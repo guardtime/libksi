@@ -4,6 +4,8 @@
 #include "../src/config.h"
 #include "cutest/CuTest.h"
 
+#include "all_tests.h"
+
 #ifndef HAVE_CONFIG_H
 #  define UNIT_TEST_OUTPUT_XML "_testsuite.xml"
 #endif
@@ -62,8 +64,16 @@ static void createSuiteXMLSummary(CuSuite* testSuite, CuString* summary) {
 }
 
 static void addSuite(CuSuite *suite, CuSuite *(*fn())) {
+	int i;
 	CuSuite *tmp = fn();
-	CuSuiteAddSuite(suite, tmp);
+
+	for (i = 0 ; i < tmp->count ; ++i)
+	{
+		CuTest* testCase = tmp->list[i];
+		CuSuiteAdd(suite, testCase);
+		tmp->list[i] = NULL;
+	}
+
 	CuSuiteDelete(tmp);
 }
 
