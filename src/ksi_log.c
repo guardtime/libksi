@@ -7,6 +7,7 @@ static const char *level2str(int level) {
 	switch (level) {
 		case KSI_LOG_DEBUG: return "DEBUG";
 		case KSI_LOG_WARN: return "WARN";
+		case KSI_LOG_INFO: return "INFO";
 		case KSI_LOG_ERROR: return "ERROR";
 		case KSI_LOG_FATAL: return "FATAL";
 		default: return "UNKNOWN LOG LEVEL";
@@ -30,7 +31,7 @@ static int writeLog(KSI_CTX *ctx, int logLevel, char *format, va_list va) {
 	}
 
 	if (ctx->logStream != NULL) {
-		fprintf(ctx->logStream, "%s: %s - ", level2str(logLevel));
+		fprintf(ctx->logStream, "%s: ", level2str(logLevel));
 		vfprintf(ctx->logStream, format, va);
 		fprintf(ctx->logStream, "\n");
 	}
@@ -54,24 +55,10 @@ int KSI_LOG_##suffix(KSI_CTX *ctx, char *format, ...) { \
 	return KSI_ERR_getStatus(ctx); \
 }
 
-/*
- *
- */
 KSI_LOG_FN(debug, DEBUG);
-
-/*
- *
- */
 KSI_LOG_FN(warn, WARN);
-
-/*
- *
- */
+KSI_LOG_FN(info, INFO);
 KSI_LOG_FN(error, ERROR);
-
-/*
- *
- */
 KSI_LOG_FN(fatal, FATAL);
 
 
@@ -89,6 +76,8 @@ static int closeLogFile(KSI_CTX *ctx) {
 	}
 	ctx->logStream = NULL;
 
+	KSI_ERR_success(ctx);
+
 cleanup:
 	return KSI_ERR_getStatus(ctx);
 }
@@ -103,8 +92,6 @@ int KSI_LOG_init(KSI_CTX *ctx, char *fileName, int logLevel) {
 		KSI_ERR_fail(ctx, KSI_INVALID_ARGUMENT, 0, __FILE__, __LINE__, NULL);
 		goto cleanup;
 	}
-
-
 
 	if (fileName == NULL || !strcmp("-", fileName)) {
 		f = stdout;

@@ -1,4 +1,4 @@
-#include "cutest-1.5/CuTest.h"
+#include "cutest/CuTest.h"
 
 #include"../src/ksi_internal.h"
 

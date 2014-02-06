@@ -671,7 +671,7 @@ void TestAssertDblEquals(CuTest* tc)
  * main
  *-------------------------------------------------------------------------*/
 
-CuSuite* KSI_CTX_GetSuite(void)
+CuSuite* CuGetSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
 

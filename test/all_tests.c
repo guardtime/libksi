@@ -2,7 +2,7 @@
 #include<string.h>
 
 #include "../src/config.h"
-#include "cutest-1.5/CuTest.h"
+#include "cutest/CuTest.h"
 
 #ifndef HAVE_CONFIG_H
 #  define UNIT_TEST_OUTPUT_XML "_testsuite.xml"
@@ -61,6 +61,11 @@ static void createSuiteXMLSummary(CuSuite* testSuite, CuString* summary) {
 
 }
 
+static void addSuite(CuSuite *suite, CuSuite *(*fn())) {
+	CuSuite *tmp = fn();
+	CuSuiteAddSuite(suite, tmp);
+	CuSuiteDelete(tmp);
+}
 
 
 static int RunAllTests() {
@@ -73,7 +78,8 @@ static int RunAllTests() {
 
 	CuSuite* suite = CuSuiteNew();
 
-	CuSuiteAddSuite(suite, KSI_CTX_GetSuite());
+	addSuite(suite, KSI_CTX_GetSuite);
+	addSuite(suite, KSI_LOG_GetSuite);
 
 	CuSuiteRun(suite);
 
@@ -95,6 +101,7 @@ static int RunAllTests() {
 cleanup:
 	if (f) fclose(f);
 
+	CuStringDelete(xmlOutput);
 	CuStringDelete(output);
 	CuSuiteDelete(suite);
 
