@@ -3,6 +3,7 @@
 PRF=libksi-0.0.1
 
 rm -f ${PRF}*.tar.gz && \
+rm -fr .deps && \
 mkdir -p config m4 && \
 echo Running autoreconf... && \
 autoreconf -i && \

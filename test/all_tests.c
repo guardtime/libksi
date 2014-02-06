@@ -10,7 +10,7 @@
 #  define UNIT_TEST_OUTPUT_XML "_testsuite.xml"
 #endif
 
-static void escapeStr(char *str, CuString *escaped) {
+static void escapeStr(const char *str, CuString *escaped) {
 	int p;
 	static const char *replIndex = "<>&\"'";
 	static const char *repl[] = { "lt", "gt", "amp", "quot", "#39"};
@@ -63,7 +63,7 @@ static void createSuiteXMLSummary(CuSuite* testSuite, CuString* summary) {
 
 }
 
-static void addSuite(CuSuite *suite, CuSuite *(*fn())) {
+static void addSuite(CuSuite *suite, CuSuite* (*fn)(void)) {
 	int i;
 	CuSuite *tmp = fn();
 
@@ -108,7 +108,7 @@ static int RunAllTests() {
 
 	failCount = suite->failCount;
 
-cleanup:
+	/* Cleanup. */
 	if (f) fclose(f);
 
 	CuStringDelete(xmlOutput);

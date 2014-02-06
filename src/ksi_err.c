@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "ksi_internal.h"
 
 /**
@@ -9,7 +11,7 @@ int KSI_ERR_getStatus(KSI_CTX *context) {
 }
 
 int KSI_ERR_isOK(KSI_CTX *ctx) {
-	return ctx != NULL && ctx->errors_count == NULL && ctx->statusCode == KSI_OK;
+	return ctx != NULL && ctx->errors_count == 0 && ctx->statusCode == KSI_OK;
 }
 
 int KSI_ERR_success(KSI_CTX *ctx) {
@@ -81,7 +83,7 @@ int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f) {
 	/* List all errors, starting from the most general. */
 	for (i = 0; i < ctx->errors_count && i < ctx->errors_size; i++) {
 		err = ctx->errors + (ctx->errors_size - i - 1);
-		fprintf(f, "  %3d) %s:%d - %s\n", ctx->errors_count - i, err->fileName, err->lineNr, err->message);
+		fprintf(f, "  %3u) %s:%u - %s\n", ctx->errors_count - i, err->fileName, err->lineNr, err->message);
 	}
 
 	/* If there where more errors than buffers for the errors, indicate the fact */
