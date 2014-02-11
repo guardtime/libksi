@@ -2,6 +2,3 @@ SUBDIRS = src test
 
 test: all
 	./test/runner
-	
-xtest: all
-	./test/runner xml

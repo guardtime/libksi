@@ -18,6 +18,7 @@ static int writeLog(KSI_CTX *ctx, int logLevel, char *format, va_list va) {
 	KSI_ERR err;
 	/* Do not call #KSI_begin. */
 	KSI_ERR_init(ctx, &err);
+	FILE *f = NULL;
 
 	if (ctx == NULL || format == NULL) {
 		KSI_ERR_fail(&err, KSI_INVALID_ARGUMENT, 0, __FILE__, __LINE__, NULL);
@@ -32,11 +33,11 @@ static int writeLog(KSI_CTX *ctx, int logLevel, char *format, va_list va) {
 		goto cleanup;
 	}
 
-	if (ctx->logStream != NULL) {
-		fprintf(ctx->logStream, "%s: ", level2str(logLevel));
-		vfprintf(ctx->logStream, format, va);
-		fprintf(ctx->logStream, "\n");
-	}
+	f = ctx->logStream != NULL ? ctx->logStream : stdout;
+
+	fprintf(f, "%s: ", level2str(logLevel));
+	vfprintf(f, format, va);
+	fprintf(f, "\n");
 
 	/* NB! Do not call macro #KSI_success. */
 	KSI_ERR_success(&err);
@@ -67,7 +68,7 @@ static int closeLogFile(KSI_CTX *ctx) {
 	KSI_ERR err;
 	KSI_ERR_init(ctx, &err);
 
-	if (ctx->logFile != NULL) {
+	if (ctx->logStream != NULL) {
 		if (!fclose(ctx->logStream)) {
 			KSI_ERR_fail(&err, KSI_IO_ERROR, 0, __FILE__, __LINE__, NULL);
 			goto cleanup;
@@ -77,6 +78,8 @@ static int closeLogFile(KSI_CTX *ctx) {
 		ctx->logFile = NULL;
 	}
 	ctx->logStream = NULL;
+	ctx->logFile = NULL;
+	ctx->logLevel = KSI_LOG_NONE;
 
 	KSI_ERR_success(&err);
 
@@ -98,9 +101,10 @@ int KSI_LOG_init(KSI_CTX *ctx, char *fileName, int logLevel) {
 		goto cleanup;
 	}
 
-	if (fileName == NULL || !strcmp("-", fileName)) {
-		f = stdout;
-	} else {
+	/* Close the log file */
+	res = closeLogFile(ctx);
+
+	if (fileName != NULL && strcmp("-", fileName)) {
 		f = fopen(fileName, "a");
 		if (f == NULL) {
 			KSI_ERR_fail(&err, KSI_IO_ERROR, 0, __FILE__, __LINE__, "Unable to open log file for append.");
@@ -108,12 +112,10 @@ int KSI_LOG_init(KSI_CTX *ctx, char *fileName, int logLevel) {
 		}
 	}
 
-	/* Close the log file */
-	res = closeLogFile(ctx);
 	if (res != KSI_OK) goto cleanup;
 
 	/* Copy log file name */
-	if (f != stdout) {
+	if (fileName != NULL) {
 		logFileName = KSI_calloc(strlen(fileName) + 1, 1);
 		if (logFileName == NULL) {
 			KSI_ERR_fail(&err, KSI_OUT_OF_MEMORY, 0, __FILE__, __LINE__, NULL);
@@ -135,7 +137,7 @@ int KSI_LOG_init(KSI_CTX *ctx, char *fileName, int logLevel) {
 
 cleanup:
 	KSI_free(logFileName);
-	if (f != NULL && f != stdout) fclose(f);
+	if (f != NULL) fclose(f);
 
 	return KSI_ERR_apply(&err);
 }

@@ -50,7 +50,7 @@ int KSI_RDR_fromMem(KSI_CTX *ctx, char *buffer, const size_t buffer_length, int 
 
 int KSI_RDR_isEOF(KSI_RDR *rdr);
 
-int KSI_RDR_read(KSI_RDR *rdr, char *buffer, size_t *length);
+int KSI_RDR_read(KSI_RDR *rdr, char *buffer, const size_t bufferLength, int *readCount);
 
 void KSI_RDR_close(KSI_RDR *rdr);
 

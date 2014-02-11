@@ -42,6 +42,8 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->errors_count = 0;
 
 	KSI_ERR_clearErrors(ctx);
+	KSI_LOG_init(ctx, NULL, KSI_LOG_NONE);
+
 
 	*context = ctx;
 	ctx = NULL;

@@ -82,7 +82,6 @@ static int RunAllTests() {
 	int failCount;
 	FILE *f = NULL;
 
-
 	CuString *output = CuStringNew();
 	CuString *xmlOutput = CuStringNew();
 
@@ -96,6 +95,8 @@ static int RunAllTests() {
 
 	CuSuiteSummary(suite, output);
 	CuSuiteDetails(suite, output);
+
+	/* Output humanreadable test result. */
 	printf("%s\n", output->buffer);
 
 	createSuiteXMLSummary(suite, xmlOutput);
