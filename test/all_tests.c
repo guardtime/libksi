@@ -90,6 +90,7 @@ static int RunAllTests() {
 
 	addSuite(suite, KSI_CTX_GetSuite);
 	addSuite(suite, KSI_LOG_GetSuite);
+	addSuite(suite, KSI_RDR_GetSuite);
 
 	CuSuiteRun(suite);
 

@@ -14,6 +14,7 @@ extern "C" {
 
 CuSuite* KSI_CTX_GetSuite(void);
 CuSuite* KSI_LOG_GetSuite(void);
+CuSuite* KSI_RDR_GetSuite(void);
 
 #ifdef __cplusplus
 }

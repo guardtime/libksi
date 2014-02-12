@@ -6,7 +6,22 @@
 
 #define KSI_ERR_STACK_LEN 16
 
-int KSI_CTX_init(KSI_CTX **context) {
+const char *KSI_getErrorString(int statusCode) {
+	switch (statusCode) {
+		case KSI_OK:
+			return "No errors";
+		case KSI_INVALID_ARGUMENT:
+			return "Invalid argument";
+		case KSI_OUT_OF_MEMORY:
+			return "Out of memory";
+		case KSI_IO_ERROR:
+			return "I/O error";
+		default:
+			return "Unknown error";
+	}
+}
+
+int KSI_CTX_new(KSI_CTX **context) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	KSI_CTX *ctx = NULL;
@@ -26,8 +41,11 @@ int KSI_CTX_init(KSI_CTX **context) {
 	}
 	ctx->errors_count = 0;
 
+	KSI_ERR_clearErrors(ctx);
+
 	*context = ctx;
 	ctx = NULL;
+
 
 	res = KSI_OK;
 

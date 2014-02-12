@@ -12,3 +12,5 @@ depcomp
 install-sh
 missing
 results.xml
+*.log
+.deps

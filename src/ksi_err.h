@@ -12,20 +12,48 @@
 extern "C" {
 #endif
 
+/* Error structure.*/
+struct KSI_ERR_st {
+	/* Free text error message to be displayed. */
+	char message[1024];
+
+	/* Filename of the error. */
+	char fileName[1024];
+
+	/* Line number where the error was logd. */
+	ssize_t lineNr;
+
+	/* Status code. */
+	int statusCode;
+
+	/* Error code */
+	int extErrorCode;
+
+	/* Pointer to parent context. */
+	KSI_CTX *ctx;
+};
+
+/**
+ * Init single error:
+ * 1. statusCode = KSI_UNKNOWN_ERROR
+ * 2. message = ""
+ */
+void KSI_ERR_init(KSI_CTX *ctx, KSI_ERR *err);
+
 /**
  * Clear all errors from context.
  */
-int KSI_ERR_clearErrors(KSI_CTX *ctx);
+void KSI_ERR_clearErrors(KSI_CTX *ctx);
 
 /**
  * Add an error to context #ctx.
  */
-int KSI_ERR_fail(KSI_CTX *ctx, int statusCode, int extErrorCode, char *fileName, int lineNr, char *message);
+void KSI_ERR_fail(KSI_ERR *ctx, int statusCode, int extErrorCode, char *fileName, int lineNr, char *message);
 
 /**
  * State that the function finished successfully.
  */
-int KSI_ERR_success(KSI_CTX *ctx);
+void KSI_ERR_success(KSI_ERR *err);
 
 #ifdef __cplusplus
 }

@@ -15,18 +15,20 @@ static const char *level2str(int level) {
 }
 
 static int writeLog(KSI_CTX *ctx, int logLevel, char *format, va_list va) {
-	/* Do not use macro #KSI_begin. */
-	KSI_ERR_clearErrors(ctx);
+	KSI_ERR err;
+	/* Do not call #KSI_begin. */
+	KSI_ERR_init(ctx, &err);
 
 	if (ctx == NULL || format == NULL) {
-		KSI_ERR_fail(ctx, KSI_INVALID_ARGUMENT, 0, __FILE__, __LINE__, NULL);
+		KSI_ERR_fail(&err, KSI_INVALID_ARGUMENT, 0, __FILE__, __LINE__, NULL);
 		goto cleanup;
 	}
 
 	if (ctx->logLevel < logLevel) {
 		/* Do not perform logging.
-		 * NB! Do not use macro #KSI_success as it will cause an infinite recursion here. */
-		KSI_ERR_success((ctx));
+		 * NB! Do not call macro #KSI_success. */
+		KSI_ERR_success(&err);
+
 		goto cleanup;
 	}
 
@@ -36,23 +38,22 @@ static int writeLog(KSI_CTX *ctx, int logLevel, char *format, va_list va) {
 		fprintf(ctx->logStream, "\n");
 	}
 
-	/* NB! Do not use macro #KSI_success. */
-	KSI_ERR_success(ctx);
+	/* NB! Do not call macro #KSI_success. */
+	KSI_ERR_success(&err);
 
 cleanup:
 
-
-	return KSI_ERR_getStatus(ctx);
+	return KSI_ERR_apply(&err);
 }
 
 #define KSI_LOG_FN(suffix, level) \
 int KSI_LOG_##suffix(KSI_CTX *ctx, char *format, ...) { \
-	KSI_ERR_clearErrors(ctx); \
+	int res; \
 	va_list va; \
 	va_start(va, format);\
-	writeLog(ctx, KSI_LOG_##level, format, va); \
+	res = writeLog(ctx, KSI_LOG_##level, format, va); \
 	va_end(va); \
-	return KSI_ERR_getStatus(ctx); \
+	return res; \
 }
 
 KSI_LOG_FN(debug, DEBUG);
@@ -63,11 +64,12 @@ KSI_LOG_FN(fatal, FATAL);
 
 
 static int closeLogFile(KSI_CTX *ctx) {
-	KSI_ERR_clearErrors(ctx);
+	KSI_ERR err;
+	KSI_ERR_init(ctx, &err);
 
 	if (ctx->logFile != NULL) {
 		if (!fclose(ctx->logStream)) {
-			KSI_ERR_fail(ctx, KSI_IO_ERROR, 0, __FILE__, __LINE__, NULL);
+			KSI_ERR_fail(&err, KSI_IO_ERROR, 0, __FILE__, __LINE__, NULL);
 			goto cleanup;
 		}
 
@@ -76,20 +78,23 @@ static int closeLogFile(KSI_CTX *ctx) {
 	}
 	ctx->logStream = NULL;
 
-	KSI_ERR_success(ctx);
+	KSI_ERR_success(&err);
 
 cleanup:
-	return KSI_ERR_getStatus(ctx);
+	return KSI_ERR_apply(&err);
 }
 
 int KSI_LOG_init(KSI_CTX *ctx, char *fileName, int logLevel) {
+	KSI_ERR err;
+	int res;
+
 	FILE *f = NULL;
 	char *logFileName = NULL;
 
-	KSI_ERR_clearErrors(ctx);
+	KSI_ERR_init(ctx, &err);
 
 	if (logLevel < KSI_LOG_NONE || logLevel > KSI_LOG_DEBUG) {
-		KSI_ERR_fail(ctx, KSI_INVALID_ARGUMENT, 0, __FILE__, __LINE__, NULL);
+		KSI_ERR_fail(&err, KSI_INVALID_ARGUMENT, 0, __FILE__, __LINE__, NULL);
 		goto cleanup;
 	}
 
@@ -98,20 +103,20 @@ int KSI_LOG_init(KSI_CTX *ctx, char *fileName, int logLevel) {
 	} else {
 		f = fopen(fileName, "a");
 		if (f == NULL) {
-			KSI_ERR_fail(ctx, KSI_IO_ERROR, 0, __FILE__, __LINE__, "Unable to open log file for append.");
+			KSI_ERR_fail(&err, KSI_IO_ERROR, 0, __FILE__, __LINE__, "Unable to open log file for append.");
 			goto cleanup;
 		}
 	}
 
 	/* Close the log file */
-	closeLogFile(ctx);
-	if (!KSI_OK(ctx)) goto cleanup;
+	res = closeLogFile(ctx);
+	if (res != KSI_OK) goto cleanup;
 
 	/* Copy log file name */
 	if (f != stdout) {
 		logFileName = KSI_calloc(strlen(fileName) + 1, 1);
 		if (logFileName == NULL) {
-			KSI_ERR_fail(ctx, KSI_OUT_OF_MEMORY, 0, __FILE__, __LINE__, NULL);
+			KSI_ERR_fail(&err, KSI_OUT_OF_MEMORY, 0, __FILE__, __LINE__, NULL);
 			goto cleanup;
 		}
 		strcpy(logFileName, fileName);
@@ -126,11 +131,11 @@ int KSI_LOG_init(KSI_CTX *ctx, char *fileName, int logLevel) {
 
 	ctx->logLevel = logLevel;
 
-	KSI_ERR_success(ctx);
+	KSI_ERR_success(&err);
 
 cleanup:
 	KSI_free(logFileName);
 	if (f != NULL && f != stdout) fclose(f);
 
-	return KSI_ERR_getStatus(ctx);
+	return KSI_ERR_apply(&err);
 }

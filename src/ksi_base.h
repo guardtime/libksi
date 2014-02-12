@@ -13,6 +13,9 @@ extern "C" {
 typedef struct KSI_CTX_st KSI_CTX;
 typedef struct KSI_ERR_st KSI_ERR;
 
+/* KSI reader type. */
+typedef struct KSI_RDR_st KSI_RDR;
+
 enum KSI_StatusCode {
 	/* RETURN CODES WHICH ARE NOT ERRORS */
 	KSI_OK = 0,
@@ -27,11 +30,13 @@ enum KSI_StatusCode {
 	KSI_UNKNOWN_ERROR
 };
 
+const char *KSI_getErrorString(int statusCode);
+
 /**
  * Initialize KSI context #KSI_CTX
  */
 
-int KSI_CTX_init(KSI_CTX **context);
+int KSI_CTX_new(KSI_CTX **context);
 
 /**
  * Free KSI context.
@@ -42,11 +47,6 @@ void KSI_CTX_free(KSI_CTX *context);
 /****************************
  *  ERROR HANDLING FUNCTIONS.
  ****************************/
-
-/*
- * Returns true, if no errors.
- */
-int KSI_ERR_isOK(KSI_CTX *ctx);
 
 /**
  * Get the last status set.
