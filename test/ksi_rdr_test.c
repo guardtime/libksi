@@ -1,9 +1,10 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "cutest/CuTest.h"
 #include "../src/ksi_internal.h"
 
-static void TestRdrBadFileName(CuTest* tc) {
+static void TestRdrFileBadFileName(CuTest* tc) {
 	int res;
 	char tmpFile[L_tmpnam];
 	char tmpBuf[0xffff];
@@ -32,11 +33,11 @@ static void TestRdrBadFileName(CuTest* tc) {
 
 }
 
-static void TestRdrFileReading(CuTest* tc) {
+static void TestRdrFileFileReading(CuTest* tc) {
 	int res;
 	char tmpFile[L_tmpnam];
 	char tmpBuf[0xffff];
-	int readh;
+	int readCount;
 
 	static char testStr[] = "Randomness is too important to be left to chance";
 
@@ -61,10 +62,10 @@ static void TestRdrFileReading(CuTest* tc) {
 	res = KSI_RDR_fromFile(ctx, tmpFile, "r", &rdr);
 	CuAssert(tc, "Error creating reader from file.", res == KSI_OK);
 	CuAssert(tc, "Creating reader from file did not fail, but object is still NULL", rdr != NULL);
-	/* Read two blocks */
-	KSI_RDR_read(rdr, tmpBuf + readh, sizeof(tmpBuf), &readh);
+	/* Read as a single block. */
+	KSI_RDR_read(rdr, tmpBuf, sizeof(tmpBuf), &readCount);
 
-	CuAssert(tc, "Wrong length read", readh == strlen(testStr));
+	CuAssert(tc, "Wrong length read", readCount == strlen(testStr));
 
 	CuAssert(tc, "Reader is not at EOF", rdr->eof);
 	KSI_RDR_close(rdr);
@@ -76,12 +77,61 @@ static void TestRdrFileReading(CuTest* tc) {
 	KSI_CTX_free(ctx);
 }
 
+
+static void TestRdrFileReadingChuncks(CuTest* tc) {
+	int res;
+	char tmpFile[L_tmpnam];
+	char tmpBuf[0xffff];
+	int readCount;
+	int size = 0;
+
+	static char testStr[] = "Randomness is too important to be left to chance";
+
+	FILE *f = NULL;
+
+	KSI_CTX *ctx = NULL;
+	KSI_RDR *rdr = NULL;
+
+	/* Init context. */
+	KSI_CTX_new(&ctx);
+
+	/* Create tmp file name. */
+	CuAssert(tc, "Unable to create temporary file name.", tmpnam_r(tmpFile) != NULL);
+
+	/* Write some data to file */
+	f = fopen(tmpFile, "w");
+	CuAssert(tc, "Unable to create tempprary file", f != NULL);
+	CuAssert(tc, "Unable to write temporary file", fprintf(f, testStr) > 0);
+	CuAssert(tc, "Unable to close temporary file", !fclose(f));
+
+	/* Try reading it back. */
+	res = KSI_RDR_fromFile(ctx, tmpFile, "r", &rdr);
+	CuAssert(tc, "Error creating reader from file.", res == KSI_OK);
+	CuAssert(tc, "Creating reader from file did not fail, but object is still NULL", rdr != NULL);
+	/* Read blocks of size 10. */
+	while (!KSI_RDR_isEOF(rdr)) {
+		KSI_RDR_read(rdr, tmpBuf + size, 10, &readCount);
+		size += readCount;
+	}
+	CuAssert(tc, "Wrong length read", readCount == strlen(testStr));
+
+	CuAssert(tc, "Reader is not at EOF", rdr->eof);
+	KSI_RDR_close(rdr);
+
+	/* Remove temporary file */
+	CuAssert(tc, "Unable to remove temporary file", remove(tmpFile) == 0);
+
+	KSI_CTX_free(ctx);
+}
+
+
 CuSuite* KSI_RDR_GetSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
 
-	SUITE_ADD_TEST(suite, TestRdrBadFileName);
-	SUITE_ADD_TEST(suite, TestRdrFileReading);
+	SUITE_ADD_TEST(suite, TestRdrFileBadFileName);
+	SUITE_ADD_TEST(suite, TestRdrFileFileReading);
+	SUITE_ADD_TEST(suite, TestRdrFileReadingChuncks);
 
 	return suite;
 }
