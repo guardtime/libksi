@@ -2,7 +2,7 @@ import xml.etree.ElementTree as ET
 doc = ET.parse('valgrind.xml')
 errors = doc.findall('//error')
  
-out = open("testsuite-valgrind.xml","w")
+out = open("testsuite-memtest.xml","w")
 out.write('<?xml version="1.0" encoding="UTF-8"?>\n')
 out.write('<testsuite name="memcheck" tests="1" errors="0" failures="'+str(len(errors))+'" skip="0">\n')
 out.write('    <testcase classname="ValgrindMemoryCheck " \n')

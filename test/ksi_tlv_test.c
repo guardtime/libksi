@@ -4,7 +4,7 @@
 #include "cutest/CuTest.h"
 #include "../src/ksi_internal.h"
 
-void TestTlvInitOwnMem(CuTest* tc) {
+static void TestTlvInitOwnMem(CuTest* tc) {
 	KSI_CTX *ctx = NULL;
 	KSI_TLV *tlv = NULL;
 	int res;
@@ -19,7 +19,7 @@ void TestTlvInitOwnMem(CuTest* tc) {
 
 	CuAssert(tc, "TLV encoding is wrong.", tlv->encoding == KSI_TLV_ENC_RAW);
 
-	CuAssert(tc, "TLV raw does not point to buffer.", tlv->encode.rawVal.ptr != tlv->buffer);
+	CuAssert(tc, "TLV raw does not point to buffer.", tlv->encode.rawVal.ptr == tlv->buffer);
 
 	KSI_TLV_free(tlv);
 	KSI_CTX_free(ctx);
@@ -29,7 +29,7 @@ CuSuite* KSI_TLV_GetSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
 
-//	SUITE_ADD_TEST(suite, TestRdrFileBadFileName);
+	SUITE_ADD_TEST(suite, TestTlvInitOwnMem);
 
 	return suite;
 }
