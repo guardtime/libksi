@@ -2,3 +2,5 @@ SUBDIRS = src test
 
 test: all
 	./test/runner
+memtest: all 
+	valgrind --xml=yes --xml-file=valgrind.xml ./test/runner && python valgrind2xunit.py 

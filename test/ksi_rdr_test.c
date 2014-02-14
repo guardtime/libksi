@@ -113,7 +113,8 @@ static void TestRdrFileReadingChuncks(CuTest* tc) {
 		KSI_RDR_read(rdr, tmpBuf + size, 10, &readCount);
 		size += readCount;
 	}
-	CuAssert(tc, "Wrong length read", readCount == strlen(testStr));
+
+	CuAssert(tc, "Wrong length read", size == strlen(testStr));
 
 	CuAssert(tc, "Reader is not at EOF", rdr->eof);
 	KSI_RDR_close(rdr);
@@ -124,6 +125,59 @@ static void TestRdrFileReadingChuncks(CuTest* tc) {
 	KSI_CTX_free(ctx);
 }
 
+static void TestRdrMemInitExtStorage(CuTest* tc) {
+	int res;
+	int readCount;
+
+	KSI_CTX *ctx = NULL;
+	KSI_RDR *rdr = NULL;
+	static char testData[] = "Random binary data.";
+	char tmpBuf[0xffff];
+
+	/* Init context. */
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Failed initializing context.", res == KSI_OK);
+
+	/* Init reader. */
+	res = KSI_RDR_fromMem(ctx, testData, sizeof(testData), 0, &rdr);
+	CuAssert(tc, "Failed initializing context from shared memory.", res == KSI_OK);
+	CuAssert(tc, "Init did not fail, but object not created.", rdr != NULL);
+
+	res = KSI_RDR_read(rdr, tmpBuf, sizeof(tmpBuf), &readCount);
+	CuAssert(tc, "Incorrect read count.", readCount = sizeof(testData));
+
+
+
+	KSI_RDR_close(rdr);
+	KSI_CTX_free(ctx);
+}
+
+static void TestRdrMemInitOwnStorage(CuTest* tc) {
+	int res;
+	int readCount;
+
+	KSI_CTX *ctx = NULL;
+	KSI_RDR *rdr = NULL;
+	static char testData[] = "Random binary data.";
+	char tmpBuf[0xffff];
+
+	/* Init context. */
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Failed initializing context.", res == KSI_OK);
+
+	/* Init reader. */
+	res = KSI_RDR_fromMem(ctx, testData, sizeof(testData), 1, &rdr);
+	CuAssert(tc, "Failed initializing context from private memory.", res == KSI_OK);
+	CuAssert(tc, "Init did not fail, but object not created.", rdr != NULL);
+
+	res = KSI_RDR_read(rdr, tmpBuf, sizeof(tmpBuf), &readCount);
+	CuAssert(tc, "Incorrect read count.", readCount = sizeof(testData));
+
+
+
+	KSI_RDR_close(rdr);
+	KSI_CTX_free(ctx);
+}
 
 CuSuite* KSI_RDR_GetSuite(void)
 {
@@ -132,6 +186,9 @@ CuSuite* KSI_RDR_GetSuite(void)
 	SUITE_ADD_TEST(suite, TestRdrFileBadFileName);
 	SUITE_ADD_TEST(suite, TestRdrFileFileReading);
 	SUITE_ADD_TEST(suite, TestRdrFileReadingChuncks);
+
+	SUITE_ADD_TEST(suite, TestRdrMemInitExtStorage);
+	SUITE_ADD_TEST(suite, TestRdrMemInitOwnStorage);
 
 	return suite;
 }

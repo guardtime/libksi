@@ -12,6 +12,7 @@ extern "C" {
 
 typedef struct KSI_CTX_st KSI_CTX;
 typedef struct KSI_ERR_st KSI_ERR;
+typedef struct KSI_TLV_st KSI_TLV;
 
 /* KSI reader type. */
 typedef struct KSI_RDR_st KSI_RDR;
@@ -62,6 +63,8 @@ int KSI_CTX_statusDump(KSI_CTX *ctx, FILE *f);
  * LOG FUNCTIONS.
  ****************/
 
+// TODO!
+
 /**
  * Set log file.
  *
@@ -73,6 +76,10 @@ int KSI_LOG_init(KSI_CTX *ctx, char *fileName, int logLevel);
  * Change the log level.
  */
 int KSI_LOG_setLevel(int logLevel);
+
+/**************
+ * TLV FUNCTINS
+ **************/
 
 #ifdef __cplusplus
 }

@@ -19,6 +19,9 @@
 #define KSI_fail(err, statusCode, message) (KSI_LOG_debug((err)->ctx, "Fail called from %s:%d\n", __FILE__, __LINE__), KSI_ERR_fail((err), (statusCode), 0, __FILE__, __LINE__, (message)))
 #define KSI_success(err) KSI_ERR_success((err))
 
+/* Dummy macro for indicating that the programmer knows and did not forget to free up some pointer. */
+#define KSI_nofree(ptr)
+
 #ifdef __cplusplus
 extern "C" {
 #endif

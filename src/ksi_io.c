@@ -59,7 +59,7 @@ int KSI_RDR_fromMem(KSI_CTX *ctx, char *buffer, const size_t buffer_length, int 
 
 	KSI_begin(ctx, &err);
 
-	reader = newReader(ctx, KSI_IO_FILE);
+	reader = newReader(ctx, KSI_IO_MEM);
 	if (reader == NULL) {
 		KSI_fail(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
@@ -79,6 +79,8 @@ int KSI_RDR_fromMem(KSI_CTX *ctx, char *buffer, const size_t buffer_length, int 
 
 	*rdr = reader;
 	reader = NULL;
+
+	KSI_success(&err);
 cleanup:
 	KSI_free(buf);
 
@@ -103,7 +105,7 @@ static int readFromFile(KSI_RDR *rdr, char *buffer, const size_t size, int *read
 	rdr->offset += count;
 	rdr->eof = feof(rdr->data.file);
 
-	if (readCount != NULL) *readCount = count;
+	*readCount = count;
 
 	KSI_success(&err);
 

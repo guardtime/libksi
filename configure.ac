@@ -12,7 +12,7 @@ AC_CONFIG_HEADERS([src/config.h])
 
 AC_ARG_WITH(unit-test-xml,
 [  --with-unit-test-xml=file		Specifies the target xml of unit tests.],
-:, with_unit_test_xml=testsuit.xml)
+:, with_unit_test_xml=testsuite-xunit.xml)
 
 AC_DEFINE_UNQUOTED(UNIT_TEST_OUTPUT_XML, "$with_unit_test_xml", [Location of the unit test xml results.])
 
