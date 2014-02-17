@@ -146,7 +146,7 @@ static void TestRdrMemInitExtStorage(CuTest* tc) {
 	res = KSI_RDR_read(rdr, tmpBuf, sizeof(tmpBuf), &readCount);
 	CuAssert(tc, "Incorrect read count.", readCount = sizeof(testData));
 
-
+	CuAssert(tc, "Data missmatch", !memcmp(tmpBuf, testData, sizeof(testData)));
 
 	KSI_RDR_close(rdr);
 	KSI_CTX_free(ctx);
@@ -173,7 +173,7 @@ static void TestRdrMemInitOwnStorage(CuTest* tc) {
 	res = KSI_RDR_read(rdr, tmpBuf, sizeof(tmpBuf), &readCount);
 	CuAssert(tc, "Incorrect read count.", readCount = sizeof(testData));
 
-
+	CuAssert(tc, "Data missmatch", !memcmp(tmpBuf, testData, sizeof(testData)));
 
 	KSI_RDR_close(rdr);
 	KSI_CTX_free(ctx);

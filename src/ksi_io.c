@@ -67,6 +67,11 @@ int KSI_RDR_fromMem(KSI_CTX *ctx, char *buffer, const size_t buffer_length, int 
 
 	if (ownCopy) {
 		buf = KSI_calloc(buffer_length, 1);
+		if (buf == NULL) {
+			KSI_fail(&err, KSI_OUT_OF_MEMORY, NULL);
+			goto cleanup;
+		}
+		memcpy(buf, buffer, buffer_length);
 	} else {
 		buf = buffer;
 	}
@@ -161,7 +166,12 @@ int KSI_RDR_read(KSI_RDR *rdr, char *buffer, const size_t bufferLength, int *rea
 			goto cleanup;
 	}
 
-	if (res != KSI_OK) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_fail(&err, res, NULL);
+		goto cleanup;
+	}
+
+	KSI_success(&err);
 
 cleanup:
 
