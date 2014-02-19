@@ -71,7 +71,7 @@ int KSI_TLV_getUInt64Value(KSI_TLV *tlv, uint64_t *val);
 
 int KSI_TLV_getStringValue(KSI_TLV *tlv, char **buf, int copy);
 
-// TODO Functions for nested TLV's.
+int KSI_TLV_getNextNestedTLV(KSI_TLV *tlv, const KSI_TLV **nested);
 
 void KSI_TLV_free(KSI_TLV *tlv);
 

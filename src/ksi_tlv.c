@@ -5,29 +5,6 @@
 /**
  *
  */
-static int appendBlob(KSI_TLV *tlv, char *data, size_t data_length) {
-	int size = -1;
-
-	if (tlv->payloadType != KSI_TLV_PAYLOAD_RAW || tlv->buffer == NULL) {
-		goto cleanup;
-	}
-
-	if (tlv->payload.rawVal.length + data_length > tlv->buffer_size) {
-		goto cleanup;
-	}
-
-	memcpy(tlv->payload.rawVal.ptr + tlv->payload.rawVal.length , data, data_length);
-
-	size = tlv->payload.rawVal.length += data_length;
-
-cleanup:
-
-	return size;
-}
-
-/**
- *
- */
 static int createOwnBuffer(KSI_TLV *tlv, int copy) {
 	KSI_ERR err;
 	unsigned char *buf;
@@ -73,6 +50,133 @@ cleanup:
 	KSI_free(buf);
 
 	return KSI_end(&err);
+}
+
+/**
+ *
+ */
+static int encodeAsRaw(KSI_TLV *tlv) {
+	KSI_ERR err;
+
+	KSI_begin(tlv->ctx, &err);
+
+	KSI_fail(&err, KSI_UNKNOWN_ERROR, "Unimplemented method.");
+
+	return KSI_end(&err);
+}
+
+/**
+ *
+ */
+static int encodeAsString(KSI_TLV *tlv) {
+	int res;
+	KSI_ERR err;
+
+	KSI_begin(tlv->ctx, &err);
+
+	if (tlv->payloadType == KSI_TLV_PAYLOAD_STR) {
+		KSI_success(&err);
+		goto cleanup;
+	}
+
+	if (tlv->payloadType != KSI_TLV_PAYLOAD_RAW) {
+		res = encodeAsRaw(tlv);
+		if (res != KSI_OK) {
+			KSI_fail(&err, res, NULL);
+			goto cleanup;
+		}
+	}
+
+	if (tlv->buffer == NULL) {
+		/* Create local copy. */
+		res = createOwnBuffer(tlv, 1);
+		if (res != KSI_OK) {
+			KSI_fail(&err, res, NULL);
+			goto cleanup;
+		}
+	}
+
+	/* Make the buffer a null-terminated string, but do not change the actual size. */
+	*(tlv->payload.rawVal.ptr + tlv->payload.rawVal.length) = '\0';
+
+	KSI_success(&err);
+
+cleanup:
+
+	return KSI_end(&err);
+}
+/**
+ *
+ */
+static int encodeAsUInt64(KSI_TLV *tlv) {
+	int res;
+	KSI_ERR err;
+	uint64_t value;
+	int value_len;
+
+	KSI_begin(tlv->ctx, &err);
+
+	/* Exit when already correct type. */
+	if (tlv->payloadType == KSI_TLV_PAYLOAD_INT) {
+		KSI_success(&err);
+		goto cleanup;
+	}
+
+	/* Use only raw format. */
+	if (tlv->payloadType != KSI_TLV_PAYLOAD_RAW) {
+		/* Convert the TLV into raw form */
+		res = encodeAsRaw(tlv);
+		if (res != KSI_OK) {
+			KSI_fail(&err, res, NULL);
+			goto cleanup;
+		}
+	}
+
+	/* Verify size of data - fail if overflow. */
+	if (tlv->payload.rawVal.length > sizeof(uint64_t)) {
+		KSI_fail(&err, KSI_INVALID_FORMAT, "TLV size too long for integer value.");
+		goto cleanup;
+	}
+
+	/* Decode the big endian value. */
+	value = 0;
+	for (value_len = 0; value_len < tlv->payload.rawVal.length; value_len++) {
+		value = (value << 8) | *(tlv->payload.rawVal.ptr + value_len);
+	}
+
+	tlv->payloadType = KSI_TLV_PAYLOAD_INT;
+
+	tlv->payload.uintVal.value = value;
+	tlv->payload.uintVal.length = value_len;
+
+	KSI_success(&err);
+
+cleanup:
+
+	return KSI_end(&err);
+}
+
+/**
+ *
+ */
+static int appendBlob(KSI_TLV *tlv, char *data, size_t data_length) {
+	int size = -1;
+
+	if (tlv->payloadType != KSI_TLV_PAYLOAD_RAW || tlv->buffer == NULL) {
+		goto cleanup;
+	}
+
+	if (tlv->payload.rawVal.length + data_length > tlv->buffer_size) {
+		goto cleanup;
+	}
+
+	memcpy(tlv->payload.rawVal.ptr + tlv->payload.rawVal.length , data, data_length);
+
+	size = tlv->payload.rawVal.length += data_length;
+
+cleanup:
+
+	return size;
 }
 
 /**
@@ -250,19 +354,6 @@ cleanup:
 /**
  *
  */
-static int encodeAsRaw(KSI_TLV *tlv) {
-	KSI_ERR err;
-
-	KSI_begin(tlv->ctx, &err);
-
-	KSI_fail(&err, KSI_UNKNOWN_ERROR, "Unimplemented method.");
-
-	return KSI_end(&err);
-}
-
-/**
- *
- */
 int KSI_TLV_getRawValue(KSI_TLV *tlv, unsigned char **buf, int *len, int copy) {
 	KSI_ERR err;
 	int res;
@@ -318,32 +409,13 @@ int KSI_TLV_getUInt64Value(KSI_TLV *tlv, uint64_t *val) {
 
 	KSI_begin(tlv->ctx, &err);
 
-	if (tlv->payloadType == KSI_TLV_PAYLOAD_INT) {
-		value = tlv->payload.uintVal.value;
-	} else {
-		if (tlv->payloadType != KSI_TLV_PAYLOAD_RAW) {
-			/* Convert the TLV into raw form */
-			res = encodeAsRaw(tlv);
-			if (res != KSI_OK) {
-				KSI_fail(&err, res, NULL);
-				goto cleanup;
-			}
-		}
-
-		if (tlv->payload.rawVal.length > sizeof(uint64_t)) {
-			KSI_fail(&err, KSI_INVALID_FORMAT, "TLV size too long for integer value.");
-			goto cleanup;
-		}
-
-		value = 0;
-		for (value_len = 0; value_len < tlv->payload.rawVal.length; value_len++) {
-			value = (value << 8) | *(tlv->payload.rawVal.ptr + value_len);
-		}
+	res = encodeAsUInt64(tlv);
+	if (res != KSI_OK) {
+		KSI_fail(&err, res, NULL);
+		goto cleanup;
 	}
 
-	tlv->payloadType = KSI_TLV_PAYLOAD_INT;
-	*val = tlv->payload.uintVal.value = value;
-	tlv->payload.uintVal.length = value_len;
+	*val = tlv->payload.uintVal.value;
 
 	KSI_success(&err);
 
@@ -362,27 +434,10 @@ int KSI_TLV_getStringValue(KSI_TLV *tlv, char **buf, int copy) {
 
 	KSI_begin(tlv->ctx, &err);
 
-	if (tlv->payloadType != KSI_TLV_PAYLOAD_STR) {
-		if (tlv->payloadType != KSI_TLV_PAYLOAD_RAW) {
-
-			res = encodeAsRaw(tlv);
-			if (res != KSI_OK) {
-				KSI_fail(&err, res, NULL);
-				goto cleanup;
-			}
-		}
-
-		if (tlv->buffer == NULL) {
-			/* Create local copy. */
-			res = createOwnBuffer(tlv, 1);
-			if (res != KSI_OK) {
-				KSI_fail(&err, res, NULL);
-				goto cleanup;
-			}
-		}
-
-		/* Make the buffer a null-terminated string, but do not change the actual size. */
-		*(tlv->payload.rawVal.ptr + tlv->payload.rawVal.length) = '\0';
+	res = encodeAsString(tlv);
+	if (res != KSI_OK) {
+		KSI_fail(&err, res, NULL);
+		goto cleanup;
 	}
 
 	if (copy) {
