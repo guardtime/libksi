@@ -18,6 +18,8 @@ int KSI_ERR_apply(KSI_ERR *err) {
 	if (err->statusCode != KSI_OK) {
 		ctxErr = ctx->errors + (ctx->errors_count % ctx->errors_size);
 
+
+
 		ctxErr->statusCode = err->statusCode;
 		ctxErr->extErrorCode = err->extErrorCode;
 		ctxErr->lineNr = err->lineNr;
@@ -49,7 +51,11 @@ void KSI_ERR_success(KSI_ERR *err) {
 void KSI_ERR_fail(KSI_ERR *err, int statusCode, int extErrorCode, char *fileName, int lineNr, char *message) {
 	err->extErrorCode = extErrorCode;
 	err->statusCode = statusCode;
-	strncpy(err->message, KSI_strnvl(message), sizeof(err->message));
+	if (message == NULL) {
+		strncpy(err->message, KSI_getErrorString(statusCode), sizeof(err->message));
+	} else {
+		strncpy(err->message, KSI_strnvl(message), sizeof(err->message));
+	}
 	strncpy(err->fileName, KSI_strnvl(fileName), sizeof(err->fileName));
 	err->lineNr = lineNr;
 }
@@ -72,7 +78,7 @@ int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f) {
 
 	/* List all errors, starting from the most general. */
 	for (i = 0; i < ctx->errors_count && i < ctx->errors_size; i++) {
-		err = ctx->errors + (ctx->errors_size - i - 1);
+		err = ctx->errors + ((ctx->errors_count - i - 1) % ctx->errors_size);
 		fprintf(f, "  %3u) %s:%u - (%d/%d) %s\n", ctx->errors_count - i, err->fileName, err->lineNr,err->statusCode, err->extErrorCode, err->message);
 	}
 

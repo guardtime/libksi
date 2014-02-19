@@ -18,13 +18,22 @@ typedef struct KSI_TLV_st KSI_TLV;
 typedef struct KSI_RDR_st KSI_RDR;
 
 enum KSI_StatusCode {
-	/* RETURN CODES WHICH ARE NOT ERRORS */
+/* RETURN CODES WHICH ARE NOT ERRORS */
 	KSI_OK = 0,
 
-	/* SYNTAX ERRORS */
+/* SYNTAX ERRORS */
+	/**
+	 * Argument to function was invalid. Mostly this indicates \c NULL
+	 * pointer.
+	 */
 	KSI_INVALID_ARGUMENT = 0x00000100,
+	/**
+	 * Either arguments to function or responses from timestamping server had
+	 * invalid format.
+	 */
+	KSI_INVALID_FORMAT,
 
-	/* SYSTEM ERRORS */
+/* SYSTEM ERRORS */
 	KSI_OUT_OF_MEMORY = 0x00000300,
 	KSI_IO_ERROR,
 
