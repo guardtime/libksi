@@ -22,18 +22,18 @@ int KSI_RDR_fromFile(KSI_CTX *ctx, const char *fileName, const char *flags, KSI_
 	KSI_RDR *reader = NULL;
 	FILE *file = NULL;
 
-	KSI_begin(ctx, &err);
+	KSI_BEGIN(ctx, &err);
 
 	reader = newReader(ctx, KSI_IO_FILE);
 	if (reader == NULL) {
-		KSI_fail(&err, KSI_OUT_OF_MEMORY, NULL);
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
 	file = fopen(fileName, flags);
 
 	if (file == NULL) {
-		KSI_fail(&err, KSI_IO_ERROR, "Unable to open file");
+		KSI_FAIL(&err, KSI_IO_ERROR, "Unable to open file");
 		goto cleanup;
 	}
 
@@ -43,13 +43,13 @@ int KSI_RDR_fromFile(KSI_CTX *ctx, const char *fileName, const char *flags, KSI_
 	*rdr = reader;
 	reader = NULL;
 
-	KSI_success(&err);
+	KSI_SUCCESS(&err);
 
 cleanup:
 	if (file != NULL) fclose(file);
 	KSI_RDR_close(reader);
 
-	return KSI_end(&err);
+	return KSI_RETURN(&err);
 }
 
 int KSI_RDR_fromMem(KSI_CTX *ctx, char *buffer, const size_t buffer_length, int ownCopy, KSI_RDR **rdr) {
@@ -57,18 +57,18 @@ int KSI_RDR_fromMem(KSI_CTX *ctx, char *buffer, const size_t buffer_length, int 
 	KSI_RDR *reader = NULL;
 	char *buf = NULL;
 
-	KSI_begin(ctx, &err);
+	KSI_BEGIN(ctx, &err);
 
 	reader = newReader(ctx, KSI_IO_MEM);
 	if (reader == NULL) {
-		KSI_fail(&err, KSI_OUT_OF_MEMORY, NULL);
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
 	if (ownCopy) {
 		buf = KSI_calloc(buffer_length, 1);
 		if (buf == NULL) {
-			KSI_fail(&err, KSI_OUT_OF_MEMORY, NULL);
+			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 			goto cleanup;
 		}
 		memcpy(buf, buffer, buffer_length);
@@ -85,13 +85,13 @@ int KSI_RDR_fromMem(KSI_CTX *ctx, char *buffer, const size_t buffer_length, int 
 	*rdr = reader;
 	reader = NULL;
 
-	KSI_success(&err);
+	KSI_SUCCESS(&err);
 cleanup:
 	KSI_free(buf);
 
 	KSI_RDR_close(reader);
 
-	return KSI_end(&err);
+	return KSI_RETURN(&err);
 }
 
 
@@ -104,7 +104,7 @@ static int readFromFile(KSI_RDR *rdr, char *buffer, const size_t size, int *read
 	int count;
 
 	/* Init error handling. */
-	KSI_begin(rdr->ctx, &err);
+	KSI_BEGIN(rdr->ctx, &err);
 	count = fread(buffer, 1, size, rdr->data.file);
 	/* Update metadata. */
 	rdr->offset += count;
@@ -112,11 +112,11 @@ static int readFromFile(KSI_RDR *rdr, char *buffer, const size_t size, int *read
 
 	*readCount = count;
 
-	KSI_success(&err);
+	KSI_SUCCESS(&err);
 
 cleanup:
 
-	return KSI_end(&err);
+	return KSI_RETURN(&err);
 }
 
 static int readFromMem(KSI_RDR *rdr, char *buffer, const size_t size, int *readCount) {
@@ -124,7 +124,7 @@ static int readFromMem(KSI_RDR *rdr, char *buffer, const size_t size, int *readC
 	int count;
 
 	/* Init error handling. */
-	KSI_begin(rdr->ctx, &err);
+	KSI_BEGIN(rdr->ctx, &err);
 
 	/* Max bytes still to read. */
 	count = rdr->data.mem.buffer_length - rdr->offset;
@@ -140,11 +140,11 @@ static int readFromMem(KSI_RDR *rdr, char *buffer, const size_t size, int *readC
 
 	if (readCount != NULL) *readCount = count;
 
-	KSI_success(&err);
+	KSI_SUCCESS(&err);
 
 cleanup:
 
-	return KSI_end(&err);
+	return KSI_RETURN(&err);
 }
 
 
@@ -152,7 +152,7 @@ int KSI_RDR_read(KSI_RDR *rdr, char *buffer, const size_t bufferLength, int *rea
 	KSI_ERR err;
 	int res;
 
-	KSI_begin(rdr->ctx, &err);
+	KSI_BEGIN(rdr->ctx, &err);
 
 	switch (rdr->ioType) {
 		case KSI_IO_FILE:
@@ -162,20 +162,20 @@ int KSI_RDR_read(KSI_RDR *rdr, char *buffer, const size_t bufferLength, int *rea
 			res = readFromMem(rdr, buffer, bufferLength, readCount);
 			break;
 		default:
-			KSI_fail(&err, KSI_UNKNOWN_ERROR, "Unsupported KSI IO TYPE");
+			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Unsupported KSI IO TYPE");
 			goto cleanup;
 	}
 
 	if (res != KSI_OK) {
-		KSI_fail(&err, res, NULL);
+		KSI_FAIL(&err, res, NULL);
 		goto cleanup;
 	}
 
-	KSI_success(&err);
+	KSI_SUCCESS(&err);
 
 cleanup:
 
-	return KSI_end(&err);
+	return KSI_RETURN(&err);
 }
 
 
@@ -188,7 +188,7 @@ void KSI_RDR_close(KSI_RDR *rdr)  {
 	ctx = rdr->ctx;
 	rdr->ctx = NULL;
 
-	/* NB! Do not call #KSI_begin. */
+	/* NB! Do not call #KSI_BEGIN. */
 
 	switch (rdr->ioType) {
 		case KSI_IO_FILE:
@@ -207,7 +207,7 @@ void KSI_RDR_close(KSI_RDR *rdr)  {
 			}
 			break;
 		default:
-			KSI_fail(&err, KSI_UNKNOWN_ERROR, "Unsupported KSI IO TYPE");
+			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Unsupported KSI IO TYPE");
 	}
 
 	KSI_free(rdr);

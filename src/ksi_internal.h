@@ -13,12 +13,6 @@
 /* Returns Empty string if #str==NULL otherwise returns #str itself */
 #define KSI_strnvl(str) ((str) == NULL)?"":(str)
 
-#define KSI_begin(ctx, err) (KSI_LOG_debug((ctx), "Begin called from %s:%d\n", __FILE__, __LINE__), KSI_ERR_init(ctx, err))
-#define KSI_end(err) (KSI_LOG_debug((err)->ctx, "End called from %s:%d\n", __FILE__, __LINE__), KSI_ERR_apply((err)))
-#define KSI_failExt(err, statusCode, extErrCode, message) (KSI_LOG_debug((err)->ctx, "External fail called from %s:%d\n", __FILE__, __LINE__), KSI_ERR_fail((err), (statusCode), (extErrCode), __FILE__, __LINE__, (message)))
-#define KSI_fail(err, statusCode, message) (KSI_LOG_debug((err)->ctx, "Fail called from %s:%d\n", __FILE__, __LINE__), KSI_ERR_fail((err), (statusCode), 0, __FILE__, __LINE__, (message)))
-#define KSI_success(err) KSI_ERR_success((err))
-
 /* Dummy macro for indicating that the programmer knows and did not forget to free up some pointer. */
 #define KSI_nofree(ptr)
 

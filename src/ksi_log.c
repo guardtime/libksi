@@ -16,7 +16,7 @@ static const char *level2str(int level) {
 
 static int writeLog(KSI_CTX *ctx, int logLevel, char *format, va_list va) {
 	KSI_ERR err;
-	/* Do not call #KSI_begin. */
+	/* Do not call #KSI_BEGIN. */
 	KSI_ERR_init(ctx, &err);
 	FILE *f = NULL;
 

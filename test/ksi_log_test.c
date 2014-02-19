@@ -18,11 +18,11 @@ static int failWithError(KSI_CTX *ctx, int statusCode) {
 	KSI_ERR_init(ctx, &err);
 
 	if (statusCode != KSI_OK) {
-		KSI_fail(&err, statusCode, "Some random error");
+		KSI_FAIL(&err, statusCode, "Some random error");
 	} else {
-		KSI_success(&err);
+		KSI_SUCCESS(&err);
 	}
-	return KSI_end(&err);
+	return KSI_RETURN(&err);
 }
 
 

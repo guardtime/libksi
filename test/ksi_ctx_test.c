@@ -8,17 +8,17 @@ static int failingMethod(KSI_CTX *ctx, int caseNr) {
 
 	switch (caseNr) {
 		case 0: /* No failure */
-			KSI_success(&err);
+			KSI_SUCCESS(&err);
 			break;
 		case 1:
-			KSI_fail(&err, KSI_INVALID_ARGUMENT, "Some random error.");
+			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Some random error.");
 			break;
 		case 2:
 			/* Forget to fail or succeed. */
 			break;
 	}
 
-	return KSI_end(&err);
+	return KSI_RETURN(&err);
 }
 
 static void TestCtxInit(CuTest* tc) {
@@ -81,7 +81,7 @@ CuSuite* KSI_CTX_GetSuite(void)
 
 	SUITE_ADD_TEST(suite, TestCtxInit);
 	SUITE_ADD_TEST(suite, TestCtxAddFailure);
-//	SUITE_ADD_TEST(suite, TestCtxAddFailureOverflow);
+	SUITE_ADD_TEST(suite, TestCtxAddFailureOverflow);
 
 	return suite;
 }
