@@ -58,6 +58,8 @@ struct KSI_TLV_st {
 
 	/* Next tlv in a linked list */
 	KSI_TLV *next;
+	/* Pointer to the last element of a list. By default pointing to itself. */
+	KSI_TLV *last;
 };
 
 /* Creates an empty TLV with its own memory (always 0xffff bytes long).*/

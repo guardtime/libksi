@@ -197,6 +197,7 @@ static void TestTlvGetUint64(CuTest* tc) {
 	CuAssert(tc, "Failed to create TLV from reader.", res == KSI_OK && tlv != NULL);
 
 	res = KSI_TLV_getUInt64Value(tlv, &value);
+	KSI_ERR_statusDump(ctx, stdout);
 	CuAssert(tc, "Parsing uint64 failed.", res == KSI_OK);
 
 	CuAssert(tc, "Parsed value is not correct.", value == 0xcafebabecafeface);
@@ -293,6 +294,50 @@ static void TestTlvGetStringValueCopy(CuTest* tc) {
 	KSI_CTX_free(ctx);
 }
 
+static void TestTlvGetNextNested(CuTest* tc) {
+	int res;
+	/* TLV16 type = 0x2aa, length = 21 */
+	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
+	char *str = NULL;
+
+	KSI_CTX *ctx = NULL;
+	KSI_RDR *rdr = NULL;
+	KSI_TLV *tlv = NULL;
+	KSI_TLV *nested = NULL;
+	uint64_t uint;
+
+	KSI_CTX_new(&ctx);
+
+	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw) - 1, 1, &rdr);
+	CuAssert(tc, "Unable to create reader.", res == KSI_OK && rdr != NULL);
+
+	res = KSI_TLV_fromReader(rdr, &tlv);
+	CuAssert(tc, "Unable to read TLV.", res == KSI_OK && tlv != NULL);
+
+	res = KSI_TLV_getNextNestedTLV(tlv, &nested);
+	CuAssert(tc, "Unable to read nested TLV", res == KSI_OK && nested != NULL);
+
+	res = KSI_TLV_getStringValue(nested, &str, 1);
+	CuAssert(tc, "Unable to read string from nested TLV", res == KSI_OK && str != NULL);
+	CuAssert(tc, "Unexpected string from nested TLV.", !strcmp("THIS IS A TLV CONTENT", str));
+
+	res = KSI_TLV_getNextNestedTLV(tlv, &nested);
+	CuAssert(tc, "Unable to read nested TLV", res == KSI_OK && nested != NULL);
+	res = KSI_TLV_getUInt64Value(nested, &uint);
+	CuAssert(tc, "Unable to read uint from nested TLV", res == KSI_OK);
+	CuAssertIntEquals_Msg(tc, "Unexpected uint value from nested TLV", 0xcafffffffffe, uint);
+
+	res = KSI_TLV_getNextNestedTLV(tlv, &nested);
+	CuAssert(tc, "Reading nested TLV failed after reading last TLV.", res == KSI_OK);
+	CuAssert(tc, "Nested element should have been NULL", nested == NULL);
+
+
+	KSI_free(str);
+	KSI_TLV_free(tlv);
+	KSI_RDR_close(rdr);
+	KSI_CTX_free(ctx);
+
+}
 
 CuSuite* KSI_TLV_GetSuite(void)
 {
@@ -308,6 +353,7 @@ CuSuite* KSI_TLV_GetSuite(void)
 	SUITE_ADD_TEST(suite, TestTlvGetUint64Overflow);
 	SUITE_ADD_TEST(suite, TestTlvGetStringValue);
 	SUITE_ADD_TEST(suite, TestTlvGetStringValueCopy);
+	SUITE_ADD_TEST(suite, TestTlvGetNextNested);
 
 
 	return suite;

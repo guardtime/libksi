@@ -60,7 +60,14 @@ static int encodeAsRaw(KSI_TLV *tlv) {
 
 	KSI_BEGIN(tlv->ctx, &err);
 
+	if (tlv->payloadType == KSI_TLV_PAYLOAD_RAW) {
+		KSI_SUCCESS(&err);
+		goto cleanup;
+	}
+
 	KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Unimplemented method.");
+
+cleanup:
 
 	return KSI_RETURN(&err);
 }
@@ -122,14 +129,11 @@ static int encodeAsUInt64(KSI_TLV *tlv) {
 		goto cleanup;
 	}
 
-	/* Use only raw format. */
-	if (tlv->payloadType != KSI_TLV_PAYLOAD_RAW) {
-		/* Convert the TLV into raw form */
-		res = encodeAsRaw(tlv);
-		if (res != KSI_OK) {
-			KSI_FAIL(&err, res, NULL);
-			goto cleanup;
-		}
+	/* Convert the TLV into raw form */
+	res = encodeAsRaw(tlv);
+	if (res != KSI_OK) {
+		KSI_FAIL(&err, res, NULL);
+		goto cleanup;
 	}
 
 	/* Verify size of data - fail if overflow. */
@@ -152,6 +156,84 @@ static int encodeAsUInt64(KSI_TLV *tlv) {
 	KSI_SUCCESS(&err);
 
 cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+int appendLastSibling(KSI_TLV **first, KSI_TLV *tlv) {
+	int res;
+	KSI_ERR err;
+
+	KSI_BEGIN(tlv->ctx, &err);
+
+	if (*first == NULL) {
+		*first = tlv;
+	} else {
+		(*first)->last->next = tlv;
+	}
+
+	(*first)->last = tlv;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+int encodeAsNestedTlvs(KSI_TLV *tlv) {
+	int res;
+	KSI_ERR err;
+	KSI_RDR *rdr = NULL;
+	KSI_TLV *tmp = NULL;
+	KSI_TLV *tlvList = NULL;
+
+	KSI_BEGIN(tlv->ctx, &err);
+
+	if (tlv->payloadType == KSI_TLV_PAYLOAD_TLV) {
+		KSI_SUCCESS(&err);
+		goto cleanup;
+	}
+
+	res = encodeAsRaw(tlv);
+	if (res != KSI_OK) {
+		KSI_FAIL(&err, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_RDR_fromMem(tlv->ctx, tlv->payload.rawVal.ptr, tlv->payload.rawVal.length, 0, &rdr);
+	if (res != KSI_OK) {
+		KSI_FAIL(&err, res, NULL);
+		goto cleanup;
+	}
+	/* Try parsing all of the nested TLV's. */
+	while (!KSI_RDR_isEOF(rdr)) {
+		res = KSI_TLV_fromReader(rdr, &tmp);
+		if (res != KSI_OK) {
+			KSI_FAIL(&err, res, NULL);
+			goto cleanup;
+		}
+
+		res = appendLastSibling(&tlvList, tmp);
+		if (res != KSI_OK) {
+			KSI_FAIL(&err, res, NULL);
+			goto cleanup;
+		}
+
+		tmp = NULL;
+	}
+
+	tlv->payloadType = KSI_TLV_PAYLOAD_TLV;
+	tlv->payload.tlv.current = tlv->payload.tlv.list = tlvList;
+	tlvList = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_RDR_close(rdr);
+	KSI_TLV_free(tmp);
+	KSI_TLV_free(tlvList);
 
 	return KSI_RETURN(&err);
 }
@@ -199,6 +281,8 @@ int KSI_TLV_new(KSI_CTX *ctx, char *data, size_t data_len, KSI_TLV **tlv) {
 	t->ctx = ctx;
 	/* Initialize the parameters with default values. */
 	t->next = NULL;
+	/* Last will point to itself. */
+	t->last = t;
 	t->isLenient = 0;
 	t->isForwardable = 0;
 
@@ -265,11 +349,12 @@ int KSI_TLV_fromReader(KSI_RDR *rdr, KSI_TLV **tlv) {
 	int hdr_len = 0;
 	int readCount;
 	KSI_TLV *t = NULL;
-	int length = 0;
+	size_t length = 0;
 	int lenient = 0;
 	int forward = 0;
 	unsigned int type;
 	char buffer[0xffff];
+	char errstr[1024];
 
 
 	KSI_BEGIN(rdr->ctx, &err);
@@ -320,7 +405,8 @@ int KSI_TLV_fromReader(KSI_RDR *rdr, KSI_TLV **tlv) {
 	KSI_RDR_read(rdr, buffer, length, &readCount);
 
 	if (readCount != length) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+		snprintf(errstr, sizeof(errstr), "Expected to read %d bytes, but got %d", length, readCount);
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, errstr);
 		goto cleanup;
 	}
 
@@ -455,6 +541,34 @@ int KSI_TLV_getStringValue(KSI_TLV *tlv, char **buf, int copy) {
 cleanup:
 
 	KSI_free(value);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_TLV_getNextNestedTLV(KSI_TLV *tlv, const KSI_TLV **nested) {
+	int res;
+	KSI_ERR err;
+	KSI_TLV *current = NULL;
+
+	KSI_BEGIN(tlv->ctx, &err);
+	res = encodeAsNestedTlvs(tlv);
+	if (res != KSI_OK) {
+		KSI_FAIL(&err, res, NULL);
+		goto cleanup;
+	}
+
+	current = tlv->payload.tlv.current;
+
+	/* Adwance the pointer. */
+	if (current != NULL) {
+		tlv->payload.tlv.current = current->next;
+	}
+
+	*nested = current;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
 
 	return KSI_RETURN(&err);
 }
