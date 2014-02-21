@@ -77,28 +77,31 @@ static void addSuite(CuSuite *suite, CuSuite* (*fn)(void)) {
 	CuSuiteDelete(tmp);
 }
 
-
-static int RunAllTests() {
-	int failCount;
-	FILE *f = NULL;
-
-	CuString *output = CuStringNew();
-	CuString *xmlOutput = CuStringNew();
-
-	CuSuite* suite = CuSuiteNew();
+static CuSuite* initSuite(void) {
+	CuSuite *suite = CuSuiteNew();
 
 	addSuite(suite, KSI_CTX_GetSuite);
 	addSuite(suite, KSI_LOG_GetSuite);
 	addSuite(suite, KSI_RDR_GetSuite);
 	addSuite(suite, KSI_TLV_GetSuite);
+	addSuite(suite, KSI_TLV_Sample_GetSuite);
 
-	CuSuiteRun(suite);
+	return suite;
+}
 
-	CuSuiteSummary(suite, output);
+static void printStats(CuSuite *suite) {
+	CuString *output = CuStringNew();
 	CuSuiteDetails(suite, output);
 
-	/* Output humanreadable test result. */
+	printf("\n\n==== TEST RESULTS ====\n\n");
 	printf("%s\n", output->buffer);
+
+	CuStringDelete(output);
+}
+
+static void writeXmlReport(CuSuite *suite) {
+	CuString *xmlOutput = CuStringNew();
+	FILE *f = NULL;
 
 	createSuiteXMLSummary(suite, xmlOutput);
 
@@ -109,13 +112,25 @@ static int RunAllTests() {
 		fprintf(f, "%s\n", xmlOutput->buffer);
 	}
 
-	failCount = suite->failCount;
-
 	/* Cleanup. */
 	if (f) fclose(f);
 
 	CuStringDelete(xmlOutput);
-	CuStringDelete(output);
+}
+
+static int RunAllTests() {
+	int failCount;
+
+
+	CuSuite* suite = initSuite();
+	CuSuiteRun(suite);
+
+	printStats(suite);
+
+	writeXmlReport(suite);
+
+	failCount = suite->failCount;
+
 	CuSuiteDelete(suite);
 
 	return failCount;

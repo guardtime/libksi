@@ -197,7 +197,6 @@ static void TestTlvGetUint64(CuTest* tc) {
 	CuAssert(tc, "Failed to create TLV from reader.", res == KSI_OK && tlv != NULL);
 
 	res = KSI_TLV_getUInt64Value(tlv, &value);
-	KSI_ERR_statusDump(ctx, stdout);
 	CuAssert(tc, "Parsing uint64 failed.", res == KSI_OK);
 
 	CuAssert(tc, "Parsed value is not correct.", value == 0xcafebabecafeface);

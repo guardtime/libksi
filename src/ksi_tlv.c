@@ -137,8 +137,8 @@ static int encodeAsUInt64(KSI_TLV *tlv) {
 	}
 
 	/* Verify size of data - fail if overflow. */
-	if (tlv->payload.rawVal.length > sizeof(uint64_t)) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "TLV size too long for integer value.");
+	if (tlv->payload.rawVal.length < 1 || tlv->payload.rawVal.length > sizeof(uint64_t)) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, "TLV size not in range for integer value.");
 		goto cleanup;
 	}
 

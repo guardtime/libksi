@@ -16,5 +16,5 @@ AC_ARG_WITH(unit-test-xml,
 
 AC_DEFINE_UNQUOTED(UNIT_TEST_OUTPUT_XML, "$with_unit_test_xml", [Location of the unit test xml results.])
 
-AC_CONFIG_FILES(GNUmakefile src/GNUmakefile test/GNUmakefile)
+AC_CONFIG_FILES(GNUmakefile src/GNUmakefile test/GNUmakefile test/util/GNUmakefile)
 AC_OUTPUT
