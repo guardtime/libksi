@@ -55,6 +55,144 @@ cleanup:
 /**
  *
  */
+static int appendBlob(KSI_TLV *tlv, char *data, size_t data_length) {
+	int size = -1;
+
+	if (tlv->payloadType != KSI_TLV_PAYLOAD_RAW || tlv->buffer == NULL) {
+		goto cleanup;
+	}
+
+	if (tlv->payload.rawVal.length + data_length > tlv->buffer_size) {
+		goto cleanup;
+	}
+
+	memcpy(tlv->payload.rawVal.ptr + tlv->payload.rawVal.length , data, data_length);
+
+	size = tlv->payload.rawVal.length += data_length;
+
+cleanup:
+
+	return size;
+}
+
+
+/**
+ *
+ */
+static int readTlv(KSI_RDR *rdr, KSI_TLV **tlv, int copy) {
+	int res;
+	KSI_ERR err;
+	unsigned char hdr[4];
+	int hdr_len = 0;
+	int readCount;
+	KSI_TLV *t = NULL;
+	size_t length = 0;
+	int lenient = 0;
+	int forward = 0;
+	unsigned int type;
+	unsigned char buffer[0xffff];
+	unsigned char *ptr = NULL;
+	char errstr[1024];
+
+
+	KSI_BEGIN(rdr->ctx, &err);
+
+	/* Read first two bytes */
+	res = KSI_RDR_readIntoBuffer(rdr, hdr, 2, &readCount);
+	if (res != KSI_OK) {
+		KSI_FAIL(&err, res, NULL);
+		goto cleanup;
+	}
+
+	if (readCount == 0 && KSI_RDR_isEOF(rdr)) {
+		/* Reached end of stream. */
+		KSI_SUCCESS(&err);
+		goto cleanup;
+	}
+	if (readCount != 2) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+		goto cleanup;
+	}
+
+	lenient = *hdr & KSI_TLV_MASK_LENIENT;
+	forward = *hdr & KSI_TLV_MASK_FORWARD;
+
+	/* Is it a TLV8 or TLV16 */
+	if (*hdr & KSI_TLV_MASK_TLV16) {
+		/* TLV16 */
+		/* Read additional 2 bytes of header */
+		res = KSI_RDR_readIntoBuffer(rdr, hdr + 2, 2, &readCount);
+		if (res != KSI_OK) {
+			KSI_FAIL(&err, res, NULL);
+			goto cleanup;
+		}
+		if (readCount != 2) {
+			KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+			goto cleanup;
+		}
+
+		type = ((*hdr & KSI_TLV_MASK_TLV8_TYPE) << 8 ) | *(hdr + 1);
+		length = (*(hdr + 2) << 8) | *(hdr + 3);
+	} else {
+		/* TLV8 */
+		type = *hdr & KSI_TLV_MASK_TLV8_TYPE;
+		length = *(hdr + 1);
+	}
+
+	/* Get the payload. */
+	if (rdr->ioType == KSI_IO_MEM && !copy) {
+		/* At this point we will reuse the allocated memory. */
+		res = KSI_RDR_readMemPtr(rdr, &ptr, length, &readCount);
+	} else {
+		/* Read and make a copy of the payload. */
+		res = KSI_RDR_readIntoBuffer(rdr, buffer, length, &readCount);
+	}
+
+	if (res != KSI_OK) {
+		KSI_FAIL(&err, res, NULL);
+		goto cleanup;
+	}
+
+	if (readCount != length) {
+		snprintf(errstr, sizeof(errstr), "Expected to read %d bytes, but got %d", length, readCount);
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, errstr);
+		goto cleanup;
+	}
+
+	/* Create new TLV object. */
+	res = KSI_TLV_new(rdr->ctx, ptr, readCount, &t);
+	if (res != KSI_OK) {
+		KSI_FAIL(&err, res, NULL);
+		goto cleanup;
+	}
+
+	t->type = type;
+
+	if (ptr == NULL) {
+		/* Append raw data. */
+		if (appendBlob(t, buffer, length) != length) {
+			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Unable to complete TLV object.");
+			goto cleanup;
+		}
+	}
+
+	*tlv = t;
+	t = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(ptr);
+	KSI_TLV_free(t);
+
+	return KSI_RETURN(&err);
+}
+
+
+/**
+ *
+ */
 static int encodeAsRaw(KSI_TLV *tlv) {
 	KSI_ERR err;
 
@@ -207,12 +345,15 @@ int encodeAsNestedTlvs(KSI_TLV *tlv) {
 		goto cleanup;
 	}
 	/* Try parsing all of the nested TLV's. */
-	while (!KSI_RDR_isEOF(rdr)) {
-		res = KSI_TLV_fromReader(rdr, &tmp);
+	while (1) {
+		res = readTlv(rdr, &tmp, 0);
 		if (res != KSI_OK) {
 			KSI_FAIL(&err, res, NULL);
 			goto cleanup;
 		}
+
+		/* Check if end of reader. */
+		if (tmp == NULL) break;
 
 		res = appendLastSibling(&tlvList, tmp);
 		if (res != KSI_OK) {
@@ -236,29 +377,6 @@ cleanup:
 	KSI_TLV_free(tlvList);
 
 	return KSI_RETURN(&err);
-}
-
-/**
- *
- */
-static int appendBlob(KSI_TLV *tlv, char *data, size_t data_length) {
-	int size = -1;
-
-	if (tlv->payloadType != KSI_TLV_PAYLOAD_RAW || tlv->buffer == NULL) {
-		goto cleanup;
-	}
-
-	if (tlv->payload.rawVal.length + data_length > tlv->buffer_size) {
-		goto cleanup;
-	}
-
-	memcpy(tlv->payload.rawVal.ptr + tlv->payload.rawVal.length , data, data_length);
-
-	size = tlv->payload.rawVal.length += data_length;
-
-cleanup:
-
-	return size;
 }
 
 /**
@@ -339,103 +457,10 @@ void KSI_TLV_free(KSI_TLV *tlv) {
 	}
 }
 
-/**
- *
- */
 int KSI_TLV_fromReader(KSI_RDR *rdr, KSI_TLV **tlv) {
-	int res;
-	KSI_ERR err;
-	unsigned char hdr[4];
-	int hdr_len = 0;
-	int readCount;
-	KSI_TLV *t = NULL;
-	size_t length = 0;
-	int lenient = 0;
-	int forward = 0;
-	unsigned int type;
-	char buffer[0xffff];
-	char errstr[1024];
-
-
-	KSI_BEGIN(rdr->ctx, &err);
-
-	/* Read first two bytes */
-	res = KSI_RDR_read(rdr, hdr, 2, &readCount);
-	if (res != KSI_OK) {
-		KSI_FAIL(&err, res, NULL);
-		goto cleanup;
-	}
-
-	if (readCount == 0 && KSI_RDR_isEOF(rdr)) {
-		/* Reached end of stream. */
-		KSI_SUCCESS(&err);
-		goto cleanup;
-	}
-	if (readCount != 2) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
-		goto cleanup;
-	}
-
-	lenient = *hdr & KSI_TLV_MASK_LENIENT;
-	forward = *hdr & KSI_TLV_MASK_FORWARD;
-
-	/* Is it a TLV8 or TLV16 */
-	if (*hdr & KSI_TLV_MASK_TLV16) {
-		/* TLV16 */
-		/* Read additional 2 bytes of header */
-		res = KSI_RDR_read(rdr, hdr + 2, 2, &readCount);
-		if (res != KSI_OK) {
-			KSI_FAIL(&err, res, NULL);
-			goto cleanup;
-		}
-		if (readCount != 2) {
-			KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
-			goto cleanup;
-		}
-
-		type = ((*hdr & KSI_TLV_MASK_TLV8_TYPE) << 8 ) | *(hdr + 1);
-		length = (*(hdr + 2) << 8) | *(hdr + 3);
-	} else {
-		/* TLV8 */
-		type = *hdr & KSI_TLV_MASK_TLV8_TYPE;
-		length = *(hdr + 1);
-	}
-
-	/* Read payload. */
-	KSI_RDR_read(rdr, buffer, length, &readCount);
-
-	if (readCount != length) {
-		snprintf(errstr, sizeof(errstr), "Expected to read %d bytes, but got %d", length, readCount);
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, errstr);
-		goto cleanup;
-	}
-
-	/* Create new TLV object. */
-	res = KSI_TLV_new(rdr->ctx, NULL, 0, &t);
-	if (res != KSI_OK) {
-		KSI_FAIL(&err, res, NULL);
-		goto cleanup;
-	}
-
-	t->type = type;
-
-	/* Append raw data. */
-	if (appendBlob(t, buffer, length) != length) {
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Unable to complete TLV object.");
-		goto cleanup;
-	}
-
-	*tlv = t;
-	t = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_TLV_free(t);
-
-	return KSI_RETURN(&err);
+	return readTlv(rdr, tlv, 1);
 }
+
 
 /**
  *
@@ -551,6 +576,7 @@ int KSI_TLV_getNextNestedTLV(KSI_TLV *tlv, const KSI_TLV **nested) {
 	KSI_TLV *current = NULL;
 
 	KSI_BEGIN(tlv->ctx, &err);
+
 	res = encodeAsNestedTlvs(tlv);
 	if (res != KSI_OK) {
 		KSI_FAIL(&err, res, NULL);

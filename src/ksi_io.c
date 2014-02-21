@@ -148,7 +148,7 @@ cleanup:
 }
 
 
-int KSI_RDR_read(KSI_RDR *rdr, char *buffer, const size_t bufferLength, int *readCount)  {
+int KSI_RDR_readIntoBuffer(KSI_RDR *rdr, char *buffer, const size_t bufferLength, int *readCount)  {
 	KSI_ERR err;
 	int res;
 
@@ -178,6 +178,54 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+int KSI_RDR_readMemPtr(KSI_RDR *rdr, unsigned char **ptr, const size_t len, int *readCount) {
+	KSI_ERR err;
+	int res;
+	unsigned char *p = NULL;
+	int count = 0;
+
+	KSI_BEGIN(rdr->ctx, &err);
+
+	switch (rdr->ioType) {
+		case KSI_IO_FILE:
+			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "KSI_RDR: Can't reuse memody while reading from file.");
+			goto cleanup;
+			break;
+		case KSI_IO_MEM:
+			if (rdr->offset < rdr->data.mem.buffer_length) {
+				p = rdr->data.mem.buffer + rdr->offset;
+				count = len;
+				if (rdr->offset + count > rdr->data.mem.buffer_length) {
+					count = rdr->data.mem.buffer_length - rdr->offset;
+					rdr->eof = 1;
+				}
+			} else {
+				rdr->eof = 1;
+			}
+
+			rdr->offset += count;
+
+			*readCount = count;
+			*ptr = p;
+
+			break;
+		default:
+			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Unsupported KSI IO TYPE");
+			goto cleanup;
+	}
+
+	if (res != KSI_OK) {
+		KSI_FAIL(&err, res, NULL);
+		goto cleanup;
+	}
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
 
 void KSI_RDR_close(KSI_RDR *rdr)  {
 	KSI_ERR err;
@@ -187,8 +235,6 @@ void KSI_RDR_close(KSI_RDR *rdr)  {
 
 	ctx = rdr->ctx;
 	rdr->ctx = NULL;
-
-	/* NB! Do not call #KSI_BEGIN. */
 
 	switch (rdr->ioType) {
 		case KSI_IO_FILE:

@@ -250,6 +250,7 @@ static void TestTlvGetStringValue(CuTest* tc) {
 	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw) - 1, 1, &rdr);
 	CuAssert(tc, "Unable to create reader.", res == KSI_OK && rdr != NULL);
 	res = KSI_TLV_fromReader(rdr, &tlv);
+	KSI_ERR_statusDump(ctx, stdout);
 	CuAssert(tc, "Unable to create TLV from reader.", res == KSI_OK && tlv != NULL);
 
 	res = KSI_TLV_getStringValue(tlv, &str, 0);
@@ -277,8 +278,11 @@ static void TestTlvGetStringValueCopy(CuTest* tc) {
 
 	KSI_CTX_new(&ctx);
 
-	KSI_RDR_fromMem(ctx, raw, sizeof(raw) - 1, 1, &rdr);
-	KSI_TLV_fromReader(rdr, &tlv);
+	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw) - 1, 1, &rdr);
+	CuAssert(tc, "Unable to create reader.", res == KSI_OK && rdr != NULL);
+
+	res = KSI_TLV_fromReader(rdr, &tlv);
+	CuAssert(tc, "Unable to create TLV from reader.", res == KSI_OK && tlv != NULL);
 
 	res = KSI_TLV_getStringValue(tlv, &str, 1);
 	CuAssert(tc, "Failed to get string value from tlv.", res == KSI_OK && str != NULL);
@@ -338,6 +342,51 @@ static void TestTlvGetNextNested(CuTest* tc) {
 
 }
 
+static void TestTlvGetNextNestedSharedMemory(CuTest* tc) {
+	int res;
+	/* TLV16 type = 0x2aa, length = 21 */
+	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
+	char *str = NULL;
+
+	KSI_CTX *ctx = NULL;
+	KSI_RDR *rdr = NULL;
+	KSI_TLV *tlv = NULL;
+	KSI_TLV *nested = NULL;
+	uint64_t uint;
+
+	KSI_CTX_new(&ctx);
+
+	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw) - 1, 1, &rdr);
+	CuAssert(tc, "Unable to create reader.", res == KSI_OK && rdr != NULL);
+
+	res = KSI_TLV_fromReader(rdr, &tlv);
+	CuAssert(tc, "Unable to read TLV.", res == KSI_OK && tlv != NULL);
+
+	res = KSI_TLV_getNextNestedTLV(tlv, &nested);
+	CuAssert(tc, "Unable to read nested TLV", res == KSI_OK && nested != NULL);
+	CuAssert(tc, "Nested TLV buffer is not NULL", nested->buffer == NULL);
+	CuAssert(tc, "Nested TLV memory area out of parent buffer.",
+			nested->payload.rawVal.ptr > tlv->buffer && nested->payload.rawVal.ptr <= tlv->buffer + tlv->buffer_size );
+
+	res = KSI_TLV_getNextNestedTLV(tlv, &nested);
+	CuAssert(tc, "Unable to read nested TLV", res == KSI_OK && nested != NULL);
+	CuAssert(tc, "Nested TLV buffer is not NULL", nested->buffer == NULL);
+	CuAssert(tc, "Nested TLV memory area out of parent buffer.",
+			nested->payload.rawVal.ptr > tlv->buffer && nested->payload.rawVal.ptr <= tlv->buffer + tlv->buffer_size );
+
+	res = KSI_TLV_getNextNestedTLV(tlv, &nested);
+	CuAssert(tc, "Reading nested TLV failed after reading last TLV.", res == KSI_OK);
+	CuAssert(tc, "Nested element should have been NULL", nested == NULL);
+
+
+	KSI_free(str);
+	KSI_TLV_free(tlv);
+	KSI_RDR_close(rdr);
+	KSI_CTX_free(ctx);
+
+}
+
+
 CuSuite* KSI_TLV_GetSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
@@ -353,6 +402,7 @@ CuSuite* KSI_TLV_GetSuite(void)
 	SUITE_ADD_TEST(suite, TestTlvGetStringValue);
 	SUITE_ADD_TEST(suite, TestTlvGetStringValueCopy);
 	SUITE_ADD_TEST(suite, TestTlvGetNextNested);
+	SUITE_ADD_TEST(suite, TestTlvGetNextNestedSharedMemory);
 
 
 	return suite;

@@ -157,6 +157,7 @@ static void TestLogLevelRestriction(CuTest* tc) {
 
 	/* Cleanup */
 	CuAssert(tc, "Unable to remove temporary file", remove(tmpFile) == 0);
+	fclose(f);
 }
 
 static void TestDoNotChangeFault(CuTest* tc) {

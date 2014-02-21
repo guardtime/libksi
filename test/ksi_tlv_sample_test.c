@@ -59,7 +59,7 @@ static int tlvFromFile(CuTest* tc, char *fileName, KSI_TLV **tlv) {
 	res = KSI_RDR_fromFile(ctx, fileName, "rb", &rdr);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_TLV_fromReader(rdr, tlv);
+	res = KSI_TLV_fromReader(rdr, tlv, 1);
 	if (res != KSI_OK) goto cleanup;
 
 cleanup:
