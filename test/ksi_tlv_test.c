@@ -542,6 +542,62 @@ static void TestTlvSerializeNested(CuTest* tc) {
 
 }
 
+static void TestTlvRequireCast(CuTest* tc) {
+	int res;
+	KSI_CTX *ctx = NULL;
+	KSI_TLV *tlv = NULL;
+	KSI_TLV *nested = NULL;
+
+	unsigned char *ptr = NULL;
+	int len;
+	uint64_t uintval;
+
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create context", res == KSI_OK && ctx != NULL);
+
+	unsigned char raw[] = "\x07\x06QWERTY";
+	res = KSI_TLV_fromBlob(ctx, raw, sizeof(raw) - 1, &tlv);
+	CuAssert(tc, "Unable to create TLV", res == KSI_OK && tlv != NULL);
+
+	/* Should not fail */
+	res = KSI_TLV_getRawValue(tlv, &ptr, &len, 0);
+	CuAssert(tc, "Failed to get raw value without a cast", res == KSI_OK && ptr != NULL);
+	ptr = NULL;
+
+	/* Should fail. */
+	res = KSI_TLV_getStringValue(tlv, &ptr, 0);
+	CuAssert(tc, "Got string value without a cast", res != KSI_OK);
+	ptr = NULL;
+
+	/* Should fail. */
+	res = KSI_TLV_getUInt64Value(tlv, &uintval);
+	CuAssert(tc, "Got uint value without a cast", res != KSI_OK);
+	ptr = NULL;
+
+	/* Should fail. */
+	res = KSI_TLV_getNextNestedTLV(tlv, &nested);
+	CuAssert(tc, "Got nested TLV without a cast", res != KSI_OK);
+	ptr = NULL;
+
+
+	/* Cast as string */
+	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_STR);
+	CuAssert(tc, "Failed to cast TLV to nested string.", res == KSI_OK);
+
+	/* After cast, this should not fail */
+	res = KSI_TLV_getStringValue(tlv, &ptr, 0);
+	CuAssert(tc, "Failed to get string value after a cast to string", res == KSI_OK);
+	ptr = NULL;
+
+	/* Should fail */
+	res = KSI_TLV_getRawValue(tlv, &ptr, &len, 0);
+	CuAssert(tc, "Got raw value after a cast to string", res != KSI_OK);
+	ptr = NULL;
+
+	KSI_TLV_free(tlv);
+	KSI_nofree(nested);
+	KSI_CTX_free(ctx);
+}
 
 CuSuite* KSI_TLV_GetSuite(void)
 {
@@ -562,6 +618,7 @@ CuSuite* KSI_TLV_GetSuite(void)
 	SUITE_ADD_TEST(suite, TestTlvSerializeString);
 	SUITE_ADD_TEST(suite, TestTlvSerializeUint);
 	SUITE_ADD_TEST(suite, TestTlvSerializeNested);
+	SUITE_ADD_TEST(suite, TestTlvRequireCast);
 
 	return suite;
 }
