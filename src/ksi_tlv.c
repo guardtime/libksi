@@ -194,6 +194,8 @@ cleanup:
  */
 static int encodeAsRaw(KSI_TLV *tlv) {
 	KSI_ERR err;
+	int res;
+	int payloadLength;
 
 	KSI_BEGIN(tlv->ctx, &err);
 
@@ -202,7 +204,21 @@ static int encodeAsRaw(KSI_TLV *tlv) {
 		goto cleanup;
 	}
 
-	KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Unimplemented method.");
+	if (tlv->buffer == NULL) {
+		res = createOwnBuffer(tlv, 0);
+		if (res != KSI_OK) {
+			KSI_FAIL(&err, res, NULL);
+			goto cleanup;
+		}
+	}
+
+	payloadLength = tlv->buffer_size;
+	KSI_TLV_serialize(tlv, tlv->buffer, &payloadLength);
+
+	tlv->payloadType = KSI_TLV_PAYLOAD_RAW;
+	tlv->payload.rawVal.length = payloadLength;
+
+	KSI_SUCCESS(&err);
 
 cleanup:
 
@@ -224,11 +240,8 @@ static int encodeAsString(KSI_TLV *tlv) {
 	}
 
 	if (tlv->payloadType != KSI_TLV_PAYLOAD_RAW) {
-		res = encodeAsRaw(tlv);
-		if (res != KSI_OK) {
-			KSI_FAIL(&err, res, NULL);
-			goto cleanup;
-		}
+		KSI_FAIL(&err, KSI_TLV_PAYLOAD_TYPE_MISMATCH, NULL);
+		goto cleanup;
 	}
 
 	if (tlv->buffer == NULL) {
@@ -269,10 +282,8 @@ static int encodeAsUInt64(KSI_TLV *tlv) {
 		goto cleanup;
 	}
 
-	/* Convert the TLV into raw form */
-	res = encodeAsRaw(tlv);
-	if (res != KSI_OK) {
-		KSI_FAIL(&err, res, NULL);
+	if (tlv->payloadType != KSI_TLV_PAYLOAD_RAW) {
+		KSI_FAIL(&err, KSI_TLV_PAYLOAD_TYPE_MISMATCH, NULL);
 		goto cleanup;
 	}
 
@@ -332,9 +343,8 @@ int encodeAsNestedTlvs(KSI_TLV *tlv) {
 		goto cleanup;
 	}
 
-	res = encodeAsRaw(tlv);
-	if (res != KSI_OK) {
-		KSI_FAIL(&err, res, NULL);
+	if (tlv->payloadType != KSI_TLV_PAYLOAD_RAW) {
+		KSI_FAIL(&err, KSI_TLV_PAYLOAD_TYPE_MISMATCH, NULL);
 		goto cleanup;
 	}
 
@@ -473,12 +483,10 @@ int KSI_TLV_getRawValue(KSI_TLV *tlv, unsigned char **buf, int *len, int copy) {
 
 	KSI_BEGIN(tlv->ctx, &err);
 
+	/* Check payload type. */
 	if (tlv->payloadType != KSI_TLV_PAYLOAD_RAW) {
-		res = encodeAsRaw(tlv);
-		if (res != KSI_OK) {
-			KSI_FAIL(&err, res, NULL);
-			goto cleanup;
-		}
+		KSI_FAIL(&err, KSI_TLV_PAYLOAD_TYPE_MISMATCH, NULL);
+		goto cleanup;
 	}
 
 	if (copy) {
@@ -517,9 +525,9 @@ int KSI_TLV_getUInt64Value(KSI_TLV *tlv, uint64_t *val) {
 
 	KSI_BEGIN(tlv->ctx, &err);
 
-	res = encodeAsUInt64(tlv);
-	if (res != KSI_OK) {
-		KSI_FAIL(&err, res, NULL);
+	/* Check payload type. */
+	if (tlv->payloadType != KSI_TLV_PAYLOAD_INT) {
+		KSI_FAIL(&err, KSI_TLV_PAYLOAD_TYPE_MISMATCH, NULL);
 		goto cleanup;
 	}
 
@@ -542,9 +550,9 @@ int KSI_TLV_getStringValue(KSI_TLV *tlv, char **buf, int copy) {
 
 	KSI_BEGIN(tlv->ctx, &err);
 
-	res = encodeAsString(tlv);
-	if (res != KSI_OK) {
-		KSI_FAIL(&err, res, NULL);
+	/* Check payload type. */
+	if (tlv->payloadType != KSI_TLV_PAYLOAD_STR) {
+		KSI_FAIL(&err, KSI_TLV_PAYLOAD_TYPE_MISMATCH, NULL);
 		goto cleanup;
 	}
 
@@ -572,16 +580,19 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_TLV_getNextNestedTLV(KSI_TLV *tlv, const KSI_TLV **nested) {
+/**
+ *
+ */
+int KSI_TLV_getNextNestedTLV(KSI_TLV *tlv, KSI_TLV **nested) {
 	int res;
 	KSI_ERR err;
 	KSI_TLV *current = NULL;
 
 	KSI_BEGIN(tlv->ctx, &err);
 
-	res = encodeAsNestedTlvs(tlv);
-	if (res != KSI_OK) {
-		KSI_FAIL(&err, res, NULL);
+	/* Check payload type. */
+	if (tlv->payloadType != KSI_TLV_PAYLOAD_TLV) {
+		KSI_FAIL(&err, KSI_TLV_PAYLOAD_TYPE_MISMATCH, NULL);
 		goto cleanup;
 	}
 
@@ -601,6 +612,9 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+/**
+ *
+ */
 int KSI_TLV_fromBlob(KSI_CTX *ctx, unsigned char *data, size_t data_length, KSI_TLV **tlv) {
 	KSI_ERR err;
 	KSI_RDR *rdr = NULL;
@@ -631,6 +645,51 @@ cleanup:
 
 	KSI_RDR_close(rdr);
 	KSI_TLV_free(t);
+
+	return KSI_RETURN(&err);
+}
+
+/**
+ *
+ */
+int KSI_TLV_cast(KSI_TLV *tlv, enum KSI_TLV_PayloadType_en payloadType) {
+	KSI_ERR err;
+
+	int res;
+
+	KSI_BEGIN(tlv->ctx, &err);
+
+	if (tlv->payloadType == payloadType) {
+		KSI_SUCCESS(&err);
+		goto cleanup;
+	}
+
+	switch(payloadType) {
+		case KSI_TLV_PAYLOAD_RAW:
+			res = encodeAsRaw(tlv);
+			break;
+		case KSI_TLV_PAYLOAD_STR:
+			res = encodeAsString(tlv);
+			break;
+		case KSI_TLV_PAYLOAD_INT:
+			res = encodeAsUInt64(tlv);
+			break;
+		case KSI_TLV_PAYLOAD_TLV:
+			res = encodeAsNestedTlvs(tlv);
+			break;
+		default:
+			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Unknown TLV payload encoding.");
+			goto cleanup;
+	}
+
+	if (res != KSI_OK) {
+		KSI_FAIL(&err, res, NULL);
+		goto cleanup;
+	}
+
+	KSI_SUCCESS(&err);
+
+cleanup:
 
 	return KSI_RETURN(&err);
 }

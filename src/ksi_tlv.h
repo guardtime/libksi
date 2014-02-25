@@ -13,13 +13,6 @@ extern "C" {
 
 #define KSI_TLV_MASK_TLV8_TYPE 0x1f
 
-enum KSI_TLV_PayloadType_en {
-	KSI_TLV_PAYLOAD_RAW,
-	KSI_TLV_PAYLOAD_STR,
-	KSI_TLV_PAYLOAD_INT,
-	KSI_TLV_PAYLOAD_TLV
-};
-
 struct KSI_TLV_st {
 	/* Context. */
 	KSI_CTX *ctx;

@@ -81,12 +81,19 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 
 	switch (tlv->type) {
 		case 0x01:
+			/* Cast as numeric TLV */
+			res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_INT);
+			if (res != KSI_OK) goto cleanup;
+
 			/* Parse number */
 			lprintf("%*sPayload type: UINT64\n", indent*4, "");
 			res = KSI_TLV_getUInt64Value(tlv, &uint);
 			if (res != KSI_OK) goto cleanup;
 			break;
 		case 0x02:
+			/* Cast as string TLV */
+			res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_STR);
+			if (res != KSI_OK) goto cleanup;
 			/* Parse string */
 			lprintf("%*sPayload type: STR\n", indent*4, "");
 			res = KSI_TLV_getStringValue(tlv, &buf, 0);
@@ -94,6 +101,10 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 			break;
 		case 0x03:
 		case 0x1003:
+			/* Cast as nested TLV */
+			res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_TLV);
+			if (res != KSI_OK) goto cleanup;
+
 			/* Parse nested */
 			lprintf("%*sPayload type: NESTED\n", indent*4, "");
 			while (1) {

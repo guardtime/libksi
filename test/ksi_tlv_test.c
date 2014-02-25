@@ -197,6 +197,10 @@ static void TestTlvGetUint64(CuTest* tc) {
 	res = KSI_TLV_fromReader(rdr, &tlv);
 	CuAssert(tc, "Failed to create TLV from reader.", res == KSI_OK && tlv != NULL);
 
+	/* Cast payload type */
+	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_INT);
+	CuAssert(tc, "TLV cast failed", res == KSI_OK);
+
 	res = KSI_TLV_getUInt64Value(tlv, &value);
 	CuAssert(tc, "Parsing uint64 failed.", res == KSI_OK);
 
@@ -253,6 +257,11 @@ static void TestTlvGetStringValue(CuTest* tc) {
 	res = KSI_TLV_fromReader(rdr, &tlv);
 	CuAssert(tc, "Unable to create TLV from reader.", res == KSI_OK && tlv != NULL);
 
+	/* Cast payload type */
+	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_STR);
+	CuAssert(tc, "TLV cast failed", res == KSI_OK);
+
+
 	res = KSI_TLV_getStringValue(tlv, &str, 0);
 	CuAssert(tc, "Failed to get string value from tlv.", res == KSI_OK && str != NULL);
 	CuAssert(tc, "TLV payload type not string.", tlv->payloadType == KSI_TLV_PAYLOAD_STR);
@@ -285,10 +294,14 @@ static void TestTlvGetStringValueCopy(CuTest* tc) {
 	res = KSI_TLV_fromReader(rdr, &tlv);
 	CuAssert(tc, "Unable to create TLV from reader.", res == KSI_OK && tlv != NULL);
 
+	/* Cast payload type */
+	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_STR);
+	CuAssert(tc, "TLV cast failed", res == KSI_OK);
+
 	res = KSI_TLV_getStringValue(tlv, &str, 1);
 	CuAssert(tc, "Failed to get string value from tlv.", res == KSI_OK && str != NULL);
 
-	CuAssert(tc, "Returned value *does* point to original value.", str != tlv->payload.rawVal.ptr);
+	CuAssert(tc, "Returned value *does* point to original value.", str != (char *)tlv->payload.rawVal.ptr);
 
 	CuAssert(tc, "Returned string is not what was expected", !strcmp("lore ipsum", str));
 
@@ -318,8 +331,16 @@ static void TestTlvGetNextNested(CuTest* tc) {
 	res = KSI_TLV_fromReader(rdr, &tlv);
 	CuAssert(tc, "Unable to read TLV.", res == KSI_OK && tlv != NULL);
 
+	/* Cast payload type */
+	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_TLV);
+	CuAssert(tc, "TLV cast failed", res == KSI_OK);
+
 	res = KSI_TLV_getNextNestedTLV(tlv, &nested);
 	CuAssert(tc, "Unable to read nested TLV", res == KSI_OK && nested != NULL);
+
+	/* Cast payload type */
+	res = KSI_TLV_cast(nested, KSI_TLV_PAYLOAD_STR);
+	CuAssert(tc, "TLV cast failed", res == KSI_OK);
 
 	res = KSI_TLV_getStringValue(nested, &str, 1);
 	CuAssert(tc, "Unable to read string from nested TLV", res == KSI_OK && str != NULL);
@@ -327,9 +348,14 @@ static void TestTlvGetNextNested(CuTest* tc) {
 
 	res = KSI_TLV_getNextNestedTLV(tlv, &nested);
 	CuAssert(tc, "Unable to read nested TLV", res == KSI_OK && nested != NULL);
+
+	/* Cast payload type */
+	res = KSI_TLV_cast(nested, KSI_TLV_PAYLOAD_INT);
+	CuAssert(tc, "TLV cast failed", res == KSI_OK);
+
 	res = KSI_TLV_getUInt64Value(nested, &uint);
 	CuAssert(tc, "Unable to read uint from nested TLV", res == KSI_OK);
-	CuAssertIntEquals_Msg(tc, "Unexpected uint value from nested TLV", 0xcafffffffffe, uint);
+	CuAssert(tc, "Unexpected uint value from nested TLV", 0xcafffffffffe == uint);
 
 	res = KSI_TLV_getNextNestedTLV(tlv, &nested);
 	CuAssert(tc, "Reading nested TLV failed after reading last TLV.", res == KSI_OK);
@@ -362,6 +388,10 @@ static void TestTlvGetNextNestedSharedMemory(CuTest* tc) {
 
 	res = KSI_TLV_fromReader(rdr, &tlv);
 	CuAssert(tc, "Unable to read TLV.", res == KSI_OK && tlv != NULL);
+
+	/* Cast payload type */
+	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_TLV);
+	CuAssert(tc, "TLV cast failed", res == KSI_OK);
 
 	res = KSI_TLV_getNextNestedTLV(tlv, &nested);
 	CuAssert(tc, "Unable to read nested TLV", res == KSI_OK && nested != NULL);
@@ -409,6 +439,10 @@ static void TestTlvSerializeString(CuTest* tc) {
 	KSI_ERR_statusDump(ctx, stdout);
 	CuAssert(tc, "Unable to create TLV from reader.", res == KSI_OK && tlv != NULL);
 
+	/* Cast payload type */
+	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_STR);
+	CuAssert(tc, "TLV cast failed", res == KSI_OK);
+
 	res = KSI_TLV_getStringValue(tlv, &str, 0);
 	CuAssert(tc, "Failed to get string value from tlv.", res == KSI_OK && str != NULL);
 
@@ -446,6 +480,10 @@ static void TestTlvSerializeUint(CuTest* tc) {
 	res = KSI_TLV_fromReader(rdr, &tlv);
 	CuAssert(tc, "Failed to create TLV from reader.", res == KSI_OK && tlv != NULL);
 
+	/* Cast payload type */
+	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_INT);
+	CuAssert(tc, "TLV cast failed", res == KSI_OK);
+
 	res = KSI_TLV_getUInt64Value(tlv, &value);
 	CuAssert(tc, "Parsing uint64 with overflow should not succeed.", res == KSI_OK);
 
@@ -480,6 +518,10 @@ static void TestTlvSerializeNested(CuTest* tc) {
 
 	res = KSI_TLV_fromReader(rdr, &tlv);
 	CuAssert(tc, "Unable to read TLV.", res == KSI_OK && tlv != NULL);
+
+	/* Cast payload type */
+	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_TLV);
+	CuAssert(tc, "TLV cast failed", res == KSI_OK);
 
 	res = KSI_TLV_getNextNestedTLV(tlv, &nested);
 	CuAssert(tc, "Unable to read nested TLV", res == KSI_OK && nested != NULL);

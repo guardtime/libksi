@@ -57,12 +57,21 @@ void *KSI_calloc(size_t num, size_t size);
 void *KSI_realloc(void *ptr, size_t size);
 void KSI_free(void *ptr);
 
-/**
- * KSI TLV FUNCTIONS
- */
+/**********
+ * KSI TLV
+ **********/
+
+enum KSI_TLV_PayloadType_en {
+	KSI_TLV_PAYLOAD_RAW,
+	KSI_TLV_PAYLOAD_STR,
+	KSI_TLV_PAYLOAD_INT,
+	KSI_TLV_PAYLOAD_TLV
+};
 
 /* Creates an empty TLV with its own memory (always 0xffff bytes long).*/
 int KSI_TLV_new(KSI_CTX *ctx, unsigned char *data, size_t data_len, KSI_TLV **tlv);
+
+int KSI_TLV_cast(KSI_TLV *tlv, enum KSI_TLV_PayloadType_en);
 
 int KSI_TLV_fromBlob(KSI_CTX *ctx, unsigned char *data, size_t data_length, KSI_TLV **tlv);
 
@@ -72,7 +81,7 @@ int KSI_TLV_getUInt64Value(KSI_TLV *tlv, uint64_t *val);
 
 int KSI_TLV_getStringValue(KSI_TLV *tlv, char **buf, int copy);
 
-int KSI_TLV_getNextNestedTLV(KSI_TLV *tlv, const KSI_TLV **nested);
+int KSI_TLV_getNextNestedTLV(KSI_TLV *tlv, KSI_TLV **nested);
 
 void KSI_TLV_free(KSI_TLV *tlv);
 

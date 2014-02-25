@@ -32,10 +32,17 @@ enum KSI_StatusCode {
 	 * invalid format.
 	 */
 	KSI_INVALID_FORMAT,
+	/**
+	 * Buffer too small to perform operation.
+	 */
+	KSI_BUFFER_OVERFLOW,
+	/**
+	 * TLV payload has wrong type for operation.
+	 */
+	KSI_TLV_PAYLOAD_TYPE_MISMATCH,
 
 /* SYSTEM ERRORS */
 	KSI_OUT_OF_MEMORY = 0x00000300,
-	KSI_BUFFER_OVERFLOW,
 	KSI_IO_ERROR,
 
 	KSI_UNKNOWN_ERROR
