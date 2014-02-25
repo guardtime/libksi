@@ -46,7 +46,7 @@ struct KSI_RDR_st {
 
 int KSI_RDR_fromFile(KSI_CTX *ctx, const char *fileName, const char *flags, KSI_RDR **rdr);
 
-int KSI_RDR_fromMem(KSI_CTX *ctx, char *buffer, const size_t buffer_length, int ownCopy, KSI_RDR **rdr);
+int KSI_RDR_fromMem(KSI_CTX *ctx, unsigned char *buffer, const size_t buffer_length, int ownCopy, KSI_RDR **rdr);
 
 int KSI_RDR_isEOF(KSI_RDR *rdr);
 
@@ -55,7 +55,7 @@ int KSI_RDR_isEOF(KSI_RDR *rdr);
  *
  * \return KSI_OK when no errors occured.
  */
-int KSI_RDR_readIntoBuffer(KSI_RDR *rdr, char *buffer, const size_t bufferLength, int *readCount);
+int KSI_RDR_readIntoBuffer(KSI_RDR *rdr, unsigned char *buffer, const size_t bufferLength, int *readCount);
 
 /**
  * Method for reading from reader without copyng data. The pointer #ptr will point to the parent payload

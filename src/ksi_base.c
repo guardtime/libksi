@@ -14,6 +14,8 @@ const char *KSI_getErrorString(int statusCode) {
 			return "Invalid argument";
 		case KSI_OUT_OF_MEMORY:
 			return "Out of memory";
+		case KSI_BUFFER_OVERFLOW:
+			return "Buffer overflow";
 		case KSI_IO_ERROR:
 			return "I/O error";
 		default:

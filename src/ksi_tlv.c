@@ -1,13 +1,14 @@
 #include <string.h>
 
 #include "ksi_internal.h"
+#include "ksi_tlv.h"
 
 /**
  *
  */
 static int createOwnBuffer(KSI_TLV *tlv, int copy) {
 	KSI_ERR err;
-	unsigned char *buf;
+	unsigned char *buf = NULL;
 	int buf_size = 0xffff + 1;
 	int buf_len = 0;
 
@@ -19,7 +20,6 @@ static int createOwnBuffer(KSI_TLV *tlv, int copy) {
 	}
 
 	buf = KSI_calloc(buf_size, 1);
-
 	if (buf == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
@@ -83,7 +83,6 @@ static int readTlv(KSI_RDR *rdr, KSI_TLV **tlv, int copy) {
 	int res;
 	KSI_ERR err;
 	unsigned char hdr[4];
-	int hdr_len = 0;
 	int readCount;
 	KSI_TLV *t = NULL;
 	size_t length = 0;
@@ -154,7 +153,7 @@ static int readTlv(KSI_RDR *rdr, KSI_TLV **tlv, int copy) {
 	}
 
 	if (readCount != length) {
-		snprintf(errstr, sizeof(errstr), "Expected to read %d bytes, but got %d", length, readCount);
+		snprintf(errstr, sizeof(errstr), "Expected to read %d bytes, but got %d", (int)length, readCount);
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, errstr);
 		goto cleanup;
 	}
@@ -244,6 +243,9 @@ static int encodeAsString(KSI_TLV *tlv) {
 	/* Make the buffer a null-terminated string, but do not change the actual size. */
 	*(tlv->payload.rawVal.ptr + tlv->payload.rawVal.length) = '\0';
 
+	tlv->payloadType = KSI_TLV_PAYLOAD_STR;
+	tlv->payload.stringVal = tlv->payload.rawVal.ptr;
+
 	KSI_SUCCESS(&err);
 
 cleanup:
@@ -299,7 +301,6 @@ cleanup:
 }
 
 int appendLastSibling(KSI_TLV **first, KSI_TLV *tlv) {
-	int res;
 	KSI_ERR err;
 
 	KSI_BEGIN(tlv->ctx, &err);
@@ -313,8 +314,6 @@ int appendLastSibling(KSI_TLV **first, KSI_TLV *tlv) {
 	(*first)->last = tlv;
 
 	KSI_SUCCESS(&err);
-
-cleanup:
 
 	return KSI_RETURN(&err);
 }
@@ -382,7 +381,7 @@ cleanup:
 /**
  *
  */
-int KSI_TLV_new(KSI_CTX *ctx, char *data, size_t data_len, KSI_TLV **tlv) {
+int KSI_TLV_new(KSI_CTX *ctx, unsigned char *data, size_t data_len, KSI_TLV **tlv) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *t = NULL;
@@ -458,6 +457,7 @@ void KSI_TLV_free(KSI_TLV *tlv) {
 }
 
 int KSI_TLV_fromReader(KSI_RDR *rdr, KSI_TLV **tlv) {
+	/* Read the TLV and make a copy of the memory. */
 	return readTlv(rdr, tlv, 1);
 }
 
@@ -468,7 +468,7 @@ int KSI_TLV_fromReader(KSI_RDR *rdr, KSI_TLV **tlv) {
 int KSI_TLV_getRawValue(KSI_TLV *tlv, unsigned char **buf, int *len, int copy) {
 	KSI_ERR err;
 	int res;
-	char *ptr = NULL;
+	unsigned char *ptr = NULL;
 	size_t ptr_len;
 
 	KSI_BEGIN(tlv->ctx, &err);
@@ -514,9 +514,6 @@ cleanup:
 int KSI_TLV_getUInt64Value(KSI_TLV *tlv, uint64_t *val) {
 	KSI_ERR err;
 	int res;
-	int value_len;
-	uint64_t value;
-	uint64_t mask;
 
 	KSI_BEGIN(tlv->ctx, &err);
 
@@ -541,7 +538,7 @@ cleanup:
 int KSI_TLV_getStringValue(KSI_TLV *tlv, char **buf, int copy) {
 	KSI_ERR err;
 	int res;
-	char *value = NULL;
+	unsigned char *value = NULL;
 
 	KSI_BEGIN(tlv->ctx, &err);
 
@@ -553,6 +550,11 @@ int KSI_TLV_getStringValue(KSI_TLV *tlv, char **buf, int copy) {
 
 	if (copy) {
 		value = KSI_calloc(tlv->payload.rawVal.length + 1, 1);
+		if (value == NULL) {
+			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+			goto cleanup;
+		}
+
 		strncpy(value, tlv->payload.rawVal.ptr, tlv->payload.rawVal.length + 1);
 	} else {
 		value = tlv->payload.rawVal.ptr;
@@ -595,6 +597,40 @@ int KSI_TLV_getNextNestedTLV(KSI_TLV *tlv, const KSI_TLV **nested) {
 	KSI_SUCCESS(&err);
 
 cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_TLV_fromBlob(KSI_CTX *ctx, unsigned char *data, size_t data_length, KSI_TLV **tlv) {
+	KSI_ERR err;
+	KSI_RDR *rdr = NULL;
+	KSI_TLV *t = NULL;
+
+	int res;
+
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_RDR_fromMem(ctx, data, data_length, 0, &rdr);
+	if (res != KSI_OK) {
+		KSI_FAIL(&err, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_TLV_fromReader(rdr, &t);
+	if (res != KSI_OK) {
+		KSI_FAIL(&err, res, NULL);
+		goto cleanup;
+	}
+
+	*tlv = t;
+	t = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_RDR_close(rdr);
+	KSI_TLV_free(t);
 
 	return KSI_RETURN(&err);
 }

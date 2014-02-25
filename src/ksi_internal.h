@@ -1,11 +1,12 @@
 #ifndef _KSI_INTERNAL_H_
 #define _KSI_INTERNAL_H_
 
+#include <stdint.h>
+
 #include "ksi_base.h"
 #include "ksi_err.h"
 #include "ksi_io.h"
 #include "ksi_log.h"
-#include "ksi_tlv.h"
 
 /* Create a new object of type. */
 #define KSI_new(typeVar) (typeVar *)(KSI_calloc(sizeof(typeVar), 1))
@@ -55,6 +56,26 @@ void *KSI_malloc(size_t size);
 void *KSI_calloc(size_t num, size_t size);
 void *KSI_realloc(void *ptr, size_t size);
 void KSI_free(void *ptr);
+
+/**
+ * KSI TLV FUNCTIONS
+ */
+
+/* Creates an empty TLV with its own memory (always 0xffff bytes long).*/
+int KSI_TLV_new(KSI_CTX *ctx, unsigned char *data, size_t data_len, KSI_TLV **tlv);
+
+int KSI_TLV_fromBlob(KSI_CTX *ctx, unsigned char *data, size_t data_length, KSI_TLV **tlv);
+
+int KSI_TLV_getRawValue(KSI_TLV *tlv, unsigned char **buf, int *len, int copy);
+
+int KSI_TLV_getUInt64Value(KSI_TLV *tlv, uint64_t *val);
+
+int KSI_TLV_getStringValue(KSI_TLV *tlv, char **buf, int copy);
+
+int KSI_TLV_getNextNestedTLV(KSI_TLV *tlv, const KSI_TLV **nested);
+
+void KSI_TLV_free(KSI_TLV *tlv);
+
 
 #ifdef __cplusplus
 }

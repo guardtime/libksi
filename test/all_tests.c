@@ -6,7 +6,7 @@
 
 #include "all_tests.h"
 
-#ifndef HAVE_CONFIG_H
+#ifndef UNIT_TEST_OUTPUT_XML
 #  define UNIT_TEST_OUTPUT_XML "_testsuite.xml"
 #endif
 

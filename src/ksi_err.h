@@ -62,6 +62,8 @@ void KSI_ERR_fail(KSI_ERR *ctx, int statusCode, int extErrorCode, char *fileName
  */
 void KSI_ERR_success(KSI_ERR *err);
 
+int KSI_ERR_apply(KSI_ERR *err);
+
 #ifdef __cplusplus
 }
 #endif

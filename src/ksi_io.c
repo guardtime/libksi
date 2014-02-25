@@ -52,7 +52,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_RDR_fromMem(KSI_CTX *ctx, char *buffer, const size_t buffer_length, int ownCopy, KSI_RDR **rdr) {
+int KSI_RDR_fromMem(KSI_CTX *ctx, unsigned char *buffer, const size_t buffer_length, int ownCopy, KSI_RDR **rdr) {
 	KSI_ERR err;
 	KSI_RDR *reader = NULL;
 	char *buf = NULL;
@@ -148,7 +148,7 @@ cleanup:
 }
 
 
-int KSI_RDR_readIntoBuffer(KSI_RDR *rdr, char *buffer, const size_t bufferLength, int *readCount)  {
+int KSI_RDR_readIntoBuffer(KSI_RDR *rdr, unsigned char *buffer, const size_t bufferLength, int *readCount)  {
 	KSI_ERR err;
 	int res;
 

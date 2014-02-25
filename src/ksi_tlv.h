@@ -49,7 +49,7 @@ struct KSI_TLV_st {
 			uint64_t value;
 			int length;
 		}uintVal;
-		char stringVal;
+		char *stringVal;
 		struct {
 			KSI_TLV *list;
 			KSI_TLV *current;
@@ -61,21 +61,6 @@ struct KSI_TLV_st {
 	/* Pointer to the last element of a list. By default pointing to itself. */
 	KSI_TLV *last;
 };
-
-/* Creates an empty TLV with its own memory (always 0xffff bytes long).*/
-int KSI_TLV_new(KSI_CTX *ctx, char *data, size_t data_len, KSI_TLV **tlv);
-
-int KSI_TLV_fromBlob(KSI_CTX *ctx, char *data, size_t data_length, KSI_TLV **tlv);
-
-int KSI_TLV_getRawValue(KSI_TLV *tlv, unsigned char **buf, int *len, int copy);
-
-int KSI_TLV_getUInt64Value(KSI_TLV *tlv, uint64_t *val);
-
-int KSI_TLV_getStringValue(KSI_TLV *tlv, char **buf, int copy);
-
-int KSI_TLV_getNextNestedTLV(KSI_TLV *tlv, const KSI_TLV **nested);
-
-void KSI_TLV_free(KSI_TLV *tlv);
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,6 @@
 #include "all_tests.h"
 
+
 static char *ok_sample[] = {
 		"test/resource/tlv/ok_int-1.tlv",
 		"test/resource/tlv/ok_int-2.tlv",
@@ -161,6 +162,53 @@ static void TestNokFiles(CuTest* tc) {
 	closeEnv(tc);
 }
 
+static void TestSerialize(CuTest* tc) {
+	int res;
+	KSI_TLV *tlv = NULL;
+	KSI_RDR *rdr = NULL;
+
+	unsigned char in[0xffff + 4];
+	unsigned char out[0xffff + 4];
+	char errstr[1024];
+
+	int out_len;
+	int in_len;
+
+	FILE *f = NULL;
+	int i = 0;
+
+	initEnv(tc);
+
+	while (ok_sample[i] != NULL) {
+		f = fopen(ok_sample[i], "rb");
+		CuAssert(tc, "Unable to open test file.", f != NULL);
+
+		in_len = fread(in, 1, sizeof(in), f);
+
+		fclose(f);
+		f = NULL;
+
+		res = KSI_TLV_fromBlob(ctx, in, in_len, &tlv);
+		CuAssert(tc, "Unable to parse TLV", res == KSI_OK);
+
+		res = parseStructure(tlv, 0);
+		CuAssert(tc, "Unable to parse TLV structure", res == KSI_OK);
+
+		/* Re assemble TLV */
+		out_len = sizeof(out);
+		KSI_TLV_serialize(tlv, out, &out_len);
+
+		CuAssertIntEquals_Msg(tc, "Serialized TLV size", in_len, out_len);
+		sprintf(errstr, "Serialised TLV content does not match original: %s", ok_sample[i]);
+		CuAssert(tc, errstr, !memcmp(in, out, in_len));
+
+		KSI_TLV_free(tlv);
+		tlv = NULL;
+		i++;
+	}
+
+	closeEnv(tc);
+}
 
 CuSuite* KSI_TLV_Sample_GetSuite(void)
 {
@@ -168,6 +216,7 @@ CuSuite* KSI_TLV_Sample_GetSuite(void)
 
 	SUITE_ADD_TEST(suite, TestOkFiles);
 	SUITE_ADD_TEST(suite, TestNokFiles);
+	SUITE_ADD_TEST(suite, TestSerialize);
 
 	return suite;
 }
