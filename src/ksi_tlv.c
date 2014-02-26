@@ -1,8 +1,21 @@
 #include <string.h>
 
+
 #include "ksi_internal.h"
 #include "ksi_tlv.h"
 
+/**
+ *
+ */
+static int getUintLen(uint64_t uint) {
+	int i;
+	for (i = sizeof(uint64_t); i > 1; i--) {
+		if (uint >> ((i - 1) * 8)) {
+			break;
+		}
+	}
+	return i;
+}
 /**
  *
  */
@@ -86,8 +99,8 @@ static int readTlv(KSI_RDR *rdr, KSI_TLV **tlv, int copy) {
 	int readCount;
 	KSI_TLV *t = NULL;
 	size_t length = 0;
-	int lenient = 0;
-	int forward = 0;
+	int isLenient = 0;
+	int isForward = 0;
 	unsigned int type;
 	unsigned char buffer[0xffff];
 	unsigned char *ptr = NULL;
@@ -113,8 +126,8 @@ static int readTlv(KSI_RDR *rdr, KSI_TLV **tlv, int copy) {
 		goto cleanup;
 	}
 
-	lenient = *hdr & KSI_TLV_MASK_LENIENT;
-	forward = *hdr & KSI_TLV_MASK_FORWARD;
+	isLenient = *hdr & KSI_TLV_MASK_LENIENT;
+	isForward = *hdr & KSI_TLV_MASK_FORWARD;
 
 	/* Is it a TLV8 or TLV16 */
 	if (*hdr & KSI_TLV_MASK_TLV16) {
@@ -159,13 +172,11 @@ static int readTlv(KSI_RDR *rdr, KSI_TLV **tlv, int copy) {
 	}
 
 	/* Create new TLV object. */
-	res = KSI_TLV_new(rdr->ctx, ptr, readCount, &t);
+	res = KSI_TLV_new(rdr->ctx,type, isLenient, isForward,  ptr, readCount, &t);
 	if (res != KSI_OK) {
 		KSI_FAIL(&err, res, NULL);
 		goto cleanup;
 	}
-
-	t->type = type;
 
 	if (ptr == NULL) {
 		/* Append raw data. */
@@ -196,6 +207,8 @@ static int encodeAsRaw(KSI_TLV *tlv) {
 	KSI_ERR err;
 	int res;
 	int payloadLength;
+	unsigned char *buf = NULL;
+	int buf_size = 0;
 
 	KSI_BEGIN(tlv->ctx, &err);
 
@@ -205,22 +218,38 @@ static int encodeAsRaw(KSI_TLV *tlv) {
 	}
 
 	if (tlv->buffer == NULL) {
-		res = createOwnBuffer(tlv, 0);
-		if (res != KSI_OK) {
-			KSI_FAIL(&err, res, NULL);
+		buf_size = 0xffff + 1;
+		buf = KSI_calloc(buf_size, 1);
+		if (buf == NULL) {
+			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 			goto cleanup;
 		}
+	} else {
+		buf = tlv->buffer;
+		buf_size = tlv->buffer_size;
 	}
 
-	payloadLength = tlv->buffer_size;
-	KSI_TLV_serialize(tlv, tlv->buffer, &payloadLength);
+	payloadLength = buf_size;
+	res = KSI_TLV_serializePayload(tlv, buf, &payloadLength);
+	if (res != KSI_OK) {
+		KSI_FAIL(&err, res, NULL);
+		goto cleanup;
+	}
 
 	tlv->payloadType = KSI_TLV_PAYLOAD_RAW;
+	tlv->buffer = buf;
+	tlv->buffer_size = buf_size;
+
+	tlv->payload.rawVal.ptr = buf;
 	tlv->payload.rawVal.length = payloadLength;
+
+	buf = NULL;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
+
+	KSI_free(buf);
 
 	return KSI_RETURN(&err);
 }
@@ -391,7 +420,7 @@ cleanup:
 /**
  *
  */
-int KSI_TLV_new(KSI_CTX *ctx, unsigned char *data, size_t data_len, KSI_TLV **tlv) {
+int KSI_TLV_new(KSI_CTX *ctx, int type, int isLenient, int isForward, unsigned char *data, size_t data_len, KSI_TLV **tlv) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *t = NULL;
@@ -410,8 +439,10 @@ int KSI_TLV_new(KSI_CTX *ctx, unsigned char *data, size_t data_len, KSI_TLV **tl
 	t->next = NULL;
 	/* Last will point to itself. */
 	t->last = t;
-	t->isLenient = 0;
-	t->isForwardable = 0;
+	t->type = type;
+	/* Make sure the values are *only* 1 or 0. */
+	t->isLenient = isLenient ? 1 : 0;
+	t->isForwardable = isForward ? 1 : 0;
 
 	t->payloadType = KSI_TLV_PAYLOAD_RAW;
 
@@ -422,9 +453,10 @@ int KSI_TLV_new(KSI_CTX *ctx, unsigned char *data, size_t data_len, KSI_TLV **tl
 		t->payload.rawVal.length = data_len;
 		t->payload.rawVal.ptr = data;
 	} else {
-		res = createOwnBuffer(t, 0);
-		if (res != KSI_OK) {
-			KSI_FAIL(&err, res, NULL);
+		t->buffer_size = 0xffff + 1;
+		t->buffer = KSI_calloc(t->buffer_size, 1);
+		if (t->buffer == NULL) {
+			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 			goto cleanup;
 		}
 
@@ -615,7 +647,7 @@ cleanup:
 /**
  *
  */
-int KSI_TLV_fromBlob(KSI_CTX *ctx, unsigned char *data, size_t data_length, KSI_TLV **tlv) {
+int KSI_TLV_parseBlob(KSI_CTX *ctx, unsigned char *data, size_t data_length, KSI_TLV **tlv) {
 	KSI_ERR err;
 	KSI_RDR *rdr = NULL;
 	KSI_TLV *t = NULL;
@@ -693,3 +725,88 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
+
+/**
+ *
+ */
+int KSI_TLV_fromUint(KSI_CTX *ctx, int type, int isLenient, int isForward, uint64_t uint, KSI_TLV **tlv) {
+	KSI_ERR err;
+	KSI_TLV *t = NULL;
+	int res;
+
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_TLV_new(ctx, type, isLenient, isForward, NULL, 0, &t);
+	if (res != KSI_OK) {
+		KSI_FAIL(&err, res, NULL);
+		goto cleanup;
+	}
+
+	t->payloadType = KSI_TLV_PAYLOAD_INT;
+	t->payload.uintVal.length = getUintLen(uint);
+	t->payload.uintVal.value = uint;
+
+	*tlv = t;
+	t = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_TLV_free(t);
+
+	return KSI_RETURN(&err);
+}
+
+/**
+ *
+ */
+int KSI_TLV_fromString(KSI_CTX *ctx, int type, int isLenient, int isForward, char *str, KSI_TLV **tlv) {
+	KSI_ERR err;
+	KSI_TLV *t = NULL;
+	int res;
+
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_TLV_new(ctx, type, isLenient, isForward, NULL, 0, &t);
+	if (res != KSI_OK) {
+		KSI_FAIL(&err, res, NULL);
+		goto cleanup;
+	}
+
+	appendBlob(t, str, strlen(str));
+
+	KSI_TLV_cast(t, KSI_TLV_PAYLOAD_STR);
+	*tlv = t;
+	t = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_TLV_free(t);
+
+	return KSI_RETURN(&err);
+}
+
+/**
+ *
+ */
+int KSI_TLV_isLenient(KSI_TLV *tlv) {
+	return tlv->isLenient;
+}
+
+/**
+ *
+ */
+int KSI_TLV_isForward(KSI_TLV *tlv) {
+	return tlv->isForwardable;
+}
+
+/**
+ *
+ */
+int KSI_TLV_getType(KSI_TLV *tlv) {
+	return tlv->type;
+}
+

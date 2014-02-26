@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 #define KSI_TLV_MASK_TLV16 0x80
-#define KSI_TLV_MASK_LENIENT 0x04
+#define KSI_TLV_MASK_LENIENT 0x40
 #define KSI_TLV_MASK_FORWARD 0x20
 
 #define KSI_TLV_MASK_TLV8_TYPE 0x1f

@@ -11,6 +11,8 @@ extern "C" {
 
 #define lprintf //printf("%s:%d - ", __FILE__, __LINE__); printf
 
+int debug_memcmp(void *ptr1, void *ptr2, size_t len);
+
 CuSuite* KSI_CTX_GetSuite(void);
 CuSuite* KSI_LOG_GetSuite(void);
 CuSuite* KSI_RDR_GetSuite(void);

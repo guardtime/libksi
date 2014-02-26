@@ -10,6 +10,8 @@
 #  define UNIT_TEST_OUTPUT_XML "_testsuite.xml"
 #endif
 
+KSI_CTX *ctx;
+
 static void escapeStr(const char *str, CuString *escaped) {
 	int p;
 	static const char *replIndex = "<>&\"'";
@@ -121,6 +123,7 @@ static void writeXmlReport(CuSuite *suite) {
 static int RunAllTests() {
 	int failCount;
 
+	KSI_CTX_new(&ctx);
 
 	CuSuite* suite = initSuite();
 	CuSuiteRun(suite);
@@ -133,8 +136,27 @@ static int RunAllTests() {
 
 	CuSuiteDelete(suite);
 
+	KSI_CTX_free(ctx);
+
 	return failCount;
 }
+
+int debug_memcmp(void *ptr1, void *ptr2, size_t len) {
+	int res;
+	int i;
+	res = memcmp(ptr1, ptr2, len);
+	if (res) {
+		printf("> ");
+		for (i = 0; i < len; i++)
+			printf("%02x ", *((unsigned char *)ptr1 + i));
+		printf("\n< ");
+		for (i = 0; i < len; i++)
+			printf("%02x ", *((unsigned char *)ptr2 + i));
+		printf("\n");
+	}
+	return res;
+}
+
 
 int main(void) {
 	return RunAllTests();
