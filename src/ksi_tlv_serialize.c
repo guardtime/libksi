@@ -67,22 +67,22 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int serializeTlvList(KSI_TLV *tlv, unsigned char *buf, int *buf_free) {
+static int serializeTlvList(KSI_TLV_LIST *tlvListNode, unsigned char *buf, int *buf_free) {
 	KSI_ERR err;
 	int res;
 	int bf = *buf_free;
 
-	KSI_BEGIN(tlv->ctx, &err);
+	KSI_BEGIN(tlvListNode->tlv->ctx, &err);
 
-	if (tlv->next != NULL) {
-		res = serializeTlvList(tlv->next, buf, &bf);
+	if (tlvListNode->next != NULL) {
+		res = serializeTlvList(tlvListNode->next, buf, &bf);
 		if (res != KSI_OK) {
 			KSI_FAIL(&err, res, NULL);
 			goto cleanup;
 		}
 	}
 
-	res = serializeTlv(tlv, buf, &bf, 1);
+	res = serializeTlv(tlvListNode->tlv, buf, &bf, 1);
 	if (res != KSI_OK) {
 		KSI_FAIL(&err, res, NULL);
 		goto cleanup;
@@ -100,8 +100,6 @@ cleanup:
 static int serializeNested(KSI_TLV *tlv, unsigned char *buf, int *buf_free) {
 	KSI_ERR err;
 	int res;
-	int i;
-	KSI_TLV *tmp = NULL;
 	int bf = *buf_free;
 
 	KSI_BEGIN(tlv->ctx, &err);
@@ -111,8 +109,8 @@ static int serializeNested(KSI_TLV *tlv, unsigned char *buf, int *buf_free) {
 		goto cleanup;
 	}
 
-	if (tlv->payload.tlv.list != NULL) {
-		res = serializeTlvList(tlv->payload.tlv.list, buf, &bf);
+	if (tlv->nested != NULL) {
+		res = serializeTlvList(tlv->nested, buf, &bf);
 		if (res != KSI_OK) {
 			KSI_FAIL(&err, res, NULL);
 			goto cleanup;
@@ -170,7 +168,7 @@ static int serializeTlv(KSI_TLV *tlv, unsigned char *buf, int *buf_free, int ser
 	int bf = *buf_free;
 	int payloadLength;
 	unsigned char *ptr;
-	int i;
+
 	KSI_BEGIN(tlv->ctx, &err);
 
 	res = serializePayload(tlv, buf, &bf);

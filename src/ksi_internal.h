@@ -269,6 +269,60 @@ int KSI_TLV_serialize(KSI_TLV *tlv, unsigned char *buf, int *len);
  */
 int KSI_TLV_serializePayload(KSI_TLV *tlv, unsigned char *buf, int *len);
 
+/**
+ * This function appends a nested tlv to the target TLV. The target TLV is required to
+ * have payload type #KSI_TLV_PAYLOAD_TLV. The added TLV will be added after the TLV
+ * given as the second parameter. If the second parameter is NULL the new TLV is added
+ * as the last element in the internal list.
+ *
+ *	\param[in]	target		Target TLV where to add the new value as nested TLV.
+ *	\param[in]	after		After which nested TLV the value should be added (single layer only).
+ *							If the parameter is NULL, the TLV is added to the end.
+ *	\param[in]	tlv			The TLV to be appended.
+ */
+int KSI_TLV_appendNestedTLV(KSI_TLV *target, KSI_TLV *after, KSI_TLV *tlv);
+
+/************
+ *
+ * KSI READER
+ *
+ ************/
+/* TODO!
+ *
+ */
+int KSI_RDR_fromFile(KSI_CTX *ctx, const char *fileName, const char *flags, KSI_RDR **rdr);
+
+/* TODO!
+ *
+ */
+int KSI_RDR_fromMem(KSI_CTX *ctx, unsigned char *buffer, const size_t buffer_length, int ownCopy, KSI_RDR **rdr);
+
+/* TODO!
+ *
+ */
+int KSI_RDR_isEOF(KSI_RDR *rdr);
+
+/* TODO!
+ * Reads at maximum #bufferLength bytes into #buffer and strores number of read bytes in #readCount.
+ *
+ * \return KSI_OK when no errors occured.
+ */
+int KSI_RDR_readIntoBuffer(KSI_RDR *rdr, unsigned char *buffer, const size_t bufferLength, int *readCount);
+
+/* TODO!
+ * Method for reading from reader without copyng data. The pointer #ptr will point to the parent payload
+ * area (which itself may not belong to the parent).
+ *
+ * \return The method will return KSI_OK when no error occured.
+ *
+ * \note This method can be applied to only #KSI_RDR which is based on a memory buffer.
+ */
+int KSI_RDR_readMemPtr(KSI_RDR *rdr, unsigned char **ptr, const size_t len, int *readCount);
+
+/* TODO!
+ *
+ */
+void KSI_RDR_close(KSI_RDR *rdr);
 
 
 #ifdef __cplusplus

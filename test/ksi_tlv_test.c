@@ -1,9 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "cutest/CuTest.h"
-#include "../src/ksi_internal.h"
-#include "../src/ksi_tlv.h"
+#include "all_tests.h"
 
 extern KSI_CTX *ctx;
 
@@ -549,7 +547,7 @@ static void TestTlvSerializeNested(CuTest* tc) {
 	CuAssert(tc, "Failed to serialize nested values of tlv.", res == KSI_OK);
 	CuAssertIntEquals_Msg(tc, "Size of serialized TLV", sizeof(raw) - 1, buf_len);
 
-	CuAssert(tc, "Serialized value does not match original", !memcmp(raw, buf, buf_len));
+	CuAssert(tc, "Serialized value does not match original", !debug_memcmp(raw, buf, buf_len));
 
 	KSI_free(str);
 	KSI_TLV_free(tlv);
@@ -642,6 +640,81 @@ static void TestTlvFromUint(CuTest* tc) {
 	KSI_TLV_free(tlv);
 }
 
+static void TestTlvComposeNested(CuTest* tc) {
+	KSI_TLV *outer = NULL;
+	KSI_TLV *nested = NULL;
+	unsigned char raw[] = {0x01, 0x06, 0x61, 0x04, 0xca, 0xfe, 0xba, 0xbe};
+	int buf_len = 0xffff;
+	unsigned char buf[buf_len];
+	int res;
+
+	KSI_ERR_clearErrors(ctx);
+
+	/* Create an empty outer TLV */
+	res = KSI_TLV_new(ctx, 0x1, 0, 0, NULL, 0, &outer);
+	CuAssert(tc, "Unable to create TLV", res == KSI_OK && outer != NULL);
+
+	res = KSI_TLV_cast(outer, KSI_TLV_PAYLOAD_TLV);
+	CuAssert(tc, "Unable to cast outer TLV payload type to 'nested'", res == KSI_OK);
+
+	/* Create nested TLV and append to the outer TLV*/
+	res = KSI_TLV_fromUint(ctx, 0x01, 1, 1, 0xcafebabe, &nested);
+	CuAssert(tc, "Unable to create nested TLV from uint", res == KSI_OK && nested != NULL);
+
+	res = KSI_TLV_appendNestedTLV(outer, NULL, nested);
+	CuAssert(tc, "Unable to append nested TLV.", res == KSI_OK);
+
+	res = KSI_TLV_serialize(outer, buf, &buf_len);
+	CuAssert(tc, "Unable to serialize outer TLV.", res == KSI_OK);
+	CuAssertIntEquals_Msg(tc, "Size of serialized data", sizeof(raw), buf_len);
+	CuAssert(tc, "Unexpected serialized data", !memcmp(raw, buf, buf_len));
+
+	KSI_nofree(nested);
+	KSI_TLV_free(outer);
+
+}
+
+static void TestTlvComposeNestedMore(CuTest* tc) {
+	KSI_TLV *outer = NULL;
+	KSI_TLV *nested = NULL;
+	unsigned char raw[] = {0x01, 0x0a, 0x61, 0x04, 0xca, 0xfe, 0xba, 0xbe, 0x61, 0x02, 0x47, 0x54 };
+	int buf_len = 0xffff;
+	unsigned char buf[buf_len];
+	int res;
+
+	KSI_ERR_clearErrors(ctx);
+
+	/* Create an empty outer TLV */
+	res = KSI_TLV_new(ctx, 0x1, 0, 0, NULL, 0, &outer);
+	CuAssert(tc, "Unable to create TLV", res == KSI_OK && outer != NULL);
+
+	res = KSI_TLV_cast(outer, KSI_TLV_PAYLOAD_TLV);
+	CuAssert(tc, "Unable to cast outer TLV payload type to 'nested'", res == KSI_OK);
+
+	/* Create nested TLV and append to the outer TLV*/
+	res = KSI_TLV_fromUint(ctx, 0x01, 1, 1, 0xcafebabe, &nested);
+	CuAssert(tc, "Unable to create nested TLV from uint", res == KSI_OK && nested != NULL);
+
+	res = KSI_TLV_appendNestedTLV(outer, NULL, nested);
+	CuAssert(tc, "Unable to append first nested TLV.", res == KSI_OK);
+
+	/* Create nested TLV and append to the outer TLV*/
+	res = KSI_TLV_fromString(ctx, 0x01, 1, 1, "GT", &nested);
+	CuAssert(tc, "Unable to create nested TLV from uint", res == KSI_OK && nested != NULL);
+
+	res = KSI_TLV_appendNestedTLV(outer, NULL, nested);
+	CuAssert(tc, "Unable to append first nested TLV.", res == KSI_OK);
+
+	res = KSI_TLV_serialize(outer, buf, &buf_len);
+	CuAssert(tc, "Unable to serialize outer TLV.", res == KSI_OK);
+	CuAssertIntEquals_Msg(tc, "Size of serialized data", sizeof(raw), buf_len);
+	CuAssert(tc, "Unexpected serialized data", !debug_memcmp(raw, buf, buf_len));
+
+	KSI_nofree(nested);
+	KSI_TLV_free(outer);
+
+}
+
 CuSuite* KSI_TLV_GetSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
@@ -665,6 +738,8 @@ CuSuite* KSI_TLV_GetSuite(void)
 	SUITE_ADD_TEST(suite, TestTlvLenientFlag);
 	SUITE_ADD_TEST(suite, TestTlvForwardFlag);
 	SUITE_ADD_TEST(suite, TestTlvFromUint);
+	SUITE_ADD_TEST(suite, TestTlvComposeNested);
+	SUITE_ADD_TEST(suite, TestTlvComposeNestedMore);
 
 	return suite;
 }
