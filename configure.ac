@@ -7,6 +7,16 @@ AC_PROG_CC
 AC_CONFIG_HEADERS([src/config.h])
 # Checks for libraries.
 
+AC_ARG_WITH(openssl,
+[  --with-openssl=path       build with OpenSSL installed at specified location],
+:, with_openssl=)
+if test ! -z "$with_openssl" ; then
+    CFLAGS="-I$with_openssl/include $CFLAGS"
+    LDFLAGS="-L$with_openssl/lib $LDFLAGS"
+fi
+
+AC_CHECK_LIB([crypto], [SHA256_Init], [], [AC_MSG_FAILURE([Could not find OpenSSL 0.9.8+ libraries.])])
+
 # Checks for header files.
 #AC_CHECK_HEADER([stdint.h stdlib.h string.h gt_base.h gt_http.h])
 

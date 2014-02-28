@@ -87,6 +87,7 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSI_RDR_GetSuite);
 	addSuite(suite, KSI_TLV_GetSuite);
 	addSuite(suite, KSI_TLV_Sample_GetSuite);
+	addSuite(suite, KSI_Hash_GetSuite);
 
 	return suite;
 }

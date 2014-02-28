@@ -18,6 +18,7 @@ CuSuite* KSI_LOG_GetSuite(void);
 CuSuite* KSI_RDR_GetSuite(void);
 CuSuite* KSI_TLV_GetSuite(void);
 CuSuite* KSI_TLV_Sample_GetSuite(void);
+CuSuite* KSI_Hash_GetSuite(void);
 
 #ifdef __cplusplus
 }
