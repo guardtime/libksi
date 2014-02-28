@@ -32,7 +32,7 @@ static const EVP_MD *hashAlgorithmToEVP(int hash_id)
 	}
 }
 
-int KSI_Hasher_reset(KSI_Hasher *hasher) {
+int KSI_Hasher_reset(KSI_DataHasher *hasher) {
 	KSI_ERR err;
 
 	const EVP_MD *evp_md = NULL;
@@ -73,13 +73,13 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_Hasher_open(KSI_CTX *ctx, int hash_algorithm, KSI_Hasher **hasher) {
+int KSI_DataHasher_open(KSI_CTX *ctx, int hash_algorithm, KSI_DataHasher **hasher) {
 	KSI_ERR err;
 	int res;
 
 	KSI_BEGIN(ctx, &err);
 
-	KSI_Hasher *tmp_hasher = NULL;
+	KSI_DataHasher *tmp_hasher = NULL;
 
 	if (hasher == NULL) {
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);
@@ -91,7 +91,7 @@ int KSI_Hasher_open(KSI_CTX *ctx, int hash_algorithm, KSI_Hasher **hasher) {
 		goto cleanup;
 	}
 
-	tmp_hasher = KSI_new(KSI_Hasher);
+	tmp_hasher = KSI_new(KSI_DataHasher);
 	if (tmp_hasher == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
@@ -113,12 +113,12 @@ int KSI_Hasher_open(KSI_CTX *ctx, int hash_algorithm, KSI_Hasher **hasher) {
 
 cleanup:
 
-	KSI_Hasher_free(tmp_hasher);
+	KSI_DataHasher_free(tmp_hasher);
 
 	return KSI_RETURN(&err);
 }
 
-int KSI_Hasher_add(KSI_Hasher *hasher, const unsigned char* data, size_t data_length) {
+int KSI_Hasher_add(KSI_DataHasher *hasher, const unsigned char* data, size_t data_length) {
 	KSI_ERR err;
 
 	KSI_BEGIN(hasher->ctx, &err);
@@ -141,7 +141,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_Hasher_close(KSI_Hasher *hasher, KSI_DataHash **data_hash) {
+int KSI_Hasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 	KSI_ERR err;
 	KSI_DataHash *tmp_data_hash = NULL;
 	unsigned char* tmp_hash = NULL;

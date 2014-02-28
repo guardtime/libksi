@@ -4,7 +4,7 @@
 /**
  *
  */
-void KSI_Hasher_free(KSI_Hasher *hasher) {
+void KSI_DataHasher_free(KSI_DataHasher *hasher) {
 	if (hasher != NULL) {
 		KSI_free(hasher->hashContext);
 		KSI_free(hasher);

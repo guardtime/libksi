@@ -113,8 +113,22 @@ int KSI_LOG_setLevel(int logLevel);
  ***********/
 
 /**
- * \ingroup common
- *
+ * This structure is used for calculating the hash values.
+ * \see #KSI_DataHash, #KSI_DataHasher_open, #KSI_DataHasher_reset, #KSI_DataHasher_close, #KSI_DataHasher_free
+ */
+typedef struct KSI_DataHasher_st KSI_DataHasher;
+
+/**
+ * This structure represents hashed data.
+ * \see #KSI_DataHasher, #KSI_DataHasher_close, #KSI_DataHash_free
+ */
+typedef struct KSI_DataHash_st {
+	int algorithm;
+	char *digest;
+	int digest_length;
+} KSI_DataHash;
+
+/**
  * The Guardtime representation of hash algorithms, necessary to calculate
  * instances of #KSI_DataHash.
  *
@@ -147,6 +161,59 @@ enum KSI_HashAlgorithm {
 	/** Use default algorithm. */
 	KSI_HASHALG_DEFAULT = -1
 };
+
+/**
+ * Starts a hash computation.
+ * \see #KSI_DataHasher_add, #KSI_DataHasher_close
+ *
+ * \param[in] ctx Ksi context.
+ * \param[in] hash_algorithm Identifier of the hash algorithm.
+ * See #KSI_HashAlgorithm for possible values.
+ * \param[out] hasher Pointer that will receive pointer to the
+ * hasher object.
+ * \return status code (\c KSI_OK, when operation succeeded, otherwise an
+ * error code).
+ */
+int KSI_DataHasher_open(KSI_CTX *ctx, int hash_algorithm, KSI_DataHasher **hasher);
+
+/**
+ * Resets the state of the hash computation.
+ * \see #KSI_DataHasher_open, #KSI_DataHasher_close
+ *
+ * \param[in] hasher Pointer to the hasher.
+ */
+int KSI_Hasher_reset(KSI_DataHasher *hasher);
+
+/**
+ * Adds data to an open hash computation.
+ * \see #KSI_DataHasher_open, #KSI_GTDataHasher_close
+ *
+ * \param[in] hasher Pointer to the hasher object.
+ * \param data \c (in) - Pointer to the data to be hashed.
+ * \param data_length \c (in) - Length of the hashed data.
+ * \return status code (\c KSI_OK, when operation succeeded, otherwise an
+ * error code).
+ */
+int KSI_Hasher_add(KSI_DataHasher *hasher, const unsigned char* data, size_t data_length);
+
+/**
+ * Frees memory used by hasher.
+ *
+ * \param data_hash \c (in) - \c GTDataHash object that is to be freed.
+ *
+ * \see #KSI_free()
+ */
+void KSI_DataHash_free(KSI_DataHash *hash);
+/**
+ * Fixes hash algorithm ID: replaces default ID with the current default
+ * as necessary.
+ **/
+int KSI_fixHashAlgorithm(int hash_id);
+
+/**
+ * Is \p hash_id hash algorithm supported?
+ */
+int KSI_isSupportedHashAlgorithm(int hash_id);
 
 #ifdef __cplusplus
 }
