@@ -32,7 +32,7 @@ static const EVP_MD *hashAlgorithmToEVP(int hash_id)
 	}
 }
 
-int KSI_Hasher_reset(KSI_DataHasher *hasher) {
+int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 	KSI_ERR err;
 
 	const EVP_MD *evp_md = NULL;
@@ -100,7 +100,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_algorithm, KSI_DataHasher **hashe
 	tmp_hasher->ctx = ctx;
 	tmp_hasher->algorithm = hash_algorithm;
 
-	res = KSI_Hasher_reset(tmp_hasher);
+	res = KSI_DataHasher_reset(tmp_hasher);
 	if (res != KSI_OK) {
 		KSI_FAIL(&err, res, NULL);
 		goto cleanup;
@@ -118,7 +118,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_Hasher_add(KSI_DataHasher *hasher, const unsigned char* data, size_t data_length) {
+int KSI_DataHasher_add(KSI_DataHasher *hasher, const unsigned char* data, size_t data_length) {
 	KSI_ERR err;
 
 	KSI_BEGIN(hasher->ctx, &err);
@@ -141,7 +141,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_Hasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
+int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 	KSI_ERR err;
 	KSI_DataHash *tmp_data_hash = NULL;
 	unsigned char* tmp_hash = NULL;

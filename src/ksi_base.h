@@ -182,7 +182,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_algorithm, KSI_DataHasher **hashe
  *
  * \param[in] hasher Pointer to the hasher.
  */
-int KSI_Hasher_reset(KSI_DataHasher *hasher);
+int KSI_DataHasher_reset(KSI_DataHasher *hasher);
 
 /**
  * Adds data to an open hash computation.
@@ -194,8 +194,19 @@ int KSI_Hasher_reset(KSI_DataHasher *hasher);
  * \return status code (\c KSI_OK, when operation succeeded, otherwise an
  * error code).
  */
-int KSI_Hasher_add(KSI_DataHasher *hasher, const unsigned char* data, size_t data_length);
+int KSI_DataHasher_add(KSI_DataHasher *hasher, const unsigned char* data, size_t data_length);
 
+/**
+ * Finalizes a hash computation.
+ * \see #KSI_DataHasher_open, #KSI_DataHasher_add, #KSI_DataHasher_free
+ *
+ * \param[in] hasher Pointer to the hasher object.
+ * \param[out] hash Pointer that will receive pointer to the hash object.
+ *
+ * \return status code (\c KSI_OK, when operation succeeded, otherwise an
+ * error code).
+ */
+int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **hash);
 /**
  * Frees memory used by hasher.
  *
