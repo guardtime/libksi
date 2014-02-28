@@ -54,6 +54,8 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 			goto cleanup;
 		}
+	} else {
+		EVP_MD_CTX_cleanup(context);
 	}
 
 	digest_length = EVP_MD_size(evp_md);
