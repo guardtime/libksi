@@ -4,3 +4,6 @@ test: all
 	./test/runner
 memtest: all 
 	valgrind --xml=yes --xml-file=valgrind.xml ./test/runner 
+
+clean-local:
+	rm -rf ./test/*.gcda

@@ -1,5 +1,5 @@
 # Generated with mk_makefile.sh
-AM_CFLAGS=-g --coverage
+AM_CFLAGS=-g
 bin_PROGRAMS=runner
 runner_SOURCES= \
 		all_tests.c \
