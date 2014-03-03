@@ -9,11 +9,12 @@
 #define KSI_ERR_H_
 
 #define KSI_BEGIN(ctx, err) (KSI_LOG_debug((ctx), "Begin called from %s:%d\n", __FILE__, __LINE__), KSI_ERR_init((ctx), (err)))
+#define KSI_PRE(err, cond) if (!(cond) && (KSI_ERR_init(NULL, (err)) == KSI_OK) && (KSI_FAIL((err), KSI_INVALID_ARGUMENT, NULL) == KSI_OK))
+#define KSI_PRE_NOT_NULL(err, exp) if (((exp) == NULL) && (KSI_ERR_init(NULL, (err)) == KSI_OK))
 #define KSI_RETURN(err) (KSI_LOG_debug((err)->ctx, "End called from %s:%d\n", __FILE__, __LINE__), KSI_ERR_apply((err)))
 #define KSI_FAIL_EXT(err, statusCode, extErrCode, message) (KSI_LOG_debug((err)->ctx, "External fail called from %s:%d\n", __FILE__, __LINE__), KSI_ERR_fail((err), (statusCode), (extErrCode), __FILE__, __LINE__, (message)))
 #define KSI_FAIL(err, statusCode, message) (KSI_LOG_debug((err)->ctx, "Fail called from %s:%d\n", __FILE__, __LINE__), KSI_ERR_fail((err), (statusCode), 0, __FILE__, __LINE__, (message)))
 #define KSI_SUCCESS(err) KSI_ERR_success((err))
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,11 +42,11 @@ struct KSI_ERR_st {
 };
 
 /**
- * Init single error:
- * 1. statusCode = KSI_UNKNOWN_ERROR
- * 2. message = ""
+ * Init error environment.
+ *
+ * \return KSI_OK
  */
-void KSI_ERR_init(KSI_CTX *ctx, KSI_ERR *err);
+int KSI_ERR_init(KSI_CTX *ctx, KSI_ERR *err);
 
 /**
  * Clear all errors from context.
@@ -55,7 +56,7 @@ void KSI_ERR_clearErrors(KSI_CTX *ctx);
 /**
  * Add an error to context #ctx.
  */
-void KSI_ERR_fail(KSI_ERR *ctx, int statusCode, int extErrorCode, char *fileName, int lineNr, char *message);
+int KSI_ERR_fail(KSI_ERR *ctx, int statusCode, int extErrorCode, char *fileName, int lineNr, char *message);
 
 /**
  * State that the function finished successfully.

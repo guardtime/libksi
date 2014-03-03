@@ -2,35 +2,38 @@
 
 #include "ksi_internal.h"
 
-void KSI_ERR_init(KSI_CTX *ctx, KSI_ERR *err) {
+int KSI_ERR_init(KSI_CTX *ctx, KSI_ERR *err) {
 	err->extErrorCode = 0;
 	*err->fileName = '\0';
 	*err->message = '\0';
 	err->lineNr = -1;
 	err->statusCode = KSI_UNKNOWN_ERROR;
 	err->ctx = ctx;
+
+	return KSI_OK;
 }
 
 int KSI_ERR_apply(KSI_ERR *err) {
 	KSI_CTX *ctx = err->ctx;
 	KSI_ERR *ctxErr = NULL;
 
-	if (err->statusCode != KSI_OK) {
-		ctxErr = ctx->errors + (ctx->errors_count % ctx->errors_size);
+	if (ctx != NULL) {
+		if (err->statusCode != KSI_OK) {
+			ctxErr = ctx->errors + (ctx->errors_count % ctx->errors_size);
 
 
 
-		ctxErr->statusCode = err->statusCode;
-		ctxErr->extErrorCode = err->extErrorCode;
-		ctxErr->lineNr = err->lineNr;
-		strncpy(ctxErr->fileName, KSI_strnvl(err->fileName), sizeof(err->fileName));
-		strncpy(ctxErr->message, KSI_strnvl(err->message), sizeof(err->message));
+			ctxErr->statusCode = err->statusCode;
+			ctxErr->extErrorCode = err->extErrorCode;
+			ctxErr->lineNr = err->lineNr;
+			strncpy(ctxErr->fileName, KSI_strnvl(err->fileName), sizeof(err->fileName));
+			strncpy(ctxErr->message, KSI_strnvl(err->message), sizeof(err->message));
 
-		ctx->errors_count++;
+			ctx->errors_count++;
+		}
+
+		ctx->statusCode = err->statusCode;
 	}
-
-	ctx->statusCode = err->statusCode;
-
 	/* Return the result, which does not indicate the result of this method. */
 	return err->statusCode;
 }
@@ -48,7 +51,7 @@ void KSI_ERR_success(KSI_ERR *err) {
 	*err->message = '\0';
 }
 
-void KSI_ERR_fail(KSI_ERR *err, int statusCode, int extErrorCode, char *fileName, int lineNr, char *message) {
+int KSI_ERR_fail(KSI_ERR *err, int statusCode, int extErrorCode, char *fileName, int lineNr, char *message) {
 	err->extErrorCode = extErrorCode;
 	err->statusCode = statusCode;
 	if (message == NULL) {
@@ -58,11 +61,15 @@ void KSI_ERR_fail(KSI_ERR *err, int statusCode, int extErrorCode, char *fileName
 	}
 	strncpy(err->fileName, KSI_strnvl(fileName), sizeof(err->fileName));
 	err->lineNr = lineNr;
+
+	return KSI_OK;
 }
 
 void KSI_ERR_clearErrors(KSI_CTX *ctx) {
-	ctx->statusCode = KSI_UNKNOWN_ERROR;
-	ctx->errors_count = 0;
+	if (ctx != NULL) {
+		ctx->statusCode = KSI_UNKNOWN_ERROR;
+		ctx->errors_count = 0;
+	}
 }
 
 int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f) {

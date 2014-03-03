@@ -21,6 +21,18 @@ static int failingMethod(KSI_CTX *ctx, int caseNr) {
 	return KSI_RETURN(&err);
 }
 
+static int failingPreCondition() {
+	KSI_ERR err;
+
+	KSI_PRE(&err, 1 > 2) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
 static void TestCtxInit(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -75,6 +87,13 @@ static void TestCtxAddFailureOverflow(CuTest* tc) {
 	KSI_CTX_free(ctx);
 }
 
+static void TestCtxFailingPreCondition(CuTest* tc) {
+	int res;
+
+	res = failingPreCondition();
+	CuAssert(tc, "Precondition was unsuccessful", res == KSI_INVALID_ARGUMENT);
+}
+
 CuSuite* KSI_CTX_GetSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
@@ -82,6 +101,7 @@ CuSuite* KSI_CTX_GetSuite(void)
 	SUITE_ADD_TEST(suite, TestCtxInit);
 	SUITE_ADD_TEST(suite, TestCtxAddFailure);
 	SUITE_ADD_TEST(suite, TestCtxAddFailureOverflow);
+	SUITE_ADD_TEST(suite, TestCtxFailingPreCondition);
 
 	return suite;
 }
