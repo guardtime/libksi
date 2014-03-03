@@ -246,6 +246,10 @@ static void TestParallelHashing(CuTest* tc) {
 	CuAssert(tc, "Digest mismatch", !memcmp(exp2, hsh2->digest, sizeof(exp2)));
 	CuAssertIntEquals_Msg(tc, "Algorithm", KSI_HASHALG_SHA512, hsh2->algorithm);
 
+	KSI_DataHash_free(hsh1);
+	KSI_DataHash_free(hsh2);
+	KSI_DataHasher_free(hsr1);
+	KSI_DataHasher_free(hsr2);
 }
 
 
