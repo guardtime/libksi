@@ -122,11 +122,7 @@ typedef struct KSI_DataHasher_st KSI_DataHasher;
  * This structure represents hashed data.
  * \see #KSI_DataHasher, #KSI_DataHasher_close, #KSI_DataHash_free
  */
-typedef struct KSI_DataHash_st {
-	int algorithm;
-	char *digest;
-	int digest_length;
-} KSI_DataHash;
+typedef struct KSI_DataHash_st KSI_DataHash;
 
 /**
  * The Guardtime representation of hash algorithms, necessary to calculate
@@ -200,8 +196,8 @@ int KSI_DataHasher_add(KSI_DataHasher *hasher, const unsigned char* data, size_t
  * Finalizes a hash computation.
  * \see #KSI_DataHasher_open, #KSI_DataHasher_add, #KSI_DataHasher_free
  *
- * \param[in] hasher Pointer to the hasher object.
- * \param[out] hash Pointer that will receive pointer to the hash object.
+ * \param[in] hasher	Pointer to the hasher object.
+ * \param[out] hash		Pointer that will receive pointer to the hash object.
  *
  * \return status code (\c KSI_OK, when operation succeeded, otherwise an
  * error code).
@@ -215,6 +211,94 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **hash);
  * \see #KSI_free()
  */
 void KSI_DataHash_free(KSI_DataHash *hash);
+
+/**
+ * Interneal data access method.
+ *
+ * \param[in]	hash			Data hash object.
+ * \param[out]	algorithm		Algorithm used to compute the hash.
+ * \param[out]	digest			Binary digest value.
+ * \param[out]	digest_length	Length of the digest value.
+ *
+ * \return status code (\c KSI_OK, when operation succeeded, otherwise an
+ * error code).
+ *
+ * \note The digest value returned by this function has to be freed by the
+ * programmer with #KSI_free.
+ */
+int KSI_DataHash_getData(KSI_DataHash *hash, int *algorithm, unsigned char **digest, int *digest_length);
+
+/**
+ * Constructor for #KSI_DataHash object from existing hash value.
+ * \param[in]	ctx				KSI context.
+ * \param[in]	algorithm		Algorithm used to compute the digest value.
+ * \param[in]	digest			Binary digest value.
+ * \param[in]	digest_length	Lengt of the binary digest value.
+ * \param[in]	hash			Pointer that will receive pointer to the hash object.
+ *
+ * \return status code (\c KSI_OK, when operation succeeded, otherwise an
+ * error code).
+ */
+int KSI_DataHash_fromData(KSI_CTX *ctx, int algorithm, unsigned char *digest, int digest_length, KSI_DataHash **hash);
+
+/**
+ * Reevaluates the #KSI_DataHash object with another precalculated hash value.
+ * \param[in]	algorithm		Algorithm used to compute the digest value.
+ * \param[in]	digest			Binary digest value.
+ * \param[in]	digest_length	Lengt of the binary digest value.
+ * \param[in]	hash			Pointer to the existing hash object.
+ *
+ * \return status code (\c KSI_OK, when operation succeeded, otherwise an
+ * error code).
+ */
+int KSI_DataHash_fromData_ex(int algorithm, unsigned char *digest, int digest_length, KSI_DataHash *hash);
+
+/**
+ * Encodes the data hash object as an imprtint.
+ *
+ * \param[in]	hash			Data hash object.
+ * \param[out]	imprint			Pointer that will receive pointer to the imprint.
+ * \param[out]	imprint_length	Pointer that will reveive the length of the imprint.
+ *
+ * \return status code (\c KSI_OK, when operation succeeded, otherwise an
+ * error code).
+ */
+int KSI_DataHash_getImprint(KSI_DataHash *hash, unsigned char **imprint, int *imprint_length);
+
+/**
+ * Constructor for #KSI_DataHash object from existing imprint.
+ *
+ * \param[in]	ctx				KSI context.
+ * \param[in]	imprint			Pointer to the imprint.
+ * \param[in]	imprint_length	Length of the imprint.
+ * \param[out]	hash			Pointer that will receive pointer to the data hash objet.
+ *
+ * \return status code (\c KSI_OK, when operation succeeded, otherwise an
+ * error code).
+ */
+int KSI_DataHash_fromImprint(KSI_CTX *ctx, unsigned char *imprint, int imprint_length, KSI_DataHash **hash);
+
+/**
+ * Reevaluates the existing #KSI_DataHash object.
+ *
+ * \param[in]	imprint			Pointer to hash imprint.
+ * \param[in]	imprint_length	Length of the imprint.
+ * \param[out]	hash			Pointer to the data hash object.
+ *
+ * \return status code (\c KSI_OK, when operation succeeded, otherwise an
+ * error code).
+ */
+int KSI_DataHash_fromImprint_ex(unsigned char *imprint, int imprint_length, KSI_DataHash *hash);
+
+/**
+ * Returns the hash length in bytes for the given hash algorithm id.
+ *
+ * \param[in]	hash_id		Hash algorithm id
+ *
+ * \return Length of the hash value calculated by the given hash algorithm. Returns negative value on error.
+ */
+int KSI_getHashLength(int hash_id);
+
 /**
  * Fixes hash algorithm ID: replaces default ID with the current default
  * as necessary.
