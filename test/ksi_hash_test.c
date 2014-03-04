@@ -252,6 +252,12 @@ static void TestParallelHashing(CuTest* tc) {
 	KSI_DataHasher_free(hsr2);
 }
 
+static void TestHashGetAlgByName(CuTest* tc) {
+	CuAssertIntEquals_Msg(tc, "Default algorithm", KSI_getHashAlgorithmByName("default"), KSI_HASHALG_SHA2_256);
+	CuAssertIntEquals_Msg(tc, "Sha2 algorithm", KSI_getHashAlgorithmByName("Sha2"), KSI_HASHALG_SHA2_256);
+	CuAssertIntEquals_Msg(tc, "Sha-2 algorithm", KSI_getHashAlgorithmByName("Sha-2"), KSI_HASHALG_SHA2_256);
+	CuAssertIntEquals_Msg(tc, "Sha3-256 algorithm", KSI_getHashAlgorithmByName("Sha3-256"), KSI_HASHALG_SHA3_256);
+}
 
 CuSuite* KSI_Hash_GetSuite(void) {
 	CuSuite* suite = CuSuiteNew();
@@ -264,6 +270,7 @@ CuSuite* KSI_Hash_GetSuite(void) {
 	SUITE_ADD_TEST(suite, TestSHA256GetImprint);
 	SUITE_ADD_TEST(suite, TestSHA256fromImprint);
 	SUITE_ADD_TEST(suite, TestParallelHashing);
+	SUITE_ADD_TEST(suite, TestHashGetAlgByName);
 
 	return suite;
 }

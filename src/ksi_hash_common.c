@@ -3,28 +3,32 @@
 #include "ksi_internal.h"
 #include "ksi_hash.h"
 
-#define HASH_ALGO(id, name, bitcount, trusted) {(id), (name), (bitcount), (trusted)}
+#define HASH_ALGO(id, name, bitcount, trusted, csvAlias) {(id), (name), (bitcount), (trusted), (csvAlias)}
 
 struct KSI_hashAlgorithmInfo_st {
+	/* Hash algorithm id (should mirror the array index in #KSI_hashAlgorithmInfo) */
 	int algo_id;
+	/** Upper-case name. */
 	char *name;
+	/** Hash bit count. */
 	int bitCount;
+	/** Is the hash algorithm trusted? */
 	int trusted;
-};
-
-static struct KSI_hashAlgorithmInfo_st KSI_hashAlgorithmInfo[] = {
-		HASH_ALGO(KSI_HASHALG_SHA1,			"SHA1", 		160, 1),
-		HASH_ALGO(KSI_HASHALG_SHA2_256,		"SHA-256", 		256, 1),
-		HASH_ALGO(KSI_HASHALG_RIPEMD160,	"RIPEMD-160", 	160, 1),
-		HASH_ALGO(KSI_HASHALG_SHA2_224,		"SHA2-224", 	224, 1),
-		HASH_ALGO(KSI_HASHALG_SHA2_384,		"SHA2-384", 	384, 1),
-		HASH_ALGO(KSI_HASHALG_SHA2_512,		"SHA2-512", 	512, 1),
-		HASH_ALGO(KSI_HASHALG_RIPEMD_256,	"RIPEMD-256", 	256, 1),
-		HASH_ALGO(KSI_HASHALG_SHA3_244,		"SHA3-224", 	224, 1),
-		HASH_ALGO(KSI_HASHALG_SHA3_256,		"SHA3-256", 	256, 1),
-		HASH_ALGO(KSI_HASHALG_SHA3_384,		"SHA3-384", 	384, 1),
-		HASH_ALGO(KSI_HASHALG_SHA3_512,		"SHA3-512", 	512, 1),
-		HASH_ALGO(KSI_HASHALG_SM3, 			"SM3", 			256, 1)
+	/** Comma separated upper-case aliases (no spaces) */
+	char *csvAlias;
+} KSI_hashAlgorithmInfo[] = {
+		HASH_ALGO(KSI_HASHALG_SHA1,			"SHA1", 		160, 1, "SHA-1"),
+		HASH_ALGO(KSI_HASHALG_SHA2_256,		"SHA2-256", 	256, 1, "DEFAULT,SHA2,SHA-2,SHA256,SHA-256"),
+		HASH_ALGO(KSI_HASHALG_RIPEMD160,	"RIPEMD-160", 	160, 1, "RIPEMD160"),
+		HASH_ALGO(KSI_HASHALG_SHA2_224,		"SHA2-224", 	224, 1, "SHA224,SHA-224"),
+		HASH_ALGO(KSI_HASHALG_SHA2_384,		"SHA2-384", 	384, 1, "SHA384,SHA-384"),
+		HASH_ALGO(KSI_HASHALG_SHA2_512,		"SHA2-512", 	512, 1, "SHA512,SHA-512"),
+		HASH_ALGO(KSI_HASHALG_RIPEMD_256,	"RIPEMD-256", 	256, 1, "RIPEMD256"),
+		HASH_ALGO(KSI_HASHALG_SHA3_244,		"SHA3-224", 	224, 1, ""),
+		HASH_ALGO(KSI_HASHALG_SHA3_256,		"SHA3-256", 	256, 1, ""),
+		HASH_ALGO(KSI_HASHALG_SHA3_384,		"SHA3-384", 	384, 1, ""),
+		HASH_ALGO(KSI_HASHALG_SHA3_512,		"SHA3-512", 	512, 1, ""),
+		HASH_ALGO(KSI_HASHALG_SM3, 			"SM3", 			256, 1, "SM-3")
 };
 
 /**
@@ -244,4 +248,67 @@ cleanup:
 
 	return KSI_RETURN(&err);
 
+}
+
+/**
+ *
+ */
+const char *KSI_getHashAlgorithmName(int hash_algorithm) {
+	int id = KSI_fixHashAlgorithm(hash_algorithm);
+	if (id >= 0 && id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
+		return KSI_hashAlgorithmInfo[id].name;
+	}
+	return NULL;
+}
+
+int KSI_getHashAlgorithmByName(const char *name) {
+	int i;
+	char *fuzzy = NULL;
+	char *aliases = NULL;
+	int hash_id = -1;
+	char left, right;
+	char *upperName = NULL;
+
+	if (name == NULL || !*name) goto cleanup;
+
+	upperName = KSI_calloc(strlen(name) + 1, 1);
+	if (upperName == NULL) goto cleanup;
+
+	/* Create upper-case name */
+	for (i = 0; i < strlen(name); i++) {
+		upperName[i] = toupper(name[i]);
+	}
+	upperName[i] = '\0';
+
+	for (i = 0; i < KSI_NUMBER_OF_KNOWN_HASHALGS; i++) {
+		/* Do we have a bingo? */
+		if (!strcmp(upperName, KSI_hashAlgorithmInfo[i].name)) {
+			hash_id = i;
+			goto cleanup;
+		}
+		aliases = KSI_hashAlgorithmInfo[i].csvAlias;
+
+		/* Are there any aliases defined. */
+		if (aliases == NULL || !*aliases) continue;
+
+		/* Find the alias. */
+		fuzzy = strstr(aliases, upperName);
+		if (fuzzy == NULL) continue;
+
+		/* Accept alias only with a full match. */
+		left = fuzzy == aliases ? 0 : *(fuzzy - 1);
+		right = *(fuzzy + strlen(upperName));
+		if ((!left || left == ',') && (!right || right == ',')) {
+			hash_id = i;
+			goto cleanup;
+		}
+	}
+
+cleanup:
+
+	KSI_free(upperName);
+	KSI_nofree(fuzzy);
+	KSI_nofree(aliases);
+
+	return hash_id;
 }

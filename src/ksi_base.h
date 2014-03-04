@@ -314,6 +314,26 @@ int KSI_fixHashAlgorithm(int hash_id);
  */
 int KSI_isTrusteddHashAlgorithm(int hash_id);
 
+/**
+ * Returns a pointer to constant string containing the name of the hash algorithm. Returns NULL if
+ * the algorithm is unknown.
+ *
+ * \param[in]	hash_algorithm	The hash algorithm id.
+ *
+ * \return Name of the algorithm or NULL on error.
+ */
+const char *KSI_getHashAlgorithmName(int hash_algorithm);
+
+/**
+ * Returns the hash algorithm id for the given name.
+ *
+ * \param[in]	name	Hash algorithm name.
+ *
+ * \return Hash algorithm id or -1 on error.
+ */
+int KSI_getHashAlgorithmByName(const char *name);
+
+
 #ifdef __cplusplus
 }
 #endif
