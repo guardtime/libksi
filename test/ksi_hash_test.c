@@ -16,7 +16,7 @@ static void TestSHA256(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA256, &hsr);
+	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA2_256, &hsr);
 	CuAssert(tc, "Failed to open DataHasher", res == KSI_OK && hsr != NULL);
 
 	res = KSI_DataHasher_add(hsr, data, strlen(data));
@@ -41,7 +41,7 @@ static void TestSHA256Parts(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA256, &hsr);
+	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA2_256, &hsr);
 	CuAssert(tc, "Failed to open DataHasher", res == KSI_OK && hsr != NULL);
 
 	while (data[i] != NULL) {
@@ -67,7 +67,7 @@ static void TestSHA256Reset(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA256, &hsr);
+	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA2_256, &hsr);
 	CuAssert(tc, "Failed to open DataHasher", res == KSI_OK && hsr != NULL);
 
 	res = KSI_DataHasher_add(hsr, "TEST", strlen("TEST"));
@@ -97,7 +97,7 @@ static void TestSHA256Empty(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA256, &hsr);
+	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA2_256, &hsr);
 	CuAssert(tc, "Failed to open DataHasher", res == KSI_OK && hsr != NULL);
 
 	res = KSI_DataHasher_add(hsr, "TEST", strlen("TEST"));
@@ -128,7 +128,7 @@ static void TestSHA256GetData(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA256, &hsr);
+	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA2_256, &hsr);
 	CuAssert(tc, "Failed to open DataHasher", res == KSI_OK && hsr != NULL);
 
 	res = KSI_DataHasher_close(hsr, &hsh);
@@ -136,7 +136,7 @@ static void TestSHA256GetData(CuTest* tc) {
 
 	res = KSI_DataHash_getData(hsh, &algorithm, &digest, &digest_length);
 	CuAssert(tc, "Failed to get data from data hash object.", res == KSI_OK && digest != NULL);
-	CuAssertIntEquals_Msg(tc, "Algorithm", KSI_HASHALG_SHA256, algorithm);
+	CuAssertIntEquals_Msg(tc, "Algorithm", KSI_HASHALG_SHA2_256, algorithm);
 	CuAssertIntEquals_Msg(tc, "Digest lenght", sizeof(expected), digest_length);
 
 	CuAssertIntEquals_Msg(tc, "Digest lenght", sizeof(expected), hsh->digest_length);
@@ -151,13 +151,13 @@ static void TestSHA256GetImprint(CuTest* tc) {
 	int res;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
-	unsigned char expected[] = {KSI_HASHALG_SHA256, 0xe3, 0xb0, 0xc4, 0x42, 0x98, 0xfc, 0x1c, 0x14, 0x9a, 0xfb, 0xf4, 0xc8, 0x99, 0x6f, 0xb9, 0x24, 0x27, 0xae, 0x41, 0xe4, 0x64, 0x9b, 0x93, 0x4c, 0xa4, 0x95, 0x99, 0x1b, 0x78, 0x52, 0xb8, 0x55};
+	unsigned char expected[] = {KSI_HASHALG_SHA2_256, 0xe3, 0xb0, 0xc4, 0x42, 0x98, 0xfc, 0x1c, 0x14, 0x9a, 0xfb, 0xf4, 0xc8, 0x99, 0x6f, 0xb9, 0x24, 0x27, 0xae, 0x41, 0xe4, 0x64, 0x9b, 0x93, 0x4c, 0xa4, 0x95, 0x99, 0x1b, 0x78, 0x52, 0xb8, 0x55};
 	unsigned char *imprint = NULL;
 	int imprint_length;
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA256, &hsr);
+	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA2_256, &hsr);
 	CuAssert(tc, "Failed to open DataHasher", res == KSI_OK && hsr != NULL);
 
 	res = KSI_DataHasher_close(hsr, &hsh);
@@ -165,7 +165,7 @@ static void TestSHA256GetImprint(CuTest* tc) {
 
 	res = KSI_DataHash_getImprint(hsh, &imprint, &imprint_length);
 	CuAssert(tc, "Failed to get imprint from data hash object.", res == KSI_OK && imprint != NULL);
-	CuAssertIntEquals_Msg(tc, "Algorithm", KSI_HASHALG_SHA256, *imprint);
+	CuAssertIntEquals_Msg(tc, "Algorithm", KSI_HASHALG_SHA2_256, *imprint);
 	CuAssertIntEquals_Msg(tc, "Imprint lenght", sizeof(expected), imprint_length);
 
 	CuAssertIntEquals_Msg(tc, "Imprint lenght", sizeof(expected), imprint_length);
@@ -179,8 +179,8 @@ static void TestSHA256GetImprint(CuTest* tc) {
 static void TestSHA256fromImprint(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
-	unsigned char unexpected[] = {KSI_HASHALG_SHA256, 0xe3, 0xb0, 0xc4, 0x42, 0x98, 0xfc, 0x1c, 0x14, 0x9a, 0xfb, 0xf4, 0xc8, 0x99, 0x6f, 0xb9, 0x24, 0x27, 0xae, 0x41, 0xe4, 0x64, 0x9b, 0x93, 0x4c, 0xa4, 0x95, 0x99, 0x1b, 0x78, 0x52, 0xb8, 0x55};
-	unsigned char expected[] = {KSI_HASHALG_SHA256, 0xc4, 0xbb, 0xcb, 0x1f, 0xbe, 0xc9, 0x9d, 0x65, 0xbf, 0x59, 0xd8, 0x5c, 0x8c, 0xb6, 0x2e, 0xe2, 0xdb, 0x96, 0x3f, 0x0f, 0xe1, 0x06, 0xf4, 0x83, 0xd9, 0xaf, 0xa7, 0x3b, 0xd4, 0xe3, 0x9a, 0x8a};
+	unsigned char unexpected[] = {KSI_HASHALG_SHA2_256, 0xe3, 0xb0, 0xc4, 0x42, 0x98, 0xfc, 0x1c, 0x14, 0x9a, 0xfb, 0xf4, 0xc8, 0x99, 0x6f, 0xb9, 0x24, 0x27, 0xae, 0x41, 0xe4, 0x64, 0x9b, 0x93, 0x4c, 0xa4, 0x95, 0x99, 0x1b, 0x78, 0x52, 0xb8, 0x55};
+	unsigned char expected[] = {KSI_HASHALG_SHA2_256, 0xc4, 0xbb, 0xcb, 0x1f, 0xbe, 0xc9, 0x9d, 0x65, 0xbf, 0x59, 0xd8, 0x5c, 0x8c, 0xb6, 0x2e, 0xe2, 0xdb, 0x96, 0x3f, 0x0f, 0xe1, 0x06, 0xf4, 0x83, 0xd9, 0xaf, 0xa7, 0x3b, 0xd4, 0xe3, 0x9a, 0x8a};
 
 	unsigned char *imprint = NULL;
 	int imprint_length;
@@ -191,11 +191,11 @@ static void TestSHA256fromImprint(CuTest* tc) {
 	CuAssert(tc, "Failed to get data hash from imprint.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_DataHash_fromImprint_ex(expected, sizeof(expected), hsh);
-	CuAssert(tc, "Failed to get data hash from imprint to existing data hash object.", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Failed to get data hash from imprint to existing data hash object.", res == KSI_OK);
 
 	res = KSI_DataHash_getImprint(hsh, &imprint, &imprint_length);
 	CuAssert(tc, "Failed to get imprint from data hash object.", res == KSI_OK && imprint != NULL);
-	CuAssertIntEquals_Msg(tc, "Algorithm", KSI_HASHALG_SHA256, *imprint);
+	CuAssertIntEquals_Msg(tc, "Algorithm", KSI_HASHALG_SHA2_256, *imprint);
 	CuAssertIntEquals_Msg(tc, "Imprint lenght", sizeof(expected), imprint_length);
 
 	CuAssertIntEquals_Msg(tc, "Imprint lenght", sizeof(expected), imprint_length);
@@ -221,7 +221,7 @@ static void TestParallelHashing(CuTest* tc) {
 	res = KSI_DataHasher_open(ctx, KSI_HASHALG_RIPEMD160, &hsr1);
 	CuAssert(tc, "Failed to open hasher", res == KSI_OK && hsr1 != NULL);
 
-	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA512, &hsr2);
+	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA2_512, &hsr2);
 	CuAssert(tc, "Failed to open hasher", res == KSI_OK && hsr2 != NULL);
 
 	while (*ptr) {
@@ -244,7 +244,7 @@ static void TestParallelHashing(CuTest* tc) {
 	CuAssert(tc, "Unable to close hasher", res == KSI_OK && hsh2 != NULL);
 	CuAssertIntEquals_Msg(tc, "Digest length", sizeof(exp2), hsh2->digest_length);
 	CuAssert(tc, "Digest mismatch", !memcmp(exp2, hsh2->digest, sizeof(exp2)));
-	CuAssertIntEquals_Msg(tc, "Algorithm", KSI_HASHALG_SHA512, hsh2->algorithm);
+	CuAssertIntEquals_Msg(tc, "Algorithm", KSI_HASHALG_SHA2_512, hsh2->algorithm);
 
 	KSI_DataHash_free(hsh1);
 	KSI_DataHash_free(hsh2);

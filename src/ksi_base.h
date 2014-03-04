@@ -37,6 +37,7 @@ enum KSI_StatusCode {
 	 * the verification policy.
 	 */
 	KSI_UNTRUSTED_HASH_ALGORITHM,
+	KSI_UNAVAILABLE_HASH_ALGORITHM,
 	/**
 	 * Buffer too small to perform operation.
 	 */
@@ -86,7 +87,7 @@ int KSI_ERR_getStatus(KSI_CTX *ctx);
 /**
  * Dump error stack trace to stream
  */
-int KSI_CTX_statusDump(KSI_CTX *ctx, FILE *f);
+int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f);
 
 /****************
  * LOG FUNCTIONS.
@@ -126,34 +127,37 @@ typedef struct KSI_DataHash_st KSI_DataHash;
 
 /**
  * The Guardtime representation of hash algorithms, necessary to calculate
- * instances of #KSI_DataHash.
- *
- * The currently supported algorithms are:
- * <table>
- * <tr><th>Name</th><th>OID</th><th>GT ID</th><th>digest size (bytes)</th></tr>
- * <tr><td>SHA1</td><td>1.3.14.3.2.26</td><td>0</td><td>20</td></tr>
- * <tr><td>SHA224</td><td>2.16.840.1.101.3.4.2.4</td><td>3</td><td>28</td></tr>
- * <tr><td>SHA256</td><td>2.16.840.1.101.3.4.2.1</td><td>1</td><td>32</td></tr>
- * <tr><td>SHA384</td><td>2.16.840.1.101.3.4.2.2</td><td>4</td><td>48</td></tr>
- * <tr><td>SHA512</td><td>2.16.840.1.101.3.4.2.3</td><td>5</td><td>64</td></tr>
- * <tr><td>RIPEMD160</td><td>1.3.36.3.2.1</td><td>2</td><td>20</td></tr>
- * </table>
- *
- * Names are as in the ASN.1 OID registry as defined in ITU-T Rec. X.660 / ISO/IEC 9834 series.
+ * instances of #KSI_DataHasher and #KSI_DataHash.
  */
 enum KSI_HashAlgorithm {
 	/** The SHA-1 algorithm. */
 	KSI_HASHALG_SHA1 = 0,
 	/** The SHA-256 algorithm. */
-	KSI_HASHALG_SHA256,
+	KSI_HASHALG_SHA2_256,
 	/** The RIPEMD-160 algorithm. */
 	KSI_HASHALG_RIPEMD160,
 	/** The SHA-224 algorithm. */
-	KSI_HASHALG_SHA224,
+	KSI_HASHALG_SHA2_224,
 	/** The SHA-384 algorithm. */
-	KSI_HASHALG_SHA384,
+	KSI_HASHALG_SHA2_384,
 	/** The SHA-512 algorithm. */
-	KSI_HASHALG_SHA512,
+	KSI_HASHALG_SHA2_512,
+	/** The RIPEMD-256 algorithm. */
+	KSI_HASHALG_RIPEMD_256,
+	/** The SHA3-244 algorithm. */
+	KSI_HASHALG_SHA3_244,
+	/** The SHA3-256 algorithm. */
+	KSI_HASHALG_SHA3_256,
+	/** The SHA3-384 algorithm. */
+	KSI_HASHALG_SHA3_384,
+	/** The SHA3-512 algoritm */
+	KSI_HASHALG_SHA3_512,
+	/** The SM3 algorithm.*/
+	KSI_HASHALG_SM3,
+
+	/* Number of known hash algorithms. */
+	KSI_NUMBER_OF_KNOWN_HASHALGS,
+
 	/** Use default algorithm. */
 	KSI_HASHALG_DEFAULT = -1
 };
@@ -306,9 +310,9 @@ int KSI_getHashLength(int hash_id);
 int KSI_fixHashAlgorithm(int hash_id);
 
 /**
- * Is \p hash_id hash algorithm supported?
+ * Is \p hash_id hash algorithm trusted?
  */
-int KSI_isSupportedHashAlgorithm(int hash_id);
+int KSI_isTrusteddHashAlgorithm(int hash_id);
 
 #ifdef __cplusplus
 }

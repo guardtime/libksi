@@ -3,11 +3,28 @@
 #include "ksi_internal.h"
 #include "ksi_hash.h"
 
-struct KSI_algorithm_st {
+#define HASH_ALGO(id, name, bitcount, trusted) {(id), (name), (bitcount), (trusted)}
+
+struct KSI_hashAlgorithmInfo_st {
 	int algo_id;
 	char *name;
 	int bitCount;
-	int status;
+	int trusted;
+};
+
+static struct KSI_hashAlgorithmInfo_st KSI_hashAlgorithmInfo[] = {
+		HASH_ALGO(KSI_HASHALG_SHA1,			"SHA1", 		160, 1),
+		HASH_ALGO(KSI_HASHALG_SHA2_256,		"SHA-256", 		256, 1),
+		HASH_ALGO(KSI_HASHALG_RIPEMD160,	"RIPEMD-160", 	160, 1),
+		HASH_ALGO(KSI_HASHALG_SHA2_224,		"SHA2-224", 	224, 1),
+		HASH_ALGO(KSI_HASHALG_SHA2_384,		"SHA2-384", 	384, 1),
+		HASH_ALGO(KSI_HASHALG_SHA2_512,		"SHA2-512", 	512, 1),
+		HASH_ALGO(KSI_HASHALG_RIPEMD_256,	"RIPEMD-256", 	256, 1),
+		HASH_ALGO(KSI_HASHALG_SHA3_244,		"SHA3-224", 	224, 1),
+		HASH_ALGO(KSI_HASHALG_SHA3_256,		"SHA3-256", 	256, 1),
+		HASH_ALGO(KSI_HASHALG_SHA3_384,		"SHA3-384", 	384, 1),
+		HASH_ALGO(KSI_HASHALG_SHA3_512,		"SHA3-512", 	512, 1),
+		HASH_ALGO(KSI_HASHALG_SM3, 			"SM3", 			256, 1)
 };
 
 /**
@@ -32,7 +49,7 @@ void KSI_DataHash_free(KSI_DataHash *hash) {
  */
 int KSI_fixHashAlgorithm(int hash_id) {
 	if (hash_id == KSI_HASHALG_DEFAULT) {
-		return KSI_HASHALG_SHA256;
+		return KSI_HASHALG_SHA2_256;
 	}
 	return hash_id;
 }
@@ -40,41 +57,20 @@ int KSI_fixHashAlgorithm(int hash_id) {
 /**
  *
  */
-int KSI_isSupportedHashAlgorithm(int hash_id)
-{
-	return
-#ifndef OPENSSL_NO_SHA
-		(hash_id == KSI_HASHALG_SHA1) ||
-#endif
-		(hash_id == KSI_HASHALG_SHA224) ||
-		(hash_id == KSI_HASHALG_SHA256) ||
-#ifndef OPENSSL_NO_SHA512
-		(hash_id == KSI_HASHALG_SHA384) ||
-		(hash_id == KSI_HASHALG_SHA512) ||
-#endif
-#ifndef OPENSSL_NO_RIPEMD
-		(hash_id == KSI_HASHALG_RIPEMD160) ||
-#endif
-		(hash_id == KSI_HASHALG_DEFAULT);
+int KSI_isTrusteddHashAlgorithm(int hash_id) {
+	int id = KSI_fixHashAlgorithm(hash_id);
+	if (id >= 0 && id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
+		return KSI_hashAlgorithmInfo[id].trusted;
+	}
+	return 0;
 }
 
 int KSI_getHashLength(int hash_id) {
-	switch (KSI_fixHashAlgorithm(hash_id)) {
-		case KSI_HASHALG_SHA1:
-			return 20;
-		case KSI_HASHALG_SHA224:
-			return 28;
-		case KSI_HASHALG_SHA256:
-			return 32;
-		case KSI_HASHALG_SHA384:
-			return 48;
-		case KSI_HASHALG_SHA512:
-			return 64;
-		case KSI_HASHALG_RIPEMD160:
-			return 20;
-		default:
-			return -1;
+	int id = KSI_fixHashAlgorithm(hash_id);
+	if (id >= 0 && id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
+		return (KSI_hashAlgorithmInfo[id].bitCount) >> 3;
 	}
+	return -1;
 }
 
 /**
@@ -158,7 +154,6 @@ int KSI_DataHash_fromData_ex(int algorithm, unsigned char *digest, int digest_le
 	KSI_PRE(&err, digest != NULL) goto cleanup;
 
 	KSI_BEGIN(hash->ctx, &err);
-
 	if (KSI_getHashLength(algorithm) != digest_length) {
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Digest length does not match with algorithm.");
 		goto cleanup;
@@ -233,5 +228,20 @@ int KSI_DataHash_fromImprint(KSI_CTX *ctx, unsigned char *imprint, int imprint_l
  *
  */
 int KSI_DataHash_fromImprint_ex(unsigned char *imprint, int imprint_length, KSI_DataHash *hash) {
-	return KSI_DataHash_fromData_ex(*imprint, imprint + 1, imprint_length - 1, hash);
+	KSI_ERR err;
+	int res;
+	KSI_PRE(&err, hash != NULL) goto cleanup;
+	KSI_PRE(&err, imprint != NULL) goto cleanup;
+
+	KSI_BEGIN(hash->ctx, &err);
+
+	res = KSI_DataHash_fromData_ex(*imprint, imprint + 1, imprint_length - 1, hash);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+
 }

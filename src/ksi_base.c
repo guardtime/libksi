@@ -12,14 +12,26 @@ const char *KSI_getErrorString(int statusCode) {
 			return "No errors";
 		case KSI_INVALID_ARGUMENT:
 			return "Invalid argument";
-		case KSI_OUT_OF_MEMORY:
-			return "Out of memory";
+		case KSI_INVALID_FORMAT:
+			return "Invalid format";
+		case KSI_UNTRUSTED_HASH_ALGORITHM:
+			return "The hash algorithm is not trusted";
+		case KSI_UNAVAILABLE_HASH_ALGORITHM:
+			return "The hash algorith is not implemented or unavailable";
 		case KSI_BUFFER_OVERFLOW:
 			return "Buffer overflow";
+		case KSI_TLV_PAYLOAD_TYPE_MISMATCH:
+			return "TLV payload type mismatch";
+		case KSI_OUT_OF_MEMORY:
+			return "Out of memory";
 		case KSI_IO_ERROR:
 			return "I/O error";
+		case KSI_CRYPTO_FAILURE:
+			return "Crypto failure";
+		case KSI_UNKNOWN_ERROR:
+			return "Unknown internal error";
 		default:
-			return "Unknown error";
+			return "Unknown status code";
 	}
 }
 

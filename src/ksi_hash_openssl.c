@@ -17,14 +17,14 @@ static const EVP_MD *hashAlgorithmToEVP(int hash_id)
 		case KSI_HASHALG_RIPEMD160:
 			return EVP_ripemd160();
 #endif
-		case KSI_HASHALG_SHA224:
+		case KSI_HASHALG_SHA2_224:
 			return EVP_sha224();
-		case KSI_HASHALG_SHA256:
+		case KSI_HASHALG_SHA2_256:
 			return EVP_sha256();
 #ifndef OPENSSL_NO_SHA512
-		case KSI_HASHALG_SHA384:
+		case KSI_HASHALG_SHA2_384:
 			return EVP_sha384();
-		case KSI_HASHALG_SHA512:
+		case KSI_HASHALG_SHA2_512:
 			return EVP_sha512();
 #endif
 		default:
@@ -88,8 +88,8 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_algorithm, KSI_DataHasher **hashe
 		goto cleanup;
 	}
 
-	if (!KSI_isSupportedHashAlgorithm(hash_algorithm)) {
-		KSI_FAIL(&err, KSI_UNTRUSTED_HASH_ALGORITHM, NULL);
+	if (hashAlgorithmToEVP(hash_algorithm) == NULL) {
+		KSI_FAIL(&err, KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
 		goto cleanup;
 	}
 
