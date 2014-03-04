@@ -276,7 +276,11 @@ int KSI_getHashAlgorithmByName(const char *name) {
 
 	/* Create upper-case name */
 	for (i = 0; i < strlen(name); i++) {
-		upperName[i] = toupper(name[i]);
+		if (name[i] == '_') {
+			upperName[i] = '-';
+		} else {
+			upperName[i] = toupper(name[i]);
+		}
 	}
 	upperName[i] = '\0';
 

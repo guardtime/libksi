@@ -253,11 +253,13 @@ static void TestParallelHashing(CuTest* tc) {
 }
 
 static void TestHashGetAlgByName(CuTest* tc) {
-	CuAssertIntEquals_Msg(tc, "Default algorithm", KSI_getHashAlgorithmByName("default"), KSI_HASHALG_SHA2_256);
-	CuAssertIntEquals_Msg(tc, "Sha2 algorithm", KSI_getHashAlgorithmByName("Sha2"), KSI_HASHALG_SHA2_256);
-	CuAssertIntEquals_Msg(tc, "Sha-2 algorithm", KSI_getHashAlgorithmByName("Sha-2"), KSI_HASHALG_SHA2_256);
-	CuAssertIntEquals_Msg(tc, "Sha3-256 algorithm", KSI_getHashAlgorithmByName("Sha3-256"), KSI_HASHALG_SHA3_256);
-	CuAssertIntEquals_Msg(tc, "Sha3 algorithm", KSI_getHashAlgorithmByName("SHA3"), -1);
+	CuAssertIntEquals_Msg(tc, "Default algorithm", KSI_HASHALG_SHA2_256, KSI_getHashAlgorithmByName("default"));
+	CuAssertIntEquals_Msg(tc, "Sha2 algorithm", KSI_HASHALG_SHA2_256, KSI_getHashAlgorithmByName("Sha2"));
+	CuAssertIntEquals_Msg(tc, "Sha-2 algorithm", KSI_HASHALG_SHA2_256, KSI_getHashAlgorithmByName("Sha-2"));
+	CuAssertIntEquals_Msg(tc, "Sha3-256 algorithm", KSI_HASHALG_SHA3_256, KSI_getHashAlgorithmByName("Sha3-256"));
+	CuAssertIntEquals_Msg(tc, "Sha3 algorithm", -1, KSI_getHashAlgorithmByName("SHA3"));
+	CuAssertIntEquals_Msg(tc, "Sha3_384 algorithm", KSI_HASHALG_SHA3_384, KSI_getHashAlgorithmByName("Sha3_384"));
+
 }
 
 CuSuite* KSI_Hash_GetSuite(void) {
