@@ -259,6 +259,7 @@ static void TestHashGetAlgByName(CuTest* tc) {
 	CuAssertIntEquals_Msg(tc, "Sha3-256 algorithm", KSI_HASHALG_SHA3_256, KSI_getHashAlgorithmByName("Sha3-256"));
 	CuAssertIntEquals_Msg(tc, "Sha3 algorithm", -1, KSI_getHashAlgorithmByName("SHA3"));
 	CuAssertIntEquals_Msg(tc, "Sha3_384 algorithm", KSI_HASHALG_SHA3_384, KSI_getHashAlgorithmByName("Sha3_384"));
+	CuAssertIntEquals_Msg(tc, "SHA2,SHA-2 algorithm", -1, KSI_getHashAlgorithmByName("SHA2,SHA-2"));
 
 }
 
