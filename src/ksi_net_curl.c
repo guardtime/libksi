@@ -9,9 +9,9 @@ static size_t receiveDataFromLibCurl(void *ptr, size_t size, size_t nmemb,
 {
         size_t res = 0;
         unsigned char *tmp_buffer;
-        KSI_NET_Handle *handle;
+        KSI_NetHandle *handle;
 
-        handle = (KSI_NET_Handle *)stream;
+        handle = (KSI_NetHandle *)stream;
         tmp_buffer = KSI_realloc(handle->response,
                         handle->response_length + size * nmemb);
         if (tmp_buffer != NULL) {
@@ -24,7 +24,7 @@ static size_t receiveDataFromLibCurl(void *ptr, size_t size, size_t nmemb,
         return res;
 }
 
-static int curlReceive(KSI_NET_Handle *handle) {
+static int curlReceive(KSI_NetHandle *handle) {
 	KSI_ERR err;
 	int res;
 	char curlErr[CURL_ERROR_SIZE];
@@ -61,7 +61,7 @@ cleanup:
 }
 
 
-static int curlSend(KSI_NET_Handle *handle) {
+static int curlSend(KSI_NetHandle *handle) {
 	KSI_ERR err;
 	CURL *curl = NULL;
 
@@ -130,7 +130,9 @@ void KSI_NET_global_cleanup(void) {
 	curl_global_cleanup();
 }
 
-
+/**
+ *
+ */
 int KSI_NET_CURL(KSI_CTX *ctx) {
 	KSI_ERR err;
 

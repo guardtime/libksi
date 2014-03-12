@@ -71,7 +71,7 @@ void dumpHex(unsigned char *data, int data_len) {
 int KSI_sign(KSI_DataHash *hsh, KSI_TLV **signature) {
 	KSI_ERR err;
 	int res;
-	KSI_NET_Handle *handle = NULL;
+	KSI_NetHandle *handle = NULL;
 
 	unsigned char *req = NULL;
 	int req_len = 0;
@@ -89,10 +89,10 @@ int KSI_sign(KSI_DataHash *hsh, KSI_TLV **signature) {
 
 	KSI_LOG_debugBlob(hsh->ctx, "Request: ", req, req_len);
 
-	res = KSI_Transport_sendRequest(hsh->ctx, hsh->ctx->conf.net.urlSigner, req, req_len, &handle);
+	res = KSI_NET_sendRequest(hsh->ctx, hsh->ctx->conf.net.urlSigner, req, req_len, &handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_Transport_getResponse(handle, &resp, &resp_len, 0);
+	res = KSI_NET_getResponse(handle, &resp, &resp_len, 0);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_LOG_debugBlob(hsh->ctx, "Response: ", resp, resp_len);
@@ -101,7 +101,7 @@ int KSI_sign(KSI_DataHash *hsh, KSI_TLV **signature) {
 
 cleanup:
 
-	KSI_NET_Handle_free(handle);
+	KSI_NetHandle_free(handle);
 	KSI_free(req);
 
 	return KSI_RETURN(&err);

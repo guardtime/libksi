@@ -1,11 +1,11 @@
-#ifndef KSI_TRANSPORT_H_
-#define KSI_TRANSPORT_H_
+#ifndef KSI_NET_H_
+#define KSI_NET_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct KSI_NET_Handle_st {
+struct KSI_NetHandle_st {
 	/** KSI context. */
 	KSI_CTX *ctx;
 	/** Request destination. */
@@ -21,7 +21,7 @@ struct KSI_NET_Handle_st {
 
 	void (*netCtx_free)(void *);
 
-	int (*readResponse)(KSI_NET_Handle *);
+	int (*readResponse)(KSI_NetHandle *);
 
 	/** Addidtional context for the trasnport layer. */
 	void *netCtx;
@@ -31,4 +31,4 @@ struct KSI_NET_Handle_st {
 }
 #endif
 
-#endif /* KSI_TRANSPORT_H_ */
+#endif /* KSI_NET_H_ */

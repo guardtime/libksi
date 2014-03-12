@@ -62,7 +62,7 @@ struct KSI_CTX_st {
 		void (*providerCleanup)(void *);
 
 		/** Function for sending requests. This needs to be non blocking. */
-		int (*sendRequest)(KSI_NET_Handle *);
+		int (*sendRequest)(KSI_NetHandle *);
 
 		/** Dedicated context for the net provider */
 		void *poviderCtx;

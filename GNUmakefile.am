@@ -1,4 +1,4 @@
-SUBDIRS = src test test/util
+SUBDIRS = src test
 
 test: all
 	./test/runner

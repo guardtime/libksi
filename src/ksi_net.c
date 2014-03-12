@@ -6,13 +6,13 @@
 /**
  *
  */
-static int KSI_NET_Handle_new(KSI_CTX *ctx, KSI_NET_Handle **handle) {
+static int KSI_NetHandle_new(KSI_CTX *ctx, KSI_NetHandle **handle) {
 	KSI_ERR err;
-	KSI_NET_Handle *tmp = NULL;
+	KSI_NetHandle *tmp = NULL;
 
 	KSI_BEGIN(ctx, &err);
 
-	tmp = KSI_new(KSI_NET_Handle);
+	tmp = KSI_new(KSI_NetHandle);
 	if (tmp == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
@@ -33,7 +33,7 @@ static int KSI_NET_Handle_new(KSI_CTX *ctx, KSI_NET_Handle **handle) {
 
 cleanup:
 
-	KSI_NET_Handle_free(tmp);
+	KSI_NetHandle_free(tmp);
 
 	return KSI_RETURN(&err);
 }
@@ -41,7 +41,7 @@ cleanup:
 /**
  *
  */
-void KSI_NET_Handle_free(KSI_NET_Handle *handle) {
+void KSI_NetHandle_free(KSI_NetHandle *handle) {
 	if (handle != NULL) {
 		handle->netCtx_free(handle->netCtx);
 		KSI_free(handle->request);
@@ -54,9 +54,9 @@ void KSI_NET_Handle_free(KSI_NET_Handle *handle) {
 /**
  *
  */
-int KSI_Transport_sendRequest(KSI_CTX *ctx, const char *url, const unsigned char *request, int request_length, KSI_NET_Handle **handle) {
+int KSI_NET_sendRequest(KSI_CTX *ctx, const char *url, const unsigned char *request, int request_length, KSI_NetHandle **handle) {
 	KSI_ERR err;
-	KSI_NET_Handle *tmp = NULL;
+	KSI_NetHandle *tmp = NULL;
 	int res;
 	int len;
 
@@ -68,7 +68,7 @@ int KSI_Transport_sendRequest(KSI_CTX *ctx, const char *url, const unsigned char
 	KSI_BEGIN(ctx, &err);
 
 	/* Create handle */
-	res = KSI_NET_Handle_new(ctx, &tmp);
+	res = KSI_NetHandle_new(ctx, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Copy url. */
@@ -98,12 +98,12 @@ int KSI_Transport_sendRequest(KSI_CTX *ctx, const char *url, const unsigned char
 
 cleanup:
 
-	KSI_NET_Handle_free(tmp);
+	KSI_NetHandle_free(tmp);
 
 	return KSI_RETURN(&err);
 }
 
-int KSI_Transport_getResponse(KSI_NET_Handle *handle, unsigned char **response, int *response_length, int copy) {
+int KSI_NET_getResponse(KSI_NetHandle *handle, unsigned char **response, int *response_length, int copy) {
 	KSI_ERR err;
 	unsigned char *tmp = NULL;
 	int res;
@@ -137,7 +137,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-void KSI_NET_Provider_free(KSI_CTX *ctx) {
+void KSI_NetProvider_free(KSI_CTX *ctx) {
 	if (ctx->netProvider.providerCleanup != NULL) {
 		ctx->netProvider.providerCleanup(ctx->netProvider.poviderCtx);
 	}

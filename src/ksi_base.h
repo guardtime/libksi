@@ -353,15 +353,13 @@ int KSI_getHashAlgorithmByName(const char *name);
 /** Transport Providers */
 int KSI_NET_CURL(KSI_CTX *ctx);
 
-typedef struct KSI_NET_Handle_st KSI_NET_Handle;
+typedef struct KSI_NetHandle_st KSI_NetHandle;
 
-int KSI_Transport_sendRequest(KSI_CTX *ctx, const char *url, const unsigned char *request, int request_length, KSI_NET_Handle **handle);
+int KSI_NET_sendRequest(KSI_CTX *ctx, const char *url, const unsigned char *request, int request_length, KSI_NetHandle **handle);
 
-int KSI_Transport_isReady(KSI_NET_Handle *handle);
+int KSI_NET_getResponse(KSI_NetHandle *handle, unsigned char **response, int *response_length, int copy);
 
-int KSI_Transport_getResponse(KSI_NET_Handle *handle, unsigned char **response, int *response_length, int copy);
-
-void KSI_NET_Handle_free(KSI_NET_Handle *heandle);
+void KSI_NetHandle_free(KSI_NetHandle *heandle);
 
 #ifdef __cplusplus
 }

@@ -16,6 +16,7 @@ if test ! -z "$with_openssl" ; then
 fi
 
 AC_CHECK_LIB([crypto], [SHA256_Init], [], [AC_MSG_FAILURE([Could not find OpenSSL 0.9.8+ libraries.])])
+AC_CHECK_LIB([curl], [curl_easy_init], [], [AC_MSG_FAILURE([Could nod find Curl libraries.])])
 
 # Checks for header files.
 #AC_CHECK_HEADER([stdint.h stdlib.h string.h gt_base.h gt_http.h])
@@ -26,5 +27,5 @@ AC_ARG_WITH(unit-test-xml,
 
 AC_DEFINE_UNQUOTED(UNIT_TEST_OUTPUT_XML, "$with_unit_test_xml", [Location of the unit test xml results.])
 
-AC_CONFIG_FILES(GNUmakefile src/GNUmakefile test/GNUmakefile test/util/GNUmakefile)
+AC_CONFIG_FILES(GNUmakefile src/GNUmakefile test/GNUmakefile)
 AC_OUTPUT
