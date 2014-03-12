@@ -27,6 +27,8 @@ static void TestSHA256(CuTest* tc) {
 	CuAssertIntEquals_Msg(tc, "Digest lenght", sizeof(expected), hsh->digest_length);
 	CuAssert(tc, "Digest value mismatch", !memcmp(expected, hsh->digest, hsh->digest_length));
 
+	CuAssert(tc, "Hash object does not have correct context.", hsh->ctx == hsr->ctx);
+
 	KSI_DataHasher_free(hsr);
 	KSI_DataHash_free(hsh);
 }

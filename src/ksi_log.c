@@ -5,6 +5,7 @@
 
 static const char *level2str(int level) {
 	switch (level) {
+		case KSI_LOG_TRACE: return "TRACE";
 		case KSI_LOG_DEBUG: return "DEBUG";
 		case KSI_LOG_WARN: return "WARN";
 		case KSI_LOG_INFO: return "INFO";
@@ -57,6 +58,7 @@ int KSI_LOG_##suffix(KSI_CTX *ctx, char *format, ...) { \
 	return res; \
 }
 
+KSI_LOG_FN(trace, TRACE);
 KSI_LOG_FN(debug, DEBUG);
 KSI_LOG_FN(warn, WARN);
 KSI_LOG_FN(info, INFO);
@@ -140,4 +142,32 @@ cleanup:
 	if (f != NULL) fclose(f);
 
 	return KSI_ERR_apply(&err);
+}
+
+int KSI_LOG_debugBlob(KSI_CTX *ctx, const char *prefix, const unsigned char *data, int data_len) {
+	int res = KSI_UNKNOWN_ERROR;
+	char *logStr = NULL;
+	int logStr_size = 0;
+	int logStr_len = 0;
+	int i;
+
+	logStr_size = data_len * 2 + 1;
+
+	logStr = KSI_calloc(logStr_size, 1);
+	if (logStr == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	for (i = 0; i < data_len; i++) {
+		logStr_len += snprintf(logStr + logStr_len, logStr_size - logStr_len, "%02x", data[i]);
+	}
+
+	res = KSI_LOG_debug(ctx, "%s: %s", prefix, logStr);
+
+cleanup:
+
+	KSI_free(logStr);
+
+	return res;
 }

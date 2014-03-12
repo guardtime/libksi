@@ -14,13 +14,16 @@ static KSI_RDR *newReader(KSI_CTX *ctx, KSI_IO_Type ioType) {
 	rdr->offset = 0;
 
 cleanup:
+
 	return rdr;
 }
 
-int KSI_RDR_fromFile(KSI_CTX *ctx, const char *fileName, const char *flags, KSI_RDR **rdr) {
+int KSI_RDR_fromStream(KSI_CTX *ctx, FILE *file, KSI_RDR **rdr) {
 	KSI_ERR err;
 	KSI_RDR *reader = NULL;
-	FILE *file = NULL;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, file != NULL) goto cleanup;
 
 	KSI_BEGIN(ctx, &err);
 
@@ -30,14 +33,37 @@ int KSI_RDR_fromFile(KSI_CTX *ctx, const char *fileName, const char *flags, KSI_
 		goto cleanup;
 	}
 
-	file = fopen(fileName, flags);
+	reader->data.file = file;
 
+	*rdr = reader;
+	reader = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_RDR_close(reader);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_RDR_fromFile(KSI_CTX *ctx, const char *fileName, const char *flags, KSI_RDR **rdr) {
+	KSI_ERR err;
+	KSI_RDR *reader = NULL;
+	FILE *file = NULL;
+	int res;
+
+	KSI_BEGIN(ctx, &err);
+
+	file = fopen(fileName, flags);
 	if (file == NULL) {
 		KSI_FAIL(&err, KSI_IO_ERROR, "Unable to open file");
 		goto cleanup;
 	}
 
-	reader->data.file = file;
+	res = KSI_RDR_fromStream(ctx, file, &reader);
+	KSI_CATCH(&err, res) goto cleanup;
+
 	file = NULL;
 
 	*rdr = reader;
@@ -46,11 +72,13 @@ int KSI_RDR_fromFile(KSI_CTX *ctx, const char *fileName, const char *flags, KSI_
 	KSI_SUCCESS(&err);
 
 cleanup:
+
 	if (file != NULL) fclose(file);
 	KSI_RDR_close(reader);
 
 	return KSI_RETURN(&err);
 }
+
 
 int KSI_RDR_fromMem(KSI_CTX *ctx, unsigned char *buffer, const size_t buffer_length, int ownCopy, KSI_RDR **rdr) {
 	KSI_ERR err;
@@ -228,7 +256,6 @@ cleanup:
 
 
 void KSI_RDR_close(KSI_RDR *rdr)  {
-	KSI_ERR err;
 	KSI_CTX *ctx = NULL;
 
 	if (rdr == NULL) return;
@@ -241,7 +268,7 @@ void KSI_RDR_close(KSI_RDR *rdr)  {
 			if (rdr->data.file != NULL) {
 				if (fclose(rdr->data.file)) {
 					rdr->data.file = NULL;
-					KSI_ERR_fail(&err, KSI_IO_ERROR, 0, __FILE__, __LINE__, "Unable to close log file.");
+					KSI_LOG_warn(ctx, "Unable to close log file.");
 				}
 			}
 			rdr->data.file = NULL;
@@ -253,7 +280,7 @@ void KSI_RDR_close(KSI_RDR *rdr)  {
 			}
 			break;
 		default:
-			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Unsupported KSI IO TYPE");
+			KSI_LOG_warn(ctx, "Unsupported KSI IO-type - possible MEMORY LEAK");
 	}
 
 	KSI_free(rdr);

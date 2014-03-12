@@ -142,7 +142,7 @@ static int readTlv(KSI_RDR *rdr, KSI_TLV **tlv, int copy) {
 	size_t length = 0;
 	int isLenient = 0;
 	int isForward = 0;
-	unsigned int type;
+	unsigned int tag;
 	unsigned char buffer[0xffff];
 	unsigned char *ptr = NULL;
 	char errstr[1024];
@@ -184,11 +184,11 @@ static int readTlv(KSI_RDR *rdr, KSI_TLV **tlv, int copy) {
 			goto cleanup;
 		}
 
-		type = ((*hdr & KSI_TLV_MASK_TLV8_TYPE) << 8 ) | *(hdr + 1);
+		tag = ((*hdr & KSI_TLV_MASK_TLV8_TYPE) << 8 ) | *(hdr + 1);
 		length = (*(hdr + 2) << 8) | *(hdr + 3);
 	} else {
 		/* TLV8 */
-		type = *hdr & KSI_TLV_MASK_TLV8_TYPE;
+		tag = *hdr & KSI_TLV_MASK_TLV8_TYPE;
 		length = *(hdr + 1);
 	}
 
@@ -213,7 +213,7 @@ static int readTlv(KSI_RDR *rdr, KSI_TLV **tlv, int copy) {
 	}
 
 	/* Create new TLV object. */
-	res = KSI_TLV_new(rdr->ctx,type, isLenient, isForward,  ptr, readCount, &t);
+	res = KSI_TLV_new(rdr->ctx,tag, isLenient, isForward,  ptr, readCount, 0, &t);
 	if (res != KSI_OK) {
 		KSI_FAIL(&err, res, NULL);
 		goto cleanup;
@@ -327,7 +327,6 @@ static int encodeAsString(KSI_TLV *tlv) {
 	*(tlv->payload.rawVal.ptr + tlv->payload.rawVal.length) = '\0';
 
 	tlv->payloadType = KSI_TLV_PAYLOAD_STR;
-	tlv->payload.stringVal = (char *)tlv->payload.rawVal.ptr;
 
 	KSI_SUCCESS(&err);
 
@@ -475,7 +474,7 @@ cleanup:
 /**
  *
  */
-int KSI_TLV_new(KSI_CTX *ctx, int type, int isLenient, int isForward, unsigned char *data, size_t data_len, KSI_TLV **tlv) {
+int KSI_TLV_new(KSI_CTX *ctx, int tag, int isLenient, int isForward, unsigned char *data, size_t data_len, int copy, KSI_TLV **tlv) {
 	KSI_ERR err;
 	KSI_TLV *t = NULL;
 
@@ -489,7 +488,7 @@ int KSI_TLV_new(KSI_CTX *ctx, int type, int isLenient, int isForward, unsigned c
 
 	/* Initialize context. */
 	t->ctx = ctx;
-	t->type = type;
+	t->tag = tag;
 	/* Make sure the values are *only* 1 or 0. */
 	t->isLenient = isLenient ? 1 : 0;
 	t->isForwardable = isForward ? 1 : 0;
@@ -497,7 +496,7 @@ int KSI_TLV_new(KSI_CTX *ctx, int type, int isLenient, int isForward, unsigned c
 	t->payloadType = KSI_TLV_PAYLOAD_RAW;
 	t->nested = NULL;
 
-	if (data != NULL) {
+	if (data != NULL && !copy) {
 		t->buffer_size = 0;
 		t->buffer = NULL;
 
@@ -511,8 +510,13 @@ int KSI_TLV_new(KSI_CTX *ctx, int type, int isLenient, int isForward, unsigned c
 			goto cleanup;
 		}
 
-		t->payload.rawVal.length = 0;
 		t->payload.rawVal.ptr = t->buffer;
+		if (data != NULL) {
+			memcpy(t->buffer, data, data_len);
+			t->payload.rawVal.length = data_len;
+		} else {
+			t->payload.rawVal.length = 0;
+		}
 	}
 
 	/* Update the out parameter. */
@@ -769,14 +773,14 @@ cleanup:
 /**
  *
  */
-int KSI_TLV_fromUint(KSI_CTX *ctx, int type, int isLenient, int isForward, uint64_t uint, KSI_TLV **tlv) {
+int KSI_TLV_fromUint(KSI_CTX *ctx, int tag, int isLenient, int isForward, uint64_t uint, KSI_TLV **tlv) {
 	KSI_ERR err;
 	KSI_TLV *t = NULL;
 	int res;
 
 	KSI_BEGIN(ctx, &err);
 
-	res = KSI_TLV_new(ctx, type, isLenient, isForward, NULL, 0, &t);
+	res = KSI_TLV_new(ctx, tag, isLenient, isForward, NULL, 0, 0, &t);
 	if (res != KSI_OK) {
 		KSI_FAIL(&err, res, NULL);
 		goto cleanup;
@@ -801,14 +805,14 @@ cleanup:
 /**
  *
  */
-int KSI_TLV_fromString(KSI_CTX *ctx, int type, int isLenient, int isForward, char *str, KSI_TLV **tlv) {
+int KSI_TLV_fromString(KSI_CTX *ctx, int tag, int isLenient, int isForward, char *str, KSI_TLV **tlv) {
 	KSI_ERR err;
 	KSI_TLV *t = NULL;
 	int res;
 
 	KSI_BEGIN(ctx, &err);
 
-	res = KSI_TLV_new(ctx, type, isLenient, isForward, NULL, 0, &t);
+	res = KSI_TLV_new(ctx, tag, isLenient, isForward, NULL, 0, 0, &t);
 	if (res != KSI_OK) {
 		KSI_FAIL(&err, res, NULL);
 		goto cleanup;
@@ -847,7 +851,7 @@ int KSI_TLV_isForward(KSI_TLV *tlv) {
  *
  */
 int KSI_TLV_getType(KSI_TLV *tlv) {
-	return tlv->type;
+	return tlv->tag;
 }
 
 /**

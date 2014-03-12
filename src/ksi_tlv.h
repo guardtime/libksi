@@ -37,8 +37,8 @@ struct KSI_TLV_st {
 	int isLenient;
 	int isForwardable;
 
-	/* TLV type. */
-	unsigned int type;
+	/* TLV tag. */
+	unsigned int tag;
 
 	/* Max size of the buffer. Default is 0xffff bytes. */
 	int buffer_size;
@@ -61,7 +61,6 @@ struct KSI_TLV_st {
 			uint64_t value;
 			int length;
 		}uintVal;
-		char *stringVal;
 		struct {
 			KSI_TLV_LIST *current;
 		} tlv;

@@ -11,7 +11,7 @@ static void TestTlvInitOwnMem(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_TLV_new(ctx, 0x11, 1, 1, NULL, 0, &tlv);
+	res = KSI_TLV_new(ctx, 0x11, 1, 1, NULL, 0, 0, &tlv);
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
@@ -33,7 +33,7 @@ static void TestTlvLenientFlag(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_TLV_new(ctx, 0x11, 1, 1, NULL, 0, &tlv);
+	res = KSI_TLV_new(ctx, 0x11, 1, 1, NULL, 0, 0, &tlv);
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
@@ -41,7 +41,7 @@ static void TestTlvLenientFlag(CuTest* tc) {
 
 	KSI_TLV_free(tlv);
 
-	res = KSI_TLV_new(ctx, 0x11, 0, 1, NULL, 0, &tlv);
+	res = KSI_TLV_new(ctx, 0x11, 0, 1, NULL, 0, 0, &tlv);
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
@@ -56,7 +56,7 @@ static void TestTlvForwardFlag(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_TLV_new(ctx, 0x11, 1, 1, NULL, 0, &tlv);
+	res = KSI_TLV_new(ctx, 0x11, 1, 1, NULL, 0, 0, &tlv);
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
@@ -64,7 +64,7 @@ static void TestTlvForwardFlag(CuTest* tc) {
 
 	KSI_TLV_free(tlv);
 
-	res = KSI_TLV_new(ctx, 0x11, 0, 0, NULL, 0, &tlv);
+	res = KSI_TLV_new(ctx, 0x11, 0, 0, NULL, 0, 0, &tlv);
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
@@ -81,7 +81,7 @@ static void TestTlvInitExtMem(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_TLV_new(ctx, 0x12, 0, 0, tmp, sizeof(tmp), &tlv);
+	res = KSI_TLV_new(ctx, 0x12, 0, 0, tmp, sizeof(tmp), 0, &tlv);
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
@@ -111,7 +111,7 @@ static void TestTlv8FromReader(CuTest* tc) {
 	CuAssert(tc, "Failed to create TLV from reader.", res == KSI_OK && tlv != NULL);
 
 	CuAssertIntEquals_Msg(tc, "TLV length", 21, tlv->payload.rawVal.length);
-	CuAssertIntEquals_Msg(tc, "TLV type", 7, tlv->type);
+	CuAssertIntEquals_Msg(tc, "TLV type", 7, tlv->tag);
 
 	CuAssert(tc, "TLV content differs", !memcmp(tlv->payload.rawVal.ptr, raw + 2, tlv->payload.rawVal.length));
 
@@ -208,7 +208,7 @@ static void TestTlv16FromReader(CuTest* tc) {
 	CuAssert(tc, "Failed to create TLV from reader.", res == KSI_OK && tlv != NULL);
 
 	CuAssertIntEquals_Msg(tc, "TLV length", 21, tlv->payload.rawVal.length);
-	CuAssertIntEquals_Msg(tc, "TLV type", 0x2aa, tlv->type);
+	CuAssertIntEquals_Msg(tc, "TLV type", 0x2aa, tlv->tag);
 
 	CuAssert(tc, "TLV content differs", !memcmp(tlv->payload.rawVal.ptr, raw + 4, tlv->payload.rawVal.length));
 
@@ -444,8 +444,8 @@ static void TestTlvSerializeString(CuTest* tc) {
 	/* TLV16 type = 0x2aa, length = 21 */
 	char raw[] = "\x82\xaa\x00\x0alore ipsum";
 	char *str = NULL;
-	int buf_len = 0xffff;
-	unsigned char buf[buf_len];
+	int buf_len;
+	unsigned char buf[0xffff];
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -466,7 +466,7 @@ static void TestTlvSerializeString(CuTest* tc) {
 	res = KSI_TLV_getStringValue(tlv, &str, 0);
 	CuAssert(tc, "Failed to get string value from tlv.", res == KSI_OK && str != NULL);
 
-	res = KSI_TLV_serialize(tlv, buf, &buf_len);
+	res = KSI_TLV_serialize_ex(tlv, buf, sizeof(buf), &buf_len);
 	CuAssert(tc, "Failed to serialize string TLV", res == KSI_OK);
 	CuAssertIntEquals_Msg(tc, "Size of serialized TLV", sizeof(raw) - 1, buf_len);
 
@@ -482,8 +482,8 @@ static void TestTlvSerializeUint(CuTest* tc) {
 	/* TLV type = 1a, length = 8 */
 	unsigned char raw[] = {0x1a, 0x08, 0xca, 0xfe, 0xba, 0xbe, 0xca, 0xfe, 0xfa, 0xce};
 	uint64_t value;
-	int buf_len = 0xffff;
-	unsigned char buf[buf_len];
+	int buf_len;
+	unsigned char buf[0xffff];
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -504,7 +504,7 @@ static void TestTlvSerializeUint(CuTest* tc) {
 	res = KSI_TLV_getUInt64Value(tlv, &value);
 	CuAssert(tc, "Parsing uint64 with overflow should not succeed.", res == KSI_OK);
 
-	res = KSI_TLV_serialize(tlv, buf, &buf_len);
+	res = KSI_TLV_serialize_ex(tlv, buf, sizeof(buf), &buf_len);
 	CuAssert(tc, "Failed to serialize string value of tlv.", res == KSI_OK);
 	CuAssertIntEquals_Msg(tc, "Size of serialized TLV", sizeof(raw), buf_len);
 
@@ -518,8 +518,8 @@ static void TestTlvSerializeNested(CuTest* tc) {
 	int res;
 	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
 	char *str = NULL;
-	int buf_len = 0xffff;
-	unsigned char buf[buf_len];
+	int buf_len;
+	unsigned char buf[0xffff];
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -542,7 +542,7 @@ static void TestTlvSerializeNested(CuTest* tc) {
 	CuAssert(tc, "Unable to read nested TLV", res == KSI_OK && nested != NULL);
 	CuAssert(tc, "Nested TLV buffer is not NULL", nested->buffer == NULL);
 
-	res = KSI_TLV_serialize(tlv, buf, &buf_len);
+	res = KSI_TLV_serialize_ex(tlv, buf, sizeof(buf), &buf_len);
 
 	CuAssert(tc, "Failed to serialize nested values of tlv.", res == KSI_OK);
 	CuAssertIntEquals_Msg(tc, "Size of serialized TLV", sizeof(raw) - 1, buf_len);
@@ -578,7 +578,7 @@ static void TestTlvRequireCast(CuTest* tc) {
 	ptr = NULL;
 
 	/* Should fail. */
-	res = KSI_TLV_getStringValue(tlv, &ptr, 0);
+	res = KSI_TLV_getStringValue(tlv, (char **)&ptr, 0);
 	CuAssert(tc, "Got string value without a cast", res != KSI_OK);
 	ptr = NULL;
 
@@ -644,14 +644,14 @@ static void TestTlvComposeNested(CuTest* tc) {
 	KSI_TLV *outer = NULL;
 	KSI_TLV *nested = NULL;
 	unsigned char raw[] = {0x01, 0x06, 0x61, 0x04, 0xca, 0xfe, 0xba, 0xbe};
-	int buf_len = 0xffff;
-	unsigned char buf[buf_len];
+	int buf_len;
+	unsigned char buf[0xffff];
 	int res;
 
 	KSI_ERR_clearErrors(ctx);
 
 	/* Create an empty outer TLV */
-	res = KSI_TLV_new(ctx, 0x1, 0, 0, NULL, 0, &outer);
+	res = KSI_TLV_new(ctx, 0x1, 0, 0, NULL, 0, 0, &outer);
 	CuAssert(tc, "Unable to create TLV", res == KSI_OK && outer != NULL);
 
 	res = KSI_TLV_cast(outer, KSI_TLV_PAYLOAD_TLV);
@@ -664,7 +664,7 @@ static void TestTlvComposeNested(CuTest* tc) {
 	res = KSI_TLV_appendNestedTLV(outer, NULL, nested);
 	CuAssert(tc, "Unable to append nested TLV.", res == KSI_OK);
 
-	res = KSI_TLV_serialize(outer, buf, &buf_len);
+	res = KSI_TLV_serialize_ex(outer, buf, sizeof(buf), &buf_len);
 	CuAssert(tc, "Unable to serialize outer TLV.", res == KSI_OK);
 	CuAssertIntEquals_Msg(tc, "Size of serialized data", sizeof(raw), buf_len);
 	CuAssert(tc, "Unexpected serialized data", !memcmp(raw, buf, buf_len));
@@ -678,14 +678,14 @@ static void TestTlvComposeNestedMore(CuTest* tc) {
 	KSI_TLV *outer = NULL;
 	KSI_TLV *nested = NULL;
 	unsigned char raw[] = {0x01, 0x0a, 0x61, 0x04, 0xca, 0xfe, 0xba, 0xbe, 0x61, 0x02, 0x47, 0x54 };
-	int buf_len = 0xffff;
-	unsigned char buf[buf_len];
+	int buf_len;
+	unsigned char buf[0xffff];
 	int res;
 
 	KSI_ERR_clearErrors(ctx);
 
 	/* Create an empty outer TLV */
-	res = KSI_TLV_new(ctx, 0x1, 0, 0, NULL, 0, &outer);
+	res = KSI_TLV_new(ctx, 0x1, 0, 0, NULL, 0, 0, &outer);
 	CuAssert(tc, "Unable to create TLV", res == KSI_OK && outer != NULL);
 
 	res = KSI_TLV_cast(outer, KSI_TLV_PAYLOAD_TLV);
@@ -705,7 +705,7 @@ static void TestTlvComposeNestedMore(CuTest* tc) {
 	res = KSI_TLV_appendNestedTLV(outer, NULL, nested);
 	CuAssert(tc, "Unable to append first nested TLV.", res == KSI_OK);
 
-	res = KSI_TLV_serialize(outer, buf, &buf_len);
+	res = KSI_TLV_serialize_ex(outer, buf, sizeof(buf), &buf_len);
 	CuAssert(tc, "Unable to serialize outer TLV.", res == KSI_OK);
 	CuAssertIntEquals_Msg(tc, "Size of serialized data", sizeof(raw), buf_len);
 	CuAssert(tc, "Unexpected serialized data", !debug_memcmp(raw, buf, buf_len));

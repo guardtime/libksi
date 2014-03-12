@@ -77,9 +77,9 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 	KSI_TLV *nested = NULL;
 
 	lprintf("%*sTLV:\n", indent++*4, "");
-	lprintf("%*sTLV type: 0x%04x\n",indent*4, "", tlv->type);
+	lprintf("%*sTLV type: 0x%04x\n",indent*4, "", tlv->tag);
 
-	switch (tlv->type) {
+	switch (tlv->tag) {
 		case 0x01:
 			/* Cast as numeric TLV */
 			res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_INT);
@@ -144,6 +144,8 @@ static void TestOkFiles(CuTest* tc) {
 
 		KSI_TLV_free(tlv);
 		tlv = NULL;
+
+		break;
 	}
 
 	closeEnv(tc);
@@ -206,8 +208,7 @@ static void TestSerialize(CuTest* tc) {
 		CuAssert(tc, "Unable to parse TLV structure", res == KSI_OK);
 
 		/* Re assemble TLV */
-		out_len = sizeof(out);
-		KSI_TLV_serialize(tlv, out, &out_len);
+		KSI_TLV_serialize_ex(tlv, out, sizeof(out), &out_len);
 
 		CuAssertIntEquals_Msg(tc, "Serialized TLV size", in_len, out_len);
 		sprintf(errstr, "Serialised TLV content does not match original: %s", ok_sample[i]);

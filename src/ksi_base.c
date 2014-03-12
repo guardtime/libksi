@@ -26,6 +26,10 @@ const char *KSI_getErrorString(int statusCode) {
 			return "Out of memory";
 		case KSI_IO_ERROR:
 			return "I/O error";
+		case KSI_NETWORK_ERROR:
+			return "Network error";
+		case KSI_HTTP_ERROR:
+			return "HTTP error";
 		case KSI_CRYPTO_FAILURE:
 			return "Crypto failure";
 		case KSI_UNKNOWN_ERROR:
@@ -56,12 +60,21 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->errors_count = 0;
 
 	KSI_ERR_clearErrors(ctx);
-	KSI_LOG_init(ctx, NULL, KSI_LOG_NONE);
+	KSI_LOG_init(ctx, NULL, KSI_LOG_DEBUG);
 
+	/* Initialize curl as the net handle. */
+	res = KSI_NET_CURL(ctx);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Initialize config */
+	/* TODO: Perhaps this should come from some external config file */
+	ctx->conf.net.connectTimeoutSeconds = 5;
+	ctx->conf.net.readTimeoutSeconds = 10;
+	ctx->conf.net.urlSigner = "http://localhost:3333/";
+	ctx->conf.net.agent = "KSI-C-API";
 
 	*context = ctx;
 	ctx = NULL;
-
 
 	res = KSI_OK;
 
@@ -82,6 +95,33 @@ void KSI_CTX_free(KSI_CTX *context) {
 		if (context->logStream) fclose(context->logStream);
 		KSI_free(context->logFile);
 
+		if (context->netProvider.poviderCtx != NULL && context->netProvider.providerCleanup != NULL) {
+			context->netProvider.providerCleanup(context->netProvider.poviderCtx);
+		}
+
 		KSI_free(context);
 	}
+}
+
+/**
+ *
+ */
+int KSI_global_init(void) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	res = KSI_NET_global_init();
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+/**
+ *
+ */
+void KSI_global_cleanup(void) {
+	KSI_NET_global_cleanup();
 }

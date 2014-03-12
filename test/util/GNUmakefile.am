@@ -1,4 +1,0 @@
-# Generated with mk_makefile.sh
-AM_CFLAGS=-g
-bin_PROGRAMS=gttlvc
-gttlvc_SOURCES=gttlvc.c

@@ -47,9 +47,16 @@ enum KSI_StatusCode {
 	 */
 	KSI_TLV_PAYLOAD_TYPE_MISMATCH,
 
+	/**
+	 * The async operation has not finished.
+	 */
+	KSI_ASYNC_NOT_FINISHED,
+
 /* SYSTEM ERRORS */
 	KSI_OUT_OF_MEMORY = 0x00000300,
 	KSI_IO_ERROR,
+	KSI_NETWORK_ERROR,
+	KSI_HTTP_ERROR,
 	/**
 	 * Cryptographic operation could not be performed. Likely causes are
 	 * unsupported cryptographic algorithms, invalid keys and lack of
@@ -161,6 +168,10 @@ enum KSI_HashAlgorithm {
 	/** Use default algorithm. */
 	KSI_HASHALG_DEFAULT = -1
 };
+
+int KSI_global_init(void);
+
+void KSI_global_finalize(void);
 
 /**
  * Starts a hash computation.
@@ -333,6 +344,24 @@ const char *KSI_getHashAlgorithmName(int hash_algorithm);
  */
 int KSI_getHashAlgorithmByName(const char *name);
 
+/************
+ *
+ * NETWORKING
+ *
+ ************/
+
+/** Transport Providers */
+int KSI_NET_CURL(KSI_CTX *ctx);
+
+typedef struct KSI_NET_Handle_st KSI_NET_Handle;
+
+int KSI_Transport_sendRequest(KSI_CTX *ctx, const char *url, const unsigned char *request, int request_length, KSI_NET_Handle **handle);
+
+int KSI_Transport_isReady(KSI_NET_Handle *handle);
+
+int KSI_Transport_getResponse(KSI_NET_Handle *handle, unsigned char **response, int *response_length, int copy);
+
+void KSI_NET_Handle_free(KSI_NET_Handle *heandle);
 
 #ifdef __cplusplus
 }

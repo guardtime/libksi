@@ -23,11 +23,7 @@ static int serializeRaw(KSI_TLV *tlv, unsigned char *buf, int *len) {
 		goto cleanup;
 	}
 
-	if (tlv->payloadType == KSI_TLV_PAYLOAD_RAW) {
-		memcpy(buf + *len - payloadLength, tlv->payload.rawVal.ptr, payloadLength);
-	} else {
-		memcpy(buf + *len - payloadLength, tlv->payload.stringVal, payloadLength);
-	}
+	memcpy(buf + *len - payloadLength, tlv->payload.rawVal.ptr, payloadLength);
 
 	*len-=payloadLength;
 
@@ -182,7 +178,7 @@ static int serializeTlv(KSI_TLV *tlv, unsigned char *buf, int *buf_free, int ser
 
 	if (serializeHeader) {
 		/* Write header */
-		if (payloadLength > 0xff || tlv->type > KSI_TLV_MASK_TLV8_TYPE) {
+		if (payloadLength > 0xff || tlv->tag > KSI_TLV_MASK_TLV8_TYPE) {
 			/* Encode as TLV16 */
 			bf -= 4;
 			if (bf < 0) {
@@ -191,8 +187,8 @@ static int serializeTlv(KSI_TLV *tlv, unsigned char *buf, int *buf_free, int ser
 			}
 			*ptr-- = 0xff & payloadLength;
 			*ptr-- = 0xff & payloadLength >> 8;
-			*ptr-- = tlv->type & 0xff;
-			*ptr-- = KSI_TLV_MASK_TLV16 | (KSI_TLV_MASK_LENIENT * tlv->isLenient) | (KSI_TLV_MASK_FORWARD * tlv->isForwardable) | (tlv->type >> 8);
+			*ptr-- = tlv->tag & 0xff;
+			*ptr-- = KSI_TLV_MASK_TLV16 | (KSI_TLV_MASK_LENIENT * tlv->isLenient) | (KSI_TLV_MASK_FORWARD * tlv->isForwardable) | (tlv->tag >> 8);
 
 		} else {
 			/* Encode as TLV8 */
@@ -202,9 +198,10 @@ static int serializeTlv(KSI_TLV *tlv, unsigned char *buf, int *buf_free, int ser
 				goto cleanup;
 			}
 			*ptr-- = payloadLength & 0xff;
-			*ptr-- = 0x00 | (KSI_TLV_MASK_LENIENT * tlv->isLenient) | (KSI_TLV_MASK_FORWARD * tlv->isForwardable) | tlv->type;
+			*ptr-- = 0x00 | (KSI_TLV_MASK_LENIENT * tlv->isLenient) | (KSI_TLV_MASK_FORWARD * tlv->isForwardable) | tlv->tag;
 		}
 	}
+
 	*buf_free = bf;
 
 	KSI_SUCCESS(&err);
@@ -248,8 +245,48 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_TLV_serialize(KSI_TLV *tlv, unsigned char *buf, int *len) {
-	return serialize(tlv, buf, len, 1);
+int KSI_TLV_serialize_ex(KSI_TLV *tlv, unsigned char *buf, int buf_size, int *len) {
+	int res;
+	int buf_free = buf_size;
+
+	res = serialize(tlv, buf, &buf_free, 1);
+	if (res != KSI_OK) goto cleanup;
+
+	*len = buf_free;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_TLV_serialize(KSI_TLV *tlv, unsigned char **outBuf, int *outBuf_len) {
+	int res;
+	unsigned char tmp[0xffff + 4];
+	int tmp_len;
+
+	unsigned char *buf = NULL;
+
+	res = KSI_TLV_serialize_ex(tlv, tmp, sizeof(tmp), &tmp_len);
+	if (res != KSI_OK) goto cleanup;
+
+	buf = KSI_calloc(tmp_len, 1);
+	if (buf == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	memcpy(buf, tmp, tmp_len);
+
+	*outBuf = buf;
+	*outBuf_len = tmp_len;
+
+	buf = NULL;
+
+cleanup:
+
+	KSI_free(buf);
+
+	return res;
 }
 
 int KSI_TLV_serializePayload(KSI_TLV *tlv, unsigned char *buf, int *len) {

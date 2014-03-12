@@ -7,6 +7,7 @@
 #include "ksi_err.h"
 #include "ksi_io.h"
 #include "ksi_log.h"
+#include "ksi_tlv_tags.h"
 
 /* Create a new object of type. */
 #define KSI_new(typeVar) (typeVar *)(KSI_calloc(sizeof(typeVar), 1))
@@ -21,12 +22,12 @@
 extern "C" {
 #endif
 
-
 struct KSI_CTX_st {
 
-/**
- *  ERROR HANDLING.
- **/
+	/******************
+	 *  ERROR HANDLING.
+	 ******************/
+
 	/* Status code of the last executed function. */
 	int statusCode;
 
@@ -39,9 +40,10 @@ struct KSI_CTX_st {
 	/* Count of errors (usually #error_end - #error_start + 1, unless error count > #errors_size. */
 	size_t errors_count;
 
-/**
- * LOGGING
- */
+	/**********
+	 * LOGGING.
+	 **********/
+
 	/* Log level see enum KSI_LOG_LVL_en */
 	int logLevel;
 	/* Filename where to write the log. NULL or "-" means stdout. */
@@ -49,16 +51,34 @@ struct KSI_CTX_st {
 
 	/* Stream to write log. */
 	FILE *logStream; // TODO! Do we need more options?
-/**
- * CRYPTO
- */
-	/* TODO! Add interfaces. */
 
-/**
- * TRANSPORT
- */
-	/* TODO! Add interfaces. */
+	/************
+	 * TRANSPORT.
+	 ************/
 
+	/** This structure is used from the current implementation of network provider. */
+	struct {
+		/** Cleanup for the provider, gets the #providerCtx as parameter. */
+		void (*providerCleanup)(void *);
+
+		/** Function for sending requests. This needs to be non blocking. */
+		int (*sendRequest)(KSI_NET_Handle *);
+
+		/** Dedicated context for the net provider */
+		void *poviderCtx;
+	} netProvider;
+
+	/****************
+	 * CONFIGURATION.
+	 ****************/
+	struct {
+		struct {
+			int connectTimeoutSeconds;
+			int readTimeoutSeconds;
+			char *urlSigner;
+			char *agent;
+		} net;
+	} conf;
 };
 
 void *KSI_malloc(size_t size);
@@ -92,16 +112,17 @@ enum KSI_TLV_PayloadType_en {
  * otherwise the pointer itself and data_len is used for the payload.
  *
  * \param[in]	ctx			KSI context.
- * \param[in]	type		Numeric TLV type.
+ * \param[in]	tag			Numeric TLV tag.
  * \param[in]	isLenient	Value of the lenient-flag (1 or 0).
  * \param[in]	isForward	Value of the forward-flag (1 or 0).
  * \param[in]	data		NULL or pointer to shared memory area.
  * \param[in]	data_len	Length of shared memory area, value will be ignored if #data == NULL
+ * \param[in]	copy		Should the data be copyd to internal buffer, on can the data pointer be reused.
  * \param[out]	tlv			Pointer to the output variable.
  *
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
  */
-int KSI_TLV_new(KSI_CTX *ctx, int type, int isLenient, int isForward, unsigned char *data, size_t data_len, KSI_TLV **tlv);
+int KSI_TLV_new(KSI_CTX *ctx, int tag, int isLenient, int isForward, unsigned char *data, size_t data_len, int copy, KSI_TLV **tlv);
 
 /**
  * \ingroup tlv
@@ -109,7 +130,7 @@ int KSI_TLV_new(KSI_CTX *ctx, int type, int isLenient, int isForward, unsigned c
  * The payload type will be #KSI_TLV_PAYLOAD_INT.
  *
  * \param[in]	ctx			KSI context.
- * \param[in]	type		Numeric TLV type.
+ * \param[in]	tag			Numeric TLV tag.
  * \param[in]	isLenient	Value of the lenient-flag (1 or 0).
  * \param[in]	isForward	Value of the forward-flag (1 or 0).
  * \param[in]	data		NULL or pointer to shared memory area.
@@ -118,7 +139,7 @@ int KSI_TLV_new(KSI_CTX *ctx, int type, int isLenient, int isForward, unsigned c
  *
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
  */
-int KSI_TLV_fromUint(KSI_CTX *ctx, int type, int isLenient, int isForward, uint64_t uint, KSI_TLV **tlv);
+int KSI_TLV_fromUint(KSI_CTX *ctx, int tag, int isLenient, int isForward, uint64_t uint, KSI_TLV **tlv);
 
 /**
  * \ingroup tlv
@@ -126,7 +147,7 @@ int KSI_TLV_fromUint(KSI_CTX *ctx, int type, int isLenient, int isForward, uint6
  * The payload type will be #KSI_TLV_PAYLOAD_INT.
  *
  * \param[in]	ctx			KSI context.
- * \param[in]	type		Numeric TLV type.
+ * \param[in]	tag			Numeric TLV tag.
  * \param[in]	isLenient	Value of the lenient-flag (1 or 0).
  * \param[in]	isForward	Value of the forward-flag (1 or 0).
  * \param[in]	data		NULL or pointer to shared memory area.
@@ -135,7 +156,7 @@ int KSI_TLV_fromUint(KSI_CTX *ctx, int type, int isLenient, int isForward, uint6
  *
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
  */
-int KSI_TLV_fromString(KSI_CTX *ctx, int type, int isLenient, int isForward, char *str, KSI_TLV **tlv);
+int KSI_TLV_fromString(KSI_CTX *ctx, int tag, int isLenient, int isForward, char *str, KSI_TLV **tlv);
 /**
  * This function changes the internal representation of the TLV payload.
  * \param[in]	tlv			TLV which payload will be casted.
@@ -249,13 +270,19 @@ int KSI_TLV_getType(KSI_TLV *tlv);
  * This function serialises the tlv into a given buffer with \c len bytes of free
  * space.
  *
- * \param[in]		tlv		TLV.
- * \param[in]		buf		Pointer to buffer.
- * \param[in,out]  	len		Length of the buffer, after execution its value will be the lenght of the serialized TLV.
- *
+ * \param[in]		tlv				TLV.
+ * \param[in]		buf				Pointer to buffer.
+ * \param[in]  		buf_size		Size of the buffer.
+ * \param[out]		len				Length of the serialized data.
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
  */
-int KSI_TLV_serialize(KSI_TLV *tlv, unsigned char *buf, int *len);
+int KSI_TLV_serialize_ex(KSI_TLV *tlv, unsigned char *buf, int buf_size, int *len);
+
+/**
+ *  TODO!
+ */
+
+int KSI_TLV_serialize(KSI_TLV *tlv, unsigned char **outBuf, int *outBuf_len);
 
 /**
  * This function serialises the tlv payload into a given buffer with \c len bytes of free
@@ -287,6 +314,12 @@ int KSI_TLV_appendNestedTLV(KSI_TLV *target, KSI_TLV *after, KSI_TLV *tlv);
  * KSI READER
  *
  ************/
+
+/* TODO
+ *
+ */
+int KSI_RDR_fromStream(KSI_CTX *ctx, FILE *file, KSI_RDR **rdr);
+
 /* TODO!
  *
  */
@@ -323,6 +356,12 @@ int KSI_RDR_readMemPtr(KSI_RDR *rdr, unsigned char **ptr, const size_t len, int 
  *
  */
 void KSI_RDR_close(KSI_RDR *rdr);
+
+void KSI_NET_Handle_freeNetContext(void *netCtx);
+
+int KSI_NET_global_init(void);
+
+void KSI_NET_global_cleanup(void);
 
 
 #ifdef __cplusplus

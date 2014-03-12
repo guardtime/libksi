@@ -171,6 +171,7 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 		goto cleanup;
 	}
 
+	tmp_data_hash->ctx = hasher->ctx;
 	tmp_data_hash->algorithm = hasher->algorithm;
 	tmp_data_hash->digest_length = digest_length;
 	tmp_data_hash->digest = tmp_hash;

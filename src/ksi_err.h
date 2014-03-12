@@ -8,12 +8,12 @@
 #ifndef KSI_ERR_H_
 #define KSI_ERR_H_
 
-#define KSI_BEGIN(ctx, err) (KSI_LOG_debug((ctx), "Begin called from %s:%d\n", __FILE__, __LINE__), KSI_ERR_init((ctx), (err)))
+#define KSI_BEGIN(ctx, err) (KSI_LOG_trace((ctx), "Begin called from %s:%d", __FILE__, __LINE__), KSI_ERR_init((ctx), (err)))
 #define KSI_PRE(err, cond) if (!(cond) && (KSI_ERR_init(NULL, (err)) == KSI_OK) && (KSI_FAIL((err), KSI_INVALID_ARGUMENT, NULL) == KSI_OK))
 #define KSI_PRE_NOT_NULL(err, exp) if (((exp) == NULL) && (KSI_ERR_init(NULL, (err)) == KSI_OK))
-#define KSI_RETURN(err) (KSI_LOG_debug((err)->ctx, "End called from %s:%d\n", __FILE__, __LINE__), KSI_ERR_apply((err)))
-#define KSI_FAIL_EXT(err, statusCode, extErrCode, message) (KSI_LOG_debug((err)->ctx, "External fail called from %s:%d\n", __FILE__, __LINE__), KSI_ERR_fail((err), (statusCode), (extErrCode), __FILE__, __LINE__, (message)))
-#define KSI_FAIL(err, statusCode, message) (KSI_LOG_debug((err)->ctx, "Fail called from %s:%d\n", __FILE__, __LINE__), KSI_ERR_fail((err), (statusCode), 0, __FILE__, __LINE__, (message)))
+#define KSI_RETURN(err) (KSI_LOG_trace((err)->ctx, "End called from %s:%d\n", __FILE__, __LINE__), KSI_ERR_apply((err)))
+#define KSI_FAIL_EXT(err, statusCode, extErrCode, message) (KSI_LOG_debug((err)->ctx, "External fail called from %s:%d", __FILE__, __LINE__), KSI_ERR_fail((err), (statusCode), (extErrCode), __FILE__, __LINE__, (message)))
+#define KSI_FAIL(err, statusCode, message) (KSI_LOG_trace((err)->ctx, "Fail called from %s:%d\n", __FILE__, __LINE__), KSI_ERR_fail((err), (statusCode), 0, __FILE__, __LINE__, (message)))
 #define KSI_CATCH(err, res) if ((res) != KSI_OK && KSI_FAIL((err), res, NULL) == KSI_OK)
 #define KSI_SUCCESS(err) KSI_ERR_success((err))
 
