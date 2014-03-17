@@ -13,6 +13,7 @@ extern "C" {
 typedef struct KSI_CTX_st KSI_CTX;
 typedef struct KSI_ERR_st KSI_ERR;
 typedef struct KSI_TLV_st KSI_TLV;
+typedef struct KSI_Signature_st KSI_Signature;
 
 /* KSI reader type. */
 typedef struct KSI_RDR_st KSI_RDR;
@@ -80,7 +81,6 @@ int KSI_CTX_new(KSI_CTX **context);
  * Free KSI context.
  */
 void KSI_CTX_free(KSI_CTX *context);
-
 
 /****************************
  *  ERROR HANDLING FUNCTIONS.
@@ -353,6 +353,11 @@ int KSI_getHashAlgorithmByName(const char *name);
 /** Transport Providers */
 int KSI_NET_CURL(KSI_CTX *ctx);
 
+/**
+ * Network resource handle
+ *
+ *	\see #KSI_NET_sendRequest
+ */
 typedef struct KSI_NetHandle_st KSI_NetHandle;
 
 int KSI_NET_sendRequest(KSI_CTX *ctx, const char *url, const unsigned char *request, int request_length, KSI_NetHandle **handle);
@@ -360,6 +365,9 @@ int KSI_NET_sendRequest(KSI_CTX *ctx, const char *url, const unsigned char *requ
 int KSI_NET_getResponse(KSI_NetHandle *handle, unsigned char **response, int *response_length, int copy);
 
 void KSI_NetHandle_free(KSI_NetHandle *heandle);
+
+int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, int (*provider)(KSI_CTX *));
+
 
 #ifdef __cplusplus
 }

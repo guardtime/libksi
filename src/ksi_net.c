@@ -43,7 +43,9 @@ cleanup:
  */
 void KSI_NetHandle_free(KSI_NetHandle *handle) {
 	if (handle != NULL) {
-		handle->netCtx_free(handle->netCtx);
+		if (handle->netCtx_free != NULL) {
+			handle->netCtx_free(handle->netCtx);
+		}
 		KSI_free(handle->request);
 		KSI_free(handle->response);
 		KSI_free(handle->url);
@@ -142,4 +144,20 @@ void KSI_NetProvider_free(KSI_CTX *ctx) {
 		ctx->netProvider.providerCleanup(ctx->netProvider.poviderCtx);
 	}
 }
+
+int KSI_NET_extractPDU(KSI_CTX *ctx, unsigned char *data, int data_len, unsigned char **payload, int *payload_length) {
+	KSI_ERR err;
+	int res;
+	KSI_TLV *pdu = NULL;
+
+	/* Parse the PDU */
+	res = KSI_TLV_parseBlob(ctx, data, data_len, &pdu);
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
 

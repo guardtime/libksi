@@ -63,7 +63,7 @@ static void TestRdrFileFileReading(CuTest* tc) {
 	CuAssert(tc, "Error creating reader from file.", res == KSI_OK);
 	CuAssert(tc, "Creating reader from file did not fail, but object is still NULL", rdr != NULL);
 	/* Read as a single block. */
-	KSI_RDR_readIntoBuffer(rdr, tmpBuf, sizeof(tmpBuf), &readCount);
+	KSI_RDR_read_ex(rdr, tmpBuf, sizeof(tmpBuf), &readCount);
 
 	CuAssert(tc, "Wrong length read", readCount == strlen(testStr));
 
@@ -110,7 +110,7 @@ static void TestRdrFileReadingChuncks(CuTest* tc) {
 	CuAssert(tc, "Creating reader from file did not fail, but object is still NULL", rdr != NULL);
 	/* Read blocks of size 10. */
 	while (!KSI_RDR_isEOF(rdr)) {
-		KSI_RDR_readIntoBuffer(rdr, tmpBuf + size, 10, &readCount);
+		KSI_RDR_read_ex(rdr, tmpBuf + size, 10, &readCount);
 		size += readCount;
 	}
 
@@ -143,7 +143,7 @@ static void TestRdrMemInitExtStorage(CuTest* tc) {
 	CuAssert(tc, "Failed initializing context from shared memory.", res == KSI_OK);
 	CuAssert(tc, "Init did not fail, but object not created.", rdr != NULL);
 
-	res = KSI_RDR_readIntoBuffer(rdr, tmpBuf, sizeof(tmpBuf), &readCount);
+	res = KSI_RDR_read_ex(rdr, tmpBuf, sizeof(tmpBuf), &readCount);
 	CuAssert(tc, "Incorrect read count.", readCount = sizeof(testData));
 
 	CuAssert(tc, "Data missmatch", !memcmp(tmpBuf, testData, sizeof(testData)));
@@ -170,7 +170,7 @@ static void TestRdrMemInitOwnStorage(CuTest* tc) {
 	CuAssert(tc, "Failed initializing context from private memory.", res == KSI_OK);
 	CuAssert(tc, "Init did not fail, but object not created.", rdr != NULL);
 
-	res = KSI_RDR_readIntoBuffer(rdr, tmpBuf, sizeof(tmpBuf), &readCount);
+	res = KSI_RDR_read_ex(rdr, tmpBuf, sizeof(tmpBuf), &readCount);
 	CuAssert(tc, "Incorrect read count.", readCount = sizeof(testData));
 
 	CuAssert(tc, "Data missmatch", !memcmp(tmpBuf, testData, sizeof(testData)));

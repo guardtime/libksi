@@ -7,6 +7,8 @@ runner_SOURCES= \
 		ksi_ctx_test.c \
 		ksi_hash_test.c \
 		ksi_log_test.c \
+		ksi_net_mock.c \
+		ksi_net_test.c \
 		ksi_rdr_test.c \
 		ksi_tlv_sample_test.c \
 		ksi_tlv_test.c \
@@ -30,7 +32,8 @@ runner_SOURCES= \
 		../src/ksi_net.c \
 		../src/ksi_net_curl.c \
 		../src/ksi_tlv.c \
-		../src/ksi_sign.c \
+		../src/ksi_signature.c \
+		../src/ksi_signer.c \
 		../src/ksi_tlv_easy.h \
 		../src/ksi_tlv_serialize.c \
 		../src/ksi_tlv_tags.h \
@@ -55,7 +58,7 @@ sign_SOURCES= \
 		../src/ksi_net.h \
 		../src/ksi_net.c \
 		../src/ksi_net_curl.c \
-		../src/ksi_sign.c \
+		../src/ksi_signer.c \
 		../src/ksi_tlv.c \
 		../src/ksi_tlv_serialize.c \
 		../src/ksi_tlv.h

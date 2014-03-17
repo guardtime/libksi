@@ -13,12 +13,15 @@ extern "C" {
 
 int debug_memcmp(void *ptr1, void *ptr2, size_t len);
 
+int KSI_NET_MOCK(KSI_CTX *ctx);
+
 CuSuite* KSI_CTX_GetSuite(void);
 CuSuite* KSI_LOG_GetSuite(void);
 CuSuite* KSI_RDR_GetSuite(void);
 CuSuite* KSI_TLV_GetSuite(void);
 CuSuite* KSI_TLV_Sample_GetSuite(void);
 CuSuite* KSI_Hash_GetSuite(void);
+CuSuite* KSI_NET_GetSuite(void);
 
 #ifdef __cplusplus
 }

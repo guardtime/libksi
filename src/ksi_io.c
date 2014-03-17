@@ -176,7 +176,7 @@ cleanup:
 }
 
 
-int KSI_RDR_readIntoBuffer(KSI_RDR *rdr, unsigned char *buffer, const size_t bufferLength, int *readCount)  {
+int KSI_RDR_read_ex(KSI_RDR *rdr, unsigned char *buffer, const size_t bufferLength, int *readCount)  {
 	KSI_ERR err;
 	int res;
 
@@ -206,7 +206,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_RDR_readMemPtr(KSI_RDR *rdr, unsigned char **ptr, const size_t len, int *readCount) {
+int KSI_RDR_read_ptr(KSI_RDR *rdr, unsigned char **ptr, const size_t len, int *readCount) {
 	KSI_ERR err;
 	int res;
 	unsigned char *p = NULL;
@@ -227,15 +227,15 @@ int KSI_RDR_readMemPtr(KSI_RDR *rdr, unsigned char **ptr, const size_t len, int 
 					count = rdr->data.mem.buffer_length - rdr->offset;
 					rdr->eof = 1;
 				}
+
+				rdr->offset += count;
+
+				*ptr = p;
+				*readCount = count;
 			} else {
 				rdr->eof = 1;
+				*readCount = 0;
 			}
-
-			rdr->offset += count;
-
-			*readCount = count;
-			*ptr = p;
-
 			break;
 		default:
 			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Unsupported KSI IO TYPE");
@@ -253,7 +253,6 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
-
 
 void KSI_RDR_close(KSI_RDR *rdr)  {
 	KSI_CTX *ctx = NULL;
@@ -284,4 +283,29 @@ void KSI_RDR_close(KSI_RDR *rdr)  {
 	}
 
 	KSI_free(rdr);
+}
+
+int KSI_RDR_verifyEnd(KSI_RDR *rdr) {
+	KSI_ERR err;
+	int res;
+	char *buf = NULL;
+	int buf_len = 0;
+
+	KSI_PRE(&err, rdr != NULL) goto cleanup;
+	KSI_BEGIN(rdr->ctx, &err);
+
+	res = KSI_RDR_read_ptr(rdr, &buf, 1, &buf_len);
+	if (res != KSI_OK || buf != NULL) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+		goto cleanup;
+	}
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(buf);
+
+	return KSI_RETURN(&err);
+
 }

@@ -3,7 +3,6 @@
 
 #include "ksi_internal.h"
 
-
 #define KSI_ERR_STACK_LEN 16
 
 const char *KSI_getErrorString(int statusCode) {
@@ -39,6 +38,21 @@ const char *KSI_getErrorString(int statusCode) {
 	}
 }
 
+static void ctxNetProvider_init(KSI_CTX* ctx) {
+	ctx->netProvider.poviderCtx = NULL;
+	ctx->netProvider.providerCleanup = NULL;
+	ctx->netProvider.sendRequest = NULL;
+}
+
+static void ctxConf_init(KSI_CTX* ctx) {
+	/* Initialize config */
+	/* TODO: Perhaps this should come from some external config file */
+	ctx->conf.net.connectTimeoutSeconds = 5;
+	ctx->conf.net.readTimeoutSeconds = 10;
+	ctx->conf.net.urlSigner = "http://localhost:3333/";
+	ctx->conf.net.agent = "KSI-C-API";
+}
+
 int KSI_CTX_new(KSI_CTX **context) {
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -62,16 +76,13 @@ int KSI_CTX_new(KSI_CTX **context) {
 	KSI_ERR_clearErrors(ctx);
 	KSI_LOG_init(ctx, NULL, KSI_LOG_DEBUG);
 
-	/* Initialize curl as the net handle. */
-	res = KSI_NET_CURL(ctx);
-	if (res != KSI_OK) goto cleanup;
+	/* Init context with default values. */
+	ctxNetProvider_init(ctx);
+	ctxConf_init(ctx);
 
-	/* Initialize config */
-	/* TODO: Perhaps this should come from some external config file */
-	ctx->conf.net.connectTimeoutSeconds = 5;
-	ctx->conf.net.readTimeoutSeconds = 10;
-	ctx->conf.net.urlSigner = "http://localhost:3333/";
-	ctx->conf.net.agent = "KSI-C-API";
+	/* Initialize curl as the net handle. */
+	res = KSI_CTX_setNetworkProvider(ctx, KSI_NET_CURL);
+	if (res != KSI_OK) goto cleanup;
 
 	*context = ctx;
 	ctx = NULL;
@@ -81,6 +92,20 @@ int KSI_CTX_new(KSI_CTX **context) {
 cleanup:
 
 	KSI_CTX_free(ctx);
+
+	return res;
+}
+
+int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, int (*provider)(KSI_CTX *)) {
+	int res;
+
+	if (ctx->netProvider.providerCleanup != NULL) {
+		ctx->netProvider.providerCleanup(ctx->netProvider.poviderCtx);
+	}
+
+	res = provider(ctx);
+
+cleanup:
 
 	return res;
 }

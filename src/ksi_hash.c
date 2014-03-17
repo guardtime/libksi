@@ -144,6 +144,7 @@ int KSI_DataHash_fromData(KSI_CTX *ctx, int algorithm, unsigned char *digest, in
 		goto cleanup;
 	}
 
+	tmp_hash->ctx = ctx;
 	tmp_hash->digest = NULL;
 
 	res = KSI_DataHash_fromData_ex(algorithm, digest, digest_length, tmp_hash);

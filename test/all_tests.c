@@ -10,7 +10,7 @@
 #  define UNIT_TEST_OUTPUT_XML "_testsuite.xml"
 #endif
 
-KSI_CTX *ctx;
+KSI_CTX *ctx = NULL;
 
 static void escapeStr(const char *str, CuString *escaped) {
 	int p;
@@ -88,6 +88,7 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSI_TLV_GetSuite);
 	addSuite(suite, KSI_TLV_Sample_GetSuite);
 	addSuite(suite, KSI_Hash_GetSuite);
+	addSuite(suite, KSI_NET_GetSuite);
 
 	return suite;
 }

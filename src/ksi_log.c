@@ -151,6 +151,8 @@ int KSI_LOG_debugBlob(KSI_CTX *ctx, const char *prefix, const unsigned char *dat
 	int logStr_len = 0;
 	int i;
 
+	if (ctx->logLevel < KSI_LOG_DEBUG) goto cleanup;
+
 	logStr_size = data_len * 2 + 1;
 
 	logStr = KSI_calloc(logStr_size, 1);
@@ -163,11 +165,28 @@ int KSI_LOG_debugBlob(KSI_CTX *ctx, const char *prefix, const unsigned char *dat
 		logStr_len += snprintf(logStr + logStr_len, logStr_size - logStr_len, "%02x", data[i]);
 	}
 
-	res = KSI_LOG_debug(ctx, "%s: %s", prefix, logStr);
+	res = KSI_LOG_debug(ctx, "%s (len = %d): %s", prefix, data_len, logStr);
 
 cleanup:
 
 	KSI_free(logStr);
+
+	return res;
+}
+
+int KSI_LOG_debugTlv(KSI_CTX *ctx, const char *prefix, KSI_TLV *tlv) {
+	int res = KSI_UNKNOWN_ERROR;
+	char *serialized = NULL;
+
+	if (ctx->logLevel < KSI_LOG_DEBUG) goto cleanup;
+	res = KSI_TLV_toString(tlv, &serialized);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_LOG_debug(ctx, "%s:\n%s", prefix, serialized);
+
+cleanup:
+
+	KSI_free(serialized);
 
 	return res;
 }

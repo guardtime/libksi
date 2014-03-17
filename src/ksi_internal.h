@@ -81,6 +81,16 @@ struct KSI_CTX_st {
 	} conf;
 };
 
+/**
+ * KSI Signature object
+ */
+struct KSI_Signature_st {
+	/* TODO! */
+	int mock;
+};
+
+void KSI_Signature_free(KSI_Signature *sig);
+
 void *KSI_malloc(size_t size);
 void *KSI_calloc(size_t num, size_t size);
 void *KSI_realloc(void *ptr, size_t size);
@@ -112,6 +122,7 @@ enum KSI_TLV_PayloadType_en {
  * otherwise the pointer itself and data_len is used for the payload.
  *
  * \param[in]	ctx			KSI context.
+ * \param[in]	payloadType	Payload type of the TLV.
  * \param[in]	tag			Numeric TLV tag.
  * \param[in]	isLenient	Value of the lenient-flag (1 or 0).
  * \param[in]	isForward	Value of the forward-flag (1 or 0).
@@ -122,7 +133,7 @@ enum KSI_TLV_PayloadType_en {
  *
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
  */
-int KSI_TLV_new(KSI_CTX *ctx, int tag, int isLenient, int isForward, unsigned char *data, size_t data_len, int copy, KSI_TLV **tlv);
+int KSI_TLV_new(KSI_CTX *ctx, int payloadType, int tag, int isLenient, int isForward, void *data, size_t data_len, int copy, KSI_TLV **tlv);
 
 /**
  * \ingroup tlv
@@ -309,6 +320,16 @@ int KSI_TLV_serializePayload(KSI_TLV *tlv, unsigned char *buf, int *len);
  */
 int KSI_TLV_appendNestedTLV(KSI_TLV *target, KSI_TLV *after, KSI_TLV *tlv);
 
+/**
+ * This function creates a human readable representation of the TLV object.
+ *
+ * \param[in]	tlv		The TLV object.
+ * \param[out]	str		Pointer to variable receiving the string pointer.
+ *
+ * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+ */
+int KSI_TLV_toString(KSI_TLV *tlv, char **str);
+
 /************
  *
  * KSI READER
@@ -340,7 +361,7 @@ int KSI_RDR_isEOF(KSI_RDR *rdr);
  *
  * \return KSI_OK when no errors occured.
  */
-int KSI_RDR_readIntoBuffer(KSI_RDR *rdr, unsigned char *buffer, const size_t bufferLength, int *readCount);
+int KSI_RDR_read_ex(KSI_RDR *rdr, unsigned char *buffer, const size_t bufferLength, int *readCount);
 
 /* TODO!
  * Method for reading from reader without copyng data. The pointer #ptr will point to the parent payload
@@ -350,7 +371,7 @@ int KSI_RDR_readIntoBuffer(KSI_RDR *rdr, unsigned char *buffer, const size_t buf
  *
  * \note This method can be applied to only #KSI_RDR which is based on a memory buffer.
  */
-int KSI_RDR_readMemPtr(KSI_RDR *rdr, unsigned char **ptr, const size_t len, int *readCount);
+int KSI_RDR_read_ptr(KSI_RDR *rdr, unsigned char **ptr, const size_t len, int *readCount);
 
 /* TODO!
  *

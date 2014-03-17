@@ -289,6 +289,110 @@ cleanup:
 	return res;
 }
 
+/**
+ *
+ */
 int KSI_TLV_serializePayload(KSI_TLV *tlv, unsigned char *buf, int *len) {
 	return serialize(tlv, buf, len, 0);
+}
+
+#define NOTNEG(a) (a) < 0 ? 0 : a
+
+static int stringify(KSI_TLV *tlv, int indent, char *str, int size, int *len) {
+	int res;
+	KSI_TLV_LIST *tmp_list = NULL;
+	int l = *len;
+	int i;
+
+	if (*len >= size) {
+		res = KSI_OK; /* Buffer is full, but do not break the flow. */
+		goto cleanup;
+	}
+	if (indent != 0) {
+		l += snprintf(str + l, NOTNEG(size - l), "\n%*s", indent, "");
+	}
+	if (tlv->tag > 0xff) {
+		l += snprintf(str + l, NOTNEG(size - l), "TLV[0x%04x]", tlv->tag);
+	} else {
+		l += snprintf(str + l, NOTNEG(size - l), "TLV[0x%02x]", tlv->tag);
+	}
+
+	l += snprintf(str + l, NOTNEG(size - l), " %c", tlv->isLenient ? 'L' : '-');
+	l += snprintf(str + l, NOTNEG(size - l), " %c", tlv->isForwardable ? 'F' : '-');
+
+	switch (tlv->payloadType) {
+		case KSI_TLV_PAYLOAD_RAW:
+			l += snprintf(str + l, NOTNEG(size - l), " len = %d : ", tlv->payload.rawVal.length);
+			for (i = 0; i < tlv->payload.rawVal.length; i++) {
+				l += snprintf(str + l, NOTNEG(size - l), "%02x ", tlv->payload.rawVal.ptr[i]);
+			}
+			break;
+		case KSI_TLV_PAYLOAD_STR:
+			l += snprintf(str + l, NOTNEG(size - l), " len = %d : \"%s\"", tlv->payload.rawVal.length, tlv->payload.rawVal.ptr);
+			break;
+		case KSI_TLV_PAYLOAD_INT:
+			l += snprintf(str + l, NOTNEG(size - l), " len = %d : 0x%x", tlv->payload.uintVal.length, tlv->payload.uintVal.value);
+			break;
+		case KSI_TLV_PAYLOAD_TLV:
+			l += snprintf(str + l, NOTNEG(size - l), ":");
+			tmp_list = tlv->nested;
+			while(tmp_list != NULL) {
+				res = stringify(tmp_list->tlv, indent + 2, str, size, &l);
+				if (res != KSI_OK) goto cleanup;
+				tmp_list = tmp_list->next;
+			}
+			break;
+		default:
+			res = KSI_INVALID_ARGUMENT;
+			goto cleanup;
+	}
+
+	if (l < size) {
+		*len = l;
+	} else {
+		*len = size;
+	}
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_TLV_toString(KSI_TLV *tlv, char **str) {
+	KSI_ERR err;
+	char *tmp = NULL;
+	int tmp_size = 0xfffff; /* 1 MB, now this should be enough for everyone. */
+	int tmp_len = 0;
+	int res;
+
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_PRE(&err, str != NULL) goto cleanup;
+	KSI_BEGIN(tlv->ctx, &err);
+
+	tmp = KSI_calloc(tmp_size, 1);
+	if (tmp == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	res = stringify(tlv, 0, tmp, tmp_size, &tmp_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	tmp = KSI_realloc(tmp, tmp_len + 1);
+	if (tmp == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	*str = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_free(tmp);
+
+	return KSI_RETURN(&err);
 }

@@ -11,7 +11,7 @@ static void TestTlvInitOwnMem(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_TLV_new(ctx, 0x11, 1, 1, NULL, 0, 0, &tlv);
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, 0x11, 1, 1, NULL, 0, 0, &tlv);
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
@@ -33,7 +33,7 @@ static void TestTlvLenientFlag(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_TLV_new(ctx, 0x11, 1, 1, NULL, 0, 0, &tlv);
+	res = KSI_TLV_new(ctx,KSI_TLV_PAYLOAD_RAW, 0x11, 1, 1, NULL, 0, 0, &tlv);
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
@@ -41,7 +41,7 @@ static void TestTlvLenientFlag(CuTest* tc) {
 
 	KSI_TLV_free(tlv);
 
-	res = KSI_TLV_new(ctx, 0x11, 0, 1, NULL, 0, 0, &tlv);
+	res = KSI_TLV_new(ctx,KSI_TLV_PAYLOAD_RAW, 0x11, 0, 1, NULL, 0, 0, &tlv);
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
@@ -56,7 +56,7 @@ static void TestTlvForwardFlag(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_TLV_new(ctx, 0x11, 1, 1, NULL, 0, 0, &tlv);
+	res = KSI_TLV_new(ctx,KSI_TLV_PAYLOAD_RAW, 0x11, 1, 1, NULL, 0, 0, &tlv);
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
@@ -64,7 +64,7 @@ static void TestTlvForwardFlag(CuTest* tc) {
 
 	KSI_TLV_free(tlv);
 
-	res = KSI_TLV_new(ctx, 0x11, 0, 0, NULL, 0, 0, &tlv);
+	res = KSI_TLV_new(ctx,KSI_TLV_PAYLOAD_RAW, 0x11, 0, 0, NULL, 0, 0, &tlv);
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
@@ -81,7 +81,7 @@ static void TestTlvInitExtMem(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_TLV_new(ctx, 0x12, 0, 0, tmp, sizeof(tmp), 0, &tlv);
+	res = KSI_TLV_new(ctx,KSI_TLV_PAYLOAD_RAW, 0x12, 0, 0, tmp, sizeof(tmp), 0, &tlv);
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
@@ -291,7 +291,6 @@ static void TestTlvGetStringValue(CuTest* tc) {
 	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_STR);
 	CuAssert(tc, "TLV cast failed", res == KSI_OK);
 
-
 	res = KSI_TLV_getStringValue(tlv, &str, 0);
 	CuAssert(tc, "Failed to get string value from tlv.", res == KSI_OK && str != NULL);
 	CuAssert(tc, "TLV payload type not string.", tlv->payloadType == KSI_TLV_PAYLOAD_STR);
@@ -386,7 +385,6 @@ static void TestTlvGetNextNested(CuTest* tc) {
 	res = KSI_TLV_getNextNestedTLV(tlv, &nested);
 	CuAssert(tc, "Reading nested TLV failed after reading last TLV.", res == KSI_OK);
 	CuAssert(tc, "Nested element should have been NULL", nested == NULL);
-
 
 	KSI_free(str);
 	KSI_TLV_free(tlv);
@@ -611,11 +609,26 @@ static void TestTlvRequireCast(CuTest* tc) {
 	KSI_nofree(nested);
 }
 
-static void TestTlvFromUint(CuTest* tc) {
+static void TestTlvParseBlobFailWithExtraData(CuTest* tc) {
+	int res;
+	KSI_TLV *tlv = NULL;
+	unsigned char raw[] = "\x07\x06QWERTYU";
+
 	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_TLV_parseBlob(ctx, raw, sizeof(raw) - 1, &tlv);
+	CuAssert(tc, "Blob with extra data was parsed into TLV", res != KSI_OK && tlv == NULL);
+
+	KSI_TLV_free(tlv);
+}
+
+
+static void TestTlvFromUint(CuTest* tc) {
 	KSI_TLV *tlv = NULL;
 	int res;
 	uint64_t val;
+
+	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_TLV_fromUint(ctx, 0x13, 0, 0, 0xabcde, &tlv);
 	CuAssert(tc, "Unable to create TLV from uint value.", res == KSI_OK && tlv != NULL);
@@ -651,7 +664,7 @@ static void TestTlvComposeNested(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	/* Create an empty outer TLV */
-	res = KSI_TLV_new(ctx, 0x1, 0, 0, NULL, 0, 0, &outer);
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, 0x1, 0, 0, NULL, 0, 0, &outer);
 	CuAssert(tc, "Unable to create TLV", res == KSI_OK && outer != NULL);
 
 	res = KSI_TLV_cast(outer, KSI_TLV_PAYLOAD_TLV);
@@ -685,7 +698,7 @@ static void TestTlvComposeNestedMore(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	/* Create an empty outer TLV */
-	res = KSI_TLV_new(ctx, 0x1, 0, 0, NULL, 0, 0, &outer);
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, 0x1, 0, 0, NULL, 0, 0, &outer);
 	CuAssert(tc, "Unable to create TLV", res == KSI_OK && outer != NULL);
 
 	res = KSI_TLV_cast(outer, KSI_TLV_PAYLOAD_TLV);
@@ -740,6 +753,7 @@ CuSuite* KSI_TLV_GetSuite(void)
 	SUITE_ADD_TEST(suite, TestTlvFromUint);
 	SUITE_ADD_TEST(suite, TestTlvComposeNested);
 	SUITE_ADD_TEST(suite, TestTlvComposeNestedMore);
+	SUITE_ADD_TEST(suite, TestTlvParseBlobFailWithExtraData);
 
 	return suite;
 }
