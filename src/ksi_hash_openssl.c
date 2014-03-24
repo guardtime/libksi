@@ -120,7 +120,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_DataHasher_add(KSI_DataHasher *hasher, const unsigned char* data, size_t data_length) {
+int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_length) {
 	KSI_ERR err;
 
 	KSI_BEGIN(hasher->ctx, &err);
@@ -129,6 +129,7 @@ int KSI_DataHasher_add(KSI_DataHasher *hasher, const unsigned char* data, size_t
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
+
 	if (data == NULL && data_length != 0) {
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;

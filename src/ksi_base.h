@@ -205,7 +205,7 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher);
  * \return status code (\c KSI_OK, when operation succeeded, otherwise an
  * error code).
  */
-int KSI_DataHasher_add(KSI_DataHasher *hasher, const unsigned char* data, size_t data_length);
+int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_length);
 
 /**
  * Finalizes a hash computation.
@@ -226,6 +226,31 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **hash);
  * \see #KSI_free()
  */
 void KSI_DataHash_free(KSI_DataHash *hash);
+
+/**
+ * Calculates the data hash object from the input data.
+ *
+ * @param[in]		ctx				KSI context.
+ * @param[in]		data			Pointer to the input data.
+ * @param[in]		data_length		Length of the imput data.
+ * @param[in]		hash_id			Hash algorithm id.
+ * @param[out]		hash			Pointer to the pointer receiving the data hash object.
+ *
+ * @return status code (\c KSI_OK, when operation succeeded, otherwise an
+ * error code).
+ */
+int KSI_DataHash_create(KSI_CTX *ctx, const void *data, size_t data_length, int hash_id, KSI_DataHash **hash);
+
+/**
+ * Creates a clone of the data hash.
+ *
+ * @param[in]	from	Data hash to be cloned.
+ * @param[out]	to		Pointer to the receiving pointer to the cloned object.
+ *
+ * @return status code (\c KSI_OK, when operation succeeded, otherwise an
+ * error code).
+ */
+int KSI_DataHash_clone(KSI_DataHash *from, KSI_DataHash **to);
 
 /**
  * Interneal data access method.
@@ -254,7 +279,7 @@ int KSI_DataHash_getData(KSI_DataHash *hash, int *algorithm, unsigned char **dig
  * \return status code (\c KSI_OK, when operation succeeded, otherwise an
  * error code).
  */
-int KSI_DataHash_fromData(KSI_CTX *ctx, int algorithm, unsigned char *digest, int digest_length, KSI_DataHash **hash);
+int KSI_DataHash_fromDigest(KSI_CTX *ctx, int algorithm, unsigned char *digest, int digest_length, KSI_DataHash **hash);
 
 /**
  * Reevaluates the #KSI_DataHash object with another precalculated hash value.
@@ -279,6 +304,16 @@ int KSI_DataHash_fromData_ex(int algorithm, unsigned char *digest, int digest_le
  * error code).
  */
 int KSI_DataHash_getImprint(KSI_DataHash *hash, unsigned char **imprint, int *imprint_length);
+
+/**
+ * Encodes the data hash object as an imprint into an existing array.
+ *
+ * @param[in]	hash			Data hash object.
+ * @param[in]	target			Pointer to the existing target memory.
+ * @param[in]	target_size		Maximum output length.
+ * @param[out]	target_length	Length of the serialized imprint.
+ */
+int KSI_DataHash_getImprint_ex(KSI_DataHash *hash, unsigned char *target, int target_size, int *target_length);
 
 /**
  * Constructor for #KSI_DataHash object from existing imprint.
@@ -322,8 +357,19 @@ int KSI_fixHashAlgorithm(int hash_id);
 
 /**
  * Is \p hash_id hash algorithm trusted?
+ * @param[in]	hash_id		Hash algorithm id.
+ *
+ * @return Returns 0 if algorithm is not trusted, otherwise non-zero.
  */
 int KSI_isTrusteddHashAlgorithm(int hash_id);
+
+/**
+ * Is \p hash_id hash algorithm supported by the API.
+ * @param[in]	hash_id		Hash algorithm id.
+ *
+ * @return Returns 0 if algorithm is not supported, otherwise non-zero.
+ */
+int KSI_isSupportedHashAlgorithm(int hash_id);
 
 /**
  * Returns a pointer to constant string containing the name of the hash algorithm. Returns NULL if
@@ -360,12 +406,24 @@ int KSI_NET_CURL(KSI_CTX *ctx);
  */
 typedef struct KSI_NetHandle_st KSI_NetHandle;
 
+/**
+ *
+ */
 int KSI_NET_sendRequest(KSI_CTX *ctx, const char *url, const unsigned char *request, int request_length, KSI_NetHandle **handle);
 
+/**
+ *
+ */
 int KSI_NET_getResponse(KSI_NetHandle *handle, unsigned char **response, int *response_length, int copy);
 
+/**
+ *
+ */
 void KSI_NetHandle_free(KSI_NetHandle *heandle);
 
+/**
+ *
+ */
 int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, int (*provider)(KSI_CTX *));
 
 

@@ -147,15 +147,35 @@ void KSI_NetProvider_free(KSI_CTX *ctx) {
 
 int KSI_NET_extractPDU(KSI_CTX *ctx, unsigned char *data, int data_len, unsigned char **payload, int *payload_length) {
 	KSI_ERR err;
-	int res;
 	KSI_TLV *pdu = NULL;
+	int res;
+	unsigned char *pl = NULL;
+	int pl_len;
 
 	/* Parse the PDU */
 	res = KSI_TLV_parseBlob(ctx, data, data_len, &pdu);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Assert PDU tag */
+	if (KSI_TLV_getType(pdu) != KSI_TLV_TAG_PDU_AGGREGATION) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+		goto cleanup;
+	}
+
+	/* Extract the contents */
+	res = KSI_TLV_getRawValue(pdu, &pl, &pl_len, 1);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*payload = pl;
+	*payload_length = pl_len;
+
+	pl = NULL;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
+
+	KSI_free(pl);
 
 	return KSI_RETURN(&err);
 }

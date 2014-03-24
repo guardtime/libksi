@@ -6,6 +6,7 @@ runner_SOURCES= \
 		all_tests.h \
 		ksi_ctx_test.c \
 		ksi_hash_test.c \
+		ksi_hashchain_test.c \
 		ksi_log_test.c \
 		ksi_net_mock.c \
 		ksi_net_test.c \
@@ -21,6 +22,8 @@ runner_SOURCES= \
 		../src/ksi_err.h \
 		../src/ksi_hash.h \
 		../src/ksi_hash.c \
+		../src/ksi_hashchain.h \
+		../src/ksi_hashchain.c \
 		../src/ksi_hash_openssl.c \
 		../src/ksi_internal.c \
 		../src/ksi_internal.h \

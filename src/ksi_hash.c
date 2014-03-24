@@ -77,15 +77,20 @@ int KSI_fixHashAlgorithm(int hash_id) {
  */
 int KSI_isTrusteddHashAlgorithm(int hash_id) {
 	int id = KSI_fixHashAlgorithm(hash_id);
-	if (id >= 0 && id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
+	if (KSI_isSupportedHashAlgorithm(id)) {
 		return KSI_hashAlgorithmInfo[id].trusted;
 	}
 	return 0;
 }
 
+int KSI_isSupportedHashAlgorithm(int hash_id) {
+	int id = KSI_fixHashAlgorithm(hash_id);
+	return id >= 0 && id < KSI_NUMBER_OF_KNOWN_HASHALGS;
+}
+
 int KSI_getHashLength(int hash_id) {
 	int id = KSI_fixHashAlgorithm(hash_id);
-	if (id >= 0 && id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
+	if (KSI_isSupportedHashAlgorithm(id)) {
 		return (KSI_hashAlgorithmInfo[id].bitCount) >> 3;
 	}
 	return -1;
@@ -129,7 +134,7 @@ cleanup:
 /**
  *
  */
-int KSI_DataHash_fromData(KSI_CTX *ctx, int algorithm, unsigned char *digest, int digest_length, KSI_DataHash **hash) {
+int KSI_DataHash_fromDigest(KSI_CTX *ctx, int algorithm, unsigned char *digest, int digest_length, KSI_DataHash **hash) {
 	KSI_ERR err;
 	KSI_DataHash *tmp_hash = NULL;
 	int res;
@@ -206,32 +211,60 @@ cleanup:
 /**
  *
  */
-int KSI_DataHash_getImprint(KSI_DataHash *hash, unsigned char **imprint, int *imprint_length) {
+int KSI_DataHash_getImprint_ex(KSI_DataHash *hash, unsigned char *target, int target_size, int *target_length) {
 	KSI_ERR err;
-	unsigned char *tmp_imprint = NULL;
-
-	KSI_PRE(&err, hash != NULL) goto cleanup;
 
 	KSI_BEGIN(hash->ctx, &err);
 
-	tmp_imprint = KSI_calloc(hash->digest_length + 1, 1);
-	if (tmp_imprint == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+	if (target_size < hash->digest_length + 1) {
+		KSI_FAIL(&err, KSI_BUFFER_OVERFLOW, NULL);
 		goto cleanup;
 	}
 
-	*tmp_imprint = (unsigned char) hash->algorithm;
-	memcpy(tmp_imprint + 1, hash->digest, hash->digest_length);
-
-	*imprint_length = hash->digest_length + 1;
-	*imprint = tmp_imprint;
-	tmp_imprint = NULL;
+	*target = (unsigned char ) hash->algorithm;
+	memcpy(target + 1, hash->digest, hash->digest_length);
+	*target_length = hash->digest_length + 1;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
 
-	KSI_free(tmp_imprint);
+	return KSI_RETURN(&err);
+}
+
+/**
+ *
+ */
+int KSI_DataHash_getImprint(KSI_DataHash *hash, unsigned char **imprint, int *imprint_length) {
+	KSI_ERR err;
+	int res;
+	int len;
+	unsigned char *imp = NULL;
+	int imp_len;
+
+	KSI_PRE(&err, hash != NULL) goto cleanup;
+
+	KSI_BEGIN(hash->ctx, &err);
+
+	imp_len = hash->digest_length + 1;
+	imp = KSI_calloc(imp_len, 1);
+	if (imp == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_DataHash_getImprint_ex(hash, imp, imp_len, &len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*imprint_length = len;
+	*imprint = imp;
+	imp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_free(imp);
 
 	return KSI_RETURN(&err);
 }
@@ -240,7 +273,7 @@ cleanup:
  *
  */
 int KSI_DataHash_fromImprint(KSI_CTX *ctx, unsigned char *imprint, int imprint_length, KSI_DataHash **hash) {
-	return KSI_DataHash_fromData(ctx, *imprint, imprint + 1, imprint_length - 1, hash);
+	return KSI_DataHash_fromDigest(ctx, *imprint, imprint + 1, imprint_length - 1, hash);
 }
 
 /**
@@ -262,7 +295,6 @@ int KSI_DataHash_fromImprint_ex(unsigned char *imprint, int imprint_length, KSI_
 cleanup:
 
 	return KSI_RETURN(&err);
-
 }
 
 /**
@@ -324,4 +356,62 @@ cleanup:
 	KSI_nofree(alias);
 
 	return hash_id;
+}
+
+/**
+ *
+ */
+int KSI_DataHash_create(KSI_CTX *ctx, const void *data, size_t data_length, int hash_id, KSI_DataHash **hash) {
+	KSI_ERR err;
+	KSI_DataHash *hsh = NULL;
+	KSI_DataHasher *hsr = NULL;
+	int res;
+
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_DataHasher_open(ctx, hash_id, &hsr);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_DataHasher_add(hsr, data, data_length);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_DataHasher_close(hsr, &hsh);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*hash = hsh;
+	hsh = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_DataHash_free(hsh);
+	KSI_DataHasher_free(hsr);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_DataHash_clone(KSI_DataHash *from, KSI_DataHash **to) {
+	KSI_ERR err;
+	KSI_DataHash *hsh = NULL;
+	int res;
+
+	KSI_PRE(&err, from != NULL) goto cleanup;
+	KSI_PRE(&err, to != NULL) goto cleanup;
+
+	KSI_BEGIN(from->ctx, &err);
+
+	res = KSI_DataHash_fromDigest(from->ctx, from->algorithm, from->digest, from->digest_length, &hsh);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*to = hsh;
+	hsh = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_DataHash_free(hsh);
+
+	return KSI_RETURN(&err);
 }
