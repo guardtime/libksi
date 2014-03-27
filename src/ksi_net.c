@@ -90,7 +90,7 @@ int KSI_NET_sendRequest(KSI_CTX *ctx, const char *url, const unsigned char *requ
 	memcpy(tmp->request, request, request_length);
 	tmp->request_length = request_length;
 
-	res = ctx->netProvider.sendRequest(tmp);
+	res = ctx->netProvider->sendRequest(tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*handle = tmp;
@@ -139,9 +139,12 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-void KSI_NetProvider_free(KSI_CTX *ctx) {
-	if (ctx->netProvider.providerCleanup != NULL) {
-		ctx->netProvider.providerCleanup(ctx->netProvider.poviderCtx);
+void KSI_NetProvider_free(KSI_NetProvider *provider) {
+	if (provider != NULL) {
+		if (provider->providerCleanup != NULL) {
+			provider->providerCleanup(provider->poviderCtx);
+		}
+		KSI_free(provider);
 	}
 }
 

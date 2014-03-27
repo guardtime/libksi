@@ -38,12 +38,6 @@ const char *KSI_getErrorString(int statusCode) {
 	}
 }
 
-static void ctxNetProvider_init(KSI_CTX* ctx) {
-	ctx->netProvider.poviderCtx = NULL;
-	ctx->netProvider.providerCleanup = NULL;
-	ctx->netProvider.sendRequest = NULL;
-}
-
 static void ctxConf_init(KSI_CTX* ctx) {
 	/* Initialize config */
 	/* TODO: Perhaps this should come from some external config file */
@@ -77,7 +71,6 @@ int KSI_CTX_new(KSI_CTX **context) {
 	KSI_LOG_init(ctx, NULL, KSI_LOG_DEBUG);
 
 	/* Init context with default values. */
-	ctxNetProvider_init(ctx);
 	ctxConf_init(ctx);
 
 	/* Initialize curl as the net handle. */
@@ -95,15 +88,15 @@ cleanup:
 
 	return res;
 }
-
-int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, int (*provider)(KSI_CTX *)) {
+int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, int (*provider)(KSI_CTX *, KSI_NetProvider **)) {
 	int res;
 
-	if (ctx->netProvider.providerCleanup != NULL) {
-		ctx->netProvider.providerCleanup(ctx->netProvider.poviderCtx);
-	}
+	KSI_NetProvider_free(ctx->netProvider);
+	ctx->netProvider = NULL;
 
-	res = provider(ctx);
+	if (provider != NULL) {
+		res = provider(ctx, &ctx->netProvider);
+	}
 
 cleanup:
 
@@ -120,9 +113,7 @@ void KSI_CTX_free(KSI_CTX *context) {
 		if (context->logStream) fclose(context->logStream);
 		KSI_free(context->logFile);
 
-		if (context->netProvider.poviderCtx != NULL && context->netProvider.providerCleanup != NULL) {
-			context->netProvider.providerCleanup(context->netProvider.poviderCtx);
-		}
+		KSI_NetProvider_free(context->netProvider);
 
 		KSI_free(context);
 	}

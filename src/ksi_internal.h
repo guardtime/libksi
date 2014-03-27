@@ -27,6 +27,16 @@ typedef struct KSI_CalendarChain_st KSI_CalendarChain;
 typedef struct KSI_AggregationChain_st KSI_AggregationChain;
 typedef struct KSI_Header_st KSI_Header;
 
+struct KSI_NetProvider_st {
+	/** Cleanup for the provider, gets the #providerCtx as parameter. */
+	void (*providerCleanup)(void *);
+
+	/** Function for sending requests. This needs to be non blocking. */
+	int (*sendRequest)(KSI_NetHandle *);
+
+	/** Dedicated context for the net provider */
+	void *poviderCtx;
+};
 
 struct KSI_CTX_st {
 
@@ -62,17 +72,7 @@ struct KSI_CTX_st {
 	 * TRANSPORT.
 	 ************/
 
-	/** This structure is used from the current implementation of network provider. */
-	struct {
-		/** Cleanup for the provider, gets the #providerCtx as parameter. */
-		void (*providerCleanup)(void *);
-
-		/** Function for sending requests. This needs to be non blocking. */
-		int (*sendRequest)(KSI_NetHandle *);
-
-		/** Dedicated context for the net provider */
-		void *poviderCtx;
-	} netProvider;
+	KSI_NetProvider *netProvider;
 
 	/****************
 	 * CONFIGURATION.

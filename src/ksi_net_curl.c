@@ -133,20 +133,30 @@ void KSI_NET_global_cleanup(void) {
 /**
  *
  */
-int KSI_NET_CURL(KSI_CTX *ctx) {
+int KSI_NET_CURL(KSI_CTX *ctx, KSI_NetProvider **provider) {
 	KSI_ERR err;
+	KSI_NetProvider *pr = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	ctx->netProvider.poviderCtx = NULL;
-	ctx->netProvider.providerCleanup = NULL;
-	ctx->netProvider.sendRequest = curlSend;
+	pr = KSI_new(KSI_NetProvider);
+	if (pr == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+	pr->poviderCtx = NULL;
+	pr->providerCleanup = NULL;
+	pr->sendRequest = curlSend;
+
+	*provider = pr;
+	pr = NULL;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
 
+	KSI_free(pr);
 
 	return KSI_RETURN(&err);
 }

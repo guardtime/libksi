@@ -14,6 +14,8 @@ typedef struct KSI_CTX_st KSI_CTX;
 typedef struct KSI_ERR_st KSI_ERR;
 typedef struct KSI_TLV_st KSI_TLV;
 typedef struct KSI_Signature_st KSI_Signature;
+typedef struct KSI_NetProvider_st KSI_NetProvider;
+
 
 /* KSI reader type. */
 typedef struct KSI_RDR_st KSI_RDR;
@@ -397,7 +399,7 @@ int KSI_getHashAlgorithmByName(const char *name);
  ************/
 
 /** Transport Providers */
-int KSI_NET_CURL(KSI_CTX *ctx);
+int KSI_NET_CURL(KSI_CTX *ctx, KSI_NetProvider **provider);
 
 /**
  * Network resource handle
@@ -424,8 +426,8 @@ void KSI_NetHandle_free(KSI_NetHandle *heandle);
 /**
  *
  */
-int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, int (*provider)(KSI_CTX *));
-
+int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, int (*provider)(KSI_CTX *, KSI_NetProvider **));
+void KSI_NetProvider_free(KSI_NetProvider *provider);
 
 #ifdef __cplusplus
 }
