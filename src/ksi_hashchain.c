@@ -1,5 +1,16 @@
+#include <string.h>
+
 #include "ksi_internal.h"
 #include "ksi_hashchain.h"
+
+static int highBit(unsigned int n) {
+    n |= (n >>  1);
+    n |= (n >>  2);
+    n |= (n >>  4);
+    n |= (n >>  8);
+    n |= (n >> 16);
+    return n - (n >> 1);
+}
 
 void KSI_HashNode_free(KSI_HashNode *node) {
 	if (node != NULL) {
@@ -101,7 +112,7 @@ int KSI_HashNode_join(KSI_HashNode *left, KSI_HashNode *right, int hash_id, KSI_
 	/* Add the level as the last byte. */
 	buf[len++] = level;
 
-	KSI_LOG_debugBlob(ctx, "HashNode_join", buf, len);
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "HashNode_join", buf, len);
 
 	/* Create the hash for the new root. */
 	res = KSI_DataHash_create(ctx, buf, len, hash_id, &hsh);
@@ -127,6 +138,126 @@ cleanup:
 
 	KSI_DataHash_free(hsh);
 	KSI_HashNode_free(hn);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_HashNode_buildCalendar(KSI_CTX *ctx, KSI_DataHash *sibling, int isLeft, KSI_HashNode **root) {
+	KSI_ERR err;
+	int res;
+
+	KSI_DataHash *hsh = NULL;
+	KSI_HashNode *hn = NULL;
+
+	unsigned char buf[0xffff];
+	int buf_len = 0;
+
+	unsigned char *sibling_digest = NULL;
+	int sibling_digestLen = 0;
+	int sibling_hashId = 0;
+
+	unsigned char *root_digest = NULL;
+	int root_digestLen = 0;
+	int root_hashId = 0;
+
+	KSI_PRE(&err, sibling != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	if (*root == NULL) {
+		res = KSI_DataHash_clone(sibling, &hsh);
+		KSI_CATCH(&err, res) goto cleanup;
+	} else {
+		res = KSI_DataHash_getData(sibling, &sibling_hashId, &sibling_digest, &sibling_digestLen);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		res = KSI_DataHash_getData((*root)->hash, &root_hashId, &root_digest, &root_digestLen);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		if (isLeft) {
+			memcpy(buf + buf_len, root_digest, root_digestLen);
+			buf_len += root_digestLen;
+
+			memcpy(buf + buf_len, sibling_digest, sibling_digestLen);
+			buf_len += sibling_digestLen;
+		} else {
+			memcpy(buf + buf_len, sibling_digest, sibling_digestLen);
+			buf_len += sibling_digestLen;
+
+			memcpy(buf + buf_len, root_digest, root_digestLen);
+			buf_len += root_digestLen;
+		}
+
+		buf[buf_len++] = 0xff;
+
+		KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "HashNode_buildCalendar", buf, buf_len);
+
+		/* Create the hash for the new root. */
+		res = KSI_DataHash_create(ctx, buf, buf_len, sibling_hashId, &hsh);
+		KSI_CATCH(&err, res) goto cleanup;
+
+	}
+	res = KSI_HashNode_new(ctx, hsh, 0, &hn);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	if (*root != NULL) {
+		(*root)->parent = hn;
+		if (isLeft) {
+			hn->rightChild = *root;
+		} else {
+			hn->leftChild = *root;
+		}
+	}
+
+	*root = hn;
+	hn = NULL;
+	hsh = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_free(sibling_digest);
+	KSI_free(root_digest);
+
+	KSI_DataHash_free(hsh);
+	KSI_HashNode_free(hn);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_HashNode_getCalendarAggregationTime(KSI_HashNode *cal, uint32_t aggr_time, uint32_t *utc_time) {
+	KSI_ERR err;
+	uint32_t r = aggr_time;
+	uint32_t t = 0;
+	KSI_HashNode *hn = NULL;
+
+	KSI_PRE(&err, cal != NULL) goto cleanup;
+	KSI_BEGIN(cal->ctx, &err);
+
+	hn = cal;
+	while(hn != NULL && (hn->leftChild != NULL || hn->rightChild != NULL)) {
+		if (hn->leftChild != NULL) {
+			r = highBit(r) - 1;
+			hn = hn->leftChild;
+		} else {
+			t += highBit(r);
+			r -= highBit(r);
+			hn = hn->rightChild;
+		}
+	}
+
+	if (r != 0) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+		goto cleanup;
+	}
+
+	*utc_time = t;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(hn);
 
 	return KSI_RETURN(&err);
 }
@@ -158,3 +289,4 @@ cleanup:
 int KSI_HashNode_getImprint(KSI_HashNode *node, unsigned char **imprint, int *imprint_length) {
 	return KSI_DataHash_getImprint(node->hash, imprint, imprint_length);
 }
+
