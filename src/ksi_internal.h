@@ -120,11 +120,14 @@ struct KSI_Signature_st {
 
 	KSI_Header *responseHeader;
 	KSI_CalendarChain *calendarChain;
+	KSI_AggregationChain *aggregationChain;
+
 };
 
 void KSI_Header_free(KSI_Header *hdr);
 void KSI_Signature_free(KSI_Signature *sig);
 void KSI_CalendarChain_free(KSI_CalendarChain *cal);
+void KSI_AggregationChain_free(KSI_AggregationChain *aggr);
 
 void *KSI_malloc(size_t size);
 void *KSI_calloc(size_t num, size_t size);

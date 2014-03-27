@@ -6,6 +6,7 @@ void KSI_Signature_free(KSI_Signature *sig) {
 		KSI_free(sig->errorMessage);
 		KSI_Header_free(sig->responseHeader);
 		KSI_CalendarChain_free(sig->calendarChain);
+		KSI_AggregationChain_free(sig->aggregationChain);
 		KSI_free(sig);
 	}
 }
@@ -21,6 +22,14 @@ void KSI_Header_free(KSI_Header *hdr) {
 	if (hdr != NULL) {
 		KSI_free(hdr->clientId);
 		KSI_free(hdr);
+	}
+}
+
+void KSI_AggregationChain_free(KSI_AggregationChain *aggr) {
+	if (aggr != NULL) {
+		KSI_free(aggr->inputData);
+		KSI_DataHash_free(aggr->inputHash);
+		KSI_free(aggr);
 	}
 }
 
@@ -231,6 +240,7 @@ int KSI_parseSignature(KSI_CTX *ctx, unsigned char *rawPdu, int rawPdu_len, KSI_
 	sig->errorMessage = NULL;
 
 	sig->calendarChain = NULL;
+	sig->aggregationChain = NULL;
 
 	cal = KSI_new(KSI_CalendarChain);
 	if (cal == NULL) {
@@ -313,6 +323,10 @@ int KSI_parseSignature(KSI_CTX *ctx, unsigned char *rawPdu, int rawPdu_len, KSI_
 
 	sig->responseHeader = hdr;
 	hdr = NULL;
+
+	sig->aggregationChain = aggr;
+	aggr = NULL;
+
 	KSI_LOG_debug(ctx, "status = %d, aggr_time = %lld, pub_time = %lld", sig->status, sig->calendarChain->aggregationTime, sig->calendarChain->publicationTime);
 
 
@@ -327,6 +341,7 @@ int KSI_parseSignature(KSI_CTX *ctx, unsigned char *rawPdu, int rawPdu_len, KSI_
 cleanup:
 
 	KSI_Header_free(hdr);
+	KSI_AggregationChain_free(aggr);
 	KSI_CalendarChain_free(cal);
 	KSI_Signature_free(sig);
 
