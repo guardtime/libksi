@@ -22,6 +22,12 @@
 extern "C" {
 #endif
 
+typedef struct KSI_HashNode_st KSI_HashNode;
+typedef struct KSI_CalendarChain_st KSI_CalendarChain;
+typedef struct KSI_AggregationChain_st KSI_AggregationChain;
+typedef struct KSI_Header_st KSI_Header;
+
+
 struct KSI_CTX_st {
 
 	/******************
@@ -81,15 +87,44 @@ struct KSI_CTX_st {
 	} conf;
 };
 
+struct KSI_AggregationChain_st {
+	uint32_t aggregationTime;
+	uint32_t chainIndex;
+	unsigned char *inputData;
+	int inputData_len;
+	KSI_DataHash *inputHash;
+	int aggrHashId;
+};
+
+struct KSI_CalendarChain_st {
+	uint32_t publicationTime;
+	uint32_t aggregationTime;
+	KSI_DataHash *inputHash;
+	KSI_HashNode *chain;
+};
+
+struct KSI_Header_st {
+	uint32_t instanceId;
+	uint32_t messageId;
+	unsigned char *clientId;
+	int clientId_length;
+};
+
 /**
  * KSI Signature object
  */
 struct KSI_Signature_st {
-	/* TODO! */
-	int mock;
+	uint32_t requestId;
+	uint32_t status;
+	char *errorMessage;
+
+	KSI_Header *responseHeader;
+	KSI_CalendarChain *calendarChain;
 };
 
+void KSI_Header_free(KSI_Header *hdr);
 void KSI_Signature_free(KSI_Signature *sig);
+void KSI_CalendarChain_free(KSI_CalendarChain *cal);
 
 void *KSI_malloc(size_t size);
 void *KSI_calloc(size_t num, size_t size);
@@ -275,7 +310,7 @@ int KSI_TLV_isForward(KSI_TLV *tlv);
  *
  * \return Numeric value of the TLV type.
  */
-int KSI_TLV_getType(KSI_TLV *tlv);
+int KSI_TLV_getTag(KSI_TLV *tlv);
 
 /**
  * This function serialises the tlv into a given buffer with \c len bytes of free
@@ -385,7 +420,6 @@ int KSI_NET_global_init(void);
 void KSI_NET_global_cleanup(void);
 
 
-typedef struct KSI_HashNode_st KSI_HashNode;
 
 /**
  * Hash node cleanup method.
@@ -419,7 +453,8 @@ int KSI_HashNode_new(KSI_CTX *ctx, KSI_DataHash *hash, int level, KSI_HashNode *
  * error code).
  */
 int KSI_HashNode_join(KSI_HashNode *left, KSI_HashNode *right, int hash_id, KSI_HashNode **root);
-
+int KSI_HashNode_buildCalendar(KSI_CTX *ctx, KSI_DataHash *sibling, int isLeft, KSI_HashNode **root);
+int KSI_HashNode_getCalendarAggregationTime(KSI_HashNode *cal, uint32_t aggr_time, uint32_t *utc_time);
 /**
  * Extracts the data hash value from the internal data hash object.
  *
@@ -449,6 +484,7 @@ int KSI_HashNode_getDataHash(KSI_HashNode *node, KSI_DataHash **hash);
  */
 int KSI_HashNode_getImprint(KSI_HashNode *node, unsigned char **imprint, int *imprint_length);
 
+int KSI_parseSignature(KSI_CTX *ctx, unsigned char *rawPdu, int rawPdu_len, KSI_Signature **signature);
 
 #ifdef __cplusplus
 }

@@ -10,7 +10,6 @@
 
 static void tlvList_free(KSI_TLV_LIST *list) {
 	KSI_TLV_LIST *tmp = NULL;
-
 	if (list == NULL) return;
 
 	while (list != NULL) {
@@ -584,7 +583,6 @@ cleanup:
 void KSI_TLV_free(KSI_TLV *tlv) {
 	if (tlv != NULL) {
 		KSI_free(tlv->buffer);
-
 		/* Free nested data */
 		tlvList_free(tlv->nested);
 		KSI_free(tlv);
@@ -852,7 +850,7 @@ int KSI_TLV_isForward(KSI_TLV *tlv) {
 /**
  *
  */
-int KSI_TLV_getType(KSI_TLV *tlv) {
+int KSI_TLV_getTag(KSI_TLV *tlv) {
 	return tlv->tag;
 }
 

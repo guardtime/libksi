@@ -43,7 +43,7 @@ static int createRequest (KSI_DataHash *hsh, unsigned char **outReq, int *outReq
 	res = createRequestTlv(hsh->ctx, imprint, imprint_len, &tlv);
 	if (res != KSI_OK) goto cleanup;
 
-	KSI_LOG_debugTlv(hsh->ctx, "Request TLV", tlv);
+	KSI_LOG_logTlv(hsh->ctx, KSI_LOG_DEBUG, "Request TLV", tlv);
 
 	/* Serialize the request TLV. */
 	res = KSI_TLV_serialize(tlv, &req, &req_len);
@@ -63,17 +63,11 @@ cleanup:
 	return res;
 }
 
-void dumpHex(unsigned char *data, int data_len) {
-	int i;
-	for (i = 0; i < data_len; i++)
-		printf("%02x", data[i]);
-	printf("\n");
-}
-
 int KSI_sign(KSI_DataHash *hsh, KSI_Signature **signature) {
 	KSI_ERR err;
 	int res;
 	KSI_NetHandle *handle = NULL;
+	KSI_Signature *sign = NULL;
 
 	unsigned char *req = NULL;
 	int req_len = 0;
@@ -89,7 +83,7 @@ int KSI_sign(KSI_DataHash *hsh, KSI_Signature **signature) {
 	res = createRequest(hsh, &req, &req_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	KSI_LOG_debugBlob(hsh->ctx, "Request", req, req_len);
+	KSI_LOG_logBlob(hsh->ctx, KSI_LOG_DEBUG, "Request", req, req_len);
 
 	res = KSI_NET_sendRequest(hsh->ctx, hsh->ctx->conf.net.urlSigner, req, req_len, &handle);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -97,14 +91,19 @@ int KSI_sign(KSI_DataHash *hsh, KSI_Signature **signature) {
 	res = KSI_NET_getResponse(handle, &resp, &resp_len, 0);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	KSI_LOG_debugBlob(hsh->ctx, "Response", resp, resp_len);
+	KSI_LOG_logBlob(hsh->ctx, KSI_LOG_DEBUG, "Response", resp, resp_len);
 
-	*signature = KSI_new(KSI_Signature); /* TODO Add real implementation */
+	res = KSI_parseSignature(hsh->ctx, resp, resp_len, &sign);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*signature = sign;
+	sign = NULL;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
 
+	KSI_Signature_free(sign);
 	KSI_NetHandle_free(handle);
 	KSI_free(req);
 

@@ -7,6 +7,7 @@ int main(void) {
 
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sign = NULL;
 
 	res = KSI_global_init();
 	if (res != KSI_OK) goto cleanup;
@@ -35,7 +36,7 @@ int main(void) {
 		goto cleanup;
 	}
 
-	res = KSI_sign(hsh, NULL);
+	res = KSI_sign(hsh, &sign);
 	if (res != KSI_OK) {
 		printf("Unable to sign %d.\n", res);
 		KSI_ERR_statusDump(ctx, stderr);
@@ -45,6 +46,7 @@ int main(void) {
 
 cleanup:
 
+	KSI_Signature_free(sign);
 	KSI_DataHash_free(hsh);
 	KSI_DataHasher_free(hsr);
 

@@ -1,20 +1,8 @@
 # Generated with mk_makefile.sh
 AM_CFLAGS=-g
 bin_PROGRAMS=runner sign
-runner_SOURCES= \
-		all_tests.c \
-		all_tests.h \
-		ksi_ctx_test.c \
-		ksi_hash_test.c \
-		ksi_hashchain_test.c \
-		ksi_log_test.c \
-		ksi_net_mock.c \
-		ksi_net_test.c \
-		ksi_rdr_test.c \
-		ksi_tlv_sample_test.c \
-		ksi_tlv_test.c \
-		cutest/CuTest.h \
-		cutest/CuTest.c \
+
+apiSources = \
 		../src/config.h \
 		../src/ksi_base.c \
 		../src/ksi_base.h \
@@ -42,26 +30,23 @@ runner_SOURCES= \
 		../src/ksi_tlv_tags.h \
 		../src/ksi_tlv.h
 
+
+runner_SOURCES= \
+		all_tests.c \
+		all_tests.h \
+		ksi_ctx_test.c \
+		ksi_hash_test.c \
+		ksi_hashchain_test.c \
+		ksi_log_test.c \
+		ksi_net_mock.c \
+		ksi_net_test.c \
+		ksi_rdr_test.c \
+		ksi_tlv_sample_test.c \
+		ksi_tlv_test.c \
+		cutest/CuTest.h \
+		cutest/CuTest.c \
+		$(apiSources)
+		
 sign_SOURCES= \
 		sign_test.c \
-		../src/config.h \
-		../src/ksi_base.c \
-		../src/ksi_base.h \
-		../src/ksi_err.c \
-		../src/ksi_err.h \
-		../src/ksi_hash.h \
-		../src/ksi_hash.c \
-		../src/ksi_hash_openssl.c \
-		../src/ksi_internal.c \
-		../src/ksi_internal.h \
-		../src/ksi_io.c \
-		../src/ksi_io.h \
-		../src/ksi_log.c \
-		../src/ksi_log.h \
-		../src/ksi_net.h \
-		../src/ksi_net.c \
-		../src/ksi_net_curl.c \
-		../src/ksi_signer.c \
-		../src/ksi_tlv.c \
-		../src/ksi_tlv_serialize.c \
-		../src/ksi_tlv.h
+		$(apiSources)

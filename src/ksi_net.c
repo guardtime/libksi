@@ -157,7 +157,7 @@ int KSI_NET_extractPDU(KSI_CTX *ctx, unsigned char *data, int data_len, unsigned
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Assert PDU tag */
-	if (KSI_TLV_getType(pdu) != KSI_TLV_TAG_PDU_AGGREGATION) {
+	if (KSI_TLV_getTag(pdu) != KSI_TLV_TAG_PDU_AGGREGATION) {
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
 		goto cleanup;
 	}
