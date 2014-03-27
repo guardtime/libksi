@@ -65,6 +65,15 @@ KSI_LOG_FN(info, INFO);
 KSI_LOG_FN(error, ERROR);
 KSI_LOG_FN(fatal, FATAL);
 
+static int KSI_LOG_log(KSI_CTX *ctx, int level, char *format, ...) {
+	int res;
+	va_list va;
+	va_start(va, format);
+	res = writeLog(ctx, level, format, va); \
+	va_end(va);
+	return res;
+}
+
 
 static int closeLogFile(KSI_CTX *ctx) {
 	KSI_ERR err;
@@ -144,14 +153,14 @@ cleanup:
 	return KSI_ERR_apply(&err);
 }
 
-int KSI_LOG_debugBlob(KSI_CTX *ctx, const char *prefix, const unsigned char *data, int data_len) {
+int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned char *data, int data_len) {
 	int res = KSI_UNKNOWN_ERROR;
 	char *logStr = NULL;
 	int logStr_size = 0;
 	int logStr_len = 0;
 	int i;
 
-	if (ctx->logLevel < KSI_LOG_DEBUG) goto cleanup;
+	if (level < ctx->logLevel) goto cleanup;
 
 	logStr_size = data_len * 2 + 1;
 
@@ -165,7 +174,7 @@ int KSI_LOG_debugBlob(KSI_CTX *ctx, const char *prefix, const unsigned char *dat
 		logStr_len += snprintf(logStr + logStr_len, logStr_size - logStr_len, "%02x", data[i]);
 	}
 
-	res = KSI_LOG_debug(ctx, "%s (len = %d): %s", prefix, data_len, logStr);
+	res = KSI_LOG_log(ctx, level, "%s (len = %d): %s", prefix, data_len, logStr);
 
 cleanup:
 
@@ -174,19 +183,37 @@ cleanup:
 	return res;
 }
 
-int KSI_LOG_debugTlv(KSI_CTX *ctx, const char *prefix, KSI_TLV *tlv) {
+int KSI_LOG_logTlv(KSI_CTX *ctx, int level, const char *prefix, KSI_TLV *tlv) {
 	int res = KSI_UNKNOWN_ERROR;
 	char *serialized = NULL;
 
-	if (ctx->logLevel < KSI_LOG_DEBUG) goto cleanup;
+	if (level < ctx->logLevel) goto cleanup;
 	res = KSI_TLV_toString(tlv, &serialized);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_LOG_debug(ctx, "%s:\n%s", prefix, serialized);
+	res = KSI_LOG_log(ctx, level, "%s:\n%s", prefix, serialized);
 
 cleanup:
 
 	KSI_free(serialized);
+
+	return res;
+}
+
+int KSI_LOG_logDataHash(KSI_CTX *ctx, int level, const char *prefix, KSI_DataHash *hsh) {
+	int res = KSI_UNKNOWN_ERROR;
+	unsigned char *imprint = NULL;
+	int imprint_len = 0;
+	if (level < ctx->logLevel) goto cleanup;
+
+	res = KSI_DataHash_getImprint(hsh, &imprint, &imprint_len);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_LOG_logBlob(ctx, level, prefix, imprint, imprint_len);
+
+cleanup:
+
+	KSI_free(imprint);
 
 	return res;
 }
