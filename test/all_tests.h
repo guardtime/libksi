@@ -13,7 +13,7 @@ extern "C" {
 
 int debug_memcmp(void *ptr1, void *ptr2, size_t len);
 
-int KSI_NET_MOCK(KSI_CTX *ctx);
+int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetProvider **provider);
 
 CuSuite* KSI_CTX_GetSuite(void);
 CuSuite* KSI_LOG_GetSuite(void);

@@ -21,10 +21,14 @@ static void TestSendRequest(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
+	KSI_NetProvider *pr = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_setNetworkProvider(ctx, KSI_NET_MOCK);
+	res = KSI_NET_MOCK_new(ctx, &pr);
+	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
+
+	res = KSI_CTX_setNetworkProvider(ctx, pr);
 	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, someImprint, sizeof(someImprint), &hsh);

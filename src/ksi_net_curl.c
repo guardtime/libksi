@@ -61,7 +61,7 @@ cleanup:
 }
 
 
-static int curlSend(KSI_NetHandle *handle) {
+static int curlSendRequest(KSI_NetHandle *handle) {
 	KSI_ERR err;
 	CURL *curl = NULL;
 
@@ -114,6 +114,10 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+static int curlSendSignRequest(KSI_NetProvider *netProvider, void *data, int data_len, KSI_NetHandle **handle) {
+	KSI_NET_sendRequest(netProvider->ctx, netProvider->ctx->conf.net.urlSigner, data, data_len, handle);
+}
+
 int KSI_NET_global_init(void) {
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -133,7 +137,7 @@ void KSI_NET_global_cleanup(void) {
 /**
  *
  */
-int KSI_NET_CURL(KSI_CTX *ctx, KSI_NetProvider **provider) {
+int KSI_NET_CURL_new(KSI_CTX *ctx, KSI_NetProvider **netProvider) {
 	KSI_ERR err;
 	KSI_NetProvider *pr = NULL;
 
@@ -145,11 +149,19 @@ int KSI_NET_CURL(KSI_CTX *ctx, KSI_NetProvider **provider) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
+
+	pr->ctx = ctx;
+
 	pr->poviderCtx = NULL;
 	pr->providerCleanup = NULL;
-	pr->sendRequest = curlSend;
 
-	*provider = pr;
+	pr->sendSignRequest = curlSendSignRequest;
+	pr->sendExtendRequest = NULL;
+	pr->sendPublicationRequest = NULL;
+
+	pr->sendRequest = curlSendRequest;
+
+	*netProvider = pr;
 	pr = NULL;
 
 	KSI_SUCCESS(&err);

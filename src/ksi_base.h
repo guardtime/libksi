@@ -399,8 +399,7 @@ int KSI_getHashAlgorithmByName(const char *name);
  ************/
 
 /** Transport Providers */
-int KSI_NET_CURL(KSI_CTX *ctx, KSI_NetProvider **provider);
-
+int KSI_NET_CURL_new(KSI_CTX *ctx, KSI_NetProvider **netProvider);
 /**
  * Network resource handle
  *
@@ -416,6 +415,21 @@ int KSI_NET_sendRequest(KSI_CTX *ctx, const char *url, const unsigned char *requ
 /**
  *
  */
+int KSI_NET_sendSignRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle);
+
+/**
+ *
+ */
+int KSI_NET_sendExtendRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle);
+
+/**
+ *
+ */
+int KSI_NET_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle);
+
+/**
+ *
+ */
 int KSI_NET_getResponse(KSI_NetHandle *handle, unsigned char **response, int *response_length, int copy);
 
 /**
@@ -426,7 +440,7 @@ void KSI_NetHandle_free(KSI_NetHandle *heandle);
 /**
  *
  */
-int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, int (*provider)(KSI_CTX *, KSI_NetProvider **));
+int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, KSI_NetProvider *netProvider);
 void KSI_NetProvider_free(KSI_NetProvider *provider);
 
 #ifdef __cplusplus

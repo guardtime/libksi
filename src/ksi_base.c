@@ -51,6 +51,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	KSI_CTX *ctx = NULL;
+	KSI_NetProvider *netProvider = NULL;
 
 	ctx = KSI_new(KSI_CTX);
 	if (ctx == NULL) {
@@ -74,8 +75,12 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctxConf_init(ctx);
 
 	/* Initialize curl as the net handle. */
-	res = KSI_CTX_setNetworkProvider(ctx, KSI_NET_CURL);
+	res = KSI_NET_CURL_new(ctx, &netProvider);
 	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_CTX_setNetworkProvider(ctx, netProvider);
+	if (res != KSI_OK) goto cleanup;
+	netProvider = NULL;
 
 	*context = ctx;
 	ctx = NULL;
@@ -88,15 +93,11 @@ cleanup:
 
 	return res;
 }
-int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, int (*provider)(KSI_CTX *, KSI_NetProvider **)) {
+int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, KSI_NetProvider *netProvider) {
 	int res;
 
 	KSI_NetProvider_free(ctx->netProvider);
-	ctx->netProvider = NULL;
-
-	if (provider != NULL) {
-		res = provider(ctx, &ctx->netProvider);
-	}
+	ctx->netProvider = netProvider;
 
 cleanup:
 

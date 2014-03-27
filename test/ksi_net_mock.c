@@ -35,9 +35,14 @@ cleanup:
 	return KSI_OK;
 }
 
+static int mockSendSignRequest(KSI_NetProvider *netProvider, void *data, int data_len, KSI_NetHandle **handle) {
+	KSI_NET_sendRequest(netProvider->ctx, netProvider->ctx->conf.net.urlSigner, data, data_len, handle);
+}
 
-int KSI_NET_MOCK(KSI_CTX *ctx) {
+
+int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetProvider **provider) {
 	KSI_ERR err;
+	KSI_NetProvider *pr = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
@@ -45,14 +50,28 @@ int KSI_NET_MOCK(KSI_CTX *ctx) {
 	KSI_NET_MOCK_request_len = 0;
 	KSI_NET_MOCK_response_len = 0;
 
-	ctx->netProvider.poviderCtx = NULL;
-	ctx->netProvider.providerCleanup = NULL;
-	ctx->netProvider.sendRequest = mockSend;
+	pr = KSI_new(KSI_NetProvider);
+	if (pr == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	pr->ctx = ctx;
+	pr->poviderCtx = NULL;
+	pr->providerCleanup = NULL;
+	pr->sendRequest = mockSend;
+	pr->sendSignRequest = mockSendSignRequest;
+	pr->sendExtendRequest = NULL;
+	pr->sendPublicationRequest = NULL;
+
+	*provider = pr;
+	pr = NULL;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
 
+	KSI_free(pr);
 
 	return KSI_RETURN(&err);
 }

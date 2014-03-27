@@ -105,6 +105,11 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+int KSI_NET_sendSignRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle) {
+	return ctx->netProvider->sendSignRequest(ctx->netProvider, request, request_length, handle);
+}
+
+
 int KSI_NET_getResponse(KSI_NetHandle *handle, unsigned char **response, int *response_length, int copy) {
 	KSI_ERR err;
 	unsigned char *tmp = NULL;

@@ -28,11 +28,17 @@ typedef struct KSI_AggregationChain_st KSI_AggregationChain;
 typedef struct KSI_Header_st KSI_Header;
 
 struct KSI_NetProvider_st {
+	KSI_CTX *ctx;
+
 	/** Cleanup for the provider, gets the #providerCtx as parameter. */
 	void (*providerCleanup)(void *);
 
 	/** Function for sending requests. This needs to be non blocking. */
 	int (*sendRequest)(KSI_NetHandle *);
+
+	int (*sendSignRequest)(KSI_NetProvider *, void *, int, KSI_NetHandle **);
+	int (*sendExtendRequest)(KSI_NetProvider *, void *, int, KSI_NetHandle **);
+	int (*sendPublicationRequest)(KSI_NetProvider *, void *, int, KSI_NetHandle **);
 
 	/** Dedicated context for the net provider */
 	void *poviderCtx;
