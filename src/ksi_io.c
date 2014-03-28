@@ -288,7 +288,7 @@ void KSI_RDR_close(KSI_RDR *rdr)  {
 int KSI_RDR_verifyEnd(KSI_RDR *rdr) {
 	KSI_ERR err;
 	int res;
-	char *buf = NULL;
+	unsigned char *buf = NULL;
 	int buf_len = 0;
 
 	KSI_PRE(&err, rdr != NULL) goto cleanup;
