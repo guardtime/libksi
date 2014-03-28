@@ -342,7 +342,8 @@ int KSI_getHashAlgorithmByName(const char *name) {
 		}
 
 		alias_id = 0;
-		while(*(alias = KSI_hashAlgorithmInfo[algorithm_id].aliases[alias_id++]) != NULL) {
+		/* Loop until a null pointer or empty string. */
+		while((alias = KSI_hashAlgorithmInfo[algorithm_id].aliases[alias_id++]) && *alias) {
 			if (!strcmp(upperName, alias)) {
 				hash_id = algorithm_id;
 				goto cleanup;
