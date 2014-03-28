@@ -157,12 +157,7 @@ void KSI_AggregationChain_free(KSI_AggregationChain *aggr) {
 		__res = (fn)(__ctx, __tlv, (dat));												\
 	TLV_ELEMENT_END																		\
 
-#define TLV_OPT_SINGLE {static int __count = 0; ++__count; if (__count > 1) __res = KSI_INVALID_FORMAT;}
-#define TLV_OPT_SINGLE2 																	\
-		{ 																				\
-			static int __count = 0;														\
-			if (++__count > 1) __res == KSI_INVALID_FORMAT;								\
-		}																				\
+#define TLV_OPT_SINGLE { /* TODO! Find a propper way to check for unique value */ }
 
 #define TLV_OPT_NONE
 

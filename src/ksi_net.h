@@ -9,8 +9,6 @@ struct KSI_NetHandle_st {
 	/** KSI context. */
 	KSI_CTX *ctx;
 	/** Request destination. */
-	char *url;
-	/** Original request. */
 	unsigned char *request;
 	/** Length of the original request. */
 	int request_length;
@@ -24,7 +22,7 @@ struct KSI_NetHandle_st {
 	int (*readResponse)(KSI_NetHandle *);
 
 	/** Addidtional context for the trasnport layer. */
-	void *netCtx;
+	void *handleCtx;
 };
 
 #ifdef __cplusplus

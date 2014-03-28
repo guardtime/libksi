@@ -31,14 +31,14 @@ struct KSI_NetProvider_st {
 	KSI_CTX *ctx;
 
 	/** Cleanup for the provider, gets the #providerCtx as parameter. */
-	void (*providerCleanup)(void *);
+	void (*providerCtx_free)(void *);
 
 	/** Function for sending requests. This needs to be non blocking. */
-	int (*sendRequest)(KSI_NetHandle *);
+//	int (*sendRequest)(KSI_NetProvider *, KSI_NetHandle *);
 
-	int (*sendSignRequest)(KSI_NetProvider *, void *, int, KSI_NetHandle **);
-	int (*sendExtendRequest)(KSI_NetProvider *, void *, int, KSI_NetHandle **);
-	int (*sendPublicationRequest)(KSI_NetProvider *, void *, int, KSI_NetHandle **);
+	int (*sendSignRequest)(KSI_NetProvider *, KSI_NetHandle *);
+	int (*sendExtendRequest)(KSI_NetProvider *, void *, int, KSI_NetHandle *);
+	int (*sendPublicationRequest)(KSI_NetProvider *, void *, int, KSI_NetHandle *);
 
 	/** Dedicated context for the net provider */
 	void *poviderCtx;
@@ -79,18 +79,6 @@ struct KSI_CTX_st {
 	 ************/
 
 	KSI_NetProvider *netProvider;
-
-	/****************
-	 * CONFIGURATION.
-	 ****************/
-	struct {
-		struct {
-			int connectTimeoutSeconds;
-			int readTimeoutSeconds;
-			char *urlSigner;
-			char *agent;
-		} net;
-	} conf;
 };
 
 struct KSI_AggregationChain_st {

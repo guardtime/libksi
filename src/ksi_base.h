@@ -400,6 +400,12 @@ int KSI_getHashAlgorithmByName(const char *name);
 
 /** Transport Providers */
 int KSI_NET_CURL_new(KSI_CTX *ctx, KSI_NetProvider **netProvider);
+int KSI_NET_CURL_setSignerUrl(KSI_NetProvider *netProvider, char *val);
+int KSI_NET_CURL_setExtenderUrl(KSI_NetProvider *netProvider, char *val);
+int KSI_NET_CURL_setPublicationUrl(KSI_NetProvider *netProvider, char *val);
+int KSI_NET_CURL_setConnectionTimeoutSeconds(KSI_NetProvider *netProvider, int val);
+int KSI_NET_CURL_setReadTimeoutSeconds(KSI_NetProvider *netProvider, int val);
+
 /**
  * Network resource handle
  *
@@ -415,8 +421,7 @@ int KSI_NET_sendRequest(KSI_CTX *ctx, const char *url, const unsigned char *requ
 /**
  *
  */
-int KSI_NET_sendSignRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle);
-
+int KSI_NET_sendSignRequest(KSI_NetProvider *netProvider, const unsigned char *request, int request_length, KSI_NetHandle **handle);
 /**
  *
  */

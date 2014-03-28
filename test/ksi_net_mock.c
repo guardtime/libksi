@@ -36,7 +36,7 @@ cleanup:
 }
 
 static int mockSendSignRequest(KSI_NetProvider *netProvider, void *data, int data_len, KSI_NetHandle **handle) {
-	KSI_NET_sendRequest(netProvider->ctx, netProvider->ctx->conf.net.urlSigner, data, data_len, handle);
+	return KSI_UNKNOWN_ERROR;
 }
 
 
@@ -58,8 +58,7 @@ int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetProvider **provider) {
 
 	pr->ctx = ctx;
 	pr->poviderCtx = NULL;
-	pr->providerCleanup = NULL;
-	pr->sendRequest = mockSend;
+	pr->providerCtx_free = NULL;
 	pr->sendSignRequest = mockSendSignRequest;
 	pr->sendExtendRequest = NULL;
 	pr->sendPublicationRequest = NULL;

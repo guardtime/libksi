@@ -38,15 +38,6 @@ const char *KSI_getErrorString(int statusCode) {
 	}
 }
 
-static void ctxConf_init(KSI_CTX* ctx) {
-	/* Initialize config */
-	/* TODO: Perhaps this should come from some external config file */
-	ctx->conf.net.connectTimeoutSeconds = 5;
-	ctx->conf.net.readTimeoutSeconds = 10;
-	ctx->conf.net.urlSigner = "http://localhost:3333/";
-	ctx->conf.net.agent = "KSI-C-API";
-}
-
 int KSI_CTX_new(KSI_CTX **context) {
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -71,12 +62,16 @@ int KSI_CTX_new(KSI_CTX **context) {
 	KSI_ERR_clearErrors(ctx);
 	KSI_LOG_init(ctx, NULL, KSI_LOG_DEBUG);
 
-	/* Init context with default values. */
-	ctxConf_init(ctx);
-
 	/* Initialize curl as the net handle. */
 	res = KSI_NET_CURL_new(ctx, &netProvider);
 	if (res != KSI_OK) goto cleanup;
+
+	/* Configure curl net provider */
+	if ((res = KSI_NET_CURL_setSignerUrl(netProvider, "http://localhost:3333")) != KSI_OK) goto cleanup;
+	if ((res = KSI_NET_CURL_setExtenderUrl(netProvider, "TODO")) != KSI_OK) goto cleanup;
+	if ((res = KSI_NET_CURL_setPublicationUrl(netProvider, "TODO")) != KSI_OK) goto cleanup;
+	if ((res = KSI_NET_CURL_setConnectTimeoutSeconds(netProvider, 5)) != KSI_OK) goto cleanup;
+	if ((res = KSI_NET_CURL_setReadTimeoutSeconds(netProvider, 5)) != KSI_OK) goto cleanup;
 
 	res = KSI_CTX_setNetworkProvider(ctx, netProvider);
 	if (res != KSI_OK) goto cleanup;

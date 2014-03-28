@@ -85,7 +85,7 @@ int KSI_sign(KSI_DataHash *hsh, KSI_Signature **signature) {
 
 	KSI_LOG_logBlob(hsh->ctx, KSI_LOG_DEBUG, "Request", req, req_len);
 
-	res = KSI_NET_sendSignRequest(hsh->ctx, req, req_len, &handle);
+	res = KSI_NET_sendSignRequest(hsh->ctx->netProvider, req, req_len, &handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_NET_getResponse(handle, &resp, &resp_len, 0);
