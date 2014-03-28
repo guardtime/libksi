@@ -36,7 +36,7 @@ struct KSI_ERR_st {
 	int statusCode;
 
 	/* Error code */
-	int extErrorCode;
+	long extErrorCode;
 
 	/* Pointer to parent context. */
 	KSI_CTX *ctx;
@@ -57,7 +57,7 @@ void KSI_ERR_clearErrors(KSI_CTX *ctx);
 /**
  * Add an error to context #ctx.
  */
-int KSI_ERR_fail(KSI_ERR *ctx, int statusCode, int extErrorCode, char *fileName, int lineNr, char *message);
+int KSI_ERR_fail(KSI_ERR *ctx, int statusCode, long extErrorCode, char *fileName, int lineNr, char *message);
 
 /**
  * State that the function finished successfully.

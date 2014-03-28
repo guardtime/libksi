@@ -51,7 +51,7 @@ void KSI_ERR_success(KSI_ERR *err) {
 	*err->message = '\0';
 }
 
-int KSI_ERR_fail(KSI_ERR *err, int statusCode, int extErrorCode, char *fileName, int lineNr, char *message) {
+int KSI_ERR_fail(KSI_ERR *err, int statusCode, long extErrorCode, char *fileName, int lineNr, char *message) {
 	err->extErrorCode = extErrorCode;
 	err->statusCode = statusCode;
 	if (message == NULL) {

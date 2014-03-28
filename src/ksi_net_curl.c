@@ -86,7 +86,7 @@ static int curlReceive(KSI_NetHandle *handle) {
     res = curl_easy_perform(curl);
 
     if (res != CURLE_OK) {
-    	int httpCode;
+    	long httpCode;
     	if (res == CURLE_HTTP_RETURNED_ERROR && curl_easy_getinfo(curl, CURLINFO_HTTP_CODE, &httpCode) == CURLE_OK) {
    			KSI_FAIL_EXT(&err, KSI_HTTP_ERROR, httpCode, curlErr);
     	} else {
@@ -206,7 +206,7 @@ int KSI_NET_CURL_new(KSI_CTX *ctx, KSI_NetProvider **netProvider) {
 
 	pr->poviderCtx = pctx;
 	pctx = NULL;
-	pr->providerCtx_free = CurlNetProviderCtx_free;
+	pr->providerCtx_free = (void (*)(void*))CurlNetProviderCtx_free;
 
 	*netProvider = pr;
 	pr = NULL;
