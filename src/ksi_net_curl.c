@@ -255,7 +255,7 @@ static int setIntParam(int *param, int val) {
 	return KSI_OK;
 }
 
-#define KSI_NET_CURL_SETTER($name, $type, $var, $fn) 														\
+#define KSI_NET_CURL_SETTER($name, $type, $var, $fn) 													\
 		int KSI_NET_CURL_set##$name(KSI_NetProvider *netProvider, $type val) {							\
 			int res = KSI_UNKNOWN_ERROR;																\
 			CurlNetProviderCtx *pctx = NULL;															\

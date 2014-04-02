@@ -143,9 +143,12 @@ int KSI_NET_getResponse(KSI_NetHandle *handle, unsigned char **response, int *re
 	int res;
 
 	KSI_PRE(&err, handle != NULL);
-
 	KSI_BEGIN(handle->ctx, &err);
 
+	if (handle->readResponse == NULL) {
+		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, NULL);
+		goto cleanup;
+	}
 	res = handle->readResponse(handle);
 
 	KSI_CATCH(&err, res) goto cleanup;
