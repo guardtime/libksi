@@ -10,6 +10,8 @@
 extern "C" {
 #endif
 
+typedef uint64_t KSI_Integer;
+
 typedef struct KSI_CTX_st KSI_CTX;
 typedef struct KSI_ERR_st KSI_ERR;
 typedef struct KSI_TLV_st KSI_TLV;
@@ -128,6 +130,10 @@ int KSI_LOG_setLevel(int logLevel);
  */
 typedef struct KSI_DataHasher_st KSI_DataHasher;
 
+typedef struct KSI_MetaHash_st KSI_MetaHash;
+
+typedef struct KSI_MetaData_st KSI_MetaData;
+
 /**
  * This structure represents hashed data.
  * \see #KSI_DataHasher, #KSI_DataHasher_close, #KSI_DataHash_free
@@ -220,6 +226,7 @@ int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_len
  * error code).
  */
 int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **hash);
+
 /**
  * Frees memory used by hasher.
  *
@@ -343,6 +350,30 @@ int KSI_DataHash_fromImprint(KSI_CTX *ctx, unsigned char *imprint, int imprint_l
 int KSI_DataHash_fromImprint_ex(unsigned char *imprint, int imprint_length, KSI_DataHash *hash);
 
 /**
+ *
+ */
+const char *KSI_getHashAlgorithmName(int hash_algorithm);
+
+/**
+ *
+ */
+int KSI_getHashAlgorithmByName(const char *name);
+
+/**
+ *
+ */
+int KSI_DataHash_create(KSI_CTX *ctx, const void *data, size_t data_length, int hash_id, KSI_DataHash **hash);
+
+/**
+ *
+ */
+int KSI_DataHash_clone(KSI_DataHash *from, KSI_DataHash **to);
+/**
+ *
+ */
+int KSI_DataHash_getCtx(KSI_DataHash *hsh, KSI_CTX **ctx);
+
+/**
  * Returns the hash length in bytes for the given hash algorithm id.
  *
  * \param[in]	hash_id		Hash algorithm id
@@ -447,6 +478,22 @@ void KSI_NetHandle_free(KSI_NetHandle *heandle);
  */
 int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, KSI_NetProvider *netProvider);
 void KSI_NetProvider_free(KSI_NetProvider *provider);
+
+void KSI_Signature_free(KSI_Signature *sig);
+int KSI_Signature_getDataHash(KSI_Signature *sig, const KSI_DataHash ** hsh);
+int KSI_Signature_getSigningTime(KSI_Signature *sig, uint32_t *signTime);
+int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **identity);
+int KSI_Signature_getCalendarHash(KSI_Signature *sig, const KSI_DataHash **hsh);
+/** TODO! For now these are just mock declarations
+int KSI_Signature_getPublishedData(KSI_Signature *sig, char **pub_data);
+int KSI_Signature_getPublicationReference(KSI_Signature *sig, char **pub_ref);
+int KSI_Signature_getPublicationSignature(KSI_Signature *sig, char **pub_sig);
+*/
+
+void *KSI_malloc(size_t size);
+void *KSI_calloc(size_t num, size_t size);
+void *KSI_realloc(void *ptr, size_t size);
+void KSI_free(void *ptr);
 
 #ifdef __cplusplus
 }
