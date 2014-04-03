@@ -25,7 +25,7 @@ cleanup:
 	return res;
 }
 
-static int createRequest (KSI_DataHash *hsh, unsigned char **outReq, int *outReq_len) {
+static int createRequest (KSI_CTX *ctx, KSI_DataHash *hsh, unsigned char **outReq, int *outReq_len) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tlv = NULL;
 
@@ -40,10 +40,10 @@ static int createRequest (KSI_DataHash *hsh, unsigned char **outReq, int *outReq
 	if (res != KSI_OK) goto cleanup;
 
 	/* Create request TLV. */
-	res = createRequestTlv(hsh->ctx, imprint, imprint_len, &tlv);
+	res = createRequestTlv(ctx, imprint, imprint_len, &tlv);
 	if (res != KSI_OK) goto cleanup;
 
-	KSI_LOG_logTlv(hsh->ctx, KSI_LOG_DEBUG, "Request TLV", tlv);
+	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Request TLV", tlv);
 
 	/* Serialize the request TLV. */
 	res = KSI_TLV_serialize(tlv, &req, &req_len);
@@ -65,6 +65,7 @@ cleanup:
 
 int KSI_sign(KSI_DataHash *hsh, KSI_Signature **signature) {
 	KSI_ERR err;
+	KSI_CTX *ctx;
 	int res;
 	KSI_NetHandle *handle = NULL;
 	KSI_Signature *sign = NULL;
@@ -75,25 +76,24 @@ int KSI_sign(KSI_DataHash *hsh, KSI_Signature **signature) {
 	unsigned char *resp = NULL;
 	int resp_len = 0;
 
-
 	KSI_PRE(&err, hsh != NULL) goto cleanup;
+	KSI_PRE(&err, KSI_DataHash_getCtx(hsh, &ctx) == KSI_OK) goto cleanup;
+	KSI_BEGIN(ctx, &err);
 
-	KSI_BEGIN(hsh->ctx, &err);
-
-	res = createRequest(hsh, &req, &req_len);
+	res = createRequest(ctx, hsh, &req, &req_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	KSI_LOG_logBlob(hsh->ctx, KSI_LOG_DEBUG, "Request", req, req_len);
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Request", req, req_len);
 
-	res = KSI_NET_sendSignRequest(hsh->ctx->netProvider, req, req_len, &handle);
+	res = KSI_NET_sendSignRequest(ctx->netProvider, req, req_len, &handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_NET_getResponse(handle, &resp, &resp_len, 0);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	KSI_LOG_logBlob(hsh->ctx, KSI_LOG_DEBUG, "Response", resp, resp_len);
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Response", resp, resp_len);
 
-	res = KSI_parseSignature(hsh->ctx, resp, resp_len, &sign);
+	res = KSI_parseSignature(ctx, resp, resp_len, &sign);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*signature = sign;
