@@ -12,15 +12,6 @@
 extern "C" {
 #endif
 
-struct KSI_DataHash_st {
-	/* KSI context */
-	KSI_CTX *ctx;
-
-	int algorithm;
-	unsigned char *digest;
-	int digest_length;
-};
-
 struct KSI_DataHasher_st {
 	/* KSI context */
 	KSI_CTX *ctx;

@@ -146,8 +146,9 @@ cleanup:
 
 int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 	KSI_ERR err;
-	KSI_DataHash *tmp_data_hash = NULL;
-	unsigned char* tmp_hash = NULL;
+	int res;
+	KSI_DataHash *hsh = NULL;
+	unsigned char *digest = NULL;
 	unsigned int digest_length;
 
 	KSI_BEGIN(hasher->ctx, &err);
@@ -157,39 +158,28 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 		goto cleanup;
 	}
 
-	tmp_hash = KSI_malloc(hasher->digest_length);
-	if (tmp_hash == NULL) {
+	digest = KSI_malloc(hasher->digest_length);
+	if (digest == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
-	EVP_DigestFinal(hasher->hashContext, tmp_hash, &digest_length);
+	EVP_DigestFinal(hasher->hashContext, digest, &digest_length);
 
-	/* Create a data hash object */
-	tmp_data_hash = KSI_new(KSI_DataHash);
-	if (tmp_data_hash == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	tmp_data_hash->ctx = hasher->ctx;
-	tmp_data_hash->algorithm = hasher->algorithm;
-	tmp_data_hash->digest_length = digest_length;
-	tmp_data_hash->digest = tmp_hash;
-
-	tmp_hash = NULL;
+	res = KSI_DataHash_fromDigest(hasher->ctx, hasher->algorithm, digest, digest_length, &hsh);
 
 	KSI_free(hasher->hashContext);
 	hasher->hashContext = NULL;
 
-	*data_hash = tmp_data_hash;
-	tmp_data_hash = NULL;
+	*data_hash = hsh;
+	hsh = NULL;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
 
-	KSI_DataHash_free(tmp_data_hash);
+	KSI_free(digest);
+	KSI_DataHash_free(hsh);
 
 	return KSI_RETURN(&err);
 }

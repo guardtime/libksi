@@ -5,6 +5,15 @@
 
 #define HASH_ALGO(id, name, bitcount, trusted) {(id), (name), (bitcount), (trusted), id##_aliases}
 
+struct KSI_DataHash_st {
+	/* KSI context */
+	KSI_CTX *ctx;
+
+	int algorithm;
+	unsigned char *digest;
+	int digest_length;
+};
+
 /** Hash algorithm aliases. The last alias has to be an empty string */
 static char *KSI_HASHALG_SHA1_aliases[] = {"SHA-1", ""};
 static char *KSI_HASHALG_SHA2_256_aliases[] = {"DEFAULT", "SHA-2", "SHA2", "SHA256", "SHA-256", ""};

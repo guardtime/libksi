@@ -5,6 +5,17 @@
 #include "../src/ksi_internal.h"
 #include "../src/ksi_hash.h"
 
+/* Recreate the internal structure. */
+struct KSI_DataHash_st {
+	/* KSI context */
+	KSI_CTX *ctx;
+
+	int algorithm;
+	unsigned char *digest;
+	int digest_length;
+};
+
+
 extern KSI_CTX *ctx;
 
 static void TestSHA256(CuTest* tc) {
