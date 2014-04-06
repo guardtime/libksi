@@ -5,6 +5,81 @@
 
 #define KSI_ERR_STACK_LEN 16
 
+struct KSI_Integer_st {
+	KSI_CTX *ctx;
+	KSI_uint64_t value;
+};
+
+void KSI_Integer_free(KSI_Integer *kint) {
+	if (kint != NULL) {
+		KSI_free(kint);
+	}
+}
+
+int KSI_Integer_getSize(KSI_Integer *kint, int *size) {
+	KSI_ERR err;
+	KSI_PRE(&err, kint != NULL) goto cleanup;
+	KSI_BEGIN(kint->ctx, &err);
+
+	*size = KSI_UINT64_MINSIZE(kint->value);
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_Integer_getUInt64(KSI_Integer *kint, KSI_uint64_t *val) {
+	KSI_ERR err;
+	KSI_PRE(&err, kint != NULL) goto cleanup;
+	KSI_BEGIN(kint->ctx, &err);
+
+	*val = kint->value;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_Integer_equals(KSI_Integer *a, KSI_Integer *b) {
+	return a != NULL && b != NULL && (a == b || a->value == b->value);
+}
+
+int KSI_Integer_equalsUInt(KSI_Integer *o, KSI_uint64_t i) {
+	return o != NULL && o->value == i;
+}
+
+int KSI_Integer_new(KSI_CTX *ctx, KSI_uint64_t value, KSI_Integer **kint) {
+	KSI_ERR err;
+	KSI_Integer *tmp = NULL;
+
+	KSI_PRE(&err, ctx != NULL);
+	KSI_BEGIN(ctx, &err);
+
+	tmp = KSI_new(KSI_Integer);
+	if (tmp == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->value = value;
+
+	*kint = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_Integer_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
 const char *KSI_getErrorString(int statusCode) {
 	switch (statusCode) {
 		case KSI_OK:

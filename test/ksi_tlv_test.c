@@ -295,7 +295,7 @@ static void TestTlvGetStringValue(CuTest* tc) {
 	CuAssert(tc, "Failed to get string value from tlv.", res == KSI_OK && str != NULL);
 	CuAssert(tc, "TLV payload type not string.", tlv->payloadType == KSI_TLV_PAYLOAD_STR);
 
-	CuAssert(tc, "Returned value does not point to original value.", str == tlv->payload.rawVal.ptr);
+	CuAssert(tc, "Returned value does not point to original value.", str == (char *)tlv->payload.rawVal.ptr);
 
 	CuAssert(tc, "Returned string is not what was expected", !strcmp("lore ipsum", str));
 
@@ -596,7 +596,7 @@ static void TestTlvRequireCast(CuTest* tc) {
 	CuAssert(tc, "Failed to cast TLV to nested string.", res == KSI_OK);
 
 	/* After cast, this should not fail */
-	res = KSI_TLV_getStringValue(tlv, &ptr, 0);
+	res = KSI_TLV_getStringValue(tlv, (char **)&ptr, 0);
 	CuAssert(tc, "Failed to get string value after a cast to string", res == KSI_OK);
 	ptr = NULL;
 

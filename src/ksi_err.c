@@ -3,12 +3,9 @@
 #include "ksi_internal.h"
 
 int KSI_ERR_init(KSI_CTX *ctx, KSI_ERR *err) {
-	err->extErrorCode = 0;
-	*err->fileName = '\0';
-	*err->message = '\0';
-	err->lineNr = -1;
-	err->statusCode = KSI_UNKNOWN_ERROR;
 	err->ctx = ctx;
+
+	KSI_ERR_fail(err, KSI_UNKNOWN_ERROR, 0, "null", 0, "Internal error: Probably a function returned without a distinctive success or error.");
 
 	return KSI_OK;
 }

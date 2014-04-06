@@ -3,7 +3,7 @@
 
 extern KSI_CTX *ctx;
 extern unsigned char KSI_NET_MOCK_request[0xfffff];
-extern int KSI_NET_MOCK_request_len = 0;
+extern int KSI_NET_MOCK_request_len;
 extern unsigned char KSI_NET_MOCK_response[0xfffff];
 //extern int KSI_NET_MOCK_response_len = 0;
 

@@ -44,12 +44,12 @@ extern "C" {
 
 #define KSI_TLV_NESTED_BEGIN(tag, isLenient, isForward) 																	\
 		KSI_TLV_NESTED_HEADER																								\
-		__res = KSI_TLV_new(__ctx, KSI_TLV_PAYLOAD_TLV, (tag), (isLenient), (isForward), NULL, 0, 0, &__tlv);	\
+		__res = KSI_TLV_new(__ctx, KSI_TLV_PAYLOAD_TLV, (tag), (isLenient), (isForward), NULL, 0, 0, &__tlv);				\
 
-#define KSI_TLV_NESTED_RAW(tag, isLenient, isForward, data, data_len) 									\
-	KSI_TLV_NESTED_HEADER																				\
-		__res = KSI_TLV_new(__ctx, KSI_TLV_PAYLOAD_RAW, (tag), (isLenient), (isForward), (data), (data_len), 0, &__tlv);	\
-	KSI_TLV_NESTED_END																					\
+#define KSI_TLV_NESTED_RAW(tag, isLenient, isForward, data, data_len) 														\
+	KSI_TLV_NESTED_HEADER																									\
+		__res = KSI_TLV_new(__ctx, KSI_TLV_PAYLOAD_RAW, (tag), (isLenient), (isForward), (data), (data_len), 1, &__tlv);	\
+	KSI_TLV_NESTED_END																										\
 
 #define KSI_TLV_NESTED_UINT(tag, isLenient, isForward, val) 							\
 	KSI_TLV_NESTED_HEADER																\
@@ -87,7 +87,19 @@ extern "C" {
 				} 																		\
 			}																			\
 
-#define TLV_PDU_BEGIN(ctx, raw, raw_len) 												\
+#define KSI_TLV_PARSE_BEGIN(ctx, tlv)		 											\
+		{																				\
+			KSI_CTX *__ctx = (ctx);														\
+			int __res;																	\
+			KSI_TLV *__tlv = (tlv);														\
+			KSI_PARSE_TLV_NESTED_BEGIN													\
+
+#define KSI_TLV_PARSE_END(res)				 											\
+			KSI_PARSE_TLV_NESTED_END													\
+			(res) = __res;																\
+		}																				\
+
+#define KSI_TLV_PARSE_RAW_BEGIN(ctx, raw, raw_len) 										\
 		{																				\
 			KSI_CTX *__ctx = (ctx);														\
 			int __res;																	\
@@ -96,11 +108,11 @@ extern "C" {
 			__res = KSI_TLV_parseBlob(ctx, (raw), (raw_len), &__tlv);					\
 			if (__res == KSI_OK) {														\
 				/* Parse PDU nested components. */										\
-				KSI_PARSE_TLV_NESTED_BEGIN												\
+				switch(KSI_TLV_getTag(__tlv)) {											\
 
 
-#define TLV_PDU_END(res) 																\
-				KSI_PARSE_TLV_NESTED_END												\
+#define KSI_TLV_PARSE_RAW_END(res)														\
+				}																		\
 			}																			\
 			KSI_TLV_free(__tlv);														\
 			(res) = __res;																\
@@ -117,15 +129,23 @@ extern "C" {
 		}																				\
 
 #define KSI_PARSE_TLV_NESTED_ELEMENT_BEGIN(tag) 										\
-	KSI_PARSE_TLV_ELEMENT_BEGIN((tag), KSI_PARSE_TLV_OPT_NONE)									\
+	KSI_PARSE_TLV_ELEMENT_BEGIN((tag), KSI_PARSE_TLV_OPT_NONE)							\
 	KSI_PARSE_TLV_NESTED_BEGIN															\
 
 #define KSI_PARSE_TLV_NESTED_ELEMENT_END												\
 	KSI_PARSE_TLV_NESTED_END															\
 	KSI_PARSE_TLV_ELEMENT_END															\
 
+#define KSI_PARSE_TLV_ELEMENT_INTEGER(tag, val)											\
+	KSI_PARSE_TLV_ELEMENT_BEGIN(tag, KSI_PARSE_TLV_OPT_SINGLE)							\
+		__res = KSI_TLV_cast(__tlv, KSI_TLV_PAYLOAD_INT); 								\
+		if (__res == KSI_OK) {															\
+			__res = KSI_TLV_getInteger(__tlv, (val));									\
+		} 																				\
+	KSI_PARSE_TLV_ELEMENT_END															\
+
 #define KSI_PARSE_TLV_ELEMENT_UINT64(tag, val) 											\
-	KSI_PARSE_TLV_ELEMENT_BEGIN(tag, KSI_PARSE_TLV_OPT_SINGLE)									\
+	KSI_PARSE_TLV_ELEMENT_BEGIN(tag, KSI_PARSE_TLV_OPT_SINGLE)							\
 		__res = KSI_TLV_cast(__tlv, KSI_TLV_PAYLOAD_INT); 								\
 		if (__res == KSI_OK) { 															\
 			__res = KSI_TLV_getUInt64Value(__tlv, (val)); 								\
@@ -133,7 +153,7 @@ extern "C" {
 	KSI_PARSE_TLV_ELEMENT_END															\
 
 #define KSI_PARSE_TLV_ELEMENT_UTF8STR(tag, str) 										\
-	KSI_PARSE_TLV_ELEMENT_BEGIN(tag, KSI_PARSE_TLV_OPT_SINGLE)									\
+	KSI_PARSE_TLV_ELEMENT_BEGIN(tag, KSI_PARSE_TLV_OPT_SINGLE)							\
 		__res = KSI_TLV_cast(__tlv, KSI_TLV_PAYLOAD_STR); 								\
 		if (__res == KSI_OK) { 															\
 			__res = KSI_TLV_getStringValue(__tlv, (str), 1);							\
@@ -141,7 +161,7 @@ extern "C" {
 	KSI_PARSE_TLV_ELEMENT_END															\
 
 #define KSI_PARSE_TLV_ELEMENT_RAW(tag, raw, len)										\
-	KSI_PARSE_TLV_ELEMENT_BEGIN(tag, KSI_PARSE_TLV_OPT_SINGLE)									\
+	KSI_PARSE_TLV_ELEMENT_BEGIN(tag, KSI_PARSE_TLV_OPT_SINGLE)							\
 		__res = KSI_TLV_cast(__tlv, KSI_TLV_PAYLOAD_STR); 								\
 		if (__res == KSI_OK) { 															\
 			__res = KSI_TLV_getRawValue(__tlv, (raw), (len), 1);						\
@@ -149,7 +169,7 @@ extern "C" {
 	KSI_PARSE_TLV_ELEMENT_END															\
 
 #define KSI_PARSE_TLV_ELEMENT_UINT_(tag, val, maxVal, type) 							\
-	KSI_PARSE_TLV_ELEMENT_BEGIN(tag, KSI_PARSE_TLV_OPT_SINGLE)									\
+	KSI_PARSE_TLV_ELEMENT_BEGIN(tag, KSI_PARSE_TLV_OPT_SINGLE)							\
 		__res = KSI_TLV_cast(__tlv, KSI_TLV_PAYLOAD_INT); 								\
 		if (__res == KSI_OK) { 															\
 			uint64_t __val;																\
@@ -161,31 +181,40 @@ extern "C" {
 			if (__res == KSI_OK)														\
 				*(val) = (type) __val;													\
 		} 																				\
-	KSI_PARSE_TLV_ELEMENT_END																		\
+	KSI_PARSE_TLV_ELEMENT_END															\
+
+#define KSI_PARSE_TLV_ELEMENT_UNKNOWN_LENIENT_IGNORE									\
+	default: {																			\
+		if (!KSI_TLV_isLenient(__tlv)) {												\
+			__res = KSI_INVALID_FORMAT;													\
+		} else {																		\
+			__res = KSI_OK;																\
+		}																				\
+	}																					\
 
 #define KSI_PARSE_TLV_ELEMENT_UINT32(tag, val) KSI_PARSE_TLV_ELEMENT_UINT_(tag, val, 0xffffffff, uint32_t)
 #define KSI_PARSE_TLV_ELEMENT_UINT16(tag, val) KSI_PARSE_TLV_ELEMENT_UINT_(tag, val, 0xffff, uint16_t)
 #define KSI_PARSE_TLV_ELEMENT_UINT8(tag, val) KSI_PARSE_TLV_ELEMENT_UINT_(tag, val, 0xff, uint8_t)
 
 
-#define TLV_ELEMENT_IMPRINT(tag, hsh) 													\
-	KSI_PARSE_TLV_ELEMENT_BEGIN(tag, KSI_PARSE_TLV_OPT_SINGLE)												\
+#define KSI_PARSE_TLV_ELEMENT_IMPRINT(tag, hsh) 										\
+	KSI_PARSE_TLV_ELEMENT_BEGIN(tag, KSI_PARSE_TLV_OPT_SINGLE)							\
 		unsigned char *__raw = NULL; \
 		int __raw_len = 0; \
 		__res = KSI_TLV_cast(__tlv, KSI_TLV_PAYLOAD_RAW); 								\
 		if (__res == KSI_OK) { 															\
 			__res = KSI_TLV_getRawValue(__tlv, &__raw, &__raw_len, 0); 					\
 			if (__res == KSI_OK) { 														\
-				__res = KSI_DataHash_fromImprint(__tlv->ctx, __raw, __raw_len, (hsh));	\
+				__res = KSI_DataHash_fromImprint(ctx, __raw, __raw_len, (hsh));			\
 			} 																			\
 		}																				\
 		KSI_nofree(__raw);																\
-	KSI_PARSE_TLV_ELEMENT_END																		\
+	KSI_PARSE_TLV_ELEMENT_END															\
 
-#define TLV_ELEMENT_CB(tag, fn, dat)													\
-	KSI_PARSE_TLV_ELEMENT_BEGIN(tag, KSI_PARSE_TLV_OPT_NONE)												\
+#define KSI_PARSE_TLV_ELEMENT_CB(tag, fn, dat)											\
+	KSI_PARSE_TLV_ELEMENT_BEGIN(tag, KSI_PARSE_TLV_OPT_NONE)							\
 		__res = (fn)(__ctx, __tlv, (dat));												\
-	KSI_PARSE_TLV_ELEMENT_END																		\
+	KSI_PARSE_TLV_ELEMENT_END															\
 
 #define KSI_PARSE_TLV_OPT_SINGLE { /* TODO! Find a proper way to check for unique value */ }
 

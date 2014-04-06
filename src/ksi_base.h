@@ -10,7 +10,6 @@
 extern "C" {
 #endif
 
-typedef uint64_t KSI_Integer;
 
 typedef struct KSI_CTX_st KSI_CTX;
 typedef struct KSI_ERR_st KSI_ERR;
@@ -18,9 +17,25 @@ typedef struct KSI_TLV_st KSI_TLV;
 typedef struct KSI_Signature_st KSI_Signature;
 typedef struct KSI_NetProvider_st KSI_NetProvider;
 
+/**************
+ * KSI INTEGER
+ **************/
+typedef struct KSI_Integer_st KSI_Integer;
+#define KSI_uint64_t uint64_t
 
+void KSI_Integer_free(KSI_Integer *kint);
+int KSI_Integer_getSize(KSI_Integer *kint, int *size);
+int KSI_Integer_getUInt64(KSI_Integer *kint, KSI_uint64_t *val);
+int KSI_Integer_new(KSI_CTX *ctx, KSI_uint64_t value, KSI_Integer **kint);
+int KSI_Integer_equals(KSI_Integer *a, KSI_Integer *b);
+int KSI_Integer_equalsUInt(KSI_Integer *o, KSI_uint64_t i);
+
+/*************
+ * KSI READER
+ *************/
 /* KSI reader type. */
 typedef struct KSI_RDR_st KSI_RDR;
+
 
 enum KSI_StatusCode {
 /* RETURN CODES WHICH ARE NOT ERRORS */
@@ -130,9 +145,9 @@ int KSI_LOG_setLevel(int logLevel);
  */
 typedef struct KSI_DataHasher_st KSI_DataHasher;
 
-typedef struct KSI_MetaHash_st KSI_MetaHash;
+typedef struct KSI_HashChain_MetaHash_st KSI_MetaHash;
 
-typedef struct KSI_MetaData_st KSI_MetaData;
+typedef struct KSI_HashChain_MetaHash_st KSI_MetaData;
 
 /**
  * This structure represents hashed data.
@@ -275,7 +290,7 @@ int KSI_DataHash_clone(KSI_DataHash *from, KSI_DataHash **to);
  * \note The digest value returned by this function has to be freed by the
  * programmer with #KSI_free.
  */
-int KSI_DataHash_getData(KSI_DataHash *hash, int *algorithm, unsigned char **digest, int *digest_length);
+int KSI_DataHash_getData(KSI_DataHash *hash, int *hash_id, const unsigned char **digest, int *digest_length);
 
 /**
  * Constructor for #KSI_DataHash object from existing hash value.
@@ -288,7 +303,7 @@ int KSI_DataHash_getData(KSI_DataHash *hash, int *algorithm, unsigned char **dig
  * \return status code (\c KSI_OK, when operation succeeded, otherwise an
  * error code).
  */
-int KSI_DataHash_fromDigest(KSI_CTX *ctx, int algorithm, unsigned char *digest, int digest_length, KSI_DataHash **hash);
+int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *digest, int digest_length, KSI_DataHash **hash);
 
 /**
  * Reevaluates the #KSI_DataHash object with another precalculated hash value.
@@ -300,7 +315,7 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, int algorithm, unsigned char *digest, 
  * \return status code (\c KSI_OK, when operation succeeded, otherwise an
  * error code).
  */
-int KSI_DataHash_fromData_ex(int algorithm, unsigned char *digest, int digest_length, KSI_DataHash *hash);
+int KSI_DataHash_fromData_ex(int hash_id, const unsigned char *digest, int digest_length, KSI_DataHash *hash);
 
 /**
  * Encodes the data hash object as an imprtint.
@@ -312,7 +327,7 @@ int KSI_DataHash_fromData_ex(int algorithm, unsigned char *digest, int digest_le
  * \return status code (\c KSI_OK, when operation succeeded, otherwise an
  * error code).
  */
-int KSI_DataHash_getImprint(KSI_DataHash *hash, unsigned char **imprint, int *imprint_length);
+int KSI_DataHash_getImprint(KSI_DataHash *hash, const unsigned char **imprint, int *imprint_length);
 
 /**
  * Encodes the data hash object as an imprint into an existing array.
@@ -481,7 +496,7 @@ void KSI_NetProvider_free(KSI_NetProvider *provider);
 
 void KSI_Signature_free(KSI_Signature *sig);
 int KSI_Signature_getDataHash(KSI_Signature *sig, const KSI_DataHash ** hsh);
-int KSI_Signature_getSigningTime(KSI_Signature *sig, uint32_t *signTime);
+int KSI_Signature_getSigningTime(KSI_Signature *sig, KSI_Integer *signTime);
 int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **identity);
 int KSI_Signature_getCalendarHash(KSI_Signature *sig, const KSI_DataHash **hsh);
 /** TODO! For now these are just mock declarations

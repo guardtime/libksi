@@ -4,10 +4,6 @@
 #include "ksi_internal.h"
 #include "ksi_tlv.h"
 
-#define KSI_UINT16_MINSIZE(val) ((val > 0xff) ? 2 : 1)
-#define KSI_UINT32_MINSIZE(val) ((val > 0xffff) ? (2 + KSI_UINT16_MINSIZE((val) >> 16)) : KSI_UINT16_MINSIZE((val)))
-#define KSI_UINT64_MINSIZE(val) (((val) > 0xffffffff) ? (4 + KSI_UINT32_MINSIZE((val) >> 32)) : KSI_UINT32_MINSIZE((val)))
-
 static void tlvList_free(KSI_TLV_LIST *list) {
 	KSI_TLV_LIST *tmp = NULL;
 	if (list == NULL) return;
@@ -477,7 +473,7 @@ cleanup:
 /**
  *
  */
-int KSI_TLV_new(KSI_CTX *ctx, int payloadType, int tag, int isLenient, int isForward, void *data, size_t data_len, int copy, KSI_TLV **tlv) {
+int KSI_TLV_new(KSI_CTX *ctx, int payloadType, int tag, int isLenient, int isForward, const void *data, size_t data_len, int copy, KSI_TLV **tlv) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *t = NULL;
@@ -637,6 +633,35 @@ cleanup:
 	KSI_free(ptr);
 	return KSI_RETURN(&err);
 }
+
+int KSI_TLV_getInteger(KSI_TLV *tlv, KSI_Integer **val) {
+	KSI_ERR err;
+	KSI_Integer *tmp = NULL;
+	int res;
+
+	KSI_BEGIN(tlv->ctx, &err);
+
+	/* Check payload type. */
+	if (tlv->payloadType != KSI_TLV_PAYLOAD_INT) {
+		KSI_FAIL(&err, KSI_TLV_PAYLOAD_TYPE_MISMATCH, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_Integer_new(tlv->ctx, tlv->payload.uintVal.value, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*val = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
 
 /**
  *

@@ -35,7 +35,7 @@ cleanup:
 	return KSI_OK;
 }
 
-static int mockSendSignRequest(KSI_NetProvider *netProvider, void *data, int data_len, KSI_NetHandle **handle) {
+static int mockSendSignRequest(KSI_NetProvider *netProvider, KSI_NetHandle *handle) {
 	return KSI_UNKNOWN_ERROR;
 }
 

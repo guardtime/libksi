@@ -9,9 +9,8 @@ struct KSI_DataHash_st {
 	/* KSI context */
 	KSI_CTX *ctx;
 
-	int algorithm;
-	unsigned char *digest;
-	int digest_length;
+	unsigned char *imprint;
+	int imprint_length;
 };
 
 /** Hash algorithm aliases. The last alias has to be an empty string */
@@ -66,7 +65,7 @@ void KSI_DataHasher_free(KSI_DataHasher *hasher) {
 
 void KSI_DataHash_free(KSI_DataHash *hash) {
 	if (hash != NULL) {
-		KSI_free(hash->digest);
+		KSI_free(hash->imprint);
 		KSI_free(hash);
 	}
 }
@@ -108,34 +107,22 @@ int KSI_getHashLength(int hash_id) {
 /**
  *
  */
-int KSI_DataHash_getData(KSI_DataHash *hash, int *algorithm, unsigned char **digest, int *digest_length) {
+int KSI_DataHash_getData(KSI_DataHash *hash, int *hash_id, const unsigned char **digest, int *digest_length) {
 	KSI_ERR err;
-	unsigned char *tmp_digest = NULL;
 
 	KSI_PRE(&err, hash != NULL) goto cleanup;
 
 	KSI_BEGIN(hash->ctx, &err);
 
-	tmp_digest = KSI_calloc(hash->digest_length, 1);
-	if (tmp_digest == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	memcpy(tmp_digest, hash->digest, hash->digest_length);
-
-	if (digest_length != NULL) *digest_length = hash->digest_length;
-	if (algorithm != NULL) *algorithm = hash->algorithm;
+	if (digest_length != NULL) *digest_length = hash->imprint_length - 1;
+	if (hash_id != NULL) *hash_id = *hash->imprint;
 	if (digest != NULL) {
-		*digest = tmp_digest;
-		tmp_digest = NULL;
+		*digest = hash->imprint + 1;
 	}
 
 	KSI_SUCCESS(&err);
 
 cleanup:
-
-	KSI_free(tmp_digest);
 
 	return KSI_RETURN(&err);
 }
@@ -143,7 +130,7 @@ cleanup:
 /**
  *
  */
-int KSI_DataHash_fromDigest(KSI_CTX *ctx, int algorithm, unsigned char *digest, int digest_length, KSI_DataHash **hash) {
+int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *digest, int digest_length, KSI_DataHash **hash) {
 	KSI_ERR err;
 	KSI_DataHash *tmp_hash = NULL;
 	int res;
@@ -159,9 +146,9 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, int algorithm, unsigned char *digest, 
 	}
 
 	tmp_hash->ctx = ctx;
-	tmp_hash->digest = NULL;
+	tmp_hash->imprint = NULL;
 
-	res = KSI_DataHash_fromData_ex(algorithm, digest, digest_length, tmp_hash);
+	res = KSI_DataHash_fromData_ex(hash_id, digest, digest_length, tmp_hash);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*hash = tmp_hash;
@@ -179,40 +166,40 @@ cleanup:
 /**
  *
  */
-int KSI_DataHash_fromData_ex(int algorithm, unsigned char *digest, int digest_length, KSI_DataHash *hash) {
+int KSI_DataHash_fromData_ex(int hash_id, const unsigned char *digest, int digest_length, KSI_DataHash *hash) {
 	KSI_ERR err;
-	unsigned char *tmp_digest = NULL;
+	unsigned char *tmp_imprint = NULL;
 
 	KSI_PRE(&err, hash != NULL) goto cleanup;
 	KSI_PRE(&err, digest != NULL) goto cleanup;
 
 	KSI_BEGIN(hash->ctx, &err);
-	if (KSI_getHashLength(algorithm) != digest_length) {
+	if (KSI_getHashLength(hash_id) != digest_length) {
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Digest length does not match with algorithm.");
 		goto cleanup;
 	}
 
-	tmp_digest = KSI_calloc(digest_length, 1);
-	if (tmp_digest == NULL) {
+	tmp_imprint = KSI_calloc(digest_length + 1, 1);
+	if (tmp_imprint == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
-	memcpy(tmp_digest, digest, digest_length);
+	memcpy(tmp_imprint + 1, digest, digest_length);
+	*tmp_imprint = (char)hash_id;
 
-	KSI_free(hash->digest);
+	KSI_free(hash->imprint);
 
-	hash->algorithm = algorithm;
-	hash->digest = tmp_digest;
-	hash->digest_length = digest_length;
+	hash->imprint = tmp_imprint;
+	hash->imprint_length = digest_length + 1;
 
-	tmp_digest = NULL;
+	tmp_imprint = NULL;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
 
-	KSI_free(tmp_digest);
+	KSI_free(tmp_imprint);
 
 	return KSI_RETURN(&err);
 }
@@ -225,14 +212,13 @@ int KSI_DataHash_getImprint_ex(KSI_DataHash *hash, unsigned char *target, int ta
 
 	KSI_BEGIN(hash->ctx, &err);
 
-	if (target_size < hash->digest_length + 1) {
+	if (target_size < hash->imprint_length) {
 		KSI_FAIL(&err, KSI_BUFFER_OVERFLOW, NULL);
 		goto cleanup;
 	}
 
-	*target = (unsigned char ) hash->algorithm;
-	memcpy(target + 1, hash->digest, hash->digest_length);
-	*target_length = hash->digest_length + 1;
+	memcpy(target, hash->imprint, hash->imprint_length);
+	*target_length = hash->imprint_length;
 
 	KSI_SUCCESS(&err);
 
@@ -244,36 +230,20 @@ cleanup:
 /**
  *
  */
-int KSI_DataHash_getImprint(KSI_DataHash *hash, unsigned char **imprint, int *imprint_length) {
+int KSI_DataHash_getImprint(KSI_DataHash *hash, const unsigned char **imprint, int *imprint_length) {
 	KSI_ERR err;
 	int res;
-	int len;
-	unsigned char *imp = NULL;
-	int imp_len;
 
 	KSI_PRE(&err, hash != NULL) goto cleanup;
 
 	KSI_BEGIN(hash->ctx, &err);
 
-	imp_len = hash->digest_length + 1;
-	imp = KSI_calloc(imp_len, 1);
-	if (imp == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_DataHash_getImprint_ex(hash, imp, imp_len, &len);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	*imprint_length = len;
-	*imprint = imp;
-	imp = NULL;
+	*imprint_length = hash->imprint_length;
+	*imprint = hash->imprint;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
-
-	KSI_free(imp);
 
 	return KSI_RETURN(&err);
 }
@@ -411,7 +381,7 @@ int KSI_DataHash_clone(KSI_DataHash *from, KSI_DataHash **to) {
 
 	KSI_BEGIN(from->ctx, &err);
 
-	res = KSI_DataHash_fromDigest(from->ctx, from->algorithm, from->digest, from->digest_length, &hsh);
+	res = KSI_DataHash_fromImprint(from->ctx, from->imprint, from->imprint_length, &hsh);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*to = hsh;
@@ -425,3 +395,8 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
+
+/**
+ *
+ */
+KSI_GET_CTX(KSI_DataHash);

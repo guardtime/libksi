@@ -1,10 +1,31 @@
 #include <string.h>
 
+#include "ksi_tlv_easy.h"
 #include "ksi_internal.h"
+
+struct KSI_HashChain_MetaHash_st {
+	KSI_CTX *ctx;
+	unsigned char *data;
+	int data_length;
+};
+
+
+struct KSI_HashChain_MetaData_st {
+	KSI_CTX *ctx;
+	unsigned char *raw;
+	int raw_length;
+	char *clientId;
+	KSI_Integer *machineId;
+	KSI_Integer *sequenceNr;
+};
 
 struct KSI_HashChain_st {
 	KSI_CTX *ctx;
+
 	KSI_DataHash *hash;
+	KSI_MetaHash *metaHash;
+	KSI_MetaData *metaData;
+
 	unsigned int levelCorrection;
 	int isLeft;
 
@@ -22,9 +43,11 @@ static int highBit(unsigned int n) {
     return n - (n >> 1);
 }
 
-static int addNvlImprint(KSI_DataHash *first, KSI_DataHash *second, unsigned char *buf, int buf_size, int *buf_len) {
+static int addNvlImprint(KSI_DataHash *first, KSI_DataHash *second, KSI_DataHasher *hsr, int *buf_len) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = first;
+	const unsigned char *imprint;
+	int imprint_len;
 
 	if (hsh == NULL) {
 		if (second == NULL) {
@@ -34,14 +57,62 @@ static int addNvlImprint(KSI_DataHash *first, KSI_DataHash *second, unsigned cha
 		hsh = second;
 	}
 
-	res = KSI_DataHash_getImprint_ex(hsh, buf, buf_size, buf_len);
+	res = KSI_DataHash_getImprint(hsh, &imprint, &imprint_len);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_DataHasher_add(hsr, imprint, imprint_len);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_OK;
 
 cleanup:
 
+	KSI_nofree(imprint);
+
 	return res;
+}
+
+static int addChainImprint(KSI_DataHasher *hsr, KSI_HashChain *chain) {
+	KSI_ERR err;
+	int res;
+	int mode = 0;
+	const unsigned char *imprint;
+	int imprint_len;
+
+	KSI_PRE(&err, hsr != NULL) goto cleanup;
+	KSI_PRE(&err, chain != NULL) goto cleanup;
+	KSI_BEGIN(chain->ctx, &err);
+
+	if (chain->hash != NULL) mode |= 0x01;
+	if (chain->metaHash != NULL) mode |= 0x02;
+	if (chain->metaData != NULL) mode |= 0x04;
+
+	switch(mode) {
+		case 0x01:
+			res = KSI_DataHash_getImprint(chain->hash, &imprint, &imprint_len);
+			KSI_CATCH(&err, res) goto cleanup;
+			break;
+		case 0x02:
+			res = KSI_MetaHash_getRaw(chain->metaHash, &imprint, &imprint_len);
+			KSI_CATCH(&err, res) goto cleanup;
+			break;
+		case 0x04:
+			res = KSI_MetaData_getRaw(chain->metaData, &imprint, &imprint_len);
+			KSI_CATCH(&err, res) goto cleanup;
+			break;
+		default:
+			KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+			goto cleanup;
+	}
+
+	res = KSI_DataHasher_add(hsr, imprint, imprint_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
 }
 
 static int aggregateChain(KSI_HashChain *chain, KSI_DataHash *inputHash, int startLevel, int hash_id, int isCalendar, KSI_DataHash **outputHash) {
@@ -49,54 +120,63 @@ static int aggregateChain(KSI_HashChain *chain, KSI_DataHash *inputHash, int sta
 	int res;
 	int tmp_len;
 	int level = startLevel;
-	unsigned char buf[0xffff];
-	int len = 0;
+	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
+	int algo_id = hash_id;
+	const unsigned char *imprint = NULL;
+	int imprint_len;
+	char chr_level;
 
 	KSI_PRE(&err, chain != NULL) goto cleanup;
 	KSI_PRE(&err, inputHash != NULL) goto cleanup;
 	KSI_PRE(&err, outputHash != NULL) goto cleanup;
 	KSI_BEGIN(chain->ctx, &err);
 
-	res = KSI_DataHash_getImprint_ex(inputHash, buf, sizeof(buf), &len);
-	KSI_CATCH(&err, res) goto cleanup;
-
 	while (chain != NULL) {
-		len = 0;
-		if (chain->isLeft) {
-			res = addNvlImprint(hsh, inputHash, buf + len, sizeof(buf) - len,  &tmp_len);
-			KSI_CATCH(&err, res) goto cleanup;
-
-			len += tmp_len;
-			res = KSI_DataHash_getImprint_ex(chain->hash, buf + len, sizeof(buf) - len, &tmp_len);
-		} else {
-			res = KSI_DataHash_getImprint_ex(chain->hash, buf + len, sizeof(buf) - len, &tmp_len);
-			KSI_CATCH(&err, res) goto cleanup;
-
-			len += tmp_len;
-
-			res = addNvlImprint(hsh, inputHash, buf + len, sizeof(buf) - len, &tmp_len);
-		}
-		KSI_CATCH(&err, res) goto cleanup;
-		len += tmp_len;
-
 		if(!isCalendar) {
 			level += chain->levelCorrection + 1;
+		} else {
+			res = KSI_DataHash_getData(chain->hash, &algo_id, NULL, NULL);
+			KSI_CATCH(&err, res) goto cleanup;
 		}
+
+		/* Create or reset the hasher. */
+		if (hsr == NULL) {
+			res = KSI_DataHasher_open(chain->ctx, algo_id, &hsr);
+		} else {
+			KSI_DataHasher_reset(hsr);
+		}
+
+		if (chain->isLeft) {
+			res = addNvlImprint(hsh, inputHash, hsr,  &tmp_len);
+			KSI_CATCH(&err, res) goto cleanup;
+
+			res = addChainImprint(hsr, chain);
+			KSI_CATCH(&err, res) goto cleanup;
+		} else {
+			res = addChainImprint(hsr, chain);
+			KSI_CATCH(&err, res) goto cleanup;
+
+			res = addNvlImprint(hsh, inputHash, hsr, &tmp_len);
+			KSI_CATCH(&err, res) goto cleanup;
+		}
+
 
 		if (level > 0xff) {
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, "Aggregation chain length exceeds 0xff");
 			goto cleanup;
 		}
 
-		buf[len++] = (char)(level & 0xff);
+		chr_level = (char) level;
+		KSI_DataHasher_add(hsr, &chr_level, 1);
 
 		if (hsh != NULL) KSI_DataHash_free(hsh);
 
-		res = KSI_DataHash_create(chain->ctx, buf, len, hash_id, &hsh);
+		res = KSI_DataHasher_close(hsr, &hsh);
 		KSI_CATCH(&err, res) goto cleanup;
 
 		chain = chain->next;
+
 	}
 
 	*outputHash = hsh;
@@ -106,6 +186,7 @@ static int aggregateChain(KSI_HashChain *chain, KSI_DataHash *inputHash, int sta
 
 cleanup:
 
+	KSI_DataHasher_free(hsr);
 	KSI_DataHash_free(hsh);
 
 	return KSI_RETURN(&err);
@@ -141,7 +222,11 @@ int KSI_HashChain_new(KSI_CTX *ctx, KSI_DataHash *hash, unsigned int levelCorrec
 	}
 
 	nd->ctx = ctx;
+
 	nd->hash = hash;
+	nd->metaData = NULL;
+	nd->metaHash = NULL;
+
 	nd->next = NULL;
 	nd->last = nd;
 	nd->levelCorrection = levelCorrection;
@@ -223,14 +308,19 @@ cleanup:
 /**
  *
  */
-int KSI_HashChain_getCalendarAggregationTime(KSI_HashChain *cal, uint32_t aggr_time, uint32_t *utc_time) {
+int KSI_HashChain_getCalendarAggregationTime(KSI_HashChain *cal, KSI_Integer *aggr_time, uint32_t *utc_time) {
 	KSI_ERR err;
-	long long r = aggr_time;
+	KSI_uint64_t r;
 	uint32_t t = 0;
 	KSI_HashChain *hn = NULL;
+	int res;
 
 	KSI_PRE(&err, cal != NULL) goto cleanup;
+	KSI_PRE(&err, aggr_time != NULL) goto cleanup;
 	KSI_BEGIN(cal->ctx, &err);
+
+	res = KSI_Integer_getUInt64(aggr_time, &r);
+
 
 	hn = cal->last;
 	while(hn != NULL) {
@@ -262,7 +352,121 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
+ /**
+  *
+  */
+void KSI_MetaHash_free(KSI_MetaHash *mhs) {
+	if (mhs != NULL) {
+		KSI_free(mhs->data);
+		KSI_nofree(mhs->str);
 
+		KSI_free(mhs);
+	}
+}
+
+/**
+ *
+ */
+int KSI_MetaHash_create(KSI_CTX *ctx, unsigned char *data, int data_length, KSI_MetaHash **mth) {
+	KSI_ERR err;
+	KSI_MetaHash *tmp = NULL;
+	int payload_len;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, data != NULL) goto cleanup;
+	KSI_PRE(&err, data_length >= 3) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	/* Validate the internal structure, first two bytes represent the length. */
+	payload_len = data[1] << 8 | data[2];
+	if (payload_len + 2 != data_length) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Not a meta hash");
+		goto cleanup;
+	}
+
+	tmp = KSI_new(KSI_MetaHash);
+	if (tmp == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	tmp->data = NULL;
+
+	if (data == NULL) {
+		tmp->data_length = 0;
+	} else {
+		tmp->data = KSI_calloc(data_length + 1, 1);
+		if (tmp->data == NULL) {
+			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+			goto cleanup;
+		}
+		memcpy(tmp->data, data, data_length);
+		tmp->data_length = data_length;
+	}
+
+	/* Set extra byte to zero for easy return of UTF-8 string. */
+	tmp->data[data_length] = '\0';
+
+	*mth = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_MetaHash_free(tmp);
+
+	return KSI_RETURN(&err);
+
+}
+
+/**
+ *
+ */
+int KSI_MetaHash_getUtf8Value(KSI_MetaHash *mth, const char **value) {
+	KSI_ERR err;
+	KSI_PRE(&err, mth != NULL) goto cleanup;
+
+	KSI_BEGIN(mth->ctx, &err);
+
+	*value = mth->data + 2;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+/**
+ *
+ */
+int KSI_MetaHash_getHashId(KSI_MetaHash *mth, int *hash_id) {
+	KSI_ERR err;
+	KSI_PRE(&err, mth != NULL) goto cleanup;
+
+	*hash_id = (char) mth->data[0];
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_MetaHash_getRaw(KSI_MetaHash *mth, const void **data, int *data_len) {
+	KSI_ERR err;
+	KSI_PRE(&err, mth != NULL) goto cleanup;
+
+	*data = mth->data;
+	*data_len = mth->data_length;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
 /**
  *
  */
@@ -273,6 +477,65 @@ int KSI_HashChain_aggregate(KSI_HashChain *chain, KSI_DataHash *inputHash, int s
 /**
  *
  */
-int KSI_HashChain_aggregateCalendar(KSI_HashChain *chain, KSI_DataHash *inputHash, int hash_id, KSI_DataHash **outputHash) {
-	return aggregateChain(chain, inputHash, 0xff, hash_id, 1, outputHash);
+int KSI_HashChain_aggregateCalendar(KSI_HashChain *chain, KSI_DataHash *inputHash, KSI_DataHash **outputHash) {
+	return aggregateChain(chain, inputHash, 0xff, -1, 1, outputHash);
+}
+
+int KSI_MetaData_parse(KSI_MetaData *mtd, char **clientId, KSI_Integer **machineId, KSI_Integer **sequenceNr) {
+	KSI_ERR err;
+	int res;
+
+	char *cId = NULL;
+	KSI_Integer *mId = NULL;
+	KSI_Integer *sNr = NULL;
+
+	KSI_PRE(&err, mtd != NULL) goto cleanup;
+	KSI_BEGIN(mtd->ctx, &err);
+
+	KSI_TLV_PARSE_RAW_BEGIN(mtd->ctx, mtd->data, mtd->data_length)
+		KSI_PARSE_TLV_ELEMENT_UTF8STR(0x01, &cId)
+		KSI_PARSE_TLV_ELEMENT_INTEGER(0x02, &mId)
+		KSI_PARSE_TLV_ELEMENT_INTEGER(0x03, &sNr)
+		KSI_PARSE_TLV_ELEMENT_UNKNOWN_LENIENT_IGNORE
+	KSI_TLV_PARSE_RAW_END(res);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	if (clientId != NULL) {
+		*clientId = cId;
+		cId = NULL;
+	}
+
+	if (machineId != NULL) {
+		*machineId = mId;
+		mId = NULL;
+	}
+
+	if (sequenceNr != NULL) {
+		*sequenceNr = sNr;
+		sNr = NULL;
+	}
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_free(cId);
+	KSI_free(mId);
+	KSI_free(sNr);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_MetaData_getRaw(KSI_MetaData *mtd, const void **data, int *data_len) {
+	KSI_ERR err;
+	KSI_PRE(&err, mtd != NULL) goto cleanup;
+
+	*data = mtd->data;
+	*data_len = mtd->data_length;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
 }

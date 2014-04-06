@@ -3,7 +3,7 @@
 
 #include "ksi_tlv_easy.h"
 
-static int createRequestTlv(KSI_CTX *ctx, unsigned char *imprint, int imprint_len, KSI_TLV **outTlv) {
+static int createRequestTlv(KSI_CTX *ctx, const unsigned char *imprint, int imprint_len, KSI_TLV **outTlv) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tlv = NULL;
 
@@ -29,7 +29,7 @@ static int createRequest (KSI_CTX *ctx, KSI_DataHash *hsh, unsigned char **outRe
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tlv = NULL;
 
-	unsigned char *imprint = NULL;
+	const unsigned char *imprint = NULL;
 	int imprint_len = 0;
 
 	unsigned char *req = NULL;
@@ -57,7 +57,7 @@ static int createRequest (KSI_CTX *ctx, KSI_DataHash *hsh, unsigned char **outRe
 cleanup:
 
 	KSI_free(req);
-	KSI_free(imprint);
+	KSI_nofree(imprint);
 	KSI_TLV_free(tlv);
 
 	return res;

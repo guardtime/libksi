@@ -88,6 +88,10 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_algorithm, KSI_DataHasher **hashe
 		goto cleanup;
 	}
 
+	if (!KSI_isSupportedHashAlgorithm(hash_algorithm)) {
+		KSI_FAIL(&err, KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
+	}
+
 	if (hashAlgorithmToEVP(hash_algorithm) == NULL) {
 		KSI_FAIL(&err, KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
 		goto cleanup;

@@ -73,7 +73,7 @@ cleanup:
 static int parseStructure(KSI_TLV *tlv, int indent) {
 	int res;
 	uint64_t uint;
-	unsigned char *buf;
+	char *buf;
 	KSI_TLV *nested = NULL;
 
 	lprintf("%*sTLV:\n", indent++*4, "");

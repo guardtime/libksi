@@ -187,13 +187,20 @@ int KSI_LOG_logTlv(KSI_CTX *ctx, int level, const char *prefix, KSI_TLV *tlv) {
 	int res = KSI_UNKNOWN_ERROR;
 	char *serialized = NULL;
 
-	if (level < ctx->logLevel) goto cleanup;
+	if (level < ctx->logLevel) {
+		res = KSI_OK;
+		goto cleanup;
+	}
 	res = KSI_TLV_toString(tlv, &serialized);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_LOG_log(ctx, level, "%s:\n%s", prefix, serialized);
 
 cleanup:
+
+	if (res != KSI_OK) {
+		KSI_LOG_log(ctx, level, "%s: Unable to log tlv value - %s", prefix, KSI_getErrorString(res));
+	}
 
 	KSI_free(serialized);
 
@@ -202,10 +209,17 @@ cleanup:
 
 int KSI_LOG_logDataHash(KSI_CTX *ctx, int level, const char *prefix, KSI_DataHash *hsh) {
 	int res = KSI_UNKNOWN_ERROR;
-	unsigned char *imprint = NULL;
+	const unsigned char *imprint = NULL;
 	int imprint_len = 0;
-	if (level < ctx->logLevel) goto cleanup;
+	if (level < ctx->logLevel) {
+		res = KSI_OK;
+		goto cleanup;
+	}
 
+	if (hsh == NULL) {
+		res = KSI_LOG_log(ctx, level, "%s: null", prefix);
+		goto cleanup;
+	}
 	res = KSI_DataHash_getImprint(hsh, &imprint, &imprint_len);
 	if (res != KSI_OK) goto cleanup;
 
@@ -213,7 +227,11 @@ int KSI_LOG_logDataHash(KSI_CTX *ctx, int level, const char *prefix, KSI_DataHas
 
 cleanup:
 
-	KSI_free(imprint);
+	if (res != KSI_OK) {
+		KSI_LOG_log(ctx, level, "%s: Unable to log data hash value - %s", prefix, KSI_getErrorString(res));
+	}
+
+	KSI_nofree(imprint);
 
 	return res;
 }

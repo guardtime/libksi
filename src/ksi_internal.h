@@ -9,6 +9,10 @@
 #include "ksi_log.h"
 #include "ksi_tlv_tags.h"
 
+#define KSI_UINT16_MINSIZE(val) ((val > 0xff) ? 2 : 1)
+#define KSI_UINT32_MINSIZE(val) ((val > 0xffff) ? (2 + KSI_UINT16_MINSIZE((val) >> 16)) : KSI_UINT16_MINSIZE((val)))
+#define KSI_UINT64_MINSIZE(val) (((val) > 0xffffffff) ? (4 + KSI_UINT32_MINSIZE((val) >> 32)) : KSI_UINT32_MINSIZE((val)))
+
 /* Create a new object of type. */
 #define KSI_new(typeVar) (typeVar *)(KSI_calloc(sizeof(typeVar), 1))
 
@@ -18,14 +22,18 @@
 /* Dummy macro for indicating that the programmer knows and did not forget to free up some pointer. */
 #define KSI_nofree(ptr)
 
+#define KSI_GET_CTX(type) 									\
+int type##_getCtx(type *o, KSI_CTX **ctx) {	 				\
+	if (o == NULL) return KSI_INVALID_ARGUMENT; 			\
+	*ctx = o->ctx; 											\
+	return KSI_OK; 											\
+} 															\
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct KSI_HashNode_st KSI_HashNode;
-typedef struct KSI_CalendarChain_st KSI_CalendarChain;
-typedef struct KSI_AggregationChain_st KSI_AggregationChain;
-typedef struct KSI_Header_st KSI_Header;
+typedef struct KSI_HashChain_st KSI_HashChain;
 
 struct KSI_NetProvider_st {
 	KSI_CTX *ctx;
@@ -81,53 +89,6 @@ struct KSI_CTX_st {
 	KSI_NetProvider *netProvider;
 };
 
-struct KSI_AggregationChain_st {
-	uint32_t aggregationTime;
-	uint32_t chainIndex;
-	unsigned char *inputData;
-	int inputData_len;
-	KSI_DataHash *inputHash;
-	int aggrHashId;
-};
-
-struct KSI_CalendarChain_st {
-	uint32_t publicationTime;
-	uint32_t aggregationTime;
-	KSI_DataHash *inputHash;
-	KSI_HashNode *chain;
-};
-
-struct KSI_Header_st {
-	uint32_t instanceId;
-	uint32_t messageId;
-	unsigned char *clientId;
-	int clientId_length;
-};
-
-/**
- * KSI Signature object
- */
-struct KSI_Signature_st {
-	uint32_t requestId;
-	uint32_t status;
-	char *errorMessage;
-
-	KSI_Header *responseHeader;
-	KSI_CalendarChain *calendarChain;
-	KSI_AggregationChain *aggregationChain;
-
-};
-
-void KSI_Header_free(KSI_Header *hdr);
-void KSI_Signature_free(KSI_Signature *sig);
-void KSI_CalendarChain_free(KSI_CalendarChain *cal);
-void KSI_AggregationChain_free(KSI_AggregationChain *aggr);
-
-void *KSI_malloc(size_t size);
-void *KSI_calloc(size_t num, size_t size);
-void *KSI_realloc(void *ptr, size_t size);
-void KSI_free(void *ptr);
-
 /**********
  * KSI TLV
  **********/
@@ -165,7 +126,7 @@ enum KSI_TLV_PayloadType_en {
  *
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
  */
-int KSI_TLV_new(KSI_CTX *ctx, int payloadType, int tag, int isLenient, int isForward, void *data, size_t data_len, int copy, KSI_TLV **tlv);
+int KSI_TLV_new(KSI_CTX *ctx, int payloadType, int tag, int isLenient, int isForward, const void *data, size_t data_len, int copy, KSI_TLV **tlv);
 
 /**
  * \ingroup tlv
@@ -235,6 +196,11 @@ int KSI_TLV_parseBlob(KSI_CTX *ctx, unsigned char *data, size_t data_length, KSI
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
  */
 int KSI_TLV_getRawValue(KSI_TLV *tlv, unsigned char **buf, int *len, int copy);
+
+/**
+ *
+ */
+int KSI_TLV_getInteger(KSI_TLV *tlv, KSI_Integer **val);
 
 /**
  * This function extracts the unsigned 64 bit integer value.
@@ -423,7 +389,7 @@ void KSI_NET_global_cleanup(void);
  *
  * @param[in]	node	Hash node to be freed.
  */
-void KSI_HashNode_free(KSI_HashNode *node);
+void KSI_HashChain_free(KSI_HashChain *node);
 
 /**
  * Constructor for the hash node object.
@@ -436,7 +402,7 @@ void KSI_HashNode_free(KSI_HashNode *node);
  * \return status code (\c KSI_OK, when operation succeeded, otherwise an
  * error code).
  */
-int KSI_HashNode_new(KSI_CTX *ctx, KSI_DataHash *hash, int level, KSI_HashNode **node);
+int KSI_HashChain_new(KSI_CTX *ctx, KSI_DataHash *hash, unsigned int levelCorrection, int isLeft, KSI_HashChain **node);
 
 /**
  * This function joins to hash nodes by creating a common parent. The imprints
@@ -449,9 +415,10 @@ int KSI_HashNode_new(KSI_CTX *ctx, KSI_DataHash *hash, int level, KSI_HashNode *
  * \return status code (\c KSI_OK, when operation succeeded, otherwise an
  * error code).
  */
-int KSI_HashNode_join(KSI_HashNode *left, KSI_HashNode *right, int hash_id, KSI_HashNode **root);
-int KSI_HashNode_buildCalendar(KSI_CTX *ctx, KSI_DataHash *sibling, int isLeft, KSI_HashNode **root);
-int KSI_HashNode_getCalendarAggregationTime(KSI_HashNode *cal, uint32_t aggr_time, uint32_t *utc_time);
+int KSI_HashNode_join(KSI_HashChain *left, KSI_HashChain *right, int hash_id, KSI_HashChain **root);
+int KSI_HashNode_buildCalendar(KSI_CTX *ctx, KSI_DataHash *sibling, int isLeft, KSI_HashChain **root);
+int KSI_HashChain_getCalendarAggregationTime(KSI_HashChain *cal, KSI_Integer *aggr_time, uint32_t *utc_time);
+
 /**
  * Extracts the data hash value from the internal data hash object.
  *
@@ -464,7 +431,7 @@ int KSI_HashNode_getCalendarAggregationTime(KSI_HashNode *cal, uint32_t aggr_tim
  * \note The digest value returned by this function has to be freed by the
  * programmer with #KSI_DataHash_free.
  */
-int KSI_HashNode_getDataHash(KSI_HashNode *node, KSI_DataHash **hash);
+int KSI_HashNode_getDataHash(KSI_HashChain *node, const KSI_DataHash ** hsh);
 
 /**
  * Extracts the imprint value from the internal data hash object.
@@ -479,7 +446,7 @@ int KSI_HashNode_getDataHash(KSI_HashNode *node, KSI_DataHash **hash);
  * \note The digest value returned by this function has to be freed by the
  * programmer with #KSI_free.
  */
-int KSI_HashNode_getImprint(KSI_HashNode *node, unsigned char **imprint, int *imprint_length);
+int KSI_HashNode_getImprint(KSI_HashChain *node, unsigned char **imprint, int *imprint_length);
 
 int KSI_parseSignature(KSI_CTX *ctx, unsigned char *rawPdu, int rawPdu_len, KSI_Signature **signature);
 
