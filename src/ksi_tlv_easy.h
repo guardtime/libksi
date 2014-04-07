@@ -75,11 +75,15 @@ extern "C" {
 							KSI_TLV *__tlv = NULL;										\
 							res = KSI_TLV_getNextNestedTLV(__parent, &__tlv);			\
 							if (res == KSI_OK && __tlv != NULL) {						\
+								int __tagChecked = 0;									\
 								switch(KSI_TLV_getTag(__tlv)) {							\
 
 #define KSI_PARSE_TLV_NESTED_END 														\
 								} 														\
-							} 															\
+								if (!__tagChecked)										\
+									KSI_LOG_warn(__ctx, "Tag 0x%x not handeled", 		\
+											KSI_TLV_getTag(__tlv)); 					\
+							}															\
 							if (__tlv == NULL) break;									\
 							if (__res != KSI_OK) break;									\
 						}																\
@@ -107,12 +111,16 @@ extern "C" {
 			/* Parse PDU */																\
 			__res = KSI_TLV_parseBlob(ctx, (raw), (raw_len), &__tlv);					\
 			if (__res == KSI_OK) {														\
+				int __tagChecked = 0;													\
 				/* Parse PDU nested components. */										\
 				switch(KSI_TLV_getTag(__tlv)) {											\
 
 
 #define KSI_TLV_PARSE_RAW_END(res)														\
 				}																		\
+				if (!__tagChecked)														\
+						KSI_LOG_warn(__ctx, "Tag 0x%x not handeled",					\
+								KSI_TLV_getTag(__tlv));									\
 			}																			\
 			KSI_TLV_free(__tlv);														\
 			(res) = __res;																\
@@ -121,6 +129,7 @@ extern "C" {
 #define KSI_PARSE_TLV_ELEMENT_BEGIN(tag, opt)											\
 		case (tag): {																	\
 			{opt}																		\
+			__tagChecked = 1;															\
 			if (__res == KSI_OK) {														\
 
 #define KSI_PARSE_TLV_ELEMENT_END														\
@@ -162,7 +171,7 @@ extern "C" {
 
 #define KSI_PARSE_TLV_ELEMENT_RAW(tag, raw, len)										\
 	KSI_PARSE_TLV_ELEMENT_BEGIN(tag, KSI_PARSE_TLV_OPT_SINGLE)							\
-		__res = KSI_TLV_cast(__tlv, KSI_TLV_PAYLOAD_STR); 								\
+		__res = KSI_TLV_cast(__tlv, KSI_TLV_PAYLOAD_RAW); 								\
 		if (__res == KSI_OK) { 															\
 			__res = KSI_TLV_getRawValue(__tlv, (raw), (len), 1);						\
 		} 																				\
@@ -185,9 +194,13 @@ extern "C" {
 
 #define KSI_PARSE_TLV_ELEMENT_UNKNOWN_LENIENT_IGNORE									\
 	default: {																			\
+		__tagChecked = 1;																\
 		if (!KSI_TLV_isLenient(__tlv)) {												\
+			KSI_LOG_error(__ctx, "Unknown tag 0x%x", KSI_TLV_getTag(__tlv));			\
+			__res = KSI_OK;																\
 			__res = KSI_INVALID_FORMAT;													\
 		} else {																		\
+			KSI_LOG_debug(__ctx, "Ignoring unknown tag 0x%x", KSI_TLV_getTag(__tlv));	\
 			__res = KSI_OK;																\
 		}																				\
 	}																					\
