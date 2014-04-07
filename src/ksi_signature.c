@@ -6,7 +6,14 @@
 typedef struct calChainComponent_st CalChainComponent;
 typedef struct aggrChainComponent_st AggChainComponent;
 typedef struct headerComponent_st HeaderComponent;
-typedef struct authRecordComponent_st AuthRecordComponent;
+typedef struct calAuthComponent_st CalAuthComponent;
+
+struct calAuthComponent_st {
+	KSI_Integer *publicationTime;
+	KSI_DataHash *publicationHash;
+	char *signatureAlgo;
+
+};
 
 struct aggrChainComponent_st {
 	KSI_Integer *aggregationTime;

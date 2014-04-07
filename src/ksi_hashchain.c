@@ -122,6 +122,7 @@ static int aggregateChain(KSI_HashChain *chain, KSI_DataHash *inputHash, int sta
 	int level = startLevel;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
+	KSI_HashChain *ch = chain;
 	int algo_id = hash_id;
 	const unsigned char *imprint = NULL;
 	int imprint_len;
@@ -132,29 +133,29 @@ static int aggregateChain(KSI_HashChain *chain, KSI_DataHash *inputHash, int sta
 	KSI_PRE(&err, outputHash != NULL) goto cleanup;
 	KSI_BEGIN(chain->ctx, &err);
 
-	while (chain != NULL) {
+	while (ch != NULL) {
 		if(!isCalendar) {
-			level += chain->levelCorrection + 1;
+			level += ch->levelCorrection + 1;
 		} else {
-			res = KSI_DataHash_getData(chain->hash, &algo_id, NULL, NULL);
+			res = KSI_DataHash_getData(ch->hash, &algo_id, NULL, NULL);
 			KSI_CATCH(&err, res) goto cleanup;
 		}
 
 		/* Create or reset the hasher. */
 		if (hsr == NULL) {
-			res = KSI_DataHasher_open(chain->ctx, algo_id, &hsr);
+			res = KSI_DataHasher_open(ch->ctx, algo_id, &hsr);
 		} else {
 			KSI_DataHasher_reset(hsr);
 		}
 
-		if (chain->isLeft) {
+		if (ch->isLeft) {
 			res = addNvlImprint(hsh, inputHash, hsr,  &tmp_len);
 			KSI_CATCH(&err, res) goto cleanup;
 
-			res = addChainImprint(hsr, chain);
+			res = addChainImprint(hsr, ch);
 			KSI_CATCH(&err, res) goto cleanup;
 		} else {
-			res = addChainImprint(hsr, chain);
+			res = addChainImprint(hsr, ch);
 			KSI_CATCH(&err, res) goto cleanup;
 
 			res = addNvlImprint(hsh, inputHash, hsr, &tmp_len);
@@ -175,9 +176,11 @@ static int aggregateChain(KSI_HashChain *chain, KSI_DataHash *inputHash, int sta
 		res = KSI_DataHasher_close(hsr, &hsh);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		chain = chain->next;
+		ch = ch->next;
 
 	}
+
+	KSI_LOG_logDataHash(chain->ctx, KSI_LOG_DEBUG, "Calculated chain root", hsh);
 
 	*outputHash = hsh;
 	hsh = NULL;
@@ -247,7 +250,7 @@ cleanup:
 /**
  *
  */
-int KSI_HashChain_fromImprint(KSI_CTX *ctx, unsigned char *imprint, int imprint_length, unsigned int levelCorrection, int isLeft, KSI_HashChain **node) {
+static int KSI_HashChain_fromImprint(KSI_CTX *ctx, unsigned char *imprint, int imprint_length, unsigned int levelCorrection, int isLeft, KSI_HashChain **node) {
 	KSI_ERR err;
 	KSI_DataHash *hsh = NULL;
 	KSI_HashChain *nd = NULL;

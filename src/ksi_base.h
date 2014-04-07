@@ -149,11 +149,14 @@ typedef struct KSI_HashChain_MetaHash_st KSI_MetaHash;
 
 typedef struct KSI_HashChain_MetaHash_st KSI_MetaData;
 
+
 /**
  * This structure represents hashed data.
  * \see #KSI_DataHasher, #KSI_DataHasher_close, #KSI_DataHash_free
  */
 typedef struct KSI_DataHash_st KSI_DataHash;
+
+int KSI_DataHash_equals(KSI_DataHash *left, KSI_DataHash *right);
 
 /**
  * The Guardtime representation of hash algorithms, necessary to calculate
@@ -509,6 +512,12 @@ void *KSI_malloc(size_t size);
 void *KSI_calloc(size_t num, size_t size);
 void *KSI_realloc(void *ptr, size_t size);
 void KSI_free(void *ptr);
+
+/**********
+ * UTIL's
+ **********/
+
+int KSI_decodeHexStr(const char *hexstr, unsigned char *buf, int buf_size, int *buf_length);
 
 #ifdef __cplusplus
 }

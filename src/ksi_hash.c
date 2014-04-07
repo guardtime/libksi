@@ -396,6 +396,10 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+int KSI_DataHash_equals(KSI_DataHash *left, KSI_DataHash *right) {
+	return left != NULL && right != NULL && left->imprint_length == right->imprint_length && !memcmp(left->imprint, right->imprint, left->imprint_length);
+}
+
 /**
  *
  */

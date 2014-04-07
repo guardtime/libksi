@@ -28,8 +28,8 @@ apiSources = \
 		../src/ksi_tlv_easy.h \
 		../src/ksi_tlv_serialize.c \
 		../src/ksi_tlv_tags.h \
-		../src/ksi_tlv.h
-
+		../src/ksi_tlv.h \
+		../src/ksi_util.c
 
 runner_SOURCES= \
 		all_tests.c \
@@ -43,6 +43,7 @@ runner_SOURCES= \
 		ksi_rdr_test.c \
 		ksi_tlv_sample_test.c \
 		ksi_tlv_test.c \
+		ksi_util_test.c \
 		cutest/CuTest.h \
 		cutest/CuTest.c \
 		$(apiSources)
