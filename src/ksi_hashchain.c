@@ -322,7 +322,7 @@ int KSI_HashChain_getCalendarAggregationTime(KSI_HashChain *cal, KSI_Integer *ag
 	KSI_PRE(&err, aggr_time != NULL) goto cleanup;
 	KSI_BEGIN(cal->ctx, &err);
 
-	res = KSI_Integer_getUInt64(aggr_time, &r);
+	r = KSI_Integer_getUInt64(aggr_time);
 
 
 	hn = cal->last;

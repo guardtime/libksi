@@ -30,18 +30,8 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_Integer_getUInt64(KSI_Integer *kint, KSI_uint64_t *val) {
-	KSI_ERR err;
-	KSI_PRE(&err, kint != NULL) goto cleanup;
-	KSI_BEGIN(kint->ctx, &err);
-
-	*val = kint->value;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
+KSI_uint64_t KSI_Integer_getUInt64(KSI_Integer *kint) {
+	return kint != NULL ? kint->value : 0;
 }
 
 int KSI_Integer_equals(KSI_Integer *a, KSI_Integer *b) {

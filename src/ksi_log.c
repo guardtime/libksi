@@ -1,5 +1,6 @@
 #include <stdarg.h>
 #include <string.h>
+#include <time.h>
 
 #include "ksi_internal.h"
 
@@ -20,6 +21,14 @@ static int writeLog(KSI_CTX *ctx, int logLevel, char *format, va_list va) {
 	/* Do not call #KSI_BEGIN. */
 	KSI_ERR_init(ctx, &err);
 	FILE *f = NULL;
+	struct tm *tm_info;
+	char time_buf[32];
+	time_t timer;
+
+	timer = time(NULL);
+
+	tm_info = localtime(&timer);
+	strftime(time_buf, sizeof(time_buf), "%d.%m.%Y %H:%M:%S", tm_info);
 
 	if (ctx == NULL || format == NULL) {
 		KSI_ERR_fail(&err, KSI_INVALID_ARGUMENT, 0, __FILE__, __LINE__, NULL);
@@ -36,7 +45,7 @@ static int writeLog(KSI_CTX *ctx, int logLevel, char *format, va_list va) {
 
 	f = ctx->logStream != NULL ? ctx->logStream : stdout;
 
-	fprintf(f, "%s: ", level2str(logLevel));
+	fprintf(f, "%s [%s] - ", level2str(logLevel), time_buf);
 	vfprintf(f, format, va);
 	fprintf(f, "\n");
 

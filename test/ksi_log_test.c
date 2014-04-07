@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "cutest/CuTest.h"
 #include "../src/ksi_internal.h"
@@ -64,7 +65,8 @@ static void TestLogInit(CuTest* tc) {
 	/* Close file. */
 	CuAssert(tc, "Unable to close file", !fclose(f));
 
-	CuAssert(tc, "Wrong log data", !strcmp(tmpBuf, "DEBUG: Test log file\n"));
+	CuAssert(tc, "Wrong log data", strstr(tmpBuf, "DEBUG") != NULL);
+	CuAssert(tc, "Wrong log data", strstr(tmpBuf, "Test log file\n") != NULL);
 
 	/* Cleanup */
 	CuAssert(tc, "Unable to remove temporary file", remove(tmpFile) == 0);
@@ -76,6 +78,7 @@ static void TestLogLevel(CuTest* tc) {
 	char tmpBuf[0xffff];
 	FILE *f = NULL;
 	int len;
+	char *ptr;
 
 	KSI_CTX *ctx = NULL;
 
@@ -106,12 +109,21 @@ static void TestLogLevel(CuTest* tc) {
 	/* Close file. */
 	CuAssert(tc, "Unable to close file", !fclose(f));
 
-	CuAssert(tc, "Wrong log data", !strcmp(tmpBuf,
-			"DEBUG: Test log debug\n"
-			"WARN: Test log warn\n"
-			"INFO: Test log info\n"
-			"ERROR: Test log error\n"
-			"FATAL: Test log fatal\n"));
+	ptr = tmpBuf;
+	CuAssert(tc, "Wrong log data", (ptr = strstr(ptr, "DEBUG")) != NULL);
+	CuAssert(tc, "Wrong log data", (ptr = strstr(ptr, "Test log debug\n")) != NULL);
+
+	CuAssert(tc, "Wrong log data", (ptr = strstr(ptr, "WARN")) != NULL);
+	CuAssert(tc, "Wrong log data", (ptr = strstr(ptr, "Test log warn\n")) != NULL);
+
+	CuAssert(tc, "Wrong log data", (ptr = strstr(ptr, "INFO")) != NULL);
+	CuAssert(tc, "Wrong log data", (ptr = strstr(ptr, "Test log info\n")) != NULL);
+
+	CuAssert(tc, "Wrong log data", (ptr = strstr(ptr, "ERROR")) != NULL);
+	CuAssert(tc, "Wrong log data", (ptr = strstr(ptr, "Test log error\n")) != NULL);
+
+	CuAssert(tc, "Wrong log data", (ptr = strstr(ptr, "FATAL")) != NULL);
+	CuAssert(tc, "Wrong log data", (ptr = strstr(ptr, "Test log fatal\n")) != NULL);
 
 	/* Cleanup */
 	CuAssert(tc, "Unable to remove temporary file", remove(tmpFile) == 0);
@@ -122,6 +134,7 @@ static void TestLogLevelRestriction(CuTest* tc) {
 	char tmpFile[L_tmpnam];
 	char tmpBuf[0xffff];
 	int len;
+	char *ptr;
 	FILE *f = NULL;
 
 	KSI_CTX *ctx = NULL;
@@ -150,10 +163,21 @@ static void TestLogLevelRestriction(CuTest* tc) {
 	CuAssert(tc, "Unable to read log file", (len = fread(tmpBuf, 1, sizeof(tmpBuf) - 1, f)) > 0);
 	tmpBuf[len] = '\0';
 
-	CuAssert(tc, "Wrong log data", !strcmp(tmpBuf,
-			"INFO: Test log info\n"
-			"ERROR: Test log error\n"
-			"FATAL: Test log fatal\n"));
+	ptr = tmpBuf;
+	CuAssert(tc, "Wrong log data", (strstr(ptr, "DEBUG")) == NULL);
+	CuAssert(tc, "Wrong log data", (strstr(ptr, "Test log debug\n")) == NULL);
+
+	CuAssert(tc, "Wrong log data", (strstr(ptr, "WARN")) == NULL);
+	CuAssert(tc, "Wrong log data", (strstr(ptr, "Test log warn\n")) == NULL);
+
+	CuAssert(tc, "Wrong log data", (ptr = strstr(ptr, "INFO")) != NULL);
+	CuAssert(tc, "Wrong log data", (ptr = strstr(ptr, "Test log info\n")) != NULL);
+
+	CuAssert(tc, "Wrong log data", (ptr = strstr(ptr, "ERROR")) != NULL);
+	CuAssert(tc, "Wrong log data", (ptr = strstr(ptr, "Test log error\n")) != NULL);
+
+	CuAssert(tc, "Wrong log data", (ptr = strstr(ptr, "FATAL")) != NULL);
+	CuAssert(tc, "Wrong log data", (ptr = strstr(ptr, "Test log fatal\n")) != NULL);
 
 	/* Cleanup */
 	CuAssert(tc, "Unable to remove temporary file", remove(tmpFile) == 0);

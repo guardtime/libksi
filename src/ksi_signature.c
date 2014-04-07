@@ -74,7 +74,6 @@ struct KSI_Signature_st {
 	/** Signed hash value */
 	KSI_DataHash *signedHash;
 
-	HeaderRec *responseHeader;
 	CalChainRec *calendarChain;
 
 	AggChainRec **aggregationChain;
@@ -633,7 +632,6 @@ cleanup:
 void KSI_Signature_free(KSI_Signature *sig) {
 	int i;
 	if (sig != NULL) {
-		HeaderRec_free(sig->responseHeader);
 		CalChainRec_free(sig->calendarChain);
 		for (i = 0; i < sig->aggregationChain_count; i++) {
 			AggrChainRec_free(sig->aggregationChain[i]);
@@ -701,8 +699,21 @@ int KSI_parseSignature(KSI_CTX *ctx, unsigned char *rawPdu, int rawPdu_len, KSI_
 			KSI_PARSE_TLV_NESTED_ELEMENT_END
 		KSI_PARSE_TLV_NESTED_ELEMENT_END
 	KSI_TLV_PARSE_RAW_END(res);
-
 	KSI_CATCH(&err, res) goto cleanup;
+
+	// TODO What else to do with message header ?
+	KSI_LOG_debug(ctx, "Aggregation response: instanceId = %ld, messageId = %ld",
+			(unsigned long long) KSI_Integer_getUInt64(hdr->instanceId),
+			(unsigned long long) KSI_Integer_getUInt64(hdr->messageId));
+
+	if (status != NULL && !KSI_Integer_equalsUInt(status, 0)) {
+		char msg[1024];
+
+		snprintf(msg, sizeof(msg), "Aggregation failed: %s", errorMessage);
+		KSI_FAIL_EXT(&err, KSI_AGGREGATOR_ERROR, (unsigned long long)KSI_Integer_getUInt64(status), errorMessage);
+		goto cleanup;
+	}
+
 
 	res = KSI_HashChain_getCalendarAggregationTime(cal->chain, cal->publicationTime, &utc_time);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -714,9 +725,6 @@ int KSI_parseSignature(KSI_CTX *ctx, unsigned char *rawPdu, int rawPdu_len, KSI_
 
 	sig->calendarChain = cal;
 	cal = NULL;
-
-	sig->responseHeader = hdr;
-	hdr = NULL;
 
 	KSI_LOG_debug(ctx, "Finished parsing successfully.");
 
