@@ -72,6 +72,7 @@ enum KSI_StatusCode {
 	 */
 	KSI_ASYNC_NOT_FINISHED,
 
+	KSI_INVALID_SIGNATURE,
 /* SYSTEM ERRORS */
 	KSI_OUT_OF_MEMORY = 0x00000300,
 	KSI_IO_ERROR,
@@ -498,6 +499,7 @@ void KSI_NetHandle_free(KSI_NetHandle *heandle);
 int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, KSI_NetProvider *netProvider);
 void KSI_NetProvider_free(KSI_NetProvider *provider);
 
+int KSI_Signature_validate(KSI_Signature *sig);
 void KSI_Signature_free(KSI_Signature *sig);
 int KSI_Signature_getDataHash(KSI_Signature *sig, const KSI_DataHash ** hsh);
 int KSI_Signature_getSigningTime(KSI_Signature *sig, KSI_Integer *signTime);

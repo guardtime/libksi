@@ -933,6 +933,7 @@ int KSI_TLV_appendNestedTLV(KSI_TLV *target, KSI_TLV *after, KSI_TLV *tlv) {
 	} else {
 		if (target->nested == NULL) {
 			target->nested = node;
+			target->payload.tlv.current = node;
 		} else {
 			target->nested->last->next = node;
 		}

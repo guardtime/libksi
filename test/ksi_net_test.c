@@ -5,7 +5,7 @@ extern KSI_CTX *ctx;
 extern unsigned char KSI_NET_MOCK_request[0xfffff];
 extern int KSI_NET_MOCK_request_len;
 extern unsigned char KSI_NET_MOCK_response[0xfffff];
-//extern int KSI_NET_MOCK_response_len = 0;
+extern int KSI_NET_MOCK_response_len;
 
 
 static unsigned char someImprint[] ={
@@ -22,6 +22,7 @@ static void TestSendRequest(CuTest* tc) {
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
 	KSI_NetProvider *pr = NULL;
+	FILE *f = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -34,9 +35,16 @@ static void TestSendRequest(CuTest* tc) {
 	res = KSI_DataHash_fromImprint(ctx, someImprint, sizeof(someImprint), &hsh);
 	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
 
+	/* Read valid response */
+	f = fopen("test/resource/tlv/ok_aggr_response-1.tlv", "rb");
+	CuAssert(tc, "Unable to open sample response file", f != NULL);
+
+	KSI_NET_MOCK_response_len = fread(KSI_NET_MOCK_response, 1, sizeof(KSI_NET_MOCK_response), f);
+	fclose(f);
+
 	res = KSI_sign(hsh, &sig);
-//	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
-//	CuAssert(tc, "Unexpected send request", KSI_NET_MOCK_request_len == sizeof(expectedSendRequest) && !memcmp(expectedSendRequest, KSI_NET_MOCK_request, KSI_NET_MOCK_request_len));
+	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
+	CuAssert(tc, "Unexpected send request", KSI_NET_MOCK_request_len == sizeof(expectedSendRequest) && !debug_memcmp(expectedSendRequest, KSI_NET_MOCK_request, KSI_NET_MOCK_request_len));
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);

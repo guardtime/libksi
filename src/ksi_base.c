@@ -154,10 +154,12 @@ cleanup:
 	return res;
 }
 int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, KSI_NetProvider *netProvider) {
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 
 	KSI_NetProvider_free(ctx->netProvider);
 	ctx->netProvider = netProvider;
+
+	res = KSI_OK;
 
 cleanup:
 

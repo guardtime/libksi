@@ -208,7 +208,6 @@ cleanup:
 
 int KSI_RDR_read_ptr(KSI_RDR *rdr, unsigned char **ptr, const size_t len, int *readCount) {
 	KSI_ERR err;
-	int res;
 	unsigned char *p = NULL;
 	int count = 0;
 
@@ -240,11 +239,6 @@ int KSI_RDR_read_ptr(KSI_RDR *rdr, unsigned char **ptr, const size_t len, int *r
 		default:
 			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Unsupported KSI IO TYPE");
 			goto cleanup;
-	}
-
-	if (res != KSI_OK) {
-		KSI_FAIL(&err, res, NULL);
-		goto cleanup;
 	}
 
 	KSI_SUCCESS(&err);

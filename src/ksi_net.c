@@ -51,56 +51,6 @@ void KSI_NetHandle_free(KSI_NetHandle *handle) {
 	}
 }
 
-/**
- *
- *
-int KSI_NET_sendRequest(KSI_CTX *ctx, const char *url, const unsigned char *request, int request_length, KSI_NetHandle **handle) {
-	KSI_ERR err;
-	KSI_NetHandle *tmp = NULL;
-	int res;
-	int len;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, url != NULL) goto cleanup;
-	KSI_PRE(&err, request != NULL) goto cleanup;
-	KSI_PRE(&err, handle != NULL) goto cleanup;
-
-	KSI_BEGIN(ctx, &err);
-
-	res = KSI_NetHandle_new(ctx, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	tmp->url = KSI_calloc(len = strlen(url) + 1, 1);
-	if (tmp->url == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-	strncpy(tmp->url, url, len);
-
-	tmp->request = KSI_calloc(request_length, 1);
-	if (tmp->request == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-	memcpy(tmp->request, request, request_length);
-	tmp->request_length = request_length;
-
-	res = ctx->netProvider->sendRequest(tmp);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	*handle = tmp;
-	tmp = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_NetHandle_free(tmp);
-
-	return KSI_RETURN(&err);
-}
-*/
-
 int KSI_NET_sendSignRequest(KSI_NetProvider *netProvider, const unsigned char *request, int request_length, KSI_NetHandle **handle) {
 	KSI_ERR err;
 	KSI_NetHandle *hndl = NULL;

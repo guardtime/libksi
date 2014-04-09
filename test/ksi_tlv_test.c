@@ -280,8 +280,6 @@ static void TestTlvGetStringValue(CuTest* tc) {
 	KSI_RDR *rdr = NULL;
 	KSI_TLV *tlv = NULL;
 
-	CuAssert(tc, "Unable to create context", res == KSI_OK && ctx != NULL);
-
 	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw) - 1, 1, &rdr);
 	CuAssert(tc, "Unable to create reader.", res == KSI_OK && rdr != NULL);
 	res = KSI_TLV_fromReader(rdr, &tlv);
@@ -449,8 +447,6 @@ static void TestTlvSerializeString(CuTest* tc) {
 
 	KSI_RDR *rdr = NULL;
 	KSI_TLV *tlv = NULL;
-
-	CuAssert(tc, "Unable to create context", res == KSI_OK && ctx != NULL);
 
 	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw) - 1, 1, &rdr);
 	CuAssert(tc, "Unable to create reader.", res == KSI_OK && rdr != NULL);

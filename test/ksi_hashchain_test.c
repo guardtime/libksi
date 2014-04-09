@@ -127,7 +127,7 @@ static void testAggrChainBuilt(CuTest *tc) {
 	res = KSI_DataHash_fromImprint(ctx, buf, buf_len, &in);
 	CuAssert(tc, "Unable to create input data hash", res == KSI_OK && in != NULL);
 
-	res = KSI_HashChain_aggregate(chn, in, 0, KSI_HASHALG_SHA2_256, &out);
+	res = KSI_HashChain_aggregate(chn, in, 0, KSI_HASHALG_SHA2_256, NULL, &out);
 	CuAssert(tc, "Unable to aggregate chain", res == KSI_OK && out != NULL);
 
 	/* Expected out hash. */

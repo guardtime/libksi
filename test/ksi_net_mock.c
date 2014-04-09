@@ -28,6 +28,9 @@ static int mockSend(KSI_NetHandle *handle) {
 	memcpy(KSI_NET_MOCK_request, handle->request, handle->request_length);
 	KSI_NET_MOCK_request_len = handle->request_length;
 
+	KSI_NET_MOCK_request_len = handle->request_length;
+	memcpy(KSI_NET_MOCK_request, handle->request, handle->request_length);
+
 	handle->readResponse = mockReceive;
 
 cleanup:
@@ -36,7 +39,7 @@ cleanup:
 }
 
 static int mockSendSignRequest(KSI_NetProvider *netProvider, KSI_NetHandle *handle) {
-	return KSI_UNKNOWN_ERROR;
+	return mockSend(handle);
 }
 
 

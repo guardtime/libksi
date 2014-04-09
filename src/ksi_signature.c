@@ -71,9 +71,6 @@ struct headerRec_st {
 struct KSI_Signature_st {
 	KSI_CTX *ctx;
 
-	/** Signed hash value */
-	KSI_DataHash *signedHash;
-
 	CalChainRec *calendarChain;
 
 	AggChainRec **aggregationChain;
@@ -534,11 +531,23 @@ static int parsePublDataRecord(KSI_CTX *ctx, KSI_TLV *tlv, PubDataRec **pdr) {
 	}
 
 	KSI_TLV_PARSE_BEGIN(ctx, tlv)
-		KSI_PARSE_TLV_ELEMENT_INTEGER(0x01, &tmp->pubTime)
+		KSI_PARSE_TLV_ELEMENT_INTEGER(0x02, &tmp->pubTime)
 		KSI_PARSE_TLV_ELEMENT_IMPRINT(0x04, &tmp->pubHash)
 		KSI_PARSE_TLV_ELEMENT_UNKNOWN_LENIENT_IGNORE
 	KSI_TLV_PARSE_END(res);
 	KSI_CATCH(&err, res) goto cleanup;;
+
+	if (tmp->pubTime == NULL) {
+		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Published Data: Missing publication time.");
+		goto cleanup;
+
+	}
+
+	if (tmp->pubHash == NULL) {
+		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Published Data: Missing publication hash.");
+		goto cleanup;
+
+	}
 
 	*pdr = tmp;
 	tmp = NULL;
@@ -555,6 +564,7 @@ cleanup:
 static int parseSigDataRecord(KSI_CTX *ctx, KSI_TLV *tlv, SigDataRec **sdr) {
 	KSI_ERR err;
 	int res;
+	int count;
 	SigDataRec *tmp = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -577,7 +587,27 @@ static int parseSigDataRecord(KSI_CTX *ctx, KSI_TLV *tlv, SigDataRec **sdr) {
 		KSI_PARSE_TLV_ELEMENT_UTF8STR(0x04, &tmp->certRepUri)
 		KSI_PARSE_TLV_ELEMENT_UNKNOWN_LENIENT_IGNORE
 	KSI_TLV_PARSE_END(res);
-	KSI_CATCH(&err, res) goto cleanup;;
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Check mandatory parameters. */
+	if (tmp->sigValue == NULL) {
+		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Signed Data: Missing signed value");
+		goto cleanup;
+	}
+
+	/* Manual xor */
+	count = 0 +
+			(tmp->cert != NULL ? 1 : 0) +
+			(tmp->certId != NULL ? 1 : 0) +
+			(tmp->certRepUri != NULL ? 1 : 0);
+
+	if (count == 0) {
+		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Signed Data: Incomplete signed data.");
+		goto cleanup;
+	} else if (count != 1 ) {
+		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Signed Data: More than one certificate specified.");
+		goto cleanup;
+	}
 
 	*sdr = tmp;
 	tmp = NULL;
@@ -617,6 +647,22 @@ static int parseCalAuthRec(KSI_CTX *ctx, KSI_TLV *tlv, CalAuthRec **car) {
 	KSI_TLV_PARSE_END(res);
 	KSI_CATCH(&err, res) goto cleanup;
 
+	/* Check mandatory parameters. */
+	if (auth->pubData == NULL) {
+		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Calendar Auth Record: Missing publication data.");
+		goto cleanup;
+	}
+
+	if (auth->sigAlgo == NULL) {
+		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Calendar Auth Record: Missing algorithm.");
+		goto cleanup;
+	}
+
+	if (auth->sigData == NULL) {
+		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Calendar Auth Record: Missing signed data.");
+		goto cleanup;
+	}
+
 	*car = auth;
 	auth = NULL;
 
@@ -646,9 +692,8 @@ int KSI_parseSignature(KSI_CTX *ctx, unsigned char *rawPdu, int rawPdu_len, KSI_
 	KSI_ERR err;
 	int res;
 
-	uint32_t utc_time;
-	KSI_Integer *status;
-	KSI_Integer *requestId;
+	KSI_Integer *status = NULL;
+	KSI_Integer *requestId = NULL;
 	char *errorMessage;
 
 	KSI_Signature *sig = NULL;
@@ -697,7 +742,9 @@ int KSI_parseSignature(KSI_CTX *ctx, unsigned char *rawPdu, int rawPdu_len, KSI_
 
 				KSI_PARSE_TLV_ELEMENT_UNKNOWN_LENIENT_IGNORE
 			KSI_PARSE_TLV_NESTED_ELEMENT_END
+			KSI_PARSE_TLV_ELEMENT_UNKNOWN_LENIENT_IGNORE
 		KSI_PARSE_TLV_NESTED_ELEMENT_END
+		KSI_PARSE_TLV_ELEMENT_UNKNOWN_LENIENT_IGNORE
 	KSI_TLV_PARSE_RAW_END(res);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -714,17 +761,11 @@ int KSI_parseSignature(KSI_CTX *ctx, unsigned char *rawPdu, int rawPdu_len, KSI_
 		goto cleanup;
 	}
 
-
-	res = KSI_HashChain_getCalendarAggregationTime(cal->chain, cal->publicationTime, &utc_time);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	if (!KSI_Integer_equalsUInt(cal->aggregationTime, utc_time)) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Aggregation time mismatch.");
-		goto cleanup;
-	}
-
 	sig->calendarChain = cal;
 	cal = NULL;
+
+	res = KSI_Signature_validate(sig);
+	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_LOG_debug(ctx, "Finished parsing successfully.");
 
@@ -748,12 +789,8 @@ int KSI_Signature_getDataHash(KSI_Signature *sig, const KSI_DataHash **hsh) {
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
 	KSI_BEGIN(sig->ctx, &err);
-	if (sig->signedHash == NULL) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
-		goto cleanup;
-	}
 
-	*hsh = sig->signedHash;
+	// TODO!
 
 	KSI_SUCCESS(&err);
 
@@ -816,4 +853,104 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+int KSI_Signature_validateInternal(KSI_Signature *sig) {
+	KSI_ERR err;
+	KSI_DataHash *hsh = NULL;
+	uint32_t utc_time;
+	int i;
+	int res;
+	int level;
+
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_BEGIN(sig->ctx, &err);
+
+	if (sig->aggregationChain == NULL || sig->aggregationChain_count == 0) {
+		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Signature does not contain any aggregation chains.");
+		goto cleanup;
+	}
+
+	if (sig->calendarChain == NULL) {
+		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Signature does not contain a calendar chain.");
+		goto cleanup;
+	}
+
+	if (sig->calAuth == NULL) { // Add aggr auth
+		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Signature does not contain any authentication record.");
+		goto cleanup;
+	}
+
+	/* Validate aggregation time */
+	res = KSI_HashChain_getCalendarAggregationTime(sig->calendarChain->chain, sig->calendarChain->publicationTime, &utc_time);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	if (!KSI_Integer_equalsUInt(sig->calendarChain->aggregationTime, utc_time)) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Aggregation time mismatch.");
+		goto cleanup;
+	}
+
+	/* Aggregate aggregation chains. */
+	hsh = NULL;
+	level = 0;
+	for (i = 0; i < sig->aggregationChain_count; i++) {
+		AggChainRec* aggregationChain = sig->aggregationChain[i];
+		KSI_DataHash *tmpHash = NULL;
+
+		if (hsh != NULL) {
+			/* Validate input hash */
+			if (!KSI_DataHash_equals(hsh, aggregationChain->inputHash)) {
+				KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Aggregation chain mismatch,");
+			}
+		}
+
+		res = KSI_HashChain_aggregate(aggregationChain->chain, aggregationChain->inputHash, level, aggregationChain->aggrHashId, &level, &tmpHash);
+		KSI_CATCH(&err, res) {
+			KSI_FAIL(&err, res, "Failed to calculate aggregation chain.");
+			goto cleanup;
+		}
+
+		if (hsh != NULL) {
+			KSI_DataHash_free(hsh);
+		}
+		hsh = tmpHash;
+	}
+
+	/* Validate calendar input hash */
+	if (!KSI_DataHash_equals(hsh, sig->calendarChain->inputHash)) {
+		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Calendar chain input hash mismatch.");
+		goto cleanup;
+	}
+
+	KSI_DataHash_free(hsh);
+	hsh = NULL;
+
+	/* Aggregate calendar chain */
+	res = KSI_HashChain_aggregateCalendar(sig->calendarChain->chain, sig->calendarChain->inputHash, &hsh);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Validate calendar root hash */
+	if (!KSI_DataHash_equals(hsh, sig->calAuth->pubData->pubHash)) {
+		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Calendar chain root hash mismatch.");
+		goto cleanup;
+	}
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_DataHash_free(hsh);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_Signature_validate(KSI_Signature *sig) {
+	int res;
+	res = KSI_Signature_validateInternal(sig);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
 

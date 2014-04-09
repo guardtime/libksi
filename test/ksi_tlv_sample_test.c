@@ -129,7 +129,7 @@ cleanup:
 
 static void TestOkFiles(CuTest* tc) {
 	int res;
-	int i;
+	int i = 0;
 
 	KSI_TLV *tlv = NULL;
 
@@ -138,9 +138,9 @@ static void TestOkFiles(CuTest* tc) {
 	while (ok_sample[i] != NULL) {
 		CuAssert(tc, "Unable to read valid TLV", tlvFromFile(tc, ok_sample[i++], &tlv) == KSI_OK);
 
-		CuAssert(tc, "Unable to parse valid TLV", parseStructure(tlv, 0) == KSI_OK);
+		res = parseStructure(tlv, 0);
 
-		CuAssert(tc, "Failed to parse structure.", res == KSI_OK);
+		CuAssert(tc, "Unable to parse valid TLV", res == KSI_OK);
 
 		KSI_TLV_free(tlv);
 		tlv = NULL;
@@ -153,7 +153,7 @@ static void TestOkFiles(CuTest* tc) {
 
 static void TestNokFiles(CuTest* tc) {
 	int res;
-	int i;
+	int i = 0;
 
 	KSI_TLV *tlv = NULL;
 
