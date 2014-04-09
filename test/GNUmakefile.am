@@ -1,6 +1,6 @@
 # Generated with mk_makefile.sh
 AM_CFLAGS=-g
-bin_PROGRAMS=runner sign asd
+bin_PROGRAMS=runner sign
 
 apiSources = \
 		../src/config.h \
@@ -30,10 +30,6 @@ apiSources = \
 		../src/ksi_tlv_tags.h \
 		../src/ksi_tlv.h \
 		../src/ksi_util.c
-
-asd_SOURCES= \
-		../src/ksi_tlv_parser.c \
-		$(apiSources)
 
 runner_SOURCES= \
 		all_tests.c \
