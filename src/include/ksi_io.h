@@ -1,10 +1,3 @@
-/*
- * ksi_io.h
- *
- *  Created on: 11.04.2014
- *      Author: henri
- */
-
 #ifndef KSI_IO_H_
 #define KSI_IO_H_
 
