@@ -3,6 +3,41 @@
 
 #include "ksi_internal.h"
 
+typedef enum {
+	KSI_IO_FILE,
+	KSI_IO_MEM
+} KSI_IO_Type;
+
+struct KSI_RDR_st {
+	/* Context for the reader. */
+	KSI_CTX *ctx;
+
+	/* Type of the reader (see #KSI_IO_Type) */
+	int ioType;
+
+	/* Union of inputs. */
+	union {
+		/* KSI_IO_FILE type input. */
+		FILE *file;
+
+		/* KSI_IO_MEM type input */
+		struct {
+			char *buffer;
+			size_t buffer_length;
+
+			/* Does the memory belong to this reader? */
+			int ownCopy;
+		} mem;
+	} data;
+
+	/* Offset of stream. */
+	size_t offset;
+
+	/* Indicates end of stream.
+	 * \note This will be set after reading the stream. */
+	int eof;
+};
+
 static KSI_RDR *newReader(KSI_CTX *ctx, KSI_IO_Type ioType) {
 	KSI_RDR *rdr = NULL;
 	rdr = KSI_new(KSI_RDR);
@@ -303,3 +338,9 @@ cleanup:
 	return KSI_RETURN(&err);
 
 }
+
+int KSI_RDR_isNocopyAvailable(KSI_RDR *rdr) {
+	return rdr->ioType == KSI_IO_MEM;
+}
+
+KSI_IMPLEMENT_GET_CTX(KSI_RDR);

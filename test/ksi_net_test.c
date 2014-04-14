@@ -1,10 +1,9 @@
 #include "all_tests.h"
-#include "../src/ksi_hash.h"
 
 extern KSI_CTX *ctx;
-extern unsigned char KSI_NET_MOCK_request[0xfffff];
+extern unsigned char *KSI_NET_MOCK_request;
 extern int KSI_NET_MOCK_request_len;
-extern unsigned char KSI_NET_MOCK_response[0xfffff];
+extern const unsigned char *KSI_NET_MOCK_response;
 extern int KSI_NET_MOCK_response_len;
 
 
@@ -23,8 +22,13 @@ static void TestSendRequest(CuTest* tc) {
 	KSI_Signature *sig = NULL;
 	KSI_NetProvider *pr = NULL;
 	FILE *f = NULL;
+	char *resp = NULL;
+	int resp_size = 0xfffff;
 
 	KSI_ERR_clearErrors(ctx);
+
+	resp = KSI_calloc(resp_size, 1);
+	CuAssert(tc, "Out of memory", resp != NULL);
 
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
@@ -39,12 +43,18 @@ static void TestSendRequest(CuTest* tc) {
 	f = fopen("test/resource/tlv/ok_aggr_response-1.tlv", "rb");
 	CuAssert(tc, "Unable to open sample response file", f != NULL);
 
-	KSI_NET_MOCK_response_len = fread(KSI_NET_MOCK_response, 1, sizeof(KSI_NET_MOCK_response), f);
+	KSI_NET_MOCK_response_len = fread(resp, 1, resp_size, f);
 	fclose(f);
+
+	KSI_NET_MOCK_response = resp;
+
 
 	res = KSI_sign(hsh, &sig);
 	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
-	CuAssert(tc, "Unexpected send request", KSI_NET_MOCK_request_len == sizeof(expectedSendRequest) && !debug_memcmp(expectedSendRequest, KSI_NET_MOCK_request, KSI_NET_MOCK_request_len));
+	CuAssert(tc, "Unexpected send request", KSI_NET_MOCK_request_len == sizeof(expectedSendRequest) && !memcmp(expectedSendRequest, KSI_NET_MOCK_request, KSI_NET_MOCK_request_len));
+
+	KSI_NET_MOCK_response = NULL;
+	KSI_free(resp);
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);

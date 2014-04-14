@@ -14,7 +14,7 @@ static void testDecodeHexStr(CuTest *tc) {
 	res = KSI_decodeHexStr(str, buf, sizeof(buf), &len);
 	CuAssert(tc, "Unable to decode valid hex string", res == KSI_OK);
 	CuAssertIntEquals_Msg(tc, "Decoded buf length", sizeof(exp), len);
-	CuAssert(tc, "Decoded data mismatch", !debug_memcmp(exp, buf, len));
+	CuAssert(tc, "Decoded data mismatch", !memcmp(exp, buf, len));
 
 }
 

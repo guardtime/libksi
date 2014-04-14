@@ -39,7 +39,8 @@ static void TestLogInit(CuTest* tc) {
 	KSI_CTX *ctx = NULL;
 
 	/* Init context. */
-	KSI_CTX_new(&ctx);
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create ctx", res == KSI_OK && ctx != NULL);
 
 	/* Create tmp file name. */
 	CuAssert(tc, "Unable to create temporary file name.", tmpnam_r(tmpFile) != NULL);

@@ -4,6 +4,37 @@
 #include "cutest/CuTest.h"
 #include "../src/ksi_internal.h"
 
+struct KSI_RDR_st {
+	/* Context for the reader. */
+	KSI_CTX *ctx;
+
+	/* Type of the reader (see #KSI_IO_Type) */
+	int ioType;
+
+	/* Union of inputs. */
+	union {
+		/* KSI_IO_FILE type input. */
+		FILE *file;
+
+		/* KSI_IO_MEM type input */
+		struct {
+			char *buffer;
+			size_t buffer_length;
+
+			/* Does the memory belong to this reader? */
+			int ownCopy;
+		} mem;
+	} data;
+
+	/* Offset of stream. */
+	size_t offset;
+
+	/* Indicates end of stream.
+	 * \note This will be set after reading the stream. */
+	int eof;
+};
+
+
 static void TestRdrFileBadFileName(CuTest* tc) {
 	int res;
 	char tmpFile[L_tmpnam];

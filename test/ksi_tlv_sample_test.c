@@ -77,9 +77,9 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 	KSI_TLV *nested = NULL;
 
 	lprintf("%*sTLV:\n", indent++*4, "");
-	lprintf("%*sTLV type: 0x%04x\n",indent*4, "", tlv->tag);
+	lprintf("%*sTLV type: 0x%04x\n",indent*4, "", KSI_TLV_getTag(tlv));
 
-	switch (tlv->tag) {
+	switch (KSI_TLV_getTag(tlv)) {
 		case 0x01:
 			/* Cast as numeric TLV */
 			res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_INT);

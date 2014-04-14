@@ -3,7 +3,6 @@
 
 #include "cutest/CuTest.h"
 #include "../src/ksi_internal.h"
-#include "../src/ksi_hash.h"
 
 extern KSI_CTX *ctx;
 

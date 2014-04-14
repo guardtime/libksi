@@ -17,6 +17,7 @@ apiSources = \
 		../src/ksi_internal.h \
 		../src/ksi_io.c \
 		../src/ksi_io.h \
+		../src/ksi_list.c \
 		../src/ksi_log.c \
 		../src/ksi_log.h \
 		../src/ksi_net.h \

@@ -110,6 +110,7 @@ extern "C" {
 			KSI_TLV *__tlv = NULL;														\
 			/* Parse PDU */																\
 			__res = KSI_TLV_parseBlob(ctx, (raw), (raw_len), &__tlv);					\
+			if (__tlv == NULL) __res = KSI_INVALID_FORMAT;								\
 			if (__res == KSI_OK) {														\
 				int __tagChecked = 0;													\
 				/* Parse PDU nested components. */										\

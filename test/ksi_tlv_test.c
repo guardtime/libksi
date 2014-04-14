@@ -5,6 +5,41 @@
 
 extern KSI_CTX *ctx;
 
+struct KSI_TLV_st {
+	/* Context. */
+	KSI_CTX *ctx;
+
+	/* Flags */
+	int isLenient;
+	int isForwardable;
+
+	/* TLV tag. */
+	unsigned int tag;
+
+	/* Max size of the buffer. Default is 0xffff bytes. */
+	int buffer_size;
+
+	/* Internal storage. */
+	unsigned char *buffer;
+
+	/* Internal storage of nested TLV's */
+	KSI_LIST(KSI_TLV) *nested;
+
+	/* How the payload is encoded internally. */
+	enum KSI_TLV_PayloadType_en payloadType;
+
+	union {
+		struct {
+			unsigned char *ptr; /* Pointer to raw value */
+			int length;
+		} rawVal;
+		struct {
+			uint64_t value;
+			int length;
+		}uintVal;
+	} payload;
+};
+
 static void TestTlvInitOwnMem(CuTest* tc) {
 	KSI_TLV *tlv = NULL;
 	int res;
@@ -15,8 +50,8 @@ static void TestTlvInitOwnMem(CuTest* tc) {
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
-	CuAssert(tc, "TLV not marked as lenient", tlv->isLenient);
-	CuAssert(tc, "TLV not marked to be forwarded", tlv->isForwardable);
+	CuAssert(tc, "TLV not marked as lenient", KSI_TLV_isLenient(tlv));
+	CuAssert(tc, "TLV not marked to be forwarded", KSI_TLV_isForward(tlv));
 
 	CuAssert(tc, "TLV buffer is null.", tlv->buffer != NULL);
 
@@ -37,7 +72,7 @@ static void TestTlvLenientFlag(CuTest* tc) {
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
-	CuAssert(tc, "TLV not marked as lenient", tlv->isLenient);
+	CuAssert(tc, "TLV not marked as lenient", KSI_TLV_isLenient(tlv));
 
 	KSI_TLV_free(tlv);
 
@@ -45,7 +80,7 @@ static void TestTlvLenientFlag(CuTest* tc) {
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
-	CuAssert(tc, "TLV marked as lenient", !tlv->isLenient);
+	CuAssert(tc, "TLV marked as lenient", !KSI_TLV_isLenient(tlv));
 
 	KSI_TLV_free(tlv);
 }
@@ -60,7 +95,7 @@ static void TestTlvForwardFlag(CuTest* tc) {
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
-	CuAssert(tc, "TLV not marked to be forwarded", tlv->isForwardable);
+	CuAssert(tc, "TLV not marked to be forwarded", KSI_TLV_isForward(tlv));
 
 	KSI_TLV_free(tlv);
 
@@ -68,7 +103,7 @@ static void TestTlvForwardFlag(CuTest* tc) {
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
-	CuAssert(tc, "TLV marked to be forwarded", !tlv->isForwardable);
+	CuAssert(tc, "TLV marked to be forwarded", !KSI_TLV_isForward(tlv));
 
 	KSI_TLV_free(tlv);
 }

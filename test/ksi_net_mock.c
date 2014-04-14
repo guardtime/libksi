@@ -1,21 +1,22 @@
 #include <string.h>
 
 #include "../src/ksi_internal.h"
-#include "../src/ksi_net.h"
 
-unsigned char KSI_NET_MOCK_request[0xfffff];
+const unsigned char *KSI_NET_MOCK_request = NULL;
 int KSI_NET_MOCK_request_len;
-unsigned char KSI_NET_MOCK_response[0xfffff];
+const unsigned char *KSI_NET_MOCK_response = NULL;
 int KSI_NET_MOCK_response_len;
 
 static int mockReceive(KSI_NetHandle *handle) {
+	KSI_CTX *ctx = NULL;
+	int res = KSI_UNKNOWN_ERROR;
 
-	KSI_LOG_debug(handle->ctx, "Connecting to MOCK service");
+	if (handle == NULL) return res;
 
-	handle->response = KSI_calloc(KSI_NET_MOCK_response_len, 1);
-	memcpy(handle->response, KSI_NET_MOCK_response, KSI_NET_MOCK_response_len);
+	KSI_LOG_debug(KSI_NetHandle_getCtx(handle), "Connecting to MOCK service");
 
-	handle->response_length = KSI_NET_MOCK_response_len;
+	res = KSI_NetHandle_setResponse(handle, KSI_NET_MOCK_response, KSI_NET_MOCK_response_len);
+	if (res != KSI_OK) return res;
 
 cleanup:
 
@@ -23,19 +24,28 @@ cleanup:
 }
 
 static int mockSend(KSI_NetHandle *handle) {
-	handle->netCtx_free = NULL;
+	int res = KSI_UNKNOWN_ERROR;
+	const unsigned char *req = NULL;
+	int req_len;
 
-	memcpy(KSI_NET_MOCK_request, handle->request, handle->request_length);
-	KSI_NET_MOCK_request_len = handle->request_length;
+	KSI_LOG_debug(KSI_NetHandle_getCtx(handle), "Initiate MOCK request.");
 
-	KSI_NET_MOCK_request_len = handle->request_length;
-	memcpy(KSI_NET_MOCK_request, handle->request, handle->request_length);
+	res = KSI_NetHandle_setReadResponseFn(handle, mockReceive);
+	if (res != KSI_OK) goto cleanup;
 
-	handle->readResponse = mockReceive;
+	res = KSI_NetHandle_getRequest(handle, &req, &req_len);
+	if (res != KSI_OK) goto cleanup;
 
+	if (KSI_NET_MOCK_request != NULL) KSI_free((unsigned char *)KSI_NET_MOCK_request);
+
+	KSI_NET_MOCK_request = KSI_calloc(req_len, 1);
+	memcpy((unsigned char *)KSI_NET_MOCK_request, req, req_len);
+
+	KSI_NET_MOCK_request_len = req_len;
+	res = KSI_OK;
 cleanup:
 
-	return KSI_OK;
+	return res;
 }
 
 static int mockSendSignRequest(KSI_NetProvider *netProvider, KSI_NetHandle *handle) {
@@ -45,6 +55,7 @@ static int mockSendSignRequest(KSI_NetProvider *netProvider, KSI_NetHandle *hand
 
 int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetProvider **provider) {
 	KSI_ERR err;
+	int res;
 	KSI_NetProvider *pr = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -53,18 +64,10 @@ int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetProvider **provider) {
 	KSI_NET_MOCK_request_len = 0;
 	KSI_NET_MOCK_response_len = 0;
 
-	pr = KSI_new(KSI_NetProvider);
-	if (pr == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
+	res = KSI_NetProvider_new(ctx, &pr);
+	KSI_CATCH(&err, res) goto cleanup;
 
-	pr->ctx = ctx;
-	pr->poviderCtx = NULL;
-	pr->providerCtx_free = NULL;
-	pr->sendSignRequest = mockSendSignRequest;
-	pr->sendExtendRequest = NULL;
-	pr->sendPublicationRequest = NULL;
+	res = KSI_NetProvider_setSendSignRequestFn(pr, mockSendSignRequest);
 
 	*provider = pr;
 	pr = NULL;

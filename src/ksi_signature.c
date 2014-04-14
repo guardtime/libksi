@@ -7,14 +7,31 @@ typedef struct calChainRec_st CalChainRec;
 typedef struct aggrChainRec_st AggChainRec;
 typedef struct headerRec_st HeaderRec;
 typedef struct calAuthRec_st CalAuthRec;
+typedef struct aggrAuthRec_st AggrAuthRec;
 typedef struct pubDataRec_st PubDataRec;
 typedef struct sigDataRec_st SigDataRec;
+typedef struct chainIndex_st ChainIndex;
 
+struct chainIndex_st {
+	KSI_Integer *index;
+};
 
 struct calAuthRec_st {
 	KSI_CTX *ctx;
 	PubDataRec *pubData;
 	char *sigAlgo;
+	SigDataRec *sigData;
+};
+
+struct aggrAuthRec_st {
+	KSI_Integer *aggrTime;
+	KSI_Integer **chainIndexes;
+	int chainIndexes_len;
+
+	KSI_DataHash *intputHash;
+
+	char *sigAlgo;
+
 	SigDataRec *sigData;
 };
 
@@ -77,6 +94,7 @@ struct KSI_Signature_st {
 	int aggregationChain_count;
 
 	CalAuthRec *calAuth;
+	AggrAuthRec *aggrAuth;
 
 };
 
@@ -95,6 +113,13 @@ static void SigDataRec_free(SigDataRec *sdc) {
 		KSI_free(sdc->certId);
 		KSI_free(sdc->certRepUri);
 		KSI_free(sdc);
+	}
+}
+
+static void AggrAuthRec_free(AggrAuthRec *aar) {
+	if (aar != NULL) {
+		KSI_Integer_free(aar->aggrTime);
+		KSI_free(aar->sigAlgo);
 	}
 }
 
@@ -621,6 +646,60 @@ cleanup:
 	return KSI_RETURN(&err);
 
 }
+
+static int parseAggrAuthRecChainIndex(KSI_CTX *ctx, KSI_TLV *tlv, AggrAuthRec **aar) {
+	KSI_ERR err;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_PRE(&err, aar != NULL) goto cleanup;
+
+	KSI_BEGIN(ctx, &err);
+
+	if (KSI_TLV_getTag(tlv) != 0x03)
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+static int parseAggrAuthRec(KSI_CTX *ctx, KSI_TLV *tlv, AggrAuthRec **aar) {
+	KSI_ERR err;
+	int res;
+	AggrAuthRec *auth = NULL;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_PRE(&err, aar != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	res = CalAuthRec_new(ctx, &auth);
+	KSI_CATCH(&err, res);
+
+	KSI_TLV_PARSE_BEGIN(ctx, tlv)
+		KSI_PARSE_TLV_ELEMENT_INTEGER(0x02, &auth->aggrTime)
+		KSI_PARSE_TLV_ELEMENT_CB(0x03, parseAggrAuthRecChainIndex, auth)
+		KSI_PARSE_TLV_ELEMENT_IMPRINT(0x05, &auth->intputHash)
+
+		KSI_PARSE_TLV_ELEMENT_UTF8STR(0x0b, &auth->sigAlgo)
+
+		KSI_PARSE_TLV_ELEMENT_CB(0x0c, parseSigDataRecord, &auth->sigData)
+
+		KSI_PARSE_TLV_ELEMENT_UNKNOWN_LENIENT_IGNORE
+	KSI_TLV_PARSE_END(res);
+
+
+
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
 static int parseCalAuthRec(KSI_CTX *ctx, KSI_TLV *tlv, CalAuthRec **car) {
 	KSI_ERR err;
 	int res;
@@ -644,6 +723,7 @@ static int parseCalAuthRec(KSI_CTX *ctx, KSI_TLV *tlv, CalAuthRec **car) {
 		KSI_PARSE_TLV_ELEMENT_CB(0x10, parsePublDataRecord, &auth->pubData)
 		KSI_PARSE_TLV_ELEMENT_UTF8STR(0x0b, &auth->sigAlgo)
 		KSI_PARSE_TLV_ELEMENT_CB(0x0c, parseSigDataRecord, &auth->sigData)
+		KSI_PARSE_TLV_ELEMENT_UNKNOWN_LENIENT_IGNORE
 	KSI_TLV_PARSE_END(res);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -684,6 +764,7 @@ void KSI_Signature_free(KSI_Signature *sig) {
 		}
 		KSI_free(sig->aggregationChain);
 		CalAuthRec_free(sig->calAuth);
+		AggrAuthRec_free(sig->aggrAuth);
 		KSI_free(sig);
 	}
 }
@@ -722,6 +803,7 @@ int KSI_parseSignature(KSI_CTX *ctx, unsigned char *rawPdu, int rawPdu_len, KSI_
 					KSI_PARSE_TLV_ELEMENT_INTEGER(0x05, &hdr->instanceId)
 					KSI_PARSE_TLV_ELEMENT_INTEGER(0x06, &hdr->messageId)
 					KSI_PARSE_TLV_ELEMENT_RAW(0x07, &hdr->clientId, &hdr->clientId_length);
+					KSI_PARSE_TLV_ELEMENT_UNKNOWN_LENIENT_IGNORE
 				KSI_PARSE_TLV_NESTED_ELEMENT_END
 
 				KSI_PARSE_TLV_ELEMENT_INTEGER(0x02, &requestId);
@@ -736,8 +818,10 @@ int KSI_parseSignature(KSI_CTX *ctx, unsigned char *rawPdu, int rawPdu_len, KSI_
 					KSI_PARSE_TLV_ELEMENT_IMPRINT(0x05, &cal->inputHash)
 					KSI_PARSE_TLV_ELEMENT_CB(0x07, CalChainRec_addLink, cal)
 					KSI_PARSE_TLV_ELEMENT_CB(0x08, CalChainRec_addLink, cal)
+					KSI_PARSE_TLV_ELEMENT_UNKNOWN_LENIENT_IGNORE
 				KSI_PARSE_TLV_NESTED_ELEMENT_END
 
+				KSI_PARSE_TLV_ELEMENT_CB(0x0804, parseAggrAuthRec, &sig->aggrAuth);
 				KSI_PARSE_TLV_ELEMENT_CB(0x0805, parseCalAuthRec, &sig->calAuth)
 
 				KSI_PARSE_TLV_ELEMENT_UNKNOWN_LENIENT_IGNORE
@@ -748,7 +832,7 @@ int KSI_parseSignature(KSI_CTX *ctx, unsigned char *rawPdu, int rawPdu_len, KSI_
 	KSI_TLV_PARSE_RAW_END(res);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	// TODO What else to do with message header ?
+	// TODO What else can we do with message header ?
 	KSI_LOG_debug(ctx, "Aggregation response: instanceId = %ld, messageId = %ld",
 			(unsigned long long) KSI_Integer_getUInt64(hdr->instanceId),
 			(unsigned long long) KSI_Integer_getUInt64(hdr->messageId));

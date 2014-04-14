@@ -1,5 +1,4 @@
 #include "../src/ksi_internal.h"
-#include "../src/ksi_hash.h"
 
 int main(void) {
 	KSI_CTX *ctx;

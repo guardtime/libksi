@@ -50,7 +50,8 @@ static void TestCtxAddFailure(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	KSI_CTX *ctx = NULL;
-	KSI_CTX_new(&ctx);
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create ctx", ctx != NULL);
 
 	res = failingMethod(ctx, 1);
 	CuAssert(tc, "Adding first fault failed.", res == KSI_INVALID_ARGUMENT);
@@ -71,9 +72,9 @@ static void TestCtxAddFailureOverflow(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
 	int i;
 
-
 	KSI_CTX *ctx = NULL;
-	KSI_CTX_new(&ctx);
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create ctx", ctx != NULL);
 
 	KSI_LOG_init(ctx, "test.log", KSI_LOG_DEBUG);
 

@@ -1,5 +1,4 @@
 #include "ksi_internal.h"
-#include "ksi_hash.h"
 
 #include "ksi_tlv_easy.h"
 
@@ -77,8 +76,7 @@ int KSI_sign(KSI_DataHash *hsh, KSI_Signature **signature) {
 	int resp_len = 0;
 
 	KSI_PRE(&err, hsh != NULL) goto cleanup;
-	KSI_PRE(&err, KSI_DataHash_getCtx(hsh, &ctx) == KSI_OK) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_BEGIN((ctx = KSI_DataHash_getCtx(hsh)), &err);
 
 	res = createRequest(ctx, hsh, &req, &req_len);
 	KSI_CATCH(&err, res) goto cleanup;

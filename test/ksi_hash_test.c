@@ -3,7 +3,6 @@
 
 #include "cutest/CuTest.h"
 #include "../src/ksi_internal.h"
-#include "../src/ksi_hash.h"
 
 /* Recreate the internal structure. */
 struct KSI_DataHash_st {
@@ -41,11 +40,14 @@ static void TestSHA256(CuTest* tc) {
 	res = KSI_DataHash_getData(hsh, NULL, &digest, &digest_length);
 	CuAssert(tc, "Failed to parse imprint.", res == KSI_OK);
 
-	CuAssertIntEquals_Msg(tc, "Digest lenght", sizeof(expected), digest_length);
+	CuAssertIntEquals_Msg(tc, "Digest length", sizeof(expected), digest_length);
 	CuAssert(tc, "Digest value mismatch", !memcmp(expected, digest, digest_length));
 
-	CuAssert(tc, "Hash object does not have correct context.", hsh->ctx == hsr->ctx);
 
+	CuAssert(tc, "Hash object does not have correct context.", KSI_DataHasher_getCtx(hsr) == KSI_DataHash_getCtx(hsh));
+
+	KSI_nofree(ctx1);
+	KSI_nofree(ctx2);
 	KSI_nofree(digest);
 	KSI_DataHasher_free(hsr);
 	KSI_DataHash_free(hsh);

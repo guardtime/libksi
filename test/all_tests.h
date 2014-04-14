@@ -3,7 +3,6 @@
 
 #include "cutest/CuTest.h"
 #include "../src/ksi_internal.h"
-#include "../src/ksi_tlv.h"
 
 #ifdef __cplusplus
 extern "C" {

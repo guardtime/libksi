@@ -132,7 +132,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	if (res != KSI_OK) goto cleanup;
 
 	/* Configure curl net provider */
-	if ((res = KSI_NET_CURL_setSignerUrl(netProvider, "http://localhost:3333")) != KSI_OK) goto cleanup;
+	if ((res = KSI_NET_CURL_setSignerUrl(netProvider, "http://localhost:3333/signer")) != KSI_OK) goto cleanup;
 	if ((res = KSI_NET_CURL_setExtenderUrl(netProvider, "TODO")) != KSI_OK) goto cleanup;
 	if ((res = KSI_NET_CURL_setPublicationUrl(netProvider, "TODO")) != KSI_OK) goto cleanup;
 	if ((res = KSI_NET_CURL_setConnectTimeoutSeconds(netProvider, 5)) != KSI_OK) goto cleanup;
