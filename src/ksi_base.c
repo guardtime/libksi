@@ -86,6 +86,12 @@ const char *KSI_getErrorString(int statusCode) {
 			return "Buffer overflow";
 		case KSI_TLV_PAYLOAD_TYPE_MISMATCH:
 			return "TLV payload type mismatch";
+		case KSI_ASYNC_NOT_FINISHED:
+			return "Asynchronous call not yet finished.";
+		case KSI_INVALID_SIGNATURE:
+			return "Invalid KSI signature.";
+		case KSI_INVALID_PKI_SIGNATURE:
+			return "Invalid PKI signature.";
 		case KSI_OUT_OF_MEMORY:
 			return "Out of memory";
 		case KSI_IO_ERROR:
@@ -94,6 +100,8 @@ const char *KSI_getErrorString(int statusCode) {
 			return "Network error";
 		case KSI_HTTP_ERROR:
 			return "HTTP error";
+		case KSI_AGGREGATOR_ERROR:
+			return "Failure from aggregator.";
 		case KSI_CRYPTO_FAILURE:
 			return "Crypto failure";
 		case KSI_UNKNOWN_ERROR:
@@ -191,6 +199,8 @@ int KSI_global_init(void) {
 	res = KSI_NET_global_init();
 	if (res != KSI_OK) goto cleanup;
 
+	res = KSI_Truststore_global_init();
+
 	res = KSI_OK;
 
 cleanup:
@@ -204,3 +214,4 @@ cleanup:
 void KSI_global_cleanup(void) {
 	KSI_NET_global_cleanup();
 }
+

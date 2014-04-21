@@ -30,7 +30,8 @@ apiSources = \
 		../src/ksi_tlv_serialize.c \
 		../src/ksi_tlv_tags.h \
 		../src/ksi_tlv.h \
-		../src/ksi_util.c
+		../src/ksi_util.c \
+		../src/ksi_truststore_openssl.c
 
 runner_SOURCES= \
 		all_tests.c \
@@ -52,3 +53,7 @@ runner_SOURCES= \
 sign_SOURCES= \
 		sign_test.c \
 		$(apiSources)
+
+#altparse_SOURCES= \
+#		../src/ksi_tlv_parser2.c \
+#		$(apiSources)

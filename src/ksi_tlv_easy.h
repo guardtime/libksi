@@ -117,11 +117,15 @@ extern "C" {
 				switch(KSI_TLV_getTag(__tlv)) {											\
 
 
-#define KSI_TLV_PARSE_RAW_END(res)														\
+#define KSI_TLV_PARSE_RAW_END(res, tlv)													\
 				}																		\
 				if (!__tagChecked)														\
 						KSI_LOG_warn(__ctx, "Tag 0x%x not handeled",					\
 								KSI_TLV_getTag(__tlv));									\
+			}																			\
+			if (__res == KSI_OK && (KSI_TLV **)(tlv) != NULL) {							\
+				*((KSI_TLV **)(tlv)) = __tlv;															\
+				__tlv = NULL;															\
 			}																			\
 			KSI_TLV_free(__tlv);														\
 			(res) = __res;																\

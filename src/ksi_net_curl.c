@@ -57,7 +57,7 @@ static size_t receiveDataFromLibCurl(void *ptr, size_t size, size_t nmemb,
         unsigned char *tmp_buffer;
         KSI_NetHandle *handle;
         unsigned char *resp = NULL;
-        int resp_len = 0;
+        size_t resp_len = 0;
 
         handle = (KSI_NetHandle *)stream;
 
@@ -75,6 +75,7 @@ static size_t receiveDataFromLibCurl(void *ptr, size_t size, size_t nmemb,
         res = KSI_NetHandle_setResponse(handle, tmp_buffer, bytesCount);
         if (tmp_buffer == NULL) goto cleanup;
 
+        bytesCount = size * nmemb;
 
 cleanup:
 

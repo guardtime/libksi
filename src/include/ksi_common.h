@@ -19,6 +19,7 @@ int KSI_LIST_FN_NAME(type, iter)(KSI_LIST(type) *);						\
 int KSI_LIST_FN_NAME(type, next)(KSI_LIST(type) *, type **);			\
 int KSI_LIST_FN_NAME(type, indexOf)(KSI_LIST(type) *, type *);			\
 int KSI_LIST_FN_NAME(type, insertAt)(KSI_LIST(type) *, int, type *);	\
+int KSI_LIST_FN_NAME(type, length)(KSI_LIST(type) *);					\
 KSI_CTX *type##List_getCtx(KSI_LIST(type) *o);							\
 
 typedef struct KSI_CTX_st KSI_CTX;
@@ -28,7 +29,10 @@ typedef struct KSI_Signature_st KSI_Signature;
 typedef struct KSI_RDR_st KSI_RDR;
 typedef struct KSI_HashChain_st KSI_HashChain;
 typedef struct KSI_Integer_st KSI_Integer;
+typedef struct KSI_List_st KSI_List;
+typedef char * KSI_String;
 
+typedef struct KSI_Certificate_st KSI_Certificate;
 /**
  * This structure is used for calculating the hash values.
  * \see #KSI_DataHash, #KSI_DataHasher_open, #KSI_DataHasher_reset, #KSI_DataHasher_close, #KSI_DataHasher_free
@@ -52,7 +56,9 @@ typedef struct KSI_NetHandle_st KSI_NetHandle;
 typedef struct KSI_NetProvider_st KSI_NetProvider;
 
 KSI_DEFINE_LIST(KSI_Integer);
+KSI_DEFINE_LIST(KSI_HashChain);
 KSI_DEFINE_LIST(KSI_TLV);
+KSI_DEFINE_LIST(KSI_String);
 
 KSI_DEFINE_GET_CTX(KSI_DataHash);
 KSI_DEFINE_GET_CTX(KSI_DataHasher);

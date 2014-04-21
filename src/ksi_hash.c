@@ -117,6 +117,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_algorithm, KSI_DataHasher **hashe
 
 	if (!KSI_isSupportedHashAlgorithm(hash_algorithm)) {
 		KSI_FAIL(&err, KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
+		goto cleanup;
 	}
 
 	tmp_hasher = KSI_new(KSI_DataHasher);
@@ -127,7 +128,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_algorithm, KSI_DataHasher **hashe
 
 	tmp_hasher->hashContext = NULL;
 	tmp_hasher->ctx = ctx;
-	tmp_hasher->algorithm = hash_algorithm;
+	tmp_hasher->algorithm = KSI_fixHashAlgorithm(hash_algorithm);
 
 	res = KSI_DataHasher_reset(tmp_hasher);
 	if (res != KSI_OK) {
@@ -171,7 +172,7 @@ int KSI_isTrusteddHashAlgorithm(int hash_id) {
 
 int KSI_isSupportedHashAlgorithm(int hash_id) {
 	int id = KSI_fixHashAlgorithm(hash_id);
-	return id >= 0 && id < KSI_NUMBER_OF_KNOWN_HASHALGS;
+	return id > 0 && id < KSI_NUMBER_OF_KNOWN_HASHALGS;
 }
 
 int KSI_getHashLength(int hash_id) {

@@ -11,21 +11,11 @@
 #include "include/ksi_io.h"
 #include "include/ksi_net.h"
 #include "include/ksi_tlv.h"
-
-/* Returns true if context has no errors. */
-#define KSI_CTX_OK(ctx) ((ctx) != NULL && (ctx)->statusCode == KSI_OK && (ctx)->errors_count == 0
+#include "include/ksi_truststore.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-
-
-/*************
- * KSI READER
- *************/
-/* KSI reader type. */
-
 
 enum KSI_StatusCode {
 /* RETURN CODES WHICH ARE NOT ERRORS */
@@ -63,6 +53,7 @@ enum KSI_StatusCode {
 	KSI_ASYNC_NOT_FINISHED,
 
 	KSI_INVALID_SIGNATURE,
+	KSI_INVALID_PKI_SIGNATURE,
 /* SYSTEM ERRORS */
 	KSI_OUT_OF_MEMORY = 0x00000300,
 	KSI_IO_ERROR,
@@ -158,7 +149,7 @@ enum KSI_HashAlgorithm {
 
 int KSI_global_init(void);
 
-void KSI_global_finalize(void);
+void KSI_global_cleanup(void);
 
 int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, KSI_NetProvider *netProvider);
 

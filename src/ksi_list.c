@@ -2,57 +2,7 @@
 
 #include "ksi_internal.h"
 
-typedef struct KSI_List_st KSI_List;
-
 #define KSI_LIST_SIZE_INCREMENT 10
-
-#define KSI_IMPLEMENT_LIST(type) 													\
-struct type##_list_st { 															\
-	KSI_CTX *ctx;																	\
-	KSI_List *list;																	\
-};																					\
-int KSI_LIST_FN_NAME(type, new)(KSI_CTX *ctx, KSI_LIST(type) **list) {				\
-	int res = KSI_UNKNOWN_ERROR;													\
-	KSI_LIST(type) *l = NULL;														\
-	l = KSI_new(KSI_LIST(type));													\
-	if (l == NULL) {																\
-		res = KSI_OUT_OF_MEMORY;													\
-		goto cleanup;																\
-	}																				\
-	res = KSI_List_new((void (*)(void *))type##_free, &l->list);					\
-	if (res != KSI_OK) goto cleanup;												\
-	l->ctx = ctx;																	\
-	*list = l;																		\
-	l = NULL;																		\
-	res = KSI_OK;																	\
-cleanup:																			\
-	KSI_LIST_FN_NAME(type, free)(l);												\
-	return res;																		\
-}																					\
-void KSI_LIST_FN_NAME(type, free)(KSI_LIST(type) *list) {							\
-	if (list != NULL) {																\
-		KSI_List_free(list->list);													\
-		KSI_free(list);																\
-	}																				\
-} 																					\
-int KSI_LIST_FN_NAME(type, append)(KSI_LIST(type) *list, type *o) {					\
-	return KSI_List_append(list->list, o);											\
-}																					\
-int KSI_LIST_FN_NAME(type, iter)(KSI_LIST(type) *list) {							\
-	return KSI_List_iter(list->list);												\
-}																					\
-int KSI_LIST_FN_NAME(type, next)(KSI_LIST(type) *list, type **o) {					\
-	return KSI_List_next(list->list, (void **)o);									\
-}																					\
-int KSI_LIST_FN_NAME(type, indexOf)(KSI_LIST(type) *list, type *o) {				\
-	return KSI_List_indexOf(list->list, o);											\
-}																					\
-int KSI_LIST_FN_NAME(type, insertAt)(KSI_LIST(type) *list, int pos, type *o) {		\
-	return KSI_List_insertAt(list->list, pos, o);									\
-}																					\
-KSI_CTX *type##List_getCtx(KSI_LIST(type) *o) {	 									\
-	return o->ctx; 																	\
-} 																					\
 
 struct KSI_List_st {
 	void **arr;
@@ -63,50 +13,7 @@ struct KSI_List_st {
 
 };
 
-
-static void KSI_List_free(struct KSI_List_st *list) {
-	if (list != NULL) {
-		struct KSI_List_st *tmp = NULL;
-		int i;
-		for (i = 0; i < list->arr_len; i++) {
-			if (list->obj_free != NULL) {
-				list->obj_free(list->arr[i]);
-			}
-		}
-		KSI_free(list->arr);
-		KSI_free(list);
-	}
-}
-
-static int KSI_List_new(void (*obj_free)(void *), struct KSI_List_st **list) {
-	int res;
-	struct KSI_List_st *tmp = NULL;
-
-	tmp = KSI_new(struct KSI_List_st);
-	if (tmp == NULL) {
-		res = KSI_OUT_OF_MEMORY;
-		goto cleanup;
-	}
-
-	tmp->arr = NULL;
-	tmp->obj_free = obj_free;
-	tmp->arr_len = 0;
-	tmp->arr_size = 0;
-	tmp->iter = 0;
-
-	*list = tmp;
-	tmp = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_List_free(tmp);
-
-	return res;
-}
-
-static int appendElement(struct KSI_List_st* list, void* obj) {
+static int appendElement(KSI_List *list, void* obj) {
 	int res = KSI_UNKNOWN_ERROR;
 	void **tmp_arr = NULL;
 
@@ -146,7 +53,49 @@ cleanup:
 	return res;
 }
 
-static int KSI_List_append(struct KSI_List_st *list, void *obj) {
+void KSI_List_free(KSI_List *list) {
+	if (list != NULL) {
+		struct KSI_List_st *tmp = NULL;
+		int i;
+		for (i = 0; i < list->arr_len; i++) {
+			if (list->obj_free != NULL) {
+				list->obj_free(list->arr[i]);
+			}
+		}
+		KSI_free(list->arr);
+		KSI_free(list);
+	}
+}
+
+int KSI_List_new(void (*obj_free)(void *), KSI_List **list) {
+	int res;
+	KSI_List *tmp = NULL;
+
+	tmp = KSI_new(struct KSI_List_st);
+	if (tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->arr = NULL;
+	tmp->obj_free = obj_free;
+	tmp->arr_len = 0;
+	tmp->arr_size = 0;
+	tmp->iter = 0;
+
+	*list = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_List_free(tmp);
+
+	return res;
+}
+
+int KSI_List_append(KSI_List *list, void *obj) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (list == NULL || obj == NULL) {
@@ -164,7 +113,7 @@ cleanup:
 	return res;
 }
 
-static int KSI_List_iter(struct KSI_List_st *list) {
+int KSI_List_iter(KSI_List *list) {
 	int res = KSI_UNKNOWN_ERROR;
 	if (list == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -180,7 +129,7 @@ cleanup:
 	return res;
 }
 
-static int KSI_List_next(struct KSI_List_st *list, void **o) {
+int KSI_List_next(KSI_List *list, void **o) {
 	int res = KSI_UNKNOWN_ERROR;
 	if (list == NULL || o == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -200,7 +149,7 @@ cleanup:
 	return res;
 }
 
-static int KSI_List_indexOf(struct KSI_List_st *list, void *o) {
+int KSI_List_indexOf(KSI_List *list, void *o) {
 	int index = -1;
 	int i;
 	if (list == NULL || o == NULL) goto cleanup;
@@ -216,7 +165,7 @@ cleanup:
 	return index;
 }
 
-static int KSI_List_insertAt(struct KSI_List_st *list, int pos, void *o) {
+int KSI_List_insertAt(KSI_List *list, int pos, void *o) {
 	int res = KSI_UNKNOWN_ERROR;
 	int i;
 
@@ -239,6 +188,11 @@ cleanup:
 	return res;
 }
 
-KSI_IMPLEMENT_LIST(KSI_Integer);
-KSI_IMPLEMENT_LIST(KSI_TLV);
-//KSI_IMPLEMENT_LIST(KSI_HashChain);
+int KSI_List_length(KSI_List *list) {
+	return list == NULL ? 0 : list->arr_len;
+}
+
+KSI_IMPLEMENT_LIST(KSI_Integer, KSI_Integer_free);
+KSI_IMPLEMENT_LIST(KSI_TLV, KSI_TLV_free);
+KSI_IMPLEMENT_LIST(KSI_HashChain, KSI_HashChain_free);
+KSI_IMPLEMENT_LIST(KSI_String, KSI_free);

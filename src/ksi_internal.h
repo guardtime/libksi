@@ -26,6 +26,59 @@ KSI_CTX *type##_getCtx(type *o) {				 			\
 	return o->ctx; 											\
 } 															\
 
+#define KSI_IMPLEMENT_LIST(type, free_fn)											\
+struct type##_list_st { 															\
+	KSI_CTX *ctx;																	\
+	KSI_List *list;																	\
+};																					\
+int KSI_LIST_FN_NAME(type, new)(KSI_CTX *ctx, KSI_LIST(type) **list) {				\
+	int res = KSI_UNKNOWN_ERROR;													\
+	KSI_LIST(type) *l = NULL;														\
+	l = KSI_new(KSI_LIST(type));													\
+	if (l == NULL) {																\
+		res = KSI_OUT_OF_MEMORY;													\
+		goto cleanup;																\
+	}																				\
+	res = KSI_List_new((void (*)(void *))free_fn, &l->list);						\
+	if (res != KSI_OK) goto cleanup;												\
+	l->ctx = ctx;																	\
+	*list = l;																		\
+	l = NULL;																		\
+	res = KSI_OK;																	\
+cleanup:																			\
+	KSI_LIST_FN_NAME(type, free)(l);												\
+	return res;																		\
+}																					\
+void KSI_LIST_FN_NAME(type, free)(KSI_LIST(type) *list) {							\
+	if (list != NULL) {																\
+		KSI_List_free(list->list);													\
+		KSI_free(list);																\
+	}																				\
+} 																					\
+int KSI_LIST_FN_NAME(type, append)(KSI_LIST(type) *list, type *o) {					\
+	return KSI_List_append(list->list, o);											\
+}																					\
+int KSI_LIST_FN_NAME(type, iter)(KSI_LIST(type) *list) {							\
+	return KSI_List_iter(list->list);												\
+}																					\
+int KSI_LIST_FN_NAME(type, next)(KSI_LIST(type) *list, type **o) {					\
+	return KSI_List_next(list->list, (void **)o);									\
+}																					\
+int KSI_LIST_FN_NAME(type, indexOf)(KSI_LIST(type) *list, type *o) {				\
+	return KSI_List_indexOf(list->list, o);											\
+}																					\
+int KSI_LIST_FN_NAME(type, insertAt)(KSI_LIST(type) *list, int pos, type *o) {		\
+	return KSI_List_insertAt(list->list, pos, o);									\
+}																					\
+int KSI_LIST_FN_NAME(type, length)(KSI_LIST(type) *list) {							\
+	return KSI_List_length(list->list);												\
+}																					\
+KSI_CTX *type##List_getCtx(KSI_LIST(type) *o) {	 									\
+	return o->ctx; 																	\
+} 																					\
+
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

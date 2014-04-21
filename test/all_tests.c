@@ -128,6 +128,7 @@ static int RunAllTests() {
 	int failCount;
 
 	KSI_CTX_new(&ctx);
+	KSI_global_init();
 
 	CuSuite* suite = initSuite();
 	CuSuiteRun(suite);
@@ -140,6 +141,7 @@ static int RunAllTests() {
 
 	CuSuiteDelete(suite);
 
+	KSI_global_cleanup();
 	KSI_CTX_free(ctx);
 
 	return failCount;

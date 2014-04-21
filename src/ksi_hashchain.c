@@ -479,7 +479,7 @@ int KSI_MetaData_parse(KSI_MetaData *mtd, char **clientId, KSI_Integer **machine
 		KSI_PARSE_TLV_ELEMENT_INTEGER(0x02, &mId)
 		KSI_PARSE_TLV_ELEMENT_INTEGER(0x03, &sNr)
 		KSI_PARSE_TLV_ELEMENT_UNKNOWN_LENIENT_IGNORE
-	KSI_TLV_PARSE_RAW_END(res);
+	KSI_TLV_PARSE_RAW_END(res, NULL);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	if (clientId != NULL) {
