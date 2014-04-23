@@ -165,7 +165,7 @@ cleanup:
 	return index;
 }
 
-int KSI_List_insertAt(KSI_List *list, int pos, void *o) {
+int KSI_List_insert(KSI_List *list, int pos, void *o) {
 	int res = KSI_UNKNOWN_ERROR;
 	int i;
 
@@ -183,6 +183,8 @@ int KSI_List_insertAt(KSI_List *list, int pos, void *o) {
 	}
 	list->arr[pos] = o;
 
+	res = KSI_OK;
+
 cleanup:
 
 	return res;
@@ -190,6 +192,31 @@ cleanup:
 
 int KSI_List_length(KSI_List *list) {
 	return list == NULL ? 0 : list->arr_len;
+}
+
+int KSI_List_remove(KSI_List *list, int pos) {
+	int res = KSI_UNKNOWN_ERROR;
+	int i;
+
+	if (list == NULL || pos < 0 || pos >= list->arr_len) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	/* Shift the tail */
+	for (i = pos + 1; i < list->arr_len; i++) {
+		list->arr[i - 1] = list->arr[i];
+	}
+
+	list->arr_len--;
+
+	if (list->iter > pos) --list->iter;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
 }
 
 KSI_IMPLEMENT_LIST(KSI_Integer, KSI_Integer_free);

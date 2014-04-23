@@ -26,22 +26,18 @@ extern "C" {
 	KSI_DEFINE_GET_CTX(KSI_TLV);
 	/**
 	 * \ingroup tlv
-	 * This function creates an new TLV. If #data pointer is NULL a new memory block (with size 0xffff+1) is allocated,
-	 * otherwise the pointer itself and data_len is used for the payload.
+	 * This function creates an new TLV.
 	 *
 	 * \param[in]	ctx			KSI context.
 	 * \param[in]	payloadType	Payload type of the TLV.
 	 * \param[in]	tag			Numeric TLV tag.
 	 * \param[in]	isLenient	Value of the lenient-flag (1 or 0).
 	 * \param[in]	isForward	Value of the forward-flag (1 or 0).
-	 * \param[in]	data		NULL or pointer to shared memory area.
-	 * \param[in]	data_len	Length of shared memory area, value will be ignored if #data == NULL
-	 * \param[in]	copy		Should the data be copyd to internal buffer, on can the data pointer be reused.
 	 * \param[out]	tlv			Pointer to the output variable.
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_new(KSI_CTX *ctx, int payloadType, int tag, int isLenient, int isForward, const void *data, size_t data_len, int copy, KSI_TLV **tlv);
+	int KSI_TLV_new(KSI_CTX *ctx, int payloadType, int tag, int isLenient, int isForward, KSI_TLV **tlv);
 
 	/**
 	 * \ingroup tlv
@@ -52,25 +48,23 @@ extern "C" {
 	 * \param[in]	tag			Numeric TLV tag.
 	 * \param[in]	isLenient	Value of the lenient-flag (1 or 0).
 	 * \param[in]	isForward	Value of the forward-flag (1 or 0).
-	 * \param[in]	data		NULL or pointer to shared memory area.
-	 * \param[in]	data_len	Length of shared memory area, value will be ignored if #data == NULL
+	 * \param[in]	uint		64-bit unsigned value.
 	 * \param[out]	tlv			Pointer to the output variable.
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_fromUint(KSI_CTX *ctx, int tag, int isLenient, int isForward, uint64_t uint, KSI_TLV **tlv);
+	int KSI_TLV_fromUint(KSI_CTX *ctx, int tag, int isLenient, int isForward, KSI_uint64_t uint, KSI_TLV **tlv);
 
 	/**
 	 * \ingroup tlv
 	 * This function creates a new TLV and initializes its payload with the given string \c str.
-	 * The payload type will be #KSI_TLV_PAYLOAD_INT.
+	 * The payload type will be #KSI_TLV_PAYLOAD_INT. The null value is included in the payload.
 	 *
 	 * \param[in]	ctx			KSI context.
 	 * \param[in]	tag			Numeric TLV tag.
 	 * \param[in]	isLenient	Value of the lenient-flag (1 or 0).
 	 * \param[in]	isForward	Value of the forward-flag (1 or 0).
-	 * \param[in]	data		NULL or pointer to shared memory area.
-	 * \param[in]	data_len	Length of shared memory area, value will be ignored if #data == NULL
+	 * \param[in]	str			Null-terminated string value.
 	 * \param[out]	tlv			Pointer to the output variable.
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
@@ -83,7 +77,7 @@ extern "C" {
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_cast(KSI_TLV *tlv, enum KSI_TLV_PayloadType_en payloadType);
+	int KSI_TLV_cast(KSI_TLV *tlv, int payloadType);
 
 	/**
 	 * Parses a memory area and creates a new TLV.
@@ -106,16 +100,20 @@ extern "C" {
 	 * \param[in]	tlv		TLV from where to extract the value.
 	 * \param[out]	buf		Pointer to output pointer.
 	 * \param[out]	len		Length of the raw value.
-	 * \param[int]	copy	0 - do not create, 1 - create a copy (has to be freed by the user with #KSI_free).
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_getRawValue(KSI_TLV *tlv, unsigned char **buf, int *len, int copy);
+	int KSI_TLV_getRawValue(KSI_TLV *tlv, const unsigned char **buf, int *len);
 
 	/**
+	 * Integer value accessor method.
 	 *
+	 * \param[in]	tlv		TLV from where to extract the value.
+	 * \param[out]	value	Pointer to pointer of the integer value.
+	 *
+	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_getInteger(KSI_TLV *tlv, KSI_Integer **val);
+	int KSI_TLV_getInteger(KSI_TLV *tlv, KSI_Integer **value);
 
 	/**
 	 * This function extracts the unsigned 64 bit integer value.
@@ -128,7 +126,7 @@ extern "C" {
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_getUInt64Value(KSI_TLV *tlv, uint64_t *val);
+	int KSI_TLV_getUInt64Value(KSI_TLV *tlv, KSI_uint64_t *val);
 
 	/**
 	 * This function extracts string value from the TLV.
@@ -138,11 +136,10 @@ extern "C" {
 	 *
 	 * \param[in]	tlv		TLV from where to extract the value.
 	 * \param[out]	buf		Pointer to output variable.
-	 * \param[in]	copy	0 - do not create, 1 - create a copy (has to be freed by the user with #KSI_free).
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_getStringValue(KSI_TLV *tlv, char **buf, int copy);
+	int KSI_TLV_getStringValue(KSI_TLV *tlv, const char **buf);
 
 	/**
 	 * This function extracts the next nested TLV value from the TLV.
@@ -191,6 +188,12 @@ extern "C" {
 	int KSI_TLV_getTag(KSI_TLV *tlv);
 
 	/**
+	 * TODO!
+	 */
+	int KSI_TLV_getPayloadType(KSI_TLV *tlv);
+
+
+	/**
 	 * This function serialises the tlv into a given buffer with \c len bytes of free
 	 * space.
 	 *
@@ -231,7 +234,12 @@ extern "C" {
 	 *							If the parameter is NULL, the TLV is added to the end.
 	 *	\param[in]	tlv			The TLV to be appended.
 	 */
-	int KSI_TLV_appendNestedTLV(KSI_TLV *target, KSI_TLV *after, KSI_TLV *tlv);
+	int KSI_TLV_appendNestedTlv(KSI_TLV *target, KSI_TLV *after, KSI_TLV *tlv);
+
+	/**
+	 * TODO
+	 */
+	int KSI_TLV_removeNestedTlv(KSI_TLV *target, KSI_TLV *tlv);
 
 	/**
 	 * This function creates a human readable representation of the TLV object.

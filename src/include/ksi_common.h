@@ -32,7 +32,7 @@ typedef struct KSI_Integer_st KSI_Integer;
 typedef struct KSI_List_st KSI_List;
 typedef char * KSI_String;
 
-typedef struct KSI_Certificate_st KSI_Certificate;
+typedef struct KSI_PKICertificate_st KSI_PKICertificate;
 /**
  * This structure is used for calculating the hash values.
  * \see #KSI_DataHash, #KSI_DataHasher_open, #KSI_DataHasher_reset, #KSI_DataHasher_close, #KSI_DataHasher_free

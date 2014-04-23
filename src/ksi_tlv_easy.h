@@ -7,55 +7,60 @@
 extern "C" {
 #endif
 
-#define KSI_TLV_BEGIN(ctx, tag, isLenient, isForward) 														\
-			{																								\
-				KSI_CTX *__ctx = (ctx);																		\
-				KSI_TLV *__tlv = NULL; 																		\
-				int __res; 																					\
-				__res = KSI_TLV_new(__ctx, KSI_TLV_PAYLOAD_TLV, (tag), (isLenient), (isForward), NULL, 0, 0, &__tlv); 			\
-				if (__res == KSI_OK) {																		\
+#define KSI_TLV_BEGIN(ctx, tag, isLenient, isForward) 																				\
+			{																														\
+				KSI_CTX *__ctx = (ctx);																								\
+				KSI_TLV *__tlv = NULL; 																								\
+				int __res; 																											\
+				__res = KSI_TLV_new(__ctx, KSI_TLV_PAYLOAD_TLV, (tag), (isLenient), (isForward), &__tlv);			 				\
+				if (__res == KSI_OK) {																								\
 
-#define KSI_TLV_END(outRes, outTlv) 		\
-				} 							\
-				if (__res == KSI_OK) {		\
-					(outTlv) = __tlv; 		\
-					__tlv = NULL; 			\
-				} 							\
-				(outRes) = __res; 			\
-				KSI_TLV_free(__tlv); 		\
-			}								\
+#define KSI_TLV_END(outRes, outTlv) 																								\
+				} 																													\
+				if (__res == KSI_OK) {																								\
+					(outTlv) = __tlv; 																								\
+					__tlv = NULL; 																									\
+				} 																													\
+				(outRes) = __res; 																									\
+				KSI_TLV_free(__tlv); 																								\
+			}																														\
 
-#define KSI_TLV_NESTED_HEADER \
-		if (__res == KSI_OK) 																				\
-		{ 																									\
-			KSI_TLV *__master = __tlv; 																		\
-			KSI_TLV *__tlv = NULL; 																			\
+#define KSI_TLV_NESTED_HEADER 																										\
+		if (__res == KSI_OK) 																										\
+		{ 																															\
+			KSI_TLV *__master = __tlv; 																								\
+			KSI_TLV *__tlv = NULL; 																									\
 
 
-#define KSI_TLV_NESTED_RAW_BEGIN(tag, isLenient, isForward, data, data_len) 								\
-			KSI_TLV_NESTED_HEADER																			\
-			__res = KSI_TLV_new(__ctx, KSI_TLV_PAYLOAD_RAW, (tag), (isLenient), (isForward), (data), (data_len), 0, &__tlv);	\
+#define KSI_TLV_NESTED_RAW_BEGIN(tag, isLenient, isForward, data, data_len) 														\
+			KSI_TLV_NESTED_HEADER																									\
+			__res = KSI_TLV_new(__ctx, KSI_TLV_PAYLOAD_RAW, (tag), (isLenient), (isForward), &__tlv);								\
+			if (__res == KSI_OK) {																									\
+				__res = KSI_TLV_setRawValue(__tlv, (data), (data_len));																\
+			}																														\
 
 #define KSI_TLV_NESTED_END \
-				if (__res == KSI_OK) __res = KSI_TLV_appendNestedTLV(__master, NULL, __tlv); 	\
-				if (__res == KSI_OK) __tlv = NULL; 												\
-				KSI_TLV_free(__tlv); 															\
-			}																					\
+				if (__res == KSI_OK) __res = KSI_TLV_appendNestedTlv(__master, NULL, __tlv); 										\
+				if (__res == KSI_OK) __tlv = NULL; 																					\
+				KSI_TLV_free(__tlv); 																								\
+			}																														\
 
-#define KSI_TLV_NESTED_BEGIN(tag, isLenient, isForward) 																	\
-		KSI_TLV_NESTED_HEADER																								\
-		__res = KSI_TLV_new(__ctx, KSI_TLV_PAYLOAD_TLV, (tag), (isLenient), (isForward), NULL, 0, 0, &__tlv);				\
+#define KSI_TLV_NESTED_BEGIN(tag, isLenient, isForward) 																			\
+		KSI_TLV_NESTED_HEADER																										\
+		__res = KSI_TLV_new(__ctx, KSI_TLV_PAYLOAD_TLV, (tag), (isLenient), (isForward), &__tlv);									\
 
-#define KSI_TLV_NESTED_RAW(tag, isLenient, isForward, data, data_len) 														\
-	KSI_TLV_NESTED_HEADER																									\
-		__res = KSI_TLV_new(__ctx, KSI_TLV_PAYLOAD_RAW, (tag), (isLenient), (isForward), (data), (data_len), 1, &__tlv);	\
-	KSI_TLV_NESTED_END																										\
+#define KSI_TLV_NESTED_RAW(tag, isLenient, isForward, data, data_len) 																\
+	KSI_TLV_NESTED_HEADER																											\
+		__res = KSI_TLV_new(__ctx, KSI_TLV_PAYLOAD_RAW, (tag), (isLenient), (isForward), &__tlv);									\
+		if (__res == KSI_OK) {																										\
+			__res = KSI_TLV_setRawValue(__tlv, (data), (data_len));																	\
+		}																															\
+	KSI_TLV_NESTED_END																												\
 
-#define KSI_TLV_NESTED_UINT(tag, isLenient, isForward, val) 							\
-	KSI_TLV_NESTED_HEADER																\
-		__res = KSI_TLV_fromUint(__ctx, (tag), (isLenient), (isForward),  (val));		\
-	KSI_TLV_NESTED_END \
-
+#define KSI_TLV_NESTED_UINT(tag, isLenient, isForward, val) 																		\
+	KSI_TLV_NESTED_HEADER																											\
+		__res = KSI_TLV_fromUint(__ctx, (tag), (isLenient), (isForward),  (val), &__tlv);											\
+	KSI_TLV_NESTED_END 																												\
 
 /************
  *
@@ -170,7 +175,16 @@ extern "C" {
 	KSI_PARSE_TLV_ELEMENT_BEGIN(tag, KSI_PARSE_TLV_OPT_SINGLE)							\
 		__res = KSI_TLV_cast(__tlv, KSI_TLV_PAYLOAD_STR); 								\
 		if (__res == KSI_OK) { 															\
-			__res = KSI_TLV_getStringValue(__tlv, (str), 1);							\
+			const char *$tmpStr = NULL;													\
+			__res = KSI_TLV_getStringValue(__tlv, &$tmpStr);							\
+			if (__res == KSI_OK) {														\
+				*str = KSI_calloc(strlen($tmpStr) + 1, 1);								\
+				if (*str == NULL) {														\
+					__res = KSI_OUT_OF_MEMORY;											\
+				} else {																\
+					strncpy(*str, $tmpStr, strlen($tmpStr) + 1);						\
+				}																		\
+			}																			\
 		} 																				\
 	KSI_PARSE_TLV_ELEMENT_END															\
 
@@ -178,7 +192,18 @@ extern "C" {
 	KSI_PARSE_TLV_ELEMENT_BEGIN(tag, KSI_PARSE_TLV_OPT_SINGLE)							\
 		__res = KSI_TLV_cast(__tlv, KSI_TLV_PAYLOAD_RAW); 								\
 		if (__res == KSI_OK) { 															\
-			__res = KSI_TLV_getRawValue(__tlv, (raw), (len), 1);						\
+			const unsigned char *$tmpRaw = NULL;										\
+			int $tmpRaw_len = 0;														\
+			__res = KSI_TLV_getRawValue(__tlv, &$tmpRaw, &$tmpRaw_len);					\
+			if (__res == KSI_OK) {														\
+				*raw = KSI_calloc($tmpRaw_len, 1);										\
+				if (*raw == NULL) {														\
+					__res = KSI_OUT_OF_MEMORY;											\
+				} else {																\
+					*(len) = $tmpRaw_len;												\
+					memcpy(*(raw), $tmpRaw, $tmpRaw_len);								\
+				}																		\
+			}																			\
 		} 																				\
 	KSI_PARSE_TLV_ELEMENT_END															\
 
@@ -210,6 +235,15 @@ extern "C" {
 		}																				\
 	}																					\
 
+#define KSI_PARSE_TLV_ELEMENT_UNKNOWN_FWD(fwdTlv)										\
+	default: {																			\
+		__tagChecked = 1;																\
+		__res = KSI_TLV_appendNestedTlv(fwdTlv, NULL, __tlv);							\
+		if (__res == KSI_OK) {															\
+			__res = KSI_TLV_removeNestedTlv(__parent, __tlv);							\
+		}																				\
+	}																					\
+
 #define KSI_PARSE_TLV_ELEMENT_UINT32(tag, val) KSI_PARSE_TLV_ELEMENT_UINT_(tag, val, 0xffffffff, uint32_t)
 #define KSI_PARSE_TLV_ELEMENT_UINT16(tag, val) KSI_PARSE_TLV_ELEMENT_UINT_(tag, val, 0xffff, uint16_t)
 #define KSI_PARSE_TLV_ELEMENT_UINT8(tag, val) KSI_PARSE_TLV_ELEMENT_UINT_(tag, val, 0xff, uint8_t)
@@ -217,11 +251,11 @@ extern "C" {
 
 #define KSI_PARSE_TLV_ELEMENT_IMPRINT(tag, hsh) 										\
 	KSI_PARSE_TLV_ELEMENT_BEGIN(tag, KSI_PARSE_TLV_OPT_SINGLE)							\
-		unsigned char *__raw = NULL; \
-		int __raw_len = 0; \
+		const unsigned char *__raw = NULL; 												\
+		int __raw_len = 0; 																\
 		__res = KSI_TLV_cast(__tlv, KSI_TLV_PAYLOAD_RAW); 								\
 		if (__res == KSI_OK) { 															\
-			__res = KSI_TLV_getRawValue(__tlv, &__raw, &__raw_len, 0); 					\
+			__res = KSI_TLV_getRawValue(__tlv, &__raw, &__raw_len); 					\
 			if (__res == KSI_OK) { 														\
 				__res = KSI_DataHash_fromImprint(ctx, __raw, __raw_len, (hsh));			\
 			} 																			\

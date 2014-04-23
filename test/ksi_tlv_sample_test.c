@@ -73,7 +73,7 @@ cleanup:
 static int parseStructure(KSI_TLV *tlv, int indent) {
 	int res;
 	uint64_t uint;
-	char *buf;
+	const char *buf;
 	KSI_TLV *nested = NULL;
 
 	lprintf("%*sTLV:\n", indent++*4, "");
@@ -96,7 +96,7 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 			if (res != KSI_OK) goto cleanup;
 			/* Parse string */
 			lprintf("%*sPayload type: STR\n", indent*4, "");
-			res = KSI_TLV_getStringValue(tlv, &buf, 0);
+			res = KSI_TLV_getStringValue(tlv, &buf);
 			if (res != KSI_OK) goto cleanup;
 			break;
 		case 0x03:

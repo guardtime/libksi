@@ -199,7 +199,8 @@ int KSI_global_init(void) {
 	res = KSI_NET_global_init();
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_Truststore_global_init();
+	res = KSI_PKITruststore_global_init();
+	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_OK;
 
@@ -213,5 +214,7 @@ cleanup:
  */
 void KSI_global_cleanup(void) {
 	KSI_NET_global_cleanup();
+// TODO	KSI_PKITruststore_global_cleanup()
 }
+
 

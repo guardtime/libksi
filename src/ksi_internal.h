@@ -67,15 +67,19 @@ int KSI_LIST_FN_NAME(type, next)(KSI_LIST(type) *list, type **o) {					\
 int KSI_LIST_FN_NAME(type, indexOf)(KSI_LIST(type) *list, type *o) {				\
 	return KSI_List_indexOf(list->list, o);											\
 }																					\
-int KSI_LIST_FN_NAME(type, insertAt)(KSI_LIST(type) *list, int pos, type *o) {		\
-	return KSI_List_insertAt(list->list, pos, o);									\
+int KSI_LIST_FN_NAME(type, insert)(KSI_LIST(type) *list, int pos, type *o) {		\
+	return KSI_List_insert(list->list, pos, o);										\
 }																					\
 int KSI_LIST_FN_NAME(type, length)(KSI_LIST(type) *list) {							\
 	return KSI_List_length(list->list);												\
 }																					\
+int KSI_LIST_FN_NAME(type, remove)(KSI_LIST(type) *list, int pos) {					\
+	return KSI_List_remove(list->list, pos);										\
+}																					\
 KSI_CTX *type##List_getCtx(KSI_LIST(type) *o) {	 									\
 	return o->ctx; 																	\
 } 																					\
+
 
 
 

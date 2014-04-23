@@ -162,7 +162,7 @@ extern "C" {
 	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_DataHash_fromImprint(KSI_CTX *ctx, unsigned char *imprint, int imprint_length, KSI_DataHash **hash);
+	int KSI_DataHash_fromImprint(KSI_CTX *ctx, const unsigned char *imprint, int imprint_length, KSI_DataHash **hash);
 
 	/**
 	 * Reevaluates the existing #KSI_DataHash object.

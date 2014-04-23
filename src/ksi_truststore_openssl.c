@@ -6,9 +6,13 @@
 
 #include "ksi_internal.h"
 
-struct KSI_Certificate_st {
+struct KSI_PKICertificate_st {
 	KSI_CTX *ctx;
 	X509 *x509;
+};
+
+struct KSI_PKITruststore_st {
+
 };
 
 static int KSI_MD2hashAlg(EVP_MD *hash_alg) {
@@ -34,7 +38,7 @@ static int KSI_MD2hashAlg(EVP_MD *hash_alg) {
 }
 
 /**/
-void KSI_Certificate_free(KSI_Certificate *cert) {
+void KSI_PKICertificate_free(KSI_PKICertificate *cert) {
 	if (cert != NULL) {
 		if (cert->x509 != NULL) X509_free(cert->x509);
 		KSI_free(cert);
@@ -42,11 +46,11 @@ void KSI_Certificate_free(KSI_Certificate *cert) {
 }
 
 /**/
-int KSI_Certificate_new(KSI_CTX *ctx, const void *der, int der_len, KSI_Certificate **cert) {
+int KSI_PKICertificate_new(KSI_CTX *ctx, const void *der, int der_len, KSI_PKICertificate **cert) {
 	KSI_ERR err;
 	X509 *x509 = NULL;
 	BIO *bio = NULL;
-	KSI_Certificate *tmp = NULL;
+	KSI_PKICertificate *tmp = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, der != NULL) goto cleanup;
@@ -67,7 +71,7 @@ int KSI_Certificate_new(KSI_CTX *ctx, const void *der, int der_len, KSI_Certific
 		goto cleanup;
 	}
 
-	tmp = KSI_new(KSI_Certificate);
+	tmp = KSI_new(KSI_PKICertificate);
 	if (tmp == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
@@ -89,12 +93,12 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_Certificate_find(KSI_CTX *ctx, const unsigned char *certId, int certId_len, const KSI_Certificate **cert) {
+int KSI_PKICertificate_find(KSI_CTX *ctx, const unsigned char *certId, int certId_len, const KSI_PKICertificate **cert) {
 	// TODO!
 	return KSI_UNKNOWN_ERROR;
 }
 
-int KSI_Truststore_validatePKISignature(unsigned char *data, unsigned int data_len, const char *algoOid, unsigned char *signature, unsigned int signature_len, const KSI_Certificate *cert) {
+int KSI_PKITruststore_validateSignature(unsigned char *data, unsigned int data_len, const char *algoOid, unsigned char *signature, unsigned int signature_len, const KSI_PKICertificate *cert) {
 	KSI_ERR err;
 	int res;
 	ASN1_OBJECT* algorithm = NULL;
@@ -164,14 +168,14 @@ int KSI_Truststore_validatePKISignature(unsigned char *data, unsigned int data_l
 
 cleanup:
 
-	if (md_ctx != NULL) EVP_MD_CTX_cleanup(&md_ctx);
+	EVP_MD_CTX_cleanup(&md_ctx);
 	if (algorithm != NULL) ASN1_OBJECT_free(algorithm);
 	if (pubKey != NULL) EVP_PKEY_free(pubKey);
 
 	return KSI_RETURN(&err);
 }
 
-int KSI_Truststore_global_init() {
+int KSI_PKITruststore_global_init() {
 	OpenSSL_add_all_digests();
 
 	return KSI_OK;
