@@ -1,3 +1,5 @@
+#include <ctype.h>
+
 #include "ksi_internal.h"
 
 int KSI_decodeHexStr(const char *hexstr, unsigned char *buf, int buf_size, int *buf_length) {
