@@ -56,8 +56,8 @@ static size_t receiveDataFromLibCurl(void *ptr, size_t size, size_t nmemb,
         size_t bytesCount = 0;
         unsigned char *tmp_buffer;
         KSI_NetHandle *handle;
-        unsigned char *resp = NULL;
-        size_t resp_len = 0;
+        const unsigned char *resp = NULL;
+        int resp_len = 0;
 
         handle = (KSI_NetHandle *)stream;
 
@@ -181,6 +181,11 @@ static int curlSendSignRequest(KSI_NetProvider *netProvider, KSI_NetHandle *hand
 	return curlSendRequest(handle, "TODO", pctx->urlSigner, pctx->connectionTimeoutSeconds, pctx->readTimeoutSeconds);
 }
 
+static int curlSendExtendRequest(KSI_NetProvider *netProvider, KSI_NetHandle *handle) {
+	CurlNetProviderCtx *pctx = (CurlNetProviderCtx *) KSI_NetProvider_getNetContext(netProvider);
+	return curlSendRequest(handle, "TODO", pctx->urlExtender, pctx->connectionTimeoutSeconds, pctx->readTimeoutSeconds);
+}
+
 int KSI_NET_global_init(void) {
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -213,6 +218,10 @@ int KSI_NET_CURL_new(KSI_CTX *ctx, KSI_NetProvider **netProvider) {
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_NetProvider_setSendSignRequestFn(pr, curlSendSignRequest);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_NetProvider_setSendExtendRequestFn(pr, curlSendExtendRequest);
+	KSI_CATCH(&err, res) goto cleanup;
 
 	res = CurlNetProviderCtx_new(&pctx);
 	KSI_CATCH(&err, res) goto cleanup;

@@ -1,3 +1,4 @@
+#include <string.h>
 #include "all_tests.h"
 
 extern KSI_CTX *ctx;

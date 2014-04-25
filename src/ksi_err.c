@@ -83,7 +83,7 @@ int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f) {
 	/* List all errors, starting from the most general. */
 	for (i = 0; i < ctx->errors_count && i < ctx->errors_size; i++) {
 		err = ctx->errors + ((ctx->errors_count - i - 1) % ctx->errors_size);
-		fprintf(f, "  %3u) %s:%u - (%d/%d) %s\n", ctx->errors_count - i, err->fileName, err->lineNr,err->statusCode, err->extErrorCode, err->message);
+		fprintf(f, "  %3u) %s:%u - (%d/%ld) %s\n", ctx->errors_count - i, err->fileName, err->lineNr,err->statusCode, err->extErrorCode, err->message);
 	}
 
 	/* If there where more errors than buffers for the errors, indicate the fact */

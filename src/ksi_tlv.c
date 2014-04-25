@@ -177,17 +177,17 @@ static int readTlv(KSI_RDR *rdr, KSI_TLV **tlv, int copy) {
 	}
 
 	/* Get the payload. */
-	if (KSI_RDR_isNocopyAvailable(rdr) && !copy) {
+	ptr = NULL;
+	if (!copy) {
 		/* At this point we will reuse the allocated memory. */
 		res = KSI_RDR_read_ptr(rdr, &ptr, length, &readCount);
-	} else {
-		/* Read and make a copy of the payload. */
-		res = KSI_RDR_read_ex(rdr, buffer, length, &readCount);
+		KSI_CATCH(&err, res) goto cleanup;
 	}
 
-	if (res != KSI_OK) {
-		KSI_FAIL(&err, res, NULL);
-		goto cleanup;
+	if (ptr == NULL) {
+		/* Read and make a copy of the payload. */
+		res = KSI_RDR_read_ex(rdr, buffer, length, &readCount);
+		KSI_CATCH(&err, res) goto cleanup;
 	}
 
 	if (readCount != length) {
@@ -326,9 +326,8 @@ cleanup:
  */
 static int encodeAsUInt64(KSI_TLV *tlv) {
 	KSI_ERR err;
-	uint64_t value;
-	int value_len;
 
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
 	KSI_BEGIN(tlv->ctx, &err);
 
 	/* Exit when already correct type. */
@@ -343,7 +342,7 @@ static int encodeAsUInt64(KSI_TLV *tlv) {
 	}
 
 	/* Verify size of data - fail if overflow. */
-	if (tlv->datap_len < 1 || tlv->datap_len > sizeof(uint64_t)) {
+	if (tlv->datap_len < 0 || tlv->datap_len > sizeof(uint64_t)) {
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, "TLV size not in range for integer value.");
 		goto cleanup;
 	}
@@ -366,8 +365,6 @@ static int encodeAsNestedTlvs(KSI_TLV *tlv) {
 
 	KSI_BEGIN(tlv->ctx, &err);
 
-	res = KSI_TLVList_new(tlv->ctx, &tlvList);
-
 	if (tlv->payloadType == KSI_TLV_PAYLOAD_TLV) {
 		KSI_SUCCESS(&err);
 		goto cleanup;
@@ -379,26 +376,21 @@ static int encodeAsNestedTlvs(KSI_TLV *tlv) {
 	}
 
 	res = KSI_RDR_fromMem(tlv->ctx, tlv->datap, tlv->datap_len, 0, &rdr);
-	if (res != KSI_OK) {
-		KSI_FAIL(&err, res, NULL);
-		goto cleanup;
-	}
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_TLVList_new(tlv->ctx, &tlvList);
+	KSI_CATCH(&err, res) goto cleanup;
+
 	/* Try parsing all of the nested TLV's. */
 	while (1) {
 		res = readTlv(rdr, &tmp, 0);
-		if (res != KSI_OK) {
-			KSI_FAIL(&err, res, NULL);
-			goto cleanup;
-		}
+		KSI_CATCH(&err, res) goto cleanup;
 
 		/* Check if end of reader. */
 		if (tmp == NULL) break;
 
 		res = KSI_TLVList_append(tlvList, tmp);
-		if (res != KSI_OK) {
-			KSI_FAIL(&err, res, NULL);
-			goto cleanup;
-		}
+		KSI_CATCH(&err, res) goto cleanup;
 
 		tmp = NULL;
 	}
@@ -422,7 +414,6 @@ int KSI_TLV_setUintValue(KSI_TLV *tlv, KSI_uint64_t val) {
 	KSI_ERR err;
 	int res;
 	int len;
-	int i;
 
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
 	KSI_BEGIN(tlv->ctx, &err);
@@ -529,7 +520,6 @@ cleanup:
  */
 int KSI_TLV_new(KSI_CTX *ctx, int payloadType, int tag, int isLenient, int isForward, KSI_TLV **tlv) {
 	KSI_ERR err;
-	int res;
 	KSI_TLV *tmp = NULL;
 
 	KSI_BEGIN(ctx, &err);
@@ -693,7 +683,7 @@ int KSI_TLV_getStringValue(KSI_TLV *tlv, const char **buf) {
 		goto cleanup;
 	}
 
-	*buf = tlv->datap;
+	*buf = (const char *) tlv->datap;
 
 	KSI_SUCCESS(&err);
 
@@ -722,6 +712,31 @@ int KSI_TLV_getNextNestedTLV(KSI_TLV *tlv, KSI_TLV **nested) {
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*nested = next;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(next);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_TLV_iterNested(KSI_TLV *tlv) {
+	KSI_ERR err;
+	int res;
+
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_BEGIN(tlv->ctx, &err);
+
+	/* Check payload type. */
+	if (tlv->payloadType != KSI_TLV_PAYLOAD_TLV) {
+		KSI_FAIL(&err, KSI_TLV_PAYLOAD_TYPE_MISMATCH, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_TLVList_iter(tlv->nested);
+	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
 
@@ -963,7 +978,7 @@ int KSI_TLV_appendNestedTlv(KSI_TLV *target, KSI_TLV *after, KSI_TLV *tlv) {
 			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Object not part of list.");
 			goto cleanup;
 		}
-		res = KSI_TLVList_insert(target->nested, pos, tlv);
+		res = KSI_TLVList_insertAt(target->nested, pos, tlv);
 	} else {
 		res = KSI_TLVList_append(target->nested, tlv);
 	}
@@ -978,9 +993,9 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int serializeTlv(KSI_TLV *tlv, unsigned char *buf, int *buf_free, int serializeHeader);
+static int serializeTlv(const KSI_TLV *tlv, unsigned char *buf, int *buf_free, int serializeHeader);
 
-static int serializeRaw(KSI_TLV *tlv, unsigned char *buf, int *len) {
+static int serializeRaw(const KSI_TLV *tlv, unsigned char *buf, int *len) {
 	KSI_ERR err;
 	int payloadLength;
 
@@ -1009,7 +1024,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int serializeTlvList(KSI_LIST(KSI_TLV) *tlvListNode, unsigned char *buf, int *buf_free) {
+static int serializeTlvList(const KSI_LIST(KSI_TLV) *tlvListNode, unsigned char *buf, int *buf_free) {
 	KSI_ERR err;
 	int res;
 	int bf = *buf_free;
@@ -1018,7 +1033,8 @@ static int serializeTlvList(KSI_LIST(KSI_TLV) *tlvListNode, unsigned char *buf, 
 	KSI_PRE(&err, tlvListNode != NULL) goto cleanup;
 	KSI_BEGIN(KSI_TLVList_getCtx(tlvListNode), &err);
 
-	res = KSI_TLVList_next(tlvListNode, &tlv);
+	/* Cast required, as the iterator is advanced by one. */
+	res = KSI_TLVList_next((KSI_LIST(KSI_TLV) *)tlvListNode, &tlv);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	if (tlv != NULL) {
@@ -1043,7 +1059,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int serializeNested(KSI_TLV *tlv, unsigned char *buf, int *buf_free) {
+static int serializeNested(const KSI_TLV *tlv, unsigned char *buf, int *buf_free) {
 	KSI_ERR err;
 	int res;
 	int bf = *buf_free;
@@ -1075,7 +1091,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int serializePayload(KSI_TLV *tlv, unsigned char *buf, int *buf_free) {
+static int serializePayload(const KSI_TLV *tlv, unsigned char *buf, int *buf_free) {
 	KSI_ERR err;
 	int res;
 	int bf = *buf_free;
@@ -1109,7 +1125,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int serializeTlv(KSI_TLV *tlv, unsigned char *buf, int *buf_free, int serializeHeader) {
+static int serializeTlv(const KSI_TLV *tlv, unsigned char *buf, int *buf_free, int serializeHeader) {
 	KSI_ERR err;
 	int res;
 	int bf = *buf_free;
@@ -1162,7 +1178,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int serialize(KSI_TLV *tlv, unsigned char *buf, int *len, int serializeHeader) {
+static int serialize(const KSI_TLV *tlv, unsigned char *buf, int *len, int serializeHeader) {
 	KSI_ERR err;
 	int res;
 	int bf = *len;
@@ -1196,7 +1212,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_TLV_serialize_ex(KSI_TLV *tlv, unsigned char *buf, int buf_size, int *len) {
+int KSI_TLV_serialize_ex(const KSI_TLV *tlv, unsigned char *buf, int buf_size, int *len) {
 	int res;
 	int buf_free = buf_size;
 
@@ -1210,32 +1226,32 @@ cleanup:
 	return res;
 }
 
-int KSI_TLV_serialize(KSI_TLV *tlv, unsigned char **outBuf, int *outBuf_len) {
+int KSI_TLV_serialize(const KSI_TLV *tlv, unsigned char **buf, int *buf_len) {
 	int res;
-	unsigned char tmp[0xffff + 4];
+	unsigned char tmpBuf[0xffff + 4];
 	int tmp_len;
 
-	unsigned char *buf = NULL;
+	unsigned char *tmp = NULL;
 
-	res = KSI_TLV_serialize_ex(tlv, tmp, sizeof(tmp), &tmp_len);
+	res = KSI_TLV_serialize_ex(tlv, tmpBuf, sizeof(tmpBuf), &tmp_len);
 	if (res != KSI_OK) goto cleanup;
 
-	buf = KSI_calloc(tmp_len, 1);
-	if (buf == NULL) {
+	tmp = KSI_calloc(tmp_len, 1);
+	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
 
-	memcpy(buf, tmp, tmp_len);
+	memcpy(tmp, tmpBuf, tmp_len);
 
-	*outBuf = buf;
-	*outBuf_len = tmp_len;
+	*buf = tmp;
+	*buf_len = tmp_len;
 
-	buf = NULL;
+	tmp = NULL;
 
 cleanup:
 
-	KSI_free(buf);
+	KSI_free(tmp);
 
 	return res;
 }
@@ -1285,7 +1301,7 @@ static int stringify(KSI_TLV *tlv, int indent, char *str, int size, int *len) {
 			res = KSI_TLV_getUInt64Value(tlv, &tmpInt);
 			if (res != KSI_OK) goto cleanup;
 
-			l += snprintf(str + l, NOTNEG(size - l), " len = %d : 0x%x", tlv->datap_len, tmpInt);
+			l += snprintf(str + l, NOTNEG(size - l), " len = %d : 0x%llx", tlv->datap_len, (unsigned long long) tmpInt);
 			break;
 		case KSI_TLV_PAYLOAD_TLV:
 			l += snprintf(str + l, NOTNEG(size - l), ":");
@@ -1357,5 +1373,101 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
+
+static int expandNested(const KSI_TLV *sample, KSI_TLV *tlv) {
+	KSI_ERR err;
+	int res;
+	int i;
+
+	KSI_PRE(&err, sample != NULL) goto cleanup;
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+
+	KSI_BEGIN(sample->ctx, &err);
+
+	/* Fail if the TLV tags differ */
+	if (sample->tag != tlv->tag) {
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "TLV types differ");
+		goto cleanup;
+	}
+
+	/* Cast if necessary. */
+	if (sample->payloadType != tlv->payloadType) {
+		res = KSI_TLV_cast(tlv, sample->payloadType);
+		KSI_CATCH(&err, res) goto cleanup;
+	}
+
+	/* Continue if nested. */
+	if (sample->payloadType == KSI_TLV_PAYLOAD_TLV) {
+		/* Check if nested element count matches */
+		if (KSI_TLVList_length(sample->nested) != KSI_TLVList_length(tlv->nested)) {
+			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Different number of nested TLV's.");
+			goto cleanup;
+		}
+
+		for (i = 0; i < KSI_TLVList_length(sample->nested); i++) {
+			const KSI_TLV *nestedSample = NULL;
+			KSI_TLV *nestedTlv = NULL;
+
+			res = KSI_TLVList_elementAt(sample->nested, i, (KSI_TLV **)&nestedSample);
+			KSI_CATCH(&err, res) goto cleanup;
+
+			res = KSI_TLVList_elementAt(tlv->nested, i, &nestedTlv);
+			KSI_CATCH(&err, res) goto cleanup;
+
+			res = expandNested(nestedSample, nestedTlv);
+			KSI_CATCH(&err, res) goto cleanup;
+
+			/* The values are still components of the tlvs, so nothing has to be freed. */
+			KSI_nofree(nestedTlv);
+			KSI_nofree(nestedSample);
+		}
+
+	}
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_TLV_clone(const KSI_TLV *tlv, KSI_TLV **clone) {
+	KSI_ERR err;
+	int res;
+	unsigned char *buf = NULL;
+	int buf_len;
+	KSI_TLV *tmp = NULL;
+
+
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_PRE(&err, clone != NULL) goto cleanup;
+
+	KSI_BEGIN(tlv->ctx, &err);
+
+	/* Selialize the entire tlv */
+	res = KSI_TLV_serialize(tlv, &buf, &buf_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Recreate the TLV */
+	res = KSI_TLV_parseBlob(tlv->ctx, buf, buf_len, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Reexpand the nested (if any) TLV's */
+	res = expandNested(tlv, tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*clone = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_free(buf);
+	KSI_TLV_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
 
 KSI_IMPLEMENT_GET_CTX(KSI_TLV);

@@ -52,8 +52,26 @@ extern "C" {
 	 * error code).
 	 */
 	int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **hash);
+
+	/**
+	 * TODO!
+	 */
 	void *KSI_DataHasher_getHahshContext(KSI_DataHasher *hasher);
+
+	/**
+	 * TODO!
+	 */
+	int KSI_DataHasher_setHashContext(KSI_DataHasher *hasher, void *hashContext);
+
+	/**
+	 * TODO!
+	 */
 	int KSI_DataHasher_getAlgorithm(KSI_DataHasher *hasher);
+
+	/**
+	 * TODO!
+	 */
+	void KSI_DataHasher_free(KSI_DataHasher *hasher);
 	/**
 	 * Frees memory used by hasher.
 	 *
@@ -86,7 +104,7 @@ extern "C" {
 	 * @return status code (\c KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_DataHash_clone(KSI_DataHash *from, KSI_DataHash **to);
+	int KSI_DataHash_clone(const KSI_DataHash *from, KSI_DataHash **to);
 
 	/**
 	 * Interneal data access method.
@@ -139,7 +157,7 @@ extern "C" {
 	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_DataHash_getImprint(KSI_DataHash *hash, const unsigned char **imprint, int *imprint_length);
+	int KSI_DataHash_getImprint(const KSI_DataHash *hash, const unsigned char **imprint, int *imprint_length);
 
 	/**
 	 * Encodes the data hash object as an imprint into an existing array.
@@ -190,11 +208,6 @@ extern "C" {
 	 *
 	 */
 	int KSI_DataHash_create(KSI_CTX *ctx, const void *data, size_t data_length, int hash_id, KSI_DataHash **hash);
-
-	/**
-	 *
-	 */
-	int KSI_DataHash_clone(KSI_DataHash *from, KSI_DataHash **to);
 
 	/**
 	 * Returns the hash length in bytes for the given hash algorithm id.

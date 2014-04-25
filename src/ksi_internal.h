@@ -22,7 +22,7 @@
 #define KSI_nofree(ptr)
 
 #define KSI_IMPLEMENT_GET_CTX(type)							\
-KSI_CTX *type##_getCtx(type *o) {				 			\
+KSI_CTX *type##_getCtx(const type *o) {			 			\
 	return o->ctx; 											\
 } 															\
 
@@ -67,8 +67,8 @@ int KSI_LIST_FN_NAME(type, next)(KSI_LIST(type) *list, type **o) {					\
 int KSI_LIST_FN_NAME(type, indexOf)(KSI_LIST(type) *list, type *o) {				\
 	return KSI_List_indexOf(list->list, o);											\
 }																					\
-int KSI_LIST_FN_NAME(type, insert)(KSI_LIST(type) *list, int pos, type *o) {		\
-	return KSI_List_insert(list->list, pos, o);										\
+int KSI_LIST_FN_NAME(type, insertAt)(KSI_LIST(type) *list, int pos, type *o) {		\
+	return KSI_List_insertAt(list->list, pos, o);									\
 }																					\
 int KSI_LIST_FN_NAME(type, length)(KSI_LIST(type) *list) {							\
 	return KSI_List_length(list->list);												\
@@ -76,7 +76,10 @@ int KSI_LIST_FN_NAME(type, length)(KSI_LIST(type) *list) {							\
 int KSI_LIST_FN_NAME(type, remove)(KSI_LIST(type) *list, int pos) {					\
 	return KSI_List_remove(list->list, pos);										\
 }																					\
-KSI_CTX *type##List_getCtx(KSI_LIST(type) *o) {	 									\
+int KSI_LIST_FN_NAME(type, elementAt)(KSI_LIST(type) *list, int pos, type **o) {	\
+	return KSI_List_elementAt(list->list, pos, (void **) o);						\
+}																					\
+KSI_CTX *type##List_getCtx(const KSI_LIST(type) *o) {	 							\
 	return o->ctx; 																	\
 } 																					\
 
@@ -100,10 +103,10 @@ struct KSI_CTX_st {
 	KSI_ERR *errors;
 
 	/* Length of error array. */
-	size_t errors_size;
+	unsigned int errors_size;
 
 	/* Count of errors (usually #error_end - #error_start + 1, unless error count > #errors_size. */
-	size_t errors_count;
+	unsigned int errors_count;
 
 	/**********
 	 * LOGGING.

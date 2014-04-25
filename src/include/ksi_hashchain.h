@@ -41,6 +41,7 @@ extern "C" {
 	int KSI_HashNode_join(KSI_HashChain *left, KSI_HashChain *right, int hash_id, KSI_HashChain **root);
 	int KSI_HashNode_buildCalendar(KSI_CTX *ctx, KSI_DataHash *sibling, int isLeft, KSI_HashChain **root);
 	int KSI_HashChain_getCalendarAggregationTime(KSI_HashChain *cal, KSI_Integer *aggr_time, uint32_t *utc_time);
+	int KSI_HashChain_appendLink(KSI_CTX *ctx, KSI_DataHash *siblingHash, int isLeft, unsigned int levelCorrection, KSI_HashChain **root);
 
 	/**
 	 * Extracts the data hash value from the internal data hash object.
@@ -71,6 +72,18 @@ extern "C" {
 	 */
 	int KSI_HashNode_getImprint(KSI_HashChain *node, unsigned char **imprint, int *imprint_length);
 
+	/**
+	 * TODO!
+	 */
+	int KSI_HashChain_aggregate(KSI_HashChain *chain, KSI_DataHash *inputHash, int startLevel, int hash_id, int *endLevel, KSI_DataHash **outputHash);
+
+	/**
+	 *
+	 */
+	int KSI_HashChain_aggregateCalendar(KSI_HashChain *chain, KSI_DataHash *inputHash, KSI_DataHash **outputHash);
+
+	int KSI_MetaHash_getRaw(KSI_MetaHash *mth, const unsigned char **data, int *data_len);
+	int KSI_MetaData_getRaw(KSI_MetaData *mtd, const unsigned char **data, int *data_len);
 
 #ifdef __cplusplus
 }

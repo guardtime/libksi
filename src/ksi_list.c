@@ -55,7 +55,6 @@ cleanup:
 
 void KSI_List_free(KSI_List *list) {
 	if (list != NULL) {
-		struct KSI_List_st *tmp = NULL;
 		int i;
 		for (i = 0; i < list->arr_len; i++) {
 			if (list->obj_free != NULL) {
@@ -165,11 +164,11 @@ cleanup:
 	return index;
 }
 
-int KSI_List_insert(KSI_List *list, int pos, void *o) {
+int KSI_List_insertAt(KSI_List *list, int pos, void *o) {
 	int res = KSI_UNKNOWN_ERROR;
 	int i;
 
-	if (list == NULL || o == NULL || pos > list->arr_len + 1) {
+	if (list == NULL || o == NULL || pos > list->arr_len) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -182,6 +181,22 @@ int KSI_List_insert(KSI_List *list, int pos, void *o) {
 		list->arr[i] = list->arr[i - 1];
 	}
 	list->arr[pos] = o;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_List_elementAt(KSI_List *list, int pos, void **o) {
+	int res = KSI_UNKNOWN_ERROR;
+	if (list == NULL || o == NULL || pos >= list->arr_len) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	*o = list->arr[pos];
 
 	res = KSI_OK;
 

@@ -1,3 +1,4 @@
+#include <string.h>
 #include "all_tests.h"
 
 extern KSI_CTX *ctx;
@@ -22,7 +23,7 @@ static void TestSendRequest(CuTest* tc) {
 	KSI_Signature *sig = NULL;
 	KSI_NetProvider *pr = NULL;
 	FILE *f = NULL;
-	char *resp = NULL;
+	unsigned char *resp = NULL;
 	int resp_size = 0xfffff;
 
 	KSI_ERR_clearErrors(ctx);
@@ -49,7 +50,7 @@ static void TestSendRequest(CuTest* tc) {
 	KSI_NET_MOCK_response = resp;
 
 
-	res = KSI_sign(hsh, &sig);
+	res = KSI_Signature_sign(hsh, &sig);
 	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
 	CuAssert(tc, "Unexpected send request", KSI_NET_MOCK_request_len == sizeof(expectedSendRequest) && !memcmp(expectedSendRequest, KSI_NET_MOCK_request, KSI_NET_MOCK_request_len));
 

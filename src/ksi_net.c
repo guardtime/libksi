@@ -42,9 +42,14 @@ KSI_IMPLEMENT_GET_CTX(KSI_NetHandle);
 /**
  *
  */
-int KSI_NetHandle_new(KSI_CTX *ctx, KSI_NetHandle **handle) {
+int KSI_NetHandle_new(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle) {
 	KSI_ERR err;
 	KSI_NetHandle *tmp = NULL;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, request != NULL) goto cleanup;
+	KSI_PRE(&err, request_length > 0) goto cleanup;
+	KSI_PRE(&err, handle != NULL) goto cleanup;
 
 	KSI_BEGIN(ctx, &err);
 
@@ -56,8 +61,14 @@ int KSI_NetHandle_new(KSI_CTX *ctx, KSI_NetHandle **handle) {
 
 	tmp->ctx = ctx;
 	tmp->handleCtx = NULL;
-	tmp->request = NULL;
-	tmp->request_length = 0;
+	tmp->request = KSI_calloc(request_length, 1);
+	if (tmp->request == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+	memcpy(tmp->request, request, request_length);
+
+	tmp->request_length = request_length;
 	tmp->response = NULL;
 	tmp->response_length = 0;
 
@@ -91,40 +102,6 @@ void KSI_NetHandle_free(KSI_NetHandle *handle) {
 	}
 }
 
-int KSI_NET_sendSignRequest(KSI_NetProvider *netProvider, const unsigned char *request, int request_length, KSI_NetHandle **handle) {
-	KSI_ERR err;
-	KSI_NetHandle *hndl = NULL;
-	int res;
-
-	KSI_PRE(&err, netProvider != NULL) goto cleanup;
-	KSI_BEGIN(netProvider->ctx, &err);
-
-	res = KSI_NetHandle_new(netProvider->ctx, &hndl);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	hndl->request = KSI_calloc(request_length, 1);
-	if (hndl->request == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	memcpy(hndl->request, request, request_length);
-	hndl->request_length = request_length;
-
-	res = netProvider->sendSignRequest(netProvider, hndl);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	*handle = hndl;
-	hndl = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_NetHandle_free(hndl);
-
-	return KSI_RETURN(&err);
-}
 
 
 int KSI_NET_getResponse(KSI_NetHandle *handle, unsigned char **response, int *response_length, int copy) {
@@ -156,6 +133,44 @@ int KSI_NET_getResponse(KSI_NetHandle *handle, unsigned char **response, int *re
 
 	*response = tmp;
 	*response_length = handle->response_length;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_NetProvider_sendSignRequest(KSI_NetProvider *provider, KSI_NetHandle *handle) {
+	KSI_ERR err;
+	int res;
+
+	KSI_PRE(&err, provider != NULL) goto cleanup;
+	KSI_PRE(&err, handle != NULL) goto cleanup;
+
+	KSI_BEGIN(provider->ctx, &err);
+
+	res = provider->sendSignRequest(provider, handle);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_NetProvider_sendExtendRequest(KSI_NetProvider *provider, KSI_NetHandle *handle) {
+	KSI_ERR err;
+	int res;
+
+	KSI_PRE(&err, provider != NULL) goto cleanup;
+	KSI_PRE(&err, handle != NULL) goto cleanup;
+
+	KSI_BEGIN(provider->ctx, &err);
+
+	res = provider->sendExtendRequest(provider, handle);
+	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
 
@@ -305,7 +320,6 @@ cleanup:
 
 int KSI_NetProvider_setNetCtx(KSI_NetProvider *provider, void *netCtx, void (*netCtx_free)(void *)) {
 	KSI_ERR err;
-	KSI_NetProvider *pr = NULL;
 
 	KSI_PRE(&err, provider != NULL) goto cleanup;
 	KSI_BEGIN(provider->ctx, &err);
@@ -325,13 +339,11 @@ cleanup:
 
 int KSI_NetProvider_setSendSignRequestFn(KSI_NetProvider *provider, int (*fn)(KSI_NetProvider *, KSI_NetHandle *)) {
 	KSI_ERR err;
-	KSI_NetProvider *pr = NULL;
 
 	KSI_PRE(&err, provider != NULL) goto cleanup;
 	KSI_BEGIN(provider->ctx, &err);
 
 	provider->sendSignRequest = fn;
-
 
 	KSI_SUCCESS(&err);
 
@@ -340,9 +352,8 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_NetProvider_setExtendSignRequestFn(KSI_NetProvider *provider, int (*fn)(KSI_NetProvider *, KSI_NetHandle *)) {
+int KSI_NetProvider_setSendExtendRequestFn(KSI_NetProvider *provider, int (*fn)(KSI_NetProvider *, KSI_NetHandle *)) {
 	KSI_ERR err;
-	KSI_NetProvider *pr = NULL;
 
 	KSI_PRE(&err, provider != NULL) goto cleanup;
 	KSI_BEGIN(provider->ctx, &err);
@@ -358,7 +369,6 @@ cleanup:
 
 int KSI_NetProvider_setSendPublicationRequestFn(KSI_NetProvider *provider, int (*fn)(KSI_NetProvider *, KSI_NetHandle *)) {
 	KSI_ERR err;
-	KSI_NetProvider *pr = NULL;
 
 	KSI_PRE(&err, provider != NULL) goto cleanup;
 	KSI_BEGIN(provider->ctx, &err);

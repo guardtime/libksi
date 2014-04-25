@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <string.h>
 
 #include "ksi_internal.h"
@@ -309,12 +310,12 @@ cleanup:
 /**
  *
  */
-int KSI_DataHash_getImprint(KSI_DataHash *hash, const unsigned char **imprint, int *imprint_length) {
+int KSI_DataHash_getImprint(const KSI_DataHash *hash, const unsigned char **imprint, int *imprint_length) {
 	KSI_ERR err;
-	int res;
 
 	KSI_PRE(&err, hash != NULL) goto cleanup;
-
+	KSI_PRE(&err, imprint != NULL) goto cleanup;
+	KSI_PRE(&err, imprint_length != NULL) goto cleanup;
 	KSI_BEGIN(hash->ctx, &err);
 
 	*imprint_length = hash->imprint_length;
@@ -450,18 +451,17 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_DataHash_clone(KSI_DataHash *from, KSI_DataHash **to) {
+int KSI_DataHash_clone(const KSI_DataHash *from, KSI_DataHash **to) {
 	KSI_ERR err;
 	KSI_DataHash *hsh = NULL;
 	int res;
-
 	KSI_PRE(&err, from != NULL) goto cleanup;
 	KSI_PRE(&err, to != NULL) goto cleanup;
-
 	KSI_BEGIN(from->ctx, &err);
 
 	res = KSI_DataHash_fromImprint(from->ctx, from->imprint, from->imprint_length, &hsh);
 	KSI_CATCH(&err, res) goto cleanup;
+
 
 	*to = hsh;
 	hsh = NULL;
@@ -477,5 +477,5 @@ cleanup:
 
 int KSI_DataHash_equals(KSI_DataHash *left, KSI_DataHash *right) {
 	return left != NULL && right != NULL &&
-			(left == right || left->imprint_length == right->imprint_length && !memcmp(left->imprint, right->imprint, left->imprint_length));
+			(left == right || (left->imprint_length == right->imprint_length && !memcmp(left->imprint, right->imprint, left->imprint_length)));
 }

@@ -37,7 +37,7 @@ struct KSI_RDR_st {
 
 static void TestRdrFileBadFileName(CuTest* tc) {
 	int res;
-	char tmpFile[L_tmpnam];
+	char tmpFile[] = "tmpXXXXXXXX";
 	char tmpBuf[0xffff];
 
 	KSI_CTX *ctx = NULL;
@@ -45,9 +45,6 @@ static void TestRdrFileBadFileName(CuTest* tc) {
 
 	/* Init context. */
 	KSI_CTX_new(&ctx);
-
-	/* Create tmp file name. */
-	CuAssert(tc, "Unable to create temporary file name.", tmpnam_r(tmpFile) != NULL);
 
 	/* Init reader from non existing file name */
 	res = KSI_RDR_fromFile(ctx, tmpFile, "r", &rdr);
@@ -66,7 +63,7 @@ static void TestRdrFileBadFileName(CuTest* tc) {
 
 static void TestRdrFileFileReading(CuTest* tc) {
 	int res;
-	char tmpFile[L_tmpnam];
+	char tmpFile[] = "tmpXXXXXXXX";
 	char tmpBuf[0xffff];
 	int readCount;
 
@@ -81,7 +78,7 @@ static void TestRdrFileFileReading(CuTest* tc) {
 	KSI_CTX_new(&ctx);
 
 	/* Create tmp file name. */
-	CuAssert(tc, "Unable to create temporary file name.", tmpnam_r(tmpFile) != NULL);
+	CuAssert(tc, "Unable to create temporary file name.", mkstemp(tmpFile) > 0);
 
 	/* Write some data to file */
 	f = fopen(tmpFile, "w");
@@ -111,7 +108,7 @@ static void TestRdrFileFileReading(CuTest* tc) {
 
 static void TestRdrFileReadingChuncks(CuTest* tc) {
 	int res;
-	char tmpFile[L_tmpnam];
+	char tmpFile[] = "tmpXXXXXXXX";
 	char tmpBuf[0xffff];
 	int readCount;
 	int size = 0;
@@ -127,7 +124,7 @@ static void TestRdrFileReadingChuncks(CuTest* tc) {
 	KSI_CTX_new(&ctx);
 
 	/* Create tmp file name. */
-	CuAssert(tc, "Unable to create temporary file name.", tmpnam_r(tmpFile) != NULL);
+	CuAssert(tc, "Unable to create temporary file name.", mkstemp(tmpFile) > 0);
 
 	/* Write some data to file */
 	f = fopen(tmpFile, "w");

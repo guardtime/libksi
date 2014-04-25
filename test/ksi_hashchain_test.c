@@ -7,7 +7,7 @@
 extern KSI_CTX *ctx;
 
 static void buildHashChain(CuTest *tc, const char *hexImprint, int isLeft, int levelCorrection, KSI_HashChain **chn) {
-	char buf[1024];
+	unsigned char buf[1024];
 	int buf_len;
 	int res;
 	KSI_DataHash *hsh = NULL;

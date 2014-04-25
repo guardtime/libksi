@@ -216,11 +216,8 @@ cleanup:
 static int CalAuthRec_validate(CalAuthRec *calAuth) {
 	KSI_ERR err;
 	int res;
-	const unsigned char *signedData = NULL;
-	int signedDataLen = 0;
 	KSI_PKICertificate *cert = NULL;
 	const KSI_PKICertificate *certp = NULL;
-
 
 	KSI_PRE(&err, calAuth != NULL) goto cleanup;
 	KSI_BEGIN(calAuth->ctx, &err);
@@ -259,8 +256,8 @@ static int CalChainRec_new(KSI_CTX *ctx, CalChainRec **ccr) {
 		goto cleanup;
 	}
 
-	tmp->aggregationTime = 0;
-	tmp->publicationTime = 0;
+	tmp->aggregationTime = NULL;
+	tmp->publicationTime = NULL;
 	tmp->chain = NULL;
 	tmp->inputHash = NULL;
 
@@ -481,7 +478,6 @@ static int AggrChainRec_addLink(KSI_CTX *ctx, KSI_TLV *tlv, AggrChainRec *aggr) 
 	uint8_t levelCorrection = 0;
 	KSI_DataHash *siblingHash = NULL;
 	KSI_DataHash *metaHash = NULL;
-	KSI_HashChain *chainLink = NULL;
 
 	switch (KSI_TLV_getTag(tlv)) {
 		case 0x07:
@@ -565,7 +561,6 @@ cleanup:
 static int parseAggregationChainRec(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature *sig) {
 	KSI_ERR err;
 	int res;
-	int i;
 
 	AggrChainRec *aggr = NULL;
 
@@ -636,7 +631,7 @@ static int parsePublDataRecord(KSI_CTX *ctx, KSI_TLV *tlv, PubDataRec **pdr) {
 	KSI_TLV_PARSE_BEGIN(ctx, tlv)
 		KSI_PARSE_TLV_ELEMENT_INTEGER(0x02, &tmp->pubTime)
 		KSI_PARSE_TLV_ELEMENT_IMPRINT(0x04, &tmp->pubHash)
-		KSI_PARSE_TLV_ELEMENT_UNKNOWN_LENIENT_IGNORE
+		KSI_PARSE_TLV_ELEMENT_UNKNONW_NON_CRITICAL_IGNORE
 	KSI_TLV_PARSE_END(res);
 	KSI_CATCH(&err, res) goto cleanup;;
 
@@ -693,7 +688,7 @@ static int parseSigDataRecord(KSI_CTX *ctx, KSI_TLV *tlv, SigDataRec **sdr) {
 		KSI_PARSE_TLV_ELEMENT_RAW(0x02, &tmp->cert, &tmp->cert_len)
 		KSI_PARSE_TLV_ELEMENT_RAW(0x03, &tmp->certId, &tmp->certId_len)
 		KSI_PARSE_TLV_ELEMENT_UTF8STR(0x04, &tmp->certRepUri)
-		KSI_PARSE_TLV_ELEMENT_UNKNOWN_LENIENT_IGNORE
+		KSI_PARSE_TLV_ELEMENT_UNKNONW_NON_CRITICAL_IGNORE
 	KSI_TLV_PARSE_END(res);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -770,7 +765,7 @@ static int parseAggrAuthRec(KSI_CTX *ctx, KSI_TLV *tlv, AggrAuthRec **aar) {
 
 		KSI_PARSE_TLV_ELEMENT_CB(0x0c, parseSigDataRecord, &auth->sigData)
 
-		KSI_PARSE_TLV_ELEMENT_UNKNOWN_LENIENT_IGNORE
+		KSI_PARSE_TLV_ELEMENT_UNKNONW_NON_CRITICAL_IGNORE
 	KSI_TLV_PARSE_END(res);
 
 
@@ -806,7 +801,7 @@ static int parseCalAuthRec(KSI_CTX *ctx, KSI_TLV *tlv, CalAuthRec **car) {
 		KSI_PARSE_TLV_ELEMENT_CB(0x10, parsePublDataRecord, &auth->pubData)
 		KSI_PARSE_TLV_ELEMENT_UTF8STR(0x0b, &auth->sigAlgo)
 		KSI_PARSE_TLV_ELEMENT_CB(0x0c, parseSigDataRecord, &auth->sigData)
-		KSI_PARSE_TLV_ELEMENT_UNKNOWN_LENIENT_IGNORE
+		KSI_PARSE_TLV_ELEMENT_UNKNONW_NON_CRITICAL_IGNORE
 	KSI_TLV_PARSE_END(res);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -873,29 +868,31 @@ static int extractSignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature **signatur
 			KSI_PARSE_TLV_ELEMENT_IMPRINT(0x05, &cal->inputHash)
 			KSI_PARSE_TLV_ELEMENT_CB(0x07, CalChainRec_addLink, cal)
 			KSI_PARSE_TLV_ELEMENT_CB(0x08, CalChainRec_addLink, cal)
-			KSI_PARSE_TLV_ELEMENT_UNKNOWN_LENIENT_IGNORE
+			KSI_PARSE_TLV_ELEMENT_UNKNONW_NON_CRITICAL_REMOVE
 		KSI_PARSE_TLV_NESTED_ELEMENT_END
 
 		KSI_PARSE_TLV_ELEMENT_CB(0x0804, parseAggrAuthRec, &sig->aggrAuth);
 		KSI_PARSE_TLV_ELEMENT_CB(0x0805, parseCalAuthRec, &sig->calAuth)
 
-		KSI_PARSE_TLV_ELEMENT_UNKNOWN_LENIENT_IGNORE
+		KSI_PARSE_TLV_ELEMENT_UNKNONW_NON_CRITICAL_REMOVE
 	KSI_TLV_PARSE_END(res);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	sig->calendarChain = cal;
 	cal = NULL;
 
+	/* Store the remaining TLV for storing purposes. */
+	sig->baseTlv = tlv;
+
 	res = KSI_Signature_validate(sig);
 	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_LOG_debug(ctx, "Finished parsing successfully.");
-
-	KSI_SUCCESS(&err);
 
 
 	*signature = sig;
 	sig = NULL;
+
+	KSI_LOG_debug(ctx, "Finished parsing successfully.");
+	KSI_SUCCESS(&err);
 
 cleanup:
 
@@ -907,7 +904,6 @@ cleanup:
 
 
 void KSI_Signature_free(KSI_Signature *sig) {
-	int i;
 	if (sig != NULL) {
 		KSI_TLV_free(sig->baseTlv);
 		CalChainRec_free(sig->calendarChain);
@@ -964,7 +960,7 @@ int KSI_parseAggregationResponse(KSI_CTX *ctx, unsigned char *response, int resp
 				KSI_PARSE_TLV_ELEMENT_INTEGER(0x05, &hdr->instanceId)
 				KSI_PARSE_TLV_ELEMENT_INTEGER(0x06, &hdr->messageId)
 				KSI_PARSE_TLV_ELEMENT_RAW(0x07, &hdr->clientId, &hdr->clientId_length);
-				KSI_PARSE_TLV_ELEMENT_UNKNOWN_LENIENT_IGNORE
+				KSI_PARSE_TLV_ELEMENT_UNKNONW_NON_CRITICAL_IGNORE
 			KSI_PARSE_TLV_NESTED_ELEMENT_END
 
 			KSI_PARSE_TLV_ELEMENT_INTEGER(0x02, &requestId)
@@ -1001,7 +997,7 @@ int KSI_parseAggregationResponse(KSI_CTX *ctx, unsigned char *response, int resp
 	res = extractSignature(ctx, sigTlv, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	tmp->baseTlv = sigTlv;
+	/* The tlv is referenced from the signature now */
 	sigTlv = NULL;
 
 	*signature = tmp;
@@ -1037,7 +1033,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_Signature_getSigningTime(KSI_Signature *sig, KSI_Integer *signTime) {
+int KSI_Signature_getSigningTime(KSI_Signature *sig, const KSI_Integer **signTime) {
 	KSI_ERR err;
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
@@ -1047,7 +1043,7 @@ int KSI_Signature_getSigningTime(KSI_Signature *sig, KSI_Integer *signTime) {
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
 		goto cleanup;
 	}
-	signTime = sig->calendarChain->aggregationTime;
+	*signTime = sig->calendarChain->aggregationTime;
 
 	KSI_SUCCESS(&err);
 
@@ -1093,7 +1089,6 @@ int KSI_Signature_validateInternal(KSI_Signature *sig) {
 	KSI_ERR err;
 	KSI_DataHash *hsh = NULL;
 	uint32_t utc_time;
-	int i;
 	int res;
 	int level;
 
@@ -1203,3 +1198,40 @@ cleanup:
 	return res;
 }
 
+int KSI_Signature_clone(const KSI_Signature *sig, KSI_Signature **clone) {
+	KSI_ERR err;
+	KSI_TLV *tlv = NULL;
+	KSI_Signature *tmp = NULL;
+	int res;
+
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_PRE(&err, clone != NULL) goto cleanup;
+
+	KSI_BEGIN(sig->ctx, &err);
+
+	res = KSI_TLV_clone(sig->baseTlv, &tlv);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_LOG_logTlv(sig->ctx, KSI_LOG_DEBUG, "Original TLV", sig->baseTlv);
+	KSI_LOG_logTlv(sig->ctx, KSI_LOG_DEBUG, "Cloned TLV", tlv);
+
+	res = extractSignature(sig->ctx, tlv, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* The TLV is referenced from the signature now */
+	tlv = NULL;
+
+	*clone = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_TLV_free(tlv);
+	KSI_Signature_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
+KSI_IMPLEMENT_GET_CTX(KSI_Signature);

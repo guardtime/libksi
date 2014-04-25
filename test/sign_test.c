@@ -7,6 +7,7 @@ int main(void) {
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sign = NULL;
+	KSI_Signature *ext = NULL;
 
 	res = KSI_global_init();
 	if (res != KSI_OK) goto cleanup;
@@ -35,9 +36,16 @@ int main(void) {
 		goto cleanup;
 	}
 
-	res = KSI_sign(hsh, &sign);
+	res = KSI_Signature_sign(hsh, &sign);
 	if (res != KSI_OK) {
 		printf("Unable to sign %d.\n", res);
+		KSI_ERR_statusDump(ctx, stderr);
+		goto cleanup;
+	}
+
+	res = KSI_Signature_extend(sign, &ext);
+	if (res != KSI_OK) {
+		printf("Unable to extend %d.\n", res);
 		KSI_ERR_statusDump(ctx, stderr);
 		goto cleanup;
 	}
@@ -46,6 +54,7 @@ int main(void) {
 cleanup:
 
 	KSI_Signature_free(sign);
+	KSI_Signature_free(ext);
 	KSI_DataHash_free(hsh);
 	KSI_DataHasher_free(hsr);
 

@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "all_tests.h"
 
 
@@ -10,6 +12,7 @@ static char *ok_sample[] = {
 		"test/resource/tlv/ok_int-6.tlv",
 		"test/resource/tlv/ok_int-7.tlv",
 		"test/resource/tlv/ok_int-8.tlv",
+		"test/resource/tlv/ok_int-9.tlv",
 		"test/resource/tlv/ok_nested-1.tlv",
 		"test/resource/tlv/ok_nested-2.tlv",
 		"test/resource/tlv/ok_nested-3.tlv",
@@ -32,7 +35,6 @@ static char *nok_sample[] = {
 		"test/resource/tlv/nok_int-2.tlv",
 		"test/resource/tlv/nok_int-3.tlv",
 		"test/resource/tlv/nok_int-4.tlv",
-		"test/resource/tlv/nok_int-5.tlv",
 		"test/resource/tlv/nok_str-1.tlv",
 		NULL
 };
@@ -55,12 +57,12 @@ static int tlvFromFile(CuTest* tc, char *fileName, KSI_TLV **tlv) {
 	int res;
 	KSI_RDR *rdr = NULL;
 
-	lprintf("Open TLV file: '%s'\n", fileName);
+	KSI_LOG_debug(ctx, "Open TLV file: '%s'", fileName);
 
 	res = KSI_RDR_fromFile(ctx, fileName, "rb", &rdr);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_TLV_fromReader(rdr, tlv, 1);
+	res = KSI_TLV_fromReader(rdr, tlv);
 	if (res != KSI_OK) goto cleanup;
 
 cleanup:
@@ -76,9 +78,6 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 	const char *buf;
 	KSI_TLV *nested = NULL;
 
-	lprintf("%*sTLV:\n", indent++*4, "");
-	lprintf("%*sTLV type: 0x%04x\n",indent*4, "", KSI_TLV_getTag(tlv));
-
 	switch (KSI_TLV_getTag(tlv)) {
 		case 0x01:
 			/* Cast as numeric TLV */
@@ -86,7 +85,6 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 			if (res != KSI_OK) goto cleanup;
 
 			/* Parse number */
-			lprintf("%*sPayload type: UINT64\n", indent*4, "");
 			res = KSI_TLV_getUInt64Value(tlv, &uint);
 			if (res != KSI_OK) goto cleanup;
 			break;
@@ -95,7 +93,6 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 			res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_STR);
 			if (res != KSI_OK) goto cleanup;
 			/* Parse string */
-			lprintf("%*sPayload type: STR\n", indent*4, "");
 			res = KSI_TLV_getStringValue(tlv, &buf);
 			if (res != KSI_OK) goto cleanup;
 			break;
@@ -106,7 +103,6 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 			if (res != KSI_OK) goto cleanup;
 
 			/* Parse nested */
-			lprintf("%*sPayload type: NESTED\n", indent*4, "");
 			while (1) {
 				res = KSI_TLV_getNextNestedTLV(tlv, &nested);
 				if (res != KSI_OK) goto cleanup;
@@ -178,7 +174,6 @@ static void TestNokFiles(CuTest* tc) {
 static void TestSerialize(CuTest* tc) {
 	int res;
 	KSI_TLV *tlv = NULL;
-	KSI_RDR *rdr = NULL;
 
 	unsigned char in[0xffff + 4];
 	unsigned char out[0xffff + 4];
@@ -222,6 +217,60 @@ static void TestSerialize(CuTest* tc) {
 	closeEnv(tc);
 }
 
+static void TestClone(CuTest *tc) {
+	int res;
+	KSI_TLV *tlv = NULL;
+	KSI_TLV *clone = NULL;
+
+	unsigned char in[0xffff + 4];
+	unsigned char out1[0xffff + 4];
+	char errstr[1024];
+
+	int out_len;
+	int in_len;
+
+	FILE *f = NULL;
+	int i = 0;
+
+	initEnv(tc);
+
+	while (ok_sample[i] != NULL) {
+		f = fopen(ok_sample[i], "rb");
+		CuAssert(tc, "Unable to open test file.", f != NULL);
+
+		in_len = fread(in, 1, sizeof(in), f);
+
+		fclose(f);
+		f = NULL;
+
+		res = KSI_TLV_parseBlob(ctx, in, in_len, &tlv);
+		CuAssert(tc, "Unable to parse TLV", res == KSI_OK);
+
+		res = parseStructure(tlv, 0);
+		CuAssert(tc, "Unable to parse TLV structure", res == KSI_OK);
+
+		res = KSI_TLV_clone(tlv, &clone);
+		CuAssert(tc, "Unsable to clone TLV", res == KSI_OK && clone != NULL);
+
+		/* Re assemble TLV */
+		res = KSI_TLV_serialize_ex(clone, out1, sizeof(out1), &out_len);
+		CuAssert(tc, "Unable to serialize TLV", res == KSI_OK);
+
+		CuAssertIntEquals_Msg(tc, "Serialized TLV size", in_len, out_len);
+		sprintf(errstr, "Serialised TLV content does not match original: %s", ok_sample[i]);
+		CuAssert(tc, errstr, !memcmp(in, out1, in_len));
+
+		KSI_TLV_free(clone);
+		clone = NULL;
+
+		KSI_TLV_free(tlv);
+		tlv = NULL;
+		i++;
+	}
+
+	closeEnv(tc);
+}
+
 CuSuite* KSI_TLV_Sample_GetSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
@@ -229,6 +278,7 @@ CuSuite* KSI_TLV_Sample_GetSuite(void)
 	SUITE_ADD_TEST(suite, TestOkFiles);
 	SUITE_ADD_TEST(suite, TestNokFiles);
 	SUITE_ADD_TEST(suite, TestSerialize);
+	SUITE_ADD_TEST(suite, TestClone);
 
 	return suite;
 }

@@ -5,70 +5,6 @@
 
 #define KSI_ERR_STACK_LEN 16
 
-struct KSI_Integer_st {
-	KSI_CTX *ctx;
-	KSI_uint64_t value;
-};
-
-void KSI_Integer_free(KSI_Integer *kint) {
-	if (kint != NULL) {
-		KSI_free(kint);
-	}
-}
-
-int KSI_Integer_getSize(KSI_Integer *kint, int *size) {
-	KSI_ERR err;
-	KSI_PRE(&err, kint != NULL) goto cleanup;
-	KSI_BEGIN(kint->ctx, &err);
-
-	*size = KSI_UINT64_MINSIZE(kint->value);
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-}
-
-KSI_uint64_t KSI_Integer_getUInt64(KSI_Integer *kint) {
-	return kint != NULL ? kint->value : 0;
-}
-
-int KSI_Integer_equals(KSI_Integer *a, KSI_Integer *b) {
-	return a != NULL && b != NULL && (a == b || a->value == b->value);
-}
-
-int KSI_Integer_equalsUInt(KSI_Integer *o, KSI_uint64_t i) {
-	return o != NULL && o->value == i;
-}
-
-int KSI_Integer_new(KSI_CTX *ctx, KSI_uint64_t value, KSI_Integer **kint) {
-	KSI_ERR err;
-	KSI_Integer *tmp = NULL;
-
-	KSI_PRE(&err, ctx != NULL);
-	KSI_BEGIN(ctx, &err);
-
-	tmp = KSI_new(KSI_Integer);
-	if (tmp == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	tmp->ctx = ctx;
-	tmp->value = value;
-
-	*kint = tmp;
-	tmp = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_Integer_free(tmp);
-
-	return KSI_RETURN(&err);
-}
 
 const char *KSI_getErrorString(int statusCode) {
 	switch (statusCode) {
@@ -140,8 +76,8 @@ int KSI_CTX_new(KSI_CTX **context) {
 	if (res != KSI_OK) goto cleanup;
 
 	/* Configure curl net provider */
-	if ((res = KSI_NET_CURL_setSignerUrl(netProvider, "http://localhost:3333/signer")) != KSI_OK) goto cleanup;
-	if ((res = KSI_NET_CURL_setExtenderUrl(netProvider, "TODO")) != KSI_OK) goto cleanup;
+	if ((res = KSI_NET_CURL_setSignerUrl(netProvider, "http://192.168.1.36:3333/signer")) != KSI_OK) goto cleanup;
+	if ((res = KSI_NET_CURL_setExtenderUrl(netProvider, "192.168.1.36:8010/gt-extendingservice")) != KSI_OK) goto cleanup;
 	if ((res = KSI_NET_CURL_setPublicationUrl(netProvider, "TODO")) != KSI_OK) goto cleanup;
 	if ((res = KSI_NET_CURL_setConnectTimeoutSeconds(netProvider, 5)) != KSI_OK) goto cleanup;
 	if ((res = KSI_NET_CURL_setReadTimeoutSeconds(netProvider, 5)) != KSI_OK) goto cleanup;
@@ -162,16 +98,19 @@ cleanup:
 	return res;
 }
 int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, KSI_NetProvider *netProvider) {
-	int res = KSI_UNKNOWN_ERROR;
+	KSI_ERR err;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
 
 	KSI_NetProvider_free(ctx->netProvider);
 	ctx->netProvider = netProvider;
 
-	res = KSI_OK;
+	KSI_SUCCESS(&err);
 
 cleanup:
 
-	return res;
+	return KSI_RETURN(&err);
 }
 
 /**
@@ -217,4 +156,66 @@ void KSI_global_cleanup(void) {
 // TODO	KSI_PKITruststore_global_cleanup()
 }
 
+int KSI_sendSignRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle) {
+	KSI_ERR err;
+	KSI_NetHandle *hndl = NULL;
+	int res;
+	KSI_NetProvider *netProvider = NULL;
 
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, request != NULL) goto cleanup;
+	KSI_PRE(&err, request_length > 0) goto cleanup;
+
+	KSI_BEGIN(ctx, &err);
+
+	netProvider = ctx->netProvider;
+
+	res = KSI_NetHandle_new(ctx, request, request_length, &hndl);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_NetProvider_sendSignRequest(netProvider, hndl);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*handle = hndl;
+	hndl = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_NetHandle_free(hndl);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_sendExtendRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle) {
+	KSI_ERR err;
+	KSI_NetHandle *hndl = NULL;
+	int res;
+	KSI_NetProvider *netProvider = NULL;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, request != NULL) goto cleanup;
+	KSI_PRE(&err, request_length > 0) goto cleanup;
+
+	KSI_BEGIN(ctx, &err);
+
+	netProvider = ctx->netProvider;
+
+	res = KSI_NetHandle_new(ctx, request, request_length, &hndl);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_NetProvider_sendExtendRequest(netProvider, hndl);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*handle = hndl;
+	hndl = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_NetHandle_free(hndl);
+
+	return KSI_RETURN(&err);
+}

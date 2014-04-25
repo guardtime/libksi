@@ -7,11 +7,13 @@
 #include "include/ksi_common.h"
 #include "include/ksi_hash.h"
 #include "include/ksi_hashchain.h"
-#include "include/ksi_integer.h"
 #include "include/ksi_io.h"
+#include "include/ksi_list.h"
 #include "include/ksi_net.h"
+#include "include/ksi_signature.h"
 #include "include/ksi_tlv.h"
 #include "include/ksi_truststore.h"
+#include "include/ksi_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -94,6 +96,11 @@ void KSI_CTX_free(KSI_CTX *context);
 int KSI_ERR_getStatus(KSI_CTX *ctx);
 
 /**
+ * Finalizes the current error stack.
+ */
+int KSI_ERR_apply(KSI_ERR *err);
+
+/**
  * Dump error stack trace to stream
  */
 int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f);
@@ -157,6 +164,22 @@ void *KSI_malloc(size_t size);
 void *KSI_calloc(size_t num, size_t size);
 void *KSI_realloc(void *ptr, size_t size);
 void KSI_free(void *ptr);
+
+
+/**
+ *
+ */
+int KSI_sendSignRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle);
+/**
+ *
+ */
+int KSI_sendExtendRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle);
+
+/**
+ *
+ */
+int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle);
+
 
 /**********
  * UTIL's

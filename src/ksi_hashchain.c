@@ -124,8 +124,6 @@ static int aggregateChain(KSI_HashChain *chain, KSI_DataHash *inputHash, int sta
 	KSI_DataHash *hsh = NULL;
 	KSI_HashChain *ch = chain;
 	int algo_id = hash_id;
-	const unsigned char *imprint = NULL;
-	int imprint_len;
 	char chr_level;
 	char logMsg[0xff];
 
@@ -295,7 +293,6 @@ int KSI_HashChain_getCalendarAggregationTime(KSI_HashChain *cal, KSI_Integer *ag
 	KSI_uint64_t r;
 	uint32_t t = 0;
 	KSI_HashChain *hn = NULL;
-	int res;
 
 	KSI_PRE(&err, cal != NULL) goto cleanup;
 	KSI_PRE(&err, aggr_time != NULL) goto cleanup;
@@ -411,7 +408,7 @@ int KSI_MetaHash_getUtf8Value(KSI_MetaHash *mth, const char **value) {
 
 	KSI_BEGIN(mth->ctx, &err);
 
-	*value = mth->data + 2;
+	*value = (char *)mth->data + 2;
 
 	KSI_SUCCESS(&err);
 
@@ -436,7 +433,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_MetaHash_getRaw(KSI_MetaHash *mth, const void **data, int *data_len) {
+int KSI_MetaHash_getRaw(KSI_MetaHash *mth, const unsigned char **data, int *data_len) {
 	KSI_ERR err;
 	KSI_PRE(&err, mth != NULL) goto cleanup;
 
@@ -478,7 +475,7 @@ int KSI_MetaData_parse(KSI_MetaData *mtd, char **clientId, KSI_Integer **machine
 		KSI_PARSE_TLV_ELEMENT_UTF8STR(0x01, &cId)
 		KSI_PARSE_TLV_ELEMENT_INTEGER(0x02, &mId)
 		KSI_PARSE_TLV_ELEMENT_INTEGER(0x03, &sNr)
-		KSI_PARSE_TLV_ELEMENT_UNKNOWN_LENIENT_IGNORE
+		KSI_PARSE_TLV_ELEMENT_UNKNONW_NON_CRITICAL_IGNORE
 	KSI_TLV_PARSE_RAW_END(res, NULL);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -508,7 +505,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_MetaData_getRaw(KSI_MetaData *mtd, const void **data, int *data_len) {
+int KSI_MetaData_getRaw(KSI_MetaData *mtd, const unsigned char **data, int *data_len) {
 	KSI_ERR err;
 	KSI_PRE(&err, mtd != NULL) goto cleanup;
 

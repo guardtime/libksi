@@ -1,5 +1,5 @@
 # Generated with mk_makefile.sh
-AM_CFLAGS=-g
+AM_CFLAGS=-g -Wall
 bin_PROGRAMS=runner sign
 
 apiSources = \
@@ -25,11 +25,12 @@ apiSources = \
 		../src/ksi_net_curl.c \
 		../src/ksi_tlv.c \
 		../src/ksi_signature.c \
-		../src/ksi_signer.c \
+		../src/ksi_request.c \
 		../src/ksi_tlv_easy.h \
-		../src/ksi_tlv_serialize.c \
 		../src/ksi_tlv_tags.h \
 		../src/ksi_tlv.h \
+		../src/ksi_types.c \
+		../src/ksi_types_base.c \
 		../src/ksi_util.c \
 		../src/ksi_truststore_openssl.c
 

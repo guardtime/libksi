@@ -19,9 +19,8 @@ static void TestSHA256(CuTest* tc) {
 	int res;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
-	unsigned char *data = "correct horse battery staple";
+	char *data = "correct horse battery staple";
 	unsigned char expected[] = {0xc4, 0xbb, 0xcb, 0x1f, 0xbe, 0xc9, 0x9d, 0x65, 0xbf, 0x59, 0xd8, 0x5c, 0x8c, 0xb6, 0x2e, 0xe2, 0xdb, 0x96, 0x3f, 0x0f, 0xe1, 0x06, 0xf4, 0x83, 0xd9, 0xaf, 0xa7, 0x3b, 0xd4, 0xe3, 0x9a, 0x8a};
-	int len;
 
 	const unsigned char *digest = NULL;
 	int digest_length = 0;
@@ -31,7 +30,7 @@ static void TestSHA256(CuTest* tc) {
 	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA2_256, &hsr);
 	CuAssert(tc, "Failed to open DataHasher", res == KSI_OK && hsr != NULL);
 
-	res = KSI_DataHasher_add(hsr, data, strlen(data));
+	res = KSI_DataHasher_add(hsr, (unsigned char *)data, strlen(data));
 	CuAssert(tc, "Failed to add data", res == KSI_OK);
 
 	res = KSI_DataHasher_close(hsr, &hsh);
@@ -57,7 +56,7 @@ static void TestSHA256Parts(CuTest* tc) {
 	int res;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
-	unsigned char *data[] = {"correct ", "horse ", "battery ", "staple", NULL };
+	char *data[] = {"correct ", "horse ", "battery ", "staple", NULL };
 	int i = 0;
 	unsigned char expected[] = {0xc4, 0xbb, 0xcb, 0x1f, 0xbe, 0xc9, 0x9d, 0x65, 0xbf, 0x59, 0xd8, 0x5c, 0x8c, 0xb6, 0x2e, 0xe2, 0xdb, 0x96, 0x3f, 0x0f, 0xe1, 0x06, 0xf4, 0x83, 0xd9, 0xaf, 0xa7, 0x3b, 0xd4, 0xe3, 0x9a, 0x8a};
 
@@ -70,7 +69,7 @@ static void TestSHA256Parts(CuTest* tc) {
 	CuAssert(tc, "Failed to open DataHasher", res == KSI_OK && hsr != NULL);
 
 	while (data[i] != NULL) {
-		res = KSI_DataHasher_add(hsr, data[i], strlen(data[i]));
+		res = KSI_DataHasher_add(hsr, (unsigned char *)data[i], strlen(data[i]));
 		CuAssert(tc, "Failed to add data", res == KSI_OK);
 		i++;
 	}
@@ -92,7 +91,7 @@ static void TestSHA256Reset(CuTest* tc) {
 	int res;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
-	unsigned char *data = "correct horse battery staple";
+	char *data = "correct horse battery staple";
 	unsigned char expected[] = {0xc4, 0xbb, 0xcb, 0x1f, 0xbe, 0xc9, 0x9d, 0x65, 0xbf, 0x59, 0xd8, 0x5c, 0x8c, 0xb6, 0x2e, 0xe2, 0xdb, 0x96, 0x3f, 0x0f, 0xe1, 0x06, 0xf4, 0x83, 0xd9, 0xaf, 0xa7, 0x3b, 0xd4, 0xe3, 0x9a, 0x8a};
 
 	const unsigned char *digest = NULL;
@@ -110,7 +109,7 @@ static void TestSHA256Reset(CuTest* tc) {
 	CuAssert(tc, "Failed to reset hasher", res == KSI_OK);
 
 
-	res = KSI_DataHasher_add(hsr, data, strlen(data));
+	res = KSI_DataHasher_add(hsr, (unsigned char *)data, strlen(data));
 	CuAssert(tc, "Failed to add data", res == KSI_OK);
 
 	res = KSI_DataHasher_close(hsr, &hsh);

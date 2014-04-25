@@ -153,6 +153,7 @@ extern "C" {
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
 	int KSI_TLV_getNextNestedTLV(KSI_TLV *tlv, KSI_TLV **nested);
+	int KSI_TLV_iterNested(KSI_TLV *tlv);
 
 	/**
 	 * Destructor for a TLV object.
@@ -203,13 +204,17 @@ extern "C" {
 	 * \param[out]		len				Length of the serialized data.
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_serialize_ex(KSI_TLV *tlv, unsigned char *buf, int buf_size, int *len);
+	int KSI_TLV_serialize_ex(const KSI_TLV *tlv, unsigned char *buf, int buf_size, int *len);
 
 	/**
-	 *  TODO!
+	 *  This function serialises the TLV value into a buffer. The output buffer value
+	 *  has to be freed (see #KSI_free) by the caller.
+	 *
+	 *  \param[in]		tlv		TLV to be serialized.
+	 *  \param[out]		buf		Pointer to the receiving buffer pointer.
+	 *  \param[out]		buf_len	Pointer to the receiving buffer length variable.
 	 */
-
-	int KSI_TLV_serialize(KSI_TLV *tlv, unsigned char **outBuf, int *outBuf_len);
+	int KSI_TLV_serialize(const KSI_TLV *tlv, unsigned char **buf, int *buf_len);
 
 	/**
 	 * This function serialises the tlv payload into a given buffer with \c len bytes of free
@@ -237,7 +242,13 @@ extern "C" {
 	int KSI_TLV_appendNestedTlv(KSI_TLV *target, KSI_TLV *after, KSI_TLV *tlv);
 
 	/**
-	 * TODO
+	 * Removes the given TLV from the parent iff the given TLV is a immediate child
+	 * of the parent.
+	 *
+	 * \param[in]		target			The parent TLV.
+	 * \param[in]		tlv				TLV value to be removed.
+	 *
+	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
 	int KSI_TLV_removeNestedTlv(KSI_TLV *target, KSI_TLV *tlv);
 
@@ -250,6 +261,22 @@ extern "C" {
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
 	int KSI_TLV_toString(KSI_TLV *tlv, char **str);
+
+	/**
+	 * This functions makes an identical copy of a TLV by serializing, parsing
+	 * the serialized value and restoring the internal structure.
+	 *
+	 * \param[in]	tlv			TLV to be cloned.
+	 * \param[out]	clone		Pointer to the receiving pointer of the cloned value.
+	 *
+	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+	 */
+	int KSI_TLV_clone(const KSI_TLV *tlv, KSI_TLV **clone);
+
+	int KSI_TLV_setUintValue(KSI_TLV *tlv, KSI_uint64_t val);
+	int KSI_TLV_setRawValue(KSI_TLV *tlv, const void *data, int data_len);
+	int KSI_TLV_setStringValue(KSI_TLV *tlv, const char *str);
+	int KSI_TLV_fromReader(KSI_RDR *rdr, KSI_TLV **tlv);
 
 #ifdef __cplusplus
 }

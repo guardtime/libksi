@@ -34,7 +34,6 @@ static const EVP_MD *hashAlgorithmToEVP(int hash_id)
 int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 	KSI_ERR err;
 	int res;
-	int algorithm;
 
 	const EVP_MD *evp_md = NULL;
 	void *context = NULL;

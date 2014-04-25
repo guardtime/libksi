@@ -49,6 +49,8 @@ extern "C" {
 	 */
 	void KSI_RDR_close(KSI_RDR *rdr);
 
+	int KSI_RDR_verifyEnd(KSI_RDR *rdr);
+
 
 #ifdef __cplusplus
 }

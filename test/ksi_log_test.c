@@ -31,7 +31,7 @@ static int failWithError(KSI_CTX *ctx, int statusCode) {
 
 static void TestLogInit(CuTest* tc) {
 	int res;
-	char tmpFile[L_tmpnam];
+	char tmpFile[] = "tmpXXXXXXXX";
 	char tmpBuf[0xffff];
 	FILE *f = NULL;
 	int len;
@@ -43,7 +43,7 @@ static void TestLogInit(CuTest* tc) {
 	CuAssert(tc, "Unable to create ctx", res == KSI_OK && ctx != NULL);
 
 	/* Create tmp file name. */
-	CuAssert(tc, "Unable to create temporary file name.", tmpnam_r(tmpFile) != NULL);
+	CuAssert(tc, "Unable to create temporary file name.", mkstemp(tmpFile) > 0);
 
 	/* Init logging. */
 	res = KSI_LOG_init(ctx, tmpFile, KSI_LOG_DEBUG );
@@ -75,7 +75,7 @@ static void TestLogInit(CuTest* tc) {
 
 static void TestLogLevel(CuTest* tc) {
 	int res;
-	char tmpFile[L_tmpnam];
+	char tmpFile[] = "tmpXXXXXXXX";
 	char tmpBuf[0xffff];
 	FILE *f = NULL;
 	int len;
@@ -87,7 +87,7 @@ static void TestLogLevel(CuTest* tc) {
 	KSI_CTX_new(&ctx);
 
 	/* Create tmp file name. */
-	CuAssert(tc, "Unable to create temporary file name.", tmpnam_r(tmpFile) != NULL);
+	CuAssert(tc, "Unable to create temporary file name.", mkstemp(tmpFile) > 0);
 
 	/* Init logging. */
 	res = KSI_LOG_init(ctx, tmpFile, KSI_LOG_DEBUG );
@@ -132,7 +132,7 @@ static void TestLogLevel(CuTest* tc) {
 
 static void TestLogLevelRestriction(CuTest* tc) {
 	int res;
-	char tmpFile[L_tmpnam];
+	char tmpFile[] = "tmpXXXXXXXX";
 	char tmpBuf[0xffff];
 	int len;
 	char *ptr;
@@ -144,7 +144,7 @@ static void TestLogLevelRestriction(CuTest* tc) {
 	KSI_CTX_new(&ctx);
 
 	/* Create tmp file name. */
-	CuAssert(tc, "Unable to create temporary file name.", tmpnam_r(tmpFile) != NULL);
+	CuAssert(tc, "Unable to create temporary file name.", mkstemp(tmpFile) > 0);
 
 	/* Init logging. */
 	res = KSI_LOG_init(ctx, tmpFile, KSI_LOG_INFO );
@@ -187,7 +187,7 @@ static void TestLogLevelRestriction(CuTest* tc) {
 
 static void TestDoNotChangeFault(CuTest* tc) {
 	int res;
-	char tmpFile[L_tmpnam];
+	char tmpFile[] = "tmpXXXXXXXX";
 	int i;
 
 	static int failures[] = {KSI_IO_ERROR, KSI_INVALID_ARGUMENT, KSI_OUT_OF_MEMORY};
@@ -198,7 +198,7 @@ static void TestDoNotChangeFault(CuTest* tc) {
 	KSI_CTX_new(&ctx);
 
 	/* Create tmp file name. */
-	CuAssert(tc, "Unable to create temporary file name.", tmpnam_r(tmpFile) != NULL);
+	CuAssert(tc, "Unable to create temporary file name.", mkstemp(tmpFile) > 0);
 
 	/* Init logging. */
 	res = KSI_LOG_init(ctx, tmpFile, KSI_LOG_INFO );

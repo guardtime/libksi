@@ -30,7 +30,7 @@ struct KSI_ERR_st {
 	char fileName[1024];
 
 	/* Line number where the error was logd. */
-	ssize_t lineNr;
+	unsigned int lineNr;
 
 	/* Status code. */
 	int statusCode;

@@ -8,19 +8,18 @@ const unsigned char *KSI_NET_MOCK_response = NULL;
 int KSI_NET_MOCK_response_len;
 
 static int mockReceive(KSI_NetHandle *handle) {
-	KSI_CTX *ctx = NULL;
 	int res = KSI_UNKNOWN_ERROR;
 
-	if (handle == NULL) return res;
+	if (handle == NULL) goto cleanup;
 
 	KSI_LOG_debug(KSI_NetHandle_getCtx(handle), "Connecting to MOCK service");
 
 	res = KSI_NetHandle_setResponse(handle, KSI_NET_MOCK_response, KSI_NET_MOCK_response_len);
-	if (res != KSI_OK) return res;
+	if (res != KSI_OK) goto cleanup;
 
 cleanup:
 
-		return KSI_OK;
+		return res;
 }
 
 static int mockSend(KSI_NetHandle *handle) {

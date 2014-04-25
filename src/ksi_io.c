@@ -22,7 +22,7 @@ struct KSI_RDR_st {
 
 		/* KSI_IO_MEM type input */
 		struct {
-			char *buffer;
+			unsigned char *buffer;
 			size_t buffer_length;
 
 			/* Does the memory belong to this reader? */
@@ -118,7 +118,7 @@ cleanup:
 int KSI_RDR_fromMem(KSI_CTX *ctx, unsigned char *buffer, const size_t buffer_length, int ownCopy, KSI_RDR **rdr) {
 	KSI_ERR err;
 	KSI_RDR *reader = NULL;
-	char *buf = NULL;
+	unsigned char *buf = NULL;
 
 	KSI_BEGIN(ctx, &err);
 
@@ -162,11 +162,14 @@ int KSI_RDR_isEOF(KSI_RDR *rdr) {
 	return rdr->eof;
 }
 
-static int readFromFile(KSI_RDR *rdr, char *buffer, const size_t size, int *readCount) {
+static int readFromFile(KSI_RDR *rdr, unsigned char *buffer, const size_t size, int *readCount) {
 	KSI_ERR err;
 	int count;
 
-	/* Init error handling. */
+	KSI_PRE(&err, rdr != NULL) goto cleanup;
+	KSI_PRE(&err, buffer != NULL) goto cleanup;
+	KSI_PRE(&err, readCount != NULL) goto cleanup;
+
 	KSI_BEGIN(rdr->ctx, &err);
 	count = fread(buffer, 1, size, rdr->data.file);
 	/* Update metadata. */
@@ -182,11 +185,13 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int readFromMem(KSI_RDR *rdr, char *buffer, const size_t size, int *readCount) {
+static int readFromMem(KSI_RDR *rdr, unsigned char *buffer, const size_t size, int *readCount) {
 	KSI_ERR err;
 	int count;
 
-	/* Init error handling. */
+	KSI_PRE(&err, rdr != NULL) goto cleanup;
+	KSI_PRE(&err, buffer != NULL) goto cleanup;
+	KSI_PRE(&err, readCount != NULL) goto cleanup;
 	KSI_BEGIN(rdr->ctx, &err);
 
 	/* Max bytes still to read. */
@@ -246,12 +251,13 @@ int KSI_RDR_read_ptr(KSI_RDR *rdr, unsigned char **ptr, const size_t len, int *r
 	unsigned char *p = NULL;
 	int count = 0;
 
+	KSI_PRE(&err, rdr != NULL) goto cleanup;
+	KSI_PRE(&err, ptr != NULL) goto cleanup;
+	KSI_PRE(&err, readCount != NULL) goto cleanup;
 	KSI_BEGIN(rdr->ctx, &err);
 
 	switch (rdr->ioType) {
 		case KSI_IO_FILE:
-			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "KSI_RDR: Can't reuse memody while reading from file.");
-			goto cleanup;
 			break;
 		case KSI_IO_MEM:
 			if (rdr->offset < rdr->data.mem.buffer_length) {
@@ -337,10 +343,6 @@ cleanup:
 
 	return KSI_RETURN(&err);
 
-}
-
-int KSI_RDR_isNocopyAvailable(KSI_RDR *rdr) {
-	return rdr->ioType == KSI_IO_MEM;
 }
 
 KSI_IMPLEMENT_GET_CTX(KSI_RDR);
