@@ -54,7 +54,3 @@ runner_SOURCES= \
 sign_SOURCES= \
 		sign_test.c \
 		$(apiSources)
-
-#altparse_SOURCES= \
-#		../src/ksi_tlv_parser2.c \
-#		$(apiSources)
