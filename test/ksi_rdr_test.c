@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "cutest/CuTest.h"
@@ -38,7 +39,6 @@ struct KSI_RDR_st {
 static void TestRdrFileBadFileName(CuTest* tc) {
 	int res;
 	char tmpFile[] = "tmpXXXXXXXX";
-	char tmpBuf[0xffff];
 
 	KSI_CTX *ctx = NULL;
 	KSI_RDR *rdr = NULL;
@@ -64,7 +64,7 @@ static void TestRdrFileBadFileName(CuTest* tc) {
 static void TestRdrFileFileReading(CuTest* tc) {
 	int res;
 	char tmpFile[] = "tmpXXXXXXXX";
-	char tmpBuf[0xffff];
+	unsigned char tmpBuf[0xffff];
 	int readCount;
 
 	static char testStr[] = "Randomness is too important to be left to chance";
@@ -109,7 +109,7 @@ static void TestRdrFileFileReading(CuTest* tc) {
 static void TestRdrFileReadingChuncks(CuTest* tc) {
 	int res;
 	char tmpFile[] = "tmpXXXXXXXX";
-	char tmpBuf[0xffff];
+	unsigned char tmpBuf[0xffff];
 	int readCount;
 	int size = 0;
 
@@ -160,14 +160,14 @@ static void TestRdrMemInitExtStorage(CuTest* tc) {
 	KSI_CTX *ctx = NULL;
 	KSI_RDR *rdr = NULL;
 	static char testData[] = "Random binary data.";
-	char tmpBuf[0xffff];
+	unsigned char tmpBuf[0xffff];
 
 	/* Init context. */
 	res = KSI_CTX_new(&ctx);
 	CuAssert(tc, "Failed initializing context.", res == KSI_OK);
 
 	/* Init reader. */
-	res = KSI_RDR_fromMem(ctx, testData, sizeof(testData), 0, &rdr);
+	res = KSI_RDR_fromMem(ctx, (unsigned char *)testData, sizeof(testData), 0, &rdr);
 	CuAssert(tc, "Failed initializing context from shared memory.", res == KSI_OK);
 	CuAssert(tc, "Init did not fail, but object not created.", rdr != NULL);
 
@@ -187,14 +187,14 @@ static void TestRdrMemInitOwnStorage(CuTest* tc) {
 	KSI_CTX *ctx = NULL;
 	KSI_RDR *rdr = NULL;
 	static char testData[] = "Random binary data.";
-	char tmpBuf[0xffff];
+	unsigned char tmpBuf[0xffff];
 
 	/* Init context. */
 	res = KSI_CTX_new(&ctx);
 	CuAssert(tc, "Failed initializing context.", res == KSI_OK);
 
 	/* Init reader. */
-	res = KSI_RDR_fromMem(ctx, testData, sizeof(testData), 1, &rdr);
+	res = KSI_RDR_fromMem(ctx, (unsigned char *) testData, sizeof(testData), 1, &rdr);
 	CuAssert(tc, "Failed initializing context from private memory.", res == KSI_OK);
 	CuAssert(tc, "Init did not fail, but object not created.", rdr != NULL);
 
