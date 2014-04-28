@@ -301,18 +301,20 @@ static int encodeAsString(KSI_TLV *tlv) {
 		goto cleanup;
 	}
 
-	if (tlv->buffer == NULL) {
-		/* Create local copy. */
-		res = createOwnBuffer(tlv, tlv->datap != NULL);
-		if (res != KSI_OK) {
-			KSI_FAIL(&err, res, NULL);
-			goto cleanup;
+	/* Determine if the current string ends with a zero. */
+	if (tlv->datap[tlv->datap_len - 1] != '\0') {
+		/* Make the buffer a null-terminated string, but do not change the actual size. */
+		if (tlv->buffer == NULL) {
+			/* Create local copy. */
+			res = createOwnBuffer(tlv, tlv->datap != NULL);
+			if (res != KSI_OK) {
+				KSI_FAIL(&err, res, NULL);
+				goto cleanup;
+			}
 		}
+
+		*(tlv->datap + tlv->datap_len) = '\0';
 	}
-
-	/* Make the buffer a null-terminated string, but do not change the actual size. */
-	*(tlv->datap + tlv->datap_len) = '\0';
-
 	tlv->payloadType = KSI_TLV_PAYLOAD_STR;
 
 	KSI_SUCCESS(&err);
