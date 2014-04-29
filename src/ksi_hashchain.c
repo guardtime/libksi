@@ -343,6 +343,17 @@ void KSI_MetaHash_free(KSI_MetaHash *mhs) {
 	}
 }
 
+void KSI_MetaData_free(KSI_MetaData *p) {
+	if (p != NULL) {
+		KSI_free(p->clientId);
+		KSI_free(p->raw);
+		KSI_Integer_free(p->machineId);
+		KSI_Integer_free(p->sequenceNr);
+		KSI_free(p);
+	}
+}
+
+
 /**
  *
  */
@@ -470,15 +481,15 @@ int KSI_MetaData_parse(KSI_MetaData *mtd, char **clientId, KSI_Integer **machine
 
 	KSI_PRE(&err, mtd != NULL) goto cleanup;
 	KSI_BEGIN(mtd->ctx, &err);
-
-	KSI_TLV_PARSE_RAW_BEGIN(mtd->ctx, mtd->data, mtd->data_length)
+// FIXME!
+/*	KSI_TLV_PARSE_RAW_BEGIN(mtd->ctx, mtd->data, mtd->data_length)
 		KSI_PARSE_TLV_ELEMENT_UTF8STR(0x01, &cId)
 		KSI_PARSE_TLV_ELEMENT_INTEGER(0x02, &mId)
 		KSI_PARSE_TLV_ELEMENT_INTEGER(0x03, &sNr)
 		KSI_PARSE_TLV_ELEMENT_UNKNONW_NON_CRITICAL_IGNORE
 	KSI_TLV_PARSE_RAW_END(res, NULL);
 	KSI_CATCH(&err, res) goto cleanup;
-
+*/
 	if (clientId != NULL) {
 		*clientId = cId;
 		cId = NULL;
@@ -508,10 +519,10 @@ cleanup:
 int KSI_MetaData_getRaw(KSI_MetaData *mtd, const unsigned char **data, int *data_len) {
 	KSI_ERR err;
 	KSI_PRE(&err, mtd != NULL) goto cleanup;
-
-	*data = mtd->data;
+// FIXME
+/*	*data = mtd->data;
 	*data_len = mtd->data_length;
-
+*/
 	KSI_SUCCESS(&err);
 
 cleanup:

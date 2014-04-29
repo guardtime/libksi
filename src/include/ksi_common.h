@@ -46,7 +46,7 @@ typedef struct KSI_DataHasher_st KSI_DataHasher;
 
 typedef struct KSI_HashChain_MetaHash_st KSI_MetaHash;
 
-typedef struct KSI_HashChain_MetaHash_st KSI_MetaData;
+typedef struct KSI_HashChain_MetaData_st KSI_MetaData;
 /**
  * This structure represents hashed data.
  * \see #KSI_DataHasher, #KSI_DataHasher_close, #KSI_DataHash_free

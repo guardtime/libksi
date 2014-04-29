@@ -1,5 +1,34 @@
 #include "ksi_internal.h"
 
+struct KSI_HashChainLink_st {
+	KSI_CTX *ctx;
+	int isLeft;
+	int levelCorrection;
+	KSI_MetaHash *metaHash;
+	KSI_MetaData *metaData;
+	KSI_DataHash *imprint;
+};
+
+struct KSI_CalendarHashChain_st {
+	KSI_CTX *ctx;
+	KSI_Integer *publicationTime;
+	KSI_Integer *aggregationTime;
+	KSI_DataHash *inputHash;
+	KSI_LIST(KSI_HashChainLink) *hashChain;
+};
+
+struct KSI_ExtendPdu_st {
+	KSI_CTX *ctx;
+	KSI_ExtendReq *request;
+	KSI_ExtendResp *response;
+};
+
+struct KSI_AggregationPdu_st {
+	KSI_CTX *ctx;
+	KSI_AggregationReq *request;
+	KSI_AggregationResp *response;
+};
+
 struct KSI_Header_st {
 	KSI_CTX *ctx;
 	KSI_Integer *instanceId;
@@ -56,8 +85,458 @@ struct KSI_ExtendResp_st {
 	KSI_Integer *status;
 	KSI_Utf8String *errorMsg;
 	KSI_Integer *lastTime;
-	KSI_LIST(KSI_TLV) *payload;
+	KSI_CalendarHashChain *calendarHashChain;
 };
+
+
+KSI_IMPLEMENT_LIST(KSI_HashChainLink, KSI_HashChainLink_free);
+
+/**
+ * KSI_HashChainLink
+ */
+void KSI_HashChainLink_free(KSI_HashChainLink *t) {
+	if(t != NULL) {
+		KSI_MetaHash_free(t->metaHash);
+		KSI_MetaData_free(t->metaData);
+		KSI_DataHash_free(t->imprint);
+		KSI_free(t);
+	}
+}
+
+int KSI_HashChainLink_new(KSI_CTX *ctx, KSI_HashChainLink **t) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_HashChainLink *tmp = NULL;
+	tmp = KSI_new(KSI_HashChainLink);
+	if(tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->isLeft = 0;
+	tmp->levelCorrection = 0;
+	tmp->metaHash = NULL;
+	tmp->metaData = NULL;
+	tmp->imprint = NULL;
+	*t = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+cleanup:
+	KSI_HashChainLink_free(tmp);
+	return res;
+}
+
+int KSI_HashChainLink_getIsLeft(const KSI_HashChainLink *t, int *isLeft) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || isLeft == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*isLeft = t->isLeft;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_HashChainLink_getLevelCorrection(const KSI_HashChainLink *t, int *levelCorrection) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || levelCorrection == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*levelCorrection = t->levelCorrection;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_HashChainLink_getMetaHash(const KSI_HashChainLink *t, const KSI_MetaHash **metaHash) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || metaHash == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*metaHash = t->metaHash;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_HashChainLink_getMetaData(const KSI_HashChainLink *t, const KSI_MetaData **metaData) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || metaData == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*metaData = t->metaData;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_HashChainLink_getImprint(const KSI_HashChainLink *t, const KSI_DataHash **imprint) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || imprint == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*imprint = t->imprint;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_HashChainLink_setIsLeft(KSI_HashChainLink *t, int isLeft) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->isLeft = isLeft;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_HashChainLink_setLevelCorrection(KSI_HashChainLink *t, int levelCorrection) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->levelCorrection = levelCorrection;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_HashChainLink_setMetaHash(KSI_HashChainLink *t, KSI_MetaHash *metaHash) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->metaHash = metaHash;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_HashChainLink_setMetaData(KSI_HashChainLink *t, KSI_MetaData *metaData) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->metaData = metaData;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_HashChainLink_setImprint(KSI_HashChainLink *t, KSI_DataHash *imprint) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->imprint = imprint;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+
+/**
+ * KSI_CalendarHashChain
+ */
+void KSI_CalendarHashChain_free(KSI_CalendarHashChain *t) {
+	if(t != NULL) {
+		KSI_Integer_free(t->publicationTime);
+		KSI_Integer_free(t->aggregationTime);
+		KSI_DataHash_free(t->inputHash);
+		KSI_HashChainLinkList_free(t->hashChain);
+		KSI_free(t);
+	}
+}
+
+int KSI_CalendarHashChain_new(KSI_CTX *ctx, KSI_CalendarHashChain **t) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CalendarHashChain *tmp = NULL;
+	tmp = KSI_new(KSI_CalendarHashChain);
+	if(tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->publicationTime = NULL;
+	tmp->aggregationTime = NULL;
+	tmp->inputHash = NULL;
+	tmp->hashChain = NULL;
+	*t = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+cleanup:
+	KSI_CalendarHashChain_free(tmp);
+	return res;
+}
+
+int KSI_CalendarHashChain_getPublicationTime(const KSI_CalendarHashChain *t, const KSI_Integer **publicationTime) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || publicationTime == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*publicationTime = t->publicationTime;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_CalendarHashChain_getAggregationTime(const KSI_CalendarHashChain *t, const KSI_Integer **aggregationTime) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || aggregationTime == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*aggregationTime = t->aggregationTime;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_CalendarHashChain_getInputHash(const KSI_CalendarHashChain *t, const KSI_DataHash **inputHash) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || inputHash == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*inputHash = t->inputHash;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_CalendarHashChain_getHashChain(const KSI_CalendarHashChain *t, const KSI_LIST(KSI_HashChainLink) **hashChain) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || hashChain == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*hashChain = t->hashChain;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_CalendarHashChain_setPublicationTime(KSI_CalendarHashChain *t, KSI_Integer *publicationTime) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->publicationTime = publicationTime;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_CalendarHashChain_setAggregationTime(KSI_CalendarHashChain *t, KSI_Integer *aggregationTime) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->aggregationTime = aggregationTime;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_CalendarHashChain_setInputHash(KSI_CalendarHashChain *t, KSI_DataHash *inputHash) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->inputHash = inputHash;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_CalendarHashChain_setHashChain(KSI_CalendarHashChain *t, KSI_LIST(KSI_HashChainLink) *hashChain) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->hashChain = hashChain;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+
+/**
+ * KSI_ExtendPdu
+ */
+void KSI_ExtendPdu_free(KSI_ExtendPdu *t) {
+	if(t != NULL) {
+		KSI_ExtendReq_free(t->request);
+		KSI_ExtendResp_free(t->response);
+		KSI_free(t);
+	}
+}
+
+int KSI_ExtendPdu_new(KSI_CTX *ctx, KSI_ExtendPdu **t) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_ExtendPdu *tmp = NULL;
+	tmp = KSI_new(KSI_ExtendPdu);
+	if(tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->request = NULL;
+	tmp->response = NULL;
+	*t = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+cleanup:
+	KSI_ExtendPdu_free(tmp);
+	return res;
+}
+
+int KSI_ExtendPdu_getRequest(const KSI_ExtendPdu *t, const KSI_ExtendReq **request) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || request == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*request = t->request;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_ExtendPdu_getResponse(const KSI_ExtendPdu *t, const KSI_ExtendResp **response) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || response == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*response = t->response;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_ExtendPdu_setRequest(KSI_ExtendPdu *t, KSI_ExtendReq *request) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->request = request;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_ExtendPdu_setResponse(KSI_ExtendPdu *t, KSI_ExtendResp *response) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->response = response;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+
+/**
+ * KSI_AggregationPdu
+ */
+void KSI_AggregationPdu_free(KSI_AggregationPdu *t) {
+	if(t != NULL) {
+		KSI_AggregationReq_free(t->request);
+		KSI_AggregationResp_free(t->response);
+		KSI_free(t);
+	}
+}
+
+int KSI_AggregationPdu_new(KSI_CTX *ctx, KSI_AggregationPdu **t) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_AggregationPdu *tmp = NULL;
+	tmp = KSI_new(KSI_AggregationPdu);
+	if(tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->request = NULL;
+	tmp->response = NULL;
+	*t = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+cleanup:
+	KSI_AggregationPdu_free(tmp);
+	return res;
+}
+
+int KSI_AggregationPdu_getRequest(const KSI_AggregationPdu *t, const KSI_AggregationReq **request) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || request == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*request = t->request;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_AggregationPdu_getResponse(const KSI_AggregationPdu *t, const KSI_AggregationResp **response) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || response == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*response = t->response;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_AggregationPdu_setRequest(KSI_AggregationPdu *t, KSI_AggregationReq *request) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->request = request;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_AggregationPdu_setResponse(KSI_AggregationPdu *t, KSI_AggregationResp *response) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->response = response;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
 
 
 /**
@@ -888,7 +1367,7 @@ void KSI_ExtendResp_free(KSI_ExtendResp *t) {
 		KSI_Integer_free(t->status);
 		KSI_Utf8String_free(t->errorMsg);
 		KSI_Integer_free(t->lastTime);
-		KSI_TLVList_free(t->payload);
+		KSI_CalendarHashChain_free(t->calendarHashChain);
 		KSI_free(t);
 	}
 }
@@ -908,7 +1387,7 @@ int KSI_ExtendResp_new(KSI_CTX *ctx, KSI_ExtendResp **t) {
 	tmp->status = NULL;
 	tmp->errorMsg = NULL;
 	tmp->lastTime = NULL;
-	tmp->payload = NULL;
+	tmp->calendarHashChain = NULL;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -977,13 +1456,13 @@ cleanup:
 	 return res;
 }
 
-int KSI_ExtendResp_getPayload(const KSI_ExtendResp *t, const KSI_LIST(KSI_TLV) **payload) {
+int KSI_ExtendResp_getCalendarHashChain(const KSI_ExtendResp *t, const KSI_CalendarHashChain **calendarHashChain) {
 	int res = KSI_UNKNOWN_ERROR;
-	if(t == NULL || payload == NULL) {
+	if(t == NULL || calendarHashChain == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
-	*payload = t->payload;
+	*calendarHashChain = t->calendarHashChain;
 	res = KSI_OK;
 cleanup:
 	 return res;
@@ -1049,13 +1528,13 @@ cleanup:
 	 return res;
 }
 
-int KSI_ExtendResp_setPayload(KSI_ExtendResp *t, KSI_LIST(KSI_TLV) *payload) {
+int KSI_ExtendResp_setCalendarHashChain(KSI_ExtendResp *t, KSI_CalendarHashChain *calendarHashChain) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
-	t->payload = payload;
+	t->calendarHashChain = calendarHashChain;
 	res = KSI_OK;
 cleanup:
 	 return res;
