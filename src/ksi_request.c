@@ -602,12 +602,7 @@ static int createExtendRequest(KSI_CTX *ctx, const KSI_Integer *start, const KSI
 	res = KSI_ExtendReq_new(ctx, &req);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	// FIXME!
-	KSI_Integer *tmpStart = NULL;
-	res = KSI_Integer_new(ctx, KSI_Integer_getUInt64(start) - 3600*24*14, &tmpStart);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_ExtendReq_setAggregationTime(req, tmpStart);
+	res = KSI_ExtendReq_setAggregationTime(req, KSI_Integer_clone(start));
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_ExtendReq_setPublicationTime(req, KSI_Integer_clone(end));

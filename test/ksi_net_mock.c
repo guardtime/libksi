@@ -51,6 +51,9 @@ static int mockSendSignRequest(KSI_NetProvider *netProvider, KSI_NetHandle *hand
 	return mockSend(handle);
 }
 
+static int mockSendExtendRequest(KSI_NetProvider *netProvider, KSI_NetHandle *handle) {
+	return mockSend(handle);
+}
 
 int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetProvider **provider) {
 	KSI_ERR err;
@@ -67,6 +70,10 @@ int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetProvider **provider) {
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_NetProvider_setSendSignRequestFn(pr, mockSendSignRequest);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_NetProvider_setSendExtendRequestFn(pr, mockSendExtendRequest);
+	KSI_CATCH(&err, res) goto cleanup;
 
 	*provider = pr;
 	pr = NULL;
