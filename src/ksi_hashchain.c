@@ -19,21 +19,6 @@ struct KSI_HashChain_MetaData_st {
 	KSI_Integer *sequenceNr;
 };
 
-struct KSI_HashChain_st {
-	KSI_CTX *ctx;
-
-	KSI_DataHash *hash;
-	KSI_MetaHash *metaHash;
-	KSI_MetaData *metaData;
-
-	unsigned int levelCorrection;
-	int isLeft;
-
-	KSI_HashChain *last;
-	KSI_HashChain *prev;
-	KSI_HashChain *next;
-};
-
 static int highBit(unsigned int n) {
     n |= (n >>  1);
     n |= (n >>  2);
@@ -72,32 +57,47 @@ cleanup:
 	return res;
 }
 
-static int addChainImprint(KSI_DataHasher *hsr, KSI_HashChain *chain) {
+static int addChainImprint(KSI_DataHasher *hsr, KSI_HashChainLink *link) {
 	KSI_ERR err;
+	KSI_CTX *ctx;
 	int res;
 	int mode = 0;
 	const unsigned char *imprint;
 	int imprint_len;
+	const KSI_MetaData *metaData = NULL;
+	const KSI_MetaHash *metaHash = NULL;
+	const KSI_DataHash *hash = NULL;
 
 	KSI_PRE(&err, hsr != NULL) goto cleanup;
-	KSI_PRE(&err, chain != NULL) goto cleanup;
-	KSI_BEGIN(chain->ctx, &err);
+	KSI_PRE(&err, link != NULL) goto cleanup;
 
-	if (chain->hash != NULL) mode |= 0x01;
-	if (chain->metaHash != NULL) mode |= 0x02;
-	if (chain->metaData != NULL) mode |= 0x04;
+	ctx = KSI_DataHasher_getCtx(hsr);
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_HashChainLink_getImprint(link, &hash);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_HashChainLink_getMetaData(link, &metaData);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_HashChainLink_getMetaHash(link, &metaHash);
+
+
+	if (hash != NULL) mode |= 0x01;
+	if (metaHash != NULL) mode |= 0x02;
+	if (metaData != NULL) mode |= 0x04;
 
 	switch(mode) {
 		case 0x01:
-			res = KSI_DataHash_getImprint(chain->hash, &imprint, &imprint_len);
+			res = KSI_DataHash_getImprint(hash, &imprint, &imprint_len);
 			KSI_CATCH(&err, res) goto cleanup;
 			break;
 		case 0x02:
-			res = KSI_MetaHash_getRaw(chain->metaHash, &imprint, &imprint_len);
+			res = KSI_MetaHash_getRaw(metaHash, &imprint, &imprint_len);
 			KSI_CATCH(&err, res) goto cleanup;
 			break;
 		case 0x04:
-			res = KSI_MetaData_getRaw(chain->metaData, &imprint, &imprint_len);
+			res = KSI_MetaData_getRaw(metaData, &imprint, &imprint_len);
 			KSI_CATCH(&err, res) goto cleanup;
 			break;
 		default:
@@ -115,49 +115,70 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int aggregateChain(KSI_HashChain *chain, KSI_DataHash *inputHash, int startLevel, int hash_id, int isCalendar, int *endLevel, KSI_DataHash **outputHash) {
+static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, KSI_DataHash *inputHash, int startLevel, int hash_id, int isCalendar, int *endLevel, KSI_DataHash **outputHash) {
 	KSI_ERR err;
+	KSI_CTX *ctx = NULL;
 	int res;
 	int tmp_len;
 	int level = startLevel;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
-	KSI_HashChain *ch = chain;
+	KSI_HashChainLink *link = NULL;
 	int algo_id = hash_id;
 	char chr_level;
 	char logMsg[0xff];
+	int i;
+
+	/* Extracted data. */
+	int levelCorrection;
+	int isLeft;
+	const KSI_DataHash *linkHsh = NULL;
 
 	KSI_PRE(&err, chain != NULL) goto cleanup;
 	KSI_PRE(&err, inputHash != NULL) goto cleanup;
 	KSI_PRE(&err, outputHash != NULL) goto cleanup;
-	KSI_BEGIN(chain->ctx, &err);
+
+	ctx = KSI_DataHash_getCtx(inputHash);
+	KSI_BEGIN(ctx, &err);
 
 	sprintf(logMsg, "Starting %s hash chain aggregation with input  hash", isCalendar ? "calendar": "aggregation");
-	KSI_LOG_logDataHash(chain->ctx, KSI_LOG_DEBUG, logMsg, inputHash);
+	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, logMsg, inputHash);
 
-	while (ch != NULL) {
+	for (i = 0; i < KSI_HashChainLinkList_length(chain); i++) {
+		res = KSI_HashChainLinkList_elementAt(chain, i, &link);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		res = KSI_HashChainLink_getLevelCorrection(link, &levelCorrection);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		res = KSI_HashChainLink_getImprint(link, &linkHsh);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		res = KSI_HashChainLink_getIsLeft(link, &isLeft);
+		KSI_CATCH(&err, res) goto cleanup;
+
 		if(!isCalendar) {
-			level += ch->levelCorrection + 1;
+			level += levelCorrection + 1;
 		} else {
-			res = KSI_DataHash_getData(ch->hash, &algo_id, NULL, NULL);
+			res = KSI_DataHash_getData(linkHsh, &algo_id, NULL, NULL);
 			KSI_CATCH(&err, res) goto cleanup;
 		}
 
 		/* Create or reset the hasher. */
 		if (hsr == NULL) {
-			res = KSI_DataHasher_open(ch->ctx, algo_id, &hsr);
+			res = KSI_DataHasher_open(ctx, algo_id, &hsr);
 		} else {
 			KSI_DataHasher_reset(hsr);
 		}
 
-		if (ch->isLeft) {
+		if (isLeft) {
 			res = addNvlImprint(hsh, inputHash, hsr,  &tmp_len);
 			KSI_CATCH(&err, res) goto cleanup;
 
-			res = addChainImprint(hsr, ch);
+			res = addChainImprint(hsr, link);
 			KSI_CATCH(&err, res) goto cleanup;
 		} else {
-			res = addChainImprint(hsr, ch);
+			res = addChainImprint(hsr, link);
 			KSI_CATCH(&err, res) goto cleanup;
 
 			res = addNvlImprint(hsh, inputHash, hsr, &tmp_len);
@@ -177,9 +198,6 @@ static int aggregateChain(KSI_HashChain *chain, KSI_DataHash *inputHash, int sta
 
 		res = KSI_DataHasher_close(hsr, &hsh);
 		KSI_CATCH(&err, res) goto cleanup;
-
-		ch = ch->next;
-
 	}
 
 
@@ -188,7 +206,7 @@ static int aggregateChain(KSI_HashChain *chain, KSI_DataHash *inputHash, int sta
 	hsh = NULL;
 
 	sprintf(logMsg, "Finished %s hash chain aggregation with output hash", isCalendar ? "calendar": "aggregation");
-	KSI_LOG_logDataHash(chain->ctx, KSI_LOG_DEBUG, logMsg, *outputHash);
+	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, logMsg, *outputHash);
 
 	KSI_SUCCESS(&err);
 
@@ -203,51 +221,33 @@ cleanup:
 /**
  *
  */
-void KSI_HashChain_free(KSI_HashChain *node) {
-	while (node != NULL) {
-		KSI_HashChain *tmp = node->next;
-
-		KSI_DataHash_free(node->hash);
-		KSI_free(node);
-
-		node = tmp;
-	}
-}
-
-/**
- *
- */
-int KSI_HashChain_new(KSI_CTX *ctx, KSI_DataHash *hash, unsigned int levelCorrection, int isLeft, KSI_HashChain **node) {
+int KSI_HashChain_new(KSI_CTX *ctx, KSI_DataHash *hash, unsigned int levelCorrection, int isLeft, KSI_HashChainLink **node) {
 	KSI_ERR err;
-	KSI_HashChain *nd = NULL;
+	int res;
+	KSI_HashChainLink *tmp = NULL;
 
 	KSI_BEGIN(ctx, &err);
 
-	nd = KSI_new(KSI_HashChain);
-	if (nd == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
+	res = KSI_HashChainLink_new(ctx, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
 
-	nd->ctx = ctx;
+	res = KSI_HashChainLink_setIsLeft(tmp, isLeft);
+	KSI_CATCH(&err, res) goto cleanup;
 
-	nd->hash = hash;
-	nd->metaData = NULL;
-	nd->metaHash = NULL;
+	res = KSI_HashChainLink_setLevelCorrection(tmp, levelCorrection);
+	KSI_CATCH(&err, res) goto cleanup;
 
-	nd->next = NULL;
-	nd->last = nd;
-	nd->levelCorrection = levelCorrection;
-	nd->isLeft = isLeft;
+	res = KSI_HashChainLink_setImprint(tmp, hash);
+	KSI_CATCH(&err, res) goto cleanup;
 
-	*node = nd;
-	nd = NULL;
+	*node = tmp;
+	tmp = NULL;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
 
-	KSI_HashChain_free(nd);
+	KSI_HashChainLink_free(tmp);
 
 	return KSI_RETURN(&err);
 }
@@ -255,32 +255,40 @@ cleanup:
 /**
  *
  */
-int KSI_HashChain_appendLink(KSI_CTX *ctx, KSI_DataHash *siblingHash, int isLeft, unsigned int levelCorrection, KSI_HashChain **root) {
+int KSI_HashChain_appendLink(KSI_CTX *ctx, KSI_DataHash *siblingHash, int isLeft, unsigned int levelCorrection, KSI_LIST(KSI_HashChainLink) **chain) {
 	KSI_ERR err;
-	KSI_HashChain *chainLink = NULL;
+	KSI_HashChainLink *chainLink = NULL;
 	int res;
+	KSI_LIST(KSI_HashChainLink) *tmp = NULL;
+
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, chain != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
 	res = KSI_HashChain_new(ctx, siblingHash, levelCorrection, isLeft, &chainLink);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	if (*root == NULL) {
-		*root = chainLink;
-	} else {
-		(*root)->last->next = chainLink;
-		chainLink->prev = (*root)->last;
+	tmp = *chain;
+
+	if (tmp == NULL) {
+		res = KSI_HashChainLinkList_new(ctx, &tmp);
+		KSI_CATCH(&err, res) goto cleanup;
 	}
 
-	(*root)->last = chainLink;
+	res = KSI_HashChainLinkList_append(tmp, chainLink);
+	KSI_CATCH(&err, res) goto cleanup;
 	chainLink = NULL;
+
+	*chain = tmp;
+	tmp = NULL;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
 
-	KSI_HashChain_free(chainLink);
+	KSI_HashChainLinkList_free(tmp);
+	KSI_HashChainLink_free(chainLink);
 
 	return KSI_RETURN(&err);
 }
@@ -288,48 +296,55 @@ cleanup:
 /**
  *
  */
-int KSI_HashChain_getCalendarAggregationTime(KSI_HashChain *cal, KSI_Integer *aggr_time, uint32_t *utc_time) {
-	KSI_ERR err;
+int KSI_HashChain_getCalendarAggregationTime(KSI_LIST(KSI_HashChainLink) *chain, KSI_Integer *aggr_time, uint32_t *utc_time) {
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_uint64_t r;
 	uint32_t t = 0;
-	KSI_HashChain *hn = NULL;
+	KSI_HashChainLink *hn = NULL;
+	int i;
+	int isLeft;
 
-	KSI_PRE(&err, cal != NULL) goto cleanup;
-	KSI_PRE(&err, aggr_time != NULL) goto cleanup;
-	KSI_BEGIN(cal->ctx, &err);
+	if (chain == NULL || aggr_time == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
 	r = KSI_Integer_getUInt64(aggr_time);
 
-
-	hn = cal->last;
-	while(hn != NULL) {
+	/* Traverse the list from the end to the beginning. */
+	for (i = KSI_HashChainLinkList_length(chain) - 1; i >= 0; i--) {
 		if (r <= 0) {
-			KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+			res = KSI_INVALID_FORMAT;
 			goto cleanup;
 		}
-		if (hn->isLeft) {
+		res = KSI_HashChainLinkList_elementAt(chain, i, &hn);
+		if (res != KSI_OK) goto cleanup;
+
+		res = KSI_HashChainLink_getIsLeft(hn, &isLeft);
+		if (res != KSI_OK) goto cleanup;
+
+		if (isLeft) {
 			r = highBit(r) - 1;
 		} else {
 			t += highBit(r);
 			r -= highBit(r);
 		}
-		hn = hn->prev;
 	}
 
 	if (r != 0) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+		res = KSI_INVALID_FORMAT;
 		goto cleanup;
 	}
 
 	*utc_time = t;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_nofree(hn);
 
-	return KSI_RETURN(&err);
+	return res;
 }
  /**
   *
@@ -444,7 +459,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_MetaHash_getRaw(KSI_MetaHash *mth, const unsigned char **data, int *data_len) {
+int KSI_MetaHash_getRaw(const KSI_MetaHash *mth, const unsigned char **data, int *data_len) {
 	KSI_ERR err;
 	KSI_PRE(&err, mth != NULL) goto cleanup;
 
@@ -460,14 +475,14 @@ cleanup:
 /**
  *
  */
-int KSI_HashChain_aggregate(KSI_HashChain *chain, KSI_DataHash *inputHash, int startLevel, int hash_id, int *endLevel, KSI_DataHash **outputHash) {
+int KSI_HashChain_aggregate(KSI_LIST(KSI_HashChainLink) *chain, KSI_DataHash *inputHash, int startLevel, int hash_id, int *endLevel, KSI_DataHash **outputHash) {
 	return aggregateChain(chain, inputHash, startLevel, hash_id, 0, endLevel, outputHash);
 }
 
 /**
  *
  */
-int KSI_HashChain_aggregateCalendar(KSI_HashChain *chain, KSI_DataHash *inputHash, KSI_DataHash **outputHash) {
+int KSI_HashChain_aggregateCalendar(KSI_LIST(KSI_HashChainLink) *chain, KSI_DataHash *inputHash, KSI_DataHash **outputHash) {
 	return aggregateChain(chain, inputHash, 0xff, -1, 1, NULL, outputHash);
 }
 
@@ -516,7 +531,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_MetaData_getRaw(KSI_MetaData *mtd, const unsigned char **data, int *data_len) {
+int KSI_MetaData_getRaw(const KSI_MetaData *mtd, const unsigned char **data, int *data_len) {
 	KSI_ERR err;
 	KSI_PRE(&err, mtd != NULL) goto cleanup;
 // FIXME

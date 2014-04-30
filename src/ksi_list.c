@@ -236,5 +236,4 @@ cleanup:
 
 KSI_IMPLEMENT_LIST(KSI_Integer, KSI_Integer_free);
 KSI_IMPLEMENT_LIST(KSI_TLV, KSI_TLV_free);
-KSI_IMPLEMENT_LIST(KSI_HashChain, KSI_HashChain_free);
 KSI_IMPLEMENT_LIST(KSI_String, KSI_free);

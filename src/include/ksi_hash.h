@@ -120,7 +120,7 @@ extern "C" {
 	 * \note The digest value returned by this function has to be freed by the
 	 * programmer with #KSI_free.
 	 */
-	int KSI_DataHash_getData(KSI_DataHash *hash, int *hash_id, const unsigned char **digest, int *digest_length);
+	int KSI_DataHash_getData(const KSI_DataHash *hash, int *hash_id, const unsigned char **digest, int *digest_length);
 
 	/**
 	 * Constructor for #KSI_DataHash object from existing hash value.

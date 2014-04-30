@@ -23,6 +23,7 @@ CuSuite* KSI_Hash_GetSuite(void);
 CuSuite* KSI_NET_GetSuite(void);
 CuSuite* KSI_HashChain_GetSuite(void);
 CuSuite* KSI_UTIL_GetSuite(void);
+CuSuite* KSI_Signature_getSuite(void);
 
 #ifdef __cplusplus
 }

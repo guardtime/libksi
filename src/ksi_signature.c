@@ -63,19 +63,19 @@ struct sigDataRec_st {
 struct aggrChainRec_st {
 	KSI_CTX *ctx;
 	KSI_Integer *aggregationTime;
-	KSI_Integer *chainIndex;
+	KSI_LIST(KSI_Integer) *chainIndex;
 	unsigned char *inputData;
 	int inputData_len;
 	KSI_DataHash *inputHash;
 	int aggrHashId;
-	KSI_HashChain *chain;
+	KSI_LIST(KSI_HashChainLink) *chain;
 };
 
 struct calChainRec_st {
 	KSI_Integer *publicationTime;
 	KSI_Integer *aggregationTime;
 	KSI_DataHash *inputHash;
-	KSI_HashChain *chain;
+	KSI_LIST(KSI_HashChainLink) *chain;
 };
 
 struct headerRec_st {
@@ -148,7 +148,7 @@ static void CalChainRec_free(CalChainRec *cal) {
 	if (cal != NULL) {
 		KSI_Integer_free(cal->aggregationTime);
 		KSI_Integer_free(cal->publicationTime);
-		KSI_HashChain_free(cal->chain);
+		KSI_HashChainLinkList_free(cal->chain);
 		KSI_DataHash_free(cal->inputHash);
 		KSI_free(cal);
 	}
@@ -166,10 +166,10 @@ static void HeaderRec_free(HeaderRec *hdr) {
 static void AggrChainRec_free(AggrChainRec *aggr) {
 	if (aggr != NULL) {
 		KSI_Integer_free(aggr->aggregationTime);
-		KSI_Integer_free(aggr->chainIndex);
+		KSI_IntegerList_free(aggr->chainIndex);
 		KSI_free(aggr->inputData);
 		KSI_DataHash_free(aggr->inputHash);
-		KSI_HashChain_free(aggr->chain);
+		KSI_HashChainLinkList_free(aggr->chain);
 		KSI_free(aggr);
 	}
 }
@@ -472,6 +472,45 @@ cleanup:
 
 }
 
+
+static int AggrChainRec_addIndex(KSI_CTX *ctx, KSI_TLV *tlv, AggrChainRec *aggr) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Integer *item = NULL;
+	KSI_LIST(KSI_Integer) *list = NULL;
+
+	if (aggr == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	list = aggr->chainIndex;
+
+	if (list == NULL) {
+		res = KSI_IntegerList_new(ctx, &list);
+	}
+
+	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_INT);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_TLV_getInteger(tlv, &item);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_IntegerList_append(list, item);
+	if (res != KSI_OK) goto cleanup;
+	item = NULL;
+
+	aggr->chainIndex = list;
+	list = NULL;
+
+
+
+cleanup:
+	if (list != aggr->chainIndex) KSI_IntegerList_free(list);
+	KSI_Integer_free(item);
+
+	return res;
+}
+
 static int AggrChainRec_addLink(KSI_CTX *ctx, KSI_TLV *tlv, AggrChainRec *aggr) {
 	int res = KSI_UNKNOWN_ERROR;
 	int isLeft;
@@ -580,14 +619,14 @@ static int parseAggregationChainRec(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature *s
 
 	KSI_TLV_PARSE_BEGIN(ctx, tlv)
 		KSI_PARSE_TLV_ELEMENT_INTEGER	(0x02, &aggr->aggregationTime)
-		KSI_PARSE_TLV_ELEMENT_INTEGER	(0x03, &aggr->chainIndex)
+		KSI_PARSE_TLV_ELEMENT_CB		(0x03, AggrChainRec_addIndex, aggr)
 		KSI_PARSE_TLV_ELEMENT_RAW		(0x04, &aggr->inputData, &aggr->inputData_len)
 		KSI_PARSE_TLV_ELEMENT_IMPRINT	(0x05, &aggr->inputHash)
 		KSI_PARSE_TLV_ELEMENT_UINT8		(0x06, &aggr->aggrHashId)
 		KSI_PARSE_TLV_ELEMENT_CB		(0x07, AggrChainRec_addLink, aggr)
 		KSI_PARSE_TLV_ELEMENT_CB		(0x08, AggrChainRec_addLink, aggr)
+		KSI_PARSE_TLV_ELEMENT_UNKNONW_NON_CRITICAL_IGNORE
 	KSI_TLV_PARSE_END(res);
-
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = AggrChainRecList_append(sig->aggregationChainList, aggr);
@@ -881,9 +920,6 @@ static int extractSignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature **signatur
 	sig->calendarChain = cal;
 	cal = NULL;
 
-	/* Store the remaining TLV for storing purposes. */
-	sig->baseTlv = tlv;
-
 	res = KSI_Signature_validate(sig);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -998,6 +1034,7 @@ int KSI_parseAggregationResponse(KSI_CTX *ctx, unsigned char *response, int resp
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* The tlv is referenced from the signature now */
+	tmp->baseTlv = sigTlv;
 	sigTlv = NULL;
 
 	*signature = tmp;
@@ -1091,6 +1128,7 @@ int KSI_Signature_validateInternal(KSI_Signature *sig) {
 	uint32_t utc_time;
 	int res;
 	int level;
+	int i;
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
 	KSI_BEGIN(sig->ctx, &err);
@@ -1122,14 +1160,12 @@ int KSI_Signature_validateInternal(KSI_Signature *sig) {
 	/* Aggregate aggregation chains. */
 	hsh = NULL;
 	level = 0;
-	res = AggrChainRecList_iter(sig->aggregationChainList);
-	KSI_CATCH(&err, res) goto cleanup;
 
-	while (1) {
-		AggrChainRec* aggregationChain = NULL;
+	for (i = 0; i < AggrChainRecList_length(sig->aggregationChainList); i++) {
+		const AggrChainRec* aggregationChain = NULL;
 		KSI_DataHash *tmpHash = NULL;
 
-		res = AggrChainRecList_next(sig->aggregationChainList, &aggregationChain);
+		res = AggrChainRecList_elementAt(sig->aggregationChainList, i, (AggrChainRec **)&aggregationChain);
 		KSI_CATCH(&err, res) goto cleanup;
 
 		if (aggregationChain == NULL) break;
@@ -1218,7 +1254,7 @@ int KSI_Signature_clone(const KSI_Signature *sig, KSI_Signature **clone) {
 	res = extractSignature(sig->ctx, tlv, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	/* The TLV is referenced from the signature now */
+	tmp->baseTlv = tlv;
 	tlv = NULL;
 
 	*clone = tmp;
@@ -1232,6 +1268,124 @@ cleanup:
 	KSI_Signature_free(tmp);
 
 	return KSI_RETURN(&err);
+}
+
+int KSI_Signature_parse(KSI_CTX *ctx, unsigned char *raw, int raw_len, KSI_Signature **sig) {
+	KSI_ERR err;
+	KSI_TLV *tlv = NULL;
+	KSI_Signature *tmp = NULL;
+	int res;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, raw != NULL) goto cleanup;
+	KSI_PRE(&err, raw_len > 0) goto cleanup;
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_TLV_parseBlob(ctx, raw, raw_len, &tlv);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = extractSignature(ctx, tlv, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	tmp->baseTlv = tlv;
+	tlv = NULL;
+
+	*sig = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_TLV_free(tlv);
+	KSI_Signature_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_Signature_fromFile(KSI_CTX *ctx, const char *fileName, KSI_Signature **sig) {
+	KSI_ERR err;
+	int res;
+	FILE *f = NULL;
+	unsigned char *raw = NULL;
+	int raw_size = 0xfffff;
+	size_t raw_len = 0;
+	KSI_Signature *tmp = NULL;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, fileName != NULL) goto cleanup;
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	raw = KSI_calloc(raw_size, 1);
+	if (raw == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	f = fopen(fileName, "rb");
+	if (f == NULL) {
+		KSI_FAIL(&err, KSI_IO_ERROR, "Unable to open file.");
+		goto cleanup;
+	}
+
+	raw_len = fread(raw, 1, raw_size, f);
+	if (raw_len == 0) {
+		KSI_FAIL(&err, KSI_IO_ERROR, "Unable to read file.");
+		goto cleanup;
+	}
+
+	if (!feof(f)) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Input too long for a valid signature.");
+		goto cleanup;
+	}
+
+	res = KSI_Signature_parse(ctx, raw, (int)raw_len, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*sig = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	if (f != NULL) fclose(f);
+	KSI_Signature_free(tmp);
+	KSI_free(raw);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_Signature_serialize(KSI_Signature *sig, unsigned char **raw, int *raw_len) {
+	KSI_ERR err;
+	int res;
+	unsigned char *tmp = NULL;
+	int tmp_len;
+
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_PRE(&err, raw != NULL) goto cleanup;
+	KSI_PRE(&err, raw_len != NULL) goto cleanup;
+	KSI_BEGIN(sig->ctx, &err);
+
+	/* We assume that the baseTlv tree is up to date! */
+	res = KSI_TLV_serialize(sig->baseTlv, &tmp, &tmp_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*raw = tmp;
+	tmp = NULL;
+
+	*raw_len = tmp_len;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_free(tmp);
+
+	return KSI_RETURN(&err);
+
 }
 
 KSI_IMPLEMENT_GET_CTX(KSI_Signature);

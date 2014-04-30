@@ -44,6 +44,7 @@ runner_SOURCES= \
 		ksi_net_mock.c \
 		ksi_net_test.c \
 		ksi_rdr_test.c \
+		ksi_signature_test.c \
 		ksi_tlv_sample_test.c \
 		ksi_tlv_test.c \
 		ksi_util_test.c \

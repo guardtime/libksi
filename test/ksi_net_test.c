@@ -17,19 +17,35 @@ static unsigned char expectedSendRequest[] = {
 		0x6c, 0x47, 0xec, 0xba, 0x05, 0xed, 0x37, 0xbc, 0x14, 0xdc, 0xad, 0xb2, 0x38, 0x55, 0x2d, 0x86, 0xc6,
 		0x59, 0x34, 0x2d, 0x1d, 0x7e, 0x87, 0xb8, 0x77, 0x2d};
 
-static void TestSendRequest(CuTest* tc) {
-	int res;
-	KSI_DataHash *hsh = NULL;
-	KSI_Signature *sig = NULL;
-	KSI_NetProvider *pr = NULL;
+static void setFileMockResponse(CuTest *tc, const char *fileName) {
 	FILE *f = NULL;
 	unsigned char *resp = NULL;
 	int resp_size = 0xfffff;
 
-	KSI_ERR_clearErrors(ctx);
-
 	resp = KSI_calloc(resp_size, 1);
 	CuAssert(tc, "Out of memory", resp != NULL);
+
+	/* Read response from file. */
+	f = fopen(fileName, "rb");
+	CuAssert(tc, "Unable to open sample response file", f != NULL);
+
+	KSI_NET_MOCK_response_len = fread(resp, 1, resp_size, f);
+	fclose(f);
+
+	if (KSI_NET_MOCK_response != NULL) {
+		KSI_free(KSI_NET_MOCK_response);
+	}
+	KSI_NET_MOCK_response = resp;
+}
+
+static void TestSendAggregateRequest(CuTest* tc) {
+	int res;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+	KSI_NetProvider *pr = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
 
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
@@ -40,32 +56,57 @@ static void TestSendRequest(CuTest* tc) {
 	res = KSI_DataHash_fromImprint(ctx, someImprint, sizeof(someImprint), &hsh);
 	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
 
-	/* Read valid response */
-	f = fopen("test/resource/tlv/ok_aggr_response-1.tlv", "rb");
-	CuAssert(tc, "Unable to open sample response file", f != NULL);
-
-	KSI_NET_MOCK_response_len = fread(resp, 1, resp_size, f);
-	fclose(f);
-
-	KSI_NET_MOCK_response = resp;
-
+	setFileMockResponse(tc, "test/resource/tlv/ok_aggr_response-1.tlv");
 
 	res = KSI_Signature_sign(hsh, &sig);
+	KSI_ERR_statusDump(ctx, stdout);
 	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
 	CuAssert(tc, "Unexpected send request", KSI_NET_MOCK_request_len == sizeof(expectedSendRequest) && !memcmp(expectedSendRequest, KSI_NET_MOCK_request, KSI_NET_MOCK_request_len));
 
+	KSI_free(KSI_NET_MOCK_response);
 	KSI_NET_MOCK_response = NULL;
-	KSI_free(resp);
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
+}
+
+static void TestSendExtendRequest(CuTest* tc) {
+	int res;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+	KSI_NetProvider *pr = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_NET_MOCK_new(ctx, &pr);
+	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
+
+	res = KSI_CTX_setNetworkProvider(ctx, pr);
+	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
+
+	res = KSI_DataHash_fromImprint(ctx, someImprint, sizeof(someImprint), &hsh);
+	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+
+	setFileMockResponse(tc, "test/resource/tlv/ok_extend_response-1.tlv");
+
+	res = KSI_Signature_sign(hsh, &sig);
+	KSI_ERR_statusDump(ctx, stdout);
+	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
+	CuAssert(tc, "Unexpected send request", KSI_NET_MOCK_request_len == sizeof(expectedSendRequest) && !memcmp(expectedSendRequest, KSI_NET_MOCK_request, KSI_NET_MOCK_request_len));
+
+	KSI_free(KSI_NET_MOCK_response);
+	KSI_NET_MOCK_response = NULL;
+
+	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
+
 }
 
 CuSuite* KSI_NET_GetSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
 
-	SUITE_ADD_TEST(suite, TestSendRequest);
+	SUITE_ADD_TEST(suite, TestSendAggregateRequest);
 
 	return suite;
 }

@@ -187,7 +187,7 @@ int KSI_getHashLength(int hash_id) {
 /**
  *
  */
-int KSI_DataHash_getData(KSI_DataHash *hash, int *hash_id, const unsigned char **digest, int *digest_length) {
+int KSI_DataHash_getData(const KSI_DataHash *hash, int *hash_id, const unsigned char **digest, int *digest_length) {
 	KSI_ERR err;
 
 	KSI_PRE(&err, hash != NULL) goto cleanup;

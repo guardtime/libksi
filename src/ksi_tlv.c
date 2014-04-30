@@ -612,6 +612,8 @@ int KSI_TLV_getInteger(KSI_TLV *tlv, KSI_Integer **value) {
 	KSI_uint64_t val = 0;
 	int res;
 
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_PRE(&err, value != NULL) goto cleanup;
 	KSI_BEGIN(tlv->ctx, &err);
 
 	/* Check payload type. */

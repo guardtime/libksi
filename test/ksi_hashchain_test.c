@@ -6,11 +6,16 @@
 
 extern KSI_CTX *ctx;
 
-static void buildHashChain(CuTest *tc, const char *hexImprint, int isLeft, int levelCorrection, KSI_HashChain **chn) {
+static void buildHashChain(CuTest *tc, const char *hexImprint, int isLeft, int levelCorrection, KSI_LIST(KSI_HashChainLink) **chn) {
 	unsigned char buf[1024];
 	int buf_len;
 	int res;
 	KSI_DataHash *hsh = NULL;
+
+	if (*chn == NULL) {
+		res = KSI_HashChainLinkList_new(ctx, chn);
+		CuAssert(tc, "Unable to build hash chain.", res == KSI_OK && *chn != NULL);
+	}
 
 	res = KSI_decodeHexStr(hexImprint, buf, sizeof(buf), &buf_len);
 	CuAssert(tc, "Unable to parse hex imprint", res == KSI_OK);
@@ -24,7 +29,7 @@ static void buildHashChain(CuTest *tc, const char *hexImprint, int isLeft, int l
 }
 
 static void testCalChainBuild(CuTest* tc) {
-	KSI_HashChain *chn = NULL;
+	KSI_LIST(KSI_HashChainLink) *chn = NULL;
 	KSI_DataHash *in = NULL;
 	KSI_DataHash *out = NULL;
 	KSI_DataHash *exp = NULL;
@@ -81,14 +86,14 @@ static void testCalChainBuild(CuTest* tc) {
 	KSI_DataHash_free(exp);
 	KSI_DataHash_free(in);
 	KSI_DataHash_free(out);
-	KSI_HashChain_free(chn);
+	KSI_HashChainLinkList_free(chn);
 }
 
 static void testAggrChainBuilt(CuTest *tc) {
 	int res;
 	unsigned char buf[1024];
 	int buf_len;
-	KSI_HashChain *chn = NULL;
+	KSI_LIST(KSI_HashChainLink) *chn = NULL;
 	KSI_DataHash *in = NULL;
 	KSI_DataHash *out = NULL;
 	KSI_DataHash *exp = NULL;
@@ -139,7 +144,7 @@ static void testAggrChainBuilt(CuTest *tc) {
 	KSI_DataHash_free(exp);
 	KSI_DataHash_free(in);
 	KSI_DataHash_free(out);
-	KSI_HashChain_free(chn);
+	KSI_HashChainLinkList_free(chn);
 
 
 }

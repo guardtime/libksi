@@ -6,6 +6,8 @@ typedef struct KSI_TlvTemplate_st KSI_TlvTemplate;
 
 typedef int (*getter_t)(const void *, const void **);
 typedef int (*setter_t)(void *, void *);
+typedef int (*cb_decode_t)(KSI_CTX *ctx, KSI_TLV *, void *, getter_t, setter_t);
+typedef int (*cb_encode_t)(void *, KSI_TLV *);
 struct KSI_TlvTemplate_st {
 	int type;
 	int tag;
@@ -30,8 +32,8 @@ struct KSI_TlvTemplate_st {
 	void (*elementDestruct)(void *);
 
 	/* Callbacks */
-	int (*callbackEncode)(void *, KSI_TLV *);
-	int (*callbackDecode)(KSI_CTX *ctx, KSI_TLV *, void *, getter_t, setter_t);
+	cb_encode_t callbackEncode;
+	cb_decode_t callbackDecode;
 };
 
 #define KSI_TLV_TEMPLATE_INTEGER 				1
@@ -42,7 +44,7 @@ struct KSI_TlvTemplate_st {
 #define KSI_TLV_TEMPLATE_LIST					6
 #define KSI_TLV_TEMPLATE_CALLBACK				7
 
-#define TLV_FULL_TEMPLATE_DEF(typ, tg, nc, fw, gttr, sttr, constr, destr, subTmpl, appnd, mul, elConstr, elDestr, cbEnc, cbDec) { typ, tg, nc, fw, (getter_t)gttr, (setter_t)sttr, (int (*)(KSI_CTX *, void **)) constr, (void (*)(void *)) destr, subTmpl, (int (*)(void *, void *))appnd, mul, (int (*)(KSI_CTX *, void **)) elConstr, (void (*)(void *)) elDestr, (int (*)(void *, KSI_TLV *))cbEnc, (int (*)(KSI_CTX *ctx, KSI_TLV *, void *))cbDec},
+#define TLV_FULL_TEMPLATE_DEF(typ, tg, nc, fw, gttr, sttr, constr, destr, subTmpl, appnd, mul, elConstr, elDestr, cbEnc, cbDec) { typ, tg, nc, fw, (getter_t)gttr, (setter_t)sttr, (int (*)(KSI_CTX *, void **)) constr, (void (*)(void *)) destr, subTmpl, (int (*)(void *, void *))appnd, mul, (int (*)(KSI_CTX *, void **)) elConstr, (void (*)(void *)) elDestr, (cb_encode_t)cbEnc, (cb_decode_t)cbDec},
 #define TLV_PRIMITIVE_TEMPLATE_DEF(type, tag, isNonCritical, isForward, getter, setter) TLV_FULL_TEMPLATE_DEF(type, tag, isNonCritical, isForward, getter, setter, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL)
 
 #define DEFINE_TLV_TEMPLATE(name)	static KSI_TlvTemplate name##_template[] = {
@@ -109,7 +111,7 @@ static int decodeCalendarHashChainLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarH
 	hsh = NULL;
 
 	/* Get the whole hash chain. */
-	res = valueGetter(calHashChain, &listp);
+	res = valueGetter((void *)calHashChain, (const void **)&listp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Initialize list if it does not exist */
@@ -190,7 +192,7 @@ DEFINE_TLV_TEMPLATE(KSI_ExtendResp)
 	TLV_INTEGER(0x02, 0, 0, KSI_ExtendResp_getRequestId, KSI_ExtendResp_setRequestId)
 	TLV_INTEGER(0x05, 0, 0, KSI_ExtendResp_getStatus, KSI_ExtendResp_setStatus)
 	TLV_UTF8_STRING(0x06, 0, 0, KSI_ExtendResp_getErrorMsg, KSI_ExtendResp_setErrorMsg)
-	TLV_INTEGER(0x07, 0, 0, KSI_ExtendResp_getLastTime, KSI_ExtendResp_getLastTime)
+	TLV_INTEGER(0x07, 0, 0, KSI_ExtendResp_getLastTime, KSI_ExtendResp_setLastTime)
 	TLV_COMPOSITE(0x802, 0, 0, KSI_ExtendResp_getCalendarHashChain, KSI_ExtendResp_setCalendarHashChain, KSI_CalendarHashChain)
 END_TLV_TEMPLATE
 
@@ -320,6 +322,9 @@ static int extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, KSI_TlvTemplate *t
 						goto cleanup;
 					}
 
+					res = t->setValue(payload, (void *)compositeVal);
+					KSI_CATCH(&err, res) goto cleanup;
+
 					break;
 				case KSI_TLV_TEMPLATE_CALLBACK:
 					break;
@@ -336,7 +341,7 @@ static int extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, KSI_TlvTemplate *t
 						}
 					}
 
-					res = t->getValue(payload, &listp);
+					res = t->getValue((void *)payload, (const void **)&listp);
 					KSI_CATCH(&err, res) goto cleanup;
 
 					res = t->elementConstruct(ctx, &listVal);
@@ -561,6 +566,7 @@ cleanup:
 	KSI_TLV_free(pduTlv);
 
 	KSI_DataHash_free(tmpHash);
+	KSI_AggregationPdu_free(pdu);
 	KSI_AggregationReq_free(req);
 
 	KSI_free(tmp);
@@ -633,6 +639,8 @@ static int createExtendRequest(KSI_CTX *ctx, const KSI_Integer *start, const KSI
 
 cleanup:
 
+	KSI_ExtendReq_free(req);
+	KSI_ExtendPdu_free(pdu);
 	KSI_free(tmp);
 	KSI_nofree(imprint);
 	KSI_TLV_free(pduTLV);
@@ -754,6 +762,10 @@ int KSI_Signature_extend(KSI_Signature *signature, KSI_Signature **extended) {
 
 cleanup:
 
+	KSI_ExtendPdu_free(pdu);
+	KSI_TLVList_free(reminder);
+	KSI_NetHandle_free(handle);
+	KSI_TLV_free(respTlv);
 	KSI_free(rawReq);
 	KSI_Signature_free(tmp);
 

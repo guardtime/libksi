@@ -20,6 +20,16 @@ extern "C" {
 	/**
 	 * TODO!
 	 */
+	int KSI_Signature_parse(KSI_CTX *ctx, unsigned char *raw, int raw_len, KSI_Signature **sig);
+
+	/**
+	 * TODO!
+	 */
+	int KSI_Signature_serialize(KSI_Signature *sig, unsigned char **raw, int *raw_len);
+
+	/**
+	 * TODO!
+	 */
 	int KSI_Signature_sign(const KSI_DataHash *hsh, KSI_Signature **signature);
 
 	/**
