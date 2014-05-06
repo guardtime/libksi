@@ -30,7 +30,9 @@ extern "C" {
 #define KSI_TLV_TAG_AGGRE_CONT_AGGR_PERIOD			0x04
 #define KSI_TLV_TAG_AGGRE_CONF_PARENT_SERVER		0x05
 
-#define KSI_TLV_SIGNATURE	0x0800
+#define KSI_TAG_CALENDAR_CHAIN						0x0802
+
+#define KSI_TAG_TLV_SIGNATURE						0x0800
 
 #ifdef __cplusplus
 }

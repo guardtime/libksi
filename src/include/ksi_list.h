@@ -13,6 +13,7 @@ extern "C" {
 	int KSI_List_next(KSI_List *list, void **o);
 	int KSI_List_indexOf(KSI_List *list, void *o);
 	int KSI_List_insertAt(KSI_List *list, int pos, void *o);
+	int KSI_List_replaceAt(KSI_List *list, int pos, void *o);
 	int KSI_List_elementAt(KSI_List *list, int pos, void **o);
 	int KSI_List_length(KSI_List *list);
 	int KSI_List_get(KSI_List *list, int pos, void **o);

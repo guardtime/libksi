@@ -949,6 +949,39 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+int KSI_TLV_replaceNestedTlv(KSI_TLV *parentTlv, KSI_TLV *oldTlv, KSI_TLV *newTlv) {
+	KSI_ERR err;
+	int pos;
+	int res;
+
+	KSI_PRE(&err, parentTlv != NULL) goto cleanup;
+	KSI_PRE(&err, oldTlv != NULL) goto cleanup;
+	KSI_PRE(&err, newTlv != NULL) goto cleanup;
+
+	KSI_BEGIN(parentTlv->ctx, &err);
+
+	if (parentTlv->payloadType != KSI_TLV_PAYLOAD_TLV) {
+		KSI_FAIL(&err, KSI_TLV_PAYLOAD_TYPE_MISMATCH, NULL);
+		goto cleanup;
+	}
+
+	pos = KSI_TLVList_indexOf(parentTlv->nested, oldTlv);
+	if (pos < 0) {
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Not an immediate sub tlv.");
+		goto cleanup;
+	}
+
+	res = KSI_TLVList_replaceAt(parentTlv->nested, pos, newTlv);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+
 /**
  *
  */

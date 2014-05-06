@@ -1080,7 +1080,15 @@ int KSI_Signature_getSigningTime(KSI_Signature *sig, const KSI_Integer **signTim
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
 		goto cleanup;
 	}
-	*signTime = sig->calendarChain->aggregationTime;
+
+	if (sig->calendarChain->aggregationTime != NULL) {
+		*signTime = sig->calendarChain->aggregationTime;
+	} else if (sig->calendarChain->publicationTime != NULL) {
+		*signTime = sig->calendarChain->publicationTime;
+	} else {
+		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, NULL);
+		goto cleanup;
+	}
 
 	KSI_SUCCESS(&err);
 
@@ -1129,6 +1137,7 @@ int KSI_Signature_validateInternal(KSI_Signature *sig) {
 	int res;
 	int level;
 	int i;
+	const KSI_Integer *aggregationTime = NULL;
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
 	KSI_BEGIN(sig->ctx, &err);
@@ -1152,7 +1161,10 @@ int KSI_Signature_validateInternal(KSI_Signature *sig) {
 	res = KSI_HashChain_getCalendarAggregationTime(sig->calendarChain->chain, sig->calendarChain->publicationTime, &utc_time);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	if (!KSI_Integer_equalsUInt(sig->calendarChain->aggregationTime, utc_time)) {
+	aggregationTime = sig->calendarChain->aggregationTime;
+	if (aggregationTime == NULL) aggregationTime = sig->calendarChain->publicationTime;
+
+	if (!KSI_Integer_equalsUInt(aggregationTime, utc_time)) {
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Aggregation time mismatch.");
 		goto cleanup;
 	}
@@ -1211,6 +1223,12 @@ int KSI_Signature_validateInternal(KSI_Signature *sig) {
 	if (sig->calAuth != NULL) {
 		res = CalAuthRec_validate(sig->calAuth);
 		KSI_CATCH(&err, res) goto cleanup;
+	}
+
+	if (sig->aggrAuth != NULL) {
+		/* TODO! */
+		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Validation using aggregation auth record not implemented.");
+		goto cleanup;
 	}
 
 	KSI_SUCCESS(&err);
@@ -1386,6 +1404,75 @@ cleanup:
 
 	return KSI_RETURN(&err);
 
+}
+
+int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, const KSI_CalendarHashChain *chain) {
+	KSI_ERR err;
+	int res;
+	const KSI_DataHash *inputHash = NULL;
+	KSI_TLV *oldCalChainTlv = NULL;
+	KSI_TLV *newCalChainTlv = NULL;
+
+	KSI_PRE(&err, chain != NULL) goto cleanup;
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+
+	KSI_BEGIN(sig->ctx, &err);
+
+	if (sig->calendarChain == NULL) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Signature does not contain a hash chain.");
+		goto cleanup;
+	}
+
+/*	res = KSI_CalendarHashChain_getInputHash(chain, &inputHash);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	if (inputHash == NULL) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Given calendar hash chain does not contain an input hash.");
+		goto cleanup;
+	}
+*/
+	/* The output hash and input hash have to be equal */
+/*	if (!KSI_DataHash_equals(inputHash, sig->calendarChain->inputHash)) {
+		KSI_FAIL(&err, KSI_EXTEND_WRONG_CAL_CHAIN, NULL);
+		goto cleanup;
+	}
+*/
+	res = KSI_TLV_iterNested(sig->baseTlv);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	while (1) {
+		res = KSI_TLV_getNextNestedTLV(sig->baseTlv, &oldCalChainTlv);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		if (oldCalChainTlv == NULL) {
+			KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Signature does not contain calendar chain.");
+			goto cleanup;
+		}
+
+		if (KSI_TLV_getTag(oldCalChainTlv) == KSI_TAG_CALENDAR_CHAIN) break;
+	}
+
+	res = KSI_TLV_new(sig->ctx, KSI_TLV_PAYLOAD_TLV, KSI_TAG_CALENDAR_CHAIN, 0, 0, &newCalChainTlv);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_TlvTemplate_construct(sig->ctx, newCalChainTlv, chain, KSI_CalendarHashChain_template);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_TLV_replaceNestedTlv(sig->baseTlv, oldCalChainTlv, newCalChainTlv);
+	KSI_CATCH(&err, res) goto cleanup;
+	newCalChainTlv = NULL;
+
+	KSI_TLV_free(oldCalChainTlv);
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_TLV_free(newCalChainTlv);
+
+	KSI_nofree(inputHash);
+
+	return KSI_RETURN(&err);
 }
 
 KSI_IMPLEMENT_GET_CTX(KSI_Signature);

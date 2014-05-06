@@ -19,6 +19,7 @@ int KSI_LIST_FN_NAME(type, iter)(KSI_LIST(type) *);								\
 int KSI_LIST_FN_NAME(type, next)(KSI_LIST(type) *, type **);					\
 int KSI_LIST_FN_NAME(type, indexOf)(KSI_LIST(type) *, type *);					\
 int KSI_LIST_FN_NAME(type, insertAt)(KSI_LIST(type) *, int, type *);			\
+int KSI_LIST_FN_NAME(type, replaceAt)(KSI_LIST(type) *, int, type *);			\
 int KSI_LIST_FN_NAME(type, remove)(KSI_LIST(type) *, int);						\
 int KSI_LIST_FN_NAME(type, length)(KSI_LIST(type) *);							\
 int KSI_LIST_FN_NAME(type, elementAt)(KSI_LIST(type) *, int pos, type **);		\

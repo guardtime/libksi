@@ -1,16 +1,18 @@
 # Generated with mk_makefile.sh
 AM_CFLAGS=-g -Wall
-bin_PROGRAMS=runner sign
+bin_PROGRAMS=runner ksi_sign ksi_extend
 
 apiSources = \
 		../src/config.h \
+		../src/include/ksi_hashchain.h \
+		../src/include/ksi_hash.h \
+		../src/include/ksi_net.h \
+		../src/include/ksi_tlv_template.h \
 		../src/ksi_base.c \
 		../src/ksi_base.h \
 		../src/ksi_err.c \
 		../src/ksi_err.h \
-		../src/ksi_hash.h \
 		../src/ksi_hash.c \
-		../src/ksi_hashchain.h \
 		../src/ksi_hashchain.c \
 		../src/ksi_hash_openssl.c \
 		../src/ksi_internal.c \
@@ -20,7 +22,6 @@ apiSources = \
 		../src/ksi_list.c \
 		../src/ksi_log.c \
 		../src/ksi_log.h \
-		../src/ksi_net.h \
 		../src/ksi_net.c \
 		../src/ksi_net_curl.c \
 		../src/ksi_tlv.c \
@@ -29,6 +30,7 @@ apiSources = \
 		../src/ksi_tlv_easy.h \
 		../src/ksi_tlv_tags.h \
 		../src/ksi_tlv.h \
+		../src/ksi_tlv_template.c \
 		../src/ksi_types.c \
 		../src/ksi_types_base.c \
 		../src/ksi_util.c \
@@ -52,6 +54,10 @@ runner_SOURCES= \
 		cutest/CuTest.c \
 		$(apiSources)
 		
-sign_SOURCES= \
+ksi_sign_SOURCES= \
 		sign_test.c \
+		$(apiSources)
+		
+ksi_extend_SOURCES= \
+		extend_test.c \
 		$(apiSources)

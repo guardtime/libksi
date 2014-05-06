@@ -38,8 +38,12 @@ const char *KSI_getErrorString(int statusCode) {
 			return "HTTP error";
 		case KSI_AGGREGATOR_ERROR:
 			return "Failure from aggregator.";
+		case KSI_EXTENDER_ERROR:
+			return "Failure from extender.";
+		case KSI_EXTEND_WRONG_CAL_CHAIN:
+			return "The given calendar chain is not a continuation of the signature calendar chain.";
 		case KSI_CRYPTO_FAILURE:
-			return "Crypto failure";
+			return "Cryptographic failure";
 		case KSI_UNKNOWN_ERROR:
 			return "Unknown internal error";
 		default:

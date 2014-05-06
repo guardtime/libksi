@@ -200,10 +200,15 @@ int KSI_LOG_logTlv(KSI_CTX *ctx, int level, const char *prefix, KSI_TLV *tlv) {
 		res = KSI_OK;
 		goto cleanup;
 	}
-	res = KSI_TLV_toString(tlv, &serialized);
-	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_LOG_log(ctx, level, "%s:\n%s", prefix, serialized);
+	if (tlv != NULL) {
+		res = KSI_TLV_toString(tlv, &serialized);
+		if (res != KSI_OK) goto cleanup;
+
+		res = KSI_LOG_log(ctx, level, "%s:\n%s", prefix, serialized);
+	} else {
+		res = KSI_LOG_log(ctx, level, "%s:\n%s", prefix, "(null)");
+	}
 
 cleanup:
 

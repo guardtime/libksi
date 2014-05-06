@@ -22,7 +22,7 @@ static int appendElement(KSI_List *list, void* obj) {
 		goto cleanup;
 	}
 
-	if (list->arr_len + 1 >= list->arr_size) {
+	if ((list->arr_len + 1) >= list->arr_size) {
 		int i;
 
 		tmp_arr = KSI_calloc(list->arr_size + KSI_LIST_SIZE_INCREMENT,
@@ -162,6 +162,24 @@ int KSI_List_indexOf(KSI_List *list, void *o) {
 cleanup:
 
 	return index;
+}
+
+int KSI_List_replaceAt(KSI_List *list, int pos, void *o) {
+	int res = KSI_UNKNOWN_ERROR;
+	int i;
+
+	if (list == NULL || o == NULL || pos > list->arr_len) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	list->arr[pos] = o;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
 }
 
 int KSI_List_insertAt(KSI_List *list, int pos, void *o) {

@@ -70,6 +70,9 @@ int KSI_LIST_FN_NAME(type, indexOf)(KSI_LIST(type) *list, type *o) {				\
 int KSI_LIST_FN_NAME(type, insertAt)(KSI_LIST(type) *list, int pos, type *o) {		\
 	return KSI_List_insertAt(list->list, pos, o);									\
 }																					\
+int KSI_LIST_FN_NAME(type, replaceAt)(KSI_LIST(type) *list, int pos, type *o) {		\
+	return KSI_List_replaceAt(list->list, pos, o);									\
+}																					\
 int KSI_LIST_FN_NAME(type, length)(KSI_LIST(type) *list) {							\
 	return KSI_List_length(list->list);												\
 }																					\

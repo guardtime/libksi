@@ -12,6 +12,7 @@
 #include "include/ksi_net.h"
 #include "include/ksi_signature.h"
 #include "include/ksi_tlv.h"
+#include "include/ksi_tlv_template.h"
 #include "include/ksi_truststore.h"
 #include "include/ksi_types.h"
 
@@ -30,7 +31,7 @@ enum KSI_StatusCode {
 	 */
 	KSI_INVALID_ARGUMENT = 0x00000100,
 	/**
-	 * Either arguments to function or responses from timestamping server had
+	 * Either arguments to function or responses from the server had
 	 * invalid format.
 	 */
 	KSI_INVALID_FORMAT,
@@ -62,6 +63,8 @@ enum KSI_StatusCode {
 	KSI_NETWORK_ERROR,
 	KSI_HTTP_ERROR,
 	KSI_AGGREGATOR_ERROR,
+	KSI_EXTENDER_ERROR,
+	KSI_EXTEND_WRONG_CAL_CHAIN,
 	/**
 	 * Cryptographic operation could not be performed. Likely causes are
 	 * unsupported cryptographic algorithms, invalid keys and lack of

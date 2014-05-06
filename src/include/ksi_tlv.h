@@ -229,6 +229,11 @@ extern "C" {
 	int KSI_TLV_serializePayload(KSI_TLV *tlv, unsigned char *buf, int *len);
 
 	/**
+	 *
+	 */
+	int KSI_TLV_replaceNestedTlv(KSI_TLV *parentTlv, KSI_TLV *oldTlv, KSI_TLV *newTlv);
+
+	/**
 	 * This function appends a nested tlv to the target TLV. The target TLV is required to
 	 * have payload type #KSI_TLV_PAYLOAD_TLV. The added TLV will be added after the TLV
 	 * given as the second parameter. If the second parameter is NULL the new TLV is added
