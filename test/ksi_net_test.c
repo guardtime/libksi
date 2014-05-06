@@ -2,7 +2,7 @@
 #include "all_tests.h"
 
 extern KSI_CTX *ctx;
-extern unsigned char *KSI_NET_MOCK_request;
+extern const unsigned char *KSI_NET_MOCK_request;
 extern int KSI_NET_MOCK_request_len;
 extern const unsigned char *KSI_NET_MOCK_response;
 extern int KSI_NET_MOCK_response_len;
@@ -38,7 +38,7 @@ static void setFileMockResponse(CuTest *tc, const char *fileName) {
 	fclose(f);
 
 	if (KSI_NET_MOCK_response != NULL) {
-		KSI_free(KSI_NET_MOCK_response);
+		KSI_free((unsigned char *)KSI_NET_MOCK_response);
 	}
 	KSI_NET_MOCK_response = resp;
 }
@@ -68,7 +68,7 @@ static void TestSendAggregateRequest(CuTest* tc) {
 	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
 	CuAssert(tc, "Unexpected send request", KSI_NET_MOCK_request_len == sizeof(expectedSignRequest) && !memcmp(expectedSignRequest, KSI_NET_MOCK_request, KSI_NET_MOCK_request_len));
 
-	KSI_free(KSI_NET_MOCK_response);
+	KSI_free((unsigned char *)KSI_NET_MOCK_response);
 	KSI_NET_MOCK_response = NULL;
 
 	KSI_DataHash_free(hsh);
@@ -81,6 +81,11 @@ static void TestSendExtendRequest(CuTest* tc) {
 	KSI_Signature *sig = NULL;
 	KSI_NetProvider *pr = NULL;
 	KSI_Signature *ext = NULL;
+	unsigned char *serialized = NULL;
+	int serialized_len = 0;
+	unsigned char *expected[0x1ffff];
+	int expected_len = 0;
+	FILE *f = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -93,13 +98,26 @@ static void TestSendExtendRequest(CuTest* tc) {
 	res = KSI_Signature_fromFile(ctx, TEST_SIGNATURE_FILE, &sig);
 	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
 
-	setFileMockResponse(tc, "test/resource/tlv/ok_extend_response-1.tlv");
+	setFileMockResponse(tc, "test/resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv");
 
-	res = KSI_Signature_extend(sig, &ext);
+	res = KSI_Signature_extend(sig, NULL, &ext);
 	CuAssert(tc, "Unable to extend the signature", res == KSI_OK && ext != NULL);
 	CuAssert(tc, "Unexpected send request", KSI_NET_MOCK_request_len == sizeof(expectedExtendRequest) && !memcmp(expectedExtendRequest, KSI_NET_MOCK_request, KSI_NET_MOCK_request_len));
 
-	KSI_free(KSI_NET_MOCK_response);
+	res = KSI_Signature_serialize(ext, &serialized, &serialized_len);
+	CuAssert(tc, "Unable to serialize extended signature", res == KSI_OK && serialized != NULL && serialized_len > 0);
+
+	/* Read in the expected result */
+	f = fopen("test/resource/tlv/ok-sig-2014-04-30.1-extended.ksig", "rb");
+	CuAssert(tc, "Unable to read expected result file", f != NULL);
+	expected_len = fread(expected, 1, sizeof(expected), f);
+	fclose(f);
+
+	CuAssertIntEquals_Msg(tc, "Expected result length", expected_len, serialized_len);
+	CuAssert(tc, "Unexpected extended signature.", !memcmp(expected, serialized, expected_len));
+
+	KSI_free((unsigned char *)KSI_NET_MOCK_response);
+	KSI_free(serialized);
 	KSI_NET_MOCK_response = NULL;
 
 	KSI_DataHash_free(hsh);

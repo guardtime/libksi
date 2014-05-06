@@ -32,7 +32,7 @@ extern "C" {
 	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_HashChain_getCalendarAggregationTime(KSI_LIST(KSI_HashChainLink) *chain, KSI_Integer *aggr_time, uint32_t *utc_time);
+	int KSI_HashChain_getCalendarAggregationTime(const KSI_LIST(KSI_HashChainLink) *chain, const KSI_Integer *aggr_time, uint32_t *utc_time);
 	int KSI_HashChain_appendLink(KSI_CTX *ctx, KSI_DataHash *siblingHash, int isLeft, unsigned int levelCorrection, KSI_LIST(KSI_HashChainLink) **chain);
 
 	/**

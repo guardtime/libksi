@@ -64,9 +64,9 @@ static int addChainImprint(KSI_DataHasher *hsr, KSI_HashChainLink *link) {
 	int mode = 0;
 	const unsigned char *imprint;
 	int imprint_len;
-	const KSI_MetaData *metaData = NULL;
-	const KSI_MetaHash *metaHash = NULL;
-	const KSI_DataHash *hash = NULL;
+	KSI_MetaData *metaData = NULL;
+	KSI_MetaHash *metaHash = NULL;
+	KSI_DataHash *hash = NULL;
 
 	KSI_PRE(&err, hsr != NULL) goto cleanup;
 	KSI_PRE(&err, link != NULL) goto cleanup;
@@ -132,7 +132,7 @@ static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, KSI_DataHash *inpu
 	/* Extracted data. */
 	int levelCorrection;
 	int isLeft;
-	const KSI_DataHash *linkHsh = NULL;
+	KSI_DataHash *linkHsh = NULL;
 
 	KSI_PRE(&err, chain != NULL) goto cleanup;
 	KSI_PRE(&err, inputHash != NULL) goto cleanup;
@@ -296,7 +296,7 @@ cleanup:
 /**
  *
  */
-int KSI_HashChain_getCalendarAggregationTime(KSI_LIST(KSI_HashChainLink) *chain, KSI_Integer *aggr_time, uint32_t *utc_time) {
+int KSI_HashChain_getCalendarAggregationTime(const KSI_LIST(KSI_HashChainLink) *chain, const KSI_Integer *aggr_time, uint32_t *utc_time) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_uint64_t r;
 	uint32_t t = 0;
@@ -488,7 +488,6 @@ int KSI_HashChain_aggregateCalendar(KSI_LIST(KSI_HashChainLink) *chain, KSI_Data
 
 int KSI_MetaData_parse(KSI_MetaData *mtd, char **clientId, KSI_Integer **machineId, KSI_Integer **sequenceNr) {
 	KSI_ERR err;
-	int res;
 
 	char *cId = NULL;
 	KSI_Integer *mId = NULL;

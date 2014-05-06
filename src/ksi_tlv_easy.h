@@ -47,7 +47,7 @@ extern "C" {
 #define KSI_TLV_PARSE_BEGIN(ctx, tlv)		 											\
 		{																				\
 			KSI_CTX *__ctx = (ctx);														\
-			int __res;																	\
+			int __res = KSI_UNKNOWN_ERROR;												\
 			KSI_TLV *__tlv = (tlv);														\
 			KSI_PARSE_TLV_NESTED_BEGIN													\
 

@@ -54,8 +54,8 @@ static size_t receiveDataFromLibCurl(void *ptr, size_t size, size_t nmemb,
 {
 		int res;
         size_t bytesCount = 0;
-        unsigned char *tmp_buffer;
-        KSI_NetHandle *handle;
+        unsigned char *tmp_buffer = NULL;
+        KSI_NetHandle *handle = NULL;
         const unsigned char *resp = NULL;
         int resp_len = 0;
 
@@ -147,7 +147,7 @@ static int curlSendRequest(KSI_NetHandle *handle, char *agent, char *url, int co
 	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
 	if (request != NULL) {
 		curl_easy_setopt(curl, CURLOPT_POST, 1);
-		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, request);
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, (char *)request);
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, request_len);
 	}
 	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);

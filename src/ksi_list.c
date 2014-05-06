@@ -148,7 +148,7 @@ cleanup:
 	return res;
 }
 
-int KSI_List_indexOf(KSI_List *list, void *o) {
+int KSI_List_indexOf(const KSI_List *list, const void *o) {
 	int index = -1;
 	int i;
 	if (list == NULL || o == NULL) goto cleanup;
@@ -166,7 +166,6 @@ cleanup:
 
 int KSI_List_replaceAt(KSI_List *list, int pos, void *o) {
 	int res = KSI_UNKNOWN_ERROR;
-	int i;
 
 	if (list == NULL || o == NULL || pos > list->arr_len) {
 		res = KSI_INVALID_ARGUMENT;
@@ -207,7 +206,7 @@ cleanup:
 	return res;
 }
 
-int KSI_List_elementAt(KSI_List *list, int pos, void **o) {
+int KSI_List_elementAt(const KSI_List *list, int pos, void **o) {
 	int res = KSI_UNKNOWN_ERROR;
 	if (list == NULL || o == NULL || pos >= list->arr_len) {
 		res = KSI_INVALID_ARGUMENT;
@@ -223,7 +222,7 @@ cleanup:
 	return res;
 }
 
-int KSI_List_length(KSI_List *list) {
+int KSI_List_length(const KSI_List *list) {
 	return list == NULL ? 0 : list->arr_len;
 }
 

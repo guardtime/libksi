@@ -64,7 +64,7 @@ int KSI_LIST_FN_NAME(type, iter)(KSI_LIST(type) *list) {							\
 int KSI_LIST_FN_NAME(type, next)(KSI_LIST(type) *list, type **o) {					\
 	return KSI_List_next(list->list, (void **)o);									\
 }																					\
-int KSI_LIST_FN_NAME(type, indexOf)(KSI_LIST(type) *list, type *o) {				\
+int KSI_LIST_FN_NAME(type, indexOf)(const KSI_LIST(type) *list, const type *o) {	\
 	return KSI_List_indexOf(list->list, o);											\
 }																					\
 int KSI_LIST_FN_NAME(type, insertAt)(KSI_LIST(type) *list, int pos, type *o) {		\
@@ -73,13 +73,13 @@ int KSI_LIST_FN_NAME(type, insertAt)(KSI_LIST(type) *list, int pos, type *o) {		
 int KSI_LIST_FN_NAME(type, replaceAt)(KSI_LIST(type) *list, int pos, type *o) {		\
 	return KSI_List_replaceAt(list->list, pos, o);									\
 }																					\
-int KSI_LIST_FN_NAME(type, length)(KSI_LIST(type) *list) {							\
+int KSI_LIST_FN_NAME(type, length)(const KSI_LIST(type) *list) {					\
 	return KSI_List_length(list->list);												\
 }																					\
 int KSI_LIST_FN_NAME(type, remove)(KSI_LIST(type) *list, int pos) {					\
 	return KSI_List_remove(list->list, pos);										\
 }																					\
-int KSI_LIST_FN_NAME(type, elementAt)(KSI_LIST(type) *list, int pos, type **o) {	\
+int KSI_LIST_FN_NAME(type, elementAt)(const KSI_LIST(type) *list, int pos, type **o) {	\
 	return KSI_List_elementAt(list->list, pos, (void **) o);						\
 }																					\
 KSI_CTX *type##List_getCtx(const KSI_LIST(type) *o) {	 							\

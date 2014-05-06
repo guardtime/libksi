@@ -11,11 +11,11 @@ extern "C" {
 	int KSI_List_remove(KSI_List *list, int pos);
 	int KSI_List_iter(KSI_List *list);
 	int KSI_List_next(KSI_List *list, void **o);
-	int KSI_List_indexOf(KSI_List *list, void *o);
+	int KSI_List_indexOf(const KSI_List *list, const void *o);
 	int KSI_List_insertAt(KSI_List *list, int pos, void *o);
 	int KSI_List_replaceAt(KSI_List *list, int pos, void *o);
-	int KSI_List_elementAt(KSI_List *list, int pos, void **o);
-	int KSI_List_length(KSI_List *list);
+	int KSI_List_elementAt(const KSI_List *list, int pos, void **o);
+	int KSI_List_length(const KSI_List *list);
 	int KSI_List_get(KSI_List *list, int pos, void **o);
 
 

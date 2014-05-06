@@ -2,6 +2,9 @@
 
 #include "ksi_tlv_easy.h"
 
+KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu);
+KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendPdu);
+
 
 static int createPduTlv(KSI_CTX *ctx, int tag, KSI_TLV **pdu) {
 	KSI_ERR err;
@@ -141,8 +144,7 @@ static int createExtendRequest(KSI_CTX *ctx, const KSI_Integer *start, const KSI
 	KSI_CATCH(&err, res) goto cleanup;
 	req = NULL;
 
-	res = KSI_TlvTemplate_construct(ctx, pduTLV, pdu, KSI_ExtendPdu_template);
-//	res = pduAdd(pduTLV, 0x301, req, KSI_ExtendReq_template);
+	res = KSI_TlvTemplate_construct(ctx, pduTLV, pdu, KSI_TLV_TEMPLATE(KSI_ExtendPdu));
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Extend request PDU", pduTLV);
@@ -215,15 +217,15 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_Signature_extend(KSI_Signature *signature, KSI_Signature **extended) {
+int KSI_Signature_extend(KSI_Signature *signature, KSI_Integer *extentTo, KSI_Signature **extended) {
 	KSI_ERR err;
 	KSI_CTX *ctx = NULL;
 	int res;
 	KSI_Signature *tmp = NULL;
-	const KSI_Integer *startTime;
-	const KSI_ExtendResp *response = NULL;
-	const KSI_CalendarHashChain *calHashChain = NULL;
-	const KSI_Integer *respStatus = NULL;
+	KSI_Integer *startTime;
+	KSI_ExtendResp *response = NULL;
+	KSI_CalendarHashChain *calHashChain = NULL;
+	KSI_Integer *respStatus = NULL;
 
 	unsigned char *rawReq = NULL;
 	int rawReq_len = 0;
@@ -252,7 +254,7 @@ int KSI_Signature_extend(KSI_Signature *signature, KSI_Signature **extended) {
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Create request. */
-	res = createExtendRequest(ctx, startTime, NULL, &rawReq, &rawReq_len);
+	res = createExtendRequest(ctx, startTime, extentTo, &rawReq, &rawReq_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Extend request", rawReq, rawReq_len);
@@ -278,6 +280,7 @@ int KSI_Signature_extend(KSI_Signature *signature, KSI_Signature **extended) {
 	res = KSI_TlvTemplate_extract(ctx, pdu, respTlv, KSI_ExtendPdu_template, NULL);
 	KSI_CATCH(&err, res) goto cleanup;
 
+
 	/* Extract the response */
 	res = KSI_ExtendPdu_getResponse(pdu, &response);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -288,7 +291,7 @@ int KSI_Signature_extend(KSI_Signature *signature, KSI_Signature **extended) {
 
 	/* Fail if status is presend and does not equal to success (0) */
 	if (respStatus != NULL && !KSI_Integer_equalsUInt(respStatus, 0)) {
-		const KSI_Utf8String *error = NULL;
+		KSI_Utf8String *error = NULL;
 		res = KSI_ExtendResp_getErrorMsg(response, &error);
 
 		KSI_FAIL(&err, KSI_EXTENDER_ERROR, (char *)error);
@@ -298,6 +301,10 @@ int KSI_Signature_extend(KSI_Signature *signature, KSI_Signature **extended) {
 
 	/* Extract the calendar hash chain */
 	res = KSI_ExtendResp_getCalendarHashChain(response, &calHashChain);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Remove the chain from the structure, as it will be freed when this function finishes. */
+	res = KSI_ExtendResp_setCalendarHashChain(response, NULL);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Add the hash chain to the signature. */

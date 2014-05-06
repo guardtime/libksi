@@ -9,7 +9,6 @@ int main(void) {
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sign = NULL;
-	KSI_Signature *ext = NULL;
 
 	unsigned char *raw;
 	int raw_len;
@@ -48,13 +47,6 @@ int main(void) {
 		goto cleanup;
 	}
 
-	res = KSI_Signature_extend(sign, &ext);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to extend %d.\n", res);
-		KSI_ERR_statusDump(ctx, stderr);
-		goto cleanup;
-	}
-
 	/* Save the signature */
 	f = fopen("sign_test.gtsig", "wb");
 	if (f == NULL) {
@@ -79,7 +71,6 @@ cleanup:
 	if (f != NULL) fclose(f);
 
 	KSI_Signature_free(sign);
-	KSI_Signature_free(ext);
 	KSI_DataHash_free(hsh);
 	KSI_DataHasher_free(hsr);
 
