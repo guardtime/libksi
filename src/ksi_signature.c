@@ -12,6 +12,7 @@ typedef struct sigDataRec_st SigDataRec;
 typedef struct chainIndex_st ChainIndex;
 
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarHashChain);
+KSI_IMPORT_TLV_TEMPLATE(KSI_HashChainLink)
 
 KSI_DEFINE_LIST(AggrChainRec);
 
@@ -472,11 +473,16 @@ cleanup:
 }
 
 static int AggrChainRec_addLink(KSI_CTX *ctx, KSI_TLV *tlv, AggrChainRec *aggr) {
+	KSI_ERR err;
 	int res = KSI_UNKNOWN_ERROR;
 	int isLeft;
-	uint8_t levelCorrection = 0;
-	KSI_DataHash *siblingHash = NULL;
-	KSI_DataHash *metaHash = NULL;
+
+	KSI_HashChainLink *link = NULL;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_PRE(&err, aggr != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
 
 	switch (KSI_TLV_getTag(tlv)) {
 		case 0x07:
@@ -486,28 +492,35 @@ static int AggrChainRec_addLink(KSI_CTX *ctx, KSI_TLV *tlv, AggrChainRec *aggr) 
 			isLeft = 0;
 			break;
 		default:
-			res = KSI_INVALID_ARGUMENT;
+			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);
 			goto cleanup;
 	}
 
-	KSI_TLV_PARSE_BEGIN(ctx, tlv)
-		KSI_PARSE_TLV_ELEMENT_UINT8(0x01, &levelCorrection)
-		KSI_PARSE_TLV_ELEMENT_IMPRINT(0x02, &siblingHash)
-		default: printf("Unimplemented tag %d", KSI_TLV_getTag(__tlv));
-	KSI_TLV_PARSE_END(res)
-	if (res != KSI_OK) goto cleanup;
+	res = KSI_HashChainLink_new(ctx, &link);
+	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_HashChain_appendLink(ctx, siblingHash, isLeft, levelCorrection, &aggr->chain);
-	if (res != KSI_OK) goto cleanup;
+	res = KSI_HashChainLink_setIsLeft(link, isLeft);
+	KSI_CATCH(&err, res) goto cleanup;
 
-	siblingHash = NULL;
+	res = KSI_TlvTemplate_extract(ctx, link, tlv, KSI_TLV_TEMPLATE(KSI_HashChainLink), NULL);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Create a new list of links if this is the first link. */
+	if (aggr->chain == NULL) {
+		res = KSI_HashChainLinkList_new(ctx, &aggr->chain);
+		KSI_CATCH(&err, res) goto cleanup;
+	}
+
+	/* Append the link to the chain */
+	res = KSI_HashChainLinkList_append(aggr->chain, link);
+	KSI_CATCH(&err, res) goto cleanup;
+	link = NULL;
 
 	res = KSI_OK;
 
 cleanup:
 
-	KSI_DataHash_free(siblingHash);
-	KSI_DataHash_free(metaHash);
+	KSI_HashChainLink_free(link);
 
 	return res;
 }
@@ -546,7 +559,7 @@ static int CalChainRec_addLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarHashChain
 	res = KSI_CalendarHashChain_getHashChain(cal, &chain);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_HashChain_appendLink(ctx, hsh, isLeft, 0, &chain);
+	res = KSI_HashChain_appendLink(ctx, hsh, NULL, NULL, isLeft, 0, &chain);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_CalendarHashChain_setHashChain(cal, chain);
@@ -1456,6 +1469,81 @@ cleanup:
 	KSI_TLV_free(newCalChainTlv);
 
 	KSI_nofree(inputHash);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_Signature_getSignedIdentity(KSI_Signature *sig, char **signerIdentity) {
+	KSI_ERR err;
+	int res;
+	int i, j;
+	KSI_LIST(KSI_Utf8String) *idList = NULL;
+	KSI_Utf8String *clientId = NULL;
+	char *signerId = NULL;
+	int signerId_size = 0;
+	int signerId_len = 0;
+
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_PRE(&err, signerIdentity != NULL) goto cleanup;
+	KSI_BEGIN(sig->ctx, &err);
+
+	/* Create a list of separate signer identities. */
+	res = KSI_Utf8StringList_new(sig->ctx, &idList);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Extract all identities from all aggregation chains. */
+	for (i = 0; i < AggrChainRecList_length(sig->aggregationChainList); i++) {
+		AggrChainRec *aggrRec = NULL;
+
+		res = AggrChainRecList_elementAt(sig->aggregationChainList, i, &aggrRec);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		for (j = 0; j < KSI_HashChainLinkList_length(aggrRec->chain); j++) {
+			KSI_HashChainLink *link = NULL;
+			KSI_MetaData *metaData = NULL;
+
+			res = KSI_HashChainLinkList_elementAt(aggrRec->chain, j, &link);
+			KSI_CATCH(&err, res) goto cleanup;
+
+			KSI_HashChainLink_getMetaData(link, &metaData);
+			KSI_CATCH(&err, res) goto cleanup;
+
+			/* Exit inner loop if this chain link does not contain a metadata block. */
+			if (metaData == NULL) continue;
+
+			res = KSI_MetaData_getClientId(metaData, &clientId);
+			KSI_CATCH(&err, res) goto cleanup;
+
+			signerId_size += strlen((char *)clientId) + 1; /* +1 for dot (.) or ending zero character. */
+
+			res = KSI_Utf8StringList_append(idList, clientId);
+			clientId = NULL;
+
+		}
+	}
+
+	/* Concatenate all together. */
+	for (i = 0; i < KSI_Utf8StringList_length(idList); i++) {
+		KSI_Utf8String *tmp = NULL;
+
+		res = KSI_Utf8StringList_elementAt(idList, i, &tmp);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		signerId_len += sprintf(signerId + signerId_len, "%s%s", signerId_len > 0 ? ".": "", (char *) tmp);
+	}
+
+	*signerIdentity = signerId;
+	signerId = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_Utf8String_free(signerId);
+	KSI_Utf8StringList_free(idList);
+	KSI_free(clientId);
+	KSI_free(clientId);
+	KSI_Utf8StringList_free(idList);
 
 	return KSI_RETURN(&err);
 }

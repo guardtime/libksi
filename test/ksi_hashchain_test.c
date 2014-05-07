@@ -23,7 +23,7 @@ static void buildHashChain(CuTest *tc, const char *hexImprint, int isLeft, int l
 	res = KSI_DataHash_fromImprint(ctx, buf, buf_len, &hsh);
 	CuAssert(tc, "Unable to create data hash", res == KSI_OK && hsh != NULL);
 
-	res = KSI_HashChain_appendLink(ctx, hsh, isLeft, levelCorrection, chn);
+	res = KSI_HashChain_appendLink(ctx, hsh, NULL, NULL, isLeft, levelCorrection, chn);
 	CuAssert(tc, "Unable to append hash chain link", res == KSI_OK && chn != NULL);
 
 }

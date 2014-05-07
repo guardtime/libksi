@@ -32,7 +32,6 @@ typedef struct KSI_Signature_st KSI_Signature;
 typedef struct KSI_RDR_st KSI_RDR;
 typedef struct KSI_Integer_st KSI_Integer;
 typedef struct KSI_List_st KSI_List;
-typedef char * KSI_String;
 
 typedef struct KSI_OctetString_st KSI_OctetString;
 typedef char KSI_Utf8String;
@@ -44,9 +43,6 @@ typedef struct KSI_PKICertificate_st KSI_PKICertificate;
  */
 typedef struct KSI_DataHasher_st KSI_DataHasher;
 
-typedef struct KSI_HashChain_MetaHash_st KSI_MetaHash;
-
-typedef struct KSI_HashChain_MetaData_st KSI_MetaData;
 /**
  * This structure represents hashed data.
  * \see #KSI_DataHasher, #KSI_DataHasher_close, #KSI_DataHash_free
@@ -62,7 +58,7 @@ typedef struct KSI_NetProvider_st KSI_NetProvider;
 
 KSI_DEFINE_LIST(KSI_Integer);
 KSI_DEFINE_LIST(KSI_TLV);
-KSI_DEFINE_LIST(KSI_String);
+KSI_DEFINE_LIST(KSI_Utf8String);
 
 KSI_DEFINE_GET_CTX(KSI_DataHash);
 KSI_DEFINE_GET_CTX(KSI_DataHasher);

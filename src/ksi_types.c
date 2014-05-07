@@ -1,10 +1,18 @@
 #include "ksi_internal.h"
 
+struct KSI_MetaData_st {
+	KSI_CTX *ctx;
+	KSI_OctetString *raw;
+	KSI_Utf8String *clientId;
+	KSI_Integer *machineId;
+	KSI_Integer *sequenceNr;
+};
+
 struct KSI_HashChainLink_st {
 	KSI_CTX *ctx;
 	int isLeft;
 	int levelCorrection;
-	KSI_MetaHash *metaHash;
+	KSI_DataHash *metaHash;
 	KSI_MetaData *metaData;
 	KSI_DataHash *imprint;
 };
@@ -88,15 +96,171 @@ struct KSI_ExtendResp_st {
 	KSI_CalendarHashChain *calendarHashChain;
 };
 
+struct KSI_PublicationHeader_st {
+	KSI_CTX *ctx;
+	KSI_Integer *version;
+	KSI_Integer *timeCreated;
+};
+
+struct KSI_CertificateRecord_st {
+	KSI_CTX *ctx;
+	KSI_OctetString *certId;
+	KSI_OctetString *cert;
+};
+
+struct KSI_PublicationData_st {
+	KSI_CTX *ctx;
+	KSI_Integer *time;
+	KSI_DataHash *imprint;
+};
+
+struct KSI_PublicationRecord_st {
+	KSI_CTX *ctx;
+	KSI_PublicationData *publishedData;
+	KSI_LIST(KSI_Utf8String) *publicationRef;
+};
+
 
 KSI_IMPLEMENT_LIST(KSI_HashChainLink, KSI_HashChainLink_free);
+
+/**
+ * KSI_MetaData
+ */
+void KSI_MetaData_free(KSI_MetaData *t) {
+	if(t != NULL) {
+		KSI_OctetString_free(t->raw);
+		KSI_Utf8String_free(t->clientId);
+		KSI_Integer_free(t->machineId);
+		KSI_Integer_free(t->sequenceNr);
+		KSI_free(t);
+	}
+}
+
+int KSI_MetaData_new(KSI_CTX *ctx, KSI_MetaData **t) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_MetaData *tmp = NULL;
+	tmp = KSI_new(KSI_MetaData);
+	if(tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->raw = NULL;
+	tmp->clientId = NULL;
+	tmp->machineId = NULL;
+	tmp->sequenceNr = NULL;
+	*t = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+cleanup:
+	KSI_MetaData_free(tmp);
+	return res;
+}
+
+int KSI_MetaData_getRaw(const KSI_MetaData *t, KSI_OctetString **raw) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || raw == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*raw = t->raw;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_MetaData_getClientId(const KSI_MetaData *t, KSI_Utf8String **clientId) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || clientId == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*clientId = t->clientId;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_MetaData_getMachineId(const KSI_MetaData *t, KSI_Integer **machineId) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || machineId == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*machineId = t->machineId;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_MetaData_getSequenceNr(const KSI_MetaData *t, KSI_Integer **sequenceNr) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || sequenceNr == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*sequenceNr = t->sequenceNr;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_MetaData_setRaw(KSI_MetaData *t, KSI_OctetString *raw) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->raw = raw;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_MetaData_setClientId(KSI_MetaData *t, KSI_Utf8String *clientId) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->clientId = clientId;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_MetaData_setMachineId(KSI_MetaData *t, KSI_Integer *machineId) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->machineId = machineId;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_MetaData_setSequenceNr(KSI_MetaData *t, KSI_Integer *sequenceNr) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->sequenceNr = sequenceNr;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
 
 /**
  * KSI_HashChainLink
  */
 void KSI_HashChainLink_free(KSI_HashChainLink *t) {
 	if(t != NULL) {
-		KSI_MetaHash_free(t->metaHash);
+		KSI_DataHash_free(t->metaHash);
 		KSI_MetaData_free(t->metaData);
 		KSI_DataHash_free(t->imprint);
 		KSI_free(t);
@@ -150,7 +314,7 @@ cleanup:
 	 return res;
 }
 
-int KSI_HashChainLink_getMetaHash(const KSI_HashChainLink *t, KSI_MetaHash **metaHash) {
+int KSI_HashChainLink_getMetaHash(const KSI_HashChainLink *t, KSI_DataHash **metaHash) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL || metaHash == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -210,7 +374,7 @@ cleanup:
 	 return res;
 }
 
-int KSI_HashChainLink_setMetaHash(KSI_HashChainLink *t, KSI_MetaHash *metaHash) {
+int KSI_HashChainLink_setMetaHash(KSI_HashChainLink *t, KSI_DataHash *metaHash) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1535,6 +1699,326 @@ int KSI_ExtendResp_setCalendarHashChain(KSI_ExtendResp *t, KSI_CalendarHashChain
 		goto cleanup;
 	}
 	t->calendarHashChain = calendarHashChain;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+
+/**
+ * KSI_PublicationHeader
+ */
+void KSI_PublicationHeader_free(KSI_PublicationHeader *t) {
+	if(t != NULL) {
+		KSI_Integer_free(t->version);
+		KSI_Integer_free(t->timeCreated);
+		KSI_free(t);
+	}
+}
+
+int KSI_PublicationHeader_new(KSI_CTX *ctx, KSI_PublicationHeader **t) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_PublicationHeader *tmp = NULL;
+	tmp = KSI_new(KSI_PublicationHeader);
+	if(tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->version = NULL;
+	tmp->timeCreated = NULL;
+	*t = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+cleanup:
+	KSI_PublicationHeader_free(tmp);
+	return res;
+}
+
+int KSI_PublicationHeader_getVersion(const KSI_PublicationHeader *t, KSI_Integer **version) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || version == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*version = t->version;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_PublicationHeader_getTimeCreated(const KSI_PublicationHeader *t, KSI_Integer **timeCreated) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || timeCreated == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*timeCreated = t->timeCreated;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_PublicationHeader_setVersion(KSI_PublicationHeader *t, KSI_Integer *version) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->version = version;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_PublicationHeader_setTimeCreated(KSI_PublicationHeader *t, KSI_Integer *timeCreated) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->timeCreated = timeCreated;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+
+/**
+ * KSI_CertificateRecord
+ */
+void KSI_CertificateRecord_free(KSI_CertificateRecord *t) {
+	if(t != NULL) {
+		KSI_OctetString_free(t->certId);
+		KSI_OctetString_free(t->cert);
+		KSI_free(t);
+	}
+}
+
+int KSI_CertificateRecord_new(KSI_CTX *ctx, KSI_CertificateRecord **t) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CertificateRecord *tmp = NULL;
+	tmp = KSI_new(KSI_CertificateRecord);
+	if(tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->certId = NULL;
+	tmp->cert = NULL;
+	*t = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+cleanup:
+	KSI_CertificateRecord_free(tmp);
+	return res;
+}
+
+int KSI_CertificateRecord_getCertId(const KSI_CertificateRecord *t, KSI_OctetString **certId) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || certId == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*certId = t->certId;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_CertificateRecord_getCert(const KSI_CertificateRecord *t, KSI_OctetString **cert) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || cert == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*cert = t->cert;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_CertificateRecord_setCertId(KSI_CertificateRecord *t, KSI_OctetString *certId) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->certId = certId;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_CertificateRecord_setCert(KSI_CertificateRecord *t, KSI_OctetString *cert) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->cert = cert;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+
+/**
+ * KSI_PublicationData
+ */
+void KSI_PublicationData_free(KSI_PublicationData *t) {
+	if(t != NULL) {
+		KSI_Integer_free(t->time);
+		KSI_DataHash_free(t->imprint);
+		KSI_free(t);
+	}
+}
+
+int KSI_PublicationData_new(KSI_CTX *ctx, KSI_PublicationData **t) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_PublicationData *tmp = NULL;
+	tmp = KSI_new(KSI_PublicationData);
+	if(tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->time = NULL;
+	tmp->imprint = NULL;
+	*t = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+cleanup:
+	KSI_PublicationData_free(tmp);
+	return res;
+}
+
+int KSI_PublicationData_getTime(const KSI_PublicationData *t, KSI_Integer **time) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || time == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*time = t->time;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_PublicationData_getImprint(const KSI_PublicationData *t, KSI_DataHash **imprint) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || imprint == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*imprint = t->imprint;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_PublicationData_setTime(KSI_PublicationData *t, KSI_Integer *time) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->time = time;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_PublicationData_setImprint(KSI_PublicationData *t, KSI_DataHash *imprint) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->imprint = imprint;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+
+/**
+ * KSI_PublicationRecord
+ */
+void KSI_PublicationRecord_free(KSI_PublicationRecord *t) {
+	if(t != NULL) {
+		KSI_PublicationData_free(t->publishedData);
+		KSI_Utf8StringList_free(t->publicationRef);
+		KSI_free(t);
+	}
+}
+
+int KSI_PublicationRecord_new(KSI_CTX *ctx, KSI_PublicationRecord **t) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_PublicationRecord *tmp = NULL;
+	tmp = KSI_new(KSI_PublicationRecord);
+	if(tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->publishedData = NULL;
+	tmp->publicationRef = NULL;
+	*t = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+cleanup:
+	KSI_PublicationRecord_free(tmp);
+	return res;
+}
+
+int KSI_PublicationRecord_getPublishedData(const KSI_PublicationRecord *t, KSI_PublicationData **publishedData) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || publishedData == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*publishedData = t->publishedData;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_PublicationRecord_getPublicationRef(const KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) **publicationRef) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || publicationRef == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*publicationRef = t->publicationRef;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_PublicationRecord_setPublishedData(KSI_PublicationRecord *t, KSI_PublicationData *publishedData) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->publishedData = publishedData;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_PublicationRecord_setPublicationRef(KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) *publicationRef) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->publicationRef = publicationRef;
 	res = KSI_OK;
 cleanup:
 	 return res;

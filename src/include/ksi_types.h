@@ -6,6 +6,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+typedef struct KSI_MetaData_st KSI_MetaData;
 typedef struct KSI_HashChainLink_st KSI_HashChainLink;
 typedef struct KSI_CalendarHashChain_st KSI_CalendarHashChain;
 typedef struct KSI_ExtendPdu_st KSI_ExtendPdu;
@@ -17,8 +18,26 @@ typedef struct KSI_RequestAck_st KSI_RequestAck;
 typedef struct KSI_AggregationResp_st KSI_AggregationResp;
 typedef struct KSI_ExtendReq_st KSI_ExtendReq;
 typedef struct KSI_ExtendResp_st KSI_ExtendResp;
+typedef struct KSI_PublicationHeader_st KSI_PublicationHeader;
+typedef struct KSI_CertificateRecord_st KSI_CertificateRecord;
+typedef struct KSI_PublicationData_st KSI_PublicationData;
+typedef struct KSI_PublicationRecord_st KSI_PublicationRecord;
 
 KSI_DEFINE_LIST(KSI_HashChainLink);
+
+/**
+ * KSI_MetaData
+ */
+void KSI_MetaData_free(KSI_MetaData *t);
+int KSI_MetaData_new(KSI_CTX *ctx, KSI_MetaData **t);
+int KSI_MetaData_getRaw(const KSI_MetaData *t, KSI_OctetString **raw);
+int KSI_MetaData_getClientId(const KSI_MetaData *t, KSI_Utf8String **clientId);
+int KSI_MetaData_getMachineId(const KSI_MetaData *t, KSI_Integer **machineId);
+int KSI_MetaData_getSequenceNr(const KSI_MetaData *t, KSI_Integer **sequenceNr);
+int KSI_MetaData_setRaw(KSI_MetaData *t, KSI_OctetString *raw);
+int KSI_MetaData_setClientId(KSI_MetaData *t, KSI_Utf8String *clientId);
+int KSI_MetaData_setMachineId(KSI_MetaData *t, KSI_Integer *machineId);
+int KSI_MetaData_setSequenceNr(KSI_MetaData *t, KSI_Integer *sequenceNr);
 
 /**
  * KSI_HashChainLink
@@ -27,12 +46,12 @@ void KSI_HashChainLink_free(KSI_HashChainLink *t);
 int KSI_HashChainLink_new(KSI_CTX *ctx, KSI_HashChainLink **t);
 int KSI_HashChainLink_getIsLeft(const KSI_HashChainLink *t, int *isLeft);
 int KSI_HashChainLink_getLevelCorrection(const KSI_HashChainLink *t, int *levelCorrection);
-int KSI_HashChainLink_getMetaHash(const KSI_HashChainLink *t, KSI_MetaHash **metaHash);
+int KSI_HashChainLink_getMetaHash(const KSI_HashChainLink *t, KSI_DataHash **metaHash);
 int KSI_HashChainLink_getMetaData(const KSI_HashChainLink *t, KSI_MetaData **metaData);
 int KSI_HashChainLink_getImprint(const KSI_HashChainLink *t, KSI_DataHash **imprint);
 int KSI_HashChainLink_setIsLeft(KSI_HashChainLink *t, int isLeft);
 int KSI_HashChainLink_setLevelCorrection(KSI_HashChainLink *t, int levelCorrection);
-int KSI_HashChainLink_setMetaHash(KSI_HashChainLink *t, KSI_MetaHash *metaHash);
+int KSI_HashChainLink_setMetaHash(KSI_HashChainLink *t, KSI_DataHash *metaHash);
 int KSI_HashChainLink_setMetaData(KSI_HashChainLink *t, KSI_MetaData *metaData);
 int KSI_HashChainLink_setImprint(KSI_HashChainLink *t, KSI_DataHash *imprint);
 
@@ -173,6 +192,46 @@ int KSI_ExtendResp_setStatus(KSI_ExtendResp *t, KSI_Integer *status);
 int KSI_ExtendResp_setErrorMsg(KSI_ExtendResp *t, KSI_Utf8String *errorMsg);
 int KSI_ExtendResp_setLastTime(KSI_ExtendResp *t, KSI_Integer *lastTime);
 int KSI_ExtendResp_setCalendarHashChain(KSI_ExtendResp *t, KSI_CalendarHashChain *calendarHashChain);
+
+/**
+ * KSI_PublicationHeader
+ */
+void KSI_PublicationHeader_free(KSI_PublicationHeader *t);
+int KSI_PublicationHeader_new(KSI_CTX *ctx, KSI_PublicationHeader **t);
+int KSI_PublicationHeader_getVersion(const KSI_PublicationHeader *t, KSI_Integer **version);
+int KSI_PublicationHeader_getTimeCreated(const KSI_PublicationHeader *t, KSI_Integer **timeCreated);
+int KSI_PublicationHeader_setVersion(KSI_PublicationHeader *t, KSI_Integer *version);
+int KSI_PublicationHeader_setTimeCreated(KSI_PublicationHeader *t, KSI_Integer *timeCreated);
+
+/**
+ * KSI_CertificateRecord
+ */
+void KSI_CertificateRecord_free(KSI_CertificateRecord *t);
+int KSI_CertificateRecord_new(KSI_CTX *ctx, KSI_CertificateRecord **t);
+int KSI_CertificateRecord_getCertId(const KSI_CertificateRecord *t, KSI_OctetString **certId);
+int KSI_CertificateRecord_getCert(const KSI_CertificateRecord *t, KSI_OctetString **cert);
+int KSI_CertificateRecord_setCertId(KSI_CertificateRecord *t, KSI_OctetString *certId);
+int KSI_CertificateRecord_setCert(KSI_CertificateRecord *t, KSI_OctetString *cert);
+
+/**
+ * KSI_PublicationData
+ */
+void KSI_PublicationData_free(KSI_PublicationData *t);
+int KSI_PublicationData_new(KSI_CTX *ctx, KSI_PublicationData **t);
+int KSI_PublicationData_getTime(const KSI_PublicationData *t, KSI_Integer **time);
+int KSI_PublicationData_getImprint(const KSI_PublicationData *t, KSI_DataHash **imprint);
+int KSI_PublicationData_setTime(KSI_PublicationData *t, KSI_Integer *time);
+int KSI_PublicationData_setImprint(KSI_PublicationData *t, KSI_DataHash *imprint);
+
+/**
+ * KSI_PublicationRecord
+ */
+void KSI_PublicationRecord_free(KSI_PublicationRecord *t);
+int KSI_PublicationRecord_new(KSI_CTX *ctx, KSI_PublicationRecord **t);
+int KSI_PublicationRecord_getPublishedData(const KSI_PublicationRecord *t, KSI_PublicationData **publishedData);
+int KSI_PublicationRecord_getPublicationRef(const KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) **publicationRef);
+int KSI_PublicationRecord_setPublishedData(KSI_PublicationRecord *t, KSI_PublicationData *publishedData);
+int KSI_PublicationRecord_setPublicationRef(KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) *publicationRef);
 
 
 #ifdef __cplusplus

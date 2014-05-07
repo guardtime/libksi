@@ -33,7 +33,7 @@ extern "C" {
 	 * error code).
 	 */
 	int KSI_HashChain_getCalendarAggregationTime(const KSI_LIST(KSI_HashChainLink) *chain, const KSI_Integer *aggr_time, uint32_t *utc_time);
-	int KSI_HashChain_appendLink(KSI_CTX *ctx, KSI_DataHash *siblingHash, int isLeft, unsigned int levelCorrection, KSI_LIST(KSI_HashChainLink) **chain);
+	int KSI_HashChain_appendLink(KSI_CTX *ctx, KSI_DataHash *siblingHash, KSI_DataHash *metaHash, KSI_MetaData *metaData, int isLeft, unsigned int levelCorrection, KSI_LIST(KSI_HashChainLink) **chain);
 
 	/**
 	 * TODO!
@@ -45,8 +45,6 @@ extern "C" {
 	 */
 	int KSI_HashChain_aggregateCalendar(KSI_LIST(KSI_HashChainLink) *chain, KSI_DataHash *inputHash, KSI_DataHash **outputHash);
 
-	int KSI_MetaHash_getRaw(const KSI_MetaHash *mth, const unsigned char **data, int *data_len);
-	int KSI_MetaData_getRaw(const KSI_MetaData *mtd, const unsigned char **data, int *data_len);
 
 #ifdef __cplusplus
 }

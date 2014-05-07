@@ -3,22 +3,6 @@
 #include "ksi_tlv_easy.h"
 #include "ksi_internal.h"
 
-struct KSI_HashChain_MetaHash_st {
-	KSI_CTX *ctx;
-	unsigned char *data;
-	int data_length;
-};
-
-
-struct KSI_HashChain_MetaData_st {
-	KSI_CTX *ctx;
-	unsigned char *raw;
-	int raw_length;
-	char *clientId;
-	KSI_Integer *machineId;
-	KSI_Integer *sequenceNr;
-};
-
 static int highBit(unsigned int n) {
     n |= (n >>  1);
     n |= (n >>  2);
@@ -65,8 +49,9 @@ static int addChainImprint(KSI_DataHasher *hsr, KSI_HashChainLink *link) {
 	const unsigned char *imprint;
 	int imprint_len;
 	KSI_MetaData *metaData = NULL;
-	KSI_MetaHash *metaHash = NULL;
+	KSI_DataHash *metaHash = NULL;
 	KSI_DataHash *hash = NULL;
+	KSI_OctetString *tmpOctStr = NULL;
 
 	KSI_PRE(&err, hsr != NULL) goto cleanup;
 	KSI_PRE(&err, link != NULL) goto cleanup;
@@ -93,11 +78,14 @@ static int addChainImprint(KSI_DataHasher *hsr, KSI_HashChainLink *link) {
 			KSI_CATCH(&err, res) goto cleanup;
 			break;
 		case 0x02:
-			res = KSI_MetaHash_getRaw(metaHash, &imprint, &imprint_len);
+			res = KSI_DataHash_getImprint(metaHash, &imprint, &imprint_len);
 			KSI_CATCH(&err, res) goto cleanup;
 			break;
 		case 0x04:
-			res = KSI_MetaData_getRaw(metaData, &imprint, &imprint_len);
+			res = KSI_MetaData_getRaw(metaData, &tmpOctStr);
+			KSI_CATCH(&err, res) goto cleanup;
+
+			res = KSI_OctetString_extract(tmpOctStr, &imprint, &imprint_len);
 			KSI_CATCH(&err, res) goto cleanup;
 			break;
 		default:
@@ -111,6 +99,12 @@ static int addChainImprint(KSI_DataHasher *hsr, KSI_HashChainLink *link) {
 	KSI_SUCCESS(&err);
 
 cleanup:
+
+	KSI_nofree(hash);
+	KSI_nofree(metaHash);
+	KSI_nofree(metaData);
+	KSI_nofree(imprint);
+	KSI_nofree(tmpOctStr);
 
 	return KSI_RETURN(&err);
 }
@@ -255,7 +249,7 @@ cleanup:
 /**
  *
  */
-int KSI_HashChain_appendLink(KSI_CTX *ctx, KSI_DataHash *siblingHash, int isLeft, unsigned int levelCorrection, KSI_LIST(KSI_HashChainLink) **chain) {
+int KSI_HashChain_appendLink(KSI_CTX *ctx, KSI_DataHash *siblingHash, KSI_DataHash *metaHash, KSI_MetaData *metaData, int isLeft, unsigned int levelCorrection, KSI_LIST(KSI_HashChainLink) **chain) {
 	KSI_ERR err;
 	KSI_HashChainLink *chainLink = NULL;
 	int res;
@@ -346,132 +340,7 @@ cleanup:
 
 	return res;
 }
- /**
-  *
-  */
-void KSI_MetaHash_free(KSI_MetaHash *mhs) {
-	if (mhs != NULL) {
-		KSI_free(mhs->data);
-		KSI_nofree(mhs->str);
 
-		KSI_free(mhs);
-	}
-}
-
-void KSI_MetaData_free(KSI_MetaData *p) {
-	if (p != NULL) {
-		KSI_free(p->clientId);
-		KSI_free(p->raw);
-		KSI_Integer_free(p->machineId);
-		KSI_Integer_free(p->sequenceNr);
-		KSI_free(p);
-	}
-}
-
-
-/**
- *
- */
-int KSI_MetaHash_create(KSI_CTX *ctx, unsigned char *data, int data_length, KSI_MetaHash **mth) {
-	KSI_ERR err;
-	KSI_MetaHash *tmp = NULL;
-	int payload_len;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, data != NULL) goto cleanup;
-	KSI_PRE(&err, data_length >= 3) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	/* Validate the internal structure, first two bytes represent the length. */
-	payload_len = data[1] << 8 | data[2];
-	if (payload_len + 2 != data_length) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Not a meta hash");
-		goto cleanup;
-	}
-
-	tmp = KSI_new(KSI_MetaHash);
-	if (tmp == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	tmp->data = NULL;
-
-	if (data == NULL) {
-		tmp->data_length = 0;
-	} else {
-		tmp->data = KSI_calloc(data_length + 1, 1);
-		if (tmp->data == NULL) {
-			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-			goto cleanup;
-		}
-		memcpy(tmp->data, data, data_length);
-		tmp->data_length = data_length;
-	}
-
-	/* Set extra byte to zero for easy return of UTF-8 string. */
-	tmp->data[data_length] = '\0';
-
-	*mth = tmp;
-	tmp = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_MetaHash_free(tmp);
-
-	return KSI_RETURN(&err);
-
-}
-
-/**
- *
- */
-int KSI_MetaHash_getUtf8Value(KSI_MetaHash *mth, const char **value) {
-	KSI_ERR err;
-	KSI_PRE(&err, mth != NULL) goto cleanup;
-
-	KSI_BEGIN(mth->ctx, &err);
-
-	*value = (char *)mth->data + 2;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-}
-
-/**
- *
- */
-int KSI_MetaHash_getHashId(KSI_MetaHash *mth, int *hash_id) {
-	KSI_ERR err;
-	KSI_PRE(&err, mth != NULL) goto cleanup;
-
-	*hash_id = (char) mth->data[0];
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-}
-
-int KSI_MetaHash_getRaw(const KSI_MetaHash *mth, const unsigned char **data, int *data_len) {
-	KSI_ERR err;
-	KSI_PRE(&err, mth != NULL) goto cleanup;
-
-	*data = mth->data;
-	*data_len = mth->data_length;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-}
 /**
  *
  */
@@ -484,62 +353,4 @@ int KSI_HashChain_aggregate(KSI_LIST(KSI_HashChainLink) *chain, KSI_DataHash *in
  */
 int KSI_HashChain_aggregateCalendar(KSI_LIST(KSI_HashChainLink) *chain, KSI_DataHash *inputHash, KSI_DataHash **outputHash) {
 	return aggregateChain(chain, inputHash, 0xff, -1, 1, NULL, outputHash);
-}
-
-int KSI_MetaData_parse(KSI_MetaData *mtd, char **clientId, KSI_Integer **machineId, KSI_Integer **sequenceNr) {
-	KSI_ERR err;
-
-	char *cId = NULL;
-	KSI_Integer *mId = NULL;
-	KSI_Integer *sNr = NULL;
-
-	KSI_PRE(&err, mtd != NULL) goto cleanup;
-	KSI_BEGIN(mtd->ctx, &err);
-// FIXME!
-/*	KSI_TLV_PARSE_RAW_BEGIN(mtd->ctx, mtd->data, mtd->data_length)
-		KSI_PARSE_TLV_ELEMENT_UTF8STR(0x01, &cId)
-		KSI_PARSE_TLV_ELEMENT_INTEGER(0x02, &mId)
-		KSI_PARSE_TLV_ELEMENT_INTEGER(0x03, &sNr)
-		KSI_PARSE_TLV_ELEMENT_UNKNONW_NON_CRITICAL_IGNORE
-	KSI_TLV_PARSE_RAW_END(res, NULL);
-	KSI_CATCH(&err, res) goto cleanup;
-*/
-	if (clientId != NULL) {
-		*clientId = cId;
-		cId = NULL;
-	}
-
-	if (machineId != NULL) {
-		*machineId = mId;
-		mId = NULL;
-	}
-
-	if (sequenceNr != NULL) {
-		*sequenceNr = sNr;
-		sNr = NULL;
-	}
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_free(cId);
-	KSI_free(mId);
-	KSI_free(sNr);
-
-	return KSI_RETURN(&err);
-}
-
-int KSI_MetaData_getRaw(const KSI_MetaData *mtd, const unsigned char **data, int *data_len) {
-	KSI_ERR err;
-	KSI_PRE(&err, mtd != NULL) goto cleanup;
-// FIXME
-/*	*data = mtd->data;
-	*data_len = mtd->data_length;
-*/
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
 }

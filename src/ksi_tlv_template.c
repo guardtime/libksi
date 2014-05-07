@@ -3,6 +3,19 @@
 static int encodeCalendarHashChainLink(KSI_CTX *ctx, KSI_TLV *tlv, const KSI_CalendarHashChain *calHashChain, const KSI_TlvTemplate *template);
 static int decodeCalendarHashChainLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarHashChain *calHashChain, getter_t valueGetter, setter_t valueSetter);
 
+KSI_DEFINE_TLV_TEMPLATE(KSI_MetaData)
+	KSI_TLV_UTF8_STRING(0x01, 0, 0, KSI_MetaData_getClientId, KSI_MetaData_setClientId)
+	KSI_TLV_INTEGER(0x02, 0, 0, KSI_MetaData_getMachineId, KSI_MetaData_setMachineId)
+	KSI_TLV_INTEGER(0x03, 0, 0, KSI_MetaData_getSequenceNr, KSI_MetaData_setSequenceNr)
+KSI_END_TLV_TEMPLATE
+
+KSI_DEFINE_TLV_TEMPLATE(KSI_HashChainLink)
+	KSI_TLV_NATIVE_INT(0x01, 0, 0, KSI_HashChainLink_getLevelCorrection, KSI_HashChainLink_setLevelCorrection)
+	KSI_TLV_IMPRINT(0x02, 0, 0, KSI_HashChainLink_getImprint, KSI_HashChainLink_setImprint)
+	KSI_TLV_IMPRINT(0x03, 0, 0, KSI_HashChainLink_getMetaHash, KSI_HashChainLink_setMetaHash)
+	KSI_TLV_COMPOSITE(0x04, 0, 0, KSI_HashChainLink_getMetaData, KSI_HashChainLink_setMetaData, KSI_MetaData)
+KSI_END_TLV_TEMPLATE
+
 KSI_DEFINE_TLV_TEMPLATE(KSI_Header)
 	KSI_TLV_INTEGER(0x05, 0, 0, KSI_Header_getInstanceId, KSI_Header_setInstanceId)
 	KSI_TLV_INTEGER(0x06, 0, 0, KSI_Header_getMessageId, KSI_Header_setMessageId)
@@ -238,6 +251,8 @@ int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI
 	KSI_DataHash *hashVal = NULL;
 	KSI_OctetString *octetStringVal = NULL;
 	KSI_Utf8String *stringVal = NULL;
+	KSI_uint64_t uint64Val = 0;
+	int intVal = 0;
 	void *listVal = NULL;
 	void *compositeVal = NULL;
 	void *valuep = NULL;
@@ -276,6 +291,25 @@ int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI
 
 			/* Parse the current TLV */
 			switch (t->type) {
+				case KSI_TLV_TEMPLATE_NATIVE_INT:
+					res = KSI_TLV_cast(tmp, KSI_TLV_PAYLOAD_INT);
+					KSI_CATCH(&err, res) goto cleanup;
+
+					res = KSI_TLV_getUInt64Value(tmp, &uint64Val);
+					KSI_CATCH(&err, res) goto cleanup;
+
+					intVal = (int)uint64Val;
+					if (intVal != uint64Val) {
+						KSI_FAIL(&err, KSI_INVALID_FORMAT, "Value too big for internal int value.");
+						goto cleanup;
+					}
+
+					res = ((int (*)(void *, int))t->setValue)(payload, intVal);
+					KSI_CATCH(&err, res) goto cleanup;
+
+					integerVal = NULL;
+
+					break;
 				case KSI_TLV_TEMPLATE_INTEGER:
 					res = KSI_TLV_cast(tmp, KSI_TLV_PAYLOAD_INT);
 					KSI_CATCH(&err, res) goto cleanup;
@@ -298,8 +332,6 @@ int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI
 
 					res = KSI_DataHash_fromImprint(ctx, raw, raw_len, &hashVal);
 					KSI_CATCH(&err, res) goto cleanup;
-
-					hashVal = NULL;
 
 					res = t->setValue(payload, (void *)hashVal);
 					KSI_CATCH(&err, res) goto cleanup;
@@ -394,7 +426,6 @@ int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI
 					KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Undefined template type");
 					goto cleanup;
 			}
-
 		} else {
 			if (reminder != NULL) {
 				/* The TLV tag is not in the template, move it to the reminder. */
@@ -432,6 +463,7 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 	int raw_len = 0;
 	KSI_TLV *tmp = NULL;
 	const void *payloadp = NULL;
+	int intVal;
 
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
 	KSI_PRE(&err, template != NULL) goto cleanup;
@@ -444,6 +476,20 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 		KSI_CATCH(&err, res) goto cleanup;
 		if (payloadp != NULL) {
 			switch (template->type) {
+				case KSI_TLV_TEMPLATE_NATIVE_INT:
+					res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, template->tag, template->isNonCritical, template->isForward, &tmp);
+					KSI_CATCH(&err, res) goto cleanup;
+
+					res = KSI_TLV_cast(tmp, KSI_TLV_PAYLOAD_INT);
+					KSI_CATCH(&err, res) goto cleanup;
+
+					res = ((int (*)(const void *, int *))template->getValue)(payload, &intVal);
+					KSI_CATCH(&err, res) goto cleanup;
+
+					res = KSI_TLV_setUintValue(tmp, (KSI_uint64_t)intVal);
+					KSI_CATCH(&err, res) goto cleanup;
+
+					break;
 				case KSI_TLV_TEMPLATE_INTEGER:
 					res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, template->tag, template->isNonCritical, template->isForward, &tmp);
 					KSI_CATCH(&err, res) goto cleanup;
