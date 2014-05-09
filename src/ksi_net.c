@@ -102,45 +102,6 @@ void KSI_NetHandle_free(KSI_NetHandle *handle) {
 	}
 }
 
-
-
-int KSI_NET_getResponse(KSI_NetHandle *handle, unsigned char **response, int *response_length, int copy) {
-	KSI_ERR err;
-	unsigned char *tmp = NULL;
-	int res;
-
-	KSI_PRE(&err, handle != NULL);
-	KSI_BEGIN(handle->ctx, &err);
-
-	if (handle->readResponse == NULL) {
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, NULL);
-		goto cleanup;
-	}
-	res = handle->readResponse(handle);
-
-	KSI_CATCH(&err, res) goto cleanup;
-
-	if (copy) {
-		tmp = KSI_calloc(handle->response_length, 1);
-		if (tmp == NULL) {
-			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-			goto cleanup;
-		}
-		memcpy(tmp, handle->response, handle->response_length);
-	} else {
-		tmp = handle->response;
-	}
-
-	*response = tmp;
-	*response_length = handle->response_length;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-}
-
 int KSI_NetProvider_sendSignRequest(KSI_NetProvider *provider, KSI_NetHandle *handle) {
 	KSI_ERR err;
 	int res;
@@ -272,8 +233,22 @@ cleanup:
 
 int KSI_NetHandle_getResponse(KSI_NetHandle *handle, const unsigned char **response, int *response_len) {
 	KSI_ERR err;
+	int res;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(handle->ctx, &err);
+
+	KSI_PRE(&err, handle != NULL);
+	KSI_BEGIN(handle->ctx, &err);
+
+	if (handle->response == NULL) {
+		if (handle->readResponse == NULL) {
+			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, NULL);
+			goto cleanup;
+		}
+
+		res = handle->readResponse(handle);
+		KSI_CATCH(&err, res) goto cleanup;
+	}
 
 	*response = handle->response;
 	*response_len = handle->response_length;

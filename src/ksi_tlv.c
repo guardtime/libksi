@@ -377,7 +377,7 @@ static int encodeAsNestedTlvs(KSI_TLV *tlv) {
 		goto cleanup;
 	}
 
-	res = KSI_RDR_fromMem(tlv->ctx, tlv->datap, tlv->datap_len, 0, &rdr);
+	res = KSI_RDR_fromSharedMem(tlv->ctx, tlv->datap, tlv->datap_len, &rdr);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_TLVList_new(tlv->ctx, &tlvList);
@@ -757,19 +757,19 @@ cleanup:
 int KSI_TLV_parseBlob(KSI_CTX *ctx, unsigned char *data, size_t data_length, KSI_TLV **tlv) {
 	KSI_ERR err;
 	KSI_RDR *rdr = NULL;
-	KSI_TLV *t = NULL;
+	KSI_TLV *tmp = NULL;
 
 	int res;
 
 	KSI_BEGIN(ctx, &err);
 
-	res = KSI_RDR_fromMem(ctx, data, data_length, 0, &rdr);
+	res = KSI_RDR_fromSharedMem(ctx, data, data_length, &rdr);
 	if (res != KSI_OK) {
 		KSI_FAIL(&err, res, NULL);
 		goto cleanup;
 	}
 
-	res = KSI_TLV_fromReader(rdr, &t);
+	res = KSI_TLV_fromReader(rdr, &tmp);
 	if (res != KSI_OK) {
 		KSI_FAIL(&err, res, NULL);
 		goto cleanup;
@@ -779,15 +779,16 @@ int KSI_TLV_parseBlob(KSI_CTX *ctx, unsigned char *data, size_t data_length, KSI
 	res = KSI_RDR_verifyEnd(rdr);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	*tlv = t;
-	t = NULL;
+
+	*tlv = tmp;
+	tmp = NULL;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
 
 	KSI_RDR_close(rdr);
-	KSI_TLV_free(t);
+	KSI_TLV_free(tmp);
 
 	return KSI_RETURN(&err);
 }

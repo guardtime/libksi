@@ -1,41 +1,9 @@
-/*
- * ksi_net.h
- *
- *  Created on: 11.04.2014
- *      Author: henri
- */
-
 #ifndef KSI_NET_H_
 #define KSI_NET_H_
-
-#include "ksi_common.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-	void KSI_NET_Handle_freeNetContext(void *netCtx);
-
-	int KSI_NET_global_init(void);
-
-	void KSI_NET_global_cleanup(void);
-
-	/** Transport Providers */
-	int KSI_NET_CURL_new(KSI_CTX *ctx, KSI_NetProvider **netProvider);
-	int KSI_NET_CURL_setSignerUrl(KSI_NetProvider *netProvider, char *val);
-	int KSI_NET_CURL_setExtenderUrl(KSI_NetProvider *netProvider, char *val);
-	int KSI_NET_CURL_setPublicationUrl(KSI_NetProvider *netProvider, char *val);
-	int KSI_NET_CURL_setConnectionTimeoutSeconds(KSI_NetProvider *netProvider, int val);
-	int KSI_NET_CURL_setReadTimeoutSeconds(KSI_NetProvider *netProvider, int val);
-	/**
-	 *
-	 */
-	int KSI_NET_sendRequest(KSI_CTX *ctx, const char *url, const unsigned char *request, int request_length, KSI_NetHandle **handle);
-
-	/**
-	 *
-	 */
-	int KSI_NET_getResponse(KSI_NetHandle *handle, unsigned char **response, int *response_length, int copy);
 
 	/**
 	 *

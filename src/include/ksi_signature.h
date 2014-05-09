@@ -45,7 +45,7 @@ extern "C" {
 	/**
 	 * TODO!
 	 */
-	int KSI_parseAggregationResponse(KSI_CTX *ctx, unsigned char *response, int response_len, KSI_Signature **signature);
+	int KSI_parseAggregationResponse(KSI_CTX *ctx, const unsigned char *response, int response_len, KSI_Signature **signature);
 
 	/**
 	 * TODO!

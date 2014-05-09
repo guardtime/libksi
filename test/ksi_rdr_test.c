@@ -167,7 +167,7 @@ static void TestRdrMemInitExtStorage(CuTest* tc) {
 	CuAssert(tc, "Failed initializing context.", res == KSI_OK);
 
 	/* Init reader. */
-	res = KSI_RDR_fromMem(ctx, (unsigned char *)testData, sizeof(testData), 0, &rdr);
+	res = KSI_RDR_fromSharedMem(ctx, (unsigned char *)testData, sizeof(testData), &rdr);
 	CuAssert(tc, "Failed initializing context from shared memory.", res == KSI_OK);
 	CuAssert(tc, "Init did not fail, but object not created.", rdr != NULL);
 
@@ -194,7 +194,7 @@ static void TestRdrMemInitOwnStorage(CuTest* tc) {
 	CuAssert(tc, "Failed initializing context.", res == KSI_OK);
 
 	/* Init reader. */
-	res = KSI_RDR_fromMem(ctx, (unsigned char *) testData, sizeof(testData), 1, &rdr);
+	res = KSI_RDR_fromMem(ctx, (unsigned char *) testData, sizeof(testData), &rdr);
 	CuAssert(tc, "Failed initializing context from private memory.", res == KSI_OK);
 	CuAssert(tc, "Init did not fail, but object not created.", rdr != NULL);
 

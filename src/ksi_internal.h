@@ -74,7 +74,7 @@ int KSI_LIST_FN_NAME(type, replaceAt)(KSI_LIST(type) *list, int pos, type *o) {	
 	return KSI_List_replaceAt(list->list, pos, o);									\
 }																					\
 int KSI_LIST_FN_NAME(type, length)(const KSI_LIST(type) *list) {					\
-	return KSI_List_length(list->list);												\
+	return list != NULL ? KSI_List_length(list->list): 0;							\
 }																					\
 int KSI_LIST_FN_NAME(type, remove)(KSI_LIST(type) *list, int pos) {					\
 	return KSI_List_remove(list->list, pos);										\

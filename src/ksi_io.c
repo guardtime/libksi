@@ -115,10 +115,9 @@ cleanup:
 }
 
 
-int KSI_RDR_fromMem(KSI_CTX *ctx, unsigned char *buffer, const size_t buffer_length, int ownCopy, KSI_RDR **rdr) {
+static int createReader_fromMem(KSI_CTX *ctx, unsigned char *buffer, const size_t buffer_length, int ownCopy, KSI_RDR **rdr) {
 	KSI_ERR err;
 	KSI_RDR *reader = NULL;
-	unsigned char *buf = NULL;
 
 	KSI_BEGIN(ctx, &err);
 
@@ -128,19 +127,7 @@ int KSI_RDR_fromMem(KSI_CTX *ctx, unsigned char *buffer, const size_t buffer_len
 		goto cleanup;
 	}
 
-	if (ownCopy) {
-		buf = KSI_calloc(buffer_length, 1);
-		if (buf == NULL) {
-			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-			goto cleanup;
-		}
-		memcpy(buf, buffer, buffer_length);
-	} else {
-		buf = buffer;
-	}
-
-	reader->data.mem.buffer = buf;
-	buf = NULL;
+	reader->data.mem.buffer = buffer;
 
 	reader->data.mem.buffer_length = buffer_length;
 	reader->data.mem.ownCopy = ownCopy;
@@ -150,9 +137,52 @@ int KSI_RDR_fromMem(KSI_CTX *ctx, unsigned char *buffer, const size_t buffer_len
 
 	KSI_SUCCESS(&err);
 cleanup:
-	KSI_free(buf);
 
 	KSI_RDR_close(reader);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_RDR_fromMem(KSI_CTX *ctx, const unsigned char *buffer, const size_t buffer_length, KSI_RDR **rdr) {
+	KSI_ERR err;
+	int res;
+	unsigned char *buf = NULL;
+
+	KSI_BEGIN(ctx, &err);
+
+	buf = KSI_calloc(buffer_length, 1);
+	if (buf == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+	memcpy(buf, buffer, buffer_length);
+
+	res = createReader_fromMem(ctx, buf, buffer_length, 1, rdr);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	buf = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_free(buf);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_RDR_fromSharedMem(KSI_CTX *ctx, unsigned char *buffer, const size_t buffer_length, KSI_RDR **rdr) {
+	KSI_ERR err;
+	int res;
+
+	KSI_BEGIN(ctx, &err);
+
+	res = createReader_fromMem(ctx, buffer, buffer_length, 0, rdr);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
 
 	return KSI_RETURN(&err);
 }

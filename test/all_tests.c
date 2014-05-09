@@ -92,6 +92,7 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSI_HashChain_GetSuite);
 	addSuite(suite, KSI_UTIL_GetSuite);
 	addSuite(suite, KSI_Signature_getSuite);
+	addSuite(suite, KSI_KSITrustProvider_getSuite);
 
 	return suite;
 }

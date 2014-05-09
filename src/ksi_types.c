@@ -96,7 +96,7 @@ struct KSI_ExtendResp_st {
 	KSI_CalendarHashChain *calendarHashChain;
 };
 
-struct KSI_PublicationHeader_st {
+struct KSI_PublicationsHeader_st {
 	KSI_CTX *ctx;
 	KSI_Integer *version;
 	KSI_Integer *timeCreated;
@@ -120,8 +120,9 @@ struct KSI_PublicationRecord_st {
 	KSI_LIST(KSI_Utf8String) *publicationRef;
 };
 
-
 KSI_IMPLEMENT_LIST(KSI_HashChainLink, KSI_HashChainLink_free);
+KSI_IMPLEMENT_LIST(KSI_CertificateRecord, KSI_CertificateRecord_free);
+KSI_IMPLEMENT_LIST(KSI_PublicationRecord, KSI_PublicationRecord_free);
 
 /**
  * KSI_MetaData
@@ -1706,9 +1707,9 @@ cleanup:
 
 
 /**
- * KSI_PublicationHeader
+ * KSI_PublicationsHeader
  */
-void KSI_PublicationHeader_free(KSI_PublicationHeader *t) {
+void KSI_PublicationsHeader_free(KSI_PublicationsHeader *t) {
 	if(t != NULL) {
 		KSI_Integer_free(t->version);
 		KSI_Integer_free(t->timeCreated);
@@ -1716,10 +1717,10 @@ void KSI_PublicationHeader_free(KSI_PublicationHeader *t) {
 	}
 }
 
-int KSI_PublicationHeader_new(KSI_CTX *ctx, KSI_PublicationHeader **t) {
+int KSI_PublicationsHeader_new(KSI_CTX *ctx, KSI_PublicationsHeader **t) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_PublicationHeader *tmp = NULL;
-	tmp = KSI_new(KSI_PublicationHeader);
+	KSI_PublicationsHeader *tmp = NULL;
+	tmp = KSI_new(KSI_PublicationsHeader);
 	if(tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
@@ -1732,11 +1733,11 @@ int KSI_PublicationHeader_new(KSI_CTX *ctx, KSI_PublicationHeader **t) {
 	tmp = NULL;
 	res = KSI_OK;
 cleanup:
-	KSI_PublicationHeader_free(tmp);
+	KSI_PublicationsHeader_free(tmp);
 	return res;
 }
 
-int KSI_PublicationHeader_getVersion(const KSI_PublicationHeader *t, KSI_Integer **version) {
+int KSI_PublicationsHeader_getVersion(const KSI_PublicationsHeader *t, KSI_Integer **version) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL || version == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1748,7 +1749,7 @@ cleanup:
 	 return res;
 }
 
-int KSI_PublicationHeader_getTimeCreated(const KSI_PublicationHeader *t, KSI_Integer **timeCreated) {
+int KSI_PublicationsHeader_getTimeCreated(const KSI_PublicationsHeader *t, KSI_Integer **timeCreated) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL || timeCreated == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1760,7 +1761,7 @@ cleanup:
 	 return res;
 }
 
-int KSI_PublicationHeader_setVersion(KSI_PublicationHeader *t, KSI_Integer *version) {
+int KSI_PublicationsHeader_setVersion(KSI_PublicationsHeader *t, KSI_Integer *version) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1772,7 +1773,7 @@ cleanup:
 	 return res;
 }
 
-int KSI_PublicationHeader_setTimeCreated(KSI_PublicationHeader *t, KSI_Integer *timeCreated) {
+int KSI_PublicationsHeader_setTimeCreated(KSI_PublicationsHeader *t, KSI_Integer *timeCreated) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -2023,6 +2024,5 @@ int KSI_PublicationRecord_setPublicationRef(KSI_PublicationRecord *t, KSI_LIST(K
 cleanup:
 	 return res;
 }
-
 
 

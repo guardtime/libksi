@@ -76,15 +76,15 @@ int KSI_CTX_new(KSI_CTX **context) {
 	KSI_LOG_init(ctx, NULL, KSI_LOG_DEBUG);
 
 	/* Initialize curl as the net handle. */
-	res = KSI_NET_CURL_new(ctx, &netProvider);
+	res = KSI_CurlNetProvider_new(ctx, &netProvider);
 	if (res != KSI_OK) goto cleanup;
 
 	/* Configure curl net provider */
-	if ((res = KSI_NET_CURL_setSignerUrl(netProvider, "192.168.1.36:3333" /*"http://192.168.1.36:3333/signer"*/)) != KSI_OK) goto cleanup;
-	if ((res = KSI_NET_CURL_setExtenderUrl(netProvider, "192.168.1.36:8010/gt-extendingservice")) != KSI_OK) goto cleanup;
-	if ((res = KSI_NET_CURL_setPublicationUrl(netProvider, "TODO")) != KSI_OK) goto cleanup;
-	if ((res = KSI_NET_CURL_setConnectTimeoutSeconds(netProvider, 5)) != KSI_OK) goto cleanup;
-	if ((res = KSI_NET_CURL_setReadTimeoutSeconds(netProvider, 5)) != KSI_OK) goto cleanup;
+	if ((res = KSI_CurlNetProvider_setSignerUrl(netProvider, "192.168.1.36:3333" /*"http://192.168.1.36:3333/signer"*/)) != KSI_OK) goto cleanup;
+	if ((res = KSI_CurlNetProvider_setExtenderUrl(netProvider, "192.168.1.36:8010/gt-extendingservice")) != KSI_OK) goto cleanup;
+	if ((res = KSI_CurlNetProvider_setPublicationUrl(netProvider, "TODO")) != KSI_OK) goto cleanup;
+	if ((res = KSI_CurlNetProvider_setConnectTimeoutSeconds(netProvider, 5)) != KSI_OK) goto cleanup;
+	if ((res = KSI_CurlNetProvider_setReadTimeoutSeconds(netProvider, 5)) != KSI_OK) goto cleanup;
 
 	res = KSI_CTX_setNetworkProvider(ctx, netProvider);
 	if (res != KSI_OK) goto cleanup;
@@ -139,7 +139,7 @@ void KSI_CTX_free(KSI_CTX *context) {
 int KSI_global_init(void) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	res = KSI_NET_global_init();
+	res = KSI_CurlNetProvider_global_init();
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_PKITruststore_global_init();
@@ -156,7 +156,7 @@ cleanup:
  *
  */
 void KSI_global_cleanup(void) {
-	KSI_NET_global_cleanup();
+	KSI_CurlNetProvider_global_cleanup();
 // TODO	KSI_PKITruststore_global_cleanup()
 }
 

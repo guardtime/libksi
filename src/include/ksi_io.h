@@ -20,7 +20,8 @@ extern "C" {
 	/* TODO!
 	 *
 	 */
-	int KSI_RDR_fromMem(KSI_CTX *ctx, unsigned char *buffer, const size_t buffer_length, int ownCopy, KSI_RDR **rdr);
+	int KSI_RDR_fromMem(KSI_CTX *ctx, const unsigned char *buffer, const size_t buffer_length, KSI_RDR **rdr);
+	int KSI_RDR_fromSharedMem(KSI_CTX *ctx, unsigned char *buffer, const size_t buffer_length, KSI_RDR **rdr);
 
 	/* TODO!
 	 *

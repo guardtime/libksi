@@ -18,12 +18,14 @@ typedef struct KSI_RequestAck_st KSI_RequestAck;
 typedef struct KSI_AggregationResp_st KSI_AggregationResp;
 typedef struct KSI_ExtendReq_st KSI_ExtendReq;
 typedef struct KSI_ExtendResp_st KSI_ExtendResp;
-typedef struct KSI_PublicationHeader_st KSI_PublicationHeader;
+typedef struct KSI_PublicationsHeader_st KSI_PublicationsHeader;
 typedef struct KSI_CertificateRecord_st KSI_CertificateRecord;
 typedef struct KSI_PublicationData_st KSI_PublicationData;
 typedef struct KSI_PublicationRecord_st KSI_PublicationRecord;
 
 KSI_DEFINE_LIST(KSI_HashChainLink);
+KSI_DEFINE_LIST(KSI_CertificateRecord);
+KSI_DEFINE_LIST(KSI_PublicationRecord);
 
 /**
  * KSI_MetaData
@@ -194,14 +196,14 @@ int KSI_ExtendResp_setLastTime(KSI_ExtendResp *t, KSI_Integer *lastTime);
 int KSI_ExtendResp_setCalendarHashChain(KSI_ExtendResp *t, KSI_CalendarHashChain *calendarHashChain);
 
 /**
- * KSI_PublicationHeader
+ * KSI_PublicationsHeader
  */
-void KSI_PublicationHeader_free(KSI_PublicationHeader *t);
-int KSI_PublicationHeader_new(KSI_CTX *ctx, KSI_PublicationHeader **t);
-int KSI_PublicationHeader_getVersion(const KSI_PublicationHeader *t, KSI_Integer **version);
-int KSI_PublicationHeader_getTimeCreated(const KSI_PublicationHeader *t, KSI_Integer **timeCreated);
-int KSI_PublicationHeader_setVersion(KSI_PublicationHeader *t, KSI_Integer *version);
-int KSI_PublicationHeader_setTimeCreated(KSI_PublicationHeader *t, KSI_Integer *timeCreated);
+void KSI_PublicationsHeader_free(KSI_PublicationsHeader *t);
+int KSI_PublicationsHeader_new(KSI_CTX *ctx, KSI_PublicationsHeader **t);
+int KSI_PublicationsHeader_getVersion(const KSI_PublicationsHeader *t, KSI_Integer **version);
+int KSI_PublicationsHeader_getTimeCreated(const KSI_PublicationsHeader *t, KSI_Integer **timeCreated);
+int KSI_PublicationsHeader_setVersion(KSI_PublicationsHeader *t, KSI_Integer *version);
+int KSI_PublicationsHeader_setTimeCreated(KSI_PublicationsHeader *t, KSI_Integer *timeCreated);
 
 /**
  * KSI_CertificateRecord
@@ -232,7 +234,6 @@ int KSI_PublicationRecord_getPublishedData(const KSI_PublicationRecord *t, KSI_P
 int KSI_PublicationRecord_getPublicationRef(const KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) **publicationRef);
 int KSI_PublicationRecord_setPublishedData(KSI_PublicationRecord *t, KSI_PublicationData *publishedData);
 int KSI_PublicationRecord_setPublicationRef(KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) *publicationRef);
-
 
 #ifdef __cplusplus
 }

@@ -1,6 +1,6 @@
 # Generated with mk_makefile.sh
 AM_CFLAGS=-g -Wall
-bin_PROGRAMS=runner ksi_sign ksi_extend
+bin_PROGRAMS=runner ksi_sign ksi_extend ksi_pubfile
 
 apiSources = \
 		../src/config.h \
@@ -26,6 +26,7 @@ apiSources = \
 		../src/ksi_net_curl.c \
 		../src/ksi_tlv.c \
 		../src/ksi_signature.c \
+		../src/ksi_publicationsfile.c \
 		../src/ksi_request.c \
 		../src/ksi_tlv_easy.h \
 		../src/ksi_tlv_tags.h \
@@ -42,6 +43,7 @@ runner_SOURCES= \
 		ksi_ctx_test.c \
 		ksi_hash_test.c \
 		ksi_hashchain_test.c \
+		ksi_ksitrustprovider_test.c \
 		ksi_log_test.c \
 		ksi_net_mock.c \
 		ksi_net_test.c \
@@ -60,4 +62,8 @@ ksi_sign_SOURCES= \
 		
 ksi_extend_SOURCES= \
 		extend_test.c \
+		$(apiSources)
+		
+ksi_pubfile_SOURCES= \
+		pubfile_test.c \
 		$(apiSources)

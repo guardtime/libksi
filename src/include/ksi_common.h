@@ -36,6 +36,8 @@ typedef struct KSI_List_st KSI_List;
 typedef struct KSI_OctetString_st KSI_OctetString;
 typedef char KSI_Utf8String;
 
+typedef struct KSI_KSITrustProvider_st KSI_KSITrustProvider;
+
 typedef struct KSI_PKICertificate_st KSI_PKICertificate;
 /**
  * This structure is used for calculating the hash values.
@@ -59,6 +61,7 @@ typedef struct KSI_NetProvider_st KSI_NetProvider;
 KSI_DEFINE_LIST(KSI_Integer);
 KSI_DEFINE_LIST(KSI_TLV);
 KSI_DEFINE_LIST(KSI_Utf8String);
+KSI_DEFINE_LIST(KSI_OctetString);
 
 KSI_DEFINE_GET_CTX(KSI_DataHash);
 KSI_DEFINE_GET_CTX(KSI_DataHasher);

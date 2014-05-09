@@ -181,7 +181,7 @@ int KSI_Signature_sign(const KSI_DataHash *hsh, KSI_Signature **signature) {
 	unsigned char *req = NULL;
 	int req_len = 0;
 
-	unsigned char *resp = NULL;
+	const unsigned char *resp = NULL;
 	int resp_len = 0;
 
 	KSI_PRE(&err, hsh != NULL) goto cleanup;
@@ -195,7 +195,7 @@ int KSI_Signature_sign(const KSI_DataHash *hsh, KSI_Signature **signature) {
 	res = KSI_sendSignRequest(ctx, req, req_len, &handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_NET_getResponse(handle, &resp, &resp_len, 0);
+	res = KSI_NetHandle_getResponse(handle, &resp, &resp_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Response", resp, resp_len);
@@ -230,7 +230,7 @@ int KSI_Signature_extend(KSI_Signature *signature, KSI_Integer *extentTo, KSI_Si
 	unsigned char *rawReq = NULL;
 	int rawReq_len = 0;
 
-	unsigned char *rawResp = NULL;
+	const unsigned char *rawResp = NULL;
 	int rawResp_len = 0;
 
 	KSI_TLV *respTlv = NULL;
@@ -264,7 +264,7 @@ int KSI_Signature_extend(KSI_Signature *signature, KSI_Integer *extentTo, KSI_Si
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Get the binary response */
-	res = KSI_NET_getResponse(handle, &rawResp, &rawResp_len, 0);
+	res = KSI_NetHandle_getResponse(handle, &rawResp, &rawResp_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Extend response", rawResp, rawResp_len);

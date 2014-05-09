@@ -186,7 +186,7 @@ static int curlSendExtendRequest(KSI_NetProvider *netProvider, KSI_NetHandle *ha
 	return curlSendRequest(handle, "TODO", pctx->urlExtender, pctx->connectionTimeoutSeconds, pctx->readTimeoutSeconds);
 }
 
-int KSI_NET_global_init(void) {
+int KSI_CurlNetProvider_global_init(void) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (curl_global_init(CURLUSESSL_ALL) != CURLE_OK) goto cleanup;
@@ -198,14 +198,14 @@ cleanup:
 	return res;
 }
 
-void KSI_NET_global_cleanup(void) {
+void KSI_CurlNetProvider_global_cleanup(void) {
 	curl_global_cleanup();
 }
 
 /**
  *
  */
-int KSI_NET_CURL_new(KSI_CTX *ctx, KSI_NetProvider **netProvider) {
+int KSI_CurlNetProvider_new(KSI_CTX *ctx, KSI_NetProvider **netProvider) {
 	KSI_ERR err;
 	KSI_NetProvider *pr = NULL;
 	CurlNetProviderCtx *pctx = NULL;
@@ -278,7 +278,7 @@ static int setIntParam(int *param, int val) {
 }
 
 #define KSI_NET_CURL_SETTER($name, $type, $var, $fn) 													\
-		int KSI_NET_CURL_set##$name(KSI_NetProvider *netProvider, $type val) {							\
+		int KSI_CurlNetProvider_set##$name(KSI_NetProvider *netProvider, $type val) {					\
 			int res = KSI_UNKNOWN_ERROR;																\
 			CurlNetProviderCtx *pctx = NULL;															\
 			if (netProvider == NULL) {																	\
