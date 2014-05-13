@@ -389,7 +389,7 @@ int KSI_PKITruststore_validateSignatureCertificate(KSI_CTX *ctx, KSI_PKISignatur
 	X509 *cert = NULL;
 	X509_NAME *subj = NULL;
 	ASN1_OBJECT *oid = NULL;
-	X509_STORE_CTX *store_ctx = NULL;
+	X509_STORE_CTX *storeCtx = NULL;
 	char tmp[256];
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -421,21 +421,21 @@ int KSI_PKITruststore_validateSignatureCertificate(KSI_CTX *ctx, KSI_PKISignatur
 	}
 #endif
 
-	store_ctx = X509_STORE_CTX_new();
-	if (store_ctx == NULL) {
+	storeCtx = X509_STORE_CTX_new();
+	if (storeCtx == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
 	// FIXME! No direct access to the pki truststore object!
 
-	if (!X509_STORE_CTX_init(store_ctx, ctx->pkiTruststore->store, cert,
+	if (!X509_STORE_CTX_init(storeCtx, ctx->pkiTruststore->store, cert,
 			signature->pkcs7->d.sign->cert)) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
-	res = X509_verify_cert(store_ctx);
+	res = X509_verify_cert(storeCtx);
 	if (res < 0) {
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, NULL);
 		goto cleanup;
@@ -448,6 +448,8 @@ int KSI_PKITruststore_validateSignatureCertificate(KSI_CTX *ctx, KSI_PKISignatur
 	KSI_SUCCESS(&err);
 
 cleanup:
+
+	X509_STORE_CTX_free(storeCtx);
 
 	return KSI_RETURN(&err);
 }
