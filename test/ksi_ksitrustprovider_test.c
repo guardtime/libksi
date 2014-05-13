@@ -11,6 +11,9 @@ static void testLoadPublicationsFile(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
+	res = KSI_PKITruststore_addLookupFile(ctx->pkiTruststore, "test/resource/tlv/server.crt");
+	CuAssert(tc, "Unable to read certificate", res == KSI_OK);
+
 	res = KSI_KSITrustProvider_fromFile(ctx,TEST_PUBLICATIONS_FILE, &trust);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && trust != NULL);
 
