@@ -282,9 +282,6 @@ static int extractData(KSI_CTX *ctx, void *raw, int raw_len, KSI_KSITrustProvide
 	res = KSI_TlvTemplate_extractGenerator(ctx, tmp, (void *)&gen, KSI_TLV_TEMPLATE(KSI_KSITrustProvider), NULL, (int (*)(void *, KSI_TLV **))generateNextTlv);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	tmp->raw = raw;
-	tmp->raw_len = raw_len;
-
 	res = KSI_PKITruststore_validateSignature(ctx, raw, tmp->signatureOffset, tmp->signature);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -363,6 +360,8 @@ int KSI_KSITrustProvider_fromFile(KSI_CTX *ctx, const char *fileName, KSI_KSITru
 
 	res = extractData(ctx, raw, raw_len, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
+	tmp->raw = raw;
+	tmp->raw_len = raw_len;
 	raw = NULL;
 
 	*store = tmp;

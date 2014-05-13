@@ -45,6 +45,8 @@ const char *KSI_getErrorString(int statusCode) {
 			return "The given calendar chain is not a continuation of the signature calendar chain.";
 		case KSI_CRYPTO_FAILURE:
 			return "Cryptographic failure";
+		case KSI_PKI_CERTIFICATE_NOT_TRUSTED:
+			return "PKI Certificate not trusted.";
 		case KSI_UNKNOWN_ERROR:
 			return "Unknown internal error";
 		default:

@@ -7,7 +7,7 @@
 #include "ksi_internal.h"
 
 /* Hide the following line to deactivate. */
-#define MAGIC_EMAIL "publications@guardtime.com"
+//#define MAGIC_EMAIL "publications@guardtime.com"
 
 struct KSI_PKITruststore_st {
 	KSI_CTX *ctx;
@@ -146,6 +146,8 @@ int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **tru
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
+
+	tmp->ctx = ctx;
 
 	tmp->store = X509_STORE_new();
 	if (tmp->store == NULL) {
@@ -345,24 +347,17 @@ int KSI_PKICertificate_find(KSI_CTX *ctx, const unsigned char *certId, int certI
 	return KSI_UNKNOWN_ERROR;
 }
 
-static int extractCertificate(const unsigned char *data, unsigned int data_len, X509 **cert) {
+static int extractCertificate(KSI_PKISignature *signature, X509 **cert) {
 	int res = KSI_UNKNOWN_ERROR;
-	PKCS7 *signature = NULL;
 	X509 *signing_cert = NULL;
 	STACK_OF(X509) *certs = NULL;
 
-	if (data == NULL || cert == NULL) {
+	if (signature == NULL || cert == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	signature = d2i_PKCS7(NULL, &data, data_len);
-	if (signature == NULL) {
-		res = KSI_INVALID_PKI_SIGNATURE;
-		goto cleanup;
-	}
-
-	certs = PKCS7_get0_signers(signature, NULL, 0);
+	certs = PKCS7_get0_signers(signature->pkcs7, NULL, 0);
 	if (certs == NULL) {
 		res = KSI_INVALID_FORMAT;
 		goto cleanup;
@@ -384,7 +379,6 @@ cleanup:
 
 	if (certs != NULL) sk_X509_free(certs);
 	X509_free(signing_cert);
-	PKCS7_free(signature);
 
 	return res;
 }
@@ -402,8 +396,11 @@ int KSI_PKITruststore_validateSignatureCertificate(KSI_CTX *ctx, KSI_PKISignatur
 	KSI_PRE(&err, signature != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
+	res = extractCertificate(signature, &cert);
+	KSI_CATCH(&err, res) goto cleanup;
+
 #ifdef MAGIC_EMAIL
-//	subj = X509_get_subject_name(certt->x509);
+	subj = X509_get_subject_name(cert);
 	if (subj == NULL) {
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Unable to get subject name from certificate.");
 		goto cleanup;
@@ -430,11 +427,13 @@ int KSI_PKITruststore_validateSignatureCertificate(KSI_CTX *ctx, KSI_PKISignatur
 		goto cleanup;
 	}
 
-/*	if (!X509_STORE_CTX_init(store_ctx, global_truststore, certt->x509,
-			certt->chain)) {
+	// FIXME! No direct access to the pki truststore object!
+
+	if (!X509_STORE_CTX_init(store_ctx, ctx->pkiTruststore->store, cert,
+			signature->pkcs7->d.sign->cert)) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
-	}*/
+	}
 
 	res = X509_verify_cert(store_ctx);
 	if (res < 0) {
@@ -480,12 +479,10 @@ int KSI_PKITruststore_validateSignature(KSI_CTX *ctx, const unsigned char *data,
 		goto cleanup;
 	}
 
-	// TODO! Validate certificate
-//	KSI_CATCH(&err, res) goto cleanup;
+	res = KSI_PKITruststore_validateSignatureCertificate(ctx, signature);
+	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
-
-
 
 cleanup:
 

@@ -28,6 +28,13 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
+	res = KSI_PKITruststore_addLookupFile(ctx->pkiTruststore, "test/resource/tlv/server.crt");
+	if (res != KSI_OK) {
+		KSI_ERR_statusDump(ctx, stdout);
+		fprintf(stderr, "Unable to read cert.\n");
+		goto cleanup;
+	}
+
 	res = KSI_KSITrustProvider_fromFile(ctx, fileName, &ksiTrustProvider);
 	if (res != KSI_OK) {
 		KSI_ERR_statusDump(ctx, stdout);
