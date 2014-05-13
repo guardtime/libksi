@@ -195,6 +195,11 @@ int KSI_Signature_sign(const KSI_DataHash *hsh, KSI_Signature **signature) {
 	res = KSI_sendSignRequest(ctx, req, req_len, &handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
+	/* Wait for the response. */
+	res = KSI_NetHandle_receive(handle);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Read the response. */
 	res = KSI_NetHandle_getResponse(handle, &resp, &resp_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -263,7 +268,11 @@ int KSI_Signature_extend(KSI_Signature *signature, KSI_Integer *extentTo, KSI_Si
 	res = KSI_sendExtendRequest(ctx, rawReq, rawReq_len, &handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	/* Get the binary response */
+	/* Wait for the response. */
+	res = KSI_NetHandle_receive(handle);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Read the response. */
 	res = KSI_NetHandle_getResponse(handle, &rawResp, &rawResp_len);
 	KSI_CATCH(&err, res) goto cleanup;
 

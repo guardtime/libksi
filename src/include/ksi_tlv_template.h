@@ -11,7 +11,7 @@ extern "C" {
 
 	typedef int (*getter_t)(const void *, void **);
 	typedef int (*setter_t)(void *, void *);
-	typedef int (*cb_decode_t)(KSI_CTX *ctx, KSI_TLV *, void *, getter_t, setter_t);
+	typedef int (*cb_decode_t)(KSI_CTX *ctx, const KSI_TLV *, void *, const KSI_TlvTemplate *);
 
 	typedef int (*cb_encode_t)(KSI_CTX *ctx, KSI_TLV *, const void *, const KSI_TlvTemplate *);
 	struct KSI_TlvTemplate_st {
@@ -50,6 +50,7 @@ extern "C" {
 	#define KSI_TLV_TEMPLATE_UTF8_STRING 			3
 	#define KSI_TLV_TEMPLATE_IMPRINT 				4
 	#define KSI_TLV_TEMPLATE_COMPOSITE				5
+	#define KSI_TLV_TEMPLATE_SEEK_POS				6
 	#define KSI_TLV_TEMPLATE_CALLBACK				7
 	#define KSI_TLV_TEMPLATE_NATIVE_INT				8
 
@@ -70,6 +71,8 @@ extern "C" {
 
 	#define KSI_TLV_COMPOSITE(tag, isNonCritical, isForward, getter, setter, sub)			KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_COMPOSITE, tag, isNonCritical, isForward, getter, setter, sub##_new, sub##_free, sub##_template, NULL, 0,  NULL, NULL, NULL, NULL)
 	#define KSI_TLV_COMPOSITE_LIST(tag, isNonCritical, isForward, getter, setter, sub) 		KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_COMPOSITE, tag, isNonCritical, isForward, getter, setter, sub##_new, sub##_free, sub##_template, sub##List_append, 1, sub##List_new, sub##List_free, NULL, NULL)
+
+	#define KSI_TLV_SEEK_POS(tag, setter)													KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_SEEK_POS, tag, 0, 0, NULL, setter)
 
 	#define KSI_TLV_CALLBACK(tag, isNonCritical, isForward, getter, setter, encode, decode)	KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_CALLBACK, tag, isNonCritical, isForward, getter, setter, NULL, NULL, NULL, NULL, 1, NULL, NULL, encode, decode)
 	#define KSI_END_TLV_TEMPLATE { -1, 0, 0, 0, NULL, NULL}};

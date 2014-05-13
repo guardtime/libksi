@@ -128,6 +128,8 @@ struct KSI_CTX_st {
 	 ************/
 
 	KSI_NetProvider *netProvider;
+
+	KSI_PKITruststore *pkiTruststore;
 };
 
 int KSI_parseSignature(KSI_CTX *ctx, unsigned char *rawPdu, int rawPdu_len, KSI_Signature **signature);

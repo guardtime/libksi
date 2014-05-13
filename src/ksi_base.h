@@ -14,7 +14,7 @@
 #include "include/ksi_signature.h"
 #include "include/ksi_tlv.h"
 #include "include/ksi_tlv_template.h"
-#include "include/ksi_truststore.h"
+#include "include/ksi_pkitruststore.h"
 #include "include/ksi_types.h"
 
 #ifdef __cplusplus
@@ -58,6 +58,7 @@ enum KSI_StatusCode {
 
 	KSI_INVALID_SIGNATURE,
 	KSI_INVALID_PKI_SIGNATURE,
+	KSI_PKI_CERTIFICATE_NOT_TRUSTED,
 /* SYSTEM ERRORS */
 	KSI_OUT_OF_MEMORY = 0x00000300,
 	KSI_IO_ERROR,

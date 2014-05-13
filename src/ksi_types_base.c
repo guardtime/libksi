@@ -43,6 +43,8 @@ int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, int data_len, K
 		goto cleanup;
 	}
 
+	memcpy(tmp->data, data, data_len);
+
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;

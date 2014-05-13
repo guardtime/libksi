@@ -17,7 +17,10 @@ int main(int argc, char **argv) {
 	fileName = argv[1];
 
 	res = KSI_global_init();
-	if (res != KSI_OK) goto cleanup;
+	if (res != KSI_OK) {
+		printf("KSI global init failed.");
+		goto cleanup;
+	}
 
 	res = KSI_CTX_new(&ctx);
 	if (res != KSI_OK) {

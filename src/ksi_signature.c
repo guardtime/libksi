@@ -223,7 +223,7 @@ static int CalAuthRec_validate(CalAuthRec *calAuth) {
 		KSI_CATCH(&err, res) goto cleanup;
 	}
 
-	res = KSI_PKITruststore_validateSignature(calAuth->pubData->raw, calAuth->pubData->raw_len, calAuth->sigAlgo, calAuth->sigData->sigValue, calAuth->sigData->sigValue_len, certp);
+	res = KSI_PKITruststore_validateSignatureWithCert(calAuth->ctx, calAuth->pubData->raw, calAuth->pubData->raw_len, calAuth->sigAlgo, calAuth->sigData->sigValue, calAuth->sigData->sigValue_len, certp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 

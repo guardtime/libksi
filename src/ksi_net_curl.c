@@ -91,7 +91,6 @@ static int curlReceive(KSI_NetHandle *handle) {
 	CURL *curl = NULL;
 
 	KSI_PRE(&err, handle != NULL) goto cleanup;
-
 	KSI_BEGIN(KSI_NetHandle_getCtx(handle), &err);
 
 	curl = (CURL *)KSI_NetHandle_getNetContext(handle);

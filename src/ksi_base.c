@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -56,6 +57,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 
 	KSI_CTX *ctx = NULL;
 	KSI_NetProvider *netProvider = NULL;
+	KSI_PKITruststore *pkiTruststore = NULL;
 
 	ctx = KSI_new(KSI_CTX);
 	if (ctx == NULL) {
@@ -90,6 +92,13 @@ int KSI_CTX_new(KSI_CTX **context) {
 	if (res != KSI_OK) goto cleanup;
 	netProvider = NULL;
 
+	res = KSI_PKITruststore_new(ctx, 1, &pkiTruststore);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_CTX_setPKITruststore(ctx, pkiTruststore);
+	if (res != KSI_OK) goto cleanup;
+	pkiTruststore = NULL;
+
 	*context = ctx;
 	ctx = NULL;
 
@@ -97,24 +106,12 @@ int KSI_CTX_new(KSI_CTX **context) {
 
 cleanup:
 
+	KSI_NetProvider_free(netProvider);
+	KSI_PKITruststore_free(pkiTruststore);
+
 	KSI_CTX_free(ctx);
 
 	return res;
-}
-int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, KSI_NetProvider *netProvider) {
-	KSI_ERR err;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	KSI_NetProvider_free(ctx->netProvider);
-	ctx->netProvider = netProvider;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
 }
 
 /**
@@ -128,6 +125,8 @@ void KSI_CTX_free(KSI_CTX *context) {
 		KSI_free(context->logFile);
 
 		KSI_NetProvider_free(context->netProvider);
+		KSI_PKITruststore_free(context->pkiTruststore);
+
 
 		KSI_free(context);
 	}
@@ -223,3 +222,61 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
+
+static int setValue(KSI_CTX *ctx, const char *variableName, void **target, void *value, void (*valueFree)(void *)) {
+	KSI_ERR err;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, target != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	KSI_LOG_debug(ctx, "Setting variable %s to point to 0x%x", variableName, (unsigned int)value);
+
+	if (valueFree != NULL && *target != NULL) {
+		valueFree(*target);
+	}
+
+	*target = value;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+static int getValue(KSI_CTX *ctx, const char *variableName, int offset, void **value) {
+	KSI_ERR err;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, offset >= 0) goto cleanup;
+	KSI_PRE(&err, value != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	KSI_LOG_debug(ctx, "KSI_CTX_set%s(ctx, 0x%x)", variableName, (unsigned int)value);
+
+	*value = *(((unsigned char *)ctx) + offset);
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+#define CTX_VALUEP_SETTER(var, nam, typ, fre)										\
+int KSI_CTX_set##nam(KSI_CTX *ctx, typ *val) { 										\
+	return setValue(ctx, #nam, (void **)&ctx->var, (void *)val, fre);				\
+} 																					\
+
+#define CTX_VALUEP_GETTER(var, nam, typ) 											\
+int KSI_CTX_get##nam(KSI_CTX *ctx, typ **val) { 									\
+	return getValue(ctx, #nam, offsetof(KSI_CTX, var), (void **)val);				\
+} 																					\
+
+#define CTX_GET_SET_VALUE(var, nam, typ, fre) 										\
+	CTX_VALUEP_SETTER(var, nam, typ, fre)											\
+	CTX_VALUEP_GETTER(var, nam, typ)												\
+
+CTX_GET_SET_VALUE(pkiTruststore, PKITruststore, KSI_PKITruststore, NULL)
+CTX_GET_SET_VALUE(netProvider, NetworkProvider, KSI_NetProvider, KSI_NetProvider_free)

@@ -37,6 +37,9 @@ struct KSI_TLV_st {
 	unsigned char *datap;
 	int datap_len;
 
+	int relativeOffset;
+	int absoluteOffset;
+
 };
 
 /**
@@ -122,7 +125,7 @@ static int readTlv(KSI_RDR *rdr, KSI_TLV **tlv, int copy) {
 	KSI_ERR err;
 	unsigned char hdr[4];
 	int readCount;
-	KSI_TLV *t = NULL;
+	KSI_TLV *tmp = NULL;
 	size_t length = 0;
 	int isLenient = 0;
 	int isForward = 0;
@@ -130,9 +133,15 @@ static int readTlv(KSI_RDR *rdr, KSI_TLV **tlv, int copy) {
 	unsigned char buffer[0xffff];
 	unsigned char *ptr = NULL;
 	char errstr[1024];
+	int tlvOffset = 0;
 
-
+	KSI_PRE(&err, rdr != NULL) goto cleanup;
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
 	KSI_BEGIN(KSI_RDR_getCtx(rdr), &err);
+
+	/* Store the relative offset. */
+	res = KSI_RDR_getOffset(rdr, &tlvOffset);
+	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Read first two bytes */
 	res = KSI_RDR_read_ex(rdr, hdr, 2, &readCount);
@@ -197,29 +206,31 @@ static int readTlv(KSI_RDR *rdr, KSI_TLV **tlv, int copy) {
 	}
 
 	/* Create new TLV object. */
-	res = KSI_TLV_new(KSI_RDR_getCtx(rdr), KSI_TLV_PAYLOAD_RAW, tag, isLenient, isForward, &t);
+	res = KSI_TLV_new(KSI_RDR_getCtx(rdr), KSI_TLV_PAYLOAD_RAW, tag, isLenient, isForward, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	if (ptr == NULL) {
 		/* Append raw data. */
-		if (appendBlob(t, buffer, length) != length) {
+		if (appendBlob(tmp, buffer, length) != length) {
 			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Unable to complete TLV object.");
 			goto cleanup;
 		}
 	} else {
-		t->datap = ptr;
-		t->datap_len = readCount;
+		tmp->datap = ptr;
+		tmp->datap_len = readCount;
 	}
 
-	*tlv = t;
-	t = NULL;
+	tmp->relativeOffset = tlvOffset;
+	tmp->absoluteOffset = tlvOffset;
+	*tlv = tmp;
+	tmp = NULL;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
 
 	KSI_nofree(ptr);
-	KSI_TLV_free(t);
+	KSI_TLV_free(tmp);
 
 	return KSI_RETURN(&err);
 }
@@ -391,6 +402,9 @@ static int encodeAsNestedTlvs(KSI_TLV *tlv) {
 		/* Check if end of reader. */
 		if (tmp == NULL) break;
 
+		/* Update the absolute offset of the child TLV object. */
+		tmp->absoluteOffset += tlv->absoluteOffset;
+
 		res = KSI_TLVList_append(tlvList, tmp);
 		KSI_CATCH(&err, res) goto cleanup;
 
@@ -547,6 +561,9 @@ int KSI_TLV_new(KSI_CTX *ctx, int payloadType, int tag, int isLenient, int isFor
 	tmp->payloadType = payloadType;
 	tmp->datap_len = 0;
 	tmp->datap = NULL;
+
+	tmp->relativeOffset = 0;
+	tmp->absoluteOffset = 0;
 
 	/* Update the out parameter. */
 	*tlv = tmp;
@@ -1505,6 +1522,14 @@ cleanup:
 	KSI_TLV_free(tmp);
 
 	return KSI_RETURN(&err);
+}
+
+int KSI_TLV_getAbsoluteOffset(const KSI_TLV *tlv) {
+	return tlv->absoluteOffset;
+}
+
+int KSI_TLV_getRelativeOffset(const KSI_TLV *tlv) {
+	return tlv->relativeOffset;
 }
 
 

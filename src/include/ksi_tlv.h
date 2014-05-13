@@ -283,6 +283,9 @@ extern "C" {
 	int KSI_TLV_setStringValue(KSI_TLV *tlv, const char *str);
 	int KSI_TLV_fromReader(KSI_RDR *rdr, KSI_TLV **tlv);
 
+	int KSI_TLV_getAbsoluteOffset(const KSI_TLV *tlv);
+	int KSI_TLV_getRelativeOffset(const KSI_TLV *tlv);
+
 #ifdef __cplusplus
 }
 #endif

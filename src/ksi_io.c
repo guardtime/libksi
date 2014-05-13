@@ -53,6 +53,21 @@ cleanup:
 	return rdr;
 }
 
+int KSI_RDR_getOffset(KSI_RDR *rdr, int *offset) {
+	KSI_ERR err;
+	KSI_PRE(&err, rdr != NULL) goto cleanup;
+	KSI_PRE(&err, offset != NULL) goto cleanup;
+	KSI_BEGIN(rdr->ctx, &err);
+
+	*offset = rdr->offset;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
 int KSI_RDR_fromStream(KSI_CTX *ctx, FILE *file, KSI_RDR **rdr) {
 	KSI_ERR err;
 	KSI_RDR *reader = NULL;

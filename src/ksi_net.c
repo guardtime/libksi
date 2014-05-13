@@ -231,6 +231,28 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+int KSI_NetHandle_receive(KSI_NetHandle *handle) {
+	KSI_ERR err;
+	int res;
+
+	KSI_PRE(&err, handle != NULL) goto cleanup;
+	KSI_BEGIN(KSI_NetHandle_getCtx(handle), &err);
+
+	if (handle->readResponse == NULL) {
+		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, NULL);
+		goto cleanup;
+	}
+
+	res = handle->readResponse(handle);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
 int KSI_NetHandle_getResponse(KSI_NetHandle *handle, const unsigned char **response, int *response_len) {
 	KSI_ERR err;
 	int res;
@@ -239,16 +261,6 @@ int KSI_NetHandle_getResponse(KSI_NetHandle *handle, const unsigned char **respo
 
 	KSI_PRE(&err, handle != NULL);
 	KSI_BEGIN(handle->ctx, &err);
-
-	if (handle->response == NULL) {
-		if (handle->readResponse == NULL) {
-			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, NULL);
-			goto cleanup;
-		}
-
-		res = handle->readResponse(handle);
-		KSI_CATCH(&err, res) goto cleanup;
-	}
 
 	*response = handle->response;
 	*response_len = handle->response_length;

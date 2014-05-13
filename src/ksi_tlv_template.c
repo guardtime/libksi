@@ -1,8 +1,8 @@
 #include "ksi_internal.h"
 
 static int encodeCalendarHashChainLink(KSI_CTX *ctx, KSI_TLV *tlv, const KSI_CalendarHashChain *calHashChain, const KSI_TlvTemplate *template);
-static int decodeCalendarHashChainLeftLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarHashChain *calHashChain, getter_t valueGetter, setter_t valueSetter);
-static int decodeCalendarHashChainRightLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarHashChain *calHashChain, getter_t valueGetter, setter_t valueSetter);
+static int decodeCalendarHashChainLeftLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarHashChain *calHashChain, const KSI_TlvTemplate *template);
+static int decodeCalendarHashChainRightLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarHashChain *calHashChain, KSI_TlvTemplate *template);
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationsHeader)
 	KSI_TLV_INTEGER(0x01, 0, 0, KSI_PublicationsHeader_getVersion, KSI_PublicationsHeader_setVersion)
@@ -243,11 +243,11 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int decodeCalendarHashChainLeftLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarHashChain *calHashChain, getter_t valueGetter, setter_t valueSetter) {
-	return decodeCalendarHashChainLink(ctx, tlv, calHashChain, valueGetter, valueSetter, 1);
+static int decodeCalendarHashChainLeftLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarHashChain *calHashChain, const KSI_TlvTemplate *template) {
+	return decodeCalendarHashChainLink(ctx, tlv, calHashChain, template->getValue, template->setValue, 1);
 }
-static int decodeCalendarHashChainRightLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarHashChain *calHashChain, getter_t valueGetter, setter_t valueSetter) {
-	return decodeCalendarHashChainLink(ctx, tlv, calHashChain, valueGetter, valueSetter, 0);
+static int decodeCalendarHashChainRightLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarHashChain *calHashChain, KSI_TlvTemplate *template) {
+	return decodeCalendarHashChainLink(ctx, tlv, calHashChain, template->getValue, template->setValue, 0);
 }
 
 
@@ -321,16 +321,17 @@ int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI
 	res = KSI_TlvTemplate_extractGenerator(ctx, payload, (void *)tlv, template, reminder, (int (*)(void *, KSI_TLV **))KSI_TLV_getNextNestedTLV);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	/* Remove the elements in the reminder from the base tlv. */
-	for (i = 0; i < KSI_TLVList_length(reminder); i++) {
-		KSI_TLV *tmp = NULL;
-		/* Delete the TLV from the original list. */
-		res = KSI_TLV_removeNestedTlv(tlv, tmp);
-		KSI_CATCH(&err, res) goto cleanup;
+	if (reminder != NULL) {
+		/* Remove the elements in the reminder from the base tlv. */
+		for (i = 0; i < KSI_TLVList_length(reminder); i++) {
+			KSI_TLV *tmp = NULL;
+			/* Delete the TLV from the original list. */
+			res = KSI_TLV_removeNestedTlv(tlv, tmp);
+			KSI_CATCH(&err, res) goto cleanup;
 
-		KSI_nofree(tmp);
+			KSI_nofree(tmp);
+		}
 	}
-
 
 	KSI_SUCCESS(&err);
 
@@ -361,6 +362,7 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 	KSI_BEGIN(ctx, &err);
 
 	while (1) {
+		int matchCount = 0;
 		res = generator(generatorCtx, &tlv);
 		KSI_CATCH(&err, res) goto cleanup;
 
@@ -369,21 +371,26 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 		KSI_LOG_debug(ctx, "Starting to parse TLV(0x%02x)", KSI_TLV_getTag(tlv));
 
 		t = template;
-		while(t->type > 0 && t->tag != KSI_TLV_getTag(tlv)) {
-			++t;
-		}
 
-		if (t->type > 0) {
-			/* Validate the value has not been set */
-			res = t->getValue(payload, (void **)&valuep);
-			KSI_CATCH(&err, res) goto cleanup;
+		while (t->type > 0) {
+			if (t->tag != KSI_TLV_getTag(tlv)) {
+				t++;
+				continue;
+			}
+			matchCount++;
+
+			valuep = NULL;
+			if (t->getValue != NULL) {
+				/* Validate the value has not been set */
+				res = t->getValue(payload, (void **)&valuep);
+				KSI_CATCH(&err, res) goto cleanup;
+			}
 
 			if (valuep != NULL && !t->multiple) {
 				compositeVal = NULL;
 				KSI_FAIL(&err, KSI_INVALID_FORMAT, "To avoid memory leaks, a value may not be set more than once while parsing.");
 				goto cleanup;
 			}
-
 			/* Parse the current TLV */
 			switch (t->type) {
 				case KSI_TLV_TEMPLATE_NATIVE_INT:
@@ -403,7 +410,12 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 					res = ((int (*)(void *, int))t->setValue)(payload, intVal);
 					KSI_CATCH(&err, res) goto cleanup;
 
-					integerVal = NULL;
+					break;
+				case KSI_TLV_TEMPLATE_SEEK_POS:
+					intVal = KSI_TLV_getAbsoluteOffset(tlv);
+
+					res = ((int (*)(void *, int))t->setValue)(payload, intVal);
+					KSI_CATCH(&err, res) goto cleanup;
 
 					break;
 				case KSI_TLV_TEMPLATE_INTEGER:
@@ -496,7 +508,7 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 					KSI_LOG_debug(ctx, "Detected callback template for TLV value extraction.");
 
 					if (t->callbackDecode != NULL) {
-						res = t->callbackDecode(ctx, tlv, payload, t->getValue, t->setValue);
+						res = t->callbackDecode(ctx, tlv, payload, t);
 						KSI_CATCH(&err, res) goto cleanup;
 					}
 					break;
@@ -506,7 +518,11 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 					KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Undefined template type");
 					goto cleanup;
 			}
-		} else {
+
+			t++;
+		}
+
+		if(matchCount == 0) {
 			if (reminder != NULL) {
 				/* The TLV tag is not in the template, move it to the reminder. */
 				res = KSI_TLVList_append(reminder, tlv);
@@ -552,6 +568,10 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 		KSI_CATCH(&err, res) goto cleanup;
 		if (payloadp != NULL) {
 			switch (template->type) {
+				case KSI_TLV_TEMPLATE_SEEK_POS:
+					/* As this is a read-only template in the extraction process, there is
+					 * no logical construction action performed. */
+					break;
 				case KSI_TLV_TEMPLATE_NATIVE_INT:
 					res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, template->tag, template->isNonCritical, template->isForward, &tmp);
 					KSI_CATCH(&err, res) goto cleanup;

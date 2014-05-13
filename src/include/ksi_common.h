@@ -32,6 +32,7 @@ typedef struct KSI_Signature_st KSI_Signature;
 typedef struct KSI_RDR_st KSI_RDR;
 typedef struct KSI_Integer_st KSI_Integer;
 typedef struct KSI_List_st KSI_List;
+typedef struct KSI_PKITruststore_st KSI_PKITruststore;
 
 typedef struct KSI_OctetString_st KSI_OctetString;
 typedef char KSI_Utf8String;
@@ -39,6 +40,8 @@ typedef char KSI_Utf8String;
 typedef struct KSI_KSITrustProvider_st KSI_KSITrustProvider;
 
 typedef struct KSI_PKICertificate_st KSI_PKICertificate;
+typedef struct KSI_PKISignature_st KSI_PKISignature;
+
 /**
  * This structure is used for calculating the hash values.
  * \see #KSI_DataHash, #KSI_DataHasher_open, #KSI_DataHasher_reset, #KSI_DataHasher_close, #KSI_DataHasher_free

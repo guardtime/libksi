@@ -20,7 +20,7 @@ extern "C" {
 	 */
 	int KSI_NetProvider_sendSignRequest(KSI_NetProvider *provider, KSI_NetHandle *handle);
 	int KSI_NetProvider_sendExtendRequest(KSI_NetProvider *provider, KSI_NetHandle *handle);
-
+	int KSI_NetHandle_receive(KSI_NetHandle *handle);
 
 	int KSI_NetHandle_setResponse(KSI_NetHandle *handle, const unsigned char *response, int response_len);
 	int KSI_NetHandle_setNetContext(KSI_NetHandle *handle, void *, void (*netCtx_free)(void *));
