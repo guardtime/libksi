@@ -335,6 +335,7 @@ cleanup:
 
 	if (bio != NULL) BIO_free(bio);
 	if (x509 != NULL) X509_free(x509);
+	KSI_PKICertificate_free(tmp);
 
 	return KSI_RETURN(&err);
 }
@@ -506,26 +507,16 @@ int KSI_PKITruststore_validateSignatureWithCert(KSI_CTX *ctx, unsigned char *dat
 
 	KSI_PRE(&err, data != NULL && data_len > 0) goto cleanup;
 	KSI_PRE(&err, signature != NULL && signature_len > 0) goto cleanup;
+	KSI_PRE(&err, algoOid != NULL) goto cleanup;
+	KSI_PRE(&err, certificate != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
 	KSI_LOG_debug(ctx, "Verifying PKI signature.");
     EVP_MD_CTX_init(&md_ctx);
 
-	/* Extract certificate. */
-	if (certificate != NULL) {
-		x509 = certificate->x509;
-	} else {
-		res = extractCertificate(signature, signature_len, &x509);
-		KSI_CATCH(&err, res) goto cleanup;
-	}
+	x509 = certificate->x509;
 
-	/* Extract algorithm. */
-	if (0 && algoOid != NULL) {
-		algorithm = OBJ_txt2obj(algoOid, 1);
-	} else {
-		/* If the algorithm is not specified retrieve it from the certificate */
-		algorithm = x509->sig_alg->algorithm;
-	}
+	algorithm = OBJ_txt2obj(algoOid, 1);
 
 	if (algorithm == NULL) {
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Unknown hash algorithm.");
