@@ -640,8 +640,6 @@ static void TestTlvComposeNestedMore(CuTest* tc) {
 
 	/* Create nested TLV and append to the outer TLV*/
 	res = KSI_TLV_fromString(ctx, 0x01, 1, 1, "GT", &nested);
-	KSI_ERR_statusDump(ctx, stdout);
-
 	CuAssert(tc, "Unable to create nested TLV from string", res == KSI_OK && nested != NULL);
 
 	res = KSI_TLV_appendNestedTlv(outer, NULL, nested);

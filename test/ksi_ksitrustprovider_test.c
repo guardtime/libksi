@@ -15,7 +15,6 @@ static void testLoadPublicationsFile(CuTest *tc) {
 	CuAssert(tc, "Unable to read certificate", res == KSI_OK);
 
 	res = KSI_KSITrustProvider_fromFile(ctx,TEST_PUBLICATIONS_FILE, &trust);
-	KSI_ERR_statusDump(ctx, stderr);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && trust != NULL);
 
 	KSI_KSITrustProvider_free(trust);
@@ -33,7 +32,6 @@ static void testPublicationStringEncodingAndDecoding(CuTest *tc) {
 	CuAssert(tc, "Failed decoding publication string.", res == KSI_OK && pub != NULL);
 
 	res = KSI_publishedDataToBase32(pub, &out);
-KSI_ERR_statusDump(ctx, stdout);
 	CuAssert(tc, "Failed encoding the published data object", res == KSI_OK && out != NULL);
 
 	CuAssert(tc, "Invalid encoded publication string does not match original.", strncmp(publication, out, strlen(publication)));
