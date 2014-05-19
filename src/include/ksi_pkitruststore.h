@@ -12,7 +12,12 @@ extern "C" {
 
 	void KSI_PKICertificate_free(KSI_PKICertificate *cert);
 	int KSI_PKICertificate_new(KSI_CTX *ctx, const void *der, int der_len, KSI_PKICertificate **cert);
-	int KSI_PKICertificate_find(KSI_CTX *ctx, const unsigned char *certId, int certId_len, const KSI_PKICertificate **cert);
+	int KSI_PKICertificate_fromTlv(KSI_TLV *tlv, KSI_PKICertificate **cert);
+	int KSI_PKICertificate_toTlv(KSI_PKICertificate *cert, int tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+
+	int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, int raw_len, KSI_PKISignature **signature);
+	void KSI_PKISignature_free(KSI_PKISignature *sig);
+
 
 	int KSI_PKITruststore_validateSignatureWithCert(KSI_CTX *ctx, unsigned char *data, unsigned int data_len, const char *algoOid, unsigned char *signature, unsigned int signature_len, const KSI_PKICertificate *cert);
 	int KSI_PKITruststore_global_init();

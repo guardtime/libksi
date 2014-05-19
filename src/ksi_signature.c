@@ -219,8 +219,8 @@ static int CalAuthRec_validate(CalAuthRec *calAuth) {
 		KSI_CATCH(&err, res) goto cleanup;
 		certp = cert;
 	} else {
-		res = KSI_PKICertificate_find(calAuth->ctx, calAuth->sigData->certId, calAuth->sigData->certId_len, &certp);
-		KSI_CATCH(&err, res) goto cleanup;
+//		res = KSI_PKICertificate_find(calAuth->ctx, calAuth->sigData->certId, calAuth->sigData->certId_len, &certp);
+//		KSI_CATCH(&err, res) goto cleanup;
 	}
 
 	res = KSI_PKITruststore_validateSignatureWithCert(calAuth->ctx, calAuth->pubData->raw, calAuth->pubData->raw_len, calAuth->sigAlgo, calAuth->sigData->sigValue, calAuth->sigData->sigValue_len, certp);
@@ -1542,8 +1542,6 @@ cleanup:
 	KSI_Utf8String_free(signerId);
 	KSI_Utf8StringList_free(idList);
 	KSI_free(clientId);
-	KSI_free(clientId);
-	KSI_Utf8StringList_free(idList);
 
 	return KSI_RETURN(&err);
 }

@@ -8,8 +8,10 @@ apiSources = \
 		../src/include/ksi_hash.h \
 		../src/include/ksi_net.h \
 		../src/include/ksi_tlv_template.h \
+		../src/ksi_base32.c \
 		../src/ksi_base.c \
 		../src/ksi_base.h \
+		../src/ksi_crc32.c \
 		../src/ksi_err.c \
 		../src/ksi_err.h \
 		../src/ksi_hash.c \

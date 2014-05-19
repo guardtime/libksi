@@ -48,7 +48,7 @@ struct KSI_TLV_st {
 static int createOwnBuffer(KSI_TLV *tlv, int copy) {
 	KSI_ERR err;
 	unsigned char *buf = NULL;
-	int buf_size = 0xffff + 1;
+	int buf_size = KSI_BUFFER_SIZE;
 	int buf_len = 0;
 
 	KSI_BEGIN(tlv->ctx, &err);
@@ -435,7 +435,6 @@ int KSI_TLV_setUintValue(KSI_TLV *tlv, KSI_uint64_t val) {
 	KSI_BEGIN(tlv->ctx, &err);
 
 	len = KSI_UINT64_MINSIZE(val);
-
 	if (tlv->buffer == NULL) {
 		res = createOwnBuffer(tlv, 0);
 		KSI_CATCH(&err, res) goto cleanup;
@@ -445,7 +444,7 @@ int KSI_TLV_setUintValue(KSI_TLV *tlv, KSI_uint64_t val) {
 	tlv->datap_len = len;
 
 	for (; len > 0; len--) {
-		tlv->datap[len - 1] = val & 0xff;
+		tlv->datap[len - 1] = (unsigned char)(val & 0xff);
 		val >>= 8;
 	}
 

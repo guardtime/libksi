@@ -105,7 +105,7 @@ struct KSI_PublicationsHeader_st {
 struct KSI_CertificateRecord_st {
 	KSI_CTX *ctx;
 	KSI_OctetString *certId;
-	KSI_OctetString *cert;
+	KSI_PKICertificate *cert;
 };
 
 struct KSI_PublicationData_st {
@@ -120,8 +120,22 @@ struct KSI_PublicationRecord_st {
 	KSI_LIST(KSI_Utf8String) *publicationRef;
 };
 
+
+KSI_IMPLEMENT_LIST(KSI_MetaData, KSI_MetaData_free);
 KSI_IMPLEMENT_LIST(KSI_HashChainLink, KSI_HashChainLink_free);
+KSI_IMPLEMENT_LIST(KSI_CalendarHashChain, KSI_CalendarHashChain_free);
+KSI_IMPLEMENT_LIST(KSI_ExtendPdu, KSI_ExtendPdu_free);
+KSI_IMPLEMENT_LIST(KSI_AggregationPdu, KSI_AggregationPdu_free);
+KSI_IMPLEMENT_LIST(KSI_Header, KSI_Header_free);
+KSI_IMPLEMENT_LIST(KSI_Config, KSI_Config_free);
+KSI_IMPLEMENT_LIST(KSI_AggregationReq, KSI_AggregationReq_free);
+KSI_IMPLEMENT_LIST(KSI_RequestAck, KSI_RequestAck_free);
+KSI_IMPLEMENT_LIST(KSI_AggregationResp, KSI_AggregationResp_free);
+KSI_IMPLEMENT_LIST(KSI_ExtendReq, KSI_ExtendReq_free);
+KSI_IMPLEMENT_LIST(KSI_ExtendResp, KSI_ExtendResp_free);
+KSI_IMPLEMENT_LIST(KSI_PublicationsHeader, KSI_PublicationsHeader_free);
 KSI_IMPLEMENT_LIST(KSI_CertificateRecord, KSI_CertificateRecord_free);
+KSI_IMPLEMENT_LIST(KSI_PublicationData, KSI_PublicationData_free);
 KSI_IMPLEMENT_LIST(KSI_PublicationRecord, KSI_PublicationRecord_free);
 
 /**
@@ -157,6 +171,10 @@ int KSI_MetaData_new(KSI_CTX *ctx, KSI_MetaData **t) {
 cleanup:
 	KSI_MetaData_free(tmp);
 	return res;
+}
+
+KSI_CTX *KSI_MetaData_getCtx(KSI_MetaData *t){
+	return t != NULL ? t->ctx : NULL;
 }
 
 int KSI_MetaData_getRaw(const KSI_MetaData *t, KSI_OctetString **raw) {
@@ -289,6 +307,10 @@ int KSI_HashChainLink_new(KSI_CTX *ctx, KSI_HashChainLink **t) {
 cleanup:
 	KSI_HashChainLink_free(tmp);
 	return res;
+}
+
+KSI_CTX *KSI_HashChainLink_getCtx(KSI_HashChainLink *t){
+	return t != NULL ? t->ctx : NULL;
 }
 
 int KSI_HashChainLink_getIsLeft(const KSI_HashChainLink *t, int *isLeft) {
@@ -447,6 +469,10 @@ cleanup:
 	return res;
 }
 
+KSI_CTX *KSI_CalendarHashChain_getCtx(KSI_CalendarHashChain *t){
+	return t != NULL ? t->ctx : NULL;
+}
+
 int KSI_CalendarHashChain_getPublicationTime(const KSI_CalendarHashChain *t, KSI_Integer **publicationTime) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL || publicationTime == NULL) {
@@ -575,6 +601,10 @@ cleanup:
 	return res;
 }
 
+KSI_CTX *KSI_ExtendPdu_getCtx(KSI_ExtendPdu *t){
+	return t != NULL ? t->ctx : NULL;
+}
+
 int KSI_ExtendPdu_getRequest(const KSI_ExtendPdu *t, KSI_ExtendReq **request) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL || request == NULL) {
@@ -653,6 +683,10 @@ int KSI_AggregationPdu_new(KSI_CTX *ctx, KSI_AggregationPdu **t) {
 cleanup:
 	KSI_AggregationPdu_free(tmp);
 	return res;
+}
+
+KSI_CTX *KSI_AggregationPdu_getCtx(KSI_AggregationPdu *t){
+	return t != NULL ? t->ctx : NULL;
 }
 
 int KSI_AggregationPdu_getRequest(const KSI_AggregationPdu *t, KSI_AggregationReq **request) {
@@ -735,6 +769,10 @@ int KSI_Header_new(KSI_CTX *ctx, KSI_Header **t) {
 cleanup:
 	KSI_Header_free(tmp);
 	return res;
+}
+
+KSI_CTX *KSI_Header_getCtx(KSI_Header *t){
+	return t != NULL ? t->ctx : NULL;
 }
 
 int KSI_Header_getInstanceId(const KSI_Header *t, KSI_Integer **instanceId) {
@@ -843,6 +881,10 @@ int KSI_Config_new(KSI_CTX *ctx, KSI_Config **t) {
 cleanup:
 	KSI_Config_free(tmp);
 	return res;
+}
+
+KSI_CTX *KSI_Config_getCtx(KSI_Config *t){
+	return t != NULL ? t->ctx : NULL;
 }
 
 int KSI_Config_getMaxLevel(const KSI_Config *t, KSI_Integer **maxLevel) {
@@ -977,6 +1019,10 @@ int KSI_AggregationReq_new(KSI_CTX *ctx, KSI_AggregationReq **t) {
 cleanup:
 	KSI_AggregationReq_free(tmp);
 	return res;
+}
+
+KSI_CTX *KSI_AggregationReq_getCtx(KSI_AggregationReq *t){
+	return t != NULL ? t->ctx : NULL;
 }
 
 int KSI_AggregationReq_getHeader(const KSI_AggregationReq *t, KSI_Header **header) {
@@ -1131,6 +1177,10 @@ cleanup:
 	return res;
 }
 
+KSI_CTX *KSI_RequestAck_getCtx(KSI_RequestAck *t){
+	return t != NULL ? t->ctx : NULL;
+}
+
 int KSI_RequestAck_getAggregationPeriod(const KSI_RequestAck *t, KSI_Integer **aggregationPeriod) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL || aggregationPeriod == NULL) {
@@ -1219,6 +1269,10 @@ int KSI_AggregationResp_new(KSI_CTX *ctx, KSI_AggregationResp **t) {
 cleanup:
 	KSI_AggregationResp_free(tmp);
 	return res;
+}
+
+KSI_CTX *KSI_AggregationResp_getCtx(KSI_AggregationResp *t){
+	return t != NULL ? t->ctx : NULL;
 }
 
 int KSI_AggregationResp_getHeader(const KSI_AggregationResp *t, KSI_Header **header) {
@@ -1425,6 +1479,10 @@ cleanup:
 	return res;
 }
 
+KSI_CTX *KSI_ExtendReq_getCtx(KSI_ExtendReq *t){
+	return t != NULL ? t->ctx : NULL;
+}
+
 int KSI_ExtendReq_getHeader(const KSI_ExtendReq *t, KSI_Header **header) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL || header == NULL) {
@@ -1559,6 +1617,10 @@ int KSI_ExtendResp_new(KSI_CTX *ctx, KSI_ExtendResp **t) {
 cleanup:
 	KSI_ExtendResp_free(tmp);
 	return res;
+}
+
+KSI_CTX *KSI_ExtendResp_getCtx(KSI_ExtendResp *t){
+	return t != NULL ? t->ctx : NULL;
 }
 
 int KSI_ExtendResp_getHeader(const KSI_ExtendResp *t, KSI_Header **header) {
@@ -1737,6 +1799,10 @@ cleanup:
 	return res;
 }
 
+KSI_CTX *KSI_PublicationsHeader_getCtx(KSI_PublicationsHeader *t){
+	return t != NULL ? t->ctx : NULL;
+}
+
 int KSI_PublicationsHeader_getVersion(const KSI_PublicationsHeader *t, KSI_Integer **version) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL || version == NULL) {
@@ -1792,7 +1858,7 @@ cleanup:
 void KSI_CertificateRecord_free(KSI_CertificateRecord *t) {
 	if(t != NULL) {
 		KSI_OctetString_free(t->certId);
-		KSI_OctetString_free(t->cert);
+		KSI_PKICertificate_free(t->cert);
 		KSI_free(t);
 	}
 }
@@ -1817,6 +1883,10 @@ cleanup:
 	return res;
 }
 
+KSI_CTX *KSI_CertificateRecord_getCtx(KSI_CertificateRecord *t){
+	return t != NULL ? t->ctx : NULL;
+}
+
 int KSI_CertificateRecord_getCertId(const KSI_CertificateRecord *t, KSI_OctetString **certId) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL || certId == NULL) {
@@ -1829,7 +1899,7 @@ cleanup:
 	 return res;
 }
 
-int KSI_CertificateRecord_getCert(const KSI_CertificateRecord *t, KSI_OctetString **cert) {
+int KSI_CertificateRecord_getCert(const KSI_CertificateRecord *t, KSI_PKICertificate **cert) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL || cert == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1853,7 +1923,7 @@ cleanup:
 	 return res;
 }
 
-int KSI_CertificateRecord_setCert(KSI_CertificateRecord *t, KSI_OctetString *cert) {
+int KSI_CertificateRecord_setCert(KSI_CertificateRecord *t, KSI_PKICertificate *cert) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1895,6 +1965,10 @@ int KSI_PublicationData_new(KSI_CTX *ctx, KSI_PublicationData **t) {
 cleanup:
 	KSI_PublicationData_free(tmp);
 	return res;
+}
+
+KSI_CTX *KSI_PublicationData_getCtx(KSI_PublicationData *t){
+	return t != NULL ? t->ctx : NULL;
 }
 
 int KSI_PublicationData_getTime(const KSI_PublicationData *t, KSI_Integer **time) {
@@ -1977,6 +2051,10 @@ cleanup:
 	return res;
 }
 
+KSI_CTX *KSI_PublicationRecord_getCtx(KSI_PublicationRecord *t){
+	return t != NULL ? t->ctx : NULL;
+}
+
 int KSI_PublicationRecord_getPublishedData(const KSI_PublicationRecord *t, KSI_PublicationData **publishedData) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL || publishedData == NULL) {
@@ -2024,5 +2102,6 @@ int KSI_PublicationRecord_setPublicationRef(KSI_PublicationRecord *t, KSI_LIST(K
 cleanup:
 	 return res;
 }
+
 
 

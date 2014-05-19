@@ -11,7 +11,7 @@ KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_CertificateRecord)
 	KSI_TLV_OCTET_STRING(0x01, 0, 0, KSI_CertificateRecord_getCertId, KSI_CertificateRecord_setCertId)
-	KSI_TLV_OCTET_STRING(0x02, 0, 0, KSI_CertificateRecord_getCert, KSI_CertificateRecord_setCert)
+	KSI_TLV_OBJECT(0x02, 0, 0, KSI_CertificateRecord_getCert, KSI_CertificateRecord_setCert, KSI_PKICertificate_fromTlv, KSI_PKICertificate_toTlv)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationData)
@@ -354,6 +354,7 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 	KSI_OctetString *octetStringVal = NULL;
 	KSI_Utf8String *stringVal = NULL;
 	KSI_uint64_t uint64Val = 0;
+	void *voidVal = NULL;
 	int intVal = 0;
 	void *compositeVal = NULL;
 	void *valuep = NULL;
@@ -418,57 +419,19 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 					KSI_CATCH(&err, res) goto cleanup;
 
 					break;
-				case KSI_TLV_TEMPLATE_INTEGER:
-					KSI_LOG_debug(ctx, "Detected KSI_Integer template for TLV value extraction.");
+				case KSI_TLV_TEMPLATE_OBJECT:
+					if (t->fromTlv == NULL) {
+						KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Invalid template: fromTlv not set.");
+						goto cleanup;
+					}
 
-					res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_INT);
+					res = t->fromTlv(tlv, &voidVal);
 					KSI_CATCH(&err, res) goto cleanup;
 
-					res = KSI_TLV_getInteger(tlv, &integerVal);
+					res = storeObjectValue(ctx, t, payload, voidVal);
 					KSI_CATCH(&err, res) goto cleanup;
 
-					res = t->setValue(payload, (void *)integerVal);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					integerVal = NULL;
 					break;
-
-				case KSI_TLV_TEMPLATE_IMPRINT:
-					KSI_LOG_debug(ctx, "Detected  KSI_DataHash template for TLV value extraction.");
-
-					res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_RAW);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					res = KSI_TLV_getRawValue(tlv, &raw, &raw_len);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					res = KSI_DataHash_fromImprint(ctx, raw, raw_len, &hashVal);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					res = t->setValue(payload, (void *)hashVal);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					hashVal = NULL;
-					break;
-
-				case KSI_TLV_TEMPLATE_OCTET_STRING:
-					KSI_LOG_debug(ctx, "Detected KSI_OctetString template for TLV value extraction.");
-
-					res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_RAW);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					res = KSI_TLV_getRawValue(tlv, &raw, &raw_len);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					res = KSI_OctetString_new(ctx, raw, raw_len, &octetStringVal);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					res = storeObjectValue(ctx, t, payload, (void *)octetStringVal);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					octetStringVal = NULL;
-					break;
-
 				case KSI_TLV_TEMPLATE_UTF8_STRING:
 					KSI_LOG_debug(ctx, "Detected KSI_Utf8String template for TLV value extraction.");
 
@@ -586,36 +549,13 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 					KSI_CATCH(&err, res) goto cleanup;
 
 					break;
-				case KSI_TLV_TEMPLATE_INTEGER:
-					res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, template->tag, template->isNonCritical, template->isForward, &tmp);
-					KSI_CATCH(&err, res) goto cleanup;
+				case KSI_TLV_TEMPLATE_OBJECT:
+					if (template->toTlv == NULL) {
+						KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Invalid template: toTlv not set.");
+						goto cleanup;
+					}
 
-					res = KSI_TLV_cast(tmp, KSI_TLV_PAYLOAD_INT);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					res = KSI_TLV_setUintValue(tmp, KSI_Integer_getUInt64((KSI_Integer *) payloadp));
-					KSI_CATCH(&err, res) goto cleanup;
-
-					break;
-				case KSI_TLV_TEMPLATE_OCTET_STRING:
-					res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, template->tag, template->isNonCritical, template->isForward, &tmp);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					res = KSI_OctetString_extract((const KSI_OctetString *)payloadp, &raw, &raw_len);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					res = KSI_TLV_setRawValue(tmp, raw, raw_len);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					break;
-				case KSI_TLV_TEMPLATE_IMPRINT:
-					res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, template->tag, template->isNonCritical, template->isForward, &tmp);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					res = KSI_DataHash_getImprint((const KSI_DataHash *)payloadp, &raw, &raw_len);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					res = KSI_TLV_setRawValue(tmp, raw, raw_len);
+					res = template->toTlv(payloadp, template->tag, template->isNonCritical, template->isForward, &tmp);
 					KSI_CATCH(&err, res) goto cleanup;
 
 					break;

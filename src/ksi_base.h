@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include "include/ksi_base32.h"
 #include "include/ksi_common.h"
 #include "include/ksi_hash.h"
 #include "include/ksi_hashchain.h"
@@ -184,6 +185,9 @@ int KSI_sendExtendRequest(KSI_CTX *ctx, const unsigned char *request, int reques
  *
  */
 int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle);
+
+
+int KSI_base32ToPublishedData(KSI_CTX *ctx,	const char *publication, int publication_length, KSI_PublicationData **published_data);
 
 
 /**********

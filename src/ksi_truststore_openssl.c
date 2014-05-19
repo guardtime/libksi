@@ -78,9 +78,47 @@ void KSI_PKITruststore_free(KSI_PKITruststore *trust) {
 	}
 }
 
+int KSI_PKICertificate_fromTlv(KSI_TLV *tlv, KSI_PKICertificate **cert) {
+	KSI_ERR err;
+	KSI_CTX *ctx = NULL;
+	int res;
+
+	KSI_PKICertificate *tmp = NULL;
+	const unsigned char *raw = NULL;
+	int raw_len = 0;
+
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_PRE(&err, cert != NULL) goto cleanup;
+
+	ctx = KSI_TLV_getCtx(tlv);
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_TLV_getRawValue(tlv, &raw, &raw_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_PKICertificate_new(ctx, raw, raw_len, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*cert = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(raw);
+
+	KSI_PKICertificate_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_PKICertificate_toTlv(KSI_PKICertificate *cert, int tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+	return KSI_UNKNOWN_ERROR; // FIXME!
+}
+
 int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) {
 	KSI_ERR err;
-	int res;
 	X509_LOOKUP *lookup = NULL;
 
 	KSI_PRE(&err, trust != NULL) goto cleanup;
@@ -107,7 +145,6 @@ cleanup:
 
 int GTTruststore_addLookupDir(KSI_PKITruststore *trust, const char *path) {
 	KSI_ERR err;
-	int res;
 	X509_LOOKUP *lookup = NULL;
 
 	KSI_PRE(&err, trust != NULL) goto cleanup;
@@ -134,7 +171,6 @@ cleanup:
 
 int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **trust) {
 	KSI_ERR err;
-	int res;
 	KSI_PKITruststore *tmp = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -225,7 +261,7 @@ int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, int raw_len, KSI_PKISign
 	tmp->ctx = ctx;
 	tmp->pkcs7 = NULL;
 
-	pkcs7 = d2i_PKCS7(NULL, &raw, raw_len);
+	pkcs7 = d2i_PKCS7(NULL, (const unsigned char **)&raw, raw_len);
 	if (pkcs7 == NULL) {
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, NULL);
 		goto cleanup;
@@ -247,7 +283,6 @@ cleanup:
 
 int KSI_PKICertificate_fromSignature(KSI_PKISignature *sig, KSI_PKICertificate **cert) {
 	KSI_ERR err;
-	int res;
 	KSI_PKICertificate *tmp = NULL;
 
 	X509 *signing_cert = NULL;
@@ -342,12 +377,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_PKICertificate_find(KSI_CTX *ctx, const unsigned char *certId, int certId_len, const KSI_PKICertificate **cert) {
-	// TODO!
-	return KSI_UNKNOWN_ERROR;
-}
-
-static int extractCertificate(KSI_PKISignature *signature, X509 **cert) {
+static int extractCertificate(const KSI_PKISignature *signature, X509 **cert) {
 	int res = KSI_UNKNOWN_ERROR;
 	X509 *signing_cert = NULL;
 	STACK_OF(X509) *certs = NULL;
@@ -383,7 +413,7 @@ cleanup:
 	return res;
 }
 
-int KSI_PKITruststore_validateSignatureCertificate(KSI_CTX *ctx, KSI_PKISignature *signature) {
+int KSI_PKITruststore_validateSignatureCertificate(KSI_CTX *ctx, const KSI_PKISignature *signature) {
 	KSI_ERR err;
 	int res;
 	X509 *cert = NULL;
@@ -428,7 +458,6 @@ int KSI_PKITruststore_validateSignatureCertificate(KSI_CTX *ctx, KSI_PKISignatur
 	}
 
 	// FIXME! No direct access to the pki truststore object!
-
 	if (!X509_STORE_CTX_init(storeCtx, ctx->pkiTruststore->store, cert,
 			signature->pkcs7->d.sign->cert)) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);

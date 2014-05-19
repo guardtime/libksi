@@ -237,7 +237,6 @@ cleanup:
 
 	KSI_NetProvider_free(pr);
 	CurlNetProviderCtx_free(pctx);
-	KSI_free(pr);
 
 	return KSI_RETURN(&err);
 }

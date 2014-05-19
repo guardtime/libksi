@@ -143,4 +143,3 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
-

@@ -65,6 +65,7 @@ KSI_DEFINE_LIST(KSI_Integer);
 KSI_DEFINE_LIST(KSI_TLV);
 KSI_DEFINE_LIST(KSI_Utf8String);
 KSI_DEFINE_LIST(KSI_OctetString);
+KSI_DEFINE_LIST(KSI_PKICertificate);
 
 KSI_DEFINE_GET_CTX(KSI_DataHash);
 KSI_DEFINE_GET_CTX(KSI_DataHasher);
@@ -82,10 +83,17 @@ int KSI_Integer_new(KSI_CTX *ctx, KSI_uint64_t value, KSI_Integer **kint);
 int KSI_Integer_equals(const KSI_Integer *a, const KSI_Integer *b);
 int KSI_Integer_equalsUInt(const KSI_Integer *o, KSI_uint64_t i);
 KSI_Integer *KSI_Integer_clone(const KSI_Integer *val);
+int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_OctetString **integer);
+int KSI_Integer_toTlv(KSI_Integer *i, int tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+
 
 void KSI_OctetString_free(KSI_OctetString *t);
 int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, int data_len, KSI_OctetString **t);
 int KSI_OctetString_extract(const KSI_OctetString *t, const unsigned char **data, int *data_len);
+int KSI_OctetString_equals(const KSI_OctetString *left, const KSI_OctetString *right);
+
+int KSI_OctetString_fromTlv(KSI_TLV *tlv, KSI_OctetString **oct);
+int KSI_OctetString_toTlv(KSI_OctetString *oct, int tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 void KSI_Utf8String_free(KSI_Utf8String *t);
 int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, KSI_Utf8String **t);

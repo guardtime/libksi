@@ -263,6 +263,10 @@ extern "C" {
 	 */
 	int KSI_DataHash_equals(KSI_DataHash *left, KSI_DataHash *right);
 
+	int KSI_DataHash_fromTlv(KSI_TLV *tlv, KSI_DataHash **hsh);
+	int KSI_DataHash_toTlv(KSI_DataHash *hsh, int tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+
+
 #ifdef __cplusplus
 }
 #endif

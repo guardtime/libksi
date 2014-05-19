@@ -479,3 +479,73 @@ int KSI_DataHash_equals(KSI_DataHash *left, KSI_DataHash *right) {
 	return left != NULL && right != NULL &&
 			(left == right || (left->imprint_length == right->imprint_length && !memcmp(left->imprint, right->imprint, left->imprint_length)));
 }
+
+int KSI_DataHash_fromTlv(KSI_TLV *tlv, KSI_DataHash **hsh) {
+	KSI_ERR err;
+	KSI_CTX *ctx = NULL;
+	int res;
+	const unsigned char *raw = NULL;
+	int raw_len = 0;
+	KSI_DataHash *tmp = NULL;
+
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_PRE(&err, hsh != NULL) goto cleanup;
+
+	ctx = KSI_TLV_getCtx(tlv);
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_RAW);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_TLV_getRawValue(tlv, &raw, &raw_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_DataHash_fromImprint(ctx, raw, raw_len, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*hsh = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(ctx);
+	KSI_nofree(raw);
+	KSI_DataHash_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_DataHash_toTlv(KSI_DataHash *hsh, int tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+	KSI_ERR err;
+	int res;
+	KSI_TLV *tmp = NULL;
+	const unsigned char *raw = NULL;
+	int raw_len = 0;
+
+	KSI_PRE(&err, hsh != NULL) goto cleanup;
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_BEGIN(hsh->ctx, &err);
+
+	res = KSI_TLV_new(hsh->ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_DataHash_getImprint(hsh, &raw, &raw_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_TLV_setRawValue(tmp, raw, raw_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*tlv = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(raw);
+	KSI_TLV_free(tmp);
+
+	return KSI_RETURN(&err);
+}

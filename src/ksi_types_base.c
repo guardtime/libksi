@@ -67,6 +67,76 @@ cleanup:
 	 return res;
 }
 
+int KSI_OctetString_equals(const KSI_OctetString *left, const KSI_OctetString *right) {
+	return left != NULL && right != NULL && left->data_len == right->data_len && !memcmp(left->data, right->data, left->data_len);
+}
+
+int KSI_OctetString_fromTlv(KSI_TLV *tlv, KSI_OctetString **oct) {
+	KSI_ERR err;
+	KSI_CTX *ctx = NULL;
+	int res;
+	const unsigned char *raw = NULL;
+	int raw_len = 0;
+	KSI_OctetString *tmp = NULL;
+
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_PRE(&err, oct != NULL) goto cleanup;
+
+	ctx = KSI_TLV_getCtx(tlv);
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_RAW);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_TLV_getRawValue(tlv, &raw, &raw_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_OctetString_new(ctx, raw, raw_len, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*oct = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(ctx);
+	KSI_nofree(raw);
+	KSI_OctetString_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_OctetString_toTlv(KSI_OctetString *oct, int tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+	KSI_ERR err;
+	int res;
+	KSI_TLV *tmp = NULL;
+
+	KSI_PRE(&err, oct != NULL) goto cleanup;
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_BEGIN(oct->ctx, &err);
+
+	res = KSI_TLV_new(oct->ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_TLV_setRawValue(tmp, oct->data, oct->data_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*tlv = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(raw);
+	KSI_TLV_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
+
 /**
  * Utf8String
  */
@@ -176,6 +246,64 @@ int KSI_Integer_new(KSI_CTX *ctx, KSI_uint64_t value, KSI_Integer **kint) {
 cleanup:
 
 	KSI_Integer_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_OctetString **integer) {
+	KSI_ERR err;
+	KSI_CTX *ctx = NULL;
+	int res;
+	KSI_Integer *tmp = NULL;
+
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_PRE(&err, integer != NULL) goto cleanup;
+
+	ctx = KSI_TLV_getCtx(tlv);
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_INT);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_TLV_getInteger(tlv, &tmp);
+
+	*integer = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(ctx);
+	KSI_Integer_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_Integer_toTlv(KSI_Integer *integer, int tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+	KSI_ERR err;
+	int res;
+	KSI_TLV *tmp = NULL;
+
+	KSI_PRE(&err, integer != NULL) goto cleanup;
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_BEGIN(integer->ctx, &err);
+
+	res = KSI_TLV_new(integer->ctx, KSI_TLV_PAYLOAD_INT, tag, isNonCritical, isForward, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_TLV_setUintValue(tmp, integer->value);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*tlv = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(raw);
+	KSI_TLV_free(tmp);
 
 	return KSI_RETURN(&err);
 }

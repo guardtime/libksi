@@ -40,41 +40,46 @@ extern "C" {
 		/* Callbacks */
 		cb_encode_t callbackEncode;
 		cb_decode_t callbackDecode;
+
+		int (*fromTlv)(KSI_TLV *tlv, void **);
+		int (*toTlv)(void *, int, int, int, KSI_TLV **tlv);
 	};
 
 #define KSI_TLV_TEMPLATE(name) name##_template
 #define KSI_IMPORT_TLV_TEMPLATE(name) extern const KSI_TlvTemplate KSI_TLV_TEMPLATE(name)[];
 
-	#define KSI_TLV_TEMPLATE_INTEGER 				1
-	#define KSI_TLV_TEMPLATE_OCTET_STRING 			2
+	#define KSI_TLV_TEMPLATE_OBJECT					1
 	#define KSI_TLV_TEMPLATE_UTF8_STRING 			3
-	#define KSI_TLV_TEMPLATE_IMPRINT 				4
 	#define KSI_TLV_TEMPLATE_COMPOSITE				5
 	#define KSI_TLV_TEMPLATE_SEEK_POS				6
 	#define KSI_TLV_TEMPLATE_CALLBACK				7
 	#define KSI_TLV_TEMPLATE_NATIVE_INT				8
 
-	#define KSI_TLV_FULL_TEMPLATE_DEF(typ, tg, nc, fw, gttr, sttr, constr, destr, subTmpl, list_append, mul, list_new, list_free, cbEnc, cbDec) { typ, tg, nc, fw, (getter_t)gttr, (setter_t)sttr, (int (*)(KSI_CTX *, void **)) constr, (void (*)(void *)) destr, subTmpl, (int (*)(void *, void *))list_append, mul, (int (*)(KSI_CTX *, void **)) list_new, (void (*)(void *)) list_free, (cb_encode_t)cbEnc, (cb_decode_t)cbDec},
-	#define KSI_TLV_PRIMITIVE_TEMPLATE_DEF(type, tag, isNonCritical, isForward, getter, setter) KSI_TLV_FULL_TEMPLATE_DEF(type, tag, isNonCritical, isForward, getter, setter, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL)
+	#define KSI_TLV_FULL_TEMPLATE_DEF(typ, tg, nc, fw, gttr, sttr, constr, destr, subTmpl, list_append, mul, list_new, list_free, cbEnc, cbDec, fromTlv, toTlv) { typ, tg, nc, fw, (getter_t)gttr, (setter_t)sttr, (int (*)(KSI_CTX *, void **)) constr, (void (*)(void *)) destr, subTmpl, (int (*)(void *, void *))list_append, mul, (int (*)(KSI_CTX *, void **)) list_new, (void (*)(void *)) list_free, (cb_encode_t)cbEnc, (cb_decode_t)cbDec, (int (*)(KSI_TLV *, void **)) fromTlv, (int (*)(void *, int, int, int, KSI_TLV **))toTlv},
+	#define KSI_TLV_PRIMITIVE_TEMPLATE_DEF(type, tag, isNonCritical, isForward, getter, setter) KSI_TLV_FULL_TEMPLATE_DEF(type, tag, isNonCritical, isForward, getter, setter, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL)
+
 
 	#define KSI_DEFINE_TLV_TEMPLATE(name)	const KSI_TlvTemplate name##_template[] = {
-	#define KSI_TLV_INTEGER(tag, isNonCritical, isForward, getter, setter) 					KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_INTEGER, tag, isNonCritical, isForward, getter, setter)
+
+	#define KSI_TLV_OBJECT(tag, nc, fw, getter, setter, fromTlv, toTlv) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tag, nc, fw, getter, setter, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, fromTlv, toTlv)
+	#define KSI_TLV_INTEGER(tag, nc, fw, getter, setter) 									KSI_TLV_OBJECT(tag, nc, fw, getter, setter, KSI_Integer_fromTlv, KSI_Integer_toTlv)
+	#define KSI_TLV_OCTET_STRING(tag, nc, fw, getter, setter) 								KSI_TLV_OBJECT(tag, nc, fw, getter, setter, KSI_OctetString_fromTlv, KSI_OctetString_toTlv)
+	#define KSI_TLV_IMPRINT(tag, nc, fw, getter, setter) 									KSI_TLV_OBJECT(tag, nc, fw, getter, setter, KSI_DataHash_fromTlv, KSI_DataHash_toTlv)
+
 	#define KSI_TLV_NATIVE_INT(tag, isNonCritical, isForward, getter, setter) 				KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_NATIVE_INT, tag, isNonCritical, isForward, getter, setter)
 
-	#define KSI_TLV_OCTET_STRING(tag, isNonCritical, isForward, getter, setter) 			KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OCTET_STRING, tag, isNonCritical, isForward, getter, setter)
-	#define KSI_TLV_OCTET_STRING_LIST(tag, isNonCritical, isForward, getter, setter) 		KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OCTET_STRING, tag, isNonCritical, isForward, getter, setter, NULL, NULL, NULL, KSI_OctetStringList_append, 1, KSI_OctetStringList_new, KSI_OctetStringList_free, NULL, NULL)
+	#define KSI_TLV_OCTET_STRING_LIST(tag, isNonCritical, isForward, getter, setter) 		KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OCTET_STRING, tag, isNonCritical, isForward, getter, setter, NULL, NULL, NULL, KSI_OctetStringList_append, 1, KSI_OctetStringList_new, KSI_OctetStringList_free, NULL, NULL, NULL, NULL)
 
 	#define KSI_TLV_UTF8_STRING(tag, isNonCritical, isForward, getter, setter) 				KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_UTF8_STRING, tag, isNonCritical, isForward, getter, setter)
-	#define KSI_TLV_UTF8_STRING_LIST(tag, isNonCritical, isForward, getter, setter) 		KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_UTF8_STRING, tag, isNonCritical, isForward, getter, setter, NULL, NULL, NULL, KSI_Utf8StringList_append, 1, KSI_Utf8StringList_new, KSI_Utf8StringList_free, NULL, NULL)
+	#define KSI_TLV_UTF8_STRING_LIST(tag, isNonCritical, isForward, getter, setter) 		KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_UTF8_STRING, tag, isNonCritical, isForward, getter, setter, NULL, NULL, NULL, KSI_Utf8StringList_append, 1, KSI_Utf8StringList_new, KSI_Utf8StringList_free, NULL, NULL, NULL, NULL)
 
-	#define KSI_TLV_IMPRINT(tag, isNonCritical, isForward, getter, setter) 					KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_IMPRINT, tag, isNonCritical, isForward, getter, setter)
 
-	#define KSI_TLV_COMPOSITE(tag, isNonCritical, isForward, getter, setter, sub)			KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_COMPOSITE, tag, isNonCritical, isForward, getter, setter, sub##_new, sub##_free, sub##_template, NULL, 0,  NULL, NULL, NULL, NULL)
-	#define KSI_TLV_COMPOSITE_LIST(tag, isNonCritical, isForward, getter, setter, sub) 		KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_COMPOSITE, tag, isNonCritical, isForward, getter, setter, sub##_new, sub##_free, sub##_template, sub##List_append, 1, sub##List_new, sub##List_free, NULL, NULL)
+	#define KSI_TLV_COMPOSITE(tag, isNonCritical, isForward, getter, setter, sub)			KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_COMPOSITE, tag, isNonCritical, isForward, getter, setter, sub##_new, sub##_free, sub##_template, NULL, 0,  NULL, NULL, NULL, NULL, NULL, NULL)
+	#define KSI_TLV_COMPOSITE_LIST(tag, isNonCritical, isForward, getter, setter, sub) 		KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_COMPOSITE, tag, isNonCritical, isForward, getter, setter, sub##_new, sub##_free, sub##_template, sub##List_append, 1, sub##List_new, sub##List_free, NULL, NULL, NULL, NULL)
 
 	#define KSI_TLV_SEEK_POS(tag, setter)													KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_SEEK_POS, tag, 0, 0, NULL, setter)
 
-	#define KSI_TLV_CALLBACK(tag, isNonCritical, isForward, getter, setter, encode, decode)	KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_CALLBACK, tag, isNonCritical, isForward, getter, setter, NULL, NULL, NULL, NULL, 1, NULL, NULL, encode, decode)
+	#define KSI_TLV_CALLBACK(tag, isNonCritical, isForward, getter, setter, encode, decode)	KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_CALLBACK, tag, isNonCritical, isForward, getter, setter, NULL, NULL, NULL, NULL, 1, NULL, NULL, encode, decode, NULL, NULL)
 	#define KSI_END_TLV_TEMPLATE { -1, 0, 0, 0, NULL, NULL}};
 
 

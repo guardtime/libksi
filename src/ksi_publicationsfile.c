@@ -429,6 +429,41 @@ cleanup:
 	 return res;
 }
 
+int KSI_KSITrustProvider_getPKICertificateById(const KSI_KSITrustProvider *trust, const KSI_OctetString *id, KSI_PKICertificate **cert) {
+	KSI_ERR err;
+	int res;
+	int i;
+	KSI_CertificateRecord *certRec = NULL;
+
+	KSI_PRE(&err, trust != NULL) goto cleanup;
+	KSI_PRE(&err, id != NULL) goto cleanup;
+	KSI_PRE(&err, cert != NULL) goto cleanup;
+
+	for (i = 0; i < KSI_CertificateRecordList_length(trust->certificates); i++) {
+		const KSI_OctetString *cId = NULL;
+		res = KSI_CertificateRecordList_elementAt(trust->certificates, i, &certRec);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		res = KSI_CertificateRecord_getCertId(certRec, &cId);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		if (KSI_OctetString_equals(cId, id)) {
+			res = KSI_CertificateRecord_getCert(certRec, cert);
+			KSI_CATCH(&err, res) goto cleanup;
+
+			break;
+		}
+	}
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(certRec);
+
+	return KSI_RETURN(&err);
+}
+
 int KSI_KSITrustProvider_getSignature(const KSI_KSITrustProvider *t, KSI_OctetString **signature) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL || signature == NULL) {
