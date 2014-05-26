@@ -19,7 +19,7 @@ static int printCerts(KSI_PublicationsFile *pubFile) {
 	for (i = 0; i < KSI_CertificateRecordList_length(certRecList); i++) {
 		KSI_CertificateRecord *certRec = NULL;
 		KSI_PKICertificate *cert = NULL;
-		int j;
+//		int j;
 
 		printf("cert-dummy-%d=file%d.der\n", i, i);
 
@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
 			goto cleanup;
 		}
 
-		res = KSI_publishedDataToBase32(pubDat, &pubStr);
+		res = KSI_PublicationData_toBase32(pubDat, &pubStr);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Failed to create publication string from published data.\n");
 			goto cleanup;

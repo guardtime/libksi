@@ -1539,7 +1539,6 @@ int KSI_Signature_sign(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **si
 	/* Wait for the response. */
 	res = KSI_NetHandle_receive(handle);
 	KSI_CATCH(&err, res) goto cleanup;
-
 	/* Read the response. */
 	res = KSI_NetHandle_getResponse(handle, &resp, &resp_len);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -1548,7 +1547,6 @@ int KSI_Signature_sign(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **si
 
 	res = KSI_parseAggregationResponse(ctx, resp, resp_len, &sign);
 	KSI_CATCH(&err, res) goto cleanup;
-
 	*signature = sign;
 	sign = NULL;
 

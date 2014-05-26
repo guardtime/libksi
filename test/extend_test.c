@@ -2,7 +2,7 @@
 
 int main(int argc, char **argv) {
 	KSI_CTX *ctx;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_PKITruststore *pki = NULL;
 
 	FILE *f = NULL;
@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	res = KSI_CTX_getPKITruststore(ctx, &pki);
+	res = KSI_getPKITruststore(ctx, &pki);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to get PKI trustprovider from KSI context.");
 		goto cleanup;

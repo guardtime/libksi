@@ -56,10 +56,10 @@ static void testPublicationStringEncodingAndDecoding(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_base32ToPublishedData(ctx, publication, strlen(publication), &pub);
+	res = KSI_PublicationData_fromBase32(ctx, publication, strlen(publication), &pub);
 	CuAssert(tc, "Failed decoding publication string.", res == KSI_OK && pub != NULL);
 
-	res = KSI_publishedDataToBase32(pub, &out);
+	res = KSI_PublicationData_toBase32(pub, &out);
 	CuAssert(tc, "Failed encoding the published data object", res == KSI_OK && out != NULL);
 
 	CuAssert(tc, "Invalid encoded publication string does not match original.", strncmp(publication, out, strlen(publication)));

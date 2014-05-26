@@ -204,7 +204,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_PublicationsFile_fromFile(KSI_CTX *ctx, const char *fileName, KSI_PublicationsFile **store) {
+int KSI_PublicationsFile_fromFile(KSI_CTX *ctx, const char *fileName, KSI_PublicationsFile **pubFile) {
 	KSI_ERR err;
 	int res;
 	KSI_RDR *reader = NULL;
@@ -216,7 +216,7 @@ int KSI_PublicationsFile_fromFile(KSI_CTX *ctx, const char *fileName, KSI_Public
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, fileName != NULL) goto cleanup;
-	KSI_PRE(&err, store != NULL) goto cleanup;
+	KSI_PRE(&err, pubFile != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
 	f = fopen(fileName, "rb");
@@ -266,7 +266,7 @@ int KSI_PublicationsFile_fromFile(KSI_CTX *ctx, const char *fileName, KSI_Public
 	tmp->raw_len = raw_len;
 	raw = NULL;
 
-	*store = tmp;
+	*pubFile = tmp;
 	tmp = NULL;
 
 	KSI_SUCCESS(&err);

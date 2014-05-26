@@ -40,7 +40,7 @@ int main(void) {
 		goto cleanup;
 	}
 
-	res = KSI_Signature_sign(ctx, hsh, &sign);
+	res = KSI_createSignature(ctx, hsh, &sign);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to sign %d.\n", res);
 		KSI_ERR_statusDump(ctx, stderr);

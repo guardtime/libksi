@@ -55,7 +55,7 @@ static void TestSendAggregateRequest(CuTest* tc) {
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
 
-	res = KSI_CTX_setNetworkProvider(ctx, pr);
+	res = KSI_setNetworkProvider(ctx, pr);
 	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, someImprint, sizeof(someImprint), &hsh);
@@ -95,7 +95,7 @@ static void TestSendExtendRequest(CuTest* tc) {
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
 
-	res = KSI_CTX_setNetworkProvider(ctx, pr);
+	res = KSI_setNetworkProvider(ctx, pr);
 	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, TEST_SIGNATURE_FILE, &sig);

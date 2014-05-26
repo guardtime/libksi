@@ -92,7 +92,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	if (res != KSI_OK) goto cleanup;
 
 	/* Configure curl net provider */
-	if ((res = KSI_CurlNetProvider_setSignerUrl(netProvider,"192.168.1.29:1234"/* "192.168.1.36:3333"*/)) != KSI_OK) goto cleanup;
+	if ((res = KSI_CurlNetProvider_setSignerUrl(netProvider, "192.168.1.36:3333")) != KSI_OK) goto cleanup;
 	if ((res = KSI_CurlNetProvider_setExtenderUrl(netProvider, "192.168.1.36:8010/gt-extendingservice")) != KSI_OK) goto cleanup;
 	if ((res = KSI_CurlNetProvider_setPublicationUrl(netProvider, "file:///root/dev/ksi-c-api/test/resource/tlv/publications-4.tlv")) != KSI_OK) goto cleanup;
 	if ((res = KSI_CurlNetProvider_setConnectTimeoutSeconds(netProvider, 5)) != KSI_OK) goto cleanup;
