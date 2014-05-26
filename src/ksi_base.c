@@ -6,7 +6,7 @@
 
 #define KSI_ERR_STACK_LEN 16
 
-KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationRecord)
+static int KSI_CTX_global_initCount = 0;
 
 const char *KSI_getErrorString(int statusCode) {
 	switch (statusCode) {
@@ -151,11 +151,15 @@ void KSI_CTX_free(KSI_CTX *context) {
 int KSI_global_init(void) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	res = KSI_CurlNetProvider_global_init();
-	if (res != KSI_OK) goto cleanup;
+	if (KSI_CTX_global_initCount == 0) {
+		res = KSI_CurlNetProvider_global_init();
+		if (res != KSI_OK) goto cleanup;
 
-	res = KSI_PKITruststore_global_init();
-	if (res != KSI_OK) goto cleanup;
+		res = KSI_PKITruststore_global_init();
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	KSI_CTX_global_initCount++;
 
 	res = KSI_OK;
 
@@ -168,7 +172,13 @@ cleanup:
  *
  */
 void KSI_global_cleanup(void) {
-	KSI_CurlNetProvider_global_cleanup();
+	if (KSI_CTX_global_initCount == 0) {
+		KSI_CurlNetProvider_global_cleanup();
+		KSI_PKITruststore_global_cleanup();
+	}
+	if (KSI_CTX_global_initCount > 0) {
+		KSI_CTX_global_initCount--;
+	}
 }
 
 int KSI_sendSignRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle) {

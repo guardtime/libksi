@@ -17,7 +17,7 @@ extern "C" {
 	 * \ingroup pkitruststore
 	 * Global finalize of the PKI truststore.
 	 */
-	void KSI_PKITruststore_global_finalize(void);
+	void KSI_PKITruststore_global_cleanup(void);
 
 	/**
 	 * \ingroup pkitruststore

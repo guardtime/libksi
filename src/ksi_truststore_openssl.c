@@ -10,7 +10,7 @@
 /* Hide the following line to deactivate. */
 #define MAGIC_EMAIL "publications@guardtime.com"
 
-static int KSI_PKITruststore_initCount = 0;
+static int KSI_PKITruststore_global_initCount = 0;
 
 struct KSI_PKITruststore_st {
 	KSI_CTX *ctx;
@@ -645,19 +645,19 @@ cleanup:
 }
 
 int KSI_PKITruststore_global_init(void) {
-	if (KSI_PKITruststore_initCount == 0) {
+	if (KSI_PKITruststore_global_initCount == 0) {
 		OpenSSL_add_all_digests();
 	}
-	KSI_PKITruststore_initCount++;
+	KSI_PKITruststore_global_initCount++;
 
 	return KSI_OK;
 }
 
-void KSI_PKITruststore_global_finalize(void) {
-	if (KSI_PKITruststore_initCount == 0) {
+void KSI_PKITruststore_global_cleanup(void) {
+	if (KSI_PKITruststore_global_initCount == 0) {
 		EVP_cleanup();
 	}
-	if (KSI_PKITruststore_initCount > 0) {
-		KSI_PKITruststore_initCount--;
+	if (KSI_PKITruststore_global_initCount > 0) {
+		KSI_PKITruststore_global_initCount--;
 	}
 }
