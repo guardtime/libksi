@@ -36,7 +36,7 @@ apiSources = \
 		../src/ksi_types.c \
 		../src/ksi_types_base.c \
 		../src/ksi_util.c \
-		../src/ksi_truststore_openssl.c
+		../src/ksi_pkitruststore_openssl.c
 
 runner_SOURCES= \
 		all_tests.c \
@@ -44,7 +44,7 @@ runner_SOURCES= \
 		ksi_ctx_test.c \
 		ksi_hash_test.c \
 		ksi_hashchain_test.c \
-		ksi_ksitrustprovider_test.c \
+		ksi_publicationsfile_test.c \
 		ksi_log_test.c \
 		ksi_net_mock.c \
 		ksi_net_test.c \
