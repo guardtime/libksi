@@ -10,6 +10,8 @@
 /* Hide the following line to deactivate. */
 #define MAGIC_EMAIL "publications@guardtime.com"
 
+static int KSI_PKITruststore_initCount = 0;
+
 struct KSI_PKITruststore_st {
 	KSI_CTX *ctx;
 	X509_STORE *store;
@@ -563,7 +565,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_PKITruststore_validateSignatureWithCert(KSI_CTX *ctx, unsigned char *data, unsigned int data_len, const char *algoOid, const unsigned char *signature, unsigned int signature_len, const KSI_PKICertificate *certificate) {
+int KSI_PKITruststore_validateRawSignature(KSI_CTX *ctx, unsigned char *data, unsigned int data_len, const char *algoOid, const unsigned char *signature, unsigned int signature_len, const KSI_PKICertificate *certificate) {
 	KSI_ERR err;
 	int res;
 	ASN1_OBJECT* algorithm = NULL;
@@ -643,8 +645,19 @@ cleanup:
 }
 
 int KSI_PKITruststore_global_init(void) {
-	OpenSSL_add_all_digests();
+	if (KSI_PKITruststore_initCount == 0) {
+		OpenSSL_add_all_digests();
+	}
+	KSI_PKITruststore_initCount++;
 
 	return KSI_OK;
 }
 
+void KSI_PKITruststore_global_finalize(void) {
+	if (KSI_PKITruststore_initCount == 0) {
+		EVP_cleanup();
+	}
+	if (KSI_PKITruststore_initCount > 0) {
+		KSI_PKITruststore_initCount--;
+	}
+}
