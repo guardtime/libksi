@@ -620,6 +620,15 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+/**
+ *
+ */
+int KSI_CTX_getStatus(KSI_CTX *ctx) {
+	/* Will fail with segfault if context is null. */
+	return ctx == NULL ? KSI_INVALID_ARGUMENT : ctx->statusCode;
+}
+
+
 #define CTX_VALUEP_SETTER(var, nam, typ, fre)												\
 int KSI_set##nam(KSI_CTX *ctx, typ *val) { 													\
 	return setValue(ctx, #nam, (void **)&ctx->var, (void *)val, (void(*)(void *))fre);		\

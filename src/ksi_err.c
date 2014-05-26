@@ -35,14 +35,6 @@ int KSI_ERR_apply(KSI_ERR *err) {
 	return err->statusCode;
 }
 
-/**
- *
- */
-int KSI_ERR_getStatus(KSI_CTX *context) {
-	/* Will fail with segfault if context is null. */
-	return context->statusCode;
-}
-
 void KSI_ERR_success(KSI_ERR *err) {
 	err->statusCode = KSI_OK;
 	*err->message = '\0';

@@ -101,9 +101,13 @@ void KSI_CTX_free(KSI_CTX *context);
  ****************************/
 
 /**
- * Get the last status set.
+ * Returns the current status of the error container.
+ * \param[in]	ctx		KSI context.
+ *
+ * \return The current status code of the KSI context. If #ctx is NULL a
+ * #KSI_INVALID_ARGUMENT is returned.
  */
-int KSI_ERR_getStatus(KSI_CTX *ctx);
+int KSI_CTX_getStatus(KSI_CTX *ctx);
 
 /**
  * Finalizes the current error stack.
