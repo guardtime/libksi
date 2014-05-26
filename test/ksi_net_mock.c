@@ -19,7 +19,7 @@ static int mockPublicationsFileReceive(KSI_NetHandle *handle) {
 
 	KSI_LOG_debug(KSI_NetHandle_getCtx(handle), "Connecting to MOCK publications file service");
 
-	f = fopen("test/resource/tlv/publications-4.tlv", "rb");
+	f = fopen("test/resource/tlv/publications.tlv", "rb");
 	if (f == NULL) {
 		res = KSI_IO_ERROR;
 		goto cleanup;

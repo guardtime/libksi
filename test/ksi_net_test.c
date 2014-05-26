@@ -89,7 +89,7 @@ static void TestSendExtendRequest(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_PKITruststore_addLookupFile(ctx->pkiTruststore, "test/resource/tlv/server-3.crt");
+	res = KSI_PKITruststore_addLookupFile(ctx->pkiTruststore, "test/resource/tlv/mock.crt");
 	CuAssert(tc, "Unable to add test certificate to truststore.", res == KSI_OK);
 
 	res = KSI_NET_MOCK_new(ctx, &pr);

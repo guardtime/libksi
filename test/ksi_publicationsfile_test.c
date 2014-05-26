@@ -7,7 +7,7 @@ extern int KSI_NET_MOCK_request_len;
 extern const unsigned char *KSI_NET_MOCK_response;
 extern int KSI_NET_MOCK_response_len;
 
-#define TEST_PUBLICATIONS_FILE "test/resource/tlv/publications-4.tlv"
+#define TEST_PUBLICATIONS_FILE "test/resource/tlv/publications.tlv"
 
 static void setFileMockResponse(CuTest *tc, const char *fileName) {
 	FILE *f = NULL;
@@ -36,7 +36,7 @@ static void testLoadPublicationsFile(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_PKITruststore_addLookupFile(ctx->pkiTruststore, "test/resource/tlv/server-3.crt");
+	res = KSI_PKITruststore_addLookupFile(ctx->pkiTruststore, "test/resource/tlv/mock.crt");
 	CuAssert(tc, "Unable to read certificate", res == KSI_OK);
 
 	setFileMockResponse(tc, TEST_PUBLICATIONS_FILE);
