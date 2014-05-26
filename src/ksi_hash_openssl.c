@@ -7,7 +7,7 @@
  */
 static const EVP_MD *hashAlgorithmToEVP(int hash_id)
 {
-	switch (KSI_fixHashAlgorithm(hash_id)) {
+	switch (hash_id) {
 #ifndef OPENSSL_NO_SHA
 		case KSI_HASHALG_SHA1:
 			return EVP_sha1();

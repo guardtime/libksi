@@ -2,22 +2,50 @@
 #include "all_tests.h"
 
 extern KSI_CTX *ctx;
+extern const unsigned char *KSI_NET_MOCK_request;
+extern int KSI_NET_MOCK_request_len;
+extern const unsigned char *KSI_NET_MOCK_response;
+extern int KSI_NET_MOCK_response_len;
 
-#define TEST_PUBLICATIONS_FILE "test/resource/tlv/publications-1.tlv"
+#define TEST_PUBLICATIONS_FILE "test/resource/tlv/publications-4.tlv"
+
+static void setFileMockResponse(CuTest *tc, const char *fileName) {
+	FILE *f = NULL;
+	unsigned char *resp = NULL;
+	int resp_size = 0xfffff;
+
+	resp = KSI_calloc(resp_size, 1);
+	CuAssert(tc, "Out of memory", resp != NULL);
+
+	/* Read response from file. */
+	f = fopen(fileName, "rb");
+	CuAssert(tc, "Unable to open sample response file", f != NULL);
+
+	KSI_NET_MOCK_response_len = fread(resp, 1, resp_size, f);
+	fclose(f);
+
+	if (KSI_NET_MOCK_response != NULL) {
+		KSI_free((unsigned char *)KSI_NET_MOCK_response);
+	}
+	KSI_NET_MOCK_response = resp;
+}
 
 static void testLoadPublicationsFile(CuTest *tc) {
 	int res;
-	KSI_KSITrustProvider *trust = NULL;
+	KSI_PublicationsFile *trust = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_PKITruststore_addLookupFile(ctx->pkiTruststore, "test/resource/tlv/server.crt");
+	res = KSI_PKITruststore_addLookupFile(ctx->pkiTruststore, "test/resource/tlv/server-3.crt");
 	CuAssert(tc, "Unable to read certificate", res == KSI_OK);
 
-	res = KSI_KSITrustProvider_fromFile(ctx,TEST_PUBLICATIONS_FILE, &trust);
+	setFileMockResponse(tc, TEST_PUBLICATIONS_FILE);
+
+	res = KSI_PublicationsFile_fromFile(ctx, TEST_PUBLICATIONS_FILE, &trust);
+	KSI_ERR_statusDump(ctx, stdout);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && trust != NULL);
 
-	KSI_KSITrustProvider_free(trust);
+	KSI_PublicationsFile_free(trust);
 }
 
 static void testPublicationStringEncodingAndDecoding(CuTest *tc) {

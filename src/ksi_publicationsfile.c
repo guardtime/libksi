@@ -8,7 +8,7 @@ KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationsHeader)
 KSI_IMPORT_TLV_TEMPLATE(KSI_CertificateRecord)
 KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationRecord)
 
-struct KSI_KSITrustProvider_st {
+struct KSI_PublicationsFile_st {
 	KSI_CTX *ctx;
 	unsigned char *raw;
 	int raw_len;
@@ -22,21 +22,20 @@ struct KSI_KSITrustProvider_st {
 /**
  * KSI_KSITrustProvider
  */
-static int KSI_KSITrustProvider_new(KSI_CTX *ctx, KSI_KSITrustProvider **t);
-static int KSI_KSITrustProvider_setHeader(KSI_KSITrustProvider *t, KSI_PublicationsHeader *header);
-static int KSI_KSITrustProvider_setCertificates(KSI_KSITrustProvider *t, KSI_LIST(KSI_CertificateRecord) *certificates);
-static int KSI_KSITrustProvider_setPublications(KSI_KSITrustProvider *t, KSI_LIST(KSI_PublicationRecord) *publications);
-static int KSI_KSITrustProvider_setSignature(KSI_KSITrustProvider *t, KSI_OctetString *signature);
-static int KSI_KSITrustProvider_setSignatureOffset(KSI_KSITrustProvider *t, int signatureOffset);
-static int KSI_KSITrustProvider_decodePKISignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_KSITrustProvider *trust, KSI_TlvTemplate *template);
-static int KSI_KSITrustProvider_decodePKICertificateList(KSI_CTX *ctx, KSI_TLV *tlv, KSI_KSITrustProvider *trust, KSI_TlvTemplate *template);
+static int publicationsFile_setHeader(KSI_PublicationsFile *t, KSI_PublicationsHeader *header);
+static int publicationsFile_setCertificates(KSI_PublicationsFile *t, KSI_LIST(KSI_CertificateRecord) *certificates);
+static int publicationsFile_setPublications(KSI_PublicationsFile *t, KSI_LIST(KSI_PublicationRecord) *publications);
+static int publicationsFile_setSignature(KSI_PublicationsFile *t, KSI_PKISignature *signature);
+static int publicationsFile_setSignatureOffset(KSI_PublicationsFile *t, int signatureOffset);
+static int publicationsFile_decodePKISignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_PublicationsFile *trust, KSI_TlvTemplate *template);
+static int publicationsFile_decodePKICertificateList(KSI_CTX *ctx, KSI_TLV *tlv, KSI_PublicationsFile *trust, KSI_TlvTemplate *template);
 
-KSI_DEFINE_TLV_TEMPLATE(KSI_KSITrustProvider)
-	KSI_TLV_COMPOSITE(0x0701, 0, 0, KSI_KSITrustProvider_getHeader, KSI_KSITrustProvider_setHeader, KSI_PublicationsHeader)
-	KSI_TLV_CALLBACK(0x0702, 0, 0, KSI_KSITrustProvider_getCertificates, KSI_KSITrustProvider_setCertificates, NULL, KSI_KSITrustProvider_decodePKICertificateList)
-	KSI_TLV_COMPOSITE_LIST(0x0703, 0, 0, KSI_KSITrustProvider_getPublications, KSI_KSITrustProvider_setPublications, KSI_PublicationRecord)
-	KSI_TLV_CALLBACK(0x0704, 0, 0, KSI_KSITrustProvider_getSignature, KSI_KSITrustProvider_setSignature, NULL, KSI_KSITrustProvider_decodePKISignature)
-	KSI_TLV_SEEK_POS(0x0704, KSI_KSITrustProvider_setSignatureOffset)
+KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationsFile)
+	KSI_TLV_COMPOSITE(0x0701, 0, 0, KSI_PublicationsFile_getHeader, publicationsFile_setHeader, KSI_PublicationsHeader)
+	KSI_TLV_CALLBACK(0x0702, 0, 0, KSI_PublicationsFile_getCertificates, publicationsFile_setCertificates, NULL, publicationsFile_decodePKICertificateList)
+	KSI_TLV_COMPOSITE_LIST(0x0703, 0, 0, KSI_PublicationsFile_getPublications, publicationsFile_setPublications, KSI_PublicationRecord)
+	KSI_TLV_CALLBACK(0x0704, 0, 0, NULL, NULL, NULL, publicationsFile_decodePKISignature)
+	KSI_TLV_SEEK_POS(0x0704, publicationsFile_setSignatureOffset)
 KSI_END_TLV_TEMPLATE
 
 struct generator_st {
@@ -44,7 +43,7 @@ struct generator_st {
 	KSI_TLV *tlv;
 };
 
-static int KSI_KSITrustProvider_decodePKICertificateList(KSI_CTX *ctx, KSI_TLV *tlv, KSI_KSITrustProvider *trust, KSI_TlvTemplate *template) {
+static int publicationsFile_decodePKICertificateList(KSI_CTX *ctx, KSI_TLV *tlv, KSI_PublicationsFile *trust, KSI_TlvTemplate *template) {
 	KSI_ERR err;
 	int res;
 	KSI_CertificateRecord *certRec = NULL;
@@ -66,7 +65,7 @@ static int KSI_KSITrustProvider_decodePKICertificateList(KSI_CTX *ctx, KSI_TLV *
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Get the list. */
-	res = KSI_KSITrustProvider_getCertificates(trust, &listp);
+	res = KSI_PublicationsFile_getCertificates(trust, &listp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	if (listp == NULL) {
@@ -84,7 +83,7 @@ static int KSI_KSITrustProvider_decodePKICertificateList(KSI_CTX *ctx, KSI_TLV *
 
 	/* If the list was just created, add it to the structure. */
 	if (list != NULL) {
-		res = KSI_KSITrustProvider_setCertificates(trust, listp);
+		res = publicationsFile_setCertificates(trust, listp);
 		KSI_CATCH(&err, res) goto cleanup;
 
 		list = NULL;
@@ -100,7 +99,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int KSI_KSITrustProvider_decodePKISignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_KSITrustProvider *trust, KSI_TlvTemplate *template) {
+static int publicationsFile_decodePKISignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_PublicationsFile *trust, KSI_TlvTemplate *template) {
 	KSI_ERR err;
 	int res;
 	KSI_PKISignature *signature = NULL;
@@ -156,7 +155,7 @@ cleanup:
 	return res;
 }
 
-static int KSI_KSITrustProvider_setSignatureOffset(KSI_KSITrustProvider *t, int signatureOffset) {
+static int publicationsFile_setSignatureOffset(KSI_PublicationsFile *t, int signatureOffset) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -168,7 +167,7 @@ cleanup:
 	 return res;
 }
 
-static int KSI_KSITrustProvider_setHeader(KSI_KSITrustProvider *t, KSI_PublicationsHeader *header) {
+static int publicationsFile_setHeader(KSI_PublicationsFile *t, KSI_PublicationsHeader *header) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -180,7 +179,7 @@ cleanup:
 	 return res;
 }
 
-static int KSI_KSITrustProvider_setCertificates(KSI_KSITrustProvider *t, KSI_LIST(KSI_CertificateRecord) *certificates) {
+static int publicationsFile_setCertificates(KSI_PublicationsFile *t, KSI_LIST(KSI_CertificateRecord) *certificates) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -192,7 +191,7 @@ cleanup:
 	 return res;
 }
 
-static int KSI_KSITrustProvider_setPublications(KSI_KSITrustProvider *t, KSI_LIST(KSI_PublicationRecord) *publications) {
+static int publicationsFile_setPublications(KSI_PublicationsFile *t, KSI_LIST(KSI_PublicationRecord) *publications) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -204,7 +203,7 @@ cleanup:
 	 return res;
 }
 
-static int KSI_KSITrustProvider_setSignature(KSI_KSITrustProvider *t, KSI_OctetString *signature) {
+static int publicationsFile_setSignature(KSI_PublicationsFile *t, KSI_PKISignature *signature) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -216,10 +215,10 @@ cleanup:
 	 return res;
 }
 
-static int KSI_KSITrustProvider_new(KSI_CTX *ctx, KSI_KSITrustProvider **t) {
+int KSI_PublicationsFile_new(KSI_CTX *ctx, KSI_PublicationsFile **t) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_KSITrustProvider *tmp = NULL;
-	tmp = KSI_new(KSI_KSITrustProvider);
+	KSI_PublicationsFile *tmp = NULL;
+	tmp = KSI_new(KSI_PublicationsFile);
 	if(tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
@@ -236,21 +235,18 @@ static int KSI_KSITrustProvider_new(KSI_CTX *ctx, KSI_KSITrustProvider **t) {
 	tmp = NULL;
 	res = KSI_OK;
 cleanup:
-	KSI_KSITrustProvider_free(tmp);
+	KSI_PublicationsFile_free(tmp);
 	return res;
 }
 
-
-static int extractData(KSI_CTX *ctx, void *raw, int raw_len, KSI_KSITrustProvider **ksiTrustProvider) {
+int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, int raw_len, KSI_PublicationsFile **ksiTrustProvider) {
 	KSI_ERR err;
 	int res;
 	unsigned char hdr[8];
 	int hdr_len = 0;
-	KSI_KSITrustProvider *tmp = NULL;
+	KSI_PublicationsFile *tmp = NULL;
 	KSI_RDR *reader = NULL;
 	struct generator_st gen;
-	unsigned char *der = NULL;
-	int der_len = 0;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, raw != NULL) goto cleanup;
@@ -258,7 +254,7 @@ static int extractData(KSI_CTX *ctx, void *raw, int raw_len, KSI_KSITrustProvide
 	KSI_PRE(&err, ksiTrustProvider != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	res = KSI_RDR_fromSharedMem(ctx, raw, raw_len, &reader);
+	res = KSI_RDR_fromSharedMem(ctx, (unsigned char *)raw, raw_len, &reader);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Read file header. */
@@ -271,7 +267,7 @@ static int extractData(KSI_CTX *ctx, void *raw, int raw_len, KSI_KSITrustProvide
 	}
 
 	/* Header verification ok - create the store object. */
-	res = KSI_KSITrustProvider_new(ctx, &tmp);
+	res = KSI_PublicationsFile_new(ctx, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Initialize generator. */
@@ -279,7 +275,7 @@ static int extractData(KSI_CTX *ctx, void *raw, int raw_len, KSI_KSITrustProvide
 	gen.tlv = NULL;
 
 	/* Read the payload of the file, and make no assumptions with the ordering. */
-	res = KSI_TlvTemplate_extractGenerator(ctx, tmp, (void *)&gen, KSI_TLV_TEMPLATE(KSI_KSITrustProvider), NULL, (int (*)(void *, KSI_TLV **))generateNextTlv);
+	res = KSI_TlvTemplate_extractGenerator(ctx, tmp, (void *)&gen, KSI_TLV_TEMPLATE(KSI_PublicationsFile), NULL, (int (*)(void *, KSI_TLV **))generateNextTlv);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_PKITruststore_validateSignature(ctx, raw, tmp->signatureOffset, tmp->signature);
@@ -296,17 +292,17 @@ cleanup:
 	KSI_nofree(der);
 
 	KSI_TLV_free(gen.tlv);
-	KSI_KSITrustProvider_free(tmp);
+	KSI_PublicationsFile_free(tmp);
 	KSI_RDR_close(reader);
 
 	return KSI_RETURN(&err);
 }
 
-int KSI_KSITrustProvider_fromFile(KSI_CTX *ctx, const char *fileName, KSI_KSITrustProvider **store) {
+int KSI_PublicationsFile_fromFile(KSI_CTX *ctx, const char *fileName, KSI_PublicationsFile **store) {
 	KSI_ERR err;
 	int res;
 	KSI_RDR *reader = NULL;
-	KSI_KSITrustProvider *tmp = NULL;
+	KSI_PublicationsFile *tmp = NULL;
 	unsigned char *raw = NULL;
 	int raw_len = 0;
 	long raw_size = 0;
@@ -358,7 +354,7 @@ int KSI_KSITrustProvider_fromFile(KSI_CTX *ctx, const char *fileName, KSI_KSITru
 		goto cleanup;
 	}
 
-	res = extractData(ctx, raw, raw_len, &tmp);
+	res = KSI_PublicationsFile_parse(ctx, raw, raw_len, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 	tmp->raw = raw;
 	tmp->raw_len = raw_len;
@@ -374,15 +370,12 @@ cleanup:
 	if (f != NULL) fclose(f);
 	KSI_free(raw);
 	KSI_RDR_close(reader);
-	KSI_KSITrustProvider_free(tmp);
+	KSI_PublicationsFile_free(tmp);
 
 	return KSI_RETURN(&err);
 }
 
-/**
- * KSI_KSITrustProvider
- */
-void KSI_KSITrustProvider_free(KSI_KSITrustProvider *t) {
+void KSI_PublicationsFile_free(KSI_PublicationsFile *t) {
 	if(t != NULL) {
 		KSI_PublicationsHeader_free(t->header);
 		KSI_CertificateRecordList_free(t->certificates);
@@ -393,7 +386,7 @@ void KSI_KSITrustProvider_free(KSI_KSITrustProvider *t) {
 	}
 }
 
-int KSI_KSITrustProvider_getHeader(const KSI_KSITrustProvider *t, KSI_PublicationsHeader **header) {
+int KSI_PublicationsFile_getHeader(const KSI_PublicationsFile *t, KSI_PublicationsHeader **header) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL || header == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -405,7 +398,7 @@ cleanup:
 	 return res;
 }
 
-int KSI_KSITrustProvider_getCertificates(const KSI_KSITrustProvider *t, KSI_LIST(KSI_CertificateRecord) **certificates) {
+int KSI_PublicationsFile_getCertificates(const KSI_PublicationsFile *t, KSI_LIST(KSI_CertificateRecord) **certificates) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL || certificates == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -417,7 +410,7 @@ cleanup:
 	 return res;
 }
 
-int KSI_KSITrustProvider_getPublications(const KSI_KSITrustProvider *t, KSI_LIST(KSI_PublicationRecord) **publications) {
+int KSI_PublicationsFile_getPublications(const KSI_PublicationsFile *t, KSI_LIST(KSI_PublicationRecord) **publications) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL || publications == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -429,7 +422,7 @@ cleanup:
 	 return res;
 }
 
-int KSI_KSITrustProvider_getPKICertificateById(const KSI_KSITrustProvider *trust, const KSI_OctetString *id, KSI_PKICertificate **cert) {
+int KSI_PublicationsFile_getPKICertificateById(const KSI_PublicationsFile *trust, const KSI_OctetString *id, KSI_PKICertificate **cert) {
 	KSI_ERR err;
 	int res;
 	int i;
@@ -440,7 +433,8 @@ int KSI_KSITrustProvider_getPKICertificateById(const KSI_KSITrustProvider *trust
 	KSI_PRE(&err, cert != NULL) goto cleanup;
 
 	for (i = 0; i < KSI_CertificateRecordList_length(trust->certificates); i++) {
-		const KSI_OctetString *cId = NULL;
+		KSI_OctetString *cId = NULL;
+
 		res = KSI_CertificateRecordList_elementAt(trust->certificates, i, &certRec);
 		KSI_CATCH(&err, res) goto cleanup;
 
@@ -464,7 +458,153 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_KSITrustProvider_getSignature(const KSI_KSITrustProvider *t, KSI_OctetString **signature) {
+int KSI_PublicationsFile_getPublicationDataByTime(const KSI_PublicationsFile *trust, const KSI_Integer *pubTime, KSI_PublicationData **pubData) {
+	KSI_ERR err;
+	int res;
+	int i;
+	KSI_PublicationData *result = NULL;
+
+	KSI_PRE(&err, trust != NULL) goto cleanup;
+	KSI_PRE(&err, pubTime != NULL) goto cleanup;
+	KSI_PRE(&err, pubData != NULL) goto cleanup;
+	KSI_BEGIN(trust->ctx, &err);
+
+	for (i = 0; i < KSI_PublicationRecordList_length(trust->publications); i++) {
+		KSI_PublicationRecord *pr = NULL;
+		KSI_PublicationData *pd = NULL;
+		KSI_Integer *tm = NULL;
+
+		res = KSI_PublicationRecordList_elementAt(trust->publications, i, &pr);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		res = KSI_PublicationRecord_getPublishedData(pr, &pd);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		res = KSI_PublicationData_getTime(pd, &tm);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		if (KSI_Integer_equals(pubTime, tm)) {
+			result = pd;
+			break;
+		}
+
+		KSI_nofree(tm);
+		KSI_nofree(pd);
+	}
+
+	*pubData = result;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(result);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_PublicationsFile_getNearestPublication(const KSI_PublicationsFile *trust, const KSI_Integer *pubTime, KSI_PublicationRecord **pubRec) {
+	KSI_ERR err;
+	int res;
+	int i;
+	KSI_PublicationRecord *result = NULL;
+	KSI_Integer *result_tm = NULL;
+
+	KSI_PRE(&err, trust != NULL) goto cleanup;
+	KSI_PRE(&err, pubTime != NULL) goto cleanup;
+	KSI_PRE(&err, pubRec != NULL) goto cleanup;
+	KSI_BEGIN(trust->ctx, &err);
+
+	for (i = 0; i < KSI_PublicationRecordList_length(trust->publications); i++) {
+		KSI_PublicationRecord *pr = NULL;
+		KSI_PublicationData *pd = NULL;
+		KSI_Integer *tm = NULL;
+
+		res = KSI_PublicationRecordList_elementAt(trust->publications, i, &pr);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		res = KSI_PublicationRecord_getPublishedData(pr, &pd);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		res = KSI_PublicationData_getTime(pd, &tm);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		/* Check, if current publication time is after given time. */
+		if (KSI_Integer_compare(pubTime, tm) < 0) {
+			if (result_tm == NULL || KSI_Integer_compare(result_tm, tm) < 0) {
+				result = pr;
+				result_tm = tm;
+			}
+		}
+
+		KSI_nofree(tm);
+		KSI_nofree(pd);
+	}
+
+	*pubRec = result;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(result);
+	KSI_nofree(result_tm);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_PublicationsFile_getLatestPublication(const KSI_PublicationsFile *trust, const KSI_Integer *pubTime, KSI_PublicationData **pubData) {
+	KSI_ERR err;
+	int res;
+	int i;
+	KSI_PublicationData *result = NULL;
+	KSI_Integer *result_tm = NULL;
+
+	KSI_PRE(&err, trust != NULL) goto cleanup;
+	KSI_PRE(&err, pubTime != NULL) goto cleanup;
+	KSI_PRE(&err, pubData != NULL) goto cleanup;
+
+	for (i = 0; i < KSI_PublicationRecordList_length(trust->publications); i++) {
+		KSI_PublicationRecord *pr = NULL;
+		KSI_PublicationData *pd = NULL;
+		KSI_Integer *tm = NULL;
+
+		res = KSI_PublicationRecordList_elementAt(trust->publications, i, &pr);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		res = KSI_PublicationRecord_getPublishedData(pr, &pd);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		res = KSI_PublicationData_getTime(pd, &tm);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		/* Check, if current publication time is after given time. If
+		 * pubTime is NULL, the latest available publication is returned. */
+		if (pubTime == NULL || KSI_Integer_compare(pubTime, tm) < 0) {
+			/* Check if the current publication time is after the last found time. */
+			if (result_tm == NULL || KSI_Integer_compare(result_tm, tm) > 0) {
+				result = pd;
+				result_tm = tm;
+			}
+		}
+
+		KSI_nofree(tm);
+		KSI_nofree(pd);
+	}
+
+	*pubData = result;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(result);
+	KSI_nofree(result_tm);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_PublicationsFile_getSignature(const KSI_PublicationsFile *t, KSI_PKISignature **signature) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL || signature == NULL) {
 		res = KSI_INVALID_ARGUMENT;

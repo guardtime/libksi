@@ -89,7 +89,7 @@ extern "C" {
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_parseBlob(KSI_CTX *ctx, unsigned char *data, size_t data_length, KSI_TLV **tlv);
+	int KSI_TLV_parseBlob(KSI_CTX *ctx, const unsigned char *data, size_t data_length, KSI_TLV **tlv);
 
 	/**
 	 * This function extracts the binary data from the TLV.
@@ -155,6 +155,17 @@ extern "C" {
 	int KSI_TLV_getNextNestedTLV(KSI_TLV *tlv, KSI_TLV **nested);
 	int KSI_TLV_iterNested(KSI_TLV *tlv);
 
+	/**
+	 * This function returns the list of nested elements of the TLV. The list is
+	 * ordered and will be serialized in this order. The list may not be freed
+	 * by the caller.
+	 *
+	 * \param[in]	tlv		The composite TLV object.
+	 * \param[out]	list	Pointer to the receiving list pointer.
+	 *
+	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+	 */
+	int KSI_TLV_getNestedList(KSI_TLV *tlv, KSI_LIST(KSI_TLV) **list);
 	/**
 	 * Destructor for a TLV object.
 	 * \param[in]	tlv 	TLV to be freed.

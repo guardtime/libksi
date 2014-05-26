@@ -6,11 +6,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	int KSI_KSITrustProvider_fromFile(KSI_CTX *ctx, const char *fileName, KSI_KSITrustProvider **store);
-	int KSI_KSITrustProvider_getHeader(const KSI_KSITrustProvider *t, KSI_PublicationsHeader **header);
-	int KSI_KSITrustProvider_getCertificates(const KSI_KSITrustProvider *t, KSI_LIST(KSI_CertificateRecord) **certificates);
-	int KSI_KSITrustProvider_getPublications(const KSI_KSITrustProvider *t, KSI_LIST(KSI_PublicationRecord) **publications);
-	int KSI_KSITrustProvider_getSignature(const KSI_KSITrustProvider *t, KSI_OctetString **signature);
+	int KSI_PublicationsFile_fromFile(KSI_CTX *ctx, const char *fileName, KSI_PublicationsFile **store);
+	int KSI_PublicationsFile_getHeader(const KSI_PublicationsFile *t, KSI_PublicationsHeader **header);
+	int KSI_PublicationsFile_getCertificates(const KSI_PublicationsFile *t, KSI_LIST(KSI_CertificateRecord) **certificates);
+	int KSI_PublicationsFile_getPublications(const KSI_PublicationsFile *t, KSI_LIST(KSI_PublicationRecord) **publications);
+	int KSI_PublicationsFile_getSignature(const KSI_PublicationsFile *t, KSI_PKISignature **signature);
 
 #ifdef __cplusplus
 }

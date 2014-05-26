@@ -6,6 +6,7 @@
 
 #define KSI_ERR_STACK_LEN 16
 
+KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationRecord)
 
 const char *KSI_getErrorString(int statusCode) {
 	switch (statusCode) {
@@ -43,6 +44,10 @@ const char *KSI_getErrorString(int statusCode) {
 			return "Failure from extender.";
 		case KSI_EXTEND_WRONG_CAL_CHAIN:
 			return "The given calendar chain is not a continuation of the signature calendar chain.";
+		case KSI_EXTEND_NO_SUITABLE_PUBLICATION:
+			return "There is no suitable publication yet.";
+		case KSI_VERIFY_PUBLICATION_NOT_FOUND:
+			return "Unknown publication";
 		case KSI_CRYPTO_FAILURE:
 			return "Cryptographic failure";
 		case KSI_PKI_CERTIFICATE_NOT_TRUSTED:
@@ -75,6 +80,9 @@ int KSI_CTX_new(KSI_CTX **context) {
 		goto cleanup;
 	}
 	ctx->errors_count = 0;
+	ctx->publicationsFile = NULL;
+	ctx->pkiTruststore = NULL;
+	ctx->netProvider = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 	KSI_LOG_init(ctx, NULL, KSI_LOG_DEBUG);
@@ -84,9 +92,9 @@ int KSI_CTX_new(KSI_CTX **context) {
 	if (res != KSI_OK) goto cleanup;
 
 	/* Configure curl net provider */
-	if ((res = KSI_CurlNetProvider_setSignerUrl(netProvider, "192.168.1.36:3333" /*"http://192.168.1.36:3333/signer"*/)) != KSI_OK) goto cleanup;
+	if ((res = KSI_CurlNetProvider_setSignerUrl(netProvider,"192.168.1.29:1234"/* "192.168.1.36:3333"*/)) != KSI_OK) goto cleanup;
 	if ((res = KSI_CurlNetProvider_setExtenderUrl(netProvider, "192.168.1.36:8010/gt-extendingservice")) != KSI_OK) goto cleanup;
-	if ((res = KSI_CurlNetProvider_setPublicationUrl(netProvider, "TODO")) != KSI_OK) goto cleanup;
+	if ((res = KSI_CurlNetProvider_setPublicationUrl(netProvider, "file:///root/dev/ksi-c-api/test/resource/tlv/publications-4.tlv")) != KSI_OK) goto cleanup;
 	if ((res = KSI_CurlNetProvider_setConnectTimeoutSeconds(netProvider, 5)) != KSI_OK) goto cleanup;
 	if ((res = KSI_CurlNetProvider_setReadTimeoutSeconds(netProvider, 5)) != KSI_OK) goto cleanup;
 
@@ -94,6 +102,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	if (res != KSI_OK) goto cleanup;
 	netProvider = NULL;
 
+	/* Create and set the PKI truststore */
 	res = KSI_PKITruststore_new(ctx, 1, &pkiTruststore);
 	if (res != KSI_OK) goto cleanup;
 
@@ -101,6 +110,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	if (res != KSI_OK) goto cleanup;
 	pkiTruststore = NULL;
 
+	/* Return the context. */
 	*context = ctx;
 	ctx = NULL;
 
@@ -129,6 +139,7 @@ void KSI_CTX_free(KSI_CTX *context) {
 		KSI_NetProvider_free(context->netProvider);
 		KSI_PKITruststore_free(context->pkiTruststore);
 
+		KSI_PublicationsFile_free(context->publicationsFile);
 
 		KSI_free(context);
 	}
@@ -158,7 +169,6 @@ cleanup:
  */
 void KSI_global_cleanup(void) {
 	KSI_CurlNetProvider_global_cleanup();
-// TODO	KSI_PKITruststore_global_cleanup()
 }
 
 int KSI_sendSignRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle) {
@@ -232,7 +242,7 @@ static int setValue(KSI_CTX *ctx, const char *variableName, void **target, void 
 	KSI_PRE(&err, target != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	KSI_LOG_debug(ctx, "Setting variable %s to point to 0x%x", variableName, (unsigned int)value);
+	KSI_LOG_debug(ctx, "Setting variable %s to point to 0x%xll", variableName, (unsigned long long)value);
 
 	if (valueFree != NULL && *target != NULL) {
 		valueFree(*target);
@@ -255,9 +265,9 @@ static int getValue(KSI_CTX *ctx, const char *variableName, int offset, void **v
 	KSI_PRE(&err, value != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	KSI_LOG_debug(ctx, "KSI_CTX_set%s(ctx, 0x%x)", variableName, (unsigned int)value);
+	KSI_LOG_debug(ctx, "KSI_CTX_set%s(ctx, 0x%llx) -> %d", variableName, (unsigned long long)value, offset);
 
-	*value = *(((unsigned char *)ctx) + offset);
+	*value = ((unsigned char *)ctx) + offset;
 
 	KSI_SUCCESS(&err);
 
@@ -366,17 +376,15 @@ int KSI_publishedDataToBase32(const KSI_PublicationData *published_data, char **
 	const unsigned char *imprint = NULL;
 	int imprint_len = 0;
 	int res;
-	KSI_uint64_t publication_identifier;
+	KSI_uint64_t publication_identifier = 0;
 	unsigned char *binary_publication = NULL;
 	size_t binary_publication_length;
 	int i;
-	KSI_uint64_t tmp_uint64;
 	unsigned long tmp_ulong;
-	char *s;
 	char *tmp_publication = NULL;
 
 	KSI_PRE(&err, published_data != NULL) goto cleanup;
-	ctx = KSI_PublicationData_getCtx(published_data);
+	ctx = KSI_PublicationData_getCtx((KSI_PublicationData *)published_data);
 
 	KSI_BEGIN(ctx, &err);
 
@@ -419,12 +427,146 @@ int KSI_publishedDataToBase32(const KSI_PublicationData *published_data, char **
 	KSI_SUCCESS(&err);
 
 cleanup:
+
 	KSI_free(binary_publication);
 	KSI_free(tmp_publication);
 
 	return KSI_RETURN(&err);
 }
 
+int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle) {
+	KSI_ERR err;
+	KSI_NetHandle *hndl = NULL;
+	int res;
+	KSI_NetProvider *netProvider = NULL;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+
+	KSI_BEGIN(ctx, &err);
+
+	netProvider = ctx->netProvider;
+
+	res = KSI_NetHandle_new(ctx, request, request_length, &hndl);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_NetProvider_sendPublicationsFileRequest(netProvider, hndl);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*handle = hndl;
+	hndl = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_NetHandle_free(hndl);
+
+	return KSI_RETURN(&err);
+
+}
+
+int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
+	KSI_ERR err;
+	int res;
+	KSI_NetHandle *handle = NULL;
+	const unsigned char *raw = NULL;
+	int raw_len = 0;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, pubFile != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	/* TODO! Implement mechanism for reloading (e.g cache timeout) */
+	if (ctx->publicationsFile == NULL) {
+		res = KSI_sendPublicationRequest(ctx, NULL, 0, &handle);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		res = KSI_NetHandle_receive(handle);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		res = KSI_NetHandle_getResponse(handle, &raw, &raw_len);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		res = KSI_PublicationsFile_parse(ctx, raw, raw_len, &ctx->publicationsFile);
+		KSI_CATCH(&err, res) goto cleanup;
+	}
+
+	*pubFile = ctx->publicationsFile;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_NetHandle_free(handle);
+
+	return KSI_RETURN(&err);
+
+}
+
+int KSI_createSignature(KSI_CTX *ctx, const KSI_DataHash *dataHash, KSI_Signature **sig) {
+	KSI_ERR err;
+	int res;
+	KSI_Signature *tmp = NULL;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, dataHash != NULL) goto cleanup;
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_Signature_sign(ctx, dataHash, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*sig = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_Signature_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extended) {
+	KSI_ERR err;
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_Integer *signingTime = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
+	KSI_Signature *extSig = NULL;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_receivePublicationsFile(ctx, &pubFile);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_Signature_getSigningTime(sig, &signingTime);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_PublicationsFile_getNearestPublication(pubFile, signingTime, &pubRec);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	if (pubRec == NULL) {
+		KSI_FAIL(&err, KSI_EXTEND_NO_SUITABLE_PUBLICATION, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_Signature_extend(sig, pubRec, &extSig);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*extended = extSig;
+	extSig = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_Signature_free(extSig);
+	return KSI_RETURN(&err);
+}
 
 #define CTX_VALUEP_SETTER(var, nam, typ, fre)										\
 int KSI_CTX_set##nam(KSI_CTX *ctx, typ *val) { 										\

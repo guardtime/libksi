@@ -3,6 +3,7 @@
 int main(int argc, char **argv) {
 	KSI_CTX *ctx;
 	int res;
+	KSI_PKITruststore *pki = NULL;
 
 	FILE *f = NULL;
 
@@ -34,10 +35,20 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	res = KSI_Signature_extend(sign, NULL, &ext);
+	res = KSI_CTX_getPKITruststore(ctx, &pki);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to get PKI trustprovider from KSI context.");
+		goto cleanup;
+	}
+	res = KSI_PKITruststore_addLookupFile(ctx->pkiTruststore, "test/resource/tlv/server-3.crt");
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to add certificate to PKI.");
+		goto cleanup;
+	}
+
+	res = KSI_extendSignature(ctx, sign, &ext);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to extend %d.\n", res);
-		KSI_ERR_statusDump(ctx, stderr);
 		goto cleanup;
 	}
 
@@ -50,6 +61,10 @@ int main(int argc, char **argv) {
 	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Serialized", serialized, serialized_len);
 
 cleanup:
+	if (res != KSI_OK) {
+		fprintf(stderr, "res = %s\n", KSI_getErrorString(res));
+		KSI_ERR_statusDump(ctx, stderr);
+	}
 
 	if (f != NULL) fclose(f);
 

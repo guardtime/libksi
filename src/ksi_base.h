@@ -68,6 +68,9 @@ enum KSI_StatusCode {
 	KSI_AGGREGATOR_ERROR,
 	KSI_EXTENDER_ERROR,
 	KSI_EXTEND_WRONG_CAL_CHAIN,
+	KSI_EXTEND_NO_SUITABLE_PUBLICATION,
+	KSI_VERIFY_PUBLICATION_NOT_FOUND,
+	KSI_VERIFY_PUBLICATION_MISMATCH,
 	/**
 	 * Cryptographic operation could not be performed. Likely causes are
 	 * unsupported cryptographic algorithms, invalid keys and lack of
@@ -155,9 +158,6 @@ enum KSI_HashAlgorithm {
 
 	/* Number of known hash algorithms. */
 	KSI_NUMBER_OF_KNOWN_HASHALGS,
-
-	/** Use default algorithm. */
-	KSI_HASHALG_DEFAULT = -1
 };
 
 int KSI_global_init(void);
@@ -170,7 +170,6 @@ void *KSI_malloc(size_t size);
 void *KSI_calloc(size_t num, size_t size);
 void *KSI_realloc(void *ptr, size_t size);
 void KSI_free(void *ptr);
-
 
 /**
  *
@@ -189,7 +188,9 @@ int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, int r
 
 int KSI_base32ToPublishedData(KSI_CTX *ctx,	const char *publication, int publication_length, KSI_PublicationData **published_data);
 
-
+int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile);
+int KSI_createSignature(KSI_CTX *ctx, const KSI_DataHash *dataHash, KSI_Signature **sig);
+int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extended);
 /**********
  * UTIL's
  **********/

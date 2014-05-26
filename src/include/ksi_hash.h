@@ -197,11 +197,6 @@ extern "C" {
 	/**
 	 *
 	 */
-	const char *KSI_getHashAlgorithmName(int hash_algorithm);
-
-	/**
-	 *
-	 */
 	int KSI_getHashAlgorithmByName(const char *name);
 
 	/**
@@ -248,7 +243,7 @@ extern "C" {
 	 *
 	 * \return Name of the algorithm or NULL on error.
 	 */
-	const char *KSI_getHashAlgorithmName(int hash_algorithm);
+	const char *KSI_getHashAlgorithmName(int hash_id);
 
 	/**
 	 * Returns the hash algorithm id for the given name.

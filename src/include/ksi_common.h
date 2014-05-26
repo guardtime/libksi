@@ -35,9 +35,9 @@ typedef struct KSI_List_st KSI_List;
 typedef struct KSI_PKITruststore_st KSI_PKITruststore;
 
 typedef struct KSI_OctetString_st KSI_OctetString;
-typedef char KSI_Utf8String;
+typedef struct KSI_Utf8String_st KSI_Utf8String;
 
-typedef struct KSI_KSITrustProvider_st KSI_KSITrustProvider;
+typedef struct KSI_PublicationsFile_st KSI_PublicationsFile;
 
 typedef struct KSI_PKICertificate_st KSI_PKICertificate;
 typedef struct KSI_PKISignature_st KSI_PKISignature;
@@ -81,9 +81,10 @@ int KSI_Integer_getSize(const KSI_Integer *kint, int *size);
 KSI_uint64_t KSI_Integer_getUInt64(const KSI_Integer *kint);
 int KSI_Integer_new(KSI_CTX *ctx, KSI_uint64_t value, KSI_Integer **kint);
 int KSI_Integer_equals(const KSI_Integer *a, const KSI_Integer *b);
+int KSI_Integer_compare(const KSI_Integer *a, const KSI_Integer *b);
 int KSI_Integer_equalsUInt(const KSI_Integer *o, KSI_uint64_t i);
 KSI_Integer *KSI_Integer_clone(const KSI_Integer *val);
-int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_OctetString **integer);
+int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_Integer **integer);
 int KSI_Integer_toTlv(KSI_Integer *i, int tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 
@@ -97,7 +98,9 @@ int KSI_OctetString_toTlv(KSI_OctetString *oct, int tag, int isNonCritical, int 
 
 void KSI_Utf8String_free(KSI_Utf8String *t);
 int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, KSI_Utf8String **t);
-
+char *KSI_Utf8String_cstr(KSI_Utf8String *t);
+int KSI_Utf8String_fromTlv(KSI_TLV *tlv, KSI_Utf8String **u8str);
+int KSI_Utf8String_toTlv(KSI_Utf8String *u8str, int tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 #ifdef __cplusplus
 }

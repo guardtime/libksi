@@ -29,7 +29,6 @@ apiSources = \
 		../src/ksi_tlv.c \
 		../src/ksi_signature.c \
 		../src/ksi_publicationsfile.c \
-		../src/ksi_request.c \
 		../src/ksi_tlv_easy.h \
 		../src/ksi_tlv_tags.h \
 		../src/ksi_tlv.h \

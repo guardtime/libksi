@@ -18,6 +18,7 @@ typedef struct KSI_RequestAck_st KSI_RequestAck;
 typedef struct KSI_AggregationResp_st KSI_AggregationResp;
 typedef struct KSI_ExtendReq_st KSI_ExtendReq;
 typedef struct KSI_ExtendResp_st KSI_ExtendResp;
+typedef struct KSI_PKISignedData_st KSI_PKISignedData;
 typedef struct KSI_PublicationsHeader_st KSI_PublicationsHeader;
 typedef struct KSI_CertificateRecord_st KSI_CertificateRecord;
 typedef struct KSI_PublicationData_st KSI_PublicationData;
@@ -35,6 +36,7 @@ KSI_DEFINE_LIST(KSI_RequestAck);
 KSI_DEFINE_LIST(KSI_AggregationResp);
 KSI_DEFINE_LIST(KSI_ExtendReq);
 KSI_DEFINE_LIST(KSI_ExtendResp);
+KSI_DEFINE_LIST(KSI_PKISignedData);
 KSI_DEFINE_LIST(KSI_PublicationsHeader);
 KSI_DEFINE_LIST(KSI_CertificateRecord);
 KSI_DEFINE_LIST(KSI_PublicationData);
@@ -219,6 +221,21 @@ int KSI_ExtendResp_setStatus(KSI_ExtendResp *t, KSI_Integer *status);
 int KSI_ExtendResp_setErrorMsg(KSI_ExtendResp *t, KSI_Utf8String *errorMsg);
 int KSI_ExtendResp_setLastTime(KSI_ExtendResp *t, KSI_Integer *lastTime);
 int KSI_ExtendResp_setCalendarHashChain(KSI_ExtendResp *t, KSI_CalendarHashChain *calendarHashChain);
+
+/**
+ * KSI_PKISignedData
+ */
+void KSI_PKISignedData_free(KSI_PKISignedData *t);
+int KSI_PKISignedData_new(KSI_CTX *ctx, KSI_PKISignedData **t);
+KSI_CTX *KSI_PKISignedData_getCtx(KSI_PKISignedData *t);
+int KSI_PKISignedData_getSignatureValue(const KSI_PKISignedData *t, KSI_OctetString **signatureValue);
+int KSI_PKISignedData_getCert(const KSI_PKISignedData *t, KSI_PKICertificate **cert);
+int KSI_PKISignedData_getCertId(const KSI_PKISignedData *t, KSI_OctetString **certId);
+int KSI_PKISignedData_getCertRepositoryUri(const KSI_PKISignedData *t, KSI_Utf8String **certRepositoryUri);
+int KSI_PKISignedData_setSignatureValue(KSI_PKISignedData *t, KSI_OctetString *signatureValue);
+int KSI_PKISignedData_setCert(KSI_PKISignedData *t, KSI_PKICertificate *cert);
+int KSI_PKISignedData_setCertId(KSI_PKISignedData *t, KSI_OctetString *certId);
+int KSI_PKISignedData_setCertRepositoryUri(KSI_PKISignedData *t, KSI_Utf8String *certRepositoryUri);
 
 /**
  * KSI_PublicationsHeader

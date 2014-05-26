@@ -23,6 +23,11 @@ void KSI_OctetString_free(KSI_OctetString *t) {
 	}
 }
 
+struct KSI_Utf8String_st {
+	KSI_CTX *ctx;
+	char *value;
+};
+
 int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, int data_len, KSI_OctetString **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_OctetString *tmp = NULL;
@@ -143,6 +148,7 @@ cleanup:
 
 void KSI_Utf8String_free(KSI_Utf8String *t) {
 	if (t != NULL) {
+		KSI_free(t->value);
 		KSI_free(t);
 	}
 }
@@ -150,14 +156,21 @@ void KSI_Utf8String_free(KSI_Utf8String *t) {
 int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, KSI_Utf8String **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Utf8String *tmp = NULL;
+	char *val = NULL;
 
-	tmp = KSI_calloc(strlen(str) + 1, 1);
+	tmp = KSI_new(KSI_Utf8String);
 	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
 
-	memcpy(tmp, str, strlen(str));
+	tmp->value = NULL;
+
+	val = KSI_calloc(strlen(str) + 1, 1);
+	memcpy(val, str, strlen(str));
+
+	tmp->value = val;
+	val = NULL;
 
 	*t = tmp;
 	tmp = NULL;
@@ -165,9 +178,80 @@ int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, KSI_Utf8String **t) {
 	res = KSI_OK;
 cleanup:
 
+	KSI_free(val);
 	KSI_Utf8String_free(tmp);
 	return res;
 }
+
+char *KSI_Utf8String_cstr(KSI_Utf8String *t) {
+	return t == NULL ? NULL : t->value;
+}
+
+int KSI_Utf8String_fromTlv(KSI_TLV *tlv, KSI_Utf8String **u8str) {
+	KSI_ERR err;
+	KSI_CTX *ctx = NULL;
+	int res;
+	const char *cstr = NULL;
+	KSI_Utf8String *tmp = NULL;
+
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_PRE(&err, u8str != NULL) goto cleanup;
+
+	ctx = KSI_TLV_getCtx(tlv);
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_STR);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_TLV_getStringValue(tlv, &cstr);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_Utf8String_new(ctx, cstr, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*u8str = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(ctx);
+	KSI_nofree(cstr);
+	KSI_Utf8String_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_Utf8String_toTlv(KSI_Utf8String *u8str, int tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+	KSI_ERR err;
+	int res;
+	KSI_TLV *tmp = NULL;
+
+	KSI_PRE(&err, u8str != NULL) goto cleanup;
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_BEGIN(u8str->ctx, &err);
+
+	res = KSI_TLV_new(u8str->ctx, KSI_TLV_PAYLOAD_STR, tag, isNonCritical, isForward, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_TLV_setStringValue(tmp, u8str->value);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*tlv = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(raw);
+	KSI_TLV_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
+
 
 void KSI_Integer_free(KSI_Integer *kint) {
 	if (kint != NULL) {
@@ -222,6 +306,13 @@ int KSI_Integer_equalsUInt(const KSI_Integer *o, KSI_uint64_t i) {
 	return o != NULL && o->value == i;
 }
 
+int KSI_Integer_compare(const KSI_Integer *a, const KSI_Integer *b) {
+	if (a == b) return 0;
+	if (a == NULL && b != NULL) return -1;
+	if (a != NULL && b == NULL) return 1;
+	return a->value - b->value;
+}
+
 int KSI_Integer_new(KSI_CTX *ctx, KSI_uint64_t value, KSI_Integer **kint) {
 	KSI_ERR err;
 	KSI_Integer *tmp = NULL;
@@ -250,7 +341,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_OctetString **integer) {
+int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_Integer **integer) {
 	KSI_ERR err;
 	KSI_CTX *ctx = NULL;
 	int res;

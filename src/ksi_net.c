@@ -47,8 +47,6 @@ int KSI_NetHandle_new(KSI_CTX *ctx, const unsigned char *request, int request_le
 	KSI_NetHandle *tmp = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, request != NULL) goto cleanup;
-	KSI_PRE(&err, request_length > 0) goto cleanup;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 
 	KSI_BEGIN(ctx, &err);
@@ -61,14 +59,18 @@ int KSI_NetHandle_new(KSI_CTX *ctx, const unsigned char *request, int request_le
 
 	tmp->ctx = ctx;
 	tmp->handleCtx = NULL;
-	tmp->request = KSI_calloc(request_length, 1);
-	if (tmp->request == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
+	tmp->request = NULL;
+	tmp->request_length = 0;
+	if (request != NULL && request_length > 0) {
+		tmp->request = KSI_calloc(request_length, 1);
+		if (tmp->request == NULL) {
+			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+			goto cleanup;
+		}
+		memcpy(tmp->request, request, request_length);
+		tmp->request_length = request_length;
 	}
-	memcpy(tmp->request, request, request_length);
 
-	tmp->request_length = request_length;
 	tmp->response = NULL;
 	tmp->response_length = 0;
 
@@ -111,6 +113,10 @@ int KSI_NetProvider_sendSignRequest(KSI_NetProvider *provider, KSI_NetHandle *ha
 
 	KSI_BEGIN(provider->ctx, &err);
 
+	if (provider->sendSignRequest == NULL) {
+		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Signed request sender not initialized.");
+		goto cleanup;
+	}
 	res = provider->sendSignRequest(provider, handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -130,7 +136,34 @@ int KSI_NetProvider_sendExtendRequest(KSI_NetProvider *provider, KSI_NetHandle *
 
 	KSI_BEGIN(provider->ctx, &err);
 
+	if (provider->sendExtendRequest == NULL) {
+		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Extend request sender not initialized.");
+		goto cleanup;
+	}
 	res = provider->sendExtendRequest(provider, handle);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_NetProvider_sendPublicationsFileRequest(KSI_NetProvider *provider, KSI_NetHandle *handle) {
+	KSI_ERR err;
+	int res;
+
+	KSI_PRE(&err, provider != NULL) goto cleanup;
+	KSI_PRE(&err, handle != NULL) goto cleanup;
+
+	KSI_BEGIN(provider->ctx, &err);
+
+	if (provider->sendPublicationRequest == NULL) {
+		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Publications file request sender not initialized.");
+		goto cleanup;
+	}
+	res = provider->sendPublicationRequest(provider, handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);

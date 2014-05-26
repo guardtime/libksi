@@ -123,6 +123,7 @@ static int curlSendRequest(KSI_NetHandle *handle, char *agent, char *url, int co
 	KSI_ERR err;
 	int res;
 	CURL *curl = NULL;
+	KSI_CTX *ctx = NULL;
 	const unsigned char *request = NULL;
 	int request_len = 0;
 
@@ -135,6 +136,9 @@ static int curlSendRequest(KSI_NetHandle *handle, char *agent, char *url, int co
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
+
+	ctx = KSI_NetHandle_getCtx(handle);
+	KSI_LOG_debug(ctx, "Sending request to: %s", url);
 
 	res = KSI_NetHandle_getRequest(handle, &request, &request_len);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -185,6 +189,11 @@ static int curlSendExtendRequest(KSI_NetProvider *netProvider, KSI_NetHandle *ha
 	return curlSendRequest(handle, "TODO", pctx->urlExtender, pctx->connectionTimeoutSeconds, pctx->readTimeoutSeconds);
 }
 
+static int curlSendPublicationsFileRequest(KSI_NetProvider *netProvider, KSI_NetHandle *handle) {
+	CurlNetProviderCtx *pctx = (CurlNetProviderCtx *) KSI_NetProvider_getNetContext(netProvider);
+	return curlSendRequest(handle, "TODO", pctx->urlPublication, pctx->connectionTimeoutSeconds, pctx->readTimeoutSeconds);
+}
+
 int KSI_CurlNetProvider_global_init(void) {
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -220,6 +229,9 @@ int KSI_CurlNetProvider_new(KSI_CTX *ctx, KSI_NetProvider **netProvider) {
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_NetProvider_setSendExtendRequestFn(pr, curlSendExtendRequest);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_NetProvider_setSendPublicationRequestFn(pr, curlSendPublicationsFileRequest);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = CurlNetProviderCtx_new(&pctx);

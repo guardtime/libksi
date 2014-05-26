@@ -129,7 +129,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_algorithm, KSI_DataHasher **hashe
 
 	tmp_hasher->hashContext = NULL;
 	tmp_hasher->ctx = ctx;
-	tmp_hasher->algorithm = KSI_fixHashAlgorithm(hash_algorithm);
+	tmp_hasher->algorithm = hash_algorithm;
 
 	res = KSI_DataHasher_reset(tmp_hasher);
 	if (res != KSI_OK) {
@@ -153,33 +153,20 @@ cleanup:
 /**
  *
  */
-int KSI_fixHashAlgorithm(int hash_id) {
-	if (hash_id == KSI_HASHALG_DEFAULT) {
-		return KSI_HASHALG_SHA2_256;
-	}
-	return hash_id;
-}
-
-/**
- *
- */
 int KSI_isTrusteddHashAlgorithm(int hash_id) {
-	int id = KSI_fixHashAlgorithm(hash_id);
-	if (KSI_isSupportedHashAlgorithm(id)) {
-		return KSI_hashAlgorithmInfo[id].trusted;
+	if (KSI_isSupportedHashAlgorithm(hash_id)) {
+		return KSI_hashAlgorithmInfo[hash_id].trusted;
 	}
 	return 0;
 }
 
 int KSI_isSupportedHashAlgorithm(int hash_id) {
-	int id = KSI_fixHashAlgorithm(hash_id);
-	return id > 0 && id < KSI_NUMBER_OF_KNOWN_HASHALGS;
+	return hash_id >= 0 && hash_id < KSI_NUMBER_OF_KNOWN_HASHALGS;
 }
 
 int KSI_getHashLength(int hash_id) {
-	int id = KSI_fixHashAlgorithm(hash_id);
-	if (KSI_isSupportedHashAlgorithm(id)) {
-		return (KSI_hashAlgorithmInfo[id].bitCount) >> 3;
+	if (KSI_isSupportedHashAlgorithm(hash_id)) {
+		return (KSI_hashAlgorithmInfo[hash_id].bitCount) >> 3;
 	}
 	return -1;
 }
@@ -359,10 +346,9 @@ cleanup:
 /**
  *
  */
-const char *KSI_getHashAlgorithmName(int hash_algorithm) {
-	int id = KSI_fixHashAlgorithm(hash_algorithm);
-	if (id >= 0 && id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
-		return KSI_hashAlgorithmInfo[id].name;
+const char *KSI_getHashAlgorithmName(int hash_id) {
+	if (hash_id >= 0 && hash_id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
+		return KSI_hashAlgorithmInfo[hash_id].name;
 	}
 	return NULL;
 }

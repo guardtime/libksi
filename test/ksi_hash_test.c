@@ -318,6 +318,23 @@ static void TestHashGetAlgByName(CuTest* tc) {
 
 }
 
+static void TestIncorrectHashLen(CuTest* tc) {
+	int res;
+	KSI_DataHash *hsh = NULL;
+	static unsigned char badImprit1[] = {0x01, 0x02, 0x03};
+	static unsigned char badImprint2[] = { 0x01, 0x01, 0xc4, 0xbb, 0xcb, 0x1f, 0xbe, 0xc9, 0x9d, 0x65, 0xbf, 0x59, 0xd8, 0x5c, 0x8c, 0xb6, 0x2e, 0xe2, 0xdb, 0x96, 0x3f, 0x0f, 0xe1, 0x06, 0xf4, 0x83, 0xd9, 0xaf, 0xa7, 0x3b, 0xd4, 0xe3, 0x9a, 0x8a};
+
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_DataHash_fromImprint(ctx, badImprit1, sizeof(badImprit1), &hsh);
+	CuAssert(tc, "Datahash accepts incorrectly short imprint value", res != KSI_OK && hsh == NULL);
+
+	res = KSI_DataHash_fromImprint(ctx, badImprint2, sizeof(badImprint2), &hsh);
+	CuAssert(tc, "Datahash accepts incorrectly long imprint value", res != KSI_OK && hsh == NULL);
+
+}
+
 CuSuite* KSI_Hash_GetSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -330,6 +347,7 @@ CuSuite* KSI_Hash_GetSuite(void) {
 	SUITE_ADD_TEST(suite, TestSHA256fromImprint);
 	SUITE_ADD_TEST(suite, TestParallelHashing);
 	SUITE_ADD_TEST(suite, TestHashGetAlgByName);
+	SUITE_ADD_TEST(suite, TestIncorrectHashLen);
 
 	return suite;
 }

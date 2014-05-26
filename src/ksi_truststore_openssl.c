@@ -1,3 +1,4 @@
+#include <string.h>
 #include <openssl/err.h>
 #include <openssl/asn1.h>
 #include <openssl/pkcs7.h>
@@ -7,7 +8,7 @@
 #include "ksi_internal.h"
 
 /* Hide the following line to deactivate. */
-//#define MAGIC_EMAIL "publications@guardtime.com"
+#define MAGIC_EMAIL "publications@guardtime.com"
 
 struct KSI_PKITruststore_st {
 	KSI_CTX *ctx;
@@ -27,7 +28,6 @@ struct KSI_PKISignature_st {
 struct KSI_PKISignatureValidator_st {
 	EVP_MD_CTX md_ctx;
 	const EVP_MD *evp_md;
-
 };
 
 
@@ -377,6 +377,54 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, int *raw_len) {
+	KSI_ERR err;
+	unsigned char *tmp_ossl = NULL;
+	unsigned char *tmp = NULL;
+	int len = 0;
+
+	KSI_PRE(&err, cert != NULL) goto cleanup;
+	KSI_PRE(&err, raw != NULL) goto cleanup;
+	KSI_PRE(&err, raw_len != NULL) goto cleanup;
+	KSI_BEGIN(cert->ctx, &err);
+
+	len = i2d_X509(cert->x509, NULL);
+	if (len < 0) {
+		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Unable to serialize certificate.");
+		goto cleanup;
+	}
+
+	tmp_ossl = OPENSSL_malloc(len);
+	if (tmp_ossl == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	tmp = tmp_ossl;
+	i2d_X509(cert->x509, &tmp);
+
+	tmp = KSI_calloc(len, 1);
+	if (tmp == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	memcpy(tmp, tmp_ossl, len);
+
+	*raw = tmp;
+	*raw_len = len;
+
+	tmp = NULL;
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_free(tmp);
+	if (tmp_ossl != NULL) OPENSSL_free(tmp_ossl);
+
+	return KSI_RETURN(&err);
+}
+
 static int extractCertificate(const KSI_PKISignature *signature, X509 **cert) {
 	int res = KSI_UNKNOWN_ERROR;
 	X509 *signing_cert = NULL;
@@ -445,7 +493,7 @@ int KSI_PKITruststore_validateSignatureCertificate(KSI_CTX *ctx, const KSI_PKISi
 		KSI_FAIL(&err, KSI_PKI_CERTIFICATE_NOT_TRUSTED, NULL);
 		goto cleanup;
 	}
-	if (!strcmp(tmp) != 0) {
+	if (strcmp(tmp, MAGIC_EMAIL)) {
 		KSI_FAIL(&err, KSI_PKI_CERTIFICATE_NOT_TRUSTED, "Wrong subject name.");
 		goto cleanup;
 	}
@@ -478,7 +526,8 @@ int KSI_PKITruststore_validateSignatureCertificate(KSI_CTX *ctx, const KSI_PKISi
 
 cleanup:
 
-	X509_STORE_CTX_free(storeCtx);
+	if (storeCtx != NULL) X509_STORE_CTX_free(storeCtx);
+	if (oid != NULL) ASN1_OBJECT_free(oid);
 
 	return KSI_RETURN(&err);
 }
@@ -522,7 +571,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_PKITruststore_validateSignatureWithCert(KSI_CTX *ctx, unsigned char *data, unsigned int data_len, const char *algoOid, unsigned char *signature, unsigned int signature_len, const KSI_PKICertificate *certificate) {
+int KSI_PKITruststore_validateSignatureWithCert(KSI_CTX *ctx, unsigned char *data, unsigned int data_len, const char *algoOid, const unsigned char *signature, unsigned int signature_len, const KSI_PKICertificate *certificate) {
 	KSI_ERR err;
 	int res;
 	ASN1_OBJECT* algorithm = NULL;
@@ -568,19 +617,17 @@ int KSI_PKITruststore_validateSignatureWithCert(KSI_CTX *ctx, unsigned char *dat
 		goto cleanup;
 	}
 
-
-
     if (!EVP_VerifyInit(&md_ctx, evp_md)) {
-    	printf("Error\n");
+    	KSI_FAIL(&err, KSI_CRYPTO_FAILURE, NULL);
     	goto cleanup;
     }
 
     if (!EVP_VerifyUpdate(&md_ctx, data, data_len)) {
-    	printf("Error\n");
+    	KSI_FAIL(&err, KSI_CRYPTO_FAILURE, NULL);
     	goto cleanup;
     }
 
-    res = EVP_VerifyFinal(&md_ctx, signature, signature_len, pubKey);
+    res = EVP_VerifyFinal(&md_ctx, (unsigned char *)signature, signature_len, pubKey);
     if (res < 0) {
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, NULL);
 		goto cleanup;

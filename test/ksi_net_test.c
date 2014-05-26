@@ -19,7 +19,7 @@ static unsigned char expectedSignRequest[] = {
 		0x59, 0x34, 0x2d, 0x1d, 0x7e, 0x87, 0xb8, 0x77, 0x2d};
 
 static unsigned char expectedExtendRequest[] = {
-		0x83, 0x00, 0x00, 0x0a, 0x83, 0x01, 0x00, 0x06, 0x02, 0x04, 0x53, 0x61, 0x01, 0x50
+		0x83, 0x00, 0x00, 0x10, 0x83, 0x01, 0x00, 0x0c, 0x02, 0x04, 0x53, 0x61, 0x01, 0x50, 0x03, 0x04, 0x53, 0x74, 0x03, 0x80
 };
 
 static void setFileMockResponse(CuTest *tc, const char *fileName) {
@@ -63,7 +63,8 @@ static void TestSendAggregateRequest(CuTest* tc) {
 
 	setFileMockResponse(tc, "test/resource/tlv/ok_aggr_response-1.tlv");
 
-	res = KSI_Signature_sign(hsh, &sig);
+	res = KSI_Signature_sign(ctx, hsh, &sig);
+	KSI_ERR_statusDump(ctx, stdout);
 	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
 	CuAssert(tc, "Unexpected send request", KSI_NET_MOCK_request_len == sizeof(expectedSignRequest) && !memcmp(expectedSignRequest, KSI_NET_MOCK_request, KSI_NET_MOCK_request_len));
 
@@ -88,6 +89,9 @@ static void TestSendExtendRequest(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
+	res = KSI_PKITruststore_addLookupFile(ctx->pkiTruststore, "test/resource/tlv/server-3.crt");
+	CuAssert(tc, "Unable to add test certificate to truststore.", res == KSI_OK);
+
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
 
@@ -99,7 +103,9 @@ static void TestSendExtendRequest(CuTest* tc) {
 
 	setFileMockResponse(tc, "test/resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv");
 
-	res = KSI_Signature_extend(sig, NULL, &ext);
+	res = KSI_extendSignature(ctx, sig, &ext);
+	KSI_ERR_statusDump(ctx, stdout);
+
 	CuAssert(tc, "Unable to extend the signature", res == KSI_OK && ext != NULL);
 	CuAssert(tc, "Unexpected send request", KSI_NET_MOCK_request_len == sizeof(expectedExtendRequest) && !memcmp(expectedExtendRequest, KSI_NET_MOCK_request, KSI_NET_MOCK_request_len));
 

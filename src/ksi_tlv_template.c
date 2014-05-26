@@ -92,6 +92,12 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendPdu)
 	KSI_TLV_COMPOSITE(0x302, 0, 0, KSI_ExtendPdu_getResponse, KSI_ExtendPdu_setResponse, KSI_ExtendResp)
 KSI_END_TLV_TEMPLATE
 
+KSI_DEFINE_TLV_TEMPLATE(KSI_PKISignedData)
+	KSI_TLV_OCTET_STRING(0x01, 0, 0, KSI_PKISignedData_getSignatureValue, KSI_PKISignedData_setSignatureValue)
+	KSI_TLV_OBJECT(0x02, 0, 0, KSI_PKISignedData_getCert, KSI_PKISignedData_setCert, KSI_PKICertificate_fromTlv, KSI_PKICertificate_toTlv)
+	KSI_TLV_OCTET_STRING(0x03, 0, 0, KSI_PKISignedData_getCertId, KSI_PKISignedData_setCertId)
+KSI_END_TLV_TEMPLATE
+
 static int encodeCalendarHashChainLink(KSI_CTX *ctx, KSI_TLV *tlv, const KSI_CalendarHashChain *calHashChain, const KSI_TlvTemplate *template) {
 	KSI_ERR err;
 	int res;
@@ -346,8 +352,6 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 	KSI_TLV *tlv = NULL;
 	int res;
 	const KSI_TlvTemplate *t = NULL;
-	const unsigned char *raw = NULL;
-	int raw_len = 0;
 
 	KSI_Integer *integerVal = NULL;
 	KSI_DataHash *hashVal = NULL;
@@ -369,7 +373,7 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 
 		if (tlv == NULL) break;
 
-		KSI_LOG_debug(ctx, "Starting to parse TLV(0x%02x)", KSI_TLV_getTag(tlv));
+		KSI_LOG_trace(ctx, "Starting to parse TLV(0x%02x)", KSI_TLV_getTag(tlv));
 
 		t = template;
 
@@ -395,7 +399,7 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 			/* Parse the current TLV */
 			switch (t->type) {
 				case KSI_TLV_TEMPLATE_NATIVE_INT:
-					KSI_LOG_debug(ctx, "Detected native int template for TLV value extraction.");
+					KSI_LOG_trace(ctx, "Detected native int template for TLV value extraction.");
 					res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_INT);
 					KSI_CATCH(&err, res) goto cleanup;
 
@@ -432,26 +436,8 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 					KSI_CATCH(&err, res) goto cleanup;
 
 					break;
-				case KSI_TLV_TEMPLATE_UTF8_STRING:
-					KSI_LOG_debug(ctx, "Detected KSI_Utf8String template for TLV value extraction.");
-
-					res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_STR);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					res = KSI_TLV_getStringValue(tlv, (const char **)&raw);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					res = KSI_Utf8String_new(ctx, (const char *)raw, &stringVal);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					res = storeObjectValue(ctx, t, payload, (void *)stringVal);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					stringVal = NULL;
-					break;
-
 				case KSI_TLV_TEMPLATE_COMPOSITE:
-					KSI_LOG_debug(ctx, "Detected composite template for TLV value extraction.");
+					KSI_LOG_trace(ctx, "Detected composite template for TLV value extraction.");
 
 					res = t->construct(ctx, &compositeVal);
 					KSI_CATCH(&err, res) goto cleanup;
@@ -465,10 +451,10 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 					res = storeObjectValue(ctx, t, payload, (void *)compositeVal);
 					KSI_CATCH(&err, res) goto cleanup;
 
-					KSI_LOG_debug(ctx, "Composite value extracted.");
+					KSI_LOG_trace(ctx, "Composite value extracted.");
 					break;
 				case KSI_TLV_TEMPLATE_CALLBACK:
-					KSI_LOG_debug(ctx, "Detected callback template for TLV value extraction.");
+					KSI_LOG_trace(ctx, "Detected callback template for TLV value extraction.");
 
 					if (t->callbackDecode != NULL) {
 						res = t->callbackDecode(ctx, tlv, payload, t);
@@ -514,8 +500,6 @@ cleanup:
 int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_TlvTemplate *template) {
 	KSI_ERR err;
 	int res;
-	const unsigned char *raw = NULL;
-	int raw_len = 0;
 	KSI_TLV *tmp = NULL;
 	void *payloadp = NULL;
 	int intVal;
@@ -555,8 +539,26 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 						goto cleanup;
 					}
 
-					res = template->toTlv(payloadp, template->tag, template->isNonCritical, template->isForward, &tmp);
-					KSI_CATCH(&err, res) goto cleanup;
+					if (template->listLength != NULL) {
+						int i;
+						for (i = 0; i < template->listLength(payloadp); i++) {
+							void *listElement = 0;
+							res = template->listElementAt(payloadp, i, &listElement);
+							KSI_CATCH(&err, res) goto cleanup;
+
+							res = template->toTlv(listElement, template->tag, template->isNonCritical, template->isForward, &tmp);
+							KSI_CATCH(&err, res) goto cleanup;
+
+							res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
+							KSI_CATCH(&err, res) goto cleanup;
+							tmp = NULL;
+						}
+
+
+					} else {
+						res = template->toTlv(payloadp, template->tag, template->isNonCritical, template->isForward, &tmp);
+						KSI_CATCH(&err, res) goto cleanup;
+					}
 
 					break;
 				case KSI_TLV_TEMPLATE_COMPOSITE:
@@ -577,6 +579,7 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 					}
 					break;
 				default:
+					KSI_LOG_error(ctx, "Unimplemented template type: %d", template->type);
 					KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Unimplemented template type.");
 					goto cleanup;
 			}
@@ -597,6 +600,38 @@ cleanup:
 	KSI_nofree(payloadp);
 
 	KSI_TLV_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_TlvTemplate_deepCopy(KSI_CTX *ctx, const void *from, const KSI_TlvTemplate *baseTemplate, void *to) {
+	KSI_ERR err;
+	KSI_TLV *tmpTlv = NULL;
+	int res;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, from != NULL) goto cleanup;
+	KSI_PRE(&err, baseTemplate != NULL) goto cleanup;
+	KSI_PRE(&err, to != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	/* Create a dummy TLV */
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, 0x0, 0, 0, &tmpTlv);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Create a TLV object */
+	res = KSI_TlvTemplate_construct(ctx, tmpTlv, from, baseTemplate);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Evaluate the cloned object */
+	res = KSI_TlvTemplate_extract(ctx, to, tmpTlv, baseTemplate, NULL);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_TLV_free(tmpTlv);
 
 	return KSI_RETURN(&err);
 }

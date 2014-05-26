@@ -712,6 +712,28 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+int KSI_TLV_getNestedList(KSI_TLV *tlv, KSI_LIST(KSI_TLV) **list) {
+	KSI_ERR err;
+
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_PRE(&err, list != NULL) goto cleanup;
+	KSI_BEGIN(tlv->ctx, &err);
+
+	/* Check payload type. */
+	if (tlv->payloadType != KSI_TLV_PAYLOAD_TLV) {
+		KSI_FAIL(&err, KSI_TLV_PAYLOAD_TYPE_MISMATCH, NULL);
+		goto cleanup;
+	}
+
+	*list = tlv->nested;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
 /**
  *
  */
@@ -720,6 +742,8 @@ int KSI_TLV_getNextNestedTLV(KSI_TLV *tlv, KSI_TLV **nested) {
 	int res;
 	KSI_TLV *next = NULL;
 
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_PRE(&err, nested != NULL) goto cleanup;
 	KSI_BEGIN(tlv->ctx, &err);
 
 	/* Check payload type. */
@@ -770,7 +794,7 @@ cleanup:
 /**
  *
  */
-int KSI_TLV_parseBlob(KSI_CTX *ctx, unsigned char *data, size_t data_length, KSI_TLV **tlv) {
+int KSI_TLV_parseBlob(KSI_CTX *ctx, const unsigned char *data, size_t data_length, KSI_TLV **tlv) {
 	KSI_ERR err;
 	KSI_RDR *rdr = NULL;
 	KSI_TLV *tmp = NULL;
@@ -779,7 +803,7 @@ int KSI_TLV_parseBlob(KSI_CTX *ctx, unsigned char *data, size_t data_length, KSI
 
 	KSI_BEGIN(ctx, &err);
 
-	res = KSI_RDR_fromSharedMem(ctx, data, data_length, &rdr);
+	res = KSI_RDR_fromSharedMem(ctx, (unsigned char *)data, data_length, &rdr);
 	if (res != KSI_OK) {
 		KSI_FAIL(&err, res, NULL);
 		goto cleanup;

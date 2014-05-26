@@ -96,6 +96,14 @@ struct KSI_ExtendResp_st {
 	KSI_CalendarHashChain *calendarHashChain;
 };
 
+struct KSI_PKISignedData_st {
+	KSI_CTX *ctx;
+	KSI_OctetString *signatureValue;
+	KSI_PKICertificate *cert;
+	KSI_OctetString *certId;
+	KSI_Utf8String *certRepositoryUri;
+};
+
 struct KSI_PublicationsHeader_st {
 	KSI_CTX *ctx;
 	KSI_Integer *version;
@@ -133,6 +141,7 @@ KSI_IMPLEMENT_LIST(KSI_RequestAck, KSI_RequestAck_free);
 KSI_IMPLEMENT_LIST(KSI_AggregationResp, KSI_AggregationResp_free);
 KSI_IMPLEMENT_LIST(KSI_ExtendReq, KSI_ExtendReq_free);
 KSI_IMPLEMENT_LIST(KSI_ExtendResp, KSI_ExtendResp_free);
+KSI_IMPLEMENT_LIST(KSI_PKISignedData, KSI_PKISignedData_free);
 KSI_IMPLEMENT_LIST(KSI_PublicationsHeader, KSI_PublicationsHeader_free);
 KSI_IMPLEMENT_LIST(KSI_CertificateRecord, KSI_CertificateRecord_free);
 KSI_IMPLEMENT_LIST(KSI_PublicationData, KSI_PublicationData_free);
@@ -1762,6 +1771,142 @@ int KSI_ExtendResp_setCalendarHashChain(KSI_ExtendResp *t, KSI_CalendarHashChain
 		goto cleanup;
 	}
 	t->calendarHashChain = calendarHashChain;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+
+/**
+ * KSI_PKISignedData
+ */
+void KSI_PKISignedData_free(KSI_PKISignedData *t) {
+	if(t != NULL) {
+		KSI_OctetString_free(t->signatureValue);
+		KSI_PKICertificate_free(t->cert);
+		KSI_OctetString_free(t->certId);
+		KSI_Utf8String_free(t->certRepositoryUri);
+		KSI_free(t);
+	}
+}
+
+int KSI_PKISignedData_new(KSI_CTX *ctx, KSI_PKISignedData **t) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_PKISignedData *tmp = NULL;
+	tmp = KSI_new(KSI_PKISignedData);
+	if(tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->signatureValue = NULL;
+	tmp->cert = NULL;
+	tmp->certId = NULL;
+	tmp->certRepositoryUri = NULL;
+	*t = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+cleanup:
+	KSI_PKISignedData_free(tmp);
+	return res;
+}
+
+KSI_CTX *KSI_PKISignedData_getCtx(KSI_PKISignedData *t){
+	return t != NULL ? t->ctx : NULL;
+}
+
+int KSI_PKISignedData_getSignatureValue(const KSI_PKISignedData *t, KSI_OctetString **signatureValue) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || signatureValue == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*signatureValue = t->signatureValue;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_PKISignedData_getCert(const KSI_PKISignedData *t, KSI_PKICertificate **cert) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || cert == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*cert = t->cert;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_PKISignedData_getCertId(const KSI_PKISignedData *t, KSI_OctetString **certId) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || certId == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*certId = t->certId;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_PKISignedData_getCertRepositoryUri(const KSI_PKISignedData *t, KSI_Utf8String **certRepositoryUri) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL || certRepositoryUri == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	*certRepositoryUri = t->certRepositoryUri;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_PKISignedData_setSignatureValue(KSI_PKISignedData *t, KSI_OctetString *signatureValue) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->signatureValue = signatureValue;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_PKISignedData_setCert(KSI_PKISignedData *t, KSI_PKICertificate *cert) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->cert = cert;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_PKISignedData_setCertId(KSI_PKISignedData *t, KSI_OctetString *certId) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->certId = certId;
+	res = KSI_OK;
+cleanup:
+	 return res;
+}
+
+int KSI_PKISignedData_setCertRepositoryUri(KSI_PKISignedData *t, KSI_Utf8String *certRepositoryUri) {
+	int res = KSI_UNKNOWN_ERROR;
+	if(t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	t->certRepositoryUri = certRepositoryUri;
 	res = KSI_OK;
 cleanup:
 	 return res;

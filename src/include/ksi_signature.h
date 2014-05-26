@@ -35,12 +35,12 @@ extern "C" {
 	/**
 	 * TODO!
 	 */
-	int KSI_Signature_sign(const KSI_DataHash *hsh, KSI_Signature **signature);
+	int KSI_Signature_sign(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **signature);
 
 	/**
 	 * TODO!
 	 */
-	int KSI_Signature_extend(KSI_Signature *signature, KSI_Integer *extendTo, KSI_Signature **extended);
+	int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRecord *pubRec, KSI_Signature **extended);
 
 	/**
 	 * TODO!
@@ -50,9 +50,6 @@ extern "C" {
 	/**
 	 * TODO!
 	 */
-	int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain);
-
-	int KSI_Signature_validate(KSI_Signature *sig);
 	void KSI_Signature_free(KSI_Signature *sig);
 	int KSI_Signature_getDataHash(KSI_Signature *sig, const KSI_DataHash ** hsh);
 	int KSI_Signature_getSigningTime(const KSI_Signature *sig, KSI_Integer **signTime);
