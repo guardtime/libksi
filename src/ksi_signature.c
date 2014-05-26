@@ -664,7 +664,6 @@ cleanup:
 static int parseSigDataRecord(KSI_CTX *ctx, KSI_TLV *tlv, KSI_PKISignedData **sdr) {
 	KSI_ERR err;
 	int res;
-	int count;
 	KSI_PKISignedData *tmp = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -840,6 +839,7 @@ static int validateSignatureWithPublication(KSI_CTX *ctx, KSI_Signature *sig) {
 	KSI_ERR err;
 	KSI_PublicationsFile *pubFile = NULL;
 	KSI_PublicationData *pubData = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
 	KSI_Integer *pubTime = NULL;
 	KSI_DataHash *pubHash = NULL;
 	KSI_DataHash *rootHash = NULL;
@@ -869,20 +869,26 @@ static int validateSignatureWithPublication(KSI_CTX *ctx, KSI_Signature *sig) {
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Get the publication */
-	res = KSI_PublicationsFile_getPublicationDataByTime(pubFile, pubTime, &pubData);
+	res = KSI_PublicationsFile_getPublicationDataByTime(pubFile, pubTime, &pubRec);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	if (pubData == NULL) {
+	if (pubRec == NULL) {
 		KSI_FAIL(&err, KSI_VERIFY_PUBLICATION_NOT_FOUND, NULL);
 		goto cleanup;
 	}
 
+	/* Extract the publication data. */
+	res = KSI_PublicationRecord_getPublishedData(pubRec, &pubData);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Extract the imprint from the published data object. */
 	res = KSI_PublicationData_getImprint(pubData, &pubHash);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Calendar chain root hash", rootHash);
 	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Publication imprint     ", pubHash);
 
+	/* Verify the hashes are correct. */
 	if (!KSI_DataHash_equals(rootHash, pubHash)) {
 		KSI_FAIL(&err, KSI_VERIFY_PUBLICATION_MISMATCH, NULL);
 		goto cleanup;
@@ -904,6 +910,131 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+static int validateSignature_internal(KSI_Signature *sig) {
+	KSI_ERR err;
+	KSI_DataHash *hsh = NULL;
+	uint32_t utc_time;
+	int res;
+	int level;
+	int i;
+	KSI_Integer *aggregationTime = NULL;
+	KSI_Integer *publicationTime = NULL;
+	KSI_LIST(KSI_HashChainLink) *chain = NULL;
+	KSI_DataHash *inputHash = NULL;
+
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_BEGIN(sig->ctx, &err);
+
+	if (sig->aggregationChainList == NULL || AggrChainRecList_length(sig->aggregationChainList) == 0) {
+		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Signature does not contain any aggregation chains.");
+		goto cleanup;
+	}
+
+	if (sig->calendarChain == NULL) {
+		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Signature does not contain a calendar chain.");
+		goto cleanup;
+	}
+
+	if (sig->calAuth == NULL && sig->publication == NULL) { // TODO! Should this list contain also aggr auth record?
+		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Signature does not contain any authentication record.");
+		goto cleanup;
+	}
+
+	res = KSI_CalendarHashChain_getHashChain(sig->calendarChain, &chain);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &publicationTime);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &aggregationTime);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_CalendarHashChain_getInputHash(sig->calendarChain, &inputHash);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Validate aggregation time */
+	res = KSI_HashChain_getCalendarAggregationTime(chain, publicationTime, &utc_time);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	if (aggregationTime == NULL) aggregationTime = publicationTime;
+
+
+	if (!KSI_Integer_equalsUInt(aggregationTime, utc_time)) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Aggregation time mismatch.");
+		goto cleanup;
+	}
+
+	/* Aggregate aggregation chains. */
+	hsh = NULL;
+	level = 0;
+
+	for (i = 0; i < AggrChainRecList_length(sig->aggregationChainList); i++) {
+		const AggrChainRec* aggregationChain = NULL;
+		KSI_DataHash *tmpHash = NULL;
+
+		res = AggrChainRecList_elementAt(sig->aggregationChainList, i, (AggrChainRec **)&aggregationChain);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		if (aggregationChain == NULL) break;
+
+		if (hsh != NULL) {
+			/* Validate input hash */
+			if (!KSI_DataHash_equals(hsh, aggregationChain->inputHash)) {
+				KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Aggregation chain mismatch,");
+			}
+		}
+
+		res = KSI_HashChain_aggregate(aggregationChain->chain, aggregationChain->inputHash, level, aggregationChain->aggrHashId, &level, &tmpHash);
+		KSI_CATCH(&err, res) {
+			KSI_FAIL(&err, res, "Failed to calculate aggregation chain.");
+			goto cleanup;
+		}
+
+		if (hsh != NULL) {
+			KSI_DataHash_free(hsh);
+		}
+		hsh = tmpHash;
+	}
+
+	/* Validate calendar input hash */
+	if (!KSI_DataHash_equals(hsh, inputHash)) {
+		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Calendar chain input hash mismatch.");
+		goto cleanup;
+	}
+
+	KSI_DataHash_free(hsh);
+	hsh = NULL;
+
+	/* Aggregate calendar chain */
+	res = KSI_HashChain_aggregateCalendar(chain, inputHash, &hsh);
+	KSI_CATCH(&err, res) goto cleanup;
+
+
+	if (sig->calAuth != NULL) {
+		/* Validate calendar root hash */
+		if (!KSI_DataHash_equals(hsh, sig->calAuth->pubData->pubHash)) {
+			KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Calendar chain root hash mismatch.");
+			goto cleanup;
+		}
+	}
+
+	if (sig->aggrAuth != NULL) {
+		/* TODO! */
+		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Validation using aggregation auth record not implemented.");
+		goto cleanup;
+	}
+
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_DataHash_free(hsh);
+
+	return KSI_RETURN(&err);
+}
+
+
 static int validateSignature(KSI_CTX *ctx, KSI_Signature *sig) {
 	KSI_ERR err;
 	int res;
@@ -912,7 +1043,7 @@ static int validateSignature(KSI_CTX *ctx, KSI_Signature *sig) {
 	KSI_PRE(&err, sig != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	res = KSI_Signature_validateInternal(sig);
+	res = validateSignature_internal(sig);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	if (sig->calAuth != NULL) {
@@ -1379,7 +1510,6 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-
 int KSI_Signature_sign(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **signature) {
 	KSI_ERR err;
 	int res;
@@ -1750,129 +1880,6 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char ** identity) {
 	return KSI_OK;
 }
 
-int KSI_Signature_validateInternal(KSI_Signature *sig) {
-	KSI_ERR err;
-	KSI_DataHash *hsh = NULL;
-	uint32_t utc_time;
-	int res;
-	int level;
-	int i;
-	KSI_Integer *aggregationTime = NULL;
-	KSI_Integer *publicationTime = NULL;
-	KSI_LIST(KSI_HashChainLink) *chain = NULL;
-	KSI_DataHash *inputHash = NULL;
-
-	KSI_PRE(&err, sig != NULL) goto cleanup;
-	KSI_BEGIN(sig->ctx, &err);
-
-	if (sig->aggregationChainList == NULL || AggrChainRecList_length(sig->aggregationChainList) == 0) {
-		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Signature does not contain any aggregation chains.");
-		goto cleanup;
-	}
-
-	if (sig->calendarChain == NULL) {
-		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Signature does not contain a calendar chain.");
-		goto cleanup;
-	}
-
-	if (sig->calAuth == NULL && sig->publication == NULL) { // TODO! Should this list contain also aggr auth record?
-		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Signature does not contain any authentication record.");
-		goto cleanup;
-	}
-
-	res = KSI_CalendarHashChain_getHashChain(sig->calendarChain, &chain);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &publicationTime);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &aggregationTime);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_CalendarHashChain_getInputHash(sig->calendarChain, &inputHash);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Validate aggregation time */
-	res = KSI_HashChain_getCalendarAggregationTime(chain, publicationTime, &utc_time);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	if (aggregationTime == NULL) aggregationTime = publicationTime;
-
-
-	if (!KSI_Integer_equalsUInt(aggregationTime, utc_time)) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Aggregation time mismatch.");
-		goto cleanup;
-	}
-
-	/* Aggregate aggregation chains. */
-	hsh = NULL;
-	level = 0;
-
-	for (i = 0; i < AggrChainRecList_length(sig->aggregationChainList); i++) {
-		const AggrChainRec* aggregationChain = NULL;
-		KSI_DataHash *tmpHash = NULL;
-
-		res = AggrChainRecList_elementAt(sig->aggregationChainList, i, (AggrChainRec **)&aggregationChain);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		if (aggregationChain == NULL) break;
-
-		if (hsh != NULL) {
-			/* Validate input hash */
-			if (!KSI_DataHash_equals(hsh, aggregationChain->inputHash)) {
-				KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Aggregation chain mismatch,");
-			}
-		}
-
-		res = KSI_HashChain_aggregate(aggregationChain->chain, aggregationChain->inputHash, level, aggregationChain->aggrHashId, &level, &tmpHash);
-		KSI_CATCH(&err, res) {
-			KSI_FAIL(&err, res, "Failed to calculate aggregation chain.");
-			goto cleanup;
-		}
-
-		if (hsh != NULL) {
-			KSI_DataHash_free(hsh);
-		}
-		hsh = tmpHash;
-	}
-
-	/* Validate calendar input hash */
-	if (!KSI_DataHash_equals(hsh, inputHash)) {
-		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Calendar chain input hash mismatch.");
-		goto cleanup;
-	}
-
-	KSI_DataHash_free(hsh);
-	hsh = NULL;
-
-	/* Aggregate calendar chain */
-	res = KSI_HashChain_aggregateCalendar(chain, inputHash, &hsh);
-	KSI_CATCH(&err, res) goto cleanup;
-
-
-	if (sig->calAuth != NULL) {
-		/* Validate calendar root hash */
-		if (!KSI_DataHash_equals(hsh, sig->calAuth->pubData->pubHash)) {
-			KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Calendar chain root hash mismatch.");
-			goto cleanup;
-		}
-	}
-
-	if (sig->aggrAuth != NULL) {
-		/* TODO! */
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Validation using aggregation auth record not implemented.");
-		goto cleanup;
-	}
-
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_DataHash_free(hsh);
-
-	return KSI_RETURN(&err);
-}
 
 int KSI_Signature_clone(const KSI_Signature *sig, KSI_Signature **clone) {
 	KSI_ERR err;

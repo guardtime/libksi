@@ -542,7 +542,7 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 					if (template->listLength != NULL) {
 						int i;
 						for (i = 0; i < template->listLength(payloadp); i++) {
-							void *listElement = 0;
+							void *listElement = NULL;
 							res = template->listElementAt(payloadp, i, &listElement);
 							KSI_CATCH(&err, res) goto cleanup;
 

@@ -287,8 +287,8 @@ static int setIntParam(int *param, int val) {
 	return KSI_OK;
 }
 
-#define KSI_NET_CURL_SETTER($name, $type, $var, $fn) 													\
-		int KSI_CurlNetProvider_set##$name(KSI_NetProvider *netProvider, $type val) {					\
+#define KSI_NET_CURL_SETTER(name, type, var, fn) 														\
+		int KSI_CurlNetProvider_set##name(KSI_NetProvider *netProvider, type val) {						\
 			int res = KSI_UNKNOWN_ERROR;																\
 			CurlNetProviderCtx *pctx = NULL;															\
 			if (netProvider == NULL) {																	\
@@ -300,7 +300,7 @@ static int setIntParam(int *param, int val) {
 				res = KSI_INVALID_ARGUMENT;																\
 				goto cleanup;																			\
 			}																							\
-			res = ($fn)(&pctx->$var, val);																\
+			res = (fn)(&pctx->var, val);																\
 		cleanup:																						\
 			return res;																					\
 		}																								\

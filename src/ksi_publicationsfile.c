@@ -7,6 +7,7 @@
 KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationsHeader)
 KSI_IMPORT_TLV_TEMPLATE(KSI_CertificateRecord)
 KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationRecord)
+KSI_IMPORT_TLV_TEMPLATE(KSI_PKICertificateRecord)
 
 struct KSI_PublicationsFile_st {
 	KSI_CTX *ctx;
@@ -27,14 +28,12 @@ static int publicationsFile_setCertificates(KSI_PublicationsFile *t, KSI_LIST(KS
 static int publicationsFile_setPublications(KSI_PublicationsFile *t, KSI_LIST(KSI_PublicationRecord) *publications);
 static int publicationsFile_setSignature(KSI_PublicationsFile *t, KSI_PKISignature *signature);
 static int publicationsFile_setSignatureOffset(KSI_PublicationsFile *t, int signatureOffset);
-static int publicationsFile_decodePKISignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_PublicationsFile *trust, KSI_TlvTemplate *template);
-static int publicationsFile_decodePKICertificateList(KSI_CTX *ctx, KSI_TLV *tlv, KSI_PublicationsFile *trust, KSI_TlvTemplate *template);
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationsFile)
 	KSI_TLV_COMPOSITE(0x0701, 0, 0, KSI_PublicationsFile_getHeader, publicationsFile_setHeader, KSI_PublicationsHeader)
-	KSI_TLV_CALLBACK(0x0702, 0, 0, KSI_PublicationsFile_getCertificates, publicationsFile_setCertificates, NULL, publicationsFile_decodePKICertificateList)
+	KSI_TLV_COMPOSITE_LIST(0x0702, 0, 0, KSI_PublicationsFile_getCertificates, publicationsFile_setCertificates, KSI_CertificateRecord)
 	KSI_TLV_COMPOSITE_LIST(0x0703, 0, 0, KSI_PublicationsFile_getPublications, publicationsFile_setPublications, KSI_PublicationRecord)
-	KSI_TLV_CALLBACK(0x0704, 0, 0, NULL, NULL, NULL, publicationsFile_decodePKISignature)
+	KSI_TLV_OBJECT(0x0704, 0, 0, KSI_PublicationsFile_getSignature, publicationsFile_setSignature, KSI_PKISignature_fromTlv, KSI_PKISignature_toTlv)
 	KSI_TLV_SEEK_POS(0x0704, publicationsFile_setSignatureOffset)
 KSI_END_TLV_TEMPLATE
 
@@ -42,99 +41,6 @@ struct generator_st {
 	KSI_RDR *reader;
 	KSI_TLV *tlv;
 };
-
-static int publicationsFile_decodePKICertificateList(KSI_CTX *ctx, KSI_TLV *tlv, KSI_PublicationsFile *trust, KSI_TlvTemplate *template) {
-	KSI_ERR err;
-	int res;
-	KSI_CertificateRecord *certRec = NULL;
-	KSI_LIST(KSI_CertificateRecord) *listp = NULL;
-	KSI_LIST(KSI_CertificateRecord) *list = NULL;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, trust != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	/* Create an empty certificate record. */
-	res = KSI_CertificateRecord_new(ctx, &certRec);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Extract the values. */
-	res = KSI_TlvTemplate_extract(ctx, certRec, tlv, KSI_TLV_TEMPLATE(KSI_CertificateRecord), NULL);
-
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Get the list. */
-	res = KSI_PublicationsFile_getCertificates(trust, &listp);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	if (listp == NULL) {
-		res = KSI_CertificateRecordList_new(ctx, &list);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		listp = list;
-	}
-
-	/* Append the new element. */
-	res = KSI_CertificateRecordList_append(listp, certRec);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	certRec = NULL;
-
-	/* If the list was just created, add it to the structure. */
-	if (list != NULL) {
-		res = publicationsFile_setCertificates(trust, listp);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		list = NULL;
-	}
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_CertificateRecord_free(certRec);
-	KSI_CertificateRecordList_free(list);
-
-	return KSI_RETURN(&err);
-}
-
-static int publicationsFile_decodePKISignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_PublicationsFile *trust, KSI_TlvTemplate *template) {
-	KSI_ERR err;
-	int res;
-	KSI_PKISignature *signature = NULL;
-	const unsigned char *raw = NULL;
-	int len = 0;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, trust != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	if (trust->signature != NULL) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Too many signatures.");
-		goto cleanup;
-	}
-
-	res = KSI_TLV_getRawValue(tlv, &raw, &len);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_PKISignature_new(ctx, raw, len, &signature);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	trust->signature = signature;
-	signature = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_PKISignature_free(signature);
-
-	return KSI_RETURN(&err);
-}
-
-
 
 static int generateNextTlv(struct generator_st *gen, KSI_TLV **tlv) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -458,15 +364,15 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_PublicationsFile_getPublicationDataByTime(const KSI_PublicationsFile *trust, const KSI_Integer *pubTime, KSI_PublicationData **pubData) {
+int KSI_PublicationsFile_getPublicationDataByTime(const KSI_PublicationsFile *trust, const KSI_Integer *pubTime, KSI_PublicationRecord **pubRec) {
 	KSI_ERR err;
 	int res;
 	int i;
-	KSI_PublicationData *result = NULL;
+	KSI_PublicationRecord *result = NULL;
 
 	KSI_PRE(&err, trust != NULL) goto cleanup;
 	KSI_PRE(&err, pubTime != NULL) goto cleanup;
-	KSI_PRE(&err, pubData != NULL) goto cleanup;
+	KSI_PRE(&err, pubRec != NULL) goto cleanup;
 	KSI_BEGIN(trust->ctx, &err);
 
 	for (i = 0; i < KSI_PublicationRecordList_length(trust->publications); i++) {
@@ -484,7 +390,7 @@ int KSI_PublicationsFile_getPublicationDataByTime(const KSI_PublicationsFile *tr
 		KSI_CATCH(&err, res) goto cleanup;
 
 		if (KSI_Integer_equals(pubTime, tm)) {
-			result = pd;
+			result = pr;
 			break;
 		}
 
@@ -492,7 +398,7 @@ int KSI_PublicationsFile_getPublicationDataByTime(const KSI_PublicationsFile *tr
 		KSI_nofree(pd);
 	}
 
-	*pubData = result;
+	*pubRec = result;
 
 	KSI_SUCCESS(&err);
 
@@ -502,6 +408,71 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
+
+int KSI_PublicationsFile_getPublicationDataByPublicationString(const KSI_PublicationsFile *pubFile, char *pubString, KSI_PublicationRecord **pubRec) {
+	KSI_ERR err;
+	int res;
+	KSI_PublicationData *findPubData = NULL;
+	KSI_DataHash *findImprint = NULL;
+	KSI_Integer *findTime = NULL;
+
+	KSI_PublicationRecord *tmpPubRec = NULL;
+	KSI_PublicationData *tmpPubData = NULL;
+	KSI_DataHash *tmpImprint = NULL;
+
+	KSI_PRE(&err, pubFile != NULL) goto cleanup;
+	KSI_PRE(&err, pubString != NULL) goto cleanup;
+	KSI_PRE(&err, pubRec != NULL) goto cleanup;
+	KSI_BEGIN(pubFile->ctx, &err);
+
+	/* Decode the publication string. */
+	res = KSI_PublicationData_fromBase32(pubFile->ctx, pubString, strlen(pubString), &findPubData);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Extract the expected imprint. */
+	res = KSI_PublicationData_getImprint(findPubData, &findImprint);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Extract the expected publication time. */
+	res = KSI_PublicationData_getTime(findPubData, &findTime);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Find the publication using the publication time. */
+	res = KSI_PublicationsFile_getPublicationDataByTime(pubFile, findTime, &tmpPubRec);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	if (tmpPubRec != NULL) {
+		/* Extract published data. */
+		res = KSI_PublicationRecord_getPublishedData(tmpPubRec, &tmpPubData);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		/* Extract the time. */
+		res = KSI_PublicationData_getImprint(tmpPubData, &tmpImprint);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		if (!KSI_DataHash_equals(findImprint, tmpImprint))  {
+			KSI_FAIL(&err, KSI_INVALID_PUBLICATION, NULL);
+			goto cleanup;
+		}
+	}
+
+	*pubRec = tmpPubRec;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_PublicationData_free(findPubData);
+	KSI_nofree(findImprint);
+	KSI_nofree(findTime);
+
+	KSI_nofree(tmpPubRec);
+	KSI_nofree(tmpPubData);
+	KSI_nofree(tmpImprint);
+
+	return KSI_RETURN(&err);
+}
+
 
 int KSI_PublicationsFile_getNearestPublication(const KSI_PublicationsFile *trust, const KSI_Integer *pubTime, KSI_PublicationRecord **pubRec) {
 	KSI_ERR err;
@@ -553,16 +524,16 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_PublicationsFile_getLatestPublication(const KSI_PublicationsFile *trust, const KSI_Integer *pubTime, KSI_PublicationData **pubData) {
+int KSI_PublicationsFile_getLatestPublication(const KSI_PublicationsFile *trust, const KSI_Integer *pubTime, KSI_PublicationRecord **pubRec) {
 	KSI_ERR err;
 	int res;
 	int i;
-	KSI_PublicationData *result = NULL;
+	KSI_PublicationRecord *result = NULL;
 	KSI_Integer *result_tm = NULL;
 
 	KSI_PRE(&err, trust != NULL) goto cleanup;
 	KSI_PRE(&err, pubTime != NULL) goto cleanup;
-	KSI_PRE(&err, pubData != NULL) goto cleanup;
+	KSI_PRE(&err, pubRec != NULL) goto cleanup;
 
 	for (i = 0; i < KSI_PublicationRecordList_length(trust->publications); i++) {
 		KSI_PublicationRecord *pr = NULL;
@@ -583,7 +554,7 @@ int KSI_PublicationsFile_getLatestPublication(const KSI_PublicationsFile *trust,
 		if (pubTime == NULL || KSI_Integer_compare(pubTime, tm) < 0) {
 			/* Check if the current publication time is after the last found time. */
 			if (result_tm == NULL || KSI_Integer_compare(result_tm, tm) > 0) {
-				result = pd;
+				result = pr;
 				result_tm = tm;
 			}
 		}
@@ -592,7 +563,7 @@ int KSI_PublicationsFile_getLatestPublication(const KSI_PublicationsFile *trust,
 		KSI_nofree(pd);
 	}
 
-	*pubData = result;
+	*pubRec = result;
 
 	KSI_SUCCESS(&err);
 

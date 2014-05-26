@@ -77,9 +77,9 @@ extern "C" {
 
 	#define KSI_TLV_NATIVE_INT(tag, isNonCritical, isForward, getter, setter) 				KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_NATIVE_INT, tag, isNonCritical, isForward, getter, setter)
 
-	#define KSI_TLV_OCTET_STRING_LIST(tag, isNonCritical, isForward, getter, setter) 		KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tag, isNonCritical, isForward, getter, setter, NULL, NULL, NULL, KSI_OctetStringList_append, 1, KSI_OctetStringList_new, KSI_OctetStringList_free, KSI_OctetStringList_length, KSI_OctetStringList_elementAt, NULL, NULL, KSI_OctetSring_fromTlv, KSI_OctetString_toTlv)
-	#define KSI_TLV_UTF8_STRING_LIST(tag, isNonCritical, isForward, getter, setter) 		KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tag, isNonCritical, isForward, getter, setter, NULL, NULL, NULL, KSI_Utf8StringList_append, 1, KSI_Utf8StringList_new, KSI_Utf8StringList_free, KSI_Utf8StringList_length, KSI_Utf8StringList_elementAt, NULL, NULL, KSI_Utf8String_fromTlv, KSI_Utf8String_toTlv)
-
+	#define KSI_TLV_OBJECT_LIST(tag, nc, fw, getter, setter, obj) 							KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tag, nc, fw, getter, setter, NULL, NULL, NULL, obj##List_append, 1, obj##List_new, KSI_OctetStringList_free, obj##List_length, obj##List_elementAt, NULL, NULL, obj##_fromTlv, obj##_toTlv)
+	#define KSI_TLV_OCTET_STRING_LIST(tag, nc, fw, getter, setter)							KSI_TLV_OBJECT_LIST(tag, nc, fw, getter, setter, KSI_OctetString)
+	#define KSI_TLV_UTF8_STRING_LIST(tag, nc, fw, getter, setter)							KSI_TLV_OBJECT_LIST(tag, nc, fw, getter, setter, KSI_Utf8String)
 
 	#define KSI_TLV_COMPOSITE(tag, isNonCritical, isForward, getter, setter, sub)			KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_COMPOSITE, tag, isNonCritical, isForward, getter, setter, sub##_new, sub##_free, sub##_template, NULL, 0,  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)
 	#define KSI_TLV_COMPOSITE_LIST(tag, isNonCritical, isForward, getter, setter, sub) 		KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_COMPOSITE, tag, isNonCritical, isForward, getter, setter, sub##_new, sub##_free, sub##_template, sub##List_append, 1, sub##List_new, sub##List_free, sub##List_length, sub##List_elementAt, NULL, NULL, NULL, NULL)

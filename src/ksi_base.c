@@ -98,7 +98,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	if ((res = KSI_CurlNetProvider_setConnectTimeoutSeconds(netProvider, 5)) != KSI_OK) goto cleanup;
 	if ((res = KSI_CurlNetProvider_setReadTimeoutSeconds(netProvider, 5)) != KSI_OK) goto cleanup;
 
-	res = KSI_CTX_setNetworkProvider(ctx, netProvider);
+	res = KSI_setNetworkProvider(ctx, netProvider);
 	if (res != KSI_OK) goto cleanup;
 	netProvider = NULL;
 
@@ -106,7 +106,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	res = KSI_PKITruststore_new(ctx, 1, &pkiTruststore);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_CTX_setPKITruststore(ctx, pkiTruststore);
+	res = KSI_setPKITruststore(ctx, pkiTruststore);
 	if (res != KSI_OK) goto cleanup;
 	pkiTruststore = NULL;
 
@@ -265,7 +265,7 @@ static int getValue(KSI_CTX *ctx, const char *variableName, int offset, void **v
 	KSI_PRE(&err, value != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	KSI_LOG_debug(ctx, "KSI_CTX_set%s(ctx, 0x%llx) -> %d", variableName, (unsigned long long)value, offset);
+	KSI_LOG_debug(ctx, "KSI_set%s(ctx, 0x%llx) -> %d", variableName, (unsigned long long)value, offset);
 
 	*value = ((unsigned char *)ctx) + offset;
 
@@ -276,7 +276,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_base32ToPublishedData(KSI_CTX *ctx,	const char *publication, int publication_length, KSI_PublicationData **published_data) {
+int KSI_PublicationData_fromBase32(KSI_CTX *ctx,	const char *publication, int publication_length, KSI_PublicationData **published_data) {
 	KSI_ERR err;
 	int res = KSI_UNKNOWN_ERROR;
 	unsigned char *binary_publication = NULL;
@@ -368,7 +368,7 @@ cleanup:
 	return res;
 }
 
-int KSI_publishedDataToBase32(const KSI_PublicationData *published_data, char **publication) {
+int KSI_PublicationData_toBase32(const KSI_PublicationData *published_data, char **publication) {
 	KSI_ERR err;
 	KSI_CTX *ctx = NULL;
 	KSI_DataHash *hsh = NULL;
@@ -568,19 +568,61 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-#define CTX_VALUEP_SETTER(var, nam, typ, fre)										\
-int KSI_CTX_set##nam(KSI_CTX *ctx, typ *val) { 										\
-	return setValue(ctx, #nam, (void **)&ctx->var, (void *)val, fre);				\
-} 																					\
+int KSI_extendSignatureToPublication(KSI_CTX *ctx, KSI_Signature *sig, char *pubString, KSI_Signature **extended) {
+	KSI_ERR err;
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_Integer *signingTime = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
+	KSI_Signature *extSig = NULL;
 
-#define CTX_VALUEP_GETTER(var, nam, typ) 											\
-int KSI_CTX_get##nam(KSI_CTX *ctx, typ **val) { 									\
-	return getValue(ctx, #nam, offsetof(KSI_CTX, var), (void **)val);				\
-} 																					\
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_PRE(&err, pubString != NULL) goto cleanup;
+	KSI_PRE(&err, extended != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
 
-#define CTX_GET_SET_VALUE(var, nam, typ, fre) 										\
-	CTX_VALUEP_SETTER(var, nam, typ, fre)											\
-	CTX_VALUEP_GETTER(var, nam, typ)												\
+	res = KSI_receivePublicationsFile(ctx, &pubFile);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_Signature_getSigningTime(sig, &signingTime);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_PublicationsFile_getNearestPublication(pubFile, signingTime, &pubRec);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	if (pubRec == NULL) {
+		KSI_FAIL(&err, KSI_EXTEND_NO_SUITABLE_PUBLICATION, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_Signature_extend(sig, pubRec, &extSig);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*extended = extSig;
+	extSig = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_Signature_free(extSig);
+	return KSI_RETURN(&err);
+}
+
+#define CTX_VALUEP_SETTER(var, nam, typ, fre)												\
+int KSI_set##nam(KSI_CTX *ctx, typ *val) { 													\
+	return setValue(ctx, #nam, (void **)&ctx->var, (void *)val, (void(*)(void *))fre);		\
+} 																							\
+
+#define CTX_VALUEP_GETTER(var, nam, typ) 													\
+int KSI_get##nam(KSI_CTX *ctx, typ **val) { 												\
+	return getValue(ctx, #nam, offsetof(KSI_CTX, var), (void **)val);						\
+} 																							\
+
+#define CTX_GET_SET_VALUE(var, nam, typ, fre) 												\
+	CTX_VALUEP_SETTER(var, nam, typ, fre)													\
+	CTX_VALUEP_GETTER(var, nam, typ)														\
 
 CTX_GET_SET_VALUE(pkiTruststore, PKITruststore, KSI_PKITruststore, NULL)
 CTX_GET_SET_VALUE(netProvider, NetworkProvider, KSI_NetProvider, KSI_NetProvider_free)

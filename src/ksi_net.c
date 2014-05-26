@@ -288,7 +288,6 @@ cleanup:
 
 int KSI_NetHandle_getResponse(KSI_NetHandle *handle, const unsigned char **response, int *response_len) {
 	KSI_ERR err;
-	int res;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(handle->ctx, &err);
 

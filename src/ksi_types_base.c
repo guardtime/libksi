@@ -31,8 +31,8 @@ struct KSI_Utf8String_st {
 int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, int data_len, KSI_OctetString **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_OctetString *tmp = NULL;
-	tmp = KSI_new(KSI_OctetString);
 
+	tmp = KSI_new(KSI_OctetString);
 	if(tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
@@ -53,22 +53,28 @@ int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, int data_len, K
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
+
 cleanup:
+
 	KSI_OctetString_free(tmp);
 	return res;
 }
 
 int KSI_OctetString_extract(const KSI_OctetString *t, const unsigned char **data, int *data_len) {
 	int res = KSI_UNKNOWN_ERROR;
+
 	if(t == NULL || data == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+
 	*data = t->data;
 	*data_len = t->data_len;
 
 	res = KSI_OK;
+
 cleanup:
+
 	 return res;
 }
 
@@ -157,6 +163,7 @@ int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, KSI_Utf8String **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Utf8String *tmp = NULL;
 	char *val = NULL;
+	int len = 0;
 
 	tmp = KSI_new(KSI_Utf8String);
 	if (tmp == NULL) {
@@ -166,8 +173,10 @@ int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, KSI_Utf8String **t) {
 
 	tmp->value = NULL;
 
-	val = KSI_calloc(strlen(str) + 1, 1);
-	memcpy(val, str, strlen(str));
+	len = strlen(str) + 1;
+
+	val = KSI_calloc(len, 1);
+	memcpy(val, str, len);
 
 	tmp->value = val;
 	val = NULL;

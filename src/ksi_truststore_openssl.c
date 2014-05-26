@@ -53,7 +53,7 @@ static int KSI_MD2hashAlg(EVP_MD *hash_alg) {
 	return -1;
 }
 
-static int isMallocFailure() {
+static int isMallocFailure(void) {
 	/* Check if the earliest reason was malloc failure. */
 	if (ERR_GET_REASON(ERR_peek_error()) == ERR_R_MALLOC_FAILURE) {
 		return 1;
@@ -242,6 +242,45 @@ void KSI_PKISignature_free(KSI_PKISignature *sig) {
 	}
 }
 
+int KSI_PKISignature_fromTlv(KSI_TLV *tlv, KSI_PKISignature **sig) {
+	KSI_ERR err;
+	KSI_CTX *ctx = NULL;
+	int res;
+
+	KSI_PKISignature *tmp = NULL;
+	const unsigned char *raw = NULL;
+	int raw_len = 0;
+
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+
+	ctx = KSI_TLV_getCtx(tlv);
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_TLV_getRawValue(tlv, &raw, &raw_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_PKISignature_new(ctx, raw, raw_len, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*sig = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(raw);
+
+	KSI_PKISignature_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_PKISignature_toTlv(KSI_PKISignature *sig, int tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+	return KSI_UNKNOWN_ERROR; // FIXME!
+}
+
 int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, int raw_len, KSI_PKISignature **signature) {
 	KSI_ERR err;
 	KSI_PKISignature *tmp = NULL;
@@ -277,53 +316,6 @@ int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, int raw_len, KSI_PKISign
 cleanup:
 
 	KSI_PKISignature_free(tmp);
-
-	return KSI_RETURN(&err);
-}
-
-int KSI_PKICertificate_fromSignature(KSI_PKISignature *sig, KSI_PKICertificate **cert) {
-	KSI_ERR err;
-	KSI_PKICertificate *tmp = NULL;
-
-	X509 *signing_cert = NULL;
-	STACK_OF(X509) *certs = NULL;
-
-	KSI_PRE(&err, sig != NULL) goto cleanup;
-	KSI_BEGIN(sig->ctx, &err);
-
-	certs = PKCS7_get0_signers(sig->pkcs7, NULL, 0);
-	if (certs == NULL) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Unable to get signers from signature.");
-		goto cleanup;
-	}
-
-	if (sk_X509_num(certs) != 1) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Too many signing certs.");
-		goto cleanup;
-	}
-
-	signing_cert = sk_X509_delete(certs, 0);
-
-	tmp = KSI_new(KSI_PKICertificate);
-	if (tmp == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	tmp->ctx = sig->ctx;
-	tmp->x509 = signing_cert;
-	signing_cert = NULL;
-
-	*cert = tmp;
-	tmp = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	if (signing_cert != NULL) X509_free(signing_cert);
-	if (certs != NULL) sk_X509_free(certs);
-	KSI_PKICertificate_free(tmp);
 
 	return KSI_RETURN(&err);
 }
@@ -461,7 +453,7 @@ cleanup:
 	return res;
 }
 
-int KSI_PKITruststore_validateSignatureCertificate(KSI_CTX *ctx, const KSI_PKISignature *signature) {
+static int KSI_PKITruststore_validateSignatureCertificate(KSI_CTX *ctx, const KSI_PKISignature *signature) {
 	KSI_ERR err;
 	int res;
 	X509 *cert = NULL;
@@ -650,7 +642,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_PKITruststore_global_init() {
+int KSI_PKITruststore_global_init(void) {
 	OpenSSL_add_all_digests();
 
 	return KSI_OK;

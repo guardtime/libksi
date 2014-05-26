@@ -71,6 +71,7 @@ enum KSI_StatusCode {
 	KSI_EXTEND_NO_SUITABLE_PUBLICATION,
 	KSI_VERIFY_PUBLICATION_NOT_FOUND,
 	KSI_VERIFY_PUBLICATION_MISMATCH,
+	KSI_INVALID_PUBLICATION,
 	/**
 	 * Cryptographic operation could not be performed. Likely causes are
 	 * unsupported cryptographic algorithms, invalid keys and lack of
@@ -186,11 +187,20 @@ int KSI_sendExtendRequest(KSI_CTX *ctx, const unsigned char *request, int reques
 int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle);
 
 
-int KSI_base32ToPublishedData(KSI_CTX *ctx,	const char *publication, int publication_length, KSI_PublicationData **published_data);
+int KSI_PublicationData_fromBase32(KSI_CTX *ctx,	const char *publication, int publication_length, KSI_PublicationData **published_data);
+int KSI_PublicationData_toBase32(const KSI_PublicationData *published_data, char **publication);
 
 int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile);
 int KSI_createSignature(KSI_CTX *ctx, const KSI_DataHash *dataHash, KSI_Signature **sig);
 int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extended);
+
+int KSI_getPKITruststore(KSI_CTX *ctx, KSI_PKITruststore **pki);
+int KSI_getNetworkProvider(KSI_CTX *ctx, KSI_NetProvider **net);
+
+int KSI_setPKITruststore(KSI_CTX *ctx, KSI_PKITruststore *pki);
+int KSI_setNetworkProvider(KSI_CTX *ctx, KSI_NetProvider *net);
+
+
 /**********
  * UTIL's
  **********/

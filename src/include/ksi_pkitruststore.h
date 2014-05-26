@@ -18,6 +18,8 @@ extern "C" {
 
 	int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, int raw_len, KSI_PKISignature **signature);
 	void KSI_PKISignature_free(KSI_PKISignature *sig);
+	int KSI_PKISignature_fromTlv(KSI_TLV *tlv, KSI_PKISignature **sig);
+	int KSI_PKISignature_toTlv(KSI_PKISignature *sig, int tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 
 	int KSI_PKITruststore_validateSignatureWithCert(KSI_CTX *ctx, unsigned char *data, unsigned int data_len, const char *algoOid, const unsigned char *signature, unsigned int signature_len, const KSI_PKICertificate *cert);
@@ -25,6 +27,8 @@ extern "C" {
 
 	int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path);
 	int GTTruststore_addLookupDir(KSI_PKITruststore *trust, const char *path);
+
+	int KSI_PKITruststore_validateSignature(KSI_CTX *ctx, const unsigned char *data, unsigned int data_len, const KSI_PKISignature *signature);
 
 #ifdef __cplusplus
 }
