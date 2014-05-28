@@ -17,6 +17,7 @@
 #include "include/ksi_tlv_template.h"
 #include "include/ksi_pkitruststore.h"
 #include "include/ksi_types.h"
+#include "include/ksi_crc32.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -200,10 +201,11 @@ int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extend
 
 int KSI_getPKITruststore(KSI_CTX *ctx, KSI_PKITruststore **pki);
 int KSI_getNetworkProvider(KSI_CTX *ctx, KSI_NetProvider **net);
+int KSI_getLogger(KSI_CTX *ctx, KSI_Logger **logger);
 
 int KSI_setPKITruststore(KSI_CTX *ctx, KSI_PKITruststore *pki);
 int KSI_setNetworkProvider(KSI_CTX *ctx, KSI_NetProvider *net);
-
+int KSI_setLogger(KSI_CTX *ctx, KSI_Logger *logger);
 
 /**********
  * UTIL's

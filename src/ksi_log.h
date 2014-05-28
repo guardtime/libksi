@@ -26,6 +26,8 @@ int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned 
 int KSI_LOG_logTlv(KSI_CTX *ctx, int level, const char *prefix, KSI_TLV *tlv);
 int KSI_LOG_logDataHash(KSI_CTX *ctx, int level, const char *prefix, KSI_DataHash *hsh);
 
+int KSI_Logger_new(KSI_CTX *ctx, char *fileName, int logLevel, KSI_Logger **logger);
+void KSI_Logger_free(KSI_Logger *logger);
 
 #ifdef __cplusplus
 }

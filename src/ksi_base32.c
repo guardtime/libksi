@@ -218,5 +218,5 @@ int KSI_base32Encode(const unsigned char *data, size_t data_len, size_t group_le
 cleanup:
 
 	KSI_free(tmp);
-	return NULL;
+	return res;
 }

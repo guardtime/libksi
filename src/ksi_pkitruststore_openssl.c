@@ -116,7 +116,36 @@ cleanup:
 }
 
 int KSI_PKICertificate_toTlv(KSI_PKICertificate *cert, int tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
-	return KSI_UNKNOWN_ERROR; // FIXME!
+	KSI_ERR err;
+	int res;
+	KSI_TLV *tmp = NULL;
+	unsigned char *raw = NULL;
+	int raw_len = 0;
+
+	KSI_PRE(&err, cert != NULL) goto cleanup;
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_BEGIN(cert->ctx, &err);
+
+	res = KSI_TLV_new(cert->ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_PKICertificate_serialize(cert, &raw, &raw_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_TLV_setRawValue(tmp, raw, raw_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*tlv = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(raw);
+	KSI_TLV_free(tmp);
+
+	return KSI_RETURN(&err);
 }
 
 int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) {
@@ -186,6 +215,7 @@ int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **tru
 	}
 
 	tmp->ctx = ctx;
+	tmp->store = NULL;
 
 	tmp->store = X509_STORE_new();
 	if (tmp->store == NULL) {
@@ -244,6 +274,46 @@ void KSI_PKISignature_free(KSI_PKISignature *sig) {
 	}
 }
 
+int KSI_PKISignature_serialize(KSI_PKISignature *sig, unsigned char **raw, int *raw_len) {
+	KSI_ERR err;
+	unsigned char *tmpOssl = NULL;
+	unsigned char *tmp = NULL;
+	int len = 0;
+
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_PRE(&err, raw != NULL) goto cleanup;
+	KSI_PRE(&err, raw_len != NULL) goto cleanup;
+	KSI_BEGIN(sig->ctx, &err);
+
+	len = i2d_PKCS7(sig->pkcs7, NULL);
+	if (len < 0) {
+		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, NULL);
+		goto cleanup;
+	}
+
+	tmp = KSI_calloc(len, 1);
+	if (tmp == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	tmpOssl = tmp;
+	i2d_PKCS7(sig->pkcs7, &tmpOssl);
+
+	*raw = tmp;
+	*raw_len = len;
+
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
 int KSI_PKISignature_fromTlv(KSI_TLV *tlv, KSI_PKISignature **sig) {
 	KSI_ERR err;
 	KSI_CTX *ctx = NULL;
@@ -280,7 +350,36 @@ cleanup:
 }
 
 int KSI_PKISignature_toTlv(KSI_PKISignature *sig, int tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
-	return KSI_UNKNOWN_ERROR; // FIXME!
+	KSI_ERR err;
+	int res;
+	KSI_TLV *tmp = NULL;
+	unsigned char *raw = NULL;
+	int raw_len = 0;
+
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_BEGIN(sig->ctx, &err);
+
+	res = KSI_TLV_new(sig->ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_PKISignature_serialize(sig, &raw, &raw_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_TLV_setRawValue(tmp, raw, raw_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*tlv = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(raw);
+	KSI_TLV_free(tmp);
+
+	return KSI_RETURN(&err);
 }
 
 int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, int raw_len, KSI_PKISignature **signature) {
@@ -463,6 +562,7 @@ static int KSI_PKITruststore_validateSignatureCertificate(KSI_CTX *ctx, const KS
 	ASN1_OBJECT *oid = NULL;
 	X509_STORE_CTX *storeCtx = NULL;
 	char tmp[256];
+	KSI_PKITruststore *pki = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, signature != NULL) goto cleanup;
@@ -499,8 +599,10 @@ static int KSI_PKITruststore_validateSignatureCertificate(KSI_CTX *ctx, const KS
 		goto cleanup;
 	}
 
-	// FIXME! No direct access to the pki truststore object!
-	if (!X509_STORE_CTX_init(storeCtx, ctx->pkiTruststore->store, cert,
+	res = KSI_getPKITruststore(ctx, &pki);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	if (!X509_STORE_CTX_init(storeCtx, pki->store, cert,
 			signature->pkcs7->d.sign->cert)) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
@@ -519,6 +621,8 @@ static int KSI_PKITruststore_validateSignatureCertificate(KSI_CTX *ctx, const KS
 	KSI_SUCCESS(&err);
 
 cleanup:
+
+	KSI_nofree(pki);
 
 	if (storeCtx != NULL) X509_STORE_CTX_free(storeCtx);
 	if (oid != NULL) ASN1_OBJECT_free(oid);

@@ -33,10 +33,14 @@ static void setFileMockResponse(CuTest *tc, const char *fileName) {
 static void testLoadPublicationsFile(CuTest *tc) {
 	int res;
 	KSI_PublicationsFile *trust = NULL;
+	KSI_PKITruststore *pki = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_PKITruststore_addLookupFile(ctx->pkiTruststore, "test/resource/tlv/mock.crt");
+	res = KSI_getPKITruststore(ctx, &pki);
+	CuAssert(tc, "Unable to get PKI truststore from context.", res == KSI_OK && pki != NULL);
+
+	res = KSI_PKITruststore_addLookupFile(pki, "test/resource/tlv/mock.crt");
 	CuAssert(tc, "Unable to read certificate", res == KSI_OK);
 
 	setFileMockResponse(tc, TEST_PUBLICATIONS_FILE);

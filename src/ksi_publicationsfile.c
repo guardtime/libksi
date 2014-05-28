@@ -7,7 +7,6 @@
 KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationsHeader)
 KSI_IMPORT_TLV_TEMPLATE(KSI_CertificateRecord)
 KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationRecord)
-KSI_IMPORT_TLV_TEMPLATE(KSI_PKICertificateRecord)
 
 struct KSI_PublicationsFile_st {
 	KSI_CTX *ctx;
@@ -149,7 +148,7 @@ int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, int raw_len, KSI_P
 	KSI_ERR err;
 	int res;
 	unsigned char hdr[8];
-	int hdr_len = 0;
+	unsigned int hdr_len = 0;
 	KSI_PublicationsFile *tmp = NULL;
 	KSI_RDR *reader = NULL;
 	struct generator_st gen;

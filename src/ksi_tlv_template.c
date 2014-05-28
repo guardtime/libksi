@@ -1,3 +1,4 @@
+#include <limits.h>
 #include "ksi_internal.h"
 
 static int encodeCalendarHashChainLink(KSI_CTX *ctx, KSI_TLV *tlv, const KSI_CalendarHashChain *calHashChain, const KSI_TlvTemplate *template);
@@ -406,11 +407,11 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 					res = KSI_TLV_getUInt64Value(tlv, &uint64Val);
 					KSI_CATCH(&err, res) goto cleanup;
 
-					intVal = (int)uint64Val;
-					if (intVal != uint64Val) {
+					if ((uint64Val & INT_MAX) != uint64Val) {
 						KSI_FAIL(&err, KSI_INVALID_FORMAT, "Value too big for internal int value.");
 						goto cleanup;
 					}
+					intVal = (int)uint64Val;
 
 					res = ((int (*)(void *, int))t->setValue)(payload, intVal);
 					KSI_CATCH(&err, res) goto cleanup;

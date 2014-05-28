@@ -171,6 +171,7 @@ int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, KSI_Utf8String **t) {
 		goto cleanup;
 	}
 
+	tmp->ctx = ctx;
 	tmp->value = NULL;
 
 	len = strlen(str) + 1;
@@ -322,11 +323,12 @@ int KSI_Integer_compare(const KSI_Integer *a, const KSI_Integer *b) {
 	return a->value - b->value;
 }
 
-int KSI_Integer_new(KSI_CTX *ctx, KSI_uint64_t value, KSI_Integer **kint) {
+int KSI_Integer_new(KSI_CTX *ctx, KSI_uint64_t value, KSI_Integer **ksiInteger) {
 	KSI_ERR err;
 	KSI_Integer *tmp = NULL;
 
-	KSI_PRE(&err, ctx != NULL);
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, ksiInteger != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
 	tmp = KSI_new(KSI_Integer);
@@ -338,7 +340,7 @@ int KSI_Integer_new(KSI_CTX *ctx, KSI_uint64_t value, KSI_Integer **kint) {
 	tmp->ctx = ctx;
 	tmp->value = value;
 
-	*kint = tmp;
+	*ksiInteger = tmp;
 	tmp = NULL;
 
 	KSI_SUCCESS(&err);
@@ -350,14 +352,14 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_Integer **integer) {
+int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_Integer **ksiInteger) {
 	KSI_ERR err;
 	KSI_CTX *ctx = NULL;
 	int res;
 	KSI_Integer *tmp = NULL;
 
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, integer != NULL) goto cleanup;
+	KSI_PRE(&err, ksiInteger != NULL) goto cleanup;
 
 	ctx = KSI_TLV_getCtx(tlv);
 	KSI_BEGIN(ctx, &err);
@@ -367,7 +369,7 @@ int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_Integer **integer) {
 
 	res = KSI_TLV_getInteger(tlv, &tmp);
 
-	*integer = tmp;
+	*ksiInteger = tmp;
 	tmp = NULL;
 
 	KSI_SUCCESS(&err);

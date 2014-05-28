@@ -291,7 +291,9 @@ int KSI_NetHandle_getResponse(KSI_NetHandle *handle, const unsigned char **respo
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(handle->ctx, &err);
 
-	KSI_PRE(&err, handle != NULL);
+	KSI_PRE(&err, handle != NULL) goto cleanup;
+	KSI_PRE(&err, response != NULL) goto cleanup;
+	KSI_PRE(&err, response_len != NULL) goto cleanup;
 	KSI_BEGIN(handle->ctx, &err);
 
 	*response = handle->response;

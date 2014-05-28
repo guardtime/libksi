@@ -8,6 +8,14 @@
 #include "ksi_log.h"
 #include "ksi_tlv_tags.h"
 
+#define KSI_BEGIN(ctx, err) KSI_ERR_init((ctx), (err))
+#define KSI_PRE(err, cond) if (!(cond) && (KSI_ERR_init(NULL, (err)) == KSI_OK) && (KSI_FAIL((err), KSI_INVALID_ARGUMENT, NULL) == KSI_OK))
+#define KSI_RETURN(err) KSI_ERR_apply((err))
+#define KSI_FAIL_EXT(err, statusCode, extErrCode, message) (KSI_ERR_fail((err), (statusCode), (extErrCode), __FILE__, __LINE__, (message)))
+#define KSI_FAIL(err, statusCode, message) (KSI_ERR_fail((err), (statusCode), 0, __FILE__, __LINE__, (message)))
+#define KSI_CATCH(err, res) if ((res) != KSI_OK && KSI_FAIL((err), res, NULL) == KSI_OK)
+#define KSI_SUCCESS(err) KSI_ERR_success((err))
+
 #define KSI_UINT16_MINSIZE(val) ((val > 0xff) ? 2 : 1)
 #define KSI_UINT32_MINSIZE(val) ((val > 0xffff) ? (2 + KSI_UINT16_MINSIZE((val) >> 16)) : KSI_UINT16_MINSIZE((val)))
 #define KSI_UINT64_MINSIZE(val) (((val) > 0xffffffff) ? (4 + KSI_UINT32_MINSIZE((val) >> 32)) : KSI_UINT32_MINSIZE((val)))
@@ -85,61 +93,5 @@ int KSI_LIST_FN_NAME(type, elementAt)(const KSI_LIST(type) *list, int pos, type 
 KSI_CTX *type##List_getCtx(const KSI_LIST(type) *o) {	 							\
 	return o->ctx; 																	\
 } 																					\
-
-
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-struct KSI_CTX_st {
-
-	/******************
-	 *  ERROR HANDLING.
-	 ******************/
-
-	/* Status code of the last executed function. */
-	int statusCode;
-
-	/* Array of errors. */
-	KSI_ERR *errors;
-
-	/* Length of error array. */
-	unsigned int errors_size;
-
-	/* Count of errors (usually #error_end - #error_start + 1, unless error count > #errors_size. */
-	unsigned int errors_count;
-
-	/**********
-	 * LOGGING.
-	 **********/
-
-	/* Log level see enum KSI_LOG_LVL_en */
-	int logLevel;
-	/* Filename where to write the log. NULL or "-" means stdout. */
-	char *logFile;
-
-	/* Stream to write log. */
-	FILE *logStream; // TODO! Do we need more options?
-
-	/************
-	 * TRANSPORT.
-	 ************/
-
-	KSI_NetProvider *netProvider;
-
-	KSI_PKITruststore *pkiTruststore;
-
-	KSI_PublicationsFile *publicationsFile;
-
-};
-
-int KSI_parseSignature(KSI_CTX *ctx, unsigned char *rawPdu, int rawPdu_len, KSI_Signature **signature);
-
-#ifdef __cplusplus
-}
-#endif
-
 
 #endif

@@ -370,7 +370,7 @@ int KSI_getHashAlgorithmByName(const char *name) {
 	if (upperName == NULL) goto cleanup;
 
 	/* Create upper-case name */
-	for (algorithm_id = 0; algorithm_id < strlen(name); algorithm_id++) {
+	for (algorithm_id = 0; algorithm_id < (int)strlen(name); algorithm_id++) {
 		if (name[algorithm_id] == '_') {
 			upperName[algorithm_id] = '-';
 		} else {

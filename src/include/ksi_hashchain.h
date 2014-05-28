@@ -9,19 +9,6 @@ extern "C" {
 #endif
 
 	/**
-	 * Constructor for the hash node object.
-	 *
-	 * @param[in]	ctx		KSI context.
-	 * @param[in]	hash	Datahash object.
-	 * @param[in]	level	Level of the current node (leafs have level 0).
-	 * @param[out]	node	Pointer to the receiving pointer.
-	 *
-	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an
-	 * error code).
-	 */
-	int KSI_HashChain_new(KSI_CTX *ctx, KSI_DataHash *hash, unsigned int levelCorrection, int isLeft, KSI_HashChainLink **node);
-
-	/**
 	 * This function joins to hash nodes by creating a common parent. The imprints
 	 * of the two nodes are concatenated and added
 	 *

@@ -8,6 +8,38 @@
 
 static int KSI_CTX_global_initCount = 0;
 
+struct KSI_CTX_st {
+
+	/******************
+	 *  ERROR HANDLING.
+	 ******************/
+
+	/* Status code of the last executed function. */
+	int statusCode;
+
+	/* Array of errors. */
+	KSI_ERR *errors;
+
+	/* Length of error array. */
+	unsigned int errors_size;
+
+	/* Count of errors (usually #error_end - #error_start + 1, unless error count > #errors_size. */
+	unsigned int errors_count;
+
+	KSI_Logger *logger;
+
+	/************
+	 * TRANSPORT.
+	 ************/
+
+	KSI_NetProvider *netProvider;
+
+	KSI_PKITruststore *pkiTruststore;
+
+	KSI_PublicationsFile *publicationsFile;
+
+};
+
 const char *KSI_getErrorString(int statusCode) {
 	switch (statusCode) {
 		case KSI_OK:
@@ -65,6 +97,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	KSI_CTX *ctx = NULL;
 	KSI_NetProvider *netProvider = NULL;
 	KSI_PKITruststore *pkiTruststore = NULL;
+	KSI_Logger *logger = NULL;
 
 	ctx = KSI_new(KSI_CTX);
 	if (ctx == NULL) {
@@ -83,9 +116,15 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->publicationsFile = NULL;
 	ctx->pkiTruststore = NULL;
 	ctx->netProvider = NULL;
+	ctx->logger = NULL;
 
 	KSI_ERR_clearErrors(ctx);
-	KSI_LOG_init(ctx, NULL, KSI_LOG_DEBUG);
+
+	/* Create and set the logger. */
+	res = KSI_Logger_new(ctx, NULL, KSI_LOG_DEBUG, &logger);
+	if (res != KSI_OK) goto cleanup;
+	res = KSI_setLogger(ctx, logger);
+	if (res != KSI_OK) goto cleanup;
 
 	/* Initialize curl as the net handle. */
 	res = KSI_CurlNetProvider_new(ctx, &netProvider);
@@ -105,7 +144,6 @@ int KSI_CTX_new(KSI_CTX **context) {
 	/* Create and set the PKI truststore */
 	res = KSI_PKITruststore_new(ctx, 1, &pkiTruststore);
 	if (res != KSI_OK) goto cleanup;
-
 	res = KSI_setPKITruststore(ctx, pkiTruststore);
 	if (res != KSI_OK) goto cleanup;
 	pkiTruststore = NULL;
@@ -133,8 +171,7 @@ void KSI_CTX_free(KSI_CTX *context) {
 	if (context != NULL) {
 		KSI_free(context->errors);
 
-		if (context->logStream) fclose(context->logStream);
-		KSI_free(context->logFile);
+		KSI_Logger_free(context->logger);
 
 		KSI_NetProvider_free(context->netProvider);
 		KSI_PKITruststore_free(context->pkiTruststore);
@@ -241,47 +278,6 @@ int KSI_sendExtendRequest(KSI_CTX *ctx, const unsigned char *request, int reques
 cleanup:
 
 	KSI_NetHandle_free(hndl);
-
-	return KSI_RETURN(&err);
-}
-
-static int setValue(KSI_CTX *ctx, const char *variableName, void **target, void *value, void (*valueFree)(void *)) {
-	KSI_ERR err;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, target != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	KSI_LOG_debug(ctx, "Setting variable %s to point to 0x%xll", variableName, (unsigned long long)value);
-
-	if (valueFree != NULL && *target != NULL) {
-		valueFree(*target);
-	}
-
-	*target = value;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-}
-
-static int getValue(KSI_CTX *ctx, const char *variableName, int offset, void **value) {
-	KSI_ERR err;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, offset >= 0) goto cleanup;
-	KSI_PRE(&err, value != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	KSI_LOG_debug(ctx, "KSI_set%s(ctx, 0x%llx) -> %d", variableName, (unsigned long long)value, offset);
-
-	*value = ((unsigned char *)ctx) + offset;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
 
 	return KSI_RETURN(&err);
 }
@@ -620,6 +616,94 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+int KSI_ERR_init(KSI_CTX *ctx, KSI_ERR *err) {
+	err->ctx = ctx;
+
+	KSI_ERR_fail(err, KSI_UNKNOWN_ERROR, 0, "null", 0, "Internal error: Probably a function returned without a distinctive success or error.");
+
+	return KSI_OK;
+}
+
+int KSI_ERR_apply(KSI_ERR *err) {
+	KSI_CTX *ctx = err->ctx;
+	KSI_ERR *ctxErr = NULL;
+
+	if (ctx != NULL) {
+		if (err->statusCode != KSI_OK) {
+			ctxErr = ctx->errors + (ctx->errors_count % ctx->errors_size);
+
+
+
+			ctxErr->statusCode = err->statusCode;
+			ctxErr->extErrorCode = err->extErrorCode;
+			ctxErr->lineNr = err->lineNr;
+			strncpy(ctxErr->fileName, KSI_strnvl(err->fileName), sizeof(err->fileName));
+			strncpy(ctxErr->message, KSI_strnvl(err->message), sizeof(err->message));
+
+			ctx->errors_count++;
+		}
+
+		ctx->statusCode = err->statusCode;
+	}
+	/* Return the result, which does not indicate the result of this method. */
+	return err->statusCode;
+}
+
+void KSI_ERR_success(KSI_ERR *err) {
+	err->statusCode = KSI_OK;
+	*err->message = '\0';
+}
+
+int KSI_ERR_fail(KSI_ERR *err, int statusCode, long extErrorCode, char *fileName, int lineNr, char *message) {
+	err->extErrorCode = extErrorCode;
+	err->statusCode = statusCode;
+	if (message == NULL) {
+		strncpy(err->message, KSI_getErrorString(statusCode), sizeof(err->message));
+	} else {
+		strncpy(err->message, KSI_strnvl(message), sizeof(err->message));
+	}
+	strncpy(err->fileName, KSI_strnvl(fileName), sizeof(err->fileName));
+	err->lineNr = lineNr;
+
+	return KSI_OK;
+}
+
+void KSI_ERR_clearErrors(KSI_CTX *ctx) {
+	if (ctx != NULL) {
+		ctx->statusCode = KSI_UNKNOWN_ERROR;
+		ctx->errors_count = 0;
+	}
+}
+
+int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_ERR *err = NULL;
+	unsigned int i;
+
+	fprintf(f, "KSI error trace:\n");
+	if (ctx->errors_count == 0) {
+		printf("  No errors.\n");
+		goto cleanup;
+	}
+
+	/* List all errors, starting from the most general. */
+	for (i = 0; i < ctx->errors_count && i < ctx->errors_size; i++) {
+		err = ctx->errors + ((ctx->errors_count - i - 1) % ctx->errors_size);
+		fprintf(f, "  %3u) %s:%u - (%d/%ld) %s\n", ctx->errors_count - i, err->fileName, err->lineNr,err->statusCode, err->extErrorCode, err->message);
+	}
+
+	/* If there where more errors than buffers for the errors, indicate the fact */
+	if (ctx->errors_count > ctx->errors_size) {
+		fprintf(f, "  ... (more errors)\n");
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 /**
  *
  */
@@ -630,18 +714,38 @@ int KSI_CTX_getStatus(KSI_CTX *ctx) {
 
 
 #define CTX_VALUEP_SETTER(var, nam, typ, fre)												\
-int KSI_set##nam(KSI_CTX *ctx, typ *val) { 													\
-	return setValue(ctx, #nam, (void **)&ctx->var, (void *)val, (void(*)(void *))fre);		\
+int KSI_set##nam(KSI_CTX *ctx, typ *var) { 													\
+	int res = KSI_UNKNOWN_ERROR;															\
+	if (ctx == NULL) {																		\
+		res = KSI_INVALID_ARGUMENT;															\
+		goto cleanup;																		\
+	}																						\
+	if (ctx->var != NULL) {																	\
+		fre(ctx->var);																		\
+	}																						\
+	ctx->var = var;																			\
+	res = KSI_OK;																			\
+cleanup:																					\
+	return res;																				\
 } 																							\
 
 #define CTX_VALUEP_GETTER(var, nam, typ) 													\
-int KSI_get##nam(KSI_CTX *ctx, typ **val) { 												\
-	return getValue(ctx, #nam, offsetof(KSI_CTX, var), (void **)val);						\
+int KSI_get##nam(KSI_CTX *ctx, typ **var) { 												\
+	int res = KSI_UNKNOWN_ERROR;															\
+	if (ctx == NULL || var == NULL) {														\
+		res = KSI_INVALID_ARGUMENT;															\
+		goto cleanup;																		\
+	}																						\
+	*var = ctx->var;																		\
+	res = KSI_OK;																			\
+cleanup:																					\
+	return res;																				\
 } 																							\
 
 #define CTX_GET_SET_VALUE(var, nam, typ, fre) 												\
 	CTX_VALUEP_SETTER(var, nam, typ, fre)													\
 	CTX_VALUEP_GETTER(var, nam, typ)														\
 
-CTX_GET_SET_VALUE(pkiTruststore, PKITruststore, KSI_PKITruststore, NULL)
+CTX_GET_SET_VALUE(pkiTruststore, PKITruststore, KSI_PKITruststore, KSI_PKITruststore_free)
 CTX_GET_SET_VALUE(netProvider, NetworkProvider, KSI_NetProvider, KSI_NetProvider_free)
+CTX_GET_SET_VALUE(logger, Logger, KSI_Logger, KSI_Logger_free)

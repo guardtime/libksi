@@ -207,7 +207,7 @@ int KSI_RDR_isEOF(KSI_RDR *rdr) {
 	return rdr->eof;
 }
 
-static int readFromFile(KSI_RDR *rdr, unsigned char *buffer, const size_t size, int *readCount) {
+static int readFromFile(KSI_RDR *rdr, unsigned char *buffer, const size_t size, unsigned int *readCount) {
 	KSI_ERR err;
 	int count;
 
@@ -230,9 +230,9 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int readFromMem(KSI_RDR *rdr, unsigned char *buffer, const size_t size, int *readCount) {
+static int readFromMem(KSI_RDR *rdr, unsigned char *buffer, const size_t size, unsigned int *readCount) {
 	KSI_ERR err;
-	int count;
+	unsigned int count;
 
 	KSI_PRE(&err, rdr != NULL) goto cleanup;
 	KSI_PRE(&err, buffer != NULL) goto cleanup;
@@ -261,7 +261,7 @@ cleanup:
 }
 
 
-int KSI_RDR_read_ex(KSI_RDR *rdr, unsigned char *buffer, const size_t bufferLength, int *readCount)  {
+int KSI_RDR_read_ex(KSI_RDR *rdr, unsigned char *buffer, const size_t bufferLength, unsigned int *readCount)  {
 	KSI_ERR err;
 	int res;
 
@@ -291,7 +291,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_RDR_read_ptr(KSI_RDR *rdr, unsigned char **ptr, const size_t len, int *readCount) {
+int KSI_RDR_read_ptr(KSI_RDR *rdr, unsigned char **ptr, const size_t len, unsigned int *readCount) {
 	KSI_ERR err;
 	unsigned char *p = NULL;
 	int count = 0;
@@ -369,7 +369,7 @@ int KSI_RDR_verifyEnd(KSI_RDR *rdr) {
 	KSI_ERR err;
 	int res;
 	unsigned char *buf = NULL;
-	int buf_len = 0;
+	unsigned int buf_len = 0;
 
 	KSI_PRE(&err, rdr != NULL) goto cleanup;
 	KSI_BEGIN(rdr->ctx, &err);

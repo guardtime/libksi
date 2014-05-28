@@ -54,6 +54,7 @@ cleanup:
 int main(int argc, char **argv) {
 	KSI_CTX *ctx;
 	int res;
+	KSI_PKITruststore *pki = NULL;
 	KSI_PublicationsFile *publicationsFile = NULL;
 	KSI_LIST(KSI_PublicationRecord) *publications = NULL;
 	int i;
@@ -78,7 +79,11 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	res = KSI_PKITruststore_addLookupFile(ctx->pkiTruststore, "test/resource/tlv/server-3.crt");
+	res = KSI_getPKITruststore(ctx, &pki);
+	if (res != KSI_OK || pki == NULL) {
+		fprintf(stderr, "Unable to get PKI truststore.");
+	}
+	res = KSI_PKITruststore_addLookupFile(pki, "test/resource/tlv/dummy.crt");
 	if (res != KSI_OK) {
 		KSI_ERR_statusDump(ctx, stdout);
 		fprintf(stderr, "Unable to read cert.\n");

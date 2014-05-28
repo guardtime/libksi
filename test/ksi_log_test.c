@@ -36,6 +36,7 @@ static void TestLogInit(CuTest* tc) {
 	char tmpBuf[0xffff];
 	FILE *f = NULL;
 	int len;
+	KSI_Logger *logger = NULL;
 
 	KSI_CTX *ctx = NULL;
 
@@ -47,8 +48,11 @@ static void TestLogInit(CuTest* tc) {
 	CuAssert(tc, "Unable to create temporary file name.", mkstemp(tmpFile) > 0);
 
 	/* Init logging. */
-	res = KSI_LOG_init(ctx, tmpFile, KSI_LOG_DEBUG );
-	CuAssert(tc, "Failed to initialize logger.", res == KSI_OK);
+	res = KSI_Logger_new(ctx, tmpFile, KSI_LOG_DEBUG, &logger);
+	CuAssert(tc, "Unable to create logger", res == KSI_OK && logger != NULL);
+
+	res = KSI_setLogger(ctx, logger);
+	CuAssert(tc, "Unable to set logger", res == KSI_OK);
 
 	/* Generate data. */
 	KSI_LOG_debug(ctx, "Test log %s", "file");
@@ -80,7 +84,8 @@ static void TestLogLevel(CuTest* tc) {
 	char tmpBuf[0xffff];
 	FILE *f = NULL;
 	int len;
-	char *ptr;
+	char *ptr = NULL;
+	KSI_Logger *logger = NULL;
 
 	KSI_CTX *ctx = NULL;
 
@@ -91,8 +96,11 @@ static void TestLogLevel(CuTest* tc) {
 	CuAssert(tc, "Unable to create temporary file name.", mkstemp(tmpFile) > 0);
 
 	/* Init logging. */
-	res = KSI_LOG_init(ctx, tmpFile, KSI_LOG_DEBUG );
-	CuAssert(tc, "Failed to initialize logger.", res == KSI_OK);
+	res = KSI_Logger_new(ctx, tmpFile, KSI_LOG_DEBUG, &logger);
+	CuAssert(tc, "Unable to create logger", res == KSI_OK && logger != NULL);
+
+	res = KSI_setLogger(ctx, logger);
+	CuAssert(tc, "Unable to set logger", res == KSI_OK);
 
 	/* Generate data. */
 	doLog(tc, ctx);
@@ -136,8 +144,9 @@ static void TestLogLevelRestriction(CuTest* tc) {
 	char tmpFile[] = "tmpXXXXXXXX";
 	char tmpBuf[0xffff];
 	int len;
-	char *ptr;
+	char *ptr = NULL;
 	FILE *f = NULL;
+	KSI_Logger *logger = NULL;
 
 	KSI_CTX *ctx = NULL;
 
@@ -148,8 +157,11 @@ static void TestLogLevelRestriction(CuTest* tc) {
 	CuAssert(tc, "Unable to create temporary file name.", mkstemp(tmpFile) > 0);
 
 	/* Init logging. */
-	res = KSI_LOG_init(ctx, tmpFile, KSI_LOG_INFO );
-	CuAssert(tc, "Failed to initialize logger.", res == KSI_OK);
+	res = KSI_Logger_new(ctx, tmpFile, KSI_LOG_INFO, &logger);
+	CuAssert(tc, "Unable to create logger", res == KSI_OK && logger != NULL);
+
+	res = KSI_setLogger(ctx, logger);
+	CuAssert(tc, "Unable to set logger", res == KSI_OK);
 
 	/* Generate data. */
 	doLog(tc, ctx);
@@ -190,6 +202,7 @@ static void TestDoNotChangeFault(CuTest* tc) {
 	int res;
 	char tmpFile[] = "tmpXXXXXXXX";
 	int i;
+	KSI_Logger *logger = NULL;
 
 	static int failures[] = {KSI_IO_ERROR, KSI_INVALID_ARGUMENT, KSI_OUT_OF_MEMORY};
 
@@ -202,8 +215,11 @@ static void TestDoNotChangeFault(CuTest* tc) {
 	CuAssert(tc, "Unable to create temporary file name.", mkstemp(tmpFile) > 0);
 
 	/* Init logging. */
-	res = KSI_LOG_init(ctx, tmpFile, KSI_LOG_INFO );
-	CuAssert(tc, "Failed to initialize logger.", res == KSI_OK);
+	res = KSI_Logger_new(ctx, tmpFile, KSI_LOG_INFO, &logger);
+	CuAssert(tc, "Unable to create logger", res == KSI_OK && logger != NULL);
+
+	res = KSI_setLogger(ctx, logger);
+	CuAssert(tc, "Unable to set logger", res == KSI_OK);
 
 
 	for (i = 0; i < sizeof(failures); i++) {
@@ -214,10 +230,7 @@ static void TestDoNotChangeFault(CuTest* tc) {
 		doLog(tc, ctx);
 
 		/* The state of the context should be the same as before logging. */
-		CuAssert(tc, "Context did not remain in failed state.", ctx->errors_count > 0);
-
-		CuAssert(tc, "Failure status changed", res == failures[i]);
-
+		CuAssert(tc, "Context did not remain in failed state.", KSI_CTX_getStatus(ctx) == failures[i]);
 	}
 	/* Close context. */
 	KSI_CTX_free(ctx);

@@ -300,9 +300,6 @@ static void TestTlvGetNextNested(CuTest* tc) {
 
 	res = KSI_TLV_getStringValue(nested, &str);
 	CuAssert(tc, "Unable to read string from nested TLV", res == KSI_OK && str != NULL);
-
-	printf("Str = %s\n", str);
-
 	CuAssert(tc, "Unexpected string from nested TLV.", !strcmp("THIS IS A TLV CONTENT", str));
 
 	res = KSI_TLV_getNextNestedTLV(tlv, &nested);

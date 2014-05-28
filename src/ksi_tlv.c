@@ -23,7 +23,7 @@ struct KSI_TLV_st {
 	unsigned int tag;
 
 	/* Max size of the buffer. Default is 0xffff bytes. */
-	int buffer_size;
+	size_t buffer_size;
 
 	/* Internal storage. */
 	unsigned char *buffer;
@@ -35,7 +35,7 @@ struct KSI_TLV_st {
 	int payloadType;
 
 	unsigned char *datap;
-	int datap_len;
+	size_t datap_len;
 
 	int relativeOffset;
 	int absoluteOffset;
@@ -49,7 +49,7 @@ static int createOwnBuffer(KSI_TLV *tlv, int copy) {
 	KSI_ERR err;
 	unsigned char *buf = NULL;
 	int buf_size = KSI_BUFFER_SIZE;
-	int buf_len = 0;
+	size_t buf_len = 0;
 
 	KSI_BEGIN(tlv->ctx, &err);
 
@@ -90,8 +90,8 @@ cleanup:
 /**
  *
  */
-static int appendBlob(KSI_TLV *tlv, unsigned char *data, size_t data_length) {
-	int size = -1;
+static size_t appendBlob(KSI_TLV *tlv, unsigned char *data, size_t data_length) {
+	size_t size = 0;
 	int res;
 
 	if (tlv->payloadType != KSI_TLV_PAYLOAD_RAW) {
@@ -124,7 +124,7 @@ static int readTlv(KSI_RDR *rdr, KSI_TLV **tlv, int copy) {
 	int res;
 	KSI_ERR err;
 	unsigned char hdr[4];
-	int readCount;
+	unsigned int readCount;
 	KSI_TLV *tmp = NULL;
 	size_t length = 0;
 	int isLenient = 0;
@@ -355,7 +355,7 @@ static int encodeAsUInt64(KSI_TLV *tlv) {
 	}
 
 	/* Verify size of data - fail if overflow. */
-	if (tlv->datap_len < 0 || tlv->datap_len > sizeof(uint64_t)) {
+	if (tlv->datap_len > sizeof(uint64_t)) {
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, "TLV size not in range for integer value.");
 		goto cleanup;
 	}
@@ -663,7 +663,7 @@ cleanup:
 int KSI_TLV_getUInt64Value(KSI_TLV *tlv, KSI_uint64_t *val) {
 	KSI_ERR err;
 	KSI_uint64_t tmp = 0;
-	int i;
+	size_t i;
 
 	KSI_BEGIN(tlv->ctx, &err);
 
@@ -1346,7 +1346,7 @@ int KSI_TLV_serializePayload(KSI_TLV *tlv, unsigned char *buf, int *len) {
 static int stringify(KSI_TLV *tlv, int indent, char *str, int size, int *len) {
 	int res;
 	int l = *len;
-	int i;
+	size_t i;
 	KSI_uint64_t tmpInt;
 
 	if (*len >= size) {
@@ -1367,19 +1367,19 @@ static int stringify(KSI_TLV *tlv, int indent, char *str, int size, int *len) {
 
 	switch (tlv->payloadType) {
 		case KSI_TLV_PAYLOAD_RAW:
-			l += snprintf(str + l, NOTNEG(size - l), " len = %d : ", tlv->datap_len);
+			l += snprintf(str + l, NOTNEG(size - l), " len = %llu : ", (unsigned long long)tlv->datap_len);
 			for (i = 0; i < tlv->datap_len; i++) {
 				l += snprintf(str + l, NOTNEG(size - l), "%02x", tlv->datap[i]);
 			}
 			break;
 		case KSI_TLV_PAYLOAD_STR:
-			l += snprintf(str + l, NOTNEG(size - l), " len = %d : \"%s\"", tlv->datap_len, tlv->datap);
+			l += snprintf(str + l, NOTNEG(size - l), " len = %llu : \"%s\"", (unsigned long long)tlv->datap_len, tlv->datap);
 			break;
 		case KSI_TLV_PAYLOAD_INT:
 			res = KSI_TLV_getUInt64Value(tlv, &tmpInt);
 			if (res != KSI_OK) goto cleanup;
 
-			l += snprintf(str + l, NOTNEG(size - l), " len = %d : 0x%llx", tlv->datap_len, (unsigned long long) tmpInt);
+			l += snprintf(str + l, NOTNEG(size - l), " len = %llu : 0x%llx", (unsigned long long)tlv->datap_len, (unsigned long long) tmpInt);
 			break;
 		case KSI_TLV_PAYLOAD_TLV:
 			l += snprintf(str + l, NOTNEG(size - l), ":");

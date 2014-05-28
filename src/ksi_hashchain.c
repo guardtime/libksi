@@ -12,7 +12,7 @@ static int highBit(unsigned int n) {
     return n - (n >> 1);
 }
 
-static int addNvlImprint(KSI_DataHash *first, KSI_DataHash *second, KSI_DataHasher *hsr, int *buf_len) {
+static int addNvlImprint(KSI_DataHash *first, KSI_DataHash *second, KSI_DataHasher *hsr) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = first;
 	const unsigned char *imprint;
@@ -113,7 +113,6 @@ static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, KSI_DataHash *inpu
 	KSI_ERR err;
 	KSI_CTX *ctx = NULL;
 	int res;
-	int tmp_len;
 	int level = startLevel;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
@@ -166,7 +165,7 @@ static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, KSI_DataHash *inpu
 		}
 
 		if (isLeft) {
-			res = addNvlImprint(hsh, inputHash, hsr,  &tmp_len);
+			res = addNvlImprint(hsh, inputHash, hsr);
 			KSI_CATCH(&err, res) goto cleanup;
 
 			res = addChainImprint(hsr, link);
@@ -175,7 +174,7 @@ static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, KSI_DataHash *inpu
 			res = addChainImprint(hsr, link);
 			KSI_CATCH(&err, res) goto cleanup;
 
-			res = addNvlImprint(hsh, inputHash, hsr, &tmp_len);
+			res = addNvlImprint(hsh, inputHash, hsr);
 			KSI_CATCH(&err, res) goto cleanup;
 		}
 
@@ -215,53 +214,50 @@ cleanup:
 /**
  *
  */
-int KSI_HashChain_new(KSI_CTX *ctx, KSI_DataHash *hash, unsigned int levelCorrection, int isLeft, KSI_HashChainLink **node) {
-	KSI_ERR err;
-	int res;
-	KSI_HashChainLink *tmp = NULL;
-
-	KSI_BEGIN(ctx, &err);
-
-	res = KSI_HashChainLink_new(ctx, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_HashChainLink_setIsLeft(tmp, isLeft);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_HashChainLink_setLevelCorrection(tmp, levelCorrection);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_HashChainLink_setImprint(tmp, hash);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	*node = tmp;
-	tmp = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_HashChainLink_free(tmp);
-
-	return KSI_RETURN(&err);
-}
-
-/**
- *
- */
 int KSI_HashChain_appendLink(KSI_CTX *ctx, KSI_DataHash *siblingHash, KSI_DataHash *metaHash, KSI_MetaData *metaData, int isLeft, unsigned int levelCorrection, KSI_LIST(KSI_HashChainLink) **chain) {
 	KSI_ERR err;
-	KSI_HashChainLink *chainLink = NULL;
+	KSI_HashChainLink *link = NULL;
 	int res;
 	KSI_LIST(KSI_HashChainLink) *tmp = NULL;
-
+	int mode = 0;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, chain != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	res = KSI_HashChain_new(ctx, siblingHash, levelCorrection, isLeft, &chainLink);
+	/* Create new link. */
+	res = KSI_HashChainLink_new(ctx, &link);
 	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Is the siblin right of left. */
+	res = KSI_HashChainLink_setIsLeft(link, isLeft);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Chain link level correction. */
+	res = KSI_HashChainLink_setLevelCorrection(link, levelCorrection);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	if (siblingHash != NULL) mode |= 0x01;
+	if (metaHash != NULL) mode |= 0x02;
+	if (metaData != NULL) mode |= 0x04;
+
+	switch (mode) {
+		case 0x01:
+			res = KSI_HashChainLink_setImprint(link, siblingHash);
+			KSI_CATCH(&err, res) goto cleanup;
+			break;
+		case 0x02:
+			res = KSI_HashChainLink_setMetaHash(link, metaHash);
+			KSI_CATCH(&err, res) goto cleanup;
+			break;
+		case 0x04:
+			res = KSI_HashChainLink_setMetaData(link, metaData);
+			KSI_CATCH(&err, res) goto cleanup;
+			break;
+		default:
+			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Not implemented");
+			goto cleanup;
+	}
 
 	tmp = *chain;
 
@@ -270,9 +266,9 @@ int KSI_HashChain_appendLink(KSI_CTX *ctx, KSI_DataHash *siblingHash, KSI_DataHa
 		KSI_CATCH(&err, res) goto cleanup;
 	}
 
-	res = KSI_HashChainLinkList_append(tmp, chainLink);
+	res = KSI_HashChainLinkList_append(tmp, link);
 	KSI_CATCH(&err, res) goto cleanup;
-	chainLink = NULL;
+	link = NULL;
 
 	*chain = tmp;
 	tmp = NULL;
@@ -282,7 +278,7 @@ int KSI_HashChain_appendLink(KSI_CTX *ctx, KSI_DataHash *siblingHash, KSI_DataHa
 cleanup:
 
 	KSI_HashChainLinkList_free(tmp);
-	KSI_HashChainLink_free(chainLink);
+	KSI_HashChainLink_free(link);
 
 	return KSI_RETURN(&err);
 }

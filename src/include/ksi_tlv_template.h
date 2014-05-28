@@ -87,7 +87,7 @@ extern "C" {
 	#define KSI_TLV_SEEK_POS(tag, setter)													KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_SEEK_POS, tag, 0, 0, NULL, setter)
 
 	#define KSI_TLV_CALLBACK(tag, isNonCritical, isForward, getter, setter, encode, decode)	KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_CALLBACK, tag, isNonCritical, isForward, getter, setter, NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, encode, decode, NULL, NULL)
-	#define KSI_END_TLV_TEMPLATE { -1, 0, 0, 0, NULL, NULL}};
+	#define KSI_END_TLV_TEMPLATE { -1, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}};
 
 
 	/**

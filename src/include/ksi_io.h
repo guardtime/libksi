@@ -35,7 +35,7 @@ extern "C" {
 	 *
 	 * \return KSI_OK when no errors occured.
 	 */
-	int KSI_RDR_read_ex(KSI_RDR *rdr, unsigned char *buffer, const size_t bufferLength, int *readCount);
+	int KSI_RDR_read_ex(KSI_RDR *rdr, unsigned char *buffer, const size_t bufferLength, unsigned int *readCount);
 
 	/* TODO!
 	 * Method for reading from reader without copyng data. The pointer #ptr will point to the parent payload
@@ -45,7 +45,7 @@ extern "C" {
 	 *
 	 * \note This method can be applied to only #KSI_RDR which is based on a memory buffer.
 	 */
-	int KSI_RDR_read_ptr(KSI_RDR *rdr, unsigned char **ptr, const size_t len, int *readCount);
+	int KSI_RDR_read_ptr(KSI_RDR *rdr, unsigned char **ptr, const size_t len, unsigned int *readCount);
 
 	/* TODO!
 	 *

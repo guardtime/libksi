@@ -4,6 +4,14 @@
 
 #include "ksi_internal.h"
 
+struct KSI_Logger_st {
+	KSI_CTX *ctx;
+	int logLevel;
+	FILE *logStream;
+	char *logFile;
+
+};
+
 static const char *level2str(int level) {
 	switch (level) {
 		case KSI_LOG_TRACE: return "TRACE";
@@ -17,13 +25,15 @@ static const char *level2str(int level) {
 }
 
 static int writeLog(KSI_CTX *ctx, int logLevel, char *format, va_list va) {
-	KSI_ERR err;
-	/* Do not call #KSI_BEGIN. */
-	KSI_ERR_init(ctx, &err);
+	int res;
 	FILE *f = NULL;
 	struct tm *tm_info;
 	char time_buf[32];
 	time_t timer;
+	KSI_Logger *logger = NULL;
+
+	res = KSI_getLogger(ctx, &logger);
+	if (res != KSI_OK) goto cleanup;
 
 	timer = time(NULL);
 
@@ -31,30 +41,28 @@ static int writeLog(KSI_CTX *ctx, int logLevel, char *format, va_list va) {
 	strftime(time_buf, sizeof(time_buf), "%d.%m.%Y %H:%M:%S", tm_info);
 
 	if (ctx == NULL || format == NULL) {
-		KSI_ERR_fail(&err, KSI_INVALID_ARGUMENT, 0, __FILE__, __LINE__, NULL);
+		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
-
-	if (ctx->logLevel < logLevel) {
+	if (logger == NULL || logger->logLevel < logLevel) {
 		/* Do not perform logging.
 		 * NB! Do not call macro #KSI_success. */
-		KSI_ERR_success(&err);
+		res = KSI_OK;
 
 		goto cleanup;
 	}
-
-	f = ctx->logStream != NULL ? ctx->logStream : stdout;
+	f = logger->logStream != NULL ? logger->logStream : stdout;
 
 	fprintf(f, "%s [%s] - ", level2str(logLevel), time_buf);
 	vfprintf(f, format, va);
 	fprintf(f, "\n");
 
 	/* NB! Do not call macro #KSI_success. */
-	KSI_ERR_success(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_ERR_apply(&err);
+	return res;
 }
 
 #define KSI_LOG_FN(suffix, level) \
@@ -84,82 +92,79 @@ static int KSI_LOG_log(KSI_CTX *ctx, int level, char *format, ...) {
 }
 
 
-static int closeLogFile(KSI_CTX *ctx) {
+int KSI_Logger_new(KSI_CTX *ctx, char *fileName, int logLevel, KSI_Logger **logger) {
 	KSI_ERR err;
-	KSI_ERR_init(ctx, &err);
-
-	if (ctx->logStream != NULL) {
-		if (!fclose(ctx->logStream)) {
-			KSI_ERR_fail(&err, KSI_IO_ERROR, 0, __FILE__, __LINE__, NULL);
-			goto cleanup;
-		}
-
-		KSI_free(ctx->logFile);
-		ctx->logFile = NULL;
-	}
-	ctx->logStream = NULL;
-	ctx->logFile = NULL;
-	ctx->logLevel = KSI_LOG_NONE;
-
-	KSI_ERR_success(&err);
-
-cleanup:
-	return KSI_ERR_apply(&err);
-}
-
-int KSI_LOG_init(KSI_CTX *ctx, char *fileName, int logLevel) {
-	KSI_ERR err;
-	int res;
+	KSI_Logger *tmp = NULL;
 
 	FILE *f = NULL;
 	char *logFileName = NULL;
 
-	KSI_ERR_init(ctx, &err);
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, logger != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
 
 	if (logLevel < KSI_LOG_NONE || logLevel > KSI_LOG_DEBUG) {
-		KSI_ERR_fail(&err, KSI_INVALID_ARGUMENT, 0, __FILE__, __LINE__, NULL);
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
 
-	/* Close the log file */
-	res = closeLogFile(ctx);
+	tmp = KSI_new(KSI_Logger);
+	if (tmp == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
 
 	if (fileName != NULL && strcmp("-", fileName)) {
 		f = fopen(fileName, "a");
 		if (f == NULL) {
-			KSI_ERR_fail(&err, KSI_IO_ERROR, 0, __FILE__, __LINE__, "Unable to open log file for append.");
+			KSI_FAIL(&err, KSI_IO_ERROR, "Unable to open log file for append.");
 			goto cleanup;
 		}
 	}
-
-	if (res != KSI_OK) goto cleanup;
 
 	/* Copy log file name */
 	if (fileName != NULL) {
 		logFileName = KSI_calloc(strlen(fileName) + 1, 1);
 		if (logFileName == NULL) {
-			KSI_ERR_fail(&err, KSI_OUT_OF_MEMORY, 0, __FILE__, __LINE__, NULL);
+			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 			goto cleanup;
 		}
-		strcpy(logFileName, fileName);
+		strncpy(logFileName, fileName, strlen(fileName));
 	}
 
 	/* Update the context */
-	ctx->logFile = logFileName;
-	logFileName = NULL;
+	tmp->ctx = ctx;
 
-	ctx->logStream = f;
+	tmp->logFile = logFileName;
+	logFileName = NULL;
+	tmp->logStream = f;
 	f = NULL;
 
-	ctx->logLevel = logLevel;
+	tmp->logLevel = logLevel;
+
+	*logger = tmp;
+	tmp = NULL;
 
 	KSI_ERR_success(&err);
 
 cleanup:
+
+	KSI_Logger_free(tmp);
 	KSI_free(logFileName);
 	if (f != NULL) fclose(f);
 
 	return KSI_ERR_apply(&err);
+}
+
+void KSI_Logger_free(KSI_Logger *logger) {
+	if (logger != NULL) {
+		if (logger->logStream != NULL) {
+			fclose(logger->logStream);
+		}
+
+		KSI_free(logger->logFile);
+		KSI_free(logger);
+	}
 }
 
 int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned char *data, int data_len) {
@@ -168,8 +173,14 @@ int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned 
 	int logStr_size = 0;
 	int logStr_len = 0;
 	int i;
+	KSI_Logger *logger = NULL;
 
-	if (level < ctx->logLevel) goto cleanup;
+	res = KSI_getLogger(ctx, &logger);
+	if (res != KSI_OK) {
+		goto cleanup;
+	}
+
+	if (logger == NULL || level < logger->logLevel) goto cleanup;
 
 	logStr_size = data_len * 2 + 1;
 
@@ -195,8 +206,12 @@ cleanup:
 int KSI_LOG_logTlv(KSI_CTX *ctx, int level, const char *prefix, KSI_TLV *tlv) {
 	int res = KSI_UNKNOWN_ERROR;
 	char *serialized = NULL;
+	KSI_Logger *logger = NULL;
 
-	if (level < ctx->logLevel) {
+	res = KSI_getLogger(ctx, &logger);
+	if (res != KSI_OK) goto cleanup;
+
+	if (logger == NULL || level < logger->logLevel) {
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -225,7 +240,12 @@ int KSI_LOG_logDataHash(KSI_CTX *ctx, int level, const char *prefix, KSI_DataHas
 	int res = KSI_UNKNOWN_ERROR;
 	const unsigned char *imprint = NULL;
 	int imprint_len = 0;
-	if (level < ctx->logLevel) {
+	KSI_Logger *logger = NULL;
+
+	res = KSI_getLogger(ctx, &logger);
+	if (res != KSI_OK) goto cleanup;
+
+	if (logger == NULL || level < logger->logLevel) {
 		res = KSI_OK;
 		goto cleanup;
 	}

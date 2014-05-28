@@ -1822,17 +1822,23 @@ cleanup:
 
 int KSI_Signature_getDataHash(KSI_Signature *sig, const KSI_DataHash **hsh) {
 	KSI_ERR err;
+	AggrChainRec *aggr = NULL;
+	int res;
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_PRE(&err, hsh != NULL) goto cleanup;
 	KSI_BEGIN(sig->ctx, &err);
 
-	// TODO!
+	res = AggrChainRecList_elementAt(sig->aggregationChainList, 0, &aggr);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*hsh = aggr->inputHash;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
 
-	KSI_nofree(h);
+	KSI_nofree(aggr);
 
 	return KSI_RETURN(&err);
 }
@@ -1872,12 +1878,6 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
-
-int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char ** identity) {
-	*identity = "TODO!";
-	return KSI_OK;
-}
-
 
 int KSI_Signature_clone(const KSI_Signature *sig, KSI_Signature **clone) {
 	KSI_ERR err;
@@ -2033,7 +2033,7 @@ cleanup:
 
 }
 
-int KSI_Signature_getSignedIdentity(KSI_Signature *sig, char **signerIdentity) {
+int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 	KSI_ERR err;
 	int res;
 	int i, j;

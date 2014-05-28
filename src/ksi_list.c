@@ -9,7 +9,7 @@ struct KSI_List_st {
 	size_t arr_size;
 	size_t arr_len;
 	void (*obj_free)(void *);
-	int iter;
+	unsigned int iter;
 
 };
 
@@ -23,7 +23,7 @@ static int appendElement(KSI_List *list, void* obj) {
 	}
 
 	if ((list->arr_len + 1) >= list->arr_size) {
-		int i;
+		unsigned int i;
 
 		tmp_arr = KSI_calloc(list->arr_size + KSI_LIST_SIZE_INCREMENT,
 		        sizeof(void *));
@@ -55,7 +55,7 @@ cleanup:
 
 void KSI_List_free(KSI_List *list) {
 	if (list != NULL) {
-		int i;
+		unsigned int i;
 		for (i = 0; i < list->arr_len; i++) {
 			if (list->obj_free != NULL) {
 				list->obj_free(list->arr[i]);
@@ -150,11 +150,11 @@ cleanup:
 
 int KSI_List_indexOf(const KSI_List *list, const void *o) {
 	int index = -1;
-	int i;
+	unsigned int i;
 	if (list == NULL || o == NULL) goto cleanup;
 	for (i = 0; i < list->arr_len; i++) {
 		if (o == list->arr[i]) {
-			index = i;
+			index = (int)i;
 			break;
 		}
 	}
@@ -164,7 +164,7 @@ cleanup:
 	return index;
 }
 
-int KSI_List_replaceAt(KSI_List *list, int pos, void *o) {
+int KSI_List_replaceAt(KSI_List *list, unsigned int pos, void *o) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (list == NULL || o == NULL || pos > list->arr_len) {
@@ -181,9 +181,9 @@ cleanup:
 	return res;
 }
 
-int KSI_List_insertAt(KSI_List *list, int pos, void *o) {
+int KSI_List_insertAt(KSI_List *list, unsigned int pos, void *o) {
 	int res = KSI_UNKNOWN_ERROR;
-	int i;
+	size_t i;
 
 	if (list == NULL || o == NULL || pos > list->arr_len) {
 		res = KSI_INVALID_ARGUMENT;
@@ -206,7 +206,7 @@ cleanup:
 	return res;
 }
 
-int KSI_List_elementAt(const KSI_List *list, int pos, void **o) {
+int KSI_List_elementAt(const KSI_List *list, unsigned int pos, void **o) {
 	int res = KSI_UNKNOWN_ERROR;
 	if (list == NULL || o == NULL || pos >= list->arr_len) {
 		res = KSI_INVALID_ARGUMENT;
@@ -226,11 +226,11 @@ int KSI_List_length(const KSI_List *list) {
 	return list == NULL ? 0 : list->arr_len;
 }
 
-int KSI_List_remove(KSI_List *list, int pos) {
+int KSI_List_remove(KSI_List *list, unsigned int pos) {
 	int res = KSI_UNKNOWN_ERROR;
-	int i;
+	size_t i;
 
-	if (list == NULL || pos < 0 || pos >= list->arr_len) {
+	if (list == NULL || pos >= list->arr_len) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}

@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "Unable to get PKI trustprovider from KSI context.");
 		goto cleanup;
 	}
-	res = KSI_PKITruststore_addLookupFile(ctx->pkiTruststore, "test/resource/tlv/server-3.crt");
+	res = KSI_PKITruststore_addLookupFile(pki, "test/resource/tlv/server-3.crt");
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to add certificate to PKI.");
 		goto cleanup;

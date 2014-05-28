@@ -25,6 +25,8 @@ int KSI_LIST_FN_NAME(type, length)(const KSI_LIST(type) *);						\
 int KSI_LIST_FN_NAME(type, elementAt)(const KSI_LIST(type) *, int pos, type **);		\
 KSI_CTX *type##List_getCtx(const KSI_LIST(type) *o);							\
 
+
+typedef struct KSI_Logger_st KSI_Logger;
 typedef struct KSI_CTX_st KSI_CTX;
 typedef struct KSI_ERR_st KSI_ERR;
 typedef struct KSI_TLV_st KSI_TLV;
