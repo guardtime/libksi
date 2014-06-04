@@ -1,42 +1,6 @@
 # Generated with mk_makefile.sh
-AM_CFLAGS=-g -Wall
+AM_CFLAGS=-g -Wall -I../src
 bin_PROGRAMS=runner ksi_sign ksi_extend ksi_pubfile
-
-apiSources = \
-		../src/config.h \
-		../src/include/ksi_hashchain.h \
-		../src/include/ksi_hash.h \
-		../src/include/ksi_net.h \
-		../src/include/ksi_tlv_template.h \
-		../src/ksi_base32.c \
-		../src/ksi_base.c \
-		../src/ksi_base.h \
-		../src/ksi_crc32.c \
-		../src/ksi_err.c \
-		../src/ksi_err.h \
-		../src/ksi_hash.c \
-		../src/ksi_hashchain.c \
-		../src/ksi_hash_openssl.c \
-		../src/ksi_internal.c \
-		../src/ksi_internal.h \
-		../src/ksi_io.c \
-		../src/ksi_io.h \
-		../src/ksi_list.c \
-		../src/ksi_log.c \
-		../src/ksi_log.h \
-		../src/ksi_net.c \
-		../src/ksi_net_curl.c \
-		../src/ksi_tlv.c \
-		../src/ksi_signature.c \
-		../src/ksi_publicationsfile.c \
-		../src/ksi_tlv_easy.h \
-		../src/ksi_tlv_tags.h \
-		../src/ksi_tlv.h \
-		../src/ksi_tlv_template.c \
-		../src/ksi_types.c \
-		../src/ksi_types_base.c \
-		../src/ksi_util.c \
-		../src/ksi_pkitruststore_openssl.c
 
 runner_SOURCES= \
 		all_tests.c \
@@ -54,17 +18,18 @@ runner_SOURCES= \
 		ksi_tlv_test.c \
 		ksi_util_test.c \
 		cutest/CuTest.h \
-		cutest/CuTest.c \
-		$(apiSources)
-		
+		cutest/CuTest.c
+
+runner_LDADD = $(top_builddir)/src/libksi.la
+				
 ksi_sign_SOURCES= \
-		sign_test.c \
-		$(apiSources)
+		sign_test.c 
+ksi_sign_LDADD = $(runner_LDADD)
 		
 ksi_extend_SOURCES= \
-		extend_test.c \
-		$(apiSources)
+		extend_test.c
+ksi_extend_LDADD = $(runner_LDADD)		
 		
 ksi_pubfile_SOURCES= \
-		pubfile_test.c \
-		$(apiSources)
+		pubfile_test.c
+ksi_pubfile_LDADD = $(runner_LDADD)

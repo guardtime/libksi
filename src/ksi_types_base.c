@@ -163,7 +163,7 @@ int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, KSI_Utf8String **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Utf8String *tmp = NULL;
 	char *val = NULL;
-	int len = 0;
+	size_t len = 0;
 
 	tmp = KSI_new(KSI_Utf8String);
 	if (tmp == NULL) {

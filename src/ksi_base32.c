@@ -194,7 +194,7 @@ int KSI_base32Encode(const unsigned char *data, size_t data_len, size_t group_le
 	for (bits_read = 0;	(next_bits = readNextBits(data, data_len, bits_read)) != -1; bits_read += 5) {
 		tmp[ret_len++] = base32EncodeTable[next_bits];
 
-		if (ret_len % (group_len + 1) == group_len && bits_read + 5 < data_len * 8) {
+		if (group_len > 0 && ret_len % (group_len + 1) == group_len && bits_read + 5 < data_len * 8) {
 			tmp[ret_len++] = '-';
 		}
 	}

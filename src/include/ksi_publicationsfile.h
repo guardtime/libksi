@@ -7,12 +7,29 @@
 extern "C" {
 #endif
 	/**
+	 * \addtogroup publicationsfile Publications file.
+	 * Publication file is a trust anchor for verifying keyless signatures. It contains a list
+	 * of public-key certificates for verifying authentication records and publications for verifying
+	 * calendar hash chains. Publication file has the following components that must appear in the
+	 * following order:
+	 * - 8-byte magic 4B 53 49 50 55 42 4C 46 (in hexadecimal), which in ASCII means the string 'KSIPUBLF'.
+	 * - Header (Single) that contains the version number and the creation time of the publication file.
+	 * - Public Key Certificates (Multiple) that are considered trustworthy at the time of creation of the
+	 * publication file.
+	 * - sPublications (Multiple) that have been created up to the file creation time. Every `publication'
+	 * structure consists of `published data' and `publication reference' structures, where the `published
+	 * data' structure consists of the `publication time' and `published hash' fields.
+	 * - Signature (Single) of the file.
+	 * @{
+	 */
+
+	/**
 	 * A convenience function for loading a publications file from an actual file.
 	 * \param[in]		ctx			KSI context.
 	 * \param[in]		fileName	Publications file filename.
 	 * \param[out]		pubFile		Pointer to the receiving pointer.
 	 *
-	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
 	int KSI_PublicationsFile_fromFile(KSI_CTX *ctx, const char *fileName, KSI_PublicationsFile **pubFile);
@@ -22,7 +39,7 @@ extern "C" {
 	 * \param[in]	pubFile			Publicationsfile object.
 	 * \param[out]	header			Pointer to receiving pointer.
 	 *
-	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 * \note The output object may not be freed by the user.
 	 */
@@ -33,7 +50,7 @@ extern "C" {
 	 * \param[in]	pubFile			PublicationsFille.
 	 * \param[out]	certificates	Pointer to receiving pointer.
 	 *
-	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 * \note The output object may not be freed by the user.
 	 */
@@ -44,7 +61,7 @@ extern "C" {
 	 * \param[in]	pubFile			PublicationsFille.
 	 * \param[out]	publications	Pointer to receiving pointer.
 	 *
-	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 * \note The output object may not be freed by the user.
 	 */
@@ -55,7 +72,7 @@ extern "C" {
 	 * \param[in]	pubFile			PublicationsFille.
 	 * \param[out]	signature		Pointer to receiving pointer.
 	 *
-	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 * \note The output object may not be freed by the user.
 	 */
@@ -64,9 +81,10 @@ extern "C" {
 	/**
 	 * PKI Certificate search function by certificate Id.
 	 * \param[in]	pubFile			PublicationsFille.
+	 * \param[in]	id				Certificate id.
 	 * \param[out]	cert			Pointer to receiving pointer.
 	 *
-	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 * \note The output object may not be freed by the user.
 	 */
@@ -74,12 +92,12 @@ extern "C" {
 
 	/**
 	 * Search publication by exact time. The publication is returned via output
-	 * parameter #pubRec if found, otherwise #pubRec is evaluated to NULL.
+	 * parameter \c pubRec if found, otherwise \c pubRec is evaluated to NULL.
 	 * \param[in]	pubFile			PublicationsFille.
 	 * \param[in]	pubTime			Publication time.
 	 * \param[out]	pubRec			Pointer to receiving pointer.
 	 *
-	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 * \note The output object may not be freed by the user.
 	 */
@@ -87,13 +105,13 @@ extern "C" {
 
 	/**
 	 * Search nearest publication by time. The next available publication (published
-	 * after the given time #pubTime) is returned via the output parameter #pubRec
-	 * if found, otherwise #pubRec is evaluated to NULL.
+	 * after the given time \c pubTime) is returned via the output parameter \c pubRec
+	 * if found, otherwise \c pubRec is evaluated to NULL.
 	 * \param[in]	pubFile			PublicationsFille.
 	 * \param[in]	pubTime			Publication time.
 	 * \param[out]	pubRec			Pointer to receiving pointer.
 	 *
-	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 * \note The output object may not be freed by the user.
 	 */
@@ -101,13 +119,13 @@ extern "C" {
 
 	/**
 	 * Search nearest publication by time. The next available publication (published
-	 * after the given time #pubTime) is returned via the output parameter #pubRec
-	 * if found, otherwise #pubRec is evaluated to NULL.
+	 * after the given time \c pubTime) is returned via the output parameter \c pubRec
+	 * if found, otherwise \c pubRec is evaluated to NULL.
 	 * \param[in]	pubFile			PublicationsFille.
 	 * \param[in]	pubTime			Publication time.
 	 * \param[out]	pubRec			Pointer to receiving pointer.
 	 *
-	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 * \note The output object may not be freed by the user.
 	 */
@@ -117,7 +135,11 @@ extern "C" {
 	 * Function for freeing publicationsfile object.
 	 * \param[in]	pubFile		Publicationsfile to be freed.
 	 */
-	void KSI_PublicationsFile_free(KSI_PublicationsFile *t);
+	void KSI_PublicationsFile_free(KSI_PublicationsFile *pubFile);
+
+	/**
+	 * @}
+	 */
 
 #ifdef __cplusplus
 }

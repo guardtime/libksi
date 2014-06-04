@@ -2,14 +2,50 @@
 
 #include "../src/ksi_internal.h"
 
+int toHex(KSI_OctetString *certId, char **hex) {
+	int res = KSI_UNKNOWN_ERROR;
+	int len;
+	const unsigned char *raw = NULL;
+	int raw_len = 0;
+	char *tmp = NULL;
+	int i;
+
+	res = KSI_OctetString_extract(certId, &raw, &raw_len);
+	if (res != KSI_OK) goto cleanup;
+
+	len = 2*raw_len + 1;
+
+	tmp = KSI_calloc(len, 1);
+	if (tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	for (i = 0; i < raw_len; i++) {
+		snprintf(tmp + (i * 2), len - i * 2, "%02x", raw[i]);
+	}
+
+	*hex = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_free(tmp);
+
+	return res;
+}
 
 
 static int printCerts(KSI_PublicationsFile *pubFile) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_LIST(KSI_CertificateRecord) *certRecList = NULL;
 	int i;
+	char *hex = NULL;
 	unsigned char *raw = NULL;
 	int len = 0;
+	FILE *f = NULL;
 
 	printf("[certificates]\n");
 
@@ -17,14 +53,29 @@ static int printCerts(KSI_PublicationsFile *pubFile) {
 	if (res != KSI_OK) goto cleanup;
 
 	for (i = 0; i < KSI_CertificateRecordList_length(certRecList); i++) {
+		char fileName[0xff];
 		KSI_CertificateRecord *certRec = NULL;
 		KSI_PKICertificate *cert = NULL;
-//		int j;
+		KSI_OctetString *certId = NULL;
 
-		printf("cert-dummy-%d=file%d.der\n", i, i);
-
+		/* Get the next certificate record from the list. */
 		res = KSI_CertificateRecordList_elementAt(certRecList, i, &certRec);
 		if (res != KSI_OK) goto cleanup;
+
+		/* Extract the certId. */
+		res = KSI_CertificateRecord_getCertId(certRec, &certId);
+		if (res != KSI_OK) goto cleanup;
+
+		/* Encode the certId as base32. */
+		res = toHex(certId, &hex);
+		if (res != KSI_OK) goto cleanup;
+
+		/* Create the file name. */
+		snprintf(fileName, sizeof(fileName), "%s.der", hex);
+		printf("cert%d=%s\n", i, fileName);
+
+		KSI_free(hex);
+		hex = NULL;
 
 		res = KSI_CertificateRecord_getCert(certRec, &cert);
 		if (res != KSI_OK) goto cleanup;
@@ -32,13 +83,18 @@ static int printCerts(KSI_PublicationsFile *pubFile) {
 		res = KSI_PKICertificate_serialize(cert, &raw, &len);
 		if (res != KSI_OK) goto cleanup;
 
-/*		for (j = 0; j < len; j++) {
-			printf("%02x", raw[j]);
-			if (j + 1 < len && (j + 1) % 60 == 0) printf("\n");
+		f = fopen(fileName, "w");
+		if (f == NULL) {
+			fprintf(stderr, "Unable to write file '%s'\n", fileName);
+			goto cleanup;
 		}
 
-		printf("\n\n");
-*/
+		/* TODO! Check for write errors */
+		fwrite(raw, 1, len, f);
+
+		fclose(f);
+		f = NULL;
+
 		KSI_free(raw);
 		raw = NULL;
 	}
@@ -47,6 +103,7 @@ static int printCerts(KSI_PublicationsFile *pubFile) {
 
 cleanup:
 
+	if (f != NULL) fclose(f);
 	KSI_free(raw);
 	return res;
 }
@@ -82,8 +139,9 @@ int main(int argc, char **argv) {
 	res = KSI_getPKITruststore(ctx, &pki);
 	if (res != KSI_OK || pki == NULL) {
 		fprintf(stderr, "Unable to get PKI truststore.");
+		goto cleanup;
 	}
-	res = KSI_PKITruststore_addLookupFile(pki, "test/resource/tlv/dummy.crt");
+	res = KSI_PKITruststore_addLookupFile(pki, "test/resource/tlv/mock.crt");
 	if (res != KSI_OK) {
 		KSI_ERR_statusDump(ctx, stdout);
 		fprintf(stderr, "Unable to read cert.\n");
@@ -161,7 +219,7 @@ int main(int argc, char **argv) {
 			goto cleanup;
 		}
 
-		printf("[pub-%d-%d-%d]\n", 1900 + tm_pubTime->tm_year, tm_pubTime->tm_mon, tm_pubTime->tm_mday);
+		printf("[pub-%d-%d-%d]\n", 1900 + tm_pubTime->tm_year, tm_pubTime->tm_mon + 1, tm_pubTime->tm_mday);
 		printf("pub=%s\n", pubStr);
 
 		for (j = 0; j < KSI_Utf8StringList_length(refs); j++) {

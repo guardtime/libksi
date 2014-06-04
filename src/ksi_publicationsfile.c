@@ -425,7 +425,7 @@ int KSI_PublicationsFile_getPublicationDataByPublicationString(const KSI_Publica
 	KSI_BEGIN(pubFile->ctx, &err);
 
 	/* Decode the publication string. */
-	res = KSI_PublicationData_fromBase32(pubFile->ctx, pubString, strlen(pubString), &findPubData);
+	res = KSI_PublicationData_fromBase32(pubFile->ctx, pubString, &findPubData);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Extract the expected imprint. */

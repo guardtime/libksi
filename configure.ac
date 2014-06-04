@@ -1,10 +1,16 @@
-AC_INIT([ksi-c-api], [0.0.1], [support@guardtime.com])
+AC_INIT([libksi], [0.0.1], [support@guardtime.com])
+AC_CONFIG_FILES([libksi.pc])
+AC_CONFIG_AUX_DIR(config)
+AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_HEADERS([src/config.h])
+AC_CANONICAL_TARGET
 
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 # Checks for programs.
 AC_PROG_CC
+AC_PROG_LIBTOOL
 
-AC_CONFIG_HEADERS([src/config.h])
 # Checks for libraries.
 
 AC_ARG_WITH(openssl,

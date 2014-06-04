@@ -23,6 +23,14 @@
 extern "C" {
 #endif
 
+/**
+ * \addtogroup base KSI base functionality
+ * @{
+ */
+
+/**
+ * KSI function returnvalues.
+ */
 enum KSI_StatusCode {
 /* RETURN CODES WHICH ARE NOT ERRORS */
 	KSI_OK = 0,
@@ -32,46 +40,89 @@ enum KSI_StatusCode {
 	 * Argument to function was invalid. Mostly this indicates \c NULL
 	 * pointer.
 	 */
-	KSI_INVALID_ARGUMENT = 0x00000100,
+	KSI_INVALID_ARGUMENT = 0x100,
 	/**
 	 * Either arguments to function or responses from the server had
 	 * invalid format.
 	 */
-	KSI_INVALID_FORMAT,
+	KSI_INVALID_FORMAT = 0x101,
 	/**
 	 * The given hash algorithm is considered untrustworthy by
 	 * the verification policy.
 	 */
-	KSI_UNTRUSTED_HASH_ALGORITHM,
-	KSI_UNAVAILABLE_HASH_ALGORITHM,
+	KSI_UNTRUSTED_HASH_ALGORITHM = 0x102,
+	/**
+	 * This hash algorithm is not implemented.
+	 */
+	KSI_UNAVAILABLE_HASH_ALGORITHM = 0x103,
 	/**
 	 * Buffer too small to perform operation.
 	 */
-	KSI_BUFFER_OVERFLOW,
+	KSI_BUFFER_OVERFLOW = 0x104,
 	/**
 	 * TLV payload has wrong type for operation.
 	 */
-	KSI_TLV_PAYLOAD_TYPE_MISMATCH,
-
+	KSI_TLV_PAYLOAD_TYPE_MISMATCH = 0x105,
 	/**
 	 * The async operation has not finished.
 	 */
-	KSI_ASYNC_NOT_FINISHED,
-
-	KSI_INVALID_SIGNATURE,
-	KSI_INVALID_PKI_SIGNATURE,
-	KSI_PKI_CERTIFICATE_NOT_TRUSTED,
+	KSI_ASYNC_NOT_FINISHED = 0x106,
+	/**
+	 * Invalid KSI signature.
+	 */
+	KSI_INVALID_SIGNATURE = 0x107,
+	/**
+	 * Invalid PKI signature.
+	 */
+	KSI_INVALID_PKI_SIGNATURE = 0x108,
+	/**
+	 * The PKI signature is not trusted by the API.
+	 */
+	KSI_PKI_CERTIFICATE_NOT_TRUSTED = 0x109,
 /* SYSTEM ERRORS */
-	KSI_OUT_OF_MEMORY = 0x00000300,
-	KSI_IO_ERROR,
+	/**
+	 * Out of memory.
+	 */
+	KSI_OUT_OF_MEMORY = 0x200,
+	/**
+	 * IO error occured.
+	 */
+	KSI_IO_ERROR = 0x201,
+	/**
+	 * A network error occured.
+	 */
 	KSI_NETWORK_ERROR,
+	/**
+	 * A HTTP error occured.
+	 */
 	KSI_HTTP_ERROR,
+	/**
+	 * The aggregator returned an error.
+	 */
 	KSI_AGGREGATOR_ERROR,
+	/**
+	 * The extender returned an error.
+	 */
 	KSI_EXTENDER_ERROR,
+	/**
+	 * The extender returned a wrong calendar chain.
+	 */
 	KSI_EXTEND_WRONG_CAL_CHAIN,
+	/**
+	 * No suitable publication to extend to.
+	 */
 	KSI_EXTEND_NO_SUITABLE_PUBLICATION,
+	/**
+	 * The publication in the signature was not fround in the publications file.
+	 */
 	KSI_VERIFY_PUBLICATION_NOT_FOUND,
+	/**
+	 * The publication in the signature does not match the publication in the publications file.
+	 */
 	KSI_VERIFY_PUBLICATION_MISMATCH,
+	/**
+	 * Invalid publication.
+	 */
 	KSI_INVALID_PUBLICATION,
 	/**
 	 * Cryptographic operation could not be performed. Likely causes are
@@ -80,57 +131,68 @@ enum KSI_StatusCode {
 	 */
 	KSI_CRYPTO_FAILURE,
 
-
+	/**
+	 * Unknown error occured.
+	 */
 	KSI_UNKNOWN_ERROR
 };
-
+/**
+ * Function to convert a #KSI_StatusCode value to a human readable
+ * string value.
+ *
+ * \param[in]		statusCode		#KSI_StatusCode value.
+ *
+ * \return A pointer to a statically allocated string value. This pointer may
+ * not be freed by the caller.
+ */
 const char *KSI_getErrorString(int statusCode);
 
 /**
- * Initialize KSI context #KSI_CTX
+ * Constructor for the central KSI object #KSI_CTX. For thread safety, this object
+ * may not be shared between threads. Also, this object may be freed only if there
+ * are no other objects created using this object - this applies recursively to other
+ * objects created by the user.
+ *
+ * \param[in]		ctx			Pointer to the receiving pointer.
+ *
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an
+ * error code).
  */
-
-int KSI_CTX_new(KSI_CTX **context);
+int KSI_CTX_new(KSI_CTX **ctx);
 
 /**
- * Free KSI context.
+ * Destructor for KSI context object #KSI_CTX.
+ * \param[in]	ctx		KSI ctx.
+ *
+ * \note This function should not be called when there still exist some
+ * objects created using this context.
  */
-void KSI_CTX_free(KSI_CTX *context);
-
-/****************************
- *  ERROR HANDLING FUNCTIONS.
- ****************************/
+void KSI_CTX_free(KSI_CTX *ctx);
 
 /**
  * Returns the current status of the error container.
  * \param[in]	ctx		KSI context.
  *
- * \return The current status code of the KSI context. If #ctx is NULL a
+ * \return The current status code of the KSI \c ctx. If \c ctx is NULL a
  * #KSI_INVALID_ARGUMENT is returned.
  */
 int KSI_CTX_getStatus(KSI_CTX *ctx);
 
 /**
  * Finalizes the current error stack.
+ * \param[in]		err		Pointer to the error object.
  */
 int KSI_ERR_apply(KSI_ERR *err);
 
 /**
- * Dump error stack trace to stream
+ * Dump error stack trace to stream.
+ * \param[in]		ctx		KSI context object.
+ * \param[in]		f		Output stream.
+ *
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an
+ * error code).
  */
 int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f);
-
-/**
- * Set log file.
- *
- * \note this method will append to the file if it exists.
- */
-int KSI_LOG_init(KSI_CTX *ctx, char *fileName, int logLevel);
-
-/**
- * Change the log level.
- */
-int KSI_LOG_setLevel(int logLevel);
 
 /**
  * The Guardtime representation of hash algorithms, necessary to calculate
@@ -166,35 +228,120 @@ enum KSI_HashAlgorithm {
 	KSI_NUMBER_OF_KNOWN_HASHALGS,
 };
 
+/**
+ * KSI global initiation of resources. This function should be called once (independently of
+ * the number of threads) at the beginning of the program.
+ *
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an
+ * error code).
+ *
+ * \note At the end of the program #KSI_global_cleanup should be called.
+ */
 int KSI_global_init(void);
 
+/**
+ * Cleanup function for global objects. This should be called as the last KSI statement executed.
+ */
 void KSI_global_cleanup(void);
 
-int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, KSI_NetProvider *netProvider);
-
+/**
+ * Allocates \c size bytes of memory.
+ * \param[in]	size		Size of allocated block.
+ *
+ * \return Pointer to the allocated memory, or \c NULL if an error occurred.
+ * \note The caller needs to free the allocated memory with #KSI_free.
+ */
 void *KSI_malloc(size_t size);
+
+/**
+ * Allocates \c num times of \c size bytes of memory.
+ * \param[in]	num		Number of blocks to allocate.
+ * \param[in]	size	Size of a single block.
+ *
+ * \return Pointer to the allocated memory, or \c NULL if an error occurred.
+ * \note The caller needs to free the allocated memory with #KSI_free.
+ */
 void *KSI_calloc(size_t num, size_t size);
+
+/**
+ * Reallocates pointer \c ptr to \c size bytes.
+ * \param[in]	ptr		Pointer to the memory being reallocated.
+ * \param[in]	size	New size in bytes.
+ *
+ * \return Pointer to the allocated memory, or \c NULL if an error occurred.
+ * \note The caller needs to free the allocated memory with #KSI_free.
+ */
 void *KSI_realloc(void *ptr, size_t size);
+
+/**
+ * Free memory allocated by #KSI_malloc, #KSI_calloc or #KSI_realloc.
+ * \param[in]	ptr		Pointer to the memory to be freed.
+ */
 void KSI_free(void *ptr);
 
 /**
+ * Send a binary signing request using the specified KSI context.
+ * \param[in]		ctx					KSI context object.
+ * \param[in]		request				Pointer to the binary request.
+ * \param[in]		request_length		Length of the binary request.
+ * \param[out]		handle				Pointer to the receiving pointer of the network handle.
  *
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
 int KSI_sendSignRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle);
+
 /**
+ * Send a binary extend request using the specified KSI context.
+ * \param[in]		ctx					KSI context object.
+ * \param[in]		request				Pointer to the binary request.
+ * \param[in]		request_length		Length of the binary request.
+ * \param[out]		handle				Pointer to the receiving pointer of the network handle.
  *
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
 int KSI_sendExtendRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle);
 
 /**
+ * Send a binary request to download publications file using the specified KSI context.
+ * \param[in]		ctx					KSI context object.
+ * \param[in]		request				Pointer to the binary request.
+ * \param[in]		request_length		Length of the binary request.
+ * \param[out]		handle				Pointer to the receiving pointer of the network handle.
  *
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
 int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle);
 
+/**
+ * Converts the base-32 encoded publicationstring into #KSI_PublicationData object.
+ * \param[in]		ctx				KSI context.
+ * \param[in]		publication		Pointer to base-32 encoded publications string.
+ * \param[in]		published_data	Pointer to the receiving pointer.
+ *
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \note The output memory has to be freed by the caller using #KSI_PublicationData_free.
+ */
+int KSI_PublicationData_fromBase32(KSI_CTX *ctx, const char *publication, KSI_PublicationData **published_data);
 
-int KSI_PublicationData_fromBase32(KSI_CTX *ctx,	const char *publication, int publication_length, KSI_PublicationData **published_data);
+/**
+ * Functioin to concert the published data into a base-32 encoded null-terminated string.
+ * \param[in]		published_data		Pointer to the published data object.
+ * \param[out]		publication			Pointer to the receiving pointer.
+ *
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \note The putput memory has to be freed by the caller using #KSI_free.
+ */
 int KSI_PublicationData_toBase32(const KSI_PublicationData *published_data, char **publication);
 
+/**
+ * Accessor method for the publications file. It will download the publications file from
+ * the uri specified by the KSI context.
+ * \param[in]		ctx			KSI context.
+ * \param[out]		pubFile		Pointer to the receiving pointer.
+ *
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \note The output value may not be freed by the caller.
+ */
 int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile);
 int KSI_createSignature(KSI_CTX *ctx, const KSI_DataHash *dataHash, KSI_Signature **sig);
 int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extended);
@@ -213,6 +360,9 @@ int KSI_setLogger(KSI_CTX *ctx, KSI_Logger *logger);
 
 int KSI_decodeHexStr(const char *hexstr, unsigned char *buf, int buf_size, int *buf_length);
 
+/**
+ * @}
+ */
 #ifdef __cplusplus
 }
 #endif

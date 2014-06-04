@@ -324,6 +324,10 @@ static int encodeAsString(KSI_TLV *tlv) {
 			}
 		}
 
+		if (tlv->datap_len >= tlv->buffer_size) {
+			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, NULL);
+			goto cleanup;
+		}
 		*(tlv->datap + tlv->datap_len) = '\0';
 	}
 	tlv->payloadType = KSI_TLV_PAYLOAD_STR;

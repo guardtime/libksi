@@ -1,4 +1,7 @@
+AUTOMAKE_OPTIONS = foreign
 SUBDIRS = src test
+
+all:
 
 test: all
 	./test/runner

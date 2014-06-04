@@ -6,6 +6,30 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+	/**
+	 * \addtogroup tlv TLV manipulation
+	 * Most KSI objects use a type-length-value (TLV) encoding scheme. The TLV scheme is used
+	 * to encode both the KSI data structures and also protocol data units (PDUs) for transferring
+	 * them between the entities during the signature generation process. The values are octet
+	 * strings of given lengths that carry information to be interpreted as specified by the types.
+	 * The value part of an encoded object may contain nested TLV objects.
+	 *
+	 * For space efficiency, two TLV encodings are used:
+	 * - A 16-bit TLV (TLV16) encodes a 13-bit type and 16-bit length (and can thus contain at most
+	 * 65535 octets of data in the value part).
+	 * - An 8-bit TLV (TLV8) encodes a 5-bit type and 8-bit length (at most 255 octets of value data).
+	 *
+	 * Smaller objects are encoded as TLV8 for lower overhead. A TLV8 type has local significance and
+	 * identifies the encapsulated structure in the context where it is used. A TLV16 type < 256 has
+	 * still local significance, but may be used to encode data that needs 16-bit length. A TLV16
+	 * type >= 256 has global significance and identifies the encapsulated structure in the context of
+	 *  the whole signature generation system.
+	 *
+	 * TLV8 and TLV16 are distinguished by the `16-Bit' flag in the first octet of the type field.
+	 * @{
+	 */
+
 	/**
 	 * This enum contains all the legal values for a TLV payload type.
 	 */
@@ -25,7 +49,6 @@ extern "C" {
 
 	KSI_DEFINE_GET_CTX(KSI_TLV);
 	/**
-	 * \ingroup tlv
 	 * This function creates an new TLV.
 	 *
 	 * \param[in]	ctx			KSI context.
@@ -40,7 +63,6 @@ extern "C" {
 	int KSI_TLV_new(KSI_CTX *ctx, int payloadType, int tag, int isLenient, int isForward, KSI_TLV **tlv);
 
 	/**
-	 * \ingroup tlv
 	 * This function creates a new TLV and initializes its payload with the given \c uint value.
 	 * The payload type will be #KSI_TLV_PAYLOAD_INT.
 	 *
@@ -56,7 +78,6 @@ extern "C" {
 	int KSI_TLV_fromUint(KSI_CTX *ctx, int tag, int isLenient, int isForward, KSI_uint64_t uint, KSI_TLV **tlv);
 
 	/**
-	 * \ingroup tlv
 	 * This function creates a new TLV and initializes its payload with the given string \c str.
 	 * The payload type will be #KSI_TLV_PAYLOAD_INT. The null value is included in the payload.
 	 *
@@ -282,21 +303,75 @@ extern "C" {
 	 * This functions makes an identical copy of a TLV by serializing, parsing
 	 * the serialized value and restoring the internal structure.
 	 *
-	 * \param[in]	tlv			TLV to be cloned.
+	 * \param[in]	tlv			The TLV object to be cloned.
 	 * \param[out]	clone		Pointer to the receiving pointer of the cloned value.
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
 	int KSI_TLV_clone(const KSI_TLV *tlv, KSI_TLV **clone);
 
+	/**
+	 * Set a unsigned 64-bit integer value to the TLV object.
+	 * \param[in]	tlv			The TLV object.
+	 * \param[in]	val			Unsigned 64-bit integer value.
+	 *
+	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+	 * \note This function checks the payload type of the TLV object and will fail if it is not equal to #KSI_TLV_PAYLOAD_INT.
+	 */
 	int KSI_TLV_setUintValue(KSI_TLV *tlv, KSI_uint64_t val);
+
+	/**
+	 * Set a raw value to the TLV object.
+	 * \param[in]	tlv			The TLV object.
+	 * \param[in]	data		Pointer to the raw data.
+	 * \param[in]	data_len	Length of the raw data.
+	 *
+	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+	 * \note This function checks the payload type of the TLV object an will fail if it is not equal to #KSI_TLV_PAYLOAD_RAW.
+	 */
 	int KSI_TLV_setRawValue(KSI_TLV *tlv, const void *data, int data_len);
+
+	/**
+	 * Set a UTF-8 string value to the TLV object.
+	 * \param[in]	tlv			The TLV object.
+	 * \param[in]	str			Pointer to the null-terminated utf-8 string.
+	 *
+	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+	 * \note This function checks the payload type of the TLV object and will fail if it is not equal to #KSI_TLV_PAYLOAD_STR.
+	 */
 	int KSI_TLV_setStringValue(KSI_TLV *tlv, const char *str);
+
+	/**
+	 * Read and create a new TLV object from reader (see #KSI_RDR).
+	 * \param[in]	rdr			Reader object.
+	 * \param[out]	tlv			Pointer to the receiving pointer.
+	 *
+	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+	 */
 	int KSI_TLV_fromReader(KSI_RDR *rdr, KSI_TLV **tlv);
 
+	/**
+	 * Returns the absolute offset of the TLV object in the source raw data. If the TLV object is
+	 * created using #KSI_TLV_new, the offset is 0.
+	 * \param[in]	tlv			The TLV object.
+	 *
+	 * \return The absolute offset of the TLV object.
+	 */
 	int KSI_TLV_getAbsoluteOffset(const KSI_TLV *tlv);
+
+	/**
+	 * Returns the relative offset of the TLV object in the source raw data. (i.e. if this is a nested TLV
+	 *  object, the offset is calculated only within the payload of the parent TLV object)If the TLV object is
+	 * created using #KSI_TLV_new, the offset is 0.
+	 * \param[in]	tlv			The TLV object.
+	 *
+	 * \return The absolute offset of the TLV object.
+	 */
 	int KSI_TLV_getRelativeOffset(const KSI_TLV *tlv);
 
+	/**
+	 * @}
+	 */
 #ifdef __cplusplus
 }
 #endif

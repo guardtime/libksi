@@ -9,6 +9,7 @@ int main(void) {
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sign = NULL;
+	KSI_PKITruststore *pki = NULL;
 
 	unsigned char *raw;
 	int raw_len;
@@ -19,6 +20,18 @@ int main(void) {
 	res = KSI_CTX_new(&ctx);
 	if (res != KSI_OK) {
 		printf("Unable to create context.\n");
+		goto cleanup;
+	}
+
+	res = KSI_getPKITruststore(ctx, &pki);
+	if (res != KSI_OK || pki == NULL) {
+		fprintf(stderr, "Unable to get PKI truststore.");
+		goto cleanup;
+	}
+	res = KSI_PKITruststore_addLookupFile(pki, "test/resource/tlv/mock.crt");
+	if (res != KSI_OK) {
+		KSI_ERR_statusDump(ctx, stdout);
+		fprintf(stderr, "Unable to read cert.\n");
 		goto cleanup;
 	}
 

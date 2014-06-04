@@ -133,7 +133,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	/* Configure curl net provider */
 	if ((res = KSI_CurlNetProvider_setSignerUrl(netProvider, "192.168.1.36:3333")) != KSI_OK) goto cleanup;
 	if ((res = KSI_CurlNetProvider_setExtenderUrl(netProvider, "192.168.1.36:8010/gt-extendingservice")) != KSI_OK) goto cleanup;
-	if ((res = KSI_CurlNetProvider_setPublicationUrl(netProvider, "file:///root/dev/ksi-c-api/test/resource/tlv/publications-4.tlv")) != KSI_OK) goto cleanup;
+	if ((res = KSI_CurlNetProvider_setPublicationUrl(netProvider, "file:///root/dev/ksi-c-api/test/resource/tlv/publications.tlv")) != KSI_OK) goto cleanup;
 	if ((res = KSI_CurlNetProvider_setConnectTimeoutSeconds(netProvider, 5)) != KSI_OK) goto cleanup;
 	if ((res = KSI_CurlNetProvider_setReadTimeoutSeconds(netProvider, 5)) != KSI_OK) goto cleanup;
 
@@ -282,7 +282,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_PublicationData_fromBase32(KSI_CTX *ctx,	const char *publication, int publication_length, KSI_PublicationData **published_data) {
+int KSI_PublicationData_fromBase32(KSI_CTX *ctx,	const char *publication, KSI_PublicationData **published_data) {
 	KSI_ERR err;
 	int res = KSI_UNKNOWN_ERROR;
 	unsigned char *binary_publication = NULL;
@@ -295,14 +295,13 @@ int KSI_PublicationData_fromBase32(KSI_CTX *ctx,	const char *publication, int pu
 	size_t hash_size;
 	KSI_DataHash *pubHash = NULL;
 	KSI_Integer *pubTime;
+	int publication_length = 0;
 
 	KSI_PRE(&err, publication != NULL) goto cleanup;
 	KSI_PRE(&err, published_data != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	if (publication_length < 0) {
-		publication_length = strlen(publication);
-	}
+	publication_length = strlen(publication);
 
 	res = KSI_base32Decode(publication, publication_length, &binary_publication, &binary_publication_length);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -409,6 +408,13 @@ int KSI_PublicationData_toBase32(const KSI_PublicationData *published_data, char
 
 	res = KSI_PublicationData_getTime(published_data, &publicationTime);
 	KSI_CATCH(&err, res) goto cleanup;
+
+	if (publicationTime == NULL) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Publication has no publication time.");
+		goto cleanup;
+	}
+
+	publication_identifier = KSI_Integer_getUInt64(publicationTime);
 
 	for (i = 7; i >= 0; --i) {
 		binary_publication[i] = (unsigned char) (publication_identifier & 0xff);
