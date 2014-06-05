@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libgt
+Description: GuardTime KSI API
+Version: @VERSION@
+Libs: -L${libdir} -lksi -lcurl -lcrypto -lrt
+Cflags: -I${includedir}
