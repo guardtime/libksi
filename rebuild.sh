@@ -6,7 +6,7 @@ rm -f ${PRF}*.tar.gz && \
 rm -fr .deps && \
 mkdir -p config m4 && \
 echo Running autoreconf... && \
-autoreconf -ia && \
+autoreconf -i && \
 echo Running configure script... && \
 ./configure $* && \
 echo Running make... && \
