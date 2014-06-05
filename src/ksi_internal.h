@@ -3,9 +3,7 @@
 
 #include <stdint.h>
 
-#include "ksi_base.h"
-#include "ksi_err.h"
-#include "ksi_log.h"
+#include "include/ksi/ksi.h"
 #include "ksi_tlv_tags.h"
 
 #define KSI_BEGIN(ctx, err) KSI_ERR_init((ctx), (err))

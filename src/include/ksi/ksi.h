@@ -4,20 +4,22 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "include/ksi_base32.h"
-#include "include/ksi_common.h"
-#include "include/ksi_hash.h"
-#include "include/ksi_hashchain.h"
-#include "include/ksi_io.h"
-#include "include/ksi_publicationsfile.h"
-#include "include/ksi_list.h"
-#include "include/ksi_net_curl.h"
-#include "include/ksi_signature.h"
-#include "include/ksi_tlv.h"
-#include "include/ksi_tlv_template.h"
-#include "include/ksi_pkitruststore.h"
-#include "include/ksi_types.h"
-#include "include/ksi_crc32.h"
+#include "ksi_base32.h"
+#include "ksi_common.h"
+#include "ksi_err.h"
+#include "ksi_hash.h"
+#include "ksi_hashchain.h"
+#include "ksi_io.h"
+#include "ksi_publicationsfile.h"
+#include "ksi_list.h"
+#include "ksi_log.h"
+#include "ksi_net_curl.h"
+#include "ksi_signature.h"
+#include "ksi_tlv.h"
+#include "ksi_tlv_template.h"
+#include "ksi_pkitruststore.h"
+#include "ksi_types.h"
+#include "ksi_crc32.h"
 
 #ifdef __cplusplus
 extern "C" {

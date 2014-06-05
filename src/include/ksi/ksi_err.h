@@ -13,6 +13,10 @@
 extern "C" {
 #endif
 
+/**
+ * \addtogroup errorhandling Errorhandling functions.
+ * @{
+ */
 /* Error structure.*/
 struct KSI_ERR_st {
 	/* Free text error message to be displayed. */
@@ -70,6 +74,9 @@ int KSI_ERR_fail(KSI_ERR *ctx, int statusCode, long extErrorCode, char *fileName
  */
 void KSI_ERR_success(KSI_ERR *err);
 
+/**
+ * @}
+ */
 #ifdef __cplusplus
 }
 #endif

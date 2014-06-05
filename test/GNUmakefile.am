@@ -1,5 +1,6 @@
 # Generated with mk_makefile.sh
-AM_CFLAGS=-g -Wall -I../src
+AM_CFLAGS=-g -Wall -lksi -I$(top_builddir)/src/include
+AM_LDFLAGS=-L$(top_builddir)/src
 bin_PROGRAMS=runner ksi_sign ksi_extend ksi_pubfile
 
 runner_SOURCES= \
@@ -20,16 +21,11 @@ runner_SOURCES= \
 		cutest/CuTest.h \
 		cutest/CuTest.c
 
-runner_LDADD = $(top_builddir)/src/libksi.la
-				
 ksi_sign_SOURCES= \
 		sign_test.c 
-ksi_sign_LDADD = $(runner_LDADD)
 		
 ksi_extend_SOURCES= \
 		extend_test.c
-ksi_extend_LDADD = $(runner_LDADD)		
 		
 ksi_pubfile_SOURCES= \
 		pubfile_test.c
-ksi_pubfile_LDADD = $(runner_LDADD)

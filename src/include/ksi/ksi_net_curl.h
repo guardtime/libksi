@@ -1,4 +1,4 @@
-#include "module/ksi_net.h"
+#include "ksi_net.h"
 
 #ifndef KSI_NET_CURL_H_
 #define KSI_NET_CURL_H_

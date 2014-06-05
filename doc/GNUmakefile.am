@@ -1,0 +1,14 @@
+AUTOMAKE_OPTIONS = foreign
+
+all:
+
+doc: htmldoc 
+
+htmldoc: $(builddir)/html/index.html
+
+$(builddir)/html/index.html: $(builddir)/doxyfile
+	doxygen $(builddir)/doxyfile
+
+clean-local:
+	rm -rf html latex 
+

@@ -1,4 +1,4 @@
-#include "module/ksi_ksitrustprovider.h"
+#include "ksi_ksitrustprovider.h"
 
 #ifndef KSI_PUBLICATIONSFILE_H_
 #define KSI_PUBLICATIONSFILE_H_

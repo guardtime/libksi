@@ -1,4 +1,5 @@
-#include "../src/ksi_internal.h"
+#include <stdio.h>
+#include <ksi/ksi.h>
 
 int main(int argc, char **argv) {
 	KSI_CTX *ctx;
