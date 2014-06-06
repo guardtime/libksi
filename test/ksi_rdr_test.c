@@ -207,7 +207,7 @@ static void TestRdrMemInitOwnStorage(CuTest* tc) {
 	KSI_CTX_free(ctx);
 }
 
-CuSuite* KSI_RDR_GetSuite(void)
+CuSuite* KSITest_RDR_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
 

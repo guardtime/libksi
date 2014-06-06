@@ -464,7 +464,7 @@ static void TestTlvSerializeNested(CuTest* tc) {
 	CuAssert(tc, "Failed to serialize nested values of tlv.", res == KSI_OK);
 	CuAssertIntEquals_Msg(tc, "Size of serialized TLV", sizeof(raw) - 1, buf_len);
 
-	CuAssert(tc, "Serialized value does not match original", !debug_memcmp(raw, buf, buf_len));
+	CuAssert(tc, "Serialized value does not match original", !KSITest_memcmp(raw, buf, buf_len));
 
 	KSI_free(str);
 	KSI_TLV_free(tlv);
@@ -645,13 +645,13 @@ static void TestTlvComposeNestedMore(CuTest* tc) {
 	res = KSI_TLV_serialize_ex(outer, buf, sizeof(buf), &buf_len);
 	CuAssert(tc, "Unable to serialize outer TLV.", res == KSI_OK);
 	CuAssertIntEquals_Msg(tc, "Size of serialized data", sizeof(raw), buf_len);
-	CuAssert(tc, "Unexpected serialized data", !debug_memcmp(raw, buf, buf_len));
+	CuAssert(tc, "Unexpected serialized data", !KSITest_memcmp(raw, buf, buf_len));
 
 	KSI_nofree(nested);
 	KSI_TLV_free(outer);
 }
 
-CuSuite* KSI_TLV_GetSuite(void)
+CuSuite* KSITest_TLV_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
 

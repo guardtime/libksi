@@ -51,7 +51,7 @@ static void testSerializeSignature(CuTest *tc) {
 }
 
 
-CuSuite* KSI_Signature_getSuite(void) {
+CuSuite* KSITest_Signature_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
 	SUITE_ADD_TEST(suite, testLoadSignatureFromFile);

@@ -356,12 +356,6 @@ int KSI_setPKITruststore(KSI_CTX *ctx, KSI_PKITruststore *pki);
 int KSI_setNetworkProvider(KSI_CTX *ctx, KSI_NetProvider *net);
 int KSI_setLogger(KSI_CTX *ctx, KSI_Logger *logger);
 
-/**********
- * UTIL's
- **********/
-
-int KSI_decodeHexStr(const char *hexstr, unsigned char *buf, int buf_size, int *buf_length);
-
 /**
  * @}
  */

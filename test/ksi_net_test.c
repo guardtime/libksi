@@ -135,7 +135,7 @@ static void TestSendExtendRequest(CuTest* tc) {
 
 }
 
-CuSuite* KSI_NET_GetSuite(void)
+CuSuite* KSITest_NET_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
 

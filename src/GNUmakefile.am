@@ -43,8 +43,7 @@ libksi_la_SOURCES = \
 	ksi_tlv_tags.h \
 	ksi_tlv_template.c \
 	ksi_types_base.c \
-	ksi_types.c \
-	ksi_util.c
+	ksi_types.c
 
 otherincludedir = $(includedir)/ksi
 otherinclude_HEADERS = \

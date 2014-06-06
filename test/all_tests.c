@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<string.h>
+#include<ctype.h>
 
 #include "../src/config.h"
 #include "cutest/CuTest.h"
@@ -82,17 +83,16 @@ static void addSuite(CuSuite *suite, CuSuite* (*fn)(void)) {
 static CuSuite* initSuite(void) {
 	CuSuite *suite = CuSuiteNew();
 
-	addSuite(suite, KSI_CTX_GetSuite);
-	addSuite(suite, KSI_LOG_GetSuite);
-	addSuite(suite, KSI_RDR_GetSuite);
-	addSuite(suite, KSI_TLV_GetSuite);
-	addSuite(suite, KSI_TLV_Sample_GetSuite);
-	addSuite(suite, KSI_Hash_GetSuite);
-	addSuite(suite, KSI_NET_GetSuite);
-	addSuite(suite, KSI_HashChain_GetSuite);
-	addSuite(suite, KSI_UTIL_GetSuite);
-	addSuite(suite, KSI_Signature_getSuite);
-	addSuite(suite, KSI_KSITrustProvider_getSuite);
+	addSuite(suite, KSITest_CTX_getSuite);
+	addSuite(suite, KSITest_LOG_getSuite);
+	addSuite(suite, KSITest_RDR_getSuite);
+	addSuite(suite, KSITest_TLV_getSuite);
+	addSuite(suite, KSITest_TLV_Sample_getSuite);
+	addSuite(suite, KSITest_Hash_getSuite);
+	addSuite(suite, KSITest_NET_getSuite);
+	addSuite(suite, KSITest_HashChain_getSuite);
+	addSuite(suite, KSITest_Signature_getSuite);
+	addSuite(suite, KSITest_Publicationsfile_getSuite);
 
 	return suite;
 }
@@ -151,7 +151,7 @@ static int RunAllTests() {
 	return failCount;
 }
 
-int debug_memcmp(void *ptr1, void *ptr2, size_t len) {
+int KSITest_memcmp(void *ptr1, void *ptr2, size_t len) {
 	int res;
 	int i;
 	res = memcmp(ptr1, ptr2, len);
@@ -164,6 +164,56 @@ int debug_memcmp(void *ptr1, void *ptr2, size_t len) {
 			printf("%02x ", *((unsigned char *)ptr2 + i));
 		printf("\n");
 	}
+	return res;
+}
+
+int KSITest_decodeHexStr(const char *hexstr, unsigned char *buf, int buf_size, int *buf_length) {
+	int res = KSI_UNKNOWN_ERROR;
+	int i = 0;
+	int len = 0;
+	int count = 0;
+
+	while (hexstr[i]) {
+		char chr = hexstr[i++];
+		if (isspace(chr)) continue;
+
+		if (len >= buf_size) {
+			res = KSI_BUFFER_OVERFLOW;
+			goto cleanup;
+		}
+
+		if (count == 0) {
+			buf[len] = 0;
+		}
+
+		chr = tolower(chr);
+		if (isdigit(chr)) {
+			buf[len] = buf[len] << 4 | (chr - '0');
+		} else if (chr >= 'a' && chr <= 'f') {
+			buf[len] = buf[len] << 4 | (chr - 'a' + 10);
+		} else {
+			res = KSI_INVALID_FORMAT;
+			goto cleanup;
+		}
+
+		if (++count > 1) {
+			count = 0;
+			len++;
+		}
+	}
+
+	if (count != 0) {
+		/* Single char hex value. */
+		res = KSI_INVALID_FORMAT;
+		goto cleanup;
+	}
+
+	*buf_length = len;
+
+	res = KSI_OK;
+
+cleanup:
+
 	return res;
 }
 

@@ -17,7 +17,7 @@ static void buildHashChain(CuTest *tc, const char *hexImprint, int isLeft, int l
 		CuAssert(tc, "Unable to build hash chain.", res == KSI_OK && *chn != NULL);
 	}
 
-	res = KSI_decodeHexStr(hexImprint, buf, sizeof(buf), &buf_len);
+	res = KSITest_decodeHexStr(hexImprint, buf, sizeof(buf), &buf_len);
 	CuAssert(tc, "Unable to parse hex imprint", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, buf, buf_len, &hsh);
@@ -67,7 +67,7 @@ static void testCalChainBuild(CuTest* tc) {
 	buildHashChain(tc, "01bb44fd36a5f3cdee7b5c6df3a6098a09e353335b6029f1477502588a7e37be00", 0, 0, &chn);
 
 
-	res = KSI_decodeHexStr("019e03cd3829beb2f9d4001f17070e25d9a4d3ef25adc39e8907ce3cdca7bebbb3", buf, sizeof(buf), &buf_len);
+	res = KSITest_decodeHexStr("019e03cd3829beb2f9d4001f17070e25d9a4d3ef25adc39e8907ce3cdca7bebbb3", buf, sizeof(buf), &buf_len);
 	CuAssert(tc, "Unable to decode input hash", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, buf, buf_len, &in);
@@ -77,7 +77,7 @@ static void testCalChainBuild(CuTest* tc) {
 	CuAssert(tc, "Unable to aggregate calendar chain", res == KSI_OK && out != NULL);
 
 	/* Expected out hash. */
-	res = KSI_decodeHexStr("0166b4fb533791e50c5ca8f6415ab8de7cdde9f563449ad6f7252385b6e1dc29c1", buf, sizeof(buf), &buf_len);
+	res = KSITest_decodeHexStr("0166b4fb533791e50c5ca8f6415ab8de7cdde9f563449ad6f7252385b6e1dc29c1", buf, sizeof(buf), &buf_len);
 	CuAssert(tc, "Unable to decode expected output hash", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, buf, buf_len, &exp);
@@ -125,7 +125,7 @@ static void testAggrChainBuilt(CuTest *tc) {
 	buildHashChain(tc, "01eaa8541261f66a1cc4c29119569df7293bd52c64dcfa73b47987683af0705b8d", 1, 46, &chn);
 	buildHashChain(tc, "01adad105926792ab36994e394c5dc36be56fbb50b76534fcecfe6b08f4deadfea", 1, 0, &chn);
 
-	res = KSI_decodeHexStr("0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", buf, sizeof(buf), &buf_len);
+	res = KSITest_decodeHexStr("0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", buf, sizeof(buf), &buf_len);
 	CuAssert(tc, "Unable to decode input hash", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, buf, buf_len, &in);
@@ -135,7 +135,7 @@ static void testAggrChainBuilt(CuTest *tc) {
 	CuAssert(tc, "Unable to aggregate chain", res == KSI_OK && out != NULL);
 
 	/* Expected out hash. */
-	res = KSI_decodeHexStr("01559c8ba6dfd2c048ad117a0dea339db9477513af2065fedd23a4da1c69120bc8", buf, sizeof(buf), &buf_len);
+	res = KSITest_decodeHexStr("01559c8ba6dfd2c048ad117a0dea339db9477513af2065fedd23a4da1c69120bc8", buf, sizeof(buf), &buf_len);
 	CuAssert(tc, "Unable to decode expected output hash", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, buf, buf_len, &exp);
@@ -148,7 +148,7 @@ static void testAggrChainBuilt(CuTest *tc) {
 
 
 }
-CuSuite* KSI_HashChain_GetSuite(void) {
+CuSuite* KSITest_HashChain_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
 	SUITE_ADD_TEST(suite, testCalChainBuild);

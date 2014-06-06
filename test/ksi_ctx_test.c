@@ -100,7 +100,7 @@ static void TestCtxFailingPreCondition(CuTest* tc) {
 	CuAssert(tc, "Precondition was unsuccessful", res == KSI_INVALID_ARGUMENT);
 }
 
-CuSuite* KSI_CTX_GetSuite(void)
+CuSuite* KSITest_CTX_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
 

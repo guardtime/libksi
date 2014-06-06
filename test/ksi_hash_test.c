@@ -335,7 +335,7 @@ static void TestIncorrectHashLen(CuTest* tc) {
 
 }
 
-CuSuite* KSI_Hash_GetSuite(void) {
+CuSuite* KSITest_Hash_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
 	SUITE_ADD_TEST(suite, TestSHA256);

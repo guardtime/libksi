@@ -73,7 +73,7 @@ static void testPublicationStringEncodingAndDecoding(CuTest *tc) {
 	KSI_free(out);
 }
 
-CuSuite* KSI_KSITrustProvider_getSuite(void) {
+CuSuite* KSITest_Publicationsfile_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
 	SUITE_ADD_TEST(suite, testLoadPublicationsFile);

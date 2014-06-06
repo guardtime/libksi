@@ -240,7 +240,7 @@ static void TestDoNotChangeFault(CuTest* tc) {
 
 }
 
-CuSuite* KSI_LOG_GetSuite(void)
+CuSuite* KSITest_LOG_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
 

@@ -10,21 +10,23 @@ extern "C" {
 
 #define lprintf //printf("%s:%d - ", __FILE__, __LINE__); printf
 
-int debug_memcmp(void *ptr1, void *ptr2, size_t len);
+int KSITest_memcmp(void *ptr1, void *ptr2, size_t len);
+
+int KSITest_decodeHexStr(const char *hexstr, unsigned char *buf, int buf_size, int *buf_length);
 
 int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetProvider **provider);
 
-CuSuite* KSI_CTX_GetSuite(void);
-CuSuite* KSI_LOG_GetSuite(void);
-CuSuite* KSI_RDR_GetSuite(void);
-CuSuite* KSI_TLV_GetSuite(void);
-CuSuite* KSI_TLV_Sample_GetSuite(void);
-CuSuite* KSI_Hash_GetSuite(void);
-CuSuite* KSI_NET_GetSuite(void);
-CuSuite* KSI_HashChain_GetSuite(void);
+CuSuite* KSITest_CTX_getSuite(void);
+CuSuite* KSITest_LOG_getSuite(void);
+CuSuite* KSITest_RDR_getSuite(void);
+CuSuite* KSITest_TLV_getSuite(void);
+CuSuite* KSITest_TLV_Sample_getSuite(void);
+CuSuite* KSITest_Hash_getSuite(void);
+CuSuite* KSITest_NET_getSuite(void);
+CuSuite* KSITest_HashChain_getSuite(void);
 CuSuite* KSI_UTIL_GetSuite(void);
-CuSuite* KSI_Signature_getSuite(void);
-CuSuite* KSI_KSITrustProvider_getSuite(void);
+CuSuite* KSITest_Signature_getSuite(void);
+CuSuite* KSITest_Publicationsfile_getSuite(void);
 
 #ifdef __cplusplus
 }

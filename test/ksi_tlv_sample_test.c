@@ -271,7 +271,7 @@ static void TestClone(CuTest *tc) {
 	closeEnv(tc);
 }
 
-CuSuite* KSI_TLV_Sample_GetSuite(void)
+CuSuite* KSITest_TLV_Sample_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
 
