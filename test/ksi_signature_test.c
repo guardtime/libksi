@@ -17,6 +17,28 @@ static void testLoadSignatureFromFile(CuTest *tc) {
 	KSI_Signature_free(sig);
 }
 
+static void testSignatureSigningTime(CuTest *tc) {
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_Integer *sigTime = NULL;
+	KSI_uint64_t utc = 0;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, TEST_SIGNATURE_FILE, &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_getSigningTime(sig, &sigTime);
+	CuAssert(tc, "Unable to get signing time from signature", res == KSI_OK && sigTime != NULL);
+
+	utc = KSI_Integer_getUInt64(sigTime);
+
+	CuAssert(tc, "Unexpected signature signing time.", utc == 1398866256);
+
+	KSI_Signature_free(sig);
+}
+
+
 static void testSerializeSignature(CuTest *tc) {
 	int res;
 
@@ -55,6 +77,7 @@ CuSuite* KSITest_Signature_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
 	SUITE_ADD_TEST(suite, testLoadSignatureFromFile);
+	SUITE_ADD_TEST(suite, testSignatureSigningTime);
 	SUITE_ADD_TEST(suite, testSerializeSignature);
 
 	return suite;

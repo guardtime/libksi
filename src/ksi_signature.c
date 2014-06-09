@@ -1278,8 +1278,10 @@ static int createExtendRequest(KSI_CTX *ctx, const KSI_Integer *start, const KSI
 	res = KSI_ExtendReq_setAggregationTime(req, KSI_Integer_clone(start));
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_ExtendReq_setPublicationTime(req, KSI_Integer_clone(end));
-	KSI_CATCH(&err, res) goto cleanup;
+	if (end != NULL) {
+		res = KSI_ExtendReq_setPublicationTime(req, KSI_Integer_clone(end));
+		KSI_CATCH(&err, res) goto cleanup;
+	}
 
 	res = KSI_ExtendPdu_new(ctx, &pdu);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -1458,47 +1460,47 @@ static int setPublicationRecord(KSI_Signature *sig, KSI_PublicationRecord *pubRe
 	int i;
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
-	KSI_PRE(&err, pubRec != NULL) goto cleanup;
 	KSI_BEGIN(sig->ctx, &err);
 
-	/* Create a new TLV object */
-	res = KSI_TLV_new(sig->ctx, KSI_TLV_PAYLOAD_TLV, 0x0803, 0, 0, &newPubTlv);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Evaluate the TLV object */
-	res = KSI_TlvTemplate_construct(sig->ctx, newPubTlv, pubRec, KSI_TLV_TEMPLATE(KSI_PublicationRecord));
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Find previous publication */
-	res = KSI_TLV_getNestedList(sig->baseTlv, &nestedList);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	for (i = 0; i < KSI_TLVList_length(nestedList); i++) {
-		KSI_TLV *tmp = NULL;
-		res = KSI_TLVList_elementAt(nestedList, i, &tmp);
+	if (pubRec != NULL) {
+		/* Create a new TLV object */
+		res = KSI_TLV_new(sig->ctx, KSI_TLV_PAYLOAD_TLV, 0x0803, 0, 0, &newPubTlv);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		if (KSI_TLV_getTag(tmp) == 0x0803) {
-			oldPubTlvPos = i;
-			break;
+		/* Evaluate the TLV object */
+		res = KSI_TlvTemplate_construct(sig->ctx, newPubTlv, pubRec, KSI_TLV_TEMPLATE(KSI_PublicationRecord));
+		KSI_CATCH(&err, res) goto cleanup;
+
+		/* Find previous publication */
+		res = KSI_TLV_getNestedList(sig->baseTlv, &nestedList);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		for (i = 0; i < KSI_TLVList_length(nestedList); i++) {
+			KSI_TLV *tmp = NULL;
+			res = KSI_TLVList_elementAt(nestedList, i, &tmp);
+			KSI_CATCH(&err, res) goto cleanup;
+
+			if (KSI_TLV_getTag(tmp) == 0x0803) {
+				oldPubTlvPos = i;
+				break;
+			}
+
+			KSI_nofree(tmp);
 		}
 
-		KSI_nofree(tmp);
-	}
+		if (oldPubTlvPos != -1) {
+			res = KSI_TLVList_replaceAt(nestedList, oldPubTlvPos, newPubTlv);
+			KSI_CATCH(&err, res) goto cleanup;
+		} else {
+			res = KSI_TLVList_append(nestedList, newPubTlv);
+			KSI_CATCH(&err, res) goto cleanup;
+		}
 
-	if (oldPubTlvPos != -1) {
-		res = KSI_TLVList_replaceAt(nestedList, oldPubTlvPos, newPubTlv);
-		KSI_CATCH(&err, res) goto cleanup;
-	} else {
-		res = KSI_TLVList_append(nestedList, newPubTlv);
-		KSI_CATCH(&err, res) goto cleanup;
+		if (sig->publication != NULL) {
+			KSI_PublicationRecord_free(sig->publication);
+		}
+		sig->publication = pubRec;
 	}
-
-	if (sig->publication != NULL) {
-		KSI_PublicationRecord_free(sig->publication);
-	}
-	sig->publication = pubRec;
-
 	/* Remove previous weaker authentication records. */
 	res = removeWeakAuthRecords(sig);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -1510,213 +1512,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_Signature_sign(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **signature) {
-	KSI_ERR err;
-	int res;
-	KSI_NetHandle *handle = NULL;
-	KSI_Signature *sign = NULL;
-
-	unsigned char *req = NULL;
-	int req_len = 0;
-
-	const unsigned char *resp = NULL;
-	int resp_len = 0;
-
-	KSI_PRE(&err, hsh != NULL) goto cleanup;
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, signature != NULL) goto cleanup;
-
-	KSI_BEGIN(ctx, &err);
-
-	res = createSignRequest(ctx, hsh, &req, &req_len);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Request", req, req_len);
-
-	res = KSI_sendSignRequest(ctx, req, req_len, &handle);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Wait for the response. */
-	res = KSI_NetHandle_receive(handle);
-	KSI_CATCH(&err, res) goto cleanup;
-	/* Read the response. */
-	res = KSI_NetHandle_getResponse(handle, &resp, &resp_len);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Response", resp, resp_len);
-
-	res = KSI_parseAggregationResponse(ctx, resp, resp_len, &sign);
-	KSI_CATCH(&err, res) goto cleanup;
-	*signature = sign;
-	sign = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_Signature_free(sign);
-	KSI_NetHandle_free(handle);
-	KSI_free(req);
-
-	return KSI_RETURN(&err);
-}
-
-int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRecord *pubRec, KSI_Signature **extended) {
-	KSI_ERR err;
-	KSI_CTX *ctx = NULL;
-	int res;
-	KSI_Signature *tmp = NULL;
-	KSI_ExtendResp *response = NULL;
-	KSI_CalendarHashChain *calHashChain = NULL;
-	KSI_Integer *respStatus = NULL;
-	KSI_Integer *signTime = NULL;
-	KSI_Integer *pubTime = NULL;
-	KSI_PublicationData *pubData = NULL;
-	KSI_PublicationRecord *pubRecClone = NULL;
-
-	unsigned char *rawReq = NULL;
-	int rawReq_len = 0;
-
-	const unsigned char *rawResp = NULL;
-	int rawResp_len = 0;
-
-	KSI_TLV *respTlv = NULL;
-	KSI_ExtendPdu *pdu = NULL;
-	KSI_NetHandle *handle = NULL;
-
-	KSI_PRE(&err, pubRec != NULL) goto cleanup;
-	KSI_PRE(&err, signature != NULL) goto cleanup;
-	KSI_PRE(&err, extended != NULL) goto cleanup;
-
-	ctx = KSI_Signature_getCtx(signature);
-	KSI_BEGIN(ctx, &err);
-
-	/* Make a copy of the original publication record .*/
-	res = KSI_PublicationRecord_new(ctx, &pubRecClone);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_TlvTemplate_deepCopy(ctx, pubRec, KSI_TLV_TEMPLATE(KSI_PublicationRecord), pubRecClone);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Make a copy of the original signature */
-	res = KSI_Signature_clone(signature, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Request the calendar hash chain from this moment on. */
-	res = KSI_Signature_getSigningTime(tmp, &signTime);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Extract the published data object. */
-	res = KSI_PublicationRecord_getPublishedData(pubRecClone, &pubData);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Read the publication time from the published data object. */
-	res = KSI_PublicationData_getTime(pubData, &pubTime);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Create request. */
-	res = createExtendRequest(ctx, signTime, pubTime, &rawReq, &rawReq_len);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Extend request", rawReq, rawReq_len);
-
-	/* Send the actual request. */
-	res = KSI_sendExtendRequest(ctx, rawReq, rawReq_len, &handle);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Wait for the response. */
-	res = KSI_NetHandle_receive(handle);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Read the response. */
-	res = KSI_NetHandle_getResponse(handle, &rawResp, &rawResp_len);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Extend response", rawResp, rawResp_len);
-
-	res = KSI_TLV_parseBlob(ctx, rawResp, rawResp_len, &respTlv);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Create response PDU object. */
-	res = KSI_ExtendPdu_new(ctx, &pdu);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Evaluate response PDU object. */
-	res = KSI_TlvTemplate_extract(ctx, pdu, respTlv, KSI_TLV_TEMPLATE(KSI_ExtendPdu), NULL);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Parsed part of the response", respTlv);
-
-	/* Extract the response */
-	res = KSI_ExtendPdu_getResponse(pdu, &response);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Verify the response is ok. */
-	res = KSI_ExtendResp_getStatus(response, &respStatus);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Fail if status is presend and does not equal to success (0) */
-	if (respStatus != NULL && !KSI_Integer_equalsUInt(respStatus, 0)) {
-		KSI_Utf8String *error = NULL;
-		res = KSI_ExtendResp_getErrorMsg(response, &error);
-
-		KSI_FAIL(&err, KSI_EXTENDER_ERROR, KSI_Utf8String_cstr(error));
-		KSI_nofree(error);
-		goto cleanup;
-	}
-
-	/* Extract the calendar hash chain */
-	res = KSI_ExtendResp_getCalendarHashChain(response, &calHashChain);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Remove the chain from the structure, as it will be freed when this function finishes. */
-	res = KSI_ExtendResp_setCalendarHashChain(response, NULL);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Add the hash chain to the signature. */
-	res = replaceCalendarChain(tmp, calHashChain);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Set the publication as the trust anchor. */
-	res = setPublicationRecord(tmp, pubRecClone);
-	KSI_CATCH(&err, res) goto cleanup;
-	pubRecClone = NULL;
-
-	/* Validate signature before returning. */
-	res = validateSignature(ctx, tmp);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	*extended = tmp;
-	tmp = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_PublicationRecord_free(pubRecClone);
-	KSI_ExtendPdu_free(pdu);
-	KSI_NetHandle_free(handle);
-	KSI_TLV_free(respTlv);
-	KSI_free(rawReq);
-	KSI_Signature_free(tmp);
-
-	return KSI_RETURN(&err);
-}
-
-
-void KSI_Signature_free(KSI_Signature *sig) {
-	if (sig != NULL) {
-		KSI_TLV_free(sig->baseTlv);
-		KSI_CalendarHashChain_free(sig->calendarChain);
-		AggrChainRecList_free(sig->aggregationChainList);
-		CalAuthRec_free(sig->calAuth);
-		AggrAuthRec_free(sig->aggrAuth);
-		KSI_PublicationRecord_free(sig->publication);
-		KSI_free(sig);
-	}
-}
-
-int KSI_parseAggregationResponse(KSI_CTX *ctx, const unsigned char *response, int response_len, KSI_Signature **signature) {
+static int KSI_parseAggregationResponse(KSI_CTX *ctx, const unsigned char *response, int response_len, KSI_Signature **signature) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *sigTlv = NULL;
@@ -1820,7 +1616,217 @@ cleanup:
 
 }
 
-int KSI_Signature_getDataHash(KSI_Signature *sig, const KSI_DataHash **hsh) {
+int KSI_Signature_sign(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **signature) {
+	KSI_ERR err;
+	int res;
+	KSI_NetHandle *handle = NULL;
+	KSI_Signature *sign = NULL;
+
+	unsigned char *req = NULL;
+	int req_len = 0;
+
+	const unsigned char *resp = NULL;
+	int resp_len = 0;
+
+	KSI_PRE(&err, hsh != NULL) goto cleanup;
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, signature != NULL) goto cleanup;
+
+	KSI_BEGIN(ctx, &err);
+
+	res = createSignRequest(ctx, hsh, &req, &req_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Request", req, req_len);
+
+	res = KSI_sendSignRequest(ctx, req, req_len, &handle);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Wait for the response. */
+	res = KSI_NetHandle_receive(handle);
+	KSI_CATCH(&err, res) goto cleanup;
+	/* Read the response. */
+	res = KSI_NetHandle_getResponse(handle, &resp, &resp_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Response", resp, resp_len);
+
+	res = KSI_parseAggregationResponse(ctx, resp, resp_len, &sign);
+	KSI_CATCH(&err, res) goto cleanup;
+	*signature = sign;
+	sign = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_Signature_free(sign);
+	KSI_NetHandle_free(handle);
+	KSI_free(req);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRecord *pubRec, KSI_Signature **extended) {
+	KSI_ERR err;
+	KSI_CTX *ctx = NULL;
+	int res;
+	KSI_Signature *tmp = NULL;
+	KSI_ExtendResp *response = NULL;
+	KSI_CalendarHashChain *calHashChain = NULL;
+	KSI_Integer *respStatus = NULL;
+	KSI_Integer *signTime = NULL;
+	KSI_Integer *pubTime = NULL;
+	KSI_PublicationData *pubData = NULL;
+	KSI_PublicationRecord *pubRecClone = NULL;
+
+	unsigned char *rawReq = NULL;
+	int rawReq_len = 0;
+
+	const unsigned char *rawResp = NULL;
+	int rawResp_len = 0;
+
+	KSI_TLV *respTlv = NULL;
+	KSI_ExtendPdu *pdu = NULL;
+	KSI_NetHandle *handle = NULL;
+
+	KSI_PRE(&err, signature != NULL) goto cleanup;
+	KSI_PRE(&err, extended != NULL) goto cleanup;
+
+	ctx = KSI_Signature_getCtx(signature);
+	KSI_BEGIN(ctx, &err);
+
+	/* Make a copy of the original publication record .*/
+	res = KSI_PublicationRecord_new(ctx, &pubRecClone);
+	KSI_CATCH(&err, res) goto cleanup;
+
+
+	/* Make a copy of the original signature */
+	res = KSI_Signature_clone(signature, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Request the calendar hash chain from this moment on. */
+	res = KSI_Signature_getSigningTime(tmp, &signTime);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* If publication record is present, extract the publication time. */
+	if (pubRec != NULL) {
+		res = KSI_TlvTemplate_deepCopy(ctx, pubRec, KSI_TLV_TEMPLATE(KSI_PublicationRecord), pubRecClone);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		/* Extract the published data object. */
+		res = KSI_PublicationRecord_getPublishedData(pubRecClone, &pubData);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		/* Read the publication time from the published data object. */
+		res = KSI_PublicationData_getTime(pubData, &pubTime);
+		KSI_CATCH(&err, res) goto cleanup;
+	}
+
+	/* Create request. */
+	res = createExtendRequest(ctx, signTime, pubTime, &rawReq, &rawReq_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Extend request", rawReq, rawReq_len);
+
+	/* Send the actual request. */
+	res = KSI_sendExtendRequest(ctx, rawReq, rawReq_len, &handle);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Wait for the response. */
+	res = KSI_NetHandle_receive(handle);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Read the response. */
+	res = KSI_NetHandle_getResponse(handle, &rawResp, &rawResp_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Extend response", rawResp, rawResp_len);
+
+	res = KSI_TLV_parseBlob(ctx, rawResp, rawResp_len, &respTlv);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Create response PDU object. */
+	res = KSI_ExtendPdu_new(ctx, &pdu);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Evaluate response PDU object. */
+	res = KSI_TlvTemplate_extract(ctx, pdu, respTlv, KSI_TLV_TEMPLATE(KSI_ExtendPdu), NULL);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Parsed part of the response", respTlv);
+
+	/* Extract the response */
+	res = KSI_ExtendPdu_getResponse(pdu, &response);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Verify the response is ok. */
+	res = KSI_ExtendResp_getStatus(response, &respStatus);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Fail if status is presend and does not equal to success (0) */
+	if (respStatus != NULL && !KSI_Integer_equalsUInt(respStatus, 0)) {
+		KSI_Utf8String *error = NULL;
+		res = KSI_ExtendResp_getErrorMsg(response, &error);
+
+		KSI_FAIL(&err, KSI_EXTENDER_ERROR, KSI_Utf8String_cstr(error));
+		KSI_nofree(error);
+		goto cleanup;
+	}
+
+	/* Extract the calendar hash chain */
+	res = KSI_ExtendResp_getCalendarHashChain(response, &calHashChain);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Remove the chain from the structure, as it will be freed when this function finishes. */
+	res = KSI_ExtendResp_setCalendarHashChain(response, NULL);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Add the hash chain to the signature. */
+	res = replaceCalendarChain(tmp, calHashChain);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Set the publication as the trust anchor. */
+	res = setPublicationRecord(tmp, pubRecClone);
+	KSI_CATCH(&err, res) goto cleanup;
+	pubRecClone = NULL;
+
+	/* Validate signature before returning. */
+	res = validateSignature(ctx, tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*extended = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_PublicationRecord_free(pubRecClone);
+	KSI_ExtendPdu_free(pdu);
+	KSI_NetHandle_free(handle);
+	KSI_TLV_free(respTlv);
+	KSI_free(rawReq);
+	KSI_Signature_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
+
+void KSI_Signature_free(KSI_Signature *sig) {
+	if (sig != NULL) {
+		KSI_TLV_free(sig->baseTlv);
+		KSI_CalendarHashChain_free(sig->calendarChain);
+		AggrChainRecList_free(sig->aggregationChainList);
+		CalAuthRec_free(sig->calAuth);
+		AggrAuthRec_free(sig->aggrAuth);
+		KSI_PublicationRecord_free(sig->publication);
+		KSI_free(sig);
+	}
+}
+
+
+int KSI_Signature_getDocumentHash(KSI_Signature *sig, const KSI_DataHash **hsh) {
 	KSI_ERR err;
 	AggrChainRec *aggr = NULL;
 	int res;
@@ -1846,7 +1852,7 @@ cleanup:
 int KSI_Signature_getSigningTime(const KSI_Signature *sig, KSI_Integer **signTime) {
 	KSI_ERR err;
 	int res;
-	KSI_Integer *signingTime = NULL;
+	KSI_Integer *tmp = NULL;
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
 	KSI_BEGIN(sig->ctx, &err);
@@ -1856,21 +1862,21 @@ int KSI_Signature_getSigningTime(const KSI_Signature *sig, KSI_Integer **signTim
 		goto cleanup;
 	}
 
-	res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &signingTime);
+	res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	if (signingTime == NULL) {
-		res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &signingTime);
+	if (tmp == NULL) {
+		res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &tmp);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		if (signTime == NULL){
+		if (tmp == NULL){
 			KSI_FAIL(&err, KSI_INVALID_SIGNATURE, NULL);
 			goto cleanup;
 		}
 
 	}
 
-	*signTime = signingTime;
+	*signTime = tmp;
 
 	KSI_SUCCESS(&err);
 
@@ -2105,5 +2111,22 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
+
+int KSI_Signature_getPublicatioinRecord(KSI_Signature *sig, KSI_PublicationRecord **pubRec) {
+	KSI_ERR err;
+
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_PRE(&err, pubRec != NULL) goto cleanup;
+	KSI_BEGIN(sig->ctx, &err);
+
+	*pubRec = sig->publication;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
 
 KSI_IMPLEMENT_GET_CTX(KSI_Signature);

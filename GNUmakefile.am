@@ -8,3 +8,6 @@ test: all
 memtest: all 
 	valgrind --xml=yes --xml-file=valgrind.xml ./test/runner 
 
+doc:
+	cd doc; make doc; cd ..
+

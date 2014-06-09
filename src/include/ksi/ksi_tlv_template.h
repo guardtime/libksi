@@ -409,7 +409,7 @@ extern "C" {
 	 * \param[in]		tlv			An empty target TLV.
 	 * \param[in]		template	Template of the TLV expected structure.
 	 *
-	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
 	int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_TlvTemplate *template);
@@ -418,7 +418,7 @@ extern "C" {
 	 * Deepcopy an object using TLV templates. The object is first transformed internally into a #KSI_TLV tree and
 	 * the process is reversed and the result is stoed, thus all values are copied.
 	 *
-	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 *
 	 * \note If the TLV template is incomplete and discards by endoding or decoding some values, the result is not an
