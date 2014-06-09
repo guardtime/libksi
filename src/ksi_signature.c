@@ -1669,7 +1669,6 @@ cleanup:
 
 int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRecord *pubRec, KSI_Signature **extended) {
 	KSI_ERR err;
-	KSI_CTX *ctx = NULL;
 	int res;
 	KSI_Signature *tmp = NULL;
 	KSI_ExtendResp *response = NULL;
@@ -1693,13 +1692,11 @@ int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRe
 	KSI_PRE(&err, signature != NULL) goto cleanup;
 	KSI_PRE(&err, extended != NULL) goto cleanup;
 
-	ctx = KSI_Signature_getCtx(signature);
-	KSI_BEGIN(ctx, &err);
+	KSI_BEGIN(signature->ctx, &err);
 
 	/* Make a copy of the original publication record .*/
-	res = KSI_PublicationRecord_new(ctx, &pubRecClone);
+	res = KSI_PublicationRecord_new(signature->ctx, &pubRecClone);
 	KSI_CATCH(&err, res) goto cleanup;
-
 
 	/* Make a copy of the original signature */
 	res = KSI_Signature_clone(signature, &tmp);
@@ -1711,7 +1708,7 @@ int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRe
 
 	/* If publication record is present, extract the publication time. */
 	if (pubRec != NULL) {
-		res = KSI_TlvTemplate_deepCopy(ctx, pubRec, KSI_TLV_TEMPLATE(KSI_PublicationRecord), pubRecClone);
+		res = KSI_TlvTemplate_deepCopy(signature->ctx, pubRec, KSI_TLV_TEMPLATE(KSI_PublicationRecord), pubRecClone);
 		KSI_CATCH(&err, res) goto cleanup;
 
 		/* Extract the published data object. */
@@ -1724,13 +1721,13 @@ int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRe
 	}
 
 	/* Create request. */
-	res = createExtendRequest(ctx, signTime, pubTime, &rawReq, &rawReq_len);
+	res = createExtendRequest(signature->ctx, signTime, pubTime, &rawReq, &rawReq_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Extend request", rawReq, rawReq_len);
+	KSI_LOG_logBlob(signature->ctx, KSI_LOG_DEBUG, "Extend request", rawReq, rawReq_len);
 
 	/* Send the actual request. */
-	res = KSI_sendExtendRequest(ctx, rawReq, rawReq_len, &handle);
+	res = KSI_sendExtendRequest(signature->ctx, rawReq, rawReq_len, &handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Wait for the response. */
@@ -1741,20 +1738,20 @@ int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRe
 	res = KSI_NetHandle_getResponse(handle, &rawResp, &rawResp_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Extend response", rawResp, rawResp_len);
+	KSI_LOG_logBlob(signature->ctx, KSI_LOG_DEBUG, "Extend response", rawResp, rawResp_len);
 
-	res = KSI_TLV_parseBlob(ctx, rawResp, rawResp_len, &respTlv);
+	res = KSI_TLV_parseBlob(signature->ctx, rawResp, rawResp_len, &respTlv);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Create response PDU object. */
-	res = KSI_ExtendPdu_new(ctx, &pdu);
+	res = KSI_ExtendPdu_new(signature->ctx, &pdu);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Evaluate response PDU object. */
-	res = KSI_TlvTemplate_extract(ctx, pdu, respTlv, KSI_TLV_TEMPLATE(KSI_ExtendPdu), NULL);
+	res = KSI_TlvTemplate_extract(signature->ctx, pdu, respTlv, KSI_TLV_TEMPLATE(KSI_ExtendPdu), NULL);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Parsed part of the response", respTlv);
+	KSI_LOG_logTlv(signature->ctx, KSI_LOG_DEBUG, "Parsed part of the response", respTlv);
 
 	/* Extract the response */
 	res = KSI_ExtendPdu_getResponse(pdu, &response);
@@ -1792,7 +1789,7 @@ int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRe
 	pubRecClone = NULL;
 
 	/* Validate signature before returning. */
-	res = validateSignature(ctx, tmp);
+	res = validateSignature(signature->ctx, tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*extended = tmp;
@@ -2127,6 +2124,3 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
-
-
-KSI_IMPLEMENT_GET_CTX(KSI_Signature);

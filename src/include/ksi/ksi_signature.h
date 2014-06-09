@@ -140,9 +140,6 @@ extern "C" {
 	 * error code).
 	 */
 	int KSI_Signature_getPublicatioinRecord(KSI_Signature *sig, KSI_PublicationRecord **pubRec);
-
-	KSI_DEFINE_GET_CTX(KSI_Signature);
-
 /**
  * @}
  */
