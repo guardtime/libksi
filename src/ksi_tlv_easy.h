@@ -15,18 +15,20 @@ extern "C" {
 
 #define KSI_PARSE_TLV_NESTED_BEGIN 														\
 			{																			\
+				KSI_LIST(KSI_TLV) *nestedList = NULL;									\
 				KSI_TLV *__parent = __tlv; 												\
+				int __itr;																\
 				if (__parent != NULL) {													\
 					__res = KSI_TLV_cast(__parent, KSI_TLV_PAYLOAD_TLV);				\
 				} 																		\
 				if (__res == KSI_OK && __parent != NULL) {								\
-						__res = KSI_TLV_iterNested(__parent);							\
+						__res = KSI_TLV_getNestedList(__parent, &nestedList);			\
 				}																		\
 				if (__res == KSI_OK) {													\
 					if (__parent != NULL) {												\
-						while(1) {														\
+						for(__itr = 0; __itr < KSI_TLVList_length(nestedList); __itr++) {	\
 							KSI_TLV *__tlv = NULL;										\
-							res = KSI_TLV_getNextNestedTLV(__parent, &__tlv);			\
+							res = KSI_TLVList_elementAt(nestedList, __itr, &__tlv); 	\
 							if (res == KSI_OK && __tlv != NULL) {						\
 								int __tagChecked = 0;									\
 								switch(KSI_TLV_getTag(__tlv)) {							\
@@ -203,6 +205,7 @@ extern "C" {
 		__res = KSI_TLV_appendNestedTlv(fwdTlv, NULL, __tlv);							\
 		if (__res == KSI_OK) {															\
 			__res = KSI_TLV_removeNestedTlv(__parent, __tlv);							\
+			__itr--;																	\
 		}																				\
 	}																					\
 

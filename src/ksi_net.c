@@ -86,8 +86,19 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-void *KSI_NetHandle_getNetContext(KSI_NetHandle *handle) {
-	return handle->handleCtx;
+int KSI_NetHandle_getNetContext(KSI_NetHandle *handle, void **c) {
+	KSI_ERR err;
+	KSI_PRE(&err, handle != NULL) goto cleanup;
+	KSI_PRE(&err, c != NULL) goto cleanup;
+	KSI_BEGIN(handle->ctx, &err);
+
+	*c = handle->handleCtx;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
 }
 
 /**
@@ -231,11 +242,23 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-void *KSI_NetProvider_getNetContext(KSI_NetProvider *provider) {
-	return provider->poviderCtx;
+int KSI_NetProvider_getNetContext(KSI_NetProvider *provider, void **netCtx) {
+	KSI_ERR err;
+
+	KSI_PRE(&err, provider != NULL) goto cleanup;
+	KSI_PRE(&err, netCtx != NULL) goto cleanup;
+	KSI_BEGIN(provider->ctx, &err);
+
+	*netCtx = provider->poviderCtx;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
 }
 
-int KSI_NetHandle_setReadResponseFn(KSI_NetHandle *handle, int fn(KSI_NetHandle *)) {
+int KSI_NetHandle_setReadResponseFn(KSI_NetHandle *handle, int (*fn)(KSI_NetHandle *)) {
 	KSI_ERR err;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(handle->ctx, &err);
@@ -264,7 +287,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_NetHandle_receive(KSI_NetHandle *handle) {
+static int receiveResponse(KSI_NetHandle *handle) {
 	KSI_ERR err;
 	int res;
 
@@ -288,6 +311,7 @@ cleanup:
 
 int KSI_NetHandle_getResponse(KSI_NetHandle *handle, const unsigned char **response, int *response_len) {
 	KSI_ERR err;
+	int res;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(handle->ctx, &err);
 
@@ -295,6 +319,11 @@ int KSI_NetHandle_getResponse(KSI_NetHandle *handle, const unsigned char **respo
 	KSI_PRE(&err, response != NULL) goto cleanup;
 	KSI_PRE(&err, response_len != NULL) goto cleanup;
 	KSI_BEGIN(handle->ctx, &err);
+
+	if (handle->response == NULL) {
+		res = receiveResponse(handle);
+		KSI_CATCH(&err, res) goto cleanup;
+	}
 
 	*response = handle->response;
 	*response_len = handle->response_length;

@@ -493,9 +493,6 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 		res = KSI_sendPublicationRequest(ctx, NULL, 0, &handle);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		res = KSI_NetHandle_receive(handle);
-		KSI_CATCH(&err, res) goto cleanup;
-
 		res = KSI_NetHandle_getResponse(handle, &raw, &raw_len);
 		KSI_CATCH(&err, res) goto cleanup;
 

@@ -1389,10 +1389,11 @@ static int stringify(KSI_TLV *tlv, int indent, char *str, int size, int *len) {
 			l += snprintf(str + l, NOTNEG(size - l), ":");
 			res = KSI_TLVList_iter(tlv->nested);
 			if (res != KSI_OK) goto cleanup;
-			while(1) {
+			i = 0;
+			for (i = 0; i < KSI_TLVList_length(tlv->nested); i++) {
 				KSI_TLV *tmp = NULL;
 
-				res = KSI_TLVList_next(tlv->nested, &tmp);
+				res = KSI_TLVList_elementAt(tlv->nested, i, &tmp);
 				if (res != KSI_OK) goto cleanup;
 				if (tmp == NULL) break;
 				res = stringify(tmp, indent + 2, str, size, &l);

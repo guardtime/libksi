@@ -65,9 +65,9 @@ static void TestSendAggregateRequest(CuTest* tc) {
 
 	res = KSI_Signature_sign(ctx, hsh, &sig);
 	KSI_ERR_statusDump(ctx, stdout);
+
 	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
 	CuAssert(tc, "Unexpected send request", KSI_NET_MOCK_request_len == sizeof(expectedSignRequest) && !memcmp(expectedSignRequest, KSI_NET_MOCK_request, KSI_NET_MOCK_request_len));
-
 	KSI_free((unsigned char *)KSI_NET_MOCK_response);
 	KSI_NET_MOCK_response = NULL;
 

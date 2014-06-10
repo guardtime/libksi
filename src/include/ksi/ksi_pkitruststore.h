@@ -30,7 +30,7 @@ extern "C" {
 	 * \param[in]	setDefaults		With or without default system settings.
 	 * \param[out]	store			Pointer to the receiving pointer.
 	 *
-	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
 	int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **store);
@@ -48,7 +48,7 @@ extern "C" {
 	 * \param[in]	der_len		Length of the certificate.
 	 * \param[out]	cert		Pointer to the receiving pointer.
 	 *
-	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
 	int KSI_PKICertificate_new(KSI_CTX *ctx, const void *der, int der_len, KSI_PKICertificate **cert);
@@ -64,7 +64,7 @@ extern "C" {
 	 * \param[in]	tlv			TLV object containing the DER encoded certificate.
 	 * \param[out]	cert		Pointer to the receiving pointer.
 	 *
-	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
 	int KSI_PKICertificate_fromTlv(KSI_TLV *tlv, KSI_PKICertificate **cert);
@@ -77,7 +77,7 @@ extern "C" {
 	 * \param[in]	isForward		TLV forward-flag value {0,1}.
 	 * \param[out]	tlv				Pointer to the receiving pointer.
 
-	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
 	int KSI_PKICertificate_toTlv(KSI_PKICertificate *cert, int tag, int isNonCritical, int isForward, KSI_TLV **tlv);
@@ -97,7 +97,7 @@ extern "C" {
 	 * \param[in]	raw_len		Signature len.
 	 * \param[out]	signature	Pointer to the receiving pointer.
 	 *
-	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
 	int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, int raw_len, KSI_PKISignature **signature);
@@ -113,7 +113,7 @@ extern "C" {
 	 * \param[in]	tlv		TLV structure.
 	 * \param[out]	sig		Pointer to the receiving pointer.
 	 *
-	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
 	int KSI_PKISignature_fromTlv(KSI_TLV *tlv, KSI_PKISignature **sig);
@@ -125,6 +125,9 @@ extern "C" {
 	 * \param[in]	isNonCritical	TLV non-critical-flag value {0,1}.
 	 * \param[in]	isForward		TLV forward-flag value {0,1}.
 	 * \param[out]	tlv				Ponter to the receiving pointer.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
 	 */
 	int KSI_PKISignature_toTlv(KSI_PKISignature *sig, int tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 

@@ -1324,6 +1324,8 @@ static int replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calen
 	KSI_DataHash *oldInputHash = NULL;
 	KSI_TLV *oldCalChainTlv = NULL;
 	KSI_TLV *newCalChainTlv = NULL;
+	KSI_LIST(KSI_TLV) *nestedList = NULL;
+	int i;
 
 	KSI_PRE(&err, calendarHashChain != NULL) goto cleanup;
 	KSI_PRE(&err, sig != NULL) goto cleanup;
@@ -1356,8 +1358,11 @@ static int replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calen
 	res = KSI_TLV_iterNested(sig->baseTlv);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	while (1) {
-		res = KSI_TLV_getNextNestedTLV(sig->baseTlv, &oldCalChainTlv);
+	res = KSI_TLV_getNestedList(sig->baseTlv, &nestedList);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	for (i = 0; i < KSI_TLVList_length(nestedList); i++) {
+		res = KSI_TLVList_elementAt(nestedList,i, &oldCalChainTlv);
 		KSI_CATCH(&err, res) goto cleanup;
 
 		if (oldCalChainTlv == NULL) {
@@ -1389,6 +1394,7 @@ static int replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calen
 
 cleanup:
 
+	KSI_nofree(nestedList);
 	KSI_nofree(oldInputHash);
 	KSI_nofree(newInputHash);
 
@@ -1524,6 +1530,7 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, const unsigned char *respo
 	KSI_Integer *requestId = NULL;
 	char *errorMessage = NULL;
 	HeaderRec *hdr = NULL;
+	int i;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, response != NULL) goto cleanup;
@@ -1642,9 +1649,6 @@ int KSI_Signature_sign(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **si
 	res = KSI_sendSignRequest(ctx, req, req_len, &handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	/* Wait for the response. */
-	res = KSI_NetHandle_receive(handle);
-	KSI_CATCH(&err, res) goto cleanup;
 	/* Read the response. */
 	res = KSI_NetHandle_getResponse(handle, &resp, &resp_len);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -1728,10 +1732,6 @@ int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRe
 
 	/* Send the actual request. */
 	res = KSI_sendExtendRequest(signature->ctx, rawReq, rawReq_len, &handle);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Wait for the response. */
-	res = KSI_NetHandle_receive(handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Read the response. */
