@@ -46,7 +46,7 @@ void KSI_DataHasher_free(KSI_DataHasher *hasher) {
 	}
 }
 
-int KSI_DataHasher_open(KSI_CTX *ctx, int hash_algorithm, KSI_DataHasher **hasher) {
+int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
 	KSI_ERR err;
 	int res;
 
@@ -59,7 +59,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_algorithm, KSI_DataHasher **hashe
 		goto cleanup;
 	}
 
-	if (!KSI_isSupportedHashAlgorithm(hash_algorithm)) {
+	if (!KSI_isHashAlgorithmSupported(hash_id)) {
 		KSI_FAIL(&err, KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
 		goto cleanup;
 	}
@@ -72,7 +72,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_algorithm, KSI_DataHasher **hashe
 
 	tmp_hasher->hashContext = NULL;
 	tmp_hasher->ctx = ctx;
-	tmp_hasher->algorithm = hash_algorithm;
+	tmp_hasher->algorithm = hash_id;
 
 	res = KSI_DataHasher_reset(tmp_hasher);
 	if (res != KSI_OK) {

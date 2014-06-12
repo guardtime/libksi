@@ -338,7 +338,7 @@ int KSI_PublicationData_fromBase32(KSI_CTX *ctx,	const char *publication, KSI_Pu
 
 
 	hash_alg = binary_publication[8];
-	if (!KSI_isSupportedHashAlgorithm(hash_alg)) {
+	if (!KSI_isHashAlgorithmSupported(hash_alg)) {
 		KSI_FAIL(&err, KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
 		goto cleanup;
 	}

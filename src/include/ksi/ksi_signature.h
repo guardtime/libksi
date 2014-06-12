@@ -110,6 +110,16 @@ extern "C" {
 	int KSI_Signature_getDocumentHash(KSI_Signature *sig, const KSI_DataHash ** hsh);
 
 	/**
+	 * Access method for the hash algorithm used to hash the signed document.
+	 * \param[in]		sig			KSI signature.
+	 * \param[out]		hash_id		Pointer to the receiving hash id variable.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 */
+	int KSI_Signature_getHashAlgorithm(KSI_Signature *sig, int *hash_id);
+
+	/**
 	 * Access method for the signing time. The \c signTime is expressed as
 	 * the number of seconds since 1970-01-01 00:00:00 UTC.
 	 * \param[in]		sig			KSI signature.
@@ -143,6 +153,32 @@ extern "C" {
 	 * error code).
 	 */
 	int KSI_Signature_getPublicatioinRecord(KSI_Signature *sig, KSI_PublicationRecord **pubRec);
+
+	/**
+	 * This function verifies given hash value \c hsh using the signature \c sig. If
+	 * the hash value does not match the input hash value of the signeture, a
+	 * #KSI_WRONG_DOCUMENT error code is returned.
+	 * \param[in]		sig			KSI signature.
+	 * \param[in]		hsh			Document hash.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 */
+	int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_DataHash *hsh);
+
+	/**
+	 * This function verifies the given document using the signature. If the hash value of
+	 * the document does not match the input hash value of the signature, a
+	 * #KSI_WRONG_DOCUMENT error code is returned.
+	 * \param[in]		sig			KSI signature.
+	 * \param[in]		doc			Pointer to the document.
+	 * \param[in]		doc_len		Length of the document.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 */
+	int KSI_Signature_verifyDocument(KSI_Signature *sig, void *doc, size_t doc_len);
+
 /**
  * @}
  */

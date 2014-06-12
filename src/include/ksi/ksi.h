@@ -127,6 +127,10 @@ enum KSI_StatusCode {
 	 */
 	KSI_INVALID_PUBLICATION,
 	/**
+	 * The document does not match the signature.
+	 */
+	KSI_WRONG_DOCUMENT,
+	/**
 	 * Cryptographic operation could not be performed. Likely causes are
 	 * unsupported cryptographic algorithms, invalid keys and lack of
 	 * resources.

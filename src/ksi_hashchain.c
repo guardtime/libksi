@@ -150,7 +150,7 @@ static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, KSI_DataHash *inpu
 		if(!isCalendar) {
 			level += levelCorrection + 1;
 		} else {
-			res = KSI_DataHash_getData(linkHsh, &algo_id, NULL, NULL);
+			res = KSI_DataHash_extract(linkHsh, &algo_id, NULL, NULL);
 			KSI_CATCH(&err, res) goto cleanup;
 		}
 

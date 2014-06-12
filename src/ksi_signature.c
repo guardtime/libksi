@@ -2124,3 +2124,82 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
+
+int KSI_Signature_getHashAlgorithm(KSI_Signature *sig, int *hash_id) {
+	KSI_ERR err;
+	const KSI_DataHash *hsh = NULL;
+	int res;
+	int tmp = -1;
+
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_BEGIN(sig->ctx, &err);
+
+	res = KSI_Signature_getDocumentHash(sig, &hsh);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_DataHash_extract(hsh, &tmp, NULL, NULL);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*hash_id = tmp;
+
+cleanup:
+
+	KSI_nofree(hsh);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_DataHash *hsh) {
+	KSI_ERR err;
+	int res;
+	const KSI_DataHash *sigHsh = NULL;
+
+	KSI_PRE(&err, sig != KSI_OK) goto cleanup;
+	KSI_PRE(&err, hsh != KSI_OK) goto cleanup;
+	KSI_BEGIN(sig->ctx, &err);
+
+	res = KSI_Signature_getDocumentHash(sig, &sigHsh);
+	KSI_CATCH(&err, res) goto cleanup;
+	if (!KSI_DataHash_equals(hsh, sigHsh)) {
+		KSI_FAIL(&err, KSI_WRONG_DOCUMENT, NULL);
+		goto cleanup;
+	}
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(sigHsh);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_Signature_verifyDocument(KSI_Signature *sig, void *doc, size_t doc_len) {
+	KSI_ERR err;
+	int res;
+	const KSI_DataHash *sigHsh = NULL;
+	KSI_DataHash *hsh = NULL;
+
+	int hash_id;
+
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_PRE(&err, doc != NULL) goto cleanup;
+	KSI_BEGIN(sig->ctx, &err);
+
+	res = KSI_Signature_getHashAlgorithm(sig, &hash_id);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_DataHash_create(sig->ctx, doc, doc_len, hash_id, &hsh);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_Signature_verifyDataHash(sig, hsh);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_DataHash_free(hsh);
+
+	return KSI_RETURN(&err);
+}

@@ -67,19 +67,19 @@ void KSI_DataHash_free(KSI_DataHash *hash) {
 /**
  *
  */
-int KSI_isTrusteddHashAlgorithm(int hash_id) {
-	if (KSI_isSupportedHashAlgorithm(hash_id)) {
+int KSI_isHashAlgorithmTrusted(int hash_id) {
+	if (KSI_isHashAlgorithmSupported(hash_id)) {
 		return KSI_hashAlgorithmInfo[hash_id].trusted;
 	}
 	return 0;
 }
 
-int KSI_isSupportedHashAlgorithm(int hash_id) {
+int KSI_isHashAlgorithmSupported(int hash_id) {
 	return hash_id >= 0 && hash_id < KSI_NUMBER_OF_KNOWN_HASHALGS;
 }
 
 int KSI_getHashLength(int hash_id) {
-	if (KSI_isSupportedHashAlgorithm(hash_id)) {
+	if (KSI_isHashAlgorithmSupported(hash_id)) {
 		return (KSI_hashAlgorithmInfo[hash_id].bitCount) >> 3;
 	}
 	return -1;
@@ -88,7 +88,7 @@ int KSI_getHashLength(int hash_id) {
 /**
  *
  */
-int KSI_DataHash_getData(const KSI_DataHash *hash, int *hash_id, const unsigned char **digest, int *digest_length) {
+int KSI_DataHash_extract(const KSI_DataHash *hash, int *hash_id, const unsigned char **digest, int *digest_length) {
 	KSI_ERR err;
 
 	KSI_PRE(&err, hash != NULL) goto cleanup;
@@ -114,11 +114,19 @@ cleanup:
 int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *digest, int digest_length, KSI_DataHash **hash) {
 	KSI_ERR err;
 	KSI_DataHash *tmp_hash = NULL;
+	unsigned char *tmp_imprint = NULL;
 	int res;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
-
+	KSI_PRE(&err, digest != NULL) goto cleanup;
+	KSI_PRE(&err, digest_length > 0) goto cleanup;
+	KSI_PRE(&err, hash != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
+
+	if (KSI_getHashLength(hash_id) != digest_length) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Digest length does not match with algorithm.");
+		goto cleanup;
+	}
 
 	tmp_hash = KSI_new(KSI_DataHash);
 	if (tmp_hash == NULL) {
@@ -129,8 +137,18 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *dige
 	tmp_hash->ctx = ctx;
 	tmp_hash->imprint = NULL;
 
-	res = KSI_DataHash_fromData_ex(hash_id, digest, digest_length, tmp_hash);
-	KSI_CATCH(&err, res) goto cleanup;
+	tmp_imprint = KSI_calloc(digest_length + 1, 1);
+	if (tmp_imprint == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	*tmp_imprint = (char)hash_id;
+	memcpy(tmp_imprint + 1, digest, digest_length);
+
+	tmp_hash->imprint = tmp_imprint;
+	tmp_hash->imprint_length = digest_length + 1;
+	tmp_imprint = NULL;
 
 	*hash = tmp_hash;
 	tmp_hash = NULL;
@@ -139,48 +157,8 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *dige
 
 cleanup:
 
-	KSI_DataHash_free(tmp_hash);
-
-	return KSI_RETURN(&err);
-}
-
-/**
- *
- */
-int KSI_DataHash_fromData_ex(int hash_id, const unsigned char *digest, int digest_length, KSI_DataHash *hash) {
-	KSI_ERR err;
-	unsigned char *tmp_imprint = NULL;
-
-	KSI_PRE(&err, hash != NULL) goto cleanup;
-	KSI_PRE(&err, digest != NULL) goto cleanup;
-
-	KSI_BEGIN(hash->ctx, &err);
-	if (KSI_getHashLength(hash_id) != digest_length) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Digest length does not match with algorithm.");
-		goto cleanup;
-	}
-
-	tmp_imprint = KSI_calloc(digest_length + 1, 1);
-	if (tmp_imprint == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	memcpy(tmp_imprint + 1, digest, digest_length);
-	*tmp_imprint = (char)hash_id;
-
-	KSI_free(hash->imprint);
-
-	hash->imprint = tmp_imprint;
-	hash->imprint_length = digest_length + 1;
-
-	tmp_imprint = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
 	KSI_free(tmp_imprint);
+	KSI_DataHash_free(tmp_hash);
 
 	return KSI_RETURN(&err);
 }
@@ -331,7 +309,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_DataHash_equals(KSI_DataHash *left, KSI_DataHash *right) {
+int KSI_DataHash_equals(const KSI_DataHash *left, const KSI_DataHash *right) {
 	return left != NULL && right != NULL &&
 			(left == right || (left->imprint_length == right->imprint_length && !memcmp(left->imprint, right->imprint, left->imprint_length)));
 }
