@@ -1,4 +1,4 @@
-#include "ksi_ksitrustprovider.h"
+#include "ksi_common.h"
 
 #ifndef KSI_PUBLICATIONSFILE_H_
 #define KSI_PUBLICATIONSFILE_H_
@@ -22,6 +22,15 @@ extern "C" {
 	 * - Signature (Single) of the file.
 	 * @{
 	 */
+
+	/**
+	 * Function to parse the raw publicationsfile.
+	 * \param[in]	ctx				KSI context.
+	 * \param[in]	raw				Pointer to the raw publications file.
+	 * \param[in]	raw_len			Length of the raw publications file.
+	 * \param[out]	pubFile			Pointer to the receiving pointer to the publications file object.
+	 */
+	int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, int raw_len, KSI_PublicationsFile **pubFile);
 
 	/**
 	 * A convenience function for loading a publications file from an actual file.

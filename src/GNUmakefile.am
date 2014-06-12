@@ -17,7 +17,6 @@ libksi_la_SOURCES = \
 	include/ksi/ksi_tlv.h \
 	include/ksi/ksi_tlv_template.h \
 	include/ksi/ksi_types.h	\
-	include/ksi/ksi_ksitrustprovider.h \
 	include/ksi/ksi_net.h \
 	ksi_base32.c \
 	ksi_base.c \
@@ -62,7 +61,6 @@ otherinclude_HEADERS = \
 	include/ksi/ksi_tlv.h \
 	include/ksi/ksi_tlv_template.h \
 	include/ksi/ksi_types.h \
-	include/ksi/ksi_ksitrustprovider.h \
 	include/ksi/ksi_net.h \
 	include/ksi/ksi.h
 

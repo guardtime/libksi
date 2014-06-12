@@ -19,9 +19,6 @@ struct KSI_PublicationsFile_st {
 	KSI_PKISignature *signature;
 };
 
-/**
- * KSI_KSITrustProvider
- */
 static int publicationsFile_setHeader(KSI_PublicationsFile *t, KSI_PublicationsHeader *header);
 static int publicationsFile_setCertificates(KSI_PublicationsFile *t, KSI_LIST(KSI_CertificateRecord) *certificates);
 static int publicationsFile_setPublications(KSI_PublicationsFile *t, KSI_LIST(KSI_PublicationRecord) *publications);
@@ -120,7 +117,11 @@ cleanup:
 	 return res;
 }
 
-int KSI_PublicationsFile_new(KSI_CTX *ctx, KSI_PublicationsFile **t) {
+/*
+ * FIXME! At the moment the users may not create publications files, as there are
+ * missing functions to manipulate its contents.
+ */
+static int KSI_PublicationsFile_new(KSI_CTX *ctx, KSI_PublicationsFile **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationsFile *tmp = NULL;
 	tmp = KSI_new(KSI_PublicationsFile);
@@ -144,7 +145,7 @@ cleanup:
 	return res;
 }
 
-int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, int raw_len, KSI_PublicationsFile **ksiTrustProvider) {
+int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, int raw_len, KSI_PublicationsFile **pubFile) {
 	KSI_ERR err;
 	int res;
 	unsigned char hdr[8];
@@ -156,7 +157,7 @@ int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, int raw_len, KSI_P
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, raw != NULL) goto cleanup;
 	KSI_PRE(&err, raw_len > 0) goto cleanup;
-	KSI_PRE(&err, ksiTrustProvider != NULL) goto cleanup;
+	KSI_PRE(&err, pubFile != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
 	res = KSI_RDR_fromSharedMem(ctx, (unsigned char *)raw, raw_len, &reader);
@@ -186,7 +187,7 @@ int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, int raw_len, KSI_P
 	res = KSI_PKITruststore_validateSignature(ctx, raw, tmp->signatureOffset, tmp->signature);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	*ksiTrustProvider = tmp;
+	*pubFile = tmp;
 	tmp = NULL;
 
 	KSI_SUCCESS(&err);
