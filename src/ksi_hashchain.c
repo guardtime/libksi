@@ -283,7 +283,7 @@ cleanup:
 /**
  *
  */
-int KSI_HashChain_getCalendarAggregationTime(const KSI_LIST(KSI_HashChainLink) *chain, const KSI_Integer *aggr_time, uint32_t *utc_time) {
+int KSI_HashChain_getCalendarAggregationTime(const KSI_LIST(KSI_HashChainLink) *chain, const KSI_Integer *pub_time, uint32_t *utc_time) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_uint64_t r;
 	uint32_t t = 0;
@@ -291,12 +291,12 @@ int KSI_HashChain_getCalendarAggregationTime(const KSI_LIST(KSI_HashChainLink) *
 	int i;
 	int isLeft;
 
-	if (chain == NULL || aggr_time == NULL) {
+	if (chain == NULL || pub_time == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	r = KSI_Integer_getUInt64(aggr_time);
+	r = KSI_Integer_getUInt64(pub_time);
 
 	/* Traverse the list from the end to the beginning. */
 	for (i = KSI_HashChainLinkList_length(chain) - 1; i >= 0; i--) {
