@@ -42,9 +42,6 @@ static void TestSHA256(CuTest* tc) {
 	CuAssertIntEquals_Msg(tc, "Digest length", sizeof(expected), digest_length);
 	CuAssert(tc, "Digest value mismatch", !memcmp(expected, digest, digest_length));
 
-
-	CuAssert(tc, "Hash object does not have correct context.", KSI_DataHasher_getCtx(hsr) == KSI_DataHash_getCtx(hsh));
-
 	KSI_nofree(ctx1);
 	KSI_nofree(ctx2);
 	KSI_nofree(digest);
@@ -221,7 +218,6 @@ static void TestSHA256GetImprint(CuTest* tc) {
 static void TestSHA256fromImprint(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
-	unsigned char unexpected[] = {KSI_HASHALG_SHA2_256, 0xe3, 0xb0, 0xc4, 0x42, 0x98, 0xfc, 0x1c, 0x14, 0x9a, 0xfb, 0xf4, 0xc8, 0x99, 0x6f, 0xb9, 0x24, 0x27, 0xae, 0x41, 0xe4, 0x64, 0x9b, 0x93, 0x4c, 0xa4, 0x95, 0x99, 0x1b, 0x78, 0x52, 0xb8, 0x55};
 	unsigned char expected[] = {KSI_HASHALG_SHA2_256, 0xc4, 0xbb, 0xcb, 0x1f, 0xbe, 0xc9, 0x9d, 0x65, 0xbf, 0x59, 0xd8, 0x5c, 0x8c, 0xb6, 0x2e, 0xe2, 0xdb, 0x96, 0x3f, 0x0f, 0xe1, 0x06, 0xf4, 0x83, 0xd9, 0xaf, 0xa7, 0x3b, 0xd4, 0xe3, 0x9a, 0x8a};
 
 	const unsigned char *imprint = NULL;
@@ -229,11 +225,8 @@ static void TestSHA256fromImprint(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_DataHash_fromImprint(ctx, unexpected, sizeof(unexpected), &hsh);
+	res = KSI_DataHash_fromImprint(ctx, expected, sizeof(expected), &hsh);
 	CuAssert(tc, "Failed to get data hash from imprint.", res == KSI_OK && hsh != NULL);
-
-	res = KSI_DataHash_fromImprint_ex(expected, sizeof(expected), hsh);
-	CuAssert(tc, "Failed to get data hash from imprint to existing data hash object.", res == KSI_OK);
 
 	res = KSI_DataHash_getImprint(hsh, &imprint, &imprint_length);
 	CuAssert(tc, "Failed to get imprint from data hash object.", res == KSI_OK && imprint != NULL);

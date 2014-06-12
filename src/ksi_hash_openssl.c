@@ -2,6 +2,14 @@
 
 #include "ksi_internal.h"
 
+struct KSI_DataHasher_st {
+	/* KSI context */
+	KSI_CTX *ctx;
+
+	void *hashContext;
+	int algorithm;
+};
+
 /**
  * Converts hash function ID from hash chain to OpenSSL identifier
  */
@@ -31,6 +39,60 @@ static const EVP_MD *hashAlgorithmToEVP(int hash_id)
 	}
 }
 
+void KSI_DataHasher_free(KSI_DataHasher *hasher) {
+	if (hasher != NULL) {
+		KSI_free(hasher->hashContext);
+		KSI_free(hasher);
+	}
+}
+
+int KSI_DataHasher_open(KSI_CTX *ctx, int hash_algorithm, KSI_DataHasher **hasher) {
+	KSI_ERR err;
+	int res;
+
+	KSI_BEGIN(ctx, &err);
+
+	KSI_DataHasher *tmp_hasher = NULL;
+
+	if (hasher == NULL) {
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	if (!KSI_isSupportedHashAlgorithm(hash_algorithm)) {
+		KSI_FAIL(&err, KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
+		goto cleanup;
+	}
+
+	tmp_hasher = KSI_new(KSI_DataHasher);
+	if (tmp_hasher == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	tmp_hasher->hashContext = NULL;
+	tmp_hasher->ctx = ctx;
+	tmp_hasher->algorithm = hash_algorithm;
+
+	res = KSI_DataHasher_reset(tmp_hasher);
+	if (res != KSI_OK) {
+		KSI_FAIL(&err, res, NULL);
+		goto cleanup;
+	}
+
+	*hasher = tmp_hasher;
+	tmp_hasher = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_DataHasher_free(tmp_hasher);
+
+	return KSI_RETURN(&err);
+}
+
+
 int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 	KSI_ERR err;
 	int res;
@@ -40,15 +102,15 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 	int digest_length;
 
 	KSI_PRE(&err, hasher != NULL) goto cleanup;
-	KSI_BEGIN(KSI_DataHasher_getCtx(hasher), &err);
+	KSI_BEGIN(hasher->ctx, &err);
 
-	evp_md = hashAlgorithmToEVP(KSI_DataHasher_getAlgorithm(hasher));
+	evp_md = hashAlgorithmToEVP(hasher->algorithm);
 	if (evp_md == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
-	context = KSI_DataHasher_getHahshContext(hasher);
+	context = hasher->hashContext;
 	if (context == NULL) {
 		context = KSI_new(EVP_MD_CTX);
 		if (context == NULL) {
@@ -56,9 +118,7 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 			goto cleanup;
 		}
 
-		res = KSI_DataHasher_setHashContext(hasher, context);
-		KSI_CATCH(&err, res) goto cleanup;
-
+		hasher->hashContext = context;
 	} else {
 		EVP_MD_CTX_cleanup(context);
 	}
@@ -81,19 +141,12 @@ int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_len
 	KSI_ERR err;
 
 	KSI_PRE(&err, hasher != NULL) goto cleanup;
-	KSI_BEGIN(KSI_DataHasher_getCtx(hasher), &err);
+	KSI_PRE(&err, data != NULL || data_length == 0) goto cleanup;
+	KSI_BEGIN(hasher->ctx, &err);
 
-	if (hasher == NULL || KSI_DataHasher_getHahshContext(hasher) == NULL) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
+	if (data_length > 0) {
+		EVP_DigestUpdate(hasher->hashContext, data, data_length);
 	}
-
-	if (data == NULL && data_length != 0) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	EVP_DigestUpdate(KSI_DataHasher_getHahshContext(hasher), data, data_length);
 
 	KSI_SUCCESS(&err);
 
@@ -110,26 +163,22 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 	unsigned int digest_length;
 
 	KSI_PRE(&err, hasher != NULL) goto cleanup;
-	KSI_BEGIN(KSI_DataHasher_getCtx(hasher), &err);
+	KSI_PRE(&err, data_hash != NULL) goto cleanup;
+	KSI_BEGIN(hasher->ctx, &err);
 
-	if (hasher == NULL || KSI_DataHasher_getHahshContext(hasher) == NULL) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	digest = KSI_malloc(KSI_getHashLength(KSI_DataHasher_getAlgorithm(hasher))); // FIXME! This should handle errors.
+	digest = KSI_malloc(KSI_getHashLength(hasher->algorithm)); // FIXME! This should handle errors.
 	if (digest == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
-	EVP_DigestFinal(KSI_DataHasher_getHahshContext(hasher), digest, &digest_length);
+	EVP_DigestFinal(hasher->hashContext, digest, &digest_length);
 
-	res = KSI_DataHash_fromDigest(KSI_DataHasher_getCtx(hasher), KSI_DataHasher_getAlgorithm(hasher), digest, digest_length, &hsh);
-
-	KSI_free(KSI_DataHasher_getHahshContext(hasher));
-	res = KSI_DataHasher_setHashContext(hasher, NULL);
+	res = KSI_DataHash_fromDigest(hasher->ctx, hasher->algorithm, digest, digest_length, &hsh);
 	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_free(hasher->hashContext);
+	hasher->hashContext = NULL;
 
 	*data_hash = hsh;
 	hsh = NULL;

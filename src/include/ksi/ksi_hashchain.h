@@ -16,8 +16,7 @@ extern "C" {
 	 * @param[in]	right		Right sibling.
 	 * @param[out]	root		Pointer to the receiving pointer of the new root hash node.
 	 *
-	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an
-	 * error code).
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_HashChain_getCalendarAggregationTime(const KSI_LIST(KSI_HashChainLink) *chain, const KSI_Integer *aggr_time, uint32_t *utc_time);
 	int KSI_HashChain_appendLink(KSI_CTX *ctx, KSI_DataHash *siblingHash, KSI_DataHash *metaHash, KSI_MetaData *metaData, int isLeft, unsigned int levelCorrection, KSI_LIST(KSI_HashChainLink) **chain);

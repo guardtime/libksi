@@ -360,7 +360,7 @@ static int setIntParam(int *param, int val) {
 				goto cleanup;																			\
 			}																							\
 			res = KSI_NetProvider_getNetContext(netProvider, (void **)&pctx);							\
-			if (pctx != KSI_OK) goto cleanup;															\
+			if (res != KSI_OK) goto cleanup;															\
 			res = (fn)(&pctx->var, val);																\
 		cleanup:																						\
 			return res;																					\

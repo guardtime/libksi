@@ -5,14 +5,6 @@
 
 #define HASH_ALGO(id, name, bitcount, trusted) {(id), (name), (bitcount), (trusted), id##_aliases}
 
-struct KSI_DataHasher_st {
-	/* KSI context */
-	KSI_CTX *ctx;
-
-	void *hashContext;
-	int algorithm;
-};
-
 struct KSI_DataHash_st {
 	/* KSI context */
 	KSI_CTX *ctx;
@@ -61,18 +53,9 @@ static struct KSI_hashAlgorithmInfo_st {
 		HASH_ALGO(KSI_HASHALG_SM3, 			"SM3", 			256, 1)
 };
 
-KSI_IMPLEMENT_GET_CTX(KSI_DataHash);
-KSI_IMPLEMENT_GET_CTX(KSI_DataHasher);
-
 /**
  *
  */
-void KSI_DataHasher_free(KSI_DataHasher *hasher) {
-	if (hasher != NULL) {
-		KSI_free(hasher->hashContext);
-		KSI_free(hasher);
-	}
-}
 
 void KSI_DataHash_free(KSI_DataHash *hash) {
 	if (hash != NULL) {
@@ -80,75 +63,6 @@ void KSI_DataHash_free(KSI_DataHash *hash) {
 		KSI_free(hash);
 	}
 }
-
-int KSI_DataHasher_getAlgorithm(KSI_DataHasher *hasher) {
-	return hasher->algorithm;
-}
-
-void *KSI_DataHasher_getHahshContext(KSI_DataHasher *hasher) {
-	return hasher->hashContext;
-}
-
-int KSI_DataHasher_setHashContext(KSI_DataHasher *hasher, void *hashContext) {
-	KSI_ERR err;
-	KSI_PRE(&err, hasher != NULL) goto cleanup;
-	KSI_BEGIN(hasher->ctx, &err);
-
-	hasher->hashContext = hashContext;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-}
-
-int KSI_DataHasher_open(KSI_CTX *ctx, int hash_algorithm, KSI_DataHasher **hasher) {
-	KSI_ERR err;
-	int res;
-
-	KSI_BEGIN(ctx, &err);
-
-	KSI_DataHasher *tmp_hasher = NULL;
-
-	if (hasher == NULL) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	if (!KSI_isSupportedHashAlgorithm(hash_algorithm)) {
-		KSI_FAIL(&err, KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
-		goto cleanup;
-	}
-
-	tmp_hasher = KSI_new(KSI_DataHasher);
-	if (tmp_hasher == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	tmp_hasher->hashContext = NULL;
-	tmp_hasher->ctx = ctx;
-	tmp_hasher->algorithm = hash_algorithm;
-
-	res = KSI_DataHasher_reset(tmp_hasher);
-	if (res != KSI_OK) {
-		KSI_FAIL(&err, res, NULL);
-		goto cleanup;
-	}
-
-	*hasher = tmp_hasher;
-	tmp_hasher = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_DataHasher_free(tmp_hasher);
-
-	return KSI_RETURN(&err);
-}
-
 
 /**
  *
@@ -274,29 +188,6 @@ cleanup:
 /**
  *
  */
-int KSI_DataHash_getImprint_ex(KSI_DataHash *hash, unsigned char *target, int target_size, int *target_length) {
-	KSI_ERR err;
-
-	KSI_BEGIN(hash->ctx, &err);
-
-	if (target_size < hash->imprint_length) {
-		KSI_FAIL(&err, KSI_BUFFER_OVERFLOW, NULL);
-		goto cleanup;
-	}
-
-	memcpy(target, hash->imprint, hash->imprint_length);
-	*target_length = hash->imprint_length;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-}
-
-/**
- *
- */
 int KSI_DataHash_getImprint(const KSI_DataHash *hash, const unsigned char **imprint, int *imprint_length) {
 	KSI_ERR err;
 
@@ -320,27 +211,6 @@ cleanup:
  */
 int KSI_DataHash_fromImprint(KSI_CTX *ctx, const unsigned char *imprint, int imprint_length, KSI_DataHash **hash) {
 	return KSI_DataHash_fromDigest(ctx, *imprint, imprint + 1, imprint_length - 1, hash);
-}
-
-/**
- *
- */
-int KSI_DataHash_fromImprint_ex(unsigned char *imprint, int imprint_length, KSI_DataHash *hash) {
-	KSI_ERR err;
-	int res;
-	KSI_PRE(&err, hash != NULL) goto cleanup;
-	KSI_PRE(&err, imprint != NULL) goto cleanup;
-
-	KSI_BEGIN(hash->ctx, &err);
-
-	res = KSI_DataHash_fromData_ex(*imprint, imprint + 1, imprint_length - 1, hash);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
 }
 
 /**

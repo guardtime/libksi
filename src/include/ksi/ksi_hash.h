@@ -56,21 +56,6 @@ extern "C" {
 	/**
 	 * TODO!
 	 */
-	void *KSI_DataHasher_getHahshContext(KSI_DataHasher *hasher);
-
-	/**
-	 * TODO!
-	 */
-	int KSI_DataHasher_setHashContext(KSI_DataHasher *hasher, void *hashContext);
-
-	/**
-	 * TODO!
-	 */
-	int KSI_DataHasher_getAlgorithm(KSI_DataHasher *hasher);
-
-	/**
-	 * TODO!
-	 */
 	void KSI_DataHasher_free(KSI_DataHasher *hasher);
 	/**
 	 * Frees memory used by hasher.
@@ -160,16 +145,6 @@ extern "C" {
 	int KSI_DataHash_getImprint(const KSI_DataHash *hash, const unsigned char **imprint, int *imprint_length);
 
 	/**
-	 * Encodes the data hash object as an imprint into an existing array.
-	 *
-	 * @param[in]	hash			Data hash object.
-	 * @param[in]	target			Pointer to the existing target memory.
-	 * @param[in]	target_size		Maximum output length.
-	 * @param[out]	target_length	Length of the serialized imprint.
-	 */
-	int KSI_DataHash_getImprint_ex(KSI_DataHash *hash, unsigned char *target, int target_size, int *target_length);
-
-	/**
 	 * Constructor for #KSI_DataHash object from existing imprint.
 	 *
 	 * \param[in]	ctx				KSI context.
@@ -181,18 +156,6 @@ extern "C" {
 	 * error code).
 	 */
 	int KSI_DataHash_fromImprint(KSI_CTX *ctx, const unsigned char *imprint, int imprint_length, KSI_DataHash **hash);
-
-	/**
-	 * Reevaluates the existing #KSI_DataHash object.
-	 *
-	 * \param[in]	imprint			Pointer to hash imprint.
-	 * \param[in]	imprint_length	Length of the imprint.
-	 * \param[out]	hash			Pointer to the data hash object.
-	 *
-	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an
-	 * error code).
-	 */
-	int KSI_DataHash_fromImprint_ex(unsigned char *imprint, int imprint_length, KSI_DataHash *hash);
 
 	/**
 	 *

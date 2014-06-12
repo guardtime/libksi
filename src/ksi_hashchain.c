@@ -41,9 +41,8 @@ cleanup:
 	return res;
 }
 
-static int addChainImprint(KSI_DataHasher *hsr, KSI_HashChainLink *link) {
+static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink *link) {
 	KSI_ERR err;
-	KSI_CTX *ctx;
 	int res;
 	int mode = 0;
 	const unsigned char *imprint;
@@ -55,8 +54,6 @@ static int addChainImprint(KSI_DataHasher *hsr, KSI_HashChainLink *link) {
 
 	KSI_PRE(&err, hsr != NULL) goto cleanup;
 	KSI_PRE(&err, link != NULL) goto cleanup;
-
-	ctx = KSI_DataHasher_getCtx(hsr);
 	KSI_BEGIN(ctx, &err);
 
 	res = KSI_HashChainLink_getImprint(link, &hash);
@@ -131,7 +128,7 @@ static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, KSI_DataHash *inpu
 	KSI_PRE(&err, inputHash != NULL) goto cleanup;
 	KSI_PRE(&err, outputHash != NULL) goto cleanup;
 
-	ctx = KSI_DataHash_getCtx(inputHash);
+	ctx = KSI_HashChainLinkList_getCtx(chain);
 	KSI_BEGIN(ctx, &err);
 
 	sprintf(logMsg, "Starting %s hash chain aggregation with input  hash", isCalendar ? "calendar": "aggregation");
@@ -168,10 +165,10 @@ static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, KSI_DataHash *inpu
 			res = addNvlImprint(hsh, inputHash, hsr);
 			KSI_CATCH(&err, res) goto cleanup;
 
-			res = addChainImprint(hsr, link);
+			res = addChainImprint(ctx, hsr, link);
 			KSI_CATCH(&err, res) goto cleanup;
 		} else {
-			res = addChainImprint(hsr, link);
+			res = addChainImprint(ctx, hsr, link);
 			KSI_CATCH(&err, res) goto cleanup;
 
 			res = addNvlImprint(hsh, inputHash, hsr);

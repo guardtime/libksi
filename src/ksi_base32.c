@@ -60,22 +60,21 @@ static void addBits(unsigned char *buf, int *bits_decoded, int bits)
 	}
 }
 
-int KSI_base32Decode(const char *base32, int base32_len, unsigned char **raw, size_t *raw_len) {
+int KSI_base32Decode(const char *base32, unsigned char **data, size_t *data_len) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	int bits_decoded = 0;
 	char c;
 	int i;
 	unsigned char *tmp = NULL;
+	int base32_len;
 
-	if (base32 == NULL || raw == NULL || raw_len == NULL) {
+	if (base32 == NULL || data == NULL || data_len == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	if (base32_len < 0) {
-		base32_len = strlen(base32);
-	}
+	base32_len = strlen(base32);
 
 	tmp = KSI_calloc(base32_len * 5 / 8 + 2, 1);
 	if (tmp == NULL) {
@@ -115,8 +114,8 @@ int KSI_base32Decode(const char *base32, int base32_len, unsigned char **raw, si
 
 	/* This operation also truncates extra bits from the end (when input
 	 * bit count was not divisible by 5). */
-	*raw_len = bits_decoded / 8;
-	*raw = tmp;
+	*data_len = bits_decoded / 8;
+	*data = tmp;
 	tmp = NULL;
 
 	res = KSI_OK;

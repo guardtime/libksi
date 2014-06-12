@@ -131,7 +131,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	if (res != KSI_OK) goto cleanup;
 
 	/* Configure curl net provider */
-	if ((res = KSI_CurlNetProvider_setSignerUrl(netProvider, "192.168.1.36:3333")) != KSI_OK) goto cleanup;
+	if ((res = KSI_CurlNetProvider_setSignerUrl(netProvider, "192.168.1.29:1234"/*"192.168.1.36:3333"*/)) != KSI_OK) goto cleanup;
 	if ((res = KSI_CurlNetProvider_setExtenderUrl(netProvider, "192.168.1.36:8081/gt-extendingservice")) != KSI_OK) goto cleanup;
 	if ((res = KSI_CurlNetProvider_setPublicationUrl(netProvider, "file:///root/dev/ksi-c-api/test/resource/tlv/publications.tlv")) != KSI_OK) goto cleanup;
 	if ((res = KSI_CurlNetProvider_setReadTimeoutSeconds(netProvider, 5)) != KSI_OK) goto cleanup;
@@ -295,15 +295,12 @@ int KSI_PublicationData_fromBase32(KSI_CTX *ctx,	const char *publication, KSI_Pu
 	size_t hash_size;
 	KSI_DataHash *pubHash = NULL;
 	KSI_Integer *pubTime;
-	int publication_length = 0;
 
 	KSI_PRE(&err, publication != NULL) goto cleanup;
 	KSI_PRE(&err, published_data != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	publication_length = strlen(publication);
-
-	res = KSI_base32Decode(publication, publication_length, &binary_publication, &binary_publication_length);
+	res = KSI_base32Decode(publication, &binary_publication, &binary_publication_length);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	if (binary_publication_length < 13) {
