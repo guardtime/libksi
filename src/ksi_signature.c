@@ -2142,6 +2142,8 @@ int KSI_Signature_getHashAlgorithm(KSI_Signature *sig, int *hash_id) {
 
 	*hash_id = tmp;
 
+	KSI_SUCCESS(&err);
+
 cleanup:
 
 	KSI_nofree(hsh);

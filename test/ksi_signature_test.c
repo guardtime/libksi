@@ -72,6 +72,93 @@ static void testSerializeSignature(CuTest *tc) {
 	KSI_Signature_free(sig);
 }
 
+static void testVerifyDocument(CuTest *tc) {
+	int res;
+
+	unsigned char in[0x1ffff];
+	int in_len = 0;
+
+	unsigned char doc[] = "LAPTOP";
+
+	FILE *f = NULL;
+	KSI_Signature *sig = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	f = fopen(TEST_SIGNATURE_FILE, "rb");
+	CuAssert(tc, "Unable to open signature file.", f != NULL);
+
+	in_len = fread(in, 1, sizeof(in), f);
+	CuAssert(tc, "Nothing read from signature file.", in_len > 0);
+
+	res = KSI_Signature_parse(ctx, in, in_len, &sig);
+	CuAssert(tc, "Failed to parse signature", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_verifyDocument(sig, doc, strlen(doc));
+	CuAssert(tc, "Failed to verify valid document", res == KSI_OK);
+
+	res = KSI_Signature_verifyDocument(sig, doc, sizeof(doc));
+	CuAssert(tc, "Verification did not fail with expected error.", res == KSI_WRONG_DOCUMENT);
+
+	KSI_Signature_free(sig);
+}
+
+static void testVerifyDocumentHash(CuTest *tc) {
+	int res;
+
+	unsigned char in[0x1ffff];
+	int in_len = 0;
+
+	unsigned char doc[] = "LAPTOP";
+	KSI_DataHash *hsh = NULL;
+
+	FILE *f = NULL;
+	KSI_Signature *sig = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	f = fopen(TEST_SIGNATURE_FILE, "rb");
+	CuAssert(tc, "Unable to open signature file.", f != NULL);
+
+	in_len = fread(in, 1, sizeof(in), f);
+	CuAssert(tc, "Nothing read from signature file.", in_len > 0);
+
+	res = KSI_Signature_parse(ctx, in, in_len, &sig);
+	CuAssert(tc, "Failed to parse signature", res == KSI_OK && sig != NULL);
+
+	/* Chech correct document. */
+	res = KSI_DataHash_create(ctx, doc, strlen(doc), KSI_HASHALG_SHA2_256, &hsh);
+	CuAssert(tc, "Failed to create data hash", res == KSI_OK && hsh != NULL);
+
+	res = KSI_Signature_verifyDataHash(sig, hsh);
+	CuAssert(tc, "Failed to verify valid document", res == KSI_OK);
+
+	KSI_DataHash_free(hsh);
+	hsh = NULL;
+
+	/* Chech wrong document. */
+	res = KSI_DataHash_create(ctx, doc, sizeof(doc), KSI_HASHALG_SHA2_256, &hsh);
+	CuAssert(tc, "Failed to create data hash", res == KSI_OK && hsh != NULL);
+
+	res = KSI_Signature_verifyDataHash(sig, hsh);
+	CuAssert(tc, "Verification did not fail with expected error.", res == KSI_WRONG_DOCUMENT);
+
+	KSI_DataHash_free(hsh);
+	hsh = NULL;
+
+	/* Check correct document with wrong hash algorithm. */
+	res = KSI_DataHash_create(ctx, doc, strlen(doc), KSI_HASHALG_SHA2_512, &hsh);
+	CuAssert(tc, "Failed to create data hash", res == KSI_OK && hsh != NULL);
+
+	res = KSI_Signature_verifyDataHash(sig, hsh);
+	CuAssert(tc, "Verification did not fail with expected error.", res == KSI_WRONG_DOCUMENT);
+
+	KSI_DataHash_free(hsh);
+
+
+	KSI_Signature_free(sig);
+}
+
 
 CuSuite* KSITest_Signature_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
@@ -79,6 +166,8 @@ CuSuite* KSITest_Signature_getSuite(void) {
 	SUITE_ADD_TEST(suite, testLoadSignatureFromFile);
 	SUITE_ADD_TEST(suite, testSignatureSigningTime);
 	SUITE_ADD_TEST(suite, testSerializeSignature);
+	SUITE_ADD_TEST(suite, testVerifyDocument);
+	SUITE_ADD_TEST(suite, testVerifyDocumentHash);
 
 	return suite;
 }
