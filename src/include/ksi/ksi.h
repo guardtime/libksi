@@ -131,6 +131,10 @@ enum KSI_StatusCode {
 	 */
 	KSI_WRONG_DOCUMENT,
 	/**
+	 * The publications file is not signed.
+	 */
+	KSI_PUBLICATIONS_FILE_NOT_SIGNED_WITH_PKI,
+	/**
 	 * Cryptographic operation could not be performed. Likely causes are
 	 * unsupported cryptographic algorithms, invalid keys and lack of
 	 * resources.
@@ -319,36 +323,24 @@ int KSI_sendExtendRequest(KSI_CTX *ctx, const unsigned char *request, int reques
 int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle);
 
 /**
- * Converts the base-32 encoded publicationstring into #KSI_PublicationData object.
- * \param[in]		ctx				KSI context.
- * \param[in]		publication		Pointer to base-32 encoded publications string.
- * \param[in]		published_data	Pointer to the receiving pointer.
- *
- * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- * \note The output memory has to be freed by the caller using #KSI_PublicationData_free.
- */
-int KSI_PublicationData_fromBase32(KSI_CTX *ctx, const char *publication, KSI_PublicationData **published_data);
-
-/**
- * Functioin to concert the published data into a base-32 encoded null-terminated string.
- * \param[in]		published_data		Pointer to the published data object.
- * \param[out]		publication			Pointer to the receiving pointer.
- *
- * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- * \note The putput memory has to be freed by the caller using #KSI_free.
- */
-int KSI_PublicationData_toBase32(const KSI_PublicationData *published_data, char **publication);
-
-/**
  * Accessor method for the publications file. It will download the publications file from
  * the uri specified by the KSI context.
  * \param[in]		ctx			KSI context.
  * \param[out]		pubFile		Pointer to the receiving pointer.
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- * \note The output value may not be freed by the caller.
  */
 int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile);
+
+/**
+ * Verify the PKI signature of the publications file using the context.
+ * \param[in]		ctx			KSI context.
+ * \param[in]		pubFile		Publications file.
+ *
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
+int KSI_verifyPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile *pubFile);
+
 int KSI_createSignature(KSI_CTX *ctx, const KSI_DataHash *dataHash, KSI_Signature **sig);
 int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extended);
 

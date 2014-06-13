@@ -79,8 +79,11 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
+	 * \note For signing hash values, the use of #KSI_createSignature is strongly
+	 * recomended.
+	 * \see #KSI_createSignature
 	 */
-	int KSI_Signature_sign(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **signature);
+	int KSI_Signature_create(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **signature);
 
 	/**
 	 * This function extends the signature to the given publication \c pubRec. If \c pubRec is \c NULL the signature is

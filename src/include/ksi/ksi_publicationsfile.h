@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 	/**
-	 * \addtogroup publicationsfile Publications file.
+	 * \addtogroup publications Publications.
 	 * Publication file is a trust anchor for verifying keyless signatures. It contains a list
 	 * of public-key certificates for verifying authentication records and publications for verifying
 	 * calendar hash chains. Publication file has the following components that must appear in the
@@ -38,10 +38,18 @@ extern "C" {
 	 * \param[in]		fileName	Publications file filename.
 	 * \param[out]		pubFile		Pointer to the receiving pointer.
 	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_PublicationsFile_fromFile(KSI_CTX *ctx, const char *fileName, KSI_PublicationsFile **pubFile);
+
+	/**
+	 * Verify PKI signature of the publications file using the PKI truststore.
+	 * \param[in]		pubFile		Publications file.
+	 * \param[in]		pki			PKI truststore.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_PublicationsFile_verify(KSI_PublicationsFile *pubFile, KSI_PKITruststore *pki);
 
 	/**
 	 * Publicationsfile header getter method.
@@ -145,6 +153,27 @@ extern "C" {
 	 * \param[in]	pubFile		Publicationsfile to be freed.
 	 */
 	void KSI_PublicationsFile_free(KSI_PublicationsFile *pubFile);
+
+	/**
+	 * Converts the base-32 encoded publicationstring into #KSI_PublicationData object.
+	 * \param[in]		ctx				KSI context.
+	 * \param[in]		publication		Pointer to base-32 encoded publications string.
+	 * \param[in]		published_data	Pointer to the receiving pointer.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note The output memory has to be freed by the caller using #KSI_PublicationData_free.
+	 */
+	int KSI_PublicationData_fromBase32(KSI_CTX *ctx, const char *publication, KSI_PublicationData **published_data);
+
+	/**
+	 * Functioin to concert the published data into a base-32 encoded null-terminated string.
+	 * \param[in]		published_data		Pointer to the published data object.
+	 * \param[out]		publication			Pointer to the receiving pointer.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note The putput memory has to be freed by the caller using #KSI_free.
+	 */
+	int KSI_PublicationData_toBase32(const KSI_PublicationData *published_data, char **publication);
 
 	/**
 	 * @}

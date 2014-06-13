@@ -132,7 +132,7 @@ extern "C" {
 	int KSI_PKISignature_toTlv(KSI_PKISignature *sig, int tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 	/**
-	 * Function for validating a raw signature. TODO! - explain in detail!
+	 * Function for verifying a raw signature. TODO! - explain in detail!
 	 * \param[in]	ctx				KSI contetx.
 	 * \param[in]	data			Pointer to input data.
 	 * \param[in]	data_len		Input data len.
@@ -144,11 +144,11 @@ extern "C" {
 	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_PKITruststore_validateRawSignature(KSI_CTX *ctx, unsigned char *data, unsigned int data_len, const char *algoOid, const unsigned char *signature, unsigned int signature_len, const KSI_PKICertificate *cert);
+	int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, unsigned char *data, unsigned int data_len, const char *algoOid, const unsigned char *signature, unsigned int signature_len, const KSI_PKICertificate *cert);
 
 	/**
-	 * Function for validating PKI Signature.
-	 * \param[in]	ctx			KSI context.
+	 * Function for verifying the data with PKI Signature.
+	 * \param[in]	pki			PKI Truststore.
 	 * \param[in]	data		Pointer to signed data.
 	 * \param[in]	data_len	Length of the signed data.
 	 * \param[in]	signature	PKI signature object.
@@ -156,7 +156,7 @@ extern "C" {
 	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_PKITruststore_validateSignature(KSI_CTX *ctx, const unsigned char *data, unsigned int data_len, const KSI_PKISignature *signature);
+	int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned char *data, unsigned int data_len, const KSI_PKISignature *signature);
 
 	/**
 	 * Add trusted certificate lookup file.

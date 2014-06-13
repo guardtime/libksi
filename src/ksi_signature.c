@@ -233,7 +233,7 @@ static int CalAuthRec_validate(KSI_CTX *ctx, CalAuthRec *calAuth) {
 	res = KSI_OctetString_extract(signatureValue, &raw, &raw_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_PKITruststore_validateRawSignature(ctx, calAuth->pubData->raw, calAuth->pubData->raw_len, calAuth->sigAlgo, raw, raw_len, cert);
+	res = KSI_PKITruststore_verifyRawSignature(ctx, calAuth->pubData->raw, calAuth->pubData->raw_len, calAuth->sigAlgo, raw, raw_len, cert);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
@@ -935,11 +935,6 @@ static int validateSignature_internal(KSI_Signature *sig) {
 		goto cleanup;
 	}
 
-	if (sig->calAuth == NULL && sig->publication == NULL) { // TODO! Should this list contain also aggr auth record?
-		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Signature does not contain any authentication record.");
-		goto cleanup;
-	}
-
 	res = KSI_CalendarHashChain_getHashChain(sig->calendarChain, &chain);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -1035,7 +1030,7 @@ cleanup:
 }
 
 
-static int validateSignature(KSI_CTX *ctx, KSI_Signature *sig) {
+static int KSI_Signature_validateInternal(KSI_CTX *ctx, KSI_Signature *sig) {
 	KSI_ERR err;
 	int res;
 
@@ -1128,7 +1123,7 @@ static int extractSignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature **signatur
 	sig->calendarChain = cal;
 	cal = NULL;
 
-	res = validateSignature(ctx, sig);
+	res = KSI_Signature_validateInternal(ctx, sig);
 	KSI_CATCH(&err, res) goto cleanup;
 
 
@@ -1623,7 +1618,7 @@ cleanup:
 
 }
 
-int KSI_Signature_sign(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **signature) {
+int KSI_Signature_create(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **signature) {
 	KSI_ERR err;
 	int res;
 	KSI_NetHandle *handle = NULL;
@@ -1698,10 +1693,6 @@ int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRe
 
 	KSI_BEGIN(signature->ctx, &err);
 
-	/* Make a copy of the original publication record .*/
-	res = KSI_PublicationRecord_new(signature->ctx, &pubRecClone);
-	KSI_CATCH(&err, res) goto cleanup;
-
 	/* Make a copy of the original signature */
 	res = KSI_Signature_clone(signature, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -1712,6 +1703,10 @@ int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRe
 
 	/* If publication record is present, extract the publication time. */
 	if (pubRec != NULL) {
+		/* Make a copy of the original publication record .*/
+		res = KSI_PublicationRecord_new(signature->ctx, &pubRecClone);
+		KSI_CATCH(&err, res) goto cleanup;
+
 		res = KSI_TlvTemplate_deepCopy(signature->ctx, pubRec, KSI_TLV_TEMPLATE(KSI_PublicationRecord), pubRecClone);
 		KSI_CATCH(&err, res) goto cleanup;
 
@@ -1789,7 +1784,7 @@ int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRe
 	pubRecClone = NULL;
 
 	/* Validate signature before returning. */
-	res = validateSignature(signature->ctx, tmp);
+	res = KSI_Signature_validateInternal(signature->ctx, tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*extended = tmp;

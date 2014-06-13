@@ -32,25 +32,51 @@ static void setFileMockResponse(CuTest *tc, const char *fileName) {
 
 static void testLoadPublicationsFile(CuTest *tc) {
 	int res;
-	KSI_PublicationsFile *trust = NULL;
+	KSI_PublicationsFile *pubFile = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	setFileMockResponse(tc, TEST_PUBLICATIONS_FILE);
+
+	res = KSI_PublicationsFile_fromFile(ctx, TEST_PUBLICATIONS_FILE, &pubFile);
+	KSI_ERR_statusDump(ctx, stdout);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	KSI_PublicationsFile_free(pubFile);
+}
+
+static void testVerifyPublicationsFile(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
 	KSI_PKITruststore *pki = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_getPKITruststore(ctx, &pki);
+	setFileMockResponse(tc, TEST_PUBLICATIONS_FILE);
+
+	res = KSI_PublicationsFile_fromFile(ctx, TEST_PUBLICATIONS_FILE, &pubFile);
+	KSI_ERR_statusDump(ctx, stdout);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_PKITruststore_new(ctx, 0, &pki);
 	CuAssert(tc, "Unable to get PKI truststore from context.", res == KSI_OK && pki != NULL);
+
+	/* Verification should fail. */
+	res = KSI_PublicationsFile_verify(pubFile, pki);
+	CuAssert(tc, "Publications file shouldn't verify without mock certificate.", res != KSI_OK);
+
+	/* Verification should succeed. */
 
 	res = KSI_PKITruststore_addLookupFile(pki, "test/resource/tlv/mock.crt");
 	CuAssert(tc, "Unable to read certificate", res == KSI_OK);
 
-	setFileMockResponse(tc, TEST_PUBLICATIONS_FILE);
+	res = KSI_PublicationsFile_verify(pubFile, pki);
+	CuAssert(tc, "Publications file should verify with mock certificate.", res == KSI_OK);
 
-	res = KSI_PublicationsFile_fromFile(ctx, TEST_PUBLICATIONS_FILE, &trust);
-	KSI_ERR_statusDump(ctx, stdout);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && trust != NULL);
-
-	KSI_PublicationsFile_free(trust);
+	KSI_PKITruststore_free(pki);
+	KSI_PublicationsFile_free(pubFile);
 }
+
 
 static void testPublicationStringEncodingAndDecoding(CuTest *tc) {
 	static const char publication[] = "AAAAAA-CTJR3I-AANBWU-RY76YF-7TH2M5-KGEZVA-WLLRGD-3GKYBG-AM5WWV-4MCLSP-XPRDDI-UFMHBA";
@@ -77,6 +103,7 @@ CuSuite* KSITest_Publicationsfile_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
 	SUITE_ADD_TEST(suite, testLoadPublicationsFile);
+	SUITE_ADD_TEST(suite, testVerifyPublicationsFile);
 	SUITE_ADD_TEST(suite, testPublicationStringEncodingAndDecoding);
 
 	return suite;

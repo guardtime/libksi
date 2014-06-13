@@ -27,12 +27,6 @@ struct KSI_PKISignature_st {
 	PKCS7 *pkcs7;
 };
 
-struct KSI_PKISignatureValidator_st {
-	EVP_MD_CTX md_ctx;
-	const EVP_MD *evp_md;
-};
-
-
 static int KSI_MD2hashAlg(EVP_MD *hash_alg) {
 	if (hash_alg == EVP_sha224())
 		return KSI_HASHALG_SHA2_224;
@@ -554,7 +548,7 @@ cleanup:
 	return res;
 }
 
-static int KSI_PKITruststore_validateSignatureCertificate(KSI_CTX *ctx, const KSI_PKISignature *signature) {
+static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore *pki, const KSI_PKISignature *signature) {
 	KSI_ERR err;
 	int res;
 	X509 *cert = NULL;
@@ -562,11 +556,10 @@ static int KSI_PKITruststore_validateSignatureCertificate(KSI_CTX *ctx, const KS
 	ASN1_OBJECT *oid = NULL;
 	X509_STORE_CTX *storeCtx = NULL;
 	char tmp[256];
-	KSI_PKITruststore *pki = NULL;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, pki != NULL) goto cleanup;
 	KSI_PRE(&err, signature != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_BEGIN(pki->ctx, &err);
 
 	res = extractCertificate(signature, &cert);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -599,9 +592,6 @@ static int KSI_PKITruststore_validateSignatureCertificate(KSI_CTX *ctx, const KS
 		goto cleanup;
 	}
 
-	res = KSI_getPKITruststore(ctx, &pki);
-	KSI_CATCH(&err, res) goto cleanup;
-
 	if (!X509_STORE_CTX_init(storeCtx, pki->store, cert,
 			signature->pkcs7->d.sign->cert)) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
@@ -622,23 +612,21 @@ static int KSI_PKITruststore_validateSignatureCertificate(KSI_CTX *ctx, const KS
 
 cleanup:
 
-	KSI_nofree(pki);
-
 	if (storeCtx != NULL) X509_STORE_CTX_free(storeCtx);
 	if (oid != NULL) ASN1_OBJECT_free(oid);
 
 	return KSI_RETURN(&err);
 }
 
-int KSI_PKITruststore_validateSignature(KSI_CTX *ctx, const unsigned char *data, unsigned int data_len, const KSI_PKISignature *signature) {
+int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned char *data, unsigned int data_len, const KSI_PKISignature *signature) {
 	KSI_ERR err;
 	int res;
 	BIO *bio = NULL;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, pki != NULL) goto cleanup;
 	KSI_PRE(&err, data != NULL) goto cleanup;
 	KSI_PRE(&err, signature != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_BEGIN(pki->ctx, &err);
 
 
 	bio = BIO_new_mem_buf((void *)data, data_len);
@@ -657,7 +645,7 @@ int KSI_PKITruststore_validateSignature(KSI_CTX *ctx, const unsigned char *data,
 		goto cleanup;
 	}
 
-	res = KSI_PKITruststore_validateSignatureCertificate(ctx, signature);
+	res = KSI_PKITruststore_verifySignatureCertificate(pki, signature);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
@@ -669,7 +657,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_PKITruststore_validateRawSignature(KSI_CTX *ctx, unsigned char *data, unsigned int data_len, const char *algoOid, const unsigned char *signature, unsigned int signature_len, const KSI_PKICertificate *certificate) {
+int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, unsigned char *data, unsigned int data_len, const char *algoOid, const unsigned char *signature, unsigned int signature_len, const KSI_PKICertificate *certificate) {
 	KSI_ERR err;
 	int res;
 	ASN1_OBJECT* algorithm = NULL;

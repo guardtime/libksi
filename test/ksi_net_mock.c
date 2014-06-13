@@ -3,9 +3,9 @@
 
 #include "../src/ksi_internal.h"
 
-const unsigned char *KSI_NET_MOCK_request = NULL;
+unsigned char *KSI_NET_MOCK_request = NULL;
 int KSI_NET_MOCK_request_len;
-const unsigned char *KSI_NET_MOCK_response = NULL;
+unsigned char *KSI_NET_MOCK_response = NULL;
 int KSI_NET_MOCK_response_len;
 
 static int mockPublicationsFileReceive(KSI_NetHandle *handle) {
