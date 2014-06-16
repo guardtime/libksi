@@ -131,9 +131,9 @@ int KSI_CTX_new(KSI_CTX **context) {
 	if (res != KSI_OK) goto cleanup;
 
 	/* Configure curl net provider */
-	if ((res = KSI_CurlNetProvider_setSignerUrl(netProvider, "192.168.1.29:1234"/*"192.168.1.36:3333"*/)) != KSI_OK) goto cleanup;
-	if ((res = KSI_CurlNetProvider_setExtenderUrl(netProvider, "192.168.1.36:8081/gt-extendingservice")) != KSI_OK) goto cleanup;
-	if ((res = KSI_CurlNetProvider_setPublicationUrl(netProvider, "file:///root/dev/ksi-c-api/test/resource/tlv/publications.tlv")) != KSI_OK) goto cleanup;
+	if ((res = KSI_CurlNetProvider_setSignerUrl(netProvider, KSI_DEFAULT_URI_AGGREGATOR /*"192.168.1.36:3333"*/)) != KSI_OK) goto cleanup;
+	if ((res = KSI_CurlNetProvider_setExtenderUrl(netProvider, KSI_DEFAULT_URI_EXTENDER)) != KSI_OK) goto cleanup;
+	if ((res = KSI_CurlNetProvider_setPublicationUrl(netProvider, KSI_DEFAULT_URI_PUBLICATIONS_FILE)) != KSI_OK) goto cleanup;
 	if ((res = KSI_CurlNetProvider_setReadTimeoutSeconds(netProvider, 5)) != KSI_OK) goto cleanup;
 	if ((res = KSI_CurlNetProvider_setConnectTimeoutSeconds(netProvider, 5)) != KSI_OK) goto cleanup;
 
@@ -320,6 +320,7 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 	KSI_NetHandle *handle = NULL;
 	const unsigned char *raw = NULL;
 	int raw_len = 0;
+	KSI_PublicationsFile *tmp = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, pubFile != NULL) goto cleanup;
@@ -333,8 +334,14 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 		res = KSI_NetHandle_getResponse(handle, &raw, &raw_len);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		res = KSI_PublicationsFile_parse(ctx, raw, raw_len, &ctx->publicationsFile);
+		res = KSI_PublicationsFile_parse(ctx, raw, raw_len, &tmp);
 		KSI_CATCH(&err, res) goto cleanup;
+
+		res = KSI_PublicationsFile_verify(tmp, ctx->pkiTruststore);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		ctx->publicationsFile = tmp;
+		tmp = NULL;
 	}
 
 	*pubFile = ctx->publicationsFile;
@@ -344,6 +351,7 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 cleanup:
 
 	KSI_NetHandle_free(handle);
+	KSI_PublicationsFile_free(tmp);
 
 	return KSI_RETURN(&err);
 
@@ -357,7 +365,7 @@ int KSI_verifyPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile *pubFile) {
 	KSI_PRE(&err, pubFile != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	res = KSI_PublicationsFile_verify(ctx->pkiTruststore, pubFile);
+	res = KSI_PublicationsFile_verify(pubFile, ctx->pkiTruststore);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);

@@ -30,6 +30,10 @@ extern "C" {
  * @{
  */
 
+#define KSI_DEFAULT_URI_AGGREGATOR "192.168.1.29:1234"
+#define KSI_DEFAULT_URI_EXTENDER "192.168.1.36:8081/gt-extendingservice"
+#define KSI_DEFAULT_URI_PUBLICATIONS_FILE "http://172.20.20.7/publications.tlv"
+
 /**
  * KSI function returnvalues.
  */

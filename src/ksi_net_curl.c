@@ -12,6 +12,7 @@ typedef struct CurlNetProviderCtx_st {
 } CurlNetProviderCtx;
 
 typedef struct CurlNetHandleCtx_st {
+	KSI_CTX *ctx;
 	CURL *curl;
 	char *raw;
     size_t len;
@@ -21,6 +22,7 @@ static void CurlNetHandleCtx_free(CurlNetHandleCtx *handleCtx) {
 	if (handleCtx != NULL) {
 		curl_easy_cleanup(handleCtx->curl);
 		KSI_free(handleCtx->raw);
+		KSI_free(handleCtx);
 	}
 }
 
@@ -63,38 +65,32 @@ cleanup:
 }
 
 static size_t receiveDataFromLibCurl(void *ptr, size_t size, size_t nmemb,
-                void *stream)
-{
-	CurlNetHandleCtx *nc = NULL;
-		int res;
-        size_t bytesCount = 0;
-        unsigned char *tmp_buffer = NULL;
-        KSI_NetHandle *handle = NULL;
+			void *stream) {
+	int res;
+	size_t bytesCount = 0;
+	unsigned char *tmp_buffer = NULL;
+	CurlNetHandleCtx *nc = (CurlNetHandleCtx *) stream;
 
-        handle = (KSI_NetHandle *)stream;
-        if (handle == NULL) goto cleanup;
+	KSI_LOG_debug(nc->ctx, "curl: receive data size=%lld, nmemb=%lld", size, nmemb);
 
-        res = KSI_NetHandle_getNetContext(handle, (void **)&nc);
-        if (res != KSI_OK) goto cleanup;
+	bytesCount = nc->len + size * nmemb;
+	tmp_buffer = KSI_calloc(bytesCount, 1);
+	if (tmp_buffer == NULL) goto cleanup;
 
-        bytesCount = nc->len + size * nmemb;
-        tmp_buffer = KSI_calloc(bytesCount, 1);
-        if (tmp_buffer == NULL) goto cleanup;
+	memcpy(tmp_buffer, nc->raw, nc->len);
+	memcpy(tmp_buffer + nc->len, ptr, size * nmemb);
 
-        memcpy(tmp_buffer, nc->raw, nc->len);
-        memcpy(tmp_buffer + nc->len, ptr, size * nmemb);
+	KSI_free(nc->raw);
+	nc->raw = tmp_buffer;
+	nc->len = bytesCount;
+	tmp_buffer = NULL;
 
-        KSI_free(nc->raw);
-        nc->raw = tmp_buffer;
-        nc->len = bytesCount;
-
-        bytesCount = size * nmemb;
+	bytesCount = size * nmemb;
 
 cleanup:
 
-		KSI_nofree(resp);
-		KSI_free(tmp_buffer);
-        return bytesCount;
+	KSI_free(tmp_buffer);
+	return bytesCount;
 }
 
 static int curlReceive(KSI_NetHandle *handle) {
@@ -121,6 +117,14 @@ static int curlReceive(KSI_NetHandle *handle) {
     	}
     	goto cleanup;
     }
+
+    res = KSI_NetHandle_setResponse(handle, nc->raw, nc->len);
+    KSI_CATCH(&err, res) goto cleanup;
+
+    /* Cleanup on success.*/
+    KSI_free(nc->raw);
+    nc->raw = NULL;
+    nc->len = 0;
 
 	KSI_SUCCESS(&err);
 
@@ -149,6 +153,9 @@ static int curlSendRequest(KSI_NetHandle *handle, char *agent, char *url, int co
 		goto cleanup;
 	}
 
+	ctx = KSI_NetHandle_getCtx(handle);
+
+	hc->ctx = ctx;
 	hc->curl = NULL;
 	hc->len = 0;
 	hc->raw = NULL;
@@ -160,7 +167,6 @@ static int curlSendRequest(KSI_NetHandle *handle, char *agent, char *url, int co
 		goto cleanup;
 	}
 
-	ctx = KSI_NetHandle_getCtx(handle);
 	KSI_LOG_debug(ctx, "Sending request to: %s", url);
 
 	res = KSI_NetHandle_getRequest(handle, &request, &request_len);
@@ -181,7 +187,7 @@ static int curlSendRequest(KSI_NetHandle *handle, char *agent, char *url, int co
 
 	curl_easy_setopt(hc->curl, CURLOPT_WRITEFUNCTION, receiveDataFromLibCurl);
 
-    curl_easy_setopt(hc->curl, CURLOPT_WRITEDATA, handle);
+    curl_easy_setopt(hc->curl, CURLOPT_WRITEDATA, hc);
 
     curl_easy_setopt(hc->curl, CURLOPT_CONNECTTIMEOUT, connectionTimeout);
     curl_easy_setopt(hc->curl, CURLOPT_TIMEOUT, readTimeout);
@@ -303,6 +309,21 @@ int KSI_CurlNetProvider_new(KSI_CTX *ctx, KSI_NetProvider **netProvider) {
 
 	res = KSI_NetProvider_setNetCtx(pr, pctx, (void (*)(void*))CurlNetProviderCtx_free);
 	pctx = NULL;
+
+	res = KSI_CurlNetProvider_setSignerUrl(pr, KSI_DEFAULT_URI_AGGREGATOR);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_CurlNetProvider_setExtenderUrl(pr, KSI_DEFAULT_URI_EXTENDER);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_CurlNetProvider_setPublicationUrl(pr, KSI_DEFAULT_URI_PUBLICATIONS_FILE);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_CurlNetProvider_setReadTimeoutSeconds(pr, 5);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_CurlNetProvider_setConnectTimeoutSeconds(pr, 5);
+	KSI_CATCH(&err, res) goto cleanup;
 
 	*netProvider = pr;
 	pr = NULL;

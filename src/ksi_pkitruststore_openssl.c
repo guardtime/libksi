@@ -10,6 +10,21 @@
 /* Hide the following line to deactivate. */
 #define MAGIC_EMAIL "publications@guardtime.com"
 
+static const char *defaultCaFile =
+#ifdef OPENSSL_CA_FILE
+	OPENSSL_CA_FILE;
+#else
+	NULL;
+#endif
+
+static const char *defaultCaDir =
+#ifdef OPENSSL_CA_DIR
+	 OPENSSL_CA_DIR;
+#else
+	NULL;
+#endif
+
+
 static int KSI_PKITruststore_global_initCount = 0;
 
 struct KSI_PKITruststore_st {
@@ -168,7 +183,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int GTTruststore_addLookupDir(KSI_PKITruststore *trust, const char *path) {
+int KSI_PKITruststore_addLookupDir(KSI_PKITruststore *trust, const char *path) {
 	KSI_ERR err;
 	X509_LOOKUP *lookup = NULL;
 
@@ -197,6 +212,7 @@ cleanup:
 int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **trust) {
 	KSI_ERR err;
 	KSI_PKITruststore *tmp = NULL;
+	int res;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, trust != NULL) goto cleanup;
@@ -225,20 +241,15 @@ int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **tru
 		}
 
 		/* Set lookup file for trusted CA certificates if specified. */
-#ifdef OPENSSL_CA_FILE
-		res = GTTruststore_addLookupFile(OPENSSL_CA_FILE);
-		if (res != GT_OK) {
-			goto cleanup;
+		if (defaultCaFile != NULL) {
+			res = KSI_PKITruststore_addLookupFile(tmp, defaultCaFile);
+			KSI_CATCH(&err, res) goto cleanup;
 		}
-#endif
-
-	/* Set lookup directory for trusted CA certificates if specified. */
-#ifdef OPENSSL_CA_DIR
-		res = GTTruststore_addLookupDir(OPENSSL_CA_DIR);
-		if (res != GT_OK) {
-			goto cleanup;
+		/* Set lookup directory for trusted CA certificates if specified. */
+		if (defaultCaDir != NULL) {
+			res = KSI_PKITruststore_addLookupDir(tmp, defaultCaDir);
+			KSI_CATCH(&err, res) goto cleanup;
 		}
-#endif
 	}
 
 	*trust = tmp;

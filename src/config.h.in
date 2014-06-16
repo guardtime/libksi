@@ -40,6 +40,12 @@
    */
 #undef LT_OBJDIR
 
+/* Path to the trusted CA certificate directory */
+#undef OPENSSL_CA_DIR
+
+/* Location of the trusted CA certificate bundle file */
+#undef OPENSSL_CA_FILE
+
 /* Name of package */
 #undef PACKAGE
 

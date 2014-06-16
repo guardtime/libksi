@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = src test doc
+SUBDIRS = src test doc example
 
 .PHONY: doc test memtest
 

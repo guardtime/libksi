@@ -164,6 +164,13 @@ int main(int argc, char **argv) {
 			goto cleanup;
 		}
 	}
+
+	res = KSI_verifyPublicationsFile(ctx, publicationsFile);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Failed to verify publications file");
+		KSI_ERR_statusDump(ctx, stderr);
+	}
+
 	res = KSI_PublicationsFile_getPublications(publicationsFile, &publications);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to get publications from store.\n");

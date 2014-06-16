@@ -367,20 +367,21 @@ cleanup:
 	 return res;
 }
 
-int KSI_PublicationsFile_getPKICertificateById(const KSI_PublicationsFile *trust, const KSI_OctetString *id, KSI_PKICertificate **cert) {
+int KSI_PublicationsFile_getPKICertificateById(const KSI_PublicationsFile *pubFile, const KSI_OctetString *id, KSI_PKICertificate **cert) {
 	KSI_ERR err;
 	int res;
 	int i;
 	KSI_CertificateRecord *certRec = NULL;
 
-	KSI_PRE(&err, trust != NULL) goto cleanup;
+	KSI_PRE(&err, pubFile != NULL) goto cleanup;
 	KSI_PRE(&err, id != NULL) goto cleanup;
 	KSI_PRE(&err, cert != NULL) goto cleanup;
+	KSI_BEGIN(pubFile->ctx, &err);
 
-	for (i = 0; i < KSI_CertificateRecordList_length(trust->certificates); i++) {
+	for (i = 0; i < KSI_CertificateRecordList_length(pubFile->certificates); i++) {
 		KSI_OctetString *cId = NULL;
 
-		res = KSI_CertificateRecordList_elementAt(trust->certificates, i, &certRec);
+		res = KSI_CertificateRecordList_elementAt(pubFile->certificates, i, &certRec);
 		KSI_CATCH(&err, res) goto cleanup;
 
 		res = KSI_CertificateRecord_getCertId(certRec, &cId);

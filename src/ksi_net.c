@@ -14,7 +14,7 @@ struct KSI_NetHandle_st {
 	/** Length of the response. */
 	int response_length;
 
-	void (*netCtx_free)(void *);
+	void (*handleCtx_free)(void *);
 
 	int (*readResponse)(KSI_NetHandle *);
 
@@ -106,8 +106,8 @@ cleanup:
  */
 void KSI_NetHandle_free(KSI_NetHandle *handle) {
 	if (handle != NULL) {
-		if (handle->netCtx_free != NULL) {
-			handle->netCtx_free(handle->handleCtx);
+		if (handle->handleCtx_free != NULL) {
+			handle->handleCtx_free(handle->handleCtx);
 		}
 		KSI_free(handle->request);
 		KSI_free(handle->response);
@@ -229,11 +229,11 @@ int KSI_NetHandle_setNetContext(KSI_NetHandle *handle, void *netCtx, void (*netC
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(handle->ctx, &err);
 
-	if (handle->handleCtx != netCtx && handle->handleCtx != NULL && handle->netCtx_free != NULL) {
-		handle->netCtx_free(handle->handleCtx);
+	if (handle->handleCtx != netCtx && handle->handleCtx != NULL && handle->handleCtx_free != NULL) {
+		handle->handleCtx_free(handle->handleCtx);
 	}
 	handle->handleCtx = netCtx;
-	handle->netCtx_free = netCtx_free;
+	handle->handleCtx_free = netCtx_free;
 
 	KSI_SUCCESS(&err);
 
@@ -321,6 +321,7 @@ int KSI_NetHandle_getResponse(KSI_NetHandle *handle, const unsigned char **respo
 	KSI_BEGIN(handle->ctx, &err);
 
 	if (handle->response == NULL) {
+		KSI_LOG_debug(handle->ctx, "Waiting for response.");
 		res = receiveResponse(handle);
 		KSI_CATCH(&err, res) goto cleanup;
 	}

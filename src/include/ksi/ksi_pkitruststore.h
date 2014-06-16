@@ -176,7 +176,7 @@ extern "C" {
 	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int GTTruststore_addLookupDir(KSI_PKITruststore *store, const char *path);
+	int KSI_PKITruststore_addLookupDir(KSI_PKITruststore *store, const char *path);
 
 
 #ifdef __cplusplus

@@ -6,6 +6,13 @@
 #include "include/ksi/ksi.h"
 #include "ksi_tlv_tags.h"
 
+#ifndef _WIN32
+#  ifdef HAVE_CONFIG_H
+#    include "config.h"
+#  endif
+#endif
+
+
 #define KSI_BEGIN(ctx, err) KSI_ERR_init((ctx), (err))
 #define KSI_PRE(err, cond) if (!(cond) && (KSI_ERR_init(NULL, (err)) == KSI_OK) && (KSI_FAIL((err), KSI_INVALID_ARGUMENT, NULL) == KSI_OK))
 #define KSI_RETURN(err) KSI_ERR_apply((err))

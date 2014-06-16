@@ -1,7 +1,7 @@
 # Generated with mk_makefile.sh
 AM_CFLAGS=-g -Wall -lksi -I$(top_builddir)/src/include
 AM_LDFLAGS=-L$(top_builddir)/src -no-install
-bin_PROGRAMS=runner ksi_sign ksi_extend ksi_pubfile
+bin_PROGRAMS=runner ksi_extend ksi_pubfile
 
 runner_SOURCES= \
 		all_tests.c \
@@ -20,9 +20,6 @@ runner_SOURCES= \
 		cutest/CuTest.h \
 		cutest/CuTest.c
 
-ksi_sign_SOURCES= \
-		sign_test.c 
-		
 ksi_extend_SOURCES= \
 		extend_test.c
 		
