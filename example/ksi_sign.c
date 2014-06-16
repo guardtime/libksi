@@ -69,6 +69,7 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
+	/* Check if uri's are specified. */
 	if (strncmp("-", argv[3], 1) || strncmp("-", argv[4], 1)) {
 		KSI_NetProvider *net = NULL;
 		res = KSI_CurlNetProvider_new(ksi, &net);
@@ -77,6 +78,7 @@ int main(int argc, char **argv) {
 			goto cleanup;
 		}
 
+		/* Check aggregator url */
 		if (strncmp("-", argv[3], 1)) {
 			res = KSI_CurlNetProvider_setSignerUrl(net, argv[3]);
 			if (res != KSI_OK) {
@@ -85,6 +87,7 @@ int main(int argc, char **argv) {
 			}
 		}
 
+		/* Check publications file url. */
 		if (strncmp("-", argv[4], 1)) {
 			res = KSI_CurlNetProvider_setPublicationUrl(net, argv[4]);
 			if (res != KSI_OK) {
@@ -93,6 +96,7 @@ int main(int argc, char **argv) {
 			}
 		}
 
+		/* Set the new network provider. */
 		res = KSI_setNetworkProvider(ksi, net);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable to set network provider.\n");
@@ -143,6 +147,7 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
+	/* Write the signature file. */
 	if (!fwrite(raw, 1, raw_len, out)) {
 		fprintf(stderr, "Unable to write output file.\n");
 		res = KSI_IO_ERROR;
