@@ -17,6 +17,63 @@ static void testLoadSignatureFromFile(CuTest *tc) {
 	KSI_Signature_free(sig);
 }
 
+static void testVerifySignatureNew(CuTest *tc) {
+	int res;
+	KSI_Signature *sig = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, TEST_SIGNATURE_FILE, &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	/* Set the extend response. */
+	KSITest_setFileMockResponse(tc, "test/resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv");
+
+	res = KSI_verifySignature(ctx, sig);
+
+	CuAssert(tc, "Unable to verify signature online.", res == KSI_OK);
+
+	KSI_Signature_free(sig);
+
+}
+
+static void testVerifySignatureWithPublication(CuTest *tc) {
+	int res;
+	KSI_Signature *sig = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, "test/resource/tlv/ok-sig-2014-04-30.1-extended.ksig", &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_verifySignature(ctx, sig);
+
+	CuAssert(tc, "Unable to verify signature online.", res == KSI_OK);
+
+	KSI_Signature_free(sig);
+
+}
+
+static void testVerifySignatureExtendedToHead(CuTest *tc) {
+	int res;
+	KSI_Signature *sig = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, "test/resource/tlv/ok-sig-2014-04-30.1-head.ksig", &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	/* Set the extend response. */
+	KSITest_setFileMockResponse(tc, "test/resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv");
+
+	res = KSI_verifySignature(ctx, sig);
+	CuAssert(tc, "Unable to verify signature online.", res == KSI_OK);
+
+	KSI_Signature_free(sig);
+
+}
+
+
 static void testSignatureSigningTime(CuTest *tc) {
 	int res;
 	KSI_Signature *sig = NULL;
@@ -168,6 +225,9 @@ CuSuite* KSITest_Signature_getSuite(void) {
 	SUITE_ADD_TEST(suite, testSerializeSignature);
 	SUITE_ADD_TEST(suite, testVerifyDocument);
 	SUITE_ADD_TEST(suite, testVerifyDocumentHash);
+	SUITE_ADD_TEST(suite, testVerifySignatureNew);
+	SUITE_ADD_TEST(suite, testVerifySignatureWithPublication);
+	SUITE_ADD_TEST(suite, testVerifySignatureExtendedToHead);
 
 	return suite;
 }

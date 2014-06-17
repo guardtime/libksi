@@ -195,7 +195,7 @@ cleanup:
 
 }
 
-static int CalAuthRec_validate(KSI_CTX *ctx, CalAuthRec *calAuth) {
+static int CalAuthRec_verify(KSI_CTX *ctx, CalAuthRec *calAuth) {
 	KSI_ERR err;
 	int res;
 	KSI_PKICertificate *cert = NULL;
@@ -835,7 +835,30 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int validateSignatureWithPublication(KSI_CTX *ctx, KSI_Signature *sig) {
+static int verifySignatureWithExtender(KSI_CTX *ctx, KSI_Signature *sig) {
+	KSI_ERR err;
+	int res;
+	KSI_Integer *sigTime = NULL;
+
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_Signature_getSigningTime(sig, &sigTime);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_Signature_extend(sig, NULL, NULL);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+static int verifySignatureWithPublication(KSI_CTX *ctx, KSI_Signature *sig) {
 	KSI_ERR err;
 	KSI_PublicationsFile *pubFile = NULL;
 	KSI_PublicationData *pubData = NULL;
@@ -847,8 +870,9 @@ static int validateSignatureWithPublication(KSI_CTX *ctx, KSI_Signature *sig) {
 	KSI_LIST(KSI_HashChainLink) *chain = NULL;
 	int res;
 
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, sig != NULL) goto cleanup;
-	KSI_BEGIN(sig->ctx, &err);
+	KSI_BEGIN(ctx, &err);
 
 	/* Get the calendar hash chain input hash. */
 	res = KSI_CalendarHashChain_getInputHash(sig->calendarChain, &inputHash);
@@ -1030,7 +1054,7 @@ cleanup:
 }
 
 
-static int KSI_Signature_validateInternal(KSI_CTX *ctx, KSI_Signature *sig) {
+static int KSI_Signature_verifyInternal(KSI_CTX *ctx, KSI_Signature *sig) {
 	KSI_ERR err;
 	int res;
 
@@ -1042,12 +1066,7 @@ static int KSI_Signature_validateInternal(KSI_CTX *ctx, KSI_Signature *sig) {
 	KSI_CATCH(&err, res) goto cleanup;
 
 	if (sig->calAuth != NULL) {
-		res = CalAuthRec_validate(ctx, sig->calAuth);
-		KSI_CATCH(&err, res) goto cleanup;
-	}
-
-	if (sig->publication != NULL) {
-		res = validateSignatureWithPublication(ctx, sig);
+		res = CalAuthRec_verify(ctx, sig->calAuth);
 		KSI_CATCH(&err, res) goto cleanup;
 	}
 
@@ -1057,7 +1076,6 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
-
 
 static int extractSignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature **signature) {
 	KSI_ERR err;
@@ -1123,7 +1141,7 @@ static int extractSignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature **signatur
 	sig->calendarChain = cal;
 	cal = NULL;
 
-	res = KSI_Signature_validateInternal(ctx, sig);
+	res = KSI_Signature_verifyInternal(ctx, sig);
 	KSI_CATCH(&err, res) goto cleanup;
 
 
@@ -1618,6 +1636,33 @@ cleanup:
 
 }
 
+int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx) {
+	KSI_ERR err;
+	int res;
+	KSI_CTX *ctxp = ctx;
+
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_BEGIN(sig->ctx, &err);
+
+	if (ctxp == NULL) ctxp = sig->ctx;
+
+	if (sig->publication != NULL) {
+		/* Verify using publication. */
+		res = verifySignatureWithPublication(ctx, sig);
+		KSI_CATCH(&err, res) goto cleanup;
+	} else {
+		/* Verify using extender. */
+		res = verifySignatureWithExtender(ctx, sig);
+	}
+
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
 int KSI_Signature_create(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **signature) {
 	KSI_ERR err;
 	int res;
@@ -1689,8 +1734,6 @@ int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRe
 	KSI_NetHandle *handle = NULL;
 
 	KSI_PRE(&err, signature != NULL) goto cleanup;
-	KSI_PRE(&err, extended != NULL) goto cleanup;
-
 	KSI_BEGIN(signature->ctx, &err);
 
 	/* Make a copy of the original signature */
@@ -1784,11 +1827,14 @@ int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRe
 	pubRecClone = NULL;
 
 	/* Validate signature before returning. */
-	res = KSI_Signature_validateInternal(signature->ctx, tmp);
+	res = KSI_Signature_verifyInternal(signature->ctx, tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	*extended = tmp;
-	tmp = NULL;
+	/* Return the extended signature only when requested. */
+	if (extended != NULL) {
+		*extended = tmp;
+		tmp = NULL;
+	}
 
 	KSI_SUCCESS(&err);
 
@@ -2197,6 +2243,32 @@ int KSI_Signature_verifyDocument(KSI_Signature *sig, void *doc, size_t doc_len) 
 cleanup:
 
 	KSI_DataHash_free(hsh);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_Signature_createDataHasher(KSI_Signature *sig, KSI_DataHasher **hsr) {
+	KSI_ERR err;
+	int res;
+	KSI_DataHasher *tmp = NULL;
+	int hash_id;
+
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_PRE(&err, hsr != NULL) goto cleanup;
+	KSI_BEGIN(sig->ctx, &err);
+
+	res = KSI_Signature_getHashAlgorithm(sig, &hash_id);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_DataHasher_open(sig->ctx, hash_id, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	hsr = tmp;
+	tmp = NULL;
+
+cleanup:
+
+	KSI_DataHasher_free(tmp);
 
 	return KSI_RETURN(&err);
 }

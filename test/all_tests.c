@@ -13,6 +13,33 @@
 
 KSI_CTX *ctx = NULL;
 
+extern unsigned char *KSI_NET_MOCK_request;
+extern int KSI_NET_MOCK_request_len;
+extern unsigned char *KSI_NET_MOCK_response;
+extern int KSI_NET_MOCK_response_len;
+
+
+void KSITest_setFileMockResponse(CuTest *tc, const char *fileName) {
+	FILE *f = NULL;
+	unsigned char *resp = NULL;
+	int resp_size = 0xfffff;
+
+	resp = KSI_calloc(resp_size, 1);
+	CuAssert(tc, "Out of memory", resp != NULL);
+
+	/* Read response from file. */
+	f = fopen(fileName, "rb");
+	CuAssert(tc, "Unable to open sample response file", f != NULL);
+
+	KSI_NET_MOCK_response_len = fread(resp, 1, resp_size, f);
+	fclose(f);
+
+	if (KSI_NET_MOCK_response != NULL) {
+		KSI_free((unsigned char *)KSI_NET_MOCK_response);
+	}
+	KSI_NET_MOCK_response = resp;
+}
+
 static void escapeStr(const char *str, CuString *escaped) {
 	int p;
 	static const char *replIndex = "<>&\"'";

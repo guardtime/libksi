@@ -13,7 +13,6 @@
 #include "ksi_publicationsfile.h"
 #include "ksi_list.h"
 #include "ksi_log.h"
-#include "ksi_net_curl.h"
 #include "ksi_signature.h"
 #include "ksi_tlv.h"
 #include "ksi_tlv_template.h"
@@ -345,7 +344,35 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile);
  */
 int KSI_verifyPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile *pubFile);
 
+/**
+ * Use the context to verify the signature.
+ * \param[in]		ctx			KSI context.
+ * \param[in]		sig			KSI signature.
+ *
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
+int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig);
+
+/**
+ * Create a KSI signature from a given data hash.
+ * \param[in]		ctx			KSI context.
+ * \param[in]		dataHash	Data hash object from the document to be signed.
+ * \param[out]		sig			Pointer to the receiving pointer to the KSI signature object.
+ *
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \see #KSI_Signature_free, #KSI_extendSignature
+ */
 int KSI_createSignature(KSI_CTX *ctx, const KSI_DataHash *dataHash, KSI_Signature **sig);
+
+/**
+ * Extend the signature to the earlyest available publication.
+ * \param[in]		ctx			KSI context.
+ * \param[in]		sig			Signature to be extended.
+ * \param[out]		extended	Pointer to the receiving pointer to the extended signature.
+ *
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \see #KSI_Signature_free, #KSI_createSignature
+ */
 int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extended);
 
 int KSI_getPKITruststore(KSI_CTX *ctx, KSI_PKITruststore **pki);

@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include <ksi/ksi.h>
+#include <ksi/ksi_net_curl.h>
 
 int main(int argc, char **argv) {
 	KSI_CTX *ksi = NULL;

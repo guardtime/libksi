@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "ksi_internal.h"
+#include "include/ksi/ksi_net_curl.h"
 
 #define KSI_ERR_STACK_LEN 16
 
@@ -366,6 +367,24 @@ int KSI_verifyPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile *pubFile) {
 	KSI_BEGIN(ctx, &err);
 
 	res = KSI_PublicationsFile_verify(pubFile, ctx->pkiTruststore);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig) {
+	KSI_ERR err;
+	int res;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_Signature_verify(sig ,ctx);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);

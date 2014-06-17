@@ -26,27 +26,6 @@ static unsigned char expectedExtendRequestWithoutPublication[] = {
 		0x83, 0x00, 0x00, 0x0a, 0x83, 0x01, 0x00, 0x06, 0x02, 0x04, 0x53, 0x61, 0x01, 0x50
 };
 
-static void setFileMockResponse(CuTest *tc, const char *fileName) {
-	FILE *f = NULL;
-	unsigned char *resp = NULL;
-	int resp_size = 0xfffff;
-
-	resp = KSI_calloc(resp_size, 1);
-	CuAssert(tc, "Out of memory", resp != NULL);
-
-	/* Read response from file. */
-	f = fopen(fileName, "rb");
-	CuAssert(tc, "Unable to open sample response file", f != NULL);
-
-	KSI_NET_MOCK_response_len = fread(resp, 1, resp_size, f);
-	fclose(f);
-
-	if (KSI_NET_MOCK_response != NULL) {
-		KSI_free((unsigned char *)KSI_NET_MOCK_response);
-	}
-	KSI_NET_MOCK_response = resp;
-}
-
 static void testSigning(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
@@ -65,7 +44,7 @@ static void testSigning(CuTest* tc) {
 	res = KSI_DataHash_fromImprint(ctx, someImprint, sizeof(someImprint), &hsh);
 	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
 
-	setFileMockResponse(tc, "test/resource/tlv/ok_aggr_response-1.tlv");
+	KSITest_setFileMockResponse(tc, "test/resource/tlv/ok_aggr_response-1.tlv");
 
 	res = KSI_createSignature(ctx, hsh, &sig);
 	KSI_ERR_statusDump(ctx, stdout);
@@ -109,7 +88,7 @@ static void testExtending(CuTest* tc) {
 	res = KSI_Signature_fromFile(ctx, TEST_SIGNATURE_FILE, &sig);
 	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
 
-	setFileMockResponse(tc, "test/resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv");
+	KSITest_setFileMockResponse(tc, "test/resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv");
 
 	res = KSI_extendSignature(ctx, sig, &ext);
 
@@ -168,7 +147,7 @@ static void testExtendingWithoutPublication(CuTest* tc) {
 	res = KSI_Signature_fromFile(ctx, TEST_SIGNATURE_FILE, &sig);
 	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
 
-	setFileMockResponse(tc, "test/resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv");
+	KSITest_setFileMockResponse(tc, "test/resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv");
 
 	res = KSI_Signature_extend(sig, NULL, &ext);
 	KSI_ERR_statusDump(ctx, stdout);
@@ -229,7 +208,7 @@ static void testExtendingHeadSignature(CuTest* tc) {
 	res = KSI_Signature_fromFile(ctx, "test/resource/tlv/ok-sig-2014-04-30.1-head.ksig", &sig);
 	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
 
-	setFileMockResponse(tc, "test/resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv");
+	KSITest_setFileMockResponse(tc, "test/resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv");
 
 	res = KSI_extendSignature(ctx, sig, &ext);
 	CuAssert(tc, "Unable to extend the signature to the head", res == KSI_OK && ext != NULL);

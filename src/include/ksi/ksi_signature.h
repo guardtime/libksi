@@ -21,12 +21,22 @@ extern "C" {
 	void KSI_Signature_free(KSI_Signature *signature);
 
 	/**
+	 * This function verifies the signature using online resources. If the
+	 * signature has a publication attached to it, the publication is verified
+	 * using the publications file. Otherwise, the signature is verified by
+	 * an attempt to extend it.
+	 * \param[in]		sig			Signature to be verified.
+	 * \param[in]		ctx			KSI context to be used.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx);
+	/**
 	 * Creates a clone of the signature object.
 	 * \param[in]		sig			Signature to be cloned.
 	 * \param[out]		clone		Pointer to the receiving pointer.
 	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_Signature_clone(const KSI_Signature *sig, KSI_Signature **clone);
 
@@ -117,11 +127,22 @@ extern "C" {
 	 * \param[in]		sig			KSI signature.
 	 * \param[out]		hash_id		Pointer to the receiving hash id variable.
 	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_DataHash_open, #KSI_DataHash_create, #KSI_DataHash_close,
+	 * #KSI_Signature_createDataHasher.
 	 */
 	int KSI_Signature_getHashAlgorithm(KSI_Signature *sig, int *hash_id);
 
+	/**
+	 * This method creates a data hasher object to be used on the signed data.
+	 * \param[in]		sig			KSI signature.
+	 * \param[out]		hsr			Data hasher.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_DataHasher_free, #KSI_DataHasher_close, #KSI_DataHasher_open,
+	 * #KSI_Signature_getHashAlgorithm.
+	 */
+	int KSI_Signature_createDataHasher(KSI_Signature *sig, KSI_DataHasher **hsr);
 	/**
 	 * Access method for the signing time. The \c signTime is expressed as
 	 * the number of seconds since 1970-01-01 00:00:00 UTC.
