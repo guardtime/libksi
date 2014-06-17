@@ -9,10 +9,7 @@ int main(int argc, char **argv) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	FILE *in = NULL;
-	FILE *inp = NULL;
-
 	FILE *out = NULL;
-	FILE *outp = NULL;
 
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
@@ -31,34 +28,24 @@ int main(int argc, char **argv) {
 	/* Handle command line parameters */
 	if (argc != 5) {
 		fprintf(stderr, "Usage:\n"
-				"  %s <in-file | - > <out-file | - > <aggregator url |-> <pub-file url | -> \n", argv[0]);
+				"  %s <in-file> <out-file> <aggregator url |-> <pub-file url | -> \n", argv[0]);
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
 	/* Input file */
-	if (argv[1] == NULL || !strncmp("-", argv[1], 1)) {
-		inp = stdin;
-	} else {
-		in = inp = fopen(argv[1], "rb");
-	}
-	if (inp == NULL) {
+	in = fopen(argv[1], "rb");
+	if (in == NULL) {
 		fprintf(stderr, "Unable to open input file '%s'\n", argv[1]);
 		res = KSI_IO_ERROR;
-
 		goto cleanup;
 	}
 
 	/* Output file */
-	if (argv[2] == NULL || !strncmp("-", argv[2], 1)) {
-		outp = stdout;
-	} else {
-		out = outp = fopen(argv[2], "wb");
-	}
-	if (outp == NULL) {
+	out = fopen(argv[2], "wb");
+	if (out == NULL) {
 		fprintf(stderr, "Unable to open input file '%s'\n", argv[2]);
 		res = KSI_IO_ERROR;
-
 		goto cleanup;
 	}
 
@@ -115,8 +102,8 @@ int main(int argc, char **argv) {
 	}
 
 	/* Read the input file and calculate the hash of its contents. */
-	while (!feof(inp)) {
-		buf_len = fread(buf, 1, sizeof(buf), inp);
+	while (!feof(in)) {
+		buf_len = fread(buf, 1, sizeof(buf), in);
 
 		/* Add  next block to the calculation. */
 		res = KSI_DataHasher_add(hsr, buf, buf_len);
