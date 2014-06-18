@@ -36,25 +36,25 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	if (strncmp("-",argv[2], 1) || strncmp("-", argv[3], 1)) {
+	if (strncmp("-",argv[3], 1) || strncmp("-", argv[4], 1)) {
 		res = KSI_CurlNetProvider_new(ksi, &net);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable to create new network provider.\n");
 			goto cleanup;
 		}
 
-		if (strncmp("-", argv[2], 1)) {
+		if (strncmp("-", argv[3], 1)) {
 			/* Set extender uri. */
-			res = KSI_CurlNetProvider_setExtenderUrl(net, argv[2]);
+			res = KSI_CurlNetProvider_setExtenderUrl(net, argv[3]);
 			if (res != KSI_OK) {
 				fprintf(stderr, "Unable to set extender url.\n");
 				goto cleanup;
 			}
 		}
 
-		if (strncmp("-", argv[3], 1)) {
+		if (strncmp("-", argv[4], 1)) {
 			/* Set the publications file url. */
-			res = KSI_CurlNetProvider_setPublicationUrl(net, argv[3]);
+			res = KSI_CurlNetProvider_setPublicationUrl(net, argv[4]);
 			if (res != KSI_OK) {
 				fprintf(stderr, "Unable to set publications file url.\n");
 				goto cleanup;
