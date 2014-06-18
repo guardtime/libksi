@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sign = NULL;
 
-	unsigned char *raw;
+	unsigned char *raw = NULL;
 	int raw_len;
 
 	unsigned char buf[1024];

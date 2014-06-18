@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "internal.h"
+#include "net_curl.h"
 
 typedef struct CurlNetProviderCtx_st {
 	int connectionTimeoutSeconds;
@@ -14,7 +15,7 @@ typedef struct CurlNetProviderCtx_st {
 typedef struct CurlNetHandleCtx_st {
 	KSI_CTX *ctx;
 	CURL *curl;
-	char *raw;
+	unsigned char *raw;
     size_t len;
 } CurlNetHandleCtx;
 

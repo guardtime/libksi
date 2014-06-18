@@ -85,6 +85,13 @@ if test -z "$with_cafile" -a -z "$with_cadir"; then
     fi
 fi
 
+case "${target_os}" in
+    darwin*)
+        CFLAGS="$CFLAGS -mmacosx-version-min=10.5"
+        LDFLAGS="$LDFALGS -mmacosx-version-min=10.5"
+        ;;
+esac
+
 AC_ARG_WITH(unit-test-xml,
 [  --with-unit-test-xml=file		Specifies the target xml of unit tests.],
 :, with_unit_test_xml=testsuite-xunit.xml)
