@@ -1,6 +1,6 @@
 # Generated with mk_makefile.sh
-AM_CFLAGS=-g -Wall -lksi -I$(top_builddir)/src/include
-AM_LDFLAGS=-L$(top_builddir)/src -no-install
+AM_CFLAGS=-g -Wall -lksi -I$(top_builddir)/src/
+AM_LDFLAGS=-L$(top_builddir)/src/ksi -no-install
 bin_PROGRAMS=runner ksi_extend ksi_pubfile
 
 runner_SOURCES= \

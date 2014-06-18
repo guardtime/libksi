@@ -91,7 +91,6 @@ static void TestTlvSetRaw(CuTest* tc) {
 
 	CuAssert(tc, "Raw value mismatch", val_len == sizeof(tmp) && !memcmp(val, tmp, val_len));
 
-	KSI_nofree(val);
 	KSI_TLV_free(tlv);
 }
 
@@ -121,7 +120,6 @@ static void TestTlv8FromReader(CuTest* tc) {
 
 	CuAssert(tc, "TLV content differs", !memcmp(val, raw + 2, val_len));
 
-	KSI_nofree(val);
 	KSI_TLV_free(tlv);
 	KSI_RDR_close(rdr);
 }
@@ -147,7 +145,6 @@ static void TestTlv8getRawValueSharedMem(CuTest* tc) {
 
 	CuAssertIntEquals_Msg(tc, "TLV payload length", 21, tmp_len);
 
-	KSI_nofree(tmp);
 	KSI_TLV_free(tlv);
 	KSI_RDR_close(rdr);
 }
@@ -263,7 +260,6 @@ static void TestTlvGetStringValue(CuTest* tc) {
 
 	CuAssert(tc, "Returned string is not what was expected", !strcmp("lore ipsum", str));
 
-	KSI_nofree(str);
 	KSI_TLV_free(tlv);
 	KSI_RDR_close(rdr);
 }
@@ -391,7 +387,6 @@ static void TestTlvSerializeString(CuTest* tc) {
 
 	CuAssert(tc, "Serialized TLV does not match original", !memcmp(raw, buf, buf_len));
 
-	KSI_nofree(str);
 	KSI_TLV_free(tlv);
 	KSI_RDR_close(rdr);
 }
@@ -525,7 +520,6 @@ static void TestTlvRequireCast(CuTest* tc) {
 	ptr = NULL;
 
 	KSI_TLV_free(tlv);
-	KSI_nofree(nested);
 }
 
 static void TestTlvParseBlobFailWithExtraData(CuTest* tc) {
@@ -573,7 +567,6 @@ static void TestTlvFromUint(CuTest* tc) {
 	res = KSI_TLV_getUInt64Value(tlv, &intVal);
 	CuAssert(tc, "Wrong value from TLV (after casts)", intVal == 0xabcde);
 
-	KSI_nofree(val);
 	KSI_TLV_free(tlv);
 }
 
@@ -606,7 +599,6 @@ static void TestTlvComposeNested(CuTest* tc) {
 	CuAssertIntEquals_Msg(tc, "Size of serialized data", sizeof(raw), buf_len);
 	CuAssert(tc, "Unexpected serialized data", !memcmp(raw, buf, buf_len));
 
-	KSI_nofree(nested);
 	KSI_TLV_free(outer);
 
 }
@@ -647,7 +639,6 @@ static void TestTlvComposeNestedMore(CuTest* tc) {
 	CuAssertIntEquals_Msg(tc, "Size of serialized data", sizeof(raw), buf_len);
 	CuAssert(tc, "Unexpected serialized data", !KSITest_memcmp(raw, buf, buf_len));
 
-	KSI_nofree(nested);
 	KSI_TLV_free(outer);
 }
 

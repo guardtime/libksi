@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include <ksi/ksi.h>
-#include <ksi/ksi_net_curl.h>
+#include <ksi/net_curl.h>
 
 
 int main(int argc, char **argv) {

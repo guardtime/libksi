@@ -2,7 +2,7 @@
 #define ALL_TESTS_H_
 
 #include "cutest/CuTest.h"
-#include "../src/ksi_internal.h"
+#include "ksi/ksi.h"
 
 #ifdef __cplusplus
 extern "C" {

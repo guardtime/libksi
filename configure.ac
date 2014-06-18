@@ -2,7 +2,7 @@ AC_INIT([libksi], [0.0.1], [support@guardtime.com])
 AC_CONFIG_FILES([libksi.pc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_HEADERS([src/config.h])
+AC_CONFIG_HEADERS([src/ksi/config.h])
 AC_CANONICAL_TARGET
 
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
@@ -91,5 +91,5 @@ AC_ARG_WITH(unit-test-xml,
 
 AC_DEFINE_UNQUOTED(UNIT_TEST_OUTPUT_XML, "$with_unit_test_xml", [Location of the unit test xml results.])
 
-AC_CONFIG_FILES(GNUmakefile src/GNUmakefile test/GNUmakefile doc/GNUmakefile example/GNUmakefile)
+AC_CONFIG_FILES(GNUmakefile src/ksi/GNUmakefile test/GNUmakefile doc/GNUmakefile example/GNUmakefile)
 AC_OUTPUT

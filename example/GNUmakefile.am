@@ -1,5 +1,5 @@
 # Generated with mk_makefile.sh
-AM_CFLAGS=-g -Wall -lksi -I$(top_builddir)/src/include
+AM_CFLAGS=-g -Wall -lksi -I$(top_builddir)/src
 AM_LDFLAGS=-L$(top_builddir)/src -no-install
 bin_PROGRAMS=ksi_sign ksi_extend
 	

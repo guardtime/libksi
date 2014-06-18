@@ -3,8 +3,8 @@
 #include <string.h>
 
 #include "cutest/CuTest.h"
-#include "../src/ksi_internal.h"
-
+#include "all_tests.h"
+#include "../src/ksi/internal.h"
 /*** HELPER FUNCTIONS ***/
 
 static void doLog(CuTest *tc, KSI_CTX *ctx) {

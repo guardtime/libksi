@@ -1,7 +1,7 @@
 #include <limits.h>
 #include <string.h>
 
-#include "../src/ksi_internal.h"
+#include "../src/ksi/internal.h"
 
 unsigned char *KSI_NET_MOCK_request = NULL;
 int KSI_NET_MOCK_request_len;

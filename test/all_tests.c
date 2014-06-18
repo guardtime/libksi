@@ -2,7 +2,7 @@
 #include<string.h>
 #include<ctype.h>
 
-#include "../src/config.h"
+#include "../src/ksi/config.h"
 #include "cutest/CuTest.h"
 
 #include "all_tests.h"

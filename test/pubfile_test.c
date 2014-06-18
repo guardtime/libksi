@@ -1,6 +1,6 @@
 #include <time.h>
 
-#include "../src/ksi_internal.h"
+#include "ksi/ksi.h"
 
 int toHex(KSI_OctetString *certId, char **hex) {
 	int res = KSI_UNKNOWN_ERROR;

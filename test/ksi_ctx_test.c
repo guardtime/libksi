@@ -1,6 +1,7 @@
 #include "cutest/CuTest.h"
 
-#include"../src/ksi_internal.h"
+#include "all_tests.h"
+#include "../src/ksi/internal.h"
 
 static int failingMethod(KSI_CTX *ctx, int caseNr) {
 	KSI_ERR err;

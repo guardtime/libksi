@@ -3,7 +3,8 @@
 #include <string.h>
 
 #include "cutest/CuTest.h"
-#include "../src/ksi_internal.h"
+#include "all_tests.h"
+
 
 struct KSI_RDR_st {
 	/* Context for the reader. */

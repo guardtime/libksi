@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include "cutest/CuTest.h"
-#include "../src/ksi_internal.h"
+#include "all_tests.h"
 
 /* Recreate the internal structure. */
 struct KSI_DataHash_st {
@@ -42,9 +42,6 @@ static void TestSHA256(CuTest* tc) {
 	CuAssertIntEquals_Msg(tc, "Digest length", sizeof(expected), digest_length);
 	CuAssert(tc, "Digest value mismatch", !memcmp(expected, digest, digest_length));
 
-	KSI_nofree(ctx1);
-	KSI_nofree(ctx2);
-	KSI_nofree(digest);
 	KSI_DataHasher_free(hsr);
 	KSI_DataHash_free(hsh);
 }
@@ -79,7 +76,6 @@ static void TestSHA256Parts(CuTest* tc) {
 	CuAssertIntEquals_Msg(tc, "Digest lenght", sizeof(expected), digest_length);
 	CuAssert(tc, "Digest value mismatch", !memcmp(expected, digest, digest_length));
 
-	KSI_nofree(digest);
 	KSI_DataHasher_free(hsr);
 	KSI_DataHash_free(hsh);
 }
@@ -151,7 +147,6 @@ static void TestSHA256Empty(CuTest* tc) {
 	CuAssertIntEquals_Msg(tc, "Digest lenght", sizeof(expected), digest_length);
 	CuAssert(tc, "Digest value mismatch", !memcmp(expected, digest, digest_length));
 
-	KSI_nofree(digest);
 	KSI_DataHasher_free(hsr);
 	KSI_DataHash_free(hsh);
 }
@@ -181,7 +176,6 @@ static void TestSHA256GetData(CuTest* tc) {
 	CuAssertIntEquals_Msg(tc, "Digest lenght", sizeof(expected), digest_length);
 	CuAssert(tc, "Digest value mismatch", !memcmp(expected, digest, digest_length));
 
-	KSI_nofree(digest);
 	KSI_DataHasher_free(hsr);
 	KSI_DataHash_free(hsh);
 }
@@ -210,7 +204,6 @@ static void TestSHA256GetImprint(CuTest* tc) {
 	CuAssertIntEquals_Msg(tc, "Imprint lenght", sizeof(expected), imprint_length);
 	CuAssert(tc, "Imprint value mismatch", !memcmp(expected, imprint, imprint_length));
 
-	KSI_nofree(imprint);
 	KSI_DataHasher_free(hsr);
 	KSI_DataHash_free(hsh);
 }
@@ -236,7 +229,6 @@ static void TestSHA256fromImprint(CuTest* tc) {
 	CuAssertIntEquals_Msg(tc, "Imprint lenght", sizeof(expected), imprint_length);
 	CuAssert(tc, "Imprint value mismatch", !memcmp(expected, imprint, imprint_length));
 
-	KSI_nofree(imprint);
 	KSI_DataHash_free(hsh);
 }
 
@@ -293,7 +285,6 @@ static void TestParallelHashing(CuTest* tc) {
 	CuAssert(tc, "Digest mismatch", !memcmp(exp2, digest, sizeof(exp2)));
 	CuAssertIntEquals_Msg(tc, "Algorithm", KSI_HASHALG_SHA2_512, algorithm);
 
-	KSI_nofree(digest);
 	KSI_DataHash_free(hsh1);
 	KSI_DataHash_free(hsh2);
 	KSI_DataHasher_free(hsr1);
