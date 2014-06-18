@@ -2266,6 +2266,8 @@ int KSI_Signature_createDataHasher(KSI_Signature *sig, KSI_DataHasher **hsr) {
 	*hsr = tmp;
 	tmp = NULL;
 
+	KSI_SUCCESS(&err);
+
 cleanup:
 
 	KSI_DataHasher_free(tmp);
