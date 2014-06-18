@@ -9,6 +9,7 @@ AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 # Checks for programs.
 AC_PROG_CC
+m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AC_PROG_LIBTOOL
 
 # Checks for libraries.
