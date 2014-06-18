@@ -1,7 +1,8 @@
 # Generated with mk_makefile.sh
 AM_CFLAGS=-g -Wall -lksi -I$(top_builddir)/src
-AM_LDFLAGS=-L$(top_builddir)/src -no-install
-bin_PROGRAMS=ksi_sign ksi_extend
+AM_LDFLAGS=-L$(top_builddir)/src/ksi -no-install
+bin_PROGRAMS=ksi_sign ksi_extend ksi_verify
 	
 ksi_sign_SOURCES=ksi_sign.c
 ksi_extend_SOURCES=ksi_extend.c
+ksi_verify_SOURCES=ksi_verify.c

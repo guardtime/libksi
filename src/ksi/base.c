@@ -63,6 +63,8 @@ const char *KSI_getErrorString(int statusCode) {
 			return "Invalid KSI signature.";
 		case KSI_INVALID_PKI_SIGNATURE:
 			return "Invalid PKI signature.";
+		case KSI_PKI_CERTIFICATE_NOT_TRUSTED:
+			return "The PKI certificate is not trusted.";
 		case KSI_OUT_OF_MEMORY:
 			return "Out of memory";
 		case KSI_IO_ERROR:
@@ -81,10 +83,16 @@ const char *KSI_getErrorString(int statusCode) {
 			return "There is no suitable publication yet.";
 		case KSI_VERIFY_PUBLICATION_NOT_FOUND:
 			return "Unknown publication";
+		case KSI_VERIFY_PUBLICATION_MISMATCH:
+			return "The publications in the signature and publications file mismatch.";
+		case KSI_INVALID_PUBLICATION:
+			return "Ivalid publication";
+		case KSI_WRONG_DOCUMENT:
+			return "Wrong document";
+		case KSI_PUBLICATIONS_FILE_NOT_SIGNED_WITH_PKI:
+			return "The publications file is not signed.";
 		case KSI_CRYPTO_FAILURE:
 			return "Cryptographic failure";
-		case KSI_PKI_CERTIFICATE_NOT_TRUSTED:
-			return "PKI Certificate not trusted.";
 		case KSI_UNKNOWN_ERROR:
 			return "Unknown internal error";
 		default:
