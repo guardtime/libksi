@@ -282,11 +282,12 @@ cleanup:
 
 static int AggChainRec_new(KSI_CTX *ctx, AggrChainRec **out) {
 	KSI_ERR err;
+	AggrChainRec *tmp = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, out != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	AggrChainRec *tmp = NULL;
 	tmp = KSI_new(AggrChainRec);
 	if (tmp == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
@@ -316,11 +317,12 @@ cleanup:
 
 static int PubDataRed_new(KSI_CTX *ctx, PubDataRec **out) {
 	KSI_ERR err;
+	PubDataRec *tmp = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, out != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	PubDataRec *tmp = NULL;
 	tmp = KSI_new(PubDataRec);
 	if (tmp == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
@@ -347,11 +349,12 @@ cleanup:
 
 static int CalAuthRec_new(KSI_CTX *ctx, CalAuthRec **out) {
 	KSI_ERR err;
+	CalAuthRec *tmp = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, out != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	CalAuthRec *tmp = NULL;
 	tmp = KSI_new(CalAuthRec);
 	if (tmp == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
@@ -378,13 +381,13 @@ cleanup:
 
 static int AggrAuthRec_new(KSI_CTX *ctx, AggrAuthRec **out) {
 	KSI_ERR err;
+	AggrAuthRec *tmp = NULL;
 	int res;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, out != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	AggrAuthRec *tmp = NULL;
 	tmp = KSI_new(AggrAuthRec);
 	if (tmp == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);

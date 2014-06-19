@@ -49,15 +49,11 @@ void KSI_DataHasher_free(KSI_DataHasher *hasher) {
 int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
 	KSI_ERR err;
 	int res;
-
-	KSI_BEGIN(ctx, &err);
-
 	KSI_DataHasher *tmp_hasher = NULL;
 
-	if (hasher == NULL) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, hasher != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
 
 	if (!KSI_isHashAlgorithmSupported(hash_id)) {
 		KSI_FAIL(&err, KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);

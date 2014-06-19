@@ -12,6 +12,10 @@
 #  endif
 #endif
 
+/* Compatibility for MS Windows. */
+#ifdef _WIN32
+#  define snprintf _snprintf
+#endif
 
 #define KSI_BEGIN(ctx, err) KSI_ERR_init((ctx), (err))
 #define KSI_PRE(err, cond) if (!(cond) && (KSI_ERR_init(NULL, (err)) == KSI_OK) && (KSI_FAIL((err), KSI_INVALID_ARGUMENT, NULL) == KSI_OK))
