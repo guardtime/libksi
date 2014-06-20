@@ -101,7 +101,6 @@ static void TestTlv8FromReader(CuTest* tc) {
 	const unsigned char *val = NULL;
 	int val_len = 0;
 
-	KSI_ERR_clearErrors(ctx);
 
 	KSI_RDR *rdr = NULL;
 	KSI_TLV *tlv = NULL;
@@ -156,11 +155,11 @@ static void TestTlv16FromReader(CuTest* tc) {
 	const unsigned char *val = NULL;
 	int val_len = 0;
 
-	KSI_ERR_clearErrors(ctx);
 
 	KSI_RDR *rdr = NULL;
 	KSI_TLV *tlv = NULL;
 
+	KSI_ERR_clearErrors(ctx);
 	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw) - 1, &rdr);
 
 	CuAssert(tc, "Failed to create reader.", res == KSI_OK && rdr != NULL);
@@ -186,11 +185,10 @@ static void TestTlvGetUint64(CuTest* tc) {
 	unsigned char raw[] = {0x1a, 0x08, 0xca, 0xfe, 0xba, 0xbe, 0xca, 0xfe, 0xfa, 0xce};
 	uint64_t value;
 
-	KSI_ERR_clearErrors(ctx);
-
 	KSI_RDR *rdr = NULL;
 	KSI_TLV *tlv = NULL;
 
+	KSI_ERR_clearErrors(ctx);
 	KSI_RDR_fromMem(ctx, raw, sizeof(raw), &rdr);
 	res = KSI_TLV_fromReader(rdr, &tlv);
 	CuAssert(tc, "Failed to create TLV from reader.", res == KSI_OK && tlv != NULL);
@@ -214,11 +212,11 @@ static void TestTlvGetUint64Overflow(CuTest* tc) {
 	unsigned char raw[] = {0x1a, 0x09, 0xca, 0xfe, 0xba, 0xbe, 0xca, 0xfe, 0xfa, 0xce, 0xee};
 	uint64_t value;
 
-	KSI_ERR_clearErrors(ctx);
 
 	KSI_RDR *rdr = NULL;
 	KSI_TLV *tlv = NULL;
 
+	KSI_ERR_clearErrors(ctx);
 	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw), &rdr);
 	CuAssert(tc, "Failed to create reader from memory buffer.", res == KSI_OK && rdr != NULL);
 
@@ -239,11 +237,11 @@ static void TestTlvGetStringValue(CuTest* tc) {
 	unsigned char raw[] = "\x82\xaa\x00\x0alore ipsum";
 	const char *str = NULL;
 
-	KSI_ERR_clearErrors(ctx);
 
 	KSI_RDR *rdr = NULL;
 	KSI_TLV *tlv = NULL;
 
+	KSI_ERR_clearErrors(ctx);
 	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw) - 1, &rdr);
 	CuAssert(tc, "Unable to create reader.", res == KSI_OK && rdr != NULL);
 	res = KSI_TLV_fromReader(rdr, &tlv);
@@ -270,13 +268,13 @@ static void TestTlvGetNextNested(CuTest* tc) {
 	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
 	const char *str = NULL;
 
-	KSI_ERR_clearErrors(ctx);
 
 	KSI_RDR *rdr = NULL;
 	KSI_TLV *tlv = NULL;
 	KSI_TLV *nested = NULL;
 	uint64_t uint;
 
+	KSI_ERR_clearErrors(ctx);
 	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw) - 1, &rdr);
 	CuAssert(tc, "Unable to create reader.", res == KSI_OK && rdr != NULL);
 
@@ -324,12 +322,12 @@ static void TestTlvGetNextNestedSharedMemory(CuTest* tc) {
 	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
 	char *str = NULL;
 
-	KSI_ERR_clearErrors(ctx);
 
 	KSI_RDR *rdr = NULL;
 	KSI_TLV *tlv = NULL;
 	KSI_TLV *nested = NULL;
 
+	KSI_ERR_clearErrors(ctx);
 	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw) - 1, &rdr);
 	CuAssert(tc, "Unable to create reader.", res == KSI_OK && rdr != NULL);
 
@@ -364,11 +362,10 @@ static void TestTlvSerializeString(CuTest* tc) {
 	int buf_len;
 	unsigned char buf[0xffff];
 
-	KSI_ERR_clearErrors(ctx);
-
 	KSI_RDR *rdr = NULL;
 	KSI_TLV *tlv = NULL;
 
+	KSI_ERR_clearErrors(ctx);
 	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw) - 1, &rdr);
 	CuAssert(tc, "Unable to create reader.", res == KSI_OK && rdr != NULL);
 	res = KSI_TLV_fromReader(rdr, &tlv);
@@ -399,11 +396,11 @@ static void TestTlvSerializeUint(CuTest* tc) {
 	int buf_len;
 	unsigned char buf[0xffff];
 
-	KSI_ERR_clearErrors(ctx);
 
 	KSI_RDR *rdr = NULL;
 	KSI_TLV *tlv = NULL;
 
+	KSI_ERR_clearErrors(ctx);
 	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw), &rdr);
 	CuAssert(tc, "Failed to create reader from memory buffer.", res == KSI_OK && rdr != NULL);
 
@@ -435,12 +432,12 @@ static void TestTlvSerializeNested(CuTest* tc) {
 	int buf_len;
 	unsigned char buf[0xffff];
 
-	KSI_ERR_clearErrors(ctx);
 
 	KSI_RDR *rdr = NULL;
 	KSI_TLV *tlv = NULL;
 	KSI_TLV *nested = NULL;
 
+	KSI_ERR_clearErrors(ctx);
 	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw) - 1, &rdr);
 	CuAssert(tc, "Unable to create reader.", res == KSI_OK && rdr != NULL);
 
