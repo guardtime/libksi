@@ -93,6 +93,9 @@ case "${target_os}" in
         ;;
 esac
 
+# To ensure compatibility with Microsoft compiler.
+CFLAGS="$CFLAGS -Wdeclaration-after-statement"
+
 AC_ARG_WITH(unit-test-xml,
 [  --with-unit-test-xml=file		Specifies the target xml of unit tests.],
 :, with_unit_test_xml=testsuite-xunit.xml)
