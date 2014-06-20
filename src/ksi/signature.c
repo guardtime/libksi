@@ -937,7 +937,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int validateSignature_internal(KSI_Signature *sig) {
+static int verifySignature_internal(KSI_Signature *sig) {
 	KSI_ERR err;
 	KSI_DataHash *hsh = NULL;
 	uint32_t utc_time;
@@ -1065,13 +1065,8 @@ static int KSI_Signature_verifyInternal(KSI_CTX *ctx, KSI_Signature *sig) {
 	KSI_PRE(&err, sig != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	res = validateSignature_internal(sig);
+	res = verifySignature_internal(sig);
 	KSI_CATCH(&err, res) goto cleanup;
-
-	if (sig->calAuth != NULL) {
-		res = CalAuthRec_verify(ctx, sig->calAuth);
-		KSI_CATCH(&err, res) goto cleanup;
-	}
 
 	KSI_SUCCESS(&err);
 
@@ -1649,11 +1644,16 @@ int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx) {
 
 	if (ctxp == NULL) ctxp = sig->ctx;
 
+
 	if (sig->publication != NULL) {
 		/* Verify using publication. */
 		res = verifySignatureWithPublication(ctx, sig);
 		KSI_CATCH(&err, res) goto cleanup;
 	} else {
+		if (sig->calAuth != NULL) {
+			res = CalAuthRec_verify(ctx, sig->calAuth);
+			KSI_CATCH(&err, res) goto cleanup;
+		}
 		/* Verify using extender. */
 		res = verifySignatureWithExtender(ctx, sig);
 	}
