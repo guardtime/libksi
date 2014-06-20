@@ -61,7 +61,7 @@ static void TestRdrFileFileReading(CuTest* tc) {
 	int res;
 	char tmpFile[] = "tmpXXXXXXXX";
 	unsigned char tmpBuf[0xffff];
-	int readCount;
+	unsigned int readCount;
 
 	static char testStr[] = "Randomness is too important to be left to chance";
 
@@ -99,7 +99,7 @@ static void TestRdrFileReadingChuncks(CuTest* tc) {
 	int res;
 	char tmpFile[] = "tmpXXXXXXXX";
 	unsigned char tmpBuf[0xffff];
-	int readCount;
+	unsigned int readCount;
 	int size = 0;
 
 	static char testStr[] = "Randomness is too important to be left to chance";
@@ -138,7 +138,7 @@ static void TestRdrFileReadingChuncks(CuTest* tc) {
 
 static void TestRdrMemInitExtStorage(CuTest* tc) {
 	int res;
-	int readCount;
+	unsigned int readCount;
 
 	KSI_RDR *rdr = NULL;
 	static char testData[] = "Random binary data.";
@@ -159,7 +159,7 @@ static void TestRdrMemInitExtStorage(CuTest* tc) {
 
 static void TestRdrMemInitOwnStorage(CuTest* tc) {
 	int res;
-	int readCount;
+	unsigned int readCount;
 
 	KSI_RDR *rdr = NULL;
 	static char testData[] = "Random binary data.";

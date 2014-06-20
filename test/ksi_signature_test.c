@@ -135,7 +135,7 @@ static void testVerifyDocument(CuTest *tc) {
 	unsigned char in[0x1ffff];
 	int in_len = 0;
 
-	unsigned char doc[] = "LAPTOP";
+	char doc[] = "LAPTOP";
 
 	FILE *f = NULL;
 	KSI_Signature *sig = NULL;
@@ -166,7 +166,7 @@ static void testVerifyDocumentHash(CuTest *tc) {
 	unsigned char in[0x1ffff];
 	int in_len = 0;
 
-	unsigned char doc[] = "LAPTOP";
+	char doc[] = "LAPTOP";
 	KSI_DataHash *hsh = NULL;
 
 	FILE *f = NULL;

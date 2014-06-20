@@ -129,7 +129,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	KSI_ERR_clearErrors(ctx);
 
 	/* Create and set the logger. */
-	res = KSI_Logger_new(ctx, NULL, KSI_LOG_DEBUG, &logger);
+	res = KSI_Logger_new(ctx, NULL, KSI_LOG_FATAL, &logger);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_setLogger(ctx, logger);
@@ -163,7 +163,6 @@ cleanup:
 
 	KSI_CTX_free(ctx);
 
-	printf("res = %d\n", res);
 	return res;
 }
 

@@ -2,9 +2,9 @@
 #include "all_tests.h"
 
 extern KSI_CTX *ctx;
-extern const unsigned char *KSI_NET_MOCK_request;
+extern unsigned char *KSI_NET_MOCK_request;
 extern int KSI_NET_MOCK_request_len;
-extern const unsigned char *KSI_NET_MOCK_response;
+extern unsigned char *KSI_NET_MOCK_response;
 extern int KSI_NET_MOCK_response_len;
 
 #define TEST_SIGNATURE_FILE "test/resource/tlv/ok-sig-2014-04-30.1.ksig"
@@ -47,8 +47,6 @@ static void testSigning(CuTest* tc) {
 	KSITest_setFileMockResponse(tc, "test/resource/tlv/ok_aggr_response-1.tlv");
 
 	res = KSI_createSignature(ctx, hsh, &sig);
-	KSI_ERR_statusDump(ctx, stdout);
-
 	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
 	CuAssert(tc, "Unexpected send request", KSI_NET_MOCK_request_len == sizeof(expectedSignRequest) && !memcmp(expectedSignRequest, KSI_NET_MOCK_request, KSI_NET_MOCK_request_len));
 	KSI_free((void *)KSI_NET_MOCK_response);
@@ -150,7 +148,6 @@ static void testExtendingWithoutPublication(CuTest* tc) {
 	KSITest_setFileMockResponse(tc, "test/resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv");
 
 	res = KSI_Signature_extend(sig, NULL, &ext);
-	KSI_ERR_statusDump(ctx, stdout);
 	CuAssert(tc, "Unable to extend the signature to the head", res == KSI_OK && ext != NULL);
 	CuAssert(tc, "Unexpected send request", KSI_NET_MOCK_request_len == sizeof(expectedExtendRequestWithoutPublication) && !KSITest_memcmp(expectedExtendRequestWithoutPublication, KSI_NET_MOCK_request, KSI_NET_MOCK_request_len));
 

@@ -39,7 +39,6 @@ static void testLoadPublicationsFile(CuTest *tc) {
 	setFileMockResponse(tc, TEST_PUBLICATIONS_FILE);
 
 	res = KSI_PublicationsFile_fromFile(ctx, TEST_PUBLICATIONS_FILE, &pubFile);
-	KSI_ERR_statusDump(ctx, stdout);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
 
 	KSI_PublicationsFile_free(pubFile);
@@ -55,7 +54,6 @@ static void testVerifyPublicationsFile(CuTest *tc) {
 	setFileMockResponse(tc, TEST_PUBLICATIONS_FILE);
 
 	res = KSI_PublicationsFile_fromFile(ctx, TEST_PUBLICATIONS_FILE, &pubFile);
-	KSI_ERR_statusDump(ctx, stdout);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
 
 	res = KSI_PKITruststore_new(ctx, 0, &pki);
