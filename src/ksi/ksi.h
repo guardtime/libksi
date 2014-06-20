@@ -383,7 +383,7 @@ int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extend
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  * \see #KSI_LOG_LVL_en
  */
-int KSI_setLogLevel(KSI_CTX *ctx, int level);
+int KSI_CTX_setLogLevel(KSI_CTX *ctx, int level);
 
 /**
  * Set the log output file.
@@ -394,7 +394,7 @@ int KSI_setLogLevel(KSI_CTX *ctx, int level);
  * \note When the fileName is set to \c NULL the log is sent to the standard output. To
  * turn the logger off use #KSI_setLogLevel with #KSI_LOG_NONE.
  */
-int KSI_setLogFile(KSI_CTX *ctx, char *fileName);
+int KSI_CTX_setLogFile(KSI_CTX *ctx, char *fileName);
 
 int KSI_getPKITruststore(KSI_CTX *ctx, KSI_PKITruststore **pki);
 int KSI_getNetworkProvider(KSI_CTX *ctx, KSI_NetProvider **net);

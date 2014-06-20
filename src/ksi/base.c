@@ -502,7 +502,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_setLogLevel(KSI_CTX *ctx, int level) {
+int KSI_CTX_setLogLevel(KSI_CTX *ctx, int level) {
 	KSI_ERR err;
 	int res;
 
@@ -519,7 +519,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_setLogFile(KSI_CTX *ctx, char *fileName) {
+int KSI_CTX_setLogFile(KSI_CTX *ctx, char *fileName) {
 	KSI_ERR err;
 	int res;
 

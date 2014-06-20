@@ -158,6 +158,7 @@ static int RunAllTests() {
 	KSI_global_init();
 
 	KSI_CTX_new(&ctx);
+	KSI_CTX_setLogLevel(ctx, KSI_LOG_DEBUG);
 
 	CuSuiteRun(suite);
 
