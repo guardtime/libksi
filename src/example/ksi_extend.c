@@ -68,6 +68,8 @@ int main(int argc, char **argv) {
 		}
 	}
 
+	/* Clear the errors. */
+	KSI_ERR_clearErrors(ksi);
 	/* Read the signature. */
 	res = KSI_Signature_fromFile(ksi, argv[1], &sig);
 	if (res != KSI_OK) {

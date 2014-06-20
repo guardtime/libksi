@@ -28,6 +28,8 @@ int KSI_LOG_logDataHash(KSI_CTX *ctx, int level, const char *prefix, KSI_DataHas
 
 int KSI_Logger_new(KSI_CTX *ctx, char *fileName, int logLevel, KSI_Logger **logger);
 void KSI_Logger_free(KSI_Logger *logger);
+int KSI_LOG_setLogLevel(KSI_Logger *logger, int level);
+int KSI_LOG_setLogFile(KSI_Logger *logger, char *file);
 
 #ifdef __cplusplus
 }

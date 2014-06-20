@@ -237,7 +237,10 @@ int KSI_PublicationsFile_verify(KSI_PublicationsFile *pubFile, KSI_PKITruststore
 	}
 
 	res = KSI_PKITruststore_verifySignature(pki, pubFile->raw, pubFile->signatureOffset, pubFile->signature);
-	KSI_CATCH(&err, res) goto cleanup;
+	KSI_CATCH(&err, res) {
+		KSI_FAIL(&err, res, "Publications file not trusted.");
+		goto cleanup;
+	}
 
 	KSI_SUCCESS(&err);
 

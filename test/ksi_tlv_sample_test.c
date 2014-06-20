@@ -39,19 +39,7 @@ static char *nok_sample[] = {
 		NULL
 };
 
-static KSI_CTX *ctx = NULL;
-
-static void initEnv(CuTest* tc) {
-	int res;
-
-	res = KSI_CTX_new(&ctx);
-	CuAssert(tc, "Failed to init context", res == KSI_OK && ctx != NULL);
-}
-
-static void closeEnv(CuTest* tc) {
-	KSI_CTX_free(ctx);
-	ctx = NULL;
-}
+extern KSI_CTX *ctx;
 
 static int tlvFromFile(CuTest* tc, char *fileName, KSI_TLV **tlv) {
 	int res;
@@ -129,7 +117,7 @@ static void TestOkFiles(CuTest* tc) {
 
 	KSI_TLV *tlv = NULL;
 
-	initEnv(tc);
+	KSI_ERR_clearErrors(ctx);
 
 	while (ok_sample[i] != NULL) {
 		CuAssert(tc, "Unable to read valid TLV", tlvFromFile(tc, ok_sample[i++], &tlv) == KSI_OK);
@@ -143,8 +131,6 @@ static void TestOkFiles(CuTest* tc) {
 
 		break;
 	}
-
-	closeEnv(tc);
 }
 
 static void TestNokFiles(CuTest* tc) {
@@ -153,7 +139,7 @@ static void TestNokFiles(CuTest* tc) {
 
 	KSI_TLV *tlv = NULL;
 
-	initEnv(tc);
+	KSI_ERR_clearErrors(ctx);
 
 	while (nok_sample[i] != NULL) {
 		res = tlvFromFile(tc, nok_sample[i++], &tlv);
@@ -167,8 +153,6 @@ static void TestNokFiles(CuTest* tc) {
 		KSI_TLV_free(tlv);
 		tlv = NULL;
 	}
-
-	closeEnv(tc);
 }
 
 static void TestSerialize(CuTest* tc) {
@@ -185,7 +169,7 @@ static void TestSerialize(CuTest* tc) {
 	FILE *f = NULL;
 	int i = 0;
 
-	initEnv(tc);
+	KSI_ERR_clearErrors(ctx);
 
 	while (ok_sample[i] != NULL) {
 		f = fopen(ok_sample[i], "rb");
@@ -213,8 +197,6 @@ static void TestSerialize(CuTest* tc) {
 		tlv = NULL;
 		i++;
 	}
-
-	closeEnv(tc);
 }
 
 static void TestClone(CuTest *tc) {
@@ -232,7 +214,7 @@ static void TestClone(CuTest *tc) {
 	FILE *f = NULL;
 	int i = 0;
 
-	initEnv(tc);
+	KSI_ERR_clearErrors(ctx);
 
 	while (ok_sample[i] != NULL) {
 		f = fopen(ok_sample[i], "rb");
@@ -267,8 +249,6 @@ static void TestClone(CuTest *tc) {
 		tlv = NULL;
 		i++;
 	}
-
-	closeEnv(tc);
 }
 
 CuSuite* KSITest_TLV_Sample_getSuite(void)

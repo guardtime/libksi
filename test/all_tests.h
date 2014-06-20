@@ -18,7 +18,6 @@ void KSITest_setFileMockResponse(CuTest *tc, const char *fileName);
 int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetProvider **provider);
 
 CuSuite* KSITest_CTX_getSuite(void);
-CuSuite* KSITest_LOG_getSuite(void);
 CuSuite* KSITest_RDR_getSuite(void);
 CuSuite* KSITest_TLV_getSuite(void);
 CuSuite* KSITest_TLV_Sample_getSuite(void);

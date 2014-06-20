@@ -375,6 +375,27 @@ int KSI_createSignature(KSI_CTX *ctx, const KSI_DataHash *dataHash, KSI_Signatur
  */
 int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extended);
 
+/**
+ * Setter for the internal log level.
+ * \param[in]		ctx			KSI context.
+ * \param[in]		level		Log level.
+ *
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \see #KSI_LOG_LVL_en
+ */
+int KSI_setLogLevel(KSI_CTX *ctx, int level);
+
+/**
+ * Set the log output file.
+ * \param[in]		ctx			KSI context.
+ * \param[in]		fileName	Output file name.
+ *
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \note When the fileName is set to \c NULL the log is sent to the standard output. To
+ * turn the logger off use #KSI_setLogLevel with #KSI_LOG_NONE.
+ */
+int KSI_setLogFile(KSI_CTX *ctx, char *fileName);
+
 int KSI_getPKITruststore(KSI_CTX *ctx, KSI_PKITruststore **pki);
 int KSI_getNetworkProvider(KSI_CTX *ctx, KSI_NetProvider **net);
 int KSI_getLogger(KSI_CTX *ctx, KSI_Logger **logger);

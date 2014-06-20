@@ -113,7 +113,6 @@ int KSI_CTX_new(KSI_CTX **context) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
-
 	/* Init error stack */
 	ctx->errors_size = KSI_ERR_STACK_LEN;
 	ctx->errors = KSI_malloc(sizeof(KSI_ERR) * ctx->errors_size);
@@ -132,19 +131,13 @@ int KSI_CTX_new(KSI_CTX **context) {
 	/* Create and set the logger. */
 	res = KSI_Logger_new(ctx, NULL, KSI_LOG_DEBUG, &logger);
 	if (res != KSI_OK) goto cleanup;
+
 	res = KSI_setLogger(ctx, logger);
 	if (res != KSI_OK) goto cleanup;
 
 	/* Initialize curl as the net handle. */
 	res = KSI_CurlNetProvider_new(ctx, &netProvider);
 	if (res != KSI_OK) goto cleanup;
-
-	/* Configure curl net provider */
-	if ((res = KSI_CurlNetProvider_setSignerUrl(netProvider, KSI_DEFAULT_URI_AGGREGATOR /*"192.168.1.36:3333"*/)) != KSI_OK) goto cleanup;
-	if ((res = KSI_CurlNetProvider_setExtenderUrl(netProvider, KSI_DEFAULT_URI_EXTENDER)) != KSI_OK) goto cleanup;
-	if ((res = KSI_CurlNetProvider_setPublicationUrl(netProvider, KSI_DEFAULT_URI_PUBLICATIONS_FILE)) != KSI_OK) goto cleanup;
-	if ((res = KSI_CurlNetProvider_setReadTimeoutSeconds(netProvider, 5)) != KSI_OK) goto cleanup;
-	if ((res = KSI_CurlNetProvider_setConnectTimeoutSeconds(netProvider, 5)) != KSI_OK) goto cleanup;
 
 	res = KSI_setNetworkProvider(ctx, netProvider);
 	if (res != KSI_OK) goto cleanup;
@@ -170,6 +163,7 @@ cleanup:
 
 	KSI_CTX_free(ctx);
 
+	printf("res = %d\n", res);
 	return res;
 }
 
@@ -508,6 +502,41 @@ cleanup:
 	KSI_Signature_free(extSig);
 	return KSI_RETURN(&err);
 }
+
+int KSI_setLogLevel(KSI_CTX *ctx, int level) {
+	KSI_ERR err;
+	int res;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_LOG_setLogLevel(ctx->logger, level);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_setLogFile(KSI_CTX *ctx, char *fileName) {
+	KSI_ERR err;
+	int res;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_LOG_setLogFile(ctx->logger, fileName);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
 
 int KSI_ERR_init(KSI_CTX *ctx, KSI_ERR *err) {
 	err->ctx = ctx;

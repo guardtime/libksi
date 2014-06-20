@@ -51,12 +51,13 @@ static int writeLog(KSI_CTX *ctx, int logLevel, char *format, va_list va) {
 
 		goto cleanup;
 	}
-	f = logger->logStream != NULL ? logger->logStream : stdout;
+	f = logger->logStream;
 
-	fprintf(f, "%s [%s] - ", level2str(logLevel), time_buf);
-	vfprintf(f, format, va);
-	fprintf(f, "\n");
-
+	if (f != NULL) {
+		fprintf(f, "%s [%s] - ", level2str(logLevel), time_buf);
+		vfprintf(f, format, va);
+		fprintf(f, "\n");
+	}
 	/* NB! Do not call macro #KSI_success. */
 	res = KSI_OK;
 
@@ -114,7 +115,7 @@ int KSI_Logger_new(KSI_CTX *ctx, char *fileName, int logLevel, KSI_Logger **logg
 		goto cleanup;
 	}
 
-	if (fileName != NULL && strcmp("-", fileName)) {
+	if (fileName != NULL) {
 		f = fopen(fileName, "a");
 		if (f == NULL) {
 			KSI_FAIL(&err, KSI_IO_ERROR, "Unable to open log file for append.");
@@ -137,7 +138,7 @@ int KSI_Logger_new(KSI_CTX *ctx, char *fileName, int logLevel, KSI_Logger **logg
 
 	tmp->logFile = logFileName;
 	logFileName = NULL;
-	tmp->logStream = f;
+	tmp->logStream = (f != NULL ? f : stdout);
 	f = NULL;
 
 	tmp->logLevel = logLevel;
@@ -158,7 +159,7 @@ cleanup:
 
 void KSI_Logger_free(KSI_Logger *logger) {
 	if (logger != NULL) {
-		if (logger->logStream != NULL) {
+		if (logger->logFile != NULL && logger->logStream != NULL) {
 			fclose(logger->logStream);
 		}
 
@@ -266,6 +267,36 @@ cleanup:
 	}
 
 	KSI_nofree(imprint);
+
+	return res;
+}
+
+int KSI_LOG_setLogLevel(KSI_Logger *logger, int level) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	logger->logLevel = level;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_LOG_setLogFile(KSI_Logger *logger, char *file) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (logger->logStream != NULL) {
+		fclose(logger->logStream);
+		logger->logStream = NULL;
+	}
+
+	logger->logStream = fopen(file, "a");
+	if (logger->logStream == NULL) goto cleanup;
+
+	res = KSI_OK;
+
+cleanup:
 
 	return res;
 }

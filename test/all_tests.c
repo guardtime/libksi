@@ -111,7 +111,6 @@ static CuSuite* initSuite(void) {
 	CuSuite *suite = CuSuiteNew();
 
 	addSuite(suite, KSITest_CTX_getSuite);
-	addSuite(suite, KSITest_LOG_getSuite);
 	addSuite(suite, KSITest_RDR_getSuite);
 	addSuite(suite, KSITest_TLV_getSuite);
 	addSuite(suite, KSITest_TLV_Sample_getSuite);
@@ -155,12 +154,11 @@ static void writeXmlReport(CuSuite *suite) {
 
 static int RunAllTests() {
 	int failCount;
-
+	CuSuite* suite = initSuite();
 	KSI_global_init();
 
 	KSI_CTX_new(&ctx);
 
-	CuSuite* suite = initSuite();
 	CuSuiteRun(suite);
 
 	printStats(suite);

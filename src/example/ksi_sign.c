@@ -41,15 +41,6 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	/* Output file */
-	out = fopen(argv[2], "wb");
-	if (out == NULL) {
-		fprintf(stderr, "Unable to open input file '%s'\n", argv[2]);
-		res = KSI_IO_ERROR;
-		goto cleanup;
-	}
-
-
 	/* Create new KSI context for this thread. */
 	res = KSI_CTX_new(&ksi);
 	if (res != KSI_OK) {
@@ -132,6 +123,14 @@ int main(int argc, char **argv) {
 	res = KSI_Signature_serialize(sign, &raw, &raw_len);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to serialize signature.");
+		goto cleanup;
+	}
+
+	/* Output file */
+	out = fopen(argv[2], "wb");
+	if (out == NULL) {
+		fprintf(stderr, "Unable to open input file '%s'\n", argv[2]);
+		res = KSI_IO_ERROR;
 		goto cleanup;
 	}
 

@@ -5,7 +5,7 @@ test: all
 	cd test; make all; cd ..; ./test/runner;
 	
 memtest: all 
-	cd test; maks all; cd ..; valgrind --xml=yes --xml-file=valgrind.xml ./test/runner 
+	cd test; make all; cd ..; valgrind --xml=yes --xml-file=valgrind.xml ./test/runner 
 
 doc:
 	cd doc; make doc; cd ..

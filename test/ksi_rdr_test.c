@@ -5,6 +5,7 @@
 #include "cutest/CuTest.h"
 #include "all_tests.h"
 
+extern KSI_CTX *ctx;
 
 struct KSI_RDR_st {
 	/* Context for the reader. */
@@ -41,11 +42,7 @@ static void TestRdrFileBadFileName(CuTest* tc) {
 	int res;
 	char tmpFile[] = "tmpXXXXXXXX";
 
-	KSI_CTX *ctx = NULL;
 	KSI_RDR *rdr = NULL;
-
-	/* Init context. */
-	KSI_CTX_new(&ctx);
 
 	/* Init reader from non existing file name */
 	res = KSI_RDR_fromFile(ctx, tmpFile, "r", &rdr);
@@ -58,8 +55,6 @@ static void TestRdrFileBadFileName(CuTest* tc) {
 
 	/* Closing a NULL reader should not fail. */
 	KSI_RDR_close(NULL);
-	KSI_CTX_free(ctx);
-
 }
 
 static void TestRdrFileFileReading(CuTest* tc) {
@@ -72,13 +67,9 @@ static void TestRdrFileFileReading(CuTest* tc) {
 
 	FILE *f = NULL;
 
-	KSI_CTX *ctx = NULL;
 	KSI_RDR *rdr = NULL;
 
 	/* Init context. */
-	KSI_CTX_new(&ctx);
-
-	/* Create tmp file name. */
 	CuAssert(tc, "Unable to create temporary file name.", mkstemp(tmpFile) > 0);
 
 	/* Write some data to file */
@@ -101,9 +92,6 @@ static void TestRdrFileFileReading(CuTest* tc) {
 
 	/* Remove temporary file */
 	CuAssert(tc, "Unable to remove temporary file", remove(tmpFile) == 0);
-
-
-	KSI_CTX_free(ctx);
 }
 
 
@@ -118,11 +106,7 @@ static void TestRdrFileReadingChuncks(CuTest* tc) {
 
 	FILE *f = NULL;
 
-	KSI_CTX *ctx = NULL;
 	KSI_RDR *rdr = NULL;
-
-	/* Init context. */
-	KSI_CTX_new(&ctx);
 
 	/* Create tmp file name. */
 	CuAssert(tc, "Unable to create temporary file name.", mkstemp(tmpFile) > 0);
@@ -150,22 +134,15 @@ static void TestRdrFileReadingChuncks(CuTest* tc) {
 
 	/* Remove temporary file */
 	CuAssert(tc, "Unable to remove temporary file", remove(tmpFile) == 0);
-
-	KSI_CTX_free(ctx);
 }
 
 static void TestRdrMemInitExtStorage(CuTest* tc) {
 	int res;
 	int readCount;
 
-	KSI_CTX *ctx = NULL;
 	KSI_RDR *rdr = NULL;
 	static char testData[] = "Random binary data.";
 	unsigned char tmpBuf[0xffff];
-
-	/* Init context. */
-	res = KSI_CTX_new(&ctx);
-	CuAssert(tc, "Failed initializing context.", res == KSI_OK);
 
 	/* Init reader. */
 	res = KSI_RDR_fromSharedMem(ctx, (unsigned char *)testData, sizeof(testData), &rdr);
@@ -178,21 +155,15 @@ static void TestRdrMemInitExtStorage(CuTest* tc) {
 	CuAssert(tc, "Data missmatch", !memcmp(tmpBuf, testData, sizeof(testData)));
 
 	KSI_RDR_close(rdr);
-	KSI_CTX_free(ctx);
 }
 
 static void TestRdrMemInitOwnStorage(CuTest* tc) {
 	int res;
 	int readCount;
 
-	KSI_CTX *ctx = NULL;
 	KSI_RDR *rdr = NULL;
 	static char testData[] = "Random binary data.";
 	unsigned char tmpBuf[0xffff];
-
-	/* Init context. */
-	res = KSI_CTX_new(&ctx);
-	CuAssert(tc, "Failed initializing context.", res == KSI_OK);
 
 	/* Init reader. */
 	res = KSI_RDR_fromMem(ctx, (unsigned char *) testData, sizeof(testData), &rdr);
@@ -205,7 +176,6 @@ static void TestRdrMemInitOwnStorage(CuTest* tc) {
 	CuAssert(tc, "Data missmatch", !memcmp(tmpBuf, testData, sizeof(testData)));
 
 	KSI_RDR_close(rdr);
-	KSI_CTX_free(ctx);
 }
 
 CuSuite* KSITest_RDR_getSuite(void)
