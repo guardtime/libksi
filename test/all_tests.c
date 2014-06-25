@@ -5,7 +5,11 @@
 #include "../src/ksi/config.h"
 #include "cutest/CuTest.h"
 
-#include "all_tests.h"
+#ifndef _WIN32
+#  ifdef HAVE_CONFIG_H
+#    include "config.h"
+#  endif
+#endif
 
 #ifndef UNIT_TEST_OUTPUT_XML
 #  define UNIT_TEST_OUTPUT_XML "_testsuite.xml"
