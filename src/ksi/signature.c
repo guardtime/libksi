@@ -1366,9 +1366,6 @@ static int replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calen
 		goto cleanup;
 	}
 
-	res = KSI_TLV_iterNested(sig->baseTlv);
-	KSI_CATCH(&err, res) goto cleanup;
-
 	res = KSI_TLV_getNestedList(sig->baseTlv, &nestedList);
 	KSI_CATCH(&err, res) goto cleanup;
 
