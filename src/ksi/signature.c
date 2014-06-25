@@ -104,6 +104,22 @@ struct KSI_Signature_st {
 
 };
 
+
+static KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_TLV*, baseTlv, BaseTlv)
+static KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_CalendarHashChain*, calendarChain, CalendarChain)
+static KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_LIST(AggrChainRec)*, aggregationChainList, AggregationChainList)
+static KSI_IMPLEMENT_GETTER(KSI_Signature, CalAuthRec*, calAuth, CalendarAuthRecord)
+static KSI_IMPLEMENT_GETTER(KSI_Signature, AggrAuthRec*, aggrAuth, AggregationAuthRecord)
+static KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_PublicationRecord*, publication, Publication)
+
+static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_TLV*, baseTlv, BaseTlv);
+static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_CalendarHashChain*, calendarChain, CalendarChain)
+static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_LIST(AggrChainRec)*, aggregationChainList, AggregationChainList)
+static KSI_IMPLEMENT_SETTER(KSI_Signature, CalAuthRec*, calAuth, CalendarAuthRecord)
+static KSI_IMPLEMENT_SETTER(KSI_Signature, AggrAuthRec*, aggrAuth, AggregationAuthRecord)
+static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_PublicationRecord*, publication, Publication)
+
+
 static void PubDataRec_free (PubDataRec *pdc) {
 	if (pdc != NULL) {
 		KSI_free(pdc->raw);
@@ -578,6 +594,7 @@ static int parseAggregationChainRec(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature *s
 	res = AggChainRec_new(ctx, &aggr);
 	KSI_CATCH(&err, res) goto cleanup;
 
+	// FIXME: Replace using templates instead.
 	KSI_TLV_PARSE_BEGIN(ctx, tlv)
 		KSI_PARSE_TLV_ELEMENT_INTEGER	(0x02, &aggr->aggregationTime)
 		KSI_PARSE_TLV_ELEMENT_CB		(0x03, AggrChainRec_addIndex, aggr)
@@ -628,6 +645,7 @@ static int parsePublDataRecord(KSI_CTX *ctx, KSI_TLV *tlv, PubDataRec **pdr) {
 	res = KSI_TLV_serialize(tlv, &raw, &raw_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
+	// FIXME: Replace using templates instead.
 	KSI_TLV_PARSE_BEGIN(ctx, tlv)
 		KSI_PARSE_TLV_ELEMENT_INTEGER(0x02, &tmp->pubTime)
 		KSI_PARSE_TLV_ELEMENT_IMPRINT(0x04, &tmp->pubHash)
@@ -759,6 +777,7 @@ static int parseAggrAuthRec(KSI_CTX *ctx, KSI_TLV *tlv, AggrAuthRec **aar) {
 	res = AggrAuthRec_new(ctx, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
+	// FIXME: Replace using templates instead.
 	KSI_TLV_PARSE_BEGIN(ctx, tlv)
 		KSI_PARSE_TLV_ELEMENT_INTEGER(0x02, &tmp->aggregationTime)
 		KSI_PARSE_TLV_ELEMENT_CB(0x03, parseAggrAuthRecChainIndex, &tmp)
@@ -802,6 +821,7 @@ static int parseCalAuthRec(KSI_CTX *ctx, KSI_TLV *tlv, CalAuthRec **car) {
 	res = CalAuthRec_new(ctx, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
+	// FIXME: Replace using templates instead.
 	KSI_TLV_PARSE_BEGIN(ctx, tlv)
 		KSI_PARSE_TLV_ELEMENT_CB(0x10, parsePublDataRecord, &tmp->pubData)
 		KSI_PARSE_TLV_ELEMENT_UTF8STR(0x0b, &tmp->sigAlgo)
