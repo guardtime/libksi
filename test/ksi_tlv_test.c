@@ -273,6 +273,8 @@ static void TestTlvGetNextNested(CuTest* tc) {
 	KSI_TLV *tlv = NULL;
 	KSI_TLV *nested = NULL;
 	uint64_t uint;
+	int i = 0;
+	KSI_LIST(KSI_TLV) *list = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw) - 1, &rdr);
@@ -285,7 +287,10 @@ static void TestTlvGetNextNested(CuTest* tc) {
 	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_TLV);
 	CuAssert(tc, "TLV cast failed", res == KSI_OK);
 
-	res = KSI_TLV_getNextNestedTLV(tlv, &nested);
+	res = KSI_TLV_getNestedList(tlv, &list);
+	CuAssert(tc, "Unable to get nested list from TLV.", res == KSI_OK && list != NULL);
+
+	res = KSI_TLVList_elementAt(list, i++, &nested);
 	CuAssert(tc, "Unable to read nested TLV", res == KSI_OK && nested != NULL);
 
 	/* Cast payload type */
@@ -296,7 +301,7 @@ static void TestTlvGetNextNested(CuTest* tc) {
 	CuAssert(tc, "Unable to read string from nested TLV", res == KSI_OK && str != NULL);
 	CuAssert(tc, "Unexpected string from nested TLV.", !strcmp("THIS IS A TLV CONTENT", str));
 
-	res = KSI_TLV_getNextNestedTLV(tlv, &nested);
+	res = KSI_TLVList_elementAt(list, i++, &nested);
 	CuAssert(tc, "Unable to read nested TLV", res == KSI_OK && nested != NULL);
 
 	/* Cast payload type */
@@ -307,9 +312,8 @@ static void TestTlvGetNextNested(CuTest* tc) {
 	CuAssert(tc, "Unable to read uint from nested TLV", res == KSI_OK);
 	CuAssert(tc, "Unexpected uint value from nested TLV", 0xcafffffffffe == uint);
 
-	res = KSI_TLV_getNextNestedTLV(tlv, &nested);
-	CuAssert(tc, "Reading nested TLV failed after reading last TLV.", res == KSI_OK);
-	CuAssert(tc, "Nested element should have been NULL", nested == NULL);
+	res = KSI_TLVList_elementAt(list, i++, &nested);
+	CuAssert(tc, "Reading nested TLV did not fail after reading last TLV.", res == KSI_BUFFER_OVERFLOW);
 
 	KSI_TLV_free(tlv);
 	KSI_RDR_close(rdr);
@@ -326,6 +330,8 @@ static void TestTlvGetNextNestedSharedMemory(CuTest* tc) {
 	KSI_RDR *rdr = NULL;
 	KSI_TLV *tlv = NULL;
 	KSI_TLV *nested = NULL;
+	KSI_LIST(KSI_TLV) *list = NULL;
+	int i;
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw) - 1, &rdr);
@@ -338,15 +344,17 @@ static void TestTlvGetNextNestedSharedMemory(CuTest* tc) {
 	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_TLV);
 	CuAssert(tc, "TLV cast failed", res == KSI_OK);
 
-	res = KSI_TLV_getNextNestedTLV(tlv, &nested);
+	res = KSI_TLV_getNestedList(tlv, &list);
+	CuAssert(tc, "Unable to get nested list from TLV.", res == KSI_OK && list != NULL);
+
+	res = KSI_TLVList_elementAt(list, i++, &nested);
 	CuAssert(tc, "Unable to read nested TLV", res == KSI_OK && nested != NULL);
 
-	res = KSI_TLV_getNextNestedTLV(tlv, &nested);
+	res = KSI_TLVList_elementAt(list, i++, &nested);
 	CuAssert(tc, "Unable to read nested TLV", res == KSI_OK && nested != NULL);
 
-	res = KSI_TLV_getNextNestedTLV(tlv, &nested);
-	CuAssert(tc, "Reading nested TLV failed after reading last TLV.", res == KSI_OK);
-	CuAssert(tc, "Nested element should have been NULL", nested == NULL);
+	res = KSI_TLVList_elementAt(list, i++, &nested);
+	CuAssert(tc, "Reading nested TLV did not fail after reading last TLV.", res == KSI_BUFFER_OVERFLOW);
 
 
 	KSI_free(str);
@@ -436,6 +444,7 @@ static void TestTlvSerializeNested(CuTest* tc) {
 	KSI_RDR *rdr = NULL;
 	KSI_TLV *tlv = NULL;
 	KSI_TLV *nested = NULL;
+	KSI_LIST(KSI_TLV) *list = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw) - 1, &rdr);
@@ -448,7 +457,10 @@ static void TestTlvSerializeNested(CuTest* tc) {
 	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_TLV);
 	CuAssert(tc, "TLV cast failed", res == KSI_OK);
 
-	res = KSI_TLV_getNextNestedTLV(tlv, &nested);
+	res = KSI_TLV_getNestedList(tlv, &list);
+	CuAssert(tc, "Unable to get nested list from TLV.", res == KSI_OK && list != NULL);
+
+	res = KSI_TLVList_elementAt(list, 0, &nested);
 	CuAssert(tc, "Unable to read nested TLV", res == KSI_OK && nested != NULL);
 
 	res = KSI_TLV_serialize_ex(tlv, buf, sizeof(buf), &buf_len);
@@ -468,13 +480,13 @@ static void TestTlvRequireCast(CuTest* tc) {
 	int res;
 
 	KSI_TLV *tlv = NULL;
-	KSI_TLV *nested = NULL;
 
 	const unsigned char *ptr = NULL;
 	int len;
 	uint64_t uintval;
 
 	unsigned char raw[] = "\x07\x06QWERTY";
+	KSI_LIST(KSI_TLV) *list = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -497,7 +509,7 @@ static void TestTlvRequireCast(CuTest* tc) {
 	ptr = NULL;
 
 	/* Should fail. */
-	res = KSI_TLV_getNextNestedTLV(tlv, &nested);
+	res = KSI_TLV_getNestedList(tlv, &list);
 	CuAssert(tc, "Got nested TLV without a cast", res != KSI_OK);
 	ptr = NULL;
 

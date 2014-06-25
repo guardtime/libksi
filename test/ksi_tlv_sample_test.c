@@ -65,6 +65,8 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 	uint64_t uint;
 	const char *buf;
 	KSI_TLV *nested = NULL;
+	KSI_LIST(KSI_TLV) *list = NULL;
+	int i;
 
 	switch (KSI_TLV_getTag(tlv)) {
 		case 0x01:
@@ -90,9 +92,12 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 			res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_TLV);
 			if (res != KSI_OK) goto cleanup;
 
+			res = KSI_TLV_getNestedList(tlv, &list);
+			if (res != KSI_OK) goto cleanup;
+
 			/* Parse nested */
-			while (1) {
-				res = KSI_TLV_getNextNestedTLV(tlv, &nested);
+			for (i = 0; i < KSI_TLVList_length(list); i++) {
+				res = KSI_TLVList_elementAt(list, i, &nested);
 				if (res != KSI_OK) goto cleanup;
 
 				if (nested == NULL) break;

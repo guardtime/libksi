@@ -741,63 +741,6 @@ cleanup:
 /**
  *
  */
-int KSI_TLV_getNextNestedTLV(KSI_TLV *tlv, KSI_TLV **nested) {
-	KSI_ERR err;
-	int res;
-	KSI_TLV *next = NULL;
-
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, nested != NULL) goto cleanup;
-	KSI_BEGIN(tlv->ctx, &err);
-
-	/* Check payload type. */
-	if (tlv->payloadType != KSI_TLV_PAYLOAD_TLV) {
-		KSI_FAIL(&err, KSI_TLV_PAYLOAD_TYPE_MISMATCH, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_TLVList_next(tlv->nested, &next);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	*nested = next;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_nofree(next);
-
-	return KSI_RETURN(&err);
-}
-
-int KSI_TLV_iterNested(KSI_TLV *tlv) {
-	KSI_ERR err;
-	int res;
-
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_BEGIN(tlv->ctx, &err);
-
-	/* Check payload type. */
-	if (tlv->payloadType != KSI_TLV_PAYLOAD_TLV) {
-		KSI_FAIL(&err, KSI_TLV_PAYLOAD_TYPE_MISMATCH, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_TLVList_iter(tlv->nested);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_nofree(next);
-
-	return KSI_RETURN(&err);
-}
-
-/**
- *
- */
 int KSI_TLV_parseBlob(KSI_CTX *ctx, const unsigned char *data, size_t data_length, KSI_TLV **tlv) {
 	KSI_ERR err;
 	KSI_RDR *rdr = NULL;

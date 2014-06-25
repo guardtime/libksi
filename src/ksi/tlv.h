@@ -163,20 +163,6 @@ extern "C" {
 	int KSI_TLV_getStringValue(KSI_TLV *tlv, const char **buf);
 
 	/**
-	 * This function extracts the next nested TLV value from the TLV.
-	 *
-	 * \note This operation is available only if the TLV payloadType is #KSI_TLV_PAYLOAD_TLV. To
-	 * change the payload type use #KSI_TLV_cast function.
-	 *
-	 * \param[in]	tlv		TLV from where to extract the value.
-	 * \param[out]	nested	Pointer to output variable.
-	 *
-	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
-	 */
-	int KSI_TLV_getNextNestedTLV(KSI_TLV *tlv, KSI_TLV **nested);
-	int KSI_TLV_iterNested(KSI_TLV *tlv);
-
-	/**
 	 * This function returns the list of nested elements of the TLV. The list is
 	 * ordered and will be serialized in this order. The list may not be freed
 	 * by the caller.

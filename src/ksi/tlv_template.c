@@ -311,10 +311,41 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+typedef struct TLVListIterator_st {
+	KSI_LIST(KSI_TLV) *list;
+	int idx;
+} TLVListIterator;
+
+static int TLVListIterator_next(TLVListIterator *iter, KSI_TLV **tlv) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_TLV *next = NULL;
+
+	if (iter == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (iter->idx < KSI_TLVList_length(iter->list)) {
+		res = KSI_TLVList_elementAt(iter->list, iter->idx, &next);
+		if (res != KSI_OK) goto cleanup;
+
+		iter->idx++;
+	}
+
+	*tlv = next;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *template, KSI_LIST(KSI_TLV) *reminder) {
 	KSI_ERR err;
 	int res;
 	int i;
+	TLVListIterator iter;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
@@ -322,10 +353,12 @@ int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI
 	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_TLV);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_TLV_iterNested(tlv);
+	res = KSI_TLV_getNestedList(tlv, &iter.list);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_TlvTemplate_extractGenerator(ctx, payload, (void *)tlv, template, reminder, (int (*)(void *, KSI_TLV **))KSI_TLV_getNextNestedTLV);
+	iter.idx = 0;
+
+	res = KSI_TlvTemplate_extractGenerator(ctx, payload, (void *)&iter, template, reminder, (int (*)(void *, KSI_TLV **))TLVListIterator_next);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	if (reminder != NULL) {

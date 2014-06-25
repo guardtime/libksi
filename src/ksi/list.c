@@ -208,11 +208,15 @@ cleanup:
 
 int KSI_List_elementAt(const KSI_List *list, unsigned int pos, void **o) {
 	int res = KSI_UNKNOWN_ERROR;
-	if (list == NULL || o == NULL || pos >= list->arr_len) {
+	if (list == NULL || o == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
+	if (pos >= list->arr_len) {
+		res = KSI_BUFFER_OVERFLOW;
+		goto cleanup;
+	}
 	*o = list->arr[pos];
 
 	res = KSI_OK;
