@@ -99,6 +99,9 @@ int KSI_LIST_FN_NAME(type, remove)(KSI_LIST(type) *list, int pos) {					\
 int KSI_LIST_FN_NAME(type, elementAt)(const KSI_LIST(type) *list, int pos, type **o) {	\
 	return KSI_List_elementAt(list->list, pos, (void **) o);						\
 }																					\
+int KSI_LIST_FN_NAME(type, sort)(KSI_LIST(type) *list, int (*cmp)(const type *a, const type *b)) {	\
+	return KSI_List_sort(list->list, (int (*)(const void*, const void *)) cmp);		\
+}																					\
 KSI_CTX *type##List_getCtx(const KSI_LIST(type) *o) {	 							\
 	return o->ctx; 																	\
 } 																					\

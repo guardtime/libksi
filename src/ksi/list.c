@@ -251,6 +251,21 @@ cleanup:
 	return res;
 }
 
+int KSI_List_sort(KSI_List *list, int (*cmp)(const void *a, const void *b)) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (list == NULL || cmp == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	qsort(list->arr, list->arr_len, sizeof(void *), cmp);
+
+cleanup:
+
+	return res;
+}
+
 KSI_IMPLEMENT_LIST(KSI_Integer, KSI_Integer_free);
 KSI_IMPLEMENT_LIST(KSI_TLV, KSI_TLV_free);
 KSI_IMPLEMENT_LIST(KSI_Utf8String, KSI_Utf8String_free);

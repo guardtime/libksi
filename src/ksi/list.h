@@ -23,6 +23,7 @@ int KSI_LIST_FN_NAME(type, replaceAt)(KSI_LIST(type) *, int, type *);			\
 int KSI_LIST_FN_NAME(type, remove)(KSI_LIST(type) *, int);						\
 int KSI_LIST_FN_NAME(type, length)(const KSI_LIST(type) *);						\
 int KSI_LIST_FN_NAME(type, elementAt)(const KSI_LIST(type) *, int pos, type **);		\
+int KSI_LIST_FN_NAME(type, sort)(KSI_LIST(type) *, int (*)(const type *, const type *));	\
 KSI_CTX *type##List_getCtx(const KSI_LIST(type) *o);							\
 
 
@@ -38,6 +39,7 @@ int KSI_List_insertAt(KSI_List *list, unsigned int pos, void *o);
 int KSI_List_replaceAt(KSI_List *list, unsigned int pos, void *o);
 int KSI_List_elementAt(const KSI_List *list, unsigned int pos, void **o);
 int KSI_List_length(const KSI_List *list);
+int KSI_List_sort(KSI_List *list, int (*)(const void *, const void *));
 
 
 #ifdef __cplusplus

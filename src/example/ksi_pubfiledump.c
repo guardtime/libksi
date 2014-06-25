@@ -1,6 +1,7 @@
 #include <time.h>
+#include <string.h>
 
-#include "ksi/ksi.h"
+#include <ksi/ksi.h>
 
 int toHex(KSI_OctetString *certId, char **hex) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -109,16 +110,15 @@ cleanup:
 }
 
 int main(int argc, char **argv) {
-	KSI_CTX *ctx;
+	KSI_CTX *ctx = NULL;
 	int res;
-	KSI_PKITruststore *pki = NULL;
 	KSI_PublicationsFile *publicationsFile = NULL;
 	KSI_LIST(KSI_PublicationRecord) *publications = NULL;
 	int i;
 
 	const char *fileName = NULL;
 
-	if (argc != 1 && argc != 2) {
+	if (argc != 2) {
 		printf("Usage:\n  %s <publications file>\n\n", *argv);
 		goto cleanup;
 	}
@@ -136,19 +136,7 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	res = KSI_getPKITruststore(ctx, &pki);
-	if (res != KSI_OK || pki == NULL) {
-		fprintf(stderr, "Unable to get PKI truststore.");
-		goto cleanup;
-	}
-	res = KSI_PKITruststore_addLookupFile(pki, "test/resource/tlv/mock.crt");
-	if (res != KSI_OK) {
-		KSI_ERR_statusDump(ctx, stdout);
-		fprintf(stderr, "Unable to read cert.\n");
-		goto cleanup;
-	}
-
-	if (argc == 2) {
+	if (argc == 2 && strncmp(argv[1], "-", 1)) {
 		fileName = argv[1];
 		res = KSI_PublicationsFile_fromFile(ctx, fileName, &publicationsFile);
 		if (res != KSI_OK) {
