@@ -17,8 +17,6 @@
 
 KSI_CTX *ctx = NULL;
 
-extern unsigned char *KSI_NET_MOCK_request;
-extern int KSI_NET_MOCK_request_len;
 extern unsigned char *KSI_NET_MOCK_response;
 extern int KSI_NET_MOCK_response_len;
 
