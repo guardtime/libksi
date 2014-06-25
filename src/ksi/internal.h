@@ -106,4 +106,30 @@ KSI_CTX *type##List_getCtx(const KSI_LIST(type) *o) {	 							\
 	return o->ctx; 																	\
 } 																					\
 
+#define KSI_DEFINE_SETTER(baseType, valueType, valueName, alias) int baseType##_set##alias(baseType *o, valueType valueName)
+#define KSI_DEFINE_GETTER(baseType, valueType, valueName, alias) int baseType##_get##alias(const baseType *o, valueType* valueName)
+
+#define KSI_IMPLEMENT_SETTER(baseType, valueType, valueName, alias)			\
+KSI_DEFINE_SETTER(baseType, valueType, valueName, alias) {					\
+	KSI_ERR err;															\
+	KSI_PRE(&err, o != NULL) goto cleanup;									\
+	KSI_BEGIN(o->ctx, &err);												\
+	o->valueName = valueName;												\
+	KSI_SUCCESS(&err);														\
+cleanup:																	\
+	return KSI_RETURN(&err);												\
+}																			\
+
+#define KSI_IMPLEMENT_GETTER(baseType, valueType, valueName, alias)			\
+KSI_DEFINE_GETTER(baseType, valueType, valueName, alias) {					\
+	KSI_ERR err;															\
+	KSI_PRE(&err, o != NULL) goto cleanup;									\
+	KSI_PRE(&err, valueName != NULL) goto cleanup;							\
+	KSI_BEGIN(o->ctx, &err);												\
+	*valueName = o->valueName;												\
+	KSI_SUCCESS(&err);														\
+cleanup:																	\
+	return KSI_RETURN(&err);												\
+}																			\
+
 #endif
