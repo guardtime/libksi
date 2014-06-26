@@ -331,7 +331,7 @@ static void TestTlvGetNextNestedSharedMemory(CuTest* tc) {
 	KSI_TLV *tlv = NULL;
 	KSI_TLV *nested = NULL;
 	KSI_LIST(KSI_TLV) *list = NULL;
-	int i;
+	int i = 0;
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw) - 1, &rdr);

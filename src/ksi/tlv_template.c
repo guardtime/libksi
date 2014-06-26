@@ -12,7 +12,7 @@ KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_CertificateRecord)
 	KSI_TLV_OCTET_STRING(0x01, 0, 0, KSI_CertificateRecord_getCertId, KSI_CertificateRecord_setCertId)
-	KSI_TLV_OBJECT(0x02, 0, 0, KSI_CertificateRecord_getCert, KSI_CertificateRecord_setCert, KSI_PKICertificate_fromTlv, KSI_PKICertificate_toTlv)
+	KSI_TLV_OBJECT(0x02, 0, 0, KSI_CertificateRecord_getCert, KSI_CertificateRecord_setCert, KSI_PKICertificate_fromTlv, KSI_PKICertificate_toTlv, KSI_PKICertificate_free)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationData)
@@ -59,6 +59,9 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationReq)
 	KSI_TLV_COMPOSITE(0x04, 0, 0, KSI_AggregationReq_getConfig, KSI_AggregationReq_setConfig, KSI_Config)
 KSI_END_TLV_TEMPLATE
 
+KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationResp)
+KSI_END_TLV_TEMPLATE
+
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationPdu)
 	KSI_TLV_COMPOSITE(0x201, 0, 0, KSI_AggregationPdu_getRequest, KSI_AggregationPdu_setRequest, KSI_AggregationReq)
 //	TLV_COMPOSITE(0x202, 0, 0, KSI_AggregationPdu_getResponse, KSI_AggregationPdu_setResponse, KSI_AggregationResp)
@@ -95,7 +98,7 @@ KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_PKISignedData)
 	KSI_TLV_OCTET_STRING(0x01, 0, 0, KSI_PKISignedData_getSignatureValue, KSI_PKISignedData_setSignatureValue)
-	KSI_TLV_OBJECT(0x02, 0, 0, KSI_PKISignedData_getCert, KSI_PKISignedData_setCert, KSI_PKICertificate_fromTlv, KSI_PKICertificate_toTlv)
+	KSI_TLV_OBJECT(0x02, 0, 0, KSI_PKISignedData_getCert, KSI_PKISignedData_setCert, KSI_PKICertificate_fromTlv, KSI_PKICertificate_toTlv, KSI_PKICertificate_free)
 	KSI_TLV_OCTET_STRING(0x03, 0, 0, KSI_PKISignedData_getCertId, KSI_PKISignedData_setCertId)
 KSI_END_TLV_TEMPLATE
 
@@ -242,7 +245,7 @@ static int decodeCalendarHashChainLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarH
 
 cleanup:
 
-	KSI_HashChainLinkList_free(list);
+	KSI_HashChainLinkList_freeAll(list);
 	KSI_HashChainLink_free(link);
 	KSI_DataHash_free(hsh);
 	KSI_nofree(raw);
@@ -361,18 +364,6 @@ int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI
 	res = KSI_TlvTemplate_extractGenerator(ctx, payload, (void *)&iter, template, reminder, (int (*)(void *, KSI_TLV **))TLVListIterator_next);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	if (reminder != NULL) {
-		/* Remove the elements in the reminder from the base tlv. */
-		for (i = 0; i < KSI_TLVList_length(reminder); i++) {
-			KSI_TLV *tmp = NULL;
-			/* Delete the TLV from the original list. */
-			res = KSI_TLV_removeNestedTlv(tlv, tmp);
-			KSI_CATCH(&err, res) goto cleanup;
-
-			KSI_nofree(tmp);
-		}
-	}
-
 	KSI_SUCCESS(&err);
 
 cleanup:
@@ -396,6 +387,7 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 	int intVal = 0;
 	void *compositeVal = NULL;
 	void *valuep = NULL;
+	KSI_TLV *tlvVal = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
@@ -427,6 +419,7 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 
 			if (valuep != NULL && !t->multiple) {
 				compositeVal = NULL;
+				KSI_LOG_error(ctx, "Multiple occurrances of a unique tag 0x%02x", t->tag);
 				KSI_FAIL(&err, KSI_INVALID_FORMAT, "To avoid memory leaks, a value may not be set more than once while parsing.");
 				goto cleanup;
 			}
@@ -457,6 +450,16 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 					KSI_CATCH(&err, res) goto cleanup;
 
 					break;
+				case KSI_TLV_TEMPLATE_UNPROCESSED:
+					res = KSI_TLV_clone(tlv, &tlvVal);
+					KSI_CATCH(&err, res) goto cleanup;
+
+					res = storeObjectValue(ctx, t, payload, tlvVal);
+					KSI_CATCH(&err, res) goto cleanup;
+
+					tlvVal = NULL;
+
+					break;
 				case KSI_TLV_TEMPLATE_OBJECT:
 					if (t->fromTlv == NULL) {
 						KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Invalid template: fromTlv not set.");
@@ -467,7 +470,10 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 					KSI_CATCH(&err, res) goto cleanup;
 
 					res = storeObjectValue(ctx, t, payload, voidVal);
-					KSI_CATCH(&err, res) goto cleanup;
+					KSI_CATCH(&err, res) {
+						t->destruct(voidVal);
+						goto cleanup;
+					}
 
 					break;
 				case KSI_TLV_TEMPLATE_COMPOSITE:
@@ -478,6 +484,7 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 
 					res = KSI_TlvTemplate_extract(ctx, compositeVal, tlv, t->subTemplate, NULL);
 					KSI_CATCH(&err, res) {
+						KSI_ERR_statusDump(ctx, stdout);
 						t->destruct(compositeVal);
 						goto cleanup;
 					}
@@ -523,6 +530,7 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 
 cleanup:
 
+	KSI_TLV_free(tlvVal);
 	KSI_OctetString_free(octetStringVal);
 	KSI_DataHash_free(hashVal);
 	KSI_Utf8String_free(stringVal);
@@ -549,6 +557,7 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 		KSI_CATCH(&err, res) goto cleanup;
 		if (payloadp != NULL) {
 			switch (template->type) {
+				case KSI_TLV_TEMPLATE_UNPROCESSED:
 				case KSI_TLV_TEMPLATE_SEEK_POS:
 					/* As this is a read-only template in the extraction process, there is
 					 * no logical construction action performed. */

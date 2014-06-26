@@ -257,7 +257,7 @@ void KSI_CalendarHashChain_free(KSI_CalendarHashChain *t) {
 		KSI_Integer_free(t->publicationTime);
 		KSI_Integer_free(t->aggregationTime);
 		KSI_DataHash_free(t->inputHash);
-		KSI_HashChainLinkList_free(t->hashChain);
+		KSI_HashChainLinkList_freeAll(t->hashChain);
 		KSI_free(t);
 	}
 }
@@ -586,7 +586,7 @@ void KSI_AggregationResp_free(KSI_AggregationResp *t) {
 		KSI_Utf8String_free(t->errorMsg);
 		KSI_Config_free(t->config);
 		KSI_RequestAck_free(t->requestAck);
-		KSI_TLVList_free(t->payload);
+		KSI_TLVList_freeAll(t->payload);
 		KSI_free(t);
 	}
 }
@@ -927,7 +927,7 @@ KSI_IMPLEMENT_SETTER(KSI_PublicationData, KSI_DataHash*, imprint, Imprint);
 void KSI_PublicationRecord_free(KSI_PublicationRecord *t) {
 	if(t != NULL) {
 		KSI_PublicationData_free(t->publishedData);
-		KSI_Utf8StringList_free(t->publicationRef);
+		KSI_Utf8StringList_freeAll(t->publicationRef);
 		KSI_free(t);
 	}
 }

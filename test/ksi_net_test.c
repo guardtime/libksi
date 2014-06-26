@@ -49,7 +49,7 @@ static void testSigning(CuTest* tc) {
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
 	CuAssert(tc, "Unexpected send request", KSI_NET_MOCK_request_len == sizeof(expectedSignRequest) && !memcmp(expectedSignRequest, KSI_NET_MOCK_request, KSI_NET_MOCK_request_len));
-	KSI_free((void *)KSI_NET_MOCK_response);
+	KSI_free(KSI_NET_MOCK_response);
 	KSI_NET_MOCK_response = NULL;
 
 	KSI_DataHash_free(hsh);

@@ -274,7 +274,7 @@ int KSI_HashChain_appendLink(KSI_CTX *ctx, KSI_DataHash *siblingHash, KSI_DataHa
 
 cleanup:
 
-	KSI_HashChainLinkList_free(tmp);
+	KSI_HashChainLinkList_freeAll(tmp);
 	KSI_HashChainLink_free(link);
 
 	return KSI_RETURN(&err);

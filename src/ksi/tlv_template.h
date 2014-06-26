@@ -181,6 +181,11 @@ extern "C" {
 	#define KSI_TLV_TEMPLATE_SEEK_POS				6
 
 	/**
+	 * A special #KSI_TlvTemplate type for storing raw nested TLV objects as #KSI_OctetString objects.
+	 */
+	#define KSI_TLV_TEMPLATE_UNPROCESSED 7
+
+	/**
 	 * A helper macro for defining a single template with all parameters.
 	 * \param[in]	typ				Template internal type.
 	 * \param[in]	tg				TLV tag value.
@@ -236,7 +241,7 @@ extern "C" {
 	 * \param[in]	fromTlv			Function to create the object from TLV.
 	 * \param[in]	toTlv			Function to create a TLV from the object.
 	 */
-	#define KSI_TLV_OBJECT(tg, nc, fw, gttr, sttr, fromTlv, toTlv) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, nc, fw, gttr, sttr, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, fromTlv, toTlv)
+	#define KSI_TLV_OBJECT(tg, nc, fw, gttr, sttr, fromTlv, toTlv, destr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, nc, fw, gttr, sttr, NULL, destr, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, fromTlv, toTlv)
 
 	/**
 	 * TLV template for #KSI_Utf8String type.
@@ -246,7 +251,7 @@ extern "C" {
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
-	#define KSI_TLV_UTF8_STRING(tg, nc, fw, gttr, sttr) KSI_TLV_OBJECT(tg, nc, fw, gttr, sttr, KSI_Utf8String_fromTlv, KSI_Utf8String_toTlv)
+	#define KSI_TLV_UTF8_STRING(tg, nc, fw, gttr, sttr) KSI_TLV_OBJECT(tg, nc, fw, gttr, sttr, KSI_Utf8String_fromTlv, KSI_Utf8String_toTlv, KSI_Utf8String_free)
 
 	/**
 	 * TLV template for #KSI_Integer type.
@@ -256,7 +261,7 @@ extern "C" {
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
-	#define KSI_TLV_INTEGER(tg, nc, fw, gttr, sttr) KSI_TLV_OBJECT(tg, nc, fw, gttr, sttr, KSI_Integer_fromTlv, KSI_Integer_toTlv)
+	#define KSI_TLV_INTEGER(tg, nc, fw, gttr, sttr) KSI_TLV_OBJECT(tg, nc, fw, gttr, sttr, KSI_Integer_fromTlv, KSI_Integer_toTlv, KSI_Integer_free)
 
 	/**
 	 * TLV template for #KSI_OctetString type.
@@ -266,7 +271,7 @@ extern "C" {
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
-	#define KSI_TLV_OCTET_STRING(tg, nc, fw, gttr, sttr) KSI_TLV_OBJECT(tg, nc, fw, gttr, sttr, KSI_OctetString_fromTlv, KSI_OctetString_toTlv)
+	#define KSI_TLV_OCTET_STRING(tg, nc, fw, gttr, sttr) KSI_TLV_OBJECT(tg, nc, fw, gttr, sttr, KSI_OctetString_fromTlv, KSI_OctetString_toTlv, KSI_OctetString_free)
 
 	/**
 	 * TLV template for #KSI_DataHash type.
@@ -276,7 +281,7 @@ extern "C" {
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
-	#define KSI_TLV_IMPRINT(tg, nc, fw, gttr, sttr) KSI_TLV_OBJECT(tg, nc, fw, gttr, sttr, KSI_DataHash_fromTlv, KSI_DataHash_toTlv)
+	#define KSI_TLV_IMPRINT(tg, nc, fw, gttr, sttr) KSI_TLV_OBJECT(tg, nc, fw, gttr, sttr, KSI_DataHash_fromTlv, KSI_DataHash_toTlv, KSI_DataHash_free)
 
 	/**
 	 * Native unsigned integer template.
@@ -321,6 +326,16 @@ extern "C" {
 	#define KSI_TLV_UTF8_STRING_LIST(tg, nc, fw, gttr, sttr) KSI_TLV_OBJECT_LIST(tg, nc, fw, gttr, sttr, KSI_Utf8String)
 
 	/**
+	 * TLV template for list of #KSI_Integer types.
+	 * \param[in]	tg				TLV tag value.
+	 * \param[in]	nc				Is the TLV non-critical?
+	 * \param[in]	fw				Should the TLV be forwarded if unknown?
+	 * \param[in]	gttr			Getter function.
+	 * \param[in]	sttr			Setter function.
+	 */
+	#define KSI_TLV_INTEGER_LIST(tg, nc, fw, gttr, sttr) KSI_TLV_OBJECT_LIST(tg, nc, fw, gttr, sttr, KSI_Integer)
+
+	/**
 	 * TLV template for composite objects.
 	 * \param[in]	tg				TLV tag value.
 	 * \param[in]	nc				Is the TLV non-critical?
@@ -349,6 +364,7 @@ extern "C" {
 	 */
 	#define KSI_TLV_SEEK_POS(tg, sttr) KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_SEEK_POS, tg, 0, 0, NULL, sttr)
 
+	#define KSI_TLV_UNPROCESSED(tg, sttr) KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_UNPROCESSED, tg, 0, 0, NULL, sttr)
 	/**
 	 * TLV template to encode and decode using callback functions.
 	 * \param[in]	tg				TLV tag value.

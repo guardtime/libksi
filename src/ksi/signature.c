@@ -7,11 +7,11 @@ typedef struct aggrChainRec_st AggrChainRec;
 typedef struct headerRec_st HeaderRec;
 typedef struct calAuthRec_st CalAuthRec;
 typedef struct aggrAuthRec_st AggrAuthRec;
-typedef struct pubDataRec_st PubDataRec;
 
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarHashChain);
 KSI_IMPORT_TLV_TEMPLATE(KSI_HashChainLink);
 KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationRecord);
+KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationData);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu);
 KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendPdu);
 KSI_IMPORT_TLV_TEMPLATE(KSI_PKISignedData);
@@ -21,28 +21,21 @@ KSI_DEFINE_LIST(AggrChainRec);
 struct calAuthRec_st {
 	KSI_CTX *ctx;
 
-	PubDataRec *pubData;
-	char *sigAlgo;
-	KSI_PKISignedData *sigData;
+	KSI_TLV *pubDataTlv;
+	KSI_PublicationData *pubData;
+	KSI_Utf8String *signatureAlgo;
+	KSI_PKISignedData *signatureData;
 };
 
 struct aggrAuthRec_st {
 	KSI_CTX *ctx;
 	KSI_Integer *aggregationTime;
 	KSI_LIST(KSI_Integer) *chainIndexesList;
-	KSI_DataHash *intputHash;
+	KSI_DataHash *inputHash;
 
-	char *sigAlgo;
+	KSI_Utf8String *signatureAlgo;
 
-	KSI_PKISignedData *sigData;
-};
-
-struct pubDataRec_st {
-	KSI_CTX *ctx;
-	unsigned char *raw;
-	int raw_len;
-	KSI_Integer *pubTime;
-	KSI_DataHash *pubHash;
+	KSI_PKISignedData *signatureData;
 };
 
 struct sigDataRec_st {
@@ -63,10 +56,9 @@ struct aggrChainRec_st {
 	KSI_CTX *ctx;
 	KSI_Integer *aggregationTime;
 	KSI_LIST(KSI_Integer) *chainIndex;
-	unsigned char *inputData;
-	int inputData_len;
+	KSI_OctetString *inputData;
 	KSI_DataHash *inputHash;
-	int aggrHashId;
+	KSI_Integer *aggrHashId;
 	KSI_LIST(KSI_HashChainLink) *chain;
 };
 
@@ -104,50 +96,209 @@ struct KSI_Signature_st {
 
 };
 
-
-static KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_TLV*, baseTlv, BaseTlv)
+/**
+ * KSI_Signature
+ */
 static KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_CalendarHashChain*, calendarChain, CalendarChain)
 static KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_LIST(AggrChainRec)*, aggregationChainList, AggregationChainList)
 static KSI_IMPLEMENT_GETTER(KSI_Signature, CalAuthRec*, calAuth, CalendarAuthRecord)
 static KSI_IMPLEMENT_GETTER(KSI_Signature, AggrAuthRec*, aggrAuth, AggregationAuthRecord)
-static KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_PublicationRecord*, publication, Publication)
 
-static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_TLV*, baseTlv, BaseTlv);
 static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_CalendarHashChain*, calendarChain, CalendarChain)
 static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_LIST(AggrChainRec)*, aggregationChainList, AggregationChainList)
 static KSI_IMPLEMENT_SETTER(KSI_Signature, CalAuthRec*, calAuth, CalendarAuthRecord)
 static KSI_IMPLEMENT_SETTER(KSI_Signature, AggrAuthRec*, aggrAuth, AggregationAuthRecord)
-static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_PublicationRecord*, publication, Publication)
+static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_PublicationRecord*, publication, PublicationRecord)
 
-
-static void PubDataRec_free (PubDataRec *pdc) {
-	if (pdc != NULL) {
-		KSI_free(pdc->raw);
-		KSI_Integer_free(pdc->pubTime);
-		KSI_DataHash_free(pdc->pubHash);
-		KSI_free(pdc);
+/**
+ * AggrChainRec
+ */
+static void AggrChainRec_free(AggrChainRec *aggr) {
+	if (aggr != NULL) {
+		KSI_Integer_free(aggr->aggrHashId);
+		KSI_Integer_free(aggr->aggregationTime);
+		KSI_IntegerList_freeAll(aggr->chainIndex);
+		KSI_OctetString_free(aggr->inputData);
+		KSI_DataHash_free(aggr->inputHash);
+		KSI_HashChainLinkList_freeAll(aggr->chain);
+		KSI_free(aggr);
 	}
 }
 
+static int AggrChainRec_new(KSI_CTX *ctx, AggrChainRec **out) {
+	KSI_ERR err;
+	AggrChainRec *tmp = NULL;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, out != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	tmp = KSI_new(AggrChainRec);
+	if (tmp == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->aggregationTime = NULL;
+	tmp->chain = NULL;
+	tmp->chainIndex = NULL;
+	tmp->inputData = NULL;
+	tmp->inputHash = NULL;
+
+	*out = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	AggrChainRec_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
+static KSI_IMPLEMENT_GETTER(AggrChainRec, KSI_Integer*, aggregationTime, AggregationTime)
+static KSI_IMPLEMENT_GETTER(AggrChainRec, KSI_LIST(KSI_Integer)*, chainIndex, ChainIndex)
+static KSI_IMPLEMENT_GETTER(AggrChainRec, KSI_OctetString*, inputData, InputData)
+static KSI_IMPLEMENT_GETTER(AggrChainRec, KSI_DataHash*, inputHash, InputHash)
+static KSI_IMPLEMENT_GETTER(AggrChainRec, KSI_Integer*, aggrHashId, AggrHashId)
+
+static KSI_IMPLEMENT_SETTER(AggrChainRec, KSI_Integer*, aggregationTime, AggregationTime)
+static KSI_IMPLEMENT_SETTER(AggrChainRec, KSI_LIST(KSI_Integer)*, chainIndex, ChainIndex)
+static KSI_IMPLEMENT_SETTER(AggrChainRec, KSI_OctetString*, inputData, InputData)
+static KSI_IMPLEMENT_SETTER(AggrChainRec, KSI_DataHash*, inputHash, InputHash)
+static KSI_IMPLEMENT_SETTER(AggrChainRec, KSI_Integer*, aggrHashId, AggrHashId)
+
+/**
+ * AggrAuthRec
+ */
 static void AggrAuthRec_free(AggrAuthRec *aar) {
 	if (aar != NULL) {
 		KSI_Integer_free(aar->aggregationTime);
-		KSI_IntegerList_free(aar->chainIndexesList);
-		KSI_DataHash_free(aar->intputHash);
-		KSI_free(aar->sigAlgo);
-		KSI_PKISignedData_free(aar->sigData);
+		KSI_IntegerList_freeAll(aar->chainIndexesList);
+		KSI_DataHash_free(aar->inputHash);
+		KSI_Utf8String_free(aar->signatureAlgo);
+		KSI_PKISignedData_free(aar->signatureData);
 		KSI_free(aar);
 	}
 }
 
+static int AggrAuthRec_new(KSI_CTX *ctx, AggrAuthRec **out) {
+	KSI_ERR err;
+	AggrAuthRec *tmp = NULL;
+	int res;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, out != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	tmp = KSI_new(AggrAuthRec);
+	if (tmp == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_IntegerList_new(ctx, &tmp->chainIndexesList);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	tmp->inputHash = NULL;
+	tmp->ctx = ctx;
+	tmp->signatureAlgo = NULL;
+	tmp->signatureData = NULL;
+	tmp->aggregationTime = NULL;
+
+	*out = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	AggrAuthRec_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
+static KSI_IMPLEMENT_GETTER(AggrAuthRec, KSI_Integer*, aggregationTime, AggregationTime)
+static KSI_IMPLEMENT_GETTER(AggrAuthRec, KSI_LIST(KSI_Integer)*, chainIndexesList, ChainIndex)
+static KSI_IMPLEMENT_GETTER(AggrAuthRec, KSI_DataHash*, inputHash, IntpuHash)
+static KSI_IMPLEMENT_GETTER(AggrAuthRec, KSI_Utf8String*, signatureAlgo, SigAlgo)
+static KSI_IMPLEMENT_GETTER(AggrAuthRec, KSI_PKISignedData*, signatureData, SigData)
+
+static KSI_IMPLEMENT_SETTER(AggrAuthRec, KSI_Integer*, aggregationTime, AggregationTime)
+static KSI_IMPLEMENT_SETTER(AggrAuthRec, KSI_LIST(KSI_Integer)*, chainIndexesList, ChainIndex)
+static KSI_IMPLEMENT_SETTER(AggrAuthRec, KSI_DataHash*, inputHash, IntpuHash)
+static KSI_IMPLEMENT_SETTER(AggrAuthRec, KSI_Utf8String*, signatureAlgo, SigAlgo)
+static KSI_IMPLEMENT_SETTER(AggrAuthRec, KSI_PKISignedData*, signatureData, SigData)
+
+/**
+ * CalAuthRec
+ */
+
 static void CalAuthRec_free(CalAuthRec *calAuth) {
 	if (calAuth != NULL) {
-		PubDataRec_free(calAuth->pubData);
-		KSI_free(calAuth->sigAlgo);
-		KSI_PKISignedData_free(calAuth->sigData);
+		KSI_TLV_free(calAuth->pubDataTlv);
+		KSI_PublicationData_free(calAuth->pubData);
+		KSI_Utf8String_free(calAuth->signatureAlgo);
+		KSI_PKISignedData_free(calAuth->signatureData);
 
 		KSI_free(calAuth);
 	}
+}
+
+static int CalAuthRec_new(KSI_CTX *ctx, CalAuthRec **out) {
+	KSI_ERR err;
+	CalAuthRec *tmp = NULL;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, out != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	tmp = KSI_new(CalAuthRec);
+	if (tmp == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->pubData = NULL;
+	tmp->signatureAlgo = NULL;
+	tmp->signatureData = NULL;
+
+	*out = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	CalAuthRec_free(tmp);
+
+	return KSI_RETURN(&err);
+
+}
+
+static KSI_IMPLEMENT_SETTER(CalAuthRec, KSI_TLV*, pubDataTlv, SignedData)
+static KSI_IMPLEMENT_SETTER(CalAuthRec, KSI_PublicationData*, pubData, PublishedData)
+static KSI_IMPLEMENT_SETTER(CalAuthRec, KSI_Utf8String*, signatureAlgo, SignatureAlgo)
+static KSI_IMPLEMENT_SETTER(CalAuthRec, KSI_PKISignedData*, signatureData, SignatureData)
+
+static KSI_IMPLEMENT_GETTER(CalAuthRec, KSI_PublicationData*, pubData, PublishedData)
+static KSI_IMPLEMENT_GETTER(CalAuthRec, KSI_Utf8String*, signatureAlgo, SignatureAlgo)
+static KSI_IMPLEMENT_GETTER(CalAuthRec, KSI_PKISignedData*, signatureData, SignatureData)
+
+
+KSI_DEFINE_TLV_TEMPLATE(AggrChainRec)
+	KSI_TLV_INTEGER(0x02, 0, 0, AggrChainRec_getAggregationTime, AggrChainRec_setAggregationTime)
+	KSI_TLV_INTEGER_LIST(0x03, 0, 0, AggrChainRec_getChainIndex, AggrChainRec_setChainIndex)
+	KSI_TLV_OCTET_STRING(0x04, 0, 0, AggrChainRec_getInputData, AggrChainRec_setInputData)
+	KSI_TLV_IMPRINT(0x05, 0, 0, AggrChainRec_getInputHash, AggrChainRec_setInputHash)
+	KSI_TLV_INTEGER(0x06, 0, 0, AggrChainRec_getAggrHashId, AggrChainRec_setAggrHashId)
+KSI_END_TLV_TEMPLATE
+
+
+static int AggrChainRec_toTlv(KSI_TLV *tlv, AggrChainRec **rec) {
 }
 
 static void HeaderRec_free(HeaderRec *hdr) {
@@ -159,24 +310,122 @@ static void HeaderRec_free(HeaderRec *hdr) {
 	}
 }
 
-static void AggrChainRec_free(AggrChainRec *aggr) {
-	if (aggr != NULL) {
-		KSI_Integer_free(aggr->aggregationTime);
-		KSI_IntegerList_free(aggr->chainIndex);
-		KSI_free(aggr->inputData);
-		KSI_DataHash_free(aggr->inputHash);
-		KSI_HashChainLinkList_free(aggr->chain);
-		KSI_free(aggr);
+KSI_IMPLEMENT_LIST(AggrChainRec, AggrChainRec_free);
+
+static int AggrChainRec_fromTlv(KSI_TLV *tlv, AggrChainRec **rec) {
+	KSI_ERR err;
+	KSI_CTX *ctx = NULL;
+	AggrChainRec *tmp = NULL;
+	KSI_LIST(KSI_TLV) *chainLinks = NULL;
+	KSI_HashChainLink *link = NULL;
+	KSI_TLV *linkTlv = NULL;
+	int isLeft;
+	int i;
+	int res;
+
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_PRE(&err, rec != NULL) goto cleanup;
+	ctx = KSI_TLV_getCtx(tlv);
+	KSI_BEGIN(ctx, &err);
+
+	/* Create new element */
+	res = AggrChainRec_new(ctx, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Create list for the left and right hash chain TLVs. */
+	res = KSI_TLVList_new(ctx, &chainLinks);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Extract all except the hash chain TLVs. */
+	res = KSI_TlvTemplate_extract(ctx, tmp, tlv, KSI_TLV_TEMPLATE(AggrChainRec), chainLinks);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Create a new list for the chain. */
+	res = KSI_HashChainLinkList_new(ctx, &tmp->chain);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Parse all the chain links. */
+	for (i = 0; i < KSI_TLVList_length(chainLinks); i++) {
+		/* Get the tlv from the list. */
+		res = KSI_TLVList_elementAt(chainLinks, i, &linkTlv);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		switch (KSI_TLV_getTag(linkTlv)) {
+			case 0x07:
+				isLeft = 1;
+				break;
+			case 0x08:
+				isLeft = 0;
+				break;
+			default:
+				if (!KSI_TLV_isLenient(linkTlv)) {
+					KSI_LOG_error(ctx, "Unknown aggregation chain record critical tag 0x%02x", KSI_TLV_getTag(linkTlv));
+					KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+					goto cleanup;
+				}
+				KSI_LOG_debug(ctx, "Ignoring aggregation chain record non-critical tag 0x%02x", KSI_TLV_getTag(linkTlv));
+				continue;
+		}
+
+		/* Create a new chain link object. */
+		res = KSI_HashChainLink_new(ctx, &link);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		res = KSI_HashChainLink_setIsLeft(link, isLeft);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		/* Extract the values. */
+		res = KSI_TlvTemplate_extract(ctx, link, linkTlv, KSI_TLV_TEMPLATE(KSI_HashChainLink), NULL);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		/* Add the link to the chain. */
+		res = KSI_HashChainLinkList_append(tmp->chain, link);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		link = NULL;
 	}
+
+	*rec = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_TLVList_free(chainLinks);
+	KSI_nofree(chainLinks);
+	KSI_HashChainLink_free(link);
+	AggrChainRec_free(tmp);
+	return KSI_RETURN(&err);
 }
 
-KSI_IMPLEMENT_LIST(AggrChainRec, AggrChainRec_free);
+KSI_DEFINE_TLV_TEMPLATE(AggrAuthRec)
+	KSI_TLV_INTEGER(0x02, 0, 0, AggrAuthRec_getAggregationTime, AggrAuthRec_setAggregationTime)
+	KSI_TLV_INTEGER_LIST(0x04, 0, 0, AggrAuthRec_getChainIndex, AggrAuthRec_setChainIndex)
+	KSI_TLV_IMPRINT(0x05, 0, 0, AggrAuthRec_getIntpuHash, AggrAuthRec_setIntpuHash)
+	KSI_TLV_UTF8_STRING(0x0b, 0, 0, AggrAuthRec_getSigAlgo, AggrAuthRec_setSigAlgo)
+	KSI_TLV_COMPOSITE(0x0c, 0, 0, AggrAuthRec_getSigData, AggrAuthRec_setSigData, KSI_PKISignedData)
+KSI_END_TLV_TEMPLATE
+
+KSI_DEFINE_TLV_TEMPLATE(CalAuthRec)
+	KSI_TLV_COMPOSITE(0x10, 0, 0, CalAuthRec_getPublishedData, CalAuthRec_setPublishedData, KSI_PublicationData)
+	KSI_TLV_UNPROCESSED(0x10, CalAuthRec_setSignedData)
+	KSI_TLV_UTF8_STRING(0x0b, 0, 0, CalAuthRec_getSignatureAlgo, CalAuthRec_setSignatureAlgo)
+	KSI_TLV_COMPOSITE(0x0c, 0, 0, CalAuthRec_getSignatureData, CalAuthRec_setSignatureData, KSI_PKISignedData)
+KSI_END_TLV_TEMPLATE
+
+KSI_DEFINE_TLV_TEMPLATE(KSI_Signature)
+	KSI_TLV_OBJECT_LIST(0x0801, 0, 0, KSI_Signature_getAggregationChainList, KSI_Signature_setAggregationChainList, AggrChainRec)
+	KSI_TLV_COMPOSITE(0x0802, 0, 0, KSI_Signature_getCalendarChain, KSI_Signature_setCalendarChain, KSI_CalendarHashChain)
+	KSI_TLV_COMPOSITE(0x0803, 0, 0, KSI_Signature_getPublicationRecord, KSI_Signature_setPublicationRecord, KSI_PublicationRecord)
+	KSI_TLV_COMPOSITE(0x0804, 0, 0, KSI_Signature_getAggregationAuthRecord, KSI_Signature_setAggregationAuthRecord, AggrAuthRec)
+	KSI_TLV_COMPOSITE(0x0805, 0, 0, KSI_Signature_getCalendarAuthRecord, KSI_Signature_setCalendarAuthRecord, CalAuthRec)
+KSI_END_TLV_TEMPLATE
 
 static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
 	KSI_ERR err;
 	int res;
 	KSI_Signature *tmp = NULL;
-	KSI_LIST(AggrChainRec) *list = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
@@ -192,11 +441,8 @@ static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
 	tmp->baseTlv = NULL;
 	tmp->publication = NULL;
 	tmp->aggregationChainList = NULL;
-
-	res = AggrChainRecList_new(ctx, &list);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	tmp->aggregationChainList = list;
+	tmp->aggrAuth = NULL;
+	tmp->aggregationChainList = NULL;
 
 	*sig = tmp;
 	tmp = NULL;
@@ -209,6 +455,34 @@ cleanup:
 
 	return KSI_RETURN(&err);
 
+}
+
+static int verifyPublicationData(KSI_CTX *ctx, CalAuthRec *calAuth, const unsigned char *raw, int raw_len, KSI_PKICertificate *cert) {
+	KSI_ERR err;
+	int res;
+	unsigned char *data = NULL;
+	int data_len;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, calAuth != NULL) goto cleanup;
+	KSI_PRE(&err, raw != NULL) goto cleanup;
+	KSI_PRE(&err, raw_len >= 0) goto cleanup;
+	KSI_PRE(&err, cert != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_TLV_serialize(calAuth->pubDataTlv, &data, &data_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_PKITruststore_verifyRawSignature(ctx, data, data_len, KSI_Utf8String_cstr(calAuth->signatureAlgo), raw, raw_len, cert);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_free(data);
+
+	return KSI_RETURN(&err);
 }
 
 static int CalAuthRec_verify(KSI_CTX *ctx, CalAuthRec *calAuth) {
@@ -224,11 +498,11 @@ static int CalAuthRec_verify(KSI_CTX *ctx, CalAuthRec *calAuth) {
 	KSI_PRE(&err, calAuth != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	res = KSI_PKISignedData_getCertId(calAuth->sigData, &certId);
+	res = KSI_PKISignedData_getCertId(calAuth->signatureData, &certId);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	if (certId == NULL) {
-		res = KSI_PKISignedData_getCert(calAuth->sigData, &cert);
+		res = KSI_PKISignedData_getCert(calAuth->signatureData, &cert);
 		KSI_CATCH(&err, res) goto cleanup;
 	} else {
 		res = KSI_receivePublicationsFile(ctx, &pubFile);
@@ -243,13 +517,13 @@ static int CalAuthRec_verify(KSI_CTX *ctx, CalAuthRec *calAuth) {
 		goto cleanup;
 	}
 
-	res = KSI_PKISignedData_getSignatureValue(calAuth->sigData, &signatureValue);
+	res = KSI_PKISignedData_getSignatureValue(calAuth->signatureData, &signatureValue);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_OctetString_extract(signatureValue, &raw, &raw_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_PKITruststore_verifyRawSignature(ctx, calAuth->pubData->raw, calAuth->pubData->raw_len, calAuth->sigAlgo, raw, raw_len, cert);
+	res = verifyPublicationData(ctx, calAuth, raw, raw_len, cert);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
@@ -294,568 +568,6 @@ cleanup:
 
 	return KSI_RETURN(&err);
 
-}
-
-static int AggChainRec_new(KSI_CTX *ctx, AggrChainRec **out) {
-	KSI_ERR err;
-	AggrChainRec *tmp = NULL;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, out != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	tmp = KSI_new(AggrChainRec);
-	if (tmp == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	tmp->ctx = ctx;
-	tmp->aggrHashId = 0;
-	tmp->aggregationTime = NULL;
-	tmp->chain = NULL;
-	tmp->chainIndex = NULL;
-	tmp->inputData = NULL;
-	tmp->inputData_len = 0;
-	tmp->inputHash = NULL;
-
-	*out = tmp;
-	tmp = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	AggrChainRec_free(tmp);
-
-	return KSI_RETURN(&err);
-}
-
-static int PubDataRed_new(KSI_CTX *ctx, PubDataRec **out) {
-	KSI_ERR err;
-	PubDataRec *tmp = NULL;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, out != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	tmp = KSI_new(PubDataRec);
-	if (tmp == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	tmp->ctx = ctx;
-	tmp->raw = NULL;
-	tmp->pubHash = NULL;
-	tmp->pubTime = NULL;
-
-	*out = tmp;
-	tmp = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	PubDataRec_free(tmp);
-
-	return KSI_RETURN(&err);
-
-}
-
-static int CalAuthRec_new(KSI_CTX *ctx, CalAuthRec **out) {
-	KSI_ERR err;
-	CalAuthRec *tmp = NULL;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, out != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	tmp = KSI_new(CalAuthRec);
-	if (tmp == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	tmp->ctx = ctx;
-	tmp->pubData = NULL;
-	tmp->sigAlgo = NULL;
-	tmp->sigData = NULL;
-
-	*out = tmp;
-	tmp = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	CalAuthRec_free(tmp);
-
-	return KSI_RETURN(&err);
-
-}
-
-static int AggrAuthRec_new(KSI_CTX *ctx, AggrAuthRec **out) {
-	KSI_ERR err;
-	AggrAuthRec *tmp = NULL;
-	int res;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, out != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	tmp = KSI_new(AggrAuthRec);
-	if (tmp == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_IntegerList_new(ctx, &tmp->chainIndexesList);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	tmp->intputHash = NULL;
-	tmp->ctx = ctx;
-	tmp->sigAlgo = NULL;
-	tmp->sigData = NULL;
-	tmp->aggregationTime = NULL;
-
-	*out = tmp;
-	tmp = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	AggrAuthRec_free(tmp);
-
-	return KSI_RETURN(&err);
-}
-
-static int AggrChainRec_addIndex(KSI_CTX *ctx, KSI_TLV *tlv, AggrChainRec *aggr) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_Integer *item = NULL;
-	KSI_LIST(KSI_Integer) *list = NULL;
-
-	if (aggr == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	list = aggr->chainIndex;
-
-	if (list == NULL) {
-		res = KSI_IntegerList_new(ctx, &list);
-	}
-
-	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_INT);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_TLV_getInteger(tlv, &item);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_IntegerList_append(list, item);
-	if (res != KSI_OK) goto cleanup;
-	item = NULL;
-
-	aggr->chainIndex = list;
-	list = NULL;
-
-
-
-cleanup:
-	if (list != aggr->chainIndex) KSI_IntegerList_free(list);
-	KSI_Integer_free(item);
-
-	return res;
-}
-
-static int AggrChainRec_addLink(KSI_CTX *ctx, KSI_TLV *tlv, AggrChainRec *aggr) {
-	KSI_ERR err;
-	int res = KSI_UNKNOWN_ERROR;
-	int isLeft;
-
-	KSI_HashChainLink *link = NULL;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, aggr != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	switch (KSI_TLV_getTag(tlv)) {
-		case 0x07:
-			isLeft = 1;
-			break;
-		case 0x08:
-			isLeft = 0;
-			break;
-		default:
-			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);
-			goto cleanup;
-	}
-
-	res = KSI_HashChainLink_new(ctx, &link);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_HashChainLink_setIsLeft(link, isLeft);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_TlvTemplate_extract(ctx, link, tlv, KSI_TLV_TEMPLATE(KSI_HashChainLink), NULL);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Create a new list of links if this is the first link. */
-	if (aggr->chain == NULL) {
-		res = KSI_HashChainLinkList_new(ctx, &aggr->chain);
-		KSI_CATCH(&err, res) goto cleanup;
-	}
-
-	/* Append the link to the chain */
-	res = KSI_HashChainLinkList_append(aggr->chain, link);
-	KSI_CATCH(&err, res) goto cleanup;
-	link = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_HashChainLink_free(link);
-
-	return res;
-}
-
-static int CalChainRec_addLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarHashChain *cal) {
-	int res;
-	KSI_DataHash *hsh = NULL;
-	const unsigned char *imprint = NULL;
-	int imprint_len = 0;
-	int isLeft;
-	KSI_LIST(KSI_HashChainLink) *chain = NULL;
-
-	/* Validate arguments. */
-	switch (KSI_TLV_getTag(tlv)) {
-		case 0x07:
-			isLeft = 1;
-			break;
-		case 0x08:
-			isLeft = 0;
-			break;
-		default:
-			res = KSI_INVALID_ARGUMENT;
-			goto cleanup;
-	}
-
-	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_RAW);
-	if (res != KSI_OK) goto cleanup;
-
-	/* Extract the raw value from the tlv */
-	res = KSI_TLV_getRawValue(tlv, &imprint, &imprint_len);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_DataHash_fromImprint(ctx, imprint, imprint_len, &hsh);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_CalendarHashChain_getHashChain(cal, &chain);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_HashChain_appendLink(ctx, hsh, NULL, NULL, isLeft, 0, &chain);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_CalendarHashChain_setHashChain(cal, chain);
-	if (res != KSI_OK) goto cleanup;
-
-	hsh = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_nofree(imprint);
-	KSI_DataHash_free(hsh);
-
-	return res;
-}
-
-static int parseAggregationChainRec(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature *sig) {
-	KSI_ERR err;
-	int res;
-
-	AggrChainRec *aggr = NULL;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, sig != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-
-	if (KSI_TLV_getTag(tlv) != 0x0801) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	res = AggChainRec_new(ctx, &aggr);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	// FIXME: Replace using templates instead.
-	KSI_TLV_PARSE_BEGIN(ctx, tlv)
-		KSI_PARSE_TLV_ELEMENT_INTEGER	(0x02, &aggr->aggregationTime)
-		KSI_PARSE_TLV_ELEMENT_CB		(0x03, AggrChainRec_addIndex, aggr)
-		KSI_PARSE_TLV_ELEMENT_RAW		(0x04, &aggr->inputData, &aggr->inputData_len)
-		KSI_PARSE_TLV_ELEMENT_IMPRINT	(0x05, &aggr->inputHash)
-		KSI_PARSE_TLV_ELEMENT_UINT8		(0x06, &aggr->aggrHashId)
-		KSI_PARSE_TLV_ELEMENT_CB		(0x07, AggrChainRec_addLink, aggr)
-		KSI_PARSE_TLV_ELEMENT_CB		(0x08, AggrChainRec_addLink, aggr)
-		KSI_PARSE_TLV_ELEMENT_UNKNONW_NON_CRITICAL_IGNORE
-	KSI_TLV_PARSE_END(res);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = AggrChainRecList_append(sig->aggregationChainList, aggr);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	aggr = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	AggrChainRec_free(aggr);
-
-	return KSI_RETURN(&err);
-}
-
-static int parsePublDataRecord(KSI_CTX *ctx, KSI_TLV *tlv, PubDataRec **pdr) {
-	KSI_ERR err;
-	int res;
-	PubDataRec *tmp = NULL;
-	unsigned char *raw;
-	int raw_len;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, pdr != NULL) goto cleanup;
-
-	KSI_BEGIN(ctx, &err);
-
-	res = PubDataRed_new(ctx, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
-	if (*pdr != NULL) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Multiple publication data records.");
-		goto cleanup;
-	}
-
-	/* Keep the serialized value. */
-	res = KSI_TLV_serialize(tlv, &raw, &raw_len);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	// FIXME: Replace using templates instead.
-	KSI_TLV_PARSE_BEGIN(ctx, tlv)
-		KSI_PARSE_TLV_ELEMENT_INTEGER(0x02, &tmp->pubTime)
-		KSI_PARSE_TLV_ELEMENT_IMPRINT(0x04, &tmp->pubHash)
-		KSI_PARSE_TLV_ELEMENT_UNKNONW_NON_CRITICAL_IGNORE
-	KSI_TLV_PARSE_END(res);
-	KSI_CATCH(&err, res) goto cleanup;;
-
-	if (tmp->pubTime == NULL) {
-		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Published Data: Missing publication time.");
-		goto cleanup;
-
-	}
-
-	if (tmp->pubHash == NULL) {
-		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Published Data: Missing publication hash.");
-		goto cleanup;
-
-	}
-
-	tmp->raw = raw;
-	tmp->raw_len = raw_len;
-	raw = NULL;
-
-	*pdr = tmp;
-	tmp = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_free(raw);
-	PubDataRec_free(tmp);
-
-	return KSI_RETURN(&err);
-}
-
-static int parseSigDataRecord(KSI_CTX *ctx, KSI_TLV *tlv, KSI_PKISignedData **sdr) {
-	KSI_ERR err;
-	int res;
-	KSI_PKISignedData *tmp = NULL;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, sdr != NULL) goto cleanup;
-
-	KSI_BEGIN(ctx, &err);
-
-	if (*sdr != NULL) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Multiple signature data records.");
-		goto cleanup;
-	}
-
-	res = KSI_PKISignedData_new(ctx, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_TlvTemplate_extract(ctx, tmp, tlv, KSI_TLV_TEMPLATE(KSI_PKISignedData), NULL);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	*sdr = tmp;
-	tmp = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_PKISignedData_free(tmp);
-
-	return KSI_RETURN(&err);
-
-}
-
-static int parseAggrAuthRecChainIndex(KSI_CTX *ctx, KSI_TLV *tlv, AggrAuthRec **aar) {
-	KSI_ERR err;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, aar != NULL) goto cleanup;
-
-	KSI_BEGIN(ctx, &err);
-
-	if (KSI_TLV_getTag(tlv) != 0x03)
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-}
-
-static int parsePublication(KSI_CTX *ctx, KSI_TLV *tlv, KSI_PublicationRecord **pubRec) {
-	KSI_ERR err;
-	int res;
-	KSI_PublicationRecord *tmp = NULL;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, pubRec != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	res = KSI_PublicationRecord_new(ctx, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_TlvTemplate_extract(ctx, tmp, tlv, KSI_TLV_TEMPLATE(KSI_PublicationRecord), NULL);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	*pubRec = tmp;
-	tmp = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_PublicationRecord_free(tmp);
-
-	return KSI_RETURN(&err);
-
-}
-
-static int parseAggrAuthRec(KSI_CTX *ctx, KSI_TLV *tlv, AggrAuthRec **aar) {
-	KSI_ERR err;
-	int res;
-	AggrAuthRec *tmp = NULL;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, aar != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	res = AggrAuthRec_new(ctx, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	// FIXME: Replace using templates instead.
-	KSI_TLV_PARSE_BEGIN(ctx, tlv)
-		KSI_PARSE_TLV_ELEMENT_INTEGER(0x02, &tmp->aggregationTime)
-		KSI_PARSE_TLV_ELEMENT_CB(0x03, parseAggrAuthRecChainIndex, &tmp)
-		KSI_PARSE_TLV_ELEMENT_IMPRINT(0x05, &tmp->intputHash)
-
-		KSI_PARSE_TLV_ELEMENT_UTF8STR(0x0b, &tmp->sigAlgo)
-
-		KSI_PARSE_TLV_ELEMENT_CB(0x0c, parseSigDataRecord, &tmp->sigData)
-
-		KSI_PARSE_TLV_ELEMENT_UNKNONW_NON_CRITICAL_IGNORE
-	KSI_TLV_PARSE_END(res);
-
-	*aar = tmp;
-	tmp = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	AggrAuthRec_free(tmp);
-
-	return KSI_RETURN(&err);
-}
-
-static int parseCalAuthRec(KSI_CTX *ctx, KSI_TLV *tlv, CalAuthRec **car) {
-	KSI_ERR err;
-	int res;
-	CalAuthRec *tmp = NULL;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, car != NULL) goto cleanup;
-
-	KSI_BEGIN(ctx, &err);
-
-	if (*car != NULL) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Multiple calendar auth records.");
-		goto cleanup;
-	}
-
-	res = CalAuthRec_new(ctx, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	// FIXME: Replace using templates instead.
-	KSI_TLV_PARSE_BEGIN(ctx, tlv)
-		KSI_PARSE_TLV_ELEMENT_CB(0x10, parsePublDataRecord, &tmp->pubData)
-		KSI_PARSE_TLV_ELEMENT_UTF8STR(0x0b, &tmp->sigAlgo)
-		KSI_PARSE_TLV_ELEMENT_CB(0x0c, parseSigDataRecord, &tmp->sigData)
-		KSI_PARSE_TLV_ELEMENT_UNKNONW_NON_CRITICAL_IGNORE
-	KSI_TLV_PARSE_END(res);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Check mandatory parameters. */
-	if (tmp->pubData == NULL) {
-		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Calendar Auth Record: Missing publication data.");
-		goto cleanup;
-	}
-
-	if (tmp->sigAlgo == NULL) {
-		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Calendar Auth Record: Missing algorithm.");
-		goto cleanup;
-	}
-
-	if (tmp->sigData == NULL) {
-		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Calendar Auth Record: Missing signed data.");
-		goto cleanup;
-	}
-
-	*car = tmp;
-	tmp = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	CalAuthRec_free(tmp);
-
-	return KSI_RETURN(&err);
 }
 
 static int verifySignatureWithExtender(KSI_CTX *ctx, KSI_Signature *sig) {
@@ -960,6 +672,7 @@ cleanup:
 static int verifySignature_internal(KSI_Signature *sig) {
 	KSI_ERR err;
 	KSI_DataHash *hsh = NULL;
+	KSI_DataHash *pubHsh = NULL;
 	uint32_t utc_time;
 	int res;
 	int level;
@@ -1026,7 +739,7 @@ static int verifySignature_internal(KSI_Signature *sig) {
 			}
 		}
 
-		res = KSI_HashChain_aggregate(aggregationChain->chain, aggregationChain->inputHash, level, aggregationChain->aggrHashId, &level, &tmpHash);
+		res = KSI_HashChain_aggregate(aggregationChain->chain, aggregationChain->inputHash, level, KSI_Integer_getUInt64(aggregationChain->aggrHashId), &level, &tmpHash);
 		KSI_CATCH(&err, res) {
 			KSI_FAIL(&err, res, "Failed to calculate aggregation chain.");
 			goto cleanup;
@@ -1053,8 +766,11 @@ static int verifySignature_internal(KSI_Signature *sig) {
 
 
 	if (sig->calAuth != NULL) {
+		res = KSI_PublicationData_getImprint(sig->calAuth->pubData, &pubHsh);
+		KSI_CATCH(&err, res) goto cleanup;
+
 		/* Validate calendar root hash */
-		if (!KSI_DataHash_equals(hsh, sig->calAuth->pubData->pubHash)) {
+		if (!KSI_DataHash_equals(hsh, pubHsh)) {
 			KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Calendar chain root hash mismatch.");
 			goto cleanup;
 		}
@@ -1119,45 +835,8 @@ static int extractSignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature **signatur
 	res = KSI_Signature_new(ctx, &sig);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_CalendarHashChain_new(ctx, &cal);
+	res = KSI_TlvTemplate_extract(ctx, sig, tlv, KSI_TLV_TEMPLATE(KSI_Signature), NULL);
 	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_LOG_debug(ctx, "Starting to parse signature.");
-
-	// FIXME: Replace using templates instead.
-	KSI_TLV_PARSE_BEGIN(ctx, tlv)
-		KSI_PARSE_TLV_ELEMENT_CB(0x801, parseAggregationChainRec, sig) // Aggregation hash chain
-
-		KSI_PARSE_TLV_NESTED_ELEMENT_BEGIN(0x802) // Calendar hash chain
-			KSI_PARSE_TLV_ELEMENT_INTEGER(0x01, &publicationTime)
-			KSI_PARSE_TLV_ELEMENT_INTEGER(0x02, &aggregationTime)
-			KSI_PARSE_TLV_ELEMENT_IMPRINT(0x05, &inputHash)
-			KSI_PARSE_TLV_ELEMENT_CB(0x07, CalChainRec_addLink, cal)
-			KSI_PARSE_TLV_ELEMENT_CB(0x08, CalChainRec_addLink, cal)
-			KSI_PARSE_TLV_ELEMENT_UNKNONW_NON_CRITICAL_REMOVE
-		KSI_PARSE_TLV_NESTED_ELEMENT_END
-
-		KSI_PARSE_TLV_ELEMENT_CB(0x0803, parsePublication, &sig->publication);
-		KSI_PARSE_TLV_ELEMENT_CB(0x0804, parseAggrAuthRec, &sig->aggrAuth);
-		KSI_PARSE_TLV_ELEMENT_CB(0x0805, parseCalAuthRec, &sig->calAuth)
-
-		KSI_PARSE_TLV_ELEMENT_UNKNONW_NON_CRITICAL_REMOVE
-	KSI_TLV_PARSE_END(res);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_CalendarHashChain_setAggregationTime(cal, aggregationTime);
-	KSI_CATCH(&err, res) goto cleanup;
-	aggregationTime = NULL;
-
-	res = KSI_CalendarHashChain_setPublicationTime(cal, publicationTime);
-	KSI_CATCH(&err, res) goto cleanup;
-	publicationTime = NULL;
-
-	res = KSI_CalendarHashChain_setInputHash(cal, inputHash);
-	KSI_CATCH(&err, res) goto cleanup;
-	inputHash = NULL;
-	sig->calendarChain = cal;
-	cal = NULL;
 
 	res = KSI_Signature_verifyInternal(ctx, sig);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -1731,6 +1410,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+/* TODO Refactor into shorter functions. */
 int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRecord *pubRec, KSI_Signature **extended) {
 	KSI_ERR err;
 	int res;
@@ -1875,7 +1555,7 @@ void KSI_Signature_free(KSI_Signature *sig) {
 	if (sig != NULL) {
 		KSI_TLV_free(sig->baseTlv);
 		KSI_CalendarHashChain_free(sig->calendarChain);
-		AggrChainRecList_free(sig->aggregationChainList);
+		AggrChainRecList_freeAll(sig->aggregationChainList);
 		CalAuthRec_free(sig->calAuth);
 		AggrAuthRec_free(sig->aggrAuth);
 		KSI_PublicationRecord_free(sig->publication);
@@ -2164,27 +1844,13 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 cleanup:
 
 	KSI_free(signerId);
-	KSI_Utf8StringList_free(idList);
+	KSI_Utf8StringList_freeAll(idList);
 	KSI_free(clientId);
 
 	return KSI_RETURN(&err);
 }
 
-int KSI_Signature_getPublicatioinRecord(KSI_Signature *sig, KSI_PublicationRecord **pubRec) {
-	KSI_ERR err;
-
-	KSI_PRE(&err, sig != NULL) goto cleanup;
-	KSI_PRE(&err, pubRec != NULL) goto cleanup;
-	KSI_BEGIN(sig->ctx, &err);
-
-	*pubRec = sig->publication;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-}
+KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_PublicationRecord*, publication, PublicationRecord)
 
 int KSI_Signature_getHashAlgorithm(KSI_Signature *sig, int *hash_id) {
 	KSI_ERR err;

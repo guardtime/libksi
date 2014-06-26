@@ -13,6 +13,7 @@ typedef struct KSI_List_st KSI_List;
 #define KSI_DEFINE_LIST(type) 													\
 typedef struct type##_list_st KSI_LIST(type);									\
 void KSI_LIST_FN_NAME(type, free)(KSI_LIST(type) *);							\
+void KSI_LIST_FN_NAME(type, freeAll)(KSI_LIST(type) *);							\
 int KSI_LIST_FN_NAME(type, new)(KSI_CTX *, KSI_LIST(type) **);					\
 int KSI_LIST_FN_NAME(type, append)(KSI_LIST(type) *, type *);					\
 int KSI_LIST_FN_NAME(type, iter)(KSI_LIST(type) *);								\
@@ -28,6 +29,7 @@ KSI_CTX *type##List_getCtx(const KSI_LIST(type) *o);							\
 
 
 
+void KSI_List_freeAll(KSI_List *list);
 void KSI_List_free(KSI_List *list);
 int KSI_List_new(void (*obj_free)(void *), KSI_List **list);
 int KSI_List_append(KSI_List *list, void *obj);

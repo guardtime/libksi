@@ -29,7 +29,7 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationsFile)
 	KSI_TLV_COMPOSITE(0x0701, 0, 0, KSI_PublicationsFile_getHeader, publicationsFile_setHeader, KSI_PublicationsHeader)
 	KSI_TLV_COMPOSITE_LIST(0x0702, 0, 0, KSI_PublicationsFile_getCertificates, publicationsFile_setCertificates, KSI_CertificateRecord)
 	KSI_TLV_COMPOSITE_LIST(0x0703, 0, 0, KSI_PublicationsFile_getPublications, publicationsFile_setPublications, KSI_PublicationRecord)
-	KSI_TLV_OBJECT(0x0704, 0, 0, KSI_PublicationsFile_getSignature, publicationsFile_setSignature, KSI_PKISignature_fromTlv, KSI_PKISignature_toTlv)
+	KSI_TLV_OBJECT(0x0704, 0, 0, KSI_PublicationsFile_getSignature, publicationsFile_setSignature, KSI_PKISignature_fromTlv, KSI_PKISignature_toTlv, KSI_PKISignature_free)
 	KSI_TLV_SEEK_POS(0x0704, publicationsFile_setSignatureOffset)
 KSI_END_TLV_TEMPLATE
 
@@ -326,8 +326,8 @@ cleanup:
 void KSI_PublicationsFile_free(KSI_PublicationsFile *t) {
 	if(t != NULL) {
 		KSI_PublicationsHeader_free(t->header);
-		KSI_CertificateRecordList_free(t->certificates);
-		KSI_PublicationRecordList_free(t->publications);
+		KSI_CertificateRecordList_freeAll(t->certificates);
+		KSI_PublicationRecordList_freeAll(t->publications);
 		KSI_PKISignature_free(t->signature);
 		KSI_free(t->raw);
 		KSI_free(t);

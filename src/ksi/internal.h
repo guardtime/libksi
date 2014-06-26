@@ -72,6 +72,12 @@ void KSI_LIST_FN_NAME(type, free)(KSI_LIST(type) *list) {							\
 		KSI_free(list);																\
 	}																				\
 } 																					\
+void KSI_LIST_FN_NAME(type, freeAll)(KSI_LIST(type) *list) {						\
+	if (list != NULL) {																\
+		KSI_List_freeAll(list->list);												\
+		KSI_free(list);																\
+	}																				\
+} 																					\
 int KSI_LIST_FN_NAME(type, append)(KSI_LIST(type) *list, type *o) {					\
 	return KSI_List_append(list->list, o);											\
 }																					\

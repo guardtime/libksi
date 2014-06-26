@@ -55,14 +55,20 @@ cleanup:
 
 void KSI_List_free(KSI_List *list) {
 	if (list != NULL) {
+		KSI_free(list->arr);
+		KSI_free(list);
+	}
+}
+
+void KSI_List_freeAll(KSI_List *list) {
+	if (list != NULL) {
 		unsigned int i;
 		for (i = 0; i < list->arr_len; i++) {
 			if (list->obj_free != NULL) {
 				list->obj_free(list->arr[i]);
 			}
 		}
-		KSI_free(list->arr);
-		KSI_free(list);
+		KSI_List_free(list);
 	}
 }
 

@@ -85,7 +85,7 @@ static void testCalChainBuild(CuTest* tc) {
 	KSI_DataHash_free(exp);
 	KSI_DataHash_free(in);
 	KSI_DataHash_free(out);
-	KSI_HashChainLinkList_free(chn);
+	KSI_HashChainLinkList_freeAll(chn);
 }
 
 static void testAggrChainBuilt(CuTest *tc) {
@@ -143,7 +143,7 @@ static void testAggrChainBuilt(CuTest *tc) {
 	KSI_DataHash_free(exp);
 	KSI_DataHash_free(in);
 	KSI_DataHash_free(out);
-	KSI_HashChainLinkList_free(chn);
+	KSI_HashChainLinkList_freeAll(chn);
 
 
 }

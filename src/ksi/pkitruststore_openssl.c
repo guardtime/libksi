@@ -668,7 +668,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, unsigned char *data, unsigned int data_len, const char *algoOid, const unsigned char *signature, unsigned int signature_len, const KSI_PKICertificate *certificate) {
+int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, unsigned int data_len, const char *algoOid, const unsigned char *signature, unsigned int signature_len, const KSI_PKICertificate *certificate) {
 	KSI_ERR err;
 	int res;
 	ASN1_OBJECT* algorithm = NULL;
@@ -719,7 +719,7 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, unsigned char *data, unsi
     	goto cleanup;
     }
 
-    if (!EVP_VerifyUpdate(&md_ctx, data, data_len)) {
+    if (!EVP_VerifyUpdate(&md_ctx, (unsigned char *)data, data_len)) {
     	KSI_FAIL(&err, KSI_CRYPTO_FAILURE, NULL);
     	goto cleanup;
     }

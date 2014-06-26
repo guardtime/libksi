@@ -279,7 +279,7 @@ static int encodeAsRaw(KSI_TLV *tlv) {
 	tlv->datap = buf;
 	tlv->datap_len = payloadLength;
 
-	KSI_TLVList_free(tlv->nested);
+	KSI_TLVList_freeAll(tlv->nested);
 	tlv->nested = NULL;
 
 	buf = NULL;
@@ -425,7 +425,7 @@ cleanup:
 
 	KSI_RDR_close(rdr);
 	KSI_TLV_free(tmp);
-	KSI_TLVList_free(tlvList);
+	KSI_TLVList_freeAll(tlvList);
 
 	return KSI_RETURN(&err);
 }
@@ -588,7 +588,7 @@ void KSI_TLV_free(KSI_TLV *tlv) {
 		KSI_free(tlv->buffer);
 		/* Free nested data */
 
-		KSI_TLVList_free(tlv->nested);
+		KSI_TLVList_freeAll(tlv->nested);
 		KSI_free(tlv);
 	}
 }
@@ -1014,7 +1014,7 @@ int KSI_TLV_appendNestedTlv(KSI_TLV *target, KSI_TLV *after, KSI_TLV *tlv) {
 
 cleanup:
 
-	KSI_TLVList_free(list);
+	KSI_TLVList_freeAll(list);
 	return KSI_RETURN(&err);
 }
 
