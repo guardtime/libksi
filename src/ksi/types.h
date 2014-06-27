@@ -7,41 +7,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-typedef struct KSI_MetaData_st KSI_MetaData;
-typedef struct KSI_HashChainLink_st KSI_HashChainLink;
-typedef struct KSI_CalendarHashChain_st KSI_CalendarHashChain;
-typedef struct KSI_ExtendPdu_st KSI_ExtendPdu;
-typedef struct KSI_AggregationPdu_st KSI_AggregationPdu;
-typedef struct KSI_Header_st KSI_Header;
-typedef struct KSI_Config_st KSI_Config;
-typedef struct KSI_AggregationReq_st KSI_AggregationReq;
-typedef struct KSI_RequestAck_st KSI_RequestAck;
-typedef struct KSI_AggregationResp_st KSI_AggregationResp;
-typedef struct KSI_ExtendReq_st KSI_ExtendReq;
-typedef struct KSI_ExtendResp_st KSI_ExtendResp;
-typedef struct KSI_PKISignedData_st KSI_PKISignedData;
-typedef struct KSI_PublicationsHeader_st KSI_PublicationsHeader;
-typedef struct KSI_CertificateRecord_st KSI_CertificateRecord;
-typedef struct KSI_PublicationData_st KSI_PublicationData;
-typedef struct KSI_PublicationRecord_st KSI_PublicationRecord;
-
-KSI_DEFINE_LIST(KSI_MetaData);
-KSI_DEFINE_LIST(KSI_HashChainLink);
-KSI_DEFINE_LIST(KSI_CalendarHashChain);
-KSI_DEFINE_LIST(KSI_ExtendPdu);
-KSI_DEFINE_LIST(KSI_AggregationPdu);
-KSI_DEFINE_LIST(KSI_Header);
-KSI_DEFINE_LIST(KSI_Config);
-KSI_DEFINE_LIST(KSI_AggregationReq);
-KSI_DEFINE_LIST(KSI_RequestAck);
-KSI_DEFINE_LIST(KSI_AggregationResp);
-KSI_DEFINE_LIST(KSI_ExtendReq);
-KSI_DEFINE_LIST(KSI_ExtendResp);
-KSI_DEFINE_LIST(KSI_PKISignedData);
-KSI_DEFINE_LIST(KSI_PublicationsHeader);
-KSI_DEFINE_LIST(KSI_CertificateRecord);
-KSI_DEFINE_LIST(KSI_PublicationData);
-KSI_DEFINE_LIST(KSI_PublicationRecord);
 
 /**
  * KSI_MetaData
@@ -180,14 +145,20 @@ int KSI_AggregationResp_getStatus(const KSI_AggregationResp *t, KSI_Integer **st
 int KSI_AggregationResp_getErrorMsg(const KSI_AggregationResp *t, KSI_Utf8String **errorMsg);
 int KSI_AggregationResp_getConfig(const KSI_AggregationResp *t, KSI_Config **config);
 int KSI_AggregationResp_getRequestAck(const KSI_AggregationResp *t, KSI_RequestAck **requestAck);
-int KSI_AggregationResp_getPayload(const KSI_AggregationResp *t, KSI_LIST(KSI_TLV) **payload);
+int KSI_AggregationResp_getCalendarChain(const KSI_AggregationResp *t, KSI_CalendarHashChain **calendarChain);
+int KSI_AggregationResp_getAggregationChainList(const KSI_AggregationResp *t, KSI_LIST(KSI_AggregationHashChain) **aggregationChainList);
+int KSI_AggregationResp_getCalendarAuthRec(const KSI_AggregationResp *t, KSI_CalendarAuthRec **calendarAuthRec);
+int KSI_AggregationResp_getAggregationAuthRec(const KSI_AggregationResp *t, KSI_AggregationAuthRec **aggregationAuthRec);
 int KSI_AggregationResp_setHeader(KSI_AggregationResp *t, KSI_Header *header);
 int KSI_AggregationResp_setRequestId(KSI_AggregationResp *t, KSI_Integer *requestId);
 int KSI_AggregationResp_setStatus(KSI_AggregationResp *t, KSI_Integer *status);
 int KSI_AggregationResp_setErrorMsg(KSI_AggregationResp *t, KSI_Utf8String *errorMsg);
 int KSI_AggregationResp_setConfig(KSI_AggregationResp *t, KSI_Config *config);
 int KSI_AggregationResp_setRequestAck(KSI_AggregationResp *t, KSI_RequestAck *requestAck);
-int KSI_AggregationResp_setPayload(KSI_AggregationResp *t, KSI_LIST(KSI_TLV) *payload);
+int KSI_AggregationResp_setCalendarChain(KSI_AggregationResp *t, KSI_CalendarHashChain *calendarChain);
+int KSI_AggregationResp_setAggregationChainList(KSI_AggregationResp *t, KSI_LIST(KSI_AggregationHashChain) *aggregationChainList);
+int KSI_AggregationResp_setCalendarAuthRec(KSI_AggregationResp *t, KSI_CalendarAuthRec *calendarAuthRec);
+int KSI_AggregationResp_setAggregationAuthRec(KSI_AggregationResp *t, KSI_AggregationAuthRec *aggregationAuthRec);
 
 /**
  * KSI_ExtendReq

@@ -75,7 +75,10 @@ struct KSI_AggregationResp_st {
 	KSI_Utf8String *errorMsg;
 	KSI_Config *config;
 	KSI_RequestAck *requestAck;
-	KSI_LIST(KSI_TLV) *payload;
+	KSI_CalendarHashChain *calendarChain;
+	KSI_LIST(KSI_AggregationHashChain) *aggregationChainList;
+	KSI_CalendarAuthRec *calendarAuthRec;
+	KSI_AggregationAuthRec *aggregationAuthRec;
 };
 
 struct KSI_ExtendReq_st {
@@ -586,7 +589,10 @@ void KSI_AggregationResp_free(KSI_AggregationResp *t) {
 		KSI_Utf8String_free(t->errorMsg);
 		KSI_Config_free(t->config);
 		KSI_RequestAck_free(t->requestAck);
-		KSI_TLVList_freeAll(t->payload);
+		KSI_CalendarHashChain_free(t->calendarChain);
+		KSI_AggregationHashChainList_freeAll(t->aggregationChainList);
+		KSI_CalendarAuthRec_free(t->calendarAuthRec);
+		KSI_AggregationAuthRec_free(t->aggregationAuthRec);
 		KSI_free(t);
 	}
 }
@@ -607,7 +613,10 @@ int KSI_AggregationResp_new(KSI_CTX *ctx, KSI_AggregationResp **t) {
 	tmp->errorMsg = NULL;
 	tmp->config = NULL;
 	tmp->requestAck = NULL;
-	tmp->payload = NULL;
+	tmp->calendarChain = NULL;
+	tmp->aggregationChainList = NULL;
+	tmp->calendarAuthRec = NULL;
+	tmp->aggregationAuthRec = NULL;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -626,7 +635,10 @@ KSI_IMPLEMENT_GETTER(KSI_AggregationResp, KSI_Integer*, status, Status);
 KSI_IMPLEMENT_GETTER(KSI_AggregationResp, KSI_Utf8String*, errorMsg, ErrorMsg);
 KSI_IMPLEMENT_GETTER(KSI_AggregationResp, KSI_Config*, config, Config);
 KSI_IMPLEMENT_GETTER(KSI_AggregationResp, KSI_RequestAck*, requestAck, RequestAck);
-KSI_IMPLEMENT_GETTER(KSI_AggregationResp, KSI_LIST(KSI_TLV)*, payload, Payload);
+KSI_IMPLEMENT_GETTER(KSI_AggregationResp, KSI_CalendarHashChain*, calendarChain, CalendarChain);
+KSI_IMPLEMENT_GETTER(KSI_AggregationResp, KSI_LIST(KSI_AggregationHashChain)*, aggregationChainList, AggregationChainList);
+KSI_IMPLEMENT_GETTER(KSI_AggregationResp, KSI_CalendarAuthRec*, calendarAuthRec, CalendarAuthRec);
+KSI_IMPLEMENT_GETTER(KSI_AggregationResp, KSI_AggregationAuthRec*, aggregationAuthRec, AggregationAuthRec);
 
 KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_Header*, header, Header);
 KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_Integer*, requestId, RequestId);
@@ -634,7 +646,10 @@ KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_Integer*, status, Status);
 KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_Utf8String*, errorMsg, ErrorMsg);
 KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_Config*, config, Config);
 KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_RequestAck*, requestAck, RequestAck);
-KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_LIST(KSI_TLV)*, payload, Payload);
+KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_CalendarHashChain*, calendarChain, CalendarChain);
+KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_LIST(KSI_AggregationHashChain)*, aggregationChainList, AggregationChainList);
+KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_CalendarAuthRec*, calendarAuthRec, CalendarAuthRec);
+KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_AggregationAuthRec*, aggregationAuthRec, AggregationAuthRec);
 
 
 /**

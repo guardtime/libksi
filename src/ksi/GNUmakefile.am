@@ -35,7 +35,6 @@ libksi_la_SOURCES = \
 	publicationsfile.c \
 	signature.c \
 	tlv.c \
-	tlv_easy.h \
 	tlv_tags.h \
 	tlv_template.c \
 	types_base.c \

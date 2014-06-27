@@ -4,9 +4,18 @@
 #ifndef KSI_TLV_TEMPLATE_H_
 #define KSI_TLV_TEMPLATE_H_
 
+/**
+ * These definitions are used to retrieve the entire TLV
+ * as the result of parsing.
+ */
+#define KSI_TLV_toTlv KSI_TLV_clone
+#define KSI_TLV_fromTlv KSI_TLV_clone
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
 	/**
 	 * \addtogroup tlvtemplate TLV Templates
 	 * The TLV templates are used to convert plain c structs into #KSI_TLV object trees and back.

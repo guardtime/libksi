@@ -1,6 +1,5 @@
 #include <string.h>
 
-#include "tlv_easy.h"
 #include "internal.h"
 
 static int highBit(unsigned int n) {

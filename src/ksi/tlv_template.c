@@ -5,6 +5,12 @@ static int encodeCalendarHashChainLink(KSI_CTX *ctx, KSI_TLV *tlv, const KSI_Cal
 static int decodeCalendarHashChainLeftLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarHashChain *calHashChain, const KSI_TlvTemplate *template);
 static int decodeCalendarHashChainRightLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarHashChain *calHashChain, KSI_TlvTemplate *template);
 
+KSI_DEFINE_TLV_TEMPLATE(KSI_PKISignedData)
+	KSI_TLV_OCTET_STRING(0x01, 0, 0, KSI_PKISignedData_getSignatureValue, KSI_PKISignedData_setSignatureValue)
+	KSI_TLV_OBJECT(0x02, 0, 0, KSI_PKISignedData_getCert, KSI_PKISignedData_setCert, KSI_PKICertificate_fromTlv, KSI_PKICertificate_toTlv, KSI_PKICertificate_free)
+	KSI_TLV_OCTET_STRING(0x03, 0, 0, KSI_PKISignedData_getCertId, KSI_PKISignedData_setCertId)
+KSI_END_TLV_TEMPLATE
+
 KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationsHeader)
 	KSI_TLV_INTEGER(0x01, 0, 0, KSI_PublicationsHeader_getVersion, KSI_PublicationsHeader_setVersion)
 	KSI_TLV_INTEGER(0x02, 0, 0, KSI_PublicationsHeader_getTimeCreated, KSI_PublicationsHeader_setTimeCreated)
@@ -51,6 +57,29 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_Config)
 	KSI_TLV_UTF8_STRING(0x05, 0, 0, KSI_Config_getParentUri, KSI_Config_setParentUri)
 KSI_END_TLV_TEMPLATE
 
+KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationHashChain)
+	KSI_TLV_INTEGER(0x02, 0, 0, KSI_AggregationHashChain_getAggregationTime, KSI_AggregationHashChain_setAggregationTime)
+	KSI_TLV_INTEGER_LIST(0x03, 0, 0, KSI_AggregationHashChain_getChainIndex, KSI_AggregationHashChain_setChainIndex)
+	KSI_TLV_OCTET_STRING(0x04, 0, 0, KSI_AggregationHashChain_getInputData, KSI_AggregationHashChain_setInputData)
+	KSI_TLV_IMPRINT(0x05, 0, 0, KSI_AggregationHashChain_getInputHash, KSI_AggregationHashChain_setInputHash)
+	KSI_TLV_INTEGER(0x06, 0, 0, KSI_AggregationHashChain_getAggrHashId, KSI_AggregationHashChain_setAggrHashId)
+KSI_END_TLV_TEMPLATE
+
+KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationAuthRec)
+	KSI_TLV_INTEGER(0x02, 0, 0, KSI_AggregationAuthRec_getAggregationTime, KSI_AggregationAuthRec_setAggregationTime)
+	KSI_TLV_INTEGER_LIST(0x04, 0, 0, KSI_AggregationAuthRec_getChainIndex, KSI_AggregationAuthRec_setChainIndex)
+	KSI_TLV_IMPRINT(0x05, 0, 0, KSI_AggregationAuthRec_getInputHash, KSI_AggregationAuthRec_setInputHash)
+	KSI_TLV_UTF8_STRING(0x0b, 0, 0, KSI_AggregationAuthRec_getSigAlgo, KSI_AggregationAuthRec_setSigAlgo)
+	KSI_TLV_COMPOSITE(0x0c, 0, 0, KSI_AggregationAuthRec_getSigData, KSI_AggregationAuthRec_setSigData, KSI_PKISignedData)
+KSI_END_TLV_TEMPLATE
+
+KSI_DEFINE_TLV_TEMPLATE(KSI_CalendarAuthRec)
+	KSI_TLV_COMPOSITE(0x10, 0, 0, KSI_CalendarAuthRec_getPublishedData, KSI_CalendarAuthRec_setPublishedData, KSI_PublicationData)
+	KSI_TLV_UNPROCESSED(0x10, KSI_CalendarAuthRec_setSignedData)
+	KSI_TLV_UTF8_STRING(0x0b, 0, 0, KSI_CalendarAuthRec_getSignatureAlgo, KSI_CalendarAuthRec_setSignatureAlgo)
+	KSI_TLV_COMPOSITE(0x0c, 0, 0, KSI_CalendarAuthRec_getSignatureData, KSI_CalendarAuthRec_setSignatureData, KSI_PKISignedData)
+KSI_END_TLV_TEMPLATE
+
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationReq)
 	KSI_TLV_COMPOSITE(0x01, 0, 0, KSI_AggregationReq_getHeader, KSI_AggregationReq_setHeader, KSI_Header)
 	KSI_TLV_INTEGER(0x02, 0, 0, KSI_AggregationReq_getRequestId, KSI_AggregationReq_setRequestId)
@@ -59,12 +88,9 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationReq)
 	KSI_TLV_COMPOSITE(0x04, 0, 0, KSI_AggregationReq_getConfig, KSI_AggregationReq_setConfig, KSI_Config)
 KSI_END_TLV_TEMPLATE
 
-KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationResp)
-KSI_END_TLV_TEMPLATE
-
-KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationPdu)
-	KSI_TLV_COMPOSITE(0x201, 0, 0, KSI_AggregationPdu_getRequest, KSI_AggregationPdu_setRequest, KSI_AggregationReq)
-//	TLV_COMPOSITE(0x202, 0, 0, KSI_AggregationPdu_getResponse, KSI_AggregationPdu_setResponse, KSI_AggregationResp)
+KSI_DEFINE_TLV_TEMPLATE(KSI_RequestAck)
+	KSI_TLV_INTEGER(0x01, 0, 0, KSI_RequestAck_getAggregationPeriod, KSI_RequestAck_setAggregationPeriod)
+	KSI_TLV_INTEGER(0x02, 0, 0, KSI_RequestAck_getAggregationDelay, KSI_RequestAck_setAggregationDelay)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_CalendarHashChain)
@@ -73,6 +99,24 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_CalendarHashChain)
 	KSI_TLV_IMPRINT(0x05, 0, 0, KSI_CalendarHashChain_getInputHash, KSI_CalendarHashChain_setInputHash)
 	KSI_TLV_CALLBACK(0x07, 0, 0, KSI_CalendarHashChain_getHashChain, KSI_CalendarHashChain_setHashChain, encodeCalendarHashChainLink, decodeCalendarHashChainLeftLink)
 	KSI_TLV_CALLBACK(0x08, 0, 0, KSI_CalendarHashChain_getHashChain, KSI_CalendarHashChain_setHashChain, NULL, decodeCalendarHashChainRightLink)
+KSI_END_TLV_TEMPLATE
+
+KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationResp)
+	KSI_TLV_COMPOSITE(0x01, 0, 0, KSI_AggregationResp_getHeader, KSI_AggregationResp_setHeader, KSI_Header)
+	KSI_TLV_INTEGER(0x02, 0, 0, KSI_AggregationResp_getRequestId, KSI_AggregationResp_setRequestId)
+	KSI_TLV_INTEGER(0x05, 0, 0, KSI_AggregationResp_getStatus, KSI_AggregationResp_setStatus)
+	KSI_TLV_UTF8_STRING(0x06, 0, 0, KSI_AggregationResp_getErrorMsg, KSI_AggregationResp_setErrorMsg)
+	KSI_TLV_COMPOSITE(0x10, 0, 0, KSI_AggregationResp_getConfig, KSI_AggregationResp_setConfig, KSI_Config)
+	KSI_TLV_COMPOSITE(0x12, 0, 0, KSI_AggregationResp_getRequestAck, KSI_AggregationResp_setRequestAck, KSI_RequestAck)
+	KSI_TLV_OBJECT_LIST(0x0801, 0, 0, KSI_AggregationResp_getAggregationChainList, KSI_AggregationResp_getAggregationChainList, KSI_AggregationHashChain)
+	KSI_TLV_COMPOSITE(0x0802, 0, 0, KSI_AggregationResp_getCalendarChain, KSI_AggregationResp_setCalendarChain, KSI_CalendarHashChain)
+	KSI_TLV_COMPOSITE(0x0804, 0, 0, KSI_AggregationResp_getAggregationAuthRec, KSI_AggregationResp_setAggregationAuthRec, KSI_AggregationAuthRec)
+	KSI_TLV_COMPOSITE(0x0805, 0, 0, KSI_AggregationResp_getCalendarAuthRec, KSI_AggregationResp_setCalendarAuthRec, KSI_CalendarAuthRec)
+KSI_END_TLV_TEMPLATE
+
+KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationPdu)
+	KSI_TLV_COMPOSITE(0x201, 0, 0, KSI_AggregationPdu_getRequest, KSI_AggregationPdu_setRequest, KSI_AggregationReq)
+	KSI_TLV_COMPOSITE(0x202, 0, 0, KSI_AggregationPdu_getResponse, KSI_AggregationPdu_setResponse, KSI_AggregationResp)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendReq)
@@ -94,12 +138,6 @@ KSI_END_TLV_TEMPLATE
 KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendPdu)
 	KSI_TLV_COMPOSITE(0x301, 0, 0, KSI_ExtendPdu_getRequest, KSI_ExtendPdu_setRequest, KSI_ExtendReq)
 	KSI_TLV_COMPOSITE(0x302, 0, 0, KSI_ExtendPdu_getResponse, KSI_ExtendPdu_setResponse, KSI_ExtendResp)
-KSI_END_TLV_TEMPLATE
-
-KSI_DEFINE_TLV_TEMPLATE(KSI_PKISignedData)
-	KSI_TLV_OCTET_STRING(0x01, 0, 0, KSI_PKISignedData_getSignatureValue, KSI_PKISignedData_setSignatureValue)
-	KSI_TLV_OBJECT(0x02, 0, 0, KSI_PKISignedData_getCert, KSI_PKISignedData_setCert, KSI_PKICertificate_fromTlv, KSI_PKICertificate_toTlv, KSI_PKICertificate_free)
-	KSI_TLV_OCTET_STRING(0x03, 0, 0, KSI_PKISignedData_getCertId, KSI_PKISignedData_setCertId)
 KSI_END_TLV_TEMPLATE
 
 static int encodeCalendarHashChainLink(KSI_CTX *ctx, KSI_TLV *tlv, const KSI_CalendarHashChain *calHashChain, const KSI_TlvTemplate *template) {
@@ -484,7 +522,7 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 
 					res = KSI_TlvTemplate_extract(ctx, compositeVal, tlv, t->subTemplate, NULL);
 					KSI_CATCH(&err, res) {
-						KSI_ERR_statusDump(ctx, stdout);
+						KSI_LOG_error(ctx, "Unable to parse composite TLV: 0x%02x", KSI_TLV_getTag(tlv));
 						t->destruct(compositeVal);
 						goto cleanup;
 					}
@@ -519,6 +557,7 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 				KSI_CATCH(&err, res) goto cleanup;
 			} else {
 				if (!KSI_TLV_isLenient(tlv)) {
+					KSI_LOG_error(ctx, "Unknown critical tag: 0x%02x", KSI_TLV_getTag(tlv));
 					KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
 					goto cleanup;
 				}
