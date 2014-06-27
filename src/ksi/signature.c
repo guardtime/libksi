@@ -1267,6 +1267,7 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, const unsigned char *respo
 
 cleanup:
 
+	KSI_AggregationPdu_free(pdu);
 	KSI_Signature_free(tmp);
 	KSI_TLV_free(tmpTlv);
 
