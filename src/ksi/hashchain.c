@@ -116,7 +116,7 @@ static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, KSI_DataHash *inpu
 	int algo_id = hash_id;
 	char chr_level;
 	char logMsg[0xff];
-	int i;
+	size_t i;
 
 	/* Extracted data. */
 	int levelCorrection;

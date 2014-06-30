@@ -7,6 +7,8 @@
 
 extern KSI_CTX *ctx;
 
+static const char TMP_FILE[] = "test/tmpfile.tmp";
+
 struct KSI_RDR_st {
 	/* Context for the reader. */
 	KSI_CTX *ctx;
@@ -40,12 +42,10 @@ struct KSI_RDR_st {
 
 static void TestRdrFileBadFileName(CuTest* tc) {
 	int res;
-	char tmpFile[] = "tmpXXXXXXXX";
-
 	KSI_RDR *rdr = NULL;
 
 	/* Init reader from non existing file name */
-	res = KSI_RDR_fromFile(ctx, tmpFile, "r", &rdr);
+	res = KSI_RDR_fromFile(ctx, "doesnotexist.tmp", "r", &rdr);
 
 	/* Assert failure to initialize */
 	CuAssert(tc, "Reader initzialisation did not fail from bad input file name.", res != KSI_OK);
@@ -59,7 +59,6 @@ static void TestRdrFileBadFileName(CuTest* tc) {
 
 static void TestRdrFileFileReading(CuTest* tc) {
 	int res;
-	char tmpFile[] = "tmpXXXXXXXX";
 	unsigned char tmpBuf[0xffff];
 	unsigned int readCount;
 
@@ -69,17 +68,14 @@ static void TestRdrFileFileReading(CuTest* tc) {
 
 	KSI_RDR *rdr = NULL;
 
-	/* Init context. */
-	CuAssert(tc, "Unable to create temporary file name.", mkstemp(tmpFile) > 0);
-
 	/* Write some data to file */
-	f = fopen(tmpFile, "w");
+	f = fopen(TMP_FILE, "w");
 	CuAssert(tc, "Unable to create tempprary file", f != NULL);
 	CuAssert(tc, "Unable to write temporary file", fprintf(f, testStr) > 0);
 	CuAssert(tc, "Unable to close temporary file", !fclose(f));
 
 	/* Try reading it back. */
-	res = KSI_RDR_fromFile(ctx, tmpFile, "r", &rdr);
+	res = KSI_RDR_fromFile(ctx, TMP_FILE, "r", &rdr);
 	CuAssert(tc, "Error creating reader from file.", res == KSI_OK);
 	CuAssert(tc, "Creating reader from file did not fail, but object is still NULL", rdr != NULL);
 	/* Read as a single block. */
@@ -91,16 +87,15 @@ static void TestRdrFileFileReading(CuTest* tc) {
 	KSI_RDR_close(rdr);
 
 	/* Remove temporary file */
-	CuAssert(tc, "Unable to remove temporary file", remove(tmpFile) == 0);
+	CuAssert(tc, "Unable to remove temporary file", remove(TMP_FILE) == 0);
 }
 
 
 static void TestRdrFileReadingChuncks(CuTest* tc) {
 	int res;
-	char tmpFile[] = "tmpXXXXXXXX";
 	unsigned char tmpBuf[0xffff];
 	unsigned int readCount;
-	int size = 0;
+	size_t size = 0;
 
 	static char testStr[] = "Randomness is too important to be left to chance";
 
@@ -108,17 +103,14 @@ static void TestRdrFileReadingChuncks(CuTest* tc) {
 
 	KSI_RDR *rdr = NULL;
 
-	/* Create tmp file name. */
-	CuAssert(tc, "Unable to create temporary file name.", mkstemp(tmpFile) > 0);
-
 	/* Write some data to file */
-	f = fopen(tmpFile, "w");
+	f = fopen(TMP_FILE, "w");
 	CuAssert(tc, "Unable to create tempprary file", f != NULL);
 	CuAssert(tc, "Unable to write temporary file", fprintf(f, testStr) > 0);
 	CuAssert(tc, "Unable to close temporary file", !fclose(f));
 
 	/* Try reading it back. */
-	res = KSI_RDR_fromFile(ctx, tmpFile, "r", &rdr);
+	res = KSI_RDR_fromFile(ctx, TMP_FILE, "r", &rdr);
 	CuAssert(tc, "Error creating reader from file.", res == KSI_OK);
 	CuAssert(tc, "Creating reader from file did not fail, but object is still NULL", rdr != NULL);
 	/* Read blocks of size 10. */
@@ -133,7 +125,7 @@ static void TestRdrFileReadingChuncks(CuTest* tc) {
 	KSI_RDR_close(rdr);
 
 	/* Remove temporary file */
-	CuAssert(tc, "Unable to remove temporary file", remove(tmpFile) == 0);
+	CuAssert(tc, "Unable to remove temporary file", remove(TMP_FILE) == 0);
 }
 
 static void TestRdrMemInitExtStorage(CuTest* tc) {

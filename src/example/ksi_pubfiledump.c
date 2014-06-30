@@ -42,7 +42,7 @@ cleanup:
 static int printCerts(KSI_PublicationsFile *pubFile) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_LIST(KSI_CertificateRecord) *certRecList = NULL;
-	int i;
+	size_t i;
 	char *hex = NULL;
 	unsigned char *raw = NULL;
 	int len = 0;
@@ -73,7 +73,7 @@ static int printCerts(KSI_PublicationsFile *pubFile) {
 
 		/* Create the file name. */
 		snprintf(fileName, sizeof(fileName), "%s.der", hex);
-		printf("cert%d=%s\n", i, fileName);
+		printf("cert%llu=%s\n", (long long unsigned)i, fileName);
 
 		KSI_free(hex);
 		hex = NULL;
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
 	int res;
 	KSI_PublicationsFile *publicationsFile = NULL;
 	KSI_LIST(KSI_PublicationRecord) *publications = NULL;
-	int i;
+	size_t i;
 
 	const char *fileName = NULL;
 
@@ -171,7 +171,7 @@ int main(int argc, char **argv) {
 		KSI_PublicationData *pubDat = NULL;
 		char *pubStr = NULL;
 		KSI_LIST(KSI_Utf8String) *refs = NULL;
-		int j;
+		size_t j;
 		struct tm *tm_pubTime;
 		time_t pubTime;
 		KSI_Integer *pubTimeO = NULL;
@@ -225,7 +225,7 @@ int main(int argc, char **argv) {
 				goto cleanup;
 			}
 
-			printf("ref%d=%s\n", j, KSI_Utf8String_cstr(ref));
+			printf("ref%llu=%s\n", (long long unsigned)j, KSI_Utf8String_cstr(ref));
 		}
 
 		printf("\n");

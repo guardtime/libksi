@@ -2,6 +2,7 @@
 #define _KSI_INTERNAL_H_
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "ksi.h"
 #include "tlv_tags.h"
@@ -90,19 +91,19 @@ int KSI_LIST_FN_NAME(type, next)(KSI_LIST(type) *list, type **o) {					\
 int KSI_LIST_FN_NAME(type, indexOf)(const KSI_LIST(type) *list, const type *o) {	\
 	return KSI_List_indexOf(list->list, o);											\
 }																					\
-int KSI_LIST_FN_NAME(type, insertAt)(KSI_LIST(type) *list, int pos, type *o) {		\
+int KSI_LIST_FN_NAME(type, insertAt)(KSI_LIST(type) *list, size_t pos, type *o) {	\
 	return KSI_List_insertAt(list->list, pos, o);									\
 }																					\
-int KSI_LIST_FN_NAME(type, replaceAt)(KSI_LIST(type) *list, int pos, type *o) {		\
+int KSI_LIST_FN_NAME(type, replaceAt)(KSI_LIST(type) *list, size_t pos, type *o) {	\
 	return KSI_List_replaceAt(list->list, pos, o);									\
 }																					\
-int KSI_LIST_FN_NAME(type, length)(const KSI_LIST(type) *list) {					\
+size_t KSI_LIST_FN_NAME(type, length)(const KSI_LIST(type) *list) {					\
 	return list != NULL ? KSI_List_length(list->list): 0;							\
 }																					\
-int KSI_LIST_FN_NAME(type, remove)(KSI_LIST(type) *list, int pos) {					\
+int KSI_LIST_FN_NAME(type, remove)(KSI_LIST(type) *list, size_t pos) {				\
 	return KSI_List_remove(list->list, pos);										\
 }																					\
-int KSI_LIST_FN_NAME(type, elementAt)(const KSI_LIST(type) *list, int pos, type **o) {	\
+int KSI_LIST_FN_NAME(type, elementAt)(const KSI_LIST(type) *list, size_t pos, type **o) {	\
 	return KSI_List_elementAt(list->list, pos, (void **) o);						\
 }																					\
 int KSI_LIST_FN_NAME(type, sort)(KSI_LIST(type) *list, int (*cmp)(const type *a, const type *b)) {	\

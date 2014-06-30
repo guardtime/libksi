@@ -143,7 +143,7 @@ KSI_END_TLV_TEMPLATE
 static int encodeCalendarHashChainLink(KSI_CTX *ctx, KSI_TLV *tlv, const KSI_CalendarHashChain *calHashChain, const KSI_TlvTemplate *template) {
 	KSI_ERR err;
 	int res;
-	int i;
+	size_t i;
 
 	KSI_LIST(KSI_HashChainLink) *chain = NULL;
 
@@ -354,7 +354,7 @@ cleanup:
 
 typedef struct TLVListIterator_st {
 	KSI_LIST(KSI_TLV) *list;
-	int idx;
+	size_t idx;
 } TLVListIterator;
 
 static int TLVListIterator_next(TLVListIterator *iter, KSI_TLV **tlv) {

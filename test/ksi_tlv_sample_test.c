@@ -66,7 +66,7 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 	const char *buf;
 	KSI_TLV *nested = NULL;
 	KSI_LIST(KSI_TLV) *list = NULL;
-	int i;
+	size_t i;
 
 	switch (KSI_TLV_getTag(tlv)) {
 		case 0x01:

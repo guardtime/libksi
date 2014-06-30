@@ -269,7 +269,7 @@ int KSI_AggregationHashChain_fromTlv(KSI_TLV *tlv, KSI_AggregationHashChain **re
 	KSI_HashChainLink *link = NULL;
 	KSI_TLV *linkTlv = NULL;
 	int isLeft;
-	int i;
+	size_t i;
 	int res;
 
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
@@ -579,7 +579,7 @@ static int verifySignature_internal(KSI_Signature *sig) {
 	uint32_t utc_time;
 	int res;
 	int level;
-	int i;
+	size_t i;
 	KSI_Integer *aggregationTime = NULL;
 	KSI_Integer *publicationTime = NULL;
 	KSI_LIST(KSI_HashChainLink) *chain = NULL;
@@ -938,7 +938,7 @@ static int replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calen
 	KSI_TLV *oldCalChainTlv = NULL;
 	KSI_TLV *newCalChainTlv = NULL;
 	KSI_LIST(KSI_TLV) *nestedList = NULL;
-	int i;
+	size_t i;
 
 	KSI_PRE(&err, calendarHashChain != NULL) goto cleanup;
 	KSI_PRE(&err, sig != NULL) goto cleanup;
@@ -1070,10 +1070,13 @@ cleanup:
 static int setPublicationRecord(KSI_Signature *sig, KSI_PublicationRecord *pubRec) {
 	KSI_ERR err;
 	KSI_TLV *newPubTlv = NULL;
-	int oldPubTlvPos = -1;
+	size_t oldPubTlvPos = 0;
+	bool oldPubTlvPos_found = false;
+
+
 	KSI_LIST(KSI_TLV) *nestedList = NULL;
 	int res;
-	int i;
+	size_t i;
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
 	KSI_BEGIN(sig->ctx, &err);
@@ -1098,13 +1101,14 @@ static int setPublicationRecord(KSI_Signature *sig, KSI_PublicationRecord *pubRe
 
 			if (KSI_TLV_getTag(tmp) == 0x0803) {
 				oldPubTlvPos = i;
+				oldPubTlvPos_found = true;
 				break;
 			}
 
 			KSI_nofree(tmp);
 		}
 
-		if (oldPubTlvPos != -1) {
+		if (oldPubTlvPos_found) {
 			res = KSI_TLVList_replaceAt(nestedList, oldPubTlvPos, newPubTlv);
 			KSI_CATCH(&err, res) goto cleanup;
 		} else {
@@ -1141,7 +1145,7 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, const unsigned char *respo
 	/* PDU Specific objects */
 	KSI_Integer *status = NULL;
 	KSI_Integer *requestId = NULL;
-	int i;
+	size_t i;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, response != NULL) goto cleanup;
@@ -1725,7 +1729,7 @@ cleanup:
 int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 	KSI_ERR err;
 	int res;
-	int i, j;
+	size_t i, j;
 	KSI_LIST(KSI_Utf8String) *idList = NULL;
 	KSI_Utf8String *clientId = NULL;
 	char *signerId = NULL;

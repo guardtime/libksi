@@ -373,7 +373,7 @@ cleanup:
 int KSI_PublicationsFile_getPKICertificateById(const KSI_PublicationsFile *pubFile, const KSI_OctetString *id, KSI_PKICertificate **cert) {
 	KSI_ERR err;
 	int res;
-	int i;
+	size_t i;
 	KSI_CertificateRecord *certRec = NULL;
 
 	KSI_PRE(&err, pubFile != NULL) goto cleanup;
@@ -410,7 +410,7 @@ cleanup:
 int KSI_PublicationsFile_getPublicationDataByTime(const KSI_PublicationsFile *trust, const KSI_Integer *pubTime, KSI_PublicationRecord **pubRec) {
 	KSI_ERR err;
 	int res;
-	int i;
+	size_t i;
 	KSI_PublicationRecord *result = NULL;
 
 	KSI_PRE(&err, trust != NULL) goto cleanup;
@@ -520,7 +520,7 @@ cleanup:
 int KSI_PublicationsFile_getNearestPublication(const KSI_PublicationsFile *trust, const KSI_Integer *pubTime, KSI_PublicationRecord **pubRec) {
 	KSI_ERR err;
 	int res;
-	int i;
+	size_t i;
 	KSI_PublicationRecord *result = NULL;
 	KSI_Integer *result_tm = NULL;
 
@@ -570,7 +570,7 @@ cleanup:
 int KSI_PublicationsFile_getLatestPublication(const KSI_PublicationsFile *trust, const KSI_Integer *pubTime, KSI_PublicationRecord **pubRec) {
 	KSI_ERR err;
 	int res;
-	int i;
+	size_t i;
 	KSI_PublicationRecord *result = NULL;
 	KSI_Integer *result_tm = NULL;
 

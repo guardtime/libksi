@@ -181,7 +181,7 @@ static int RunAllTests() {
 
 int KSITest_memcmp(void *ptr1, void *ptr2, size_t len) {
 	int res;
-	int i;
+	size_t i;
 	res = memcmp(ptr1, ptr2, len);
 	if (res) {
 		printf("> ");

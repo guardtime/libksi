@@ -1403,7 +1403,7 @@ cleanup:
 static int expandNested(const KSI_TLV *sample, KSI_TLV *tlv) {
 	KSI_ERR err;
 	int res;
-	int i;
+	size_t i;
 
 	KSI_PRE(&err, sample != NULL) goto cleanup;
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
