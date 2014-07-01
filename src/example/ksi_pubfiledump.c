@@ -3,6 +3,10 @@
 
 #include <ksi/ksi.h>
 
+#ifdef _WIN32
+#  define snprintf _snprintf
+#endif
+
 int toHex(KSI_OctetString *certId, char **hex) {
 	int res = KSI_UNKNOWN_ERROR;
 	int len;

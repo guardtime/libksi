@@ -11,7 +11,9 @@
 #  ifdef HAVE_CONFIG_H
 #    include "config.h"
 #  endif
-#else
+#endif
+
+#ifdef _WIN32
 	typedef enum { false = 0, true = !false } bool;
 #  define snprintf _snprintf
 #endif
