@@ -154,20 +154,24 @@ cleanup:
 	return res;
 }
 
-int KSI_List_indexOf(const KSI_List *list, const void *o) {
-	int index = -1;
-	unsigned int i;
+int KSI_List_indexOf(const KSI_List *list, const void *o, size_t *pos) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	size_t i;
 	if (list == NULL || o == NULL) goto cleanup;
 	for (i = 0; i < list->arr_len; i++) {
 		if (o == list->arr[i]) {
-			index = (int)i;
-			break;
+			*pos = (int)i;
+			res = KSI_OK;
+			goto cleanup;
 		}
 	}
 
+	res = KSI_INVALID_ARGUMENT;
+
 cleanup:
 
-	return index;
+	return res;
 }
 
 int KSI_List_replaceAt(KSI_List *list, size_t pos, void *o) {

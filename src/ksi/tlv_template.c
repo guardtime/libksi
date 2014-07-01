@@ -223,7 +223,7 @@ static int decodeCalendarHashChainLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarH
 	KSI_ERR err;
 	int res;
 	const unsigned char *raw;
-	int raw_len = 0;
+	unsigned int raw_len = 0;
 	KSI_LIST(KSI_HashChainLink) *listp = NULL;
 	KSI_LIST(KSI_HashChainLink) *list = NULL;
 	KSI_HashChainLink *link = NULL;

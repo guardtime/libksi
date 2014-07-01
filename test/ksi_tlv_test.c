@@ -75,7 +75,7 @@ static void TestTlvSetRaw(CuTest* tc) {
 
 	unsigned char tmp[0xff] = { 0xaa, 0xbb, 0xcc, 0xdd };
 	const unsigned char *val = NULL;
-	int val_len = 0;
+	unsigned int val_len = 0;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -99,7 +99,7 @@ static void TestTlv8FromReader(CuTest* tc) {
 	/* TLV type = 7, length = 21 */
 	unsigned char raw[] = "\x07\x15THIS IS A TLV CONTENT";
 	const unsigned char *val = NULL;
-	int val_len = 0;
+	unsigned int val_len = 0;
 
 
 	KSI_RDR *rdr = NULL;
@@ -128,7 +128,7 @@ static void TestTlv8getRawValueSharedMem(CuTest* tc) {
 	/* TLV type = 7, length = 21 */
 	unsigned char raw[] = "\x07\x15THIS IS A TLV CONTENT";
 	const unsigned char *tmp = NULL;
-	int tmp_len = sizeof(tmp);
+	unsigned int tmp_len = sizeof(tmp);
 
 	KSI_RDR *rdr = NULL;
 	KSI_TLV *tlv = NULL;
@@ -153,8 +153,7 @@ static void TestTlv16FromReader(CuTest* tc) {
 	/* TLV16 type = 0x2aa, length = 21 */
 	unsigned char raw[] = "\x82\xaa\x00\x15THIS IS A TLV CONTENT";
 	const unsigned char *val = NULL;
-	int val_len = 0;
-
+	unsigned int val_len = 0;
 
 	KSI_RDR *rdr = NULL;
 	KSI_TLV *tlv = NULL;
@@ -367,7 +366,7 @@ static void TestTlvSerializeString(CuTest* tc) {
 	/* TLV16 type = 0x2aa, length = 21 */
 	unsigned char raw[] = "\x82\xaa\x00\x0alore ipsum";
 	const char *str = NULL;
-	int buf_len;
+	unsigned int buf_len;
 	unsigned char buf[0xffff];
 
 	KSI_RDR *rdr = NULL;
@@ -401,7 +400,7 @@ static void TestTlvSerializeUint(CuTest* tc) {
 	/* TLV type = 1a, length = 8 */
 	unsigned char raw[] = {0x1a, 0x08, 0xca, 0xfe, 0xba, 0xbe, 0xca, 0xfe, 0xfa, 0xce};
 	uint64_t value;
-	int buf_len;
+	unsigned int buf_len;
 	unsigned char buf[0xffff];
 
 
@@ -437,7 +436,7 @@ static void TestTlvSerializeNested(CuTest* tc) {
 	int res;
 	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
 	char *str = NULL;
-	int buf_len;
+	unsigned int buf_len;
 	unsigned char buf[0xffff];
 
 
@@ -482,7 +481,7 @@ static void TestTlvRequireCast(CuTest* tc) {
 	KSI_TLV *tlv = NULL;
 
 	const unsigned char *ptr = NULL;
-	int len;
+	unsigned int len;
 	uint64_t uintval;
 
 	unsigned char raw[] = "\x07\x06QWERTY";
@@ -551,7 +550,7 @@ static void TestTlvFromUint(CuTest* tc) {
 	KSI_uint64_t intVal;
 
 	const unsigned char *val = NULL;
-	int val_len = 0;
+	unsigned int val_len = 0;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -583,7 +582,7 @@ static void TestTlvComposeNested(CuTest* tc) {
 	KSI_TLV *outer = NULL;
 	KSI_TLV *nested = NULL;
 	unsigned char raw[] = {0x01, 0x06, 0x61, 0x04, 0xca, 0xfe, 0xba, 0xbe};
-	int buf_len;
+	unsigned int buf_len;
 	unsigned char buf[0xffff];
 	int res;
 
@@ -616,7 +615,7 @@ static void TestTlvComposeNestedMore(CuTest* tc) {
 	KSI_TLV *outer = NULL;
 	KSI_TLV *nested = NULL;
 	unsigned char raw[] = {0x01, 0x0b, 0x61, 0x04, 0xca, 0xfe, 0xba, 0xbe, 0x61, 0x03, 0x47, 0x54, 0x00 };
-	int buf_len;
+	unsigned int buf_len;
 	unsigned char buf[0xffff];
 	int res;
 

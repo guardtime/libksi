@@ -97,7 +97,7 @@ int KSI_PKICertificate_fromTlv(KSI_TLV *tlv, KSI_PKICertificate **cert) {
 
 	KSI_PKICertificate *tmp = NULL;
 	const unsigned char *raw = NULL;
-	int raw_len = 0;
+	unsigned int raw_len = 0;
 
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
 	KSI_PRE(&err, cert != NULL) goto cleanup;
@@ -327,7 +327,7 @@ int KSI_PKISignature_fromTlv(KSI_TLV *tlv, KSI_PKISignature **sig) {
 
 	KSI_PKISignature *tmp = NULL;
 	const unsigned char *raw = NULL;
-	int raw_len = 0;
+	unsigned int raw_len = 0;
 
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
 	KSI_PRE(&err, sig != NULL) goto cleanup;

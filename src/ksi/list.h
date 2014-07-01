@@ -18,7 +18,7 @@ int KSI_LIST_FN_NAME(type, new)(KSI_CTX *, KSI_LIST(type) **);					\
 int KSI_LIST_FN_NAME(type, append)(KSI_LIST(type) *, type *);					\
 int KSI_LIST_FN_NAME(type, iter)(KSI_LIST(type) *);								\
 int KSI_LIST_FN_NAME(type, next)(KSI_LIST(type) *, type **);					\
-int KSI_LIST_FN_NAME(type, indexOf)(const KSI_LIST(type) *, const type *);		\
+int KSI_LIST_FN_NAME(type, indexOf)(const KSI_LIST(type) *, const type *, size_t *);	\
 int KSI_LIST_FN_NAME(type, insertAt)(KSI_LIST(type) *, size_t, type *);			\
 int KSI_LIST_FN_NAME(type, replaceAt)(KSI_LIST(type) *, size_t, type *);		\
 int KSI_LIST_FN_NAME(type, remove)(KSI_LIST(type) *, size_t);					\
@@ -36,7 +36,7 @@ int KSI_List_append(KSI_List *list, void *obj);
 int KSI_List_remove(KSI_List *list, size_t pos);
 int KSI_List_iter(KSI_List *list);
 int KSI_List_next(KSI_List *list, void **o);
-int KSI_List_indexOf(const KSI_List *list, const void *o);
+int KSI_List_indexOf(const KSI_List *list, const void *o, size_t *);
 int KSI_List_insertAt(KSI_List *list, size_t pos, void *o);
 int KSI_List_replaceAt(KSI_List *list, size_t pos, void *o);
 int KSI_List_elementAt(const KSI_List *list, size_t pos, void **o);

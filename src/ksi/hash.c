@@ -318,7 +318,7 @@ int KSI_DataHash_fromTlv(KSI_TLV *tlv, KSI_DataHash **hsh) {
 	KSI_CTX *ctx = NULL;
 	int res;
 	const unsigned char *raw = NULL;
-	int raw_len = 0;
+	unsigned int raw_len = 0;
 	KSI_DataHash *tmp = NULL;
 
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
