@@ -31,6 +31,11 @@ static void testSigning(CuTest* tc) {
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
 	KSI_NetProvider *pr = NULL;
+	unsigned char *raw = NULL;
+	int raw_len = 0;
+	unsigned char expected[0x1ffff];
+	int expected_len = 0;
+	FILE *f = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -44,15 +49,28 @@ static void testSigning(CuTest* tc) {
 	res = KSI_DataHash_fromImprint(ctx, someImprint, sizeof(someImprint), &hsh);
 	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
 
-	KSITest_setFileMockResponse(tc, "test/resource/tlv/ok_aggr_response-1.tlv");
+	KSITest_setFileMockResponse(tc, "test/resource/tlv/ok-sig-2014-07-01.1-aggr_response.tlv");
 
 	res = KSI_createSignature(ctx, hsh, &sig);
-	KSI_ERR_statusDump(ctx, stdout);
 	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
 	CuAssert(tc, "Unexpected send request", KSI_NET_MOCK_request_len == sizeof(expectedSignRequest) && !memcmp(expectedSignRequest, KSI_NET_MOCK_request, KSI_NET_MOCK_request_len));
 	KSI_free(KSI_NET_MOCK_response);
 	KSI_NET_MOCK_response = NULL;
 
+	res = KSI_Signature_serialize(sig, &raw, &raw_len);
+	CuAssert(tc, "Unable to serialize signature.", res == KSI_OK && raw != NULL && raw_len > 0);
+
+	f = fopen("test/resource/tlv/ok-sig-2014-07-01.1.ksig", "rb");
+	CuAssert(tc, "Unable to load sample signature.", f != NULL);
+
+	expected_len = fread(expected, 1, sizeof(expected), f);
+	CuAssert(tc, "Failed to read sample", expected_len > 0);
+
+	CuAssertIntEquals_Msg(tc, "Serialized signature length", expected_len, raw_len);
+	CuAssert(tc, "Serialized signature content mismatch.", !memcmp(expected, raw, raw_len));
+
+	if (f != NULL) fclose(f);
+	KSI_free(raw);
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
 }

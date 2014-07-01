@@ -48,6 +48,8 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
+	KSI_CTX_setLogLevel(ksi, KSI_LOG_DEBUG);
+
 	/* Check if uri's are specified. */
 	if (strncmp("-", argv[3], 1) || strncmp("-", argv[4], 1)) {
 		KSI_NetProvider *net = NULL;
