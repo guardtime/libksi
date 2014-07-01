@@ -12,7 +12,7 @@
 #    include "config.h"
 #  endif
 #else
-#  typedef enum { false = 0, true = !false } bool;
+	typedef enum { false = 0, true = !false } bool;
 #  define snprintf _snprintf
 #endif
 
