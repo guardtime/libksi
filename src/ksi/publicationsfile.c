@@ -15,7 +15,7 @@ struct KSI_PublicationsFile_st {
 	KSI_PublicationsHeader *header;
 	KSI_LIST(KSI_CertificateRecord) *certificates;
 	KSI_LIST(KSI_PublicationRecord) *publications;
-	int signatureOffset;
+	size_t signatureOffset;
 	KSI_PKISignature *signature;
 };
 
@@ -23,7 +23,7 @@ static int publicationsFile_setHeader(KSI_PublicationsFile *t, KSI_PublicationsH
 static int publicationsFile_setCertificates(KSI_PublicationsFile *t, KSI_LIST(KSI_CertificateRecord) *certificates);
 static int publicationsFile_setPublications(KSI_PublicationsFile *t, KSI_LIST(KSI_PublicationRecord) *publications);
 static int publicationsFile_setSignature(KSI_PublicationsFile *t, KSI_PKISignature *signature);
-static int publicationsFile_setSignatureOffset(KSI_PublicationsFile *t, int signatureOffset);
+static int publicationsFile_setSignatureOffset(KSI_PublicationsFile *t, size_t signatureOffset);
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationsFile)
 	KSI_TLV_COMPOSITE(0x0701, 0, 0, KSI_PublicationsFile_getHeader, publicationsFile_setHeader, KSI_PublicationsHeader)
@@ -57,7 +57,7 @@ cleanup:
 	return res;
 }
 
-static int publicationsFile_setSignatureOffset(KSI_PublicationsFile *t, int signatureOffset) {
+static int publicationsFile_setSignatureOffset(KSI_PublicationsFile *t, size_t signatureOffset) {
 	int res = KSI_UNKNOWN_ERROR;
 	if(t == NULL) {
 		res = KSI_INVALID_ARGUMENT;

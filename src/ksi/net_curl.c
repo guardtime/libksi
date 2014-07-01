@@ -65,9 +65,7 @@ cleanup:
 	return res;
 }
 
-static size_t receiveDataFromLibCurl(void *ptr, size_t size, size_t nmemb,
-			void *stream) {
-	int res;
+static size_t receiveDataFromLibCurl(void *ptr, size_t size, size_t nmemb, void *stream) {
 	size_t bytesCount = 0;
 	unsigned char *tmp_buffer = NULL;
 	CurlNetHandleCtx *nc = (CurlNetHandleCtx *) stream;

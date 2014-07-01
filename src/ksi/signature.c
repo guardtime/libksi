@@ -358,7 +358,6 @@ KSI_END_TLV_TEMPLATE
 
 static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
 	KSI_ERR err;
-	int res;
 	KSI_Signature *tmp = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -1145,7 +1144,6 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, const unsigned char *respo
 
 	/* PDU Specific objects */
 	KSI_Integer *status = NULL;
-	KSI_Integer *requestId = NULL;
 	size_t i;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -1862,7 +1860,6 @@ cleanup:
 int KSI_Signature_verifyDocument(KSI_Signature *sig, void *doc, size_t doc_len) {
 	KSI_ERR err;
 	int res;
-	const KSI_DataHash *sigHsh = NULL;
 	KSI_DataHash *hsh = NULL;
 
 	int hash_id;

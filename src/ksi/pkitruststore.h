@@ -156,7 +156,7 @@ extern "C" {
 	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned char *data, unsigned int data_len, const KSI_PKISignature *signature);
+	int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned char *data, size_t data_len, const KSI_PKISignature *signature);
 
 	/**
 	 * Add trusted certificate lookup file.

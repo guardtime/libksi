@@ -275,6 +275,10 @@ cleanup:
 int KSI_LOG_setLogLevel(KSI_Logger *logger, int level) {
 	int res = KSI_UNKNOWN_ERROR;
 
+	if (logger == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 	logger->logLevel = level;
 
 	res = KSI_OK;

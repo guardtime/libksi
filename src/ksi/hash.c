@@ -115,7 +115,6 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *dige
 	KSI_ERR err;
 	KSI_DataHash *tmp_hash = NULL;
 	unsigned char *tmp_imprint = NULL;
-	int res;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, digest != NULL) goto cleanup;

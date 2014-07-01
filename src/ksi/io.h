@@ -28,7 +28,7 @@ extern "C" {
 	 */
 	int KSI_RDR_isEOF(KSI_RDR *rdr);
 
-	int KSI_RDR_getOffset(KSI_RDR *rdr, int *offset);
+	int KSI_RDR_getOffset(KSI_RDR *rdr, size_t *offset);
 
 	/* TODO!
 	 * Reads at maximum #bufferLength bytes into #buffer and strores number of read bytes in #readCount.

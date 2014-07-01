@@ -385,7 +385,6 @@ cleanup:
 int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *template, KSI_LIST(KSI_TLV) *reminder) {
 	KSI_ERR err;
 	int res;
-	int i;
 	TLVListIterator iter;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -416,10 +415,6 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 	int res;
 	const KSI_TlvTemplate *t = NULL;
 
-	KSI_Integer *integerVal = NULL;
-	KSI_DataHash *hashVal = NULL;
-	KSI_OctetString *octetStringVal = NULL;
-	KSI_Utf8String *stringVal = NULL;
 	KSI_uint64_t uint64Val = 0;
 	void *voidVal = NULL;
 	int intVal = 0;
@@ -482,9 +477,9 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 
 					break;
 				case KSI_TLV_TEMPLATE_SEEK_POS:
-					intVal = KSI_TLV_getAbsoluteOffset(tlv);
+					uint64Val = (KSI_uint64_t)KSI_TLV_getAbsoluteOffset(tlv);
 
-					res = ((int (*)(void *, int))t->setValue)(payload, intVal);
+					res = ((int (*)(void *, int))t->setValue)(payload, uint64Val);
 					KSI_CATCH(&err, res) goto cleanup;
 
 					break;
@@ -570,10 +565,6 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 cleanup:
 
 	KSI_TLV_free(tlvVal);
-	KSI_OctetString_free(octetStringVal);
-	KSI_DataHash_free(hashVal);
-	KSI_Utf8String_free(stringVal);
-	KSI_Integer_free(integerVal);
 
 	return KSI_RETURN(&err);
 }

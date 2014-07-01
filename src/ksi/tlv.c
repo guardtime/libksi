@@ -37,8 +37,8 @@ struct KSI_TLV_st {
 	unsigned char *datap;
 	size_t datap_len;
 
-	int relativeOffset;
-	int absoluteOffset;
+	size_t relativeOffset;
+	size_t absoluteOffset;
 
 };
 
@@ -133,7 +133,7 @@ static int readTlv(KSI_RDR *rdr, KSI_TLV **tlv, int copy) {
 	unsigned char buffer[0xffff];
 	unsigned char *ptr = NULL;
 	char errstr[1024];
-	int tlvOffset = 0;
+	size_t tlvOffset = 0;
 
 	KSI_PRE(&err, rdr != NULL) goto cleanup;
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
@@ -1495,11 +1495,11 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_TLV_getAbsoluteOffset(const KSI_TLV *tlv) {
+size_t KSI_TLV_getAbsoluteOffset(const KSI_TLV *tlv) {
 	return tlv->absoluteOffset;
 }
 
-int KSI_TLV_getRelativeOffset(const KSI_TLV *tlv) {
+size_t KSI_TLV_getRelativeOffset(const KSI_TLV *tlv) {
 	return tlv->relativeOffset;
 }
 

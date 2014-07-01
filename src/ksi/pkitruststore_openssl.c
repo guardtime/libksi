@@ -1,4 +1,5 @@
 #include <string.h>
+#include <limits.h>
 #include <openssl/err.h>
 #include <openssl/asn1.h>
 #include <openssl/pkcs7.h>
@@ -629,7 +630,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned char *data, unsigned int data_len, const KSI_PKISignature *signature) {
+int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned char *data, size_t data_len, const KSI_PKISignature *signature) {
 	KSI_ERR err;
 	int res;
 	BIO *bio = NULL;
@@ -639,8 +640,12 @@ int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned cha
 	KSI_PRE(&err, signature != NULL) goto cleanup;
 	KSI_BEGIN(pki->ctx, &err);
 
+	if (data_len > INT_MAX) {
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Data too long (more than MAX_INT).");
+		goto cleanup;
+	}
 
-	bio = BIO_new_mem_buf((void *)data, data_len);
+	bio = BIO_new_mem_buf((void *)data, (int)data_len);
 	if (bio == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;

@@ -343,7 +343,7 @@ extern "C" {
 	 *
 	 * \return The absolute offset of the TLV object.
 	 */
-	int KSI_TLV_getAbsoluteOffset(const KSI_TLV *tlv);
+	size_t KSI_TLV_getAbsoluteOffset(const KSI_TLV *tlv);
 
 	/**
 	 * Returns the relative offset of the TLV object in the source raw data. (i.e. if this is a nested TLV
@@ -353,7 +353,7 @@ extern "C" {
 	 *
 	 * \return The absolute offset of the TLV object.
 	 */
-	int KSI_TLV_getRelativeOffset(const KSI_TLV *tlv);
+	size_t KSI_TLV_getRelativeOffset(const KSI_TLV *tlv);
 
 	/**
 	 * @}

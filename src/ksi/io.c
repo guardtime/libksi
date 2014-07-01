@@ -53,7 +53,7 @@ cleanup:
 	return rdr;
 }
 
-int KSI_RDR_getOffset(KSI_RDR *rdr, int *offset) {
+int KSI_RDR_getOffset(KSI_RDR *rdr, size_t *offset) {
 	KSI_ERR err;
 	KSI_PRE(&err, rdr != NULL) goto cleanup;
 	KSI_PRE(&err, offset != NULL) goto cleanup;

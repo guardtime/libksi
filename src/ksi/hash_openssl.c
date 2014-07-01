@@ -91,8 +91,6 @@ cleanup:
 
 int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 	KSI_ERR err;
-	int res;
-
 	const EVP_MD *evp_md = NULL;
 	void *context = NULL;
 	int digest_length;
