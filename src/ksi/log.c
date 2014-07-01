@@ -37,8 +37,6 @@ static int writeLog(KSI_CTX *ctx, int logLevel, char *format, va_list va) {
 
 	timer = time(NULL);
 
-	tm_info = localtime(&timer);
-	strftime(time_buf, sizeof(time_buf), "%d.%m.%Y %H:%M:%S", tm_info);
 
 	if (ctx == NULL || format == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -54,6 +52,9 @@ static int writeLog(KSI_CTX *ctx, int logLevel, char *format, va_list va) {
 	f = logger->logStream;
 
 	if (f != NULL) {
+		tm_info = localtime(&timer);
+		strftime(time_buf, sizeof(time_buf), "%d.%m.%Y %H:%M:%S", tm_info);
+
 		fprintf(f, "%s [%s] - ", level2str(logLevel), time_buf);
 		vfprintf(f, format, va);
 		fprintf(f, "\n");
@@ -291,9 +292,12 @@ int KSI_LOG_setLogFile(KSI_Logger *logger, char *file) {
 		logger->logStream = NULL;
 	}
 
-	logger->logStream = fopen(file, "a");
-	if (logger->logStream == NULL) goto cleanup;
-
+	if (file != NULL && strlen(file) > 0) {
+		logger->logStream = fopen(file, "a");
+		if (logger->logStream == NULL) goto cleanup;
+	} else {
+		logger->logStream = stdout;
+	}
 	res = KSI_OK;
 
 cleanup:

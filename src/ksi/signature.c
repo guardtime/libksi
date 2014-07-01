@@ -1135,6 +1135,7 @@ cleanup:
 static int KSI_parseAggregationResponse(KSI_CTX *ctx, const unsigned char *response, int response_len, KSI_Signature **signature) {
 	KSI_ERR err;
 	int res;
+	KSI_TLV *pduTlv = NULL;
 	KSI_TLV *tmpTlv = NULL;
 	KSI_TLV *respTlv = NULL;
 	KSI_Signature *tmp = NULL;
@@ -1154,11 +1155,11 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, const unsigned char *respo
 	KSI_BEGIN(ctx, &err);
 
 	/* Parse the pdu */
-	res = KSI_TLV_parseBlob(ctx, response, response_len, &tmpTlv);
+	res = KSI_TLV_parseBlob(ctx, response, response_len, &pduTlv);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Validate tag value */
-	if (KSI_TLV_getTag(tmpTlv) != 0x200) {
+	if (KSI_TLV_getTag(pduTlv) != 0x200) {
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
 		goto cleanup;
 	}
@@ -1166,7 +1167,7 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, const unsigned char *respo
 	res = KSI_AggregationPdu_new(ctx, &pdu);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_TlvTemplate_extract(ctx, pdu, tmpTlv, KSI_TLV_TEMPLATE(KSI_AggregationPdu), NULL);
+	res = KSI_TlvTemplate_extract(ctx, pdu, pduTlv, KSI_TLV_TEMPLATE(KSI_AggregationPdu), NULL);
 	KSI_CATCH(&err, res) goto cleanup;
 
 
@@ -1212,7 +1213,8 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, const unsigned char *respo
 	res = KSI_AggregationResp_setCalendarChain(resp, NULL);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_TLV_getNestedList(tmpTlv, &tlvList);
+	/* Get all elements from the pdu */
+	res = KSI_TLV_getNestedList(pduTlv, &tlvList);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	if (KSI_TLVList_length(tlvList) != 1) {
@@ -1220,6 +1222,7 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, const unsigned char *respo
 		goto cleanup;
 	}
 
+	/* Get the aggregation response object. */
 	res = KSI_TLVList_elementAt(tlvList, 0, &respTlv);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -1229,7 +1232,7 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, const unsigned char *respo
 	}
 
 	/* Create signature TLV */
-	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, 0x0800, 0, 0, &tmp->baseTlv);
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, 0x0800, 0, 0, &tmpTlv);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_TLV_getNestedList(respTlv, &tlvList);
@@ -1253,7 +1256,7 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, const unsigned char *respo
 				break;
 			default:
 				/* Copy this tag to the signature. */
-				res = KSI_TLV_appendNestedTlv(tmp->baseTlv, NULL, t);
+				res = KSI_TLV_appendNestedTlv(tmpTlv, NULL, t);
 				KSI_CATCH(&err, res) goto cleanup;
 
 				/* Remove it from the original list. */
@@ -1261,6 +1264,9 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, const unsigned char *respo
 				KSI_CATCH(&err, res) goto cleanup;
 		}
 	}
+
+	res = KSI_TLV_clone(tmpTlv, &tmp->baseTlv);
+	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Signature", tmp->baseTlv);
 
@@ -1271,9 +1277,10 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, const unsigned char *respo
 
 cleanup:
 
+	KSI_TLV_free(tmpTlv);
 	KSI_AggregationPdu_free(pdu);
 	KSI_Signature_free(tmp);
-	KSI_TLV_free(tmpTlv);
+	KSI_TLV_free(pduTlv);
 
 	return KSI_RETURN(&err);
 
