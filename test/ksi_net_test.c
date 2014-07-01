@@ -65,7 +65,7 @@ static void testExtending(CuTest* tc) {
 	KSI_Signature *ext = NULL;
 	unsigned char *serialized = NULL;
 	int serialized_len = 0;
-	unsigned char *expected[0x1ffff];
+	unsigned char expected[0x1ffff];
 	int expected_len = 0;
 	FILE *f = NULL;
 	KSI_PKITruststore *pki = NULL;
@@ -124,7 +124,7 @@ static void testExtendingWithoutPublication(CuTest* tc) {
 	KSI_Signature *ext = NULL;
 	unsigned char *serialized = NULL;
 	int serialized_len = 0;
-	unsigned char *expected[0x1ffff];
+	unsigned char expected[0x1ffff];
 	int expected_len = 0;
 	FILE *f = NULL;
 	KSI_PKITruststore *pki = NULL;
@@ -184,7 +184,7 @@ static void testExtendingHeadSignature(CuTest* tc) {
 	KSI_Signature *ext = NULL;
 	unsigned char *serialized = NULL;
 	int serialized_len = 0;
-	unsigned char *expected[0x1ffff];
+	unsigned char expected[0x1ffff];
 	int expected_len = 0;
 	FILE *f = NULL;
 	KSI_PKITruststore *pki = NULL;
