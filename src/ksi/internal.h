@@ -2,19 +2,17 @@
 #define _KSI_INTERNAL_H_
 
 #include <stdint.h>
-#include <stdbool.h>
 
 #include "ksi.h"
 #include "tlv_tags.h"
 
 #ifndef _WIN32
+#  include <stdbool.h>
 #  ifdef HAVE_CONFIG_H
 #    include "config.h"
 #  endif
-#endif
-
-/* Compatibility for MS Windows. */
-#ifdef _WIN32
+#else
+#  typedef enum { false = 0, true = !false } bool;
 #  define snprintf _snprintf
 #endif
 
