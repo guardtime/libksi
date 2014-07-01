@@ -2,9 +2,7 @@
 #include "all_tests.h"
 
 extern KSI_CTX *ctx;
-extern const unsigned char *KSI_NET_MOCK_request;
-extern int KSI_NET_MOCK_request_len;
-extern const unsigned char *KSI_NET_MOCK_response;
+extern unsigned char *KSI_NET_MOCK_response;
 extern int KSI_NET_MOCK_response_len;
 
 #define TEST_PUBLICATIONS_FILE "test/resource/tlv/publications.tlv"
@@ -144,6 +142,7 @@ static void testFindPublicationByTime(CuTest *tc) {
 	KSI_DataHash *pubHsh = NULL;
 	KSI_Integer *pubTime = NULL;
 	KSI_DataHash *expHsh = NULL;
+	KSI_LIST(KSI_Utf8String) *pubRefList = NULL;
 	unsigned char buf[0xff];
 	int len;
 
@@ -176,9 +175,48 @@ static void testFindPublicationByTime(CuTest *tc) {
 	CuAssert(tc, "Publication hash mismatch.", KSI_DataHash_equals(expHsh, pubHsh));
 	CuAssert(tc, "Publication time mismatch", KSI_Integer_equalsUInt(pubTime, 1397520000));
 
+	res = KSI_PublicationRecord_getPublicationRef(pubRec, &pubRefList);
+	CuAssert(tc, "Unable to get publications ref list", res == KSI_OK && pubRefList != NULL);
+
 	KSI_DataHash_free(expHsh);
 }
 
+static void testFindPublicationRef(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
+	KSI_Integer *pubTime = NULL;
+	KSI_LIST(KSI_Utf8String) *pubRefList = NULL;
+	size_t i;
+	int isPubRefFound = 0;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_receivePublicationsFile(ctx, &pubFile);
+	CuAssert(tc, "Unable to get publications file.", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_Integer_new(ctx, 1397520000, &pubTime);
+	CuAssert(tc, "Unable to create ksi integer object.", res == KSI_OK && pubTime != NULL);
+
+	res = KSI_PublicationsFile_getPublicationDataByTime(pubFile, pubTime, &pubRec);
+	CuAssert(tc, "Unable to get publication record by publication date.", res == KSI_OK && pubRec != NULL);
+
+	KSI_Integer_free(pubTime);
+	pubTime = NULL;
+
+	res = KSI_PublicationRecord_getPublicationRef(pubRec, &pubRefList);
+	CuAssert(tc, "Unable to get publications ref list", res == KSI_OK && pubRefList != NULL);
+
+	for (i = 0; i < KSI_Utf8StringList_length(pubRefList); i++) {
+		KSI_Utf8String *pubRef = NULL;
+		res = KSI_Utf8StringList_elementAt(pubRefList, i, &pubRef);
+		if (!strcmp("Financial Times, ISSN: 0307-1766, 2014-04-17", KSI_Utf8String_cstr(pubRef))) {
+			isPubRefFound = 1;
+		}
+	}
+
+	CuAssert(tc, "Financial times publication not found", isPubRefFound);
+}
 
 CuSuite* KSITest_Publicationsfile_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
@@ -188,6 +226,7 @@ CuSuite* KSITest_Publicationsfile_getSuite(void) {
 	SUITE_ADD_TEST(suite, testPublicationStringEncodingAndDecoding);
 	SUITE_ADD_TEST(suite, testFindPublicationByPubStr);
 	SUITE_ADD_TEST(suite, testFindPublicationByTime);
+	SUITE_ADD_TEST(suite, testFindPublicationRef);
 
 	return suite;
 }
