@@ -169,12 +169,12 @@ void KSI_Logger_free(KSI_Logger *logger) {
 	}
 }
 
-int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned char *data, int data_len) {
+int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned char *data, size_t data_len) {
 	int res = KSI_UNKNOWN_ERROR;
 	char *logStr = NULL;
-	int logStr_size = 0;
+	size_t logStr_size = 0;
 	int logStr_len = 0;
-	int i;
+	size_t i;
 	KSI_Logger *logger = NULL;
 
 	res = KSI_getLogger(ctx, &logger);
@@ -241,7 +241,7 @@ cleanup:
 int KSI_LOG_logDataHash(KSI_CTX *ctx, int level, const char *prefix, KSI_DataHash *hsh) {
 	int res = KSI_UNKNOWN_ERROR;
 	const unsigned char *imprint = NULL;
-	int imprint_len = 0;
+	unsigned int imprint_len = 0;
 	KSI_Logger *logger = NULL;
 
 	res = KSI_getLogger(ctx, &logger);

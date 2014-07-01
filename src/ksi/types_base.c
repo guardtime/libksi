@@ -5,7 +5,7 @@
 struct KSI_OctetString_st {
 	KSI_CTX *ctx;
 	unsigned char *data;
-	int data_len;
+	unsigned int data_len;
 };
 
 struct KSI_Integer_st {
@@ -28,7 +28,7 @@ struct KSI_Utf8String_st {
 	char *value;
 };
 
-int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, int data_len, KSI_OctetString **t) {
+int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, unsigned int data_len, KSI_OctetString **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_OctetString *tmp = NULL;
 
@@ -60,7 +60,7 @@ cleanup:
 	return res;
 }
 
-int KSI_OctetString_extract(const KSI_OctetString *t, const unsigned char **data, int *data_len) {
+int KSI_OctetString_extract(const KSI_OctetString *t, const unsigned char **data, unsigned int *data_len) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if(t == NULL || data == NULL) {

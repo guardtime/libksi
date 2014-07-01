@@ -41,7 +41,7 @@ static char *nok_sample[] = {
 
 extern KSI_CTX *ctx;
 
-static int tlvFromFile(CuTest* tc, char *fileName, KSI_TLV **tlv) {
+static int tlvFromFile(char *fileName, KSI_TLV **tlv) {
 	int res;
 	KSI_RDR *rdr = NULL;
 
@@ -125,7 +125,7 @@ static void TestOkFiles(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	while (ok_sample[i] != NULL) {
-		CuAssert(tc, "Unable to read valid TLV", tlvFromFile(tc, ok_sample[i++], &tlv) == KSI_OK);
+		CuAssert(tc, "Unable to read valid TLV", tlvFromFile(ok_sample[i++], &tlv) == KSI_OK);
 
 		res = parseStructure(tlv, 0);
 
@@ -147,7 +147,7 @@ static void TestNokFiles(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	while (nok_sample[i] != NULL) {
-		res = tlvFromFile(tc, nok_sample[i++], &tlv);
+		res = tlvFromFile(nok_sample[i++], &tlv);
 
 		if (res == KSI_OK) {
 			res = parseStructure(tlv, 0);

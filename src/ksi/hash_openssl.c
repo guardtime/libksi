@@ -155,14 +155,14 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 	KSI_DataHash *hsh = NULL;
 	unsigned char *digest = NULL;
 	unsigned int digest_length;
-	int hash_length;
+	unsigned int hash_length;
 
 	KSI_PRE(&err, hasher != NULL) goto cleanup;
 	KSI_PRE(&err, data_hash != NULL) goto cleanup;
 	KSI_BEGIN(hasher->ctx, &err);
 
 	hash_length = KSI_getHashLength(hasher->algorithm);
-	if (hash_length <= 0) {
+	if (hash_length == 0) {
 		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Error finding digest length.");
 		goto cleanup;
 	}
@@ -176,7 +176,7 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 	EVP_DigestFinal(hasher->hashContext, digest, &digest_length);
 
 	/* Make sure the hash length is the same. */
-	if ((unsigned int)hash_length != digest_length) {
+	if (hash_length != digest_length) {
 		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Internal hash lengths mismatch.");
 		goto cleanup;
 	}

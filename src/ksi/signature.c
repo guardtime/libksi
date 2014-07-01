@@ -426,7 +426,7 @@ static int KSI_CalendarAuthRec_verify(KSI_CTX *ctx, KSI_CalendarAuthRec *calAuth
 	KSI_OctetString *certId = NULL;
 	KSI_OctetString *signatureValue = NULL;
 	const unsigned char *raw = NULL;
-	int raw_len = 0;
+	unsigned int raw_len = 0;
 
 	KSI_PRE(&err, calAuth != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);

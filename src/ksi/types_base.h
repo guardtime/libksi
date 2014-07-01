@@ -130,8 +130,8 @@ int KSI_Integer_toTlv(KSI_Integer *i, int tag, int isNonCritical, int isForward,
  * KSI_OctetString
  */
 void KSI_OctetString_free(KSI_OctetString *t);
-int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, int data_len, KSI_OctetString **t);
-int KSI_OctetString_extract(const KSI_OctetString *t, const unsigned char **data, int *data_len);
+int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, unsigned int data_len, KSI_OctetString **t);
+int KSI_OctetString_extract(const KSI_OctetString *t, const unsigned char **data, unsigned int *data_len);
 int KSI_OctetString_equals(const KSI_OctetString *left, const KSI_OctetString *right);
 int KSI_OctetString_fromTlv(KSI_TLV *tlv, KSI_OctetString **oct);
 int KSI_OctetString_toTlv(KSI_OctetString *oct, int tag, int isNonCritical, int isForward, KSI_TLV **tlv);

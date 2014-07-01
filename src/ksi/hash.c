@@ -10,7 +10,7 @@ struct KSI_DataHash_st {
 	KSI_CTX *ctx;
 
 	unsigned char *imprint;
-	int imprint_length;
+	unsigned int imprint_length;
 };
 
 /** Hash algorithm aliases. The last alias has to be an empty string */
@@ -78,17 +78,17 @@ int KSI_isHashAlgorithmSupported(int hash_id) {
 	return hash_id >= 0 && hash_id < KSI_NUMBER_OF_KNOWN_HASHALGS;
 }
 
-int KSI_getHashLength(int hash_id) {
+unsigned KSI_getHashLength(int hash_id) {
 	if (KSI_isHashAlgorithmSupported(hash_id)) {
 		return (KSI_hashAlgorithmInfo[hash_id].bitCount) >> 3;
 	}
-	return -1;
+	return 0;
 }
 
 /**
  *
  */
-int KSI_DataHash_extract(const KSI_DataHash *hash, int *hash_id, const unsigned char **digest, int *digest_length) {
+int KSI_DataHash_extract(const KSI_DataHash *hash, int *hash_id, const unsigned char **digest, unsigned int *digest_length) {
 	KSI_ERR err;
 
 	KSI_PRE(&err, hash != NULL) goto cleanup;
@@ -111,7 +111,7 @@ cleanup:
 /**
  *
  */
-int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *digest, int digest_length, KSI_DataHash **hash) {
+int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *digest, unsigned int digest_length, KSI_DataHash **hash) {
 	KSI_ERR err;
 	KSI_DataHash *tmp_hash = NULL;
 	unsigned char *tmp_imprint = NULL;
@@ -165,7 +165,7 @@ cleanup:
 /**
  *
  */
-int KSI_DataHash_getImprint(const KSI_DataHash *hash, const unsigned char **imprint, int *imprint_length) {
+int KSI_DataHash_getImprint(const KSI_DataHash *hash, const unsigned char **imprint, unsigned int *imprint_length) {
 	KSI_ERR err;
 
 	KSI_PRE(&err, hash != NULL) goto cleanup;
@@ -186,7 +186,7 @@ cleanup:
 /**
  *
  */
-int KSI_DataHash_fromImprint(KSI_CTX *ctx, const unsigned char *imprint, int imprint_length, KSI_DataHash **hash) {
+int KSI_DataHash_fromImprint(KSI_CTX *ctx, const unsigned char *imprint, unsigned int imprint_length, KSI_DataHash **hash) {
 	return KSI_DataHash_fromDigest(ctx, *imprint, imprint + 1, imprint_length - 1, hash);
 }
 
@@ -355,7 +355,7 @@ int KSI_DataHash_toTlv(KSI_DataHash *hsh, int tag, int isNonCritical, int isForw
 	int res;
 	KSI_TLV *tmp = NULL;
 	const unsigned char *raw = NULL;
-	int raw_len = 0;
+	unsigned int raw_len = 0;
 
 	KSI_PRE(&err, hsh != NULL) goto cleanup;
 	KSI_PRE(&err, tlv != NULL) goto cleanup;

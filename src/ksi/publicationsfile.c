@@ -640,7 +640,7 @@ int KSI_PublicationData_fromBase32(KSI_CTX *ctx, const char *publication, KSI_Pu
 	unsigned long tmp_ulong;
 	KSI_uint64_t tmp_uint64;
 	int hash_alg;
-	size_t hash_size;
+	unsigned int hash_size;
 	KSI_DataHash *pubHash = NULL;
 	KSI_Integer *pubTime;
 
@@ -724,7 +724,7 @@ int KSI_PublicationData_toBase32(const KSI_PublicationData *published_data, char
 	KSI_DataHash *hsh = NULL;
 	KSI_Integer *publicationTime = NULL;
 	const unsigned char *imprint = NULL;
-	int imprint_len = 0;
+	unsigned int imprint_len = 0;
 	int res;
 	KSI_uint64_t publication_identifier = 0;
 	unsigned char *binary_publication = NULL;

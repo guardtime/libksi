@@ -11,9 +11,9 @@ int toHex(KSI_OctetString *certId, char **hex) {
 	int res = KSI_UNKNOWN_ERROR;
 	int len;
 	const unsigned char *raw = NULL;
-	int raw_len = 0;
+	unsigned int raw_len = 0;
 	char *tmp = NULL;
-	int i;
+	unsigned int i;
 
 	res = KSI_OctetString_extract(certId, &raw, &raw_len);
 	if (res != KSI_OK) goto cleanup;

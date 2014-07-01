@@ -22,7 +22,7 @@ int KSI_LOG_info(KSI_CTX *ctx, char *format, ...);
 int KSI_LOG_error(KSI_CTX *ctx, char *format, ...);
 int KSI_LOG_fatal(KSI_CTX *ctx, char *format, ...);
 
-int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned char *data, int data_len);
+int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned char *data, size_t data_len);
 int KSI_LOG_logTlv(KSI_CTX *ctx, int level, const char *prefix, KSI_TLV *tlv);
 int KSI_LOG_logDataHash(KSI_CTX *ctx, int level, const char *prefix, KSI_DataHash *hsh);
 

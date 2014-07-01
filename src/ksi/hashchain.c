@@ -15,7 +15,7 @@ static int addNvlImprint(KSI_DataHash *first, KSI_DataHash *second, KSI_DataHash
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = first;
 	const unsigned char *imprint;
-	int imprint_len;
+	unsigned int imprint_len;
 
 	if (hsh == NULL) {
 		if (second == NULL) {
@@ -45,7 +45,7 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 	int res;
 	int mode = 0;
 	const unsigned char *imprint;
-	int imprint_len;
+	unsigned int imprint_len;
 	KSI_MetaData *metaData = NULL;
 	KSI_DataHash *metaHash = NULL;
 	KSI_DataHash *hash = NULL;

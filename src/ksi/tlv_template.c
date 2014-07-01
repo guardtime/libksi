@@ -170,7 +170,7 @@ static int encodeCalendarHashChainLink(KSI_CTX *ctx, KSI_TLV *tlv, const KSI_Cal
 		KSI_HashChainLink *link = NULL;
 		KSI_DataHash *hsh = NULL;
 		const unsigned char *imprint = NULL;
-		int imprint_len = 0;
+		unsigned int imprint_len = 0;
 		int isLeft;
 
 		/* Get the chain element. */
