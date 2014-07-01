@@ -5,6 +5,74 @@
 
 extern KSI_CTX *ctx;
 
+static /**
+ *
+ */
+int KSI_HashChain_appendLink(KSI_DataHash *siblingHash, KSI_DataHash *metaHash, KSI_MetaData *metaData, int isLeft, int levelCorrection, KSI_LIST(KSI_HashChainLink) **chain) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_HashChainLink *link = NULL;
+	KSI_LIST(KSI_HashChainLink) *tmp = NULL;
+	int mode = 0;
+
+	/* Create new link. */
+	res = KSI_HashChainLink_new(ctx, &link);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Is the siblin right of left. */
+	res = KSI_HashChainLink_setIsLeft(link, isLeft);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Chain link level correction. */
+	res = KSI_HashChainLink_setLevelCorrection(link, levelCorrection);
+	if (res != KSI_OK) goto cleanup;
+
+	if (siblingHash != NULL) mode |= 0x01;
+	if (metaHash != NULL) mode |= 0x02;
+	if (metaData != NULL) mode |= 0x04;
+
+	switch (mode) {
+		case 0x01:
+			res = KSI_HashChainLink_setImprint(link, siblingHash);
+			if (res != KSI_OK) goto cleanup;
+			break;
+		case 0x02:
+			res = KSI_HashChainLink_setMetaHash(link, metaHash);
+			if (res != KSI_OK) goto cleanup;
+			break;
+		case 0x04:
+			res = KSI_HashChainLink_setMetaData(link, metaData);
+			if (res != KSI_OK) goto cleanup;
+			break;
+		default:
+			res = KSI_UNKNOWN_ERROR;
+			goto cleanup;
+	}
+
+	tmp = *chain;
+
+	if (tmp == NULL) {
+		res = KSI_HashChainLinkList_new(ctx, &tmp);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	res = KSI_HashChainLinkList_append(tmp, link);
+	if (res != KSI_OK) goto cleanup;
+	link = NULL;
+
+	*chain = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_HashChainLinkList_freeAll(tmp);
+	KSI_HashChainLink_free(link);
+
+	return res;
+}
+
+
 static void buildHashChain(CuTest *tc, const char *hexImprint, int isLeft, int levelCorrection, KSI_LIST(KSI_HashChainLink) **chn) {
 	unsigned char buf[1024];
 	int buf_len;
@@ -22,7 +90,7 @@ static void buildHashChain(CuTest *tc, const char *hexImprint, int isLeft, int l
 	res = KSI_DataHash_fromImprint(ctx, buf, buf_len, &hsh);
 	CuAssert(tc, "Unable to create data hash", res == KSI_OK && hsh != NULL);
 
-	res = KSI_HashChain_appendLink(ctx, hsh, NULL, NULL, isLeft, levelCorrection, chn);
+	res = KSI_HashChain_appendLink(hsh, NULL, NULL, isLeft, levelCorrection, chn);
 	CuAssert(tc, "Unable to append hash chain link", res == KSI_OK && chn != NULL);
 
 }

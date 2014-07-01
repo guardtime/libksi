@@ -1,6 +1,8 @@
 #ifndef KSI_HASHCHAIN_H_
 #define KSI_HASHCHAIN_H_
 
+#include <time.h>
+
 #include "list.h"
 #include "types.h"
 
@@ -25,25 +27,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_HashChain_getCalendarAggregationTime(const KSI_LIST(KSI_HashChainLink) *chain, const KSI_Integer *pub_time, uint32_t *utc_time);
-
-	/**
-	 * This is a helper method for creating hash chains. Exactly one of the three pointers (\c siblingHash, \c metaHash xor \c metadata) must have
-	 * a not \c NULL value.
-	 * \param[in]		ctx				KSI context.
-	 * \param[in]		siblingHash		A regular hash value.
-	 * \param[in]		metaHash		A meta hash value.
-	 * \param[in]		metaData		A meta data object.
-	 * \param[in]		isLeft			Is the node to the left of the added sibling?
-	 * \param[in]		levelCorrection	Levek correction for the calculated hash.
-	 * \param[in,out]	chain			List of hash chain links, if the list is \c NULL
-	 * 									The list is initialized and returned through this
-	 * 									parameter.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_HashChainLink_free
-	 */
-	int KSI_HashChain_appendLink(KSI_CTX *ctx, KSI_DataHash *siblingHash, KSI_DataHash *metaHash, KSI_MetaData *metaData, int isLeft, unsigned int levelCorrection, KSI_LIST(KSI_HashChainLink) **chain);
+	int KSI_HashChain_getCalendarAggregationTime(const KSI_LIST(KSI_HashChainLink) *chain, const KSI_Integer *pub_time, time_t *utc_time);
 
 	/**
 	 * This function aggregates the hashchain and returns the result hash via \c outputHash parameter.

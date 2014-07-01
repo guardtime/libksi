@@ -33,7 +33,7 @@ static struct KSI_hashAlgorithmInfo_st {
 	/** Upper-case name. */
 	char *name;
 	/** Hash bit count. */
-	int bitCount;
+	unsigned int bitCount;
 	/** Is the hash algorithm trusted? */
 	int trusted;
 	/** Accepted aliases for this hash algorithm. */
@@ -78,7 +78,7 @@ int KSI_isHashAlgorithmSupported(int hash_id) {
 	return hash_id >= 0 && hash_id < KSI_NUMBER_OF_KNOWN_HASHALGS;
 }
 
-unsigned KSI_getHashLength(int hash_id) {
+unsigned int KSI_getHashLength(int hash_id) {
 	if (KSI_isHashAlgorithmSupported(hash_id)) {
 		return (KSI_hashAlgorithmInfo[hash_id].bitCount) >> 3;
 	}
@@ -142,7 +142,7 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *dige
 		goto cleanup;
 	}
 
-	*tmp_imprint = (char)hash_id;
+	*tmp_imprint = (unsigned char)hash_id;
 	memcpy(tmp_imprint + 1, digest, digest_length);
 
 	tmp_hash->imprint = tmp_imprint;
@@ -221,7 +221,7 @@ int KSI_getHashAlgorithmByName(const char *name) {
 		if (name[algorithm_id] == '_') {
 			upperName[algorithm_id] = '-';
 		} else {
-			upperName[algorithm_id] = toupper(name[algorithm_id]);
+			upperName[algorithm_id] = (char)toupper(name[algorithm_id]);
 		}
 	}
 	upperName[algorithm_id] = '\0';

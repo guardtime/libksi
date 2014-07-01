@@ -2,14 +2,16 @@
 
 #include "internal.h"
 
-static int highBit(unsigned int n) {
+static long long int highBit(long long int n) {
     n |= (n >>  1);
     n |= (n >>  2);
     n |= (n >>  4);
     n |= (n >>  8);
     n |= (n >> 16);
+    n |= (n >> 32);
     return n - (n >> 1);
 }
+
 
 static int addNvlImprint(KSI_DataHash *first, KSI_DataHash *second, KSI_DataHasher *hsr) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -210,84 +212,12 @@ cleanup:
 /**
  *
  */
-int KSI_HashChain_appendLink(KSI_CTX *ctx, KSI_DataHash *siblingHash, KSI_DataHash *metaHash, KSI_MetaData *metaData, int isLeft, unsigned int levelCorrection, KSI_LIST(KSI_HashChainLink) **chain) {
-	KSI_ERR err;
-	KSI_HashChainLink *link = NULL;
-	int res;
-	KSI_LIST(KSI_HashChainLink) *tmp = NULL;
-	int mode = 0;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, chain != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	/* Create new link. */
-	res = KSI_HashChainLink_new(ctx, &link);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Is the siblin right of left. */
-	res = KSI_HashChainLink_setIsLeft(link, isLeft);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Chain link level correction. */
-	res = KSI_HashChainLink_setLevelCorrection(link, levelCorrection);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	if (siblingHash != NULL) mode |= 0x01;
-	if (metaHash != NULL) mode |= 0x02;
-	if (metaData != NULL) mode |= 0x04;
-
-	switch (mode) {
-		case 0x01:
-			res = KSI_HashChainLink_setImprint(link, siblingHash);
-			KSI_CATCH(&err, res) goto cleanup;
-			break;
-		case 0x02:
-			res = KSI_HashChainLink_setMetaHash(link, metaHash);
-			KSI_CATCH(&err, res) goto cleanup;
-			break;
-		case 0x04:
-			res = KSI_HashChainLink_setMetaData(link, metaData);
-			KSI_CATCH(&err, res) goto cleanup;
-			break;
-		default:
-			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Not implemented");
-			goto cleanup;
-	}
-
-	tmp = *chain;
-
-	if (tmp == NULL) {
-		res = KSI_HashChainLinkList_new(ctx, &tmp);
-		KSI_CATCH(&err, res) goto cleanup;
-	}
-
-	res = KSI_HashChainLinkList_append(tmp, link);
-	KSI_CATCH(&err, res) goto cleanup;
-	link = NULL;
-
-	*chain = tmp;
-	tmp = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_HashChainLinkList_freeAll(tmp);
-	KSI_HashChainLink_free(link);
-
-	return KSI_RETURN(&err);
-}
-
-/**
- *
- */
-int KSI_HashChain_getCalendarAggregationTime(const KSI_LIST(KSI_HashChainLink) *chain, const KSI_Integer *pub_time, uint32_t *utc_time) {
+int KSI_HashChain_getCalendarAggregationTime(const KSI_LIST(KSI_HashChainLink) *chain, const KSI_Integer *pub_time, time_t *utc_time) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_uint64_t r;
-	uint32_t t = 0;
+	long long int r;
+	long long int t = 0;
 	KSI_HashChainLink *hn = NULL;
-	int i;
+	size_t i;
 	int isLeft;
 
 	if (chain == NULL || pub_time == NULL) {
@@ -295,15 +225,20 @@ int KSI_HashChain_getCalendarAggregationTime(const KSI_LIST(KSI_HashChainLink) *
 		goto cleanup;
 	}
 
-	r = KSI_Integer_getUInt64(pub_time);
+	if (KSI_HashChainLinkList_length(chain) == 0) {
+		res = KSI_INVALID_FORMAT;
+		goto cleanup;
+	}
+
+	r = (time_t) KSI_Integer_getUInt64(pub_time);
 
 	/* Traverse the list from the end to the beginning. */
-	for (i = KSI_HashChainLinkList_length(chain) - 1; i >= 0; i--) {
+	for (i = 0; i < KSI_HashChainLinkList_length(chain); i++) {
 		if (r <= 0) {
 			res = KSI_INVALID_FORMAT;
 			goto cleanup;
 		}
-		res = KSI_HashChainLinkList_elementAt(chain, i, &hn);
+		res = KSI_HashChainLinkList_elementAt(chain, KSI_HashChainLinkList_length(chain) - i - 1, &hn);
 		if (res != KSI_OK) goto cleanup;
 
 		res = KSI_HashChainLink_getIsLeft(hn, &isLeft);
@@ -322,7 +257,7 @@ int KSI_HashChain_getCalendarAggregationTime(const KSI_LIST(KSI_HashChainLink) *
 		goto cleanup;
 	}
 
-	*utc_time = t;
+	*utc_time = (time_t) t;
 
 	res = KSI_OK;
 

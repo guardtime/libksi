@@ -575,7 +575,7 @@ static int verifySignature_internal(KSI_Signature *sig) {
 	KSI_ERR err;
 	KSI_DataHash *hsh = NULL;
 	KSI_DataHash *pubHsh = NULL;
-	uint32_t utc_time;
+	time_t utc_time;
 	int res;
 	int level;
 	size_t i;
@@ -616,7 +616,7 @@ static int verifySignature_internal(KSI_Signature *sig) {
 	if (aggregationTime == NULL) aggregationTime = publicationTime;
 
 
-	if (!KSI_Integer_equalsUInt(aggregationTime, utc_time)) {
+	if ((time_t)KSI_Integer_getUInt64(aggregationTime) != utc_time) {
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Aggregation time mismatch.");
 		goto cleanup;
 	}
