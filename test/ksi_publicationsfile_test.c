@@ -97,12 +97,97 @@ static void testPublicationStringEncodingAndDecoding(CuTest *tc) {
 	KSI_free(out);
 }
 
+static void testFindPublicationByPubStr(CuTest *tc) {
+	static const char publication[] = "AAAAAA-CTJR3I-AANBWU-RY76YF-7TH2M5-KGEZVA-WLLRGD-3GKYBG-AM5WWV-4MCLSP-XPRDDI-UFMHBA";
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
+	KSI_PublicationData *pub = NULL;
+	KSI_DataHash *pubHsh = NULL;
+	KSI_Integer *pubTime = NULL;
+	KSI_DataHash *expHsh = NULL;
+	unsigned char buf[0xff];
+	int len;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_receivePublicationsFile(ctx, &pubFile);
+	CuAssert(tc, "Unable to get publications file.", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_PublicationsFile_getPublicationDataByPublicationString(pubFile, publication, &pubRec);
+	CuAssert(tc, "Unable to get publication record by publication string.", res == KSI_OK && pubRec != NULL);
+
+	res = KSI_PublicationRecord_getPublishedData(pubRec, &pub);
+	CuAssert(tc, "Unable to get published data", res == KSI_OK && pub != NULL);
+
+	res = KSI_PublicationData_getImprint(pub, &pubHsh);
+	CuAssert(tc, "Unable to get published hash", res == KSI_OK && pubHsh != NULL);
+
+	res = KSI_PublicationData_getTime(pub, &pubTime);
+	CuAssert(tc, "Unable to get publication time.", res == KSI_OK && pubTime != NULL);
+
+	KSITest_decodeHexStr("01a1b5238ffb05fccfa67546266a0b2d7130f6656026033b6b578c12e4fbbe231a", buf, sizeof(buf), &len);
+	res = KSI_DataHash_fromImprint(ctx, buf, len, &expHsh);
+
+	CuAssert(tc, "Publication hash mismatch.", KSI_DataHash_equals(expHsh, pubHsh));
+	CuAssert(tc, "Publication time mismatch", KSI_Integer_equalsUInt(pubTime, 1397520000));
+
+	KSI_DataHash_free(expHsh);
+
+}
+
+static void testFindPublicationByTime(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
+	KSI_PublicationData *pub = NULL;
+	KSI_DataHash *pubHsh = NULL;
+	KSI_Integer *pubTime = NULL;
+	KSI_DataHash *expHsh = NULL;
+	unsigned char buf[0xff];
+	int len;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_receivePublicationsFile(ctx, &pubFile);
+	CuAssert(tc, "Unable to get publications file.", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_Integer_new(ctx, 1397520000, &pubTime);
+	CuAssert(tc, "Unable to create ksi integer object.", res == KSI_OK && pubTime != NULL);
+
+	res = KSI_PublicationsFile_getPublicationDataByTime(pubFile, pubTime, &pubRec);
+	CuAssert(tc, "Unable to get publication record by publication date.", res == KSI_OK && pubRec != NULL);
+
+	res = KSI_PublicationRecord_getPublishedData(pubRec, &pub);
+	CuAssert(tc, "Unable to get published data", res == KSI_OK && pub != NULL);
+
+	res = KSI_PublicationData_getImprint(pub, &pubHsh);
+	CuAssert(tc, "Unable to get published hash", res == KSI_OK && pubHsh != NULL);
+
+	KSI_Integer_free(pubTime);
+	pubTime = NULL;
+
+	res = KSI_PublicationData_getTime(pub, &pubTime);
+	CuAssert(tc, "Unable to get publication time.", res == KSI_OK && pubTime != NULL);
+
+	KSITest_decodeHexStr("01a1b5238ffb05fccfa67546266a0b2d7130f6656026033b6b578c12e4fbbe231a", buf, sizeof(buf), &len);
+	res = KSI_DataHash_fromImprint(ctx, buf, len, &expHsh);
+
+	CuAssert(tc, "Publication hash mismatch.", KSI_DataHash_equals(expHsh, pubHsh));
+	CuAssert(tc, "Publication time mismatch", KSI_Integer_equalsUInt(pubTime, 1397520000));
+
+	KSI_DataHash_free(expHsh);
+}
+
+
 CuSuite* KSITest_Publicationsfile_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
 	SUITE_ADD_TEST(suite, testLoadPublicationsFile);
 	SUITE_ADD_TEST(suite, testVerifyPublicationsFile);
 	SUITE_ADD_TEST(suite, testPublicationStringEncodingAndDecoding);
+	SUITE_ADD_TEST(suite, testFindPublicationByPubStr);
+	SUITE_ADD_TEST(suite, testFindPublicationByTime);
 
 	return suite;
 }

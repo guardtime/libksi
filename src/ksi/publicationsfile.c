@@ -452,7 +452,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_PublicationsFile_getPublicationDataByPublicationString(const KSI_PublicationsFile *pubFile, char *pubString, KSI_PublicationRecord **pubRec) {
+int KSI_PublicationsFile_getPublicationDataByPublicationString(const KSI_PublicationsFile *pubFile, const char *pubString, KSI_PublicationRecord **pubRec) {
 	KSI_ERR err;
 	int res;
 	KSI_PublicationData *findPubData = NULL;

@@ -123,6 +123,19 @@ extern "C" {
 	int KSI_PublicationsFile_getPublicationDataByTime(const KSI_PublicationsFile *pubFile, const KSI_Integer *pubTime, KSI_PublicationRecord **pubRec);
 
 	/**
+	 * Search publication by publication string. The publication is returned via output
+	 * parameter \c pubRec if found, otherwise \c pubRec is evaluated to NULL.
+	 * \param[in]	pubFile			PublicationsFille.
+	 * \param[in]	pubString		Publication string.
+	 * \param[out]	pubRec			Pointer to receiving pointer.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 * \note The output object may not be freed by the user.
+	 */
+	int KSI_PublicationsFile_getPublicationDataByPublicationString(const KSI_PublicationsFile *pubFile, const char *pubString, KSI_PublicationRecord **pubRec);
+
+	/**
 	 * Search nearest publication by time. The next available publication (published
 	 * after the given time \c pubTime) is returned via the output parameter \c pubRec
 	 * if found, otherwise \c pubRec is evaluated to NULL.
