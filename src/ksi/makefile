@@ -42,9 +42,9 @@ LIB_OBJ = \
 	$(OBJ_DIR)\types.obj \
 	$(OBJ_DIR)\types_base.obj
 
-
+#/NODEFAULTLIB:libcmtd.lib
 CCFLAGS = /nologo /W3 /D_CRT_SECURE_NO_DEPRECATE /DCURL_STATICLIB /I$(SRC_DIR)\ksi /I$(SRC_DIR)\example /I$(SRC_DIR)
-LDFLAGS = /NOLOGO /LIBPATH:$(LIB_DIR)
+LDFLAGS = /NOLOGO /LIBPATH:$(LIB_DIR) 
 
 !IF "$(RTL)" == "MT" || "$(RTL)" == "MD"
 CCFLAGS = $(CCFLAGS) /DNDEBUG /O2
@@ -66,7 +66,7 @@ all: $(LIB_DIR)\$(LIB_NAME)$(RTL).lib include
 
 
 $(LIB_DIR)\$(LIB_NAME)$(RTL).lib: $(OBJ_DIR) $(LIB_DIR) $(LIB_OBJ)  
-	link /LIB /OUT:$@ $(LIB_OBJ)
+	link /LIB /OUT:$@ $(LDFLAGS) $(LIB_OBJ)
 	
 
 {$(SRC_DIR)}.c{$(OBJ_DIR)\}.obj:

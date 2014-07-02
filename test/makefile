@@ -40,13 +40,13 @@ ALLTESTS_OBJ = \
 	
 #Compiler and linker configuration
 EXT_LIB = libeay32$(RTL).lib \
-	user32.lib gdi32.lib \
+	user32.lib gdi32.lib advapi32.lib libc$(RTL).lib \
 	libksiapi$(RTL).$(DLL) libcurl$(RTL).lib 
 	
 
-
+#/NODEFAULTLIB:libcmtd.lib
 CCFLAGS = /nologo /W3 /D_CRT_SECURE_NO_DEPRECATE /DCURL_STATICLIB /I$(SRC_DIR) /I$(INC_DIR) /I$(CUTEST_DIR)
-LDFLAGS = /NOLOGO /LIBPATH:$(LIB_DIR)
+LDFLAGS = /NOLOGO /LIBPATH:$(LIB_DIR) 
 
 !IF "$(RTL)" == "MT" || "$(RTL)" == "MD"
 CCFLAGS = $(CCFLAGS) /DNDEBUG /O2

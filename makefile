@@ -7,7 +7,7 @@ RTL = MT
 
 
 MODEL = DLL=$(DLL) RTL=$(RTL)
-EXTRA = CCEXTRA="$(CCEXTRA)" LDEXTRA="$(LDEXTRA) /NODEFAULTLIB:LIBCMT.lib" OPENSSL_CA_FILE="$(OPENSSL_CA_FILE)" OPENSSL_CA_DIR="$(OPENSSL_CA_DIR)" CURL_DIR="$(CURL_DIR)"
+EXTRA = CCEXTRA="$(CCEXTRA)" LDEXTRA="$(LDEXTRA)" OPENSSL_CA_FILE="$(OPENSSL_CA_FILE)" OPENSSL_CA_DIR="$(OPENSSL_CA_DIR)" CURL_DIR="$(CURL_DIR)"
 
 !IF "$(OPENSSL_CA_FILE)" != ""
 TRUSTSTORE_MACROS = $(TRUSTSTORE_MACROS) /DOPENSSL_CA_FILE=\"$(OPENSSL_CA_FILE:\=\\)\"
@@ -33,7 +33,7 @@ default:
 
 all: librarys example tests
 
-librarys: libMTd libMT
+librarys: lib$(RTL)
 	
 	
 libMT:
@@ -53,7 +53,8 @@ tests: lib$(RTL)
 	nmake $(MODEL) $(EXTRA)
 	cd ..	
 
-
+test: tests
+	$(BIN_DIR)\alltests.exe
 	
 clean:
 	@for %i in ($(OBJ_DIR) $(OUT_DIR)) do @if exist .\%i rmdir /s /q .\%i
