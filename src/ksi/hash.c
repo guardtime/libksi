@@ -350,7 +350,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_DataHash_toTlv(KSI_DataHash *hsh, int tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_DataHash_toTlv(KSI_DataHash *hsh, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tmp = NULL;

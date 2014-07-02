@@ -13,8 +13,8 @@ int main(int argc, char **argv) {
 	KSI_Signature *ext = NULL;
 	KSI_NetProvider *net = NULL;
 	unsigned char *raw = NULL;
-	int raw_len;
-	int count;
+	unsigned raw_len;
+	unsigned count;
 
 	res = KSI_global_init();
 	if (res != KSI_OK) {
@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	count = fwrite(raw, 1, raw_len, out);
+	count = (unsigned)fwrite(raw, 1, raw_len, out);
 	if (count != raw_len) {
 		fprintf(stderr, "Failed to write output file.\n");
 		res = KSI_IO_ERROR;

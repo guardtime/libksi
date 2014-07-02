@@ -9,7 +9,7 @@
 
 int toHex(KSI_OctetString *certId, char **hex) {
 	int res = KSI_UNKNOWN_ERROR;
-	int len;
+	unsigned len;
 	const unsigned char *raw = NULL;
 	unsigned int raw_len = 0;
 	char *tmp = NULL;
@@ -49,7 +49,7 @@ static int printCerts(KSI_PublicationsFile *pubFile) {
 	size_t i;
 	char *hex = NULL;
 	unsigned char *raw = NULL;
-	int len = 0;
+	unsigned len = 0;
 	FILE *f = NULL;
 
 	printf("[certificates]\n");
@@ -211,7 +211,7 @@ int main(int argc, char **argv) {
 			goto cleanup;
 		}
 
-		pubTime =  KSI_Integer_getUInt64(pubTimeO);
+		pubTime =  (time_t)KSI_Integer_getUInt64(pubTimeO);
 		tm_pubTime = gmtime(&pubTime);
 		if (tm_pubTime == NULL) {
 			fprintf(stderr, "Unable to parse publication time.\n");

@@ -16,7 +16,7 @@ typedef struct CurlNetHandleCtx_st {
 	KSI_CTX *ctx;
 	CURL *curl;
 	unsigned char *raw;
-    size_t len;
+    unsigned len;
 } CurlNetHandleCtx;
 
 static void CurlNetHandleCtx_free(CurlNetHandleCtx *handleCtx) {
@@ -73,6 +73,9 @@ static size_t receiveDataFromLibCurl(void *ptr, size_t size, size_t nmemb, void 
 	KSI_LOG_debug(nc->ctx, "curl: receive data size=%lld, nmemb=%lld", size, nmemb);
 
 	bytesCount = nc->len + size * nmemb;
+	if (bytesCount > UINT_MAX) {
+		goto cleanup;
+	}
 	tmp_buffer = KSI_calloc(bytesCount, 1);
 	if (tmp_buffer == NULL) goto cleanup;
 
@@ -81,7 +84,7 @@ static size_t receiveDataFromLibCurl(void *ptr, size_t size, size_t nmemb, void 
 
 	KSI_free(nc->raw);
 	nc->raw = tmp_buffer;
-	nc->len = bytesCount;
+	nc->len = (unsigned)bytesCount;
 	tmp_buffer = NULL;
 
 	bytesCount = size * nmemb;
@@ -140,7 +143,7 @@ static int curlSendRequest(KSI_NetHandle *handle, char *agent, char *url, int co
 	int res;
 	KSI_CTX *ctx = NULL;
 	const unsigned char *request = NULL;
-	int request_len = 0;
+	unsigned request_len = 0;
 	CurlNetHandleCtx *hc = NULL;
 
 	KSI_PRE(&err, handle != NULL) goto cleanup;
@@ -171,6 +174,11 @@ static int curlSendRequest(KSI_NetHandle *handle, char *agent, char *url, int co
 	res = KSI_NetHandle_getRequest(handle, &request, &request_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
+	if (request_len > LONG_MAX) {
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Request too long");
+		goto cleanup;
+	}
+
 	res = KSI_NetHandle_setReadResponseFn(handle, curlReceive);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -180,7 +188,7 @@ static int curlSendRequest(KSI_NetHandle *handle, char *agent, char *url, int co
 	if (request != NULL) {
 		curl_easy_setopt(hc->curl, CURLOPT_POST, 1);
 		curl_easy_setopt(hc->curl, CURLOPT_POSTFIELDS, (char *)request);
-		curl_easy_setopt(hc->curl, CURLOPT_POSTFIELDSIZE, request_len);
+		curl_easy_setopt(hc->curl, CURLOPT_POSTFIELDSIZE, (long)request_len);
 	}
 	curl_easy_setopt(hc->curl, CURLOPT_NOPROGRESS, 1);
 

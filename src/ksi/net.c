@@ -8,11 +8,11 @@ struct KSI_NetHandle_st {
 	/** Request destination. */
 	unsigned char *request;
 	/** Length of the original request. */
-	int request_length;
+	unsigned request_length;
 	/** Response for the request. NULL if not yet present. */
 	unsigned char *response;
 	/** Length of the response. */
-	int response_length;
+	unsigned response_length;
 
 	void (*handleCtx_free)(void *);
 
@@ -42,7 +42,7 @@ KSI_IMPLEMENT_GET_CTX(KSI_NetHandle);
 /**
  *
  */
-int KSI_NetHandle_new(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle) {
+int KSI_NetHandle_new(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_NetHandle **handle) {
 	KSI_ERR err;
 	KSI_NetHandle *tmp = NULL;
 
@@ -193,7 +193,7 @@ void KSI_NetProvider_free(KSI_NetProvider *provider) {
 	}
 }
 
-int KSI_NetHandle_setResponse(KSI_NetHandle *handle, const unsigned char *response, int response_len) {
+int KSI_NetHandle_setResponse(KSI_NetHandle *handle, const unsigned char *response, unsigned response_len) {
 	KSI_ERR err;
 	unsigned char *resp = NULL;
 
@@ -272,7 +272,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_NetHandle_getRequest(KSI_NetHandle *handle, const unsigned char **response, int *response_len) {
+int KSI_NetHandle_getRequest(KSI_NetHandle *handle, const unsigned char **response, unsigned *response_len) {
 	KSI_ERR err;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(handle->ctx, &err);
@@ -309,7 +309,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_NetHandle_getResponse(KSI_NetHandle *handle, const unsigned char **response, int *response_len) {
+int KSI_NetHandle_getResponse(KSI_NetHandle *handle, const unsigned char **response, unsigned *response_len) {
 	KSI_ERR err;
 	int res;
 	KSI_PRE(&err, handle != NULL) goto cleanup;

@@ -301,7 +301,7 @@ void KSI_free(void *ptr);
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_sendSignRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle);
+int KSI_sendSignRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_NetHandle **handle);
 
 /**
  * Send a binary extend request using the specified KSI context.
@@ -312,7 +312,7 @@ int KSI_sendSignRequest(KSI_CTX *ctx, const unsigned char *request, int request_
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_sendExtendRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle);
+int KSI_sendExtendRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_NetHandle **handle);
 
 /**
  * Send a binary request to download publications file using the specified KSI context.
@@ -323,7 +323,7 @@ int KSI_sendExtendRequest(KSI_CTX *ctx, const unsigned char *request, int reques
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle);
+int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_NetHandle **handle);
 
 /**
  * Accessor method for the publications file. It will download the publications file from

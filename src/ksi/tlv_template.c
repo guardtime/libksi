@@ -479,7 +479,7 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 				case KSI_TLV_TEMPLATE_SEEK_POS:
 					uint64Val = (KSI_uint64_t)KSI_TLV_getAbsoluteOffset(tlv);
 
-					res = ((int (*)(void *, int))t->setValue)(payload, uint64Val);
+					res = ((int (*)(void *, KSI_uint64_t))t->setValue)(payload, uint64Val);
 					KSI_CATCH(&err, res) goto cleanup;
 
 					break;

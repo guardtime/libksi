@@ -116,7 +116,7 @@ KSI_DEFINE_LIST(KSI_PKICertificate);
  * KSI_Integer
  */
 void KSI_Integer_free(KSI_Integer *kint);
-int KSI_Integer_getSize(const KSI_Integer *kint, int *size);
+int KSI_Integer_getSize(const KSI_Integer *kint, unsigned *size);
 KSI_uint64_t KSI_Integer_getUInt64(const KSI_Integer *kint);
 int KSI_Integer_new(KSI_CTX *ctx, KSI_uint64_t value, KSI_Integer **kint);
 int KSI_Integer_equals(const KSI_Integer *a, const KSI_Integer *b);
@@ -124,7 +124,7 @@ int KSI_Integer_compare(const KSI_Integer *a, const KSI_Integer *b);
 int KSI_Integer_equalsUInt(const KSI_Integer *o, KSI_uint64_t i);
 KSI_Integer *KSI_Integer_clone(const KSI_Integer *val);
 int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_Integer **integer);
-int KSI_Integer_toTlv(KSI_Integer *i, int tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+int KSI_Integer_toTlv(KSI_Integer *i, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 /**
  * KSI_OctetString
@@ -134,7 +134,7 @@ int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, unsigned int da
 int KSI_OctetString_extract(const KSI_OctetString *t, const unsigned char **data, unsigned int *data_len);
 int KSI_OctetString_equals(const KSI_OctetString *left, const KSI_OctetString *right);
 int KSI_OctetString_fromTlv(KSI_TLV *tlv, KSI_OctetString **oct);
-int KSI_OctetString_toTlv(KSI_OctetString *oct, int tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+int KSI_OctetString_toTlv(KSI_OctetString *oct, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 /**
  * KSI_Utf8String
@@ -143,7 +143,7 @@ void KSI_Utf8String_free(KSI_Utf8String *t);
 int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, KSI_Utf8String **t);
 char *KSI_Utf8String_cstr(KSI_Utf8String *t);
 int KSI_Utf8String_fromTlv(KSI_TLV *tlv, KSI_Utf8String **u8str);
-int KSI_Utf8String_toTlv(KSI_Utf8String *u8str, int tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+int KSI_Utf8String_toTlv(KSI_Utf8String *u8str, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 /**
  * KSI_AggregationHashChain

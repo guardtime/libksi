@@ -220,7 +220,7 @@ void KSI_global_cleanup(void) {
 	}
 }
 
-int KSI_sendSignRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle) {
+int KSI_sendSignRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_NetHandle **handle) {
 	KSI_ERR err;
 	KSI_NetHandle *hndl = NULL;
 	int res;
@@ -252,7 +252,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_sendExtendRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle) {
+int KSI_sendExtendRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_NetHandle **handle) {
 	KSI_ERR err;
 	KSI_NetHandle *hndl = NULL;
 	int res;
@@ -285,7 +285,7 @@ cleanup:
 }
 
 
-int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle) {
+int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_NetHandle **handle) {
 	KSI_ERR err;
 	KSI_NetHandle *hndl = NULL;
 	int res;
@@ -321,7 +321,7 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 	int res;
 	KSI_NetHandle *handle = NULL;
 	const unsigned char *raw = NULL;
-	int raw_len = 0;
+	unsigned raw_len = 0;
 	KSI_PublicationsFile *tmp = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;

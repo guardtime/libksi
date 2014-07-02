@@ -16,10 +16,10 @@ int main(int argc, char **argv) {
 	KSI_Signature *sign = NULL;
 
 	unsigned char *raw = NULL;
-	int raw_len;
+	unsigned raw_len;
 
 	unsigned char buf[1024];
-	int buf_len;
+	unsigned buf_len;
 
 	/** Global init of KSI */
 	res = KSI_global_init();
@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
 
 	/* Read the input file and calculate the hash of its contents. */
 	while (!feof(in)) {
-		buf_len = fread(buf, 1, sizeof(buf), in);
+		buf_len = (unsigned)fread(buf, 1, sizeof(buf), in);
 
 		/* Add  next block to the calculation. */
 		res = KSI_DataHasher_add(hsr, buf, buf_len);

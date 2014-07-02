@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
 	KSI_DataHasher *hsr = NULL;
 	FILE *in = NULL;
 	unsigned char buf[1024];
-	int buf_len;
+	unsigned buf_len;
 
 	/* Init global resources. */
 	res = KSI_global_init();
@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
 
 	/* Calculate the hash of the document. */
 	while (!feof(in)) {
-		buf_len = fread(buf, 1, sizeof(buf), in);
+		buf_len = (unsigned)fread(buf, 1, sizeof(buf), in);
 		res = KSI_DataHasher_add(hsr, buf, buf_len);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable hash the document.\n");

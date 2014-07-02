@@ -119,7 +119,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_OctetString_toTlv(KSI_OctetString *oct, int tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_OctetString_toTlv(KSI_OctetString *oct, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tmp = NULL;
@@ -233,7 +233,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_Utf8String_toTlv(KSI_Utf8String *u8str, int tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_Utf8String_toTlv(KSI_Utf8String *u8str, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tmp = NULL;
@@ -290,7 +290,7 @@ cleanup:
 	return clone;
 }
 
-int KSI_Integer_getSize(const KSI_Integer *kint, int *size) {
+int KSI_Integer_getSize(const KSI_Integer *kint, unsigned *size) {
 	KSI_ERR err;
 	KSI_PRE(&err, kint != NULL) goto cleanup;
 	KSI_BEGIN(kint->ctx, &err);
@@ -320,7 +320,12 @@ int KSI_Integer_compare(const KSI_Integer *a, const KSI_Integer *b) {
 	if (a == b) return 0;
 	if (a == NULL && b != NULL) return -1;
 	if (a != NULL && b == NULL) return 1;
-	return a->value - b->value;
+	if (a->value > b->value)
+		return 1;
+	else if (a->value < b->value)
+		return -1;
+	else
+		return 0;
 }
 
 int KSI_Integer_new(KSI_CTX *ctx, KSI_uint64_t value, KSI_Integer **ksiInteger) {
@@ -382,7 +387,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_Integer_toTlv(KSI_Integer *integer, int tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_Integer_toTlv(KSI_Integer *integer, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tmp = NULL;

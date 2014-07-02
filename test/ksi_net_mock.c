@@ -4,15 +4,15 @@
 #include "../src/ksi/internal.h"
 
 unsigned char *KSI_NET_MOCK_request = NULL;
-int KSI_NET_MOCK_request_len;
+unsigned KSI_NET_MOCK_request_len;
 unsigned char *KSI_NET_MOCK_response = NULL;
-int KSI_NET_MOCK_response_len;
+unsigned KSI_NET_MOCK_response_len;
 
 static int mockPublicationsFileReceive(KSI_NetHandle *handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	FILE *f = NULL;
 	unsigned char *raw = NULL;
-	int len;
+	unsigned len;
 	long int raw_size = 0;
 
 	if (handle == NULL) goto cleanup;
@@ -48,13 +48,13 @@ static int mockPublicationsFileReceive(KSI_NetHandle *handle) {
 		goto cleanup;
 	}
 
-	raw = KSI_calloc(raw_size, 1);
+	raw = KSI_calloc((unsigned)raw_size, 1);
 	if (raw == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
 
-	len = fread(raw, 1, raw_size, f);
+	len = (unsigned)fread(raw, 1, (unsigned)raw_size, f);
 	if (len != raw_size) {
 		res = KSI_IO_ERROR;
 		goto cleanup;
@@ -91,7 +91,7 @@ cleanup:
 static int mockSend(KSI_NetHandle *handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	const unsigned char *req = NULL;
-	int req_len;
+	unsigned req_len;
 
 	KSI_LOG_debug(KSI_NetHandle_getCtx(handle), "Initiate MOCK request.");
 
@@ -124,7 +124,7 @@ static int mockSendExtendRequest(KSI_NetProvider *netProvider, KSI_NetHandle *ha
 static int mockSendPublicationsFileRequest(KSI_NetProvider *netProvider, KSI_NetHandle *handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	const unsigned char *req = NULL;
-	int req_len;
+	unsigned req_len;
 
 	KSI_LOG_debug(KSI_NetHandle_getCtx(handle), "Initiate MOCK request.");
 

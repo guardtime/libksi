@@ -100,10 +100,10 @@ static void testSerializeSignature(CuTest *tc) {
 	int res;
 
 	unsigned char in[0x1ffff];
-	int in_len = 0;
+	unsigned in_len = 0;
 
 	unsigned char *out = NULL;
-	int out_len = 0;
+	unsigned out_len = 0;
 
 	FILE *f = NULL;
 
@@ -114,7 +114,7 @@ static void testSerializeSignature(CuTest *tc) {
 	f = fopen(TEST_SIGNATURE_FILE, "rb");
 	CuAssert(tc, "Unable to open signature file.", f != NULL);
 
-	in_len = fread(in, 1, sizeof(in), f);
+	in_len = (unsigned)fread(in, 1, sizeof(in), f);
 	CuAssert(tc, "Nothing read from signature file.", in_len > 0);
 
 	res = KSI_Signature_parse(ctx, in, in_len, &sig);
@@ -122,7 +122,7 @@ static void testSerializeSignature(CuTest *tc) {
 
 	res = KSI_Signature_serialize(sig, &out, &out_len);
 	CuAssert(tc, "Failed to serialize signature", res == KSI_OK);
-	CuAssertIntEquals_Msg(tc, "Serialized signature length", in_len, out_len);
+	CuAssert(tc, "Serialized signature length mismatch", in_len == out_len);
 	CuAssert(tc, "Serialized signature content mismatch", !memcmp(in, out, in_len));
 
 	KSI_free(out);
@@ -133,7 +133,7 @@ static void testVerifyDocument(CuTest *tc) {
 	int res;
 
 	unsigned char in[0x1ffff];
-	int in_len = 0;
+	unsigned in_len = 0;
 
 	char doc[] = "LAPTOP";
 
@@ -145,7 +145,7 @@ static void testVerifyDocument(CuTest *tc) {
 	f = fopen(TEST_SIGNATURE_FILE, "rb");
 	CuAssert(tc, "Unable to open signature file.", f != NULL);
 
-	in_len = fread(in, 1, sizeof(in), f);
+	in_len = (unsigned)fread(in, 1, sizeof(in), f);
 	CuAssert(tc, "Nothing read from signature file.", in_len > 0);
 
 	res = KSI_Signature_parse(ctx, in, in_len, &sig);
@@ -164,7 +164,7 @@ static void testVerifyDocumentHash(CuTest *tc) {
 	int res;
 
 	unsigned char in[0x1ffff];
-	int in_len = 0;
+	unsigned in_len = 0;
 
 	char doc[] = "LAPTOP";
 	KSI_DataHash *hsh = NULL;
@@ -177,7 +177,7 @@ static void testVerifyDocumentHash(CuTest *tc) {
 	f = fopen(TEST_SIGNATURE_FILE, "rb");
 	CuAssert(tc, "Unable to open signature file.", f != NULL);
 
-	in_len = fread(in, 1, sizeof(in), f);
+	in_len = (unsigned)fread(in, 1, sizeof(in), f);
 	CuAssert(tc, "Nothing read from signature file.", in_len > 0);
 
 	res = KSI_Signature_parse(ctx, in, in_len, &sig);

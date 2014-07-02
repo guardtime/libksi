@@ -51,7 +51,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_PKICertificate_new(KSI_CTX *ctx, const void *der, int der_len, KSI_PKICertificate **cert);
+	int KSI_PKICertificate_new(KSI_CTX *ctx, const void *der, size_t der_len, KSI_PKICertificate **cert);
 
 	/**
 	 * Destructor for the PKI Certificate object.
@@ -80,7 +80,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_PKICertificate_toTlv(KSI_PKICertificate *cert, int tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+	int KSI_PKICertificate_toTlv(KSI_PKICertificate *cert, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 	/**
 	 * Function to serialise the KSI Certificate object as DER.
@@ -88,7 +88,7 @@ extern "C" {
 	 * \param[out]	raw			Pointer to the receiving pointer.
 	 * \param[out]	raw_len		Serialized length.
 	 */
-	int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, int *raw_len);
+	int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, unsigned *raw_len);
 
 	/**
 	 * Constructor for PKI Signature object.
@@ -100,13 +100,18 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, int raw_len, KSI_PKISignature **signature);
+	int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, unsigned raw_len, KSI_PKISignature **signature);
 
 	/**
 	 * Destructor for the PKI Signature object.
 	 * \param[in]	sig			PKI Signature object.
 	 */
 	void KSI_PKISignature_free(KSI_PKISignature *sig);
+
+	/**
+	 * TODO!
+	 */
+	int KSI_PKISignature_serialize(KSI_PKISignature *sig, unsigned char **raw, unsigned *raw_len);
 
 	/**
 	 * Function for converting a #KSI_TLV structure into a #KSI_PKISignature object.
@@ -129,7 +134,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_PKISignature_toTlv(KSI_PKISignature *sig, int tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+	int KSI_PKISignature_toTlv(KSI_PKISignature *sig, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 	/**
 	 * Function for verifying a raw signature. TODO! - explain in detail!
@@ -144,7 +149,7 @@ extern "C" {
 	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, unsigned int data_len, const char *algoOid, const unsigned char *signature, unsigned int signature_len, const KSI_PKICertificate *cert);
+	int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, unsigned data_len, const char *algoOid, const unsigned char *signature, unsigned signature_len, const KSI_PKICertificate *cert);
 
 	/**
 	 * Function for verifying the data with PKI Signature.

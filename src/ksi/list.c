@@ -161,7 +161,7 @@ int KSI_List_indexOf(const KSI_List *list, const void *o, size_t *pos) {
 	if (list == NULL || o == NULL) goto cleanup;
 	for (i = 0; i < list->arr_len; i++) {
 		if (o == list->arr[i]) {
-			*pos = (int)i;
+			*pos = i;
 			res = KSI_OK;
 			goto cleanup;
 		}

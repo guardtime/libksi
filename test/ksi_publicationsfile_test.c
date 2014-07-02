@@ -3,14 +3,14 @@
 
 extern KSI_CTX *ctx;
 extern unsigned char *KSI_NET_MOCK_response;
-extern int KSI_NET_MOCK_response_len;
+extern unsigned KSI_NET_MOCK_response_len;
 
 #define TEST_PUBLICATIONS_FILE "test/resource/tlv/publications.tlv"
 
 static void setFileMockResponse(CuTest *tc, const char *fileName) {
 	FILE *f = NULL;
 	unsigned char *resp = NULL;
-	int resp_size = 0xfffff;
+	unsigned resp_size = 0xfffff;
 
 	resp = KSI_calloc(resp_size, 1);
 	CuAssert(tc, "Out of memory", resp != NULL);
@@ -19,7 +19,7 @@ static void setFileMockResponse(CuTest *tc, const char *fileName) {
 	f = fopen(fileName, "rb");
 	CuAssert(tc, "Unable to open sample response file", f != NULL);
 
-	KSI_NET_MOCK_response_len = fread(resp, 1, resp_size, f);
+	KSI_NET_MOCK_response_len = (unsigned)fread(resp, 1, resp_size, f);
 	fclose(f);
 
 	if (KSI_NET_MOCK_response != NULL) {
@@ -105,7 +105,7 @@ static void testFindPublicationByPubStr(CuTest *tc) {
 	KSI_Integer *pubTime = NULL;
 	KSI_DataHash *expHsh = NULL;
 	unsigned char buf[0xff];
-	int len;
+	unsigned len;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -144,7 +144,7 @@ static void testFindPublicationByTime(CuTest *tc) {
 	KSI_DataHash *expHsh = NULL;
 	KSI_LIST(KSI_Utf8String) *pubRefList = NULL;
 	unsigned char buf[0xff];
-	int len;
+	unsigned len;
 
 	KSI_ERR_clearErrors(ctx);
 

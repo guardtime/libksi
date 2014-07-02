@@ -54,7 +54,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_Signature_parse(KSI_CTX *ctx, unsigned char *raw, int raw_len, KSI_Signature **sig);
+	int KSI_Signature_parse(KSI_CTX *ctx, unsigned char *raw, unsigned raw_len, KSI_Signature **sig);
 
 	/**
 	 * A convenience function for reading a signature from a file.
@@ -80,7 +80,7 @@ extern "C" {
 	 * \note The output memory buffer belongs to the caller and needs to be freed
 	 * by the caller using #KSI_free.
 	 */
-	int KSI_Signature_serialize(KSI_Signature *sig, unsigned char **raw, int *raw_len);
+	int KSI_Signature_serialize(KSI_Signature *sig, unsigned char **raw, unsigned *raw_len);
 
 	/**
 	 * This function signs the given data hash \c hsh. This function requires a access to

@@ -75,7 +75,7 @@ static void TestTlvSetRaw(CuTest* tc) {
 
 	unsigned char tmp[0xff] = { 0xaa, 0xbb, 0xcc, 0xdd };
 	const unsigned char *val = NULL;
-	unsigned int val_len = 0;
+	unsigned val_len = 0;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -99,7 +99,7 @@ static void TestTlv8FromReader(CuTest* tc) {
 	/* TLV type = 7, length = 21 */
 	unsigned char raw[] = "\x07\x15THIS IS A TLV CONTENT";
 	const unsigned char *val = NULL;
-	unsigned int val_len = 0;
+	unsigned val_len = 0;
 
 
 	KSI_RDR *rdr = NULL;
@@ -114,8 +114,8 @@ static void TestTlv8FromReader(CuTest* tc) {
 	res = KSI_TLV_getRawValue(tlv, &val, &val_len);
 	CuAssert(tc, "Unable to get raw value", res == KSI_OK);
 
-	CuAssertIntEquals_Msg(tc, "TLV length", 21, val_len);
-	CuAssertIntEquals_Msg(tc, "TLV type", 7, KSI_TLV_getTag(tlv));
+	CuAssert(tc, "TLV length mismatch", 21 == val_len);
+	CuAssert(tc, "TLV type mismatch", 7 == KSI_TLV_getTag(tlv));
 
 	CuAssert(tc, "TLV content differs", !memcmp(val, raw + 2, val_len));
 
@@ -128,7 +128,7 @@ static void TestTlv8getRawValueSharedMem(CuTest* tc) {
 	/* TLV type = 7, length = 21 */
 	unsigned char raw[] = "\x07\x15THIS IS A TLV CONTENT";
 	const unsigned char *tmp = NULL;
-	unsigned int tmp_len = sizeof(tmp);
+	unsigned tmp_len = sizeof(tmp);
 
 	KSI_RDR *rdr = NULL;
 	KSI_TLV *tlv = NULL;
@@ -142,7 +142,7 @@ static void TestTlv8getRawValueSharedMem(CuTest* tc) {
 	res = KSI_TLV_getRawValue(tlv, &tmp, &tmp_len);
 	CuAssert(tc, "Failed to retrieve raw value.", res == KSI_OK);
 
-	CuAssertIntEquals_Msg(tc, "TLV payload length", 21, tmp_len);
+	CuAssert(tc, "TLV payload length mismatch", 21 == tmp_len);
 
 	KSI_TLV_free(tlv);
 	KSI_RDR_close(rdr);
@@ -153,7 +153,7 @@ static void TestTlv16FromReader(CuTest* tc) {
 	/* TLV16 type = 0x2aa, length = 21 */
 	unsigned char raw[] = "\x82\xaa\x00\x15THIS IS A TLV CONTENT";
 	const unsigned char *val = NULL;
-	unsigned int val_len = 0;
+	unsigned val_len = 0;
 
 	KSI_RDR *rdr = NULL;
 	KSI_TLV *tlv = NULL;
@@ -169,8 +169,8 @@ static void TestTlv16FromReader(CuTest* tc) {
 	res = KSI_TLV_getRawValue(tlv, &val, &val_len);
 	CuAssert(tc, "Unable to get raw value", res == KSI_OK);
 
-	CuAssertIntEquals_Msg(tc, "TLV length", 21, val_len);
-	CuAssertIntEquals_Msg(tc, "TLV type", 0x2aa, KSI_TLV_getTag(tlv));
+	CuAssert(tc, "TLV length mismatch", 21 == val_len);
+	CuAssert(tc, "TLV type mismatch", 0x2aa == KSI_TLV_getTag(tlv));
 
 	CuAssert(tc, "TLV content differs", !memcmp(val, raw + 4, val_len));
 
@@ -272,7 +272,7 @@ static void TestTlvGetNextNested(CuTest* tc) {
 	KSI_TLV *tlv = NULL;
 	KSI_TLV *nested = NULL;
 	uint64_t uint;
-	int i = 0;
+	unsigned i = 0;
 	KSI_LIST(KSI_TLV) *list = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -330,7 +330,7 @@ static void TestTlvGetNextNestedSharedMemory(CuTest* tc) {
 	KSI_TLV *tlv = NULL;
 	KSI_TLV *nested = NULL;
 	KSI_LIST(KSI_TLV) *list = NULL;
-	int i = 0;
+	unsigned i = 0;
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw) - 1, &rdr);
@@ -366,7 +366,7 @@ static void TestTlvSerializeString(CuTest* tc) {
 	/* TLV16 type = 0x2aa, length = 21 */
 	unsigned char raw[] = "\x82\xaa\x00\x0alore ipsum";
 	const char *str = NULL;
-	unsigned int buf_len;
+	unsigned buf_len;
 	unsigned char buf[0xffff];
 
 	KSI_RDR *rdr = NULL;
@@ -387,7 +387,7 @@ static void TestTlvSerializeString(CuTest* tc) {
 
 	res = KSI_TLV_serialize_ex(tlv, buf, sizeof(buf), &buf_len);
 	CuAssert(tc, "Failed to serialize string TLV", res == KSI_OK);
-	CuAssertIntEquals_Msg(tc, "Size of serialized TLV", sizeof(raw) - 1, buf_len);
+	CuAssert(tc, "Size of serialized TLV mismatch", sizeof(raw) - 1 == buf_len);
 
 	CuAssert(tc, "Serialized TLV does not match original", !memcmp(raw, buf, buf_len));
 
@@ -400,7 +400,7 @@ static void TestTlvSerializeUint(CuTest* tc) {
 	/* TLV type = 1a, length = 8 */
 	unsigned char raw[] = {0x1a, 0x08, 0xca, 0xfe, 0xba, 0xbe, 0xca, 0xfe, 0xfa, 0xce};
 	uint64_t value;
-	unsigned int buf_len;
+	unsigned buf_len;
 	unsigned char buf[0xffff];
 
 
@@ -424,7 +424,7 @@ static void TestTlvSerializeUint(CuTest* tc) {
 
 	res = KSI_TLV_serialize_ex(tlv, buf, sizeof(buf), &buf_len);
 	CuAssert(tc, "Failed to serialize string value of tlv.", res == KSI_OK);
-	CuAssertIntEquals_Msg(tc, "Size of serialized TLV", sizeof(raw), buf_len);
+	CuAssert(tc, "Size of serialized TLV mismatch", sizeof(raw) == buf_len);
 
 	CuAssert(tc, "Serialized value does not match", !memcmp(raw, buf, buf_len));
 
@@ -436,7 +436,7 @@ static void TestTlvSerializeNested(CuTest* tc) {
 	int res;
 	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
 	char *str = NULL;
-	unsigned int buf_len;
+	unsigned buf_len;
 	unsigned char buf[0xffff];
 
 
@@ -465,7 +465,7 @@ static void TestTlvSerializeNested(CuTest* tc) {
 	res = KSI_TLV_serialize_ex(tlv, buf, sizeof(buf), &buf_len);
 
 	CuAssert(tc, "Failed to serialize nested values of tlv.", res == KSI_OK);
-	CuAssertIntEquals_Msg(tc, "Size of serialized TLV", sizeof(raw) - 1, buf_len);
+	CuAssert(tc, "Size of serialized TLV mismatch", sizeof(raw) - 1 == buf_len);
 
 	CuAssert(tc, "Serialized value does not match original", !KSITest_memcmp(raw, buf, buf_len));
 
@@ -481,7 +481,7 @@ static void TestTlvRequireCast(CuTest* tc) {
 	KSI_TLV *tlv = NULL;
 
 	const unsigned char *ptr = NULL;
-	unsigned int len;
+	unsigned len;
 	uint64_t uintval;
 
 	unsigned char raw[] = "\x07\x06QWERTY";
@@ -550,7 +550,7 @@ static void TestTlvFromUint(CuTest* tc) {
 	KSI_uint64_t intVal;
 
 	const unsigned char *val = NULL;
-	unsigned int val_len = 0;
+	unsigned val_len = 0;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -567,7 +567,7 @@ static void TestTlvFromUint(CuTest* tc) {
 	res = KSI_TLV_getRawValue(tlv, &val, &val_len);
 	CuAssert(tc, "Unable to get raw value", res == KSI_OK);
 
-	CuAssertIntEquals_Msg(tc, "Raw tlv payload lenght", 3, val_len);
+	CuAssert(tc, "Raw tlv payload lenght mismatch", 3 == val_len);
 
 	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_INT);
 	CuAssert(tc, "Unable to cast from raw to uint", res == KSI_OK);
@@ -582,7 +582,7 @@ static void TestTlvComposeNested(CuTest* tc) {
 	KSI_TLV *outer = NULL;
 	KSI_TLV *nested = NULL;
 	unsigned char raw[] = {0x01, 0x06, 0x61, 0x04, 0xca, 0xfe, 0xba, 0xbe};
-	unsigned int buf_len;
+	unsigned buf_len;
 	unsigned char buf[0xffff];
 	int res;
 
@@ -604,7 +604,7 @@ static void TestTlvComposeNested(CuTest* tc) {
 
 	res = KSI_TLV_serialize_ex(outer, buf, sizeof(buf), &buf_len);
 	CuAssert(tc, "Unable to serialize outer TLV.", res == KSI_OK);
-	CuAssertIntEquals_Msg(tc, "Size of serialized data", sizeof(raw), buf_len);
+	CuAssert(tc, "Size of serialized data mismatch", sizeof(raw) == buf_len);
 	CuAssert(tc, "Unexpected serialized data", !memcmp(raw, buf, buf_len));
 
 	KSI_TLV_free(outer);
@@ -615,7 +615,7 @@ static void TestTlvComposeNestedMore(CuTest* tc) {
 	KSI_TLV *outer = NULL;
 	KSI_TLV *nested = NULL;
 	unsigned char raw[] = {0x01, 0x0b, 0x61, 0x04, 0xca, 0xfe, 0xba, 0xbe, 0x61, 0x03, 0x47, 0x54, 0x00 };
-	unsigned int buf_len;
+	unsigned buf_len;
 	unsigned char buf[0xffff];
 	int res;
 
@@ -644,7 +644,7 @@ static void TestTlvComposeNestedMore(CuTest* tc) {
 
 	res = KSI_TLV_serialize_ex(outer, buf, sizeof(buf), &buf_len);
 	CuAssert(tc, "Unable to serialize outer TLV.", res == KSI_OK);
-	CuAssertIntEquals_Msg(tc, "Size of serialized data", sizeof(raw), buf_len);
+	CuAssert(tc, "Size of serialized data mismatch", sizeof(raw) == buf_len);
 	CuAssert(tc, "Unexpected serialized data", !KSITest_memcmp(raw, buf, buf_len));
 
 	KSI_TLV_free(outer);
