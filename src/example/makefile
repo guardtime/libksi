@@ -41,12 +41,12 @@ EXAMPLE_BIN = \
 	
 #external libraries used for linking. 
 EXT_LIB = libeay32$(RTL).lib \
-	gdi32.lib user32.lib libcurl$(RTL).lib \
-	$(LIB_NAME)$(RTL).$(DLL)
+	user32.lib gdi32.lib advapi32.lib libc$(RTL).lib \
+	$(LIB_NAME)$(RTL).$(DLL) libcurl$(RTL).lib
 	
-	
+#/NODEFAULTLIB:libcmtd.lib	
 CCFLAGS = /nologo /W3 /D_CRT_SECURE_NO_DEPRECATE /DCURL_STATICLIB /I$(INCLUDE_DIR) /I$(SRC_DIR)
-LDFLAGS = /NOLOGO /LIBPATH:$(LIB_DIR)
+LDFLAGS = /NOLOGO /LIBPATH:$(LIB_DIR) 
 
 !IF "$(RTL)" == "MT" || "$(RTL)" == "MD"
 CCFLAGS = $(CCFLAGS) /DNDEBUG /O2
@@ -74,7 +74,7 @@ default: $(EXAMPLE_BIN)
 
 #Linking obj files to exe files
 $(EXAMPLE_BIN): $(OBJ_DIR)\$(@B).obj $(OBJ_DIR) $(BIN_DIR)
-	link $(LDFLAGS) /OUT:$@ $(OBJ_DIR)\$(@B).obj  $(EXT_LIB) 
+	link $(LDFLAGS)  /OUT:$@ $(OBJ_DIR)\$(@B).obj  $(EXT_LIB)
 
 	
 #Compiling c files to obj files
