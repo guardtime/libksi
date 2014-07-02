@@ -12,6 +12,6 @@ SET OPENSSL_CA_FILE=C:\Users\Taavi\Documents\GuardTime\ksicapi\test\resource\tlv
 SET RUNNTIME=MTd
 
 nmake clean
-nmake RTL="%RUNNTIME%" CURL_DIR="%CURL_DIR%" OPENSSL_CA_FILE="%OPENSSL_CA_FILE%" OPENSSL_DIR="%OPENSSL_DIR%" example
+nmake RTL="%RUNNTIME%" CURL_DIR="%CURL_DIR%" OPENSSL_CA_FILE="%OPENSSL_CA_FILE%" OPENSSL_DIR="%OPENSSL_DIR%" all
 
 pause
