@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "internal.h"
-#include "net_curl.h"
+#include "net_http.h"
 
 #define KSI_ERR_STACK_LEN 16
 
@@ -136,7 +136,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	if (res != KSI_OK) goto cleanup;
 
 	/* Initialize curl as the net handle. */
-	res = KSI_CurlNetProvider_new(ctx, &netProvider);
+	res = KSI_HttpClient_new(ctx, &netProvider);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_setNetworkProvider(ctx, netProvider);
@@ -158,7 +158,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 
 cleanup:
 
-	KSI_NetProvider_free(netProvider);
+	KSI_NetworkClient_free(netProvider);
 	KSI_PKITruststore_free(pkiTruststore);
 
 	KSI_CTX_free(ctx);
@@ -175,7 +175,7 @@ void KSI_CTX_free(KSI_CTX *context) {
 
 		KSI_Logger_free(context->logger);
 
-		KSI_NetProvider_free(context->netProvider);
+		KSI_NetworkClient_free(context->netProvider);
 		KSI_PKITruststore_free(context->pkiTruststore);
 
 		KSI_PublicationsFile_free(context->publicationsFile);
@@ -684,5 +684,5 @@ cleanup:																					\
 	CTX_VALUEP_GETTER(var, nam, typ)														\
 
 CTX_GET_SET_VALUE(pkiTruststore, PKITruststore, KSI_PKITruststore, KSI_PKITruststore_free)
-CTX_GET_SET_VALUE(netProvider, NetworkProvider, KSI_NetworkClient, KSI_NetProvider_free)
+CTX_GET_SET_VALUE(netProvider, NetworkProvider, KSI_NetworkClient, KSI_NetworkClient_free)
 CTX_GET_SET_VALUE(logger, Logger, KSI_Logger, KSI_Logger_free)

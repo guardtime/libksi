@@ -121,6 +121,7 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSITest_HashChain_getSuite);
 	addSuite(suite, KSITest_Signature_getSuite);
 	addSuite(suite, KSITest_Publicationsfile_getSuite);
+	addSuite(suite, KSITest_Truststore_getSuite);
 
 	return suite;
 }

@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include "internal.h"
-#include "net_curl.h"
+#include "net_http.h"
 
 typedef struct CurlNetProviderCtx_st {
 	int connectionTimeoutSeconds;
@@ -290,7 +290,7 @@ void KSI_CurlNetProvider_global_cleanup(void) {
 /**
  *
  */
-int KSI_CurlNetProvider_new(KSI_CTX *ctx, KSI_NetworkClient **netProvider) {
+int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **netProvider) {
 	KSI_ERR err;
 	KSI_NetworkClient *pr = NULL;
 	CurlNetProviderCtx *pctx = NULL;
@@ -317,19 +317,19 @@ int KSI_CurlNetProvider_new(KSI_CTX *ctx, KSI_NetworkClient **netProvider) {
 	res = KSI_NetworkClient_setNetCtx(pr, pctx, (void (*)(void*))CurlNetProviderCtx_free);
 	pctx = NULL;
 
-	res = KSI_CurlNetProvider_setSignerUrl(pr, KSI_DEFAULT_URI_AGGREGATOR);
+	res = KSI_HttpClient_setSignerUrl(pr, KSI_DEFAULT_URI_AGGREGATOR);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_CurlNetProvider_setExtenderUrl(pr, KSI_DEFAULT_URI_EXTENDER);
+	res = KSI_HttpClient_setExtenderUrl(pr, KSI_DEFAULT_URI_EXTENDER);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_CurlNetProvider_setPublicationUrl(pr, KSI_DEFAULT_URI_PUBLICATIONS_FILE);
+	res = KSI_HttpClient_setPublicationUrl(pr, KSI_DEFAULT_URI_PUBLICATIONS_FILE);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_CurlNetProvider_setReadTimeoutSeconds(pr, 5);
+	res = KSI_HttpClient_setReadTimeoutSeconds(pr, 5);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_CurlNetProvider_setConnectTimeoutSeconds(pr, 5);
+	res = KSI_HttpClient_setConnectTimeoutSeconds(pr, 5);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*netProvider = pr;
@@ -339,7 +339,7 @@ int KSI_CurlNetProvider_new(KSI_CTX *ctx, KSI_NetworkClient **netProvider) {
 
 cleanup:
 
-	KSI_NetProvider_free(pr);
+	KSI_NetworkClient_free(pr);
 	CurlNetProviderCtx_free(pctx);
 
 	return KSI_RETURN(&err);
@@ -380,7 +380,7 @@ static int setIntParam(int *param, int val) {
 }
 
 #define KSI_NET_CURL_SETTER(name, type, var, fn) 														\
-		int KSI_CurlNetProvider_set##name(KSI_NetworkClient *client, type val) {						\
+		int KSI_HttpClient_set##name(KSI_NetworkClient *client, type val) {								\
 			int res = KSI_UNKNOWN_ERROR;																\
 			CurlNetProviderCtx *pctx = NULL;															\
 			if (client == NULL) {																		\

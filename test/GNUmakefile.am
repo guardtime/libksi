@@ -15,6 +15,7 @@ runner_SOURCES= \
 		ksi_signature_test.c \
 		ksi_tlv_sample_test.c \
 		ksi_tlv_test.c \
+		ksi_truststore_test.c \
 		cutest/CuTest.h \
 		cutest/CuTest.c
 

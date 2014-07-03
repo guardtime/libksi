@@ -30,7 +30,7 @@ libksi_la_SOURCES = \
 	list.c \
 	log.c \
 	net.c \
-	net_curl.c \
+	net_http_curl.c \
 	pkitruststore_openssl.c \
 	publicationsfile.c \
 	signature.c \
@@ -49,7 +49,7 @@ otherinclude_HEADERS = \
 	io.h \
 	list.h \
 	log.h \
-	net_curl.h \
+	net_http.h \
 	pkitruststore.h \
 	publicationsfile.h \
 	signature.h \

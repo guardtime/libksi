@@ -10,7 +10,7 @@ extern "C" {
 	/**
 	 * \addtogroup network Network Interface
 	 * This module contains two networking concepts used in this API:
-	 * - Network provider (#KSI_NetProvider), this object takes care of network
+	 * - Network provider (#KSI_NetworkClient), this object takes care of network
 	 * transtport.
 	 * - Network handle (#KSI_NetHandle), this object contains a single request and
 	 * is used to access the response.
@@ -27,7 +27,7 @@ extern "C" {
 	 * Free network provider object.
 	 * \param[in]		provider		Network provider.
 	 */
-	void KSI_NetProvider_free(KSI_NetworkClient *provider);
+	void KSI_NetworkClient_free(KSI_NetworkClient *provider);
 
 	/**
 	 * Sends a non-blocking signing request or initialize the handle.

@@ -22,7 +22,7 @@ struct KSI_NetHandle_st {
 	void *handleCtx;
 };
 
-struct KSI_NetProvider_st {
+struct KSI_NetworkClient_st {
 	KSI_CTX *ctx;
 
 	/** Cleanup for the provider, gets the #providerCtx as parameter. */
@@ -184,7 +184,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-void KSI_NetProvider_free(KSI_NetworkClient *provider) {
+void KSI_NetworkClient_free(KSI_NetworkClient *provider) {
 	if (provider != NULL) {
 		if (provider->providerCtx_free != NULL) {
 			provider->providerCtx_free(provider->poviderCtx);
@@ -365,7 +365,7 @@ int KSI_NetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **provider) {
 
 cleanup:
 
-	KSI_NetProvider_free(pr);
+	KSI_NetworkClient_free(pr);
 	return KSI_RETURN(&err);
 }
 

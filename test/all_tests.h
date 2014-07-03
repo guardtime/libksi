@@ -27,6 +27,8 @@ CuSuite* KSITest_HashChain_getSuite(void);
 CuSuite* KSI_UTIL_GetSuite(void);
 CuSuite* KSITest_Signature_getSuite(void);
 CuSuite* KSITest_Publicationsfile_getSuite(void);
+CuSuite* KSITest_Truststore_getSuite(void);
+
 
 #ifdef __cplusplus
 }

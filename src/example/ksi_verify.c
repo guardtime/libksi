@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ksi/ksi.h>
-#include <ksi/net_curl.h>
+#include <ksi/net_http.h>
 
 int main(int argc, char **argv) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
 	}
 
 	if (strncmp("-",argv[3], 1) || strncmp("-", argv[4], 1)) {
-		res = KSI_CurlNetProvider_new(ksi, &net);
+		res = KSI_HttpClient_new(ksi, &net);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable to create new network provider.\n");
 			goto cleanup;
@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 
 		if (strncmp("-", argv[3], 1)) {
 			/* Set extender uri. */
-			res = KSI_CurlNetProvider_setExtenderUrl(net, argv[3]);
+			res = KSI_HttpClient_setExtenderUrl(net, argv[3]);
 			if (res != KSI_OK) {
 				fprintf(stderr, "Unable to set extender url.\n");
 				goto cleanup;
@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
 
 		if (strncmp("-", argv[4], 1)) {
 			/* Set the publications file url. */
-			res = KSI_CurlNetProvider_setPublicationUrl(net, argv[4]);
+			res = KSI_HttpClient_setPublicationUrl(net, argv[4]);
 			if (res != KSI_OK) {
 				fprintf(stderr, "Unable to set publications file url.\n");
 				goto cleanup;
@@ -130,7 +130,7 @@ cleanup:
 
 	if (in != NULL) fclose(in);
 
-	KSI_NetProvider_free(net);
+	KSI_NetworkClient_free(net);
 	KSI_Signature_free(sig);
 	KSI_DataHasher_free(hsr);
 	KSI_DataHash_free(hsh);

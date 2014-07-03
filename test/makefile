@@ -35,6 +35,7 @@ ALLTESTS_OBJ = \
 	$(OBJ_DIR)\ksi_signature_test.obj \
 	$(OBJ_DIR)\ksi_tlv_sample_test.obj \
 	$(OBJ_DIR)\ksi_tlv_test.obj \
+	$(OBJ_DIR)\ksi_truststore_test.obj \
 	$(OBJ_DIR)\CuTest.obj
 
 	

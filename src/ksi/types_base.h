@@ -83,7 +83,7 @@ typedef struct KSI_DataHash_st KSI_DataHash;
  *	\see #KSI_NET_sendRequest
  */
 typedef struct KSI_NetHandle_st KSI_RequestHandle;
-typedef struct KSI_NetProvider_st KSI_NetworkClient;
+typedef struct KSI_NetworkClient_st KSI_NetworkClient;
 typedef struct KSI_AggregationHashChain_st KSI_AggregationHashChain;
 typedef struct KSI_CalendarAuthRec_st KSI_CalendarAuthRec;
 typedef struct KSI_AggregationAuthRec_st KSI_AggregationAuthRec;

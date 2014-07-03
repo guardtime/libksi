@@ -6,6 +6,10 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 
+#ifndef _WIN32
+#  include<sys/stat.h>
+#endif
+
 #include "internal.h"
 
 /* Hide the following line to deactivate. */
@@ -82,6 +86,17 @@ static int isMallocFailure(void) {
 
 	return 0;
 }
+
+#ifdef _WIN32
+static int checkPath(const char *path) {
+	return 1; // TODO!
+}
+#else
+static int checkPath(const char *path) {
+	struct stat st;
+	return stat(path, &st) == 0;
+}
+#endif
 
 void KSI_PKITruststore_free(KSI_PKITruststore *trust) {
 	if (trust != NULL) {
@@ -166,6 +181,11 @@ int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) 
 	KSI_PRE(&err, path != NULL) goto cleanup;
 	KSI_BEGIN(trust->ctx, &err);
 
+	if (!checkPath(path)) {
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
 	lookup = X509_STORE_add_lookup(trust->store, X509_LOOKUP_file());
 	if (lookup == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
@@ -191,6 +211,11 @@ int KSI_PKITruststore_addLookupDir(KSI_PKITruststore *trust, const char *path) {
 	KSI_PRE(&err, trust != NULL) goto cleanup;
 	KSI_PRE(&err, path != NULL) goto cleanup;
 	KSI_BEGIN(trust->ctx, &err);
+
+	if (!checkPath(path)) {
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	lookup = X509_STORE_add_lookup(trust->store, X509_LOOKUP_hash_dir());
 	if (lookup == NULL) {
