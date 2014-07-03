@@ -301,7 +301,7 @@ void KSI_free(void *ptr);
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_sendSignRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_NetHandle **handle);
+int KSI_sendSignRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_RequestHandle **handle);
 
 /**
  * Send a binary extend request using the specified KSI context.
@@ -312,7 +312,7 @@ int KSI_sendSignRequest(KSI_CTX *ctx, const unsigned char *request, unsigned req
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_sendExtendRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_NetHandle **handle);
+int KSI_sendExtendRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_RequestHandle **handle);
 
 /**
  * Send a binary request to download publications file using the specified KSI context.
@@ -323,7 +323,7 @@ int KSI_sendExtendRequest(KSI_CTX *ctx, const unsigned char *request, unsigned r
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_NetHandle **handle);
+int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_RequestHandle **handle);
 
 /**
  * Accessor method for the publications file. It will download the publications file from
@@ -397,11 +397,11 @@ int KSI_CTX_setLogLevel(KSI_CTX *ctx, int level);
 int KSI_CTX_setLogFile(KSI_CTX *ctx, char *fileName);
 
 int KSI_getPKITruststore(KSI_CTX *ctx, KSI_PKITruststore **pki);
-int KSI_getNetworkProvider(KSI_CTX *ctx, KSI_NetProvider **net);
+int KSI_getNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient **net);
 int KSI_getLogger(KSI_CTX *ctx, KSI_Logger **logger);
 
 int KSI_setPKITruststore(KSI_CTX *ctx, KSI_PKITruststore *pki);
-int KSI_setNetworkProvider(KSI_CTX *ctx, KSI_NetProvider *net);
+int KSI_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *net);
 int KSI_setLogger(KSI_CTX *ctx, KSI_Logger *logger);
 
 /**

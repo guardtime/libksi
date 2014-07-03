@@ -7,7 +7,7 @@ int main(int argc, char **argv) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ksi = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_NetProvider *net = NULL;
+	KSI_NetworkClient *net = NULL;
 	KSI_DataHash *hsh = NULL;
 	KSI_DataHasher *hsr = NULL;
 	FILE *in = NULL;

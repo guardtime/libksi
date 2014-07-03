@@ -30,7 +30,7 @@ static void testSigning(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_NetProvider *pr = NULL;
+	KSI_NetworkClient *pr = NULL;
 	unsigned char *raw = NULL;
 	unsigned raw_len = 0;
 	unsigned char expected[0x1ffff];
@@ -79,7 +79,7 @@ static void testExtending(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_NetProvider *pr = NULL;
+	KSI_NetworkClient *pr = NULL;
 	KSI_Signature *ext = NULL;
 	unsigned char *serialized = NULL;
 	unsigned serialized_len = 0;
@@ -138,7 +138,7 @@ static void testExtendingWithoutPublication(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_NetProvider *pr = NULL;
+	KSI_NetworkClient *pr = NULL;
 	KSI_Signature *ext = NULL;
 	unsigned char *serialized = NULL;
 	unsigned serialized_len = 0;
@@ -198,7 +198,7 @@ static void testExtendingHeadSignature(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_NetProvider *pr = NULL;
+	KSI_NetworkClient *pr = NULL;
 	KSI_Signature *ext = NULL;
 	unsigned char *serialized = NULL;
 	unsigned serialized_len = 0;

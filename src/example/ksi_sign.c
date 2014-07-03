@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
 
 	/* Check if uri's are specified. */
 	if (strncmp("-", argv[3], 1) || strncmp("-", argv[4], 1)) {
-		KSI_NetProvider *net = NULL;
+		KSI_NetworkClient *net = NULL;
 		res = KSI_CurlNetProvider_new(ksi, &net);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable to create new network provider.\n");

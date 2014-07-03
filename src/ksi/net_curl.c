@@ -95,16 +95,16 @@ cleanup:
 	return bytesCount;
 }
 
-static int curlReceive(KSI_NetHandle *handle) {
+static int curlReceive(KSI_RequestHandle *handle) {
 	KSI_ERR err;
 	int res;
 	char curlErr[CURL_ERROR_SIZE];
 	CurlNetHandleCtx *nc = NULL;
 
 	KSI_PRE(&err, handle != NULL) goto cleanup;
-	KSI_BEGIN(KSI_NetHandle_getCtx(handle), &err);
+	KSI_BEGIN(KSI_RequestHandle_getCtx(handle), &err);
 
-	res = KSI_NetHandle_getNetContext(handle, (void **)&nc);
+	res = KSI_RequestHandle_getNetContext(handle, (void **)&nc);
 	KSI_CATCH(&err, res) goto cleanup;
 
     curl_easy_setopt(nc->curl, CURLOPT_ERRORBUFFER, curlErr);
@@ -120,7 +120,7 @@ static int curlReceive(KSI_NetHandle *handle) {
     	goto cleanup;
     }
 
-    res = KSI_NetHandle_setResponse(handle, nc->raw, nc->len);
+    res = KSI_RequestHandle_setResponse(handle, nc->raw, nc->len);
     KSI_CATCH(&err, res) goto cleanup;
 
     /* Cleanup on success.*/
@@ -138,7 +138,7 @@ cleanup:
 }
 
 
-static int curlSendRequest(KSI_NetHandle *handle, char *agent, char *url, int connectionTimeout, int readTimeout ) {
+static int curlSendRequest(KSI_RequestHandle *handle, char *agent, char *url, int connectionTimeout, int readTimeout ) {
 	KSI_ERR err;
 	int res;
 	KSI_CTX *ctx = NULL;
@@ -147,7 +147,7 @@ static int curlSendRequest(KSI_NetHandle *handle, char *agent, char *url, int co
 	CurlNetHandleCtx *hc = NULL;
 
 	KSI_PRE(&err, handle != NULL) goto cleanup;
-	KSI_BEGIN(KSI_NetHandle_getCtx(handle), &err);
+	KSI_BEGIN(KSI_RequestHandle_getCtx(handle), &err);
 
 	hc = KSI_new(CurlNetHandleCtx);
 	if (hc == NULL) {
@@ -155,7 +155,7 @@ static int curlSendRequest(KSI_NetHandle *handle, char *agent, char *url, int co
 		goto cleanup;
 	}
 
-	ctx = KSI_NetHandle_getCtx(handle);
+	ctx = KSI_RequestHandle_getCtx(handle);
 
 	hc->ctx = ctx;
 	hc->curl = NULL;
@@ -171,7 +171,7 @@ static int curlSendRequest(KSI_NetHandle *handle, char *agent, char *url, int co
 
 	KSI_LOG_debug(ctx, "Sending request to: %s", url);
 
-	res = KSI_NetHandle_getRequest(handle, &request, &request_len);
+	res = KSI_RequestHandle_getRequest(handle, &request, &request_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	if (request_len > LONG_MAX) {
@@ -179,7 +179,7 @@ static int curlSendRequest(KSI_NetHandle *handle, char *agent, char *url, int co
 		goto cleanup;
 	}
 
-	res = KSI_NetHandle_setReadResponseFn(handle, curlReceive);
+	res = KSI_RequestHandle_setReadResponseFn(handle, curlReceive);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	curl_easy_setopt(hc->curl, CURLOPT_USERAGENT, agent);
@@ -203,7 +203,7 @@ static int curlSendRequest(KSI_NetHandle *handle, char *agent, char *url, int co
 
     curl_easy_setopt(hc->curl, CURLOPT_VERBOSE, 0);
 
-    res = KSI_NetHandle_setNetContext(handle, hc, (void (*)(void *))CurlNetHandleCtx_free);
+    res = KSI_RequestHandle_setNetContext(handle, hc, (void (*)(void *))CurlNetHandleCtx_free);
     KSI_CATCH(&err, res) goto cleanup;
 
     hc = NULL;
@@ -220,11 +220,11 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int curlSendSignRequest(KSI_NetProvider *netProvider, KSI_NetHandle *handle) {
+static int curlSendSignRequest(KSI_NetworkClient *netProvider, KSI_RequestHandle *handle) {
 	CurlNetProviderCtx *pctx = NULL;
 	int res;
 
-	res = KSI_NetProvider_getNetContext(netProvider, (void **)&pctx);
+	res = KSI_NetworkClient_getNetContext(netProvider, (void **)&pctx);
 	if (res != KSI_OK) goto cleanup;
 
 	res = curlSendRequest(handle, "TODO", pctx->urlSigner, pctx->connectionTimeoutSeconds, pctx->readTimeoutSeconds);
@@ -237,11 +237,11 @@ cleanup:
 	return res;
 }
 
-static int curlSendExtendRequest(KSI_NetProvider *netProvider, KSI_NetHandle *handle) {
+static int curlSendExtendRequest(KSI_NetworkClient *netProvider, KSI_RequestHandle *handle) {
 	CurlNetProviderCtx *pctx = NULL;
 	int res;
 
-	res = KSI_NetProvider_getNetContext(netProvider, (void **)&pctx);
+	res = KSI_NetworkClient_getNetContext(netProvider, (void **)&pctx);
 	if (res != KSI_OK) goto cleanup;
 
 	res = curlSendRequest(handle, "TODO", pctx->urlExtender, pctx->connectionTimeoutSeconds, pctx->readTimeoutSeconds);
@@ -254,11 +254,11 @@ cleanup:
 	return res;
 }
 
-static int curlSendPublicationsFileRequest(KSI_NetProvider *netProvider, KSI_NetHandle *handle) {
+static int curlSendPublicationsFileRequest(KSI_NetworkClient *netProvider, KSI_RequestHandle *handle) {
 	CurlNetProviderCtx *pctx = NULL;
 	int res;
 
-	res = KSI_NetProvider_getNetContext(netProvider, (void **)&pctx);
+	res = KSI_NetworkClient_getNetContext(netProvider, (void **)&pctx);
 	if (res != KSI_OK) goto cleanup;
 
 	res = curlSendRequest(handle, "TODO", pctx->urlPublication, pctx->connectionTimeoutSeconds, pctx->readTimeoutSeconds);
@@ -290,31 +290,31 @@ void KSI_CurlNetProvider_global_cleanup(void) {
 /**
  *
  */
-int KSI_CurlNetProvider_new(KSI_CTX *ctx, KSI_NetProvider **netProvider) {
+int KSI_CurlNetProvider_new(KSI_CTX *ctx, KSI_NetworkClient **netProvider) {
 	KSI_ERR err;
-	KSI_NetProvider *pr = NULL;
+	KSI_NetworkClient *pr = NULL;
 	CurlNetProviderCtx *pctx = NULL;
 	int res;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	res = KSI_NetProvider_new(ctx, &pr);
+	res = KSI_NetworkClient_new(ctx, &pr);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_NetProvider_setSendSignRequestFn(pr, curlSendSignRequest);
+	res = KSI_NetworkClient_setSendSignRequestFn(pr, curlSendSignRequest);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_NetProvider_setSendExtendRequestFn(pr, curlSendExtendRequest);
+	res = KSI_NetworkClient_setSendExtendRequestFn(pr, curlSendExtendRequest);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_NetProvider_setSendPublicationRequestFn(pr, curlSendPublicationsFileRequest);
+	res = KSI_NetworkClient_setSendPublicationRequestFn(pr, curlSendPublicationsFileRequest);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = CurlNetProviderCtx_new(&pctx);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_NetProvider_setNetCtx(pr, pctx, (void (*)(void*))CurlNetProviderCtx_free);
+	res = KSI_NetworkClient_setNetCtx(pr, pctx, (void (*)(void*))CurlNetProviderCtx_free);
 	pctx = NULL;
 
 	res = KSI_CurlNetProvider_setSignerUrl(pr, KSI_DEFAULT_URI_AGGREGATOR);
@@ -380,14 +380,14 @@ static int setIntParam(int *param, int val) {
 }
 
 #define KSI_NET_CURL_SETTER(name, type, var, fn) 														\
-		int KSI_CurlNetProvider_set##name(KSI_NetProvider *netProvider, type val) {						\
+		int KSI_CurlNetProvider_set##name(KSI_NetworkClient *client, type val) {						\
 			int res = KSI_UNKNOWN_ERROR;																\
 			CurlNetProviderCtx *pctx = NULL;															\
-			if (netProvider == NULL) {																	\
+			if (client == NULL) {																		\
 				res = KSI_INVALID_ARGUMENT;																\
 				goto cleanup;																			\
 			}																							\
-			res = KSI_NetProvider_getNetContext(netProvider, (void **)&pctx);							\
+			res = KSI_NetworkClient_getNetContext(client, (void **)&pctx);								\
 			if (res != KSI_OK) goto cleanup;															\
 			res = (fn)(&pctx->var, val);																\
 		cleanup:																						\

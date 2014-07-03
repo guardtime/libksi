@@ -1320,7 +1320,7 @@ cleanup:
 int KSI_Signature_create(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **signature) {
 	KSI_ERR err;
 	int res;
-	KSI_NetHandle *handle = NULL;
+	KSI_RequestHandle *handle = NULL;
 	KSI_Signature *sign = NULL;
 
 	unsigned char *req = NULL;
@@ -1344,7 +1344,7 @@ int KSI_Signature_create(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Read the response. */
-	res = KSI_NetHandle_getResponse(handle, &resp, &resp_len);
+	res = KSI_RequestHandle_getResponse(handle, &resp, &resp_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Response", resp, resp_len);
@@ -1359,7 +1359,7 @@ int KSI_Signature_create(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **
 cleanup:
 
 	KSI_Signature_free(sign);
-	KSI_NetHandle_free(handle);
+	KSI_RequestHandle_free(handle);
 	KSI_free(req);
 
 	return KSI_RETURN(&err);
@@ -1386,7 +1386,7 @@ int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRe
 
 	KSI_TLV *respTlv = NULL;
 	KSI_ExtendPdu *pdu = NULL;
-	KSI_NetHandle *handle = NULL;
+	KSI_RequestHandle *handle = NULL;
 
 	KSI_PRE(&err, signature != NULL) goto cleanup;
 	KSI_BEGIN(signature->ctx, &err);
@@ -1428,7 +1428,7 @@ int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRe
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Read the response. */
-	res = KSI_NetHandle_getResponse(handle, &rawResp, &rawResp_len);
+	res = KSI_RequestHandle_getResponse(handle, &rawResp, &rawResp_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_LOG_logBlob(signature->ctx, KSI_LOG_DEBUG, "Extend response", rawResp, rawResp_len);
@@ -1497,7 +1497,7 @@ cleanup:
 
 	KSI_PublicationRecord_free(pubRecClone);
 	KSI_ExtendPdu_free(pdu);
-	KSI_NetHandle_free(handle);
+	KSI_RequestHandle_free(handle);
 	KSI_TLV_free(respTlv);
 	KSI_free(rawReq);
 	KSI_Signature_free(tmp);

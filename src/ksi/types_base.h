@@ -82,8 +82,8 @@ typedef struct KSI_DataHash_st KSI_DataHash;
  *
  *	\see #KSI_NET_sendRequest
  */
-typedef struct KSI_NetHandle_st KSI_NetHandle;
-typedef struct KSI_NetProvider_st KSI_NetProvider;
+typedef struct KSI_NetHandle_st KSI_RequestHandle;
+typedef struct KSI_NetProvider_st KSI_NetworkClient;
 typedef struct KSI_AggregationHashChain_st KSI_AggregationHashChain;
 typedef struct KSI_CalendarAuthRec_st KSI_CalendarAuthRec;
 typedef struct KSI_AggregationAuthRec_st KSI_AggregationAuthRec;
@@ -203,8 +203,8 @@ int KSI_CalendarAuthRec_setSignatureData(KSI_CalendarAuthRec *rec, KSI_PKISigned
 KSI_DEFINE_GET_CTX(KSI_DataHash);
 KSI_DEFINE_GET_CTX(KSI_DataHasher);
 KSI_DEFINE_GET_CTX(KSI_TLV);
-KSI_DEFINE_GET_CTX(KSI_NetProvider);
-KSI_DEFINE_GET_CTX(KSI_NetHandle);
+KSI_DEFINE_GET_CTX(KSI_NetworkClient);
+KSI_DEFINE_GET_CTX(KSI_RequestHandle);
 KSI_DEFINE_GET_CTX(KSI_RDR);
 
 #ifdef __cplusplus

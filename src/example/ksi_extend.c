@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
 	FILE *out = NULL;
 	KSI_Signature *sig = NULL;
 	KSI_Signature *ext = NULL;
-	KSI_NetProvider *net = NULL;
+	KSI_NetworkClient *net = NULL;
 	unsigned char *raw = NULL;
 	unsigned raw_len;
 	unsigned count;
