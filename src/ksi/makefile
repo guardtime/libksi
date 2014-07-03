@@ -15,7 +15,7 @@ TRUSTSTORE_MACROS = $(TRUSTSTORE_MACROS) /DOPENSSL_CA_DIR=\"$(OPENSSL_CA_DIR:\=\
 !ENDIF
 
 SRC_DIR = .
-OBJ_DIR = ..\..\obj
+OBJ_DIR = ..\..\obj$(RTL)
 LIB_DIR = ..\..\out\$(DLL)
 INCLUDE_DIR = ..\..\out\include\ksi
 
@@ -58,15 +58,17 @@ CCFLAGS = $(CCFLAGS) /I"$(OPENSSL_DIR)\include" /I"$(CURL_DIR)\include"
 CCFLAGS = $(CCFLAGS) $(CCEXTRA) $(TRUSTSTORE_MACROS)
 LDFLAGS = $(LDFLAGS) $(LDEXTRA)
 
-default: $(LIB_DIR)\$(LIB_NAME)$(RTL).lib include
+default: $(LIB_DIR)\$(LIB_NAME)$(RTL).$(DLL) include
 
-all: $(LIB_DIR)\$(LIB_NAME)$(RTL).lib include
+all: $(LIB_DIR)\$(LIB_NAME)$(RTL).$(DLL) include
 
 
 
 
 $(LIB_DIR)\$(LIB_NAME)$(RTL).lib: $(OBJ_DIR) $(LIB_DIR) $(LIB_OBJ)  
 	link /LIB /OUT:$@ $(LDFLAGS) $(LIB_OBJ)
+
+
 	
 
 {$(SRC_DIR)}.c{$(OBJ_DIR)\}.obj:

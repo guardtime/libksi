@@ -15,7 +15,7 @@ TRUSTSTORE_MACROS = $(TRUSTSTORE_MACROS) /DOPENSSL_CA_DIR=\"$(OPENSSL_CA_DIR:\=\
 !ENDIF
 
 SRC_DIR = .
-OBJ_DIR = ..\obj
+OBJ_DIR = ..\obj$(RTL)
 INC_DIR = ..\out\include
 LIB_DIR = ..\out\$(DLL)
 BIN_DIR = ..\out\bin
@@ -40,7 +40,7 @@ ALLTESTS_OBJ = \
 	
 #Compiler and linker configuration
 EXT_LIB = libeay32$(RTL).lib \
-	user32.lib gdi32.lib advapi32.lib libc$(RTL).lib \
+	user32.lib gdi32.lib advapi32.lib \
 	libksiapi$(RTL).$(DLL) libcurl$(RTL).lib 
 	
 

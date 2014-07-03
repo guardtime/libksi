@@ -16,7 +16,7 @@ TRUSTSTORE_MACROS = $(TRUSTSTORE_MACROS) /DOPENSSL_CA_DIR=\"$(OPENSSL_CA_DIR:\=\
 
 SRC_DIR = .
 INCLUDE_DIR = ..\..\out\include
-OBJ_DIR = ..\..\obj
+OBJ_DIR = ..\..\obj$(RTL)
 LIB_DIR = ..\..\out\$(DLL)
 BIN_DIR = ..\..\out\bin
 
@@ -40,8 +40,8 @@ EXAMPLE_BIN = \
 
 	
 #external libraries used for linking. 
-EXT_LIB = libeay32$(RTL).lib \
-	user32.lib gdi32.lib advapi32.lib libc$(RTL).lib \
+EXT_LIB = libeay32$(RTL).$(DLL) \
+	user32.lib gdi32.lib advapi32.lib \
 	$(LIB_NAME)$(RTL).$(DLL) libcurl$(RTL).lib
 	
 #/NODEFAULTLIB:libcmtd.lib	
