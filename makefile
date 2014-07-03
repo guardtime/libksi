@@ -33,7 +33,7 @@ default:
 
 all: librarys example tests
 
-librarys: lib$(RTL)
+librarys: libMT libMTd libMD libMDd
 	
 	
 libMT:
@@ -42,13 +42,19 @@ libMT:
 libMTd:
 	nmake DLL=lib RTL=MTd $(EXTRA)
 
+libMD:
+	nmake DLL=lib RTL=MD $(EXTRA)
+
+libMDd:
+	nmake DLL=lib RTL=MDd $(EXTRA)
 	
-example: lib$(RTL)
+	
+example: $(DLL)$(RTL)
 	cd $(SRC_DIR)\example
 	nmake $(MODEL) $(EXTRA)
 	cd ..\..
 	
-tests: lib$(RTL)
+tests: $(DLL)$(RTL)
 	cd $(TEST_DIR)
 	nmake $(MODEL) $(EXTRA)
 	cd ..	
@@ -57,5 +63,5 @@ test: tests
 	$(BIN_DIR)\alltests.exe
 	
 clean:
-	@for %i in ($(OBJ_DIR) $(OUT_DIR)) do @if exist .\%i rmdir /s /q .\%i
+	@for %i in ($(OBJ_DIR)MT $(OBJ_DIR)MTd $(OBJ_DIR)MD $(OBJ_DIR)MDd $(OUT_DIR)) do @if exist .\%i rmdir /s /q .\%i
 	@for %i in ($(SRC_DIR)\ksi $(SRC_DIR)\example $(TEST_DIR)) do @if exist .\%i\*.pdb del /q .\%i\*.pdb	
