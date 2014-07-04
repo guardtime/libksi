@@ -222,7 +222,7 @@ cleanup:
 static int decodeCalendarHashChainLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarHashChain *calHashChain, getter_t valueGetter, setter_t valueSetter, int isLeft) {
 	KSI_ERR err;
 	int res;
-	const unsigned char *raw;
+	const unsigned char *raw = NULL;
 	unsigned int raw_len = 0;
 	KSI_LIST(KSI_HashChainLink) *listp = NULL;
 	KSI_LIST(KSI_HashChainLink) *list = NULL;

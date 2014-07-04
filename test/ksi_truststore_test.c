@@ -54,7 +54,7 @@ CuSuite* KSITest_Truststore_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
 
-//	SUITE_ADD_TEST(suite, TestAddInvalidLookupFile);
+	SUITE_ADD_TEST(suite, TestAddInvalidLookupFile);
 //	SUITE_ADD_TEST(suite, TestAddInvalidLookupDir);
 	SUITE_ADD_TEST(suite, TestAddValidLookupFile);
 

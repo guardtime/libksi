@@ -16,7 +16,7 @@ static long long int highBit(long long int n) {
 static int addNvlImprint(KSI_DataHash *first, KSI_DataHash *second, KSI_DataHasher *hsr) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = first;
-	const unsigned char *imprint;
+	const unsigned char *imprint = NULL;
 	unsigned int imprint_len;
 
 	if (hsh == NULL) {
@@ -46,7 +46,7 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 	KSI_ERR err;
 	int res;
 	int mode = 0;
-	const unsigned char *imprint;
+	const unsigned char *imprint = NULL;
 	unsigned int imprint_len;
 	KSI_MetaData *metaData = NULL;
 	KSI_DataHash *metaHash = NULL;

@@ -1162,7 +1162,7 @@ static int serializeTlv(const KSI_TLV *tlv, unsigned char *buf, unsigned *buf_fr
 	int res;
 	unsigned bf = *buf_free;
 	unsigned payloadLength;
-	unsigned char *ptr;
+	unsigned char *ptr = NULL;
 
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
 	KSI_PRE(&err, buf != NULL) goto cleanup;
@@ -1218,7 +1218,7 @@ static int serialize(const KSI_TLV *tlv, unsigned char *buf, unsigned *len, int 
 	int res;
 	unsigned bf = *len;
 	unsigned payloadLength;
-	unsigned char *ptr;
+	unsigned char *ptr = NULL;
 	unsigned i;
 	unsigned tmpLen;
 
