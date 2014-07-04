@@ -40,10 +40,9 @@ ALLTESTS_OBJ = \
 
 	
 #Compiler and linker configuration
-EXT_LIB = libeay32$(RTL).lib \
-	user32.lib gdi32.lib advapi32.lib \
-	libksiapi$(RTL).$(DLL) libcurl$(RTL).lib 
-	
+EXT_LIB = libksiapi$(RTL).$(DLL) \
+	libcurl$(RTL).lib libeay32$(RTL).lib \
+	wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib advapi32.lib
 
 #/NODEFAULTLIB:libcmtd.lib
 CCFLAGS = /nologo /W3 /D_CRT_SECURE_NO_DEPRECATE /DCURL_STATICLIB /I$(SRC_DIR) /I$(INC_DIR) /I$(CUTEST_DIR)
