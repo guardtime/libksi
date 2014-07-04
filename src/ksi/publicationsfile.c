@@ -642,7 +642,7 @@ int KSI_PublicationData_fromBase32(KSI_CTX *ctx, const char *publication, KSI_Pu
 	int hash_alg;
 	unsigned int hash_size;
 	KSI_DataHash *pubHash = NULL;
-	KSI_Integer *pubTime;
+	KSI_Integer *pubTime = NULL;
 
 	KSI_PRE(&err, publication != NULL) goto cleanup;
 	KSI_PRE(&err, published_data != NULL) goto cleanup;
