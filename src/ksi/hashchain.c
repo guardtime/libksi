@@ -64,7 +64,7 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_HashChainLink_getMetaHash(link, &metaHash);
-
+	KSI_CATCH(&err, res) goto cleanup;
 
 	if (hash != NULL) mode |= 0x01;
 	if (metaHash != NULL) mode |= 0x02;
@@ -159,8 +159,10 @@ static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, KSI_DataHash *inpu
 		if (hsr == NULL) {
 			res = KSI_DataHasher_open(ctx, algo_id, &hsr);
 		} else {
-			KSI_DataHasher_reset(hsr);
+			res = KSI_DataHasher_reset(hsr);
 		}
+		KSI_CATCH(&err, res) goto cleanup;
+
 
 		if (isLeft) {
 			res = addNvlImprint(hsh, inputHash, hsr);

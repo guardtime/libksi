@@ -126,6 +126,7 @@ static void testFindPublicationByPubStr(CuTest *tc) {
 
 	KSITest_decodeHexStr("01a1b5238ffb05fccfa67546266a0b2d7130f6656026033b6b578c12e4fbbe231a", buf, sizeof(buf), &len);
 	res = KSI_DataHash_fromImprint(ctx, buf, len, &expHsh);
+	CuAssert(tc, "Unable to get data hash from imprint.", res == KSI_OK && expHsh != NULL);
 
 	CuAssert(tc, "Publication hash mismatch.", KSI_DataHash_equals(expHsh, pubHsh));
 	CuAssert(tc, "Publication time mismatch", KSI_Integer_equalsUInt(pubTime, 1397520000));
@@ -171,6 +172,7 @@ static void testFindPublicationByTime(CuTest *tc) {
 
 	KSITest_decodeHexStr("01a1b5238ffb05fccfa67546266a0b2d7130f6656026033b6b578c12e4fbbe231a", buf, sizeof(buf), &len);
 	res = KSI_DataHash_fromImprint(ctx, buf, len, &expHsh);
+	CuAssert(tc, "Unable to get datahash from imprint", res == KSI_OK && expHsh != NULL);
 
 	CuAssert(tc, "Publication hash mismatch.", KSI_DataHash_equals(expHsh, pubHsh));
 	CuAssert(tc, "Publication time mismatch", KSI_Integer_equalsUInt(pubTime, 1397520000));
@@ -210,6 +212,7 @@ static void testFindPublicationRef(CuTest *tc) {
 	for (i = 0; i < KSI_Utf8StringList_length(pubRefList); i++) {
 		KSI_Utf8String *pubRef = NULL;
 		res = KSI_Utf8StringList_elementAt(pubRefList, i, &pubRef);
+		CuAssert(tc, "Unable to get element from list", res == KSI_OK && pubRef != NULL);
 		if (!strcmp("Financial Times, ISSN: 0307-1766, 2014-04-17", KSI_Utf8String_cstr(pubRef))) {
 			isPubRefFound = 1;
 		}

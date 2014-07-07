@@ -373,6 +373,7 @@ int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_Integer **ksiInteger) {
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_TLV_getInteger(tlv, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
 
 	*ksiInteger = tmp;
 	tmp = NULL;

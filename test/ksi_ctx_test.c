@@ -52,7 +52,7 @@ static void TestCtxAddFailure(CuTest* tc) {
 
 	KSI_CTX *ctx = NULL;
 	res = KSI_CTX_new(&ctx);
-	CuAssert(tc, "Unable to create ctx", ctx != NULL);
+	CuAssert(tc, "Unable to create ctx", res == KSI_OK && ctx != NULL);
 
 	res = failingMethod(ctx, 1);
 	CuAssert(tc, "Adding first fault failed.", res == KSI_INVALID_ARGUMENT);
@@ -63,8 +63,7 @@ static void TestCtxAddFailure(CuTest* tc) {
 	CuAssert(tc, "Clear error may not set state to success.", KSI_CTX_getStatus(ctx) != KSI_OK);
 
 	res = failingMethod(ctx, 0);
-
-	CuAssert(tc, "Context did not succeed", KSI_CTX_getStatus(ctx) == KSI_OK);
+	CuAssert(tc, "Context did not succeed", res == KSI_OK && KSI_CTX_getStatus(ctx) == KSI_OK);
 
 	KSI_CTX_free(ctx);
 }
@@ -76,7 +75,7 @@ static void TestCtxAddFailureOverflow(CuTest* tc) {
 
 	KSI_CTX *ctx = NULL;
 	res = KSI_CTX_new(&ctx);
-	CuAssert(tc, "Unable to create ctx", ctx != NULL);
+	CuAssert(tc, "Unable to create ctx", res == KSI_OK && ctx != NULL);
 
 	res = KSI_Logger_new(ctx, "test.log", KSI_LOG_DEBUG, &logger);
 	CuAssert(tc, "Unable to create logger", res == KSI_OK && logger != NULL);

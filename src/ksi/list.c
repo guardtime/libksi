@@ -202,6 +202,7 @@ int KSI_List_insertAt(KSI_List *list, size_t pos, void *o) {
 
 	/* Append empty element */
 	res = appendElement(list, NULL);
+	if (res != KSI_OK) goto cleanup;
 
 	/* Shift the elements */
 	for (i = pos + 1; i < list->arr_len; i++) {

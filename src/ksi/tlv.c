@@ -1345,7 +1345,6 @@ static int stringify(KSI_TLV *tlv, int indent, char *str, unsigned size, unsigne
 			l += (unsigned)snprintf(str + l, NOTNEG(size - l), ":");
 			res = KSI_TLVList_iter(tlv->nested);
 			if (res != KSI_OK) goto cleanup;
-			i = 0;
 			for (i = 0; i < KSI_TLVList_length(tlv->nested); i++) {
 				KSI_TLV *tmp = NULL;
 

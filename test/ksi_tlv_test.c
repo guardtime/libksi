@@ -558,7 +558,7 @@ static void TestTlvFromUint(CuTest* tc) {
 	CuAssert(tc, "Unable to create TLV from uint value.", res == KSI_OK && tlv != NULL);
 
 	res = KSI_TLV_getUInt64Value(tlv, &intVal);
-	CuAssert(tc, "Wrong value from TLV", intVal == 0xabcde);
+	CuAssert(tc, "Wrong value from TLV", res == KSI_OK && intVal == 0xabcde);
 
 	/* Cast to raw and back */
 	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_RAW);
@@ -573,7 +573,7 @@ static void TestTlvFromUint(CuTest* tc) {
 	CuAssert(tc, "Unable to cast from raw to uint", res == KSI_OK);
 
 	res = KSI_TLV_getUInt64Value(tlv, &intVal);
-	CuAssert(tc, "Wrong value from TLV (after casts)", intVal == 0xabcde);
+	CuAssert(tc, "Wrong value from TLV (after casts)", res == KSI_OK && intVal == 0xabcde);
 
 	KSI_TLV_free(tlv);
 }

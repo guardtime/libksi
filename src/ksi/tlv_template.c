@@ -269,6 +269,7 @@ static int decodeCalendarHashChainLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarH
 
 	/* Append the current link to the list */
 	res = KSI_HashChainLinkList_append(listp, link);
+	KSI_CATCH(&err, res) goto cleanup;
 	link = NULL;
 
 	if (list != NULL) {

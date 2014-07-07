@@ -1298,15 +1298,16 @@ int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx) {
 
 	if (sig->publication != NULL) {
 		/* Verify using publication. */
-		res = verifySignatureWithPublication(ctx, sig);
+		res = verifySignatureWithPublication(ctxp, sig);
 		KSI_CATCH(&err, res) goto cleanup;
 	} else {
 		if (sig->calendarAuthRec != NULL) {
-			res = KSI_CalendarAuthRec_verify(ctx, sig->calendarAuthRec);
+			res = KSI_CalendarAuthRec_verify(ctxp, sig->calendarAuthRec);
 			KSI_CATCH(&err, res) goto cleanup;
 		}
 		/* Verify using extender. */
-		res = verifySignatureWithExtender(ctx, sig);
+		res = verifySignatureWithExtender(ctxp, sig);
+		KSI_CATCH(&err, res) goto cleanup;
 	}
 
 
@@ -1458,6 +1459,7 @@ int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRe
 	if (respStatus != NULL && !KSI_Integer_equalsUInt(respStatus, 0)) {
 		KSI_Utf8String *error = NULL;
 		res = KSI_ExtendResp_getErrorMsg(response, &error);
+		KSI_CATCH(&err, res) goto cleanup;
 
 		KSI_FAIL(&err, KSI_EXTENDER_ERROR, KSI_Utf8String_cstr(error));
 		KSI_nofree(error);
@@ -1779,6 +1781,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 			signerId_size += strlen((char *)clientId) + 1; /* +1 for dot (.) or ending zero character. */
 
 			res = KSI_Utf8StringList_append(idList, clientId);
+			KSI_CATCH(&err, res) goto cleanup;
 			clientId = NULL;
 
 		}

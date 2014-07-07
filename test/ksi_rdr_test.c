@@ -142,7 +142,7 @@ static void TestRdrMemInitExtStorage(CuTest* tc) {
 	CuAssert(tc, "Init did not fail, but object not created.", rdr != NULL);
 
 	res = KSI_RDR_read_ex(rdr, tmpBuf, sizeof(tmpBuf), &readCount);
-	CuAssert(tc, "Incorrect read count.", readCount == sizeof(testData));
+	CuAssert(tc, "Incorrect read count.", res == KSI_OK && readCount == sizeof(testData));
 
 	CuAssert(tc, "Data missmatch", !memcmp(tmpBuf, testData, sizeof(testData)));
 
@@ -163,7 +163,7 @@ static void TestRdrMemInitOwnStorage(CuTest* tc) {
 	CuAssert(tc, "Init did not fail, but object not created.", rdr != NULL);
 
 	res = KSI_RDR_read_ex(rdr, tmpBuf, sizeof(tmpBuf), &readCount);
-	CuAssert(tc, "Incorrect read count.", readCount == sizeof(testData));
+	CuAssert(tc, "Incorrect read count.", res == KSI_OK && readCount == sizeof(testData));
 
 	CuAssert(tc, "Data missmatch", !memcmp(tmpBuf, testData, sizeof(testData)));
 

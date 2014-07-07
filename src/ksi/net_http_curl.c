@@ -315,6 +315,7 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **netProvider) {
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_NetworkClient_setNetCtx(pr, pctx, (void (*)(void*))CurlNetProviderCtx_free);
+	KSI_CATCH(&err, res) goto cleanup;
 	pctx = NULL;
 
 	res = KSI_HttpClient_setSignerUrl(pr, KSI_DEFAULT_URI_AGGREGATOR);
