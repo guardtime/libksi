@@ -44,6 +44,16 @@ extern "C" {
 	 */
 	int KSI_PublicationsFile_fromFile(KSI_CTX *ctx, const char *fileName, KSI_PublicationsFile **pubFile);
 
+        /**
+         * 
+         * \param[in]		ctx			KSI context.
+         * \param[in]	pubFile			Publicationsfile object.
+         * \param[out]		fileName	Publications file filename.
+         * 
+         * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+         */
+        int KSI_PublicationsFile_toFile(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, const char *fileName);
+        
 	/**
 	 * Verify PKI signature of the publications file using the PKI truststore.
 	 * \param[in]		pubFile		Publications file.

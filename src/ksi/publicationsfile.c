@@ -152,7 +152,7 @@ int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, int raw_len, KSI_P
 	unsigned int hdr_len = 0;
 	KSI_PublicationsFile *tmp = NULL;
 	KSI_RDR *reader = NULL;
-	struct generator_st gen;
+	struct generator_st gen = {NULL, NULL};
 	unsigned char *tmpRaw = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -172,20 +172,20 @@ int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, int raw_len, KSI_P
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Unrecognized header.");
 		goto cleanup;
 	}
-
+        
 	/* Header verification ok - create the store object. */
 	res = KSI_PublicationsFile_new(ctx, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Initialize generator. */
+	
+        /* Initialize generator. */
 	gen.reader = reader;
 	gen.tlv = NULL;
 
 	/* Read the payload of the file, and make no assumptions with the ordering. */
 	res = KSI_TlvTemplate_extractGenerator(ctx, tmp, (void *)&gen, KSI_TLV_TEMPLATE(KSI_PublicationsFile), NULL, (int (*)(void *, KSI_TLV **))generateNextTlv);
 	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Copy the raw value */
+	
+        /* Copy the raw value */
 	tmpRaw = KSI_calloc(raw_len, 1);
 	if (tmpRaw == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
@@ -194,6 +194,7 @@ int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, int raw_len, KSI_P
 	memcpy(tmpRaw, raw, raw_len);
 
 	tmp->raw = tmpRaw;
+        tmp->raw_len = raw_len;
 	tmpRaw = NULL;
 
 	*pubFile = tmp;
@@ -322,6 +323,40 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
+
+
+int KSI_PublicationsFile_toFile(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, const char *fileName) {
+	KSI_ERR err;
+	int res;
+        unsigned int count;
+	FILE *out = NULL;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, fileName != NULL) goto cleanup;
+	KSI_PRE(&err, pubFile != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+        /* Open output file. */
+        out = fopen(fileName, "wb");
+	if (out == NULL) {
+            KSI_FAIL(&err, KSI_IO_ERROR, "Unable to open publications file.");
+            goto cleanup;
+	}
+        
+        /* Write output file */
+        count = fwrite(pubFile->raw, 1, pubFile->raw_len, out);
+	if (count != pubFile->raw_len) {
+            KSI_FAIL(&err, KSI_IO_ERROR, "Unable to write publications file.");
+            goto cleanup;
+	}
+
+	KSI_SUCCESS(&err);
+cleanup:
+	if (out != NULL) fclose(out);
+
+	return KSI_RETURN(&err);
+}
+
 
 void KSI_PublicationsFile_free(KSI_PublicationsFile *t) {
 	if(t != NULL) {
