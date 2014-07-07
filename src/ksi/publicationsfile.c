@@ -325,35 +325,27 @@ cleanup:
 }
 
 
-int KSI_PublicationsFile_toFile(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, const char *fileName) {
+int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, char **raw, int* raw_len) {
 	KSI_ERR err;
 	int res;
-        unsigned int count;
-	FILE *out = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, fileName != NULL) goto cleanup;
 	KSI_PRE(&err, pubFile != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-        /* Open output file. */
-        out = fopen(fileName, "wb");
-	if (out == NULL) {
-            KSI_FAIL(&err, KSI_IO_ERROR, "Unable to open publications file.");
+        *raw_len = pubFile->raw_len;
+        *raw = (char*)KSI_malloc(*raw_len);
+        if(*raw == NULL){
+            KSI_FAIL(&err, KSI_OUT_OF_MEMORY, "KSI out of memory");
             goto cleanup;
-	}
-        
-        /* Write output file */
-        count = fwrite(pubFile->raw, 1, pubFile->raw_len, out);
-	if (count != pubFile->raw_len) {
-            KSI_FAIL(&err, KSI_IO_ERROR, "Unable to write publications file.");
-            goto cleanup;
-	}
-
+            }
+               
+        memcpy(*raw, pubFile->raw, *raw_len);
+     
 	KSI_SUCCESS(&err);
 cleanup:
-	if (out != NULL) fclose(out);
 
+        KSI_nofree(*raw);
 	return KSI_RETURN(&err);
 }
 

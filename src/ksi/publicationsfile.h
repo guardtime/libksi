@@ -46,13 +46,13 @@ extern "C" {
 
         /**
          * 
-         * \param[in]		ctx			KSI context.
-         * \param[in]	pubFile			Publicationsfile object.
-         * \param[out]		fileName	Publications file filename.
-         * 
-         * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+         * @param[in]		ctx			KSI context.
+         * @param[in]		pubFile		Publications file.
+         * @param[out]          raw	Pointer to the pointer to output buffer. 
+         * @param[out]          raw_len	Pointer to the length of the buffer variable.
+         * @return 
          */
-        int KSI_PublicationsFile_toFile(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, const char *fileName);
+        int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, char **raw, int* raw_len);
         
 	/**
 	 * Verify PKI signature of the publications file using the PKI truststore.
