@@ -16,7 +16,7 @@ static long long int highBit(long long int n) {
 static int addNvlImprint(KSI_DataHash *first, KSI_DataHash *second, KSI_DataHasher *hsr) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = first;
-	const unsigned char *imprint;
+	const unsigned char *imprint = NULL;
 	unsigned int imprint_len;
 
 	if (hsh == NULL) {
@@ -46,7 +46,7 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 	KSI_ERR err;
 	int res;
 	int mode = 0;
-	const unsigned char *imprint;
+	const unsigned char *imprint = NULL;
 	unsigned int imprint_len;
 	KSI_MetaData *metaData = NULL;
 	KSI_DataHash *metaHash = NULL;
@@ -64,7 +64,7 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_HashChainLink_getMetaHash(link, &metaHash);
-
+	KSI_CATCH(&err, res) goto cleanup;
 
 	if (hash != NULL) mode |= 0x01;
 	if (metaHash != NULL) mode |= 0x02;
@@ -159,8 +159,10 @@ static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, KSI_DataHash *inpu
 		if (hsr == NULL) {
 			res = KSI_DataHasher_open(ctx, algo_id, &hsr);
 		} else {
-			KSI_DataHasher_reset(hsr);
+			res = KSI_DataHasher_reset(hsr);
 		}
+		KSI_CATCH(&err, res) goto cleanup;
+
 
 		if (isLeft) {
 			res = addNvlImprint(hsh, inputHash, hsr);

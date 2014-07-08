@@ -168,7 +168,7 @@ static void TestSerialize(CuTest* tc) {
 	unsigned char out[0xffff + 4];
 	char errstr[1024];
 
-	unsigned int out_len;
+	unsigned out_len;
 	size_t in_len;
 
 	FILE *f = NULL;
@@ -213,7 +213,7 @@ static void TestClone(CuTest *tc) {
 	unsigned char out1[0xffff + 4];
 	char errstr[1024];
 
-	unsigned int out_len;
+	unsigned out_len;
 	size_t in_len;
 
 	FILE *f = NULL;
@@ -243,7 +243,7 @@ static void TestClone(CuTest *tc) {
 		res = KSI_TLV_serialize_ex(clone, out1, sizeof(out1), &out_len);
 		CuAssert(tc, "Unable to serialize TLV", res == KSI_OK);
 
-		CuAssertIntEquals_Msg(tc, "Serialized TLV size", in_len, out_len);
+		CuAssert(tc, "Serialized TLV size mismatch", in_len == out_len);
 		sprintf(errstr, "Serialised TLV content does not match original: %s", ok_sample[i]);
 		CuAssert(tc, errstr, !memcmp(in, out1, in_len));
 

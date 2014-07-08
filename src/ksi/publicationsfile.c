@@ -145,11 +145,11 @@ cleanup:
 	return res;
 }
 
-int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, int raw_len, KSI_PublicationsFile **pubFile) {
+int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, size_t raw_len, KSI_PublicationsFile **pubFile) {
 	KSI_ERR err;
 	int res;
 	unsigned char hdr[8];
-	unsigned int hdr_len = 0;
+	size_t hdr_len = 0;
 	KSI_PublicationsFile *tmp = NULL;
 	KSI_RDR *reader = NULL;
 	struct generator_st gen = {NULL, NULL};
@@ -256,7 +256,7 @@ int KSI_PublicationsFile_fromFile(KSI_CTX *ctx, const char *fileName, KSI_Public
 	KSI_RDR *reader = NULL;
 	KSI_PublicationsFile *tmp = NULL;
 	unsigned char *raw = NULL;
-	int raw_len = 0;
+	size_t raw_len = 0;
 	long raw_size = 0;
 	FILE *f = NULL;
 
@@ -283,7 +283,7 @@ int KSI_PublicationsFile_fromFile(KSI_CTX *ctx, const char *fileName, KSI_Public
 		goto cleanup;
 	}
 
-	if (raw_size > INT_MAX) {
+	if (raw_size > UINT_MAX) {
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
 		goto cleanup;
 	}
@@ -294,19 +294,19 @@ int KSI_PublicationsFile_fromFile(KSI_CTX *ctx, const char *fileName, KSI_Public
 		goto cleanup;
 	}
 
-	raw = KSI_calloc(raw_size, 1);
+	raw = KSI_calloc((unsigned)raw_size, 1);
 	if (raw == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
-	raw_len = fread(raw, 1, raw_size, f);
+	raw_len = fread(raw, 1, (unsigned)raw_size, f);
 	if (raw_len != raw_size) {
 		KSI_FAIL(&err, KSI_IO_ERROR, NULL);
 		goto cleanup;
 	}
 
-	res = KSI_PublicationsFile_parse(ctx, raw, raw_len, &tmp);
+	res = KSI_PublicationsFile_parse(ctx, raw, (unsigned)raw_len, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*pubFile = tmp;
@@ -663,13 +663,13 @@ int KSI_PublicationData_fromBase32(KSI_CTX *ctx, const char *publication, KSI_Pu
 	unsigned char *binary_publication = NULL;
 	size_t binary_publication_length;
 	KSI_PublicationData *tmp_published_data = NULL;
-	int i;
+	unsigned i;
 	unsigned long tmp_ulong;
 	KSI_uint64_t tmp_uint64;
 	int hash_alg;
 	unsigned int hash_size;
 	KSI_DataHash *pubHash = NULL;
-	KSI_Integer *pubTime;
+	KSI_Integer *pubTime = NULL;
 
 	KSI_PRE(&err, publication != NULL) goto cleanup;
 	KSI_PRE(&err, published_data != NULL) goto cleanup;

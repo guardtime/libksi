@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "internal.h"
-#include "net_curl.h"
+#include "net_http.h"
 
 #define KSI_ERR_STACK_LEN 16
 
@@ -33,7 +33,7 @@ struct KSI_CTX_st {
 	 * TRANSPORT.
 	 ************/
 
-	KSI_NetProvider *netProvider;
+	KSI_NetworkClient *netProvider;
 
 	KSI_PKITruststore *pkiTruststore;
 
@@ -104,7 +104,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	KSI_CTX *ctx = NULL;
-	KSI_NetProvider *netProvider = NULL;
+	KSI_NetworkClient *netProvider = NULL;
 	KSI_PKITruststore *pkiTruststore = NULL;
 	KSI_Logger *logger = NULL;
 
@@ -136,7 +136,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	if (res != KSI_OK) goto cleanup;
 
 	/* Initialize curl as the net handle. */
-	res = KSI_CurlNetProvider_new(ctx, &netProvider);
+	res = KSI_HttpClient_new(ctx, &netProvider);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_setNetworkProvider(ctx, netProvider);
@@ -158,7 +158,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 
 cleanup:
 
-	KSI_NetProvider_free(netProvider);
+	KSI_NetworkClient_free(netProvider);
 	KSI_PKITruststore_free(pkiTruststore);
 
 	KSI_CTX_free(ctx);
@@ -175,7 +175,7 @@ void KSI_CTX_free(KSI_CTX *context) {
 
 		KSI_Logger_free(context->logger);
 
-		KSI_NetProvider_free(context->netProvider);
+		KSI_NetworkClient_free(context->netProvider);
 		KSI_PKITruststore_free(context->pkiTruststore);
 
 		KSI_PublicationsFile_free(context->publicationsFile);
@@ -220,11 +220,11 @@ void KSI_global_cleanup(void) {
 	}
 }
 
-int KSI_sendSignRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle) {
+int KSI_sendSignRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_RequestHandle **handle) {
 	KSI_ERR err;
-	KSI_NetHandle *hndl = NULL;
+	KSI_RequestHandle *hndl = NULL;
 	int res;
-	KSI_NetProvider *netProvider = NULL;
+	KSI_NetworkClient *netProvider = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, request != NULL) goto cleanup;
@@ -234,10 +234,10 @@ int KSI_sendSignRequest(KSI_CTX *ctx, const unsigned char *request, int request_
 
 	netProvider = ctx->netProvider;
 
-	res = KSI_NetHandle_new(ctx, request, request_length, &hndl);
+	res = KSI_RequestHandle_new(ctx, request, request_length, &hndl);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_NetProvider_sendSignRequest(netProvider, hndl);
+	res = KSI_NetworkClient_sendSignRequest(netProvider, hndl);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*handle = hndl;
@@ -247,16 +247,16 @@ int KSI_sendSignRequest(KSI_CTX *ctx, const unsigned char *request, int request_
 
 cleanup:
 
-	KSI_NetHandle_free(hndl);
+	KSI_RequestHandle_free(hndl);
 
 	return KSI_RETURN(&err);
 }
 
-int KSI_sendExtendRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle) {
+int KSI_sendExtendRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_RequestHandle **handle) {
 	KSI_ERR err;
-	KSI_NetHandle *hndl = NULL;
+	KSI_RequestHandle *hndl = NULL;
 	int res;
-	KSI_NetProvider *netProvider = NULL;
+	KSI_NetworkClient *netProvider = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, request != NULL) goto cleanup;
@@ -266,10 +266,10 @@ int KSI_sendExtendRequest(KSI_CTX *ctx, const unsigned char *request, int reques
 
 	netProvider = ctx->netProvider;
 
-	res = KSI_NetHandle_new(ctx, request, request_length, &hndl);
+	res = KSI_RequestHandle_new(ctx, request, request_length, &hndl);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_NetProvider_sendExtendRequest(netProvider, hndl);
+	res = KSI_NetworkClient_sendExtendRequest(netProvider, hndl);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*handle = hndl;
@@ -279,17 +279,17 @@ int KSI_sendExtendRequest(KSI_CTX *ctx, const unsigned char *request, int reques
 
 cleanup:
 
-	KSI_NetHandle_free(hndl);
+	KSI_RequestHandle_free(hndl);
 
 	return KSI_RETURN(&err);
 }
 
 
-int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle) {
+int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_RequestHandle **handle) {
 	KSI_ERR err;
-	KSI_NetHandle *hndl = NULL;
+	KSI_RequestHandle *hndl = NULL;
 	int res;
-	KSI_NetProvider *netProvider = NULL;
+	KSI_NetworkClient *netProvider = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 
@@ -297,10 +297,10 @@ int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, int r
 
 	netProvider = ctx->netProvider;
 
-	res = KSI_NetHandle_new(ctx, request, request_length, &hndl);
+	res = KSI_RequestHandle_new(ctx, request, request_length, &hndl);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_NetProvider_sendPublicationsFileRequest(netProvider, hndl);
+	res = KSI_NetworkClient_sendPublicationsFileRequest(netProvider, hndl);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*handle = hndl;
@@ -310,7 +310,7 @@ int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, int r
 
 cleanup:
 
-	KSI_NetHandle_free(hndl);
+	KSI_RequestHandle_free(hndl);
 
 	return KSI_RETURN(&err);
 
@@ -319,9 +319,9 @@ cleanup:
 int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 	KSI_ERR err;
 	int res;
-	KSI_NetHandle *handle = NULL;
+	KSI_RequestHandle *handle = NULL;
 	const unsigned char *raw = NULL;
-	int raw_len = 0;
+	unsigned raw_len = 0;
 	KSI_PublicationsFile *tmp = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -333,7 +333,7 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 		res = KSI_sendPublicationRequest(ctx, NULL, 0, &handle);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		res = KSI_NetHandle_getResponse(handle, &raw, &raw_len);
+		res = KSI_RequestHandle_getResponse(handle, &raw, &raw_len);
 		KSI_CATCH(&err, res) goto cleanup;
 
 		res = KSI_PublicationsFile_parse(ctx, raw, raw_len, &tmp);
@@ -352,7 +352,7 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 
 cleanup:
 
-	KSI_NetHandle_free(handle);
+	KSI_RequestHandle_free(handle);
 	KSI_PublicationsFile_free(tmp);
 
 	return KSI_RETURN(&err);
@@ -684,5 +684,5 @@ cleanup:																					\
 	CTX_VALUEP_GETTER(var, nam, typ)														\
 
 CTX_GET_SET_VALUE(pkiTruststore, PKITruststore, KSI_PKITruststore, KSI_PKITruststore_free)
-CTX_GET_SET_VALUE(netProvider, NetworkProvider, KSI_NetProvider, KSI_NetProvider_free)
+CTX_GET_SET_VALUE(netProvider, NetworkProvider, KSI_NetworkClient, KSI_NetworkClient_free)
 CTX_GET_SET_VALUE(logger, Logger, KSI_Logger, KSI_Logger_free)

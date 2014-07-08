@@ -169,11 +169,11 @@ void KSI_Logger_free(KSI_Logger *logger) {
 	}
 }
 
-int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned char *data, size_t data_len) {
+int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned char *data, unsigned data_len) {
 	int res = KSI_UNKNOWN_ERROR;
 	char *logStr = NULL;
 	size_t logStr_size = 0;
-	int logStr_len = 0;
+	size_t logStr_len = 0;
 	size_t i;
 	KSI_Logger *logger = NULL;
 
@@ -193,10 +193,19 @@ int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned 
 	}
 
 	for (i = 0; i < data_len; i++) {
-		logStr_len += snprintf(logStr + logStr_len, logStr_size - logStr_len, "%02x", data[i]);
+		int written;
+		written = snprintf(logStr + logStr_len, logStr_size - logStr_len, "%02x", data[i]);
+		if (written <= 0 || written > logStr_size - logStr_len) {
+			res = KSI_BUFFER_OVERFLOW;
+			goto cleanup;
+		}
+		logStr_len += (unsigned)written;
 	}
 
-	res = KSI_LOG_log(ctx, level, "%s (len = %d): %s", prefix, data_len, logStr);
+	res = KSI_LOG_log(ctx, level, "%s (len = %lld): %s", prefix, (long long)data_len, logStr);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OK;
 
 cleanup:
 

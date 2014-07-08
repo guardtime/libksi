@@ -54,7 +54,7 @@ extern "C" {
 		/**
 		 * TLV tag value.
 		 */
-		int tag;
+		unsigned tag;
 
 		/**
 		 * Is this TLV non-critical - should it produce an error when the parser does not know this tag.
@@ -142,7 +142,7 @@ extern "C" {
 		/**
 		 * Simple function for converting an object into a TLV.
 		 */
-		int (*toTlv)(void *, int, int, int, KSI_TLV **tlv);
+		int (*toTlv)(void *, unsigned, int, int, KSI_TLV **tlv);
 	};
 
 
@@ -221,7 +221,7 @@ extern "C" {
 				(int (*)(KSI_CTX *, void **)) constr, (void (*)(void *)) destr, subTmpl, 																															\
 				(int (*)(void *, void *))list_append, mul, (int (*)(KSI_CTX *, void **)) list_new, (void (*)(void *)) list_free, (int (*)(const void *)) list_len, (int (*)(const void *, int, void **))list_elAt, 	\
 				(cb_encode_t)cbEnc, (cb_decode_t)cbDec, 																																							\
-				(int (*)(KSI_TLV *, void **)) fromTlv, (int (*)(void *, int, int, int, KSI_TLV **))toTlv},																											\
+				(int (*)(KSI_TLV *, void **)) fromTlv, (int (*)(void *, unsigned, int, int, KSI_TLV **))toTlv},																											\
 
 	/**
 	 * A helper macro for defining primitive templates.

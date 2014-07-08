@@ -4,20 +4,20 @@
 #include "../src/ksi/internal.h"
 
 unsigned char *KSI_NET_MOCK_request = NULL;
-int KSI_NET_MOCK_request_len;
+unsigned KSI_NET_MOCK_request_len;
 unsigned char *KSI_NET_MOCK_response = NULL;
-int KSI_NET_MOCK_response_len;
+unsigned KSI_NET_MOCK_response_len;
 
-static int mockPublicationsFileReceive(KSI_NetHandle *handle) {
+static int mockPublicationsFileReceive(KSI_RequestHandle *handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	FILE *f = NULL;
 	unsigned char *raw = NULL;
-	int len;
+	unsigned len;
 	long int raw_size = 0;
 
 	if (handle == NULL) goto cleanup;
 
-	KSI_LOG_debug(KSI_NetHandle_getCtx(handle), "Connecting to MOCK publications file service");
+	KSI_LOG_debug(KSI_RequestHandle_getCtx(handle), "Connecting to MOCK publications file service");
 
 	f = fopen("test/resource/tlv/publications.tlv", "rb");
 	if (f == NULL) {
@@ -48,20 +48,20 @@ static int mockPublicationsFileReceive(KSI_NetHandle *handle) {
 		goto cleanup;
 	}
 
-	raw = KSI_calloc(raw_size, 1);
+	raw = KSI_calloc((unsigned)raw_size, 1);
 	if (raw == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
 
-	len = fread(raw, 1, raw_size, f);
+	len = (unsigned)fread(raw, 1, (unsigned)raw_size, f);
 	if (len != raw_size) {
 		res = KSI_IO_ERROR;
 		goto cleanup;
 	}
 
 
-	res = KSI_NetHandle_setResponse(handle, raw, len);
+	res = KSI_RequestHandle_setResponse(handle, raw, len);
 	if (res != KSI_OK) goto cleanup;
 
 cleanup:
@@ -73,14 +73,14 @@ cleanup:
 
 
 
-static int mockReceive(KSI_NetHandle *handle) {
+static int mockReceive(KSI_RequestHandle *handle) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (handle == NULL) goto cleanup;
 
-	KSI_LOG_debug(KSI_NetHandle_getCtx(handle), "Connecting to MOCK service");
+	KSI_LOG_debug(KSI_RequestHandle_getCtx(handle), "Connecting to MOCK service");
 
-	res = KSI_NetHandle_setResponse(handle, KSI_NET_MOCK_response, KSI_NET_MOCK_response_len);
+	res = KSI_RequestHandle_setResponse(handle, KSI_NET_MOCK_response, KSI_NET_MOCK_response_len);
 	if (res != KSI_OK) goto cleanup;
 
 cleanup:
@@ -88,17 +88,17 @@ cleanup:
 		return res;
 }
 
-static int mockSend(KSI_NetHandle *handle) {
+static int mockSend(KSI_RequestHandle *handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	const unsigned char *req = NULL;
-	int req_len;
+	unsigned req_len;
 
-	KSI_LOG_debug(KSI_NetHandle_getCtx(handle), "Initiate MOCK request.");
+	KSI_LOG_debug(KSI_RequestHandle_getCtx(handle), "Initiate MOCK request.");
 
-	res = KSI_NetHandle_setReadResponseFn(handle, mockReceive);
+	res = KSI_RequestHandle_setReadResponseFn(handle, mockReceive);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_NetHandle_getRequest(handle, &req, &req_len);
+	res = KSI_RequestHandle_getRequest(handle, &req, &req_len);
 	if (res != KSI_OK) goto cleanup;
 
 	if (KSI_NET_MOCK_request != NULL) KSI_free((unsigned char *)KSI_NET_MOCK_request);
@@ -113,25 +113,25 @@ cleanup:
 	return res;
 }
 
-static int mockSendSignRequest(KSI_NetProvider *netProvider, KSI_NetHandle *handle) {
+static int mockSendSignRequest(KSI_NetworkClient *netProvider, KSI_RequestHandle *handle) {
 	return mockSend(handle);
 }
 
-static int mockSendExtendRequest(KSI_NetProvider *netProvider, KSI_NetHandle *handle) {
+static int mockSendExtendRequest(KSI_NetworkClient *netProvider, KSI_RequestHandle *handle) {
 	return mockSend(handle);
 }
 
-static int mockSendPublicationsFileRequest(KSI_NetProvider *netProvider, KSI_NetHandle *handle) {
+static int mockSendPublicationsFileRequest(KSI_NetworkClient *netProvider, KSI_RequestHandle *handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	const unsigned char *req = NULL;
-	int req_len;
+	unsigned req_len;
 
-	KSI_LOG_debug(KSI_NetHandle_getCtx(handle), "Initiate MOCK request.");
+	KSI_LOG_debug(KSI_RequestHandle_getCtx(handle), "Initiate MOCK request.");
 
-	res = KSI_NetHandle_setReadResponseFn(handle, mockPublicationsFileReceive);
+	res = KSI_RequestHandle_setReadResponseFn(handle, mockPublicationsFileReceive);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_NetHandle_getRequest(handle, &req, &req_len);
+	res = KSI_RequestHandle_getRequest(handle, &req, &req_len);
 	if (res != KSI_OK) goto cleanup;
 
 	if (KSI_NET_MOCK_request != NULL) KSI_free((unsigned char *)KSI_NET_MOCK_request);
@@ -146,10 +146,10 @@ cleanup:
 	return res;
 }
 
-int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetProvider **provider) {
+int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetworkClient **provider) {
 	KSI_ERR err;
 	int res;
-	KSI_NetProvider *pr = NULL;
+	KSI_NetworkClient *pr = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
@@ -157,16 +157,16 @@ int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetProvider **provider) {
 	KSI_NET_MOCK_request_len = 0;
 	KSI_NET_MOCK_response_len = 0;
 
-	res = KSI_NetProvider_new(ctx, &pr);
+	res = KSI_NetworkClient_new(ctx, &pr);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_NetProvider_setSendSignRequestFn(pr, mockSendSignRequest);
+	res = KSI_NetworkClient_setSendSignRequestFn(pr, mockSendSignRequest);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_NetProvider_setSendExtendRequestFn(pr, mockSendExtendRequest);
+	res = KSI_NetworkClient_setSendExtendRequestFn(pr, mockSendExtendRequest);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_NetProvider_setSendPublicationRequestFn(pr, mockSendPublicationsFileRequest);
+	res = KSI_NetworkClient_setSendPublicationRequestFn(pr, mockSendPublicationsFileRequest);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*provider = pr;

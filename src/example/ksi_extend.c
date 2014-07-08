@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include <ksi/ksi.h>
-#include <ksi/net_curl.h>
+#include <ksi/net_http.h>
 
 
 int main(int argc, char **argv) {
@@ -11,10 +11,10 @@ int main(int argc, char **argv) {
 	FILE *out = NULL;
 	KSI_Signature *sig = NULL;
 	KSI_Signature *ext = NULL;
-	KSI_NetProvider *net = NULL;
+	KSI_NetworkClient *net = NULL;
 	unsigned char *raw = NULL;
-	int raw_len;
-	int count;
+	unsigned raw_len;
+	unsigned count;
 
 	res = KSI_global_init();
 	if (res != KSI_OK) {
@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
 	}
 
 	if (strncmp("-",argv[3], 1) || strncmp("-", argv[4], 1)) {
-		res = KSI_CurlNetProvider_new(ksi, &net);
+		res = KSI_HttpClient_new(ksi, &net);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable to create new network provider.\n");
 			goto cleanup;
@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
 
 		if (strncmp("-", argv[3], 1)) {
 			/* Set extender uri. */
-			res = KSI_CurlNetProvider_setExtenderUrl(net, argv[3]);
+			res = KSI_HttpClient_setExtenderUrl(net, argv[3]);
 			if (res != KSI_OK) {
 				fprintf(stderr, "Unable to set extender url.\n");
 				goto cleanup;
@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
 
 		if (strncmp("-", argv[4], 1)) {
 			/* Set the publications file url. */
-			res = KSI_CurlNetProvider_setPublicationUrl(net, argv[4]);
+			res = KSI_HttpClient_setPublicationUrl(net, argv[4]);
 			if (res != KSI_OK) {
 				fprintf(stderr, "Unable to set publications file url.\n");
 				goto cleanup;
@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	count = fwrite(raw, 1, raw_len, out);
+	count = (unsigned)fwrite(raw, 1, raw_len, out);
 	if (count != raw_len) {
 		fprintf(stderr, "Failed to write output file.\n");
 		res = KSI_IO_ERROR;

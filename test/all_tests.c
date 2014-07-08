@@ -18,13 +18,13 @@
 KSI_CTX *ctx = NULL;
 
 extern unsigned char *KSI_NET_MOCK_response;
-extern int KSI_NET_MOCK_response_len;
+extern unsigned KSI_NET_MOCK_response_len;
 
 
 void KSITest_setFileMockResponse(CuTest *tc, const char *fileName) {
 	FILE *f = NULL;
 	unsigned char *resp = NULL;
-	int resp_size = 0xfffff;
+	unsigned resp_size = 0xfffff;
 
 	resp = KSI_calloc(resp_size, 1);
 	CuAssert(tc, "Out of memory", resp != NULL);
@@ -33,7 +33,7 @@ void KSITest_setFileMockResponse(CuTest *tc, const char *fileName) {
 	f = fopen(fileName, "rb");
 	CuAssert(tc, "Unable to open sample response file", f != NULL);
 
-	KSI_NET_MOCK_response_len = fread(resp, 1, resp_size, f);
+	KSI_NET_MOCK_response_len = (unsigned)fread(resp, 1, resp_size, f);
 	fclose(f);
 
 	if (KSI_NET_MOCK_response != NULL) {
@@ -48,7 +48,7 @@ static void escapeStr(const char *str, CuString *escaped) {
 	static const char *repl[] = { "lt", "gt", "amp", "quot", "#39"};
 	while (*str) {
 		/* Find the index of current char. */
-		p = strchr(replIndex, *str) - replIndex;
+		p = (int)(strchr(replIndex, *str) - replIndex);
 		/* If the character is found, use the replacement */
 		if (p >= 0) {
 			CuStringAppendFormat(escaped, "&%s", repl[p]);
@@ -121,6 +121,7 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSITest_HashChain_getSuite);
 	addSuite(suite, KSITest_Signature_getSuite);
 	addSuite(suite, KSITest_Publicationsfile_getSuite);
+	addSuite(suite, KSITest_Truststore_getSuite);
 
 	return suite;
 }
@@ -195,10 +196,10 @@ int KSITest_memcmp(void *ptr1, void *ptr2, size_t len) {
 	return res;
 }
 
-int KSITest_decodeHexStr(const char *hexstr, unsigned char *buf, int buf_size, int *buf_length) {
+int KSITest_decodeHexStr(const char *hexstr, unsigned char *buf, int buf_size, unsigned *buf_length) {
 	int res = KSI_UNKNOWN_ERROR;
 	int i = 0;
-	int len = 0;
+	unsigned len = 0;
 	int count = 0;
 
 	while (hexstr[i]) {
@@ -214,11 +215,11 @@ int KSITest_decodeHexStr(const char *hexstr, unsigned char *buf, int buf_size, i
 			buf[len] = 0;
 		}
 
-		chr = tolower(chr);
+		chr = (char)tolower(chr);
 		if (isdigit(chr)) {
-			buf[len] = buf[len] << 4 | (chr - '0');
+			buf[len] = (unsigned char)(buf[len] << 4) | (unsigned char)(chr - '0');
 		} else if (chr >= 'a' && chr <= 'f') {
-			buf[len] = buf[len] << 4 | (chr - 'a' + 10);
+			buf[len] = (unsigned char)(buf[len] << 4) | (unsigned char)(chr - 'a' + 10);
 		} else {
 			res = KSI_INVALID_FORMAT;
 			goto cleanup;

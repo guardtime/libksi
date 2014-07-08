@@ -234,7 +234,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_TLV_free, #KSI_DataHash_fromTlv
 	 */
-	int KSI_DataHash_toTlv(KSI_DataHash *hsh, int tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+	int KSI_DataHash_toTlv(KSI_DataHash *hsh, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 	/**
 	 * @}

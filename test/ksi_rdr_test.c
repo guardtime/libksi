@@ -60,7 +60,7 @@ static void TestRdrFileBadFileName(CuTest* tc) {
 static void TestRdrFileFileReading(CuTest* tc) {
 	int res;
 	unsigned char tmpBuf[0xffff];
-	unsigned int readCount;
+	size_t readCount;
 
 	static char testStr[] = "Randomness is too important to be left to chance";
 
@@ -94,7 +94,7 @@ static void TestRdrFileFileReading(CuTest* tc) {
 static void TestRdrFileReadingChuncks(CuTest* tc) {
 	int res;
 	unsigned char tmpBuf[0xffff];
-	unsigned int readCount;
+	size_t readCount;
 	size_t size = 0;
 
 	static char testStr[] = "Randomness is too important to be left to chance";
@@ -130,7 +130,7 @@ static void TestRdrFileReadingChuncks(CuTest* tc) {
 
 static void TestRdrMemInitExtStorage(CuTest* tc) {
 	int res;
-	unsigned int readCount;
+	size_t readCount;
 
 	KSI_RDR *rdr = NULL;
 	static char testData[] = "Random binary data.";
@@ -142,7 +142,7 @@ static void TestRdrMemInitExtStorage(CuTest* tc) {
 	CuAssert(tc, "Init did not fail, but object not created.", rdr != NULL);
 
 	res = KSI_RDR_read_ex(rdr, tmpBuf, sizeof(tmpBuf), &readCount);
-	CuAssert(tc, "Incorrect read count.", readCount = sizeof(testData));
+	CuAssert(tc, "Incorrect read count.", res == KSI_OK && readCount == sizeof(testData));
 
 	CuAssert(tc, "Data missmatch", !memcmp(tmpBuf, testData, sizeof(testData)));
 
@@ -151,7 +151,7 @@ static void TestRdrMemInitExtStorage(CuTest* tc) {
 
 static void TestRdrMemInitOwnStorage(CuTest* tc) {
 	int res;
-	unsigned int readCount;
+	size_t readCount;
 
 	KSI_RDR *rdr = NULL;
 	static char testData[] = "Random binary data.";
@@ -163,7 +163,7 @@ static void TestRdrMemInitOwnStorage(CuTest* tc) {
 	CuAssert(tc, "Init did not fail, but object not created.", rdr != NULL);
 
 	res = KSI_RDR_read_ex(rdr, tmpBuf, sizeof(tmpBuf), &readCount);
-	CuAssert(tc, "Incorrect read count.", readCount = sizeof(testData));
+	CuAssert(tc, "Incorrect read count.", res == KSI_OK && readCount == sizeof(testData));
 
 	CuAssert(tc, "Data missmatch", !memcmp(tmpBuf, testData, sizeof(testData)));
 

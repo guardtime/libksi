@@ -6,6 +6,10 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 
+#ifndef _WIN32
+#  include<sys/stat.h>
+#endif
+
 #include "internal.h"
 
 /* Hide the following line to deactivate. */
@@ -125,12 +129,12 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_PKICertificate_toTlv(KSI_PKICertificate *cert, int tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_PKICertificate_toTlv(KSI_PKICertificate *cert, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tmp = NULL;
 	unsigned char *raw = NULL;
-	int raw_len = 0;
+	unsigned raw_len = 0;
 
 	KSI_PRE(&err, cert != NULL) goto cleanup;
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
@@ -280,7 +284,7 @@ void KSI_PKISignature_free(KSI_PKISignature *sig) {
 	}
 }
 
-int KSI_PKISignature_serialize(KSI_PKISignature *sig, unsigned char **raw, int *raw_len) {
+int KSI_PKISignature_serialize(KSI_PKISignature *sig, unsigned char **raw, unsigned *raw_len) {
 	KSI_ERR err;
 	unsigned char *tmpOssl = NULL;
 	unsigned char *tmp = NULL;
@@ -297,7 +301,7 @@ int KSI_PKISignature_serialize(KSI_PKISignature *sig, unsigned char **raw, int *
 		goto cleanup;
 	}
 
-	tmp = KSI_calloc(len, 1);
+	tmp = KSI_calloc((unsigned)len, 1);
 	if (tmp == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
@@ -307,7 +311,7 @@ int KSI_PKISignature_serialize(KSI_PKISignature *sig, unsigned char **raw, int *
 	i2d_PKCS7(sig->pkcs7, &tmpOssl);
 
 	*raw = tmp;
-	*raw_len = len;
+	*raw_len = (unsigned)len;
 
 	tmp = NULL;
 
@@ -355,12 +359,12 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_PKISignature_toTlv(KSI_PKISignature *sig, int tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_PKISignature_toTlv(KSI_PKISignature *sig, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tmp = NULL;
 	unsigned char *raw = NULL;
-	int raw_len = 0;
+	unsigned raw_len = 0;
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
@@ -388,7 +392,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, int raw_len, KSI_PKISignature **signature) {
+int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, unsigned raw_len, KSI_PKISignature **signature) {
 	KSI_ERR err;
 	KSI_PKISignature *tmp = NULL;
 	PKCS7 *pkcs7 = NULL;
@@ -407,7 +411,12 @@ int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, int raw_len, KSI_PKISign
 	tmp->ctx = ctx;
 	tmp->pkcs7 = NULL;
 
-	pkcs7 = d2i_PKCS7(NULL, (const unsigned char **)&raw, raw_len);
+	if (raw_len > INT_MAX) {
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Length is greater than INT_MAX");
+		goto cleanup;
+	}
+
+	pkcs7 = d2i_PKCS7(NULL, (const unsigned char **)&raw, (int)raw_len);
 	if (pkcs7 == NULL) {
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, NULL);
 		goto cleanup;
@@ -428,7 +437,7 @@ cleanup:
 }
 
 /**/
-int KSI_PKICertificate_new(KSI_CTX *ctx, const void *der, int der_len, KSI_PKICertificate **cert) {
+int KSI_PKICertificate_new(KSI_CTX *ctx, const void *der, size_t der_len, KSI_PKICertificate **cert) {
 	KSI_ERR err;
 	X509 *x509 = NULL;
 	BIO *bio = NULL;
@@ -441,7 +450,11 @@ int KSI_PKICertificate_new(KSI_CTX *ctx, const void *der, int der_len, KSI_PKICe
 
 	KSI_BEGIN(ctx, &err);
 
-	bio = BIO_new_mem_buf((void *)der, der_len);
+	if (der_len > INT_MAX) {
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Length is more than MAX_INT");
+		goto cleanup;
+	}
+	bio = BIO_new_mem_buf((void *)der, (int)der_len);
 	if (bio == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
@@ -476,7 +489,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, int *raw_len) {
+int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, unsigned *raw_len) {
 	KSI_ERR err;
 	unsigned char *tmp_ossl = NULL;
 	unsigned char *tmp = NULL;
@@ -502,16 +515,16 @@ int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, 
 	tmp = tmp_ossl;
 	i2d_X509(cert->x509, &tmp);
 
-	tmp = KSI_calloc(len, 1);
+	tmp = KSI_calloc((unsigned)len, 1);
 	if (tmp == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
-	memcpy(tmp, tmp_ossl, len);
+	memcpy(tmp, tmp_ossl, (unsigned)len);
 
 	*raw = tmp;
-	*raw_len = len;
+	*raw_len = (unsigned)len;
 
 	tmp = NULL;
 	KSI_SUCCESS(&err);
@@ -673,7 +686,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, unsigned int data_len, const char *algoOid, const unsigned char *signature, unsigned int signature_len, const KSI_PKICertificate *certificate) {
+int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, unsigned data_len, const char *algoOid, const unsigned char *signature, unsigned signature_len, const KSI_PKICertificate *certificate) {
 	KSI_ERR err;
 	int res;
 	ASN1_OBJECT* algorithm = NULL;
@@ -686,6 +699,7 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 
 	KSI_PRE(&err, data != NULL && data_len > 0) goto cleanup;
 	KSI_PRE(&err, signature != NULL && signature_len > 0) goto cleanup;
+	KSI_PRE(&err, signature_len < UINT_MAX) goto cleanup;
 	KSI_PRE(&err, algoOid != NULL) goto cleanup;
 	KSI_PRE(&err, certificate != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);

@@ -390,11 +390,11 @@ cleanup:
 
 }
 
-static int verifyPublicationData(KSI_CTX *ctx, KSI_CalendarAuthRec *calAuth, const unsigned char *raw, int raw_len, KSI_PKICertificate *cert) {
+static int verifyPublicationData(KSI_CTX *ctx, KSI_CalendarAuthRec *calAuth, const unsigned char *raw, unsigned raw_len, KSI_PKICertificate *cert) {
 	KSI_ERR err;
 	int res;
 	unsigned char *data = NULL;
-	int data_len;
+	unsigned data_len;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, calAuth != NULL) goto cleanup;
@@ -583,6 +583,7 @@ static int verifySignature_internal(KSI_Signature *sig) {
 	KSI_Integer *publicationTime = NULL;
 	KSI_LIST(KSI_HashChainLink) *chain = NULL;
 	KSI_DataHash *inputHash = NULL;
+	int hash_id;
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
 	KSI_BEGIN(sig->ctx, &err);
@@ -641,7 +642,7 @@ static int verifySignature_internal(KSI_Signature *sig) {
 			}
 		}
 
-		res = KSI_HashChain_aggregate(aggregationChain->chain, aggregationChain->inputHash, level, KSI_Integer_getUInt64(aggregationChain->aggrHashId), &level, &tmpHash);
+		res = KSI_HashChain_aggregate(aggregationChain->chain, aggregationChain->inputHash, level, (int)KSI_Integer_getUInt64(aggregationChain->aggrHashId), &level, &tmpHash);
 		KSI_CATCH(&err, res) {
 			KSI_FAIL(&err, res, "Failed to calculate aggregation chain.");
 			goto cleanup;
@@ -762,7 +763,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int createPduTlv(KSI_CTX *ctx, int tag, KSI_TLV **pdu) {
+static int createPduTlv(KSI_CTX *ctx, unsigned tag, KSI_TLV **pdu) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tmp = NULL;
@@ -1029,16 +1030,16 @@ static int removeWeakAuthRecords(KSI_Signature *sig) {
 
 	/* By looping in reverse order, we can safely remove elements
 	 * and continue. */
-	for (i = KSI_TLVList_length(nested) - 1; i >= 0; i--) {
-		int tag;
+	for (i = (int)KSI_TLVList_length(nested) - 1; i >= 0; i--) {
+		unsigned tag;
 
-		res = KSI_TLVList_elementAt(nested, i, &tlv);
+		res = KSI_TLVList_elementAt(nested, (unsigned)i, &tlv);
 		KSI_CATCH(&err, res) goto cleanup;
 
 		tag = KSI_TLV_getTag(tlv);
 
 		if (tag == 0x0804 || tag == 0x0805) {
-			res = KSI_TLVList_remove(nested, i);
+			res = KSI_TLVList_remove(nested, (unsigned)i);
 			KSI_CATCH(&err, res) goto cleanup;
 
 			KSI_TLV_free(tlv);
@@ -1131,7 +1132,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int KSI_parseAggregationResponse(KSI_CTX *ctx, const unsigned char *response, int response_len, KSI_Signature **signature) {
+static int KSI_parseAggregationResponse(KSI_CTX *ctx, const unsigned char *response, unsigned response_len, KSI_Signature **signature) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *pduTlv = NULL;
@@ -1184,7 +1185,7 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, const unsigned char *respo
 		KSI_CATCH(&err, res) goto cleanup;
 
 		snprintf(msg, sizeof(msg), "Aggregation failed: %s", KSI_Utf8String_cstr(errorMessage));
-		KSI_FAIL_EXT(&err, KSI_AGGREGATOR_ERROR, (unsigned long long)KSI_Integer_getUInt64(status), KSI_Utf8String_cstr(errorMessage));
+		KSI_FAIL_EXT(&err, KSI_AGGREGATOR_ERROR, (long)KSI_Integer_getUInt64(status), KSI_Utf8String_cstr(errorMessage));
 		goto cleanup;
 	}
 
@@ -1297,15 +1298,16 @@ int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx) {
 
 	if (sig->publication != NULL) {
 		/* Verify using publication. */
-		res = verifySignatureWithPublication(ctx, sig);
+		res = verifySignatureWithPublication(ctxp, sig);
 		KSI_CATCH(&err, res) goto cleanup;
 	} else {
 		if (sig->calendarAuthRec != NULL) {
-			res = KSI_CalendarAuthRec_verify(ctx, sig->calendarAuthRec);
+			res = KSI_CalendarAuthRec_verify(ctxp, sig->calendarAuthRec);
 			KSI_CATCH(&err, res) goto cleanup;
 		}
 		/* Verify using extender. */
-		res = verifySignatureWithExtender(ctx, sig);
+		res = verifySignatureWithExtender(ctxp, sig);
+		KSI_CATCH(&err, res) goto cleanup;
 	}
 
 
@@ -1319,14 +1321,14 @@ cleanup:
 int KSI_Signature_create(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **signature) {
 	KSI_ERR err;
 	int res;
-	KSI_NetHandle *handle = NULL;
+	KSI_RequestHandle *handle = NULL;
 	KSI_Signature *sign = NULL;
 
 	unsigned char *req = NULL;
-	int req_len = 0;
+	unsigned req_len = 0;
 
 	const unsigned char *resp = NULL;
-	int resp_len = 0;
+	unsigned resp_len = 0;
 
 	KSI_PRE(&err, hsh != NULL) goto cleanup;
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -1343,7 +1345,7 @@ int KSI_Signature_create(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Read the response. */
-	res = KSI_NetHandle_getResponse(handle, &resp, &resp_len);
+	res = KSI_RequestHandle_getResponse(handle, &resp, &resp_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Response", resp, resp_len);
@@ -1358,7 +1360,7 @@ int KSI_Signature_create(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **
 cleanup:
 
 	KSI_Signature_free(sign);
-	KSI_NetHandle_free(handle);
+	KSI_RequestHandle_free(handle);
 	KSI_free(req);
 
 	return KSI_RETURN(&err);
@@ -1378,14 +1380,14 @@ int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRe
 	KSI_PublicationRecord *pubRecClone = NULL;
 
 	unsigned char *rawReq = NULL;
-	int rawReq_len = 0;
+	unsigned rawReq_len = 0;
 
 	const unsigned char *rawResp = NULL;
-	int rawResp_len = 0;
+	unsigned rawResp_len = 0;
 
 	KSI_TLV *respTlv = NULL;
 	KSI_ExtendPdu *pdu = NULL;
-	KSI_NetHandle *handle = NULL;
+	KSI_RequestHandle *handle = NULL;
 
 	KSI_PRE(&err, signature != NULL) goto cleanup;
 	KSI_BEGIN(signature->ctx, &err);
@@ -1427,7 +1429,7 @@ int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRe
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Read the response. */
-	res = KSI_NetHandle_getResponse(handle, &rawResp, &rawResp_len);
+	res = KSI_RequestHandle_getResponse(handle, &rawResp, &rawResp_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_LOG_logBlob(signature->ctx, KSI_LOG_DEBUG, "Extend response", rawResp, rawResp_len);
@@ -1457,6 +1459,7 @@ int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRe
 	if (respStatus != NULL && !KSI_Integer_equalsUInt(respStatus, 0)) {
 		KSI_Utf8String *error = NULL;
 		res = KSI_ExtendResp_getErrorMsg(response, &error);
+		KSI_CATCH(&err, res) goto cleanup;
 
 		KSI_FAIL(&err, KSI_EXTENDER_ERROR, KSI_Utf8String_cstr(error));
 		KSI_nofree(error);
@@ -1496,7 +1499,7 @@ cleanup:
 
 	KSI_PublicationRecord_free(pubRecClone);
 	KSI_ExtendPdu_free(pdu);
-	KSI_NetHandle_free(handle);
+	KSI_RequestHandle_free(handle);
 	KSI_TLV_free(respTlv);
 	KSI_free(rawReq);
 	KSI_Signature_free(tmp);
@@ -1613,7 +1616,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_Signature_parse(KSI_CTX *ctx, unsigned char *raw, int raw_len, KSI_Signature **sig) {
+int KSI_Signature_parse(KSI_CTX *ctx, unsigned char *raw, unsigned raw_len, KSI_Signature **sig) {
 	KSI_ERR err;
 	KSI_TLV *tlv = NULL;
 	KSI_Signature *tmp = NULL;
@@ -1651,10 +1654,13 @@ int KSI_Signature_fromFile(KSI_CTX *ctx, const char *fileName, KSI_Signature **s
 	KSI_ERR err;
 	int res;
 	FILE *f = NULL;
+
 	unsigned char *raw = NULL;
-	int raw_size = 0xfffff;
 	size_t raw_len = 0;
+
 	KSI_Signature *tmp = NULL;
+
+	const unsigned raw_size = 0xfffff;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, fileName != NULL) goto cleanup;
@@ -1684,7 +1690,7 @@ int KSI_Signature_fromFile(KSI_CTX *ctx, const char *fileName, KSI_Signature **s
 		goto cleanup;
 	}
 
-	res = KSI_Signature_parse(ctx, raw, (int)raw_len, &tmp);
+	res = KSI_Signature_parse(ctx, raw, (unsigned)raw_len, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*sig = tmp;
@@ -1701,11 +1707,11 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_Signature_serialize(KSI_Signature *sig, unsigned char **raw, int *raw_len) {
+int KSI_Signature_serialize(KSI_Signature *sig, unsigned char **raw, unsigned *raw_len) {
 	KSI_ERR err;
 	int res;
 	unsigned char *tmp = NULL;
-	int tmp_len;
+	unsigned tmp_len;
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
 	KSI_PRE(&err, raw != NULL) goto cleanup;
@@ -1738,8 +1744,8 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 	KSI_LIST(KSI_Utf8String) *idList = NULL;
 	KSI_Utf8String *clientId = NULL;
 	char *signerId = NULL;
-	int signerId_size = 0;
-	int signerId_len = 0;
+	size_t signerId_size = 0;
+	size_t signerId_len = 0;
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
 	KSI_PRE(&err, signerIdentity != NULL) goto cleanup;
@@ -1775,6 +1781,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 			signerId_size += strlen((char *)clientId) + 1; /* +1 for dot (.) or ending zero character. */
 
 			res = KSI_Utf8StringList_append(idList, clientId);
+			KSI_CATCH(&err, res) goto cleanup;
 			clientId = NULL;
 
 		}
@@ -1787,7 +1794,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 		res = KSI_Utf8StringList_elementAt(idList, i, &tmp);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		signerId_len += sprintf(signerId + signerId_len, "%s%s", signerId_len > 0 ? ".": "", KSI_Utf8String_cstr(tmp));
+		signerId_len += (unsigned)sprintf(signerId + signerId_len, "%s%s", signerId_len > 0 ? ".": "", KSI_Utf8String_cstr(tmp));
 	}
 
 	*signerIdentity = signerId;

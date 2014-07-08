@@ -2,6 +2,7 @@
 #define _KSI_INTERNAL_H_
 
 #include <stdint.h>
+#include <limits.h>
 
 #include "ksi.h"
 #include "tlv_tags.h"

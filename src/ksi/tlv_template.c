@@ -222,7 +222,7 @@ cleanup:
 static int decodeCalendarHashChainLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarHashChain *calHashChain, getter_t valueGetter, setter_t valueSetter, int isLeft) {
 	KSI_ERR err;
 	int res;
-	const unsigned char *raw;
+	const unsigned char *raw = NULL;
 	unsigned int raw_len = 0;
 	KSI_LIST(KSI_HashChainLink) *listp = NULL;
 	KSI_LIST(KSI_HashChainLink) *list = NULL;
@@ -269,6 +269,7 @@ static int decodeCalendarHashChainLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarH
 
 	/* Append the current link to the list */
 	res = KSI_HashChainLinkList_append(listp, link);
+	KSI_CATCH(&err, res) goto cleanup;
 	link = NULL;
 
 	if (list != NULL) {
@@ -479,7 +480,7 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 				case KSI_TLV_TEMPLATE_SEEK_POS:
 					uint64Val = (KSI_uint64_t)KSI_TLV_getAbsoluteOffset(tlv);
 
-					res = ((int (*)(void *, int))t->setValue)(payload, uint64Val);
+					res = ((int (*)(void *, KSI_uint64_t))t->setValue)(payload, uint64Val);
 					KSI_CATCH(&err, res) goto cleanup;
 
 					break;

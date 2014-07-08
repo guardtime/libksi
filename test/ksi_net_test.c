@@ -3,9 +3,9 @@
 
 extern KSI_CTX *ctx;
 extern unsigned char *KSI_NET_MOCK_request;
-extern int KSI_NET_MOCK_request_len;
+extern unsigned KSI_NET_MOCK_request_len;
 extern unsigned char *KSI_NET_MOCK_response;
-extern int KSI_NET_MOCK_response_len;
+extern unsigned KSI_NET_MOCK_response_len;
 
 #define TEST_SIGNATURE_FILE "test/resource/tlv/ok-sig-2014-04-30.1.ksig"
 
@@ -30,11 +30,11 @@ static void testSigning(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_NetProvider *pr = NULL;
+	KSI_NetworkClient *pr = NULL;
 	unsigned char *raw = NULL;
-	int raw_len = 0;
+	unsigned raw_len = 0;
 	unsigned char expected[0x1ffff];
-	int expected_len = 0;
+	unsigned expected_len = 0;
 	FILE *f = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -63,10 +63,10 @@ static void testSigning(CuTest* tc) {
 	f = fopen("test/resource/tlv/ok-sig-2014-07-01.1.ksig", "rb");
 	CuAssert(tc, "Unable to load sample signature.", f != NULL);
 
-	expected_len = fread(expected, 1, sizeof(expected), f);
+	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
 	CuAssert(tc, "Failed to read sample", expected_len > 0);
 
-	CuAssertIntEquals_Msg(tc, "Serialized signature length", expected_len, raw_len);
+	CuAssert(tc, "Serialized signature length mismatch", expected_len == raw_len);
 	CuAssert(tc, "Serialized signature content mismatch.", !memcmp(expected, raw, raw_len));
 
 	if (f != NULL) fclose(f);
@@ -79,12 +79,12 @@ static void testExtending(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_NetProvider *pr = NULL;
+	KSI_NetworkClient *pr = NULL;
 	KSI_Signature *ext = NULL;
 	unsigned char *serialized = NULL;
-	int serialized_len = 0;
+	unsigned serialized_len = 0;
 	unsigned char expected[0x1ffff];
-	int expected_len = 0;
+	unsigned expected_len = 0;
 	FILE *f = NULL;
 	KSI_PKITruststore *pki = NULL;
 
@@ -118,10 +118,10 @@ static void testExtending(CuTest* tc) {
 	/* Read in the expected result */
 	f = fopen("test/resource/tlv/ok-sig-2014-04-30.1-extended.ksig", "rb");
 	CuAssert(tc, "Unable to read expected result file", f != NULL);
-	expected_len = fread(expected, 1, sizeof(expected), f);
+	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
 	fclose(f);
 
-	CuAssertIntEquals_Msg(tc, "Expected result length", expected_len, serialized_len);
+	CuAssert(tc, "Expected result length mismatch", expected_len == serialized_len);
 	CuAssert(tc, "Unexpected extended signature.", !memcmp(expected, serialized, expected_len));
 
 	KSI_free(KSI_NET_MOCK_response);
@@ -138,12 +138,12 @@ static void testExtendingWithoutPublication(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_NetProvider *pr = NULL;
+	KSI_NetworkClient *pr = NULL;
 	KSI_Signature *ext = NULL;
 	unsigned char *serialized = NULL;
-	int serialized_len = 0;
+	unsigned serialized_len = 0;
 	unsigned char expected[0x1ffff];
-	int expected_len = 0;
+	unsigned expected_len = 0;
 	FILE *f = NULL;
 	KSI_PKITruststore *pki = NULL;
 
@@ -177,11 +177,11 @@ static void testExtendingWithoutPublication(CuTest* tc) {
 	/* Read in the expected result */
 	f = fopen("test/resource/tlv/ok-sig-2014-04-30.1-head.ksig", "rb");
 	CuAssert(tc, "Unable to read expected result file", f != NULL);
-	expected_len = fread(expected, 1, sizeof(expected), f);
+	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
 	fclose(f);
 
 
-	CuAssertIntEquals_Msg(tc, "Expected result length", expected_len, serialized_len);
+	CuAssert(tc, "Expected result length mismatch", expected_len == serialized_len);
 	CuAssert(tc, "Unexpected extended signature.", !memcmp(expected, serialized, expected_len));
 
 	KSI_free(KSI_NET_MOCK_response);
@@ -198,12 +198,12 @@ static void testExtendingHeadSignature(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_NetProvider *pr = NULL;
+	KSI_NetworkClient *pr = NULL;
 	KSI_Signature *ext = NULL;
 	unsigned char *serialized = NULL;
-	int serialized_len = 0;
+	unsigned serialized_len = 0;
 	unsigned char expected[0x1ffff];
-	int expected_len = 0;
+	unsigned expected_len = 0;
 	FILE *f = NULL;
 	KSI_PKITruststore *pki = NULL;
 
@@ -228,7 +228,7 @@ static void testExtendingHeadSignature(CuTest* tc) {
 
 	res = KSI_extendSignature(ctx, sig, &ext);
 	CuAssert(tc, "Unable to extend the signature to the head", res == KSI_OK && ext != NULL);
-	CuAssert(tc, "Unexpected send request", KSI_NET_MOCK_request_len == sizeof(expectedExtendRequestForPublication) && !KSITest_memcmp(expectedExtendRequestForPublication, KSI_NET_MOCK_request, KSI_NET_MOCK_request_len));
+	CuAssert(tc, "Unexpected send request", KSI_NET_MOCK_request_len == sizeof(expectedExtendRequestForPublication) && !memcmp(expectedExtendRequestForPublication, KSI_NET_MOCK_request, KSI_NET_MOCK_request_len));
 
 	res = KSI_Signature_serialize(ext, &serialized, &serialized_len);
 	CuAssert(tc, "Unable to serialize extended signature", res == KSI_OK && serialized != NULL && serialized_len > 0);
@@ -237,11 +237,11 @@ static void testExtendingHeadSignature(CuTest* tc) {
 	/* Read in the expected result */
 	f = fopen("test/resource/tlv/ok-sig-2014-04-30.1-extended.ksig", "rb");
 	CuAssert(tc, "Unable to read expected result file", f != NULL);
-	expected_len = fread(expected, 1, sizeof(expected), f);
+	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
 	fclose(f);
 
 
-	CuAssertIntEquals_Msg(tc, "Expected result length", expected_len, serialized_len);
+	CuAssert(tc, "Expected result length mismatch", expected_len == serialized_len);
 	CuAssert(tc, "Unexpected extended signature.", !memcmp(expected, serialized, expected_len));
 
 	KSI_free(KSI_NET_MOCK_response);

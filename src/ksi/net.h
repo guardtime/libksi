@@ -10,7 +10,7 @@ extern "C" {
 	/**
 	 * \addtogroup network Network Interface
 	 * This module contains two networking concepts used in this API:
-	 * - Network provider (#KSI_NetProvider), this object takes care of network
+	 * - Network provider (#KSI_NetworkClient), this object takes care of network
 	 * transtport.
 	 * - Network handle (#KSI_NetHandle), this object contains a single request and
 	 * is used to access the response.
@@ -21,13 +21,13 @@ extern "C" {
 	 * Free network handle object.
 	 * \param[in]		handle			Network handle.
 	 */
-	void KSI_NetHandle_free(KSI_NetHandle *handle);
+	void KSI_RequestHandle_free(KSI_RequestHandle *handle);
 
 	/**
 	 * Free network provider object.
 	 * \param[in]		provider		Network provider.
 	 */
-	void KSI_NetProvider_free(KSI_NetProvider *provider);
+	void KSI_NetworkClient_free(KSI_NetworkClient *provider);
 
 	/**
 	 * Sends a non-blocking signing request or initialize the handle.
@@ -37,7 +37,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetProvider_sendSignRequest(KSI_NetProvider *provider, KSI_NetHandle *handle);
+	int KSI_NetworkClient_sendSignRequest(KSI_NetworkClient *provider, KSI_RequestHandle *handle);
 
 	/**
 	 * Sends a non-blocking extending request or initialize the handle.
@@ -47,7 +47,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetProvider_sendExtendRequest(KSI_NetProvider *provider, KSI_NetHandle *handle);
+	int KSI_NetworkClient_sendExtendRequest(KSI_NetworkClient *provider, KSI_RequestHandle *handle);
 
 	/**
 	 * Sends a non-blocking publicationsfile request or initialize the handle.
@@ -57,7 +57,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetProvider_sendPublicationsFileRequest(KSI_NetProvider *provider, KSI_NetHandle *handle);
+	int KSI_NetworkClient_sendPublicationsFileRequest(KSI_NetworkClient *provider, KSI_RequestHandle *handle);
 
 	/**
 	 * Setter for network request implementation context.
@@ -68,7 +68,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetHandle_setNetContext(KSI_NetHandle *handle, void *netCtx, void (*netCtx_free)(void *));
+	int KSI_RequestHandle_setNetContext(KSI_RequestHandle *handle, void *netCtx, void (*netCtx_free)(void *));
 
 	/**
 	 * Getter method for the network request implementation context.
@@ -79,7 +79,7 @@ extern "C" {
 	 * error code).
 	 * \note The caller may not free the output object.
 	 */
-	int KSI_NetHandle_getNetContext(KSI_NetHandle *handle, void **c);
+	int KSI_RequestHandle_getNetContext(KSI_RequestHandle *handle, void **c);
 
 	/**
 	 * Getter for the request. The request can be set only while creating the network handle object
@@ -93,7 +93,7 @@ extern "C" {
 	 * error code).
 	 * \note The output memory may not be freed by the caller.
 	 */
-	int KSI_NetHandle_getRequest(KSI_NetHandle *handle, const unsigned char **request, int *request_len);
+	int KSI_RequestHandle_getRequest(KSI_RequestHandle *handle, const unsigned char **request, unsigned *request_len);
 
 	/**
 	 * Response value setter. Should be called only by the actual network provider implementation.
@@ -106,7 +106,7 @@ extern "C" {
 	 * \note The \c response memory may be freed after a successful call to this method, as the
 	 * contents is copied internally.
 	 */
-	int KSI_NetHandle_setResponse(KSI_NetHandle *handle, const unsigned char *response, int response_len);
+	int KSI_RequestHandle_setResponse(KSI_RequestHandle *handle, const unsigned char *response, unsigned response_len);
 
 	/**
 	 * A blocking function to read the response to the request. The function is blocking only
@@ -119,7 +119,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetHandle_getResponse(KSI_NetHandle *handle, const unsigned char **response, int *response_len);
+	int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, const unsigned char **response, unsigned *response_len);
 
 	/**
 	 * Constructor for network handle object.
@@ -133,7 +133,7 @@ extern "C" {
 	 * \note The \c request value may be freed after a successful call to this function as
 	 * its contents is copied internally.
 	 */
-	int KSI_NetHandle_new(KSI_CTX *ctx, const unsigned char *request, int request_length, KSI_NetHandle **handle);
+	int KSI_RequestHandle_new(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_RequestHandle **handle);
 
 	/**
 	 * As network handles may be created by using several KSI contexts with different network providers and/or
@@ -145,17 +145,19 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetHandle_setReadResponseFn(KSI_NetHandle *handle, int (*fn)(KSI_NetHandle *));
+	int KSI_RequestHandle_setReadResponseFn(KSI_RequestHandle *handle, int (*fn)(KSI_RequestHandle *));
 
 	/**
-	 * Constructor for a new network provider.
+	 * Constructor for a new plain network provider.
 	 * \param[in]		ctx				KSI context.
 	 * \param[out]		provider		Pointer to the receiving network provider pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
+	 *
+	 * \note Do not use, unless implementing a new network client.
 	 */
-	int KSI_NetProvider_new(KSI_CTX *ctx, KSI_NetProvider **provider);
+	int KSI_NetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **provider);
 
 	/**
 	 * Setter for the implementation specific networking context.
@@ -166,7 +168,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetProvider_setNetCtx(KSI_NetProvider *provider, void *netCtx, void (*netCtx_free)(void *));
+	int KSI_NetworkClient_setNetCtx(KSI_NetworkClient *provider, void *netCtx, void (*netCtx_free)(void *));
 
 	/**
 	 * Getter for the implementation specific network context.
@@ -176,7 +178,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetProvider_getNetContext(KSI_NetProvider *provider, void **netCtx);
+	int KSI_NetworkClient_getNetContext(KSI_NetworkClient *provider, void **netCtx);
 
 	/**
 	 * Setter for sign request function.
@@ -186,7 +188,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetProvider_setSendSignRequestFn(KSI_NetProvider *provider, int (*fn)(KSI_NetProvider *, KSI_NetHandle *));
+	int KSI_NetworkClient_setSendSignRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_RequestHandle *));
 
 	/**
 	 * Setter for sign request function.
@@ -196,7 +198,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetProvider_setSendExtendRequestFn(KSI_NetProvider *provider, int (*fn)(KSI_NetProvider *, KSI_NetHandle *));
+	int KSI_NetworkClient_setSendExtendRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_RequestHandle *));
 
 	/**
 	 * Setter for sign request function.
@@ -206,7 +208,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetProvider_setSendPublicationRequestFn(KSI_NetProvider *provider, int (*fn)(KSI_NetProvider *, KSI_NetHandle *));
+	int KSI_NetworkClient_setSendPublicationRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_RequestHandle *));
 
 	/**
 	 * @}

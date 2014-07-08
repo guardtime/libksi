@@ -32,7 +32,7 @@ extern "C" {
 	 * \param[in]	raw_len			Length of the raw publications file.
 	 * \param[out]	pubFile			Pointer to the receiving pointer to the publications file object.
 	 */
-	int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, int raw_len, KSI_PublicationsFile **pubFile);
+	int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, size_t raw_len, KSI_PublicationsFile **pubFile);
 
 	/**
 	 * A convenience function for loading a publications file from an actual file.

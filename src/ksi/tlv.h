@@ -60,7 +60,7 @@ extern "C" {
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_new(KSI_CTX *ctx, int payloadType, int tag, int isLenient, int isForward, KSI_TLV **tlv);
+	int KSI_TLV_new(KSI_CTX *ctx, int payloadType, unsigned tag, int isLenient, int isForward, KSI_TLV **tlv);
 
 	/**
 	 * This function creates a new TLV and initializes its payload with the given \c uint value.
@@ -75,7 +75,7 @@ extern "C" {
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_fromUint(KSI_CTX *ctx, int tag, int isLenient, int isForward, KSI_uint64_t uint, KSI_TLV **tlv);
+	int KSI_TLV_fromUint(KSI_CTX *ctx, unsigned tag, int isLenient, int isForward, KSI_uint64_t uint, KSI_TLV **tlv);
 
 	/**
 	 * This function creates a new TLV and initializes its payload with the given string \c str.
@@ -90,7 +90,7 @@ extern "C" {
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_fromString(KSI_CTX *ctx, int tag, int isLenient, int isForward, char *str, KSI_TLV **tlv);
+	int KSI_TLV_fromString(KSI_CTX *ctx, unsigned tag, int isLenient, int isForward, char *str, KSI_TLV **tlv);
 	/**
 	 * This function changes the internal representation of the TLV payload.
 	 * \param[in]	tlv			TLV which payload will be casted.
@@ -204,7 +204,7 @@ extern "C" {
 	 *
 	 * \return Numeric value of the TLV type.
 	 */
-	int KSI_TLV_getTag(KSI_TLV *tlv);
+	unsigned KSI_TLV_getTag(KSI_TLV *tlv);
 
 	/**
 	 * TODO!
@@ -232,7 +232,7 @@ extern "C" {
 	 *  \param[out]		buf		Pointer to the receiving buffer pointer.
 	 *  \param[out]		buf_len	Pointer to the receiving buffer length variable.
 	 */
-	int KSI_TLV_serialize(const KSI_TLV *tlv, unsigned char **buf, int *buf_len);
+	int KSI_TLV_serialize(const KSI_TLV *tlv, unsigned char **buf, unsigned *buf_len);
 
 	/**
 	 * This function serialises the tlv payload into a given buffer with \c len bytes of free
@@ -315,7 +315,7 @@ extern "C" {
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 * \note This function checks the payload type of the TLV object an will fail if it is not equal to #KSI_TLV_PAYLOAD_RAW.
 	 */
-	int KSI_TLV_setRawValue(KSI_TLV *tlv, const void *data, unsigned int data_len);
+	int KSI_TLV_setRawValue(KSI_TLV *tlv, const void *data, unsigned data_len);
 
 	/**
 	 * Set a UTF-8 string value to the TLV object.

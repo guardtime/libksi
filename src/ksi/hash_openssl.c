@@ -93,7 +93,6 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 	KSI_ERR err;
 	const EVP_MD *evp_md = NULL;
 	void *context = NULL;
-	int digest_length;
 
 	KSI_PRE(&err, hasher != NULL) goto cleanup;
 	KSI_BEGIN(hasher->ctx, &err);
@@ -116,8 +115,6 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 	} else {
 		EVP_MD_CTX_cleanup(context);
 	}
-
-	digest_length = EVP_MD_size(evp_md);
 
 	if (!EVP_DigestInit(context, evp_md)) {
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, NULL);

@@ -75,7 +75,7 @@ cleanup:
 
 static void buildHashChain(CuTest *tc, const char *hexImprint, int isLeft, int levelCorrection, KSI_LIST(KSI_HashChainLink) **chn) {
 	unsigned char buf[1024];
-	int buf_len;
+	unsigned buf_len;
 	int res;
 	KSI_DataHash *hsh = NULL;
 
@@ -101,7 +101,7 @@ static void testCalChainBuild(CuTest* tc) {
 	KSI_DataHash *out = NULL;
 	KSI_DataHash *exp = NULL;
 	unsigned char buf[1024];
-	int buf_len;
+	unsigned buf_len;
 	int res;
 
 	KSI_ERR_clearErrors(ctx);
@@ -159,7 +159,7 @@ static void testCalChainBuild(CuTest* tc) {
 static void testAggrChainBuilt(CuTest *tc) {
 	int res;
 	unsigned char buf[1024];
-	int buf_len;
+	unsigned buf_len;
 	KSI_LIST(KSI_HashChainLink) *chn = NULL;
 	KSI_DataHash *in = NULL;
 	KSI_DataHash *out = NULL;
