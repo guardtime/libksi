@@ -183,7 +183,7 @@ extern "C" {
 	 * Converts the base-32 encoded publicationstring into #KSI_PublicationData object.
 	 * \param[in]		ctx				KSI context.
 	 * \param[in]		publication		Pointer to base-32 encoded publications string.
-	 * \param[in]		published_data	Pointer to the receiving pointer.
+	 * \param[out]		published_data	Pointer to the receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note The output memory has to be freed by the caller using #KSI_PublicationData_free.
