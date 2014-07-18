@@ -200,7 +200,7 @@ static int readTlv(KSI_RDR *rdr, KSI_TLV **tlv, int copy) {
 	}
 
 	if (readCount != length) {
-		snprintf(errstr, sizeof(errstr), "Expected to read %d bytes, but got %d", (int)length, readCount);
+		snprintf(errstr, sizeof(errstr), "Expected to read %u bytes, but got %llu", length, (long long unsigned)readCount);
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, errstr);
 		goto cleanup;
 	}

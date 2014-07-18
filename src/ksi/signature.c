@@ -792,7 +792,7 @@ cleanup:
 /***************
  * SIGN REQUEST
  ***************/
-static int createSignRequest(KSI_CTX *ctx, const KSI_DataHash *hsh, unsigned char **raw, int *raw_len) {
+static int createSignRequest(KSI_CTX *ctx, const KSI_DataHash *hsh, unsigned char **raw, unsigned *raw_len) {
 	KSI_ERR err;
 	int res;
 	KSI_AggregationReq *req = NULL;
@@ -802,7 +802,7 @@ static int createSignRequest(KSI_CTX *ctx, const KSI_DataHash *hsh, unsigned cha
 	KSI_TLV *pduTlv = NULL;
 
 	unsigned char *tmp = NULL;
-	int tmp_len = 0;
+	unsigned tmp_len = 0;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, hsh != NULL) goto cleanup;
@@ -864,7 +864,7 @@ cleanup:
 /*****************
  * EXTEND REQUEST
  *****************/
-static int createExtendRequest(KSI_CTX *ctx, const KSI_Integer *start, const KSI_Integer *end, unsigned char **raw, int *raw_len) {
+static int createExtendRequest(KSI_CTX *ctx, const KSI_Integer *start, const KSI_Integer *end, unsigned char **raw, unsigned *raw_len) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *pduTLV = NULL;
@@ -872,7 +872,7 @@ static int createExtendRequest(KSI_CTX *ctx, const KSI_Integer *start, const KSI
 	KSI_ExtendReq *req = NULL;
 
 	unsigned char *tmp = NULL;
-	int tmp_len = 0;
+	unsigned tmp_len = 0;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, raw != NULL) goto cleanup;
