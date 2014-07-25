@@ -1307,7 +1307,7 @@ static int stringify(KSI_TLV *tlv, int indent, char *str, unsigned size, unsigne
 	int res;
 	unsigned l = *len;
 	size_t i;
-	KSI_uint64_t tmpInt;
+	KSI_uint64_t tmpInt = 0;
 
 	if (*len >= size) {
 		res = KSI_OK; /* Buffer is full, but do not break the flow. */

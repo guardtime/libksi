@@ -20,7 +20,7 @@
 #endif
 
 #define KSI_BEGIN(ctx, err) KSI_ERR_init((ctx), (err))
-#define KSI_PRE(err, cond) if (!(cond) && (KSI_ERR_init(NULL, (err)) == KSI_OK) && (KSI_FAIL((err), KSI_INVALID_ARGUMENT, NULL) == KSI_OK))
+#define KSI_PRE(err, cond) if (KSI_ERR_pre(err, cond, __FILE__, __LINE__) || !(cond))
 #define KSI_RETURN(err) KSI_ERR_apply((err))
 #define KSI_FAIL_EXT(err, statusCode, extErrCode, message) (KSI_ERR_fail((err), (statusCode), (extErrCode), __FILE__, __LINE__, (message)))
 #define KSI_FAIL(err, statusCode, message) (KSI_ERR_fail((err), (statusCode), 0, __FILE__, __LINE__, (message)))

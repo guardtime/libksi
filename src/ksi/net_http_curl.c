@@ -174,11 +174,6 @@ static int curlSendRequest(KSI_RequestHandle *handle, char *agent, char *url, in
 	res = KSI_RequestHandle_getRequest(handle, &request, &request_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	if (request_len > LONG_MAX) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Request too long");
-		goto cleanup;
-	}
-
 	res = KSI_RequestHandle_setReadResponseFn(handle, curlReceive);
 	KSI_CATCH(&err, res) goto cleanup;
 

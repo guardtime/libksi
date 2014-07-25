@@ -575,6 +575,15 @@ void KSI_ERR_success(KSI_ERR *err) {
 	*err->message = '\0';
 }
 
+int KSI_ERR_pre(KSI_ERR *err, int cond, char *fileName, int lineNr) {
+	if (!cond) {
+		KSI_ERR_init(NULL, err);
+		KSI_ERR_fail(err, KSI_INVALID_ARGUMENT, 0, fileName, lineNr, NULL);
+	}
+
+	return !cond;
+}
+
 int KSI_ERR_fail(KSI_ERR *err, int statusCode, long extErrorCode, char *fileName, unsigned int lineNr, char *message) {
 	err->extErrorCode = extErrorCode;
 	err->statusCode = statusCode;

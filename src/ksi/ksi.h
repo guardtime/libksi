@@ -196,6 +196,7 @@ int KSI_CTX_getStatus(KSI_CTX *ctx);
  * \param[in]		err		Pointer to the error object.
  */
 int KSI_ERR_apply(KSI_ERR *err);
+int KSI_ERR_pre(KSI_ERR *err, int cond, char *fileName, int lineNr);
 
 /**
  * Dump error stack trace to stream.

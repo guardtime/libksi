@@ -1869,7 +1869,7 @@ int KSI_Signature_verifyDocument(KSI_Signature *sig, void *doc, size_t doc_len) 
 	int res;
 	KSI_DataHash *hsh = NULL;
 
-	int hash_id;
+	int hash_id = -1;
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
 	KSI_PRE(&err, doc != NULL) goto cleanup;
@@ -1897,7 +1897,7 @@ int KSI_Signature_createDataHasher(KSI_Signature *sig, KSI_DataHasher **hsr) {
 	KSI_ERR err;
 	int res;
 	KSI_DataHasher *tmp = NULL;
-	int hash_id;
+	int hash_id = -1;
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
 	KSI_PRE(&err, hsr != NULL) goto cleanup;

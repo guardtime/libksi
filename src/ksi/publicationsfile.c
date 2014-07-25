@@ -152,7 +152,7 @@ int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, size_t raw_len, KS
 	size_t hdr_len = 0;
 	KSI_PublicationsFile *tmp = NULL;
 	KSI_RDR *reader = NULL;
-	struct generator_st gen;
+	struct generator_st gen = {NULL, NULL};
 	unsigned char *tmpRaw = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
