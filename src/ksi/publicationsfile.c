@@ -333,19 +333,19 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 	KSI_PRE(&err, pubFile != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-        *raw_len = pubFile->raw_len;
-        *raw = (char*)KSI_malloc(*raw_len);
-        if(*raw == NULL){
-            KSI_FAIL(&err, KSI_OUT_OF_MEMORY, "KSI out of memory");
-            goto cleanup;
-            }
-               
-        memcpy(*raw, pubFile->raw, *raw_len);
-     
+	*raw_len = pubFile->raw_len;
+	*raw = (char*)KSI_malloc(*raw_len);
+	if(*raw == NULL){
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, "KSI out of memory");
+		goto cleanup;
+		}
+
+	memcpy(*raw, pubFile->raw, *raw_len);
+
 	KSI_SUCCESS(&err);
 cleanup:
 
-        KSI_nofree(*raw);
+	KSI_nofree(*raw);
 	return KSI_RETURN(&err);
 }
 
