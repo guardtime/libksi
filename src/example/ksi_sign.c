@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
 		KSI_ERR_statusDump(ksi, stderr);
 		goto cleanup;
 	}
-
+    
 	/* Serialize the signature. */
 	res = KSI_Signature_serialize(sign, &raw, &raw_len);
 	if (res != KSI_OK) {

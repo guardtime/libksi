@@ -172,20 +172,20 @@ int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, size_t raw_len, KS
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Unrecognized header.");
 		goto cleanup;
 	}
-
+        
 	/* Header verification ok - create the store object. */
 	res = KSI_PublicationsFile_new(ctx, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Initialize generator. */
+	
+        /* Initialize generator. */
 	gen.reader = reader;
 	gen.tlv = NULL;
 
 	/* Read the payload of the file, and make no assumptions with the ordering. */
 	res = KSI_TlvTemplate_extractGenerator(ctx, tmp, (void *)&gen, KSI_TLV_TEMPLATE(KSI_PublicationsFile), NULL, (int (*)(void *, KSI_TLV **))generateNextTlv);
 	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Copy the raw value */
+	
+        /* Copy the raw value */
 	tmpRaw = KSI_calloc(raw_len, 1);
 	if (tmpRaw == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
@@ -194,6 +194,7 @@ int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, size_t raw_len, KS
 	memcpy(tmpRaw, raw, raw_len);
 
 	tmp->raw = tmpRaw;
+        tmp->raw_len = raw_len;
 	tmpRaw = NULL;
 
 	*pubFile = tmp;
@@ -322,6 +323,32 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
+
+
+int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, char **raw, int* raw_len) {
+	KSI_ERR err;
+	int res;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, pubFile != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	*raw_len = pubFile->raw_len;
+	*raw = (char*)KSI_malloc(*raw_len);
+	if(*raw == NULL){
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, "KSI out of memory");
+		goto cleanup;
+		}
+
+	memcpy(*raw, pubFile->raw, *raw_len);
+
+	KSI_SUCCESS(&err);
+cleanup:
+
+	KSI_nofree(*raw);
+	return KSI_RETURN(&err);
+}
+
 
 void KSI_PublicationsFile_free(KSI_PublicationsFile *t) {
 	if(t != NULL) {

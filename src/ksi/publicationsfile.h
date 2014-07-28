@@ -45,6 +45,16 @@ extern "C" {
 	int KSI_PublicationsFile_fromFile(KSI_CTX *ctx, const char *fileName, KSI_PublicationsFile **pubFile);
 
 	/**
+	 * 
+	 * @param[in]		ctx			KSI context.
+	 * @param[in]		pubFile		Publications file.
+	 * @param[out]          raw	Pointer to the pointer to output buffer. 
+	 * @param[out]          raw_len	Pointer to the length of the buffer variable.
+	 * @return 
+	 */
+    int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, char **raw, int* raw_len);
+
+	/**
 	 * Verify PKI signature of the publications file using the PKI truststore.
 	 * \param[in]		pubFile		Publications file.
 	 * \param[in]		pki			PKI truststore.
@@ -173,7 +183,7 @@ extern "C" {
 	 * Converts the base-32 encoded publicationstring into #KSI_PublicationData object.
 	 * \param[in]		ctx				KSI context.
 	 * \param[in]		publication		Pointer to base-32 encoded publications string.
-	 * \param[in]		published_data	Pointer to the receiving pointer.
+	 * \param[out]		published_data	Pointer to the receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note The output memory has to be freed by the caller using #KSI_PublicationData_free.

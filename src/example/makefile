@@ -6,14 +6,6 @@ RTL = MT
 !ENDIF
 
 
-!IF "$(OPENSSL_CA_FILE)" != ""
-TRUSTSTORE_MACROS = $(TRUSTSTORE_MACROS) /DOPENSSL_CA_FILE=\"$(OPENSSL_CA_FILE:\=\\)\"
-!ENDIF
-
-!IF "$(OPENSSL_CA_DIR)" != ""
-TRUSTSTORE_MACROS = $(TRUSTSTORE_MACROS) /DOPENSSL_CA_DIR=\"$(OPENSSL_CA_DIR:\=\\)\" 
-!ENDIF
-
 SRC_DIR = .
 INCLUDE_DIR = ..\..\out\include
 OBJ_DIR = ..\..\obj$(RTL)
@@ -40,9 +32,9 @@ EXAMPLE_BIN = \
 
 	
 #external libraries used for linking. 
-EXT_LIB = libeay32$(RTL).$(DLL) \
-	user32.lib gdi32.lib advapi32.lib \
-	$(LIB_NAME)$(RTL).$(DLL) libcurl$(RTL).lib
+EXT_LIB = $(LIB_NAME)$(RTL).$(DLL) \
+	libeay32$(RTL).$(DLL) libcurl$(RTL).lib \
+	wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib advapi32.lib
 	
 #/NODEFAULTLIB:libcmtd.lib	
 CCFLAGS = /nologo /W3 /D_CRT_SECURE_NO_DEPRECATE /DCURL_STATICLIB /I$(INCLUDE_DIR) /I$(SRC_DIR)
@@ -63,7 +55,7 @@ LDFLAGS = $(LDFLAGS) /LIBPATH:"$(CURL_DIR)\lib"
 LDFLAGS = $(LDFLAGS) /LIBPATH:"$(OPENSSL_DIR)\dll" 
 LDFLAGS = $(LDFLAGS) /LIBPATH:"$(CURL_DIR)\dll"
 !ENDIF
-CCFLAGS = $(CCFLAGS) $(CCEXTRA) $(TRUSTSTORE_MACROS)
+CCFLAGS = $(CCFLAGS) $(CCEXTRA)
 LDFLAGS = $(LDFLAGS) $(LDEXTRA)
 
 
