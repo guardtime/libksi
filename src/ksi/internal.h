@@ -89,7 +89,7 @@ int KSI_LIST_FN_NAME(type, iter)(KSI_LIST(type) *list) {							\
 int KSI_LIST_FN_NAME(type, next)(KSI_LIST(type) *list, type **o) {					\
 	return KSI_List_next(list->list, (void **)o);									\
 }																					\
-int KSI_LIST_FN_NAME(type, indexOf)(const KSI_LIST(type) *list, const type *o, size_t *pos) {	\
+int KSI_LIST_FN_NAME(type, indexOf)(const KSI_LIST(type) *list, const type *o, size_t **pos) {	\
 	return KSI_List_indexOf(list->list, o, pos);									\
 }																					\
 int KSI_LIST_FN_NAME(type, insertAt)(KSI_LIST(type) *list, size_t pos, type *o) {	\

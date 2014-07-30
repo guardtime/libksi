@@ -14,13 +14,6 @@ int main(int argc, char **argv) {
 	unsigned char buf[1024];
 	unsigned buf_len;
 
-	/* Init global resources. */
-	res = KSI_global_init();
-	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to init KSI global resources.\n");
-		goto cleanup;
-	}
-
 	/* Init context. */
 	res = KSI_CTX_new(&ksi);
 	if (res != KSI_OK) {
@@ -135,6 +128,6 @@ cleanup:
 	KSI_DataHasher_free(hsr);
 	KSI_DataHash_free(hsh);
 	KSI_CTX_free(ksi);
-	KSI_global_cleanup();
+
 	return res;
 }

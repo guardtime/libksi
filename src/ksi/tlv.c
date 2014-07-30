@@ -923,7 +923,7 @@ int KSI_TLV_getPayloadType(KSI_TLV *tlv) {
 int KSI_TLV_removeNestedTlv(KSI_TLV *target, KSI_TLV *tlv) {
 	KSI_ERR err;
 	int res;
-	size_t pos;
+	size_t *pos = NULL;
 
 	KSI_PRE(&err, target != NULL) goto cleanup;
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
@@ -933,19 +933,26 @@ int KSI_TLV_removeNestedTlv(KSI_TLV *target, KSI_TLV *tlv) {
 	res = KSI_TLVList_indexOf(target->nested, tlv, &pos);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_TLVList_remove(target->nested, pos);
+	if (pos == NULL) {
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Nested TLV not found.");
+		goto cleanup;
+	}
+
+	res = KSI_TLVList_remove(target->nested, *pos);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
 
+	KSI_free(pos);
+
 	return KSI_RETURN(&err);
 }
 
 int KSI_TLV_replaceNestedTlv(KSI_TLV *parentTlv, KSI_TLV *oldTlv, KSI_TLV *newTlv) {
 	KSI_ERR err;
-	size_t pos;
+	size_t *pos;
 	int res;
 
 	KSI_PRE(&err, parentTlv != NULL) goto cleanup;
@@ -962,12 +969,18 @@ int KSI_TLV_replaceNestedTlv(KSI_TLV *parentTlv, KSI_TLV *oldTlv, KSI_TLV *newTl
 	res = KSI_TLVList_indexOf(parentTlv->nested, oldTlv, &pos);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_TLVList_replaceAt(parentTlv->nested, pos, newTlv);
+	if (pos == NULL) {
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Nested TLV not found.");
+		goto cleanup;
+	}
+
+	res = KSI_TLVList_replaceAt(parentTlv->nested, *pos, newTlv);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
+	KSI_free(pos);
 
 	return KSI_RETURN(&err);
 }
@@ -978,7 +991,7 @@ cleanup:
  */
 int KSI_TLV_appendNestedTlv(KSI_TLV *target, KSI_TLV *after, KSI_TLV *tlv) {
 	KSI_ERR err;
-	size_t pos;
+	size_t *pos = NULL;
 	int res;
 	KSI_LIST(KSI_TLV) *list = NULL;
 
@@ -1004,7 +1017,12 @@ int KSI_TLV_appendNestedTlv(KSI_TLV *target, KSI_TLV *after, KSI_TLV *tlv) {
 		res = KSI_TLVList_indexOf(target->nested, tlv, &pos);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		res = KSI_TLVList_insertAt(target->nested, pos, tlv);
+		if (pos == NULL) {
+			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Nested TLV not found.");
+			goto cleanup;
+		}
+
+		res = KSI_TLVList_insertAt(target->nested, *pos, tlv);
 	} else {
 		res = KSI_TLVList_append(target->nested, tlv);
 	}
@@ -1015,7 +1033,9 @@ int KSI_TLV_appendNestedTlv(KSI_TLV *target, KSI_TLV *after, KSI_TLV *tlv) {
 
 cleanup:
 
+	KSI_free(pos);
 	KSI_TLVList_freeAll(list);
+
 	return KSI_RETURN(&err);
 }
 

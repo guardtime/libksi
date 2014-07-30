@@ -154,22 +154,37 @@ cleanup:
 	return res;
 }
 
-int KSI_List_indexOf(const KSI_List *list, const void *o, size_t *pos) {
+int KSI_List_indexOf(const KSI_List *list, const void *o, size_t **pos) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	size_t i;
-	if (list == NULL || o == NULL) goto cleanup;
+	size_t *tmp = NULL;
+
+	if (list == NULL || o == NULL || pos == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
 	for (i = 0; i < list->arr_len; i++) {
 		if (o == list->arr[i]) {
-			*pos = i;
-			res = KSI_OK;
-			goto cleanup;
+			tmp = KSI_calloc(sizeof(i), 1);
+			if (tmp == NULL) {
+				res = KSI_OUT_OF_MEMORY;
+				goto cleanup;
+			}
+			*tmp = i;
+			break;
 		}
 	}
 
-	res = KSI_INVALID_ARGUMENT;
+	*pos = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
 
 cleanup:
+
+	KSI_free(tmp);
 
 	return res;
 }

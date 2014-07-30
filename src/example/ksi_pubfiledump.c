@@ -127,13 +127,6 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-
-	res = KSI_global_init();
-	if (res != KSI_OK) {
-		printf("KSI global init failed.");
-		goto cleanup;
-	}
-
 	res = KSI_CTX_new(&ctx);
 	if (res != KSI_OK) {
 		printf("Unable to create context.\n");
@@ -246,8 +239,6 @@ int main(int argc, char **argv) {
 cleanup:
 
 	KSI_CTX_free(ctx);
-
-	KSI_global_cleanup();
 
 	return 0;
 

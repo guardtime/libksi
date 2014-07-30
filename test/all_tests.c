@@ -158,7 +158,6 @@ static void writeXmlReport(CuSuite *suite) {
 static int RunAllTests() {
 	int failCount;
 	CuSuite* suite = initSuite();
-	KSI_global_init();
 
 	KSI_CTX_new(&ctx);
 	KSI_CTX_setLogLevel(ctx, KSI_LOG_DEBUG);
@@ -174,8 +173,6 @@ static int RunAllTests() {
 	CuSuiteDelete(suite);
 
 	KSI_CTX_free(ctx);
-
-	KSI_global_cleanup();
 
 	return failCount;
 }

@@ -4,6 +4,8 @@
 #include "internal.h"
 #include "net_http.h"
 
+static size_t curlGlobal_initCount = 0;
+
 typedef struct CurlNetProviderCtx_st {
 	int connectionTimeoutSeconds;
 	int readTimeoutSeconds;
@@ -18,6 +20,31 @@ typedef struct CurlNetHandleCtx_st {
 	unsigned char *raw;
     unsigned len;
 } CurlNetHandleCtx;
+
+static int curlGlobal_init(void) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (curlGlobal_initCount++ > 0) {
+		/* Nothing to do */
+		return KSI_OK;
+	}
+
+	if (curl_global_init(CURLUSESSL_ALL) != CURLE_OK) goto cleanup;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+static void curlGlobal_cleanup(void) {
+	if (--curlGlobal_initCount > 0) {
+		/* Nothing to do. */
+		return;
+	}
+	curl_global_cleanup();
+}
 
 static void CurlNetHandleCtx_free(CurlNetHandleCtx *handleCtx) {
 	if (handleCtx != NULL) {
@@ -266,22 +293,6 @@ cleanup:
 	return res;
 }
 
-int KSI_CurlNetProvider_global_init(void) {
-	int res = KSI_UNKNOWN_ERROR;
-
-	if (curl_global_init(CURLUSESSL_ALL) != CURLE_OK) goto cleanup;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
-void KSI_CurlNetProvider_global_cleanup(void) {
-	curl_global_cleanup();
-}
-
 /**
  *
  */
@@ -293,6 +304,10 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **netProvider) {
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
+
+	/* Register global init and cleanup methods. */
+	res = KSI_CTX_registerGlobals(ctx, curlGlobal_init, curlGlobal_cleanup);
+	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_NetworkClient_new(ctx, &pr);
 	KSI_CATCH(&err, res) goto cleanup;

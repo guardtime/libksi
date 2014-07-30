@@ -7,7 +7,10 @@
 
 #define KSI_ERR_STACK_LEN 16
 
-static int KSI_CTX_global_initCount = 0;
+typedef void (*GlobalCleanupFn)(void);
+typedef int (*GlobalInitFn)(void);
+
+KSI_DEFINE_LIST(GlobalCleanupFn)
 
 struct KSI_CTX_st {
 
@@ -39,7 +42,12 @@ struct KSI_CTX_st {
 
 	KSI_PublicationsFile *publicationsFile;
 
+	KSI_List *cleanupFnList;
+
 };
+
+KSI_IMPLEMENT_LIST(GlobalCleanupFn, NULL);
+
 
 const char *KSI_getErrorString(int statusCode) {
 	switch (statusCode) {
@@ -126,7 +134,12 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->netProvider = NULL;
 	ctx->logger = NULL;
 
+
 	KSI_ERR_clearErrors(ctx);
+
+	/* Create global cleanup list as the first thing. */
+	res = KSI_List_new(NULL, &ctx->cleanupFnList);
+	if (res != KSI_OK) goto cleanup;
 
 	/* Create and set the logger. */
 	res = KSI_Logger_new(ctx, NULL, KSI_LOG_FATAL, &logger);
@@ -166,57 +179,78 @@ cleanup:
 	return res;
 }
 
-/**
- *
- */
-void KSI_CTX_free(KSI_CTX *context) {
-	if (context != NULL) {
-		KSI_free(context->errors);
-
-		KSI_Logger_free(context->logger);
-
-		KSI_NetworkClient_free(context->netProvider);
-		KSI_PKITruststore_free(context->pkiTruststore);
-
-		KSI_PublicationsFile_free(context->publicationsFile);
-
-		KSI_free(context);
-	}
-}
-
-/**
- *
- */
-int KSI_global_init(void) {
+int KSI_CTX_registerGlobals(KSI_CTX *ctx, int (*initFn)(void), void (*cleanupFn)(void)) {
 	int res = KSI_UNKNOWN_ERROR;
+	size_t *pos = NULL;
 
-	if (KSI_CTX_global_initCount == 0) {
-		res = KSI_CurlNetProvider_global_init();
-		if (res != KSI_OK) goto cleanup;
-
-		res = KSI_PKITruststore_global_init();
-		if (res != KSI_OK) goto cleanup;
+	if (ctx == NULL || initFn == NULL || cleanupFn == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
 	}
 
-	KSI_CTX_global_initCount++;
+	res = KSI_List_indexOf(ctx->cleanupFnList, (void *)cleanupFn, &pos);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Only run the init function if the cleanup function is not found. */
+	if (pos == NULL) {
+		res = initFn();
+		if (res != KSI_OK) goto cleanup;
+
+		res = KSI_List_append(ctx->cleanupFnList, (void *)cleanupFn);
+		if (res != KSI_OK) goto cleanup;
+	}
 
 	res = KSI_OK;
 
 cleanup:
 
+	KSI_free(pos);
+
 	return res;
+}
+
+static void globalCleanup(KSI_CTX *ctx) {
+	int res;
+	size_t pos;
+	void (*fn)(void);
+
+	for (pos = 0; pos < KSI_List_length(ctx->cleanupFnList); pos++) {
+		res = KSI_List_elementAt(ctx->cleanupFnList, pos, (void **)&fn);
+		if (res != KSI_OK) {
+			KSI_LOG_error(ctx, "Unable to retreive cleanupfunction.");
+			break;
+		}
+
+		if (fn == NULL) {
+			KSI_LOG_error(ctx, "Got NULL as global cleanup method.");
+			break;
+		}
+
+		fn();
+	}
 }
 
 /**
  *
  */
-void KSI_global_cleanup(void) {
-	if (KSI_CTX_global_initCount == 0) {
-		KSI_CurlNetProvider_global_cleanup();
-		KSI_PKITruststore_global_cleanup();
-	}
-	if (KSI_CTX_global_initCount > 0) {
-		KSI_CTX_global_initCount--;
+void KSI_CTX_free(KSI_CTX *ctx) {
+	size_t pos;
+	if (ctx != NULL) {
+		/* Call cleanup methods. */
+		globalCleanup(ctx);
+
+		KSI_List_free(ctx->cleanupFnList);
+
+		KSI_free(ctx->errors);
+
+		KSI_Logger_free(ctx->logger);
+
+		KSI_NetworkClient_free(ctx->netProvider);
+		KSI_PKITruststore_free(ctx->pkiTruststore);
+
+		KSI_PublicationsFile_free(ctx->publicationsFile);
+
+		KSI_free(ctx);
 	}
 }
 

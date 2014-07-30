@@ -21,10 +21,6 @@ int main(int argc, char **argv) {
 	unsigned char buf[1024];
 	unsigned buf_len;
 
-	/** Global init of KSI */
-	res = KSI_global_init();
-	if (res != KSI_OK) goto cleanup;
-
 	/* Handle command line parameters */
 	if (argc != 5) {
 		fprintf(stderr, "Usage:\n"
@@ -162,9 +158,6 @@ cleanup:
 	KSI_free(raw);
 
 	KSI_CTX_free(ksi);
-
-	/* Global cleanup */
-	KSI_global_cleanup();
 
 	return res;
 
