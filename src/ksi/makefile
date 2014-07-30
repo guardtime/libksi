@@ -40,7 +40,8 @@ LIB_OBJ = \
 	$(OBJ_DIR)\tlv.obj \
 	$(OBJ_DIR)\tlv_template.obj \
 	$(OBJ_DIR)\types.obj \
-	$(OBJ_DIR)\types_base.obj
+	$(OBJ_DIR)\types_base.obj \
+	$(OBJ_DIR)\net_http_wininet.obj
 
 #/NODEFAULTLIB:libcmtd.lib
 CCFLAGS = /nologo /W3 /D_CRT_SECURE_NO_DEPRECATE /DCURL_STATICLIB /I$(SRC_DIR)\ksi /I$(SRC_DIR)\example /I$(SRC_DIR)

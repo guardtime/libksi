@@ -7,10 +7,10 @@
 extern "C" {
 #endif
 
-	int KSI_CurlNetProvider_global_init(void);
 
-	void KSI_CurlNetProvider_global_cleanup(void);
-
+	int KSI_NetProvider_global_init(void);
+	void KSI_NetProvider_global_cleanup(void);
+	
 	/** Transport Providers */
 	int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **netProvider);
 	int KSI_HttpClient_setSignerUrl(KSI_NetworkClient *netProvider, char *val);

@@ -4,6 +4,16 @@
 #include "internal.h"
 #include "net_http.h"
 
+#ifndef NETPROVIDER_CURL
+#	ifndef NETPROVIDER_WININET
+#		ifndef _WIN32
+#			define NETPROVIDER_CURL
+#		endif
+#	endif
+#endif
+
+#ifdef NETPROVIDER_CURL
+
 typedef struct CurlNetProviderCtx_st {
 	int connectionTimeoutSeconds;
 	int readTimeoutSeconds;
@@ -271,7 +281,11 @@ cleanup:
 	return res;
 }
 
-int KSI_CurlNetProvider_global_init(void) {
+
+
+
+
+int KSI_NetProvider_global_init(void) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (curl_global_init(CURLUSESSL_ALL) != CURLE_OK) goto cleanup;
@@ -283,7 +297,7 @@ cleanup:
 	return res;
 }
 
-void KSI_CurlNetProvider_global_cleanup(void) {
+void KSI_NetProvider_global_cleanup(void) {
 	curl_global_cleanup();
 }
 
@@ -400,3 +414,6 @@ KSI_NET_CURL_SETTER(ExtenderUrl, char *, urlExtender, setStringParam);
 KSI_NET_CURL_SETTER(PublicationUrl, char *, urlPublication, setStringParam);
 KSI_NET_CURL_SETTER(ConnectTimeoutSeconds, int, connectionTimeoutSeconds, setIntParam);
 KSI_NET_CURL_SETTER(ReadTimeoutSeconds, int, readTimeoutSeconds, setIntParam);
+
+
+#endif

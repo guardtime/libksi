@@ -191,9 +191,9 @@ int KSI_global_init(void) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (KSI_CTX_global_initCount == 0) {
-		res = KSI_CurlNetProvider_global_init();
+		res = KSI_NetProvider_global_init();
 		if (res != KSI_OK) goto cleanup;
-
+		
 		res = KSI_PKITruststore_global_init();
 		if (res != KSI_OK) goto cleanup;
 	}
@@ -212,7 +212,7 @@ cleanup:
  */
 void KSI_global_cleanup(void) {
 	if (KSI_CTX_global_initCount == 0) {
-		KSI_CurlNetProvider_global_cleanup();
+		KSI_NetProvider_global_cleanup();
 		KSI_PKITruststore_global_cleanup();
 	}
 	if (KSI_CTX_global_initCount > 0) {
