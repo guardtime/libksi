@@ -6,15 +6,15 @@
 #include "internal.h"
 #include "net_http.h"
 
-#ifndef NEPROVIDER_WININET
+#ifndef NETPROVIDER_WININET
 #	ifndef NETPROVIDER_CURL
 #		ifdef _WIN32
-#			define NEPROVIDER_WININET
+#			define NETPROVIDER_WININET
 #		endif
 #	endif
 #endif
 
-#ifdef NEPROVIDER_WININET
+#ifdef NETPROVIDER_WININET
 
 /* Global internet handle for Wininet*/
 static HINTERNET internet_handle = NULL;
