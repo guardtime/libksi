@@ -618,7 +618,7 @@ int KSI_ERR_pre(KSI_ERR *err, int cond, char *fileName, int lineNr) {
 	return !cond;
 }
 
-int KSI_ERR_fail(KSI_ERR *err, int statusCode, long extErrorCode, char *fileName, unsigned int lineNr, char *message) {
+int KSI_ERR_fail(KSI_ERR *err, int statusCode, long extErrorCode, char *fileName, unsigned int lineNr, const char *message) {
 	err->extErrorCode = extErrorCode;
 	err->statusCode = statusCode;
 	if (message == NULL) {

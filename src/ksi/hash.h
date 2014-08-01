@@ -237,6 +237,30 @@ extern "C" {
 	int KSI_DataHash_toTlv(KSI_DataHash *hsh, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 	/**
+	 * Parses the metha value if the hash value is formatted:
+	 * - 2 bytes of length (n).
+	 * - n bytes of metadata.
+	 * - digest length - n bytse of padding with zero values.
+	 * \param[in]	metaHash		Metahash value.
+	 * \param[out]	data			Pointer to the receiving pointer.
+	 * \param[out]	data_len		Pointer to the receiving length variable.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_DataHash_free, #KSI_DataHash_toTlv
+	 */
+	int KSI_MetaHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned char **data, int *data_len);
+
+	/**
+	 * Works the same way as #KSI_DataHash_fromTlv, but performs an additional
+	 * format check on the digest value and makes sure the binary digest is a
+	 * null terminated sequence of bytes.
+	 * \param[in]	tlv			TLV object.
+	 * \param[out]	hsh			Pointer to the receiving data hash object pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_DataHash_MetaHash_fromTlv(KSI_TLV *tlv, KSI_DataHash **hsh);
+
+	/**
 	 * @}
 	 */
 #ifdef __cplusplus

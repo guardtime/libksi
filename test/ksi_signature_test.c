@@ -117,6 +117,8 @@ static void testSerializeSignature(CuTest *tc) {
 	in_len = (unsigned)fread(in, 1, sizeof(in), f);
 	CuAssert(tc, "Nothing read from signature file.", in_len > 0);
 
+	fclose(f);
+
 	res = KSI_Signature_parse(ctx, in, in_len, &sig);
 	CuAssert(tc, "Failed to parse signature", res == KSI_OK && sig != NULL);
 
@@ -147,6 +149,8 @@ static void testVerifyDocument(CuTest *tc) {
 
 	in_len = (unsigned)fread(in, 1, sizeof(in), f);
 	CuAssert(tc, "Nothing read from signature file.", in_len > 0);
+
+	fclose(f);
 
 	res = KSI_Signature_parse(ctx, in, in_len, &sig);
 	CuAssert(tc, "Failed to parse signature", res == KSI_OK && sig != NULL);
@@ -179,6 +183,8 @@ static void testVerifyDocumentHash(CuTest *tc) {
 
 	in_len = (unsigned)fread(in, 1, sizeof(in), f);
 	CuAssert(tc, "Nothing read from signature file.", in_len > 0);
+
+	fclose(f);
 
 	res = KSI_Signature_parse(ctx, in, in_len, &sig);
 	CuAssert(tc, "Failed to parse signature", res == KSI_OK && sig != NULL);
@@ -216,6 +222,24 @@ static void testVerifyDocumentHash(CuTest *tc) {
 	KSI_Signature_free(sig);
 }
 
+static void testSignerIdentity(CuTest *tc) {
+	int res;
+	const char id_expected[] = "GT :: testA :: 36-test";
+	KSI_Signature *sig = NULL;
+	char *id_actual = NULL;
+
+	res = KSI_Signature_fromFile(ctx, "test/resource/tlv/ok-sig-2014-08-01.1.ksig", &sig);
+	CuAssert(tc, "Unable to load signature", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_getSignerIdentity(sig, &id_actual);
+	CuAssert(tc, "Unable to get signer identity from signature.", res == KSI_OK && id_actual != NULL);
+
+	CuAssert(tc, "Unexpected signer identity", !strncmp(id_expected, id_actual, strlen(id_expected)));
+
+	KSI_Signature_free(sig);
+	KSI_free(id_actual);
+
+}
 
 CuSuite* KSITest_Signature_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
@@ -228,6 +252,7 @@ CuSuite* KSITest_Signature_getSuite(void) {
 	SUITE_ADD_TEST(suite, testVerifySignatureNew);
 	SUITE_ADD_TEST(suite, testVerifySignatureWithPublication);
 	SUITE_ADD_TEST(suite, testVerifySignatureExtendedToHead);
+	SUITE_ADD_TEST(suite, testSignerIdentity);
 
 	return suite;
 }

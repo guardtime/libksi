@@ -1,12 +1,16 @@
+#include <stdio.h>
 #include <limits.h>
 #include <string.h>
+#include <ksi/ksi.h>
 
-#include "../src/ksi/internal.h"
+#include "ksi_net_mock.h"
 
 unsigned char *KSI_NET_MOCK_request = NULL;
-unsigned KSI_NET_MOCK_request_len;
+unsigned KSI_NET_MOCK_request_len = 0;
 unsigned char *KSI_NET_MOCK_response = NULL;
-unsigned KSI_NET_MOCK_response_len;
+unsigned KSI_NET_MOCK_response_len = 0;
+
+static size_t mockInitCount = 0;
 
 static int mockPublicationsFileReceive(KSI_RequestHandle *handle) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -101,9 +105,6 @@ static int mockSend(KSI_RequestHandle *handle) {
 	res = KSI_RequestHandle_getRequest(handle, &req, &req_len);
 	if (res != KSI_OK) goto cleanup;
 
-	if (KSI_NET_MOCK_request != NULL) KSI_free((unsigned char *)KSI_NET_MOCK_request);
-
-	KSI_NET_MOCK_request = KSI_calloc(req_len, 1);
 	memcpy((unsigned char *)KSI_NET_MOCK_request, req, req_len);
 
 	KSI_NET_MOCK_request_len = req_len;
@@ -134,9 +135,6 @@ static int mockSendPublicationsFileRequest(KSI_NetworkClient *netProvider, KSI_R
 	res = KSI_RequestHandle_getRequest(handle, &req, &req_len);
 	if (res != KSI_OK) goto cleanup;
 
-	if (KSI_NET_MOCK_request != NULL) KSI_free((unsigned char *)KSI_NET_MOCK_request);
-
-	KSI_NET_MOCK_request = KSI_calloc(req_len, 1);
 	memcpy((unsigned char *)KSI_NET_MOCK_request, req, req_len);
 
 	KSI_NET_MOCK_request_len = req_len;
@@ -146,37 +144,56 @@ cleanup:
 	return res;
 }
 
+static int mockInit(void) {
+	if (mockInitCount++ > 0) return KSI_OK;
+
+	KSI_NET_MOCK_response = KSI_calloc(MOCK_BUFFER_SIZE, 1);
+	if (KSI_NET_MOCK_response == NULL) return KSI_OUT_OF_MEMORY;
+
+	KSI_NET_MOCK_request = KSI_calloc(MOCK_BUFFER_SIZE, 1);
+	if (KSI_NET_MOCK_request == NULL) return KSI_OUT_OF_MEMORY;
+
+	return KSI_OK;
+}
+
+static void mockCleanup(void) {
+	if (--mockInitCount > 0) return;
+	KSI_free(KSI_NET_MOCK_response);
+	KSI_free(KSI_NET_MOCK_request);
+}
+
 int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetworkClient **provider) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_NetworkClient *pr = NULL;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	if (ctx == NULL || provider == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
-	KSI_NET_MOCK_request_len = 0;
-	KSI_NET_MOCK_response_len = 0;
+	res = KSI_CTX_registerGlobals(ctx, mockInit, mockCleanup);
+	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_NetworkClient_new(ctx, &pr);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_NetworkClient_setSendSignRequestFn(pr, mockSendSignRequest);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_NetworkClient_setSendExtendRequestFn(pr, mockSendExtendRequest);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_NetworkClient_setSendPublicationRequestFn(pr, mockSendPublicationsFileRequest);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) goto cleanup;
 
 	*provider = pr;
 	pr = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_free(pr);
 
-	return KSI_RETURN(&err);
+	return res;
 }

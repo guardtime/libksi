@@ -9,23 +9,13 @@ extern unsigned KSI_NET_MOCK_response_len;
 
 static void setFileMockResponse(CuTest *tc, const char *fileName) {
 	FILE *f = NULL;
-	unsigned char *resp = NULL;
-	unsigned resp_size = 0xfffff;
-
-	resp = KSI_calloc(resp_size, 1);
-	CuAssert(tc, "Out of memory", resp != NULL);
 
 	/* Read response from file. */
 	f = fopen(fileName, "rb");
 	CuAssert(tc, "Unable to open sample response file", f != NULL);
 
-	KSI_NET_MOCK_response_len = (unsigned)fread(resp, 1, resp_size, f);
+	KSI_NET_MOCK_response_len = (unsigned)fread(KSI_NET_MOCK_response, 1, MOCK_BUFFER_SIZE, f);
 	fclose(f);
-
-	if (KSI_NET_MOCK_response != NULL) {
-		KSI_free((unsigned char *)KSI_NET_MOCK_response);
-	}
-	KSI_NET_MOCK_response = resp;
 }
 
 static void testLoadPublicationsFile(CuTest *tc) {

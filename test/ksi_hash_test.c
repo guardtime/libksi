@@ -319,6 +319,33 @@ static void TestIncorrectHashLen(CuTest* tc) {
 
 }
 
+static void TestParseMetaHash(CuTest *tc) {
+	unsigned char metaImprint[33];
+	const char *metaVal = "Meta-methanol";
+	KSI_DataHash *metaHash = NULL;
+	const unsigned char *tmp = NULL;
+	int tmp_len;
+	int res;
+
+	memset(metaImprint, 0, sizeof(metaImprint));
+	metaImprint[0] = KSI_HASHALG_SHA2_256;
+	metaImprint[1] = (unsigned char) strlen(metaVal) >> 8 & 0xff;
+	metaImprint[2] = (unsigned char) strlen(metaVal) & 0xff;
+	memcpy(metaImprint + 3, metaVal, strlen(metaVal));
+
+	res = KSI_DataHash_fromImprint(ctx, metaImprint, sizeof(metaImprint), &metaHash);
+	KSI_ERR_statusDump(ctx, stdout);
+
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "MetaImprint", metaImprint, sizeof(metaImprint));
+	CuAssert(tc, "Unable to create meta data hash.", res == KSI_OK && metaHash != NULL);
+
+	res = KSI_MetaHash_MetaHash_parseMeta(metaHash, &tmp, &tmp_len);
+	CuAssert(tc, "Unable to parse valid meta datahash", res == KSI_OK && tmp != NULL && tmp_len > 0);
+	CuAssert(tc, "Metadata value mismatch", !memcmp(metaVal, tmp, tmp_len));
+
+	KSI_DataHash_free(metaHash);
+}
+
 CuSuite* KSITest_Hash_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -332,6 +359,7 @@ CuSuite* KSITest_Hash_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestParallelHashing);
 	SUITE_ADD_TEST(suite, TestHashGetAlgByName);
 	SUITE_ADD_TEST(suite, TestIncorrectHashLen);
+	SUITE_ADD_TEST(suite, TestParseMetaHash);
 
 	return suite;
 }

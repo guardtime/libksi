@@ -54,8 +54,6 @@ static void testSigning(CuTest* tc) {
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
 	CuAssert(tc, "Unexpected send request", KSI_NET_MOCK_request_len == sizeof(expectedSignRequest) && !memcmp(expectedSignRequest, KSI_NET_MOCK_request, KSI_NET_MOCK_request_len));
-	KSI_free(KSI_NET_MOCK_response);
-	KSI_NET_MOCK_response = NULL;
 
 	res = KSI_Signature_serialize(sig, &raw, &raw_len);
 	CuAssert(tc, "Unable to serialize signature.", res == KSI_OK && raw != NULL && raw_len > 0);
@@ -124,9 +122,7 @@ static void testExtending(CuTest* tc) {
 	CuAssert(tc, "Expected result length mismatch", expected_len == serialized_len);
 	CuAssert(tc, "Unexpected extended signature.", !memcmp(expected, serialized, expected_len));
 
-	KSI_free(KSI_NET_MOCK_response);
 	KSI_free(serialized);
-	KSI_NET_MOCK_response = NULL;
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
@@ -184,9 +180,7 @@ static void testExtendingWithoutPublication(CuTest* tc) {
 	CuAssert(tc, "Expected result length mismatch", expected_len == serialized_len);
 	CuAssert(tc, "Unexpected extended signature.", !memcmp(expected, serialized, expected_len));
 
-	KSI_free(KSI_NET_MOCK_response);
 	KSI_free(serialized);
-	KSI_NET_MOCK_response = NULL;
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
@@ -244,9 +238,7 @@ static void testExtendingHeadSignature(CuTest* tc) {
 	CuAssert(tc, "Expected result length mismatch", expected_len == serialized_len);
 	CuAssert(tc, "Unexpected extended signature.", !memcmp(expected, serialized, expected_len));
 
-	KSI_free(KSI_NET_MOCK_response);
 	KSI_free(serialized);
-	KSI_NET_MOCK_response = NULL;
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
