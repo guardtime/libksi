@@ -4,17 +4,6 @@
 #include "internal.h"
 #include "net_http.h"
 
-#ifndef NETPROVIDER_CURL
-#	ifndef NETPROVIDER_WININET
-#		ifndef NETPROVIDER_WINHTTP
-#			ifndef _WIN32
-#				define NETPROVIDER_CURL
-#			endif
-#		endif
-#	endif
-#endif
-
-#ifdef NETPROVIDER_CURL
 static size_t curlGlobal_initCount = 0;
 
 typedef struct CurlNetProviderCtx_st {
@@ -421,6 +410,3 @@ KSI_NET_CURL_SETTER(ExtenderUrl, char *, urlExtender, setStringParam);
 KSI_NET_CURL_SETTER(PublicationUrl, char *, urlPublication, setStringParam);
 KSI_NET_CURL_SETTER(ConnectTimeoutSeconds, int, connectionTimeoutSeconds, setIntParam);
 KSI_NET_CURL_SETTER(ReadTimeoutSeconds, int, readTimeoutSeconds, setIntParam);
-
-
-#endif

@@ -6,17 +6,6 @@
 #include "internal.h"
 #include "net_http.h"
 
-#ifndef NETPROVIDER_WININET
-#	ifndef NETPROVIDER_CURL
-#		ifndef NETPROVIDER_WINHTTP
-#			ifdef _WIN32
-#				define NETPROVIDER_WININET
-#			endif
-#		endif
-#	endif
-#endif
-
-#ifdef NETPROVIDER_WININET
 static size_t wininetGlobal_initCount = 0;
 
 /* Global internet handle for Wininet*/
@@ -239,7 +228,7 @@ cleanup:
 }
 
 /**
- * Prepares request a opens a session handle.
+ * Prepares request and opens a session handle.
  * 
  * \param handle Pointer to KSI_RequestHandle object.
  * \param agent
@@ -339,7 +328,14 @@ static int wininetSendRequest(KSI_RequestHandle *handle, char *agent, char *url,
 		nhc->query, NULL, NULL, NULL,
 		(nhc->uc.nScheme == INTERNET_SCHEME_HTTPS ? INTERNET_FLAG_SECURE : 0),
 		0);
-//TODO:error control
+
+	if(nhc->request_handle == NULL){
+		DWORD error = GetLastError();
+		KSI_LOG_debug(ctx, "Wininet: Open request error %i\n", error);
+		KSI_FAIL(&err, KSI_NETWORK_ERROR, "Wininet: Unable to init request handle");
+		goto cleanup;
+		}
+	
 	if (connectionTimeout >= 0) {
 		DWORD dw = (connectionTimeout == 0 ? 0xFFFFFFFF : connectionTimeout * 1000);
 		InternetSetOption(nhc->request_handle, INTERNET_OPTION_CONNECT_TIMEOUT, &dw, sizeof(dw));
@@ -552,5 +548,3 @@ KSI_NET_WININET_SETTER(ExtenderUrl, char *, urlExtender, setStringParam);
 KSI_NET_WININET_SETTER(PublicationUrl, char *, urlPublication, setStringParam);
 KSI_NET_WININET_SETTER(ConnectTimeoutSeconds, int, connectionTimeoutSeconds, setIntParam);
 KSI_NET_WININET_SETTER(ReadTimeoutSeconds, int, readTimeoutSeconds, setIntParam);
-
-#endif

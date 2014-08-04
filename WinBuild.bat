@@ -11,6 +11,7 @@ SET OPENSSL_DIR=C:\Users\Taavi\Documents\GuardTime\LIBS\openssl-0.9.8g-win64
 SET OPENSSL_CA_FILE=C:\Users\Taavi\Documents\GuardTime\ksi-c-api\test\resource\tlv\mock.crt
 
 
+
 nmake clean
-nmake RTL=MTd CURL_DIR="%CURL_DIR%" OPENSSL_CA_FILE="%OPENSSL_CA_FILE%" OPENSSL_DIR="%OPENSSL_DIR%" all
+nmake RTL=MTd NET_PROVIDER=WININET CURL_DIR="%CURL_DIR%" OPENSSL_CA_FILE="%OPENSSL_CA_FILE%" OPENSSL_DIR="%OPENSSL_DIR%" all
 pause

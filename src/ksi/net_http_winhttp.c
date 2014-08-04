@@ -7,10 +7,9 @@
 #include "net_http.h"
 
 
-#ifdef NETPROVIDER_WINHTTP
 static size_t winhttpGlobal_initCount = 0;
 /* Global internet handle for Wininet*/
-/*tegelikult peaks olema session, connect ja rquest handelid*/
+
 static HINTERNET session_handle = NULL;
 
 typedef struct winhttpNetProviderCtx_st {
@@ -23,7 +22,7 @@ typedef struct winhttpNetProviderCtx_st {
 
 typedef struct winhttpNetHandleCtx_st {
 	KSI_CTX *ctx;
-	/*A internet handle object for handling a HTTP session*/
+	/*A internet handle object for handling a HTTP connection*/
 	HINTERNET connection_handle;
 	/*A internet handle object for handling a HTTP request*/
 	HINTERNET request_handle;
@@ -127,7 +126,15 @@ static void winhttpNetProviderCtx_free(winhttpNetProviderCtx *providerCtx) {
 	}
 }
 
-
+/**
+ * Create a 16-bit Unicode character string from C string.
+ * 
+ * \param[in] cstr Pointer to source string. 
+ * 
+ * \return Pointer to output string.
+ * 
+ * \Note Object belongs to the caller and must be freed. 
+ */
 static LPWSTR LPWSTR_new(const char * cstr){
 	int lenInChars =0;
 	wchar_t * p_wchar = NULL;
@@ -138,6 +145,7 @@ static LPWSTR LPWSTR_new(const char * cstr){
 	MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS, cstr, -1, p_wchar,lenInChars);
 	return p_wchar;
 	}
+
 
 static void LPWSTR_free(LPWSTR wstr){
 	free(wstr);
@@ -202,7 +210,7 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 		KSI_LOG_debug(ctx, "Winhttp: Query error %i\n", error);
 		
 		if(error == ERROR_INSUFFICIENT_BUFFER)
-			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Insufficient buffer");
+			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Winhttp: Insufficient buffer");
 		else
 			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, NULL);
 		res = KSI_HTTP_ERROR;
@@ -229,7 +237,7 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 			KSI_LOG_debug(ctx, "Winhttp: Read data error %i\n", error);
 
 			if(error == ERROR_INSUFFICIENT_BUFFER)
-				KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Insufficient buffer");
+				KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Winhttp: Insufficient buffer");
 			else
 				KSI_FAIL(&err, KSI_UNKNOWN_ERROR, NULL);
 			
@@ -260,7 +268,7 @@ cleanup:
 }
 
 /**
- * Prepares request a opens a session handle.
+ * Prepares request and opens a session handle.
  * 
  * \param handle Pointer to KSI_RequestHandle object.
  * \param agent
@@ -368,22 +376,18 @@ static int winhttpSendRequest(KSI_RequestHandle *handle, char *agent, char *url,
 	if(nhc->request_handle == NULL){
 		DWORD error = GetLastError();
 		KSI_LOG_debug(ctx, "Winhttp: Open request error %i\n", error);
-		KSI_FAIL(&err, KSI_NETWORK_ERROR, "Wininet: Unable to init request handle");
+		KSI_FAIL(&err, KSI_NETWORK_ERROR, "Winhttp: Unable to init request handle");
 		goto cleanup;
 		}
 	
 	//error codes http://msdn.microsoft.com/en-us/library/windows/desktop/aa384099%28v=vs.85%29.aspx
-	/*
-	if (connectionTimeout >= 0) {
-		DWORD dw = (connectionTimeout == 0 ? 0xFFFFFFFF : connectionTimeout * 1000);
-		WinHttpSetOption(nhc->request_handle, INTERNET_OPTION_CONNECT_TIMEOUT, &dw, sizeof(dw));
-	}
-	if (readTimeout >= 0) {
-		DWORD dw = (readTimeout == 0 ? 0xFFFFFFFF : readTimeout * 1000);
-		WinHttpSetOption(nhc->request_handle, INTERNET_OPTION_SEND_TIMEOUT, &dw, sizeof(dw));
-		WinHttpSetOption(nhc->request_handle, INTERNET_OPTION_RECEIVE_TIMEOUT, &dw, sizeof(dw));
-	}
-*/
+	
+	if(!WinHttpSetTimeouts(nhc->request_handle,0, connectionTimeout*1000, 0, readTimeout*1000)){
+		DWORD error = GetLastError();
+		KSI_LOG_debug(ctx, "Winhttp: Open set timeout error %i\n", error);
+		KSI_FAIL(&err, KSI_NETWORK_ERROR, "Winhttp: Unable to set timeouts");
+		goto cleanup;
+		}
 	
     res = KSI_RequestHandle_setNetContext(handle, nhc, (void (*)(void *))winhttpNetHandleCtx_free);
     KSI_CATCH(&err, res) goto cleanup;
@@ -442,7 +446,6 @@ static int winhttpGlobal_init(void) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
-	/* By default WinINet allows just two simultaneous connections to one server. */
 	
 	buf = 1024;
 	res = WinHttpSetOption(session_handle, WINHTTP_OPTION_MAX_CONNS_PER_SERVER, &buf, sizeof(buf));
@@ -590,5 +593,3 @@ KSI_NET_WININET_SETTER(ExtenderUrl, char *, urlExtender, setStringParam);
 KSI_NET_WININET_SETTER(PublicationUrl, char *, urlPublication, setStringParam);
 KSI_NET_WININET_SETTER(ConnectTimeoutSeconds, int, connectionTimeoutSeconds, setIntParam);
 KSI_NET_WININET_SETTER(ReadTimeoutSeconds, int, readTimeoutSeconds, setIntParam);
-
-#endif
