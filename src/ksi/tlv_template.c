@@ -40,7 +40,7 @@ KSI_END_TLV_TEMPLATE
 KSI_DEFINE_TLV_TEMPLATE(KSI_HashChainLink)
 	KSI_TLV_NATIVE_INT(0x01, 0, 0, KSI_HashChainLink_getLevelCorrection, KSI_HashChainLink_setLevelCorrection)
 	KSI_TLV_IMPRINT(0x02, 0, 0, KSI_HashChainLink_getImprint, KSI_HashChainLink_setImprint)
-	KSI_TLV_IMPRINT(0x03, 0, 0, KSI_HashChainLink_getMetaHash, KSI_HashChainLink_setMetaHash)
+	KSI_TLV_META_IMPRINT(0x03, 0, 0, KSI_HashChainLink_getMetaHash, KSI_HashChainLink_setMetaHash)
 	KSI_TLV_COMPOSITE(0x04, 0, 0, KSI_HashChainLink_getMetaData, KSI_HashChainLink_setMetaData, KSI_MetaData)
 KSI_END_TLV_TEMPLATE
 

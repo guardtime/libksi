@@ -3,6 +3,17 @@
 #include "all_tests.h"
 #include "../src/ksi/internal.h"
 
+static int mockInitCount = 0;
+
+static int mock_init(void) {
+	mockInitCount++;
+	return KSI_OK;
+}
+
+static void mock_cleanup(void) {
+	mockInitCount--;
+}
+
 static int failingMethod(KSI_CTX *ctx, int caseNr) {
 	KSI_ERR err;
 	KSI_ERR_init(ctx, &err);
@@ -100,6 +111,26 @@ static void TestCtxFailingPreCondition(CuTest* tc) {
 	CuAssert(tc, "Precondition was unsuccessful", res == KSI_INVALID_ARGUMENT);
 }
 
+static void TestRegisterGlobals(CuTest *tc) {
+	int res;
+	KSI_CTX *ctx = NULL;
+
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create KSI context.", res == KSI_OK && ctx != NULL);
+
+	res = KSI_CTX_registerGlobals(ctx, mock_init, mock_cleanup);
+	CuAssert(tc, "Unable to register globals.", res == KSI_OK);
+
+	res = KSI_CTX_registerGlobals(ctx, mock_init, mock_cleanup);
+	CuAssert(tc, "Unable to register globals the 2nd time.", res == KSI_OK);
+
+	CuAssert(tc, "Global init called wrong number of times", mockInitCount == 1);
+
+	KSI_CTX_free(ctx);
+
+	CuAssert(tc, "Globals not propperly cleaned up.", mockInitCount == 0);
+}
+
 CuSuite* KSITest_CTX_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
@@ -108,6 +139,7 @@ CuSuite* KSITest_CTX_getSuite(void)
 	SUITE_ADD_TEST(suite, TestCtxAddFailure);
 	SUITE_ADD_TEST(suite, TestCtxAddFailureOverflow);
 	SUITE_ADD_TEST(suite, TestCtxFailingPreCondition);
+	SUITE_ADD_TEST(suite, TestRegisterGlobals);
 
 	return suite;
 }

@@ -21,9 +21,7 @@ int main(int argc, char **argv) {
 	unsigned char buf[1024];
 	unsigned buf_len;
 
-	/** Global init of KSI */
-	res = KSI_global_init();
-	if (res != KSI_OK) goto cleanup;
+	char *signerIdentity = NULL;
 
 	/* Handle command line parameters */
 	if (argc != 5) {
@@ -120,6 +118,14 @@ int main(int argc, char **argv) {
 		KSI_ERR_statusDump(ksi, stderr);
 		goto cleanup;
 	}
+
+	/* Output the signer id */
+	res = KSI_Signature_getSignerIdentity(sign, &signerIdentity);
+	if (res == KSI_OK) {
+		printf("Signer id: %s\n", signerIdentity);
+	} else {
+		fprintf(stderr, "Unable to extract signer identity.\n");
+	}
     
 	/* Serialize the signature. */
 	res = KSI_Signature_serialize(sign, &raw, &raw_len);
@@ -155,6 +161,8 @@ cleanup:
 	if (in != NULL) fclose(in);
 	if (out != NULL) fclose(out);
 
+	KSI_free(signerIdentity);
+
 	KSI_Signature_free(sign);
 	KSI_DataHash_free(hsh);
 	KSI_DataHasher_free(hsr);
@@ -162,9 +170,6 @@ cleanup:
 	KSI_free(raw);
 
 	KSI_CTX_free(ksi);
-
-	/* Global cleanup */
-	KSI_global_cleanup();
 
 	return res;
 

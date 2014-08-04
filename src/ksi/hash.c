@@ -382,3 +382,94 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
+
+int KSI_MetaHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned char **data, int *data_len) {
+	KSI_ERR err;
+	int len;
+	int algo_id;
+	int i;
+
+	KSI_PRE(&err, metaHash != NULL) goto cleanup;
+	KSI_PRE(&err, data != NULL) goto cleanup;
+	KSI_PRE(&err, data_len != NULL) goto cleanup;
+	KSI_BEGIN(metaHash->ctx, &err);
+
+	/* Just be paranoid, and check for the length (the length should be determined by the algorithm anyway) .*/
+	if (metaHash->imprint_length < 3) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Imprint too short for a metahash value.");
+		goto cleanup;
+	}
+
+	algo_id = metaHash->imprint[0];
+	len = ((metaHash->imprint[1] << 8) & 0xff) | (metaHash->imprint[2] & 0xff);
+
+	if (len + 3 > metaHash->imprint_length) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Metadata length greater than imprint length");
+		goto cleanup;
+	}
+
+	/* Verify padding. */
+	for (i = len + 3; i < metaHash->imprint_length; i++) {
+		if (metaHash->imprint[i] != 0) {
+			KSI_FAIL(&err, KSI_INVALID_FORMAT, "Metahash not padded with zeros.");
+			goto cleanup;
+		}
+	}
+
+	*data = metaHash->imprint + 3;
+	*data_len = len;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+
+}
+
+int KSI_DataHash_MetaHash_fromTlv(KSI_TLV *tlv, KSI_DataHash **hsh) {
+	KSI_ERR err;
+	int res;
+	KSI_CTX *ctx = NULL;
+	KSI_DataHash *tmp = NULL;
+	const unsigned char *data = NULL;
+	int data_len;
+
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_PRE(&err, hsh != NULL) goto cleanup;
+
+	ctx = KSI_TLV_getCtx(tlv);
+	KSI_BEGIN(ctx, &err);
+
+	/* Parse as an imprint */
+	res = KSI_DataHash_fromTlv(tlv, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Try to extract the meta value to validate format. */
+	res = KSI_MetaHash_MetaHash_parseMeta(tmp, &data, &data_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Make sure that the contents of this imprint is a null terminated sequence of bytes. */
+	if (data_len + 3 >= tmp->imprint_length && tmp->imprint[tmp->imprint_length - 1] != 0) {
+		KSI_realloc(tmp->imprint, tmp->imprint_length + 1);
+		if (tmp->imprint == NULL) {
+			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+			goto cleanup;
+		}
+		tmp->imprint[tmp->imprint_length] = 0;
+	}
+
+	*hsh = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(ctx);
+	KSI_nofree(raw);
+	KSI_DataHash_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+

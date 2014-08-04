@@ -14,16 +14,6 @@ extern "C" {
 	 */
 
 	/**
-	 * Global initialization of the PKI truststore.
-	 */
-	int KSI_PKITruststore_global_init(void);
-
-	/**
-	 * Global finalize of the PKI truststore.
-	 */
-	void KSI_PKITruststore_global_cleanup(void);
-
-	/**
 	 * PKI Truststore constructor. If <tt>\c setDefaults == 1</tt>, the truststore is initiated
 	 * with default settings, otherwise a blank truststore is created.
 	 * \param[in]	ctx				KSI context.

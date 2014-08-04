@@ -47,6 +47,25 @@ struct KSI_PKISignature_st {
 	PKCS7 *pkcs7;
 };
 
+static int openSslGlobal_init(void) {
+	if (KSI_PKITruststore_global_initCount++ > 0) {
+		/* Nothing to do */
+	} else {
+		OpenSSL_add_all_digests();
+	}
+
+	return KSI_OK;
+}
+
+static void openSslGlobal_cleanup(void) {
+	if (--KSI_PKITruststore_global_initCount > 0) {
+		/* Nothing to do */
+	} else {
+		EVP_cleanup();
+	}
+}
+
+
 static int KSI_MD2hashAlg(EVP_MD *hash_alg) {
 	if (hash_alg == EVP_sha224())
 		return KSI_HASHALG_SHA2_224;
@@ -222,6 +241,9 @@ int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **tru
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, trust != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
+
+	res = KSI_CTX_registerGlobals(ctx, openSslGlobal_init, openSslGlobal_cleanup);
+	KSI_CATCH(&err, res) goto cleanup;
 
 	tmp = KSI_new(KSI_PKITruststore);
 	if (tmp == NULL) {
@@ -764,22 +786,4 @@ cleanup:
 	if (pubKey != NULL) EVP_PKEY_free(pubKey);
 
 	return KSI_RETURN(&err);
-}
-
-int KSI_PKITruststore_global_init(void) {
-	if (KSI_PKITruststore_global_initCount == 0) {
-		OpenSSL_add_all_digests();
-	}
-	KSI_PKITruststore_global_initCount++;
-
-	return KSI_OK;
-}
-
-void KSI_PKITruststore_global_cleanup(void) {
-	if (KSI_PKITruststore_global_initCount == 0) {
-		EVP_cleanup();
-	}
-	if (KSI_PKITruststore_global_initCount > 0) {
-		KSI_PKITruststore_global_initCount--;
-	}
 }

@@ -4,6 +4,7 @@
 #include "internal.h"
 #include "net_http.h"
 
+static size_t curlGlobal_initCount = 0;
 #ifndef NETPROVIDER_CURL
 #	ifndef NETPROVIDER_WININET
 #		ifndef NETPROVIDER_WINHTTP
@@ -30,6 +31,31 @@ typedef struct CurlNetHandleCtx_st {
 	unsigned char *raw;
     unsigned len;
 } CurlNetHandleCtx;
+
+static int curlGlobal_init(void) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (curlGlobal_initCount++ > 0) {
+		/* Nothing to do */
+		return KSI_OK;
+	}
+
+	if (curl_global_init(CURLUSESSL_ALL) != CURLE_OK) goto cleanup;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+static void curlGlobal_cleanup(void) {
+	if (--curlGlobal_initCount > 0) {
+		/* Nothing to do. */
+		return;
+	}
+	curl_global_cleanup();
+}
 
 static void CurlNetHandleCtx_free(CurlNetHandleCtx *handleCtx) {
 	if (handleCtx != NULL) {
@@ -186,11 +212,6 @@ static int curlSendRequest(KSI_RequestHandle *handle, char *agent, char *url, in
 	res = KSI_RequestHandle_getRequest(handle, &request, &request_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	if (request_len > LONG_MAX) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Request too long");
-		goto cleanup;
-	}
-
 	res = KSI_RequestHandle_setReadResponseFn(handle, curlReceive);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -283,26 +304,6 @@ cleanup:
 	return res;
 }
 
-
-
-
-
-int KSI_NetProvider_global_init(void) {
-	int res = KSI_UNKNOWN_ERROR;
-
-	if (curl_global_init(CURLUSESSL_ALL) != CURLE_OK) goto cleanup;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
-void KSI_NetProvider_global_cleanup(void) {
-	curl_global_cleanup();
-}
-
 /**
  *
  */
@@ -314,6 +315,10 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **netProvider) {
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
+
+	/* Register global init and cleanup methods. */
+	res = KSI_CTX_registerGlobals(ctx, curlGlobal_init, curlGlobal_cleanup);
+	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_NetworkClient_new(ctx, &pr);
 	KSI_CATCH(&err, res) goto cleanup;

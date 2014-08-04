@@ -20,7 +20,7 @@
 #endif
 
 #define KSI_BEGIN(ctx, err) KSI_ERR_init((ctx), (err))
-#define KSI_PRE(err, cond) if (!(cond) && (KSI_ERR_init(NULL, (err)) == KSI_OK) && (KSI_FAIL((err), KSI_INVALID_ARGUMENT, NULL) == KSI_OK))
+#define KSI_PRE(err, cond) if (KSI_ERR_pre(err, cond, __FILE__, __LINE__) || !(cond))
 #define KSI_RETURN(err) KSI_ERR_apply((err))
 #define KSI_FAIL_EXT(err, statusCode, extErrCode, message) (KSI_ERR_fail((err), (statusCode), (extErrCode), __FILE__, __LINE__, (message)))
 #define KSI_FAIL(err, statusCode, message) (KSI_ERR_fail((err), (statusCode), 0, __FILE__, __LINE__, (message)))
@@ -89,7 +89,7 @@ int KSI_LIST_FN_NAME(type, iter)(KSI_LIST(type) *list) {							\
 int KSI_LIST_FN_NAME(type, next)(KSI_LIST(type) *list, type **o) {					\
 	return KSI_List_next(list->list, (void **)o);									\
 }																					\
-int KSI_LIST_FN_NAME(type, indexOf)(const KSI_LIST(type) *list, const type *o, size_t *pos) {	\
+int KSI_LIST_FN_NAME(type, indexOf)(const KSI_LIST(type) *list, const type *o, size_t **pos) {	\
 	return KSI_List_indexOf(list->list, o, pos);									\
 }																					\
 int KSI_LIST_FN_NAME(type, insertAt)(KSI_LIST(type) *list, size_t pos, type *o) {	\

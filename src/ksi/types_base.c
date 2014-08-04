@@ -26,6 +26,7 @@ void KSI_OctetString_free(KSI_OctetString *t) {
 struct KSI_Utf8String_st {
 	KSI_CTX *ctx;
 	char *value;
+	size_t len;
 };
 
 int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, unsigned int data_len, KSI_OctetString **t) {
@@ -180,6 +181,8 @@ int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, KSI_Utf8String **t) {
 	memcpy(val, str, len);
 
 	tmp->value = val;
+	tmp->len = len;
+
 	val = NULL;
 
 	*t = tmp;
@@ -193,7 +196,11 @@ cleanup:
 	return res;
 }
 
-char *KSI_Utf8String_cstr(KSI_Utf8String *t) {
+size_t KSI_Utf8String_size(const KSI_Utf8String *t) {
+	return t != NULL ? t->len : 0;
+}
+
+const char *KSI_Utf8String_cstr(const KSI_Utf8String *t) {
 	return t == NULL ? NULL : t->value;
 }
 

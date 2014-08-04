@@ -139,9 +139,40 @@ int KSI_OctetString_toTlv(KSI_OctetString *oct, unsigned tag, int isNonCritical,
 /**
  * KSI_Utf8String
  */
+
+/**
+ * Cleanup method for the #KSI_Utf8String object.
+ * \param[in]		t			Pointer to the object to be freed.
+ *
+ */
 void KSI_Utf8String_free(KSI_Utf8String *t);
+
+/**
+ * Creates a new #KSI_Utf8String object.
+ * \param[in]		ctx			KSI context.
+ * \param[in]		str			String value.
+ * \param[out]		t			Pointer to the receiving pointer.
+ *
+ * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+ * \see #KSI_Utf8String_free, #KSI_Utf8String_cstr
+ */
 int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, KSI_Utf8String **t);
-char *KSI_Utf8String_cstr(KSI_Utf8String *t);
+
+/**
+ * Returns the actual size of the string in bytes.
+ * \param[in]		t		KSI utf8 string object.
+ * \return Returns the actual size of the string in bytes or 0 if the object is NULL.
+ */
+size_t KSI_Utf8String_size(const KSI_Utf8String *t);
+
+/**
+ * Returns a constant pointer to a buffer containing the null terminated c string or NULL if the
+ * object is NULL.
+ * \param[in]		t			Pointer to the string object.
+ *
+ * \return Pointer to the null terminated c string.
+ */
+const char *KSI_Utf8String_cstr(const KSI_Utf8String *t);
 int KSI_Utf8String_fromTlv(KSI_TLV *tlv, KSI_Utf8String **u8str);
 int KSI_Utf8String_toTlv(KSI_Utf8String *u8str, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 

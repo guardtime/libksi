@@ -293,6 +293,18 @@ extern "C" {
 	#define KSI_TLV_IMPRINT(tg, nc, fw, gttr, sttr) KSI_TLV_OBJECT(tg, nc, fw, gttr, sttr, KSI_DataHash_fromTlv, KSI_DataHash_toTlv, KSI_DataHash_free)
 
 	/**
+	 * This template works as #KSI_TLV_IMPRINT, but performs additional digest format check and
+	 * makes sure the imprint is a null terminated sequence of bytes.
+	 *
+	 * \param[in]	tg				TLV tag value.
+	 * \param[in]	nc				Is the TLV non-critical?
+	 * \param[in]	fw				Should the TLV be forwarded if unknown?
+	 * \param[in]	gttr			Getter function.
+	 * \param[in]	sttr			Setter function.
+	 */
+	#define KSI_TLV_META_IMPRINT(tg, nc, fw, gttr, sttr) KSI_TLV_OBJECT(tg, nc, fw, gttr, sttr, KSI_DataHash_MetaHash_fromTlv, KSI_DataHash_toTlv, KSI_DataHash_free)
+
+	/**
 	 * Native unsigned integer template.
 	 * \param[in]	tg				TLV tag value.
 	 * \param[in]	nc				Is the TLV non-critical?

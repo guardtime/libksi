@@ -3,6 +3,7 @@
 
 #include "cutest/CuTest.h"
 #include "ksi/ksi.h"
+#include "ksi_net_mock.h"
 
 #ifdef __cplusplus
 extern "C" {

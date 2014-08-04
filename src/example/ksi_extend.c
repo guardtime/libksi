@@ -16,12 +16,6 @@ int main(int argc, char **argv) {
 	unsigned raw_len;
 	unsigned count;
 
-	res = KSI_global_init();
-	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to init global KSI.\n");
-		goto cleanup;
-	}
-
 	if (argc != 5) {
 		printf("Usage:\n"
 				"  %s <signature> <extended> <extender uri | -> <pub-file uri | ->\n", argv[0]);
@@ -137,7 +131,6 @@ cleanup:
 	KSI_Signature_free(ext);
 	KSI_free(raw);
 	KSI_CTX_free(ksi);
-	KSI_global_cleanup();
 
 	return res;
 }

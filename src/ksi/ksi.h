@@ -183,6 +183,21 @@ int KSI_CTX_new(KSI_CTX **ctx);
 void KSI_CTX_free(KSI_CTX *ctx);
 
 /**
+ * This function is used to call global init functions and to register the appropriate
+ * global cleanup method. The init function will be called only once per KSI context and
+ * the cleanup method will be called when #KSI_CTX_free is called on the context object.
+ * The global init and cleanup functions must keep track how many times they are called
+ * (if multiple calls cause issues) and allow multiple calls.
+ *
+ * \param[in] 	initFn		Global initiation function.
+ * \param[in]	cleanupFn	Global cleanup function.
+ *
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an
+ * error code).
+ */
+int KSI_CTX_registerGlobals(KSI_CTX *ctx, int (*initFn)(void), void (*cleanupFn)(void));
+
+/**
  * Returns the current status of the error container.
  * \param[in]	ctx		KSI context.
  *
@@ -196,6 +211,7 @@ int KSI_CTX_getStatus(KSI_CTX *ctx);
  * \param[in]		err		Pointer to the error object.
  */
 int KSI_ERR_apply(KSI_ERR *err);
+int KSI_ERR_pre(KSI_ERR *err, int cond, char *fileName, int lineNr);
 
 /**
  * Dump error stack trace to stream.
@@ -240,22 +256,6 @@ enum KSI_HashAlgorithm {
 	/* Number of known hash algorithms. */
 	KSI_NUMBER_OF_KNOWN_HASHALGS,
 };
-
-/**
- * KSI global initiation of resources. This function should be called once (independently of
- * the number of threads) at the beginning of the program.
- *
- * \return status code (#KSI_OK, when operation succeeded, otherwise an
- * error code).
- *
- * \note At the end of the program #KSI_global_cleanup should be called.
- */
-int KSI_global_init(void);
-
-/**
- * Cleanup function for global objects. This should be called as the last KSI statement executed.
- */
-void KSI_global_cleanup(void);
 
 /**
  * Allocates \c size bytes of memory.

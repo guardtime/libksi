@@ -63,7 +63,7 @@ void KSI_ERR_clearErrors(KSI_CTX *ctx);
  * error code).
  *
  */
-int KSI_ERR_fail(KSI_ERR *ctx, int statusCode, long extErrorCode, char *fileName, unsigned int lineNr, char *message);
+int KSI_ERR_fail(KSI_ERR *ctx, int statusCode, long extErrorCode, char *fileName, unsigned int lineNr, const char *message);
 
 /**
  * State that the function finished successfully.

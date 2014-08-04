@@ -792,7 +792,7 @@ cleanup:
 /***************
  * SIGN REQUEST
  ***************/
-static int createSignRequest(KSI_CTX *ctx, const KSI_DataHash *hsh, unsigned char **raw, int *raw_len) {
+static int createSignRequest(KSI_CTX *ctx, const KSI_DataHash *hsh, unsigned char **raw, unsigned *raw_len) {
 	KSI_ERR err;
 	int res;
 	KSI_AggregationReq *req = NULL;
@@ -802,7 +802,7 @@ static int createSignRequest(KSI_CTX *ctx, const KSI_DataHash *hsh, unsigned cha
 	KSI_TLV *pduTlv = NULL;
 
 	unsigned char *tmp = NULL;
-	int tmp_len = 0;
+	unsigned tmp_len = 0;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, hsh != NULL) goto cleanup;
@@ -864,7 +864,7 @@ cleanup:
 /*****************
  * EXTEND REQUEST
  *****************/
-static int createExtendRequest(KSI_CTX *ctx, const KSI_Integer *start, const KSI_Integer *end, unsigned char **raw, int *raw_len) {
+static int createExtendRequest(KSI_CTX *ctx, const KSI_Integer *start, const KSI_Integer *end, unsigned char **raw, unsigned *raw_len) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *pduTLV = NULL;
@@ -872,7 +872,7 @@ static int createExtendRequest(KSI_CTX *ctx, const KSI_Integer *start, const KSI
 	KSI_ExtendReq *req = NULL;
 
 	unsigned char *tmp = NULL;
-	int tmp_len = 0;
+	unsigned tmp_len = 0;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, raw != NULL) goto cleanup;
@@ -1741,10 +1741,9 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 	KSI_ERR err;
 	int res;
 	size_t i, j;
-	KSI_LIST(KSI_Utf8String) *idList = NULL;
-	KSI_Utf8String *clientId = NULL;
+	KSI_List *idList = NULL;
 	char *signerId = NULL;
-	size_t signerId_size = 0;
+	size_t signerId_size = 100;
 	size_t signerId_len = 0;
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
@@ -1752,49 +1751,80 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 	KSI_BEGIN(sig->ctx, &err);
 
 	/* Create a list of separate signer identities. */
-	res = KSI_Utf8StringList_new(sig->ctx, &idList);
+	res = KSI_List_new(NULL, &idList);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	/* Extract all identities from all aggregation chains. */
-	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
+	/* Extract all identities from all aggregation chains from top to bottom. */
+	for (i = KSI_AggregationHashChainList_length(sig->aggregationChainList); i-- > 0;) {
 		KSI_AggregationHashChain *aggrRec = NULL;
 
 		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, &aggrRec);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		for (j = 0; j < KSI_HashChainLinkList_length(aggrRec->chain); j++) {
+		for (j = KSI_HashChainLinkList_length(aggrRec->chain); j-- > 0;) {
 			KSI_HashChainLink *link = NULL;
 			KSI_MetaData *metaData = NULL;
+			KSI_DataHash *metaHash = NULL;
 
 			res = KSI_HashChainLinkList_elementAt(aggrRec->chain, j, &link);
 			KSI_CATCH(&err, res) goto cleanup;
 
+			/* Extract MetaHash */
+			KSI_HashChainLink_getMetaHash(link, &metaHash);
+			KSI_CATCH(&err, res) goto cleanup;
+
+			/* Extract MetaData */
 			KSI_HashChainLink_getMetaData(link, &metaData);
 			KSI_CATCH(&err, res) goto cleanup;
 
-			/* Exit inner loop if this chain link does not contain a metadata block. */
-			if (metaData == NULL) continue;
+			if (metaHash != NULL) {
+				const char *tmp = NULL;
+				int tmp_len;
 
-			res = KSI_MetaData_getClientId(metaData, &clientId);
-			KSI_CATCH(&err, res) goto cleanup;
+				res = KSI_MetaHash_MetaHash_parseMeta(metaHash, (const unsigned char **)&tmp, &tmp_len);
+				KSI_CATCH(&err, res) goto cleanup;
 
-			signerId_size += strlen((char *)clientId) + 1; /* +1 for dot (.) or ending zero character. */
+				signerId_size += tmp_len + 4;
 
-			res = KSI_Utf8StringList_append(idList, clientId);
-			KSI_CATCH(&err, res) goto cleanup;
-			clientId = NULL;
+				res = KSI_List_append(idList, (void *)tmp);
+				KSI_CATCH(&err, res) goto cleanup;
+
+			} else if (metaData != NULL) {
+				KSI_Utf8String *clientId = NULL;
+
+				res = KSI_MetaData_getClientId(metaData, &clientId);
+				KSI_CATCH(&err, res) goto cleanup;
+
+				signerId_size += KSI_Utf8String_size(clientId) + 4;
+
+				res = KSI_List_append(idList, (void *)KSI_Utf8String_cstr(clientId));
+				KSI_CATCH(&err, res) goto cleanup;
+				clientId = NULL;
+
+			} else {
+				/* Exit inner loop if this chain link does not contain a meta value block. */
+				continue;
+			}
+
 
 		}
 	}
 
-	/* Concatenate all together. */
-	for (i = 0; i < KSI_Utf8StringList_length(idList); i++) {
-		KSI_Utf8String *tmp = NULL;
+	/* Allocate the result buffer. */
+	signerId = KSI_calloc(signerId_size, 1);
+	if (signerId == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
 
-		res = KSI_Utf8StringList_elementAt(idList, i, &tmp);
+	/* Concatenate all together. */
+	for (i = 0; i < KSI_List_length(idList); i++) {
+		const char *tmp = NULL;
+
+		res = KSI_List_elementAt(idList, i, (void **)&tmp);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		signerId_len += (unsigned)sprintf(signerId + signerId_len, "%s%s", signerId_len > 0 ? ".": "", KSI_Utf8String_cstr(tmp));
+		signerId_len += (unsigned)snprintf(signerId + signerId_len, signerId_size - signerId_len, "%s%s", signerId_len > 0 ? " :: " : "", tmp);
 	}
 
 	*signerIdentity = signerId;
@@ -1805,8 +1835,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 cleanup:
 
 	KSI_free(signerId);
-	KSI_Utf8StringList_freeAll(idList);
-	KSI_free(clientId);
+	KSI_List_free(idList);
 
 	return KSI_RETURN(&err);
 }
@@ -1869,7 +1898,7 @@ int KSI_Signature_verifyDocument(KSI_Signature *sig, void *doc, size_t doc_len) 
 	int res;
 	KSI_DataHash *hsh = NULL;
 
-	int hash_id;
+	int hash_id = -1;
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
 	KSI_PRE(&err, doc != NULL) goto cleanup;
@@ -1897,7 +1926,7 @@ int KSI_Signature_createDataHasher(KSI_Signature *sig, KSI_DataHasher **hsr) {
 	KSI_ERR err;
 	int res;
 	KSI_DataHasher *tmp = NULL;
-	int hash_id;
+	int hash_id = -1;
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
 	KSI_PRE(&err, hsr != NULL) goto cleanup;
