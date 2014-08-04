@@ -12,11 +12,12 @@
 #			ifdef _WIN32
 #				define NETPROVIDER_WININET
 #			endif
-		#endif
+#		endif
 #	endif
 #endif
 
 #ifdef NETPROVIDER_WININET
+static size_t wininetGlobal_initCount = 0;
 
 /* Global internet handle for Wininet*/
 static HINTERNET internet_handle = NULL;
@@ -150,9 +151,11 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 	size_t resp_len = 0;
 	DWORD http_response;
 	DWORD http_response_len = sizeof(http_response);
-
+	KSI_CTX *ctx = KSI_RequestHandle_getCtx(handle);
+	
+	
 	KSI_PRE(&err, handle != NULL) goto cleanup;
-	KSI_BEGIN(KSI_RequestHandle_getCtx(handle), &err);
+	KSI_BEGIN(ctx, &err);
 
 	res = KSI_RequestHandle_getNetContext(handle, (void **)&nhc);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -163,11 +166,12 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 	/*Send request*/
 	if (!HttpSendRequestA(nhc->request_handle, NULL, 0, (LPVOID) request, request_len)) {
 		DWORD error = GetLastError();
-		printf("send error %i\n", error);
+		KSI_LOG_debug(ctx, "Wininet: Send error %i\n", error);
+
 		if(error == ERROR_INTERNET_NAME_NOT_RESOLVED)
-			KSI_FAIL(&err, KSI_INVALID_FORMAT, "Invalid host name");
+			KSI_FAIL(&err, KSI_INVALID_FORMAT, "Wininet: Invalid host name");
 		else if(error == ERROR_INTERNET_CANNOT_CONNECT)
-			KSI_FAIL(&err, KSI_NETWORK_ERROR, "Unable to connect");
+			KSI_FAIL(&err, KSI_NETWORK_ERROR, "Wininet: Unable to connect");
 		else
 			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, NULL);
 		goto cleanup;
@@ -179,7 +183,7 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 		if(error == ERROR_HTTP_HEADER_NOT_FOUND)
 			KSI_FAIL(&err, KSI_HTTP_ERROR, "HTTP header not found");
 		else if(error == ERROR_INSUFFICIENT_BUFFER)
-			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Insufficient buffer");
+			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Wininet: Insufficient buffer");
 		else
 			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, NULL);
 		res = KSI_HTTP_ERROR;
@@ -204,7 +208,7 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 		if (!InternetReadFile(nhc->request_handle, resp + resp_len, add_len, &add_len)) {
 			DWORD error = GetLastError();
 			if(error == ERROR_INSUFFICIENT_BUFFER)
-				KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Insufficient buffer");
+				KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Wininet: Insufficient buffer");
 			else
 				KSI_FAIL(&err, KSI_UNKNOWN_ERROR, NULL);
 			
@@ -304,7 +308,7 @@ static int wininetSendRequest(KSI_RequestHandle *handle, char *agent, char *url,
 	
 	/*Preparing request*/
 
-	KSI_LOG_debug(ctx, "Sending request to: %s", url);
+	KSI_LOG_debug(ctx, "Wininet: Sending request to: %s", url);
 
 	res = KSI_RequestHandle_getRequest(handle, &request, &request_len);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -385,9 +389,15 @@ IMPL_EXTEND_REQUEST(wininet)
 IMPL_PUBLICATIONSFILE_REQUEST(wininet)
 
 
-int KSI_NetProvider_global_init(void) {
+static int wininetGlobal_init(void) {
 	int res = KSI_UNKNOWN_ERROR;
 	ULONG buf;
+	
+	if (wininetGlobal_initCount++ > 0) {
+		/* Nothing to do */
+		return KSI_OK;
+		}
+	
 	//Initializes an application's use of the Win32 Internet functions. 
 	internet_handle = InternetOpenA("TODO", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
 	if (internet_handle == NULL) {
@@ -416,7 +426,12 @@ cleanup:
 	return res;
 }
 
-void KSI_NetProvider_global_cleanup(void) {
+static void wininetGlobal_cleanup(void) {
+	if (--wininetGlobal_initCount > 0) {
+		/* Nothing to do. */
+		return;
+		}
+	
 	if (internet_handle!= NULL){
 		InternetCloseHandle(internet_handle);
 		internet_handle = NULL;
@@ -432,6 +447,10 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **netProvider) {
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
+	/* Register global init and cleanup methods. */
+	res = KSI_CTX_registerGlobals(ctx, wininetGlobal_init, wininetGlobal_cleanup);
+	KSI_CATCH(&err, res) goto cleanup;
+	
 	res = KSI_NetworkClient_new(ctx, &pr);
 	KSI_CATCH(&err, res) goto cleanup;
 

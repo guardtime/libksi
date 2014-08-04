@@ -4,18 +4,18 @@
 #include "internal.h"
 #include "net_http.h"
 
-static size_t curlGlobal_initCount = 0;
 #ifndef NETPROVIDER_CURL
 #	ifndef NETPROVIDER_WININET
 #		ifndef NETPROVIDER_WINHTTP
-	#		ifndef _WIN32
-	#			define NETPROVIDER_CURL
-	#		endif
-	#	endif
+#			ifndef _WIN32
+#				define NETPROVIDER_CURL
+#			endif
+#		endif
 #	endif
 #endif
 
 #ifdef NETPROVIDER_CURL
+static size_t curlGlobal_initCount = 0;
 
 typedef struct CurlNetProviderCtx_st {
 	int connectionTimeoutSeconds;
@@ -108,7 +108,7 @@ static size_t receiveDataFromLibCurl(void *ptr, size_t size, size_t nmemb, void 
 	unsigned char *tmp_buffer = NULL;
 	CurlNetHandleCtx *nc = (CurlNetHandleCtx *) stream;
 
-	KSI_LOG_debug(nc->ctx, "curl: receive data size=%lld, nmemb=%lld", size, nmemb);
+	KSI_LOG_debug(nc->ctx, "Curl: Receive data size=%lld, nmemb=%lld", size, nmemb);
 
 	bytesCount = nc->len + size * nmemb;
 	if (bytesCount > UINT_MAX) {
@@ -207,7 +207,7 @@ static int curlSendRequest(KSI_RequestHandle *handle, char *agent, char *url, in
 		goto cleanup;
 	}
 
-	KSI_LOG_debug(ctx, "Sending request to: %s", url);
+	KSI_LOG_debug(ctx, "Curl: Sending request to: %s", url);
 
 	res = KSI_RequestHandle_getRequest(handle, &request, &request_len);
 	KSI_CATCH(&err, res) goto cleanup;

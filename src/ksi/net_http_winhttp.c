@@ -8,7 +8,7 @@
 
 
 #ifdef NETPROVIDER_WINHTTP
-
+static size_t winhttpGlobal_initCount = 0;
 /* Global internet handle for Wininet*/
 /*tegelikult peaks olema session, connect ja rquest handelid*/
 static HINTERNET session_handle = NULL;
@@ -163,9 +163,10 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 	size_t resp_len = 0;
 	DWORD http_response;
 	DWORD http_response_len = sizeof(http_response);
-
+	KSI_CTX *ctx = KSI_RequestHandle_getCtx(handle);
+	
 	KSI_PRE(&err, handle != NULL) goto cleanup;
-	KSI_BEGIN(KSI_RequestHandle_getCtx(handle), &err);
+	KSI_BEGIN(ctx, &err);
 
 	
 	
@@ -178,7 +179,8 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 	/*Send request*/
 	if (!WinHttpSendRequest(nhc->request_handle, WINHTTP_NO_ADDITIONAL_HEADERS,0, (LPVOID) request, request_len, request_len,0)) {
 		DWORD error = GetLastError();
-		printf("\n>>>send error %i \n", error);
+		KSI_LOG_debug(ctx, "Winhttp send error %i\n", error);
+
 		if(error = ERROR_WINHTTP_CANNOT_CONNECT)
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, "Winhttp: Unable to connect");
 		else
@@ -188,7 +190,8 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 
 	if(!WinHttpReceiveResponse(nhc->request_handle, NULL)){
 		DWORD error = GetLastError();
-		printf("\n>>>recive error %i \n", error);
+		KSI_LOG_debug(ctx, "Winhttp: Receive error %i\n", error);
+
 		KSI_FAIL(&err, KSI_NETWORK_ERROR, NULL);
 		goto cleanup;
 		}
@@ -196,7 +199,7 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 	/* Receive the response information. */
 	if (!WinHttpQueryHeaders(nhc->request_handle, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, &http_response, &http_response_len, 0)) {
 		DWORD error = GetLastError();
-		printf("\nquery error %i\n", error);
+		KSI_LOG_debug(ctx, "Winhttp: Query error %i\n", error);
 		
 		if(error == ERROR_INSUFFICIENT_BUFFER)
 			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Insufficient buffer");
@@ -223,7 +226,8 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 
 		if (!WinHttpReadData(nhc->request_handle, resp + resp_len, add_len, &add_len)) {
 			DWORD error = GetLastError();
-			printf("\n>>>>>>>>read data error: %i\n", error);
+			KSI_LOG_debug(ctx, "Winhttp: Read data error %i\n", error);
+
 			if(error == ERROR_INSUFFICIENT_BUFFER)
 				KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Insufficient buffer");
 			else
@@ -291,20 +295,19 @@ static int winhttpSendRequest(KSI_RequestHandle *handle, char *agent, char *url,
 	nhc->uc.dwUrlPathLength = 1;
 	nhc->uc.dwExtraInfoLength = 1;
 	w_url = LPWSTR_new(url);
-	wprintf(L">>>>>>WURL:: %s\n", w_url);
 	if (!WinHttpCrackUrl(w_url, 0, 0, &(nhc->uc))) {
 		DWORD error = GetLastError();
-		printf("\n error: %i \n");
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Wininet: Unable to crack url");
+		KSI_LOG_debug(ctx, "Winhttp: Crack url error %i\n", error);
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Winhttp: Unable to crack url");
 		goto cleanup;
 		}
 
 	/*Extracting host name*/
 	if (nhc->uc.lpszHostName == NULL || nhc->uc.dwHostNameLength == 0){
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Wininet: Invalid host name");
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Winhttp: Invalid host name");
 		goto cleanup;
 		}
-	wprintf(L">>>>>>host:: '%s', %i\n", nhc->uc.lpszHostName, nhc->uc.dwHostNameLength);
+
 	nhc->hostName = KSI_malloc(nhc->uc.dwHostNameLength*10 + 1);
 	if (nhc->hostName == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
@@ -313,7 +316,7 @@ static int winhttpSendRequest(KSI_RequestHandle *handle, char *agent, char *url,
 
 	wcsncpy_s(nhc->hostName, nhc->uc.dwHostNameLength + 1, nhc->uc.lpszHostName, nhc->uc.dwHostNameLength);
 	if (nhc->uc.lpszUrlPath == NULL || nhc->uc.dwUrlPathLength == 0) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Wininet: Invalid url path");
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Winhttp: Invalid url path");
 		goto cleanup;
 	}
 
@@ -328,30 +331,26 @@ static int winhttpSendRequest(KSI_RequestHandle *handle, char *agent, char *url,
 	if (!(nhc->uc.lpszExtraInfo == NULL || nhc->uc.dwExtraInfoLength == 0)) {
 		wcsncpy_s(nhc->query + nhc->uc.dwUrlPathLength, nhc->uc.dwExtraInfoLength + 1, nhc->uc.lpszExtraInfo, nhc->uc.dwExtraInfoLength);
 		}
-	wprintf(L">>>>>>query:: '%s'\n", nhc->query);
-	/*Preparing request*/
 
-	KSI_LOG_debug(ctx, "Sending request to: %s", url);
+	/*Preparing request*/
+	KSI_LOG_debug(ctx, "Winhttp: Sending request to: %s", url);
 
 	res = KSI_RequestHandle_getRequest(handle, &request, &request_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	if (request_len > LONG_MAX) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Wininet: Request too long");
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Winhttp: Request too long");
 		goto cleanup;
 	}
 
 	res = KSI_RequestHandle_setReadResponseFn(handle, winhttpReceive);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	/*Preparing session handle*/
-	//Opens an HTTP session for a given site
-	wprintf(L">>>>hostname:: %s | %i\n", nhc->hostName, nhc->uc.nPort);
-	
+	/*Preparing session handle. Opens an HTTP session for a given site*/
 	nhc->connection_handle = WinHttpConnect(session_handle, nhc->hostName, nhc->uc.nPort, 0);
 	if (nhc->connection_handle == NULL) {
 		//error koodid http://msdn.microsoft.com/en-us/library/windows/desktop/aa384091%28v=vs.85%29.aspx
-		KSI_FAIL(&err, KSI_NETWORK_ERROR, "Wininet: Unable to init connection handle");
+		KSI_FAIL(&err, KSI_NETWORK_ERROR, "Winhttp: Unable to init connection handle");
 		goto cleanup;
 		}
 
@@ -368,7 +367,7 @@ static int winhttpSendRequest(KSI_RequestHandle *handle, char *agent, char *url,
 	
 	if(nhc->request_handle == NULL){
 		DWORD error = GetLastError();
-		printf("\n>>open request error: %i \n", error);
+		KSI_LOG_debug(ctx, "Winhttp: Open request error %i\n", error);
 		KSI_FAIL(&err, KSI_NETWORK_ERROR, "Wininet: Unable to init request handle");
 		goto cleanup;
 		}
@@ -427,10 +426,15 @@ IMPL_EXTEND_REQUEST(winhttp)
 IMPL_PUBLICATIONSFILE_REQUEST(winhttp)
 
 
-int KSI_NetProvider_global_init(void) {
+static int winhttpGlobal_init(void) {
 	int res = KSI_UNKNOWN_ERROR;
 	ULONG buf;
 
+	if (winhttpGlobal_initCount++ > 0) {
+		/* Nothing to do */
+		return KSI_OK;
+		}
+	
 	//Initializes an application's use of the Win32 Internet functions. 
 	session_handle = WinHttpOpen(L"TODO", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
 	if (session_handle == NULL) {
@@ -460,7 +464,12 @@ cleanup:
 	return res;
 }
 
-void KSI_NetProvider_global_cleanup(void) {
+static void winhttpGlobal_cleanup(void) {
+	if (--winhttpGlobal_initCount > 0) {
+		/* Nothing to do. */
+		return;
+		}
+	
 	if (session_handle!= NULL){
 		WinHttpCloseHandle(session_handle);
 		session_handle = NULL;
@@ -476,6 +485,10 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **netProvider) {
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
+	/* Register global init and cleanup methods. */
+	res = KSI_CTX_registerGlobals(ctx, winhttpGlobal_init, winhttpGlobal_cleanup);
+	KSI_CATCH(&err, res) goto cleanup;
+	
 	res = KSI_NetworkClient_new(ctx, &pr);
 	KSI_CATCH(&err, res) goto cleanup;
 
