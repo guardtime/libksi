@@ -124,6 +124,14 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+int KSI_AggregationHashChain_compareTo(const KSI_AggregationHashChain *left, const KSI_AggregationHashChain *right) {
+	if (left == NULL || right == NULL) {
+		return left == right;
+	} else {
+		return KSI_IntegerList_length(right->chainIndex) - KSI_IntegerList_length(left->chainIndex);
+	}
+}
+
 KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_Integer*, aggregationTime, AggregationTime)
 KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_LIST(KSI_Integer)*, chainIndex, ChainIndex)
 KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_OctetString*, inputData, InputData)
@@ -738,9 +746,32 @@ static int extractSignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature **signatur
 	res = KSI_Signature_new(ctx, &sig);
 	KSI_CATCH(&err, res) goto cleanup;
 
+	/* Parse and extract the signature. */
 	res = KSI_TlvTemplate_extract(ctx, sig, tlv, KSI_TLV_TEMPLATE(KSI_Signature), NULL);
 	KSI_CATCH(&err, res) goto cleanup;
 
+
+	int i;
+	printf("Before\n");
+	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
+		KSI_AggregationHashChain *tmp = NULL;
+		KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, &tmp);
+		printf("%d. @0x%x\n", i, tmp);
+	}
+
+	/* Make sure the aggregation chains are in correct order. */
+	res = KSI_AggregationHashChainList_sort(sig->aggregationChainList, KSI_AggregationHashChain_compareTo);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	printf("After\n");
+	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
+		KSI_AggregationHashChain *tmp = NULL;
+		KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, &tmp);
+		printf("%d. @0x%x\n", i, tmp);
+	}
+
+
+	/* Verify the internal correctness. */
 	res = KSI_Signature_verifyInternal(ctx, sig);
 	KSI_CATCH(&err, res) goto cleanup;
 

@@ -181,6 +181,8 @@ int KSI_Utf8String_toTlv(KSI_Utf8String *u8str, unsigned tag, int isNonCritical,
  */
 void KSI_AggregationHashChain_free(KSI_AggregationHashChain *aggr);
 int KSI_AggregationHashChain_new(KSI_CTX *ctx, KSI_AggregationHashChain **out);
+int KSI_AggregationHashChain_compareTo(const KSI_AggregationHashChain *left, const KSI_AggregationHashChain *right);
+
 
 int KSI_AggregationHashChain_getAggregationTime(const KSI_AggregationHashChain *aggr, KSI_Integer **aggregationTime);
 int KSI_AggregationHashChain_getChainIndex(const KSI_AggregationHashChain * aggr, KSI_LIST(KSI_Integer) **chainIndex);

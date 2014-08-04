@@ -291,6 +291,8 @@ int KSI_List_sort(KSI_List *list, int (*cmp)(const void *a, const void *b)) {
 
 	qsort(list->arr, list->arr_len, sizeof(void *), cmp);
 
+	res = KSI_OK;
+
 cleanup:
 
 	return res;
