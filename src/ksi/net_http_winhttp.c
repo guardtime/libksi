@@ -1,9 +1,10 @@
-#ifdef _WIN32
-#	include <windows.h>
-#	include <Winhttp.h>
-#endif
-
 #include "internal.h"
+
+#if KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP
+
+#include <windows.h>
+#include <Winhttp.h>
+
 #include "net_http.h"
 
 
@@ -593,3 +594,5 @@ KSI_NET_WININET_SETTER(ExtenderUrl, char *, urlExtender, setStringParam);
 KSI_NET_WININET_SETTER(PublicationUrl, char *, urlPublication, setStringParam);
 KSI_NET_WININET_SETTER(ConnectTimeoutSeconds, int, connectionTimeoutSeconds, setIntParam);
 KSI_NET_WININET_SETTER(ReadTimeoutSeconds, int, readTimeoutSeconds, setIntParam);
+
+#endif

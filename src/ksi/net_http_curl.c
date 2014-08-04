@@ -1,7 +1,10 @@
+#include "internal.h"
+
+#if KSI_NET_HTTP_IMPL==KSI_IMPL_CURL
+
 #include <curl/curl.h>
 #include <string.h>
 
-#include "internal.h"
 #include "net_http.h"
 
 static size_t curlGlobal_initCount = 0;
@@ -410,3 +413,5 @@ KSI_NET_CURL_SETTER(ExtenderUrl, char *, urlExtender, setStringParam);
 KSI_NET_CURL_SETTER(PublicationUrl, char *, urlPublication, setStringParam);
 KSI_NET_CURL_SETTER(ConnectTimeoutSeconds, int, connectionTimeoutSeconds, setIntParam);
 KSI_NET_CURL_SETTER(ReadTimeoutSeconds, int, readTimeoutSeconds, setIntParam);
+
+#endif

@@ -1,9 +1,10 @@
-#ifdef _WIN32
-#	include <windows.h>
-#	include <wininet.h>
-#endif
-
 #include "internal.h"
+
+#if KSI_NET_HTTP_IMPL==KSI_IMPL_WININET
+
+#include <windows.h>
+#include <wininet.h>
+
 #include "net_http.h"
 
 static size_t wininetGlobal_initCount = 0;
@@ -548,3 +549,5 @@ KSI_NET_WININET_SETTER(ExtenderUrl, char *, urlExtender, setStringParam);
 KSI_NET_WININET_SETTER(PublicationUrl, char *, urlPublication, setStringParam);
 KSI_NET_WININET_SETTER(ConnectTimeoutSeconds, int, connectionTimeoutSeconds, setIntParam);
 KSI_NET_WININET_SETTER(ReadTimeoutSeconds, int, readTimeoutSeconds, setIntParam);
+
+#endif

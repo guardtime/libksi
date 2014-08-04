@@ -7,6 +7,20 @@
 #include "ksi.h"
 #include "tlv_tags.h"
 
+/**
+ * HTTP network client implementations.
+ */
+#define KSI_IMPL_CURL			1
+#define KSI_IMPL_WININET		2
+#define KSI_IMPL_WINHTTP		3
+
+/**
+ * Default implementation for HTTP network client.
+ */
+#ifndef KSI_NET_HTTP_IMPL
+#define KSI_NET_HTTP_IMPL KSI_IMPL_CURL
+#endif
+
 #ifndef _WIN32
 #  include <stdbool.h>
 #  ifdef HAVE_CONFIG_H
