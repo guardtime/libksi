@@ -24,7 +24,7 @@ int KSI_LIST_FN_NAME(type, replaceAt)(KSI_LIST(type) *, size_t, type *);		\
 int KSI_LIST_FN_NAME(type, remove)(KSI_LIST(type) *, size_t);					\
 size_t KSI_LIST_FN_NAME(type, length)(const KSI_LIST(type) *);					\
 int KSI_LIST_FN_NAME(type, elementAt)(const KSI_LIST(type) *, size_t pos, type **);		\
-int KSI_LIST_FN_NAME(type, sort)(KSI_LIST(type) *, int (*)(const type *, const type *));	\
+int KSI_LIST_FN_NAME(type, sort)(KSI_LIST(type) *, int (*)(const type **, const type **));	\
 KSI_CTX *type##List_getCtx(const KSI_LIST(type) *o);							\
 
 
