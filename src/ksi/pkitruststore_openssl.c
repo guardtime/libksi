@@ -1,3 +1,7 @@
+#include "internal.h"
+
+#if KSI_PKI_TRUSTSTORE_IMPL == KSI_IMPL_OPENSSL
+
 #include <string.h>
 #include <limits.h>
 #include <openssl/err.h>
@@ -5,12 +9,6 @@
 #include <openssl/pkcs7.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
-
-#ifndef _WIN32
-#  include<sys/stat.h>
-#endif
-
-#include "internal.h"
 
 /* Hide the following line to deactivate. */
 #define MAGIC_EMAIL "publications@guardtime.com"
@@ -787,3 +785,5 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
+
+#endif

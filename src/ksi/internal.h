@@ -13,12 +13,31 @@
 #define KSI_IMPL_CURL			1
 #define KSI_IMPL_WININET		2
 #define KSI_IMPL_WINHTTP		3
+ /**
+  * Crypo implementations.
+  */
+#define KSI_IMPL_OPENSSL		4
+#define KSI_IMPL_WINAPI			5
 
 /**
  * Default implementation for HTTP network client.
  */
 #ifndef KSI_NET_HTTP_IMPL
 #define KSI_NET_HTTP_IMPL KSI_IMPL_CURL
+#endif
+
+/**
+ * Default implementation for data hashing.
+ */
+#ifndef KSI_HASH_IMPL
+#define KSI_HASH_IMPL KSI_IMPL_OPENSSL
+#endif
+
+/**
+ * Default implementation for the PKI truststore.
+ */
+#ifndef KSI_PKI_TRUSTSTORE_IMPL
+#define KSI_PKI_TRUSTSTORE_IMPL KSI_IMPL_OPENSSL
 #endif
 
 #ifndef _WIN32
