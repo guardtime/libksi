@@ -6,9 +6,11 @@
 
 #ifndef NETPROVIDER_CURL
 #	ifndef NETPROVIDER_WININET
-#		ifndef _WIN32
-#			define NETPROVIDER_CURL
-#		endif
+#		ifndef NETPROVIDER_WINHTTP
+	#		ifndef _WIN32
+	#			define NETPROVIDER_CURL
+	#		endif
+	#	endif
 #	endif
 #endif
 

@@ -34,7 +34,7 @@ EXAMPLE_BIN = \
 #external libraries used for linking. 
 EXT_LIB = $(LIB_NAME)$(RTL).$(DLL) \
 	libeay32$(RTL).$(DLL) libcurl$(RTL).lib \
-	wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib advapi32.lib wininet.lib
+	wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib advapi32.lib wininet.lib winhttp.lib
 	
 #/NODEFAULTLIB:libcmtd.lib	
 CCFLAGS = /nologo /W3 /D_CRT_SECURE_NO_DEPRECATE /DCURL_STATICLIB /I$(INCLUDE_DIR) /I$(SRC_DIR)

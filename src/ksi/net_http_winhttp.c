@@ -1,60 +1,52 @@
 #ifdef _WIN32
 #	include <windows.h>
-#	include <wininet.h>
+#	include <Winhttp.h>
 #endif
 
 #include "internal.h"
 #include "net_http.h"
 
-#ifndef NETPROVIDER_WININET
-#	ifndef NETPROVIDER_CURL
-#		ifndef NETPROVIDER_WINHTTP
-#			ifdef _WIN32
-#				define NETPROVIDER_WININET
-#			endif
-		#endif
-#	endif
-#endif
 
-#ifdef NETPROVIDER_WININET
+#ifdef NETPROVIDER_WINHTTP
 
 /* Global internet handle for Wininet*/
-static HINTERNET internet_handle = NULL;
+/*tegelikult peaks olema session, connect ja rquest handelid*/
+static HINTERNET session_handle = NULL;
 
-typedef struct wininetNetProviderCtx_st {
+typedef struct winhttpNetProviderCtx_st {
 	int connectionTimeoutSeconds;
 	int readTimeoutSeconds;
 	char *urlSigner;
 	char *urlExtender;
 	char *urlPublication;
-} wininetNetProviderCtx;
+} winhttpNetProviderCtx;
 
-typedef struct wininetNetHandleCtx_st {
+typedef struct winhttpNetHandleCtx_st {
 	KSI_CTX *ctx;
 	/*A internet handle object for handling a HTTP session*/
-	HINTERNET session_handle;
+	HINTERNET connection_handle;
 	/*A internet handle object for handling a HTTP request*/
 	HINTERNET request_handle;
 	/*Object for holding pointers to url components*/
 	URL_COMPONENTS uc;	
 	/*A copy of host name (copied from uc)*/
-	char *hostName;
+	wchar_t *hostName;
 	/*A copy of URL path + extras (copied from uc)*/
-	char *query;
-} wininetNetHandleCtx;
+	wchar_t *query;
+} winhttpNetHandleCtx;
 
-static int wininetNetHandleCtx_new(wininetNetHandleCtx **handleCtx){
-	wininetNetHandleCtx *nhc = NULL;
+static int winhttpNetHandleCtx_new(winhttpNetHandleCtx **handleCtx){
+	winhttpNetHandleCtx *nhc = NULL;
 	int res = KSI_UNKNOWN_ERROR;
 	
-	nhc = KSI_new(wininetNetHandleCtx);
+	nhc = KSI_new(winhttpNetHandleCtx);
 	if (nhc == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
-	
+
 	nhc->ctx = NULL;
-	nhc->session_handle = NULL;
+	nhc->connection_handle = NULL;
 	nhc->request_handle = NULL;
 	nhc->hostName = NULL;
 	nhc->query = NULL;
@@ -76,25 +68,29 @@ return res;
  * Function for releasing KSI_NetHandle helper struct. 
  * Called by net.c -> KSI_RequestHandle_free   
  */
-static void wininetNetHandleCtx_free(wininetNetHandleCtx *handleCtx) {
+static void winhttpNetHandleCtx_free(winhttpNetHandleCtx *handleCtx) {
 	if (handleCtx != NULL) {
-		if(handleCtx->session_handle != NULL){
-			InternetCloseHandle(handleCtx->session_handle);
-			handleCtx->session_handle = NULL;
+		if(handleCtx->connection_handle != NULL){
+			WinHttpCloseHandle(handleCtx->connection_handle);
+			handleCtx->connection_handle = NULL;
 			}
 		if(handleCtx->request_handle != NULL){
-			InternetCloseHandle(handleCtx->request_handle);
+			WinHttpCloseHandle(handleCtx->request_handle);
 			handleCtx->request_handle = NULL;
 			}
+		
+		KSI_free(handleCtx->hostName);
+		KSI_free(handleCtx->query);
 		KSI_free(handleCtx);
+		
 	}
 }
 
-static int wininetNetProviderCtx_new(wininetNetProviderCtx **providerCtx) {
-	wininetNetProviderCtx *pctx = NULL;
+static int winhttpNetProviderCtx_new(winhttpNetProviderCtx **providerCtx) {
+	winhttpNetProviderCtx *pctx = NULL;
 	int res;
 
-	pctx = KSI_new (wininetNetProviderCtx);
+	pctx = KSI_new (winhttpNetProviderCtx);
 	if (pctx == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
@@ -122,7 +118,7 @@ cleanup:
  * Function for releasing KSI_NetworkClient helper struct. 
  * Called by net.c -> KSI_NetworkClient_free   
  */
-static void wininetNetProviderCtx_free(wininetNetProviderCtx *providerCtx) {
+static void winhttpNetProviderCtx_free(winhttpNetProviderCtx *providerCtx) {
 	if (providerCtx != NULL) {
 		KSI_free(providerCtx->urlExtender);
 		KSI_free(providerCtx->urlPublication);
@@ -130,6 +126,23 @@ static void wininetNetProviderCtx_free(wininetNetProviderCtx *providerCtx) {
 		KSI_free(providerCtx);
 	}
 }
+
+
+static LPWSTR LPWSTR_new(const char * cstr){
+	int lenInChars =0;
+	wchar_t * p_wchar = NULL;
+	//Get chracater count.
+	lenInChars = MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS, cstr, -1, NULL,0);
+	p_wchar = (wchar_t *)malloc(lenInChars*sizeof(wchar_t));
+	if(p_wchar == NULL) return NULL;
+	MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS, cstr, -1, p_wchar,lenInChars);
+	return p_wchar;
+	}
+
+static void LPWSTR_free(LPWSTR wstr){
+	free(wstr);
+	}
+
 
 
 /**
@@ -140,10 +153,10 @@ static void wininetNetProviderCtx_free(wininetNetProviderCtx *providerCtx) {
  * 
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
  */
-static int wininetReceive(KSI_RequestHandle *handle) {
+static int winhttpReceive(KSI_RequestHandle *handle) {
 	KSI_ERR err;
 	int res;
-	wininetNetHandleCtx *nhc = NULL;
+	winhttpNetHandleCtx *nhc = NULL;
 	const unsigned char *request = NULL;
 	unsigned request_len = 0;
 	unsigned char *resp = NULL;
@@ -154,6 +167,8 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(KSI_RequestHandle_getCtx(handle), &err);
 
+	
+	
 	res = KSI_RequestHandle_getNetContext(handle, (void **)&nhc);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -161,24 +176,29 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/*Send request*/
-	if (!HttpSendRequestA(nhc->request_handle, NULL, 0, (LPVOID) request, request_len)) {
+	if (!WinHttpSendRequest(nhc->request_handle, WINHTTP_NO_ADDITIONAL_HEADERS,0, (LPVOID) request, request_len, request_len,0)) {
 		DWORD error = GetLastError();
-		printf("send error %i\n", error);
-		if(error == ERROR_INTERNET_NAME_NOT_RESOLVED)
-			KSI_FAIL(&err, KSI_INVALID_FORMAT, "Invalid host name");
-		else if(error == ERROR_INTERNET_CANNOT_CONNECT)
-			KSI_FAIL(&err, KSI_NETWORK_ERROR, "Unable to connect");
+		printf("\n>>>send error %i \n", error);
+		if(error = ERROR_WINHTTP_CANNOT_CONNECT)
+			KSI_FAIL(&err, KSI_NETWORK_ERROR, "Winhttp: Unable to connect");
 		else
-			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, NULL);
+			KSI_FAIL(&err, KSI_NETWORK_ERROR, NULL);
 		goto cleanup;
 		}
 
-	/* Receive the response information. */
-	if (!HttpQueryInfo(nhc->request_handle, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &http_response, &http_response_len, 0)) {
+	if(!WinHttpReceiveResponse(nhc->request_handle, NULL)){
 		DWORD error = GetLastError();
-		if(error == ERROR_HTTP_HEADER_NOT_FOUND)
-			KSI_FAIL(&err, KSI_HTTP_ERROR, "HTTP header not found");
-		else if(error == ERROR_INSUFFICIENT_BUFFER)
+		printf("\n>>>recive error %i \n", error);
+		KSI_FAIL(&err, KSI_NETWORK_ERROR, NULL);
+		goto cleanup;
+		}
+	
+	/* Receive the response information. */
+	if (!WinHttpQueryHeaders(nhc->request_handle, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, &http_response, &http_response_len, 0)) {
+		DWORD error = GetLastError();
+		printf("\nquery error %i\n", error);
+		
+		if(error == ERROR_INSUFFICIENT_BUFFER)
 			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Insufficient buffer");
 		else
 			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, NULL);
@@ -201,8 +221,9 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 			goto cleanup;
 			}
 
-		if (!InternetReadFile(nhc->request_handle, resp + resp_len, add_len, &add_len)) {
+		if (!WinHttpReadData(nhc->request_handle, resp + resp_len, add_len, &add_len)) {
 			DWORD error = GetLastError();
+			printf("\n>>>>>>>>read data error: %i\n", error);
 			if(error == ERROR_INSUFFICIENT_BUFFER)
 				KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Insufficient buffer");
 			else
@@ -245,19 +266,22 @@ cleanup:
  * 
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
  */
-static int wininetSendRequest(KSI_RequestHandle *handle, char *agent, char *url, int connectionTimeout, int readTimeout ) {
+static int winhttpSendRequest(KSI_RequestHandle *handle, char *agent, char *url, int connectionTimeout, int readTimeout ) {
 	KSI_ERR err;
 	int res;
 	KSI_CTX *ctx = NULL;
 	const unsigned char *request = NULL;
 	unsigned request_len = 0;
-	wininetNetHandleCtx *nhc = NULL;
-
+	winhttpNetHandleCtx *nhc = NULL;
+	LPWSTR w_url = NULL;
+	
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(KSI_RequestHandle_getCtx(handle), &err);
 
-	/*Initializing of wininet helper struct*/
-	res = wininetNetHandleCtx_new(&nhc);
+		
+	
+	/*Initializing of winhttp helper struct*/
+	res = winhttpNetHandleCtx_new(&nhc);
 	KSI_CATCH(&err, res) goto cleanup;
 	ctx = KSI_RequestHandle_getCtx(handle);
 	nhc->ctx = ctx;
@@ -266,8 +290,11 @@ static int wininetSendRequest(KSI_RequestHandle *handle, char *agent, char *url,
 	nhc->uc.dwHostNameLength = 1;
 	nhc->uc.dwUrlPathLength = 1;
 	nhc->uc.dwExtraInfoLength = 1;
-
-	if (!InternetCrackUrlA(url, 0, 0, &(nhc->uc))) {
+	w_url = LPWSTR_new(url);
+	wprintf(L">>>>>>WURL:: %s\n", w_url);
+	if (!WinHttpCrackUrl(w_url, 0, 0, &(nhc->uc))) {
+		DWORD error = GetLastError();
+		printf("\n error: %i \n");
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Wininet: Unable to crack url");
 		goto cleanup;
 		}
@@ -277,31 +304,31 @@ static int wininetSendRequest(KSI_RequestHandle *handle, char *agent, char *url,
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Wininet: Invalid host name");
 		goto cleanup;
 		}
-	
-	nhc->hostName = KSI_malloc(nhc->uc.dwHostNameLength + 1);
+	wprintf(L">>>>>>host:: '%s', %i\n", nhc->uc.lpszHostName, nhc->uc.dwHostNameLength);
+	nhc->hostName = KSI_malloc(nhc->uc.dwHostNameLength*10 + 1);
 	if (nhc->hostName == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 		}
 
-	strncpy_s(nhc->hostName, nhc->uc.dwHostNameLength + 1, nhc->uc.lpszHostName, nhc->uc.dwHostNameLength);
+	wcsncpy_s(nhc->hostName, nhc->uc.dwHostNameLength + 1, nhc->uc.lpszHostName, nhc->uc.dwHostNameLength);
 	if (nhc->uc.lpszUrlPath == NULL || nhc->uc.dwUrlPathLength == 0) {
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Wininet: Invalid url path");
 		goto cleanup;
 	}
 
 	/*Extracting query string*/
-	nhc->query = KSI_malloc(nhc->uc.dwUrlPathLength + nhc->uc.dwExtraInfoLength + 1);
+	nhc->query = KSI_malloc((nhc->uc.dwUrlPathLength + nhc->uc.dwExtraInfoLength)*10 + 1);
 	if (nhc->query == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 		}
 
-	strncpy_s(nhc->query, nhc->uc.dwUrlPathLength + 1, nhc->uc.lpszUrlPath, nhc->uc.dwUrlPathLength);
+	wcsncpy_s(nhc->query, nhc->uc.dwUrlPathLength + 1, nhc->uc.lpszUrlPath, nhc->uc.dwUrlPathLength);
 	if (!(nhc->uc.lpszExtraInfo == NULL || nhc->uc.dwExtraInfoLength == 0)) {
-		strncpy_s(nhc->query + nhc->uc.dwUrlPathLength, nhc->uc.dwExtraInfoLength + 1, nhc->uc.lpszExtraInfo, nhc->uc.dwExtraInfoLength);
+		wcsncpy_s(nhc->query + nhc->uc.dwUrlPathLength, nhc->uc.dwExtraInfoLength + 1, nhc->uc.lpszExtraInfo, nhc->uc.dwExtraInfoLength);
 		}
-	
+	wprintf(L">>>>>>query:: '%s'\n", nhc->query);
 	/*Preparing request*/
 
 	KSI_LOG_debug(ctx, "Sending request to: %s", url);
@@ -314,39 +341,52 @@ static int wininetSendRequest(KSI_RequestHandle *handle, char *agent, char *url,
 		goto cleanup;
 	}
 
-	res = KSI_RequestHandle_setReadResponseFn(handle, wininetReceive);
+	res = KSI_RequestHandle_setReadResponseFn(handle, winhttpReceive);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/*Preparing session handle*/
 	//Opens an HTTP session for a given site
-	nhc->session_handle = InternetConnectA(internet_handle, nhc->hostName, nhc->uc.nPort, NULL, NULL, nhc->uc.nScheme, 0, 0);
-	if (nhc->session_handle == NULL) {
+	wprintf(L">>>>hostname:: %s | %i\n", nhc->hostName, nhc->uc.nPort);
+	
+	nhc->connection_handle = WinHttpConnect(session_handle, nhc->hostName, nhc->uc.nPort, 0);
+	if (nhc->connection_handle == NULL) {
+		//error koodid http://msdn.microsoft.com/en-us/library/windows/desktop/aa384091%28v=vs.85%29.aspx
 		KSI_FAIL(&err, KSI_NETWORK_ERROR, "Wininet: Unable to init connection handle");
 		goto cleanup;
 		}
-	
+
 	/*Preparing HTTP request handle*/
 	/*Should it use:
 	 INTERNET_FLAG_RELOAD
 	 INTERNET_FLAG_NO_CACHE_WRITE
 	 */
-	nhc->request_handle = HttpOpenRequestA(nhc->session_handle,
-		(request == NULL ? "GET" : "POST"),
-		nhc->query, NULL, NULL, NULL,
-		(nhc->uc.nScheme == INTERNET_SCHEME_HTTPS ? INTERNET_FLAG_SECURE : 0),
-		0);
-//TODO:error control
+	
+	nhc->request_handle = WinHttpOpenRequest(nhc->connection_handle,
+			(request == NULL ? L"GET" : L"POST"),
+			nhc->query, 
+			NULL, NULL, NULL,0);
+	
+	if(nhc->request_handle == NULL){
+		DWORD error = GetLastError();
+		printf("\n>>open request error: %i \n", error);
+		KSI_FAIL(&err, KSI_NETWORK_ERROR, "Wininet: Unable to init request handle");
+		goto cleanup;
+		}
+	
+	//error codes http://msdn.microsoft.com/en-us/library/windows/desktop/aa384099%28v=vs.85%29.aspx
+	/*
 	if (connectionTimeout >= 0) {
 		DWORD dw = (connectionTimeout == 0 ? 0xFFFFFFFF : connectionTimeout * 1000);
-		InternetSetOption(nhc->request_handle, INTERNET_OPTION_CONNECT_TIMEOUT, &dw, sizeof(dw));
+		WinHttpSetOption(nhc->request_handle, INTERNET_OPTION_CONNECT_TIMEOUT, &dw, sizeof(dw));
 	}
 	if (readTimeout >= 0) {
 		DWORD dw = (readTimeout == 0 ? 0xFFFFFFFF : readTimeout * 1000);
-		InternetSetOption(nhc->request_handle, INTERNET_OPTION_SEND_TIMEOUT, &dw, sizeof(dw));
-		InternetSetOption(nhc->request_handle, INTERNET_OPTION_RECEIVE_TIMEOUT, &dw, sizeof(dw));
+		WinHttpSetOption(nhc->request_handle, INTERNET_OPTION_SEND_TIMEOUT, &dw, sizeof(dw));
+		WinHttpSetOption(nhc->request_handle, INTERNET_OPTION_RECEIVE_TIMEOUT, &dw, sizeof(dw));
 	}
-
-    res = KSI_RequestHandle_setNetContext(handle, nhc, (void (*)(void *))wininetNetHandleCtx_free);
+*/
+	
+    res = KSI_RequestHandle_setNetContext(handle, nhc, (void (*)(void *))winhttpNetHandleCtx_free);
     KSI_CATCH(&err, res) goto cleanup;
 
     nhc = NULL;
@@ -356,8 +396,10 @@ cleanup:
 
 	KSI_nofree(request);
 	KSI_nofree(state);
-
-	wininetNetHandleCtx_free(nhc);
+	
+	LPWSTR_free(w_url);
+	
+	winhttpNetHandleCtx_free(nhc);
 
 	return KSI_RETURN(&err);
 }
@@ -380,35 +422,37 @@ cleanup:
 #define IMPL_EXTEND_REQUEST(providerName) IMPL_X_REQUEST(providerName, Extend, urlExtender)
 #define IMPL_PUBLICATIONSFILE_REQUEST(providerName) IMPL_X_REQUEST(providerName, PublicationsFile, urlPublication)
 
-IMPL_SIGN_REQUEST(wininet)
-IMPL_EXTEND_REQUEST(wininet)
-IMPL_PUBLICATIONSFILE_REQUEST(wininet)
+IMPL_SIGN_REQUEST(winhttp)
+IMPL_EXTEND_REQUEST(winhttp)
+IMPL_PUBLICATIONSFILE_REQUEST(winhttp)
 
 
 int KSI_NetProvider_global_init(void) {
 	int res = KSI_UNKNOWN_ERROR;
 	ULONG buf;
+
 	//Initializes an application's use of the Win32 Internet functions. 
-	internet_handle = InternetOpenA("TODO", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
-	if (internet_handle == NULL) {
+	session_handle = WinHttpOpen(L"TODO", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+	if (session_handle == NULL) {
 		/*TODO res = map_impl(GetLastError());*/
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
-	
 	/* By default WinINet allows just two simultaneous connections to one server. */
-	buf = 1024;
-	res = InternetSetOption(NULL, INTERNET_OPTION_MAX_CONNS_PER_SERVER, &buf, sizeof(buf));
-	if (res != TRUE) {
-		res = KSI_HTTP_ERROR;
-		goto cleanup;
-	}
-	res = InternetSetOption(NULL, INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER, &buf, sizeof(buf));
-	if (res != TRUE) {
-		res = KSI_HTTP_ERROR;
-		goto cleanup;
-	}
 	
+	buf = 1024;
+	res = WinHttpSetOption(session_handle, WINHTTP_OPTION_MAX_CONNS_PER_SERVER, &buf, sizeof(buf));
+	if (res != TRUE) {
+		res = KSI_HTTP_ERROR;
+		goto cleanup;
+	}
+
+	res = WinHttpSetOption(session_handle, WINHTTP_OPTION_MAX_CONNS_PER_1_0_SERVER, &buf, sizeof(buf));
+	if (res != TRUE) {
+		res = KSI_HTTP_ERROR;
+		goto cleanup;
+	}
+
 	res = KSI_OK;
 
 cleanup:
@@ -417,16 +461,16 @@ cleanup:
 }
 
 void KSI_NetProvider_global_cleanup(void) {
-	if (internet_handle!= NULL){
-		InternetCloseHandle(internet_handle);
-		internet_handle = NULL;
+	if (session_handle!= NULL){
+		WinHttpCloseHandle(session_handle);
+		session_handle = NULL;
 		}
 }
 
 int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **netProvider) {
 	KSI_ERR err;
 	KSI_NetworkClient *pr = NULL;
-	wininetNetProviderCtx *pctx = NULL;
+	winhttpNetProviderCtx *pctx = NULL;
 	int res;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -435,19 +479,19 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **netProvider) {
 	res = KSI_NetworkClient_new(ctx, &pr);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_NetworkClient_setSendSignRequestFn(pr, wininetSendSignRequest);
+	res = KSI_NetworkClient_setSendSignRequestFn(pr, winhttpSendSignRequest);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_NetworkClient_setSendExtendRequestFn(pr, wininetSendExtendRequest);
+	res = KSI_NetworkClient_setSendExtendRequestFn(pr, winhttpSendExtendRequest);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_NetworkClient_setSendPublicationRequestFn(pr, wininetSendPublicationsFileRequest);
+	res = KSI_NetworkClient_setSendPublicationRequestFn(pr, winhttpSendPublicationsFileRequest);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = wininetNetProviderCtx_new(&pctx);
+	res = winhttpNetProviderCtx_new(&pctx);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_NetworkClient_setNetCtx(pr, pctx, (void (*)(void*))wininetNetProviderCtx_free);
+	res = KSI_NetworkClient_setNetCtx(pr, pctx, (void (*)(void*))winhttpNetProviderCtx_free);
 	KSI_CATCH(&err, res) goto cleanup;
 	pctx = NULL;
 
@@ -474,7 +518,7 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **netProvider) {
 cleanup:
 
 	KSI_NetworkClient_free(pr);
-	wininetNetProviderCtx_free(pctx);
+	winhttpNetProviderCtx_free(pctx);
 
 	return KSI_RETURN(&err);
 }
@@ -516,7 +560,7 @@ static int setIntParam(int *param, int val) {
 #define KSI_NET_WININET_SETTER(name, type, var, fn) 														\
 		int KSI_HttpClient_set##name(KSI_NetworkClient *client, type val) {								\
 			int res = KSI_UNKNOWN_ERROR;																\
-			wininetNetProviderCtx *pctx = NULL;															\
+			winhttpNetProviderCtx *pctx = NULL;															\
 			if (client == NULL) {																		\
 				res = KSI_INVALID_ARGUMENT;																\
 				goto cleanup;																			\
