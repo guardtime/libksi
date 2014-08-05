@@ -49,7 +49,7 @@ struct KSI_Config_st {
 	KSI_Integer *maxLevel;
 	KSI_Integer *aggrAlgo;
 	KSI_Integer *aggrPeriod;
-	KSI_Utf8String *parentUri;
+	KSI_LIST(KSI_Utf8String) *parentUri;
 };
 
 struct KSI_AggregationReq_st {
@@ -111,6 +111,7 @@ struct KSI_PublicationsHeader_st {
 	KSI_CTX *ctx;
 	KSI_Integer *version;
 	KSI_Integer *timeCreated;
+	KSI_Utf8String *repositoryUri;
 };
 
 struct KSI_CertificateRecord_st {
@@ -440,7 +441,7 @@ void KSI_Config_free(KSI_Config *t) {
 		KSI_Integer_free(t->maxLevel);
 		KSI_Integer_free(t->aggrAlgo);
 		KSI_Integer_free(t->aggrPeriod);
-		KSI_Utf8String_free(t->parentUri);
+		KSI_Utf8StringList_free(t->parentUri);
 		KSI_free(t);
 	}
 }
@@ -474,12 +475,12 @@ KSI_CTX *KSI_Config_getCtx(KSI_Config *t){
 KSI_IMPLEMENT_GETTER(KSI_Config, KSI_Integer*, maxLevel, MaxLevel);
 KSI_IMPLEMENT_GETTER(KSI_Config, KSI_Integer*, aggrAlgo, AggrAlgo);
 KSI_IMPLEMENT_GETTER(KSI_Config, KSI_Integer*, aggrPeriod, AggrPeriod);
-KSI_IMPLEMENT_GETTER(KSI_Config, KSI_Utf8String*, parentUri, ParentUri);
+KSI_IMPLEMENT_GETTER(KSI_Config, KSI_LIST(KSI_Utf8String)*, parentUri, ParentUri);
 
 KSI_IMPLEMENT_SETTER(KSI_Config, KSI_Integer*, maxLevel, MaxLevel);
 KSI_IMPLEMENT_SETTER(KSI_Config, KSI_Integer*, aggrAlgo, AggrAlgo);
 KSI_IMPLEMENT_SETTER(KSI_Config, KSI_Integer*, aggrPeriod, AggrPeriod);
-KSI_IMPLEMENT_SETTER(KSI_Config, KSI_Utf8String*, parentUri, ParentUri);
+KSI_IMPLEMENT_SETTER(KSI_Config, KSI_LIST(KSI_Utf8String)*, parentUri, ParentUri);
 
 
 /**
@@ -817,6 +818,7 @@ void KSI_PublicationsHeader_free(KSI_PublicationsHeader *t) {
 	if(t != NULL) {
 		KSI_Integer_free(t->version);
 		KSI_Integer_free(t->timeCreated);
+		KSI_Utf8String_free(t->repositoryUri);
 		KSI_free(t);
 	}
 }
@@ -833,6 +835,7 @@ int KSI_PublicationsHeader_new(KSI_CTX *ctx, KSI_PublicationsHeader **t) {
 	tmp->ctx = ctx;
 	tmp->version = NULL;
 	tmp->timeCreated = NULL;
+	tmp->repositoryUri = NULL;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -847,9 +850,11 @@ KSI_CTX *KSI_PublicationsHeader_getCtx(KSI_PublicationsHeader *t){
 
 KSI_IMPLEMENT_GETTER(KSI_PublicationsHeader, KSI_Integer*, version, Version);
 KSI_IMPLEMENT_GETTER(KSI_PublicationsHeader, KSI_Integer*, timeCreated, TimeCreated);
+KSI_IMPLEMENT_GETTER(KSI_PublicationsHeader, KSI_Utf8String*, repositoryUri, RepositoryUri);
 
 KSI_IMPLEMENT_SETTER(KSI_PublicationsHeader, KSI_Integer*, version, Version);
 KSI_IMPLEMENT_SETTER(KSI_PublicationsHeader, KSI_Integer*, timeCreated, TimeCreated);
+KSI_IMPLEMENT_SETTER(KSI_PublicationsHeader, KSI_Utf8String*, repositoryUri, RepositoryUri);
 
 
 /**
