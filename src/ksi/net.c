@@ -1,40 +1,7 @@
 #include <string.h>
 
 #include "internal.h"
-
-struct KSI_NetHandle_st {
-	/** KSI context. */
-	KSI_CTX *ctx;
-	/** Request destination. */
-	unsigned char *request;
-	/** Length of the original request. */
-	unsigned request_length;
-	/** Response for the request. NULL if not yet present. */
-	unsigned char *response;
-	/** Length of the response. */
-	unsigned response_length;
-
-	void (*handleCtx_free)(void *);
-
-	int (*readResponse)(KSI_RequestHandle *);
-
-	/** Addidtional context for the trasnport layer. */
-	void *handleCtx;
-};
-
-struct KSI_NetworkClient_st {
-	KSI_CTX *ctx;
-
-	/** Cleanup for the provider, gets the #providerCtx as parameter. */
-	void (*providerCtx_free)(void *);
-
-	int (*sendSignRequest)(KSI_NetworkClient *, KSI_RequestHandle *);
-	int (*sendExtendRequest)(KSI_NetworkClient *, KSI_RequestHandle *);
-	int (*sendPublicationRequest)(KSI_NetworkClient *, KSI_RequestHandle *);
-
-	/** Dedicated context for the net provider */
-	void *poviderCtx;
-};
+#include "net_impl.h"
 
 KSI_IMPLEMENT_GET_CTX(KSI_NetworkClient);
 KSI_IMPLEMENT_GET_CTX(KSI_RequestHandle);
