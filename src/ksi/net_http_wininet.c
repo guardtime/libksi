@@ -5,20 +5,13 @@
 #include <windows.h>
 #include <wininet.h>
 
-#include "net_http.h"
+#include "net_http_impl.h"
+#include "net_impl.h"
 
 static size_t wininetGlobal_initCount = 0;
 
 /* Global internet handle for Wininet*/
 static HINTERNET internet_handle = NULL;
-
-typedef struct wininetNetProviderCtx_st {
-	int connectionTimeoutSeconds;
-	int readTimeoutSeconds;
-	char *urlSigner;
-	char *urlExtender;
-	char *urlPublication;
-} wininetNetProviderCtx;
 
 typedef struct wininetNetHandleCtx_st {
 	KSI_CTX *ctx;
@@ -80,48 +73,6 @@ static void wininetNetHandleCtx_free(wininetNetHandleCtx *handleCtx) {
 		KSI_free(handleCtx);
 	}
 }
-
-static int wininetNetProviderCtx_new(wininetNetProviderCtx **providerCtx) {
-	wininetNetProviderCtx *pctx = NULL;
-	int res;
-
-	pctx = KSI_new (wininetNetProviderCtx);
-	if (pctx == NULL) {
-		res = KSI_OUT_OF_MEMORY;
-		goto cleanup;
-	}
-
-	pctx->connectionTimeoutSeconds = 0;
-	pctx->readTimeoutSeconds = 0;
-	pctx->urlSigner = NULL;
-	pctx->urlPublication = NULL;
-	pctx->urlExtender = NULL;
-
-	*providerCtx = pctx;
-	pctx = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_nofree(pctx);
-
-	return res;
-}
-
-/**
- * Function for releasing KSI_NetworkClient helper struct. 
- * Called by net.c -> KSI_NetworkClient_free   
- */
-static void wininetNetProviderCtx_free(wininetNetProviderCtx *providerCtx) {
-	if (providerCtx != NULL) {
-		KSI_free(providerCtx->urlExtender);
-		KSI_free(providerCtx->urlPublication);
-		KSI_free(providerCtx->urlSigner);
-		KSI_free(providerCtx);
-	}
-}
-
 
 /**
  * Sends request defined in handle and waits for response.
@@ -366,7 +317,7 @@ cleanup:
 
 #define IMPL_X_REQUEST(providerName, requestType, urlName)																	\
 	static int providerName##Send##requestType##Request(KSI_NetworkClient *netProvider, KSI_RequestHandle *handle){				\
-		providerName##NetProviderCtx *npc = NULL;																				\
+		KSI_HttpClientCtx *npc = NULL;																				\
 		int res;																												\
 		res = KSI_NetworkClient_getNetContext(netProvider, (void **)&npc);														\
 		if (res != KSI_OK) goto cleanup;																						\
@@ -438,7 +389,7 @@ static void wininetGlobal_cleanup(void) {
 int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **netProvider) {
 	KSI_ERR err;
 	KSI_NetworkClient *pr = NULL;
-	wininetNetProviderCtx *pctx = NULL;
+	KSI_HttpClientCtx *pctx = NULL;
 	int res;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -460,10 +411,10 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **netProvider) {
 	res = KSI_NetworkClient_setSendPublicationRequestFn(pr, wininetSendPublicationsFileRequest);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = wininetNetProviderCtx_new(&pctx);
+	res = KSI_HttpClientCtx_new(&pctx);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_NetworkClient_setNetCtx(pr, pctx, (void (*)(void*))wininetNetProviderCtx_free);
+	res = KSI_NetworkClient_setNetCtx(pr, pctx, (void (*)(void*))KSI_HttpClientCtx_free);
 	KSI_CATCH(&err, res) goto cleanup;
 	pctx = NULL;
 
@@ -490,64 +441,9 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **netProvider) {
 cleanup:
 
 	KSI_NetworkClient_free(pr);
-	wininetNetProviderCtx_free(pctx);
+	KSI_HttpClientCtx_free(pctx);
 
 	return KSI_RETURN(&err);
 }
-
-static int setStringParam(char **param, char *urlSigner) {
-	char *val = NULL;
-	int res = KSI_UNKNOWN_ERROR;
-
-
-	val = KSI_calloc(strlen(urlSigner) + 1, 1);
-	if (val == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	memcpy(val, urlSigner, strlen(urlSigner) + 1);
-
-	if (*param != NULL) {
-		KSI_free(*param);
-	}
-
-	*param = val;
-	val = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_nofree(pctx);
-	KSI_free(val);
-
-	return res;
-}
-
-static int setIntParam(int *param, int val) {
-	*param = val;
-	return KSI_OK;
-}
-
-#define KSI_NET_WININET_SETTER(name, type, var, fn) 														\
-		int KSI_HttpClient_set##name(KSI_NetworkClient *client, type val) {								\
-			int res = KSI_UNKNOWN_ERROR;																\
-			wininetNetProviderCtx *pctx = NULL;															\
-			if (client == NULL) {																		\
-				res = KSI_INVALID_ARGUMENT;																\
-				goto cleanup;																			\
-			}																							\
-			res = KSI_NetworkClient_getNetContext(client, (void **)&pctx);								\
-			if (res != KSI_OK) goto cleanup;															\
-			res = (fn)(&pctx->var, val);																\
-		cleanup:																						\
-			return res;																					\
-		}																								\
-
-KSI_NET_WININET_SETTER(SignerUrl, char *, urlSigner, setStringParam);
-KSI_NET_WININET_SETTER(ExtenderUrl, char *, urlExtender, setStringParam);
-KSI_NET_WININET_SETTER(PublicationUrl, char *, urlPublication, setStringParam);
-KSI_NET_WININET_SETTER(ConnectTimeoutSeconds, int, connectionTimeoutSeconds, setIntParam);
-KSI_NET_WININET_SETTER(ReadTimeoutSeconds, int, readTimeoutSeconds, setIntParam);
 
 #endif
