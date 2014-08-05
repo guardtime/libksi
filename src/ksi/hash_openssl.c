@@ -1,6 +1,8 @@
-#include <openssl/evp.h>
-
 #include "internal.h"
+
+#if KSI_HASH_IMPL == KSI_IMPL_OPENSSL
+
+#include <openssl/evp.h>
 
 struct KSI_DataHasher_st {
 	/* KSI context */
@@ -196,3 +198,5 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
+
+#endif
