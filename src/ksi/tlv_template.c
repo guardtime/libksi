@@ -98,8 +98,8 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_CalendarHashChain)
 	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarHashChain_getPublicationTime, KSI_CalendarHashChain_setPublicationTime)
 	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_CalendarHashChain_getAggregationTime, KSI_CalendarHashChain_setAggregationTime)
 	KSI_TLV_IMPRINT(0x05, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarHashChain_getInputHash, KSI_CalendarHashChain_setInputHash)
-	KSI_TLV_CALLBACK(0x07, KSI_TLV_TMPL_FLG_NONE, KSI_CalendarHashChain_getHashChain, KSI_CalendarHashChain_setHashChain, encodeCalendarHashChainLink, decodeCalendarHashChainLeftLink) /* TODO! Add group mandatory check. */
-	KSI_TLV_CALLBACK(0x08, KSI_TLV_TMPL_FLG_NONE, KSI_CalendarHashChain_getHashChain, KSI_CalendarHashChain_setHashChain, NULL, decodeCalendarHashChainRightLink) /* TODO! Add group mandatory check. */
+	KSI_TLV_CALLBACK(0x07, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_CalendarHashChain_getHashChain, KSI_CalendarHashChain_setHashChain, encodeCalendarHashChainLink, decodeCalendarHashChainLeftLink)
+	KSI_TLV_CALLBACK(0x08, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_CalendarHashChain_getHashChain, KSI_CalendarHashChain_setHashChain, NULL, decodeCalendarHashChainRightLink)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationResp)
@@ -116,8 +116,8 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationResp)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationPdu)
-	KSI_TLV_COMPOSITE(0x201, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationPdu_getRequest, KSI_AggregationPdu_setRequest, KSI_AggregationReq)
-	KSI_TLV_COMPOSITE(0x202, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationPdu_getResponse, KSI_AggregationPdu_setResponse, KSI_AggregationResp)
+	KSI_TLV_COMPOSITE(0x201, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_AggregationPdu_getRequest, KSI_AggregationPdu_setRequest, KSI_AggregationReq)
+	KSI_TLV_COMPOSITE(0x202, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_AggregationPdu_getResponse, KSI_AggregationPdu_setResponse, KSI_AggregationResp)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendReq)
@@ -137,8 +137,8 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendResp)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendPdu)
-	KSI_TLV_COMPOSITE(0x301, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendPdu_getRequest, KSI_ExtendPdu_setRequest, KSI_ExtendReq)
-	KSI_TLV_COMPOSITE(0x302, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendPdu_getResponse, KSI_ExtendPdu_setResponse, KSI_ExtendResp)
+	KSI_TLV_COMPOSITE(0x301, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_ExtendPdu_getRequest, KSI_ExtendPdu_setRequest, KSI_ExtendReq)
+	KSI_TLV_COMPOSITE(0x302, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_ExtendPdu_getResponse, KSI_ExtendPdu_setResponse, KSI_ExtendResp)
 KSI_END_TLV_TEMPLATE
 
 static int encodeCalendarHashChainLink(KSI_CTX *ctx, KSI_TLV *tlv, const KSI_CalendarHashChain *calHashChain, const KSI_TlvTemplate *template) {
@@ -436,6 +436,7 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 
 	size_t template_len = 0;
 	bool *templateHit = NULL;
+	bool groupHit[2] = {false, false};
 	int i;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -461,6 +462,8 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 			if (template[i].tag != KSI_TLV_getTag(tlv)) continue;
 			matchCount++;
 			templateHit[i] = true;
+			if (template[i].isMandatoryGroup0) groupHit[0] = true;
+			if (template[i].isMandatoryGroup1) groupHit[1] = true;
 
 			valuep = NULL;
 			if (template[i].getValue != NULL) {
@@ -579,12 +582,19 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 
 	/* Check that every mandatory component was present. */
 	for (i = 0; i < template_len; i++) {
+		char errm[100];
 		if (template[i].isMandatory && !templateHit[i]) {
-			char errm[100];
 			snprintf(errm, sizeof(errm), "Mandatory element missing: tag=0x%x", template[i].tag);
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
 			goto cleanup;
 		}
+		if ((template[i].isMandatoryGroup0 && !groupHit[0]) ||
+				(template[i].isMandatoryGroup1 && !groupHit[1])) {
+			snprintf(errm, sizeof(errm), "Mandatory group missing: tag=0x%x", template[i].tag);
+			KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
+			goto cleanup;
+		}
+
 	}
 
 	KSI_SUCCESS(&err);
@@ -606,6 +616,7 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 
 	size_t template_len = 0;
 	bool *templateHit = NULL;
+	bool groupHit[2] = {false, false};
 
 	int i;
 
@@ -626,6 +637,9 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 		KSI_CATCH(&err, res) goto cleanup;
 		if (payloadp != NULL) {
 			templateHit[i] = true;
+			if (template[i].isMandatoryGroup0) groupHit[0] = true;
+			if (template[i].isMandatoryGroup1) groupHit[1] = true;
+
 			switch (template[i].type) {
 				case KSI_TLV_TEMPLATE_UNPROCESSED:
 				case KSI_TLV_TEMPLATE_SEEK_POS:
@@ -707,9 +721,15 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 
 	/* Check that every mandatory component was present. */
 	for (i = 0; i < template_len; i++) {
+		char errm[100];
 		if (template[i].isMandatory && !templateHit[i]) {
-			char errm[100];
 			snprintf(errm, sizeof(errm), "Mandatory element missing: tag=0x%x", template[i].tag);
+			KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
+			goto cleanup;
+		}
+		if ((template[i].isMandatoryGroup0 && !groupHit[0]) ||
+				(template[i].isMandatoryGroup1 && !groupHit[1])) {
+			snprintf(errm, sizeof(errm), "Mandatory group missing: tag=0x%x", template[i].tag);
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
 			goto cleanup;
 		}
