@@ -1,44 +1,50 @@
 lib_LTLIBRARIES = libksi.la
 
 libksi_la_SOURCES = \
-	config.h \
-	base32.h \
-	crc32.h \
-	hashchain.h \
-	hash.h \
-	io.h \
-	list.h \
-	log.h \
-	net_curl.h \
-	pkitruststore.h \
-	publicationsfile.h \
-	signature.h \
-	tlv.h \
-	tlv_template.h \
-	types.h	\
-	net.h \
 	base32.c \
+	base32.h \
 	base.c \
-	base.h \
+	config.h \
 	crc32.c \
+	crc32.h \
 	err.h \
 	hash.c \
 	hashchain.c \
+	hashchain.h \
+	hash.h \
 	hash_openssl.c \
 	internal.h \
 	io.c \
+	io.h \
+	ksi.h \
 	list.c \
+	list.h \
 	log.c \
+	log.h \
 	net.c \
+	net.h \
+	net_http.c \
 	net_http_curl.c \
+	net_http.h \
+	net_http_impl.h \
+	net_http_winhttp.c \
+	net_http_wininet.c \
+	net_impl.h \
+	pkitruststore.h \
 	pkitruststore_openssl.c \
 	publicationsfile.c \
+	publicationsfile.h \
 	signature.c \
+	signature.h \
 	tlv.c \
+	tlv.h \
 	tlv_tags.h \
 	tlv_template.c \
+	tlv_template.h \
 	types_base.c \
-	types.c
+	types_base.h \
+	types.c \
+	types.h
 
 otherincludedir = $(includedir)/ksi
 otherinclude_HEADERS = \
