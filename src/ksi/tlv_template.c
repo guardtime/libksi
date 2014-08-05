@@ -411,11 +411,21 @@ cleanup:
 
 }
 
+static size_t getTemplateLength(const KSI_TlvTemplate *template) {
+	const KSI_TlvTemplate *tmp = NULL;
+	size_t len = 0;
+
+	/* Count the number of templates. */
+	tmp = template;
+	while (tmp != NULL && tmp++->tag) ++len;
+
+	return len;
+}
+
 int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, const KSI_TlvTemplate *template, KSI_LIST(KSI_TLV) *reminder, int (*generator)(void *, KSI_TLV **)) {
 	KSI_ERR err;
 	KSI_TLV *tlv = NULL;
 	int res;
-	const KSI_TlvTemplate *tmp = NULL;
 
 	KSI_uint64_t uint64Val = 0;
 	void *voidVal = NULL;
@@ -431,9 +441,7 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	/* Count the number of templates. */
-	tmp = template;
-	while (tmp++->tag) ++template_len;
+	template_len = getTemplateLength(template);
 
 	/* Create the hit buffer with all values set to zero. */
 	if (template_len > 0) {
@@ -452,7 +460,7 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 		for (i = 0; i < template_len; i++) {
 			if (template[i].tag != KSI_TLV_getTag(tlv)) continue;
 			matchCount++;
-			templateHit[i] = 1;
+			templateHit[i] = true;
 
 			valuep = NULL;
 			if (template[i].getValue != NULL) {
@@ -596,30 +604,42 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 	void *payloadp = NULL;
 	int intVal;
 
+	size_t template_len = 0;
+	bool *templateHit = NULL;
+
+	int i;
+
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
 	KSI_PRE(&err, template != NULL) goto cleanup;
 
 	KSI_BEGIN(ctx, &err);
 
-	while (template->type > 0) {
+	template_len = getTemplateLength(template);
+
+	if (template_len > 0) {
+		templateHit = KSI_calloc(template_len, sizeof(bool));
+	}
+
+	for(i = 0; i < template_len; i++) {
 		payloadp = NULL;
-		res = template->getValue(payload, &payloadp);
+		res = template[i].getValue(payload, &payloadp);
 		KSI_CATCH(&err, res) goto cleanup;
 		if (payloadp != NULL) {
-			switch (template->type) {
+			templateHit[i] = true;
+			switch (template[i].type) {
 				case KSI_TLV_TEMPLATE_UNPROCESSED:
 				case KSI_TLV_TEMPLATE_SEEK_POS:
 					/* As this is a read-only template in the extraction process, there is
 					 * no logical construction action performed. */
 					break;
 				case KSI_TLV_TEMPLATE_NATIVE_INT:
-					res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, template->tag, template->isNonCritical, template->isForward, &tmp);
+					res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, template[i].tag, template[i].isNonCritical, template[i].isForward, &tmp);
 					KSI_CATCH(&err, res) goto cleanup;
 
 					res = KSI_TLV_cast(tmp, KSI_TLV_PAYLOAD_INT);
 					KSI_CATCH(&err, res) goto cleanup;
 
-					res = ((int (*)(const void *, int *))template->getValue)(payload, &intVal);
+					res = ((int (*)(const void *, int *))template[i].getValue)(payload, &intVal);
 					KSI_CATCH(&err, res) goto cleanup;
 
 					res = KSI_TLV_setUintValue(tmp, (KSI_uint64_t)intVal);
@@ -627,19 +647,19 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 
 					break;
 				case KSI_TLV_TEMPLATE_OBJECT:
-					if (template->toTlv == NULL) {
+					if (template[i].toTlv == NULL) {
 						KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Invalid template: toTlv not set.");
 						goto cleanup;
 					}
 
-					if (template->listLength != NULL) {
-						int i;
-						for (i = 0; i < template->listLength(payloadp); i++) {
+					if (template[i].listLength != NULL) {
+						int j;
+						for (j = 0; j < template[i].listLength(payloadp); j++) {
 							void *listElement = NULL;
-							res = template->listElementAt(payloadp, i, &listElement);
+							res = template[i].listElementAt(payloadp, j, &listElement);
 							KSI_CATCH(&err, res) goto cleanup;
 
-							res = template->toTlv(listElement, template->tag, template->isNonCritical, template->isForward, &tmp);
+							res = template[i].toTlv(listElement, template[i].tag, template[i].isNonCritical, template[i].isForward, &tmp);
 							KSI_CATCH(&err, res) goto cleanup;
 
 							res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
@@ -649,30 +669,30 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 
 
 					} else {
-						res = template->toTlv(payloadp, template->tag, template->isNonCritical, template->isForward, &tmp);
+						res = template[i].toTlv(payloadp, template[i].tag, template[i].isNonCritical, template[i].isForward, &tmp);
 						KSI_CATCH(&err, res) goto cleanup;
 					}
 
 					break;
 				case KSI_TLV_TEMPLATE_COMPOSITE:
-					res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, template->tag, template->isNonCritical, template->isForward, &tmp);
+					res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, template[i].tag, template[i].isNonCritical, template[i].isForward, &tmp);
 					KSI_CATCH(&err, res) goto cleanup;
 
 					res = KSI_TLV_cast(tmp, KSI_TLV_PAYLOAD_TLV);
 					KSI_CATCH(&err, res) goto cleanup;
 
-					res = KSI_TlvTemplate_construct(ctx, tmp, payloadp, template->subTemplate);
+					res = KSI_TlvTemplate_construct(ctx, tmp, payloadp, template[i].subTemplate);
 					KSI_CATCH(&err, res) goto cleanup;
 
 					break;
 				case KSI_TLV_TEMPLATE_CALLBACK:
-					if (template->callbackEncode != NULL) {
-						res = template->callbackEncode(ctx, tlv, payload, template);
+					if (template[i].callbackEncode != NULL) {
+						res = template[i].callbackEncode(ctx, tlv, payload, &template[i]);
 						KSI_CATCH(&err, res) goto cleanup;
 					}
 					break;
 				default:
-					KSI_LOG_error(ctx, "Unimplemented template type: %d", template->type);
+					KSI_LOG_error(ctx, "Unimplemented template type: %d", template[i].type);
 					KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Unimplemented template type.");
 					goto cleanup;
 			}
@@ -683,7 +703,16 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 			}
 			tmp = NULL;
 		}
-		template++;
+	}
+
+	/* Check that every mandatory component was present. */
+	for (i = 0; i < template_len; i++) {
+		if (template[i].isMandatory && !templateHit[i]) {
+			char errm[100];
+			snprintf(errm, sizeof(errm), "Mandatory element missing: tag=0x%x", template[i].tag);
+			KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
+			goto cleanup;
+		}
 	}
 
 	KSI_SUCCESS(&err);
@@ -692,6 +721,7 @@ cleanup:
 
 	KSI_nofree(payloadp);
 
+	KSI_free(templateHit);
 	KSI_TLV_free(tmp);
 
 	return KSI_RETURN(&err);
