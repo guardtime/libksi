@@ -435,15 +435,15 @@ static int KSI_CalendarAuthRec_verify(KSI_CTX *ctx, KSI_CalendarAuthRec *calAuth
 	KSI_CATCH(&err, res) goto cleanup;
 
 	if (certId == NULL) {
-		res = KSI_PKISignedData_getCert(calAuth->signatureData, &cert);
-		KSI_CATCH(&err, res) goto cleanup;
-	} else {
-		res = KSI_receivePublicationsFile(ctx, &pubFile);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		res = KSI_PublicationsFile_getPKICertificateById(pubFile, certId, &cert);
-		KSI_CATCH(&err, res) goto cleanup;
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Invalid format.");
+		goto cleanup;
 	}
+
+	res = KSI_receivePublicationsFile(ctx, &pubFile);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_PublicationsFile_getPKICertificateById(pubFile, certId, &cert);
+	KSI_CATCH(&err, res) goto cleanup;
 
 	if (cert == NULL) {
 		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Unable to validate calendar auth record.");

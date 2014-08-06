@@ -201,11 +201,9 @@ void KSI_PKISignedData_free(KSI_PKISignedData *t);
 int KSI_PKISignedData_new(KSI_CTX *ctx, KSI_PKISignedData **t);
 KSI_CTX *KSI_PKISignedData_getCtx(KSI_PKISignedData *t);
 int KSI_PKISignedData_getSignatureValue(const KSI_PKISignedData *t, KSI_OctetString **signatureValue);
-int KSI_PKISignedData_getCert(const KSI_PKISignedData *t, KSI_PKICertificate **cert);
 int KSI_PKISignedData_getCertId(const KSI_PKISignedData *t, KSI_OctetString **certId);
 int KSI_PKISignedData_getCertRepositoryUri(const KSI_PKISignedData *t, KSI_Utf8String **certRepositoryUri);
 int KSI_PKISignedData_setSignatureValue(KSI_PKISignedData *t, KSI_OctetString *signatureValue);
-int KSI_PKISignedData_setCert(KSI_PKISignedData *t, KSI_PKICertificate *cert);
 int KSI_PKISignedData_setCertId(KSI_PKISignedData *t, KSI_OctetString *certId);
 int KSI_PKISignedData_setCertRepositoryUri(KSI_PKISignedData *t, KSI_Utf8String *certRepositoryUri);
 

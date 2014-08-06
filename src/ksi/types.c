@@ -102,7 +102,6 @@ struct KSI_ExtendResp_st {
 struct KSI_PKISignedData_st {
 	KSI_CTX *ctx;
 	KSI_OctetString *signatureValue;
-	KSI_PKICertificate *cert;
 	KSI_OctetString *certId;
 	KSI_Utf8String *certRepositoryUri;
 };
@@ -767,7 +766,6 @@ KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_CalendarHashChain*, calendarHashChain, 
 void KSI_PKISignedData_free(KSI_PKISignedData *t) {
 	if(t != NULL) {
 		KSI_OctetString_free(t->signatureValue);
-		KSI_PKICertificate_free(t->cert);
 		KSI_OctetString_free(t->certId);
 		KSI_Utf8String_free(t->certRepositoryUri);
 		KSI_free(t);
@@ -785,7 +783,6 @@ int KSI_PKISignedData_new(KSI_CTX *ctx, KSI_PKISignedData **t) {
 
 	tmp->ctx = ctx;
 	tmp->signatureValue = NULL;
-	tmp->cert = NULL;
 	tmp->certId = NULL;
 	tmp->certRepositoryUri = NULL;
 	*t = tmp;
@@ -801,12 +798,10 @@ KSI_CTX *KSI_PKISignedData_getCtx(KSI_PKISignedData *t){
 }
 
 KSI_IMPLEMENT_GETTER(KSI_PKISignedData, KSI_OctetString*, signatureValue, SignatureValue);
-KSI_IMPLEMENT_GETTER(KSI_PKISignedData, KSI_PKICertificate*, cert, Cert);
 KSI_IMPLEMENT_GETTER(KSI_PKISignedData, KSI_OctetString*, certId, CertId);
 KSI_IMPLEMENT_GETTER(KSI_PKISignedData, KSI_Utf8String*, certRepositoryUri, CertRepositoryUri);
 
 KSI_IMPLEMENT_SETTER(KSI_PKISignedData, KSI_OctetString*, signatureValue, SignatureValue);
-KSI_IMPLEMENT_SETTER(KSI_PKISignedData, KSI_PKICertificate*, cert, Cert);
 KSI_IMPLEMENT_SETTER(KSI_PKISignedData, KSI_OctetString*, certId, CertId);
 KSI_IMPLEMENT_SETTER(KSI_PKISignedData, KSI_Utf8String*, certRepositoryUri, CertRepositoryUri);
 

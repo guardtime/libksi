@@ -7,8 +7,7 @@ static int decodeCalendarHashChainRightLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Cale
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_PKISignedData)
 	KSI_TLV_OCTET_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getSignatureValue, KSI_PKISignedData_setSignatureValue)
-	KSI_TLV_OBJECT(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_PKISignedData_getCert, KSI_PKISignedData_setCert, KSI_PKICertificate_fromTlv, KSI_PKICertificate_toTlv, KSI_PKICertificate_free) /* TODO! Deprecated format */
-	KSI_TLV_OCTET_STRING(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_PKISignedData_getCertId, KSI_PKISignedData_setCertId)
+	KSI_TLV_OCTET_STRING(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getCertId, KSI_PKISignedData_setCertId)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationsHeader)
