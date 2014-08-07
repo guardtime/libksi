@@ -36,6 +36,7 @@ LIB_OBJ = \
 	$(OBJ_DIR)\list.obj \
 	$(OBJ_DIR)\log.obj \
 	$(OBJ_DIR)\net.obj \
+	$(OBJ_DIR)\net_http.obj \
 	$(OBJ_DIR)\pkitruststore_openssl.obj \
 	$(OBJ_DIR)\publicationsfile.obj \
 	$(OBJ_DIR)\signature.obj \
