@@ -13,8 +13,8 @@ extern "C" {
 		/** Cleanup for the provider, gets the #providerCtx as parameter. */
 		void (*providerCtx_free)(void *);
 
-		int (*sendSignRequest)(KSI_NetworkClient *, KSI_RequestHandle *);
-		int (*sendExtendRequest)(KSI_NetworkClient *, KSI_RequestHandle *);
+		int (*sendSignRequest)(KSI_NetworkClient *, KSI_AggregationReq *, KSI_RequestHandle **);
+		int (*sendExtendRequest)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **);
 		int (*sendPublicationRequest)(KSI_NetworkClient *, KSI_RequestHandle *);
 
 		/** Dedicated context for the net provider */

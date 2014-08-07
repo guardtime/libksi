@@ -82,11 +82,12 @@ void KSI_RequestHandle_free(KSI_RequestHandle *handle) {
 	}
 }
 
-int KSI_NetworkClient_sendSignRequest(KSI_NetworkClient *provider, KSI_RequestHandle *handle) {
+int KSI_NetworkClient_sendSignRequest(KSI_NetworkClient *provider, KSI_AggregationReq *request, KSI_RequestHandle **handle) {
 	KSI_ERR err;
 	int res;
 
 	KSI_PRE(&err, provider != NULL) goto cleanup;
+	KSI_PRE(&err, request != NULL) goto cleanup;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 
 	KSI_BEGIN(provider->ctx, &err);
@@ -95,7 +96,8 @@ int KSI_NetworkClient_sendSignRequest(KSI_NetworkClient *provider, KSI_RequestHa
 		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Signed request sender not initialized.");
 		goto cleanup;
 	}
-	res = provider->sendSignRequest(provider, handle);
+
+	res = provider->sendSignRequest(provider, request, handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
@@ -105,7 +107,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_NetworkClient_sendExtendRequest(KSI_NetworkClient *provider, KSI_RequestHandle *handle) {
+int KSI_NetworkClient_sendExtendRequest(KSI_NetworkClient *provider, KSI_ExtendReq *request, KSI_RequestHandle **handle) {
 	KSI_ERR err;
 	int res;
 
@@ -118,7 +120,7 @@ int KSI_NetworkClient_sendExtendRequest(KSI_NetworkClient *provider, KSI_Request
 		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Extend request sender not initialized.");
 		goto cleanup;
 	}
-	res = provider->sendExtendRequest(provider, handle);
+	res = provider->sendExtendRequest(provider, request, handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
@@ -355,7 +357,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_NetworkClient_setSendSignRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_RequestHandle *)) {
+int KSI_NetworkClient_setSendSignRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_AggregationReq *, KSI_RequestHandle **)) {
 	KSI_ERR err;
 
 	KSI_PRE(&err, provider != NULL) goto cleanup;
@@ -370,7 +372,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_NetworkClient_setSendExtendRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_RequestHandle *)) {
+int KSI_NetworkClient_setSendExtendRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **)) {
 	KSI_ERR err;
 
 	KSI_PRE(&err, provider != NULL) goto cleanup;

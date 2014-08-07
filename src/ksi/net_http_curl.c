@@ -97,6 +97,7 @@ static int curlReceive(KSI_RequestHandle *handle) {
     if (res != CURLE_OK) {
     	long httpCode;
     	if (res == CURLE_HTTP_RETURNED_ERROR && curl_easy_getinfo(nc->curl, CURLINFO_HTTP_CODE, &httpCode) == CURLE_OK) {
+    		KSI_LOG_debug(handle->ctx, "Received HTTP error code %d", httpCode);
    			KSI_FAIL_EXT(&err, KSI_HTTP_ERROR, httpCode, curlErr);
     	} else {
     		KSI_FAIL(&err, KSI_NETWORK_ERROR, curlErr);
@@ -122,11 +123,9 @@ cleanup:
 }
 
 
-static int curlSendRequest(KSI_RequestHandle *handle, char *agent, char *url, int connectionTimeout, int readTimeout ) {
+static int sendRequest(KSI_RequestHandle *handle, char *agent, char *url, int connectionTimeout, int readTimeout ) {
 	KSI_ERR err;
 	int res;
-	const unsigned char *request = NULL;
-	unsigned request_len = 0;
 	CurlNetHandleCtx *hc = NULL;
 
 	KSI_PRE(&err, handle != NULL) goto cleanup;
@@ -153,19 +152,15 @@ static int curlSendRequest(KSI_RequestHandle *handle, char *agent, char *url, in
 
 	KSI_LOG_debug(handle->ctx, "Curl: Sending request to: %s", url);
 
-	res = KSI_RequestHandle_getRequest(handle, &request, &request_len);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_RequestHandle_setReadResponseFn(handle, curlReceive);
-	KSI_CATCH(&err, res) goto cleanup;
+	handle->readResponse = curlReceive;
 
 	curl_easy_setopt(hc->curl, CURLOPT_USERAGENT, agent);
 	curl_easy_setopt(hc->curl, CURLOPT_URL, url);
 	curl_easy_setopt(hc->curl, CURLOPT_NOPROGRESS, 1);
-	if (request != NULL) {
+	if (handle->request != NULL) {
 		curl_easy_setopt(hc->curl, CURLOPT_POST, 1);
-		curl_easy_setopt(hc->curl, CURLOPT_POSTFIELDS, (char *)request);
-		curl_easy_setopt(hc->curl, CURLOPT_POSTFIELDSIZE, (long)request_len);
+		curl_easy_setopt(hc->curl, CURLOPT_POSTFIELDS, (char *)handle->request);
+		curl_easy_setopt(hc->curl, CURLOPT_POSTFIELDSIZE, (long)handle->request_length);
 	}
 	curl_easy_setopt(hc->curl, CURLOPT_NOPROGRESS, 1);
 
@@ -197,106 +192,32 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int curlSendSignRequest(KSI_NetworkClient *netProvider, KSI_RequestHandle *handle) {
-	int res;
-	KSI_HttpClientCtx *http = NULL;
-
-	if (netProvider == NULL || handle == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	http = netProvider->poviderCtx;
-
-	res = curlSendRequest(handle, http->agentName, http->urlSigner, http->connectionTimeoutSeconds, http->readTimeoutSeconds);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
-static int curlSendExtendRequest(KSI_NetworkClient *netProvider, KSI_RequestHandle *handle) {
-	int res;
-	KSI_HttpClientCtx *http = NULL;
-
-	if (netProvider == NULL || handle == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	http = netProvider->poviderCtx;
-
-	res = curlSendRequest(handle, http->agentName, http->urlExtender, http->connectionTimeoutSeconds, http->readTimeoutSeconds);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
-static int curlSendPublicationsFileRequest(KSI_NetworkClient *netProvider, KSI_RequestHandle *handle) {
-	int res;
-	KSI_HttpClientCtx *http = NULL;
-
-	if (netProvider == NULL || handle == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	http = netProvider->poviderCtx;
-
-	res = curlSendRequest(handle, http->agentName, http->urlPublication, http->connectionTimeoutSeconds, http->readTimeoutSeconds);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
-/**
- *
- */
-int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **netProvider) {
+int KSI_HttpClient_init(KSI_NetworkClient *client) {
 	KSI_ERR err;
-	KSI_NetworkClient *pr = NULL;
 	KSI_HttpClientCtx *http = NULL;
 	int res;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_PRE(&err, client != NULL) goto cleanup;
+	KSI_BEGIN(client->ctx, &err);
+
+	http = client->poviderCtx;
+	if (http == NULL) {
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "HttpClient network client context not initialized.");
+		goto cleanup;
+	}
+
+	http->sendRequest = sendRequest;
 
 	/* Register global init and cleanup methods. */
-	res = KSI_CTX_registerGlobals(ctx, curlGlobal_init, curlGlobal_cleanup);
+	res = KSI_CTX_registerGlobals(client->ctx, curlGlobal_init, curlGlobal_cleanup);
 	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_NetworkClient_new(ctx, &pr);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_HttpClientCtx_new(&http);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	pr->sendSignRequest = curlSendSignRequest;
-	pr->sendExtendRequest = curlSendExtendRequest;
-	pr->sendPublicationRequest = curlSendPublicationsFileRequest;
-	pr->poviderCtx = http;
-	pr->providerCtx_free = (void (*)(void*))KSI_HttpClientCtx_free;
-	http = NULL;
-
-	*netProvider = pr;
-	pr = NULL;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
 
-	KSI_NetworkClient_free(pr);
-	KSI_HttpClientCtx_free(http);
-
 	return KSI_RETURN(&err);
+
 }
 
 #endif

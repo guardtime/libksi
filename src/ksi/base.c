@@ -254,66 +254,60 @@ void KSI_CTX_free(KSI_CTX *ctx) {
 	}
 }
 
-int KSI_sendSignRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_RequestHandle **handle) {
+int KSI_sendSignRequest(KSI_CTX *ctx, KSI_AggregationReq *request, KSI_RequestHandle **handle) {
 	KSI_ERR err;
-	KSI_RequestHandle *hndl = NULL;
+	KSI_RequestHandle *tmp = NULL;
 	int res;
 	KSI_NetworkClient *netProvider = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, request != NULL) goto cleanup;
-	KSI_PRE(&err, request_length > 0) goto cleanup;
+	KSI_PRE(&err, handle != NULL) goto cleanup;
 
 	KSI_BEGIN(ctx, &err);
 
 	netProvider = ctx->netProvider;
 
-	res = KSI_RequestHandle_new(ctx, request, request_length, &hndl);
+	res = KSI_NetworkClient_sendSignRequest(netProvider, request, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_NetworkClient_sendSignRequest(netProvider, hndl);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	*handle = hndl;
-	hndl = NULL;
+	*handle = tmp;
+	tmp = NULL;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
 
-	KSI_RequestHandle_free(hndl);
+	KSI_RequestHandle_free(tmp);
 
 	return KSI_RETURN(&err);
 }
 
-int KSI_sendExtendRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_RequestHandle **handle) {
+int KSI_sendExtendRequest(KSI_CTX *ctx, KSI_ExtendReq *request, KSI_RequestHandle **handle) {
 	KSI_ERR err;
-	KSI_RequestHandle *hndl = NULL;
+	KSI_RequestHandle *tmp = NULL;
 	int res;
 	KSI_NetworkClient *netProvider = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, request != NULL) goto cleanup;
-	KSI_PRE(&err, request_length > 0) goto cleanup;
+	KSI_PRE(&err, handle != NULL) goto cleanup;
 
 	KSI_BEGIN(ctx, &err);
 
 	netProvider = ctx->netProvider;
 
-	res = KSI_RequestHandle_new(ctx, request, request_length, &hndl);
+	res = KSI_NetworkClient_sendExtendRequest(netProvider, request, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_NetworkClient_sendExtendRequest(netProvider, hndl);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	*handle = hndl;
-	hndl = NULL;
+	*handle = tmp;
+	tmp = NULL;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
 
-	KSI_RequestHandle_free(hndl);
+	KSI_RequestHandle_free(tmp);
 
 	return KSI_RETURN(&err);
 }

@@ -295,24 +295,22 @@ void KSI_free(void *ptr);
 /**
  * Send a binary signing request using the specified KSI context.
  * \param[in]		ctx					KSI context object.
- * \param[in]		request				Pointer to the binary request.
- * \param[in]		request_length		Length of the binary request.
+ * \param[in]		request				Request object.
  * \param[out]		handle				Pointer to the receiving pointer of the network handle.
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_sendSignRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_RequestHandle **handle);
+int KSI_sendSignRequest(KSI_CTX *ctx, KSI_AggregationReq *request, KSI_RequestHandle **handle);
 
 /**
  * Send a binary extend request using the specified KSI context.
  * \param[in]		ctx					KSI context object.
- * \param[in]		request				Pointer to the binary request.
- * \param[in]		request_length		Length of the binary request.
+ * \param[in]		request				Request object.
  * \param[out]		handle				Pointer to the receiving pointer of the network handle.
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_sendExtendRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_RequestHandle **handle);
+int KSI_sendExtendRequest(KSI_CTX *ctx, KSI_ExtendReq *request, KSI_RequestHandle **handle);
 
 /**
  * Send a binary request to download publications file using the specified KSI context.
