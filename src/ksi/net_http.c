@@ -284,6 +284,7 @@ static int httpClientCtx_new(KSI_CTX *ctx, KSI_HttpClientCtx **http) {
 	setStringParam(&tmp->urlExtender, KSI_DEFAULT_URI_EXTENDER);
 	setStringParam(&tmp->urlPublication, KSI_DEFAULT_URI_PUBLICATIONS_FILE);
 	setStringParam(&tmp->agentName, "KSI HTTP Client");
+	tmp->requestId = 0;
 
 	*http = tmp;
 	tmp = NULL;
