@@ -484,6 +484,11 @@ extern "C" {
 	int KSI_TlvTemplate_deepCopy(KSI_CTX *ctx, const void *from, const KSI_TlvTemplate *baseTemplate, void *to);
 
 	/**
+	 * TODO!
+	 */
+	int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag, int isFwd, int isNc, const KSI_TlvTemplate *template, unsigned char **raw, unsigned *raw_len);
+
+	/**
 	 * @}
 	 */
 
