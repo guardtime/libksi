@@ -807,28 +807,19 @@ cleanup:
 /***************
  * SIGN REQUEST
  ***************/
-static int createSignRequest(KSI_CTX *ctx, const KSI_DataHash *hsh, unsigned char **raw, unsigned *raw_len) {
+static int createSignRequest(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_AggregationReq **request) {
 	KSI_ERR err;
 	int res;
 	KSI_AggregationReq *req = NULL;
-	KSI_AggregationPdu *pdu = NULL;
 
 	KSI_DataHash *tmpHash = NULL;
-	KSI_TLV *pduTlv = NULL;
-
-	unsigned char *tmp = NULL;
-	unsigned tmp_len = 0;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, hsh != NULL) goto cleanup;
-	KSI_PRE(&err, raw != NULL) goto cleanup;
-	KSI_PRE(&err, raw_len != NULL) goto cleanup;
+	KSI_PRE(&err, request != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 	/* Create request object */
 	res = KSI_AggregationReq_new(ctx, &req);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_AggregationPdu_new(ctx, &pdu);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_DataHash_clone(hsh, &tmpHash);
@@ -839,39 +830,16 @@ static int createSignRequest(KSI_CTX *ctx, const KSI_DataHash *hsh, unsigned cha
 	KSI_CATCH(&err, res) goto cleanup;
 	tmpHash = NULL;
 
-	res = KSI_AggregationPdu_setRequest(pdu, req);
-	KSI_CATCH(&err, res) goto cleanup;
+	*request = req;
 	req = NULL;
-
-	res = createPduTlv(ctx,  0x200, &pduTlv);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_TlvTemplate_construct(ctx, pduTlv, pdu, KSI_AggregationPdu_template);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Request PDU", pduTlv);
-
-	/* Serialize the request TLV. */
-	res = KSI_TLV_serialize(pduTlv, &tmp, &tmp_len);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	*raw = tmp;
-	*raw_len = tmp_len;
-
-	tmp = NULL;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
 
-	KSI_TLV_free(pduTlv);
 
 	KSI_DataHash_free(tmpHash);
-	KSI_AggregationPdu_free(pdu);
 	KSI_AggregationReq_free(req);
-
-	KSI_free(tmp);
-	KSI_nofree(imprint);
 
 	return KSI_RETURN(&err);
 }
@@ -879,68 +847,37 @@ cleanup:
 /*****************
  * EXTEND REQUEST
  *****************/
-static int createExtendRequest(KSI_CTX *ctx, const KSI_Integer *start, const KSI_Integer *end, unsigned char **raw, unsigned *raw_len) {
+static int createExtendRequest(KSI_CTX *ctx, const KSI_Integer *start, const KSI_Integer *end, KSI_ExtendReq **request) {
 	KSI_ERR err;
 	int res;
-	KSI_TLV *pduTLV = NULL;
-	KSI_ExtendPdu *pdu = NULL;
-	KSI_ExtendReq *req = NULL;
-
-	unsigned char *tmp = NULL;
-	unsigned tmp_len = 0;
+	KSI_ExtendReq *tmp = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, raw != NULL) goto cleanup;
-	KSI_PRE(&err, raw_len != NULL) goto cleanup;
+	KSI_PRE(&err, start != NULL) goto cleanup;
+	KSI_PRE(&err, request != NULL) goto cleanup;
 
 	KSI_BEGIN(ctx, &err);
 
-	/* Create PDU */
-	res = createPduTlv(ctx, 0x300, &pduTLV);
-	KSI_CATCH(&err, res) goto cleanup;
-
 	/* Create extend request object. */
-	res = KSI_ExtendReq_new(ctx, &req);
+	res = KSI_ExtendReq_new(ctx, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_ExtendReq_setAggregationTime(req, KSI_Integer_clone(start));
+	res = KSI_ExtendReq_setAggregationTime(tmp, KSI_Integer_clone(start));
 	KSI_CATCH(&err, res) goto cleanup;
 
 	if (end != NULL) {
-		res = KSI_ExtendReq_setPublicationTime(req, KSI_Integer_clone(end));
+		res = KSI_ExtendReq_setPublicationTime(tmp, KSI_Integer_clone(end));
 		KSI_CATCH(&err, res) goto cleanup;
 	}
 
-	res = KSI_ExtendPdu_new(ctx, &pdu);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_ExtendPdu_setRequest(pdu, req);
-	KSI_CATCH(&err, res) goto cleanup;
-	req = NULL;
-
-	res = KSI_TlvTemplate_construct(ctx, pduTLV, pdu, KSI_TLV_TEMPLATE(KSI_ExtendPdu));
-	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Extend request PDU", pduTLV);
-
-	/* Serialize the request TLV. */
-	res = KSI_TLV_serialize(pduTLV, &tmp, &tmp_len);
-	if (res != KSI_OK) goto cleanup;
-
-	*raw = tmp;
-	*raw_len = tmp_len;
-
+	*request = tmp;
 	tmp = NULL;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
 
-	KSI_ExtendReq_free(req);
-	KSI_ExtendPdu_free(pdu);
-	KSI_free(tmp);
-	KSI_nofree(imprint);
-	KSI_TLV_free(pduTLV);
+	KSI_ExtendReq_free(tmp);
 
 	return KSI_RETURN(&err);
 }
@@ -1339,7 +1276,7 @@ int KSI_Signature_create(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **
 	KSI_RequestHandle *handle = NULL;
 	KSI_Signature *sign = NULL;
 
-	unsigned char *req = NULL;
+	KSI_AggregationReq *req = NULL;
 	unsigned req_len = 0;
 
 	const unsigned char *resp = NULL;
@@ -1351,12 +1288,10 @@ int KSI_Signature_create(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **
 
 	KSI_BEGIN(ctx, &err);
 
-	res = createSignRequest(ctx, hsh, &req, &req_len);
+	res = createSignRequest(ctx, hsh, &req);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Request", req, req_len);
-
-	res = KSI_sendSignRequest(ctx, req, req_len, &handle);
+	res = KSI_sendSignRequest(ctx, req, &handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Read the response. */
@@ -1376,7 +1311,7 @@ cleanup:
 
 	KSI_Signature_free(sign);
 	KSI_RequestHandle_free(handle);
-	KSI_free(req);
+	KSI_AggregationReq_free(req);
 
 	return KSI_RETURN(&err);
 }
@@ -1385,6 +1320,7 @@ cleanup:
 int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRecord *pubRec, KSI_Signature **extended) {
 	KSI_ERR err;
 	int res;
+	KSI_ExtendReq *req = NULL;
 	KSI_Signature *tmp = NULL;
 	KSI_ExtendResp *response = NULL;
 	KSI_CalendarHashChain *calHashChain = NULL;
@@ -1393,9 +1329,6 @@ int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRe
 	KSI_Integer *pubTime = NULL;
 	KSI_PublicationData *pubData = NULL;
 	KSI_PublicationRecord *pubRecClone = NULL;
-
-	unsigned char *rawReq = NULL;
-	unsigned rawReq_len = 0;
 
 	const unsigned char *rawResp = NULL;
 	unsigned rawResp_len = 0;
@@ -1434,13 +1367,11 @@ int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRe
 	}
 
 	/* Create request. */
-	res = createExtendRequest(signature->ctx, signTime, pubTime, &rawReq, &rawReq_len);
+	res = createExtendRequest(signature->ctx, signTime, pubTime, &req);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	KSI_LOG_logBlob(signature->ctx, KSI_LOG_DEBUG, "Extend request", rawReq, rawReq_len);
-
 	/* Send the actual request. */
-	res = KSI_sendExtendRequest(signature->ctx, rawReq, rawReq_len, &handle);
+	res = KSI_sendExtendRequest(signature->ctx, req, &handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Read the response. */
@@ -1512,11 +1443,11 @@ int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRe
 
 cleanup:
 
+	KSI_ExtendReq_free(req);
 	KSI_PublicationRecord_free(pubRecClone);
 	KSI_ExtendPdu_free(pdu);
 	KSI_RequestHandle_free(handle);
 	KSI_TLV_free(respTlv);
-	KSI_free(rawReq);
 	KSI_Signature_free(tmp);
 
 	return KSI_RETURN(&err);

@@ -32,12 +32,13 @@ extern "C" {
 	/**
 	 * Sends a non-blocking signing request or initialize the handle.
 	 * \param[in]		provider		Network provider.
-	 * \param[in]		handle			Network handle.
+	 * \param[in]		request			Request object.
+	 * \param[out]		handle			Network handle.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetworkClient_sendSignRequest(KSI_NetworkClient *provider, KSI_RequestHandle *handle);
+	int KSI_NetworkClient_sendSignRequest(KSI_NetworkClient *provider, KSI_AggregationReq *request, KSI_RequestHandle **handle);
 
 	/**
 	 * Sends a non-blocking extending request or initialize the handle.
@@ -47,7 +48,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetworkClient_sendExtendRequest(KSI_NetworkClient *provider, KSI_RequestHandle *handle);
+	int KSI_NetworkClient_sendExtendRequest(KSI_NetworkClient *provider, KSI_ExtendReq *request, KSI_RequestHandle **handle);
 
 	/**
 	 * Sends a non-blocking publicationsfile request or initialize the handle.
@@ -188,7 +189,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetworkClient_setSendSignRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_RequestHandle *));
+	int KSI_NetworkClient_setSendSignRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_AggregationReq *, KSI_RequestHandle **));
 
 	/**
 	 * Setter for sign request function.
@@ -198,7 +199,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetworkClient_setSendExtendRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_RequestHandle *));
+	int KSI_NetworkClient_setSendExtendRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **));
 
 	/**
 	 * Setter for sign request function.
