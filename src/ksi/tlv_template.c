@@ -108,10 +108,10 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationResp)
 	KSI_TLV_UTF8_STRING(0x06, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getErrorMsg, KSI_AggregationResp_setErrorMsg)
 	KSI_TLV_COMPOSITE(0x10, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getConfig, KSI_AggregationResp_setConfig, KSI_Config)
 	KSI_TLV_COMPOSITE(0x12, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getRequestAck, KSI_AggregationResp_setRequestAck, KSI_RequestAck)
-	KSI_TLV_OBJECT_LIST(0x0801, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationResp_getAggregationChainList, KSI_AggregationResp_setAggregationChainList, KSI_AggregationHashChain)
-	KSI_TLV_COMPOSITE(0x0802, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationResp_getCalendarChain, KSI_AggregationResp_setCalendarChain, KSI_CalendarHashChain)
+	KSI_TLV_OBJECT_LIST(0x0801, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getAggregationChainList, KSI_AggregationResp_setAggregationChainList, KSI_AggregationHashChain)
+	KSI_TLV_COMPOSITE(0x0802, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getCalendarChain, KSI_AggregationResp_setCalendarChain, KSI_CalendarHashChain)
 	KSI_TLV_COMPOSITE(0x0804, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getAggregationAuthRec, KSI_AggregationResp_setAggregationAuthRec, KSI_AggregationAuthRec) /* TODO! Future work. */
-	KSI_TLV_COMPOSITE(0x0805, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationResp_getCalendarAuthRec, KSI_AggregationResp_setCalendarAuthRec, KSI_CalendarAuthRec)
+	KSI_TLV_COMPOSITE(0x0805, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getCalendarAuthRec, KSI_AggregationResp_setCalendarAuthRec, KSI_CalendarAuthRec)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationPdu)
@@ -132,7 +132,7 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendResp)
 	KSI_TLV_INTEGER(0x05, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getStatus, KSI_ExtendResp_setStatus)
 	KSI_TLV_UTF8_STRING(0x06, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getErrorMsg, KSI_ExtendResp_setErrorMsg)
 	KSI_TLV_INTEGER(0x07, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getLastTime, KSI_ExtendResp_setLastTime)
-	KSI_TLV_COMPOSITE(0x802, KSI_TLV_TMPL_FLG_MANDATORY, KSI_ExtendResp_getCalendarHashChain, KSI_ExtendResp_setCalendarHashChain, KSI_CalendarHashChain)
+	KSI_TLV_COMPOSITE(0x802, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getCalendarHashChain, KSI_ExtendResp_setCalendarHashChain, KSI_CalendarHashChain)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendPdu)
@@ -774,6 +774,47 @@ int KSI_TlvTemplate_deepCopy(KSI_CTX *ctx, const void *from, const KSI_TlvTempla
 cleanup:
 
 	KSI_TLV_free(tmpTlv);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag, int isFwd, int isNc, const KSI_TlvTemplate *template, unsigned char **raw, unsigned *raw_len) {
+	KSI_ERR err;
+	int res;
+	KSI_TLV *tlv = NULL;
+	unsigned char *tmp = NULL;
+	unsigned tmp_len = 0;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, obj != NULL) goto cleanup;
+	KSI_PRE(&err, template != NULL) goto cleanup;
+	KSI_PRE(&err, raw != NULL) goto cleanup;
+	KSI_PRE(&err, raw_len != NULL) goto cleanup;
+
+	KSI_BEGIN(ctx, &err);
+
+	/* Create TLV for the PDU object. */
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, tag, isFwd, isNc, &tlv);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Evaluate the TLV. */
+	res = KSI_TlvTemplate_construct(ctx, tlv, obj, template);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Serialize the TLV. */
+	res = KSI_TLV_serialize(tlv, &tmp, &tmp_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*raw = tmp;
+	tmp = NULL;
+	*raw_len = tmp_len;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_free(tmp);
+	KSI_TLV_free(tlv);
 
 	return KSI_RETURN(&err);
 }
