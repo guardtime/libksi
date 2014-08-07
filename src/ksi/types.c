@@ -49,7 +49,7 @@ struct KSI_Config_st {
 	KSI_Integer *maxLevel;
 	KSI_Integer *aggrAlgo;
 	KSI_Integer *aggrPeriod;
-	KSI_Utf8String *parentUri;
+	KSI_LIST(KSI_Utf8String) *parentUri;
 };
 
 struct KSI_AggregationReq_st {
@@ -102,7 +102,6 @@ struct KSI_ExtendResp_st {
 struct KSI_PKISignedData_st {
 	KSI_CTX *ctx;
 	KSI_OctetString *signatureValue;
-	KSI_PKICertificate *cert;
 	KSI_OctetString *certId;
 	KSI_Utf8String *certRepositoryUri;
 };
@@ -111,6 +110,7 @@ struct KSI_PublicationsHeader_st {
 	KSI_CTX *ctx;
 	KSI_Integer *version;
 	KSI_Integer *timeCreated;
+	KSI_Utf8String *repositoryUri;
 };
 
 struct KSI_CertificateRecord_st {
@@ -440,7 +440,7 @@ void KSI_Config_free(KSI_Config *t) {
 		KSI_Integer_free(t->maxLevel);
 		KSI_Integer_free(t->aggrAlgo);
 		KSI_Integer_free(t->aggrPeriod);
-		KSI_Utf8String_free(t->parentUri);
+		KSI_Utf8StringList_free(t->parentUri);
 		KSI_free(t);
 	}
 }
@@ -474,12 +474,12 @@ KSI_CTX *KSI_Config_getCtx(KSI_Config *t){
 KSI_IMPLEMENT_GETTER(KSI_Config, KSI_Integer*, maxLevel, MaxLevel);
 KSI_IMPLEMENT_GETTER(KSI_Config, KSI_Integer*, aggrAlgo, AggrAlgo);
 KSI_IMPLEMENT_GETTER(KSI_Config, KSI_Integer*, aggrPeriod, AggrPeriod);
-KSI_IMPLEMENT_GETTER(KSI_Config, KSI_Utf8String*, parentUri, ParentUri);
+KSI_IMPLEMENT_GETTER(KSI_Config, KSI_LIST(KSI_Utf8String)*, parentUri, ParentUri);
 
 KSI_IMPLEMENT_SETTER(KSI_Config, KSI_Integer*, maxLevel, MaxLevel);
 KSI_IMPLEMENT_SETTER(KSI_Config, KSI_Integer*, aggrAlgo, AggrAlgo);
 KSI_IMPLEMENT_SETTER(KSI_Config, KSI_Integer*, aggrPeriod, AggrPeriod);
-KSI_IMPLEMENT_SETTER(KSI_Config, KSI_Utf8String*, parentUri, ParentUri);
+KSI_IMPLEMENT_SETTER(KSI_Config, KSI_LIST(KSI_Utf8String)*, parentUri, ParentUri);
 
 
 /**
@@ -766,7 +766,6 @@ KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_CalendarHashChain*, calendarHashChain, 
 void KSI_PKISignedData_free(KSI_PKISignedData *t) {
 	if(t != NULL) {
 		KSI_OctetString_free(t->signatureValue);
-		KSI_PKICertificate_free(t->cert);
 		KSI_OctetString_free(t->certId);
 		KSI_Utf8String_free(t->certRepositoryUri);
 		KSI_free(t);
@@ -784,7 +783,6 @@ int KSI_PKISignedData_new(KSI_CTX *ctx, KSI_PKISignedData **t) {
 
 	tmp->ctx = ctx;
 	tmp->signatureValue = NULL;
-	tmp->cert = NULL;
 	tmp->certId = NULL;
 	tmp->certRepositoryUri = NULL;
 	*t = tmp;
@@ -800,12 +798,10 @@ KSI_CTX *KSI_PKISignedData_getCtx(KSI_PKISignedData *t){
 }
 
 KSI_IMPLEMENT_GETTER(KSI_PKISignedData, KSI_OctetString*, signatureValue, SignatureValue);
-KSI_IMPLEMENT_GETTER(KSI_PKISignedData, KSI_PKICertificate*, cert, Cert);
 KSI_IMPLEMENT_GETTER(KSI_PKISignedData, KSI_OctetString*, certId, CertId);
 KSI_IMPLEMENT_GETTER(KSI_PKISignedData, KSI_Utf8String*, certRepositoryUri, CertRepositoryUri);
 
 KSI_IMPLEMENT_SETTER(KSI_PKISignedData, KSI_OctetString*, signatureValue, SignatureValue);
-KSI_IMPLEMENT_SETTER(KSI_PKISignedData, KSI_PKICertificate*, cert, Cert);
 KSI_IMPLEMENT_SETTER(KSI_PKISignedData, KSI_OctetString*, certId, CertId);
 KSI_IMPLEMENT_SETTER(KSI_PKISignedData, KSI_Utf8String*, certRepositoryUri, CertRepositoryUri);
 
@@ -817,6 +813,7 @@ void KSI_PublicationsHeader_free(KSI_PublicationsHeader *t) {
 	if(t != NULL) {
 		KSI_Integer_free(t->version);
 		KSI_Integer_free(t->timeCreated);
+		KSI_Utf8String_free(t->repositoryUri);
 		KSI_free(t);
 	}
 }
@@ -833,6 +830,7 @@ int KSI_PublicationsHeader_new(KSI_CTX *ctx, KSI_PublicationsHeader **t) {
 	tmp->ctx = ctx;
 	tmp->version = NULL;
 	tmp->timeCreated = NULL;
+	tmp->repositoryUri = NULL;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -847,9 +845,11 @@ KSI_CTX *KSI_PublicationsHeader_getCtx(KSI_PublicationsHeader *t){
 
 KSI_IMPLEMENT_GETTER(KSI_PublicationsHeader, KSI_Integer*, version, Version);
 KSI_IMPLEMENT_GETTER(KSI_PublicationsHeader, KSI_Integer*, timeCreated, TimeCreated);
+KSI_IMPLEMENT_GETTER(KSI_PublicationsHeader, KSI_Utf8String*, repositoryUri, RepositoryUri);
 
 KSI_IMPLEMENT_SETTER(KSI_PublicationsHeader, KSI_Integer*, version, Version);
 KSI_IMPLEMENT_SETTER(KSI_PublicationsHeader, KSI_Integer*, timeCreated, TimeCreated);
+KSI_IMPLEMENT_SETTER(KSI_PublicationsHeader, KSI_Utf8String*, repositoryUri, RepositoryUri);
 
 
 /**

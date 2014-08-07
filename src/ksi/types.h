@@ -99,11 +99,11 @@ KSI_CTX *KSI_Config_getCtx(KSI_Config *t);
 int KSI_Config_getMaxLevel(const KSI_Config *t, KSI_Integer **maxLevel);
 int KSI_Config_getAggrAlgo(const KSI_Config *t, KSI_Integer **aggrAlgo);
 int KSI_Config_getAggrPeriod(const KSI_Config *t, KSI_Integer **aggrPeriod);
-int KSI_Config_getParentUri(const KSI_Config *t, KSI_Utf8String **parentUri);
+int KSI_Config_getParentUri(const KSI_Config *t, KSI_LIST(KSI_Utf8String) **parentUri);
 int KSI_Config_setMaxLevel(KSI_Config *t, KSI_Integer *maxLevel);
 int KSI_Config_setAggrAlgo(KSI_Config *t, KSI_Integer *aggrAlgo);
 int KSI_Config_setAggrPeriod(KSI_Config *t, KSI_Integer *aggrPeriod);
-int KSI_Config_setParentUri(KSI_Config *t, KSI_Utf8String *parentUri);
+int KSI_Config_setParentUri(KSI_Config *t, KSI_LIST(KSI_Utf8String) *parentUri);
 
 /**
  * KSI_AggregationReq
@@ -201,11 +201,9 @@ void KSI_PKISignedData_free(KSI_PKISignedData *t);
 int KSI_PKISignedData_new(KSI_CTX *ctx, KSI_PKISignedData **t);
 KSI_CTX *KSI_PKISignedData_getCtx(KSI_PKISignedData *t);
 int KSI_PKISignedData_getSignatureValue(const KSI_PKISignedData *t, KSI_OctetString **signatureValue);
-int KSI_PKISignedData_getCert(const KSI_PKISignedData *t, KSI_PKICertificate **cert);
 int KSI_PKISignedData_getCertId(const KSI_PKISignedData *t, KSI_OctetString **certId);
 int KSI_PKISignedData_getCertRepositoryUri(const KSI_PKISignedData *t, KSI_Utf8String **certRepositoryUri);
 int KSI_PKISignedData_setSignatureValue(KSI_PKISignedData *t, KSI_OctetString *signatureValue);
-int KSI_PKISignedData_setCert(KSI_PKISignedData *t, KSI_PKICertificate *cert);
 int KSI_PKISignedData_setCertId(KSI_PKISignedData *t, KSI_OctetString *certId);
 int KSI_PKISignedData_setCertRepositoryUri(KSI_PKISignedData *t, KSI_Utf8String *certRepositoryUri);
 
@@ -217,8 +215,10 @@ int KSI_PublicationsHeader_new(KSI_CTX *ctx, KSI_PublicationsHeader **t);
 KSI_CTX *KSI_PublicationsHeader_getCtx(KSI_PublicationsHeader *t);
 int KSI_PublicationsHeader_getVersion(const KSI_PublicationsHeader *t, KSI_Integer **version);
 int KSI_PublicationsHeader_getTimeCreated(const KSI_PublicationsHeader *t, KSI_Integer **timeCreated);
+int KSI_PublicationsHeader_getRepositoryUri(const KSI_PublicationsHeader *t, KSI_Utf8String **repositoryUri);
 int KSI_PublicationsHeader_setVersion(KSI_PublicationsHeader *t, KSI_Integer *version);
 int KSI_PublicationsHeader_setTimeCreated(KSI_PublicationsHeader *t, KSI_Integer *timeCreated);
+int KSI_PublicationsHeader_setRepositoryUri(KSI_PublicationsHeader *t, KSI_Utf8String *repositoryUri);
 
 /**
  * KSI_CertificateRecord

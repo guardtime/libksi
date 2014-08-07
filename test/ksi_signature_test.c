@@ -30,7 +30,6 @@ static void testVerifySignatureNew(CuTest *tc) {
 	KSITest_setFileMockResponse(tc, "test/resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv");
 
 	res = KSI_verifySignature(ctx, sig);
-
 	CuAssert(tc, "Unable to verify signature online.", res == KSI_OK);
 
 	KSI_Signature_free(sig);
