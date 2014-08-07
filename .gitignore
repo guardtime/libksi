@@ -16,3 +16,9 @@ results.xml
 .deps
 /Debug
 *.gcno
+*.exe
+*.pdb
+*.sln
+*.suo
+objM*
+
