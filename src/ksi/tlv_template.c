@@ -13,7 +13,7 @@ KSI_END_TLV_TEMPLATE
 KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationsHeader)
 	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsHeader_getVersion, KSI_PublicationsHeader_setVersion)
 	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsHeader_getTimeCreated, KSI_PublicationsHeader_setTimeCreated)
-	KSI_TLV_UTF8_STRING(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_PublicationsHeader_getRepositoryUri, KSI_PublicationsHeader_setRepositoryUri) /* TODO! Should be mandatory by rfc. */
+	KSI_TLV_UTF8_STRING(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_PublicationsHeader_getRepositoryUri, KSI_PublicationsHeader_setRepositoryUri)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_CertificateRecord)
@@ -800,6 +800,8 @@ int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag,
 	/* Evaluate the TLV. */
 	res = KSI_TlvTemplate_construct(ctx, tlv, obj, template);
 	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Serializing object", tlv);
 
 	/* Serialize the TLV. */
 	res = KSI_TLV_serialize(tlv, &tmp, &tmp_len);
