@@ -122,7 +122,9 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
 		
 	/*Create new crypto service provider (CSP)*/
 	if(!CryptAcquireContext(&tmp_CSP, NULL, NULL, PROV_RSA_AES, 0)){
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		char errm[1024];
+		snprintf(errm, sizeof(errm), "Wincrypt Error (%d)", GetLastError());
+		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, errm);
 		goto cleanup;
 		}
 	
