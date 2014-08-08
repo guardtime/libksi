@@ -11,6 +11,11 @@ extern "C" {
 
 #define lprintf //printf("%s:%d - ", __FILE__, __LINE__); printf
 
+#ifdef _WIN32
+	typedef enum { false = 0, true = !false } bool;
+#  define snprintf _snprintf
+#endif
+
 int KSITest_memcmp(void *ptr1, void *ptr2, size_t len);
 
 int KSITest_DataHash_fromStr(KSI_CTX *ctx, const char *hexstr, KSI_DataHash **hsh);
