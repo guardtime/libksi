@@ -5,6 +5,13 @@ DLL = lib
 RTL = MT
 !ENDIF
 
+!IF "$(NET_PROVIDER)" != "CURL" && "$(NET_PROVIDER)" != "WININET" && "$(NET_PROVIDER)" != "WINHTTP"
+NET_PROVIDER = CURL
+!ENDIF
+
+!IF "$(CRYPTO_PROVIDER)" != "OPENSSL" && "$(CRYPTO_PROVIDER)" != "CRYPTOAPI"
+CRYPTO_PROVIDER = OPENSSL
+!ENDIF
 
 SRC_DIR = .
 INCLUDE_DIR = ..\..\out\include
@@ -34,7 +41,15 @@ EXAMPLE_BIN = \
 #external libraries used for linking. 
 EXT_LIB = $(LIB_NAME)$(RTL).$(DLL) \
 	libeay32$(RTL).$(DLL) libcurl$(RTL).lib \
-	wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib advapi32.lib wininet.lib winhttp.lib
+	wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib advapi32.lib
+
+!IF "$(NET_PROVIDER)" == "CURL"
+EXT_LIB = $(EXT_LIB) libcurl$(RTL).lib 
+!ELSE IF "$(NET_PROVIDER)" == "WININET"
+EXT_LIB = $(EXT_LIB) wininet.lib 
+!ELSE IF "$(NET_PROVIDER)" == "WINHTTP" 
+EXT_LIB = $(EXT_LIB) winhttp.lib 
+!ENDIF
 	
 #/NODEFAULTLIB:libcmtd.lib	
 CCFLAGS = /nologo /W3 /D_CRT_SECURE_NO_DEPRECATE /DCURL_STATICLIB /I$(INCLUDE_DIR) /I$(SRC_DIR)
