@@ -6,16 +6,12 @@
 #include "ksi_net_mock.h"
 #include "../src/ksi/net_http_impl.h"
 
-KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu)
-
 unsigned char *KSI_NET_MOCK_request = NULL;
 unsigned KSI_NET_MOCK_request_len = 0;
 unsigned char *KSI_NET_MOCK_response = NULL;
 unsigned KSI_NET_MOCK_response_len = 0;
 
 static size_t mockInitCount = 0;
-
-extern KSI_CTX *ctx;
 
 static int mockPublicationsFileReceive(KSI_RequestHandle *handle) {
 	int res = KSI_UNKNOWN_ERROR;

@@ -49,7 +49,9 @@
 
 #ifdef _WIN32
 	typedef enum { false = 0, true = !false } bool;
-#  define snprintf _snprintf
+#  ifndef snprintf
+#    define snprintf _snprintf
+#  endif
 #endif
 
 #define KSI_BEGIN(ctx, err) KSI_ERR_init((ctx), (err))
