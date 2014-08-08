@@ -13,6 +13,7 @@ extern "C" {
 
 int KSITest_memcmp(void *ptr1, void *ptr2, size_t len);
 
+int KSITest_DataHash_fromStr(KSI_CTX *ctx, const char *hexstr, KSI_DataHash **hsh);
 int KSITest_decodeHexStr(const char *hexstr, unsigned char *buf, int buf_size, unsigned *buf_length);
 void KSITest_setFileMockResponse(CuTest *tc, const char *fileName);
 

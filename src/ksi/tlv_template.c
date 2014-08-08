@@ -13,7 +13,7 @@ KSI_END_TLV_TEMPLATE
 KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationsHeader)
 	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsHeader_getVersion, KSI_PublicationsHeader_setVersion)
 	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsHeader_getTimeCreated, KSI_PublicationsHeader_setTimeCreated)
-	KSI_TLV_UTF8_STRING(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_PublicationsHeader_getRepositoryUri, KSI_PublicationsHeader_setRepositoryUri) /* TODO! Should be mandatory by rfc. */
+	KSI_TLV_UTF8_STRING(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_PublicationsHeader_getRepositoryUri, KSI_PublicationsHeader_setRepositoryUri)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_CertificateRecord)
@@ -81,9 +81,9 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_CalendarAuthRec)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationReq)
-	KSI_TLV_COMPOSITE(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationReq_getHeader, KSI_AggregationReq_setHeader, KSI_Header)
-	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationReq_getRequestId, KSI_AggregationReq_setRequestId)
-	KSI_TLV_IMPRINT(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationReq_getRequestHash, KSI_AggregationReq_setRequestHash)
+	KSI_TLV_COMPOSITE(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationReq_getHeader, KSI_AggregationReq_setHeader, KSI_Header)
+	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationReq_getRequestId, KSI_AggregationReq_setRequestId)
+	KSI_TLV_IMPRINT(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationReq_getRequestHash, KSI_AggregationReq_setRequestHash)
 	KSI_TLV_INTEGER(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationReq_getRequestLevel, KSI_AggregationReq_setRequestLevel)
 	KSI_TLV_COMPOSITE(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationReq_getConfig, KSI_AggregationReq_setConfig, KSI_Config)
 KSI_END_TLV_TEMPLATE
@@ -120,8 +120,8 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationPdu)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendReq)
-	KSI_TLV_COMPOSITE(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendReq_getHeader, KSI_ExtendReq_setHeader, KSI_Header)
-	KSI_TLV_INTEGER(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendReq_getRequestId, KSI_ExtendReq_setRequestId)
+	KSI_TLV_COMPOSITE(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_ExtendReq_getHeader, KSI_ExtendReq_setHeader, KSI_Header)
+	KSI_TLV_INTEGER(0x04, KSI_TLV_TMPL_FLG_MANDATORY, KSI_ExtendReq_getRequestId, KSI_ExtendReq_setRequestId)
 	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendReq_getAggregationTime, KSI_ExtendReq_setAggregationTime)
 	KSI_TLV_INTEGER(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendReq_getPublicationTime, KSI_ExtendReq_setPublicationTime)
 KSI_END_TLV_TEMPLATE
@@ -800,6 +800,8 @@ int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag,
 	/* Evaluate the TLV. */
 	res = KSI_TlvTemplate_construct(ctx, tlv, obj, template);
 	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Serializing object", tlv);
 
 	/* Serialize the TLV. */
 	res = KSI_TLV_serialize(tlv, &tmp, &tmp_len);

@@ -41,6 +41,10 @@ static const EVP_MD *hashAlgorithmToEVP(int hash_id)
 	}
 }
 
+int KSI_isHashAlgorithmSupported(int hash_id) {
+	return hashAlgorithmToEVP(hash_id) != NULL;
+}
+
 void KSI_DataHasher_free(KSI_DataHasher *hasher) {
 	if (hasher != NULL) {
 		KSI_free(hasher->hashContext);

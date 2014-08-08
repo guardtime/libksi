@@ -72,6 +72,11 @@ static const ALG_ID hashAlgorithmToALG_ID(int hash_id)
 	}
 }
 
+int KSI_isHashAlgorithmSupported(int hash_id) {
+	return hashAlgorithmToALG_ID(hash_id) != -1;
+}
+
+
 void KSI_DataHasher_free(KSI_DataHasher *hasher) {
 	if (hasher != NULL) {
 		CRYPTO_HASH_CTX_free((CRYPTO_HASH_CTX*)hasher->hashContext);
