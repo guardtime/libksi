@@ -74,10 +74,6 @@ int KSI_isHashAlgorithmTrusted(int hash_id) {
 	return 0;
 }
 
-int KSI_isHashAlgorithmSupported(int hash_id) {
-	return hash_id >= 0 && hash_id < KSI_NUMBER_OF_KNOWN_HASHALGS;
-}
-
 unsigned int KSI_getHashLength(int hash_id) {
 	if (KSI_isHashAlgorithmSupported(hash_id)) {
 		return (KSI_hashAlgorithmInfo[hash_id].bitCount) >> 3;

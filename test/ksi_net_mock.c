@@ -108,7 +108,6 @@ static int sendRequest(KSI_RequestHandle *handle, char *agent, char *url, int co
 
 	KSI_NET_MOCK_request_len = handle->request_length;
 	res = KSI_OK;
-cleanup:
 
 	return res;
 }

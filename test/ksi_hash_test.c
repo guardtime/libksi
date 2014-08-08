@@ -346,6 +346,69 @@ static void TestParseMetaHash(CuTest *tc) {
 	KSI_DataHash_free(metaHash);
 }
 
+static void testAllHashing(CuTest *tc) {
+	const char *input = "Once I was blind but now I C!";
+	const char *expected[KSI_NUMBER_OF_KNOWN_HASHALGS];
+	int res;
+	KSI_DataHasher *hsr = NULL;
+	KSI_DataHash *hsh = NULL;
+	int hashId;
+
+	for (hashId = 0; hashId < KSI_NUMBER_OF_KNOWN_HASHALGS; expected[hashId++] = NULL);
+
+	expected[KSI_HASHALG_SHA1] = "17feaf7afb41e469c907170915eab91aa9114c05";
+	expected[KSI_HASHALG_SHA2_256] = "4d151c05f29a9757ff252ff1000fdcd28f88caaa52c020bc7d25e683890e7335";
+	expected[KSI_HASHALG_RIPEMD160] = "404a79f20439e1d82492ed73ad413b6d95d643a6";
+	expected[KSI_HASHALG_SHA2_224] = "e57a7d602733b326b2368d922e754f0a04c7c433d7dfd89ea8d3f54a";
+	expected[KSI_HASHALG_SHA2_384] = "4495385793894ac9a2cc1b2d8760da3ce50d14a193b19166417d503d853ad3588689e5a6b0e65675367394a207cac264";
+	expected[KSI_HASHALG_SHA2_512] = "2dcee3bebeeec061751c7e2c886fddb069502c3c71e1f70272d77a64c092e51b6a262d208939cc557de7650da347b08f643d515ff8009a7342454e73247761dd";
+	expected[KSI_HASHALG_RIPEMD_256] = "4b28ccc7d757abe6f987455b40b83c55103cb90e8274e8b317ed88cdeff2b055";
+	expected[KSI_HASHALG_SHA3_244] = "TODO!";
+	expected[KSI_HASHALG_SHA3_256] = "TODO!";
+	expected[KSI_HASHALG_SHA3_384] = "TODO!";
+	expected[KSI_HASHALG_SHA3_512] = "TODO!";
+	expected[KSI_HASHALG_SM3] = "TODO!";
+
+	for (hashId = 0; hashId < KSI_NUMBER_OF_KNOWN_HASHALGS; hashId++) {
+		if (KSI_isHashAlgorithmSupported(hashId)) {
+			unsigned char expectedImprint[0xff];
+			unsigned expectedLen = 0;
+			const unsigned char *imprint = NULL;
+			unsigned imprintLen;
+			char errm[0x1ff];
+			char tmp[0xff];
+
+			res = KSI_DataHasher_open(ctx, hashId, &hsr);
+			CuAssert(tc, "Unable to initialize hasher", res == KSI_OK && hsr != NULL);
+
+			res = KSI_DataHasher_add(hsr, input, strlen(input));
+			CuAssert(tc, "Unable to add data to the hasher.", res == KSI_OK);
+
+			res = KSI_DataHasher_close(hsr, &hsh);
+			CuAssert(tc, "Unable to close data hasher", res == KSI_OK && hsh != NULL);
+
+			snprintf(tmp, sizeof(tmp), "%02x%s", hashId, expected[hashId]);
+			KSITest_decodeHexStr(tmp, expectedImprint, sizeof(expectedImprint), &expectedLen);
+
+			res = KSI_DataHash_getImprint(hsh, &imprint, &imprintLen);
+
+			CuAssert(tc, "Unable to retreive imprint value", res == KSI_OK && imprint != NULL && imprintLen > 0);
+
+			snprintf(errm, sizeof(errm), "Hash values mismatch for hashId=%d (%s)", hashId, KSI_getHashAlgorithmName(hashId));
+			CuAssert(tc, errm, imprintLen == expectedLen && !memcmp(imprint, expectedImprint, imprintLen));
+
+			imprint = NULL;
+			imprintLen = 0;
+
+			KSI_DataHash_free(hsh);
+			hsh = NULL;
+
+			KSI_DataHasher_free(hsr);
+			hsr = NULL;
+		}
+	}
+}
+
 CuSuite* KSITest_Hash_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -360,6 +423,7 @@ CuSuite* KSITest_Hash_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestHashGetAlgByName);
 	SUITE_ADD_TEST(suite, TestIncorrectHashLen);
 	SUITE_ADD_TEST(suite, TestParseMetaHash);
+	SUITE_ADD_TEST(suite, testAllHashing);
 
 	return suite;
 }

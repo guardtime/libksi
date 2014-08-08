@@ -183,41 +183,64 @@ int KSITest_memcmp(void *ptr1, void *ptr2, size_t len) {
 	return res;
 }
 
+int KSITest_DataHash_fromStr(KSI_CTX *ctx, const char *hexstr, KSI_DataHash **hsh) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *tmp = NULL;
+	unsigned char raw[0xff];
+	unsigned len = 0;
+
+	res = KSITest_decodeHexStr(hexstr, raw, sizeof(raw), &len);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_DataHash_fromImprint(ctx, raw, len, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	*hsh = tmp;
+	tmp = NULL;
+
+cleanup:
+
+	KSI_DataHash_free(tmp);
+
+	return res;
+}
+
 int KSITest_decodeHexStr(const char *hexstr, unsigned char *buf, int buf_size, unsigned *buf_length) {
 	int res = KSI_UNKNOWN_ERROR;
 	int i = 0;
 	unsigned len = 0;
 	int count = 0;
 
-	while (hexstr[i]) {
-		char chr = hexstr[i++];
-		if (isspace(chr)) continue;
+	if (hexstr != NULL) {
+		while (hexstr[i]) {
+			char chr = hexstr[i++];
+			if (isspace(chr)) continue;
 
-		if (len >= buf_size) {
-			res = KSI_BUFFER_OVERFLOW;
-			goto cleanup;
-		}
+			if (len >= buf_size) {
+				res = KSI_BUFFER_OVERFLOW;
+				goto cleanup;
+			}
 
-		if (count == 0) {
-			buf[len] = 0;
-		}
+			if (count == 0) {
+				buf[len] = 0;
+			}
 
-		chr = (char)tolower(chr);
-		if (isdigit(chr)) {
-			buf[len] = (unsigned char)(buf[len] << 4) | (unsigned char)(chr - '0');
-		} else if (chr >= 'a' && chr <= 'f') {
-			buf[len] = (unsigned char)(buf[len] << 4) | (unsigned char)(chr - 'a' + 10);
-		} else {
-			res = KSI_INVALID_FORMAT;
-			goto cleanup;
-		}
+			chr = (char)tolower(chr);
+			if (isdigit(chr)) {
+				buf[len] = (unsigned char)(buf[len] << 4) | (unsigned char)(chr - '0');
+			} else if (chr >= 'a' && chr <= 'f') {
+				buf[len] = (unsigned char)(buf[len] << 4) | (unsigned char)(chr - 'a' + 10);
+			} else {
+				res = KSI_INVALID_FORMAT;
+				goto cleanup;
+			}
 
-		if (++count > 1) {
-			count = 0;
-			len++;
+			if (++count > 1) {
+				count = 0;
+				len++;
+			}
 		}
 	}
-
 	if (count != 0) {
 		/* Single char hex value. */
 		res = KSI_INVALID_FORMAT;
