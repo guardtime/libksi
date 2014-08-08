@@ -236,10 +236,11 @@ static void TestParallelHashing(CuTest* tc) {
 	int res;
 	char data[] = "I'll be Bach";
 	char *ptr = data;
-	unsigned char exp1[] = {0x91, 0x05, 0xeb, 0xd0, 0x16, 0xf5, 0xcf, 0xf2, 0xe2, 0xa8, 0x04, 0xe2, 0xee, 0x24, 0xac, 0x05, 0x89, 0xf4, 0x7e, 0x21};
-	unsigned char exp2[] = {0x9b, 0x07, 0x11, 0x1f, 0x17, 0x3b, 0x3d, 0x2b, 0x9e, 0xc8, 0x29, 0xe8, 0xab, 0x25, 0xb5, 0x94, 0xef, 0x5d, 0x57, 0xfe,
-			0x53, 0x7f, 0x2b, 0x66, 0xa6, 0xfe, 0xc4, 0xc0, 0x92, 0x66, 0x89, 0xa9, 0x34, 0x10, 0x58, 0x59, 0x1b, 0xa1, 0xef, 0x68, 0x69, 0xae,
-			0xff, 0x46, 0x6d, 0x2a, 0x87, 0x1d, 0xb2, 0x47, 0xd0, 0xc5, 0xd6, 0x82, 0xa0, 0x14, 0x1a, 0x98, 0xa7, 0xcd, 0xbd, 0x2f, 0x10, 0xea};
+	unsigned char exp1[0xff];
+	unsigned exp1_len = 0;
+	unsigned char exp2[0xff];
+	unsigned exp2_len;
+
 	KSI_DataHasher *hsr1 = NULL;
 	KSI_DataHasher *hsr2 = NULL;
 	KSI_DataHash *hsh1 = NULL;
@@ -249,10 +250,13 @@ static void TestParallelHashing(CuTest* tc) {
 	unsigned digest_length = 0;
 	int algorithm = 0;
 
-	res = KSI_DataHasher_open(ctx, KSI_HASHALG_RIPEMD160, &hsr1);
+	KSITest_decodeHexStr("a0dc7b252059b9a742722508de940a6a208574dd", exp1, sizeof(exp1), &exp1_len);
+	KSITest_decodeHexStr("72d0c4f2cb390540f925c8e5d5dde7ed7ffc2a6b722eaab979f854d1c273b35e", exp2, sizeof(exp2), &exp2_len);
+
+	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA1, &hsr1);
 	CuAssert(tc, "Failed to open hasher", res == KSI_OK && hsr1 != NULL);
 
-	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA2_512, &hsr2);
+	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA2_256, &hsr2);
 	CuAssert(tc, "Failed to open hasher", res == KSI_OK && hsr2 != NULL);
 
 	while (*ptr) {
@@ -271,9 +275,9 @@ static void TestParallelHashing(CuTest* tc) {
 	res = KSI_DataHash_extract(hsh1, &algorithm, &digest, &digest_length);
 	CuAssert(tc, "Failed to parse imprint.", res == KSI_OK);
 
-	CuAssert(tc, "Digest length mismatch", sizeof(exp1) == digest_length);
-	CuAssert(tc, "Digest mismatch", !memcmp(exp1, digest, sizeof(exp1)));
-	CuAssertIntEquals_Msg(tc, "Algorithm", KSI_HASHALG_RIPEMD160, algorithm);
+	CuAssert(tc, "Digest length mismatch", exp1_len == digest_length);
+	CuAssert(tc, "Digest mismatch", !memcmp(exp1, digest, exp1_len));
+	CuAssertIntEquals_Msg(tc, "Algorithm", KSI_HASHALG_SHA1, algorithm);
 
 	res = KSI_DataHasher_close(hsr2, &hsh2);
 	CuAssert(tc, "Unable to close hasher", res == KSI_OK && hsh2 != NULL);
@@ -281,9 +285,9 @@ static void TestParallelHashing(CuTest* tc) {
 	res = KSI_DataHash_extract(hsh2, &algorithm, &digest, &digest_length);
 	CuAssert(tc, "Failed to parse imprint.", res == KSI_OK);
 
-	CuAssert(tc, "Digest length mismatch", sizeof(exp2) == digest_length);
-	CuAssert(tc, "Digest mismatch", !memcmp(exp2, digest, sizeof(exp2)));
-	CuAssertIntEquals_Msg(tc, "Algorithm", KSI_HASHALG_SHA2_512, algorithm);
+	CuAssert(tc, "Digest length mismatch", exp2_len == digest_length);
+	CuAssert(tc, "Digest mismatch", !memcmp(exp2, digest, exp2_len));
+	CuAssertIntEquals_Msg(tc, "Algorithm", KSI_HASHALG_SHA2_256, algorithm);
 
 	KSI_DataHash_free(hsh1);
 	KSI_DataHash_free(hsh2);
