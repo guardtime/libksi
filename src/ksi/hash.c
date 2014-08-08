@@ -68,14 +68,14 @@ void KSI_DataHash_free(KSI_DataHash *hash) {
  *
  */
 int KSI_isHashAlgorithmTrusted(int hash_id) {
-	if (KSI_isHashAlgorithmSupported(hash_id)) {
+	if (hash_id >= 0 && hash_id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
 		return KSI_hashAlgorithmInfo[hash_id].trusted;
 	}
 	return 0;
 }
 
 unsigned int KSI_getHashLength(int hash_id) {
-	if (KSI_isHashAlgorithmSupported(hash_id)) {
+	if (hash_id >= 0 && hash_id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
 		return (KSI_hashAlgorithmInfo[hash_id].bitCount) >> 3;
 	}
 	return 0;

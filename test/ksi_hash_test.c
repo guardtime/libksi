@@ -384,8 +384,11 @@ static void testAllHashing(CuTest *tc) {
 			res = KSI_DataHasher_add(hsr, input, strlen(input));
 			CuAssert(tc, "Unable to add data to the hasher.", res == KSI_OK);
 
+			snprintf(errm, sizeof(errm), "Unable to close data hasher for hashId=%d (%s)", hashId, KSI_getHashAlgorithmName(hashId));
+
 			res = KSI_DataHasher_close(hsr, &hsh);
-			CuAssert(tc, "Unable to close data hasher", res == KSI_OK && hsh != NULL);
+
+			CuAssert(tc, errm, res == KSI_OK && hsh != NULL);
 
 			snprintf(tmp, sizeof(tmp), "%02x%s", hashId, expected[hashId]);
 			KSITest_decodeHexStr(tmp, expectedImprint, sizeof(expectedImprint), &expectedLen);
