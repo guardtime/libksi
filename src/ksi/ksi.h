@@ -32,6 +32,10 @@ extern "C" {
 #define KSI_DEFAULT_URI_EXTENDER "192.168.1.36:8081/gt-extendingservice"
 #define KSI_DEFAULT_URI_PUBLICATIONS_FILE "http://172.20.20.7/publications.tlv"
 
+/**
+ * The maximum length of an imprint.
+ */
+#define KSI_MAX_IMPRINT_LEN 65 /* Algorithm ID (1 byte) + longest digest */
 
 /**
  * KSI function returnvalues.

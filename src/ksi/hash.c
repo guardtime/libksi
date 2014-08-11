@@ -5,13 +5,11 @@
 
 #define HASH_ALGO(id, name, bitcount, trusted) {(id), (name), (bitcount), (trusted), id##_aliases}
 
-#define MAX_IMPRINT_LEN 65 /* Algorithm ID (1 byte) + longest digest */
-
 struct KSI_DataHash_st {
 	/* KSI context */
 	KSI_CTX *ctx;
 
-	unsigned char imprint[MAX_IMPRINT_LEN + 1]; /* For an extra '0' for meta hash. */
+	unsigned char imprint[KSI_MAX_IMPRINT_LEN + 1]; /* For an extra '0' for meta hash. */
 	unsigned int imprint_length;
 };
 
@@ -123,7 +121,7 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *dige
 		goto cleanup;
 	}
 
-	if (digest_length > MAX_IMPRINT_LEN) {
+	if (digest_length > KSI_MAX_IMPRINT_LEN) {
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Internal buffer too short to hold imprint");
 		goto cleanup;
 	}
@@ -440,7 +438,7 @@ int KSI_DataHash_MetaHash_fromTlv(KSI_TLV *tlv, KSI_DataHash **hsh) {
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Make sure that the contents of this imprint is a null terminated sequence of bytes. */
-	tmp->imprint[MAX_IMPRINT_LEN] = 0; /* Write extra 0 */
+	tmp->imprint[KSI_MAX_IMPRINT_LEN] = 0; /* Write extra 0 */
 
 	*hsh = tmp;
 	tmp = NULL;
