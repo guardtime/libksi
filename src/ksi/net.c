@@ -25,7 +25,7 @@ int KSI_RequestHandle_new(KSI_CTX *ctx, const unsigned char *request, unsigned r
 	}
 
 	tmp->ctx = ctx;
-	tmp->handleCtx = NULL;
+	tmp->implCtx = NULL;
 	tmp->request = NULL;
 	tmp->request_length = 0;
 	if (request != NULL && request_length > 0) {
@@ -40,6 +40,8 @@ int KSI_RequestHandle_new(KSI_CTX *ctx, const unsigned char *request, unsigned r
 
 	tmp->response = NULL;
 	tmp->response_length = 0;
+
+	tmp->client = NULL;
 
 	*handle = tmp;
 	tmp = NULL;
@@ -59,7 +61,7 @@ int KSI_RequestHandle_getNetContext(KSI_RequestHandle *handle, void **c) {
 	KSI_PRE(&err, c != NULL) goto cleanup;
 	KSI_BEGIN(handle->ctx, &err);
 
-	*c = handle->handleCtx;
+	*c = handle->implCtx;
 
 	KSI_SUCCESS(&err);
 
@@ -73,8 +75,8 @@ cleanup:
  */
 void KSI_RequestHandle_free(KSI_RequestHandle *handle) {
 	if (handle != NULL) {
-		if (handle->handleCtx_free != NULL) {
-			handle->handleCtx_free(handle->handleCtx);
+		if (handle->implCtx_free != NULL) {
+			handle->implCtx_free(handle->implCtx);
 		}
 		KSI_free(handle->request);
 		KSI_free(handle->response);
@@ -155,8 +157,8 @@ cleanup:
 
 void KSI_NetworkClient_free(KSI_NetworkClient *provider) {
 	if (provider != NULL) {
-		if (provider->providerCtx_free != NULL) {
-			provider->providerCtx_free(provider->poviderCtx);
+		if (provider->implCtx_free != NULL) {
+			provider->implCtx_free(provider->implCtx);
 		}
 		KSI_free(provider);
 	}
@@ -193,16 +195,16 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_RequestHandle_setNetContext(KSI_RequestHandle *handle, void *netCtx, void (*netCtx_free)(void *)) {
+int KSI_RequestHandle_setImplContext(KSI_RequestHandle *handle, void *netCtx, void (*netCtx_free)(void *)) {
 	KSI_ERR err;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(handle->ctx, &err);
 
-	if (handle->handleCtx != netCtx && handle->handleCtx != NULL && handle->handleCtx_free != NULL) {
-		handle->handleCtx_free(handle->handleCtx);
+	if (handle->implCtx != netCtx && handle->implCtx != NULL && handle->implCtx_free != NULL) {
+		handle->implCtx_free(handle->implCtx);
 	}
-	handle->handleCtx = netCtx;
-	handle->handleCtx_free = netCtx_free;
+	handle->implCtx = netCtx;
+	handle->implCtx_free = netCtx_free;
 
 	KSI_SUCCESS(&err);
 
@@ -218,7 +220,7 @@ int KSI_NetworkClient_getNetContext(KSI_NetworkClient *provider, void **netCtx) 
 	KSI_PRE(&err, netCtx != NULL) goto cleanup;
 	KSI_BEGIN(provider->ctx, &err);
 
-	*netCtx = provider->poviderCtx;
+	*netCtx = provider->implCtx;
 
 	KSI_SUCCESS(&err);
 
@@ -305,12 +307,12 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_NetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **provider) {
+int KSI_NetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	KSI_ERR err;
 	KSI_NetworkClient *pr = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, provider != NULL) goto cleanup;
+	KSI_PRE(&err, client != NULL) goto cleanup;
 
 	KSI_BEGIN(ctx, &err);
 
@@ -321,13 +323,13 @@ int KSI_NetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **provider) {
 	}
 
 	pr->ctx = ctx;
-	pr->poviderCtx = NULL;
-	pr->providerCtx_free = NULL;
+	pr->implCtx = NULL;
+	pr->implCtx_free = NULL;
 	pr->sendSignRequest = NULL;
 	pr->sendExtendRequest = NULL;
 	pr->sendPublicationRequest = NULL;
 
-	*provider = pr;
+	*client = pr;
 	pr = NULL;
 
 	KSI_SUCCESS(&err);
@@ -338,17 +340,17 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_NetworkClient_setNetCtx(KSI_NetworkClient *provider, void *netCtx, void (*netCtx_free)(void *)) {
+int KSI_NetworkClient_setNetCtx(KSI_NetworkClient *client, void *netCtx, void (*netCtx_free)(void *)) {
 	KSI_ERR err;
 
-	KSI_PRE(&err, provider != NULL) goto cleanup;
-	KSI_BEGIN(provider->ctx, &err);
+	KSI_PRE(&err, client != NULL) goto cleanup;
+	KSI_BEGIN(client->ctx, &err);
 
-	if (provider->poviderCtx != NULL && provider->providerCtx_free != NULL) {
-		provider->providerCtx_free(provider->poviderCtx);
+	if (client->implCtx != NULL && client->implCtx_free != NULL) {
+		client->implCtx_free(client->implCtx);
 	}
-	provider->poviderCtx = netCtx;
-	provider->providerCtx_free = netCtx_free;
+	client->implCtx = netCtx;
+	client->implCtx_free = netCtx_free;
 
 	KSI_SUCCESS(&err);
 
@@ -357,13 +359,13 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_NetworkClient_setSendSignRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_AggregationReq *, KSI_RequestHandle **)) {
+int KSI_NetworkClient_setSendSignRequestFn(KSI_NetworkClient *client, int (*fn)(KSI_NetworkClient *, KSI_AggregationReq *, KSI_RequestHandle **)) {
 	KSI_ERR err;
 
-	KSI_PRE(&err, provider != NULL) goto cleanup;
-	KSI_BEGIN(provider->ctx, &err);
+	KSI_PRE(&err, client != NULL) goto cleanup;
+	KSI_BEGIN(client->ctx, &err);
 
-	provider->sendSignRequest = fn;
+	client->sendSignRequest = fn;
 
 	KSI_SUCCESS(&err);
 
@@ -372,13 +374,13 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_NetworkClient_setSendExtendRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **)) {
+int KSI_NetworkClient_setSendExtendRequestFn(KSI_NetworkClient *client, int (*fn)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **)) {
 	KSI_ERR err;
 
-	KSI_PRE(&err, provider != NULL) goto cleanup;
-	KSI_BEGIN(provider->ctx, &err);
+	KSI_PRE(&err, client != NULL) goto cleanup;
+	KSI_BEGIN(client->ctx, &err);
 
-	provider->sendExtendRequest = fn;
+	client->sendExtendRequest = fn;
 
 	KSI_SUCCESS(&err);
 
@@ -387,13 +389,13 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_NetworkClient_setSendPublicationRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_RequestHandle *)) {
+int KSI_NetworkClient_setSendPublicationRequestFn(KSI_NetworkClient *client, int (*fn)(KSI_NetworkClient *, KSI_RequestHandle *)) {
 	KSI_ERR err;
 
-	KSI_PRE(&err, provider != NULL) goto cleanup;
-	KSI_BEGIN(provider->ctx, &err);
+	KSI_PRE(&err, client != NULL) goto cleanup;
+	KSI_BEGIN(client->ctx, &err);
 
-	provider->sendPublicationRequest = fn;
+	client->sendPublicationRequest = fn;
 
 	KSI_SUCCESS(&err);
 

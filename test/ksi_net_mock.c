@@ -93,7 +93,7 @@ cleanup:
 		return res;
 }
 
-static int sendRequest(KSI_RequestHandle *handle, char *agent, char *url, int connectionTimeout, int readTimeout ) {
+static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, char *url) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	KSI_LOG_debug(KSI_RequestHandle_getCtx(handle), "Initiate MOCK request.");
@@ -161,7 +161,7 @@ int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	res = KSI_HttpClient_new(ctx, &tmp);
 	if (res != KSI_OK) goto cleanup;
 
-	http = tmp->poviderCtx;
+	http = tmp->implCtx;
 
 	http->sendRequest = sendRequest;
 
