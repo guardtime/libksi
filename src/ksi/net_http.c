@@ -116,7 +116,7 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(client->ctx, &err);
 
-	http = client->poviderCtx;
+	http = client->implCtx;
 
 	if (http == NULL) {
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "KSI_HttpClient context not initialized.");
@@ -149,7 +149,7 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Send request not initialized.");
 		goto cleanup;
 	}
-	res = http->sendRequest(tmp, http->agentName, http->urlSigner, http->connectionTimeoutSeconds, http->readTimeoutSeconds);
+	res = http->sendRequest(client, tmp, http->urlSigner);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*handle = tmp;
@@ -181,7 +181,7 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(client->ctx, &err);
 
-	http = client->poviderCtx;
+	http = client->implCtx;
 
 	if (http == NULL) {
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "KSI_HttpClient context not initialized.");
@@ -214,7 +214,7 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 		goto cleanup;
 	}
 
-	res = http->sendRequest(tmp, http->agentName, http->urlExtender, http->connectionTimeoutSeconds, http->readTimeoutSeconds);
+	res = http->sendRequest(client, tmp, http->urlExtender);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*handle = tmp;
@@ -240,13 +240,13 @@ static int preparePublicationsFileRequest(KSI_NetworkClient *client, KSI_Request
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(client->ctx, &err);
 
-	http = client->poviderCtx;
+	http = client->implCtx;
 
 	if (http->sendRequest == NULL) {
 		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Send request not initialized.");
 		goto cleanup;
 	}
-	res = http->sendRequest(handle, http->agentName, http->urlPublication, http->connectionTimeoutSeconds, http->readTimeoutSeconds);
+	res = http->sendRequest(client, handle, http->urlPublication);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_OK;
@@ -263,6 +263,7 @@ static void httpClientCtx_free(KSI_HttpClientCtx *http) {
 		KSI_free(http->urlExtender);
 		KSI_free(http->urlPublication);
 		KSI_free(http->agentName);
+		if (http->implCtx_free != NULL) http->implCtx_free(http->implCtx);
 		KSI_free(http);
 	}
 }
@@ -285,6 +286,8 @@ static int httpClientCtx_new(KSI_CTX *ctx, KSI_HttpClientCtx **http) {
 	setStringParam(&tmp->urlPublication, KSI_DEFAULT_URI_PUBLICATIONS_FILE);
 	setStringParam(&tmp->agentName, "KSI HTTP Client");
 	tmp->requestId = 0;
+	tmp->implCtx = NULL;
+	tmp->implCtx_free = NULL;
 
 	*http = tmp;
 	tmp = NULL;
@@ -319,8 +322,8 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **netProvider) {
 	pr->sendSignRequest = prepareAggregationRequest;
 	pr->sendExtendRequest = prepareExtendRequest;
 	pr->sendPublicationRequest = preparePublicationsFileRequest;
-	pr->poviderCtx = http;
-	pr->providerCtx_free = (void (*)(void*))httpClientCtx_free;
+	pr->implCtx = http;
+	pr->implCtx_free = (void (*)(void*))httpClientCtx_free;
 	http = NULL;
 
 	res = KSI_HttpClient_init(pr);

@@ -69,7 +69,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_RequestHandle_setNetContext(KSI_RequestHandle *handle, void *netCtx, void (*netCtx_free)(void *));
+	int KSI_RequestHandle_setImplContext(KSI_RequestHandle *handle, void *netCtx, void (*netCtx_free)(void *));
 
 	/**
 	 * Getter method for the network request implementation context.

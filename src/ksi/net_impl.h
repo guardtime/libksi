@@ -10,15 +10,14 @@ extern "C" {
 	struct KSI_NetworkClient_st {
 		KSI_CTX *ctx;
 
-		/** Cleanup for the provider, gets the #providerCtx as parameter. */
-		void (*providerCtx_free)(void *);
-
 		int (*sendSignRequest)(KSI_NetworkClient *, KSI_AggregationReq *, KSI_RequestHandle **);
 		int (*sendExtendRequest)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **);
 		int (*sendPublicationRequest)(KSI_NetworkClient *, KSI_RequestHandle *);
 
 		/** Dedicated context for the net provider */
-		void *poviderCtx;
+		void *implCtx;
+		/** Cleanup for the provider, gets the #providerCtx as parameter. */
+		void (*implCtx_free)(void *);
 	};
 
 	struct KSI_NetHandle_st {
@@ -33,12 +32,13 @@ extern "C" {
 		/** Length of the response. */
 		unsigned response_length;
 
-		void (*handleCtx_free)(void *);
-
 		int (*readResponse)(KSI_RequestHandle *);
 
+		KSI_NetworkClient *client;
+
 		/** Addidtional context for the trasnport layer. */
-		void *handleCtx;
+		void *implCtx;
+		void (*implCtx_free)(void *);
 	};
 
 #ifdef __cplusplus
