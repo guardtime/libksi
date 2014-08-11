@@ -15,6 +15,8 @@ struct KSI_DataHash_st {
 
 extern KSI_CTX *ctx;
 
+#define KSITest_assertCreateCall(tc, errm, res, obj) if ((res) != KSI_OK) KSI_ERR_statusDump(ctx, stdout); CuAssert(tc, errm ": error returned", (res) == KSI_OK); CuAssert(tc, errm ": object is NULL", (obj) != NULL);
+
 static void TestSHA256(CuTest* tc) {
 	int res;
 	KSI_DataHasher *hsr = NULL;
@@ -28,13 +30,13 @@ static void TestSHA256(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA2_256, &hsr);
-	CuAssert(tc, "Failed to open DataHasher", res == KSI_OK && hsr != NULL);
+	KSITest_assertCreateCall(tc, "Failed to open DataHasher", res, hsr);
 
 	res = KSI_DataHasher_add(hsr, (unsigned char *)data, strlen(data));
 	CuAssert(tc, "Failed to add data", res == KSI_OK);
 
 	res = KSI_DataHasher_close(hsr, &hsh);
-	CuAssert(tc, "Failed to close hasher.", res == KSI_OK && hsh != NULL);
+	KSITest_assertCreateCall(tc, "Failed to close hasher", res, hsh);
 
 	res = KSI_DataHash_extract(hsh, NULL, &digest, &digest_length);
 	CuAssert(tc, "Failed to parse imprint.", res == KSI_OK);
@@ -60,7 +62,7 @@ static void TestSHA256Parts(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA2_256, &hsr);
-	CuAssert(tc, "Failed to open DataHasher", res == KSI_OK && hsr != NULL);
+	KSITest_assertCreateCall(tc, "Failed to open DataHasher", res, hsr);
 
 	while (data[i] != NULL) {
 		res = KSI_DataHasher_add(hsr, (unsigned char *)data[i], strlen(data[i]));
@@ -68,7 +70,7 @@ static void TestSHA256Parts(CuTest* tc) {
 		i++;
 	}
 	res = KSI_DataHasher_close(hsr, &hsh);
-	CuAssert(tc, "Failed to close hasher.", res == KSI_OK && hsh != NULL);
+	KSITest_assertCreateCall(tc, "Failed to close hasher.", res, hsh);
 
 	res = KSI_DataHash_extract(hsh, NULL, &digest, &digest_length);
 	CuAssert(tc, "Failed to parse imprint.", res == KSI_OK);
@@ -93,7 +95,7 @@ static void TestSHA256Reset(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA2_256, &hsr);
-	CuAssert(tc, "Failed to open DataHasher", res == KSI_OK && hsr != NULL);
+	KSITest_assertCreateCall(tc, "Failed to open DataHasher", res, hsr);
 
 	res = KSI_DataHasher_add(hsr, "TEST", strlen("TEST"));
 	CuAssert(tc, "Failed to add data", res == KSI_OK);
@@ -106,7 +108,7 @@ static void TestSHA256Reset(CuTest* tc) {
 	CuAssert(tc, "Failed to add data", res == KSI_OK);
 
 	res = KSI_DataHasher_close(hsr, &hsh);
-	CuAssert(tc, "Failed to close hasher.", res == KSI_OK && hsh != NULL);
+	KSITest_assertCreateCall(tc, "Failed to close hasher", res, hsh);
 
 	res = KSI_DataHash_extract(hsh, NULL, &digest, &digest_length);
 	CuAssert(tc, "Failed to parse imprint.", res == KSI_OK);
@@ -130,7 +132,7 @@ static void TestSHA256Empty(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA2_256, &hsr);
-	CuAssert(tc, "Failed to open DataHasher", res == KSI_OK && hsr != NULL);
+	KSITest_assertCreateCall(tc, "Failed to open DataHasher", res, hsr);
 
 	res = KSI_DataHasher_add(hsr, "TEST", strlen("TEST"));
 	CuAssert(tc, "Failed to add data", res == KSI_OK);
@@ -139,7 +141,7 @@ static void TestSHA256Empty(CuTest* tc) {
 	CuAssert(tc, "Failed to reset hasher", res == KSI_OK);
 
 	res = KSI_DataHasher_close(hsr, &hsh);
-	CuAssert(tc, "Failed to close empty hasher.", res == KSI_OK && hsh != NULL);
+	KSITest_assertCreateCall(tc, "Failed to close empty hasher.", res, hsh);
 
 	res = KSI_DataHash_extract(hsh, NULL, &digest, &digest_length);
 	CuAssert(tc, "Failed to parse imprint.", res == KSI_OK);
