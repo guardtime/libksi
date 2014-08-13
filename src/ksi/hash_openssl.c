@@ -156,7 +156,7 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 	KSI_ERR err;
 	int res;
 	KSI_DataHash *hsh = NULL;
-	unsigned char *digest = NULL;
+	unsigned char digest[KSI_MAX_IMPRINT_LEN];
 	unsigned int digest_length;
 	unsigned int hash_length;
 
@@ -167,12 +167,6 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 	hash_length = KSI_getHashLength(hasher->algorithm);
 	if (hash_length == 0) {
 		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Error finding digest length.");
-		goto cleanup;
-	}
-
-	digest = KSI_malloc(hash_length);
-	if (digest == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
@@ -197,7 +191,6 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 
 cleanup:
 
-	KSI_free(digest);
 	KSI_DataHash_free(hsh);
 
 	return KSI_RETURN(&err);

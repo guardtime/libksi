@@ -9,7 +9,7 @@ struct KSI_DataHash_st {
 	/* KSI context */
 	KSI_CTX *ctx;
 
-	unsigned char *imprint;
+	unsigned char imprint[KSI_MAX_IMPRINT_LEN + 1]; /* For an extra '0' for meta hash. */
 	unsigned int imprint_length;
 };
 
@@ -59,7 +59,6 @@ static struct KSI_hashAlgorithmInfo_st {
 
 void KSI_DataHash_free(KSI_DataHash *hash) {
 	if (hash != NULL) {
-		KSI_free(hash->imprint);
 		KSI_free(hash);
 	}
 }
@@ -92,7 +91,7 @@ int KSI_DataHash_extract(const KSI_DataHash *hash, int *hash_id, const unsigned 
 	KSI_BEGIN(hash->ctx, &err);
 
 	if (digest_length != NULL) *digest_length = hash->imprint_length - 1;
-	if (hash_id != NULL) *hash_id = *hash->imprint;
+	if (hash_id != NULL) *hash_id = hash->imprint[0];
 	if (digest != NULL) {
 		*digest = hash->imprint + 1;
 	}
@@ -110,7 +109,6 @@ cleanup:
 int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *digest, unsigned int digest_length, KSI_DataHash **hash) {
 	KSI_ERR err;
 	KSI_DataHash *tmp_hash = NULL;
-	unsigned char *tmp_imprint = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, digest != NULL) goto cleanup;
@@ -123,6 +121,11 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *dige
 		goto cleanup;
 	}
 
+	if (digest_length > KSI_MAX_IMPRINT_LEN) {
+		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Internal buffer too short to hold imprint");
+		goto cleanup;
+	}
+
 	tmp_hash = KSI_new(KSI_DataHash);
 	if (tmp_hash == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
@@ -130,20 +133,10 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *dige
 	}
 
 	tmp_hash->ctx = ctx;
-	tmp_hash->imprint = NULL;
 
-	tmp_imprint = KSI_calloc(digest_length + 1, 1);
-	if (tmp_imprint == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	*tmp_imprint = (unsigned char)hash_id;
-	memcpy(tmp_imprint + 1, digest, digest_length);
-
-	tmp_hash->imprint = tmp_imprint;
+	tmp_hash->imprint[0] = (unsigned char)hash_id;
+	memcpy(tmp_hash->imprint + 1, digest, digest_length);
 	tmp_hash->imprint_length = digest_length + 1;
-	tmp_imprint = NULL;
 
 	*hash = tmp_hash;
 	tmp_hash = NULL;
@@ -152,7 +145,6 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *dige
 
 cleanup:
 
-	KSI_free(tmp_imprint);
 	KSI_DataHash_free(tmp_hash);
 
 	return KSI_RETURN(&err);
@@ -446,14 +438,7 @@ int KSI_DataHash_MetaHash_fromTlv(KSI_TLV *tlv, KSI_DataHash **hsh) {
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Make sure that the contents of this imprint is a null terminated sequence of bytes. */
-	if (data_len + 3 >= tmp->imprint_length && tmp->imprint[tmp->imprint_length - 1] != 0) {
-		KSI_realloc(tmp->imprint, tmp->imprint_length + 1);
-		if (tmp->imprint == NULL) {
-			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-			goto cleanup;
-		}
-		tmp->imprint[tmp->imprint_length] = 0;
-	}
+	tmp->imprint[KSI_MAX_IMPRINT_LEN] = 0; /* Write extra 0 */
 
 	*hsh = tmp;
 	tmp = NULL;
