@@ -147,7 +147,7 @@ extern "C" {
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_getUInt64Value(KSI_TLV *tlv, KSI_uint64_t *val);
+	int KSI_TLV_getUInt64Value(const KSI_TLV *tlv, KSI_uint64_t *val);
 
 	/**
 	 * This function extracts string value from the TLV.
@@ -283,7 +283,7 @@ extern "C" {
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_toString(KSI_TLV *tlv, char **str);
+	int KSI_TLV_toString(const KSI_TLV *tlv, char **str);
 
 	/**
 	 * This functions makes an identical copy of a TLV by serializing, parsing

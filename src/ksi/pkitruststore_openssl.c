@@ -609,7 +609,12 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	res = extractCertificate(signature, &cert);
 	KSI_CATCH(&err, res) goto cleanup;
 
+	KSI_LOG_debug(pki->ctx, "Verifying PKI signature certificate.");
+
 #ifdef MAGIC_EMAIL
+
+	KSI_LOG_debug(pki->ctx, "Verifying PKI signature certificate with e-mail address '%s'", MAGIC_EMAIL);
+
 	subj = X509_get_subject_name(cert);
 	if (subj == NULL) {
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Unable to get subject name from certificate.");
@@ -653,6 +658,8 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 		goto cleanup;
 	}
 
+	KSI_LOG_debug(pki->ctx, "PKI signature certificate verified.");
+
 	KSI_SUCCESS(&err);
 
 cleanup:
@@ -672,6 +679,8 @@ int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned cha
 	KSI_PRE(&err, data != NULL) goto cleanup;
 	KSI_PRE(&err, signature != NULL) goto cleanup;
 	KSI_BEGIN(pki->ctx, &err);
+
+	KSI_LOG_debug(pki->ctx, "Starting to verify publications file signature.");
 
 	if (data_len > INT_MAX) {
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Data too long (more than MAX_INT).");
@@ -693,6 +702,8 @@ int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned cha
 		KSI_FAIL(&err, KSI_INVALID_PKI_SIGNATURE, "PKI Signature not verified.");
 		goto cleanup;
 	}
+
+	KSI_LOG_debug(pki->ctx, "Signature verified.");
 
 	res = KSI_PKITruststore_verifySignatureCertificate(pki, signature);
 	KSI_CATCH(&err, res) goto cleanup;
