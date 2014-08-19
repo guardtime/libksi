@@ -723,12 +723,13 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 	ASN1_OBJECT* algorithm = NULL;
     EVP_MD_CTX md_ctx;
     X509 *x509 = NULL;
-
 	const EVP_MD *evp_md;
-
 	EVP_PKEY *pubKey = NULL;
 
-	KSI_PRE(&err, data != NULL && data_len > 0) goto cleanup;
+	/* Needs to be initialized before jumping to cleanup. */
+    EVP_MD_CTX_init(&md_ctx);
+
+    KSI_PRE(&err, data != NULL && data_len > 0) goto cleanup;
 	KSI_PRE(&err, signature != NULL && signature_len > 0) goto cleanup;
 	KSI_PRE(&err, signature_len < UINT_MAX) goto cleanup;
 	KSI_PRE(&err, algoOid != NULL) goto cleanup;
@@ -736,13 +737,13 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 	KSI_BEGIN(ctx, &err);
 
 	KSI_LOG_debug(ctx, "Verifying PKI signature.");
-    EVP_MD_CTX_init(&md_ctx);
 
 	x509 = certificate->x509;
 
 	algorithm = OBJ_txt2obj(algoOid, 1);
 
 	if (algorithm == NULL) {
+		KSI_LOG_debug(ctx, "Unknown hash algorithm '%s'.", algoOid);
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Unknown hash algorithm.");
 		goto cleanup;
 	}
