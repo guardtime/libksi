@@ -1,6 +1,6 @@
 #include "internal.h"
 
-#if KSI_HASH_IMPL == KSI_IMPL_WINAPI
+#if KSI_HASH_IMPL == KSI_IMPL_CRYPTOAPI
 
 #include <windows.h>
 #include <Wincrypt.h>

@@ -127,12 +127,12 @@ extern "C" {
 	int KSI_PKISignature_toTlv(KSI_PKISignature *sig, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 	/**
-	 * Function for verifying a raw signature. TODO! - explain in detail!
+	 * Function for verifying a raw PKCS#1 signature. TODO! - explain in detail!
 	 * \param[in]	ctx				KSI contetx.
 	 * \param[in]	data			Pointer to input data.
 	 * \param[in]	data_len		Input data len.
-	 * \param[in]	algoOid			Algorithm used to sign the input data.
-	 * \param[in]	signature		Pointer to the raw signature.
+	 * \param[in]	algoOid			Algorithm OID used to sign the input data.
+	 * \param[in]	signature		Pointer to the raw PKCS#1 signature.
 	 * \param[in]	signature_len	Signature length.
 	 * \param[in]	cert			PKI Certificate object.
 	 *

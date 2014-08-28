@@ -17,7 +17,7 @@
   * Crypo implementations.
   */
 #define KSI_IMPL_OPENSSL		4
-#define KSI_IMPL_WINAPI			5
+#define KSI_IMPL_CRYPTOAPI			5
 
 /**
  * Default implementation for HTTP network client.
