@@ -448,7 +448,6 @@ int KSI_DataHash_MetaHash_fromTlv(KSI_TLV *tlv, KSI_DataHash **hsh) {
 cleanup:
 
 	KSI_nofree(ctx);
-	KSI_nofree(raw);
 	KSI_DataHash_free(tmp);
 
 	return KSI_RETURN(&err);

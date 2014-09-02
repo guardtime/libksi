@@ -1,4 +1,5 @@
 #include "internal.h"
+#include "publicationsfile_impl.h"
 
 struct KSI_MetaData_st {
 	KSI_CTX *ctx;
@@ -118,19 +119,6 @@ struct KSI_CertificateRecord_st {
 	KSI_OctetString *certId;
 	KSI_PKICertificate *cert;
 };
-
-struct KSI_PublicationData_st {
-	KSI_CTX *ctx;
-	KSI_Integer *time;
-	KSI_DataHash *imprint;
-};
-
-struct KSI_PublicationRecord_st {
-	KSI_CTX *ctx;
-	KSI_PublicationData *publishedData;
-	KSI_LIST(KSI_Utf8String) *publicationRef;
-};
-
 
 KSI_IMPLEMENT_LIST(KSI_MetaData, KSI_MetaData_free);
 KSI_IMPLEMENT_LIST(KSI_HashChainLink, KSI_HashChainLink_free);
@@ -289,6 +277,24 @@ cleanup:
 
 KSI_CTX *KSI_CalendarHashChain_getCtx(KSI_CalendarHashChain *t){
 	return t != NULL ? t->ctx : NULL;
+}
+
+int KSI_CalendarHashChain_aggregate(KSI_CalendarHashChain *chain, KSI_DataHash **hsh) {
+	KSI_ERR err;
+	int res;
+
+	KSI_PRE(&err, chain != NULL) goto cleanup;
+	KSI_PRE(&err, hsh != NULL) goto cleanup;
+	KSI_BEGIN(chain->ctx, &err);
+
+	res = KSI_HashChain_aggregateCalendar(chain->hashChain, chain->inputHash, hsh);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
 }
 
 KSI_IMPLEMENT_GETTER(KSI_CalendarHashChain, KSI_Integer*, publicationTime, PublicationTime);

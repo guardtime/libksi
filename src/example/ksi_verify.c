@@ -13,6 +13,7 @@ int main(int argc, char **argv) {
 	FILE *in = NULL;
 	unsigned char buf[1024];
 	unsigned buf_len;
+	const KSI_VerificationResult *info = NULL;
 
 	/* Init context. */
 	res = KSI_CTX_new(&ksi);
@@ -71,14 +72,6 @@ int main(int argc, char **argv) {
 	}
 	printf("ok\n");
 
-	printf("Verifying signature... ");
-	res = KSI_Signature_verify(sig, ksi);
-	if (res != KSI_OK) {
-		printf("failed (%s)\n", KSI_getErrorString(res));
-		goto cleanup;
-	}
-	printf("ok\n");
-
 	/* Create hasher. */
 	res = KSI_Signature_createDataHasher(sig, &hsr);
 	if (res != KSI_OK) {
@@ -110,17 +103,27 @@ int main(int argc, char **argv) {
 	}
 
 	printf("Verifying document hash... ");
-	res = KSI_Signature_verifyDataHash(sig, hsh);
-	if (res != KSI_OK) {
-		printf("failed (%s)\n", KSI_getErrorString(res));
-		goto cleanup;
+	res = KSI_Signature_verifyDataHash(sig, ksi, hsh);
+	switch (res) {
+		case KSI_VERIFICATION_FAILURE:
+			printf("failed\n");
+			break;
+		default:
+			printf("failed (%s)\n", KSI_getErrorString(res));
+			goto cleanup;
 	}
-	printf("ok\n");
-	printf("Document verified.\n");
+	res = KSI_Signature_getVerificationResult(sig, &info);
+	if (res != KSI_OK) goto cleanup;
+
+	KSI_VerificationResult_dump(info);
 
 	res = KSI_OK;
 
 cleanup:
+
+	if (res != KSI_OK && ksi != NULL) {
+		KSI_ERR_statusDump(ksi, stderr);
+	}
 
 	if (in != NULL) fclose(in);
 

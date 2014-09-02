@@ -6,6 +6,8 @@
 KSI_IMPLEMENT_GET_CTX(KSI_NetworkClient);
 KSI_IMPLEMENT_GET_CTX(KSI_RequestHandle);
 
+KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendPdu);
+
 /**
  *
  */
@@ -307,6 +309,42 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendResp **resp) {
+	KSI_ERR err;
+	int res;
+	KSI_ExtendPdu *pdu = NULL;
+	const unsigned char *raw = NULL;
+	unsigned len;
+
+	KSI_PRE(&err, handle != NULL) goto cleanup;
+	KSI_PRE(&err, resp != NULL) goto cleanup;
+	KSI_BEGIN(handle->ctx, &err);
+
+	res = KSI_RequestHandle_getResponse(handle, &raw, &len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_ExtendPdu_new(handle->ctx, &pdu);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_TlvTemplate_parse(handle->ctx, raw, len, KSI_TLV_TEMPLATE(KSI_ExtendPdu), pdu);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_ExtendPdu_getResponse(pdu, resp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_ExtendPdu_setResponse(pdu, NULL);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+
+	KSI_ExtendPdu_free(pdu);
+
+	return KSI_RETURN(&err);
+}
+
 int KSI_NetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	KSI_ERR err;
 	KSI_NetworkClient *pr = NULL;
@@ -403,3 +441,4 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
+

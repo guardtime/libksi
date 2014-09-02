@@ -143,7 +143,7 @@ static void testExtendingWithoutPublication(CuTest* tc) {
 
 	KSITest_setFileMockResponse(tc, "test/resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv");
 
-	res = KSI_Signature_extend(sig, NULL, &ext);
+	res = KSI_Signature_extend(sig, ctx, NULL, &ext);
 	CuAssert(tc, "Unable to extend the signature to the head", res == KSI_OK && ext != NULL);
 
 	res = KSI_Signature_serialize(ext, &serialized, &serialized_len);

@@ -1,5 +1,6 @@
 #include <string.h>
 #include "net_http_impl.h"
+#include <assert.h>
 
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu)
 KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendPdu)
@@ -28,7 +29,6 @@ static int setStringParam(char **param, char *val) {
 
 cleanup:
 
-	KSI_nofree(pctx);
 	KSI_free(tmp);
 
 	return res;
@@ -279,8 +279,8 @@ static int httpClientCtx_new(KSI_CTX *ctx, KSI_HttpClientCtx **http) {
 	}
 
 	tmp->ctx = ctx;
-	setIntParam(&tmp->connectionTimeoutSeconds, 5);
-	setIntParam(&tmp->readTimeoutSeconds, 5);
+	setIntParam(&tmp->connectionTimeoutSeconds, 10);
+	setIntParam(&tmp->readTimeoutSeconds, 10);
 	setStringParam(&tmp->urlSigner, KSI_DEFAULT_URI_AGGREGATOR);
 	setStringParam(&tmp->urlExtender, KSI_DEFAULT_URI_EXTENDER);
 	setStringParam(&tmp->urlPublication, KSI_DEFAULT_URI_PUBLICATIONS_FILE);

@@ -46,6 +46,7 @@ int KSI_HashChainLink_setImprint(KSI_HashChainLink *t, KSI_DataHash *imprint);
 void KSI_CalendarHashChain_free(KSI_CalendarHashChain *t);
 int KSI_CalendarHashChain_new(KSI_CTX *ctx, KSI_CalendarHashChain **t);
 KSI_CTX *KSI_CalendarHashChain_getCtx(KSI_CalendarHashChain *t);
+int KSI_CalendarHashChain_aggregate(KSI_CalendarHashChain *chain, KSI_DataHash **hsh);
 int KSI_CalendarHashChain_getPublicationTime(const KSI_CalendarHashChain *t, KSI_Integer **publicationTime);
 int KSI_CalendarHashChain_getAggregationTime(const KSI_CalendarHashChain *t, KSI_Integer **aggregationTime);
 int KSI_CalendarHashChain_getInputHash(const KSI_CalendarHashChain *t, KSI_DataHash **inputHash);

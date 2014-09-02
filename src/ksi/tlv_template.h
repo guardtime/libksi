@@ -443,6 +443,11 @@ extern "C" {
 	int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *template, KSI_LIST(KSI_TLV) *reminder);
 
 	/**
+	 * TODO!
+	 */
+	 int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *template, void *payload);
+
+	/**
 	 * This function acts similary as #KSI_TlvTemplate_extract but allows the caller to specify how the top level
 	 * TLV's are retrieved (e.g. read from a file).
 	 * \param[in]		ctx				KSI context.

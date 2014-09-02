@@ -1375,7 +1375,6 @@ static int stringify(const KSI_TLV *tlv, int indent, char *str, unsigned size, u
 				if (res != KSI_OK) goto cleanup;
 			}
 
-			KSI_nofree(tmp);
 			break;
 		default:
 			res = KSI_INVALID_ARGUMENT;

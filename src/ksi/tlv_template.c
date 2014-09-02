@@ -209,9 +209,6 @@ static int encodeCalendarHashChainLink(KSI_CTX *ctx, KSI_TLV *tlv, const KSI_Cal
 
 cleanup:
 
-	KSI_nofree(aggrTime);
-	KSI_nofree(publTime);
-	KSI_nofree(inputHash);
 	KSI_nofree(chain);
 
 	KSI_TLV_free(tmp);
@@ -400,7 +397,10 @@ int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI
 	iter.idx = 0;
 
 	res = KSI_TlvTemplate_extractGenerator(ctx, payload, (void *)&iter, template, reminder, (int (*)(void *, KSI_TLV **))TLVListIterator_next);
-	KSI_CATCH(&err, res) goto cleanup;
+	KSI_CATCH(&err, res) {
+		KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Parsed tlv before failure", tlv);
+		goto cleanup;
+	}
 
 	KSI_SUCCESS(&err);
 
@@ -408,6 +408,35 @@ cleanup:
 
 	return KSI_RETURN(&err);
 
+}
+
+int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *template, void *payload) {
+	KSI_ERR err;
+	int res;
+	KSI_TLV *tlv = NULL;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, raw != NULL) goto cleanup;
+	KSI_PRE(&err, raw_len > 0) goto cleanup;
+	KSI_PRE(&err, template != NULL) goto cleanup;
+	KSI_PRE(&err, payload != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_TLV_parseBlob(ctx, raw, raw_len, &tlv);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_TlvTemplate_extract(ctx, payload, tlv, template, NULL);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Parsed TLV", tlv);
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_TLV_free(tlv);
+
+	return KSI_RETURN(&err);
 }
 
 static size_t getTemplateLength(const KSI_TlvTemplate *template) {

@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "internal.h"
+#include "publicationsfile_impl.h"
 
 KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationsHeader)
 KSI_IMPORT_TLV_TEMPLATE(KSI_CertificateRecord)
@@ -205,8 +206,6 @@ int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, size_t raw_len, KS
 cleanup:
 
 
-	KSI_nofree(der);
-
 	KSI_free(tmpRaw);
 	KSI_TLV_free(gen.tlv);
 	KSI_PublicationsFile_free(tmp);
@@ -215,13 +214,18 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_PublicationsFile_verify(KSI_PublicationsFile *pubFile, KSI_PKITruststore *pki) {
+int KSI_PublicationsFile_verify(KSI_PublicationsFile *pubFile, KSI_CTX *ctx) {
 	KSI_ERR err;
 	int res;
+	KSI_CTX *useCtx = ctx;
+	KSI_PKITruststore *pki = NULL;
 
 	KSI_PRE(&err, pubFile != NULL) goto cleanup;
-	KSI_PRE(&err, pki != NULL) goto cleanup;
 	KSI_BEGIN(pubFile->ctx, &err);
+
+	if (useCtx == NULL) {
+		useCtx = pubFile->ctx;
+	}
 
 	/* Make sure the signature exists. */
 	if (pubFile->signature == NULL) {
@@ -237,6 +241,9 @@ int KSI_PublicationsFile_verify(KSI_PublicationsFile *pubFile, KSI_PKITruststore
 		goto cleanup;
 	}
 
+	res = KSI_getPKITruststore(useCtx, &pki);
+	KSI_CATCH(&err, res) goto cleanup;
+
 	res = KSI_PKITruststore_verifySignature(pki, pubFile->raw, pubFile->signatureOffset, pubFile->signature);
 	KSI_CATCH(&err, res) {
 		KSI_FAIL(&err, res, "Publications file not trusted.");
@@ -246,6 +253,9 @@ int KSI_PublicationsFile_verify(KSI_PublicationsFile *pubFile, KSI_PKITruststore
 	KSI_SUCCESS(&err);
 
 cleanup:
+
+	KSI_nofree(useCtx);
+	KSI_nofree(pki);
 
 	return KSI_RETURN(&err);
 }
@@ -543,7 +553,8 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-
+/*
+ */
 int KSI_PublicationsFile_getNearestPublication(const KSI_PublicationsFile *trust, const KSI_Integer *pubTime, KSI_PublicationRecord **pubRec) {
 	KSI_ERR err;
 	int res;
@@ -641,6 +652,37 @@ cleanup:
 
 	KSI_nofree(result);
 	KSI_nofree(result_tm);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_PublicationsFile_findPublication(const KSI_PublicationsFile *trust, KSI_PublicationRecord *inRec, KSI_PublicationRecord **outRec) {
+	KSI_ERR err;
+	int res;
+	size_t i;
+
+	KSI_PRE(&err, trust != NULL) goto cleanup;
+	KSI_PRE(&err, inRec != NULL) goto cleanup;
+	KSI_PRE(&err, outRec != NULL) goto cleanup;
+	KSI_BEGIN(trust->ctx, &err);
+
+	for (i = 0; i < KSI_PublicationRecordList_length(trust->publications); i++) {
+		KSI_PublicationRecord *pr = NULL;
+
+		res = KSI_PublicationRecordList_elementAt(trust->publications, i, &pr);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		if (KSI_DataHash_equals(pr->publishedData->imprint, inRec->publishedData->imprint) && KSI_Integer_equals(pr->publishedData->time, inRec->publishedData->time) ) {
+			*outRec = pr;
+			break;
+		}
+
+		KSI_nofree(pr);
+	}
+
+	KSI_SUCCESS(&err);
+
+cleanup:
 
 	return KSI_RETURN(&err);
 }
@@ -745,75 +787,76 @@ cleanup:
 	return res;
 }
 
-int KSI_PublicationData_toBase32(const KSI_PublicationData *published_data, char **publication) {
+int KSI_PublicationData_toBase32(const KSI_PublicationData *pubData, char **pubStr) {
 	KSI_ERR err;
-	KSI_CTX *ctx = NULL;
-	KSI_DataHash *hsh = NULL;
-	KSI_Integer *publicationTime = NULL;
 	const unsigned char *imprint = NULL;
 	unsigned int imprint_len = 0;
 	int res;
 	KSI_uint64_t publication_identifier = 0;
-	unsigned char *binary_publication = NULL;
-	size_t binary_publication_length;
+	unsigned char *binPub = NULL;
+	size_t binPub_length;
 	int i;
 	unsigned long tmp_ulong;
-	char *tmp_publication = NULL;
+	char *tmp = NULL;
 
-	KSI_PRE(&err, published_data != NULL) goto cleanup;
-	ctx = KSI_PublicationData_getCtx((KSI_PublicationData *)published_data);
+	KSI_PRE(&err, pubData != NULL) goto cleanup;
+	KSI_BEGIN(pubData->ctx, &err);
 
-	KSI_BEGIN(ctx, &err);
-
-	res = KSI_PublicationData_getImprint(published_data, &hsh);
+	res = KSI_DataHash_getImprint(pubData->imprint, &imprint, &imprint_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_DataHash_getImprint(hsh, &imprint, &imprint_len);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	binary_publication_length =	8 + imprint_len + 4;
-	binary_publication = KSI_calloc(binary_publication_length, 1);
-	if (binary_publication == NULL) {
+	binPub_length =	8 + imprint_len + 4;
+	binPub = KSI_calloc(binPub_length, 1);
+	if (binPub == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
-	res = KSI_PublicationData_getTime(published_data, &publicationTime);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	if (publicationTime == NULL) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Publication has no publication time.");
-		goto cleanup;
-	}
-
-	publication_identifier = KSI_Integer_getUInt64(publicationTime);
+	publication_identifier = KSI_Integer_getUInt64(pubData->time);
 
 	for (i = 7; i >= 0; --i) {
-		binary_publication[i] = (unsigned char) (publication_identifier & 0xff);
+		binPub[i] = (unsigned char) (publication_identifier & 0xff);
 		publication_identifier >>= 8;
 	}
 
-	memcpy(binary_publication + 8, imprint, imprint_len);
+	memcpy(binPub + 8, imprint, imprint_len);
 
-	tmp_ulong = KSI_crc32(binary_publication, binary_publication_length - 4, 0);
+	tmp_ulong = KSI_crc32(binPub, binPub_length - 4, 0);
 	for (i = 3; i >= 0; --i) {
-		binary_publication[binary_publication_length - 4 + i] =
+		binPub[binPub_length - 4 + i] =
 			(unsigned char) (tmp_ulong & 0xff);
 		tmp_ulong >>= 8;
 	}
 
-	res = KSI_base32Encode(binary_publication, binary_publication_length, 6, &tmp_publication);
+	res = KSI_base32Encode(binPub, binPub_length, 6, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	*publication = tmp_publication;
-	tmp_publication = NULL;
+	*pubStr = tmp;
+	tmp = NULL;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
 
-	KSI_free(binary_publication);
-	KSI_free(tmp_publication);
+	KSI_free(binPub);
+	KSI_free(tmp);
 
 	return KSI_RETURN(&err);
+}
+
+int KSI_PublicationRecord_toBase32(KSI_PublicationRecord *pubRec, char **pubStr) {
+	KSI_ERR err;
+	int res;
+	KSI_PRE(&err, pubRec != NULL) goto cleanup;
+	KSI_PRE(&err, pubStr != NULL) goto cleanup;
+	KSI_BEGIN(pubRec->ctx, &err);
+
+	res = KSI_PublicationData_toBase32(pubRec->publishedData, pubStr);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return res;
 }

@@ -154,11 +154,11 @@ static void testVerifyDocument(CuTest *tc) {
 	res = KSI_Signature_parse(ctx, in, in_len, &sig);
 	CuAssert(tc, "Failed to parse signature", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_verifyDocument(sig, doc, strlen(doc));
+	res = KSI_Signature_verifyDocument(sig, ctx, doc, strlen(doc));
 	CuAssert(tc, "Failed to verify valid document", res == KSI_OK);
 
-	res = KSI_Signature_verifyDocument(sig, doc, sizeof(doc));
-	CuAssert(tc, "Verification did not fail with expected error.", res == KSI_WRONG_DOCUMENT);
+	res = KSI_Signature_verifyDocument(sig, ctx, doc, sizeof(doc));
+	CuAssert(tc, "Verification did not fail with expected error.", res == KSI_VERIFICATION_FAILURE);
 
 	KSI_Signature_free(sig);
 }
@@ -192,7 +192,7 @@ static void testVerifyDocumentHash(CuTest *tc) {
 	res = KSI_DataHash_create(ctx, doc, strlen(doc), KSI_HASHALG_SHA2_256, &hsh);
 	CuAssert(tc, "Failed to create data hash", res == KSI_OK && hsh != NULL);
 
-	res = KSI_Signature_verifyDataHash(sig, hsh);
+	res = KSI_Signature_verifyDataHash(sig, ctx, hsh);
 	CuAssert(tc, "Failed to verify valid document", res == KSI_OK);
 
 	KSI_DataHash_free(hsh);
@@ -202,8 +202,8 @@ static void testVerifyDocumentHash(CuTest *tc) {
 	res = KSI_DataHash_create(ctx, doc, sizeof(doc), KSI_HASHALG_SHA2_256, &hsh);
 	CuAssert(tc, "Failed to create data hash", res == KSI_OK && hsh != NULL);
 
-	res = KSI_Signature_verifyDataHash(sig, hsh);
-	CuAssert(tc, "Verification did not fail with expected error.", res == KSI_WRONG_DOCUMENT);
+	res = KSI_Signature_verifyDataHash(sig, ctx, hsh);
+	CuAssert(tc, "Verification did not fail with expected error.", res == KSI_VERIFICATION_FAILURE);
 
 	KSI_DataHash_free(hsh);
 	hsh = NULL;
@@ -212,8 +212,8 @@ static void testVerifyDocumentHash(CuTest *tc) {
 	res = KSI_DataHash_create(ctx, doc, strlen(doc), KSI_HASHALG_SHA2_512, &hsh);
 	CuAssert(tc, "Failed to create data hash", res == KSI_OK && hsh != NULL);
 
-	res = KSI_Signature_verifyDataHash(sig, hsh);
-	CuAssert(tc, "Verification did not fail with expected error.", res == KSI_WRONG_DOCUMENT);
+	res = KSI_Signature_verifyDataHash(sig, ctx, hsh);
+	CuAssert(tc, "Verification did not fail with expected error.", res == KSI_VERIFICATION_FAILURE);
 
 	KSI_DataHash_free(hsh);
 

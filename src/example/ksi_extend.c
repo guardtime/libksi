@@ -30,6 +30,8 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
+	KSI_CTX_setLogLevel(ksi, KSI_LOG_DEBUG);
+
 	if (strncmp("-",argv[3], 1) || strncmp("-", argv[4], 1)) {
 		res = KSI_HttpClient_new(ksi, &net);
 		if (res != KSI_OK) {

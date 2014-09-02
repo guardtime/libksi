@@ -47,8 +47,11 @@ static void testVerifyPublicationsFile(CuTest *tc) {
 	res = KSI_PKITruststore_new(ctx, 0, &pki);
 	CuAssert(tc, "Unable to get PKI truststore from context.", res == KSI_OK && pki != NULL);
 
+	res = KSI_setPKITruststore(ctx, pki);
+	CuAssert(tc, "Unable to set new pki truststrore for ksi context.", res == KSI_OK);
+
 	/* Verification should fail. */
-	res = KSI_PublicationsFile_verify(pubFile, pki);
+	res = KSI_PublicationsFile_verify(pubFile, ctx);
 	CuAssert(tc, "Publications file shouldn't verify without mock certificate.", res != KSI_OK);
 
 	/* Verification should succeed. */
@@ -56,10 +59,9 @@ static void testVerifyPublicationsFile(CuTest *tc) {
 	res = KSI_PKITruststore_addLookupFile(pki, "test/resource/tlv/mock.crt");
 	CuAssert(tc, "Unable to read certificate", res == KSI_OK);
 
-	res = KSI_PublicationsFile_verify(pubFile, pki);
+	res = KSI_PublicationsFile_verify(pubFile, ctx);
 	CuAssert(tc, "Publications file should verify with mock certificate.", res == KSI_OK);
 
-	KSI_PKITruststore_free(pki);
 	KSI_PublicationsFile_free(pubFile);
 }
 

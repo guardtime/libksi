@@ -141,8 +141,6 @@ static int curlReceive(KSI_RequestHandle *handle) {
 
 cleanup:
 
-	KSI_nofree(state);
-
 	return KSI_RETURN(&err);
 }
 
@@ -193,9 +191,6 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 	KSI_SUCCESS(&err);
 
 cleanup:
-
-	KSI_nofree(request);
-	KSI_nofree(state);
 
 	CurlNetHandleCtx_free(implCtx);
 
