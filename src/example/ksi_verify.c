@@ -22,7 +22,6 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	KSI_CTX_setLogLevel(ksi, KSI_LOG_DEBUG);
 	/* Check parameters. */
 	if (argc != 5) {
 		fprintf(stderr, "Usage\n"
@@ -105,6 +104,9 @@ int main(int argc, char **argv) {
 	printf("Verifying document hash... ");
 	res = KSI_Signature_verifyDataHash(sig, ksi, hsh);
 	switch (res) {
+		case KSI_OK:
+			printf("ok\n");
+			break;
 		case KSI_VERIFICATION_FAILURE:
 			printf("failed\n");
 			break;
@@ -115,7 +117,22 @@ int main(int argc, char **argv) {
 	res = KSI_Signature_getVerificationResult(sig, &info);
 	if (res != KSI_OK) goto cleanup;
 
-	KSI_VerificationResult_dump(info);
+	if (info != NULL) {
+		size_t i;
+		printf("Verification info:\n");
+		for (i = 0; i < KSI_VerificationResult_getStepResultCount(info); i++) {
+			const KSI_VerificationStepResult *result = NULL;
+			const char *desc = NULL;
+			res = KSI_VerificationResult_getStepResult(info, i, &result);
+			if (res != KSI_OK) goto cleanup;
+			printf("\t0x%02x:\t%s", KSI_VerificationStepResult_getStep(result), KSI_VerificationStepResult_isSuccess(result) ? "OK" : "FAIL");
+			desc = KSI_VerificationStepResult_getDescription(result);
+			if (desc && *desc) {
+				printf(" (%s)", desc);
+			}
+			printf("\n");
+		}
+	}
 
 	res = KSI_OK;
 
