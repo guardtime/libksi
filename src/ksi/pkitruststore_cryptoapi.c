@@ -80,6 +80,13 @@ static int KSI_MD2hashAlg(ALG_ID hash_alg) {
 		return -1;
 }
 
+static ALG_ID algIdFromOID(const char *OID){
+	if(strcmp(OID,szOID_RSA_SHA256RSA) == 0) return CALG_SHA_256;
+	else if (strcmp(OID,szOID_RSA_SHA1RSA) == 0) return CALG_SHA1;
+	else if (strcmp(OID,szOID_RSA_SHA384RSA) == 0) return CALG_SHA_384;
+	else if (strcmp(OID,szOID_RSA_SHA512RSA) == 0) return CALG_SHA_512;
+	else return -1;
+	}
 
 /*TODO: Check CertClose error handling*/
 void KSI_PKITruststore_free(KSI_PKITruststore *trust) {
@@ -743,7 +750,7 @@ static int KSI_PKITruststore_verifyCertificate(const KSI_PKITruststore *pki, con
 		goto cleanup;
 	}
 
-	printCertChain(pChainContext);
+	//printCertChain(pChainContext);
 	
 	if (pChainContext->TrustStatus.dwErrorStatus != CERT_TRUST_NO_ERROR) {
 		KSI_LOG_debug(ctx, "%s", getCertificateChainErrorStr(pChainContext));
@@ -793,7 +800,7 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	res = extractSigningCertificate(signature, &subjectCert);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	printCertInfo(subjectCert);
+	//printCertInfo(subjectCert);
 	
 	
 #ifdef MAGIC_EMAIL
@@ -854,8 +861,8 @@ int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned cha
 		goto cleanup;
 	}
 
-	KSI_LOG_debug(ctx, "CryptoAPI: Subjects PKI Certificate info:");
-	printCertInfo(subjectCert);
+	//KSI_LOG_debug(ctx, "CryptoAPI: Subjects PKI Certificate info:");
+	//printCertInfo(subjectCert);
 	
 	res = KSI_PKITruststore_verifyCertificate(pki, subjectCert);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -897,15 +904,8 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 	KSI_BEGIN(ctx, &err);
 	
 	
-	/*TODO: fix algorithm identification*/
-	/*Get signatures ALG_ID*/
-	algorithm = CertOIDToAlgId(algoOid);
-	pOID_INFO = CryptFindOIDInfo(CRYPT_OID_INFO_OID_KEY, (void*)algoOid, 0);
-	printError(GetLastError());
-	algorithm = pOID_INFO->Algid;
-	printf(">>ALG_ID %x %x \n%s\n%s\n%s \n", algorithm, CALG_SHA_256, algoOid, certificate->x509->pCertInfo->SignatureAlgorithm.pszObjId, CertAlgIdToOID(CALG_SHA1));
-	algorithm = CALG_SHA_256;
-	if (algorithm == 0) {
+	algorithm = algIdFromOID(algoOid);
+	if (algorithm == -1) {
 		KSI_FAIL(&err, KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
 		goto cleanup;
 	}
