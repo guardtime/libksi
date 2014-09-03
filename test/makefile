@@ -23,7 +23,7 @@ HASH_PROVIDER = "$(CRYPTO_PROVIDER)"
 !ENDIF
 
 SRC_DIR = .
-OBJ_DIR = ..\obj$(RTL)
+OBJ_DIR = ..\obj\$(RTL)
 INC_DIR = ..\out\include
 LIB_DIR = ..\out\$(DLL)
 BIN_DIR = ..\out\bin

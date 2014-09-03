@@ -24,7 +24,7 @@ HASH_PROVIDER = "$(CRYPTO_PROVIDER)"
 
 SRC_DIR = .
 INCLUDE_DIR = ..\..\out\include
-OBJ_DIR = ..\..\obj$(RTL)
+OBJ_DIR = ..\..\obj\$(RTL)
 LIB_DIR = ..\..\out\$(DLL)
 BIN_DIR = ..\..\out\bin
 

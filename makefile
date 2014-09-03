@@ -40,9 +40,9 @@ default:
 	nmake $(MODEL) $(EXTRA)
 	cd ..\..
 
-all: librarys example tests
+all: libraries example tests
 
-librarys: libMT libMTd libMD libMDd
+libraries: libMT libMTd libMD libMDd
 	
 	
 libMT:
@@ -72,5 +72,5 @@ test: tests
 	$(BIN_DIR)\alltests.exe
 	
 clean:
-	@for %i in ($(OBJ_DIR)MT $(OBJ_DIR)MTd $(OBJ_DIR)MD $(OBJ_DIR)MDd $(OUT_DIR)) do @if exist .\%i rmdir /s /q .\%i
+	@for %i in ($(OBJ_DIR) $(OUT_DIR)) do @if exist .\%i rmdir /s /q .\%i
 	@for %i in ($(SRC_DIR)\ksi $(SRC_DIR)\example $(TEST_DIR)) do @if exist .\%i\*.pdb del /q .\%i\*.pdb	

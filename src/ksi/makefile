@@ -33,7 +33,7 @@ TRUSTSTORE_MACROS = $(TRUSTSTORE_MACROS) /DOPENSSL_CA_DIR=\"$(OPENSSL_CA_DIR:\=\
 !ENDIF
 
 SRC_DIR = .
-OBJ_DIR = ..\..\obj$(RTL)
+OBJ_DIR = ..\..\obj\$(RTL)
 LIB_DIR = ..\..\out\$(DLL)
 INCLUDE_DIR = ..\..\out\include\ksi
 
