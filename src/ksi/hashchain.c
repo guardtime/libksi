@@ -13,9 +13,9 @@ static long long int highBit(long long int n) {
 }
 
 
-static int addNvlImprint(KSI_DataHash *first, KSI_DataHash *second, KSI_DataHasher *hsr) {
+static int addNvlImprint(const KSI_DataHash *first, const KSI_DataHash *second, KSI_DataHasher *hsr) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_DataHash *hsh = first;
+	const KSI_DataHash *hsh = first;
 	const unsigned char *imprint = NULL;
 	unsigned int imprint_len;
 
@@ -107,7 +107,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, KSI_DataHash *inputHash, int startLevel, int hash_id, int isCalendar, int *endLevel, KSI_DataHash **outputHash) {
+static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, int startLevel, int hash_id, int isCalendar, int *endLevel, KSI_DataHash **outputHash) {
 	KSI_ERR err;
 	KSI_CTX *ctx = NULL;
 	int res;
@@ -273,13 +273,13 @@ cleanup:
 /**
  *
  */
-int KSI_HashChain_aggregate(KSI_LIST(KSI_HashChainLink) *chain, KSI_DataHash *inputHash, int startLevel, int hash_id, int *endLevel, KSI_DataHash **outputHash) {
+int KSI_HashChain_aggregate(KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, int startLevel, int hash_id, int *endLevel, KSI_DataHash **outputHash) {
 	return aggregateChain(chain, inputHash, startLevel, hash_id, 0, endLevel, outputHash);
 }
 
 /**
  *
  */
-int KSI_HashChain_aggregateCalendar(KSI_LIST(KSI_HashChainLink) *chain, KSI_DataHash *inputHash, KSI_DataHash **outputHash) {
+int KSI_HashChain_aggregateCalendar(KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, KSI_DataHash **outputHash) {
 	return aggregateChain(chain, inputHash, 0xff, -1, 1, NULL, outputHash);
 }

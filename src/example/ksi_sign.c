@@ -115,7 +115,12 @@ int main(int argc, char **argv) {
 	res = KSI_createSignature(ksi, hsh, &sign);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to sign %d.\n", res);
-		KSI_ERR_statusDump(ksi, stderr);
+		goto cleanup;
+	}
+
+	res = KSI_verifySignature(ksi, sign);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Failed to verify signature.");
 		goto cleanup;
 	}
 
@@ -157,6 +162,10 @@ int main(int argc, char **argv) {
 	res = KSI_OK;
 
 cleanup:
+
+	if (res != KSI_OK && ksi != NULL) {
+		KSI_ERR_statusDump(ksi, stderr);
+	}
 
 	if (in != NULL) fclose(in);
 	if (out != NULL) fclose(out);

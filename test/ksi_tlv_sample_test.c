@@ -21,12 +21,14 @@ static char *ok_sample[] = {
 		"test/resource/tlv/ok_nested-6.tlv",
 		"test/resource/tlv/ok_nested-7.tlv",
 		"test/resource/tlv/ok_nested-8.tlv",
+		"test/resource/tlv/ok_nested-9.tlv",
 		"test/resource/tlv/ok_str-1.tlv",
 		"test/resource/tlv/ok_str-2.tlv",
 		"test/resource/tlv/ok_str-3.tlv",
 		"test/resource/tlv/ok_str-4.tlv",
 		"test/resource/tlv/ok_str-5.tlv",
 		"test/resource/tlv/ok_str-6.tlv",
+		"test/resource/tlv/ok_str-7.tlv",
 		NULL
 };
 
@@ -177,6 +179,7 @@ static void TestSerialize(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	while (ok_sample[i] != NULL) {
+		KSI_LOG_debug(ctx, "TestSerialize: opening file '%s'", ok_sample[i]);
 		f = fopen(ok_sample[i], "rb");
 		CuAssert(tc, "Unable to open test file.", f != NULL);
 

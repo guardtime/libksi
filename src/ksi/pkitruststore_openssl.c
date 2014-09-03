@@ -609,7 +609,12 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	res = extractCertificate(signature, &cert);
 	KSI_CATCH(&err, res) goto cleanup;
 
+	KSI_LOG_debug(pki->ctx, "Verifying PKI signature certificate.");
+
 #ifdef MAGIC_EMAIL
+
+	KSI_LOG_debug(pki->ctx, "Verifying PKI signature certificate with e-mail address '%s'", MAGIC_EMAIL);
+
 	subj = X509_get_subject_name(cert);
 	if (subj == NULL) {
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Unable to get subject name from certificate.");
@@ -653,6 +658,8 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 		goto cleanup;
 	}
 
+	KSI_LOG_debug(pki->ctx, "PKI signature certificate verified.");
+
 	KSI_SUCCESS(&err);
 
 cleanup:
@@ -672,6 +679,8 @@ int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned cha
 	KSI_PRE(&err, data != NULL) goto cleanup;
 	KSI_PRE(&err, signature != NULL) goto cleanup;
 	KSI_BEGIN(pki->ctx, &err);
+
+	KSI_LOG_debug(pki->ctx, "Starting to verify publications file signature.");
 
 	if (data_len > INT_MAX) {
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Data too long (more than MAX_INT).");
@@ -694,6 +703,8 @@ int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned cha
 		goto cleanup;
 	}
 
+	KSI_LOG_debug(pki->ctx, "Signature verified.");
+
 	res = KSI_PKITruststore_verifySignatureCertificate(pki, signature);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -712,12 +723,13 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 	ASN1_OBJECT* algorithm = NULL;
     EVP_MD_CTX md_ctx;
     X509 *x509 = NULL;
-
 	const EVP_MD *evp_md;
-
 	EVP_PKEY *pubKey = NULL;
 
-	KSI_PRE(&err, data != NULL && data_len > 0) goto cleanup;
+	/* Needs to be initialized before jumping to cleanup. */
+    EVP_MD_CTX_init(&md_ctx);
+
+    KSI_PRE(&err, data != NULL && data_len > 0) goto cleanup;
 	KSI_PRE(&err, signature != NULL && signature_len > 0) goto cleanup;
 	KSI_PRE(&err, signature_len < UINT_MAX) goto cleanup;
 	KSI_PRE(&err, algoOid != NULL) goto cleanup;
@@ -725,13 +737,13 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 	KSI_BEGIN(ctx, &err);
 
 	KSI_LOG_debug(ctx, "Verifying PKI signature.");
-    EVP_MD_CTX_init(&md_ctx);
 
 	x509 = certificate->x509;
 
 	algorithm = OBJ_txt2obj(algoOid, 1);
 
 	if (algorithm == NULL) {
+		KSI_LOG_debug(ctx, "Unknown hash algorithm '%s'.", algoOid);
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Unknown hash algorithm.");
 		goto cleanup;
 	}

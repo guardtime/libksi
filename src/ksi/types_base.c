@@ -142,7 +142,6 @@ int KSI_OctetString_toTlv(KSI_OctetString *oct, unsigned tag, int isNonCritical,
 
 cleanup:
 
-	KSI_nofree(raw);
 	KSI_TLV_free(tmp);
 
 	return KSI_RETURN(&err);
@@ -262,7 +261,6 @@ int KSI_Utf8String_toTlv(KSI_Utf8String *u8str, unsigned tag, int isNonCritical,
 
 cleanup:
 
-	KSI_nofree(raw);
 	KSI_TLV_free(tmp);
 
 	return KSI_RETURN(&err);
@@ -276,25 +274,28 @@ void KSI_Integer_free(KSI_Integer *kint) {
 	}
 }
 
-KSI_Integer *KSI_Integer_clone(const KSI_Integer *val) {
-	KSI_Integer *clone = NULL;
+int KSI_Integer_clone(const KSI_Integer *val, KSI_Integer **clone) {
+	KSI_ERR err;
+	int res;
 	KSI_Integer *tmp = NULL;
 
-	int res;
-
-	if (val == NULL) goto cleanup;
+	KSI_PRE(&err, val != NULL) goto cleanup;
+	KSI_PRE(&err, clone != NULL) goto cleanup;
+	KSI_BEGIN(val->ctx, &err);
 
 	res = KSI_Integer_new(val->ctx, val->value, &tmp);
-	if (res != KSI_OK) goto cleanup;
+	KSI_CATCH(&err, res) goto cleanup;
 
-	clone = tmp;
+	*clone = tmp;
 	tmp = NULL;
+
+	KSI_SUCCESS(&err);
 
 cleanup:
 
 	KSI_Integer_free(tmp);
 
-	return clone;
+	return KSI_RETURN(&err);
 }
 
 int KSI_Integer_getSize(const KSI_Integer *kint, unsigned *size) {
@@ -417,7 +418,6 @@ int KSI_Integer_toTlv(KSI_Integer *integer, unsigned tag, int isNonCritical, int
 
 cleanup:
 
-	KSI_nofree(raw);
 	KSI_TLV_free(tmp);
 
 	return KSI_RETURN(&err);

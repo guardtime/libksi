@@ -1,6 +1,8 @@
 #include <string.h>
 
 #include "internal.h"
+#include "verification_impl.h"
+#include "signature_impl.h"
 
 typedef struct headerRec_st HeaderRec;
 
@@ -12,55 +14,6 @@ KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendPdu);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationHashChain)
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationAuthRec)
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarAuthRec)
-
-struct KSI_CalendarAuthRec_st {
-	KSI_CTX *ctx;
-
-	KSI_TLV *pubDataTlv;
-	KSI_PublicationData *pubData;
-	KSI_Utf8String *signatureAlgo;
-	KSI_PKISignedData *signatureData;
-};
-
-struct KSI_AggregationAuthRec_st {
-	KSI_CTX *ctx;
-	KSI_Integer *aggregationTime;
-	KSI_LIST(KSI_Integer) *chainIndexesList;
-	KSI_DataHash *inputHash;
-
-	KSI_Utf8String *signatureAlgo;
-
-	KSI_PKISignedData *signatureData;
-};
-
-struct KSI_AggregationHashChain_st {
-	KSI_CTX *ctx;
-	KSI_Integer *aggregationTime;
-	KSI_LIST(KSI_Integer) *chainIndex;
-	KSI_OctetString *inputData;
-	KSI_DataHash *inputHash;
-	KSI_Integer *aggrHashId;
-	KSI_LIST(KSI_HashChainLink) *chain;
-};
-
-/**
- * KSI Signature object
- */
-struct KSI_Signature_st {
-	KSI_CTX *ctx;
-
-	/* Base TLV - when serialized, this value will be used. */
-	KSI_TLV *baseTlv;
-
-	KSI_CalendarHashChain *calendarChain;
-
-	KSI_LIST(KSI_AggregationHashChain) *aggregationChainList;
-
-	KSI_CalendarAuthRec *calendarAuthRec;
-	KSI_AggregationAuthRec *aggregationAuthRec;
-	KSI_PublicationRecord *publication;
-
-};
 
 /**
  * KSI_Signature
@@ -163,8 +116,8 @@ int KSI_AggregationAuthRec_new(KSI_CTX *ctx, KSI_AggregationAuthRec **out) {
 	if (tmp == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
-	}
 
+	}
 	res = KSI_IntegerList_new(ctx, &tmp->chainIndexesList);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -358,6 +311,7 @@ KSI_END_TLV_TEMPLATE
 
 static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
 	KSI_ERR err;
+	int res;
 	KSI_Signature *tmp = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -377,6 +331,9 @@ static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
 	tmp->aggregationAuthRec = NULL;
 	tmp->aggregationChainList = NULL;
 
+	res = KSI_VerificationResult_init(ctx, &tmp->verificationResult);
+	KSI_CATCH(&err, res) goto cleanup;
+
 	*sig = tmp;
 	tmp = NULL;
 
@@ -388,330 +345,6 @@ cleanup:
 
 	return KSI_RETURN(&err);
 
-}
-
-static int verifyPublicationData(KSI_CTX *ctx, KSI_CalendarAuthRec *calAuth, const unsigned char *raw, unsigned raw_len, KSI_PKICertificate *cert) {
-	KSI_ERR err;
-	int res;
-	unsigned char *data = NULL;
-	unsigned data_len;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, calAuth != NULL) goto cleanup;
-	KSI_PRE(&err, raw != NULL) goto cleanup;
-	KSI_PRE(&err, raw_len >= 0) goto cleanup;
-	KSI_PRE(&err, cert != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	res = KSI_TLV_serialize(calAuth->pubDataTlv, &data, &data_len);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_PKITruststore_verifyRawSignature(ctx, data, data_len, KSI_Utf8String_cstr(calAuth->signatureAlgo), raw, raw_len, cert);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_free(data);
-
-	return KSI_RETURN(&err);
-}
-
-static int KSI_CalendarAuthRec_verify(KSI_CTX *ctx, KSI_CalendarAuthRec *calAuth) {
-	KSI_ERR err;
-	int res;
-	KSI_PKICertificate *cert = NULL;
-	KSI_PublicationsFile *pubFile = NULL;
-	KSI_OctetString *certId = NULL;
-	KSI_OctetString *signatureValue = NULL;
-	const unsigned char *raw = NULL;
-	unsigned int raw_len = 0;
-
-	KSI_PRE(&err, calAuth != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	res = KSI_PKISignedData_getCertId(calAuth->signatureData, &certId);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	if (certId == NULL) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Invalid format.");
-		goto cleanup;
-	}
-
-	res = KSI_receivePublicationsFile(ctx, &pubFile);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_PublicationsFile_getPKICertificateById(pubFile, certId, &cert);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	if (cert == NULL) {
-		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Unable to validate calendar auth record.");
-		goto cleanup;
-	}
-
-	res = KSI_PKISignedData_getSignatureValue(calAuth->signatureData, &signatureValue);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_OctetString_extract(signatureValue, &raw, &raw_len);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = verifyPublicationData(ctx, calAuth, raw, raw_len, cert);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_nofree(cert);
-	KSI_nofree(pubFile);
-	KSI_nofree(certId);
-	KSI_nofree(signatureValue);
-	KSI_nofree(raw);
-
-	return KSI_RETURN(&err);
-}
-
-static int verifySignatureWithExtender(KSI_CTX *ctx, KSI_Signature *sig) {
-	KSI_ERR err;
-	int res;
-	KSI_Integer *sigTime = NULL;
-
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, sig != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	res = KSI_Signature_getSigningTime(sig, &sigTime);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_Signature_extend(sig, NULL, NULL);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-}
-
-static int verifySignatureWithPublication(KSI_CTX *ctx, KSI_Signature *sig) {
-	KSI_ERR err;
-	KSI_PublicationsFile *pubFile = NULL;
-	KSI_PublicationData *pubData = NULL;
-	KSI_PublicationRecord *pubRec = NULL;
-	KSI_Integer *pubTime = NULL;
-	KSI_DataHash *pubHash = NULL;
-	KSI_DataHash *rootHash = NULL;
-	KSI_DataHash *inputHash = NULL;
-	KSI_LIST(KSI_HashChainLink) *chain = NULL;
-	int res;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, sig != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	/* Get the calendar hash chain input hash. */
-	res = KSI_CalendarHashChain_getInputHash(sig->calendarChain, &inputHash);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &pubTime);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_CalendarHashChain_getHashChain(sig->calendarChain, &chain);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Calculate calendar hash chain root hash. */
-	res = KSI_HashChain_aggregateCalendar(chain, inputHash, &rootHash);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Get the publications file. */
-	res = KSI_receivePublicationsFile(ctx, &pubFile);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Get the publication */
-	res = KSI_PublicationsFile_getPublicationDataByTime(pubFile, pubTime, &pubRec);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	if (pubRec == NULL) {
-		KSI_FAIL(&err, KSI_VERIFY_PUBLICATION_NOT_FOUND, NULL);
-		goto cleanup;
-	}
-
-	/* Extract the publication data. */
-	res = KSI_PublicationRecord_getPublishedData(pubRec, &pubData);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Extract the imprint from the published data object. */
-	res = KSI_PublicationData_getImprint(pubData, &pubHash);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Calendar chain root hash", rootHash);
-	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Publication imprint     ", pubHash);
-
-	/* Verify the hashes are correct. */
-	if (!KSI_DataHash_equals(rootHash, pubHash)) {
-		KSI_FAIL(&err, KSI_VERIFY_PUBLICATION_MISMATCH, NULL);
-		goto cleanup;
-	}
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_nofree(chain);
-	KSI_nofree(pubFile);
-	KSI_nofree(pubData);
-	KSI_nofree(pubTime);
-	KSI_nofree(pubHash);
-	KSI_nofree(inputHash);
-
-	KSI_DataHash_free(rootHash);
-
-	return KSI_RETURN(&err);
-}
-
-static int verifySignature_internal(KSI_Signature *sig) {
-	KSI_ERR err;
-	KSI_DataHash *hsh = NULL;
-	KSI_DataHash *pubHsh = NULL;
-	time_t utc_time;
-	int res;
-	int level;
-	size_t i;
-	KSI_Integer *aggregationTime = NULL;
-	KSI_Integer *publicationTime = NULL;
-	KSI_LIST(KSI_HashChainLink) *chain = NULL;
-	KSI_DataHash *inputHash = NULL;
-	int hash_id;
-
-	KSI_PRE(&err, sig != NULL) goto cleanup;
-	KSI_BEGIN(sig->ctx, &err);
-
-	if (sig->aggregationChainList == NULL || KSI_AggregationHashChainList_length(sig->aggregationChainList) == 0) {
-		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Signature does not contain any aggregation chains.");
-		goto cleanup;
-	}
-
-	if (sig->calendarChain == NULL) {
-		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Signature does not contain a calendar chain.");
-		goto cleanup;
-	}
-
-	res = KSI_CalendarHashChain_getHashChain(sig->calendarChain, &chain);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &publicationTime);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &aggregationTime);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_CalendarHashChain_getInputHash(sig->calendarChain, &inputHash);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Validate aggregation time */
-	res = KSI_HashChain_getCalendarAggregationTime(chain, publicationTime, &utc_time);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	if (aggregationTime == NULL) aggregationTime = publicationTime;
-
-
-	if ((time_t)KSI_Integer_getUInt64(aggregationTime) != utc_time) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Aggregation time mismatch.");
-		goto cleanup;
-	}
-
-	/* Aggregate aggregation chains. */
-	hsh = NULL;
-	level = 0;
-
-	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
-		const KSI_AggregationHashChain* aggregationChain = NULL;
-		KSI_DataHash *tmpHash = NULL;
-
-		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, (KSI_AggregationHashChain **)&aggregationChain);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		if (aggregationChain == NULL) break;
-
-		if (hsh != NULL) {
-			/* Validate input hash */
-			if (!KSI_DataHash_equals(hsh, aggregationChain->inputHash)) {
-				KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Aggregation chain mismatch,");
-			}
-		}
-
-		res = KSI_HashChain_aggregate(aggregationChain->chain, aggregationChain->inputHash, level, (int)KSI_Integer_getUInt64(aggregationChain->aggrHashId), &level, &tmpHash);
-		KSI_CATCH(&err, res) {
-			KSI_FAIL(&err, res, "Failed to calculate aggregation chain.");
-			goto cleanup;
-		}
-
-		if (hsh != NULL) {
-			KSI_DataHash_free(hsh);
-		}
-		hsh = tmpHash;
-	}
-
-	/* Validate calendar input hash */
-	if (!KSI_DataHash_equals(hsh, inputHash)) {
-		KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Calendar chain input hash mismatch.");
-		goto cleanup;
-	}
-
-	KSI_DataHash_free(hsh);
-	hsh = NULL;
-
-	/* Aggregate calendar chain */
-	res = KSI_HashChain_aggregateCalendar(chain, inputHash, &hsh);
-	KSI_CATCH(&err, res) goto cleanup;
-
-
-	if (sig->calendarAuthRec != NULL) {
-		res = KSI_PublicationData_getImprint(sig->calendarAuthRec->pubData, &pubHsh);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		/* Validate calendar root hash */
-		if (!KSI_DataHash_equals(hsh, pubHsh)) {
-			KSI_FAIL(&err, KSI_INVALID_SIGNATURE, "Calendar chain root hash mismatch.");
-			goto cleanup;
-		}
-	}
-
-	if (sig->aggregationAuthRec != NULL) {
-		/* TODO! */
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Validation using aggregation auth record not implemented.");
-		goto cleanup;
-	}
-
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_DataHash_free(hsh);
-
-	return KSI_RETURN(&err);
-}
-
-
-static int KSI_Signature_verifyInternal(KSI_CTX *ctx, KSI_Signature *sig) {
-	KSI_ERR err;
-	int res;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, sig != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	res = verifySignature_internal(sig);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
 }
 
 static int aggregationHashChainCmp(const KSI_AggregationHashChain **left, const KSI_AggregationHashChain **right) {
@@ -755,11 +388,6 @@ static int extractSignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature **signatur
 	res = KSI_AggregationHashChainList_sort(sig->aggregationChainList, aggregationHashChainCmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	/* Verify the internal correctness. */
-	res = KSI_Signature_verifyInternal(ctx, sig);
-	KSI_CATCH(&err, res) goto cleanup;
-
-
 	*signature = sig;
 	sig = NULL;
 
@@ -774,32 +402,6 @@ cleanup:
 
 	KSI_CalendarHashChain_free(cal);
 	KSI_Signature_free(sig);
-
-	return KSI_RETURN(&err);
-}
-
-static int createPduTlv(KSI_CTX *ctx, unsigned tag, KSI_TLV **pdu) {
-	KSI_ERR err;
-	int res;
-	KSI_TLV *tmp = NULL;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, tag >= 0 && tag <= 0x1fff) goto cleanup;
-	KSI_PRE(&err, pdu != NULL) goto cleanup;
-
-	KSI_BEGIN(ctx, &err);
-
-	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, tag, 0, 0, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	*pdu = tmp;
-	tmp = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_TLV_free(tmp);
 
 	return KSI_RETURN(&err);
 }
@@ -851,6 +453,8 @@ static int createExtendRequest(KSI_CTX *ctx, const KSI_Integer *start, const KSI
 	KSI_ERR err;
 	int res;
 	KSI_ExtendReq *tmp = NULL;
+	KSI_Integer *startTm = NULL;
+	KSI_Integer *endTm = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, start != NULL) goto cleanup;
@@ -862,12 +466,21 @@ static int createExtendRequest(KSI_CTX *ctx, const KSI_Integer *start, const KSI
 	res = KSI_ExtendReq_new(ctx, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_ExtendReq_setAggregationTime(tmp, KSI_Integer_clone(start));
+	res = KSI_Integer_clone(start, &startTm);
 	KSI_CATCH(&err, res) goto cleanup;
 
+	res = KSI_ExtendReq_setAggregationTime(tmp, startTm);
+	KSI_CATCH(&err, res) goto cleanup;
+	startTm = NULL;
+
 	if (end != NULL) {
-		res = KSI_ExtendReq_setPublicationTime(tmp, KSI_Integer_clone(end));
+		res = KSI_Integer_clone(end, &endTm);
 		KSI_CATCH(&err, res) goto cleanup;
+
+		res = KSI_ExtendReq_setPublicationTime(tmp, endTm);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		endTm = NULL;
 	}
 
 	*request = tmp;
@@ -877,6 +490,8 @@ static int createExtendRequest(KSI_CTX *ctx, const KSI_Integer *start, const KSI
 
 cleanup:
 
+	KSI_Integer_free(startTm);
+	KSI_Integer_free(endTm);
 	KSI_ExtendReq_free(tmp);
 
 	return KSI_RETURN(&err);
@@ -1237,39 +852,6 @@ cleanup:
 
 }
 
-int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx) {
-	KSI_ERR err;
-	int res;
-	KSI_CTX *ctxp = ctx;
-
-	KSI_PRE(&err, sig != NULL) goto cleanup;
-	KSI_BEGIN(sig->ctx, &err);
-
-	if (ctxp == NULL) ctxp = sig->ctx;
-
-
-	if (sig->publication != NULL) {
-		/* Verify using publication. */
-		res = verifySignatureWithPublication(ctxp, sig);
-		KSI_CATCH(&err, res) goto cleanup;
-	} else {
-		if (sig->calendarAuthRec != NULL) {
-			res = KSI_CalendarAuthRec_verify(ctxp, sig->calendarAuthRec);
-			KSI_CATCH(&err, res) goto cleanup;
-		}
-		/* Verify using extender. */
-		res = verifySignatureWithExtender(ctxp, sig);
-		KSI_CATCH(&err, res) goto cleanup;
-	}
-
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-}
-
 int KSI_Signature_create(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **signature) {
 	KSI_ERR err;
 	int res;
@@ -1317,7 +899,7 @@ cleanup:
 }
 
 /* TODO Refactor into shorter functions. */
-int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRecord *pubRec, KSI_Signature **extended) {
+int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI_PublicationRecord *pubRec, KSI_Signature **extended) {
 	KSI_ERR err;
 	int res;
 	KSI_ExtendReq *req = NULL;
@@ -1371,7 +953,7 @@ int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRe
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Send the actual request. */
-	res = KSI_sendExtendRequest(signature->ctx, req, &handle);
+	res = KSI_sendExtendRequest(ctx, req, &handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Read the response. */
@@ -1429,8 +1011,8 @@ int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRe
 	KSI_CATCH(&err, res) goto cleanup;
 	pubRecClone = NULL;
 
-	/* Validate signature before returning. */
-	res = KSI_Signature_verifyInternal(signature->ctx, tmp);
+	/* To be sure we won't return a bad signature, lets verify it. */
+	res = KSI_Signature_verify(tmp, ctx);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Return the extended signature only when requested. */
@@ -1462,6 +1044,8 @@ void KSI_Signature_free(KSI_Signature *sig) {
 		KSI_CalendarAuthRec_free(sig->calendarAuthRec);
 		KSI_AggregationAuthRec_free(sig->aggregationAuthRec);
 		KSI_PublicationRecord_free(sig->publication);
+		KSI_VerificationResult_reset(&sig->verificationResult);
+
 		KSI_free(sig);
 	}
 }
@@ -1814,32 +1398,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_DataHash *hsh) {
-	KSI_ERR err;
-	int res;
-	const KSI_DataHash *sigHsh = NULL;
-
-	KSI_PRE(&err, sig != KSI_OK) goto cleanup;
-	KSI_PRE(&err, hsh != KSI_OK) goto cleanup;
-	KSI_BEGIN(sig->ctx, &err);
-
-	res = KSI_Signature_getDocumentHash(sig, &sigHsh);
-	KSI_CATCH(&err, res) goto cleanup;
-	if (!KSI_DataHash_equals(hsh, sigHsh)) {
-		KSI_FAIL(&err, KSI_WRONG_DOCUMENT, NULL);
-		goto cleanup;
-	}
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_nofree(sigHsh);
-
-	return KSI_RETURN(&err);
-}
-
-int KSI_Signature_verifyDocument(KSI_Signature *sig, void *doc, size_t doc_len) {
+int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, size_t doc_len) {
 	KSI_ERR err;
 	int res;
 	KSI_DataHash *hsh = NULL;
@@ -1848,15 +1407,15 @@ int KSI_Signature_verifyDocument(KSI_Signature *sig, void *doc, size_t doc_len) 
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
 	KSI_PRE(&err, doc != NULL) goto cleanup;
-	KSI_BEGIN(sig->ctx, &err);
+	KSI_BEGIN(ctx, &err);
 
 	res = KSI_Signature_getHashAlgorithm(sig, &hash_id);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_DataHash_create(sig->ctx, doc, doc_len, hash_id, &hsh);
+	res = KSI_DataHash_create(ctx, doc, doc_len, hash_id, &hsh);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_Signature_verifyDataHash(sig, hsh);
+	res = KSI_Signature_verifyDataHash(sig, ctx, hsh);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
@@ -1892,6 +1451,593 @@ int KSI_Signature_createDataHasher(KSI_Signature *sig, KSI_DataHasher **hsr) {
 cleanup:
 
 	KSI_DataHasher_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
+static int initPublicationsFile(KSI_VerificationResult *info, KSI_CTX *ctx) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (info->publicationsFile == NULL) {
+		res = KSI_receivePublicationsFile(ctx, &info->publicationsFile);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
+
+	return res;
+}
+
+static int verifyAggregationChain(KSI_CTX *ctx, KSI_Signature *sig) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *hsh = NULL;
+	int level;
+	size_t i;
+	int successCount = 0;
+	KSI_DataHash *inputHash = NULL;
+	KSI_VerificationStep step = KSI_SIG_AGGREGATION_CHAIN;
+	KSI_VerificationResult *info = &sig->verificationResult;
+
+	/* Aggregate aggregation chains. */
+	hsh = NULL;
+	level = 0;
+
+	KSI_LOG_info(sig->ctx, "Verifying aggregation hash chain internal consistency.");
+
+
+	/* Aggregate all the aggregation chains. */
+	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
+		const KSI_AggregationHashChain* aggregationChain = NULL;
+		KSI_DataHash *tmpHash = NULL;
+
+
+		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, (KSI_AggregationHashChain **)&aggregationChain);
+		if (res != KSI_OK) goto cleanup;
+
+		if (aggregationChain == NULL) break;
+
+		if (hsh != NULL) {
+			/* Validate input hash */
+			if (!KSI_DataHash_equals(hsh, aggregationChain->inputHash)) {
+				break;
+			}
+		}
+
+		res = KSI_HashChain_aggregate(aggregationChain->chain, aggregationChain->inputHash, level, (int)KSI_Integer_getUInt64(aggregationChain->aggrHashId), &level, &tmpHash);
+		if (res != KSI_OK) goto cleanup;
+
+		/* TODO! Instead of freeing the object - reuse it */
+		if (hsh != NULL) {
+			KSI_DataHash_free(hsh);
+		}
+
+		hsh = tmpHash;
+
+
+		++successCount;
+	}
+
+	/* First verify internal calculations. */
+	if (successCount != KSI_AggregationHashChainList_length(sig->aggregationChainList)) {
+		res = KSI_VerificationResult_addFailure(info, step, "Aggregation hash chain calculation failed.");
+		goto cleanup;
+	}
+
+	sig->verificationResult.aggregationHash = hsh;
+	hsh = NULL;
+
+	res = KSI_VerificationResult_addSuccess(info,  step, NULL);
+
+cleanup:
+
+	KSI_DataHash_free(hsh);
+
+	return res;
+}
+
+static int verifyAggregationRoot(KSI_CTX *ctx, KSI_Signature *sig) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *inputHash = NULL;
+	KSI_VerificationStep step = KSI_SIG_CALENDAR_CHAIN;
+	KSI_VerificationResult *info = &sig->verificationResult;
+
+	KSI_LOG_info(sig->ctx, "Verifying agrgeation hash chain root.");
+
+	res = KSI_CalendarHashChain_getInputHash(sig->calendarChain, &inputHash);
+	if (res != KSI_OK) goto cleanup;
+
+	if (!KSI_DataHash_equals(sig->verificationResult.aggregationHash, inputHash)) {
+		res = KSI_VerificationResult_addFailure(info, step, "Aggregation root hash mismatch.");
+	}
+
+	res = KSI_VerificationResult_addSuccess(info, step, NULL);
+
+cleanup:
+
+	return res;
+}
+
+static int verifyCalendarChain(KSI_CTX *ctx, KSI_Signature *sig) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *rootHash = NULL;
+	KSI_Integer *calPubTime = NULL;
+	KSI_PublicationData *pubData = NULL;
+	KSI_DataHash *pubHash = NULL;
+	KSI_Integer *pubTime = NULL;
+	KSI_VerificationStep step = KSI_SIG_CAL_AUTH_REC_MATCH;
+	KSI_VerificationResult *info = &sig->verificationResult;
+
+	if (sig->calendarAuthRec == NULL) {
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	KSI_LOG_info(sig->ctx, "Verifying calendar hash chain.");
+
+	/* Calculate the root hash value. */
+	res = KSI_CalendarHashChain_aggregate(sig->calendarChain, &rootHash);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Get the publication time from calendar hash chain. */
+	res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &calPubTime);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Get publication data. */
+	res = KSI_CalendarAuthRec_getPublishedData(sig->calendarAuthRec, &pubData);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Get published hash value. */
+	res = KSI_PublicationData_getImprint(pubData, &pubHash);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Get publication date. */
+	res = KSI_PublicationData_getTime(pubData, &pubTime);
+	if (res != KSI_OK) goto cleanup;
+
+	if (KSI_Integer_equals(calPubTime, pubTime) && KSI_DataHash_equals(rootHash, pubHash)) {
+		res = KSI_VerificationResult_addSuccess(info, step, NULL);
+	} else {
+		res = KSI_VerificationResult_addFailure(info, step, "Calendar chain and auth record mismatch.");
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_DataHash_free(rootHash);
+
+	return res;
+}
+
+static int verifyCalAuthRec(KSI_CTX *ctx, KSI_Signature *sig) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_OctetString *certId = NULL;
+	KSI_PKICertificate *cert = NULL;
+	KSI_OctetString *signatureValue = NULL;
+	const unsigned char *rawSignature = NULL;
+	unsigned rawSignature_len;
+	unsigned char *rawData = NULL;
+	unsigned rawData_len;
+	KSI_VerificationStep step = KSI_SIG_CAL_AUTH_REC_SIGNATURE;
+	KSI_VerificationResult *info = &sig->verificationResult;
+
+
+	if (sig->calendarAuthRec == NULL) {
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	KSI_LOG_info(sig->ctx, "Verifying calendar auth record.");
+
+	res = KSI_PKISignedData_getCertId(sig->calendarAuthRec->signatureData, &certId);
+	if (res != KSI_OK) goto cleanup;
+
+	if (certId == NULL) {
+		res = KSI_INVALID_FORMAT;
+		goto cleanup;
+	}
+
+	res = initPublicationsFile(&sig->verificationResult, ctx);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_PublicationsFile_getPKICertificateById(sig->verificationResult.publicationsFile, certId, &cert);
+	if (res != KSI_OK) goto cleanup;
+
+	if (cert == NULL) {
+		res = KSI_VerificationResult_addFailure(info, step, "Certificate not found");
+		goto cleanup;
+	}
+
+	res = KSI_PKISignedData_getSignatureValue(sig->calendarAuthRec->signatureData, &signatureValue);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OctetString_extract(signatureValue, &rawSignature, &rawSignature_len);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_TLV_serialize(sig->calendarAuthRec->pubDataTlv, &rawData, &rawData_len);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_PKITruststore_verifyRawSignature(sig->ctx, rawData, rawData_len, KSI_Utf8String_cstr(sig->calendarAuthRec->signatureAlgo), rawSignature, rawSignature_len, cert);
+
+	if (res != KSI_OK) {
+		res = KSI_VerificationResult_addFailure(info, step, "Calendar auth record signature not verified.");
+		goto cleanup;
+	}
+
+	res = KSI_VerificationResult_addSuccess(info, step, NULL);
+
+cleanup:
+
+	KSI_free(rawData);
+
+	return res;
+}
+
+static int verifyPublication(KSI_CTX *ctx, KSI_Signature *sig) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
+	char *pubStr = NULL;
+	KSI_VerificationStep step = KSI_SIG_PUBLICATION_TRUSTED;
+	KSI_VerificationResult *info = &sig->verificationResult;
+
+
+	if (sig->publication == NULL) {
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	KSI_LOG_info(sig->ctx, "Verifying publication");
+
+	if (sig->verificationResult.useUserPublication) {
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	res = KSI_receivePublicationsFile(ctx, &pubFile);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_PublicationsFile_findPublication(pubFile, sig->publication, &pubRec);
+	if (res != KSI_OK) goto cleanup;
+
+	if (pubRec == NULL) {
+		res = KSI_VerificationResult_addFailure(info, step, "Publication not trusted.");
+		goto cleanup;
+	}
+
+	res = KSI_VerificationResult_addSuccess(info, step, NULL);
+
+cleanup:
+
+	return res;
+}
+
+static int verifyDocument(KSI_CTX *ctx, KSI_Signature *sig) {
+	int res = KSI_UNKNOWN_ERROR;
+	const KSI_DataHash *hsh = NULL;
+	KSI_VerificationStep step = KSI_SIG_DOCUMENT_MATCH;
+	KSI_VerificationResult *info = &sig->verificationResult;
+
+	if (!sig->verificationResult.verifyDocumentHash) {
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	KSI_LOG_info(sig->ctx, "Verifying document hash.");
+
+	res = KSI_Signature_getDocumentHash(sig, &hsh);
+	if (res != KSI_OK) goto cleanup;
+
+	if (!KSI_DataHash_equals(hsh, sig->verificationResult.documentHash)) {
+		KSI_LOG_logDataHash(sig->ctx, KSI_LOG_DEBUG, "Document hash", sig->verificationResult.documentHash);
+		KSI_LOG_logDataHash(sig->ctx, KSI_LOG_DEBUG, "Signed   hash", hsh);
+
+		res = KSI_VerificationResult_addFailure(info, step, "Wrong document");
+		goto cleanup;
+	}
+
+	res = KSI_VerificationResult_addSuccess(info, step, NULL);
+
+cleanup:
+
+	KSI_nofree(hsh);
+	KSI_nofree(info);
+
+	return res;
+}
+
+static int verifyPublicationsFile(KSI_CTX *ctx, KSI_Signature *sig) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *hsh = NULL;
+	KSI_VerificationStep step = KSI_PUB_SIGNATURE;
+	KSI_VerificationResult *info = &sig->verificationResult;
+
+	KSI_LOG_debug(sig->ctx, "Verifying publications file.");
+
+	res = initPublicationsFile(&sig->verificationResult, ctx);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_PublicationsFile_verify(sig->verificationResult.publicationsFile, ctx);
+	if (res == KSI_OK) {
+		res = KSI_VerificationResult_addSuccess(info, step, "Publications file verified.");
+	} else {
+		res = KSI_VerificationResult_addFailure(info, step, "Publications file not verified.");
+	}
+
+cleanup:
+
+	return res;
+}
+
+static int verifyOnline(KSI_CTX *ctx, KSI_Signature *sig) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	KSI_ExtendReq *req = NULL;
+	KSI_Integer *start = NULL;
+	KSI_Integer *startTm = NULL;
+	KSI_Integer *end = NULL;
+	KSI_Integer *endTm = NULL;
+	KSI_RequestHandle *handle = NULL;
+	KSI_DataHash *extHash = NULL;
+	KSI_DataHash *calHash = NULL;
+	KSI_ExtendResp *resp = NULL;
+	KSI_Integer *status = NULL;
+	KSI_CalendarHashChain *calChain = NULL;
+	KSI_DataHash *rootHash = NULL;
+	KSI_DataHash *pubHash = NULL;
+	KSI_VerificationStep step = KSI_SIG_VERIFY_ONLINE;
+	KSI_VerificationResult *info = &sig->verificationResult;
+
+	KSI_LOG_info(sig->ctx, "Verifying signature online.");
+
+	/* Extract start time */
+	res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &start);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Clone the start time object */
+	res = KSI_Integer_clone(start, &startTm);
+	if (res != KSI_OK) goto cleanup;
+
+	if (sig->verificationResult.useUserPublication) {
+		/* Extract end time. */
+		res = KSI_PublicationData_getTime(sig->verificationResult.userPublication, &end);
+		if (res != KSI_OK) goto cleanup;
+
+		res = KSI_Integer_clone(end, &endTm);
+		if (res != KSI_OK) goto cleanup;
+	}
+	res = createExtendRequest(sig->ctx, startTm, endTm, &req);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_sendExtendRequest(ctx, req, &handle);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_RequestHandle_getExtendResponse(handle, &resp);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_ExtendResp_getStatus(resp, &status);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Verify status. */
+	if (status != NULL && !KSI_Integer_equalsUInt(status, 0)) {
+		KSI_Utf8String *respErr = NULL;
+		char errm[1024];
+
+		res = KSI_ExtendResp_getErrorMsg(resp, &respErr);
+		if (res != KSI_OK) goto cleanup;
+
+		snprintf(errm, sizeof(errm), "Extend failure from server: '%s'", KSI_Utf8String_cstr(respErr));
+
+		res = KSI_VerificationResult_addFailure(info, step, errm);
+		goto cleanup;
+	}
+
+	res = KSI_ExtendResp_getCalendarHashChain(resp, &calChain);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_CalendarHashChain_getInputHash(calChain, &extHash);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_CalendarHashChain_getInputHash(sig->calendarChain, &calHash);
+	if (res != KSI_OK) goto cleanup;
+
+	if (!KSI_DataHash_equals(extHash, calHash)) {
+		res = KSI_VerificationResult_addFailure(info, step, "Extender returned different input hash for calendar hash chain.");
+		goto cleanup;
+	}
+
+	if (sig->verificationResult.useUserPublication) {
+		res = KSI_CalendarHashChain_aggregate(calChain, &rootHash);
+		if (res != KSI_OK) goto cleanup;
+
+		if (!KSI_DataHash_equals(rootHash, pubHash)) {
+			res = KSI_VerificationResult_addFailure(info, step, "External publication imprint mismatch.");
+			goto cleanup;
+		}
+	}
+
+	res = KSI_VerificationResult_addSuccess(info, step, "External publication imprint mismatch.");
+
+cleanup:
+
+	KSI_ExtendReq_free(req);
+	KSI_Integer_free(startTm);
+	KSI_RequestHandle_free(handle);
+	KSI_ExtendResp_free(resp);
+
+	return res;
+}
+
+#define KSI_DEFINE_VERIFICATION_POLICY(name) unsigned name[] = {
+#define KSI_END_VERIFICATION_POLICY , 0};
+
+KSI_DEFINE_VERIFICATION_POLICY(KSI_VP_DOCUMENT)
+	KSI_SIG_DOCUMENT_MATCH | KSI_SIG_AGGREGATION_CHAIN | KSI_SIG_CALENDAR_CHAIN | KSI_SIG_CAL_AUTH_REC_MATCH | KSI_SIG_CAL_AUTH_REC_SIGNATURE,
+	KSI_SIG_DOCUMENT_MATCH | KSI_SIG_AGGREGATION_CHAIN | KSI_SIG_CALENDAR_CHAIN | KSI_SIG_PUBLICATION_MATCH | KSI_SIG_PUBLICATION_TRUSTED,
+	KSI_SIG_DOCUMENT_MATCH | KSI_SIG_AGGREGATION_CHAIN | KSI_SIG_CALENDAR_CHAIN | KSI_SIG_VERIFY_ONLINE
+KSI_END_VERIFICATION_POLICY
+
+KSI_DEFINE_VERIFICATION_POLICY(KSI_VP_SIGNATURE)
+	KSI_SIG_AGGREGATION_CHAIN | KSI_SIG_CALENDAR_CHAIN | KSI_SIG_CAL_AUTH_REC_MATCH | KSI_SIG_CAL_AUTH_REC_SIGNATURE,
+	KSI_SIG_AGGREGATION_CHAIN | KSI_SIG_CALENDAR_CHAIN | KSI_SIG_PUBLICATION_MATCH | KSI_SIG_PUBLICATION_TRUSTED,
+	KSI_SIG_AGGREGATION_CHAIN | KSI_SIG_CALENDAR_CHAIN | KSI_SIG_VERIFY_ONLINE
+KSI_END_VERIFICATION_POLICY
+
+
+KSI_DEFINE_VERIFICATION_POLICY(KSI_VP_PARANOID)
+	KSI_PUB_SIGNATURE | KSI_SIG_AGGREGATION_CHAIN | KSI_SIG_CALENDAR_CHAIN | KSI_SIG_CAL_AUTH_REC_MATCH | KSI_SIG_CAL_AUTH_REC_SIGNATURE | KSI_SIG_VERIFY_ONLINE,
+	KSI_PUB_SIGNATURE | KSI_SIG_AGGREGATION_CHAIN | KSI_SIG_CALENDAR_CHAIN | KSI_SIG_PUBLICATION_MATCH | KSI_SIG_PUBLICATION_TRUSTED | KSI_SIG_VERIFY_ONLINE,
+	KSI_PUB_SIGNATURE | KSI_SIG_AGGREGATION_CHAIN | KSI_SIG_CALENDAR_CHAIN | KSI_SIG_VERIFY_ONLINE
+KSI_END_VERIFICATION_POLICY
+
+static int performVerification(unsigned policy, KSI_Signature *sig, enum KSI_VerificationStep_en step) {
+	return (policy & step) && !(sig->verificationResult.stepsPerformed & step) && !(sig->verificationResult.stepsFailed);
+}
+
+static int KSI_Signature_verifyPolicy(KSI_Signature *sig, unsigned *policy, KSI_CTX *ctx) {
+	KSI_ERR err;
+	int res;
+	unsigned i;
+
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_PRE(&err, policy != NULL) goto cleanup;
+	KSI_BEGIN(sig->ctx, &err);
+
+	for (i = 0; policy[i] != 0; i++) {
+		unsigned pol = policy[i];
+		KSI_LOG_debug(sig->ctx, "Verifying policy 0x%02x", pol);
+
+		if (performVerification(pol, sig, KSI_PUB_SIGNATURE)) {
+			res = verifyPublicationsFile(ctx, sig);
+			KSI_CATCH(&err, res) goto cleanup;
+		}
+
+		if (performVerification(pol, sig, KSI_SIG_DOCUMENT_MATCH)) {
+			res = verifyDocument(ctx, sig);
+			KSI_CATCH(&err, res) goto cleanup;
+		}
+
+		if (performVerification(pol, sig, KSI_SIG_AGGREGATION_CHAIN)) {
+			res = verifyAggregationChain(ctx, sig);
+			KSI_CATCH(&err, res) goto cleanup;
+		}
+
+		if (performVerification(pol, sig, KSI_SIG_CALENDAR_CHAIN)) {
+			res = verifyAggregationRoot(ctx, sig);
+			KSI_CATCH(&err, res) goto cleanup;
+		}
+
+		if (performVerification(pol, sig, KSI_SIG_CAL_AUTH_REC_MATCH)){
+			res = verifyCalendarChain(ctx, sig);
+			KSI_CATCH(&err, res) goto cleanup;
+		}
+
+		if (performVerification(pol, sig, KSI_SIG_CAL_AUTH_REC_SIGNATURE)) {
+			res = verifyCalAuthRec(ctx, sig);
+			KSI_CATCH(&err, res) goto cleanup;
+		}
+
+		if (performVerification(pol, sig,  KSI_SIG_PUBLICATION_TRUSTED)) {
+			res = verifyPublication(ctx, sig);
+			KSI_CATCH(&err, res) goto cleanup;
+		}
+
+		if (performVerification(pol, sig, KSI_SIG_VERIFY_ONLINE)) {
+			res = verifyOnline(ctx, sig);
+			KSI_CATCH(&err, res) goto cleanup;
+		}
+
+		if (sig->verificationResult.stepsFailed) {
+			KSI_LOG_debug(sig->ctx, "Verification failed with: 0x%02x", sig->verificationResult.stepsFailed);
+			KSI_FAIL(&err, KSI_VERIFICATION_FAILURE, "One of the performed verification steps failed.");
+			goto cleanup;
+		}
+
+		if ((pol & sig->verificationResult.stepsPerformed) == pol) {
+			KSI_LOG_debug(sig->ctx, "Verification successful with policy 0x%02x (steps performed 0x%02x)", pol, sig->verificationResult.stepsPerformed);
+			KSI_SUCCESS(&err);
+			goto cleanup;
+		}
+	}
+
+	KSI_FAIL(&err, KSI_SIG_VERIFY_ONLINE, "Signature not verified - no suitable policy.");
+
+cleanup:
+
+	return KSI_RETURN(&err);
+
+}
+
+int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx) {
+	KSI_ERR err;
+	int res;
+	KSI_CTX *useCtx = ctx;
+
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_BEGIN(sig->ctx, &err);
+
+	if (useCtx == NULL) {
+		useCtx = sig->ctx;
+	}
+
+	res = KSI_Signature_verifyPolicy(sig, KSI_VP_SIGNATURE, useCtx);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_CTX *ctx, const KSI_DataHash *docHash) {
+	KSI_ERR err;
+	int res;
+	KSI_CTX *useCtx = ctx;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_PRE(&err, docHash != NULL) goto cleanup;
+
+	KSI_BEGIN(ctx, &err);
+
+	if (useCtx == NULL) {
+		useCtx = sig->ctx;
+	}
+
+	KSI_VerificationResult_reset(&sig->verificationResult);
+
+	/* Set the document hash. */
+	sig->verificationResult.documentHash = docHash;
+	sig->verificationResult.verifyDocumentHash = true;
+
+	res = KSI_Signature_verifyPolicy(sig, KSI_VP_DOCUMENT, ctx);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_Signature_getVerificationResult(KSI_Signature *sig, const KSI_VerificationResult **info) {
+	KSI_ERR err;
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_PRE(&err, info != NULL) goto cleanup;
+	KSI_BEGIN(sig->ctx, &err);
+
+	if (!sig->verificationResult.stepsPerformed) {
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Signature not verified.");
+		goto cleanup;
+	}
+
+	*info = &sig->verificationResult;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
 
 	return KSI_RETURN(&err);
 }

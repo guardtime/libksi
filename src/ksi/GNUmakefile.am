@@ -27,8 +27,6 @@ libksi_la_SOURCES = \
 	net_http_curl.c \
 	net_http.h \
 	net_http_impl.h \
-	net_http_winhttp.c \
-	net_http_wininet.c \
 	net_impl.h \
 	pkitruststore.h \
 	pkitruststore_openssl.c \
@@ -44,7 +42,10 @@ libksi_la_SOURCES = \
 	types_base.c \
 	types_base.h \
 	types.c \
-	types.h
+	types.h \
+	verification.c \
+	verification.h \
+	verification_impl.h
 
 otherincludedir = $(includedir)/ksi
 otherinclude_HEADERS = \
@@ -64,6 +65,7 @@ otherinclude_HEADERS = \
 	types.h \
 	types_base.h \
 	net.h \
-	ksi.h
+	ksi.h \
+	verification.h
 
 

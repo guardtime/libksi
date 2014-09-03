@@ -61,7 +61,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_PublicationsFile_verify(KSI_PublicationsFile *pubFile, KSI_PKITruststore *pki);
+	int KSI_PublicationsFile_verify(KSI_PublicationsFile *pubFile, KSI_CTX *ctx);
 
 	/**
 	 * Publicationsfile header getter method.

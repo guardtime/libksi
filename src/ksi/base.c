@@ -89,14 +89,10 @@ const char *KSI_getErrorString(int statusCode) {
 			return "The given calendar chain is not a continuation of the signature calendar chain.";
 		case KSI_EXTEND_NO_SUITABLE_PUBLICATION:
 			return "There is no suitable publication yet.";
-		case KSI_VERIFY_PUBLICATION_NOT_FOUND:
-			return "Unknown publication";
-		case KSI_VERIFY_PUBLICATION_MISMATCH:
-			return "The publications in the signature and publications file mismatch.";
+		case KSI_VERIFICATION_FAILURE:
+			return "Verification failed.";
 		case KSI_INVALID_PUBLICATION:
-			return "Ivalid publication";
-		case KSI_WRONG_DOCUMENT:
-			return "Wrong document";
+			return "Invalid publication";
 		case KSI_PUBLICATIONS_FILE_NOT_SIGNED_WITH_PKI:
 			return "The publications file is not signed.";
 		case KSI_CRYPTO_FAILURE:
@@ -356,8 +352,11 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 	KSI_PRE(&err, pubFile != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
+
 	/* TODO! Implement mechanism for reloading (e.g cache timeout) */
 	if (ctx->publicationsFile == NULL) {
+		KSI_LOG_debug(ctx, "Receiving publications file.");
+
 		res = KSI_sendPublicationRequest(ctx, NULL, 0, &handle);
 		KSI_CATCH(&err, res) goto cleanup;
 
@@ -367,11 +366,13 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 		res = KSI_PublicationsFile_parse(ctx, raw, raw_len, &tmp);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		res = KSI_PublicationsFile_verify(tmp, ctx->pkiTruststore);
+		res = KSI_PublicationsFile_verify(tmp, ctx);
 		KSI_CATCH(&err, res) goto cleanup;
 
 		ctx->publicationsFile = tmp;
 		tmp = NULL;
+
+		KSI_LOG_debug(ctx, "Publications file received.");
 	}
 
 	*pubFile = ctx->publicationsFile;
@@ -395,7 +396,7 @@ int KSI_verifyPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile *pubFile) {
 	KSI_PRE(&err, pubFile != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	res = KSI_PublicationsFile_verify(pubFile, ctx->pkiTruststore);
+	res = KSI_PublicationsFile_verify(pubFile, ctx);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
@@ -413,7 +414,7 @@ int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig) {
 	KSI_PRE(&err, sig != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	res = KSI_Signature_verify(sig ,ctx);
+	res = KSI_Signature_verify(sig, ctx);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
@@ -474,7 +475,7 @@ int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extend
 		goto cleanup;
 	}
 
-	res = KSI_Signature_extend(sig, pubRec, &extSig);
+	res = KSI_Signature_extend(sig, ctx, pubRec, &extSig);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*extended = extSig;
@@ -516,7 +517,7 @@ int KSI_extendSignatureToPublication(KSI_CTX *ctx, KSI_Signature *sig, char *pub
 		goto cleanup;
 	}
 
-	res = KSI_Signature_extend(sig, pubRec, &extSig);
+	res = KSI_Signature_extend(sig, ctx, pubRec, &extSig);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*extended = extSig;

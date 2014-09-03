@@ -214,7 +214,7 @@ cleanup:
 	return res;
 }
 
-int KSI_LOG_logTlv(KSI_CTX *ctx, int level, const char *prefix, KSI_TLV *tlv) {
+int KSI_LOG_logTlv(KSI_CTX *ctx, int level, const char *prefix, const KSI_TLV *tlv) {
 	int res = KSI_UNKNOWN_ERROR;
 	char *serialized = NULL;
 	KSI_Logger *logger = NULL;
@@ -247,7 +247,7 @@ cleanup:
 	return res;
 }
 
-int KSI_LOG_logDataHash(KSI_CTX *ctx, int level, const char *prefix, KSI_DataHash *hsh) {
+int KSI_LOG_logDataHash(KSI_CTX *ctx, int level, const char *prefix, const KSI_DataHash *hsh) {
 	int res = KSI_UNKNOWN_ERROR;
 	const unsigned char *imprint = NULL;
 	unsigned int imprint_len = 0;

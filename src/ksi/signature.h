@@ -2,6 +2,7 @@
 #define KSI_SIGNATURE_H_
 
 #include "types.h"
+#include "verification.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,8 +28,7 @@ extern "C" {
 	 * signature has a publication attached to it, the publication is verified
 	 * using the publications file. Otherwise, the signature is verified by
 	 * an attempt to extend it.
-	 * \param[in]		sig			Signature to be verified.
-	 * \param[in]		ctx			KSI context to be used.
+	 * TODO!
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
@@ -110,7 +110,7 @@ extern "C" {
 	 *
 	 * \note The output signature is independent of the input signature and needs to be freed using #KSI_Signature_free.
 	 */
-	int KSI_Signature_extend(const KSI_Signature *signature, const KSI_PublicationRecord *pubRec, KSI_Signature **extended);
+	int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI_PublicationRecord *pubRec, KSI_Signature **extended);
 
 	/**
 	 * Access method for the signed document hash as a #KSI_DataHash object.
@@ -184,13 +184,11 @@ extern "C" {
 	 * This function verifies given hash value \c hsh using the signature \c sig. If
 	 * the hash value does not match the input hash value of the signeture, a
 	 * #KSI_WRONG_DOCUMENT error code is returned.
-	 * \param[in]		sig			KSI signature.
-	 * \param[in]		hsh			Document hash.
-	 *
+	 * TODO!
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_DataHash *hsh);
+	int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_CTX *ctx, const KSI_DataHash *docHash);
 
 	/**
 	 * This function verifies the given document using the signature. If the hash value of
@@ -203,7 +201,9 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_Signature_verifyDocument(KSI_Signature *sig, void *doc, size_t doc_len);
+//	int KSI_Signature_verifyDocument(KSI_Signature *sig, void *doc, size_t doc_len);
+
+	int KSI_Signature_getVerificationResult(KSI_Signature *sig, const KSI_VerificationResult **info);
 
 /**
  * @}

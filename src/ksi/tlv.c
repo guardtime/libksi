@@ -314,7 +314,7 @@ static int encodeAsString(KSI_TLV *tlv) {
 	}
 
 	/* Determine if the current string ends with a zero. */
-	if (tlv->datap[tlv->datap_len - 1] != '\0') {
+	if (tlv->datap_len == 0 || tlv->datap[tlv->datap_len - 1] != '\0') {
 		/* Make the buffer a null-terminated string, but do not change the actual size. */
 		if (tlv->buffer == NULL) {
 			/* Create local copy. */
@@ -668,7 +668,7 @@ cleanup:
 /**
  *
  */
-int KSI_TLV_getUInt64Value(KSI_TLV *tlv, KSI_uint64_t *val) {
+int KSI_TLV_getUInt64Value(const KSI_TLV *tlv, KSI_uint64_t *val) {
 	KSI_ERR err;
 	KSI_uint64_t tmp = 0;
 	unsigned i;
@@ -1323,7 +1323,7 @@ int KSI_TLV_serializePayload(KSI_TLV *tlv, unsigned char *buf, unsigned *len) {
 
 #define NOTNEG(a) (a) < 0 ? 0 : a
 
-static int stringify(KSI_TLV *tlv, int indent, char *str, unsigned size, unsigned *len) {
+static int stringify(const KSI_TLV *tlv, int indent, char *str, unsigned size, unsigned *len) {
 	int res;
 	unsigned l = *len;
 	size_t i;
@@ -1375,7 +1375,6 @@ static int stringify(KSI_TLV *tlv, int indent, char *str, unsigned size, unsigne
 				if (res != KSI_OK) goto cleanup;
 			}
 
-			KSI_nofree(tmp);
 			break;
 		default:
 			res = KSI_INVALID_ARGUMENT;
@@ -1394,7 +1393,7 @@ cleanup:
 	return res;
 }
 
-int KSI_TLV_toString(KSI_TLV *tlv, char **str) {
+int KSI_TLV_toString(const KSI_TLV *tlv, char **str) {
 	KSI_ERR err;
 	int res;
 	char *tmp = NULL;

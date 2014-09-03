@@ -18,6 +18,7 @@
 #include "pkitruststore.h"
 #include "types.h"
 #include "crc32.h"
+#include "verification.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,7 +31,7 @@ extern "C" {
 
 #define KSI_DEFAULT_URI_AGGREGATOR "192.168.1.29:1234"
 #define KSI_DEFAULT_URI_EXTENDER "192.168.1.36:8081/gt-extendingservice"
-#define KSI_DEFAULT_URI_PUBLICATIONS_FILE "http://172.20.20.7/publications.tlv"
+#define KSI_DEFAULT_URI_PUBLICATIONS_FILE "http://verify.guardtime.com/ksi-publications.bin"
 
 /**
  * The maximum length of an imprint.
@@ -124,19 +125,11 @@ enum KSI_StatusCode {
 	/**
 	 * The publication in the signature was not fround in the publications file.
 	 */
-	KSI_VERIFY_PUBLICATION_NOT_FOUND,
-	/**
-	 * The publication in the signature does not match the publication in the publications file.
-	 */
-	KSI_VERIFY_PUBLICATION_MISMATCH,
+	KSI_VERIFICATION_FAILURE,
 	/**
 	 * Invalid publication.
 	 */
 	KSI_INVALID_PUBLICATION,
-	/**
-	 * The document does not match the signature.
-	 */
-	KSI_WRONG_DOCUMENT,
 	/**
 	 * The publications file is not signed.
 	 */
