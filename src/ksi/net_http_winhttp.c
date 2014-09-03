@@ -235,7 +235,6 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 cleanup:
 
     KSI_free(resp);
-	KSI_nofree(state);
 
 	return KSI_RETURN(&err);
 }
@@ -378,7 +377,6 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 cleanup:
 
 	KSI_nofree(request);
-	KSI_nofree(state);
 	
 	LPWSTR_free(w_url);
 	
