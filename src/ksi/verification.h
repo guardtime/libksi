@@ -54,44 +54,80 @@ extern "C" {
 
 	/**
 	 * TODO!
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationResult_init(KSI_CTX *ctx, KSI_VerificationResult *info);
+	int KSI_VerificationResult_init(KSI_VerificationResult *info);
 
 	/**
 	 * TODO!
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_VerificationResult_reset(KSI_VerificationResult *info);
 
 	/**
 	 * TODO!
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_VerificationResult_addFailure(KSI_VerificationResult *info, KSI_VerificationStep step, const char *desc);
 
 	/**
 	 * TODO!
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_VerificationResult_addSuccess(KSI_VerificationResult *info, KSI_VerificationStep step, const char *desc);
 
 	/**
-	 * TODO!
+	 * Returns the performed step count.
+	 * \param[in]	info		Verification result.
+	 * \return count of elements in the verification info.
 	 */
-	int KSI_VerificationStepResult_fail(KSI_VerificationStepResult *result, const char *description);
+	size_t KSI_VerificationResult_getStepResultCount(const KSI_VerificationResult *info);
 
 	/**
-	 * TODO!
+	 * Get the a verification step with the given index.
+	 * \param[in]	info		Verification result.
+	 * \param[in]	index		Index of the step.
+	 * \param[out]	step		Verification step objec.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationStepResult_success(KSI_VerificationStepResult *result);
+	int KSI_VerificationResult_getStepResult(const KSI_VerificationResult *info, size_t index, const KSI_VerificationStepResult **result);
 
 	/**
-	 * TODO!
+	 * Returns 0 if the given verification step is not performed.
+	 * \param[in]	info		Verification result.
+	 * \param[in]	step		Verification step.
+	 * \return 0 is the given verification step is not performed.
 	 */
-	void KSI_VerificationStepResult_free(KSI_VerificationStepResult *stepResult);
+	int KSI_VerificationResult_isStepPerformed(const KSI_VerificationResult *info, enum KSI_VerificationStep_en step);
 
 	/**
-	 * TODO!
+	 * Returns 0 if the given verification step is not performed or the performed step was
+	 * unsuccessful.
+	 * \param[in]	info		Verification result.
+	 * \param[in]	step		Verification step.
+	 * \returns 0 if the given verification step was unsuccessful or not performed.
 	 */
-	int KSI_VerificationStepResult_new(KSI_CTX *ctx, KSI_VerificationStep step, KSI_VerificationStepResult **stepResult);
+	int KSI_VerificationResult_isStepSuccess(const KSI_VerificationResult *info, enum KSI_VerificationStep_en step);
 
+	/**
+	 * Returns the #KSI_VerificationStep value or 0 on an error.
+	 * \param[in]	retult 		Verification step result.
+	 */
+	int KSI_VerificationStepResult_getStep(const KSI_VerificationStepResult *result);
+
+	/**
+	 * Returns if the verification step result was successful.
+	 * \param[in]	result		Verification step result.
+	 * \return If the step was not successful 0 is returned, otherwise !0.
+	 */
+	int KSI_VerificationStepResult_isSuccess(const KSI_VerificationStepResult *result);
+
+	/**
+	 * Returns a pointer to the description of this step result.
+	 * \param[in]	result		Verification step result.
+	 */
+	const char *KSI_VerificationStepResult_getDescription(const KSI_VerificationStepResult *result);
 
 #ifdef __cplusplus
 }

@@ -331,7 +331,7 @@ static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
 	tmp->aggregationAuthRec = NULL;
 	tmp->aggregationChainList = NULL;
 
-	res = KSI_VerificationResult_init(ctx, &tmp->verificationResult);
+	res = KSI_VerificationResult_init(&tmp->verificationResult);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*sig = tmp;
@@ -1857,7 +1857,7 @@ static int verifyOnline(KSI_CTX *ctx, KSI_Signature *sig) {
 		}
 	}
 
-	res = KSI_VerificationResult_addSuccess(info, step, "External publication imprint mismatch.");
+	res = KSI_VerificationResult_addSuccess(info, step, NULL);
 
 cleanup:
 
