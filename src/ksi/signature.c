@@ -449,7 +449,7 @@ cleanup:
 /*****************
  * EXTEND REQUEST
  *****************/
-static int createExtendRequest(KSI_CTX *ctx, const KSI_Integer *start, const KSI_Integer *end, KSI_ExtendReq **request) {
+static int createExtendRequest(KSI_CTX *ctx, KSI_Integer *start, KSI_Integer *end, KSI_ExtendReq **request) {
 	KSI_ERR err;
 	int res;
 	KSI_ExtendReq *tmp = NULL;
