@@ -1,6 +1,6 @@
 #include "internal.h"
 
-#if KSI_NET_HTTP_IMPL==KSI_IMPL_WININET
+#if KSI_NET_HTTP_IMPL==KSI_IMPL_WININET || 1
 
 #include <windows.h>
 #include <wininet.h>
@@ -124,7 +124,6 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 	DWORD http_response_len = sizeof(http_response);
 	KSI_CTX *ctx = NULL; 
 	
-	
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_PRE(&err, handle->client != NULL) goto cleanup;
 	KSI_PRE(&err, handle->implCtx != NULL) goto cleanup;
@@ -145,8 +144,10 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, "Wininet: Invalid host name");
 		else if(error == ERROR_INTERNET_CANNOT_CONNECT)
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, "Wininet: Unable to connect");
+		else if(error = ERROR_INTERNET_TIMEOUT)
+			KSI_FAIL(&err, KSI_NETWORK_SEND_TIMEOUT, NULL);
 		else
-			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, NULL);
+			KSI_FAIL(&err, KSI_NETWORK_ERROR, NULL);
 		goto cleanup;
 	}
 
@@ -157,8 +158,10 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 			KSI_FAIL(&err, KSI_HTTP_ERROR, "HTTP header not found");
 		else if(error == ERROR_INSUFFICIENT_BUFFER)
 			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Wininet: Insufficient buffer");
+		else if(error = ERROR_INTERNET_TIMEOUT)
+			KSI_FAIL(&err, KSI_NETWORK_RECIEVE_TIMEOUT, NULL);
 		else
-			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, NULL);
+			KSI_FAIL(&err, KSI_NETWORK_ERROR, NULL);
 		res = KSI_HTTP_ERROR;
 		goto cleanup;
 	}
@@ -217,8 +220,6 @@ cleanup:
  * \param handle Pointer to KSI_RequestHandle object.
  * \param agent
  * \param url Pointer to url string.
- * \param connectionTimeout Connection timeout.
- * \param readTimeout Read timeout.
  * 
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
  */
@@ -322,14 +323,26 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		goto cleanup;
 	}
 	
+	/*TODO Timeout is set, but seems to have no effect*/
+	
 	if (http->connectionTimeoutSeconds >= 0) {
 		DWORD dw = (http->connectionTimeoutSeconds == 0 ? 0xFFFFFFFF : http->connectionTimeoutSeconds * 1000);
-		InternetSetOption(implCtx->request_handle, INTERNET_OPTION_CONNECT_TIMEOUT, &dw, sizeof(dw));
+		if(!InternetSetOption(implCtx->request_handle, INTERNET_OPTION_CONNECT_TIMEOUT, &dw, sizeof(dw))){
+			KSI_FAIL(&err, KSI_NETWORK_ERROR, "Unable to set timeout");
+			goto cleanup;	
+		}
 	}
+	
 	if (http->readTimeoutSeconds >= 0) {
 		DWORD dw = (http->readTimeoutSeconds == 0 ? 0xFFFFFFFF : http->readTimeoutSeconds * 1000);
-		InternetSetOption(implCtx->request_handle, INTERNET_OPTION_SEND_TIMEOUT, &dw, sizeof(dw));
-		InternetSetOption(implCtx->request_handle, INTERNET_OPTION_RECEIVE_TIMEOUT, &dw, sizeof(dw));
+		if(!InternetSetOption(implCtx->request_handle, INTERNET_OPTION_SEND_TIMEOUT, &dw, sizeof(dw))){
+			KSI_FAIL(&err, KSI_NETWORK_ERROR, "Unable to set timeout");
+			goto cleanup;
+		}
+		if(!InternetSetOption(implCtx->request_handle, INTERNET_OPTION_RECEIVE_TIMEOUT, &dw, sizeof(dw))){
+			KSI_FAIL(&err, KSI_NETWORK_ERROR, "Unable to set timeout");
+			goto cleanup;
+		}
 	}
 
 	handle->readResponse = wininetReceive;

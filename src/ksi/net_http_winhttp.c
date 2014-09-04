@@ -1,6 +1,6 @@
 #include "internal.h"
 
-#if KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP || 1
+#if KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP
 
 #include <windows.h>
 #include <Winhttp.h>
@@ -164,6 +164,8 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 
 		if(error = ERROR_WINHTTP_CANNOT_CONNECT)
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, "Winhttp: Unable to connect");
+		if(error = ERROR_WINHTTP_TIMEOUT)
+			KSI_FAIL(&err, KSI_NETWORK_SEND_TIMEOUT, NULL);
 		else
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, NULL);
 		goto cleanup;
@@ -171,9 +173,12 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 
 	if(!WinHttpReceiveResponse(nhc->request_handle, NULL)){
 		DWORD error = GetLastError();
+		if(error == ERROR_WINHTTP_TIMEOUT)
+			KSI_FAIL(&err, KSI_NETWORK_RECIEVE_TIMEOUT, NULL);
+		else
+			KSI_FAIL(&err, KSI_NETWORK_ERROR, NULL);
+			
 		KSI_LOG_debug(ctx, "Winhttp: Receive error %i\n", error);
-
-		KSI_FAIL(&err, KSI_NETWORK_ERROR, NULL);
 		goto cleanup;
 	}
 	
@@ -245,8 +250,6 @@ cleanup:
  * \param handle Pointer to KSI_RequestHandle object.
  * \param agent
  * \param url Pointer to url string.
- * \param connectionTimeout Connection timeout.
- * \param readTimeout Read timeout.
  * 
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
  */
@@ -358,8 +361,6 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		KSI_FAIL(&err, KSI_NETWORK_ERROR, "Winhttp: Unable to init request handle");
 		goto cleanup;
 	}
-	
-	//error codes http://msdn.microsoft.com/en-us/library/windows/desktop/aa384099%28v=vs.85%29.aspx
 	
 	if(!WinHttpSetTimeouts(implCtx->request_handle,0, http->connectionTimeoutSeconds*1000, 0, http->readTimeoutSeconds*1000)){
 		DWORD error = GetLastError();

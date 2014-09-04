@@ -103,6 +103,18 @@ enum KSI_StatusCode {
 	 */
 	KSI_NETWORK_ERROR,
 	/**
+	 * A network connection timeout occured.
+	 */
+	KSI_NETWORK_CONNECTION_TIMEOUT,
+	/**
+	 * A network send timeout occured.
+	 */
+	KSI_NETWORK_SEND_TIMEOUT,
+	/**
+	 * A network recieve timeout occured.
+	 */
+	KSI_NETWORK_RECIEVE_TIMEOUT,
+	/**
 	 * A HTTP error occured.
 	 */
 	KSI_HTTP_ERROR,

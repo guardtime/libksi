@@ -79,6 +79,12 @@ const char *KSI_getErrorString(int statusCode) {
 			return "I/O error";
 		case KSI_NETWORK_ERROR:
 			return "Network error";
+		case KSI_NETWORK_CONNECTION_TIMEOUT:
+			return "Network connection timeout";
+		case KSI_NETWORK_SEND_TIMEOUT:
+			return "Network send timeout";
+		case KSI_NETWORK_RECIEVE_TIMEOUT:
+			return "Network recieve timeout";
 		case KSI_HTTP_ERROR:
 			return "HTTP error";
 		case KSI_AGGREGATOR_ERROR:
