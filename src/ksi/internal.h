@@ -53,7 +53,7 @@
 #    define snprintf _snprintf
 #  endif
 #  ifndef gmtime_r
-#    define gmtime_r(time, resultp) _gmtime_s(resultp, time)
+#    define gmtime_r(time, resultp) gmtime_s(resultp, time)
 #  endif
 #endif
 
