@@ -308,7 +308,6 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-
 int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_RequestHandle **handle) {
 	KSI_ERR err;
 	KSI_RequestHandle *hndl = NULL;

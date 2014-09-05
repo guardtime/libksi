@@ -1561,10 +1561,12 @@ cleanup:
 static int verifyCalendarChain(KSI_CTX *ctx, KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *rootHash = NULL;
-	KSI_Integer *calPubTime = NULL;
+	KSI_Integer *calendarPubTm = NULL;
 	KSI_PublicationData *pubData = NULL;
 	KSI_DataHash *pubHash = NULL;
 	KSI_Integer *pubTime = NULL;
+	KSI_Integer *calendarAggrTm = NULL;
+	time_t calculatedAggrTm;
 	KSI_VerificationStep step = KSI_SIG_CAL_AUTH_REC_MATCH;
 	KSI_VerificationResult *info = &sig->verificationResult;
 
@@ -1580,7 +1582,10 @@ static int verifyCalendarChain(KSI_CTX *ctx, KSI_Signature *sig) {
 	if (res != KSI_OK) goto cleanup;
 
 	/* Get the publication time from calendar hash chain. */
-	res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &calPubTime);
+	res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &calendarPubTm);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &calendarAggrTm);
 	if (res != KSI_OK) goto cleanup;
 
 	/* Get publication data. */
@@ -1591,11 +1596,14 @@ static int verifyCalendarChain(KSI_CTX *ctx, KSI_Signature *sig) {
 	res = KSI_PublicationData_getImprint(pubData, &pubHash);
 	if (res != KSI_OK) goto cleanup;
 
-	/* Get publication date. */
+	/* Get publication time. */
 	res = KSI_PublicationData_getTime(pubData, &pubTime);
 	if (res != KSI_OK) goto cleanup;
 
-	if (KSI_Integer_equals(calPubTime, pubTime) && KSI_DataHash_equals(rootHash, pubHash)) {
+	res = KSI_CalendarHashChain_calculateAggregationTime(sig->calendarChain, &calculatedAggrTm);
+	if (res != KSI_OK) goto cleanup;
+
+	if (KSI_Integer_equals(calendarPubTm, pubTime) && KSI_DataHash_equals(rootHash, pubHash) && KSI_Integer_equalsUInt(calendarAggrTm, (KSI_uint64_t) calculatedAggrTm)) {
 		res = KSI_VerificationResult_addSuccess(info, step, NULL);
 	} else {
 		res = KSI_VerificationResult_addFailure(info, step, "Calendar chain and auth record mismatch.");

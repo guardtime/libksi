@@ -201,6 +201,29 @@ extern "C" {
 	int KSI_PublicationData_toBase32(const KSI_PublicationData *published_data, char **publication);
 
 	/**
+	 * KSI_PublicationData
+	 */
+	void KSI_PublicationData_free(KSI_PublicationData *t);
+	int KSI_PublicationData_new(KSI_CTX *ctx, KSI_PublicationData **t);
+	int KSI_PublicationData_getTime(const KSI_PublicationData *t, KSI_Integer **time);
+	int KSI_PublicationData_getImprint(const KSI_PublicationData *t, KSI_DataHash **imprint);
+	int KSI_PublicationData_setTime(KSI_PublicationData *t, KSI_Integer *time);
+	int KSI_PublicationData_setImprint(KSI_PublicationData *t, KSI_DataHash *imprint);
+	char *KSI_PublicationData_toString(KSI_PublicationData *t, char *buffer, unsigned buffer_len);
+
+	/**
+	 * KSI_PublicationRecord
+	 */
+	void KSI_PublicationRecord_free(KSI_PublicationRecord *t);
+	int KSI_PublicationRecord_new(KSI_CTX *ctx, KSI_PublicationRecord **t);
+	int KSI_PublicationRecord_getPublishedData(const KSI_PublicationRecord *t, KSI_PublicationData **publishedData);
+	int KSI_PublicationRecord_getPublicationRef(const KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) **publicationRef);
+	int KSI_PublicationRecord_setPublishedData(KSI_PublicationRecord *t, KSI_PublicationData *publishedData);
+	int KSI_PublicationRecord_setPublicationRef(KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) *publicationRef);
+	char *KSI_PublicationRecord_toString(KSI_PublicationRecord *t, char *buffer, unsigned buffer_len);
+
+
+	/**
 	 * @}
 	 */
 

@@ -1,5 +1,4 @@
 #include "internal.h"
-#include "publicationsfile_impl.h"
 
 struct KSI_MetaData_st {
 	KSI_CTX *ctx;
@@ -16,14 +15,6 @@ struct KSI_HashChainLink_st {
 	KSI_DataHash *metaHash;
 	KSI_MetaData *metaData;
 	KSI_DataHash *imprint;
-};
-
-struct KSI_CalendarHashChain_st {
-	KSI_CTX *ctx;
-	KSI_Integer *publicationTime;
-	KSI_Integer *aggregationTime;
-	KSI_DataHash *inputHash;
-	KSI_LIST(KSI_HashChainLink) *hashChain;
 };
 
 struct KSI_ExtendPdu_st {
@@ -122,7 +113,6 @@ struct KSI_CertificateRecord_st {
 
 KSI_IMPLEMENT_LIST(KSI_MetaData, KSI_MetaData_free);
 KSI_IMPLEMENT_LIST(KSI_HashChainLink, KSI_HashChainLink_free);
-KSI_IMPLEMENT_LIST(KSI_CalendarHashChain, KSI_CalendarHashChain_free);
 KSI_IMPLEMENT_LIST(KSI_ExtendPdu, KSI_ExtendPdu_free);
 KSI_IMPLEMENT_LIST(KSI_AggregationPdu, KSI_AggregationPdu_free);
 KSI_IMPLEMENT_LIST(KSI_Header, KSI_Header_free);
@@ -135,8 +125,6 @@ KSI_IMPLEMENT_LIST(KSI_ExtendResp, KSI_ExtendResp_free);
 KSI_IMPLEMENT_LIST(KSI_PKISignedData, KSI_PKISignedData_free);
 KSI_IMPLEMENT_LIST(KSI_PublicationsHeader, KSI_PublicationsHeader_free);
 KSI_IMPLEMENT_LIST(KSI_CertificateRecord, KSI_CertificateRecord_free);
-KSI_IMPLEMENT_LIST(KSI_PublicationData, KSI_PublicationData_free);
-KSI_IMPLEMENT_LIST(KSI_PublicationRecord, KSI_PublicationRecord_free);
 
 /**
  * KSI_MetaData
@@ -238,75 +226,6 @@ KSI_IMPLEMENT_SETTER(KSI_HashChainLink, int, levelCorrection, LevelCorrection);
 KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_DataHash*, metaHash, MetaHash);
 KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_MetaData*, metaData, MetaData);
 KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_DataHash*, imprint, Imprint);
-
-
-/**
- * KSI_CalendarHashChain
- */
-void KSI_CalendarHashChain_free(KSI_CalendarHashChain *t) {
-	if(t != NULL) {
-		KSI_Integer_free(t->publicationTime);
-		KSI_Integer_free(t->aggregationTime);
-		KSI_DataHash_free(t->inputHash);
-		KSI_HashChainLinkList_freeAll(t->hashChain);
-		KSI_free(t);
-	}
-}
-
-int KSI_CalendarHashChain_new(KSI_CTX *ctx, KSI_CalendarHashChain **t) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_CalendarHashChain *tmp = NULL;
-	tmp = KSI_new(KSI_CalendarHashChain);
-	if(tmp == NULL) {
-		res = KSI_OUT_OF_MEMORY;
-		goto cleanup;
-	}
-
-	tmp->ctx = ctx;
-	tmp->publicationTime = NULL;
-	tmp->aggregationTime = NULL;
-	tmp->inputHash = NULL;
-	tmp->hashChain = NULL;
-	*t = tmp;
-	tmp = NULL;
-	res = KSI_OK;
-cleanup:
-	KSI_CalendarHashChain_free(tmp);
-	return res;
-}
-
-KSI_CTX *KSI_CalendarHashChain_getCtx(KSI_CalendarHashChain *t){
-	return t != NULL ? t->ctx : NULL;
-}
-
-int KSI_CalendarHashChain_aggregate(KSI_CalendarHashChain *chain, KSI_DataHash **hsh) {
-	KSI_ERR err;
-	int res;
-
-	KSI_PRE(&err, chain != NULL) goto cleanup;
-	KSI_PRE(&err, hsh != NULL) goto cleanup;
-	KSI_BEGIN(chain->ctx, &err);
-
-	res = KSI_HashChain_aggregateCalendar(chain->hashChain, chain->inputHash, hsh);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-}
-
-KSI_IMPLEMENT_GETTER(KSI_CalendarHashChain, KSI_Integer*, publicationTime, PublicationTime);
-KSI_IMPLEMENT_GETTER(KSI_CalendarHashChain, KSI_Integer*, aggregationTime, AggregationTime);
-KSI_IMPLEMENT_GETTER(KSI_CalendarHashChain, KSI_DataHash*, inputHash, InputHash);
-KSI_IMPLEMENT_GETTER(KSI_CalendarHashChain, KSI_LIST(KSI_HashChainLink)*, hashChain, HashChain);
-
-KSI_IMPLEMENT_SETTER(KSI_CalendarHashChain, KSI_Integer*, publicationTime, PublicationTime);
-KSI_IMPLEMENT_SETTER(KSI_CalendarHashChain, KSI_Integer*, aggregationTime, AggregationTime);
-KSI_IMPLEMENT_SETTER(KSI_CalendarHashChain, KSI_DataHash*, inputHash, InputHash);
-KSI_IMPLEMENT_SETTER(KSI_CalendarHashChain, KSI_LIST(KSI_HashChainLink)*, hashChain, HashChain);
-
 
 /**
  * KSI_ExtendPdu
@@ -898,90 +817,5 @@ KSI_IMPLEMENT_GETTER(KSI_CertificateRecord, KSI_PKICertificate*, cert, Cert);
 
 KSI_IMPLEMENT_SETTER(KSI_CertificateRecord, KSI_OctetString*, certId, CertId);
 KSI_IMPLEMENT_SETTER(KSI_CertificateRecord, KSI_PKICertificate*, cert, Cert);
-
-
-/**
- * KSI_PublicationData
- */
-void KSI_PublicationData_free(KSI_PublicationData *t) {
-	if(t != NULL) {
-		KSI_Integer_free(t->time);
-		KSI_DataHash_free(t->imprint);
-		KSI_free(t);
-	}
-}
-
-int KSI_PublicationData_new(KSI_CTX *ctx, KSI_PublicationData **t) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_PublicationData *tmp = NULL;
-	tmp = KSI_new(KSI_PublicationData);
-	if(tmp == NULL) {
-		res = KSI_OUT_OF_MEMORY;
-		goto cleanup;
-	}
-
-	tmp->ctx = ctx;
-	tmp->time = NULL;
-	tmp->imprint = NULL;
-	*t = tmp;
-	tmp = NULL;
-	res = KSI_OK;
-cleanup:
-	KSI_PublicationData_free(tmp);
-	return res;
-}
-
-KSI_CTX *KSI_PublicationData_getCtx(KSI_PublicationData *t){
-	return t != NULL ? t->ctx : NULL;
-}
-
-KSI_IMPLEMENT_GETTER(KSI_PublicationData, KSI_Integer*, time, Time);
-KSI_IMPLEMENT_GETTER(KSI_PublicationData, KSI_DataHash*, imprint, Imprint);
-
-KSI_IMPLEMENT_SETTER(KSI_PublicationData, KSI_Integer*, time, Time);
-KSI_IMPLEMENT_SETTER(KSI_PublicationData, KSI_DataHash*, imprint, Imprint);
-
-
-/**
- * KSI_PublicationRecord
- */
-void KSI_PublicationRecord_free(KSI_PublicationRecord *t) {
-	if(t != NULL) {
-		KSI_PublicationData_free(t->publishedData);
-		KSI_Utf8StringList_freeAll(t->publicationRef);
-		KSI_free(t);
-	}
-}
-
-int KSI_PublicationRecord_new(KSI_CTX *ctx, KSI_PublicationRecord **t) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_PublicationRecord *tmp = NULL;
-	tmp = KSI_new(KSI_PublicationRecord);
-	if(tmp == NULL) {
-		res = KSI_OUT_OF_MEMORY;
-		goto cleanup;
-	}
-
-	tmp->ctx = ctx;
-	tmp->publishedData = NULL;
-	tmp->publicationRef = NULL;
-	*t = tmp;
-	tmp = NULL;
-	res = KSI_OK;
-cleanup:
-	KSI_PublicationRecord_free(tmp);
-	return res;
-}
-
-KSI_CTX *KSI_PublicationRecord_getCtx(KSI_PublicationRecord *t){
-	return t != NULL ? t->ctx : NULL;
-}
-
-KSI_IMPLEMENT_GETTER(KSI_PublicationRecord, KSI_PublicationData*, publishedData, PublishedData);
-KSI_IMPLEMENT_GETTER(KSI_PublicationRecord, KSI_LIST(KSI_Utf8String)*, publicationRef, PublicationRef);
-
-KSI_IMPLEMENT_SETTER(KSI_PublicationRecord, KSI_PublicationData*, publishedData, PublishedData);
-KSI_IMPLEMENT_SETTER(KSI_PublicationRecord, KSI_LIST(KSI_Utf8String)*, publicationRef, PublicationRef);
-
 
 

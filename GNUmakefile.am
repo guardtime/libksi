@@ -1,7 +1,8 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = src/ksi src/example test 
+SUBDIRS = src/ksi src/example 
 
 test: all
+	cd test; make; cd ..
 	./test/runner;
 	
 memtest: all 

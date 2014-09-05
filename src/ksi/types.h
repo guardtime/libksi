@@ -1,8 +1,10 @@
 #ifndef KSI_COM_TYPES_H_
 #define KSI_COM_TYPES_H_
 
+#include <time.h>
 #include "types_base.h"
 #include "list.h"
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,6 +49,7 @@ void KSI_CalendarHashChain_free(KSI_CalendarHashChain *t);
 int KSI_CalendarHashChain_new(KSI_CTX *ctx, KSI_CalendarHashChain **t);
 KSI_CTX *KSI_CalendarHashChain_getCtx(KSI_CalendarHashChain *t);
 int KSI_CalendarHashChain_aggregate(KSI_CalendarHashChain *chain, KSI_DataHash **hsh);
+int KSI_CalendarHashChain_calculateAggregationTime(KSI_CalendarHashChain *chain, time_t *aggrTime);
 int KSI_CalendarHashChain_getPublicationTime(const KSI_CalendarHashChain *t, KSI_Integer **publicationTime);
 int KSI_CalendarHashChain_getAggregationTime(const KSI_CalendarHashChain *t, KSI_Integer **aggregationTime);
 int KSI_CalendarHashChain_getInputHash(const KSI_CalendarHashChain *t, KSI_DataHash **inputHash);
@@ -231,29 +234,6 @@ int KSI_CertificateRecord_getCertId(const KSI_CertificateRecord *t, KSI_OctetStr
 int KSI_CertificateRecord_getCert(const KSI_CertificateRecord *t, KSI_PKICertificate **cert);
 int KSI_CertificateRecord_setCertId(KSI_CertificateRecord *t, KSI_OctetString *certId);
 int KSI_CertificateRecord_setCert(KSI_CertificateRecord *t, KSI_PKICertificate *cert);
-
-/**
- * KSI_PublicationData
- */
-void KSI_PublicationData_free(KSI_PublicationData *t);
-int KSI_PublicationData_new(KSI_CTX *ctx, KSI_PublicationData **t);
-KSI_CTX *KSI_PublicationData_getCtx(KSI_PublicationData *t);
-int KSI_PublicationData_getTime(const KSI_PublicationData *t, KSI_Integer **time);
-int KSI_PublicationData_getImprint(const KSI_PublicationData *t, KSI_DataHash **imprint);
-int KSI_PublicationData_setTime(KSI_PublicationData *t, KSI_Integer *time);
-int KSI_PublicationData_setImprint(KSI_PublicationData *t, KSI_DataHash *imprint);
-
-/**
- * KSI_PublicationRecord
- */
-void KSI_PublicationRecord_free(KSI_PublicationRecord *t);
-int KSI_PublicationRecord_new(KSI_CTX *ctx, KSI_PublicationRecord **t);
-KSI_CTX *KSI_PublicationRecord_getCtx(KSI_PublicationRecord *t);
-int KSI_PublicationRecord_getPublishedData(const KSI_PublicationRecord *t, KSI_PublicationData **publishedData);
-int KSI_PublicationRecord_getPublicationRef(const KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) **publicationRef);
-int KSI_PublicationRecord_setPublishedData(KSI_PublicationRecord *t, KSI_PublicationData *publishedData);
-int KSI_PublicationRecord_setPublicationRef(KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) *publicationRef);
-
 
 #ifdef __cplusplus
 }

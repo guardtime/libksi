@@ -1,6 +1,7 @@
 #include <limits.h>
 #include <string.h>
 #include <stdio.h>
+#include <time.h>
 
 #include "internal.h"
 #include "publicationsfile_impl.h"
@@ -9,16 +10,10 @@ KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationsHeader)
 KSI_IMPORT_TLV_TEMPLATE(KSI_CertificateRecord)
 KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationRecord)
 
-struct KSI_PublicationsFile_st {
-	KSI_CTX *ctx;
-	unsigned char *raw;
-	int raw_len;
-	KSI_PublicationsHeader *header;
-	KSI_LIST(KSI_CertificateRecord) *certificates;
-	KSI_LIST(KSI_PublicationRecord) *publications;
-	size_t signatureOffset;
-	KSI_PKISignature *signature;
-};
+KSI_IMPLEMENT_LIST(KSI_PublicationData, KSI_PublicationData_free);
+KSI_IMPLEMENT_LIST(KSI_PublicationRecord, KSI_PublicationRecord_free);
+
+
 
 static int publicationsFile_setHeader(KSI_PublicationsFile *t, KSI_PublicationsHeader *header);
 static int publicationsFile_setCertificates(KSI_PublicationsFile *t, KSI_LIST(KSI_CertificateRecord) *certificates);
@@ -860,3 +855,105 @@ cleanup:
 
 	return res;
 }
+
+/**
+ * KSI_PublicationData
+ */
+void KSI_PublicationData_free(KSI_PublicationData *t) {
+	if(t != NULL) {
+		KSI_Integer_free(t->time);
+		KSI_DataHash_free(t->imprint);
+		KSI_free(t);
+	}
+}
+
+int KSI_PublicationData_new(KSI_CTX *ctx, KSI_PublicationData **t) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_PublicationData *tmp = NULL;
+	tmp = KSI_new(KSI_PublicationData);
+	if(tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->time = NULL;
+	tmp->imprint = NULL;
+	*t = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+cleanup:
+	KSI_PublicationData_free(tmp);
+	return res;
+}
+
+char *KSI_PublicationData_toString(KSI_PublicationData *t, char *buffer, unsigned buffer_len) {
+	int res = KSI_UNKNOWN_ERROR;
+	char *ret = NULL;
+	unsigned len = 0;
+	char *pubStr = NULL;
+	struct tm tm;
+	time_t pubTm;
+	char tmp[256];
+
+	res = KSI_PublicationData_toBase32(t, &pubStr);
+	if (res != KSI_OK) {
+		KSI_LOG_error(t->ctx, "Unable to convert publication data to base 64: %s (%d)", KSI_getErrorString(res), res);
+		goto cleanup;
+	}
+
+	len+= snprintf(buffer + len, buffer_len - len, "Publication string: %s\nPublication date: %s", pubStr, KSI_Integer_toDateString(t->time, tmp, sizeof(tmp)));
+	len+= snprintf(buffer + len, buffer_len - len, "\nPublished hash: %s", KSI_DataHash_toString(t->imprint, tmp, sizeof(tmp)));
+
+	ret = buffer;
+
+cleanup:
+
+	KSI_free(pubStr);
+
+	return ret;
+}
+
+KSI_IMPLEMENT_GETTER(KSI_PublicationData, KSI_Integer*, time, Time);
+KSI_IMPLEMENT_GETTER(KSI_PublicationData, KSI_DataHash*, imprint, Imprint);
+
+KSI_IMPLEMENT_SETTER(KSI_PublicationData, KSI_Integer*, time, Time);
+KSI_IMPLEMENT_SETTER(KSI_PublicationData, KSI_DataHash*, imprint, Imprint);
+
+
+/**
+ * KSI_PublicationRecord
+ */
+void KSI_PublicationRecord_free(KSI_PublicationRecord *t) {
+	if(t != NULL) {
+		KSI_PublicationData_free(t->publishedData);
+		KSI_Utf8StringList_freeAll(t->publicationRef);
+		KSI_free(t);
+	}
+}
+
+int KSI_PublicationRecord_new(KSI_CTX *ctx, KSI_PublicationRecord **t) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_PublicationRecord *tmp = NULL;
+	tmp = KSI_new(KSI_PublicationRecord);
+	if(tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->publishedData = NULL;
+	tmp->publicationRef = NULL;
+	*t = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+cleanup:
+	KSI_PublicationRecord_free(tmp);
+	return res;
+}
+
+KSI_IMPLEMENT_GETTER(KSI_PublicationRecord, KSI_PublicationData*, publishedData, PublishedData);
+KSI_IMPLEMENT_GETTER(KSI_PublicationRecord, KSI_LIST(KSI_Utf8String)*, publicationRef, PublicationRef);
+
+KSI_IMPLEMENT_SETTER(KSI_PublicationRecord, KSI_PublicationData*, publishedData, PublishedData);
+KSI_IMPLEMENT_SETTER(KSI_PublicationRecord, KSI_LIST(KSI_Utf8String)*, publicationRef, PublicationRef);

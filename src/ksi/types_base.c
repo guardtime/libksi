@@ -294,6 +294,24 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+char *KSI_Integer_toDateString(const KSI_Integer *kint, char *buf, unsigned buf_len) {
+	char *ret = NULL;
+	time_t pubTm;
+	struct tm tm;
+
+	pubTm = (time_t)kint->value;
+
+	gmtime_r(&pubTm, &tm);
+
+	strftime(buf, buf_len, "%Y-%m-%d %H:%M:%S UTC", &tm);
+
+	ret = buf;
+
+cleanup:
+
+	return ret;
+}
+
 int KSI_Integer_getSize(const KSI_Integer *kint, unsigned *size) {
 	KSI_ERR err;
 	KSI_PRE(&err, kint != NULL) goto cleanup;

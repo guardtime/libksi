@@ -123,6 +123,11 @@ extern "C" {
 	int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, const unsigned char **response, unsigned *response_len);
 
 	/**
+	 * TODO!
+	 */
+	int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendResp **resp);
+
+	/**
 	 * Constructor for network handle object.
 	 * \param[in]		ctx				KSI context.
 	 * \param[in]		request			Pointer to request.
