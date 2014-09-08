@@ -327,6 +327,8 @@ int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, unsig
  * \param[out]		pubFile		Pointer to the receiving pointer.
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \note The publications file is not verified, use KSI_PublicationsFile_verify to do so.
+ * \see #KSI_PublicationsFile_verify
  */
 int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile);
 

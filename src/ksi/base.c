@@ -365,9 +365,6 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 		res = KSI_PublicationsFile_parse(ctx, raw, raw_len, &tmp);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		res = KSI_PublicationsFile_verify(tmp, ctx);
-		KSI_CATCH(&err, res) goto cleanup;
-
 		ctx->publicationsFile = tmp;
 		tmp = NULL;
 
