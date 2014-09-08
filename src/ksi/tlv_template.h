@@ -440,12 +440,12 @@ extern "C" {
 	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *template, KSI_LIST(KSI_TLV) *reminder);
+	int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *tmpl, KSI_LIST(KSI_TLV) *reminder);
 
 	/**
 	 * TODO!
 	 */
-	 int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *template, void *payload);
+	 int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *tmpl, void *payload);
 
 	/**
 	 * This function acts similary as #KSI_TlvTemplate_extract but allows the caller to specify how the top level
@@ -461,7 +461,7 @@ extern "C" {
 	 * 									is expected to be returned by the second parameter - a NULL value is interpreted as end of input.
 	 * 									The function is expected to return #KSI_OK on success.
 	 */
-	int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, const KSI_TlvTemplate *template, KSI_LIST(KSI_TLV) *reminder, int (*generator)(void *, KSI_TLV **));
+	int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, const KSI_TlvTemplate *tmpl, KSI_LIST(KSI_TLV) *reminder, int (*generator)(void *, KSI_TLV **));
 
 	/**
 	 * Given a payload object, template and a initialized target TLV, this function constructs a TLV using the
@@ -474,7 +474,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_TlvTemplate *template);
+	int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_TlvTemplate *tmpl);
 
 	/**
 	 * Deepcopy an object using TLV templates. The object is first transformed internally into a #KSI_TLV tree and
@@ -491,7 +491,7 @@ extern "C" {
 	/**
 	 * TODO!
 	 */
-	int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag, int isFwd, int isNc, const KSI_TlvTemplate *template, unsigned char **raw, unsigned *raw_len);
+	int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag, int isFwd, int isNc, const KSI_TlvTemplate *tmpl, unsigned char **raw, unsigned *raw_len);
 
 	/**
 	 * @}
