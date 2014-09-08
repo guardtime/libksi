@@ -162,9 +162,9 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 		DWORD error = GetLastError();
 		KSI_LOG_debug(ctx, "Winhttp send error %i\n", error);
 
-		if(error = ERROR_WINHTTP_CANNOT_CONNECT)
+		if(error == ERROR_WINHTTP_CANNOT_CONNECT)
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, "Winhttp: Unable to connect");
-		if(error = ERROR_WINHTTP_TIMEOUT)
+		if(error == ERROR_WINHTTP_TIMEOUT)
 			KSI_FAIL(&err, KSI_NETWORK_SEND_TIMEOUT, NULL);
 		else
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, NULL);
@@ -284,7 +284,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	implCtx->uc.dwUrlPathLength = 1;
 	implCtx->uc.dwExtraInfoLength = 1;
 	w_url = LPWSTR_new(url);
-	
+
 	if (!WinHttpCrackUrl(w_url, 0, 0, &(implCtx->uc))) {
 		DWORD error = GetLastError();
 		KSI_LOG_debug(ctx, "Winhttp: Crack url error %i\n", error);
