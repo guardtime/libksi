@@ -917,7 +917,7 @@ cleanup:
 char *KSI_PublicationRecord_toString(KSI_PublicationRecord *t, char *buffer, unsigned buffer_len) {
 	int res = KSI_UNKNOWN_ERROR;
 	char *ret = NULL;
-	char *tmp[256];
+	char tmp[256];
 	unsigned len = 0;
 	size_t i;
 
