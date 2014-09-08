@@ -2,40 +2,6 @@
 #include "internal.h"
 #include "verification_impl.h"
 
-int KSI_VerificationStepResult_success(KSI_VerificationStepResult *result) {
-	KSI_ERR err;
-	KSI_PRE(&err, result != NULL) goto cleanup;
-	KSI_BEGIN(result->ctx, &err);
-
-	KSI_LOG_debug(result->ctx, "Verification step %d succeeded.", (int)result->step);
-
-	result->succeeded = true;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-}
-
-int KSI_VerificationStepResult_fail(KSI_VerificationStepResult *result, const char *description) {
-	KSI_ERR err;
-	KSI_PRE(&err, result != NULL) goto cleanup;
-	KSI_BEGIN(result->ctx, &err);
-
-	KSI_LOG_debug(result->ctx, "Verification step %d failed: .", (int)result->step, (description != NULL) ? description : "N/A");
-
-	result->succeeded = false;
-	strncpy(result->description, (description != NULL) ? description : "N/A", sizeof(result->description));
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-
-}
-
 int KSI_VerificationResult_reset(KSI_VerificationResult *info) {
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -65,7 +31,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationResult_init(KSI_CTX *ctx, KSI_VerificationResult *info) {
+int KSI_VerificationResult_init(KSI_VerificationResult *info) {
 	int res = KSI_UNKNOWN_ERROR;
 	if (info == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -117,23 +83,43 @@ int KSI_VerificationResult_addSuccess(KSI_VerificationResult *info, KSI_Verifica
 	return addVerificationStepResult(info, step, desc, 1);
 }
 
-void KSI_VerificationResult_dump(KSI_VerificationResult *info) {
-	int res;
-	size_t i;
+size_t KSI_VerificationResult_getStepResultCount(const KSI_VerificationResult *info) {
+	return info == NULL ? 0 : info->steps_len;
+}
 
-	if (info != NULL) {
-		for (i = 0; i < info->steps_len; i++) {
-			KSI_VerificationStepResult *result = info->steps + i;
-
-			printf("step: %d\nresult: %s\ndesc: %s\n\n", result->step, result->succeeded ? "success": "fail", result->description);
-		}
-	} else {
-		printf("Verification object is NULL\n");
+int KSI_VerificationResult_getStepResult(const KSI_VerificationResult *info, size_t index, const KSI_VerificationStepResult **result) {
+	int res = KSI_UNKNOWN_ERROR;
+	if (info == NULL || index > info->steps_len || result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
 	}
+
+	*result = info->steps + index;
+
+	res = KSI_OK;
 
 cleanup:
-	if (res != KSI_OK) {
-		fprintf(stderr, "\nUnknown error: %d\n", res);
-	}
-	return;
+
+	return res;
 }
+
+int KSI_VerificationResult_isStepPerformed(const KSI_VerificationResult *info, enum KSI_VerificationStep_en step) {
+	return info != NULL && (info->stepsPerformed & step);
+}
+
+int KSI_VerificationResult_isStepSuccess(const KSI_VerificationResult *info, enum KSI_VerificationStep_en step) {
+	return KSI_VerificationResult_isStepPerformed(info, step) && (info->stepsFailed & step) == 0;
+}
+
+int KSI_VerificationStepResult_getStep(const KSI_VerificationStepResult *result) {
+	return result == NULL ? 0 : result->step;
+}
+
+const char *KSI_VerificationStepResult_getDescription(const KSI_VerificationStepResult *result) {
+	return result == NULL ? "null" : result->description;
+}
+
+int KSI_VerificationStepResult_isSuccess(const KSI_VerificationStepResult *result) {
+	return result != NULL && result->succeeded;
+}
+

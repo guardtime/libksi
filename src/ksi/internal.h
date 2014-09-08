@@ -52,6 +52,9 @@
 #  ifndef snprintf
 #    define snprintf _snprintf
 #  endif
+#  ifndef gmtime_r
+#    define gmtime_r(time, resultp) gmtime_s(resultp, time)
+#  endif
 #endif
 
 #define KSI_BEGIN(ctx, err) KSI_ERR_init((ctx), (err))

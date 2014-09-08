@@ -6,7 +6,7 @@ KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu)
 KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendPdu)
 
 
-static int setStringParam(char **param, char *val) {
+static int setStringParam(char **param, const char *val) {
 	char *tmp = NULL;
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -358,8 +358,8 @@ cleanup:
 			return res;																					\
 		}																								\
 
-KSI_NET_IMPLEMENT_SETTER(SignerUrl, char *, urlSigner, setStringParam);
-KSI_NET_IMPLEMENT_SETTER(ExtenderUrl, char *, urlExtender, setStringParam);
-KSI_NET_IMPLEMENT_SETTER(PublicationUrl, char *, urlPublication, setStringParam);
+KSI_NET_IMPLEMENT_SETTER(SignerUrl, const char *, urlSigner, setStringParam);
+KSI_NET_IMPLEMENT_SETTER(ExtenderUrl, const char *, urlExtender, setStringParam);
+KSI_NET_IMPLEMENT_SETTER(PublicationUrl, const char *, urlPublication, setStringParam);
 KSI_NET_IMPLEMENT_SETTER(ConnectTimeoutSeconds, int, connectionTimeoutSeconds, setIntParam);
 KSI_NET_IMPLEMENT_SETTER(ReadTimeoutSeconds, int, readTimeoutSeconds, setIntParam);

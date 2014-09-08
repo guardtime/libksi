@@ -261,6 +261,14 @@ extern "C" {
 	int KSI_DataHash_MetaHash_fromTlv(KSI_TLV *tlv, KSI_DataHash **hsh);
 
 	/**
+	 * Creates a string representation of the datahash.
+	 * \param[in]		hsh		Input hash object.
+	 * \param[in,out]	buf		Pointer to the receiving buffer.
+	 * \param[in]		buf_len	Length of the receiving buffer.
+	 */
+	char *KSI_DataHash_toString(const KSI_DataHash *hsh, char *buf, unsigned buf_len);
+
+	/**
 	 * @}
 	 */
 #ifdef __cplusplus

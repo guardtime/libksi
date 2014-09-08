@@ -19,17 +19,6 @@ extern "C" {
 	 */
 
 	/**
-	 * Given the publication time \c pub_time and the aggregation chain \c chain, the aggregation UTC time
-	 * is calculated.
-	 * \param[in]	chain			Aggregation chain.
-	 * \param[in]	pub_time		Publication time.
-	 * \param[out]	utc_time		UTC time of the aggregation.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_HashChain_getCalendarAggregationTime(const KSI_LIST(KSI_HashChainLink) *chain, const KSI_Integer *pub_time, time_t *utc_time);
-
-	/**
 	 * This function aggregates the hashchain and returns the result hash via \c outputHash parameter.
 	 * \param[in]	chain			Hash chain (list of hash chain links)
 	 * \param[in]	inputHash		Input hash value.

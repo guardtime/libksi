@@ -10,6 +10,7 @@ struct KSI_OctetString_st {
 
 struct KSI_Integer_st {
 	KSI_CTX *ctx;
+	int refCount;
 	KSI_uint64_t value;
 };
 
@@ -269,33 +270,46 @@ cleanup:
 
 
 void KSI_Integer_free(KSI_Integer *kint) {
-	if (kint != NULL) {
+	if (kint != NULL && --kint->refCount == 0) {
 		KSI_free(kint);
 	}
 }
 
-int KSI_Integer_clone(const KSI_Integer *val, KSI_Integer **clone) {
+int KSI_Integer_clone(KSI_Integer *val, KSI_Integer **clone) {
 	KSI_ERR err;
 	int res;
-	KSI_Integer *tmp = NULL;
 
 	KSI_PRE(&err, val != NULL) goto cleanup;
 	KSI_PRE(&err, clone != NULL) goto cleanup;
 	KSI_BEGIN(val->ctx, &err);
 
-	res = KSI_Integer_new(val->ctx, val->value, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	val->refCount++;
 
-	*clone = tmp;
-	tmp = NULL;
+	*clone = val;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
 
-	KSI_Integer_free(tmp);
-
 	return KSI_RETURN(&err);
+}
+
+char *KSI_Integer_toDateString(const KSI_Integer *kint, char *buf, unsigned buf_len) {
+	char *ret = NULL;
+	time_t pubTm;
+	struct tm tm;
+
+	pubTm = (time_t)kint->value;
+
+	gmtime_r(&pubTm, &tm);
+
+	strftime(buf, buf_len, "%Y-%m-%d %H:%M:%S UTC", &tm);
+
+	ret = buf;
+
+cleanup:
+
+	return ret;
 }
 
 int KSI_Integer_getSize(const KSI_Integer *kint, unsigned *size) {
@@ -352,6 +366,7 @@ int KSI_Integer_new(KSI_CTX *ctx, KSI_uint64_t value, KSI_Integer **ksiInteger) 
 
 	tmp->ctx = ctx;
 	tmp->value = value;
+	tmp->refCount = 1;
 
 	*ksiInteger = tmp;
 	tmp = NULL;

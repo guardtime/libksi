@@ -8,9 +8,9 @@ extern "C" {
 #endif
 	/** Transport Providers */
 	int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **netProvider);
-	int KSI_HttpClient_setSignerUrl(KSI_NetworkClient *netProvider, char *val);
-	int KSI_HttpClient_setExtenderUrl(KSI_NetworkClient *netProvider, char *val);
-	int KSI_HttpClient_setPublicationUrl(KSI_NetworkClient *netProvider, char *val);
+	int KSI_HttpClient_setSignerUrl(KSI_NetworkClient *netProvider, const char *val);
+	int KSI_HttpClient_setExtenderUrl(KSI_NetworkClient *netProvider, const char *val);
+	int KSI_HttpClient_setPublicationUrl(KSI_NetworkClient *netProvider, const char *val);
 	int KSI_HttpClient_setConnectTimeoutSeconds(KSI_NetworkClient *netProvider, int val);
 	int KSI_HttpClient_setReadTimeoutSeconds(KSI_NetworkClient *netProvider, int val);
 

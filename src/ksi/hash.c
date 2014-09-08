@@ -452,4 +452,20 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
+char *KSI_DataHash_toString(const KSI_DataHash *hsh, char *buf, unsigned buf_len) {
+	char *ret = NULL;
+	unsigned i;
+	unsigned len = 0;
 
+	if (hsh == NULL || buf == NULL) goto cleanup;
+
+	for (i = 0; i < hsh->imprint_length && len < buf_len; i++) {
+		len += snprintf(buf + len, buf_len - len, "%02x", hsh->imprint[i]);
+	}
+
+	ret = buf;
+
+cleanup:
+
+	return ret;
+}

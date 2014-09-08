@@ -2,6 +2,14 @@
 
 #include "internal.h"
 
+struct KSI_CalendarHashChain_st {
+	KSI_CTX *ctx;
+	KSI_Integer *publicationTime;
+	KSI_Integer *aggregationTime;
+	KSI_DataHash *inputHash;
+	KSI_LIST(KSI_HashChainLink) *hashChain;
+};
+
 static long long int highBit(long long int n) {
     n |= (n >>  1);
     n |= (n >>  2);
@@ -214,7 +222,7 @@ cleanup:
 /**
  *
  */
-int KSI_HashChain_getCalendarAggregationTime(const KSI_LIST(KSI_HashChainLink) *chain, const KSI_Integer *pub_time, time_t *utc_time) {
+static int calculateCalendarAggregationTime(const KSI_LIST(KSI_HashChainLink) *chain, const KSI_Integer *pub_time, time_t *utc_time) {
 	int res = KSI_UNKNOWN_ERROR;
 	long long int r;
 	long long int t = 0;
@@ -283,3 +291,90 @@ int KSI_HashChain_aggregate(KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHa
 int KSI_HashChain_aggregateCalendar(KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, KSI_DataHash **outputHash) {
 	return aggregateChain(chain, inputHash, 0xff, -1, 1, NULL, outputHash);
 }
+
+/**
+ * KSI_CalendarHashChain
+ */
+void KSI_CalendarHashChain_free(KSI_CalendarHashChain *t) {
+	if(t != NULL) {
+		KSI_Integer_free(t->publicationTime);
+		KSI_Integer_free(t->aggregationTime);
+		KSI_DataHash_free(t->inputHash);
+		KSI_HashChainLinkList_freeAll(t->hashChain);
+		KSI_free(t);
+	}
+}
+
+int KSI_CalendarHashChain_new(KSI_CTX *ctx, KSI_CalendarHashChain **t) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CalendarHashChain *tmp = NULL;
+	tmp = KSI_new(KSI_CalendarHashChain);
+	if(tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->publicationTime = NULL;
+	tmp->aggregationTime = NULL;
+	tmp->inputHash = NULL;
+	tmp->hashChain = NULL;
+	*t = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+cleanup:
+	KSI_CalendarHashChain_free(tmp);
+	return res;
+}
+
+KSI_CTX *KSI_CalendarHashChain_getCtx(KSI_CalendarHashChain *t){
+	return t != NULL ? t->ctx : NULL;
+}
+
+int KSI_CalendarHashChain_aggregate(KSI_CalendarHashChain *chain, KSI_DataHash **hsh) {
+	KSI_ERR err;
+	int res;
+
+	KSI_PRE(&err, chain != NULL) goto cleanup;
+	KSI_PRE(&err, hsh != NULL) goto cleanup;
+	KSI_BEGIN(chain->ctx, &err);
+
+	res = KSI_HashChain_aggregateCalendar(chain->hashChain, chain->inputHash, hsh);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_CalendarHashChain_calculateAggregationTime(KSI_CalendarHashChain *chain, time_t *aggrTime) {
+	KSI_ERR err;
+	int res;
+	KSI_PRE(&err, chain != NULL) goto cleanup;
+	KSI_PRE(&err, aggrTime != NULL) goto cleanup;
+	KSI_BEGIN(chain->ctx, &err);
+
+	res = calculateCalendarAggregationTime(chain->hashChain, chain->publicationTime, aggrTime);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+
+}
+
+KSI_IMPLEMENT_GETTER(KSI_CalendarHashChain, KSI_Integer*, publicationTime, PublicationTime);
+KSI_IMPLEMENT_GETTER(KSI_CalendarHashChain, KSI_Integer*, aggregationTime, AggregationTime);
+KSI_IMPLEMENT_GETTER(KSI_CalendarHashChain, KSI_DataHash*, inputHash, InputHash);
+KSI_IMPLEMENT_GETTER(KSI_CalendarHashChain, KSI_LIST(KSI_HashChainLink)*, hashChain, HashChain);
+
+KSI_IMPLEMENT_SETTER(KSI_CalendarHashChain, KSI_Integer*, publicationTime, PublicationTime);
+KSI_IMPLEMENT_SETTER(KSI_CalendarHashChain, KSI_Integer*, aggregationTime, AggregationTime);
+KSI_IMPLEMENT_SETTER(KSI_CalendarHashChain, KSI_DataHash*, inputHash, InputHash);
+KSI_IMPLEMENT_SETTER(KSI_CalendarHashChain, KSI_LIST(KSI_HashChainLink)*, hashChain, HashChain);
+
+KSI_IMPLEMENT_LIST(KSI_CalendarHashChain, KSI_CalendarHashChain_free);
