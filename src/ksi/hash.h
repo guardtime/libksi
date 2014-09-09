@@ -17,6 +17,12 @@ extern "C" {
 	 * @{
 	 */
 
+
+	/**
+	 * The maximum length of an imprint.
+	 */
+	#define KSI_MAX_IMPRINT_LEN 65 /* Algorithm ID (1 byte) + longest digest */
+
 	/**
 	 * Starts a hash computation.
 	 * \param[in]		ctx			KSI context.
@@ -60,6 +66,11 @@ extern "C" {
 	 * \see #KSI_DataHasher_open, #KSI_DataHasher_add, #KSI_DataHasher_free
 	 */
 	int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **hash);
+
+	/**
+	 * TODO!
+	 */
+	int KSI_DataHasher_close_ex(KSI_DataHasher *hasher, KSI_DataHash *data_hash);
 
 	/**
 	 * Frees the data hasher object.

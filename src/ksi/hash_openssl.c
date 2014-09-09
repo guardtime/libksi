@@ -1,16 +1,9 @@
 #include "internal.h"
+#include "hash_impl.h"
 
 #if KSI_HASH_IMPL == KSI_IMPL_OPENSSL
 
 #include <openssl/evp.h>
-
-struct KSI_DataHasher_st {
-	/* KSI context */
-	KSI_CTX *ctx;
-
-	void *hashContext;
-	int algorithm;
-};
 
 /**
  * Converts hash function ID from hash chain to OpenSSL identifier
@@ -152,12 +145,9 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
+int KSI_DataHasher_close_ex(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 	KSI_ERR err;
 	int res;
-	KSI_DataHash *hsh = NULL;
-	unsigned char digest[KSI_MAX_IMPRINT_LEN];
-	unsigned int digest_length;
 	unsigned int hash_length;
 
 	KSI_PRE(&err, hasher != NULL) goto cleanup;
@@ -170,28 +160,20 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 		goto cleanup;
 	}
 
-	EVP_DigestFinal(hasher->hashContext, digest, &digest_length);
+	EVP_DigestFinal(hasher->hashContext, data_hash->imprint + 1, &data_hash->imprint_length);
 
 	/* Make sure the hash length is the same. */
-	if (hash_length != digest_length) {
+	if (hash_length != data_hash->imprint_length) {
 		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Internal hash lengths mismatch.");
 		goto cleanup;
 	}
 
-	res = KSI_DataHash_fromDigest(hasher->ctx, hasher->algorithm, digest, digest_length, &hsh);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_free(hasher->hashContext);
-	hasher->hashContext = NULL;
-
-	*data_hash = hsh;
-	hsh = NULL;
+	data_hash->imprint[0] = hasher->algorithm;
+	data_hash->imprint_length++;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
-
-	KSI_DataHash_free(hsh);
 
 	return KSI_RETURN(&err);
 }

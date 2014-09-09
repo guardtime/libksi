@@ -2,16 +2,9 @@
 #include <string.h>
 
 #include "internal.h"
+#include "hash_impl.h"
 
 #define HASH_ALGO(id, name, bitcount, trusted) {(id), (name), (bitcount), (trusted), id##_aliases}
-
-struct KSI_DataHash_st {
-	/* KSI context */
-	KSI_CTX *ctx;
-
-	unsigned char imprint[KSI_MAX_IMPRINT_LEN + 1]; /* For an extra '0' for meta hash. */
-	unsigned int imprint_length;
-};
 
 /** Hash algorithm aliases. The last alias has to be an empty string */
 static char *KSI_HASHALG_SHA1_aliases[] = {"SHA-1", ""};
@@ -468,4 +461,38 @@ char *KSI_DataHash_toString(const KSI_DataHash *hsh, char *buf, unsigned buf_len
 cleanup:
 
 	return ret;
+}
+
+int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
+	KSI_ERR err;
+	int res;
+	KSI_DataHash *hsh = NULL;
+	unsigned int hash_length;
+
+	KSI_PRE(&err, hasher != NULL) goto cleanup;
+	KSI_PRE(&err, data_hash != NULL) goto cleanup;
+	KSI_BEGIN(hasher->ctx, &err);
+
+	hsh = KSI_new(KSI_DataHash);
+	if (hsh == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	hsh->ctx = hasher->ctx;
+
+	res = KSI_DataHasher_close_ex(hasher, hsh);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*data_hash = hsh;
+	hsh = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_DataHash_free(hsh);
+
+	return KSI_RETURN(&err);
+
 }

@@ -34,11 +34,6 @@ extern "C" {
 #define KSI_DEFAULT_URI_PUBLICATIONS_FILE "http://verify.guardtime.com/ksi-publications.bin"
 
 /**
- * The maximum length of an imprint.
- */
-#define KSI_MAX_IMPRINT_LEN 65 /* Algorithm ID (1 byte) + longest digest */
-
-/**
  * KSI function returnvalues.
  */
 enum KSI_StatusCode {
