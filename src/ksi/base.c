@@ -343,7 +343,7 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 	KSI_ERR err;
 	int res;
 	KSI_RequestHandle *handle = NULL;
-	const unsigned char *raw = NULL;
+	unsigned char *raw = NULL;
 	unsigned raw_len = 0;
 	KSI_PublicationsFile *tmp = NULL;
 

@@ -699,7 +699,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int KSI_parseAggregationResponse(KSI_CTX *ctx, const unsigned char *response, unsigned response_len, KSI_Signature **signature) {
+static int KSI_parseAggregationResponse(KSI_CTX *ctx, unsigned char *response, unsigned response_len, KSI_Signature **signature) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *pduTlv = NULL;
@@ -721,7 +721,7 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, const unsigned char *respo
 	KSI_BEGIN(ctx, &err);
 
 	/* Parse the pdu */
-	res = KSI_TLV_parseBlob(ctx, response, response_len, &pduTlv);
+	res = KSI_TLV_parseBlob2(ctx, response, response_len, 0, &pduTlv);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Validate tag value */
@@ -861,7 +861,7 @@ int KSI_Signature_create(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **
 	KSI_AggregationReq *req = NULL;
 	unsigned req_len = 0;
 
-	const unsigned char *resp = NULL;
+	unsigned char *resp = NULL;
 	unsigned resp_len = 0;
 
 	KSI_PRE(&err, hsh != NULL) goto cleanup;
@@ -884,6 +884,10 @@ int KSI_Signature_create(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **
 
 	res = KSI_parseAggregationResponse(ctx, resp, resp_len, &sign);
 	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_RequestHandle_setResponse(handle, NULL, 0);
+	KSI_CATCH(&err, res) goto cleanup;
+
 	*signature = sign;
 	sign = NULL;
 
@@ -912,7 +916,7 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 	KSI_PublicationData *pubData = NULL;
 	KSI_PublicationRecord *pubRecClone = NULL;
 
-	const unsigned char *rawResp = NULL;
+	unsigned char *rawResp = NULL;
 	unsigned rawResp_len = 0;
 
 	KSI_TLV *respTlv = NULL;
@@ -962,7 +966,11 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 
 	KSI_LOG_logBlob(signature->ctx, KSI_LOG_DEBUG, "Extend response", rawResp, rawResp_len);
 
-	res = KSI_TLV_parseBlob(signature->ctx, rawResp, rawResp_len, &respTlv);
+	res = KSI_TLV_parseBlob2(signature->ctx, rawResp, rawResp_len, 1, &respTlv);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/* Release the handle - respTlv will handle it now. */
+	res = KSI_RequestHandle_setResponse(handle, NULL, 0);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Create response PDU object. */

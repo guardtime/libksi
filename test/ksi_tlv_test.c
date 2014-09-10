@@ -489,7 +489,7 @@ static void TestTlvRequireCast(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_TLV_parseBlob(ctx, raw, sizeof(raw) - 1, &tlv);
+	res = KSI_TLV_parseBlob2(ctx, raw, sizeof(raw) - 1, 0, &tlv);
 	CuAssert(tc, "Unable to create TLV", res == KSI_OK && tlv != NULL);
 
 	/* Should not fail */
@@ -537,7 +537,7 @@ static void TestTlvParseBlobFailWithExtraData(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_TLV_parseBlob(ctx, raw, sizeof(raw) - 1, &tlv);
+	res = KSI_TLV_parseBlob2(ctx, raw, sizeof(raw) - 1, 0, &tlv);
 	CuAssert(tc, "Blob with extra data was parsed into TLV", res != KSI_OK && tlv == NULL);
 
 	KSI_TLV_free(tlv);

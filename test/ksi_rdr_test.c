@@ -149,27 +149,6 @@ static void TestRdrMemInitExtStorage(CuTest* tc) {
 	KSI_RDR_close(rdr);
 }
 
-static void TestRdrMemInitOwnStorage(CuTest* tc) {
-	int res;
-	size_t readCount;
-
-	KSI_RDR *rdr = NULL;
-	static char testData[] = "Random binary data.";
-	unsigned char tmpBuf[0xffff];
-
-	/* Init reader. */
-	res = KSI_RDR_fromMem(ctx, (unsigned char *) testData, sizeof(testData), &rdr);
-	CuAssert(tc, "Failed initializing context from private memory.", res == KSI_OK);
-	CuAssert(tc, "Init did not fail, but object not created.", rdr != NULL);
-
-	res = KSI_RDR_read_ex(rdr, tmpBuf, sizeof(tmpBuf), &readCount);
-	CuAssert(tc, "Incorrect read count.", res == KSI_OK && readCount == sizeof(testData));
-
-	CuAssert(tc, "Data missmatch", !memcmp(tmpBuf, testData, sizeof(testData)));
-
-	KSI_RDR_close(rdr);
-}
-
 CuSuite* KSITest_RDR_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
@@ -179,7 +158,6 @@ CuSuite* KSITest_RDR_getSuite(void)
 	SUITE_ADD_TEST(suite, TestRdrFileReadingChuncks);
 
 	SUITE_ADD_TEST(suite, TestRdrMemInitExtStorage);
-	SUITE_ADD_TEST(suite, TestRdrMemInitOwnStorage);
 
 	return suite;
 }

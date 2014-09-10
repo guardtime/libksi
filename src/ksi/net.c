@@ -173,16 +173,15 @@ int KSI_RequestHandle_setResponse(KSI_RequestHandle *handle, const unsigned char
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(handle->ctx, &err);
 
-	resp = KSI_calloc(response_len, 1);
-	if (resp == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
+	if (response != NULL && response_len > 0) {
+		resp = KSI_calloc(response_len, 1);
+		if (resp == NULL) {
+			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+			goto cleanup;
+		}
+		memcpy(resp, response, response_len);
 	}
-	memcpy(resp, response, response_len);
 
-	if (handle->response != NULL) {
-		KSI_free(handle->response);
-	}
 	handle->response = resp;
 	handle->response_length = response_len;
 
@@ -282,7 +281,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, const unsigned char **response, unsigned *response_len) {
+int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, unsigned char **response, unsigned *response_len) {
 	KSI_ERR err;
 	int res;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
@@ -313,7 +312,7 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 	KSI_ERR err;
 	int res;
 	KSI_ExtendPdu *pdu = NULL;
-	const unsigned char *raw = NULL;
+	unsigned char *raw = NULL;
 	unsigned len;
 
 	KSI_PRE(&err, handle != NULL) goto cleanup;
