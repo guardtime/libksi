@@ -811,7 +811,6 @@ int KSI_TLV_parseBlob2(KSI_CTX *ctx, unsigned char *data, size_t data_length, in
 	KSI_BEGIN(ctx, &err);
 
 	if ((consumedBytes = readFirstTlv(ctx, data, data_length, &tmp)) != data_length) {
-		printf("Expected tlv length %llu, but consumed %llu\n", data_length, consumedBytes);
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
 		goto cleanup;
 	}
