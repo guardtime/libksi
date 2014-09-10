@@ -49,7 +49,7 @@ EXAMPLE_BIN = \
 	
 #external libraries used for linking. 
 EXT_LIB = $(LIB_NAME)$(RTL).$(DLL) \
-	wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib 
+	wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib
 
 !IF "$(NET_PROVIDER)" == "CURL"
 EXT_LIB = $(EXT_LIB) libcurl$(RTL).lib 
@@ -59,19 +59,15 @@ EXT_LIB = $(EXT_LIB) wininet.lib
 EXT_LIB = $(EXT_LIB) winhttp.lib 
 !ENDIF
 
-!IF "$(HASH_PROVIDER)" == "OPENSSL"
-EXT_LIB = $(EXT_LIB) libeay32$(RTL).$(DLL) 
-!ELSE IF "$(HASH_PROVIDER)" == "CRYPTOAPI"
-EXT_LIB = $(EXT_LIB) advapi32.lib 
+!IF "$(HASH_PROVIDER)" == "OPENSSL" || "$(TRUST_PROVIDER)" == "OPENSSL"
+EXT_LIB = $(EXT_LIB) libeay32$(RTL).$(DLL) advapi32.lib  
 !ENDIF
 
-!IF "$(TRUST_PROVIDER)" == "OPENSSL"
-EXT_LIB = $(EXT_LIB) libeay32$(RTL).$(DLL) 
-!ELSE IF "$(TRUST_PROVIDER)" == "CRYPTOAPI"
-EXT_LIB = $(EXT_LIB) advapi32.lib Crypt32.lib 
+!IF "$(HASH_PROVIDER)" == "CRYPTOAPI" || "$(TRUST_PROVIDER)" == "CRYPTOAPI"
+EXT_LIB = $(EXT_LIB) Crypt32.lib advapi32.lib
 !ENDIF
 
-	
+
 #/NODEFAULTLIB:libcmtd.lib	
 CCFLAGS = /nologo /W3 /D_CRT_SECURE_NO_DEPRECATE /DCURL_STATICLIB /I$(INCLUDE_DIR) /I$(SRC_DIR)
 LDFLAGS = /NOLOGO /LIBPATH:$(LIB_DIR) 

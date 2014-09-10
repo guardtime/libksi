@@ -60,17 +60,14 @@ EXT_LIB = $(EXT_LIB) wininet.lib
 EXT_LIB = $(EXT_LIB) winhttp.lib 
 !ENDIF
 
-!IF "$(HASH_PROVIDER)" == "OPENSSL"
-EXT_LIB = $(EXT_LIB) libeay32$(RTL).$(DLL) 
-!ELSE IF "$(HASH_PROVIDER)" == "CRYPTOAPI"
-EXT_LIB = $(EXT_LIB) advapi32.lib 
+!IF "$(HASH_PROVIDER)" == "OPENSSL" || "$(TRUST_PROVIDER)" == "OPENSSL"
+EXT_LIB = $(EXT_LIB) libeay32$(RTL).$(DLL) advapi32.lib  
 !ENDIF
 
-!IF "$(TRUST_PROVIDER)" == "OPENSSL"
-EXT_LIB = $(EXT_LIB) libeay32$(RTL).$(DLL) 
-!ELSE IF "$(TRUST_PROVIDER)" == "CRYPTOAPI"
-EXT_LIB = $(EXT_LIB) advapi32.lib Crypt32.lib 
+!IF "$(HASH_PROVIDER)" == "CRYPTOAPI" || "$(TRUST_PROVIDER)" == "CRYPTOAPI"
+EXT_LIB = $(EXT_LIB) Crypt32.lib advapi32.lib
 !ENDIF
+
 
 
 #/NODEFAULTLIB:libcmtd.lib
