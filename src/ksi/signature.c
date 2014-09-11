@@ -721,7 +721,7 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, unsigned char *response, u
 	KSI_BEGIN(ctx, &err);
 
 	/* Parse the pdu */
-	res = KSI_TLV_parseBlob2(ctx, response, response_len, 0, &pduTlv);
+	res = KSI_TLV_parseBlob2(ctx, response, response_len, 1, &pduTlv);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Validate tag value */

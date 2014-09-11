@@ -410,7 +410,7 @@ cleanup:
 
 }
 
-int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *tmpl, void *payload) {
+int KSI_TlvTemplate_parse(KSI_CTX *ctx, unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *tmpl, void *payload) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tlv = NULL;
@@ -422,7 +422,7 @@ int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, unsigned raw_l
 	KSI_PRE(&err, payload != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	res = KSI_TLV_parseBlob(ctx, raw, raw_len, &tlv);
+	res = KSI_TLV_parseBlob2(ctx, raw, raw_len, 0, &tlv);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_TlvTemplate_extract(ctx, payload, tlv, tmpl, NULL);

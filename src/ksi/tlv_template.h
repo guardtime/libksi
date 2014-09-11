@@ -445,7 +445,7 @@ extern "C" {
 	/**
 	 * TODO!
 	 */
-	 int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *tmpl, void *payload);
+	 int KSI_TlvTemplate_parse(KSI_CTX *ctx, unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *tmpl, void *payload);
 
 	/**
 	 * This function acts similary as #KSI_TlvTemplate_extract but allows the caller to specify how the top level

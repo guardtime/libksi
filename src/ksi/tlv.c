@@ -838,42 +838,32 @@ cleanup:
  */
 int KSI_TLV_parseBlob(KSI_CTX *ctx, const unsigned char *data, size_t data_length, KSI_TLV **tlv) {
 	KSI_ERR err;
-	KSI_RDR *rdr = NULL;
-	KSI_TLV *tmp = NULL;
-
 	int res;
+	unsigned char *tmpDat = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, data != NULL) goto cleanup;
+	KSI_PRE(&err, data_length > 0) goto cleanup;
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	res = KSI_RDR_fromSharedMem(ctx, (unsigned char *)data, data_length, &rdr);
-	if (res != KSI_OK) {
-		KSI_FAIL(&err, res, NULL);
+	tmpDat = KSI_calloc(data_length, 1);
+	if (tmpDat == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
+	memcpy(tmpDat, data, data_length);
 
-	res = KSI_TLV_fromReader(rdr, &tmp);
-	if (res != KSI_OK) {
-		KSI_FAIL(&err, res, NULL);
-		goto cleanup;
-	}
-
-	/* Make sure, the blob does not contain extra data. */
-	res = KSI_RDR_verifyEnd(rdr);
+	res = KSI_TLV_parseBlob2(ctx, tmpDat, data_length, 1, tlv);
 	KSI_CATCH(&err, res) goto cleanup;
 
-
-	*tlv = tmp;
-	tmp = NULL;
+	tmpDat = NULL;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
 
-	KSI_RDR_close(rdr);
-	KSI_TLV_free(tmp);
+	KSI_free(tmpDat);
 
 	return KSI_RETURN(&err);
 }
