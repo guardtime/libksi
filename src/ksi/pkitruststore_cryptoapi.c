@@ -1,6 +1,6 @@
 #include "internal.h"
 
-#if KSI_PKI_TRUSTSTORE_IMPL == KSI_IMPL_CRYPTOAPI
+#if KSI_PKI_TRUSTSTORE_IMPL == KSI_IMPL_CRYPTOAPI || 1
 
 #include <string.h>
 #include <limits.h>
@@ -11,7 +11,7 @@
 /* Hide the following line to deactivate. */
 #define MAGIC_EMAIL "publications@guardtime.com"
 
-void printError(DWORD dw) 
+static void printError(DWORD dw) 
 { 
     // Retrieve the system error message for the last-error code
     LPVOID lpMsgBuf;
@@ -53,7 +53,7 @@ static int cryptopapiGlobal_init(void) {
 	if (KSI_PKITruststore_global_initCount++ > 0) {
 		/* Nothing to do */
 	} else {
-		;//OpenSSL_add_all_digests();
+		;
 	}
 
 	return KSI_OK;
@@ -63,21 +63,8 @@ static void cryptopapiGlobal_cleanup(void) {
 	if (--KSI_PKITruststore_global_initCount > 0) {
 		/* Nothing to do */
 	} else {
-		;//EVP_cleanup();
+		;
 	}
-}
-
-static int KSI_MD2hashAlg(ALG_ID hash_alg) {
-	if (hash_alg == CALG_SHA_256)
-		return KSI_HASHALG_SHA2_256;
-	else if (hash_alg == CALG_SHA1)
-		return KSI_HASHALG_SHA1;
-	else if (hash_alg == CALG_SHA_384)
-		return KSI_HASHALG_SHA2_384;
-	else if (hash_alg == CALG_SHA_512)
-		return KSI_HASHALG_SHA2_512;
-	else
-		return -1;
 }
 
 static ALG_ID algIdFromOID(const char *OID){
@@ -191,7 +178,7 @@ int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) 
 		goto cleanup;
 	}
 
-	/*Not updates with priority 0*/
+	/*Update with priority 0 store*/
 	if (!CertAddStoreToCollection(trust->store, tmp_FileTrustStore, 0, 0)) {
 		printError(GetLastError());
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
@@ -208,7 +195,7 @@ cleanup:
 	return KSI_RETURN(&err);
 	return KSI_OK;
 }
-/*+ TODO: At CertOpenSystemStore change "ROOT" to CA*/
+/*+ TODO: Is CertOpenSystemStore as "ROOT" OK*/
 int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **trust) {
 	KSI_ERR err;
 	KSI_PKITruststore *tmp = NULL;
@@ -253,8 +240,6 @@ int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **tru
 	}
 
 	tmp->ctx = ctx;
-	tmp->store = NULL;
-
 	tmp->store = collectionStore;
 	
 	*trust = tmp;
@@ -413,14 +398,12 @@ int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, unsigned raw_len, KSI_PK
 
 	tmp->pkcs7.pbData = KSI_malloc(raw_len);
 	tmp->pkcs7.cbData = raw_len;
-	
 	memcpy(tmp->pkcs7.pbData, raw, raw_len);
 
 	*signature = tmp;
 	tmp = NULL;
 
 	KSI_SUCCESS(&err);
-
 	
 cleanup:
 
@@ -507,8 +490,8 @@ int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, 
 
 	*raw = tmp_serialized;
 	*raw_len = (unsigned)len;
-
 	tmp_serialized = NULL;
+
 	KSI_SUCCESS(&err);
 
 cleanup:
@@ -516,6 +499,24 @@ cleanup:
 	KSI_free(tmp_serialized);
 
 	return KSI_RETURN(&err);
+}
+
+char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, unsigned buf_len){
+	char *ret = NULL;
+	char strSubjectname[256];
+	char strIssuerName[256];
+	
+	if(cert == NULL  || buf == NULL) goto cleanup;
+		
+	CertGetNameString(cert->x509, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, strSubjectname, sizeof(strSubjectname));
+	CertGetNameString(cert->x509, CERT_NAME_SIMPLE_DISPLAY_TYPE , CERT_NAME_ISSUER_FLAG, 0,strIssuerName, sizeof(strIssuerName));
+	_snprintf(buf, buf_len, "Subject: '%s',  Issuer '%s'", strSubjectname, strIssuerName);
+	
+	ret = buf;
+	
+cleanup:
+
+return ret;
 }
 
 static void printCertInfo(PCCERT_CONTEXT cert){
@@ -584,35 +585,6 @@ static void printCertChain(const PCCERT_CHAIN_CONTEXT pChainContext){
 			printCertInfo(element->pCertContext);
 		}
 			
-	}
-}
-
-static const char* getCertificateChainErrorStr(PCCERT_CHAIN_CONTEXT pChainContext){
-	if(pChainContext == NULL)
-		return "Certificate chain is nullptr";
-	
-	switch(pChainContext->TrustStatus.dwErrorStatus){
-		case CERT_TRUST_NO_ERROR: return "No error found for this certificate or chain.";
-		case CERT_TRUST_IS_NOT_TIME_VALID:return "This certificate or one of the certificates in the certificate chain is not time valid.";
-		case CERT_TRUST_IS_REVOKED:return "Trust for this certificate or one of the certificates in the certificate chain has been revoked.";
-		case CERT_TRUST_IS_NOT_SIGNATURE_VALID: return "The certificate or one of the certificates in the certificate chain does not have a valid signature.";
-		case CERT_TRUST_IS_NOT_VALID_FOR_USAGE:return "The certificate or certificate chain is not valid for its proposed usage.";
-		case CERT_TRUST_IS_UNTRUSTED_ROOT: return "The certificate or certificate chain is based on an untrusted root.";
-		case CERT_TRUST_REVOCATION_STATUS_UNKNOWN: return "The revocation status of the certificate or one of the certificates in the certificate chain is unknown.";
-		case CERT_TRUST_IS_CYCLIC: return "One of the certificates in the chain was issued by a certification authority that the original certificate had certified.";
-		case CERT_TRUST_INVALID_EXTENSION: return "One of the certificates has an extension that is not valid.";
-		case CERT_TRUST_INVALID_POLICY_CONSTRAINTS: return "The certificate or one of the certificates in the certificate chain has a policy constraints extension, and one of the issued certificates has a disallowed policy mapping extension or does not have a required issuance policies extension.";
-		case CERT_TRUST_INVALID_BASIC_CONSTRAINTS: return "The certificate or one of the certificates in the certificate chain has a basic constraints extension, and either the certificate cannot be used to issue other certificates, or the chain path length has been exceeded.";
-		case CERT_TRUST_INVALID_NAME_CONSTRAINTS: return "The certificate or one of the certificates in the certificate chain has a name constraints extension that is not valid.";
-		case CERT_TRUST_HAS_NOT_SUPPORTED_NAME_CONSTRAINT: return "The certificate or one of the certificates in the certificate chain has a name constraints extension that contains unsupported fields.";
-		case CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT: return "The certificate or one of the certificates in the certificate chain has a name constraints extension and a name constraint is missing for one of the name choices in the end certificate.";
-		case CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT: return "The certificate or one of the certificates in the certificate chain has a name constraints extension, and there is not a permitted name constraint for one of the name choices in the end certificate.";
-		case CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT: return "The certificate or one of the certificates in the certificate chain has a name constraints extension, and one of the name choices in the end certificate is explicitly excluded.";
-		case CERT_TRUST_IS_OFFLINE_REVOCATION: return "The revocation status of the certificate or one of the certificates in the certificate chain is either offline or stale.";
-		case CERT_TRUST_NO_ISSUANCE_CHAIN_POLICY: return "The end certificate does not have any resultant issuance policies, and one of the issuing certification authority certificates has a policy constraints extension requiring it.";
-		case CERT_TRUST_IS_EXPLICIT_DISTRUST: return "The certificate is explicitly distrusted.";
-		case CERT_TRUST_HAS_NOT_SUPPORTED_CRITICAL_EXT: return "The certificate does not support a critical extension.";
-		default: return "Unknown certificate chain error";
 	}
 }
 
@@ -719,6 +691,35 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+static const char* getCertificateChainErrorStr(PCCERT_CHAIN_CONTEXT pChainContext){
+	if(pChainContext == NULL)
+		return "Certificate chain is nullptr";
+	
+	switch(pChainContext->TrustStatus.dwErrorStatus){
+		case CERT_TRUST_NO_ERROR: return "No error found for this certificate or chain.";
+		case CERT_TRUST_IS_NOT_TIME_VALID:return "This certificate or one of the certificates in the certificate chain is not time valid.";
+		case CERT_TRUST_IS_REVOKED:return "Trust for this certificate or one of the certificates in the certificate chain has been revoked.";
+		case CERT_TRUST_IS_NOT_SIGNATURE_VALID: return "The certificate or one of the certificates in the certificate chain does not have a valid signature.";
+		case CERT_TRUST_IS_NOT_VALID_FOR_USAGE:return "The certificate or certificate chain is not valid for its proposed usage.";
+		case CERT_TRUST_IS_UNTRUSTED_ROOT: return "The certificate or certificate chain is based on an untrusted root.";
+		case CERT_TRUST_REVOCATION_STATUS_UNKNOWN: return "The revocation status of the certificate or one of the certificates in the certificate chain is unknown.";
+		case CERT_TRUST_IS_CYCLIC: return "One of the certificates in the chain was issued by a certification authority that the original certificate had certified.";
+		case CERT_TRUST_INVALID_EXTENSION: return "One of the certificates has an extension that is not valid.";
+		case CERT_TRUST_INVALID_POLICY_CONSTRAINTS: return "The certificate or one of the certificates in the certificate chain has a policy constraints extension, and one of the issued certificates has a disallowed policy mapping extension or does not have a required issuance policies extension.";
+		case CERT_TRUST_INVALID_BASIC_CONSTRAINTS: return "The certificate or one of the certificates in the certificate chain has a basic constraints extension, and either the certificate cannot be used to issue other certificates, or the chain path length has been exceeded.";
+		case CERT_TRUST_INVALID_NAME_CONSTRAINTS: return "The certificate or one of the certificates in the certificate chain has a name constraints extension that is not valid.";
+		case CERT_TRUST_HAS_NOT_SUPPORTED_NAME_CONSTRAINT: return "The certificate or one of the certificates in the certificate chain has a name constraints extension that contains unsupported fields.";
+		case CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT: return "The certificate or one of the certificates in the certificate chain has a name constraints extension and a name constraint is missing for one of the name choices in the end certificate.";
+		case CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT: return "The certificate or one of the certificates in the certificate chain has a name constraints extension, and there is not a permitted name constraint for one of the name choices in the end certificate.";
+		case CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT: return "The certificate or one of the certificates in the certificate chain has a name constraints extension, and one of the name choices in the end certificate is explicitly excluded.";
+		case CERT_TRUST_IS_OFFLINE_REVOCATION: return "The revocation status of the certificate or one of the certificates in the certificate chain is either offline or stale.";
+		case CERT_TRUST_NO_ISSUANCE_CHAIN_POLICY: return "The end certificate does not have any resultant issuance policies, and one of the issuing certification authority certificates has a policy constraints extension requiring it.";
+		case CERT_TRUST_IS_EXPLICIT_DISTRUST: return "The certificate is explicitly distrusted.";
+		case CERT_TRUST_HAS_NOT_SUPPORTED_CRITICAL_EXT: return "The certificate does not support a critical extension.";
+		default: return "Unknown certificate chain error";
+	}
+}
+
 static int KSI_PKITruststore_verifyCertificate(const KSI_PKITruststore *pki, const PCCERT_CONTEXT cert){
 	KSI_ERR err;
 	KSI_CTX *ctx = NULL;
@@ -742,7 +743,8 @@ static int KSI_PKITruststore_verifyCertificate(const KSI_PKITruststore *pki, con
 	chainPara.cbSize = sizeof(CERT_CHAIN_PARA);
 	chainPara.RequestedUsage = certUsage;
 	
-	/*use CERT_CHAIN_CACHE_ONLY_URL_RETRIEVAL for no updates*/	
+	/*Use CERT_CHAIN_CACHE_ONLY_URL_RETRIEVAL for no automatic cert store update by windows.
+	 It is useful when there is need to remove default cert from system store*/	
 	/*Build Certificate Chain from top to root certificate*/
 	if (!CertGetCertificateChain(NULL, cert, NULL, pki->store, &chainPara, 0, NULL, &pChainContext)) {
 		printError(GetLastError());
@@ -801,7 +803,6 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	KSI_CATCH(&err, res) goto cleanup;
 
 	//printCertInfo(subjectCert);
-	
 	
 #ifdef MAGIC_EMAIL
 	if(CertGetNameString(subjectCert, CERT_NAME_EMAIL_TYPE, 0, NULL, tmp, sizeof(tmp))==1){
@@ -894,8 +895,7 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 	BYTE *little_endian_pkcs1= NULL;
 	DWORD pkcs1_len = 0;
 	HCRYPTHASH hash = 0;
-	
-	
+
 	KSI_PRE(&err, data != NULL && data_len > 0) goto cleanup;
 	KSI_PRE(&err, signature != NULL && signature_len > 0) goto cleanup;
 	KSI_PRE(&err, signature_len < UINT_MAX) goto cleanup;

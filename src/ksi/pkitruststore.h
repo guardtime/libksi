@@ -173,6 +173,15 @@ extern "C" {
 	 */
 	int KSI_PKITruststore_addLookupDir(KSI_PKITruststore *store, const char *path);
 
+	/**
+	 * Creates a string representation of a PKI Certificate.
+	 * 
+     * \param[in] cert		input certificate object.
+     * \param[in, out] buf	Pointer to the receiving buffer.
+     * \param[in] buf_len	Length of the receiving buffer.
+     * \return 
+     */
+	char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, unsigned buf_len);
 
 #ifdef __cplusplus
 }
