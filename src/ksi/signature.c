@@ -1008,6 +1008,7 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 
 cleanup:
 
+	KSI_ExtendResp_free(response);
 	KSI_ExtendReq_free(req);
 	KSI_PublicationRecord_free(pubRecClone);
 	KSI_RequestHandle_free(handle);
