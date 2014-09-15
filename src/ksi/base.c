@@ -42,6 +42,8 @@ struct KSI_CTX_st {
 
 	KSI_PublicationsFile *publicationsFile;
 
+	char *publicationCertEmail;
+
 	KSI_List *cleanupFnList;
 
 };
@@ -129,6 +131,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->pkiTruststore = NULL;
 	ctx->netProvider = NULL;
 	ctx->logger = NULL;
+	ctx->publicationCertEmail = NULL;
 
 
 	KSI_ERR_clearErrors(ctx);
@@ -158,6 +161,9 @@ int KSI_CTX_new(KSI_CTX **context) {
 	res = KSI_setPKITruststore(ctx, pkiTruststore);
 	if (res != KSI_OK) goto cleanup;
 	pkiTruststore = NULL;
+
+	res = KSI_setPublicationCertEmail(ctx, "publications@guardtime.com");
+	if (res != KSI_OK) goto cleanup;
 
 	/* Return the context. */
 	*context = ctx;
@@ -245,6 +251,7 @@ void KSI_CTX_free(KSI_CTX *ctx) {
 		KSI_PKITruststore_free(ctx->pkiTruststore);
 
 		KSI_PublicationsFile_free(ctx->publicationsFile);
+		KSI_free(ctx->publicationCertEmail);
 
 		KSI_free(ctx);
 	}
@@ -578,8 +585,6 @@ int KSI_ERR_apply(KSI_ERR *err) {
 		if (err->statusCode != KSI_OK) {
 			ctxErr = ctx->errors + (ctx->errors_count % ctx->errors_size);
 
-
-
 			ctxErr->statusCode = err->statusCode;
 			ctxErr->extErrorCode = err->extErrorCode;
 			ctxErr->lineNr = err->lineNr;
@@ -720,3 +725,32 @@ cleanup:																					\
 CTX_GET_SET_VALUE(pkiTruststore, PKITruststore, KSI_PKITruststore, KSI_PKITruststore_free)
 CTX_GET_SET_VALUE(netProvider, NetworkProvider, KSI_NetworkClient, KSI_NetworkClient_free)
 CTX_GET_SET_VALUE(logger, Logger, KSI_Logger, KSI_Logger_free)
+
+int KSI_setPublicationCertEmail(KSI_CTX *ctx, const char *email) {
+	int res = KSI_UNKNOWN_ERROR;
+	char *tmp = NULL;
+	if (ctx == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (email != NULL && email[0] != '\0') {
+		size_t len = strlen(email);
+		tmp = KSI_calloc(len + 1, 1);
+		if (tmp == NULL) {
+			res = KSI_OUT_OF_MEMORY;
+			goto cleanup;
+		}
+
+		memcpy(tmp, email, len + 1);
+	}
+
+	ctx->publicationCertEmail = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+cleanup:
+	KSI_free(tmp);
+	return res;
+}
+CTX_VALUEP_GETTER(publicationCertEmail, PublicationCertEmail, const char)

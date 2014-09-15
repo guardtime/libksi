@@ -77,6 +77,7 @@ typedef struct KSI_DataHasher_st KSI_DataHasher;
  * \see #KSI_DataHasher, #KSI_DataHasher_close, #KSI_DataHash_free
  */
 typedef struct KSI_DataHash_st KSI_DataHash;
+
 /**
  * Network resource handle
  *

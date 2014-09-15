@@ -391,10 +391,12 @@ int KSI_CTX_setLogFile(KSI_CTX *ctx, char *fileName);
 int KSI_getPKITruststore(KSI_CTX *ctx, KSI_PKITruststore **pki);
 int KSI_getNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient **net);
 int KSI_getLogger(KSI_CTX *ctx, KSI_Logger **logger);
+int KSI_getPublicationCertEmail(KSI_CTX *ctx, const char **address);
 
 int KSI_setPKITruststore(KSI_CTX *ctx, KSI_PKITruststore *pki);
 int KSI_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *net);
 int KSI_setLogger(KSI_CTX *ctx, KSI_Logger *logger);
+int KSI_setPublicationCertEmail(KSI_CTX *ctx, const char *email);
 
 /**
  * @}

@@ -70,7 +70,7 @@
 #define KSI_UINT64_MINSIZE(val) (((val) > 0xffffffff) ? (4 + KSI_UINT32_MINSIZE((val) >> 32)) : KSI_UINT32_MINSIZE((val)))
 
 /* Create a new object of type. */
-#define KSI_new(typeVar) (typeVar *)(KSI_calloc(sizeof(typeVar), 1))
+#define KSI_new(typeVar) (typeVar *)(KSI_malloc(sizeof(typeVar)))
 
 /* Returns Empty string if #str==NULL otherwise returns #str itself */
 #define KSI_strnvl(str) ((str) == NULL)?"":(str)

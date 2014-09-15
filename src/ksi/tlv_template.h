@@ -56,27 +56,8 @@ extern "C" {
 		 */
 		unsigned tag;
 
-		/**
-		 * Is this TLV non-critical - should it produce an error when the parser does not know this tag.
-		 */
-		int isNonCritical;
+		unsigned flags;
 
-		/**
-		 * If the current TLV is unknown, should it be forwarded or dropped.
-		 */
-		int isForward;
-
-		/**
-		 * If the current TLV element is mandatory - if it is not present - the parsing will result in an error.
-		 */
-		int isMandatory;
-
-		/**
-		 * In some cases (e.g calendar hash chain) it is not possible to specify a single tag (left or right) to be
-		 * mandatory. This flag is used to group these values together and mark them (at least one of them) as mandatory.
-		 */
-		int isMandatoryGroup0;
-		int isMandatoryGroup1;
 		/**
 		 * Getter function for the object value.
 		 */
@@ -214,6 +195,7 @@ extern "C" {
 	#define KSI_TLV_TMPL_FLG_MANDATORY		0x04
 	#define KSI_TLV_TMPL_FLG_MANDATORY_G0	0x08
 	#define KSI_TLV_TMPL_FLG_MANDATORY_G1	0x10
+	#define KSI_TLV_TMPL_FLG_MORE_DEFS		0x20
 
 	/**
 	 * A helper macro for defining a single template with all parameters.
@@ -238,9 +220,7 @@ extern "C" {
 	 * \param[in]	toTlv			Create TLV from object function.
 	 */
 	#define KSI_TLV_FULL_TEMPLATE_DEF(typ, tg, flg, gttr, sttr, constr, destr, subTmpl, list_append, mul, list_new, list_free, list_len, list_elAt, cbEnc, cbDec, fromTlv, toTlv) 									\
-				{ typ, tg, ((flg) & KSI_TLV_TMPL_FLG_FORWARD) != 0, ((flg) & KSI_TLV_TMPL_FLG_NONCRITICAL) != 0, ((flg) & KSI_TLV_TMPL_FLG_MANDATORY) != 0, ((flg) & KSI_TLV_TMPL_FLG_MANDATORY_G0) != 0,			\
-				((flg) & KSI_TLV_TMPL_FLG_MANDATORY_G1) != 0, (getter_t)gttr, (setter_t)sttr, 																														\
-				(int (*)(KSI_CTX *, void **)) constr, (void (*)(void *)) destr, subTmpl, 																															\
+				{ typ, tg, flg , (getter_t)gttr, (setter_t)sttr, (int (*)(KSI_CTX *, void **)) constr, (void (*)(void *)) destr, subTmpl, 																															\
 				(int (*)(void *, void *))list_append, mul, (int (*)(KSI_CTX *, void **)) list_new, (void (*)(void *)) list_free, (int (*)(const void *)) list_len, (int (*)(const void *, int, void **))list_elAt, 	\
 				(cb_encode_t)cbEnc, (cb_decode_t)cbDec, 																																							\
 				(int (*)(KSI_TLV *, void **)) fromTlv, (int (*)(void *, unsigned, int, int, KSI_TLV **))toTlv},																										\
@@ -426,7 +406,7 @@ extern "C" {
 	/**
 	 * This macro ends the #KSI_TlvTemplate definition started by #KSI_TLV_TEMPLATE.
 	 */
-	#define KSI_END_TLV_TEMPLATE { -1, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}};
+	#define KSI_END_TLV_TEMPLATE { -1, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}};
 
 	/**
 	 * Given a TLV object, template and a initialized target payload, this function evaluates the payload objects

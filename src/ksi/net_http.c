@@ -279,6 +279,12 @@ static int httpClientCtx_new(KSI_CTX *ctx, KSI_HttpClientCtx **http) {
 	}
 
 	tmp->ctx = ctx;
+	tmp->agentName = NULL;
+	tmp->sendRequest = NULL;
+	tmp->urlExtender = NULL;
+	tmp->urlPublication = NULL;
+	tmp->urlSigner = NULL;
+
 	setIntParam(&tmp->connectionTimeoutSeconds, 10);
 	setIntParam(&tmp->readTimeoutSeconds, 10);
 	setStringParam(&tmp->urlSigner, KSI_DEFAULT_URI_AGGREGATOR);

@@ -601,6 +601,7 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	ASN1_OBJECT *oid = NULL;
 	X509_STORE_CTX *storeCtx = NULL;
 	char tmp[256];
+	const char *magicEmail = NULL;
 
 	KSI_PRE(&err, pki != NULL) goto cleanup;
 	KSI_PRE(&err, signature != NULL) goto cleanup;
@@ -611,30 +612,32 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 
 	KSI_LOG_debug(pki->ctx, "Verifying PKI signature certificate.");
 
-#ifdef MAGIC_EMAIL
+	res = KSI_getPublicationCertEmail(pki->ctx, &magicEmail);
+	KSI_CATCH(&err, res) goto cleanup;
 
-	KSI_LOG_debug(pki->ctx, "Verifying PKI signature certificate with e-mail address '%s'", MAGIC_EMAIL);
+	if (magicEmail != NULL) {
+		KSI_LOG_debug(pki->ctx, "Verifying PKI signature certificate with e-mail address '%s'", magicEmail);
 
-	subj = X509_get_subject_name(cert);
-	if (subj == NULL) {
-		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Unable to get subject name from certificate.");
-		goto cleanup;
+		subj = X509_get_subject_name(cert);
+		if (subj == NULL) {
+			KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Unable to get subject name from certificate.");
+			goto cleanup;
+		}
+		oid = OBJ_txt2obj("1.2.840.113549.1.9.1", 1);
+		if (oid == NULL) {
+			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+			goto cleanup;
+		}
+		res = X509_NAME_get_text_by_OBJ(subj, oid, tmp, sizeof(tmp));
+		if (res < 0) {
+			KSI_FAIL(&err, KSI_PKI_CERTIFICATE_NOT_TRUSTED, NULL);
+			goto cleanup;
+		}
+		if (strcmp(tmp, magicEmail)) {
+			KSI_FAIL(&err, KSI_PKI_CERTIFICATE_NOT_TRUSTED, "Wrong subject name.");
+			goto cleanup;
+		}
 	}
-	oid = OBJ_txt2obj("1.2.840.113549.1.9.1", 1);
-	if (oid == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-	res = X509_NAME_get_text_by_OBJ(subj, oid, tmp, sizeof(tmp));
-	if (res < 0) {
-		KSI_FAIL(&err, KSI_PKI_CERTIFICATE_NOT_TRUSTED, NULL);
-		goto cleanup;
-	}
-	if (strcmp(tmp, MAGIC_EMAIL)) {
-		KSI_FAIL(&err, KSI_PKI_CERTIFICATE_NOT_TRUSTED, "Wrong subject name.");
-		goto cleanup;
-	}
-#endif
 
 	storeCtx = X509_STORE_CTX_new();
 	if (storeCtx == NULL) {
@@ -663,6 +666,8 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	KSI_SUCCESS(&err);
 
 cleanup:
+
+	KSI_nofree(magicEmail);
 
 	if (storeCtx != NULL) X509_STORE_CTX_free(storeCtx);
 	if (oid != NULL) ASN1_OBJECT_free(oid);

@@ -74,7 +74,7 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationAuthRec)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_CalendarAuthRec)
-	KSI_TLV_COMPOSITE(0x10, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarAuthRec_getPublishedData, KSI_CalendarAuthRec_setPublishedData, KSI_PublicationData)
+	KSI_TLV_COMPOSITE(0x10, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_MORE_DEFS, KSI_CalendarAuthRec_getPublishedData, KSI_CalendarAuthRec_setPublishedData, KSI_PublicationData)
 	KSI_TLV_UNPROCESSED(0x10, KSI_CalendarAuthRec_setSignedData)
 	KSI_TLV_UTF8_STRING(0x0b, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarAuthRec_getSignatureAlgo, KSI_CalendarAuthRec_setSignatureAlgo)
 	KSI_TLV_COMPOSITE(0x0c, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarAuthRec_getSignatureData, KSI_CalendarAuthRec_setSignatureData, KSI_PKISignedData)
@@ -309,10 +309,6 @@ static int storeObjectValue(KSI_CTX *ctx, const KSI_TlvTemplate *tmpl, void *pay
 	KSI_BEGIN(ctx, &err);
 
 	if (tmpl->listAppend != NULL) {
-		/* If the list append function pointer is set, the value is added to a list. */
-		void *list = NULL;
-
-
 		res = tmpl->getValue(payload, &listp);
 		if (res != KSI_OK) goto cleanup;
 		
@@ -333,6 +329,8 @@ static int storeObjectValue(KSI_CTX *ctx, const KSI_TlvTemplate *tmpl, void *pay
 		
 		res = tmpl->setValue(payload, listp);
 		KSI_CATCH(&err, res) goto cleanup;
+
+		list = NULL;
 
 	} else {
 		/* Regular value - store with the setter. */
@@ -465,7 +463,8 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 	size_t template_len = 0;
 	bool *templateHit = NULL;
 	bool groupHit[2] = {false, false};
-	int i;
+	size_t i;
+	size_t tmplStart = 0;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
@@ -486,12 +485,13 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 
 		KSI_LOG_trace(ctx, "Starting to parse TLV(0x%02x)", KSI_TLV_getTag(tlv));
 
-		for (i = 0; i < template_len; i++) {
+		for (i = tmplStart; i < template_len; i++) {
 			if (tmpl[i].tag != KSI_TLV_getTag(tlv)) continue;
+			if (i == tmplStart && !tmpl[i].multiple) tmplStart++;
 			matchCount++;
 			templateHit[i] = true;
-			if (tmpl[i].isMandatoryGroup0) groupHit[0] = true;
-			if (tmpl[i].isMandatoryGroup1) groupHit[1] = true;
+			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY_G0) != 0) groupHit[0] = true;
+			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY_G1) != 0) groupHit[1] = true;
 
 			valuep = NULL;
 			if (tmpl[i].getValue != NULL) {
@@ -591,6 +591,8 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 					KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Undefined template type");
 					goto cleanup;
 			}
+
+			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MORE_DEFS) == 0) break;
 		}
 
 		if(matchCount == 0) {
@@ -611,13 +613,13 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 	/* Check that every mandatory component was present. */
 	for (i = 0; i < template_len; i++) {
 		char errm[100];
-		if (tmpl[i].isMandatory && !templateHit[i]) {
+		if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY) != 0 && !templateHit[i]) {
 			snprintf(errm, sizeof(errm), "Mandatory element missing: tag=0x%x", tmpl[i].tag);
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
 			goto cleanup;
 		}
-		if ((tmpl[i].isMandatoryGroup0 && !groupHit[0]) ||
-				(tmpl[i].isMandatoryGroup1 && !groupHit[1])) {
+		if (((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY_G0) != 0 && !groupHit[0]) ||
+				((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY_G1) != 0 && !groupHit[1])) {
 			snprintf(errm, sizeof(errm), "Mandatory group missing: tag=0x%x", tmpl[i].tag);
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
 			goto cleanup;
@@ -641,6 +643,8 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 	KSI_TLV *tmp = NULL;
 	void *payloadp = NULL;
 	int intVal;
+	int isNonCritical = 0;
+	int isForward = 0;
 
 	size_t template_len = 0;
 	bool *templateHit = NULL;
@@ -665,8 +669,11 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 		KSI_CATCH(&err, res) goto cleanup;
 		if (payloadp != NULL) {
 			templateHit[i] = true;
-			if (tmpl[i].isMandatoryGroup0) groupHit[0] = true;
-			if (tmpl[i].isMandatoryGroup1) groupHit[1] = true;
+			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY_G0) != 0) groupHit[0] = true;
+			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY_G1) != 0) groupHit[1] = true;
+
+			isNonCritical = (tmpl[i].flags & KSI_TLV_TMPL_FLG_NONCRITICAL) != 0;
+			isForward = (tmpl[i].flags & KSI_TLV_TMPL_FLG_FORWARD) != 0;
 
 			switch (tmpl[i].type) {
 				case KSI_TLV_TEMPLATE_UNPROCESSED:
@@ -675,7 +682,7 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 					 * no logical construction action performed. */
 					break;
 				case KSI_TLV_TEMPLATE_NATIVE_INT:
-					res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tmpl[i].tag, tmpl[i].isNonCritical, tmpl[i].isForward, &tmp);
+					res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tmpl[i].tag, isNonCritical, isForward, &tmp);
 					KSI_CATCH(&err, res) goto cleanup;
 
 					res = KSI_TLV_cast(tmp, KSI_TLV_PAYLOAD_INT);
@@ -701,7 +708,7 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 							res = tmpl[i].listElementAt(payloadp, j, &listElement);
 							KSI_CATCH(&err, res) goto cleanup;
 
-							res = tmpl[i].toTlv(listElement, tmpl[i].tag, tmpl[i].isNonCritical, tmpl[i].isForward, &tmp);
+							res = tmpl[i].toTlv(listElement, tmpl[i].tag, isNonCritical, isForward != 0, &tmp);
 							KSI_CATCH(&err, res) goto cleanup;
 
 							res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
@@ -711,13 +718,13 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 
 
 					} else {
-						res = tmpl[i].toTlv(payloadp, tmpl[i].tag, tmpl[i].isNonCritical, tmpl[i].isForward, &tmp);
+						res = tmpl[i].toTlv(payloadp, tmpl[i].tag, isNonCritical, isForward, &tmp);
 						KSI_CATCH(&err, res) goto cleanup;
 					}
 
 					break;
 				case KSI_TLV_TEMPLATE_COMPOSITE:
-					res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tmpl[i].tag, tmpl[i].isNonCritical, tmpl[i].isForward, &tmp);
+					res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tmpl[i].tag, isNonCritical, isForward, &tmp);
 					KSI_CATCH(&err, res) goto cleanup;
 
 					res = KSI_TLV_cast(tmp, KSI_TLV_PAYLOAD_TLV);
@@ -750,13 +757,13 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 	/* Check that every mandatory component was present. */
 	for (i = 0; i < template_len; i++) {
 		char errm[100];
-		if (tmpl[i].isMandatory && !templateHit[i]) {
+		if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY) != 0 && !templateHit[i]) {
 			snprintf(errm, sizeof(errm), "Mandatory element missing: tag=0x%x", tmpl[i].tag);
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
 			goto cleanup;
 		}
-		if ((tmpl[i].isMandatoryGroup0 && !groupHit[0]) ||
-				(tmpl[i].isMandatoryGroup1 && !groupHit[1])) {
+		if (((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY_G0) != 0 && !groupHit[0]) ||
+				((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY_G1) != 0 && !groupHit[1])) {
 			snprintf(errm, sizeof(errm), "Mandatory group missing: tag=0x%x", tmpl[i].tag);
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
 			goto cleanup;
