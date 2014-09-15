@@ -374,12 +374,66 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+static size_t readFirstTlv(KSI_CTX *ctx, unsigned char *data, size_t data_length, KSI_TLV **tlv) {
+	int res;
+	size_t bytesConsumed = 0;
+
+	KSI_TLV *tmp = NULL;
+	int isNonCritical = 0;
+	int isForward = 0;
+	unsigned tag = 0;
+	unsigned hdrLen = 0;
+	size_t length = 0;
+
+	isNonCritical = data[0] & KSI_TLV_MASK_LENIENT;
+	isForward = data[0] & KSI_TLV_MASK_FORWARD;
+
+	/* Is it a TLV8 or TLV16 */
+	if (data[0] & KSI_TLV_MASK_TLV16) {
+		/* TLV16 */
+		if (data_length < 4) goto cleanup;
+
+		hdrLen = 4;
+
+		tag = ((data[0] & KSI_TLV_MASK_TLV8_TYPE) << 8 ) | data[1];
+		length = (unsigned)(data[2] << 8) | data[3];
+	} else {
+		/* TLV8 */
+		hdrLen = 2;
+		tag = data[0] & KSI_TLV_MASK_TLV8_TYPE;
+		length = data[1];
+	}
+
+	if (hdrLen + length > data_length) {
+		goto cleanup;
+	}
+
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	tmp->datap = data + hdrLen;
+	tmp->datap_len = length;
+
+	*tlv = tmp;
+	tmp = NULL;
+
+	bytesConsumed = hdrLen + length;
+
+cleanup:
+
+	KSI_TLV_free(tmp);
+
+	return bytesConsumed;
+}
+
+
 static int encodeAsNestedTlvs(KSI_TLV *tlv) {
 	int res;
 	KSI_ERR err;
-	KSI_RDR *rdr = NULL;
 	KSI_TLV *tmp = NULL;
 	KSI_LIST(KSI_TLV) *tlvList = NULL;
+	size_t allConsumedBytes = 0;
+	size_t lastConsumedBytes = 0;
 
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
 	KSI_BEGIN(tlv->ctx, &err);
@@ -394,27 +448,28 @@ static int encodeAsNestedTlvs(KSI_TLV *tlv) {
 		goto cleanup;
 	}
 
-	res = KSI_RDR_fromSharedMem(tlv->ctx, tlv->datap, tlv->datap_len, &rdr);
-	KSI_CATCH(&err, res) goto cleanup;
-
 	res = KSI_TLVList_new(tlv->ctx, &tlvList);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Try parsing all of the nested TLV's. */
-	while (1) {
-		res = readTlv(rdr, &tmp, 0);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		/* Check if end of reader. */
-		if (tmp == NULL) break;
+	while (allConsumedBytes < tlv->datap_len) {
+		lastConsumedBytes = readFirstTlv(tlv->ctx, tlv->datap + allConsumedBytes, tlv->datap_len - allConsumedBytes, &tmp);
 
 		/* Update the absolute offset of the child TLV object. */
-		tmp->absoluteOffset += tlv->absoluteOffset;
+		tmp->absoluteOffset += allConsumedBytes;
+
+		allConsumedBytes += lastConsumedBytes;
 
 		res = KSI_TLVList_append(tlvList, tmp);
 		KSI_CATCH(&err, res) goto cleanup;
 
+
 		tmp = NULL;
+	}
+
+	if (allConsumedBytes > tlv->datap_len) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+		goto cleanup;
 	}
 
 	tlv->payloadType = KSI_TLV_PAYLOAD_TLV;
@@ -425,7 +480,6 @@ static int encodeAsNestedTlvs(KSI_TLV *tlv) {
 
 cleanup:
 
-	KSI_RDR_close(rdr);
 	KSI_TLV_free(tmp);
 	KSI_TLVList_freeAll(tlvList);
 
@@ -741,6 +795,42 @@ int KSI_TLV_getNestedList(KSI_TLV *tlv, KSI_LIST(KSI_TLV) **list) {
 cleanup:
 
 	return KSI_RETURN(&err);
+}
+
+int KSI_TLV_parseBlob2(KSI_CTX *ctx, unsigned char *data, size_t data_length, int ownMemory, KSI_TLV **tlv) {
+	KSI_ERR err;
+	int res;
+	KSI_TLV *tmp = NULL;
+	size_t consumedBytes = 0;
+
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, data != NULL) goto cleanup;
+	KSI_PRE(&err, data_length >= 2) goto cleanup;
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	if ((consumedBytes = readFirstTlv(ctx, data, data_length, &tmp)) != data_length) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+		goto cleanup;
+	}
+
+	if (ownMemory) {
+		tmp->buffer = data;
+		tmp->buffer_size = data_length;
+	}
+
+	*tlv = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_TLV_free(tmp);
+
+	return KSI_RETURN(&err);
+
 }
 
 /**
@@ -1286,21 +1376,19 @@ cleanup:
 
 int KSI_TLV_serialize(const KSI_TLV *tlv, unsigned char **buf, unsigned *buf_len) {
 	int res;
-	unsigned char tmpBuf[0xffff + 4];
 	unsigned tmp_len;
 
 	unsigned char *tmp = NULL;
 
-	res = KSI_TLV_serialize_ex(tlv, tmpBuf, sizeof(tmpBuf), &tmp_len);
-	if (res != KSI_OK) goto cleanup;
-
-	tmp = KSI_calloc(tmp_len, 1);
+	tmp = KSI_calloc(4 + KSI_BUFFER_SIZE, 1);
 	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
 
-	memcpy(tmp, tmpBuf, tmp_len);
+	res = KSI_TLV_serialize_ex(tlv, tmp, 4 + KSI_BUFFER_SIZE, &tmp_len);
+	if (res != KSI_OK) goto cleanup;
+
 
 	*buf = tmp;
 	*buf_len = tmp_len;
@@ -1506,8 +1594,9 @@ int KSI_TLV_clone(const KSI_TLV *tlv, KSI_TLV **clone) {
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Recreate the TLV */
-	res = KSI_TLV_parseBlob(tlv->ctx, buf, buf_len, &tmp);
+	res = KSI_TLV_parseBlob2(tlv->ctx, buf, buf_len, 1, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
+	buf = NULL;
 
 	/* Reexpand the nested (if any) TLV's */
 	res = expandNested(tlv, tmp);

@@ -349,7 +349,7 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 	KSI_ERR err;
 	int res;
 	KSI_RequestHandle *handle = NULL;
-	const unsigned char *raw = NULL;
+	unsigned char *raw = NULL;
 	unsigned raw_len = 0;
 	KSI_PublicationsFile *tmp = NULL;
 
@@ -369,9 +369,6 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 		KSI_CATCH(&err, res) goto cleanup;
 
 		res = KSI_PublicationsFile_parse(ctx, raw, raw_len, &tmp);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		res = KSI_PublicationsFile_verify(tmp, ctx);
 		KSI_CATCH(&err, res) goto cleanup;
 
 		ctx->publicationsFile = tmp;

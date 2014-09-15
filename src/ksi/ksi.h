@@ -34,11 +34,6 @@ extern "C" {
 #define KSI_DEFAULT_URI_PUBLICATIONS_FILE "http://verify.guardtime.com/ksi-publications.bin"
 
 /**
- * The maximum length of an imprint.
- */
-#define KSI_MAX_IMPRINT_LEN 65 /* Algorithm ID (1 byte) + longest digest */
-
-/**
  * KSI function returnvalues.
  */
 enum KSI_StatusCode {
@@ -339,6 +334,8 @@ int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, unsig
  * \param[out]		pubFile		Pointer to the receiving pointer.
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \note The publications file is not verified, use KSI_PublicationsFile_verify to do so.
+ * \see #KSI_PublicationsFile_verify
  */
 int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile);
 

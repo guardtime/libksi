@@ -188,7 +188,7 @@ static void TestSerialize(CuTest* tc) {
 		fclose(f);
 		f = NULL;
 
-		res = KSI_TLV_parseBlob(ctx, in, in_len, &tlv);
+		res = KSI_TLV_parseBlob2(ctx, in, in_len, 0, &tlv);
 		CuAssert(tc, "Unable to parse TLV", res == KSI_OK);
 
 		res = parseStructure(tlv, 0);
@@ -233,7 +233,7 @@ static void TestClone(CuTest *tc) {
 		fclose(f);
 		f = NULL;
 
-		res = KSI_TLV_parseBlob(ctx, in, in_len, &tlv);
+		res = KSI_TLV_parseBlob2(ctx, in, in_len, 0, &tlv);
 		CuAssert(tc, "Unable to parse TLV", res == KSI_OK);
 
 		res = parseStructure(tlv, 0);

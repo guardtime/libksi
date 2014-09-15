@@ -1,4 +1,5 @@
 #include "internal.h"
+#include "hash_impl.h"
 
 #if KSI_HASH_IMPL == KSI_IMPL_CRYPTOAPI
 
@@ -11,18 +12,6 @@ typedef struct CRYPTO_HASH_CTX_st {
 	HCRYPTPROV pt_CSP;		//Crypto Service Provider
 	HCRYPTHASH pt_hHash;	//hasher object
 	} CRYPTO_HASH_CTX;
-
-struct KSI_DataHasher_st {
-	/* KSI context */
-	KSI_CTX *ctx;
-	
-	void *hashContext;	//Mis iganes hasher obj
-	int algorithm;
-};
-
-
-
-
 
 static void CRYPTO_HASH_CTX_free(CRYPTO_HASH_CTX *cryptoCtxt){
 	if(cryptoCtxt != NULL){
@@ -230,11 +219,9 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
+int KSI_DataHasher_close_ex(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 	KSI_ERR err;
 	int res;
-	KSI_DataHash *hsh = NULL;
-	unsigned char *digest = NULL;
 	DWORD digest_length = 0;
 	DWORD digestLenSize = 0;	//The size of digest_length variable
 	DWORD hash_length = 0;
@@ -264,30 +251,16 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 		goto cleanup;
 	}
 	
-	digest = KSI_malloc(hash_length);
-	if (digest == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-	
 	/*After final call pHash is can not be used further*/
-	CryptGetHashParam(pHash, HP_HASHVAL, digest, &digest_length,0);
+	CryptGetHashParam(pHash, HP_HASHVAL, data_hash->imprint + 1, &digest_length,0);
 	
-
-	res = KSI_DataHash_fromDigest(hasher->ctx, hasher->algorithm, digest, digest_length, &hsh);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	
-
-	*data_hash = hsh;
-	hsh = NULL;
+	data_hash->imprint[0] = hasher->algorithm;
+	data_hash->imprint_length = digest_length + 1;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
 
-	KSI_free(digest);
-	KSI_DataHash_free(hsh);
 	return KSI_RETURN(&err);
 }
 

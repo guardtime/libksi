@@ -195,9 +195,11 @@ static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash
 		chr_level = (char) level;
 		KSI_DataHasher_add(hsr, &chr_level, 1);
 
-		if (hsh != NULL) KSI_DataHash_free(hsh);
-
-		res = KSI_DataHasher_close(hsr, &hsh);
+		if (hsh != NULL) {
+			res = KSI_DataHasher_close_ex(hsr, hsh);
+		} else {
+			res = KSI_DataHasher_close(hsr, &hsh);
+		}
 		KSI_CATCH(&err, res) goto cleanup;
 	}
 

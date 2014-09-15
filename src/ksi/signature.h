@@ -33,6 +33,12 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx);
+
+	/**
+	 * TODO!
+	 */
+	int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, size_t doc_len);
+
 	/**
 	 * Creates a clone of the signature object.
 	 * \param[in]		sig			Signature to be cloned.

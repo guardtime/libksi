@@ -120,7 +120,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, const unsigned char **response, unsigned *response_len);
+	int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, unsigned char **response, unsigned *response_len);
 
 	/**
 	 * TODO!

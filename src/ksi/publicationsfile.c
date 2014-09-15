@@ -914,6 +914,31 @@ cleanup:
 	return ret;
 }
 
+char *KSI_PublicationRecord_toString(KSI_PublicationRecord *t, char *buffer, unsigned buffer_len) {
+	int res = KSI_UNKNOWN_ERROR;
+	char *ret = NULL;
+	char tmp[256];
+	unsigned len = 0;
+	size_t i;
+
+	len += snprintf(buffer + len, buffer_len - len, "%s", KSI_PublicationData_toString(t->publishedData, tmp, sizeof(tmp)));
+
+	for (i = 0; i < KSI_Utf8StringList_length(t->publicationRef); i++) {
+		KSI_Utf8String *ref = NULL;
+
+		res = KSI_Utf8StringList_elementAt(t->publicationRef, i, &ref);
+		if (res != KSI_OK) goto cleanup;
+
+		len += snprintf(buffer + len, buffer_len - len, "\nRef: %s", KSI_Utf8String_cstr(ref));
+	}
+
+	ret = buffer;
+
+cleanup:
+
+	return ret;
+}
+
 KSI_IMPLEMENT_GETTER(KSI_PublicationData, KSI_Integer*, time, Time);
 KSI_IMPLEMENT_GETTER(KSI_PublicationData, KSI_DataHash*, imprint, Imprint);
 
