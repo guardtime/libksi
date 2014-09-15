@@ -920,11 +920,6 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 	KSI_PublicationData *pubData = NULL;
 	KSI_PublicationRecord *pubRecClone = NULL;
 
-	unsigned char *rawResp = NULL;
-	unsigned rawResp_len = 0;
-
-	KSI_TLV *respTlv = NULL;
-	KSI_ExtendPdu *pdu = NULL;
 	KSI_RequestHandle *handle = NULL;
 
 	KSI_PRE(&err, signature != NULL) goto cleanup;
@@ -964,31 +959,7 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 	res = KSI_sendExtendRequest(ctx, req, &handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	/* Read the response. */
-	res = KSI_RequestHandle_getResponse(handle, &rawResp, &rawResp_len);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_LOG_logBlob(signature->ctx, KSI_LOG_DEBUG, "Extend response", rawResp, rawResp_len);
-
-	res = KSI_TLV_parseBlob2(signature->ctx, rawResp, rawResp_len, 1, &respTlv);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Release the handle - respTlv will handle it now. */
-	res = KSI_RequestHandle_setResponse(handle, NULL, 0);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Create response PDU object. */
-	res = KSI_ExtendPdu_new(signature->ctx, &pdu);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Evaluate response PDU object. */
-	res = KSI_TlvTemplate_extract(signature->ctx, pdu, respTlv, KSI_TLV_TEMPLATE(KSI_ExtendPdu), NULL);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_LOG_logTlv(signature->ctx, KSI_LOG_DEBUG, "Parsed part of the response", respTlv);
-
-	/* Extract the response */
-	res = KSI_ExtendPdu_getResponse(pdu, &response);
+	res = KSI_RequestHandle_getExtendResponse(handle, &response);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Verify the response is ok. */
@@ -1039,9 +1010,7 @@ cleanup:
 
 	KSI_ExtendReq_free(req);
 	KSI_PublicationRecord_free(pubRecClone);
-	KSI_ExtendPdu_free(pdu);
 	KSI_RequestHandle_free(handle);
-	KSI_TLV_free(respTlv);
 	KSI_Signature_free(tmp);
 
 	return KSI_RETURN(&err);

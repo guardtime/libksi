@@ -326,6 +326,8 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 	res = KSI_ExtendPdu_new(handle->ctx, &pdu);
 	KSI_CATCH(&err, res) goto cleanup;
 
+	KSI_LOG_logBlob(handle->ctx, KSI_LOG_DEBUG, "Parsing extend response from", raw, len);
+
 	res = KSI_TlvTemplate_parse(handle->ctx, raw, len, KSI_TLV_TEMPLATE(KSI_ExtendPdu), pdu);
 	KSI_CATCH(&err, res) goto cleanup;
 
