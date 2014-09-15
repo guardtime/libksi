@@ -216,7 +216,7 @@ cleanup:
 
 int KSI_LOG_logTlv(KSI_CTX *ctx, int level, const char *prefix, const KSI_TLV *tlv) {
 	int res = KSI_UNKNOWN_ERROR;
-	char *serialized = NULL;
+	char serialized[0x1ffff];
 	KSI_Logger *logger = NULL;
 
 	res = KSI_getLogger(ctx, &logger);
@@ -228,10 +228,7 @@ int KSI_LOG_logTlv(KSI_CTX *ctx, int level, const char *prefix, const KSI_TLV *t
 	}
 
 	if (tlv != NULL) {
-		res = KSI_TLV_toString(tlv, &serialized);
-		if (res != KSI_OK) goto cleanup;
-
-		res = KSI_LOG_log(ctx, level, "%s:\n%s", prefix, serialized);
+		res = KSI_LOG_log(ctx, level, "%s:\n%s", prefix, KSI_TLV_toString(tlv, serialized, sizeof(serialized)));
 	} else {
 		res = KSI_LOG_log(ctx, level, "%s:\n%s", prefix, "(null)");
 	}
@@ -241,8 +238,6 @@ cleanup:
 	if (res != KSI_OK) {
 		KSI_LOG_log(ctx, level, "%s: Unable to log tlv value - %s", prefix, KSI_getErrorString(res));
 	}
-
-	KSI_free(serialized);
 
 	return res;
 }
