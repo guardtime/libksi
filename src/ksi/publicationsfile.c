@@ -977,41 +977,6 @@ cleanup:
 	return res;
 }
 
-char *KSI_PublicationRecord_toString(KSI_PublicationRecord *t, char *buffer, unsigned buffer_len){
-	char *res = NULL;
-	KSI_LIST(KSI_Utf8String) *list_publicationReferences = NULL;
-	KSI_PublicationData *pubData = NULL;
-	int ret = KSI_UNKNOWN_ERROR;
-	int len = 0;
-	int j = 0;
-	char tmp[256];
-	
-	res = KSI_PublicationRecord_getPublicationRef(t, &list_publicationReferences);
-	if(res != KSI_OK) goto cleanup;
-	
-	res = KSI_PublicationRecord_getPublishedData(t, &pubData);
-	if(res != KSI_OK) goto cleanup;
-	
-	if(KSI_Integer_toDateString(pubData->time, tmp, sizeof(tmp)) == NULL) goto cleanup;
-
-	len+=snprintf(buffer+len, buffer_len - len, "%s\n", tmp);
-	
-	for (j = 0; j < KSI_Utf8StringList_length(list_publicationReferences); j++) {
-		KSI_Utf8String *reference = NULL;
-		res = KSI_Utf8StringList_elementAt(list_publicationReferences, j, &reference);
-		if(res != KSI_OK) goto cleanup;
-		len+=snprintf(buffer+len, buffer_len - len, "%s\n", KSI_Utf8String_cstr(reference));
-	}
-	
-	if(j==0) goto cleanup;
-	
-	ret = buffer;
-	
-cleanup:
-	
-	return ret;
-}
-
 KSI_IMPLEMENT_GETTER(KSI_PublicationRecord, KSI_PublicationData*, publishedData, PublishedData);
 KSI_IMPLEMENT_GETTER(KSI_PublicationRecord, KSI_LIST(KSI_Utf8String)*, publicationRef, PublicationRef);
 
