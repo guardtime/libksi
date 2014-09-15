@@ -8,8 +8,6 @@
 #include <windows.h>
 #include <Wincrypt.h>
 
-/* Hide the following line to deactivate. */
-#define MAGIC_EMAIL "publications@guardtime.com"
 
 static void printError(DWORD dw) 
 { 
@@ -792,7 +790,7 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	KSI_CTX *ctx = NULL;
 	PCCERT_CONTEXT subjectCert = NULL;
 	char tmp[256];
-	
+	char *magicEmail = NULL;
 	
 	KSI_PRE(&err, pki != NULL) goto cleanup;
 	KSI_PRE(&err, signature != NULL) goto cleanup;
@@ -804,19 +802,22 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 
 	//printCertInfo(subjectCert);
 	
-#ifdef MAGIC_EMAIL
-	if(CertGetNameString(subjectCert, CERT_NAME_EMAIL_TYPE, 0, NULL, tmp, sizeof(tmp))==1){
-		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Unable to get subjects name from PKI certificate");
-		goto cleanup;
-	}
-	
-	KSI_LOG_debug(ctx, "CryptoAPI: Subjects E-mail: %s", tmp);
+	res=KSI_getPublicationCertEmail(ctx, &magicEmail);
+	KSI_CATCH(&err, res) goto cleanup;
+		
+	if(magicEmail != NULL){
+		if(CertGetNameString(subjectCert, CERT_NAME_EMAIL_TYPE, 0, NULL, tmp, sizeof(tmp))==1){
+			KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Unable to get subjects name from PKI certificate");
+			goto cleanup;
+		}
 
-	if (strcmp(tmp, MAGIC_EMAIL) != 0) {
-		KSI_FAIL(&err, KSI_PKI_CERTIFICATE_NOT_TRUSTED, "Wrong subject name");
-		goto cleanup;
+		KSI_LOG_debug(ctx, "CryptoAPI: Subjects E-mail: %s", tmp);
+
+		if (strcmp(tmp, magicEmail) != 0) {
+			KSI_FAIL(&err, KSI_PKI_CERTIFICATE_NOT_TRUSTED, "Wrong subject name");
+			goto cleanup;
+		}
 	}
-#endif
 
 	res = KSI_PKITruststore_verifyCertificate(pki, subjectCert);
 	KSI_CATCH(&err, res);

@@ -88,6 +88,7 @@ static int winhttpNetHandleCtx_new(winhttpNetHandleCtx **handleCtx){
 	nhc->request_handle = NULL;
 	nhc->hostName = NULL;
 	nhc->query = NULL;
+	memset(&(nhc->uc), 0, sizeof(nhc->uc));
 	nhc->uc.dwStructSize = sizeof(nhc->uc);
 
 	*handleCtx = nhc;

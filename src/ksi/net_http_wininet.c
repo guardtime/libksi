@@ -79,13 +79,13 @@ static void wininetNetHandleCtx_free(wininetNetHandleCtx *handleCtx) {
 static int wininetNetHandleCtx_new(wininetNetHandleCtx **handleCtx){
 	wininetNetHandleCtx *nhc = NULL;
 	int res = KSI_UNKNOWN_ERROR;
-	
+
 	nhc = KSI_new(wininetNetHandleCtx);
 	if (nhc == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
-	
+
 	nhc->ctx = NULL;
 	//nhc->internet_handle = NULL;
 	nhc->session_handle = NULL;
@@ -93,6 +93,7 @@ static int wininetNetHandleCtx_new(wininetNetHandleCtx **handleCtx){
 	nhc->hostName = NULL;
 	nhc->query = NULL;
 	nhc->scheme = INTERNET_SCHEME_DEFAULT;
+	memset(&(nhc->uc), 0, sizeof(nhc->uc));
 	nhc->uc.dwStructSize = sizeof(nhc->uc);
 	
 	*handleCtx = nhc;
