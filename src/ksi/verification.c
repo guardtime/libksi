@@ -19,6 +19,8 @@ int KSI_VerificationResult_reset(KSI_VerificationResult *info) {
 	info->useUserPublication = false;
 	info->userPublication = NULL;
 
+	info->publicationsFile = NULL;
+
 	info->steps_len = 0;
 
 	KSI_DataHash_free(info->aggregationHash);
@@ -38,6 +40,7 @@ int KSI_VerificationResult_init(KSI_VerificationResult *info) {
 		goto cleanup;
 	}
 
+	info->aggregationHash = NULL;
 	res = KSI_VerificationResult_reset(info);
 	if (res != KSI_OK) goto cleanup;
 

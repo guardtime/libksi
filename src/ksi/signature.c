@@ -64,6 +64,7 @@ int KSI_AggregationHashChain_new(KSI_CTX *ctx, KSI_AggregationHashChain **out) {
 	tmp->chainIndex = NULL;
 	tmp->inputData = NULL;
 	tmp->inputHash = NULL;
+	tmp->aggrHashId = NULL;
 
 	*out = tmp;
 	tmp = NULL;
@@ -184,6 +185,7 @@ int KSI_CalendarAuthRec_new(KSI_CTX *ctx, KSI_CalendarAuthRec **out) {
 	tmp->pubData = NULL;
 	tmp->signatureAlgo = NULL;
 	tmp->signatureData = NULL;
+	tmp->pubDataTlv = NULL;
 
 	*out = tmp;
 	tmp = NULL;
@@ -330,6 +332,8 @@ static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
 	tmp->aggregationChainList = NULL;
 	tmp->aggregationAuthRec = NULL;
 	tmp->aggregationChainList = NULL;
+	tmp->calendarAuthRec = NULL;
+	tmp->publication = NULL;
 
 	res = KSI_VerificationResult_init(&tmp->verificationResult);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -721,7 +725,7 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, unsigned char *response, u
 	KSI_BEGIN(ctx, &err);
 
 	/* Parse the pdu */
-	res = KSI_TLV_parseBlob2(ctx, response, response_len, 0, &pduTlv);
+	res = KSI_TLV_parseBlob2(ctx, response, response_len, 1, &pduTlv);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Validate tag value */

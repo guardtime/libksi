@@ -28,6 +28,7 @@ int KSI_RequestHandle_new(KSI_CTX *ctx, const unsigned char *request, unsigned r
 
 	tmp->ctx = ctx;
 	tmp->implCtx = NULL;
+	tmp->implCtx_free = NULL;
 	tmp->request = NULL;
 	tmp->request_length = 0;
 	if (request != NULL && request_length > 0) {
