@@ -16,8 +16,6 @@ void KSI_LIST_FN_NAME(type, free)(KSI_LIST(type) *);							\
 void KSI_LIST_FN_NAME(type, freeAll)(KSI_LIST(type) *);							\
 int KSI_LIST_FN_NAME(type, new)(KSI_CTX *, KSI_LIST(type) **);					\
 int KSI_LIST_FN_NAME(type, append)(KSI_LIST(type) *, type *);					\
-int KSI_LIST_FN_NAME(type, iter)(KSI_LIST(type) *);								\
-int KSI_LIST_FN_NAME(type, next)(KSI_LIST(type) *, type **);					\
 int KSI_LIST_FN_NAME(type, indexOf)(const KSI_LIST(type) *, const type *, size_t **);	\
 int KSI_LIST_FN_NAME(type, insertAt)(KSI_LIST(type) *, size_t, type *);			\
 int KSI_LIST_FN_NAME(type, replaceAt)(KSI_LIST(type) *, size_t, type *);		\

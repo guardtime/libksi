@@ -1153,21 +1153,21 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int serializeTlvList(const KSI_LIST(KSI_TLV) *tlvListNode, unsigned char *buf, unsigned *buf_free) {
+static int serializeTlvList(KSI_LIST(KSI_TLV) *nestedList, unsigned idx, unsigned char *buf, unsigned *buf_free) {
 	KSI_ERR err;
 	int res;
 	unsigned bf = *buf_free;
 	KSI_TLV *tlv = NULL;
 
-	KSI_PRE(&err, tlvListNode != NULL) goto cleanup;
-	KSI_BEGIN(KSI_TLVList_getCtx(tlvListNode), &err);
+	KSI_PRE(&err, nestedList != NULL) goto cleanup;
+	KSI_BEGIN(KSI_TLVList_getCtx(nestedList), &err);
 
-	/* Cast required, as the iterator is advanced by one. */
-	res = KSI_TLVList_next((KSI_LIST(KSI_TLV) *)tlvListNode, &tlv);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (KSI_TLVList_length(nestedList) > idx) {
+		/* Cast required, as the iterator is advanced by one. */
+		res = KSI_TLVList_elementAt(nestedList, idx, &tlv);
+		KSI_CATCH(&err, res) goto cleanup;
 
-	if (tlv != NULL) {
-		res = serializeTlvList(tlvListNode, buf, &bf);
+		res = serializeTlvList(nestedList, idx + 1, buf, &bf);
 		if (res != KSI_OK) {
 			KSI_FAIL(&err, res, NULL);
 			goto cleanup;
@@ -1204,10 +1204,7 @@ static int serializeNested(const KSI_TLV *tlv, unsigned char *buf, unsigned *buf
 	}
 
 	if (tlv->nested != NULL) {
-		res = KSI_TLVList_iter(tlv->nested);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		res = serializeTlvList(tlv->nested, buf, &bf);
+		res = serializeTlvList(tlv->nested, 0, buf, &bf);
 		if (res != KSI_OK) {
 			KSI_FAIL(&err, res, NULL);
 			goto cleanup;
@@ -1441,8 +1438,6 @@ static int stringify(const KSI_TLV *tlv, int indent, char *str, unsigned size, u
 			break;
 		case KSI_TLV_PAYLOAD_TLV:
 			l += (unsigned)snprintf(str + l, NOTNEG(size - l), ":");
-			res = KSI_TLVList_iter(tlv->nested);
-			if (res != KSI_OK) goto cleanup;
 			for (i = 0; i < KSI_TLVList_length(tlv->nested); i++) {
 				KSI_TLV *tmp = NULL;
 
@@ -1471,42 +1466,23 @@ cleanup:
 	return res;
 }
 
-int KSI_TLV_toString(const KSI_TLV *tlv, char **str) {
-	KSI_ERR err;
+char *KSI_TLV_toString(const KSI_TLV *tlv, char *buffer, unsigned buffer_len) {
 	int res;
-	char *tmp = NULL;
-	unsigned tmp_size = 0xfffff; /* 1 MB, now this should be enough for everyone. */
+	char *ret = NULL;
 	unsigned tmp_len = 0;
 
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, str != NULL) goto cleanup;
-	KSI_BEGIN(tlv->ctx, &err);
-
-	tmp = KSI_calloc(tmp_size, 1);
-	if (tmp == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+	if (tlv == NULL || buffer == NULL) {
 		goto cleanup;
 	}
 
-	res = stringify(tlv, 0, tmp, tmp_size, &tmp_len);
-	KSI_CATCH(&err, res) goto cleanup;
+	res = stringify(tlv, 0, buffer, buffer_len, &tmp_len);
+	if (res != KSI_OK) goto cleanup;
 
-	tmp = KSI_realloc(tmp, tmp_len + 1);
-	if (tmp == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	*str = tmp;
-	tmp = NULL;
-
-	KSI_SUCCESS(&err);
+	ret = buffer;
 
 cleanup:
 
-	KSI_free(tmp);
-
-	return KSI_RETURN(&err);
+	return ret;
 }
 
 static int expandNested(const KSI_TLV *sample, KSI_TLV *tlv) {

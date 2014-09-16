@@ -283,7 +283,7 @@ extern "C" {
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_toString(const KSI_TLV *tlv, char **str);
+	char *KSI_TLV_toString(const KSI_TLV *tlv, char *buffer, unsigned buffer_len);
 
 	/**
 	 * This functions makes an identical copy of a TLV by serializing, parsing

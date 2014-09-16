@@ -9,8 +9,6 @@ struct KSI_List_st {
 	size_t arr_size;
 	size_t arr_len;
 	void (*obj_free)(void *);
-	unsigned int iter;
-
 };
 
 static int appendElement(KSI_List *list, void* obj) {
@@ -86,8 +84,6 @@ int KSI_List_new(void (*obj_free)(void *), KSI_List **list) {
 	tmp->obj_free = obj_free;
 	tmp->arr_len = 0;
 	tmp->arr_size = 0;
-	tmp->iter = 0;
-
 	*list = tmp;
 	tmp = NULL;
 
@@ -110,42 +106,6 @@ int KSI_List_append(KSI_List *list, void *obj) {
 
 	res = appendElement(list, obj);
 	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
-int KSI_List_iter(KSI_List *list) {
-	int res = KSI_UNKNOWN_ERROR;
-	if (list == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	list->iter = 0;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
-int KSI_List_next(KSI_List *list, void **o) {
-	int res = KSI_UNKNOWN_ERROR;
-	if (list == NULL || o == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	if (list->iter < list->arr_len) {
-		*o = list->arr[list->iter++];
-	} else {
-		*o = NULL;
-	}
 
 	res = KSI_OK;
 
@@ -271,8 +231,6 @@ int KSI_List_remove(KSI_List *list, size_t pos) {
 	}
 
 	list->arr_len--;
-
-	if (list->iter > pos) --list->iter;
 
 	res = KSI_OK;
 
