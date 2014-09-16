@@ -898,7 +898,7 @@ char *KSI_PublicationData_toString(KSI_PublicationData *t, char *buffer, unsigne
 
 	res = KSI_PublicationData_toBase32(t, &pubStr);
 	if (res != KSI_OK) {
-		KSI_LOG_error(t->ctx, "Unable to convert publication data to base 64: %s (%d)", KSI_getErrorString(res), res);
+		KSI_LOG_error(t->ctx, "Unable to convert publication data to base 32: %s (%d)", KSI_getErrorString(res), res);
 		goto cleanup;
 	}
 
