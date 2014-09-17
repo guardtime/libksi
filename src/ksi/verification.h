@@ -15,41 +15,55 @@ extern "C" {
 
 	typedef enum KSI_VerificationStep_en {
 	    /**
-	     * OK! verify aggregation chain
+	     * Check if signature input hash and document hash match.
 	     */
-	    KSI_SIG_AGGREGATION_CHAIN = 0x01,
+	    KSI_VERIFY_DOCUMENT = 0x01,
+
 	    /**
-	     * OK!check if signature and document hashes match
+	     * Verify the aggregation chain internally.
 	     */
-	    KSI_SIG_DOCUMENT_MATCH = 0x02,
+	    KSI_VERIFY_AGGRCHAIN_INTERNALLY = 0x02,
+
 	    /**
-	     * OK! check if calendar chain matches aggregation chain
+	     * Check if calendar chain matches aggregation chain
 	     */
-	    KSI_SIG_CALENDAR_CHAIN = 0x04,
+	    KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN = 0x04,
+
 	    /**
-	     * check publication file signature
+	     * Verify calendar chain internally.
 	     */
-	    KSI_PUB_SIGNATURE = 0x08,
+	    KSI_VERIFY_CALCHAIN_INTERNALLY = 0x08,
+
 	    /**
-	     * OK!verify that calendar authentication record matches calendar chain
+	     * Verify calendar chain using calendar auth record.
 	     */
-	    KSI_SIG_CAL_AUTH_REC_MATCH = 0x10,
+	    KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC = 0x10,
+
+	    /**
+	     * Verify calendar chain with publication.
+	     */
+	    KSI_VERIFY_CALCHAIN_WITH_PUBLICATION = 0x20,
+
+	    /**
+	     * Verify signature against online calendar
+	     */
+	    KSI_VERIFY_CALCHAIN_ONLINE = 0x40,
+
 	    /**
 	     * OK!verify that calendar authentication record signature is correct
 	     */
-	    KSI_SIG_CAL_AUTH_REC_SIGNATURE = 0x20,
+	    KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE = 0x80,
+
 	    /**
-	     * OK! check if publication record matches calendar chain
+	     * check publication file signature
 	     */
-	    KSI_SIG_PUBLICATION_MATCH = 0x40,
+	    KSI_VERIFY_PUBFILE_SIGNATURE = 0x100,
+
 	    /**
-	     * OK! check if publication record is stored in KSI Trust provider
+	     * Check if publication record is stored in KSI Trust provider
 	     */
-	    KSI_SIG_PUBLICATION_TRUSTED = 0x80,
-	    /**
-	     * OK! verify signature against online calendar
-	     */
-	    KSI_SIG_VERIFY_ONLINE = 0x100
+	    KSI_VERIFY_PUBLICATION_WITH_PUBFILE = 0x200,
+
 	} KSI_VerificationStep;
 
 	/**

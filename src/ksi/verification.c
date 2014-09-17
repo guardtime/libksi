@@ -67,6 +67,7 @@ static int addVerificationStepResult(KSI_VerificationResult *info, KSI_Verificat
 	result = info->steps + info->steps_len++;
 	result->step = step;
 	result->succeeded = succeeded;
+	result->description[0] = '\0';
 	if (desc != NULL) {
 		strncpy(result->description, desc, sizeof(result->description));
 	}
