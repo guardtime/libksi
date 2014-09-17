@@ -28,6 +28,7 @@ struct KSI_Utf8String_st {
 	KSI_CTX *ctx;
 	char *value;
 	size_t len;
+	int refCount;
 };
 
 int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, unsigned int data_len, KSI_OctetString **t) {
@@ -154,7 +155,7 @@ cleanup:
  */
 
 void KSI_Utf8String_free(KSI_Utf8String *t) {
-	if (t != NULL) {
+	if (t != NULL && --t->refCount == 0) {
 		KSI_free(t->value);
 		KSI_free(t);
 	}
@@ -174,7 +175,8 @@ int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, KSI_Utf8String **t) {
 
 	tmp->ctx = ctx;
 	tmp->value = NULL;
-
+	tmp->refCount = 1;
+	
 	len = strlen(str) + 1;
 
 	val = KSI_calloc(len, 1);
@@ -270,28 +272,19 @@ cleanup:
 int KSI_Utf8String_clone(const KSI_Utf8String *u8str, KSI_Utf8String **clone){
 	KSI_ERR err;
 	int res;
-	KSI_Utf8String *tmp = NULL;
 	
 	KSI_PRE(&err, u8str != NULL) goto cleanup;
 	KSI_PRE(&err, clone != NULL) goto cleanup;
 	KSI_BEGIN(u8str->ctx, &err);
 	
-	tmp = KSI_new(KSI_Utf8String);
-	tmp->ctx = u8str->ctx;
-	tmp->len = u8str->len;
+	((KSI_Utf8String*)u8str)->refCount++;
 	
-	tmp->value = (char*) KSI_malloc(u8str->len);
-	if(tmp->value == NULL) goto cleanup;
-	memcpy(tmp->value, u8str->value, u8str->len);
-	
-	*clone = tmp;
-	tmp = NULL;
+	*clone = u8str;
 	
 	KSI_SUCCESS(&err);
 
 cleanup:
 
-	KSI_Utf8String_free(tmp);
 	return KSI_RETURN(&err);
 }
 
