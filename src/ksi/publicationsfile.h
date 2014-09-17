@@ -221,7 +221,7 @@ extern "C" {
 	int KSI_PublicationRecord_setPublishedData(KSI_PublicationRecord *t, KSI_PublicationData *publishedData);
 	int KSI_PublicationRecord_setPublicationRef(KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) *publicationRef);
 	char *KSI_PublicationRecord_toString(KSI_PublicationRecord *t, char *buffer, unsigned buffer_len);
-
+	int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_PublicationRecord **clone);
 
 	/**
 	 * @}

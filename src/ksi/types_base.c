@@ -267,6 +267,33 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+int KSI_Utf8String_clone(const KSI_Utf8String *u8str, KSI_Utf8String **clone){
+	KSI_ERR err;
+	int res;
+	KSI_Utf8String *tmp = NULL;
+	
+	KSI_PRE(&err, u8str != NULL) goto cleanup;
+	KSI_PRE(&err, clone != NULL) goto cleanup;
+	KSI_BEGIN(u8str->ctx, &err);
+	
+	tmp = KSI_new(KSI_Utf8String);
+	tmp->ctx = u8str->ctx;
+	tmp->len = u8str->len;
+	
+	tmp->value = (char*) KSI_malloc(u8str->len);
+	if(tmp->value == NULL) goto cleanup;
+	memcpy(tmp->value, u8str->value, u8str->len);
+	
+	*clone = tmp;
+	tmp = NULL;
+	
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_Utf8String_free(tmp);
+	return KSI_RETURN(&err);
+}
 
 
 void KSI_Integer_free(KSI_Integer *kint) {
