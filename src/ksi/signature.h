@@ -211,6 +211,16 @@ extern "C" {
 
 	int KSI_Signature_getVerificationResult(KSI_Signature *sig, const KSI_VerificationResult **info);
 
+	/**
+	 * This function replaces the signatures calender hash chain 
+	 * \param [in out]	sig					KSI signature.
+	 * \param [in]		calendarHashChain	Pointer to the calendar hash chain
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 */
+	int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain);
+	
+	int KSI_Signature_replacePublicationRecord(KSI_Signature *sig, KSI_PublicationRecord *pubRec);
 /**
  * @}
  */

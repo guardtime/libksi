@@ -501,7 +501,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain) {
+int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain) {
 	KSI_ERR err;
 	int res;
 	KSI_DataHash *newInputHash = NULL;
@@ -638,7 +638,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int setPublicationRecord(KSI_Signature *sig, KSI_PublicationRecord *pubRec) {
+int KSI_Signature_replacePublicationRecord(KSI_Signature *sig, KSI_PublicationRecord *pubRec) {
 	KSI_ERR err;
 	KSI_TLV *newPubTlv = NULL;
 	size_t oldPubTlvPos = 0;
@@ -986,11 +986,11 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Add the hash chain to the signature. */
-	res = replaceCalendarChain(tmp, calHashChain);
+	res = KSI_Signature_replaceCalendarChain(tmp, calHashChain);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Set the publication as the trust anchor. */
-	res = setPublicationRecord(tmp, pubRecClone);
+	res = KSI_Signature_replacePublicationRecord(tmp, pubRecClone);
 	KSI_CATCH(&err, res) goto cleanup;
 	pubRecClone = NULL;
 
