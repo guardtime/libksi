@@ -455,6 +455,11 @@ static int encodeAsNestedTlvs(KSI_TLV *tlv) {
 	while (allConsumedBytes < tlv->datap_len) {
 		lastConsumedBytes = readFirstTlv(tlv->ctx, tlv->datap + allConsumedBytes, tlv->datap_len - allConsumedBytes, &tmp);
 
+		if (tmp == NULL) {
+			KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+			goto cleanup;
+		}
+
 		/* Update the absolute offset of the child TLV object. */
 		tmp->absoluteOffset += allConsumedBytes;
 

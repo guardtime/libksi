@@ -26,40 +26,6 @@ int KSI_MetaData_setMachineId(KSI_MetaData *t, KSI_Integer *machineId);
 int KSI_MetaData_setSequenceNr(KSI_MetaData *t, KSI_Integer *sequenceNr);
 
 /**
- * KSI_HashChainLink
- */
-void KSI_HashChainLink_free(KSI_HashChainLink *t);
-int KSI_HashChainLink_new(KSI_CTX *ctx, KSI_HashChainLink **t);
-KSI_CTX *KSI_HashChainLink_getCtx(KSI_HashChainLink *t);
-int KSI_HashChainLink_getIsLeft(const KSI_HashChainLink *t, int *isLeft);
-int KSI_HashChainLink_getLevelCorrection(const KSI_HashChainLink *t, int *levelCorrection);
-int KSI_HashChainLink_getMetaHash(const KSI_HashChainLink *t, KSI_DataHash **metaHash);
-int KSI_HashChainLink_getMetaData(const KSI_HashChainLink *t, KSI_MetaData **metaData);
-int KSI_HashChainLink_getImprint(const KSI_HashChainLink *t, KSI_DataHash **imprint);
-int KSI_HashChainLink_setIsLeft(KSI_HashChainLink *t, int isLeft);
-int KSI_HashChainLink_setLevelCorrection(KSI_HashChainLink *t, int levelCorrection);
-int KSI_HashChainLink_setMetaHash(KSI_HashChainLink *t, KSI_DataHash *metaHash);
-int KSI_HashChainLink_setMetaData(KSI_HashChainLink *t, KSI_MetaData *metaData);
-int KSI_HashChainLink_setImprint(KSI_HashChainLink *t, KSI_DataHash *imprint);
-
-/**
- * KSI_CalendarHashChain
- */
-void KSI_CalendarHashChain_free(KSI_CalendarHashChain *t);
-int KSI_CalendarHashChain_new(KSI_CTX *ctx, KSI_CalendarHashChain **t);
-KSI_CTX *KSI_CalendarHashChain_getCtx(KSI_CalendarHashChain *t);
-int KSI_CalendarHashChain_aggregate(KSI_CalendarHashChain *chain, KSI_DataHash **hsh);
-int KSI_CalendarHashChain_calculateAggregationTime(KSI_CalendarHashChain *chain, time_t *aggrTime);
-int KSI_CalendarHashChain_getPublicationTime(const KSI_CalendarHashChain *t, KSI_Integer **publicationTime);
-int KSI_CalendarHashChain_getAggregationTime(const KSI_CalendarHashChain *t, KSI_Integer **aggregationTime);
-int KSI_CalendarHashChain_getInputHash(const KSI_CalendarHashChain *t, KSI_DataHash **inputHash);
-int KSI_CalendarHashChain_getHashChain(const KSI_CalendarHashChain *t, KSI_LIST(KSI_HashChainLink) **hashChain);
-int KSI_CalendarHashChain_setPublicationTime(KSI_CalendarHashChain *t, KSI_Integer *publicationTime);
-int KSI_CalendarHashChain_setAggregationTime(KSI_CalendarHashChain *t, KSI_Integer *aggregationTime);
-int KSI_CalendarHashChain_setInputHash(KSI_CalendarHashChain *t, KSI_DataHash *inputHash);
-int KSI_CalendarHashChain_setHashChain(KSI_CalendarHashChain *t, KSI_LIST(KSI_HashChainLink) *hashChain);
-
-/**
  * KSI_ExtendPdu
  */
 void KSI_ExtendPdu_free(KSI_ExtendPdu *t);
