@@ -983,7 +983,7 @@ cleanup:
 /**
  *
  */
-int KSI_TLV_isLenient(KSI_TLV *tlv) {
+int KSI_TLV_isNonCritical(KSI_TLV *tlv) {
 	return tlv->isNonCritical;
 }
 

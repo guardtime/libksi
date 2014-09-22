@@ -52,8 +52,13 @@ extern "C" {
 	int KSI_HashChainLink_setMetaHash(KSI_HashChainLink *t, KSI_DataHash *metaHash);
 	int KSI_HashChainLink_setMetaData(KSI_HashChainLink *t, KSI_MetaData *metaData);
 	int KSI_HashChainLink_setImprint(KSI_HashChainLink *t, KSI_DataHash *imprint);
+
 	int KSI_HashChainLink_fromTlv(KSI_TLV *tlv, KSI_HashChainLink **link);
 	int KSI_HashChainLink_toTlv(KSI_HashChainLink *link, unsigned tag, int isNonCritica, int isForward, KSI_TLV **tlv);
+
+
+	int KSI_CalendarHashChainLink_fromTlv(KSI_TLV *tlv, KSI_CalendarHashChainLink **link);
+	int KSI_CalendarHashChainLink_toTlv(KSI_CalendarHashChainLink *link, unsigned tag, int isNonCritica, int isForward, KSI_TLV **tlv);
 
 	/**
 	 * KSI_CalendarHashChain

@@ -394,7 +394,7 @@ extern "C" {
 	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *tmpl, KSI_LIST(KSI_TLV) *reminder);
+	int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *tmpl);
 
 	/**
 	 * TODO!
@@ -409,13 +409,11 @@ extern "C" {
 	 * \param[in]		generatorCtx	Context for the generator.
 	 * \param[in]		tlv				TLV value which has the structure represented in \c template.
 	 * \param[in]		template		Template of the TLV expected structure.
-	 * \param[in]		reminder		List of TLV's that did not match the template on the first level. Can be NULL, in which case
-	 * 									an error code is returned if an unknown non-critical TLV is encountered.
 	 * \param[in]		generator		Generator function. The \c generatorCtx is passed as the first parameter and a #KSI_TLV object
 	 * 									is expected to be returned by the second parameter - a NULL value is interpreted as end of input.
 	 * 									The function is expected to return #KSI_OK on success.
 	 */
-	int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, const KSI_TlvTemplate *tmpl, KSI_LIST(KSI_TLV) *reminder, int (*generator)(void *, KSI_TLV **));
+	int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, const KSI_TlvTemplate *tmpl, int (*generator)(void *, KSI_TLV **));
 
 	/**
 	 * Given a payload object, template and a initialized target TLV, this function constructs a TLV using the

@@ -20,6 +20,7 @@ typedef struct KSI_Logger_st KSI_Logger;
 
 typedef struct KSI_MetaData_st KSI_MetaData;
 typedef struct KSI_HashChainLink_st KSI_HashChainLink;
+typedef KSI_HashChainLink KSI_CalendarHashChainLink;
 typedef struct KSI_CalendarHashChain_st KSI_CalendarHashChain;
 typedef struct KSI_ExtendPdu_st KSI_ExtendPdu;
 typedef struct KSI_AggregationPdu_st KSI_AggregationPdu;
@@ -91,6 +92,7 @@ typedef struct KSI_AggregationAuthRec_st KSI_AggregationAuthRec;
 
 KSI_DEFINE_LIST(KSI_MetaData);
 KSI_DEFINE_LIST(KSI_HashChainLink);
+KSI_DEFINE_LIST(KSI_CalendarHashChainLink);
 KSI_DEFINE_LIST(KSI_CalendarHashChain);
 KSI_DEFINE_LIST(KSI_ExtendPdu);
 KSI_DEFINE_LIST(KSI_AggregationPdu);
@@ -177,27 +179,6 @@ size_t KSI_Utf8String_size(const KSI_Utf8String *t);
 const char *KSI_Utf8String_cstr(const KSI_Utf8String *t);
 int KSI_Utf8String_fromTlv(KSI_TLV *tlv, KSI_Utf8String **u8str);
 int KSI_Utf8String_toTlv(KSI_Utf8String *u8str, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
-
-/**
- * KSI_AggregationHashChain
- */
-void KSI_AggregationHashChain_free(KSI_AggregationHashChain *aggr);
-int KSI_AggregationHashChain_new(KSI_CTX *ctx, KSI_AggregationHashChain **out);
-
-int KSI_AggregationHashChain_getAggregationTime(const KSI_AggregationHashChain *aggr, KSI_Integer **aggregationTime);
-int KSI_AggregationHashChain_getChainIndex(const KSI_AggregationHashChain * aggr, KSI_LIST(KSI_Integer) **chainIndex);
-int KSI_AggregationHashChain_getInputData(const KSI_AggregationHashChain * aggr, KSI_OctetString **inputData);
-int KSI_AggregationHashChain_getInputHash(const KSI_AggregationHashChain * aggr, KSI_DataHash **inputHash);
-int KSI_AggregationHashChain_getAggrHashId(const KSI_AggregationHashChain * aggr, KSI_Integer **aggrHashId);
-
-int KSI_AggregationHashChain_setAggregationTime(KSI_AggregationHashChain *aggr, KSI_Integer *aggregationTime);
-int KSI_AggregationHashChain_setChainIndex(KSI_AggregationHashChain * aggr, KSI_LIST(KSI_Integer) *chainIndex);
-int KSI_AggregationHashChain_setInputData(KSI_AggregationHashChain * aggr, KSI_OctetString *inputData);
-int KSI_AggregationHashChain_setInputHash(KSI_AggregationHashChain * aggr, KSI_DataHash *inputHash);
-int KSI_AggregationHashChain_setAggrHashId(KSI_AggregationHashChain * aggr, KSI_Integer *aggrHashId);
-
-int KSI_AggregationHashChain_toTlv(KSI_TLV *tlv, KSI_AggregationHashChain **rec);
-int KSI_AggregationHashChain_fromTlv(KSI_TLV *tlv, KSI_AggregationHashChain **rec);
 
 /**
  * KSI_AggregationAuthRec

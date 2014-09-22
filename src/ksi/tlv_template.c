@@ -59,6 +59,8 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationHashChain)
 	KSI_TLV_OCTET_STRING(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationHashChain_getInputData, KSI_AggregationHashChain_setInputData)
 	KSI_TLV_IMPRINT(0x05, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationHashChain_getInputHash, KSI_AggregationHashChain_setInputHash)
 	KSI_TLV_INTEGER(0x06, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationHashChain_getAggrHashId, KSI_AggregationHashChain_setAggrHashId)
+	KSI_TLV_OBJECT_LIST(0x07, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_AggregationHashChain_getChain, KSI_AggregationHashChain_setChain, KSI_HashChainLink)
+	KSI_TLV_OBJECT_LIST(0x08, KSI_TLV_TMPL_FLG_MANDATORY_G0 | KSI_TLV_TMPL_FLG_NO_SERIALIZE, KSI_AggregationHashChain_getChain, KSI_AggregationHashChain_setChain, KSI_HashChainLink)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationAuthRec)
@@ -93,8 +95,8 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_CalendarHashChain)
 	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarHashChain_getPublicationTime, KSI_CalendarHashChain_setPublicationTime)
 	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_CalendarHashChain_getAggregationTime, KSI_CalendarHashChain_setAggregationTime)
 	KSI_TLV_IMPRINT(0x05, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarHashChain_getInputHash, KSI_CalendarHashChain_setInputHash)
-	KSI_TLV_OBJECT_LIST(0x07, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_CalendarHashChain_getHashChain, KSI_CalendarHashChain_setHashChain, KSI_HashChainLink)
-	KSI_TLV_OBJECT_LIST(0x08, KSI_TLV_TMPL_FLG_MANDATORY_G0 | KSI_TLV_TMPL_FLG_NO_SERIALIZE, KSI_CalendarHashChain_getHashChain, KSI_CalendarHashChain_setHashChain, KSI_HashChainLink)
+	KSI_TLV_OBJECT_LIST(0x07, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_CalendarHashChain_getHashChain, KSI_CalendarHashChain_setHashChain, KSI_CalendarHashChainLink)
+	KSI_TLV_OBJECT_LIST(0x08, KSI_TLV_TMPL_FLG_MANDATORY_G0 | KSI_TLV_TMPL_FLG_NO_SERIALIZE, KSI_CalendarHashChain_getHashChain, KSI_CalendarHashChain_setHashChain, KSI_CalendarHashChainLink)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationResp)
@@ -104,7 +106,7 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationResp)
 	KSI_TLV_UTF8_STRING(0x06, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getErrorMsg, KSI_AggregationResp_setErrorMsg)
 	KSI_TLV_COMPOSITE(0x10, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getConfig, KSI_AggregationResp_setConfig, KSI_Config)
 	KSI_TLV_COMPOSITE(0x12, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getRequestAck, KSI_AggregationResp_setRequestAck, KSI_RequestAck)
-	KSI_TLV_OBJECT_LIST(0x0801, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getAggregationChainList, KSI_AggregationResp_setAggregationChainList, KSI_AggregationHashChain)
+	KSI_TLV_COMPOSITE_LIST(0x0801, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getAggregationChainList, KSI_AggregationResp_setAggregationChainList, KSI_AggregationHashChain)
 	KSI_TLV_COMPOSITE(0x0802, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getCalendarChain, KSI_AggregationResp_setCalendarChain, KSI_CalendarHashChain)
 	KSI_TLV_COMPOSITE(0x0804, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getAggregationAuthRec, KSI_AggregationResp_setAggregationAuthRec, KSI_AggregationAuthRec) /* TODO! Future work. */
 	KSI_TLV_COMPOSITE(0x0805, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getCalendarAuthRec, KSI_AggregationResp_setCalendarAuthRec, KSI_CalendarAuthRec)
@@ -217,7 +219,7 @@ cleanup:
 	return res;
 }
 
-int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *tmpl, KSI_LIST(KSI_TLV) *reminder) {
+int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *tmpl) {
 	KSI_ERR err;
 	int res;
 	TLVListIterator iter;
@@ -233,7 +235,7 @@ int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI
 
 	iter.idx = 0;
 
-	res = KSI_TlvTemplate_extractGenerator(ctx, payload, (void *)&iter, tmpl, reminder, (int (*)(void *, KSI_TLV **))TLVListIterator_next);
+	res = KSI_TlvTemplate_extractGenerator(ctx, payload, (void *)&iter, tmpl, (int (*)(void *, KSI_TLV **))TLVListIterator_next);
 	KSI_CATCH(&err, res) {
 		KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Parsed tlv before failure", tlv);
 		goto cleanup;
@@ -262,7 +264,7 @@ int KSI_TlvTemplate_parse(KSI_CTX *ctx, unsigned char *raw, unsigned raw_len, co
 	res = KSI_TLV_parseBlob2(ctx, raw, raw_len, 0, &tlv);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_TlvTemplate_extract(ctx, payload, tlv, tmpl, NULL);
+	res = KSI_TlvTemplate_extract(ctx, payload, tlv, tmpl);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Parsed TLV", tlv);
@@ -287,7 +289,7 @@ static size_t getTemplateLength(const KSI_TlvTemplate *tmpl) {
 	return len;
 }
 
-int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, const KSI_TlvTemplate *tmpl, KSI_LIST(KSI_TLV) *reminder, int (*generator)(void *, KSI_TLV **)) {
+int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, const KSI_TlvTemplate *tmpl, int (*generator)(void *, KSI_TLV **)) {
 	KSI_ERR err;
 	KSI_TLV *tlv = NULL;
 	int res;
@@ -404,7 +406,7 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 					res = tmpl[i].construct(ctx, &compositeVal);
 					KSI_CATCH(&err, res) goto cleanup;
 
-					res = KSI_TlvTemplate_extract(ctx, compositeVal, tlv, tmpl[i].subTemplate, NULL);
+					res = KSI_TlvTemplate_extract(ctx, compositeVal, tlv, tmpl[i].subTemplate);
 					KSI_CATCH(&err, res) {
 						KSI_LOG_error(ctx, "Unable to parse composite TLV: 0x%02x", KSI_TLV_getTag(tlv));
 						tmpl[i].destruct(compositeVal);
@@ -426,18 +428,11 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MORE_DEFS) == 0) break;
 		}
 
-		if(matchCount == 0) {
-			if (reminder != NULL) {
-				/* The TLV tag is not in the template, move it to the reminder. */
-				res = KSI_TLVList_append(reminder, tlv);
-				KSI_CATCH(&err, res) goto cleanup;
-			} else {
-				if (!KSI_TLV_isLenient(tlv)) {
-					KSI_LOG_error(ctx, "Unknown critical tag: 0x%02x", KSI_TLV_getTag(tlv));
-					KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
-					goto cleanup;
-				}
-			}
+		/* Check if a match was found, an raise an error if the TLV is marked as critical. */
+		if(matchCount == 0 && !KSI_TLV_isNonCritical(tlv)) {
+			KSI_LOG_error(ctx, "Unknown critical tag: 0x%02x", KSI_TLV_getTag(tlv));
+			KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+			goto cleanup;
 		}
 	}
 
@@ -629,7 +624,7 @@ int KSI_TlvTemplate_deepCopy(KSI_CTX *ctx, const void *from, const KSI_TlvTempla
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Evaluate the cloned object */
-	res = KSI_TlvTemplate_extract(ctx, to, tmpTlv, baseTemplate, NULL);
+	res = KSI_TlvTemplate_extract(ctx, to, tmpTlv, baseTemplate);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
