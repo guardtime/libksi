@@ -15,7 +15,7 @@ static void TestTlvInitOwnMem(CuTest* tc) {
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
-	CuAssert(tc, "TLV not marked as lenient", KSI_TLV_isLenient(tlv));
+	CuAssert(tc, "TLV not marked as lenient", KSI_TLV_isNonCritical(tlv));
 	CuAssert(tc, "TLV not marked to be forwarded", KSI_TLV_isForward(tlv));
 
 	CuAssert(tc, "TLV encoding is wrong.", KSI_TLV_getPayloadType(tlv) == KSI_TLV_PAYLOAD_RAW);
@@ -33,7 +33,7 @@ static void TestTlvLenientFlag(CuTest* tc) {
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
-	CuAssert(tc, "TLV not marked as lenient", KSI_TLV_isLenient(tlv));
+	CuAssert(tc, "TLV not marked as lenient", KSI_TLV_isNonCritical(tlv));
 
 	KSI_TLV_free(tlv);
 
@@ -41,7 +41,7 @@ static void TestTlvLenientFlag(CuTest* tc) {
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
-	CuAssert(tc, "TLV marked as lenient", !KSI_TLV_isLenient(tlv));
+	CuAssert(tc, "TLV marked as lenient", !KSI_TLV_isNonCritical(tlv));
 
 	KSI_TLV_free(tlv);
 }

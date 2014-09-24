@@ -55,8 +55,7 @@ static void createSuiteXMLSummary(CuSuite* testSuite, CuString* summary) {
 
 	CuStringAppendFormat(summary, "<testsuite tests=\"%d\">\n", testSuite->count);
 
-	for (i = 0 ; i < testSuite->count ; ++i)
-	{
+	for (i = 0 ; i < testSuite->count ; ++i) {
 		CuTest* testCase = testSuite->list[i];
 
 		/* Escape the test case name. */
@@ -89,8 +88,7 @@ static void addSuite(CuSuite *suite, CuSuite* (*fn)(void)) {
 	int i;
 	CuSuite *tmp = fn();
 
-	for (i = 0 ; i < tmp->count ; ++i)
-	{
+	for (i = 0 ; i < tmp->count ; ++i) {
 		CuTest* testCase = tmp->list[i];
 		CuSuiteAdd(suite, testCase);
 		tmp->list[i] = NULL;
