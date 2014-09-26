@@ -83,12 +83,14 @@ KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_LIST(KSI_Integer)*, chainInde
 KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_OctetString*, inputData, InputData)
 KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_DataHash*, inputHash, InputHash)
 KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_Integer*, aggrHashId, AggrHashId)
+KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_LIST(KSI_HashChainLink) *, chain, Chain)
 
 KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_Integer*, aggregationTime, AggregationTime)
 KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_LIST(KSI_Integer)*, chainIndex, ChainIndex)
 KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_OctetString*, inputData, InputData)
 KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_DataHash*, inputHash, InputHash)
 KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_Integer*, aggrHashId, AggrHashId)
+KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_LIST(KSI_HashChainLink) *, chain, Chain)
 
 /**
  * KSI_AggregationAuthRec
@@ -210,101 +212,10 @@ KSI_IMPLEMENT_GETTER(KSI_CalendarAuthRec, KSI_PublicationData*, pubData, Publish
 KSI_IMPLEMENT_GETTER(KSI_CalendarAuthRec, KSI_Utf8String*, signatureAlgo, SignatureAlgo)
 KSI_IMPLEMENT_GETTER(KSI_CalendarAuthRec, KSI_PKISignedData*, signatureData, SignatureData)
 
-int KSI_AggregationHashChain_toTlv(KSI_TLV *tlv, KSI_AggregationHashChain **rec) {
-	return KSI_UNKNOWN_ERROR;
-}
-
 KSI_IMPLEMENT_LIST(KSI_AggregationHashChain, KSI_AggregationHashChain_free);
 
-int KSI_AggregationHashChain_fromTlv(KSI_TLV *tlv, KSI_AggregationHashChain **rec) {
-	KSI_ERR err;
-	KSI_CTX *ctx = NULL;
-	KSI_AggregationHashChain *tmp = NULL;
-	KSI_LIST(KSI_TLV) *chainLinks = NULL;
-	KSI_HashChainLink *link = NULL;
-	KSI_TLV *linkTlv = NULL;
-	int isLeft;
-	size_t i;
-	int res;
-
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, rec != NULL) goto cleanup;
-	ctx = KSI_TLV_getCtx(tlv);
-	KSI_BEGIN(ctx, &err);
-
-	/* Create new element */
-	res = KSI_AggregationHashChain_new(ctx, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Create list for the left and right hash chain TLVs. */
-	res = KSI_TLVList_new(ctx, &chainLinks);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Extract all except the hash chain TLVs. */
-	res = KSI_TlvTemplate_extract(ctx, tmp, tlv, KSI_TLV_TEMPLATE(KSI_AggregationHashChain), chainLinks);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Create a new list for the chain. */
-	res = KSI_HashChainLinkList_new(ctx, &tmp->chain);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Parse all the chain links. */
-	for (i = 0; i < KSI_TLVList_length(chainLinks); i++) {
-		/* Get the tlv from the list. */
-		res = KSI_TLVList_elementAt(chainLinks, i, &linkTlv);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		switch (KSI_TLV_getTag(linkTlv)) {
-			case 0x07:
-				isLeft = 1;
-				break;
-			case 0x08:
-				isLeft = 0;
-				break;
-			default:
-				if (!KSI_TLV_isLenient(linkTlv)) {
-					KSI_LOG_error(ctx, "Unknown aggregation chain record critical tag 0x%02x", KSI_TLV_getTag(linkTlv));
-					KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
-					goto cleanup;
-				}
-				KSI_LOG_debug(ctx, "Ignoring aggregation chain record non-critical tag 0x%02x", KSI_TLV_getTag(linkTlv));
-				continue;
-		}
-
-		/* Create a new chain link object. */
-		res = KSI_HashChainLink_new(ctx, &link);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		res = KSI_HashChainLink_setIsLeft(link, isLeft);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		/* Extract the values. */
-		res = KSI_TlvTemplate_extract(ctx, link, linkTlv, KSI_TLV_TEMPLATE(KSI_HashChainLink), NULL);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		/* Add the link to the chain. */
-		res = KSI_HashChainLinkList_append(tmp->chain, link);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		link = NULL;
-	}
-
-	*rec = tmp;
-	tmp = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_TLVList_free(chainLinks);
-	KSI_nofree(chainLinks);
-	KSI_HashChainLink_free(link);
-	KSI_AggregationHashChain_free(tmp);
-	return KSI_RETURN(&err);
-}
-
 KSI_DEFINE_TLV_TEMPLATE(KSI_Signature)
-	KSI_TLV_OBJECT_LIST(0x0801, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Signature_getAggregationChainList, KSI_Signature_setAggregationChainList, KSI_AggregationHashChain)
+	KSI_TLV_COMPOSITE_LIST(0x0801, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Signature_getAggregationChainList, KSI_Signature_setAggregationChainList, KSI_AggregationHashChain)
 	KSI_TLV_COMPOSITE(0x0802, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Signature_getCalendarChain, KSI_Signature_setCalendarChain, KSI_CalendarHashChain)
 	KSI_TLV_COMPOSITE(0x0803, KSI_TLV_TMPL_FLG_NONE, KSI_Signature_getPublicationRecord, KSI_Signature_setPublicationRecord, KSI_PublicationRecord)
 	KSI_TLV_COMPOSITE(0x0804, KSI_TLV_TMPL_FLG_NONE, KSI_Signature_getAggregationAuthRecord, KSI_Signature_setAggregationAuthRecord, KSI_AggregationAuthRec)
@@ -385,7 +296,7 @@ static int extractSignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature **signatur
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Parse and extract the signature. */
-	res = KSI_TlvTemplate_extract(ctx, sig, tlv, KSI_TLV_TEMPLATE(KSI_Signature), NULL);
+	res = KSI_TlvTemplate_extract(ctx, sig, tlv, KSI_TLV_TEMPLATE(KSI_Signature));
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Make sure the aggregation chains are in correct order. */
@@ -737,7 +648,7 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, unsigned char *response, u
 	res = KSI_AggregationPdu_new(ctx, &pdu);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_TlvTemplate_extract(ctx, pdu, pduTlv, KSI_TLV_TEMPLATE(KSI_AggregationPdu), NULL);
+	res = KSI_TlvTemplate_extract(ctx, pdu, pduTlv, KSI_TLV_TEMPLATE(KSI_AggregationPdu));
 	KSI_CATCH(&err, res) goto cleanup;
 
 

@@ -186,7 +186,7 @@ extern "C" {
 	 *
 	 * \return 1 if the lenient-flag is set, 0 otherwise.
 	 */
-	int KSI_TLV_isLenient(KSI_TLV *tlv);
+	int KSI_TLV_isNonCritical(KSI_TLV *tlv);
 
 	/**
 	 * This is an access method for the TLV forward-flag.

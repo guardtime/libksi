@@ -1,10 +1,6 @@
 #include <limits.h>
 #include "internal.h"
 
-static int encodeCalendarHashChainLink(KSI_CTX *ctx, KSI_TLV *tlv, const KSI_CalendarHashChain *calHashChain, const KSI_TlvTemplate *tmpl);
-static int decodeCalendarHashChainLeftLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarHashChain *calHashChain, const KSI_TlvTemplate *tmpl);
-static int decodeCalendarHashChainRightLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarHashChain *calHashChain, KSI_TlvTemplate *tmpl);
-
 KSI_DEFINE_TLV_TEMPLATE(KSI_PKISignedData)
 	KSI_TLV_OCTET_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getSignatureValue, KSI_PKISignedData_setSignatureValue)
 	KSI_TLV_OCTET_STRING(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getCertId, KSI_PKISignedData_setCertId)
@@ -63,6 +59,8 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationHashChain)
 	KSI_TLV_OCTET_STRING(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationHashChain_getInputData, KSI_AggregationHashChain_setInputData)
 	KSI_TLV_IMPRINT(0x05, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationHashChain_getInputHash, KSI_AggregationHashChain_setInputHash)
 	KSI_TLV_INTEGER(0x06, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationHashChain_getAggrHashId, KSI_AggregationHashChain_setAggrHashId)
+	KSI_TLV_OBJECT_LIST(0x07, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_AggregationHashChain_getChain, KSI_AggregationHashChain_setChain, KSI_HashChainLink)
+	KSI_TLV_OBJECT_LIST(0x08, KSI_TLV_TMPL_FLG_MANDATORY_G0 | KSI_TLV_TMPL_FLG_NO_SERIALIZE, KSI_AggregationHashChain_getChain, KSI_AggregationHashChain_setChain, KSI_HashChainLink)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationAuthRec)
@@ -97,8 +95,8 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_CalendarHashChain)
 	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarHashChain_getPublicationTime, KSI_CalendarHashChain_setPublicationTime)
 	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_CalendarHashChain_getAggregationTime, KSI_CalendarHashChain_setAggregationTime)
 	KSI_TLV_IMPRINT(0x05, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarHashChain_getInputHash, KSI_CalendarHashChain_setInputHash)
-	KSI_TLV_CALLBACK(0x07, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_CalendarHashChain_getHashChain, KSI_CalendarHashChain_setHashChain, encodeCalendarHashChainLink, decodeCalendarHashChainLeftLink)
-	KSI_TLV_CALLBACK(0x08, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_CalendarHashChain_getHashChain, KSI_CalendarHashChain_setHashChain, NULL, decodeCalendarHashChainRightLink)
+	KSI_TLV_OBJECT_LIST(0x07, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_CalendarHashChain_getHashChain, KSI_CalendarHashChain_setHashChain, KSI_CalendarHashChainLink)
+	KSI_TLV_OBJECT_LIST(0x08, KSI_TLV_TMPL_FLG_MANDATORY_G0 | KSI_TLV_TMPL_FLG_NO_SERIALIZE, KSI_CalendarHashChain_getHashChain, KSI_CalendarHashChain_setHashChain, KSI_CalendarHashChainLink)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationResp)
@@ -108,7 +106,7 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationResp)
 	KSI_TLV_UTF8_STRING(0x06, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getErrorMsg, KSI_AggregationResp_setErrorMsg)
 	KSI_TLV_COMPOSITE(0x10, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getConfig, KSI_AggregationResp_setConfig, KSI_Config)
 	KSI_TLV_COMPOSITE(0x12, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getRequestAck, KSI_AggregationResp_setRequestAck, KSI_RequestAck)
-	KSI_TLV_OBJECT_LIST(0x0801, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getAggregationChainList, KSI_AggregationResp_setAggregationChainList, KSI_AggregationHashChain)
+	KSI_TLV_COMPOSITE_LIST(0x0801, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getAggregationChainList, KSI_AggregationResp_setAggregationChainList, KSI_AggregationHashChain)
 	KSI_TLV_COMPOSITE(0x0802, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getCalendarChain, KSI_AggregationResp_setCalendarChain, KSI_CalendarHashChain)
 	KSI_TLV_COMPOSITE(0x0804, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getAggregationAuthRec, KSI_AggregationResp_setAggregationAuthRec, KSI_AggregationAuthRec) /* TODO! Future work. */
 	KSI_TLV_COMPOSITE(0x0805, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getCalendarAuthRec, KSI_AggregationResp_setCalendarAuthRec, KSI_CalendarAuthRec)
@@ -139,163 +137,6 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendPdu)
 	KSI_TLV_COMPOSITE(0x301, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_ExtendPdu_getRequest, KSI_ExtendPdu_setRequest, KSI_ExtendReq)
 	KSI_TLV_COMPOSITE(0x302, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_ExtendPdu_getResponse, KSI_ExtendPdu_setResponse, KSI_ExtendResp)
 KSI_END_TLV_TEMPLATE
-
-static int encodeCalendarHashChainLink(KSI_CTX *ctx, KSI_TLV *tlv, const KSI_CalendarHashChain *calHashChain, const KSI_TlvTemplate *tmpl) {
-	KSI_ERR err;
-	int res;
-	size_t i;
-
-	KSI_LIST(KSI_HashChainLink) *chain = NULL;
-
-	KSI_TLV *tmp = NULL;
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, calHashChain != NULL) goto cleanup;
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, tmpl != NULL) goto cleanup;
-
-	KSI_BEGIN(ctx, &err);
-
-	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_TLV);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = tmpl->getValue((void *)calHashChain, (void **)&chain);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	if (chain == NULL) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	for (i = 0; i < KSI_HashChainLinkList_length(chain); i++) {
-		KSI_HashChainLink *link = NULL;
-		KSI_DataHash *hsh = NULL;
-		const unsigned char *imprint = NULL;
-		unsigned int imprint_len = 0;
-		int isLeft;
-
-		/* Get the chain element. */
-		res = KSI_HashChainLinkList_elementAt(chain, i, &link);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		/* Extract data hash value */
-		res = KSI_HashChainLink_getImprint(link, &hsh);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		/* Extract raw imprint */
-		res = KSI_DataHash_getImprint(hsh, &imprint, &imprint_len);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		res = KSI_HashChainLink_getIsLeft(link, &isLeft);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		/* Create new TLV object. */
-		res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, isLeft ? 0x07 : 0x08, 0, 0, &tmp );
-		KSI_CATCH(&err, res) goto cleanup;
-
-		/* Set the imprint as payload. */
-		res = KSI_TLV_setRawValue(tmp, imprint, imprint_len);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		/* Append the payload to the parent TLV */
-		res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		tmp = NULL;
-
-		KSI_nofree(link);
-	}
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_nofree(chain);
-
-	KSI_TLV_free(tmp);
-
-	return KSI_RETURN(&err);
-}
-
-static int decodeCalendarHashChainLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarHashChain *calHashChain, getter_t valueGetter, setter_t valueSetter, int isLeft) {
-	KSI_ERR err;
-	int res;
-	const unsigned char *raw = NULL;
-	unsigned int raw_len = 0;
-	KSI_LIST(KSI_HashChainLink) *listp = NULL;
-	KSI_LIST(KSI_HashChainLink) *list = NULL;
-	KSI_HashChainLink *link = NULL;
-	KSI_DataHash *hsh = NULL;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, calHashChain != NULL) goto cleanup;
-	KSI_PRE(&err, valueGetter != NULL) goto cleanup;
-	KSI_PRE(&err, valueSetter != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	/* Get the imprint as raw value */
-	res = KSI_TLV_getRawValue(tlv, &raw, &raw_len);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Create datahash object */
-	res = KSI_DataHash_fromImprint(ctx, raw, raw_len, &hsh);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Initialize the current link. */
-	res = KSI_HashChainLink_new(ctx, &link);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_HashChainLink_setIsLeft(link, isLeft);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_HashChainLink_setImprint(link, hsh);
-	KSI_CATCH(&err, res) goto cleanup;
-	hsh = NULL;
-
-	/* Get the whole hash chain. */
-	res = valueGetter((void *)calHashChain, (void **)&listp);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Initialize list if it does not exist */
-	if (listp == NULL) {
-		res = KSI_HashChainLinkList_new(ctx, &list);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		listp = list;
-	}
-
-	/* Append the current link to the list */
-	res = KSI_HashChainLinkList_append(listp, link);
-	KSI_CATCH(&err, res) goto cleanup;
-	link = NULL;
-
-	if (list != NULL) {
-		/* The list was just created - set it in the object */
-		res = valueSetter((void *)calHashChain, (void *)list);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		list = NULL;
-	}
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_HashChainLinkList_freeAll(list);
-	KSI_HashChainLink_free(link);
-	KSI_DataHash_free(hsh);
-	KSI_nofree(raw);
-	KSI_nofree(listp);
-	return KSI_RETURN(&err);
-}
-
-static int decodeCalendarHashChainLeftLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarHashChain *calHashChain, const KSI_TlvTemplate *tmpl) {
-	return decodeCalendarHashChainLink(ctx, tlv, calHashChain, tmpl->getValue, tmpl->setValue, 1);
-}
-static int decodeCalendarHashChainRightLink(KSI_CTX *ctx, KSI_TLV *tlv, KSI_CalendarHashChain *calHashChain, KSI_TlvTemplate *tmpl) {
-	return decodeCalendarHashChainLink(ctx, tlv, calHashChain, tmpl->getValue, tmpl->setValue, 0);
-}
-
 
 static int storeObjectValue(KSI_CTX *ctx, const KSI_TlvTemplate *tmpl, void *payload, void *val) {
 	KSI_ERR err;
@@ -378,7 +219,7 @@ cleanup:
 	return res;
 }
 
-int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *tmpl, KSI_LIST(KSI_TLV) *reminder) {
+int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *tmpl) {
 	KSI_ERR err;
 	int res;
 	TLVListIterator iter;
@@ -394,7 +235,7 @@ int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI
 
 	iter.idx = 0;
 
-	res = KSI_TlvTemplate_extractGenerator(ctx, payload, (void *)&iter, tmpl, reminder, (int (*)(void *, KSI_TLV **))TLVListIterator_next);
+	res = KSI_TlvTemplate_extractGenerator(ctx, payload, (void *)&iter, tmpl, (int (*)(void *, KSI_TLV **))TLVListIterator_next);
 	KSI_CATCH(&err, res) {
 		KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Parsed tlv before failure", tlv);
 		goto cleanup;
@@ -423,7 +264,7 @@ int KSI_TlvTemplate_parse(KSI_CTX *ctx, unsigned char *raw, unsigned raw_len, co
 	res = KSI_TLV_parseBlob2(ctx, raw, raw_len, 0, &tlv);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_TlvTemplate_extract(ctx, payload, tlv, tmpl, NULL);
+	res = KSI_TlvTemplate_extract(ctx, payload, tlv, tmpl);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Parsed TLV", tlv);
@@ -448,7 +289,7 @@ static size_t getTemplateLength(const KSI_TlvTemplate *tmpl) {
 	return len;
 }
 
-int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, const KSI_TlvTemplate *tmpl, KSI_LIST(KSI_TLV) *reminder, int (*generator)(void *, KSI_TLV **)) {
+int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, const KSI_TlvTemplate *tmpl, int (*generator)(void *, KSI_TLV **)) {
 	KSI_ERR err;
 	KSI_TLV *tlv = NULL;
 	int res;
@@ -565,7 +406,7 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 					res = tmpl[i].construct(ctx, &compositeVal);
 					KSI_CATCH(&err, res) goto cleanup;
 
-					res = KSI_TlvTemplate_extract(ctx, compositeVal, tlv, tmpl[i].subTemplate, NULL);
+					res = KSI_TlvTemplate_extract(ctx, compositeVal, tlv, tmpl[i].subTemplate);
 					KSI_CATCH(&err, res) {
 						KSI_LOG_error(ctx, "Unable to parse composite TLV: 0x%02x", KSI_TLV_getTag(tlv));
 						tmpl[i].destruct(compositeVal);
@@ -577,14 +418,6 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 
 					KSI_LOG_trace(ctx, "Composite value extracted.");
 					break;
-				case KSI_TLV_TEMPLATE_CALLBACK:
-					KSI_LOG_trace(ctx, "Detected callback template for TLV value extraction.");
-
-					if (tmpl[i].callbackDecode != NULL) {
-						res = tmpl[i].callbackDecode(ctx, tlv, payload, &tmpl[i]);
-						KSI_CATCH(&err, res) goto cleanup;
-					}
-					break;
 				default:
 					KSI_LOG_warn(ctx, "No template found.");
 					/* Should not happen, but just in case. */
@@ -595,18 +428,11 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MORE_DEFS) == 0) break;
 		}
 
-		if(matchCount == 0) {
-			if (reminder != NULL) {
-				/* The TLV tag is not in the template, move it to the reminder. */
-				res = KSI_TLVList_append(reminder, tlv);
-				KSI_CATCH(&err, res) goto cleanup;
-			} else {
-				if (!KSI_TLV_isLenient(tlv)) {
-					KSI_LOG_error(ctx, "Unknown critical tag: 0x%02x", KSI_TLV_getTag(tlv));
-					KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
-					goto cleanup;
-				}
-			}
+		/* Check if a match was found, an raise an error if the TLV is marked as critical. */
+		if(matchCount == 0 && !KSI_TLV_isNonCritical(tlv)) {
+			KSI_LOG_error(ctx, "Unknown critical tag: 0x%02x", KSI_TLV_getTag(tlv));
+			KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+			goto cleanup;
 		}
 	}
 
@@ -669,6 +495,8 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 		KSI_CATCH(&err, res) goto cleanup;
 		if (payloadp != NULL) {
 			templateHit[i] = true;
+
+			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_NO_SERIALIZE) != 0) continue;
 			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY_G0) != 0) groupHit[0] = true;
 			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY_G1) != 0) groupHit[1] = true;
 
@@ -734,12 +562,6 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 					KSI_CATCH(&err, res) goto cleanup;
 
 					break;
-				case KSI_TLV_TEMPLATE_CALLBACK:
-					if (tmpl[i].callbackEncode != NULL) {
-						res = tmpl[i].callbackEncode(ctx, tlv, payload, &tmpl[i]);
-						KSI_CATCH(&err, res) goto cleanup;
-					}
-					break;
 				default:
 					KSI_LOG_error(ctx, "Unimplemented template type: %d", tmpl[i].type);
 					KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Unimplemented template type.");
@@ -802,7 +624,7 @@ int KSI_TlvTemplate_deepCopy(KSI_CTX *ctx, const void *from, const KSI_TlvTempla
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Evaluate the cloned object */
-	res = KSI_TlvTemplate_extract(ctx, to, tmpTlv, baseTemplate, NULL);
+	res = KSI_TlvTemplate_extract(ctx, to, tmpTlv, baseTemplate);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);

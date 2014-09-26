@@ -245,7 +245,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_RequestHandle_getRequest(KSI_RequestHandle *handle, const unsigned char **response, unsigned *response_len) {
+int KSI_RequestHandle_getRequest(KSI_RequestHandle *handle, unsigned char **response, unsigned *response_len) {
 	KSI_ERR err;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(handle->ctx, &err);

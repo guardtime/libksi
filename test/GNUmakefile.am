@@ -1,6 +1,6 @@
 AM_CFLAGS=-g -Wall -lksi -I$(top_builddir)/src/
 AM_LDFLAGS=-L$(top_builddir)/src/ksi -no-install
-bin_PROGRAMS=runner
+bin_PROGRAMS=runner parse-benchmark
 
 runner_SOURCES= \
 		all_tests.c \
@@ -18,4 +18,6 @@ runner_SOURCES= \
 		ksi_truststore_test.c \
 		cutest/CuTest.h \
 		cutest/CuTest.c
+		
+parse_benchmark_SOURCES=parse_benchmark.c
 
