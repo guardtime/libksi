@@ -445,6 +445,48 @@ extern "C" {
 	 */
 	int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag, int isFwd, int isNc, const KSI_TlvTemplate *tmpl, unsigned char **raw, unsigned *raw_len);
 
+	#define KSI_IMPLEMENT_OBJECT_PARSE(type, tag) \
+		int type##_parse(KSI_CTX *ctx, unsigned char *raw, unsigned len, type **t) { \
+			int res = KSI_UNKNOWN_ERROR; \
+			KSI_TLV *tlv = NULL; \
+			type *tmp = NULL; \
+			if (ctx == NULL || t == NULL) { \
+				res = KSI_INVALID_ARGUMENT; \
+				goto cleanup; \
+			} \
+			res = KSI_TLV_parseBlob2(ctx, raw, len, 0, &tlv); \
+			if (res != KSI_OK) goto cleanup; \
+			if (KSI_TLV_getTag(tlv) != (tag)) { \
+				res = KSI_INVALID_FORMAT; \
+				goto cleanup; \
+			} \
+			res = type##_new(ctx, &tmp); \
+			if (res != KSI_OK) goto cleanup; \
+			res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(type), tmp); \
+			if (res != KSI_OK) goto cleanup; \
+			*t = tmp; \
+			tmp = NULL; \
+			res = KSI_OK; \
+		cleanup: \
+			KSI_TLV_free(tlv); \
+			type##_free(tmp); \
+			return res; \
+		} \
+
+	#define KSI_IMPLEMENT_OBJECT_SERIALIZE(type, tag, nc, fwd) \
+		int type##_serialize(const type *t, unsigned char **raw, unsigned *len) { \
+			int res = KSI_UNKNOWN_ERROR; \
+			if (t == NULL || raw == NULL || len == NULL) { \
+				res = KSI_INVALID_ARGUMENT; \
+				goto cleanup; \
+			} \
+			res = KSI_TlvTemplate_serializeObject(t->ctx, t, (tag), (nc), (fwd), KSI_TLV_TEMPLATE(type), raw, len); \
+			if (res != KSI_OK) goto cleanup; \
+			res = KSI_OK; \
+		cleanup: \
+			return res; \
+		} \
+
 	/**
 	 * @}
 	 */

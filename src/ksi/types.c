@@ -1,5 +1,8 @@
 #include "internal.h"
 
+KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendPdu);
+KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu)
+
 struct KSI_MetaData_st {
 	KSI_CTX *ctx;
 	KSI_OctetString *raw;
@@ -206,6 +209,8 @@ KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_ExtendResp*, response, Response);
 KSI_IMPLEMENT_SETTER(KSI_ExtendPdu, KSI_ExtendReq*, request, Request);
 KSI_IMPLEMENT_SETTER(KSI_ExtendPdu, KSI_ExtendResp*, response, Response);
 
+KSI_IMPLEMENT_OBJECT_PARSE(KSI_ExtendPdu, 0x300);
+KSI_IMPLEMENT_OBJECT_SERIALIZE(KSI_ExtendPdu, 0x300, 0, 0)
 
 /**
  * KSI_AggregationPdu
@@ -248,6 +253,8 @@ KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_AggregationResp*, response, Respons
 KSI_IMPLEMENT_SETTER(KSI_AggregationPdu, KSI_AggregationReq*, request, Request);
 KSI_IMPLEMENT_SETTER(KSI_AggregationPdu, KSI_AggregationResp*, response, Response);
 
+KSI_IMPLEMENT_OBJECT_PARSE(KSI_AggregationPdu, 0x200);
+KSI_IMPLEMENT_OBJECT_SERIALIZE(KSI_AggregationPdu, 0x200, 0, 0)
 
 /**
  * KSI_Header

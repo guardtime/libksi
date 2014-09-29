@@ -37,6 +37,29 @@ int KSI_ExtendPdu_setRequest(KSI_ExtendPdu *t, KSI_ExtendReq *request);
 int KSI_ExtendPdu_setResponse(KSI_ExtendPdu *t, KSI_ExtendResp *response);
 
 /**
+ * This function is used to parse a raw extend PDU into a #KSI_ExtendPdu object.
+ * \param[in]	ctx		KSI context.
+ * \param[in]	raw		Pointer to the raw blob to be parsed.
+ * \param[in]	len		Length of the raw blob.
+ * \param[out]	t		Pointer to the receiving pointer to the #KSI_ExtendPdu object.
+ * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+ * \see KSI_ExtendPdu_serialize
+ */
+int KSI_ExtendPdu_parse(KSI_CTX *ctx, unsigned char *raw, unsigned len, KSI_ExtendPdu **t);
+
+/**
+ * This function serialized the #KSI_ExtendPdu object into a blob.
+ * \param[in]	ctx		KSI context.
+ * \param[in]	t		Pointer to the #KSI_ExtendPdu object.
+ * \param[out]	raw		Pointer to the receiving pointer.
+ * \param[out]	len		Pointer to the receiving lengt variable.
+ * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+ * \see KSI_ExtendPdu_parse
+ * @return
+ */
+int KSI_ExtendPdu_serialize(const KSI_ExtendPdu *t, unsigned char **raw, unsigned *len);
+
+/**
  * KSI_AggregationPdu
  */
 void KSI_AggregationPdu_free(KSI_AggregationPdu *t);
@@ -46,6 +69,29 @@ int KSI_AggregationPdu_getRequest(const KSI_AggregationPdu *t, KSI_AggregationRe
 int KSI_AggregationPdu_getResponse(const KSI_AggregationPdu *t, KSI_AggregationResp **response);
 int KSI_AggregationPdu_setRequest(KSI_AggregationPdu *t, KSI_AggregationReq *request);
 int KSI_AggregationPdu_setResponse(KSI_AggregationPdu *t, KSI_AggregationResp *response);
+
+/**
+ * This function is used to parse a raw aggregation PDU into a #KSI_AggregationPdu object.
+ * \param[in]	ctx		KSI context.
+ * \param[in]	raw		Pointer to the raw blob to be parsed.
+ * \param[in]	len		Length of the raw blob.
+ * \param[out]	t		Pointer to the receiving pointer to the #KSI_AggregationPdu object.
+ * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+ * \see KSI_AggregationPdu_serialize
+ */
+int KSI_AggregationPdu_parse(KSI_CTX *ctx, unsigned char *raw, unsigned len, KSI_AggregationPdu **t);
+
+/**
+ * This function serialized the #KSI_AggregationPdu object into a blob.
+ * \param[in]	ctx		KSI context.
+ * \param[in]	t		Pointer to the #KSI_AggregationPdu object.
+ * \param[out]	raw		Pointer to the receiving pointer.
+ * \param[out]	len		Pointer to the receiving lengt variable.
+ * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+ * \see KSI_AggregationPdu_parse
+ * @return
+ */
+int KSI_AggregationPdu_serialize(const KSI_AggregationPdu *t, unsigned char **raw, unsigned *len);
 
 /**
  * KSI_Header
