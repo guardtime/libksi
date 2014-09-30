@@ -256,10 +256,6 @@ cleanup:
 	return res;
 }
 
-KSI_IMPLEMENT_LIST(KSI_Integer, KSI_Integer_free);
-KSI_IMPLEMENT_LIST(KSI_TLV, KSI_TLV_free);
-KSI_IMPLEMENT_LIST(KSI_Utf8String, KSI_Utf8String_free);
-KSI_IMPLEMENT_LIST(KSI_OctetString, KSI_OctetString_free);
 KSI_IMPLEMENT_LIST(KSI_PKICertificate, KSI_PKICertificate_free);
 
 

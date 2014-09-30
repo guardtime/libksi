@@ -30,6 +30,10 @@ struct KSI_Utf8String_st {
 	size_t len;
 };
 
+KSI_IMPLEMENT_LIST(KSI_Integer, KSI_Integer_free);
+KSI_IMPLEMENT_LIST(KSI_Utf8String, KSI_Utf8String_free);
+KSI_IMPLEMENT_LIST(KSI_OctetString, KSI_OctetString_free);
+
 int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, unsigned int data_len, KSI_OctetString **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_OctetString *tmp = NULL;

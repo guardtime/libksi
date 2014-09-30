@@ -142,9 +142,6 @@ int KSI_LIST_FN_NAME(type, elementAt)(const KSI_LIST(type) *list, size_t pos, ty
 int KSI_LIST_FN_NAME(type, sort)(KSI_LIST(type) *list, int (*cmp)(const type **a, const type **b)) {	\
 	return KSI_List_sort(list->list, (int (*)(const void *, const void *)) cmp);	\
 }																					\
-KSI_CTX *type##List_getCtx(const KSI_LIST(type) *o) {	 							\
-	return o->ctx; 																	\
-} 																					\
 
 #define KSI_DEFINE_SETTER(baseType, valueType, valueName, alias) int baseType##_set##alias(baseType *o, valueType valueName)
 #define KSI_DEFINE_GETTER(baseType, valueType, valueName, alias) int baseType##_get##alias(const baseType *o, valueType* valueName)

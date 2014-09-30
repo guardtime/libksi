@@ -263,7 +263,7 @@ static int receiveResponse(KSI_RequestHandle *handle) {
 	int res;
 
 	KSI_PRE(&err, handle != NULL) goto cleanup;
-	KSI_BEGIN(KSI_RequestHandle_getCtx(handle), &err);
+	KSI_BEGIN(handle->ctx, &err);
 
 	if (handle->readResponse == NULL) {
 		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, NULL);
