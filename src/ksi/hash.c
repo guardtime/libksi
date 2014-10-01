@@ -331,7 +331,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_DataHash_toTlv(KSI_DataHash *hsh, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_DataHash_toTlv(KSI_CTX *ctx, KSI_DataHash *hsh, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tmp = NULL;
@@ -340,9 +340,9 @@ int KSI_DataHash_toTlv(KSI_DataHash *hsh, unsigned tag, int isNonCritical, int i
 
 	KSI_PRE(&err, hsh != NULL) goto cleanup;
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_BEGIN(hsh->ctx, &err);
+	KSI_BEGIN(ctx, &err);
 
-	res = KSI_TLV_new(hsh->ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_DataHash_getImprint(hsh, &raw, &raw_len);

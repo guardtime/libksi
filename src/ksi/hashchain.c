@@ -7,7 +7,7 @@ KSI_IMPORT_TLV_TEMPLATE(KSI_HashChainLink)
 struct KSI_HashChainLink_st {
 	KSI_CTX *ctx;
 	int isLeft;
-	int levelCorrection;
+	KSI_Integer *levelCorrection;
 	KSI_DataHash *metaHash;
 	KSI_MetaData *metaData;
 	KSI_DataHash *imprint;
@@ -144,8 +144,6 @@ static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash
 
 	/* Extracted data. */
 	int levelCorrection;
-	int isLeft;
-	KSI_DataHash *linkHsh = NULL;
 
 	KSI_PRE(&err, chain != NULL) goto cleanup;
 	KSI_PRE(&err, inputHash != NULL) goto cleanup;
@@ -160,19 +158,12 @@ static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash
 		res = KSI_HashChainLinkList_elementAt(chain, i, &link);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		res = KSI_HashChainLink_getLevelCorrection(link, &levelCorrection);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		res = KSI_HashChainLink_getImprint(link, &linkHsh);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		res = KSI_HashChainLink_getIsLeft(link, &isLeft);
-		KSI_CATCH(&err, res) goto cleanup;
+		levelCorrection = KSI_Integer_getUInt64(link->levelCorrection);
 
 		if(!isCalendar) {
 			level += levelCorrection + 1;
 		} else {
-			res = KSI_DataHash_extract(linkHsh, &algo_id, NULL, NULL);
+			res = KSI_DataHash_extract(link->imprint, &algo_id, NULL, NULL);
 			KSI_CATCH(&err, res) goto cleanup;
 		}
 
@@ -184,8 +175,7 @@ static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash
 		}
 		KSI_CATCH(&err, res) goto cleanup;
 
-
-		if (isLeft) {
+		if (link->isLeft) {
 			res = addNvlImprint(hsh, inputHash, hsr);
 			KSI_CATCH(&err, res) goto cleanup;
 
@@ -396,6 +386,7 @@ void KSI_HashChainLink_free(KSI_HashChainLink *t) {
 		KSI_DataHash_free(t->metaHash);
 		KSI_MetaData_free(t->metaData);
 		KSI_DataHash_free(t->imprint);
+		KSI_Integer_free(t->levelCorrection);
 		KSI_free(t);
 	}
 }
@@ -411,7 +402,7 @@ int KSI_HashChainLink_new(KSI_CTX *ctx, KSI_HashChainLink **t) {
 
 	tmp->ctx = ctx;
 	tmp->isLeft = 0;
-	tmp->levelCorrection = 0;
+	tmp->levelCorrection = NULL;
 	tmp->metaHash = NULL;
 	tmp->metaData = NULL;
 	tmp->imprint = NULL;
@@ -471,7 +462,7 @@ cleanup:
 }
 
 
-int KSI_CalendarHashChainLink_toTlv(KSI_CalendarHashChainLink *link, unsigned tag, int isNonCritica, int isForward, KSI_TLV **tlv) {
+int KSI_CalendarHashChainLink_toTlv(KSI_CTX *ctx, KSI_CalendarHashChainLink *link, unsigned tag, int isNonCritica, int isForward, KSI_TLV **tlv) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tmp = NULL;
@@ -479,12 +470,12 @@ int KSI_CalendarHashChainLink_toTlv(KSI_CalendarHashChainLink *link, unsigned ta
 
 	KSI_PRE(&err, link != NULL) goto cleanup;
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_BEGIN(link->ctx, &err);
+	KSI_BEGIN(ctx, &err);
 
 	if (link->isLeft) tagOverride = 0x07;
 	else tagOverride = 0x08;
 
-	res = KSI_DataHash_toTlv(link->imprint, tagOverride, isNonCritica, isForward, &tmp);
+	res = KSI_DataHash_toTlv(ctx, link->imprint, tagOverride, isNonCritica, isForward, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*tlv = tmp;
@@ -542,7 +533,7 @@ cleanup:
 }
 
 
-int KSI_HashChainLink_toTlv(KSI_HashChainLink *link, unsigned tag, int isNonCritica, int isForward, KSI_TLV **tlv) {
+int KSI_HashChainLink_toTlv(KSI_CTX *ctx, KSI_HashChainLink *link, unsigned tag, int isNonCritica, int isForward, KSI_TLV **tlv) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tmp = NULL;
@@ -550,15 +541,15 @@ int KSI_HashChainLink_toTlv(KSI_HashChainLink *link, unsigned tag, int isNonCrit
 
 	KSI_PRE(&err, link != NULL) goto cleanup;
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_BEGIN(link->ctx, &err);
+	KSI_BEGIN(ctx, &err);
 
 	if (link->isLeft) tagOverride = 0x07;
 	else tagOverride = 0x08;
 
-	res = KSI_TLV_new(link->ctx, KSI_TLV_PAYLOAD_RAW, tagOverride, isNonCritica, isForward, &tmp);
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tagOverride, isNonCritica, isForward, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_TlvTemplate_construct(link->ctx, tmp, link, KSI_TLV_TEMPLATE(KSI_HashChainLink));
+	res = KSI_TlvTemplate_construct(ctx, tmp, link, KSI_TLV_TEMPLATE(KSI_HashChainLink));
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*tlv = tmp;
@@ -575,13 +566,13 @@ cleanup:
 
 
 KSI_IMPLEMENT_GETTER(KSI_HashChainLink, int, isLeft, IsLeft);
-KSI_IMPLEMENT_GETTER(KSI_HashChainLink, int, levelCorrection, LevelCorrection);
+KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_Integer*, levelCorrection, LevelCorrection);
 KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_DataHash*, metaHash, MetaHash);
 KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_MetaData*, metaData, MetaData);
 KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_DataHash*, imprint, Imprint);
 
 KSI_IMPLEMENT_SETTER(KSI_HashChainLink, int, isLeft, IsLeft);
-KSI_IMPLEMENT_SETTER(KSI_HashChainLink, int, levelCorrection, LevelCorrection);
+KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_Integer*, levelCorrection, LevelCorrection);
 KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_DataHash*, metaHash, MetaHash);
 KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_MetaData*, metaData, MetaData);
 KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_DataHash*, imprint, Imprint);

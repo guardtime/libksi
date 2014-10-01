@@ -124,7 +124,7 @@ extern "C" {
 		/**
 		 * Simple function for converting an object into a TLV.
 		 */
-		int (*toTlv)(void *, unsigned, int, int, KSI_TLV **tlv);
+		int (*toTlv)(KSI_CTX *, void *, unsigned, int, int, KSI_TLV **tlv);
 	};
 
 
@@ -155,11 +155,6 @@ extern "C" {
 	 * List #KSI_TlvTemplate type.
 	 */
 	#define KSI_TLV_TEMPLATE_LIST					3
-
-	/**
-	 * Native unsigned 64-bit integer #KSI_TlvTemplate type.
-	 */
-	#define KSI_TLV_TEMPLATE_NATIVE_INT				5
 
 	/**
 	 * A special #KSI_TlvTemplate type for storing the absolute offset of the nested TLV object.
@@ -208,7 +203,7 @@ extern "C" {
 	#define KSI_TLV_FULL_TEMPLATE_DEF(typ, tg, flg, gttr, sttr, constr, destr, subTmpl, list_append, mul, list_new, list_free, list_len, list_elAt, fromTlv, toTlv) 												\
 				{ typ, tg, flg , (getter_t)gttr, (setter_t)sttr, (int (*)(KSI_CTX *, void **)) constr, (void (*)(void *)) destr, subTmpl, 																			\
 				(int (*)(void *, void *))list_append, mul, (int (*)(KSI_CTX *, void **)) list_new, (void (*)(void *)) list_free, (int (*)(const void *)) list_len, (int (*)(const void *, int, void **))list_elAt, 	\
-				(int (*)(KSI_TLV *, void **)) fromTlv, (int (*)(void *, unsigned, int, int, KSI_TLV **))toTlv},																										\
+				(int (*)(KSI_TLV *, void **)) fromTlv, (int (*)(KSI_CTX *, void *, unsigned, int, int, KSI_TLV **))toTlv},																										\
 
 	/**
 	 * A helper macro for defining primitive templates.
@@ -441,9 +436,20 @@ extern "C" {
 	int KSI_TlvTemplate_deepCopy(KSI_CTX *ctx, const void *from, const KSI_TlvTemplate *baseTemplate, void *to);
 
 	/**
-	 * TODO!
+	 * Serializes an object using #KSI_TlvTemplate.
+	 * \param[in]	ctx		KSI context.
+	 * \param[in]	obj		Object to be serialized.
+	 * \param[in]	tag		Tag of the serialized object.
+	 * \param[in}	isNc	TLV flag is-non-critical.
+	 * \param[in]	isFwd	TLV flag is-forward.
+	 * \param[in]	tmpl	Template to be used.
+	 * \param[out]	raw		Pointer to the receiving pointer to the serialized value.
+	 * \param[out]	rar_len	Length of the serialized value.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note Thre returned pointer raw belongs to the caller and it needs to be freed using #KSI_free
+	 * \see #KSI_free
 	 */
-	int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag, int isFwd, int isNc, const KSI_TlvTemplate *tmpl, unsigned char **raw, unsigned *raw_len);
+	int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag, int isNc, int isFwd, const KSI_TlvTemplate *tmpl, unsigned char **raw, unsigned *raw_len);
 
 	#define KSI_IMPLEMENT_OBJECT_PARSE(type, tag) \
 		int type##_parse(KSI_CTX *ctx, unsigned char *raw, unsigned len, type **t) { \
