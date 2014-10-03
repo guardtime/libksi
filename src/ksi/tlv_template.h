@@ -365,12 +365,12 @@ extern "C" {
 	 * \param[in]	tg				TLV tag value.
 	 * \param[in]	sttr			Setter function for int value.
 	 */
-	#define KSI_TLV_SEEK_POS(tg, sttr) KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_SEEK_POS, tg, KSI_TLV_TMPL_FLG_NONE, NULL, sttr)
+	#define KSI_TLV_SEEK_POS(tg, sttr) KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_SEEK_POS, tg, KSI_TLV_TMPL_FLG_NO_SERIALIZE, NULL, sttr)
 
 	/**
 	 * TODO!
 	 */
-	#define KSI_TLV_UNPROCESSED(tg, sttr) KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_UNPROCESSED, tg, KSI_TLV_TMPL_FLG_NONE, NULL, sttr)
+	#define KSI_TLV_UNPROCESSED(tg, sttr) KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_UNPROCESSED, tg, KSI_TLV_TMPL_FLG_NO_SERIALIZE, NULL, sttr)
 
 	/**
 	 * This macro ends the #KSI_TlvTemplate definition started by #KSI_TLV_TEMPLATE.

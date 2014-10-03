@@ -472,13 +472,13 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 	}
 
 	for(i = 0; i < template_len; i++) {
+		if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_NO_SERIALIZE) != 0) continue;
 		payloadp = NULL;
 		res = tmpl[i].getValue(payload, &payloadp);
 		KSI_CATCH(&err, res) goto cleanup;
 		if (payloadp != NULL) {
 			templateHit[i] = true;
 
-			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_NO_SERIALIZE) != 0) continue;
 			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY_G0) != 0) groupHit[0] = true;
 			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY_G1) != 0) groupHit[1] = true;
 
@@ -486,11 +486,6 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 			isForward = (tmpl[i].flags & KSI_TLV_TMPL_FLG_FORWARD) != 0;
 
 			switch (tmpl[i].type) {
-				case KSI_TLV_TEMPLATE_UNPROCESSED:
-				case KSI_TLV_TEMPLATE_SEEK_POS:
-					/* As this is a read-only template in the extraction process, there is
-					 * no logical construction action performed. */
-					break;
 				case KSI_TLV_TEMPLATE_OBJECT:
 					if (tmpl[i].toTlv == NULL) {
 						KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Invalid template: toTlv not set.");
