@@ -1,5 +1,8 @@
 #include "internal.h"
 
+KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendPdu);
+KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu)
+
 struct KSI_MetaData_st {
 	KSI_CTX *ctx;
 	KSI_OctetString *raw;
@@ -151,10 +154,6 @@ cleanup:
 	return res;
 }
 
-KSI_CTX *KSI_MetaData_getCtx(KSI_MetaData *t){
-	return t != NULL ? t->ctx : NULL;
-}
-
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_OctetString*, raw, Raw);
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Utf8String*, clientId, ClientId);
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Integer*, machineId, MachineId);
@@ -196,16 +195,14 @@ cleanup:
 	return res;
 }
 
-KSI_CTX *KSI_ExtendPdu_getCtx(KSI_ExtendPdu *t){
-	return t != NULL ? t->ctx : NULL;
-}
-
 KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_ExtendReq*, request, Request);
 KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_ExtendResp*, response, Response);
 
 KSI_IMPLEMENT_SETTER(KSI_ExtendPdu, KSI_ExtendReq*, request, Request);
 KSI_IMPLEMENT_SETTER(KSI_ExtendPdu, KSI_ExtendResp*, response, Response);
 
+KSI_IMPLEMENT_OBJECT_PARSE(KSI_ExtendPdu, 0x300);
+KSI_IMPLEMENT_OBJECT_SERIALIZE(KSI_ExtendPdu, 0x300, 0, 0)
 
 /**
  * KSI_AggregationPdu
@@ -238,16 +235,14 @@ cleanup:
 	return res;
 }
 
-KSI_CTX *KSI_AggregationPdu_getCtx(KSI_AggregationPdu *t){
-	return t != NULL ? t->ctx : NULL;
-}
-
 KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_AggregationReq*, request, Request);
 KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_AggregationResp*, response, Response);
 
 KSI_IMPLEMENT_SETTER(KSI_AggregationPdu, KSI_AggregationReq*, request, Request);
 KSI_IMPLEMENT_SETTER(KSI_AggregationPdu, KSI_AggregationResp*, response, Response);
 
+KSI_IMPLEMENT_OBJECT_PARSE(KSI_AggregationPdu, 0x200);
+KSI_IMPLEMENT_OBJECT_SERIALIZE(KSI_AggregationPdu, 0x200, 0, 0)
 
 /**
  * KSI_Header
@@ -280,10 +275,6 @@ int KSI_Header_new(KSI_CTX *ctx, KSI_Header **t) {
 cleanup:
 	KSI_Header_free(tmp);
 	return res;
-}
-
-KSI_CTX *KSI_Header_getCtx(KSI_Header *t){
-	return t != NULL ? t->ctx : NULL;
 }
 
 KSI_IMPLEMENT_GETTER(KSI_Header, KSI_Integer*, instanceId, InstanceId);
@@ -328,10 +319,6 @@ int KSI_Config_new(KSI_CTX *ctx, KSI_Config **t) {
 cleanup:
 	KSI_Config_free(tmp);
 	return res;
-}
-
-KSI_CTX *KSI_Config_getCtx(KSI_Config *t){
-	return t != NULL ? t->ctx : NULL;
 }
 
 KSI_IMPLEMENT_GETTER(KSI_Config, KSI_Integer*, maxLevel, MaxLevel);
@@ -382,10 +369,6 @@ cleanup:
 	return res;
 }
 
-KSI_CTX *KSI_AggregationReq_getCtx(KSI_AggregationReq *t){
-	return t != NULL ? t->ctx : NULL;
-}
-
 KSI_IMPLEMENT_GETTER(KSI_AggregationReq, KSI_Header*, header, Header);
 KSI_IMPLEMENT_GETTER(KSI_AggregationReq, KSI_Integer*, requestId, RequestId);
 KSI_IMPLEMENT_GETTER(KSI_AggregationReq, KSI_DataHash*, requestHash, RequestHash);
@@ -428,10 +411,6 @@ int KSI_RequestAck_new(KSI_CTX *ctx, KSI_RequestAck **t) {
 cleanup:
 	KSI_RequestAck_free(tmp);
 	return res;
-}
-
-KSI_CTX *KSI_RequestAck_getCtx(KSI_RequestAck *t){
-	return t != NULL ? t->ctx : NULL;
 }
 
 KSI_IMPLEMENT_GETTER(KSI_RequestAck, KSI_Integer*, aggregationPeriod, AggregationPeriod);
@@ -486,10 +465,6 @@ int KSI_AggregationResp_new(KSI_CTX *ctx, KSI_AggregationResp **t) {
 cleanup:
 	KSI_AggregationResp_free(tmp);
 	return res;
-}
-
-KSI_CTX *KSI_AggregationResp_getCtx(KSI_AggregationResp *t){
-	return t != NULL ? t->ctx : NULL;
 }
 
 KSI_IMPLEMENT_GETTER(KSI_AggregationResp, KSI_Header*, header, Header);
@@ -550,10 +525,6 @@ cleanup:
 	return res;
 }
 
-KSI_CTX *KSI_ExtendReq_getCtx(KSI_ExtendReq *t){
-	return t != NULL ? t->ctx : NULL;
-}
-
 KSI_IMPLEMENT_GETTER(KSI_ExtendReq, KSI_Header*, header, Header);
 KSI_IMPLEMENT_GETTER(KSI_ExtendReq, KSI_Integer*, requestId, RequestId);
 KSI_IMPLEMENT_GETTER(KSI_ExtendReq, KSI_Integer*, aggregationTime, AggregationTime);
@@ -604,10 +575,6 @@ cleanup:
 	return res;
 }
 
-KSI_CTX *KSI_ExtendResp_getCtx(KSI_ExtendResp *t){
-	return t != NULL ? t->ctx : NULL;
-}
-
 KSI_IMPLEMENT_GETTER(KSI_ExtendResp, KSI_Header*, header, Header);
 KSI_IMPLEMENT_GETTER(KSI_ExtendResp, KSI_Integer*, requestId, RequestId);
 KSI_IMPLEMENT_GETTER(KSI_ExtendResp, KSI_Integer*, status, Status);
@@ -656,10 +623,6 @@ cleanup:
 	return res;
 }
 
-KSI_CTX *KSI_PKISignedData_getCtx(KSI_PKISignedData *t){
-	return t != NULL ? t->ctx : NULL;
-}
-
 KSI_IMPLEMENT_GETTER(KSI_PKISignedData, KSI_OctetString*, signatureValue, SignatureValue);
 KSI_IMPLEMENT_GETTER(KSI_PKISignedData, KSI_OctetString*, certId, CertId);
 KSI_IMPLEMENT_GETTER(KSI_PKISignedData, KSI_Utf8String*, certRepositoryUri, CertRepositoryUri);
@@ -702,10 +665,6 @@ cleanup:
 	return res;
 }
 
-KSI_CTX *KSI_PublicationsHeader_getCtx(KSI_PublicationsHeader *t){
-	return t != NULL ? t->ctx : NULL;
-}
-
 KSI_IMPLEMENT_GETTER(KSI_PublicationsHeader, KSI_Integer*, version, Version);
 KSI_IMPLEMENT_GETTER(KSI_PublicationsHeader, KSI_Integer*, timeCreated, TimeCreated);
 KSI_IMPLEMENT_GETTER(KSI_PublicationsHeader, KSI_Utf8String*, repositoryUri, RepositoryUri);
@@ -746,14 +705,8 @@ cleanup:
 	return res;
 }
 
-KSI_CTX *KSI_CertificateRecord_getCtx(KSI_CertificateRecord *t){
-	return t != NULL ? t->ctx : NULL;
-}
-
 KSI_IMPLEMENT_GETTER(KSI_CertificateRecord, KSI_OctetString*, certId, CertId);
 KSI_IMPLEMENT_GETTER(KSI_CertificateRecord, KSI_PKICertificate*, cert, Cert);
 
 KSI_IMPLEMENT_SETTER(KSI_CertificateRecord, KSI_OctetString*, certId, CertId);
 KSI_IMPLEMENT_SETTER(KSI_CertificateRecord, KSI_PKICertificate*, cert, Cert);
-
-

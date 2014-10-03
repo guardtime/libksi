@@ -42,6 +42,8 @@ struct KSI_TLV_st {
 
 };
 
+KSI_IMPLEMENT_LIST(KSI_TLV, KSI_TLV_free);
+
 /**
  *
  */
@@ -1165,7 +1167,7 @@ static int serializeTlvList(KSI_LIST(KSI_TLV) *nestedList, unsigned idx, unsigne
 	KSI_TLV *tlv = NULL;
 
 	KSI_PRE(&err, nestedList != NULL) goto cleanup;
-	KSI_BEGIN(KSI_TLVList_getCtx(nestedList), &err);
+	KSI_BEGIN(nestedList->ctx, &err);
 
 	if (KSI_TLVList_length(nestedList) > idx) {
 		/* Cast required, as the iterator is advanced by one. */

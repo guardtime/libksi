@@ -70,7 +70,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_PKICertificate_toTlv(KSI_PKICertificate *cert, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+	int KSI_PKICertificate_toTlv(KSI_CTX *ctx, KSI_PKICertificate *cert, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 	/**
 	 * Function to serialise the KSI Certificate object as DER.
@@ -124,7 +124,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_PKISignature_toTlv(KSI_PKISignature *sig, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+	int KSI_PKISignature_toTlv(KSI_CTX *ctx, KSI_PKISignature *sig, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 	/**
 	 * Function for verifying a raw PKCS#1 signature. TODO! - explain in detail!

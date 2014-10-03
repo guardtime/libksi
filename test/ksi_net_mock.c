@@ -6,6 +6,8 @@
 #include "ksi_net_mock.h"
 #include "../src/ksi/net_http_impl.h"
 
+extern KSI_CTX *ctx;
+
 unsigned char *KSI_NET_MOCK_request = NULL;
 unsigned KSI_NET_MOCK_request_len = 0;
 unsigned char *KSI_NET_MOCK_response = NULL;
@@ -22,7 +24,7 @@ static int mockPublicationsFileReceive(KSI_RequestHandle *handle) {
 
 	if (handle == NULL) goto cleanup;
 
-	KSI_LOG_debug(KSI_RequestHandle_getCtx(handle), "Connecting to MOCK publications file service");
+	KSI_LOG_debug(ctx, "Connecting to MOCK publications file service");
 
 	f = fopen("test/resource/tlv/publications.tlv", "rb");
 	if (f == NULL) {
@@ -83,7 +85,7 @@ static int mockReceive(KSI_RequestHandle *handle) {
 
 	if (handle == NULL) goto cleanup;
 
-	KSI_LOG_debug(KSI_RequestHandle_getCtx(handle), "Connecting to MOCK service");
+	KSI_LOG_debug(ctx, "Connecting to MOCK service");
 
 	res = KSI_RequestHandle_setResponse(handle, KSI_NET_MOCK_response, KSI_NET_MOCK_response_len);
 	if (res != KSI_OK) goto cleanup;
@@ -96,7 +98,7 @@ cleanup:
 static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, char *url) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	KSI_LOG_debug(KSI_RequestHandle_getCtx(handle), "Initiate MOCK request.");
+	KSI_LOG_debug(ctx, "Initiate MOCK request.");
 
 	handle->readResponse = mockReceive;
 
@@ -128,10 +130,10 @@ static void mockCleanup(void) {
 
 static int mockSendPublicationsFileRequest(KSI_NetworkClient *netProvider, KSI_RequestHandle *handle) {
 	int res = KSI_UNKNOWN_ERROR;
-	const unsigned char *req = NULL;
+	unsigned char *req = NULL;
 	unsigned req_len;
 
-	KSI_LOG_debug(KSI_RequestHandle_getCtx(handle), "Initiate MOCK request.");
+	KSI_LOG_debug(ctx, "Initiate MOCK request.");
 
 	res = KSI_RequestHandle_setReadResponseFn(handle, mockPublicationsFileReceive);
 	if (res != KSI_OK) goto cleanup;

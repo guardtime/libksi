@@ -128,7 +128,7 @@ int KSI_Integer_compare(const KSI_Integer *a, const KSI_Integer *b);
 int KSI_Integer_equalsUInt(const KSI_Integer *o, KSI_uint64_t i);
 int KSI_Integer_clone(KSI_Integer *val, KSI_Integer **clone);
 int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_Integer **integer);
-int KSI_Integer_toTlv(KSI_Integer *i, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+int KSI_Integer_toTlv(KSI_CTX *ctx, KSI_Integer *i, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 /**
  * KSI_OctetString
@@ -138,7 +138,7 @@ int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, unsigned int da
 int KSI_OctetString_extract(const KSI_OctetString *t, const unsigned char **data, unsigned int *data_len);
 int KSI_OctetString_equals(const KSI_OctetString *left, const KSI_OctetString *right);
 int KSI_OctetString_fromTlv(KSI_TLV *tlv, KSI_OctetString **oct);
-int KSI_OctetString_toTlv(KSI_OctetString *oct, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+int KSI_OctetString_toTlv(KSI_CTX *ctx, KSI_OctetString *oct, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 /**
  * KSI_Utf8String

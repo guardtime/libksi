@@ -2,10 +2,6 @@
 #include "net_http_impl.h"
 #include <assert.h>
 
-KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu)
-KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendPdu)
-
-
 static int setStringParam(char **param, const char *val) {
 	char *tmp = NULL;
 	int res = KSI_UNKNOWN_ERROR;
@@ -131,7 +127,7 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 	res = KSI_AggregationPdu_setRequest(pdu, req);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_TlvTemplate_serializeObject(client->ctx, pdu, 0x0200, 0, 0, KSI_TLV_TEMPLATE(KSI_AggregationPdu), &raw, &raw_len);
+	res = KSI_AggregationPdu_serialize(pdu, &raw, &raw_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Detach request from the PDU, as it may not be freed in this function. */
@@ -196,7 +192,7 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 	res = KSI_ExtendPdu_setRequest(pdu, req);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_TlvTemplate_serializeObject(client->ctx, pdu, 0x0300, 0, 0, KSI_TLV_TEMPLATE(KSI_ExtendPdu), &raw, &raw_len);
+	res = KSI_ExtendPdu_serialize(pdu, &raw, &raw_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Detach request from the PDU, as it may not be freed in this function. */

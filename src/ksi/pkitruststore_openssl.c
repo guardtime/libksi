@@ -146,7 +146,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_PKICertificate_toTlv(KSI_PKICertificate *cert, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_PKICertificate_toTlv(KSI_CTX *ctx, KSI_PKICertificate *cert, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tmp = NULL;
@@ -155,9 +155,9 @@ int KSI_PKICertificate_toTlv(KSI_PKICertificate *cert, unsigned tag, int isNonCr
 
 	KSI_PRE(&err, cert != NULL) goto cleanup;
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_BEGIN(cert->ctx, &err);
+	KSI_BEGIN(ctx, &err);
 
-	res = KSI_TLV_new(cert->ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_PKICertificate_serialize(cert, &raw, &raw_len);
@@ -379,7 +379,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_PKISignature_toTlv(KSI_PKISignature *sig, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_PKISignature_toTlv(KSI_CTX *ctx, KSI_PKISignature *sig, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tmp = NULL;
@@ -388,9 +388,9 @@ int KSI_PKISignature_toTlv(KSI_PKISignature *sig, unsigned tag, int isNonCritica
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_BEGIN(sig->ctx, &err);
+	KSI_BEGIN(ctx, &err);
 
-	res = KSI_TLV_new(sig->ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_PKISignature_serialize(sig, &raw, &raw_len);

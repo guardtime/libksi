@@ -34,7 +34,7 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_MetaData)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_HashChainLink)
-	KSI_TLV_NATIVE_INT(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_HashChainLink_getLevelCorrection, KSI_HashChainLink_setLevelCorrection)
+	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_HashChainLink_getLevelCorrection, KSI_HashChainLink_setLevelCorrection)
 	KSI_TLV_IMPRINT(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_HashChainLink_getImprint, KSI_HashChainLink_setImprint)
 	KSI_TLV_META_IMPRINT(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_HashChainLink_getMetaHash, KSI_HashChainLink_setMetaHash)
 	KSI_TLV_COMPOSITE(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_HashChainLink_getMetaData, KSI_HashChainLink_setMetaData, KSI_MetaData)
@@ -349,24 +349,6 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 			}
 			/* Parse the current TLV */
 			switch (tmpl[i].type) {
-				case KSI_TLV_TEMPLATE_NATIVE_INT:
-					KSI_LOG_trace(ctx, "Detected native int template for TLV value extraction.");
-					res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_INT);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					res = KSI_TLV_getUInt64Value(tlv, &uint64Val);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					if ((uint64Val & INT_MAX) != uint64Val) {
-						KSI_FAIL(&err, KSI_INVALID_FORMAT, "Value too big for internal int value.");
-						goto cleanup;
-					}
-					intVal = (int)uint64Val;
-
-					res = ((int (*)(void *, int))tmpl[i].setValue)(payload, intVal);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					break;
 				case KSI_TLV_TEMPLATE_SEEK_POS:
 					uint64Val = (KSI_uint64_t)KSI_TLV_getAbsoluteOffset(tlv);
 
@@ -490,13 +472,13 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 	}
 
 	for(i = 0; i < template_len; i++) {
+		if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_NO_SERIALIZE) != 0) continue;
 		payloadp = NULL;
 		res = tmpl[i].getValue(payload, &payloadp);
 		KSI_CATCH(&err, res) goto cleanup;
 		if (payloadp != NULL) {
 			templateHit[i] = true;
 
-			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_NO_SERIALIZE) != 0) continue;
 			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY_G0) != 0) groupHit[0] = true;
 			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY_G1) != 0) groupHit[1] = true;
 
@@ -504,25 +486,6 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 			isForward = (tmpl[i].flags & KSI_TLV_TMPL_FLG_FORWARD) != 0;
 
 			switch (tmpl[i].type) {
-				case KSI_TLV_TEMPLATE_UNPROCESSED:
-				case KSI_TLV_TEMPLATE_SEEK_POS:
-					/* As this is a read-only template in the extraction process, there is
-					 * no logical construction action performed. */
-					break;
-				case KSI_TLV_TEMPLATE_NATIVE_INT:
-					res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tmpl[i].tag, isNonCritical, isForward, &tmp);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					res = KSI_TLV_cast(tmp, KSI_TLV_PAYLOAD_INT);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					res = ((int (*)(const void *, int *))tmpl[i].getValue)(payload, &intVal);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					res = KSI_TLV_setUintValue(tmp, (KSI_uint64_t)intVal);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					break;
 				case KSI_TLV_TEMPLATE_OBJECT:
 					if (tmpl[i].toTlv == NULL) {
 						KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Invalid template: toTlv not set.");
@@ -536,7 +499,7 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 							res = tmpl[i].listElementAt(payloadp, j, &listElement);
 							KSI_CATCH(&err, res) goto cleanup;
 
-							res = tmpl[i].toTlv(listElement, tmpl[i].tag, isNonCritical, isForward != 0, &tmp);
+							res = tmpl[i].toTlv(ctx, listElement, tmpl[i].tag, isNonCritical, isForward != 0, &tmp);
 							KSI_CATCH(&err, res) goto cleanup;
 
 							res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
@@ -546,7 +509,7 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 
 
 					} else {
-						res = tmpl[i].toTlv(payloadp, tmpl[i].tag, isNonCritical, isForward, &tmp);
+						res = tmpl[i].toTlv(ctx, payloadp, tmpl[i].tag, isNonCritical, isForward, &tmp);
 						KSI_CATCH(&err, res) goto cleanup;
 					}
 
@@ -636,7 +599,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag, int isFwd, int isNc, const KSI_TlvTemplate *tmpl, unsigned char **raw, unsigned *raw_len) {
+int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag, int isNc, int isFwd, const KSI_TlvTemplate *tmpl, unsigned char **raw, unsigned *raw_len) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tlv = NULL;

@@ -9,7 +9,7 @@ struct KSI_OctetString_st {
 };
 
 struct KSI_Integer_st {
-	KSI_CTX *ctx;
+	int staticAlloc;
 	int refCount;
 	KSI_uint64_t value;
 };
@@ -30,6 +30,20 @@ struct KSI_Utf8String_st {
 	size_t len;
 	int refCount;
 };
+
+/**
+ *  A static pool for immutable #KSI_Integer object values in range 0..f
+ */
+static KSI_Integer integerPool[] = {
+		{1, 0, 0x00}, {1, 0, 0x01}, {1, 0, 0x02}, {1, 0, 0x03},
+		{1, 0, 0x04}, {1, 0, 0x05}, {1, 0, 0x06}, {1, 0, 0x07},
+		{1, 0, 0x08}, {1, 0, 0x09}, {1, 0, 0x0a}, {1, 0, 0x0b},
+		{1, 0, 0x0c}, {1, 0, 0x0d}, {1, 0, 0x0e}, {1, 0, 0x0f}
+};
+
+KSI_IMPLEMENT_LIST(KSI_Integer, KSI_Integer_free);
+KSI_IMPLEMENT_LIST(KSI_Utf8String, KSI_Utf8String_free);
+KSI_IMPLEMENT_LIST(KSI_OctetString, KSI_OctetString_free);
 
 int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, unsigned int data_len, KSI_OctetString **t) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -122,16 +136,16 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_OctetString_toTlv(KSI_OctetString *oct, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_OctetString_toTlv(KSI_CTX *ctx, KSI_OctetString *oct, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tmp = NULL;
 
 	KSI_PRE(&err, oct != NULL) goto cleanup;
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_BEGIN(oct->ctx, &err);
+	KSI_BEGIN(ctx, &err);
 
-	res = KSI_TLV_new(oct->ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_TLV_setRawValue(tmp, oct->data, oct->data_len);
@@ -242,16 +256,16 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_Utf8String_toTlv(KSI_Utf8String *u8str, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_Utf8String_toTlv(KSI_CTX *ctx, KSI_Utf8String *u8str, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tmp = NULL;
 
 	KSI_PRE(&err, u8str != NULL) goto cleanup;
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_BEGIN(u8str->ctx, &err);
+	KSI_BEGIN(ctx, &err);
 
-	res = KSI_TLV_new(u8str->ctx, KSI_TLV_PAYLOAD_STR, tag, isNonCritical, isForward, &tmp);
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_STR, tag, isNonCritical, isForward, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_TLV_setStringValue(tmp, u8str->value);
@@ -290,28 +304,31 @@ cleanup:
 
 
 void KSI_Integer_free(KSI_Integer *kint) {
-	if (kint != NULL && --kint->refCount == 0) {
+	if (kint != NULL && !kint->staticAlloc && --kint->refCount == 0) {
 		KSI_free(kint);
 	}
 }
 
 int KSI_Integer_clone(KSI_Integer *val, KSI_Integer **clone) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 
-	KSI_PRE(&err, val != NULL) goto cleanup;
-	KSI_PRE(&err, clone != NULL) goto cleanup;
-	KSI_BEGIN(val->ctx, &err);
+	if (val == NULL || clone == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
-	val->refCount++;
+	/* Update ref count only when not statically allocated object. */
+	if (!val->staticAlloc) {
+		val->refCount++;
+	}
 
 	*clone = val;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 char *KSI_Integer_toDateString(const KSI_Integer *kint, char *buf, unsigned buf_len) {
@@ -333,17 +350,19 @@ cleanup:
 }
 
 int KSI_Integer_getSize(const KSI_Integer *kint, unsigned *size) {
-	KSI_ERR err;
-	KSI_PRE(&err, kint != NULL) goto cleanup;
-	KSI_BEGIN(kint->ctx, &err);
+	int res = KSI_UNKNOWN_ERROR;
+	if (kint == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
 	*size = KSI_UINT64_MINSIZE(kint->value);
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 KSI_uint64_t KSI_Integer_getUInt64(const KSI_Integer *kint) {
@@ -373,20 +392,25 @@ int KSI_Integer_compare(const KSI_Integer *a, const KSI_Integer *b) {
 int KSI_Integer_new(KSI_CTX *ctx, KSI_uint64_t value, KSI_Integer **ksiInteger) {
 	KSI_ERR err;
 	KSI_Integer *tmp = NULL;
+	static size_t poolSize = sizeof(integerPool) / sizeof(KSI_Integer);
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, ksiInteger != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	tmp = KSI_new(KSI_Integer);
-	if (tmp == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
+	if (value < poolSize) {
+		tmp = integerPool + value;
+	} else {
+		tmp = KSI_new(KSI_Integer);
+		if (tmp == NULL) {
+			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+			goto cleanup;
+		}
 
-	tmp->ctx = ctx;
-	tmp->value = value;
-	tmp->refCount = 1;
+		tmp->staticAlloc = 0;
+		tmp->value = value;
+		tmp->refCount = 1;
+	}
 
 	*ksiInteger = tmp;
 	tmp = NULL;
@@ -431,16 +455,16 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_Integer_toTlv(KSI_Integer *integer, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_Integer_toTlv(KSI_CTX *ctx, KSI_Integer *integer, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tmp = NULL;
 
 	KSI_PRE(&err, integer != NULL) goto cleanup;
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_BEGIN(integer->ctx, &err);
+	KSI_BEGIN(ctx, &err);
 
-	res = KSI_TLV_new(integer->ctx, KSI_TLV_PAYLOAD_INT, tag, isNonCritical, isForward, &tmp);
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_INT, tag, isNonCritical, isForward, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_TLV_setUintValue(tmp, integer->value);

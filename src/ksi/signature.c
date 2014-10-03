@@ -7,10 +7,8 @@
 typedef struct headerRec_st HeaderRec;
 
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarHashChain);
-KSI_IMPORT_TLV_TEMPLATE(KSI_HashChainLink);
 KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationRecord);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu);
-KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendPdu);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationHashChain)
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationAuthRec)
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarAuthRec)

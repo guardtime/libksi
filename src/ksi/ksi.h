@@ -233,29 +233,29 @@ int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f);
  */
 enum KSI_HashAlgorithm {
 	/** The SHA-1 algorithm. */
-	KSI_HASHALG_SHA1 = 0,
+	KSI_HASHALG_SHA1 = 0x00,
 	/** The SHA-256 algorithm. */
-	KSI_HASHALG_SHA2_256,
+	KSI_HASHALG_SHA2_256 = 0x01,
 	/** The RIPEMD-160 algorithm. */
-	KSI_HASHALG_RIPEMD160,
+	KSI_HASHALG_RIPEMD160 = 0x02,
 	/** The SHA-224 algorithm. */
-	KSI_HASHALG_SHA2_224,
+	KSI_HASHALG_SHA2_224 = 0x03,
 	/** The SHA-384 algorithm. */
-	KSI_HASHALG_SHA2_384,
+	KSI_HASHALG_SHA2_384 = 0x04,
 	/** The SHA-512 algorithm. */
-	KSI_HASHALG_SHA2_512,
+	KSI_HASHALG_SHA2_512 = 0x05,
 	/** The RIPEMD-256 algorithm. */
-	KSI_HASHALG_RIPEMD_256,
+	KSI_HASHALG_RIPEMD_256 = 0x06,
 	/** The SHA3-244 algorithm. */
-	KSI_HASHALG_SHA3_244,
+	KSI_HASHALG_SHA3_244 = 0x07,
 	/** The SHA3-256 algorithm. */
-	KSI_HASHALG_SHA3_256,
+	KSI_HASHALG_SHA3_256 = 0x08,
 	/** The SHA3-384 algorithm. */
-	KSI_HASHALG_SHA3_384,
+	KSI_HASHALG_SHA3_384 = 0x09,
 	/** The SHA3-512 algoritm */
-	KSI_HASHALG_SHA3_512,
+	KSI_HASHALG_SHA3_512 = 0x0a,
 	/** The SM3 algorithm.*/
-	KSI_HASHALG_SM3,
+	KSI_HASHALG_SM3 = 0x0b,
 
 	/* Number of known hash algorithms. */
 	KSI_NUMBER_OF_KNOWN_HASHALGS,

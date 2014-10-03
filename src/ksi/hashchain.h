@@ -43,22 +43,22 @@ extern "C" {
 	void KSI_HashChainLink_free(KSI_HashChainLink *t);
 	int KSI_HashChainLink_new(KSI_CTX *ctx, KSI_HashChainLink **t);
 	int KSI_HashChainLink_getIsLeft(const KSI_HashChainLink *t, int *isLeft);
-	int KSI_HashChainLink_getLevelCorrection(const KSI_HashChainLink *t, int *levelCorrection);
+	int KSI_HashChainLink_getLevelCorrection(const KSI_HashChainLink *t, KSI_Integer **levelCorrection);
 	int KSI_HashChainLink_getMetaHash(const KSI_HashChainLink *t, KSI_DataHash **metaHash);
 	int KSI_HashChainLink_getMetaData(const KSI_HashChainLink *t, KSI_MetaData **metaData);
 	int KSI_HashChainLink_getImprint(const KSI_HashChainLink *t, KSI_DataHash **imprint);
 	int KSI_HashChainLink_setIsLeft(KSI_HashChainLink *t, int isLeft);
-	int KSI_HashChainLink_setLevelCorrection(KSI_HashChainLink *t, int levelCorrection);
+	int KSI_HashChainLink_setLevelCorrection(KSI_HashChainLink *t, KSI_Integer *levelCorrection);
 	int KSI_HashChainLink_setMetaHash(KSI_HashChainLink *t, KSI_DataHash *metaHash);
 	int KSI_HashChainLink_setMetaData(KSI_HashChainLink *t, KSI_MetaData *metaData);
 	int KSI_HashChainLink_setImprint(KSI_HashChainLink *t, KSI_DataHash *imprint);
 
 	int KSI_HashChainLink_fromTlv(KSI_TLV *tlv, KSI_HashChainLink **link);
-	int KSI_HashChainLink_toTlv(KSI_HashChainLink *link, unsigned tag, int isNonCritica, int isForward, KSI_TLV **tlv);
+	int KSI_HashChainLink_toTlv(KSI_CTX *ctx, KSI_HashChainLink *link, unsigned tag, int isNonCritica, int isForward, KSI_TLV **tlv);
 
 
 	int KSI_CalendarHashChainLink_fromTlv(KSI_TLV *tlv, KSI_CalendarHashChainLink **link);
-	int KSI_CalendarHashChainLink_toTlv(KSI_CalendarHashChainLink *link, unsigned tag, int isNonCritica, int isForward, KSI_TLV **tlv);
+	int KSI_CalendarHashChainLink_toTlv(KSI_CTX *ctx, KSI_CalendarHashChainLink *link, unsigned tag, int isNonCritica, int isForward, KSI_TLV **tlv);
 
 	/**
 	 * KSI_CalendarHashChain

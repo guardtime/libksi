@@ -15,7 +15,6 @@ extern "C" {
  */
 void KSI_MetaData_free(KSI_MetaData *t);
 int KSI_MetaData_new(KSI_CTX *ctx, KSI_MetaData **t);
-KSI_CTX *KSI_MetaData_getCtx(KSI_MetaData *t);
 int KSI_MetaData_getRaw(const KSI_MetaData *t, KSI_OctetString **raw);
 int KSI_MetaData_getClientId(const KSI_MetaData *t, KSI_Utf8String **clientId);
 int KSI_MetaData_getMachineId(const KSI_MetaData *t, KSI_Integer **machineId);
@@ -30,29 +29,72 @@ int KSI_MetaData_setSequenceNr(KSI_MetaData *t, KSI_Integer *sequenceNr);
  */
 void KSI_ExtendPdu_free(KSI_ExtendPdu *t);
 int KSI_ExtendPdu_new(KSI_CTX *ctx, KSI_ExtendPdu **t);
-KSI_CTX *KSI_ExtendPdu_getCtx(KSI_ExtendPdu *t);
 int KSI_ExtendPdu_getRequest(const KSI_ExtendPdu *t, KSI_ExtendReq **request);
 int KSI_ExtendPdu_getResponse(const KSI_ExtendPdu *t, KSI_ExtendResp **response);
 int KSI_ExtendPdu_setRequest(KSI_ExtendPdu *t, KSI_ExtendReq *request);
 int KSI_ExtendPdu_setResponse(KSI_ExtendPdu *t, KSI_ExtendResp *response);
 
 /**
+ * This function is used to parse a raw extend PDU into a #KSI_ExtendPdu object.
+ * \param[in]	ctx		KSI context.
+ * \param[in]	raw		Pointer to the raw blob to be parsed.
+ * \param[in]	len		Length of the raw blob.
+ * \param[out]	t		Pointer to the receiving pointer to the #KSI_ExtendPdu object.
+ * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+ * \see KSI_ExtendPdu_serialize
+ */
+int KSI_ExtendPdu_parse(KSI_CTX *ctx, unsigned char *raw, unsigned len, KSI_ExtendPdu **t);
+
+/**
+ * This function serialized the #KSI_ExtendPdu object into a blob.
+ * \param[in]	ctx		KSI context.
+ * \param[in]	t		Pointer to the #KSI_ExtendPdu object.
+ * \param[out]	raw		Pointer to the receiving pointer.
+ * \param[out]	len		Pointer to the receiving lengt variable.
+ * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+ * \see KSI_ExtendPdu_parse
+ * @return
+ */
+int KSI_ExtendPdu_serialize(const KSI_ExtendPdu *t, unsigned char **raw, unsigned *len);
+
+/**
  * KSI_AggregationPdu
  */
 void KSI_AggregationPdu_free(KSI_AggregationPdu *t);
 int KSI_AggregationPdu_new(KSI_CTX *ctx, KSI_AggregationPdu **t);
-KSI_CTX *KSI_AggregationPdu_getCtx(KSI_AggregationPdu *t);
 int KSI_AggregationPdu_getRequest(const KSI_AggregationPdu *t, KSI_AggregationReq **request);
 int KSI_AggregationPdu_getResponse(const KSI_AggregationPdu *t, KSI_AggregationResp **response);
 int KSI_AggregationPdu_setRequest(KSI_AggregationPdu *t, KSI_AggregationReq *request);
 int KSI_AggregationPdu_setResponse(KSI_AggregationPdu *t, KSI_AggregationResp *response);
 
 /**
+ * This function is used to parse a raw aggregation PDU into a #KSI_AggregationPdu object.
+ * \param[in]	ctx		KSI context.
+ * \param[in]	raw		Pointer to the raw blob to be parsed.
+ * \param[in]	len		Length of the raw blob.
+ * \param[out]	t		Pointer to the receiving pointer to the #KSI_AggregationPdu object.
+ * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+ * \see KSI_AggregationPdu_serialize
+ */
+int KSI_AggregationPdu_parse(KSI_CTX *ctx, unsigned char *raw, unsigned len, KSI_AggregationPdu **t);
+
+/**
+ * This function serialized the #KSI_AggregationPdu object into a blob.
+ * \param[in]	ctx		KSI context.
+ * \param[in]	t		Pointer to the #KSI_AggregationPdu object.
+ * \param[out]	raw		Pointer to the receiving pointer.
+ * \param[out]	len		Pointer to the receiving lengt variable.
+ * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+ * \see KSI_AggregationPdu_parse
+ * @return
+ */
+int KSI_AggregationPdu_serialize(const KSI_AggregationPdu *t, unsigned char **raw, unsigned *len);
+
+/**
  * KSI_Header
  */
 void KSI_Header_free(KSI_Header *t);
 int KSI_Header_new(KSI_CTX *ctx, KSI_Header **t);
-KSI_CTX *KSI_Header_getCtx(KSI_Header *t);
 int KSI_Header_getInstanceId(const KSI_Header *t, KSI_Integer **instanceId);
 int KSI_Header_getMessageId(const KSI_Header *t, KSI_Integer **messageId);
 int KSI_Header_getClientId(const KSI_Header *t, KSI_OctetString **clientId);
@@ -65,7 +107,6 @@ int KSI_Header_setClientId(KSI_Header *t, KSI_OctetString *clientId);
  */
 void KSI_Config_free(KSI_Config *t);
 int KSI_Config_new(KSI_CTX *ctx, KSI_Config **t);
-KSI_CTX *KSI_Config_getCtx(KSI_Config *t);
 int KSI_Config_getMaxLevel(const KSI_Config *t, KSI_Integer **maxLevel);
 int KSI_Config_getAggrAlgo(const KSI_Config *t, KSI_Integer **aggrAlgo);
 int KSI_Config_getAggrPeriod(const KSI_Config *t, KSI_Integer **aggrPeriod);
@@ -80,7 +121,6 @@ int KSI_Config_setParentUri(KSI_Config *t, KSI_LIST(KSI_Utf8String) *parentUri);
  */
 void KSI_AggregationReq_free(KSI_AggregationReq *t);
 int KSI_AggregationReq_new(KSI_CTX *ctx, KSI_AggregationReq **t);
-KSI_CTX *KSI_AggregationReq_getCtx(KSI_AggregationReq *t);
 int KSI_AggregationReq_getHeader(const KSI_AggregationReq *t, KSI_Header **header);
 int KSI_AggregationReq_getRequestId(const KSI_AggregationReq *t, KSI_Integer **requestId);
 int KSI_AggregationReq_getRequestHash(const KSI_AggregationReq *t, KSI_DataHash **requestHash);
@@ -108,7 +148,6 @@ int KSI_RequestAck_setAggregationDelay(KSI_RequestAck *t, KSI_Integer *aggregati
  */
 void KSI_AggregationResp_free(KSI_AggregationResp *t);
 int KSI_AggregationResp_new(KSI_CTX *ctx, KSI_AggregationResp **t);
-KSI_CTX *KSI_AggregationResp_getCtx(KSI_AggregationResp *t);
 int KSI_AggregationResp_getHeader(const KSI_AggregationResp *t, KSI_Header **header);
 int KSI_AggregationResp_getRequestId(const KSI_AggregationResp *t, KSI_Integer **requestId);
 int KSI_AggregationResp_getStatus(const KSI_AggregationResp *t, KSI_Integer **status);
@@ -135,7 +174,6 @@ int KSI_AggregationResp_setAggregationAuthRec(KSI_AggregationResp *t, KSI_Aggreg
  */
 void KSI_ExtendReq_free(KSI_ExtendReq *t);
 int KSI_ExtendReq_new(KSI_CTX *ctx, KSI_ExtendReq **t);
-KSI_CTX *KSI_ExtendReq_getCtx(KSI_ExtendReq *t);
 int KSI_ExtendReq_getHeader(const KSI_ExtendReq *t, KSI_Header **header);
 int KSI_ExtendReq_getRequestId(const KSI_ExtendReq *t, KSI_Integer **requestId);
 int KSI_ExtendReq_getAggregationTime(const KSI_ExtendReq *t, KSI_Integer **aggregationTime);
@@ -150,7 +188,6 @@ int KSI_ExtendReq_setPublicationTime(KSI_ExtendReq *t, KSI_Integer *publicationT
  */
 void KSI_ExtendResp_free(KSI_ExtendResp *t);
 int KSI_ExtendResp_new(KSI_CTX *ctx, KSI_ExtendResp **t);
-KSI_CTX *KSI_ExtendResp_getCtx(KSI_ExtendResp *t);
 int KSI_ExtendResp_getHeader(const KSI_ExtendResp *t, KSI_Header **header);
 int KSI_ExtendResp_getRequestId(const KSI_ExtendResp *t, KSI_Integer **requestId);
 int KSI_ExtendResp_getStatus(const KSI_ExtendResp *t, KSI_Integer **status);
@@ -169,7 +206,6 @@ int KSI_ExtendResp_setCalendarHashChain(KSI_ExtendResp *t, KSI_CalendarHashChain
  */
 void KSI_PKISignedData_free(KSI_PKISignedData *t);
 int KSI_PKISignedData_new(KSI_CTX *ctx, KSI_PKISignedData **t);
-KSI_CTX *KSI_PKISignedData_getCtx(KSI_PKISignedData *t);
 int KSI_PKISignedData_getSignatureValue(const KSI_PKISignedData *t, KSI_OctetString **signatureValue);
 int KSI_PKISignedData_getCertId(const KSI_PKISignedData *t, KSI_OctetString **certId);
 int KSI_PKISignedData_getCertRepositoryUri(const KSI_PKISignedData *t, KSI_Utf8String **certRepositoryUri);
@@ -182,7 +218,6 @@ int KSI_PKISignedData_setCertRepositoryUri(KSI_PKISignedData *t, KSI_Utf8String 
  */
 void KSI_PublicationsHeader_free(KSI_PublicationsHeader *t);
 int KSI_PublicationsHeader_new(KSI_CTX *ctx, KSI_PublicationsHeader **t);
-KSI_CTX *KSI_PublicationsHeader_getCtx(KSI_PublicationsHeader *t);
 int KSI_PublicationsHeader_getVersion(const KSI_PublicationsHeader *t, KSI_Integer **version);
 int KSI_PublicationsHeader_getTimeCreated(const KSI_PublicationsHeader *t, KSI_Integer **timeCreated);
 int KSI_PublicationsHeader_getRepositoryUri(const KSI_PublicationsHeader *t, KSI_Utf8String **repositoryUri);
@@ -195,7 +230,6 @@ int KSI_PublicationsHeader_setRepositoryUri(KSI_PublicationsHeader *t, KSI_Utf8S
  */
 void KSI_CertificateRecord_free(KSI_CertificateRecord *t);
 int KSI_CertificateRecord_new(KSI_CTX *ctx, KSI_CertificateRecord **t);
-KSI_CTX *KSI_CertificateRecord_getCtx(KSI_CertificateRecord *t);
 int KSI_CertificateRecord_getCertId(const KSI_CertificateRecord *t, KSI_OctetString **certId);
 int KSI_CertificateRecord_getCert(const KSI_CertificateRecord *t, KSI_PKICertificate **cert);
 int KSI_CertificateRecord_setCertId(KSI_CertificateRecord *t, KSI_OctetString *certId);

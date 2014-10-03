@@ -6,8 +6,6 @@
 KSI_IMPLEMENT_GET_CTX(KSI_NetworkClient);
 KSI_IMPLEMENT_GET_CTX(KSI_RequestHandle);
 
-KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendPdu);
-
 /**
  *
  */
@@ -265,7 +263,7 @@ static int receiveResponse(KSI_RequestHandle *handle) {
 	int res;
 
 	KSI_PRE(&err, handle != NULL) goto cleanup;
-	KSI_BEGIN(KSI_RequestHandle_getCtx(handle), &err);
+	KSI_BEGIN(handle->ctx, &err);
 
 	if (handle->readResponse == NULL) {
 		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, NULL);
@@ -323,12 +321,9 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 	res = KSI_RequestHandle_getResponse(handle, &raw, &len);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_ExtendPdu_new(handle->ctx, &pdu);
-	KSI_CATCH(&err, res) goto cleanup;
-
 	KSI_LOG_logBlob(handle->ctx, KSI_LOG_DEBUG, "Parsing extend response from", raw, len);
 
-	res = KSI_TlvTemplate_parse(handle->ctx, raw, len, KSI_TLV_TEMPLATE(KSI_ExtendPdu), pdu);
+	res = KSI_ExtendPdu_parse(handle->ctx, raw, len, &pdu);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_ExtendPdu_getResponse(pdu, resp);

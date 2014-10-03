@@ -13,6 +13,7 @@ int KSI_HashChain_appendLink(KSI_DataHash *siblingHash, KSI_DataHash *metaHash, 
 	KSI_HashChainLink *link = NULL;
 	KSI_LIST(KSI_HashChainLink) *tmp = NULL;
 	int mode = 0;
+	KSI_Integer *lvlCorr = NULL;
 
 	/* Create new link. */
 	res = KSI_HashChainLink_new(ctx, &link);
@@ -22,9 +23,14 @@ int KSI_HashChain_appendLink(KSI_DataHash *siblingHash, KSI_DataHash *metaHash, 
 	res = KSI_HashChainLink_setIsLeft(link, isLeft);
 	if (res != KSI_OK) goto cleanup;
 
-	/* Chain link level correction. */
-	res = KSI_HashChainLink_setLevelCorrection(link, levelCorrection);
+	res = KSI_Integer_new(ctx, levelCorrection, &lvlCorr);
 	if (res != KSI_OK) goto cleanup;
+
+	/* Chain link level correction. */
+	res = KSI_HashChainLink_setLevelCorrection(link, lvlCorr);
+	if (res != KSI_OK) goto cleanup;
+	lvlCorr = NULL;
+
 
 	if (siblingHash != NULL) mode |= 0x01;
 	if (metaHash != NULL) mode |= 0x02;
@@ -66,6 +72,7 @@ int KSI_HashChain_appendLink(KSI_DataHash *siblingHash, KSI_DataHash *metaHash, 
 
 cleanup:
 
+	KSI_Integer_free(lvlCorr);
 	KSI_HashChainLinkList_freeAll(tmp);
 	KSI_HashChainLink_free(link);
 

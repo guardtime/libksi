@@ -22,6 +22,8 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
+	KSI_CTX_setLogLevel(ksi, KSI_LOG_DEBUG);
+
 	/* Check parameters. */
 	if (argc != 5) {
 		fprintf(stderr, "Usage\n"

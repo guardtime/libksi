@@ -92,7 +92,7 @@ static int curlReceive(KSI_RequestHandle *handle) {
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_PRE(&err, handle->client != NULL) goto cleanup;
 	KSI_PRE(&err, handle->implCtx != NULL) goto cleanup;
-	KSI_BEGIN(KSI_RequestHandle_getCtx(handle), &err);
+	KSI_BEGIN(handle->ctx, &err);
 
 	client = handle->client;
 	http = client->implCtx; // TODO!

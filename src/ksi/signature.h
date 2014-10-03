@@ -221,8 +221,9 @@ extern "C" {
 	int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain);
 	
 	int KSI_Signature_replacePublicationRecord(KSI_Signature *sig, KSI_PublicationRecord *pubRec);
-	 * KSI_AggregationHashChain
-	 */
+	/* 
+	* KSI_AggregationHashChain
+	*/
 	void KSI_AggregationHashChain_free(KSI_AggregationHashChain *aggr);
 	int KSI_AggregationHashChain_new(KSI_CTX *ctx, KSI_AggregationHashChain **out);
 
