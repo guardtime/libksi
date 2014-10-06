@@ -340,8 +340,6 @@ static void TestParseMetaHash(CuTest *tc) {
 	memcpy(metaImprint + 3, metaVal, strlen(metaVal));
 
 	res = KSI_DataHash_fromImprint(ctx, metaImprint, sizeof(metaImprint), &metaHash);
-	KSI_ERR_statusDump(ctx, stdout);
-
 	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "MetaImprint", metaImprint, sizeof(metaImprint));
 	CuAssert(tc, "Unable to create meta data hash.", res == KSI_OK && metaHash != NULL);
 
