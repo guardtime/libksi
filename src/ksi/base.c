@@ -141,7 +141,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	if (res != KSI_OK) goto cleanup;
 
 	/* Create and set the logger. */
-	res = KSI_Logger_new(ctx, NULL, KSI_LOG_FATAL, &logger);
+	res = KSI_Logger_new(ctx, "ksi.log", KSI_LOG_DEBUG, &logger);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_setLogger(ctx, logger);
