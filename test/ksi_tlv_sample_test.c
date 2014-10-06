@@ -259,6 +259,62 @@ static void TestClone(CuTest *tc) {
 	}
 }
 
+static void testObjectSerialization(CuTest *tc, const char *sample, int (*parse)(KSI_CTX *, unsigned char *, unsigned, void **), int (*serialize)(void *, unsigned char **, unsigned *), void (*objFree)(void *)) {
+	int res;
+	void *pdu = NULL;
+	unsigned char in[0xffff + 4];
+	unsigned in_len;
+	unsigned char *out1 = NULL, *out2 = NULL;
+	unsigned out1_len, out2_len;
+	FILE *f = NULL;
+
+	f = fopen(sample, "rb");
+	CuAssert(tc, "Unable to open pdu file.", f != NULL);
+
+	in_len = fread(in, 1, sizeof(in), f);
+	fclose(f);
+	CuAssert(tc, "Unable to read pdu.", in_len > 0);
+
+	res = parse(ctx, in, in_len, &pdu);
+	CuAssert(tc, "Unable to parse 1st pdu.", res == KSI_OK && pdu != NULL);
+
+	res = serialize(pdu, &out1, &out1_len);
+	CuAssert(tc, "Unable to serialize 1st pdu", res == KSI_OK && out1 != NULL && out1_len > 0);
+
+	objFree(pdu);
+
+	/* The second run is necessary due to the fact that in general the ordering of
+	 * the nested TLV's is not fixed.
+	 */
+	res = parse(ctx, out1, out1_len, &pdu);
+	CuAssert(tc, "Unable to parse 2nd pdu.", res == KSI_OK && pdu != NULL);
+
+	res = serialize(pdu, &out2, &out2_len);
+	CuAssert(tc, "Unable to serialize 2nd pdu", res == KSI_OK && out2 != NULL && out2_len > 0);
+
+	CuAssert(tc, "Serialized pdu length mismatch.", out2_len == out1_len);
+	CuAssert(tc, "Serialised pdu content mismatch.", !memcmp(out2, out1, in_len));
+
+	KSI_free(out1);
+	KSI_free(out2);
+	objFree(pdu);
+}
+
+static void aggregationPduTest(CuTest *tc) {
+	testObjectSerialization(tc, "test/resource/tlv/ok-sig-2014-07-01.1-aggr_response.tlv",
+			(int (*)(KSI_CTX *, unsigned char *, unsigned, void **))KSI_AggregationPdu_parse,
+			(int (*)(void *, unsigned char **, unsigned *))KSI_AggregationPdu_serialize,
+			( void (*)(void *))KSI_AggregationPdu_free);
+}
+
+static void extendPduTest(CuTest *tc) {
+	testObjectSerialization(tc, "test/resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv",
+			(int (*)(KSI_CTX *, unsigned char *, unsigned, void **))KSI_ExtendPdu_parse,
+			(int (*)(void *, unsigned char **, unsigned *))KSI_ExtendPdu_serialize,
+			( void (*)(void *))KSI_ExtendPdu_free);
+}
+
+
 CuSuite* KSITest_TLV_Sample_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
@@ -267,6 +323,8 @@ CuSuite* KSITest_TLV_Sample_getSuite(void)
 	SUITE_ADD_TEST(suite, TestNokFiles);
 	SUITE_ADD_TEST(suite, TestSerialize);
 	SUITE_ADD_TEST(suite, TestClone);
+	SUITE_ADD_TEST(suite, aggregationPduTest);
+	SUITE_ADD_TEST(suite, extendPduTest);
 
 	return suite;
 }

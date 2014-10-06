@@ -72,7 +72,7 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationAuthRec)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_CalendarAuthRec)
-	KSI_TLV_COMPOSITE(0x10, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_MORE_DEFS, KSI_CalendarAuthRec_getPublishedData, KSI_CalendarAuthRec_setPublishedData, KSI_PublicationData)
+	KSI_TLV_COMPOSITE(0x10, KSI_TLV_TMPL_FLG_FORWARD | KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_MORE_DEFS, KSI_CalendarAuthRec_getPublishedData, KSI_CalendarAuthRec_setPublishedData, KSI_PublicationData)
 	KSI_TLV_UNPROCESSED(0x10, KSI_CalendarAuthRec_setSignedData)
 	KSI_TLV_UTF8_STRING(0x0b, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarAuthRec_getSignatureAlgo, KSI_CalendarAuthRec_setSignatureAlgo)
 	KSI_TLV_COMPOSITE(0x0c, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarAuthRec_getSignatureData, KSI_CalendarAuthRec_setSignatureData, KSI_PKISignedData)
@@ -511,31 +511,49 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 					} else {
 						res = tmpl[i].toTlv(ctx, payloadp, tmpl[i].tag, isNonCritical, isForward, &tmp);
 						KSI_CATCH(&err, res) goto cleanup;
+
+						res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
+						KSI_CATCH(&err, res) goto cleanup;
+						tmp = NULL;
 					}
 
 					break;
 				case KSI_TLV_TEMPLATE_COMPOSITE:
-					res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tmpl[i].tag, isNonCritical, isForward, &tmp);
-					KSI_CATCH(&err, res) goto cleanup;
+					if (tmpl[i].listLength != NULL) {
+						int j;
+						for (j = 0; j < tmpl[i].listLength(payloadp); j++) {
+							void *listElement = NULL;
 
-					res = KSI_TLV_cast(tmp, KSI_TLV_PAYLOAD_TLV);
-					KSI_CATCH(&err, res) goto cleanup;
+							res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, tmpl[i].tag, isNonCritical, isForward, &tmp);
+							KSI_CATCH(&err, res) goto cleanup;
 
-					res = KSI_TlvTemplate_construct(ctx, tmp, payloadp, tmpl[i].subTemplate);
-					KSI_CATCH(&err, res) goto cleanup;
+							res = tmpl[i].listElementAt(payloadp, j, &listElement);
+							KSI_CATCH(&err, res) goto cleanup;
 
+							res = KSI_TlvTemplate_construct(ctx, tmp, listElement, tmpl[i].subTemplate);
+							KSI_CATCH(&err, res) goto cleanup;
+
+							res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
+							KSI_CATCH(&err, res) goto cleanup;
+							tmp = NULL;
+						}
+					} else {
+						res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, tmpl[i].tag, isNonCritical, isForward, &tmp);
+						KSI_CATCH(&err, res) goto cleanup;
+
+						res = KSI_TlvTemplate_construct(ctx, tmp, payloadp, tmpl[i].subTemplate);
+						KSI_CATCH(&err, res) goto cleanup;
+
+						res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
+						KSI_CATCH(&err, res) goto cleanup;
+						tmp = NULL;
+					}
 					break;
 				default:
 					KSI_LOG_error(ctx, "Unimplemented template type: %d", tmpl[i].type);
 					KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Unimplemented template type.");
 					goto cleanup;
 			}
-
-			if (tmp != NULL) {
-				res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
-				KSI_CATCH(&err, res) goto cleanup;
-			}
-			tmp = NULL;
 		}
 	}
 
