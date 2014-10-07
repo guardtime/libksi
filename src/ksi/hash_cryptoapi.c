@@ -61,6 +61,52 @@ static const ALG_ID hashAlgorithmToALG_ID(int hash_id)
 	}
 }
 
+static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
+	KSI_ERR err;
+	int res;
+	DWORD digest_length = 0;
+	DWORD digestLenSize = 0;	//The size of digest_length variable
+	DWORD hash_length = 0;
+	CRYPTO_HASH_CTX * pCryptoCTX = NULL;	//Crypto helper struct
+	HCRYPTHASH pHash = 0;				//Hash object
+
+
+	KSI_PRE(&err, hasher != NULL) goto cleanup;
+	KSI_PRE(&err, data_hash != NULL) goto cleanup;
+	KSI_BEGIN(hasher->ctx, &err);
+
+	pCryptoCTX = (CRYPTO_HASH_CTX*)hasher->hashContext;
+	pHash = pCryptoCTX->pt_hHash;
+
+	hash_length = KSI_getHashLength(hasher->algorithm);
+	if (hash_length == 0) {
+		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Error finding digest length.");
+		goto cleanup;
+	}
+
+	digestLenSize = sizeof(digest_length);
+	CryptGetHashParam(pHash, HP_HASHSIZE, (BYTE*)&digest_length, &digestLenSize,0);
+
+	/* Make sure the hash length is the same. */
+	if (hash_length != digest_length) {
+		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Internal hash lengths mismatch.");
+		goto cleanup;
+	}
+
+	/*After final call pHash is can not be used further*/
+	CryptGetHashParam(pHash, HP_HASHVAL, data_hash->imprint + 1, &digest_length,0);
+
+	data_hash->imprint[0] = hasher->algorithm;
+	data_hash->imprint_length = digest_length + 1;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+
 int KSI_isHashAlgorithmSupported(int hash_id) {
 	return hashAlgorithmToALG_ID(hash_id) != -1;
 }
@@ -101,6 +147,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
 	tmp_hasher->hashContext = NULL;
 	tmp_hasher->ctx = ctx;
 	tmp_hasher->algorithm = hash_id;
+	tmp_hasher->closeExisting = closeExisting;
 
 	/*Create new helper context for crypto api*/
 	res = CRYPTO_HASH_CTX_new(&tmp_cryptoCTX);
@@ -211,51 +258,6 @@ int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_len
 			goto cleanup;
 			}
 	}
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-}
-
-int KSI_DataHasher_close_ex(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
-	KSI_ERR err;
-	int res;
-	DWORD digest_length = 0;
-	DWORD digestLenSize = 0;	//The size of digest_length variable
-	DWORD hash_length = 0;
-	CRYPTO_HASH_CTX * pCryptoCTX = NULL;	//Crypto helper struct
-	HCRYPTHASH pHash = 0;				//Hash object
-
-	
-	KSI_PRE(&err, hasher != NULL) goto cleanup;
-	KSI_PRE(&err, data_hash != NULL) goto cleanup;
-	KSI_BEGIN(hasher->ctx, &err);
-
-	pCryptoCTX = (CRYPTO_HASH_CTX*)hasher->hashContext;
-	pHash = pCryptoCTX->pt_hHash;
-	
-	hash_length = KSI_getHashLength(hasher->algorithm);
-	if (hash_length == 0) {
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Error finding digest length.");
-		goto cleanup;
-	}
-	
-	digestLenSize = sizeof(digest_length);
-	CryptGetHashParam(pHash, HP_HASHSIZE, (BYTE*)&digest_length, &digestLenSize,0);
-
-	/* Make sure the hash length is the same. */
-	if (hash_length != digest_length) {
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Internal hash lengths mismatch.");
-		goto cleanup;
-	}
-	
-	/*After final call pHash is can not be used further*/
-	CryptGetHashParam(pHash, HP_HASHVAL, data_hash->imprint + 1, &digest_length,0);
-	
-	data_hash->imprint[0] = hasher->algorithm;
-	data_hash->imprint_length = digest_length + 1;
 
 	KSI_SUCCESS(&err);
 

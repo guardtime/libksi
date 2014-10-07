@@ -427,7 +427,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_createSignature(KSI_CTX *ctx, const KSI_DataHash *dataHash, KSI_Signature **sig) {
+int KSI_createSignature(KSI_CTX *ctx, KSI_DataHash *dataHash, KSI_Signature **sig) {
 	KSI_ERR err;
 	int res;
 	KSI_Signature *tmp = NULL;

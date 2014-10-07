@@ -51,7 +51,7 @@ static struct KSI_hashAlgorithmInfo_st {
  */
 
 void KSI_DataHash_free(KSI_DataHash *hash) {
-	if (hash != NULL) {
+	if (hash != NULL && --hash->refCount == 0) {
 		KSI_free(hash);
 	}
 }
@@ -125,6 +125,7 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *dige
 		goto cleanup;
 	}
 
+	tmp_hash->refCount = 1;
 	tmp_hash->ctx = ctx;
 
 	tmp_hash->imprint[0] = (unsigned char)hash_id;
@@ -265,26 +266,19 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_DataHash_clone(const KSI_DataHash *from, KSI_DataHash **to) {
+int KSI_DataHash_clone(KSI_DataHash *from, KSI_DataHash **to) {
 	KSI_ERR err;
-	KSI_DataHash *hsh = NULL;
 	int res;
 	KSI_PRE(&err, from != NULL) goto cleanup;
 	KSI_PRE(&err, to != NULL) goto cleanup;
 	KSI_BEGIN(from->ctx, &err);
 
-	res = KSI_DataHash_fromImprint(from->ctx, from->imprint, from->imprint_length, &hsh);
-	KSI_CATCH(&err, res) goto cleanup;
-
-
-	*to = hsh;
-	hsh = NULL;
+	from->refCount++;
+	*to = from;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
-
-	KSI_DataHash_free(hsh);
 
 	return KSI_RETURN(&err);
 }
@@ -478,10 +472,10 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
-
+	hsh->refCount = 1;
 	hsh->ctx = hasher->ctx;
 
-	res = KSI_DataHasher_close_ex(hasher, hsh);
+	res = hasher->closeExisting(hasher, hsh);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*data_hash = hsh;
