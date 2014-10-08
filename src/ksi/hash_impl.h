@@ -11,6 +11,8 @@ extern "C" {
 		/* KSI context */
 		KSI_CTX *ctx;
 
+		unsigned refCount;
+
 		unsigned char imprint[KSI_MAX_IMPRINT_LEN + 1]; /* For an extra '0' for meta hash. */
 		unsigned int imprint_length;
 	};
@@ -20,6 +22,7 @@ extern "C" {
 		KSI_CTX *ctx;
 		void *hashContext;
 		int algorithm;
+		int (*closeExisting)(KSI_DataHasher *, KSI_DataHash *);
 	};
 
 #ifdef __cplusplus

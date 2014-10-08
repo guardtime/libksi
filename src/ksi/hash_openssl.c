@@ -34,6 +34,39 @@ static const EVP_MD *hashAlgorithmToEVP(int hash_id)
 	}
 }
 
+static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
+	KSI_ERR err;
+	int res;
+	unsigned int hash_length;
+
+	KSI_PRE(&err, hasher != NULL) goto cleanup;
+	KSI_PRE(&err, data_hash != NULL) goto cleanup;
+	KSI_BEGIN(hasher->ctx, &err);
+
+	hash_length = KSI_getHashLength(hasher->algorithm);
+	if (hash_length == 0) {
+		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Error finding digest length.");
+		goto cleanup;
+	}
+
+	EVP_DigestFinal(hasher->hashContext, data_hash->imprint + 1, &data_hash->imprint_length);
+
+	/* Make sure the hash length is the same. */
+	if (hash_length != data_hash->imprint_length) {
+		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Internal hash lengths mismatch.");
+		goto cleanup;
+	}
+
+	data_hash->imprint[0] = hasher->algorithm;
+	data_hash->imprint_length++;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
 int KSI_isHashAlgorithmSupported(int hash_id) {
 	return hashAlgorithmToEVP(hash_id) != NULL;
 }
@@ -68,6 +101,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
 	tmp_hasher->hashContext = NULL;
 	tmp_hasher->ctx = ctx;
 	tmp_hasher->algorithm = hash_id;
+	tmp_hasher->closeExisting = closeExisting;
 
 	res = KSI_DataHasher_reset(tmp_hasher);
 	if (res != KSI_OK) {
@@ -137,39 +171,6 @@ int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_len
 	if (data_length > 0) {
 		EVP_DigestUpdate(hasher->hashContext, data, data_length);
 	}
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-}
-
-int KSI_DataHasher_close_ex(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
-	KSI_ERR err;
-	int res;
-	unsigned int hash_length;
-
-	KSI_PRE(&err, hasher != NULL) goto cleanup;
-	KSI_PRE(&err, data_hash != NULL) goto cleanup;
-	KSI_BEGIN(hasher->ctx, &err);
-
-	hash_length = KSI_getHashLength(hasher->algorithm);
-	if (hash_length == 0) {
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Error finding digest length.");
-		goto cleanup;
-	}
-
-	EVP_DigestFinal(hasher->hashContext, data_hash->imprint + 1, &data_hash->imprint_length);
-
-	/* Make sure the hash length is the same. */
-	if (hash_length != data_hash->imprint_length) {
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Internal hash lengths mismatch.");
-		goto cleanup;
-	}
-
-	data_hash->imprint[0] = hasher->algorithm;
-	data_hash->imprint_length++;
 
 	KSI_SUCCESS(&err);
 

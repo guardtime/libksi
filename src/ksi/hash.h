@@ -68,11 +68,6 @@ extern "C" {
 	int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **hash);
 
 	/**
-	 * TODO!
-	 */
-	int KSI_DataHasher_close_ex(KSI_DataHasher *hasher, KSI_DataHash *data_hash);
-
-	/**
 	 * Frees the data hasher object.
 	 * \param[in]		hasher			Hasher object.
 	 *
@@ -111,7 +106,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_DataHash_clone(const KSI_DataHash *from, KSI_DataHash **to);
+	int KSI_DataHash_clone(KSI_DataHash *from, KSI_DataHash **to);
 
 	/**
 	 * Interneal data access method.

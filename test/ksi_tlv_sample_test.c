@@ -259,6 +259,50 @@ static void TestClone(CuTest *tc) {
 	}
 }
 
+static void testObjectSerialization(CuTest *tc, const char *sample, int (*parse)(KSI_CTX *, unsigned char *, unsigned, void **), int (*serialize)(void *, unsigned char **, unsigned *), void (*objFree)(void *)) {
+	int res;
+	void *pdu = NULL;
+	unsigned char in[0xffff + 4];
+	unsigned in_len;
+	unsigned char *out = NULL;
+	unsigned out_len;
+	FILE *f = NULL;
+
+	f = fopen(sample, "rb");
+	CuAssert(tc, "Unable to open pdu file.", f != NULL);
+
+	in_len = fread(in, 1, sizeof(in), f);
+	fclose(f);
+	CuAssert(tc, "Unable to read pdu.", in_len > 0);
+
+	res = parse(ctx, in, in_len, &pdu);
+	CuAssert(tc, "Unable to parse 1st pdu.", res == KSI_OK && pdu != NULL);
+
+	res = serialize(pdu, &out, &out_len);
+	CuAssert(tc, "Unable to serialize 1st pdu", res == KSI_OK && out != NULL && out_len > 0);
+
+	CuAssert(tc, "Serialized pdu length mismatch.", in_len == out_len);
+	CuAssert(tc, "Serialised pdu content mismatch.", !KSITest_memcmp(in, out, in_len));
+
+	KSI_free(out);
+	objFree(pdu);
+}
+
+static void aggregationPduTest(CuTest *tc) {
+	testObjectSerialization(tc, "test/resource/tlv/ok-sig-2014-07-01.1-aggr_response_ordered.tlv",
+			(int (*)(KSI_CTX *, unsigned char *, unsigned, void **))KSI_AggregationPdu_parse,
+			(int (*)(void *, unsigned char **, unsigned *))KSI_AggregationPdu_serialize,
+			( void (*)(void *))KSI_AggregationPdu_free);
+}
+
+static void extendPduTest(CuTest *tc) {
+	testObjectSerialization(tc, "test/resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv",
+			(int (*)(KSI_CTX *, unsigned char *, unsigned, void **))KSI_ExtendPdu_parse,
+			(int (*)(void *, unsigned char **, unsigned *))KSI_ExtendPdu_serialize,
+			( void (*)(void *))KSI_ExtendPdu_free);
+}
+
+
 CuSuite* KSITest_TLV_Sample_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
@@ -267,6 +311,8 @@ CuSuite* KSITest_TLV_Sample_getSuite(void)
 	SUITE_ADD_TEST(suite, TestNokFiles);
 	SUITE_ADD_TEST(suite, TestSerialize);
 	SUITE_ADD_TEST(suite, TestClone);
+	SUITE_ADD_TEST(suite, aggregationPduTest);
+	SUITE_ADD_TEST(suite, extendPduTest);
 
 	return suite;
 }

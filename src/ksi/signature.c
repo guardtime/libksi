@@ -322,7 +322,7 @@ cleanup:
 /***************
  * SIGN REQUEST
  ***************/
-static int createSignRequest(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_AggregationReq **request) {
+static int createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_AggregationReq **request) {
 	KSI_ERR err;
 	int res;
 	KSI_AggregationReq *req = NULL;
@@ -765,7 +765,7 @@ cleanup:
 
 }
 
-int KSI_Signature_create(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **signature) {
+int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature) {
 	KSI_ERR err;
 	int res;
 	KSI_RequestHandle *handle = NULL;
