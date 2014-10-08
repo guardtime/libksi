@@ -795,10 +795,10 @@ int KSI_Signature_create(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **
 
 	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Response", resp, resp_len);
 
-	res = KSI_parseAggregationResponse(ctx, resp, resp_len, &sign);
+	res = KSI_RequestHandle_setResponse(handle, NULL, 0);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_RequestHandle_setResponse(handle, NULL, 0);
+	res = KSI_parseAggregationResponse(ctx, resp, resp_len, &sign);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*signature = sign;
