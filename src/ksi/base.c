@@ -242,7 +242,6 @@ static void globalCleanup(KSI_CTX *ctx) {
  *
  */
 void KSI_CTX_free(KSI_CTX *ctx) {
-	size_t pos;
 	if (ctx != NULL) {
 		/* Call cleanup methods. */
 		globalCleanup(ctx);

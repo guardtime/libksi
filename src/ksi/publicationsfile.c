@@ -332,7 +332,6 @@ cleanup:
 
 int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, char **raw, int* raw_len) {
 	KSI_ERR err;
-	int res;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, pubFile != NULL) goto cleanup;
@@ -892,8 +891,6 @@ char *KSI_PublicationData_toString(KSI_PublicationData *t, char *buffer, unsigne
 	char *ret = NULL;
 	unsigned len = 0;
 	char *pubStr = NULL;
-	struct tm tm;
-	time_t pubTm;
 	char tmp[256];
 
 	res = KSI_PublicationData_toBase32(t, &pubStr);

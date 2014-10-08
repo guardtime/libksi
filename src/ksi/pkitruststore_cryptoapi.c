@@ -1,6 +1,6 @@
 #include "internal.h"
 
-#if KSI_PKI_TRUSTSTORE_IMPL == KSI_IMPL_CRYPTOAPI
+#if KSI_PKI_TRUSTSTORE_IMPL == KSI_IMPL_CRYPTOAPI || 1
 
 #include <string.h>
 #include <limits.h>
@@ -167,7 +167,7 @@ int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) 
 	KSI_PRE(&err, trust != NULL) goto cleanup;
 	KSI_PRE(&err, path != NULL) goto cleanup;
 	KSI_BEGIN(trust->ctx, &err);
-	
+
 	/*Open new store */
 	tmp_FileTrustStore = CertOpenStore(CERT_STORE_PROV_FILENAME_A, 0, NULL, 0, path);
 	if (tmp_FileTrustStore == NULL) {
@@ -333,8 +333,7 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
-
-int KSI_PKISignature_toTlv(KSI_PKISignature *sig, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_PKISignature_toTlv(KSI_CTX *ctx, KSI_PKISignature *sig, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tmp = NULL;
@@ -343,10 +342,10 @@ int KSI_PKISignature_toTlv(KSI_PKISignature *sig, unsigned tag, int isNonCritica
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_BEGIN(sig->ctx, &err);
+	KSI_BEGIN(ctx, &err);
 
 	
-	res = KSI_TLV_new(sig->ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_PKISignature_serialize(sig, &raw, &raw_len);
@@ -412,9 +411,9 @@ cleanup:
 
 int KSI_PKICertificate_new(KSI_CTX *ctx, const void *der, size_t der_len, KSI_PKICertificate **cert) {
 	KSI_ERR err;
-	PCERT_CONTEXT x509;
+	PCCERT_CONTEXT x509 = NULL;
 	KSI_PKICertificate *tmp = NULL;
-
+	
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, der != NULL) goto cleanup;
 	KSI_PRE(&err, der_len > 0) goto cleanup;
@@ -428,7 +427,7 @@ int KSI_PKICertificate_new(KSI_CTX *ctx, const void *der, size_t der_len, KSI_PK
 	}
 	
 	/*TODO check pCreatePara (last argument)*/
-	x509 = CertCreateCertificateContext(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, (const BYTE*)der, der_len);
+	x509 = CertCreateCertificateContext(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, der, (DWORD)der_len);
 	if (x509 == NULL) {
 		printError(GetLastError());
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Unable to create PKI certificate");
@@ -886,7 +885,6 @@ cleanup:
 
 int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, unsigned data_len, const char *algoOid, const unsigned char *signature, unsigned signature_len, const KSI_PKICertificate *certificate) {
 	KSI_ERR err;
-	int res;
 	PCCRYPT_OID_INFO pOID_INFO = NULL;
 	ALG_ID algorithm=0;
 	HCRYPTPROV hCryptProv = 0;

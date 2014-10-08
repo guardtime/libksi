@@ -41,8 +41,6 @@ static int wininetGlobal_init(void) {
 		
 	res = KSI_OK;
 
-cleanup:
-
 	return res;
 }
 
@@ -378,6 +376,10 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+static void implCtx_free(void * hInternet){
+	InternetCloseHandle((HINTERNET)hInternet);
+}
+
 int KSI_HttpClient_init(KSI_NetworkClient *client) {
 	KSI_ERR err;
 	KSI_HttpClientCtx *http = NULL;
@@ -416,7 +418,7 @@ int KSI_HttpClient_init(KSI_NetworkClient *client) {
 	}
 	
 	http->implCtx = internet_handle;
-	http->implCtx_free = InternetCloseHandle;
+	http->implCtx_free = implCtx_free;
 	internet_handle = NULL;
 	http->sendRequest = wininetSendRequest;
 

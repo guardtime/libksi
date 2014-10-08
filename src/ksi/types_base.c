@@ -255,7 +255,6 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
-
 int KSI_Utf8String_toTlv(KSI_CTX *ctx, KSI_Utf8String *u8str, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	KSI_ERR err;
 	int res;
@@ -285,7 +284,6 @@ cleanup:
 
 int KSI_Utf8String_clone(const KSI_Utf8String *u8str, KSI_Utf8String **clone){
 	KSI_ERR err;
-	int res;
 	
 	KSI_PRE(&err, u8str != NULL) goto cleanup;
 	KSI_PRE(&err, clone != NULL) goto cleanup;
@@ -343,8 +341,6 @@ char *KSI_Integer_toDateString(const KSI_Integer *kint, char *buf, unsigned buf_
 	strftime(buf, buf_len, "%Y-%m-%d %H:%M:%S UTC", &tm);
 
 	ret = buf;
-
-cleanup:
 
 	return ret;
 }

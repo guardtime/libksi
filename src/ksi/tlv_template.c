@@ -450,7 +450,6 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 	int res;
 	KSI_TLV *tmp = NULL;
 	void *payloadp = NULL;
-	int intVal;
 	int isNonCritical = 0;
 	int isForward = 0;
 

@@ -806,7 +806,6 @@ cleanup:
 
 int KSI_TLV_parseBlob2(KSI_CTX *ctx, unsigned char *data, size_t data_length, int ownMemory, KSI_TLV **tlv) {
 	KSI_ERR err;
-	int res;
 	KSI_TLV *tmp = NULL;
 	size_t consumedBytes = 0;
 

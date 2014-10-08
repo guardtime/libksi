@@ -178,7 +178,7 @@ size_t KSI_Utf8String_size(const KSI_Utf8String *t);
  */
 const char *KSI_Utf8String_cstr(const KSI_Utf8String *t);
 int KSI_Utf8String_fromTlv(KSI_TLV *tlv, KSI_Utf8String **u8str);
-int KSI_Utf8String_toTlv(KSI_Utf8String *u8str, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+int KSI_Utf8String_toTlv(KSI_CTX *ctx, KSI_Utf8String *u8str, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 int KSI_Utf8String_clone(const KSI_Utf8String *u8str, KSI_Utf8String **clone);
 /**
  * KSI_AggregationAuthRec
