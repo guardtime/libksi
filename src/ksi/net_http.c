@@ -35,7 +35,7 @@ static int setIntParam(int *param, int val) {
 	return KSI_OK;
 }
 
-static int postProcessRequest(KSI_HttpClientCtx *http, void *req, int (*getHeader)(const void *, KSI_Header **), int (*setHeader)(void *, KSI_Header *)) {
+static int postProcessRequest(KSI_HttpClientCtx *http, void *req, void* pdu, int (*getHeader)(const void *, KSI_Header **), int (*setHeader)(void *, KSI_Header *)) {
 	KSI_ERR err;
 	int res;
 	KSI_Integer *messageId = NULL;
@@ -43,14 +43,14 @@ static int postProcessRequest(KSI_HttpClientCtx *http, void *req, int (*getHeade
 	KSI_Integer *requestId = NULL;
 	KSI_Header *header = NULL;
 	KSI_uint64_t reqId = 0;
-
+	
 	KSI_PRE(&err, http != NULL) goto cleanup;
 	KSI_PRE(&err, req != NULL) goto cleanup;
 	KSI_BEGIN(http->ctx, &err);
-
-	res = getHeader(req, &header);
+	
+	res = getHeader(pdu, &header);
 	KSI_CATCH(&err, res) goto cleanup;
-
+	
 	reqId = ++http->requestId;
 	if (header == NULL) {
 		res = KSI_Header_new(http->ctx, &header);
@@ -70,11 +70,11 @@ static int postProcessRequest(KSI_HttpClientCtx *http, void *req, int (*getHeade
 		KSI_CATCH(&err, res) goto cleanup;
 		messageId = NULL;
 
-		res = setHeader(req, header);
+		res = setHeader(pdu, header);
 		KSI_CATCH(&err, res) goto cleanup;
 		header = NULL;
 	}
-
+	
 	res = KSI_AggregationReq_getRequestId(req, &requestId);
 	if (requestId == NULL) {
 		res = KSI_Integer_new(http->ctx, reqId, &requestId);
@@ -118,11 +118,12 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "KSI_HttpClient context not initialized.");
 		goto cleanup;
 	}
-	res = postProcessRequest(http, req, (int (*)(const void *, KSI_Header **))KSI_AggregationReq_getHeader, (int (*)(void *, KSI_Header *))KSI_AggregationReq_setHeader);
-	KSI_CATCH(&err, res) goto cleanup;
-
 	res = KSI_AggregationPdu_new(client->ctx, &pdu);
 	KSI_CATCH(&err, res) goto cleanup;
+	
+	res = postProcessRequest(http, req,pdu, (int (*)(const void *, KSI_Header **))KSI_AggregationPdu_getHeader, (int (*)(void *, KSI_Header *))KSI_AggregationPdu_setHeader);
+	KSI_CATCH(&err, res) goto cleanup;
+
 
 	res = KSI_AggregationPdu_setRequest(pdu, req);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -183,10 +184,10 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "KSI_HttpClient context not initialized.");
 		goto cleanup;
 	}
-	res = postProcessRequest(http, req, (int (*)(const void *, KSI_Header **))KSI_ExtendReq_getHeader, (int (*)(void *, KSI_Header *))KSI_ExtendReq_setHeader);
-	KSI_CATCH(&err, res) goto cleanup;
-
 	res = KSI_ExtendPdu_new(client->ctx, &pdu);
+	KSI_CATCH(&err, res) goto cleanup;
+	
+	res = postProcessRequest(http, req,pdu, (int (*)(const void *, KSI_Header **))KSI_ExtendPdu_getHeader, (int (*)(void *, KSI_Header *))KSI_ExtendPdu_setHeader);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_ExtendPdu_setRequest(pdu, req);

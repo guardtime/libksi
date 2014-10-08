@@ -47,10 +47,10 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_Header)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_Config)
-	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Config_getMaxLevel, KSI_Config_setMaxLevel)
-	KSI_TLV_INTEGER(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Config_getAggrAlgo, KSI_Config_setAggrAlgo)
-	KSI_TLV_INTEGER(0x04, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Config_getAggrPeriod, KSI_Config_setAggrPeriod)
-	KSI_TLV_UTF8_STRING_LIST(0x05, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Config_getParentUri, KSI_Config_setParentUri)
+	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Config_getMaxLevel, KSI_Config_setMaxLevel)
+	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Config_getAggrAlgo, KSI_Config_setAggrAlgo)
+	KSI_TLV_INTEGER(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Config_getAggrPeriod, KSI_Config_setAggrPeriod)
+	KSI_TLV_UTF8_STRING_LIST(0x04, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Config_getParentUri, KSI_Config_setParentUri)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationHashChain)
@@ -79,10 +79,10 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_CalendarAuthRec)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationReq)
-	KSI_TLV_COMPOSITE(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationReq_getHeader, KSI_AggregationReq_setHeader, KSI_Header)
-	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationReq_getRequestId, KSI_AggregationReq_setRequestId)
-	KSI_TLV_IMPRINT(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationReq_getRequestHash, KSI_AggregationReq_setRequestHash)
-	KSI_TLV_INTEGER(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationReq_getRequestLevel, KSI_AggregationReq_setRequestLevel)
+//	KSI_TLV_COMPOSITE(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationReq_getHeader, KSI_AggregationReq_setHeader, KSI_Header)
+	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationReq_getRequestId, KSI_AggregationReq_setRequestId)
+	KSI_TLV_IMPRINT(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationReq_getRequestHash, KSI_AggregationReq_setRequestHash)
+	KSI_TLV_INTEGER(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationReq_getRequestLevel, KSI_AggregationReq_setRequestLevel)
 	KSI_TLV_COMPOSITE(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationReq_getConfig, KSI_AggregationReq_setConfig, KSI_Config)
 KSI_END_TLV_TEMPLATE
 
@@ -100,10 +100,10 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_CalendarHashChain)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationResp)
-	KSI_TLV_COMPOSITE(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getHeader, KSI_AggregationResp_setHeader, KSI_Header)
-	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getRequestId, KSI_AggregationResp_setRequestId)
-	KSI_TLV_INTEGER(0x05, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getStatus, KSI_AggregationResp_setStatus)
-	KSI_TLV_UTF8_STRING(0x06, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getErrorMsg, KSI_AggregationResp_setErrorMsg)
+//	KSI_TLV_COMPOSITE(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getHeader, KSI_AggregationResp_setHeader, KSI_Header)
+	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getRequestId, KSI_AggregationResp_setRequestId)
+	KSI_TLV_INTEGER(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getStatus, KSI_AggregationResp_setStatus)
+	KSI_TLV_UTF8_STRING(0x05, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getErrorMsg, KSI_AggregationResp_setErrorMsg)
 	KSI_TLV_COMPOSITE(0x10, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getConfig, KSI_AggregationResp_setConfig, KSI_Config)
 	KSI_TLV_COMPOSITE(0x12, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getRequestAck, KSI_AggregationResp_setRequestAck, KSI_RequestAck)
 	KSI_TLV_COMPOSITE_LIST(0x0801, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getAggregationChainList, KSI_AggregationResp_setAggregationChainList, KSI_AggregationHashChain)
@@ -113,27 +113,29 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationResp)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationPdu)
+	KSI_TLV_COMPOSITE(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationPdu_getHeader, KSI_AggregationPdu_setHeader, KSI_Header)
 	KSI_TLV_COMPOSITE(0x201, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_AggregationPdu_getRequest, KSI_AggregationPdu_setRequest, KSI_AggregationReq)
 	KSI_TLV_COMPOSITE(0x202, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_AggregationPdu_getResponse, KSI_AggregationPdu_setResponse, KSI_AggregationResp)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendReq)
-	KSI_TLV_COMPOSITE(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_ExtendReq_getHeader, KSI_ExtendReq_setHeader, KSI_Header)
-	KSI_TLV_INTEGER(0x04, KSI_TLV_TMPL_FLG_MANDATORY, KSI_ExtendReq_getRequestId, KSI_ExtendReq_setRequestId)
+//	KSI_TLV_COMPOSITE(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_ExtendReq_getHeader, KSI_ExtendReq_setHeader, KSI_Header)
+	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_ExtendReq_getRequestId, KSI_ExtendReq_setRequestId)
 	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendReq_getAggregationTime, KSI_ExtendReq_setAggregationTime)
 	KSI_TLV_INTEGER(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendReq_getPublicationTime, KSI_ExtendReq_setPublicationTime)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendResp)
-	KSI_TLV_COMPOSITE(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getHeader, KSI_ExtendResp_setHeader, KSI_Header)
-	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getRequestId, KSI_ExtendResp_setRequestId)
-	KSI_TLV_INTEGER(0x05, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getStatus, KSI_ExtendResp_setStatus)
-	KSI_TLV_UTF8_STRING(0x06, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getErrorMsg, KSI_ExtendResp_setErrorMsg)
-	KSI_TLV_INTEGER(0x07, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getLastTime, KSI_ExtendResp_setLastTime)
+//	KSI_TLV_COMPOSITE(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getHeader, KSI_ExtendResp_setHeader, KSI_Header)
+	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getRequestId, KSI_ExtendResp_setRequestId)
+	KSI_TLV_INTEGER(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getStatus, KSI_ExtendResp_setStatus)
+	KSI_TLV_UTF8_STRING(0x05, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getErrorMsg, KSI_ExtendResp_setErrorMsg)
+	KSI_TLV_INTEGER(0x10, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getLastTime, KSI_ExtendResp_setLastTime)
 	KSI_TLV_COMPOSITE(0x802, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getCalendarHashChain, KSI_ExtendResp_setCalendarHashChain, KSI_CalendarHashChain)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendPdu)
+	KSI_TLV_COMPOSITE(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_ExtendPdu_getHeader, KSI_ExtendPdu_setHeader, KSI_Header)
 	KSI_TLV_COMPOSITE(0x301, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_ExtendPdu_getRequest, KSI_ExtendPdu_setRequest, KSI_ExtendReq)
 	KSI_TLV_COMPOSITE(0x302, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_ExtendPdu_getResponse, KSI_ExtendPdu_setResponse, KSI_ExtendResp)
 KSI_END_TLV_TEMPLATE
@@ -234,7 +236,7 @@ int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI
 	KSI_CATCH(&err, res) goto cleanup;
 
 	iter.idx = 0;
-
+	
 	res = KSI_TlvTemplate_extractGenerator(ctx, payload, (void *)&iter, tmpl, (int (*)(void *, KSI_TLV **))TLVListIterator_next);
 	KSI_CATCH(&err, res) {
 		KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Parsed tlv before failure", tlv);
