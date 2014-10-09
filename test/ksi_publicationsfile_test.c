@@ -169,7 +169,7 @@ static void testFindPublicationByTime(CuTest *tc) {
 	CuAssert(tc, "Publication hash mismatch.", KSI_DataHash_equals(expHsh, pubHsh));
 	CuAssert(tc, "Publication time mismatch", KSI_Integer_equalsUInt(pubTime, 1397520000));
 
-	res = KSI_PublicationRecord_getPublicationRef(pubRec, &pubRefList);
+	res = KSI_PublicationRecord_getPublicationRefList(pubRec, &pubRefList);
 	CuAssert(tc, "Unable to get publications ref list", res == KSI_OK && pubRefList != NULL);
 
 	KSI_DataHash_free(expHsh);
@@ -198,7 +198,7 @@ static void testFindPublicationRef(CuTest *tc) {
 	KSI_Integer_free(pubTime);
 	pubTime = NULL;
 
-	res = KSI_PublicationRecord_getPublicationRef(pubRec, &pubRefList);
+	res = KSI_PublicationRecord_getPublicationRefList(pubRec, &pubRefList);
 	CuAssert(tc, "Unable to get publications ref list", res == KSI_OK && pubRefList != NULL);
 
 	for (i = 0; i < KSI_Utf8StringList_length(pubRefList); i++) {

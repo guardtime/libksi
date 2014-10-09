@@ -217,9 +217,11 @@ extern "C" {
 	void KSI_PublicationRecord_free(KSI_PublicationRecord *t);
 	int KSI_PublicationRecord_new(KSI_CTX *ctx, KSI_PublicationRecord **t);
 	int KSI_PublicationRecord_getPublishedData(const KSI_PublicationRecord *t, KSI_PublicationData **publishedData);
-	int KSI_PublicationRecord_getPublicationRef(const KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) **publicationRef);
+	int KSI_PublicationRecord_getPublicationRefList(const KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) **publicationRef);
+	int KSI_PublicationRecord_getRepositoryUriList(const KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) **repUriList);
 	int KSI_PublicationRecord_setPublishedData(KSI_PublicationRecord *t, KSI_PublicationData *publishedData);
-	int KSI_PublicationRecord_setPublicationRef(KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) *publicationRef);
+	int KSI_PublicationRecord_setPublicationRefList(KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) *publicationRef);
+	int KSI_PublicationRecord_setRepositoryUriList(KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) *repUriList);
 	char *KSI_PublicationRecord_toString(KSI_PublicationRecord *t, char *buffer, unsigned buffer_len);
 
 

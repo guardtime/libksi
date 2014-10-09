@@ -1,23 +1,24 @@
 AM_CFLAGS=-g -Wall -lksi -I$(top_builddir)/src/
 AM_LDFLAGS=-L$(top_builddir)/src/ksi -no-install
-bin_PROGRAMS=runner parse-benchmark
+check_PROGRAMS=runner parse-benchmark
 
 runner_SOURCES= \
-		all_tests.c \
-		all_tests.h \
-		ksi_ctx_test.c \
-		ksi_hash_test.c \
-		ksi_hashchain_test.c \
-		ksi_publicationsfile_test.c \
-		ksi_net_mock.c \
-		ksi_net_test.c \
-		ksi_rdr_test.c \
-		ksi_signature_test.c \
-		ksi_tlv_sample_test.c \
-		ksi_tlv_test.c \
-		ksi_truststore_test.c \
-		cutest/CuTest.h \
-		cutest/CuTest.c
-		
+		./all_tests.c \
+		./all_tests.h \
+		./cutest/CuTest.c \
+		./cutest/CuTest.h \
+		./ksi_ctx_test.c \
+		./ksi_hashchain_test.c \
+		./ksi_hash_test.c \
+		./ksi_net_mock.c \
+		./ksi_net_mock.h \
+		./ksi_net_test.c \
+		./ksi_publicationsfile_test.c \
+		./ksi_rdr_test.c \
+		./ksi_signature_test.c \
+		./ksi_tlv_sample_test.c \
+		./ksi_tlv_test.c \
+		./ksi_truststore_test.c
+
 parse_benchmark_SOURCES=parse_benchmark.c
 

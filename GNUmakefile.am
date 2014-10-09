@@ -1,10 +1,10 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = src/ksi src/example
+SUBDIRS = src/ksi src/example test doc
 
-test: all
+test: check 
 	cd test && make && cd .. && ./test/runner;
 	
-memtest: all 
+memtest: check 
 	valgrind --xml=yes --xml-file=valgrind.xml ./test/runner 
 
 doc:

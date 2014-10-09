@@ -26,6 +26,7 @@ extern "C" {
 		KSI_CTX *ctx;
 		KSI_PublicationData *publishedData;
 		KSI_LIST(KSI_Utf8String) *publicationRef;
+		KSI_LIST(KSI_Utf8String) *repositoryUriList;
 	};
 
 
