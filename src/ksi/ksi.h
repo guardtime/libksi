@@ -98,6 +98,18 @@ enum KSI_StatusCode {
 	 */
 	KSI_NETWORK_ERROR,
 	/**
+	 * A network connection timeout occured.
+	 */
+	KSI_NETWORK_CONNECTION_TIMEOUT,
+	/**
+	 * A network send timeout occured.
+	 */
+	KSI_NETWORK_SEND_TIMEOUT,
+	/**
+	 * A network recieve timeout occured.
+	 */
+	KSI_NETWORK_RECIEVE_TIMEOUT,
+	/**
 	 * A HTTP error occured.
 	 */
 	KSI_HTTP_ERROR,
@@ -391,11 +403,13 @@ int KSI_CTX_setLogFile(KSI_CTX *ctx, char *fileName);
 int KSI_getPKITruststore(KSI_CTX *ctx, KSI_PKITruststore **pki);
 int KSI_getNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient **net);
 int KSI_getLogger(KSI_CTX *ctx, KSI_Logger **logger);
+int KSI_setPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile *var);
 int KSI_getPublicationCertEmail(KSI_CTX *ctx, const char **address);
 
 int KSI_setPKITruststore(KSI_CTX *ctx, KSI_PKITruststore *pki);
 int KSI_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *net);
 int KSI_setLogger(KSI_CTX *ctx, KSI_Logger *logger);
+int KSI_getPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **var);
 int KSI_setPublicationCertEmail(KSI_CTX *ctx, const char *email);
 
 /**

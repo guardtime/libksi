@@ -332,7 +332,6 @@ cleanup:
 
 int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, char **raw, int* raw_len) {
 	KSI_ERR err;
-	int res;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, pubFile != NULL) goto cleanup;
@@ -892,13 +891,11 @@ char *KSI_PublicationData_toString(KSI_PublicationData *t, char *buffer, unsigne
 	char *ret = NULL;
 	unsigned len = 0;
 	char *pubStr = NULL;
-	struct tm tm;
-	time_t pubTm;
 	char tmp[256];
 
 	res = KSI_PublicationData_toBase32(t, &pubStr);
 	if (res != KSI_OK) {
-		KSI_LOG_error(t->ctx, "Unable to convert publication data to base 64: %s (%d)", KSI_getErrorString(res), res);
+		KSI_LOG_error(t->ctx, "Unable to convert publication data to base 32: %s (%d)", KSI_getErrorString(res), res);
 		goto cleanup;
 	}
 
@@ -977,6 +974,64 @@ int KSI_PublicationRecord_new(KSI_CTX *ctx, KSI_PublicationRecord **t) {
 cleanup:
 	KSI_PublicationRecord_free(tmp);
 	return res;
+}
+
+int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_PublicationRecord **clone){
+	KSI_ERR err;
+	KSI_TLV *tlv = NULL;
+	KSI_PublicationRecord *tmp = NULL;
+	KSI_Utf8String *cloneUTF8 = NULL;
+	int res = KSI_UNKNOWN_ERROR;
+	int i=0;
+	
+	KSI_PRE(&err, rec != NULL) goto cleanup;
+	KSI_PRE(&err, clone != NULL) goto cleanup;
+
+	KSI_BEGIN(rec->ctx, &err);
+
+	res = KSI_PublicationRecord_new(rec->ctx, &tmp);
+	KSI_CATCH(&err, res);
+		
+	/*Copy publication references*/
+	res = KSI_Utf8StringList_new(tmp->ctx, &(tmp->publicationRef));
+	if(res != KSI_OK && tmp->publicationRef) goto cleanup;
+
+	for(i=0; i<KSI_Utf8StringList_length(rec->publicationRef); i++){
+		KSI_Utf8String *srcUTF8 = NULL;
+		res = KSI_Utf8StringList_elementAt(rec->publicationRef, i, &srcUTF8);
+		KSI_CATCH(&err, res);
+		res = KSI_Utf8String_clone(srcUTF8, &cloneUTF8);
+		KSI_CATCH(&err, res);
+		res = KSI_Utf8StringList_append(tmp->publicationRef, cloneUTF8);
+		KSI_CATCH(&err, res);
+		cloneUTF8 = NULL;
+	}
+
+	
+	/*Copy publication data*/
+	res = KSI_PublicationData_new(rec->ctx, &(tmp->publishedData));
+	if(res != KSI_OK && tmp->publishedData)
+	
+	tmp->publishedData->ctx = rec->ctx;
+
+	res = KSI_DataHash_clone(rec->publishedData->imprint, &(tmp->publishedData->imprint));
+	KSI_CATCH(&err, res);
+	
+	res = KSI_Integer_clone(rec->publishedData->time, &(tmp->publishedData->time));
+	KSI_CATCH(&err, res);
+	
+	
+	*clone = tmp;
+	tmp = NULL;
+	
+	//KSI_SUCCESS(&err);
+	
+cleanup:
+	KSI_PublicationRecord_free(tmp);
+	KSI_free(cloneUTF8);
+	
+	
+	return KSI_RETURN(&err);
 }
 
 KSI_IMPLEMENT_GETTER(KSI_PublicationRecord, KSI_PublicationData*, publishedData, PublishedData);

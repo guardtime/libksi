@@ -322,7 +322,7 @@ cleanup:
 /***************
  * SIGN REQUEST
  ***************/
-static int createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_AggregationReq **request) {
+static int createSignRequest(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_AggregationReq **request) {
 	KSI_ERR err;
 	int res;
 	KSI_AggregationReq *req = NULL;
@@ -410,7 +410,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain) {
+int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain) {
 	KSI_ERR err;
 	int res;
 	KSI_DataHash *newInputHash = NULL;
@@ -547,7 +547,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int setPublicationRecord(KSI_Signature *sig, KSI_PublicationRecord *pubRec) {
+int KSI_Signature_replacePublicationRecord(KSI_Signature *sig, KSI_PublicationRecord *pubRec) {
 	KSI_ERR err;
 	KSI_TLV *newPubTlv = NULL;
 	size_t oldPubTlvPos = 0;
@@ -768,7 +768,7 @@ cleanup:
 
 }
 
-int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature) {
+int KSI_Signature_create(KSI_CTX *ctx, const KSI_DataHash *hsh, KSI_Signature **signature) {
 	KSI_ERR err;
 	int res;
 	KSI_RequestHandle *handle = NULL;
@@ -798,10 +798,10 @@ int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signat
 
 	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Response", resp, resp_len);
 
-	res = KSI_parseAggregationResponse(ctx, resp, resp_len, &sign);
+	res = KSI_RequestHandle_setResponse(handle, NULL, 0);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_RequestHandle_setResponse(handle, NULL, 0);
+	res = KSI_parseAggregationResponse(ctx, resp, resp_len, &sign);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*signature = sign;
@@ -898,11 +898,11 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Add the hash chain to the signature. */
-	res = replaceCalendarChain(tmp, calHashChain);
+	res = KSI_Signature_replaceCalendarChain(tmp, calHashChain);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Set the publication as the trust anchor. */
-	res = setPublicationRecord(tmp, pubRecClone);
+	res = KSI_Signature_replacePublicationRecord(tmp, pubRecClone);
 	KSI_CATCH(&err, res) goto cleanup;
 	pubRecClone = NULL;
 

@@ -9,13 +9,22 @@ RTL = MT
 NET_PROVIDER = CURL
 !ENDIF
 
-!IF "$(CRYPTO_PROVIDER)" != "OPENSSL" && "$(CRYPTO_PROVIDER)" != "CRYPTOAPI"
-CRYPTO_PROVIDER = OPENSSL
+!IF "$(HASH_PROVIDER)" != "OPENSSL" && "$(HASH_PROVIDER)" != "CRYPTOAPI"
+HASH_PROVIDER = OPENSSL
+!ENDIF
+
+!IF "$(TRUST_PROVIDER)" != "OPENSSL" && "$(TRUST_PROVIDER)" != "CRYPTOAPI"
+TRUST_PROVIDER = OPENSSL
+!ENDIF
+
+!IF "$(CRYPTO_PROVIDER)" == "OPENSSL" || "$(CRYPTO_PROVIDER)" == "CRYPTOAPI"
+TRUST_PROVIDER = "$(CRYPTO_PROVIDER)"
+HASH_PROVIDER = "$(CRYPTO_PROVIDER)"
 !ENDIF
 
 SRC_DIR = .
 INCLUDE_DIR = ..\..\out\include
-OBJ_DIR = ..\..\obj$(RTL)
+OBJ_DIR = ..\..\obj\$(RTL)
 LIB_DIR = ..\..\out\$(DLL)
 BIN_DIR = ..\..\out\bin
 
@@ -30,7 +39,7 @@ EXAMPLE_OBJ = \
 	$(OBJ_DIR)\ksi_pubfiledump.obj \
 	$(OBJ_DIR)\ksi_verify.obj
 
-#Output exe files. Must have the same base name as corresponding exe file. 
+#Output exe files. Must have the same base name as corresponding obj file. 
 EXAMPLE_BIN = \
 	$(BIN_DIR)\ksi_sign.exe \
 	$(BIN_DIR)\ksi_extend.exe \
@@ -40,8 +49,7 @@ EXAMPLE_BIN = \
 	
 #external libraries used for linking. 
 EXT_LIB = $(LIB_NAME)$(RTL).$(DLL) \
-	libeay32$(RTL).$(DLL) libcurl$(RTL).lib \
-	wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib advapi32.lib
+	wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib
 
 !IF "$(NET_PROVIDER)" == "CURL"
 EXT_LIB = $(EXT_LIB) libcurl$(RTL).lib 
@@ -50,7 +58,16 @@ EXT_LIB = $(EXT_LIB) wininet.lib
 !ELSE IF "$(NET_PROVIDER)" == "WINHTTP" 
 EXT_LIB = $(EXT_LIB) winhttp.lib 
 !ENDIF
-	
+
+!IF "$(HASH_PROVIDER)" == "OPENSSL" || "$(TRUST_PROVIDER)" == "OPENSSL"
+EXT_LIB = $(EXT_LIB) libeay32$(RTL).$(DLL) advapi32.lib  
+!ENDIF
+
+!IF "$(HASH_PROVIDER)" == "CRYPTOAPI" || "$(TRUST_PROVIDER)" == "CRYPTOAPI"
+EXT_LIB = $(EXT_LIB) Crypt32.lib advapi32.lib
+!ENDIF
+
+
 #/NODEFAULTLIB:libcmtd.lib	
 CCFLAGS = /nologo /W3 /D_CRT_SECURE_NO_DEPRECATE /DCURL_STATICLIB /I$(INCLUDE_DIR) /I$(SRC_DIR)
 LDFLAGS = /NOLOGO /LIBPATH:$(LIB_DIR) 

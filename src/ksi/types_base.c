@@ -28,6 +28,7 @@ struct KSI_Utf8String_st {
 	KSI_CTX *ctx;
 	char *value;
 	size_t len;
+	int refCount;
 };
 
 /**
@@ -168,7 +169,7 @@ cleanup:
  */
 
 void KSI_Utf8String_free(KSI_Utf8String *t) {
-	if (t != NULL) {
+	if (t != NULL && --t->refCount == 0) {
 		KSI_free(t->value);
 		KSI_free(t);
 	}
@@ -188,7 +189,8 @@ int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, KSI_Utf8String **t) {
 
 	tmp->ctx = ctx;
 	tmp->value = NULL;
-
+	tmp->refCount = 1;
+	
 	len = strlen(str) + 1;
 
 	val = KSI_calloc(len, 1);
@@ -253,7 +255,6 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
-
 int KSI_Utf8String_toTlv(KSI_CTX *ctx, KSI_Utf8String *u8str, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	KSI_ERR err;
 	int res;
@@ -281,6 +282,23 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+int KSI_Utf8String_clone(const KSI_Utf8String *u8str, KSI_Utf8String **clone){
+	KSI_ERR err;
+	
+	KSI_PRE(&err, u8str != NULL) goto cleanup;
+	KSI_PRE(&err, clone != NULL) goto cleanup;
+	KSI_BEGIN(u8str->ctx, &err);
+	
+	((KSI_Utf8String*)u8str)->refCount++;
+	
+	*clone = u8str;
+	
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
 
 
 void KSI_Integer_free(KSI_Integer *kint) {
@@ -323,8 +341,6 @@ char *KSI_Integer_toDateString(const KSI_Integer *kint, char *buf, unsigned buf_
 	strftime(buf, buf_len, "%Y-%m-%d %H:%M:%S UTC", &tm);
 
 	ret = buf;
-
-cleanup:
 
 	return ret;
 }

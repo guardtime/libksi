@@ -81,6 +81,12 @@ const char *KSI_getErrorString(int statusCode) {
 			return "I/O error";
 		case KSI_NETWORK_ERROR:
 			return "Network error";
+		case KSI_NETWORK_CONNECTION_TIMEOUT:
+			return "Network connection timeout";
+		case KSI_NETWORK_SEND_TIMEOUT:
+			return "Network send timeout";
+		case KSI_NETWORK_RECIEVE_TIMEOUT:
+			return "Network recieve timeout";
 		case KSI_HTTP_ERROR:
 			return "HTTP error";
 		case KSI_AGGREGATOR_ERROR:
@@ -236,7 +242,6 @@ static void globalCleanup(KSI_CTX *ctx) {
  *
  */
 void KSI_CTX_free(KSI_CTX *ctx) {
-	size_t pos;
 	if (ctx != NULL) {
 		/* Call cleanup methods. */
 		globalCleanup(ctx);
@@ -725,6 +730,7 @@ cleanup:																					\
 CTX_GET_SET_VALUE(pkiTruststore, PKITruststore, KSI_PKITruststore, KSI_PKITruststore_free)
 CTX_GET_SET_VALUE(netProvider, NetworkProvider, KSI_NetworkClient, KSI_NetworkClient_free)
 CTX_GET_SET_VALUE(logger, Logger, KSI_Logger, KSI_Logger_free)
+CTX_GET_SET_VALUE(publicationsFile, PublicationsFile, KSI_PublicationsFile, KSI_PublicationsFile_free)
 
 int KSI_setPublicationCertEmail(KSI_CTX *ctx, const char *email) {
 	int res = KSI_UNKNOWN_ERROR;

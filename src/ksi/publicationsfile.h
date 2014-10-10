@@ -179,6 +179,8 @@ extern "C" {
 	 */
 	void KSI_PublicationsFile_free(KSI_PublicationsFile *pubFile);
 
+	int KSI_PublicationsFile_findPublication(const KSI_PublicationsFile *trust, KSI_PublicationRecord *inRec, KSI_PublicationRecord **outRec);
+	
 	/**
 	 * Converts the base-32 encoded publicationstring into #KSI_PublicationData object.
 	 * \param[in]		ctx				KSI context.
@@ -223,7 +225,7 @@ extern "C" {
 	int KSI_PublicationRecord_setPublicationRefList(KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) *publicationRef);
 	int KSI_PublicationRecord_setRepositoryUriList(KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) *repUriList);
 	char *KSI_PublicationRecord_toString(KSI_PublicationRecord *t, char *buffer, unsigned buffer_len);
-
+	int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_PublicationRecord **clone);
 
 	/**
 	 * @}

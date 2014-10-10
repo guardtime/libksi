@@ -268,7 +268,7 @@ cleanup:
 
 int KSI_DataHash_clone(KSI_DataHash *from, KSI_DataHash **to) {
 	KSI_ERR err;
-	int res;
+
 	KSI_PRE(&err, from != NULL) goto cleanup;
 	KSI_PRE(&err, to != NULL) goto cleanup;
 	KSI_BEGIN(from->ctx, &err);
@@ -384,7 +384,7 @@ int KSI_MetaHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned
 	}
 
 	/* Verify padding. */
-	for (i = len + 3; i < metaHash->imprint_length; i++) {
+	for (i = len + (int)3; i < metaHash->imprint_length; i++) {
 		if (metaHash->imprint[i] != 0) {
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, "Metahash not padded with zeros.");
 			goto cleanup;
@@ -461,7 +461,6 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 	KSI_ERR err;
 	int res;
 	KSI_DataHash *hsh = NULL;
-	unsigned int hash_length;
 
 	KSI_PRE(&err, hasher != NULL) goto cleanup;
 	KSI_PRE(&err, data_hash != NULL) goto cleanup;

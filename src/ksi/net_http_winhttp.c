@@ -1,6 +1,6 @@
 #include "internal.h"
 
-#if KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP || 1
+#if KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP
 
 #include <windows.h>
 #include <Winhttp.h>
@@ -29,7 +29,6 @@ typedef struct winhttpNetHandleCtx_st {
 
 static int winhttpGlobal_init(void) {
 	int res = KSI_UNKNOWN_ERROR;
-	ULONG buf;
 
 	if (winhttpGlobal_initCount++ > 0) {
 		/* Nothing to do */
@@ -37,8 +36,6 @@ static int winhttpGlobal_init(void) {
 	}
 	
 	res = KSI_OK;
-
-cleanup:
 
 	return res;
 }
@@ -88,6 +85,7 @@ static int winhttpNetHandleCtx_new(winhttpNetHandleCtx **handleCtx){
 	nhc->request_handle = NULL;
 	nhc->hostName = NULL;
 	nhc->query = NULL;
+	memset(&(nhc->uc), 0, sizeof(nhc->uc));
 	nhc->uc.dwStructSize = sizeof(nhc->uc);
 
 	*handleCtx = nhc;
@@ -138,7 +136,7 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 	KSI_ERR err;
 	int res;
 	winhttpNetHandleCtx *nhc = NULL;
-	const unsigned char *request = NULL;
+	unsigned char *request = NULL;
 	unsigned request_len = 0;
 	unsigned char *resp = NULL;
 	size_t resp_len = 0;
@@ -162,8 +160,10 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 		DWORD error = GetLastError();
 		KSI_LOG_debug(ctx, "Winhttp send error %i\n", error);
 
-		if(error = ERROR_WINHTTP_CANNOT_CONNECT)
+		if(error == ERROR_WINHTTP_CANNOT_CONNECT)
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, "Winhttp: Unable to connect");
+		if(error == ERROR_WINHTTP_TIMEOUT)
+			KSI_FAIL(&err, KSI_NETWORK_SEND_TIMEOUT, NULL);
 		else
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, NULL);
 		goto cleanup;
@@ -171,9 +171,12 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 
 	if(!WinHttpReceiveResponse(nhc->request_handle, NULL)){
 		DWORD error = GetLastError();
+		if(error == ERROR_WINHTTP_TIMEOUT)
+			KSI_FAIL(&err, KSI_NETWORK_RECIEVE_TIMEOUT, NULL);
+		else
+			KSI_FAIL(&err, KSI_NETWORK_ERROR, NULL);
+			
 		KSI_LOG_debug(ctx, "Winhttp: Receive error %i\n", error);
-
-		KSI_FAIL(&err, KSI_NETWORK_ERROR, NULL);
 		goto cleanup;
 	}
 	
@@ -235,7 +238,6 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 cleanup:
 
     KSI_free(resp);
-	KSI_nofree(state);
 
 	return KSI_RETURN(&err);
 }
@@ -246,8 +248,6 @@ cleanup:
  * \param handle Pointer to KSI_RequestHandle object.
  * \param agent
  * \param url Pointer to url string.
- * \param connectionTimeout Connection timeout.
- * \param readTimeout Read timeout.
  * 
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
  */
@@ -255,7 +255,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	KSI_ERR err;
 	int res;
 	KSI_CTX *ctx = NULL;
-	const unsigned char *request = NULL;
+	unsigned char *request = NULL;
 	unsigned request_len = 0;
 	winhttpNetHandleCtx *implCtx = NULL;
 	KSI_HttpClientCtx *http;
@@ -282,7 +282,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	implCtx->uc.dwUrlPathLength = 1;
 	implCtx->uc.dwExtraInfoLength = 1;
 	w_url = LPWSTR_new(url);
-	
+
 	if (!WinHttpCrackUrl(w_url, 0, 0, &(implCtx->uc))) {
 		DWORD error = GetLastError();
 		KSI_LOG_debug(ctx, "Winhttp: Crack url error %i\n", error);
@@ -360,8 +360,6 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		goto cleanup;
 	}
 	
-	//error codes http://msdn.microsoft.com/en-us/library/windows/desktop/aa384099%28v=vs.85%29.aspx
-	
 	if(!WinHttpSetTimeouts(implCtx->request_handle,0, http->connectionTimeoutSeconds*1000, 0, http->readTimeoutSeconds*1000)){
 		DWORD error = GetLastError();
 		KSI_LOG_debug(ctx, "Winhttp: Open set timeout error %i\n", error);
@@ -378,7 +376,6 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 cleanup:
 
 	KSI_nofree(request);
-	KSI_nofree(state);
 	
 	LPWSTR_free(w_url);
 	
@@ -387,7 +384,9 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-
+static void implCtx_free(void * hInternet){
+	WinHttpCloseHandle((HINTERNET)hInternet);
+}
 
 int KSI_HttpClient_init(KSI_NetworkClient *client) {
 	KSI_ERR err;
@@ -429,7 +428,7 @@ int KSI_HttpClient_init(KSI_NetworkClient *client) {
 	}
 	
 	http->implCtx = session_handle;
-	http->implCtx_free = WinHttpCloseHandle;
+	http->implCtx_free = implCtx_free;
 	session_handle = NULL;
 	http->sendRequest = winhttpSendRequest;
 

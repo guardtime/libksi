@@ -556,6 +556,10 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
+/*TODO*/
+char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, unsigned buf_len){
+	return NULL;
+}
 
 static int extractCertificate(const KSI_PKISignature *signature, X509 **cert) {
 	int res = KSI_UNKNOWN_ERROR;

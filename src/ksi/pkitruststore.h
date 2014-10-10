@@ -127,12 +127,12 @@ extern "C" {
 	int KSI_PKISignature_toTlv(KSI_CTX *ctx, KSI_PKISignature *sig, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 	/**
-	 * Function for verifying a raw signature. TODO! - explain in detail!
+	 * Function for verifying a raw PKCS#1 signature. TODO! - explain in detail!
 	 * \param[in]	ctx				KSI contetx.
 	 * \param[in]	data			Pointer to input data.
 	 * \param[in]	data_len		Input data len.
-	 * \param[in]	algoOid			Algorithm used to sign the input data.
-	 * \param[in]	signature		Pointer to the raw signature.
+	 * \param[in]	algoOid			Algorithm OID used to sign the input data.
+	 * \param[in]	signature		Pointer to the raw PKCS#1 signature.
 	 * \param[in]	signature_len	Signature length.
 	 * \param[in]	cert			PKI Certificate object.
 	 *
@@ -173,6 +173,15 @@ extern "C" {
 	 */
 	int KSI_PKITruststore_addLookupDir(KSI_PKITruststore *store, const char *path);
 
+	/**
+	 * Creates a string representation of a PKI Certificate.
+	 * 
+     * \param[in] cert		input certificate object.
+     * \param[in, out] buf	Pointer to the receiving buffer.
+     * \param[in] buf_len	Length of the receiving buffer.
+     * \return 
+     */
+	char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, unsigned buf_len);
 
 #ifdef __cplusplus
 }
