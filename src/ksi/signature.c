@@ -696,13 +696,13 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, unsigned char *response, u
 	res = KSI_TLV_getNestedList(pduTlv, &tlvList);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	if (KSI_TLVList_length(tlvList) != 1) {
+	if (KSI_TLVList_length(tlvList) != 2) {
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
 		goto cleanup;
 	}
 
 	/* Get the aggregation response object. */
-	res = KSI_TLVList_elementAt(tlvList, 0, &respTlv);
+	res = KSI_TLVList_elementAt(tlvList, 1, &respTlv);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	if (KSI_TLV_getTag(respTlv) != 0x0202) {

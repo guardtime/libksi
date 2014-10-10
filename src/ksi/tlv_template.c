@@ -41,9 +41,9 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_HashChainLink)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_Header)
-	KSI_TLV_INTEGER(0x05, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Header_getInstanceId, KSI_Header_setInstanceId)
-	KSI_TLV_INTEGER(0x06, KSI_TLV_TMPL_FLG_NONE, KSI_Header_getMessageId, KSI_Header_setMessageId) /* Should be mandatory. */
-	KSI_TLV_INTEGER(0x07, KSI_TLV_TMPL_FLG_NONE, KSI_Header_getClientId, KSI_Header_setClientId)
+	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Header_getInstanceId, KSI_Header_setInstanceId)
+	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_Header_getMessageId, KSI_Header_setMessageId) /* Should be mandatory. */
+	KSI_TLV_OCTET_STRING(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_Header_getClientId, KSI_Header_setClientId)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_Config)
