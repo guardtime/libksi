@@ -355,6 +355,9 @@ extern "C" {
 	 */
 	size_t KSI_TLV_getRelativeOffset(const KSI_TLV *tlv);
 
+	
+	int KSI_TLV_parseBlob2(KSI_CTX *ctx, unsigned char *data, size_t data_length, int ownMemory, KSI_TLV **tlv);
+	
 	/**
 	 * @}
 	 */

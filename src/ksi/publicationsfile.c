@@ -332,7 +332,6 @@ cleanup:
 
 int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, char **raw, int* raw_len) {
 	KSI_ERR err;
-	int res;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, pubFile != NULL) goto cleanup;
@@ -892,8 +891,6 @@ char *KSI_PublicationData_toString(KSI_PublicationData *t, char *buffer, unsigne
 	char *ret = NULL;
 	unsigned len = 0;
 	char *pubStr = NULL;
-	struct tm tm;
-	time_t pubTm;
 	char tmp[256];
 
 	res = KSI_PublicationData_toBase32(t, &pubStr);
@@ -953,6 +950,7 @@ void KSI_PublicationRecord_free(KSI_PublicationRecord *t) {
 	if(t != NULL) {
 		KSI_PublicationData_free(t->publishedData);
 		KSI_Utf8StringList_freeAll(t->publicationRef);
+		KSI_Utf8StringList_freeAll(t->repositoryUriList);
 		KSI_free(t);
 	}
 }
@@ -968,6 +966,7 @@ int KSI_PublicationRecord_new(KSI_CTX *ctx, KSI_PublicationRecord **t) {
 
 	tmp->ctx = ctx;
 	tmp->publishedData = NULL;
+	tmp->repositoryUriList = NULL;
 	tmp->publicationRef = NULL;
 	*t = tmp;
 	tmp = NULL;
@@ -1036,7 +1035,9 @@ cleanup:
 }
 
 KSI_IMPLEMENT_GETTER(KSI_PublicationRecord, KSI_PublicationData*, publishedData, PublishedData);
-KSI_IMPLEMENT_GETTER(KSI_PublicationRecord, KSI_LIST(KSI_Utf8String)*, publicationRef, PublicationRef);
+KSI_IMPLEMENT_GETTER(KSI_PublicationRecord, KSI_LIST(KSI_Utf8String)*, publicationRef, PublicationRefList);
+KSI_IMPLEMENT_GETTER(KSI_PublicationRecord, KSI_LIST(KSI_Utf8String)*, repositoryUriList, RepositoryUriList);
 
 KSI_IMPLEMENT_SETTER(KSI_PublicationRecord, KSI_PublicationData*, publishedData, PublishedData);
-KSI_IMPLEMENT_SETTER(KSI_PublicationRecord, KSI_LIST(KSI_Utf8String)*, publicationRef, PublicationRef);
+KSI_IMPLEMENT_SETTER(KSI_PublicationRecord, KSI_LIST(KSI_Utf8String)*, publicationRef, PublicationRefList);
+KSI_IMPLEMENT_SETTER(KSI_PublicationRecord, KSI_LIST(KSI_Utf8String)*, repositoryUriList, RepositoryUriList);

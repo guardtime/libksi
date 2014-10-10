@@ -1,9 +1,24 @@
 #include <limits.h>
 #include "internal.h"
 
-KSI_DEFINE_TLV_TEMPLATE(KSI_PKISignedData)
+
+#define KSI_CalAuthRecPKISignedData_new KSI_PKISignedData_new
+#define KSI_CalAuthRecPKISignedData_free KSI_PKISignedData_free
+
+#define KSI_AggrAuthRecPKISignedData_new KSI_PKISignedData_new
+#define KSI_AggrAuthRecPKISignedData_free KSI_PKISignedData_free
+
+KSI_DEFINE_TLV_TEMPLATE(KSI_CalAuthRecPKISignedData)
 	KSI_TLV_OCTET_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getSignatureValue, KSI_PKISignedData_setSignatureValue)
 	KSI_TLV_OCTET_STRING(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getCertId, KSI_PKISignedData_setCertId)
+	KSI_TLV_UTF8_STRING(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_PKISignedData_getCertRepositoryUri, KSI_PKISignedData_setCertRepositoryUri)
+KSI_END_TLV_TEMPLATE
+
+KSI_DEFINE_TLV_TEMPLATE(KSI_AggrAuthRecPKISignedData)
+	KSI_TLV_OCTET_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getSignatureValue, KSI_PKISignedData_setSignatureValue)
+	KSI_TLV_OBJECT(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_PKISignedData_setCertificate, KSI_PKISignedData_getCertificate, KSI_PKICertificate_fromTlv, KSI_PKICertificate_toTlv, KSI_PKISignature_free)
+	KSI_TLV_OCTET_STRING(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getCertId, KSI_PKISignedData_setCertId)
+	KSI_TLV_UTF8_STRING(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_PKISignedData_getCertRepositoryUri, KSI_PKISignedData_setCertRepositoryUri)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationsHeader)
@@ -24,7 +39,8 @@ KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationRecord)
 	KSI_TLV_COMPOSITE(0x10, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationRecord_getPublishedData, KSI_PublicationRecord_setPublishedData, KSI_PublicationData)
-	KSI_TLV_UTF8_STRING_LIST(0x09, KSI_TLV_TMPL_FLG_NONE, KSI_PublicationRecord_getPublicationRef, KSI_PublicationRecord_setPublicationRef)
+	KSI_TLV_UTF8_STRING_LIST(0x09, KSI_TLV_TMPL_FLG_NONE, KSI_PublicationRecord_getPublicationRefList, KSI_PublicationRecord_setPublicationRefList)
+	KSI_TLV_UTF8_STRING_LIST(0x0a, KSI_TLV_TMPL_FLG_NONE, KSI_PublicationRecord_getRepositoryUriList, KSI_PublicationRecord_setRepositoryUriList)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_MetaData)
@@ -68,14 +84,14 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationAuthRec)
 	KSI_TLV_INTEGER_LIST(0x04, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationAuthRec_getChainIndex, KSI_AggregationAuthRec_setChainIndex)
 	KSI_TLV_IMPRINT(0x05, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationAuthRec_getInputHash, KSI_AggregationAuthRec_setInputHash)
 	KSI_TLV_UTF8_STRING(0x0b, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationAuthRec_getSigAlgo, KSI_AggregationAuthRec_setSigAlgo)
-	KSI_TLV_COMPOSITE(0x0c, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationAuthRec_getSigData, KSI_AggregationAuthRec_setSigData, KSI_PKISignedData)
+	KSI_TLV_COMPOSITE(0x0c, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationAuthRec_getSigData, KSI_AggregationAuthRec_setSigData, KSI_AggrAuthRecPKISignedData)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_CalendarAuthRec)
 	KSI_TLV_COMPOSITE(0x10, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_MORE_DEFS, KSI_CalendarAuthRec_getPublishedData, KSI_CalendarAuthRec_setPublishedData, KSI_PublicationData)
 	KSI_TLV_UNPROCESSED(0x10, KSI_CalendarAuthRec_setSignedData)
 	KSI_TLV_UTF8_STRING(0x0b, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarAuthRec_getSignatureAlgo, KSI_CalendarAuthRec_setSignatureAlgo)
-	KSI_TLV_COMPOSITE(0x0c, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarAuthRec_getSignatureData, KSI_CalendarAuthRec_setSignatureData, KSI_PKISignedData)
+	KSI_TLV_COMPOSITE(0x0c, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarAuthRec_getSignatureData, KSI_CalendarAuthRec_setSignatureData, KSI_CalAuthRecPKISignedData)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationReq)
@@ -236,7 +252,7 @@ int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI
 	KSI_CATCH(&err, res) goto cleanup;
 
 	iter.idx = 0;
-	
+
 	res = KSI_TlvTemplate_extractGenerator(ctx, payload, (void *)&iter, tmpl, (int (*)(void *, KSI_TLV **))TLVListIterator_next);
 	KSI_CATCH(&err, res) {
 		KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Parsed tlv before failure", tlv);
@@ -452,7 +468,6 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 	int res;
 	KSI_TLV *tmp = NULL;
 	void *payloadp = NULL;
-	int intVal;
 	int isNonCritical = 0;
 	int isForward = 0;
 
@@ -513,31 +528,49 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 					} else {
 						res = tmpl[i].toTlv(ctx, payloadp, tmpl[i].tag, isNonCritical, isForward, &tmp);
 						KSI_CATCH(&err, res) goto cleanup;
+
+						res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
+						KSI_CATCH(&err, res) goto cleanup;
+						tmp = NULL;
 					}
 
 					break;
 				case KSI_TLV_TEMPLATE_COMPOSITE:
-					res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tmpl[i].tag, isNonCritical, isForward, &tmp);
-					KSI_CATCH(&err, res) goto cleanup;
+					if (tmpl[i].listLength != NULL) {
+						int j;
+						for (j = 0; j < tmpl[i].listLength(payloadp); j++) {
+							void *listElement = NULL;
 
-					res = KSI_TLV_cast(tmp, KSI_TLV_PAYLOAD_TLV);
-					KSI_CATCH(&err, res) goto cleanup;
+							res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, tmpl[i].tag, isNonCritical, isForward, &tmp);
+							KSI_CATCH(&err, res) goto cleanup;
 
-					res = KSI_TlvTemplate_construct(ctx, tmp, payloadp, tmpl[i].subTemplate);
-					KSI_CATCH(&err, res) goto cleanup;
+							res = tmpl[i].listElementAt(payloadp, j, &listElement);
+							KSI_CATCH(&err, res) goto cleanup;
 
+							res = KSI_TlvTemplate_construct(ctx, tmp, listElement, tmpl[i].subTemplate);
+							KSI_CATCH(&err, res) goto cleanup;
+
+							res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
+							KSI_CATCH(&err, res) goto cleanup;
+							tmp = NULL;
+						}
+					} else {
+						res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, tmpl[i].tag, isNonCritical, isForward, &tmp);
+						KSI_CATCH(&err, res) goto cleanup;
+
+						res = KSI_TlvTemplate_construct(ctx, tmp, payloadp, tmpl[i].subTemplate);
+						KSI_CATCH(&err, res) goto cleanup;
+
+						res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
+						KSI_CATCH(&err, res) goto cleanup;
+						tmp = NULL;
+					}
 					break;
 				default:
 					KSI_LOG_error(ctx, "Unimplemented template type: %d", tmpl[i].type);
 					KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Unimplemented template type.");
 					goto cleanup;
 			}
-
-			if (tmp != NULL) {
-				res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
-				KSI_CATCH(&err, res) goto cleanup;
-			}
-			tmp = NULL;
 		}
 	}
 
