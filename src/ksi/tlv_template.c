@@ -1,9 +1,24 @@
 #include <limits.h>
 #include "internal.h"
 
-KSI_DEFINE_TLV_TEMPLATE(KSI_PKISignedData)
+
+#define KSI_CalAuthRecPKISignedData_new KSI_PKISignedData_new
+#define KSI_CalAuthRecPKISignedData_free KSI_PKISignedData_free
+
+#define KSI_AggrAuthRecPKISignedData_new KSI_PKISignedData_new
+#define KSI_AggrAuthRecPKISignedData_free KSI_PKISignedData_free
+
+KSI_DEFINE_TLV_TEMPLATE(KSI_CalAuthRecPKISignedData)
 	KSI_TLV_OCTET_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getSignatureValue, KSI_PKISignedData_setSignatureValue)
 	KSI_TLV_OCTET_STRING(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getCertId, KSI_PKISignedData_setCertId)
+	KSI_TLV_UTF8_STRING(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_PKISignedData_getCertRepositoryUri, KSI_PKISignedData_setCertRepositoryUri)
+KSI_END_TLV_TEMPLATE
+
+KSI_DEFINE_TLV_TEMPLATE(KSI_AggrAuthRecPKISignedData)
+	KSI_TLV_OCTET_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getSignatureValue, KSI_PKISignedData_setSignatureValue)
+	KSI_TLV_OBJECT(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_PKISignedData_setCertificate, KSI_PKISignedData_getCertificate, KSI_PKICertificate_fromTlv, KSI_PKICertificate_toTlv, KSI_PKISignature_free)
+	KSI_TLV_OCTET_STRING(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getCertId, KSI_PKISignedData_setCertId)
+	KSI_TLV_UTF8_STRING(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_PKISignedData_getCertRepositoryUri, KSI_PKISignedData_setCertRepositoryUri)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationsHeader)
@@ -24,7 +39,8 @@ KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationRecord)
 	KSI_TLV_COMPOSITE(0x10, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationRecord_getPublishedData, KSI_PublicationRecord_setPublishedData, KSI_PublicationData)
-	KSI_TLV_UTF8_STRING_LIST(0x09, KSI_TLV_TMPL_FLG_NONE, KSI_PublicationRecord_getPublicationRef, KSI_PublicationRecord_setPublicationRef)
+	KSI_TLV_UTF8_STRING_LIST(0x09, KSI_TLV_TMPL_FLG_NONE, KSI_PublicationRecord_getPublicationRefList, KSI_PublicationRecord_setPublicationRefList)
+	KSI_TLV_UTF8_STRING_LIST(0x0a, KSI_TLV_TMPL_FLG_NONE, KSI_PublicationRecord_getRepositoryUriList, KSI_PublicationRecord_setRepositoryUriList)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_MetaData)
@@ -68,14 +84,14 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationAuthRec)
 	KSI_TLV_INTEGER_LIST(0x04, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationAuthRec_getChainIndex, KSI_AggregationAuthRec_setChainIndex)
 	KSI_TLV_IMPRINT(0x05, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationAuthRec_getInputHash, KSI_AggregationAuthRec_setInputHash)
 	KSI_TLV_UTF8_STRING(0x0b, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationAuthRec_getSigAlgo, KSI_AggregationAuthRec_setSigAlgo)
-	KSI_TLV_COMPOSITE(0x0c, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationAuthRec_getSigData, KSI_AggregationAuthRec_setSigData, KSI_PKISignedData)
+	KSI_TLV_COMPOSITE(0x0c, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationAuthRec_getSigData, KSI_AggregationAuthRec_setSigData, KSI_AggrAuthRecPKISignedData)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_CalendarAuthRec)
 	KSI_TLV_COMPOSITE(0x10, KSI_TLV_TMPL_FLG_FORWARD | KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_MORE_DEFS, KSI_CalendarAuthRec_getPublishedData, KSI_CalendarAuthRec_setPublishedData, KSI_PublicationData)
 	KSI_TLV_UNPROCESSED(0x10, KSI_CalendarAuthRec_setSignedData)
 	KSI_TLV_UTF8_STRING(0x0b, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarAuthRec_getSignatureAlgo, KSI_CalendarAuthRec_setSignatureAlgo)
-	KSI_TLV_COMPOSITE(0x0c, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarAuthRec_getSignatureData, KSI_CalendarAuthRec_setSignatureData, KSI_PKISignedData)
+	KSI_TLV_COMPOSITE(0x0c, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarAuthRec_getSignatureData, KSI_CalendarAuthRec_setSignatureData, KSI_CalAuthRecPKISignedData)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationReq)

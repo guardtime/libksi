@@ -1,6 +1,6 @@
 AM_CFLAGS=-g -Wall -lksi -I$(top_builddir)/src
 AM_LDFLAGS=-L$(top_builddir)/src/ksi -no-install
-bin_PROGRAMS=ksi_sign ksi_extend ksi_verify ksi_pubfiledump
+check_PROGRAMS=ksi_sign ksi_extend ksi_verify ksi_pubfiledump
 	
 ksi_sign_SOURCES=ksi_sign.c
 ksi_extend_SOURCES=ksi_extend.c
