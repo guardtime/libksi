@@ -1,6 +1,6 @@
 #include "internal.h"
 
-#if KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP || 1
+#if KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP
 
 #include <windows.h>
 #include <Winhttp.h>
