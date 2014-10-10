@@ -282,7 +282,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_Utf8String_clone(const KSI_Utf8String *u8str, KSI_Utf8String **clone){
+int KSI_Utf8String_clone(KSI_Utf8String *u8str, KSI_Utf8String **clone){
 	KSI_ERR err;
 	
 	KSI_PRE(&err, u8str != NULL) goto cleanup;

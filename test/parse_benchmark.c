@@ -47,7 +47,7 @@ int main() {
 
 	time(&end);
 
-	printf("Parsed %llu signatures in %lld seconds. (one in %0.2f ms)\n", parseCount, end - start, (double)(end - start) * 1000 / parseCount);
+	printf("Parsed %llu signatures in %lld seconds. (one in %0.2f ms)\n", (unsigned long long)parseCount, (unsigned long long)end - start, (double)(end - start) * 1000 / parseCount);
 
 	res = KSI_OK;
 
