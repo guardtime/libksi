@@ -725,11 +725,10 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, unsigned char *response, u
 
 		switch(KSI_TLV_getTag(t)) {
 			case 0x01:
-			case 0x02:
+			case 0x04:
 			case 0x05:
-			case 0x06:
 			case 0x10:
-			case 0x12:
+			case 0x11:
 				/* Ignore these tags. */
 				i++;
 				break;
