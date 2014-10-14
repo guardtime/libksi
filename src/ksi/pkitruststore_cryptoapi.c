@@ -34,7 +34,7 @@ static int KSI_PKITruststore_global_initCount = 0;
 
 struct KSI_PKITruststore_st {
 	KSI_CTX *ctx;
-	HCERTSTORE store;
+	HCERTSTORE collectionStore;
 };
 
 struct KSI_PKICertificate_st {
@@ -76,8 +76,8 @@ static ALG_ID algIdFromOID(const char *OID){
 /*TODO: Check CertClose error handling*/
 void KSI_PKITruststore_free(KSI_PKITruststore *trust) {
 	if (trust != NULL) {
-		if (trust->store != NULL){
-			if(!CertCloseStore(trust->store, CERT_CLOSE_STORE_CHECK_FLAG)){
+		if (trust->collectionStore != NULL){
+			if(!CertCloseStore(trust->collectionStore, CERT_CLOSE_STORE_CHECK_FLAG)){
 				printError(GetLastError());
 				fprintf(stderr, "CryptoAPI: Unable to free PKI Truststore.\nFor Developer: Some Certificates may be still in use / not released. Consider using 'CERT_CLOSE_STORE_FORCE_FLAG'\n");
 				}
@@ -177,7 +177,7 @@ int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) 
 	}
 
 	/*Update with priority 0 store*/
-	if (!CertAddStoreToCollection(trust->store, tmp_FileTrustStore, 0, 0)) {
+	if (!CertAddStoreToCollection(trust->collectionStore, tmp_FileTrustStore, 0, 0)) {
 		printError(GetLastError());
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
 		goto cleanup;
@@ -217,12 +217,12 @@ int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **tru
 	}
 
 	/*Open cert store as system store*/
-	systemStore = CertOpenSystemStore ((HCRYPTPROV_LEGACY)NULL, "ROOT");
-	if (systemStore == NULL) {
-		printError(GetLastError());
-		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, NULL);
-		goto cleanup;
-	}
+//	systemStore = CertOpenSystemStore ((HCRYPTPROV_LEGACY)NULL, "ROOT");
+//	if (systemStore == NULL) {
+//		printError(GetLastError());
+//		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, NULL);
+//		goto cleanup;
+//	}
 	
 	/*Add system store to collection store. Priority determines where the store is located on the chain of other stores.*/
 	/*if(!CertAddStoreToCollection(collectionStore, systemStore, 0, 0)){
@@ -238,7 +238,7 @@ int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **tru
 	}
 
 	tmp->ctx = ctx;
-	tmp->store = collectionStore;
+	tmp->collectionStore = collectionStore;
 	
 	*trust = tmp;
 	tmp = NULL;
@@ -567,7 +567,7 @@ static void printCertChain(const PCCERT_CHAIN_CONTEXT pChainContext){
 	DWORD j=0;
 	
 	if(pChainContext == NULL){
-		printf("Certificate chain is nullptr");
+		printf("Certificate chain is nullptr\n");
 		return;
 	}
 	
@@ -578,8 +578,8 @@ static void printCertChain(const PCCERT_CHAIN_CONTEXT pChainContext){
 			PCERT_CHAIN_ELEMENT element = pChainContext->rgpChain[i]->rgpElement[j];
 			printf("\t %i) ", j);
 			if((element->TrustStatus.dwInfoStatus)&CERT_TRUST_IS_SELF_SIGNED)
-				printf("*ROOT* ");
-			printCertInfo(element->pCertContext);
+				printf("*UNTRUSTED ROOT* ");
+				printCertInfo(element->pCertContext);
 		}
 			
 	}
@@ -717,6 +717,36 @@ static const char* getCertificateChainErrorStr(PCCERT_CHAIN_CONTEXT pChainContex
 	}
 }
 
+static int isUntrustedRootCertInStore(const KSI_PKITruststore *pki, const PCCERT_CHAIN_CONTEXT pChainContext){
+	DWORD i=0;
+	DWORD j=0;
+	PCCERT_CONTEXT pUntrustedRootCert = NULL;
+	PCCERT_CONTEXT certFound = NULL;
+
+	if(pChainContext == NULL) return false;
+	if(pChainContext->cChain > 1) return false;
+	
+	for(j=0; j<pChainContext->rgpChain[0]->cElement; j++){
+		PCERT_CHAIN_ELEMENT element = pChainContext->rgpChain[0]->rgpElement[j];
+		
+		if(element->TrustStatus.dwErrorStatus&CERT_TRUST_IS_UNTRUSTED_ROOT && element->TrustStatus.dwInfoStatus&CERT_TRUST_IS_SELF_SIGNED){
+			pUntrustedRootCert = element->pCertContext;
+
+			while(certFound = CertEnumCertificatesInStore(pki->collectionStore,certFound)){
+				if(certFound->cbCertEncoded == pUntrustedRootCert->cbCertEncoded){
+						if(memcmp(certFound->pbCertEncoded, pUntrustedRootCert->pbCertEncoded, certFound->cbCertEncoded)==0){
+//							printf("Untrusted root is in collection store\n");
+							CertFreeCertificateContext(certFound);
+							return true;
+					}
+				}
+			}	
+		}
+	}
+	
+	return false;
+}
+
 static int KSI_PKITruststore_verifyCertificate(const KSI_PKITruststore *pki, const PCCERT_CONTEXT cert){
 	KSI_ERR err;
 	KSI_CTX *ctx = NULL;
@@ -732,34 +762,44 @@ static int KSI_PKITruststore_verifyCertificate(const KSI_PKITruststore *pki, con
 	ctx = pki->ctx;
 	KSI_BEGIN(ctx, &err);
 	
-	/* Get the certificate chain of our certificate. */
+	/* Get the certificate chain of certificate under verification. */
+	/*OID List for certificate trust list extensions*/
 	enhkeyUsage.cUsageIdentifier = 0;
 	enhkeyUsage.rgpszUsageIdentifier = NULL;
+	/*Criteria for identifying issuer certificate for chain building*/
 	certUsage.dwType = USAGE_MATCH_TYPE_AND;
 	certUsage.Usage = enhkeyUsage;
+	/*Searching and matching criteria for chain building*/
 	chainPara.cbSize = sizeof(CERT_CHAIN_PARA);
 	chainPara.RequestedUsage = certUsage;
 	
 	/*Use CERT_CHAIN_CACHE_ONLY_URL_RETRIEVAL for no automatic cert store update by windows.
 	 It is useful when there is need to remove default cert from system store*/	
 	/*Build Certificate Chain from top to root certificate*/
-	if (!CertGetCertificateChain(NULL, cert, NULL, pki->store, &chainPara, 0, NULL, &pChainContext)) {
+	if (!CertGetCertificateChain(NULL, cert, NULL, pki->collectionStore, &chainPara, 0, NULL, &pChainContext)) {
 		printError(GetLastError());
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Unable to get PKI certificate chain");
 		goto cleanup;
 	}
 
-	//printCertChain(pChainContext);
+//	printCertChain(pChainContext);
 	
-	if (pChainContext->TrustStatus.dwErrorStatus != CERT_TRUST_NO_ERROR) {
+	/*If chain is based on untrusted root, determine if it's in pki->collectionStore.
+	 If it is, enable chain verification to trust untrusted roots*/
+	if(pChainContext->TrustStatus.dwErrorStatus&CERT_TRUST_IS_UNTRUSTED_ROOT){
+		policyPara.dwFlags = isUntrustedRootCertInStore(pki, pChainContext) ? CERT_CHAIN_POLICY_ALLOW_UNKNOWN_CA_FLAG : 0;
+	}
+	else if (pChainContext->TrustStatus.dwErrorStatus != CERT_TRUST_NO_ERROR) {
 		KSI_LOG_debug(ctx, "%s", getCertificateChainErrorStr(pChainContext));
 		KSI_FAIL(&err, KSI_PKI_CERTIFICATE_NOT_TRUSTED, getCertificateChainErrorStr(pChainContext));
 		goto cleanup;
 	}
+	else{
+		policyPara.dwFlags = 0;
+	}
 	
 	/* Verify certificate chain. */
 	policyPara.cbSize = sizeof(CERT_CHAIN_POLICY_PARA);
-	policyPara.dwFlags = 0;
 	policyPara.pvExtraPolicyPara = 0;
 
 	if (!CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE,pChainContext, &policyPara, &policyStatus)) {
