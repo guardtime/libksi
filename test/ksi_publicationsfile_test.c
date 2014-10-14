@@ -213,6 +213,41 @@ static void testFindPublicationRef(CuTest *tc) {
 	CuAssert(tc, "Financial times publication not found", isPubRefFound);
 }
 
+static void testSerializePublicationsFile(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	char *raw = NULL;
+	int raw_len = 0;
+	FILE *f = NULL;
+	int symbol = 0;
+	int i= 0;
+	
+	KSI_ERR_clearErrors(ctx);
+
+	setFileMockResponse(tc, TEST_PUBLICATIONS_FILE);
+
+	res = KSI_PublicationsFile_fromFile(ctx, TEST_PUBLICATIONS_FILE, &pubFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_PublicationsFile_serialize(ctx, pubFile, &raw, &raw_len);
+	CuAssert(tc, "Unable to serialize publications file", res == KSI_OK && raw != NULL && raw_len != 0);
+	
+	f = fopen(TEST_PUBLICATIONS_FILE, "rb");
+	CuAssert(tc, "Unable to open publications file", res == KSI_OK && f != NULL);
+	
+	while((symbol = getc(f)) != EOF && i<raw_len){
+		CuAssert(tc, "Serialized publications file mismatch", (char)symbol == raw[i]);
+		i++;
+	}
+	
+	CuAssert(tc, "Serialized publications file length  mismatch", i == raw_len);
+	
+	KSI_PublicationsFile_free(pubFile);
+	KSI_free(raw);
+	if(f) fclose(f);
+}
+
+
 CuSuite* KSITest_Publicationsfile_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -222,6 +257,8 @@ CuSuite* KSITest_Publicationsfile_getSuite(void) {
 	SUITE_ADD_TEST(suite, testFindPublicationByPubStr);
 	SUITE_ADD_TEST(suite, testFindPublicationByTime);
 	SUITE_ADD_TEST(suite, testFindPublicationRef);
+	SUITE_ADD_TEST(suite, testSerializePublicationsFile);
 
 	return suite;
 }
+
