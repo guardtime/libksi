@@ -80,6 +80,12 @@ typedef struct KSI_DataHasher_st KSI_DataHasher;
 typedef struct KSI_DataHash_st KSI_DataHash;
 
 /**
+ * This structure represents HMAC
+ * \see #KSI_HMAC_new #KSI_HMAC_free #KSI_HMAC_clone #KSI_HMAC_getDigest 
+ */
+typedef struct KSI_HMAC_st KSI_HMAC;
+
+/**
  * Network resource handle
  *
  *	\see #KSI_NET_sendRequest
@@ -179,7 +185,7 @@ size_t KSI_Utf8String_size(const KSI_Utf8String *t);
 const char *KSI_Utf8String_cstr(const KSI_Utf8String *t);
 int KSI_Utf8String_fromTlv(KSI_TLV *tlv, KSI_Utf8String **u8str);
 int KSI_Utf8String_toTlv(KSI_CTX *ctx, KSI_Utf8String *u8str, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
-int KSI_Utf8String_clone(const KSI_Utf8String *u8str, KSI_Utf8String **clone);
+int KSI_Utf8String_clone(KSI_Utf8String *u8str, KSI_Utf8String **clone);
 /**
  * KSI_AggregationAuthRec
  */

@@ -105,12 +105,13 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSITest_TLV_getSuite);
 	addSuite(suite, KSITest_TLV_Sample_getSuite);
 	addSuite(suite, KSITest_Hash_getSuite);
+	addSuite(suite, KSITest_HMAC_getSuite);
 	addSuite(suite, KSITest_NET_getSuite);
 	addSuite(suite, KSITest_HashChain_getSuite);
 	addSuite(suite, KSITest_Signature_getSuite);
 	addSuite(suite, KSITest_Publicationsfile_getSuite);
 	addSuite(suite, KSITest_Truststore_getSuite);
-
+	
 	return suite;
 }
 
@@ -172,10 +173,10 @@ int KSITest_memcmp(void *ptr1, void *ptr2, size_t len) {
 	if (res) {
 		printf("> ");
 		for (i = 0; i < len; i++)
-			printf("%02x ", *((unsigned char *)ptr1 + i));
+			printf("%02x", *((unsigned char *)ptr1 + i));
 		printf("\n< ");
 		for (i = 0; i < len; i++)
-			printf("%02x ", *((unsigned char *)ptr2 + i));
+			printf("%02x", *((unsigned char *)ptr2 + i));
 		printf("\n");
 	}
 	return res;
