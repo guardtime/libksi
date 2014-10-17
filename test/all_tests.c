@@ -105,12 +105,13 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSITest_TLV_getSuite);
 	addSuite(suite, KSITest_TLV_Sample_getSuite);
 	addSuite(suite, KSITest_Hash_getSuite);
+	addSuite(suite, KSITest_HMAC_getSuite);
 	addSuite(suite, KSITest_NET_getSuite);
 	addSuite(suite, KSITest_HashChain_getSuite);
 	addSuite(suite, KSITest_Signature_getSuite);
 	addSuite(suite, KSITest_Publicationsfile_getSuite);
 	addSuite(suite, KSITest_Truststore_getSuite);
-
+	
 	return suite;
 }
 

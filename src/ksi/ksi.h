@@ -19,6 +19,7 @@
 #include "types.h"
 #include "crc32.h"
 #include "verification.h"
+#include "hmac.h"
 
 #ifdef __cplusplus
 extern "C" {
