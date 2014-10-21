@@ -76,7 +76,7 @@
 #define KSI_strnvl(str) ((str) == NULL)?"":(str)
 
 /** Dummy macro for indicating that the programmer knows and did not forget to free up some pointer. */
-#define KSI_nofree(ptr) (void *)(ptr)
+#define KSI_nofree(ptr) (ptr) = NULL
 
 #define KSI_IMPLEMENT_GET_CTX(type)							\
 KSI_CTX *type##_getCtx(const type *o) {			 			\

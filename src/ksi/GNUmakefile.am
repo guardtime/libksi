@@ -12,6 +12,7 @@ libksi_la_SOURCES = \
 	hashchain.c \
 	hashchain.h \
 	hash.h \
+	hash_impl.h \
 	hash_openssl.c \
 	internal.h \
 	io.c \
@@ -32,8 +33,10 @@ libksi_la_SOURCES = \
 	pkitruststore_openssl.c \
 	publicationsfile.c \
 	publicationsfile.h \
+	publicationsfile_impl.h \
 	signature.c \
 	signature.h \
+	signature_impl.h \
 	tlv.c \
 	tlv.h \
 	tlv_tags.h \

@@ -29,7 +29,6 @@ typedef struct winhttpNetHandleCtx_st {
 
 static int winhttpGlobal_init(void) {
 	int res = KSI_UNKNOWN_ERROR;
-	ULONG buf;
 
 	if (winhttpGlobal_initCount++ > 0) {
 		/* Nothing to do */
@@ -37,8 +36,6 @@ static int winhttpGlobal_init(void) {
 	}
 	
 	res = KSI_OK;
-
-cleanup:
 
 	return res;
 }
@@ -139,7 +136,7 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 	KSI_ERR err;
 	int res;
 	winhttpNetHandleCtx *nhc = NULL;
-	const unsigned char *request = NULL;
+	unsigned char *request = NULL;
 	unsigned request_len = 0;
 	unsigned char *resp = NULL;
 	size_t resp_len = 0;
@@ -258,7 +255,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	KSI_ERR err;
 	int res;
 	KSI_CTX *ctx = NULL;
-	const unsigned char *request = NULL;
+	unsigned char *request = NULL;
 	unsigned request_len = 0;
 	winhttpNetHandleCtx *implCtx = NULL;
 	KSI_HttpClientCtx *http;
@@ -387,7 +384,9 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-
+static void implCtx_free(void * hInternet){
+	WinHttpCloseHandle((HINTERNET)hInternet);
+}
 
 int KSI_HttpClient_init(KSI_NetworkClient *client) {
 	KSI_ERR err;
@@ -429,7 +428,7 @@ int KSI_HttpClient_init(KSI_NetworkClient *client) {
 	}
 	
 	http->implCtx = session_handle;
-	http->implCtx_free = WinHttpCloseHandle;
+	http->implCtx_free = implCtx_free;
 	session_handle = NULL;
 	http->sendRequest = winhttpSendRequest;
 

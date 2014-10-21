@@ -88,7 +88,7 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationAuthRec)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_CalendarAuthRec)
-	KSI_TLV_COMPOSITE(0x10, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_MORE_DEFS, KSI_CalendarAuthRec_getPublishedData, KSI_CalendarAuthRec_setPublishedData, KSI_PublicationData)
+	KSI_TLV_COMPOSITE(0x10, KSI_TLV_TMPL_FLG_FORWARD | KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_MORE_DEFS, KSI_CalendarAuthRec_getPublishedData, KSI_CalendarAuthRec_setPublishedData, KSI_PublicationData)
 	KSI_TLV_UNPROCESSED(0x10, KSI_CalendarAuthRec_setSignedData)
 	KSI_TLV_UTF8_STRING(0x0b, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarAuthRec_getSignatureAlgo, KSI_CalendarAuthRec_setSignatureAlgo)
 	KSI_TLV_COMPOSITE(0x0c, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarAuthRec_getSignatureData, KSI_CalendarAuthRec_setSignatureData, KSI_CalAuthRecPKISignedData)

@@ -349,7 +349,6 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 	KSI_SUCCESS(&err);
 cleanup:
 
-	KSI_nofree(*raw);
 	return KSI_RETURN(&err);
 }
 

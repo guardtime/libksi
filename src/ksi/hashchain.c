@@ -2,6 +2,9 @@
 
 #include "internal.h"
 
+/* For optimization reasons, we need need access to KSI_DataHasher->closeExisting() function. */
+#include "hash_impl.h"
+
 KSI_IMPORT_TLV_TEMPLATE(KSI_HashChainLink)
 
 struct KSI_HashChainLink_st {
@@ -199,7 +202,7 @@ static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash
 		KSI_DataHasher_add(hsr, &chr_level, 1);
 
 		if (hsh != NULL) {
-			res = KSI_DataHasher_close_ex(hsr, hsh);
+			res = hsr->closeExisting(hsr, hsh);
 		} else {
 			res = KSI_DataHasher_close(hsr, &hsh);
 		}
@@ -546,7 +549,7 @@ int KSI_HashChainLink_toTlv(KSI_CTX *ctx, KSI_HashChainLink *link, unsigned tag,
 	if (link->isLeft) tagOverride = 0x07;
 	else tagOverride = 0x08;
 
-	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tagOverride, isNonCritica, isForward, &tmp);
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, tagOverride, isNonCritica, isForward, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_TlvTemplate_construct(ctx, tmp, link, KSI_TLV_TEMPLATE(KSI_HashChainLink));

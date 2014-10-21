@@ -367,7 +367,7 @@ int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig);
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  * \see #KSI_Signature_free, #KSI_extendSignature
  */
-int KSI_createSignature(KSI_CTX *ctx, const KSI_DataHash *dataHash, KSI_Signature **sig);
+int KSI_createSignature(KSI_CTX *ctx, KSI_DataHash *dataHash, KSI_Signature **sig);
 
 /**
  * Extend the signature to the earlyest available publication.

@@ -191,7 +191,7 @@ int main(int argc, char **argv) {
 			goto cleanup;
 		}
 
-		res = KSI_PublicationRecord_getPublicationRef(rec, &refs);
+		res = KSI_PublicationRecord_getPublicationRefList(rec, &refs);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Failed to get publications ref list from publication record.\n");
 			goto cleanup;
