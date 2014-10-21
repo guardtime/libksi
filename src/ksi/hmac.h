@@ -14,11 +14,8 @@
 extern "C" {
 #endif
 
-int KSI_HMAC_free(KSI_HMAC *hmac);	
-int KSI_HMAC_new(KSI_CTX *ctx, int alg, const char *key, size_t key_len, const char *data, size_t data_len, KSI_HMAC **hmac);
-int KSI_HMAC_toString(const KSI_HMAC *hmac, char *buf, unsigned buf_len);
-int KSI_HMAC_getDigest(const KSI_HMAC *hmac, int *hash_id, const unsigned char **digest, unsigned int *digest_length);
-int KSI_HMAC_clone(KSI_HMAC *from, KSI_HMAC **to);
+int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, size_t key_len, const char *data, size_t data_len, KSI_DataHash **hmac);
+int KSI_HMAC_toString(const KSI_DataHash *hmac, char *buf, unsigned buf_len);
 
 #ifdef	__cplusplus
 }

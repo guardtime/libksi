@@ -1,7 +1,14 @@
+#include <string.h>
+
 #include "internal.h"
 
 KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendPdu);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu)
+KSI_IMPORT_TLV_TEMPLATE(KSI_Header);
+KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendReq);
+KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendResp);
+KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationReq);
+KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationResp);
 
 struct KSI_MetaData_st {
 	KSI_CTX *ctx;
@@ -16,6 +23,7 @@ struct KSI_ExtendPdu_st {
 	KSI_Header *header;
 	KSI_ExtendReq *request;
 	KSI_ExtendResp *response;
+	KSI_DataHash *hmac;
 };
 
 struct KSI_AggregationPdu_st {
@@ -23,6 +31,7 @@ struct KSI_AggregationPdu_st {
 	KSI_Header *header;
 	KSI_AggregationReq *request;
 	KSI_AggregationResp *response;
+	KSI_DataHash *hmac;
 };
 
 struct KSI_Header_st {
@@ -175,6 +184,7 @@ void KSI_ExtendPdu_free(KSI_ExtendPdu *t) {
 		KSI_Header_free(t->header);
 		KSI_ExtendReq_free(t->request);
 		KSI_ExtendResp_free(t->response);
+		KSI_DataHash_free(t->hmac);
 		KSI_free(t);
 	}
 }
@@ -192,6 +202,7 @@ int KSI_ExtendPdu_new(KSI_CTX *ctx, KSI_ExtendPdu **t) {
 	tmp->header = NULL;
 	tmp->request = NULL;
 	tmp->response = NULL;
+	tmp->hmac = NULL;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -200,13 +211,78 @@ cleanup:
 	return res;
 }
 
+int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, int hashAlg, const char *key){
+	KSI_ERR err;
+	int res;
+	
+	unsigned char *raw_header = NULL;
+	unsigned header_len = 0;
+	unsigned char *raw_payload = NULL;
+	unsigned payload_len = 0;
+	unsigned char *buf;
+	KSI_DataHash *tmp = NULL;
+
+	KSI_PRE(&err, t != NULL) goto cleanup;
+	KSI_PRE(&err, key != NULL) goto cleanup;
+	KSI_BEGIN(t->ctx, &err);
+	
+	if(t->hmac){
+		KSI_DataHash_free(t->hmac);
+		t->hmac = NULL;
+	}
+	
+	res = KSI_TlvTemplate_serializeObject(t->ctx, t->header, 0x01, 0, 0, KSI_TLV_TEMPLATE(KSI_Header), &raw_header, &header_len);
+	KSI_CATCH(&err, res) goto cleanup;
+	
+	if(t->request){
+		res = KSI_TlvTemplate_serializeObject(t->ctx, t->request, 0x0301, 0, 0, KSI_TLV_TEMPLATE(KSI_ExtendReq), &raw_payload, &payload_len);
+		KSI_CATCH(&err, res) goto cleanup;
+	}
+	else if(t->response){
+		res = KSI_TlvTemplate_serializeObject(t->ctx, t->response, 0x0302, 0, 0, KSI_TLV_TEMPLATE(KSI_ExtendResp), &raw_payload, &payload_len);
+		KSI_CATCH(&err, res) goto cleanup;
+	}
+	else{
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+	
+	buf = malloc(payload_len+header_len);
+	if(buf == NULL){
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+	
+	memcpy(buf, raw_header, header_len);
+	memcpy(buf+header_len, raw_payload, payload_len);
+	
+	res = KSI_HMAC_create(t->ctx, hashAlg, key, strlen(key), buf, header_len+payload_len, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+	
+	t->hmac = tmp;
+	tmp = NULL;
+	
+	KSI_SUCCESS(&err);
+	
+cleanup:
+
+	KSI_free(raw_header);
+	KSI_free(raw_payload);
+	KSI_free(buf);
+	KSI_DataHash_free(tmp);
+	
+	return KSI_RETURN(&err);	
+}
+
 KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_Header*, header, Header);
 KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_ExtendReq*, request, Request);
 KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_ExtendResp*, response, Response);
+KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_DataHash*, hmac, Hmac);
 
 KSI_IMPLEMENT_SETTER(KSI_ExtendPdu, KSI_Header*, header, Header);
 KSI_IMPLEMENT_SETTER(KSI_ExtendPdu, KSI_ExtendReq*, request, Request);
 KSI_IMPLEMENT_SETTER(KSI_ExtendPdu, KSI_ExtendResp*, response, Response);
+KSI_IMPLEMENT_SETTER(KSI_ExtendPdu, KSI_DataHash*, hmac, Hmac);
 
 KSI_IMPLEMENT_OBJECT_PARSE(KSI_ExtendPdu, 0x300);
 KSI_IMPLEMENT_OBJECT_SERIALIZE(KSI_ExtendPdu, 0x300, 0, 0)
@@ -219,6 +295,7 @@ void KSI_AggregationPdu_free(KSI_AggregationPdu *t) {
 		KSI_Header_free(t->header);
 		KSI_AggregationReq_free(t->request);
 		KSI_AggregationResp_free(t->response);
+		KSI_DataHash_free(t->hmac);
 		KSI_free(t);
 	}
 }
@@ -236,6 +313,7 @@ int KSI_AggregationPdu_new(KSI_CTX *ctx, KSI_AggregationPdu **t) {
 	tmp->ctx = ctx;
 	tmp->request = NULL;
 	tmp->response = NULL;
+	tmp->hmac = NULL;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -244,13 +322,78 @@ cleanup:
 	return res;
 }
 
+int KSI_AggregationPdu_calculateHmac(KSI_AggregationPdu *t, int hashAlg, const char *key){
+	KSI_ERR err;
+	int res;
+	
+	unsigned char *raw_header = NULL;
+	unsigned header_len = 0;
+	unsigned char *raw_payload = NULL;
+	unsigned payload_len = 0;
+	unsigned char *buf;
+	KSI_DataHash *tmp = NULL;
+
+	KSI_PRE(&err, t != NULL) goto cleanup;
+	KSI_PRE(&err, key != NULL) goto cleanup;
+	KSI_BEGIN(t->ctx, &err);
+	
+	if(t->hmac){
+		KSI_DataHash_free(t->hmac);
+		t->hmac = NULL;
+	}
+	
+	res = KSI_TlvTemplate_serializeObject(t->ctx, t->header, 0x01, 0, 0, KSI_TLV_TEMPLATE(KSI_Header), &raw_header, &header_len);
+	KSI_CATCH(&err, res) goto cleanup;
+	
+	if(t->request){
+		res = KSI_TlvTemplate_serializeObject(t->ctx, t->request, 0x0201, 0, 0, KSI_TLV_TEMPLATE(KSI_AggregationReq), &raw_payload, &payload_len);
+		KSI_CATCH(&err, res) goto cleanup;
+	}
+	else if(t->response){
+		res = KSI_TlvTemplate_serializeObject(t->ctx, t->request, 0x0202, 0, 0, KSI_TLV_TEMPLATE(KSI_AggregationResp), &raw_payload, &payload_len);
+		KSI_CATCH(&err, res) goto cleanup;
+	}
+	else{
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+	
+	buf = malloc(payload_len+header_len);
+	if(buf == NULL){
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+	
+	memcpy(buf, raw_header, header_len);
+	memcpy(buf+header_len, raw_payload, payload_len);
+	
+	res = KSI_HMAC_create(t->ctx, hashAlg, key, strlen(key), buf, header_len+payload_len, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+	
+	t->hmac = tmp;
+	tmp = NULL;
+	
+	KSI_SUCCESS(&err);
+	
+cleanup:
+
+	KSI_free(raw_header);
+	KSI_free(raw_payload);
+	KSI_free(buf);
+	KSI_DataHash_free(tmp);
+
+	return KSI_RETURN(&err);	
+}
+
 KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_Header*, header, Header);
 KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_AggregationReq*, request, Request);
 KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_AggregationResp*, response, Response);
+KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_DataHash*, hmac, Hmac);
 
 KSI_IMPLEMENT_SETTER(KSI_AggregationPdu, KSI_Header*, header, Header);
 KSI_IMPLEMENT_SETTER(KSI_AggregationPdu, KSI_AggregationReq*, request, Request);
 KSI_IMPLEMENT_SETTER(KSI_AggregationPdu, KSI_AggregationResp*, response, Response);
+KSI_IMPLEMENT_SETTER(KSI_AggregationPdu, KSI_DataHash*, hmac, Hmac);
 
 KSI_IMPLEMENT_OBJECT_PARSE(KSI_AggregationPdu, 0x200);
 KSI_IMPLEMENT_OBJECT_SERIALIZE(KSI_AggregationPdu, 0x200, 0, 0)

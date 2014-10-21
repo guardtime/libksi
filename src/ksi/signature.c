@@ -696,16 +696,19 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, unsigned char *response, u
 	res = KSI_TLV_getNestedList(pduTlv, &tlvList);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	if (KSI_TLVList_length(tlvList) != 2) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
-		goto cleanup;
+	for (i = 0; i < KSI_TLVList_length(tlvList); i++) {
+		res = KSI_TLVList_elementAt(tlvList, i, &respTlv);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		if (KSI_TLV_getTag(respTlv) == 0x0202) {
+			break;
+		}
+
+		respTlv = NULL;
 	}
 
-	/* Get the aggregation response object. */
-	res = KSI_TLVList_elementAt(tlvList, 1, &respTlv);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	if (KSI_TLV_getTag(respTlv) != 0x0202) {
+	if (respTlv == NULL) {
+		/* This may be caused only if the template is faulty */
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
 		goto cleanup;
 	}

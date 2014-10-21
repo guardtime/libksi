@@ -14,6 +14,11 @@ extern "C" {
 	int KSI_HttpClient_setConnectTimeoutSeconds(KSI_NetworkClient *netProvider, int val);
 	int KSI_HttpClient_setReadTimeoutSeconds(KSI_NetworkClient *netProvider, int val);
 
+	int KSI_HttpClient_setExtenderUser(KSI_NetworkClient *netProvider, const char *val);
+	int KSI_HttpClient_setExtenderPass(KSI_NetworkClient *netProvider, const char *val);
+	int KSI_HttpClient_setAggregatoUser(KSI_NetworkClient *netProvider, const char *val);
+	int KSI_HttpClient_setAggregatoPass(KSI_NetworkClient *netProvider, const char *val);
+	
 	int KSI_HttpClient_init(KSI_NetworkClient *client);
 
 #ifdef __cplusplus

@@ -35,23 +35,36 @@ static int setIntParam(int *param, int val) {
 	return KSI_OK;
 }
 
-static int postProcessRequest(KSI_HttpClientCtx *http, void *req, void* pdu, int (*getHeader)(const void *, KSI_Header **), int (*setHeader)(void *, KSI_Header *)) {
+static void debug_saw_raw_data_to_file(char *fname, unsigned char *data, unsigned data_len){
+	FILE *out = NULL;
+	out = fopen(fname, "wb");
+	fwrite(data, 1, data_len, out);
+	fclose(out);
+}
+
+static int postProcessRequest(KSI_HttpClientCtx *http, void *req, void* pdu, const char *user, int (*getHeader)(const void *, KSI_Header **), int (*setHeader)(void *, KSI_Header *), int (*getId)(void *, KSI_Integer **), int (*setId)(void *, KSI_Integer *)) {
 	KSI_ERR err;
 	int res;
-	KSI_Integer *messageId = NULL;
-	KSI_Integer *instanceId = NULL;
-	KSI_Integer *requestId = NULL;
-	KSI_Header *header = NULL;
 	KSI_uint64_t reqId = 0;
+	KSI_Header *header = NULL;
+	KSI_Integer *instanceId = NULL;
+	KSI_Integer *messageId = NULL;
+	KSI_Integer *requestId = NULL;
+	KSI_OctetString *client_id = NULL;
 	
 	KSI_PRE(&err, http != NULL) goto cleanup;
 	KSI_PRE(&err, req != NULL) goto cleanup;
+	KSI_PRE(&err, pdu != NULL) goto cleanup;
+	KSI_PRE(&err, user != NULL) goto cleanup;
 	KSI_BEGIN(http->ctx, &err);
+	
+	
+	reqId = ++http->requestId;
 	
 	res = getHeader(pdu, &header);
 	KSI_CATCH(&err, res) goto cleanup;
-	
-	reqId = ++http->requestId;
+
+	/*Add header*/
 	if (header == NULL) {
 		res = KSI_Header_new(http->ctx, &header);
 		KSI_CATCH(&err, res) goto cleanup;
@@ -62,6 +75,9 @@ static int postProcessRequest(KSI_HttpClientCtx *http, void *req, void* pdu, int
 		res = KSI_Integer_new(http->ctx, reqId, &messageId);
 		KSI_CATCH(&err, res) goto cleanup;
 
+		res = KSI_OctetString_new(http->ctx, user, strlen(user), &client_id);
+		KSI_CATCH(&err, res) goto cleanup;
+		
 		res = KSI_Header_setInstanceId(header, instanceId);
 		KSI_CATCH(&err, res) goto cleanup;
 		instanceId = NULL;
@@ -70,20 +86,26 @@ static int postProcessRequest(KSI_HttpClientCtx *http, void *req, void* pdu, int
 		KSI_CATCH(&err, res) goto cleanup;
 		messageId = NULL;
 
+		res = KSI_Header_setClientId(header, client_id);
+		KSI_CATCH(&err, res) goto cleanup;
+		client_id = NULL;
+		
 		res = setHeader(pdu, header);
 		KSI_CATCH(&err, res) goto cleanup;
 		header = NULL;
 	}
 	
-	res = KSI_AggregationReq_getRequestId(req, &requestId);
+	res = getId(req, &requestId);
+	KSI_CATCH(&err, res) goto cleanup;
 	if (requestId == NULL) {
 		res = KSI_Integer_new(http->ctx, reqId, &requestId);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		res = KSI_AggregationReq_setRequestId(req, requestId);
+		res = setId(req, requestId);
 		KSI_CATCH(&err, res) goto cleanup;
 		requestId = NULL;
 	}
+	
 	KSI_SUCCESS(&err);
 
 cleanup:
@@ -92,7 +114,8 @@ cleanup:
 	KSI_Integer_free(instanceId);
 	KSI_Integer_free(requestId);
 	KSI_Header_free(header);
-
+	KSI_OctetString_free(client_id);
+	
 	return KSI_RETURN(&err);
 }
 
@@ -105,7 +128,6 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 	KSI_AggregationPdu *pdu = NULL;
 	unsigned char *raw = NULL;
 	unsigned raw_len = 0;
-
 
 	KSI_PRE(&err, client != NULL) goto cleanup;
 	KSI_PRE(&err, req != NULL) goto cleanup;
@@ -121,19 +143,19 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 	res = KSI_AggregationPdu_new(client->ctx, &pdu);
 	KSI_CATCH(&err, res) goto cleanup;
 	
-	res = postProcessRequest(http, req,pdu, (int (*)(const void *, KSI_Header **))KSI_AggregationPdu_getHeader, (int (*)(void *, KSI_Header *))KSI_AggregationPdu_setHeader);
+	res = postProcessRequest(http, req, pdu, http->agrUser, (int (*)(const void *, KSI_Header **))KSI_AggregationPdu_getHeader, (int (*)(void *, KSI_Header *))KSI_AggregationPdu_setHeader, (int (*)(void*, KSI_Integer**))KSI_AggregationReq_getRequestId, (int (*)(void*, KSI_Integer**))KSI_AggregationReq_setRequestId);
 	KSI_CATCH(&err, res) goto cleanup;
-
 
 	res = KSI_AggregationPdu_setRequest(pdu, req);
 	KSI_CATCH(&err, res) goto cleanup;
 
+	res = KSI_AggregationPdu_calculateHmac(pdu, KSI_HASHALG_SHA1, http->agrPass);
+	KSI_CATCH(&err, res) goto cleanup;
+	
 	res = KSI_AggregationPdu_serialize(pdu, &raw, &raw_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	/* Detach request from the PDU, as it may not be freed in this function. */
-	res = KSI_AggregationPdu_setRequest(pdu, NULL);
-	KSI_CATCH(&err, res) goto cleanup;
+//	debug_saw_raw_data_to_file("C:\\Users\\Taavi\\Documents\\GuardTime\\ksi-c-api\\agr_req_test-tlv", raw, raw_len);
 
 	KSI_LOG_logBlob(client->ctx, KSI_LOG_DEBUG, "Aggregation request", raw, raw_len);
 
@@ -156,7 +178,12 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 
 cleanup:
 
-	KSI_AggregationPdu_free(pdu);
+	if(pdu){
+		/* Detach request from the PDU, as it may not be freed in this function. */
+		KSI_AggregationPdu_setRequest(pdu, NULL);
+		KSI_AggregationPdu_free(pdu);
+	}
+
 	KSI_RequestHandle_free(tmp);
 	KSI_free(raw);
 
@@ -187,18 +214,19 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 	res = KSI_ExtendPdu_new(client->ctx, &pdu);
 	KSI_CATCH(&err, res) goto cleanup;
 	
-	res = postProcessRequest(http, req,pdu, (int (*)(const void *, KSI_Header **))KSI_ExtendPdu_getHeader, (int (*)(void *, KSI_Header *))KSI_ExtendPdu_setHeader);
+	res = postProcessRequest(http, req, pdu, http->extUser, (int (*)(const void *, KSI_Header **))KSI_ExtendPdu_getHeader, (int (*)(void *, KSI_Header *))KSI_ExtendPdu_setHeader, (int (*)(void*, KSI_Integer**))KSI_ExtendReq_getRequestId, (int (*)(void*, KSI_Integer*))KSI_ExtendReq_setRequestId);
 	KSI_CATCH(&err, res) goto cleanup;
-
+	
 	res = KSI_ExtendPdu_setRequest(pdu, req);
 	KSI_CATCH(&err, res) goto cleanup;
 
+	res = KSI_ExtendPdu_calculateHmac(pdu, KSI_HASHALG_SHA1, http->extPass);
+	KSI_CATCH(&err, res) goto cleanup;
+	
 	res = KSI_ExtendPdu_serialize(pdu, &raw, &raw_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	/* Detach request from the PDU, as it may not be freed in this function. */
-	res = KSI_ExtendPdu_setRequest(pdu, NULL);
-	KSI_CATCH(&err, res) goto cleanup;
+//	debug_saw_raw_data_to_file("C:\\Users\\Taavi\\Documents\\GuardTime\\ksi-c-api\\ext_req_test-tlv", raw, raw_len);
 
 	KSI_LOG_logBlob(client->ctx, KSI_LOG_DEBUG, "Extending request", raw, raw_len);
 
@@ -221,7 +249,12 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 
 cleanup:
 
-	KSI_ExtendPdu_free(pdu);
+	if(pdu){
+		/* Detach request from the PDU, as it may not be freed in this function. */
+		KSI_ExtendPdu_setRequest(pdu, NULL);
+		KSI_ExtendPdu_free(pdu);
+	}
+
 	KSI_RequestHandle_free(tmp);
 	KSI_free(raw);
 
@@ -260,6 +293,11 @@ static void httpClientCtx_free(KSI_HttpClientCtx *http) {
 		KSI_free(http->urlExtender);
 		KSI_free(http->urlPublication);
 		KSI_free(http->agentName);
+		KSI_free(http->extUser);
+		KSI_free(http->extPass);
+		KSI_free(http->agrUser);
+		KSI_free(http->agrPass);
+		
 		if (http->implCtx_free != NULL) http->implCtx_free(http->implCtx);
 		KSI_free(http);
 	}
@@ -281,13 +319,23 @@ static int httpClientCtx_new(KSI_CTX *ctx, KSI_HttpClientCtx **http) {
 	tmp->urlExtender = NULL;
 	tmp->urlPublication = NULL;
 	tmp->urlSigner = NULL;
-
+	tmp->extUser = NULL;
+	tmp->extPass = NULL;
+	tmp->agrUser = NULL;
+	tmp->agrPass = NULL;
+	
+	
 	setIntParam(&tmp->connectionTimeoutSeconds, 10);
 	setIntParam(&tmp->readTimeoutSeconds, 10);
 	setStringParam(&tmp->urlSigner, KSI_DEFAULT_URI_AGGREGATOR);
 	setStringParam(&tmp->urlExtender, KSI_DEFAULT_URI_EXTENDER);
 	setStringParam(&tmp->urlPublication, KSI_DEFAULT_URI_PUBLICATIONS_FILE);
 	setStringParam(&tmp->agentName, "KSI HTTP Client");
+	setStringParam(&tmp->extUser, "anon");
+	setStringParam(&tmp->extPass, "anon");
+	setStringParam(&tmp->agrUser, "anon");
+	setStringParam(&tmp->agrPass, "anon");
+	
 	tmp->requestId = 0;
 	tmp->implCtx = NULL;
 	tmp->implCtx_free = NULL;
@@ -366,3 +414,7 @@ KSI_NET_IMPLEMENT_SETTER(ExtenderUrl, const char *, urlExtender, setStringParam)
 KSI_NET_IMPLEMENT_SETTER(PublicationUrl, const char *, urlPublication, setStringParam);
 KSI_NET_IMPLEMENT_SETTER(ConnectTimeoutSeconds, int, connectionTimeoutSeconds, setIntParam);
 KSI_NET_IMPLEMENT_SETTER(ReadTimeoutSeconds, int, readTimeoutSeconds, setIntParam);
+KSI_NET_IMPLEMENT_SETTER(ExtenderUser, const char *, extUser, setStringParam);
+KSI_NET_IMPLEMENT_SETTER(ExtenderPass, const char *, extPass, setStringParam);
+KSI_NET_IMPLEMENT_SETTER(AggregatoUser, const char *, agrUser, setStringParam);
+KSI_NET_IMPLEMENT_SETTER(AggregatoPass, const char *, agrPass, setStringParam);

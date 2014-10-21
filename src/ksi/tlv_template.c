@@ -58,8 +58,8 @@ KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_Header)
 	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Header_getInstanceId, KSI_Header_setInstanceId)
-	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_Header_getMessageId, KSI_Header_setMessageId) /* Should be mandatory. */
-	KSI_TLV_OCTET_STRING(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_Header_getClientId, KSI_Header_setClientId)
+	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Header_getMessageId, KSI_Header_setMessageId) /* Should be mandatory. */
+	KSI_TLV_OCTET_STRING(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Header_getClientId, KSI_Header_setClientId)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_Config)
@@ -132,6 +132,7 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationPdu)
 	KSI_TLV_COMPOSITE(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationPdu_getHeader, KSI_AggregationPdu_setHeader, KSI_Header)
 	KSI_TLV_COMPOSITE(0x201, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_AggregationPdu_getRequest, KSI_AggregationPdu_setRequest, KSI_AggregationReq)
 	KSI_TLV_COMPOSITE(0x202, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_AggregationPdu_getResponse, KSI_AggregationPdu_setResponse, KSI_AggregationResp)
+	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationPdu_getHmac, KSI_AggregationPdu_setHmac)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendReq)
@@ -154,6 +155,7 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendPdu)
 	KSI_TLV_COMPOSITE(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_ExtendPdu_getHeader, KSI_ExtendPdu_setHeader, KSI_Header)
 	KSI_TLV_COMPOSITE(0x301, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_ExtendPdu_getRequest, KSI_ExtendPdu_setRequest, KSI_ExtendReq)
 	KSI_TLV_COMPOSITE(0x302, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_ExtendPdu_getResponse, KSI_ExtendPdu_setResponse, KSI_ExtendResp)
+	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_MANDATORY, KSI_ExtendPdu_getHmac, KSI_ExtendPdu_setHmac)
 KSI_END_TLV_TEMPLATE
 
 static int storeObjectValue(KSI_CTX *ctx, const KSI_TlvTemplate *tmpl, void *payload, void *val) {

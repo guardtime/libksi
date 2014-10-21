@@ -11,29 +11,15 @@
 static const unsigned char ipad[MAX_KEY_LEN]={ipad8,ipad8,ipad8,ipad8,ipad8,ipad8,ipad8,ipad8};
 static const unsigned char opad[MAX_KEY_LEN]={opad8,opad8,opad8,opad8,opad8,opad8,opad8,opad8};
 
-struct KSI_HMAC_st{
-	KSI_CTX *ctx;
-	unsigned refCount;
-	KSI_DataHash *HMAC;
-};
-
-int KSI_HMAC_free(KSI_HMAC *hmac){
-	if (hmac != NULL && --hmac->refCount == 0) {
-		KSI_DataHash_free(hmac->HMAC);
-		KSI_free(hmac);
-	}	
-}
-
-
-int KSI_HMAC_new(KSI_CTX *ctx, int alg, const char *key, size_t key_len, const char *data, size_t data_len, KSI_HMAC **hmac){
+int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, size_t key_len, const char *data, size_t data_len, KSI_DataHash **hmac){
 	KSI_ERR err;
 	int res = 0;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hashedKey = NULL;
 	KSI_DataHash *innerHash = NULL;
 	KSI_DataHash *outerHash = NULL;
+	KSI_DataHash *tmp = NULL;
 	
-	KSI_HMAC *tmp = NULL;
 	
 	unsigned char key_for_hashing[MAX_KEY_LEN];
 	unsigned char ipadXORkey[MAX_KEY_LEN];
@@ -56,17 +42,6 @@ int KSI_HMAC_new(KSI_CTX *ctx, int alg, const char *key, size_t key_len, const c
 		goto cleanup;
 	}
 
-	tmp = KSI_new(KSI_HMAC);
-	if(hmac == NULL){
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}	
-	
-	tmp->ctx = ctx;
-	tmp->refCount = 1;
-	tmp->HMAC = NULL;
-	
-	
 	/*Open the hasher*/
 	res = KSI_DataHasher_open(ctx, alg, &hsr);
 	KSI_CATCH(&err, res);
@@ -127,8 +102,7 @@ int KSI_HMAC_new(KSI_CTX *ctx, int alg, const char *key, size_t key_len, const c
 	res = KSI_DataHasher_close(hsr, &outerHash);
 	KSI_CATCH(&err, res);
 	
-	
-	res = KSI_DataHash_clone(outerHash, &tmp->HMAC);
+	res = KSI_DataHash_clone(outerHash, &tmp);
 	KSI_CATCH(&err, res);
 	
 	*hmac = tmp;
@@ -142,48 +116,12 @@ cleanup:
 	KSI_DataHash_free(hashedKey);
 	KSI_DataHash_free(innerHash);
 	KSI_DataHash_free(outerHash);
-	KSI_HMAC_free(tmp);
+	KSI_DataHash_free(tmp);
 	
 	return KSI_RETURN(&err);
 }
 
-int KSI_HMAC_clone(KSI_HMAC *from, KSI_HMAC **to) {
-	KSI_ERR err;
-
-	KSI_PRE(&err, from != NULL) goto cleanup;
-	KSI_PRE(&err, to != NULL) goto cleanup;
-	KSI_BEGIN(from->ctx, &err);
-
-	from->refCount++;
-	*to = from;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-}
-
-
-int KSI_HMAC_getDigest(const KSI_HMAC *hmac, int *hash_id, const unsigned char **digest, unsigned int *digest_length){
-	KSI_ERR err;
-	int res;
-	
-	KSI_PRE(&err, hmac != NULL) goto cleanup;
-
-	KSI_BEGIN(hmac->ctx, &err);
-
-	res = KSI_DataHash_extract(hmac->HMAC, hash_id, digest, digest_length);
-	KSI_CATCH(&err, res);
-
-	KSI_SUCCESS(&err);
-		
-cleanup:
-
-	return KSI_RETURN(&err);
-}
-
-int KSI_HMAC_toString(const KSI_HMAC *hmac, char *buf, unsigned buf_len){
+int KSI_HMAC_toString(const KSI_DataHash *hmac, char *buf, unsigned buf_len){
 	char *ret = NULL;
 	unsigned i;
 	unsigned len = 0;
@@ -194,7 +132,7 @@ int KSI_HMAC_toString(const KSI_HMAC *hmac, char *buf, unsigned buf_len){
 	
 	if (hmac == NULL || buf == NULL) goto cleanup;
 
-	res = KSI_DataHash_extract(hmac->HMAC, NULL, &digest, &digest_len);
+	res = KSI_DataHash_extract(hmac, NULL, &digest, &digest_len);
 	if(res != KSI_OK) goto cleanup;
 	
 	for (i = 0; i < digest_len && len < buf_len; i++) {

@@ -43,20 +43,20 @@ static struct testData {
 
 static void dotest(CuTest* tc, struct testData *data, int count){
 	int res;
-	KSI_HMAC *hmac = NULL;
+	KSI_DataHash *hmac = NULL;
 	char buf[1024];
 	int i = 0;
 	
 	for(;i<count;i++){
-		res = KSI_HMAC_new(ctx, data[i].hashAlg, data[i].key, data[i].key_len, data[i].message, data[i].message_len, &hmac);
+		res = KSI_HMAC_create(ctx, data[i].hashAlg, data[i].key, data[i].key_len, data[i].message, data[i].message_len, &hmac);
 		CuAssert(tc, "Failed crete HMAC", res == KSI_OK && hmac != NULL);
 		KSI_HMAC_toString(hmac,buf, sizeof(buf));
 		CuAssert(tc, "HMAC mismatch", strcmp(data[i].ref_result, buf)==0);
-		KSI_HMAC_free(hmac);
+		KSI_DataHash_free(hmac);
 		hmac = NULL;
 	}
 	
-	KSI_HMAC_free(hmac);
+	KSI_DataHash_free(hmac);
 }
 
 
