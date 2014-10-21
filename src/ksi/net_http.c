@@ -155,8 +155,6 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 	res = KSI_AggregationPdu_serialize(pdu, &raw, &raw_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
-//	debug_saw_raw_data_to_file("C:\\Users\\Taavi\\Documents\\GuardTime\\ksi-c-api\\agr_req_test-tlv", raw, raw_len);
-
 	KSI_LOG_logBlob(client->ctx, KSI_LOG_DEBUG, "Aggregation request", raw, raw_len);
 
 	/* Create a new request handle */
@@ -225,8 +223,6 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 	
 	res = KSI_ExtendPdu_serialize(pdu, &raw, &raw_len);
 	KSI_CATCH(&err, res) goto cleanup;
-
-//	debug_saw_raw_data_to_file("C:\\Users\\Taavi\\Documents\\GuardTime\\ksi-c-api\\ext_req_test-tlv", raw, raw_len);
 
 	KSI_LOG_logBlob(client->ctx, KSI_LOG_DEBUG, "Extending request", raw, raw_len);
 
