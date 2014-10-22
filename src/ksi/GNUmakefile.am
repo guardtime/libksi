@@ -54,6 +54,7 @@ otherincludedir = $(includedir)/ksi
 otherinclude_HEADERS = \
 	base32.h \
 	crc32.h \
+    err.h \
 	hash.h \
 	hashchain.h \
 	io.h \
@@ -64,6 +65,7 @@ otherinclude_HEADERS = \
 	publicationsfile.h \
 	signature.h \
 	tlv.h \
+    tlv_tags.h \
 	tlv_template.h \
 	types.h \
 	types_base.h \
