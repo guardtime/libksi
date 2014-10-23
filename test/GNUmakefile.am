@@ -1,6 +1,6 @@
 AM_CFLAGS=-g -Wall -lksi -I$(top_builddir)/src/
 AM_LDFLAGS=-L$(top_builddir)/src/ksi -no-install
-check_PROGRAMS=runner parse-benchmark
+check_PROGRAMS=runner parse-benchmark serialize-benchmark
 
 runner_SOURCES= \
 		./all_tests.c \
@@ -21,4 +21,4 @@ runner_SOURCES= \
 		./ksi_truststore_test.c
 
 parse_benchmark_SOURCES=parse_benchmark.c
-
+serialize_benchmark_SOURCES=serialize_benchmark.c

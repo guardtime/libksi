@@ -5,7 +5,7 @@
 
 extern KSI_CTX *ctx;
 
-static void TestTlvInitOwnMem(CuTest* tc) {
+static void testTlvInitOwnMem(CuTest* tc) {
 	KSI_TLV *tlv = NULL;
 	int res;
 
@@ -23,7 +23,7 @@ static void TestTlvInitOwnMem(CuTest* tc) {
 	KSI_TLV_free(tlv);
 }
 
-static void TestTlvLenientFlag(CuTest* tc) {
+static void testTlvLenientFlag(CuTest* tc) {
 	KSI_TLV *tlv = NULL;
 	int res;
 
@@ -46,7 +46,7 @@ static void TestTlvLenientFlag(CuTest* tc) {
 	KSI_TLV_free(tlv);
 }
 
-static void TestTlvForwardFlag(CuTest* tc) {
+static void testTlvForwardFlag(CuTest* tc) {
 	KSI_TLV *tlv = NULL;
 	int res;
 
@@ -69,7 +69,7 @@ static void TestTlvForwardFlag(CuTest* tc) {
 	KSI_TLV_free(tlv);
 }
 
-static void TestTlvSetRaw(CuTest* tc) {
+static void testTlvSetRaw(CuTest* tc) {
 	KSI_TLV *tlv = NULL;
 	int res;
 
@@ -94,7 +94,7 @@ static void TestTlvSetRaw(CuTest* tc) {
 	KSI_TLV_free(tlv);
 }
 
-static void TestTlv8FromReader(CuTest* tc) {
+static void testTlv8FromReader(CuTest* tc) {
 	int res;
 	/* TLV type = 7, length = 21 */
 	unsigned char raw[] = "\x07\x15THIS IS A TLV CONTENT";
@@ -123,7 +123,7 @@ static void TestTlv8FromReader(CuTest* tc) {
 	KSI_RDR_close(rdr);
 }
 
-static void TestTlv8getRawValueSharedMem(CuTest* tc) {
+static void testTlv8getRawValueSharedMem(CuTest* tc) {
 	int res;
 	/* TLV type = 7, length = 21 */
 	unsigned char raw[] = "\x07\x15THIS IS A TLV CONTENT";
@@ -148,7 +148,7 @@ static void TestTlv8getRawValueSharedMem(CuTest* tc) {
 	KSI_RDR_close(rdr);
 }
 
-static void TestTlv16FromReader(CuTest* tc) {
+static void testTlv16FromReader(CuTest* tc) {
 	int res;
 	/* TLV16 type = 0x2aa, length = 21 */
 	unsigned char raw[] = "\x82\xaa\x00\x15THIS IS A TLV CONTENT";
@@ -178,7 +178,7 @@ static void TestTlv16FromReader(CuTest* tc) {
 	KSI_RDR_close(rdr);
 }
 
-static void TestTlvGetUint64(CuTest* tc) {
+static void testTlvGetUint64(CuTest* tc) {
 	int res;
 	/* TLV type = 1a, length = 8 */
 	unsigned char raw[] = {0x1a, 0x08, 0xca, 0xfe, 0xba, 0xbe, 0xca, 0xfe, 0xfa, 0xce};
@@ -205,7 +205,7 @@ static void TestTlvGetUint64(CuTest* tc) {
 	KSI_RDR_close(rdr);
 }
 
-static void TestTlvGetUint64Overflow(CuTest* tc) {
+static void testTlvGetUint64Overflow(CuTest* tc) {
 	int res;
 	/* TLV type = 1a, length = 8 */
 	unsigned char raw[] = {0x1a, 0x09, 0xca, 0xfe, 0xba, 0xbe, 0xca, 0xfe, 0xfa, 0xce, 0xee};
@@ -230,7 +230,7 @@ static void TestTlvGetUint64Overflow(CuTest* tc) {
 	KSI_RDR_close(rdr);
 }
 
-static void TestTlvGetStringValue(CuTest* tc) {
+static void testTlvGetStringValue(CuTest* tc) {
 	int res;
 	/* TLV16 type = 0x2aa, length = 21 */
 	unsigned char raw[] = "\x82\xaa\x00\x0alore ipsum";
@@ -261,7 +261,7 @@ static void TestTlvGetStringValue(CuTest* tc) {
 	KSI_RDR_close(rdr);
 }
 
-static void TestTlvGetNextNested(CuTest* tc) {
+static void testTlvGetNextNested(CuTest* tc) {
 	int res;
 	/* TLV16 type = 0x2aa, length = 21 */
 	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
@@ -319,7 +319,7 @@ static void TestTlvGetNextNested(CuTest* tc) {
 
 }
 
-static void TestTlvGetNextNestedSharedMemory(CuTest* tc) {
+static void testTlvGetNextNestedSharedMemory(CuTest* tc) {
 	int res;
 	/* TLV16 type = 0x2aa, length = 21 */
 	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
@@ -361,10 +361,10 @@ static void TestTlvGetNextNestedSharedMemory(CuTest* tc) {
 	KSI_RDR_close(rdr);
 }
 
-static void TestTlvSerializeString(CuTest* tc) {
+static void testTlvSerializeString(CuTest* tc) {
 	int res;
 	/* TLV16 type = 0x2aa, length = 21 */
-	unsigned char raw[] = "\x82\xaa\x00\x0alore ipsum";
+	unsigned char raw[] = "\x82\xaa\x00\x0blore ipsum";
 	const char *str = NULL;
 	unsigned buf_len;
 	unsigned char buf[0xffff];
@@ -373,7 +373,7 @@ static void TestTlvSerializeString(CuTest* tc) {
 	KSI_TLV *tlv = NULL;
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw) - 1, &rdr);
+	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw), &rdr);
 	CuAssert(tc, "Unable to create reader.", res == KSI_OK && rdr != NULL);
 	res = KSI_TLV_fromReader(rdr, &tlv);
 	CuAssert(tc, "Unable to create TLV from reader.", res == KSI_OK && tlv != NULL);
@@ -387,7 +387,7 @@ static void TestTlvSerializeString(CuTest* tc) {
 
 	res = KSI_TLV_serialize_ex(tlv, buf, sizeof(buf), &buf_len);
 	CuAssert(tc, "Failed to serialize string TLV", res == KSI_OK);
-	CuAssert(tc, "Size of serialized TLV mismatch", sizeof(raw) - 1 == buf_len);
+	CuAssert(tc, "Size of serialized TLV mismatch", sizeof(raw) == buf_len);
 
 	CuAssert(tc, "Serialized TLV does not match original", !memcmp(raw, buf, buf_len));
 
@@ -395,7 +395,43 @@ static void TestTlvSerializeString(CuTest* tc) {
 	KSI_RDR_close(rdr);
 }
 
-static void TestTlvSerializeUint(CuTest* tc) {
+static void testTlvSerializeStringWithoutTrailingZero(CuTest* tc) {
+	int res;
+	/* TLV16 type = 0x2aa, length = 21 */
+	unsigned char raw[] = "\x82\xaa\x00\x0alore ipsum";
+	unsigned char expected[] = "\x82\xaa\x00\x0blore ipsum";
+
+	const char *str = NULL;
+	unsigned buf_len;
+	unsigned char buf[0xffff];
+
+	KSI_RDR *rdr = NULL;
+	KSI_TLV *tlv = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw), &rdr);
+	CuAssert(tc, "Unable to create reader.", res == KSI_OK && rdr != NULL);
+	res = KSI_TLV_fromReader(rdr, &tlv);
+	CuAssert(tc, "Unable to create TLV from reader.", res == KSI_OK && tlv != NULL);
+
+	/* Cast payload type */
+	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_STR);
+	CuAssert(tc, "TLV cast failed", res == KSI_OK);
+
+	res = KSI_TLV_getStringValue(tlv, &str);
+	CuAssert(tc, "Failed to get string value from tlv.", res == KSI_OK && str != NULL);
+
+	res = KSI_TLV_serialize_ex(tlv, buf, sizeof(buf), &buf_len);
+	CuAssert(tc, "Failed to serialize string TLV", res == KSI_OK);
+	CuAssert(tc, "Size of serialized TLV mismatch", sizeof(expected) == buf_len);
+
+	CuAssert(tc, "Serialized TLV does not match original", !memcmp(expected, buf, buf_len));
+
+	KSI_TLV_free(tlv);
+	KSI_RDR_close(rdr);
+}
+
+static void testTlvSerializeUint(CuTest* tc) {
 	int res;
 	/* TLV type = 1a, length = 8 */
 	unsigned char raw[] = {0x1a, 0x08, 0xca, 0xfe, 0xba, 0xbe, 0xca, 0xfe, 0xfa, 0xce};
@@ -432,7 +468,7 @@ static void TestTlvSerializeUint(CuTest* tc) {
 	KSI_RDR_close(rdr);
 }
 
-static void TestTlvSerializeNested(CuTest* tc) {
+static void testTlvSerializeNested(CuTest* tc) {
 	int res;
 	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
 	char *str = NULL;
@@ -475,7 +511,7 @@ static void TestTlvSerializeNested(CuTest* tc) {
 
 }
 
-static void TestTlvRequireCast(CuTest* tc) {
+static void testTlvRequireCast(CuTest* tc) {
 	int res;
 
 	KSI_TLV *tlv = NULL;
@@ -530,7 +566,7 @@ static void TestTlvRequireCast(CuTest* tc) {
 	KSI_TLV_free(tlv);
 }
 
-static void TestTlvParseBlobFailWithExtraData(CuTest* tc) {
+static void testTlvParseBlobFailWithExtraData(CuTest* tc) {
 	int res;
 	KSI_TLV *tlv = NULL;
 	unsigned char raw[] = "\x07\x06QWERTYU";
@@ -544,7 +580,7 @@ static void TestTlvParseBlobFailWithExtraData(CuTest* tc) {
 }
 
 
-static void TestTlvFromUint(CuTest* tc) {
+static void testTlvFromUint(CuTest* tc) {
 	KSI_TLV *tlv = NULL;
 	int res;
 	KSI_uint64_t intVal;
@@ -578,7 +614,7 @@ static void TestTlvFromUint(CuTest* tc) {
 	KSI_TLV_free(tlv);
 }
 
-static void TestTlvComposeNested(CuTest* tc) {
+static void testTlvComposeNested(CuTest* tc) {
 	KSI_TLV *outer = NULL;
 	KSI_TLV *nested = NULL;
 	unsigned char raw[] = {0x01, 0x06, 0x61, 0x04, 0xca, 0xfe, 0xba, 0xbe};
@@ -611,7 +647,7 @@ static void TestTlvComposeNested(CuTest* tc) {
 
 }
 
-static void TestTlvComposeNestedMore(CuTest* tc) {
+static void testTlvComposeNestedMore(CuTest* tc) {
 	KSI_TLV *outer = NULL;
 	KSI_TLV *nested = NULL;
 	unsigned char raw[] = {0x01, 0x0b, 0x61, 0x04, 0xca, 0xfe, 0xba, 0xbe, 0x61, 0x03, 0x47, 0x54, 0x00 };
@@ -650,30 +686,76 @@ static void TestTlvComposeNestedMore(CuTest* tc) {
 	KSI_TLV_free(outer);
 }
 
+static void testBadUtf8(CuTest* tc) {
+	KSI_TLV *tlv = NULL;
+	int res;
+
+	unsigned char tmp[] = { 0xff, 0xff, 0xff, 0xff };
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_TLV_new(ctx,KSI_TLV_PAYLOAD_RAW, 0x12, 0, 0, &tlv);
+	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
+	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
+
+	res = KSI_TLV_setRawValue(tlv, tmp, sizeof(tmp));
+	CuAssert(tc, "Failed to set raw value", res == KSI_OK);
+
+	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_STR);
+	CuAssert(tc, "Blob 0xffffffff should not be a valid UTF-8 string", res != KSI_OK);
+
+	KSI_TLV_free(tlv);
+}
+
+static void testBadUtf8WithZeros(CuTest* tc) {
+	KSI_TLV *tlv = NULL;
+	int res;
+
+	unsigned char tmp[] = "some\0text";
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_TLV_new(ctx,KSI_TLV_PAYLOAD_RAW, 0x12, 0, 0, &tlv);
+	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
+	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
+
+	res = KSI_TLV_setRawValue(tlv, tmp, sizeof(tmp));
+	CuAssert(tc, "Failed to set raw value", res == KSI_OK);
+
+	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_STR);
+	CuAssert(tc, "Blob 0xffffffff should not be a valid UTF-8 string", res != KSI_OK);
+
+	KSI_TLV_free(tlv);
+}
+
+
 CuSuite* KSITest_TLV_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
 
-	SUITE_ADD_TEST(suite, TestTlvInitOwnMem);
-	SUITE_ADD_TEST(suite, TestTlvSetRaw);
-	SUITE_ADD_TEST(suite, TestTlv8FromReader);
-	SUITE_ADD_TEST(suite, TestTlv8getRawValueSharedMem);
-	SUITE_ADD_TEST(suite, TestTlv16FromReader);
-	SUITE_ADD_TEST(suite, TestTlvGetUint64);
-	SUITE_ADD_TEST(suite, TestTlvGetUint64Overflow);
-	SUITE_ADD_TEST(suite, TestTlvGetStringValue);
-	SUITE_ADD_TEST(suite, TestTlvGetNextNested);
-	SUITE_ADD_TEST(suite, TestTlvGetNextNestedSharedMemory);
-	SUITE_ADD_TEST(suite, TestTlvSerializeString);
-	SUITE_ADD_TEST(suite, TestTlvSerializeUint);
-	SUITE_ADD_TEST(suite, TestTlvSerializeNested);
-	SUITE_ADD_TEST(suite, TestTlvRequireCast);
-	SUITE_ADD_TEST(suite, TestTlvLenientFlag);
-	SUITE_ADD_TEST(suite, TestTlvForwardFlag);
-	SUITE_ADD_TEST(suite, TestTlvFromUint);
-	SUITE_ADD_TEST(suite, TestTlvComposeNested);
-	SUITE_ADD_TEST(suite, TestTlvComposeNestedMore);
-	SUITE_ADD_TEST(suite, TestTlvParseBlobFailWithExtraData);
+	SUITE_ADD_TEST(suite, testTlvInitOwnMem);
+	SUITE_ADD_TEST(suite, testTlvSetRaw);
+	SUITE_ADD_TEST(suite, testTlv8FromReader);
+	SUITE_ADD_TEST(suite, testTlv8getRawValueSharedMem);
+	SUITE_ADD_TEST(suite, testTlv16FromReader);
+	SUITE_ADD_TEST(suite, testTlvGetUint64);
+	SUITE_ADD_TEST(suite, testTlvGetUint64Overflow);
+	SUITE_ADD_TEST(suite, testTlvGetStringValue);
+	SUITE_ADD_TEST(suite, testTlvSerializeStringWithoutTrailingZero);
+	SUITE_ADD_TEST(suite, testTlvGetNextNested);
+	SUITE_ADD_TEST(suite, testTlvGetNextNestedSharedMemory);
+	SUITE_ADD_TEST(suite, testTlvSerializeString);
+	SUITE_ADD_TEST(suite, testTlvSerializeUint);
+	SUITE_ADD_TEST(suite, testTlvSerializeNested);
+	SUITE_ADD_TEST(suite, testTlvRequireCast);
+	SUITE_ADD_TEST(suite, testTlvLenientFlag);
+	SUITE_ADD_TEST(suite, testTlvForwardFlag);
+	SUITE_ADD_TEST(suite, testTlvFromUint);
+	SUITE_ADD_TEST(suite, testTlvComposeNested);
+	SUITE_ADD_TEST(suite, testTlvComposeNestedMore);
+	SUITE_ADD_TEST(suite, testTlvParseBlobFailWithExtraData);
+	SUITE_ADD_TEST(suite, testBadUtf8);
+	SUITE_ADD_TEST(suite, testBadUtf8WithZeros);
 
 	return suite;
 }
