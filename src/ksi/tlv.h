@@ -36,10 +36,6 @@ extern "C" {
 	enum KSI_TLV_PayloadType_en {
 		/* The payload of the TLV is encoded as a raw blob. */
 		KSI_TLV_PAYLOAD_RAW,
-		/* The payload of the TLV is encoded as a null terminated string.
-		 * \note Unless the string itself contains a null character, the trailing
-		 * will not be serialized. */
-		KSI_TLV_PAYLOAD_STR,
 		/* The payload is encoded as a 64 bit unsigned integer.
 		 * \note The value will be serialized as big-endian. */
 		KSI_TLV_PAYLOAD_INT,
@@ -148,19 +144,6 @@ extern "C" {
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
 	int KSI_TLV_getUInt64Value(const KSI_TLV *tlv, KSI_uint64_t *val);
-
-	/**
-	 * This function extracts string value from the TLV.
-	 *
-	 * \note This operation is available only if the TLV payloadType is #KSI_TLV_PAYLOAD_STR. To
-	 * change the payload type use #KSI_TLV_cast function.
-	 *
-	 * \param[in]	tlv		TLV from where to extract the value.
-	 * \param[out]	buf		Pointer to output variable.
-	 *
-	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
-	 */
-	int KSI_TLV_getStringValue(KSI_TLV *tlv, const char **buf);
 
 	/**
 	 * This function returns the list of nested elements of the TLV. The list is
@@ -316,16 +299,6 @@ extern "C" {
 	 * \note This function checks the payload type of the TLV object an will fail if it is not equal to #KSI_TLV_PAYLOAD_RAW.
 	 */
 	int KSI_TLV_setRawValue(KSI_TLV *tlv, const void *data, unsigned data_len);
-
-	/**
-	 * Set a UTF-8 string value to the TLV object.
-	 * \param[in]	tlv			The TLV object.
-	 * \param[in]	str			Pointer to the null-terminated utf-8 string.
-	 *
-	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
-	 * \note This function checks the payload type of the TLV object and will fail if it is not equal to #KSI_TLV_PAYLOAD_STR.
-	 */
-	int KSI_TLV_setStringValue(KSI_TLV *tlv, const char *str);
 
 	/**
 	 * Read and create a new TLV object from reader (see #KSI_RDR).

@@ -69,6 +69,7 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 	KSI_TLV *nested = NULL;
 	KSI_LIST(KSI_TLV) *list = NULL;
 	size_t i;
+	KSI_Utf8String *utf = NULL;
 
 	switch (KSI_TLV_getTag(tlv)) {
 		case 0x01:
@@ -82,10 +83,7 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 			break;
 		case 0x02:
 			/* Cast as string TLV */
-			res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_STR);
-			if (res != KSI_OK) goto cleanup;
-			/* Parse string */
-			res = KSI_TLV_getStringValue(tlv, &buf);
+			res = KSI_Utf8String_fromTlv(tlv, &utf);
 			if (res != KSI_OK) goto cleanup;
 			break;
 		case 0x03:
@@ -115,6 +113,7 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 
 cleanup:
 
+	KSI_Utf8String_free(utf);
 	return res;
 }
 

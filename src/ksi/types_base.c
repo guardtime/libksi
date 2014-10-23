@@ -163,11 +163,57 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+int verifyUtf8(const unsigned char *str, unsigned len) {
+	int res = KSI_UNKNOWN_ERROR;
+    size_t i = 0;
+    size_t j = 0;
+    size_t charContinuationLen = 0;
 
+    while (i < len) {
+        j = i;
+        if (i + 1 != len && str[i] == 0) {
+        	/* The string contains a '\0' byte where not allowed. */
+        	res = KSI_INVALID_FORMAT;
+        	goto cleanup;
+        } else if (str[i] <= 0x7f)
+            charContinuationLen = 0;
+        else if (str[i] >= 0xc0 /*11000000*/ && str[i] <= 0xdf /*11011111*/)
+            charContinuationLen = 1;
+        else if (str[i] >= 0xe0 /*11100000*/ && str[i] <= 0xef /*11101111*/)
+            charContinuationLen = 2;
+        else if (str[i] >= 0xf0 /*11110000*/ && str[i] <= 0xf4 /* Cause of RFC 3629 */)
+            charContinuationLen = 3;
+        else {
+        	res = KSI_INVALID_FORMAT;
+        	goto cleanup;
+        }
+        if (i + charContinuationLen >= len) {
+        	res = KSI_BUFFER_OVERFLOW;
+        	goto cleanup;
+        }
+
+        ++i;
+
+        while (i < len && charContinuationLen > 0
+               && str[i] >= 0x80 /*10000000*/ && str[i] <= 0xbf /*10111111*/) {
+            ++i;
+            --charContinuationLen;
+        }
+        if (charContinuationLen != 0) {
+        	res = KSI_INVALID_FORMAT;
+        	goto cleanup;
+        }
+    }
+
+    res = KSI_OK;
+
+cleanup:
+
+    return res;
+}
 /**
  * Utf8String
  */
-
 void KSI_Utf8String_free(KSI_Utf8String *t) {
 	if (t != NULL && --t->refCount == 0) {
 		KSI_free(t->value);
@@ -175,11 +221,11 @@ void KSI_Utf8String_free(KSI_Utf8String *t) {
 	}
 }
 
-int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, KSI_Utf8String **t) {
+int KSI_Utf8String_new(KSI_CTX *ctx, const unsigned char *str, unsigned len, KSI_Utf8String **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Utf8String *tmp = NULL;
 	char *val = NULL;
-	size_t len = 0;
+	unsigned actualLen = len;
 
 	tmp = KSI_new(KSI_Utf8String);
 	if (tmp == NULL) {
@@ -191,13 +237,21 @@ int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, KSI_Utf8String **t) {
 	tmp->value = NULL;
 	tmp->refCount = 1;
 	
-	len = strlen(str) + 1;
+	/* Verify that is is a null-terminated string. */
+	if (str[actualLen - 1] != '\0') {
+		++actualLen;
+	}
 
-	val = KSI_calloc(len, 1);
+	/* Verify correctness of utf-8 */
+	res = verifyUtf8(str, actualLen);
+	if (res != KSI_OK) goto cleanup;
+
+	val = KSI_malloc(actualLen);
 	memcpy(val, str, len);
+	val[actualLen - 1] = '\0';
 
 	tmp->value = val;
-	tmp->len = len;
+	tmp->len = actualLen;
 
 	val = NULL;
 
@@ -224,8 +278,9 @@ int KSI_Utf8String_fromTlv(KSI_TLV *tlv, KSI_Utf8String **u8str) {
 	KSI_ERR err;
 	KSI_CTX *ctx = NULL;
 	int res;
-	const char *cstr = NULL;
+	const unsigned char *cstr = NULL;
 	KSI_Utf8String *tmp = NULL;
+	unsigned len;
 
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
 	KSI_PRE(&err, u8str != NULL) goto cleanup;
@@ -233,13 +288,10 @@ int KSI_Utf8String_fromTlv(KSI_TLV *tlv, KSI_Utf8String **u8str) {
 	ctx = KSI_TLV_getCtx(tlv);
 	KSI_BEGIN(ctx, &err);
 
-	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_STR);
+	res = KSI_TLV_getRawValue(tlv, &cstr, &len);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_TLV_getStringValue(tlv, &cstr);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_Utf8String_new(ctx, cstr, &tmp);
+	res = KSI_Utf8String_new(ctx, cstr, len, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*u8str = tmp;
@@ -264,10 +316,10 @@ int KSI_Utf8String_toTlv(KSI_CTX *ctx, KSI_Utf8String *u8str, unsigned tag, int 
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_STR, tag, isNonCritical, isForward, &tmp);
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_TLV_setStringValue(tmp, u8str->value);
+	res = KSI_TLV_setRawValue(tmp, u8str->value, u8str->len);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*tlv = tmp;
