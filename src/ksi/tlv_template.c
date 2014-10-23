@@ -8,6 +8,8 @@
 #define KSI_AggrAuthRecPKISignedData_new KSI_PKISignedData_new
 #define KSI_AggrAuthRecPKISignedData_free KSI_PKISignedData_free
 
+#define FLAGSET(tmpl, flg) (((tmpl).flags & flg) != 0)
+
 KSI_DEFINE_TLV_TEMPLATE(KSI_CalAuthRecPKISignedData)
 	KSI_TLV_OCTET_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getSignatureValue, KSI_PKISignedData_setSignatureValue)
 	KSI_TLV_OCTET_STRING(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getCertId, KSI_PKISignedData_setCertId)
@@ -51,9 +53,9 @@ KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_HashChainLink)
 	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_HashChainLink_getLevelCorrection, KSI_HashChainLink_setLevelCorrection)
-	KSI_TLV_IMPRINT(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_HashChainLink_getImprint, KSI_HashChainLink_setImprint)
-	KSI_TLV_META_IMPRINT(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_HashChainLink_getMetaHash, KSI_HashChainLink_setMetaHash)
-	KSI_TLV_COMPOSITE(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_HashChainLink_getMetaData, KSI_HashChainLink_setMetaData, KSI_MetaData)
+	KSI_TLV_IMPRINT(0x02, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getImprint, KSI_HashChainLink_setImprint)
+	KSI_TLV_META_IMPRINT(0x03, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getMetaHash, KSI_HashChainLink_setMetaHash)
+	KSI_TLV_COMPOSITE(0x04, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getMetaData, KSI_HashChainLink_setMetaData, KSI_MetaData)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_Header)
@@ -75,8 +77,8 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationHashChain)
 	KSI_TLV_OCTET_STRING(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationHashChain_getInputData, KSI_AggregationHashChain_setInputData)
 	KSI_TLV_IMPRINT(0x05, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationHashChain_getInputHash, KSI_AggregationHashChain_setInputHash)
 	KSI_TLV_INTEGER(0x06, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationHashChain_getAggrHashId, KSI_AggregationHashChain_setAggrHashId)
-	KSI_TLV_OBJECT_LIST(0x07, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_AggregationHashChain_getChain, KSI_AggregationHashChain_setChain, KSI_HashChainLink)
-	KSI_TLV_OBJECT_LIST(0x08, KSI_TLV_TMPL_FLG_MANDATORY_G0 | KSI_TLV_TMPL_FLG_NO_SERIALIZE, KSI_AggregationHashChain_getChain, KSI_AggregationHashChain_setChain, KSI_HashChainLink)
+	KSI_TLV_OBJECT_LIST(0x07, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_AggregationHashChain_getChain, KSI_AggregationHashChain_setChain, KSI_HashChainLink)
+	KSI_TLV_OBJECT_LIST(0x08, KSI_TLV_TMPL_FLG_LEAST_ONE_G0 | KSI_TLV_TMPL_FLG_NO_SERIALIZE, KSI_AggregationHashChain_getChain, KSI_AggregationHashChain_setChain, KSI_HashChainLink)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationAuthRec)
@@ -111,8 +113,8 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_CalendarHashChain)
 	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarHashChain_getPublicationTime, KSI_CalendarHashChain_setPublicationTime)
 	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_CalendarHashChain_getAggregationTime, KSI_CalendarHashChain_setAggregationTime)
 	KSI_TLV_IMPRINT(0x05, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarHashChain_getInputHash, KSI_CalendarHashChain_setInputHash)
-	KSI_TLV_OBJECT_LIST(0x07, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_CalendarHashChain_getHashChain, KSI_CalendarHashChain_setHashChain, KSI_CalendarHashChainLink)
-	KSI_TLV_OBJECT_LIST(0x08, KSI_TLV_TMPL_FLG_MANDATORY_G0 | KSI_TLV_TMPL_FLG_NO_SERIALIZE, KSI_CalendarHashChain_getHashChain, KSI_CalendarHashChain_setHashChain, KSI_CalendarHashChainLink)
+	KSI_TLV_OBJECT_LIST(0x07, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_CalendarHashChain_getHashChain, KSI_CalendarHashChain_setHashChain, KSI_CalendarHashChainLink)
+	KSI_TLV_OBJECT_LIST(0x08, KSI_TLV_TMPL_FLG_LEAST_ONE_G0 | KSI_TLV_TMPL_FLG_NO_SERIALIZE, KSI_CalendarHashChain_getHashChain, KSI_CalendarHashChain_setHashChain, KSI_CalendarHashChainLink)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationResp)
@@ -129,8 +131,8 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationResp)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationPdu)
-	KSI_TLV_COMPOSITE(0x201, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_AggregationPdu_getRequest, KSI_AggregationPdu_setRequest, KSI_AggregationReq)
-	KSI_TLV_COMPOSITE(0x202, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_AggregationPdu_getResponse, KSI_AggregationPdu_setResponse, KSI_AggregationResp)
+	KSI_TLV_COMPOSITE(0x201, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_AggregationPdu_getRequest, KSI_AggregationPdu_setRequest, KSI_AggregationReq)
+	KSI_TLV_COMPOSITE(0x202, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_AggregationPdu_getResponse, KSI_AggregationPdu_setResponse, KSI_AggregationResp)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendReq)
@@ -150,8 +152,8 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendResp)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendPdu)
-	KSI_TLV_COMPOSITE(0x301, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_ExtendPdu_getRequest, KSI_ExtendPdu_setRequest, KSI_ExtendReq)
-	KSI_TLV_COMPOSITE(0x302, KSI_TLV_TMPL_FLG_MANDATORY_G0, KSI_ExtendPdu_getResponse, KSI_ExtendPdu_setResponse, KSI_ExtendResp)
+	KSI_TLV_COMPOSITE(0x301, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_ExtendPdu_getRequest, KSI_ExtendPdu_setRequest, KSI_ExtendReq)
+	KSI_TLV_COMPOSITE(0x302, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_ExtendPdu_getResponse, KSI_ExtendPdu_setResponse, KSI_ExtendResp)
 KSI_END_TLV_TEMPLATE
 
 static int storeObjectValue(KSI_CTX *ctx, const KSI_TlvTemplate *tmpl, void *payload, void *val) {
@@ -320,6 +322,7 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 	size_t template_len = 0;
 	bool *templateHit = NULL;
 	bool groupHit[2] = {false, false};
+	bool oneOf[2] = {false, false};
 	size_t i;
 	size_t tmplStart = 0;
 
@@ -347,8 +350,24 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 			if (i == tmplStart && !tmpl[i].multiple) tmplStart++;
 			matchCount++;
 			templateHit[i] = true;
-			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY_G0) != 0) groupHit[0] = true;
-			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY_G1) != 0) groupHit[1] = true;
+			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G0) != 0) groupHit[0] = true;
+			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G1) != 0) groupHit[1] = true;
+
+			if (FLAGSET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G0)) {
+				if (oneOf[0]) {
+					KSI_FAIL(&err, KSI_INVALID_FORMAT, "Mutually exclusive elements present within group 0.");
+					goto cleanup;
+				}
+				oneOf[0] = true;
+			}
+
+			if (FLAGSET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G1)) {
+				if (oneOf[1]) {
+					KSI_FAIL(&err, KSI_INVALID_FORMAT, "Mutually exclusive elements present within group 0.");
+					goto cleanup;
+				}
+				oneOf[1] = true;
+			}
 
 			valuep = NULL;
 			if (tmpl[i].getValue != NULL) {
@@ -442,8 +461,8 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
 			goto cleanup;
 		}
-		if (((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY_G0) != 0 && !groupHit[0]) ||
-				((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY_G1) != 0 && !groupHit[1])) {
+		if (((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G0) != 0 && !groupHit[0]) ||
+				((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G1) != 0 && !groupHit[1])) {
 			snprintf(errm, sizeof(errm), "Mandatory group missing: tag=0x%x", tmpl[i].tag);
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
 			goto cleanup;
@@ -472,6 +491,7 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 	size_t template_len = 0;
 	bool *templateHit = NULL;
 	bool groupHit[2] = {false, false};
+	bool oneOf[2] = {false, false};
 
 	int i;
 
@@ -494,8 +514,20 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 		if (payloadp != NULL) {
 			templateHit[i] = true;
 
-			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY_G0) != 0) groupHit[0] = true;
-			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY_G1) != 0) groupHit[1] = true;
+			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G0) != 0) groupHit[0] = true;
+			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G1) != 0) groupHit[1] = true;
+			if (FLAGSET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G0)) {
+				if (oneOf[0]) {
+					KSI_FAIL(&err, KSI_INVALID_FORMAT, "Mutually exclusive elements present within group 0.");
+				}
+				oneOf[0] = true;
+			}
+			if (FLAGSET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G1)) {
+				if (oneOf[1]) {
+					KSI_FAIL(&err, KSI_INVALID_FORMAT, "Mutually exclusive elements present within group 0.");
+				}
+				oneOf[1] = true;
+			}
 
 			isNonCritical = (tmpl[i].flags & KSI_TLV_TMPL_FLG_NONCRITICAL) != 0;
 			isForward = (tmpl[i].flags & KSI_TLV_TMPL_FLG_FORWARD) != 0;
@@ -580,8 +612,8 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
 			goto cleanup;
 		}
-		if (((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY_G0) != 0 && !groupHit[0]) ||
-				((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY_G1) != 0 && !groupHit[1])) {
+		if (((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G0) != 0 && !groupHit[0]) ||
+				((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G1) != 0 && !groupHit[1])) {
 			snprintf(errm, sizeof(errm), "Mandatory group missing: tag=0x%x", tmpl[i].tag);
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
 			goto cleanup;

@@ -1372,6 +1372,7 @@ static int verifyInternallyAggregationChain(KSI_CTX *ctx, KSI_Signature *sig) {
 	KSI_DataHash *inputHash = NULL;
 	KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
 	KSI_VerificationResult *info = &sig->verificationResult;
+	const KSI_AggregationHashChain *prevChain = NULL;
 
 	/* Aggregate aggregation chains. */
 	hsh = NULL;
@@ -1390,6 +1391,40 @@ static int verifyInternallyAggregationChain(KSI_CTX *ctx, KSI_Signature *sig) {
 		if (res != KSI_OK) goto cleanup;
 
 		if (aggregationChain == NULL) break;
+
+		if (prevChain != NULL) {
+			/* Verify aggregation time. */
+			if (!KSI_Integer_equals(aggregationChain->aggregationTime, prevChain->aggregationTime)) {
+				res = KSI_VerificationResult_addFailure(info, step, "Aggregation hash chain's from different aggregation rounds.");
+				goto cleanup;
+			}
+
+			/* Verify chain index length. */
+			if (KSI_IntegerList_length(prevChain->chainIndex) != KSI_IntegerList_length(aggregationChain->chainIndex) + 1) {
+				res = KSI_VerificationResult_addFailure(info, step, "Unexpected chain index length in aggregation chain.");
+				goto cleanup;
+			} else {
+				int j;
+				for (j = 0; j < KSI_IntegerList_length(aggregationChain->chainIndex); j++) {
+					KSI_Integer *chainIndex1 = NULL;
+					KSI_Integer *chainIndex2 = NULL;
+
+					res = KSI_IntegerList_elementAt(prevChain->chainIndex, j, &chainIndex1);
+					if (res != KSI_OK) goto cleanup;
+
+					res = KSI_IntegerList_elementAt(aggregationChain->chainIndex, j, &chainIndex2);
+					if (res != KSI_OK) goto cleanup;
+
+					if (!KSI_Integer_equals(chainIndex1, chainIndex2)) {
+						res = KSI_VerificationResult_addFailure(info, step, "Aggregation chain chain index is not continuation of previous chain index.");
+						goto cleanup;
+					}
+				}
+			}
+
+
+
+		}
 
 		if (hsh != NULL) {
 			/* Validate input hash */
@@ -1410,6 +1445,8 @@ static int verifyInternallyAggregationChain(KSI_CTX *ctx, KSI_Signature *sig) {
 
 
 		++successCount;
+
+		prevChain = aggregationChain;
 	}
 
 	/* First verify internal calculations. */
@@ -1435,19 +1472,36 @@ static int verifyAggregationRootWithCalendarChain(KSI_CTX *ctx, KSI_Signature *s
 	KSI_DataHash *inputHash = NULL;
 	KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN;
 	KSI_VerificationResult *info = &sig->verificationResult;
+	KSI_AggregationHashChain *aggregationChain = NULL;
+	KSI_Integer *calAggrTime = NULL;
 
 	KSI_LOG_info(sig->ctx, "Verifying agrgeation hash chain root.");
 
 	res = KSI_CalendarHashChain_getInputHash(sig->calendarChain, &inputHash);
 	if (res != KSI_OK) goto cleanup;
 
+	/* Take the first aggregation hash chain, as all of the chain should have
+	 * the same value for "aggregation time". */
+	res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &aggregationChain);
+	if (res != KSI_OK) goto cleanup;
+
 	if (!KSI_DataHash_equals(sig->verificationResult.aggregationHash, inputHash)) {
 		res = KSI_VerificationResult_addFailure(info, step, "Aggregation root hash mismatch.");
+	}
+
+	res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &calAggrTime);
+	if (res != KSI_OK) goto cleanup;
+
+	if (!KSI_Integer_equals(calAggrTime, aggregationChain->aggregationTime)) {
+		res = KSI_VerificationResult_addFailure(info, step, "Aggregation time in calendar chain and aggregation chain differ.");
 	}
 
 	res = KSI_VerificationResult_addSuccess(info, step, NULL);
 
 cleanup:
+
+	KSI_nofree(calAggrTime);
+	KSI_nofree(aggregationChain);
 
 	return res;
 }

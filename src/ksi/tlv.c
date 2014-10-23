@@ -295,6 +295,55 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+int verifyUtf8(unsigned char *str, unsigned len) {
+	int res = KSI_UNKNOWN_ERROR;
+    size_t i = 0;
+    size_t j = 0;
+    size_t charContinuationLen = 0;
+
+    while (i < len) {
+        j = i;
+        if (i + 1 != len && str[i] == 0) {
+        	/* The string contains a '\0' byte where not allowed. */
+        	res = KSI_INVALID_FORMAT;
+        	goto cleanup;
+        } else if (str[i] <= 0x7f)
+            charContinuationLen = 0;
+        else if (str[i] >= 0xc0 /*11000000*/ && str[i] <= 0xdf /*11011111*/)
+            charContinuationLen = 1;
+        else if (str[i] >= 0xe0 /*11100000*/ && str[i] <= 0xef /*11101111*/)
+            charContinuationLen = 2;
+        else if (str[i] >= 0xf0 /*11110000*/ && str[i] <= 0xf4 /* Cause of RFC 3629 */)
+            charContinuationLen = 3;
+        else {
+        	res = KSI_INVALID_FORMAT;
+        	goto cleanup;
+        }
+        if (i + charContinuationLen >= len) {
+        	res = KSI_BUFFER_OVERFLOW;
+        	goto cleanup;
+        }
+
+        ++i;
+
+        while (i < len && charContinuationLen > 0
+               && str[i] >= 0x80 /*10000000*/ && str[i] <= 0xbf /*10111111*/) {
+            ++i;
+            --charContinuationLen;
+        }
+        if (charContinuationLen != 0) {
+        	res = KSI_INVALID_FORMAT;
+        	goto cleanup;
+        }
+    }
+
+    res = KSI_OK;
+
+cleanup:
+
+    return res;
+}
+
 /**
  *
  */
@@ -315,8 +364,17 @@ static int encodeAsString(KSI_TLV *tlv) {
 		goto cleanup;
 	}
 
+	/* Verify that the value is proper UTF-8 */
+	res = verifyUtf8(tlv->datap, tlv->datap_len);
+	if (res != KSI_OK) {
+		KSI_LOG_logBlob(tlv->ctx, KSI_LOG_DEBUG, "Unable to parse blob as UTF-8 string", tlv->datap, tlv->datap_len);
+		KSI_FAIL(&err, res, "Not a UTF-8 encoded string.");
+		goto cleanup;
+	}
+
 	/* Determine if the current string ends with a zero. */
 	if (tlv->datap_len == 0 || tlv->datap[tlv->datap_len - 1] != '\0') {
+		KSI_LOG_warn(tlv->ctx, "UTF-8 String (tag=%02x) value not null-terminated.", tlv->tag);
 		/* Make the buffer a null-terminated string, but do not change the actual size. */
 		if (tlv->buffer == NULL) {
 			/* Create local copy. */
@@ -331,7 +389,7 @@ static int encodeAsString(KSI_TLV *tlv) {
 			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, NULL);
 			goto cleanup;
 		}
-		*(tlv->datap + tlv->datap_len) = '\0';
+		*(tlv->datap + tlv->datap_len++) = '\0';
 	}
 	tlv->payloadType = KSI_TLV_PAYLOAD_STR;
 
