@@ -14,8 +14,8 @@
 extern "C" {
 #endif
 
-int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, size_t key_len, const char *data, size_t data_len, KSI_DataHash **hmac);
-int KSI_HMAC_toString(const KSI_DataHash *hmac, char *buf, unsigned buf_len);
+int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, const char *data, size_t data_len, KSI_DataHash **hmac);
+char* KSI_HMAC_toString(const KSI_DataHash *hmac, char *buf, unsigned buf_len);
 
 #ifdef	__cplusplus
 }

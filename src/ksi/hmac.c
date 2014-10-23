@@ -11,7 +11,7 @@
 static const unsigned char ipad[MAX_KEY_LEN]={ipad8,ipad8,ipad8,ipad8,ipad8,ipad8,ipad8,ipad8};
 static const unsigned char opad[MAX_KEY_LEN]={opad8,opad8,opad8,opad8,opad8,opad8,opad8,opad8};
 
-int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, size_t key_len, const char *data, size_t data_len, KSI_DataHash **hmac){
+int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, const char *data, size_t data_len, KSI_DataHash **hmac){
 	KSI_ERR err;
 	int res = 0;
 	KSI_DataHasher *hsr = NULL;
@@ -20,18 +20,19 @@ int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, size_t key_len, cons
 	KSI_DataHash *outerHash = NULL;
 	KSI_DataHash *tmp = NULL;
 	
-	
-	unsigned char key_for_hashing[MAX_KEY_LEN];
+	int key_len = -1;
+	const unsigned char *bufKey = NULL;
+	unsigned int buf_len = 0;
 	unsigned char ipadXORkey[MAX_KEY_LEN];
 	unsigned char opadXORkey[MAX_KEY_LEN];
 	unsigned char *digest = NULL;
 	unsigned int digest_len = 0;
-	int i =0;
+	unsigned int i =0;
 	
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, key != NULL) goto cleanup;
-	KSI_PRE(&err, key_len > 0) goto cleanup;
+	KSI_PRE(&err, (key_len = strlen(key)) > 0) goto cleanup;
 	KSI_PRE(&err, data != NULL) goto cleanup;
 	KSI_PRE(&err, data_len > 0) goto cleanup;
 	KSI_PRE(&err, hmac != NULL) goto cleanup;
@@ -42,6 +43,8 @@ int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, size_t key_len, cons
 		goto cleanup;
 	}
 
+	
+	
 	/*Open the hasher*/
 	res = KSI_DataHasher_open(ctx, alg, &hsr);
 	KSI_CATCH(&err, res);
@@ -63,21 +66,22 @@ int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, size_t key_len, cons
 			goto cleanup;
 		}
 		
-		memcpy(key_for_hashing, digest, digest_len);
-		memset(key_for_hashing+digest_len, 0, MAX_KEY_LEN-digest_len);
-		
-		digest = NULL;
-		digest_len = 0;
+		bufKey = digest;
+		buf_len = digest_len;
 	}
 	else{
-		memcpy(key_for_hashing, key, key_len);
-		memset(key_for_hashing+key_len, 0, MAX_KEY_LEN-key_len);
+		bufKey = key;
+		buf_len = key_len;
 	}
 	
-	/*XOR the key*/
-	for(; i<MAX_KEY_LEN;i++){
-		ipadXORkey[i] = ipad[i]^key_for_hashing[i];
-		opadXORkey[i] = opad[i]^key_for_hashing[i];
+	for(i=0; i< buf_len; i++){
+		ipadXORkey[i] = ipad[i]^bufKey[i];
+		opadXORkey[i] = opad[i]^bufKey[i];
+	}
+
+	for(; i< MAX_KEY_LEN; i++){
+		ipadXORkey[i] = 0x36;
+		opadXORkey[i] = 0x5c;
 	}
 	
 	/*Hash inner data*/
@@ -121,7 +125,9 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_HMAC_toString(const KSI_DataHash *hmac, char *buf, unsigned buf_len){
+
+
+char* KSI_HMAC_toString(const KSI_DataHash *hmac, char *buf, unsigned buf_len){
 	char *ret = NULL;
 	unsigned i;
 	unsigned len = 0;
