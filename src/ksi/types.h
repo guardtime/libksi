@@ -29,15 +29,19 @@ int KSI_MetaData_setSequenceNr(KSI_MetaData *t, KSI_Integer *sequenceNr);
  */
 void KSI_ExtendPdu_free(KSI_ExtendPdu *t);
 int KSI_ExtendPdu_new(KSI_CTX *ctx, KSI_ExtendPdu **t);
-int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, int hashAlg, const char *key);
+int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, int hashAlg, const char *key, KSI_DataHash **hmac);
 int KSI_ExtendPdu_getHeader(const KSI_ExtendPdu *t, KSI_Header **header);
 int KSI_ExtendPdu_getRequest(const KSI_ExtendPdu *t, KSI_ExtendReq **request);
 int KSI_ExtendPdu_getResponse(const KSI_ExtendPdu *t, KSI_ExtendResp **response);
 int KSI_ExtendPdu_getHmac(const KSI_ExtendPdu *t, KSI_DataHash **hmac);
+int KSI_ExtendPdu_getHeaderTlv(KSI_ExtendPdu *t, KSI_TLV ** headerTLV );
+int KSI_ExtendPdu_getPayloadTlv(KSI_ExtendPdu *t, KSI_TLV ** payloadTLV );
 int KSI_ExtendPdu_setHeader(KSI_ExtendPdu *t, KSI_Header *header);
 int KSI_ExtendPdu_setRequest(KSI_ExtendPdu *t, KSI_ExtendReq *request);
 int KSI_ExtendPdu_setResponse(KSI_ExtendPdu *t, KSI_ExtendResp *response);
 int KSI_ExtendPdu_setHmac(KSI_ExtendPdu *t, KSI_DataHash *hamc);
+int KSI_ExtendPdu_setHeaderTlv(KSI_ExtendPdu *t, KSI_TLV * headerTLV );
+int KSI_ExtendPdu_setPayloadTlv(KSI_ExtendPdu *t, KSI_TLV * payloadTLV );
 
 /**
  * This function is used to parse a raw extend PDU into a #KSI_ExtendPdu object.
@@ -68,15 +72,20 @@ int KSI_ExtendPdu_serialize(const KSI_ExtendPdu *t, unsigned char **raw, unsigne
 
 void KSI_AggregationPdu_free(KSI_AggregationPdu *t);
 int KSI_AggregationPdu_new(KSI_CTX *ctx, KSI_AggregationPdu **t);
-int KSI_AggregationPdu_calculateHmac(KSI_AggregationPdu *t, int hashAlg, const char *key);
+int KSI_AggregationPdu_calculateHmac(KSI_AggregationPdu *t, int hashAlg, const char *key, KSI_DataHash **hmac);
 int KSI_AggregationPdu_getHeader(const KSI_AggregationPdu *t, KSI_Header **header);
 int KSI_AggregationPdu_getRequest(const KSI_AggregationPdu *t, KSI_AggregationReq **request);
 int KSI_AggregationPdu_getResponse(const KSI_AggregationPdu *t, KSI_AggregationResp **response);
 int KSI_AggregationPdu_getHmac(const KSI_AggregationPdu *t, KSI_DataHash **hmac);
+int KSI_AggregationPdu_getHeaderTlv(KSI_AggregationPdu *t, KSI_TLV ** headerTLV);
+int KSI_AggregationPdu_getPayloadTlv(KSI_AggregationPdu *t, KSI_TLV ** payloadTLV);
 int KSI_AggregationPdu_setHeader(KSI_AggregationPdu *t, KSI_Header *header);
 int KSI_AggregationPdu_setRequest(KSI_AggregationPdu *t, KSI_AggregationReq *request);
 int KSI_AggregationPdu_setResponse(KSI_AggregationPdu *t, KSI_AggregationResp *response);
 int KSI_AggregationPdu_setHmac(KSI_AggregationPdu *t, KSI_DataHash *hmac);
+int KSI_AggregationPdu_setHeaderTlv(KSI_AggregationPdu *t, KSI_TLV * headerTLV);
+int KSI_AggregationPdu_setPayloadTlv(KSI_AggregationPdu *t, KSI_TLV * payloadTLV);
+
 
 /**
  * This function is used to parse a raw aggregation PDU into a #KSI_AggregationPdu object.
@@ -169,7 +178,7 @@ int KSI_AggregationResp_getCalendarChain(const KSI_AggregationResp *t, KSI_Calen
 int KSI_AggregationResp_getAggregationChainList(const KSI_AggregationResp *t, KSI_LIST(KSI_AggregationHashChain) **aggregationChainList);
 int KSI_AggregationResp_getCalendarAuthRec(const KSI_AggregationResp *t, KSI_CalendarAuthRec **calendarAuthRec);
 int KSI_AggregationResp_getAggregationAuthRec(const KSI_AggregationResp *t, KSI_AggregationAuthRec **aggregationAuthRec);
-//int KSI_AggregationResp_setHeader(KSI_AggregationResp *t, KSI_Header *header);
+int KSI_AggregationResp_getBaseTlv (const KSI_AggregationResp *o, KSI_TLV **baseTlv);
 int KSI_AggregationResp_setRequestId(KSI_AggregationResp *t, KSI_Integer *requestId);
 int KSI_AggregationResp_setStatus(KSI_AggregationResp *t, KSI_Integer *status);
 int KSI_AggregationResp_setErrorMsg(KSI_AggregationResp *t, KSI_Utf8String *errorMsg);
@@ -179,7 +188,7 @@ int KSI_AggregationResp_setCalendarChain(KSI_AggregationResp *t, KSI_CalendarHas
 int KSI_AggregationResp_setAggregationChainList(KSI_AggregationResp *t, KSI_LIST(KSI_AggregationHashChain) *aggregationChainList);
 int KSI_AggregationResp_setCalendarAuthRec(KSI_AggregationResp *t, KSI_CalendarAuthRec *calendarAuthRec);
 int KSI_AggregationResp_setAggregationAuthRec(KSI_AggregationResp *t, KSI_AggregationAuthRec *aggregationAuthRec);
-
+int KSI_AggregationResp_setBaseTlv (KSI_AggregationResp *o, KSI_TLV *baseTlv);
 /**
  * KSI_ExtendReq
  */
@@ -199,19 +208,18 @@ int KSI_ExtendReq_setPublicationTime(KSI_ExtendReq *t, KSI_Integer *publicationT
  */
 void KSI_ExtendResp_free(KSI_ExtendResp *t);
 int KSI_ExtendResp_new(KSI_CTX *ctx, KSI_ExtendResp **t);
-//int KSI_ExtendResp_getHeader(const KSI_ExtendResp *t, KSI_Header **header);
 int KSI_ExtendResp_getRequestId(const KSI_ExtendResp *t, KSI_Integer **requestId);
 int KSI_ExtendResp_getStatus(const KSI_ExtendResp *t, KSI_Integer **status);
 int KSI_ExtendResp_getErrorMsg(const KSI_ExtendResp *t, KSI_Utf8String **errorMsg);
 int KSI_ExtendResp_getLastTime(const KSI_ExtendResp *t, KSI_Integer **lastTime);
 int KSI_ExtendResp_getCalendarHashChain(const KSI_ExtendResp *t, KSI_CalendarHashChain **calendarHashChain);
-//int KSI_ExtendResp_setHeader(KSI_ExtendResp *t, KSI_Header *header);
+int KSI_ExtendResp_getBaseTlv (const KSI_ExtendResp *o, KSI_TLV **baseTlv);
 int KSI_ExtendResp_setRequestId(KSI_ExtendResp *t, KSI_Integer *requestId);
 int KSI_ExtendResp_setStatus(KSI_ExtendResp *t, KSI_Integer *status);
 int KSI_ExtendResp_setErrorMsg(KSI_ExtendResp *t, KSI_Utf8String *errorMsg);
 int KSI_ExtendResp_setLastTime(KSI_ExtendResp *t, KSI_Integer *lastTime);
 int KSI_ExtendResp_setCalendarHashChain(KSI_ExtendResp *t, KSI_CalendarHashChain *calendarHashChain);
-
+int KSI_ExtendResp_setBaseTlv (KSI_ExtendResp *o, KSI_TLV *baseTlv);
 /**
  * KSI_PKISignedData
  */
