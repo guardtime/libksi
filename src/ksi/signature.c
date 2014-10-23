@@ -612,46 +612,34 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int KSI_parseAggregationResponse(KSI_CTX *ctx, unsigned char *response, unsigned response_len, KSI_Signature **signature) {
+static int KSI_parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp, KSI_Signature **signature) {
 	KSI_ERR err;
 	int res;
-	KSI_TLV *pduTlv = NULL;
 	KSI_TLV *tmpTlv = NULL;
 	KSI_TLV *respTlv = NULL;
 	KSI_Signature *tmp = NULL;
-	KSI_AggregationPdu *pdu = NULL;
-	KSI_AggregationResp *resp = NULL;
 	KSI_LIST(KSI_TLV) *tlvList = NULL;
+	unsigned char  *response = NULL;
+	unsigned response_len = 0;
 
 	/* PDU Specific objects */
 	KSI_Integer *status = NULL;
 	size_t i;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, response != NULL) goto cleanup;
-	KSI_PRE(&err, response_len > 0) goto cleanup;
+	KSI_PRE(&err, resp != NULL) goto cleanup;
 
 	KSI_BEGIN(ctx, &err);
 
 	/* Parse the pdu */
-	res = KSI_TLV_parseBlob2(ctx, response, response_len, 1, &pduTlv);
+	res = KSI_AggregationResp_getBaseTlv(resp, &respTlv);
 	KSI_CATCH(&err, res) goto cleanup;
-
+	
 	/* Validate tag value */
-	if (KSI_TLV_getTag(pduTlv) != 0x200) {
+	if (KSI_TLV_getTag(respTlv) != 0x202) {
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
 		goto cleanup;
 	}
-
-	res = KSI_AggregationPdu_new(ctx, &pdu);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_TlvTemplate_extract(ctx, pdu, pduTlv, KSI_TLV_TEMPLATE(KSI_AggregationPdu));
-	KSI_CATCH(&err, res) goto cleanup;
-
-
-	res = KSI_AggregationPdu_getResponse(pdu, &resp);
-	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_AggregationResp_getStatus(resp, &status);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -692,27 +680,7 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, unsigned char *response, u
 	res = KSI_AggregationResp_setCalendarChain(resp, NULL);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	/* Get all elements from the pdu */
-	res = KSI_TLV_getNestedList(pduTlv, &tlvList);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	for (i = 0; i < KSI_TLVList_length(tlvList); i++) {
-		res = KSI_TLVList_elementAt(tlvList, i, &respTlv);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		if (KSI_TLV_getTag(respTlv) == 0x0202) {
-			break;
-		}
-
-		respTlv = NULL;
-	}
-
-	if (respTlv == NULL) {
-		/* This may be caused only if the template is faulty */
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
-		goto cleanup;
-	}
-
+	
 	/* Create signature TLV */
 	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, 0x0800, 0, 0, &tmpTlv);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -759,20 +727,19 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, unsigned char *response, u
 cleanup:
 
 	KSI_TLV_free(tmpTlv);
-	KSI_AggregationPdu_free(pdu);
 	KSI_Signature_free(tmp);
-	KSI_TLV_free(pduTlv);
 
 	return KSI_RETURN(&err);
-
 }
+
 
 int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature) {
 	KSI_ERR err;
 	int res;
 	KSI_RequestHandle *handle = NULL;
+	KSI_AggregationResp *response = NULL;
 	KSI_Signature *sign = NULL;
-
+	
 	KSI_AggregationReq *req = NULL;
 	unsigned req_len = 0;
 
@@ -791,18 +758,12 @@ int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signat
 	res = KSI_sendSignRequest(ctx, req, &handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	/* Read the response. */
-	res = KSI_RequestHandle_getResponse(handle, &resp, &resp_len);
+	res = KSI_RequestHandle_getAggregationResponse(handle, &response);
 	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Response", resp, resp_len);
-
-	res = KSI_RequestHandle_setResponse(handle, NULL, 0);
+	
+	res = KSI_parseAggregationResponse(ctx, response, &sign);
 	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_parseAggregationResponse(ctx, resp, resp_len, &sign);
-	KSI_CATCH(&err, res) goto cleanup;
-
+	
 	*signature = sign;
 	sign = NULL;
 

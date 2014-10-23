@@ -14,6 +14,11 @@ extern "C" {
 		int (*sendExtendRequest)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **);
 		int (*sendPublicationRequest)(KSI_NetworkClient *, KSI_RequestHandle *);
 
+		char *agrUser;
+		char *agrPass;
+		char *extUser;
+		char *extPass;
+		
 		/** Dedicated context for the net provider */
 		void *implCtx;
 		/** Cleanup for the provider, gets the #providerCtx as parameter. */

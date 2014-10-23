@@ -6,6 +6,34 @@
 KSI_IMPLEMENT_GET_CTX(KSI_NetworkClient);
 KSI_IMPLEMENT_GET_CTX(KSI_RequestHandle);
 
+static int setStringParam(char **param, const char *val) {
+	char *tmp = NULL;
+	int res = KSI_UNKNOWN_ERROR;
+
+
+	tmp = KSI_calloc(strlen(val) + 1, 1);
+	if (tmp == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	memcpy(tmp, val, strlen(val) + 1);
+
+	if (*param != NULL) {
+		KSI_free(*param);
+	}
+
+	*param = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_free(tmp);
+
+	return res;
+}
+
 /**
  *
  */
@@ -311,9 +339,15 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 	KSI_ERR err;
 	int res;
 	KSI_ExtendPdu *pdu = NULL;
+	KSI_DataHash *hmac_read = NULL;
+	KSI_DataHash *hmac_real = NULL;
+	KSI_TLV *payloadTLV = NULL;
+	KSI_ExtendResp *tmp = NULL;
+	int hashAlg = -1;
 	unsigned char *raw = NULL;
 	unsigned len;
-
+	
+	
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_PRE(&err, resp != NULL) goto cleanup;
 	KSI_BEGIN(handle->ctx, &err);
@@ -323,27 +357,135 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 
 	KSI_LOG_logBlob(handle->ctx, KSI_LOG_DEBUG, "Parsing extend response from", raw, len);
 
+	/*Get response PDU*/
 	res = KSI_ExtendPdu_parse(handle->ctx, raw, len, &pdu);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_ExtendPdu_getResponse(pdu, resp);
+	/*Control HMAC*/
+	res = KSI_ExtendPdu_getHmac(pdu, &hmac_read);
+	KSI_CATCH(&err, res) goto cleanup;
+	
+	res = KSI_DataHash_getHashAlg(hmac_read, &hashAlg);
+	KSI_CATCH(&err, res) goto cleanup;
+	
+	res = KSI_ExtendPdu_calculateHmac(pdu, hashAlg, handle->client->extPass, &hmac_real);
+	KSI_CATCH(&err, res) goto cleanup;
+	
+	if(KSI_DataHash_equals(hmac_read, hmac_real) != 1){
+		KSI_FAIL(&err, KSI_HMAC_MISMATCH, NULL);
+		goto cleanup;
+	}	
+	
+	/*Get response object and its TLV*/
+	res = KSI_ExtendPdu_getResponse(pdu, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_ExtendPdu_setResponse(pdu, NULL);
 	KSI_CATCH(&err, res) goto cleanup;
 
+	res = KSI_ExtendPdu_getPayloadTlv(pdu, &payloadTLV);
+	KSI_CATCH(&err, res) goto cleanup;
+	
+	res = KSI_ExtendPdu_setPayloadTlv(pdu, NULL);
+	KSI_CATCH(&err, res) goto cleanup;
+	
+	res = KSI_ExtendResp_setBaseTlv(tmp, payloadTLV);
+	KSI_CATCH(&err, res) goto cleanup;
+	payloadTLV = NULL;
+	
+	res = KSI_ExtendPdu_setResponse(pdu, NULL);
+	KSI_CATCH(&err, res) goto cleanup;
+	
+	*resp = tmp;
+	tmp = NULL;
+	
 	KSI_SUCCESS(&err);
 
 cleanup:
 
-
+	KSI_ExtendResp_free(tmp);
 	KSI_ExtendPdu_free(pdu);
+	KSI_TLV_free(payloadTLV);
+	
+	return KSI_RETURN(&err);
+}
 
+int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_AggregationResp **resp) {
+	KSI_ERR err;
+	int res;
+	KSI_AggregationPdu *pdu = NULL;
+	KSI_TLV *payloadTLV = NULL;
+	KSI_DataHash *hmac_read = NULL;
+	KSI_DataHash *hmac_real = NULL;
+	KSI_AggregationResp *tmp = NULL;
+	int hashAlg = -1;
+	unsigned char *raw = NULL;
+	unsigned len;
+	
+	
+	KSI_PRE(&err, handle != NULL) goto cleanup;
+	KSI_PRE(&err, handle->client != NULL) goto cleanup;
+	KSI_PRE(&err, handle->client->agrPass != NULL) goto cleanup;
+	KSI_PRE(&err, resp != NULL) goto cleanup;
+	KSI_BEGIN(handle->ctx, &err);
+
+	res = KSI_RequestHandle_getResponse(handle, &raw, &len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_LOG_logBlob(handle->ctx, KSI_LOG_DEBUG, "Parsing aggregation response from", raw, len);
+	
+	/*Get PDU object*/
+	res = KSI_AggregationPdu_parse(handle->ctx, raw, len, &pdu);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/*Control HMAC*/
+	res = KSI_AggregationPdu_getHmac(pdu, &hmac_read);
+	KSI_CATCH(&err, res) goto cleanup;
+	
+	res = KSI_DataHash_getHashAlg(hmac_read, &hashAlg);
+	KSI_CATCH(&err, res) goto cleanup;
+	
+	res = KSI_AggregationPdu_calculateHmac(pdu, hashAlg, handle->client->agrPass, &hmac_real);
+	KSI_CATCH(&err, res) goto cleanup;
+	
+	if(KSI_DataHash_equals(hmac_read, hmac_real) != 1){
+		KSI_FAIL(&err, KSI_HMAC_MISMATCH, NULL);
+		goto cleanup;
+	}	
+	
+	/*Get response object and its TLV*/
+	res = KSI_AggregationPdu_getResponse(pdu, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_AggregationPdu_getPayloadTlv(pdu, &payloadTLV);
+	KSI_CATCH(&err, res) goto cleanup;
+	
+	res = KSI_AggregationPdu_setPayloadTlv(pdu, NULL);
+	KSI_CATCH(&err, res) goto cleanup;
+	
+	res = KSI_AggregationResp_setBaseTlv(tmp, payloadTLV);
+	KSI_CATCH(&err, res) goto cleanup;
+	payloadTLV = NULL;
+	
+	res = KSI_AggregationPdu_setResponse(pdu, NULL);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*resp = tmp;
+	tmp = NULL;
+	
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_AggregationResp_free(tmp);
+	KSI_AggregationPdu_free(pdu);
+	KSI_TLV_free(payloadTLV);
 	return KSI_RETURN(&err);
 }
 
 int KSI_NetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	KSI_ERR err;
+	int res = 0;
 	KSI_NetworkClient *pr = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -364,6 +506,16 @@ int KSI_NetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	pr->sendExtendRequest = NULL;
 	pr->sendPublicationRequest = NULL;
 
+	pr->agrPass = NULL;
+	pr->agrUser = NULL;
+	pr->extUser = NULL;
+	pr->extPass = NULL;
+	
+	res = setStringParam(&pr->extPass, "anon");
+	res = setStringParam(&pr->extUser, "anon");
+	res = setStringParam(&pr->agrPass, "anon");
+	res = setStringParam(&pr->agrUser, "anon");
+	
 	*client = pr;
 	pr = NULL;
 
@@ -439,3 +591,25 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+#define KSI_NET_IMPLEMENT_SETTER(name, type, var, fn) 														\
+		int KSI_NetworkClient_set##name(KSI_NetworkClient *client, type val) {								\
+			int res = KSI_UNKNOWN_ERROR;																\
+			if (client == NULL) {																		\
+				res = KSI_INVALID_ARGUMENT;																\
+				goto cleanup;																			\
+			}																							\
+			\
+		res = (fn)(&client->var, val);																\
+		cleanup:																						\
+			return res;																					\
+		}
+
+KSI_NET_IMPLEMENT_SETTER(ExtenderUser, const char *, extUser, setStringParam);
+KSI_NET_IMPLEMENT_SETTER(ExtenderPass, const char *, extPass, setStringParam);
+KSI_NET_IMPLEMENT_SETTER(AggregatorUser, const char *, agrUser, setStringParam);
+KSI_NET_IMPLEMENT_SETTER(AggregatorPass, const char *, agrPass, setStringParam);
+
+KSI_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, extUser, ExtenderUser);
+KSI_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, extPass, ExtenderPass);
+KSI_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, agrUser, AggregatorUser);
+KSI_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, agrPass, AggregatorPass);

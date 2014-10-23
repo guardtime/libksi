@@ -126,6 +126,7 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 	KSI_HttpClientCtx *http = NULL;
 	KSI_RequestHandle *tmp = NULL;
 	KSI_AggregationPdu *pdu = NULL;
+	KSI_DataHash *hmac = NULL;
 	unsigned char *raw = NULL;
 	unsigned raw_len = 0;
 
@@ -143,14 +144,18 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 	res = KSI_AggregationPdu_new(client->ctx, &pdu);
 	KSI_CATCH(&err, res) goto cleanup;
 	
-	res = postProcessRequest(http, req, pdu, http->agrUser, (int (*)(const void *, KSI_Header **))KSI_AggregationPdu_getHeader, (int (*)(void *, KSI_Header *))KSI_AggregationPdu_setHeader, (int (*)(void*, KSI_Integer**))KSI_AggregationReq_getRequestId, (int (*)(void*, KSI_Integer**))KSI_AggregationReq_setRequestId);
+	res = postProcessRequest(http, req, pdu, client->agrUser, (int (*)(const void *, KSI_Header **))KSI_AggregationPdu_getHeader, (int (*)(void *, KSI_Header *))KSI_AggregationPdu_setHeader, (int (*)(void*, KSI_Integer**))KSI_AggregationReq_getRequestId, (int (*)(void*, KSI_Integer**))KSI_AggregationReq_setRequestId);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_AggregationPdu_setRequest(pdu, req);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_AggregationPdu_calculateHmac(pdu, KSI_HASHALG_SHA1, http->agrPass);
+	res = KSI_AggregationPdu_calculateHmac(pdu, KSI_HASHALG_SHA1, client->agrPass, &hmac);
 	KSI_CATCH(&err, res) goto cleanup;
+	
+	res = KSI_AggregationPdu_setHmac(pdu, hmac);
+	KSI_CATCH(&err, res) goto cleanup;
+	hmac = NULL;
 	
 	res = KSI_AggregationPdu_serialize(pdu, &raw, &raw_len);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -183,6 +188,7 @@ cleanup:
 	}
 
 	KSI_RequestHandle_free(tmp);
+	KSI_DataHash_free(hmac);
 	KSI_free(raw);
 
 	return KSI_RETURN(&err);
@@ -194,6 +200,7 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 	KSI_HttpClientCtx *http = NULL;
 	KSI_RequestHandle *tmp = NULL;
 	KSI_ExtendPdu *pdu = NULL;
+	KSI_DataHash *hmac = NULL;
 	unsigned char *raw = NULL;
 	unsigned raw_len = 0;
 
@@ -212,14 +219,18 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 	res = KSI_ExtendPdu_new(client->ctx, &pdu);
 	KSI_CATCH(&err, res) goto cleanup;
 	
-	res = postProcessRequest(http, req, pdu, http->extUser, (int (*)(const void *, KSI_Header **))KSI_ExtendPdu_getHeader, (int (*)(void *, KSI_Header *))KSI_ExtendPdu_setHeader, (int (*)(void*, KSI_Integer**))KSI_ExtendReq_getRequestId, (int (*)(void*, KSI_Integer*))KSI_ExtendReq_setRequestId);
+	res = postProcessRequest(http, req, pdu, client->extUser, (int (*)(const void *, KSI_Header **))KSI_ExtendPdu_getHeader, (int (*)(void *, KSI_Header *))KSI_ExtendPdu_setHeader, (int (*)(void*, KSI_Integer**))KSI_ExtendReq_getRequestId, (int (*)(void*, KSI_Integer*))KSI_ExtendReq_setRequestId);
 	KSI_CATCH(&err, res) goto cleanup;
 	
 	res = KSI_ExtendPdu_setRequest(pdu, req);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_ExtendPdu_calculateHmac(pdu, KSI_HASHALG_SHA1, http->extPass);
+	res = KSI_ExtendPdu_calculateHmac(pdu, KSI_HASHALG_SHA1, client->extPass, &hmac);
 	KSI_CATCH(&err, res) goto cleanup;
+	
+	res = KSI_ExtendPdu_setHmac(pdu, hmac);
+	KSI_CATCH(&err, res) goto cleanup;
+	hmac = NULL;
 	
 	res = KSI_ExtendPdu_serialize(pdu, &raw, &raw_len);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -252,6 +263,7 @@ cleanup:
 	}
 
 	KSI_RequestHandle_free(tmp);
+	KSI_DataHash_free(hmac);
 	KSI_free(raw);
 
 	return KSI_RETURN(&err);
@@ -289,10 +301,7 @@ static void httpClientCtx_free(KSI_HttpClientCtx *http) {
 		KSI_free(http->urlExtender);
 		KSI_free(http->urlPublication);
 		KSI_free(http->agentName);
-		KSI_free(http->extUser);
-		KSI_free(http->extPass);
-		KSI_free(http->agrUser);
-		KSI_free(http->agrPass);
+
 		
 		if (http->implCtx_free != NULL) http->implCtx_free(http->implCtx);
 		KSI_free(http);
@@ -315,10 +324,7 @@ static int httpClientCtx_new(KSI_CTX *ctx, KSI_HttpClientCtx **http) {
 	tmp->urlExtender = NULL;
 	tmp->urlPublication = NULL;
 	tmp->urlSigner = NULL;
-	tmp->extUser = NULL;
-	tmp->extPass = NULL;
-	tmp->agrUser = NULL;
-	tmp->agrPass = NULL;
+
 	
 	
 	setIntParam(&tmp->connectionTimeoutSeconds, 10);
@@ -327,10 +333,7 @@ static int httpClientCtx_new(KSI_CTX *ctx, KSI_HttpClientCtx **http) {
 	setStringParam(&tmp->urlExtender, KSI_DEFAULT_URI_EXTENDER);
 	setStringParam(&tmp->urlPublication, KSI_DEFAULT_URI_PUBLICATIONS_FILE);
 	setStringParam(&tmp->agentName, "KSI HTTP Client");
-	setStringParam(&tmp->extUser, "anon");
-	setStringParam(&tmp->extPass, "anon");
-	setStringParam(&tmp->agrUser, "anon");
-	setStringParam(&tmp->agrPass, "anon");
+
 	
 	tmp->requestId = 0;
 	tmp->implCtx = NULL;
@@ -410,7 +413,4 @@ KSI_NET_IMPLEMENT_SETTER(ExtenderUrl, const char *, urlExtender, setStringParam)
 KSI_NET_IMPLEMENT_SETTER(PublicationUrl, const char *, urlPublication, setStringParam);
 KSI_NET_IMPLEMENT_SETTER(ConnectTimeoutSeconds, int, connectionTimeoutSeconds, setIntParam);
 KSI_NET_IMPLEMENT_SETTER(ReadTimeoutSeconds, int, readTimeoutSeconds, setIntParam);
-KSI_NET_IMPLEMENT_SETTER(ExtenderUser, const char *, extUser, setStringParam);
-KSI_NET_IMPLEMENT_SETTER(ExtenderPass, const char *, extPass, setStringParam);
-KSI_NET_IMPLEMENT_SETTER(AggregatoUser, const char *, agrUser, setStringParam);
-KSI_NET_IMPLEMENT_SETTER(AggregatoPass, const char *, agrPass, setStringParam);
+

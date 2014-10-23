@@ -128,6 +128,11 @@ extern "C" {
 	int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendResp **resp);
 
 	/**
+	 * TODO!
+	 */
+	int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_AggregationResp **resp);
+	
+	/**
 	 * Constructor for network handle object.
 	 * \param[in]		ctx				KSI context.
 	 * \param[in]		request			Pointer to request.
@@ -216,6 +221,15 @@ extern "C" {
 	 */
 	int KSI_NetworkClient_setSendPublicationRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_RequestHandle *));
 
+	int KSI_NetworkClient_setExtenderUser(KSI_NetworkClient *netProvider, const char *val);
+	int KSI_NetworkClient_setExtenderPass(KSI_NetworkClient *netProvider, const char *val);
+	int KSI_NetworkClient_setAggregatorUser(KSI_NetworkClient *netProvider, const char *val);
+	int KSI_NetworkClient_setAggregatorPass(KSI_NetworkClient *netProvider, const char *val);
+	
+	int KSI_NetworkClient_getExtenderUser(const KSI_NetworkClient *netProvider, const char **val);
+	int KSI_NetworkClient_getExtenderPass(const KSI_NetworkClient *netProvider, const char **val);
+	int KSI_NetworkClient_getAggregatorUser(const KSI_NetworkClient *netProvider, const char **val);
+	int KSI_NetworkClient_getAggregatorPass(const KSI_NetworkClient *netProvider, const char **val);
 	/**
 	 * @}
 	 */
