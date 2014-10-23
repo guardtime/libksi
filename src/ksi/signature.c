@@ -619,8 +619,6 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp,
 	KSI_TLV *respTlv = NULL;
 	KSI_Signature *tmp = NULL;
 	KSI_LIST(KSI_TLV) *tlvList = NULL;
-	unsigned char  *response = NULL;
-	unsigned response_len = 0;
 
 	/* PDU Specific objects */
 	KSI_Integer *status = NULL;
