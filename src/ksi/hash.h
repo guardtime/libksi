@@ -241,7 +241,14 @@ extern "C" {
 	 * \see #KSI_TLV_free, #KSI_DataHash_fromTlv
 	 */
 	int KSI_DataHash_toTlv(KSI_CTX *ctx, KSI_DataHash *hsh, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
-
+	
+	/**
+	 * TODO:
+     * @param hash
+     * @param hashAlg
+     * @return 
+     */
+	int KSI_DataHash_getHashAlg(const KSI_DataHash *hash, int *hashAlg);
 	/**
 	 * Parses the metha value if the hash value is formatted:
 	 * - 2 bytes of length (n).
