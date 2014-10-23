@@ -105,6 +105,8 @@ const char *KSI_getErrorString(int statusCode) {
 			return "The publications file is not signed.";
 		case KSI_CRYPTO_FAILURE:
 			return "Cryptographic failure";
+		case KSI_HMAC_MISMATCH:
+			return "HMAC mismatch";
 		case KSI_UNKNOWN_ERROR:
 			return "Unknown internal error";
 		default:

@@ -141,12 +141,10 @@ int KSI_Config_setParentUri(KSI_Config *t, KSI_LIST(KSI_Utf8String) *parentUri);
  */
 void KSI_AggregationReq_free(KSI_AggregationReq *t);
 int KSI_AggregationReq_new(KSI_CTX *ctx, KSI_AggregationReq **t);
-//int KSI_AggregationReq_getHeader(const KSI_AggregationReq *t, KSI_Header **header);
 int KSI_AggregationReq_getRequestId(const KSI_AggregationReq *t, KSI_Integer **requestId);
 int KSI_AggregationReq_getRequestHash(const KSI_AggregationReq *t, KSI_DataHash **requestHash);
 int KSI_AggregationReq_getRequestLevel(const KSI_AggregationReq *t, KSI_Integer **requestLevel);
 int KSI_AggregationReq_getConfig(const KSI_AggregationReq *t, KSI_Config **config);
-//int KSI_AggregationReq_setHeader(KSI_AggregationReq *t, KSI_Header *header);
 int KSI_AggregationReq_setRequestId(KSI_AggregationReq *t, KSI_Integer *requestId);
 int KSI_AggregationReq_setRequestHash(KSI_AggregationReq *t, KSI_DataHash *requestHash);
 int KSI_AggregationReq_setRequestLevel(KSI_AggregationReq *t, KSI_Integer *requestLevel);
@@ -168,7 +166,6 @@ int KSI_RequestAck_setAggregationDelay(KSI_RequestAck *t, KSI_Integer *aggregati
  */
 void KSI_AggregationResp_free(KSI_AggregationResp *t);
 int KSI_AggregationResp_new(KSI_CTX *ctx, KSI_AggregationResp **t);
-//int KSI_AggregationResp_getHeader(const KSI_AggregationResp *t, KSI_Header **header);
 int KSI_AggregationResp_getRequestId(const KSI_AggregationResp *t, KSI_Integer **requestId);
 int KSI_AggregationResp_getStatus(const KSI_AggregationResp *t, KSI_Integer **status);
 int KSI_AggregationResp_getErrorMsg(const KSI_AggregationResp *t, KSI_Utf8String **errorMsg);
@@ -194,11 +191,9 @@ int KSI_AggregationResp_setBaseTlv (KSI_AggregationResp *o, KSI_TLV *baseTlv);
  */
 void KSI_ExtendReq_free(KSI_ExtendReq *t);
 int KSI_ExtendReq_new(KSI_CTX *ctx, KSI_ExtendReq **t);
-//int KSI_ExtendReq_getHeader(const KSI_ExtendReq *t, KSI_Header **header);
 int KSI_ExtendReq_getRequestId(const KSI_ExtendReq *t, KSI_Integer **requestId);
 int KSI_ExtendReq_getAggregationTime(const KSI_ExtendReq *t, KSI_Integer **aggregationTime);
 int KSI_ExtendReq_getPublicationTime(const KSI_ExtendReq *t, KSI_Integer **publicationTime);
-//int KSI_ExtendReq_setHeader(KSI_ExtendReq *t, KSI_Header *header);
 int KSI_ExtendReq_setRequestId(KSI_ExtendReq *t, KSI_Integer *requestId);
 int KSI_ExtendReq_setAggregationTime(KSI_ExtendReq *t, KSI_Integer *aggregationTime);
 int KSI_ExtendReq_setPublicationTime(KSI_ExtendReq *t, KSI_Integer *publicationTime);
