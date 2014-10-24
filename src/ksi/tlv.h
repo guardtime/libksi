@@ -163,6 +163,10 @@ extern "C" {
 	void KSI_TLV_free(KSI_TLV *tlv);
 
 	/**
+	 * TODO!
+	 */
+	void KSI_TLV_ref(KSI_TLV *tlv);
+	/**
 	 * This is an access method for the TLV lenient-flag.
 	 *
 	 * \param[in]	tlv		TLV.

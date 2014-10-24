@@ -64,21 +64,17 @@ cleanup:
 
 static int parseStructure(KSI_TLV *tlv, int indent) {
 	int res;
-	uint64_t uint;
-	const char *buf;
 	KSI_TLV *nested = NULL;
 	KSI_LIST(KSI_TLV) *list = NULL;
 	size_t i;
 	KSI_Utf8String *utf = NULL;
+	KSI_Integer *integer = NULL;
 
 	switch (KSI_TLV_getTag(tlv)) {
 		case 0x01:
 			/* Cast as numeric TLV */
-			res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_INT);
-			if (res != KSI_OK) goto cleanup;
-
 			/* Parse number */
-			res = KSI_TLV_getUInt64Value(tlv, &uint);
+			res = KSI_Integer_fromTlv(tlv, &integer);
 			if (res != KSI_OK) goto cleanup;
 			break;
 		case 0x02:
@@ -114,6 +110,7 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 cleanup:
 
 	KSI_Utf8String_free(utf);
+	KSI_Integer_free(integer);
 	return res;
 }
 

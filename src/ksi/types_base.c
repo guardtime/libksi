@@ -477,6 +477,10 @@ int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_Integer **ksiInteger) {
 	KSI_CTX *ctx = NULL;
 	int res;
 	KSI_Integer *tmp = NULL;
+	const unsigned char *raw = NULL;
+	unsigned len;
+	unsigned i;
+	KSI_uint64_t val = 0;
 
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
 	KSI_PRE(&err, ksiInteger != NULL) goto cleanup;
@@ -484,13 +488,22 @@ int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_Integer **ksiInteger) {
 	ctx = KSI_TLV_getCtx(tlv);
 	KSI_BEGIN(ctx, &err);
 
-	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_INT);
+	res = KSI_TLV_getRawValue(tlv, &raw, &len);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_TLV_getInteger(tlv, &tmp);
+	if (len > 8) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Integer larger than 64bit");
+		goto cleanup;
+	}
+
+	for (i = 0; i < len; i++) {
+		val = val << 8 | raw[i];
+	}
+
+	res = KSI_Integer_new(ctx, val, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	*ksiInteger = tmp;
+ 	*ksiInteger = tmp;
 	tmp = NULL;
 
 	KSI_SUCCESS(&err);
@@ -507,16 +520,26 @@ int KSI_Integer_toTlv(KSI_CTX *ctx, KSI_Integer *integer, unsigned tag, int isNo
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tmp = NULL;
+	unsigned char raw[8];
+	unsigned len = 0;
+	KSI_uint64_t val = integer->value;
 
 	KSI_PRE(&err, integer != NULL) goto cleanup;
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_INT, tag, isNonCritical, isForward, &tmp);
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_TLV_setUintValue(tmp, integer->value);
-	KSI_CATCH(&err, res) goto cleanup;
+	while (val != 0) {
+		raw[7 - len++] = val & 0xff;
+		val >>= 8;
+	}
+
+	if (len > 0) {
+		res = KSI_TLV_setRawValue(tmp, raw + 8 - len, len);
+		KSI_CATCH(&err, res) goto cleanup;
+	}
 
 	*tlv = tmp;
 	tmp = NULL;
