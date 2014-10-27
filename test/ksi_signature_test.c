@@ -60,13 +60,7 @@ static void testVerifySignatureExtendedToHead(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_Signature_fromFile(ctx, "test/resource/tlv/ok-sig-2014-04-30.1-head.ksig", &sig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
-
-	/* Set the extend response. */
-	KSITest_setFileMockResponse(tc, "test/resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv");
-
-	res = KSI_verifySignature(ctx, sig);
-	CuAssert(tc, "Unable to verify signature online.", res == KSI_OK);
+	CuAssert(tc, "Signature should have either a calendar auth record or publication", res != KSI_OK && sig == NULL);
 
 	KSI_Signature_free(sig);
 
