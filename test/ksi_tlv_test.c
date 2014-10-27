@@ -198,6 +198,7 @@ static void testTlvGetUint64(CuTest* tc) {
 	CuAssert(tc, "Parsed value is not correct.", KSI_Integer_getUInt64(integer) == 0xcafebabecafeface);
 
 	KSI_TLV_free(tlv);
+	KSI_Integer_free(integer);
 	KSI_RDR_close(rdr);
 }
 
