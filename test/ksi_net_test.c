@@ -88,7 +88,6 @@ static void testExtending(CuTest* tc) {
 	KSITest_setFileMockResponse(tc, "test/resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv");
 
 	res = KSI_extendSignature(ctx, sig, &ext);
-
 	CuAssert(tc, "Unable to extend the signature", res == KSI_OK && ext != NULL);
 
 	res = KSI_Signature_serialize(ext, &serialized, &serialized_len);

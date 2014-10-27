@@ -8,25 +8,28 @@
 #define KSI_AggrAuthRecPKISignedData_new KSI_PKISignedData_new
 #define KSI_AggrAuthRecPKISignedData_free KSI_PKISignedData_free
 
+#define KSI_Utf8StringNZ_new KSI_Utf8String_new
+#define KSI_Utf8StringNZ_free KSI_Utf8String_free
+
 #define FLAGSET(tmpl, flg) (((tmpl).flags & flg) != 0)
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_CalAuthRecPKISignedData)
 	KSI_TLV_OCTET_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getSignatureValue, KSI_PKISignedData_setSignatureValue)
 	KSI_TLV_OCTET_STRING(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getCertId, KSI_PKISignedData_setCertId)
-	KSI_TLV_UTF8_STRING(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_PKISignedData_getCertRepositoryUri, KSI_PKISignedData_setCertRepositoryUri)
+	KSI_TLV_OBJECT(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_PKISignedData_getCertRepositoryUri, KSI_PKISignedData_setCertRepositoryUri, KSI_Utf8StringNZ_fromTlv, KSI_Utf8StringNZ_toTlv, KSI_Utf8String_free)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggrAuthRecPKISignedData)
 	KSI_TLV_OCTET_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getSignatureValue, KSI_PKISignedData_setSignatureValue)
 	KSI_TLV_OBJECT(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_PKISignedData_setCertificate, KSI_PKISignedData_getCertificate, KSI_PKICertificate_fromTlv, KSI_PKICertificate_toTlv, KSI_PKISignature_free)
 	KSI_TLV_OCTET_STRING(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getCertId, KSI_PKISignedData_setCertId)
-	KSI_TLV_UTF8_STRING(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_PKISignedData_getCertRepositoryUri, KSI_PKISignedData_setCertRepositoryUri)
+	KSI_TLV_OBJECT(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_PKISignedData_getCertRepositoryUri, KSI_PKISignedData_setCertRepositoryUri, KSI_Utf8StringNZ_fromTlv, KSI_Utf8StringNZ_toTlv, KSI_Utf8String_free)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationsHeader)
 	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsHeader_getVersion, KSI_PublicationsHeader_setVersion)
 	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsHeader_getTimeCreated, KSI_PublicationsHeader_setTimeCreated)
-	KSI_TLV_UTF8_STRING(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_PublicationsHeader_getRepositoryUri, KSI_PublicationsHeader_setRepositoryUri)
+	KSI_TLV_OBJECT(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_PublicationsHeader_getRepositoryUri, KSI_PublicationsHeader_setRepositoryUri, KSI_Utf8StringNZ_fromTlv, KSI_Utf8StringNZ_toTlv, KSI_Utf8String_free)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_CertificateRecord)
@@ -41,8 +44,8 @@ KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationRecord)
 	KSI_TLV_COMPOSITE(0x10, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationRecord_getPublishedData, KSI_PublicationRecord_setPublishedData, KSI_PublicationData)
-	KSI_TLV_UTF8_STRING_LIST(0x09, KSI_TLV_TMPL_FLG_NONE, KSI_PublicationRecord_getPublicationRefList, KSI_PublicationRecord_setPublicationRefList)
-	KSI_TLV_UTF8_STRING_LIST(0x0a, KSI_TLV_TMPL_FLG_NONE, KSI_PublicationRecord_getRepositoryUriList, KSI_PublicationRecord_setRepositoryUriList)
+	KSI_TLV_OBJECT_LIST(0x09, KSI_TLV_TMPL_FLG_NONE, KSI_PublicationRecord_getPublicationRefList, KSI_PublicationRecord_setPublicationRefList, KSI_Utf8StringNZ)
+	KSI_TLV_OBJECT_LIST(0x0a, KSI_TLV_TMPL_FLG_NONE, KSI_PublicationRecord_getRepositoryUriList, KSI_PublicationRecord_setRepositoryUriList, KSI_Utf8StringNZ)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_MetaData)
@@ -69,6 +72,7 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_Config)
 	KSI_TLV_INTEGER(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Config_getAggrAlgo, KSI_Config_setAggrAlgo)
 	KSI_TLV_INTEGER(0x04, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Config_getAggrPeriod, KSI_Config_setAggrPeriod)
 	KSI_TLV_UTF8_STRING_LIST(0x05, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Config_getParentUri, KSI_Config_setParentUri)
+
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationHashChain)

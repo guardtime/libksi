@@ -43,6 +43,7 @@ static KSI_Integer integerPool[] = {
 
 KSI_IMPLEMENT_LIST(KSI_Integer, KSI_Integer_free);
 KSI_IMPLEMENT_LIST(KSI_Utf8String, KSI_Utf8String_free);
+KSI_IMPLEMENT_LIST(KSI_Utf8StringNZ, KSI_Utf8String_free);
 KSI_IMPLEMENT_LIST(KSI_OctetString, KSI_OctetString_free);
 
 int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, unsigned int data_len, KSI_OctetString **t) {
@@ -238,7 +239,7 @@ int KSI_Utf8String_new(KSI_CTX *ctx, const unsigned char *str, unsigned len, KSI
 	tmp->refCount = 1;
 	
 	/* Verify that is is a null-terminated string. */
-	if (str[actualLen - 1] != '\0') {
+	if (actualLen == 0 || str[actualLen - 1] != '\0') {
 		++actualLen;
 	}
 
@@ -333,6 +334,72 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
+
+int KSI_Utf8StringNZ_fromTlv(KSI_TLV *tlv, KSI_Utf8String **u8str) {
+	KSI_ERR err;
+	KSI_CTX *ctx = NULL;
+	int res;
+	const unsigned char *cstr = NULL;
+	KSI_Utf8String *tmp = NULL;
+	unsigned len;
+
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_PRE(&err, u8str != NULL) goto cleanup;
+
+	ctx = KSI_TLV_getCtx(tlv);
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_Utf8String_fromTlv(tlv, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	if (tmp->len == 0 || (tmp->len == 1 && tmp->value[0] == 0)) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Empty string value not allowed.");
+		goto cleanup;
+	}
+
+	*u8str = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(ctx);
+	KSI_nofree(cstr);
+	KSI_Utf8String_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_Utf8StringNZ_toTlv(KSI_CTX *ctx, KSI_Utf8String *u8str, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+	KSI_ERR err;
+	int res;
+	KSI_TLV *tmp = NULL;
+
+	KSI_PRE(&err, u8str != NULL) goto cleanup;
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	if (u8str->len == 0 || (u8str->len == 1 && u8str->value[0] == 0)) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Empty string value not allowed.");
+		goto cleanup;
+	}
+
+	res = KSI_Utf8String_toTlv(ctx, u8str, tag, isNonCritical, isForward, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*tlv = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_TLV_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
 
 int KSI_Utf8String_clone(KSI_Utf8String *u8str, KSI_Utf8String **clone){
 	KSI_ERR err;
