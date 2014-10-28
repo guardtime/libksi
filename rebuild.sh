@@ -1,6 +1,6 @@
 #!/bin/sh
 
-PRF=libksi-0.0.1
+PRF=libksi-$(tr -d [:space:] < VERSION)
 
 rm -f ${PRF}*.tar.gz && \
 rm -fr .deps && \

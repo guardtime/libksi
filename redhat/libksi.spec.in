@@ -41,7 +41,7 @@ rm -rf %{buildroot}
 make install DESTDIR=%{buildroot}
  
 %files
-#%defattr(644,root,root,755)
+%defattr(644,root,root,755)
 %{_libdir}/libksi.so
 %{_libdir}/libksi.so.0
 %{_libdir}/libksi.so.0.0.0
@@ -49,7 +49,7 @@ make install DESTDIR=%{buildroot}
 %{_docdir}/%{name}/license.txt
 
 %files devel
-#%defattr(644,root,root,755)
+%defattr(644,root,root,755)
 %{_includedir}/ksi/base32.h
 %{_includedir}/ksi/crc32.h
 %{_includedir}/ksi/err.h
