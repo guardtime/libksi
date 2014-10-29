@@ -851,7 +851,7 @@ int KSI_PublicationRecord_toBase32(KSI_PublicationRecord *pubRec, char **pubStr)
 
 cleanup:
 
-	return res;
+	return KSI_RETURN(&err);
 }
 
 /**
@@ -977,7 +977,6 @@ cleanup:
 
 int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_PublicationRecord **clone){
 	KSI_ERR err;
-	KSI_TLV *tlv = NULL;
 	KSI_PublicationRecord *tmp = NULL;
 	KSI_Utf8String *cloneUTF8 = NULL;
 	int res = KSI_UNKNOWN_ERROR;
@@ -1019,11 +1018,10 @@ int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_Publicatio
 	res = KSI_Integer_clone(rec->publishedData->time, &(tmp->publishedData->time));
 	KSI_CATCH(&err, res);
 	
-	
 	*clone = tmp;
 	tmp = NULL;
 	
-	//KSI_SUCCESS(&err);
+	KSI_SUCCESS(&err);
 	
 cleanup:
 	KSI_PublicationRecord_free(tmp);

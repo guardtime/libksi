@@ -341,7 +341,6 @@ int KSI_Utf8StringNZ_fromTlv(KSI_TLV *tlv, KSI_Utf8String **u8str) {
 	int res;
 	const unsigned char *cstr = NULL;
 	KSI_Utf8String *tmp = NULL;
-	unsigned len;
 
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
 	KSI_PRE(&err, u8str != NULL) goto cleanup;

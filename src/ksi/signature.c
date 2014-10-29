@@ -775,7 +775,6 @@ int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signat
 	KSI_Signature *sign = NULL;
 
 	KSI_AggregationReq *req = NULL;
-	unsigned req_len = 0;
 
 	unsigned char *resp = NULL;
 	unsigned resp_len = 0;
@@ -1369,7 +1368,6 @@ static int verifyInternallyAggregationChain(KSI_CTX *ctx, KSI_Signature *sig) {
 	int level;
 	size_t i;
 	int successCount = 0;
-	KSI_DataHash *inputHash = NULL;
 	KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
 	KSI_VerificationResult *info = &sig->verificationResult;
 	const KSI_AggregationHashChain *prevChain = NULL;
@@ -1650,7 +1648,6 @@ static int verifyPublication(KSI_CTX *ctx, KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationsFile *pubFile = NULL;
 	KSI_PublicationRecord *pubRec = NULL;
-	char *pubStr = NULL;
 	KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBFILE;
 	KSI_VerificationResult *info = &sig->verificationResult;
 
@@ -1721,7 +1718,6 @@ cleanup:
 
 static int verifyPublicationsFile(KSI_CTX *ctx, KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_DataHash *hsh = NULL;
 	KSI_VerificationStep step = KSI_VERIFY_PUBFILE_SIGNATURE;
 	KSI_VerificationResult *info = &sig->verificationResult;
 

@@ -36,7 +36,6 @@ static const EVP_MD *hashAlgorithmToEVP(int hash_id)
 
 static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 	KSI_ERR err;
-	int res;
 	unsigned int hash_length;
 
 	KSI_PRE(&err, hasher != NULL) goto cleanup;

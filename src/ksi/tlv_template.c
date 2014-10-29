@@ -318,7 +318,6 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 
 	KSI_uint64_t uint64Val = 0;
 	void *voidVal = NULL;
-	int intVal = 0;
 	void *compositeVal = NULL;
 	void *valuep = NULL;
 	KSI_TLV *tlvVal = NULL;

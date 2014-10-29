@@ -229,7 +229,7 @@ cleanup:
 
 static int preparePublicationsFileRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle) {
 	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_HttpClientCtx *http = NULL;
 
 	KSI_PRE(&err, client != NULL) goto cleanup;
