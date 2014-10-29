@@ -53,6 +53,11 @@ typedef struct KSI_OctetString_st KSI_OctetString;
 typedef struct KSI_Utf8String_st KSI_Utf8String;
 
 /**
+ * An utf-8 string wich must have at least one printable character.
+ */
+typedef KSI_Utf8String KSI_Utf8StringNZ;
+
+/**
  * Implementation independent type for PKI certificates.
  */
 typedef struct KSI_PKICertificate_st KSI_PKICertificate;
@@ -117,6 +122,7 @@ KSI_DEFINE_LIST(KSI_PublicationRecord);
 KSI_DEFINE_LIST(KSI_Integer);
 KSI_DEFINE_LIST(KSI_OctetString);
 KSI_DEFINE_LIST(KSI_Utf8String);
+KSI_DEFINE_LIST(KSI_Utf8StringNZ);
 KSI_DEFINE_LIST(KSI_AggregationHashChain)
 KSI_DEFINE_LIST(KSI_TLV);
 KSI_DEFINE_LIST(KSI_PKICertificate);
@@ -166,7 +172,7 @@ void KSI_Utf8String_free(KSI_Utf8String *t);
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
  * \see #KSI_Utf8String_free, #KSI_Utf8String_cstr
  */
-int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, KSI_Utf8String **t);
+int KSI_Utf8String_new(KSI_CTX *ctx, const unsigned char *str, unsigned len, KSI_Utf8String **t);
 
 /**
  * Returns the actual size of the string in bytes.
@@ -186,6 +192,10 @@ const char *KSI_Utf8String_cstr(const KSI_Utf8String *t);
 int KSI_Utf8String_fromTlv(KSI_TLV *tlv, KSI_Utf8String **u8str);
 int KSI_Utf8String_toTlv(KSI_CTX *ctx, KSI_Utf8String *u8str, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 int KSI_Utf8String_clone(KSI_Utf8String *u8str, KSI_Utf8String **clone);
+
+int KSI_Utf8StringNZ_fromTlv(KSI_TLV *tlv, KSI_Utf8String **u8str);
+int KSI_Utf8StringNZ_toTlv(KSI_CTX *ctx, KSI_Utf8String *u8str, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+
 /**
  * KSI_AggregationAuthRec
  */

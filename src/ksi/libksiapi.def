@@ -301,13 +301,9 @@ EXPORTS
     KSI_TLV_getCtx
     KSI_TLV_new
     KSI_TLV_fromUint
-    KSI_TLV_fromString
     KSI_TLV_cast
     KSI_TLV_parseBlob
     KSI_TLV_getRawValue
-    KSI_TLV_getInteger
-    KSI_TLV_getUInt64Value
-    KSI_TLV_getStringValue
     KSI_TLV_getNestedList
     KSI_TLV_free
     KSI_TLV_isNonCritical
@@ -324,7 +320,6 @@ EXPORTS
     KSI_TLV_clone
     KSI_TLV_setUintValue
     KSI_TLV_setRawValue
-    KSI_TLV_setStringValue
     KSI_TLV_fromReader
     KSI_TLV_getAbsoluteOffset
     KSI_TLV_getRelativeOffset
