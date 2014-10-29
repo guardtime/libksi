@@ -38,7 +38,7 @@ TRUST_PROVIDER = OPENSSL
 !ENDIF
 
 MODEL = DLL="$(DLL)" RTL="$(RTL)" NET_PROVIDER="$(NET_PROVIDER)" CRYPTO_PROVIDER="$(CRYPTO_PROVIDER)" TRUST_PROVIDER="$(TRUST_PROVIDER)" HASH_PROVIDER="$(HASH_PROVIDER)"
-EXTRA = CCEXTRA="$(CCEXTRA)" LDEXTRA="$(LDEXTRA)" OPENSSL_CA_FILE="$(OPENSSL_CA_FILE)" OPENSSL_CA_DIR="$(OPENSSL_CA_DIR)" CURL_DIR="$(CURL_DIR)"
+EXTRA = CCEXTRA="$(CCEXTRA)" LDEXTRA="$(LDEXTRA)" OPENSSL_CA_FILE="$(OPENSSL_CA_FILE)" OPENSSL_CA_DIR="$(OPENSSL_CA_DIR)" CURL_DIR="$(CURL_DIR)" /S
 
 SRC_DIR = src
 TEST_DIR = test
@@ -56,11 +56,11 @@ default:
 
 all: libraries example tests
 
-libraries: libMT libMTd libMD libMDd
+libraries: libMT libMTd libMD libMDd dllMT dllMTd dllMD dllMDd
 	
 	
 libMT:
-	nmake DLL=lib RTL=MT $(EXTRA)
+	nmake DLL=lib RTL=MT $(EXTRA) 
 
 libMTd:
 	nmake DLL=lib RTL=MTd $(EXTRA)
@@ -70,6 +70,21 @@ libMD:
 
 libMDd:
 	nmake DLL=lib RTL=MDd $(EXTRA)
+
+	
+
+dllMT:
+	nmake DLL=dll RTL=MT $(EXTRA)
+
+dllMTd:
+	nmake DLL=dll RTL=MTd $(EXTRA)	
+
+dllMD:
+	nmake DLL=dll RTL=MD $(EXTRA)	
+
+dllMDd:
+	nmake DLL=dll RTL=MDd $(EXTRA)	
+
 	
 	
 example: $(DLL)$(RTL)
