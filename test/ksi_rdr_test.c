@@ -71,7 +71,7 @@ static void TestRdrFileFileReading(CuTest* tc) {
 	/* Write some data to file */
 	f = fopen(TMP_FILE, "w");
 	CuAssert(tc, "Unable to create temporary file", f != NULL);
-	CuAssert(tc, "Unable to write temporary file", fprintf(f, testStr) > 0);
+	CuAssert(tc, "Unable to write temporary file", fprintf(f, "%s", testStr) > 0);
 	CuAssert(tc, "Unable to close temporary file", !fclose(f));
 
 	/* Try reading it back. */
@@ -106,7 +106,7 @@ static void TestRdrFileReadingChuncks(CuTest* tc) {
 	/* Write some data to file */
 	f = fopen(TMP_FILE, "w");
 	CuAssert(tc, "Unable to create tempprary file", f != NULL);
-	CuAssert(tc, "Unable to write temporary file", fprintf(f, testStr) > 0);
+	CuAssert(tc, "Unable to write temporary file", fprintf(f, "%s", testStr) > 0);
 	CuAssert(tc, "Unable to close temporary file", !fclose(f));
 
 	/* Try reading it back. */
