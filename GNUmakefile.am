@@ -1,6 +1,14 @@
 AUTOMAKE_OPTIONS = foreign
 SUBDIRS = src/ksi src/example test doc
 
+docdir = ${datadir}/doc/${PACKAGE}
+dist_doc_DATA = changelog license.txt
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = libksi.pc
+
+EXTRA_DIST = changelog build*.txt makefile lic*.txt \
+             */makefile doc/doxy* test/*
 test: check 
 	cd test && make && cd .. && ./test/runner;
 	

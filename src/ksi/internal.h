@@ -169,4 +169,9 @@ cleanup:																	\
 	return KSI_RETURN(&err);												\
 }																			\
 
+struct KSI_Object_st {
+	KSI_CTX *ctx;
+	unsigned refCount;
+};
+
 #endif

@@ -1,4 +1,4 @@
-AC_INIT([libksi], [0.0.1], [support@guardtime.com])
+AC_INIT([libksi], m4_esyscmd([tr -d [:space:] <VERSION]), [support@guardtime.com])
 AC_CONFIG_FILES([libksi.pc])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR([m4])
@@ -103,5 +103,5 @@ AC_ARG_WITH(unit-test-xml,
 
 AC_DEFINE_UNQUOTED(UNIT_TEST_OUTPUT_XML, "$with_unit_test_xml", [Location of the unit test xml results.])
 
-AC_CONFIG_FILES(GNUmakefile src/ksi/GNUmakefile test/GNUmakefile doc/GNUmakefile src/example/GNUmakefile)
+AC_CONFIG_FILES(GNUmakefile src/ksi/GNUmakefile test/GNUmakefile doc/GNUmakefile src/example/GNUmakefile redhat/libksi.spec)
 AC_OUTPUT

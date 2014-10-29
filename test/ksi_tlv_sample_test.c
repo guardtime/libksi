@@ -64,28 +64,22 @@ cleanup:
 
 static int parseStructure(KSI_TLV *tlv, int indent) {
 	int res;
-	uint64_t uint;
-	const char *buf;
 	KSI_TLV *nested = NULL;
 	KSI_LIST(KSI_TLV) *list = NULL;
 	size_t i;
+	KSI_Utf8String *utf = NULL;
+	KSI_Integer *integer = NULL;
 
 	switch (KSI_TLV_getTag(tlv)) {
 		case 0x01:
 			/* Cast as numeric TLV */
-			res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_INT);
-			if (res != KSI_OK) goto cleanup;
-
 			/* Parse number */
-			res = KSI_TLV_getUInt64Value(tlv, &uint);
+			res = KSI_Integer_fromTlv(tlv, &integer);
 			if (res != KSI_OK) goto cleanup;
 			break;
 		case 0x02:
 			/* Cast as string TLV */
-			res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_STR);
-			if (res != KSI_OK) goto cleanup;
-			/* Parse string */
-			res = KSI_TLV_getStringValue(tlv, &buf);
+			res = KSI_Utf8String_fromTlv(tlv, &utf);
 			if (res != KSI_OK) goto cleanup;
 			break;
 		case 0x03:
@@ -115,6 +109,8 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 
 cleanup:
 
+	KSI_Utf8String_free(utf);
+	KSI_Integer_free(integer);
 	return res;
 }
 
@@ -267,22 +263,27 @@ static void testObjectSerialization(CuTest *tc, const char *sample, int (*parse)
 	unsigned char *out = NULL;
 	unsigned out_len;
 	FILE *f = NULL;
+	char errm[1024];
 
 	f = fopen(sample, "rb");
-	CuAssert(tc, "Unable to open pdu file.", f != NULL);
+	snprintf(errm, sizeof(errm), "Unable to open pdu file: %s", sample);
+	CuAssert(tc, errm, f != NULL);
 
 	in_len = fread(in, 1, sizeof(in), f);
 	fclose(f);
-	CuAssert(tc, "Unable to read pdu.", in_len > 0);
+	snprintf(errm, sizeof(errm), "Unable to resd pdu file: %s", sample);
+	CuAssert(tc, errm, in_len > 0);
 
 	res = parse(ctx, in, in_len, &pdu);
-	CuAssert(tc, "Unable to parse 1st pdu.", res == KSI_OK && pdu != NULL);
+	snprintf(errm, sizeof(errm), "Unable to parse pdu: %s", sample);
+	CuAssert(tc, errm, res == KSI_OK && pdu != NULL);
 
 	res = serialize(pdu, &out, &out_len);
-	CuAssert(tc, "Unable to serialize 1st pdu", res == KSI_OK && out != NULL && out_len > 0);
+	snprintf(errm, sizeof(errm), "Unable to serialize pdu: %s", sample);
+	CuAssert(tc, errm, res == KSI_OK && out != NULL && out_len > 0);
 
-	CuAssert(tc, "Serialized pdu length mismatch.", in_len == out_len);
-	CuAssert(tc, "Serialised pdu content mismatch.", !KSITest_memcmp(in, out, in_len));
+	snprintf(errm, sizeof(errm), "Serialised pdu content mismatch: %s", sample);
+	CuAssert(tc, errm, !KSITest_memcmp(in, out, in_len));
 
 	KSI_free(out);
 	objFree(pdu);
