@@ -103,7 +103,17 @@ default: $(BIN_DIR)\alltests.exe
 $(BIN_DIR)\alltests.exe: $(BIN_DIR) $(ALLTESTS_OBJ)
 	link $(LDFLAGS) /OUT:$@ $(ALLTESTS_OBJ) $(EXT_LIB) 
 !IF "$(DLL)" == "dll"
-	xcopy "$(LIB_DIR)\libksiapi$(RTL).dll" "$(BIN_DIR)\" /Y /D
+	copy "$(LIB_DIR)\libksiapi$(RTL).dll" "$(BIN_DIR)\" /Y /D
+!IF "$(NET_PROVIDER)" == "CURL"
+!IF "$(RTL)" == "MT" || "$(RTL)" == "MD"
+	copy "$(CURL_DIR)\$(DLL)\libcurl$(RTL).dll" "$(BIN_DIR)\libcurl.dll" /Y
+!ELSE	
+	copy "$(CURL_DIR)\$(DLL)\libcurl$(RTL).dll" "$(BIN_DIR)\libcurl_debug.dll" /Y
+!ENDIF
+!ENDIF
+!IF "$(HASH_PROVIDER)" == "OPENSSL" || "$(TRUST_PROVIDER)" == "OPENSSL"
+	copy "$(OPENSSL_DIR)\$(DLL)\libeay32$(RTL).dll" "$(BIN_DIR)\libeay32.dll" /Y
+!ENDIF
 !ENDIF
 
 	

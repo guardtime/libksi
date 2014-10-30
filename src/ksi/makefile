@@ -79,13 +79,12 @@ EXT_LIB = $(EXT_LIB) Crypt32.lib advapi32.lib
 	
 #Configuration of net provider	
 !IF "$(NET_PROVIDER)"=="CURL"
-CCFLAGS = /I"$(CURL_DIR)\include"
+CCFLAGS = $(CCFLAGS) /I"$(CURL_DIR)\include"
 CCFLAGS = $(CCFLAGS) /DKSI_NET_HTTP_IMPL=KSI_IMPL_CURL
 LIB_OBJ = $(LIB_OBJ) $(OBJ_DIR)\net_http_curl.obj
 !IF "$(DLL)" == "dll"
 LDFLAGS = $(LDFLAGS) /LIBPATH:"$(CURL_DIR)\$(DLL)"
 EXT_LIB = $(EXT_LIB) libcurl$(RTL).lib
-CCFLAGS = $(CCFLAGS) /DCURL_STATICLIB
 !ELSE
 CCFLAGS = $(CCFLAGS) /DCURL_STATICLIB
 !ENDIF
