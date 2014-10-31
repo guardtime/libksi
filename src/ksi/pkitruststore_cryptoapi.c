@@ -897,6 +897,7 @@ int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned cha
     msgPara.pvGetArg = NULL;
 	
 	if (!CryptVerifyDetachedMessageSignature(&msgPara,0,signature->pkcs7.pbData,signature->pkcs7.cbData,1,&data,&data_len,&subjectCert)){
+		printCertInfo(subjectCert);
 		printError(GetLastError()); 
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Verification of PKI signature failed");
 		goto cleanup;

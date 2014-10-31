@@ -57,7 +57,8 @@ LIB_OBJ = \
 	$(OBJ_DIR)\tlv_template.obj \
 	$(OBJ_DIR)\types.obj \
 	$(OBJ_DIR)\types_base.obj \
-	$(OBJ_DIR)\verification.obj
+	$(OBJ_DIR)\verification.obj \
+	$(OBJ_DIR)\hmac.obj
 	
 
 !IF "$(NET_PROVIDER)"=="CURL"
