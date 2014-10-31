@@ -1,10 +1,3 @@
-/* 
- * File:   hmac.h
- * Author: Taavi
- *
- * Created on October 16, 2014, 12:16 PM
- */
-
 #ifndef HMAC_H
 #define	HMAC_H
 

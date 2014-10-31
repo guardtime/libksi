@@ -8,7 +8,7 @@
 extern KSI_CTX *ctx;
 
 
-static struct testData {
+struct testData {
 	int hashAlg;
 	
 	unsigned char *key;
