@@ -252,7 +252,7 @@ extern "C" {
 	int KSI_TLV_appendNestedTlv(KSI_TLV *target, KSI_TLV *after, KSI_TLV *tlv);
 
 	/**
-	 * Removes the given TLV from the parent iff the given TLV is a immediate child
+	 * Removes the given TLV from the parent if the given TLV is a immediate child
 	 * of the parent.
 	 *
 	 * \param[in]		target			The parent TLV.

@@ -56,11 +56,11 @@ default:
 
 all: libraries example tests
 
-libraries: libMT libMTd libMD libMDd
+libraries: libMT libMTd libMD libMDd dllMT dllMTd dllMD dllMDd
 	
 	
 libMT:
-	nmake DLL=lib RTL=MT $(EXTRA)
+	nmake DLL=lib RTL=MT $(EXTRA) 
 
 libMTd:
 	nmake DLL=lib RTL=MTd $(EXTRA)
@@ -70,6 +70,21 @@ libMD:
 
 libMDd:
 	nmake DLL=lib RTL=MDd $(EXTRA)
+
+	
+
+dllMT:
+	nmake DLL=dll RTL=MT $(EXTRA)
+
+dllMTd:
+	nmake DLL=dll RTL=MTd $(EXTRA)	
+
+dllMD:
+	nmake DLL=dll RTL=MD $(EXTRA)	
+
+dllMDd:
+	nmake DLL=dll RTL=MDd $(EXTRA)	
+
 	
 	
 example: $(DLL)$(RTL)

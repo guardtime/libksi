@@ -149,8 +149,8 @@ static int RunAllTests() {
 	CuSuite* suite = initSuite();
 
 	KSI_CTX_new(&ctx);
+	KSI_CTX_setLogFile(ctx, stderr);
 	KSI_CTX_setLogLevel(ctx, KSI_LOG_DEBUG);
-
 	CuSuiteRun(suite);
 
 	printStats(suite);

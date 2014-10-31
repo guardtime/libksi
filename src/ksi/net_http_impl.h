@@ -18,6 +18,7 @@ extern "C" {
 		char *urlExtender;
 		char *urlPublication;
 		char *agentName;
+		
 		int (*sendRequest)(KSI_NetworkClient *, KSI_RequestHandle *, char *);
 		KSI_uint64_t requestId;
 

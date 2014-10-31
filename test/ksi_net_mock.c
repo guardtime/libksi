@@ -101,6 +101,7 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 	KSI_LOG_debug(ctx, "Initiate MOCK request.");
 
 	handle->readResponse = mockReceive;
+	handle->client = client;
 
 	memcpy((unsigned char *)KSI_NET_MOCK_request, handle->request, handle->request_length);
 

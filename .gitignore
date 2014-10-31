@@ -20,5 +20,11 @@ results.xml
 *.pdb
 *.sln
 *.suo
-objM*
+obj/
+out/
+kraam/
+doc/html
+doc/latex
+nbproject/
+vsproject/
 

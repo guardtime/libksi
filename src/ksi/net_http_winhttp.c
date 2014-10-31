@@ -331,8 +331,11 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		goto cleanup;
 	}
 
-	res = KSI_RequestHandle_setReadResponseFn(handle, winhttpReceive);
-	KSI_CATCH(&err, res) goto cleanup;
+	handle->readResponse = winhttpReceive;
+	handle->client = client;
+	
+//	res = KSI_RequestHandle_setReadResponseFn(handle, winhttpReceive);
+//	KSI_CATCH(&err, res) goto cleanup;
 
 	/*Preparing session handle. Opens an HTTP session for a given site*/
 	implCtx->connection_handle = WinHttpConnect(implCtx->session_handle, implCtx->hostName, implCtx->uc.nPort, 0);

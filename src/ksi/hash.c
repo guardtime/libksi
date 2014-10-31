@@ -358,6 +358,18 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+int KSI_DataHash_getHashAlg(const KSI_DataHash *hash, int *hashAlg){
+	int res = 0;
+	
+	if(hash == NULL) return KSI_INVALID_ARGUMENT;
+	if(hashAlg == NULL) return KSI_INVALID_ARGUMENT;
+	if(hash->imprint == NULL) return KSI_INVALID_ARGUMENT;
+	
+	*hashAlg = hash->imprint[0];
+	
+return KSI_OK;
+}
+
 int KSI_MetaHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned char **data, int *data_len) {
 	KSI_ERR err;
 	int len;

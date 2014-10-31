@@ -167,6 +167,32 @@ static void testExtendingWithoutPublication(CuTest* tc) {
 
 }
 
+static void testSigningInvalidResponse(CuTest* tc){
+	int res;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+	KSI_NetworkClient *pr = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+
+	res = KSI_NET_MOCK_new(ctx, &pr);
+	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
+
+	res = KSI_setNetworkProvider(ctx, pr);
+	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
+
+	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
+	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+
+	KSITest_setFileMockResponse(tc, "test/resource/tlv/nok_aggr_response_missing_header.tlv");
+	res = KSI_createSignature(ctx, hsh, &sig);
+	CuAssert(tc, "Signature should not be created with invalid aggregation response", res == KSI_INVALID_FORMAT && sig == NULL);
+
+	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
+}
+
 CuSuite* KSITest_NET_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
@@ -174,6 +200,7 @@ CuSuite* KSITest_NET_getSuite(void)
 	SUITE_ADD_TEST(suite, testSigning);
 	SUITE_ADD_TEST(suite, testExtending);
 	SUITE_ADD_TEST(suite, testExtendingWithoutPublication);
+	SUITE_ADD_TEST(suite, testSigningInvalidResponse);
 
 	return suite;
 }

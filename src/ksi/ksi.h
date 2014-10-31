@@ -148,6 +148,11 @@ enum KSI_StatusCode {
 	 * resources.
 	 */
 	KSI_CRYPTO_FAILURE,
+	
+	/**
+	 * HMAC mismatch occured
+	 */
+	KSI_HMAC_MISMATCH,
 
 	/**
 	 * Unknown error occured.
