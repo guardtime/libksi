@@ -14,9 +14,14 @@ extern "C" {
 		int (*sendExtendRequest)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **);
 		int (*sendPublicationRequest)(KSI_NetworkClient *, KSI_RequestHandle *);
 
+		/** Aggregator user. */
 		char *agrUser;
+		/** Aggregator pass phrase. */
 		char *agrPass;
+
+		/** Extender user. */
 		char *extUser;
+		/** Extender password. */
 		char *extPass;
 		
 		/** Dedicated context for the net provider */

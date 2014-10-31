@@ -187,6 +187,10 @@ cleanup:
 void KSI_NetworkClient_free(KSI_NetworkClient *provider) {
 	if (provider != NULL) {
 		if (provider->implCtx_free != NULL) {
+			KSI_free(provider->agrPass);
+			KSI_free(provider->agrUser);
+			KSI_free(provider->extPass);
+			KSI_free(provider->extUser);
 			provider->implCtx_free(provider->implCtx);
 		}
 		KSI_free(provider);
@@ -339,11 +343,11 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 	KSI_ERR err;
 	int res;
 	KSI_ExtendPdu *pdu = NULL;
-	KSI_DataHash *hmac_read = NULL;
-	KSI_DataHash *hmac_real = NULL;
+	KSI_DataHash *respHmac = NULL;
+	KSI_DataHash *actualHmac = NULL;
 	KSI_TLV *payloadTLV = NULL;
 	KSI_ExtendResp *tmp = NULL;
-	int hashAlg = -1;
+	int hashAlg;
 	unsigned char *raw = NULL;
 	unsigned len;
 	
@@ -362,16 +366,16 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/*Control HMAC*/
-	res = KSI_ExtendPdu_getHmac(pdu, &hmac_read);
+	res = KSI_ExtendPdu_getHmac(pdu, &respHmac);
 	KSI_CATCH(&err, res) goto cleanup;
 	
-	res = KSI_DataHash_getHashAlg(hmac_read, &hashAlg);
+	res = KSI_DataHash_getHashAlg(respHmac, &hashAlg);
 	KSI_CATCH(&err, res) goto cleanup;
 	
-	res = KSI_ExtendPdu_calculateHmac(pdu, hashAlg, handle->client->extPass, &hmac_real);
+	res = KSI_ExtendPdu_calculateHmac(pdu, hashAlg, handle->client->extPass, &actualHmac);
 	KSI_CATCH(&err, res) goto cleanup;
 	
-	if(KSI_DataHash_equals(hmac_read, hmac_real) != 1){
+	if(KSI_DataHash_equals(respHmac, actualHmac) != 1){
 		KSI_FAIL(&err, KSI_HMAC_MISMATCH, NULL);
 		goto cleanup;
 	}	
@@ -403,6 +407,7 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 
 cleanup:
 
+	KSI_DataHash_free(actualHmac);
 	KSI_ExtendResp_free(tmp);
 	KSI_ExtendPdu_free(pdu);
 	KSI_TLV_free(payloadTLV);
@@ -415,10 +420,10 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 	int res;
 	KSI_AggregationPdu *pdu = NULL;
 	KSI_TLV *payloadTLV = NULL;
-	KSI_DataHash *hmac_read = NULL;
-	KSI_DataHash *hmac_real = NULL;
+	KSI_DataHash *respHmac = NULL;
+	KSI_DataHash *actualHmac = NULL;
 	KSI_AggregationResp *tmp = NULL;
-	int hashAlg = -1;
+	int hashAlg;
 	unsigned char *raw = NULL;
 	unsigned len;
 	
@@ -439,16 +444,16 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/*Control HMAC*/
-	res = KSI_AggregationPdu_getHmac(pdu, &hmac_read);
+	res = KSI_AggregationPdu_getHmac(pdu, &respHmac);
 	KSI_CATCH(&err, res) goto cleanup;
 	
-	res = KSI_DataHash_getHashAlg(hmac_read, &hashAlg);
+	res = KSI_DataHash_getHashAlg(respHmac, &hashAlg);
 	KSI_CATCH(&err, res) goto cleanup;
 	
-	res = KSI_AggregationPdu_calculateHmac(pdu, hashAlg, handle->client->agrPass, &hmac_real);
+	res = KSI_AggregationPdu_calculateHmac(pdu, hashAlg, handle->client->agrPass, &actualHmac);
 	KSI_CATCH(&err, res) goto cleanup;
 	
-	if(KSI_DataHash_equals(hmac_read, hmac_real) != 1){
+	if(KSI_DataHash_equals(respHmac, actualHmac) != 1){
 		KSI_FAIL(&err, KSI_HMAC_MISMATCH, NULL);
 		goto cleanup;
 	}	
@@ -477,6 +482,7 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 
 cleanup:
 
+	KSI_DataHash_free(actualHmac);
 	KSI_AggregationResp_free(tmp);
 	KSI_AggregationPdu_free(pdu);
 	KSI_TLV_free(payloadTLV);

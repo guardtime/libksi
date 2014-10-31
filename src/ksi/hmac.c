@@ -11,9 +11,9 @@
 static const unsigned char ipad[MAX_KEY_LEN]={ipad8,ipad8,ipad8,ipad8,ipad8,ipad8,ipad8,ipad8};
 static const unsigned char opad[MAX_KEY_LEN]={opad8,opad8,opad8,opad8,opad8,opad8,opad8,opad8};
 
-int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, const char *data, size_t data_len, KSI_DataHash **hmac){
+int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, const unsigned char *data, unsigned data_len, KSI_DataHash **hmac){
 	KSI_ERR err;
-	int res = 0;
+	int res;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hashedKey = NULL;
 	KSI_DataHash *innerHash = NULL;
@@ -25,7 +25,7 @@ int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, const char *data, si
 	unsigned int buf_len = 0;
 	unsigned char ipadXORkey[MAX_KEY_LEN];
 	unsigned char opadXORkey[MAX_KEY_LEN];
-	unsigned char *digest = NULL;
+	const unsigned char *digest = NULL;
 	unsigned int digest_len = 0;
 	unsigned int i =0;
 	
@@ -42,15 +42,13 @@ int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, const char *data, si
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "The hash length is greater than 64");
 		goto cleanup;
 	}
-
 	
-	
-	/*Open the hasher*/
+	/* Open the hasher. */
 	res = KSI_DataHasher_open(ctx, alg, &hsr);
 	KSI_CATCH(&err, res);
 	
-	/*Prepare the key for hashing */
-	/*If the key is longer than 64, hash it. If the key or its hash is shorter than 64 bit, append zeros*/
+	/* Prepare the key for hashing. */
+	/* If the key is longer than 64, hash it. If the key or its hash is shorter than 64 bit, append zeros. */
 	if(key_len > MAX_KEY_LEN){
 		res = KSI_DataHasher_add(hsr, key, key_len);
 		KSI_CATCH(&err, res);
@@ -68,13 +66,12 @@ int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, const char *data, si
 		
 		bufKey = digest;
 		buf_len = digest_len;
-	}
-	else{
+	} else{
 		bufKey = key;
 		buf_len = key_len;
 	}
 	
-	for(i=0; i< buf_len; i++){
+	for(i = 0; i < buf_len; i++) {
 		ipadXORkey[i] = ipad[i]^bufKey[i];
 		opadXORkey[i] = opad[i]^bufKey[i];
 	}
@@ -84,7 +81,7 @@ int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, const char *data, si
 		opadXORkey[i] = 0x5c;
 	}
 	
-	/*Hash inner data*/
+	/* Hash inner data. */
 	res = KSI_DataHasher_reset(hsr);
 	KSI_CATCH(&err, res);
 	res = KSI_DataHasher_add(hsr, ipadXORkey, MAX_KEY_LEN);
@@ -94,7 +91,7 @@ int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, const char *data, si
 	res = KSI_DataHasher_close(hsr, &innerHash);
 	KSI_CATCH(&err, res);
 
-	/*Hash outer data*/
+	/* Hash outer data. */
 	res = KSI_DataHasher_reset(hsr);
 	KSI_CATCH(&err, res);
 	res = KSI_DataHasher_add(hsr, opadXORkey, MAX_KEY_LEN);
@@ -124,32 +121,3 @@ cleanup:
 	
 	return KSI_RETURN(&err);
 }
-
-
-
-char* KSI_HMAC_toString(const KSI_DataHash *hmac, char *buf, unsigned buf_len){
-	char *ret = NULL;
-	unsigned i;
-	unsigned len = 0;
-
-	int res = 0;
-	unsigned char *digest = NULL;
-	unsigned digest_len = 0;
-	
-	if (hmac == NULL || buf == NULL) goto cleanup;
-
-	res = KSI_DataHash_extract(hmac, NULL, &digest, &digest_len);
-	if(res != KSI_OK) goto cleanup;
-	
-	for (i = 0; i < digest_len && len < buf_len; i++) {
-		len += snprintf(buf + len, buf_len - len, "%02x", digest[i]);
-	}
-
-	ret = buf;
-
-cleanup:
-
-	return ret;
-
-}
-

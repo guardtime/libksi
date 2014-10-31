@@ -35,13 +35,6 @@ static int setIntParam(int *param, int val) {
 	return KSI_OK;
 }
 
-static void debug_saw_raw_data_to_file(char *fname, unsigned char *data, unsigned data_len){
-	FILE *out = NULL;
-	out = fopen(fname, "wb");
-	fwrite(data, 1, data_len, out);
-	fclose(out);
-}
-
 static int postProcessRequest(KSI_HttpClientCtx *http, void *req, void* pdu, const char *user, int (*getHeader)(const void *, KSI_Header **), int (*setHeader)(void *, KSI_Header *), int (*getId)(void *, KSI_Integer **), int (*setId)(void *, KSI_Integer *)) {
 	KSI_ERR err;
 	int res;
@@ -144,7 +137,7 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 	res = KSI_AggregationPdu_new(client->ctx, &pdu);
 	KSI_CATCH(&err, res) goto cleanup;
 	
-	res = postProcessRequest(http, req, pdu, client->agrUser, (int (*)(const void *, KSI_Header **))KSI_AggregationPdu_getHeader, (int (*)(void *, KSI_Header *))KSI_AggregationPdu_setHeader, (int (*)(void*, KSI_Integer**))KSI_AggregationReq_getRequestId, (int (*)(void*, KSI_Integer**))KSI_AggregationReq_setRequestId);
+	res = postProcessRequest(http, req, pdu, client->agrUser, (int (*)(const void *, KSI_Header **))KSI_AggregationPdu_getHeader, (int (*)(void *, KSI_Header *))KSI_AggregationPdu_setHeader, (int (*)(void*, KSI_Integer**))KSI_AggregationReq_getRequestId, (int (*)(void*, KSI_Integer*))KSI_AggregationReq_setRequestId);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_AggregationPdu_setRequest(pdu, req);

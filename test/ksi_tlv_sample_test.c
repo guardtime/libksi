@@ -282,6 +282,9 @@ static void testObjectSerialization(CuTest *tc, const char *sample, int (*parse)
 	snprintf(errm, sizeof(errm), "Unable to serialize pdu: %s", sample);
 	CuAssert(tc, errm, res == KSI_OK && out != NULL && out_len > 0);
 
+//	snprintf(errm, sizeof(errm), "Serialized pdu length mismatch: %s", sample);
+//	CuAssert(tc, errm, res == KSI_OK && out_len == in_len);
+
 	snprintf(errm, sizeof(errm), "Serialised pdu content mismatch: %s", sample);
 	CuAssert(tc, errm, !KSITest_memcmp(in, out, in_len));
 
@@ -290,14 +293,14 @@ static void testObjectSerialization(CuTest *tc, const char *sample, int (*parse)
 }
 
 static void aggregationPduTest(CuTest *tc) {
-	testObjectSerialization(tc, "test/resource/tlv/ok-sig-2014-07-01.1-aggr_response_ordered.tlv",
+	testObjectSerialization(tc, "test/resource/tlv/aggr_response.tlv",
 			(int (*)(KSI_CTX *, unsigned char *, unsigned, void **))KSI_AggregationPdu_parse,
 			(int (*)(void *, unsigned char **, unsigned *))KSI_AggregationPdu_serialize,
 			( void (*)(void *))KSI_AggregationPdu_free);
 }
 
 static void extendPduTest(CuTest *tc) {
-	testObjectSerialization(tc, "test/resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv",
+	testObjectSerialization(tc, "test/resource/tlv/extend_response.tlv",
 			(int (*)(KSI_CTX *, unsigned char *, unsigned, void **))KSI_ExtendPdu_parse,
 			(int (*)(void *, unsigned char **, unsigned *))KSI_ExtendPdu_serialize,
 			( void (*)(void *))KSI_ExtendPdu_free);

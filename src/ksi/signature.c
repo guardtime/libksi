@@ -768,6 +768,7 @@ int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signat
 
 cleanup:
 
+	KSI_AggregationResp_free(response);
 	KSI_Signature_free(sign);
 	KSI_RequestHandle_free(handle);
 	KSI_AggregationReq_free(req);
