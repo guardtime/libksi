@@ -58,7 +58,7 @@ EXT_LIB = $(LIB_NAME)$(RTL).lib \
 
 !IF "$(NET_PROVIDER)" == "CURL"
 EXT_LIB = $(EXT_LIB) libcurl$(RTL).lib
-CCFLAGS = $(CCFLAGS) /LIBPATH:"$(CURL_DIR)\$(DLL)" 
+LDFLAGS = $(LDFLAGS) /LIBPATH:$(CURL_DIR)\$(DLL)
 
 !ELSE IF "$(NET_PROVIDER)" == "WININET"
 EXT_LIB = $(EXT_LIB) wininet.lib
@@ -68,7 +68,8 @@ EXT_LIB = $(EXT_LIB) winhttp.lib
 !ENDIF
 
 !IF "$(HASH_PROVIDER)" == "OPENSSL" || "$(TRUST_PROVIDER)" == "OPENSSL"
-EXT_LIB = $(EXT_LIB) libeay32$(RTL).lib advapi32.lib  
+EXT_LIB = $(EXT_LIB) libeay32$(RTL).lib advapi32.lib
+LDFLAGS = $(LDFLAGS) /LIBPATH:$(OPENSSL_DIR)\$(DLL)
 !ENDIF
 
 !IF "$(HASH_PROVIDER)" == "CRYPTOAPI" || "$(TRUST_PROVIDER)" == "CRYPTOAPI"
@@ -81,7 +82,7 @@ EXT_LIB = $(EXT_LIB) Crypt32.lib advapi32.lib
 
 #/NODEFAULTLIB:libcmtd.lib
 CCFLAGS = /nologo /W3 /D_CRT_SECURE_NO_DEPRECATE /I$(SRC_DIR) /I$(INC_DIR) /I$(CUTEST_DIR)
-LDFLAGS = /NOLOGO /LIBPATH:$(LIB_DIR) 
+LDFLAGS = $(LDFLAGS) /NOLOGO /LIBPATH:$(LIB_DIR) 
 
 !IF "$(RTL)" == "MT" || "$(RTL)" == "MD"
 CCFLAGS = $(CCFLAGS) /DNDEBUG /O2
