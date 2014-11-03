@@ -282,8 +282,8 @@ static void testObjectSerialization(CuTest *tc, const char *sample, int (*parse)
 	snprintf(errm, sizeof(errm), "Unable to serialize pdu: %s", sample);
 	CuAssert(tc, errm, res == KSI_OK && out != NULL && out_len > 0);
 
-//	snprintf(errm, sizeof(errm), "Serialized pdu length mismatch: %s", sample);
-//	CuAssert(tc, errm, res == KSI_OK && out_len == in_len);
+	snprintf(errm, sizeof(errm), "Serialized pdu length mismatch: %s", sample);
+	CuAssert(tc, errm, res == KSI_OK && out_len == in_len);
 
 	snprintf(errm, sizeof(errm), "Serialised pdu content mismatch: %s", sample);
 	CuAssert(tc, errm, !KSITest_memcmp(in, out, in_len));
