@@ -3,6 +3,7 @@
 #include "internal.h"
 #include "verification_impl.h"
 #include "signature_impl.h"
+#include "publicationsfile_impl.h"
 
 typedef struct headerRec_st HeaderRec;
 
@@ -1221,6 +1222,8 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
+
+KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_CalendarAuthRec*, calendarAuthRec, CalendarAuthRec)
 
 KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_PublicationRecord*, publication, PublicationRecord)
 

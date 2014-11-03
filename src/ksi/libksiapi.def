@@ -82,7 +82,6 @@ EXPORTS
 ;hmac.h
 EXPORTS
     KSI_HMAC_create
-    KSI_HMAC_toString
 
 ;io.h
 EXPORTS
