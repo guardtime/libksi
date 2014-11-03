@@ -186,6 +186,8 @@ extern "C" {
 	 */
 	int KSI_Signature_getPublicationRecord(const KSI_Signature *sig, KSI_PublicationRecord **pubRec);
 
+	int KSI_Signature_getCalendarAuthRec (const KSI_Signature *sig, KSI_CalendarAuthRec **calendarAuthRec);
+	
 	/**
 	 * This function verifies given hash value \c hsh using the signature \c sig. If
 	 * the hash value does not match the input hash value of the signeture, a
