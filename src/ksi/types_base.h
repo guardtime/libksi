@@ -128,19 +128,99 @@ KSI_DEFINE_LIST(KSI_TLV);
 KSI_DEFINE_LIST(KSI_PKICertificate);
 
 /**
- * KSI_Integer
+ * Method to free or dereference a KSI_Integer object. The object is
+ * not freed if the object is still referenced from somewhere.
+ * \param[in]	o		Pointer to be freed
+ * \see #KSI_Integer_new, #KSI_Integer_ref
  */
-void KSI_Integer_free(KSI_Integer *kint);
-int KSI_Integer_getSize(const KSI_Integer *kint, unsigned *size);
-char *KSI_Integer_toDateString(const KSI_Integer *kint, char *buf, unsigned buf_len);
-KSI_uint64_t KSI_Integer_getUInt64(const KSI_Integer *kint);
-int KSI_Integer_new(KSI_CTX *ctx, KSI_uint64_t value, KSI_Integer **kint);
+void KSI_Integer_free(KSI_Integer *o);
+
+/**
+ * This method converts the #KSI_Integer value as UTC time and converts
+ * its value to a string with the following format: "%Y-%m-%d %H:%M:%S UTC".
+ * The result is written to buffer. If the buffer is too short, the remainder
+ * is discarded. It is guaranteed to set a terminating '\0' to the end of the
+ * result.
+ *
+ * \param[in]	o		Pointer to #KSI_Integer.
+ * \param[in]	buf		Pointer to buffer.
+ * \param[in]	buf_len	Length of the buffer.
+ * \return On success returns buf and NULL if an error occured.
+ */
+char *KSI_Integer_toDateString(const KSI_Integer *o, char *buf, unsigned buf_len);
+
+/**
+ * Returns the native 64-bit value of the #KSI_Integer.
+ * \param[in]	o		Pointer to #KSI_Integer.
+ * \return The native 64-bit value.
+ */
+KSI_uint64_t KSI_Integer_getUInt64(const KSI_Integer *o);
+
+/**
+ * Constructor to create a new #KSI_Integer.
+ * \param[in]	ctx		KSI context.
+ * \param[in]	value	Value of the new #KSI_Integer.
+ * \param[out]	o		Pointer to the receiving pointer.
+ * \return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
+ */
+int KSI_Integer_new(KSI_CTX *ctx, KSI_uint64_t value, KSI_Integer **o);
+
+/**
+ * Function to determine equality of the values of the two
+ * #KSI_Integer objects.
+ * \param[in]	a		Left operand.
+ * \param[in]	b		Right operand.
+ * \return 0 if the values differ, otherwise returns value greater than 0.
+ */
 int KSI_Integer_equals(const KSI_Integer *a, const KSI_Integer *b);
+
+/**
+ * Function to copmare the values of two #KSI_Integer objects.
+ * \param[in]	a		Left operand.
+ * \param[in]	b		Right operand.
+ * \return Returns 0 if the values are equal, -1 if b is greater and 1 otherwise.
+ * \note NULL values are treated as they where #KSI_Integer objects with value 0.
+ */
 int KSI_Integer_compare(const KSI_Integer *a, const KSI_Integer *b);
+
+/**
+ * Function to compare the equality of a #KSI_Integer with a native
+ * unsigned value.
+ * \param[in]	o		Pointer to #KSI_Integer.
+ * \param[in]	i		Native unsigned value
+ * \return Returns 0 if the values differ, otherwise value greater than 0.
+ * \note If a == NULL, the result is always not true.
+ */
 int KSI_Integer_equalsUInt(const KSI_Integer *o, KSI_uint64_t i);
-int KSI_Integer_clone(KSI_Integer *val, KSI_Integer **clone);
-int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_Integer **integer);
-int KSI_Integer_toTlv(KSI_CTX *ctx, KSI_Integer *i, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+
+/**
+ * Increases the inner reference count of that object.
+ * \param[in]	o		Pointer to #KSI_Integer
+ * \return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
+ * \see #KSI_Integer_free
+ */
+int KSI_Integer_ref(KSI_Integer *o);
+
+/**
+ * Function to convert a plain #KSI_TLV to a #KSI_Integer. The TLV meta data (i.e.
+ * tag, length and flags) are not preserved.
+ * \param[in]	tlv		Pointer to #KSI_TLV.
+ * \param[out]	o		Pointer to receiving pointer.
+ * \return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
+ */
+int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_Integer **o);
+
+/**
+ * Function to create a #KSI_TLV object.
+ * \param[in]	ctx				KSI context.
+ * \param[in]	o				Pointer to #KSI_Integer.
+ * \param[in]	tag				The TLV tag value.
+ * \param[in]	isNonCritical	Is non-critical TLV flag.
+ * \param[in]	isForward		Is forward TLV flag.
+ * \param[out]	tlv				Pointer to receiving pointer.
+ * \return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
+ */
+int KSI_Integer_toTlv(KSI_CTX *ctx, KSI_Integer *o, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 /**
  * KSI_OctetString
@@ -151,6 +231,7 @@ int KSI_OctetString_extract(const KSI_OctetString *t, const unsigned char **data
 int KSI_OctetString_equals(const KSI_OctetString *left, const KSI_OctetString *right);
 int KSI_OctetString_fromTlv(KSI_TLV *tlv, KSI_OctetString **oct);
 int KSI_OctetString_toTlv(KSI_CTX *ctx, KSI_OctetString *oct, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+int KSI_OctetString_ref(KSI_OctetString *o);
 
 /**
  * KSI_Utf8String
@@ -188,14 +269,15 @@ size_t KSI_Utf8String_size(const KSI_Utf8String *t);
  *
  * \return Pointer to the null terminated c string.
  */
-const char *KSI_Utf8String_cstr(const KSI_Utf8String *t);
-int KSI_Utf8String_fromTlv(KSI_TLV *tlv, KSI_Utf8String **u8str);
-int KSI_Utf8String_toTlv(KSI_CTX *ctx, KSI_Utf8String *u8str, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
-int KSI_Utf8String_clone(KSI_Utf8String *u8str, KSI_Utf8String **clone);
+const char *KSI_Utf8String_cstr(const KSI_Utf8String *o);
+int KSI_Utf8String_fromTlv(KSI_TLV *tlv, KSI_Utf8String **o);
+int KSI_Utf8String_toTlv(KSI_CTX *ctx, KSI_Utf8String *o, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+int KSI_Utf8String_ref(KSI_Utf8String *o);
 
-int KSI_Utf8StringNZ_fromTlv(KSI_TLV *tlv, KSI_Utf8String **u8str);
-int KSI_Utf8StringNZ_toTlv(KSI_CTX *ctx, KSI_Utf8String *u8str, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+int KSI_Utf8StringNZ_fromTlv(KSI_TLV *tlv, KSI_Utf8String **o);
+int KSI_Utf8StringNZ_toTlv(KSI_CTX *ctx, KSI_Utf8String *o, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
+/* TODO! Following functions should not be declared here. */
 /**
  * KSI_AggregationAuthRec
  */

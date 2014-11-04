@@ -27,7 +27,7 @@ extern "C" {
 	 * \param[out]	endLevel		Pointer to the receiving end level variable.
 	 * \param[out]	outputHash		Pointer to the receiving pointer to data hash object.
 	 */
-	int KSI_HashChain_aggregate(KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, int startLevel, int hash_id, int *endLevel, KSI_DataHash **outputHash);
+	int KSI_HashChain_aggregate(KSI_CTX *, KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, int startLevel, int hash_id, int *endLevel, KSI_DataHash **outputHash);
 
 	/**
 	 * This function aggregates the calendar hash chain and returns the result hash via \c outputHash parameter.
@@ -35,7 +35,7 @@ extern "C" {
 	 * \param[in]	inputHash		Input hash value.
 	 * \param[out]	outputHash		Pointer to the receiving pointer to data hash object.
 	 */
-	int KSI_HashChain_aggregateCalendar(KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, KSI_DataHash **outputHash);
+	int KSI_HashChain_aggregateCalendar(KSI_CTX *, KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, KSI_DataHash **outputHash);
 
 	/**
 	 * KSI_HashChainLink

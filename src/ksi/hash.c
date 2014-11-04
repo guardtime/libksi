@@ -370,7 +370,7 @@ int KSI_DataHash_getHashAlg(const KSI_DataHash *hash, int *hashAlg){
 return KSI_OK;
 }
 
-int KSI_MetaHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned char **data, int *data_len) {
+int KSI_DataHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned char **data, int *data_len) {
 	KSI_ERR err;
 	int len;
 	int algo_id;
@@ -433,7 +433,7 @@ int KSI_DataHash_MetaHash_fromTlv(KSI_TLV *tlv, KSI_DataHash **hsh) {
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Try to extract the meta value to validate format. */
-	res = KSI_MetaHash_MetaHash_parseMeta(tmp, &data, &data_len);
+	res = KSI_DataHash_MetaHash_parseMeta(tmp, &data, &data_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Make sure that the contents of this imprint is a null terminated sequence of bytes. */

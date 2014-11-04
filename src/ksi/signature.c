@@ -35,10 +35,10 @@ void KSI_AggregationHashChain_free(KSI_AggregationHashChain *aggr) {
 	if (aggr != NULL) {
 		KSI_Integer_free(aggr->aggrHashId);
 		KSI_Integer_free(aggr->aggregationTime);
-		KSI_IntegerList_freeAll(aggr->chainIndex);
+		KSI_IntegerList_free(aggr->chainIndex);
 		KSI_OctetString_free(aggr->inputData);
 		KSI_DataHash_free(aggr->inputHash);
-		KSI_HashChainLinkList_freeAll(aggr->chain);
+		KSI_HashChainLinkList_free(aggr->chain);
 		KSI_free(aggr);
 	}
 }
@@ -97,7 +97,7 @@ KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_LIST(KSI_HashChainLink) *, ch
 void KSI_AggregationAuthRec_free(KSI_AggregationAuthRec *aar) {
 	if (aar != NULL) {
 		KSI_Integer_free(aar->aggregationTime);
-		KSI_IntegerList_freeAll(aar->chainIndexesList);
+		KSI_IntegerList_free(aar->chainIndexesList);
 		KSI_DataHash_free(aar->inputHash);
 		KSI_Utf8String_free(aar->signatureAlgo);
 		KSI_PKISignedData_free(aar->signatureData);
@@ -474,8 +474,8 @@ int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain
 	KSI_CATCH(&err, res) goto cleanup;
 	newCalChainTlv = NULL;
 
-	/* Free only the memory, if everything else was OK.*/
-	KSI_TLV_free(oldCalChainTlv);
+	/* The memory was freed within KSI_TLV_replaceNestedTlv. */
+	oldCalChainTlv = NULL;
 
 	KSI_CalendarHashChain_free(sig->calendarChain);
 	sig->calendarChain = calendarHashChain;
@@ -520,10 +520,8 @@ static int removeWeakAuthRecords(KSI_Signature *sig) {
 		tag = KSI_TLV_getTag(tlv);
 
 		if (tag == 0x0804 || tag == 0x0805) {
-			res = KSI_TLVList_remove(nested, (unsigned)i);
+			res = KSI_TLVList_remove(nested, (unsigned)i, NULL);
 			KSI_CATCH(&err, res) goto cleanup;
-
-			KSI_TLV_free(tlv);
 			tlv = NULL;
 		}
 	}
@@ -703,13 +701,14 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp,
 				i++;
 				break;
 			default:
+				/* Remove it from the original list. */
+				res = KSI_TLVList_remove(tlvList, i, &t);
+				KSI_CATCH(&err, res) goto cleanup;
+
 				/* Copy this tag to the signature. */
 				res = KSI_TLV_appendNestedTlv(tmpTlv, NULL, t);
 				KSI_CATCH(&err, res) goto cleanup;
 
-				/* Remove it from the original list. */
-				res = KSI_TLVList_remove(tlvList, i);
-				KSI_CATCH(&err, res) goto cleanup;
 		}
 	}
 
@@ -893,7 +892,7 @@ void KSI_Signature_free(KSI_Signature *sig) {
 	if (sig != NULL) {
 		KSI_TLV_free(sig->baseTlv);
 		KSI_CalendarHashChain_free(sig->calendarChain);
-		KSI_AggregationHashChainList_freeAll(sig->aggregationChainList);
+		KSI_AggregationHashChainList_free(sig->aggregationChainList);
 		KSI_CalendarAuthRec_free(sig->calendarAuthRec);
 		KSI_AggregationAuthRec_free(sig->aggregationAuthRec);
 		KSI_PublicationRecord_free(sig->publication);
@@ -1126,7 +1125,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 	size_t i, j;
 	KSI_List *idList = NULL;
 	char *signerId = NULL;
-	size_t signerId_size = 100;
+	size_t signerId_size;
 	size_t signerId_len = 0;
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
@@ -1164,7 +1163,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 				const char *tmp = NULL;
 				int tmp_len;
 
-				res = KSI_MetaHash_MetaHash_parseMeta(metaHash, (const unsigned char **)&tmp, &tmp_len);
+				res = KSI_DataHash_MetaHash_parseMeta(metaHash, (const unsigned char **)&tmp, &tmp_len);
 				KSI_CATCH(&err, res) goto cleanup;
 
 				signerId_size += tmp_len + 4;
@@ -1393,7 +1392,7 @@ static int verifyInternallyAggregationChain(KSI_CTX *ctx, KSI_Signature *sig) {
 			}
 		}
 
-		res = KSI_HashChain_aggregate(aggregationChain->chain, aggregationChain->inputHash, level, (int)KSI_Integer_getUInt64(aggregationChain->aggrHashId), &level, &tmpHash);
+		res = KSI_HashChain_aggregate(aggregationChain->ctx, aggregationChain->chain, aggregationChain->inputHash, level, (int)KSI_Integer_getUInt64(aggregationChain->aggrHashId), &level, &tmpHash);
 		if (res != KSI_OK) goto cleanup;
 
 		/* TODO! Instead of freeing the object - reuse it */

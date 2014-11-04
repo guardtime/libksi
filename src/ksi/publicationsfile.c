@@ -356,8 +356,8 @@ cleanup:
 void KSI_PublicationsFile_free(KSI_PublicationsFile *t) {
 	if(t != NULL) {
 		KSI_PublicationsHeader_free(t->header);
-		KSI_CertificateRecordList_freeAll(t->certificates);
-		KSI_PublicationRecordList_freeAll(t->publications);
+		KSI_CertificateRecordList_free(t->certificates);
+		KSI_PublicationRecordList_free(t->publications);
 		KSI_PKISignature_free(t->signature);
 		KSI_free(t->raw);
 		KSI_free(t);
@@ -948,8 +948,8 @@ KSI_IMPLEMENT_SETTER(KSI_PublicationData, KSI_DataHash*, imprint, Imprint);
 void KSI_PublicationRecord_free(KSI_PublicationRecord *t) {
 	if(t != NULL) {
 		KSI_PublicationData_free(t->publishedData);
-		KSI_Utf8StringList_freeAll(t->publicationRef);
-		KSI_Utf8StringList_freeAll(t->repositoryUriList);
+		KSI_Utf8StringList_free(t->publicationRef);
+		KSI_Utf8StringList_free(t->repositoryUriList);
 		KSI_free(t);
 	}
 }

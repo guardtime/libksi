@@ -133,7 +133,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, int startLevel, int hash_id, int isCalendar, int *endLevel, KSI_DataHash **outputHash) {
+static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, int startLevel, int hash_id, int isCalendar, int *endLevel, KSI_DataHash **outputHash) {
 	KSI_ERR err;
 	int res;
 	int level = startLevel;
@@ -152,10 +152,10 @@ static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash
 	KSI_PRE(&err, inputHash != NULL) goto cleanup;
 	KSI_PRE(&err, outputHash != NULL) goto cleanup;
 
-	KSI_BEGIN(chain->ctx, &err);
+	KSI_BEGIN(ctx, &err);
 
 	sprintf(logMsg, "Starting %s hash chain aggregation with input  hash", isCalendar ? "calendar": "aggregation");
-	KSI_LOG_logDataHash(chain->ctx, KSI_LOG_DEBUG, logMsg, inputHash);
+	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, logMsg, inputHash);
 
 	for (i = 0; i < KSI_HashChainLinkList_length(chain); i++) {
 		res = KSI_HashChainLinkList_elementAt(chain, i, &link);
@@ -172,7 +172,7 @@ static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash
 
 		/* Create or reset the hasher. */
 		if (hsr == NULL) {
-			res = KSI_DataHasher_open(chain->ctx, algo_id, &hsr);
+			res = KSI_DataHasher_open(ctx, algo_id, &hsr);
 		} else {
 			res = KSI_DataHasher_reset(hsr);
 		}
@@ -182,10 +182,10 @@ static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash
 			res = addNvlImprint(hsh, inputHash, hsr);
 			KSI_CATCH(&err, res) goto cleanup;
 
-			res = addChainImprint(chain->ctx, hsr, link);
+			res = addChainImprint(ctx, hsr, link);
 			KSI_CATCH(&err, res) goto cleanup;
 		} else {
-			res = addChainImprint(chain->ctx, hsr, link);
+			res = addChainImprint(ctx, hsr, link);
 			KSI_CATCH(&err, res) goto cleanup;
 
 			res = addNvlImprint(hsh, inputHash, hsr);
@@ -215,7 +215,7 @@ static int aggregateChain(KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash
 	hsh = NULL;
 
 	sprintf(logMsg, "Finished %s hash chain aggregation with output hash", isCalendar ? "calendar": "aggregation");
-	KSI_LOG_logDataHash(chain->ctx, KSI_LOG_DEBUG, logMsg, *outputHash);
+	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, logMsg, *outputHash);
 
 	KSI_SUCCESS(&err);
 
@@ -230,7 +230,7 @@ cleanup:
 /**
  *
  */
-static int calculateCalendarAggregationTime(const KSI_LIST(KSI_HashChainLink) *chain, const KSI_Integer *pub_time, time_t *utc_time) {
+static int calculateCalendarAggregationTime(KSI_LIST(KSI_HashChainLink) *chain, const KSI_Integer *pub_time, time_t *utc_time) {
 	int res = KSI_UNKNOWN_ERROR;
 	long long int r;
 	long long int t = 0;
@@ -289,15 +289,15 @@ cleanup:
 /**
  *
  */
-int KSI_HashChain_aggregate(KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, int startLevel, int hash_id, int *endLevel, KSI_DataHash **outputHash) {
-	return aggregateChain(chain, inputHash, startLevel, hash_id, 0, endLevel, outputHash);
+int KSI_HashChain_aggregate(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, int startLevel, int hash_id, int *endLevel, KSI_DataHash **outputHash) {
+	return aggregateChain(ctx, chain, inputHash, startLevel, hash_id, 0, endLevel, outputHash);
 }
 
 /**
  *
  */
-int KSI_HashChain_aggregateCalendar(KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, KSI_DataHash **outputHash) {
-	return aggregateChain(chain, inputHash, 0xff, -1, 1, NULL, outputHash);
+int KSI_HashChain_aggregateCalendar(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, KSI_DataHash **outputHash) {
+	return aggregateChain(ctx, chain, inputHash, 0xff, -1, 1, NULL, outputHash);
 }
 
 /**
@@ -308,7 +308,7 @@ void KSI_CalendarHashChain_free(KSI_CalendarHashChain *t) {
 		KSI_Integer_free(t->publicationTime);
 		KSI_Integer_free(t->aggregationTime);
 		KSI_DataHash_free(t->inputHash);
-		KSI_HashChainLinkList_freeAll(t->hashChain);
+		KSI_HashChainLinkList_free(t->hashChain);
 		KSI_free(t);
 	}
 }
@@ -343,7 +343,7 @@ int KSI_CalendarHashChain_aggregate(KSI_CalendarHashChain *chain, KSI_DataHash *
 	KSI_PRE(&err, hsh != NULL) goto cleanup;
 	KSI_BEGIN(chain->ctx, &err);
 
-	res = KSI_HashChain_aggregateCalendar(chain->hashChain, chain->inputHash, hsh);
+	res = KSI_HashChain_aggregateCalendar(chain->ctx, chain->hashChain, chain->inputHash, hsh);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);

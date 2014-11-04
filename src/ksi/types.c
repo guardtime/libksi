@@ -613,14 +613,13 @@ KSI_IMPLEMENT_SETTER(KSI_RequestAck, KSI_Integer*, aggregationDelay, Aggregation
  */
 void KSI_AggregationResp_free(KSI_AggregationResp *t) {
 	if(t != NULL) {
-//		KSI_Header_free(t->header);
 		KSI_Integer_free(t->requestId);
 		KSI_Integer_free(t->status);
 		KSI_Utf8String_free(t->errorMsg);
 		KSI_Config_free(t->config);
 		KSI_RequestAck_free(t->requestAck);
 		KSI_CalendarHashChain_free(t->calendarChain);
-		KSI_AggregationHashChainList_freeAll(t->aggregationChainList);
+		KSI_AggregationHashChainList_free(t->aggregationChainList);
 		KSI_CalendarAuthRec_free(t->calendarAuthRec);
 		KSI_AggregationAuthRec_free(t->aggregationAuthRec);
 		KSI_TLV_free(t->baseTlv);

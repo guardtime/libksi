@@ -261,7 +261,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_DataHash_free, #KSI_DataHash_toTlv
 	 */
-	int KSI_MetaHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned char **data, int *data_len);
+	int KSI_DataHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned char **data, int *data_len);
 
 	/**
 	 * Works the same way as #KSI_DataHash_fromTlv, but performs an additional

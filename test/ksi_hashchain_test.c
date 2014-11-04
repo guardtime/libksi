@@ -73,7 +73,7 @@ int KSI_HashChain_appendLink(KSI_DataHash *siblingHash, KSI_DataHash *metaHash, 
 cleanup:
 
 	KSI_Integer_free(lvlCorr);
-	KSI_HashChainLinkList_freeAll(tmp);
+	KSI_HashChainLinkList_free(tmp);
 	KSI_HashChainLink_free(link);
 
 	return res;
@@ -147,7 +147,7 @@ static void testCalChainBuild(CuTest* tc) {
 	res = KSI_DataHash_fromImprint(ctx, buf, buf_len, &in);
 	CuAssert(tc, "Unable to create input data hash", res == KSI_OK && in != NULL);
 
-	res = KSI_HashChain_aggregateCalendar(chn, in, &out);
+	res = KSI_HashChain_aggregateCalendar(ctx, chn, in, &out);
 	CuAssert(tc, "Unable to aggregate calendar chain", res == KSI_OK && out != NULL);
 
 	/* Expected out hash. */
@@ -160,7 +160,7 @@ static void testCalChainBuild(CuTest* tc) {
 	KSI_DataHash_free(exp);
 	KSI_DataHash_free(in);
 	KSI_DataHash_free(out);
-	KSI_HashChainLinkList_freeAll(chn);
+	KSI_HashChainLinkList_free(chn);
 }
 
 static void testAggrChainBuilt(CuTest *tc) {
@@ -205,7 +205,7 @@ static void testAggrChainBuilt(CuTest *tc) {
 	res = KSI_DataHash_fromImprint(ctx, buf, buf_len, &in);
 	CuAssert(tc, "Unable to create input data hash", res == KSI_OK && in != NULL);
 
-	res = KSI_HashChain_aggregate(chn, in, 0, KSI_HASHALG_SHA2_256, NULL, &out);
+	res = KSI_HashChain_aggregate(ctx, chn, in, 0, KSI_HASHALG_SHA2_256, NULL, &out);
 	CuAssert(tc, "Unable to aggregate chain", res == KSI_OK && out != NULL);
 
 	/* Expected out hash. */
@@ -218,7 +218,7 @@ static void testAggrChainBuilt(CuTest *tc) {
 	KSI_DataHash_free(exp);
 	KSI_DataHash_free(in);
 	KSI_DataHash_free(out);
-	KSI_HashChainLinkList_freeAll(chn);
+	KSI_HashChainLinkList_free(chn);
 
 
 }
