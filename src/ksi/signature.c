@@ -367,8 +367,6 @@ static int createExtendRequest(KSI_CTX *ctx, KSI_Integer *start, KSI_Integer *en
 	KSI_ERR err;
 	int res;
 	KSI_ExtendReq *tmp = NULL;
-	KSI_Integer *startTm = NULL;
-	KSI_Integer *endTm = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, start != NULL) goto cleanup;
@@ -380,21 +378,21 @@ static int createExtendRequest(KSI_CTX *ctx, KSI_Integer *start, KSI_Integer *en
 	res = KSI_ExtendReq_new(ctx, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_Integer_clone(start, &startTm);
+	res = KSI_Integer_ref(start);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_ExtendReq_setAggregationTime(tmp, startTm);
+	res = KSI_Integer_ref(end);
 	KSI_CATCH(&err, res) goto cleanup;
-	startTm = NULL;
+
+	res = KSI_ExtendReq_setAggregationTime(tmp, start);
+	KSI_CATCH(&err, res) goto cleanup;
 
 	if (end != NULL) {
-		res = KSI_Integer_clone(end, &endTm);
+		res = KSI_Integer_ref(end);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		res = KSI_ExtendReq_setPublicationTime(tmp, endTm);
+		res = KSI_ExtendReq_setPublicationTime(tmp, end);
 		KSI_CATCH(&err, res) goto cleanup;
-
-		endTm = NULL;
 	}
 
 	*request = tmp;
@@ -404,8 +402,6 @@ static int createExtendRequest(KSI_CTX *ctx, KSI_Integer *start, KSI_Integer *en
 
 cleanup:
 
-	KSI_Integer_free(startTm);
-	KSI_Integer_free(endTm);
 	KSI_ExtendReq_free(tmp);
 
 	return KSI_RETURN(&err);
@@ -1704,9 +1700,7 @@ static int verifyOnline(KSI_CTX *ctx, KSI_Signature *sig) {
 
 	KSI_ExtendReq *req = NULL;
 	KSI_Integer *start = NULL;
-	KSI_Integer *startTm = NULL;
 	KSI_Integer *end = NULL;
-	KSI_Integer *endTm = NULL;
 	KSI_RequestHandle *handle = NULL;
 	KSI_DataHash *extHash = NULL;
 	KSI_DataHash *calHash = NULL;
@@ -1725,18 +1719,15 @@ static int verifyOnline(KSI_CTX *ctx, KSI_Signature *sig) {
 	if (res != KSI_OK) goto cleanup;
 
 	/* Clone the start time object */
-	res = KSI_Integer_clone(start, &startTm);
+	res = KSI_Integer_ref(start);
 	if (res != KSI_OK) goto cleanup;
 
 	if (sig->verificationResult.useUserPublication) {
 		/* Extract end time. */
 		res = KSI_PublicationData_getTime(sig->verificationResult.userPublication, &end);
 		if (res != KSI_OK) goto cleanup;
-
-		res = KSI_Integer_clone(end, &endTm);
-		if (res != KSI_OK) goto cleanup;
 	}
-	res = createExtendRequest(sig->ctx, startTm, endTm, &req);
+	res = createExtendRequest(sig->ctx, start, end, &req);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_sendExtendRequest(ctx, req, &handle);
@@ -1791,7 +1782,6 @@ static int verifyOnline(KSI_CTX *ctx, KSI_Signature *sig) {
 cleanup:
 
 	KSI_ExtendReq_free(req);
-	KSI_Integer_free(startTm);
 	KSI_RequestHandle_free(handle);
 	KSI_ExtendResp_free(resp);
 

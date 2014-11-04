@@ -85,12 +85,6 @@ typedef struct KSI_DataHasher_st KSI_DataHasher;
 typedef struct KSI_DataHash_st KSI_DataHash;
 
 /**
- * This structure represents HMAC
- * \see #KSI_HMAC_new #KSI_HMAC_free #KSI_HMAC_clone #KSI_HMAC_getDigest 
- */
-typedef struct KSI_HMAC_st KSI_HMAC;
-
-/**
  * Network resource handle
  *
  *	\see #KSI_NET_sendRequest

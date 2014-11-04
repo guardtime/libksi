@@ -276,6 +276,13 @@ cleanup:
 	return res;
 }
 
+int KSI_Utf8String_ref(KSI_Utf8String *o) {
+	if (o != NULL) {
+		++o->refCount;
+	}
+	return KSI_OK;
+}
+
 size_t KSI_Utf8String_size(const KSI_Utf8String *o) {
 	return o != NULL ? o->len : 0;
 }
