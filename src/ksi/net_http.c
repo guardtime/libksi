@@ -207,7 +207,7 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 	KSI_DataHash *hmac = NULL;
 	unsigned char *raw = NULL;
 	unsigned raw_len = 0;
-
+	int hmacHashAlgo = KSI_getHashAlgorithmByName("default");
 
 	KSI_PRE(&err, client != NULL) goto cleanup;
 	KSI_PRE(&err, req != NULL) goto cleanup;
@@ -239,7 +239,7 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 		KSI_DataHash_free(hmac);
 	}
 
-	res = KSI_ExtendPdu_calculateHmac(pdu, KSI_HASHALG_SHA1, client->extPass, &hmac);
+	res = KSI_ExtendPdu_calculateHmac(pdu, hmacHashAlgo, client->extPass, &hmac);
 	KSI_CATCH(&err, res) goto cleanup;
 	
 	res = KSI_ExtendPdu_setHmac(pdu, hmac);
