@@ -4,22 +4,22 @@
 
 struct KSI_OctetString_st {
 	KSI_CTX *ctx;
+	size_t refCount;
 	unsigned char *data;
 	unsigned int data_len;
-	int refCount;
 };
 
 struct KSI_Integer_st {
 	int staticAlloc;
-	int refCount;
+	size_t refCount;
 	KSI_uint64_t value;
 };
 
 struct KSI_Utf8String_st {
 	KSI_CTX *ctx;
+	size_t refCount;
 	char *value;
 	size_t len;
-	int refCount;
 };
 
 /**
@@ -61,6 +61,7 @@ int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, unsigned int da
 	tmp->ctx = ctx;
 	tmp->data = NULL;
 	tmp->data_len = data_len;
+	tmp->refCount = 1;
 
 	tmp->data = KSI_calloc(data_len, 1);
 	if (tmp->data == NULL) {
