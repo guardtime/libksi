@@ -994,12 +994,12 @@ int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_Publicatio
 	if(res != KSI_OK && tmp->publicationRef) goto cleanup;
 
 	for(i=0; i<KSI_Utf8StringList_length(rec->publicationRef); i++){
-		KSI_Utf8String *srcUTF8 = NULL;
-		res = KSI_Utf8StringList_elementAt(rec->publicationRef, i, &srcUTF8);
+		KSI_Utf8String *str = NULL;
+		res = KSI_Utf8StringList_elementAt(rec->publicationRef, i, &str);
 		KSI_CATCH(&err, res);
-		res = KSI_Utf8String_ref(srcUTF8);
+		res = KSI_Utf8String_ref(str);
 		KSI_CATCH(&err, res);
-		res = KSI_Utf8StringList_append(tmp->publicationRef, srcUTF8);
+		res = KSI_Utf8StringList_append(tmp->publicationRef, str);
 		KSI_CATCH(&err, res);
 	}
 	

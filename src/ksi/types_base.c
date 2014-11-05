@@ -325,6 +325,7 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
+
 int KSI_Utf8String_toTlv(KSI_CTX *ctx, KSI_Utf8String *o, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	KSI_ERR err;
 	int res;

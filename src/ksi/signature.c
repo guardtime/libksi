@@ -381,9 +381,6 @@ static int createExtendRequest(KSI_CTX *ctx, KSI_Integer *start, KSI_Integer *en
 	res = KSI_Integer_ref(start);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_Integer_ref(end);
-	KSI_CATCH(&err, res) goto cleanup;
-
 	res = KSI_ExtendReq_setAggregationTime(tmp, start);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -783,7 +780,6 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 	KSI_Integer *respStatus = NULL;
 	KSI_Integer *signTime = NULL;
 	KSI_Integer *pubTime = NULL;
-	KSI_PublicationData *pubData = NULL;
 	KSI_PublicationRecord *pubRecClone = NULL;
 
 	KSI_RequestHandle *handle = NULL;
@@ -801,6 +797,8 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 
 	/* If publication record is present, extract the publication time. */
 	if (pubRec != NULL) {
+		KSI_PublicationData *pubData = NULL;
+
 		/* Make a copy of the original publication record .*/
 		res = KSI_PublicationRecord_new(signature->ctx, &pubRecClone);
 		KSI_CATCH(&err, res) goto cleanup;
@@ -809,7 +807,7 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 		KSI_CATCH(&err, res) goto cleanup;
 
 		/* Extract the published data object. */
-		res = KSI_PublicationRecord_getPublishedData(pubRecClone, &pubData);
+		res = KSI_PublicationRecord_getPublishedData(pubRec, &pubData);
 		KSI_CATCH(&err, res) goto cleanup;
 
 		/* Read the publication time from the published data object. */
@@ -1781,6 +1779,7 @@ static int verifyOnline(KSI_CTX *ctx, KSI_Signature *sig) {
 
 cleanup:
 
+	KSI_Integer_free(start);
 	KSI_ExtendReq_free(req);
 	KSI_RequestHandle_free(handle);
 	KSI_ExtendResp_free(resp);
