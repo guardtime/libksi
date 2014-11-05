@@ -36,7 +36,6 @@ SRC_DIR = .
 OBJ_DIR = ..\..\obj\$(DLL)$(RTL)
 LIB_DIR = ..\..\out\$(DLL)
 INCLUDE_DIR = ..\..\out\include\ksi
-EXLUDED_INCS = $(SRC_DIR)\exluded_includes.txt
 LIB_DEF = $(SRC_DIR)\libksiapi.def
 
 LIB_NAME = libksiapi
@@ -60,6 +59,29 @@ LIB_OBJ = \
 	$(OBJ_DIR)\types_base.obj \
 	$(OBJ_DIR)\verification.obj \
 	$(OBJ_DIR)\hmac.obj
+
+INC_FILES = \
+	base32.h \
+	hmac.h \
+	net.h \
+	types.h \
+	crc32.h \
+	net_http.h \
+	signature.h \
+	types_base.h \
+	err.h \
+	io.h \
+	verification.h \
+	hash.h \
+	ksi.h \
+	tlv.h \
+	list.h \
+	pkitruststore.h \
+	tlv_tags.h \
+	hashchain.h \
+	log.h \
+	publicationsfile.h \
+	tlv_template.h
 
 #Compiler and linker configuration
 EXT_LIB = wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib  
@@ -119,7 +141,7 @@ LIB_OBJ = $(LIB_OBJ) $(OBJ_DIR)\pkitruststore_cryptoapi.obj
 !ENDIF
 
 
-CCFLAGS = $(CCFLAGS) /nologo /W3 /D_CRT_SECURE_NO_DEPRECATE /I$(SRC_DIR)\ksi /I$(SRC_DIR)\example /I$(SRC_DIR)
+CCFLAGS = $(CCFLAGS) /nologo /W3 /D_CRT_SECURE_NO_DEPRECATE /I$(SRC_DIR)\\ksi /I$(SRC_DIR)\example /I$(SRC_DIR)
 LDFLAGS = $(LDFLAGS) /NOLOGO /LIBPATH:$(LIB_DIR) 
 
 !IF "$(RTL)" == "MT" || "$(RTL)" == "MD"
@@ -151,7 +173,7 @@ $(LIB_DIR)\$(LIB_NAME)$(RTL).dll: $(OBJ_DIR) $(LIB_DIR) $(LIB_OBJ) $(LIB_DEF)
 
 	
 include: $(INCLUDE_DIR)
-	if not exist $(INCLUDE_DIR)\*.h for /R $(SRC_DIR) %%f in (*.h) do xcopy "%%f" $(INCLUDE_DIR) /D /EXCLUDE:$(EXLUDED_INCS)
+	if not exist $(INCLUDE_DIR)\*.h for /R $(SRC_DIR) %%f in ($(INC_FILES)) do xcopy "%%f" $(INCLUDE_DIR) /D
 	
 $(OBJ_DIR) $(LIB_DIR) $(INCLUDE_DIR):
 	@if not exist $@ mkdir $@

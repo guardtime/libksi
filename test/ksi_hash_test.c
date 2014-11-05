@@ -4,15 +4,6 @@
 #include "cutest/CuTest.h"
 #include "all_tests.h"
 
-/* Recreate the internal structure. */
-struct KSI_DataHash_st {
-	/* KSI context */
-	KSI_CTX *ctx;
-
-	unsigned char *imprint;
-	int imprint_length;
-};
-
 extern KSI_CTX *ctx;
 
 #define KSITest_assertCreateCall(tc, errm, res, obj) if ((res) != KSI_OK) KSI_ERR_statusDump(ctx, stdout); CuAssert(tc, errm ": error returned", (res) == KSI_OK); CuAssert(tc, errm ": object is NULL", (obj) != NULL);
