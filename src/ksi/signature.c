@@ -545,7 +545,6 @@ int KSI_Signature_replacePublicationRecord(KSI_Signature *sig, KSI_PublicationRe
 	size_t oldPubTlvPos = 0;
 	bool oldPubTlvPos_found = false;
 
-
 	KSI_LIST(KSI_TLV) *nestedList = NULL;
 	int res;
 	size_t i;
@@ -1119,7 +1118,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 	size_t i, j;
 	KSI_List *idList = NULL;
 	char *signerId = NULL;
-	size_t signerId_size;
+	size_t signerId_size = 1; // At least 1 for trailing zero.
 	size_t signerId_len = 0;
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
