@@ -83,66 +83,6 @@ KSI_CTX *type##_getCtx(const type *o) {			 			\
 	return o->ctx; 											\
 } 															\
 
-#define KSI_IMPLEMENT_LIST(type, free_fn)											\
-struct type##_list_st { 															\
-	KSI_CTX *ctx;																	\
-	KSI_List *list;																	\
-};																					\
-int KSI_LIST_FN_NAME(type, new)(KSI_CTX *ctx, KSI_LIST(type) **list) {				\
-	int res = KSI_UNKNOWN_ERROR;													\
-	KSI_LIST(type) *l = NULL;														\
-	l = KSI_new(KSI_LIST(type));													\
-	if (l == NULL) {																\
-		res = KSI_OUT_OF_MEMORY;													\
-		goto cleanup;																\
-	}																				\
-	res = KSI_List_new((void (*)(void *))free_fn, &l->list);						\
-	if (res != KSI_OK) goto cleanup;												\
-	l->ctx = ctx;																	\
-	*list = l;																		\
-	l = NULL;																		\
-	res = KSI_OK;																	\
-cleanup:																			\
-	KSI_LIST_FN_NAME(type, free)(l);												\
-	return res;																		\
-}																					\
-void KSI_LIST_FN_NAME(type, free)(KSI_LIST(type) *list) {							\
-	if (list != NULL) {																\
-		KSI_List_free(list->list);													\
-		KSI_free(list);																\
-	}																				\
-} 																					\
-void KSI_LIST_FN_NAME(type, freeAll)(KSI_LIST(type) *list) {						\
-	if (list != NULL) {																\
-		KSI_List_freeAll(list->list);												\
-		KSI_free(list);																\
-	}																				\
-} 																					\
-int KSI_LIST_FN_NAME(type, append)(KSI_LIST(type) *list, type *o) {					\
-	return KSI_List_append(list->list, o);											\
-}																					\
-int KSI_LIST_FN_NAME(type, indexOf)(const KSI_LIST(type) *list, const type *o, size_t **pos) {	\
-	return KSI_List_indexOf(list->list, o, pos);									\
-}																					\
-int KSI_LIST_FN_NAME(type, insertAt)(KSI_LIST(type) *list, size_t pos, type *o) {	\
-	return KSI_List_insertAt(list->list, pos, o);									\
-}																					\
-int KSI_LIST_FN_NAME(type, replaceAt)(KSI_LIST(type) *list, size_t pos, type *o) {	\
-	return KSI_List_replaceAt(list->list, pos, o);									\
-}																					\
-size_t KSI_LIST_FN_NAME(type, length)(const KSI_LIST(type) *list) {					\
-	return list != NULL ? KSI_List_length(list->list): 0;							\
-}																					\
-int KSI_LIST_FN_NAME(type, remove)(KSI_LIST(type) *list, size_t pos) {				\
-	return KSI_List_remove(list->list, pos);										\
-}																					\
-int KSI_LIST_FN_NAME(type, elementAt)(const KSI_LIST(type) *list, size_t pos, type **o) {	\
-	return KSI_List_elementAt(list->list, pos, (void **) o);						\
-}																					\
-int KSI_LIST_FN_NAME(type, sort)(KSI_LIST(type) *list, int (*cmp)(const type **a, const type **b)) {	\
-	return KSI_List_sort(list->list, (int (*)(const void *, const void *)) cmp);	\
-}																					\
-
 #define KSI_DEFINE_SETTER(baseType, valueType, valueName, alias) int baseType##_set##alias(baseType *o, valueType valueName)
 #define KSI_DEFINE_GETTER(baseType, valueType, valueName, alias) int baseType##_get##alias(const baseType *o, valueType* valueName)
 

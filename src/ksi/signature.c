@@ -35,10 +35,10 @@ void KSI_AggregationHashChain_free(KSI_AggregationHashChain *aggr) {
 	if (aggr != NULL) {
 		KSI_Integer_free(aggr->aggrHashId);
 		KSI_Integer_free(aggr->aggregationTime);
-		KSI_IntegerList_freeAll(aggr->chainIndex);
+		KSI_IntegerList_free(aggr->chainIndex);
 		KSI_OctetString_free(aggr->inputData);
 		KSI_DataHash_free(aggr->inputHash);
-		KSI_HashChainLinkList_freeAll(aggr->chain);
+		KSI_HashChainLinkList_free(aggr->chain);
 		KSI_free(aggr);
 	}
 }
@@ -97,7 +97,7 @@ KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_LIST(KSI_HashChainLink) *, ch
 void KSI_AggregationAuthRec_free(KSI_AggregationAuthRec *aar) {
 	if (aar != NULL) {
 		KSI_Integer_free(aar->aggregationTime);
-		KSI_IntegerList_freeAll(aar->chainIndexesList);
+		KSI_IntegerList_free(aar->chainIndexesList);
 		KSI_DataHash_free(aar->inputHash);
 		KSI_Utf8String_free(aar->signatureAlgo);
 		KSI_PKISignedData_free(aar->signatureData);
@@ -367,8 +367,6 @@ static int createExtendRequest(KSI_CTX *ctx, KSI_Integer *start, KSI_Integer *en
 	KSI_ERR err;
 	int res;
 	KSI_ExtendReq *tmp = NULL;
-	KSI_Integer *startTm = NULL;
-	KSI_Integer *endTm = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, start != NULL) goto cleanup;
@@ -380,21 +378,18 @@ static int createExtendRequest(KSI_CTX *ctx, KSI_Integer *start, KSI_Integer *en
 	res = KSI_ExtendReq_new(ctx, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_Integer_clone(start, &startTm);
+	res = KSI_Integer_ref(start);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_ExtendReq_setAggregationTime(tmp, startTm);
+	res = KSI_ExtendReq_setAggregationTime(tmp, start);
 	KSI_CATCH(&err, res) goto cleanup;
-	startTm = NULL;
 
 	if (end != NULL) {
-		res = KSI_Integer_clone(end, &endTm);
+		res = KSI_Integer_ref(end);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		res = KSI_ExtendReq_setPublicationTime(tmp, endTm);
+		res = KSI_ExtendReq_setPublicationTime(tmp, end);
 		KSI_CATCH(&err, res) goto cleanup;
-
-		endTm = NULL;
 	}
 
 	*request = tmp;
@@ -404,8 +399,6 @@ static int createExtendRequest(KSI_CTX *ctx, KSI_Integer *start, KSI_Integer *en
 
 cleanup:
 
-	KSI_Integer_free(startTm);
-	KSI_Integer_free(endTm);
 	KSI_ExtendReq_free(tmp);
 
 	return KSI_RETURN(&err);
@@ -474,8 +467,8 @@ int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain
 	KSI_CATCH(&err, res) goto cleanup;
 	newCalChainTlv = NULL;
 
-	/* Free only the memory, if everything else was OK.*/
-	KSI_TLV_free(oldCalChainTlv);
+	/* The memory was freed within KSI_TLV_replaceNestedTlv. */
+	oldCalChainTlv = NULL;
 
 	KSI_CalendarHashChain_free(sig->calendarChain);
 	sig->calendarChain = calendarHashChain;
@@ -520,10 +513,8 @@ static int removeWeakAuthRecords(KSI_Signature *sig) {
 		tag = KSI_TLV_getTag(tlv);
 
 		if (tag == 0x0804 || tag == 0x0805) {
-			res = KSI_TLVList_remove(nested, (unsigned)i);
+			res = KSI_TLVList_remove(nested, (unsigned)i, NULL);
 			KSI_CATCH(&err, res) goto cleanup;
-
-			KSI_TLV_free(tlv);
 			tlv = NULL;
 		}
 	}
@@ -553,7 +544,6 @@ int KSI_Signature_replacePublicationRecord(KSI_Signature *sig, KSI_PublicationRe
 	KSI_TLV *newPubTlv = NULL;
 	size_t oldPubTlvPos = 0;
 	bool oldPubTlvPos_found = false;
-
 
 	KSI_LIST(KSI_TLV) *nestedList = NULL;
 	int res;
@@ -703,13 +693,14 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp,
 				i++;
 				break;
 			default:
+				/* Remove it from the original list. */
+				res = KSI_TLVList_remove(tlvList, i, &t);
+				KSI_CATCH(&err, res) goto cleanup;
+
 				/* Copy this tag to the signature. */
 				res = KSI_TLV_appendNestedTlv(tmpTlv, NULL, t);
 				KSI_CATCH(&err, res) goto cleanup;
 
-				/* Remove it from the original list. */
-				res = KSI_TLVList_remove(tlvList, i);
-				KSI_CATCH(&err, res) goto cleanup;
 		}
 	}
 
@@ -788,7 +779,6 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 	KSI_Integer *respStatus = NULL;
 	KSI_Integer *signTime = NULL;
 	KSI_Integer *pubTime = NULL;
-	KSI_PublicationData *pubData = NULL;
 	KSI_PublicationRecord *pubRecClone = NULL;
 
 	KSI_RequestHandle *handle = NULL;
@@ -806,6 +796,8 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 
 	/* If publication record is present, extract the publication time. */
 	if (pubRec != NULL) {
+		KSI_PublicationData *pubData = NULL;
+
 		/* Make a copy of the original publication record .*/
 		res = KSI_PublicationRecord_new(signature->ctx, &pubRecClone);
 		KSI_CATCH(&err, res) goto cleanup;
@@ -814,7 +806,7 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 		KSI_CATCH(&err, res) goto cleanup;
 
 		/* Extract the published data object. */
-		res = KSI_PublicationRecord_getPublishedData(pubRecClone, &pubData);
+		res = KSI_PublicationRecord_getPublishedData(pubRec, &pubData);
 		KSI_CATCH(&err, res) goto cleanup;
 
 		/* Read the publication time from the published data object. */
@@ -893,7 +885,7 @@ void KSI_Signature_free(KSI_Signature *sig) {
 	if (sig != NULL) {
 		KSI_TLV_free(sig->baseTlv);
 		KSI_CalendarHashChain_free(sig->calendarChain);
-		KSI_AggregationHashChainList_freeAll(sig->aggregationChainList);
+		KSI_AggregationHashChainList_free(sig->aggregationChainList);
 		KSI_CalendarAuthRec_free(sig->calendarAuthRec);
 		KSI_AggregationAuthRec_free(sig->aggregationAuthRec);
 		KSI_PublicationRecord_free(sig->publication);
@@ -1126,7 +1118,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 	size_t i, j;
 	KSI_List *idList = NULL;
 	char *signerId = NULL;
-	size_t signerId_size = 100;
+	size_t signerId_size = 1; // At least 1 for trailing zero.
 	size_t signerId_len = 0;
 
 	KSI_PRE(&err, sig != NULL) goto cleanup;
@@ -1164,7 +1156,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 				const char *tmp = NULL;
 				int tmp_len;
 
-				res = KSI_MetaHash_MetaHash_parseMeta(metaHash, (const unsigned char **)&tmp, &tmp_len);
+				res = KSI_DataHash_MetaHash_parseMeta(metaHash, (const unsigned char **)&tmp, &tmp_len);
 				KSI_CATCH(&err, res) goto cleanup;
 
 				signerId_size += tmp_len + 4;
@@ -1393,7 +1385,7 @@ static int verifyInternallyAggregationChain(KSI_CTX *ctx, KSI_Signature *sig) {
 			}
 		}
 
-		res = KSI_HashChain_aggregate(aggregationChain->chain, aggregationChain->inputHash, level, (int)KSI_Integer_getUInt64(aggregationChain->aggrHashId), &level, &tmpHash);
+		res = KSI_HashChain_aggregate(aggregationChain->ctx, aggregationChain->chain, aggregationChain->inputHash, level, (int)KSI_Integer_getUInt64(aggregationChain->aggrHashId), &level, &tmpHash);
 		if (res != KSI_OK) goto cleanup;
 
 		/* TODO! Instead of freeing the object - reuse it */
@@ -1705,9 +1697,7 @@ static int verifyOnline(KSI_CTX *ctx, KSI_Signature *sig) {
 
 	KSI_ExtendReq *req = NULL;
 	KSI_Integer *start = NULL;
-	KSI_Integer *startTm = NULL;
 	KSI_Integer *end = NULL;
-	KSI_Integer *endTm = NULL;
 	KSI_RequestHandle *handle = NULL;
 	KSI_DataHash *extHash = NULL;
 	KSI_DataHash *calHash = NULL;
@@ -1726,18 +1716,15 @@ static int verifyOnline(KSI_CTX *ctx, KSI_Signature *sig) {
 	if (res != KSI_OK) goto cleanup;
 
 	/* Clone the start time object */
-	res = KSI_Integer_clone(start, &startTm);
+	res = KSI_Integer_ref(start);
 	if (res != KSI_OK) goto cleanup;
 
 	if (sig->verificationResult.useUserPublication) {
 		/* Extract end time. */
 		res = KSI_PublicationData_getTime(sig->verificationResult.userPublication, &end);
 		if (res != KSI_OK) goto cleanup;
-
-		res = KSI_Integer_clone(end, &endTm);
-		if (res != KSI_OK) goto cleanup;
 	}
-	res = createExtendRequest(sig->ctx, startTm, endTm, &req);
+	res = createExtendRequest(sig->ctx, start, end, &req);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_sendExtendRequest(ctx, req, &handle);
@@ -1791,8 +1778,8 @@ static int verifyOnline(KSI_CTX *ctx, KSI_Signature *sig) {
 
 cleanup:
 
+	KSI_Integer_free(start);
 	KSI_ExtendReq_free(req);
-	KSI_Integer_free(startTm);
 	KSI_RequestHandle_free(handle);
 	KSI_ExtendResp_free(resp);
 

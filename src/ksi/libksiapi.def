@@ -133,7 +133,6 @@ EXPORTS
 
 ;list.h
 EXPORTS
-    KSI_List_freeAll
     KSI_List_free
     KSI_List_new
     KSI_List_append
@@ -485,14 +484,13 @@ EXPORTS
 ;types_base.h
 EXPORTS
     KSI_Integer_free
-    KSI_Integer_getSize
     KSI_Integer_toDateString
     KSI_Integer_getUInt64
     KSI_Integer_new
     KSI_Integer_equals
     KSI_Integer_compare
     KSI_Integer_equalsUInt
-    KSI_Integer_clone
+	KSI_Integer_ref
     KSI_Integer_fromTlv
     KSI_Integer_toTlv
     KSI_OctetString_free
@@ -501,13 +499,14 @@ EXPORTS
     KSI_OctetString_equals
     KSI_OctetString_fromTlv
     KSI_OctetString_toTlv
+	KSI_OctetString_ref
     KSI_Utf8String_free
     KSI_Utf8String_new
     KSI_Utf8String_size
     KSI_Utf8String_cstr
     KSI_Utf8String_fromTlv
     KSI_Utf8String_toTlv
-    KSI_Utf8String_clone
+	KSI_Utf8String_ref
     KSI_AggregationAuthRec_free
     KSI_AggregationAuthRec_new
     KSI_AggregationAuthRec_getAggregationTime
@@ -538,7 +537,6 @@ EXPORTS
 ;List implementations
 EXPORTS
     KSI_MetaDataList_free 
-    KSI_MetaDataList_freeAll 
     KSI_MetaDataList_new 
     KSI_MetaDataList_append 
     KSI_MetaDataList_indexOf 
@@ -550,7 +548,6 @@ EXPORTS
     KSI_MetaDataList_sort 
 
     KSI_HashChainLinkList_free 
-    KSI_HashChainLinkList_freeAll 
     KSI_HashChainLinkList_new 
     KSI_HashChainLinkList_append 
     KSI_HashChainLinkList_indexOf 
@@ -562,7 +559,6 @@ EXPORTS
     KSI_HashChainLinkList_sort 
 
     KSI_CalendarHashChainLinkList_free 
-    KSI_CalendarHashChainLinkList_freeAll 
     KSI_CalendarHashChainLinkList_new 
     KSI_CalendarHashChainLinkList_append 
     KSI_CalendarHashChainLinkList_indexOf 
@@ -574,7 +570,6 @@ EXPORTS
     KSI_CalendarHashChainLinkList_sort 
 
     KSI_CalendarHashChainList_free 
-    KSI_CalendarHashChainList_freeAll 
     KSI_CalendarHashChainList_new 
     KSI_CalendarHashChainList_append 
     KSI_CalendarHashChainList_indexOf 
@@ -586,7 +581,6 @@ EXPORTS
     KSI_CalendarHashChainList_sort 
 
     KSI_ExtendPduList_free 
-    KSI_ExtendPduList_freeAll 
     KSI_ExtendPduList_new 
     KSI_ExtendPduList_append 
     KSI_ExtendPduList_indexOf 
@@ -598,7 +592,6 @@ EXPORTS
     KSI_ExtendPduList_sort 
 
     KSI_AggregationPduList_free 
-    KSI_AggregationPduList_freeAll 
     KSI_AggregationPduList_new 
     KSI_AggregationPduList_append 
     KSI_AggregationPduList_indexOf 
@@ -610,7 +603,6 @@ EXPORTS
     KSI_AggregationPduList_sort 
 
     KSI_HeaderList_free 
-    KSI_HeaderList_freeAll 
     KSI_HeaderList_new 
     KSI_HeaderList_append 
     KSI_HeaderList_indexOf 
@@ -622,7 +614,6 @@ EXPORTS
     KSI_HeaderList_sort 
 
     KSI_ConfigList_free 
-    KSI_ConfigList_freeAll 
     KSI_ConfigList_new 
     KSI_ConfigList_append 
     KSI_ConfigList_indexOf 
@@ -634,7 +625,6 @@ EXPORTS
     KSI_ConfigList_sort 
 
     KSI_AggregationReqList_free 
-    KSI_AggregationReqList_freeAll 
     KSI_AggregationReqList_new 
     KSI_AggregationReqList_append 
     KSI_AggregationReqList_indexOf 
@@ -646,7 +636,6 @@ EXPORTS
     KSI_AggregationReqList_sort 
 
     KSI_RequestAckList_free 
-    KSI_RequestAckList_freeAll 
     KSI_RequestAckList_new 
     KSI_RequestAckList_append 
     KSI_RequestAckList_indexOf 
@@ -658,7 +647,6 @@ EXPORTS
     KSI_RequestAckList_sort 
 
     KSI_AggregationRespList_free 
-    KSI_AggregationRespList_freeAll 
     KSI_AggregationRespList_new 
     KSI_AggregationRespList_append 
     KSI_AggregationRespList_indexOf 
@@ -670,7 +658,6 @@ EXPORTS
     KSI_AggregationRespList_sort 
 
     KSI_ExtendReqList_free 
-    KSI_ExtendReqList_freeAll 
     KSI_ExtendReqList_new 
     KSI_ExtendReqList_append 
     KSI_ExtendReqList_indexOf 
@@ -682,7 +669,6 @@ EXPORTS
     KSI_ExtendReqList_sort 
 
     KSI_ExtendRespList_free 
-    KSI_ExtendRespList_freeAll 
     KSI_ExtendRespList_new 
     KSI_ExtendRespList_append 
     KSI_ExtendRespList_indexOf 
@@ -694,7 +680,6 @@ EXPORTS
     KSI_ExtendRespList_sort 
 
     KSI_PKISignedDataList_free 
-    KSI_PKISignedDataList_freeAll 
     KSI_PKISignedDataList_new 
     KSI_PKISignedDataList_append 
     KSI_PKISignedDataList_indexOf 
@@ -706,7 +691,6 @@ EXPORTS
     KSI_PKISignedDataList_sort 
 
     KSI_PublicationsHeaderList_free 
-    KSI_PublicationsHeaderList_freeAll 
     KSI_PublicationsHeaderList_new 
     KSI_PublicationsHeaderList_append 
     KSI_PublicationsHeaderList_indexOf 
@@ -718,7 +702,6 @@ EXPORTS
     KSI_PublicationsHeaderList_sort 
 
     KSI_CertificateRecordList_free 
-    KSI_CertificateRecordList_freeAll 
     KSI_CertificateRecordList_new 
     KSI_CertificateRecordList_append 
     KSI_CertificateRecordList_indexOf 
@@ -730,7 +713,6 @@ EXPORTS
     KSI_CertificateRecordList_sort 
 
     KSI_PublicationDataList_free 
-    KSI_PublicationDataList_freeAll 
     KSI_PublicationDataList_new 
     KSI_PublicationDataList_append 
     KSI_PublicationDataList_indexOf 
@@ -742,7 +724,6 @@ EXPORTS
     KSI_PublicationDataList_sort 
 
     KSI_PublicationRecordList_free 
-    KSI_PublicationRecordList_freeAll 
     KSI_PublicationRecordList_new 
     KSI_PublicationRecordList_append 
     KSI_PublicationRecordList_indexOf 
@@ -754,7 +735,6 @@ EXPORTS
     KSI_PublicationRecordList_sort 
 
     KSI_IntegerList_free 
-    KSI_IntegerList_freeAll 
     KSI_IntegerList_new 
     KSI_IntegerList_append 
     KSI_IntegerList_indexOf 
@@ -766,7 +746,6 @@ EXPORTS
     KSI_IntegerList_sort 
 
     KSI_OctetStringList_free 
-    KSI_OctetStringList_freeAll 
     KSI_OctetStringList_new 
     KSI_OctetStringList_append 
     KSI_OctetStringList_indexOf 
@@ -778,7 +757,6 @@ EXPORTS
     KSI_OctetStringList_sort 
 
     KSI_Utf8StringList_free 
-    KSI_Utf8StringList_freeAll 
     KSI_Utf8StringList_new 
     KSI_Utf8StringList_append 
     KSI_Utf8StringList_indexOf 
@@ -790,7 +768,6 @@ EXPORTS
     KSI_Utf8StringList_sort 
 
     KSI_AggregationHashChainList_free 
-    KSI_AggregationHashChainList_freeAll 
     KSI_AggregationHashChainList_new 
     KSI_AggregationHashChainList_append 
     KSI_AggregationHashChainList_indexOf 
@@ -802,7 +779,6 @@ EXPORTS
     KSI_AggregationHashChainList_sort 
 
     KSI_TLVList_free 
-    KSI_TLVList_freeAll 
     KSI_TLVList_new 
     KSI_TLVList_append 
     KSI_TLVList_indexOf 
@@ -814,7 +790,6 @@ EXPORTS
     KSI_TLVList_sort 
 
     KSI_PKICertificateList_free 
-    KSI_PKICertificateList_freeAll 
     KSI_PKICertificateList_new 
     KSI_PKICertificateList_append 
     KSI_PKICertificateList_indexOf 

@@ -356,8 +356,8 @@ cleanup:
 void KSI_PublicationsFile_free(KSI_PublicationsFile *t) {
 	if(t != NULL) {
 		KSI_PublicationsHeader_free(t->header);
-		KSI_CertificateRecordList_freeAll(t->certificates);
-		KSI_PublicationRecordList_freeAll(t->publications);
+		KSI_CertificateRecordList_free(t->certificates);
+		KSI_PublicationRecordList_free(t->publications);
 		KSI_PKISignature_free(t->signature);
 		KSI_free(t->raw);
 		KSI_free(t);
@@ -948,8 +948,8 @@ KSI_IMPLEMENT_SETTER(KSI_PublicationData, KSI_DataHash*, imprint, Imprint);
 void KSI_PublicationRecord_free(KSI_PublicationRecord *t) {
 	if(t != NULL) {
 		KSI_PublicationData_free(t->publishedData);
-		KSI_Utf8StringList_freeAll(t->publicationRef);
-		KSI_Utf8StringList_freeAll(t->repositoryUriList);
+		KSI_Utf8StringList_free(t->publicationRef);
+		KSI_Utf8StringList_free(t->repositoryUriList);
 		KSI_free(t);
 	}
 }
@@ -978,7 +978,6 @@ cleanup:
 int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_PublicationRecord **clone){
 	KSI_ERR err;
 	KSI_PublicationRecord *tmp = NULL;
-	KSI_Utf8String *cloneUTF8 = NULL;
 	int res = KSI_UNKNOWN_ERROR;
 	int i=0;
 	
@@ -995,16 +994,14 @@ int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_Publicatio
 	if(res != KSI_OK && tmp->publicationRef) goto cleanup;
 
 	for(i=0; i<KSI_Utf8StringList_length(rec->publicationRef); i++){
-		KSI_Utf8String *srcUTF8 = NULL;
-		res = KSI_Utf8StringList_elementAt(rec->publicationRef, i, &srcUTF8);
+		KSI_Utf8String *str = NULL;
+		res = KSI_Utf8StringList_elementAt(rec->publicationRef, i, &str);
 		KSI_CATCH(&err, res);
-		res = KSI_Utf8String_clone(srcUTF8, &cloneUTF8);
+		res = KSI_Utf8String_ref(str);
 		KSI_CATCH(&err, res);
-		res = KSI_Utf8StringList_append(tmp->publicationRef, cloneUTF8);
+		res = KSI_Utf8StringList_append(tmp->publicationRef, str);
 		KSI_CATCH(&err, res);
-		cloneUTF8 = NULL;
 	}
-
 	
 	/*Copy publication data*/
 	res = KSI_PublicationData_new(rec->ctx, &(tmp->publishedData));
@@ -1015,8 +1012,9 @@ int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_Publicatio
 	res = KSI_DataHash_clone(rec->publishedData->imprint, &(tmp->publishedData->imprint));
 	KSI_CATCH(&err, res);
 	
-	res = KSI_Integer_clone(rec->publishedData->time, &(tmp->publishedData->time));
+	res = KSI_Integer_ref(rec->publishedData->time);
 	KSI_CATCH(&err, res);
+	tmp->publishedData->time = rec->publishedData->time;
 	
 	*clone = tmp;
 	tmp = NULL;
@@ -1025,8 +1023,6 @@ int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_Publicatio
 	
 cleanup:
 	KSI_PublicationRecord_free(tmp);
-	KSI_free(cloneUTF8);
-	
 	
 	return KSI_RETURN(&err);
 }

@@ -334,7 +334,7 @@ static void TestParseMetaHash(CuTest *tc) {
 	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "MetaImprint", metaImprint, sizeof(metaImprint));
 	CuAssert(tc, "Unable to create meta data hash.", res == KSI_OK && metaHash != NULL);
 
-	res = KSI_MetaHash_MetaHash_parseMeta(metaHash, &tmp, &tmp_len);
+	res = KSI_DataHash_MetaHash_parseMeta(metaHash, &tmp, &tmp_len);
 	CuAssert(tc, "Unable to parse valid meta datahash", res == KSI_OK && tmp != NULL && tmp_len > 0);
 	CuAssert(tc, "Metadata value mismatch", !memcmp(metaVal, tmp, tmp_len));
 

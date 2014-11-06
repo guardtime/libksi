@@ -287,7 +287,7 @@ static int encodeAsRaw(KSI_TLV *tlv) {
 	tlv->datap = buf;
 	tlv->datap_len = payloadLength;
 
-	KSI_TLVList_freeAll(tlv->nested);
+	KSI_TLVList_free(tlv->nested);
 	tlv->nested = NULL;
 
 	buf = NULL;
@@ -413,7 +413,7 @@ static int encodeAsNestedTlvs(KSI_TLV *tlv) {
 cleanup:
 
 	KSI_TLV_free(tmp);
-	KSI_TLVList_freeAll(tlvList);
+	KSI_TLVList_free(tlvList);
 
 	return KSI_RETURN(&err);
 }
@@ -542,7 +542,7 @@ void KSI_TLV_free(KSI_TLV *tlv) {
 		KSI_free(tlv->buffer);
 		/* Free nested data */
 
-		KSI_TLVList_freeAll(tlv->nested);
+		KSI_TLVList_free(tlv->nested);
 		KSI_free(tlv);
 	}
 }
@@ -791,7 +791,7 @@ int KSI_TLV_removeNestedTlv(KSI_TLV *target, KSI_TLV *tlv) {
 		goto cleanup;
 	}
 
-	res = KSI_TLVList_remove(target->nested, *pos);
+	res = KSI_TLVList_remove(target->nested, *pos, NULL);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
@@ -887,7 +887,7 @@ int KSI_TLV_appendNestedTlv(KSI_TLV *target, KSI_TLV *after, KSI_TLV *tlv) {
 cleanup:
 
 	KSI_free(pos);
-	KSI_TLVList_freeAll(list);
+	KSI_TLVList_free(list);
 
 	return KSI_RETURN(&err);
 }
@@ -926,21 +926,21 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int serializeTlvList(KSI_LIST(KSI_TLV) *nestedList, unsigned idx, unsigned char *buf, unsigned *buf_free) {
+static int serializeTlvList(KSI_CTX *ctx, KSI_LIST(KSI_TLV) *nestedList, unsigned idx, unsigned char *buf, unsigned *buf_free) {
 	KSI_ERR err;
 	int res;
 	unsigned bf = *buf_free;
 	KSI_TLV *tlv = NULL;
 
 	KSI_PRE(&err, nestedList != NULL) goto cleanup;
-	KSI_BEGIN(nestedList->ctx, &err);
+	KSI_BEGIN(ctx, &err);
 
 	if (KSI_TLVList_length(nestedList) > idx) {
 		/* Cast required, as the iterator is advanced by one. */
 		res = KSI_TLVList_elementAt(nestedList, idx, &tlv);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		res = serializeTlvList(nestedList, idx + 1, buf, &bf);
+		res = serializeTlvList(ctx, nestedList, idx + 1, buf, &bf);
 		if (res != KSI_OK) {
 			KSI_FAIL(&err, res, NULL);
 			goto cleanup;
@@ -977,7 +977,7 @@ static int serializeNested(const KSI_TLV *tlv, unsigned char *buf, unsigned *buf
 	}
 
 	if (tlv->nested != NULL) {
-		res = serializeTlvList(tlv->nested, 0, buf, &bf);
+		res = serializeTlvList(tlv->ctx, tlv->nested, 0, buf, &bf);
 		if (res != KSI_OK) {
 			KSI_FAIL(&err, res, NULL);
 			goto cleanup;
