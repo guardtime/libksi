@@ -42,7 +42,7 @@ EXPORTS
     KSI_DataHash_fromTlv
     KSI_DataHash_toTlv
     KSI_DataHash_getHashAlg
-    KSI_MetaHash_MetaHash_parseMeta
+    KSI_DataHash_MetaHash_parseMeta
     KSI_DataHash_MetaHash_fromTlv
     KSI_DataHash_toString
 
