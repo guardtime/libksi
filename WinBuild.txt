@@ -114,9 +114,9 @@ Configuring build scripts
 	For building process, above described top level-make file or 
 	WinBuild32.bat/WinBuild64.bat must be called.
 	
-	Make file can be executed via CMD shell or Visual Studio command promt shell.
-	When using CMD shell environment must be configured using setenev command. 
-	For example for 64-bit build setenev /x64.
+	Make file can be executed via CMD shell or Visual Studio command prompt shell.
+	When using CMD shell environment must be configured using setenv command. 
+	For example for 64-bit build setenv /x64.
 
 	
 	Make file has following options:
