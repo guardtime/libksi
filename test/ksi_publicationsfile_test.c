@@ -5,7 +5,7 @@ extern KSI_CTX *ctx;
 extern unsigned char *KSI_NET_MOCK_response;
 extern unsigned KSI_NET_MOCK_response_len;
 
-#define TEST_PUBLICATIONS_FILE "test/resource/tlv/publications.tlv"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
 static void setFileMockResponse(CuTest *tc, const char *fileName) {
 	FILE *f = NULL;
@@ -24,9 +24,9 @@ static void testLoadPublicationsFile(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	setFileMockResponse(tc, TEST_PUBLICATIONS_FILE);
+	setFileMockResponse(tc, getFullResourcePath(TEST_PUBLICATIONS_FILE));
 
-	res = KSI_PublicationsFile_fromFile(ctx, TEST_PUBLICATIONS_FILE, &pubFile);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
 
 	KSI_PublicationsFile_free(pubFile);
@@ -39,9 +39,9 @@ static void testVerifyPublicationsFile(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	setFileMockResponse(tc, TEST_PUBLICATIONS_FILE);
+	setFileMockResponse(tc, getFullResourcePath(TEST_PUBLICATIONS_FILE));
 
-	res = KSI_PublicationsFile_fromFile(ctx, TEST_PUBLICATIONS_FILE, &pubFile);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
 
 	res = KSI_PKITruststore_new(ctx, 0, &pki);
@@ -56,7 +56,7 @@ static void testVerifyPublicationsFile(CuTest *tc) {
 
 	/* Verification should succeed. */
 
-	res = KSI_PKITruststore_addLookupFile(pki, "test/resource/tlv/mock.crt");
+	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
 	CuAssert(tc, "Unable to read certificate", res == KSI_OK);
 
 	res = KSI_PublicationsFile_verify(pubFile, ctx);
@@ -224,15 +224,15 @@ static void testSerializePublicationsFile(CuTest *tc) {
 	
 	KSI_ERR_clearErrors(ctx);
 
-	setFileMockResponse(tc, TEST_PUBLICATIONS_FILE);
+	setFileMockResponse(tc, getFullResourcePath(TEST_PUBLICATIONS_FILE));
 
-	res = KSI_PublicationsFile_fromFile(ctx, TEST_PUBLICATIONS_FILE, &pubFile);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
 
 	res = KSI_PublicationsFile_serialize(ctx, pubFile, &raw, &raw_len);
 	CuAssert(tc, "Unable to serialize publications file", res == KSI_OK && raw != NULL && raw_len != 0);
 	
-	f = fopen(TEST_PUBLICATIONS_FILE, "rb");
+	f = fopen(getFullResourcePath(TEST_PUBLICATIONS_FILE), "rb");
 	CuAssert(tc, "Unable to open publications file", res == KSI_OK && f != NULL);
 	
 	while((symbol = getc(f)) != EOF && i<raw_len){

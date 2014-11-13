@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ksi/ksi.h>
 
+#include "all_tests.h"
 #include "ksi_net_mock.h"
 #include "../src/ksi/net_http_impl.h"
 
@@ -21,12 +22,12 @@ static int mockPublicationsFileReceive(KSI_RequestHandle *handle) {
 	unsigned char *raw = NULL;
 	unsigned len;
 	long int raw_size = 0;
-
+	
 	if (handle == NULL) goto cleanup;
 
 	KSI_LOG_debug(ctx, "Connecting to MOCK publications file service");
-
-	f = fopen("test/resource/tlv/publications.tlv", "rb");
+	
+	f = fopen(getFullResourcePath("resource/tlv/publications.tlv"), "rb");
 	if (f == NULL) {
 		res = KSI_IO_ERROR;
 		goto cleanup;

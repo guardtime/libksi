@@ -255,7 +255,38 @@ cleanup:
 	return res;
 }
 
+//#include <direct.h>
 
-int main(void) {
+static char path_resource[1024];
+
+static void getPathToResources(char *partialPath ){
+	char *root;
+	char *relpath_resources = "/test/";
+#ifdef _WIN32
+	char *relpath_exe = "\\out\\bin\\alltests.exe";
+	
+	if( _fullpath( path_resource, partialPath, 1024) == NULL ){
+		printf( "Can't get full path to alltests.exe!\n");
+	}
+#else
+	char *relpath_exe = "/src/alltests";
+#endif
+	
+	root = strstr(path_resource, relpath_exe);
+	if(root == NULL){
+		printf( "Can't find full path to directory 'test'!\n" );
+	}
+	strcpy(root, relpath_resources);
+}
+
+char* getFullResourcePath(const char* resource){
+	static char tmp[1024];
+	strcpy(tmp, path_resource);
+	strcat(tmp, resource);
+	return tmp;
+}
+
+int main(int argc, char** argv) {
+	getPathToResources(argv[0]);
 	return RunAllTests();
 }

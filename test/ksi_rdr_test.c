@@ -7,7 +7,7 @@
 
 extern KSI_CTX *ctx;
 
-static const char TMP_FILE[] = "test/tmpfile.tmp";
+static const char TMP_FILE[] = "tmpfile.tmp";
 
 struct KSI_RDR_st {
 	/* Context for the reader. */
@@ -69,13 +69,13 @@ static void TestRdrFileFileReading(CuTest* tc) {
 	KSI_RDR *rdr = NULL;
 
 	/* Write some data to file */
-	f = fopen(TMP_FILE, "w");
+	f = fopen(getFullResourcePath(TMP_FILE) , "w");
 	CuAssert(tc, "Unable to create temporary file", f != NULL);
 	CuAssert(tc, "Unable to write temporary file", fprintf(f, "%s", testStr) > 0);
 	CuAssert(tc, "Unable to close temporary file", !fclose(f));
 
 	/* Try reading it back. */
-	res = KSI_RDR_fromFile(ctx, TMP_FILE, "r", &rdr);
+	res = KSI_RDR_fromFile(ctx, getFullResourcePath(TMP_FILE), "r", &rdr);
 	CuAssert(tc, "Error creating reader from file.", res == KSI_OK);
 	CuAssert(tc, "Creating reader from file did not fail, but object is still NULL", rdr != NULL);
 	/* Read as a single block. */
@@ -87,7 +87,7 @@ static void TestRdrFileFileReading(CuTest* tc) {
 	KSI_RDR_close(rdr);
 
 	/* Remove temporary file */
-	CuAssert(tc, "Unable to remove temporary file", remove(TMP_FILE) == 0);
+	CuAssert(tc, "Unable to remove temporary file", remove(getFullResourcePath(TMP_FILE)) == 0);
 }
 
 
@@ -104,13 +104,13 @@ static void TestRdrFileReadingChuncks(CuTest* tc) {
 	KSI_RDR *rdr = NULL;
 
 	/* Write some data to file */
-	f = fopen(TMP_FILE, "w");
+	f = fopen(getFullResourcePath(TMP_FILE), "w");
 	CuAssert(tc, "Unable to create tempprary file", f != NULL);
 	CuAssert(tc, "Unable to write temporary file", fprintf(f, "%s", testStr) > 0);
 	CuAssert(tc, "Unable to close temporary file", !fclose(f));
 
 	/* Try reading it back. */
-	res = KSI_RDR_fromFile(ctx, TMP_FILE, "r", &rdr);
+	res = KSI_RDR_fromFile(ctx, getFullResourcePath(TMP_FILE), "r", &rdr);
 	CuAssert(tc, "Error creating reader from file.", res == KSI_OK);
 	CuAssert(tc, "Creating reader from file did not fail, but object is still NULL", rdr != NULL);
 	/* Read blocks of size 10. */
@@ -125,7 +125,7 @@ static void TestRdrFileReadingChuncks(CuTest* tc) {
 	KSI_RDR_close(rdr);
 
 	/* Remove temporary file */
-	CuAssert(tc, "Unable to remove temporary file", remove(TMP_FILE) == 0);
+	CuAssert(tc, "Unable to remove temporary file", remove(getFullResourcePath(TMP_FILE)) == 0);
 }
 
 static void TestRdrMemInitExtStorage(CuTest* tc) {
