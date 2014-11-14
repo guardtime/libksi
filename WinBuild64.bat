@@ -13,7 +13,7 @@ SET OPENSSL_CA_FILE=C:\Users\Taavi\Documents\GuardTime\ksi-c-api\test\resource\t
 
 
 REM nmake clean
-del out\bin\alltests.exe out\lib\libksiapiMTd.lib
+del out\lib\libksiapiMTd.lib
 rem nmake RTL=MTd NET_PROVIDER=CURL CRYPTO_PROVIDER=CRYPTOAPI CURL_DIR="%CURL_DIR%" OPENSSL_CA_FILE="%OPENSSL_CA_FILE%" OPENSSL_DIR="%OPENSSL_DIR%" all
 rem nmake RTL=MTd NET_PROVIDER=CURL TRUST_PROVIDER=OPENSSL HASH_PROVIDER=CRYPTOAPI CURL_DIR="%CURL_DIR%" OPENSSL_CA_FILE="%OPENSSL_CA_FILE%" OPENSSL_DIR="%OPENSSL_DIR%" test
 

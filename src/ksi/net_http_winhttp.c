@@ -1,6 +1,6 @@
 #include "internal.h"
 
-#if KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP
+#if KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP || 1
 
 #include <windows.h>
 #include <Winhttp.h>
@@ -195,7 +195,7 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 
 	if(http_response >= 400){
 		char err_msg[64];
-		snprintf(err_msg, 64, "Http error %i.", http_response);
+		snprintf(err_msg, 64, "WinHTTP: Http error %i.", http_response);
 		KSI_FAIL(&err, KSI_HTTP_ERROR, err_msg);
 		goto cleanup;
 	}
@@ -343,8 +343,15 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	/*Preparing session handle. Opens an HTTP session for a given site*/
 	implCtx->connection_handle = WinHttpConnect(implCtx->session_handle, implCtx->hostName, implCtx->uc.nPort, 0);
 	if (implCtx->connection_handle == NULL) {
-		//error koodid http://msdn.microsoft.com/en-us/library/windows/desktop/aa384091%28v=vs.85%29.aspx
-		KSI_FAIL(&err, KSI_NETWORK_ERROR, "WinHTTP: Unable to init connection handle");
+		char err_msg[128];
+		DWORD error = GetLastError();
+		if(error == ERROR_WINHTTP_INVALID_URL){
+			snprintf(err_msg, 128, "WinHTTP: Could not resolve host: '%ws'", implCtx->hostName);
+			KSI_FAIL(&err, KSI_NETWORK_ERROR, err_msg);
+			}
+		else	
+			KSI_FAIL(&err, KSI_NETWORK_ERROR, "WinHTTP: Unable to init connection handle");
+
 		goto cleanup;
 	}
 

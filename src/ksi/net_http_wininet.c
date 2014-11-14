@@ -139,17 +139,21 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 	if(wininetHandle->scheme == INTERNET_SCHEME_HTTP){
 		/*Send request*/
 		if (!HttpSendRequestA(wininetHandle->request_handle, NULL, 0, (LPVOID) handle->request, handle->request_length)) {
+			char err_msg[128];
 			DWORD error = GetLastError();
 			KSI_LOG_debug(ctx, "WinINet: Send error %i\n", error);
 
-			if(error == ERROR_INTERNET_NAME_NOT_RESOLVED)
-				KSI_FAIL(&err, KSI_INVALID_FORMAT, "WinINet: Invalid host name");
+			if(error == ERROR_INTERNET_NAME_NOT_RESOLVED){
+				snprintf(err_msg, 128, "WinINet: Could not resolve host: '%s'", wininetHandle->hostName);
+				KSI_FAIL(&err, KSI_NETWORK_ERROR, err_msg);
+			}
 			else if(error == ERROR_INTERNET_CANNOT_CONNECT)
 				KSI_FAIL(&err, KSI_NETWORK_ERROR, "WinINet: Unable to connect");
 			else if(error = ERROR_INTERNET_TIMEOUT)
 				KSI_FAIL(&err, KSI_NETWORK_SEND_TIMEOUT, NULL);
 			else
 				KSI_FAIL(&err, KSI_NETWORK_ERROR, NULL);
+			
 			goto cleanup;
 		}
 
