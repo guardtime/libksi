@@ -255,8 +255,6 @@ cleanup:
 	return res;
 }
 
-//#include <direct.h>
-
 static char path_resource[1024];
 
 static void getPathToTestDir(char *partialPath ){

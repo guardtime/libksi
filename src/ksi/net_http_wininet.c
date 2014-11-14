@@ -85,7 +85,6 @@ static int wininetNetHandleCtx_new(wininetNetHandleCtx **handleCtx){
 	}
 
 	nhc->ctx = NULL;
-	//nhc->internet_handle = NULL;
 	nhc->session_handle = NULL;
 	nhc->request_handle = NULL;
 	nhc->hostName = NULL;
@@ -141,12 +140,12 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 		/*Send request*/
 		if (!HttpSendRequestA(wininetHandle->request_handle, NULL, 0, (LPVOID) handle->request, handle->request_length)) {
 			DWORD error = GetLastError();
-			KSI_LOG_debug(ctx, "Wininet: Send error %i\n", error);
+			KSI_LOG_debug(ctx, "WinINet: Send error %i\n", error);
 
 			if(error == ERROR_INTERNET_NAME_NOT_RESOLVED)
-				KSI_FAIL(&err, KSI_INVALID_FORMAT, "Wininet: Invalid host name");
+				KSI_FAIL(&err, KSI_INVALID_FORMAT, "WinINet: Invalid host name");
 			else if(error == ERROR_INTERNET_CANNOT_CONNECT)
-				KSI_FAIL(&err, KSI_NETWORK_ERROR, "Wininet: Unable to connect");
+				KSI_FAIL(&err, KSI_NETWORK_ERROR, "WinINet: Unable to connect");
 			else if(error = ERROR_INTERNET_TIMEOUT)
 				KSI_FAIL(&err, KSI_NETWORK_SEND_TIMEOUT, NULL);
 			else
@@ -159,9 +158,9 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 		if (!HttpQueryInfo(wininetHandle->request_handle, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &http_response, &http_response_len, 0)) {
 			DWORD error = GetLastError();
 			if(error == ERROR_HTTP_HEADER_NOT_FOUND)
-				KSI_FAIL(&err, KSI_HTTP_ERROR, "HTTP header not found");
+				KSI_FAIL(&err, KSI_HTTP_ERROR, "WinINet: HTTP header not found");
 			else if(error == ERROR_INSUFFICIENT_BUFFER)
-				KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Wininet: Insufficient buffer");
+				KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "WinINet: Insufficient buffer");
 			else if(error = ERROR_INTERNET_TIMEOUT)
 				KSI_FAIL(&err, KSI_NETWORK_RECIEVE_TIMEOUT, NULL);
 			else
@@ -172,11 +171,17 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 
 		if(http_response >= 400){
 			char err_msg[64];
-			snprintf(err_msg, 64, "Http error %i.", http_response);
+			snprintf(err_msg, 64, "WinINet: Http error %i.", http_response);
 			KSI_FAIL(&err, KSI_HTTP_ERROR, err_msg);
 			goto cleanup;
 		}
 	}
+	else{
+		char err_msg[64];
+		snprintf(err_msg, 64, "WinINet: Internet scheme is '%s' instead of 'HTTP'.", wininetHandle->uc.lpszScheme);
+		KSI_FAIL(&err, KSI_HTTP_ERROR, err_msg);
+		goto cleanup;
+		}
 	
 	while (1) {
 		DWORD add_len = 0x2000; /* Download in 8K increments. */
@@ -188,8 +193,9 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 
 		if (!InternetReadFile(wininetHandle->request_handle, resp + resp_len, add_len, &add_len)) {
 			DWORD error = GetLastError();
+			printf(">> %X\n", error);
 			if(error == ERROR_INSUFFICIENT_BUFFER)
-				KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Wininet: Insufficient buffer");
+				KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "WinINet: Insufficient buffer");
 			else
 				KSI_FAIL(&err, KSI_UNKNOWN_ERROR, NULL);
 			
@@ -258,7 +264,7 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	wininetHandle->uc.dwExtraInfoLength = 1;
 	
 	if (!InternetCrackUrlA(url, 0, 0, &(wininetHandle->uc))) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Wininet: Unable to crack url");
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "WinINet: Unable to crack url");
 		goto cleanup;
 	}
 	wininetHandle->scheme = wininetHandle->uc.nScheme;
@@ -267,7 +273,7 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	if(wininetHandle->scheme == INTERNET_SCHEME_HTTP){
 		/*Extracting host name*/
 		if (wininetHandle->uc.lpszHostName == NULL || wininetHandle->uc.dwHostNameLength == 0){
-			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Wininet: Invalid host name");
+			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "WinINet: Invalid host name");
 			goto cleanup;
 		}
 
@@ -279,7 +285,7 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 
 		strncpy_s(wininetHandle->hostName, wininetHandle->uc.dwHostNameLength + 1, wininetHandle->uc.lpszHostName, wininetHandle->uc.dwHostNameLength);
 		if (wininetHandle->uc.lpszUrlPath == NULL || wininetHandle->uc.dwUrlPathLength == 0) {
-			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Wininet: Invalid url path");
+			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "WinINet: Invalid url path");
 			goto cleanup;
 		}
 
@@ -297,10 +303,10 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 
 		/*Preparing request*/
 
-		KSI_LOG_debug(ctx, "Wininet: Sending request to: %s", url);
+		KSI_LOG_debug(ctx, "WinINet: Sending request to: %s", url);
 
 		if (handle->request_length > LONG_MAX) {
-			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Wininet: Request too long");
+			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "WinINet: Request too long");
 			goto cleanup;
 		}
 
@@ -309,7 +315,7 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		//Opens an HTTP session for a given site
 		wininetHandle->session_handle = InternetConnectA(internetHandle, wininetHandle->hostName, wininetHandle->uc.nPort, NULL, NULL, wininetHandle->uc.nScheme, 0, 0);
 		if (wininetHandle->session_handle == NULL) {
-			KSI_FAIL(&err, KSI_NETWORK_ERROR, "Wininet: Unable to init connection handle");
+			KSI_FAIL(&err, KSI_NETWORK_ERROR, "WinINet: Unable to init connection handle");
 			goto cleanup;
 		}
 
@@ -326,8 +332,8 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 
 		if(wininetHandle->request_handle == NULL){
 			DWORD error = GetLastError();
-			KSI_LOG_debug(ctx, "Wininet: Open request error %i\n", error);
-			KSI_FAIL(&err, KSI_NETWORK_ERROR, "Wininet: Unable to init request handle");
+			KSI_LOG_debug(ctx, "WinINet: Open request error %i\n", error);
+			KSI_FAIL(&err, KSI_NETWORK_ERROR, "WinINet: Unable to init request handle");
 			goto cleanup;
 		}
 
@@ -356,7 +362,7 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	else if(wininetHandle->scheme == INTERNET_SCHEME_FILE){
 		wininetHandle->request_handle = InternetOpenUrl(internetHandle, url, NULL, 0, 0,0);
 		if(wininetHandle->request_handle == NULL){
-			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Wininet: Unable to open Url");
+			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "WinINet: Unable to open Url");
 			goto cleanup;
 		}		
 	}

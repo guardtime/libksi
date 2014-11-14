@@ -161,7 +161,7 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 		KSI_LOG_debug(ctx, "Winhttp send error %i\n", error);
 
 		if(error == ERROR_WINHTTP_CANNOT_CONNECT)
-			KSI_FAIL(&err, KSI_NETWORK_ERROR, "Winhttp: Unable to connect");
+			KSI_FAIL(&err, KSI_NETWORK_ERROR, "WinHTTP: Unable to connect");
 		if(error == ERROR_WINHTTP_TIMEOUT)
 			KSI_FAIL(&err, KSI_NETWORK_SEND_TIMEOUT, NULL);
 		else
@@ -176,17 +176,17 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 		else
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, NULL);
 			
-		KSI_LOG_debug(ctx, "Winhttp: Receive error %i\n", error);
+		KSI_LOG_debug(ctx, "WinHTTP: Receive error %i\n", error);
 		goto cleanup;
 	}
 	
 	/* Receive the response information. */
 	if (!WinHttpQueryHeaders(nhc->request_handle, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, &http_response, &http_response_len, 0)) {
 		DWORD error = GetLastError();
-		KSI_LOG_debug(ctx, "Winhttp: Query error %i\n", error);
+		KSI_LOG_debug(ctx, "WinHTTP: Query error %i\n", error);
 		
 		if(error == ERROR_INSUFFICIENT_BUFFER)
-			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Winhttp: Insufficient buffer");
+			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "WinHTTP: Insufficient buffer");
 		else
 			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, NULL);
 		res = KSI_HTTP_ERROR;
@@ -210,10 +210,10 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 
 		if (!WinHttpReadData(nhc->request_handle, resp + resp_len, add_len, &add_len)) {
 			DWORD error = GetLastError();
-			KSI_LOG_debug(ctx, "Winhttp: Read data error %i\n", error);
+			KSI_LOG_debug(ctx, "WinHTTP: Read data error %i\n", error);
 
 			if(error == ERROR_INSUFFICIENT_BUFFER)
-				KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Winhttp: Insufficient buffer");
+				KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "WinHTTP: Insufficient buffer");
 			else
 				KSI_FAIL(&err, KSI_UNKNOWN_ERROR, NULL);
 			
@@ -285,14 +285,14 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 
 	if (!WinHttpCrackUrl(w_url, 0, 0, &(implCtx->uc))) {
 		DWORD error = GetLastError();
-		KSI_LOG_debug(ctx, "Winhttp: Crack url error %i\n", error);
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Winhttp: Unable to crack url");
+		KSI_LOG_debug(ctx, "WinHTTP: Crack url error %i\n", error);
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "WinHTTP: Unable to crack url");
 		goto cleanup;
 	}
 
 	/*Extracting host name*/
 	if (implCtx->uc.lpszHostName == NULL || implCtx->uc.dwHostNameLength == 0){
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Winhttp: Invalid host name");
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "WinHTTP: Invalid host name");
 		goto cleanup;
 	}
 
@@ -304,7 +304,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 
 	wcsncpy_s(implCtx->hostName, implCtx->uc.dwHostNameLength + 1, implCtx->uc.lpszHostName, implCtx->uc.dwHostNameLength);
 	if (implCtx->uc.lpszUrlPath == NULL || implCtx->uc.dwUrlPathLength == 0) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Winhttp: Invalid url path");
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "WinHTTP: Invalid url path");
 		goto cleanup;
 	}
 
@@ -321,13 +321,13 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	}
 
 	/*Preparing request*/
-	KSI_LOG_debug(ctx, "Winhttp: Sending request to: %s", url);
+	KSI_LOG_debug(ctx, "WinHTTP: Sending request to: %s", url);
 
 	res = KSI_RequestHandle_getRequest(handle, &request, &request_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	if (request_len > LONG_MAX) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Winhttp: Request too long");
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "WinHTTP: Request too long");
 		goto cleanup;
 	}
 
@@ -341,7 +341,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	implCtx->connection_handle = WinHttpConnect(implCtx->session_handle, implCtx->hostName, implCtx->uc.nPort, 0);
 	if (implCtx->connection_handle == NULL) {
 		//error koodid http://msdn.microsoft.com/en-us/library/windows/desktop/aa384091%28v=vs.85%29.aspx
-		KSI_FAIL(&err, KSI_NETWORK_ERROR, "Winhttp: Unable to init connection handle");
+		KSI_FAIL(&err, KSI_NETWORK_ERROR, "WinHTTP: Unable to init connection handle");
 		goto cleanup;
 	}
 
@@ -358,15 +358,15 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	
 	if(implCtx->request_handle == NULL){
 		DWORD error = GetLastError();
-		KSI_LOG_debug(ctx, "Winhttp: Open request error %i\n", error);
-		KSI_FAIL(&err, KSI_NETWORK_ERROR, "Winhttp: Unable to init request handle");
+		KSI_LOG_debug(ctx, "WinHTTP: Open request error %i\n", error);
+		KSI_FAIL(&err, KSI_NETWORK_ERROR, "WinHTTP: Unable to init request handle");
 		goto cleanup;
 	}
 	
 	if(!WinHttpSetTimeouts(implCtx->request_handle,0, http->connectionTimeoutSeconds*1000, 0, http->readTimeoutSeconds*1000)){
 		DWORD error = GetLastError();
-		KSI_LOG_debug(ctx, "Winhttp: Open set timeout error %i\n", error);
-		KSI_FAIL(&err, KSI_NETWORK_ERROR, "Winhttp: Unable to set timeouts");
+		KSI_LOG_debug(ctx, "WinHTTP: Open set timeout error %i\n", error);
+		KSI_FAIL(&err, KSI_NETWORK_ERROR, "WinHTTP: Unable to set timeouts");
 		goto cleanup;
 	}
 	
