@@ -177,9 +177,7 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 		}
 	}
 	else{
-		char err_msg[64];
-		snprintf(err_msg, 64, "WinINet: Internet scheme is '%s' instead of 'HTTP'.", wininetHandle->uc.lpszScheme);
-		KSI_FAIL(&err, KSI_HTTP_ERROR, err_msg);
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, "WinINet: Internet scheme is not 'HTTP/HTTPS'");
 		goto cleanup;
 		}
 	

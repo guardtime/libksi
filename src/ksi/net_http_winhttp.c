@@ -1,6 +1,6 @@
 #include "internal.h"
 
-#if KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP
+#if KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP || 1
 
 #include <windows.h>
 #include <Winhttp.h>
@@ -286,7 +286,13 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	if (!WinHttpCrackUrl(w_url, 0, 0, &(implCtx->uc))) {
 		DWORD error = GetLastError();
 		KSI_LOG_debug(ctx, "WinHTTP: Crack url error %i\n", error);
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "WinHTTP: Unable to crack url");
+		if(error == ERROR_WINHTTP_UNRECOGNIZED_SCHEME)
+			KSI_FAIL(&err, KSI_INVALID_FORMAT, "WinHTTP: Internet scheme is not 'HTTP/HTTPS'");
+		else if(error == ERROR_WINHTTP_INVALID_URL)
+			KSI_FAIL(&err, KSI_INVALID_FORMAT, "WinHTTP: Invalid URL");
+		else
+			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "WinHTTP: Unable to crack url");
+		
 		goto cleanup;
 	}
 
