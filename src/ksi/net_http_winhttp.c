@@ -1,6 +1,6 @@
 #include "internal.h"
 
-#if KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP || 1
+#if KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP
 
 #include <windows.h>
 #include <Winhttp.h>
@@ -302,7 +302,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		goto cleanup;
 	}
 
-	implCtx->hostName = KSI_malloc(implCtx->uc.dwHostNameLength*10 + 1);
+	implCtx->hostName = KSI_malloc(implCtx->uc.dwHostNameLength*2 + 2);
 	if (implCtx->hostName == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
@@ -310,20 +310,20 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 
 	wcsncpy_s(implCtx->hostName, implCtx->uc.dwHostNameLength + 1, implCtx->uc.lpszHostName, implCtx->uc.dwHostNameLength);
 	if (implCtx->uc.lpszUrlPath == NULL || implCtx->uc.dwUrlPathLength == 0) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "WinHTTP: Invalid url path");
-		goto cleanup;
+		implCtx->query = LPWSTR_new("/");
 	}
+	else{
+		/*Extracting query string*/
+		implCtx->query = KSI_malloc((implCtx->uc.dwUrlPathLength + implCtx->uc.dwExtraInfoLength)*2 + 2);
+		if (implCtx->query == NULL) {
+			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+			goto cleanup;
+		}
 
-	/*Extracting query string*/
-	implCtx->query = KSI_malloc((implCtx->uc.dwUrlPathLength + implCtx->uc.dwExtraInfoLength)*10 + 1);
-	if (implCtx->query == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	wcsncpy_s(implCtx->query, implCtx->uc.dwUrlPathLength + 1, implCtx->uc.lpszUrlPath, implCtx->uc.dwUrlPathLength);
-	if (!(implCtx->uc.lpszExtraInfo == NULL || implCtx->uc.dwExtraInfoLength == 0)) {
-		wcsncpy_s(implCtx->query + implCtx->uc.dwUrlPathLength, implCtx->uc.dwExtraInfoLength + 1, implCtx->uc.lpszExtraInfo, implCtx->uc.dwExtraInfoLength);
+		wcsncpy_s(implCtx->query, implCtx->uc.dwUrlPathLength + 1, implCtx->uc.lpszUrlPath, implCtx->uc.dwUrlPathLength);
+		if (!(implCtx->uc.lpszExtraInfo == NULL || implCtx->uc.dwExtraInfoLength == 0)) {
+			wcsncpy_s(implCtx->query + implCtx->uc.dwUrlPathLength, implCtx->uc.dwExtraInfoLength + 1, implCtx->uc.lpszExtraInfo, implCtx->uc.dwExtraInfoLength);
+		}
 	}
 
 	/*Preparing request*/
@@ -340,9 +340,6 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	handle->readResponse = winhttpReceive;
 	handle->client = client;
 	
-//	res = KSI_RequestHandle_setReadResponseFn(handle, winhttpReceive);
-//	KSI_CATCH(&err, res) goto cleanup;
-
 	/*Preparing session handle. Opens an HTTP session for a given site*/
 	implCtx->connection_handle = WinHttpConnect(implCtx->session_handle, implCtx->hostName, implCtx->uc.nPort, 0);
 	if (implCtx->connection_handle == NULL) {
