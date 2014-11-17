@@ -54,6 +54,8 @@ extern "C" {
 
 	int KSI_RDR_verifyEnd(KSI_RDR *rdr);
 
+	KSI_DEFINE_GET_CTX(KSI_RDR);
+
 
 #ifdef __cplusplus
 }

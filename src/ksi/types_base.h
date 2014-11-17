@@ -8,6 +8,35 @@
 extern "C" {
 #endif
 
+#define KSI_DEFINE_FN_FROM_TLV(typ) \
+/*!
+	Function to convert a plain #KSI_TLV to a \ref typ. The TLV meta data (i.e.
+	tag, length and flags) are not preserved.
+	\param[in]	tlv		Pointer to #KSI_TLV.
+	\param[out]	o		Pointer to receiving pointer.
+	\return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
+	\see \ref typ##_foTlv
+*/ \
+int typ##_fromTlv(KSI_TLV *tlv, typ **link);
+
+#define KSI_DEFINE_FN_TO_TLV(typ) \
+/*!
+	Function to convert a \ref typ to a plain #KSI_TLV object.
+	\param[in]	ctx				KSI context.
+	\param[in]	o				Pointer to \ref typ
+	\param[in]	taggg				Tag value of the #KSI_TLV
+	\param[in]	isNonCritical	Flag is-non-critical.
+	\param[in]	isForward		Flag is-forward.
+	\param[out]	tlv				Ponter to the reveiving pointer.
+	\return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
+	\see \ref typ##_fromTlv, \ref KSI_TLV_free
+*/ \
+int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned taggg, int isNonCritica, int isForward, KSI_TLV **tlv);
+
+/**
+ * \addtogroup base_types Base types
+ *  @{
+ */
 #define KSI_uint64_t uint64_t
 #define KSI_DEFINE_GET_CTX(type) KSI_CTX *type##_getCtx(const type *o);
 
@@ -17,30 +46,6 @@ typedef struct KSI_ERR_st KSI_ERR;
 typedef struct KSI_RDR_st KSI_RDR;
 typedef struct KSI_Integer_st KSI_Integer;
 typedef struct KSI_Logger_st KSI_Logger;
-
-typedef struct KSI_MetaData_st KSI_MetaData;
-typedef struct KSI_HashChainLink_st KSI_HashChainLink;
-typedef KSI_HashChainLink KSI_CalendarHashChainLink;
-typedef struct KSI_CalendarHashChain_st KSI_CalendarHashChain;
-typedef struct KSI_ExtendPdu_st KSI_ExtendPdu;
-typedef struct KSI_AggregationPdu_st KSI_AggregationPdu;
-typedef struct KSI_Header_st KSI_Header;
-typedef struct KSI_Config_st KSI_Config;
-typedef struct KSI_AggregationReq_st KSI_AggregationReq;
-typedef struct KSI_RequestAck_st KSI_RequestAck;
-typedef struct KSI_AggregationResp_st KSI_AggregationResp;
-typedef struct KSI_ExtendReq_st KSI_ExtendReq;
-typedef struct KSI_ExtendResp_st KSI_ExtendResp;
-typedef struct KSI_PKISignedData_st KSI_PKISignedData;
-typedef struct KSI_PublicationsHeader_st KSI_PublicationsHeader;
-typedef struct KSI_CertificateRecord_st KSI_CertificateRecord;
-typedef struct KSI_PublicationData_st KSI_PublicationData;
-typedef struct KSI_PublicationRecord_st KSI_PublicationRecord;
-
-/**
- * Template type.
- */
-typedef struct KSI_TlvTemplate_st KSI_TlvTemplate;
 
 /**
  * Octet string type for storing binary data.
@@ -56,70 +61,6 @@ typedef struct KSI_Utf8String_st KSI_Utf8String;
  * An utf-8 string wich must have at least one printable character.
  */
 typedef KSI_Utf8String KSI_Utf8StringNZ;
-
-/**
- * Implementation independent type for PKI certificates.
- */
-typedef struct KSI_PKICertificate_st KSI_PKICertificate;
-
-/**
- * Implementation independent type for PKI signature.
- */
-typedef struct KSI_PKISignature_st KSI_PKISignature;
-
-/**
- * Implementation independent PKI truststore.
- */
-typedef struct KSI_PKITruststore_st KSI_PKITruststore;
-
-/**
- * This structure is used for calculating the hash values.
- * \see #KSI_DataHash, #KSI_DataHasher_open, #KSI_DataHasher_reset, #KSI_DataHasher_close, #KSI_DataHasher_free
- */
-typedef struct KSI_DataHasher_st KSI_DataHasher;
-
-/**
- * This structure represents hashed data.
- * \see #KSI_DataHasher, #KSI_DataHasher_close, #KSI_DataHash_free
- */
-typedef struct KSI_DataHash_st KSI_DataHash;
-
-/**
- * Network resource handle
- *
- *	\see #KSI_NET_sendRequest
- */
-typedef struct KSI_NetHandle_st KSI_RequestHandle;
-typedef struct KSI_NetworkClient_st KSI_NetworkClient;
-typedef struct KSI_AggregationHashChain_st KSI_AggregationHashChain;
-typedef struct KSI_CalendarAuthRec_st KSI_CalendarAuthRec;
-typedef struct KSI_AggregationAuthRec_st KSI_AggregationAuthRec;
-
-KSI_DEFINE_LIST(KSI_MetaData);
-KSI_DEFINE_LIST(KSI_HashChainLink);
-KSI_DEFINE_LIST(KSI_CalendarHashChainLink);
-KSI_DEFINE_LIST(KSI_CalendarHashChain);
-KSI_DEFINE_LIST(KSI_ExtendPdu);
-KSI_DEFINE_LIST(KSI_AggregationPdu);
-KSI_DEFINE_LIST(KSI_Header);
-KSI_DEFINE_LIST(KSI_Config);
-KSI_DEFINE_LIST(KSI_AggregationReq);
-KSI_DEFINE_LIST(KSI_RequestAck);
-KSI_DEFINE_LIST(KSI_AggregationResp);
-KSI_DEFINE_LIST(KSI_ExtendReq);
-KSI_DEFINE_LIST(KSI_ExtendResp);
-KSI_DEFINE_LIST(KSI_PKISignedData);
-KSI_DEFINE_LIST(KSI_PublicationsHeader);
-KSI_DEFINE_LIST(KSI_CertificateRecord);
-KSI_DEFINE_LIST(KSI_PublicationData);
-KSI_DEFINE_LIST(KSI_PublicationRecord);
-KSI_DEFINE_LIST(KSI_Integer);
-KSI_DEFINE_LIST(KSI_OctetString);
-KSI_DEFINE_LIST(KSI_Utf8String);
-KSI_DEFINE_LIST(KSI_Utf8StringNZ);
-KSI_DEFINE_LIST(KSI_AggregationHashChain)
-KSI_DEFINE_LIST(KSI_TLV);
-KSI_DEFINE_LIST(KSI_PKICertificate);
 
 /**
  * Method to free or dereference a KSI_Integer object. The object is
@@ -264,55 +205,18 @@ size_t KSI_Utf8String_size(const KSI_Utf8String *t);
  * \return Pointer to the null terminated c string.
  */
 const char *KSI_Utf8String_cstr(const KSI_Utf8String *o);
-int KSI_Utf8String_fromTlv(KSI_TLV *tlv, KSI_Utf8String **o);
-int KSI_Utf8String_toTlv(KSI_CTX *ctx, KSI_Utf8String *o, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+
+KSI_DEFINE_FN_FROM_TLV(KSI_Utf8String)
+KSI_DEFINE_FN_TO_TLV(KSI_Utf8String)
+
 int KSI_Utf8String_ref(KSI_Utf8String *o);
 
 int KSI_Utf8StringNZ_fromTlv(KSI_TLV *tlv, KSI_Utf8String **o);
 int KSI_Utf8StringNZ_toTlv(KSI_CTX *ctx, KSI_Utf8String *o, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
-/* TODO! Following functions should not be declared here. */
 /**
- * KSI_AggregationAuthRec
+ * @}
  */
-void KSI_AggregationAuthRec_free(KSI_AggregationAuthRec *aar);
-int KSI_AggregationAuthRec_new(KSI_CTX *ctx, KSI_AggregationAuthRec **out);
-
-int KSI_AggregationAuthRec_getAggregationTime(const KSI_AggregationAuthRec *rec, KSI_Integer **aggregationTime);
-int KSI_AggregationAuthRec_getChainIndex(const KSI_AggregationAuthRec *rec, KSI_LIST(KSI_Integer) **chainIndexesList);
-int KSI_AggregationAuthRec_getInputHash(const KSI_AggregationAuthRec *rec, KSI_DataHash **inputHash);
-int KSI_AggregationAuthRec_getSigAlgo(const KSI_AggregationAuthRec *rec, KSI_Utf8String **signatureAlgo);
-int KSI_AggregationAuthRec_getSigData(const KSI_AggregationAuthRec *rec, KSI_PKISignedData **signatureData);
-
-int KSI_AggregationAuthRec_setAggregationTime(KSI_AggregationAuthRec *rec, KSI_Integer *aggregationTime);
-int KSI_AggregationAuthRec_setChainIndex(KSI_AggregationAuthRec *rec, KSI_LIST(KSI_Integer) *chainIndexesList);
-int KSI_AggregationAuthRec_setInputHash(KSI_AggregationAuthRec *rec, KSI_DataHash *inputHash);
-int KSI_AggregationAuthRec_setSigAlgo(KSI_AggregationAuthRec *rec, KSI_Utf8String *signatureAlgo);
-int KSI_AggregationAuthRec_setSigData(KSI_AggregationAuthRec *rec, KSI_PKISignedData *signatureData);
-
-/**
- * KSI_CalendarAuthRec
- */
-void KSI_CalendarAuthRec_free(KSI_CalendarAuthRec *calAuth);
-int KSI_CalendarAuthRec_new(KSI_CTX *ctx, KSI_CalendarAuthRec **out);
-
-int KSI_CalendarAuthRec_getSignedData(const KSI_CalendarAuthRec *rec, KSI_TLV **pubDataTlv);
-int KSI_CalendarAuthRec_getPublishedData(const KSI_CalendarAuthRec *rec, KSI_PublicationData **pubData);
-int KSI_CalendarAuthRec_getSignatureAlgo(const KSI_CalendarAuthRec *rec, KSI_Utf8String **signatureAlgo);
-int KSI_CalendarAuthRec_getSignatureData(const KSI_CalendarAuthRec *rec, KSI_PKISignedData **signatureData);
-
-int KSI_CalendarAuthRec_setSignedData(KSI_CalendarAuthRec *rec, KSI_TLV *pubDataTlv);
-int KSI_CalendarAuthRec_setPublishedData(KSI_CalendarAuthRec *rec, KSI_PublicationData *pubData);
-int KSI_CalendarAuthRec_setSignatureAlgo(KSI_CalendarAuthRec *rec, KSI_Utf8String *signatureAlgo);
-int KSI_CalendarAuthRec_setSignatureData(KSI_CalendarAuthRec *rec, KSI_PKISignedData *signatureData);
-
-KSI_DEFINE_GET_CTX(KSI_DataHash);
-KSI_DEFINE_GET_CTX(KSI_DataHasher);
-KSI_DEFINE_GET_CTX(KSI_TLV);
-KSI_DEFINE_GET_CTX(KSI_NetworkClient);
-KSI_DEFINE_GET_CTX(KSI_RequestHandle);
-KSI_DEFINE_GET_CTX(KSI_RDR);
-
 #ifdef __cplusplus
 }
 #endif

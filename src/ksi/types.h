@@ -11,6 +11,98 @@ extern "C" {
 #endif
 
 /**
+ * \addtogroup ksi_types KSI Types
+ * @{
+ */
+	typedef struct KSI_MetaData_st KSI_MetaData;
+	typedef struct KSI_HashChainLink_st KSI_HashChainLink;
+	typedef KSI_HashChainLink KSI_CalendarHashChainLink;
+	typedef struct KSI_CalendarHashChain_st KSI_CalendarHashChain;
+	typedef struct KSI_ExtendPdu_st KSI_ExtendPdu;
+	typedef struct KSI_AggregationPdu_st KSI_AggregationPdu;
+	typedef struct KSI_Header_st KSI_Header;
+	typedef struct KSI_Config_st KSI_Config;
+	typedef struct KSI_AggregationReq_st KSI_AggregationReq;
+	typedef struct KSI_RequestAck_st KSI_RequestAck;
+	typedef struct KSI_AggregationResp_st KSI_AggregationResp;
+	typedef struct KSI_ExtendReq_st KSI_ExtendReq;
+	typedef struct KSI_ExtendResp_st KSI_ExtendResp;
+	typedef struct KSI_PKISignedData_st KSI_PKISignedData;
+	typedef struct KSI_PublicationsHeader_st KSI_PublicationsHeader;
+	typedef struct KSI_CertificateRecord_st KSI_CertificateRecord;
+	typedef struct KSI_PublicationData_st KSI_PublicationData;
+	typedef struct KSI_PublicationRecord_st KSI_PublicationRecord;
+
+	/**
+	 * Template type.
+	 */
+	typedef struct KSI_TlvTemplate_st KSI_TlvTemplate;
+
+	/**
+	 * Implementation independent type for PKI certificates.
+	 */
+	typedef struct KSI_PKICertificate_st KSI_PKICertificate;
+
+	/**
+	 * Implementation independent type for PKI signature.
+	 */
+	typedef struct KSI_PKISignature_st KSI_PKISignature;
+
+	/**
+	 * Implementation independent PKI truststore.
+	 */
+	typedef struct KSI_PKITruststore_st KSI_PKITruststore;
+
+	/**
+	 * This structure is used for calculating the hash values.
+	 * \see #KSI_DataHash, #KSI_DataHasher_open, #KSI_DataHasher_reset, #KSI_DataHasher_close, #KSI_DataHasher_free
+	 */
+	typedef struct KSI_DataHasher_st KSI_DataHasher;
+
+	/**
+	 * This structure represents hashed data.
+	 * \see #KSI_DataHasher, #KSI_DataHasher_close, #KSI_DataHash_free
+	 */
+	typedef struct KSI_DataHash_st KSI_DataHash;
+
+	/**
+	 * Network resource handle
+	 *
+	 *	\see #KSI_NET_sendRequest
+	 */
+	typedef struct KSI_NetHandle_st KSI_RequestHandle;
+	typedef struct KSI_NetworkClient_st KSI_NetworkClient;
+	typedef struct KSI_AggregationHashChain_st KSI_AggregationHashChain;
+	typedef struct KSI_CalendarAuthRec_st KSI_CalendarAuthRec;
+	typedef struct KSI_AggregationAuthRec_st KSI_AggregationAuthRec;
+
+	KSI_DEFINE_LIST(KSI_MetaData);
+	KSI_DEFINE_LIST(KSI_HashChainLink);
+	KSI_DEFINE_LIST(KSI_CalendarHashChainLink);
+	KSI_DEFINE_LIST(KSI_CalendarHashChain);
+	KSI_DEFINE_LIST(KSI_ExtendPdu);
+	KSI_DEFINE_LIST(KSI_AggregationPdu);
+	KSI_DEFINE_LIST(KSI_Header);
+	KSI_DEFINE_LIST(KSI_Config);
+	KSI_DEFINE_LIST(KSI_AggregationReq);
+	KSI_DEFINE_LIST(KSI_RequestAck);
+	KSI_DEFINE_LIST(KSI_AggregationResp);
+	KSI_DEFINE_LIST(KSI_ExtendReq);
+	KSI_DEFINE_LIST(KSI_ExtendResp);
+	KSI_DEFINE_LIST(KSI_PKISignedData);
+	KSI_DEFINE_LIST(KSI_PublicationsHeader);
+	KSI_DEFINE_LIST(KSI_CertificateRecord);
+	KSI_DEFINE_LIST(KSI_PublicationData);
+	KSI_DEFINE_LIST(KSI_PublicationRecord);
+	KSI_DEFINE_LIST(KSI_Integer);
+	KSI_DEFINE_LIST(KSI_OctetString);
+	KSI_DEFINE_LIST(KSI_Utf8String);
+	KSI_DEFINE_LIST(KSI_Utf8StringNZ);
+	KSI_DEFINE_LIST(KSI_AggregationHashChain)
+	KSI_DEFINE_LIST(KSI_TLV);
+	KSI_DEFINE_LIST(KSI_PKICertificate);
+
+/**
  * KSI_MetaData
  */
 void KSI_MetaData_free(KSI_MetaData *t);
@@ -251,6 +343,43 @@ int KSI_CertificateRecord_getCert(const KSI_CertificateRecord *t, KSI_PKICertifi
 int KSI_CertificateRecord_setCertId(KSI_CertificateRecord *t, KSI_OctetString *certId);
 int KSI_CertificateRecord_setCert(KSI_CertificateRecord *t, KSI_PKICertificate *cert);
 
+/**
+ * KSI_AggregationAuthRec
+ */
+void KSI_AggregationAuthRec_free(KSI_AggregationAuthRec *aar);
+int KSI_AggregationAuthRec_new(KSI_CTX *ctx, KSI_AggregationAuthRec **out);
+
+int KSI_AggregationAuthRec_getAggregationTime(const KSI_AggregationAuthRec *rec, KSI_Integer **aggregationTime);
+int KSI_AggregationAuthRec_getChainIndex(const KSI_AggregationAuthRec *rec, KSI_LIST(KSI_Integer) **chainIndexesList);
+int KSI_AggregationAuthRec_getInputHash(const KSI_AggregationAuthRec *rec, KSI_DataHash **inputHash);
+int KSI_AggregationAuthRec_getSigAlgo(const KSI_AggregationAuthRec *rec, KSI_Utf8String **signatureAlgo);
+int KSI_AggregationAuthRec_getSigData(const KSI_AggregationAuthRec *rec, KSI_PKISignedData **signatureData);
+
+int KSI_AggregationAuthRec_setAggregationTime(KSI_AggregationAuthRec *rec, KSI_Integer *aggregationTime);
+int KSI_AggregationAuthRec_setChainIndex(KSI_AggregationAuthRec *rec, KSI_LIST(KSI_Integer) *chainIndexesList);
+int KSI_AggregationAuthRec_setInputHash(KSI_AggregationAuthRec *rec, KSI_DataHash *inputHash);
+int KSI_AggregationAuthRec_setSigAlgo(KSI_AggregationAuthRec *rec, KSI_Utf8String *signatureAlgo);
+int KSI_AggregationAuthRec_setSigData(KSI_AggregationAuthRec *rec, KSI_PKISignedData *signatureData);
+
+/**
+ * KSI_CalendarAuthRec
+ */
+void KSI_CalendarAuthRec_free(KSI_CalendarAuthRec *calAuth);
+int KSI_CalendarAuthRec_new(KSI_CTX *ctx, KSI_CalendarAuthRec **out);
+
+int KSI_CalendarAuthRec_getSignedData(const KSI_CalendarAuthRec *rec, KSI_TLV **pubDataTlv);
+int KSI_CalendarAuthRec_getPublishedData(const KSI_CalendarAuthRec *rec, KSI_PublicationData **pubData);
+int KSI_CalendarAuthRec_getSignatureAlgo(const KSI_CalendarAuthRec *rec, KSI_Utf8String **signatureAlgo);
+int KSI_CalendarAuthRec_getSignatureData(const KSI_CalendarAuthRec *rec, KSI_PKISignedData **signatureData);
+
+int KSI_CalendarAuthRec_setSignedData(KSI_CalendarAuthRec *rec, KSI_TLV *pubDataTlv);
+int KSI_CalendarAuthRec_setPublishedData(KSI_CalendarAuthRec *rec, KSI_PublicationData *pubData);
+int KSI_CalendarAuthRec_setSignatureAlgo(KSI_CalendarAuthRec *rec, KSI_Utf8String *signatureAlgo);
+int KSI_CalendarAuthRec_setSignatureData(KSI_CalendarAuthRec *rec, KSI_PKISignedData *signatureData);
+
+/**
+ * @}
+ */
 #ifdef __cplusplus
 }
 #endif

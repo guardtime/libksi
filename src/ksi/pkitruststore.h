@@ -9,7 +9,12 @@ extern "C" {
 
 	/**
 	 * \addtogroup pkitruststore PKI Truststore
-	 * TODO!
+	 * This module is used for PKI operations.
+	 *
+	 * The main components are:
+	 * 1) #KSI_PKITruststore - contains and verifies certificates.
+	 * 2) #KSI_PKICertificate - an implementation independent PKI certificate object.
+	 * 3) #KSI_PKISignature - an implementation independent PKI signature object.
 	 * @{
 	 */
 
@@ -87,8 +92,7 @@ extern "C" {
 	 * \param[in]	raw_len		Signature len.
 	 * \param[out]	signature	Pointer to the receiving pointer.
 	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, unsigned raw_len, KSI_PKISignature **signature);
 
@@ -99,7 +103,12 @@ extern "C" {
 	void KSI_PKISignature_free(KSI_PKISignature *sig);
 
 	/**
-	 * TODO!
+	 * Serializes the #KSI_PKISignature object.
+	 * \param[in]	sig			Pointer to the PKI signature.
+	 * \param[out]	raw			Pointer to the receiving pointer.
+	 * \param[out]	raw_len		Serialized value length.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_PKISignature_serialize(KSI_PKISignature *sig, unsigned char **raw, unsigned *raw_len);
 
@@ -182,6 +191,10 @@ extern "C" {
      * \return 
      */
 	char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, unsigned buf_len);
+
+	/**
+	 * @}
+	 */
 
 #ifdef __cplusplus
 }

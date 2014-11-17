@@ -216,8 +216,7 @@ extern "C" {
 	 * \param[in]		provider		Network provider.
 	 * \param[in]		fn				Pointer to publicationsfile request function.
 	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_NetworkClient_setSendPublicationRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_RequestHandle *));
 

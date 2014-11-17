@@ -109,6 +109,19 @@ extern "C" {
 	int KSI_TLV_parseBlob(KSI_CTX *ctx, const unsigned char *data, size_t data_length, KSI_TLV **tlv);
 
 	/**
+	 * Parses a raw TLV into a #KSI_TLV.
+	 * \param[in]	ctx			KSI context.
+	 * \param[in]	data		Pointer to the raw TLV.
+	 * \param[in]	data_length	Length of the raw data.
+	 * \param[in]	ownMemory	Determines if the data pointer should be owned by the new TLV (1) or not (0).
+	 * \param[out]	tlv			Pointer to the receiving pointer.
+	 *
+	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+	 *
+	 */
+	int KSI_TLV_parseBlob2(KSI_CTX *ctx, unsigned char *data, size_t data_length, int ownMemory, KSI_TLV **tlv);
+
+	/**
 	 * This function extracts the binary data from the TLV.
 	 *
 	 * \note This operation is available only if the TLV payloadType is #KSI_TLV_PAYLOAD_RAW. To
@@ -194,12 +207,6 @@ extern "C" {
 	unsigned KSI_TLV_getTag(KSI_TLV *tlv);
 
 	/**
-	 * TODO!
-	 */
-	int KSI_TLV_getPayloadType(KSI_TLV *tlv);
-
-
-	/**
 	 * This function serialises the tlv into a given buffer with \c len bytes of free
 	 * space.
 	 *
@@ -234,7 +241,12 @@ extern "C" {
 	int KSI_TLV_serializePayload(KSI_TLV *tlv, unsigned char *buf, unsigned int *len);
 
 	/**
-	 *
+	 * Replaces a nested TLV.
+	 * \param[in]	parentTlv		Pointer to the parent TLV.
+	 * \param[in]	oldTlv			Pointer to the previous TLV to be replaced.
+	 * \param[in]	newTlv			Pointer to the replacement TLV.
+	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+	 * \note The \c oldTlv will be freed.
 	 */
 	int KSI_TLV_replaceNestedTlv(KSI_TLV *parentTlv, KSI_TLV *oldTlv, KSI_TLV *newTlv);
 
@@ -331,10 +343,9 @@ extern "C" {
 	 * \return The absolute offset of the TLV object.
 	 */
 	size_t KSI_TLV_getRelativeOffset(const KSI_TLV *tlv);
+	
+	KSI_DEFINE_GET_CTX(KSI_TLV);
 
-	
-	int KSI_TLV_parseBlob2(KSI_CTX *ctx, unsigned char *data, size_t data_length, int ownMemory, KSI_TLV **tlv);
-	
 	/**
 	 * @}
 	 */

@@ -237,7 +237,7 @@ int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f);
  * The Guardtime representation of hash algorithms, necessary to calculate
  * instances of #KSI_DataHasher and #KSI_DataHash.
  */
-enum KSI_HashAlgorithm {
+enum KSI_HashAlgorithm_en {
 	/** The SHA-1 algorithm. */
 	KSI_HASHALG_SHA1 = 0x00,
 	/** The SHA-256 algorithm. */

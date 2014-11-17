@@ -8,11 +8,24 @@ extern "C" {
 #endif
 
 	/**
-	 * TODO!
+	 * \addtogroup signature
+	 * @{
+	 */
+
+	/**
+	 * This type keeps track of all the performed verification steps (#KSI_VerificationStep_en) and
+	 * their results.
 	 */
 	typedef struct KSI_VerificationInfo_st KSI_VerificationResult;
+
+	/**
+	 * This type holds a concrete result for a single verification step (#KSI_VerificationStep_en).
+	 */
 	typedef struct KSI_VerificationStepResult_st KSI_VerificationStepResult;
 
+	/**
+	 * Enumeration of all KSI signature (#KSI_Signature) available verification steps.
+	 */
 	typedef enum KSI_VerificationStep_en {
 	    /**
 	     * Check if signature input hash and document hash match.
@@ -67,25 +80,34 @@ extern "C" {
 	} KSI_VerificationStep;
 
 	/**
-	 * TODO!
+	 * Initializes the #KSI_VerificationResult object.
+	 * \param[in]	info		Pointer to #KSI_VerificationResult.
+	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_VerificationResult_init(KSI_VerificationResult *info);
 
 	/**
-	 * TODO!
+	 * Reset the value of #KSI_VerificationResult.
+	 * \param[in]	info		Pointer to #KSI_VerificationResult.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_VerificationResult_reset(KSI_VerificationResult *info);
 
 	/**
-	 * TODO!
+	 * Mark the verification step as failure.
+	 * \param[in]	info		Verification result.
+	 * \param[in]	step		Verification step.
+	 * \param[in]	desc		Verification failure message.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_VerificationResult_addFailure(KSI_VerificationResult *info, KSI_VerificationStep step, const char *desc);
 
 	/**
-	 * TODO!
+	 * Mark the verification step as success.
+	 * \param[in]	info		Verification result.
+	 * \param[in]	step		Verification step.
+	 * \param[in]	desc		Verification success message.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_VerificationResult_addSuccess(KSI_VerificationResult *info, KSI_VerificationStep step, const char *desc);
@@ -127,6 +149,7 @@ extern "C" {
 	/**
 	 * Returns the #KSI_VerificationStep value or 0 on an error.
 	 * \param[in]	retult 		Verification step result.
+	 * \returns 0 if the given verification step was unsuccessful or not performed.
 	 */
 	int KSI_VerificationStepResult_getStep(const KSI_VerificationStepResult *result);
 
@@ -143,6 +166,9 @@ extern "C" {
 	 */
 	const char *KSI_VerificationStepResult_getDescription(const KSI_VerificationStepResult *result);
 
+	/**
+	 * @}
+	 */
 #ifdef __cplusplus
 }
 #endif

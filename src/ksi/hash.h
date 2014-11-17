@@ -7,16 +7,15 @@
 extern "C" {
 #endif
 
-	/**
-	 * \addtogroup hash Data Hashing
-	 * This module consists of two main objects:
-	 * - #KSI_DataHasher - this object is used to calculate hash values (see
-	 * #KSI_DataHash).
-	 * - #KSI_DataHash - this immutable object is used to store the calculated
-	 * hash value.
-	 * @{
-	 */
-
+/**
+ * \addtogroup hash Data Hashing
+ * This module consists of two main objects:
+ * - #KSI_DataHasher - this object is used to calculate hash values (see
+ * #KSI_DataHash).
+ * - #KSI_DataHash - this immutable object is used to store the calculated
+ * hash value.
+ * @{
+ */
 
 	/**
 	 * The maximum length of an imprint.
@@ -27,7 +26,7 @@ extern "C" {
 	 * Starts a hash computation.
 	 * \param[in]		ctx			KSI context.
 	 * \param[in]		hash_id 	Identifier of the hash algorithm.
-	 * See #KSI_HashAlgorithm for possible values.
+	 * See #KSI_HashAlgorithm_en for possible values.
 	 * \param[out] hasher Pointer that will receive pointer to the
 	 * hasher object.
 	 *
@@ -112,7 +111,7 @@ extern "C" {
 	 * Interneal data access method.
 	 *
 	 * \param[in]	hash			Data hash object.
-	 * \param[out]	algorithm		Algorithm used to compute the hash.
+	 * \param[out]	hash_id			Algorithm used to compute the hash.
 	 * \param[out]	digest			Binary digest value.
 	 * \param[out]	digest_length	Length of the digest value.
 	 *
@@ -243,12 +242,13 @@ extern "C" {
 	int KSI_DataHash_toTlv(KSI_CTX *ctx, KSI_DataHash *hsh, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 	
 	/**
-	 * TODO:
-     * @param hash
-     * @param hashAlg
-     * @return 
+	 * Accessor method for extracting the hash algorithm from the #KSI_DataHash.
+     * \param	hash		Data hash object.
+     * \param	hashAlg		Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
      */
 	int KSI_DataHash_getHashAlg(const KSI_DataHash *hash, int *hashAlg);
+
 	/**
 	 * Parses the metha value if the hash value is formatted:
 	 * - 2 bytes of length (n).
@@ -281,9 +281,9 @@ extern "C" {
 	 */
 	char *KSI_DataHash_toString(const KSI_DataHash *hsh, char *buf, unsigned buf_len);
 
-	/**
-	 * @}
-	 */
+/**
+ * @}
+ */
 #ifdef __cplusplus
 }
 #endif
