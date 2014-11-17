@@ -55,6 +55,7 @@ make install DESTDIR=%{buildroot}
 %{_includedir}/ksi/err.h
 %{_includedir}/ksi/hash.h
 %{_includedir}/ksi/hashchain.h
+%{_includedir}/ksi/hmac.h
 %{_includedir}/ksi/io.h
 %{_includedir}/ksi/ksi.h
 %{_includedir}/ksi/list.h
