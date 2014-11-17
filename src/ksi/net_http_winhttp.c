@@ -1,6 +1,6 @@
 #include "internal.h"
 
-#if KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP || 1
+#if KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP
 
 #include <windows.h>
 #include <Winhttp.h>
@@ -154,16 +154,21 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 
 	res = KSI_RequestHandle_getRequest(handle, &request, &request_len);
 	KSI_CATCH(&err, res) goto cleanup;
-
+	
 	/*Send request*/
 	if (!WinHttpSendRequest(nhc->request_handle, WINHTTP_NO_ADDITIONAL_HEADERS,0, (LPVOID) request, request_len, request_len,0)) {
+		char err_msg[128];
 		DWORD error = GetLastError();
-		KSI_LOG_debug(ctx, "Winhttp send error %i\n", error);
-
+		KSI_LOG_debug(ctx, "WinHTTP send error %i\n", error);
+		
 		if(error == ERROR_WINHTTP_CANNOT_CONNECT)
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, "WinHTTP: Unable to connect");
-		if(error == ERROR_WINHTTP_TIMEOUT)
+		else if(error == ERROR_WINHTTP_TIMEOUT)
 			KSI_FAIL(&err, KSI_NETWORK_SEND_TIMEOUT, NULL);
+		else if(error == ERROR_WINHTTP_NAME_NOT_RESOLVED){
+			snprintf(err_msg, 128, "WinHTTP: Could not resolve host: '%ws'", nhc->hostName);
+			KSI_FAIL(&err, KSI_NETWORK_ERROR, err_msg);
+		}
 		else
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, NULL);
 		goto cleanup;
@@ -284,12 +289,15 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	w_url = LPWSTR_new(url);
 
 	if (!WinHttpCrackUrl(w_url, 0, 0, &(implCtx->uc))) {
+		char err_msg[128];
 		DWORD error = GetLastError();
 		KSI_LOG_debug(ctx, "WinHTTP: Crack url error %i\n", error);
 		if(error == ERROR_WINHTTP_UNRECOGNIZED_SCHEME)
-			KSI_FAIL(&err, KSI_INVALID_FORMAT, "WinHTTP: Internet scheme is not 'HTTP/HTTPS'");
-		else if(error == ERROR_WINHTTP_INVALID_URL)
-			KSI_FAIL(&err, KSI_INVALID_FORMAT, "WinHTTP: Invalid URL");
+			KSI_FAIL(&err, KSI_NETWORK_ERROR, "WinHTTP: Internet scheme is not 'HTTP/HTTPS'");
+		else if(error == ERROR_WINHTTP_INVALID_URL){
+			snprintf(err_msg, 128, "WinHTTP: Invalid URL: '%s'", url);
+			KSI_FAIL(&err, KSI_NETWORK_ERROR, err_msg);
+		}
 		else
 			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "WinHTTP: Unable to crack url");
 		

@@ -181,7 +181,7 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 		}
 	}
 	else{
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "WinINet: Internet scheme is not 'HTTP/HTTPS'");
+		KSI_FAIL(&err, KSI_NETWORK_ERROR, "WinINet: Internet scheme is not 'HTTP/HTTPS'");
 		goto cleanup;
 		}
 	
@@ -195,7 +195,6 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 
 		if (!InternetReadFile(wininetHandle->request_handle, resp + resp_len, add_len, &add_len)) {
 			DWORD error = GetLastError();
-			printf(">> %X\n", error);
 			if(error == ERROR_INSUFFICIENT_BUFFER)
 				KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "WinINet: Insufficient buffer");
 			else
@@ -214,7 +213,7 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 	/*Put Received data no requesthandle*/
     res = KSI_RequestHandle_setResponse(handle, resp, resp_len);
     KSI_CATCH(&err, res) goto cleanup;
-
+		
 	
     /* Cleanup on success.*/
 	KSI_SUCCESS(&err);
@@ -230,8 +229,8 @@ cleanup:
 /**
  * Prepares request and opens a session handle.
  * 
+ * \param client Pointer to KSI_NetworkClient object.
  * \param handle Pointer to KSI_RequestHandle object.
- * \param agent
  * \param url Pointer to url string.
  * 
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
@@ -266,7 +265,14 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	wininetHandle->uc.dwExtraInfoLength = 1;
 	
 	if (!InternetCrackUrlA(url, 0, 0, &(wininetHandle->uc))) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "WinINet: Unable to crack url");
+		char err_msg[128];
+		DWORD error = GetLastError();
+		KSI_LOG_debug(ctx, "WinINet: Unable to crack url error: %i", error);
+		
+		if(error == ERROR_INTERNET_INVALID_URL){
+			snprintf(err_msg, 128, "WinINet: Invalid URL: '%s'", url);
+			KSI_FAIL(&err, KSI_NETWORK_ERROR, err_msg);
+		}
 		goto cleanup;
 	}
 	wininetHandle->scheme = wininetHandle->uc.nScheme;
