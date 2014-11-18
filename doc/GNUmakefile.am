@@ -4,9 +4,7 @@ all:
 
 doc: htmldoc 
 
-htmldoc: $(builddir)/html/index.html
-
-$(builddir)/html/index.html: $(builddir)/doxyfile
+htmldoc: 
 	doxygen $(builddir)/doxyfile
 
 clean-local:

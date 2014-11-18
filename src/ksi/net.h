@@ -12,7 +12,7 @@ extern "C" {
 	 * This module contains two networking concepts used in this API:
 	 * - Network provider (#KSI_NetworkClient), this object takes care of network
 	 * transtport.
-	 * - Network handle (#KSI_NetHandle), this object contains a single request and
+	 * - Network handle (#KSI_RequestHandle), this object contains a single request and
 	 * is used to access the response.
 	 * @{
 	 */
@@ -43,6 +43,7 @@ extern "C" {
 	/**
 	 * Sends a non-blocking extending request or initialize the handle.
 	 * \param[in]		provider		Network provider.
+	 * \param[in]		request			Extend request.
 	 * \param[in]		handle			Network handle.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
@@ -84,14 +85,13 @@ extern "C" {
 
 	/**
 	 * Getter for the request. The request can be set only while creating the network handle object
-	 * (see #KSI_NetHandle_new).
+	 * (\see #KSI_RequestHandle_new).
 	 *
 	 * \param[in]		handle			Network handle.
 	 * \param[out]		request			Pointer to the receiving pointer.
 	 * \param[out]		request_len		Pointer to the reveiving length value.
 	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note The output memory may not be freed by the caller.
 	 */
 	int KSI_RequestHandle_getRequest(KSI_RequestHandle *handle, unsigned char **request, unsigned *request_len);

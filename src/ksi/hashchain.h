@@ -3,7 +3,6 @@
 
 #include <time.h>
 
-#include "list.h"
 #include "types.h"
 
 #ifdef __cplusplus
@@ -138,7 +137,7 @@ extern "C" {
 	 * \param[in]	t					Pointer to #KSI_HashChainLink.
 	 * \param[in]	imprint				Pointer to receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \note After celling the setter, the the object belongs to \t and will be freed by #KSI_HashChainLink_free.
+	 * \note After celling the setter, the the object belongs to \c t and will be freed by #KSI_HashChainLink_free.
 	 */
 	int KSI_HashChainLink_setImprint(KSI_HashChainLink *t, KSI_DataHash *imprint);
 

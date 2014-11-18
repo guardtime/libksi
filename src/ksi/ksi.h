@@ -199,6 +199,7 @@ void KSI_CTX_free(KSI_CTX *ctx);
  * The global init and cleanup functions must keep track how many times they are called
  * (if multiple calls cause issues) and allow multiple calls.
  *
+ * \param[in]	ctx			KSI context.
  * \param[in] 	initFn		Global initiation function.
  * \param[in]	cleanupFn	Global cleanup function.
  *
@@ -391,7 +392,7 @@ int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extend
  * \param[in]		level		Log level.
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- * \see #KSI_LOG_LVL_en
+ * \see #KSI_LOG_LVL_en, #KSI_CTX_setLogFile.
  */
 int KSI_CTX_setLogLevel(KSI_CTX *ctx, int level);
 
@@ -402,7 +403,8 @@ int KSI_CTX_setLogLevel(KSI_CTX *ctx, int level);
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  * \note When the fileName is set to \c NULL the log is sent to the standard output. To
- * turn the logger off use #KSI_setLogLevel with #KSI_LOG_NONE.
+ * turn the logger off use #KSI_CTX_setLogLevel with #KSI_LOG_NONE.
+ * \see #KSI_CTX_setLogLevel
  */
 int KSI_CTX_setLogFile(KSI_CTX *ctx, char *fileName);
 

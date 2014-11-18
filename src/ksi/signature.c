@@ -1882,7 +1882,7 @@ static int KSI_Signature_verifyPolicy(KSI_Signature *sig, unsigned *policy, KSI_
 		}
 	}
 
-	KSI_FAIL(&err, KSI_VERIFY_CALCHAIN_ONLINE, "Signature not verified - no suitable policy.");
+	KSI_FAIL(&err, KSI_VERIFICATION_FAILURE, "Signature not verified - no suitable policy.");
 
 cleanup:
 

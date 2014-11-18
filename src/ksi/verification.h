@@ -123,7 +123,7 @@ extern "C" {
 	 * Get the a verification step with the given index.
 	 * \param[in]	info		Verification result.
 	 * \param[in]	index		Index of the step.
-	 * \param[out]	step		Verification step objec.
+	 * \param[out]	result		Verification step result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
@@ -148,7 +148,7 @@ extern "C" {
 
 	/**
 	 * Returns the #KSI_VerificationStep value or 0 on an error.
-	 * \param[in]	retult 		Verification step result.
+	 * \param[in]	result 		Verification step result.
 	 * \returns 0 if the given verification step was unsuccessful or not performed.
 	 */
 	int KSI_VerificationStepResult_getStep(const KSI_VerificationStepResult *result);

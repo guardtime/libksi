@@ -243,8 +243,6 @@ extern "C" {
 	 * \param[in]	list_free		List object destructor function.
 	 * \param[in]	list_len		List length function.
 	 * \param[in]	list_elAt		List elements random access function.
-	 * \param[in]	cbEnc			Object to TLV encode function.
-	 * \param[in]	cbDec			TLV to Object decode function.
 	 * \param[in]	fromTlv			Create object from TLV function.
 	 * \param[in]	toTlv			Create TLV from object function.
 	 */
@@ -277,6 +275,7 @@ extern "C" {
 	 * \param[in]	sttr			Setter function.
 	 * \param[in]	fromTlv			Function to create the object from TLV.
 	 * \param[in]	toTlv			Function to create a TLV from the object.
+	 * \param[in]	destr			Destructor function pointer.
 	 */
 	#define KSI_TLV_OBJECT(tg, flg, gttr, sttr, fromTlv, toTlv, destr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, flg, gttr, sttr, NULL, destr, NULL, NULL, 0, NULL, NULL, NULL, NULL, fromTlv, toTlv)
 
@@ -419,9 +418,7 @@ extern "C" {
 	 * \param[in]		ctx			KSI context.
 	 * \param[in]		payload		Preinitialized empty object to be evaluated with the TLV values.
 	 * \param[in]		tlv			TLV value which has the structure represented in \c template.
-	 * \param[in]		template	Template of the TLV expected structure.
-	 * \param[in]		reminder	List of TLV's that did not match the template on the first level. Can be NULL, in which case
-	 * 								an error code is returned if an unknown non-critical TLV is encountered.
+	 * \param[in]		tmpl	Template of the TLV expected structure.
 	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *tmpl);
@@ -443,8 +440,7 @@ extern "C" {
 	 * \param[in]		ctx				KSI context.
 	 * \param[in]		payload			Preinitialized empty object to be evaluated with the TLV values.
 	 * \param[in]		generatorCtx	Context for the generator.
-	 * \param[in]		tlv				TLV value which has the structure represented in \c template.
-	 * \param[in]		template		Template of the TLV expected structure.
+	 * \param[in]		tmpl			Template of the TLV expected structure.
 	 * \param[in]		generator		Generator function. The \c generatorCtx is passed as the first parameter and a #KSI_TLV object
 	 * 									is expected to be returned by the second parameter - a NULL value is interpreted as end of input.
 	 * 									The function is expected to return #KSI_OK on success.
@@ -456,9 +452,9 @@ extern "C" {
 	 * Given a payload object, template and a initialized target TLV, this function constructs a TLV using the
 	 * template and the values from the payload.
 	 * \param[in]		ctx			KSI context.
-	 * \param[in]		payload		Evaluated payload.
 	 * \param[in]		tlv			An empty target TLV.
-	 * \param[in]		template	Template of the TLV expected structure.
+	 * \param[in]		payload		Evaluated payload.
+	 * \param[in]		tmpl		Template of the TLV expected structure.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
@@ -468,25 +464,26 @@ extern "C" {
 	/**
 	 * Deepcopy an object using TLV templates. The object is first transformed internally into a #KSI_TLV tree and
 	 * the process is reversed and the result is stoed, thus all values are copied.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
-	 *
-	 * \note If the TLV template is incomplete and discards by endoding or decoding some values, the result is not an
+	 * \param[in]	ctx			KSI context.
+	 * \param[in]	from		Object to be copied from.
+	 * \param[in]	tmpl		Template.
+	 * \param[in]	to			Values to be copied to.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note If the TLV template is incomplete and discards by encoding or decoding some values, the result is not an
 	 * exact copy of the original.
 	 */
-	int KSI_TlvTemplate_deepCopy(KSI_CTX *ctx, const void *from, const KSI_TlvTemplate *baseTemplate, void *to);
+	int KSI_TlvTemplate_deepCopy(KSI_CTX *ctx, const void *from, const KSI_TlvTemplate *tmpl, void *to);
 
 	/**
 	 * Serializes an object using #KSI_TlvTemplate.
 	 * \param[in]	ctx		KSI context.
 	 * \param[in]	obj		Object to be serialized.
 	 * \param[in]	tag		Tag of the serialized object.
-	 * \param[in}	isNc	TLV flag is-non-critical.
+	 * \param[in]	isNc	TLV flag is-non-critical.
 	 * \param[in]	isFwd	TLV flag is-forward.
 	 * \param[in]	tmpl	Template to be used.
 	 * \param[out]	raw		Pointer to the receiving pointer to the serialized value.
-	 * \param[out]	rar_len	Length of the serialized value.
+	 * \param[out]	raw_len	Length of the serialized value.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note Thre returned pointer raw belongs to the caller and it needs to be freed using #KSI_free
 	 * \see #KSI_free
@@ -530,6 +527,8 @@ extern "C" {
 	 * Macro to generate object serializer.
 	 * \param[in]	type		Type name.
 	 * \param[in]	tag			Tag of the concrete TLV.
+	 * \param[in]	nc			Non-critical flag.
+	 * \param[in]	fwd			Forward flag.
 	 */
 	#define KSI_IMPLEMENT_OBJECT_SERIALIZE(type, tag, nc, fwd) \
 		int type##_serialize(const type *t, unsigned char **raw, unsigned *len) { \

@@ -277,8 +277,9 @@ extern "C" {
 	/**
 	 * This function creates a human readable representation of the TLV object.
 	 *
-	 * \param[in]	tlv		The TLV object.
-	 * \param[out]	str		Pointer to variable receiving the string pointer.
+	 * \param[in]	tlv			The TLV object.
+	 * \param[in]	buffer		Pointer to variable receiving the string.
+	 * \param[in]	buffer_len	Length of the buffer.
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */

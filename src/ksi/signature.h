@@ -28,14 +28,18 @@ extern "C" {
 	 * signature has a publication attached to it, the publication is verified
 	 * using the publications file. Otherwise, the signature is verified by
 	 * an attempt to extend it.
-	 * TODO!
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx);
 
 	/**
-	 * TODO!
+	 * Verifies that the document matches the signature.
+	 * \param[in]	sig			KSI signature.
+	 * \param[in]	ctx			KSI context.
+	 * \param[in]	doc			Pointer to document.
+	 * \param[in]	doc_len		Document length.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, size_t doc_len);
 
@@ -108,6 +112,7 @@ extern "C" {
 	 * extended to the head of the calendar database. This function requires access to a working KSI extender or it will
 	 * fail with an error.
 	 * \param[in]		signature	KSI signature to be extended.
+	 * \param[in]		ctx			KSI context.
 	 * \param[in]		pubRec		Publication record.
 	 * \param[out]		extended	Pointer to the receiving pointer.
 	 *
@@ -136,7 +141,7 @@ extern "C" {
 	 * \param[out]		hash_id		Pointer to the receiving hash id variable.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_DataHash_open, #KSI_DataHash_create, #KSI_DataHash_close,
+	 * \see #KSI_DataHasher_open, #KSI_DataHash_create, #KSI_DataHasher_close,
 	 * #KSI_Signature_createDataHasher.
 	 */
 	int KSI_Signature_getHashAlgorithm(KSI_Signature *sig, int *hash_id);
@@ -179,53 +184,59 @@ extern "C" {
 	 * Accessor method for the published data. If the signature does not have a publication
 	 * record the \c pubData will be set to \c NULL.
 	 * \param[in]		sig			KSI signature.
-	 * \param[out]		pubData		Pointer to receiving pointer.
+	 * \param[out]		pubRec		Pointer to receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
 	int KSI_Signature_getPublicationRecord(const KSI_Signature *sig, KSI_PublicationRecord **pubRec);
 
+	/**
+	 * Accessor method for the calendar authentication record.
+	 * \param[in]	sig		Signature
+	 * \param[out]	calendarAuthRec		Pointer to the receiving pointer.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 */
 	int KSI_Signature_getCalendarAuthRec (const KSI_Signature *sig, KSI_CalendarAuthRec **calendarAuthRec);
 	
 	/**
 	 * This function verifies given hash value \c hsh using the signature \c sig. If
 	 * the hash value does not match the input hash value of the signeture, a
-	 * #KSI_WRONG_DOCUMENT error code is returned.
-	 * TODO!
+	 * #KSI_VERIFICATION_FAILURE error code is returned.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
 	int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_CTX *ctx, const KSI_DataHash *docHash);
 
 	/**
-	 * This function verifies the given document using the signature. If the hash value of
-	 * the document does not match the input hash value of the signature, a
-	 * #KSI_WRONG_DOCUMENT error code is returned.
-	 * \param[in]		sig			KSI signature.
-	 * \param[in]		doc			Pointer to the document.
-	 * \param[in]		doc_len		Length of the document.
-	 *
+	 * Accessor method for verification results.
+	 * \param[in]	sig			KSI signature.
+	 * \param[out]	info		Pointer to the receiving ponter.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-//	int KSI_Signature_verifyDocument(KSI_Signature *sig, void *doc, size_t doc_len);
-
 	int KSI_Signature_getVerificationResult(KSI_Signature *sig, const KSI_VerificationResult **info);
 
 	/**
-	 * This function replaces the signatures calender hash chain 
-	 * \param [in out]	sig					KSI signature.
+	 * This function replaces the signatures calendar hash chain
+	 * \param [in]		sig					KSI signature.
 	 * \param [in]		calendarHashChain	Pointer to the calendar hash chain
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
 	int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain);
 	
+	/**
+	 * Replaces the existing publication record of the signature.
+	 * \param[in]	sig		KSI signature.
+	 * \param[in]	pubRec	Publication record.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 */
 	int KSI_Signature_replacePublicationRecord(KSI_Signature *sig, KSI_PublicationRecord *pubRec);
-	/* 
-	* KSI_AggregationHashChain
-	*/
+
 	void KSI_AggregationHashChain_free(KSI_AggregationHashChain *aggr);
 	int KSI_AggregationHashChain_new(KSI_CTX *ctx, KSI_AggregationHashChain **out);
 

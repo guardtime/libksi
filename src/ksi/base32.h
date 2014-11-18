@@ -24,6 +24,7 @@ extern "C" {
 	 * Encodes given binary data to base32.
 	 * \param[in]		data			Pointer to the input data.
 	 * \param[in]		data_len		Length of the input data.
+	 * \param[in]		group_len		Length of a group (the groups are separated with '-')
 	 * \param[out]		encoded			Pointer to the receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).

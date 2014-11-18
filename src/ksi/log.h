@@ -38,7 +38,7 @@ extern "C" {
 	};
 
 	/**
-	 * Logging for trace level. Works as #printf, but takse the KSI context as its first parameter.
+	 * Logging for trace level. Works as \c printf, but takes the KSI context as its first parameter.
 	 * \param[in]	ctx			KSI context.
 	 * \param[in]	format		Format string.
 	 * \param[in]	...			Arguments.
@@ -47,7 +47,7 @@ extern "C" {
 	int KSI_LOG_trace(KSI_CTX *ctx, char *format, ...);
 
 	/**
-	 * Logging for debug level. Works as #printf, but takse the KSI context as its first parameter.
+	 * Logging for debug level. Works as \c printf, but takes the KSI context as its first parameter.
 	 * \param[in]	ctx			KSI context.
 	 * \param[in]	format		Format string.
 	 * \param[in]	...			Arguments.
@@ -56,7 +56,7 @@ extern "C" {
 	int KSI_LOG_debug(KSI_CTX *ctx, char *format, ...);
 
 	/**
-	 * Logging for warn level. Works as #printf, but takse the KSI context as its first parameter.
+	 * Logging for warn level. Works as \c printf, but takes the KSI context as its first parameter.
 	 * \param[in]	ctx			KSI context.
 	 * \param[in]	format		Format string.
 	 * \param[in]	...			Arguments.
@@ -65,7 +65,7 @@ extern "C" {
 	int KSI_LOG_warn(KSI_CTX *ctx, char *format, ...);
 
 	/**
-	 * Logging for info level. Works as #printf, but takse the KSI context as its first parameter.
+	 * Logging for info level. Works as \c printf, but takes the KSI context as its first parameter.
 	 * \param[in]	ctx			KSI context.
 	 * \param[in]	format		Format string.
 	 * \param[in]	...			Arguments.
@@ -74,7 +74,7 @@ extern "C" {
 	int KSI_LOG_info(KSI_CTX *ctx, char *format, ...);
 
 	/**
-	 * Logging for error level. Works as #printf, but takse the KSI context as its first parameter.
+	 * Logging for error level. Works as \c printf, but takes the KSI context as its first parameter.
 	 * \param[in]	ctx			KSI context.
 	 * \param[in]	format		Format string.
 	 * \param[in]	...			Arguments.
@@ -83,7 +83,7 @@ extern "C" {
 	int KSI_LOG_error(KSI_CTX *ctx, char *format, ...);
 
 	/**
-	 * Logging for fatal level. Works as #printf, but takse the KSI context as its first parameter.
+	 * Logging for fatal level. Works as \c printf, but takes the KSI context as its first parameter.
 	 * \param[in]	ctx			KSI context.
 	 * \param[in]	format		Format string.
 	 * \param[in]	...			Arguments.
@@ -121,7 +121,7 @@ extern "C" {
 	 * \param[in]	ctx			KSI context.
 	 * \param[in]	level		Log level.
 	 * \param[in]	prefix		Prefix for the log message.
-	 * \param[in]	tlv			TLV to be logged.
+	 * \param[in]	hsh			Hash value to be logged.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_TLV_toString
 	 */
@@ -135,7 +135,7 @@ extern "C" {
 	 * \param[in]	logLevel	Log level.
 	 * \param[out]	logger		Pointer to the receiving ponter.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_Logger_free, #KSI_Logger_setLogLevel, #KSI_Logger_setLogFile.
+	 * \see #KSI_Logger_free, #KSI_LOG_setLogLevel, #KSI_LOG_setLogFile.
 	 */
 	int KSI_Logger_new(KSI_CTX *ctx, char *fileName, int logLevel, KSI_Logger **logger);
 

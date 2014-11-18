@@ -22,12 +22,16 @@ typedef struct KSI_List_st KSI_List;
 #define KSI_LIST(type) type##List
 
 /**
- * TODO!
+ * Experimental macro for creating lists.
+ * \param[in]	type		Type of the list.
+ * \param[out]	list		Pointer to the receiving pointer.
  */
 #define KSI_NEW_LIST(type, list) KSI_List_new(type##_free, (list))
 
 /**
- * TODO!
+ * Experimental macro for creating lists.
+ * \param[in]	type		Type of the list.
+ * \param[out]	list		Pointer to the receiving pointer.
  */
 #define KSI_NEW_REFLIST(type, list) KSI_RefList_new(type##_free, type##_ref, (list))
 
@@ -47,8 +51,7 @@ typedef struct KSI_List_st KSI_List;
  List of \ref type.
 */ 														\
 typedef struct type##_list_st KSI_LIST(type);									\
-/*! Frees the memory allocated by the list and performes \ref type##_free() on
-	all the elements.
+/*! Frees the memory allocated by the list and frees the elements individually.
 	\param[in]	list		Pointer to the list.
  */																				\
 void KSI_LIST_FN_NAME(type, free)(KSI_LIST(type) *list);						\
@@ -64,7 +67,6 @@ int KSI_LIST_FN_NAME(type, new)(KSI_CTX *ctx, KSI_LIST(type) **list);					\
 	\return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	\note After appending the element to the list, the element belongs to the list
 		and it will be freed if the list is freed.
-	\see \ref type##_free
  */																				\
 int KSI_LIST_FN_NAME(type, append)(KSI_LIST(type) *list, type *el);				\
 /*! This function finds the index of a given element.
@@ -82,7 +84,6 @@ int KSI_LIST_FN_NAME(type, indexOf)(KSI_LIST(type) *list, type *el, size_t **pos
 	\return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	\note After add the element to the list, the element belongs to the list
 		and it will be freed if the list is freed.
-	\see \ref type##_free
  */																				\
 int KSI_LIST_FN_NAME(type, insertAt)(KSI_LIST(type) *list, size_t pos, type *el);			\
 /*! Replace the element at the given position in the list. The old element
@@ -93,9 +94,8 @@ int KSI_LIST_FN_NAME(type, insertAt)(KSI_LIST(type) *list, size_t pos, type *el)
 	\return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	\note After add the element to the list, the element belongs to the list
 		and it will be freed if the list is freed.
-	\see \ref type##_free
  */																				\
-int KSI_LIST_FN_NAME(type, replaceAt)(KSI_LIST(type) *, size_t, type *);		\
+int KSI_LIST_FN_NAME(type, replaceAt)(KSI_LIST(type) *list, size_t pos, type *el);		\
 /*! Removes an element at the given position. If the out parameter is set to
 	NULL, the removed element is freed implicitly with type##_free.
 	\param[in]	list	Pointer to the list.
@@ -104,7 +104,6 @@ int KSI_LIST_FN_NAME(type, replaceAt)(KSI_LIST(type) *, size_t, type *);		\
 	\return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	\note If the element is removed from the list and returned via output parameter
 		to the caller, the caller is responsible for freeing the element.
-	\see type##_free
 */ \
 int KSI_LIST_FN_NAME(type, remove)(KSI_LIST(type) *list, size_t pos, type **el);			\
 /*! Returns the list of the element.
