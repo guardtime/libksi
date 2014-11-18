@@ -146,9 +146,16 @@ static void writeXmlReport(CuSuite *suite) {
 
 static int RunAllTests() {
 	int failCount;
+	int res;
 	CuSuite* suite = initSuite();
 
-	KSI_CTX_new(&ctx);
+	res = KSI_CTX_new(&ctx);
+	
+	if(ctx == NULL || res != KSI_OK){
+		fprintf(stderr, "Error: Unable to init KSI context (%s)!\n\n", KSI_getErrorString(res));
+		exit(EXIT_FAILURE);
+	}
+	
 	KSI_CTX_setLogFile(ctx, "test/test.log");
 	KSI_CTX_setLogLevel(ctx, KSI_LOG_DEBUG);
 	CuSuiteRun(suite);
