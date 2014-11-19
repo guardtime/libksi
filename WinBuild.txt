@@ -23,7 +23,7 @@ Prerequisites
 	When KSI API uses OpenSSl or Curl the location of libraries must be specified.
 	See make file options CURL_DIR, OPENSSL_DIR. The structure of the directories
 	must be as described below. The name of static library or import library files
-	must contain description of C runtime library (RTL). After build rename 
+	must contain description of C runtime library (RTL). After build, rename 
 	libcurl(RTL).dll as libcurl.dll and libeay32(RTL).dll as libeay32.dll. Windows
 	native libraries are already installed with Windows.
 	
