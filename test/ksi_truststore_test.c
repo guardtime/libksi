@@ -6,6 +6,7 @@
 #include "all_tests.h"
 
 extern KSI_CTX *ctx;
+char tmp_path[1024];
 
 static void TestAddInvalidLookupFile(CuTest *tc) {
 	int res;
@@ -30,7 +31,7 @@ static void TestAddValidLookupFile(CuTest *tc) {
 	res = KSI_getPKITruststore(ctx, &pki);
 	CuAssert(tc, "Unable to get PKI trustsore.", res == KSI_OK && pki != NULL);
 
-	res = KSI_PKITruststore_addLookupFile(pki, "test/resource/tlv/mock.crt");
+	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
 	CuAssert(tc, "Adding correct lookup file did fail.", res == KSI_OK);
 
 }

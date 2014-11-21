@@ -2,42 +2,41 @@
 
 #include "all_tests.h"
 
-
 static char *ok_sample[] = {
-		"test/resource/tlv/ok_int-1.tlv",
-		"test/resource/tlv/ok_int-2.tlv",
-		"test/resource/tlv/ok_int-3.tlv",
-		"test/resource/tlv/ok_int-4.tlv",
-		"test/resource/tlv/ok_int-5.tlv",
-		"test/resource/tlv/ok_int-6.tlv",
-		"test/resource/tlv/ok_int-7.tlv",
-		"test/resource/tlv/ok_int-8.tlv",
-		"test/resource/tlv/ok_int-9.tlv",
-		"test/resource/tlv/ok_nested-1.tlv",
-		"test/resource/tlv/ok_nested-2.tlv",
-		"test/resource/tlv/ok_nested-3.tlv",
-		"test/resource/tlv/ok_nested-4.tlv",
-		"test/resource/tlv/ok_nested-5.tlv",
-		"test/resource/tlv/ok_nested-6.tlv",
-		"test/resource/tlv/ok_nested-7.tlv",
-		"test/resource/tlv/ok_nested-8.tlv",
-		"test/resource/tlv/ok_nested-9.tlv",
-		"test/resource/tlv/ok_str-1.tlv",
-		"test/resource/tlv/ok_str-2.tlv",
-		"test/resource/tlv/ok_str-3.tlv",
-		"test/resource/tlv/ok_str-4.tlv",
-		"test/resource/tlv/ok_str-5.tlv",
-		"test/resource/tlv/ok_str-6.tlv",
-		"test/resource/tlv/ok_str-7.tlv",
+		"resource/tlv/ok_int-1.tlv",
+		"resource/tlv/ok_int-2.tlv",
+		"resource/tlv/ok_int-3.tlv",
+		"resource/tlv/ok_int-4.tlv",
+		"resource/tlv/ok_int-5.tlv",
+		"resource/tlv/ok_int-6.tlv",
+		"resource/tlv/ok_int-7.tlv",
+		"resource/tlv/ok_int-8.tlv",
+		"resource/tlv/ok_int-9.tlv",
+		"resource/tlv/ok_nested-1.tlv",
+		"resource/tlv/ok_nested-2.tlv",
+		"resource/tlv/ok_nested-3.tlv",
+		"resource/tlv/ok_nested-4.tlv",
+		"resource/tlv/ok_nested-5.tlv",
+		"resource/tlv/ok_nested-6.tlv",
+		"resource/tlv/ok_nested-7.tlv",
+		"resource/tlv/ok_nested-8.tlv",
+		"resource/tlv/ok_nested-9.tlv",
+		"resource/tlv/ok_str-1.tlv",
+		"resource/tlv/ok_str-2.tlv",
+		"resource/tlv/ok_str-3.tlv",
+		"resource/tlv/ok_str-4.tlv",
+		"resource/tlv/ok_str-5.tlv",
+		"resource/tlv/ok_str-6.tlv",
+		"resource/tlv/ok_str-7.tlv",
 		NULL
 };
 
 static char *nok_sample[] = {
-		"test/resource/tlv/nok_int-1.tlv",
-		"test/resource/tlv/nok_int-2.tlv",
-		"test/resource/tlv/nok_int-3.tlv",
-		"test/resource/tlv/nok_int-4.tlv",
-		"test/resource/tlv/nok_str-1.tlv",
+		"resource/tlv/nok_int-1.tlv",
+		"resource/tlv/nok_int-2.tlv",
+		"resource/tlv/nok_int-3.tlv",
+		"resource/tlv/nok_int-4.tlv",
+		"resource/tlv/nok_str-1.tlv",
 		NULL
 };
 
@@ -123,7 +122,7 @@ static void TestOkFiles(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	while (ok_sample[i] != NULL) {
-		CuAssert(tc, "Unable to read valid TLV", tlvFromFile(ok_sample[i++], &tlv) == KSI_OK);
+		CuAssert(tc, "Unable to read valid TLV", tlvFromFile(getFullResourcePath(ok_sample[i++]), &tlv) == KSI_OK);
 
 		res = parseStructure(tlv, 0);
 
@@ -145,7 +144,7 @@ static void TestNokFiles(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	while (nok_sample[i] != NULL) {
-		res = tlvFromFile(nok_sample[i++], &tlv);
+		res = tlvFromFile(getFullResourcePath(nok_sample[i++]), &tlv);
 
 		if (res == KSI_OK) {
 			res = parseStructure(tlv, 0);
@@ -176,7 +175,7 @@ static void TestSerialize(CuTest* tc) {
 
 	while (ok_sample[i] != NULL) {
 		KSI_LOG_debug(ctx, "TestSerialize: opening file '%s'", ok_sample[i]);
-		f = fopen(ok_sample[i], "rb");
+		f = fopen(getFullResourcePath(ok_sample[i]), "rb");
 		CuAssert(tc, "Unable to open test file.", f != NULL);
 
 		in_len = fread(in, 1, sizeof(in), f);
@@ -221,7 +220,7 @@ static void TestClone(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	while (ok_sample[i] != NULL) {
-		f = fopen(ok_sample[i], "rb");
+		f = fopen(getFullResourcePath(ok_sample[i]), "rb");
 		CuAssert(tc, "Unable to open test file.", f != NULL);
 
 		in_len = fread(in, 1, sizeof(in), f);
@@ -293,14 +292,14 @@ static void testObjectSerialization(CuTest *tc, const char *sample, int (*parse)
 }
 
 static void aggregationPduTest(CuTest *tc) {
-	testObjectSerialization(tc, "test/resource/tlv/aggr_response.tlv",
+	testObjectSerialization(tc, getFullResourcePath("resource/tlv/aggr_response.tlv"),
 			(int (*)(KSI_CTX *, unsigned char *, unsigned, void **))KSI_AggregationPdu_parse,
 			(int (*)(void *, unsigned char **, unsigned *))KSI_AggregationPdu_serialize,
 			( void (*)(void *))KSI_AggregationPdu_free);
 }
 
 static void extendPduTest(CuTest *tc) {
-	testObjectSerialization(tc, "test/resource/tlv/extend_response.tlv",
+	testObjectSerialization(tc, getFullResourcePath("resource/tlv/extend_response.tlv"),
 			(int (*)(KSI_CTX *, unsigned char *, unsigned, void **))KSI_ExtendPdu_parse,
 			(int (*)(void *, unsigned char **, unsigned *))KSI_ExtendPdu_serialize,
 			( void (*)(void *))KSI_ExtendPdu_free);

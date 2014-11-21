@@ -171,7 +171,7 @@ int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) 
 	/*Open new store */
 	tmp_FileTrustStore = CertOpenStore(CERT_STORE_PROV_FILENAME_A, 0, NULL, 0, path);
 	if (tmp_FileTrustStore == NULL) {
-		printError(GetLastError());
+		//printError(GetLastError());
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, NULL);
 		goto cleanup;
 	}

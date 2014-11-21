@@ -146,9 +146,16 @@ static void writeXmlReport(CuSuite *suite) {
 
 static int RunAllTests() {
 	int failCount;
+	int res;
 	CuSuite* suite = initSuite();
 
-	KSI_CTX_new(&ctx);
+	res = KSI_CTX_new(&ctx);
+	
+	if(ctx == NULL || res != KSI_OK){
+		fprintf(stderr, "Error: Unable to init KSI context (%s)!\n\n", KSI_getErrorString(res));
+		exit(EXIT_FAILURE);
+	}
+	
 	KSI_CTX_setLogFile(ctx, "test/test.log");
 	KSI_CTX_setLogLevel(ctx, KSI_LOG_DEBUG);
 	CuSuiteRun(suite);
@@ -255,7 +262,43 @@ cleanup:
 	return res;
 }
 
+static char path_resource[1024];
 
-int main(void) {
+static void getPathToTestDir(char *partialPath ){
+	char *root;
+	char *relpath_resources = "/test/";
+#ifdef _WIN32
+	char *relpath_exe = "\\out\\bin\\alltests.exe";
+	
+	if( _fullpath( path_resource, partialPath, 1024) == NULL ){
+		printf( "Can't get full path to alltests.exe!\n");
+                return;
+	}
+#else
+	char *relpath_exe = "/test/runner";
+        
+        if(realpath(partialPath, path_resource) == NULL){
+		printf( "Can't get full path to runner!\n");
+                return;
+                
+        }
+#endif
+
+        root = strstr(path_resource, relpath_exe);
+	if(root == NULL){
+		printf( "Can't find full path to directory 'test'!\n" );
+	}
+	strcpy(root, relpath_resources);
+}
+
+char* getFullResourcePath(const char* resource){
+	static char tmp[1024];
+	strcpy(tmp, path_resource);
+	strcat(tmp, resource);
+	return tmp;
+}
+
+int main(int argc, char** argv) {
+	getPathToTestDir(argv[0]);
 	return RunAllTests();
 }

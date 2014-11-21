@@ -17,6 +17,8 @@ extern "C" {
 #  endif
 #endif
 
+char* getFullResourcePath(const char* resource);	
+
 int KSITest_memcmp(void *ptr1, void *ptr2, size_t len);
 
 int KSITest_DataHash_fromStr(KSI_CTX *ctx, const char *hexstr, KSI_DataHash **hsh);

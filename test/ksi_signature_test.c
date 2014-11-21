@@ -3,7 +3,7 @@
 
 extern KSI_CTX *ctx;
 
-#define TEST_SIGNATURE_FILE "test/resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 
 static void testLoadSignatureFromFile(CuTest *tc) {
 	int res;
@@ -11,7 +11,7 @@ static void testLoadSignatureFromFile(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_Signature_fromFile(ctx, TEST_SIGNATURE_FILE, &sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	KSI_Signature_free(sig);
@@ -23,11 +23,11 @@ static void testVerifySignatureNew(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_Signature_fromFile(ctx, TEST_SIGNATURE_FILE, &sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	/* Set the extend response. */
-	KSITest_setFileMockResponse(tc, "test/resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv");
+	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"));
 
 	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Unable to verify signature online.", res == KSI_OK);
@@ -42,7 +42,7 @@ static void testVerifySignatureWithPublication(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_Signature_fromFile(ctx, "test/resource/tlv/ok-sig-2014-04-30.1-extended.ksig", &sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-extended.ksig"), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_verifySignature(ctx, sig);
@@ -59,7 +59,7 @@ static void testVerifySignatureExtendedToHead(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_Signature_fromFile(ctx, "test/resource/tlv/ok-sig-2014-04-30.1-head.ksig", &sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-head.ksig"), &sig);
 	CuAssert(tc, "Signature should have either a calendar auth record or publication", res != KSI_OK && sig == NULL);
 
 	KSI_Signature_free(sig);
@@ -75,7 +75,7 @@ static void testSignatureSigningTime(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_Signature_fromFile(ctx, TEST_SIGNATURE_FILE, &sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_getSigningTime(sig, &sigTime);
@@ -104,7 +104,7 @@ static void testSerializeSignature(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	f = fopen(TEST_SIGNATURE_FILE, "rb");
+	f = fopen(getFullResourcePath(TEST_SIGNATURE_FILE), "rb");
 	CuAssert(tc, "Unable to open signature file.", f != NULL);
 
 	in_len = (unsigned)fread(in, 1, sizeof(in), f);
@@ -137,7 +137,7 @@ static void testVerifyDocument(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	f = fopen(TEST_SIGNATURE_FILE, "rb");
+	f = fopen(getFullResourcePath(TEST_SIGNATURE_FILE), "rb");
 	CuAssert(tc, "Unable to open signature file.", f != NULL);
 
 	in_len = (unsigned)fread(in, 1, sizeof(in), f);
@@ -171,7 +171,7 @@ static void testVerifyDocumentHash(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	f = fopen(TEST_SIGNATURE_FILE, "rb");
+	f = fopen(getFullResourcePath(TEST_SIGNATURE_FILE), "rb");
 	CuAssert(tc, "Unable to open signature file.", f != NULL);
 
 	in_len = (unsigned)fread(in, 1, sizeof(in), f);
@@ -221,7 +221,7 @@ static void testSignerIdentity(CuTest *tc) {
 	KSI_Signature *sig = NULL;
 	char *id_actual = NULL;
 
-	res = KSI_Signature_fromFile(ctx, "test/resource/tlv/ok-sig-2014-08-01.1.ksig", &sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-sig-2014-08-01.1.ksig"), &sig);
 	CuAssert(tc, "Unable to load signature", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_getSignerIdentity(sig, &id_actual);

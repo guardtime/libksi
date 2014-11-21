@@ -235,6 +235,16 @@ int KSI_ERR_pre(KSI_ERR *err, int cond, char *fileName, int lineNr);
 int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f);
 
 /**
+ * Get base error message.
+ * \param[in]		ctx		KSI context object.
+ * \param[in/out]	buf		Buffer for storing error message.
+ * \param[in]		len		The length of the buffer. 
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an
+ * error code). 
+ */
+int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len);
+
+/**
  * The Guardtime representation of hash algorithms, necessary to calculate
  * instances of #KSI_DataHasher and #KSI_DataHash.
  */

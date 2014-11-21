@@ -12,10 +12,10 @@ SET OPENSSL_CA_FILE=C:\Users\Taavi\Documents\GuardTime\ksi-c-api\test\resource\t
 
 
 
-nmake clean
-REM del out\bin\alltests.exe libksiapiMDd.dll
+REM nmake clean
+del out\lib\libksiapiMTd.lib
 rem nmake RTL=MTd NET_PROVIDER=CURL CRYPTO_PROVIDER=CRYPTOAPI CURL_DIR="%CURL_DIR%" OPENSSL_CA_FILE="%OPENSSL_CA_FILE%" OPENSSL_DIR="%OPENSSL_DIR%" all
 rem nmake RTL=MTd NET_PROVIDER=CURL TRUST_PROVIDER=OPENSSL HASH_PROVIDER=CRYPTOAPI CURL_DIR="%CURL_DIR%" OPENSSL_CA_FILE="%OPENSSL_CA_FILE%" OPENSSL_DIR="%OPENSSL_DIR%" test
 
-nmake RTL=MDd DLL=dll NET_PROVIDER=CURL CRYPTO_PROVIDER=OPENSSL OPENSSL_CA_FILE=C:\Users\Taavi\Documents\GuardTime\ksi-c-api\test\resource\tlv\mock.crt test
+nmake RTL=MDd DLL=lib NET_PROVIDER=WINHTTP CRYPTO_PROVIDER=OPENSSL OPENSSL_CA_FILE=C:\Users\Taavi\Documents\GuardTime\ksi-c-api\test\resource\tlv\mock.crt libMTd
 pause

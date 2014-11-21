@@ -54,19 +54,19 @@ KSI_IMPLEMENT_LIST(GlobalCleanupFn, NULL);
 const char *KSI_getErrorString(int statusCode) {
 	switch (statusCode) {
 		case KSI_OK:
-			return "No errors";
+			return "No errors.";
 		case KSI_INVALID_ARGUMENT:
-			return "Invalid argument";
+			return "Invalid argument.";
 		case KSI_INVALID_FORMAT:
-			return "Invalid format";
+			return "Invalid format.";
 		case KSI_UNTRUSTED_HASH_ALGORITHM:
-			return "The hash algorithm is not trusted";
+			return "The hash algorithm is not trusted.";
 		case KSI_UNAVAILABLE_HASH_ALGORITHM:
-			return "The hash algorith is not implemented or unavailable";
+			return "The hash algorith is not implemented or unavailable.";
 		case KSI_BUFFER_OVERFLOW:
-			return "Buffer overflow";
+			return "Buffer overflow.";
 		case KSI_TLV_PAYLOAD_TYPE_MISMATCH:
-			return "TLV payload type mismatch";
+			return "TLV payload type mismatch.";
 		case KSI_ASYNC_NOT_FINISHED:
 			return "Asynchronous call not yet finished.";
 		case KSI_INVALID_SIGNATURE:
@@ -76,19 +76,19 @@ const char *KSI_getErrorString(int statusCode) {
 		case KSI_PKI_CERTIFICATE_NOT_TRUSTED:
 			return "The PKI certificate is not trusted.";
 		case KSI_OUT_OF_MEMORY:
-			return "Out of memory";
+			return "Out of memory.";
 		case KSI_IO_ERROR:
-			return "I/O error";
+			return "I/O error.";
 		case KSI_NETWORK_ERROR:
-			return "Network error";
+			return "Network error.";
 		case KSI_NETWORK_CONNECTION_TIMEOUT:
-			return "Network connection timeout";
+			return "Network connection timeout.";
 		case KSI_NETWORK_SEND_TIMEOUT:
-			return "Network send timeout";
+			return "Network send timeout.";
 		case KSI_NETWORK_RECIEVE_TIMEOUT:
-			return "Network recieve timeout";
+			return "Network recieve timeout.";
 		case KSI_HTTP_ERROR:
-			return "HTTP error";
+			return "HTTP error.";
 		case KSI_AGGREGATOR_ERROR:
 			return "Failure from aggregator.";
 		case KSI_EXTENDER_ERROR:
@@ -100,17 +100,17 @@ const char *KSI_getErrorString(int statusCode) {
 		case KSI_VERIFICATION_FAILURE:
 			return "Verification failed.";
 		case KSI_INVALID_PUBLICATION:
-			return "Invalid publication";
+			return "Invalid publication.";
 		case KSI_PUBLICATIONS_FILE_NOT_SIGNED_WITH_PKI:
 			return "The publications file is not signed.";
 		case KSI_CRYPTO_FAILURE:
-			return "Cryptographic failure";
+			return "Cryptographic failure.";
 		case KSI_HMAC_MISMATCH:
-			return "HMAC mismatch";
+			return "HMAC mismatch.";
 		case KSI_UNKNOWN_ERROR:
-			return "Unknown internal error";
+			return "Unknown internal error.";
 		default:
-			return "Unknown status code";
+			return "Unknown status code.";
 	}
 }
 
@@ -670,6 +670,19 @@ cleanup:
 
 	return res;
 }
+
+int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len){
+	KSI_ERR *err = NULL;
+	unsigned int i;
+	
+	if(ctx == NULL || buf == NULL){
+		return KSI_INVALID_ARGUMENT;
+	} 
+	
+	err = ctx->errors;
+	strncpy(buf, err->message, len);		
+	return KSI_OK;
+} 
 
 void *KSI_malloc(size_t size) {
 	return malloc(size);
