@@ -106,6 +106,7 @@ EXPORTS
     KSI_ERR_apply
     KSI_ERR_pre
     KSI_ERR_statusDump
+    KSI_ERR_getBaseErrorMessage
     KSI_malloc
     KSI_calloc
     KSI_realloc
