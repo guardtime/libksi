@@ -41,7 +41,6 @@ libksi_la_SOURCES = \
 	signature_impl.h \
 	tlv.c \
 	tlv.h \
-	tlv_tags.h \
 	tlv_template.c \
 	tlv_template.h \
 	types_base.c \
@@ -68,7 +67,6 @@ otherinclude_HEADERS = \
 	publicationsfile.h \
 	signature.h \
 	tlv.h \
-    tlv_tags.h \
 	tlv_template.h \
 	types.h \
 	types_base.h \

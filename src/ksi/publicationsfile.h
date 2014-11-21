@@ -57,7 +57,7 @@ extern "C" {
 	/**
 	 * Verify PKI signature of the publications file using the PKI truststore.
 	 * \param[in]		pubFile		Publications file.
-	 * \param[in]		pki			PKI truststore.
+	 * \param[in]		ctx			KSI context.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */

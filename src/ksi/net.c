@@ -517,6 +517,7 @@ int KSI_NetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	pr->extUser = NULL;
 	pr->extPass = NULL;
 	
+	/* TODO! Should not be static. */
 	res = setStringParam(&pr->extPass, "anon");
 	res = setStringParam(&pr->extUser, "anon");
 	res = setStringParam(&pr->agrPass, "anon");

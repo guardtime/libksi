@@ -77,7 +77,6 @@ INC_FILES = \
 	tlv.h \
 	list.h \
 	pkitruststore.h \
-	tlv_tags.h \
 	hashchain.h \
 	log.h \
 	publicationsfile.h \

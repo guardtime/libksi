@@ -107,7 +107,8 @@ cleanup:
 }
 
 int KSI_OctetString_equals(const KSI_OctetString *left, const KSI_OctetString *right) {
-	return left != NULL && right != NULL && left->data_len == right->data_len && !memcmp(left->data, right->data, left->data_len);
+	return left != NULL && right != NULL &&
+			((left == right) || (left->data_len == right->data_len && !memcmp(left->data, right->data, left->data_len)));
 }
 
 int KSI_OctetString_fromTlv(KSI_TLV *tlv, KSI_OctetString **o) {

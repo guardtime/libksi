@@ -52,16 +52,16 @@ int KSI_ERR_init(KSI_CTX *ctx, KSI_ERR *err);
 void KSI_ERR_clearErrors(KSI_CTX *ctx);
 
 /**
- * Add an error to context #ctx.
- * \param[in]	ctx			KSI context.
- * \param[in]	statusCode	KSI status code (\see #KSI_StatusCode).
- * \param[in]	fileName	Filename where the error was raised.
- * \param[in]	lineNr		Line number where the error was raised.
- * \param[in]	message		Pointer to null-terminated error message (or NULL).
+ * Add an error to context \c ctx.
+ * \param[in]	ctx				KSI context.
+ * \param[in]	statusCode		KSI status code (\see #KSI_StatusCode).
+ * \param[in]	extErrorCode	External error code.
+ * \param[in]	fileName		Filename where the error was raised.
+ * \param[in]	lineNr			Line number where the error was raised.
+ * \param[in]	message			Pointer to null-terminated error message (or NULL).
  *
  * \return status code (\c KSI_OK, when operation succeeded, otherwise an
  * error code).
- *
  */
 int KSI_ERR_fail(KSI_ERR *ctx, int statusCode, long extErrorCode, char *fileName, unsigned int lineNr, const char *message);
 

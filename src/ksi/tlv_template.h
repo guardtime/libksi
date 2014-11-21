@@ -167,28 +167,71 @@ extern "C" {
 	#define KSI_TLV_TEMPLATE_UNPROCESSED 			7
 
 	/**
-	 * Template flags
+	 * Empty placeholder for a template with no flags set.
 	 */
 	#define KSI_TLV_TMPL_FLG_NONE			0x00
-	#define KSI_TLV_TMPL_FLG_FORWARD		0x01
-	#define KSI_TLV_TMPL_FLG_NONCRITICAL	0x02
-	#define KSI_TLV_TMPL_FLG_MANDATORY		0x04
-	#define KSI_TLV_TMPL_FLG_LEAST_ONE_G0	0x08
-	#define KSI_TLV_TMPL_FLG_LEAST_ONE_G1	0x10
-	#define KSI_TLV_TMPL_FLG_MORE_DEFS		0x20
-	#define KSI_TLV_TMPL_FLG_NO_SERIALIZE	0x40
-	#define KSI_TLV_TMPL_FLG_MOST_ONE_G0	0x80
-	#define KSI_TLV_TMPL_FLG_MOST_ONE_G1	0x100
-	#define KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0 KSI_TLV_TMPL_FLG_LEAST_ONE_G0 | KSI_TLV_TMPL_FLG_MOST_ONE_G0
-	#define KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G1 KSI_TLV_TMPL_FLG_LEAST_ONE_G1 | KSI_TLV_TMPL_FLG_MOST_ONE_G1
 
+	/**
+	 * Should the template be forwarded if it is unknown for the parser?
+	 */
+	#define KSI_TLV_TMPL_FLG_FORWARD		0x01
+
+	/**
+	 * Is the TLV non-critical i.e should it be an error if this TLV is unknown to the parser?
+	 */
+	#define KSI_TLV_TMPL_FLG_NONCRITICAL	0x02
+
+	/**
+	 * Is this TLV object mandatory?.
+	 */
+	#define KSI_TLV_TMPL_FLG_MANDATORY		0x04
+
+	/**
+	 * At least one TLV of the group 0 should be present.
+	 */
+	#define KSI_TLV_TMPL_FLG_LEAST_ONE_G0	0x08
+
+	/**
+	 * At least one TLV of the group 1 should be present.
+	 */
+	#define KSI_TLV_TMPL_FLG_LEAST_ONE_G1	0x10
+
+	/**
+	 * This flags specifies that there can be more definitions for parsing the TLV.
+	 * If this flag is not set, the remaining templates are not searched.
+	 */
+	#define KSI_TLV_TMPL_FLG_MORE_DEFS		0x20
+
+	/**
+	 * This flag prevents the serialisation.
+	 */
+	#define KSI_TLV_TMPL_FLG_NO_SERIALIZE	0x40
+
+	/**
+	 * None or at most one TLV in the group 0 may be present.
+	 */
+	#define KSI_TLV_TMPL_FLG_MOST_ONE_G0	0x80
+
+	/**
+	 * None or at most one TLV in the group 1 may be present.
+	 */
+	#define KSI_TLV_TMPL_FLG_MOST_ONE_G1	0x100
+
+	/**
+	 * One and only one of the group 0 must be present.
+	 */
+	#define KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0 KSI_TLV_TMPL_FLG_LEAST_ONE_G0 | KSI_TLV_TMPL_FLG_MOST_ONE_G0
+
+	/**
+	 * One and only one of the group 0 must be present.
+	 */
+	#define KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G1 KSI_TLV_TMPL_FLG_LEAST_ONE_G1 | KSI_TLV_TMPL_FLG_MOST_ONE_G1
 
 	/**
 	 * A helper macro for defining a single template with all parameters.
 	 * \param[in]	typ				Template internal type.
 	 * \param[in]	tg				TLV tag value.
-	 * \param[in]	nc				Is the TLV non-critical?
-	 * \param[in]	fw				Should the TLV be forwarded if unknown?
+	 * \param[in]	flg				Flags for the template.
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 * \param[in]	constr			Constructor function.
@@ -200,8 +243,6 @@ extern "C" {
 	 * \param[in]	list_free		List object destructor function.
 	 * \param[in]	list_len		List length function.
 	 * \param[in]	list_elAt		List elements random access function.
-	 * \param[in]	cbEnc			Object to TLV encode function.
-	 * \param[in]	cbDec			TLV to Object decode function.
 	 * \param[in]	fromTlv			Create object from TLV function.
 	 * \param[in]	toTlv			Create TLV from object function.
 	 */
@@ -214,8 +255,7 @@ extern "C" {
 	 * A helper macro for defining primitive templates.
 	 * \param[in]	typ				Template internal type.
 	 * \param[in]	tg				TLV tag value.
-	 * \param[in]	nc				Is the TLV non-critical?
-	 * \param[in]	fw				Should the TLV be forwarded if unknown?
+	 * \param[in]	flg				Flags for the template.
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
@@ -230,20 +270,19 @@ extern "C" {
 	/**
 	 * Generic TLV template for objects for which \c fromTlv and \c toTlv functions are defined.
 	 * \param[in]	tg				TLV tag value.
-	 * \param[in]	nc				Is the TLV non-critical?
-	 * \param[in]	fw				Should the TLV be forwarded if unknown?
+	 * \param[in]	flg				Flags for the template.
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 * \param[in]	fromTlv			Function to create the object from TLV.
 	 * \param[in]	toTlv			Function to create a TLV from the object.
+	 * \param[in]	destr			Destructor function pointer.
 	 */
 	#define KSI_TLV_OBJECT(tg, flg, gttr, sttr, fromTlv, toTlv, destr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, flg, gttr, sttr, NULL, destr, NULL, NULL, 0, NULL, NULL, NULL, NULL, fromTlv, toTlv)
 
 	/**
 	 * TLV template for #KSI_Utf8String type.
 	 * \param[in]	tg				TLV tag value.
-	 * \param[in]	nc				Is the TLV non-critical?
-	 * \param[in]	fw				Should the TLV be forwarded if unknown?
+	 * \param[in]	flg				Flags for the template.
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
@@ -252,8 +291,7 @@ extern "C" {
 	/**
 	 * TLV template for #KSI_Integer type.
 	 * \param[in]	tg				TLV tag value.
-	 * \param[in]	nc				Is the TLV non-critical?
-	 * \param[in]	fw				Should the TLV be forwarded if unknown?
+	 * \param[in]	flg				Flags for the template.
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
@@ -262,8 +300,7 @@ extern "C" {
 	/**
 	 * TLV template for #KSI_OctetString type.
 	 * \param[in]	tg				TLV tag value.
-	 * \param[in]	nc				Is the TLV non-critical?
-	 * \param[in]	fw				Should the TLV be forwarded if unknown?
+	 * \param[in]	flg				Flags for the template.
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
@@ -272,8 +309,7 @@ extern "C" {
 	/**
 	 * TLV template for #KSI_DataHash type.
 	 * \param[in]	tg				TLV tag value.
-	 * \param[in]	nc				Is the TLV non-critical?
-	 * \param[in]	fw				Should the TLV be forwarded if unknown?
+	 * \param[in]	flg				Flags for the template.
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
@@ -284,8 +320,7 @@ extern "C" {
 	 * makes sure the imprint is a null terminated sequence of bytes.
 	 *
 	 * \param[in]	tg				TLV tag value.
-	 * \param[in]	nc				Is the TLV non-critical?
-	 * \param[in]	fw				Should the TLV be forwarded if unknown?
+	 * \param[in]	flg				Flags for the template.
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
@@ -294,8 +329,7 @@ extern "C" {
 	/**
 	 * Native unsigned integer template.
 	 * \param[in]	tg				TLV tag value.
-	 * \param[in]	nc				Is the TLV non-critical?
-	 * \param[in]	fw				Should the TLV be forwarded if unknown?
+	 * \param[in]	flg				Flags for the template.
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
@@ -305,8 +339,7 @@ extern "C" {
 	 * Generic object list template. The \c obj parameter may be only a type
 	 * for which there is a list type defined (see #KSI_DEFINE_LIST and #KSI_IMPLEMENT_LIST).
 	 * \param[in]	tg				TLV tag value.
-	 * \param[in]	nc				Is the TLV non-critical?
-	 * \param[in]	fw				Should the TLV be forwarded if unknown?
+	 * \param[in]	flg				Flags for the template.
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 * \param[in]	obj				Type of object stored in the list.
@@ -316,8 +349,7 @@ extern "C" {
 	/**
 	 * TLV template for list of #KSI_OctetString types.
 	 * \param[in]	tg				TLV tag value.
-	 * \param[in]	nc				Is the TLV non-critical?
-	 * \param[in]	fw				Should the TLV be forwarded if unknown?
+	 * \param[in]	flg				Flags for the template.
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
@@ -326,8 +358,7 @@ extern "C" {
 	/**
 	 * TLV template for list of #KSI_Utf8String types.
 	 * \param[in]	tg				TLV tag value.
-	 * \param[in]	nc				Is the TLV non-critical?
-	 * \param[in]	fw				Should the TLV be forwarded if unknown?
+	 * \param[in]	flg				Flags for the template.
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
@@ -336,8 +367,7 @@ extern "C" {
 	/**
 	 * TLV template for list of #KSI_Integer types.
 	 * \param[in]	tg				TLV tag value.
-	 * \param[in]	nc				Is the TLV non-critical?
-	 * \param[in]	fw				Should the TLV be forwarded if unknown?
+	 * \param[in]	flg				Flags for the template.
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
@@ -346,8 +376,7 @@ extern "C" {
 	/**
 	 * TLV template for composite objects.
 	 * \param[in]	tg				TLV tag value.
-	 * \param[in]	nc				Is the TLV non-critical?
-	 * \param[in]	fw				Should the TLV be forwarded if unknown?
+	 * \param[in]	flg				Flags for the template.
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 * \param[in]	sub				Composite element template.
@@ -357,8 +386,7 @@ extern "C" {
 	/**
 	 * TLV template for list of composite objects.
 	 * \param[in]	tg				TLV tag value.
-	 * \param[in]	nc				Is the TLV non-critical?
-	 * \param[in]	fw				Should the TLV be forwarded if unknown?
+	 * \param[in]	flg				Flags for the template.
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 * \param[in]	sub				Composite element template.
@@ -373,7 +401,9 @@ extern "C" {
 	#define KSI_TLV_SEEK_POS(tg, sttr) KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_SEEK_POS, tg, KSI_TLV_TMPL_FLG_NO_SERIALIZE, NULL, sttr)
 
 	/**
-	 * TODO!
+	 * Stores the value of the parsed element as a #KSI_TLV object.
+	 * \param[in]	tg			TLV tag value
+	 * \param[in]	sttr		Setter function for #KSI_TLV value.
 	 */
 	#define KSI_TLV_UNPROCESSED(tg, sttr) KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_UNPROCESSED, tg, KSI_TLV_TMPL_FLG_NO_SERIALIZE, NULL, sttr)
 
@@ -388,16 +418,19 @@ extern "C" {
 	 * \param[in]		ctx			KSI context.
 	 * \param[in]		payload		Preinitialized empty object to be evaluated with the TLV values.
 	 * \param[in]		tlv			TLV value which has the structure represented in \c template.
-	 * \param[in]		template	Template of the TLV expected structure.
-	 * \param[in]		reminder	List of TLV's that did not match the template on the first level. Can be NULL, in which case
-	 * 								an error code is returned if an unknown non-critical TLV is encountered.
-	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an
-	 * error code).
+	 * \param[in]		tmpl	Template of the TLV expected structure.
+	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *tmpl);
 
 	/**
-	 * TODO!
+	 * Parses a given raw data into a pre-existing element. The caller needs to know the outcome type and create it.
+	 * \param[in]	ctx			KSI context.
+	 * \param[in]	raw			Pointer to the raw data.
+	 * \param[in]	raw_len		Lenght of the raw data.
+	 * \param[in]	tmpl		Template.
+	 * \param[in]	payload		Pointer to the payload which will be populated with the parsed data.
+	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	 int KSI_TlvTemplate_parse(KSI_CTX *ctx, unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *tmpl, void *payload);
 
@@ -407,11 +440,11 @@ extern "C" {
 	 * \param[in]		ctx				KSI context.
 	 * \param[in]		payload			Preinitialized empty object to be evaluated with the TLV values.
 	 * \param[in]		generatorCtx	Context for the generator.
-	 * \param[in]		tlv				TLV value which has the structure represented in \c template.
-	 * \param[in]		template		Template of the TLV expected structure.
+	 * \param[in]		tmpl			Template of the TLV expected structure.
 	 * \param[in]		generator		Generator function. The \c generatorCtx is passed as the first parameter and a #KSI_TLV object
 	 * 									is expected to be returned by the second parameter - a NULL value is interpreted as end of input.
 	 * 									The function is expected to return #KSI_OK on success.
+	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, const KSI_TlvTemplate *tmpl, int (*generator)(void *, KSI_TLV **));
 
@@ -419,9 +452,9 @@ extern "C" {
 	 * Given a payload object, template and a initialized target TLV, this function constructs a TLV using the
 	 * template and the values from the payload.
 	 * \param[in]		ctx			KSI context.
-	 * \param[in]		payload		Evaluated payload.
 	 * \param[in]		tlv			An empty target TLV.
-	 * \param[in]		template	Template of the TLV expected structure.
+	 * \param[in]		payload		Evaluated payload.
+	 * \param[in]		tmpl		Template of the TLV expected structure.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
@@ -431,31 +464,37 @@ extern "C" {
 	/**
 	 * Deepcopy an object using TLV templates. The object is first transformed internally into a #KSI_TLV tree and
 	 * the process is reversed and the result is stoed, thus all values are copied.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
-	 *
-	 * \note If the TLV template is incomplete and discards by endoding or decoding some values, the result is not an
+	 * \param[in]	ctx			KSI context.
+	 * \param[in]	from		Object to be copied from.
+	 * \param[in]	tmpl		Template.
+	 * \param[in]	to			Values to be copied to.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note If the TLV template is incomplete and discards by encoding or decoding some values, the result is not an
 	 * exact copy of the original.
 	 */
-	int KSI_TlvTemplate_deepCopy(KSI_CTX *ctx, const void *from, const KSI_TlvTemplate *baseTemplate, void *to);
+	int KSI_TlvTemplate_deepCopy(KSI_CTX *ctx, const void *from, const KSI_TlvTemplate *tmpl, void *to);
 
 	/**
 	 * Serializes an object using #KSI_TlvTemplate.
 	 * \param[in]	ctx		KSI context.
 	 * \param[in]	obj		Object to be serialized.
 	 * \param[in]	tag		Tag of the serialized object.
-	 * \param[in}	isNc	TLV flag is-non-critical.
+	 * \param[in]	isNc	TLV flag is-non-critical.
 	 * \param[in]	isFwd	TLV flag is-forward.
 	 * \param[in]	tmpl	Template to be used.
 	 * \param[out]	raw		Pointer to the receiving pointer to the serialized value.
-	 * \param[out]	rar_len	Length of the serialized value.
+	 * \param[out]	raw_len	Length of the serialized value.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note Thre returned pointer raw belongs to the caller and it needs to be freed using #KSI_free
 	 * \see #KSI_free
 	 */
 	int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag, int isNc, int isFwd, const KSI_TlvTemplate *tmpl, unsigned char **raw, unsigned *raw_len);
 
+	/**
+	 * Macro to generate object parsers.
+	 * \param[in]	type		Type name.
+	 * \param[in]	tag			Tag of the concrete TLV.
+	 */
 	#define KSI_IMPLEMENT_OBJECT_PARSE(type, tag) \
 		int type##_parse(KSI_CTX *ctx, unsigned char *raw, unsigned len, type **t) { \
 			int res = KSI_UNKNOWN_ERROR; \
@@ -484,6 +523,13 @@ extern "C" {
 			return res; \
 		} \
 
+	/**
+	 * Macro to generate object serializer.
+	 * \param[in]	type		Type name.
+	 * \param[in]	tag			Tag of the concrete TLV.
+	 * \param[in]	nc			Non-critical flag.
+	 * \param[in]	fwd			Forward flag.
+	 */
 	#define KSI_IMPLEMENT_OBJECT_SERIALIZE(type, tag, nc, fwd) \
 		int type##_serialize(const type *t, unsigned char **raw, unsigned *len) { \
 			int res = KSI_UNKNOWN_ERROR; \

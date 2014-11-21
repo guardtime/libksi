@@ -7,11 +7,16 @@
 extern "C" {
 #endif
 
-	/**
-	 * \addtogroup pkitruststore PKI Truststore
-	 * TODO!
-	 * @{
-	 */
+/**
+ * \addtogroup pkitruststore PKI Truststore
+ * This module is used for PKI operations.
+ *
+ * The main components are:
+ * 1) #KSI_PKITruststore - contains and verifies certificates.
+ * 2) #KSI_PKICertificate - an implementation independent PKI certificate object.
+ * 3) #KSI_PKISignature - an implementation independent PKI signature object.
+ * @{
+ */
 
 	/**
 	 * PKI Truststore constructor. If <tt>\c setDefaults == 1</tt>, the truststore is initiated
@@ -49,28 +54,8 @@ extern "C" {
 	 */
 	void KSI_PKICertificate_free(KSI_PKICertificate *cert);
 
-	/**
-	 * Function for converting a #KSI_TLV structure into a #KSI_PKICertificate object.
-	 * \param[in]	tlv			TLV object containing the DER encoded certificate.
-	 * \param[out]	cert		Pointer to the receiving pointer.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
-	 */
-	int KSI_PKICertificate_fromTlv(KSI_TLV *tlv, KSI_PKICertificate **cert);
-
-	/**
-	 * Function for converting a #KSI_PKICertificate object into a #KSI_TLV structure.
-	 * \param[in]	cert			PKI Certificate object.
-	 * \param[in]	tag				Tag of the TLV.
-	 * \param[in]	isNonCritical	TLV non-critical-flag value {0,1}.
-	 * \param[in]	isForward		TLV forward-flag value {0,1}.
-	 * \param[out]	tlv				Pointer to the receiving pointer.
-
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
-	 */
-	int KSI_PKICertificate_toTlv(KSI_CTX *ctx, KSI_PKICertificate *cert, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+	KSI_DEFINE_FN_FROM_TLV(KSI_PKICertificate);
+	KSI_DEFINE_FN_TO_TLV(KSI_PKICertificate);
 
 	/**
 	 * Function to serialise the KSI Certificate object as DER.
@@ -87,8 +72,7 @@ extern "C" {
 	 * \param[in]	raw_len		Signature len.
 	 * \param[out]	signature	Pointer to the receiving pointer.
 	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, unsigned raw_len, KSI_PKISignature **signature);
 
@@ -99,32 +83,17 @@ extern "C" {
 	void KSI_PKISignature_free(KSI_PKISignature *sig);
 
 	/**
-	 * TODO!
+	 * Serializes the #KSI_PKISignature object.
+	 * \param[in]	sig			Pointer to the PKI signature.
+	 * \param[out]	raw			Pointer to the receiving pointer.
+	 * \param[out]	raw_len		Serialized value length.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_PKISignature_serialize(KSI_PKISignature *sig, unsigned char **raw, unsigned *raw_len);
 
-	/**
-	 * Function for converting a #KSI_TLV structure into a #KSI_PKISignature object.
-	 * \param[in]	tlv		TLV structure.
-	 * \param[out]	sig		Pointer to the receiving pointer.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
-	 */
-	int KSI_PKISignature_fromTlv(KSI_TLV *tlv, KSI_PKISignature **sig);
-
-	/**
-	 * Function for converting #KSI_PKISignature object into a #KSI_TLV structure.
-	 * \param[in]	sig				PKI Signature object.
-	 * \param[in]	tag				Tag value of the TLV.
-	 * \param[in]	isNonCritical	TLV non-critical-flag value {0,1}.
-	 * \param[in]	isForward		TLV forward-flag value {0,1}.
-	 * \param[out]	tlv				Ponter to the receiving pointer.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
-	 */
-	int KSI_PKISignature_toTlv(KSI_CTX *ctx, KSI_PKISignature *sig, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+	KSI_DEFINE_FN_FROM_TLV(KSI_PKISignature);
+	KSI_DEFINE_FN_TO_TLV(KSI_PKISignature);
 
 	/**
 	 * Function for verifying a raw PKCS#1 signature. TODO! - explain in detail!
@@ -182,6 +151,10 @@ extern "C" {
      * \return 
      */
 	char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, unsigned buf_len);
+
+/**
+ * @}
+ */
 
 #ifdef __cplusplus
 }

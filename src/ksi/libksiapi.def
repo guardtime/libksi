@@ -309,7 +309,6 @@ EXPORTS
     KSI_TLV_isNonCritical
     KSI_TLV_isForward
     KSI_TLV_getTag
-    KSI_TLV_getPayloadType
     KSI_TLV_serialize_ex
     KSI_TLV_serialize
     KSI_TLV_serializePayload

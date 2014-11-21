@@ -9,7 +9,6 @@ typedef struct headerRec_st HeaderRec;
 
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarHashChain);
 KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationRecord);
-KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationHashChain)
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationAuthRec)
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarAuthRec)
@@ -454,10 +453,10 @@ int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain
 			goto cleanup;
 		}
 
-		if (KSI_TLV_getTag(oldCalChainTlv) == KSI_TAG_CALENDAR_CHAIN) break;
+		if (KSI_TLV_getTag(oldCalChainTlv) == 0x0802) break;
 	}
 
-	res = KSI_TLV_new(sig->ctx, KSI_TLV_PAYLOAD_TLV, KSI_TAG_CALENDAR_CHAIN, 0, 0, &newCalChainTlv);
+	res = KSI_TLV_new(sig->ctx, KSI_TLV_PAYLOAD_TLV, 0x0802, 0, 0, &newCalChainTlv);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_TlvTemplate_construct(sig->ctx, newCalChainTlv, calendarHashChain, KSI_TLV_TEMPLATE(KSI_CalendarHashChain));
@@ -1883,7 +1882,7 @@ static int KSI_Signature_verifyPolicy(KSI_Signature *sig, unsigned *policy, KSI_
 		}
 	}
 
-	KSI_FAIL(&err, KSI_VERIFY_CALCHAIN_ONLINE, "Signature not verified - no suitable policy.");
+	KSI_FAIL(&err, KSI_VERIFICATION_FAILURE, "Signature not verified - no suitable policy.");
 
 cleanup:
 

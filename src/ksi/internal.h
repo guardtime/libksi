@@ -5,7 +5,6 @@
 #include <limits.h>
 
 #include "ksi.h"
-#include "tlv_tags.h"
 
 /**
  * HTTP network client implementations.

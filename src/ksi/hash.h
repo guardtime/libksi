@@ -7,16 +7,15 @@
 extern "C" {
 #endif
 
-	/**
-	 * \addtogroup hash Data Hashing
-	 * This module consists of two main objects:
-	 * - #KSI_DataHasher - this object is used to calculate hash values (see
-	 * #KSI_DataHash).
-	 * - #KSI_DataHash - this immutable object is used to store the calculated
-	 * hash value.
-	 * @{
-	 */
-
+/**
+ * \addtogroup hash Data Hashing
+ * This module consists of two main objects:
+ * - #KSI_DataHasher - this object is used to calculate hash values (see
+ * #KSI_DataHash).
+ * - #KSI_DataHash - this immutable object is used to store the calculated
+ * hash value.
+ * @{
+ */
 
 	/**
 	 * The maximum length of an imprint.
@@ -27,7 +26,7 @@ extern "C" {
 	 * Starts a hash computation.
 	 * \param[in]		ctx			KSI context.
 	 * \param[in]		hash_id 	Identifier of the hash algorithm.
-	 * See #KSI_HashAlgorithm for possible values.
+	 * See #KSI_HashAlgorithm_en for possible values.
 	 * \param[out] hasher Pointer that will receive pointer to the
 	 * hasher object.
 	 *
@@ -53,7 +52,7 @@ extern "C" {
 	 * \param[in]	data_length			Length of the hashed data.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_DataHasher_open, #KSI_GTDataHasher_close
+	 * \see #KSI_DataHasher_open, #KSI_DataHasher_close
 	 */
 	int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_length);
 
@@ -78,7 +77,7 @@ extern "C" {
 	/**
 	 * Frees the data hash object..
 	 *
-	 * \param[in]	data_hash			#KSI_DataHash object that is to be freed.
+	 * \param[in]	hash			#KSI_DataHash object that is to be freed.
 	 *
 	 * \see #KSI_DataHasher_close, #KSI_DataHash_fromImprint, #KSI_DataHash_fromDigest
 	 */
@@ -112,7 +111,7 @@ extern "C" {
 	 * Interneal data access method.
 	 *
 	 * \param[in]	hash			Data hash object.
-	 * \param[out]	algorithm		Algorithm used to compute the hash.
+	 * \param[out]	hash_id			Algorithm used to compute the hash.
 	 * \param[out]	digest			Binary digest value.
 	 * \param[out]	digest_length	Length of the digest value.
 	 *
@@ -125,7 +124,7 @@ extern "C" {
 	/**
 	 * Constructor for #KSI_DataHash object from existing hash value.
 	 * \param[in]		ctx				KSI context.
-	 * \param[in]		algorithm		Algorithm used to compute the digest value.
+	 * \param[in]		hash_id			Algorithm used to compute the digest value.
 	 * \param[in]		digest			Binary digest value.
 	 * \param[in]		digest_length	Lengt of the binary digest value.
 	 * \param[in]		hash			Pointer that will receive pointer to the hash object.
@@ -201,7 +200,7 @@ extern "C" {
 	/**
 	 * Returns a pointer to constant string containing the name of the hash algorithm. Returns NULL if
 	 * the algorithm is unknown.
-	 * \param[in]	hash_algorithm			The hash algorithm id.
+	 * \param[in]	hash_id			The hash algorithm id.
 	 *
 	 * \return Name of the algorithm or NULL on error.
 	 * \see #KSI_getHashAlgorithmByName
@@ -219,36 +218,17 @@ extern "C" {
 	 */
 	int KSI_DataHash_equals(const KSI_DataHash *left, const KSI_DataHash *right);
 
-	/**
-	 * This function creates a data hash object from the payload of a raw TLV object.
-	 * \param[in]	tlv			TLV object.
-	 * \param[out]	hsh			Data hash object.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_DataHash_free, #KSI_DataHash_toTlv
-	 */
-	int KSI_DataHash_fromTlv(KSI_TLV *tlv, KSI_DataHash **hsh);
+	KSI_DEFINE_FN_FROM_TLV(KSI_DataHash);
+	KSI_DEFINE_FN_TO_TLV(KSI_DataHash);
 
 	/**
-	 * Creates a TLV object with the imprint of the given data hash object as the payload.
-	 * \param[in]	hsh				Data hash object.
-	 * \param[in]	tag				The numeric tag value of the TLV.
-	 * \param[in]	isNonCritical	TLV non-critical flag.
-	 * \param[in]	isForward		TLV forward-flag.
-	 * \param[out]	tlv				Pointer to the receiving TLV pointer.
-	 *
+	 * Accessor method for extracting the hash algorithm from the #KSI_DataHash.
+     * \param	hash		Data hash object.
+     * \param	hashAlg		Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_TLV_free, #KSI_DataHash_fromTlv
-	 */
-	int KSI_DataHash_toTlv(KSI_CTX *ctx, KSI_DataHash *hsh, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
-	
-	/**
-	 * TODO:
-     * @param hash
-     * @param hashAlg
-     * @return 
      */
 	int KSI_DataHash_getHashAlg(const KSI_DataHash *hash, int *hashAlg);
+
 	/**
 	 * Parses the metha value if the hash value is formatted:
 	 * - 2 bytes of length (n).
@@ -281,9 +261,9 @@ extern "C" {
 	 */
 	char *KSI_DataHash_toString(const KSI_DataHash *hsh, char *buf, unsigned buf_len);
 
-	/**
-	 * @}
-	 */
+/**
+ * @}
+ */
 #ifdef __cplusplus
 }
 #endif

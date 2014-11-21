@@ -18,8 +18,6 @@ static void testTlvInitOwnMem(CuTest* tc) {
 	CuAssert(tc, "TLV not marked as lenient", KSI_TLV_isNonCritical(tlv));
 	CuAssert(tc, "TLV not marked to be forwarded", KSI_TLV_isForward(tlv));
 
-	CuAssert(tc, "TLV encoding is wrong.", KSI_TLV_getPayloadType(tlv) == KSI_TLV_PAYLOAD_RAW);
-
 	KSI_TLV_free(tlv);
 }
 

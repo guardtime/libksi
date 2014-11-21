@@ -769,10 +769,6 @@ unsigned KSI_TLV_getTag(KSI_TLV *tlv) {
 	return tlv->tag;
 }
 
-int KSI_TLV_getPayloadType(KSI_TLV *tlv) {
-	return tlv->payloadType;
-}
-
 int KSI_TLV_removeNestedTlv(KSI_TLV *target, KSI_TLV *tlv) {
 	KSI_ERR err;
 	int res;

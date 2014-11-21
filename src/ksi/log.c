@@ -292,7 +292,7 @@ cleanup:
 	return res;
 }
 
-int KSI_LOG_setLogFile(KSI_Logger *logger, char *file) {
+int KSI_LOG_setLogFile(KSI_Logger *logger, const char *file) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (logger->logStream != NULL) {
