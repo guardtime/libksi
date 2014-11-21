@@ -262,22 +262,30 @@ cleanup:
 	return res;
 }
 
-static char path_resource[1024];
+static char *path_resource = NULL;
 
 static void getPathToTestDir(char *partialPath ){
 	char *root;
 	char *relpath_resources = "/test/";
+	char *relpath_exe = NULL;
+
 #ifdef _WIN32
-	char *relpath_exe = "\\out\\bin\\alltests.exe";
+	static int pathMaxLen = 1024;
+	path_resource = malloc(pathMaxLen);
+	if (path_resource == NULL) {
+		fprintf(stderr, "Out of memory\n");
+		exit(1);
+	}
+	relpath_exe = "\\out\\bin\\alltests.exe";
 	
-	if( _fullpath( path_resource, partialPath, 1024) == NULL ){
+	if( _fullpath( path_resource, partialPath, pathMaxLen) == NULL ){
 		printf( "Can't get full path to alltests.exe!\n");
                 return;
 	}
 #else
-	char *relpath_exe = "/test/runner";
+	relpath_exe = "/test/runner";
         
-        if(realpath(partialPath, path_resource) == NULL){
+        if ((path_resource = realpath(partialPath, NULL)) == NULL){
 		printf( "Can't get full path to runner!\n");
                 return;
                 
@@ -301,4 +309,5 @@ char* getFullResourcePath(const char* resource){
 int main(int argc, char** argv) {
 	getPathToTestDir(argv[0]);
 	return RunAllTests();
+	free(path_resource);
 }
