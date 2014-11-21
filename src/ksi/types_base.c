@@ -234,14 +234,19 @@ void KSI_Utf8String_free(KSI_Utf8String *o) {
 }
 
 int KSI_Utf8String_new(KSI_CTX *ctx, const unsigned char *str, unsigned len, KSI_Utf8String **o) {
-	int res = KSI_UNKNOWN_ERROR;
+	KSI_ERR err;
+	int res;
 	KSI_Utf8String *tmp = NULL;
 	char *val = NULL;
-	unsigned actualLen = len;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, str != NULL) goto cleanup;
+	KSI_PRE(&err, o != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
 
 	tmp = KSI_new(KSI_Utf8String);
 	if (tmp == NULL) {
-		res = KSI_OUT_OF_MEMORY;
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
@@ -249,33 +254,35 @@ int KSI_Utf8String_new(KSI_CTX *ctx, const unsigned char *str, unsigned len, KSI
 	tmp->value = NULL;
 	tmp->refCount = 1;
 	
-	/* Verify that is is a null-terminated string. */
-	if (actualLen == 0 || str[actualLen - 1] != '\0') {
-		++actualLen;
+	/* Verify that it is a null-terminated string. */
+	if (len == 0 || str[len - 1] != '\0') {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, "String value is not null-terminated.");
+		goto cleanup;
 	}
 
 	/* Verify correctness of utf-8 */
-	res = verifyUtf8(str, actualLen);
+	res = verifyUtf8(str, len);
 	if (res != KSI_OK) goto cleanup;
 
-	val = KSI_malloc(actualLen);
+	val = KSI_malloc(len);
 	memcpy(val, str, len);
-	val[actualLen - 1] = '\0';
 
 	tmp->value = val;
-	tmp->len = actualLen;
+	tmp->len = len;
 
 	val = NULL;
 
 	*o = tmp;
 	tmp = NULL;
 
-	res = KSI_OK;
+	KSI_SUCCESS(&err);
+
 cleanup:
 
 	KSI_free(val);
 	KSI_Utf8String_free(tmp);
-	return res;
+
+	return KSI_RETURN(&err);
 }
 
 int KSI_Utf8String_ref(KSI_Utf8String *o) {
@@ -532,6 +539,11 @@ int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_Integer **o) {
 
 	for (i = 0; i < len; i++) {
 		val = val << 8 | raw[i];
+	}
+
+	if (len != KSI_UINT64_MINSIZE(val)) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Integer not properly formated.");
+		goto cleanup;
 	}
 
 	res = KSI_Integer_new(ctx, val, &tmp);

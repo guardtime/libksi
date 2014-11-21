@@ -64,8 +64,8 @@
 #define KSI_CATCH(err, res) if ((res) != KSI_OK && KSI_FAIL((err), res, NULL) == KSI_OK)
 #define KSI_SUCCESS(err) KSI_ERR_success((err))
 
-#define KSI_UINT16_MINSIZE(val) ((val > 0xff) ? 2 : 1)
-#define KSI_UINT32_MINSIZE(val) ((val > 0xffff) ? (2 + KSI_UINT16_MINSIZE((val) >> 16)) : KSI_UINT16_MINSIZE((val)))
+#define KSI_UINT16_MINSIZE(val) (((val) > 0xff) ? 2 : ((val) == 0 ? 0 : 1))
+#define KSI_UINT32_MINSIZE(val) (((val) > 0xffff) ? (2 + KSI_UINT16_MINSIZE((val) >> 16)) : KSI_UINT16_MINSIZE((val)))
 #define KSI_UINT64_MINSIZE(val) (((val) > 0xffffffff) ? (4 + KSI_UINT32_MINSIZE((val) >> 32)) : KSI_UINT32_MINSIZE((val)))
 
 /* Create a new object of type. */

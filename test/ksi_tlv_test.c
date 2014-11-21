@@ -228,7 +228,7 @@ static void testTlvGetUint64Overflow(CuTest* tc) {
 static void testTlvGetStringValue(CuTest* tc) {
 	int res;
 	/* TLV16 type = 0x2aa, length = 21 */
-	unsigned char raw[] = "\x82\xaa\x00\x0alore ipsum";
+	unsigned char raw[] = "\x82\xaa\x00\x0blore ipsum\0";
 	KSI_Utf8String *utf = NULL;
 	KSI_RDR *rdr = NULL;
 	KSI_TLV *tlv = NULL;
@@ -252,7 +252,7 @@ static void testTlvGetStringValue(CuTest* tc) {
 static void testTlvGetNextNested(CuTest* tc) {
 	int res;
 	/* TLV16 type = 0x2aa, length = 21 */
-	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
+	unsigned char raw[] = "\x01\x20" "\x07\x16" "THIS IS A TLV CONTENT\0" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
 
 	KSI_RDR *rdr = NULL;
 	KSI_TLV *tlv = NULL;
@@ -367,43 +367,6 @@ static void testTlvSerializeString(CuTest* tc) {
 	CuAssert(tc, "Size of serialized TLV mismatch", sizeof(raw) == buf_len);
 
 	CuAssert(tc, "Serialized TLV does not match original", !memcmp(raw, buf, buf_len));
-
-	KSI_Utf8String_free(utf);
-	KSI_TLV_free(tlv);
-	KSI_RDR_close(rdr);
-}
-
-static void testTlvSerializeStringWithoutTrailingZero(CuTest* tc) {
-	int res;
-	/* TLV16 type = 0x2aa, length = 21 */
-	unsigned char raw[] = "\x82\xaa\x00\x0alore ipsum";
-	unsigned char expected[] = "\x82\xaa\x00\x0blore ipsum";
-
-	unsigned buf_len;
-	unsigned char buf[0xffff];
-
-	KSI_RDR *rdr = NULL;
-	KSI_TLV *tlv = NULL;
-	KSI_Utf8String *utf = NULL;
-
-	KSI_ERR_clearErrors(ctx);
-	res = KSI_RDR_fromMem(ctx, raw, sizeof(raw), &rdr);
-	CuAssert(tc, "Unable to create reader.", res == KSI_OK && rdr != NULL);
-	res = KSI_TLV_fromReader(rdr, &tlv);
-	CuAssert(tc, "Unable to create TLV from reader.", res == KSI_OK && tlv != NULL);
-
-	res = KSI_Utf8String_fromTlv(tlv, &utf);
-	CuAssert(tc, "Failed to get string value from tlv.", res == KSI_OK && utf != NULL);
-
-	KSI_TLV_free(tlv);
-
-	res = KSI_Utf8String_toTlv(ctx, utf, 0x2aa, 0, 0, &tlv);
-	CuAssert(tc, "Failed to create TLV from UTF-8 string.", res == KSI_OK && tlv != NULL);
-
-	res = KSI_TLV_serialize_ex(tlv, buf, sizeof(buf), &buf_len);
-	CuAssert(tc, "Failed to serialize string TLV", res == KSI_OK);
-	CuAssert(tc, "Size of serialized TLV mismatch", sizeof(expected) == buf_len);
-	CuAssert(tc, "Serialized TLV does not match original", !memcmp(expected, buf, buf_len));
 
 	KSI_Utf8String_free(utf);
 	KSI_TLV_free(tlv);
@@ -557,7 +520,6 @@ CuSuite* KSITest_TLV_getSuite(void)
 	SUITE_ADD_TEST(suite, testTlvGetUint64);
 	SUITE_ADD_TEST(suite, testTlvGetUint64Overflow);
 	SUITE_ADD_TEST(suite, testTlvGetStringValue);
-	SUITE_ADD_TEST(suite, testTlvSerializeStringWithoutTrailingZero);
 	SUITE_ADD_TEST(suite, testTlvGetNextNested);
 	SUITE_ADD_TEST(suite, testTlvGetNextNestedSharedMemory);
 	SUITE_ADD_TEST(suite, testTlvSerializeString);

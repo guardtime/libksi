@@ -375,7 +375,10 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 	res = KSI_ExtendPdu_calculateHmac(pdu, hashAlg, handle->client->extPass, &actualHmac);
 	KSI_CATCH(&err, res) goto cleanup;
 	
-	if(KSI_DataHash_equals(respHmac, actualHmac) != 1){
+	if (!KSI_DataHash_equals(respHmac, actualHmac)){
+		KSI_LOG_debug(handle->ctx, "Verifying HMAC failed.");
+		KSI_LOG_logDataHash(handle->ctx, KSI_LOG_DEBUG, "Calculated HMAC", actualHmac);
+		KSI_LOG_logDataHash(handle->ctx, KSI_LOG_DEBUG, "HMAC from response", respHmac);
 		KSI_FAIL(&err, KSI_HMAC_MISMATCH, NULL);
 		goto cleanup;
 	}	
@@ -453,7 +456,10 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 	res = KSI_AggregationPdu_calculateHmac(pdu, hashAlg, handle->client->agrPass, &actualHmac);
 	KSI_CATCH(&err, res) goto cleanup;
 	
-	if(KSI_DataHash_equals(respHmac, actualHmac) != 1){
+	if (!KSI_DataHash_equals(respHmac, actualHmac)){
+		KSI_LOG_debug(handle->ctx, "Verifying HMAC failed.");
+		KSI_LOG_logDataHash(handle->ctx, KSI_LOG_DEBUG, "Calculated HMAC", actualHmac);
+		KSI_LOG_logDataHash(handle->ctx, KSI_LOG_DEBUG, "HMAC from response", respHmac);
 		KSI_FAIL(&err, KSI_HMAC_MISMATCH, NULL);
 		goto cleanup;
 	}	

@@ -194,7 +194,7 @@ static void TestSerialize(CuTest* tc) {
 		KSI_TLV_serialize_ex(tlv, out, sizeof(out), &out_len);
 
 		CuAssert(tc, "Serialized TLV size mismatch", in_len == out_len);
-		sprintf(errstr, "Serialised TLV content does not match original: %s", ok_sample[i]);
+		sprintf(errstr, "Serialized TLV content does not match original: %s", ok_sample[i]);
 		CuAssert(tc, errstr, !memcmp(in, out, in_len));
 
 		KSI_TLV_free(tlv);

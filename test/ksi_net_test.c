@@ -100,7 +100,7 @@ static void testExtending(CuTest* tc) {
 	fclose(f);
 
 	CuAssert(tc, "Expected result length mismatch", expected_len == serialized_len);
-	CuAssert(tc, "Unexpected extended signature.", !memcmp(expected, serialized, expected_len));
+	CuAssert(tc, "Unexpected extended signature.", !KSITest_memcmp(expected, serialized, expected_len));
 
 	KSI_free(serialized);
 
