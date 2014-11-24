@@ -1,7 +1,6 @@
 #ifndef KSI_LOG_H_
 #define KSI_LOG_H_
 
-#include <stdio.h>
 #include "common.h"
 
 #ifdef __cplusplus
@@ -166,7 +165,13 @@ extern "C" {
 	KSI_FN_DEPRECATED(int KSI_LOG_setLogFile(KSI_Logger *logger, const char *file));
 
 	/**
-	 * TODO!
+	 * The stream logger is a simple logging call-back to be used with #KSI_CTX_setLoggerCallback.
+	 * It will output the value to a \c FILE stream.
+	 * \param[in]	logCtx		A stream to write the log messages.
+	 * \param[in]	logLevel	Log level.
+	 * \param[in]	message		Formatted log message.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_CTX_setLoggerCallback, #KSI_LoggerCallback
 	 */
 	int KSI_LOG_StreamLogger(void *logCtx, int logLevel, const char *message);
 

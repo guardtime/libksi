@@ -160,6 +160,7 @@ EXPORTS
     KSI_Logger_free
     KSI_LOG_setLogLevel
     KSI_LOG_setLogFile
+    KSI_LOG_StreamLogger
 
 ;net.h
 EXPORTS
