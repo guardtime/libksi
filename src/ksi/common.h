@@ -1,11 +1,3 @@
-/*
- * common.h
- *
- *  Created on: 24.11.2014
- *      Author: henri
- */
-
-
 #ifndef COMMON_H_
 #define COMMON_H_
 

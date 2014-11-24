@@ -62,6 +62,7 @@ LIB_OBJ = \
 
 INC_FILES = \
 	base32.h \
+	common.h \
 	hmac.h \
 	net.h \
 	types.h \
