@@ -41,6 +41,14 @@ int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned tag, int isNonCritical, int isFor
 	#define KSI_DEFINE_GET_CTX(type) KSI_CTX *type##_getCtx(const type *o);
 
 	/**
+	 * Logger callback function pointer type.
+	 * \param[in]	logCtx		Logger context.
+	 * \param[in]	level		Log level information.
+	 * \param[in]	message		Pointer to the logged message.
+	 */
+	typedef int (*KSI_LoggerCallback)(void *logCtx, int level, const char *message);
+
+	/**
 	 * This is the central object of the SDK - the context. Instances of the context may not
 	 * be shared between threads. There are no limits how many instances one thread can have,
 	 * but objects created using this context should not be mixed with each other.

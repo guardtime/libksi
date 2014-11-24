@@ -4,49 +4,7 @@
 
 #include "internal.h"
 #include "net_http.h"
-
-#define KSI_ERR_STACK_LEN 16
-
-typedef void (*GlobalCleanupFn)(void);
-typedef int (*GlobalInitFn)(void);
-
-KSI_DEFINE_LIST(GlobalCleanupFn)
-
-struct KSI_CTX_st {
-
-	/******************
-	 *  ERROR HANDLING.
-	 ******************/
-
-	/* Status code of the last executed function. */
-	int statusCode;
-
-	/* Array of errors. */
-	KSI_ERR *errors;
-
-	/* Length of error array. */
-	unsigned int errors_size;
-
-	/* Count of errors (usually #error_end - #error_start + 1, unless error count > #errors_size. */
-	unsigned int errors_count;
-
-	KSI_Logger *logger;
-
-	/************
-	 * TRANSPORT.
-	 ************/
-
-	KSI_NetworkClient *netProvider;
-
-	KSI_PKITruststore *pkiTruststore;
-
-	KSI_PublicationsFile *publicationsFile;
-
-	char *publicationCertEmail;
-
-	KSI_List *cleanupFnList;
-
-};
+#include "ctx_impl.h"
 
 KSI_IMPLEMENT_LIST(GlobalCleanupFn, NULL);
 
@@ -120,7 +78,6 @@ int KSI_CTX_new(KSI_CTX **context) {
 	KSI_CTX *ctx = NULL;
 	KSI_NetworkClient *netProvider = NULL;
 	KSI_PKITruststore *pkiTruststore = NULL;
-	KSI_Logger *logger = NULL;
 
 	ctx = KSI_new(KSI_CTX);
 	if (ctx == NULL) {
@@ -140,7 +97,8 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->netProvider = NULL;
 	ctx->logger = NULL;
 	ctx->publicationCertEmail = NULL;
-
+	ctx->loggerCB = NULL;
+	ctx->loggerCtx = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -149,10 +107,10 @@ int KSI_CTX_new(KSI_CTX **context) {
 	if (res != KSI_OK) goto cleanup;
 
 	/* Create and set the logger. */
-	res = KSI_Logger_new(ctx, "ksi.log", KSI_LOG_DEBUG, &logger);
+	res = KSI_CTX_setLoggerCallback(ctx, KSI_LOG_StreamLogger, stdout);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_setLogger(ctx, logger);
+	res = KSI_CTX_setLogLevel(ctx, KSI_LOG_NONE);
 	if (res != KSI_OK) goto cleanup;
 
 	/* Initialize curl as the net handle. */
@@ -548,8 +506,13 @@ int KSI_CTX_setLogLevel(KSI_CTX *ctx, int level) {
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	res = KSI_LOG_setLogLevel(ctx->logger, level);
-	KSI_CATCH(&err, res) goto cleanup;
+	ctx->logLevel = level;
+
+	/* TODO! Remove deprecated. */
+	if (ctx->logger != NULL) {
+		res = KSI_LOG_setLogLevel(ctx->logger, level);
+		KSI_CATCH(&err, res) goto cleanup;
+	}
 
 	KSI_SUCCESS(&err);
 
@@ -746,6 +709,24 @@ CTX_GET_SET_VALUE(pkiTruststore, PKITruststore, KSI_PKITruststore, KSI_PKITrusts
 CTX_GET_SET_VALUE(netProvider, NetworkProvider, KSI_NetworkClient, KSI_NetworkClient_free)
 CTX_GET_SET_VALUE(logger, Logger, KSI_Logger, KSI_Logger_free)
 CTX_GET_SET_VALUE(publicationsFile, PublicationsFile, KSI_PublicationsFile, KSI_PublicationsFile_free)
+
+int KSI_CTX_setLoggerCallback(KSI_CTX *ctx, KSI_LoggerCallback cb, void *logCtx) {
+	int res = KSI_UNKNOWN_ERROR;
+	if (ctx == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	ctx->loggerCB = cb;
+	ctx->loggerCtx = logCtx;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 
 int KSI_setPublicationCertEmail(KSI_CTX *ctx, const char *email) {
 	int res = KSI_UNKNOWN_ERROR;

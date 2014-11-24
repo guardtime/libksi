@@ -3,6 +3,7 @@
 #include <time.h>
 
 #include "internal.h"
+#include "ctx_impl.h"
 
 struct KSI_Logger_st {
 	KSI_CTX *ctx;
@@ -25,6 +26,32 @@ static const char *level2str(int level) {
 }
 
 static int writeLog(KSI_CTX *ctx, int logLevel, char *format, va_list va) {
+	int res = KSI_UNKNOWN_ERROR;
+	char msg[4092];
+
+	if (ctx == NULL || format == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	if (ctx->loggerCB == NULL || ctx->logLevel < logLevel) {
+		/* Do not perform logging. */
+		res = KSI_OK;
+
+		goto cleanup;
+	}
+
+	vsnprintf(msg, sizeof(msg), format, va);
+	res = ctx->loggerCB(ctx->loggerCtx, logLevel, msg);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+static int writeLogDeprecated(KSI_CTX *ctx, int logLevel, char *format, va_list va) {
 	int res;
 	FILE *f = NULL;
 	struct tm *tm_info;
@@ -36,7 +63,6 @@ static int writeLog(KSI_CTX *ctx, int logLevel, char *format, va_list va) {
 	if (res != KSI_OK) goto cleanup;
 
 	timer = time(NULL);
-
 
 	if (ctx == NULL || format == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -59,7 +85,7 @@ static int writeLog(KSI_CTX *ctx, int logLevel, char *format, va_list va) {
 		vfprintf(f, format, va);
 		fprintf(f, "\n");
 	}
-	/* NB! Do not call macro #KSI_success. */
+
 	res = KSI_OK;
 
 cleanup:
@@ -72,7 +98,8 @@ int KSI_LOG_##suffix(KSI_CTX *ctx, char *format, ...) { \
 	int res; \
 	va_list va; \
 	va_start(va, format);\
-	res = writeLog(ctx, KSI_LOG_##level, format, va); \
+	if (ctx->logger != NULL) res = writeLogDeprecated(ctx, KSI_LOG_##level, format, va); /* TODO! Remove deprecated!*/ \
+	else writeLog(ctx, KSI_LOG_##level, format, va); \
 	va_end(va); \
 	return res; \
 }
@@ -88,7 +115,8 @@ static int KSI_LOG_log(KSI_CTX *ctx, int level, char *format, ...) {
 	int res;
 	va_list va;
 	va_start(va, format);
-	res = writeLog(ctx, level, format, va); \
+	if (ctx->logger != NULL) res = writeLogDeprecated(ctx, level, format, va); \
+	else res = writeLog(ctx, level, format, va); \
 	va_end(va);
 	return res;
 }
@@ -175,14 +203,8 @@ int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned 
 	size_t logStr_size = 0;
 	size_t logStr_len = 0;
 	size_t i;
-	KSI_Logger *logger = NULL;
 
-	res = KSI_getLogger(ctx, &logger);
-	if (res != KSI_OK) {
-		goto cleanup;
-	}
-
-	if (logger == NULL || level < logger->logLevel) goto cleanup;
+	if (level < ctx->logLevel) goto cleanup;
 
 	logStr_size = data_len * 2 + 1;
 
@@ -217,12 +239,8 @@ cleanup:
 int KSI_LOG_logTlv(KSI_CTX *ctx, int level, const char *prefix, const KSI_TLV *tlv) {
 	int res = KSI_UNKNOWN_ERROR;
 	char serialized[0x1ffff];
-	KSI_Logger *logger = NULL;
 
-	res = KSI_getLogger(ctx, &logger);
-	if (res != KSI_OK) goto cleanup;
-
-	if (logger == NULL || level < logger->logLevel) {
+	if (level < ctx->logLevel) {
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -246,12 +264,8 @@ int KSI_LOG_logDataHash(KSI_CTX *ctx, int level, const char *prefix, const KSI_D
 	int res = KSI_UNKNOWN_ERROR;
 	const unsigned char *imprint = NULL;
 	unsigned int imprint_len = 0;
-	KSI_Logger *logger = NULL;
 
-	res = KSI_getLogger(ctx, &logger);
-	if (res != KSI_OK) goto cleanup;
-
-	if (logger == NULL || level < logger->logLevel) {
+	if (level < ctx->logLevel) {
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -312,3 +326,19 @@ cleanup:
 
 	return res;
 }
+
+int KSI_LOG_StreamLogger(void *logCtx, int logLevel, const char *message) {
+	char time_buf[32];
+	struct tm *tm_info;
+	time_t timer;
+	FILE *f = (FILE *) logCtx;
+
+	timer = time(NULL);
+
+	tm_info = localtime(&timer);
+	strftime(time_buf, sizeof(time_buf), "%d.%m.%Y %H:%M:%S", tm_info);
+	fprintf(f, "%s [%s] - %s", level2str(logLevel), time_buf, message);
+
+	return KSI_OK;
+}
+

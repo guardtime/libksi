@@ -416,17 +416,27 @@ int KSI_CTX_setLogLevel(KSI_CTX *ctx, int level);
  * turn the logger off use #KSI_CTX_setLogLevel with #KSI_LOG_NONE.
  * \see #KSI_CTX_setLogLevel
  */
-int KSI_CTX_setLogFile(KSI_CTX *ctx, char *fileName);
+KSI_FN_DEPRECATED(int KSI_CTX_setLogFile(KSI_CTX *ctx, char *fileName));
+
+/**
+ * This function sets the callback for logging for the context.
+ * \param[in]	ctx		KSI context.
+ * \param[in]	cb		Logger callback.
+ * \param[in]	logCtx	Pointer to logger context, may be \c NULL.
+ *
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
+int KSI_CTX_setLoggerCallback(KSI_CTX *ctx, KSI_LoggerCallback cb, void *logCtx);
 
 int KSI_getPKITruststore(KSI_CTX *ctx, KSI_PKITruststore **pki);
 int KSI_getNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient **net);
-int KSI_getLogger(KSI_CTX *ctx, KSI_Logger **logger);
+KSI_FN_DEPRECATED(int KSI_getLogger(KSI_CTX *ctx, KSI_Logger **logger));
 int KSI_setPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile *var);
 int KSI_getPublicationCertEmail(KSI_CTX *ctx, const char **address);
 
 int KSI_setPKITruststore(KSI_CTX *ctx, KSI_PKITruststore *pki);
 int KSI_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *net);
-int KSI_setLogger(KSI_CTX *ctx, KSI_Logger *logger);
+KSI_FN_DEPRECATED(int KSI_setLogger(KSI_CTX *ctx, KSI_Logger *logger))	;
 int KSI_getPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **var);
 int KSI_setPublicationCertEmail(KSI_CTX *ctx, const char *email);
 

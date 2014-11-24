@@ -148,15 +148,21 @@ static int RunAllTests() {
 	int failCount;
 	int res;
 	CuSuite* suite = initSuite();
+	FILE *logFile = NULL;
 
 	res = KSI_CTX_new(&ctx);
-	
 	if(ctx == NULL || res != KSI_OK){
-		fprintf(stderr, "Error: Unable to init KSI context (%s)!\n\n", KSI_getErrorString(res));
+		fprintf(stderr, "Error: Unable to init KSI context (%s)!\n", KSI_getErrorString(res));
 		exit(EXIT_FAILURE);
 	}
-	
-	KSI_CTX_setLogFile(ctx, "test/test.log");
+
+	logFile = fopen("test.log", "w");
+	if (logFile == NULL) {
+		fprintf(stderr, "Unable to open log file.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	KSI_CTX_setLoggerCallback(ctx, KSI_LOG_StreamLogger, logFile);
 	KSI_CTX_setLogLevel(ctx, KSI_LOG_DEBUG);
 	CuSuiteRun(suite);
 
@@ -167,6 +173,10 @@ static int RunAllTests() {
 	failCount = suite->failCount;
 
 	CuSuiteDelete(suite);
+
+	if (logFile != NULL) {
+		fclose(logFile);
+	}
 
 	KSI_CTX_free(ctx);
 

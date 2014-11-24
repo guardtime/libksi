@@ -14,6 +14,7 @@ int main(int argc, char **argv) {
 	unsigned char buf[1024];
 	unsigned buf_len;
 	const KSI_VerificationResult *info = NULL;
+	FILE *logFile = NULL;
 
 	/* Init context. */
 	res = KSI_CTX_new(&ksi);
@@ -22,6 +23,12 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
+	logFile = fopen("ksi_verify.log", "w");
+	if (logFile == NULL) {
+		fprintf(stderr, "Unable to open log file.\n");
+	}
+
+	KSI_CTX_setLoggerCallback(ksi, KSI_LOG_StreamLogger, logFile);
 	KSI_CTX_setLogLevel(ksi, KSI_LOG_DEBUG);
 
 	/* Check parameters. */
@@ -140,6 +147,7 @@ int main(int argc, char **argv) {
 
 cleanup:
 
+	if (logFile != NULL) fclose(logFile);
 	if (res != KSI_OK && ksi != NULL) {
 		KSI_ERR_statusDump(ksi, stderr);
 	}

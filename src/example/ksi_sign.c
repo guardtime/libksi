@@ -23,6 +23,8 @@ int main(int argc, char **argv) {
 
 	char *signerIdentity = NULL;
 
+	FILE *logFile = NULL;
+
 	/* Handle command line parameters */
 	if (argc != 5) {
 		fprintf(stderr, "Usage:\n"
@@ -45,6 +47,13 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "Unable to create context.\n");
 		goto cleanup;
 	}
+
+	logFile = fopen("ksi_sign.log", "w");
+	if (logFile == NULL) {
+		fprintf(stderr, "Unable to open log file.\n");
+	}
+
+	KSI_CTX_setLoggerCallback(ksi, KSI_LOG_StreamLogger, logFile);
 
 	KSI_CTX_setLogLevel(ksi, KSI_LOG_DEBUG);
 
@@ -162,6 +171,8 @@ int main(int argc, char **argv) {
 	res = KSI_OK;
 
 cleanup:
+
+	if (logFile != NULL) fclose(logFile);
 
 	if (res != KSI_OK && ksi != NULL) {
 		KSI_ERR_statusDump(ksi, stderr);

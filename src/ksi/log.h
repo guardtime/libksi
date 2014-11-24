@@ -1,6 +1,9 @@
 #ifndef KSI_LOG_H_
 #define KSI_LOG_H_
 
+#include <stdio.h>
+#include "common.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -137,13 +140,13 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_Logger_free, #KSI_LOG_setLogLevel, #KSI_LOG_setLogFile.
 	 */
-	int KSI_Logger_new(KSI_CTX *ctx, char *fileName, int logLevel, KSI_Logger **logger);
+	KSI_FN_DEPRECATED(int KSI_Logger_new(KSI_CTX *ctx, char *fileName, int logLevel, KSI_Logger **logger));
 
 	/**
 	 * Cleanup method for the logger.
 	 * \param[in]	logger		Pointer to the logger.
 	 */
-	void KSI_Logger_free(KSI_Logger *logger);
+	KSI_FN_DEPRECATED(void KSI_Logger_free(KSI_Logger *logger));
 
 	/**
 	 * Change the log level.
@@ -151,7 +154,7 @@ extern "C" {
 	 * \param[in]	level		Log level.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_LOG_setLogLevel(KSI_Logger *logger, int level);
+	KSI_FN_DEPRECATED(int KSI_LOG_setLogLevel(KSI_Logger *logger, int level));
 
 	/**
 	 * Sets the output file for the logger. If \c file is \c NULL the log
@@ -160,7 +163,12 @@ extern "C" {
 	 * \param[in]	file		Null-terminated file name.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_LOG_setLogFile(KSI_Logger *logger, const char *file);
+	KSI_FN_DEPRECATED(int KSI_LOG_setLogFile(KSI_Logger *logger, const char *file));
+
+	/**
+	 * TODO!
+	 */
+	int KSI_LOG_StreamLogger(void *logCtx, int logLevel, const char *message);
 
 /**
  * @}

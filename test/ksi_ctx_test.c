@@ -82,17 +82,10 @@ static void TestCtxAddFailure(CuTest* tc) {
 static void TestCtxAddFailureOverflow(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
 	int i;
-	KSI_Logger *logger = NULL;
 
 	KSI_CTX *ctx = NULL;
 	res = KSI_CTX_new(&ctx);
 	CuAssert(tc, "Unable to create ctx", res == KSI_OK && ctx != NULL);
-
-	res = KSI_Logger_new(ctx, "test.log", KSI_LOG_DEBUG, &logger);
-	CuAssert(tc, "Unable to create logger", res == KSI_OK && logger != NULL);
-
-	res = KSI_setLogger(ctx, logger);
-	CuAssert(tc, "Unable to set logger", res == KSI_OK);
 
 	for (i = 0;
 			i < 1000;

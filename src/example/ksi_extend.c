@@ -15,6 +15,7 @@ int main(int argc, char **argv) {
 	unsigned char *raw = NULL;
 	unsigned raw_len;
 	unsigned count;
+	FILE *logFile = NULL;
 
 	if (argc != 5) {
 		printf("Usage:\n"
@@ -30,6 +31,12 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
+	logFile = fopen("ksi_extend.log", "w");
+	if (logFile == NULL) {
+		fprintf(stderr, "Unable to open log file.\n");
+	}
+
+	KSI_CTX_setLoggerCallback(ksi, KSI_LOG_StreamLogger, logFile);
 	KSI_CTX_setLogLevel(ksi, KSI_LOG_DEBUG);
 
 	if (strncmp("-",argv[3], 1) || strncmp("-", argv[4], 1)) {
@@ -128,6 +135,7 @@ int main(int argc, char **argv) {
 
 cleanup:
 
+	if (logFile != NULL) fclose(logFile);
 	if (out != NULL) fclose(out);
 	KSI_Signature_free(sig);
 	KSI_Signature_free(ext);
