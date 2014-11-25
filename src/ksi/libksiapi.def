@@ -161,6 +161,7 @@ EXPORTS
     KSI_LOG_setLogLevel
     KSI_LOG_setLogFile
     KSI_LOG_StreamLogger
+    KSI_CTX_setLoggerCallback
 
 ;net.h
 EXPORTS
