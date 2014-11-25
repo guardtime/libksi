@@ -99,7 +99,7 @@ int KSI_LOG_##suffix(KSI_CTX *ctx, char *format, ...) { \
 	va_list va; \
 	va_start(va, format);\
 	if (ctx->logger != NULL) res = writeLogDeprecated(ctx, KSI_LOG_##level, format, va); /* TODO! Remove deprecated!*/ \
-	else writeLog(ctx, KSI_LOG_##level, format, va); \
+	else log = writeLog(ctx, KSI_LOG_##level, format, va); \
 	va_end(va); \
 	return res; \
 }
