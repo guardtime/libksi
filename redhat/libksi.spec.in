@@ -52,6 +52,7 @@ make install DESTDIR=%{buildroot}
 %defattr(644,root,root,755)
 %{_includedir}/ksi/base32.h
 %{_includedir}/ksi/crc32.h
+%{_includedir}/ksi/common.h
 %{_includedir}/ksi/err.h
 %{_includedir}/ksi/hash.h
 %{_includedir}/ksi/hashchain.h
