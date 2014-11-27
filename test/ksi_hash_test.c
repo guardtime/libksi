@@ -326,8 +326,8 @@ static void TestParseMetaHash(CuTest *tc) {
 
 	memset(metaImprint, 0, sizeof(metaImprint));
 	metaImprint[0] = KSI_HASHALG_SHA2_256;
-	metaImprint[1] = (unsigned char) strlen(metaVal) >> 8 & 0xff;
-	metaImprint[2] = (unsigned char) strlen(metaVal) & 0xff;
+	metaImprint[1] = (unsigned char) (strlen(metaVal) >> 8 & 0xff);
+	metaImprint[2] = (unsigned char) (strlen(metaVal) & 0xff);
 	memcpy(metaImprint + 3, metaVal, strlen(metaVal));
 
 	res = KSI_DataHash_fromImprint(ctx, metaImprint, sizeof(metaImprint), &metaHash);

@@ -123,7 +123,7 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 	DWORD http_response;
 	DWORD http_response_len = 0;
 	unsigned char *resp = NULL;
-	size_t resp_len = 0;
+	unsigned resp_len = 0;
 	
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_PRE(&err, handle->client != NULL) goto cleanup;

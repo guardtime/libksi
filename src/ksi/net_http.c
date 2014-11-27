@@ -59,6 +59,12 @@ static int postProcessRequest(KSI_HttpClientCtx *http, void *req, void* pdu, con
 
 	/*Add header*/
 	if (header == NULL) {
+		KSI_uint64_t user_len = strlen(user);
+		if(user_len>0xFFFF){
+			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "User id too long.");
+			goto cleanup;
+		}
+		
 		res = KSI_Header_new(http->ctx, &header);
 		KSI_CATCH(&err, res) goto cleanup;
 
@@ -68,7 +74,7 @@ static int postProcessRequest(KSI_HttpClientCtx *http, void *req, void* pdu, con
 		res = KSI_Integer_new(http->ctx, reqId, &messageId);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		res = KSI_OctetString_new(http->ctx, user, strlen(user), &client_id);
+		res = KSI_OctetString_new(http->ctx, user, (unsigned)user_len, &client_id);
 		KSI_CATCH(&err, res) goto cleanup;
 		
 		res = KSI_Header_setInstanceId(header, instanceId);

@@ -260,13 +260,19 @@ cleanup:
 
 }
 
+static int intCmp(KSI_uint64_t a, KSI_uint64_t b){
+	if(a == b) return 0;
+	else if(a > b) return 1;
+	else return -1;
+}
+
 static int aggregationHashChainCmp(const KSI_AggregationHashChain **left, const KSI_AggregationHashChain **right) {
 	const KSI_AggregationHashChain *l = *left;
 	const KSI_AggregationHashChain *r = *right;
 	if (l == r || l == NULL || r == NULL || l->chainIndex == NULL || r->chainIndex == NULL) {
-		return right - left;
+		return intCmp((KSI_uint64_t)right, (KSI_uint64_t)left);
 	}
-	return KSI_IntegerList_length(r->chainIndex) - KSI_IntegerList_length(l->chainIndex);
+	return intCmp(KSI_IntegerList_length(r->chainIndex), KSI_IntegerList_length(l->chainIndex));
 }
 
 static int extractSignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature **signature) {

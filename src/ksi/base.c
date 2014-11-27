@@ -636,7 +636,6 @@ cleanup:
 
 int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len){
 	KSI_ERR *err = NULL;
-	unsigned int i;
 	
 	if(ctx == NULL || buf == NULL){
 		return KSI_INVALID_ARGUMENT;

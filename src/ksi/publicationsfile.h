@@ -32,7 +32,7 @@ extern "C" {
 	 * \param[in]	raw_len			Length of the raw publications file.
 	 * \param[out]	pubFile			Pointer to the receiving pointer to the publications file object.
 	 */
-	int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, size_t raw_len, KSI_PublicationsFile **pubFile);
+	int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, unsigned raw_len, KSI_PublicationsFile **pubFile);
 
 	/**
 	 * A convenience function for loading a publications file from an actual file.
@@ -52,7 +52,7 @@ extern "C" {
 	 * @param[out]          raw_len	Pointer to the length of the buffer variable.
 	 * @return 
 	 */
-    int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, char **raw, int* raw_len);
+    int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, char **raw, unsigned* raw_len);
 
 	/**
 	 * Verify PKI signature of the publications file using the PKI truststore.

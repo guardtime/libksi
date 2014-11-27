@@ -139,7 +139,7 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 	unsigned char *request = NULL;
 	unsigned request_len = 0;
 	unsigned char *resp = NULL;
-	size_t resp_len = 0;
+	unsigned resp_len = 0;
 	DWORD http_response;
 	DWORD http_response_len = sizeof(http_response);
 	KSI_CTX *ctx = KSI_RequestHandle_getCtx(handle);

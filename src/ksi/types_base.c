@@ -346,7 +346,12 @@ int KSI_Utf8String_toTlv(KSI_CTX *ctx, KSI_Utf8String *o, unsigned tag, int isNo
 	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_TLV_setRawValue(tmp, o->value, o->len);
+	if(o->len > 0xffff){
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "UTF8 string too long for TLV conversion.");
+		goto cleanup;
+	}
+	
+	res = KSI_TLV_setRawValue(tmp, o->value, (unsigned)o->len);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*tlv = tmp;

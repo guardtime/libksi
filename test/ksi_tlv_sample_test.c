@@ -166,7 +166,7 @@ static void TestSerialize(CuTest* tc) {
 	char errstr[1024];
 
 	unsigned out_len;
-	size_t in_len;
+	unsigned in_len;
 
 	FILE *f = NULL;
 	int i = 0;
@@ -174,26 +174,26 @@ static void TestSerialize(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	while (ok_sample[i] != NULL) {
-		KSI_LOG_debug(ctx, "TestSerialize: opening file '%s'", ok_sample[i]);
+		KSI_LOG_debug(ctx, "TestSerialize: opening file '%s'.", ok_sample[i]);
 		f = fopen(getFullResourcePath(ok_sample[i]), "rb");
 		CuAssert(tc, "Unable to open test file.", f != NULL);
 
-		in_len = fread(in, 1, sizeof(in), f);
+		in_len = (unsigned)fread(in, 1, sizeof(in), f);
 
 		fclose(f);
 		f = NULL;
 
 		res = KSI_TLV_parseBlob2(ctx, in, in_len, 0, &tlv);
-		CuAssert(tc, "Unable to parse TLV", res == KSI_OK);
+		CuAssert(tc, "Unable to parse TLV.", res == KSI_OK);
 
 		res = parseStructure(tlv, 0);
-		CuAssert(tc, "Unable to parse TLV structure", res == KSI_OK);
+		CuAssert(tc, "Unable to parse TLV structure.", res == KSI_OK);
 
 		/* Re assemble TLV */
 		KSI_TLV_serialize_ex(tlv, out, sizeof(out), &out_len);
 
-		CuAssert(tc, "Serialized TLV size mismatch", in_len == out_len);
-		sprintf(errstr, "Serialized TLV content does not match original: %s", ok_sample[i]);
+		CuAssert(tc, "Serialized TLV size mismatch.", in_len == out_len);
+		sprintf(errstr, "Serialized TLV content does not match original: %s.", ok_sample[i]);
 		CuAssert(tc, errstr, !memcmp(in, out, in_len));
 
 		KSI_TLV_free(tlv);
@@ -212,7 +212,7 @@ static void TestClone(CuTest *tc) {
 	char errstr[1024];
 
 	unsigned out_len;
-	size_t in_len;
+	unsigned in_len;
 
 	FILE *f = NULL;
 	int i = 0;
@@ -223,7 +223,7 @@ static void TestClone(CuTest *tc) {
 		f = fopen(getFullResourcePath(ok_sample[i]), "rb");
 		CuAssert(tc, "Unable to open test file.", f != NULL);
 
-		in_len = fread(in, 1, sizeof(in), f);
+		in_len = (unsigned)fread(in, 1, sizeof(in), f);
 
 		fclose(f);
 		f = NULL;
@@ -268,7 +268,7 @@ static void testObjectSerialization(CuTest *tc, const char *sample, int (*parse)
 	snprintf(errm, sizeof(errm), "Unable to open pdu file: %s", sample);
 	CuAssert(tc, errm, f != NULL);
 
-	in_len = fread(in, 1, sizeof(in), f);
+	in_len = (unsigned)fread(in, 1, sizeof(in), f);
 	fclose(f);
 	snprintf(errm, sizeof(errm), "Unable to resd pdu file: %s", sample);
 	CuAssert(tc, errm, in_len > 0);

@@ -133,6 +133,10 @@ extern "C" {
 	int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_AggregationResp **resp);
 	
 	/**
+	 * TODO!
+	 */
+	KSI_CTX *KSI_RequestHandle_getCtx (const KSI_RequestHandle *handle);
+	/**
 	 * Constructor for network handle object.
 	 * \param[in]		ctx				KSI context.
 	 * \param[in]		request			Pointer to request.

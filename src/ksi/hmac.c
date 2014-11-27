@@ -20,19 +20,20 @@ int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, const unsigned char 
 	KSI_DataHash *outerHash = NULL;
 	KSI_DataHash *tmp = NULL;
 	
-	int key_len = -1;
+	KSI_uint64_t key_len;
 	const unsigned char *bufKey = NULL;
-	unsigned int buf_len = 0;
+	unsigned buf_len = 0;
 	unsigned char ipadXORkey[MAX_KEY_LEN];
 	unsigned char opadXORkey[MAX_KEY_LEN];
 	const unsigned char *digest = NULL;
-	unsigned int digest_len = 0;
-	unsigned int i =0;
+	unsigned digest_len = 0;
+	unsigned i =0;
 	
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, key != NULL) goto cleanup;
 	KSI_PRE(&err, (key_len = strlen(key)) > 0) goto cleanup;
+	KSI_PRE(&err, key_len <= 0xFFFF) goto cleanup;
 	KSI_PRE(&err, data != NULL) goto cleanup;
 	KSI_PRE(&err, data_len > 0) goto cleanup;
 	KSI_PRE(&err, hmac != NULL) goto cleanup;
@@ -68,7 +69,7 @@ int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, const unsigned char 
 		buf_len = digest_len;
 	} else{
 		bufKey = key;
-		buf_len = key_len;
+		buf_len = (unsigned)key_len;
 	}
 	
 	for(i = 0; i < buf_len; i++) {

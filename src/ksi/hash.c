@@ -372,9 +372,9 @@ return KSI_OK;
 
 int KSI_DataHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned char **data, int *data_len) {
 	KSI_ERR err;
-	int len;
+	unsigned len;
 	int algo_id;
-	int i;
+	unsigned i;
 
 	KSI_PRE(&err, metaHash != NULL) goto cleanup;
 	KSI_PRE(&err, data != NULL) goto cleanup;

@@ -221,7 +221,7 @@ cleanup:
 	return res;
 }
 
-int KSITest_decodeHexStr(const char *hexstr, unsigned char *buf, int buf_size, unsigned *buf_length) {
+int KSITest_decodeHexStr(const char *hexstr, unsigned char *buf, unsigned buf_size, unsigned *buf_length) {
 	int res = KSI_UNKNOWN_ERROR;
 	int i = 0;
 	unsigned len = 0;

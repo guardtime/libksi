@@ -65,9 +65,9 @@ int KSI_base32Decode(const char *base32, unsigned char **data, size_t *data_len)
 
 	int bits_decoded = 0;
 	char c;
-	int i;
+	size_t i;
 	unsigned char *tmp = NULL;
-	int base32_len;
+	size_t base32_len;
 
 	if (base32 == NULL || data == NULL || data_len == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -131,7 +131,7 @@ static int readNextBits(const unsigned char *data, size_t data_len,
 		int bits_read)
 {
 	int ret = 0;
-	int first_byte_bits;
+	size_t first_byte_bits;
 	size_t byte_to_read;
 	int shift_count;
 
@@ -145,13 +145,13 @@ static int readNextBits(const unsigned char *data, size_t data_len,
 	if (first_byte_bits > 5) {
 		first_byte_bits = 5;
 	}
-	shift_count = 8 - bits_read % 8 - first_byte_bits;
-	ret = (data[byte_to_read] & (makeMask(first_byte_bits) << shift_count)) >>
+	shift_count = 8 - bits_read % 8 - (int)first_byte_bits;
+	ret = (data[byte_to_read] & (makeMask((int)first_byte_bits) << shift_count)) >>
 			shift_count;
 
 	byte_to_read++;
 	if (first_byte_bits < 5) {
-		int second_byte_bits = 5 - first_byte_bits;
+		int second_byte_bits = 5 - (int)first_byte_bits;
 		ret <<= second_byte_bits;
 
 		if (byte_to_read < data_len) {
@@ -169,7 +169,7 @@ int KSI_base32Encode(const unsigned char *data, size_t data_len, size_t group_le
 
 	char *tmp = NULL;
 	int next_bits;
-	size_t bits_read;
+	int bits_read;
 	size_t buf_len;
 	size_t ret_len = 0;
 

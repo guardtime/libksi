@@ -301,16 +301,16 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static size_t readFirstTlv(KSI_CTX *ctx, unsigned char *data, size_t data_length, KSI_TLV **tlv) {
+static unsigned readFirstTlv(KSI_CTX *ctx, unsigned char *data, unsigned data_length, KSI_TLV **tlv) {
 	int res;
-	size_t bytesConsumed = 0;
+	unsigned bytesConsumed = 0;
 
 	KSI_TLV *tmp = NULL;
 	int isNonCritical = 0;
 	int isForward = 0;
 	unsigned tag = 0;
 	unsigned hdrLen = 0;
-	size_t length = 0;
+	unsigned length = 0;
 
 	isNonCritical = data[0] & KSI_TLV_MASK_LENIENT;
 	isForward = data[0] & KSI_TLV_MASK_FORWARD;
@@ -359,8 +359,8 @@ static int encodeAsNestedTlvs(KSI_TLV *tlv) {
 	KSI_ERR err;
 	KSI_TLV *tmp = NULL;
 	KSI_LIST(KSI_TLV) *tlvList = NULL;
-	size_t allConsumedBytes = 0;
-	size_t lastConsumedBytes = 0;
+	unsigned allConsumedBytes = 0;
+	unsigned lastConsumedBytes = 0;
 
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
 	KSI_BEGIN(tlv->ctx, &err);
@@ -608,10 +608,10 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_TLV_parseBlob2(KSI_CTX *ctx, unsigned char *data, size_t data_length, int ownMemory, KSI_TLV **tlv) {
+int KSI_TLV_parseBlob2(KSI_CTX *ctx, unsigned char *data, unsigned data_length, int ownMemory, KSI_TLV **tlv) {
 	KSI_ERR err;
 	KSI_TLV *tmp = NULL;
-	size_t consumedBytes = 0;
+	unsigned consumedBytes = 0;
 
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -646,7 +646,7 @@ cleanup:
 /**
  *
  */
-int KSI_TLV_parseBlob(KSI_CTX *ctx, const unsigned char *data, size_t data_length, KSI_TLV **tlv) {
+int KSI_TLV_parseBlob(KSI_CTX *ctx, const unsigned char *data, unsigned data_length, KSI_TLV **tlv) {
 	KSI_ERR err;
 	int res;
 	unsigned char *tmpDat = NULL;

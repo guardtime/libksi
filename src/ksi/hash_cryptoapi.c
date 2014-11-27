@@ -63,7 +63,6 @@ static const ALG_ID hashAlgorithmToALG_ID(int hash_id)
 
 static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 	KSI_ERR err;
-	int res;
 	DWORD digest_length = 0;
 	DWORD digestLenSize = 0;	//The size of digest_length variable
 	DWORD hash_length = 0;

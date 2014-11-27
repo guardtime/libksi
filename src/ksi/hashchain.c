@@ -145,8 +145,6 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 	char logMsg[0xff];
 	size_t i;
 
-	/* Extracted data. */
-	int levelCorrection;
 
 	KSI_PRE(&err, chain != NULL) goto cleanup;
 	KSI_PRE(&err, inputHash != NULL) goto cleanup;
@@ -154,17 +152,18 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 
 	KSI_BEGIN(ctx, &err);
 
-	sprintf(logMsg, "Starting %s hash chain aggregation with input  hash", isCalendar ? "calendar": "aggregation");
+	sprintf(logMsg, "Starting %s hash chain aggregation with input hash.", isCalendar ? "calendar": "aggregation");
 	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, logMsg, inputHash);
 
 	for (i = 0; i < KSI_HashChainLinkList_length(chain); i++) {
 		res = KSI_HashChainLinkList_elementAt(chain, i, &link);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		levelCorrection = KSI_Integer_getUInt64(link->levelCorrection);
-
 		if(!isCalendar) {
-			level += levelCorrection + 1;
+			KSI_uint64_t levelCorrection = KSI_Integer_getUInt64(link->levelCorrection);
+			if(levelCorrection > 0xff || level + levelCorrection + 1 > 0xff)
+				KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Aggregation chain level out of range.");
+			level += (int)levelCorrection + 1;
 		} else {
 			res = KSI_DataHash_extract(link->imprint, &algo_id, NULL, NULL);
 			KSI_CATCH(&err, res) goto cleanup;
@@ -194,7 +193,7 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 
 
 		if (level > 0xff) {
-			KSI_FAIL(&err, KSI_INVALID_FORMAT, "Aggregation chain length exceeds 0xff");
+			KSI_FAIL(&err, KSI_INVALID_FORMAT, "Aggregation chain length exceeds 0xff.");
 			goto cleanup;
 		}
 
@@ -214,7 +213,7 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 	*outputHash = hsh;
 	hsh = NULL;
 
-	sprintf(logMsg, "Finished %s hash chain aggregation with output hash", isCalendar ? "calendar": "aggregation");
+	sprintf(logMsg, "Finished %s hash chain aggregation with output hash.", isCalendar ? "calendar": "aggregation");
 	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, logMsg, *outputHash);
 
 	KSI_SUCCESS(&err);

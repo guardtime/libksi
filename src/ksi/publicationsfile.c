@@ -141,7 +141,7 @@ cleanup:
 	return res;
 }
 
-int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, size_t raw_len, KSI_PublicationsFile **pubFile) {
+int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, unsigned raw_len, KSI_PublicationsFile **pubFile) {
 	KSI_ERR err;
 	int res;
 	unsigned char hdr[8];
@@ -190,7 +190,7 @@ int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, size_t raw_len, KS
 	memcpy(tmpRaw, raw, raw_len);
 
 	tmp->raw = tmpRaw;
-        tmp->raw_len = raw_len;
+	tmp->raw_len = raw_len;
 	tmpRaw = NULL;
 
 	*pubFile = tmp;
@@ -330,7 +330,7 @@ cleanup:
 }
 
 
-int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, char **raw, int* raw_len) {
+int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, char **raw, unsigned* raw_len) {
 	KSI_ERR err;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -340,9 +340,9 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 	*raw_len = pubFile->raw_len;
 	*raw = (char*)KSI_malloc(*raw_len);
 	if(*raw == NULL){
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, "KSI out of memory");
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
-		}
+	}
 
 	memcpy(*raw, pubFile->raw, *raw_len);
 

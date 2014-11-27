@@ -169,7 +169,7 @@ int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) 
 	KSI_BEGIN(trust->ctx, &err);
 
 	/*Open new store */
-	tmp_FileTrustStore = CertOpenStore(CERT_STORE_PROV_FILENAME_A, 0, NULL, 0, path);
+	tmp_FileTrustStore = CertOpenStore(CERT_STORE_PROV_FILENAME_A, 0, 0, 0, path);
 	if (tmp_FileTrustStore == NULL) {
 		//printError(GetLastError());
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, NULL);
@@ -209,7 +209,7 @@ int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **tru
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/*Open certificate store as collection of other stores*/
-	collectionStore = CertOpenStore(CERT_STORE_PROV_COLLECTION, PKCS_7_ASN_ENCODING | X509_ASN_ENCODING, NULL, 0, NULL);
+	collectionStore = CertOpenStore(CERT_STORE_PROV_COLLECTION, PKCS_7_ASN_ENCODING | X509_ASN_ENCODING, 0, 0, NULL);
 	if (collectionStore == NULL) {
 		printError(GetLastError());
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, NULL);
