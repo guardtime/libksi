@@ -114,7 +114,7 @@ static LPWSTR LPWSTR_new(const char * cstr){
 	wchar_t * p_wchar = NULL;
 	//Get chracater count.
 	lenInChars = MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS, cstr, -1, NULL,0);
-	p_wchar = (wchar_t *)malloc(lenInChars*sizeof(wchar_t));
+	p_wchar = (wchar_t *)KSI_malloc(lenInChars*sizeof(wchar_t));
 	if(p_wchar == NULL) return NULL;
 	MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS, cstr, -1, p_wchar,lenInChars);
 	return p_wchar;

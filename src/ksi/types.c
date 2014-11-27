@@ -262,7 +262,7 @@ int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, int hashAlg, const char *key, 
 	}
 	
 	
-	buf = malloc(payload_len+header_len);
+	buf = KSI_malloc(payload_len+header_len);
 	if(buf == NULL){
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
@@ -391,7 +391,7 @@ int KSI_AggregationPdu_calculateHmac(KSI_AggregationPdu *t, int hashAlg, const c
 	
 	
 	
-	buf = malloc(payload_len+header_len);
+	buf = KSI_malloc(payload_len+header_len);
 	if(buf == NULL){
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
