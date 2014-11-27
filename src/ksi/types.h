@@ -224,10 +224,10 @@ void KSI_Header_free(KSI_Header *t);
 int KSI_Header_new(KSI_CTX *ctx, KSI_Header **t);
 int KSI_Header_getInstanceId(const KSI_Header *t, KSI_Integer **instanceId);
 int KSI_Header_getMessageId(const KSI_Header *t, KSI_Integer **messageId);
-int KSI_Header_getClientId(const KSI_Header *t, KSI_OctetString **clientId);
+int KSI_Header_getLoginId(const KSI_Header *t, KSI_OctetString **clientId);
 int KSI_Header_setInstanceId(KSI_Header *t, KSI_Integer *instanceId);
 int KSI_Header_setMessageId(KSI_Header *t, KSI_Integer *messageId);
-int KSI_Header_setClientId(KSI_Header *t, KSI_OctetString *clientId);
+int KSI_Header_setLoginId(KSI_Header *t, KSI_OctetString *clientId);
 
 /*
  * KSI_Config

@@ -85,7 +85,7 @@ static int postProcessRequest(KSI_HttpClientCtx *http, void *req, void* pdu, con
 		KSI_CATCH(&err, res) goto cleanup;
 		messageId = NULL;
 
-		res = KSI_Header_setClientId(header, client_id);
+		res = KSI_Header_setLoginId(header, client_id);
 		KSI_CATCH(&err, res) goto cleanup;
 		client_id = NULL;
 		

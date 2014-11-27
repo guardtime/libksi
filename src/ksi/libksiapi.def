@@ -385,10 +385,10 @@ EXPORTS
     KSI_Header_new
     KSI_Header_getInstanceId
     KSI_Header_getMessageId
-    KSI_Header_getClientId
+    KSI_Header_getLoginId
     KSI_Header_setInstanceId
     KSI_Header_setMessageId
-    KSI_Header_setClientId
+    KSI_Header_setLoginId
     KSI_Config_free
     KSI_Config_new
     KSI_Config_getMaxLevel
