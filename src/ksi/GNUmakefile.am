@@ -56,6 +56,7 @@ libksi_la_SOURCES = \
 otherincludedir = $(includedir)/ksi
 otherinclude_HEADERS = \
 	base32.h \
+	common.h \
 	crc32.h \
     err.h \
 	hash.h \
