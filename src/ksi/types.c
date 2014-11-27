@@ -42,7 +42,7 @@ struct KSI_Header_st {
 	KSI_CTX *ctx;
 	KSI_Integer *instanceId;
 	KSI_Integer *messageId;
-	KSI_OctetString *clientId;
+	KSI_OctetString *loginId;
 };
 
 struct KSI_Config_st {
@@ -442,7 +442,7 @@ void KSI_Header_free(KSI_Header *t) {
 	if(t != NULL) {
 		KSI_Integer_free(t->instanceId);
 		KSI_Integer_free(t->messageId);
-		KSI_OctetString_free(t->clientId);
+		KSI_OctetString_free(t->loginId);
 		KSI_free(t);
 	}
 }
@@ -459,7 +459,7 @@ int KSI_Header_new(KSI_CTX *ctx, KSI_Header **t) {
 	tmp->ctx = ctx;
 	tmp->instanceId = NULL;
 	tmp->messageId = NULL;
-	tmp->clientId = NULL;
+	tmp->loginId = NULL;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -470,11 +470,11 @@ cleanup:
 
 KSI_IMPLEMENT_GETTER(KSI_Header, KSI_Integer*, instanceId, InstanceId);
 KSI_IMPLEMENT_GETTER(KSI_Header, KSI_Integer*, messageId, MessageId);
-KSI_IMPLEMENT_GETTER(KSI_Header, KSI_OctetString*, clientId, ClientId);
+KSI_IMPLEMENT_GETTER(KSI_Header, KSI_OctetString*, loginId, LoginId);
 
 KSI_IMPLEMENT_SETTER(KSI_Header, KSI_Integer*, instanceId, InstanceId);
 KSI_IMPLEMENT_SETTER(KSI_Header, KSI_Integer*, messageId, MessageId);
-KSI_IMPLEMENT_SETTER(KSI_Header, KSI_OctetString*, clientId, ClientId);
+KSI_IMPLEMENT_SETTER(KSI_Header, KSI_OctetString*, loginId, LoginId);
 
 
 /**
