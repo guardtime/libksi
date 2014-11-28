@@ -220,7 +220,7 @@ static void testSerializePublicationsFile(CuTest *tc) {
 	int res;
 	KSI_PublicationsFile *pubFile = NULL;
 	char *raw = NULL;
-	int raw_len = 0;
+	unsigned raw_len = 0;
 	FILE *f = NULL;
 	int symbol = 0;
 	int i= 0;
