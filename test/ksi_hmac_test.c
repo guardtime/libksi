@@ -3,7 +3,7 @@
 
 #include "cutest/CuTest.h"
 #include "all_tests.h"
-#include "ksi/hmac.h"
+#include <ksi/hmac.h>
 
 extern KSI_CTX *ctx;
 

@@ -1,8 +1,8 @@
 #ifndef ALL_TESTS_H_
 #define ALL_TESTS_H_
 
+#include <ksi/ksi.h>
 #include "cutest/CuTest.h"
-#include "ksi/ksi.h"
 #include "ksi_net_mock.h"
 
 #ifdef __cplusplus

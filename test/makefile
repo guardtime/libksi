@@ -28,6 +28,7 @@ INC_DIR = ..\out\include
 LIB_DIR = ..\out\$(DLL)
 BIN_DIR = ..\out\bin
 CUTEST_DIR = cutest
+KSI_INCLUDE_DIR = ../src
 
 LIB_NAME = libksiapi
 

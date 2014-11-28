@@ -1,8 +1,8 @@
 #include <string.h>
 
 #include "all_tests.h"
-#include "io.h"
-#include "tlv.h"
+#include <ksi/tlv.h>
+#include <ksi/io.h>
 
 static char *ok_sample[] = {
 		"resource/tlv/ok_int-1.tlv",
