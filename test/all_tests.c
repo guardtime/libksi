@@ -5,8 +5,6 @@
 #include "cutest/CuTest.h"
 #include "all_tests.h"
 
-#include "libgen.h"
-
 #ifndef _WIN32
 #  ifdef HAVE_CONFIG_H
 #    include "../src/ksi/config.h"
