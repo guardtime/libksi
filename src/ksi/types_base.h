@@ -45,6 +45,7 @@ int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned tag, int isNonCritical, int isFor
 	 * \param[in]	logCtx		Logger context.
 	 * \param[in]	level		Log level information.
 	 * \param[in]	message		Pointer to the logged message.
+	 * \return Implementation must return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	typedef int (*KSI_LoggerCallback)(void *logCtx, int level, const char *message);
 

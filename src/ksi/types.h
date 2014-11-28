@@ -34,6 +34,13 @@ extern "C" {
 	typedef struct KSI_PublicationRecord_st KSI_PublicationRecord;
 
 	/**
+	 * Callback for request header.
+	 * \param[in]	hdr		Pointer to the header.
+	 * \return Implementation must return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	typedef int (*KSI_RequestHeaderCallback)(KSI_Header *hdr);
+
+	/**
 	 * Template type.
 	 */
 	typedef struct KSI_TlvTemplate_st KSI_TlvTemplate;

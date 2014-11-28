@@ -4,6 +4,7 @@
 
 #include "cutest/CuTest.h"
 #include "all_tests.h"
+#include "io.h"
 
 extern KSI_CTX *ctx;
 

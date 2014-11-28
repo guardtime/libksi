@@ -60,7 +60,7 @@ int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, const unsigned char 
 		res = KSI_DataHash_extract(hashedKey, NULL, &digest, &digest_len);
 		KSI_CATCH(&err, res);
 		
-		if(digest == NULL || digest_len < 0 || digest_len > MAX_KEY_LEN){
+		if(digest == NULL || digest_len > MAX_KEY_LEN){
 			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "The hash of the key is invalid");
 			goto cleanup;
 		}
@@ -68,7 +68,7 @@ int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, const unsigned char 
 		bufKey = digest;
 		buf_len = digest_len;
 	} else{
-		bufKey = key;
+		bufKey = (unsigned char *)key;
 		buf_len = (unsigned)key_len;
 	}
 	

@@ -93,11 +93,21 @@ cleanup:
 	return res;
 }
 
+static int KSI_LOG_log(KSI_CTX *ctx, int level, char *format, ...) {
+	int res;
+	va_list va;
+	va_start(va, format);
+	if (ctx->logger != NULL) res = writeLogDeprecated(ctx, level, format, va);
+	else res = writeLog(ctx, level, format, va);
+	va_end(va);
+	return res;
+}
+
 #define KSI_LOG_FN(suffix, level) \
 int KSI_LOG_##suffix(KSI_CTX *ctx, char *format, ...) { \
 	int res; \
 	va_list va; \
-	va_start(va, format);\
+	va_start(va, format); \
 	if (ctx->logger != NULL) res = writeLogDeprecated(ctx, KSI_LOG_##level, format, va); /* TODO! Remove deprecated!*/ \
 	else res = writeLog(ctx, KSI_LOG_##level, format, va); \
 	va_end(va); \
@@ -111,15 +121,6 @@ KSI_LOG_FN(info, INFO);
 KSI_LOG_FN(error, ERROR);
 KSI_LOG_FN(fatal, FATAL);
 
-static int KSI_LOG_log(KSI_CTX *ctx, int level, char *format, ...) {
-	int res;
-	va_list va;
-	va_start(va, format);
-	if (ctx->logger != NULL) res = writeLogDeprecated(ctx, level, format, va); \
-	else res = writeLog(ctx, level, format, va); \
-	va_end(va);
-	return res;
-}
 
 
 int KSI_Logger_new(KSI_CTX *ctx, char *fileName, int logLevel, KSI_Logger **logger) {
@@ -246,7 +247,8 @@ int KSI_LOG_logTlv(KSI_CTX *ctx, int level, const char *prefix, const KSI_TLV *t
 	}
 
 	if (tlv != NULL) {
-		res = KSI_LOG_log(ctx, level, "%s:\n%s", prefix, KSI_TLV_toString(tlv, serialized, sizeof(serialized)));
+		KSI_TLV_toString(tlv, serialized, sizeof(serialized));
+		res = KSI_LOG_log(ctx, level, "%s:\n%s", prefix, serialized);
 	} else {
 		res = KSI_LOG_log(ctx, level, "%s:\n%s", prefix, "(null)");
 	}

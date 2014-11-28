@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "internal.h"
+#include "tlv.h"
 
 KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendPdu);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu)

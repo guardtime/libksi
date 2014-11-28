@@ -98,7 +98,7 @@ tests: $(DLL)$(RTL)
 	cd ..	
 
 test: tests
-	$(BIN_DIR)\alltests.exe
+	$(BIN_DIR)\alltests.exe .
 	
 clean:
 	@for %i in ($(OBJ_DIR) $(OUT_DIR)) do @if exist .\%i rmdir /s /q .\%i

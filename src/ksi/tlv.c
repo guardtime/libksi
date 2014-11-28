@@ -2,6 +2,8 @@
 
 
 #include "internal.h"
+#include "tlv.h"
+#include "io.h"
 
 #define KSI_TLV_MASK_TLV16 0x80u
 #define KSI_TLV_MASK_LENIENT 0x40u

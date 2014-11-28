@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "internal.h"
+#include "io.h"
 
 typedef enum {
 	KSI_IO_FILE,

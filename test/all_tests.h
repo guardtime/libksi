@@ -17,7 +17,7 @@ extern "C" {
 #  endif
 #endif
 
-char* getFullResourcePath(const char* resource);	
+const char* getFullResourcePath(const char* resource);
 
 int KSITest_memcmp(void *ptr1, void *ptr2, size_t len);
 

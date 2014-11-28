@@ -2,6 +2,8 @@
 #include <string.h>
 
 #include "all_tests.h"
+#include "tlv.h"
+#include "io.h"
 
 extern KSI_CTX *ctx;
 

@@ -1,6 +1,8 @@
 #include <string.h>
 
 #include "all_tests.h"
+#include "io.h"
+#include "tlv.h"
 
 static char *ok_sample[] = {
 		"resource/tlv/ok_int-1.tlv",
@@ -42,7 +44,7 @@ static char *nok_sample[] = {
 
 extern KSI_CTX *ctx;
 
-static int tlvFromFile(char *fileName, KSI_TLV **tlv) {
+static int tlvFromFile(const char *fileName, KSI_TLV **tlv) {
 	int res;
 	KSI_RDR *rdr = NULL;
 

@@ -3,6 +3,7 @@
 
 #include "internal.h"
 #include "hash_impl.h"
+#include "tlv.h"
 
 #define HASH_ALGO(id, name, bitcount, trusted) {(id), (name), (bitcount), (trusted), id##_aliases}
 

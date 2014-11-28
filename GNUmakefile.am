@@ -10,10 +10,10 @@ pkgconfig_DATA = libksi.pc
 EXTRA_DIST = changelog build*.txt makefile lic*.txt \
              */makefile doc/doxy* test/*
 test: check 
-	cd test && make && cd .. && ./test/runner;
+	./test/runner ./test
 	
 memtest: check 
-	valgrind --xml=yes --xml-file=valgrind.xml ./test/runner 
+	valgrind --xml=yes --xml-file=valgrind.xml ./test/runner ./test 
 
 doc:
 	cd doc; make doc; cd ..

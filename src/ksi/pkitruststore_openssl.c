@@ -10,6 +10,8 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 
+#include "tlv.h"
+
 /* Hide the following line to deactivate. */
 #define MAGIC_EMAIL "publications@guardtime.com"
 

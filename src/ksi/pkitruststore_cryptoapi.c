@@ -8,6 +8,7 @@
 #include <windows.h>
 #include <Wincrypt.h>
 
+#include "tlv.h"
 
 static void printError(DWORD dw) 
 { 

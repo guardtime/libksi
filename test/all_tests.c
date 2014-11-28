@@ -5,10 +5,18 @@
 #include "cutest/CuTest.h"
 #include "all_tests.h"
 
+#include "libgen.h"
+
 #ifndef _WIN32
 #  ifdef HAVE_CONFIG_H
 #    include "../src/ksi/config.h"
 #  endif
+#endif
+
+#ifdef _WIN32
+#  define DIR_SEP '\\'
+#else
+#  define DIR_SEP '/'
 #endif
 
 #ifndef UNIT_TEST_OUTPUT_XML
@@ -272,52 +280,19 @@ cleanup:
 	return res;
 }
 
-static char *path_resource = NULL;
+static const char *projectRoot = NULL;
+static char pathBuffer[2048];
 
-static void getPathToTestDir(char *partialPath ){
-	char *root;
-	char *relpath_resources = "/test/";
-	char *relpath_exe = NULL;
-
-#ifdef _WIN32
-	static int pathMaxLen = 1024;
-	path_resource = malloc(pathMaxLen);
-	if (path_resource == NULL) {
-		fprintf(stderr, "Out of memory\n");
-		exit(1);
-	}
-	relpath_exe = "\\out\\bin\\alltests.exe";
-	
-	if( _fullpath( path_resource, partialPath, pathMaxLen) == NULL ){
-		printf( "Can't get full path to alltests.exe!\n");
-                return;
-	}
-#else
-	relpath_exe = "/test/runner";
-        
-        if ((path_resource = realpath(partialPath, NULL)) == NULL){
-		printf( "Can't get full path to runner!\n");
-                return;
-                
-        }
-#endif
-
-        root = strstr(path_resource, relpath_exe);
-	if(root == NULL){
-		printf( "Can't find full path to directory 'test'!\n" );
-	}
-	strcpy(root, relpath_resources);
-}
-
-char* getFullResourcePath(const char* resource){
-	static char tmp[1024];
-	strcpy(tmp, path_resource);
-	strcat(tmp, resource);
-	return tmp;
+const char *getFullResourcePath(const char* resource){
+	snprintf(pathBuffer, sizeof(pathBuffer), "%s%c%s", projectRoot, DIR_SEP, resource);
+	return pathBuffer;
 }
 
 int main(int argc, char** argv) {
-	getPathToTestDir(argv[0]);
+	if (argc != 2) {
+		printf("Usage:\n %s <path to test root>\n", argv[0]);
+		exit(EXIT_FAILURE);
+	}
+	projectRoot = argv[1];
 	return RunAllTests();
-	free(path_resource);
 }

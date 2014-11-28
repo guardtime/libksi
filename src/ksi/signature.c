@@ -4,6 +4,7 @@
 #include "verification_impl.h"
 #include "signature_impl.h"
 #include "publicationsfile_impl.h"
+#include "tlv.h"
 
 typedef struct headerRec_st HeaderRec;
 

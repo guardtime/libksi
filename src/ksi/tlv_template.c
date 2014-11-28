@@ -1,6 +1,7 @@
 #include <limits.h>
 #include "internal.h"
 
+#include "tlv.h"
 
 #define KSI_CalAuthRecPKISignedData_new KSI_PKISignedData_new
 #define KSI_CalAuthRecPKISignedData_free KSI_PKISignedData_free

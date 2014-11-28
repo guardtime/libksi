@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "internal.h"
+#include "tlv.h"
 
 struct KSI_OctetString_st {
 	KSI_CTX *ctx;
