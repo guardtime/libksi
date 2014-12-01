@@ -336,6 +336,12 @@ extern "C" {
 	#define KSI_TLV_NATIVE_INT(tg, flg, gttr, sttr) KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_NATIVE_INT, tg, flg, gttr, sttr)
 
 	/**
+	 * TLV templates for time representation
+	 */
+	#define KSI_TLV_TIME_S KSI_TLV_INTEGER
+	#define KSI_TLV_TIME_US KSI_TLV_INTEGER
+	
+	/**
 	 * Generic object list template. The \c obj parameter may be only a type
 	 * for which there is a list type defined (see #KSI_DEFINE_LIST and #KSI_IMPLEMENT_LIST).
 	 * \param[in]	tg				TLV tag value.

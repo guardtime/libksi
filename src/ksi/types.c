@@ -15,8 +15,9 @@ struct KSI_MetaData_st {
 	KSI_CTX *ctx;
 	KSI_OctetString *raw;
 	KSI_Utf8String *clientId;
-	KSI_Integer *machineId;
+	KSI_OctetString *machineId;
 	KSI_Integer *sequenceNr;
+	KSI_Integer *req_time_us;
 };
 
 struct KSI_ExtendPdu_st {
@@ -85,8 +86,8 @@ struct KSI_AggregationResp_st {
 struct KSI_ExtendReq_st {
 	KSI_CTX *ctx;
 	KSI_Integer *requestId;
-	KSI_Integer *aggregationTime;
-	KSI_Integer *publicationTime;
+	KSI_Integer *aggregationTime_s;
+	KSI_Integer *publicationTime_s;
 };
 
 struct KSI_ExtendResp_st {
@@ -94,7 +95,7 @@ struct KSI_ExtendResp_st {
 	KSI_Integer *requestId;
 	KSI_Integer *status;
 	KSI_Utf8String *errorMsg;
-	KSI_Integer *lastTime;
+	KSI_Integer *lastTime_s;
 	KSI_CalendarHashChain *calendarHashChain;
 	KSI_TLV *baseTlv;
 };
@@ -110,7 +111,7 @@ struct KSI_PKISignedData_st {
 struct KSI_PublicationsHeader_st {
 	KSI_CTX *ctx;
 	KSI_Integer *version;
-	KSI_Integer *timeCreated;
+	KSI_Integer *timeCreated_s;
 	KSI_Utf8String *repositoryUri;
 };
 
@@ -141,8 +142,9 @@ void KSI_MetaData_free(KSI_MetaData *t) {
 	if(t != NULL) {
 		KSI_OctetString_free(t->raw);
 		KSI_Utf8String_free(t->clientId);
-		KSI_Integer_free(t->machineId);
+		KSI_OctetString_free(t->machineId);
 		KSI_Integer_free(t->sequenceNr);
+		KSI_Integer_free(t->req_time_us);
 		KSI_free(t);
 	}
 }
@@ -161,6 +163,7 @@ int KSI_MetaData_new(KSI_CTX *ctx, KSI_MetaData **t) {
 	tmp->clientId = NULL;
 	tmp->machineId = NULL;
 	tmp->sequenceNr = NULL;
+	tmp->req_time_us = NULL;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -171,13 +174,15 @@ cleanup:
 
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_OctetString*, raw, Raw);
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Utf8String*, clientId, ClientId);
-KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Integer*, machineId, MachineId);
+KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_OctetString*, machineId, MachineId);
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Integer*, sequenceNr, SequenceNr);
+KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Integer*, req_time_us, RequestTime);
 
 KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_OctetString*, raw, Raw);
 KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Utf8String*, clientId, ClientId);
-KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Integer*, machineId, MachineId);
+KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_OctetString*, machineId, MachineId);
 KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Integer*, sequenceNr, SequenceNr);
+KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Integer*, req_time_us, RequestTime);
 
 /**
  * KSI_ExtendPdu
@@ -685,8 +690,8 @@ KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_TLV*, baseTlv, BaseTlv);
 void KSI_ExtendReq_free(KSI_ExtendReq *t) {
 	if(t != NULL) {
 		KSI_Integer_free(t->requestId);
-		KSI_Integer_free(t->aggregationTime);
-		KSI_Integer_free(t->publicationTime);
+		KSI_Integer_free(t->aggregationTime_s);
+		KSI_Integer_free(t->publicationTime_s);
 		KSI_free(t);
 	}
 }
@@ -702,8 +707,8 @@ int KSI_ExtendReq_new(KSI_CTX *ctx, KSI_ExtendReq **t) {
 
 	tmp->ctx = ctx;
 	tmp->requestId = NULL;
-	tmp->aggregationTime = NULL;
-	tmp->publicationTime = NULL;
+	tmp->aggregationTime_s = NULL;
+	tmp->publicationTime_s = NULL;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -713,12 +718,12 @@ cleanup:
 }
 
 KSI_IMPLEMENT_GETTER(KSI_ExtendReq, KSI_Integer*, requestId, RequestId);
-KSI_IMPLEMENT_GETTER(KSI_ExtendReq, KSI_Integer*, aggregationTime, AggregationTime);
-KSI_IMPLEMENT_GETTER(KSI_ExtendReq, KSI_Integer*, publicationTime, PublicationTime);
+KSI_IMPLEMENT_GETTER(KSI_ExtendReq, KSI_Integer*, aggregationTime_s, AggregationTime);
+KSI_IMPLEMENT_GETTER(KSI_ExtendReq, KSI_Integer*, publicationTime_s, PublicationTime);
 
 KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, requestId, RequestId);
-KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, aggregationTime, AggregationTime);
-KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, publicationTime, PublicationTime);
+KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, aggregationTime_s, AggregationTime);
+KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, publicationTime_s, PublicationTime);
 
 
 /**
@@ -729,7 +734,7 @@ void KSI_ExtendResp_free(KSI_ExtendResp *t) {
 		KSI_Integer_free(t->requestId);
 		KSI_Integer_free(t->status);
 		KSI_Utf8String_free(t->errorMsg);
-		KSI_Integer_free(t->lastTime);
+		KSI_Integer_free(t->lastTime_s);
 		KSI_CalendarHashChain_free(t->calendarHashChain);
 		KSI_TLV_free(t->baseTlv);
 		KSI_free(t);
@@ -749,7 +754,7 @@ int KSI_ExtendResp_new(KSI_CTX *ctx, KSI_ExtendResp **t) {
 	tmp->requestId = NULL;
 	tmp->status = NULL;
 	tmp->errorMsg = NULL;
-	tmp->lastTime = NULL;
+	tmp->lastTime_s = NULL;
 	tmp->calendarHashChain = NULL;
 	tmp->baseTlv = NULL;
 	*t = tmp;
@@ -763,14 +768,14 @@ cleanup:
 KSI_IMPLEMENT_GETTER(KSI_ExtendResp, KSI_Integer*, requestId, RequestId);
 KSI_IMPLEMENT_GETTER(KSI_ExtendResp, KSI_Integer*, status, Status);
 KSI_IMPLEMENT_GETTER(KSI_ExtendResp, KSI_Utf8String*, errorMsg, ErrorMsg);
-KSI_IMPLEMENT_GETTER(KSI_ExtendResp, KSI_Integer*, lastTime, LastTime);
+KSI_IMPLEMENT_GETTER(KSI_ExtendResp, KSI_Integer*, lastTime_s, LastTime);
 KSI_IMPLEMENT_GETTER(KSI_ExtendResp, KSI_CalendarHashChain*, calendarHashChain, CalendarHashChain);
 KSI_IMPLEMENT_GETTER(KSI_ExtendResp, KSI_TLV*, baseTlv, BaseTlv);
 
 KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_Integer*, requestId, RequestId);
 KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_Integer*, status, Status);
 KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_Utf8String*, errorMsg, ErrorMsg);
-KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_Integer*, lastTime, LastTime);
+KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_Integer*, lastTime_s, LastTime);
 KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_CalendarHashChain*, calendarHashChain, CalendarHashChain);
 KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_TLV*, baseTlv, BaseTlv);
 
@@ -825,7 +830,7 @@ KSI_IMPLEMENT_SETTER(KSI_PKISignedData, KSI_Utf8String*, certRepositoryUri, Cert
 void KSI_PublicationsHeader_free(KSI_PublicationsHeader *t) {
 	if(t != NULL) {
 		KSI_Integer_free(t->version);
-		KSI_Integer_free(t->timeCreated);
+		KSI_Integer_free(t->timeCreated_s);
 		KSI_Utf8String_free(t->repositoryUri);
 		KSI_free(t);
 	}
@@ -842,7 +847,7 @@ int KSI_PublicationsHeader_new(KSI_CTX *ctx, KSI_PublicationsHeader **t) {
 
 	tmp->ctx = ctx;
 	tmp->version = NULL;
-	tmp->timeCreated = NULL;
+	tmp->timeCreated_s = NULL;
 	tmp->repositoryUri = NULL;
 	*t = tmp;
 	tmp = NULL;
@@ -853,11 +858,11 @@ cleanup:
 }
 
 KSI_IMPLEMENT_GETTER(KSI_PublicationsHeader, KSI_Integer*, version, Version);
-KSI_IMPLEMENT_GETTER(KSI_PublicationsHeader, KSI_Integer*, timeCreated, TimeCreated);
+KSI_IMPLEMENT_GETTER(KSI_PublicationsHeader, KSI_Integer*, timeCreated_s, TimeCreated);
 KSI_IMPLEMENT_GETTER(KSI_PublicationsHeader, KSI_Utf8String*, repositoryUri, RepositoryUri);
 
 KSI_IMPLEMENT_SETTER(KSI_PublicationsHeader, KSI_Integer*, version, Version);
-KSI_IMPLEMENT_SETTER(KSI_PublicationsHeader, KSI_Integer*, timeCreated, TimeCreated);
+KSI_IMPLEMENT_SETTER(KSI_PublicationsHeader, KSI_Integer*, timeCreated_s, TimeCreated);
 KSI_IMPLEMENT_SETTER(KSI_PublicationsHeader, KSI_Utf8String*, repositoryUri, RepositoryUri);
 
 

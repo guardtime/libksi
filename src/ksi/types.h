@@ -133,12 +133,14 @@ void KSI_MetaData_free(KSI_MetaData *t);
 int KSI_MetaData_new(KSI_CTX *ctx, KSI_MetaData **t);
 int KSI_MetaData_getRaw(const KSI_MetaData *t, KSI_OctetString **raw);
 int KSI_MetaData_getClientId(const KSI_MetaData *t, KSI_Utf8String **clientId);
-int KSI_MetaData_getMachineId(const KSI_MetaData *t, KSI_Integer **machineId);
+int KSI_MetaData_getMachineId(const KSI_MetaData *t, KSI_OctetString **machineId);
 int KSI_MetaData_getSequenceNr(const KSI_MetaData *t, KSI_Integer **sequenceNr);
+int KSI_MetaData_getRequestTime(const KSI_MetaData *t, KSI_Integer **reqTime_us);
 int KSI_MetaData_setRaw(KSI_MetaData *t, KSI_OctetString *raw);
 int KSI_MetaData_setClientId(KSI_MetaData *t, KSI_Utf8String *clientId);
-int KSI_MetaData_setMachineId(KSI_MetaData *t, KSI_Integer *machineId);
+int KSI_MetaData_setMachineId(KSI_MetaData *t, KSI_OctetString *machineId);
 int KSI_MetaData_setSequenceNr(KSI_MetaData *t, KSI_Integer *sequenceNr);
+int KSI_MetaData_setRequestTime(KSI_MetaData *t, KSI_Integer *reqTime_us);
 
 /*
  * KSI_ExtendPdu
@@ -306,11 +308,11 @@ int KSI_AggregationResp_setBaseTlv (KSI_AggregationResp *o, KSI_TLV *baseTlv);
 void KSI_ExtendReq_free(KSI_ExtendReq *t);
 int KSI_ExtendReq_new(KSI_CTX *ctx, KSI_ExtendReq **t);
 int KSI_ExtendReq_getRequestId(const KSI_ExtendReq *t, KSI_Integer **requestId);
-int KSI_ExtendReq_getAggregationTime(const KSI_ExtendReq *t, KSI_Integer **aggregationTime);
-int KSI_ExtendReq_getPublicationTime(const KSI_ExtendReq *t, KSI_Integer **publicationTime);
+int KSI_ExtendReq_getAggregationTime(const KSI_ExtendReq *t, KSI_Integer **aggregationTime_s);
+int KSI_ExtendReq_getPublicationTime(const KSI_ExtendReq *t, KSI_Integer **publicationTime_s);
 int KSI_ExtendReq_setRequestId(KSI_ExtendReq *t, KSI_Integer *requestId);
-int KSI_ExtendReq_setAggregationTime(KSI_ExtendReq *t, KSI_Integer *aggregationTime);
-int KSI_ExtendReq_setPublicationTime(KSI_ExtendReq *t, KSI_Integer *publicationTime);
+int KSI_ExtendReq_setAggregationTime(KSI_ExtendReq *t, KSI_Integer *aggregationTime_s);
+int KSI_ExtendReq_setPublicationTime(KSI_ExtendReq *t, KSI_Integer *publicationTime_s);
 
 /*
  * KSI_ExtendResp
@@ -320,13 +322,13 @@ int KSI_ExtendResp_new(KSI_CTX *ctx, KSI_ExtendResp **t);
 int KSI_ExtendResp_getRequestId(const KSI_ExtendResp *t, KSI_Integer **requestId);
 int KSI_ExtendResp_getStatus(const KSI_ExtendResp *t, KSI_Integer **status);
 int KSI_ExtendResp_getErrorMsg(const KSI_ExtendResp *t, KSI_Utf8String **errorMsg);
-int KSI_ExtendResp_getLastTime(const KSI_ExtendResp *t, KSI_Integer **lastTime);
+int KSI_ExtendResp_getLastTime(const KSI_ExtendResp *t, KSI_Integer **lastTime_s);
 int KSI_ExtendResp_getCalendarHashChain(const KSI_ExtendResp *t, KSI_CalendarHashChain **calendarHashChain);
 int KSI_ExtendResp_getBaseTlv (const KSI_ExtendResp *o, KSI_TLV **baseTlv);
 int KSI_ExtendResp_setRequestId(KSI_ExtendResp *t, KSI_Integer *requestId);
 int KSI_ExtendResp_setStatus(KSI_ExtendResp *t, KSI_Integer *status);
 int KSI_ExtendResp_setErrorMsg(KSI_ExtendResp *t, KSI_Utf8String *errorMsg);
-int KSI_ExtendResp_setLastTime(KSI_ExtendResp *t, KSI_Integer *lastTime);
+int KSI_ExtendResp_setLastTime(KSI_ExtendResp *t, KSI_Integer *lastTime_s);
 int KSI_ExtendResp_setCalendarHashChain(KSI_ExtendResp *t, KSI_CalendarHashChain *calendarHashChain);
 int KSI_ExtendResp_setBaseTlv (KSI_ExtendResp *o, KSI_TLV *baseTlv);
 
@@ -350,10 +352,10 @@ int KSI_PKISignedData_setCertRepositoryUri(KSI_PKISignedData *t, KSI_Utf8String 
 void KSI_PublicationsHeader_free(KSI_PublicationsHeader *t);
 int KSI_PublicationsHeader_new(KSI_CTX *ctx, KSI_PublicationsHeader **t);
 int KSI_PublicationsHeader_getVersion(const KSI_PublicationsHeader *t, KSI_Integer **version);
-int KSI_PublicationsHeader_getTimeCreated(const KSI_PublicationsHeader *t, KSI_Integer **timeCreated);
+int KSI_PublicationsHeader_getTimeCreated(const KSI_PublicationsHeader *t, KSI_Integer **timeCreated_s);
 int KSI_PublicationsHeader_getRepositoryUri(const KSI_PublicationsHeader *t, KSI_Utf8String **repositoryUri);
 int KSI_PublicationsHeader_setVersion(KSI_PublicationsHeader *t, KSI_Integer *version);
-int KSI_PublicationsHeader_setTimeCreated(KSI_PublicationsHeader *t, KSI_Integer *timeCreated);
+int KSI_PublicationsHeader_setTimeCreated(KSI_PublicationsHeader *t, KSI_Integer *timeCreated_s);
 int KSI_PublicationsHeader_setRepositoryUri(KSI_PublicationsHeader *t, KSI_Utf8String *repositoryUri);
 
 /*
@@ -372,13 +374,13 @@ int KSI_CertificateRecord_setCert(KSI_CertificateRecord *t, KSI_PKICertificate *
 void KSI_AggregationAuthRec_free(KSI_AggregationAuthRec *aar);
 int KSI_AggregationAuthRec_new(KSI_CTX *ctx, KSI_AggregationAuthRec **out);
 
-int KSI_AggregationAuthRec_getAggregationTime(const KSI_AggregationAuthRec *rec, KSI_Integer **aggregationTime);
+int KSI_AggregationAuthRec_getAggregationTime(const KSI_AggregationAuthRec *rec, KSI_Integer **aggregationTime_s);
 int KSI_AggregationAuthRec_getChainIndex(const KSI_AggregationAuthRec *rec, KSI_LIST(KSI_Integer) **chainIndexesList);
 int KSI_AggregationAuthRec_getInputHash(const KSI_AggregationAuthRec *rec, KSI_DataHash **inputHash);
 int KSI_AggregationAuthRec_getSigAlgo(const KSI_AggregationAuthRec *rec, KSI_Utf8String **signatureAlgo);
 int KSI_AggregationAuthRec_getSigData(const KSI_AggregationAuthRec *rec, KSI_PKISignedData **signatureData);
 
-int KSI_AggregationAuthRec_setAggregationTime(KSI_AggregationAuthRec *rec, KSI_Integer *aggregationTime);
+int KSI_AggregationAuthRec_setAggregationTime(KSI_AggregationAuthRec *rec, KSI_Integer *aggregationTime_s);
 int KSI_AggregationAuthRec_setChainIndex(KSI_AggregationAuthRec *rec, KSI_LIST(KSI_Integer) *chainIndexesList);
 int KSI_AggregationAuthRec_setInputHash(KSI_AggregationAuthRec *rec, KSI_DataHash *inputHash);
 int KSI_AggregationAuthRec_setSigAlgo(KSI_AggregationAuthRec *rec, KSI_Utf8String *signatureAlgo);
