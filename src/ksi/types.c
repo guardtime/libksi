@@ -529,7 +529,6 @@ KSI_IMPLEMENT_SETTER(KSI_Config, KSI_LIST(KSI_Utf8String)*, parentUri, ParentUri
  */
 void KSI_AggregationReq_free(KSI_AggregationReq *t) {
 	if(t != NULL) {
-//		KSI_Header_free(t->header);
 		KSI_Integer_free(t->requestId);
 		KSI_DataHash_free(t->requestHash);
 		KSI_Integer_free(t->requestLevel);
@@ -570,6 +569,8 @@ KSI_IMPLEMENT_SETTER(KSI_AggregationReq, KSI_DataHash*, requestHash, RequestHash
 KSI_IMPLEMENT_SETTER(KSI_AggregationReq, KSI_Integer*, requestLevel, RequestLevel);
 KSI_IMPLEMENT_SETTER(KSI_AggregationReq, KSI_Config*, config, Config);
 
+KSI_IMPLEMENT_OBJECT_PARSE(KSI_AggregationReq, 0x201);
+KSI_IMPLEMENT_OBJECT_SERIALIZE(KSI_AggregationReq, 0x201, 0, 0)
 
 /**
  * KSI_RequestAck
@@ -678,6 +679,8 @@ KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_CalendarAuthRec*, calendarAuthRec,
 KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_AggregationAuthRec*, aggregationAuthRec, AggregationAuthRec);
 KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_TLV*, baseTlv, BaseTlv);
 
+KSI_IMPLEMENT_OBJECT_PARSE(KSI_AggregationResp, 0x202);
+KSI_IMPLEMENT_OBJECT_SERIALIZE(KSI_AggregationResp, 0x202, 0, 0)
 
 /**
  * KSI_ExtendReq
@@ -720,6 +723,8 @@ KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, requestId, RequestId);
 KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, aggregationTime, AggregationTime);
 KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, publicationTime, PublicationTime);
 
+KSI_IMPLEMENT_OBJECT_PARSE(KSI_ExtendReq, 0x301);
+KSI_IMPLEMENT_OBJECT_SERIALIZE(KSI_ExtendReq, 0x301, 0, 0)
 
 /**
  * KSI_ExtendResp
@@ -773,6 +778,9 @@ KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_Utf8String*, errorMsg, ErrorMsg);
 KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_Integer*, lastTime, LastTime);
 KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_CalendarHashChain*, calendarHashChain, CalendarHashChain);
 KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_TLV*, baseTlv, BaseTlv);
+
+KSI_IMPLEMENT_OBJECT_PARSE(KSI_ExtendResp, 0x302);
+KSI_IMPLEMENT_OBJECT_SERIALIZE(KSI_ExtendResp, 0x302, 0, 0)
 
 /**
  * KSI_PKISignedData

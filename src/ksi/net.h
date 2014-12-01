@@ -94,7 +94,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note The output memory may not be freed by the caller.
 	 */
-	int KSI_RequestHandle_getRequest(KSI_RequestHandle *handle, unsigned char **request, unsigned *request_len);
+	int KSI_RequestHandle_getRequest(KSI_RequestHandle *handle, const unsigned char **request, unsigned *request_len);
 
 	/**
 	 * Response value setter. Should be called only by the actual network provider implementation.

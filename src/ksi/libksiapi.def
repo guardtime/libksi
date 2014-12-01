@@ -131,6 +131,7 @@ EXPORTS
     KSI_setLogger
     KSI_getPublicationsFile
     KSI_setPublicationCertEmail
+    KSI_CTX_setRequestHeaderCallback
 
 ;list.h
 EXPORTS

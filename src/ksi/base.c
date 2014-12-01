@@ -98,6 +98,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->logger = NULL;
 	ctx->publicationCertEmail = NULL;
 	ctx->loggerCB = NULL;
+	ctx->requestHeaderCB = NULL;
 	ctx->loggerCtx = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -708,6 +709,23 @@ CTX_GET_SET_VALUE(pkiTruststore, PKITruststore, KSI_PKITruststore, KSI_PKITrusts
 CTX_GET_SET_VALUE(netProvider, NetworkProvider, KSI_NetworkClient, KSI_NetworkClient_free)
 CTX_GET_SET_VALUE(logger, Logger, KSI_Logger, KSI_Logger_free)
 CTX_GET_SET_VALUE(publicationsFile, PublicationsFile, KSI_PublicationsFile, KSI_PublicationsFile_free)
+
+int KSI_CTX_setRequestHeaderCallback(KSI_CTX *ctx, KSI_RequestHeaderCallback cb) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (ctx == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	ctx->requestHeaderCB = cb;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
 
 int KSI_CTX_setLoggerCallback(KSI_CTX *ctx, KSI_LoggerCallback cb, void *logCtx) {
 	int res = KSI_UNKNOWN_ERROR;

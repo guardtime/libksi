@@ -53,6 +53,7 @@ extern "C" {
 
 		KSI_List *cleanupFnList;
 
+		KSI_RequestHeaderCallback requestHeaderCB;
 	};
 
 #ifdef __cplusplus

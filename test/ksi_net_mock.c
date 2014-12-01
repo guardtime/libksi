@@ -132,7 +132,7 @@ static void mockCleanup(void) {
 
 static int mockSendPublicationsFileRequest(KSI_NetworkClient *netProvider, KSI_RequestHandle *handle) {
 	int res = KSI_UNKNOWN_ERROR;
-	unsigned char *req = NULL;
+	const unsigned char *req = NULL;
 	unsigned req_len;
 
 	KSI_LOG_debug(ctx, "Initiate MOCK request.");

@@ -419,12 +419,22 @@ KSI_FN_DEPRECATED(int KSI_CTX_setLogFile(KSI_CTX *ctx, char *fileName));
 /**
  * This function sets the callback for logging for the context.
  * \param[in]	ctx		KSI context.
- * \param[in]	cb		Logger callback.
+ * \param[in]	cb		Logger callback function.
  * \param[in]	logCtx	Pointer to logger context, may be \c NULL.
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
 int KSI_CTX_setLoggerCallback(KSI_CTX *ctx, KSI_LoggerCallback cb, void *logCtx);
+
+/**
+ * This function sets the callback which is executed on every requests header #KSI_Header
+ * prior to serializing and submitting the request. The callback should be used when
+ * additional data (i.e session id and message id) should be added to the header.
+ * \param[in]	ctx		KSI context.
+ * \param[in]	cb		Request header callback function.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
+int KSI_CTX_setRequestHeaderCallback(KSI_CTX *ctx, KSI_RequestHeaderCallback cb);
 
 int KSI_getPKITruststore(KSI_CTX *ctx, KSI_PKITruststore **pki);
 int KSI_getNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient **net);

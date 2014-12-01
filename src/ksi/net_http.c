@@ -1,6 +1,7 @@
 #include <string.h>
 #include "net_http_impl.h"
 #include <assert.h>
+#include "ctx_impl.h"
 
 static int setStringParam(char **param, const char *val) {
 	char *tmp = NULL;
@@ -39,9 +40,8 @@ static int postProcessRequest(KSI_HttpClientCtx *http, void *req, void* pdu, con
 	KSI_ERR err;
 	int res;
 	KSI_uint64_t reqId = 0;
+	KSI_Header *headerp = NULL;
 	KSI_Header *header = NULL;
-	KSI_Integer *instanceId = NULL;
-	KSI_Integer *messageId = NULL;
 	KSI_Integer *requestId = NULL;
 	KSI_OctetString *client_id = NULL;
 	
@@ -54,11 +54,11 @@ static int postProcessRequest(KSI_HttpClientCtx *http, void *req, void* pdu, con
 	
 	reqId = ++http->requestId;
 	
-	res = getHeader(pdu, &header);
+	res = getHeader(pdu, &headerp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/*Add header*/
-	if (header == NULL) {
+	if (headerp == NULL) {
 		KSI_uint64_t user_len = strlen(user);
 		if(user_len>0xFFFF){
 			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "User id too long.");
@@ -68,32 +68,26 @@ static int postProcessRequest(KSI_HttpClientCtx *http, void *req, void* pdu, con
 		res = KSI_Header_new(http->ctx, &header);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		res = KSI_Integer_new(http->ctx, (KSI_uint64_t)http, &instanceId);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		res = KSI_Integer_new(http->ctx, reqId, &messageId);
-		KSI_CATCH(&err, res) goto cleanup;
-
 		res = KSI_OctetString_new(http->ctx, user, (unsigned)user_len, &client_id);
 		KSI_CATCH(&err, res) goto cleanup;
 		
-		res = KSI_Header_setInstanceId(header, instanceId);
-		KSI_CATCH(&err, res) goto cleanup;
-		instanceId = NULL;
-
-		res = KSI_Header_setMessageId(header, messageId);
-		KSI_CATCH(&err, res) goto cleanup;
-		messageId = NULL;
-
 		res = KSI_Header_setLoginId(header, client_id);
 		KSI_CATCH(&err, res) goto cleanup;
 		client_id = NULL;
-		
+
 		res = setHeader(pdu, header);
 		KSI_CATCH(&err, res) goto cleanup;
+
+		headerp = header;
 		header = NULL;
 	}
 	
+	/* Every request must have a header, and at this point, this should be quaranteed. */
+	if (http->ctx->requestHeaderCB != NULL) {
+		res = http->ctx->requestHeaderCB(headerp);
+		KSI_CATCH(&err, res) goto cleanup;
+	}
+
 	res = getId(req, &requestId);
 	KSI_CATCH(&err, res) goto cleanup;
 	if (requestId == NULL) {
@@ -109,8 +103,6 @@ static int postProcessRequest(KSI_HttpClientCtx *http, void *req, void* pdu, con
 
 cleanup:
 
-	KSI_Integer_free(messageId);
-	KSI_Integer_free(instanceId);
 	KSI_Integer_free(requestId);
 	KSI_Header_free(header);
 	KSI_OctetString_free(client_id);
