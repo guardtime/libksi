@@ -2,6 +2,7 @@
 
 #include "internal.h"
 #include "net_impl.h"
+#include "tlv.h"
 
 KSI_IMPLEMENT_GET_CTX(KSI_NetworkClient);
 KSI_IMPLEMENT_GET_CTX(KSI_RequestHandle);
