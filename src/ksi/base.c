@@ -76,7 +76,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	KSI_CTX *ctx = NULL;
-	KSI_NetworkClient *netProvider = NULL;
+	KSI_HttpClient *http = NULL;
 	KSI_PKITruststore *pkiTruststore = NULL;
 
 	ctx = KSI_new(KSI_CTX);
@@ -115,12 +115,12 @@ int KSI_CTX_new(KSI_CTX **context) {
 	if (res != KSI_OK) goto cleanup;
 
 	/* Initialize curl as the net handle. */
-	res = KSI_HttpClient_new(ctx, &netProvider);
+	res = KSI_HttpClient_new(ctx, &http);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_setNetworkProvider(ctx, netProvider);
+	res = KSI_setNetworkProvider(ctx, (KSI_NetworkClient *)http);
 	if (res != KSI_OK) goto cleanup;
-	netProvider = NULL;
+	http = NULL;
 
 	/* Create and set the PKI truststore */
 	res = KSI_PKITruststore_new(ctx, 1, &pkiTruststore);
@@ -140,7 +140,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 
 cleanup:
 
-	KSI_NetworkClient_free(netProvider);
+	KSI_HttpClient_free(http);
 	KSI_PKITruststore_free(pkiTruststore);
 
 	KSI_CTX_free(ctx);

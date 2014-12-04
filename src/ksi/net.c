@@ -186,14 +186,15 @@ cleanup:
 
 void KSI_NetworkClient_free(KSI_NetworkClient *provider) {
 	if (provider != NULL) {
-		if (provider->implCtx_free != NULL) {
-			KSI_free(provider->agrPass);
-			KSI_free(provider->agrUser);
-			KSI_free(provider->extPass);
-			KSI_free(provider->extUser);
-			provider->implCtx_free(provider->implCtx);
+		KSI_free(provider->agrPass);
+		KSI_free(provider->agrUser);
+		KSI_free(provider->extPass);
+		KSI_free(provider->extUser);
+		if (provider->implFree != NULL) {
+			provider->implFree(provider);
+		} else {
+			KSI_free(provider);
 		}
-		KSI_free(provider);
 	}
 }
 
@@ -237,22 +238,6 @@ int KSI_RequestHandle_setImplContext(KSI_RequestHandle *handle, void *netCtx, vo
 	}
 	handle->implCtx = netCtx;
 	handle->implCtx_free = netCtx_free;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-}
-
-int KSI_NetworkClient_getNetContext(KSI_NetworkClient *provider, void **netCtx) {
-	KSI_ERR err;
-
-	KSI_PRE(&err, provider != NULL) goto cleanup;
-	KSI_PRE(&err, netCtx != NULL) goto cleanup;
-	KSI_BEGIN(provider->ctx, &err);
-
-	*netCtx = provider->implCtx;
 
 	KSI_SUCCESS(&err);
 
@@ -492,70 +477,6 @@ cleanup:
 	KSI_AggregationResp_free(tmp);
 	KSI_AggregationPdu_free(pdu);
 	KSI_TLV_free(payloadTLV);
-	return KSI_RETURN(&err);
-}
-
-int KSI_NetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
-	KSI_ERR err;
-	int res = 0;
-	KSI_NetworkClient *pr = NULL;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, client != NULL) goto cleanup;
-
-	KSI_BEGIN(ctx, &err);
-
-	pr = KSI_new(KSI_NetworkClient);
-	if (pr == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	pr->ctx = ctx;
-	pr->implCtx = NULL;
-	pr->implCtx_free = NULL;
-	pr->sendSignRequest = NULL;
-	pr->sendExtendRequest = NULL;
-	pr->sendPublicationRequest = NULL;
-
-	pr->agrPass = NULL;
-	pr->agrUser = NULL;
-	pr->extUser = NULL;
-	pr->extPass = NULL;
-	
-	/* TODO! Should not be static. */
-	res = setStringParam(&pr->extPass, "anon");
-	res = setStringParam(&pr->extUser, "anon");
-	res = setStringParam(&pr->agrPass, "anon");
-	res = setStringParam(&pr->agrUser, "anon");
-	
-	*client = pr;
-	pr = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_NetworkClient_free(pr);
-	return KSI_RETURN(&err);
-}
-
-int KSI_NetworkClient_setNetCtx(KSI_NetworkClient *client, void *netCtx, void (*netCtx_free)(void *)) {
-	KSI_ERR err;
-
-	KSI_PRE(&err, client != NULL) goto cleanup;
-	KSI_BEGIN(client->ctx, &err);
-
-	if (client->implCtx != NULL && client->implCtx_free != NULL) {
-		client->implCtx_free(client->implCtx);
-	}
-	client->implCtx = netCtx;
-	client->implCtx_free = netCtx_free;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
 	return KSI_RETURN(&err);
 }
 

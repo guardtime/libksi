@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+	#define KSI_NETWORK_CLIENT_INIT(ctx)  (KSI_NetworkClient) {(ctx), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}
+
 	struct KSI_NetworkClient_st {
 		KSI_CTX *ctx;
 
@@ -24,10 +26,8 @@ extern "C" {
 		/** Extender password. */
 		char *extPass;
 		
-		/** Dedicated context for the net provider */
-		void *implCtx;
 		/** Cleanup for the provider, gets the #providerCtx as parameter. */
-		void (*implCtx_free)(void *);
+		void (*implFree)(void *);
 	};
 
 	struct KSI_NetHandle_st {

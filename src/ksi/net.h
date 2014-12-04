@@ -186,16 +186,6 @@ extern "C" {
 	int KSI_NetworkClient_setNetCtx(KSI_NetworkClient *provider, void *netCtx, void (*netCtx_free)(void *));
 
 	/**
-	 * Getter for the implementation specific network context.
-	 * \param[in]		provider		Network provider.
-	 * \param[out]		netCtx			Pointer to the implementation specific network context.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
-	 */
-	int KSI_NetworkClient_getNetContext(KSI_NetworkClient *provider, void **netCtx);
-
-	/**
 	 * Setter for sign request function.
 	 * \param[in]		provider		Network provider.
 	 * \param[in]		fn				Pointer to sign request function.
