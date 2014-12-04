@@ -122,12 +122,10 @@ EXPORTS
     KSI_CTX_setLogLevel
     KSI_getPKITruststore
     KSI_getNetworkProvider
-    KSI_getLogger
     KSI_setPublicationsFile
     KSI_getPublicationCertEmail
     KSI_setPKITruststore
     KSI_setNetworkProvider
-    KSI_setLogger
     KSI_getPublicationsFile
     KSI_setPublicationCertEmail
     KSI_CTX_setRequestHeaderCallback
