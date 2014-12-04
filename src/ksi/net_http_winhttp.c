@@ -147,8 +147,6 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	
-	
 	res = KSI_RequestHandle_getNetContext(handle, (void **)&nhc);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -263,18 +261,16 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	unsigned char *request = NULL;
 	unsigned request_len = 0;
 	winhttpNetHandleCtx *implCtx = NULL;
-	KSI_HttpClientCtx *http;
+	KSI_HttpClient *http = (KSI_HttpClient *)client;
 	LPWSTR w_url = NULL;
 	
 	KSI_PRE(&err, client != NULL) goto cleanup;
 	KSI_PRE(&err, client->implCtx != NULL) goto cleanup;
-	KSI_PRE(&err, ((KSI_HttpClientCtx *)client->implCtx)->implCtx != NULL) goto cleanup;
+	KSI_PRE(&err, http->implCtx != NULL) goto cleanup;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	ctx = handle->ctx;
 	KSI_BEGIN(ctx, &err);
 
-	http = client->implCtx;	
-	
 	/*Initializing of winhttp helper struct*/
 	res = winhttpNetHandleCtx_new(&implCtx);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -409,18 +405,16 @@ static void implCtx_free(void * hInternet){
 	WinHttpCloseHandle((HINTERNET)hInternet);
 }
 
-int KSI_HttpClient_init(KSI_NetworkClient *client) {
+int KSI_HttpClient_init(KSI_HttpClient *http) {
 	KSI_ERR err;
-	KSI_HttpClientCtx *http = NULL;
 	HINTERNET session_handle = NULL;
 	ULONG buf;
 	LPWSTR agent_name;
 	int res;
 
-	KSI_PRE(&err, client != NULL) goto cleanup;
-	KSI_BEGIN(client->ctx, &err);
+	KSI_PRE(&err, http != NULL) goto cleanup;
+	KSI_BEGIN(http->parent.ctx, &err);
 
-	http = client->implCtx;
 	if (http == NULL) {
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "HttpClient network client context not initialized.");
 		goto cleanup;
@@ -454,7 +448,7 @@ int KSI_HttpClient_init(KSI_NetworkClient *client) {
 	http->sendRequest = winhttpSendRequest;
 
 	/* Register global init and cleanup methods. */
-	res = KSI_CTX_registerGlobals(client->ctx, winhttpGlobal_init, winhttpGlobal_cleanup);
+	res = KSI_CTX_registerGlobals(http->parent.ctx, winhttpGlobal_init, winhttpGlobal_cleanup);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
