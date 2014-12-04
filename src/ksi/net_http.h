@@ -24,6 +24,14 @@ extern "C" {
 	void KSI_HttpClient_free(KSI_HttpClient *http);
 
 	/**
+	 * Implementation specific function for initializing
+	 * the HTTP client.
+	 * \param[in]	http		Pointer to HTTP client.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_HttpClient_init(KSI_HttpClient *http);
+
+	/**
 	 * Setter for the signer (aggregator) URL. The value will be copied and thus
 	 * can be freed after successful call.
 	 * \param[in]	client		Pointer to the http client.
