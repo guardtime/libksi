@@ -7,7 +7,7 @@ int main(int argc, char **argv) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ksi = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_NetworkClient *net = NULL;
+	KSI_HttpClient *net = NULL;
 	KSI_DataHash *hsh = NULL;
 	KSI_DataHasher *hsr = NULL;
 	FILE *in = NULL;
@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
 			}
 		}
 
-		res = KSI_setNetworkProvider(ksi, net);
+		res = KSI_setNetworkProvider(ksi, (KSI_NetworkClient *)net);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable to set new network provider.\n");
 			goto cleanup;
@@ -154,7 +154,7 @@ cleanup:
 
 	if (in != NULL) fclose(in);
 
-	KSI_NetworkClient_free(net);
+	KSI_HttpClient_free(net);
 	KSI_Signature_free(sig);
 	KSI_DataHasher_free(hsr);
 	KSI_DataHash_free(hsh);
