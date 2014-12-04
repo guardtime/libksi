@@ -176,6 +176,9 @@ static void testAggregationHeader(CuTest* tc) {
 	res = KSI_CTX_setRequestHeaderCallback(ctx, NULL);
 	CuAssert(tc, "Unable to set NULL as header callback.", res == KSI_OK);
 
+	KSI_DataHash_free(hsh);
+	KSI_AggregationPdu_free(pdu);
+	KSI_RequestHandle_free(handle);
 }
 static void testExtending(CuTest* tc) {
 	int res;
