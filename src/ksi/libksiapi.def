@@ -120,7 +120,6 @@ EXPORTS
     KSI_createSignature
     KSI_extendSignature
     KSI_CTX_setLogLevel
-    KSI_CTX_setLogFile
     KSI_getPKITruststore
     KSI_getNetworkProvider
     KSI_getLogger
@@ -157,10 +156,6 @@ EXPORTS
     KSI_LOG_logBlob
     KSI_LOG_logTlv
     KSI_LOG_logDataHash
-    KSI_Logger_new
-    KSI_Logger_free
-    KSI_LOG_setLogLevel
-    KSI_LOG_setLogFile
     KSI_LOG_StreamLogger
     KSI_CTX_setLoggerCallback
 

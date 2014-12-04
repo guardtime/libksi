@@ -80,11 +80,6 @@ int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned tag, int isNonCritical, int isFor
 	typedef struct KSI_Integer_st KSI_Integer;
 
 	/**
-	 * Internal logger.
-	 */
-	typedef struct KSI_Logger_st KSI_Logger;
-
-	/**
 	 * Octet string type for storing binary data.
 	 */
 	typedef struct KSI_OctetString_st KSI_OctetString;
