@@ -341,7 +341,7 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_HttpClient **http) {
 	tmp->parent.sendExtendRequest = prepareExtendRequest;
 	tmp->parent.sendSignRequest = prepareAggregationRequest;
 	tmp->parent.sendPublicationRequest = preparePublicationsFileRequest;
-//	tmp->parent.implFree = (void (*)(void *))KSI_HttpClient_free;
+	tmp->parent.implFree = (void (*)(void *))KSI_HttpClient_free;
 
 	setIntParam(&tmp->connectionTimeoutSeconds, 10);
 	setIntParam(&tmp->readTimeoutSeconds, 10);
