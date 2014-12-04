@@ -4,6 +4,7 @@
 
 #include "internal.h"
 #include "ctx_impl.h"
+#include "tlv.h"
 
 struct KSI_Logger_st {
 	KSI_CTX *ctx;

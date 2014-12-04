@@ -172,7 +172,6 @@ EXPORTS
     KSI_NetworkClient_sendExtendRequest
     KSI_NetworkClient_sendPublicationsFileRequest
     KSI_RequestHandle_setImplContext
-    KSI_RequestHandle_getNetContext
     KSI_RequestHandle_getRequest
     KSI_RequestHandle_setResponse
     KSI_RequestHandle_getResponse
@@ -180,9 +179,6 @@ EXPORTS
     KSI_RequestHandle_getAggregationResponse
     KSI_RequestHandle_new
     KSI_RequestHandle_setReadResponseFn
-    KSI_NetworkClient_new
-    KSI_NetworkClient_setNetCtx
-    KSI_NetworkClient_getNetContext
     KSI_NetworkClient_setSendSignRequestFn
     KSI_NetworkClient_setSendExtendRequestFn
     KSI_NetworkClient_setSendPublicationRequestFn

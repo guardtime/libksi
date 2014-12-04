@@ -329,7 +329,18 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_HttpClient **http) {
 		goto cleanup;
 	}
 
-	tmp->parent = KSI_NETWORK_CLIENT_INIT(ctx);
+//	tmp->parent = KSI_NETWORK_CLIENT_INIT(ctx);
+
+	tmp->parent.ctx = ctx;
+	tmp->parent.agrPass = NULL;
+	tmp->parent.agrUser = NULL;
+	tmp->parent.extPass = NULL;
+	tmp->parent.extUser = NULL;
+	tmp->parent.implFree = NULL;
+	tmp->parent.sendExtendRequest = NULL;
+	tmp->parent.sendPublicationRequest = NULL;
+	tmp->parent.sendSignRequest = NULL;
+
 
 	tmp->agentName = NULL;
 	tmp->sendRequest = NULL;

@@ -242,7 +242,6 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	wininetNetHandleCtx *wininetHandle = NULL;
 	
 	KSI_PRE(&err, client != NULL) goto cleanup;
-	KSI_PRE(&err, client->implCtx != NULL) goto cleanup;
 	KSI_PRE(&err, http->implCtx != NULL) goto cleanup;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	ctx = handle->ctx;
@@ -345,16 +344,16 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		}
 
 		/*TODO Timeout is set, but seems to have no effect*/
-		if (httpClient->connectionTimeoutSeconds >= 0) {
-			DWORD dw = (httpClient->connectionTimeoutSeconds == 0 ? 0xFFFFFFFF : httpClient->connectionTimeoutSeconds * 1000);
+		if (http->connectionTimeoutSeconds >= 0) {
+			DWORD dw = (http->connectionTimeoutSeconds == 0 ? 0xFFFFFFFF : http->connectionTimeoutSeconds * 1000);
 			if(!InternetSetOption(wininetHandle->request_handle, INTERNET_OPTION_CONNECT_TIMEOUT, &dw, sizeof(dw))){
 				KSI_FAIL(&err, KSI_NETWORK_ERROR, "Unable to set timeout");
 				goto cleanup;	
 			}
 		}
 
-		if (httpClient->readTimeoutSeconds >= 0) {
-			DWORD dw = (httpClient->readTimeoutSeconds == 0 ? 0xFFFFFFFF : httpClient->readTimeoutSeconds * 1000);
+		if (http->readTimeoutSeconds >= 0) {
+			DWORD dw = (http->readTimeoutSeconds == 0 ? 0xFFFFFFFF : http->readTimeoutSeconds * 1000);
 			if(!InternetSetOption(wininetHandle->request_handle, INTERNET_OPTION_SEND_TIMEOUT, &dw, sizeof(dw))){
 				KSI_FAIL(&err, KSI_NETWORK_ERROR, "Unable to set timeout");
 				goto cleanup;

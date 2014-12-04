@@ -6,6 +6,7 @@
 #include "internal.h"
 #include "publicationsfile_impl.h"
 #include "io.h"
+#include "tlv.h"
 
 KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationsHeader)
 KSI_IMPORT_TLV_TEMPLATE(KSI_CertificateRecord)
