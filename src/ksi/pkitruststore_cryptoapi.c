@@ -379,7 +379,7 @@ int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, unsigned raw_len, KSI_PK
 	tmp->pkcs7.cbData = 0;
 
 	if (raw_len > UINT_MAX) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Length is greater than INT_MAX.");
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Length is more than MAX_INT.");
 		goto cleanup;
 	}
 
@@ -423,8 +423,17 @@ int KSI_PKICertificate_new(KSI_CTX *ctx, const void *der, size_t der_len, KSI_PK
 	
 	x509 = CertCreateCertificateContext(X509_ASN_ENCODING, der, (unsigned)der_len);
 	if (x509 == NULL) {
-		KSI_LOG_debug(ctx, "%s", getMSError(GetLastError()));
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Unable to create PKI certificate.");
+		DWORD error = GetLastError();
+		char *errmsg = getMSError(error);
+		if(error == CRYPT_E_ASN1_EOD)
+			KSI_FAIL(&err, KSI_INVALID_FORMAT, "Invalid PKI certificate. ASN.1 unexpected end of data.");
+		else if(error == CRYPT_E_ASN1_MEMORY	)
+			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		else
+			KSI_FAIL(&err, KSI_INVALID_FORMAT, errmsg);
+		
+		printf(">>>> %i, %x, %s", error, error, errmsg);
+		KSI_LOG_debug(ctx, "%s", errmsg);
 		goto cleanup;
 	}
 
@@ -528,7 +537,7 @@ static void printCertInfo(PCCERT_CONTEXT cert){
 	return;
 	}
 
-/*TODO: for debuging*/
+/*TODO: for debugging*/
 static void printCertsInStore(HCERTSTORE certStore){
 	PCCERT_CONTEXT certFound = NULL;
 	DWORD i =0;
@@ -556,7 +565,7 @@ static void printCertsInStore(HCERTSTORE certStore){
 	
 }
 
-/*TODO: for debuging*/
+/*TODO: for debugging*/
 static void printCertChain(const PCCERT_CHAIN_CONTEXT pChainContext){
 	DWORD i=0;
 	DWORD j=0;
@@ -611,13 +620,13 @@ static int extractSigningCertificate(const KSI_PKISignature *signature, PCCERT_C
 	signerCount = CryptGetMessageSignerCount(PKCS_7_ASN_ENCODING, signature->pkcs7.pbData, signature->pkcs7.cbData);
 	if(signerCount == -1){
 		KSI_LOG_debug(signature->ctx, "%s", getMSError(GetLastError()));
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Unable to count signatures PKI certificates.");
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Unable to count PKI signatures certificates.");
 		goto cleanup;
 	}
 
 	/*Is there exactly 1 signing cert?*/
 	if(signerCount !=1){
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "PKI signature cert count is not 1.");
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, "PKI signature certificate count is not 1.");
 		goto cleanup;
 	}
 	
@@ -646,7 +655,7 @@ static int extractSigningCertificate(const KSI_PKISignature *signature, PCCERT_C
 		if(error == E_OUTOFMEMORY)
 			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		else if(error == CRYPT_E_UNEXPECTED_ENCODING)
-			KSI_FAIL(&err, KSI_INVALID_FORMAT, "The signature is not encoded as PKCS7.");
+			KSI_FAIL(&err, KSI_INVALID_FORMAT, "The PKI signature is not encoded as PKCS7.");
 		else if(error == CRYPT_E_MSG_ERROR)
 			KSI_FAIL(&err, KSI_CRYPTO_FAILURE, errmsg);
 		else
@@ -662,7 +671,9 @@ static int extractSigningCertificate(const KSI_PKISignature *signature, PCCERT_C
 		KSI_LOG_debug(signature->ctx, "%s", errmsg);
 		
 		if(error == CRYPT_E_ATTRIBUTES_MISSING)
-			KSI_FAIL(&err, KSI_INVALID_FORMAT, "The signatures does not contain signing certificate id.");
+			KSI_FAIL(&err, KSI_INVALID_FORMAT, "The PKI signature does not contain signing certificate id.");
+		else
+			KSI_FAIL(&err, KSI_INVALID_FORMAT, errmsg);
 		goto cleanup;
 	}
 
@@ -674,7 +685,7 @@ static int extractSigningCertificate(const KSI_PKISignature *signature, PCCERT_C
 	
 	if(!CryptMsgGetParam (signaturMSG, CMSG_SIGNER_CERT_INFO_PARAM, 0, dataRecieved, &dataLen)){
 		KSI_LOG_debug(signature->ctx, "%s", getMSError(GetLastError()));
-		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Unable to get signatures signing certificate id.");
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Unable to get PKI signatures signing certificate id.");
 		goto cleanup;
 	}
 
@@ -684,7 +695,7 @@ static int extractSigningCertificate(const KSI_PKISignature *signature, PCCERT_C
 	signing_cert = CertGetSubjectCertificateFromStore(certStore, X509_ASN_ENCODING, pSignerCertInfo);
 	if(signing_cert == NULL){
 		KSI_LOG_debug(signature->ctx, "%s", getMSError(GetLastError()));
-		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Unable to get signer certificate.");
+		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Unable to get PKI signatures signer certificate.");
 		goto cleanup;
 	}
 	
@@ -937,7 +948,7 @@ int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned cha
 		if(error == E_INVALIDARG || error == CRYPT_E_UNEXPECTED_MSG_TYPE || error == CRYPT_E_NO_SIGNER)
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, errmsg);
 		else if(NTE_BAD_ALGID)
-			KSI_FAIL(&err, KSI_UNAVAILABLE_HASH_ALGORITHM, errmsg);
+			KSI_FAIL(&err, KSI_INVALID_PKI_SIGNATURE, errmsg);
 		else if(NTE_BAD_SIGNATURE)
 			KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Verification of PKI signature failed.");
 		else
@@ -1039,8 +1050,13 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 		DWORD error = GetLastError();
 		const char *errmsg = getMSError(error);
 		KSI_LOG_debug(ctx, "%s", errmsg);
-
-		KSI_FAIL(&err, KSI_PKI_CERTIFICATE_NOT_TRUSTED, errmsg);
+		
+		if(error == NTE_BAD_SIGNATURE)
+			KSI_FAIL(&err, KSI_PKI_CERTIFICATE_NOT_TRUSTED, "Invalid PKI signature.");
+		else if(error == NTE_NO_MEMORY) 
+			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, "Unable to verify PKI signature. CSP out of memory.");
+		else 
+			KSI_FAIL(&err, KSI_PKI_CERTIFICATE_NOT_TRUSTED, errmsg);
 		goto cleanup;
 	}
 
