@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
 	FILE *out = NULL;
 	KSI_Signature *sig = NULL;
 	KSI_Signature *ext = NULL;
-	KSI_NetworkClient *net = NULL;
+	KSI_HttpClient *net = NULL;
 	unsigned char *raw = NULL;
 	unsigned raw_len;
 	unsigned count;
@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
 			}
 		}
 
-		res = KSI_setNetworkProvider(ksi, net);
+		res = KSI_setNetworkProvider(ksi, (KSI_NetworkClient *)net);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable to set new network provider.\n");
 			goto cleanup;

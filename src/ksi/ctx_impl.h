@@ -32,9 +32,6 @@ extern "C" {
 		/* Count of errors (usually #error_end - #error_start + 1, unless error count > #errors_size. */
 		unsigned int errors_count;
 
-		/** The logger mechanism is deprecated. */
-		KSI_Logger *logger;
-
 		KSI_LoggerCallback loggerCB;
 		int logLevel;
 		void *loggerCtx;

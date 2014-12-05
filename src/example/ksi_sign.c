@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
 
 	/* Check if uri's are specified. */
 	if (strncmp("-", argv[3], 1) || strncmp("-", argv[4], 1)) {
-		KSI_NetworkClient *net = NULL;
+		KSI_HttpClient *net = NULL;
 		res = KSI_HttpClient_new(ksi, &net);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable to create new network provider.\n");
@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
 		}
 
 		/* Set the new network provider. */
-		res = KSI_setNetworkProvider(ksi, net);
+		res = KSI_setNetworkProvider(ksi, (KSI_NetworkClient*)net);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable to set network provider.\n");
 			res = KSI_UNKNOWN_ERROR;

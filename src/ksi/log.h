@@ -130,41 +130,6 @@ extern "C" {
 	int KSI_LOG_logDataHash(KSI_CTX *ctx, int level, const char *prefix, const KSI_DataHash *hsh);
 
 	/**
-	 * Creates a new logger. If the output file name is set to \c NULL, the log is
-	 * written to the standard output.
-	 * \param[in]	ctx			KSI context.
-	 * \param[in]	fileName	File name where to write the log.
-	 * \param[in]	logLevel	Log level.
-	 * \param[out]	logger		Pointer to the receiving ponter.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_Logger_free, #KSI_LOG_setLogLevel, #KSI_LOG_setLogFile.
-	 */
-	KSI_FN_DEPRECATED(int KSI_Logger_new(KSI_CTX *ctx, char *fileName, int logLevel, KSI_Logger **logger));
-
-	/**
-	 * Cleanup method for the logger.
-	 * \param[in]	logger		Pointer to the logger.
-	 */
-	KSI_FN_DEPRECATED(void KSI_Logger_free(KSI_Logger *logger));
-
-	/**
-	 * Change the log level.
-	 * \param[in]	logger		Pointer to the logger.
-	 * \param[in]	level		Log level.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	KSI_FN_DEPRECATED(int KSI_LOG_setLogLevel(KSI_Logger *logger, int level));
-
-	/**
-	 * Sets the output file for the logger. If \c file is \c NULL the log
-	 * is written to the standard output.
-	 * \param[in]	logger		Pointer to the logger.
-	 * \param[in]	file		Null-terminated file name.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	KSI_FN_DEPRECATED(int KSI_LOG_setLogFile(KSI_Logger *logger, const char *file));
-
-	/**
 	 * The stream logger is a simple logging call-back to be used with #KSI_CTX_setLoggerCallback.
 	 * It will output the value to a \c FILE stream.
 	 * \param[in]	logCtx		A stream to write the log messages.

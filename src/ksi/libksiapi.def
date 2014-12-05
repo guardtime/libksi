@@ -120,15 +120,12 @@ EXPORTS
     KSI_createSignature
     KSI_extendSignature
     KSI_CTX_setLogLevel
-    KSI_CTX_setLogFile
     KSI_getPKITruststore
     KSI_getNetworkProvider
-    KSI_getLogger
     KSI_setPublicationsFile
     KSI_getPublicationCertEmail
     KSI_setPKITruststore
     KSI_setNetworkProvider
-    KSI_setLogger
     KSI_getPublicationsFile
     KSI_setPublicationCertEmail
     KSI_CTX_setRequestHeaderCallback
@@ -157,10 +154,6 @@ EXPORTS
     KSI_LOG_logBlob
     KSI_LOG_logTlv
     KSI_LOG_logDataHash
-    KSI_Logger_new
-    KSI_Logger_free
-    KSI_LOG_setLogLevel
-    KSI_LOG_setLogFile
     KSI_LOG_StreamLogger
     KSI_CTX_setLoggerCallback
 
@@ -172,7 +165,6 @@ EXPORTS
     KSI_NetworkClient_sendExtendRequest
     KSI_NetworkClient_sendPublicationsFileRequest
     KSI_RequestHandle_setImplContext
-    KSI_RequestHandle_getNetContext
     KSI_RequestHandle_getRequest
     KSI_RequestHandle_setResponse
     KSI_RequestHandle_getResponse
@@ -180,9 +172,6 @@ EXPORTS
     KSI_RequestHandle_getAggregationResponse
     KSI_RequestHandle_new
     KSI_RequestHandle_setReadResponseFn
-    KSI_NetworkClient_new
-    KSI_NetworkClient_setNetCtx
-    KSI_NetworkClient_getNetContext
     KSI_NetworkClient_setSendSignRequestFn
     KSI_NetworkClient_setSendExtendRequestFn
     KSI_NetworkClient_setSendPublicationRequestFn
@@ -204,6 +193,7 @@ EXPORTS
     KSI_HttpClient_setConnectTimeoutSeconds
     KSI_HttpClient_setReadTimeoutSeconds
     KSI_HttpClient_init
+    KSI_HttpClient_free
 
 ;pkitruststore.h
 EXPORTS

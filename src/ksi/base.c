@@ -76,7 +76,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	KSI_CTX *ctx = NULL;
-	KSI_NetworkClient *netProvider = NULL;
+	KSI_HttpClient *http = NULL;
 	KSI_PKITruststore *pkiTruststore = NULL;
 
 	ctx = KSI_new(KSI_CTX);
@@ -95,7 +95,6 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->publicationsFile = NULL;
 	ctx->pkiTruststore = NULL;
 	ctx->netProvider = NULL;
-	ctx->logger = NULL;
 	ctx->publicationCertEmail = NULL;
 	ctx->loggerCB = NULL;
 	ctx->requestHeaderCB = NULL;
@@ -115,12 +114,12 @@ int KSI_CTX_new(KSI_CTX **context) {
 	if (res != KSI_OK) goto cleanup;
 
 	/* Initialize curl as the net handle. */
-	res = KSI_HttpClient_new(ctx, &netProvider);
+	res = KSI_HttpClient_new(ctx, &http);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_setNetworkProvider(ctx, netProvider);
+	res = KSI_setNetworkProvider(ctx, (KSI_NetworkClient *)http);
 	if (res != KSI_OK) goto cleanup;
-	netProvider = NULL;
+	http = NULL;
 
 	/* Create and set the PKI truststore */
 	res = KSI_PKITruststore_new(ctx, 1, &pkiTruststore);
@@ -140,7 +139,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 
 cleanup:
 
-	KSI_NetworkClient_free(netProvider);
+	KSI_HttpClient_free(http);
 	KSI_PKITruststore_free(pkiTruststore);
 
 	KSI_CTX_free(ctx);
@@ -210,8 +209,6 @@ void KSI_CTX_free(KSI_CTX *ctx) {
 		KSI_List_free(ctx->cleanupFnList);
 
 		KSI_free(ctx->errors);
-
-		KSI_Logger_free(ctx->logger);
 
 		KSI_NetworkClient_free(ctx->netProvider);
 		KSI_PKITruststore_free(ctx->pkiTruststore);
@@ -509,36 +506,12 @@ int KSI_CTX_setLogLevel(KSI_CTX *ctx, int level) {
 
 	ctx->logLevel = level;
 
-	/* TODO! Remove deprecated. */
-	if (ctx->logger != NULL) {
-		res = KSI_LOG_setLogLevel(ctx->logger, level);
-		KSI_CATCH(&err, res) goto cleanup;
-	}
-
 	KSI_SUCCESS(&err);
 
 cleanup:
 
 	return KSI_RETURN(&err);
 }
-
-int KSI_CTX_setLogFile(KSI_CTX *ctx, char *fileName) {
-	KSI_ERR err;
-	int res;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	res = KSI_LOG_setLogFile(ctx->logger, fileName);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-}
-
 
 int KSI_ERR_init(KSI_CTX *ctx, KSI_ERR *err) {
 	err->ctx = ctx;
@@ -707,7 +680,6 @@ cleanup:																					\
 
 CTX_GET_SET_VALUE(pkiTruststore, PKITruststore, KSI_PKITruststore, KSI_PKITruststore_free)
 CTX_GET_SET_VALUE(netProvider, NetworkProvider, KSI_NetworkClient, KSI_NetworkClient_free)
-CTX_GET_SET_VALUE(logger, Logger, KSI_Logger, KSI_Logger_free)
 CTX_GET_SET_VALUE(publicationsFile, PublicationsFile, KSI_PublicationsFile, KSI_PublicationsFile_free)
 
 int KSI_CTX_setRequestHeaderCallback(KSI_CTX *ctx, KSI_RequestHeaderCallback cb) {
