@@ -193,7 +193,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetworkClient_setSendSignRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_AggregationReq *, KSI_RequestHandle **));
+	int KSI_NetworkClient_setSendSignRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_AggregationPdu *, KSI_RequestHandle **));
 
 	/**
 	 * Setter for sign request function.
@@ -203,7 +203,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetworkClient_setSendExtendRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **));
+	int KSI_NetworkClient_setSendExtendRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_ExtendPdu *, KSI_RequestHandle **));
 
 	/**
 	 * Setter for sign request function.

@@ -180,6 +180,7 @@ static void testAggregationHeader(CuTest* tc) {
 	KSI_AggregationPdu_free(pdu);
 	KSI_RequestHandle_free(handle);
 }
+
 static void testExtending(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
