@@ -141,7 +141,8 @@ int KSI_MetaData_setClientId(KSI_MetaData *t, KSI_Utf8String *clientId);
 int KSI_MetaData_setMachineId(KSI_MetaData *t, KSI_OctetString *machineId);
 int KSI_MetaData_setSequenceNr(KSI_MetaData *t, KSI_Integer *sequenceNr);
 int KSI_MetaData_setRequestTime(KSI_MetaData *t, KSI_Integer *reqTime_us);
-
+int KSI_MetaData_toTlv(KSI_CTX *ctx, const KSI_MetaData *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+int KSI_MetaData_fromTlv(KSI_TLV *tlv, KSI_MetaData **metaData);
 /*
  * KSI_ExtendPdu
  */

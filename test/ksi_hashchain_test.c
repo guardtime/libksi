@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "all_tests.h"
+#include "ksi/tlv.h"
 
 extern KSI_CTX *ctx;
 
@@ -100,6 +101,19 @@ static void buildHashChain(CuTest *tc, const char *hexImprint, int isLeft, int l
 	res = KSI_HashChain_appendLink(hsh, NULL, NULL, isLeft, levelCorrection, chn);
 	CuAssert(tc, "Unable to append hash chain link", res == KSI_OK && chn != NULL);
 
+}
+
+static void buildMetaDataHashChain(CuTest *tc, KSI_MetaData *metaData, int isLeft, int levelCorrection, KSI_LIST(KSI_HashChainLink) **chn) {
+	int res;
+	KSI_DataHash *hsh = NULL;
+
+	if (*chn == NULL) {
+		res = KSI_HashChainLinkList_new(ctx, chn);
+		CuAssert(tc, "Unable to build hash chain.", res == KSI_OK && *chn != NULL);
+	}
+
+	res = KSI_HashChain_appendLink(NULL, NULL, metaData, isLeft, levelCorrection, chn);
+	CuAssert(tc, "Unable to append hash chain link", res == KSI_OK && chn != NULL);
 }
 
 static void testCalChainBuild(CuTest* tc) {
@@ -219,14 +233,97 @@ static void testAggrChainBuilt(CuTest *tc) {
 	KSI_DataHash_free(in);
 	KSI_DataHash_free(out);
 	KSI_HashChainLinkList_free(chn);
-
-
 }
+
+static void testAggrChainBuiltWithMetaData(CuTest *tc) {
+	int res;
+	unsigned char buf[1024];
+	unsigned buf_len;
+	
+	KSI_LIST(KSI_HashChainLink) *chn = NULL;
+	KSI_HashChainLink *link = NULL;
+	KSI_DataHash *in = NULL;
+	KSI_DataHash *out = NULL;
+	KSI_DataHash *exp = NULL;
+
+	KSI_MetaData *tmp_metaData = NULL;
+	KSI_Utf8String *clientId = NULL;
+	KSI_TLV *metaDataTLV = NULL;
+	KSI_MetaData *metaData = NULL;
+	
+
+	res = KSI_MetaData_new(ctx, &tmp_metaData);
+	CuAssert(tc, "Unable to create meta data object.", res == KSI_OK);
+
+	res = KSI_Utf8String_new(ctx, "test",5, &clientId);
+	CuAssert(tc, "Unable create client ID string.", res == KSI_OK && clientId != NULL);
+	
+	res = KSI_MetaData_setClientId(tmp_metaData, clientId);
+	CuAssert(tc, "Unable to set client ID", res == KSI_OK);
+	clientId = NULL;
+	
+	res = KSI_MetaData_toTlv(ctx, tmp_metaData, 0x04, 0, 0, &metaDataTLV);
+	CuAssert(tc, "Unable to TLV", res == KSI_OK);
+	
+	res = KSI_MetaData_fromTlv(metaDataTLV, &metaData);
+	CuAssert(tc, "Unable to from TLV", res == KSI_OK);
+	
+/*
+	metadata [01 05 74 65 73 74 00]
+	
+	[01] || H([0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d] || [019eaa47c788a21835616e504d2ed960afb9ec5e867643f50c223db15fff53d636] || [01])
+	[01] || [50e7605eba534abb0f515f1f3b3359d6d909499ec102d4eafa30941c7c75109f]
+	
+	[01] || H([0150e7605eba534abb0f515f1f3b3359d6d909499ec102d4eafa30941c7c75109f] || [01 05 74 65 73 74 00] || [02])		
+	[01] || [9bfd782cbe11e1e6011196d21a9ea78a68121b972f9aecd2617d26598d5f6a95]
+				
+	[01] || H([019bfd782cbe11e1e6011196d21a9ea78a68121b972f9aecd2617d26598d5f6a95] || [010000000000000000000000000000000000000000000000000000000000000000] || [03])
+	[01] || [a98e94a755ab276818ccefcf0b866043d12f80f9df09c087777511a48e533108]
+
+	[01] || H([015e13631c36caa14a5a3b74da179db614a7ed778ce634c4c8a132007f9756cc1f] || [01a98e94a755ab276818ccefcf0b866043d12f80f9df09c087777511a48e533108] || [04])
+	[01] || [85035b9a620d4c06ca24b9df2f9e74768a0dc8a543d9c418a4bbf41cfdbdb000]
+ */	
+
+	/*Imput hash*/
+	res = KSITest_decodeHexStr("0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", buf, sizeof(buf), &buf_len);
+	CuAssert(tc, "Unable to decode input hash", res == KSI_OK);
+
+	res = KSI_DataHash_fromImprint(ctx, buf, buf_len, &in);
+	CuAssert(tc, "Unable to create input data hash", res == KSI_OK && in != NULL);
+
+	/*Hash chain*/		
+	buildHashChain(tc, "019eaa47c788a21835616e504d2ed960afb9ec5e867643f50c223db15fff53d636", 1, 0, &chn);
+	buildMetaDataHashChain(tc, metaData, 1, 0, &chn);
+	buildHashChain(tc, "010000000000000000000000000000000000000000000000000000000000000000", 1, 0, &chn);
+	buildHashChain(tc, "015e13631c36caa14a5a3b74da179db614a7ed778ce634c4c8a132007f9756cc1f", 0, 0, &chn);
+	
+	res = KSI_HashChain_aggregate(ctx, chn, in, 0, KSI_HASHALG_SHA2_256, NULL, &out);
+	CuAssert(tc, "Unable to aggregate chain without meta data TLV.", res == KSI_OK && out != NULL);
+
+	/* Expected out hash. */
+	res = KSITest_decodeHexStr("0185035b9a620d4c06ca24b9df2f9e74768a0dc8a543d9c418a4bbf41cfdbdb000", buf, sizeof(buf), &buf_len);
+	CuAssert(tc, "Unable to decode expected output hash", res == KSI_OK);
+
+	res = KSI_DataHash_fromImprint(ctx, buf, buf_len, &exp);
+	CuAssert(tc, "Unable to create expected output data hash", res == KSI_OK && exp != NULL);
+
+	CuAssert(tc, "Data hash mismatch", KSI_DataHash_equals(out, exp));
+	
+	KSI_MetaData_free(tmp_metaData);
+	KSI_Utf8String_free(clientId);
+	KSI_TLV_free(metaDataTLV);
+	KSI_HashChainLinkList_free(chn);
+	KSI_DataHash_free(in);
+	KSI_DataHash_free(out);
+	KSI_DataHash_free(exp);
+}
+
 CuSuite* KSITest_HashChain_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
 	SUITE_ADD_TEST(suite, testCalChainBuild);
 	SUITE_ADD_TEST(suite, testAggrChainBuilt);
+	SUITE_ADD_TEST(suite, testAggrChainBuiltWithMetaData);
 
 	return suite;
 }

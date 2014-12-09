@@ -203,7 +203,7 @@ extern "C" {
 	#define KSI_TLV_TMPL_FLG_MORE_DEFS		0x20
 
 	/**
-	 * This flag prevents the serialisation.
+	 * This flag prevents the serialization.
 	 */
 	#define KSI_TLV_TMPL_FLG_NO_SERIALIZE	0x40
 
