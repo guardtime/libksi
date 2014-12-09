@@ -8,7 +8,6 @@
 
 KSI_IMPLEMENT_LIST(GlobalCleanupFn, NULL);
 
-
 const char *KSI_getErrorString(int statusCode) {
 	switch (statusCode) {
 		case KSI_OK:
@@ -99,6 +98,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->loggerCB = NULL;
 	ctx->requestHeaderCB = NULL;
 	ctx->loggerCtx = NULL;
+	ctx->requestCounter = 0;
 
 	KSI_ERR_clearErrors(ctx);
 

@@ -36,58 +36,10 @@ static int setIntParam(int *param, int val) {
 	return KSI_OK;
 }
 
-static int addRequestId(
-		KSI_HttpClient *http,
-		void *pdu,
-		int(*getRequest)(void *, void **),
-		int(getId)(void *, KSI_Integer **),
-		int(setId)(void *, KSI_Integer *)) {
-	KSI_ERR err;
-	void *req = NULL;
-	KSI_Integer *reqId = NULL;
-	int res;
-
-	KSI_PRE(&err, http != NULL) goto cleanup;
-	KSI_PRE(&err, pdu != NULL) goto cleanup;
-	KSI_BEGIN(http->parent.ctx, &err);
-
-	res = getRequest(pdu, &req);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	if (req == NULL) {
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "PDU does not contain a request.");
-		goto cleanup;
-	}
-
-	res = getId(req, &reqId);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	if (reqId != NULL) {
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Request already contains a request Id.");
-		goto cleanup;
-	}
-
-	res = KSI_Integer_new(http->parent.ctx, ++http->requestId, &reqId);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = setId(req, reqId);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	reqId = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_Integer_free(reqId);
-
-	return KSI_RETURN(&err);
-}
 
 static int prepareRequest(
 		KSI_NetworkClient *client,
 		void *pdu,
-		int (*addRequestId)(KSI_HttpClient *, void *),
 		int (*updateHmac)(void *, int, char *),
 		int (*serialize)(void *, unsigned char **, unsigned *),
 		KSI_RequestHandle **handle) {
@@ -103,9 +55,6 @@ static int prepareRequest(
 	KSI_PRE(&err, pdu != NULL) goto cleanup;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(client->ctx, &err);
-
-	res = addRequestId(http, pdu);
-	KSI_CATCH(&err, res) goto cleanup;
 
 	res = updateHmac(pdu, defaultAlgo, client->extPass);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -140,29 +89,10 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int addExtendRequestId(KSI_HttpClient *http, KSI_ExtendPdu *pdu) {
-	return addRequestId(
-			http,
-			pdu,
-			(int(*)(void *, void **))KSI_ExtendPdu_getRequest,
-			(int(*)(void *, KSI_Integer **))KSI_ExtendReq_getRequestId,
-			(int(*)(void *, KSI_Integer *))KSI_ExtendReq_setRequestId);
-}
-
-static int addAggregationRequestId(KSI_HttpClient *http, KSI_ExtendPdu *pdu) {
-	return addRequestId(
-			http,
-			pdu,
-			(int(*)(void *, void **))KSI_AggregationPdu_getRequest,
-			(int(*)(void *, KSI_Integer **))KSI_AggregationReq_getRequestId,
-			(int(*)(void *, KSI_Integer *))KSI_AggregationReq_setRequestId);
-}
-
 static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendPdu *pdu, KSI_RequestHandle **handle) {
 	return prepareRequest(
 			client,
 			pdu,
-			(int (*)(KSI_HttpClient *, void *))addExtendRequestId,
 			(int (*)(void *, int, char *))KSI_ExtendPdu_updateHmac,
 			(int (*)(void *, unsigned char **, unsigned *))KSI_ExtendPdu_serialize,
 			handle);
@@ -172,7 +102,6 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationP
 	return prepareRequest(
 			client,
 			pdu,
-			(int (*)(KSI_HttpClient *, void *))addAggregationRequestId,
 			(int (*)(void *, int, char *))KSI_AggregationPdu_updateHmac,
 			(int (*)(void *, unsigned char **, unsigned *))KSI_AggregationPdu_serialize,
 			handle);
@@ -247,7 +176,6 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_HttpClient **http) {
 	tmp->urlExtender = NULL;
 	tmp->urlPublication = NULL;
 	tmp->urlSigner = NULL;
-	tmp->requestId = 0;
 
 	tmp->parent.sendExtendRequest = prepareExtendRequest;
 	tmp->parent.sendSignRequest = prepareAggregationRequest;

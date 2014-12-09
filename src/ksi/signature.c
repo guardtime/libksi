@@ -5,6 +5,7 @@
 #include "signature_impl.h"
 #include "publicationsfile_impl.h"
 #include "tlv.h"
+#include "ctx_impl.h"
 
 typedef struct headerRec_st HeaderRec;
 
@@ -13,6 +14,62 @@ KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationRecord);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationHashChain)
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationAuthRec)
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarAuthRec)
+
+static int addRequestId(
+		KSI_CTX *ctx,
+		void *req,
+		int(getId)(void *, KSI_Integer **),
+		int(setId)(void *, KSI_Integer *)) {
+	KSI_ERR err;
+	KSI_Integer *reqId = NULL;
+	int res;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, req != NULL) goto cleanup;
+	KSI_PRE(&err, getId != NULL) goto cleanup;
+	KSI_PRE(&err, setId != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	res = getId(req, &reqId);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	if (reqId != NULL) {
+		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Request already contains a request Id.");
+		goto cleanup;
+	}
+
+	res = KSI_Integer_new(ctx, ++ctx->requestCounter, &reqId);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = setId(req, reqId);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	reqId = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_Integer_free(reqId);
+
+	return KSI_RETURN(&err);
+}
+
+static int addExtendRequestId(KSI_CTX *ctx, KSI_ExtendReq *req) {
+	return addRequestId(
+			ctx,
+			req,
+			(int(*)(void *, KSI_Integer **))KSI_ExtendReq_getRequestId,
+			(int(*)(void *, KSI_Integer *))KSI_ExtendReq_setRequestId);
+}
+
+static int addAggregationRequestId(KSI_CTX *ctx, KSI_AggregationReq *req) {
+	return addRequestId(
+			ctx,
+			req,
+			(int(*)(void *, KSI_Integer **))KSI_AggregationReq_getRequestId,
+			(int(*)(void *, KSI_Integer *))KSI_AggregationReq_setRequestId);
+}
 
 /**
  * KSI_Signature
@@ -27,6 +84,7 @@ static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_LIST(KSI_AggregationHashChain)*, 
 static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_CalendarAuthRec*, calendarAuthRec, CalendarAuthRecord)
 static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_AggregationAuthRec*, aggregationAuthRec, AggregationAuthRecord)
 static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_PublicationRecord*, publication, PublicationRecord)
+
 
 /**
  * KSI_AggregationHashChain
@@ -332,7 +390,7 @@ cleanup:
 static int createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_AggregationReq **request) {
 	KSI_ERR err;
 	int res;
-	KSI_AggregationReq *req = NULL;
+	KSI_AggregationReq *tmp = NULL;
 
 	KSI_DataHash *tmpHash = NULL;
 
@@ -340,20 +398,24 @@ static int createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_AggregationReq
 	KSI_PRE(&err, hsh != NULL) goto cleanup;
 	KSI_PRE(&err, request != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
+
 	/* Create request object */
-	res = KSI_AggregationReq_new(ctx, &req);
+	res = KSI_AggregationReq_new(ctx, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = addAggregationRequestId(ctx, tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_DataHash_clone(hsh, &tmpHash);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Add the hash to the request */
-	res = KSI_AggregationReq_setRequestHash(req, tmpHash);
+	res = KSI_AggregationReq_setRequestHash(tmp, tmpHash);
 	KSI_CATCH(&err, res) goto cleanup;
 	tmpHash = NULL;
 
-	*request = req;
-	req = NULL;
+	*request = tmp;
+	tmp = NULL;
 
 	KSI_SUCCESS(&err);
 
@@ -361,7 +423,7 @@ cleanup:
 
 
 	KSI_DataHash_free(tmpHash);
-	KSI_AggregationReq_free(req);
+	KSI_AggregationReq_free(tmp);
 
 	return KSI_RETURN(&err);
 }
@@ -382,6 +444,9 @@ static int createExtendRequest(KSI_CTX *ctx, KSI_Integer *start, KSI_Integer *en
 
 	/* Create extend request object. */
 	res = KSI_ExtendReq_new(ctx, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = addExtendRequestId(ctx, tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_Integer_ref(start);

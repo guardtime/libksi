@@ -20,7 +20,6 @@ extern "C" {
 		char *agentName;
 		
 		int (*sendRequest)(KSI_NetworkClient *, KSI_RequestHandle *, char *);
-		KSI_uint64_t requestId;
 
 		void *implCtx;
 		void (*implCtx_free)(void *);
