@@ -122,6 +122,7 @@ static void testAggregationHeader(CuTest* tc) {
 	KSI_RequestHandle *handle = NULL;
 	KSI_Integer *tmp = NULL;
 	KSI_Header *hdr = NULL;
+	KSI_Integer *reqId = NULL;
 	const unsigned char *raw = NULL;
 	unsigned raw_len = 0;
 
@@ -148,6 +149,13 @@ static void testAggregationHeader(CuTest* tc) {
 	CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
 	hsh = NULL;
 
+	res = KSI_Integer_new(ctx, 17, &reqId);
+	CuAssert(tc, "Unable to create reqId", res == KSI_OK && reqId != NULL);
+
+	res = KSI_AggregationReq_setRequestId(req, reqId);
+	CuAssert(tc, "Unable to set request id.", res == KSI_OK);
+	reqId = NULL;
+
 	res = KSI_NetworkClient_sendSignRequest(pr, req, &handle);
 	CuAssert(tc, "Unable to send request.", res == KSI_OK && handle != NULL);
 
@@ -173,13 +181,17 @@ static void testAggregationHeader(CuTest* tc) {
 	CuAssert(tc, "Wrong instance id.", KSI_Integer_equalsUInt(tmp, 1337));
 	tmp = NULL;
 
+	CuAssert(tc, "Mock header callback not called.", mockHeaderCounter == 1);
+
 	res = KSI_CTX_setRequestHeaderCallback(ctx, NULL);
 	CuAssert(tc, "Unable to set NULL as header callback.", res == KSI_OK);
 
+	KSI_Integer_free(reqId);
 	KSI_DataHash_free(hsh);
 	KSI_AggregationPdu_free(pdu);
 	KSI_RequestHandle_free(handle);
 }
+
 static void testExtending(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;

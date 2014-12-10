@@ -36,210 +36,30 @@ static int setIntParam(int *param, int val) {
 	return KSI_OK;
 }
 
-static int postProcessRequest(KSI_HttpClient *http, void *req, void* pdu, const char *user, int (*getHeader)(const void *, KSI_Header **), int (*setHeader)(void *, KSI_Header *), int (*getId)(void *, KSI_Integer **), int (*setId)(void *, KSI_Integer *)) {
+
+static int prepareRequest(
+		KSI_NetworkClient *client,
+		void *pdu,
+		int (*updateHmac)(void *, int, char *),
+		int (*serialize)(void *, unsigned char **, unsigned *),
+		KSI_RequestHandle **handle) {
 	KSI_ERR err;
 	int res;
-	KSI_uint64_t reqId = 0;
-	KSI_Header *headerp = NULL;
-	KSI_Header *header = NULL;
-	KSI_Integer *requestId = NULL;
-	KSI_OctetString *client_id = NULL;
-	
-	KSI_PRE(&err, http != NULL) goto cleanup;
-	KSI_PRE(&err, req != NULL) goto cleanup;
+	KSI_HttpClient *http = (KSI_HttpClient *)client;
+	KSI_RequestHandle *tmp = NULL;
+	unsigned char *raw = NULL;
+	unsigned raw_len = 0;
+	int defaultAlgo = KSI_getHashAlgorithmByName("default");
+
+	KSI_PRE(&err, client != NULL) goto cleanup;
 	KSI_PRE(&err, pdu != NULL) goto cleanup;
-	KSI_PRE(&err, user != NULL) goto cleanup;
-	KSI_BEGIN(http->parent.ctx, &err);
-	
-	reqId = ++http->requestId;
-	
-	res = getHeader(pdu, &headerp);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/*Add header*/
-	if (headerp == NULL) {
-		KSI_uint64_t user_len = strlen(user);
-		if(user_len>0xFFFF){
-			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "User id too long.");
-			goto cleanup;
-		}
-		
-		res = KSI_Header_new(http->parent.ctx, &header);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		res = KSI_OctetString_new(http->parent.ctx, user, (unsigned)user_len, &client_id);
-		KSI_CATCH(&err, res) goto cleanup;
-		
-		res = KSI_Header_setLoginId(header, client_id);
-		KSI_CATCH(&err, res) goto cleanup;
-		client_id = NULL;
-
-		res = setHeader(pdu, header);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		headerp = header;
-		header = NULL;
-	}
-	
-	/* Every request must have a header, and at this point, this should be quaranteed. */
-	if (http->parent.ctx->requestHeaderCB != NULL) {
-		res = http->parent.ctx->requestHeaderCB(headerp);
-		KSI_CATCH(&err, res) goto cleanup;
-	}
-
-	res = getId(req, &requestId);
-	KSI_CATCH(&err, res) goto cleanup;
-	if (requestId == NULL) {
-		res = KSI_Integer_new(http->parent.ctx, reqId, &requestId);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		res = setId(req, requestId);
-		KSI_CATCH(&err, res) goto cleanup;
-		requestId = NULL;
-	}
-	
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_Integer_free(requestId);
-	KSI_Header_free(header);
-	KSI_OctetString_free(client_id);
-	
-	return KSI_RETURN(&err);
-}
-
-
-static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationReq *req, KSI_RequestHandle **handle) {
-	KSI_ERR err;
-	int res;
-	KSI_HttpClient *http = (KSI_HttpClient *)client;
-	KSI_RequestHandle *tmp = NULL;
-	KSI_AggregationPdu *pdu = NULL;
-	KSI_DataHash *hmac = NULL;
-	unsigned char *raw = NULL;
-	unsigned raw_len = 0;
-	int hmacHashAlgo = KSI_getHashAlgorithmByName("default");
-
-	KSI_PRE(&err, client != NULL) goto cleanup;
-	KSI_PRE(&err, req != NULL) goto cleanup;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(client->ctx, &err);
 
-	if (http == NULL) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "KSI_HttpClient context not initialized.");
-		goto cleanup;
-	}
-	res = KSI_AggregationPdu_new(client->ctx, &pdu);
-	KSI_CATCH(&err, res) goto cleanup;
-	
-	res = postProcessRequest(http, req, pdu, client->agrUser, (int (*)(const void *, KSI_Header **))KSI_AggregationPdu_getHeader, (int (*)(void *, KSI_Header *))KSI_AggregationPdu_setHeader, (int (*)(void*, KSI_Integer**))KSI_AggregationReq_getRequestId, (int (*)(void*, KSI_Integer*))KSI_AggregationReq_setRequestId);
+	res = updateHmac(pdu, defaultAlgo, client->extPass);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_AggregationPdu_setRequest(pdu, req);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_AggregationPdu_getHmac(pdu, &hmac);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	if (hmac != NULL) {
-		res = KSI_AggregationPdu_setHmac(pdu, NULL);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		KSI_DataHash_free(hmac);
-	}
-
-	res = KSI_AggregationPdu_calculateHmac(pdu, hmacHashAlgo, client->agrPass, &hmac);
-	KSI_CATCH(&err, res) goto cleanup;
-	
-	res = KSI_AggregationPdu_setHmac(pdu, hmac);
-	KSI_CATCH(&err, res) goto cleanup;
-	hmac = NULL;
-	
-	res = KSI_AggregationPdu_serialize(pdu, &raw, &raw_len);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	KSI_LOG_logBlob(client->ctx, KSI_LOG_DEBUG, "Aggregation request", raw, raw_len);
-
-	/* Create a new request handle */
-	res = KSI_RequestHandle_new(client->ctx, raw, raw_len, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Evaluate the handle object. */
-	if (http->sendRequest == NULL) {
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Send request not initialized.");
-		goto cleanup;
-	}
-	res = http->sendRequest(client, tmp, http->urlSigner);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	*handle = tmp;
-	tmp = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	if(pdu){
-		/* Detach request from the PDU, as it may not be freed in this function. */
-		KSI_AggregationPdu_setRequest(pdu, NULL);
-		KSI_AggregationPdu_free(pdu);
-	}
-
-	KSI_RequestHandle_free(tmp);
-	KSI_DataHash_free(hmac);
-	KSI_free(raw);
-
-	return KSI_RETURN(&err);
-}
-
-static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, KSI_RequestHandle **handle) {
-	KSI_ERR err;
-	int res;
-	KSI_HttpClient *http = (KSI_HttpClient *)client;
-	KSI_RequestHandle *tmp = NULL;
-	KSI_ExtendPdu *pdu = NULL;
-	KSI_DataHash *hmac = NULL;
-	unsigned char *raw = NULL;
-	unsigned raw_len = 0;
-	int hmacHashAlgo = KSI_getHashAlgorithmByName("default");
-
-	KSI_PRE(&err, client != NULL) goto cleanup;
-	KSI_PRE(&err, req != NULL) goto cleanup;
-	KSI_PRE(&err, handle != NULL) goto cleanup;
-	KSI_BEGIN(client->ctx, &err);
-
-	if (http == NULL) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "KSI_HttpClient context not initialized.");
-		goto cleanup;
-	}
-	res = KSI_ExtendPdu_new(client->ctx, &pdu);
-	KSI_CATCH(&err, res) goto cleanup;
-	
-	res = postProcessRequest(http, req, pdu, client->extUser, (int (*)(const void *, KSI_Header **))KSI_ExtendPdu_getHeader, (int (*)(void *, KSI_Header *))KSI_ExtendPdu_setHeader, (int (*)(void*, KSI_Integer**))KSI_ExtendReq_getRequestId, (int (*)(void*, KSI_Integer*))KSI_ExtendReq_setRequestId);
-	KSI_CATCH(&err, res) goto cleanup;
-	
-	res = KSI_ExtendPdu_setRequest(pdu, req);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_ExtendPdu_getHmac(pdu, &hmac);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	if (hmac != NULL) {
-		res = KSI_ExtendPdu_setHmac(pdu, NULL);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		KSI_DataHash_free(hmac);
-	}
-
-	res = KSI_ExtendPdu_calculateHmac(pdu, hmacHashAlgo, client->extPass, &hmac);
-	KSI_CATCH(&err, res) goto cleanup;
-	
-	res = KSI_ExtendPdu_setHmac(pdu, hmac);
-	KSI_CATCH(&err, res) goto cleanup;
-	hmac = NULL;
-	
-	res = KSI_ExtendPdu_serialize(pdu, &raw, &raw_len);
+	res = serialize(pdu, &raw, &raw_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_LOG_logBlob(client->ctx, KSI_LOG_DEBUG, "Extending request", raw, raw_len);
@@ -263,17 +83,28 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 
 cleanup:
 
-	if(pdu){
-		/* Detach request from the PDU, as it may not be freed in this function. */
-		KSI_ExtendPdu_setRequest(pdu, NULL);
-		KSI_ExtendPdu_free(pdu);
-	}
-
 	KSI_RequestHandle_free(tmp);
-	KSI_DataHash_free(hmac);
 	KSI_free(raw);
 
 	return KSI_RETURN(&err);
+}
+
+static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendPdu *pdu, KSI_RequestHandle **handle) {
+	return prepareRequest(
+			client,
+			pdu,
+			(int (*)(void *, int, char *))KSI_ExtendPdu_updateHmac,
+			(int (*)(void *, unsigned char **, unsigned *))KSI_ExtendPdu_serialize,
+			handle);
+}
+
+static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationPdu *pdu, KSI_RequestHandle **handle) {
+	return prepareRequest(
+			client,
+			pdu,
+			(int (*)(void *, int, char *))KSI_AggregationPdu_updateHmac,
+			(int (*)(void *, unsigned char **, unsigned *))KSI_AggregationPdu_serialize,
+			handle);
 }
 
 static int preparePublicationsFileRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle) {
@@ -329,8 +160,6 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_HttpClient **http) {
 		goto cleanup;
 	}
 
-//	tmp->parent = KSI_NETWORK_CLIENT_INIT(ctx);
-
 	tmp->parent.ctx = ctx;
 	tmp->parent.agrPass = NULL;
 	tmp->parent.agrUser = NULL;
@@ -347,7 +176,6 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_HttpClient **http) {
 	tmp->urlExtender = NULL;
 	tmp->urlPublication = NULL;
 	tmp->urlSigner = NULL;
-	tmp->requestId = 0;
 
 	tmp->parent.sendExtendRequest = prepareExtendRequest;
 	tmp->parent.sendSignRequest = prepareAggregationRequest;

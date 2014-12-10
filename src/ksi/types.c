@@ -223,10 +223,10 @@ int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, int hashAlg, const char *key, 
 	KSI_ERR err;
 	int res;
 	unsigned char *raw_header = NULL;
-	unsigned header_len = 0;
+	unsigned header_len;
 	unsigned char *raw_payload = NULL;
-	unsigned payload_len = 0;
-	unsigned char *buf;
+	unsigned payload_len;
+	unsigned char *buf = NULL;
 	KSI_DataHash *tmp = NULL;
 
 	KSI_PRE(&err, t != NULL) goto cleanup;
@@ -234,37 +234,33 @@ int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, int hashAlg, const char *key, 
 	KSI_PRE(&err, hmac != NULL) goto cleanup;
 	KSI_BEGIN(t->ctx, &err);
 	
-	if(t->headerTLV){
+	if (t->headerTLV != NULL) {
 		res = KSI_TLV_serialize(t->headerTLV, &raw_header, &header_len);
 		KSI_CATCH(&err, res) goto cleanup;
 	}
-	else{
+	else {
 		res = KSI_TlvTemplate_serializeObject(t->ctx, t->header, 0x01, 0, 0, KSI_TLV_TEMPLATE(KSI_Header), &raw_header, &header_len);
 		KSI_CATCH(&err, res) goto cleanup;
 	}
 	
-	if(t->payloadTLV){
+	if (t->payloadTLV != NULL){
 		res = KSI_TLV_serialize(t->payloadTLV, &raw_payload, &payload_len);
 		KSI_CATCH(&err, res) goto cleanup;
-	}else{
-		
-		if(t->request){
+	} else {
+		if (t->request != NULL) {
 			res = KSI_TlvTemplate_serializeObject(t->ctx, t->request, 0x0301, 0, 0, KSI_TLV_TEMPLATE(KSI_ExtendReq), &raw_payload, &payload_len);
 			KSI_CATCH(&err, res) goto cleanup;
-		}
-		else if(t->response){
+		} else if (t->response != NULL) {
 			res = KSI_TlvTemplate_serializeObject(t->ctx, t->response, 0x0302, 0, 0, KSI_TLV_TEMPLATE(KSI_ExtendResp), &raw_payload, &payload_len);
 			KSI_CATCH(&err, res) goto cleanup;
-		}
-		else{
+		} else {
 			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);
 			goto cleanup;
 		}
 	}
 	
-	
-	buf = KSI_malloc(payload_len+header_len);
-	if(buf == NULL){
+	buf = KSI_malloc(payload_len + header_len);
+	if(buf == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
@@ -272,7 +268,7 @@ int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, int hashAlg, const char *key, 
 	memcpy(buf, raw_header, header_len);
 	memcpy(buf+header_len, raw_payload, payload_len);
 	
-	res = KSI_HMAC_create(t->ctx, hashAlg, key, buf, header_len+payload_len, &tmp);
+	res = KSI_HMAC_create(t->ctx, hashAlg, key, buf, header_len + payload_len, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 	
 	*hmac = tmp;
@@ -288,6 +284,32 @@ cleanup:
 	KSI_DataHash_free(tmp);
 	
 	return KSI_RETURN(&err);	
+}
+
+int KSI_ExtendPdu_updateHmac(KSI_ExtendPdu *pdu, int algorithm, const char *key) {
+	KSI_ERR err;
+	int res;
+	KSI_DataHash *hmac = NULL;
+
+	KSI_PRE(&err, pdu != NULL) goto cleanup;
+	KSI_BEGIN(pdu->ctx, &err);
+
+	res = KSI_ExtendPdu_calculateHmac(pdu, algorithm, key, &hmac);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	if (pdu->hmac != NULL) {
+		KSI_DataHash_free(pdu->hmac);
+	}
+	pdu->hmac = hmac;
+	hmac = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_DataHash_free(hmac);
+
+	return KSI_RETURN(&err);
 }
 
 KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_TLV*, headerTLV, HeaderTlv);
@@ -361,39 +383,32 @@ int KSI_AggregationPdu_calculateHmac(KSI_AggregationPdu *t, int hashAlg, const c
 	KSI_PRE(&err, key != NULL) goto cleanup;
 	KSI_BEGIN(t->ctx, &err);
 	
-	if(t->headerTLV){
+	if (t->headerTLV) {
 		res = KSI_TLV_serialize(t->headerTLV, &raw_header, &header_len);
 		KSI_CATCH(&err, res) goto cleanup;
-	}
-	else{
+	} else {
 		res = KSI_TlvTemplate_serializeObject(t->ctx, t->header, 0x01, 0, 0, KSI_TLV_TEMPLATE(KSI_Header), &raw_header, &header_len);
 		KSI_CATCH(&err, res) goto cleanup;
 	}
 	
-	if(t->payloadTLV){
+	if (t->payloadTLV) {
 		res = KSI_TLV_serialize(t->payloadTLV, &raw_payload, &payload_len);
 		KSI_CATCH(&err, res) goto cleanup;
-	}
-	else{
-		if(t->request){
+	} else {
+		if (t->request) {
 			res = KSI_TlvTemplate_serializeObject(t->ctx, t->request, 0x0201, 0, 0, KSI_TLV_TEMPLATE(KSI_AggregationReq), &raw_payload, &payload_len);
 			KSI_CATCH(&err, res) goto cleanup;
-		}
-		else if(t->response){
+		} else if (t->response) {
 			res = KSI_TlvTemplate_serializeObject(t->ctx, t->response, 0x0202, 0, 0, KSI_TLV_TEMPLATE(KSI_AggregationResp), &raw_payload, &payload_len);
 			KSI_CATCH(&err, res) goto cleanup;
-		}
-		else{
+		} else {
 			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);
 			goto cleanup;
 		}
 	}
 	
-	
-	
-	
 	buf = KSI_malloc(payload_len+header_len);
-	if(buf == NULL){
+	if (buf == NULL){
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
@@ -401,7 +416,7 @@ int KSI_AggregationPdu_calculateHmac(KSI_AggregationPdu *t, int hashAlg, const c
 	memcpy(buf, raw_header, header_len);
 	memcpy(buf+header_len, raw_payload, payload_len);
 	
-	res = KSI_HMAC_create(t->ctx, hashAlg, key, buf, header_len+payload_len, &tmp);
+	res = KSI_HMAC_create(t->ctx, hashAlg, key, buf, header_len + payload_len, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 	
 	*hmac = tmp;
@@ -417,6 +432,32 @@ cleanup:
 	KSI_DataHash_free(tmp);
 
 	return KSI_RETURN(&err);	
+}
+
+int KSI_AggregationPdu_updateHmac(KSI_AggregationPdu *pdu, int algorithm, const char *key) {
+	KSI_ERR err;
+	int res;
+	KSI_DataHash *hmac = NULL;
+
+	KSI_PRE(&err, pdu != NULL) goto cleanup;
+	KSI_BEGIN(pdu->ctx, &err);
+
+	res = KSI_AggregationPdu_calculateHmac(pdu, algorithm, key, &hmac);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	if (pdu->hmac != NULL) {
+		KSI_DataHash_free(pdu->hmac);
+	}
+	pdu->hmac = hmac;
+	hmac = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_DataHash_free(hmac);
+
+	return KSI_RETURN(&err);
 }
 
 KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_TLV*, headerTLV, HeaderTlv);
