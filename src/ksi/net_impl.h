@@ -7,11 +7,13 @@
 extern "C" {
 #endif
 
+	#define KSI_NETWORK_CLIENT_INIT(ctx)  (KSI_NetworkClient) {(ctx), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}
+
 	struct KSI_NetworkClient_st {
 		KSI_CTX *ctx;
 
-		int (*sendSignRequest)(KSI_NetworkClient *, KSI_AggregationReq *, KSI_RequestHandle **);
-		int (*sendExtendRequest)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **);
+		int (*sendSignRequest)(KSI_NetworkClient *, KSI_AggregationPdu *, KSI_RequestHandle **);
+		int (*sendExtendRequest)(KSI_NetworkClient *, KSI_ExtendPdu *, KSI_RequestHandle **);
 		int (*sendPublicationRequest)(KSI_NetworkClient *, KSI_RequestHandle *);
 
 		/** Aggregator user. */
@@ -24,10 +26,8 @@ extern "C" {
 		/** Extender password. */
 		char *extPass;
 		
-		/** Dedicated context for the net provider */
-		void *implCtx;
 		/** Cleanup for the provider, gets the #providerCtx as parameter. */
-		void (*implCtx_free)(void *);
+		void (*implFree)(void *);
 	};
 
 	struct KSI_NetHandle_st {

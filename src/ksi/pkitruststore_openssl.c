@@ -434,7 +434,7 @@ int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, unsigned raw_len, KSI_PK
 	tmp->pkcs7 = NULL;
 
 	if (raw_len > INT_MAX) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Length is greater than INT_MAX");
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Length is greater than INT_MAX.");
 		goto cleanup;
 	}
 
@@ -473,7 +473,7 @@ int KSI_PKICertificate_new(KSI_CTX *ctx, const void *der, size_t der_len, KSI_PK
 	KSI_BEGIN(ctx, &err);
 
 	if (der_len > INT_MAX) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Length is more than MAX_INT");
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Length is more than MAX_INT.");
 		goto cleanup;
 	}
 	bio = BIO_new_mem_buf((void *)der, (int)der_len);
@@ -622,7 +622,7 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	KSI_CATCH(&err, res) goto cleanup;
 
 	if (magicEmail != NULL) {
-		KSI_LOG_debug(pki->ctx, "Verifying PKI signature certificate with e-mail address '%s'", magicEmail);
+		KSI_LOG_debug(pki->ctx, "Verifying PKI signature certificate with e-mail address '%s'.", magicEmail);
 
 		subj = X509_get_subject_name(cert);
 		if (subj == NULL) {

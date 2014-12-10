@@ -132,7 +132,7 @@ static void mockCleanup(void) {
 
 static int mockSendPublicationsFileRequest(KSI_NetworkClient *netProvider, KSI_RequestHandle *handle) {
 	int res = KSI_UNKNOWN_ERROR;
-	unsigned char *req = NULL;
+	const unsigned char *req = NULL;
 	unsigned req_len;
 
 	KSI_LOG_debug(ctx, "Initiate MOCK request.");
@@ -154,36 +154,31 @@ cleanup:
 
 int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_NetworkClient *tmp = NULL;
-	KSI_HttpClientCtx *http = NULL;
+	KSI_HttpClient *http = NULL;
 
 	if (ctx == NULL || client == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	res = KSI_HttpClient_new(ctx, &tmp);
+	res = KSI_HttpClient_new(ctx, &http);
 	if (res != KSI_OK) goto cleanup;
-
-	http = tmp->implCtx;
 
 	http->sendRequest = sendRequest;
 
 	res = KSI_CTX_registerGlobals(ctx, mockInit, mockCleanup);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_NetworkClient_setSendPublicationRequestFn(tmp, mockSendPublicationsFileRequest);
-	if (res != KSI_OK) goto cleanup;
+	http->parent.sendPublicationRequest = mockSendPublicationsFileRequest;
 
-
-	*client = tmp;
-	tmp = NULL;
+	*client = (KSI_NetworkClient *)http;
+	http = NULL;
 
 	res = KSI_OK;
 
 cleanup:
 
-	KSI_free(tmp);
+	KSI_HttpClient_free(http);
 
 	return res;
 }

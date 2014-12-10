@@ -94,7 +94,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note The output memory may not be freed by the caller.
 	 */
-	int KSI_RequestHandle_getRequest(KSI_RequestHandle *handle, unsigned char **request, unsigned *request_len);
+	int KSI_RequestHandle_getRequest(KSI_RequestHandle *handle, const unsigned char **request, unsigned *request_len);
 
 	/**
 	 * Response value setter. Should be called only by the actual network provider implementation.
@@ -186,16 +186,6 @@ extern "C" {
 	int KSI_NetworkClient_setNetCtx(KSI_NetworkClient *provider, void *netCtx, void (*netCtx_free)(void *));
 
 	/**
-	 * Getter for the implementation specific network context.
-	 * \param[in]		provider		Network provider.
-	 * \param[out]		netCtx			Pointer to the implementation specific network context.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
-	 */
-	int KSI_NetworkClient_getNetContext(KSI_NetworkClient *provider, void **netCtx);
-
-	/**
 	 * Setter for sign request function.
 	 * \param[in]		provider		Network provider.
 	 * \param[in]		fn				Pointer to sign request function.
@@ -203,7 +193,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetworkClient_setSendSignRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_AggregationReq *, KSI_RequestHandle **));
+	int KSI_NetworkClient_setSendSignRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_AggregationPdu *, KSI_RequestHandle **));
 
 	/**
 	 * Setter for sign request function.
@@ -213,7 +203,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetworkClient_setSendExtendRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **));
+	int KSI_NetworkClient_setSendExtendRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_ExtendPdu *, KSI_RequestHandle **));
 
 	/**
 	 * Setter for sign request function.

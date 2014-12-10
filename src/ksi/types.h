@@ -4,6 +4,7 @@
 #include <time.h>
 #include "types_base.h"
 #include "list.h"
+#include "common.h"
 
 
 #ifdef __cplusplus
@@ -149,6 +150,7 @@ int KSI_MetaData_fromTlv(KSI_TLV *tlv, KSI_MetaData **metaData);
 void KSI_ExtendPdu_free(KSI_ExtendPdu *t);
 int KSI_ExtendPdu_new(KSI_CTX *ctx, KSI_ExtendPdu **t);
 int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, int hashAlg, const char *key, KSI_DataHash **hmac);
+int KSI_ExtendPdu_updateHmac(KSI_ExtendPdu *pdu, int algorithm, const char *key);
 int KSI_ExtendPdu_getHeader(const KSI_ExtendPdu *t, KSI_Header **header);
 int KSI_ExtendPdu_getRequest(const KSI_ExtendPdu *t, KSI_ExtendReq **request);
 int KSI_ExtendPdu_getResponse(const KSI_ExtendPdu *t, KSI_ExtendResp **response);
@@ -162,27 +164,8 @@ int KSI_ExtendPdu_setHmac(KSI_ExtendPdu *t, KSI_DataHash *hamc);
 int KSI_ExtendPdu_setHeaderTlv(KSI_ExtendPdu *t, KSI_TLV * headerTLV );
 int KSI_ExtendPdu_setPayloadTlv(KSI_ExtendPdu *t, KSI_TLV * payloadTLV );
 
-/**
- * This function is used to parse a raw extend PDU into a #KSI_ExtendPdu object.
- * \param[in]	ctx		KSI context.
- * \param[in]	raw		Pointer to the raw blob to be parsed.
- * \param[in]	len		Length of the raw blob.
- * \param[out]	t		Pointer to the receiving pointer to the #KSI_ExtendPdu object.
- * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
- * \see KSI_ExtendPdu_serialize
- */
-int KSI_ExtendPdu_parse(KSI_CTX *ctx, unsigned char *raw, unsigned len, KSI_ExtendPdu **t);
-
-/**
- * This function serialized the #KSI_ExtendPdu object into a blob.
- * \param[in]	t		Pointer to the #KSI_ExtendPdu object.
- * \param[out]	raw		Pointer to the receiving pointer.
- * \param[out]	len		Pointer to the receiving lengt variable.
- * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
- * \see KSI_ExtendPdu_parse
- * @return
- */
-int KSI_ExtendPdu_serialize(const KSI_ExtendPdu *t, unsigned char **raw, unsigned *len);
+KSI_DEFINE_OBJECT_PARSE(KSI_ExtendPdu);
+KSI_DEFINE_OBJECT_SERIALIZE(KSI_ExtendPdu);
 
 /*
  * KSI_AggregationPdu
@@ -191,6 +174,7 @@ int KSI_ExtendPdu_serialize(const KSI_ExtendPdu *t, unsigned char **raw, unsigne
 void KSI_AggregationPdu_free(KSI_AggregationPdu *t);
 int KSI_AggregationPdu_new(KSI_CTX *ctx, KSI_AggregationPdu **t);
 int KSI_AggregationPdu_calculateHmac(KSI_AggregationPdu *t, int hashAlg, const char *key, KSI_DataHash **hmac);
+int KSI_AggregationPdu_updateHmac(KSI_AggregationPdu *pdu, int algorithm, const char *key);
 int KSI_AggregationPdu_getHeader(const KSI_AggregationPdu *t, KSI_Header **header);
 int KSI_AggregationPdu_getRequest(const KSI_AggregationPdu *t, KSI_AggregationReq **request);
 int KSI_AggregationPdu_getResponse(const KSI_AggregationPdu *t, KSI_AggregationResp **response);
@@ -204,28 +188,8 @@ int KSI_AggregationPdu_setHmac(KSI_AggregationPdu *t, KSI_DataHash *hmac);
 int KSI_AggregationPdu_setHeaderTlv(KSI_AggregationPdu *t, KSI_TLV * headerTLV);
 int KSI_AggregationPdu_setPayloadTlv(KSI_AggregationPdu *t, KSI_TLV * payloadTLV);
 
-
-/**
- * This function is used to parse a raw aggregation PDU into a #KSI_AggregationPdu object.
- * \param[in]	ctx		KSI context.
- * \param[in]	raw		Pointer to the raw blob to be parsed.
- * \param[in]	len		Length of the raw blob.
- * \param[out]	t		Pointer to the receiving pointer to the #KSI_AggregationPdu object.
- * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
- * \see KSI_AggregationPdu_serialize
- */
-int KSI_AggregationPdu_parse(KSI_CTX *ctx, unsigned char *raw, unsigned len, KSI_AggregationPdu **t);
-
-/**
- * This function serialized the #KSI_AggregationPdu object into a blob.
- * \param[in]	t		Pointer to the #KSI_AggregationPdu object.
- * \param[out]	raw		Pointer to the receiving pointer.
- * \param[out]	len		Pointer to the receiving lengt variable.
- * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
- * \see KSI_AggregationPdu_parse
- * @return
- */
-int KSI_AggregationPdu_serialize(const KSI_AggregationPdu *t, unsigned char **raw, unsigned *len);
+KSI_DEFINE_OBJECT_PARSE(KSI_AggregationPdu);
+KSI_DEFINE_OBJECT_SERIALIZE(KSI_AggregationPdu);
 
 /*
  * KSI_Header
@@ -267,6 +231,9 @@ int KSI_AggregationReq_setRequestHash(KSI_AggregationReq *t, KSI_DataHash *reque
 int KSI_AggregationReq_setRequestLevel(KSI_AggregationReq *t, KSI_Integer *requestLevel);
 int KSI_AggregationReq_setConfig(KSI_AggregationReq *t, KSI_Config *config);
 
+KSI_DEFINE_OBJECT_PARSE(KSI_AggregationReq);
+KSI_DEFINE_OBJECT_SERIALIZE(KSI_AggregationReq);
+
 /*
  * KSI_RequestAck
  */
@@ -303,6 +270,10 @@ int KSI_AggregationResp_setAggregationChainList(KSI_AggregationResp *t, KSI_LIST
 int KSI_AggregationResp_setCalendarAuthRec(KSI_AggregationResp *t, KSI_CalendarAuthRec *calendarAuthRec);
 int KSI_AggregationResp_setAggregationAuthRec(KSI_AggregationResp *t, KSI_AggregationAuthRec *aggregationAuthRec);
 int KSI_AggregationResp_setBaseTlv (KSI_AggregationResp *o, KSI_TLV *baseTlv);
+
+KSI_DEFINE_OBJECT_PARSE(KSI_AggregationResp);
+KSI_DEFINE_OBJECT_SERIALIZE(KSI_AggregationResp);
+
 /*
  * KSI_ExtendReq
  */
@@ -314,6 +285,9 @@ int KSI_ExtendReq_getPublicationTime(const KSI_ExtendReq *t, KSI_Integer **publi
 int KSI_ExtendReq_setRequestId(KSI_ExtendReq *t, KSI_Integer *requestId);
 int KSI_ExtendReq_setAggregationTime(KSI_ExtendReq *t, KSI_Integer *aggregationTime);
 int KSI_ExtendReq_setPublicationTime(KSI_ExtendReq *t, KSI_Integer *publicationTime);
+
+KSI_DEFINE_OBJECT_PARSE(KSI_ExtendReq);
+KSI_DEFINE_OBJECT_SERIALIZE(KSI_ExtendReq);
 
 /*
  * KSI_ExtendResp
@@ -332,6 +306,9 @@ int KSI_ExtendResp_setErrorMsg(KSI_ExtendResp *t, KSI_Utf8String *errorMsg);
 int KSI_ExtendResp_setLastTime(KSI_ExtendResp *t, KSI_Integer *lastTime);
 int KSI_ExtendResp_setCalendarHashChain(KSI_ExtendResp *t, KSI_CalendarHashChain *calendarHashChain);
 int KSI_ExtendResp_setBaseTlv (KSI_ExtendResp *o, KSI_TLV *baseTlv);
+
+KSI_DEFINE_OBJECT_PARSE(KSI_ExtendResp);
+KSI_DEFINE_OBJECT_SERIALIZE(KSI_ExtendResp);
 
 /*
  * KSI_PKISignedData

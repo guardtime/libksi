@@ -32,9 +32,6 @@ extern "C" {
 		/* Count of errors (usually #error_end - #error_start + 1, unless error count > #errors_size. */
 		unsigned int errors_count;
 
-		/** The logger mechanism is deprecated. */
-		KSI_Logger *logger;
-
 		KSI_LoggerCallback loggerCB;
 		int logLevel;
 		void *loggerCtx;
@@ -51,8 +48,14 @@ extern "C" {
 
 		char *publicationCertEmail;
 
+		/* List of cleanup functions to be called when the #KSI_CTX_free is called. */
 		KSI_List *cleanupFnList;
 
+		/** Userdefined function to be called on the request pdu header befor sending it. */
+		KSI_RequestHeaderCallback requestHeaderCB;
+
+		/** Counter for the requests sent by this context. */
+		KSI_uint64_t requestCounter;
 	};
 
 #ifdef __cplusplus

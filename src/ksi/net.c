@@ -2,6 +2,8 @@
 
 #include "internal.h"
 #include "net_impl.h"
+#include "tlv.h"
+#include "ctx_impl.h"
 
 KSI_IMPLEMENT_GET_CTX(KSI_NetworkClient);
 KSI_IMPLEMENT_GET_CTX(KSI_RequestHandle);
@@ -32,6 +34,68 @@ cleanup:
 	KSI_free(tmp);
 
 	return res;
+}
+
+#define processHeader(client, pdu, typ) processPduHeader((client),  (pdu), (int (*)(void *, KSI_Header **))typ##_getHeader, (int (*)(void *, KSI_Header *))typ##_setHeader)
+
+static int processPduHeader(
+		KSI_NetworkClient *client,
+		void *pdu,
+		int (*getHeader)(void *, KSI_Header **),
+		int (*setHeader)(void *, KSI_Header *)) {
+	KSI_ERR err;
+	int res;
+	KSI_Header *headerp = NULL;
+	KSI_Header *header = NULL;
+	KSI_OctetString *clientId = NULL;
+
+	KSI_PRE(&err, client != NULL) goto cleanup;
+	KSI_PRE(&err, pdu != NULL) goto cleanup;
+	KSI_BEGIN(client->ctx, &err);
+
+	res = getHeader(pdu, &headerp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	/*Add header*/
+	if (headerp == NULL) {
+		KSI_uint64_t userLen = strlen(client->extUser);
+
+		if(userLen > 0xffff){
+			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "User id too long.");
+			goto cleanup;
+		}
+
+		res = KSI_Header_new(client->ctx, &header);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		res = KSI_OctetString_new(client->ctx, (unsigned char *)client->extUser, (unsigned)userLen, &clientId);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		res = KSI_Header_setLoginId(header, clientId);
+		KSI_CATCH(&err, res) goto cleanup;
+		clientId = NULL;
+
+		res = setHeader(pdu, header);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		headerp = header;
+		header = NULL;
+	}
+
+	/* Every request must have a header, and at this point, this should be guaranteed. */
+	if (client->ctx->requestHeaderCB != NULL) {
+		res = client->ctx->requestHeaderCB(headerp);
+		KSI_CATCH(&err, res) goto cleanup;
+	}
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_Header_free(header);
+	KSI_OctetString_free(clientId);
+
+	return KSI_RETURN(&err);
 }
 
 /**
@@ -116,6 +180,8 @@ void KSI_RequestHandle_free(KSI_RequestHandle *handle) {
 int KSI_NetworkClient_sendSignRequest(KSI_NetworkClient *provider, KSI_AggregationReq *request, KSI_RequestHandle **handle) {
 	KSI_ERR err;
 	int res;
+	KSI_AggregationPdu *pdu = NULL;
+
 
 	KSI_PRE(&err, provider != NULL) goto cleanup;
 	KSI_PRE(&err, request != NULL) goto cleanup;
@@ -128,12 +194,23 @@ int KSI_NetworkClient_sendSignRequest(KSI_NetworkClient *provider, KSI_Aggregati
 		goto cleanup;
 	}
 
-	res = provider->sendSignRequest(provider, request, handle);
+	res = KSI_AggregationPdu_new(provider->ctx, &pdu);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_AggregationPdu_setRequest(pdu, request);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = processHeader(provider, pdu, KSI_AggregationPdu);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = provider->sendSignRequest(provider, pdu, handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
+	if (pdu != NULL) KSI_AggregationPdu_setRequest(pdu, NULL);
+	KSI_AggregationPdu_free(pdu);
 
 	return KSI_RETURN(&err);
 }
@@ -141,6 +218,7 @@ cleanup:
 int KSI_NetworkClient_sendExtendRequest(KSI_NetworkClient *provider, KSI_ExtendReq *request, KSI_RequestHandle **handle) {
 	KSI_ERR err;
 	int res;
+	KSI_ExtendPdu *pdu = NULL;
 
 	KSI_PRE(&err, provider != NULL) goto cleanup;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
@@ -151,12 +229,26 @@ int KSI_NetworkClient_sendExtendRequest(KSI_NetworkClient *provider, KSI_ExtendR
 		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Extend request sender not initialized.");
 		goto cleanup;
 	}
-	res = provider->sendExtendRequest(provider, request, handle);
+
+	res = KSI_ExtendPdu_new(provider->ctx, &pdu);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_ExtendPdu_setRequest(pdu, request);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = processHeader(provider, pdu, KSI_ExtendPdu);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = provider->sendExtendRequest(provider, pdu, handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
+
+	if (pdu != NULL) KSI_ExtendPdu_setRequest(pdu, NULL);
+
+	KSI_ExtendPdu_free(pdu);
 
 	return KSI_RETURN(&err);
 }
@@ -186,14 +278,15 @@ cleanup:
 
 void KSI_NetworkClient_free(KSI_NetworkClient *provider) {
 	if (provider != NULL) {
-		if (provider->implCtx_free != NULL) {
-			KSI_free(provider->agrPass);
-			KSI_free(provider->agrUser);
-			KSI_free(provider->extPass);
-			KSI_free(provider->extUser);
-			provider->implCtx_free(provider->implCtx);
+		KSI_free(provider->agrPass);
+		KSI_free(provider->agrUser);
+		KSI_free(provider->extPass);
+		KSI_free(provider->extUser);
+		if (provider->implFree != NULL) {
+			provider->implFree(provider);
+		} else {
+			KSI_free(provider);
 		}
-		KSI_free(provider);
 	}
 }
 
@@ -245,22 +338,6 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_NetworkClient_getNetContext(KSI_NetworkClient *provider, void **netCtx) {
-	KSI_ERR err;
-
-	KSI_PRE(&err, provider != NULL) goto cleanup;
-	KSI_PRE(&err, netCtx != NULL) goto cleanup;
-	KSI_BEGIN(provider->ctx, &err);
-
-	*netCtx = provider->implCtx;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-}
-
 int KSI_RequestHandle_setReadResponseFn(KSI_RequestHandle *handle, int (*fn)(KSI_RequestHandle *)) {
 	KSI_ERR err;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
@@ -275,13 +352,13 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_RequestHandle_getRequest(KSI_RequestHandle *handle, unsigned char **response, unsigned *response_len) {
+int KSI_RequestHandle_getRequest(KSI_RequestHandle *handle, const unsigned char **request, unsigned *request_len) {
 	KSI_ERR err;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(handle->ctx, &err);
 
-	*response = handle->request;
-	*response_len = handle->request_length;
+	*request = handle->request;
+	*request_len = handle->request_length;
 
 	KSI_SUCCESS(&err);
 
@@ -495,71 +572,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_NetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
-	KSI_ERR err;
-	int res = 0;
-	KSI_NetworkClient *pr = NULL;
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, client != NULL) goto cleanup;
-
-	KSI_BEGIN(ctx, &err);
-
-	pr = KSI_new(KSI_NetworkClient);
-	if (pr == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	pr->ctx = ctx;
-	pr->implCtx = NULL;
-	pr->implCtx_free = NULL;
-	pr->sendSignRequest = NULL;
-	pr->sendExtendRequest = NULL;
-	pr->sendPublicationRequest = NULL;
-
-	pr->agrPass = NULL;
-	pr->agrUser = NULL;
-	pr->extUser = NULL;
-	pr->extPass = NULL;
-	
-	/* TODO! Should not be static. */
-	res = setStringParam(&pr->extPass, "anon");
-	res = setStringParam(&pr->extUser, "anon");
-	res = setStringParam(&pr->agrPass, "anon");
-	res = setStringParam(&pr->agrUser, "anon");
-	
-	*client = pr;
-	pr = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_NetworkClient_free(pr);
-	return KSI_RETURN(&err);
-}
-
-int KSI_NetworkClient_setNetCtx(KSI_NetworkClient *client, void *netCtx, void (*netCtx_free)(void *)) {
-	KSI_ERR err;
-
-	KSI_PRE(&err, client != NULL) goto cleanup;
-	KSI_BEGIN(client->ctx, &err);
-
-	if (client->implCtx != NULL && client->implCtx_free != NULL) {
-		client->implCtx_free(client->implCtx);
-	}
-	client->implCtx = netCtx;
-	client->implCtx_free = netCtx_free;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-}
-
-int KSI_NetworkClient_setSendSignRequestFn(KSI_NetworkClient *client, int (*fn)(KSI_NetworkClient *, KSI_AggregationReq *, KSI_RequestHandle **)) {
+int KSI_NetworkClient_setSendSignRequestFn(KSI_NetworkClient *client, int (*fn)(KSI_NetworkClient *, KSI_AggregationPdu *, KSI_RequestHandle **)) {
 	KSI_ERR err;
 
 	KSI_PRE(&err, client != NULL) goto cleanup;
@@ -574,7 +587,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_NetworkClient_setSendExtendRequestFn(KSI_NetworkClient *client, int (*fn)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **)) {
+int KSI_NetworkClient_setSendExtendRequestFn(KSI_NetworkClient *client, int (*fn)(KSI_NetworkClient *, KSI_ExtendPdu *, KSI_RequestHandle **)) {
 	KSI_ERR err;
 
 	KSI_PRE(&err, client != NULL) goto cleanup;

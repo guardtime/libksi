@@ -86,16 +86,14 @@ static int curlReceive(KSI_RequestHandle *handle) {
 	int res;
 	char curlErr[CURL_ERROR_SIZE];
 	CurlNetHandleCtx *implCtx = NULL;
-	KSI_HttpClientCtx *http = NULL;
-	KSI_NetworkClient *client = NULL;
+	KSI_HttpClient *http = NULL;
 
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_PRE(&err, handle->client != NULL) goto cleanup;
 	KSI_PRE(&err, handle->implCtx != NULL) goto cleanup;
 	KSI_BEGIN(handle->ctx, &err);
 
-	client = handle->client;
-	http = client->implCtx; // TODO!
+	http = (KSI_HttpClient *)handle->client;
 
 	implCtx = handle->implCtx;
 
@@ -149,15 +147,11 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 	KSI_ERR err;
 	int res;
 	CurlNetHandleCtx *implCtx = NULL;
-	KSI_HttpClientCtx *http = NULL;
+	KSI_HttpClient *http = (KSI_HttpClient *)client;
 
 	KSI_PRE(&err, client != NULL) goto cleanup;
-	KSI_PRE(&err, client->implCtx != NULL) goto cleanup;
-	KSI_PRE(&err, ((KSI_HttpClientCtx *)client->implCtx)->implCtx != NULL) goto cleanup;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(handle->ctx, &err);
-
-	http = client->implCtx;
 
 	implCtx = KSI_new(CurlNetHandleCtx);
 	if (implCtx == NULL) {
@@ -197,16 +191,14 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_HttpClient_init(KSI_NetworkClient *client) {
+int KSI_HttpClient_init(KSI_HttpClient *http) {
 	KSI_ERR err;
-	KSI_HttpClientCtx *http = NULL;
 	CURL *curl = NULL;
 	int res;
 
-	KSI_PRE(&err, client != NULL) goto cleanup;
-	KSI_BEGIN(client->ctx, &err);
+	KSI_PRE(&err, http != NULL) goto cleanup;
+	KSI_BEGIN(http->parent.ctx, &err);
 
-	http = client->implCtx;
 	if (http == NULL) {
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "HttpClient network client context not initialized.");
 		goto cleanup;
@@ -229,7 +221,7 @@ int KSI_HttpClient_init(KSI_NetworkClient *client) {
 	http->sendRequest = sendRequest;
 
 	/* Register global init and cleanup methods. */
-	res = KSI_CTX_registerGlobals(client->ctx, curlGlobal_init, curlGlobal_cleanup);
+	res = KSI_CTX_registerGlobals(http->parent.ctx, curlGlobal_init, curlGlobal_cleanup);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);

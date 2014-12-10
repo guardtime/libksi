@@ -8,10 +8,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	typedef struct KSI_HttpClientCtx_st KSI_HttpClientCtx;
 
-	struct KSI_HttpClientCtx_st {
-		KSI_CTX *ctx;
+	struct KSI_HttpClient_st {
+		KSI_NetworkClient parent;
+
 		int connectionTimeoutSeconds;
 		int readTimeoutSeconds;
 		char *urlSigner;
@@ -20,7 +20,6 @@ extern "C" {
 		char *agentName;
 		
 		int (*sendRequest)(KSI_NetworkClient *, KSI_RequestHandle *, char *);
-		KSI_uint64_t requestId;
 
 		void *implCtx;
 		void (*implCtx_free)(void *);
