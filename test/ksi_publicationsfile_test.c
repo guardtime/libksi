@@ -223,7 +223,7 @@ static void testSerializePublicationsFile(CuTest *tc) {
 	unsigned raw_len = 0;
 	FILE *f = NULL;
 	int symbol = 0;
-	int i= 0;
+	unsigned i= 0;
 	
 	KSI_ERR_clearErrors(ctx);
 
