@@ -18,7 +18,7 @@ struct KSI_MetaData_st {
 	KSI_Utf8String *clientId;
 	KSI_OctetString *machineId;
 	KSI_Integer *sequenceNr;
-	KSI_Integer *req_time_us;
+	KSI_Integer *req_time_micros;
 };
 
 struct KSI_ExtendPdu_st {
@@ -87,8 +87,8 @@ struct KSI_AggregationResp_st {
 struct KSI_ExtendReq_st {
 	KSI_CTX *ctx;
 	KSI_Integer *requestId;
-	KSI_Integer *aggregationTime_s;
-	KSI_Integer *publicationTime_s;
+	KSI_Integer *aggregationTime;
+	KSI_Integer *publicationTime;
 };
 
 struct KSI_ExtendResp_st {
@@ -96,7 +96,7 @@ struct KSI_ExtendResp_st {
 	KSI_Integer *requestId;
 	KSI_Integer *status;
 	KSI_Utf8String *errorMsg;
-	KSI_Integer *lastTime_s;
+	KSI_Integer *lastTime;
 	KSI_CalendarHashChain *calendarHashChain;
 	KSI_TLV *baseTlv;
 };
@@ -145,7 +145,7 @@ void KSI_MetaData_free(KSI_MetaData *t) {
 		KSI_Utf8String_free(t->clientId);
 		KSI_OctetString_free(t->machineId);
 		KSI_Integer_free(t->sequenceNr);
-		KSI_Integer_free(t->req_time_us);
+		KSI_Integer_free(t->req_time_micros);
 		KSI_free(t);
 	}
 }
@@ -164,7 +164,7 @@ int KSI_MetaData_new(KSI_CTX *ctx, KSI_MetaData **t) {
 	tmp->clientId = NULL;
 	tmp->machineId = NULL;
 	tmp->sequenceNr = NULL;
-	tmp->req_time_us = NULL;
+	tmp->req_time_micros = NULL;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -254,13 +254,13 @@ KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_OctetString*, raw, Raw);
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Utf8String*, clientId, ClientId);
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_OctetString*, machineId, MachineId);
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Integer*, sequenceNr, SequenceNr);
-KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Integer*, req_time_us, RequestTime);
+KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Integer*, req_time_micros, RequestTimeInMicros);
 
 KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_OctetString*, raw, Raw);
 KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Utf8String*, clientId, ClientId);
 KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_OctetString*, machineId, MachineId);
 KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Integer*, sequenceNr, SequenceNr);
-KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Integer*, req_time_us, RequestTime);
+KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Integer*, req_time_micros, RequestTimeInMicros);
 
 /**
  * KSI_ExtendPdu
@@ -768,8 +768,8 @@ KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_TLV*, baseTlv, BaseTlv);
 void KSI_ExtendReq_free(KSI_ExtendReq *t) {
 	if(t != NULL) {
 		KSI_Integer_free(t->requestId);
-		KSI_Integer_free(t->aggregationTime_s);
-		KSI_Integer_free(t->publicationTime_s);
+		KSI_Integer_free(t->aggregationTime);
+		KSI_Integer_free(t->publicationTime);
 		KSI_free(t);
 	}
 }
@@ -785,8 +785,8 @@ int KSI_ExtendReq_new(KSI_CTX *ctx, KSI_ExtendReq **t) {
 
 	tmp->ctx = ctx;
 	tmp->requestId = NULL;
-	tmp->aggregationTime_s = NULL;
-	tmp->publicationTime_s = NULL;
+	tmp->aggregationTime = NULL;
+	tmp->publicationTime = NULL;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -796,12 +796,12 @@ cleanup:
 }
 
 KSI_IMPLEMENT_GETTER(KSI_ExtendReq, KSI_Integer*, requestId, RequestId);
-KSI_IMPLEMENT_GETTER(KSI_ExtendReq, KSI_Integer*, aggregationTime_s, AggregationTime);
-KSI_IMPLEMENT_GETTER(KSI_ExtendReq, KSI_Integer*, publicationTime_s, PublicationTime);
+KSI_IMPLEMENT_GETTER(KSI_ExtendReq, KSI_Integer*, aggregationTime, AggregationTime);
+KSI_IMPLEMENT_GETTER(KSI_ExtendReq, KSI_Integer*, publicationTime, PublicationTime);
 
 KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, requestId, RequestId);
-KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, aggregationTime_s, AggregationTime);
-KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, publicationTime_s, PublicationTime);
+KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, aggregationTime, AggregationTime);
+KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, publicationTime, PublicationTime);
 
 
 /**
@@ -812,7 +812,7 @@ void KSI_ExtendResp_free(KSI_ExtendResp *t) {
 		KSI_Integer_free(t->requestId);
 		KSI_Integer_free(t->status);
 		KSI_Utf8String_free(t->errorMsg);
-		KSI_Integer_free(t->lastTime_s);
+		KSI_Integer_free(t->lastTime);
 		KSI_CalendarHashChain_free(t->calendarHashChain);
 		KSI_TLV_free(t->baseTlv);
 		KSI_free(t);
@@ -832,7 +832,7 @@ int KSI_ExtendResp_new(KSI_CTX *ctx, KSI_ExtendResp **t) {
 	tmp->requestId = NULL;
 	tmp->status = NULL;
 	tmp->errorMsg = NULL;
-	tmp->lastTime_s = NULL;
+	tmp->lastTime = NULL;
 	tmp->calendarHashChain = NULL;
 	tmp->baseTlv = NULL;
 	*t = tmp;
@@ -846,14 +846,14 @@ cleanup:
 KSI_IMPLEMENT_GETTER(KSI_ExtendResp, KSI_Integer*, requestId, RequestId);
 KSI_IMPLEMENT_GETTER(KSI_ExtendResp, KSI_Integer*, status, Status);
 KSI_IMPLEMENT_GETTER(KSI_ExtendResp, KSI_Utf8String*, errorMsg, ErrorMsg);
-KSI_IMPLEMENT_GETTER(KSI_ExtendResp, KSI_Integer*, lastTime_s, LastTime);
+KSI_IMPLEMENT_GETTER(KSI_ExtendResp, KSI_Integer*, lastTime, LastTime);
 KSI_IMPLEMENT_GETTER(KSI_ExtendResp, KSI_CalendarHashChain*, calendarHashChain, CalendarHashChain);
 KSI_IMPLEMENT_GETTER(KSI_ExtendResp, KSI_TLV*, baseTlv, BaseTlv);
 
 KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_Integer*, requestId, RequestId);
 KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_Integer*, status, Status);
 KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_Utf8String*, errorMsg, ErrorMsg);
-KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_Integer*, lastTime_s, LastTime);
+KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_Integer*, lastTime, LastTime);
 KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_CalendarHashChain*, calendarHashChain, CalendarHashChain);
 KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_TLV*, baseTlv, BaseTlv);
 

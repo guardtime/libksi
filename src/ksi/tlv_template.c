@@ -53,7 +53,7 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_MetaData)
 	KSI_TLV_UTF8_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_MetaData_getClientId, KSI_MetaData_setClientId)
 	KSI_TLV_OCTET_STRING(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_MetaData_getMachineId, KSI_MetaData_setMachineId)
 	KSI_TLV_INTEGER(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_MetaData_getSequenceNr, KSI_MetaData_setSequenceNr)
-	KSI_TLV_TIME_US(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_MetaData_getRequestTime, KSI_MetaData_setRequestTime)
+	KSI_TLV_TIME_US(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_MetaData_getRequestTimeInMicros, KSI_MetaData_setRequestTimeInMicros)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_HashChainLink)
