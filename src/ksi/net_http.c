@@ -43,7 +43,9 @@ static int prepareRequest(
 		int (*updateHmac)(void *, int, char *),
 		int (*serialize)(void *, unsigned char **, unsigned *),
 		KSI_RequestHandle **handle,
-		char *url) {
+		char *url,
+		char *pass,
+		const char *desc) {
 	KSI_ERR err;
 	int res;
 	KSI_HttpClient *http = (KSI_HttpClient *)client;
@@ -57,13 +59,13 @@ static int prepareRequest(
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(client->ctx, &err);
 
-	res = updateHmac(pdu, defaultAlgo, client->extPass);
+	res = updateHmac(pdu, defaultAlgo, pass);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = serialize(pdu, &raw, &raw_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	KSI_LOG_logBlob(client->ctx, KSI_LOG_DEBUG, "Extending request", raw, raw_len);
+	KSI_LOG_logBlob(client->ctx, KSI_LOG_DEBUG, desc, raw, raw_len);
 
 	/* Create a new request handle */
 	res = KSI_RequestHandle_new(client->ctx, raw, raw_len, &tmp);
@@ -97,7 +99,9 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendPdu *pdu, K
 			(int (*)(void *, int, char *))KSI_ExtendPdu_updateHmac,
 			(int (*)(void *, unsigned char **, unsigned *))KSI_ExtendPdu_serialize,
 			handle,
-			((KSI_HttpClient*)client)->urlExtender);
+			((KSI_HttpClient*)client)->urlExtender,
+			client->extPass,
+			"Extend request");
 }
 
 static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationPdu *pdu, KSI_RequestHandle **handle) {
@@ -107,7 +111,9 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationP
 			(int (*)(void *, int, char *))KSI_AggregationPdu_updateHmac,
 			(int (*)(void *, unsigned char **, unsigned *))KSI_AggregationPdu_serialize,
 			handle,
-			((KSI_HttpClient*)client)->urlSigner);
+			((KSI_HttpClient*)client)->urlSigner,
+			client->agrPass,
+			"Aggregation request");
 }
 
 static int preparePublicationsFileRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle) {
