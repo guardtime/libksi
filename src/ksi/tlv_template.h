@@ -203,7 +203,7 @@ extern "C" {
 	#define KSI_TLV_TMPL_FLG_MORE_DEFS		0x20
 
 	/**
-	 * This flag prevents the serialisation.
+	 * This flag prevents the serialization.
 	 */
 	#define KSI_TLV_TMPL_FLG_NO_SERIALIZE	0x40
 
@@ -335,6 +335,12 @@ extern "C" {
 	 */
 	#define KSI_TLV_NATIVE_INT(tg, flg, gttr, sttr) KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_NATIVE_INT, tg, flg, gttr, sttr)
 
+	/**
+	 * TLV templates for time representation
+	 */
+	#define KSI_TLV_TIME_S KSI_TLV_INTEGER
+	#define KSI_TLV_TIME_US KSI_TLV_INTEGER
+	
 	/**
 	 * Generic object list template. The \c obj parameter may be only a type
 	 * for which there is a list type defined (see #KSI_DEFINE_LIST and #KSI_IMPLEMENT_LIST).

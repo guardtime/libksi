@@ -10,13 +10,15 @@ KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendReq);
 KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendResp);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationReq);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationResp);
+KSI_IMPORT_TLV_TEMPLATE(KSI_MetaData);
 
 struct KSI_MetaData_st {
 	KSI_CTX *ctx;
 	KSI_OctetString *raw;
 	KSI_Utf8String *clientId;
-	KSI_Integer *machineId;
+	KSI_OctetString *machineId;
 	KSI_Integer *sequenceNr;
+	KSI_Integer *req_time_micros;
 };
 
 struct KSI_ExtendPdu_st {
@@ -110,7 +112,7 @@ struct KSI_PKISignedData_st {
 struct KSI_PublicationsHeader_st {
 	KSI_CTX *ctx;
 	KSI_Integer *version;
-	KSI_Integer *timeCreated;
+	KSI_Integer *timeCreated_s;
 	KSI_Utf8String *repositoryUri;
 };
 
@@ -141,8 +143,9 @@ void KSI_MetaData_free(KSI_MetaData *t) {
 	if(t != NULL) {
 		KSI_OctetString_free(t->raw);
 		KSI_Utf8String_free(t->clientId);
-		KSI_Integer_free(t->machineId);
+		KSI_OctetString_free(t->machineId);
 		KSI_Integer_free(t->sequenceNr);
+		KSI_Integer_free(t->req_time_micros);
 		KSI_free(t);
 	}
 }
@@ -161,6 +164,7 @@ int KSI_MetaData_new(KSI_CTX *ctx, KSI_MetaData **t) {
 	tmp->clientId = NULL;
 	tmp->machineId = NULL;
 	tmp->sequenceNr = NULL;
+	tmp->req_time_micros = NULL;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -169,15 +173,94 @@ cleanup:
 	return res;
 }
 
+int KSI_MetaData_toTlv(KSI_CTX *ctx, const KSI_MetaData *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+	KSI_ERR err;
+	int res;
+	KSI_TLV *tmp = NULL;
+	unsigned char *raw = NULL;
+	unsigned int raw_len = 0;
+
+	KSI_PRE(&err, data != NULL) goto cleanup;
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, tag, isNonCritical, isForward, &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_TlvTemplate_construct(ctx, tmp, data, KSI_TLV_TEMPLATE(KSI_MetaData));
+	KSI_CATCH(&err, res) goto cleanup;
+
+	*tlv = tmp;
+	tmp = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_nofree(raw);
+	KSI_TLV_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_MetaData_fromTlv(KSI_TLV *tlv, KSI_MetaData **metaData) {
+	KSI_ERR err;
+	int res;
+	KSI_MetaData *tmp = NULL;
+	int isLeft = 0;
+	unsigned char *tlvData = NULL;
+	unsigned len;
+	KSI_OctetString *raw = NULL;
+	KSI_CTX *ctx = KSI_TLV_getCtx(tlv);
+	
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
+	KSI_PRE(&err, metaData != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	
+	if(KSI_TLV_getTag(tlv) != 0x04){
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_MetaData_new(KSI_TLV_getCtx(tlv), &tmp);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_TlvTemplate_extract(KSI_TLV_getCtx(tlv), tmp, tlv, KSI_TLV_TEMPLATE(KSI_MetaData));
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_TLV_serialize(tlv, &tlvData, &len);
+	KSI_CATCH(&err, res) goto cleanup;
+	
+	res = KSI_OctetString_new(ctx, tlvData+2, len-2, &raw);
+	KSI_CATCH(&err, res) goto cleanup;
+			
+	tmp->raw = raw;
+	*metaData = tmp;
+	
+	raw = NULL;
+	tmp = NULL;
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	KSI_MetaData_free(tmp);
+	KSI_free(tlvData);
+	KSI_OctetString_free(raw);
+	return KSI_RETURN(&err);
+}
+
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_OctetString*, raw, Raw);
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Utf8String*, clientId, ClientId);
-KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Integer*, machineId, MachineId);
+KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_OctetString*, machineId, MachineId);
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Integer*, sequenceNr, SequenceNr);
+KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Integer*, req_time_micros, RequestTimeInMicros);
 
 KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_OctetString*, raw, Raw);
 KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Utf8String*, clientId, ClientId);
-KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Integer*, machineId, MachineId);
+KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_OctetString*, machineId, MachineId);
 KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Integer*, sequenceNr, SequenceNr);
+KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Integer*, req_time_micros, RequestTimeInMicros);
 
 /**
  * KSI_ExtendPdu
@@ -874,7 +957,7 @@ KSI_IMPLEMENT_SETTER(KSI_PKISignedData, KSI_Utf8String*, certRepositoryUri, Cert
 void KSI_PublicationsHeader_free(KSI_PublicationsHeader *t) {
 	if(t != NULL) {
 		KSI_Integer_free(t->version);
-		KSI_Integer_free(t->timeCreated);
+		KSI_Integer_free(t->timeCreated_s);
 		KSI_Utf8String_free(t->repositoryUri);
 		KSI_free(t);
 	}
@@ -891,7 +974,7 @@ int KSI_PublicationsHeader_new(KSI_CTX *ctx, KSI_PublicationsHeader **t) {
 
 	tmp->ctx = ctx;
 	tmp->version = NULL;
-	tmp->timeCreated = NULL;
+	tmp->timeCreated_s = NULL;
 	tmp->repositoryUri = NULL;
 	*t = tmp;
 	tmp = NULL;
@@ -902,11 +985,11 @@ cleanup:
 }
 
 KSI_IMPLEMENT_GETTER(KSI_PublicationsHeader, KSI_Integer*, version, Version);
-KSI_IMPLEMENT_GETTER(KSI_PublicationsHeader, KSI_Integer*, timeCreated, TimeCreated);
+KSI_IMPLEMENT_GETTER(KSI_PublicationsHeader, KSI_Integer*, timeCreated_s, TimeCreated);
 KSI_IMPLEMENT_GETTER(KSI_PublicationsHeader, KSI_Utf8String*, repositoryUri, RepositoryUri);
 
 KSI_IMPLEMENT_SETTER(KSI_PublicationsHeader, KSI_Integer*, version, Version);
-KSI_IMPLEMENT_SETTER(KSI_PublicationsHeader, KSI_Integer*, timeCreated, TimeCreated);
+KSI_IMPLEMENT_SETTER(KSI_PublicationsHeader, KSI_Integer*, timeCreated_s, TimeCreated);
 KSI_IMPLEMENT_SETTER(KSI_PublicationsHeader, KSI_Utf8String*, repositoryUri, RepositoryUri);
 
 

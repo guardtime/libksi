@@ -134,13 +134,16 @@ void KSI_MetaData_free(KSI_MetaData *t);
 int KSI_MetaData_new(KSI_CTX *ctx, KSI_MetaData **t);
 int KSI_MetaData_getRaw(const KSI_MetaData *t, KSI_OctetString **raw);
 int KSI_MetaData_getClientId(const KSI_MetaData *t, KSI_Utf8String **clientId);
-int KSI_MetaData_getMachineId(const KSI_MetaData *t, KSI_Integer **machineId);
+int KSI_MetaData_getMachineId(const KSI_MetaData *t, KSI_OctetString **machineId);
 int KSI_MetaData_getSequenceNr(const KSI_MetaData *t, KSI_Integer **sequenceNr);
+int KSI_MetaData_getRequestTimeInMicros(const KSI_MetaData *t, KSI_Integer **reqTime);
 int KSI_MetaData_setRaw(KSI_MetaData *t, KSI_OctetString *raw);
 int KSI_MetaData_setClientId(KSI_MetaData *t, KSI_Utf8String *clientId);
-int KSI_MetaData_setMachineId(KSI_MetaData *t, KSI_Integer *machineId);
+int KSI_MetaData_setMachineId(KSI_MetaData *t, KSI_OctetString *machineId);
 int KSI_MetaData_setSequenceNr(KSI_MetaData *t, KSI_Integer *sequenceNr);
-
+int KSI_MetaData_setRequestTimeInMicros(KSI_MetaData *t, KSI_Integer *reqTime);
+int KSI_MetaData_toTlv(KSI_CTX *ctx, const KSI_MetaData *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+int KSI_MetaData_fromTlv(KSI_TLV *tlv, KSI_MetaData **metaData);
 /*
  * KSI_ExtendPdu
  */
@@ -327,10 +330,10 @@ int KSI_PKISignedData_setCertRepositoryUri(KSI_PKISignedData *t, KSI_Utf8String 
 void KSI_PublicationsHeader_free(KSI_PublicationsHeader *t);
 int KSI_PublicationsHeader_new(KSI_CTX *ctx, KSI_PublicationsHeader **t);
 int KSI_PublicationsHeader_getVersion(const KSI_PublicationsHeader *t, KSI_Integer **version);
-int KSI_PublicationsHeader_getTimeCreated(const KSI_PublicationsHeader *t, KSI_Integer **timeCreated);
+int KSI_PublicationsHeader_getTimeCreated(const KSI_PublicationsHeader *t, KSI_Integer **timeCreated_s);
 int KSI_PublicationsHeader_getRepositoryUri(const KSI_PublicationsHeader *t, KSI_Utf8String **repositoryUri);
 int KSI_PublicationsHeader_setVersion(KSI_PublicationsHeader *t, KSI_Integer *version);
-int KSI_PublicationsHeader_setTimeCreated(KSI_PublicationsHeader *t, KSI_Integer *timeCreated);
+int KSI_PublicationsHeader_setTimeCreated(KSI_PublicationsHeader *t, KSI_Integer *timeCreated_s);
 int KSI_PublicationsHeader_setRepositoryUri(KSI_PublicationsHeader *t, KSI_Utf8String *repositoryUri);
 
 /*
