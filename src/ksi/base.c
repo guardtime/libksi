@@ -499,7 +499,6 @@ cleanup:
 
 int KSI_CTX_setLogLevel(KSI_CTX *ctx, int level) {
 	KSI_ERR err;
-	int res;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
