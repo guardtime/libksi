@@ -360,8 +360,6 @@ cleanup:
 }
 
 int KSI_DataHash_getHashAlg(const KSI_DataHash *hash, int *hashAlg){
-	int res = 0;
-	
 	if(hash == NULL) return KSI_INVALID_ARGUMENT;
 	if(hashAlg == NULL) return KSI_INVALID_ARGUMENT;
 	if(hash->imprint == NULL) return KSI_INVALID_ARGUMENT;

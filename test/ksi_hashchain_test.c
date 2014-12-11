@@ -58,7 +58,7 @@ int KSI_HashChain_appendLink(KSI_DataHash *siblingHash, KSI_DataHash *metaHash, 
 	tmp = *chain;
 
 	if (tmp == NULL) {
-		res = KSI_HashChainLinkList_new(ctx, &tmp);
+		res = KSI_HashChainLinkList_new(&tmp);
 		if (res != KSI_OK) goto cleanup;
 	}
 
@@ -88,7 +88,7 @@ static void buildHashChain(CuTest *tc, const char *hexImprint, int isLeft, int l
 	KSI_DataHash *hsh = NULL;
 
 	if (*chn == NULL) {
-		res = KSI_HashChainLinkList_new(ctx, chn);
+		res = KSI_HashChainLinkList_new(chn);
 		CuAssert(tc, "Unable to build hash chain.", res == KSI_OK && *chn != NULL);
 	}
 
@@ -105,10 +105,9 @@ static void buildHashChain(CuTest *tc, const char *hexImprint, int isLeft, int l
 
 static void buildMetaDataHashChain(CuTest *tc, KSI_MetaData *metaData, int isLeft, int levelCorrection, KSI_LIST(KSI_HashChainLink) **chn) {
 	int res;
-	KSI_DataHash *hsh = NULL;
 
 	if (*chn == NULL) {
-		res = KSI_HashChainLinkList_new(ctx, chn);
+		res = KSI_HashChainLinkList_new(chn);
 		CuAssert(tc, "Unable to build hash chain.", res == KSI_OK && *chn != NULL);
 	}
 
@@ -241,7 +240,6 @@ static void testAggrChainBuiltWithMetaData(CuTest *tc) {
 	unsigned buf_len;
 	
 	KSI_LIST(KSI_HashChainLink) *chn = NULL;
-	KSI_HashChainLink *link = NULL;
 	KSI_DataHash *in = NULL;
 	KSI_DataHash *out = NULL;
 	KSI_DataHash *exp = NULL;

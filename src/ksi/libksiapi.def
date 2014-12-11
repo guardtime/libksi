@@ -334,10 +334,14 @@ EXPORTS
     KSI_MetaData_getClientId
     KSI_MetaData_getMachineId
     KSI_MetaData_getSequenceNr
+    KSI_MetaData_getRequestTimeInMicros
     KSI_MetaData_setRaw
     KSI_MetaData_setClientId
     KSI_MetaData_setMachineId
     KSI_MetaData_setSequenceNr
+    KSI_MetaData_setRequestTimeInMicros
+    KSI_MetaData_fromTlv
+    KSI_MetaData_toTlv
     KSI_ExtendPdu_free
     KSI_ExtendPdu_new
     KSI_ExtendPdu_calculateHmac

@@ -178,7 +178,7 @@ int KSI_AggregationAuthRec_new(KSI_CTX *ctx, KSI_AggregationAuthRec **out) {
 		goto cleanup;
 
 	}
-	res = KSI_IntegerList_new(ctx, &tmp->chainIndexesList);
+	res = KSI_IntegerList_new(&tmp->chainIndexesList);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	tmp->inputHash = NULL;
@@ -803,8 +803,6 @@ int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signat
 	
 	KSI_AggregationReq *req = NULL;
 
-	unsigned char *resp = NULL;
-	unsigned resp_len = 0;
 
 	KSI_PRE(&err, hsh != NULL) goto cleanup;
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -1387,7 +1385,7 @@ cleanup:
 	return res;
 }
 
-static int verifyInternallyAggregationChain(KSI_CTX *ctx, KSI_Signature *sig) {
+static int verifyInternallyAggregationChain(KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
 	int level;
@@ -1490,7 +1488,7 @@ cleanup:
 	return res;
 }
 
-static int verifyAggregationRootWithCalendarChain(KSI_CTX *ctx, KSI_Signature *sig) {
+static int verifyAggregationRootWithCalendarChain(KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *inputHash = NULL;
 	KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN;
@@ -1529,7 +1527,7 @@ cleanup:
 	return res;
 }
 
-static int verifyCalendarChain(KSI_CTX *ctx, KSI_Signature *sig) {
+static int verifyCalendarChain(KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *rootHash = NULL;
 	KSI_Integer *calendarPubTm = NULL;
@@ -1582,7 +1580,7 @@ cleanup:
 }
 
 
-static int verifyInternallyCalendarChain(KSI_CTX *ctx, KSI_Signature *sig) {
+static int verifyInternallyCalendarChain(KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	time_t calculatedAggrTm;
 	KSI_Integer *calendarAggrTm = NULL;
@@ -1707,7 +1705,7 @@ cleanup:
 	return res;
 }
 
-static int verifyDocument(KSI_CTX *ctx, KSI_Signature *sig) {
+static int verifyDocument(KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	const KSI_DataHash *hsh = NULL;
 	KSI_VerificationStep step = KSI_VERIFY_DOCUMENT;
@@ -1902,27 +1900,27 @@ static int KSI_Signature_verifyPolicy(KSI_Signature *sig, unsigned *policy, KSI_
 		}
 
 		if (performVerification(pol, sig, KSI_VERIFY_DOCUMENT)) {
-			res = verifyDocument(ctx, sig);
+			res = verifyDocument(sig);
 			KSI_CATCH(&err, res) goto cleanup;
 		}
 
 		if (performVerification(pol, sig, KSI_VERIFY_AGGRCHAIN_INTERNALLY)) {
-			res = verifyInternallyAggregationChain(ctx, sig);
+			res = verifyInternallyAggregationChain(sig);
 			KSI_CATCH(&err, res) goto cleanup;
 		}
 
 		if (performVerification(pol, sig, KSI_VERIFY_CALCHAIN_INTERNALLY)) {
-			res = verifyInternallyCalendarChain(ctx, sig);
+			res = verifyInternallyCalendarChain(sig);
 			KSI_CATCH(&err, res) goto cleanup;
 		}
 
 		if (performVerification(pol, sig, KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN)) {
-			res = verifyAggregationRootWithCalendarChain(ctx, sig);
+			res = verifyAggregationRootWithCalendarChain(sig);
 			KSI_CATCH(&err, res) goto cleanup;
 		}
 
 		if (performVerification(pol, sig, KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC)){
-			res = verifyCalendarChain(ctx, sig);
+			res = verifyCalendarChain(sig);
 			KSI_CATCH(&err, res) goto cleanup;
 		}
 

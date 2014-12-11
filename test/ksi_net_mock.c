@@ -21,7 +21,7 @@ static int mockPublicationsFileReceive(KSI_RequestHandle *handle) {
 	FILE *f = NULL;
 	unsigned char *raw = NULL;
 	unsigned len;
-	long int raw_size = 0;
+	long unsigned int raw_size = 0;
 	
 	if (handle == NULL) goto cleanup;
 

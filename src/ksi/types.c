@@ -177,8 +177,6 @@ int KSI_MetaData_toTlv(KSI_CTX *ctx, const KSI_MetaData *data, unsigned tag, int
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tmp = NULL;
-	unsigned char *raw = NULL;
-	unsigned int raw_len = 0;
 
 	KSI_PRE(&err, data != NULL) goto cleanup;
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
@@ -197,7 +195,6 @@ int KSI_MetaData_toTlv(KSI_CTX *ctx, const KSI_MetaData *data, unsigned tag, int
 
 cleanup:
 
-	KSI_nofree(raw);
 	KSI_TLV_free(tmp);
 
 	return KSI_RETURN(&err);

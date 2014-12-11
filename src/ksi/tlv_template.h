@@ -98,7 +98,7 @@ extern "C" {
 		/**
 		 * If the object is a list, this function is used to initialize the list object.
 		 */
-		int (*listNew)(KSI_CTX *, void **);
+		int (*listNew)(void **);
 
 		/**
 		 * If the object is a list, this function is used to free the memory of it when an
@@ -248,7 +248,7 @@ extern "C" {
 	 */
 	#define KSI_TLV_FULL_TEMPLATE_DEF(typ, tg, flg, gttr, sttr, constr, destr, subTmpl, list_append, mul, list_new, list_free, list_len, list_elAt, fromTlv, toTlv) 												\
 				{ typ, tg, flg , (getter_t)gttr, (setter_t)sttr, (int (*)(KSI_CTX *, void **)) constr, (void (*)(void *)) destr, subTmpl, 																			\
-				(int (*)(void *, void *))list_append, mul, (int (*)(KSI_CTX *, void **)) list_new, (void (*)(void *)) list_free, (int (*)(const void *)) list_len, (int (*)(const void *, int, void **))list_elAt, 	\
+				(int (*)(void *, void *))list_append, mul, (int (*)(void **)) list_new, (void (*)(void *)) list_free, (int (*)(const void *)) list_len, (int (*)(const void *, int, void **))list_elAt, 	\
 				(int (*)(KSI_TLV *, void **)) fromTlv, (int (*)(KSI_CTX *, void *, unsigned, int, int, KSI_TLV **))toTlv},																										\
 
 	/**

@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <ctype.h>
 
-static const char base32EncodeTable[32] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+static const char base32EncodeTable[33] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
 static const unsigned char base32NumDecTable[10] = {
 	-1, -1, 26, 27, 28, 29, 30, 31, -1, -1
@@ -83,7 +83,7 @@ int KSI_base32Decode(const char *base32, unsigned char **data, size_t *data_len)
 	}
 
 	for (i = 0; i < base32_len; i++) {
-		c = toupper(base32[i]);
+		c = (char)toupper(base32[i]);
 
 		if (c == '=') {
 			break;

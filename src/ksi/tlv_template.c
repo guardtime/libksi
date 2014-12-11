@@ -188,7 +188,7 @@ static int storeObjectValue(KSI_CTX *ctx, const KSI_TlvTemplate *tmpl, void *pay
 				KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Template does not have list constructor or destructor, but list itself does not exist.");
 				goto cleanup;
 			}
-			res = tmpl->listNew(ctx, &list);
+			res = tmpl->listNew(&list);
 			KSI_CATCH(&err, res) goto cleanup;
 
 			listp = list;
