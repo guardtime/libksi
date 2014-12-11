@@ -22,13 +22,14 @@ int main(int argc, char **argv) {
 	unsigned buf_len;
 
 	char *signerIdentity = NULL;
+	KSI_HttpClient *net = NULL;
 
 	FILE *logFile = NULL;
 
 	/* Handle command line parameters */
 	if (argc != 5) {
 		fprintf(stderr, "Usage:\n"
-				"  %s <in-file> <out-file> <aggregator url |-> <pub-file url | -> \n", argv[0]);
+				"  %s <in-file> <out-file> <aggregator> <pub-file url | -> \n", argv[0]);
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -58,40 +59,31 @@ int main(int argc, char **argv) {
 	KSI_CTX_setLogLevel(ksi, KSI_LOG_DEBUG);
 
 	/* Check if uri's are specified. */
-	if (strncmp("-", argv[3], 1) || strncmp("-", argv[4], 1)) {
-		KSI_HttpClient *net = NULL;
-		res = KSI_HttpClient_new(ksi, &net);
+	res = KSI_HttpClient_new(ksi, &net);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to create new network provider.\n");
+		goto cleanup;
+	}
+
+	res = KSI_HttpClient_setAggregator(net, argv[3], "anon", "anon");
+	if (res != KSI_OK) goto cleanup;
+
+	/* Check publications file url. */
+	if (strncmp("-", argv[4], 1)) {
+		res = KSI_HttpClient_setPublicationUrl(net, argv[4]);
 		if (res != KSI_OK) {
-			fprintf(stderr, "Unable to create new network provider.\n");
+			fprintf(stderr, "Unable to set publications file url.\n");
 			goto cleanup;
 		}
+	}
 
-		/* Check aggregator url */
-		if (strncmp("-", argv[3], 1)) {
-			res = KSI_HttpClient_setSignerUrl(net, argv[3]);
-			if (res != KSI_OK) {
-				fprintf(stderr, "Unable to set aggregator url.\n");
-				goto cleanup;
-			}
-		}
+	/* Set the new network provider. */
+	res = KSI_setNetworkProvider(ksi, (KSI_NetworkClient*)net);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to set network provider.\n");
+		res = KSI_UNKNOWN_ERROR;
 
-		/* Check publications file url. */
-		if (strncmp("-", argv[4], 1)) {
-			res = KSI_HttpClient_setPublicationUrl(net, argv[4]);
-			if (res != KSI_OK) {
-				fprintf(stderr, "Unable to set publications file url.\n");
-				goto cleanup;
-			}
-		}
-
-		/* Set the new network provider. */
-		res = KSI_setNetworkProvider(ksi, (KSI_NetworkClient*)net);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Unable to set network provider.\n");
-			res = KSI_UNKNOWN_ERROR;
-
-			goto cleanup;
-		}
+		goto cleanup;
 	}
 
 	/* Create a data hasher using default algorithm. */

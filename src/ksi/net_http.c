@@ -111,8 +111,8 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationP
 			(int (*)(void *, int, char *))KSI_AggregationPdu_updateHmac,
 			(int (*)(void *, unsigned char **, unsigned *))KSI_AggregationPdu_serialize,
 			handle,
-			((KSI_HttpClient*)client)->urlSigner,
-			client->agrPass,
+			((KSI_HttpClient*)client)->urlAggregator,
+			client->aggrPass,
 			"Aggregation request");
 }
 
@@ -142,7 +142,7 @@ cleanup:
 
 void KSI_HttpClient_free(KSI_HttpClient *http) {
 	if (http != NULL) {
-		KSI_free(http->urlSigner);
+		KSI_free(http->urlAggregator);
 		KSI_free(http->urlExtender);
 		KSI_free(http->urlPublication);
 		KSI_free(http->agentName);
@@ -170,8 +170,8 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_HttpClient **http) {
 	}
 
 	tmp->parent.ctx = ctx;
-	tmp->parent.agrPass = NULL;
-	tmp->parent.agrUser = NULL;
+	tmp->parent.aggrPass = NULL;
+	tmp->parent.aggrUser = NULL;
 	tmp->parent.extPass = NULL;
 	tmp->parent.extUser = NULL;
 	tmp->parent.implFree = NULL;
@@ -184,7 +184,7 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_HttpClient **http) {
 	tmp->sendRequest = NULL;
 	tmp->urlExtender = NULL;
 	tmp->urlPublication = NULL;
-	tmp->urlSigner = NULL;
+	tmp->urlAggregator = NULL;
 
 	tmp->parent.sendExtendRequest = prepareExtendRequest;
 	tmp->parent.sendSignRequest = prepareAggregationRequest;
@@ -193,14 +193,8 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_HttpClient **http) {
 
 	setIntParam(&tmp->connectionTimeoutSeconds, 10);
 	setIntParam(&tmp->readTimeoutSeconds, 10);
-	setStringParam(&tmp->urlSigner, KSI_DEFAULT_URI_AGGREGATOR);
-	setStringParam(&tmp->urlExtender, KSI_DEFAULT_URI_EXTENDER);
 	setStringParam(&tmp->urlPublication, KSI_DEFAULT_URI_PUBLICATIONS_FILE);
-	setStringParam(&tmp->agentName, "KSI HTTP Client");
-	setStringParam(&tmp->parent.agrUser, "anon");
-	setStringParam(&tmp->parent.agrPass, "anon");
-	setStringParam(&tmp->parent.extUser, "anon");
-	setStringParam(&tmp->parent.extPass, "anon");
+	setStringParam(&tmp->agentName, "KSI HTTP Client"); /** Should be only user provided */
 
 	res = KSI_HttpClient_init(tmp);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -230,9 +224,54 @@ cleanup:
 			return res;																					\
 		}																								\
 
-KSI_NET_IMPLEMENT_SETTER(SignerUrl, const char *, urlSigner, setStringParam);
+KSI_NET_IMPLEMENT_SETTER(SignerUrl, const char *, urlAggregator, setStringParam);
 KSI_NET_IMPLEMENT_SETTER(ExtenderUrl, const char *, urlExtender, setStringParam);
 KSI_NET_IMPLEMENT_SETTER(PublicationUrl, const char *, urlPublication, setStringParam);
 KSI_NET_IMPLEMENT_SETTER(ConnectTimeoutSeconds, int, connectionTimeoutSeconds, setIntParam);
 KSI_NET_IMPLEMENT_SETTER(ReadTimeoutSeconds, int, readTimeoutSeconds, setIntParam);
 
+int KSI_HttpClient_setExtender(KSI_HttpClient *client, const char *url, const char *user, const char *pass) {
+	int res = KSI_UNKNOWN_ERROR;
+	if (client == NULL || url == NULL || user == NULL || pass == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = setStringParam(&client->urlExtender, url);
+	if (res != KSI_OK) goto cleanup;
+
+	res = setStringParam(&client->parent.extUser, user);
+	if (res != KSI_OK) goto cleanup;
+
+	res = setStringParam(&client->parent.extPass, pass);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_HttpClient_setAggregator(KSI_HttpClient *client, const char *url, const char *user, const char *pass) {
+	int res = KSI_UNKNOWN_ERROR;
+	if (client == NULL || url == NULL || user == NULL || pass == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = setStringParam(&client->urlAggregator, url);
+	if (res != KSI_OK) goto cleanup;
+
+	res = setStringParam(&client->parent.aggrUser, user);
+	if (res != KSI_OK) goto cleanup;
+
+	res = setStringParam(&client->parent.aggrPass, pass);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}

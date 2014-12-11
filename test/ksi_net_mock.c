@@ -164,6 +164,12 @@ int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	res = KSI_HttpClient_new(ctx, &http);
 	if (res != KSI_OK) goto cleanup;
 
+	res = KSI_HttpClient_setAggregator(http, "mock-aggregator", "anon", "anon");
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_HttpClient_setExtender(http, "mock-extender", "anon", "anon");
+	if (res != KSI_OK) goto cleanup;
+
 	http->sendRequest = sendRequest;
 
 	res = KSI_CTX_registerGlobals(ctx, mockInit, mockCleanup);

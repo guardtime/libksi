@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
 
 	if (argc != 5) {
 		printf("Usage:\n"
-				"  %s <signature> <extended> <extender uri | -> <pub-file uri | ->\n", argv[0]);
+				"  %s <signature> <extended> <extender uri> <pub-file uri| ->\n", argv[0]);
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -39,36 +39,24 @@ int main(int argc, char **argv) {
 	KSI_CTX_setLoggerCallback(ksi, KSI_LOG_StreamLogger, logFile);
 	KSI_CTX_setLogLevel(ksi, KSI_LOG_DEBUG);
 
-	if (strncmp("-",argv[3], 1) || strncmp("-", argv[4], 1)) {
-		res = KSI_HttpClient_new(ksi, &net);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Unable to create new network provider.\n");
-			goto cleanup;
-		}
+	res = KSI_HttpClient_new(ksi, &net);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to create new network provider.\n");
+		goto cleanup;
+	}
 
-		if (strncmp("-", argv[3], 1)) {
-			/* Set extender uri. */
-			res = KSI_HttpClient_setExtenderUrl(net, argv[3]);
-			if (res != KSI_OK) {
-				fprintf(stderr, "Unable to set extender url.\n");
-				goto cleanup;
-			}
-		}
+	res = KSI_HttpClient_setExtender(net, argv[3], "anon", "anon");
+	if (res != KSI_OK) goto cleanup;
 
-		if (strncmp("-", argv[4], 1)) {
-			/* Set the publications file url. */
-			res = KSI_HttpClient_setPublicationUrl(net, argv[4]);
-			if (res != KSI_OK) {
-				fprintf(stderr, "Unable to set publications file url.\n");
-				goto cleanup;
-			}
-		}
+	if (strcmp(argv[4], "-")) {
+		res = KSI_HttpClient_setPublicationUrl(net, argv[4]);
+		if (res != KSI_OK) goto cleanup;
+	}
 
-		res = KSI_setNetworkProvider(ksi, (KSI_NetworkClient *)net);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Unable to set new network provider.\n");
-			goto cleanup;
-		}
+	res = KSI_setNetworkProvider(ksi, (KSI_NetworkClient *)net);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to set new network provider.\n");
+		goto cleanup;
 	}
 
 	/* Clear the errors. */

@@ -98,7 +98,9 @@ static int curlReceive(KSI_RequestHandle *handle) {
 	implCtx = handle->implCtx;
 
     curl_easy_setopt(implCtx->curl, CURLOPT_ERRORBUFFER, curlErr);
-	curl_easy_setopt(implCtx->curl, CURLOPT_USERAGENT, http->agentName);
+    if (http->agentName != NULL) {
+    	curl_easy_setopt(implCtx->curl, CURLOPT_USERAGENT, http->agentName);
+    }
 
 	if (handle->request != NULL) {
 		curl_easy_setopt(implCtx->curl, CURLOPT_POST, 1);

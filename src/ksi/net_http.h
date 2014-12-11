@@ -2,6 +2,7 @@
 #define KSI_NET_HTTP_H_
 
 #include "net.h"
+#include "common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,7 +39,7 @@ extern "C" {
 	 * \param[in]	val			Null-terminated URL.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_HttpClient_setSignerUrl(KSI_HttpClient *client, const char *val);
+	KSI_FN_DEPRECATED(int KSI_HttpClient_setSignerUrl(KSI_HttpClient *client, const char *val));
 
 	/**
 	 * Setter for the extender URL. The value will be copied and thus
@@ -47,7 +48,7 @@ extern "C" {
 	 * \param[in]	val			Null-terminated URL.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_HttpClient_setExtenderUrl(KSI_HttpClient *client, const char *val);
+	KSI_FN_DEPRECATED(int KSI_HttpClient_setExtenderUrl(KSI_HttpClient *client, const char *val));
 
 	/**
 	 * Setter for the publications file URL. The value will be copied and thus
@@ -73,6 +74,10 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_HttpClient_setReadTimeoutSeconds(KSI_HttpClient *client, int val);
+
+	int KSI_HttpClient_setExtender(KSI_HttpClient *client, const char *url, const char *user, const char *pass);
+	int KSI_HttpClient_setAggregator(KSI_HttpClient *client, const char *url, const char *user, const char *pass);
+
 
 #ifdef __cplusplus
 }
