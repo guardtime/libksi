@@ -156,6 +156,7 @@ static int RunAllTests() {
 	CuSuite* suite = initSuite();
 	FILE *logFile = NULL;
 
+	/* Create the context. */
 	res = KSI_CTX_new(&ctx);
 	if(ctx == NULL || res != KSI_OK){
 		fprintf(stderr, "Error: Unable to init KSI context (%s)!\n", KSI_getErrorString(res));
@@ -170,6 +171,7 @@ static int RunAllTests() {
 
 	KSI_CTX_setLoggerCallback(ctx, KSI_LOG_StreamLogger, logFile);
 	KSI_CTX_setLogLevel(ctx, KSI_LOG_DEBUG);
+
 	CuSuiteRun(suite);
 
 	printStats(suite);

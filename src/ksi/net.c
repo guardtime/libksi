@@ -36,13 +36,14 @@ cleanup:
 	return res;
 }
 
-#define processHeader(client, pdu, typ) processPduHeader((client),  (pdu), (int (*)(void *, KSI_Header **))typ##_getHeader, (int (*)(void *, KSI_Header *))typ##_setHeader)
+#define processHeader(client, pdu, typ, usr) processPduHeader((client),  (pdu), (int (*)(void *, KSI_Header **))typ##_getHeader, (int (*)(void *, KSI_Header *))typ##_setHeader, usr)
 
 static int processPduHeader(
 		KSI_NetworkClient *client,
 		void *pdu,
 		int (*getHeader)(void *, KSI_Header **),
-		int (*setHeader)(void *, KSI_Header *)) {
+		int (*setHeader)(void *, KSI_Header *),
+		const char *user) {
 	KSI_ERR err;
 	int res;
 	KSI_Header *headerp = NULL;
@@ -56,9 +57,14 @@ static int processPduHeader(
 	res = getHeader(pdu, &headerp);
 	KSI_CATCH(&err, res) goto cleanup;
 
+	if (user == NULL) {
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "User not specified.");
+		goto cleanup;
+	}
+
 	/*Add header*/
 	if (headerp == NULL) {
-		KSI_uint64_t userLen = strlen(client->extUser);
+		KSI_uint64_t userLen = strlen(user);
 
 		if(userLen > 0xffff){
 			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "User id too long.");
@@ -68,7 +74,7 @@ static int processPduHeader(
 		res = KSI_Header_new(client->ctx, &header);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		res = KSI_OctetString_new(client->ctx, (unsigned char *)client->extUser, (unsigned)userLen, &clientId);
+		res = KSI_OctetString_new(client->ctx, (unsigned char *)user, (unsigned)userLen, &clientId);
 		KSI_CATCH(&err, res) goto cleanup;
 
 		res = KSI_Header_setLoginId(header, clientId);
@@ -200,7 +206,7 @@ int KSI_NetworkClient_sendSignRequest(KSI_NetworkClient *provider, KSI_Aggregati
 	res = KSI_AggregationPdu_setRequest(pdu, request);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = processHeader(provider, pdu, KSI_AggregationPdu);
+	res = processHeader(provider, pdu, KSI_AggregationPdu, provider->aggrUser);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = provider->sendSignRequest(provider, pdu, handle);
@@ -236,7 +242,7 @@ int KSI_NetworkClient_sendExtendRequest(KSI_NetworkClient *provider, KSI_ExtendR
 	res = KSI_ExtendPdu_setRequest(pdu, request);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = processHeader(provider, pdu, KSI_ExtendPdu);
+	res = processHeader(provider, pdu, KSI_ExtendPdu, provider->extUser);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = provider->sendExtendRequest(provider, pdu, handle);
@@ -278,8 +284,8 @@ cleanup:
 
 void KSI_NetworkClient_free(KSI_NetworkClient *provider) {
 	if (provider != NULL) {
-		KSI_free(provider->agrPass);
-		KSI_free(provider->agrUser);
+		KSI_free(provider->aggrPass);
+		KSI_free(provider->aggrUser);
 		KSI_free(provider->extPass);
 		KSI_free(provider->extUser);
 		if (provider->implFree != NULL) {
@@ -510,7 +516,7 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 	
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_PRE(&err, handle->client != NULL) goto cleanup;
-	KSI_PRE(&err, handle->client->agrPass != NULL) goto cleanup;
+	KSI_PRE(&err, handle->client->aggrPass != NULL) goto cleanup;
 	KSI_PRE(&err, resp != NULL) goto cleanup;
 	KSI_BEGIN(handle->ctx, &err);
 
@@ -530,7 +536,7 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 	res = KSI_DataHash_getHashAlg(respHmac, &hashAlg);
 	KSI_CATCH(&err, res) goto cleanup;
 	
-	res = KSI_AggregationPdu_calculateHmac(pdu, hashAlg, handle->client->agrPass, &actualHmac);
+	res = KSI_AggregationPdu_calculateHmac(pdu, hashAlg, handle->client->aggrPass, &actualHmac);
 	KSI_CATCH(&err, res) goto cleanup;
 	
 	if (!KSI_DataHash_equals(respHmac, actualHmac)){
@@ -632,10 +638,10 @@ cleanup:
 
 KSI_NET_IMPLEMENT_SETTER(ExtenderUser, const char *, extUser, setStringParam);
 KSI_NET_IMPLEMENT_SETTER(ExtenderPass, const char *, extPass, setStringParam);
-KSI_NET_IMPLEMENT_SETTER(AggregatorUser, const char *, agrUser, setStringParam);
-KSI_NET_IMPLEMENT_SETTER(AggregatorPass, const char *, agrPass, setStringParam);
+KSI_NET_IMPLEMENT_SETTER(AggregatorUser, const char *, aggrUser, setStringParam);
+KSI_NET_IMPLEMENT_SETTER(AggregatorPass, const char *, aggrPass, setStringParam);
 
 KSI_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, extUser, ExtenderUser);
 KSI_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, extPass, ExtenderPass);
-KSI_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, agrUser, AggregatorUser);
-KSI_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, agrPass, AggregatorPass);
+KSI_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, aggrUser, AggregatorUser);
+KSI_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, aggrPass, AggregatorPass);

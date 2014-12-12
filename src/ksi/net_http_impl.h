@@ -14,7 +14,7 @@ extern "C" {
 
 		int connectionTimeoutSeconds;
 		int readTimeoutSeconds;
-		char *urlSigner;
+		char *urlAggregator;
 		char *urlExtender;
 		char *urlPublication;
 		char *agentName;

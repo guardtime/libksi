@@ -17,9 +17,9 @@ extern "C" {
 		int (*sendPublicationRequest)(KSI_NetworkClient *, KSI_RequestHandle *);
 
 		/** Aggregator user. */
-		char *agrUser;
+		char *aggrUser;
 		/** Aggregator pass phrase. */
-		char *agrPass;
+		char *aggrPass;
 
 		/** Extender user. */
 		char *extUser;

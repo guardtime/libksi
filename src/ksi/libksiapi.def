@@ -192,6 +192,8 @@ EXPORTS
     KSI_HttpClient_setPublicationUrl
     KSI_HttpClient_setConnectTimeoutSeconds
     KSI_HttpClient_setReadTimeoutSeconds
+    KSI_HttpClient_setAggregator
+    KSI_HttpClient_setExtender
     KSI_HttpClient_init
     KSI_HttpClient_free
 
