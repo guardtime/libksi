@@ -121,7 +121,7 @@ static LPWSTR LPWSTR_new(const char * cstr){
 }
 
 static void LPWSTR_free(LPWSTR wstr){
-	free(wstr);
+	KSI_free(wstr);
 }
 
 /**
