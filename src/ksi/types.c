@@ -106,7 +106,6 @@ struct KSI_PKISignedData_st {
 	KSI_Utf8String *sig_type;
 	KSI_OctetString *signatureValue;
 	KSI_OctetString *certId;
-//	KSI_PKICertificate *cert;
 	KSI_Utf8String *certRepositoryUri;
 };
 
@@ -941,13 +940,11 @@ cleanup:
 
 KSI_IMPLEMENT_GETTER(KSI_PKISignedData, KSI_OctetString*, signatureValue, SignatureValue);
 KSI_IMPLEMENT_GETTER(KSI_PKISignedData, KSI_OctetString*, certId, CertId);
-//KSI_IMPLEMENT_GETTER(KSI_PKISignedData, KSI_PKICertificate*, cert, Certificate);
 KSI_IMPLEMENT_GETTER(KSI_PKISignedData, KSI_Utf8String*, certRepositoryUri, CertRepositoryUri);
 KSI_IMPLEMENT_GETTER(KSI_PKISignedData, KSI_Utf8String*, sig_type, SigType);
 
 KSI_IMPLEMENT_SETTER(KSI_PKISignedData, KSI_OctetString*, signatureValue, SignatureValue);
 KSI_IMPLEMENT_SETTER(KSI_PKISignedData, KSI_OctetString*, certId, CertId);
-//KSI_IMPLEMENT_SETTER(KSI_PKISignedData, KSI_PKICertificate*, cert, Certificate);
 KSI_IMPLEMENT_SETTER(KSI_PKISignedData, KSI_Utf8String*, certRepositoryUri, CertRepositoryUri);
 KSI_IMPLEMENT_SETTER(KSI_PKISignedData, KSI_Utf8String*, sig_type, SigType);
 

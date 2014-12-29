@@ -157,7 +157,6 @@ void KSI_AggregationAuthRec_free(KSI_AggregationAuthRec *aar) {
 		KSI_Integer_free(aar->aggregationTime);
 		KSI_IntegerList_free(aar->chainIndexesList);
 		KSI_DataHash_free(aar->inputHash);
-//		KSI_Utf8String_free(aar->signatureAlgo);
 		KSI_PKISignedData_free(aar->signatureData);
 		KSI_free(aar);
 	}
@@ -183,7 +182,6 @@ int KSI_AggregationAuthRec_new(KSI_CTX *ctx, KSI_AggregationAuthRec **out) {
 
 	tmp->inputHash = NULL;
 	tmp->ctx = ctx;
-//	tmp->signatureAlgo = NULL;
 	tmp->signatureData = NULL;
 	tmp->aggregationTime = NULL;
 
@@ -202,13 +200,11 @@ cleanup:
 KSI_IMPLEMENT_GETTER(KSI_AggregationAuthRec, KSI_Integer*, aggregationTime, AggregationTime)
 KSI_IMPLEMENT_GETTER(KSI_AggregationAuthRec, KSI_LIST(KSI_Integer)*, chainIndexesList, ChainIndex)
 KSI_IMPLEMENT_GETTER(KSI_AggregationAuthRec, KSI_DataHash*, inputHash, InputHash)
-//KSI_IMPLEMENT_GETTER(KSI_AggregationAuthRec, KSI_Utf8String*, signatureAlgo, SigAlgo)
 KSI_IMPLEMENT_GETTER(KSI_AggregationAuthRec, KSI_PKISignedData*, signatureData, SigData)
 
 KSI_IMPLEMENT_SETTER(KSI_AggregationAuthRec, KSI_Integer*, aggregationTime, AggregationTime)
 KSI_IMPLEMENT_SETTER(KSI_AggregationAuthRec, KSI_LIST(KSI_Integer)*, chainIndexesList, ChainIndex)
 KSI_IMPLEMENT_SETTER(KSI_AggregationAuthRec, KSI_DataHash*, inputHash, InputHash)
-//KSI_IMPLEMENT_SETTER(KSI_AggregationAuthRec, KSI_Utf8String*, signatureAlgo, SigAlgo)
 KSI_IMPLEMENT_SETTER(KSI_AggregationAuthRec, KSI_PKISignedData*, signatureData, SigData)
 
 /**
@@ -219,7 +215,6 @@ void KSI_CalendarAuthRec_free(KSI_CalendarAuthRec *calAuth) {
 	if (calAuth != NULL) {
 		KSI_TLV_free(calAuth->pubDataTlv);
 		KSI_PublicationData_free(calAuth->pubData);
-//		KSI_Utf8String_free(calAuth->signatureAlgo);
 		KSI_PKISignedData_free(calAuth->signatureData);
 
 		KSI_free(calAuth);
@@ -242,7 +237,6 @@ int KSI_CalendarAuthRec_new(KSI_CTX *ctx, KSI_CalendarAuthRec **out) {
 
 	tmp->ctx = ctx;
 	tmp->pubData = NULL;
-//	tmp->signatureAlgo = NULL;
 	tmp->signatureData = NULL;
 	tmp->pubDataTlv = NULL;
 
@@ -261,12 +255,10 @@ cleanup:
 
 KSI_IMPLEMENT_SETTER(KSI_CalendarAuthRec, KSI_TLV*, pubDataTlv, SignedData)
 KSI_IMPLEMENT_SETTER(KSI_CalendarAuthRec, KSI_PublicationData*, pubData, PublishedData)
-//KSI_IMPLEMENT_SETTER(KSI_CalendarAuthRec, KSI_Utf8String*, signatureAlgo, SignatureAlgo)
 KSI_IMPLEMENT_SETTER(KSI_CalendarAuthRec, KSI_PKISignedData*, signatureData, SignatureData)
 
 KSI_IMPLEMENT_GETTER(KSI_CalendarAuthRec, KSI_TLV*, pubDataTlv, SignedData)
 KSI_IMPLEMENT_GETTER(KSI_CalendarAuthRec, KSI_PublicationData*, pubData, PublishedData)
-//KSI_IMPLEMENT_GETTER(KSI_CalendarAuthRec, KSI_Utf8String*, signatureAlgo, SignatureAlgo)
 KSI_IMPLEMENT_GETTER(KSI_CalendarAuthRec, KSI_PKISignedData*, signatureData, SignatureData)
 
 KSI_IMPLEMENT_LIST(KSI_AggregationHashChain, KSI_AggregationHashChain_free);
