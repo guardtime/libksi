@@ -579,7 +579,7 @@ char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, unsigned 
 	if (X509_NAME_get_text_by_OBJ(issuer, oid, subjectName, sizeof(subjectName)) < 0)
 		subjectName[0] = 0;
 	
-	_snprintf(buf, buf_len, "Subject: '%s',  Issuer '%s'.", subjectName, issuerName);
+	snprintf(buf, buf_len, "Subject: '%s',  Issuer '%s'.", subjectName, issuerName);
 	
 	ret = buf;
 	
