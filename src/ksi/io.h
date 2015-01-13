@@ -22,6 +22,7 @@ extern "C" {
 	 */
 	int KSI_RDR_fromMem(KSI_CTX *ctx, const unsigned char *buffer, const size_t buffer_length, KSI_RDR **rdr);
 	int KSI_RDR_fromSharedMem(KSI_CTX *ctx, unsigned char *buffer, const size_t buffer_length, KSI_RDR **rdr);
+	int KSI_RDR_fromSocket(KSI_CTX *ctx, int socketfd, KSI_RDR **rdr);
 
 	/* TODO!
 	 *
