@@ -317,12 +317,14 @@ void KSI_PKISignedData_free(KSI_PKISignedData *t);
 int KSI_PKISignedData_new(KSI_CTX *ctx, KSI_PKISignedData **t);
 int KSI_PKISignedData_getSignatureValue(const KSI_PKISignedData *t, KSI_OctetString **signatureValue);
 int KSI_PKISignedData_getCertId(const KSI_PKISignedData *t, KSI_OctetString **certId);
-int KSI_PKISignedData_getCertificate(const KSI_PKISignedData *t, KSI_PKICertificate **cert);
+//int KSI_PKISignedData_getCertificate(const KSI_PKISignedData *t, KSI_PKICertificate **cert);
 int KSI_PKISignedData_getCertRepositoryUri(const KSI_PKISignedData *t, KSI_Utf8String **certRepositoryUri);
+int KSI_PKISignedData_getSigType(const KSI_PKISignedData *t, KSI_Utf8String **sigType);
 int KSI_PKISignedData_setSignatureValue(KSI_PKISignedData *t, KSI_OctetString *signatureValue);
 int KSI_PKISignedData_setCertId(KSI_PKISignedData *t, KSI_OctetString *certId);
-int KSI_PKISignedData_setCertificate(KSI_PKISignedData *t, KSI_PKICertificate *cert);
+//int KSI_PKISignedData_setCertificate(KSI_PKISignedData *t, KSI_PKICertificate *cert);
 int KSI_PKISignedData_setCertRepositoryUri(KSI_PKISignedData *t, KSI_Utf8String *certRepositoryUri);
+int KSI_PKISignedData_setSigType(KSI_PKISignedData *t, KSI_Utf8String *sigType);
 
 /*
  * KSI_PublicationsHeader

@@ -68,6 +68,8 @@ static void wininetNetHandleCtx_free(wininetNetHandleCtx *handleCtx) {
 			InternetCloseHandle(handleCtx->request_handle);
 			handleCtx->request_handle = NULL;
 		}
+		KSI_free(handleCtx->hostName);
+		KSI_free(handleCtx->query);
 		KSI_free(handleCtx);
 	}
 }
@@ -285,7 +287,7 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 
 		strncpy_s(wininetHandle->hostName, wininetHandle->uc.dwHostNameLength + 1, wininetHandle->uc.lpszHostName, wininetHandle->uc.dwHostNameLength);
 		if (wininetHandle->uc.lpszUrlPath == NULL || wininetHandle->uc.dwUrlPathLength == 0) {
-			wininetHandle->query = calloc(2,1);
+			wininetHandle->query = KSI_calloc(2,1);
 			if(wininetHandle->query == NULL)
 				KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 			wininetHandle->query[0] = '/';
@@ -390,7 +392,7 @@ static void implCtx_free(void * hInternet){
 	InternetCloseHandle((HINTERNET)hInternet);
 }
 
-int KSI_HttpClient_init(KSI_NetworkClient *client) {
+int KSI_HttpClient_init(KSI_HttpClient *client) {
 	KSI_ERR err;
 	KSI_HttpClient *http = (KSI_HttpClient *)client;
 	HINTERNET internet_handle;
@@ -398,7 +400,7 @@ int KSI_HttpClient_init(KSI_NetworkClient *client) {
 	int res;
 
 	KSI_PRE(&err, client != NULL) goto cleanup;
-	KSI_BEGIN(client->ctx, &err);
+	KSI_BEGIN(client->parent.ctx, &err);
 
 	if (http == NULL) {
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "HttpClient network client context not initialized.");
@@ -432,7 +434,7 @@ int KSI_HttpClient_init(KSI_NetworkClient *client) {
 	http->sendRequest = wininetSendRequest;
 
 	/* Register global init and cleanup methods. */
-	res = KSI_CTX_registerGlobals(client->ctx, wininetGlobal_init, wininetGlobal_cleanup);
+	res = KSI_CTX_registerGlobals(client->parent.ctx, wininetGlobal_init, wininetGlobal_cleanup);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);

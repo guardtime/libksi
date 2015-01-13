@@ -103,9 +103,9 @@ struct KSI_ExtendResp_st {
 
 struct KSI_PKISignedData_st {
 	KSI_CTX *ctx;
+	KSI_Utf8String *sig_type;
 	KSI_OctetString *signatureValue;
 	KSI_OctetString *certId;
-	KSI_PKICertificate *cert;
 	KSI_Utf8String *certRepositoryUri;
 };
 
@@ -177,8 +177,6 @@ int KSI_MetaData_toTlv(KSI_CTX *ctx, const KSI_MetaData *data, unsigned tag, int
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tmp = NULL;
-	unsigned char *raw = NULL;
-	unsigned int raw_len = 0;
 
 	KSI_PRE(&err, data != NULL) goto cleanup;
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
@@ -197,7 +195,6 @@ int KSI_MetaData_toTlv(KSI_CTX *ctx, const KSI_MetaData *data, unsigned tag, int
 
 cleanup:
 
-	KSI_nofree(raw);
 	KSI_TLV_free(tmp);
 
 	return KSI_RETURN(&err);
@@ -914,6 +911,7 @@ void KSI_PKISignedData_free(KSI_PKISignedData *t) {
 		KSI_OctetString_free(t->signatureValue);
 		KSI_OctetString_free(t->certId);
 		KSI_Utf8String_free(t->certRepositoryUri);
+		KSI_Utf8String_free(t->sig_type);
 		KSI_free(t);
 	}
 }
@@ -930,8 +928,8 @@ int KSI_PKISignedData_new(KSI_CTX *ctx, KSI_PKISignedData **t) {
 	tmp->ctx = ctx;
 	tmp->signatureValue = NULL;
 	tmp->certId = NULL;
-	tmp->cert = NULL;
 	tmp->certRepositoryUri = NULL;
+	tmp->sig_type = NULL;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -942,13 +940,13 @@ cleanup:
 
 KSI_IMPLEMENT_GETTER(KSI_PKISignedData, KSI_OctetString*, signatureValue, SignatureValue);
 KSI_IMPLEMENT_GETTER(KSI_PKISignedData, KSI_OctetString*, certId, CertId);
-KSI_IMPLEMENT_GETTER(KSI_PKISignedData, KSI_PKICertificate*, cert, Certificate);
 KSI_IMPLEMENT_GETTER(KSI_PKISignedData, KSI_Utf8String*, certRepositoryUri, CertRepositoryUri);
+KSI_IMPLEMENT_GETTER(KSI_PKISignedData, KSI_Utf8String*, sig_type, SigType);
 
 KSI_IMPLEMENT_SETTER(KSI_PKISignedData, KSI_OctetString*, signatureValue, SignatureValue);
 KSI_IMPLEMENT_SETTER(KSI_PKISignedData, KSI_OctetString*, certId, CertId);
-KSI_IMPLEMENT_SETTER(KSI_PKISignedData, KSI_PKICertificate*, cert, Certificate);
 KSI_IMPLEMENT_SETTER(KSI_PKISignedData, KSI_Utf8String*, certRepositoryUri, CertRepositoryUri);
+KSI_IMPLEMENT_SETTER(KSI_PKISignedData, KSI_Utf8String*, sig_type, SigType);
 
 
 /**

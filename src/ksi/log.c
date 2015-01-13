@@ -29,11 +29,14 @@ static int writeLog(KSI_CTX *ctx, int logLevel, char *format, va_list va) {
 	if (ctx->loggerCB == NULL || ctx->logLevel < logLevel) {
 		/* Do not perform logging. */
 		res = KSI_OK;
-
 		goto cleanup;
 	}
-
+#ifdef _WIN32	
+	msg[sizeof(msg)-1] = 0;
+	_vsnprintf(msg, sizeof(msg)-1, format, va);
+#else
 	vsnprintf(msg, sizeof(msg), format, va);
+#endif
 	res = ctx->loggerCB(ctx->loggerCtx, logLevel, msg);
 	if (res != KSI_OK) goto cleanup;
 

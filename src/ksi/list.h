@@ -56,11 +56,10 @@ typedef struct type##_list_st KSI_LIST(type);									\
  */																				\
 void KSI_LIST_FN_NAME(type, free)(KSI_LIST(type) *list);						\
 /*! Creates a new list of \ref type.
-	\param[in]	ctx		KSI context.
 	\param[out]	list	Pointer ot the receiving pointer.
 	\return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */																				\
-int KSI_LIST_FN_NAME(type, new)(KSI_CTX *ctx, KSI_LIST(type) **list);					\
+int KSI_LIST_FN_NAME(type, new)(KSI_LIST(type) **list);					\
 /*! Appends the element to the list.
 	\param[in]	list	Pointer to the list.
 	\param[in]	el		Pointer to the element being added.
@@ -147,7 +146,7 @@ int KSI_List_sort(KSI_List *list, int (*)(const void *, const void *));
 struct type##_list_st { 															\
 	KSI_List *list;																	\
 };																					\
-int KSI_LIST_FN_NAME(type, new)(KSI_CTX *ctx, KSI_LIST(type) **list) {				\
+int KSI_LIST_FN_NAME(type, new)(KSI_LIST(type) **list) {				\
 	int res = KSI_UNKNOWN_ERROR;													\
 	KSI_LIST(type) *l = NULL;														\
 	l = KSI_new(KSI_LIST(type));													\

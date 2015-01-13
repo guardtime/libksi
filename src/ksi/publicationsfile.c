@@ -992,7 +992,7 @@ int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_Publicatio
 	KSI_CATCH(&err, res);
 		
 	/*Copy publication references*/
-	res = KSI_Utf8StringList_new(tmp->ctx, &(tmp->publicationRef));
+	res = KSI_Utf8StringList_new(&(tmp->publicationRef));
 	if(res != KSI_OK && tmp->publicationRef) goto cleanup;
 
 	for(i=0; i<KSI_Utf8StringList_length(rec->publicationRef); i++){

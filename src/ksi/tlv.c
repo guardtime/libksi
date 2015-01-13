@@ -398,7 +398,7 @@ static int encodeAsNestedTlvs(KSI_TLV *tlv) {
 		goto cleanup;
 	}
 
-	res = KSI_TLVList_new(tlv->ctx, &tlvList);
+	res = KSI_TLVList_new(&tlvList);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	/* Try parsing all of the nested TLV's. */
@@ -861,7 +861,7 @@ cleanup:
 
 int KSI_TLV_replaceNestedTlv(KSI_TLV *parentTlv, KSI_TLV *oldTlv, KSI_TLV *newTlv) {
 	KSI_ERR err;
-	size_t *pos;
+	size_t *pos = NULL;
 	int res;
 
 	KSI_PRE(&err, parentTlv != NULL) goto cleanup;
@@ -915,7 +915,7 @@ int KSI_TLV_appendNestedTlv(KSI_TLV *target, KSI_TLV *after, KSI_TLV *tlv) {
 	}
 
 	if (target->nested == NULL) {
-		res = KSI_TLVList_new(target->ctx, &list);
+		res = KSI_TLVList_new(&list);
 		KSI_CATCH(&err, res) goto cleanup;
 
 		target->nested = list;

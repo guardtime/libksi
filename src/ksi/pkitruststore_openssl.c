@@ -560,7 +560,33 @@ cleanup:
 }
 /*TODO*/
 char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, unsigned buf_len){
-	return NULL;
+	ASN1_OBJECT *oid = NULL;
+	X509_NAME *issuer = NULL;
+	X509_NAME *subject = NULL;
+	char subjectName[1024];
+	char issuerName[1024];
+	char *ret = NULL;
+	
+	/*Get CommonName*/
+	oid = OBJ_txt2obj("2.5.4.3", 1);
+	
+	issuer = X509_get_issuer_name(cert->x509);
+	subject = X509_get_subject_name(cert->x509);
+	
+	if (X509_NAME_get_text_by_OBJ(subject, oid, issuerName, sizeof(issuerName)) < 0)
+		issuerName[0] = 0;
+	
+	if (X509_NAME_get_text_by_OBJ(issuer, oid, subjectName, sizeof(subjectName)) < 0)
+		subjectName[0] = 0;
+	
+	snprintf(buf, buf_len, "Subject: '%s',  Issuer '%s'.", subjectName, issuerName);
+	
+	ret = buf;
+	
+cleanup:	
+
+	if (oid != NULL) ASN1_OBJECT_free(oid);
+	return ret;
 }
 
 static int extractCertificate(const KSI_PKISignature *signature, X509 **cert) {

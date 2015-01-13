@@ -336,10 +336,14 @@ EXPORTS
     KSI_MetaData_getClientId
     KSI_MetaData_getMachineId
     KSI_MetaData_getSequenceNr
+    KSI_MetaData_getRequestTimeInMicros
     KSI_MetaData_setRaw
     KSI_MetaData_setClientId
     KSI_MetaData_setMachineId
     KSI_MetaData_setSequenceNr
+    KSI_MetaData_setRequestTimeInMicros
+    KSI_MetaData_fromTlv
+    KSI_MetaData_toTlv
     KSI_ExtendPdu_free
     KSI_ExtendPdu_new
     KSI_ExtendPdu_calculateHmac
@@ -456,11 +460,9 @@ EXPORTS
     KSI_PKISignedData_new
     KSI_PKISignedData_getSignatureValue
     KSI_PKISignedData_getCertId
-    KSI_PKISignedData_getCertificate
     KSI_PKISignedData_getCertRepositoryUri
     KSI_PKISignedData_setSignatureValue
     KSI_PKISignedData_setCertId
-    KSI_PKISignedData_setCertificate
     KSI_PKISignedData_setCertRepositoryUri
     KSI_PublicationsHeader_free
     KSI_PublicationsHeader_new
@@ -508,22 +510,18 @@ EXPORTS
     KSI_AggregationAuthRec_getAggregationTime
     KSI_AggregationAuthRec_getChainIndex
     KSI_AggregationAuthRec_getInputHash
-    KSI_AggregationAuthRec_getSigAlgo
     KSI_AggregationAuthRec_getSigData
     KSI_AggregationAuthRec_setAggregationTime
     KSI_AggregationAuthRec_setChainIndex
     KSI_AggregationAuthRec_setInputHash
-    KSI_AggregationAuthRec_setSigAlgo
     KSI_AggregationAuthRec_setSigData
     KSI_CalendarAuthRec_free
     KSI_CalendarAuthRec_new
     KSI_CalendarAuthRec_getSignedData
     KSI_CalendarAuthRec_getPublishedData
-    KSI_CalendarAuthRec_getSignatureAlgo
     KSI_CalendarAuthRec_getSignatureData
     KSI_CalendarAuthRec_setSignedData
     KSI_CalendarAuthRec_setPublishedData
-    KSI_CalendarAuthRec_setSignatureAlgo
     KSI_CalendarAuthRec_setSignatureData
     KSI_TLV_getCtx
     KSI_NetworkClient_getCtx

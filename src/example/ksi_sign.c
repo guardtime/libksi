@@ -3,6 +3,7 @@
 
 #include <ksi/ksi.h>
 #include <ksi/net_http.h>
+#include <ksi/net_tcp.h>
 
 int main(int argc, char **argv) {
 	KSI_CTX *ksi = NULL;
@@ -22,7 +23,7 @@ int main(int argc, char **argv) {
 	unsigned buf_len;
 
 	char *signerIdentity = NULL;
-	KSI_HttpClient *net = NULL;
+	KSI_TcpClient *net = NULL;
 
 	FILE *logFile = NULL;
 
@@ -59,13 +60,13 @@ int main(int argc, char **argv) {
 	KSI_CTX_setLogLevel(ksi, KSI_LOG_DEBUG);
 
 	/* Check if uri's are specified. */
-	res = KSI_HttpClient_new(ksi, &net);
+	res = KSI_TcpClient_new(ksi, &net);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to create new network provider.\n");
 		goto cleanup;
 	}
 
-	res = KSI_HttpClient_setAggregator(net, argv[3], "anon", "anon");
+	res = KSI_TcpClient_setAggregator(net, "192.168.100.36", 3332, "28", "henri");
 	if (res != KSI_OK) goto cleanup;
 
 	/* Check publications file url. */

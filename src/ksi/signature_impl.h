@@ -17,7 +17,7 @@ extern "C" {
 
 		KSI_TLV *pubDataTlv;
 		KSI_PublicationData *pubData;
-		KSI_Utf8String *signatureAlgo;
+//		KSI_Utf8String *signatureAlgo;
 		KSI_PKISignedData *signatureData;
 	};
 
@@ -27,7 +27,7 @@ extern "C" {
 		KSI_LIST(KSI_Integer) *chainIndexesList;
 		KSI_DataHash *inputHash;
 
-		KSI_Utf8String *signatureAlgo;
+//		KSI_Utf8String *signatureAlgo;
 
 		KSI_PKISignedData *signatureData;
 	};

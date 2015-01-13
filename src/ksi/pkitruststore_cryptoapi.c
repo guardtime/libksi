@@ -165,7 +165,7 @@ int KSI_PKITruststore_addLookupDir(KSI_PKITruststore *trust, const char *path) {
 /*TODO: Not supported*/
 int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) {
 	KSI_ERR err;
-	HCERTSTORE tmp_FileTrustStore;
+	HCERTSTORE tmp_FileTrustStore = NULL;
 	
 	KSI_PRE(&err, trust != NULL) goto cleanup;
 	KSI_PRE(&err, path != NULL) goto cleanup;
@@ -194,14 +194,12 @@ cleanup:
 
 	if(tmp_FileTrustStore) CertCloseStore(tmp_FileTrustStore, CERT_CLOSE_STORE_CHECK_FLAG);
 	return KSI_RETURN(&err);
-	return KSI_OK;
 }
 /*+ TODO: Is CertOpenSystemStore as "ROOT" OK*/
 int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **trust) {
 	KSI_ERR err;
 	KSI_PKITruststore *tmp = NULL;
 	HCERTSTORE collectionStore = NULL;
-	HCERTSTORE systemStore = NULL;
 	int res;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -592,9 +590,8 @@ static void printCertChain(const PCCERT_CHAIN_CONTEXT pChainContext){
 /*cert obj must be freed*/
 static int extractSigningCertificate(const KSI_PKISignature *signature, PCCERT_CONTEXT *cert) {
 	KSI_ERR err;
-	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	HCERTSTORE certStore;
+	HCERTSTORE certStore = NULL;
 	DWORD signerCount = 0;
 	PCERT_INFO pSignerCertInfo = NULL;
 	HCRYPTMSG signaturMSG = NULL;
@@ -749,7 +746,6 @@ static const char* getCertificateChainErrorStr(PCCERT_CHAIN_CONTEXT pChainContex
 
 //TODO: Will be removed
 static int isUntrustedRootCertInStore(const KSI_PKITruststore *pki, const PCCERT_CHAIN_CONTEXT pChainContext){
-	DWORD i=0;
 	DWORD j=0;
 	PCCERT_CONTEXT pUntrustedRootCert = NULL;
 	PCCERT_CONTEXT certFound = NULL;
@@ -980,7 +976,6 @@ cleanup:
 
 int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, unsigned data_len, const char *algoOid, const unsigned char *signature, unsigned signature_len, const KSI_PKICertificate *certificate) {
 	KSI_ERR err;
-	PCCRYPT_OID_INFO pOID_INFO = NULL;
 	ALG_ID algorithm=0;
 	HCRYPTPROV hCryptProv = 0;
     PCCERT_CONTEXT subjectCert = NULL;
