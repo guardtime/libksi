@@ -11,7 +11,7 @@ extern "C" {
 #endif
 
 	struct KSI_TcpClient_st {
-		KSI_HttpClient parent;
+		KSI_NetworkClient parent;
 		
 		char *aggrHost;
 		unsigned aggrPort;
@@ -20,6 +20,7 @@ extern "C" {
 		unsigned extPort;
 
 		int (*sendRequest)(KSI_NetworkClient *, KSI_RequestHandle *, char *host, unsigned port);
+		KSI_HttpClient *http;
 	};
 
 

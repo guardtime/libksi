@@ -14,7 +14,7 @@ extern "C" {
 
 		int (*sendSignRequest)(KSI_NetworkClient *, KSI_AggregationPdu *, KSI_RequestHandle **);
 		int (*sendExtendRequest)(KSI_NetworkClient *, KSI_ExtendPdu *, KSI_RequestHandle **);
-		int (*sendPublicationRequest)(KSI_NetworkClient *, KSI_RequestHandle *);
+		int (*sendPublicationRequest)(KSI_NetworkClient *, KSI_RequestHandle **);
 
 		/** Aggregator user. */
 		char *aggrUser;

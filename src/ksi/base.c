@@ -280,7 +280,6 @@ cleanup:
 
 int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_RequestHandle **handle) {
 	KSI_ERR err;
-	KSI_RequestHandle *hndl = NULL;
 	int res;
 	KSI_NetworkClient *netProvider = NULL;
 
@@ -290,20 +289,12 @@ int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, unsig
 
 	netProvider = ctx->netProvider;
 
-	res = KSI_RequestHandle_new(ctx, request, request_length, &hndl);
+	res = KSI_NetworkClient_sendPublicationsFileRequest(netProvider, handle);
 	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_NetworkClient_sendPublicationsFileRequest(netProvider, hndl);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	*handle = hndl;
-	hndl = NULL;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
-
-	KSI_RequestHandle_free(hndl);
 
 	return KSI_RETURN(&err);
 

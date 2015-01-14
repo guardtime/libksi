@@ -116,10 +116,11 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationP
 			"Aggregation request");
 }
 
-static int preparePublicationsFileRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle) {
+static int preparePublicationsFileRequest(KSI_NetworkClient *client, KSI_RequestHandle **handle) {
 	KSI_ERR err;
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_HttpClient *http = (KSI_HttpClient *) client;
+	KSI_RequestHandle *tmp = NULL;
 
 	KSI_PRE(&err, client != NULL) goto cleanup;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
@@ -130,8 +131,14 @@ static int preparePublicationsFileRequest(KSI_NetworkClient *client, KSI_Request
 		goto cleanup;
 	}
 
-	res = http->sendRequest(client, handle, http->urlPublication);
+	res = KSI_RequestHandle_new(client->ctx, NULL, 0, &tmp);
 	if (res != KSI_OK) goto cleanup;
+
+	res = http->sendRequest(client, tmp, http->urlPublication);
+	if (res != KSI_OK) goto cleanup;
+
+	*handle = tmp;
+	tmp = NULL;
 
 	res = KSI_OK;
 
@@ -163,15 +170,8 @@ int KSI_HttpClient_init(KSI_CTX *ctx, KSI_HttpClient *client) {
 	KSI_PRE(&err, client != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	client->parent.ctx = ctx;
-	client->parent.aggrPass = NULL;
-	client->parent.aggrUser = NULL;
-	client->parent.extPass = NULL;
-	client->parent.extUser = NULL;
-	client->parent.implFree = NULL;
-	client->parent.sendExtendRequest = NULL;
-	client->parent.sendPublicationRequest = NULL;
-	client->parent.sendSignRequest = NULL;
+	res = KSI_NetworkClient_init(ctx, &client->parent);
+	KSI_CATCH(&err, res) goto cleanup;
 
 	client->agentName = NULL;
 	client->sendRequest = NULL;

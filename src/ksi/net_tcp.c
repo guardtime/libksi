@@ -257,11 +257,26 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationP
 			"Aggregation request");
 }
 
+static int sendPublicationRequest(KSI_NetworkClient *client, KSI_RequestHandle **handle) {
+	int res;
+	KSI_TcpClient *tcpClient = (KSI_TcpClient *)client;
+
+	res = KSI_NetworkClient_sendPublicationsFileRequest((KSI_NetworkClient *)tcpClient->http, handle);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 void KSI_TcpClient_free(KSI_TcpClient *tcp) {
 	if (tcp != NULL) {
 		KSI_free(tcp->aggrHost);
 		KSI_free(tcp->extHost);
-		KSI_HttpClient_free((KSI_HttpClient *)tcp);
+		KSI_HttpClient_free(tcp->http);
+		KSI_free(tcp);
 	}
 }
 
@@ -270,8 +285,6 @@ void KSI_TcpClient_free(KSI_TcpClient *tcp) {
  */
 int KSI_TcpClient_init(KSI_CTX *ctx, KSI_TcpClient *client) {
 	KSI_ERR err;
-	KSI_NetworkClient *baseClient = NULL;
-	KSI_HttpClient *httpClient = NULL;
 
 	int res;
 
@@ -279,10 +292,7 @@ int KSI_TcpClient_init(KSI_CTX *ctx, KSI_TcpClient *client) {
 	KSI_PRE(&err, client != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	httpClient = (KSI_HttpClient *)client;
-	baseClient = (KSI_NetworkClient *)client;
-
-	res = KSI_HttpClient_init(ctx, httpClient);
+	res = KSI_NetworkClient_init(ctx, &client->parent);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	client->sendRequest = sendRequest;
@@ -290,11 +300,15 @@ int KSI_TcpClient_init(KSI_CTX *ctx, KSI_TcpClient *client) {
 	client->aggrPort = 0;
 	client->extHost = NULL;
 	client->extPort = 0;
+	client->http = NULL;
 
-	/* Set only extend and aggregation requests. The publications file request is inherited from httpClient */
-	baseClient->sendExtendRequest = prepareExtendRequest;
-	baseClient->sendSignRequest = prepareAggregationRequest;
-	baseClient->implFree = (void (*)(void *))KSI_TcpClient_free;
+	res = KSI_HttpClient_new(ctx, &client->http);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	client->parent.sendExtendRequest = prepareExtendRequest;
+	client->parent.sendSignRequest = prepareAggregationRequest;
+	client->parent.sendPublicationRequest = sendPublicationRequest;
+	client->parent.implFree = (void (*)(void *))KSI_TcpClient_free;
 
 	KSI_SUCCESS(&err);
 
@@ -347,10 +361,10 @@ int KSI_TcpClient_setExtender(KSI_TcpClient *client, const char *host, unsigned 
 
 	client->extPort = port;
 
-	res = setStringParam(&client->parent.parent.extUser, user);
+	res = setStringParam(&client->parent.extUser, user);
 	if (res != KSI_OK) goto cleanup;
 
-	res = setStringParam(&client->parent.parent.extPass, pass);
+	res = setStringParam(&client->parent.extPass, pass);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_OK;
@@ -373,10 +387,10 @@ int KSI_TcpClient_setAggregator(KSI_TcpClient *client, const char *host, unsigne
 
 	client->aggrPort = port;
 
-	res = setStringParam(&client->parent.parent.aggrUser, user);
+	res = setStringParam(&client->parent.aggrUser, user);
 	if (res != KSI_OK) goto cleanup;
 
-	res = setStringParam(&client->parent.parent.aggrPass, pass);
+	res = setStringParam(&client->parent.aggrPass, pass);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_OK;
@@ -394,7 +408,7 @@ int KSI_TcpClient_setPublicationUrl(KSI_TcpClient *client, const char *val) {
 		goto cleanup;
 	}
 
-	res = KSI_HttpClient_setPublicationUrl((KSI_HttpClient *)client, val);
+	res = KSI_HttpClient_setPublicationUrl(client->http, val);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_OK;
