@@ -234,7 +234,7 @@ void KSI_Utf8String_free(KSI_Utf8String *o) {
 	}
 }
 
-int KSI_Utf8String_new(KSI_CTX *ctx, const unsigned char *str, unsigned len, KSI_Utf8String **o) {
+int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, unsigned len, KSI_Utf8String **o) {
 	KSI_ERR err;
 	int res;
 	KSI_Utf8String *tmp = NULL;
@@ -305,7 +305,7 @@ int KSI_Utf8String_fromTlv(KSI_TLV *tlv, KSI_Utf8String **o) {
 	KSI_ERR err;
 	KSI_CTX *ctx = NULL;
 	int res;
-	const unsigned char *cstr = NULL;
+	const char *cstr = NULL;
 	KSI_Utf8String *tmp = NULL;
 	unsigned len;
 
@@ -315,7 +315,7 @@ int KSI_Utf8String_fromTlv(KSI_TLV *tlv, KSI_Utf8String **o) {
 	ctx = KSI_TLV_getCtx(tlv);
 	KSI_BEGIN(ctx, &err);
 
-	res = KSI_TLV_getRawValue(tlv, &cstr, &len);
+	res = KSI_TLV_getRawValue(tlv, (const unsigned char **)&cstr, &len);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_Utf8String_new(ctx, cstr, len, &tmp);

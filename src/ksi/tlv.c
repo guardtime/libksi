@@ -1,6 +1,5 @@
 #include <string.h>
 
-
 #include "internal.h"
 #include "tlv.h"
 #include "io.h"

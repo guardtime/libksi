@@ -9,13 +9,14 @@ extern "C" {
 #endif
 
 	struct KSI_VerificationStepResult_st {
-		KSI_CTX *ctx;
 		KSI_VerificationStep step;
 		int succeeded;
 		char description[0xff];
 	};
 
-	struct KSI_VerificationInfo_st {
+	struct KSI_VerificationResult_st {
+		KSI_CTX *ctx;
+
 		/** Bitmap of performed steps (#KSI_VerificationStep_en values). */
 		unsigned stepsPerformed;
 

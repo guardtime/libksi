@@ -19,18 +19,26 @@ extern "C" {
 	int KSI_HttpClient_new(KSI_CTX *ctx, KSI_HttpClient **http);
 
 	/**
+	 * Initialized an existing http client.
+	 * \param[in]	ctx			KSI context.
+	 * \param[in]	http		Pointer to the HTTP client.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_HttpClient_init(KSI_CTX *ctx, KSI_HttpClient *http);
+
+	/**
 	 * Cleanup method for #KSI_HttpClient.
 	 * \param[in]	http	Pointer to the HTTP client.
 	 */
 	void KSI_HttpClient_free(KSI_HttpClient *http);
 
 	/**
-	 * Implementation specific function for initializing
+	 * Implementation specific function for initializing.
 	 * the HTTP client.
 	 * \param[in]	http		Pointer to HTTP client.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_HttpClient_init(KSI_HttpClient *http);
+	int KSI_HttpClientImpl_init(KSI_HttpClient *http);
 
 	/**
 	 * Setter for the signer (aggregator) URL. The value will be copied and thus

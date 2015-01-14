@@ -3,6 +3,7 @@
 
 #include <ksi/ksi.h>
 #include <ksi/net_http.h>
+#include <ksi/net_tcp.h>
 
 int main(int argc, char **argv) {
 	KSI_CTX *ksi = NULL;
@@ -22,14 +23,14 @@ int main(int argc, char **argv) {
 	unsigned buf_len;
 
 	char *signerIdentity = NULL;
-	KSI_HttpClient *net = NULL;
+	KSI_TcpClient *net = NULL;
 
 	FILE *logFile = NULL;
 
 	/* Handle command line parameters */
-	if (argc != 5) {
+	if (argc != 8) {
 		fprintf(stderr, "Usage:\n"
-				"  %s <in-file> <out-file> <aggregator> <pub-file url | -> \n", argv[0]);
+				"  %s <in-file> <out-file> <aggregator> <port> <user> <pass> <pub-file url | -> \n", argv[0]);
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -49,7 +50,7 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	logFile = fopen("ksi_sign.log", "w");
+	logFile = fopen("ksi_aggr.log", "w");
 	if (logFile == NULL) {
 		fprintf(stderr, "Unable to open log file.\n");
 	}
@@ -59,18 +60,18 @@ int main(int argc, char **argv) {
 	KSI_CTX_setLogLevel(ksi, KSI_LOG_DEBUG);
 
 	/* Check if uri's are specified. */
-	res = KSI_HttpClient_new(ksi, &net);
+	res = KSI_TcpClient_new(ksi, &net);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to create new network provider.\n");
 		goto cleanup;
 	}
 
-	res = KSI_HttpClient_setAggregator(net, argv[3], "anon", "anon");
+	res = KSI_TcpClient_setAggregator(net, argv[3], atoi(argv[4]), argv[5], argv[6]);
 	if (res != KSI_OK) goto cleanup;
 
 	/* Check publications file url. */
-	if (strncmp("-", argv[4], 1)) {
-		res = KSI_HttpClient_setPublicationUrl(net, argv[4]);
+	if (strncmp("-", argv[7], 1)) {
+		res = KSI_TcpClient_setPublicationUrl(net, argv[7]);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable to set publications file url.\n");
 			goto cleanup;

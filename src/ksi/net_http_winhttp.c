@@ -404,7 +404,7 @@ static void implCtx_free(void * hInternet){
 	WinHttpCloseHandle((HINTERNET)hInternet);
 }
 
-int KSI_HttpClient_init(KSI_HttpClient *http) {
+int KSI_HttpClientImpl_init(KSI_HttpClient *http) {
 	KSI_ERR err;
 	HINTERNET session_handle = NULL;
 	ULONG buf;

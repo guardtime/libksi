@@ -228,7 +228,7 @@ int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned tag, int isNonCritical, int isFor
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 * \see #KSI_Utf8String_free, #KSI_Utf8String_cstr
 	 */
-	int KSI_Utf8String_new(KSI_CTX *ctx, const unsigned char *str, unsigned len, KSI_Utf8String **t);
+	int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, unsigned len, KSI_Utf8String **t);
 
 	/**
 	 * Returns the actual size of the string in bytes.

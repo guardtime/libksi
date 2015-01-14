@@ -300,7 +300,6 @@ static int readFromSocket(KSI_RDR *rdr, unsigned char *buffer, const size_t size
 	KSI_PRE(&err, readCount != NULL) goto cleanup;
 	KSI_BEGIN(rdr->ctx, &err);
 
-	printf("Reading %d bytes of data\n", size);
 	while (!rdr->eof && count < size) {
 		int c = read(rdr->data.socketfd, buffer + count, size - count);
 
@@ -311,8 +310,6 @@ static int readFromSocket(KSI_RDR *rdr, unsigned char *buffer, const size_t size
 
 		rdr->eof = (c == 0);
 		count += c;
-
-		printf("... read %d, total %d bytes\n", c, count);
 	}
 	/* Update metadata */
 	rdr->offset += count;

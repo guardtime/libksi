@@ -16,7 +16,7 @@ extern "C" {
 	 * This type keeps track of all the performed verification steps (#KSI_VerificationStep_en) and
 	 * their results.
 	 */
-	typedef struct KSI_VerificationInfo_st KSI_VerificationResult;
+	typedef struct KSI_VerificationResult_st KSI_VerificationResult;
 
 	/**
 	 * This type holds a concrete result for a single verification step (#KSI_VerificationStep_en).
@@ -85,7 +85,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationResult_init(KSI_VerificationResult *info);
+	int KSI_VerificationResult_init(KSI_VerificationResult *info, KSI_CTX *ctx);
 
 	/**
 	 * Reset the value of #KSI_VerificationResult.
