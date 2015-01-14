@@ -428,7 +428,6 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 	KSI_ExtendPdu *pdu = NULL;
 	KSI_DataHash *respHmac = NULL;
 	KSI_DataHash *actualHmac = NULL;
-	KSI_TLV *payloadTLV = NULL;
 	KSI_ExtendResp *tmp = NULL;
 	int hashAlg;
 	unsigned char *raw = NULL;
@@ -473,19 +472,6 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 	res = KSI_ExtendPdu_setResponse(pdu, NULL);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_ExtendPdu_getPayloadTlv(pdu, &payloadTLV);
-	KSI_CATCH(&err, res) goto cleanup;
-	
-	res = KSI_ExtendPdu_setPayloadTlv(pdu, NULL);
-	KSI_CATCH(&err, res) goto cleanup;
-	
-	res = KSI_ExtendResp_setBaseTlv(tmp, payloadTLV);
-	KSI_CATCH(&err, res) goto cleanup;
-	payloadTLV = NULL;
-	
-	res = KSI_ExtendPdu_setResponse(pdu, NULL);
-	KSI_CATCH(&err, res) goto cleanup;
-	
 	*resp = tmp;
 	tmp = NULL;
 	
@@ -496,7 +482,6 @@ cleanup:
 	KSI_DataHash_free(actualHmac);
 	KSI_ExtendResp_free(tmp);
 	KSI_ExtendPdu_free(pdu);
-	KSI_TLV_free(payloadTLV);
 	
 	return KSI_RETURN(&err);
 }
@@ -505,7 +490,6 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 	KSI_ERR err;
 	int res;
 	KSI_AggregationPdu *pdu = NULL;
-	KSI_TLV *payloadTLV = NULL;
 	KSI_DataHash *respHmac = NULL;
 	KSI_DataHash *actualHmac = NULL;
 	KSI_AggregationResp *tmp = NULL;
@@ -551,16 +535,6 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 	res = KSI_AggregationPdu_getResponse(pdu, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_AggregationPdu_getPayloadTlv(pdu, &payloadTLV);
-	KSI_CATCH(&err, res) goto cleanup;
-	
-	res = KSI_AggregationPdu_setPayloadTlv(pdu, NULL);
-	KSI_CATCH(&err, res) goto cleanup;
-	
-	res = KSI_AggregationResp_setBaseTlv(tmp, payloadTLV);
-	KSI_CATCH(&err, res) goto cleanup;
-	payloadTLV = NULL;
-	
 	res = KSI_AggregationPdu_setResponse(pdu, NULL);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -574,7 +548,6 @@ cleanup:
 	KSI_DataHash_free(actualHmac);
 	KSI_AggregationResp_free(tmp);
 	KSI_AggregationPdu_free(pdu);
-	KSI_TLV_free(payloadTLV);
 	return KSI_RETURN(&err);
 }
 

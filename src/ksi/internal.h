@@ -108,6 +108,95 @@ cleanup:																	\
 	return KSI_RETURN(&err);												\
 }																			\
 
+#define KSI_IMPLEMENT_TOTLV(type) \
+int type##_toTlv(KSI_CTX *ctx, const type *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) { \
+	KSI_ERR err; \
+	int res; \
+	KSI_TLV *tmp = NULL; \
+	\
+	KSI_PRE(&err, data != NULL) goto cleanup; \
+	KSI_PRE(&err, tlv != NULL) goto cleanup; \
+	KSI_BEGIN(ctx, &err); \
+	\
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, tag, isNonCritical, isForward, &tmp); \
+	KSI_CATCH(&err, res) goto cleanup; \
+	\
+	res = KSI_TlvTemplate_construct(ctx, tmp, data, KSI_TLV_TEMPLATE(type)); \
+	KSI_CATCH(&err, res) goto cleanup; \
+	\
+	*tlv = tmp; \
+	tmp = NULL; \
+	\
+	KSI_SUCCESS(&err); \
+	\
+cleanup: \
+	\
+	KSI_TLV_free(tmp); \
+	\
+	return KSI_RETURN(&err); \
+}
+
+#define KSI_IMPLEMENT_FROMTLV(type, tag, addon) \
+int type##_fromTlv(KSI_TLV *tlv, type **data) { \
+	KSI_ERR err; \
+	int res; \
+	type *tmp = NULL; \
+	int isLeft = 0; \
+	unsigned char *tlvData = NULL; \
+	unsigned len; \
+	KSI_OctetString *raw = NULL; \
+	KSI_TLV *baseTlv = NULL; \
+	KSI_CTX *ctx = KSI_TLV_getCtx(tlv); \
+	\
+	KSI_PRE(&err, tlv != NULL) goto cleanup; \
+	KSI_PRE(&err, data != NULL) goto cleanup; \
+	KSI_BEGIN(ctx, &err); \
+	\
+	if(KSI_TLV_getTag(tlv) != tag){ \
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL); \
+		goto cleanup; \
+	} \
+	\
+	res = type##_new(KSI_TLV_getCtx(tlv), &tmp); \
+	KSI_CATCH(&err, res) goto cleanup; \
+	\
+	res = KSI_TlvTemplate_extract(KSI_TLV_getCtx(tlv), tmp, tlv, KSI_TLV_TEMPLATE(type)); \
+	KSI_CATCH(&err, res) goto cleanup; \
+	addon \
+	*data = tmp; \
+	tmp = NULL; \
+	\
+	KSI_SUCCESS(&err); \
+	\
+cleanup: \
+	\
+	type##_free(tmp); \
+	KSI_free(tlvData); \
+	KSI_OctetString_free(raw); \
+	KSI_TLV_free(baseTlv); \
+	return KSI_RETURN(&err); \
+}
+	
+#define FROMTLV_ADD_RAW(name, offset) \
+	res = KSI_TLV_serialize(tlv, &tlvData, &len); \
+	KSI_CATCH(&err, res) goto cleanup; \
+	\
+	if(len-offset <= 0){ \
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL); \
+		goto cleanup; \
+	} \
+	res = KSI_OctetString_new(ctx, tlvData+offset, len-offset, &raw); \
+	KSI_CATCH(&err, res) goto cleanup; \
+	\
+	tmp->##name = raw; \
+	raw = NULL; \
+
+#define FROMTLV_ADD_BASETLV(name) \
+	res = KSI_TLV_clone(tlv, &baseTlv); \
+	KSI_CATCH(&err, res) goto cleanup; \
+	tmp->##name = baseTlv; \
+	baseTlv = NULL;
+	
 struct KSI_Object_st {
 	KSI_CTX *ctx;
 	unsigned refCount;

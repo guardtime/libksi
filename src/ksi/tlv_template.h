@@ -441,7 +441,7 @@ extern "C" {
 	 int KSI_TlvTemplate_parse(KSI_CTX *ctx, unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *tmpl, void *payload);
 
 	/**
-	 * This function acts similary as #KSI_TlvTemplate_extract but allows the caller to specify how the top level
+	 * This function acts similarly as #KSI_TlvTemplate_extract but allows the caller to specify how the top level
 	 * TLV's are retrieved (e.g. read from a file).
 	 * \param[in]		ctx				KSI context.
 	 * \param[in]		payload			Preinitialized empty object to be evaluated with the TLV values.

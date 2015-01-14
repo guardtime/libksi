@@ -27,8 +27,6 @@ struct KSI_ExtendPdu_st {
 	KSI_ExtendReq *request;
 	KSI_ExtendResp *response;
 	KSI_DataHash *hmac;
-	KSI_TLV *headerTLV;
-	KSI_TLV *payloadTLV;
 };
 
 struct KSI_AggregationPdu_st {
@@ -37,8 +35,6 @@ struct KSI_AggregationPdu_st {
 	KSI_AggregationReq *request;
 	KSI_AggregationResp *response;
 	KSI_DataHash *hmac;
-	KSI_TLV *headerTLV;
-	KSI_TLV *payloadTLV;
 };
 
 struct KSI_Header_st {
@@ -46,6 +42,7 @@ struct KSI_Header_st {
 	KSI_Integer *instanceId;
 	KSI_Integer *messageId;
 	KSI_OctetString *loginId;
+	KSI_OctetString *raw;
 };
 
 struct KSI_Config_st {
@@ -62,6 +59,7 @@ struct KSI_AggregationReq_st {
 	KSI_DataHash *requestHash;
 	KSI_Integer *requestLevel;
 	KSI_Config *config;
+	KSI_OctetString *raw;
 };
 
 struct KSI_RequestAck_st {
@@ -82,6 +80,7 @@ struct KSI_AggregationResp_st {
 	KSI_CalendarAuthRec *calendarAuthRec;
 	KSI_AggregationAuthRec *aggregationAuthRec;
 	KSI_TLV *baseTlv;
+	KSI_OctetString *raw;
 };
 
 struct KSI_ExtendReq_st {
@@ -89,6 +88,7 @@ struct KSI_ExtendReq_st {
 	KSI_Integer *requestId;
 	KSI_Integer *aggregationTime;
 	KSI_Integer *publicationTime;
+	KSI_OctetString *raw;
 };
 
 struct KSI_ExtendResp_st {
@@ -99,6 +99,7 @@ struct KSI_ExtendResp_st {
 	KSI_Integer *lastTime;
 	KSI_CalendarHashChain *calendarHashChain;
 	KSI_TLV *baseTlv;
+	KSI_OctetString *raw;
 };
 
 struct KSI_PKISignedData_st {
@@ -135,6 +136,7 @@ KSI_IMPLEMENT_LIST(KSI_ExtendResp, KSI_ExtendResp_free);
 KSI_IMPLEMENT_LIST(KSI_PKISignedData, KSI_PKISignedData_free);
 KSI_IMPLEMENT_LIST(KSI_PublicationsHeader, KSI_PublicationsHeader_free);
 KSI_IMPLEMENT_LIST(KSI_CertificateRecord, KSI_CertificateRecord_free);
+
 
 /**
  * KSI_MetaData
@@ -173,79 +175,6 @@ cleanup:
 	return res;
 }
 
-int KSI_MetaData_toTlv(KSI_CTX *ctx, const KSI_MetaData *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
-	KSI_ERR err;
-	int res;
-	KSI_TLV *tmp = NULL;
-
-	KSI_PRE(&err, data != NULL) goto cleanup;
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, tag, isNonCritical, isForward, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_TlvTemplate_construct(ctx, tmp, data, KSI_TLV_TEMPLATE(KSI_MetaData));
-	KSI_CATCH(&err, res) goto cleanup;
-
-	*tlv = tmp;
-	tmp = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_TLV_free(tmp);
-
-	return KSI_RETURN(&err);
-}
-
-int KSI_MetaData_fromTlv(KSI_TLV *tlv, KSI_MetaData **metaData) {
-	KSI_ERR err;
-	int res;
-	KSI_MetaData *tmp = NULL;
-	int isLeft = 0;
-	unsigned char *tlvData = NULL;
-	unsigned len;
-	KSI_OctetString *raw = NULL;
-	KSI_CTX *ctx = KSI_TLV_getCtx(tlv);
-	
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, metaData != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	
-	if(KSI_TLV_getTag(tlv) != 0x04){
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_MetaData_new(KSI_TLV_getCtx(tlv), &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_TlvTemplate_extract(KSI_TLV_getCtx(tlv), tmp, tlv, KSI_TLV_TEMPLATE(KSI_MetaData));
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_TLV_serialize(tlv, &tlvData, &len);
-	KSI_CATCH(&err, res) goto cleanup;
-	
-	res = KSI_OctetString_new(ctx, tlvData+2, len-2, &raw);
-	KSI_CATCH(&err, res) goto cleanup;
-			
-	tmp->raw = raw;
-	*metaData = tmp;
-	
-	raw = NULL;
-	tmp = NULL;
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_MetaData_free(tmp);
-	KSI_free(tlvData);
-	KSI_OctetString_free(raw);
-	return KSI_RETURN(&err);
-}
 
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_OctetString*, raw, Raw);
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Utf8String*, clientId, ClientId);
@@ -259,6 +188,8 @@ KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_OctetString*, machineId, MachineId);
 KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Integer*, sequenceNr, SequenceNr);
 KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Integer*, req_time_micros, RequestTimeInMicros);
 
+KSI_IMPLEMENT_FROMTLV(KSI_MetaData, 0x04, FROMTLV_ADD_RAW(raw, 2););
+KSI_IMPLEMENT_TOTLV(KSI_MetaData);
 /**
  * KSI_ExtendPdu
  */
@@ -268,8 +199,6 @@ void KSI_ExtendPdu_free(KSI_ExtendPdu *t) {
 		KSI_ExtendReq_free(t->request);
 		KSI_ExtendResp_free(t->response);
 		KSI_DataHash_free(t->hmac);
-		KSI_TLV_free(t->headerTLV);
-		KSI_TLV_free(t->payloadTLV);
 		KSI_free(t);
 	}
 }
@@ -288,8 +217,6 @@ int KSI_ExtendPdu_new(KSI_CTX *ctx, KSI_ExtendPdu **t) {
 	tmp->request = NULL;
 	tmp->response = NULL;
 	tmp->hmac = NULL;
-	tmp->headerTLV = NULL;
-	tmp->payloadTLV = NULL;
 	
 	*t = tmp;
 	tmp = NULL;
@@ -299,44 +226,84 @@ cleanup:
 	return res;
 }
 
-int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, int hashAlg, const char *key, KSI_DataHash **hmac){
+static KSI_IMPLEMENT_GETTER(KSI_ExtendReq, KSI_OctetString*, raw, Raw);
+static KSI_IMPLEMENT_GETTER(KSI_ExtendResp, KSI_OctetString*, raw, Raw);
+static KSI_IMPLEMENT_GETTER(KSI_AggregationReq, KSI_OctetString*, raw, Raw);
+static KSI_IMPLEMENT_GETTER(KSI_AggregationResp, KSI_OctetString*, raw, Raw);
+static KSI_IMPLEMENT_GETTER(KSI_Header, KSI_OctetString*, raw, Raw);
+
+static int getObjectsRawValue(KSI_CTX* ctx, void* obj, int (*getRaw)(void*, KSI_OctetString**), const KSI_TlvTemplate *template, int tag, char **data, unsigned *len, bool* mustBeFreed){
+	int res = KSI_OK;
+	KSI_OctetString *raw = NULL;
+	*mustBeFreed = false;
+	if (ctx && obj) {
+		getRaw(obj, &raw);
+		if (raw){
+			res = KSI_OctetString_extract(raw, data, len);
+			if(res != KSI_OK) return KSI_INVALID_ARGUMENT;
+		} else{
+			res = KSI_TlvTemplate_serializeObject(ctx, obj, tag, 0, 0, template, data, len);
+			if(res != KSI_OK) return KSI_INVALID_ARGUMENT;
+			*mustBeFreed = true;
+		}
+	} else return KSI_INVALID_ARGUMENT;
+	return res;
+}
+
+static int pdu_calculateHmac(KSI_CTX* ctx, void* pdu,
+		int (*getHeader)(void*, KSI_Header**),
+		int (*getResponse)(void*, void**),
+		int (*getResponse_raw)(void*, KSI_OctetString**),
+		int (*getRequest)(void*, void**),
+		int (*getRequest_raw)(void*, KSI_OctetString**),
+		int reqTag,	int respTag,
+		const KSI_TlvTemplate *reqTemplate, const KSI_TlvTemplate *respTemplate,
+		int hashAlg, const char *key, KSI_DataHash **hmac){
 	KSI_ERR err;
 	int res;
+	KSI_Header *header = NULL;
 	unsigned char *raw_header = NULL;
 	unsigned header_len;
 	unsigned char *raw_payload = NULL;
 	unsigned payload_len;
+	void *request = NULL; 
+	void *response = NULL; 
 	unsigned char *buf = NULL;
 	KSI_DataHash *tmp = NULL;
-
-	KSI_PRE(&err, t != NULL) goto cleanup;
+	
+	bool freeRawHeader = false;
+	bool freeRawPayload = false;
+	
+	KSI_PRE(&err, pdu != NULL) goto cleanup;
 	KSI_PRE(&err, key != NULL) goto cleanup;
 	KSI_PRE(&err, hmac != NULL) goto cleanup;
-	KSI_BEGIN(t->ctx, &err);
+	KSI_BEGIN(ctx, &err);
 	
-	if (t->headerTLV != NULL) {
-		res = KSI_TLV_serialize(t->headerTLV, &raw_header, &header_len);
-		KSI_CATCH(&err, res) goto cleanup;
-	}
-	else {
-		res = KSI_TlvTemplate_serializeObject(t->ctx, t->header, 0x01, 0, 0, KSI_TLV_TEMPLATE(KSI_Header), &raw_header, &header_len);
-		KSI_CATCH(&err, res) goto cleanup;
+	res = getHeader(pdu, &header);
+	if(res != KSI_OK || header == NULL){
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Missing header.");
+		goto cleanup;
 	}
 	
-	if (t->payloadTLV != NULL){
-		res = KSI_TLV_serialize(t->payloadTLV, &raw_payload, &payload_len);
+	res = getObjectsRawValue(ctx, header, (int (*)(void*, KSI_OctetString**))KSI_Header_getRaw, KSI_TLV_TEMPLATE(KSI_Header), 0x01, &raw_header, &header_len, &freeRawHeader);
+	KSI_CATCH(&err, res) goto cleanup;
+	
+	res = getRequest(pdu, &request);
+	KSI_CATCH(&err, res) goto cleanup;
+	
+	res = getResponse(pdu, &response);
+	KSI_CATCH(&err, res) goto cleanup;
+	
+	if (request) {
+		res = getObjectsRawValue(ctx, request, getRequest_raw, reqTemplate, reqTag, &raw_payload, &payload_len, &freeRawPayload);
 		KSI_CATCH(&err, res) goto cleanup;
-	} else {
-		if (t->request != NULL) {
-			res = KSI_TlvTemplate_serializeObject(t->ctx, t->request, 0x0301, 0, 0, KSI_TLV_TEMPLATE(KSI_ExtendReq), &raw_payload, &payload_len);
-			KSI_CATCH(&err, res) goto cleanup;
-		} else if (t->response != NULL) {
-			res = KSI_TlvTemplate_serializeObject(t->ctx, t->response, 0x0302, 0, 0, KSI_TLV_TEMPLATE(KSI_ExtendResp), &raw_payload, &payload_len);
-			KSI_CATCH(&err, res) goto cleanup;
-		} else {
-			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);
-			goto cleanup;
-		}
+	}
+	else if (response) {
+		res = getObjectsRawValue(ctx, response, getResponse_raw, respTemplate, respTag, &raw_payload, &payload_len, &freeRawPayload);
+		KSI_CATCH(&err, res) goto cleanup;
+	}
+	else{
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Missing payload.");
 	}
 	
 	buf = KSI_malloc(payload_len + header_len);
@@ -348,7 +315,7 @@ int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, int hashAlg, const char *key, 
 	memcpy(buf, raw_header, header_len);
 	memcpy(buf+header_len, raw_payload, payload_len);
 	
-	res = KSI_HMAC_create(t->ctx, hashAlg, key, buf, header_len + payload_len, &tmp);
+	res = KSI_HMAC_create(header->ctx, hashAlg, key, buf, header_len + payload_len, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 	
 	*hmac = tmp;
@@ -358,12 +325,28 @@ int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, int hashAlg, const char *key, 
 	
 cleanup:
 
-	KSI_free(raw_header);
-	KSI_free(raw_payload);
+	if(freeRawHeader) KSI_free(raw_header);
+	if(freeRawPayload)	KSI_free(raw_payload);
 	KSI_free(buf);
 	KSI_DataHash_free(tmp);
 	
-	return KSI_RETURN(&err);	
+	return KSI_RETURN(&err);
+}
+
+int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, int hashAlg, const char *key, KSI_DataHash **hmac){
+	int res = KSI_OK;
+	if(t)
+		res = pdu_calculateHmac(t->ctx, (void*)t, 
+				(int (*)(void*, KSI_Header**))KSI_ExtendPdu_getHeader,
+				(int (*)(void*, void**))KSI_ExtendPdu_getResponse,
+				(int (*)(void*, KSI_OctetString**))KSI_ExtendResp_getRaw,
+				(int (*)(void*, void**))KSI_ExtendPdu_getRequest,
+				(int (*)(void*, KSI_OctetString**))KSI_ExtendReq_getRaw,
+				0x301,0x302, KSI_TLV_TEMPLATE(KSI_ExtendReq),KSI_TLV_TEMPLATE(KSI_ExtendResp),
+				hashAlg, key, hmac);
+	else return KSI_INVALID_ARGUMENT;
+	
+	return res;
 }
 
 int KSI_ExtendPdu_updateHmac(KSI_ExtendPdu *pdu, int algorithm, const char *key) {
@@ -392,15 +375,11 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_TLV*, headerTLV, HeaderTlv);
-KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_TLV*, payloadTLV, PayloadTlv);
 KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_Header*, header, Header);
 KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_ExtendReq*, request, Request);
 KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_ExtendResp*, response, Response);
 KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_DataHash*, hmac, Hmac);
 
-KSI_IMPLEMENT_SETTER(KSI_ExtendPdu, KSI_TLV*, headerTLV, HeaderTlv);
-KSI_IMPLEMENT_SETTER(KSI_ExtendPdu, KSI_TLV*, payloadTLV, PayloadTlv);
 KSI_IMPLEMENT_SETTER(KSI_ExtendPdu, KSI_Header*, header, Header);
 KSI_IMPLEMENT_SETTER(KSI_ExtendPdu, KSI_ExtendReq*, request, Request);
 KSI_IMPLEMENT_SETTER(KSI_ExtendPdu, KSI_ExtendResp*, response, Response);
@@ -418,8 +397,6 @@ void KSI_AggregationPdu_free(KSI_AggregationPdu *t) {
 		KSI_AggregationReq_free(t->request);
 		KSI_AggregationResp_free(t->response);
 		KSI_DataHash_free(t->hmac);
-		KSI_TLV_free(t->headerTLV);
-		KSI_TLV_free(t->payloadTLV);
 		KSI_free(t);
 	}
 }
@@ -438,8 +415,6 @@ int KSI_AggregationPdu_new(KSI_CTX *ctx, KSI_AggregationPdu **t) {
 	tmp->request = NULL;
 	tmp->response = NULL;
 	tmp->hmac = NULL;
-	tmp->headerTLV = NULL;
-	tmp->payloadTLV = NULL;
 	
 	*t = tmp;
 	tmp = NULL;
@@ -450,68 +425,19 @@ cleanup:
 }
 
 int KSI_AggregationPdu_calculateHmac(KSI_AggregationPdu *t, int hashAlg, const char *key, KSI_DataHash **hmac){
-	KSI_ERR err;
-	int res;
-	unsigned char *raw_header = NULL;
-	unsigned header_len = 0;
-	unsigned char *raw_payload = NULL;
-	unsigned payload_len = 0;
-	unsigned char *buf = NULL;
-	KSI_DataHash *tmp = NULL;
-
-	KSI_PRE(&err, t != NULL) goto cleanup;
-	KSI_PRE(&err, key != NULL) goto cleanup;
-	KSI_BEGIN(t->ctx, &err);
+	int res = KSI_OK;
+	if(t)
+		res = pdu_calculateHmac(t->ctx, (void*)t, 
+				(int (*)(void*, KSI_Header**))KSI_AggregationPdu_getHeader,
+				(int (*)(void*, void**))KSI_AggregationPdu_getResponse,
+				(int (*)(void*, KSI_OctetString**))KSI_AggregationResp_getRaw,
+				(int (*)(void*, void**))KSI_AggregationPdu_getRequest,
+				(int (*)(void*, KSI_OctetString**))KSI_AggregationReq_getRaw,
+				0x201,0x202, KSI_TLV_TEMPLATE(KSI_AggregationReq),KSI_TLV_TEMPLATE(KSI_AggregationResp),
+				hashAlg, key, hmac);
+	else return KSI_INVALID_ARGUMENT;
 	
-	if (t->headerTLV) {
-		res = KSI_TLV_serialize(t->headerTLV, &raw_header, &header_len);
-		KSI_CATCH(&err, res) goto cleanup;
-	} else {
-		res = KSI_TlvTemplate_serializeObject(t->ctx, t->header, 0x01, 0, 0, KSI_TLV_TEMPLATE(KSI_Header), &raw_header, &header_len);
-		KSI_CATCH(&err, res) goto cleanup;
-	}
-	
-	if (t->payloadTLV) {
-		res = KSI_TLV_serialize(t->payloadTLV, &raw_payload, &payload_len);
-		KSI_CATCH(&err, res) goto cleanup;
-	} else {
-		if (t->request) {
-			res = KSI_TlvTemplate_serializeObject(t->ctx, t->request, 0x0201, 0, 0, KSI_TLV_TEMPLATE(KSI_AggregationReq), &raw_payload, &payload_len);
-			KSI_CATCH(&err, res) goto cleanup;
-		} else if (t->response) {
-			res = KSI_TlvTemplate_serializeObject(t->ctx, t->response, 0x0202, 0, 0, KSI_TLV_TEMPLATE(KSI_AggregationResp), &raw_payload, &payload_len);
-			KSI_CATCH(&err, res) goto cleanup;
-		} else {
-			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);
-			goto cleanup;
-		}
-	}
-	
-	buf = KSI_malloc(payload_len+header_len);
-	if (buf == NULL){
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-	
-	memcpy(buf, raw_header, header_len);
-	memcpy(buf+header_len, raw_payload, payload_len);
-	
-	res = KSI_HMAC_create(t->ctx, hashAlg, key, buf, header_len + payload_len, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
-	
-	*hmac = tmp;
-	tmp = NULL;
-	
-	KSI_SUCCESS(&err);
-	
-cleanup:
-
-	KSI_free(raw_header);
-	KSI_free(raw_payload);
-	KSI_free(buf);
-	KSI_DataHash_free(tmp);
-
-	return KSI_RETURN(&err);	
+	return res;
 }
 
 int KSI_AggregationPdu_updateHmac(KSI_AggregationPdu *pdu, int algorithm, const char *key) {
@@ -540,15 +466,11 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_TLV*, headerTLV, HeaderTlv);
-KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_TLV*, payloadTLV, PayloadTlv);
 KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_Header*, header, Header);
 KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_AggregationReq*, request, Request);
 KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_AggregationResp*, response, Response);
 KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_DataHash*, hmac, Hmac);
 
-KSI_IMPLEMENT_SETTER(KSI_AggregationPdu, KSI_TLV*, headerTLV, HeaderTlv);
-KSI_IMPLEMENT_SETTER(KSI_AggregationPdu, KSI_TLV*, payloadTLV, PayloadTlv);
 KSI_IMPLEMENT_SETTER(KSI_AggregationPdu, KSI_Header*, header, Header);
 KSI_IMPLEMENT_SETTER(KSI_AggregationPdu, KSI_AggregationReq*, request, Request);
 KSI_IMPLEMENT_SETTER(KSI_AggregationPdu, KSI_AggregationResp*, response, Response);
@@ -565,6 +487,7 @@ void KSI_Header_free(KSI_Header *t) {
 		KSI_Integer_free(t->instanceId);
 		KSI_Integer_free(t->messageId);
 		KSI_OctetString_free(t->loginId);
+		KSI_OctetString_free(t->raw);
 		KSI_free(t);
 	}
 }
@@ -582,6 +505,7 @@ int KSI_Header_new(KSI_CTX *ctx, KSI_Header **t) {
 	tmp->instanceId = NULL;
 	tmp->messageId = NULL;
 	tmp->loginId = NULL;
+	tmp->raw = NULL;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -589,6 +513,8 @@ cleanup:
 	KSI_Header_free(tmp);
 	return res;
 }
+KSI_IMPLEMENT_FROMTLV(KSI_Header, 0x01, FROMTLV_ADD_RAW(raw, 0););
+KSI_IMPLEMENT_TOTLV(KSI_Header);
 
 KSI_IMPLEMENT_GETTER(KSI_Header, KSI_Integer*, instanceId, InstanceId);
 KSI_IMPLEMENT_GETTER(KSI_Header, KSI_Integer*, messageId, MessageId);
@@ -654,6 +580,7 @@ void KSI_AggregationReq_free(KSI_AggregationReq *t) {
 		KSI_DataHash_free(t->requestHash);
 		KSI_Integer_free(t->requestLevel);
 		KSI_Config_free(t->config);
+		KSI_OctetString_free(t->raw);
 		KSI_free(t);
 	}
 }
@@ -672,6 +599,7 @@ int KSI_AggregationReq_new(KSI_CTX *ctx, KSI_AggregationReq **t) {
 	tmp->requestHash = NULL;
 	tmp->requestLevel = NULL;
 	tmp->config = NULL;
+	tmp->raw = NULL;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -692,6 +620,9 @@ KSI_IMPLEMENT_SETTER(KSI_AggregationReq, KSI_Config*, config, Config);
 
 KSI_IMPLEMENT_OBJECT_PARSE(KSI_AggregationReq, 0x201);
 KSI_IMPLEMENT_OBJECT_SERIALIZE(KSI_AggregationReq, 0x201, 0, 0)
+
+KSI_IMPLEMENT_FROMTLV(KSI_AggregationReq, 0x201, FROMTLV_ADD_RAW(raw, 0));		
+KSI_IMPLEMENT_TOTLV(KSI_AggregationReq);
 
 /**
  * KSI_RequestAck
@@ -803,6 +734,8 @@ KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_TLV*, baseTlv, BaseTlv);
 KSI_IMPLEMENT_OBJECT_PARSE(KSI_AggregationResp, 0x202);
 KSI_IMPLEMENT_OBJECT_SERIALIZE(KSI_AggregationResp, 0x202, 0, 0)
 
+KSI_IMPLEMENT_FROMTLV(KSI_AggregationResp, 0x202, FROMTLV_ADD_RAW(raw, 0);FROMTLV_ADD_BASETLV(baseTlv););
+KSI_IMPLEMENT_TOTLV(KSI_AggregationResp);
 /**
  * KSI_ExtendReq
  */
@@ -811,6 +744,7 @@ void KSI_ExtendReq_free(KSI_ExtendReq *t) {
 		KSI_Integer_free(t->requestId);
 		KSI_Integer_free(t->aggregationTime);
 		KSI_Integer_free(t->publicationTime);
+		KSI_OctetString_free(t->raw);
 		KSI_free(t);
 	}
 }
@@ -828,6 +762,7 @@ int KSI_ExtendReq_new(KSI_CTX *ctx, KSI_ExtendReq **t) {
 	tmp->requestId = NULL;
 	tmp->aggregationTime = NULL;
 	tmp->publicationTime = NULL;
+	tmp->raw = NULL;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -847,6 +782,10 @@ KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, publicationTime, PublicationTi
 KSI_IMPLEMENT_OBJECT_PARSE(KSI_ExtendReq, 0x301);
 KSI_IMPLEMENT_OBJECT_SERIALIZE(KSI_ExtendReq, 0x301, 0, 0)
 
+KSI_IMPLEMENT_FROMTLV(KSI_ExtendReq, 0x301, FROMTLV_ADD_RAW(raw, 0));
+KSI_IMPLEMENT_TOTLV(KSI_ExtendReq);
+
+
 /**
  * KSI_ExtendResp
  */
@@ -858,6 +797,7 @@ void KSI_ExtendResp_free(KSI_ExtendResp *t) {
 		KSI_Integer_free(t->lastTime);
 		KSI_CalendarHashChain_free(t->calendarHashChain);
 		KSI_TLV_free(t->baseTlv);
+		KSI_OctetString_free(t->raw);
 		KSI_free(t);
 	}
 }
@@ -878,6 +818,7 @@ int KSI_ExtendResp_new(KSI_CTX *ctx, KSI_ExtendResp **t) {
 	tmp->lastTime = NULL;
 	tmp->calendarHashChain = NULL;
 	tmp->baseTlv = NULL;
+	tmp->raw = NULL;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -902,6 +843,9 @@ KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_TLV*, baseTlv, BaseTlv);
 
 KSI_IMPLEMENT_OBJECT_PARSE(KSI_ExtendResp, 0x302);
 KSI_IMPLEMENT_OBJECT_SERIALIZE(KSI_ExtendResp, 0x302, 0, 0)
+
+KSI_IMPLEMENT_FROMTLV(KSI_ExtendResp, 0x302, FROMTLV_ADD_RAW(raw, 0));
+KSI_IMPLEMENT_TOTLV(KSI_ExtendResp);
 
 /**
  * KSI_PKISignedData

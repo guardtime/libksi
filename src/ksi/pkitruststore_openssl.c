@@ -558,7 +558,7 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
-/*TODO*/
+
 char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, unsigned buf_len){
 	ASN1_OBJECT *oid = NULL;
 	X509_NAME *issuer = NULL;
@@ -583,8 +583,6 @@ char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, unsigned 
 	
 	ret = buf;
 	
-cleanup:	
-
 	if (oid != NULL) ASN1_OBJECT_free(oid);
 	return ret;
 }

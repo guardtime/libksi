@@ -351,14 +351,10 @@ EXPORTS
     KSI_ExtendPdu_getRequest
     KSI_ExtendPdu_getResponse
     KSI_ExtendPdu_getHmac
-    KSI_ExtendPdu_getHeaderTlv
-    KSI_ExtendPdu_getPayloadTlv
     KSI_ExtendPdu_setHeader
     KSI_ExtendPdu_setRequest
     KSI_ExtendPdu_setResponse
     KSI_ExtendPdu_setHmac
-    KSI_ExtendPdu_setHeaderTlv
-    KSI_ExtendPdu_setPayloadTlv
     KSI_ExtendPdu_parse
     KSI_ExtendPdu_serialize
     KSI_AggregationPdu_free
@@ -368,14 +364,10 @@ EXPORTS
     KSI_AggregationPdu_getRequest
     KSI_AggregationPdu_getResponse
     KSI_AggregationPdu_getHmac
-    KSI_AggregationPdu_getHeaderTlv
-    KSI_AggregationPdu_getPayloadTlv
     KSI_AggregationPdu_setHeader
     KSI_AggregationPdu_setRequest
     KSI_AggregationPdu_setResponse
     KSI_AggregationPdu_setHmac
-    KSI_AggregationPdu_setHeaderTlv
-    KSI_AggregationPdu_setPayloadTlv
     KSI_AggregationPdu_parse
     KSI_AggregationPdu_serialize
     KSI_Header_free
