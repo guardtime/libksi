@@ -68,7 +68,6 @@ otherinclude_HEADERS = \
 	io.h \
 	list.h \
 	log.h \
-	net_http.h \
 	pkitruststore.h \
 	publicationsfile.h \
 	signature.h \
