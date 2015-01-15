@@ -15,14 +15,14 @@
 #define FLAGSET(tmpl, flg) (((tmpl).flags & flg) != 0)
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_CalAuthRecPKISignedData)
-	KSI_TLV_OCTET_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getSigType, KSI_PKISignedData_setSigType)
+	KSI_TLV_UTF8_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getSigType, KSI_PKISignedData_setSigType)
 	KSI_TLV_OCTET_STRING(0x02, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getSignatureValue, KSI_PKISignedData_setSignatureValue)
 	KSI_TLV_OCTET_STRING(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getCertId, KSI_PKISignedData_setCertId)
 	KSI_TLV_OBJECT(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_PKISignedData_getCertRepositoryUri, KSI_PKISignedData_setCertRepositoryUri, KSI_Utf8StringNZ_fromTlv, KSI_Utf8StringNZ_toTlv, KSI_Utf8String_free)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggrAuthRecPKISignedData)
-	KSI_TLV_OCTET_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getSigType, KSI_PKISignedData_setSigType)
+	KSI_TLV_UTF8_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getSigType, KSI_PKISignedData_setSigType)
 	KSI_TLV_OCTET_STRING(0x02, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getSignatureValue, KSI_PKISignedData_setSignatureValue)
 	KSI_TLV_OCTET_STRING(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getCertId, KSI_PKISignedData_setCertId)
 	KSI_TLV_OBJECT(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_PKISignedData_getCertRepositoryUri, KSI_PKISignedData_setCertRepositoryUri, KSI_Utf8StringNZ_fromTlv, KSI_Utf8StringNZ_toTlv, KSI_Utf8String_free)
