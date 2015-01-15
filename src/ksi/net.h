@@ -59,7 +59,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetworkClient_sendPublicationsFileRequest(KSI_NetworkClient *provider, KSI_RequestHandle *handle);
+	int KSI_NetworkClient_sendPublicationsFileRequest(KSI_NetworkClient *provider, KSI_RequestHandle **handle);
 
 	/**
 	 * Setter for network request implementation context.
@@ -163,16 +163,15 @@ extern "C" {
 	int KSI_RequestHandle_setReadResponseFn(KSI_RequestHandle *handle, int (*fn)(KSI_RequestHandle *));
 
 	/**
-	 * Constructor for a new plain network provider.
+	 * Initialized for an existing abstract network provider.
 	 * \param[in]		ctx				KSI context.
-	 * \param[out]		provider		Pointer to the receiving network provider pointer.
+	 * \param[out]		provider		Abstract network provider.
 	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 *
 	 * \note Do not use, unless implementing a new network client.
 	 */
-	int KSI_NetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **provider);
+	int KSI_NetworkClient_init(KSI_CTX *ctx, KSI_NetworkClient *client);
 
 	/**
 	 * Setter for the implementation specific networking context.
@@ -212,7 +211,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_NetworkClient_setSendPublicationRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_RequestHandle *));
+	int KSI_NetworkClient_setSendPublicationRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_RequestHandle **));
 
 	int KSI_NetworkClient_setExtenderUser(KSI_NetworkClient *netProvider, const char *val);
 	int KSI_NetworkClient_setExtenderPass(KSI_NetworkClient *netProvider, const char *val);

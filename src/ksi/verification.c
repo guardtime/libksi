@@ -33,13 +33,14 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationResult_init(KSI_VerificationResult *info) {
+int KSI_VerificationResult_init(KSI_VerificationResult *info, KSI_CTX *ctx) {
 	int res = KSI_UNKNOWN_ERROR;
 	if (info == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
+	info->ctx = ctx;
 	info->aggregationHash = NULL;
 	res = KSI_VerificationResult_reset(info);
 	if (res != KSI_OK) goto cleanup;
@@ -80,6 +81,7 @@ cleanup:
 }
 
 int KSI_VerificationResult_addFailure(KSI_VerificationResult *info, KSI_VerificationStep step, const char *desc) {
+	KSI_LOG_debug(info->ctx, "Verification step 0x%02x failed with message: %s", (int)step, desc);
 	return addVerificationStepResult(info, step, desc, 0);
 }
 

@@ -1,12 +1,14 @@
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #include "internal.h"
 #include "io.h"
 
 typedef enum {
 	KSI_IO_FILE,
-	KSI_IO_MEM
+	KSI_IO_MEM,
+	KSI_IO_SOCKET
 } KSI_IO_Type;
 
 struct KSI_RDR_st {
@@ -29,6 +31,7 @@ struct KSI_RDR_st {
 			/* Does the memory belong to this reader? */
 			int ownCopy;
 		} mem;
+		int socketfd;
 	} data;
 
 	/* Offset of stream. */
@@ -203,6 +206,33 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+int KSI_RDR_fromSocket(KSI_CTX *ctx, int socketfd, KSI_RDR **rdr) {
+	KSI_ERR err;
+	KSI_RDR *reader = NULL;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, socketfd >= 0) goto cleanup;
+	KSI_PRE(&err, rdr != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	reader = newReader(ctx, KSI_IO_SOCKET);
+	if (reader == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	reader->data.socketfd = socketfd;
+
+	*rdr = reader;
+	reader = NULL;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
 
 int KSI_RDR_isEOF(KSI_RDR *rdr) {
 	return rdr->eof;
@@ -261,6 +291,37 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+static int readFromSocket(KSI_RDR *rdr, unsigned char *buffer, const size_t size, size_t *readCount) {
+	KSI_ERR err;
+	size_t count = 0;
+
+	KSI_PRE(&err, rdr != NULL) goto cleanup;
+	KSI_PRE(&err, buffer != NULL) goto cleanup;
+	KSI_PRE(&err, readCount != NULL) goto cleanup;
+	KSI_BEGIN(rdr->ctx, &err);
+
+	while (!rdr->eof && count < size) {
+		int c = read(rdr->data.socketfd, buffer + count, size - count);
+
+		if (c < 0) {
+			KSI_FAIL_EXT(&err, KSI_IO_ERROR, errno, "Unable to read from socket.");
+			goto cleanup;
+		}
+
+		rdr->eof = (c == 0);
+		count += c;
+	}
+	/* Update metadata */
+	rdr->offset += count;
+
+	if (readCount != NULL) *readCount = count;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
 
 int KSI_RDR_read_ex(KSI_RDR *rdr, unsigned char *buffer, const size_t bufferLength, size_t *readCount)  {
 	KSI_ERR err;
@@ -274,6 +335,9 @@ int KSI_RDR_read_ex(KSI_RDR *rdr, unsigned char *buffer, const size_t bufferLeng
 			break;
 		case KSI_IO_MEM:
 			res = readFromMem(rdr, buffer, bufferLength, readCount);
+			break;
+		case KSI_IO_SOCKET:
+			res = readFromSocket(rdr, buffer, bufferLength, readCount);
 			break;
 		default:
 			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Unsupported KSI IO TYPE");
@@ -358,6 +422,8 @@ void KSI_RDR_close(KSI_RDR *rdr)  {
 				KSI_free(rdr->data.mem.buffer);
 				rdr->data.mem.buffer = NULL;
 			}
+			break;
+		case KSI_IO_SOCKET:
 			break;
 		default:
 			KSI_LOG_warn(ctx, "Unsupported KSI IO-type - possible MEMORY LEAK");

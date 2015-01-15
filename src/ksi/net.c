@@ -215,6 +215,7 @@ int KSI_NetworkClient_sendSignRequest(KSI_NetworkClient *provider, KSI_Aggregati
 	KSI_SUCCESS(&err);
 
 cleanup:
+
 	if (pdu != NULL) KSI_AggregationPdu_setRequest(pdu, NULL);
 	KSI_AggregationPdu_free(pdu);
 
@@ -259,7 +260,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_NetworkClient_sendPublicationsFileRequest(KSI_NetworkClient *provider, KSI_RequestHandle *handle) {
+int KSI_NetworkClient_sendPublicationsFileRequest(KSI_NetworkClient *provider, KSI_RequestHandle **handle) {
 	KSI_ERR err;
 	int res;
 
@@ -272,6 +273,7 @@ int KSI_NetworkClient_sendPublicationsFileRequest(KSI_NetworkClient *provider, K
 		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Publications file request sender not initialized.");
 		goto cleanup;
 	}
+
 	res = provider->sendPublicationRequest(provider, handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -581,7 +583,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_NetworkClient_setSendPublicationRequestFn(KSI_NetworkClient *client, int (*fn)(KSI_NetworkClient *, KSI_RequestHandle *)) {
+int KSI_NetworkClient_setSendPublicationRequestFn(KSI_NetworkClient *client, int (*fn)(KSI_NetworkClient *, KSI_RequestHandle **)) {
 	KSI_ERR err;
 
 	KSI_PRE(&err, client != NULL) goto cleanup;
@@ -594,6 +596,32 @@ int KSI_NetworkClient_setSendPublicationRequestFn(KSI_NetworkClient *client, int
 cleanup:
 
 	return KSI_RETURN(&err);
+}
+
+int KSI_NetworkClient_init(KSI_CTX *ctx, KSI_NetworkClient *client) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (ctx == NULL || client == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	client->ctx = ctx;
+	client->aggrPass = NULL;
+	client->aggrUser = NULL;
+	client->extPass = NULL;
+	client->extUser = NULL;
+	client->implFree = NULL;
+	client->sendExtendRequest = NULL;
+	client->sendPublicationRequest = NULL;
+	client->sendSignRequest = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+
 }
 
 #define KSI_NET_IMPLEMENT_SETTER(name, type, var, fn) 														\

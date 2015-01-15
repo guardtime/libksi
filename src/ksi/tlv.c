@@ -1,6 +1,5 @@
 #include <string.h>
 
-
 #include "internal.h"
 #include "tlv.h"
 #include "io.h"
@@ -126,6 +125,60 @@ cleanup:
 	return size;
 }
 
+static int readHeader(KSI_RDR *rdr, unsigned char *dest, size_t *headerLen, int *isNonCritical, int *isForward, unsigned *tag, unsigned *length) {
+	int res = KSI_UNKNOWN_ERROR;
+	size_t readCount;
+
+	if (rdr == NULL || dest == NULL || headerLen == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	/* Read first two bytes */
+	res = KSI_RDR_read_ex(rdr, dest, 2, &readCount);
+	if (res != KSI_OK) goto cleanup;
+
+	if (readCount == 0 && KSI_RDR_isEOF(rdr)) {
+		/* Reached end of stream. */
+		*headerLen = 0;
+		res = KSI_OK;
+		goto cleanup;
+	}
+	if (readCount != 2) {
+		res = KSI_INVALID_FORMAT;
+		goto cleanup;
+	}
+
+	if (isNonCritical != NULL) *isNonCritical = *dest & KSI_TLV_MASK_LENIENT;
+	if (isForward != NULL) *isForward = *dest & KSI_TLV_MASK_FORWARD;
+
+	/* Is it a TLV8 or TLV16 */
+	if (*dest & KSI_TLV_MASK_TLV16) {
+		/* TLV16 */
+		/* Read additional 2 bytes of header */
+		res = KSI_RDR_read_ex(rdr, dest + 2, 2, &readCount);
+		if (res != KSI_OK) goto cleanup;
+		if (readCount != 2) {
+			res = KSI_INVALID_FORMAT;
+			goto cleanup;
+		}
+		*headerLen = 4;
+
+		if (tag != NULL) *tag = ((*dest & KSI_TLV_MASK_TLV8_TYPE) << 8 ) | *(dest + 1);
+		if (length != NULL) *length = (unsigned)(*(dest + 2) << 8) | *(dest + 3);
+	} else {
+		/* TLV8 */
+		*headerLen = 2;
+		if (tag != NULL) *tag = *dest & KSI_TLV_MASK_TLV8_TYPE;
+		if (length != NULL) *length = *(dest + 1);
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
 
 /**
  *
@@ -153,46 +206,13 @@ static int readTlv(KSI_RDR *rdr, KSI_TLV **tlv, int copy) {
 	res = KSI_RDR_getOffset(rdr, &tlvOffset);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	/* Read first two bytes */
-	res = KSI_RDR_read_ex(rdr, hdr, 2, &readCount);
-	if (res != KSI_OK) {
-		KSI_FAIL(&err, res, NULL);
-		goto cleanup;
-	}
+	res = readHeader(rdr, hdr, &readCount, &isLenient, &isForward, &tag, &length);
+	KSI_CATCH(&err, res) goto cleanup;
 
-	if (readCount == 0 && KSI_RDR_isEOF(rdr)) {
+	if (readCount == 0) {
 		/* Reached end of stream. */
 		KSI_SUCCESS(&err);
 		goto cleanup;
-	}
-	if (readCount != 2) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
-		goto cleanup;
-	}
-
-	isLenient = *hdr & KSI_TLV_MASK_LENIENT;
-	isForward = *hdr & KSI_TLV_MASK_FORWARD;
-
-	/* Is it a TLV8 or TLV16 */
-	if (*hdr & KSI_TLV_MASK_TLV16) {
-		/* TLV16 */
-		/* Read additional 2 bytes of header */
-		res = KSI_RDR_read_ex(rdr, hdr + 2, 2, &readCount);
-		if (res != KSI_OK) {
-			KSI_FAIL(&err, res, NULL);
-			goto cleanup;
-		}
-		if (readCount != 2) {
-			KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
-			goto cleanup;
-		}
-
-		tag = ((*hdr & KSI_TLV_MASK_TLV8_TYPE) << 8 ) | *(hdr + 1);
-		length = (unsigned)(*(hdr + 2) << 8) | *(hdr + 3);
-	} else {
-		/* TLV8 */
-		tag = *hdr & KSI_TLV_MASK_TLV8_TYPE;
-		length = *(hdr + 1);
 	}
 
 	/* Get the payload. */
@@ -558,6 +578,43 @@ void KSI_TLV_ref(KSI_TLV *tlv) {
 int KSI_TLV_fromReader(KSI_RDR *rdr, KSI_TLV **tlv) {
 	/* Read the TLV and make a copy of the memory. */
 	return readTlv(rdr, tlv, 1);
+}
+
+int KSI_TLV_readTlv(KSI_RDR *rdr, unsigned char *buffer, size_t buffer_len, size_t *readCount) {
+	KSI_ERR err;
+	int res;
+	size_t headerRead;
+	size_t valueRead;
+	unsigned valueLength;
+
+	KSI_PRE(&err, rdr != NULL) goto cleanup;
+	KSI_PRE(&err, buffer != NULL) goto cleanup;
+	KSI_PRE(&err, buffer_len >= 4) goto cleanup;
+	KSI_BEGIN(KSI_RDR_getCtx(rdr), &err);
+
+	res = readHeader(rdr, buffer, &headerRead, NULL, NULL, NULL, &valueLength);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	if (valueLength + headerRead > buffer_len) {
+		KSI_FAIL(&err, KSI_BUFFER_OVERFLOW, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_RDR_read_ex(rdr, buffer + headerRead, valueLength, &valueRead);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	if (valueLength != valueRead) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+		goto cleanup;
+	}
+
+	*readCount = headerRead + valueRead;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
 }
 
 

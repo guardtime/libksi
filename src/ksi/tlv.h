@@ -327,6 +327,13 @@ extern "C" {
 	int KSI_TLV_fromReader(KSI_RDR *rdr, KSI_TLV **tlv);
 
 	/**
+	 * Reads a raw TLV from the reader.
+	 *
+	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+	 */
+	int KSI_TLV_readTlv(KSI_RDR *rdr, unsigned char *buffer, size_t buffer_len, size_t *readCount);
+
+	/**
 	 * Returns the absolute offset of the TLV object in the source raw data. If the TLV object is
 	 * created using #KSI_TLV_new, the offset is 0.
 	 * \param[in]	tlv			The TLV object.

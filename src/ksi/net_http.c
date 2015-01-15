@@ -116,10 +116,11 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationP
 			"Aggregation request");
 }
 
-static int preparePublicationsFileRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle) {
+static int preparePublicationsFileRequest(KSI_NetworkClient *client, KSI_RequestHandle **handle) {
 	KSI_ERR err;
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_HttpClient *http = (KSI_HttpClient *) client;
+	KSI_RequestHandle *tmp = NULL;
 
 	KSI_PRE(&err, client != NULL) goto cleanup;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
@@ -130,8 +131,14 @@ static int preparePublicationsFileRequest(KSI_NetworkClient *client, KSI_Request
 		goto cleanup;
 	}
 
-	res = http->sendRequest(client, handle, http->urlPublication);
+	res = KSI_RequestHandle_new(client->ctx, NULL, 0, &tmp);
 	if (res != KSI_OK) goto cleanup;
+
+	res = http->sendRequest(client, tmp, http->urlPublication);
+	if (res != KSI_OK) goto cleanup;
+
+	*handle = tmp;
+	tmp = NULL;
 
 	res = KSI_OK;
 
@@ -155,6 +162,47 @@ void KSI_HttpClient_free(KSI_HttpClient *http) {
 /**
  *
  */
+int KSI_HttpClient_init(KSI_CTX *ctx, KSI_HttpClient *client) {
+	KSI_ERR err;
+	int res;
+
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, client != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	res = KSI_NetworkClient_init(ctx, &client->parent);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	client->agentName = NULL;
+	client->sendRequest = NULL;
+	client->urlExtender = NULL;
+	client->urlPublication = NULL;
+	client->urlAggregator = NULL;
+
+	client->parent.sendExtendRequest = prepareExtendRequest;
+	client->parent.sendSignRequest = prepareAggregationRequest;
+	client->parent.sendPublicationRequest = preparePublicationsFileRequest;
+	client->parent.implFree = (void (*)(void *))KSI_HttpClient_free;
+
+
+	setIntParam(&client->connectionTimeoutSeconds, 10);
+	setIntParam(&client->readTimeoutSeconds, 10);
+	setStringParam(&client->urlPublication, KSI_DEFAULT_URI_PUBLICATIONS_FILE);
+	setStringParam(&client->agentName, "KSI HTTP Client"); /** Should be only user provided */
+
+	res = KSI_HttpClientImpl_init(client);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+/**
+ *
+ */
 int KSI_HttpClient_new(KSI_CTX *ctx, KSI_HttpClient **http) {
 	KSI_ERR err;
 	KSI_HttpClient *tmp = NULL;
@@ -169,34 +217,7 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_HttpClient **http) {
 		goto cleanup;
 	}
 
-	tmp->parent.ctx = ctx;
-	tmp->parent.aggrPass = NULL;
-	tmp->parent.aggrUser = NULL;
-	tmp->parent.extPass = NULL;
-	tmp->parent.extUser = NULL;
-	tmp->parent.implFree = NULL;
-	tmp->parent.sendExtendRequest = NULL;
-	tmp->parent.sendPublicationRequest = NULL;
-	tmp->parent.sendSignRequest = NULL;
-
-
-	tmp->agentName = NULL;
-	tmp->sendRequest = NULL;
-	tmp->urlExtender = NULL;
-	tmp->urlPublication = NULL;
-	tmp->urlAggregator = NULL;
-
-	tmp->parent.sendExtendRequest = prepareExtendRequest;
-	tmp->parent.sendSignRequest = prepareAggregationRequest;
-	tmp->parent.sendPublicationRequest = preparePublicationsFileRequest;
-	tmp->parent.implFree = (void (*)(void *))KSI_HttpClient_free;
-
-	setIntParam(&tmp->connectionTimeoutSeconds, 10);
-	setIntParam(&tmp->readTimeoutSeconds, 10);
-	setStringParam(&tmp->urlPublication, KSI_DEFAULT_URI_PUBLICATIONS_FILE);
-	setStringParam(&tmp->agentName, "KSI HTTP Client"); /** Should be only user provided */
-
-	res = KSI_HttpClient_init(tmp);
+	res = KSI_HttpClient_init(ctx, tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*http = tmp;

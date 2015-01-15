@@ -295,7 +295,7 @@ static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
 	tmp->calendarAuthRec = NULL;
 	tmp->publication = NULL;
 
-	res = KSI_VerificationResult_init(&tmp->verificationResult);
+	res = KSI_VerificationResult_init(&tmp->verificationResult, ctx);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	*sig = tmp;
@@ -1442,6 +1442,8 @@ static int verifyInternallyAggregationChain(KSI_Signature *sig) {
 		if (hsh != NULL) {
 			/* Validate input hash */
 			if (!KSI_DataHash_equals(hsh, aggregationChain->inputHash)) {
+				KSI_LOG_logDataHash(sig->ctx, KSI_LOG_DEBUG, "Calculated hash", hsh);
+				KSI_LOG_logDataHash(sig->ctx, KSI_LOG_DEBUG, "  Expected hash", aggregationChain->inputHash);
 				break;
 			}
 		}
@@ -1578,6 +1580,8 @@ static int verifyInternallyCalendarChain(KSI_Signature *sig) {
 	KSI_Integer *calendarAggrTm = NULL;
 	KSI_VerificationStep step = KSI_VERIFY_CALCHAIN_INTERNALLY;
 	KSI_VerificationResult *info = &sig->verificationResult;
+
+	KSI_LOG_info(sig->ctx, "Verifying calendar hash chain internally.");
 
 	res = KSI_CalendarHashChain_calculateAggregationTime(sig->calendarChain, &calculatedAggrTm);
 	if (res != KSI_OK) goto cleanup;
@@ -1937,7 +1941,7 @@ static int KSI_Signature_verifyPolicy(KSI_Signature *sig, unsigned *policy, KSI_
 		}
 
 		if (sig->verificationResult.stepsFailed) {
-			KSI_LOG_debug(sig->ctx, "Verification failed with: 0x%02x", sig->verificationResult.stepsFailed);
+			KSI_LOG_debug(sig->ctx, "Verification failed with steps: 0x%02x", sig->verificationResult.stepsFailed);
 			KSI_FAIL(&err, KSI_VERIFICATION_FAILURE, "One of the performed verification steps failed.");
 			goto cleanup;
 		}

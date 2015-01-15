@@ -392,7 +392,7 @@ static void implCtx_free(void * hInternet){
 	InternetCloseHandle((HINTERNET)hInternet);
 }
 
-int KSI_HttpClient_init(KSI_HttpClient *client) {
+int KSI_HttpClientImpl_init(KSI_HttpClient *client) {
 	KSI_ERR err;
 	KSI_HttpClient *http = (KSI_HttpClient *)client;
 	HINTERNET internet_handle;

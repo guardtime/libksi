@@ -20,7 +20,7 @@ static const char *level2str(int level) {
 
 static int writeLog(KSI_CTX *ctx, int logLevel, char *format, va_list va) {
 	int res = KSI_UNKNOWN_ERROR;
-	char msg[8184];
+	char msg[0xffff + 1024];
 
 	if (ctx == NULL || format == NULL) {
 		res = KSI_INVALID_ARGUMENT;
