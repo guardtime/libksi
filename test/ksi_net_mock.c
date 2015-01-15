@@ -130,22 +130,21 @@ static void mockCleanup(void) {
 	KSI_free(KSI_NET_MOCK_request);
 }
 
-static int mockSendPublicationsFileRequest(KSI_NetworkClient *netProvider, KSI_RequestHandle *handle) {
+static int mockSendPublicationsFileRequest(KSI_NetworkClient *netProvider, KSI_RequestHandle **handle) {
 	int res = KSI_UNKNOWN_ERROR;
-	const unsigned char *req = NULL;
-	unsigned req_len;
+	KSI_RequestHandle *tmp = NULL;
 
 	KSI_LOG_debug(ctx, "Initiate MOCK request.");
 
-	res = KSI_RequestHandle_setReadResponseFn(handle, mockPublicationsFileReceive);
+	res = KSI_RequestHandle_new(ctx, NULL, 0, &tmp);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_RequestHandle_getRequest(handle, &req, &req_len);
+	res = KSI_RequestHandle_setReadResponseFn(tmp, mockPublicationsFileReceive);
 	if (res != KSI_OK) goto cleanup;
 
-	memcpy((unsigned char *)KSI_NET_MOCK_request, req, req_len);
+	KSI_NET_MOCK_request_len = 0;
+	*handle = tmp;
 
-	KSI_NET_MOCK_request_len = req_len;
 	res = KSI_OK;
 cleanup:
 
