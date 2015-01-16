@@ -197,6 +197,15 @@ EXPORTS
     KSI_HttpClient_init
     KSI_HttpClient_free
 
+;net_tcp.h
+
+    KSI_TcpClient_new
+    KSI_TcpClient_init
+    KSI_TcpClient_free
+    KSI_TcpClient_setPublicationUrl
+    KSI_TcpClient_setExtender
+    KSI_TcpClient_setAggregator
+
 ;pkitruststore.h
 EXPORTS
     KSI_PKITruststore_new

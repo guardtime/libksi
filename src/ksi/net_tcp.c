@@ -5,16 +5,25 @@
 #include "net_tcp_impl.h"
 #include "net_tcp.h"
 #include "sys/types.h"
+#include "io.h"
+#include "tlv.h"
+
+#ifndef _WIN32 
 #include "sys/socket.h"
 #include "netinet/in.h"
 #include "netdb.h"
+#else
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#define close(soc) closesocket(soc)
+#endif
 
 typedef struct TcpClientCtx_st {
 	char *host;
 	unsigned port;
 } TcpClientCtx;
 
-static TcpClientCtx_free(TcpClientCtx *t) {
+static void TcpClientCtx_free(TcpClientCtx *t) {
 	if (t != NULL) {
 		KSI_free(t->host);
 		KSI_free(t);
@@ -71,7 +80,7 @@ static int readResponse(KSI_RequestHandle *handle) {
 
 	tcp = handle->implCtx;
 
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    sockfd = (int)socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
     	KSI_FAIL(&err, KSI_NETWORK_ERROR, "Unable to open socket.");
     	goto cleanup;
@@ -83,12 +92,10 @@ static int readResponse(KSI_RequestHandle *handle) {
     	goto cleanup;
     }
 
-    bzero((char *) &serv_addr, sizeof(serv_addr));
+	memset((char *) &serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
 
-    bcopy((char *)server->h_addr,
-         (char *)&serv_addr.sin_addr.s_addr,
-         server->h_length);
+	memmove((char *)&serv_addr.sin_addr.s_addr, (char *)server->h_addr, server->h_length);
 
     serv_addr.sin_port = htons(tcp->port);
 
@@ -102,14 +109,14 @@ static int readResponse(KSI_RequestHandle *handle) {
     count = 0;
     while (count < handle->request_length) {
     	int c;
-		c = write(sockfd, handle->request, handle->request_length);
+		c = send(sockfd, handle->request, handle->request_length, 0);
 		if (c < 0) {
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, "Unable to write to socket.");
 			goto cleanup;
 		}
 		count += c;
     }
-
+	
     res = KSI_RDR_fromSocket(handle->ctx, sockfd, &rdr);
     KSI_CATCH(&err, res) goto cleanup;
 

@@ -5,6 +5,9 @@
 #include "internal.h"
 #include "io.h"
 
+#include <winsock2.h>
+#include <ws2tcpip.h>
+
 typedef enum {
 	KSI_IO_FILE,
 	KSI_IO_MEM,
@@ -301,7 +304,7 @@ static int readFromSocket(KSI_RDR *rdr, unsigned char *buffer, const size_t size
 	KSI_BEGIN(rdr->ctx, &err);
 
 	while (!rdr->eof && count < size) {
-		int c = read(rdr->data.socketfd, buffer + count, size - count);
+		size_t c = recv(rdr->data.socketfd, buffer+count, size - count, 0);
 
 		if (c < 0) {
 			KSI_FAIL_EXT(&err, KSI_IO_ERROR, errno, "Unable to read from socket.");

@@ -58,7 +58,8 @@ LIB_OBJ = \
 	$(OBJ_DIR)\types.obj \
 	$(OBJ_DIR)\types_base.obj \
 	$(OBJ_DIR)\verification.obj \
-	$(OBJ_DIR)\hmac.obj
+	$(OBJ_DIR)\hmac.obj \
+	$(OBJ_DIR)\net_tcp.obj \
 
 INC_FILES = \
 	base32.h \
@@ -68,6 +69,7 @@ INC_FILES = \
 	types.h \
 	crc32.h \
 	net_http.h \
+	net_tcp.h \
 	signature.h \
 	types_base.h \
 	err.h \
