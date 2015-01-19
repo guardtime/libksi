@@ -188,13 +188,13 @@ cleanup: \
 	res = KSI_OctetString_new(ctx, tlvData+offset, len-offset, &raw); \
 	KSI_CATCH(&err, res) goto cleanup; \
 	\
-	tmp->##name = raw; \
+	tmp->name = raw; \
 	raw = NULL; \
 
 #define FROMTLV_ADD_BASETLV(name) \
 	res = KSI_TLV_clone(tlv, &baseTlv); \
 	KSI_CATCH(&err, res) goto cleanup; \
-	tmp->##name = baseTlv; \
+	tmp->name = baseTlv; \
 	baseTlv = NULL;
 	
 struct KSI_Object_st {
