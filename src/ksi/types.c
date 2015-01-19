@@ -232,7 +232,7 @@ static KSI_IMPLEMENT_GETTER(KSI_AggregationReq, KSI_OctetString*, raw, Raw);
 static KSI_IMPLEMENT_GETTER(KSI_AggregationResp, KSI_OctetString*, raw, Raw);
 static KSI_IMPLEMENT_GETTER(KSI_Header, KSI_OctetString*, raw, Raw);
 
-static int getObjectsRawValue(KSI_CTX* ctx, void* obj, int (*getRaw)(void*, KSI_OctetString**), const KSI_TlvTemplate *template, int tag, char **data, unsigned *len, bool* mustBeFreed){
+static int getObjectsRawValue(KSI_CTX* ctx, void* obj, int (*getRaw)(void*, KSI_OctetString**), const KSI_TlvTemplate *template, int tag, const unsigned char **data, unsigned *len, bool* mustBeFreed){
 	int res = KSI_OK;
 	KSI_OctetString *raw = NULL;
 	*mustBeFreed = false;
@@ -240,13 +240,19 @@ static int getObjectsRawValue(KSI_CTX* ctx, void* obj, int (*getRaw)(void*, KSI_
 		getRaw(obj, &raw);
 		if (raw){
 			res = KSI_OctetString_extract(raw, data, len);
-			if(res != KSI_OK) return KSI_INVALID_ARGUMENT;
+			if (res != KSI_OK) goto cleanup;
 		} else{
-			res = KSI_TlvTemplate_serializeObject(ctx, obj, tag, 0, 0, template, data, len);
-			if(res != KSI_OK) return KSI_INVALID_ARGUMENT;
+			res = KSI_TlvTemplate_serializeObject(ctx, obj, tag, 0, 0, template, (unsigned char **)data, len);
+			if (res != KSI_OK) goto cleanup;
 			*mustBeFreed = true;
 		}
-	} else return KSI_INVALID_ARGUMENT;
+	} else {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+cleanup:
+
 	return res;
 }
 
@@ -262,9 +268,9 @@ static int pdu_calculateHmac(KSI_CTX* ctx, void* pdu,
 	KSI_ERR err;
 	int res;
 	KSI_Header *header = NULL;
-	unsigned char *raw_header = NULL;
+	const unsigned char *raw_header = NULL;
 	unsigned header_len;
-	unsigned char *raw_payload = NULL;
+	const unsigned char *raw_payload = NULL;
 	unsigned payload_len;
 	void *request = NULL; 
 	void *response = NULL; 
@@ -325,8 +331,8 @@ static int pdu_calculateHmac(KSI_CTX* ctx, void* pdu,
 	
 cleanup:
 
-	if(freeRawHeader) KSI_free(raw_header);
-	if(freeRawPayload)	KSI_free(raw_payload);
+	if (freeRawHeader) KSI_free((void *)raw_header);
+	if (freeRawPayload)	KSI_free((void *)raw_payload);
 	KSI_free(buf);
 	KSI_DataHash_free(tmp);
 	
@@ -677,6 +683,7 @@ void KSI_AggregationResp_free(KSI_AggregationResp *t) {
 		KSI_CalendarAuthRec_free(t->calendarAuthRec);
 		KSI_AggregationAuthRec_free(t->aggregationAuthRec);
 		KSI_TLV_free(t->baseTlv);
+		KSI_OctetString_free(t->raw);
 		KSI_free(t);
 	}
 }
@@ -690,6 +697,7 @@ int KSI_AggregationResp_new(KSI_CTX *ctx, KSI_AggregationResp **t) {
 		goto cleanup;
 	}
 
+	tmp->raw = NULL;
 	tmp->ctx = ctx;
 	tmp->requestId = NULL;
 	tmp->status = NULL;
