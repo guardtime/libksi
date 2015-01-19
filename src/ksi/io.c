@@ -5,8 +5,12 @@
 #include "internal.h"
 #include "io.h"
 
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#ifndef _WIN32
+#  include "sys/socket.h"
+#else
+#  include <winsock2.h>
+#  include <ws2tcpip.h>
+#endif
 
 typedef enum {
 	KSI_IO_FILE,
