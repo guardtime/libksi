@@ -585,7 +585,7 @@ int KSI_TLV_readTlv(KSI_RDR *rdr, unsigned char *buffer, size_t buffer_len, size
 	int res;
 	size_t headerRead;
 	size_t valueRead;
-	unsigned valueLength;
+	unsigned valueLength = 0;
 
 	KSI_PRE(&err, rdr != NULL) goto cleanup;
 	KSI_PRE(&err, buffer != NULL) goto cleanup;
