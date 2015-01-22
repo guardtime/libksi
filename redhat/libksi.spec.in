@@ -63,6 +63,7 @@ make install DESTDIR=%{buildroot}
 %{_includedir}/ksi/log.h
 %{_includedir}/ksi/net.h
 %{_includedir}/ksi/net_http.h
+%{_includedir}/ksi/net_tcp.h
 %{_includedir}/ksi/pkitruststore.h
 %{_includedir}/ksi/publicationsfile.h
 %{_includedir}/ksi/signature.h
