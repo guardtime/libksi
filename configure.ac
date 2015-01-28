@@ -103,5 +103,5 @@ AC_ARG_WITH(unit-test-xml,
 
 AC_DEFINE_UNQUOTED(UNIT_TEST_OUTPUT_XML, "$with_unit_test_xml", [Location of the unit test xml results.])
 
-AC_CONFIG_FILES(GNUmakefile src/ksi/GNUmakefile test/GNUmakefile doc/GNUmakefile src/example/GNUmakefile redhat/libksi.spec)
+AC_CONFIG_FILES(GNUmakefile src/ksi/GNUmakefile test/GNUmakefile doc/GNUmakefile src/example/GNUmakefile)
 AC_OUTPUT
