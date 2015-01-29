@@ -1,0 +1,7 @@
+Build targets:
+  all      Builds the project without tests and example code.
+  check    Builds the project, tests and example code.
+  test     Executes all tests and generates test report xml.
+  memtest  Executes all tests and generates valgrind report xml.
+  coverage Executes all tests and generates coverage report xml.
+	
