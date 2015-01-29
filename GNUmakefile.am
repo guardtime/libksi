@@ -17,3 +17,10 @@ memtest: check
 
 doc:
 	cd doc; make doc; cd ..
+
+coverage: clean
+	make check CFLAGS="-fprofile-arcs -ftest-coverage -fPIC -O0"
+	./test/runner ./test
+	lcov --capture --directory ./src/ksi --output-file coverage.info
+	cd ./src/ksi; gcovr -r . --xml-pretty > ../../coverage.xml; cd ../..
+

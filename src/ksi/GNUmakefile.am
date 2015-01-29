@@ -1,3 +1,6 @@
+clean-local:
+	rm -fr *.gcno
+
 lib_LTLIBRARIES = libksi.la
 
 libksi_la_SOURCES = \
