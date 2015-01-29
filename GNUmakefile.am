@@ -11,16 +11,26 @@ EXTRA_DIST = changelog build*.txt makefile lic*.txt \
              */makefile doc/doxy* test/*
 test: check 
 	./test/runner ./test
-	
+
+# You'll need valgrind for this target.
+#
+# yum install valgrind	
 memtest: check 
 	valgrind --xml=yes --xml-file=valgrind.xml ./test/runner ./test 
 
 doc:
 	cd doc; make doc; cd ..
 
+# You'll need gcovr for this target:
+#
+# yum install python-pip
+# pip install gcovr
+#
 coverage: clean
 	make check CFLAGS="-fprofile-arcs -ftest-coverage -fPIC -O0"
 	./test/runner ./test
-	lcov --capture --directory ./src/ksi --output-file coverage.info
 	cd ./src/ksi; gcovr -r . --xml-pretty > ../../coverage.xml; cd ../..
+
+clean-local:
+	rm -fr coverage.xml valgrind.xml test.log testsuite-xunit.xml
 
