@@ -28,8 +28,6 @@ extern "C" {
  * @{
  */
 
-#define KSI_DEFAULT_URI_AGGREGATOR "192.168.1.29:1234"
-#define KSI_DEFAULT_URI_EXTENDER "192.168.1.36:8081/gt-extendingservice"
 #define KSI_DEFAULT_URI_PUBLICATIONS_FILE "http://verify.guardtime.com/ksi-publications.bin"
 
 /**
@@ -95,67 +93,125 @@ enum KSI_StatusCode {
 	/**
 	 * A network error occured.
 	 */
-	KSI_NETWORK_ERROR,
+	KSI_NETWORK_ERROR = 0x202,
 	/**
 	 * A network connection timeout occured.
 	 */
-	KSI_NETWORK_CONNECTION_TIMEOUT,
+	KSI_NETWORK_CONNECTION_TIMEOUT = 0x203,
 	/**
 	 * A network send timeout occured.
 	 */
-	KSI_NETWORK_SEND_TIMEOUT,
+	KSI_NETWORK_SEND_TIMEOUT = 0x204,
 	/**
 	 * A network recieve timeout occured.
 	 */
-	KSI_NETWORK_RECIEVE_TIMEOUT,
+	KSI_NETWORK_RECIEVE_TIMEOUT = 0x205,
 	/**
 	 * A HTTP error occured.
 	 */
-	KSI_HTTP_ERROR,
-	/**
-	 * The aggregator returned an error.
-	 */
-	KSI_AGGREGATOR_ERROR,
-	/**
-	 * The extender returned an error.
-	 */
-	KSI_EXTENDER_ERROR,
+	KSI_HTTP_ERROR = 0x206,
 	/**
 	 * The extender returned a wrong calendar chain.
 	 */
-	KSI_EXTEND_WRONG_CAL_CHAIN,
+	KSI_EXTEND_WRONG_CAL_CHAIN = 0x207,
 	/**
 	 * No suitable publication to extend to.
 	 */
-	KSI_EXTEND_NO_SUITABLE_PUBLICATION,
+	KSI_EXTEND_NO_SUITABLE_PUBLICATION = 0x208,
 	/**
 	 * The publication in the signature was not fround in the publications file.
 	 */
-	KSI_VERIFICATION_FAILURE,
+	KSI_VERIFICATION_FAILURE = 0x20a,
 	/**
 	 * Invalid publication.
 	 */
-	KSI_INVALID_PUBLICATION,
+	KSI_INVALID_PUBLICATION = 0x20b,
 	/**
 	 * The publications file is not signed.
 	 */
-	KSI_PUBLICATIONS_FILE_NOT_SIGNED_WITH_PKI,
+	KSI_PUBLICATIONS_FILE_NOT_SIGNED_WITH_PKI = 0x20c,
 	/**
 	 * Cryptographic operation could not be performed. Likely causes are
 	 * unsupported cryptographic algorithms, invalid keys and lack of
 	 * resources.
 	 */
-	KSI_CRYPTO_FAILURE,
+	KSI_CRYPTO_FAILURE = 0x20d,
 	
 	/**
 	 * HMAC mismatch occured
 	 */
-	KSI_HMAC_MISMATCH,
+	KSI_HMAC_MISMATCH = 0x20e,
+
+	/* Generic service errors */
+
+	/**
+	 * Pattern for errors with client request.
+	 */
+	KSI_SERVICE_INVALID_REQUEST = 0x400,
+	/**
+	 * The request could not be authenticated (missing or unknown login identifier, MAC check failure, etc).
+	 */
+	KSI_SERVICE_AUTHENTICATION_FAILURE = 0x401,
+	/**
+	 * The request contained invalid payload (unknown payload type, missing mandatory elements, unknown critical elements, etc).
+	 */
+	KSI_SERVICE_INVALID_PAYLOAD = 0x402,
+	/**
+	 * The server encountered an unspecified internal error.
+	 */
+	KSI_SERVICE_INTERNAL_ERROR = 0x403,
+	/**
+	 * The server encountered unspecified critical errors connecting to upstream servers.
+	 */
+	KSI_SERVICE_UPSTREAM_ERROR = 0x404,
+	/**
+	 * No response from upstream aggregators.
+	 */
+	KSI_SERVICE_UPSTREAM_TIMEOUT = 0x405,
+	/**
+	 * The extender returned an error.
+	 */
+	KSI_SERVICE_UNKNOWN_ERROR = 0x406,
+
+	/* Aggregator errors */
+
+	/**
+	 * The request indicated client-side aggregation tree larger than allowed for the client (retrying would not succeed either).
+	 */
+	KSI_SERVICE_AGGR_REQUEST_TOO_LARGE = 0x407,
+	/**
+	 * The request combined with other requests from the same client in the same round would create an aggregation sub-tree
+	 * larger than allowed for the client (retrying in a later round could soucceed).
+	 */
+	KSI_SERVICE_AGGR_REQUEST_OVER_QUOTA = 0x408,
+
+	/* Extender status codes. */
+
+	/**
+	 * The request asked for a hash chain going backwards in time Pattern for local errors in the server.
+	 */
+	KSI_SERVICE_EXTENDER_INVALID_TIME_RANGE = 0x409,
+	/**
+	 * The server misses the internal database needed to service the request (most likely it has not been initialized yet).
+	 */
+	KSI_SERVICE_EXTENDER_DATABASE_MISSING = 0x40a,
+	/**
+	 * The server's internal database is in an inconsistent state.
+	 */
+	KSI_SERVICE_EXTENDER_DATABASE_CORRUPT = 0x40b,
+	/**
+	 * The request asked for hash values older than the oldest round in the server's database.
+	 */
+	KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_OLD = 0x40c,
+	/**
+	 * The request asked for hash values newer than the newest round in the server's database.
+	 */
+	KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_NEW = 0x40d,
 
 	/**
 	 * Unknown error occured.
 	 */
-	KSI_UNKNOWN_ERROR
+	KSI_UNKNOWN_ERROR = 0xffff
 };
 /**
  * Function to convert a #KSI_StatusCode value to a human readable

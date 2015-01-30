@@ -43,13 +43,11 @@ const char *KSI_getErrorString(int statusCode) {
 		case KSI_NETWORK_SEND_TIMEOUT:
 			return "Network send timeout.";
 		case KSI_NETWORK_RECIEVE_TIMEOUT:
-			return "Network recieve timeout.";
+			return "Network receive timeout.";
 		case KSI_HTTP_ERROR:
 			return "HTTP error.";
-		case KSI_AGGREGATOR_ERROR:
-			return "Failure from aggregator.";
-		case KSI_EXTENDER_ERROR:
-			return "Failure from extender.";
+		case KSI_SERVICE_UNKNOWN_ERROR:
+			return "Unknown service error.";
 		case KSI_EXTEND_WRONG_CAL_CHAIN:
 			return "The given calendar chain is not a continuation of the signature calendar chain.";
 		case KSI_EXTEND_NO_SUITABLE_PUBLICATION:
@@ -64,6 +62,32 @@ const char *KSI_getErrorString(int statusCode) {
 			return "Cryptographic failure.";
 		case KSI_HMAC_MISMATCH:
 			return "HMAC mismatch.";
+		case KSI_SERVICE_INVALID_REQUEST:
+			return "Pattern for errors with client request.";
+		case KSI_SERVICE_AUTHENTICATION_FAILURE:
+			return "The request could not be authenticated.";
+		case KSI_SERVICE_INVALID_PAYLOAD:
+			return "The request contained invalid payload";
+		case KSI_SERVICE_INTERNAL_ERROR:
+			return "The server encountered an unspecified internal error.";
+		case KSI_SERVICE_UPSTREAM_ERROR:
+			return "The server encountered unspecified critical errors connecting to upstream servers.";
+		case KSI_SERVICE_UPSTREAM_TIMEOUT:
+			return "No response from upstream servers";
+		case KSI_SERVICE_AGGR_REQUEST_TOO_LARGE:
+			return "The request indicated client-side aggregation tree larger than allowed for the client.";
+		case KSI_SERVICE_AGGR_REQUEST_OVER_QUOTA:
+			return "The request combined with other requests from the same client in the same round would create an aggregation sub-tree larger than allowed for the client";
+		case KSI_SERVICE_EXTENDER_INVALID_TIME_RANGE:
+			return "The request asked for a hash chain going backwards in time Pattern for local errors in the server.";
+		case KSI_SERVICE_EXTENDER_DATABASE_MISSING:
+			return "The server misses the internal database needed to service the request.";
+		case KSI_SERVICE_EXTENDER_DATABASE_CORRUPT:
+			return "The server's internal database is in an inconsistent state.";
+		case KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_OLD:
+			return "The request asked for hash values older than the oldest round in the server's database.";
+		case KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_NEW:
+			return "The request asked for hash values newer than the newest round in the server's database.";
 		case KSI_UNKNOWN_ERROR:
 			return "Unknown internal error.";
 		default:

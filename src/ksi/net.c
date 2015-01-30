@@ -653,6 +653,40 @@ cleanup:
 
 }
 
+int KSI_convertAggregatorStatusCode(KSI_Integer *statusCode) {
+	if (statusCode == NULL) return KSI_OK;
+	switch (KSI_Integer_getUInt64(statusCode)) {
+		case 0x00: return KSI_OK;
+		case 0x0101: return KSI_SERVICE_INVALID_REQUEST;
+		case 0x0102: return KSI_SERVICE_AUTHENTICATION_FAILURE;
+		case 0x0103: return KSI_SERVICE_INVALID_PAYLOAD;
+		case 0x0104: return KSI_SERVICE_AGGR_REQUEST_TOO_LARGE;
+		case 0x0105: return KSI_SERVICE_AGGR_REQUEST_OVER_QUOTA;
+		case 0x0200: return KSI_SERVICE_INTERNAL_ERROR;
+		case 0x0300: return KSI_SERVICE_UPSTREAM_ERROR;
+		case 0x0301: return KSI_SERVICE_UPSTREAM_TIMEOUT;
+		default: return KSI_SERVICE_UNKNOWN_ERROR;
+	}
+}
+
+int KSI_convertExtenderStatusCode(KSI_Integer *statusCode) {
+	if (statusCode == NULL) return KSI_OK;
+	switch (KSI_Integer_getUInt64(statusCode)) {
+		case 0x00: return KSI_OK;
+		case 0x0101: return KSI_SERVICE_INVALID_REQUEST;
+		case 0x0102: return KSI_SERVICE_AUTHENTICATION_FAILURE;
+		case 0x0103: return KSI_SERVICE_INVALID_PAYLOAD;
+		case 0x0104: return KSI_SERVICE_EXTENDER_INVALID_TIME_RANGE;
+		case 0x0200: return KSI_SERVICE_INTERNAL_ERROR;
+		case 0x0201: return KSI_SERVICE_EXTENDER_DATABASE_MISSING;
+		case 0x0202: return KSI_SERVICE_EXTENDER_DATABASE_CORRUPT;
+		case 0x0203: return KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_OLD;
+		case 0x0204: return KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_NEW;
+		case 0x0300: return KSI_SERVICE_UPSTREAM_ERROR;
+		case 0x0301: return KSI_SERVICE_UPSTREAM_TIMEOUT;
+		default: return KSI_SERVICE_UNKNOWN_ERROR;
+	}
+}
 #define KSI_NET_IMPLEMENT_SETTER(name, type, var, fn) 														\
 		int KSI_NetworkClient_set##name(KSI_NetworkClient *client, type val) {								\
 			int res = KSI_UNKNOWN_ERROR;																\

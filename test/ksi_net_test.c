@@ -350,7 +350,7 @@ static void testSigningErrorResponse(CuTest *tc) {
 
 	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok_aggr_err_response-1.tlv"));
 	res = KSI_createSignature(ctx, hsh, &sig);
-	CuAssert(tc, "Signature should not be created due to server error.", res == KSI_AGGREGATOR_ERROR && sig == NULL);
+	CuAssert(tc, "Signature should not be created due to server error.", res == KSI_SERVICE_AUTHENTICATION_FAILURE && sig == NULL);
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
@@ -384,7 +384,7 @@ static void testExtendingErrorResponse(CuTest *tc) {
 	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok_extend_err_response-1.tlv"));
 
 	res = KSI_Signature_extend(sig, ctx, NULL, &ext);
-	CuAssert(tc, "Extend should fail with server error", res == KSI_EXTENDER_ERROR && ext == NULL);
+	CuAssert(tc, "Extend should fail with server error", res == KSI_SERVICE_AUTHENTICATION_FAILURE && ext == NULL);
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);

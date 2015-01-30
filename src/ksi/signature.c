@@ -696,16 +696,16 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp,
 	res = KSI_AggregationResp_getStatus(resp, &status);
 	KSI_CATCH(&err, res) goto cleanup;
 
+	res = KSI_convertAggregatorStatusCode(status);
 	/* Check for the status of the response. */
-	if (status != NULL && !KSI_Integer_equalsUInt(status, 0)) {
+	if (res != KSI_OK) {
 		KSI_Utf8String *errorMessage = NULL;
 		char msg[1024];
 
-		res = KSI_AggregationResp_getErrorMsg(resp, &errorMessage);
-		KSI_CATCH(&err, res) goto cleanup;
+		KSI_AggregationResp_getErrorMsg(resp, &errorMessage);
 
 		snprintf(msg, sizeof(msg), "Aggregation failed: %s", KSI_Utf8String_cstr(errorMessage));
-		KSI_FAIL_EXT(&err, KSI_AGGREGATOR_ERROR, (long)KSI_Integer_getUInt64(status), KSI_Utf8String_cstr(errorMessage));
+		KSI_FAIL_EXT(&err, res, (long)KSI_Integer_getUInt64(status), KSI_Utf8String_cstr(errorMessage));
 		goto cleanup;
 	}
 
@@ -890,15 +890,15 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 	res = KSI_ExtendResp_getStatus(response, &respStatus);
 	KSI_CATCH(&err, res) goto cleanup;
 
+	res = KSI_convertExtenderStatusCode(respStatus);
 	/* Fail if status is presend and does not equal to success (0) */
-	if (respStatus != NULL && !KSI_Integer_equalsUInt(respStatus, 0)) {
+	if (res != KSI_OK) {
 		char buf[1024];
 		KSI_Utf8String *error = NULL;
-		res = KSI_ExtendResp_getErrorMsg(response, &error);
-		KSI_CATCH(&err, res) goto cleanup;
+		KSI_ExtendResp_getErrorMsg(response, &error);
 
 		snprintf(buf, sizeof(buf), "Extender error: %s", KSI_Utf8String_cstr(error));
-		KSI_FAIL_EXT(&err, KSI_EXTENDER_ERROR, KSI_Integer_getUInt64(respStatus), buf);
+		KSI_FAIL_EXT(&err, res, KSI_Integer_getUInt64(respStatus), buf);
 
 		KSI_nofree(error);
 		goto cleanup;

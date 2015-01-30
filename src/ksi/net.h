@@ -222,6 +222,19 @@ extern "C" {
 	int KSI_NetworkClient_getExtenderPass(const KSI_NetworkClient *netProvider, const char **val);
 	int KSI_NetworkClient_getAggregatorUser(const KSI_NetworkClient *netProvider, const char **val);
 	int KSI_NetworkClient_getAggregatorPass(const KSI_NetworkClient *netProvider, const char **val);
+
+	/**
+	 * This function converts the aggregator response status code into a KSI status code.
+	 * \see #KSI_StatusCode
+	 */
+	int KSI_convertAggregatorStatusCode(KSI_Integer *statusCode);
+
+	/**
+	 * This function converts the extender response status code into a KSI status code.
+	 * \see #KSI_StatusCode
+	 */
+	int KSI_convertExtenderStatusCode(KSI_Integer *statusCode);
+
 	/**
 	 * @}
 	 */

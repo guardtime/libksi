@@ -183,7 +183,8 @@ EXPORTS
     KSI_NetworkClient_getExtenderPass
     KSI_NetworkClient_getAggregatorUser
     KSI_NetworkClient_getAggregatorPass
-
+	KSI_convertAggregatorStatusCode
+	KSI_convertExtenderStatusCode
 ;net_http.h
 EXPORTS
     KSI_HttpClient_new
