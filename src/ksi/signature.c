@@ -1721,6 +1721,7 @@ static int verifyDocument(KSI_Signature *sig) {
 	}
 
 	KSI_LOG_info(sig->ctx, "Verifying document hash.");
+	KSI_LOG_logDataHash(sig->ctx, KSI_LOG_DEBUG, "Verifying document hash", sig->verificationResult.documentHash);
 
 	res = KSI_Signature_getDocumentHash(sig, &hsh);
 	if (res != KSI_OK) goto cleanup;
@@ -1875,6 +1876,9 @@ static int verifyCalendarChainWithPublication(KSI_CTX *ctx, KSI_Signature *sig){
 		res = KSI_OK;
 		goto cleanup;
 	}
+
+	KSI_LOG_debug(sig->ctx, "Verifying calendar chain with publication.");
+
 	calChain = sig->calendarChain;
 	res = KSI_CalendarHashChain_getPublicationTime(calChain, &pubTime);
 	if(res != KSI_OK) goto cleanup;
@@ -1893,16 +1897,17 @@ static int verifyCalendarChainWithPublication(KSI_CTX *ctx, KSI_Signature *sig){
 	if(res != KSI_OK) goto cleanup;
 	
 	
-	if(!KSI_Integer_equals(pubTime, publishedTime)){
-		res = KSI_VerificationResult_addFailure(info, step, "Calendar hash chain publication time mismatch.");
-		KSI_LOG_debug(sig->ctx, "Calendar hash chain publication time: %i.\n", KSI_Integer_getUInt64(pubTime));
-		KSI_LOG_debug(sig->ctx, "Published publication time: %i.\n", KSI_Integer_getUInt64(publishedTime));
-		goto cleanup;
-	}
 	if(!KSI_DataHash_equals(rootHash, publishedHash)){
 		KSI_LOG_logDataHash(sig->ctx, KSI_LOG_DEBUG, "Calendar root hash", rootHash);
 		KSI_LOG_logDataHash(sig->ctx, KSI_LOG_DEBUG, "Published hash", publishedHash);
 		res = KSI_VerificationResult_addFailure(info, step, "Published hash and calendar hash chain root hash mismatch.");
+		goto cleanup;
+	}
+
+	if(!KSI_Integer_equals(pubTime, publishedTime)){
+		res = KSI_VerificationResult_addFailure(info, step, "Calendar hash chain publication time mismatch.");
+		KSI_LOG_debug(sig->ctx, "Calendar hash chain publication time: %i.", KSI_Integer_getUInt64(pubTime));
+		KSI_LOG_debug(sig->ctx, "Published publication time: %i.", KSI_Integer_getUInt64(publishedTime));
 		goto cleanup;
 	}
 	

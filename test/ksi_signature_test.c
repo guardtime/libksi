@@ -186,6 +186,10 @@ static void testVerifyDocumentHash(CuTest *tc) {
 	res = KSI_DataHash_create(ctx, doc, strlen(doc), KSI_HASHALG_SHA2_256, &hsh);
 	CuAssert(tc, "Failed to create data hash", res == KSI_OK && hsh != NULL);
 
+	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Using hash", hsh);
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "From data", doc, strlen(doc));
+	exit(1);
+
 	res = KSI_Signature_verifyDataHash(sig, ctx, hsh);
 	CuAssert(tc, "Failed to verify valid document", res == KSI_OK);
 
