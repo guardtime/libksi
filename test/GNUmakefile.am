@@ -23,3 +23,6 @@ runner_SOURCES= \
 
 parse_benchmark_SOURCES=parse_benchmark.c
 serialize_benchmark_SOURCES=serialize_benchmark.c
+
+clean-local:
+	rm -fr *.gcda *.gcno
