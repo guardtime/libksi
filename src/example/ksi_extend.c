@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	res = KSI_HttpClient_setExtender(net, argv[3], "anon", "anon");
+	res = KSI_HttpClient_setExtender(net, argv[3], "anoan", "anon");
 	if (res != KSI_OK) goto cleanup;
 
 	if (strcmp(argv[4], "-")) {

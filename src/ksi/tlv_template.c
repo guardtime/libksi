@@ -136,7 +136,7 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationPdu)
 	KSI_TLV_OBJECT(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationPdu_getHeader, KSI_AggregationPdu_setHeader, KSI_Header_fromTlv, KSI_Header_toTlv, KSI_Header_free)
 	KSI_TLV_OBJECT(0x201, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_AggregationPdu_getRequest, KSI_AggregationPdu_setRequest, KSI_AggregationReq_fromTlv, KSI_AggregationReq_toTlv, KSI_AggregationReq_free)
 	KSI_TLV_OBJECT(0x202, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_AggregationPdu_getResponse, KSI_AggregationPdu_setResponse, KSI_AggregationResp_fromTlv, KSI_AggregationResp_toTlv, KSI_AggregationResp_free)
-	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationPdu_getHmac, KSI_AggregationPdu_setHmac)
+	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationPdu_getHmac, KSI_AggregationPdu_setHmac)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendReq)
@@ -157,7 +157,7 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendPdu)
 	KSI_TLV_OBJECT(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_ExtendPdu_getHeader, KSI_ExtendPdu_setHeader, KSI_Header_fromTlv, KSI_Header_toTlv, KSI_Header_free)
 	KSI_TLV_OBJECT(0x301, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_ExtendPdu_getRequest, KSI_ExtendPdu_setRequest, KSI_ExtendReq_fromTlv, KSI_ExtendReq_toTlv, KSI_ExtendReq_free)
 	KSI_TLV_OBJECT(0x302, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_ExtendPdu_getResponse, KSI_ExtendPdu_setResponse, KSI_ExtendResp_fromTlv, KSI_ExtendResp_toTlv, KSI_ExtendResp_free)
-	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_MANDATORY, KSI_ExtendPdu_getHmac, KSI_ExtendPdu_setHmac)
+	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendPdu_getHmac, KSI_ExtendPdu_setHmac)
 KSI_END_TLV_TEMPLATE
 
 static int storeObjectValue(KSI_CTX *ctx, const KSI_TlvTemplate *tmpl, void *payload, void *val) {

@@ -892,11 +892,14 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 
 	/* Fail if status is presend and does not equal to success (0) */
 	if (respStatus != NULL && !KSI_Integer_equalsUInt(respStatus, 0)) {
+		char buf[1024];
 		KSI_Utf8String *error = NULL;
 		res = KSI_ExtendResp_getErrorMsg(response, &error);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		KSI_FAIL(&err, KSI_EXTENDER_ERROR, KSI_Utf8String_cstr(error));
+		snprintf(buf, sizeof(buf), "Extender error: %s", KSI_Utf8String_cstr(error));
+		KSI_FAIL_EXT(&err, KSI_EXTENDER_ERROR, KSI_Integer_getUInt64(respStatus), buf);
+
 		KSI_nofree(error);
 		goto cleanup;
 	}
@@ -1096,7 +1099,7 @@ int KSI_Signature_fromFile(KSI_CTX *ctx, const char *fileName, KSI_Signature **s
 
 	KSI_Signature *tmp = NULL;
 
-	const unsigned raw_size = 0xfffff;
+	const unsigned raw_size = 0xffff + 4;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, fileName != NULL) goto cleanup;

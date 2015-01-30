@@ -449,27 +449,42 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 	res = KSI_ExtendPdu_parse(handle->ctx, raw, len, &pdu);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	/*Control HMAC*/
-	res = KSI_ExtendPdu_getHmac(pdu, &respHmac);
-	KSI_CATCH(&err, res) goto cleanup;
-	
-	res = KSI_DataHash_getHashAlg(respHmac, &hashAlg);
-	KSI_CATCH(&err, res) goto cleanup;
-	
-	res = KSI_ExtendPdu_calculateHmac(pdu, hashAlg, handle->client->extPass, &actualHmac);
-	KSI_CATCH(&err, res) goto cleanup;
-	
-	if (!KSI_DataHash_equals(respHmac, actualHmac)){
-		KSI_LOG_debug(handle->ctx, "Verifying HMAC failed.");
-		KSI_LOG_logDataHash(handle->ctx, KSI_LOG_DEBUG, "Calculated HMAC", actualHmac);
-		KSI_LOG_logDataHash(handle->ctx, KSI_LOG_DEBUG, "HMAC from response", respHmac);
-		KSI_FAIL(&err, KSI_HMAC_MISMATCH, NULL);
-		goto cleanup;
-	}	
-	
 	/*Get response object and its TLV*/
 	res = KSI_ExtendPdu_getResponse(pdu, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_ExtendPdu_getHmac(pdu, &respHmac);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	if (respHmac == NULL) {
+		KSI_Integer *statusCode = NULL;
+
+		res = KSI_ExtendResp_getStatus(tmp, &statusCode);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		/* Make sure the response error is not 0 or null. */
+		if (KSI_Integer_equalsUInt(statusCode, 0)) {
+			KSI_FAIL(&err, KSI_INVALID_FORMAT, "A successful aggregation response must have a HMAC.");
+			goto cleanup;
+		}
+		KSI_LOG_debug(handle->ctx, "HMAC not present due error from extender.");
+	} else {
+		/* Check HMAC. */
+
+		res = KSI_DataHash_getHashAlg(respHmac, &hashAlg);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		res = KSI_ExtendPdu_calculateHmac(pdu, hashAlg, handle->client->extPass, &actualHmac);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		if (!KSI_DataHash_equals(respHmac, actualHmac)){
+			KSI_LOG_debug(handle->ctx, "Verifying HMAC failed.");
+			KSI_LOG_logDataHash(handle->ctx, KSI_LOG_DEBUG, "Calculated HMAC", actualHmac);
+			KSI_LOG_logDataHash(handle->ctx, KSI_LOG_DEBUG, "HMAC from response", respHmac);
+			KSI_FAIL(&err, KSI_HMAC_MISMATCH, NULL);
+			goto cleanup;
+		}
+	}	
 
 	res = KSI_ExtendPdu_setResponse(pdu, NULL);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -515,27 +530,41 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 	res = KSI_AggregationPdu_parse(handle->ctx, raw, len, &pdu);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	/*Control HMAC*/
+	/* Check HMAC. */
 	res = KSI_AggregationPdu_getHmac(pdu, &respHmac);
 	KSI_CATCH(&err, res) goto cleanup;
-	
-	res = KSI_DataHash_getHashAlg(respHmac, &hashAlg);
-	KSI_CATCH(&err, res) goto cleanup;
-	
-	res = KSI_AggregationPdu_calculateHmac(pdu, hashAlg, handle->client->aggrPass, &actualHmac);
-	KSI_CATCH(&err, res) goto cleanup;
-	
-	if (!KSI_DataHash_equals(respHmac, actualHmac)){
-		KSI_LOG_debug(handle->ctx, "Verifying HMAC failed.");
-		KSI_LOG_logDataHash(handle->ctx, KSI_LOG_DEBUG, "Calculated HMAC", actualHmac);
-		KSI_LOG_logDataHash(handle->ctx, KSI_LOG_DEBUG, "HMAC from response", respHmac);
-		KSI_FAIL(&err, KSI_HMAC_MISMATCH, NULL);
-		goto cleanup;
-	}	
 	
 	/*Get response object and its TLV*/
 	res = KSI_AggregationPdu_getResponse(pdu, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
+
+	if (respHmac == NULL) {
+		KSI_Integer *statusCode = NULL;
+
+		res = KSI_AggregationResp_getStatus(tmp, &statusCode);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		/* Make sure the response error is not 0 or null. */
+		if (KSI_Integer_equalsUInt(statusCode, 0)) {
+			KSI_FAIL(&err, KSI_INVALID_FORMAT, "A successful aggregation response must have a HMAC.");
+			goto cleanup;
+		}
+		KSI_LOG_debug(handle->ctx, "HMAC not present due error from aggregator.");
+	} else {
+		res = KSI_DataHash_getHashAlg(respHmac, &hashAlg);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		res = KSI_AggregationPdu_calculateHmac(pdu, hashAlg, handle->client->aggrPass, &actualHmac);
+		KSI_CATCH(&err, res) goto cleanup;
+
+		if (!KSI_DataHash_equals(respHmac, actualHmac)){
+			KSI_LOG_debug(handle->ctx, "Verifying HMAC failed.");
+			KSI_LOG_logDataHash(handle->ctx, KSI_LOG_DEBUG, "Calculated HMAC", actualHmac);
+			KSI_LOG_logDataHash(handle->ctx, KSI_LOG_DEBUG, "HMAC from response", respHmac);
+			KSI_FAIL(&err, KSI_HMAC_MISMATCH, NULL);
+			goto cleanup;
+		}
+	}
 
 	res = KSI_AggregationPdu_setResponse(pdu, NULL);
 	KSI_CATCH(&err, res) goto cleanup;

@@ -330,6 +330,67 @@ static void testSigningInvalidResponse(CuTest* tc){
 	KSI_Signature_free(sig);
 }
 
+static void testSigningErrorResponse(CuTest *tc) {
+	int res;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+	KSI_NetworkClient *pr = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+
+	res = KSI_NET_MOCK_new(ctx, &pr);
+	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
+
+	res = KSI_setNetworkProvider(ctx, pr);
+	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
+
+	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
+	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+
+	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok_aggr_err_response-1.tlv"));
+	res = KSI_createSignature(ctx, hsh, &sig);
+	CuAssert(tc, "Signature should not be created due to server error.", res == KSI_AGGREGATOR_ERROR && sig == NULL);
+
+	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
+}
+
+static void testExtendingErrorResponse(CuTest *tc) {
+	int res;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+	KSI_NetworkClient *pr = NULL;
+	KSI_Signature *ext = NULL;
+	KSI_PKITruststore *pki = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_getPKITruststore(ctx, &pki);
+	CuAssert(tc, "Unable to get PKI Truststore", res == KSI_OK && pki != NULL);
+
+	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
+	CuAssert(tc, "Unable to add test certificate to truststore.", res == KSI_OK);
+
+	res = KSI_NET_MOCK_new(ctx, &pr);
+	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
+
+	res = KSI_setNetworkProvider(ctx, pr);
+	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
+
+	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok_extend_err_response-1.tlv"));
+
+	res = KSI_Signature_extend(sig, ctx, NULL, &ext);
+	CuAssert(tc, "Extend should fail with server error", res == KSI_EXTENDER_ERROR && ext == NULL);
+
+	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
+	KSI_Signature_free(ext);
+}
+
 CuSuite* KSITest_NET_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
@@ -339,6 +400,8 @@ CuSuite* KSITest_NET_getSuite(void)
 	SUITE_ADD_TEST(suite, testExtendingWithoutPublication);
 	SUITE_ADD_TEST(suite, testSigningInvalidResponse);
 	SUITE_ADD_TEST(suite, testAggregationHeader);
+	SUITE_ADD_TEST(suite, testSigningErrorResponse);
+	SUITE_ADD_TEST(suite, testExtendingErrorResponse);
 
 	return suite;
 }
