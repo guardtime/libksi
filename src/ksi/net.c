@@ -495,9 +495,10 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 	KSI_SUCCESS(&err);
 
 cleanup:
+	res = KSI_RETURN(&err);
 
 	KSI_DataHash_free(actualHmac);
-	KSI_ExtendResp_free(tmp);
+	if(res == KSI_OK) KSI_ExtendResp_free(tmp);
 	KSI_ExtendPdu_free(pdu);
 	
 	return KSI_RETURN(&err);
@@ -575,9 +576,10 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 	KSI_SUCCESS(&err);
 
 cleanup:
+	res = KSI_RETURN(&err);
 
 	KSI_DataHash_free(actualHmac);
-	KSI_AggregationResp_free(tmp);
+	if(res == KSI_OK) KSI_AggregationResp_free(tmp);
 	KSI_AggregationPdu_free(pdu);
 	return KSI_RETURN(&err);
 }

@@ -1905,9 +1905,9 @@ static int verifyCalendarChainWithPublication(KSI_CTX *ctx, KSI_Signature *sig){
 	}
 
 	if(!KSI_Integer_equals(pubTime, publishedTime)){
-		res = KSI_VerificationResult_addFailure(info, step, "Calendar hash chain publication time mismatch.");
 		KSI_LOG_debug(sig->ctx, "Calendar hash chain publication time: %i.", KSI_Integer_getUInt64(pubTime));
 		KSI_LOG_debug(sig->ctx, "Published publication time: %i.", KSI_Integer_getUInt64(publishedTime));
+		res = KSI_VerificationResult_addFailure(info, step, "Calendar hash chain publication time mismatch.");
 		goto cleanup;
 	}
 	
