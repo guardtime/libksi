@@ -27,9 +27,9 @@ doc:
 # pip install gcovr
 #
 coverage: clean
-	make check CFLAGS="-fprofile-arcs -ftest-coverage -fPIC -O0"
+	make check CFLAGS="-g -fprofile-arcs -ftest-coverage -fPIC -O0"
 	./test/runner ./test
-	cd ./src/ksi; gcovr -r . --xml-pretty > ../../coverage.xml; cd ../..
+	cd ./src/ksi; gcovr -r . --xml-pretty > coverage.xml
 
 clean-local:
 	rm -fr coverage.xml valgrind.xml test.log testsuite-xunit.xml
