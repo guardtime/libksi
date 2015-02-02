@@ -43,7 +43,7 @@ KSI_IMPLEMENT_LIST(KSI_OctetString, KSI_OctetString_free);
  * KSI_OctetString
  */
 void KSI_OctetString_free(KSI_OctetString *o) {
-	if(o != NULL && --o->refCount == 0) {
+	if (o != NULL && --o->refCount == 0) {
 		KSI_free(o->data);
 		KSI_free(o);
 	}
@@ -54,7 +54,7 @@ int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, unsigned int da
 	KSI_OctetString *tmp = NULL;
 
 	tmp = KSI_new(KSI_OctetString);
-	if(tmp == NULL) {
+	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
@@ -92,7 +92,7 @@ int KSI_OctetString_ref(KSI_OctetString *o) {
 int KSI_OctetString_extract(const KSI_OctetString *o, const unsigned char **data, unsigned int *data_len) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	if(o == NULL || data == NULL) {
+	if (o == NULL || data == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -347,7 +347,7 @@ int KSI_Utf8String_toTlv(KSI_CTX *ctx, KSI_Utf8String *o, unsigned tag, int isNo
 	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	if(o->len > 0xffff){
+	if (o->len > 0xffff){
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "UTF8 string too long for TLV conversion.");
 		goto cleanup;
 	}

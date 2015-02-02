@@ -152,7 +152,7 @@ int type##_fromTlv(KSI_TLV *tlv, type **data) { \
 	KSI_PRE(&err, data != NULL) goto cleanup; \
 	KSI_BEGIN(ctx, &err); \
 	\
-	if(KSI_TLV_getTag(tlv) != tag){ \
+	if (KSI_TLV_getTag(tlv) != tag){ \
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL); \
 		goto cleanup; \
 	} \
@@ -181,7 +181,7 @@ cleanup: \
 	res = KSI_TLV_serialize(tlv, &tlvData, &len); \
 	KSI_CATCH(&err, res) goto cleanup; \
 	\
-	if(len-offset <= 0){ \
+	if (len-offset <= 0){ \
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL); \
 		goto cleanup; \
 	} \

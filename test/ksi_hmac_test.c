@@ -46,7 +46,7 @@ static void dotest(CuTest* tc, struct testData *data, int count){
 	char buf[1024];
 	int i = 0;
 	
-	for(;i<count;i++){
+	for (;i<count;i++){
 		res = KSI_HMAC_create(ctx, data[i].hashAlg, data[i].key, data[i].message, data[i].message_len, &hmac);
 		CuAssert(tc, "Failed crete HMAC", res == KSI_OK && hmac != NULL);
 		KSI_DataHash_toString(hmac,buf, sizeof(buf));

@@ -753,7 +753,7 @@ int KSI_TLV_cast(KSI_TLV *tlv, int payloadType) {
 		goto cleanup;
 	}
 
-	switch(payloadType) {
+	switch (payloadType) {
 		case KSI_TLV_PAYLOAD_RAW:
 			res = encodeAsRaw(tlv);
 			break;

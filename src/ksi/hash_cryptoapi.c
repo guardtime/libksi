@@ -14,9 +14,9 @@ typedef struct CRYPTO_HASH_CTX_st {
 	} CRYPTO_HASH_CTX;
 
 static void CRYPTO_HASH_CTX_free(CRYPTO_HASH_CTX *cryptoCtxt){
-	if(cryptoCtxt != NULL){
-		if(cryptoCtxt->pt_CSP) CryptReleaseContext(cryptoCtxt->pt_CSP, 0);
-		if(cryptoCtxt->pt_hHash) CryptDestroyHash(cryptoCtxt->pt_hHash);
+	if (cryptoCtxt != NULL){
+		if (cryptoCtxt->pt_CSP) CryptReleaseContext(cryptoCtxt->pt_CSP, 0);
+		if (cryptoCtxt->pt_hHash) CryptDestroyHash(cryptoCtxt->pt_hHash);
 		KSI_free(cryptoCtxt);
 		}
 }
@@ -156,7 +156,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
 	}
 		
 	/*Create new crypto service provider (CSP)*/
-	if(!CryptAcquireContext(&tmp_CSP, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)){
+	if (!CryptAcquireContext(&tmp_CSP, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)){
 		char errm[1024];
 		snprintf(errm, sizeof(errm), "Wincrypt Error (%d)", GetLastError());
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, errm);
@@ -183,7 +183,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
 cleanup:
 
 	KSI_DataHasher_free(tmp_hasher);
-	if(tmp_CSP) CryptReleaseContext(tmp_CSP, 0);
+	if (tmp_CSP) CryptReleaseContext(tmp_CSP, 0);
 	CRYPTO_HASH_CTX_free(tmp_cryptoCTX);
 	return KSI_RETURN(&err);
 }
@@ -210,7 +210,7 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 	}
 
 	/*If hasher object already exists, destroy one*/
-	if(pTmp_hash != 0){
+	if (pTmp_hash != 0){
 		CryptDestroyHash(pTmp_hash);
 		}
 	
@@ -230,7 +230,7 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 
 cleanup:
 
-	if(pTmp_hash) CryptDestroyHash(pTmp_hash);
+	if (pTmp_hash) CryptDestroyHash(pTmp_hash);
 	return KSI_RETURN(&err);
 }
 
@@ -250,7 +250,7 @@ int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_len
 	pHash = pCryptoCTX->pt_hHash;
 	
 	if (data_length > 0) {
-		if(!CryptHashData(pHash, data, data_length, 0)){
+		if (!CryptHashData(pHash, data, data_length, 0)){
 			DWORD error = GetLastError();
 			KSI_LOG_debug(ctx, "Cryptoapi: HashData error %i\n", error);
 			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Cryptoapi: Unable to add data to the hash");
