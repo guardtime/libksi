@@ -218,7 +218,7 @@ int KSI_getHashAlgorithmByName(const char *name) {
 
 		alias_id = 0;
 		/* Loop until a null pointer or empty string. */
-		while((alias = KSI_hashAlgorithmInfo[algorithm_id].aliases[alias_id++]) && *alias) {
+		while ((alias = KSI_hashAlgorithmInfo[algorithm_id].aliases[alias_id++]) && *alias) {
 			if (!strcmp(upperName, alias)) {
 				hash_id = algorithm_id;
 				goto cleanup;
@@ -360,9 +360,9 @@ cleanup:
 }
 
 int KSI_DataHash_getHashAlg(const KSI_DataHash *hash, int *hashAlg){
-	if(hash == NULL) return KSI_INVALID_ARGUMENT;
-	if(hashAlg == NULL) return KSI_INVALID_ARGUMENT;
-	if(hash->imprint == NULL) return KSI_INVALID_ARGUMENT;
+	if (hash == NULL) return KSI_INVALID_ARGUMENT;
+	if (hashAlg == NULL) return KSI_INVALID_ARGUMENT;
+	if (hash->imprint == NULL) return KSI_INVALID_ARGUMENT;
 	
 	*hashAlg = hash->imprint[0];
 	

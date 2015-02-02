@@ -39,7 +39,7 @@ int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, const unsigned char 
 	KSI_PRE(&err, hmac != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 	
-	if(KSI_getHashLength(alg) > MAX_KEY_LEN){
+	if (KSI_getHashLength(alg) > MAX_KEY_LEN){
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "The hash length is greater than 64");
 		goto cleanup;
 	}
@@ -50,7 +50,7 @@ int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, const unsigned char 
 	
 	/* Prepare the key for hashing. */
 	/* If the key is longer than 64, hash it. If the key or its hash is shorter than 64 bit, append zeros. */
-	if(key_len > MAX_KEY_LEN){
+	if (key_len > MAX_KEY_LEN){
 		res = KSI_DataHasher_add(hsr, key, key_len);
 		KSI_CATCH(&err, res);
 
@@ -60,7 +60,7 @@ int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, const unsigned char 
 		res = KSI_DataHash_extract(hashedKey, NULL, &digest, &digest_len);
 		KSI_CATCH(&err, res);
 		
-		if(digest == NULL || digest_len > MAX_KEY_LEN){
+		if (digest == NULL || digest_len > MAX_KEY_LEN){
 			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "The hash of the key is invalid");
 			goto cleanup;
 		}
@@ -72,12 +72,12 @@ int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, const unsigned char 
 		buf_len = (unsigned)key_len;
 	}
 	
-	for(i = 0; i < buf_len; i++) {
+	for (i = 0; i < buf_len; i++) {
 		ipadXORkey[i] = ipad[i]^bufKey[i];
 		opadXORkey[i] = opad[i]^bufKey[i];
 	}
 
-	for(; i< MAX_KEY_LEN; i++){
+	for (; i< MAX_KEY_LEN; i++){
 		ipadXORkey[i] = 0x36;
 		opadXORkey[i] = 0x5c;
 	}

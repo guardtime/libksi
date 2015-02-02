@@ -121,7 +121,7 @@ static int readResponse(KSI_RequestHandle *handle) {
     KSI_CATCH(&err, res) goto cleanup;
 
     res = KSI_TLV_readTlv(rdr, buffer, sizeof(buffer), &count);
-    if(res != KSI_OK || count == 0){
+    if (res != KSI_OK || count == 0){
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Unable to read TLV from socket.");
 		goto cleanup;
 	}

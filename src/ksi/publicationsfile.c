@@ -57,7 +57,7 @@ cleanup:
 
 static int publicationsFile_setSignatureOffset(KSI_PublicationsFile *t, size_t signatureOffset) {
 	int res = KSI_UNKNOWN_ERROR;
-	if(t == NULL) {
+	if (t == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -69,7 +69,7 @@ cleanup:
 
 static int publicationsFile_setHeader(KSI_PublicationsFile *t, KSI_PublicationsHeader *header) {
 	int res = KSI_UNKNOWN_ERROR;
-	if(t == NULL) {
+	if (t == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -81,7 +81,7 @@ cleanup:
 
 static int publicationsFile_setCertificates(KSI_PublicationsFile *t, KSI_LIST(KSI_CertificateRecord) *certificates) {
 	int res = KSI_UNKNOWN_ERROR;
-	if(t == NULL) {
+	if (t == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -93,7 +93,7 @@ cleanup:
 
 static int publicationsFile_setPublications(KSI_PublicationsFile *t, KSI_LIST(KSI_PublicationRecord) *publications) {
 	int res = KSI_UNKNOWN_ERROR;
-	if(t == NULL) {
+	if (t == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -105,7 +105,7 @@ cleanup:
 
 static int publicationsFile_setSignature(KSI_PublicationsFile *t, KSI_PKISignature *signature) {
 	int res = KSI_UNKNOWN_ERROR;
-	if(t == NULL) {
+	if (t == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -123,7 +123,7 @@ static int KSI_PublicationsFile_new(KSI_CTX *ctx, KSI_PublicationsFile **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationsFile *tmp = NULL;
 	tmp = KSI_new(KSI_PublicationsFile);
-	if(tmp == NULL) {
+	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
@@ -341,7 +341,7 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 
 	*raw_len = pubFile->raw_len;
 	*raw = (char*)KSI_malloc(*raw_len);
-	if(*raw == NULL){
+	if (*raw == NULL){
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
@@ -356,7 +356,7 @@ cleanup:
 
 
 void KSI_PublicationsFile_free(KSI_PublicationsFile *t) {
-	if(t != NULL) {
+	if (t != NULL) {
 		KSI_PublicationsHeader_free(t->header);
 		KSI_CertificateRecordList_free(t->certificates);
 		KSI_PublicationRecordList_free(t->publications);
@@ -368,7 +368,7 @@ void KSI_PublicationsFile_free(KSI_PublicationsFile *t) {
 
 int KSI_PublicationsFile_getHeader(const KSI_PublicationsFile *t, KSI_PublicationsHeader **header) {
 	int res = KSI_UNKNOWN_ERROR;
-	if(t == NULL || header == NULL) {
+	if (t == NULL || header == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -380,7 +380,7 @@ cleanup:
 
 int KSI_PublicationsFile_getCertificates(const KSI_PublicationsFile *t, KSI_LIST(KSI_CertificateRecord) **certificates) {
 	int res = KSI_UNKNOWN_ERROR;
-	if(t == NULL || certificates == NULL) {
+	if (t == NULL || certificates == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -392,7 +392,7 @@ cleanup:
 
 int KSI_PublicationsFile_getPublications(const KSI_PublicationsFile *t, KSI_LIST(KSI_PublicationRecord) **publications) {
 	int res = KSI_UNKNOWN_ERROR;
-	if(t == NULL || publications == NULL) {
+	if (t == NULL || publications == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -684,7 +684,7 @@ cleanup:
 
 int KSI_PublicationsFile_getSignature(const KSI_PublicationsFile *t, KSI_PKISignature **signature) {
 	int res = KSI_UNKNOWN_ERROR;
-	if(t == NULL || signature == NULL) {
+	if (t == NULL || signature == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -860,7 +860,7 @@ cleanup:
  * KSI_PublicationData
  */
 void KSI_PublicationData_free(KSI_PublicationData *t) {
-	if(t != NULL) {
+	if (t != NULL) {
 		KSI_Integer_free(t->time);
 		KSI_DataHash_free(t->imprint);
 		KSI_free(t);
@@ -871,7 +871,7 @@ int KSI_PublicationData_new(KSI_CTX *ctx, KSI_PublicationData **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationData *tmp = NULL;
 	tmp = KSI_new(KSI_PublicationData);
-	if(tmp == NULL) {
+	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
@@ -948,7 +948,7 @@ KSI_IMPLEMENT_SETTER(KSI_PublicationData, KSI_DataHash*, imprint, Imprint);
  * KSI_PublicationRecord
  */
 void KSI_PublicationRecord_free(KSI_PublicationRecord *t) {
-	if(t != NULL) {
+	if (t != NULL) {
 		KSI_PublicationData_free(t->publishedData);
 		KSI_Utf8StringList_free(t->publicationRef);
 		KSI_Utf8StringList_free(t->repositoryUriList);
@@ -960,7 +960,7 @@ int KSI_PublicationRecord_new(KSI_CTX *ctx, KSI_PublicationRecord **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationRecord *tmp = NULL;
 	tmp = KSI_new(KSI_PublicationRecord);
-	if(tmp == NULL) {
+	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
@@ -993,9 +993,9 @@ int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_Publicatio
 		
 	/*Copy publication references*/
 	res = KSI_Utf8StringList_new(&(tmp->publicationRef));
-	if(res != KSI_OK && tmp->publicationRef) goto cleanup;
+	if (res != KSI_OK && tmp->publicationRef) goto cleanup;
 
-	for(i=0; i<KSI_Utf8StringList_length(rec->publicationRef); i++){
+	for (i=0; i<KSI_Utf8StringList_length(rec->publicationRef); i++){
 		KSI_Utf8String *str = NULL;
 		res = KSI_Utf8StringList_elementAt(rec->publicationRef, i, &str);
 		KSI_CATCH(&err, res);
@@ -1007,7 +1007,7 @@ int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_Publicatio
 	
 	/*Copy publication data*/
 	res = KSI_PublicationData_new(rec->ctx, &(tmp->publishedData));
-	if(res != KSI_OK && tmp->publishedData)
+	if (res != KSI_OK && tmp->publishedData)
 	
 	tmp->publishedData->ctx = rec->ctx;
 

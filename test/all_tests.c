@@ -158,7 +158,7 @@ static int RunAllTests() {
 
 	/* Create the context. */
 	res = KSI_CTX_new(&ctx);
-	if(ctx == NULL || res != KSI_OK){
+	if (ctx == NULL || res != KSI_OK){
 		fprintf(stderr, "Error: Unable to init KSI context (%s)!\n", KSI_getErrorString(res));
 		exit(EXIT_FAILURE);
 	}

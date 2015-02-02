@@ -312,8 +312,8 @@ cleanup:
 }
 
 static int intCmp(KSI_uint64_t a, KSI_uint64_t b){
-	if(a == b) return 0;
-	else if(a > b) return 1;
+	if (a == b) return 0;
+	else if (a > b) return 1;
 	else return -1;
 }
 
@@ -746,7 +746,7 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp,
 		res = KSI_TLVList_elementAt(tlvList, i, &t);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		switch(KSI_TLV_getTag(t)) {
+		switch (KSI_TLV_getTag(t)) {
 			case 0x01:
 			case 0x04:
 			case 0x05:
@@ -1881,30 +1881,30 @@ static int verifyCalendarChainWithPublication(KSI_CTX *ctx, KSI_Signature *sig){
 
 	calChain = sig->calendarChain;
 	res = KSI_CalendarHashChain_getPublicationTime(calChain, &pubTime);
-	if(res != KSI_OK) goto cleanup;
+	if (res != KSI_OK) goto cleanup;
 	
 	res = KSI_CalendarHashChain_aggregate(calChain, &rootHash);
-	if(res != KSI_OK) goto cleanup;
+	if (res != KSI_OK) goto cleanup;
 	
 	sigPubRec = sig->publication;
 	res = KSI_PublicationRecord_getPublishedData(sigPubRec, &sigPubData);
-	if(res != KSI_OK) goto cleanup;
+	if (res != KSI_OK) goto cleanup;
 	
 	res = KSI_PublicationData_getImprint(sigPubData, &publishedHash);
-	if(res != KSI_OK) goto cleanup;
+	if (res != KSI_OK) goto cleanup;
 	
 	res = KSI_PublicationData_getTime(sigPubData, &publishedTime);
-	if(res != KSI_OK) goto cleanup;
+	if (res != KSI_OK) goto cleanup;
 	
 	
-	if(!KSI_DataHash_equals(rootHash, publishedHash)){
+	if (!KSI_DataHash_equals(rootHash, publishedHash)){
 		KSI_LOG_logDataHash(sig->ctx, KSI_LOG_DEBUG, "Calendar root hash", rootHash);
 		KSI_LOG_logDataHash(sig->ctx, KSI_LOG_DEBUG, "Published hash", publishedHash);
 		res = KSI_VerificationResult_addFailure(info, step, "Published hash and calendar hash chain root hash mismatch.");
 		goto cleanup;
 	}
 
-	if(!KSI_Integer_equals(pubTime, publishedTime)){
+	if (!KSI_Integer_equals(pubTime, publishedTime)){
 		KSI_LOG_debug(sig->ctx, "Calendar hash chain publication time: %i.", KSI_Integer_getUInt64(pubTime));
 		KSI_LOG_debug(sig->ctx, "Published publication time: %i.", KSI_Integer_getUInt64(publishedTime));
 		res = KSI_VerificationResult_addFailure(info, step, "Calendar hash chain publication time mismatch.");

@@ -106,7 +106,7 @@ void TestCuStringResizes(CuTest* tc)
 {
 	CuString* str = CuStringNew();
 	int i;
-	for(i = 0 ; i < STRING_MAX ; ++i)
+	for (i = 0 ; i < STRING_MAX ; ++i)
 	{
 		CuStringAppend(str, "aa");
 	}
