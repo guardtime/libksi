@@ -1,6 +1,6 @@
 Summary: Guardtime KSI Client API for C
 Name: libksi
-Version: 3.1.0 
+Version: %(cat VERSION)
 Release: UNSTABLE 
 License: ASL 2.0
 Group: Development/Libraries
