@@ -61,7 +61,7 @@
 #define KSI_RETURN(err) KSI_ERR_apply((err))
 #define KSI_FAIL_EXT(err, statusCode, extErrCode, message) (KSI_ERR_fail((err), (statusCode), (extErrCode), __FILE__, __LINE__, (message)))
 #define KSI_FAIL(err, statusCode, message) (KSI_ERR_fail((err), (statusCode), 0, __FILE__, __LINE__, (message)))
-#define KSI_CATCH(err, res) if ((res) != KSI_OK && KSI_FAIL((err), res, NULL) == KSI_OK)
+#define KSI_CATCH(err, res) if (((res) != KSI_OK) || (KSI_FAIL((err), res, NULL) != KSI_OK))
 #define KSI_SUCCESS(err) KSI_ERR_success((err))
 
 #define KSI_UINT16_MINSIZE(val) (((val) > 0xff) ? 2 : ((val) == 0 ? 0 : 1))

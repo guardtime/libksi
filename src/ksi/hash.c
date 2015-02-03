@@ -372,7 +372,6 @@ return KSI_OK;
 int KSI_DataHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned char **data, int *data_len) {
 	KSI_ERR err;
 	unsigned len;
-	int algo_id;
 	unsigned i;
 
 	KSI_PRE(&err, metaHash != NULL) goto cleanup;
@@ -386,7 +385,6 @@ int KSI_DataHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned
 		goto cleanup;
 	}
 
-	algo_id = metaHash->imprint[0];
 	len = ((metaHash->imprint[1] << 8) & 0xff) | (metaHash->imprint[2] & 0xff);
 
 	if (len + 3 > metaHash->imprint_length) {

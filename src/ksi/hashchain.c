@@ -397,6 +397,7 @@ void KSI_HashChainLink_free(KSI_HashChainLink *t) {
 int KSI_HashChainLink_new(KSI_CTX *ctx, KSI_HashChainLink **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_HashChainLink *tmp = NULL;
+
 	tmp = KSI_new(KSI_HashChainLink);
 	if(tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
@@ -409,10 +410,14 @@ int KSI_HashChainLink_new(KSI_CTX *ctx, KSI_HashChainLink **t) {
 	tmp->metaHash = NULL;
 	tmp->metaData = NULL;
 	tmp->imprint = NULL;
+
 	*t = tmp;
 	tmp = NULL;
+
 	res = KSI_OK;
+
 cleanup:
+
 	KSI_HashChainLink_free(tmp);
 	return res;
 }
@@ -521,7 +526,6 @@ int KSI_HashChainLink_fromTlv(KSI_TLV *tlv, KSI_HashChainLink **link) {
 	KSI_CATCH(&err, res) goto cleanup;
 
 	tmp->isLeft = isLeft;
-
 
 	*link = tmp;
 	tmp = NULL;
