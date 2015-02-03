@@ -2,7 +2,7 @@
 
 BUILD_DIR=~/rpmbuild
 
-autoreconf -i && \
+autoreconf -if && \
 ./configure $* && \
 make clean && \
 make dist && \
