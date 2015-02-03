@@ -573,17 +573,18 @@ int KSI_ERR_pre(KSI_ERR *err, int cond, char *fileName, int lineNr) {
 }
 
 int KSI_ERR_fail(KSI_ERR *err, int statusCode, long extErrorCode, char *fileName, unsigned int lineNr, const char *message) {
-	err->extErrorCode = extErrorCode;
-	err->statusCode = statusCode;
-	if (message == NULL) {
-		strncpy(err->message, KSI_getErrorString(statusCode), sizeof(err->message));
-	} else {
-		strncpy(err->message, KSI_strnvl(message), sizeof(err->message));
+	if (statusCode != KSI_OK) {
+		err->extErrorCode = extErrorCode;
+		err->statusCode = statusCode;
+		if (message == NULL) {
+			strncpy(err->message, KSI_getErrorString(statusCode), sizeof(err->message));
+		} else {
+			strncpy(err->message, KSI_strnvl(message), sizeof(err->message));
+		}
+		strncpy(err->fileName, KSI_strnvl(fileName), sizeof(err->fileName));
+		err->lineNr = lineNr;
 	}
-	strncpy(err->fileName, KSI_strnvl(fileName), sizeof(err->fileName));
-	err->lineNr = lineNr;
-
-	return KSI_OK;
+	return statusCode;
 }
 
 void KSI_ERR_clearErrors(KSI_CTX *ctx) {

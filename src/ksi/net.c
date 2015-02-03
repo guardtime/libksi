@@ -498,7 +498,6 @@ cleanup:
 	res = KSI_RETURN(&err);
 
 	KSI_DataHash_free(actualHmac);
-	if (res == KSI_OK) KSI_ExtendResp_free(tmp);
 	KSI_ExtendPdu_free(pdu);
 	
 	return KSI_RETURN(&err);
@@ -579,7 +578,6 @@ cleanup:
 	res = KSI_RETURN(&err);
 
 	KSI_DataHash_free(actualHmac);
-	if (res == KSI_OK) KSI_AggregationResp_free(tmp);
 	KSI_AggregationPdu_free(pdu);
 	return KSI_RETURN(&err);
 }
