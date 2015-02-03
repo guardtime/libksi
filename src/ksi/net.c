@@ -575,7 +575,6 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 	KSI_SUCCESS(&err);
 
 cleanup:
-	res = KSI_RETURN(&err);
 
 	KSI_DataHash_free(actualHmac);
 	KSI_AggregationPdu_free(pdu);

@@ -277,6 +277,7 @@ static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
 	KSI_Signature *tmp = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, sig != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
 	tmp = KSI_new(KSI_Signature);
@@ -1505,6 +1506,7 @@ static int verifyAggregationRootWithCalendarChain(KSI_Signature *sig) {
 
 	if (!KSI_DataHash_equals(sig->verificationResult.aggregationHash, inputHash)) {
 		res = KSI_VerificationResult_addFailure(info, step, "Aggregation root hash mismatch.");
+		if (res != KSI_OK) goto cleanup;
 	}
 
 	res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &calAggrTime);
@@ -1566,6 +1568,8 @@ static int verifyCalendarChain(KSI_Signature *sig) {
 	} else {
 		res = KSI_VerificationResult_addFailure(info, step, "Calendar chain and auth record mismatch.");
 	}
+
+	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_OK;
 
@@ -2073,7 +2077,7 @@ int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_CTX *ctx, const KSI_Dat
 	sig->verificationResult.documentHash = docHash;
 	sig->verificationResult.verifyDocumentHash = true;
 
-	res = KSI_Signature_verifyPolicy(sig, KSI_VP_DOCUMENT, ctx);
+	res = KSI_Signature_verifyPolicy(sig, KSI_VP_DOCUMENT, useCtx);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);

@@ -870,6 +870,11 @@ void KSI_PublicationData_free(KSI_PublicationData *t) {
 int KSI_PublicationData_new(KSI_CTX *ctx, KSI_PublicationData **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationData *tmp = NULL;
+
+	if (ctx == NULL || t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 	tmp = KSI_new(KSI_PublicationData);
 	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
@@ -959,6 +964,10 @@ void KSI_PublicationRecord_free(KSI_PublicationRecord *t) {
 int KSI_PublicationRecord_new(KSI_CTX *ctx, KSI_PublicationRecord **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationRecord *tmp = NULL;
+	if (ctx == NULL || t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 	tmp = KSI_new(KSI_PublicationRecord);
 	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
@@ -1007,7 +1016,7 @@ int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_Publicatio
 	
 	/*Copy publication data*/
 	res = KSI_PublicationData_new(rec->ctx, &(tmp->publishedData));
-	if (res != KSI_OK && tmp->publishedData)
+	KSI_CATCH(&err, res) goto cleanup;
 	
 	tmp->publishedData->ctx = rec->ctx;
 

@@ -502,7 +502,7 @@ int KSI_HashChainLink_fromTlv(KSI_TLV *tlv, KSI_HashChainLink **link) {
 	KSI_ERR err;
 	int res;
 	KSI_HashChainLink *tmp = NULL;
-	int isLeft = 0;
+	int isLeft;
 
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
 	KSI_PRE(&err, link != NULL) goto cleanup;

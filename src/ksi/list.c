@@ -207,7 +207,7 @@ static int removeElement(KSI_List *list, size_t pos, void **o) {
 	}
 
 	if (o != NULL) {
-		o = list->arr[pos];
+		*o = list->arr[pos];
 	} else {
 		list->obj_free(list->arr[pos]);
 	}

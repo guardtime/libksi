@@ -334,6 +334,11 @@ static unsigned readFirstTlv(KSI_CTX *ctx, unsigned char *data, unsigned data_le
 	unsigned hdrLen = 0;
 	unsigned length = 0;
 
+	if (ctx == NULL || data == NULL || tlv == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
 	isNonCritical = data[0] & KSI_TLV_MASK_LENIENT;
 	isForward = data[0] & KSI_TLV_MASK_FORWARD;
 
