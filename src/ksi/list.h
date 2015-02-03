@@ -146,52 +146,37 @@ int KSI_List_sort(KSI_List *list, int (*)(const void *, const void *));
 struct type##_list_st { 															\
 	KSI_List *list;																	\
 };																					\
-int KSI_LIST_FN_NAME(type, new)(KSI_LIST(type) **list) {				\
-	int res = KSI_UNKNOWN_ERROR;													\
-	KSI_LIST(type) *l = NULL;														\
-	l = KSI_new(KSI_LIST(type));													\
-	if (l == NULL) {																\
-		res = KSI_OUT_OF_MEMORY;													\
-		goto cleanup;																\
-	}																				\
-	res = KSI_List_new((void (*)(void *))free_fn, &l->list);						\
-	if (res != KSI_OK) goto cleanup;												\
-	*list = l;																		\
-	l = NULL;																		\
-	res = KSI_OK;																	\
-cleanup:																			\
-	KSI_LIST_FN_NAME(type, free)(l);												\
-	return res;																		\
+int KSI_LIST_FN_NAME(type, new)(KSI_LIST(type) **list) {							\
+	return KSI_List_new((void (*)(void *))free_fn, (KSI_List **)list);				\
 }																					\
 void KSI_LIST_FN_NAME(type, free)(KSI_LIST(type) *list) {							\
-	if (list != NULL) {																\
-		KSI_List_free(list->list);													\
-		KSI_free(list);																\
-	}																				\
+	KSI_List_free((KSI_List *)list);												\
 } 																					\
 int KSI_LIST_FN_NAME(type, append)(KSI_LIST(type) *list, type *o) {					\
-	return KSI_List_append(list->list, o);											\
+	return KSI_List_append((KSI_List *)list, o);									\
 }																					\
 int KSI_LIST_FN_NAME(type, indexOf)(KSI_LIST(type) *list, type *o, size_t **pos) {	\
-	return KSI_List_indexOf(list->list, o, pos);									\
+	return KSI_List_indexOf((KSI_List *)list, o, pos);								\
 }																					\
 int KSI_LIST_FN_NAME(type, insertAt)(KSI_LIST(type) *list, size_t pos, type *o) {	\
-	return KSI_List_insertAt(list->list, pos, o);									\
+	return KSI_List_insertAt((KSI_List *)list, pos, o);								\
 }																					\
 int KSI_LIST_FN_NAME(type, replaceAt)(KSI_LIST(type) *list, size_t pos, type *o) {	\
-	return KSI_List_replaceAt(list->list, pos, o);									\
+	return KSI_List_replaceAt((KSI_List *)list, pos, o);							\
 }																					\
-size_t KSI_LIST_FN_NAME(type, length)(KSI_LIST(type) *list) {					\
-	return list != NULL ? KSI_List_length(list->list): 0;							\
+size_t KSI_LIST_FN_NAME(type, length)(KSI_LIST(type) *list) {						\
+	return KSI_List_length((KSI_List *)list);										\
 }																					\
 int KSI_LIST_FN_NAME(type, remove)(KSI_LIST(type) *list, size_t pos, type **o) {	\
-	return KSI_List_remove(list->list, pos, (void **)o);							\
+	return KSI_List_remove((KSI_List *)list, pos, (void **)o);						\
 }																					\
 int KSI_LIST_FN_NAME(type, elementAt)(KSI_LIST(type) *list, size_t pos, type **o) {	\
-	return KSI_List_elementAt(list->list, pos, (void **) o);						\
+	return KSI_List_elementAt((KSI_List *)list, pos, (void **) o);					\
 }																					\
-int KSI_LIST_FN_NAME(type, sort)(KSI_LIST(type) *list, int (*cmp)(const type **a, const type **b)) {	\
-	return KSI_List_sort(list->list, (int (*)(const void *, const void *)) cmp);	\
+int KSI_LIST_FN_NAME(type, sort)(													\
+		KSI_LIST(type) *list, int (*cmp)(const type **a, const type **b)) {			\
+	return KSI_List_sort(															\
+		(KSI_List *)list, (int (*)(const void *, const void *)) cmp);				\
 }																					\
 
 /**
