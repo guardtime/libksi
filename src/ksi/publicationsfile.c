@@ -906,7 +906,7 @@ char *KSI_PublicationData_toString(KSI_PublicationData *t, char *buffer, unsigne
 	}
 
 	len+= snprintf(buffer + len, buffer_len - len, "Publication string: %s\nPublication date: %s", pubStr, KSI_Integer_toDateString(t->time, tmp, sizeof(tmp)));
-	len+= snprintf(buffer + len, buffer_len - len, "\nPublished hash: %s", KSI_DataHash_toString(t->imprint, tmp, sizeof(tmp)));
+	snprintf(buffer + len, buffer_len - len, "\nPublished hash: %s", KSI_DataHash_toString(t->imprint, tmp, sizeof(tmp)));
 
 	ret = buffer;
 
@@ -998,11 +998,11 @@ int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_Publicatio
 	KSI_BEGIN(rec->ctx, &err);
 
 	res = KSI_PublicationRecord_new(rec->ctx, &tmp);
-	KSI_CATCH(&err, res);
+	KSI_CATCH(&err, res) goto cleanup;
 		
 	/*Copy publication references*/
 	res = KSI_Utf8StringList_new(&(tmp->publicationRef));
-	if (res != KSI_OK && tmp->publicationRef) goto cleanup;
+	if (res != KSI_OK) goto cleanup;
 
 	for (i=0; i<KSI_Utf8StringList_length(rec->publicationRef); i++){
 		KSI_Utf8String *str = NULL;
@@ -1021,10 +1021,10 @@ int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_Publicatio
 	tmp->publishedData->ctx = rec->ctx;
 
 	res = KSI_DataHash_clone(rec->publishedData->imprint, &(tmp->publishedData->imprint));
-	KSI_CATCH(&err, res);
+	KSI_CATCH(&err, res) goto cleanup;
 	
 	res = KSI_Integer_ref(rec->publishedData->time);
-	KSI_CATCH(&err, res);
+	KSI_CATCH(&err, res) goto cleanup;
 	tmp->publishedData->time = rec->publishedData->time;
 	
 	*clone = tmp;
@@ -1033,6 +1033,7 @@ int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_Publicatio
 	KSI_SUCCESS(&err);
 	
 cleanup:
+
 	KSI_PublicationRecord_free(tmp);
 	
 	return KSI_RETURN(&err);

@@ -433,7 +433,7 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 	KSI_ExtendResp *tmp = NULL;
 	int hashAlg;
 	unsigned char *raw = NULL;
-	unsigned len;
+	unsigned len = 0;
 	
 	
 	KSI_PRE(&err, handle != NULL) goto cleanup;
@@ -495,7 +495,6 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 	KSI_SUCCESS(&err);
 
 cleanup:
-	res = KSI_RETURN(&err);
 
 	KSI_DataHash_free(actualHmac);
 	KSI_ExtendPdu_free(pdu);

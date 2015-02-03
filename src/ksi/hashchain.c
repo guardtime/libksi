@@ -236,7 +236,6 @@ static int calculateCalendarAggregationTime(KSI_LIST(KSI_HashChainLink) *chain, 
 	long long int t = 0;
 	KSI_HashChainLink *hn = NULL;
 	size_t i;
-	int isLeft;
 
 	if (chain == NULL || pub_time == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -252,6 +251,7 @@ static int calculateCalendarAggregationTime(KSI_LIST(KSI_HashChainLink) *chain, 
 
 	/* Traverse the list from the end to the beginning. */
 	for (i = 0; i < KSI_HashChainLinkList_length(chain); i++) {
+		int isLeft = 0;
 		if (r <= 0) {
 			res = KSI_INVALID_FORMAT;
 			goto cleanup;
