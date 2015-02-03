@@ -277,7 +277,7 @@ cleanup:
 int KSI_RefList_new(void (*obj_free)(void *), int (*ref)(void *), KSI_List **list) {
 	int res;
 	struct KSI_RefList_st *tmp = NULL;
-	KSI_List *tmpl;
+	KSI_List *tmpl = NULL;
 
 	res = KSI_List_new(obj_free, &tmpl);
 	if (res != KSI_OK) goto cleanup;

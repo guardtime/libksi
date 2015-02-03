@@ -300,16 +300,15 @@ static int pdu_calculateHmac(KSI_CTX* ctx, void* pdu,
 	res = getResponse(pdu, &response);
 	KSI_CATCH(&err, res) goto cleanup;
 	
-	if (request) {
+	if (request != NULL) {
 		res = getObjectsRawValue(ctx, request, getRequest_raw, reqTemplate, reqTag, &raw_payload, &payload_len, &freeRawPayload);
 		KSI_CATCH(&err, res) goto cleanup;
-	}
-	else if (response) {
+	} else if (response != NULL) {
 		res = getObjectsRawValue(ctx, response, getResponse_raw, respTemplate, respTag, &raw_payload, &payload_len, &freeRawPayload);
 		KSI_CATCH(&err, res) goto cleanup;
-	}
-	else{
+	} else {
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Missing payload.");
+		goto cleanup;
 	}
 	
 	buf = KSI_malloc(payload_len + header_len);

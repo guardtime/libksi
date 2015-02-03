@@ -262,7 +262,7 @@ int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, unsigned len, KSI_Utf8Stri
 	}
 
 	/* Verify correctness of utf-8 */
-	res = verifyUtf8(str, len);
+	res = verifyUtf8((const unsigned char *)str, len);
 	if (res != KSI_OK) goto cleanup;
 
 	val = KSI_malloc(len);

@@ -308,7 +308,7 @@ static int readFromSocket(KSI_RDR *rdr, unsigned char *buffer, const size_t size
 	KSI_BEGIN(rdr->ctx, &err);
 
 	while (!rdr->eof && count < size) {
-		size_t c = recv(rdr->data.socketfd, buffer+count, size - count, 0);
+		int c = recv(rdr->data.socketfd, buffer+count, size - count, 0);
 
 		if (c < 0) {
 			KSI_FAIL_EXT(&err, KSI_IO_ERROR, errno, "Unable to read from socket.");

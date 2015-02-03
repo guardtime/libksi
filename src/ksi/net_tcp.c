@@ -9,9 +9,10 @@
 #include "tlv.h"
 
 #ifndef _WIN32 
-#  include "sys/socket.h"
-#  include "netinet/in.h"
-#  include "netdb.h"
+#  include <unistd.h>
+#  include <sys/socket.h>
+#  include <netinet/in.h>
+#  include <netdb.h>
 #else
 #  include <winsock2.h>
 #  include <ws2tcpip.h>
