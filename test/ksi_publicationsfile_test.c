@@ -238,7 +238,7 @@ static void testSerializePublicationsFile(CuTest *tc) {
 	f = fopen(getFullResourcePath(TEST_PUBLICATIONS_FILE), "rb");
 	CuAssert(tc, "Unable to open publications file", res == KSI_OK && f != NULL);
 	
-	while((symbol = getc(f)) != EOF && i<raw_len){
+	while ((symbol = getc(f)) != EOF && i<raw_len){
 		CuAssert(tc, "Serialized publications file mismatch", (char)symbol == raw[i]);
 		i++;
 	}
@@ -247,7 +247,7 @@ static void testSerializePublicationsFile(CuTest *tc) {
 	
 	KSI_PublicationsFile_free(pubFile);
 	KSI_free(raw);
-	if(f) fclose(f);
+	if (f) fclose(f);
 }
 
 

@@ -97,7 +97,7 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 	if (metaHash != NULL) mode |= 0x02;
 	if (metaData != NULL) mode |= 0x04;
 
-	switch(mode) {
+	switch (mode) {
 		case 0x01:
 			res = KSI_DataHash_getImprint(hash, &imprint, &imprint_len);
 			KSI_CATCH(&err, res) goto cleanup;
@@ -160,9 +160,9 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 		res = KSI_HashChainLinkList_elementAt(chain, i, &link);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		if(!isCalendar) {
+		if (!isCalendar) {
 			KSI_uint64_t levelCorrection = KSI_Integer_getUInt64(link->levelCorrection);
-			if(levelCorrection > 0xff || level + levelCorrection + 1 > 0xff)
+			if (levelCorrection > 0xff || level + levelCorrection + 1 > 0xff)
 				KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Aggregation chain level out of range.");
 			level += (int)levelCorrection + 1;
 		} else {
@@ -304,7 +304,7 @@ int KSI_HashChain_aggregateCalendar(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *c
  * KSI_CalendarHashChain
  */
 void KSI_CalendarHashChain_free(KSI_CalendarHashChain *t) {
-	if(t != NULL) {
+	if (t != NULL) {
 		KSI_Integer_free(t->publicationTime);
 		KSI_Integer_free(t->aggregationTime);
 		KSI_DataHash_free(t->inputHash);
@@ -317,7 +317,7 @@ int KSI_CalendarHashChain_new(KSI_CTX *ctx, KSI_CalendarHashChain **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CalendarHashChain *tmp = NULL;
 	tmp = KSI_new(KSI_CalendarHashChain);
-	if(tmp == NULL) {
+	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
@@ -385,7 +385,7 @@ KSI_IMPLEMENT_SETTER(KSI_CalendarHashChain, KSI_LIST(KSI_HashChainLink)*, hashCh
  * KSI_HashChainLink
  */
 void KSI_HashChainLink_free(KSI_HashChainLink *t) {
-	if(t != NULL) {
+	if (t != NULL) {
 		KSI_DataHash_free(t->metaHash);
 		KSI_MetaData_free(t->metaData);
 		KSI_DataHash_free(t->imprint);
@@ -399,7 +399,7 @@ int KSI_HashChainLink_new(KSI_CTX *ctx, KSI_HashChainLink **t) {
 	KSI_HashChainLink *tmp = NULL;
 
 	tmp = KSI_new(KSI_HashChainLink);
-	if(tmp == NULL) {
+	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
@@ -434,7 +434,7 @@ int KSI_CalendarHashChainLink_fromTlv(KSI_TLV *tlv, KSI_CalendarHashChainLink **
 	KSI_PRE(&err, link != NULL) goto cleanup;
 	KSI_BEGIN(KSI_TLV_getCtx(tlv), &err);
 
-	switch(KSI_TLV_getTag(tlv)) {
+	switch (KSI_TLV_getTag(tlv)) {
 		case 0x07: isLeft = 1; break;
 		case 0x08: isLeft = 0; break;
 		default: {
@@ -508,7 +508,7 @@ int KSI_HashChainLink_fromTlv(KSI_TLV *tlv, KSI_HashChainLink **link) {
 	KSI_PRE(&err, link != NULL) goto cleanup;
 	KSI_BEGIN(KSI_TLV_getCtx(tlv), &err);
 
-	switch(KSI_TLV_getTag(tlv)) {
+	switch (KSI_TLV_getTag(tlv)) {
 		case 0x07: isLeft = 1; break;
 		case 0x08: isLeft = 0; break;
 		default: {

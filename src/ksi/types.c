@@ -142,7 +142,7 @@ KSI_IMPLEMENT_LIST(KSI_CertificateRecord, KSI_CertificateRecord_free);
  * KSI_MetaData
  */
 void KSI_MetaData_free(KSI_MetaData *t) {
-	if(t != NULL) {
+	if (t != NULL) {
 		KSI_OctetString_free(t->raw);
 		KSI_Utf8String_free(t->clientId);
 		KSI_OctetString_free(t->machineId);
@@ -156,7 +156,7 @@ int KSI_MetaData_new(KSI_CTX *ctx, KSI_MetaData **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_MetaData *tmp = NULL;
 	tmp = KSI_new(KSI_MetaData);
-	if(tmp == NULL) {
+	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
@@ -194,7 +194,7 @@ KSI_IMPLEMENT_TOTLV(KSI_MetaData);
  * KSI_ExtendPdu
  */
 void KSI_ExtendPdu_free(KSI_ExtendPdu *t) {
-	if(t != NULL) {
+	if (t != NULL) {
 		KSI_Header_free(t->header);
 		KSI_ExtendReq_free(t->request);
 		KSI_ExtendResp_free(t->response);
@@ -207,7 +207,7 @@ int KSI_ExtendPdu_new(KSI_CTX *ctx, KSI_ExtendPdu **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ExtendPdu *tmp = NULL;
 	tmp = KSI_new(KSI_ExtendPdu);
-	if(tmp == NULL) {
+	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
@@ -286,7 +286,7 @@ static int pdu_calculateHmac(KSI_CTX* ctx, void* pdu,
 	KSI_BEGIN(ctx, &err);
 	
 	res = getHeader(pdu, &header);
-	if(res != KSI_OK || header == NULL){
+	if (res != KSI_OK || header == NULL){
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Missing header.");
 		goto cleanup;
 	}
@@ -313,7 +313,7 @@ static int pdu_calculateHmac(KSI_CTX* ctx, void* pdu,
 	}
 	
 	buf = KSI_malloc(payload_len + header_len);
-	if(buf == NULL) {
+	if (buf == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
@@ -341,7 +341,7 @@ cleanup:
 
 int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, int hashAlg, const char *key, KSI_DataHash **hmac){
 	int res = KSI_OK;
-	if(t)
+	if (t)
 		res = pdu_calculateHmac(t->ctx, (void*)t, 
 				(int (*)(void*, KSI_Header**))KSI_ExtendPdu_getHeader,
 				(int (*)(void*, void**))KSI_ExtendPdu_getResponse,
@@ -398,7 +398,7 @@ KSI_IMPLEMENT_OBJECT_SERIALIZE(KSI_ExtendPdu, 0x300, 0, 0)
  * KSI_AggregationPdu
  */
 void KSI_AggregationPdu_free(KSI_AggregationPdu *t) {
-	if(t != NULL) {
+	if (t != NULL) {
 		KSI_Header_free(t->header);
 		KSI_AggregationReq_free(t->request);
 		KSI_AggregationResp_free(t->response);
@@ -411,7 +411,7 @@ int KSI_AggregationPdu_new(KSI_CTX *ctx, KSI_AggregationPdu **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationPdu *tmp = NULL;
 	tmp = KSI_new(KSI_AggregationPdu);
-	if(tmp == NULL) {
+	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
@@ -432,7 +432,7 @@ cleanup:
 
 int KSI_AggregationPdu_calculateHmac(KSI_AggregationPdu *t, int hashAlg, const char *key, KSI_DataHash **hmac){
 	int res = KSI_OK;
-	if(t)
+	if (t)
 		res = pdu_calculateHmac(t->ctx, (void*)t, 
 				(int (*)(void*, KSI_Header**))KSI_AggregationPdu_getHeader,
 				(int (*)(void*, void**))KSI_AggregationPdu_getResponse,
@@ -489,7 +489,7 @@ KSI_IMPLEMENT_OBJECT_SERIALIZE(KSI_AggregationPdu, 0x200, 0, 0)
  * KSI_Header
  */
 void KSI_Header_free(KSI_Header *t) {
-	if(t != NULL) {
+	if (t != NULL) {
 		KSI_Integer_free(t->instanceId);
 		KSI_Integer_free(t->messageId);
 		KSI_OctetString_free(t->loginId);
@@ -502,7 +502,7 @@ int KSI_Header_new(KSI_CTX *ctx, KSI_Header **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Header *tmp = NULL;
 	tmp = KSI_new(KSI_Header);
-	if(tmp == NULL) {
+	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
@@ -535,7 +535,7 @@ KSI_IMPLEMENT_SETTER(KSI_Header, KSI_OctetString*, loginId, LoginId);
  * KSI_Config
  */
 void KSI_Config_free(KSI_Config *t) {
-	if(t != NULL) {
+	if (t != NULL) {
 		KSI_Integer_free(t->maxLevel);
 		KSI_Integer_free(t->aggrAlgo);
 		KSI_Integer_free(t->aggrPeriod);
@@ -548,7 +548,7 @@ int KSI_Config_new(KSI_CTX *ctx, KSI_Config **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Config *tmp = NULL;
 	tmp = KSI_new(KSI_Config);
-	if(tmp == NULL) {
+	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
@@ -581,7 +581,7 @@ KSI_IMPLEMENT_SETTER(KSI_Config, KSI_LIST(KSI_Utf8String)*, parentUri, ParentUri
  * KSI_AggregationReq
  */
 void KSI_AggregationReq_free(KSI_AggregationReq *t) {
-	if(t != NULL) {
+	if (t != NULL) {
 		KSI_Integer_free(t->requestId);
 		KSI_DataHash_free(t->requestHash);
 		KSI_Integer_free(t->requestLevel);
@@ -595,7 +595,7 @@ int KSI_AggregationReq_new(KSI_CTX *ctx, KSI_AggregationReq **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationReq *tmp = NULL;
 	tmp = KSI_new(KSI_AggregationReq);
-	if(tmp == NULL) {
+	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
@@ -634,7 +634,7 @@ KSI_IMPLEMENT_TOTLV(KSI_AggregationReq);
  * KSI_RequestAck
  */
 void KSI_RequestAck_free(KSI_RequestAck *t) {
-	if(t != NULL) {
+	if (t != NULL) {
 		KSI_Integer_free(t->aggregationPeriod);
 		KSI_Integer_free(t->aggregationDelay);
 		KSI_free(t);
@@ -645,7 +645,7 @@ int KSI_RequestAck_new(KSI_CTX *ctx, KSI_RequestAck **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_RequestAck *tmp = NULL;
 	tmp = KSI_new(KSI_RequestAck);
-	if(tmp == NULL) {
+	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
@@ -672,7 +672,7 @@ KSI_IMPLEMENT_SETTER(KSI_RequestAck, KSI_Integer*, aggregationDelay, Aggregation
  * KSI_AggregationResp
  */
 void KSI_AggregationResp_free(KSI_AggregationResp *t) {
-	if(t != NULL) {
+	if (t != NULL) {
 		KSI_Integer_free(t->requestId);
 		KSI_Integer_free(t->status);
 		KSI_Utf8String_free(t->errorMsg);
@@ -692,7 +692,7 @@ int KSI_AggregationResp_new(KSI_CTX *ctx, KSI_AggregationResp **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationResp *tmp = NULL;
 	tmp = KSI_new(KSI_AggregationResp);
-	if(tmp == NULL) {
+	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
@@ -748,7 +748,7 @@ KSI_IMPLEMENT_TOTLV(KSI_AggregationResp);
  * KSI_ExtendReq
  */
 void KSI_ExtendReq_free(KSI_ExtendReq *t) {
-	if(t != NULL) {
+	if (t != NULL) {
 		KSI_Integer_free(t->requestId);
 		KSI_Integer_free(t->aggregationTime);
 		KSI_Integer_free(t->publicationTime);
@@ -761,7 +761,7 @@ int KSI_ExtendReq_new(KSI_CTX *ctx, KSI_ExtendReq **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ExtendReq *tmp = NULL;
 	tmp = KSI_new(KSI_ExtendReq);
-	if(tmp == NULL) {
+	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
@@ -798,7 +798,7 @@ KSI_IMPLEMENT_TOTLV(KSI_ExtendReq);
  * KSI_ExtendResp
  */
 void KSI_ExtendResp_free(KSI_ExtendResp *t) {
-	if(t != NULL) {
+	if (t != NULL) {
 		KSI_Integer_free(t->requestId);
 		KSI_Integer_free(t->status);
 		KSI_Utf8String_free(t->errorMsg);
@@ -814,7 +814,7 @@ int KSI_ExtendResp_new(KSI_CTX *ctx, KSI_ExtendResp **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ExtendResp *tmp = NULL;
 	tmp = KSI_new(KSI_ExtendResp);
-	if(tmp == NULL) {
+	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
@@ -859,7 +859,7 @@ KSI_IMPLEMENT_TOTLV(KSI_ExtendResp);
  * KSI_PKISignedData
  */
 void KSI_PKISignedData_free(KSI_PKISignedData *t) {
-	if(t != NULL) {
+	if (t != NULL) {
 		KSI_OctetString_free(t->signatureValue);
 		KSI_OctetString_free(t->certId);
 		KSI_Utf8String_free(t->certRepositoryUri);
@@ -872,7 +872,7 @@ int KSI_PKISignedData_new(KSI_CTX *ctx, KSI_PKISignedData **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PKISignedData *tmp = NULL;
 	tmp = KSI_new(KSI_PKISignedData);
-	if(tmp == NULL) {
+	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
@@ -905,7 +905,7 @@ KSI_IMPLEMENT_SETTER(KSI_PKISignedData, KSI_Utf8String*, sig_type, SigType);
  * KSI_PublicationsHeader
  */
 void KSI_PublicationsHeader_free(KSI_PublicationsHeader *t) {
-	if(t != NULL) {
+	if (t != NULL) {
 		KSI_Integer_free(t->version);
 		KSI_Integer_free(t->timeCreated_s);
 		KSI_Utf8String_free(t->repositoryUri);
@@ -917,7 +917,7 @@ int KSI_PublicationsHeader_new(KSI_CTX *ctx, KSI_PublicationsHeader **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationsHeader *tmp = NULL;
 	tmp = KSI_new(KSI_PublicationsHeader);
-	if(tmp == NULL) {
+	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
@@ -947,7 +947,7 @@ KSI_IMPLEMENT_SETTER(KSI_PublicationsHeader, KSI_Utf8String*, repositoryUri, Rep
  * KSI_CertificateRecord
  */
 void KSI_CertificateRecord_free(KSI_CertificateRecord *t) {
-	if(t != NULL) {
+	if (t != NULL) {
 		KSI_OctetString_free(t->certId);
 		KSI_PKICertificate_free(t->cert);
 		KSI_free(t);
@@ -958,7 +958,7 @@ int KSI_CertificateRecord_new(KSI_CTX *ctx, KSI_CertificateRecord **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CertificateRecord *tmp = NULL;
 	tmp = KSI_new(KSI_CertificateRecord);
-	if(tmp == NULL) {
+	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}

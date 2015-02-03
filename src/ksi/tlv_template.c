@@ -449,7 +449,7 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 		}
 
 		/* Check if a match was found, an raise an error if the TLV is marked as critical. */
-		if(matchCount == 0 && !KSI_TLV_isNonCritical(tlv)) {
+		if (matchCount == 0 && !KSI_TLV_isNonCritical(tlv)) {
 			KSI_LOG_error(ctx, "Unknown critical tag: 0x%02x", KSI_TLV_getTag(tlv));
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
 			goto cleanup;
@@ -508,7 +508,7 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 		templateHit = KSI_calloc(template_len, sizeof(bool));
 	}
 
-	for(i = 0; i < template_len; i++) {
+	for (i = 0; i < template_len; i++) {
 		if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_NO_SERIALIZE) != 0) continue;
 		payloadp = NULL;
 		res = tmpl[i].getValue(payload, &payloadp);
