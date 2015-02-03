@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <string.h>
 
 #include "internal.h"
@@ -179,11 +180,9 @@ cleanup:
 static int verifyUtf8(const unsigned char *str, unsigned len) {
 	int res = KSI_UNKNOWN_ERROR;
     size_t i = 0;
-    size_t j = 0;
     size_t charContinuationLen = 0;
 
     while (i < len) {
-        j = i;
         if (i + 1 != len && str[i] == 0) {
         	/* The string contains a '\0' byte where not allowed. */
         	res = KSI_INVALID_FORMAT;
@@ -473,7 +472,7 @@ int KSI_Integer_equalsUInt(const KSI_Integer *o, KSI_uint64_t i) {
 }
 
 int KSI_Integer_compare(const KSI_Integer *a, const KSI_Integer *b) {
-	if (a == b) return 0;
+	if (a == b || (a == NULL && b == NULL)) return 0;
 	if (a == NULL && b != NULL) return -1;
 	if (a != NULL && b == NULL) return 1;
 	if (a->value > b->value)
