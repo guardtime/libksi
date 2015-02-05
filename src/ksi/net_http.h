@@ -83,7 +83,26 @@ extern "C" {
 	 */
 	int KSI_HttpClient_setReadTimeoutSeconds(KSI_HttpClient *client, int val);
 
+	/**
+	 * Setter for the http client extender parameters.
+     * \param[in	client		Pointer to http client.
+     * \param[in]	host		Host name.
+     * \param[in]	port		Port number.
+     * \param[in]	user		User name.
+     * \param[in]	pass		Password.
+     * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+     */
 	int KSI_HttpClient_setExtender(KSI_HttpClient *client, const char *url, const char *user, const char *pass);
+	
+	/**
+	 * Setter for the http aggregator parameters.
+     * \param[in	client		Pointer to http client.
+     * \param[in]	host		Host name.
+     * \param[in]	port		Port number.
+     * \param[in]	user		User name.
+     * \param[in]	pass		Password.
+     * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+     */
 	int KSI_HttpClient_setAggregator(KSI_HttpClient *client, const char *url, const char *user, const char *pass);
 
 
