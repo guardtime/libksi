@@ -7,8 +7,8 @@
 
 #ifndef _WIN32
 #  include "sys/socket.h"
-#  define socket_error errno; 
-#  define socketTimedOut ETIMEDOUT
+#  define socket_error errno 
+#  define socketTimedOut EWOULDBLOCK
 #else
 #  define socket_error WSAGetLastError()
 #  define socketTimedOut WSAETIMEDOUT

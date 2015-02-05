@@ -96,9 +96,9 @@ static int readResponse(KSI_RequestHandle *handle) {
 #ifdef _WIN32
 	transferTimeout = client->transferTimeoutSeconds*1000;
 #else
-	transferTimeout.tv_sec = 10;
+	transferTimeout.tv_sec = client->transferTimeoutSeconds;
     transferTimeout.tv_usec = 0;
-	transferTimeout.tv_usec = 0;
+	
 #endif	
 	
 	/*Set socket options*/
