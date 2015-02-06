@@ -1,4 +1,5 @@
 #include "internal.h"
+#include "crc32.h"
 
 #ifndef _WIN32
 #include <stdint.h>

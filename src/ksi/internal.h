@@ -5,6 +5,7 @@
 #include <limits.h>
 
 #include "ksi.h"
+#include "err.h"
 
 /**
  * HTTP network client implementations.

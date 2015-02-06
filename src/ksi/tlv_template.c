@@ -2,6 +2,8 @@
 #include "internal.h"
 
 #include "tlv.h"
+#include "tlv_template.h"
+#include "hashchain.h"
 
 #define KSI_CalAuthRecPKISignedData_new KSI_PKISignedData_new
 #define KSI_CalAuthRecPKISignedData_free KSI_PKISignedData_free
