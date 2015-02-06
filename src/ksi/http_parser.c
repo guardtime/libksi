@@ -419,6 +419,7 @@ enum http_host_state
 #define IS_USERINFO_CHAR(c) (IS_ALPHANUM(c) || IS_MARK(c) || (c) == '%' || \
   (c) == ';' || (c) == ':' || (c) == '&' || (c) == '=' || (c) == '+' || \
   (c) == '$' || (c) == ',')
+#define IS_SCHEME_CHAR(c)   (IS_ALPHANUM(c) || (c) == '+' || (c) == '-' || (c) == '.')
 
 #define STRICT_TOKEN(c)     (tokens[(unsigned char)c])
 
@@ -506,7 +507,7 @@ parse_url_char(enum state s, const char ch)
       break;
 
     case s_req_schema:
-      if (IS_ALPHA(ch)) {
+      if (IS_SCHEME_CHAR(ch)) {
         return s;
       }
 
@@ -2357,9 +2358,14 @@ http_parser_parse_url(const char *buf, size_t buflen, int is_connect,
     old_uf = uf;
   }
 
+  if ((u->field_set & (1 << UF_SCHEMA)) &&
+      (u->field_set != ((1 << UF_SCHEMA) | (1 << UF_PATH))) &&
+      ((u->field_set & (1 << UF_HOST)) == 0)) {
+    return 1;
+  }
   /* host must be present if there is a schema */
   /* parsing http:///toto will fail */
-  if ((u->field_set & ((1 << UF_SCHEMA) | (1 << UF_HOST))) != 0) {
+  if ((u->field_set & ((1 << UF_SCHEMA) | (1 << UF_HOST))) == ((1 << UF_SCHEMA) | (1 << UF_HOST))) {
     if (http_parse_host(buf, u, found_at) != 0) {
       return 1;
     }
