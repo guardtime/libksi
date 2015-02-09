@@ -6,6 +6,8 @@
 #include "publicationsfile_impl.h"
 #include "tlv.h"
 #include "ctx_impl.h"
+#include "tlv_template.h"
+#include "hashchain.h"
 
 typedef struct headerRec_st HeaderRec;
 

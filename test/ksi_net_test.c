@@ -391,8 +391,48 @@ static void testExtendingErrorResponse(CuTest *tc) {
 	KSI_Signature_free(ext);
 }
 
-CuSuite* KSITest_NET_getSuite(void)
-{
+static void testUrlSplit(CuTest *tc) {
+	struct {
+		int res;
+		const char *uri;
+		const char *expSchema;
+		const char *expHost;
+		const char *expPath;
+		const unsigned expPort;
+	} testData[] = {
+			{KSI_OK, "ksi://guardtime.com:12345", "ksi", "guardtime.com", NULL, 12345},
+			{KSI_OK, "ksi+http://guardtime.com", "ksi+http", "guardtime.com", NULL, 0},
+			{KSI_OK, "http:///toto", "http", NULL, "/toto", 0 },
+			{KSI_INVALID_FORMAT, "guardtime.com:80",  NULL, "guardtime.com", NULL, 0 },
+			{KSI_INVALID_FORMAT, "guardtime.com", NULL, NULL, NULL, 0},
+			{-1, NULL, NULL, NULL, NULL, 0 }
+	};
+	int i;
+	for (i = 0; testData[i].res >= 0; i++) {
+		char *host = NULL;
+		char *schema = NULL;
+		char *path = NULL;
+		unsigned port = 0;
+		int res;
+
+		KSI_LOG_debug(ctx, "%s\n", testData[i].uri);
+		res = KSI_UriSplitBasic(testData[i].uri, &schema, &host, &port, &path);
+		KSI_LOG_debug(ctx, "schema=%s, host=%s, port=%u, path=%s\n", schema, host, port, path);
+		CuAssert(tc, "KSI_UriSplitBasic did not return expected status code.", res == testData[i].res);
+		if (res == KSI_OK) {
+			CuAssertStrEquals_Msg(tc, "KSI_UriSplitBasic did not return expected schema", testData[i].expSchema, schema);
+			CuAssertStrEquals_Msg(tc, "KSI_UriSplitBasic did not return expected host", testData[i].expHost, host);
+			CuAssertStrEquals_Msg(tc, "KSI_UriSplitBasic did not return expected path", testData[i].expPath, path);
+			CuAssert(tc, "KSI_UriSplitBasic did not return expected port", testData[i].expPort == port);
+		}
+		KSI_free(schema);
+		KSI_free(host);
+		KSI_free(path);
+	}
+
+}
+
+CuSuite* KSITest_NET_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
 	SUITE_ADD_TEST(suite, testSigning);
@@ -402,6 +442,7 @@ CuSuite* KSITest_NET_getSuite(void)
 	SUITE_ADD_TEST(suite, testAggregationHeader);
 	SUITE_ADD_TEST(suite, testSigningErrorResponse);
 	SUITE_ADD_TEST(suite, testExtendingErrorResponse);
+	SUITE_ADD_TEST(suite, testUrlSplit);
 
 	return suite;
 }

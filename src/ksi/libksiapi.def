@@ -185,6 +185,8 @@ EXPORTS
     KSI_NetworkClient_getAggregatorPass
 	KSI_convertAggregatorStatusCode
 	KSI_convertExtenderStatusCode
+	KSI_UriSplitBasic
+	
 ;net_http.h
 EXPORTS
     KSI_HttpClient_new

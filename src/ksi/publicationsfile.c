@@ -3,10 +3,13 @@
 #include <stdio.h>
 #include <time.h>
 
+#include "base32.h"
+#include "crc32.h"
 #include "internal.h"
-#include "publicationsfile_impl.h"
 #include "io.h"
+#include "publicationsfile_impl.h"
 #include "tlv.h"
+#include "tlv_template.h"
 
 KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationsHeader)
 KSI_IMPORT_TLV_TEMPLATE(KSI_CertificateRecord)

@@ -46,6 +46,7 @@ LIB_OBJ = \
 	$(OBJ_DIR)\crc32.obj \
 	$(OBJ_DIR)\hash.obj \
 	$(OBJ_DIR)\hashchain.obj \
+	$(OBJ_DIR)\http_parser.obj \
 	$(OBJ_DIR)\io.obj \
 	$(OBJ_DIR)\list.obj \
 	$(OBJ_DIR)\log.obj \

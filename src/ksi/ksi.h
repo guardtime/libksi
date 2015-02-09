@@ -4,20 +4,15 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "base32.h"
+#include "types.h"
 #include "err.h"
 #include "hash.h"
-#include "hashchain.h"
 #include "publicationsfile.h"
 #include "log.h"
 #include "net.h"
 #include "signature.h"
-#include "tlv_template.h"
 #include "pkitruststore.h"
-#include "types.h"
-#include "crc32.h"
 #include "verification.h"
-#include "hmac.h"
 
 #ifdef __cplusplus
 extern "C" {

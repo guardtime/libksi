@@ -1,5 +1,6 @@
 #include <string.h>
 
+#include "http_parser.h"
 #include "internal.h"
 #include "net_impl.h"
 #include "tlv.h"
@@ -685,6 +686,90 @@ int KSI_convertExtenderStatusCode(KSI_Integer *statusCode) {
 		default: return KSI_SERVICE_UNKNOWN_ERROR;
 	}
 }
+
+int KSI_UriSplitBasic(const char *uri, char **schema, char **host, unsigned *port, char **path) {
+	int res = KSI_UNKNOWN_ERROR;
+	struct http_parser_url parser;
+	char *tmpHost = NULL;
+	char *tmpSchema = NULL;
+	char *tmpPath = NULL;
+
+	if (uri == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	memset(&parser, 0, sizeof(struct http_parser_url));
+
+	res = http_parser_parse_url(uri, strlen(uri), 0, &parser);
+	if (res != 0) {
+		res = KSI_INVALID_FORMAT;
+		goto cleanup;
+	}
+
+	if ((parser.field_set & (1 << UF_HOST)) && (host != NULL)) {
+		/* Extract host. */
+		int len = parser.field_data[UF_HOST].len + 1;
+		tmpHost = KSI_malloc(len);
+		if (tmpHost == NULL) {
+			res = KSI_OUT_OF_MEMORY;
+			goto cleanup;
+		}
+		snprintf(tmpHost, len, "%s", uri + parser.field_data[UF_HOST].off);
+		tmpHost[len - 1] = '\0';
+	}
+
+	if ((parser.field_set & (1 << UF_SCHEMA)) && (schema != NULL)) {
+		/* Extract shcema. */
+		int len = parser.field_data[UF_SCHEMA].len + 1;
+		tmpSchema = KSI_malloc(len);
+		if (tmpSchema == NULL) {
+			res = KSI_OUT_OF_MEMORY;
+			goto cleanup;
+		}
+		snprintf(tmpSchema, len, "%s", uri + parser.field_data[UF_SCHEMA].off);
+		tmpSchema[len - 1] = '\0';
+	}
+
+	if ((parser.field_set & (1 << UF_PATH)) && (path != NULL)) {
+		/* Extract path. */
+		int len = parser.field_data[UF_PATH].len + 1;
+		tmpPath = KSI_malloc(len);
+		if (tmpPath == NULL) {
+			res = KSI_OUT_OF_MEMORY;
+			goto cleanup;
+		}
+		snprintf(tmpPath, len, "%s", uri + parser.field_data[UF_PATH].off);
+		tmpPath[len - 1] = '\0';
+	}
+
+	if (host != NULL) {
+		*host = tmpHost;
+		tmpHost = NULL;
+	}
+
+	if (schema != NULL) {
+		*schema = tmpSchema;
+		tmpSchema = NULL;
+	}
+
+	if (path != NULL) {
+		*path = tmpPath;
+		tmpPath = NULL;
+	}
+	if (port != NULL) *port = parser.port;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_free(tmpHost);
+	KSI_free(tmpSchema);
+	KSI_free(tmpPath);
+
+	return res;
+}
+
 #define KSI_NET_IMPLEMENT_SETTER(name, type, var, fn) 														\
 		int KSI_NetworkClient_set##name(KSI_NetworkClient *client, type val) {								\
 			int res = KSI_UNKNOWN_ERROR;																\

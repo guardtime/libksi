@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<string.h>
 #include<ctype.h>
+#include<stdlib.h>
 
 #include "cutest/CuTest.h"
 #include "all_tests.h"

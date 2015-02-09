@@ -60,6 +60,7 @@ static int createOwnBuffer(KSI_TLV *tlv, int copy) {
 	unsigned buf_size = KSI_BUFFER_SIZE;
 	unsigned buf_len = 0;
 
+	KSI_PRE(&err, tlv != NULL) goto cleanup;
 	KSI_BEGIN(tlv->ctx, &err);
 
 	if (tlv->buffer != NULL) {
