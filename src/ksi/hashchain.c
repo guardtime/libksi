@@ -1,7 +1,10 @@
 #include <string.h>
 
 #include "internal.h"
+
+#include "hashchain.h"
 #include "tlv.h"
+#include "tlv_template.h"
 
 /* For optimization reasons, we need need access to KSI_DataHasher->closeExisting() function. */
 #include "hash_impl.h"

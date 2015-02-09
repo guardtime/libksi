@@ -236,6 +236,14 @@ extern "C" {
 	int KSI_convertExtenderStatusCode(KSI_Integer *statusCode);
 
 	/**
+	 * Function to split the given uri into three parts: schema, host and port. If the
+	 * part is missing from the uri, the output parameter will receive \c NULL or 0 for \c port
+	 * as the value. If the output pointers are set to \c NULL, the value is not returned.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_UriSplitBasic(const char *uri, char **schema, char **host, unsigned *port, char **path);
+	/**
 	 * @}
 	 */
 #ifdef __cplusplus

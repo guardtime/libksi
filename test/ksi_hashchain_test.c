@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <string.h>
+#include <ksi/tlv.h>
+#include <ksi/hashchain.h>
 
 #include "all_tests.h"
-#include "ksi/tlv.h"
 
 extern KSI_CTX *ctx;
 
