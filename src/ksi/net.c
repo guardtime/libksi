@@ -709,35 +709,38 @@ int KSI_UriSplitBasic(const char *uri, char **schema, char **host, unsigned *por
 
 	if ((parser.field_set & (1 << UF_HOST)) && (host != NULL)) {
 		/* Extract host. */
-		int len = parser.field_data[UF_HOST].len + 1;
-		tmpHost = KSI_malloc(len);
+		int len = parser.field_data[UF_HOST].len;
+		tmpHost = KSI_malloc(len + 1);
 		if (tmpHost == NULL) {
 			res = KSI_OUT_OF_MEMORY;
 			goto cleanup;
 		}
 		snprintf(tmpHost, len, "%s", uri + parser.field_data[UF_HOST].off);
+		tmpHost[len] = '\0';
 	}
 
 	if ((parser.field_set & (1 << UF_SCHEMA)) && (schema != NULL)) {
 		/* Extract shcema. */
-		int len = parser.field_data[UF_SCHEMA].len + 1;
-		tmpSchema = KSI_malloc(len);
+		int len = parser.field_data[UF_SCHEMA].len;
+		tmpSchema = KSI_malloc(len + 1);
 		if (tmpSchema == NULL) {
 			res = KSI_OUT_OF_MEMORY;
 			goto cleanup;
 		}
 		snprintf(tmpSchema, len, "%s", uri + parser.field_data[UF_SCHEMA].off);
+		tmpSchema[len] = '\0';
 	}
 
 	if ((parser.field_set & (1 << UF_PATH)) && (path != NULL)) {
 		/* Extract path. */
-		int len = parser.field_data[UF_PATH].len + 1;
-		tmpPath = KSI_malloc(len);
+		int len = parser.field_data[UF_PATH].len;
+		tmpPath = KSI_malloc(len + 1);
 		if (tmpPath == NULL) {
 			res = KSI_OUT_OF_MEMORY;
 			goto cleanup;
 		}
 		snprintf(tmpPath, len, "%s", uri + parser.field_data[UF_PATH].off);
+		tmpPath[len] = '\0';
 	}
 
 	if (host != NULL) {
