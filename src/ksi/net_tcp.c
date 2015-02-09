@@ -119,7 +119,6 @@ static int readResponse(KSI_RequestHandle *handle) {
     serv_addr.sin_port = htons(tcp->port);
 
     if ((res = connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr))) < 0) {
-    	perror("Failed to connect");
     	KSI_FAIL_EXT(&err, KSI_NETWORK_ERROR, res, "Unable to connect.");
     	goto cleanup;
     }
