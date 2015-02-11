@@ -13,7 +13,7 @@ int KSI_vsnprintf(char *buf, size_t n, const char *format, va_list va){
 #else
 	ret = vsnprintf(buf, n, format, va);
 	if(ret >= n) return n-1;
-#endif;
+#endif
 	
 	return ret;
 }

@@ -1,6 +1,6 @@
 #ifndef COMPATIBILITY_H
 #define	COMPATIBILITY_H
-
+#include <stddef.h>
 #include <stdarg.h>
 
 #ifdef	__cplusplus
