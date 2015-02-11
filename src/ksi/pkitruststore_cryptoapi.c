@@ -28,7 +28,7 @@ const char* getMSError(DWORD dw)
 
 	tmp = (char*)lpMsgBuf;
 	tmp[strlen(tmp)-2] = 0;
-	snprintf(ms_error, sizeof(ms_error),"CryptoAPI: %s", lpMsgBuf);
+	KSI_snprintf(ms_error, sizeof(ms_error),"CryptoAPI: %s", lpMsgBuf);
     LocalFree(lpMsgBuf);
     return ms_error; 
 }
@@ -508,7 +508,7 @@ char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, unsigned 
 		
 	CertGetNameString(cert->x509, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, strSubjectname, sizeof(strSubjectname));
 	CertGetNameString(cert->x509, CERT_NAME_SIMPLE_DISPLAY_TYPE , CERT_NAME_ISSUER_FLAG, 0,strIssuerName, sizeof(strIssuerName));
-	_snprintf(buf, buf_len, "Subject: '%s',  Issuer '%s'.", strSubjectname, strIssuerName);
+	KSI_snprintf(buf, buf_len, "Subject: '%s',  Issuer '%s'.", strSubjectname, strIssuerName);
 	
 	ret = buf;
 	

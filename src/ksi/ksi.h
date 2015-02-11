@@ -436,7 +436,7 @@ int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig);
 int KSI_createSignature(KSI_CTX *ctx, KSI_DataHash *dataHash, KSI_Signature **sig);
 
 /**
- * Extend the signature to the earlyest available publication.
+ * Extend the signature to the earliest available publication.
  * \param[in]		ctx			KSI context.
  * \param[in]		sig			Signature to be extended.
  * \param[out]		extended	Pointer to the receiving pointer to the extended signature.

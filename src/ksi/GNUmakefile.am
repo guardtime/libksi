@@ -59,7 +59,9 @@ libksi_la_SOURCES = \
 	types.h \
 	verification.c \
 	verification.h \
-	verification_impl.h
+	verification_impl.h \
+	compatibility.h \
+	compatibility.c
 
 otherincludedir = $(includedir)/ksi
 otherinclude_HEADERS = \
@@ -84,6 +86,7 @@ otherinclude_HEADERS = \
 	net_http.h \
 	net_tcp.h \
 	ksi.h \
-	verification.h
+	verification.h \
+	compatibility.h
 
 

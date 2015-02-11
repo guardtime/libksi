@@ -4,18 +4,13 @@
 #include <ksi/ksi.h>
 #include "cutest/CuTest.h"
 #include "ksi_net_mock.h"
+#include <ksi/compatibility.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define lprintf //printf("%s:%d - ", __FILE__, __LINE__); printf
-
-#ifdef _WIN32
-#  ifndef snprintf
-#    define snprintf _snprintf
-#  endif
-#endif
 
 const char* getFullResourcePath(const char* resource);
 
@@ -39,7 +34,7 @@ CuSuite* KSITest_Signature_getSuite(void);
 CuSuite* KSITest_Publicationsfile_getSuite(void);
 CuSuite* KSITest_Truststore_getSuite(void);
 CuSuite* KSITest_HMAC_getSuite(void);
-
+CuSuite* KSITest_compatibility_functions_getSuite(void);
 
 #ifdef __cplusplus
 }

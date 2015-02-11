@@ -61,6 +61,7 @@ LIB_OBJ = \
 	$(OBJ_DIR)\verification.obj \
 	$(OBJ_DIR)\hmac.obj \
 	$(OBJ_DIR)\net_tcp.obj \
+	$(OBJ_DIR)\compatibility.obj
 
 INC_FILES = \
 	base32.h \
@@ -84,7 +85,8 @@ INC_FILES = \
 	hashchain.h \
 	log.h \
 	publicationsfile.h \
-	tlv_template.h
+	tlv_template.h \
+	compatibility.h
 
 #Compiler and linker configuration
 EXT_LIB = wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib  

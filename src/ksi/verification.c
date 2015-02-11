@@ -70,7 +70,7 @@ static int addVerificationStepResult(KSI_VerificationResult *info, KSI_Verificat
 	result->succeeded = succeeded;
 	result->description[0] = '\0';
 	if (desc != NULL) {
-		strncpy(result->description, desc, sizeof(result->description));
+		KSI_strncpy(result->description, desc, sizeof(result->description));
 	}
 
 	res = KSI_OK;

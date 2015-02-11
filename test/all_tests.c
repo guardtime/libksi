@@ -118,6 +118,7 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSITest_Signature_getSuite);
 	addSuite(suite, KSITest_Publicationsfile_getSuite);
 	addSuite(suite, KSITest_Truststore_getSuite);
+	addSuite(suite, KSITest_compatibility_functions_getSuite);
 	
 	return suite;
 }
@@ -285,7 +286,7 @@ static const char *projectRoot = NULL;
 static char pathBuffer[2048];
 
 const char *getFullResourcePath(const char* resource){
-	snprintf(pathBuffer, sizeof(pathBuffer), "%s%c%s", projectRoot, DIR_SEP, resource);
+	KSI_snprintf(pathBuffer, sizeof(pathBuffer), "%s%c%s", projectRoot, DIR_SEP, resource);
 	return pathBuffer;
 }
 

@@ -546,8 +546,8 @@ int KSI_ERR_apply(KSI_ERR *err) {
 			ctxErr->statusCode = err->statusCode;
 			ctxErr->extErrorCode = err->extErrorCode;
 			ctxErr->lineNr = err->lineNr;
-			strncpy(ctxErr->fileName, KSI_strnvl(err->fileName), sizeof(err->fileName));
-			strncpy(ctxErr->message, KSI_strnvl(err->message), sizeof(err->message));
+			KSI_strncpy(ctxErr->fileName, KSI_strnvl(err->fileName), sizeof(err->fileName));
+			KSI_strncpy(ctxErr->message, KSI_strnvl(err->message), sizeof(err->message));
 
 			ctx->errors_count++;
 		}
@@ -577,11 +577,11 @@ int KSI_ERR_fail(KSI_ERR *err, int statusCode, long extErrorCode, char *fileName
 		err->extErrorCode = extErrorCode;
 		err->statusCode = statusCode;
 		if (message == NULL) {
-			strncpy(err->message, KSI_getErrorString(statusCode), sizeof(err->message));
+			KSI_strncpy(err->message, KSI_getErrorString(statusCode), sizeof(err->message));
 		} else {
-			strncpy(err->message, KSI_strnvl(message), sizeof(err->message));
+			KSI_strncpy(err->message, KSI_strnvl(message), sizeof(err->message));
 		}
-		strncpy(err->fileName, KSI_strnvl(fileName), sizeof(err->fileName));
+		KSI_strncpy(err->fileName, KSI_strnvl(fileName), sizeof(err->fileName));
 		err->lineNr = lineNr;
 	}
 	return statusCode;
@@ -634,7 +634,7 @@ int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *erro
 	
 	if(error != NULL)	*error = err->statusCode;
 	
-	strncpy(buf, err->message, len);		
+	KSI_strncpy(buf, err->message, len);		
 	return KSI_OK;
 } 
 

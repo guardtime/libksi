@@ -186,7 +186,7 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
-	strncpy(tc->host, host, strlen(host) + 1);
+	KSI_strncpy(tc->host, host, strlen(host) + 1);
 	tc->port = port;
 
 	handle->readResponse = readResponse;

@@ -164,7 +164,7 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 		else if (error == ERROR_WINHTTP_TIMEOUT)
 			KSI_FAIL(&err, KSI_NETWORK_SEND_TIMEOUT, NULL);
 		else if (error == ERROR_WINHTTP_NAME_NOT_RESOLVED){
-			snprintf(err_msg, 128, "WinHTTP: Could not resolve host: '%ws'.", nhc->hostName);
+			KSI_snprintf(err_msg, 128, "WinHTTP: Could not resolve host: '%ws'.", nhc->hostName);
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, err_msg);
 		}
 		else
@@ -198,7 +198,7 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 
 	if (http_response >= 400){
 		char err_msg[64];
-		snprintf(err_msg, 64, "WinHTTP: Http error %i.", http_response);
+		KSI_snprintf(err_msg, 64, "WinHTTP: Http error %i.", http_response);
 		KSI_FAIL(&err, KSI_HTTP_ERROR, err_msg);
 		goto cleanup;
 	}
@@ -290,7 +290,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		if (error == ERROR_WINHTTP_UNRECOGNIZED_SCHEME)
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, "WinHTTP: Internet scheme is not 'HTTP/HTTPS'.");
 		else if (error == ERROR_WINHTTP_INVALID_URL){
-			snprintf(err_msg, 128, "WinHTTP: Invalid URL: '%s'.", url);
+			KSI_snprintf(err_msg, 128, "WinHTTP: Invalid URL: '%s'.", url);
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, err_msg);
 		}
 		else
@@ -349,7 +349,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		char err_msg[128];
 		DWORD error = GetLastError();
 		if (error == ERROR_WINHTTP_INVALID_URL){
-			snprintf(err_msg, 128, "WinHTTP: Could not resolve host: '%ws'.", implCtx->hostName);
+			KSI_snprintf(err_msg, 128, "WinHTTP: Could not resolve host: '%ws'.", implCtx->hostName);
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, err_msg);
 			}
 		else	
