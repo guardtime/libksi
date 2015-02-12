@@ -418,6 +418,7 @@ EXPORTS
     KSI_AggregationReq_setRequestHash
     KSI_AggregationReq_setRequestLevel
     KSI_AggregationReq_setConfig
+    KSI_AggregationReq_enclose
     KSI_RequestAck_free
     KSI_RequestAck_new
     KSI_RequestAck_getAggregationPeriod
@@ -454,6 +455,7 @@ EXPORTS
     KSI_ExtendReq_setRequestId
     KSI_ExtendReq_setAggregationTime
     KSI_ExtendReq_setPublicationTime
+    KSI_ExtendReq_enclose
     KSI_ExtendResp_free
     KSI_ExtendResp_new
     KSI_ExtendResp_getRequestId
