@@ -908,8 +908,8 @@ char *KSI_PublicationData_toString(KSI_PublicationData *t, char *buffer, unsigne
 		goto cleanup;
 	}
 
-	len+= snprintf(buffer + len, buffer_len - len, "Publication string: %s\nPublication date: %s", pubStr, KSI_Integer_toDateString(t->time, tmp, sizeof(tmp)));
-	snprintf(buffer + len, buffer_len - len, "\nPublished hash: %s", KSI_DataHash_toString(t->imprint, tmp, sizeof(tmp)));
+	len+= KSI_snprintf(buffer + len, buffer_len - len, "Publication string: %s\nPublication date: %s", pubStr, KSI_Integer_toDateString(t->time, tmp, sizeof(tmp)));
+	KSI_snprintf(buffer + len, buffer_len - len, "\nPublished hash: %s", KSI_DataHash_toString(t->imprint, tmp, sizeof(tmp)));
 
 	ret = buffer;
 
@@ -927,7 +927,7 @@ char *KSI_PublicationRecord_toString(KSI_PublicationRecord *t, char *buffer, uns
 	unsigned len = 0;
 	size_t i;
 
-	len += snprintf(buffer + len, buffer_len - len, "%s", KSI_PublicationData_toString(t->publishedData, tmp, sizeof(tmp)));
+	len += KSI_snprintf(buffer + len, buffer_len - len, "%s", KSI_PublicationData_toString(t->publishedData, tmp, sizeof(tmp)));
 
 	for (i = 0; i < KSI_Utf8StringList_length(t->publicationRef); i++) {
 		KSI_Utf8String *ref = NULL;
@@ -935,7 +935,7 @@ char *KSI_PublicationRecord_toString(KSI_PublicationRecord *t, char *buffer, uns
 		res = KSI_Utf8StringList_elementAt(t->publicationRef, i, &ref);
 		if (res != KSI_OK) goto cleanup;
 
-		len += snprintf(buffer + len, buffer_len - len, "\nRef: %s", KSI_Utf8String_cstr(ref));
+		len += KSI_snprintf(buffer + len, buffer_len - len, "\nRef: %s", KSI_Utf8String_cstr(ref));
 	}
 
 	ret = buffer;

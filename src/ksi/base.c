@@ -67,7 +67,7 @@ const char *KSI_getErrorString(int statusCode) {
 		case KSI_SERVICE_AUTHENTICATION_FAILURE:
 			return "The request could not be authenticated.";
 		case KSI_SERVICE_INVALID_PAYLOAD:
-			return "The request contained invalid payload";
+			return "The request contained invalid payload.";
 		case KSI_SERVICE_INTERNAL_ERROR:
 			return "The server encountered an unspecified internal error.";
 		case KSI_SERVICE_UPSTREAM_ERROR:
@@ -77,7 +77,7 @@ const char *KSI_getErrorString(int statusCode) {
 		case KSI_SERVICE_AGGR_REQUEST_TOO_LARGE:
 			return "The request indicated client-side aggregation tree larger than allowed for the client.";
 		case KSI_SERVICE_AGGR_REQUEST_OVER_QUOTA:
-			return "The request combined with other requests from the same client in the same round would create an aggregation sub-tree larger than allowed for the client";
+			return "The request combined with other requests from the same client in the same round would create an aggregation sub-tree larger than allowed for the client.";
 		case KSI_SERVICE_EXTENDER_INVALID_TIME_RANGE:
 			return "The request asked for a hash chain going backwards in time Pattern for local errors in the server.";
 		case KSI_SERVICE_EXTENDER_DATABASE_MISSING:
@@ -546,8 +546,8 @@ int KSI_ERR_apply(KSI_ERR *err) {
 			ctxErr->statusCode = err->statusCode;
 			ctxErr->extErrorCode = err->extErrorCode;
 			ctxErr->lineNr = err->lineNr;
-			strncpy(ctxErr->fileName, KSI_strnvl(err->fileName), sizeof(err->fileName));
-			strncpy(ctxErr->message, KSI_strnvl(err->message), sizeof(err->message));
+			KSI_strncpy(ctxErr->fileName, KSI_strnvl(err->fileName), sizeof(err->fileName));
+			KSI_strncpy(ctxErr->message, KSI_strnvl(err->message), sizeof(err->message));
 
 			ctx->errors_count++;
 		}
@@ -577,11 +577,11 @@ int KSI_ERR_fail(KSI_ERR *err, int statusCode, long extErrorCode, char *fileName
 		err->extErrorCode = extErrorCode;
 		err->statusCode = statusCode;
 		if (message == NULL) {
-			strncpy(err->message, KSI_getErrorString(statusCode), sizeof(err->message));
+			KSI_strncpy(err->message, KSI_getErrorString(statusCode), sizeof(err->message));
 		} else {
-			strncpy(err->message, KSI_strnvl(message), sizeof(err->message));
+			KSI_strncpy(err->message, KSI_strnvl(message), sizeof(err->message));
 		}
-		strncpy(err->fileName, KSI_strnvl(fileName), sizeof(err->fileName));
+		KSI_strncpy(err->fileName, KSI_strnvl(fileName), sizeof(err->fileName));
 		err->lineNr = lineNr;
 	}
 	return statusCode;
@@ -623,7 +623,7 @@ cleanup:
 	return res;
 }
 
-int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len){
+int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *error){
 	KSI_ERR *err = NULL;
 	
 	if (ctx == NULL || buf == NULL){
@@ -631,7 +631,10 @@ int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len){
 	} 
 	
 	err = ctx->errors;
-	strncpy(buf, err->message, len);		
+	
+	if(error != NULL)	*error = err->statusCode;
+	
+	KSI_strncpy(buf, err->message, len);		
 	return KSI_OK;
 } 
 

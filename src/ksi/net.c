@@ -619,7 +619,7 @@ int KSI_UriSplitBasic(const char *uri, char **scheme, char **host, unsigned *por
 			res = KSI_OUT_OF_MEMORY;
 			goto cleanup;
 		}
-		snprintf(tmpHost, len, "%s", uri + parser.field_data[UF_HOST].off);
+		KSI_snprintf(tmpHost, len, "%s", uri + parser.field_data[UF_HOST].off);
 		tmpHost[len - 1] = '\0';
 	}
 
@@ -631,7 +631,7 @@ int KSI_UriSplitBasic(const char *uri, char **scheme, char **host, unsigned *por
 			res = KSI_OUT_OF_MEMORY;
 			goto cleanup;
 		}
-		snprintf(tmpSchema, len, "%s", uri + parser.field_data[UF_SCHEMA].off);
+		KSI_snprintf(tmpSchema, len, "%s", uri + parser.field_data[UF_SCHEMA].off);
 		tmpSchema[len - 1] = '\0';
 	}
 
@@ -643,7 +643,7 @@ int KSI_UriSplitBasic(const char *uri, char **scheme, char **host, unsigned *por
 			res = KSI_OUT_OF_MEMORY;
 			goto cleanup;
 		}
-		snprintf(tmpPath, len, "%s", uri + parser.field_data[UF_PATH].off);
+		KSI_snprintf(tmpPath, len, "%s", uri + parser.field_data[UF_PATH].off);
 		tmpPath[len - 1] = '\0';
 	}
 

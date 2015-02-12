@@ -7,7 +7,11 @@
 
 #ifndef _WIN32
 #  include "sys/socket.h"
+#  define socket_error errno 
+#  define socketTimedOut EWOULDBLOCK
 #else
+#  define socket_error WSAGetLastError()
+#  define socketTimedOut WSAETIMEDOUT
 #  include <winsock2.h>
 #  include <ws2tcpip.h>
 #endif
@@ -311,7 +315,10 @@ static int readFromSocket(KSI_RDR *rdr, unsigned char *buffer, const size_t size
 		int c = recv(rdr->data.socketfd, buffer+count, size - count, 0);
 
 		if (c < 0) {
-			KSI_FAIL_EXT(&err, KSI_IO_ERROR, errno, "Unable to read from socket.");
+			if(socket_error == socketTimedOut)
+				KSI_FAIL_EXT(&err, KSI_NETWORK_RECIEVE_TIMEOUT, errno, "Unable to read from socket.");
+			else
+				KSI_FAIL_EXT(&err, KSI_IO_ERROR, errno, "Unable to read from socket.");
 			goto cleanup;
 		}
 

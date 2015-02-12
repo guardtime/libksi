@@ -10,13 +10,13 @@ Prerequisites
 
 	To be able to build GT KSI API one must have the following software pieces:
 
-		1) Microsoft Visual Studio <version goes here> or Windows SDK <version goes here> for building tools.
+		1) Microsoft Visual Studio 10 or Windows SDK 7.1 for building tools.
 		2) Network provider (must have one)
-			2.1) Libcurl <version goes here> (recommended).
+			2.1) Lib Curl 0.9.8g (recommended).
 			2.2) Windows native WinINet
 			2.4) Windows native WinHTTP 
 		3) Cryptography provider (must have one)
-			3.1) OpenSSL <version goes here> (recommended)
+			3.1) OpenSSL 0.9.8g (recommended)
 			3.2) Windows native CryptoAPI
 		
 	

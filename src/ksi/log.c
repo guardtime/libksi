@@ -31,12 +31,8 @@ static int writeLog(KSI_CTX *ctx, int logLevel, char *format, va_list va) {
 		res = KSI_OK;
 		goto cleanup;
 	}
-#ifdef _WIN32	
-	msg[sizeof(msg)-1] = 0;
-	_vsnprintf(msg, sizeof(msg)-1, format, va);
-#else
-	vsnprintf(msg, sizeof(msg), format, va);
-#endif
+
+	KSI_vsnprintf(msg, sizeof(msg), format, va);
 	res = ctx->loggerCB(ctx->loggerCtx, logLevel, msg);
 	if (res != KSI_OK) goto cleanup;
 
@@ -92,7 +88,7 @@ int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned 
 
 	for (i = 0; i < data_len; i++) {
 		int written;
-		written = snprintf(logStr + logStr_len, logStr_size - logStr_len, "%02x", data[i]);
+		written = KSI_snprintf(logStr + logStr_len, logStr_size - logStr_len, "%02x", data[i]);
 		if (written <= 0 || written > logStr_size - logStr_len) {
 			res = KSI_BUFFER_OVERFLOW;
 			goto cleanup;

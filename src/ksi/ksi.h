@@ -286,12 +286,13 @@ int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f);
 /**
  * Get base error message.
  * \param[in]		ctx		KSI context object.
- * \param[in/out]	buf		Buffer for storing error message.
- * \param[in]		len		The length of the buffer. 
+ * \param[out]		buf		Buffer for storing error message.
+ * \param[in]		len		The length of the buffer.
+ * \param[out]		err		Pointer to buffer for base error code.		 
  * \return status code (#KSI_OK, when operation succeeded, otherwise an
  * error code). 
  */
-int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len);
+int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *error);
 
 /**
  * The Guardtime representation of hash algorithms, necessary to calculate
@@ -435,7 +436,7 @@ int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig);
 int KSI_createSignature(KSI_CTX *ctx, KSI_DataHash *dataHash, KSI_Signature **sig);
 
 /**
- * Extend the signature to the earlyest available publication.
+ * Extend the signature to the earliest available publication.
  * \param[in]		ctx			KSI context.
  * \param[in]		sig			Signature to be extended.
  * \param[out]		extended	Pointer to the receiving pointer to the extended signature.

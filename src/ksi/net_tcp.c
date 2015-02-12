@@ -68,24 +68,42 @@ static int readResponse(KSI_RequestHandle *handle) {
 	KSI_ERR err;
 	int res;
 	TcpClientCtx *tcp = NULL;
+	KSI_TcpClient *client = NULL;
 	int sockfd = -1;
     struct sockaddr_in serv_addr;
     struct hostent *server = NULL;
     size_t count;
     unsigned char buffer[0xffff + 4];
     KSI_RDR *rdr = NULL;
-
-
+#ifdef _WIN32
+	DWORD transferTimeout = 0;
+#else
+	struct timeval  transferTimeout;
+#endif
+	
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(handle->ctx, &err);
 
 	tcp = handle->implCtx;
-
+	client = (KSI_TcpClient*)handle->client;
+	
     sockfd = (int)socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
     	KSI_FAIL(&err, KSI_NETWORK_ERROR, "Unable to open socket.");
     	goto cleanup;
     }
+	
+#ifdef _WIN32
+	transferTimeout = client->transferTimeoutSeconds*1000;
+#else
+	transferTimeout.tv_sec = client->transferTimeoutSeconds;
+    transferTimeout.tv_usec = 0;
+	
+#endif	
+	
+	/*Set socket options*/
+	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (void*)&transferTimeout, sizeof(transferTimeout));
+	setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (void*)&transferTimeout, sizeof(transferTimeout));
 
     server = gethostbyname(tcp->host);
     if (server == NULL) {
@@ -101,7 +119,6 @@ static int readResponse(KSI_RequestHandle *handle) {
     serv_addr.sin_port = htons(tcp->port);
 
     if ((res = connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr))) < 0) {
-    	perror("Failed to connect");
     	KSI_FAIL_EXT(&err, KSI_NETWORK_ERROR, res, "Unable to connect.");
     	goto cleanup;
     }
@@ -169,7 +186,7 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
-	strncpy(tc->host, host, strlen(host) + 1);
+	KSI_strncpy(tc->host, host, strlen(host) + 1);
 	tc->port = port;
 
 	handle->readResponse = readResponse;
@@ -335,7 +352,9 @@ int KSI_TcpClient_init(KSI_CTX *ctx, KSI_TcpClient *client) {
 	client->extHost = NULL;
 	client->extPort = 0;
 	client->http = NULL;
-
+	
+	client->transferTimeoutSeconds = 10;
+	
 	res = KSI_HttpClient_new(ctx, &client->http);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -450,4 +469,19 @@ int KSI_TcpClient_setPublicationUrl(KSI_TcpClient *client, const char *val) {
 cleanup:
 
 	return res;
+}
+
+int KSI_TcpClient_setTransferTimeoutSeconds (KSI_TcpClient *client, int transferTimeoutSeconds ) {
+    KSI_ERR err;
+	
+	KSI_PRE(&err, client != NULL) goto cleanup;
+	KSI_BEGIN(((KSI_NetworkClient*)client)->ctx, &err);
+	
+    client->transferTimeoutSeconds = transferTimeoutSeconds ;
+    
+	KSI_SUCCESS(&err);
+	
+cleanup:
+
+	return KSI_RETURN(&err);
 }

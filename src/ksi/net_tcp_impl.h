@@ -13,6 +13,8 @@ extern "C" {
 	struct KSI_TcpClient_st {
 		KSI_NetworkClient parent;
 		
+		int transferTimeoutSeconds;
+		
 		char *aggrHost;
 		unsigned aggrPort;
 

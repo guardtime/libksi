@@ -707,7 +707,7 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp,
 
 		KSI_AggregationResp_getErrorMsg(resp, &errorMessage);
 
-		snprintf(msg, sizeof(msg), "Aggregation failed: %s", KSI_Utf8String_cstr(errorMessage));
+		KSI_snprintf(msg, sizeof(msg), "Aggregation failed: %s", KSI_Utf8String_cstr(errorMessage));
 		KSI_FAIL_EXT(&err, res, (long)KSI_Integer_getUInt64(status), KSI_Utf8String_cstr(errorMessage));
 		goto cleanup;
 	}
@@ -900,7 +900,7 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 		KSI_Utf8String *error = NULL;
 		KSI_ExtendResp_getErrorMsg(response, &error);
 
-		snprintf(buf, sizeof(buf), "Extender error: %s", KSI_Utf8String_cstr(error));
+		KSI_snprintf(buf, sizeof(buf), "Extender error: %s", KSI_Utf8String_cstr(error));
 		KSI_FAIL_EXT(&err, res, KSI_Integer_getUInt64(respStatus), buf);
 
 		KSI_nofree(error);
@@ -1266,7 +1266,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 		res = KSI_List_elementAt(idList, i, (void **)&tmp);
 		KSI_CATCH(&err, res) goto cleanup;
 
-		signerId_len += (unsigned)snprintf(signerId + signerId_len, signerId_size - signerId_len, "%s%s", signerId_len > 0 ? " :: " : "", tmp);
+		signerId_len += (unsigned)KSI_snprintf(signerId + signerId_len, signerId_size - signerId_len, "%s%s", signerId_len > 0 ? " :: " : "", tmp);
 	}
 
 	*signerIdentity = signerId;
@@ -1479,7 +1479,7 @@ static int verifyInternallyAggregationChain(KSI_Signature *sig) {
 	sig->verificationResult.aggregationHash = hsh;
 	hsh = NULL;
 
-	res = KSI_VerificationResult_addSuccess(info,  step, NULL);
+	res = KSI_VerificationResult_addSuccess(info,  step,"Aggregation chain internally consistent.");
 
 cleanup:
 
@@ -1518,7 +1518,7 @@ static int verifyAggregationRootWithCalendarChain(KSI_Signature *sig) {
 		res = KSI_VerificationResult_addFailure(info, step, "Aggregation time in calendar chain and aggregation chain differ.");
 	}
 
-	res = KSI_VerificationResult_addSuccess(info, step, NULL);
+	res = KSI_VerificationResult_addSuccess(info, step, "Aggregation root matches with calendar chain.");
 
 cleanup:
 
@@ -1566,9 +1566,9 @@ static int verifyCalendarChain(KSI_Signature *sig) {
 	if (res != KSI_OK) goto cleanup;
 
 	if (KSI_Integer_equals(calendarPubTm, pubTime) && KSI_DataHash_equals(rootHash, pubHash)) {
-		res = KSI_VerificationResult_addSuccess(info, step, NULL);
+		res = KSI_VerificationResult_addSuccess(info, step, "Calendar chain and authentication record match.");
 	} else {
-		res = KSI_VerificationResult_addFailure(info, step, "Calendar chain and auth record mismatch.");
+		res = KSI_VerificationResult_addFailure(info, step, "Calendar chain and authentication record mismatch.");
 	}
 
 	if (res != KSI_OK) goto cleanup;
@@ -1598,7 +1598,7 @@ static int verifyInternallyCalendarChain(KSI_Signature *sig) {
 	if (res != KSI_OK) goto cleanup;
 
 	if (KSI_Integer_equalsUInt(calendarAggrTm, (KSI_uint64_t) calculatedAggrTm)) {
-		res = KSI_VerificationResult_addSuccess(info, step, NULL);
+		res = KSI_VerificationResult_addSuccess(info, step, "Calendar chain internally consistent.");
 	} else {
 		res = KSI_VerificationResult_addFailure(info, step, "Calendar chain internally inconsistent.");
 	}
@@ -1627,7 +1627,7 @@ static int verifyCalAuthRec(KSI_CTX *ctx, KSI_Signature *sig) {
 		goto cleanup;
 	}
 
-	KSI_LOG_info(sig->ctx, "Verifying calendar auth record.");
+	KSI_LOG_info(sig->ctx, "Verifying calendar authentication record.");
 
 	res = KSI_PKISignedData_getCertId(sig->calendarAuthRec->signatureData, &certId);
 	if (res != KSI_OK) goto cleanup;
@@ -1664,11 +1664,11 @@ static int verifyCalAuthRec(KSI_CTX *ctx, KSI_Signature *sig) {
 	res = KSI_PKITruststore_verifyRawSignature(sig->ctx, rawData, rawData_len, KSI_Utf8String_cstr(sigtype), rawSignature, rawSignature_len, cert);
 
 	if (res != KSI_OK) {
-		res = KSI_VerificationResult_addFailure(info, step, "Calendar auth record signature not verified.");
+		res = KSI_VerificationResult_addFailure(info, step, "Calendar authentication record signature not verified.");
 		goto cleanup;
 	}
 
-	res = KSI_VerificationResult_addSuccess(info, step, NULL);
+	res = KSI_VerificationResult_addSuccess(info, step, "Calendar authentication record correct.");
 
 cleanup:
 
@@ -1708,7 +1708,7 @@ static int verifyPublication(KSI_CTX *ctx, KSI_Signature *sig) {
 		goto cleanup;
 	}
 
-	res = KSI_VerificationResult_addSuccess(info, step, NULL);
+	res = KSI_VerificationResult_addSuccess(info, step, "Publication trusted.");
 
 cleanup:
 
@@ -1740,7 +1740,7 @@ static int verifyDocument(KSI_Signature *sig) {
 		goto cleanup;
 	}
 
-	res = KSI_VerificationResult_addSuccess(info, step, NULL);
+	res = KSI_VerificationResult_addSuccess(info, step, "Document correct.");
 
 cleanup:
 
@@ -1824,7 +1824,7 @@ static int verifyOnline(KSI_CTX *ctx, KSI_Signature *sig) {
 		res = KSI_ExtendResp_getErrorMsg(resp, &respErr);
 		if (res != KSI_OK) goto cleanup;
 
-		snprintf(errm, sizeof(errm), "Extend failure from server: '%s'", KSI_Utf8String_cstr(respErr));
+		KSI_snprintf(errm, sizeof(errm), "Extend failure from server: '%s'", KSI_Utf8String_cstr(respErr));
 
 		res = KSI_VerificationResult_addFailure(info, step, errm);
 		goto cleanup;
@@ -1854,7 +1854,7 @@ static int verifyOnline(KSI_CTX *ctx, KSI_Signature *sig) {
 		}
 	}
 
-	res = KSI_VerificationResult_addSuccess(info, step, NULL);
+	res = KSI_VerificationResult_addSuccess(info, step, "Verified online.");
 
 cleanup:
 
@@ -1917,7 +1917,7 @@ static int verifyCalendarChainWithPublication(KSI_CTX *ctx, KSI_Signature *sig){
 		goto cleanup;
 	}
 	
-	res = KSI_VerificationResult_addSuccess(info, step, NULL);
+	res = KSI_VerificationResult_addSuccess(info, step, "Calendar chain verified with publication.");
 	
 cleanup:
 	

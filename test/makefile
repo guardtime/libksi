@@ -47,7 +47,8 @@ ALLTESTS_OBJ = \
 	$(OBJ_DIR)\ksi_tlv_test.obj \
 	$(OBJ_DIR)\ksi_truststore_test.obj \
 	$(OBJ_DIR)\ksi_hmac_test.obj \
-	$(OBJ_DIR)\CuTest.obj
+	$(OBJ_DIR)\CuTest.obj \
+	$(OBJ_DIR)\compatibility_functions_test.obj
 
 	
 #Compiler and linker configuration

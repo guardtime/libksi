@@ -6,6 +6,7 @@
 
 #include "ksi.h"
 #include "err.h"
+#include "compatibility.h"
 
 /**
  * HTTP network client implementations.
@@ -49,9 +50,6 @@
 
 #ifdef _WIN32
 	typedef enum { false = 0, true = !false } bool;
-#  ifndef snprintf
-#    define snprintf _snprintf
-#  endif
 #  ifndef gmtime_r
 #    define gmtime_r(time, resultp) gmtime_s(resultp, time)
 #  endif
