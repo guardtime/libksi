@@ -52,6 +52,7 @@ LIB_OBJ = \
 	$(OBJ_DIR)\log.obj \
 	$(OBJ_DIR)\net.obj \
 	$(OBJ_DIR)\net_http.obj \
+	$(OBJ_DIR)\net_uri.obj \
 	$(OBJ_DIR)\publicationsfile.obj \
 	$(OBJ_DIR)\signature.obj \
 	$(OBJ_DIR)\tlv.obj \
@@ -71,6 +72,7 @@ INC_FILES = \
 	crc32.h \
 	net_http.h \
 	net_tcp.h \
+	net_uri.h \
 	signature.h \
 	types_base.h \
 	err.h \

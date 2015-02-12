@@ -36,15 +36,12 @@ static int setIntParam(int *param, int val) {
 	return KSI_OK;
 }
 
-
 static int prepareRequest(
 		KSI_NetworkClient *client,
 		void *pdu,
-		int (*updateHmac)(void *, int, char *),
 		int (*serialize)(void *, unsigned char **, unsigned *),
 		KSI_RequestHandle **handle,
 		char *url,
-		char *pass,
 		const char *desc) {
 	KSI_ERR err;
 	int res;
@@ -58,9 +55,6 @@ static int prepareRequest(
 	KSI_PRE(&err, pdu != NULL) goto cleanup;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(client->ctx, &err);
-
-	res = updateHmac(pdu, defaultAlgo, pass);
-	KSI_CATCH(&err, res) goto cleanup;
 
 	res = serialize(pdu, &raw, &raw_len);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -92,28 +86,53 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendPdu *pdu, KSI_RequestHandle **handle) {
-	return prepareRequest(
+static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, KSI_RequestHandle **handle) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_ExtendPdu *pdu = NULL;
+
+	res = KSI_ExtendReq_enclose(req, client->extUser, client->extPass, &pdu);
+	if (res != KSI_OK) goto cleanup;
+
+	res = prepareRequest(
 			client,
 			pdu,
-			(int (*)(void *, int, char *))KSI_ExtendPdu_updateHmac,
 			(int (*)(void *, unsigned char **, unsigned *))KSI_ExtendPdu_serialize,
 			handle,
 			((KSI_HttpClient*)client)->urlExtender,
-			client->extPass,
 			"Extend request");
+
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_ExtendPdu_setRequest(pdu, NULL);
+	KSI_ExtendPdu_free(pdu);
+
+	return res;
 }
 
-static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationPdu *pdu, KSI_RequestHandle **handle) {
-	return prepareRequest(
+static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationReq *req, KSI_RequestHandle **handle) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_AggregationPdu *pdu = NULL;
+
+	res = KSI_AggregationReq_enclose(req, client->aggrUser, client->aggrPass, &pdu);
+	if (res != KSI_OK) goto cleanup;
+
+	res = prepareRequest(
 			client,
 			pdu,
-			(int (*)(void *, int, char *))KSI_AggregationPdu_updateHmac,
 			(int (*)(void *, unsigned char **, unsigned *))KSI_AggregationPdu_serialize,
 			handle,
 			((KSI_HttpClient*)client)->urlAggregator,
-			client->aggrPass,
 			"Aggregation request");
+cleanup:
+
+	KSI_AggregationPdu_setRequest(pdu, NULL);
+	KSI_AggregationPdu_free(pdu);
+
+	return res;
 }
 
 static int preparePublicationsFileRequest(KSI_NetworkClient *client, KSI_RequestHandle **handle) {
