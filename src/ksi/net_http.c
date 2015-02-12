@@ -49,7 +49,6 @@ static int prepareRequest(
 	KSI_RequestHandle *tmp = NULL;
 	unsigned char *raw = NULL;
 	unsigned raw_len = 0;
-	int defaultAlgo = KSI_getHashAlgorithmByName("default");
 
 	KSI_PRE(&err, client != NULL) goto cleanup;
 	KSI_PRE(&err, pdu != NULL) goto cleanup;

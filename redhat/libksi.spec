@@ -64,6 +64,7 @@ make install DESTDIR=%{buildroot}
 %{_includedir}/ksi/net.h
 %{_includedir}/ksi/net_http.h
 %{_includedir}/ksi/net_tcp.h
+%{_includedir}/ksi/net_uri.h
 %{_includedir}/ksi/pkitruststore.h
 %{_includedir}/ksi/publicationsfile.h
 %{_includedir}/ksi/signature.h
@@ -72,6 +73,7 @@ make install DESTDIR=%{buildroot}
 %{_includedir}/ksi/types.h
 %{_includedir}/ksi/types_base.h
 %{_includedir}/ksi/verification.h
+%{_includedir}/ksi/compatibility.h
 %{_libdir}/libksi.a
 %{_libdir}/libksi.la
 %{_libdir}/pkgconfig/libksi.pc
