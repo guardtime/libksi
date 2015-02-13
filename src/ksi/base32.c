@@ -169,7 +169,7 @@ int KSI_base32Encode(const unsigned char *data, size_t data_len, size_t group_le
 
 	char *tmp = NULL;
 	int next_bits;
-	int bits_read;
+	size_t bits_read;
 	size_t buf_len;
 	size_t ret_len = 0;
 
