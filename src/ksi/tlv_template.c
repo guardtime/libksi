@@ -497,7 +497,7 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 	bool groupHit[2] = {false, false};
 	bool oneOf[2] = {false, false};
 
-	int i;
+	size_t i;
 
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
 	KSI_PRE(&err, tmpl != NULL) goto cleanup;
