@@ -192,7 +192,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetworkClient_setSendSignRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_AggregationPdu *, KSI_RequestHandle **));
+	int KSI_NetworkClient_setSendSignRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_AggregationReq *, KSI_RequestHandle **));
 
 	/**
 	 * Setter for sign request function.
@@ -202,7 +202,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetworkClient_setSendExtendRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_ExtendPdu *, KSI_RequestHandle **));
+	int KSI_NetworkClient_setSendExtendRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **));
 
 	/**
 	 * Setter for sign request function.
@@ -239,10 +239,16 @@ extern "C" {
 	 * Function to split the given uri into three parts: schema, host and port. If the
 	 * part is missing from the uri, the output parameter will receive \c NULL or 0 for \c port
 	 * as the value. If the output pointers are set to \c NULL, the value is not returned.
+	 * \param[in]	uri			Pointer to the URI.
+	 * \param[out]	scheme		Pointer to the receiving pointer of the scheme (may be \c NULL).
+	 * \param[out]	host		Pointer to the receiving pointer of the host (may be \c NULL).
+	 * \param[out]	port		Pointer to the receiving variable (may be \c NULL).
+	 * \param[out]	path		Pointer to the receiving pointer of the path (may be \NULL).
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note All aquired pointers have to be freed by the caller using #KSI_free.
 	 */
-	int KSI_UriSplitBasic(const char *uri, char **schema, char **host, unsigned *port, char **path);
+	int KSI_UriSplitBasic(const char *uri, char **scheme, char **host, unsigned *port, char **path);
 	/**
 	 * @}
 	 */

@@ -41,6 +41,9 @@ libksi_la_SOURCES = \
 	net_tcp.c \
 	net_tcp.h \
 	net_tcp_impl.h \
+	net_uri.c \
+	net_uri.h \
+	net_uri_impl.h \
 	pkitruststore.h \
 	pkitruststore_openssl.c \
 	publicationsfile.c \
@@ -85,6 +88,7 @@ otherinclude_HEADERS = \
 	net.h \
 	net_http.h \
 	net_tcp.h \
+	net_uri.h \
 	ksi.h \
 	verification.h \
 	compatibility.h

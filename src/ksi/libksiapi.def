@@ -209,6 +209,14 @@ EXPORTS
     KSI_TcpClient_setExtender
     KSI_TcpClient_setAggregator
 
+;net_uri.h
+	KSI_UriClient_new
+	KSI_UriClient_init
+	KSI_UriClient_free
+	KSI_UriClient_setPublicationUrl
+	KSI_UriClient_setExtender
+	KSI_UriClient_setAggregator
+	
 ;pkitruststore.h
 EXPORTS
     KSI_PKITruststore_new
@@ -410,6 +418,7 @@ EXPORTS
     KSI_AggregationReq_setRequestHash
     KSI_AggregationReq_setRequestLevel
     KSI_AggregationReq_setConfig
+    KSI_AggregationReq_enclose
     KSI_RequestAck_free
     KSI_RequestAck_new
     KSI_RequestAck_getAggregationPeriod
@@ -446,6 +455,7 @@ EXPORTS
     KSI_ExtendReq_setRequestId
     KSI_ExtendReq_setAggregationTime
     KSI_ExtendReq_setPublicationTime
+    KSI_ExtendReq_enclose
     KSI_ExtendResp_free
     KSI_ExtendResp_new
     KSI_ExtendResp_getRequestId
