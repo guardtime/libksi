@@ -1516,9 +1516,11 @@ static int verifyAggregationRootWithCalendarChain(KSI_Signature *sig) {
 
 	if (!KSI_Integer_equals(calAggrTime, aggregationChain->aggregationTime)) {
 		res = KSI_VerificationResult_addFailure(info, step, "Aggregation time in calendar chain and aggregation chain differ.");
+		if (res != KSI_OK) goto cleanup;
 	}
 
 	res = KSI_VerificationResult_addSuccess(info, step, "Aggregation root matches with calendar chain.");
+	if (res != KSI_OK) goto cleanup;
 
 cleanup:
 

@@ -336,7 +336,6 @@ static unsigned readFirstTlv(KSI_CTX *ctx, unsigned char *data, unsigned data_le
 	unsigned length = 0;
 
 	if (ctx == NULL || data == NULL || tlv == NULL) {
-		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
