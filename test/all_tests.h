@@ -34,7 +34,7 @@ CuSuite* KSITest_Signature_getSuite(void);
 CuSuite* KSITest_Publicationsfile_getSuite(void);
 CuSuite* KSITest_Truststore_getSuite(void);
 CuSuite* KSITest_HMAC_getSuite(void);
-CuSuite* KSITest_compatibility_functions_getSuite(void);
+CuSuite* KSITest_compatibility_getSuite(void);
 
 #ifdef __cplusplus
 }

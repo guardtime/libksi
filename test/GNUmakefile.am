@@ -19,7 +19,8 @@ runner_SOURCES= \
 		./ksi_signature_test.c \
 		./ksi_tlv_sample_test.c \
 		./ksi_tlv_test.c \
-		./ksi_truststore_test.c
+		./ksi_truststore_test.c \
+		./compatibility_test.c
 
 parse_benchmark_SOURCES=parse_benchmark.c
 serialize_benchmark_SOURCES=serialize_benchmark.c
