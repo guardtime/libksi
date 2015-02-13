@@ -180,7 +180,7 @@ int KSI_UriClient_setExtender(KSI_UriClient *client, const char *uri, const char
 		case URI_HTTP:
 			if (replace != NULL) {
 				/* Create a new URL where the scheme is replaced with the correct one. */
-				snprintf(addr, sizeof(addr), "%s%s", replace, uri + u.field_data[UF_SCHEMA].off + u.field_data[UF_SCHEMA].len);
+				KSI_snprintf(addr, sizeof(addr), "%s%s", replace, uri + u.field_data[UF_SCHEMA].off + u.field_data[UF_SCHEMA].len);
 			}
 
 			res = KSI_HttpClient_setExtender(client->httpClient, replace != NULL ? addr : uri, loginId, key);
@@ -203,7 +203,7 @@ int KSI_UriClient_setExtender(KSI_UriClient *client, const char *uri, const char
 			}
 
 			/* Extract the host to a proper null-terminated string. */
-			snprintf(addr, sizeof(addr), "%.*s", u.field_data[UF_HOST].len, uri + u.field_data[UF_HOST].off);
+			KSI_snprintf(addr, sizeof(addr), "%.*s", u.field_data[UF_HOST].len, uri + u.field_data[UF_HOST].off);
 
 			res = KSI_TcpClient_setExtender(client->tcpClient, addr, u.port, loginId, key);
 			if (res != KSI_OK) goto cleanup;
@@ -237,7 +237,7 @@ int KSI_UriClient_setAggregator(KSI_UriClient *client, const char *uri, const ch
 		case URI_HTTP:
 			if (replace != NULL) {
 				/* Create a new URL where the scheme is replaced with the correct one. */
-				snprintf(addr, sizeof(addr), "%s%s", replace, uri + u.field_data[UF_SCHEMA].off + u.field_data[UF_SCHEMA].len);
+				KSI_snprintf(addr, sizeof(addr), "%s%s", replace, uri + u.field_data[UF_SCHEMA].off + u.field_data[UF_SCHEMA].len);
 			}
 
 			res = KSI_HttpClient_setAggregator(client->httpClient, replace != NULL ? addr : uri, loginId, key);
@@ -260,7 +260,7 @@ int KSI_UriClient_setAggregator(KSI_UriClient *client, const char *uri, const ch
 			}
 
 			/* Extract the host to a proper null-terminated string. */
-			snprintf(addr, sizeof(addr), "%.*s", u.field_data[UF_HOST].len, uri + u.field_data[UF_HOST].off);
+			KSI_snprintf(addr, sizeof(addr), "%.*s", u.field_data[UF_HOST].len, uri + u.field_data[UF_HOST].off);
 
 			res = KSI_TcpClient_setAggregator(client->tcpClient, addr, u.port, loginId, key);
 			if (res != KSI_OK) goto cleanup;
