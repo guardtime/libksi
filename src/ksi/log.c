@@ -89,7 +89,7 @@ int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned 
 	for (i = 0; i < data_len; i++) {
 		int written;
 		written = KSI_snprintf(logStr + logStr_len, logStr_size - logStr_len, "%02x", data[i]);
-		if (written <= 0 || written > logStr_size - logStr_len) {
+		if (written <= 0 || (size_t)written > logStr_size - logStr_len) {
 			res = KSI_BUFFER_OVERFLOW;
 			goto cleanup;
 		}
