@@ -991,9 +991,9 @@ cleanup:
 
 int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_PublicationRecord **clone){
 	KSI_ERR err;
-	KSI_PublicationRecord *tmp = NULL;
 	int res = KSI_UNKNOWN_ERROR;
-	int i=0;
+	KSI_PublicationRecord *tmp = NULL;
+	size_t i;
 	
 	KSI_PRE(&err, rec != NULL) goto cleanup;
 	KSI_PRE(&err, clone != NULL) goto cleanup;
@@ -1007,7 +1007,7 @@ int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_Publicatio
 	res = KSI_Utf8StringList_new(&(tmp->publicationRef));
 	if (res != KSI_OK) goto cleanup;
 
-	for (i=0; i<KSI_Utf8StringList_length(rec->publicationRef); i++){
+	for (i = 0; i < KSI_Utf8StringList_length(rec->publicationRef); i++){
 		KSI_Utf8String *str = NULL;
 		res = KSI_Utf8StringList_elementAt(rec->publicationRef, i, &str);
 		KSI_CATCH(&err, res);
