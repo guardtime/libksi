@@ -12,6 +12,11 @@ EXPORTS
 EXPORTS
     KSI_crc32
 
+;compatibility.h
+    KSI_snprintf
+    KSI_vsnprintf
+    KSI_strncpy
+
 ;err.h
 EXPORTS
     KSI_ERR_init
