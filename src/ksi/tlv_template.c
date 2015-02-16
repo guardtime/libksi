@@ -16,6 +16,9 @@
 
 #define FLAGSET(tmpl, flg) (((tmpl).flags & flg) != 0)
 
+static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, const KSI_TlvTemplate *tmpl, int (*generator)(void *, KSI_TLV **), char *buf, size_t buf_len);
+static int extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *tmpl, char *buf, size_t buf_len);
+
 KSI_DEFINE_TLV_TEMPLATE(KSI_CalAuthRecPKISignedData)
 	KSI_TLV_UTF8_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getSigType, KSI_PKISignedData_setSigType)
 	KSI_TLV_OCTET_STRING(0x02, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getSignatureValue, KSI_PKISignedData_setSignatureValue)
@@ -243,7 +246,7 @@ cleanup:
 	return res;
 }
 
-int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *tmpl) {
+static int extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *tmpl, char *buf, size_t buf_len) {
 	KSI_ERR err;
 	int res;
 	TLVListIterator iter;
@@ -259,9 +262,9 @@ int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI
 
 	iter.idx = 0;
 
-	res = KSI_TlvTemplate_extractGenerator(ctx, payload, (void *)&iter, tmpl, (int (*)(void *, KSI_TLV **))TLVListIterator_next);
+	res = extractGenerator(ctx, payload, (void *)&iter, tmpl, (int (*)(void *, KSI_TLV **))TLVListIterator_next, buf, buf_len);
 	KSI_CATCH(&err, res) {
-		KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Parsed tlv before failure", tlv);
+		KSI_LOG_debug(ctx, "Unable to parse TLV: %s", buf);
 		goto cleanup;
 	}
 
@@ -273,10 +276,24 @@ cleanup:
 
 }
 
+int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *tmpl) {
+	int res = KSI_UNKNOWN_ERROR;
+	char buf[0xffff];
+	*buf = '\0';
+	res = extract(ctx, payload, tlv, tmpl, buf, sizeof(buf));
+	if (res != KSI_OK) {
+		KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Parsed tlv at failure", tlv);
+	}
+	return res;
+}
+
 int KSI_TlvTemplate_parse(KSI_CTX *ctx, unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *tmpl, void *payload) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tlv = NULL;
+	char buf[0xfff];
+
+	*buf = '\0';
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, raw != NULL) goto cleanup;
@@ -288,7 +305,7 @@ int KSI_TlvTemplate_parse(KSI_CTX *ctx, unsigned char *raw, unsigned raw_len, co
 	res = KSI_TLV_parseBlob2(ctx, raw, raw_len, 0, &tlv);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_TlvTemplate_extract(ctx, payload, tlv, tmpl);
+	res = extract(ctx, payload, tlv, tmpl, buf, sizeof(buf));
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Parsed TLV", tlv);
@@ -313,7 +330,7 @@ static size_t getTemplateLength(const KSI_TlvTemplate *tmpl) {
 	return len;
 }
 
-int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, const KSI_TlvTemplate *tmpl, int (*generator)(void *, KSI_TLV **)) {
+static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, const KSI_TlvTemplate *tmpl, int (*generator)(void *, KSI_TLV **), char *buf, size_t buf_len) {
 	KSI_ERR err;
 	KSI_TLV *tlv = NULL;
 	int res;
@@ -343,16 +360,19 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 
 	while (1) {
 		int matchCount = 0;
+		size_t buf_used;
 		res = generator(generatorCtx, &tlv);
 		KSI_CATCH(&err, res) goto cleanup;
 
 		if (tlv == NULL) break;
 
 		KSI_LOG_trace(ctx, "Starting to parse TLV(0x%02x)", KSI_TLV_getTag(tlv));
+		buf_used = KSI_snprintf(buf, buf_len, "0x%02x", KSI_TLV_getTag(tlv));
 
 		for (i = tmplStart; i < template_len; i++) {
 			if (tmpl[i].tag != KSI_TLV_getTag(tlv)) continue;
 			if (i == tmplStart && !tmpl[i].multiple) tmplStart++;
+
 			matchCount++;
 			templateHit[i] = true;
 			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G0) != 0) groupHit[0] = true;
@@ -390,6 +410,8 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 			/* Parse the current TLV */
 			switch (tmpl[i].type) {
 				case KSI_TLV_TEMPLATE_SEEK_POS:
+					KSI_LOG_trace(ctx, "Detected seek position template for TLV value extraction.");
+
 					uint64Val = (KSI_uint64_t)KSI_TLV_getAbsoluteOffset(tlv);
 
 					res = ((int (*)(void *, KSI_uint64_t))tmpl[i].setValue)(payload, uint64Val);
@@ -397,6 +419,8 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 
 					break;
 				case KSI_TLV_TEMPLATE_UNPROCESSED:
+					KSI_LOG_trace(ctx, "Detected unprocessed template for TLV value extraction.");
+
 					res = KSI_TLV_clone(tlv, &tlvVal);
 					KSI_CATCH(&err, res) goto cleanup;
 
@@ -407,6 +431,7 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 
 					break;
 				case KSI_TLV_TEMPLATE_OBJECT:
+					KSI_LOG_trace(ctx, "Detected object template for TLV value extraction.");
 					if (tmpl[i].fromTlv == NULL) {
 						KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Invalid template: fromTlv not set.");
 						goto cleanup;
@@ -423,14 +448,18 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 
 					break;
 				case KSI_TLV_TEMPLATE_COMPOSITE:
+				{
+					size_t tmp_buf_used = 0;
 					KSI_LOG_trace(ctx, "Detected composite template for TLV value extraction.");
 
 					res = tmpl[i].construct(ctx, &compositeVal);
 					KSI_CATCH(&err, res) goto cleanup;
 
-					res = KSI_TlvTemplate_extract(ctx, compositeVal, tlv, tmpl[i].subTemplate);
+					tmp_buf_used += KSI_snprintf(buf + buf_used, buf_len - buf_used, "->");
+
+					res = extract(ctx, compositeVal, tlv, tmpl[i].subTemplate, buf + buf_used + tmp_buf_used, buf_len - buf_used - tmp_buf_used);
 					KSI_CATCH(&err, res) {
-						KSI_LOG_error(ctx, "Unable to parse composite TLV: 0x%02x", KSI_TLV_getTag(tlv));
+						KSI_LOG_error(ctx, "Unable to parse composite TLV: %s", buf);
 						tmpl[i].destruct(compositeVal);
 						goto cleanup;
 					}
@@ -438,10 +467,15 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 					res = storeObjectValue(ctx, &tmpl[i], payload, (void *)compositeVal);
 					KSI_CATCH(&err, res) goto cleanup;
 
-					KSI_LOG_trace(ctx, "Composite value extracted.");
+					KSI_LOG_trace(ctx, "Composite value %s extracted.", buf);
+
+					/* Reset the buffer. */
+					buf[buf_used] = '\0';
+
 					break;
+				}
 				default:
-					KSI_LOG_warn(ctx, "No template found.");
+					KSI_LOG_error(ctx, "No template found.");
 					/* Should not happen, but just in case. */
 					KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Undefined template type");
 					goto cleanup;
@@ -452,7 +486,7 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 
 		/* Check if a match was found, an raise an error if the TLV is marked as critical. */
 		if (matchCount == 0 && !KSI_TLV_isNonCritical(tlv)) {
-			KSI_LOG_error(ctx, "Unknown critical tag: 0x%02x", KSI_TLV_getTag(tlv));
+			KSI_LOG_error(ctx, "Unknown critical tag: %s", buf);
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
 			goto cleanup;
 		}
@@ -462,13 +496,15 @@ int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generato
 	for (i = 0; i < template_len; i++) {
 		char errm[100];
 		if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY) != 0 && !templateHit[i]) {
-			KSI_snprintf(errm, sizeof(errm), "Mandatory element missing: tag=0x%x", tmpl[i].tag);
+			KSI_snprintf(errm, sizeof(errm), "Mandatory element missing: %s->0x%x", buf, tmpl[i].tag);
+			KSI_LOG_debug(ctx, "%s", errm);
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
 			goto cleanup;
 		}
 		if (((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G0) != 0 && !groupHit[0]) ||
 				((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G1) != 0 && !groupHit[1])) {
-			KSI_snprintf(errm, sizeof(errm), "Mandatory group missing: tag=0x%x", tmpl[i].tag);
+			KSI_snprintf(errm, sizeof(errm), "Mandatory group missing: %s->0x%x", buf, tmpl[i].tag);
+			KSI_LOG_debug(ctx, "%s", errm);
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
 			goto cleanup;
 		}
@@ -482,6 +518,12 @@ cleanup:
 	KSI_TLV_free(tlvVal);
 
 	return KSI_RETURN(&err);
+}
+
+int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, const KSI_TlvTemplate *tmpl, int (*generator)(void *, KSI_TLV **)) {
+	char buf[0xffff];
+	*buf = '\0';
+	return extractGenerator(ctx, payload, generatorCtx, tmpl, generator, buf, sizeof(buf));
 }
 
 int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_TlvTemplate *tmpl) {
