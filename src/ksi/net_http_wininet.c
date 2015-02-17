@@ -285,7 +285,7 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 			goto cleanup;
 		}
 
-		KSI_strncpy(wininetHandle->hostName, wininetHandle->uc.dwHostNameLength + 1, wininetHandle->uc.lpszHostName, wininetHandle->uc.dwHostNameLength);
+		KSI_strncpy(wininetHandle->hostName, wininetHandle->uc.lpszHostName, wininetHandle->uc.dwHostNameLength + 1);
 		if (wininetHandle->uc.lpszUrlPath == NULL || wininetHandle->uc.dwUrlPathLength == 0) {
 			wininetHandle->query = KSI_calloc(2,1);
 			if (wininetHandle->query == NULL)
@@ -300,9 +300,9 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 				goto cleanup;
 			}
 
-			KSI_strncpy(wininetHandle->query, wininetHandle->uc.dwUrlPathLength + 1, wininetHandle->uc.lpszUrlPath, wininetHandle->uc.dwUrlPathLength);
+			KSI_strncpy(wininetHandle->query, wininetHandle->uc.lpszUrlPath, wininetHandle->uc.dwUrlPathLength + 1);
 			if (!(wininetHandle->uc.lpszExtraInfo == NULL || wininetHandle->uc.dwExtraInfoLength == 0)) {
-				KSI_strncpy(wininetHandle->query + wininetHandle->uc.dwUrlPathLength, wininetHandle->uc.dwExtraInfoLength + 1, wininetHandle->uc.lpszExtraInfo, wininetHandle->uc.dwExtraInfoLength);
+				KSI_strncpy(wininetHandle->query + wininetHandle->uc.dwUrlPathLength, wininetHandle->uc.lpszExtraInfo, wininetHandle->uc.dwExtraInfoLength + 1);
 			}
 		}
 

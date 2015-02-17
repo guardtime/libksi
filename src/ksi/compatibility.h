@@ -28,7 +28,9 @@ int KSI_snprintf(char *buf, size_t n, const char *format, ... );
 int KSI_vsnprintf(char *buf, size_t n, const char *format, va_list va);
 
 /**
- * Platform independent version of strncpy that guarantees NULL terminated destination.
+ * Platform independent version of strncpy that guarantees NULL terminated 
+ * destination. To copy N characters frome source to destination n and size of 
+ * source must be N+1.
  * \param[out]		destination Pointer to destination.
  * \param[in]		source		Pointer to source.
  * \param[in]		n			Maximum number of characters to be copied.

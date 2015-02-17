@@ -213,6 +213,7 @@ EXPORTS
     KSI_TcpClient_setPublicationUrl
     KSI_TcpClient_setExtender
     KSI_TcpClient_setAggregator
+    KSI_TcpClient_setTransferTimeoutSeconds
 
 ;net_uri.h
 	KSI_UriClient_new
