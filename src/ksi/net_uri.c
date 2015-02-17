@@ -248,7 +248,7 @@ int KSI_UriClient_setAggregator(KSI_UriClient *client, const char *uri, const ch
 	int res;
 	char addr[0xffff];
 	struct http_parser_url u;
-	const char *replace;
+	const char *replace = NULL;
 	int c;
 
 	c = getClientByUriScheme(uri, &u, &replace);
