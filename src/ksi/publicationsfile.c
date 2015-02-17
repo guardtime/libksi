@@ -27,10 +27,10 @@ static int publicationsFile_setSignature(KSI_PublicationsFile *t, KSI_PKISignatu
 static int publicationsFile_setSignatureOffset(KSI_PublicationsFile *t, size_t signatureOffset);
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationsFile)
-	KSI_TLV_COMPOSITE(0x0701, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getHeader, publicationsFile_setHeader, KSI_PublicationsHeader)
-	KSI_TLV_COMPOSITE_LIST(0x0702, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getCertificates, publicationsFile_setCertificates, KSI_CertificateRecord)
-	KSI_TLV_COMPOSITE_LIST(0x0703, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getPublications, publicationsFile_setPublications, KSI_PublicationRecord)
-	KSI_TLV_OBJECT(0x0704, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_MORE_DEFS, KSI_PublicationsFile_getSignature, publicationsFile_setSignature, KSI_PKISignature_fromTlv, KSI_PKISignature_toTlv, KSI_PKISignature_free)
+	KSI_TLV_COMPOSITE(0x0701, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getHeader, publicationsFile_setHeader, KSI_PublicationsHeader, "pub_header")
+	KSI_TLV_COMPOSITE_LIST(0x0702, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getCertificates, publicationsFile_setCertificates, KSI_CertificateRecord, "cert_rec")
+	KSI_TLV_COMPOSITE_LIST(0x0703, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getPublications, publicationsFile_setPublications, KSI_PublicationRecord, "pub_rec")
+	KSI_TLV_OBJECT(0x0704, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_MORE_DEFS, KSI_PublicationsFile_getSignature, publicationsFile_setSignature, KSI_PKISignature_fromTlv, KSI_PKISignature_toTlv, KSI_PKISignature_free, "pki_signature")
 	KSI_TLV_SEEK_POS(0x0704, publicationsFile_setSignatureOffset)
 KSI_END_TLV_TEMPLATE
 
@@ -993,7 +993,7 @@ int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_Publicatio
 	KSI_ERR err;
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationRecord *tmp = NULL;
-	size_t i;
+	size_t i = 0;
 	
 	KSI_PRE(&err, rec != NULL) goto cleanup;
 	KSI_PRE(&err, clone != NULL) goto cleanup;

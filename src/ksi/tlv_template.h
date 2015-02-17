@@ -125,6 +125,11 @@ extern "C" {
 		 * Simple function for converting an object into a TLV.
 		 */
 		int (*toTlv)(KSI_CTX *, void *, unsigned, int, int, KSI_TLV **tlv);
+
+		/**
+		 * Free text description of the template.
+		 */
+		const char *descr;
 	};
 
 
@@ -246,10 +251,10 @@ extern "C" {
 	 * \param[in]	fromTlv			Create object from TLV function.
 	 * \param[in]	toTlv			Create TLV from object function.
 	 */
-	#define KSI_TLV_FULL_TEMPLATE_DEF(typ, tg, flg, gttr, sttr, constr, destr, subTmpl, list_append, mul, list_new, list_free, list_len, list_elAt, fromTlv, toTlv) 												\
+	#define KSI_TLV_FULL_TEMPLATE_DEF(typ, tg, flg, gttr, sttr, constr, destr, subTmpl, list_append, mul, list_new, list_free, list_len, list_elAt, fromTlv, toTlv, descr) 												\
 				{ typ, tg, flg , (getter_t)gttr, (setter_t)sttr, (int (*)(KSI_CTX *, void **)) constr, (void (*)(void *)) destr, subTmpl, 																			\
 				(int (*)(void *, void *))list_append, mul, (int (*)(void **)) list_new, (void (*)(void *)) list_free, (int (*)(const void *)) list_len, (int (*)(const void *, int, void **))list_elAt, 	\
-				(int (*)(KSI_TLV *, void **)) fromTlv, (int (*)(KSI_CTX *, void *, unsigned, int, int, KSI_TLV **))toTlv},																										\
+				(int (*)(KSI_TLV *, void **)) fromTlv, (int (*)(KSI_CTX *, void *, unsigned, int, int, KSI_TLV **))toTlv, descr},																										\
 
 	/**
 	 * A helper macro for defining primitive templates.
@@ -259,7 +264,7 @@ extern "C" {
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
-	#define KSI_TLV_PRIMITIVE_TEMPLATE_DEF(typ, tg, flg, gttr, sttr) KSI_TLV_FULL_TEMPLATE_DEF(typ, tg, flg, gttr, sttr, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL)
+	#define KSI_TLV_PRIMITIVE_TEMPLATE_DEF(typ, tg, flg, gttr, sttr, descr) KSI_TLV_FULL_TEMPLATE_DEF(typ, tg, flg, gttr, sttr, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, descr)
 
 	/**
 	 * This macro starts a #KSI_TlvTemplate definition. The definition is ended with #KSI_END_TLV_TEMPLATE .
@@ -277,7 +282,7 @@ extern "C" {
 	 * \param[in]	toTlv			Function to create a TLV from the object.
 	 * \param[in]	destr			Destructor function pointer.
 	 */
-	#define KSI_TLV_OBJECT(tg, flg, gttr, sttr, fromTlv, toTlv, destr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, flg, gttr, sttr, NULL, destr, NULL, NULL, 0, NULL, NULL, NULL, NULL, fromTlv, toTlv)
+	#define KSI_TLV_OBJECT(tg, flg, gttr, sttr, fromTlv, toTlv, destr, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, flg, gttr, sttr, NULL, destr, NULL, NULL, 0, NULL, NULL, NULL, NULL, fromTlv, toTlv, descr)
 
 	/**
 	 * TLV template for #KSI_Utf8String type.
@@ -286,7 +291,7 @@ extern "C" {
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
-	#define KSI_TLV_UTF8_STRING(tg, flg, gttr, sttr) KSI_TLV_OBJECT(tg, flg, gttr, sttr, KSI_Utf8String_fromTlv, KSI_Utf8String_toTlv, KSI_Utf8String_free)
+	#define KSI_TLV_UTF8_STRING(tg, flg, gttr, sttr, descr) KSI_TLV_OBJECT(tg, flg, gttr, sttr, KSI_Utf8String_fromTlv, KSI_Utf8String_toTlv, KSI_Utf8String_free, descr)
 
 	/**
 	 * TLV template for #KSI_Integer type.
@@ -295,7 +300,7 @@ extern "C" {
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
-	#define KSI_TLV_INTEGER(tg, flg, gttr, sttr) KSI_TLV_OBJECT(tg, flg, gttr, sttr, KSI_Integer_fromTlv, KSI_Integer_toTlv, KSI_Integer_free)
+	#define KSI_TLV_INTEGER(tg, flg, gttr, sttr, descr) KSI_TLV_OBJECT(tg, flg, gttr, sttr, KSI_Integer_fromTlv, KSI_Integer_toTlv, KSI_Integer_free, descr)
 
 	/**
 	 * TLV template for #KSI_OctetString type.
@@ -304,7 +309,7 @@ extern "C" {
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
-	#define KSI_TLV_OCTET_STRING(tg, flg, gttr, sttr) KSI_TLV_OBJECT(tg, flg, gttr, sttr, KSI_OctetString_fromTlv, KSI_OctetString_toTlv, KSI_OctetString_free)
+	#define KSI_TLV_OCTET_STRING(tg, flg, gttr, sttr, descr) KSI_TLV_OBJECT(tg, flg, gttr, sttr, KSI_OctetString_fromTlv, KSI_OctetString_toTlv, KSI_OctetString_free, descr)
 
 	/**
 	 * TLV template for #KSI_DataHash type.
@@ -313,7 +318,7 @@ extern "C" {
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
-	#define KSI_TLV_IMPRINT(tg, flg, gttr, sttr) KSI_TLV_OBJECT(tg, flg, gttr, sttr, KSI_DataHash_fromTlv, KSI_DataHash_toTlv, KSI_DataHash_free)
+	#define KSI_TLV_IMPRINT(tg, flg, gttr, sttr, descr) KSI_TLV_OBJECT(tg, flg, gttr, sttr, KSI_DataHash_fromTlv, KSI_DataHash_toTlv, KSI_DataHash_free, descr)
 
 	/**
 	 * This template works as #KSI_TLV_IMPRINT, but performs additional digest format check and
@@ -324,7 +329,7 @@ extern "C" {
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
-	#define KSI_TLV_META_IMPRINT(tg, flg, gttr, sttr) KSI_TLV_OBJECT(tg, flg, gttr, sttr, KSI_DataHash_MetaHash_fromTlv, KSI_DataHash_toTlv, KSI_DataHash_free)
+	#define KSI_TLV_META_IMPRINT(tg, flg, gttr, sttr, descr) KSI_TLV_OBJECT(tg, flg, gttr, sttr, KSI_DataHash_MetaHash_fromTlv, KSI_DataHash_toTlv, KSI_DataHash_free, descr)
 
 	/**
 	 * Native unsigned integer template.
@@ -350,7 +355,7 @@ extern "C" {
 	 * \param[in]	sttr			Setter function.
 	 * \param[in]	obj				Type of object stored in the list.
 	 */
-	#define KSI_TLV_OBJECT_LIST(tg, flg, gttr, sttr, obj) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, flg, gttr, sttr, NULL, NULL, NULL, obj##List_append, 1, obj##List_new, KSI_OctetStringList_free, obj##List_length, obj##List_elementAt, obj##_fromTlv, obj##_toTlv)
+	#define KSI_TLV_OBJECT_LIST(tg, flg, gttr, sttr, obj, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, flg, gttr, sttr, NULL, NULL, NULL, obj##List_append, 1, obj##List_new, KSI_OctetStringList_free, obj##List_length, obj##List_elementAt, obj##_fromTlv, obj##_toTlv, descr)
 
 	/**
 	 * TLV template for list of #KSI_OctetString types.
@@ -359,7 +364,7 @@ extern "C" {
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
-	#define KSI_TLV_OCTET_STRING_LIST(tg, flg, gttr, sttr) KSI_TLV_OBJECT_LIST(tg, flg, gttr, sttr, KSI_OctetString)
+	#define KSI_TLV_OCTET_STRING_LIST(tg, flg, gttr, sttr, descr) KSI_TLV_OBJECT_LIST(tg, flg, gttr, sttr, KSI_OctetString, descr)
 
 	/**
 	 * TLV template for list of #KSI_Utf8String types.
@@ -368,7 +373,7 @@ extern "C" {
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
-	#define KSI_TLV_UTF8_STRING_LIST(tg, flg, gttr, sttr) KSI_TLV_OBJECT_LIST(tg, flg, gttr, sttr, KSI_Utf8String)
+	#define KSI_TLV_UTF8_STRING_LIST(tg, flg, gttr, sttr, descr) KSI_TLV_OBJECT_LIST(tg, flg, gttr, sttr, KSI_Utf8String, descr)
 
 	/**
 	 * TLV template for list of #KSI_Integer types.
@@ -377,7 +382,7 @@ extern "C" {
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 */
-	#define KSI_TLV_INTEGER_LIST(tg, flg, gttr, sttr) KSI_TLV_OBJECT_LIST(tg, flg, gttr, sttr, KSI_Integer)
+	#define KSI_TLV_INTEGER_LIST(tg, flg, gttr, sttr, descr) KSI_TLV_OBJECT_LIST(tg, flg, gttr, sttr, KSI_Integer, descr)
 
 	/**
 	 * TLV template for composite objects.
@@ -387,7 +392,7 @@ extern "C" {
 	 * \param[in]	sttr			Setter function.
 	 * \param[in]	sub				Composite element template.
 	 */
-	#define KSI_TLV_COMPOSITE(tg, flg, gttr, sttr, sub) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_COMPOSITE, tg, flg, gttr, sttr, sub##_new, sub##_free, sub##_template, NULL, 0,  NULL, NULL, NULL, NULL, NULL, NULL)
+	#define KSI_TLV_COMPOSITE(tg, flg, gttr, sttr, sub, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_COMPOSITE, tg, flg, gttr, sttr, sub##_new, sub##_free, sub##_template, NULL, 0,  NULL, NULL, NULL, NULL, NULL, NULL, descr)
 
 	/**
 	 * TLV template for list of composite objects.
@@ -397,26 +402,26 @@ extern "C" {
 	 * \param[in]	sttr			Setter function.
 	 * \param[in]	sub				Composite element template.
 	 */
-	#define KSI_TLV_COMPOSITE_LIST(tg, flg, gttr, sttr, sub) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_COMPOSITE, tg, flg, gttr, sttr, sub##_new, sub##_free, sub##_template, sub##List_append, 1, sub##List_new, sub##List_free, sub##List_length, sub##List_elementAt, NULL, NULL)
+	#define KSI_TLV_COMPOSITE_LIST(tg, flg, gttr, sttr, sub, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_COMPOSITE, tg, flg, gttr, sttr, sub##_new, sub##_free, sub##_template, sub##List_append, 1, sub##List_new, sub##List_free, sub##List_length, sub##List_elementAt, NULL, NULL, descr)
 
 	/**
 	 * A special TLV template to retreive the absolute position of the TLV.
 	 * \param[in]	tg				TLV tag value.
 	 * \param[in]	sttr			Setter function for int value.
 	 */
-	#define KSI_TLV_SEEK_POS(tg, sttr) KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_SEEK_POS, tg, KSI_TLV_TMPL_FLG_NO_SERIALIZE, NULL, sttr)
+	#define KSI_TLV_SEEK_POS(tg, sttr) KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_SEEK_POS, tg, KSI_TLV_TMPL_FLG_NO_SERIALIZE, NULL, sttr, NULL)
 
 	/**
 	 * Stores the value of the parsed element as a #KSI_TLV object.
 	 * \param[in]	tg			TLV tag value
 	 * \param[in]	sttr		Setter function for #KSI_TLV value.
 	 */
-	#define KSI_TLV_UNPROCESSED(tg, sttr) KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_UNPROCESSED, tg, KSI_TLV_TMPL_FLG_NO_SERIALIZE, NULL, sttr)
+	#define KSI_TLV_UNPROCESSED(tg, sttr) KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_UNPROCESSED, tg, KSI_TLV_TMPL_FLG_NO_SERIALIZE, NULL, sttr, NULL)
 
 	/**
 	 * This macro ends the #KSI_TlvTemplate definition started by #KSI_TLV_TEMPLATE.
 	 */
-	#define KSI_END_TLV_TEMPLATE { -1, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL}};
+	#define KSI_END_TLV_TEMPLATE { -1, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL}};
 
 	/**
 	 * Given a TLV object, template and a initialized target payload, this function evaluates the payload objects
