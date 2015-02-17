@@ -1,3 +1,22 @@
+;
+; GUARDTIME CONFIDENTIAL
+;
+; Copyright (C) [2015] Guardtime, Inc
+; All Rights Reserved
+;
+; NOTICE:  All information contained herein is, and remains, the
+; property of Guardtime Inc and its suppliers, if any.
+; The intellectual and technical concepts contained herein are
+; proprietary to Guardtime Inc and its suppliers and may be
+; covered by U.S. and Foreign Patents and patents in process,
+; and are protected by trade secret or copyright law.
+; Dissemination of this information or reproduction of this
+; material is strictly forbidden unless prior written permission
+; is obtained from Guardtime Inc.
+; "Guardtime" and "KSI" are trademarks or registered trademarks of
+; Guardtime Inc.
+;
+
 VERSION 1
 
 
@@ -188,9 +207,9 @@ EXPORTS
     KSI_NetworkClient_getExtenderPass
     KSI_NetworkClient_getAggregatorUser
     KSI_NetworkClient_getAggregatorPass
-	KSI_convertAggregatorStatusCode
-	KSI_convertExtenderStatusCode
-	KSI_UriSplitBasic
+    KSI_convertAggregatorStatusCode
+    KSI_convertExtenderStatusCode
+    KSI_UriSplitBasic
 	
 ;net_http.h
 EXPORTS
@@ -216,12 +235,12 @@ EXPORTS
     KSI_TcpClient_setTransferTimeoutSeconds
 
 ;net_uri.h
-	KSI_UriClient_new
-	KSI_UriClient_init
-	KSI_UriClient_free
-	KSI_UriClient_setPublicationUrl
-	KSI_UriClient_setExtender
-	KSI_UriClient_setAggregator
+    KSI_UriClient_new
+    KSI_UriClient_init
+    KSI_UriClient_free
+    KSI_UriClient_setPublicationUrl
+    KSI_UriClient_setExtender
+    KSI_UriClient_setAggregator
 	
 ;pkitruststore.h
 EXPORTS
@@ -508,7 +527,7 @@ EXPORTS
     KSI_Integer_equals
     KSI_Integer_compare
     KSI_Integer_equalsUInt
-	KSI_Integer_ref
+    KSI_Integer_ref
     KSI_Integer_fromTlv
     KSI_Integer_toTlv
     KSI_OctetString_free
@@ -517,14 +536,14 @@ EXPORTS
     KSI_OctetString_equals
     KSI_OctetString_fromTlv
     KSI_OctetString_toTlv
-	KSI_OctetString_ref
+    KSI_OctetString_ref
     KSI_Utf8String_free
     KSI_Utf8String_new
     KSI_Utf8String_size
     KSI_Utf8String_cstr
     KSI_Utf8String_fromTlv
     KSI_Utf8String_toTlv
-	KSI_Utf8String_ref
+    KSI_Utf8String_ref
     KSI_AggregationAuthRec_free
     KSI_AggregationAuthRec_new
     KSI_AggregationAuthRec_getAggregationTime
