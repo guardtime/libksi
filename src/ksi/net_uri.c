@@ -169,7 +169,6 @@ int getClientByUriScheme(const char *uri, struct http_parser_url *u, const char 
 	if (res == 0 && (u->field_set & (1 << UF_SCHEMA)) != 0) {
 		int i = 0;
 		while (schemeMap[i].scheme != NULL) {
-			unsigned len = 0;
 			if (strlen(schemeMap[i].scheme) == u->field_data[UF_SCHEMA].len &&
 					!strncmp(schemeMap[i].scheme, uri + u->field_data[UF_SCHEMA].off, strlen(schemeMap[i].scheme))) {
 				netClient = schemeMap[i].client;

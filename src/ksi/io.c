@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 
 #include "internal.h"
 #include "io.h"
@@ -325,14 +326,16 @@ cleanup:
 static int readFromSocket(KSI_RDR *rdr, unsigned char *buffer, const size_t size, size_t *readCount) {
 	KSI_ERR err;
 	size_t count = 0;
-
+	
 	KSI_PRE(&err, rdr != NULL) goto cleanup;
 	KSI_PRE(&err, buffer != NULL) goto cleanup;
 	KSI_PRE(&err, readCount != NULL) goto cleanup;
+	KSI_PRE(&err, size < INT_MAX) goto cleanup;
+	
 	KSI_BEGIN(rdr->ctx, &err);
 
 	while (!rdr->eof && count < size) {
-		int c = recv(rdr->data.socketfd, buffer+count, size - count, 0);
+		int c = recv(rdr->data.socketfd, (char*)buffer+count, (int)(size - count), 0);
 
 		if (c < 0) {
 			if(socket_error == socketTimedOut)

@@ -409,12 +409,19 @@ int KSI_ExtendReq_enclose(KSI_ExtendReq *req, char *loginId, char *key, KSI_Exte
 	KSI_ExtendPdu *tmp = NULL;
 	KSI_Header *hdr = NULL;
 	KSI_OctetString *lId = NULL;
-
+	size_t loginLen;
+	
 	if (req == NULL || loginId == NULL || key == NULL || pdu == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
+	loginLen = strlen(loginId);
+	if(loginLen > UINT_MAX){
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	
 	/* Create the pdu */
 	res = KSI_ExtendPdu_new(req->ctx, &tmp);
 	if (res != KSI_OK) goto cleanup;
@@ -423,7 +430,7 @@ int KSI_ExtendReq_enclose(KSI_ExtendReq *req, char *loginId, char *key, KSI_Exte
 	res = KSI_Header_new(req->ctx, &hdr);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_OctetString_new(req->ctx, (unsigned char *)loginId, strlen(loginId), &lId);
+	res = KSI_OctetString_new(req->ctx, (unsigned char *)loginId, (unsigned)loginLen, &lId);
 	if (res != KSI_OK) goto cleanup;
 
 	hdr->loginId = lId;
@@ -555,12 +562,19 @@ int KSI_AggregationReq_enclose(KSI_AggregationReq *req, char *loginId, char *key
 	int res;
 	KSI_AggregationPdu *tmp = NULL;
 	KSI_Header *hdr = NULL;
-
+	size_t loginLen;
+	
 	if (req == NULL || loginId == NULL || key == NULL || pdu == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
+	loginLen = strlen(loginId);
+	if(loginLen > UINT_MAX){
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	
 	/* Create the pdu */
 	res = KSI_AggregationPdu_new(req->ctx, &tmp);
 	if (res != KSI_OK) goto cleanup;
@@ -569,7 +583,7 @@ int KSI_AggregationReq_enclose(KSI_AggregationReq *req, char *loginId, char *key
 	res = KSI_Header_new(req->ctx, &hdr);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_OctetString_new(req->ctx, (unsigned char *)loginId, strlen(loginId), &hdr->loginId);
+	res = KSI_OctetString_new(req->ctx, (unsigned char *)loginId, (unsigned)loginLen, &hdr->loginId);
 	if (res != KSI_OK) goto cleanup;
 
 	/* Add request */

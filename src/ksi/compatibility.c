@@ -21,15 +21,16 @@
 #include "compatibility.h"
 #include <string.h>
 #include <stdio.h>
+#include <limits.h>
 
+/*TODO: Is it possible to avoid pointless buffer filling?*/
 int KSI_vsnprintf(char *buf, size_t n, const char *format, va_list va){
-	int ret;
-	if (n==0 || buf == NULL || format == NULL) return -1;
-	
+	int ret=0;
+	if (n==0 || buf == NULL || format == NULL || n > INT_MAX) return -1;
 #ifdef _WIN32
+	/*NOTE: If there is empty space in buf, it will be filled with 0x00 or 0xfe*/
 	ret = vsnprintf_s(buf, n, _TRUNCATE, format, va);
-	//truncation 
-	if (ret == -1) return n-1; 
+	if (ret == -1) return (int)n-1; 
 #else
 	ret = vsnprintf(buf, n, format, va);
 	if(ret >= n) return n-1;

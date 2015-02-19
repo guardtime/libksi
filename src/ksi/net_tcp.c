@@ -147,7 +147,7 @@ static int readResponse(KSI_RequestHandle *handle) {
     count = 0;
     while (count < handle->request_length) {
     	int c;
-		c = send(sockfd, handle->request, handle->request_length, 0);
+		c = send(sockfd, (char*)handle->request, handle->request_length, 0);
 		if (c < 0) {
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, "Unable to write to socket.");
 			goto cleanup;
@@ -164,13 +164,18 @@ static int readResponse(KSI_RequestHandle *handle) {
 		goto cleanup;
 	}
 
+	if(count > UINT_MAX){
+		KSI_FAIL(&err, KSI_BUFFER_OVERFLOW, "Too much data read from socket.");
+		goto cleanup;
+	}
+	
 	handle->response = KSI_malloc(count);
 	if (handle->response == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 	memcpy(handle->response, buffer, count);
-	handle->response_length = count;
+	handle->response_length = (unsigned)count;
 
 	KSI_SUCCESS(&err);
 

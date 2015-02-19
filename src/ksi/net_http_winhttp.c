@@ -428,7 +428,7 @@ int KSI_HttpClientImpl_init(KSI_HttpClient *http) {
 	KSI_ERR err;
 	HINTERNET session_handle = NULL;
 	ULONG buf;
-	LPWSTR agent_name;
+	LPWSTR agent_name = NULL;
 	int res;
 
 	KSI_PRE(&err, http != NULL) goto cleanup;

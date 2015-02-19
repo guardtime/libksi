@@ -921,7 +921,7 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 		KSI_ExtendResp_getErrorMsg(response, &error);
 
 		KSI_snprintf(buf, sizeof(buf), "Extender error: %s", KSI_Utf8String_cstr(error));
-		KSI_FAIL_EXT(&err, res, KSI_Integer_getUInt64(respStatus), buf);
+		KSI_FAIL_EXT(&err, res, (long)KSI_Integer_getUInt64(respStatus), buf);
 
 		KSI_nofree(error);
 		goto cleanup;
@@ -1888,7 +1888,7 @@ cleanup:
 	return res;
 }
 
-static int verifyCalendarChainWithPublication(KSI_CTX *ctx, KSI_Signature *sig){
+static int verifyCalendarChainWithPublication(KSI_Signature *sig){
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CalendarHashChain *calChain = NULL;
 	KSI_Integer *pubTime = NULL;
@@ -2023,7 +2023,7 @@ static int KSI_Signature_verifyPolicy(KSI_Signature *sig, unsigned *policy, KSI_
 		}
 		
 		if (performVerification(pol, sig,  KSI_VERIFY_CALCHAIN_WITH_PUBLICATION)) {
-			res = verifyCalendarChainWithPublication(ctx, sig);
+			res = verifyCalendarChainWithPublication(sig);
 			KSI_CATCH(&err, res) goto cleanup;
 		}
 		

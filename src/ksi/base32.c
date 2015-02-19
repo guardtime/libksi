@@ -148,12 +148,12 @@ cleanup:
 
 /* Returns -1 when EOF is encountered. */
 static int readNextBits(const unsigned char *data, size_t data_len,
-		int bits_read)
+		size_t bits_read)
 {
 	int ret = 0;
 	size_t first_byte_bits;
 	size_t byte_to_read;
-	int shift_count;
+	size_t shift_count;
 
 	byte_to_read = bits_read / 8;
 

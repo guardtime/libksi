@@ -269,7 +269,7 @@ cleanup:
 static int extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *tmpl, char *buf, size_t buf_len, const size_t buf_size) {
 	KSI_ERR err;
 	int res;
-	size_t len;
+	size_t len=0;
 
 	TLVListIterator iter;
 
@@ -284,7 +284,7 @@ static int extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTempl
 
 	iter.idx = 0;
 
-	len = KSI_snprintf(buf + buf_len, buf_size, "[0x%02x]", KSI_TLV_getTag(tlv));
+	len = KSI_snprintf(buf + buf_len, buf_size - buf_len, "[0x%02x]", KSI_TLV_getTag(tlv));
 
 	res = extractGenerator(ctx, payload, (void *)&iter, tmpl, (int (*)(void *, KSI_TLV **))TLVListIterator_next, buf, buf_len + len, buf_size);
 	KSI_CATCH(&err, res) {

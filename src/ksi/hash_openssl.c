@@ -61,12 +61,18 @@ static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 	KSI_PRE(&err, hasher != NULL) goto cleanup;
 	KSI_PRE(&err, data_hash != NULL) goto cleanup;
 	KSI_BEGIN(hasher->ctx, &err);
+	
+	if (hasher->algorithm > 0xff) {
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Algorithm ID too large.");
+		goto cleanup;
+	}
 
 	hash_length = KSI_getHashLength(hasher->algorithm);
 	if (hash_length == 0) {
 		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Error finding digest length.");
 		goto cleanup;
 	}
+
 
 	EVP_DigestFinal(hasher->hashContext, data_hash->imprint + 1, &data_hash->imprint_length);
 
@@ -76,7 +82,7 @@ static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 		goto cleanup;
 	}
 
-	data_hash->imprint[0] = hasher->algorithm;
+	data_hash->imprint[0] = (0xff & hasher->algorithm);
 	data_hash->imprint_length++;
 
 	KSI_SUCCESS(&err);
