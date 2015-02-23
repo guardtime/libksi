@@ -190,7 +190,7 @@ int KSI_UriClient_setExtender(KSI_UriClient *client, const char *uri, const char
 	int res;
 	char addr[0xffff];
 	struct http_parser_url u;
-	const char *replace;
+	const char *replace = NULL;
 	int c;
 
 	c = getClientByUriScheme(uri, &u, &replace);
@@ -291,6 +291,40 @@ int KSI_UriClient_setAggregator(KSI_UriClient *client, const char *uri, const ch
 		default:
 			res = KSI_UNKNOWN_ERROR;
 			goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_UriClient_setConnectionTimeoutSeconds(KSI_UriClient *client, int timeout) {
+	int res;
+
+	if(client->httpClient){
+		res = KSI_HttpClient_setConnectTimeoutSeconds(client->httpClient, timeout);
+		if(res != KSI_OK) goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_UriClient_setTransferTimeoutSeconds(KSI_UriClient *client, int timeout) {
+	int res;
+
+	if(client->httpClient){
+		res = KSI_HttpClient_setReadTimeoutSeconds(client->httpClient, timeout);
+		if(res != KSI_OK) goto cleanup;
+	}
+	if(client->tcpClient){
+		res = KSI_TcpClient_setTransferTimeoutSeconds(client->tcpClient, timeout);
+		if(res != KSI_OK) goto cleanup;
 	}
 
 	res = KSI_OK;

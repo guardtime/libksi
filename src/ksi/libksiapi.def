@@ -153,6 +153,11 @@ EXPORTS
     KSI_getPublicationsFile
     KSI_setPublicationCertEmail
     KSI_CTX_setRequestHeaderCallback
+    KSI_CTX_setPublicationUrl
+    KSI_CTX_setExtender
+    KSI_CTX_setAggregator
+    KSI_CTX_setTransferTimeoutSeconds
+    KSI_CTX_setConnectionTimeoutSeconds
 
 ;list.h
 EXPORTS
@@ -241,6 +246,8 @@ EXPORTS
     KSI_UriClient_setPublicationUrl
     KSI_UriClient_setExtender
     KSI_UriClient_setAggregator
+    KSI_UriClient_setTransferTimeoutSeconds
+    KSI_UriClient_setConnectionTimeoutSeconds
 	
 ;pkitruststore.h
 EXPORTS

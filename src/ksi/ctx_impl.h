@@ -59,7 +59,9 @@ extern "C" {
 		/************
 		 * TRANSPORT.
 		 ************/
-
+		
+		int isCustomNetProvider;
+		
 		KSI_NetworkClient *netProvider;
 
 		KSI_PKITruststore *pkiTruststore;
