@@ -36,12 +36,17 @@
 
 #define FLAGSET(tmpl, flg) (((tmpl).flags & flg) != 0)
 
-static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, const KSI_TlvTemplate *tmpl, int (*generator)(void *, KSI_TLV **), char *buf, size_t buf_len, const size_t buf_size);
-static int extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *tmpl, char *buf, size_t buf_len, const size_t buf_size);
+struct tlv_track_s {
+	unsigned tag;
+	const char *desc;
+};
+
+static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, const KSI_TlvTemplate *tmpl, int (*generator)(void *, KSI_TLV **), struct tlv_track_s *tr, size_t tr_len, size_t tr_size);
+static int extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *tmpl, struct tlv_track_s *tr, size_t tr_len, size_t tr_size);
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_CalAuthRecPKISignedData)
 	KSI_TLV_UTF8_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getSigType, KSI_PKISignedData_setSigType, "sign_data")
-	KSI_TLV_OCTET_STRING(0x02, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getSignatureValue, KSI_PKISignedData_setSignatureValue, "signature")
+	KSI_TLV_OCTET_STRING(0x02, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getSignatureValue, KSI_PKISignedData_setSignatureValue, "pki_signature")
 	KSI_TLV_OCTET_STRING(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PKISignedData_getCertId, KSI_PKISignedData_setCertId, "cert_id")
 	KSI_TLV_OBJECT(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_PKISignedData_getCertRepositoryUri, KSI_PKISignedData_setCertRepositoryUri, KSI_Utf8StringNZ_fromTlv, KSI_Utf8StringNZ_toTlv, KSI_Utf8String_free, "cert_rep_uri")
 KSI_END_TLV_TEMPLATE
@@ -122,7 +127,7 @@ KSI_END_TLV_TEMPLATE
 KSI_DEFINE_TLV_TEMPLATE(KSI_CalendarAuthRec)
 	KSI_TLV_COMPOSITE(0x10, KSI_TLV_TMPL_FLG_FORWARD | KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_MORE_DEFS, KSI_CalendarAuthRec_getPublishedData, KSI_CalendarAuthRec_setPublishedData, KSI_PublicationData, "pub_data")
 	KSI_TLV_UNPROCESSED(0x10, KSI_CalendarAuthRec_setSignedData)
-	KSI_TLV_COMPOSITE(0x0b, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarAuthRec_getSignatureData, KSI_CalendarAuthRec_setSignatureData, KSI_CalAuthRecPKISignedData, "signature")
+	KSI_TLV_COMPOSITE(0x0b, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarAuthRec_getSignatureData, KSI_CalendarAuthRec_setSignatureData, KSI_CalAuthRecPKISignedData, "pki_signature")
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationReq)
@@ -184,6 +189,21 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendPdu)
 	KSI_TLV_OBJECT(0x302, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_ExtendPdu_getResponse, KSI_ExtendPdu_setResponse, KSI_ExtendResp_fromTlv, KSI_ExtendResp_toTlv, KSI_ExtendResp_free, "ext_resp")
 	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendPdu_getHmac, KSI_ExtendPdu_setHmac, "hmac")
 KSI_END_TLV_TEMPLATE
+
+static char *track_str(struct tlv_track_s *tr, size_t tr_len, size_t tr_size, char *buf, size_t buf_len) {
+	size_t len = 0;
+	size_t i;
+
+	for (i = 0; i < tr_len && i < tr_size; i++) {
+		if (i != 0) len += KSI_snprintf(buf + len, buf_len - len, "->");
+		len += KSI_snprintf(buf + len, buf_len - len, "[0x%02x]%s", tr[i].tag, tr[i].desc != NULL ? tr[i].desc : "");
+	}
+	if (tr_len >= tr_size) {
+		KSI_snprintf(buf + len, buf_len - len, "->...");
+	}
+
+	return buf;
+}
 
 static int storeObjectValue(KSI_CTX *ctx, const KSI_TlvTemplate *tmpl, void *payload, void *val) {
 	KSI_ERR err;
@@ -266,11 +286,9 @@ cleanup:
 	return res;
 }
 
-static int extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *tmpl, char *buf, size_t buf_len, const size_t buf_size) {
+static int extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *tmpl, struct tlv_track_s *tr, size_t tr_len, size_t tr_size) {
 	KSI_ERR err;
 	int res;
-	size_t len=0;
-
 	TLVListIterator iter;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -284,11 +302,15 @@ static int extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTempl
 
 	iter.idx = 0;
 
-	len = KSI_snprintf(buf + buf_len, buf_size - buf_len, "[0x%02x]", KSI_TLV_getTag(tlv));
+	if (tr_len < tr_size) {
+		tr[tr_len].tag = KSI_TLV_getTag(tlv);
+		tr[tr_len].desc = NULL;
+	}
 
-	res = extractGenerator(ctx, payload, (void *)&iter, tmpl, (int (*)(void *, KSI_TLV **))TLVListIterator_next, buf, buf_len + len, buf_size);
+	res = extractGenerator(ctx, payload, (void *)&iter, tmpl, (int (*)(void *, KSI_TLV **))TLVListIterator_next, tr, tr_len + 1, tr_size);
 	KSI_CATCH(&err, res) {
-		KSI_LOG_debug(ctx, "Unable to parse TLV: %s", buf);
+		char buf[1024];
+		KSI_LOG_debug(ctx, "Unable to parse TLV: %s", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));
 		goto cleanup;
 	}
 
@@ -302,9 +324,9 @@ cleanup:
 
 int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *tmpl) {
 	int res = KSI_UNKNOWN_ERROR;
-	char buf[0xffff];
-	*buf = '\0';
-	res = extract(ctx, payload, tlv, tmpl, buf, 0, sizeof(buf));
+	struct tlv_track_s tr[0xf];
+
+	res = extract(ctx, payload, tlv, tmpl, tr, 0, sizeof(tr));
 	if (res != KSI_OK) {
 		KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Parsed tlv at failure", tlv);
 	}
@@ -315,9 +337,7 @@ int KSI_TlvTemplate_parse(KSI_CTX *ctx, unsigned char *raw, unsigned raw_len, co
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tlv = NULL;
-	char buf[0xfff];
-
-	*buf = '\0';
+	struct tlv_track_s tr[0xf];
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, raw != NULL) goto cleanup;
@@ -329,7 +349,7 @@ int KSI_TlvTemplate_parse(KSI_CTX *ctx, unsigned char *raw, unsigned raw_len, co
 	res = KSI_TLV_parseBlob2(ctx, raw, raw_len, 0, &tlv);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = extract(ctx, payload, tlv, tmpl, buf, 0, sizeof(buf));
+	res = extract(ctx, payload, tlv, tmpl, tr, 0, sizeof(tr));
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Parsed TLV", tlv);
@@ -354,10 +374,11 @@ static size_t getTemplateLength(const KSI_TlvTemplate *tmpl) {
 	return len;
 }
 
-static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, const KSI_TlvTemplate *tmpl, int (*generator)(void *, KSI_TLV **), char *buf, size_t buf_len, const size_t buf_size) {
+static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, const KSI_TlvTemplate *tmpl, int (*generator)(void *, KSI_TLV **), struct tlv_track_s *tr, size_t tr_len, size_t tr_size) {
 	KSI_ERR err;
 	KSI_TLV *tlv = NULL;
 	int res;
+	char buf[1024];
 
 	KSI_uint64_t uint64Val = 0;
 	void *voidVal = NULL;
@@ -390,16 +411,19 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 
 		if (tlv == NULL) break;
 
-		KSI_LOG_trace(ctx, "Starting to parse TLV(0x%02x)", KSI_TLV_getTag(tlv));
-		len = KSI_snprintf(buf + buf_len, buf_size - buf_len, "[0x%02x]", KSI_TLV_getTag(tlv));
+		KSI_LOG_trace(ctx, "Starting to parse TLV[0x%02x]", KSI_TLV_getTag(tlv));
+
+		if (tr_len < tr_size) {
+			tr[tr_len].tag = KSI_TLV_getTag(tlv);
+			tr[tr_len].desc = NULL;
+		}
 
 		for (i = tmplStart; i < template_len; i++) {
 			if (tmpl[i].tag != KSI_TLV_getTag(tlv)) continue;
 			if (i == tmplStart && !tmpl[i].multiple) tmplStart++;
 
-			if (tmpl[i].descr != NULL) {
-				len += KSI_snprintf(buf + buf_len + len, buf_size - buf_len - len, "%s", tmpl[i].descr);
-			}
+			tr[tr_len].desc = tmpl[i].descr;
+
 			matchCount++;
 			templateHit[i] = true;
 			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G0) != 0) groupHit[0] = true;
@@ -476,17 +500,14 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 					break;
 				case KSI_TLV_TEMPLATE_COMPOSITE:
 				{
-					size_t last_len = len;
 					KSI_LOG_trace(ctx, "Detected composite template for TLV value extraction.");
 
 					res = tmpl[i].construct(ctx, &compositeVal);
 					KSI_CATCH(&err, res) goto cleanup;
 
-					len += KSI_snprintf(buf + buf_len + len, buf_size - buf_len - len, "->");
-
-					res = extract(ctx, compositeVal, tlv, tmpl[i].subTemplate, buf, buf_len + len, buf_size);
+					res = extract(ctx, compositeVal, tlv, tmpl[i].subTemplate, tr, tr_len + 1, tr_size);
 					KSI_CATCH(&err, res) {
-						KSI_LOG_error(ctx, "Unable to parse composite TLV: %s", buf);
+						KSI_LOG_error(ctx, "Unable to parse composite TLV: %s", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));
 						tmpl[i].destruct(compositeVal);
 						goto cleanup;
 					}
@@ -494,11 +515,7 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 					res = storeObjectValue(ctx, &tmpl[i], payload, (void *)compositeVal);
 					KSI_CATCH(&err, res) goto cleanup;
 
-					KSI_LOG_trace(ctx, "Composite value %s extracted.", buf);
-
 					/* Reset the buffer. */
-					buf[len = last_len] = '\0';
-
 					break;
 				}
 				default:
@@ -513,27 +530,24 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 
 		/* Check if a match was found, an raise an error if the TLV is marked as critical. */
 		if (matchCount == 0 && !KSI_TLV_isNonCritical(tlv)) {
-			KSI_LOG_error(ctx, "Unknown critical tag: %s", buf);
+			KSI_LOG_error(ctx, "Unknown critical tag: %s", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
 			goto cleanup;
 		}
-
-		buf[buf_len] = '\0';
 	}
-
 
 	/* Check that every mandatory component was present. */
 	for (i = 0; i < template_len; i++) {
 		char errm[100];
 		if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY) != 0 && !templateHit[i]) {
-			KSI_snprintf(errm, sizeof(errm), "Mandatory element missing: %s->[0x%x]%s", buf, tmpl[i].tag, tmpl[i].descr != NULL ? tmpl[i].descr : "");
+			KSI_snprintf(errm, sizeof(errm), "Mandatory element missing: %s->[0x%x]%s", track_str(tr, tr_len, tr_size, buf, sizeof(buf)), tmpl[i].tag, tmpl[i].descr != NULL ? tmpl[i].descr : "");
 			KSI_LOG_debug(ctx, "%s", errm);
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
 			goto cleanup;
 		}
 		if (((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G0) != 0 && !groupHit[0]) ||
 				((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G1) != 0 && !groupHit[1])) {
-			KSI_snprintf(errm, sizeof(errm), "Mandatory group missing: %s->[0x%x]%s", buf, tmpl[i].tag, tmpl[i].descr != NULL ? tmpl[i].descr : "");
+			KSI_snprintf(errm, sizeof(errm), "Mandatory group missing: %s->[0x%x]%s", track_str(tr, tr_len, tr_size, buf, sizeof(buf)), tmpl[i].tag, tmpl[i].descr != NULL ? tmpl[i].descr : "");
 			KSI_LOG_debug(ctx, "%s", errm);
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
 			goto cleanup;
@@ -551,12 +565,11 @@ cleanup:
 }
 
 int KSI_TlvTemplate_extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, const KSI_TlvTemplate *tmpl, int (*generator)(void *, KSI_TLV **)) {
-	char buf[0xffff];
-	*buf = '\0';
+	struct tlv_track_s buf[0xf];
 	return extractGenerator(ctx, payload, generatorCtx, tmpl, generator, buf, 0, sizeof(buf));
 }
 
-static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_TlvTemplate *tmpl, char *buf, size_t buf_len, const size_t buf_size) {
+static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_TlvTemplate *tmpl, struct tlv_track_s *tr, size_t tr_len, const size_t tr_size) {
 	KSI_ERR err;
 	int res;
 	KSI_TLV *tmp = NULL;
@@ -570,6 +583,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 	bool oneOf[2] = {false, false};
 
 	size_t i;
+	char buf[1000];
 
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
 	KSI_PRE(&err, tmpl != NULL) goto cleanup;
@@ -590,7 +604,11 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 		KSI_CATCH(&err, res) goto cleanup;
 
 		if (payloadp != NULL) {
-			size_t len = KSI_snprintf(buf, buf_size - buf_len, "[%02x]%s", tmpl[i].tag, tmpl[i].descr == NULL ? "" : tmpl[i].descr);
+			/* Register for tracking. */
+			if (tr_len < tr_size) {
+				tr[tr_len].tag = tmpl[i].tag;
+				tr[tr_len].desc = tmpl[i].descr;
+			}
 
 			templateHit[i] = true;
 
@@ -598,13 +616,17 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G1) != 0) groupHit[1] = true;
 			if (FLAGSET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G0)) {
 				if (oneOf[0]) {
-					KSI_FAIL(&err, KSI_INVALID_FORMAT, "Mutually exclusive elements present within group 0.");
+					char errm[1000];
+					KSI_snprintf(errm, sizeof(errm), "Mutually exclusive elements present within group 0 (%s).", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));
+					KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
 				}
 				oneOf[0] = true;
 			}
 			if (FLAGSET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G1)) {
 				if (oneOf[1]) {
-					KSI_FAIL(&err, KSI_INVALID_FORMAT, "Mutually exclusive elements present within group 0.");
+					char errm[1000];
+					KSI_snprintf(errm, sizeof(errm), "Mutually exclusive elements present within group 1 (%s).", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));
+					KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
 				}
 				oneOf[1] = true;
 			}
@@ -646,11 +668,8 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 
 					break;
 				case KSI_TLV_TEMPLATE_COMPOSITE:
-					len += KSI_snprintf(buf + buf_len + len, buf_size - buf_len - len, "->");
-
 					if (tmpl[i].listLength != NULL) {
 						int j;
-
 
 						for (j = 0; j < tmpl[i].listLength(payloadp); j++) {
 							void *listElement = NULL;
@@ -661,7 +680,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 							res = tmpl[i].listElementAt(payloadp, j, &listElement);
 							KSI_CATCH(&err, res) goto cleanup;
 
-							res = construct(ctx, tmp, listElement, tmpl[i].subTemplate, buf, buf_len + len, buf_size);
+							res = construct(ctx, tmp, listElement, tmpl[i].subTemplate, tr, tr_len + 1, tr_size);
 							KSI_CATCH(&err, res) goto cleanup;
 
 							res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
@@ -672,7 +691,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 						res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, tmpl[i].tag, isNonCritical, isForward, &tmp);
 						KSI_CATCH(&err, res) goto cleanup;
 
-						res = construct(ctx, tmp, payloadp, tmpl[i].subTemplate, buf, buf_len + len, buf_size);
+						res = construct(ctx, tmp, payloadp, tmpl[i].subTemplate, tr, tr_len + 1, tr_size);
 						KSI_CATCH(&err, res) goto cleanup;
 
 						res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
@@ -688,20 +707,18 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 		}
 	}
 
-	buf[buf_len] = '\0';
-
 	/* Check that every mandatory component was present. */
 	for (i = 0; i < template_len; i++) {
-		char errm[100];
+		char errm[1000];
 		if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY) != 0 && !templateHit[i]) {
-			KSI_snprintf(errm, sizeof(errm), "Mandatory element missing: %s->[0x%02x]%s", buf, tmpl[i].tag, tmpl[i].descr == NULL ? "" : tmpl[i].descr);
+			KSI_snprintf(errm, sizeof(errm), "Mandatory element missing: %s->[0x%02x]%s", track_str(tr, tr_len, tr_size, buf, sizeof(buf)), tmpl[i].tag, tmpl[i].descr == NULL ? "" : tmpl[i].descr);
 			KSI_LOG_debug(ctx, "%s", errm);
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
 			goto cleanup;
 		}
 		if (((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G0) != 0 && !groupHit[0]) ||
 				((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G1) != 0 && !groupHit[1])) {
-			KSI_snprintf(errm, sizeof(errm), "Mandatory group missing: %s->[0x%02x]%s", buf, tmpl[i].tag, tmpl[i].descr == NULL ? "" : tmpl[i].descr);
+			KSI_snprintf(errm, sizeof(errm), "Mandatory group missing: %s->[0x%02x]%s", track_str(tr, tr_len, tr_size, buf, sizeof(buf)), tmpl[i].tag, tmpl[i].descr == NULL ? "" : tmpl[i].descr);
 			KSI_LOG_debug(ctx, "%s", errm);
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
 			goto cleanup;
@@ -721,9 +738,8 @@ cleanup:
 }
 
 int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_TlvTemplate *tmpl) {
-	char buf[0xffff];
-	buf[0] = '\0';
-	return construct(ctx, tlv, payload, tmpl, buf, 0, sizeof(buf));
+	struct tlv_track_s tr[0xf];
+	return construct(ctx, tlv, payload, tmpl, tr, 0, sizeof(tr));
 }
 
 int KSI_TlvTemplate_deepCopy(KSI_CTX *ctx, const void *from, const KSI_TlvTemplate *baseTemplate, void *to) {
