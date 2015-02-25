@@ -185,17 +185,23 @@ cleanup:
 	return res;
 }
 
-void KSI_HttpClient_free(KSI_HttpClient *http) {
+static void HttpClient_free(KSI_HttpClient *http) {
 	if (http != NULL) {
 		KSI_free(http->urlAggregator);
 		KSI_free(http->urlExtender);
 		KSI_free(http->urlPublication);
 		KSI_free(http->agentName);
-
+		
 		if (http->implCtx_free != NULL) http->implCtx_free(http->implCtx);
 		KSI_free(http);
 	}
 }
+
+/*TODO is it always safe?*/
+void KSI_HttpClient_free(KSI_HttpClient *http) {
+	KSI_NetworkClient_free((KSI_NetworkClient*)http);
+}
+
 
 /**
  *
@@ -220,7 +226,7 @@ int KSI_HttpClient_init(KSI_CTX *ctx, KSI_HttpClient *client) {
 	client->parent.sendExtendRequest = prepareExtendRequest;
 	client->parent.sendSignRequest = prepareAggregationRequest;
 	client->parent.sendPublicationRequest = preparePublicationsFileRequest;
-	client->parent.implFree = (void (*)(void *))KSI_HttpClient_free;
+	client->parent.implFree = (void (*)(void *))HttpClient_free;
 
 
 	setIntParam(&client->connectionTimeoutSeconds, 10);
