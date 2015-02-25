@@ -194,10 +194,16 @@ static char *track_str(struct tlv_track_s *tr, size_t tr_len, size_t tr_size, ch
 	size_t len = 0;
 	size_t i;
 
+	/* Make sure, the return value is null-terminated. */
+	buf[0] = '\0';
+
+	/* Generate the printable result string, by sepparating values with "->" */
 	for (i = 0; i < tr_len && i < tr_size; i++) {
 		if (i != 0) len += KSI_snprintf(buf + len, buf_len - len, "->");
 		len += KSI_snprintf(buf + len, buf_len - len, "[0x%02x]%s", tr[i].tag, tr[i].desc != NULL ? tr[i].desc : "");
 	}
+
+	/* Just in case the buffer was too short, but in real life, this should not happen with correct KSI objects. */
 	if (tr_len >= tr_size) {
 		KSI_snprintf(buf + len, buf_len - len, "->...");
 	}
