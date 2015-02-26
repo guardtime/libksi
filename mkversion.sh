@@ -34,7 +34,7 @@ function inc {
 }
 
 if [ $# -ne 1 ]; then 
-	echo "Usage $0 [major | minor | build] ..."
+	echo "Usage $0 [major | minor | patch | build] ..."
 	exit
 fi
 
@@ -45,8 +45,11 @@ case "$1" in
 	"minor" )
 		inc 1
 		;;
+    "patch" )
+		inc 2
+		;;
 	"build" )
-		inc 2 
+		inc 3 
 		;;
 	*)
 		echo "Unknown parameter"
