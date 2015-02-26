@@ -185,7 +185,7 @@ cleanup:
 	return res;
 }
 
-static void HttpClient_free(KSI_HttpClient *http) {
+static void httpClient_free(KSI_HttpClient *http) {
 	if (http != NULL) {
 		KSI_free(http->urlAggregator);
 		KSI_free(http->urlExtender);
@@ -197,7 +197,6 @@ static void HttpClient_free(KSI_HttpClient *http) {
 	}
 }
 
-/*TODO is it always safe?*/
 void KSI_HttpClient_free(KSI_HttpClient *http) {
 	KSI_NetworkClient_free((KSI_NetworkClient*)http);
 }
@@ -226,7 +225,7 @@ int KSI_HttpClient_init(KSI_CTX *ctx, KSI_HttpClient *client) {
 	client->parent.sendExtendRequest = prepareExtendRequest;
 	client->parent.sendSignRequest = prepareAggregationRequest;
 	client->parent.sendPublicationRequest = preparePublicationsFileRequest;
-	client->parent.implFree = (void (*)(void *))HttpClient_free;
+	client->parent.implFree = (void (*)(void *))httpClient_free;
 
 
 	setIntParam(&client->connectionTimeoutSeconds, 10);
