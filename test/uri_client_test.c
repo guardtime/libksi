@@ -49,6 +49,7 @@ static 	const char *validHttpUri[] = {
 		NULL
 };
 
+
 static const char *validTcpUri[] = {
 		"ksi+tcp://localhost:1234",
 		"ksi+tcp://127.0.0.1:1234",
