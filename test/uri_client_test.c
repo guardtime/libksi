@@ -30,10 +30,14 @@
 extern KSI_CTX *ctx;
 
 static 	const char *validHttpUri[] = {
+		"ksi://localhost",
+		"ksi://127.0.0.1",
 		"ksi+http://localhost",
 		"ksi+http://127.0.0.1",
 		"http://localhost",
 		"http://127.0.0.1",
+		"ksi://localhost:12345",
+		"ksi://127.0.0.1:12345",
 		"ksi+http://localhost:1234",
 		"ksi+http://127.0.0.1:1234",
 		"http://localhost:1234",
