@@ -303,3 +303,37 @@ cleanup:
 
 	return res;
 }
+
+int KSI_UriClient_setConnectionTimeoutSeconds(KSI_UriClient *client, int timeout) {
+	int res;
+
+	if(client->httpClient){
+		res = KSI_HttpClient_setConnectTimeoutSeconds(client->httpClient, timeout);
+		if(res != KSI_OK) goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_UriClient_setTransferTimeoutSeconds(KSI_UriClient *client, int timeout) {
+	int res;
+
+	if(client->httpClient){
+		res = KSI_HttpClient_setReadTimeoutSeconds(client->httpClient, timeout);
+		if(res != KSI_OK) goto cleanup;
+	}
+	if(client->tcpClient){
+		res = KSI_TcpClient_setTransferTimeoutSeconds(client->tcpClient, timeout);
+		if(res != KSI_OK) goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}

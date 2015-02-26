@@ -346,7 +346,7 @@ cleanup:
 	return res;
 }
 
-void KSI_TcpClient_free(KSI_TcpClient *tcp) {
+static void tcpClient_free(KSI_TcpClient *tcp) {
 	if (tcp != NULL) {
 		KSI_free(tcp->aggrHost);
 		KSI_free(tcp->extHost);
@@ -354,6 +354,11 @@ void KSI_TcpClient_free(KSI_TcpClient *tcp) {
 		KSI_free(tcp);
 	}
 }
+
+void KSI_TcpClient_free(KSI_TcpClient *tcp) {
+	KSI_NetworkClient_free((KSI_NetworkClient*)tcp);
+}
+
 
 /**
  *
@@ -385,7 +390,7 @@ int KSI_TcpClient_init(KSI_CTX *ctx, KSI_TcpClient *client) {
 	client->parent.sendExtendRequest = prepareExtendRequest;
 	client->parent.sendSignRequest = prepareAggregationRequest;
 	client->parent.sendPublicationRequest = sendPublicationRequest;
-	client->parent.implFree = (void (*)(void *))KSI_TcpClient_free;
+	client->parent.implFree = (void (*)(void *))tcpClient_free;
 
 	KSI_SUCCESS(&err);
 

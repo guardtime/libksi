@@ -67,6 +67,8 @@ extern "C" {
 	int KSI_UriClient_setExtender(KSI_UriClient *client, const char *uri, const char *loginId, const char *key);
 	int KSI_UriClient_setAggregator(KSI_UriClient *client, const char *uri, const char *loginId, const char *key);
 
+	int KSI_UriClient_setTransferTimeoutSeconds(KSI_UriClient *client, int timeout);
+	int KSI_UriClient_setConnectionTimeoutSeconds(KSI_UriClient *client, int timeout);
 
 #ifdef __cplusplus
 }

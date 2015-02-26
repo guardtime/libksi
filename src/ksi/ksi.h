@@ -508,6 +508,12 @@ int KSI_CTX_setLoggerCallback(KSI_CTX *ctx, KSI_LoggerCallback cb, void *logCtx)
  */
 int KSI_CTX_setRequestHeaderCallback(KSI_CTX *ctx, KSI_RequestHeaderCallback cb);
 
+int KSI_CTX_setPublicationUrl(KSI_CTX *ctx, const char *uri);
+int KSI_CTX_setExtender(KSI_CTX *ctx, const char *uri, const char *loginId, const char *key);
+int KSI_CTX_setAggregator(KSI_CTX *ctx, const char *uri, const char *loginId, const char *key);
+int KSI_CTX_setTransferTimeoutSeconds(KSI_CTX *ctx, int timeout);
+int KSI_CTX_setConnectionTimeoutSeconds(KSI_CTX *ctx, int timeout);
+
 int KSI_getPKITruststore(KSI_CTX *ctx, KSI_PKITruststore **pki);
 int KSI_getNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient **net);
 int KSI_setPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile *var);
