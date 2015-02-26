@@ -139,6 +139,7 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSITest_Publicationsfile_getSuite);
 	addSuite(suite, KSITest_Truststore_getSuite);
 	addSuite(suite, KSITest_compatibility_getSuite);
+	addSuite(suite, KSITest_uriClient_getSuite);
 	
 	return suite;
 }
