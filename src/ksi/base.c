@@ -858,7 +858,7 @@ int KSI_setPublicationCertEmail(KSI_CTX *ctx, const char *email) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
-
+	
 	if (email != NULL && email[0] != '\0') {
 		size_t len = strlen(email);
 		tmp = KSI_calloc(len + 1, 1);
@@ -870,6 +870,7 @@ int KSI_setPublicationCertEmail(KSI_CTX *ctx, const char *email) {
 		memcpy(tmp, email, len + 1);
 	}
 
+	KSI_free(ctx->publicationCertEmail);
 	ctx->publicationCertEmail = tmp;
 	tmp = NULL;
 
