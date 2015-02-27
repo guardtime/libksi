@@ -880,3 +880,10 @@ cleanup:
 	return res;
 }
 CTX_VALUEP_GETTER(publicationCertEmail, PublicationCertEmail, const char)
+
+const char* KSI_getVersion(void){
+#ifdef VERSION
+	return VERSION;
+#endif
+	return NULL;
+}

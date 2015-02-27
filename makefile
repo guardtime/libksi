@@ -66,6 +66,8 @@ OUT_DIR = out
 LIB_DIR = $(OUT_DIR)\$(DLL)
 BIN_DIR = $(OUT_DIR)\bin
 
+VER = \
+!INCLUDE <VERSION>
 
 
 default:
@@ -76,33 +78,33 @@ default:
 all: libraries example tests
 
 libraries: libMT libMTd libMD libMDd dllMT dllMTd dllMD dllMDd
-	
-	
+
+
 libMT:
-	nmake DLL=lib RTL=MT $(EXTRA) 
+	nmake DLL=lib RTL=MT $(EXTRA) VER=$(VER)
 
 libMTd:
-	nmake DLL=lib RTL=MTd $(EXTRA)
+	nmake DLL=lib RTL=MTd $(EXTRA) VER=$(VER)
 
 libMD:
-	nmake DLL=lib RTL=MD $(EXTRA)
+	nmake DLL=lib RTL=MD $(EXTRA) VER=$(VER)
 
 libMDd:
-	nmake DLL=lib RTL=MDd $(EXTRA)
+	nmake DLL=lib RTL=MDd $(EXTRA) VER=$(VER)
 
 	
 
 dllMT:
-	nmake DLL=dll RTL=MT $(EXTRA)
+	nmake DLL=dll RTL=MT $(EXTRA) VER=$(VER)
 
 dllMTd:
-	nmake DLL=dll RTL=MTd $(EXTRA)	
+	nmake DLL=dll RTL=MTd $(EXTRA) VER=$(VER)
 
 dllMD:
-	nmake DLL=dll RTL=MD $(EXTRA)	
+	nmake DLL=dll RTL=MD $(EXTRA) VER=$(VER)
 
 dllMDd:
-	nmake DLL=dll RTL=MDd $(EXTRA)	
+	nmake DLL=dll RTL=MDd $(EXTRA) VER=$(VER)
 
 	
 	
