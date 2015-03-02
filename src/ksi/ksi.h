@@ -228,6 +228,14 @@ enum KSI_StatusCode {
 	 */
 	KSI_UNKNOWN_ERROR = 0xffff
 };
+
+/**
+ * This function returns a pointer to a constant string describing the
+ * version number of the package.
+ * \return A constant pointer to a sring.
+ */
+const char *KSI_getVersion(void);
+
 /**
  * Function to convert a #KSI_StatusCode value to a human readable
  * string value.
