@@ -22,6 +22,7 @@
 
 #include "internal.h"
 
+#include "net.h"
 #include "net_uri.h"
 #include "net_uri_impl.h"
 #include "net_tcp.h"
@@ -88,6 +89,14 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+static void uriClient_free(KSI_UriClient *client) {
+	if (client != NULL) {
+		KSI_HttpClient_free(client->httpClient);
+		KSI_TcpClient_free(client->tcpClient);
+		KSI_free(client);
+	}
+}
+
 int KSI_UriClient_init(KSI_CTX *ctx, KSI_UriClient *client) {
 	KSI_ERR err;
 	int res;
@@ -108,7 +117,7 @@ int KSI_UriClient_init(KSI_CTX *ctx, KSI_UriClient *client) {
 	client->parent.sendExtendRequest = prepareExtendRequest;
 	client->parent.sendSignRequest = prepareAggregationRequest;
 	client->parent.sendPublicationRequest = sendPublicationRequest;
-	client->parent.implFree = (void (*)(void *))KSI_UriClient_free;
+	client->parent.implFree = (void (*)(void *))uriClient_free;
 
 	KSI_SUCCESS(&err);
 
@@ -118,13 +127,8 @@ cleanup:
 }
 
 void KSI_UriClient_free(KSI_UriClient *client) {
-	if (client != NULL) {
-		KSI_HttpClient_free(client->httpClient);
-		KSI_TcpClient_free(client->tcpClient);
-		KSI_free(client);
-	}
+	KSI_NetworkClient_free((KSI_NetworkClient *) client);
 }
-
 int KSI_UriClient_setPublicationUrl(KSI_UriClient *client, const char *val) {
 	int res = KSI_UNKNOWN_ERROR;
 
