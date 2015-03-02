@@ -1,3 +1,23 @@
+/**************************************************************************
+ *
+ * GUARDTIME CONFIDENTIAL
+ *
+ * Copyright (C) [2015] Guardtime, Inc
+ * All Rights Reserved
+ *
+ * NOTICE:  All information contained herein is, and remains, the
+ * property of Guardtime Inc and its suppliers, if any.
+ * The intellectual and technical concepts contained herein are
+ * proprietary to Guardtime Inc and its suppliers and may be
+ * covered by U.S. and Foreign Patents and patents in process,
+ * and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written permission
+ * is obtained from Guardtime Inc.
+ * "Guardtime" and "KSI" are trademarks or registered trademarks of
+ * Guardtime Inc.
+ */
+
 #include <string.h>
 
 #include "internal.h"
@@ -5,6 +25,7 @@
 #include "hmac.h"
 #include "tlv_template.h"
 #include "hashchain.h"
+#include "ctx_impl.h"
 
 KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendPdu);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu)
@@ -383,6 +404,69 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
+int KSI_ExtendReq_enclose(KSI_ExtendReq *req, char *loginId, char *key, KSI_ExtendPdu **pdu) {
+	int res;
+	KSI_ExtendPdu *tmp = NULL;
+	KSI_Header *hdr = NULL;
+	KSI_OctetString *lId = NULL;
+	size_t loginLen;
+	
+	if (req == NULL || loginId == NULL || key == NULL || pdu == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	loginLen = strlen(loginId);
+	if(loginLen > UINT_MAX){
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	
+	/* Create the pdu */
+	res = KSI_ExtendPdu_new(req->ctx, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Create header and initialize it with the loginId provided. */
+	res = KSI_Header_new(req->ctx, &hdr);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OctetString_new(req->ctx, (unsigned char *)loginId, (unsigned)loginLen, &lId);
+	if (res != KSI_OK) goto cleanup;
+
+	hdr->loginId = lId;
+	lId = NULL;
+
+	/* Add request */
+	tmp->request = req;
+	tmp->header = hdr;
+	hdr = NULL;
+
+	/* Calculate the HMAC using the provided key and the default hash algorithm. */
+	res = KSI_ExtendPdu_updateHmac(tmp, KSI_getHashAlgorithmByName("default"), key);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Every request must have a header, and at this point, this is guaranteed. */
+	if (req->ctx->requestHeaderCB != NULL) {
+		res = req->ctx->requestHeaderCB(tmp->header);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	*pdu = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	/* Make sure we won't free the request. */
+	KSI_ExtendPdu_setRequest(tmp, NULL);
+	KSI_ExtendPdu_free(tmp);
+	KSI_OctetString_free(lId);
+	KSI_Header_free(hdr);
+
+	return res;
+}
+
 KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_Header*, header, Header);
 KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_ExtendReq*, request, Request);
 KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_ExtendResp*, response, Response);
@@ -473,6 +557,66 @@ cleanup:
 
 	return KSI_RETURN(&err);
 }
+
+int KSI_AggregationReq_enclose(KSI_AggregationReq *req, char *loginId, char *key, KSI_AggregationPdu **pdu) {
+	int res;
+	KSI_AggregationPdu *tmp = NULL;
+	KSI_Header *hdr = NULL;
+	size_t loginLen;
+	
+	if (req == NULL || loginId == NULL || key == NULL || pdu == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	loginLen = strlen(loginId);
+	if(loginLen > UINT_MAX){
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	
+	/* Create the pdu */
+	res = KSI_AggregationPdu_new(req->ctx, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Create header and initialize it with the loginId provided. */
+	res = KSI_Header_new(req->ctx, &hdr);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OctetString_new(req->ctx, (unsigned char *)loginId, (unsigned)loginLen, &hdr->loginId);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Add request */
+	tmp->request = req;
+	tmp->header = hdr;
+	hdr = NULL;
+
+	/* Every request must have a header, and at this point, this is guaranteed. */
+	if (req->ctx->requestHeaderCB != NULL) {
+		res = req->ctx->requestHeaderCB(tmp->header);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	/* Calculate the HMAC using the provided key and the default hash algorithm. */
+	res = KSI_AggregationPdu_updateHmac(tmp, KSI_getHashAlgorithmByName("default"), key);
+	if (res != KSI_OK) goto cleanup;
+
+	*pdu = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	/* Make sure we won't free the request. */
+	KSI_AggregationPdu_setRequest(tmp, NULL);
+	KSI_AggregationPdu_free(tmp);
+
+	KSI_Header_free(hdr);
+
+	return res;
+}
+
 
 KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_Header*, header, Header);
 KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_AggregationReq*, request, Request);

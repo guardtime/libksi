@@ -1,3 +1,23 @@
+/**************************************************************************
+ *
+ * GUARDTIME CONFIDENTIAL
+ *
+ * Copyright (C) [2015] Guardtime, Inc
+ * All Rights Reserved
+ *
+ * NOTICE:  All information contained herein is, and remains, the
+ * property of Guardtime Inc and its suppliers, if any.
+ * The intellectual and technical concepts contained herein are
+ * proprietary to Guardtime Inc and its suppliers and may be
+ * covered by U.S. and Foreign Patents and patents in process,
+ * and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written permission
+ * is obtained from Guardtime Inc.
+ * "Guardtime" and "KSI" are trademarks or registered trademarks of
+ * Guardtime Inc.
+ */
+
 #include <string.h>
 
 #include "http_parser.h"
@@ -35,74 +55,6 @@ cleanup:
 	KSI_free(tmp);
 
 	return res;
-}
-
-#define processHeader(client, pdu, typ, usr) processPduHeader((client),  (pdu), (int (*)(void *, KSI_Header **))typ##_getHeader, (int (*)(void *, KSI_Header *))typ##_setHeader, usr)
-
-static int processPduHeader(
-		KSI_NetworkClient *client,
-		void *pdu,
-		int (*getHeader)(void *, KSI_Header **),
-		int (*setHeader)(void *, KSI_Header *),
-		const char *user) {
-	KSI_ERR err;
-	int res;
-	KSI_Header *headerp = NULL;
-	KSI_Header *header = NULL;
-	KSI_OctetString *clientId = NULL;
-
-	KSI_PRE(&err, client != NULL) goto cleanup;
-	KSI_PRE(&err, pdu != NULL) goto cleanup;
-	KSI_BEGIN(client->ctx, &err);
-
-	res = getHeader(pdu, &headerp);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	if (user == NULL) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "User not specified.");
-		goto cleanup;
-	}
-
-	/*Add header*/
-	if (headerp == NULL) {
-		KSI_uint64_t userLen = strlen(user);
-
-		if (userLen > 0xffff){
-			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "User id too long.");
-			goto cleanup;
-		}
-
-		res = KSI_Header_new(client->ctx, &header);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		res = KSI_OctetString_new(client->ctx, (unsigned char *)user, (unsigned)userLen, &clientId);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		res = KSI_Header_setLoginId(header, clientId);
-		KSI_CATCH(&err, res) goto cleanup;
-		clientId = NULL;
-
-		res = setHeader(pdu, header);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		headerp = header;
-		header = NULL;
-	}
-
-	/* Every request must have a header, and at this point, this should be guaranteed. */
-	if (client->ctx->requestHeaderCB != NULL) {
-		res = client->ctx->requestHeaderCB(headerp);
-		KSI_CATCH(&err, res) goto cleanup;
-	}
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_Header_free(header);
-	KSI_OctetString_free(clientId);
-
-	return KSI_RETURN(&err);
 }
 
 /**
@@ -187,8 +139,6 @@ void KSI_RequestHandle_free(KSI_RequestHandle *handle) {
 int KSI_NetworkClient_sendSignRequest(KSI_NetworkClient *provider, KSI_AggregationReq *request, KSI_RequestHandle **handle) {
 	KSI_ERR err;
 	int res;
-	KSI_AggregationPdu *pdu = NULL;
-
 
 	KSI_PRE(&err, provider != NULL) goto cleanup;
 	KSI_PRE(&err, request != NULL) goto cleanup;
@@ -201,24 +151,12 @@ int KSI_NetworkClient_sendSignRequest(KSI_NetworkClient *provider, KSI_Aggregati
 		goto cleanup;
 	}
 
-	res = KSI_AggregationPdu_new(provider->ctx, &pdu);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_AggregationPdu_setRequest(pdu, request);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = processHeader(provider, pdu, KSI_AggregationPdu, provider->aggrUser);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = provider->sendSignRequest(provider, pdu, handle);
+	res = provider->sendSignRequest(provider, request, handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
-
-	if (pdu != NULL) KSI_AggregationPdu_setRequest(pdu, NULL);
-	KSI_AggregationPdu_free(pdu);
 
 	return KSI_RETURN(&err);
 }
@@ -226,7 +164,6 @@ cleanup:
 int KSI_NetworkClient_sendExtendRequest(KSI_NetworkClient *provider, KSI_ExtendReq *request, KSI_RequestHandle **handle) {
 	KSI_ERR err;
 	int res;
-	KSI_ExtendPdu *pdu = NULL;
 
 	KSI_PRE(&err, provider != NULL) goto cleanup;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
@@ -238,25 +175,12 @@ int KSI_NetworkClient_sendExtendRequest(KSI_NetworkClient *provider, KSI_ExtendR
 		goto cleanup;
 	}
 
-	res = KSI_ExtendPdu_new(provider->ctx, &pdu);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_ExtendPdu_setRequest(pdu, request);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = processHeader(provider, pdu, KSI_ExtendPdu, provider->extUser);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = provider->sendExtendRequest(provider, pdu, handle);
+	res = provider->sendExtendRequest(provider, request, handle);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
 
 cleanup:
-
-	if (pdu != NULL) KSI_ExtendPdu_setRequest(pdu, NULL);
-
-	KSI_ExtendPdu_free(pdu);
 
 	return KSI_RETURN(&err);
 }
@@ -581,7 +505,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_NetworkClient_setSendSignRequestFn(KSI_NetworkClient *client, int (*fn)(KSI_NetworkClient *, KSI_AggregationPdu *, KSI_RequestHandle **)) {
+int KSI_NetworkClient_setSendSignRequestFn(KSI_NetworkClient *client, int (*fn)(KSI_NetworkClient *, KSI_AggregationReq *, KSI_RequestHandle **)) {
 	KSI_ERR err;
 
 	KSI_PRE(&err, client != NULL) goto cleanup;
@@ -596,7 +520,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_NetworkClient_setSendExtendRequestFn(KSI_NetworkClient *client, int (*fn)(KSI_NetworkClient *, KSI_ExtendPdu *, KSI_RequestHandle **)) {
+int KSI_NetworkClient_setSendExtendRequestFn(KSI_NetworkClient *client, int (*fn)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **)) {
 	KSI_ERR err;
 
 	KSI_PRE(&err, client != NULL) goto cleanup;
@@ -687,7 +611,7 @@ int KSI_convertExtenderStatusCode(KSI_Integer *statusCode) {
 	}
 }
 
-int KSI_UriSplitBasic(const char *uri, char **schema, char **host, unsigned *port, char **path) {
+int KSI_UriSplitBasic(const char *uri, char **scheme, char **host, unsigned *port, char **path) {
 	int res = KSI_UNKNOWN_ERROR;
 	struct http_parser_url parser;
 	char *tmpHost = NULL;
@@ -709,38 +633,38 @@ int KSI_UriSplitBasic(const char *uri, char **schema, char **host, unsigned *por
 
 	if ((parser.field_set & (1 << UF_HOST)) && (host != NULL)) {
 		/* Extract host. */
-		int len = parser.field_data[UF_HOST].len;
-		tmpHost = KSI_malloc(len + 1);
+		int len = parser.field_data[UF_HOST].len + 1;
+		tmpHost = KSI_malloc(len);
 		if (tmpHost == NULL) {
 			res = KSI_OUT_OF_MEMORY;
 			goto cleanup;
 		}
-		snprintf(tmpHost, len, "%s", uri + parser.field_data[UF_HOST].off);
-		tmpHost[len] = '\0';
+		KSI_snprintf(tmpHost, len, "%s", uri + parser.field_data[UF_HOST].off);
+		tmpHost[len - 1] = '\0';
 	}
 
-	if ((parser.field_set & (1 << UF_SCHEMA)) && (schema != NULL)) {
+	if ((parser.field_set & (1 << UF_SCHEMA)) && (scheme != NULL)) {
 		/* Extract shcema. */
-		int len = parser.field_data[UF_SCHEMA].len;
-		tmpSchema = KSI_malloc(len + 1);
+		int len = parser.field_data[UF_SCHEMA].len + 1;
+		tmpSchema = KSI_malloc(len);
 		if (tmpSchema == NULL) {
 			res = KSI_OUT_OF_MEMORY;
 			goto cleanup;
 		}
-		snprintf(tmpSchema, len, "%s", uri + parser.field_data[UF_SCHEMA].off);
-		tmpSchema[len] = '\0';
+		KSI_snprintf(tmpSchema, len, "%s", uri + parser.field_data[UF_SCHEMA].off);
+		tmpSchema[len - 1] = '\0';
 	}
 
 	if ((parser.field_set & (1 << UF_PATH)) && (path != NULL)) {
 		/* Extract path. */
-		int len = parser.field_data[UF_PATH].len;
-		tmpPath = KSI_malloc(len + 1);
+		int len = parser.field_data[UF_PATH].len + 1;
+		tmpPath = KSI_malloc(len);
 		if (tmpPath == NULL) {
 			res = KSI_OUT_OF_MEMORY;
 			goto cleanup;
 		}
-		snprintf(tmpPath, len, "%s", uri + parser.field_data[UF_PATH].off);
-		tmpPath[len] = '\0';
+		KSI_snprintf(tmpPath, len, "%s", uri + parser.field_data[UF_PATH].off);
+		tmpPath[len - 1] = '\0';
 	}
 
 	if (host != NULL) {
@@ -748,8 +672,8 @@ int KSI_UriSplitBasic(const char *uri, char **schema, char **host, unsigned *por
 		tmpHost = NULL;
 	}
 
-	if (schema != NULL) {
-		*schema = tmpSchema;
+	if (scheme != NULL) {
+		*scheme = tmpSchema;
 		tmpSchema = NULL;
 	}
 

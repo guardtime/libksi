@@ -1,3 +1,23 @@
+/**************************************************************************
+ *
+ * GUARDTIME CONFIDENTIAL
+ *
+ * Copyright (C) [2015] Guardtime, Inc
+ * All Rights Reserved
+ *
+ * NOTICE:  All information contained herein is, and remains, the
+ * property of Guardtime Inc and its suppliers, if any.
+ * The intellectual and technical concepts contained herein are
+ * proprietary to Guardtime Inc and its suppliers and may be
+ * covered by U.S. and Foreign Patents and patents in process,
+ * and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written permission
+ * is obtained from Guardtime Inc.
+ * "Guardtime" and "KSI" are trademarks or registered trademarks of
+ * Guardtime Inc.
+ */
+
 #include "internal.h"
 
 #if KSI_NET_HTTP_IMPL==KSI_IMPL_WININET
@@ -142,7 +162,7 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 			KSI_LOG_debug(ctx, "WinINet: Send error %i.", error);
 
 			if (error == ERROR_INTERNET_NAME_NOT_RESOLVED){
-				snprintf(err_msg, 128, "WinINet: Could not resolve host: '%s'.", wininetHandle->hostName);
+				KSI_snprintf(err_msg, 128, "WinINet: Could not resolve host: '%s'.", wininetHandle->hostName);
 				KSI_FAIL(&err, KSI_NETWORK_ERROR, err_msg);
 			}
 			else if (error == ERROR_INTERNET_CANNOT_CONNECT)
@@ -173,7 +193,7 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 
 		if (http_response >= 400){
 			char err_msg[64];
-			snprintf(err_msg, 64, "WinINet: Http error %i.", http_response);
+			KSI_snprintf(err_msg, 64, "WinINet: Http error %i.", http_response);
 			KSI_FAIL(&err, KSI_HTTP_ERROR, err_msg);
 			goto cleanup;
 		}
@@ -264,7 +284,7 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		KSI_LOG_debug(ctx, "WinINet:  Url crack error: %i", error);
 		
 		if (error == ERROR_INTERNET_INVALID_URL){
-			snprintf(err_msg, 128, "WinINet: Invalid URL: '%s'", url);
+			KSI_snprintf(err_msg, 128, "WinINet: Invalid URL: '%s'", url);
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, err_msg);
 		}
 		goto cleanup;
@@ -285,7 +305,7 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 			goto cleanup;
 		}
 
-		strncpy_s(wininetHandle->hostName, wininetHandle->uc.dwHostNameLength + 1, wininetHandle->uc.lpszHostName, wininetHandle->uc.dwHostNameLength);
+		KSI_strncpy(wininetHandle->hostName, wininetHandle->uc.lpszHostName, wininetHandle->uc.dwHostNameLength + 1);
 		if (wininetHandle->uc.lpszUrlPath == NULL || wininetHandle->uc.dwUrlPathLength == 0) {
 			wininetHandle->query = KSI_calloc(2,1);
 			if (wininetHandle->query == NULL)
@@ -300,9 +320,9 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 				goto cleanup;
 			}
 
-			strncpy_s(wininetHandle->query, wininetHandle->uc.dwUrlPathLength + 1, wininetHandle->uc.lpszUrlPath, wininetHandle->uc.dwUrlPathLength);
+			KSI_strncpy(wininetHandle->query, wininetHandle->uc.lpszUrlPath, wininetHandle->uc.dwUrlPathLength + 1);
 			if (!(wininetHandle->uc.lpszExtraInfo == NULL || wininetHandle->uc.dwExtraInfoLength == 0)) {
-				strncpy_s(wininetHandle->query + wininetHandle->uc.dwUrlPathLength, wininetHandle->uc.dwExtraInfoLength + 1, wininetHandle->uc.lpszExtraInfo, wininetHandle->uc.dwExtraInfoLength);
+				KSI_strncpy(wininetHandle->query + wininetHandle->uc.dwUrlPathLength, wininetHandle->uc.lpszExtraInfo, wininetHandle->uc.dwExtraInfoLength + 1);
 			}
 		}
 

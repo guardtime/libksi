@@ -1,13 +1,38 @@
+/**************************************************************************
+ *
+ * GUARDTIME CONFIDENTIAL
+ *
+ * Copyright (C) [2015] Guardtime, Inc
+ * All Rights Reserved
+ *
+ * NOTICE:  All information contained herein is, and remains, the
+ * property of Guardtime Inc and its suppliers, if any.
+ * The intellectual and technical concepts contained herein are
+ * proprietary to Guardtime Inc and its suppliers and may be
+ * covered by U.S. and Foreign Patents and patents in process,
+ * and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written permission
+ * is obtained from Guardtime Inc.
+ * "Guardtime" and "KSI" are trademarks or registered trademarks of
+ * Guardtime Inc.
+ */
+
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 
 #include "internal.h"
 #include "io.h"
 
 #ifndef _WIN32
 #  include "sys/socket.h"
+#  define socket_error errno 
+#  define socketTimedOut EWOULDBLOCK
 #else
+#  define socket_error WSAGetLastError()
+#  define socketTimedOut WSAETIMEDOUT
 #  include <winsock2.h>
 #  include <ws2tcpip.h>
 #endif
@@ -301,17 +326,22 @@ cleanup:
 static int readFromSocket(KSI_RDR *rdr, unsigned char *buffer, const size_t size, size_t *readCount) {
 	KSI_ERR err;
 	size_t count = 0;
-
+	
 	KSI_PRE(&err, rdr != NULL) goto cleanup;
 	KSI_PRE(&err, buffer != NULL) goto cleanup;
 	KSI_PRE(&err, readCount != NULL) goto cleanup;
+	KSI_PRE(&err, size < INT_MAX) goto cleanup;
+	
 	KSI_BEGIN(rdr->ctx, &err);
 
 	while (!rdr->eof && count < size) {
-		int c = recv(rdr->data.socketfd, buffer+count, size - count, 0);
+		int c = recv(rdr->data.socketfd, (char*)buffer+count, (int)(size - count), 0);
 
 		if (c < 0) {
-			KSI_FAIL_EXT(&err, KSI_IO_ERROR, errno, "Unable to read from socket.");
+			if(socket_error == socketTimedOut)
+				KSI_FAIL_EXT(&err, KSI_NETWORK_RECIEVE_TIMEOUT, errno, "Unable to read from socket.");
+			else
+				KSI_FAIL_EXT(&err, KSI_IO_ERROR, errno, "Unable to read from socket.");
 			goto cleanup;
 		}
 

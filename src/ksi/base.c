@@ -1,9 +1,30 @@
+/**************************************************************************
+ *
+ * GUARDTIME CONFIDENTIAL
+ *
+ * Copyright (C) [2015] Guardtime, Inc
+ * All Rights Reserved
+ *
+ * NOTICE:  All information contained herein is, and remains, the
+ * property of Guardtime Inc and its suppliers, if any.
+ * The intellectual and technical concepts contained herein are
+ * proprietary to Guardtime Inc and its suppliers and may be
+ * covered by U.S. and Foreign Patents and patents in process,
+ * and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written permission
+ * is obtained from Guardtime Inc.
+ * "Guardtime" and "KSI" are trademarks or registered trademarks of
+ * Guardtime Inc.
+ */
+
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "internal.h"
 #include "net_http.h"
+#include "net_uri.h"
 #include "ctx_impl.h"
 
 KSI_IMPLEMENT_LIST(GlobalCleanupFn, NULL);
@@ -67,7 +88,7 @@ const char *KSI_getErrorString(int statusCode) {
 		case KSI_SERVICE_AUTHENTICATION_FAILURE:
 			return "The request could not be authenticated.";
 		case KSI_SERVICE_INVALID_PAYLOAD:
-			return "The request contained invalid payload";
+			return "The request contained invalid payload.";
 		case KSI_SERVICE_INTERNAL_ERROR:
 			return "The server encountered an unspecified internal error.";
 		case KSI_SERVICE_UPSTREAM_ERROR:
@@ -77,7 +98,7 @@ const char *KSI_getErrorString(int statusCode) {
 		case KSI_SERVICE_AGGR_REQUEST_TOO_LARGE:
 			return "The request indicated client-side aggregation tree larger than allowed for the client.";
 		case KSI_SERVICE_AGGR_REQUEST_OVER_QUOTA:
-			return "The request combined with other requests from the same client in the same round would create an aggregation sub-tree larger than allowed for the client";
+			return "The request combined with other requests from the same client in the same round would create an aggregation sub-tree larger than allowed for the client.";
 		case KSI_SERVICE_EXTENDER_INVALID_TIME_RANGE:
 			return "The request asked for a hash chain going backwards in time Pattern for local errors in the server.";
 		case KSI_SERVICE_EXTENDER_DATABASE_MISSING:
@@ -99,7 +120,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	KSI_CTX *ctx = NULL;
-	KSI_HttpClient *http = NULL;
+	KSI_UriClient *client = NULL;
 	KSI_PKITruststore *pkiTruststore = NULL;
 
 	ctx = KSI_new(KSI_CTX);
@@ -123,7 +144,6 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->requestHeaderCB = NULL;
 	ctx->loggerCtx = NULL;
 	ctx->requestCounter = 0;
-
 	KSI_ERR_clearErrors(ctx);
 
 	/* Create global cleanup list as the first thing. */
@@ -137,14 +157,14 @@ int KSI_CTX_new(KSI_CTX **context) {
 	res = KSI_CTX_setLogLevel(ctx, KSI_LOG_NONE);
 	if (res != KSI_OK) goto cleanup;
 
-	/* Initialize curl as the net handle. */
-	res = KSI_HttpClient_new(ctx, &http);
+	res = KSI_UriClient_new(ctx, &client);
 	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_setNetworkProvider(ctx, (KSI_NetworkClient *)http);
+	
+	res = KSI_setNetworkProvider(ctx, (KSI_NetworkClient *)client);
 	if (res != KSI_OK) goto cleanup;
-	http = NULL;
-
+	ctx->isCustomNetProvider = 0;
+	client = NULL;
+	
 	/* Create and set the PKI truststore */
 	res = KSI_PKITruststore_new(ctx, 1, &pkiTruststore);
 	if (res != KSI_OK) goto cleanup;
@@ -163,7 +183,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 
 cleanup:
 
-	KSI_HttpClient_free(http);
+	KSI_UriClient_free(client);
 	KSI_PKITruststore_free(pkiTruststore);
 
 	KSI_CTX_free(ctx);
@@ -546,8 +566,8 @@ int KSI_ERR_apply(KSI_ERR *err) {
 			ctxErr->statusCode = err->statusCode;
 			ctxErr->extErrorCode = err->extErrorCode;
 			ctxErr->lineNr = err->lineNr;
-			strncpy(ctxErr->fileName, KSI_strnvl(err->fileName), sizeof(err->fileName));
-			strncpy(ctxErr->message, KSI_strnvl(err->message), sizeof(err->message));
+			KSI_strncpy(ctxErr->fileName, KSI_strnvl(err->fileName), sizeof(err->fileName));
+			KSI_strncpy(ctxErr->message, KSI_strnvl(err->message), sizeof(err->message));
 
 			ctx->errors_count++;
 		}
@@ -577,11 +597,11 @@ int KSI_ERR_fail(KSI_ERR *err, int statusCode, long extErrorCode, char *fileName
 		err->extErrorCode = extErrorCode;
 		err->statusCode = statusCode;
 		if (message == NULL) {
-			strncpy(err->message, KSI_getErrorString(statusCode), sizeof(err->message));
+			KSI_strncpy(err->message, KSI_getErrorString(statusCode), sizeof(err->message));
 		} else {
-			strncpy(err->message, KSI_strnvl(message), sizeof(err->message));
+			KSI_strncpy(err->message, KSI_strnvl(message), sizeof(err->message));
 		}
-		strncpy(err->fileName, KSI_strnvl(fileName), sizeof(err->fileName));
+		KSI_strncpy(err->fileName, KSI_strnvl(fileName), sizeof(err->fileName));
 		err->lineNr = lineNr;
 	}
 	return statusCode;
@@ -623,7 +643,7 @@ cleanup:
 	return res;
 }
 
-int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len){
+int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *error){
 	KSI_ERR *err = NULL;
 	
 	if (ctx == NULL || buf == NULL){
@@ -631,7 +651,10 @@ int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len){
 	} 
 	
 	err = ctx->errors;
-	strncpy(buf, err->message, len);		
+	
+	if(error != NULL)	*error = err->statusCode;
+	
+	KSI_strncpy(buf, err->message, len);		
 	return KSI_OK;
 } 
 
@@ -659,6 +682,82 @@ int KSI_CTX_getStatus(KSI_CTX *ctx) {
 	return ctx == NULL ? KSI_INVALID_ARGUMENT : ctx->statusCode;
 }
 
+static int KSI_CTX_setUri(KSI_CTX *ctx,
+		const char *uri, const char *loginId, const char *key, 
+		int (*setter)(KSI_UriClient*, const char*, const char *, const char *)){
+	KSI_ERR err;
+	int res;
+	KSI_UriClient *client = NULL;
+
+	KSI_PRE(&err, ctx != NULL && ctx->netProvider) goto cleanup;
+	KSI_PRE(&err, uri != NULL && loginId != NULL && key != NULL) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	if(ctx->isCustomNetProvider){
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Unable to set url after initial network provider replacement.");
+		goto cleanup;
+	}
+	
+	client = (KSI_UriClient*)ctx->netProvider;
+	
+	res = setter(client, uri, loginId, key);
+	KSI_CATCH(&err, res) goto cleanup;
+	
+	KSI_SUCCESS(&err);
+	
+cleanup:
+		
+	return KSI_RETURN(&err);	
+}
+
+static int KSI_UriClient_setPublicationUrl_wrapper(KSI_UriClient *client, const char *uri, const char *not_used_1, const char *not_used_2){
+	return KSI_UriClient_setPublicationUrl(client, uri);
+}
+
+int KSI_CTX_setAggregator(KSI_CTX *ctx, const char *uri, const char *loginId, const char *key){
+	return KSI_CTX_setUri(ctx, uri, loginId, key, KSI_UriClient_setAggregator);
+}
+
+int KSI_CTX_setExtender(KSI_CTX *ctx, const char *uri, const char *loginId, const char *key){
+	return KSI_CTX_setUri(ctx, uri, loginId, key, KSI_UriClient_setExtender);
+}
+
+int KSI_CTX_setPublicationUrl(KSI_CTX *ctx, const char *uri){
+	return KSI_CTX_setUri(ctx, uri, uri, uri, KSI_UriClient_setPublicationUrl_wrapper);
+}
+
+static int KSI_CTX_setTimeoutSeconds(KSI_CTX *ctx, int timeout, int (*setter)(KSI_UriClient*, int)){
+	KSI_ERR err;
+	int res;
+	KSI_UriClient *client = NULL;
+
+	KSI_PRE(&err, ctx != NULL && ctx->netProvider) goto cleanup;
+	KSI_BEGIN(ctx, &err);
+
+	if(ctx->isCustomNetProvider){
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Unable to set timeout after initial network provider replacement.");
+		goto cleanup;
+	}
+	
+	client = (KSI_UriClient*)ctx->netProvider;
+	
+	res = setter(client, timeout);
+	KSI_CATCH(&err, res) goto cleanup;
+	
+	KSI_SUCCESS(&err);
+	
+cleanup:
+		
+	return KSI_RETURN(&err);	
+}
+
+int KSI_CTX_setConnectionTimeoutSeconds(KSI_CTX *ctx, int timeout){
+	return KSI_CTX_setTimeoutSeconds(ctx, timeout, KSI_UriClient_setConnectionTimeoutSeconds);
+}
+
+int KSI_CTX_setTransferTimeoutSeconds(KSI_CTX *ctx, int timeout){
+	return KSI_CTX_setTimeoutSeconds(ctx, timeout, KSI_UriClient_setTransferTimeoutSeconds);
+}
 
 #define CTX_VALUEP_SETTER(var, nam, typ, fre)												\
 int KSI_set##nam(KSI_CTX *ctx, typ *var) { 													\
@@ -694,8 +793,28 @@ cleanup:																					\
 	CTX_VALUEP_GETTER(var, nam, typ)														\
 
 CTX_GET_SET_VALUE(pkiTruststore, PKITruststore, KSI_PKITruststore, KSI_PKITruststore_free)
-CTX_GET_SET_VALUE(netProvider, NetworkProvider, KSI_NetworkClient, KSI_NetworkClient_free)
 CTX_GET_SET_VALUE(publicationsFile, PublicationsFile, KSI_PublicationsFile, KSI_PublicationsFile_free)
+CTX_VALUEP_GETTER(netProvider, NetworkProvider, KSI_NetworkClient)
+
+int KSI_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *netProvider){
+    int res = KSI_UNKNOWN_ERROR;
+    
+	if (ctx == NULL){
+        res = KSI_INVALID_ARGUMENT;
+        goto cleanup;
+    }
+    
+	if (ctx->netProvider != NULL) {
+        KSI_NetworkClient_free (ctx->netProvider);
+    }
+    
+	ctx->netProvider = netProvider;
+    ctx->isCustomNetProvider = 1;
+	res = KSI_OK;
+	
+cleanup:
+	return res;
+}
 
 int KSI_CTX_setRequestHeaderCallback(KSI_CTX *ctx, KSI_RequestHeaderCallback cb) {
 	int res = KSI_UNKNOWN_ERROR;

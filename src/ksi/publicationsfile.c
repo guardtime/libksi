@@ -1,3 +1,23 @@
+/**************************************************************************
+ *
+ * GUARDTIME CONFIDENTIAL
+ *
+ * Copyright (C) [2015] Guardtime, Inc
+ * All Rights Reserved
+ *
+ * NOTICE:  All information contained herein is, and remains, the
+ * property of Guardtime Inc and its suppliers, if any.
+ * The intellectual and technical concepts contained herein are
+ * proprietary to Guardtime Inc and its suppliers and may be
+ * covered by U.S. and Foreign Patents and patents in process,
+ * and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written permission
+ * is obtained from Guardtime Inc.
+ * "Guardtime" and "KSI" are trademarks or registered trademarks of
+ * Guardtime Inc.
+ */
+
 #include <limits.h>
 #include <string.h>
 #include <stdio.h>
@@ -27,10 +47,10 @@ static int publicationsFile_setSignature(KSI_PublicationsFile *t, KSI_PKISignatu
 static int publicationsFile_setSignatureOffset(KSI_PublicationsFile *t, size_t signatureOffset);
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationsFile)
-	KSI_TLV_COMPOSITE(0x0701, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getHeader, publicationsFile_setHeader, KSI_PublicationsHeader)
-	KSI_TLV_COMPOSITE_LIST(0x0702, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getCertificates, publicationsFile_setCertificates, KSI_CertificateRecord)
-	KSI_TLV_COMPOSITE_LIST(0x0703, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getPublications, publicationsFile_setPublications, KSI_PublicationRecord)
-	KSI_TLV_OBJECT(0x0704, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_MORE_DEFS, KSI_PublicationsFile_getSignature, publicationsFile_setSignature, KSI_PKISignature_fromTlv, KSI_PKISignature_toTlv, KSI_PKISignature_free)
+	KSI_TLV_COMPOSITE(0x0701, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getHeader, publicationsFile_setHeader, KSI_PublicationsHeader, "pub_header")
+	KSI_TLV_COMPOSITE_LIST(0x0702, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getCertificates, publicationsFile_setCertificates, KSI_CertificateRecord, "cert_rec")
+	KSI_TLV_COMPOSITE_LIST(0x0703, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getPublications, publicationsFile_setPublications, KSI_PublicationRecord, "pub_rec")
+	KSI_TLV_OBJECT(0x0704, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_MORE_DEFS, KSI_PublicationsFile_getSignature, publicationsFile_setSignature, KSI_PKISignature_fromTlv, KSI_PKISignature_toTlv, KSI_PKISignature_free, "pki_signature")
 	KSI_TLV_SEEK_POS(0x0704, publicationsFile_setSignatureOffset)
 KSI_END_TLV_TEMPLATE
 
@@ -908,8 +928,8 @@ char *KSI_PublicationData_toString(KSI_PublicationData *t, char *buffer, unsigne
 		goto cleanup;
 	}
 
-	len+= snprintf(buffer + len, buffer_len - len, "Publication string: %s\nPublication date: %s", pubStr, KSI_Integer_toDateString(t->time, tmp, sizeof(tmp)));
-	snprintf(buffer + len, buffer_len - len, "\nPublished hash: %s", KSI_DataHash_toString(t->imprint, tmp, sizeof(tmp)));
+	len+= KSI_snprintf(buffer + len, buffer_len - len, "Publication string: %s\nPublication date: %s", pubStr, KSI_Integer_toDateString(t->time, tmp, sizeof(tmp)));
+	KSI_snprintf(buffer + len, buffer_len - len, "\nPublished hash: %s", KSI_DataHash_toString(t->imprint, tmp, sizeof(tmp)));
 
 	ret = buffer;
 
@@ -927,7 +947,7 @@ char *KSI_PublicationRecord_toString(KSI_PublicationRecord *t, char *buffer, uns
 	unsigned len = 0;
 	size_t i;
 
-	len += snprintf(buffer + len, buffer_len - len, "%s", KSI_PublicationData_toString(t->publishedData, tmp, sizeof(tmp)));
+	len += KSI_snprintf(buffer + len, buffer_len - len, "%s", KSI_PublicationData_toString(t->publishedData, tmp, sizeof(tmp)));
 
 	for (i = 0; i < KSI_Utf8StringList_length(t->publicationRef); i++) {
 		KSI_Utf8String *ref = NULL;
@@ -935,7 +955,7 @@ char *KSI_PublicationRecord_toString(KSI_PublicationRecord *t, char *buffer, uns
 		res = KSI_Utf8StringList_elementAt(t->publicationRef, i, &ref);
 		if (res != KSI_OK) goto cleanup;
 
-		len += snprintf(buffer + len, buffer_len - len, "\nRef: %s", KSI_Utf8String_cstr(ref));
+		len += KSI_snprintf(buffer + len, buffer_len - len, "\nRef: %s", KSI_Utf8String_cstr(ref));
 	}
 
 	ret = buffer;
@@ -991,9 +1011,9 @@ cleanup:
 
 int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_PublicationRecord **clone){
 	KSI_ERR err;
-	KSI_PublicationRecord *tmp = NULL;
 	int res = KSI_UNKNOWN_ERROR;
-	int i=0;
+	KSI_PublicationRecord *tmp = NULL;
+	size_t i = 0;
 	
 	KSI_PRE(&err, rec != NULL) goto cleanup;
 	KSI_PRE(&err, clone != NULL) goto cleanup;
@@ -1007,7 +1027,7 @@ int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_Publicatio
 	res = KSI_Utf8StringList_new(&(tmp->publicationRef));
 	if (res != KSI_OK) goto cleanup;
 
-	for (i=0; i<KSI_Utf8StringList_length(rec->publicationRef); i++){
+	for (i = 0; i < KSI_Utf8StringList_length(rec->publicationRef); i++){
 		KSI_Utf8String *str = NULL;
 		res = KSI_Utf8StringList_elementAt(rec->publicationRef, i, &str);
 		KSI_CATCH(&err, res);

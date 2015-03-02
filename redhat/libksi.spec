@@ -1,3 +1,22 @@
+#
+# GUARDTIME CONFIDENTIAL
+#
+# Copyright (C) [2015] Guardtime, Inc
+# All Rights Reserved
+#
+# NOTICE:  All information contained herein is, and remains, the
+# property of Guardtime Inc and its suppliers, if any.
+# The intellectual and technical concepts contained herein are
+# proprietary to Guardtime Inc and its suppliers and may be
+# covered by U.S. and Foreign Patents and patents in process,
+# and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this
+# material is strictly forbidden unless prior written permission
+# is obtained from Guardtime Inc.
+# "Guardtime" and "KSI" are trademarks or registered trademarks of
+# Guardtime Inc.
+#
+
 Summary: Guardtime KSI Client API for C
 Name: libksi
 Version: %(cat VERSION)
@@ -64,6 +83,7 @@ make install DESTDIR=%{buildroot}
 %{_includedir}/ksi/net.h
 %{_includedir}/ksi/net_http.h
 %{_includedir}/ksi/net_tcp.h
+%{_includedir}/ksi/net_uri.h
 %{_includedir}/ksi/pkitruststore.h
 %{_includedir}/ksi/publicationsfile.h
 %{_includedir}/ksi/signature.h
@@ -72,6 +92,7 @@ make install DESTDIR=%{buildroot}
 %{_includedir}/ksi/types.h
 %{_includedir}/ksi/types_base.h
 %{_includedir}/ksi/verification.h
+%{_includedir}/ksi/compatibility.h
 %{_libdir}/libksi.a
 %{_libdir}/libksi.la
 %{_libdir}/pkgconfig/libksi.pc

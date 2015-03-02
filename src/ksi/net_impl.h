@@ -1,3 +1,23 @@
+/**************************************************************************
+ *
+ * GUARDTIME CONFIDENTIAL
+ *
+ * Copyright (C) [2015] Guardtime, Inc
+ * All Rights Reserved
+ *
+ * NOTICE:  All information contained herein is, and remains, the
+ * property of Guardtime Inc and its suppliers, if any.
+ * The intellectual and technical concepts contained herein are
+ * proprietary to Guardtime Inc and its suppliers and may be
+ * covered by U.S. and Foreign Patents and patents in process,
+ * and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written permission
+ * is obtained from Guardtime Inc.
+ * "Guardtime" and "KSI" are trademarks or registered trademarks of
+ * Guardtime Inc.
+ */
+
 #ifndef NET_IMPL_H_
 #define NET_IMPL_H_
 
@@ -12,8 +32,8 @@ extern "C" {
 	struct KSI_NetworkClient_st {
 		KSI_CTX *ctx;
 
-		int (*sendSignRequest)(KSI_NetworkClient *, KSI_AggregationPdu *, KSI_RequestHandle **);
-		int (*sendExtendRequest)(KSI_NetworkClient *, KSI_ExtendPdu *, KSI_RequestHandle **);
+		int (*sendSignRequest)(KSI_NetworkClient *, KSI_AggregationReq *, KSI_RequestHandle **);
+		int (*sendExtendRequest)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **);
 		int (*sendPublicationRequest)(KSI_NetworkClient *, KSI_RequestHandle **);
 
 		/** Aggregator user. */

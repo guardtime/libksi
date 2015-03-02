@@ -1,3 +1,22 @@
+
+    GUARDTIME CONFIDENTIAL
+
+    Copyright (C) [2015] Guardtime, Inc
+    All Rights Reserved
+
+    NOTICE:  All information contained herein is, and remains, the
+    property of Guardtime Inc and its suppliers, if any.
+    The intellectual and technical concepts contained herein are
+    proprietary to Guardtime Inc and its suppliers and may be
+    covered by U.S. and Foreign Patents and patents in process,
+    and are protected by trade secret or copyright law.
+    Dissemination of this information or reproduction of this
+    material is strictly forbidden unless prior written permission
+    is obtained from Guardtime Inc.
+    "Guardtime" and "KSI" are trademarks or registered trademarks of
+    Guardtime Inc.
+
+
 Building with Microsoft Visual Studio
 =====================================
 
@@ -10,13 +29,13 @@ Prerequisites
 
 	To be able to build GT KSI API one must have the following software pieces:
 
-		1) Microsoft Visual Studio <version goes here> or Windows SDK <version goes here> for building tools.
+		1) Microsoft Visual Studio 10 or Windows SDK 7.1 for building tools.
 		2) Network provider (must have one)
-			2.1) Libcurl <version goes here> (recommended).
+			2.1) Lib Curl 0.9.8g (recommended).
 			2.2) Windows native WinINet
 			2.4) Windows native WinHTTP 
 		3) Cryptography provider (must have one)
-			3.1) OpenSSL <version goes here> (recommended)
+			3.1) OpenSSL 0.9.8g (recommended)
 			3.2) Windows native CryptoAPI
 		
 	

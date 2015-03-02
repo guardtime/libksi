@@ -1,3 +1,23 @@
+/**************************************************************************
+ *
+ * GUARDTIME CONFIDENTIAL
+ *
+ * Copyright (C) [2015] Guardtime, Inc
+ * All Rights Reserved
+ *
+ * NOTICE:  All information contained herein is, and remains, the
+ * property of Guardtime Inc and its suppliers, if any.
+ * The intellectual and technical concepts contained herein are
+ * proprietary to Guardtime Inc and its suppliers and may be
+ * covered by U.S. and Foreign Patents and patents in process,
+ * and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written permission
+ * is obtained from Guardtime Inc.
+ * "Guardtime" and "KSI" are trademarks or registered trademarks of
+ * Guardtime Inc.
+ */
+
 #include "internal.h"
 
 #if KSI_PKI_TRUSTSTORE_IMPL == KSI_IMPL_CRYPTOAPI
@@ -28,7 +48,7 @@ const char* getMSError(DWORD dw)
 
 	tmp = (char*)lpMsgBuf;
 	tmp[strlen(tmp)-2] = 0;
-	snprintf(ms_error, sizeof(ms_error),"CryptoAPI: %s", lpMsgBuf);
+	KSI_snprintf(ms_error, sizeof(ms_error),"CryptoAPI: %s", lpMsgBuf);
     LocalFree(lpMsgBuf);
     return ms_error; 
 }
@@ -508,7 +528,7 @@ char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, unsigned 
 		
 	CertGetNameString(cert->x509, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, strSubjectname, sizeof(strSubjectname));
 	CertGetNameString(cert->x509, CERT_NAME_SIMPLE_DISPLAY_TYPE , CERT_NAME_ISSUER_FLAG, 0,strIssuerName, sizeof(strIssuerName));
-	_snprintf(buf, buf_len, "Subject: '%s',  Issuer '%s'.", strSubjectname, strIssuerName);
+	KSI_snprintf(buf, buf_len, "Subject: '%s',  Issuer '%s'.", strSubjectname, strIssuerName);
 	
 	ret = buf;
 	

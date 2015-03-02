@@ -1,3 +1,22 @@
+#
+# GUARDTIME CONFIDENTIAL
+#
+# Copyright (C) [2015] Guardtime, Inc
+# All Rights Reserved
+#
+# NOTICE:  All information contained herein is, and remains, the
+# property of Guardtime Inc and its suppliers, if any.
+# The intellectual and technical concepts contained herein are
+# proprietary to Guardtime Inc and its suppliers and may be
+# covered by U.S. and Foreign Patents and patents in process,
+# and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this
+# material is strictly forbidden unless prior written permission
+# is obtained from Guardtime Inc.
+# "Guardtime" and "KSI" are trademarks or registered trademarks of
+# Guardtime Inc.
+#
+
 #Selecting of C Run-Time library and output format. 
 !IF "$(DLL)" != "lib" && "$(DLL)" != "dll"
 DLL = lib
@@ -52,6 +71,7 @@ LIB_OBJ = \
 	$(OBJ_DIR)\log.obj \
 	$(OBJ_DIR)\net.obj \
 	$(OBJ_DIR)\net_http.obj \
+	$(OBJ_DIR)\net_uri.obj \
 	$(OBJ_DIR)\publicationsfile.obj \
 	$(OBJ_DIR)\signature.obj \
 	$(OBJ_DIR)\tlv.obj \
@@ -61,6 +81,7 @@ LIB_OBJ = \
 	$(OBJ_DIR)\verification.obj \
 	$(OBJ_DIR)\hmac.obj \
 	$(OBJ_DIR)\net_tcp.obj \
+	$(OBJ_DIR)\compatibility.obj
 
 INC_FILES = \
 	base32.h \
@@ -71,6 +92,7 @@ INC_FILES = \
 	crc32.h \
 	net_http.h \
 	net_tcp.h \
+	net_uri.h \
 	signature.h \
 	types_base.h \
 	err.h \
@@ -84,7 +106,8 @@ INC_FILES = \
 	hashchain.h \
 	log.h \
 	publicationsfile.h \
-	tlv_template.h
+	tlv_template.h \
+	compatibility.h
 
 #Compiler and linker configuration
 EXT_LIB = wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib  

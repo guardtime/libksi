@@ -1,3 +1,23 @@
+/**************************************************************************
+ *
+ * GUARDTIME CONFIDENTIAL
+ *
+ * Copyright (C) [2015] Guardtime, Inc
+ * All Rights Reserved
+ *
+ * NOTICE:  All information contained herein is, and remains, the
+ * property of Guardtime Inc and its suppliers, if any.
+ * The intellectual and technical concepts contained herein are
+ * proprietary to Guardtime Inc and its suppliers and may be
+ * covered by U.S. and Foreign Patents and patents in process,
+ * and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written permission
+ * is obtained from Guardtime Inc.
+ * "Guardtime" and "KSI" are trademarks or registered trademarks of
+ * Guardtime Inc.
+ */
+
 #ifndef KSI_NET_HTTP_H_
 #define KSI_NET_HTTP_H_
 
@@ -83,7 +103,26 @@ extern "C" {
 	 */
 	int KSI_HttpClient_setReadTimeoutSeconds(KSI_HttpClient *client, int val);
 
+	/**
+	 * Setter for the http client extender parameters.
+     * \param[in	client		Pointer to http client.
+     * \param[in]	host		Host name.
+     * \param[in]	port		Port number.
+     * \param[in]	user		User name.
+     * \param[in]	pass		Password.
+     * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+     */
 	int KSI_HttpClient_setExtender(KSI_HttpClient *client, const char *url, const char *user, const char *pass);
+	
+	/**
+	 * Setter for the http aggregator parameters.
+     * \param[in	client		Pointer to http client.
+     * \param[in]	host		Host name.
+     * \param[in]	port		Port number.
+     * \param[in]	user		User name.
+     * \param[in]	pass		Password.
+     * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+     */
 	int KSI_HttpClient_setAggregator(KSI_HttpClient *client, const char *url, const char *user, const char *pass);
 
 

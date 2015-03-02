@@ -1,3 +1,23 @@
+/**************************************************************************
+ *
+ * GUARDTIME CONFIDENTIAL
+ *
+ * Copyright (C) [2015] Guardtime, Inc
+ * All Rights Reserved
+ *
+ * NOTICE:  All information contained herein is, and remains, the
+ * property of Guardtime Inc and its suppliers, if any.
+ * The intellectual and technical concepts contained herein are
+ * proprietary to Guardtime Inc and its suppliers and may be
+ * covered by U.S. and Foreign Patents and patents in process,
+ * and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written permission
+ * is obtained from Guardtime Inc.
+ * "Guardtime" and "KSI" are trademarks or registered trademarks of
+ * Guardtime Inc.
+ */
+
 #include <string.h>
 
 #include "internal.h"
@@ -231,7 +251,7 @@ static int readTlv(KSI_RDR *rdr, KSI_TLV **tlv, int copy) {
 	}
 
 	if (readCount != length) {
-		snprintf(errstr, sizeof(errstr), "Expected to read %u bytes, but got %llu", length, (long long unsigned)readCount);
+		KSI_snprintf(errstr, sizeof(errstr), "Expected to read %u bytes, but got %llu", length, (long long unsigned)readCount);
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, errstr);
 		goto cleanup;
 	}
@@ -336,7 +356,6 @@ static unsigned readFirstTlv(KSI_CTX *ctx, unsigned char *data, unsigned data_le
 	unsigned length = 0;
 
 	if (ctx == NULL || data == NULL || tlv == NULL) {
-		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
@@ -1240,26 +1259,26 @@ static int stringify(const KSI_TLV *tlv, int indent, char *str, unsigned size, u
 		goto cleanup;
 	}
 	if (indent != 0) {
-		l += (unsigned)snprintf(str + l, NOTNEG(size - l), "\n%*s", indent, "");
+		l += (unsigned)KSI_snprintf(str + l, NOTNEG(size - l), "\n%*s", indent, "");
 	}
 	if (tlv->tag > 0xff) {
-		l += (unsigned)snprintf(str + l, NOTNEG(size - l), "TLV[0x%04x]", tlv->tag);
+		l += (unsigned)KSI_snprintf(str + l, NOTNEG(size - l), "TLV[0x%04x]", tlv->tag);
 	} else {
-		l += (unsigned)snprintf(str + l, NOTNEG(size - l), "TLV[0x%02x]", tlv->tag);
+		l += (unsigned)KSI_snprintf(str + l, NOTNEG(size - l), "TLV[0x%02x]", tlv->tag);
 	}
 
-	l += (unsigned)snprintf(str + l, NOTNEG(size - l), " %c", tlv->isNonCritical ? 'L' : '-');
-	l += (unsigned)snprintf(str + l, NOTNEG(size - l), " %c", tlv->isForwardable ? 'F' : '-');
+	l += (unsigned)KSI_snprintf(str + l, NOTNEG(size - l), " %c", tlv->isNonCritical ? 'L' : '-');
+	l += (unsigned)KSI_snprintf(str + l, NOTNEG(size - l), " %c", tlv->isForwardable ? 'F' : '-');
 
 	switch (tlv->payloadType) {
 		case KSI_TLV_PAYLOAD_RAW:
-			l += (unsigned)snprintf(str + l, NOTNEG(size - l), " len = %llu : ", (unsigned long long)tlv->datap_len);
+			l += (unsigned)KSI_snprintf(str + l, NOTNEG(size - l), " len = %llu : ", (unsigned long long)tlv->datap_len);
 			for (i = 0; i < tlv->datap_len; i++) {
-				l += (unsigned)snprintf(str + l, NOTNEG(size - l), "%02x", tlv->datap[i]);
+				l += (unsigned)KSI_snprintf(str + l, NOTNEG(size - l), "%02x", tlv->datap[i]);
 			}
 			break;
 		case KSI_TLV_PAYLOAD_TLV:
-			l += (unsigned)snprintf(str + l, NOTNEG(size - l), ":");
+			l += (unsigned)KSI_snprintf(str + l, NOTNEG(size - l), ":");
 			for (i = 0; i < KSI_TLVList_length(tlv->nested); i++) {
 				KSI_TLV *tmp = NULL;
 

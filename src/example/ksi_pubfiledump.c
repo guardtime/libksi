@@ -1,11 +1,29 @@
+/**************************************************************************
+ *
+ * GUARDTIME CONFIDENTIAL
+ *
+ * Copyright (C) [2015] Guardtime, Inc
+ * All Rights Reserved
+ *
+ * NOTICE:  All information contained herein is, and remains, the
+ * property of Guardtime Inc and its suppliers, if any.
+ * The intellectual and technical concepts contained herein are
+ * proprietary to Guardtime Inc and its suppliers and may be
+ * covered by U.S. and Foreign Patents and patents in process,
+ * and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written permission
+ * is obtained from Guardtime Inc.
+ * "Guardtime" and "KSI" are trademarks or registered trademarks of
+ * Guardtime Inc.
+ */
+
 #include <time.h>
 #include <string.h>
 
 #include <ksi/ksi.h>
 
-#ifdef _WIN32
-#  define snprintf _snprintf
-#endif
+#include <ksi/compatibility.h>
 
 int toHex(KSI_OctetString *certId, char **hex) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -27,7 +45,7 @@ int toHex(KSI_OctetString *certId, char **hex) {
 	}
 
 	for (i = 0; i < raw_len; i++) {
-		snprintf(tmp + (i * 2), len - i * 2, "%02x", raw[i]);
+		KSI_snprintf(tmp + (i * 2), len - i * 2, "%02x", raw[i]);
 	}
 
 	*hex = tmp;
@@ -76,7 +94,7 @@ static int printCerts(KSI_PublicationsFile *pubFile) {
 		if (res != KSI_OK) goto cleanup;
 
 		/* Create the file name. */
-		snprintf(fileName, sizeof(fileName), "%s.der", hex);
+		KSI_snprintf(fileName, sizeof(fileName), "%s.der", hex);
 		printf("cert%llu=%s\n", (long long unsigned)i, fileName);
 
 		KSI_free(hex);

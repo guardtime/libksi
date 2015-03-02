@@ -1,3 +1,23 @@
+/**************************************************************************
+ *
+ * GUARDTIME CONFIDENTIAL
+ *
+ * Copyright (C) [2015] Guardtime, Inc
+ * All Rights Reserved
+ *
+ * NOTICE:  All information contained herein is, and remains, the
+ * property of Guardtime Inc and its suppliers, if any.
+ * The intellectual and technical concepts contained herein are
+ * proprietary to Guardtime Inc and its suppliers and may be
+ * covered by U.S. and Foreign Patents and patents in process,
+ * and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written permission
+ * is obtained from Guardtime Inc.
+ * "Guardtime" and "KSI" are trademarks or registered trademarks of
+ * Guardtime Inc.
+ */
+
 #include <string.h>
 
 #include "all_tests.h"
@@ -267,26 +287,26 @@ static void testObjectSerialization(CuTest *tc, const char *sample, int (*parse)
 	char errm[1024];
 
 	f = fopen(sample, "rb");
-	snprintf(errm, sizeof(errm), "Unable to open pdu file: %s", sample);
+	KSI_snprintf(errm, sizeof(errm), "Unable to open pdu file: %s", sample);
 	CuAssert(tc, errm, f != NULL);
 
 	in_len = (unsigned)fread(in, 1, sizeof(in), f);
 	fclose(f);
-	snprintf(errm, sizeof(errm), "Unable to resd pdu file: %s", sample);
+	KSI_snprintf(errm, sizeof(errm), "Unable to resd pdu file: %s", sample);
 	CuAssert(tc, errm, in_len > 0);
 
 	res = parse(ctx, in, in_len, &pdu);
-	snprintf(errm, sizeof(errm), "Unable to parse pdu: %s", sample);
+	KSI_snprintf(errm, sizeof(errm), "Unable to parse pdu: %s", sample);
 	CuAssert(tc, errm, res == KSI_OK && pdu != NULL);
 
 	res = serialize(pdu, &out, &out_len);
-	snprintf(errm, sizeof(errm), "Unable to serialize pdu: %s", sample);
+	KSI_snprintf(errm, sizeof(errm), "Unable to serialize pdu: %s", sample);
 	CuAssert(tc, errm, res == KSI_OK && out != NULL && out_len > 0);
 
-	snprintf(errm, sizeof(errm), "Serialized pdu length mismatch: %s", sample);
+	KSI_snprintf(errm, sizeof(errm), "Serialized pdu length mismatch: %s", sample);
 	CuAssert(tc, errm, res == KSI_OK && out_len == in_len);
 
-	snprintf(errm, sizeof(errm), "Serialised pdu content mismatch: %s", sample);
+	KSI_snprintf(errm, sizeof(errm), "Serialised pdu content mismatch: %s", sample);
 	CuAssert(tc, errm, !KSITest_memcmp(in, out, in_len));
 
 	KSI_free(out);

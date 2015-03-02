@@ -1,3 +1,23 @@
+/**************************************************************************
+ *
+ * GUARDTIME CONFIDENTIAL
+ *
+ * Copyright (C) [2015] Guardtime, Inc
+ * All Rights Reserved
+ *
+ * NOTICE:  All information contained herein is, and remains, the
+ * property of Guardtime Inc and its suppliers, if any.
+ * The intellectual and technical concepts contained herein are
+ * proprietary to Guardtime Inc and its suppliers and may be
+ * covered by U.S. and Foreign Patents and patents in process,
+ * and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written permission
+ * is obtained from Guardtime Inc.
+ * "Guardtime" and "KSI" are trademarks or registered trademarks of
+ * Guardtime Inc.
+ */
+
 #include <stdio.h>
 #include <string.h>
 
@@ -379,20 +399,20 @@ static void testAllHashing(CuTest *tc) {
 			res = KSI_DataHasher_add(hsr, input, strlen(input));
 			CuAssert(tc, "Unable to add data to the hasher.", res == KSI_OK);
 
-			snprintf(errm, sizeof(errm), "Unable to close data hasher for hashId=%d (%s)", hashId, KSI_getHashAlgorithmName(hashId));
+			KSI_snprintf(errm, sizeof(errm), "Unable to close data hasher for hashId=%d (%s)", hashId, KSI_getHashAlgorithmName(hashId));
 
 			res = KSI_DataHasher_close(hsr, &hsh);
 
 			CuAssert(tc, errm, res == KSI_OK && hsh != NULL);
 
-			snprintf(tmp, sizeof(tmp), "%02x%s", hashId, expected[hashId]);
+			KSI_snprintf(tmp, sizeof(tmp), "%02x%s", hashId, expected[hashId]);
 			KSITest_decodeHexStr(tmp, expectedImprint, sizeof(expectedImprint), &expectedLen);
 
 			res = KSI_DataHash_getImprint(hsh, &imprint, &imprintLen);
 
 			CuAssert(tc, "Unable to retreive imprint value", res == KSI_OK && imprint != NULL && imprintLen > 0);
 
-			snprintf(errm, sizeof(errm), "Hash values mismatch for hashId=%d (%s)", hashId, KSI_getHashAlgorithmName(hashId));
+			KSI_snprintf(errm, sizeof(errm), "Hash values mismatch for hashId=%d (%s)", hashId, KSI_getHashAlgorithmName(hashId));
 			CuAssert(tc, errm, imprintLen == expectedLen && !memcmp(imprint, expectedImprint, imprintLen));
 
 			imprint = NULL;

@@ -1,19 +1,29 @@
+GOTO copyrightend
+
+    GUARDTIME CONFIDENTIAL
+
+    Copyright (C) [2015] Guardtime, Inc
+    All Rights Reserved
+
+    NOTICE:  All information contained herein is, and remains, the
+    property of Guardtime Inc and its suppliers, if any.
+    The intellectual and technical concepts contained herein are
+    proprietary to Guardtime Inc and its suppliers and may be
+    covered by U.S. and Foreign Patents and patents in process,
+    and are protected by trade secret or copyright law.
+    Dissemination of this information or reproduction of this
+    material is strictly forbidden unless prior written permission
+    is obtained from Guardtime Inc.
+    "Guardtime" and "KSI" are trademarks or registered trademarks of
+    Guardtime Inc.
+
+:copyrightend
+
 @ECHO OFF
 
 CALL "%ProgramW6432%\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64
 
-REM CURL_DIR and OPENSSL_DIR must contain include and lib directories. 
-REM Runntime MT and MTd supported
+nmake clean
+nmake RTL=MTd DLL=lib NET_PROVIDER=WINHTTP CRYPTO_PROVIDER=CRYPTOAPI all test 
 
-
-SET CURL_DIR=
-SET OPENSSL_DIR=C:\openssl\openssl64\
-SET OPENSSL_CA_FILE=B:\ksi-c-api\test\resource\tlv\mock.crt
-
-REM nmake clean
-del out\lib\libksiapiMTd.lib
-rem nmake RTL=MTd NET_PROVIDER=CURL CRYPTO_PROVIDER=CRYPTOAPI CURL_DIR="%CURL_DIR%" OPENSSL_CA_FILE="%OPENSSL_CA_FILE%" OPENSSL_DIR="%OPENSSL_DIR%" all
-rem nmake RTL=MTd NET_PROVIDER=CURL TRUST_PROVIDER=OPENSSL HASH_PROVIDER=CRYPTOAPI CURL_DIR="%CURL_DIR%" OPENSSL_CA_FILE="%OPENSSL_CA_FILE%" OPENSSL_DIR="%OPENSSL_DIR%" test
-
-nmake test RTL=MDd DLL=lib NET_PROVIDER=WINHTTP CRYPTO_PROVIDER=OPENSSL OPENSSL_CA_FILE="%OPENSSL_CA_FILE%" libMTd
 pause

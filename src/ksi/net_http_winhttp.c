@@ -1,3 +1,23 @@
+/**************************************************************************
+ *
+ * GUARDTIME CONFIDENTIAL
+ *
+ * Copyright (C) [2015] Guardtime, Inc
+ * All Rights Reserved
+ *
+ * NOTICE:  All information contained herein is, and remains, the
+ * property of Guardtime Inc and its suppliers, if any.
+ * The intellectual and technical concepts contained herein are
+ * proprietary to Guardtime Inc and its suppliers and may be
+ * covered by U.S. and Foreign Patents and patents in process,
+ * and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written permission
+ * is obtained from Guardtime Inc.
+ * "Guardtime" and "KSI" are trademarks or registered trademarks of
+ * Guardtime Inc.
+ */
+
 #include "internal.h"
 
 #if KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP
@@ -164,7 +184,7 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 		else if (error == ERROR_WINHTTP_TIMEOUT)
 			KSI_FAIL(&err, KSI_NETWORK_SEND_TIMEOUT, NULL);
 		else if (error == ERROR_WINHTTP_NAME_NOT_RESOLVED){
-			snprintf(err_msg, 128, "WinHTTP: Could not resolve host: '%ws'.", nhc->hostName);
+			KSI_snprintf(err_msg, 128, "WinHTTP: Could not resolve host: '%ws'.", nhc->hostName);
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, err_msg);
 		}
 		else
@@ -198,7 +218,7 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 
 	if (http_response >= 400){
 		char err_msg[64];
-		snprintf(err_msg, 64, "WinHTTP: Http error %i.", http_response);
+		KSI_snprintf(err_msg, 64, "WinHTTP: Http error %i.", http_response);
 		KSI_FAIL(&err, KSI_HTTP_ERROR, err_msg);
 		goto cleanup;
 	}
@@ -290,7 +310,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		if (error == ERROR_WINHTTP_UNRECOGNIZED_SCHEME)
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, "WinHTTP: Internet scheme is not 'HTTP/HTTPS'.");
 		else if (error == ERROR_WINHTTP_INVALID_URL){
-			snprintf(err_msg, 128, "WinHTTP: Invalid URL: '%s'.", url);
+			KSI_snprintf(err_msg, 128, "WinHTTP: Invalid URL: '%s'.", url);
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, err_msg);
 		}
 		else
@@ -349,7 +369,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		char err_msg[128];
 		DWORD error = GetLastError();
 		if (error == ERROR_WINHTTP_INVALID_URL){
-			snprintf(err_msg, 128, "WinHTTP: Could not resolve host: '%ws'.", implCtx->hostName);
+			KSI_snprintf(err_msg, 128, "WinHTTP: Could not resolve host: '%ws'.", implCtx->hostName);
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, err_msg);
 			}
 		else	
@@ -408,7 +428,7 @@ int KSI_HttpClientImpl_init(KSI_HttpClient *http) {
 	KSI_ERR err;
 	HINTERNET session_handle = NULL;
 	ULONG buf;
-	LPWSTR agent_name;
+	LPWSTR agent_name = NULL;
 	int res;
 
 	KSI_PRE(&err, http != NULL) goto cleanup;

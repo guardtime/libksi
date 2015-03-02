@@ -1,3 +1,23 @@
+/**************************************************************************
+ *
+ * GUARDTIME CONFIDENTIAL
+ *
+ * Copyright (C) [2015] Guardtime, Inc
+ * All Rights Reserved
+ *
+ * NOTICE:  All information contained herein is, and remains, the
+ * property of Guardtime Inc and its suppliers, if any.
+ * The intellectual and technical concepts contained herein are
+ * proprietary to Guardtime Inc and its suppliers and may be
+ * covered by U.S. and Foreign Patents and patents in process,
+ * and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written permission
+ * is obtained from Guardtime Inc.
+ * "Guardtime" and "KSI" are trademarks or registered trademarks of
+ * Guardtime Inc.
+ */
+
 #include "internal.h"
 
 #include <string.h>
@@ -128,12 +148,12 @@ cleanup:
 
 /* Returns -1 when EOF is encountered. */
 static int readNextBits(const unsigned char *data, size_t data_len,
-		int bits_read)
+		size_t bits_read)
 {
 	int ret = 0;
 	size_t first_byte_bits;
 	size_t byte_to_read;
-	int shift_count;
+	size_t shift_count;
 
 	byte_to_read = bits_read / 8;
 
@@ -169,7 +189,7 @@ int KSI_base32Encode(const unsigned char *data, size_t data_len, size_t group_le
 
 	char *tmp = NULL;
 	int next_bits;
-	int bits_read;
+	size_t bits_read;
 	size_t buf_len;
 	size_t ret_len = 0;
 

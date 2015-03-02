@@ -1,3 +1,23 @@
+/**************************************************************************
+ *
+ * GUARDTIME CONFIDENTIAL
+ *
+ * Copyright (C) [2015] Guardtime, Inc
+ * All Rights Reserved
+ *
+ * NOTICE:  All information contained herein is, and remains, the
+ * property of Guardtime Inc and its suppliers, if any.
+ * The intellectual and technical concepts contained herein are
+ * proprietary to Guardtime Inc and its suppliers and may be
+ * covered by U.S. and Foreign Patents and patents in process,
+ * and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written permission
+ * is obtained from Guardtime Inc.
+ * "Guardtime" and "KSI" are trademarks or registered trademarks of
+ * Guardtime Inc.
+ */
+
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>
@@ -31,12 +51,8 @@ static int writeLog(KSI_CTX *ctx, int logLevel, char *format, va_list va) {
 		res = KSI_OK;
 		goto cleanup;
 	}
-#ifdef _WIN32	
-	msg[sizeof(msg)-1] = 0;
-	_vsnprintf(msg, sizeof(msg)-1, format, va);
-#else
-	vsnprintf(msg, sizeof(msg), format, va);
-#endif
+
+	KSI_vsnprintf(msg, sizeof(msg), format, va);
 	res = ctx->loggerCB(ctx->loggerCtx, logLevel, msg);
 	if (res != KSI_OK) goto cleanup;
 
@@ -92,8 +108,8 @@ int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned 
 
 	for (i = 0; i < data_len; i++) {
 		int written;
-		written = snprintf(logStr + logStr_len, logStr_size - logStr_len, "%02x", data[i]);
-		if (written <= 0 || written > logStr_size - logStr_len) {
+		written = KSI_snprintf(logStr + logStr_len, logStr_size - logStr_len, "%02x", data[i]);
+		if (written <= 0 || (size_t)written > logStr_size - logStr_len) {
 			res = KSI_BUFFER_OVERFLOW;
 			goto cleanup;
 		}

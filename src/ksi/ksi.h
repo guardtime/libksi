@@ -1,3 +1,23 @@
+/**************************************************************************
+ *
+ * GUARDTIME CONFIDENTIAL
+ *
+ * Copyright (C) [2015] Guardtime, Inc
+ * All Rights Reserved
+ *
+ * NOTICE:  All information contained herein is, and remains, the
+ * property of Guardtime Inc and its suppliers, if any.
+ * The intellectual and technical concepts contained herein are
+ * proprietary to Guardtime Inc and its suppliers and may be
+ * covered by U.S. and Foreign Patents and patents in process,
+ * and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written permission
+ * is obtained from Guardtime Inc.
+ * "Guardtime" and "KSI" are trademarks or registered trademarks of
+ * Guardtime Inc.
+ */
+
 #ifndef _KSI_BASE_H_
 #define _KSI_BASE_H_
 
@@ -286,12 +306,13 @@ int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f);
 /**
  * Get base error message.
  * \param[in]		ctx		KSI context object.
- * \param[in/out]	buf		Buffer for storing error message.
- * \param[in]		len		The length of the buffer. 
+ * \param[out]		buf		Buffer for storing error message.
+ * \param[in]		len		The length of the buffer.
+ * \param[out]		err		Pointer to buffer for base error code.		 
  * \return status code (#KSI_OK, when operation succeeded, otherwise an
  * error code). 
  */
-int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len);
+int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *error);
 
 /**
  * The Guardtime representation of hash algorithms, necessary to calculate
@@ -435,7 +456,7 @@ int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig);
 int KSI_createSignature(KSI_CTX *ctx, KSI_DataHash *dataHash, KSI_Signature **sig);
 
 /**
- * Extend the signature to the earlyest available publication.
+ * Extend the signature to the earliest available publication.
  * \param[in]		ctx			KSI context.
  * \param[in]		sig			Signature to be extended.
  * \param[out]		extended	Pointer to the receiving pointer to the extended signature.
@@ -486,6 +507,12 @@ int KSI_CTX_setLoggerCallback(KSI_CTX *ctx, KSI_LoggerCallback cb, void *logCtx)
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
 int KSI_CTX_setRequestHeaderCallback(KSI_CTX *ctx, KSI_RequestHeaderCallback cb);
+
+int KSI_CTX_setPublicationUrl(KSI_CTX *ctx, const char *uri);
+int KSI_CTX_setExtender(KSI_CTX *ctx, const char *uri, const char *loginId, const char *key);
+int KSI_CTX_setAggregator(KSI_CTX *ctx, const char *uri, const char *loginId, const char *key);
+int KSI_CTX_setTransferTimeoutSeconds(KSI_CTX *ctx, int timeout);
+int KSI_CTX_setConnectionTimeoutSeconds(KSI_CTX *ctx, int timeout);
 
 int KSI_getPKITruststore(KSI_CTX *ctx, KSI_PKITruststore **pki);
 int KSI_getNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient **net);

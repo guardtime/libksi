@@ -1,3 +1,23 @@
+/**************************************************************************
+ *
+ * GUARDTIME CONFIDENTIAL
+ *
+ * Copyright (C) [2015] Guardtime, Inc
+ * All Rights Reserved
+ *
+ * NOTICE:  All information contained herein is, and remains, the
+ * property of Guardtime Inc and its suppliers, if any.
+ * The intellectual and technical concepts contained herein are
+ * proprietary to Guardtime Inc and its suppliers and may be
+ * covered by U.S. and Foreign Patents and patents in process,
+ * and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written permission
+ * is obtained from Guardtime Inc.
+ * "Guardtime" and "KSI" are trademarks or registered trademarks of
+ * Guardtime Inc.
+ */
+
 #include <string.h>
 #include "internal.h"
 #include "net_http_impl.h"
@@ -68,24 +88,42 @@ static int readResponse(KSI_RequestHandle *handle) {
 	KSI_ERR err;
 	int res;
 	TcpClientCtx *tcp = NULL;
+	KSI_TcpClient *client = NULL;
 	int sockfd = -1;
     struct sockaddr_in serv_addr;
     struct hostent *server = NULL;
     size_t count;
     unsigned char buffer[0xffff + 4];
     KSI_RDR *rdr = NULL;
-
-
+#ifdef _WIN32
+	DWORD transferTimeout = 0;
+#else
+	struct timeval  transferTimeout;
+#endif
+	
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(handle->ctx, &err);
 
 	tcp = handle->implCtx;
-
+	client = (KSI_TcpClient*)handle->client;
+	
     sockfd = (int)socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
     	KSI_FAIL(&err, KSI_NETWORK_ERROR, "Unable to open socket.");
     	goto cleanup;
     }
+	
+#ifdef _WIN32
+	transferTimeout = client->transferTimeoutSeconds*1000;
+#else
+	transferTimeout.tv_sec = client->transferTimeoutSeconds;
+    transferTimeout.tv_usec = 0;
+	
+#endif	
+	
+	/*Set socket options*/
+	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (void*)&transferTimeout, sizeof(transferTimeout));
+	setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (void*)&transferTimeout, sizeof(transferTimeout));
 
     server = gethostbyname(tcp->host);
     if (server == NULL) {
@@ -101,7 +139,6 @@ static int readResponse(KSI_RequestHandle *handle) {
     serv_addr.sin_port = htons(tcp->port);
 
     if ((res = connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr))) < 0) {
-    	perror("Failed to connect");
     	KSI_FAIL_EXT(&err, KSI_NETWORK_ERROR, res, "Unable to connect.");
     	goto cleanup;
     }
@@ -110,7 +147,7 @@ static int readResponse(KSI_RequestHandle *handle) {
     count = 0;
     while (count < handle->request_length) {
     	int c;
-		c = send(sockfd, handle->request, handle->request_length, 0);
+		c = send(sockfd, (char*)handle->request, handle->request_length, 0);
 		if (c < 0) {
 			KSI_FAIL(&err, KSI_NETWORK_ERROR, "Unable to write to socket.");
 			goto cleanup;
@@ -127,13 +164,18 @@ static int readResponse(KSI_RequestHandle *handle) {
 		goto cleanup;
 	}
 
+	if(count > UINT_MAX){
+		KSI_FAIL(&err, KSI_BUFFER_OVERFLOW, "Too much data read from socket.");
+		goto cleanup;
+	}
+	
 	handle->response = KSI_malloc(count);
 	if (handle->response == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 	memcpy(handle->response, buffer, count);
-	handle->response_length = count;
+	handle->response_length = (unsigned)count;
 
 	KSI_SUCCESS(&err);
 
@@ -169,7 +211,7 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
-	strncpy(tc->host, host, strlen(host) + 1);
+	KSI_strncpy(tc->host, host, strlen(host) + 1);
 	tc->port = port;
 
 	handle->readResponse = readResponse;
@@ -189,12 +231,10 @@ cleanup:
 static int prepareRequest(
 		KSI_NetworkClient *client,
 		void *pdu,
-		int (*updateHmac)(void *, int, char *),
 		int (*serialize)(void *, unsigned char **, unsigned *),
 		KSI_RequestHandle **handle,
 		char *host,
 		unsigned port,
-		char *pass,
 		const char *desc) {
 	KSI_ERR err;
 	int res;
@@ -202,15 +242,11 @@ static int prepareRequest(
 	KSI_RequestHandle *tmp = NULL;
 	unsigned char *raw = NULL;
 	unsigned raw_len = 0;
-	int defaultAlgo = KSI_getHashAlgorithmByName("default");
 
 	KSI_PRE(&err, client != NULL) goto cleanup;
 	KSI_PRE(&err, pdu != NULL) goto cleanup;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_BEGIN(client->ctx, &err);
-
-	res = updateHmac(pdu, defaultAlgo, pass);
-	KSI_CATCH(&err, res) goto cleanup;
 
 	res = serialize(pdu, &raw, &raw_len);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -242,30 +278,58 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendPdu *pdu, KSI_RequestHandle **handle) {
-	return prepareRequest(
+static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, KSI_RequestHandle **handle) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_ExtendPdu *pdu = NULL;
+
+	res = KSI_ExtendReq_enclose(req, client->extUser, client->extPass, &pdu);
+	if (res != KSI_OK) goto cleanup;
+
+
+	res = prepareRequest(
 			client,
 			pdu,
-			(int (*)(void *, int, char *))KSI_ExtendPdu_updateHmac,
 			(int (*)(void *, unsigned char **, unsigned *))KSI_ExtendPdu_serialize,
 			handle,
 			((KSI_TcpClient*)client)->extHost,
 			((KSI_TcpClient*)client)->extPort,
-			client->extPass,
 			"Extend request");
+	if (res != KSI_OK) goto cleanup;
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_ExtendPdu_setRequest(pdu, NULL);
+	KSI_ExtendPdu_free(pdu);
+
+	return res;
 }
 
-static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationPdu *pdu, KSI_RequestHandle **handle) {
-	return prepareRequest(
+static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationReq *req, KSI_RequestHandle **handle) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_AggregationPdu *pdu = NULL;
+
+	res = KSI_AggregationReq_enclose(req, client->aggrUser, client->aggrPass, &pdu);
+	if (res != KSI_OK) goto cleanup;
+
+	res = prepareRequest(
 			client,
 			pdu,
-			(int (*)(void *, int, char *))KSI_AggregationPdu_updateHmac,
 			(int (*)(void *, unsigned char **, unsigned *))KSI_AggregationPdu_serialize,
 			handle,
 			((KSI_TcpClient*)client)->aggrHost,
 			((KSI_TcpClient*)client)->aggrPort,
-			client->aggrPass,
 			"Aggregation request");
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_AggregationPdu_setRequest(pdu, NULL);
+	KSI_AggregationPdu_free(pdu);
+
+	return res;
 }
 
 static int sendPublicationRequest(KSI_NetworkClient *client, KSI_RequestHandle **handle) {
@@ -282,7 +346,7 @@ cleanup:
 	return res;
 }
 
-void KSI_TcpClient_free(KSI_TcpClient *tcp) {
+static void tcpClient_free(KSI_TcpClient *tcp) {
 	if (tcp != NULL) {
 		KSI_free(tcp->aggrHost);
 		KSI_free(tcp->extHost);
@@ -290,6 +354,11 @@ void KSI_TcpClient_free(KSI_TcpClient *tcp) {
 		KSI_free(tcp);
 	}
 }
+
+void KSI_TcpClient_free(KSI_TcpClient *tcp) {
+	KSI_NetworkClient_free((KSI_NetworkClient*)tcp);
+}
+
 
 /**
  *
@@ -312,14 +381,16 @@ int KSI_TcpClient_init(KSI_CTX *ctx, KSI_TcpClient *client) {
 	client->extHost = NULL;
 	client->extPort = 0;
 	client->http = NULL;
-
+	
+	client->transferTimeoutSeconds = 10;
+	
 	res = KSI_HttpClient_new(ctx, &client->http);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	client->parent.sendExtendRequest = prepareExtendRequest;
 	client->parent.sendSignRequest = prepareAggregationRequest;
 	client->parent.sendPublicationRequest = sendPublicationRequest;
-	client->parent.implFree = (void (*)(void *))KSI_TcpClient_free;
+	client->parent.implFree = (void (*)(void *))tcpClient_free;
 
 	KSI_SUCCESS(&err);
 
@@ -427,4 +498,19 @@ int KSI_TcpClient_setPublicationUrl(KSI_TcpClient *client, const char *val) {
 cleanup:
 
 	return res;
+}
+
+int KSI_TcpClient_setTransferTimeoutSeconds (KSI_TcpClient *client, int transferTimeoutSeconds ) {
+    KSI_ERR err;
+	
+	KSI_PRE(&err, client != NULL) goto cleanup;
+	KSI_BEGIN(((KSI_NetworkClient*)client)->ctx, &err);
+	
+    client->transferTimeoutSeconds = transferTimeoutSeconds ;
+    
+	KSI_SUCCESS(&err);
+	
+cleanup:
+
+	return KSI_RETURN(&err);
 }

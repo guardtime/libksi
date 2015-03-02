@@ -1,3 +1,23 @@
+/**************************************************************************
+ *
+ * GUARDTIME CONFIDENTIAL
+ *
+ * Copyright (C) [2015] Guardtime, Inc
+ * All Rights Reserved
+ *
+ * NOTICE:  All information contained herein is, and remains, the
+ * property of Guardtime Inc and its suppliers, if any.
+ * The intellectual and technical concepts contained herein are
+ * proprietary to Guardtime Inc and its suppliers and may be
+ * covered by U.S. and Foreign Patents and patents in process,
+ * and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written permission
+ * is obtained from Guardtime Inc.
+ * "Guardtime" and "KSI" are trademarks or registered trademarks of
+ * Guardtime Inc.
+ */
+
 #ifndef KSI_NET_H_
 #define KSI_NET_H_
 
@@ -192,7 +212,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetworkClient_setSendSignRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_AggregationPdu *, KSI_RequestHandle **));
+	int KSI_NetworkClient_setSendSignRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_AggregationReq *, KSI_RequestHandle **));
 
 	/**
 	 * Setter for sign request function.
@@ -202,7 +222,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetworkClient_setSendExtendRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_ExtendPdu *, KSI_RequestHandle **));
+	int KSI_NetworkClient_setSendExtendRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **));
 
 	/**
 	 * Setter for sign request function.
@@ -239,10 +259,16 @@ extern "C" {
 	 * Function to split the given uri into three parts: schema, host and port. If the
 	 * part is missing from the uri, the output parameter will receive \c NULL or 0 for \c port
 	 * as the value. If the output pointers are set to \c NULL, the value is not returned.
+	 * \param[in]	uri			Pointer to the URI.
+	 * \param[out]	scheme		Pointer to the receiving pointer of the scheme (may be \c NULL).
+	 * \param[out]	host		Pointer to the receiving pointer of the host (may be \c NULL).
+	 * \param[out]	port		Pointer to the receiving variable (may be \c NULL).
+	 * \param[out]	path		Pointer to the receiving pointer of the path (may be \NULL).
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note All aquired pointers have to be freed by the caller using #KSI_free.
 	 */
-	int KSI_UriSplitBasic(const char *uri, char **schema, char **host, unsigned *port, char **path);
+	int KSI_UriSplitBasic(const char *uri, char **scheme, char **host, unsigned *port, char **path);
 	/**
 	 * @}
 	 */
