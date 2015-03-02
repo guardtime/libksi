@@ -652,7 +652,7 @@ int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *erro
 	
 	err = ctx->errors;
 	
-	if(error != NULL)	*error = err->statusCode;
+	if (error != NULL)	*error = err->statusCode;
 	
 	KSI_strncpy(buf, err->message, len);		
 	return KSI_OK;
@@ -693,7 +693,7 @@ static int KSI_CTX_setUri(KSI_CTX *ctx,
 	KSI_PRE(&err, uri != NULL && loginId != NULL && key != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	if(ctx->isCustomNetProvider){
+	if (ctx->isCustomNetProvider){
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Unable to set url after initial network provider replacement.");
 		goto cleanup;
 	}
@@ -734,7 +734,7 @@ static int KSI_CTX_setTimeoutSeconds(KSI_CTX *ctx, int timeout, int (*setter)(KS
 	KSI_PRE(&err, ctx != NULL && ctx->netProvider) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	if(ctx->isCustomNetProvider){
+	if (ctx->isCustomNetProvider){
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Unable to set timeout after initial network provider replacement.");
 		goto cleanup;
 	}

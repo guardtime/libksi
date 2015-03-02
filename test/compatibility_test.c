@@ -54,7 +54,7 @@ static void Test_KSI_snprintf(CuTest* tc) {
 	ret = KSI_snprintf(NULL, 5, "%s", "12345");
 	CuAssert(tc, "KSI_snprintf failed.", ret == -1 && memcmp(dest, empty, sizeof(dest)) == 0);
 	
-	for(i=0 ; i < 0xFF+1; i++){
+	for (i=0 ; i < 0xFF + 1; i++){
 		len += KSI_snprintf(bigdest + len, sizeof(bigdest) - len, "%s", "F");
 	}
 	

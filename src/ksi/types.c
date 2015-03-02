@@ -417,7 +417,7 @@ int KSI_ExtendReq_enclose(KSI_ExtendReq *req, char *loginId, char *key, KSI_Exte
 	}
 
 	loginLen = strlen(loginId);
-	if(loginLen > UINT_MAX){
+	if (loginLen > UINT_MAX){
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -570,7 +570,7 @@ int KSI_AggregationReq_enclose(KSI_AggregationReq *req, char *loginId, char *key
 	}
 
 	loginLen = strlen(loginId);
-	if(loginLen > UINT_MAX){
+	if (loginLen > UINT_MAX){
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}

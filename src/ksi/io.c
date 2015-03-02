@@ -338,7 +338,7 @@ static int readFromSocket(KSI_RDR *rdr, unsigned char *buffer, const size_t size
 		int c = recv(rdr->data.socketfd, (char*)buffer+count, (int)(size - count), 0);
 
 		if (c < 0) {
-			if(socket_error == socketTimedOut)
+			if (socket_error == socketTimedOut)
 				KSI_FAIL_EXT(&err, KSI_NETWORK_RECIEVE_TIMEOUT, errno, "Unable to read from socket.");
 			else
 				KSI_FAIL_EXT(&err, KSI_IO_ERROR, errno, "Unable to read from socket.");
