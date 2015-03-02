@@ -162,16 +162,14 @@ int type##_fromTlv(KSI_TLV *tlv, type **data) { \
 	type *tmp = NULL; \
 	int isLeft = 0; \
 	unsigned char *tlvData = NULL; \
-	unsigned len; \
 	KSI_OctetString *raw = NULL; \
-	KSI_TLV *baseTlv = NULL; \
 	KSI_CTX *ctx = KSI_TLV_getCtx(tlv); \
 	\
 	KSI_PRE(&err, tlv != NULL) goto cleanup; \
 	KSI_PRE(&err, data != NULL) goto cleanup; \
 	KSI_BEGIN(ctx, &err); \
 	\
-	if (KSI_TLV_getTag(tlv) != tag){ \
+		if (KSI_TLV_getTag(tlv) != tag){ \
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL); \
 		goto cleanup; \
 	} \
@@ -192,29 +190,34 @@ cleanup: \
 	type##_free(tmp); \
 	KSI_free(tlvData); \
 	KSI_OctetString_free(raw); \
-	KSI_TLV_free(baseTlv); \
 	return KSI_RETURN(&err); \
 }
 	
 #define FROMTLV_ADD_RAW(name, offset) \
-	res = KSI_TLV_serialize(tlv, &tlvData, &len); \
-	KSI_CATCH(&err, res) goto cleanup; \
-	\
-	if (len-offset <= 0){ \
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL); \
-		goto cleanup; \
-	} \
-	res = KSI_OctetString_new(ctx, tlvData+offset, len-offset, &raw); \
-	KSI_CATCH(&err, res) goto cleanup; \
-	\
-	tmp->name = raw; \
-	raw = NULL; \
+	do{ \
+		unsigned len; \
+		res = KSI_TLV_serialize(tlv, &tlvData, &len); \
+		KSI_CATCH(&err, res) goto cleanup; \
+		\
+		if (len-offset <= 0){ \
+			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL); \
+			goto cleanup; \
+		} \
+		res = KSI_OctetString_new(ctx, tlvData+offset, len-offset, &raw); \
+		KSI_CATCH(&err, res) goto cleanup; \
+		\
+		tmp->name = raw; \
+		raw = NULL; \
+	}while(0);
 
+/*TODO: Is it safe to not free baseTlv, as on error baseTlv is still NULL and after setting "name", objects tmp free handles the meory.*/
 #define FROMTLV_ADD_BASETLV(name) \
-	res = KSI_TLV_clone(tlv, &baseTlv); \
-	KSI_CATCH(&err, res) goto cleanup; \
-	tmp->name = baseTlv; \
-	baseTlv = NULL;
+	do{ \
+		KSI_TLV *baseTlv = NULL; \
+		res = KSI_TLV_clone(tlv, &baseTlv); \
+		KSI_CATCH(&err, res) goto cleanup; \
+		tmp->name = baseTlv; \
+	}while(0);
 	
 struct KSI_Object_st {
 	KSI_CTX *ctx;

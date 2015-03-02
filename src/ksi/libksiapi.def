@@ -306,6 +306,10 @@ EXPORTS
     KSI_PublicationRecord_setRepositoryUriList
     KSI_PublicationRecord_toString
     KSI_PublicationRecord_clone
+    KSI_PublicationData_fromTlv
+    KSI_PublicationData_toTlv
+    KSI_PublicationData_getBaseTlv
+    KSI_PublicationData_setBaseTlv
 
 ;signature.h
 EXPORTS
@@ -564,10 +568,8 @@ EXPORTS
     KSI_AggregationAuthRec_setSigData
     KSI_CalendarAuthRec_free
     KSI_CalendarAuthRec_new
-    KSI_CalendarAuthRec_getSignedData
     KSI_CalendarAuthRec_getPublishedData
     KSI_CalendarAuthRec_getSignatureData
-    KSI_CalendarAuthRec_setSignedData
     KSI_CalendarAuthRec_setPublishedData
     KSI_CalendarAuthRec_setSignatureData
     KSI_TLV_getCtx

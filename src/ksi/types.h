@@ -399,12 +399,10 @@ int KSI_AggregationAuthRec_setSigData(KSI_AggregationAuthRec *rec, KSI_PKISigned
 void KSI_CalendarAuthRec_free(KSI_CalendarAuthRec *calAuth);
 int KSI_CalendarAuthRec_new(KSI_CTX *ctx, KSI_CalendarAuthRec **out);
 
-int KSI_CalendarAuthRec_getSignedData(const KSI_CalendarAuthRec *rec, KSI_TLV **pubDataTlv);
 int KSI_CalendarAuthRec_getPublishedData(const KSI_CalendarAuthRec *rec, KSI_PublicationData **pubData);
 int KSI_CalendarAuthRec_getSignatureAlgo(const KSI_CalendarAuthRec *rec, KSI_Utf8String **signatureAlgo);
 int KSI_CalendarAuthRec_getSignatureData(const KSI_CalendarAuthRec *rec, KSI_PKISignedData **signatureData);
 
-int KSI_CalendarAuthRec_setSignedData(KSI_CalendarAuthRec *rec, KSI_TLV *pubDataTlv);
 int KSI_CalendarAuthRec_setPublishedData(KSI_CalendarAuthRec *rec, KSI_PublicationData *pubData);
 int KSI_CalendarAuthRec_setSignatureAlgo(KSI_CalendarAuthRec *rec, KSI_Utf8String *signatureAlgo);
 int KSI_CalendarAuthRec_setSignatureData(KSI_CalendarAuthRec *rec, KSI_PKISignedData *signatureData);

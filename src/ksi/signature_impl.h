@@ -28,7 +28,6 @@ extern "C" {
 	struct KSI_CalendarAuthRec_st {
 		KSI_CTX *ctx;
 
-		KSI_TLV *pubDataTlv;
 		KSI_PublicationData *pubData;
 		KSI_PKISignedData *signatureData;
 	};
