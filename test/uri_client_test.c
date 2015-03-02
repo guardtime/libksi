@@ -89,7 +89,7 @@ static void testValidAggregatorHttpUri(CuTest* tc) {
 		uri->pAggregationClient = NULL;
 
 		res = KSI_UriClient_setAggregator(uri, validHttpUri[i], "dummy", "dummy");
-		snprintf(errm, sizeof(errm), "Unable to set valid URI for aggregator address '%s'", validHttpUri[i]);
+		KSI_snprintf(errm, sizeof(errm), "Unable to set valid URI for aggregator address '%s'", validHttpUri[i]);
 		CuAssert(tc, errm, res == KSI_OK);
 
 		CuAssert(tc, "Aggregator client should be the HTTP client", uri->pAggregationClient == (KSI_NetworkClient *)uri->httpClient);
@@ -114,7 +114,7 @@ static void testValidExtenderHttpUri(CuTest* tc) {
 		uri->pExtendClient = NULL;
 
 		res = KSI_UriClient_setExtender(uri, validHttpUri[i], "dummy", "dummy");
-		snprintf(errm, sizeof(errm), "Unable to set valid URI for extender address '%s'", validHttpUri[i]);
+		KSI_snprintf(errm, sizeof(errm), "Unable to set valid URI for extender address '%s'", validHttpUri[i]);
 		CuAssert(tc, errm, res == KSI_OK);
 
 		CuAssert(tc, "Extender client should be the HTTP client", uri->pExtendClient == (KSI_NetworkClient *)uri->httpClient);
@@ -142,10 +142,10 @@ static void testValidAggregatorTcpUri(CuTest* tc) {
 
 		res = KSI_UriClient_setAggregator(uri, validTcpUri[i], "dummy", "dummy");
 
-		snprintf(errm, sizeof(errm), "Unable to set valid URI for aggregator address '%s'", validTcpUri[i]);
+		KSI_snprintf(errm, sizeof(errm), "Unable to set valid URI for aggregator address '%s'", validTcpUri[i]);
 		CuAssert(tc, errm, res == KSI_OK);
 
-		snprintf(errm, sizeof(errm), "TCP client should be initialized for address '%s'", validTcpUri[i]);
+		KSI_snprintf(errm, sizeof(errm), "TCP client should be initialized for address '%s'", validTcpUri[i]);
 		CuAssert(tc, errm, uri->tcpClient != NULL);
 
 		CuAssert(tc, "Aggregator client should be the TCP client", uri->pAggregationClient == (KSI_NetworkClient *)uri->tcpClient);
@@ -173,10 +173,10 @@ static void testValidExtenderTcpUri(CuTest* tc) {
 		uri->tcpClient = NULL;
 
 		res = KSI_UriClient_setExtender(uri, validTcpUri[i], "dummy", "dummy");
-		snprintf(errm, sizeof(errm), "Unable to set valid URI for extender address '%s'", validTcpUri[i]);
+		KSI_snprintf(errm, sizeof(errm), "Unable to set valid URI for extender address '%s'", validTcpUri[i]);
 		CuAssert(tc, errm, res == KSI_OK);
 
-		snprintf(errm, sizeof(errm), "TCP client should be initialized for address '%s'", validTcpUri[i]);
+		KSI_snprintf(errm, sizeof(errm), "TCP client should be initialized for address '%s'", validTcpUri[i]);
 		CuAssert(tc, errm, uri->tcpClient != NULL);
 
 		CuAssert(tc, "Extender client should be the TCP client", uri->pExtendClient == (KSI_NetworkClient *)uri->tcpClient);
@@ -204,7 +204,7 @@ static void testInvalidExtenderUri(CuTest* tc) {
 		uri->tcpClient = NULL;
 
 		res = KSI_UriClient_setExtender(uri, invalidUri[i], "dummy", "dummy");
-		snprintf(errm, sizeof(errm), "Invalid URI for extender should fail: '%s'", invalidUri[i]);
+		KSI_snprintf(errm, sizeof(errm), "Invalid URI for extender should fail: '%s'", invalidUri[i]);
 		CuAssert(tc, errm, res != KSI_OK);
 
 		i++;
@@ -230,7 +230,7 @@ static void testInvalidAggregatorUri(CuTest* tc) {
 		uri->tcpClient = NULL;
 
 		res = KSI_UriClient_setExtender(uri, invalidUri[i], "dummy", "dummy");
-		snprintf(errm, sizeof(errm), "Invalid URI for extender should fail: '%s'", invalidUri[i]);
+		KSI_snprintf(errm, sizeof(errm), "Invalid URI for extender should fail: '%s'", invalidUri[i]);
 		CuAssert(tc, errm, res != KSI_OK);
 
 		i++;
