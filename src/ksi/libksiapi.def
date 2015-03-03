@@ -122,6 +122,7 @@ EXPORTS
 
 ;ksi.h
 EXPORTS
+	KSI_getVersion
     KSI_getErrorString
     KSI_CTX_new
     KSI_CTX_free

@@ -29,6 +29,17 @@
 
 KSI_IMPLEMENT_LIST(GlobalCleanupFn, NULL);
 
+#ifdef COMMIT_ID
+#  define KSI_VERSION_STRING "libksi " VERSION "-" COMMIT_ID
+#else
+#  define KSI_VERSION_STRING "libksi " VERSION
+#endif
+
+const char *KSI_getVersion(void) {
+	static const char versionString[] = KSI_VERSION_STRING;
+	return versionString;
+}
+
 const char *KSI_getErrorString(int statusCode) {
 	switch (statusCode) {
 		case KSI_OK:

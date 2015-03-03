@@ -76,8 +76,9 @@ int main(int argc, char **argv) {
 	}
 
 	KSI_CTX_setLoggerCallback(ksi, KSI_LOG_StreamLogger, logFile);
-
 	KSI_CTX_setLogLevel(ksi, KSI_LOG_DEBUG);
+
+	KSI_LOG_info(ksi, "Using KSI version: '%s'", KSI_getVersion());
 
 	/* Check if uri's are specified. */
 	res = KSI_UriClient_new(ksi, &net);
