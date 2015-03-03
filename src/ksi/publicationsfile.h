@@ -227,11 +227,15 @@ extern "C" {
 	 */
 	void KSI_PublicationData_free(KSI_PublicationData *t);
 	int KSI_PublicationData_new(KSI_CTX *ctx, KSI_PublicationData **t);
+	int KSI_PublicationData_getBaseTlv (const KSI_PublicationData *o, KSI_TLV** baseTlv);
 	int KSI_PublicationData_getTime(const KSI_PublicationData *t, KSI_Integer **time);
 	int KSI_PublicationData_getImprint(const KSI_PublicationData *t, KSI_DataHash **imprint);
+	int KSI_PublicationData_setBaseTlv ( KSI_PublicationData *o, KSI_TLV* baseTlv);
 	int KSI_PublicationData_setTime(KSI_PublicationData *t, KSI_Integer *time);
 	int KSI_PublicationData_setImprint(KSI_PublicationData *t, KSI_DataHash *imprint);
 	char *KSI_PublicationData_toString(KSI_PublicationData *t, char *buffer, unsigned buffer_len);
+	int KSI_PublicationData_fromTlv (KSI_TLV *tlv, KSI_PublicationData **data);
+	int KSI_PublicationData_toTlv (KSI_CTX *ctx, const KSI_PublicationData *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 	/**
 	 * KSI_PublicationRecord

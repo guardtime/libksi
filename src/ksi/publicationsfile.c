@@ -886,6 +886,7 @@ void KSI_PublicationData_free(KSI_PublicationData *t) {
 	if (t != NULL) {
 		KSI_Integer_free(t->time);
 		KSI_DataHash_free(t->imprint);
+		KSI_TLV_free(t->baseTlv);
 		KSI_free(t);
 	}
 }
@@ -907,6 +908,7 @@ int KSI_PublicationData_new(KSI_CTX *ctx, KSI_PublicationData **t) {
 	tmp->ctx = ctx;
 	tmp->time = NULL;
 	tmp->imprint = NULL;
+	tmp->baseTlv = NULL;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -965,13 +967,17 @@ cleanup:
 	return ret;
 }
 
+KSI_IMPLEMENT_GETTER(KSI_PublicationData, KSI_TLV*, baseTlv, BaseTlv);
 KSI_IMPLEMENT_GETTER(KSI_PublicationData, KSI_Integer*, time, Time);
 KSI_IMPLEMENT_GETTER(KSI_PublicationData, KSI_DataHash*, imprint, Imprint);
 
+KSI_IMPLEMENT_SETTER(KSI_PublicationData, KSI_TLV*, baseTlv, BaseTlv);
 KSI_IMPLEMENT_SETTER(KSI_PublicationData, KSI_Integer*, time, Time);
 KSI_IMPLEMENT_SETTER(KSI_PublicationData, KSI_DataHash*, imprint, Imprint);
 
-
+KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationData);
+KSI_IMPLEMENT_FROMTLV(KSI_PublicationData, 0x10, FROMTLV_ADD_BASETLV(baseTlv));
+KSI_IMPLEMENT_TOTLV(KSI_PublicationData);
 /**
  * KSI_PublicationRecord
  */

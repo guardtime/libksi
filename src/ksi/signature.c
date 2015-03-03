@@ -235,7 +235,7 @@ KSI_IMPLEMENT_SETTER(KSI_AggregationAuthRec, KSI_PKISignedData*, signatureData, 
 
 void KSI_CalendarAuthRec_free(KSI_CalendarAuthRec *calAuth) {
 	if (calAuth != NULL) {
-		KSI_TLV_free(calAuth->pubDataTlv);
+		KSI_TLV_free(calAuth->pubData->baseTlv);
 		KSI_PublicationData_free(calAuth->pubData);
 		KSI_PKISignedData_free(calAuth->signatureData);
 
@@ -260,7 +260,6 @@ int KSI_CalendarAuthRec_new(KSI_CTX *ctx, KSI_CalendarAuthRec **out) {
 	tmp->ctx = ctx;
 	tmp->pubData = NULL;
 	tmp->signatureData = NULL;
-	tmp->pubDataTlv = NULL;
 
 	*out = tmp;
 	tmp = NULL;
@@ -274,12 +273,9 @@ cleanup:
 	return KSI_RETURN(&err);
 
 }
-
-KSI_IMPLEMENT_SETTER(KSI_CalendarAuthRec, KSI_TLV*, pubDataTlv, SignedData)
 KSI_IMPLEMENT_SETTER(KSI_CalendarAuthRec, KSI_PublicationData*, pubData, PublishedData)
 KSI_IMPLEMENT_SETTER(KSI_CalendarAuthRec, KSI_PKISignedData*, signatureData, SignatureData)
 
-KSI_IMPLEMENT_GETTER(KSI_CalendarAuthRec, KSI_TLV*, pubDataTlv, SignedData)
 KSI_IMPLEMENT_GETTER(KSI_CalendarAuthRec, KSI_PublicationData*, pubData, PublishedData)
 KSI_IMPLEMENT_GETTER(KSI_CalendarAuthRec, KSI_PKISignedData*, signatureData, SignatureData)
 
@@ -1676,7 +1672,7 @@ static int verifyCalAuthRec(KSI_CTX *ctx, KSI_Signature *sig) {
 	res = KSI_OctetString_extract(signatureValue, &rawSignature, &rawSignature_len);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_TLV_serialize(sig->calendarAuthRec->pubDataTlv, &rawData, &rawData_len);
+	res = KSI_TLV_serialize(sig->calendarAuthRec->pubData->baseTlv, &rawData, &rawData_len);
 	if (res != KSI_OK) goto cleanup;
 	
 	res = KSI_PKISignedData_getSigType(sig->calendarAuthRec->signatureData, &sigtype);

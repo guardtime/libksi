@@ -40,6 +40,7 @@ extern "C" {
 		KSI_CTX *ctx;
 		KSI_Integer *time;
 		KSI_DataHash *imprint;
+		KSI_TLV *baseTlv;
 	};
 
 	struct KSI_PublicationRecord_st {

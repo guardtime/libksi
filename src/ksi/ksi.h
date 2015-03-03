@@ -531,7 +531,7 @@ int KSI_setPKITruststore(KSI_CTX *ctx, KSI_PKITruststore *pki);
 int KSI_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *net);
 int KSI_getPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **var);
 int KSI_setPublicationCertEmail(KSI_CTX *ctx, const char *email);
-
+const char* KSI_getVersion(void);
 /**
  * @}
  */

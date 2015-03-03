@@ -432,13 +432,6 @@ extern "C" {
 	#define KSI_TLV_SEEK_POS(tg, sttr) KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_SEEK_POS, tg, KSI_TLV_TMPL_FLG_NO_SERIALIZE, NULL, sttr, NULL)
 
 	/**
-	 * Stores the value of the parsed element as a #KSI_TLV object.
-	 * \param[in]	tg			TLV tag value
-	 * \param[in]	sttr		Setter function for #KSI_TLV value.
-	 */
-	#define KSI_TLV_UNPROCESSED(tg, sttr) KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_UNPROCESSED, tg, KSI_TLV_TMPL_FLG_NO_SERIALIZE, NULL, sttr, NULL)
-
-	/**
 	 * This macro ends the #KSI_TlvTemplate definition started by #KSI_TLV_TEMPLATE.
 	 */
 	#define KSI_END_TLV_TEMPLATE { -1, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL}};
