@@ -159,7 +159,6 @@ EXPORTS
     KSI_CTX_setAggregator
     KSI_CTX_setTransferTimeoutSeconds
     KSI_CTX_setConnectionTimeoutSeconds
-    KSI_getVersion
 
 ;list.h
 EXPORTS

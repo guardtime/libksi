@@ -235,7 +235,6 @@ KSI_IMPLEMENT_SETTER(KSI_AggregationAuthRec, KSI_PKISignedData*, signatureData, 
 
 void KSI_CalendarAuthRec_free(KSI_CalendarAuthRec *calAuth) {
 	if (calAuth != NULL) {
-		KSI_TLV_free(calAuth->pubData->baseTlv);
 		KSI_PublicationData_free(calAuth->pubData);
 		KSI_PKISignedData_free(calAuth->signatureData);
 
