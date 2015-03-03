@@ -181,6 +181,13 @@ LDFLAGS = $(LDFLAGS) /DEBUG
 !ENDIF
 
 
+!IF "$(COM_ID)" != ""
+CCFLAGS = $(CCFLAGS) /DCOMMIT_ID=\"$(COM_ID)\"
+!ENDIF
+!IF "$(VER)" != ""
+CCFLAGS = $(CCFLAGS) /DVERSION=\"$(VER)\"
+!ENDIF
+
 CCFLAGS = $(CCFLAGS) $(CCEXTRA) $(TRUSTSTORE_MACROS)
 LDFLAGS = $(LDFLAGS) $(LDEXTRA)
 
@@ -201,7 +208,7 @@ $(LIB_DIR)\$(LIB_NAME)$(RTL).dll: $(OBJ_DIR) $(LIB_DIR) $(LIB_OBJ) $(LIB_DEF)
 	
 
 {$(SRC_DIR)}.c{$(OBJ_DIR)\}.obj:
-	cl /c /$(RTL) $(CCFLAGS) /Fo$@ $< /DVERSION=\"$(VER)\"
+	cl /c /$(RTL) $(CCFLAGS) /Fo$@ $<
 
 	
 include: $(INCLUDE_DIR)
