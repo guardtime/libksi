@@ -1,21 +1,21 @@
 /**
 	\mainpage SDK Overview
 	<h2>Acknowledgements</h2>
-	<p>	
-		This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit (<a href="http://www.openssl.org/">www.openssl.org</a>).
-	</p>
+		<p>	
+			This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit (<a href="http://www.openssl.org/">www.openssl.org</a>).
+		</p>
 	
-	<p>
-		This product includes cryptographic software written by Eric Young (eay@cryptsoft.com). This product includes software written by Tim Hudson (tjh@cryptsoft.com).
-	</p>
+		<p>
+			This product includes cryptographic software written by Eric Young (eay@cryptsoft.com). This product includes software written by Tim Hudson (tjh@cryptsoft.com).
+		</p>
 	
-	<p>
-		This product includes networking software developed by the cURL Project (<a href="http://curl.haxx.se/">curl.haxx.se</a>).
-	</p>
+		<p>
+			This product includes networking software developed by the cURL Project (<a href="http://curl.haxx.se/">curl.haxx.se</a>).
+		</p>
 
-	<p>
-		This product includes C unit testing framework CuTest written by Asim Jalis (asimjalis@gmail.com).
-	</p>	
+		<p>
+			This product includes C unit testing framework CuTest written by Asim Jalis (asimjalis@gmail.com).
+		</p>	
 	
 	<h2>KSI Context</h2>
 		<p>
