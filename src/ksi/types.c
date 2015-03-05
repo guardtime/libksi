@@ -40,7 +40,7 @@ struct KSI_MetaData_st {
 	KSI_CTX *ctx;
 	KSI_OctetString *raw;
 	KSI_Utf8String *clientId;
-	KSI_OctetString *machineId;
+	KSI_Utf8String *machineId;
 	KSI_Integer *sequenceNr;
 	KSI_Integer *req_time_micros;
 };
@@ -169,7 +169,7 @@ void KSI_MetaData_free(KSI_MetaData *t) {
 	if (t != NULL) {
 		KSI_OctetString_free(t->raw);
 		KSI_Utf8String_free(t->clientId);
-		KSI_OctetString_free(t->machineId);
+		KSI_Utf8String_free(t->machineId);
 		KSI_Integer_free(t->sequenceNr);
 		KSI_Integer_free(t->req_time_micros);
 		KSI_free(t);
@@ -202,13 +202,13 @@ cleanup:
 
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_OctetString*, raw, Raw);
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Utf8String*, clientId, ClientId);
-KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_OctetString*, machineId, MachineId);
+KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Utf8String*, machineId, MachineId);
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Integer*, sequenceNr, SequenceNr);
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Integer*, req_time_micros, RequestTimeInMicros);
 
 KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_OctetString*, raw, Raw);
 KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Utf8String*, clientId, ClientId);
-KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_OctetString*, machineId, MachineId);
+KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Utf8String*, machineId, MachineId);
 KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Integer*, sequenceNr, SequenceNr);
 KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Integer*, req_time_micros, RequestTimeInMicros);
 
