@@ -95,7 +95,7 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_HashChainLink)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_Header)
-	KSI_TLV_OCTET_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Header_getLoginId, KSI_Header_setLoginId, "login_id")
+	KSI_TLV_UTF8_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Header_getLoginId, KSI_Header_setLoginId, "login_id")
 	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_Header_getInstanceId, KSI_Header_setInstanceId, "instance_id")
 	KSI_TLV_INTEGER(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_Header_getMessageId, KSI_Header_setMessageId, "message_id")
 KSI_END_TLV_TEMPLATE

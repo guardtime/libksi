@@ -213,10 +213,10 @@ void KSI_Header_free(KSI_Header *t);
 int KSI_Header_new(KSI_CTX *ctx, KSI_Header **t);
 int KSI_Header_getInstanceId(const KSI_Header *t, KSI_Integer **instanceId);
 int KSI_Header_getMessageId(const KSI_Header *t, KSI_Integer **messageId);
-int KSI_Header_getLoginId(const KSI_Header *t, KSI_OctetString **clientId);
+int KSI_Header_getLoginId(const KSI_Header *t, KSI_Utf8String **loginId);
 int KSI_Header_setInstanceId(KSI_Header *t, KSI_Integer *instanceId);
 int KSI_Header_setMessageId(KSI_Header *t, KSI_Integer *messageId);
-int KSI_Header_setLoginId(KSI_Header *t, KSI_OctetString *clientId);
+int KSI_Header_setLoginId(KSI_Header *t, KSI_Utf8String *loginId);
 
 int KSI_Header_fromTlv (KSI_TLV *tlv, KSI_Header **data);
 int KSI_Header_toTlv (KSI_CTX *ctx, const KSI_Header *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
