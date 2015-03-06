@@ -475,18 +475,6 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 					KSI_CATCH(&err, res) goto cleanup;
 
 					break;
-				case KSI_TLV_TEMPLATE_UNPROCESSED:
-					KSI_LOG_trace(ctx, "Detected unprocessed template for TLV value extraction.");
-
-					res = KSI_TLV_clone(tlv, &tlvVal);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					res = storeObjectValue(ctx, &tmpl[i], payload, tlvVal);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					tlvVal = NULL;
-
-					break;
 				case KSI_TLV_TEMPLATE_OBJECT:
 					KSI_LOG_trace(ctx, "Detected object template for TLV value extraction.");
 					if (tmpl[i].fromTlv == NULL) {
