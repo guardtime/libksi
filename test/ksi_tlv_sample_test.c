@@ -22,6 +22,7 @@
 
 #include "all_tests.h"
 #include <ksi/tlv.h>
+#include <ksi/tlv_template.h>
 #include <ksi/io.h>
 
 static char *ok_sample[] = {
@@ -292,7 +293,7 @@ static void testObjectSerialization(CuTest *tc, const char *sample, int (*parse)
 
 	in_len = (unsigned)fread(in, 1, sizeof(in), f);
 	fclose(f);
-	KSI_snprintf(errm, sizeof(errm), "Unable to resd pdu file: %s", sample);
+	KSI_snprintf(errm, sizeof(errm), "Unable to read pdu file: %s", sample);
 	CuAssert(tc, errm, in_len > 0);
 
 	res = parse(ctx, in, in_len, &pdu);
@@ -327,6 +328,61 @@ static void extendPduTest(CuTest *tc) {
 			( void (*)(void *))KSI_ExtendPdu_free);
 }
 
+static void testErrorMessage(CuTest* tc, const char *expected, const char *tlv_file,
+		int (*obj_new)(KSI_CTX *ctx, void **),
+		void (*obj_free)(void*),
+		const KSI_TlvTemplate *tmplete) {
+	int res;
+	void *obj = NULL;
+	KSI_RDR *rdr = NULL;
+	char buf[1024];
+	size_t len;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_RDR_fromFile(ctx, getFullResourcePath(tlv_file), "r", &rdr);
+	CuAssert(tc, "Failed to open reader", res == KSI_OK);
+	
+	res = KSI_RDR_read_ex(rdr, buf, sizeof(buf), &len);
+	CuAssert(tc, "Failed read from file", res == KSI_OK);
+	
+	res = obj_new(ctx, &obj);
+	CuAssert(tc, "Unable create new obj", res == KSI_OK);
+	
+	res = KSI_TlvTemplate_parse(ctx, buf, len, tmplete, obj);
+	CuAssert(tc, "Parsing invalid obj must fail", res != KSI_OK);
+
+	res = KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL);
+	CuAssert(tc, "Unable to get base error message.", res == KSI_OK);
+	
+	CuAssert(tc, "Wrong error message.", strcmp(buf, expected) == 0);
+	
+	
+	obj_free(obj);
+	KSI_RDR_close(rdr);
+}
+
+KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu);
+
+
+static void testUnknownCriticalTagError(CuTest* tc) {
+	testErrorMessage(tc, "Unknown critical tag: [0x200]->[0x203]aggr_error_pdu->[0x01]",
+			"resource/tlv/tlv_unknown_tag.tlv", 
+			(int (*)(KSI_CTX *ctx, void **))KSI_AggregationPdu_new,
+			(void (*)(void*))KSI_AggregationPdu_free,
+			KSI_TLV_TEMPLATE(KSI_AggregationPdu)
+			);	
+}
+
+static void testMissingMandatoryTagError(CuTest* tc) {
+		testErrorMessage(tc, "Mandatory element missing: [0x200]->[0x203]aggr_error_pdu->[0x4]status",
+			"resource/tlv/tlv_missing_tag.tlv", 
+			(int (*)(KSI_CTX *ctx, void **))KSI_AggregationPdu_new,
+			(void (*)(void*))KSI_AggregationPdu_free,
+			KSI_TLV_TEMPLATE(KSI_AggregationPdu)
+			);	
+}
+
 
 CuSuite* KSITest_TLV_Sample_getSuite(void)
 {
@@ -338,6 +394,8 @@ CuSuite* KSITest_TLV_Sample_getSuite(void)
 	SUITE_ADD_TEST(suite, TestClone);
 	SUITE_ADD_TEST(suite, aggregationPduTest);
 	SUITE_ADD_TEST(suite, extendPduTest);
-
+	SUITE_ADD_TEST(suite, testUnknownCriticalTagError);
+	SUITE_ADD_TEST(suite, testMissingMandatoryTagError);
+	
 	return suite;
 }
