@@ -351,7 +351,7 @@ static void testErrorMessage(CuTest* tc, const char *expected, const char *tlv_f
 	
 	res = KSI_TlvTemplate_parse(ctx, buf, (unsigned)len, tmplete, obj);
 	CuAssert(tc, "Parsing invalid obj must fail", res != KSI_OK);
-
+	
 	res = KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL);
 	CuAssert(tc, "Unable to get base error message.", res == KSI_OK);
 	
@@ -361,7 +361,9 @@ static void testErrorMessage(CuTest* tc, const char *expected, const char *tlv_f
 	obj_free(obj);
 	KSI_RDR_close(rdr);
 }
-
+#ifdef _WIN32
+_declspec( dllimport )
+#endif
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu);
 
 

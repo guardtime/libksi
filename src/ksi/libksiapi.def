@@ -385,6 +385,10 @@ EXPORTS
     KSI_TlvTemplate_deepCopy
     KSI_TlvTemplate_serializeObject
 
+;TLV templates
+EXPORTS
+    KSI_AggregationPdu_template DATA
+
 ;types.h
 EXPORTS
     KSI_MetaData_free
