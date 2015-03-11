@@ -82,8 +82,7 @@ KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_MetaData)
 	KSI_TLV_UTF8_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_MetaData_getClientId, KSI_MetaData_setClientId, "client_id")
-	/*TODO Convert to UTF8*/
-	KSI_TLV_OCTET_STRING(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_MetaData_getMachineId, KSI_MetaData_setMachineId, "machine_id")
+	KSI_TLV_UTF8_STRING(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_MetaData_getMachineId, KSI_MetaData_setMachineId, "machine_id")
 	KSI_TLV_INTEGER(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_MetaData_getSequenceNr, KSI_MetaData_setSequenceNr, "seq_nr")
 	KSI_TLV_TIME_US(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_MetaData_getRequestTimeInMicros, KSI_MetaData_setRequestTimeInMicros, "req_time")
 KSI_END_TLV_TEMPLATE
@@ -96,8 +95,7 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_HashChainLink)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_Header)
-	/*TODO convert to UTF8*/
-	KSI_TLV_OCTET_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Header_getLoginId, KSI_Header_setLoginId, "login_id")
+	KSI_TLV_UTF8_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Header_getLoginId, KSI_Header_setLoginId, "login_id")
 	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_Header_getInstanceId, KSI_Header_setInstanceId, "instance_id")
 	KSI_TLV_INTEGER(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_Header_getMessageId, KSI_Header_setMessageId, "message_id")
 KSI_END_TLV_TEMPLATE
@@ -485,18 +483,6 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 
 					res = ((int (*)(void *, KSI_uint64_t))tmpl[i].setValue)(payload, uint64Val);
 					KSI_CATCH(&err, res) goto cleanup;
-
-					break;
-				case KSI_TLV_TEMPLATE_UNPROCESSED:
-					KSI_LOG_trace(ctx, "Detected unprocessed template for TLV value extraction.");
-
-					res = KSI_TLV_clone(tlv, &tlvVal);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					res = storeObjectValue(ctx, &tmpl[i], payload, tlvVal);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					tlvVal = NULL;
 
 					break;
 				case KSI_TLV_TEMPLATE_OBJECT:

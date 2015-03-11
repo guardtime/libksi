@@ -41,7 +41,7 @@ struct KSI_MetaData_st {
 	KSI_CTX *ctx;
 	KSI_OctetString *raw;
 	KSI_Utf8String *clientId;
-	KSI_OctetString *machineId;
+	KSI_Utf8String *machineId;
 	KSI_Integer *sequenceNr;
 	KSI_Integer *req_time_micros;
 };
@@ -74,7 +74,7 @@ struct KSI_Header_st {
 	KSI_CTX *ctx;
 	KSI_Integer *instanceId;
 	KSI_Integer *messageId;
-	KSI_OctetString *loginId;
+	KSI_Utf8String *loginId;
 	KSI_OctetString *raw;
 };
 
@@ -178,7 +178,7 @@ void KSI_MetaData_free(KSI_MetaData *t) {
 	if (t != NULL) {
 		KSI_OctetString_free(t->raw);
 		KSI_Utf8String_free(t->clientId);
-		KSI_OctetString_free(t->machineId);
+		KSI_Utf8String_free(t->machineId);
 		KSI_Integer_free(t->sequenceNr);
 		KSI_Integer_free(t->req_time_micros);
 		KSI_free(t);
@@ -211,13 +211,13 @@ cleanup:
 
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_OctetString*, raw, Raw);
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Utf8String*, clientId, ClientId);
-KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_OctetString*, machineId, MachineId);
+KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Utf8String*, machineId, MachineId);
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Integer*, sequenceNr, SequenceNr);
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Integer*, req_time_micros, RequestTimeInMicros);
 
 KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_OctetString*, raw, Raw);
 KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Utf8String*, clientId, ClientId);
-KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_OctetString*, machineId, MachineId);
+KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Utf8String*, machineId, MachineId);
 KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Integer*, sequenceNr, SequenceNr);
 KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Integer*, req_time_micros, RequestTimeInMicros);
 
@@ -457,7 +457,6 @@ int KSI_ExtendReq_enclose(KSI_ExtendReq *req, char *loginId, char *key, KSI_Exte
 	int res;
 	KSI_ExtendPdu *tmp = NULL;
 	KSI_Header *hdr = NULL;
-	KSI_OctetString *lId = NULL;
 	size_t loginLen;
 	
 	if (req == NULL || loginId == NULL || key == NULL || pdu == NULL) {
@@ -479,11 +478,8 @@ int KSI_ExtendReq_enclose(KSI_ExtendReq *req, char *loginId, char *key, KSI_Exte
 	res = KSI_Header_new(req->ctx, &hdr);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_OctetString_new(req->ctx, (unsigned char *)loginId, (unsigned)loginLen, &lId);
+	res = KSI_Utf8String_new(req->ctx, loginId, (unsigned)loginLen + 1, &hdr->loginId);
 	if (res != KSI_OK) goto cleanup;
-
-	hdr->loginId = lId;
-	lId = NULL;
 
 	/* Add request */
 	tmp->request = req;
@@ -510,7 +506,6 @@ cleanup:
 	/* Make sure we won't free the request. */
 	KSI_ExtendPdu_setRequest(tmp, NULL);
 	KSI_ExtendPdu_free(tmp);
-	KSI_OctetString_free(lId);
 	KSI_Header_free(hdr);
 
 	return res;
@@ -636,7 +631,7 @@ int KSI_AggregationReq_enclose(KSI_AggregationReq *req, char *loginId, char *key
 	res = KSI_Header_new(req->ctx, &hdr);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_OctetString_new(req->ctx, (unsigned char *)loginId, (unsigned)loginLen, &hdr->loginId);
+	res = KSI_Utf8String_new(req->ctx, loginId, (unsigned)loginLen + 1, &hdr->loginId);
 	if (res != KSI_OK) goto cleanup;
 
 	/* Add request */
@@ -693,7 +688,7 @@ void KSI_Header_free(KSI_Header *t) {
 	if (t != NULL) {
 		KSI_Integer_free(t->instanceId);
 		KSI_Integer_free(t->messageId);
-		KSI_OctetString_free(t->loginId);
+		KSI_Utf8String_free(t->loginId);
 		KSI_OctetString_free(t->raw);
 		KSI_free(t);
 	}
@@ -725,11 +720,11 @@ KSI_IMPLEMENT_TOTLV(KSI_Header);
 
 KSI_IMPLEMENT_GETTER(KSI_Header, KSI_Integer*, instanceId, InstanceId);
 KSI_IMPLEMENT_GETTER(KSI_Header, KSI_Integer*, messageId, MessageId);
-KSI_IMPLEMENT_GETTER(KSI_Header, KSI_OctetString*, loginId, LoginId);
+KSI_IMPLEMENT_GETTER(KSI_Header, KSI_Utf8String*, loginId, LoginId);
 
 KSI_IMPLEMENT_SETTER(KSI_Header, KSI_Integer*, instanceId, InstanceId);
 KSI_IMPLEMENT_SETTER(KSI_Header, KSI_Integer*, messageId, MessageId);
-KSI_IMPLEMENT_SETTER(KSI_Header, KSI_OctetString*, loginId, LoginId);
+KSI_IMPLEMENT_SETTER(KSI_Header, KSI_Utf8String*, loginId, LoginId);
 
 
 /**

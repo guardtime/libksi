@@ -187,11 +187,6 @@ extern "C" {
 	#define KSI_TLV_TEMPLATE_SEEK_POS				6
 
 	/**
-	 * A special #KSI_TlvTemplate type for storing raw nested TLV objects as #KSI_OctetString objects.
-	 */
-	#define KSI_TLV_TEMPLATE_UNPROCESSED 			7
-
-	/**
 	 * Empty placeholder for a template with no flags set.
 	 */
 	#define KSI_TLV_TMPL_FLG_NONE			0x00
