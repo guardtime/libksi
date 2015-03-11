@@ -352,7 +352,7 @@ static void testErrorMessage(CuTest* tc, const char *expected, const char *tlv_f
 	res = KSI_TlvTemplate_parse(ctx, buf, (unsigned)len, tmplete, obj);
 	CuAssert(tc, "Parsing invalid obj must fail", res != KSI_OK);
 	
-	res = KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL);
+	res = KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL, NULL);
 	CuAssert(tc, "Unable to get base error message.", res == KSI_OK);
 	
 	CuAssert(tc, "Wrong error message.", strcmp(buf, expected) == 0);
