@@ -114,7 +114,7 @@ static int curlReceive(KSI_RequestHandle *handle) {
 	KSI_BEGIN(handle->ctx, &err);
 
 	http = (KSI_HttpClient *)handle->client;
-
+	
 	implCtx = handle->implCtx;
 
     curl_easy_setopt(implCtx->curl, CURLOPT_ERRORBUFFER, curlErr);
@@ -141,14 +141,14 @@ static int curlReceive(KSI_RequestHandle *handle) {
     if (res != CURLE_OK) {
     	long httpCode;
     	if (res == CURLE_HTTP_RETURNED_ERROR && curl_easy_getinfo(implCtx->curl, CURLINFO_HTTP_CODE, &httpCode) == CURLE_OK) {
-    		KSI_LOG_debug(handle->ctx, "Received HTTP error code %d", httpCode);
-   			KSI_FAIL_EXT(&err, KSI_HTTP_ERROR, httpCode, curlErr);
-    	} else {
+    		KSI_LOG_debug(handle->ctx, "Received HTTP error code %d. Curl error '%s'.", httpCode, curlErr);
+			http->httpStatus = httpCode;
+		} else {
     		KSI_FAIL(&err, KSI_NETWORK_ERROR, curlErr);
+			goto cleanup;
     	}
-    	goto cleanup;
-    }
-
+	}
+	printf(">>> len %i\n", implCtx->len);
     res = KSI_RequestHandle_setResponse(handle, implCtx->raw, implCtx->len);
     KSI_CATCH(&err, res) goto cleanup;
 

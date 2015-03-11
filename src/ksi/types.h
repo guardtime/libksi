@@ -53,7 +53,7 @@ extern "C" {
 	typedef struct KSI_CertificateRecord_st KSI_CertificateRecord;
 	typedef struct KSI_PublicationData_st KSI_PublicationData;
 	typedef struct KSI_PublicationRecord_st KSI_PublicationRecord;
-
+	typedef struct KSI_ErrorPdu_st KSI_ErrorPdu;
 	/**
 	 * Callback for request header.
 	 * \param[in]	hdr		Pointer to the header.
@@ -175,15 +175,26 @@ int KSI_ExtendPdu_getHeader(const KSI_ExtendPdu *t, KSI_Header **header);
 int KSI_ExtendPdu_getRequest(const KSI_ExtendPdu *t, KSI_ExtendReq **request);
 int KSI_ExtendPdu_getResponse(const KSI_ExtendPdu *t, KSI_ExtendResp **response);
 int KSI_ExtendPdu_getHmac(const KSI_ExtendPdu *t, KSI_DataHash **hmac);
+int KSI_ExtendPdu_getError(const KSI_ExtendPdu *t, KSI_ErrorPdu **error); 
 int KSI_ExtendPdu_setHeader(KSI_ExtendPdu *t, KSI_Header *header);
 int KSI_ExtendPdu_setRequest(KSI_ExtendPdu *t, KSI_ExtendReq *request);
 int KSI_ExtendPdu_setResponse(KSI_ExtendPdu *t, KSI_ExtendResp *response);
 int KSI_ExtendPdu_setHmac(KSI_ExtendPdu *t, KSI_DataHash *hamc);
+int KSI_ExtendPdu_setError( KSI_ExtendPdu *t, KSI_ErrorPdu *error);
 int KSI_ExtendReq_enclose(KSI_ExtendReq *req, char *loginId, char *key, KSI_ExtendPdu **pdu);
-
 
 KSI_DEFINE_OBJECT_PARSE(KSI_ExtendPdu);
 KSI_DEFINE_OBJECT_SERIALIZE(KSI_ExtendPdu);
+
+/*
+ * KSI_ErrorPdu
+ */
+int KSI_ErrorPdu_new(KSI_CTX *ctx, KSI_ErrorPdu **pdu);
+void KSI_ErrorPdu_free(KSI_ErrorPdu *pdu);
+int KSI_ErrorPdu_getStatus(const KSI_ErrorPdu *pdu, KSI_Integer **status);
+int KSI_ErrorPdu_getErrorMessage(const KSI_ErrorPdu *pdu, KSI_Utf8String **errorMsg);
+int KSI_ErrorPdu_setStatus(KSI_ErrorPdu *pdu, KSI_Integer *status);
+int KSI_ErrorPdu_setErrorMessage(KSI_ErrorPdu *pdu, KSI_Utf8String *errorMsg);
 
 /*
  * KSI_AggregationPdu
@@ -197,12 +208,13 @@ int KSI_AggregationPdu_getHeader(const KSI_AggregationPdu *t, KSI_Header **heade
 int KSI_AggregationPdu_getRequest(const KSI_AggregationPdu *t, KSI_AggregationReq **request);
 int KSI_AggregationPdu_getResponse(const KSI_AggregationPdu *t, KSI_AggregationResp **response);
 int KSI_AggregationPdu_getHmac(const KSI_AggregationPdu *t, KSI_DataHash **hmac);
+int KSI_AggregationPdu_getError (const KSI_AggregationPdu *t, KSI_ErrorPdu **error);
 int KSI_AggregationPdu_setHeader(KSI_AggregationPdu *t, KSI_Header *header);
 int KSI_AggregationPdu_setRequest(KSI_AggregationPdu *t, KSI_AggregationReq *request);
 int KSI_AggregationPdu_setResponse(KSI_AggregationPdu *t, KSI_AggregationResp *response);
 int KSI_AggregationPdu_setHmac(KSI_AggregationPdu *t, KSI_DataHash *hmac);
+int KSI_AggregationPdu_setError ( KSI_AggregationPdu *t, KSI_ErrorPdu *error);
 int KSI_AggregationReq_enclose(KSI_AggregationReq *req, char *loginId, char *key, KSI_AggregationPdu **pdu);
-
 KSI_DEFINE_OBJECT_PARSE(KSI_AggregationPdu);
 KSI_DEFINE_OBJECT_SERIALIZE(KSI_AggregationPdu);
 

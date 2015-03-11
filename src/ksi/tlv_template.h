@@ -248,7 +248,7 @@ extern "C" {
 	#define KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0 KSI_TLV_TMPL_FLG_LEAST_ONE_G0 | KSI_TLV_TMPL_FLG_MOST_ONE_G0
 
 	/**
-	 * One and only one of the group 0 must be present.
+	 * One and only one of the group 1 must be present.
 	 */
 	#define KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G1 KSI_TLV_TMPL_FLG_LEAST_ONE_G1 | KSI_TLV_TMPL_FLG_MOST_ONE_G1
 

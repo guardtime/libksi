@@ -30,42 +30,22 @@
 
 typedef struct wininetNetHandleCtx_st {
 	KSI_CTX *ctx;
-	/*A internet handle object for handling a HTTP session*/
 	HINTERNET session_handle;
-	/*A internet handle object for handling a HTTP request*/
 	HINTERNET request_handle;
-	/*Object for holding pointers to url components*/
-	URL_COMPONENTS uc;	
-	/*A copy of host name (copied from uc)*/
-	char *hostName;
-	/*A copy of URL path + extras (copied from uc)*/
-	char *query;
-	/*Network scheme: 3 for http://, 5 for file:// */
-	INTERNET_SCHEME scheme;
 } wininetNetHandleCtx;
 
 
 static void wininetNetHandleCtx_free(wininetNetHandleCtx *handleCtx) {
 	if (handleCtx != NULL) {
-		if (handleCtx->session_handle != NULL){
-			InternetCloseHandle(handleCtx->session_handle);
-			handleCtx->session_handle = NULL;
-		}
-		
-		if (handleCtx->request_handle != NULL){
-			InternetCloseHandle(handleCtx->request_handle);
-			handleCtx->request_handle = NULL;
-		}
-		
-		KSI_free(handleCtx->hostName);
-		KSI_free(handleCtx->query);
+		InternetCloseHandle(handleCtx->session_handle);
+		InternetCloseHandle(handleCtx->request_handle);
 		KSI_free(handleCtx);
 	}
 }
 
 static int wininetNetHandleCtx_new(wininetNetHandleCtx **handleCtx){
 	wininetNetHandleCtx *nhc = NULL;
-	int res = KSI_UNKNOWN_ERROR;
+	int res = KSI_OK;
 
 	nhc = KSI_new(wininetNetHandleCtx);
 	if (nhc == NULL) {
@@ -76,16 +56,9 @@ static int wininetNetHandleCtx_new(wininetNetHandleCtx **handleCtx){
 	nhc->ctx = NULL;
 	nhc->session_handle = NULL;
 	nhc->request_handle = NULL;
-	nhc->hostName = NULL;
-	nhc->query = NULL;
-	nhc->scheme = INTERNET_SCHEME_DEFAULT;
-	memset(&(nhc->uc), 0, sizeof(nhc->uc));
-	nhc->uc.dwStructSize = sizeof(nhc->uc);
 	
 	*handleCtx = nhc;
 	nhc = NULL;
-	
-	res = KSI_OK;
 	
 cleanup:
 
@@ -94,17 +67,105 @@ cleanup:
 	return res;
 }
 
+
+#define WININET_ERROR(_ctx, _error, _ksier, _msg) \
+		KSI_LOG_error(_ctx, "WinINet returned error %i at line %i in file %s.", _error, __LINE__, __FILE__); \
+		KSI_FAIL_EXT(&err, _ksier, _error, _msg); \
+		goto cleanup;
+
+#define WININET_ERROR_1(_ctx, _winer, _ksier, _msg) { \
+	DWORD _error = GetLastError(); \
+	if(_winer == _error){ \
+		WININET_ERROR(_ctx, _error, _ksier, _msg) \
+	}
+
+#define WININET_ERROR_m(_ctx, _winer, _ksier, _msg) \
+	else if(_winer == _error){ \
+		WININET_ERROR(_ctx, _error, _ksier, _msg) \
+	}
+
+#define WININET_ERROR_N(_ctx, _ksier, _msg) \
+	else{ \
+		WININET_ERROR(_ctx, _error, _ksier, _msg) \
+	}}
+
+static int winINet_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **buf, DWORD *len){
+	KSI_ERR err;
+	int res;
+	HINTERNET handle;
+	KSI_HttpClient *http = NULL;
+	DWORD dwordLen;
+	DWORD http_payload_len = 0;
+	DWORD http_status;
+	DWORD tmp_len = 0;
+	unsigned char *tmp = NULL;
+	
+	KSI_PRE(&err, reqHandle != NULL) goto cleanup;
+	KSI_PRE(&err, buf != NULL) goto cleanup;
+	KSI_PRE(&err, len != NULL) goto cleanup;
+	KSI_BEGIN(reqHandle->ctx, &err);
+	
+	
+	handle = ((wininetNetHandleCtx*)reqHandle->implCtx)->request_handle;
+	http = (KSI_HttpClient*)reqHandle->client;
+	
+	/*Get HTTP status code*/
+	dwordLen = sizeof(DWORD);
+	if (!HttpQueryInfo(handle, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &http_status, &dwordLen, 0)) {
+		WININET_ERROR_1(reqHandle->ctx, ERROR_INSUFFICIENT_BUFFER, KSI_INVALID_ARGUMENT, "WinINet: Insufficient buffer.")
+		WININET_ERROR_m(reqHandle->ctx, ERROR_HTTP_HEADER_NOT_FOUND, KSI_NETWORK_ERROR, "WinINet: HTTP status code header not found.")
+		WININET_ERROR_N(reqHandle->ctx, KSI_UNKNOWN_ERROR, "WinINet: Unable to get HTTP status code.")
+	}
+
+	http->httpStatus = http_status;
+	
+	/*Get the length of the payload*/
+	dwordLen = sizeof(DWORD);
+	if (!HttpQueryInfo(handle, HTTP_QUERY_CONTENT_LENGTH | HTTP_QUERY_FLAG_NUMBER, &http_payload_len, &dwordLen, 0)){
+			WININET_ERROR_1(reqHandle->ctx, ERROR_INSUFFICIENT_BUFFER, KSI_INVALID_ARGUMENT, "WinINet: Insufficient buffer.")
+			WININET_ERROR_m(reqHandle->ctx, ERROR_HTTP_HEADER_NOT_FOUND, KSI_NETWORK_ERROR, "WinINet: HTTP content length not found.")
+			WININET_ERROR_N(reqHandle->ctx, KSI_UNKNOWN_ERROR, "WinINet: Unable to get HTTP content length.")
+		}
+	
+	/*Get memory for the HTTP payload*/
+	tmp_len = http_payload_len;
+	tmp = (unsigned char*)KSI_malloc(tmp_len);
+	if (tmp == NULL){
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	/*Read data*/
+	if (!InternetReadFile(handle, tmp, tmp_len, &tmp_len)) {
+		WININET_ERROR_1(reqHandle->ctx, ERROR_INSUFFICIENT_BUFFER, KSI_INVALID_ARGUMENT, "WinINet: Insufficient buffer.")
+		WININET_ERROR_N(reqHandle->ctx, KSI_UNKNOWN_ERROR, "WinINet: HTTP Internet read error.")
+	}
+
+	if (tmp_len != http_payload_len){
+		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "WinINet: Unable to read all bytes.");
+		goto cleanup;
+	}
+	
+	*buf = tmp;
+	*len = tmp_len;
+	tmp = NULL;
+	
+	KSI_SUCCESS(&err);
+	
+cleanup:
+
+	KSI_free(tmp);
+
+	return KSI_RETURN(&err);
+}
+
 static int wininetReceive(KSI_RequestHandle *handle) {
 	KSI_ERR err;
 	int res;
 	KSI_CTX *ctx = NULL; 
-	KSI_HttpClient *http = NULL;
 	wininetNetHandleCtx *wininetHandle = NULL;
-	DWORD http_response;
-	DWORD http_response_len = 0;
 	unsigned char *resp = NULL;
 	unsigned resp_len = 0;
-	char err_msg[128];
 	
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_PRE(&err, handle->client != NULL) goto cleanup;
@@ -112,87 +173,21 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 	ctx = KSI_RequestHandle_getCtx(handle);
 	KSI_BEGIN(ctx, &err);
 
-	
-	http = (KSI_HttpClient *)handle->client;
 	wininetHandle = handle->implCtx;
 	
-	if (wininetHandle->scheme == INTERNET_SCHEME_HTTP){
-		/*Send request*/
-		if (!HttpSendRequestA(wininetHandle->request_handle, NULL, 0, (LPVOID) handle->request, handle->request_length)) {
-			DWORD error = GetLastError();
-			KSI_LOG_debug(ctx, "WinINet: Send error %i.", error);
-
-			if (error == ERROR_INTERNET_NAME_NOT_RESOLVED){
-				KSI_snprintf(err_msg, sizeof(err_msg), "WinINet: Could not resolve host: '%s'.", wininetHandle->hostName);
-				KSI_FAIL(&err, KSI_NETWORK_ERROR, err_msg);
-			}
-			else if (error == ERROR_INTERNET_CANNOT_CONNECT)
-				KSI_FAIL(&err, KSI_NETWORK_ERROR, "WinINet: Unable to connect.");
-			else if (error = ERROR_INTERNET_TIMEOUT)
-				KSI_FAIL(&err, KSI_NETWORK_SEND_TIMEOUT, NULL);
-			else
-				KSI_FAIL_EXT(&err, KSI_NETWORK_ERROR, error, "WinINet: Unable to send request.");
-			
-			goto cleanup;
-		}
-
-		http_response_len = sizeof(http_response);
-		/* Receive the response information. */
-		if (!HttpQueryInfo(wininetHandle->request_handle, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &http_response, &http_response_len, 0)) {
-			DWORD error = GetLastError();
-			if (error == ERROR_HTTP_HEADER_NOT_FOUND)
-				KSI_FAIL(&err, KSI_HTTP_ERROR, "WinINet: HTTP header not found.");
-			else if (error == ERROR_INSUFFICIENT_BUFFER)
-				KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "WinINet: Insufficient buffer.");
-			else if (error = ERROR_INTERNET_TIMEOUT)
-				KSI_FAIL(&err, KSI_NETWORK_RECIEVE_TIMEOUT, NULL);
-			else
-				KSI_FAIL_EXT(&err, KSI_NETWORK_ERROR, error, "WinINet: Unable to get HTTP response.");
-			
-			goto cleanup;
-		}
-
-		if (http_response >= 400){
-			KSI_snprintf(err_msg, sizeof(err_msg), "WinINet: Http error %i.", http_response);
-			KSI_FAIL(&err, KSI_HTTP_ERROR, err_msg);
-			goto cleanup;
-		}
-	}
-	else{
-		KSI_FAIL(&err, KSI_NETWORK_ERROR, "WinINet: Internet scheme is not 'HTTP/HTTPS'.");
-		goto cleanup;
-		}
-	
-	while (1) {
-		DWORD add_len = 0x2000; /* Download in 8K increments. */
-		resp = KSI_realloc(resp, resp_len + add_len);
-		if (resp == NULL) {
-			KSI_FAIL(&err,KSI_OUT_OF_MEMORY ,NULL);
-			goto cleanup;
-		}
-
-		if (!InternetReadFile(wininetHandle->request_handle, resp + resp_len, add_len, &add_len)) {
-			DWORD error = GetLastError();
-			if (error == ERROR_INSUFFICIENT_BUFFER)
-				KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "WinINet: Insufficient buffer.");
-			else
-				KSI_FAIL_EXT(&err, KSI_UNKNOWN_ERROR, error, "WinINet: Unable to read response.");
-			
-			goto cleanup;
-		}
-		
-		if (add_len == 0) {
-			break;
-		}
-		resp_len += add_len;
+	if (!HttpSendRequestA(wininetHandle->request_handle, NULL, 0, (LPVOID) handle->request, handle->request_length)) {
+		WININET_ERROR_1(ctx, ERROR_INTERNET_CANNOT_CONNECT, KSI_NETWORK_ERROR, "WinINet: Unable to resolve host.")
+		WININET_ERROR_m(ctx, ERROR_INTERNET_NAME_NOT_RESOLVED, KSI_NETWORK_ERROR, "WinINet: HTTP status code header not found.")
+		WININET_ERROR_m(ctx, ERROR_INTERNET_TIMEOUT, KSI_NETWORK_SEND_TIMEOUT, NULL)
+		WININET_ERROR_N(ctx, KSI_UNKNOWN_ERROR, "WinINet: Unable to send request.")
 	}
 
-	/*Put Received data no requesthandle*/
-    res = KSI_RequestHandle_setResponse(handle, resp, resp_len);
-    KSI_CATCH(&err, res) goto cleanup;
+	res = winINet_ReadFromHandle(handle, &resp, &resp_len);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	res = KSI_RequestHandle_setResponse(handle, resp, resp_len);
+	KSI_CATCH(&err, res) goto cleanup;
 		
-	
-    /* Cleanup on success.*/
 	KSI_SUCCESS(&err);
 
 cleanup:
@@ -205,20 +200,20 @@ cleanup:
 
 /**
  * Prepares request and opens a session handle.
- * 
- * \param client Pointer to KSI_NetworkClient object.
- * \param handle Pointer to KSI_RequestHandle object.
- * \param url Pointer to url string.
- * 
- * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
  */
 static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, char *url) {
 	KSI_ERR err;
 	int res;
 	KSI_CTX *ctx = NULL;
-	HINTERNET internetHandle;
-	KSI_HttpClient *http = (KSI_HttpClient *)client;
 	wininetNetHandleCtx *wininetHandle = NULL;
+	KSI_HttpClient *http = (KSI_HttpClient *)client;
+	HINTERNET internetHandle;
+	char msg[1024];
+	char *scheme = NULL;
+	char *hostName = NULL;
+	char *query = NULL;
+	int port = 0; 
+	
 	
 	KSI_PRE(&err, client != NULL) goto cleanup;
 	KSI_PRE(&err, http->implCtx != NULL) goto cleanup;
@@ -226,128 +221,72 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	ctx = handle->ctx;
 	KSI_BEGIN(ctx, &err);
 
+	
 	/*Initializing of wininet helper struct*/
 	res = wininetNetHandleCtx_new(&wininetHandle);
 	KSI_CATCH(&err, res) goto cleanup;
+
 	wininetHandle->ctx = ctx;
 	internetHandle = http->implCtx;
 
-	/*Cracking URL*/
-	wininetHandle->uc.dwHostNameLength = 1;
-	wininetHandle->uc.dwUrlPathLength = 1;
-	wininetHandle->uc.dwExtraInfoLength = 1;
-	
-	if (!InternetCrackUrlA(url, 0, 0, &(wininetHandle->uc))) {
-		char err_msg[128];
-		DWORD error = GetLastError();
-		KSI_LOG_debug(ctx, "WinINet:  Url crack error: %i", error);
-		
-		if (error == ERROR_INTERNET_INVALID_URL){
-			KSI_snprintf(err_msg, 128, "WinINet: Invalid URL: '%s'", url);
-			KSI_FAIL(&err, KSI_NETWORK_ERROR, err_msg);
-		}
-		else{
-			KSI_FAIL_EXT(&err, KSI_NETWORK_ERROR, error, "WinInet: Unable to crack URL.");
-		}
+	res = KSI_UriSplitBasic(url, &scheme, &hostName, &port, &query);
+	if(res != KSI_OK){
+		KSI_snprintf(msg, sizeof(msg), "WinINet: Unable to crack url '%s'.", url);
+		KSI_FAIL(&err, res, msg);
 		goto cleanup;
 	}
 	
-	wininetHandle->scheme = wininetHandle->uc.nScheme;
+	if(scheme == NULL || strcmp("http", scheme) != 0 && strcmp("https", scheme) != 0){
+		KSI_snprintf(msg, sizeof(msg), "WinINet: unknown Internet scheme '%s'.", scheme);
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, msg);
+		goto cleanup;
+	} 
 	
-	/*Open different request handles for http and file scheme*/
-	if (wininetHandle->scheme == INTERNET_SCHEME_HTTP){
-		/*Extracting host name*/
-		if (wininetHandle->uc.lpszHostName == NULL || wininetHandle->uc.dwHostNameLength == 0){
-			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "WinINet: Invalid host name.");
-			goto cleanup;
-		}
+	if(hostName == NULL || query == NULL){
+		KSI_snprintf(msg, sizeof(msg), "WinINet: Invalid url '%s'.", url);
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, msg);
+		goto cleanup;
+	}
+	
+	if (handle->request_length > LONG_MAX) {
+		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "WinINet: Request too long.");
+		goto cleanup;
+	}
 
-		wininetHandle->hostName = KSI_malloc(wininetHandle->uc.dwHostNameLength + 1);
-		if (wininetHandle->hostName == NULL) {
-			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-			goto cleanup;
-		}
+	KSI_LOG_debug(ctx, "WinINet: Sending request to: %s.", url);
+	/*Preparing session handle*/
+	//Opens an HTTP session for a given site
+	wininetHandle->session_handle = InternetConnectA(internetHandle, hostName, port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+	if (wininetHandle->session_handle == NULL) {
+		WININET_ERROR(ctx, GetLastError(), KSI_NETWORK_ERROR, "WinINet: Unable to initialize connection handle.");
+	}
 
-		KSI_strncpy(wininetHandle->hostName, wininetHandle->uc.lpszHostName, wininetHandle->uc.dwHostNameLength + 1);
-		if (wininetHandle->uc.lpszUrlPath == NULL || wininetHandle->uc.dwUrlPathLength == 0) {
-			wininetHandle->query = KSI_calloc(2,1);
-			if (wininetHandle->query == NULL)
-				KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-			wininetHandle->query[0] = '/';
-		}
-		else{
-			/*Extracting query string*/
-			wininetHandle->query = KSI_malloc(wininetHandle->uc.dwUrlPathLength + wininetHandle->uc.dwExtraInfoLength + 1);
-			if (wininetHandle->query == NULL) {
-				KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-				goto cleanup;
-			}
+	wininetHandle->request_handle = HttpOpenRequestA(wininetHandle->session_handle,
+		(handle->request == NULL ? "GET" : "POST"),
+		query, NULL, NULL, NULL,
+		(strcmp("https", scheme) == 0 ? INTERNET_FLAG_SECURE : 0),
+		0);
 
-			KSI_strncpy(wininetHandle->query, wininetHandle->uc.lpszUrlPath, wininetHandle->uc.dwUrlPathLength + 1);
-			if (!(wininetHandle->uc.lpszExtraInfo == NULL || wininetHandle->uc.dwExtraInfoLength == 0)) {
-				KSI_strncpy(wininetHandle->query + wininetHandle->uc.dwUrlPathLength, wininetHandle->uc.lpszExtraInfo, wininetHandle->uc.dwExtraInfoLength + 1);
-			}
-		}
+	if (wininetHandle->request_handle == NULL){
+		WININET_ERROR(ctx, GetLastError(), KSI_NETWORK_ERROR, "WinINet: Unable to initialize request handle.");
+	}
 
-
-		/*Preparing request*/
-
-		KSI_LOG_debug(ctx, "WinINet: Sending request to: %s.", url);
-
-		if (handle->request_length > LONG_MAX) {
-			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "WinINet: Request too long.");
-			goto cleanup;
-		}
-
-
-		/*Preparing session handle*/
-		//Opens an HTTP session for a given site
-		wininetHandle->session_handle = InternetConnectA(internetHandle, wininetHandle->hostName, wininetHandle->uc.nPort, NULL, NULL, wininetHandle->uc.nScheme, 0, 0);
-		if (wininetHandle->session_handle == NULL) {
-			KSI_FAIL(&err, KSI_NETWORK_ERROR, "WinINet: Unable to initialize connection handle.");
-			goto cleanup;
-		}
-
-		wininetHandle->request_handle = HttpOpenRequestA(wininetHandle->session_handle,
-			(handle->request == NULL ? "GET" : "POST"),
-			wininetHandle->query, NULL, NULL, NULL,
-			(wininetHandle->uc.nScheme == INTERNET_SCHEME_HTTPS ? INTERNET_FLAG_SECURE : 0),
-			0);
-
-		if (wininetHandle->request_handle == NULL){
-			DWORD error = GetLastError();
-			KSI_LOG_debug(ctx, "WinINet: Open request error %i.", error);
-			KSI_FAIL(&err, KSI_NETWORK_ERROR, "WinINet: Unable to initialize request handle.");
-			goto cleanup;
-		}
-
-		/*TODO Timeout is set, but seems to have no effect*/
-		if (http->connectionTimeoutSeconds >= 0) {
-			DWORD dw = (http->connectionTimeoutSeconds == 0 ? 0xFFFFFFFF : http->connectionTimeoutSeconds * 1000);
-			if (!InternetSetOption(wininetHandle->request_handle, INTERNET_OPTION_CONNECT_TIMEOUT, &dw, sizeof(dw))){
-				KSI_FAIL_EXT(&err, KSI_NETWORK_ERROR, GetLastError(),"WinINet: Unable to set connection timeout.");
-				goto cleanup;	
-			}
-		}
-
-		if (http->readTimeoutSeconds >= 0) {
-			DWORD dw = (http->readTimeoutSeconds == 0 ? 0xFFFFFFFF : http->readTimeoutSeconds * 1000);
-			if (!InternetSetOption(wininetHandle->request_handle, INTERNET_OPTION_SEND_TIMEOUT, &dw, sizeof(dw))){
-				KSI_FAIL_EXT(&err, KSI_NETWORK_ERROR, GetLastError(),"WinINet: Unable to set send timeout.");
-				goto cleanup;
-			}
-			if (!InternetSetOption(wininetHandle->request_handle, INTERNET_OPTION_RECEIVE_TIMEOUT, &dw, sizeof(dw))){
-				KSI_FAIL_EXT(&err, KSI_NETWORK_ERROR, GetLastError(), "WinINet: Unable to set receive timeout.");
-				goto cleanup;
-			}
+	/*TODO Timeout is set, but seems to have no effect*/
+	if (http->connectionTimeoutSeconds >= 0) {
+		DWORD dw = (http->connectionTimeoutSeconds == 0 ? 0xFFFFFFFF : http->connectionTimeoutSeconds * 1000);
+		if (!InternetSetOption(wininetHandle->request_handle, INTERNET_OPTION_CONNECT_TIMEOUT, &dw, sizeof(dw))){
+			WININET_ERROR(ctx, GetLastError(), KSI_NETWORK_ERROR, "WinINet: Unable to set connection timeout.");
 		}
 	}
-	else if (wininetHandle->scheme == INTERNET_SCHEME_FILE){
-		wininetHandle->request_handle = InternetOpenUrl(internetHandle, url, NULL, 0, 0,0);
-		if (wininetHandle->request_handle == NULL){
-			KSI_FAIL_EXT(&err, KSI_INVALID_ARGUMENT, GetLastError(), "WinINet: Unable to open Url.");
-			goto cleanup;
-		}		
+
+	if (http->readTimeoutSeconds >= 0) {
+		DWORD dw = (http->readTimeoutSeconds == 0 ? 0xFFFFFFFF : http->readTimeoutSeconds * 1000);
+		if (!InternetSetOption(wininetHandle->request_handle, INTERNET_OPTION_SEND_TIMEOUT, &dw, sizeof(dw))){
+			WININET_ERROR(ctx, GetLastError(), KSI_NETWORK_ERROR, "WinINet: Unable to set send timeout.");
+		}
+		if (!InternetSetOption(wininetHandle->request_handle, INTERNET_OPTION_RECEIVE_TIMEOUT, &dw, sizeof(dw))){
+			WININET_ERROR(ctx, GetLastError(), KSI_NETWORK_ERROR, "WinINet: Unable to set receive timeout.");
+		}
 	}
 
 	handle->readResponse = wininetReceive;
@@ -362,7 +301,11 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 cleanup:
 
 	wininetNetHandleCtx_free(wininetHandle);
-
+	
+	KSI_free(query);
+	KSI_free(hostName);
+	KSI_free(scheme);
+	
 	return KSI_RETURN(&err);
 }
 
@@ -388,22 +331,19 @@ int KSI_HttpClientImpl_init(KSI_HttpClient *client) {
 	//Initializes an application's use of the Win32 Internet functions. 
 	internet_handle = InternetOpenA(http->agentName, INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
 	if (internet_handle == NULL) {
-		KSI_FAIL_EXT(&err, KSI_UNKNOWN_ERROR, GetLastError(), "WinINet: Unable to init.");
-		goto cleanup;
+		WININET_ERROR(client->parent.ctx, GetLastError(), KSI_NETWORK_ERROR, "WinINet: Unable to init.");
 	}
 	
 	/* By default WinINet allows just two simultaneous connections to one server. */
 	buf = 1024;
 	res = InternetSetOption(NULL, INTERNET_OPTION_MAX_CONNS_PER_SERVER, &buf, sizeof(buf));
 	if (res != TRUE) {
-		KSI_FAIL_EXT(&err, KSI_UNKNOWN_ERROR, GetLastError(), "WinINet: Unable to init.");
-		goto cleanup;
+		WININET_ERROR(client->parent.ctx, GetLastError(), KSI_UNKNOWN_ERROR, "WinINet: Unable to init.");
 	}
 	
 	res = InternetSetOption(NULL, INTERNET_OPTION_MAX_CONNS_PER_1_0_SERVER, &buf, sizeof(buf));
 	if (res != TRUE) {
-		KSI_FAIL_EXT(&err, KSI_UNKNOWN_ERROR, GetLastError(), "WinINet: Unable to init.");
-		goto cleanup;
+		WININET_ERROR(client->parent.ctx, GetLastError(), KSI_UNKNOWN_ERROR, "WinINet: Unable to init.");
 	}
 	
 	http->implCtx = internet_handle;

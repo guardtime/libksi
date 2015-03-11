@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 
-	#define KSI_NETWORK_CLIENT_INIT(ctx)  (KSI_NetworkClient) {(ctx), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}
+	#define KSI_NETWORK_CLIENT_INIT(ctx)  (KSI_NetworkClient) {(ctx), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}
 
 	struct KSI_NetworkClient_st {
 		KSI_CTX *ctx;
@@ -35,7 +35,8 @@ extern "C" {
 		int (*sendSignRequest)(KSI_NetworkClient *, KSI_AggregationReq *, KSI_RequestHandle **);
 		int (*sendExtendRequest)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **);
 		int (*sendPublicationRequest)(KSI_NetworkClient *, KSI_RequestHandle **);
-
+		int (*getStausCode)(KSI_NetworkClient *);
+		
 		/** Aggregator user. */
 		char *aggrUser;
 		/** Aggregator pass phrase. */

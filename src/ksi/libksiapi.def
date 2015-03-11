@@ -408,10 +408,12 @@ EXPORTS
     KSI_ExtendPdu_getRequest
     KSI_ExtendPdu_getResponse
     KSI_ExtendPdu_getHmac
+    KSI_ExtendPdu_getError
     KSI_ExtendPdu_setHeader
     KSI_ExtendPdu_setRequest
     KSI_ExtendPdu_setResponse
     KSI_ExtendPdu_setHmac
+    KSI_ExtendPdu_setError
     KSI_ExtendPdu_parse
     KSI_ExtendPdu_serialize
     KSI_AggregationPdu_free
@@ -421,10 +423,12 @@ EXPORTS
     KSI_AggregationPdu_getRequest
     KSI_AggregationPdu_getResponse
     KSI_AggregationPdu_getHmac
+    KSI_AggregationPdu_getError
     KSI_AggregationPdu_setHeader
     KSI_AggregationPdu_setRequest
     KSI_AggregationPdu_setResponse
     KSI_AggregationPdu_setHmac
+    KSI_AggregationPdu_setError
     KSI_AggregationPdu_parse
     KSI_AggregationPdu_serialize
     KSI_Header_free
@@ -529,6 +533,13 @@ EXPORTS
     KSI_CertificateRecord_getCert
     KSI_CertificateRecord_setCertId
     KSI_CertificateRecord_setCert
+    KSI_ErrorPdu_new
+    KSI_ErrorPdu_free
+    KSI_ErrorPdu_getStatus
+    KSI_ErrorPdu_getErrorMessage
+    KSI_ErrorPdu_setStatus
+    KSI_ErrorPdu_setErrorMessage
+
 
 ;types_base.h
 EXPORTS

@@ -390,6 +390,7 @@ int KSI_TcpClient_init(KSI_CTX *ctx, KSI_TcpClient *client) {
 	client->parent.sendExtendRequest = prepareExtendRequest;
 	client->parent.sendSignRequest = prepareAggregationRequest;
 	client->parent.sendPublicationRequest = sendPublicationRequest;
+	client->parent.getStausCode = NULL;
 	client->parent.implFree = (void (*)(void *))tcpClient_free;
 
 	KSI_SUCCESS(&err);

@@ -349,7 +349,7 @@ static void testErrorMessage(CuTest* tc, const char *expected, const char *tlv_f
 	res = obj_new(ctx, &obj);
 	CuAssert(tc, "Unable create new obj", res == KSI_OK);
 	
-	res = KSI_TlvTemplate_parse(ctx, buf, len, tmplete, obj);
+	res = KSI_TlvTemplate_parse(ctx, buf, (unsigned)len, tmplete, obj);
 	CuAssert(tc, "Parsing invalid obj must fail", res != KSI_OK);
 
 	res = KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL);
