@@ -148,7 +148,7 @@ static int curlReceive(KSI_RequestHandle *handle) {
 			goto cleanup;
     	}
 	}
-	printf(">>> len %i\n", implCtx->len);
+
     res = KSI_RequestHandle_setResponse(handle, implCtx->raw, implCtx->len);
     KSI_CATCH(&err, res) goto cleanup;
 
@@ -232,7 +232,6 @@ int KSI_HttpClientImpl_init(KSI_HttpClient *http) {
 		goto cleanup;
 	}
 
-    curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
     curl_easy_setopt(curl, CURLOPT_VERBOSE, 0);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, receiveDataFromLibCurl);
 	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
