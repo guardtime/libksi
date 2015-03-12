@@ -466,15 +466,6 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 			}
 			/* Parse the current TLV */
 			switch (tmpl[i].type) {
-				case KSI_TLV_TEMPLATE_SEEK_POS:
-					KSI_LOG_trace(ctx, "Detected seek position template for TLV value extraction.");
-
-					uint64Val = (KSI_uint64_t)KSI_TLV_getAbsoluteOffset(tlv);
-
-					res = ((int (*)(void *, KSI_uint64_t))tmpl[i].setValue)(payload, uint64Val);
-					KSI_CATCH(&err, res) goto cleanup;
-
-					break;
 				case KSI_TLV_TEMPLATE_OBJECT:
 					KSI_LOG_trace(ctx, "Detected object template for TLV value extraction.");
 					if (tmpl[i].fromTlv == NULL) {

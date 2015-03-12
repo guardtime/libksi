@@ -117,35 +117,6 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-/**
- *
- */
-static size_t appendBlob(KSI_TLV *tlv, unsigned char *data, unsigned data_length) {
-	size_t size = 0;
-	int res;
-
-	if (tlv->payloadType != KSI_TLV_PAYLOAD_RAW) {
-		goto cleanup;
-	}
-
-	if (tlv->buffer == NULL) {
-		res = createOwnBuffer(tlv, 1);
-		if (res != KSI_OK) goto cleanup;
-	}
-
-	if (tlv->datap_len + data_length > tlv->buffer_size) {
-		goto cleanup;
-	}
-
-	memcpy(tlv->datap + tlv->datap_len , data, data_length);
-
-	size = tlv->datap_len += data_length;
-
-cleanup:
-
-	return size;
-}
-
 static int readHeader(KSI_RDR *rdr, unsigned char *dest, size_t *headerLen, int *isNonCritical, int *isForward, unsigned *tag, unsigned *length) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t readCount;
@@ -186,7 +157,7 @@ static int readHeader(KSI_RDR *rdr, unsigned char *dest, size_t *headerLen, int 
 		*headerLen = 4;
 
 		if (tag != NULL) *tag = ((dest[0] & KSI_TLV_MASK_TLV8_TYPE) << 8 ) | dest[1];
-		if (length != NULL) *length = (unsigned)(dest [2] << 8) | dest[3];
+		if (length != NULL) *length = (unsigned)(dest[2] << 8) | dest[3];
 	} else {
 		/* TLV8 */
 		*headerLen = 2;
@@ -200,92 +171,6 @@ cleanup:
 
 	return res;
 }
-
-/**
- *
- */
-static int readTlv(KSI_RDR *rdr, KSI_TLV **tlv, int copy) {
-	int res;
-	KSI_ERR err;
-	unsigned char hdr[4];
-	size_t readCount;
-	KSI_TLV *tmp = NULL;
-	unsigned length = 0;
-	int isLenient = 0;
-	int isForward = 0;
-	unsigned tag;
-	unsigned char buffer[0xffff];
-	unsigned char *ptr = NULL;
-	char errstr[1024];
-	size_t tlvOffset = 0;
-
-	KSI_PRE(&err, rdr != NULL) goto cleanup;
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_BEGIN(KSI_RDR_getCtx(rdr), &err);
-
-	/* Store the relative offset. */
-	res = KSI_RDR_getOffset(rdr, &tlvOffset);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = readHeader(rdr, hdr, &readCount, &isLenient, &isForward, &tag, &length);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	if (readCount == 0) {
-		/* Reached end of stream. */
-		KSI_SUCCESS(&err);
-		goto cleanup;
-	}
-
-	/* Get the payload. */
-	ptr = NULL;
-	if (!copy) {
-		/* At this point we will reuse the allocated memory. */
-		res = KSI_RDR_read_ptr(rdr, &ptr, length, &readCount);
-		KSI_CATCH(&err, res) goto cleanup;
-	}
-
-	if (ptr == NULL) {
-		/* Read and make a copy of the payload. */
-		res = KSI_RDR_read_ex(rdr, buffer, length, &readCount);
-		KSI_CATCH(&err, res) goto cleanup;
-	}
-
-	if (readCount != length) {
-		KSI_snprintf(errstr, sizeof(errstr), "Expected to read %u bytes, but got %llu", length, (long long unsigned)readCount);
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, errstr);
-		goto cleanup;
-	}
-
-	/* Create new TLV object. */
-	res = KSI_TLV_new(KSI_RDR_getCtx(rdr), KSI_TLV_PAYLOAD_RAW, tag, isLenient, isForward, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	if (ptr == NULL) {
-		/* Append raw data. */
-		if (appendBlob(tmp, buffer, length) != length) {
-			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Unable to complete TLV object.");
-			goto cleanup;
-		}
-	} else {
-		tmp->datap = ptr;
-		tmp->datap_len = (unsigned)readCount;
-	}
-
-	tmp->relativeOffset = tlvOffset;
-	tmp->absoluteOffset = tlvOffset;
-	*tlv = tmp;
-	tmp = NULL;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	KSI_nofree(ptr);
-	KSI_TLV_free(tmp);
-
-	return KSI_RETURN(&err);
-}
-
 
 /**
  *
@@ -603,8 +488,46 @@ void KSI_TLV_ref(KSI_TLV *tlv) {
 }
 
 int KSI_TLV_fromReader(KSI_RDR *rdr, KSI_TLV **tlv) {
-	/* Read the TLV and make a copy of the memory. */
-	return readTlv(rdr, tlv, 1);
+	int res = KSI_UNKNOWN_ERROR;
+	unsigned char buf[0xffff + 4];
+	char *raw = NULL;
+	size_t consumed = 0;
+	KSI_TLV *tmp = NULL;
+	size_t offset = 0;
+
+	KSI_RDR_getOffset(rdr, &offset);
+
+	res = KSI_TLV_readTlv(rdr, buf, sizeof(buf), &consumed);
+	if (res != KSI_OK) goto cleanup;
+
+
+	if (consumed > 0) {
+		raw = KSI_malloc(consumed);
+		if (raw == NULL) {
+			res = KSI_OUT_OF_MEMORY;
+			goto cleanup;
+		}
+		memcpy(raw, buf, consumed);
+
+		res = KSI_TLV_parseBlob2(KSI_RDR_getCtx(rdr), raw, consumed, 1, &tmp);
+		if (res != KSI_OK) goto cleanup;
+
+		raw = NULL;
+
+		tmp->absoluteOffset = offset;
+	}
+
+	*tlv = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_free(raw);
+	KSI_TLV_free(tmp);
+
+	return res;
 }
 
 int KSI_TLV_readTlv(KSI_RDR *rdr, unsigned char *buffer, size_t buffer_len, size_t *readCount) {

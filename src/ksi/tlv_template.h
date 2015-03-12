@@ -182,11 +182,6 @@ extern "C" {
 	#define KSI_TLV_TEMPLATE_LIST					3
 
 	/**
-	 * A special #KSI_TlvTemplate type for storing the absolute offset of the nested TLV object.
-	 */
-	#define KSI_TLV_TEMPLATE_SEEK_POS				6
-
-	/**
 	 * Empty placeholder for a template with no flags set.
 	 */
 	#define KSI_TLV_TMPL_FLG_NONE			0x00

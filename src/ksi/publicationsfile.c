@@ -31,6 +31,8 @@
 #include "tlv.h"
 #include "tlv_template.h"
 
+#define PUB_FILE_HEADER_ID "KSIPUBLF"
+
 KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationsHeader)
 KSI_IMPORT_TLV_TEMPLATE(KSI_CertificateRecord)
 KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationRecord)
@@ -44,30 +46,54 @@ static int publicationsFile_setHeader(KSI_PublicationsFile *t, KSI_PublicationsH
 static int publicationsFile_setCertificates(KSI_PublicationsFile *t, KSI_LIST(KSI_CertificateRecord) *certificates);
 static int publicationsFile_setPublications(KSI_PublicationsFile *t, KSI_LIST(KSI_PublicationRecord) *publications);
 static int publicationsFile_setSignature(KSI_PublicationsFile *t, KSI_PKISignature *signature);
-static int publicationsFile_setSignatureOffset(KSI_PublicationsFile *t, size_t signatureOffset);
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationsFile)
 	KSI_TLV_COMPOSITE(0x0701, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getHeader, publicationsFile_setHeader, KSI_PublicationsHeader, "pub_header")
 	KSI_TLV_COMPOSITE_LIST(0x0702, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getCertificates, publicationsFile_setCertificates, KSI_CertificateRecord, "cert_rec")
 	KSI_TLV_COMPOSITE_LIST(0x0703, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getPublications, publicationsFile_setPublications, KSI_PublicationRecord, "pub_rec")
 	KSI_TLV_OBJECT(0x0704, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_MORE_DEFS, KSI_PublicationsFile_getSignature, publicationsFile_setSignature, KSI_PKISignature_fromTlv, KSI_PKISignature_toTlv, KSI_PKISignature_free, "pki_signature")
-	KSI_TLV_SEEK_POS(0x0704, publicationsFile_setSignatureOffset)
 KSI_END_TLV_TEMPLATE
 
 struct generator_st {
 	KSI_RDR *reader;
 	KSI_TLV *tlv;
+	size_t offset;
+	size_t sig_offset;
 };
 
 static int generateNextTlv(struct generator_st *gen, KSI_TLV **tlv) {
 	int res = KSI_UNKNOWN_ERROR;
+	unsigned char buf[0xffff + 4];
+	size_t consumed;
+	unsigned char *raw = NULL;
+
+
 	if (gen->tlv != NULL) {
 		KSI_TLV_free(gen->tlv);
 		gen->tlv = NULL;
 	}
 
-	res = KSI_TLV_fromReader(gen->reader, &gen->tlv);
+	res = KSI_TLV_readTlv(gen->reader, buf, sizeof(buf), &consumed);
 	if (res != KSI_OK) goto cleanup;
+
+	if (consumed > 0) {
+		raw = KSI_malloc(consumed);
+		if (raw == NULL) {
+			res = KSI_OUT_OF_MEMORY;
+			goto cleanup;
+		}
+		memcpy(raw, buf, consumed);
+		res = KSI_TLV_parseBlob2(KSI_RDR_getCtx(gen->reader), raw, consumed, 1, &gen->tlv);
+		if (res != KSI_OK) goto cleanup;
+
+		raw = NULL;
+
+		if (KSI_TLV_getTag(gen->tlv) == 0x0704) {
+			gen->sig_offset = gen->offset;
+		}
+	}
+
+	gen->offset += consumed;
 
 	*tlv = gen->tlv;
 
@@ -75,19 +101,9 @@ static int generateNextTlv(struct generator_st *gen, KSI_TLV **tlv) {
 
 cleanup:
 
-	return res;
-}
+	KSI_free(raw);
 
-static int publicationsFile_setSignatureOffset(KSI_PublicationsFile *t, size_t signatureOffset) {
-	int res = KSI_UNKNOWN_ERROR;
-	if (t == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	t->signatureOffset = signatureOffset;
-	res = KSI_OK;
-cleanup:
-	 return res;
+	return res;
 }
 
 static int publicationsFile_setHeader(KSI_PublicationsFile *t, KSI_PublicationsHeader *header) {
@@ -173,7 +189,7 @@ int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, unsigned raw_len, 
 	size_t hdr_len = 0;
 	KSI_PublicationsFile *tmp = NULL;
 	KSI_RDR *reader = NULL;
-	struct generator_st gen = {NULL, NULL};
+	struct generator_st gen = {NULL, NULL, 0, 0};
 	unsigned char *tmpRaw = NULL;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -189,7 +205,7 @@ int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, unsigned raw_len, 
 	res = KSI_RDR_read_ex(reader, hdr, sizeof(hdr), &hdr_len);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	if (hdr_len != sizeof(hdr) || memcmp(hdr, "KSIPUBLF", hdr_len)) {
+	if (hdr_len != sizeof(hdr) || memcmp(hdr, PUB_FILE_HEADER_ID, hdr_len)) {
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Unrecognized header.");
 		goto cleanup;
 	}
@@ -198,6 +214,8 @@ int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, unsigned raw_len, 
 	res = KSI_PublicationsFile_new(ctx, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 	
+	tmp->signedDataLength = strlen(PUB_FILE_HEADER_ID);
+
         /* Initialize generator. */
 	gen.reader = reader;
 	gen.tlv = NULL;
@@ -206,8 +224,10 @@ int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, unsigned raw_len, 
 	res = KSI_TlvTemplate_extractGenerator(ctx, tmp, (void *)&gen, KSI_TLV_TEMPLATE(KSI_PublicationsFile), (int (*)(void *, KSI_TLV **))generateNextTlv);
 	KSI_CATCH(&err, res) goto cleanup;
 	
-        /* Copy the raw value */
-	tmpRaw = KSI_calloc(raw_len, 1);
+	tmp->signedDataLength += gen.sig_offset;
+
+	/* Copy the raw value */
+	tmpRaw = KSI_malloc(raw_len);
 	if (tmpRaw == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
@@ -264,7 +284,7 @@ int KSI_PublicationsFile_verify(KSI_PublicationsFile *pubFile, KSI_CTX *ctx) {
 	res = KSI_getPKITruststore(useCtx, &pki);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = KSI_PKITruststore_verifySignature(pki, pubFile->raw, pubFile->signatureOffset, pubFile->signature);
+	res = KSI_PKITruststore_verifySignature(pki, pubFile->raw, pubFile->signedDataLength, pubFile->signature);
 	KSI_CATCH(&err, res) {
 		KSI_FAIL(&err, res, "Publications file not trusted.");
 		goto cleanup;

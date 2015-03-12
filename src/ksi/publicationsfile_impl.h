@@ -32,7 +32,7 @@ extern "C" {
 		KSI_PublicationsHeader *header;
 		KSI_LIST(KSI_CertificateRecord) *certificates;
 		KSI_LIST(KSI_PublicationRecord) *publications;
-		size_t signatureOffset;
+		size_t signedDataLength;
 		KSI_PKISignature *signature;
 	};
 
