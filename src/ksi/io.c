@@ -334,8 +334,8 @@ static int readFromSocket(KSI_RDR *rdr, unsigned char *buffer, const size_t size
 	
 	KSI_BEGIN(rdr->ctx, &err);
 
-	while (!rdr->eof && size - count > 0) {
-		int c = recv(rdr->data.socketfd, (char *)buffer + count, (int)(size - count), 0);
+	while (!rdr->eof && size > count) {
+		int c = recv(rdr->data.socketfd, (char *)buffer + count, (size - count), 0);
 
 		if (c < 0) {
 			if (socket_error == socketTimedOut) {

@@ -185,13 +185,13 @@ static int readHeader(KSI_RDR *rdr, unsigned char *dest, size_t *headerLen, int 
 		}
 		*headerLen = 4;
 
-		if (tag != NULL) *tag = ((*dest & KSI_TLV_MASK_TLV8_TYPE) << 8 ) | *(dest + 1);
-		if (length != NULL) *length = (unsigned)(*(dest + 2) << 8) | *(dest + 3);
+		if (tag != NULL) *tag = ((dest[0] & KSI_TLV_MASK_TLV8_TYPE) << 8 ) | dest[1];
+		if (length != NULL) *length = (unsigned)(dest [2] << 8) | dest[3];
 	} else {
 		/* TLV8 */
 		*headerLen = 2;
-		if (tag != NULL) *tag = *dest & KSI_TLV_MASK_TLV8_TYPE;
-		if (length != NULL) *length = *(dest + 1);
+		if (tag != NULL) *tag = dest[0] & KSI_TLV_MASK_TLV8_TYPE;
+		if (length != NULL) *length = dest[1];
 	}
 
 	res = KSI_OK;
