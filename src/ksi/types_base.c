@@ -74,6 +74,11 @@ int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, unsigned int da
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_OctetString *tmp = NULL;
 
+	if (ctx == NULL || (data == NULL && data_len != 0) || o == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
 	tmp = KSI_new(KSI_OctetString);
 	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
@@ -85,13 +90,15 @@ int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, unsigned int da
 	tmp->data_len = data_len;
 	tmp->refCount = 1;
 
-	tmp->data = KSI_calloc(data_len, 1);
-	if (tmp->data == NULL) {
-		res = KSI_OUT_OF_MEMORY;
-		goto cleanup;
-	}
+	if (data_len > 0) {
+		tmp->data = KSI_malloc(data_len);
+		if (tmp->data == NULL) {
+			res = KSI_OUT_OF_MEMORY;
+			goto cleanup;
+		}
 
-	memcpy(tmp->data, data, data_len);
+		memcpy(tmp->data, data, data_len);
+	}
 
 	*o = tmp;
 	tmp = NULL;

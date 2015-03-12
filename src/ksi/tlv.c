@@ -355,7 +355,7 @@ static unsigned readFirstTlv(KSI_CTX *ctx, unsigned char *data, unsigned data_le
 	unsigned hdrLen = 0;
 	unsigned length = 0;
 
-	if (ctx == NULL || data == NULL || tlv == NULL) {
+	if (ctx == NULL || data == NULL || tlv == NULL || data_length == 0) {
 		goto cleanup;
 	}
 
@@ -373,6 +373,8 @@ static unsigned readFirstTlv(KSI_CTX *ctx, unsigned char *data, unsigned data_le
 		length = (unsigned)(data[2] << 8) | data[3];
 	} else {
 		/* TLV8 */
+		if (data_length < 2) goto cleanup;
+
 		hdrLen = 2;
 		tag = data[0] & KSI_TLV_MASK_TLV8_TYPE;
 		length = data[1];
