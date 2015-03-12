@@ -293,7 +293,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int readFromMem(KSI_RDR *rdr, unsigned char *buffer, const size_t size, size_t *readCount) {
+static int readFromMem(KSI_RDR *rdr, unsigned char *buffer, const size_t buffer_size, size_t *readCount) {
 	KSI_ERR err;
 	size_t count;
 
@@ -302,17 +302,20 @@ static int readFromMem(KSI_RDR *rdr, unsigned char *buffer, const size_t size, s
 	KSI_PRE(&err, readCount != NULL) goto cleanup;
 	KSI_BEGIN(rdr->ctx, &err);
 
-	/* Max bytes still to read. */
-	count = rdr->data.mem.buffer_length - rdr->offset;
+	if (rdr->data.mem.buffer_length > rdr->offset) {
+		/* Max bytes still to read. */
+		count = rdr->data.mem.buffer_length - rdr->offset;
 
-	/* Update if requested for less. */
-	if (count > size) count = size;
+		/* Update if requested for less. */
+		if (count > buffer_size) count = buffer_size;
 
-	memcpy(buffer, rdr->data.mem.buffer + rdr->offset, count);
+		memcpy(buffer, rdr->data.mem.buffer + rdr->offset, count);
+
+		rdr->offset += count;
+	}
 
 	/* Update metadata */
-	rdr->offset += count;
-	rdr->eof = (rdr->offset == rdr->data.mem.buffer_length);
+	rdr->eof = (rdr->offset >= rdr->data.mem.buffer_length);
 
 	if (readCount != NULL) *readCount = count;
 
