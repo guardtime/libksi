@@ -618,22 +618,27 @@ cleanup:
 }
 
 int KSI_TLV_parseBlob2(KSI_CTX *ctx, unsigned char *data, unsigned data_length, int ownMemory, KSI_TLV **tlv) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tmp = NULL;
 	unsigned consumedBytes = 0;
 
-
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, data != NULL) goto cleanup;
-	KSI_PRE(&err, data_length >= 2) goto cleanup;
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	if ((consumedBytes = readFirstTlv(ctx, data, data_length, &tmp)) != data_length) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+	if (ctx == NULL || data == NULL || data_length < 2 || tlv == NULL) {
+		res = KSI_pushError(ctx, KSI_INVALID_ARGUMENT, "");
 		goto cleanup;
 	}
 
+	if ((consumedBytes = readFirstTlv(ctx, data, data_length, &tmp)) != data_length) {
+		res = KSI_pushError(ctx, KSI_INVALID_FORMAT, "");
+		goto cleanup;
+	}
+
+	/* This should never happen, but if it does, the function readFirstTlv is flawed - we'll check it here to just be sure. */
+	if (tmp == NULL) {
+		res = KSI_pushError(ctx, KSI_UNKNOWN_ERROR, "Reading TLV failed.");
+		goto cleanup;
+	}
+
+	/* If the memory should be owned by the TLV, store the pointer to free it after use. */
 	if (ownMemory) {
 		tmp->buffer = data;
 		tmp->buffer_size = data_length;
@@ -642,13 +647,13 @@ int KSI_TLV_parseBlob2(KSI_CTX *ctx, unsigned char *data, unsigned data_length, 
 	*tlv = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_TLV_free(tmp);
 
-	return KSI_RETURN(&err);
+	return res;
 
 }
 

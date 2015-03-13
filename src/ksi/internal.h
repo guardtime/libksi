@@ -100,7 +100,7 @@
 
 #define KSI_IMPLEMENT_GET_CTX(type)							\
 KSI_CTX *type##_getCtx(const type *o) {			 			\
-	return o->ctx; 											\
+	return o != NULL ? o->ctx : NULL;						\
 } 															\
 
 #define KSI_DEFINE_SETTER(baseType, valueType, valueName, alias) int baseType##_set##alias(baseType *o, valueType valueName)

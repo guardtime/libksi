@@ -323,29 +323,35 @@ const char *KSI_Utf8String_cstr(const KSI_Utf8String *o) {
 }
 
 int KSI_Utf8String_fromTlv(KSI_TLV *tlv, KSI_Utf8String **o) {
-	KSI_ERR err;
 	KSI_CTX *ctx = NULL;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	const char *cstr = NULL;
 	KSI_Utf8String *tmp = NULL;
 	unsigned len;
 
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, o != NULL) goto cleanup;
-
 	ctx = KSI_TLV_getCtx(tlv);
-	KSI_BEGIN(ctx, &err);
+
+	if (tlv == NULL || o == NULL) {
+		res = KSI_pushError(ctx, KSI_INVALID_ARGUMENT, "");
+		goto cleanup;
+	}
 
 	res = KSI_TLV_getRawValue(tlv, (const unsigned char **)&cstr, &len);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, "");
+		goto cleanup;
+	}
 
 	res = KSI_Utf8String_new(ctx, cstr, len, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, "");
+		goto cleanup;
+	}
 
 	*o = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
@@ -353,7 +359,7 @@ cleanup:
 	KSI_nofree(cstr);
 	KSI_Utf8String_free(tmp);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_Utf8String_toTlv(KSI_CTX *ctx, KSI_Utf8String *o, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
