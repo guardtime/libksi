@@ -169,7 +169,7 @@ int type##_fromTlv(KSI_TLV *tlv, type **data) { \
 	KSI_PRE(&err, data != NULL) goto cleanup; \
 	KSI_BEGIN(ctx, &err); \
 	\
-		if (KSI_TLV_getTag(tlv) != tag){ \
+	if (KSI_TLV_getTag(tlv) != tag){ \
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL); \
 		goto cleanup; \
 	} \

@@ -654,7 +654,7 @@ cleanup:
 	return res;
 }
 
-int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *error){
+int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *error, int *ext){
 	KSI_ERR *err = NULL;
 	
 	if (ctx == NULL || buf == NULL){
@@ -664,6 +664,7 @@ int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *erro
 	err = ctx->errors;
 	
 	if (error != NULL)	*error = err->statusCode;
+	if (ext != NULL)	*ext = err->extErrorCode;
 	
 	KSI_strncpy(buf, err->message, len);		
 	return KSI_OK;

@@ -149,8 +149,13 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_CalendarHashChain)
 	KSI_TLV_OBJECT_LIST(0x08, KSI_TLV_TMPL_FLG_LEAST_ONE_G0 | KSI_TLV_TMPL_FLG_NO_SERIALIZE, KSI_CalendarHashChain_getHashChain, KSI_CalendarHashChain_setHashChain, KSI_CalendarHashChainLink, "chain")
 KSI_END_TLV_TEMPLATE
 
+KSI_DEFINE_TLV_TEMPLATE(KSI_ErrorPdu)
+	KSI_TLV_INTEGER(0x04, KSI_TLV_TMPL_FLG_MANDATORY, KSI_ErrorPdu_getStatus, KSI_ErrorPdu_setStatus, "status")
+	KSI_TLV_UTF8_STRING(0x05, KSI_TLV_TMPL_FLG_NONE, KSI_ErrorPdu_getErrorMessage, KSI_ErrorPdu_setErrorMessage, "err_message")
+KSI_END_TLV_TEMPLATE
+
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationResp)
-	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getRequestId, KSI_AggregationResp_setRequestId, "req_id")
+	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationResp_getRequestId, KSI_AggregationResp_setRequestId, "req_id")
 	KSI_TLV_INTEGER(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getStatus, KSI_AggregationResp_setStatus, "status")
 	KSI_TLV_UTF8_STRING(0x05, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getErrorMsg, KSI_AggregationResp_setErrorMsg, "err_message")
 	KSI_TLV_COMPOSITE(0x10, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getConfig, KSI_AggregationResp_setConfig, KSI_Config, "config")
@@ -163,9 +168,10 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationResp)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationPdu)
-	KSI_TLV_OBJECT(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationPdu_getHeader, KSI_AggregationPdu_setHeader, KSI_Header_fromTlv, KSI_Header_toTlv, KSI_Header_free, "header")
+	KSI_TLV_OBJECT(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationPdu_getHeader, KSI_AggregationPdu_setHeader, KSI_Header_fromTlv, KSI_Header_toTlv, KSI_Header_free, "header")
 	KSI_TLV_OBJECT(0x201, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_AggregationPdu_getRequest, KSI_AggregationPdu_setRequest, KSI_AggregationReq_fromTlv, KSI_AggregationReq_toTlv, KSI_AggregationReq_free, "aggr_req")
 	KSI_TLV_OBJECT(0x202, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_AggregationPdu_getResponse, KSI_AggregationPdu_setResponse, KSI_AggregationResp_fromTlv, KSI_AggregationResp_toTlv, KSI_AggregationResp_free, "aggr_resp")
+	KSI_TLV_COMPOSITE(0x203, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_AggregationPdu_getError, KSI_AggregationPdu_setError, KSI_ErrorPdu, "aggr_error_pdu")
 	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationPdu_getHmac, KSI_AggregationPdu_setHmac, "hmac")
 KSI_END_TLV_TEMPLATE
 
@@ -176,7 +182,7 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendReq)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendResp)
-	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getRequestId, KSI_ExtendResp_setRequestId, "req_id")
+	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_ExtendResp_getRequestId, KSI_ExtendResp_setRequestId, "req_id")
 	KSI_TLV_INTEGER(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getStatus, KSI_ExtendResp_setStatus, "status")
 	KSI_TLV_UTF8_STRING(0x05, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getErrorMsg, KSI_ExtendResp_setErrorMsg, "err_message")
 	KSI_TLV_TIME_S(0x10, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getLastTime, KSI_ExtendResp_setLastTime, "last_time")
@@ -184,9 +190,10 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendResp)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendPdu)
-	KSI_TLV_OBJECT(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_ExtendPdu_getHeader, KSI_ExtendPdu_setHeader, KSI_Header_fromTlv, KSI_Header_toTlv, KSI_Header_free, "header")
+	KSI_TLV_OBJECT(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendPdu_getHeader, KSI_ExtendPdu_setHeader, KSI_Header_fromTlv, KSI_Header_toTlv, KSI_Header_free, "header")
 	KSI_TLV_OBJECT(0x301, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_ExtendPdu_getRequest, KSI_ExtendPdu_setRequest, KSI_ExtendReq_fromTlv, KSI_ExtendReq_toTlv, KSI_ExtendReq_free, "ext_req")
 	KSI_TLV_OBJECT(0x302, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_ExtendPdu_getResponse, KSI_ExtendPdu_setResponse, KSI_ExtendResp_fromTlv, KSI_ExtendResp_toTlv, KSI_ExtendResp_free, "ext_resp")
+	KSI_TLV_COMPOSITE(0x303, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_ExtendPdu_getError, KSI_ExtendPdu_setError, KSI_ErrorPdu, "ext_error_pdu")
 	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendPdu_getHmac, KSI_ExtendPdu_setHmac, "hmac")
 KSI_END_TLV_TEMPLATE
 
@@ -295,6 +302,7 @@ cleanup:
 static int extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *tmpl, struct tlv_track_s *tr, size_t tr_len, size_t tr_size) {
 	KSI_ERR err;
 	int res;
+	int tr_inc = 0;
 	TLVListIterator iter;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -308,12 +316,14 @@ static int extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTempl
 
 	iter.idx = 0;
 
-	if (tr_len < tr_size) {
+	/*When extracting second tlv there is no need to register it twice because it is mention in lower level.*/
+	if (tr_len == 0) {
 		tr[tr_len].tag = KSI_TLV_getTag(tlv);
 		tr[tr_len].desc = NULL;
+		tr_inc = 1;
 	}
 
-	res = extractGenerator(ctx, payload, (void *)&iter, tmpl, (int (*)(void *, KSI_TLV **))TLVListIterator_next, tr, tr_len + 1, tr_size);
+	res = extractGenerator(ctx, payload, (void *)&iter, tmpl, (int (*)(void *, KSI_TLV **))TLVListIterator_next, tr, tr_len + tr_inc, tr_size);
 	KSI_CATCH(&err, res) {
 		char buf[1024];
 		KSI_LOG_debug(ctx, "Unable to parse TLV: %s", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));
@@ -344,7 +354,7 @@ int KSI_TlvTemplate_parse(KSI_CTX *ctx, unsigned char *raw, unsigned raw_len, co
 	int res;
 	KSI_TLV *tlv = NULL;
 	struct tlv_track_s tr[0xf];
-
+	
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, raw != NULL) goto cleanup;
 	KSI_PRE(&err, raw_len > 0) goto cleanup;
@@ -521,8 +531,10 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 
 		/* Check if a match was found, an raise an error if the TLV is marked as critical. */
 		if (matchCount == 0 && !KSI_TLV_isNonCritical(tlv)) {
-			KSI_LOG_error(ctx, "Unknown critical tag: %s", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));
-			KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+			char errm[1024];
+			KSI_snprintf(errm, sizeof(errm), "Unknown critical tag: %s", track_str(tr, tr_len + 1, tr_size, buf, sizeof(buf)));
+			KSI_LOG_error(ctx, errm);
+			KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
 			goto cleanup;
 		}
 	}
