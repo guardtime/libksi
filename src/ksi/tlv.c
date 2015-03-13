@@ -157,7 +157,7 @@ static int readHeader(KSI_RDR *rdr, unsigned char *dest, size_t *headerLen, int 
 		*headerLen = 4;
 
 		if (tag != NULL) *tag = ((dest[0] & KSI_TLV_MASK_TLV8_TYPE) << 8 ) | dest[1];
-		if (length != NULL) *length = (unsigned)(dest[2] << 8) | dest[3];
+		if (length != NULL) *length = ((unsigned)dest[2] << 8) | (unsigned)dest[3];
 	} else {
 		/* TLV8 */
 		*headerLen = 2;
@@ -255,7 +255,7 @@ static unsigned readFirstTlv(KSI_CTX *ctx, unsigned char *data, unsigned data_le
 		hdrLen = 4;
 
 		tag = ((data[0] & KSI_TLV_MASK_TLV8_TYPE) << 8 ) | data[1];
-		length = (unsigned)(data[2] << 8) | data[3];
+		length = ((unsigned)data[2] << 8) | (unsigned)data[3];
 	} else {
 		/* TLV8 */
 		if (data_length < 2) goto cleanup;
@@ -550,7 +550,7 @@ int KSI_TLV_readTlv(KSI_RDR *rdr, unsigned char *buffer, size_t buffer_len, size
 		goto cleanup;
 	}
 
-	res = KSI_RDR_read_ex(rdr, buffer + headerRead, valueLength, &valueRead);
+	res = KSI_RDR_read_ex(rdr, buffer + headerRead, (size_t)valueLength, &valueRead);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	if (valueLength != valueRead) {

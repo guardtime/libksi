@@ -99,6 +99,7 @@ static void testAggreAuthFailure(CuTest* tc) {
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Aggregation should fail with service error.", res == KSI_SERVICE_AUTHENTICATION_FAILURE && sig == NULL);
 	
+	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
 }
 

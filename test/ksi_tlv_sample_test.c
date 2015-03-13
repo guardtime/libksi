@@ -343,13 +343,13 @@ static void testErrorMessage(CuTest* tc, const char *expected, const char *tlv_f
 	res = KSI_RDR_fromFile(ctx, getFullResourcePath(tlv_file), "r", &rdr);
 	CuAssert(tc, "Failed to open reader", res == KSI_OK);
 	
-	res = KSI_RDR_read_ex(rdr, buf, sizeof(buf), &len);
+	res = KSI_RDR_read_ex(rdr, (unsigned char *)buf, sizeof(buf), &len);
 	CuAssert(tc, "Failed read from file", res == KSI_OK);
 	
 	res = obj_new(ctx, &obj);
 	CuAssert(tc, "Unable create new obj", res == KSI_OK);
 	
-	res = KSI_TlvTemplate_parse(ctx, buf, (unsigned)len, tmplete, obj);
+	res = KSI_TlvTemplate_parse(ctx, (unsigned char *)buf, (unsigned)len, tmplete, obj);
 	CuAssert(tc, "Parsing invalid obj must fail", res != KSI_OK);
 	
 	res = KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL, NULL);
