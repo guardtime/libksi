@@ -63,9 +63,8 @@ struct generator_st {
 
 static int generateNextTlv(struct generator_st *gen, KSI_TLV **tlv) {
 	int res = KSI_UNKNOWN_ERROR;
-	unsigned char buf[0xffff + 4];
+	unsigned char *buf;
 	size_t consumed;
-	unsigned char *raw = NULL;
 
 
 	if (gen->tlv != NULL) {
@@ -73,20 +72,20 @@ static int generateNextTlv(struct generator_st *gen, KSI_TLV **tlv) {
 		gen->tlv = NULL;
 	}
 
-	res = KSI_TLV_readTlv(gen->reader, buf, sizeof(buf), &consumed);
+	buf = KSI_malloc(0xffff + 4);
+	if (buf == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	res = KSI_TLV_readTlv(gen->reader, buf, 0xffff + 4, &consumed);
 	if (res != KSI_OK) goto cleanup;
 
 	if (consumed > 0) {
-		raw = KSI_malloc(consumed);
-		if (raw == NULL) {
-			res = KSI_OUT_OF_MEMORY;
-			goto cleanup;
-		}
-		memcpy(raw, buf, consumed);
-		res = KSI_TLV_parseBlob2(KSI_RDR_getCtx(gen->reader), raw, consumed, 1, &gen->tlv);
+		res = KSI_TLV_parseBlob2(KSI_RDR_getCtx(gen->reader), buf, consumed, 1, &gen->tlv);
 		if (res != KSI_OK) goto cleanup;
 
-		raw = NULL;
+		buf = NULL;
 
 		if (KSI_TLV_getTag(gen->tlv) == 0x0704) {
 			gen->sig_offset = gen->offset;
@@ -101,7 +100,7 @@ static int generateNextTlv(struct generator_st *gen, KSI_TLV **tlv) {
 
 cleanup:
 
-	KSI_free(raw);
+	KSI_free(buf);
 
 	return res;
 }
