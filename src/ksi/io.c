@@ -295,7 +295,7 @@ cleanup:
 
 static int readFromMem(KSI_RDR *rdr, unsigned char *buffer, const size_t buffer_size, size_t *readCount) {
 	KSI_ERR err;
-	size_t count;
+	size_t count = 0;
 
 	KSI_PRE(&err, rdr != NULL) goto cleanup;
 	KSI_PRE(&err, buffer != NULL) goto cleanup;
