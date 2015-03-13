@@ -35,6 +35,9 @@ KSI_IMPLEMENT_LIST(GlobalCleanupFn, NULL);
 #  define KSI_VERSION_STRING "libksi " VERSION
 #endif
 
+static size_t min_size_t(size_t a, size_t b) {
+	return a < b ? a : b;
+}
 const char *KSI_getVersion(void) {
 	static const char versionString[] = KSI_VERSION_STRING;
 	return versionString;
@@ -587,6 +590,30 @@ int KSI_ERR_apply(KSI_ERR *err) {
 	}
 	/* Return the result, which does not indicate the result of this method. */
 	return err->statusCode;
+}
+
+int KSI_ERR_push(KSI_CTX *ctx, int statusCode, long extErrorCode, const char *fileName, unsigned int lineNr, const char *message) {
+	KSI_ERR *ctxErr = NULL;
+	const char *tmp = NULL;
+
+	if (ctx == NULL) goto cleanup;
+	if (statusCode == KSI_OK) goto cleanup;
+
+	ctxErr = ctx->errors + (ctx->errors_count % ctx->errors_size);
+
+	ctxErr->statusCode = statusCode;
+	ctxErr->extErrorCode = extErrorCode;
+	ctxErr->lineNr = lineNr;
+	tmp = KSI_strnvl(fileName);
+	KSI_strncpy(ctxErr->fileName, tmp, min_size_t(sizeof(ctxErr->fileName), strlen(tmp)));
+	tmp = KSI_strnvl(message);
+	KSI_strncpy(ctxErr->message, tmp, min_size_t(sizeof(ctxErr->message), strlen(tmp)));
+
+	ctx->errors_count++;
+
+cleanup:
+
+	return statusCode;
 }
 
 void KSI_ERR_success(KSI_ERR *err) {

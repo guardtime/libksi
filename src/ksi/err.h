@@ -92,6 +92,11 @@ int KSI_ERR_fail(KSI_ERR *ctx, int statusCode, long extErrorCode, char *fileName
 void KSI_ERR_success(KSI_ERR *err);
 
 /**
+ * Push an error message to the error stack of the context.
+ */
+int KSI_ERR_push(KSI_CTX *ctx, int statusCode, long extErrorCode, const char *fileName, unsigned int lineNr, const char *message);
+
+/**
  * @}
  */
 #ifdef __cplusplus

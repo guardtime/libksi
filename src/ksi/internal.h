@@ -75,6 +75,8 @@
 #  endif
 #endif
 
+#define KSI_pushError(ctx, statusCode, message) KSI_ERR_push((ctx), (statusCode), 0, __FILE__, __LINE__, (message))
+
 #define KSI_BEGIN(ctx, err) KSI_ERR_init((ctx), (err))
 #define KSI_PRE(err, cond) if (KSI_ERR_pre(err, cond, __FILE__, __LINE__) || !(cond))
 #define KSI_RETURN(err) KSI_ERR_apply((err))

@@ -122,7 +122,7 @@ static int readHeader(KSI_RDR *rdr, unsigned char *dest, size_t *headerLen, int 
 	size_t readCount;
 
 	if (rdr == NULL || dest == NULL || headerLen == NULL) {
-		res = KSI_INVALID_ARGUMENT;
+		res = KSI_pushError(KSI_RDR_getCtx(rdr), KSI_INVALID_ARGUMENT, "One of the arguments was null.");
 		goto cleanup;
 	}
 
@@ -137,7 +137,7 @@ static int readHeader(KSI_RDR *rdr, unsigned char *dest, size_t *headerLen, int 
 		goto cleanup;
 	}
 	if (readCount != 2) {
-		res = KSI_INVALID_FORMAT;
+		res = KSI_pushError(KSI_RDR_getCtx(rdr), KSI_INVALID_FORMAT, "Unable to read first two bytes.");
 		goto cleanup;
 	}
 
@@ -151,7 +151,7 @@ static int readHeader(KSI_RDR *rdr, unsigned char *dest, size_t *headerLen, int 
 		res = KSI_RDR_read_ex(rdr, dest + 2, 2, &readCount);
 		if (res != KSI_OK) goto cleanup;
 		if (readCount != 2) {
-			res = KSI_INVALID_FORMAT;
+			res = KSI_pushError(KSI_RDR_getCtx(rdr), KSI_INVALID_FORMAT, "Unable to read full TLV16 header.");
 			goto cleanup;
 		}
 		*headerLen = 4;
