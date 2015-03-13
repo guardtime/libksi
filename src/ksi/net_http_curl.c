@@ -170,6 +170,7 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 	int res;
 	CurlNetHandleCtx *implCtx = NULL;
 	KSI_HttpClient *http = (KSI_HttpClient *)client;
+	size_t len;
 
 	KSI_PRE(&err, client != NULL) goto cleanup;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
@@ -192,12 +193,13 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 	handle->readResponse = curlReceive;
 	handle->client = client;
 
-	implCtx->url = KSI_calloc(strlen(url) + 1, 1);
+	len = strlen(url) + 1;
+	implCtx->url = KSI_calloc(len, 1);
 	if (implCtx->url == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
-	strcpy(implCtx->url, url);
+	strncpy(implCtx->url, url, len);
 
     res = KSI_RequestHandle_setImplContext(handle, implCtx, (void (*)(void *))CurlNetHandleCtx_free);
     KSI_CATCH(&err, res) goto cleanup;

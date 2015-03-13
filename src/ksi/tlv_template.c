@@ -404,9 +404,15 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 
 	template_len = getTemplateLength(tmpl);
 
+	if (template_len == 0) {
+		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Empty template suggests invalid state.");
+		goto cleanup;
+	}
 	/* Create the hit buffer with all values set to zero. */
-	if (template_len > 0) {
-		templateHit = KSI_calloc(template_len, sizeof(bool));
+	templateHit = KSI_calloc(template_len, sizeof(bool));
+	if (templateHit == NULL) {
+		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
 	}
 
 	while (1) {
