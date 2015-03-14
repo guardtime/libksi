@@ -332,19 +332,19 @@ int KSI_Utf8String_fromTlv(KSI_TLV *tlv, KSI_Utf8String **o) {
 	ctx = KSI_TLV_getCtx(tlv);
 
 	if (tlv == NULL || o == NULL) {
-		res = KSI_pushError(ctx, KSI_INVALID_ARGUMENT, "");
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
 
 	res = KSI_TLV_getRawValue(tlv, (const unsigned char **)&cstr, &len);
 	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, "");
+		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
 	res = KSI_Utf8String_new(ctx, cstr, len, &tmp);
 	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, "");
+		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 

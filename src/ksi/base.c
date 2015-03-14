@@ -575,7 +575,7 @@ int KSI_ERR_apply(KSI_ERR *err) {
 
 	if (ctx != NULL) {
 		if (err->statusCode != KSI_OK) {
-			ctxErr = ctx->errors + (ctx->errors_count % ctx->errors_size);
+			ctxErr = &ctx->errors[ctx->errors_count % ctx->errors_size];
 
 			ctxErr->statusCode = err->statusCode;
 			ctxErr->extErrorCode = err->extErrorCode;
@@ -592,14 +592,18 @@ int KSI_ERR_apply(KSI_ERR *err) {
 	return err->statusCode;
 }
 
-int KSI_ERR_push(KSI_CTX *ctx, int statusCode, long extErrorCode, const char *fileName, unsigned int lineNr, const char *message) {
+void KSI_ERR_push(KSI_CTX *ctx, int statusCode, long extErrorCode, const char *fileName, unsigned int lineNr, const char *message) {
 	KSI_ERR *ctxErr = NULL;
 	const char *tmp = NULL;
 
-	if (ctx == NULL) goto cleanup;
-	if (statusCode == KSI_OK) goto cleanup;
+	/* Do nothing if the context is missing. */
+	if (ctx == NULL) return;
 
-	ctxErr = ctx->errors + (ctx->errors_count % ctx->errors_size);
+	/* Do notihng if there's no error. */
+	if (statusCode == KSI_OK) return;
+
+	/* Get the error container to use for storage. */
+	ctxErr = &ctx->errors[ctx->errors_count % ctx->errors_size];
 
 	ctxErr->statusCode = statusCode;
 	ctxErr->extErrorCode = extErrorCode;
@@ -610,10 +614,6 @@ int KSI_ERR_push(KSI_CTX *ctx, int statusCode, long extErrorCode, const char *fi
 	KSI_strncpy(ctxErr->message, tmp, min_size_t(sizeof(ctxErr->message), strlen(tmp)));
 
 	ctx->errors_count++;
-
-cleanup:
-
-	return statusCode;
 }
 
 void KSI_ERR_success(KSI_ERR *err) {

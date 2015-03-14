@@ -50,7 +50,7 @@ extern "C" {
 		unsigned int errors_size;
 
 		/* Count of errors (usually #error_end - #error_start + 1, unless error count > #errors_size. */
-		unsigned int errors_count;
+		size_t errors_count;
 
 		KSI_LoggerCallback loggerCB;
 		int logLevel;

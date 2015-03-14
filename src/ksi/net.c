@@ -137,28 +137,35 @@ void KSI_RequestHandle_free(KSI_RequestHandle *handle) {
 }
 
 int KSI_NetworkClient_sendSignRequest(KSI_NetworkClient *provider, KSI_AggregationReq *request, KSI_RequestHandle **handle) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 
-	KSI_PRE(&err, provider != NULL) goto cleanup;
-	KSI_PRE(&err, request != NULL) goto cleanup;
-	KSI_PRE(&err, handle != NULL) goto cleanup;
+	if (provider == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	if (request == NULL || handle == NULL) {
+		KSI_pushError(provider->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
-	KSI_BEGIN(provider->ctx, &err);
+	KSI_ERR_clearErrors(provider->ctx);
 
 	if (provider->sendSignRequest == NULL) {
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Signed request sender not initialized.");
+		KSI_pushError(provider->ctx, res = KSI_UNKNOWN_ERROR, "Signed request sender not initialized.");
 		goto cleanup;
 	}
 
 	res = provider->sendSignRequest(provider, request, handle);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(provider->ctx, res, NULL);
+		goto cleanup;
+	}
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_NetworkClient_sendExtendRequest(KSI_NetworkClient *provider, KSI_ExtendReq *request, KSI_RequestHandle **handle) {
@@ -323,30 +330,37 @@ cleanup:
 }
 
 int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, unsigned char **response, unsigned *response_len) {
-	KSI_ERR err;
-	int res;
-	KSI_PRE(&err, handle != NULL) goto cleanup;
-	KSI_BEGIN(handle->ctx, &err);
+	int res = KSI_UNKNOWN_ERROR;
 
-	KSI_PRE(&err, handle != NULL) goto cleanup;
-	KSI_PRE(&err, response != NULL) goto cleanup;
-	KSI_PRE(&err, response_len != NULL) goto cleanup;
-	KSI_BEGIN(handle->ctx, &err);
+	if (handle == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(handle->ctx);
+
+	if (response == NULL || response_len == NULL) {
+		KSI_pushError(handle->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	if (handle->response == NULL) {
 		KSI_LOG_debug(handle->ctx, "Waiting for response.");
 		res = receiveResponse(handle);
-		KSI_CATCH(&err, res) goto cleanup;
+		if (res != KSI_OK) {
+			KSI_pushError(handle->ctx, res, NULL);
+			goto cleanup;
+		}
 	}
 
 	*response = handle->response;
 	*response_len = handle->response_length;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int pdu_verify_hmac(KSI_CTX *ctx, KSI_DataHash *hmac,const char *key, int (*calculateHmac)(void*, int, const char*, KSI_DataHash**) ,void *PDU){
@@ -554,6 +568,8 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->aggrPass, 
 			(int (*)(void*, int, const char*, KSI_DataHash**))KSI_AggregationPdu_calculateHmac,
 			(void*)pdu);
+
+	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_AggregationPdu_setResponse(pdu, NULL);
 	KSI_CATCH(&err, res) goto cleanup;
