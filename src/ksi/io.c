@@ -90,32 +90,41 @@ cleanup:
 }
 
 int KSI_RDR_getOffset(KSI_RDR *rdr, size_t *offset) {
-	KSI_ERR err;
-	KSI_PRE(&err, rdr != NULL) goto cleanup;
-	KSI_PRE(&err, offset != NULL) goto cleanup;
-	KSI_BEGIN(rdr->ctx, &err);
+	int res = KSI_UNKNOWN_ERROR;
+	if (rdr == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(rdr->ctx);
+
+	if (offset == NULL) {
+		KSI_pushError(rdr->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	*offset = rdr->offset;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_RDR_fromStream(KSI_CTX *ctx, FILE *file, KSI_RDR **rdr) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_RDR *reader = NULL;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, file != NULL) goto cleanup;
+	KSI_ERR_clearErrors(ctx);
 
-	KSI_BEGIN(ctx, &err);
+	if (ctx == NULL || file == NULL || rdr == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	reader = newReader(ctx, KSI_IO_FILE);
 	if (reader == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
@@ -124,57 +133,67 @@ int KSI_RDR_fromStream(KSI_CTX *ctx, FILE *file, KSI_RDR **rdr) {
 	*rdr = reader;
 	reader = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_RDR_close(reader);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_RDR_fromFile(KSI_CTX *ctx, const char *fileName, const char *flags, KSI_RDR **rdr) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_RDR *reader = NULL;
 	FILE *file = NULL;
-	int res;
 
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || fileName == NULL || flags == NULL || rdr == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	file = fopen(fileName, flags);
 	if (file == NULL) {
-		KSI_FAIL(&err, KSI_IO_ERROR, "Unable to open file");
+		KSI_pushError(ctx, res = KSI_IO_ERROR, "Unable to open file");
 		goto cleanup;
 	}
 
 	res = KSI_RDR_fromStream(ctx, file, &reader);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	file = NULL;
 
 	*rdr = reader;
 	reader = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	if (file != NULL) fclose(file);
 	KSI_RDR_close(reader);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 
 static int createReader_fromMem(KSI_CTX *ctx, unsigned char *buffer, const size_t buffer_length, int ownCopy, KSI_RDR **rdr) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_RDR *reader = NULL;
 
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || buffer == NULL || rdr == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	reader = newReader(ctx, KSI_IO_MEM);
 	if (reader == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
@@ -186,70 +205,84 @@ static int createReader_fromMem(KSI_CTX *ctx, unsigned char *buffer, const size_
 	*rdr = reader;
 	reader = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
+
 cleanup:
 
 	KSI_RDR_close(reader);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_RDR_fromMem(KSI_CTX *ctx, const unsigned char *buffer, const size_t buffer_length, KSI_RDR **rdr) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	unsigned char *buf = NULL;
 
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || buffer == NULL || rdr == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	buf = KSI_calloc(buffer_length, 1);
 	if (buf == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 	memcpy(buf, buffer, buffer_length);
 
 	res = createReader_fromMem(ctx, buf, buffer_length, 1, rdr);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	buf = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_free(buf);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_RDR_fromSharedMem(KSI_CTX *ctx, unsigned char *buffer, const size_t buffer_length, KSI_RDR **rdr) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || buffer == NULL || rdr == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	res = createReader_fromMem(ctx, buffer, buffer_length, 0, rdr);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_RDR_fromSocket(KSI_CTX *ctx, int socketfd, KSI_RDR **rdr) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_RDR *reader = NULL;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, socketfd >= 0) goto cleanup;
-	KSI_PRE(&err, rdr != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || socketfd < 0 || rdr == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	reader = newReader(ctx, KSI_IO_SOCKET);
 	if (reader == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
@@ -258,11 +291,11 @@ int KSI_RDR_fromSocket(KSI_CTX *ctx, int socketfd, KSI_RDR **rdr) {
 	*rdr = reader;
 	reader = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 
@@ -271,14 +304,21 @@ int KSI_RDR_isEOF(KSI_RDR *rdr) {
 }
 
 static int readFromFile(KSI_RDR *rdr, unsigned char *buffer, const size_t size, size_t *readCount) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 	size_t count;
 
-	KSI_PRE(&err, rdr != NULL) goto cleanup;
-	KSI_PRE(&err, buffer != NULL) goto cleanup;
-	KSI_PRE(&err, readCount != NULL) goto cleanup;
+	if (rdr == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
-	KSI_BEGIN(rdr->ctx, &err);
+	KSI_ERR_clearErrors(rdr->ctx);
+
+	if (buffer == NULL || readCount == NULL) {
+		KSI_pushError(rdr->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
 	count = fread(buffer, 1, size, rdr->data.file);
 	/* Update metadata. */
 	rdr->offset += count;
@@ -286,21 +326,26 @@ static int readFromFile(KSI_RDR *rdr, unsigned char *buffer, const size_t size, 
 
 	*readCount = count;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 static int readFromMem(KSI_RDR *rdr, unsigned char *buffer, const size_t buffer_size, size_t *readCount) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 	size_t count = 0;
 
-	KSI_PRE(&err, rdr != NULL) goto cleanup;
-	KSI_PRE(&err, buffer != NULL) goto cleanup;
-	KSI_PRE(&err, readCount != NULL) goto cleanup;
-	KSI_BEGIN(rdr->ctx, &err);
+	if (rdr == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(rdr->ctx);
+	if (buffer == NULL || readCount == NULL) {
+		KSI_pushError(rdr->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	if (rdr->data.mem.buffer_length > rdr->offset) {
 		/* Max bytes still to read. */
@@ -319,32 +364,37 @@ static int readFromMem(KSI_RDR *rdr, unsigned char *buffer, const size_t buffer_
 
 	if (readCount != NULL) *readCount = count;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 static int readFromSocket(KSI_RDR *rdr, unsigned char *buffer, const size_t size, size_t *readCount) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 	size_t count = 0;
 	
-	KSI_PRE(&err, rdr != NULL) goto cleanup;
-	KSI_PRE(&err, buffer != NULL) goto cleanup;
-	KSI_PRE(&err, readCount != NULL) goto cleanup;
-	KSI_PRE(&err, size < INT_MAX) goto cleanup;
-	
-	KSI_BEGIN(rdr->ctx, &err);
+	if (rdr == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(rdr->ctx);
+
+	if (buffer == NULL || readCount == NULL) {
+		KSI_pushError(rdr->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	while (!rdr->eof && size > count) {
 		int c = recv(rdr->data.socketfd, (char *)buffer + count, (size - count), 0);
 
 		if (c < 0) {
 			if (socket_error == socketTimedOut) {
-				KSI_FAIL_EXT(&err, KSI_NETWORK_RECIEVE_TIMEOUT, errno, "Unable to read from socket.");
+				KSI_pushError(rdr->ctx, res = KSI_NETWORK_RECIEVE_TIMEOUT, "Unable to read from socket."); // TODO! Add errno
 			} else {
-				KSI_FAIL_EXT(&err, KSI_IO_ERROR, errno, "Unable to read from socket.");
+				KSI_pushError(rdr->ctx, res = KSI_IO_ERROR, "Unable to read from socket."); // TODO! Add errno
 			}
 			goto cleanup;
 		}
@@ -357,18 +407,27 @@ static int readFromSocket(KSI_RDR *rdr, unsigned char *buffer, const size_t size
 
 	if (readCount != NULL) *readCount = count;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_RDR_read_ex(KSI_RDR *rdr, unsigned char *buffer, const size_t bufferLength, size_t *readCount)  {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 
-	KSI_BEGIN(rdr->ctx, &err);
+	if (rdr == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(rdr->ctx);
+
+	if (buffer == NULL || readCount == NULL) {
+		KSI_pushError(rdr->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	switch (rdr->ioType) {
 		case KSI_IO_FILE:
@@ -381,31 +440,37 @@ int KSI_RDR_read_ex(KSI_RDR *rdr, unsigned char *buffer, const size_t bufferLeng
 			res = readFromSocket(rdr, buffer, bufferLength, readCount);
 			break;
 		default:
-			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Unsupported KSI IO TYPE");
+			KSI_pushError(rdr->ctx, res = KSI_UNKNOWN_ERROR, "Unsupported KSI IO TYPE");
 			goto cleanup;
 	}
 
 	if (res != KSI_OK) {
-		KSI_FAIL(&err, res, NULL);
+		KSI_pushError(rdr->ctx, res, NULL);
 		goto cleanup;
 	}
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_RDR_read_ptr(KSI_RDR *rdr, unsigned char **ptr, const size_t len, size_t *readCount) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 	unsigned char *p = NULL;
 	size_t count = 0;
 
-	KSI_PRE(&err, rdr != NULL) goto cleanup;
-	KSI_PRE(&err, ptr != NULL) goto cleanup;
-	KSI_PRE(&err, readCount != NULL) goto cleanup;
-	KSI_BEGIN(rdr->ctx, &err);
+	if (rdr == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(rdr->ctx);
+	if (ptr == NULL || readCount == NULL) {
+		KSI_pushError(rdr->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	switch (rdr->ioType) {
 		case KSI_IO_FILE:
@@ -429,15 +494,15 @@ int KSI_RDR_read_ptr(KSI_RDR *rdr, unsigned char **ptr, const size_t len, size_t
 			}
 			break;
 		default:
-			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Unsupported KSI IO TYPE");
+			KSI_pushError(rdr->ctx, res = KSI_UNKNOWN_ERROR, "Unsupported KSI IO TYPE");
 			goto cleanup;
 	}
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 void KSI_RDR_close(KSI_RDR *rdr)  {
@@ -474,27 +539,30 @@ void KSI_RDR_close(KSI_RDR *rdr)  {
 }
 
 int KSI_RDR_verifyEnd(KSI_RDR *rdr) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	unsigned char *buf = NULL;
 	size_t buf_len = 0;
 
-	KSI_PRE(&err, rdr != NULL) goto cleanup;
-	KSI_BEGIN(rdr->ctx, &err);
-
-	res = KSI_RDR_read_ptr(rdr, &buf, 1, &buf_len);
-	if (res != KSI_OK || buf != NULL) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+	if (rdr == NULL) {
+		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	KSI_SUCCESS(&err);
+	KSI_ERR_clearErrors(rdr->ctx);
+
+	res = KSI_RDR_read_ptr(rdr, &buf, 1, &buf_len);
+	if (res != KSI_OK || buf != NULL) {
+		KSI_pushError(rdr->ctx, res = KSI_INVALID_FORMAT, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_nofree(buf);
 
-	return KSI_RETURN(&err);
+	return res;
 
 }
 
