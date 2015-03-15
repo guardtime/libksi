@@ -354,9 +354,8 @@ static void testErrorMessage(CuTest* tc, const char *expected, const char *tlv_f
 	
 	res = KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL, NULL);
 	CuAssert(tc, "Unable to get base error message.", res == KSI_OK);
-	
+
 	CuAssert(tc, "Wrong error message.", strcmp(buf, expected) == 0);
-	
 	
 	obj_free(obj);
 	KSI_RDR_close(rdr);

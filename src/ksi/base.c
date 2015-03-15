@@ -35,9 +35,6 @@ KSI_IMPLEMENT_LIST(GlobalCleanupFn, NULL);
 #  define KSI_VERSION_STRING "libksi " VERSION
 #endif
 
-static size_t min_size_t(size_t a, size_t b) {
-	return a < b ? a : b;
-}
 const char *KSI_getVersion(void) {
 	static const char versionString[] = KSI_VERSION_STRING;
 	return versionString;
@@ -609,9 +606,9 @@ void KSI_ERR_push(KSI_CTX *ctx, int statusCode, long extErrorCode, const char *f
 	ctxErr->extErrorCode = extErrorCode;
 	ctxErr->lineNr = lineNr;
 	tmp = KSI_strnvl(fileName);
-	KSI_strncpy(ctxErr->fileName, tmp, min_size_t(sizeof(ctxErr->fileName), strlen(tmp)));
+	KSI_strncpy(ctxErr->fileName, tmp, sizeof(ctxErr->fileName));
 	tmp = KSI_strnvl(message);
-	KSI_strncpy(ctxErr->message, tmp, min_size_t(sizeof(ctxErr->message), strlen(tmp)));
+	KSI_strncpy(ctxErr->message, tmp, sizeof(ctxErr->message));
 
 	ctx->errors_count++;
 }
