@@ -107,6 +107,12 @@ static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_CalendarAuthRec*, calendarAuthRec
 static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_AggregationAuthRec*, aggregationAuthRec, AggregationAuthRecord)
 static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_PublicationRecord*, publication, PublicationRecord)
 
+static int checkSignatureInternals(KSI_Signature *sig) {
+	if (sig == NULL) return KSI_INVALID_ARGUMENT;
+	if (sig->aggregationChainList == NULL || KSI_AggregationHashChainList_length(sig->aggregationChainList) == 0) return KSI_INVALID_FORMAT;
+	if (sig->calendarChain == NULL && (sig->calendarAuthRec != NULL || sig->publication != NULL)) return KSI_INVALID_FORMAT;
+	return KSI_OK;
+}
 
 /**
  * KSI_AggregationHashChain
@@ -289,17 +295,18 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_Signature)
 KSI_END_TLV_TEMPLATE
 
 static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_Signature *tmp = NULL;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, sig != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || sig == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	tmp = KSI_new(KSI_Signature);
 	if (tmp == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
@@ -314,18 +321,21 @@ static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
 	tmp->publication = NULL;
 
 	res = KSI_VerificationResult_init(&tmp->verificationResult, ctx);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	*sig = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_Signature_free(tmp);
 
-	return KSI_RETURN(&err);
+	return res;
 
 }
 
@@ -345,8 +355,7 @@ static int aggregationHashChainCmp(const KSI_AggregationHashChain **left, const 
 }
 
 static int extractSignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature **signature) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 
 	KSI_Signature *sig = NULL;
 	KSI_CalendarHashChain *cal = NULL;
@@ -354,33 +363,49 @@ static int extractSignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature **signatur
 	KSI_Integer *publicationTime = NULL;
 	KSI_DataHash *inputHash = NULL;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, signature != NULL) goto cleanup;
-
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || tlv == NULL || signature == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	if (KSI_TLV_getTag(tlv) != 0x800) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
 		goto cleanup;
 	}
 
 	res = KSI_Signature_new(ctx, &sig);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	/* Parse and extract the signature. */
 	res = KSI_TlvTemplate_extract(ctx, sig, tlv, KSI_TLV_TEMPLATE(KSI_Signature));
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = checkSignatureInternals(sig);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	/* Make sure the aggregation chains are in correct order. */
 	res = KSI_AggregationHashChainList_sort(sig->aggregationChainList, aggregationHashChainCmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	*signature = sig;
 	sig = NULL;
 
 	KSI_LOG_debug(ctx, "Finished parsing successfully.");
-	KSI_SUCCESS(&err);
+
+	res = KSI_OK;
 
 cleanup:
 
@@ -391,7 +416,7 @@ cleanup:
 	KSI_CalendarHashChain_free(cal);
 	KSI_Signature_free(sig);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 /***************
