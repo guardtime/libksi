@@ -315,6 +315,7 @@ EXPORTS
 EXPORTS
     KSI_Signature_free
     KSI_Signature_verify
+    KSI_Signature_verifyOnline
     KSI_Signature_verifyDocument
     KSI_Signature_clone
     KSI_Signature_parse

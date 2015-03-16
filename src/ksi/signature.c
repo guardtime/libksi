@@ -1710,7 +1710,7 @@ static int verifyCalAuthRec(KSI_CTX *ctx, KSI_Signature *sig) {
 		goto cleanup;
 	}
 
-	res = KSI_VerificationResult_addSuccess(info, step, "Calendar authentication record correct.");
+	res = KSI_VerificationResult_addSuccess(info, step, "Calendar authentication record verified.");
 
 cleanup:
 
@@ -1983,6 +1983,10 @@ KSI_DEFINE_VERIFICATION_POLICY(KSI_VP_SIGNATURE)
 	KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_ONLINE
 KSI_END_VERIFICATION_POLICY
 
+KSI_DEFINE_VERIFICATION_POLICY(KSI_VP_ONLINE)
+	KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_ONLINE
+KSI_END_VERIFICATION_POLICY
+
 
 KSI_DEFINE_VERIFICATION_POLICY(KSI_VP_PARANOID)
 	KSI_VERIFY_PUBFILE_SIGNATURE | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC | KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE | KSI_VERIFY_CALCHAIN_ONLINE,
@@ -2091,6 +2095,28 @@ int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx) {
 	}
 
 	res = KSI_Signature_verifyPolicy(sig, KSI_VP_SIGNATURE, useCtx);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_Signature_verifyOnline(KSI_Signature *sig, KSI_CTX *ctx){
+	KSI_ERR err;
+	int res;
+	KSI_CTX *useCtx = ctx;
+
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_BEGIN(sig->ctx, &err);
+
+	if (useCtx == NULL) {
+		useCtx = sig->ctx;
+	}
+
+	res = KSI_Signature_verifyPolicy(sig, KSI_VP_ONLINE, useCtx);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
