@@ -529,20 +529,22 @@ int KSI_Integer_compare(const KSI_Integer *a, const KSI_Integer *b) {
 }
 
 int KSI_Integer_new(KSI_CTX *ctx, KSI_uint64_t value, KSI_Integer **o) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_Integer *tmp = NULL;
 	static size_t poolSize = sizeof(integerPool) / sizeof(KSI_Integer);
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, o != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (o == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	if (value < poolSize) {
 		tmp = integerPool + value;
 	} else {
 		tmp = KSI_new(KSI_Integer);
 		if (tmp == NULL) {
-			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+			KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 			goto cleanup;
 		}
 
@@ -554,13 +556,13 @@ int KSI_Integer_new(KSI_CTX *ctx, KSI_uint64_t value, KSI_Integer **o) {
 	*o = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_Integer_free(tmp);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_Integer **o) {
