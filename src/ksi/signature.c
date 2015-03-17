@@ -37,6 +37,40 @@ KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationHashChain)
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationAuthRec)
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarAuthRec)
 
+static int KSI_Signature_verifyPolicy(KSI_Signature *sig, unsigned *policy, KSI_CTX *ctx);
+
+#define KSI_DEFINE_VERIFICATION_POLICY(name) unsigned name[] = {
+#define KSI_END_VERIFICATION_POLICY , 0};
+
+KSI_DEFINE_VERIFICATION_POLICY(KSI_VP_INTERNAL)
+	KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN
+KSI_END_VERIFICATION_POLICY
+
+KSI_DEFINE_VERIFICATION_POLICY(KSI_VP_OFFLINE)
+	KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC | KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE,
+	KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION | KSI_VERIFY_PUBLICATION_WITH_PUBFILE
+KSI_END_VERIFICATION_POLICY
+
+
+KSI_DEFINE_VERIFICATION_POLICY(KSI_VP_DOCUMENT)
+	KSI_VERIFY_DOCUMENT | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC | KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE,
+	KSI_VERIFY_DOCUMENT | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION | KSI_VERIFY_PUBLICATION_WITH_PUBFILE,
+	KSI_VERIFY_DOCUMENT | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_ONLINE
+KSI_END_VERIFICATION_POLICY
+
+KSI_DEFINE_VERIFICATION_POLICY(KSI_VP_SIGNATURE)
+	KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC | KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE,
+	KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION | KSI_VERIFY_PUBLICATION_WITH_PUBFILE,
+	KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_ONLINE
+KSI_END_VERIFICATION_POLICY
+
+
+KSI_DEFINE_VERIFICATION_POLICY(KSI_VP_PARANOID)
+	KSI_VERIFY_PUBFILE_SIGNATURE | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC | KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE | KSI_VERIFY_CALCHAIN_ONLINE,
+	KSI_VERIFY_PUBFILE_SIGNATURE | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION | KSI_VERIFY_PUBLICATION_WITH_PUBFILE | KSI_VERIFY_CALCHAIN_ONLINE,
+	KSI_VERIFY_PUBFILE_SIGNATURE | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_ONLINE
+KSI_END_VERIFICATION_POLICY
+
 static int addRequestId(
 		KSI_CTX *ctx,
 		void *req,
@@ -467,47 +501,56 @@ cleanup:
  * EXTEND REQUEST
  *****************/
 static int createExtendRequest(KSI_CTX *ctx, KSI_Integer *start, KSI_Integer *end, KSI_ExtendReq **request) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_ExtendReq *tmp = NULL;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, start != NULL) goto cleanup;
-	KSI_PRE(&err, request != NULL) goto cleanup;
+	/* Validate input. */
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || start == NULL || request == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
-	KSI_BEGIN(ctx, &err);
+	/* Validate correctness of end date. */
+	if (end != NULL && KSI_Integer_compare(start, end) > 0) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Aggregation time may not be greater than the publication time.");
+		goto cleanup;
+	}
 
 	/* Create extend request object. */
 	res = KSI_ExtendReq_new(ctx, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = addExtendRequestId(ctx, tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
-	res = KSI_Integer_ref(start);
-	KSI_CATCH(&err, res) goto cleanup;
+	/* Make a virtual copy of the start object. */
+	KSI_Integer_ref(start);
 
-	res = KSI_ExtendReq_setAggregationTime(tmp, start);
-	KSI_CATCH(&err, res) goto cleanup;
+	/* Set the aggregation time. */
+	KSI_ExtendReq_setAggregationTime(tmp, start);
 
 	if (end != NULL) {
-		res = KSI_Integer_ref(end);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		res = KSI_ExtendReq_setPublicationTime(tmp, end);
-		KSI_CATCH(&err, res) goto cleanup;
+		KSI_Integer_ref(end);
+		KSI_ExtendReq_setPublicationTime(tmp, end);
 	}
 
 	*request = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_ExtendReq_free(tmp);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain) {
@@ -595,7 +638,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int removeWeakAuthRecords(KSI_Signature *sig) {
+static int removeCalAuthAndPublication(KSI_Signature *sig) {
 	KSI_ERR err;
 	KSI_LIST(KSI_TLV) *nested = NULL;
 	KSI_TLV *tlv = NULL;
@@ -618,22 +661,18 @@ static int removeWeakAuthRecords(KSI_Signature *sig) {
 
 		tag = KSI_TLV_getTag(tlv);
 
-		if (tag == 0x0804 || tag == 0x0805) {
+		if (tag == 0x0803 || tag == 0x0805) {
 			res = KSI_TLVList_remove(nested, (unsigned)i, NULL);
 			KSI_CATCH(&err, res) goto cleanup;
 			tlv = NULL;
 		}
 	}
 
-	if (sig->calendarAuthRec != NULL) {
-		KSI_CalendarAuthRec_free(sig->calendarAuthRec);
-		sig->calendarAuthRec = NULL;
-	}
+	KSI_CalendarAuthRec_free(sig->calendarAuthRec);
+	sig->calendarAuthRec = NULL;
 
-	if (sig->aggregationAuthRec != NULL) {
-		KSI_AggregationAuthRec_free(sig->aggregationAuthRec);
-		sig->aggregationAuthRec = NULL;
-	}
+	KSI_PublicationRecord_free(sig->publication);
+	sig->publication = NULL;
 
 	KSI_SUCCESS(&err);
 
@@ -659,6 +698,10 @@ int KSI_Signature_replacePublicationRecord(KSI_Signature *sig, KSI_PublicationRe
 	KSI_BEGIN(sig->ctx, &err);
 
 	if (pubRec != NULL) {
+		/* Remove auth records. */
+		res = removeCalAuthAndPublication(sig);
+		KSI_CATCH(&err, res) goto cleanup;
+
 		/* Create a new TLV object */
 		res = KSI_TLV_new(sig->ctx, KSI_TLV_PAYLOAD_TLV, 0x0803, 0, 0, &newPubTlv);
 		KSI_CATCH(&err, res) goto cleanup;
@@ -698,9 +741,6 @@ int KSI_Signature_replacePublicationRecord(KSI_Signature *sig, KSI_PublicationRe
 		}
 		sig->publication = pubRec;
 	}
-	/* Remove previous weaker authentication records. */
-	res = removeWeakAuthRecords(sig);
-	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
 
@@ -872,66 +912,18 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-/* TODO Refactor into shorter functions. */
-int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI_PublicationRecord *pubRec, KSI_Signature **extended) {
-	KSI_ERR err;
-	int res;
-	KSI_ExtendReq *req = NULL;
-	KSI_Signature *tmp = NULL;
-	KSI_ExtendResp *response = NULL;
-	KSI_CalendarHashChain *calHashChain = NULL;
+static int failOnExtendRespError(KSI_CTX *ctx, KSI_ExtendResp *response) {
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_Integer *respStatus = NULL;
-	KSI_Integer *signTime = NULL;
-	KSI_Integer *pubTime = NULL;
-	KSI_PublicationRecord *pubRecClone = NULL;
 
-	KSI_RequestHandle *handle = NULL;
-
-	KSI_PRE(&err, signature != NULL) goto cleanup;
-	KSI_BEGIN(signature->ctx, &err);
-
-	/* Make a copy of the original signature */
-	res = KSI_Signature_clone(signature, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Request the calendar hash chain from this moment on. */
-	res = KSI_Signature_getSigningTime(tmp, &signTime);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* If publication record is present, extract the publication time. */
-	if (pubRec != NULL) {
-		KSI_PublicationData *pubData = NULL;
-
-		/* Make a copy of the original publication record .*/
-		res = KSI_PublicationRecord_new(signature->ctx, &pubRecClone);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		res = KSI_TlvTemplate_deepCopy(signature->ctx, pubRec, KSI_TLV_TEMPLATE(KSI_PublicationRecord), pubRecClone);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		/* Extract the published data object. */
-		res = KSI_PublicationRecord_getPublishedData(pubRec, &pubData);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		/* Read the publication time from the published data object. */
-		res = KSI_PublicationData_getTime(pubData, &pubTime);
-		KSI_CATCH(&err, res) goto cleanup;
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || response == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
 	}
 
-	/* Create request. */
-	res = createExtendRequest(signature->ctx, signTime, pubTime, &req);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Send the actual request. */
-	res = KSI_sendExtendRequest(ctx, req, &handle);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	res = KSI_RequestHandle_getExtendResponse(handle, &response);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Verify the response is ok. */
 	res = KSI_ExtendResp_getStatus(response, &respStatus);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_convertExtenderStatusCode(respStatus);
 	/* Fail if status is presend and does not equal to success (0) */
@@ -940,53 +932,210 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 		KSI_Utf8String *error = NULL;
 		KSI_ExtendResp_getErrorMsg(response, &error);
 
-		KSI_snprintf(buf, sizeof(buf), "Extender error: %s", KSI_Utf8String_cstr(error));
-		KSI_FAIL_EXT(&err, res, (long)KSI_Integer_getUInt64(respStatus), buf);
+		KSI_snprintf(buf, sizeof(buf), "Extender error(%u): %s", KSI_Integer_getUInt64(respStatus), KSI_Utf8String_cstr(error));
+
+		KSI_pushError(ctx, res, buf); // FIXME: Add external error code.
 
 		KSI_nofree(error);
 		goto cleanup;
 	}
 
-	/* Extract the calendar hash chain */
-	res = KSI_ExtendResp_getCalendarHashChain(response, &calHashChain);
-	KSI_CATCH(&err, res) goto cleanup;
 
-	/* Remove the chain from the structure, as it will be freed when this function finishes. */
-	res = KSI_ExtendResp_setCalendarHashChain(response, NULL);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Add the hash chain to the signature. */
-	res = KSI_Signature_replaceCalendarChain(tmp, calHashChain);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Set the publication as the trust anchor. */
-	res = KSI_Signature_replacePublicationRecord(tmp, pubRecClone);
-	KSI_CATCH(&err, res) goto cleanup;
-	pubRecClone = NULL;
-
-	/* To be sure we won't return a bad signature, lets verify it. */
-	res = KSI_Signature_verify(tmp, ctx);
-	KSI_CATCH(&err, res) goto cleanup;
-
-	/* Return the extended signature only when requested. */
-	if (extended != NULL) {
-		*extended = tmp;
-		tmp = NULL;
-	}
-
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	KSI_ExtendResp_free(response);
+	KSI_nofree(respStatus);
+
+	return res;
+}
+
+int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *to, KSI_Signature **extended) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_ExtendReq *req = NULL;
+	KSI_Integer *signTime = NULL;
+	KSI_RequestHandle *handle = NULL;
+	KSI_ExtendResp *response = NULL;
+	KSI_CalendarHashChain *calHashChain = NULL;
+	KSI_Signature *tmp = NULL;
+
+
+	KSI_ERR_clearErrors(ctx);
+	if (sig == NULL || ctx == NULL || extended == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	/* Make a copy of the original signature */
+	res = KSI_Signature_clone(sig, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Request the calendar hash chain from this moment on. */
+	res = KSI_Signature_getSigningTime(sig, &signTime);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Create request. */
+	res = createExtendRequest(ctx, signTime, to, &req);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Send the actual request. */
+	res = KSI_sendExtendRequest(ctx, req, &handle);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Get and parse the response. */
+	res = KSI_RequestHandle_getExtendResponse(handle, &response);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Verify the response is ok. */
+	res = failOnExtendRespError(ctx, response);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Extract the calendar hash chain */
+	KSI_ExtendResp_getCalendarHashChain(response, &calHashChain);
+
+	/* Remove the chain from the structure, as it will be freed when this function finishes. */
+	KSI_ExtendResp_setCalendarHashChain(response, NULL);
+
+	/* Add the hash chain to the signature. */
+	res = KSI_Signature_replaceCalendarChain(tmp, calHashChain);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Remove calendar auth record and publication. */
+	res = removeCalAuthAndPublication(tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Just to be sure, verify the internals. */
+	res = KSI_Signature_verifyPolicy(tmp, KSI_VP_INTERNAL , ctx);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	*extended = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
 	KSI_ExtendReq_free(req);
-	KSI_PublicationRecord_free(pubRecClone);
+	KSI_ExtendResp_free(response);
 	KSI_RequestHandle_free(handle);
 	KSI_Signature_free(tmp);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
+int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI_PublicationRecord *pubRec, KSI_Signature **extended) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Integer *respStatus = NULL;
+	KSI_Integer *pubTime = NULL;
+	KSI_PublicationRecord *pubRecClone = NULL;
+	KSI_Signature *tmp = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+	if (signature == NULL || ctx == NULL || extended == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	/* If publication record is present, extract the publication time. */
+	if (pubRec != NULL) {
+		KSI_PublicationData *pubData = NULL;
+
+		/* Make a copy of the original publication record .*/
+		res = KSI_PublicationRecord_new(signature->ctx, &pubRecClone);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_TlvTemplate_deepCopy(signature->ctx, pubRec, KSI_TLV_TEMPLATE(KSI_PublicationRecord), pubRecClone);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		/* Extract the published data object. */
+		res = KSI_PublicationRecord_getPublishedData(pubRec, &pubData);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		/* Read the publication time from the published data object. */
+		res = KSI_PublicationData_getTime(pubData, &pubTime);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+
+	/* Perform the actual extension. */
+	res = KSI_Signature_extendTo(signature, ctx, pubTime, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Set the publication as the trust anchor. */
+	res = KSI_Signature_replacePublicationRecord(tmp, pubRecClone);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+	pubRecClone = NULL;
+
+	/* To be sure we won't return a bad signature, lets verify it. */
+	if (pubRecClone == NULL) {
+		/* Just to be sure, verify the internals. */
+		res = KSI_Signature_verifyPolicy(tmp, KSI_VP_INTERNAL, ctx);
+	} else {
+		/* Perform an actual verification. */
+		res = KSI_Signature_verifyPolicy(tmp, KSI_VP_OFFLINE, ctx);
+	}
+
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	*extended = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_PublicationRecord_free(pubRecClone);
+	KSI_Signature_free(tmp);
+
+	return res;
+}
 
 void KSI_Signature_free(KSI_Signature *sig) {
 	if (sig != NULL) {
@@ -1027,27 +1176,41 @@ cleanup:
 }
 
 int KSI_Signature_getSigningTime(const KSI_Signature *sig, KSI_Integer **signTime) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_Integer *tmp = NULL;
 
-	KSI_PRE(&err, sig != NULL) goto cleanup;
-	KSI_BEGIN(sig->ctx, &err);
+	if (sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(sig->ctx);
+
+	if (signTime == NULL) {
+		KSI_pushError(sig->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	if (sig->calendarChain == NULL) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+		KSI_pushError(sig->ctx, res = KSI_INVALID_FORMAT, NULL);
 		goto cleanup;
 	}
 
 	res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(sig->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	if (tmp == NULL) {
 		res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &tmp);
-		KSI_CATCH(&err, res) goto cleanup;
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
 
 		if (tmp == NULL){
-			KSI_FAIL(&err, KSI_INVALID_SIGNATURE, NULL);
+			KSI_pushError(sig->ctx, res = KSI_INVALID_SIGNATURE, NULL);
 			goto cleanup;
 		}
 
@@ -1055,11 +1218,11 @@ int KSI_Signature_getSigningTime(const KSI_Signature *sig, KSI_Integer **signTim
 
 	*signTime = tmp;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_Signature_clone(const KSI_Signature *sig, KSI_Signature **clone) {
@@ -1967,28 +2130,6 @@ cleanup:
 			
 	return res;	
 }
-
-#define KSI_DEFINE_VERIFICATION_POLICY(name) unsigned name[] = {
-#define KSI_END_VERIFICATION_POLICY , 0};
-
-KSI_DEFINE_VERIFICATION_POLICY(KSI_VP_DOCUMENT)
-	KSI_VERIFY_DOCUMENT | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC | KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE,
-	KSI_VERIFY_DOCUMENT | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION | KSI_VERIFY_PUBLICATION_WITH_PUBFILE,
-	KSI_VERIFY_DOCUMENT | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_ONLINE
-KSI_END_VERIFICATION_POLICY
-
-KSI_DEFINE_VERIFICATION_POLICY(KSI_VP_SIGNATURE)
-	KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC | KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE,
-	KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION | KSI_VERIFY_PUBLICATION_WITH_PUBFILE,
-	KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_ONLINE
-KSI_END_VERIFICATION_POLICY
-
-
-KSI_DEFINE_VERIFICATION_POLICY(KSI_VP_PARANOID)
-	KSI_VERIFY_PUBFILE_SIGNATURE | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC | KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE | KSI_VERIFY_CALCHAIN_ONLINE,
-	KSI_VERIFY_PUBFILE_SIGNATURE | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION | KSI_VERIFY_PUBLICATION_WITH_PUBFILE | KSI_VERIFY_CALCHAIN_ONLINE,
-	KSI_VERIFY_PUBFILE_SIGNATURE | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_ONLINE
-KSI_END_VERIFICATION_POLICY
 
 static int performVerification(unsigned policy, KSI_Signature *sig, enum KSI_VerificationStep_en step) {
 	return (policy & step) && !(sig->verificationResult.stepsPerformed & step) && !(sig->verificationResult.stepsFailed);

@@ -437,7 +437,7 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 	res = KSI_ExtendPdu_getError(pdu, &error);
 	KSI_CATCH(&err, res) goto cleanup;
 	
-	if (error){
+	if (error != NULL) {
 		KSI_Utf8String *errorMsg = NULL;
 		KSI_Integer *status = NULL;
 		
