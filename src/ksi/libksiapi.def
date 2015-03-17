@@ -323,6 +323,7 @@ EXPORTS
     KSI_Signature_serialize
     KSI_Signature_create
     KSI_Signature_extend
+    KSI_Signature_extendTo
     KSI_Signature_getDocumentHash
     KSI_Signature_getHashAlgorithm
     KSI_Signature_createDataHasher
