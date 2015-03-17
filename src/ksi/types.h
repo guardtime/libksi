@@ -53,7 +53,7 @@ extern "C" {
 	typedef struct KSI_CertificateRecord_st KSI_CertificateRecord;
 	typedef struct KSI_PublicationData_st KSI_PublicationData;
 	typedef struct KSI_PublicationRecord_st KSI_PublicationRecord;
-
+	typedef struct KSI_ErrorPdu_st KSI_ErrorPdu;
 	/**
 	 * Callback for request header.
 	 * \param[in]	hdr		Pointer to the header.
@@ -154,12 +154,12 @@ void KSI_MetaData_free(KSI_MetaData *t);
 int KSI_MetaData_new(KSI_CTX *ctx, KSI_MetaData **t);
 int KSI_MetaData_getRaw(const KSI_MetaData *t, KSI_OctetString **raw);
 int KSI_MetaData_getClientId(const KSI_MetaData *t, KSI_Utf8String **clientId);
-int KSI_MetaData_getMachineId(const KSI_MetaData *t, KSI_OctetString **machineId);
+int KSI_MetaData_getMachineId(const KSI_MetaData *t, KSI_Utf8String **machineId);
 int KSI_MetaData_getSequenceNr(const KSI_MetaData *t, KSI_Integer **sequenceNr);
 int KSI_MetaData_getRequestTimeInMicros(const KSI_MetaData *t, KSI_Integer **reqTime);
 int KSI_MetaData_setRaw(KSI_MetaData *t, KSI_OctetString *raw);
 int KSI_MetaData_setClientId(KSI_MetaData *t, KSI_Utf8String *clientId);
-int KSI_MetaData_setMachineId(KSI_MetaData *t, KSI_OctetString *machineId);
+int KSI_MetaData_setMachineId(KSI_MetaData *t, KSI_Utf8String *machineId);
 int KSI_MetaData_setSequenceNr(KSI_MetaData *t, KSI_Integer *sequenceNr);
 int KSI_MetaData_setRequestTimeInMicros(KSI_MetaData *t, KSI_Integer *reqTime);
 int KSI_MetaData_toTlv(KSI_CTX *ctx, const KSI_MetaData *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
@@ -175,15 +175,26 @@ int KSI_ExtendPdu_getHeader(const KSI_ExtendPdu *t, KSI_Header **header);
 int KSI_ExtendPdu_getRequest(const KSI_ExtendPdu *t, KSI_ExtendReq **request);
 int KSI_ExtendPdu_getResponse(const KSI_ExtendPdu *t, KSI_ExtendResp **response);
 int KSI_ExtendPdu_getHmac(const KSI_ExtendPdu *t, KSI_DataHash **hmac);
+int KSI_ExtendPdu_getError(const KSI_ExtendPdu *t, KSI_ErrorPdu **error); 
 int KSI_ExtendPdu_setHeader(KSI_ExtendPdu *t, KSI_Header *header);
 int KSI_ExtendPdu_setRequest(KSI_ExtendPdu *t, KSI_ExtendReq *request);
 int KSI_ExtendPdu_setResponse(KSI_ExtendPdu *t, KSI_ExtendResp *response);
 int KSI_ExtendPdu_setHmac(KSI_ExtendPdu *t, KSI_DataHash *hamc);
+int KSI_ExtendPdu_setError( KSI_ExtendPdu *t, KSI_ErrorPdu *error);
 int KSI_ExtendReq_enclose(KSI_ExtendReq *req, char *loginId, char *key, KSI_ExtendPdu **pdu);
-
 
 KSI_DEFINE_OBJECT_PARSE(KSI_ExtendPdu);
 KSI_DEFINE_OBJECT_SERIALIZE(KSI_ExtendPdu);
+
+/*
+ * KSI_ErrorPdu
+ */
+int KSI_ErrorPdu_new(KSI_CTX *ctx, KSI_ErrorPdu **pdu);
+void KSI_ErrorPdu_free(KSI_ErrorPdu *pdu);
+int KSI_ErrorPdu_getStatus(const KSI_ErrorPdu *pdu, KSI_Integer **status);
+int KSI_ErrorPdu_getErrorMessage(const KSI_ErrorPdu *pdu, KSI_Utf8String **errorMsg);
+int KSI_ErrorPdu_setStatus(KSI_ErrorPdu *pdu, KSI_Integer *status);
+int KSI_ErrorPdu_setErrorMessage(KSI_ErrorPdu *pdu, KSI_Utf8String *errorMsg);
 
 /*
  * KSI_AggregationPdu
@@ -197,12 +208,13 @@ int KSI_AggregationPdu_getHeader(const KSI_AggregationPdu *t, KSI_Header **heade
 int KSI_AggregationPdu_getRequest(const KSI_AggregationPdu *t, KSI_AggregationReq **request);
 int KSI_AggregationPdu_getResponse(const KSI_AggregationPdu *t, KSI_AggregationResp **response);
 int KSI_AggregationPdu_getHmac(const KSI_AggregationPdu *t, KSI_DataHash **hmac);
+int KSI_AggregationPdu_getError (const KSI_AggregationPdu *t, KSI_ErrorPdu **error);
 int KSI_AggregationPdu_setHeader(KSI_AggregationPdu *t, KSI_Header *header);
 int KSI_AggregationPdu_setRequest(KSI_AggregationPdu *t, KSI_AggregationReq *request);
 int KSI_AggregationPdu_setResponse(KSI_AggregationPdu *t, KSI_AggregationResp *response);
 int KSI_AggregationPdu_setHmac(KSI_AggregationPdu *t, KSI_DataHash *hmac);
+int KSI_AggregationPdu_setError ( KSI_AggregationPdu *t, KSI_ErrorPdu *error);
 int KSI_AggregationReq_enclose(KSI_AggregationReq *req, char *loginId, char *key, KSI_AggregationPdu **pdu);
-
 KSI_DEFINE_OBJECT_PARSE(KSI_AggregationPdu);
 KSI_DEFINE_OBJECT_SERIALIZE(KSI_AggregationPdu);
 
@@ -213,10 +225,10 @@ void KSI_Header_free(KSI_Header *t);
 int KSI_Header_new(KSI_CTX *ctx, KSI_Header **t);
 int KSI_Header_getInstanceId(const KSI_Header *t, KSI_Integer **instanceId);
 int KSI_Header_getMessageId(const KSI_Header *t, KSI_Integer **messageId);
-int KSI_Header_getLoginId(const KSI_Header *t, KSI_OctetString **clientId);
+int KSI_Header_getLoginId(const KSI_Header *t, KSI_Utf8String **loginId);
 int KSI_Header_setInstanceId(KSI_Header *t, KSI_Integer *instanceId);
 int KSI_Header_setMessageId(KSI_Header *t, KSI_Integer *messageId);
-int KSI_Header_setLoginId(KSI_Header *t, KSI_OctetString *clientId);
+int KSI_Header_setLoginId(KSI_Header *t, KSI_Utf8String *loginId);
 
 int KSI_Header_fromTlv (KSI_TLV *tlv, KSI_Header **data);
 int KSI_Header_toTlv (KSI_CTX *ctx, const KSI_Header *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
@@ -335,6 +347,13 @@ int KSI_ExtendResp_setCalendarHashChain(KSI_ExtendResp *t, KSI_CalendarHashChain
 int KSI_ExtendResp_fromTlv (KSI_TLV *tlv, KSI_ExtendResp **data);
 int KSI_ExtendResp_toTlv (KSI_CTX *ctx, const KSI_ExtendResp *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
+/**
+ * Verifies that the response is a correct response to the concrete request.
+ * \param[in]	resp	Response to be verified.
+ * \param[in]	req		Request to be used for verification.
+ */
+int KSI_ExtendResp_verifyWithRequest(KSI_ExtendResp *resp, KSI_ExtendReq *req);
+
 
 KSI_DEFINE_OBJECT_PARSE(KSI_ExtendResp);
 KSI_DEFINE_OBJECT_SERIALIZE(KSI_ExtendResp);
@@ -399,12 +418,10 @@ int KSI_AggregationAuthRec_setSigData(KSI_AggregationAuthRec *rec, KSI_PKISigned
 void KSI_CalendarAuthRec_free(KSI_CalendarAuthRec *calAuth);
 int KSI_CalendarAuthRec_new(KSI_CTX *ctx, KSI_CalendarAuthRec **out);
 
-int KSI_CalendarAuthRec_getSignedData(const KSI_CalendarAuthRec *rec, KSI_TLV **pubDataTlv);
 int KSI_CalendarAuthRec_getPublishedData(const KSI_CalendarAuthRec *rec, KSI_PublicationData **pubData);
 int KSI_CalendarAuthRec_getSignatureAlgo(const KSI_CalendarAuthRec *rec, KSI_Utf8String **signatureAlgo);
 int KSI_CalendarAuthRec_getSignatureData(const KSI_CalendarAuthRec *rec, KSI_PKISignedData **signatureData);
 
-int KSI_CalendarAuthRec_setSignedData(KSI_CalendarAuthRec *rec, KSI_TLV *pubDataTlv);
 int KSI_CalendarAuthRec_setPublishedData(KSI_CalendarAuthRec *rec, KSI_PublicationData *pubData);
 int KSI_CalendarAuthRec_setSignatureAlgo(KSI_CalendarAuthRec *rec, KSI_Utf8String *signatureAlgo);
 int KSI_CalendarAuthRec_setSignatureData(KSI_CalendarAuthRec *rec, KSI_PKISignedData *signatureData);

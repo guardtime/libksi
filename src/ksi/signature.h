@@ -54,6 +54,14 @@ extern "C" {
 	int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx);
 
 	/**
+	 * This function verifies the signature using online resources. The signature is
+	 * verified by an attempt to extend it.
+	 * 
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+     */
+	int KSI_Signature_verifyOnline(KSI_Signature *sig, KSI_CTX *ctx);
+	
+	/**
 	 * Verifies that the document matches the signature.
 	 * \param[in]	sig			KSI signature.
 	 * \param[in]	ctx			KSI context.
@@ -142,6 +150,21 @@ extern "C" {
 	 * \note The output signature is independent of the input signature and needs to be freed using #KSI_Signature_free.
 	 */
 	int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI_PublicationRecord *pubRec, KSI_Signature **extended);
+
+	/**
+	 * Extends the signature to a given time \c to. If \c to is equal to \c NULL, the signature is extended to
+	 * the head of the extender.
+	 * \param[in]		signature	KSI signature to be extended.
+	 * \param[in]		ctx			KSI context.
+	 * \param[in]		to			UTC time to extend to.
+	 * \param[out]		extended 	Pointer to the receiving pointer.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 *
+	 * \note Extending to a specific time will remove calenendar auth record and publication record.
+	 */
+	int KSI_Signature_extendTo(const KSI_Signature *signature, KSI_CTX *ctx, KSI_Integer *to, KSI_Signature **extended);
 
 	/**
 	 * Access method for the signed document hash as a #KSI_DataHash object.

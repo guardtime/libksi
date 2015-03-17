@@ -201,6 +201,11 @@ void KSI_HttpClient_free(KSI_HttpClient *http) {
 	KSI_NetworkClient_free((KSI_NetworkClient*)http);
 }
 
+static int getHttpStatusCode(KSI_NetworkClient *client){
+	KSI_HttpClient *http = (KSI_HttpClient*)client;
+	return http->httpStatus;
+}
+
 
 /**
  *
@@ -221,10 +226,12 @@ int KSI_HttpClient_init(KSI_CTX *ctx, KSI_HttpClient *client) {
 	client->urlExtender = NULL;
 	client->urlPublication = NULL;
 	client->urlAggregator = NULL;
+	client->httpStatus = 0;
 
 	client->parent.sendExtendRequest = prepareExtendRequest;
 	client->parent.sendSignRequest = prepareAggregationRequest;
 	client->parent.sendPublicationRequest = preparePublicationsFileRequest;
+	client->parent.getStausCode = getHttpStatusCode;
 	client->parent.implFree = (void (*)(void *))httpClient_free;
 
 

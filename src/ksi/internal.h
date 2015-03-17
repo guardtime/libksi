@@ -75,6 +75,8 @@
 #  endif
 #endif
 
+#define KSI_pushError(ctx, statusCode, message) KSI_ERR_push((ctx), (statusCode), 0, __FILE__, __LINE__, (message))
+
 #define KSI_BEGIN(ctx, err) KSI_ERR_init((ctx), (err))
 #define KSI_PRE(err, cond) if (KSI_ERR_pre(err, cond, __FILE__, __LINE__) || !(cond))
 #define KSI_RETURN(err) KSI_ERR_apply((err))
@@ -98,7 +100,7 @@
 
 #define KSI_IMPLEMENT_GET_CTX(type)							\
 KSI_CTX *type##_getCtx(const type *o) {			 			\
-	return o->ctx; 											\
+	return o != NULL ? o->ctx : NULL;						\
 } 															\
 
 #define KSI_DEFINE_SETTER(baseType, valueType, valueName, alias) int baseType##_set##alias(baseType *o, valueType valueName)
@@ -162,9 +164,7 @@ int type##_fromTlv(KSI_TLV *tlv, type **data) { \
 	type *tmp = NULL; \
 	int isLeft = 0; \
 	unsigned char *tlvData = NULL; \
-	unsigned len; \
 	KSI_OctetString *raw = NULL; \
-	KSI_TLV *baseTlv = NULL; \
 	KSI_CTX *ctx = KSI_TLV_getCtx(tlv); \
 	\
 	KSI_PRE(&err, tlv != NULL) goto cleanup; \
@@ -192,29 +192,34 @@ cleanup: \
 	type##_free(tmp); \
 	KSI_free(tlvData); \
 	KSI_OctetString_free(raw); \
-	KSI_TLV_free(baseTlv); \
 	return KSI_RETURN(&err); \
 }
 	
 #define FROMTLV_ADD_RAW(name, offset) \
-	res = KSI_TLV_serialize(tlv, &tlvData, &len); \
-	KSI_CATCH(&err, res) goto cleanup; \
-	\
-	if (len-offset <= 0){ \
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL); \
-		goto cleanup; \
-	} \
-	res = KSI_OctetString_new(ctx, tlvData+offset, len-offset, &raw); \
-	KSI_CATCH(&err, res) goto cleanup; \
-	\
-	tmp->name = raw; \
-	raw = NULL; \
+	do{ \
+		unsigned len; \
+		res = KSI_TLV_serialize(tlv, &tlvData, &len); \
+		KSI_CATCH(&err, res) goto cleanup; \
+		\
+		if (len-offset <= 0){ \
+			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL); \
+			goto cleanup; \
+		} \
+		res = KSI_OctetString_new(ctx, tlvData+offset, len-offset, &raw); \
+		KSI_CATCH(&err, res) goto cleanup; \
+		\
+		tmp->name = raw; \
+		raw = NULL; \
+	}while(0);
 
+/*TODO: Is it safe to not free baseTlv, as on error baseTlv is still NULL and after setting "name", objects tmp free handles the meory.*/
 #define FROMTLV_ADD_BASETLV(name) \
-	res = KSI_TLV_clone(tlv, &baseTlv); \
-	KSI_CATCH(&err, res) goto cleanup; \
-	tmp->name = baseTlv; \
-	baseTlv = NULL;
+	do{ \
+		KSI_TLV *baseTlv = NULL; \
+		res = KSI_TLV_clone(tlv, &baseTlv); \
+		KSI_CATCH(&err, res) goto cleanup; \
+		tmp->name = baseTlv; \
+	}while(0);
 	
 struct KSI_Object_st {
 	KSI_CTX *ctx;

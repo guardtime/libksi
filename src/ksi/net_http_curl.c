@@ -114,7 +114,7 @@ static int curlReceive(KSI_RequestHandle *handle) {
 	KSI_BEGIN(handle->ctx, &err);
 
 	http = (KSI_HttpClient *)handle->client;
-
+	
 	implCtx = handle->implCtx;
 
     curl_easy_setopt(implCtx->curl, CURLOPT_ERRORBUFFER, curlErr);
@@ -141,13 +141,13 @@ static int curlReceive(KSI_RequestHandle *handle) {
     if (res != CURLE_OK) {
     	long httpCode;
     	if (res == CURLE_HTTP_RETURNED_ERROR && curl_easy_getinfo(implCtx->curl, CURLINFO_HTTP_CODE, &httpCode) == CURLE_OK) {
-    		KSI_LOG_debug(handle->ctx, "Received HTTP error code %d", httpCode);
-   			KSI_FAIL_EXT(&err, KSI_HTTP_ERROR, httpCode, curlErr);
-    	} else {
+    		KSI_LOG_debug(handle->ctx, "Received HTTP error code %d. Curl error '%s'.", httpCode, curlErr);
+			http->httpStatus = httpCode;
+		} else {
     		KSI_FAIL(&err, KSI_NETWORK_ERROR, curlErr);
+			goto cleanup;
     	}
-    	goto cleanup;
-    }
+	}
 
     res = KSI_RequestHandle_setResponse(handle, implCtx->raw, implCtx->len);
     KSI_CATCH(&err, res) goto cleanup;
@@ -170,6 +170,7 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 	int res;
 	CurlNetHandleCtx *implCtx = NULL;
 	KSI_HttpClient *http = (KSI_HttpClient *)client;
+	size_t len;
 
 	KSI_PRE(&err, client != NULL) goto cleanup;
 	KSI_PRE(&err, handle != NULL) goto cleanup;
@@ -192,12 +193,13 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 	handle->readResponse = curlReceive;
 	handle->client = client;
 
-	implCtx->url = KSI_calloc(strlen(url) + 1, 1);
+	len = strlen(url) + 1;
+	implCtx->url = KSI_calloc(len, 1);
 	if (implCtx->url == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
-	strcpy(implCtx->url, url);
+	strncpy(implCtx->url, url, len);
 
     res = KSI_RequestHandle_setImplContext(handle, implCtx, (void (*)(void *))CurlNetHandleCtx_free);
     KSI_CATCH(&err, res) goto cleanup;
@@ -232,7 +234,6 @@ int KSI_HttpClientImpl_init(KSI_HttpClient *http) {
 		goto cleanup;
 	}
 
-    curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1);
     curl_easy_setopt(curl, CURLOPT_VERBOSE, 0);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, receiveDataFromLibCurl);
 	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);

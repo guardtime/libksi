@@ -65,8 +65,23 @@ OBJ_DIR = obj
 OUT_DIR = out
 LIB_DIR = $(OUT_DIR)\$(DLL)
 BIN_DIR = $(OUT_DIR)\bin
+VERSION_FILE = VERSION
+COMM_ID_FILE = COMMIT_ID
+
+VER = \
+!INCLUDE <$(VERSION_FILE)>
 
 
+!IF [git log -n1 --format="%H">$(COMM_ID_FILE)] == 0
+COM_ID = \
+!INCLUDE <$(COMM_ID_FILE)>
+!MESSAGE Git OK. Include commit ID.
+!IF [rm $(COMM_ID_FILE)] == 0
+!MESSAGE File $(COMM_ID_FILE) deleted.
+!ENDIF
+!ELSE
+!MESSAGE Git is not installed. 
+!ENDIF 
 
 default:
 	cd $(SRC_DIR)\ksi
@@ -76,33 +91,33 @@ default:
 all: libraries example tests
 
 libraries: libMT libMTd libMD libMDd dllMT dllMTd dllMD dllMDd
-	
-	
+
+
 libMT:
-	nmake DLL=lib RTL=MT $(EXTRA) 
+	nmake DLL=lib RTL=MT $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
 
 libMTd:
-	nmake DLL=lib RTL=MTd $(EXTRA)
+	nmake DLL=lib RTL=MTd $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
 
 libMD:
-	nmake DLL=lib RTL=MD $(EXTRA)
+	nmake DLL=lib RTL=MD $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
 
 libMDd:
-	nmake DLL=lib RTL=MDd $(EXTRA)
+	nmake DLL=lib RTL=MDd $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
 
 	
 
 dllMT:
-	nmake DLL=dll RTL=MT $(EXTRA)
+	nmake DLL=dll RTL=MT $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
 
 dllMTd:
-	nmake DLL=dll RTL=MTd $(EXTRA)	
+	nmake DLL=dll RTL=MTd $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
 
 dllMD:
-	nmake DLL=dll RTL=MD $(EXTRA)	
+	nmake DLL=dll RTL=MD $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
 
 dllMDd:
-	nmake DLL=dll RTL=MDd $(EXTRA)	
+	nmake DLL=dll RTL=MDd $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
 
 	
 	

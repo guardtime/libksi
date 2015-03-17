@@ -29,6 +29,17 @@
 
 KSI_IMPLEMENT_LIST(GlobalCleanupFn, NULL);
 
+#ifdef COMMIT_ID
+#  define KSI_VERSION_STRING "libksi " VERSION "-" COMMIT_ID
+#else
+#  define KSI_VERSION_STRING "libksi " VERSION
+#endif
+
+const char *KSI_getVersion(void) {
+	static const char versionString[] = KSI_VERSION_STRING;
+	return versionString;
+}
+
 const char *KSI_getErrorString(int statusCode) {
 	switch (statusCode) {
 		case KSI_OK:
@@ -561,7 +572,7 @@ int KSI_ERR_apply(KSI_ERR *err) {
 
 	if (ctx != NULL) {
 		if (err->statusCode != KSI_OK) {
-			ctxErr = ctx->errors + (ctx->errors_count % ctx->errors_size);
+			ctxErr = &ctx->errors[ctx->errors_count % ctx->errors_size];
 
 			ctxErr->statusCode = err->statusCode;
 			ctxErr->extErrorCode = err->extErrorCode;
@@ -576,6 +587,30 @@ int KSI_ERR_apply(KSI_ERR *err) {
 	}
 	/* Return the result, which does not indicate the result of this method. */
 	return err->statusCode;
+}
+
+void KSI_ERR_push(KSI_CTX *ctx, int statusCode, long extErrorCode, const char *fileName, unsigned int lineNr, const char *message) {
+	KSI_ERR *ctxErr = NULL;
+	const char *tmp = NULL;
+
+	/* Do nothing if the context is missing. */
+	if (ctx == NULL) return;
+
+	/* Do notihng if there's no error. */
+	if (statusCode == KSI_OK) return;
+
+	/* Get the error container to use for storage. */
+	ctxErr = &ctx->errors[ctx->errors_count % ctx->errors_size];
+
+	ctxErr->statusCode = statusCode;
+	ctxErr->extErrorCode = extErrorCode;
+	ctxErr->lineNr = lineNr;
+	tmp = KSI_strnvl(fileName);
+	KSI_strncpy(ctxErr->fileName, tmp, sizeof(ctxErr->fileName));
+	tmp = KSI_strnvl(message);
+	KSI_strncpy(ctxErr->message, tmp, sizeof(ctxErr->message));
+
+	ctx->errors_count++;
 }
 
 void KSI_ERR_success(KSI_ERR *err) {
@@ -643,7 +678,7 @@ cleanup:
 	return res;
 }
 
-int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *error){
+int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *error, int *ext){
 	KSI_ERR *err = NULL;
 	
 	if (ctx == NULL || buf == NULL){
@@ -652,9 +687,14 @@ int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *erro
 	
 	err = ctx->errors;
 	
-	if(error != NULL)	*error = err->statusCode;
+	if (error != NULL)	*error = err->statusCode;
+	if (ext != NULL)	*ext = err->extErrorCode;
+
+	if(ctx->errors_count)
+		KSI_strncpy(buf, err->message, len);		
+	else
+		KSI_strncpy(buf, "", len);		
 	
-	KSI_strncpy(buf, err->message, len);		
 	return KSI_OK;
 } 
 
@@ -693,7 +733,7 @@ static int KSI_CTX_setUri(KSI_CTX *ctx,
 	KSI_PRE(&err, uri != NULL && loginId != NULL && key != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	if(ctx->isCustomNetProvider){
+	if (ctx->isCustomNetProvider){
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Unable to set url after initial network provider replacement.");
 		goto cleanup;
 	}
@@ -734,7 +774,7 @@ static int KSI_CTX_setTimeoutSeconds(KSI_CTX *ctx, int timeout, int (*setter)(KS
 	KSI_PRE(&err, ctx != NULL && ctx->netProvider) goto cleanup;
 	KSI_BEGIN(ctx, &err);
 
-	if(ctx->isCustomNetProvider){
+	if (ctx->isCustomNetProvider){
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Unable to set timeout after initial network provider replacement.");
 		goto cleanup;
 	}
@@ -858,7 +898,7 @@ int KSI_setPublicationCertEmail(KSI_CTX *ctx, const char *email) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
-
+	
 	if (email != NULL && email[0] != '\0') {
 		size_t len = strlen(email);
 		tmp = KSI_calloc(len + 1, 1);
@@ -870,6 +910,7 @@ int KSI_setPublicationCertEmail(KSI_CTX *ctx, const char *email) {
 		memcpy(tmp, email, len + 1);
 	}
 
+	KSI_free(ctx->publicationCertEmail);
 	ctx->publicationCertEmail = tmp;
 	tmp = NULL;
 

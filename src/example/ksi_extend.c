@@ -59,6 +59,8 @@ int main(int argc, char **argv) {
 	KSI_CTX_setLoggerCallback(ksi, KSI_LOG_StreamLogger, logFile);
 	KSI_CTX_setLogLevel(ksi, KSI_LOG_DEBUG);
 
+	KSI_LOG_info(ksi, "Using KSI version: '%s'", KSI_getVersion());
+
 	res = KSI_HttpClient_new(ksi, &net);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to create new network provider.\n");

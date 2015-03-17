@@ -181,8 +181,19 @@ LDFLAGS = $(LDFLAGS) /DEBUG
 !ENDIF
 
 
+!IF "$(COM_ID)" != ""
+CCFLAGS = $(CCFLAGS) /DCOMMIT_ID=\"$(COM_ID)\"
+!ENDIF
+!IF "$(VER)" != ""
+CCFLAGS = $(CCFLAGS) /DVERSION=\"$(VER)\"
+!ENDIF
+
 CCFLAGS = $(CCFLAGS) $(CCEXTRA) $(TRUSTSTORE_MACROS)
 LDFLAGS = $(LDFLAGS) $(LDEXTRA)
+
+!MESSAGE ********************************************************************
+!MESSAGE ********* Building KSI library $(VER) as $(DLL) with C RTL $(RTL). *********
+!MESSAGE ********************************************************************
 
 default: $(LIB_DIR)\$(LIB_NAME)$(RTL).$(DLL) include
 
@@ -201,9 +212,8 @@ $(LIB_DIR)\$(LIB_NAME)$(RTL).dll: $(OBJ_DIR) $(LIB_DIR) $(LIB_OBJ) $(LIB_DEF)
 
 	
 include: $(INCLUDE_DIR)
-	if not exist $(INCLUDE_DIR)\*.h for /R $(SRC_DIR) %%f in ($(INC_FILES)) do xcopy "%%f" $(INCLUDE_DIR) /D
+	if not exist $(INCLUDE_DIR)\*.h for /R $(SRC_DIR) %%f in ($(INC_FILES)) do @xcopy "%%f" $(INCLUDE_DIR) /D > nul
 	
 $(OBJ_DIR) $(LIB_DIR) $(INCLUDE_DIR):
 	@if not exist $@ mkdir $@
 	
-

@@ -182,16 +182,6 @@ extern "C" {
 	#define KSI_TLV_TEMPLATE_LIST					3
 
 	/**
-	 * A special #KSI_TlvTemplate type for storing the absolute offset of the nested TLV object.
-	 */
-	#define KSI_TLV_TEMPLATE_SEEK_POS				6
-
-	/**
-	 * A special #KSI_TlvTemplate type for storing raw nested TLV objects as #KSI_OctetString objects.
-	 */
-	#define KSI_TLV_TEMPLATE_UNPROCESSED 			7
-
-	/**
 	 * Empty placeholder for a template with no flags set.
 	 */
 	#define KSI_TLV_TMPL_FLG_NONE			0x00
@@ -248,7 +238,7 @@ extern "C" {
 	#define KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0 KSI_TLV_TMPL_FLG_LEAST_ONE_G0 | KSI_TLV_TMPL_FLG_MOST_ONE_G0
 
 	/**
-	 * One and only one of the group 0 must be present.
+	 * One and only one of the group 1 must be present.
 	 */
 	#define KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G1 KSI_TLV_TMPL_FLG_LEAST_ONE_G1 | KSI_TLV_TMPL_FLG_MOST_ONE_G1
 
@@ -430,13 +420,6 @@ extern "C" {
 	 * \param[in]	sttr			Setter function for int value.
 	 */
 	#define KSI_TLV_SEEK_POS(tg, sttr) KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_SEEK_POS, tg, KSI_TLV_TMPL_FLG_NO_SERIALIZE, NULL, sttr, NULL)
-
-	/**
-	 * Stores the value of the parsed element as a #KSI_TLV object.
-	 * \param[in]	tg			TLV tag value
-	 * \param[in]	sttr		Setter function for #KSI_TLV value.
-	 */
-	#define KSI_TLV_UNPROCESSED(tg, sttr) KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_UNPROCESSED, tg, KSI_TLV_TMPL_FLG_NO_SERIALIZE, NULL, sttr, NULL)
 
 	/**
 	 * This macro ends the #KSI_TlvTemplate definition started by #KSI_TLV_TEMPLATE.

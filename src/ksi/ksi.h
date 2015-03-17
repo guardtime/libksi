@@ -222,12 +222,25 @@ enum KSI_StatusCode {
 	 * The request asked for hash values newer than the newest round in the server's database.
 	 */
 	KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_NEW = 0x40d,
+	
+	/**
+	 * The request asked for hash values newer than the current real time.
+	 */
+	KSI_SERVICE_EXTENDER_REQUEST_TIME_IN_FUTURE = 0x40e,
 
 	/**
 	 * Unknown error occured.
 	 */
 	KSI_UNKNOWN_ERROR = 0xffff
 };
+
+/**
+ * This function returns a pointer to a constant string describing the
+ * version number of the package.
+ * \return A constant pointer to a sring.
+ */
+const char *KSI_getVersion(void);
+
 /**
  * Function to convert a #KSI_StatusCode value to a human readable
  * string value.
@@ -308,11 +321,12 @@ int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f);
  * \param[in]		ctx		KSI context object.
  * \param[out]		buf		Buffer for storing error message.
  * \param[in]		len		The length of the buffer.
- * \param[out]		err		Pointer to buffer for base error code.		 
+ * \param[out]		error	Pointer to buffer for base error code. Can be NULL.		 
+ * \param[out]		ext		Pointer to buffer for external component error code. Can be NULL.		 
  * \return status code (#KSI_OK, when operation succeeded, otherwise an
  * error code). 
  */
-int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *error);
+int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *error, int *ext);
 
 /**
  * The Guardtime representation of hash algorithms, necessary to calculate
@@ -523,7 +537,6 @@ int KSI_setPKITruststore(KSI_CTX *ctx, KSI_PKITruststore *pki);
 int KSI_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *net);
 int KSI_getPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **var);
 int KSI_setPublicationCertEmail(KSI_CTX *ctx, const char *email);
-
 /**
  * @}
  */

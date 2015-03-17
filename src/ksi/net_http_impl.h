@@ -34,6 +34,7 @@ extern "C" {
 
 		int connectionTimeoutSeconds;
 		int readTimeoutSeconds;
+		int httpStatus;
 		char *urlAggregator;
 		char *urlExtender;
 		char *urlPublication;

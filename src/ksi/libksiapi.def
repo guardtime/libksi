@@ -122,6 +122,7 @@ EXPORTS
 
 ;ksi.h
 EXPORTS
+	KSI_getVersion
     KSI_getErrorString
     KSI_CTX_new
     KSI_CTX_free
@@ -305,11 +306,16 @@ EXPORTS
     KSI_PublicationRecord_setRepositoryUriList
     KSI_PublicationRecord_toString
     KSI_PublicationRecord_clone
+    KSI_PublicationData_fromTlv
+    KSI_PublicationData_toTlv
+    KSI_PublicationData_getBaseTlv
+    KSI_PublicationData_setBaseTlv
 
 ;signature.h
 EXPORTS
     KSI_Signature_free
     KSI_Signature_verify
+    KSI_Signature_verifyOnline
     KSI_Signature_verifyDocument
     KSI_Signature_clone
     KSI_Signature_parse
@@ -317,6 +323,7 @@ EXPORTS
     KSI_Signature_serialize
     KSI_Signature_create
     KSI_Signature_extend
+    KSI_Signature_extendTo
     KSI_Signature_getDocumentHash
     KSI_Signature_getHashAlgorithm
     KSI_Signature_createDataHasher
@@ -380,6 +387,10 @@ EXPORTS
     KSI_TlvTemplate_deepCopy
     KSI_TlvTemplate_serializeObject
 
+;TLV templates
+EXPORTS
+    KSI_AggregationPdu_template DATA
+
 ;types.h
 EXPORTS
     KSI_MetaData_free
@@ -403,10 +414,12 @@ EXPORTS
     KSI_ExtendPdu_getRequest
     KSI_ExtendPdu_getResponse
     KSI_ExtendPdu_getHmac
+    KSI_ExtendPdu_getError
     KSI_ExtendPdu_setHeader
     KSI_ExtendPdu_setRequest
     KSI_ExtendPdu_setResponse
     KSI_ExtendPdu_setHmac
+    KSI_ExtendPdu_setError
     KSI_ExtendPdu_parse
     KSI_ExtendPdu_serialize
     KSI_AggregationPdu_free
@@ -416,10 +429,12 @@ EXPORTS
     KSI_AggregationPdu_getRequest
     KSI_AggregationPdu_getResponse
     KSI_AggregationPdu_getHmac
+    KSI_AggregationPdu_getError
     KSI_AggregationPdu_setHeader
     KSI_AggregationPdu_setRequest
     KSI_AggregationPdu_setResponse
     KSI_AggregationPdu_setHmac
+    KSI_AggregationPdu_setError
     KSI_AggregationPdu_parse
     KSI_AggregationPdu_serialize
     KSI_Header_free
@@ -524,6 +539,13 @@ EXPORTS
     KSI_CertificateRecord_getCert
     KSI_CertificateRecord_setCertId
     KSI_CertificateRecord_setCert
+    KSI_ErrorPdu_new
+    KSI_ErrorPdu_free
+    KSI_ErrorPdu_getStatus
+    KSI_ErrorPdu_getErrorMessage
+    KSI_ErrorPdu_setStatus
+    KSI_ErrorPdu_setErrorMessage
+
 
 ;types_base.h
 EXPORTS
@@ -563,10 +585,8 @@ EXPORTS
     KSI_AggregationAuthRec_setSigData
     KSI_CalendarAuthRec_free
     KSI_CalendarAuthRec_new
-    KSI_CalendarAuthRec_getSignedData
     KSI_CalendarAuthRec_getPublishedData
     KSI_CalendarAuthRec_getSignatureData
-    KSI_CalendarAuthRec_setSignedData
     KSI_CalendarAuthRec_setPublishedData
     KSI_CalendarAuthRec_setSignatureData
     KSI_TLV_getCtx
