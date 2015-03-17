@@ -329,7 +329,7 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, unsigned char **response, unsigned *response_len) {
+int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, const unsigned char **response, unsigned *response_len) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (handle == NULL) {
@@ -408,7 +408,7 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 	KSI_DataHash *respHmac = NULL;
 	KSI_Header *header = NULL;
 	KSI_ExtendResp *tmp = NULL;
-	unsigned char *raw = NULL;
+	const unsigned char *raw = NULL;
 	unsigned len = 0;
 	
 	
@@ -502,7 +502,7 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 	KSI_DataHash *respHmac = NULL;
 	KSI_DataHash *actualHmac = NULL;
 	KSI_AggregationResp *tmp = NULL;
-	unsigned char *raw = NULL;
+	const unsigned char *raw = NULL;
 	unsigned len;
 	
 	
