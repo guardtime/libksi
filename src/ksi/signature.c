@@ -955,7 +955,7 @@ int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *
 	KSI_ExtendReq *req = NULL;
 	KSI_Integer *signTime = NULL;
 	KSI_RequestHandle *handle = NULL;
-	KSI_ExtendResp *response = NULL;
+	KSI_ExtendResp *resp = NULL;
 	KSI_CalendarHashChain *calHashChain = NULL;
 	KSI_Signature *tmp = NULL;
 
@@ -995,24 +995,24 @@ int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *
 	}
 
 	/* Get and parse the response. */
-	res = KSI_RequestHandle_getExtendResponse(handle, &response);
+	res = KSI_RequestHandle_getExtendResponse(handle, &resp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	/* Verify the response is ok. */
-	res = failOnExtendRespError(ctx, response);
+	/* Verify the correctness of the response. */
+	res = KSI_ExtendResp_verifyWithRequest(resp, req);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
 	/* Extract the calendar hash chain */
-	KSI_ExtendResp_getCalendarHashChain(response, &calHashChain);
+	KSI_ExtendResp_getCalendarHashChain(resp, &calHashChain);
 
 	/* Remove the chain from the structure, as it will be freed when this function finishes. */
-	KSI_ExtendResp_setCalendarHashChain(response, NULL);
+	KSI_ExtendResp_setCalendarHashChain(resp, NULL);
 
 	/* Add the hash chain to the signature. */
 	res = KSI_Signature_replaceCalendarChain(tmp, calHashChain);
@@ -1043,7 +1043,7 @@ int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *
 cleanup:
 
 	KSI_ExtendReq_free(req);
-	KSI_ExtendResp_free(response);
+	KSI_ExtendResp_free(resp);
 	KSI_RequestHandle_free(handle);
 	KSI_Signature_free(tmp);
 
@@ -2017,6 +2017,13 @@ static int verifyOnline(KSI_CTX *ctx, KSI_Signature *sig) {
 
 	res = KSI_RequestHandle_getExtendResponse(handle, &resp);
 	if (res != KSI_OK) goto cleanup;
+
+	/* Verify the correctness of the response. */
+	res = KSI_ExtendResp_verifyWithRequest(resp, req);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_ExtendResp_getStatus(resp, &status);
 	if (res != KSI_OK) goto cleanup;

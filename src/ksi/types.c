@@ -35,7 +35,6 @@ KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendResp);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationReq);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationResp);
 KSI_IMPORT_TLV_TEMPLATE(KSI_MetaData);
-KSI_IMPORT_TLV_TEMPLATE(KSI_ErrorPdu);
 
 struct KSI_MetaData_st {
 	KSI_CTX *ctx;
@@ -1028,6 +1027,80 @@ int KSI_ExtendResp_new(KSI_CTX *ctx, KSI_ExtendResp **t) {
 	res = KSI_OK;
 cleanup:
 	KSI_ExtendResp_free(tmp);
+	return res;
+}
+
+int KSI_ExtendResp_verifyWithRequest(KSI_ExtendResp *resp, KSI_ExtendReq *req) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Integer *tm = NULL;
+	time_t aggrTm = 0;
+
+	if (resp == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(resp->ctx);
+
+	if ( req == NULL) {
+		KSI_pushError(resp->ctx, res = KSI_INVALID_ARGUMENT, "A non-NULL response may not originate from a NULL request."); // TODO! Declare new error code
+		goto cleanup;
+	}
+
+	if (!KSI_Integer_equalsUInt(resp->status, 0)) {
+		res = KSI_convertExtenderStatusCode(resp->status);
+		goto cleanup;
+	}
+
+	if (!KSI_Integer_equals(resp->requestId, req->requestId)) {
+		KSI_pushError(resp->ctx, res = KSI_INVALID_ARGUMENT, "Request id's mismatch.");
+		goto cleanup;
+	}
+
+	/* Verify publication time. */
+	res = KSI_CalendarHashChain_getPublicationTime(resp->calendarHashChain, &tm);
+	if (res != KSI_OK) {
+		KSI_pushError(resp->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (req->publicationTime != NULL) {
+
+		if (!KSI_Integer_equals(tm, req->publicationTime)) {
+			KSI_pushError(resp->ctx, res = KSI_INVALID_ARGUMENT, "Aggregation time mismatch.");
+			goto cleanup;
+		}
+
+		KSI_nofree(tm);
+	}
+
+	/* Verify aggregation time. */
+	res = KSI_CalendarHashChain_getAggregationTime(resp->calendarHashChain, &tm);
+	if (res != KSI_OK) {
+		KSI_pushError(resp->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (!KSI_Integer_equals(tm, req->aggregationTime)) {
+		KSI_pushError(resp->ctx, res = KSI_INVALID_ARGUMENT, "Aggregation time mismatch.");
+		goto cleanup;
+	}
+
+
+	/* Verify the shape of the response. */
+	res = KSI_CalendarHashChain_calculateAggregationTime(resp->calendarHashChain, &aggrTm);
+	if (res != KSI_OK) {
+		KSI_pushError(resp->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (!KSI_Integer_equalsUInt(tm, aggrTm)) {
+		KSI_pushError(resp->ctx, res = KSI_INVALID_ARGUMENT, "Aggregation time does not match with the shape of the calendar hash chain.");
+		goto cleanup;
+	}
+
+cleanup:
+
 	return res;
 }
 

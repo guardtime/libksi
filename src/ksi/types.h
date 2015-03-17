@@ -347,6 +347,13 @@ int KSI_ExtendResp_setCalendarHashChain(KSI_ExtendResp *t, KSI_CalendarHashChain
 int KSI_ExtendResp_fromTlv (KSI_TLV *tlv, KSI_ExtendResp **data);
 int KSI_ExtendResp_toTlv (KSI_CTX *ctx, const KSI_ExtendResp *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
+/**
+ * Verifies that the response is a correct response to the concrete request.
+ * \param[in]	resp	Response to be verified.
+ * \param[in]	req		Request to be used for verification.
+ */
+int KSI_ExtendResp_verifyWithRequest(KSI_ExtendResp *resp, KSI_ExtendReq *req);
+
 
 KSI_DEFINE_OBJECT_PARSE(KSI_ExtendResp);
 KSI_DEFINE_OBJECT_SERIALIZE(KSI_ExtendResp);
