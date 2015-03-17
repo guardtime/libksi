@@ -426,10 +426,11 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 	if(res != KSI_OK){
 		int networkStatus = handle->client->getStausCode ? handle->client->getStausCode(handle->client) : 0; 
 		
-		if(networkStatus >= 400 && networkStatus < 600)
+		if (networkStatus >= 400 && networkStatus < 600) {
 			KSI_FAIL_EXT(&err, KSI_HTTP_ERROR, networkStatus, "HTTP returned error. Unable to parse extend pdu.");
-		else
+		} else {
 			KSI_FAIL_EXT(&err, res, networkStatus, "Unable to parse extend pdu.");
+		}
 		
 		goto cleanup;
 	}
