@@ -384,7 +384,7 @@ int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI
 	return res;
 }
 
-int KSI_TlvTemplate_parse(KSI_CTX *ctx, unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *tmpl, void *payload) {
+int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *tmpl, void *payload) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tlv = NULL;
 	struct tlv_track_s tr[0xf];
@@ -395,7 +395,7 @@ int KSI_TlvTemplate_parse(KSI_CTX *ctx, unsigned char *raw, unsigned raw_len, co
 		goto cleanup;
 	}
 
-	res = KSI_TLV_parseBlob2(ctx, raw, raw_len, 0, &tlv);
+	res = KSI_TLV_parseBlob2(ctx, (unsigned char *)raw, raw_len, 0, &tlv);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;

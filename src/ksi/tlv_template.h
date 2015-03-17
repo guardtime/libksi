@@ -446,7 +446,7 @@ extern "C" {
 	 * \param[in]	payload		Pointer to the payload which will be populated with the parsed data.
 	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	 int KSI_TlvTemplate_parse(KSI_CTX *ctx, unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *tmpl, void *payload);
+	 int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *tmpl, void *payload);
 
 	/**
 	 * This function acts similarly as #KSI_TlvTemplate_extract but allows the caller to specify how the top level
@@ -510,7 +510,7 @@ extern "C" {
 	 * \param[in]	tag			Tag of the concrete TLV.
 	 */
 	#define KSI_IMPLEMENT_OBJECT_PARSE(type, tag) \
-		int type##_parse(KSI_CTX *ctx, unsigned char *raw, unsigned len, type **t) { \
+		int type##_parse(KSI_CTX *ctx, const unsigned char *raw, unsigned len, type **t) { \
 			int res = KSI_UNKNOWN_ERROR; \
 			KSI_TLV *tlv = NULL; \
 			type *tmp = NULL; \
@@ -518,7 +518,7 @@ extern "C" {
 				res = KSI_INVALID_ARGUMENT; \
 				goto cleanup; \
 			} \
-			res = KSI_TLV_parseBlob2(ctx, raw, len, 0, &tlv); \
+			res = KSI_TLV_parseBlob2(ctx, (unsigned char *)raw, len, 0, &tlv); \
 			if (res != KSI_OK) goto cleanup; \
 			if (KSI_TLV_getTag(tlv) != (tag)) { \
 				res = KSI_INVALID_FORMAT; \
