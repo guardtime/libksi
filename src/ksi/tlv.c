@@ -1048,7 +1048,7 @@ cleanup:
 static int serializeTlv(const KSI_TLV *tlv, unsigned char *buf, unsigned *buf_free, int serializeHeader) {
 	KSI_ERR err;
 	int res;
-	unsigned bf = *buf_free;
+	unsigned bf;
 	unsigned payloadLength;
 	unsigned char *ptr = NULL;
 
@@ -1056,6 +1056,8 @@ static int serializeTlv(const KSI_TLV *tlv, unsigned char *buf, unsigned *buf_fr
 	KSI_PRE(&err, buf != NULL) goto cleanup;
 	KSI_PRE(&err, buf_free != NULL) goto cleanup;
 	KSI_BEGIN(tlv->ctx, &err);
+
+	bf = *buf_free;
 
 	res = serializePayload(tlv, buf, &bf);
 	if (res != KSI_OK) {

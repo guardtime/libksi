@@ -286,7 +286,7 @@ static int storeObjectValue(KSI_CTX *ctx, const KSI_TlvTemplate *tmpl, void *pay
 cleanup:
 
 	KSI_nofree(listp);
-	if (tmpl->listFree != NULL) tmpl->listFree(list);
+	if (tmpl != NULL && tmpl->listFree != NULL) tmpl->listFree(list);
 
 	return res;
 }
