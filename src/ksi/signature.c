@@ -2004,8 +2004,7 @@ static int verifyOnline(KSI_CTX *ctx, KSI_Signature *sig) {
 	if (res != KSI_OK) goto cleanup;
 
 	/* Clone the start time object */
-	res = KSI_Integer_ref(start);
-	if (res != KSI_OK) goto cleanup;
+	KSI_Integer_ref(start);
 
 	if (sig->verificationResult.useUserPublication) {
 		/* Extract end time. */

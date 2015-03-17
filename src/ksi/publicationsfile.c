@@ -1076,8 +1076,8 @@ int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_Publicatio
 	res = KSI_DataHash_clone(rec->publishedData->imprint, &(tmp->publishedData->imprint));
 	KSI_CATCH(&err, res) goto cleanup;
 	
-	res = KSI_Integer_ref(rec->publishedData->time);
-	KSI_CATCH(&err, res) goto cleanup;
+	KSI_Integer_ref(rec->publishedData->time);
+
 	tmp->publishedData->time = rec->publishedData->time;
 	
 	*clone = tmp;
