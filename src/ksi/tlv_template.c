@@ -19,11 +19,15 @@
  */
 
 #include <limits.h>
+#include <string.h>
 #include "internal.h"
 
 #include "tlv.h"
 #include "tlv_template.h"
 #include "hashchain.h"
+
+/* At the moment value 0xff should be enough for everyone (actually less than 10 is used). */
+#define MAX_TEMPLATE_SIZE 0xff
 
 #define KSI_CalAuthRecPKISignedData_new KSI_PKISignedData_new
 #define KSI_CalAuthRecPKISignedData_free KSI_PKISignedData_free
@@ -437,7 +441,7 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 	KSI_TLV *tlvVal = NULL;
 
 	size_t template_len = 0;
-	bool *templateHit = NULL;
+	bool templateHit[MAX_TEMPLATE_SIZE];
 	bool groupHit[2] = {false, false};
 	bool oneOf[2] = {false, false};
 	size_t i;
@@ -449,18 +453,20 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 		goto cleanup;
 	}
 
+	/* Analyze the template. */
 	template_len = getTemplateLength(tmpl);
 
 	if (template_len == 0) {
-		KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Empty template suggests invalid state.");
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Empty template suggests invalid state.");
 		goto cleanup;
 	}
-	/* Create the hit buffer with all values set to zero. */
-	templateHit = KSI_calloc(template_len, sizeof(bool));
-	if (templateHit == NULL) {
-		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+
+	/* Make sure there will be no buffer overflow. */
+	if (template_len > MAX_TEMPLATE_SIZE) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Template too big");
 		goto cleanup;
 	}
+	memset(templateHit, 0, sizeof(templateHit));
 
 	while (1) {
 		int matchCount = 0;
@@ -613,7 +619,6 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 
 cleanup:
 
-	KSI_free(templateHit);
 	KSI_TLV_free(tlvVal);
 
 	return res;
@@ -632,7 +637,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 	int isForward = 0;
 
 	size_t template_len = 0;
-	bool *templateHit = NULL;
+	bool templateHit[MAX_TEMPLATE_SIZE];
 	bool groupHit[2] = {false, false};
 	bool oneOf[2] = {false, false};
 
@@ -645,15 +650,21 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 		goto cleanup;
 	}
 
+	/* Calculate the template length. */
 	template_len = getTemplateLength(tmpl);
 
-	if (template_len > 0) {
-		templateHit = KSI_calloc(template_len, sizeof(bool));
-		if (templateHit == NULL) {
-			KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
-			goto cleanup;
-		}
+	if (template_len == 0) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "A template may not be empty.");
+		goto cleanup;
 	}
+
+	if (template_len > MAX_TEMPLATE_SIZE) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Template too big.");
+		goto cleanup;
+	}
+
+	memset(templateHit, 0, sizeof(templateHit));
+
 
 	for (i = 0; i < template_len; i++) {
 		if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_NO_SERIALIZE) != 0) continue;
@@ -830,7 +841,6 @@ cleanup:
 
 	KSI_nofree(payloadp);
 
-	KSI_free(templateHit);
 	KSI_TLV_free(tmp);
 
 	return res;

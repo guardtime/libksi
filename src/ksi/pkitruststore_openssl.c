@@ -228,29 +228,37 @@ cleanup:
 }
 
 int KSI_PKITruststore_addLookupDir(KSI_PKITruststore *trust, const char *path) {
-	KSI_ERR err;
+	int res = KSI_INVALID_ARGUMENT;
 	X509_LOOKUP *lookup = NULL;
 
-	KSI_PRE(&err, trust != NULL) goto cleanup;
-	KSI_PRE(&err, path != NULL) goto cleanup;
-	KSI_BEGIN(trust->ctx, &err);
+	if (trust == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(trust->ctx);
+
+	if (path == NULL) {
+		KSI_pushError(trust->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	lookup = X509_STORE_add_lookup(trust->store, X509_LOOKUP_hash_dir());
 	if (lookup == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(trust->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
 	if (!X509_LOOKUP_add_dir(lookup, path, X509_FILETYPE_PEM)) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+		KSI_pushError(trust->ctx, res = KSI_INVALID_FORMAT, NULL);
 		goto cleanup;
 	}
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **trust) {

@@ -421,6 +421,11 @@ int KSI_HashChainLink_new(KSI_CTX *ctx, KSI_HashChainLink **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_HashChainLink *tmp = NULL;
 
+	if (ctx == NULL || t == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
 	tmp = KSI_new(KSI_HashChainLink);
 	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
