@@ -54,6 +54,14 @@ extern "C" {
 	int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx);
 
 	/**
+	 * This function verifies the signature using online resources. The signature is
+	 * verified by an attempt to extend it.
+	 * 
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+     */
+	int KSI_Signature_verifyOnline(KSI_Signature *sig, KSI_CTX *ctx);
+	
+	/**
 	 * Verifies that the document matches the signature.
 	 * \param[in]	sig			KSI signature.
 	 * \param[in]	ctx			KSI context.

@@ -20,6 +20,7 @@
 
 #include <string.h>
 #include "all_tests.h"
+#include "ksi/signature.h"
 
 extern KSI_CTX *ctx;
 
@@ -80,8 +81,14 @@ static void testVerifySignatureExtendedToHead(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-head.ksig"), &sig);
-	CuAssert(tc, "Signature should have either a calendar auth record or publication", res != KSI_OK && sig == NULL);
+	CuAssert(tc, "Signature should have either a calendar auth record or publication", res == KSI_OK && sig != NULL);
 
+	/* Set the extend response. */
+	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-head-extend_response.tlv"));
+	
+	res = KSI_Signature_verifyOnline(sig, ctx);
+	CuAssert(tc, "Signature should verify", res == KSI_OK);
+	
 	KSI_Signature_free(sig);
 
 }

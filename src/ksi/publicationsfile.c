@@ -81,8 +81,12 @@ static int generateNextTlv(struct generator_st *gen, KSI_TLV **tlv) {
 	res = KSI_TLV_readTlv(gen->reader, buf, 0xffff + 4, &consumed);
 	if (res != KSI_OK) goto cleanup;
 
+	if(consumed > UINT_MAX){
+		res = KSI_INVALID_FORMAT;
+	}
+	
 	if (consumed > 0) {
-		res = KSI_TLV_parseBlob2(KSI_RDR_getCtx(gen->reader), buf, consumed, 1, &gen->tlv);
+		res = KSI_TLV_parseBlob2(KSI_RDR_getCtx(gen->reader), buf, (unsigned)consumed, 1, &gen->tlv);
 		if (res != KSI_OK) goto cleanup;
 
 		buf = NULL;

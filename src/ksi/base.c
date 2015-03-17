@@ -689,8 +689,12 @@ int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *erro
 	
 	if (error != NULL)	*error = err->statusCode;
 	if (ext != NULL)	*ext = err->extErrorCode;
+
+	if(ctx->errors_count)
+		KSI_strncpy(buf, err->message, len);		
+	else
+		KSI_strncpy(buf, "", len);		
 	
-	KSI_strncpy(buf, err->message, len);		
 	return KSI_OK;
 } 
 

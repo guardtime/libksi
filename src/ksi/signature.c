@@ -51,6 +51,9 @@ KSI_DEFINE_VERIFICATION_POLICY(KSI_VP_OFFLINE)
 	KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION | KSI_VERIFY_PUBLICATION_WITH_PUBFILE
 KSI_END_VERIFICATION_POLICY
 
+KSI_DEFINE_VERIFICATION_POLICY(KSI_VP_ONLINE)
+	KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_ONLINE
+KSI_END_VERIFICATION_POLICY
 
 KSI_DEFINE_VERIFICATION_POLICY(KSI_VP_DOCUMENT)
 	KSI_VERIFY_DOCUMENT | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC | KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE,
@@ -323,9 +326,9 @@ KSI_IMPLEMENT_LIST(KSI_AggregationHashChain, KSI_AggregationHashChain_free);
 KSI_DEFINE_TLV_TEMPLATE(KSI_Signature)
 	KSI_TLV_COMPOSITE_LIST(0x0801, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Signature_getAggregationChainList, KSI_Signature_setAggregationChainList, KSI_AggregationHashChain, "aggr_chain")
 	KSI_TLV_COMPOSITE(0x0802, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Signature_getCalendarChain, KSI_Signature_setCalendarChain, KSI_CalendarHashChain, "cal_chain")
-	KSI_TLV_COMPOSITE(0x0803, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_Signature_getPublicationRecord, KSI_Signature_setPublicationRecord, KSI_PublicationRecord, "pub_rec")
+	KSI_TLV_COMPOSITE(0x0803, KSI_TLV_TMPL_FLG_NONE, KSI_Signature_getPublicationRecord, KSI_Signature_setPublicationRecord, KSI_PublicationRecord, "pub_rec")
 	KSI_TLV_COMPOSITE(0x0804, KSI_TLV_TMPL_FLG_NONE, KSI_Signature_getAggregationAuthRecord, KSI_Signature_setAggregationAuthRecord, KSI_AggregationAuthRec, "aggr_auth_rec")
-	KSI_TLV_COMPOSITE(0x0805, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_Signature_getCalendarAuthRecord, KSI_Signature_setCalendarAuthRecord, KSI_CalendarAuthRec, "cal_auth_rec")
+	KSI_TLV_COMPOSITE(0x0805, KSI_TLV_TMPL_FLG_NONE, KSI_Signature_getCalendarAuthRecord, KSI_Signature_setCalendarAuthRecord, KSI_CalendarAuthRec, "cal_auth_rec")
 KSI_END_TLV_TEMPLATE
 
 static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
@@ -1873,7 +1876,7 @@ static int verifyCalAuthRec(KSI_CTX *ctx, KSI_Signature *sig) {
 		goto cleanup;
 	}
 
-	res = KSI_VerificationResult_addSuccess(info, step, "Calendar authentication record correct.");
+	res = KSI_VerificationResult_addSuccess(info, step, "Calendar authentication record verified.");
 
 cleanup:
 
@@ -2239,6 +2242,28 @@ int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx) {
 	}
 
 	res = KSI_Signature_verifyPolicy(sig, KSI_VP_SIGNATURE, useCtx);
+	KSI_CATCH(&err, res) goto cleanup;
+
+	KSI_SUCCESS(&err);
+
+cleanup:
+
+	return KSI_RETURN(&err);
+}
+
+int KSI_Signature_verifyOnline(KSI_Signature *sig, KSI_CTX *ctx){
+	KSI_ERR err;
+	int res;
+	KSI_CTX *useCtx = ctx;
+
+	KSI_PRE(&err, sig != NULL) goto cleanup;
+	KSI_BEGIN(sig->ctx, &err);
+
+	if (useCtx == NULL) {
+		useCtx = sig->ctx;
+	}
+
+	res = KSI_Signature_verifyPolicy(sig, KSI_VP_ONLINE, useCtx);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
