@@ -326,9 +326,9 @@ KSI_IMPLEMENT_LIST(KSI_AggregationHashChain, KSI_AggregationHashChain_free);
 KSI_DEFINE_TLV_TEMPLATE(KSI_Signature)
 	KSI_TLV_COMPOSITE_LIST(0x0801, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Signature_getAggregationChainList, KSI_Signature_setAggregationChainList, KSI_AggregationHashChain, "aggr_chain")
 	KSI_TLV_COMPOSITE(0x0802, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Signature_getCalendarChain, KSI_Signature_setCalendarChain, KSI_CalendarHashChain, "cal_chain")
-	KSI_TLV_COMPOSITE(0x0803, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_Signature_getPublicationRecord, KSI_Signature_setPublicationRecord, KSI_PublicationRecord, "pub_rec")
+	KSI_TLV_COMPOSITE(0x0803, KSI_TLV_TMPL_FLG_NONE, KSI_Signature_getPublicationRecord, KSI_Signature_setPublicationRecord, KSI_PublicationRecord, "pub_rec")
 	KSI_TLV_COMPOSITE(0x0804, KSI_TLV_TMPL_FLG_NONE, KSI_Signature_getAggregationAuthRecord, KSI_Signature_setAggregationAuthRecord, KSI_AggregationAuthRec, "aggr_auth_rec")
-	KSI_TLV_COMPOSITE(0x0805, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_Signature_getCalendarAuthRecord, KSI_Signature_setCalendarAuthRecord, KSI_CalendarAuthRec, "cal_auth_rec")
+	KSI_TLV_COMPOSITE(0x0805, KSI_TLV_TMPL_FLG_NONE, KSI_Signature_getCalendarAuthRecord, KSI_Signature_setCalendarAuthRecord, KSI_CalendarAuthRec, "cal_auth_rec")
 KSI_END_TLV_TEMPLATE
 
 static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
