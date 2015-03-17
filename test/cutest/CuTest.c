@@ -117,6 +117,7 @@ void CuTestInit(CuTest* t, const char* name, TestFunction function)
 	t->message = NULL;
 	t->function = function;
 	t->jumpBuf = NULL;
+	t->preTest = NULL;
 }
 
 CuTest* CuTestNew(const char* name, TestFunction function)
@@ -240,6 +241,7 @@ void CuSuiteInit(CuSuite* testSuite)
 	testSuite->count = 0;
 	testSuite->failCount = 0;
         memset(testSuite->list, 0, sizeof(testSuite->list));
+    testSuite->preTest = NULL;
 }
 
 CuSuite* CuSuiteNew(void)
@@ -265,6 +267,8 @@ void CuSuiteDelete(CuSuite *testSuite)
 
 void CuSuiteAdd(CuSuite* testSuite, CuTest *testCase)
 {
+	if (testSuite->preTest != NULL) testCase->preTest = testSuite->preTest;
+
 	assert(testSuite->count < MAX_TEST_CASES);
 	testSuite->list[testSuite->count] = testCase;
 	testSuite->count++;
@@ -286,6 +290,9 @@ void CuSuiteRun(CuSuite* testSuite)
 	for (i = 0 ; i < testSuite->count ; ++i)
 	{
 		CuTest* testCase = testSuite->list[i];
+
+		if (testCase->preTest != NULL) testCase->preTest();
+
 		CuTestRun(testCase);
 		if (testCase->failed) { testSuite->failCount += 1; }
 	}
