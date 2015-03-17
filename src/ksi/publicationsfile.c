@@ -83,6 +83,7 @@ static int generateNextTlv(struct generator_st *gen, KSI_TLV **tlv) {
 
 	if(consumed > UINT_MAX){
 		res = KSI_INVALID_FORMAT;
+		goto cleanup;
 	}
 	
 	if (consumed > 0) {
