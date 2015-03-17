@@ -382,16 +382,6 @@ void *KSI_malloc(size_t size);
 void *KSI_calloc(size_t num, size_t size);
 
 /**
- * Reallocates pointer \c ptr to \c size bytes.
- * \param[in]	ptr		Pointer to the memory being reallocated.
- * \param[in]	size	New size in bytes.
- *
- * \return Pointer to the allocated memory, or \c NULL if an error occurred.
- * \note The caller needs to free the allocated memory with #KSI_free.
- */
-void *KSI_realloc(void *ptr, size_t size);
-
-/**
  * Free memory allocated by #KSI_malloc, #KSI_calloc or #KSI_realloc.
  * \param[in]	ptr		Pointer to the memory to be freed.
  */

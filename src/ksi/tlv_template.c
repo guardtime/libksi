@@ -719,7 +719,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 								goto cleanup;
 							}
 
-							res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
+							res = KSI_TLV_appendNestedTlv(tlv, tmp);
 							if (res != KSI_OK) {
 								KSI_pushError(ctx, res, NULL);
 								goto cleanup;
@@ -736,7 +736,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 							goto cleanup;
 						}
 
-						res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
+						res = KSI_TLV_appendNestedTlv(tlv, tmp);
 						if (res != KSI_OK) {
 							KSI_pushError(ctx, res, NULL);
 							goto cleanup;
@@ -770,7 +770,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 								goto cleanup;
 							}
 
-							res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
+							res = KSI_TLV_appendNestedTlv(tlv, tmp);
 							if (res != KSI_OK) {
 								KSI_pushError(ctx, res, NULL);
 								goto cleanup;
@@ -790,7 +790,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 							goto cleanup;
 						}
 
-						res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
+						res = KSI_TLV_appendNestedTlv(tlv, tmp);
 						if (res != KSI_OK) {
 							KSI_pushError(ctx, res, NULL);
 							goto cleanup;

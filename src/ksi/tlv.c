@@ -862,7 +862,7 @@ cleanup:
 /**
  *
  */
-int KSI_TLV_appendNestedTlv(KSI_TLV *target, KSI_TLV *after, KSI_TLV *tlv) {
+int KSI_TLV_appendNestedTlv(KSI_TLV *target, KSI_TLV *tlv) {
 	KSI_ERR err;
 	size_t *pos = NULL;
 	int res;
@@ -886,20 +886,7 @@ int KSI_TLV_appendNestedTlv(KSI_TLV *target, KSI_TLV *after, KSI_TLV *tlv) {
 		list = NULL;
 	}
 
-	if (after != NULL) {
-		res = KSI_TLVList_indexOf(target->nested, tlv, &pos);
-		KSI_CATCH(&err, res) goto cleanup;
-
-		if (pos == NULL) {
-			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Nested TLV not found.");
-			goto cleanup;
-		}
-
-		res = KSI_TLVList_insertAt(target->nested, *pos, tlv);
-	} else {
-		res = KSI_TLVList_append(target->nested, tlv);
-	}
-
+	res = KSI_TLVList_append(target->nested, tlv);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	KSI_SUCCESS(&err);
@@ -984,12 +971,14 @@ cleanup:
 static int serializeNested(const KSI_TLV *tlv, unsigned char *buf, unsigned *buf_free) {
 	KSI_ERR err;
 	int res;
-	unsigned bf = *buf_free;
+	unsigned bf;
 
 	KSI_PRE(&err, tlv != NULL) goto cleanup;
 	KSI_PRE(&err, buf != NULL) goto cleanup;
 	KSI_PRE(&err, buf_free != NULL) goto cleanup;
 	KSI_BEGIN(tlv->ctx, &err);
+
+	bf = *buf_free;
 
 	if (tlv->payloadType != KSI_TLV_PAYLOAD_TLV) {
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL);

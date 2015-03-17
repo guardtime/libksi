@@ -847,7 +847,7 @@ static int KSI_parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp,
 				KSI_CATCH(&err, res) goto cleanup;
 
 				/* Copy this tag to the signature. */
-				res = KSI_TLV_appendNestedTlv(tmpTlv, NULL, t);
+				res = KSI_TLV_appendNestedTlv(tmpTlv, t);
 				KSI_CATCH(&err, res) goto cleanup;
 
 		}
