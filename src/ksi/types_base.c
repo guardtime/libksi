@@ -308,6 +308,10 @@ int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, unsigned len, KSI_Utf8Stri
 	if (res != KSI_OK) goto cleanup;
 
 	tmp->value = KSI_malloc(len);
+	if (tmp->value == NULL) {
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
 	memcpy(tmp->value, str, len);
 
 	tmp->len = len;

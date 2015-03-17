@@ -192,6 +192,9 @@ int KSI_LOG_StreamLogger(void *logCtx, int logLevel, const char *message) {
 	timer = time(NULL);
 
 	tm_info = localtime(&timer);
+	if (tm_info == NULL) {
+		return KSI_UNKNOWN_ERROR;
+	}
 	strftime(time_buf, sizeof(time_buf), "%d.%m.%Y %H:%M:%S", tm_info);
 	fprintf(f, "%s [%s] - %s\n", level2str(logLevel), time_buf, message);
 

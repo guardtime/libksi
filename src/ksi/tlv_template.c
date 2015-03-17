@@ -649,6 +649,10 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 
 	if (template_len > 0) {
 		templateHit = KSI_calloc(template_len, sizeof(bool));
+		if (templateHit == NULL) {
+			KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+			goto cleanup;
+		}
 	}
 
 	for (i = 0; i < template_len; i++) {
