@@ -134,7 +134,6 @@ EXPORTS
     KSI_ERR_getBaseErrorMessage
     KSI_malloc
     KSI_calloc
-    KSI_realloc
     KSI_free
     KSI_sendSignRequest
     KSI_sendExtendRequest
