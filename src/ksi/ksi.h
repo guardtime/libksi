@@ -382,7 +382,7 @@ void *KSI_malloc(size_t size);
 void *KSI_calloc(size_t num, size_t size);
 
 /**
- * Free memory allocated by #KSI_malloc, #KSI_calloc or #KSI_realloc.
+ * Free memory allocated by #KSI_malloc or #KSI_calloc.
  * \param[in]	ptr		Pointer to the memory to be freed.
  */
 void KSI_free(void *ptr);
