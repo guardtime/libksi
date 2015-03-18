@@ -915,44 +915,6 @@ cleanup:
 	return KSI_RETURN(&err);
 }
 
-static int failOnExtendRespError(KSI_CTX *ctx, KSI_ExtendResp *response) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_Integer *respStatus = NULL;
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || response == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_ExtendResp_getStatus(response, &respStatus);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_convertExtenderStatusCode(respStatus);
-	/* Fail if status is presend and does not equal to success (0) */
-	if (res != KSI_OK) {
-		char buf[1024];
-		KSI_Utf8String *error = NULL;
-		KSI_ExtendResp_getErrorMsg(response, &error);
-
-		KSI_snprintf(buf, sizeof(buf), "Extender error(%u): %s", KSI_Integer_getUInt64(respStatus), KSI_Utf8String_cstr(error));
-
-		KSI_pushError(ctx, res, buf); // FIXME: Add external error code.
-
-		KSI_nofree(error);
-		goto cleanup;
-	}
-
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_nofree(respStatus);
-
-	return res;
-}
-
 int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *to, KSI_Signature **extended) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ExtendReq *req = NULL;
