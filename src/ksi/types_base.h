@@ -47,7 +47,7 @@ int typ##_fromTlv(KSI_TLV *tlv, typ **o	);
 	\param[in]	tag				Tag value of the #KSI_TLV
 	\param[in]	isNonCritical	Flag is-non-critical.
 	\param[in]	isForward		Flag is-forward.
-	\param[out]	tlv				Ponter to the reveiving pointer.
+	\param[out]	tlv				Pointer to the receiving pointer.
 	\return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
 	\see \ref typ##_fromTlv, \ref KSI_TLV_free
 */ \
@@ -110,7 +110,7 @@ int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned tag, int isNonCritical, int isFor
 	typedef struct KSI_Utf8String_st KSI_Utf8String;
 
 	/**
-	 * An utf-8 string wich must have at least one printable character.
+	 * An utf-8 string which must have at least one printable character.
 	 */
 	typedef KSI_Utf8String KSI_Utf8StringNZ;
 
@@ -132,7 +132,7 @@ int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned tag, int isNonCritical, int isFor
 	 * \param[in]	o		Pointer to #KSI_Integer.
 	 * \param[in]	buf		Pointer to buffer.
 	 * \param[in]	buf_len	Length of the buffer.
-	 * \return On success returns buf and NULL if an error occured.
+	 * \return On success returns buf and NULL if an error occurred.
 	 */
 	char *KSI_Integer_toDateString(const KSI_Integer *o, char *buf, unsigned buf_len);
 
@@ -162,7 +162,7 @@ int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned tag, int isNonCritical, int isFor
 	int KSI_Integer_equals(const KSI_Integer *a, const KSI_Integer *b);
 
 	/**
-	 * Function to copmare the values of two #KSI_Integer objects.
+	 * Function to compare the values of two #KSI_Integer objects.
 	 * \param[in]	a		Left operand.
 	 * \param[in]	b		Right operand.
 	 * \return Returns 0 if the values are equal, -1 if b is greater and 1 otherwise.

@@ -368,14 +368,14 @@ int pdu_verify_hmac(KSI_CTX *ctx, KSI_DataHash *hmac,const char *key, int (*calc
 	int res;
 	KSI_DataHash *actualHmac = NULL;
 	int hashAlg;
-	
+
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, hmac != NULL) goto cleanup;
 	KSI_PRE(&err, key != NULL) goto cleanup;
 	KSI_PRE(&err, calculateHmac != NULL) goto cleanup;
 	KSI_PRE(&err, PDU != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
-	
+
 	/* Check HMAC. */
 	res = KSI_DataHash_getHashAlg(hmac, &hashAlg);
 	KSI_CATCH(&err, res);
@@ -392,9 +392,9 @@ int pdu_verify_hmac(KSI_CTX *ctx, KSI_DataHash *hmac,const char *key, int (*calc
 	}
 
 	KSI_SUCCESS(&err);
-	
+
 cleanup:
-	
+
 	KSI_DataHash_free(actualHmac);
 
 	return KSI_RETURN(&err);
@@ -410,8 +410,8 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 	KSI_ExtendResp *tmp = NULL;
 	const unsigned char *raw = NULL;
 	unsigned len = 0;
-	
-	
+
+
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_PRE(&err, resp != NULL) goto cleanup;
 	KSI_BEGIN(handle->ctx, &err);
@@ -424,34 +424,34 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 	/*Get response PDU*/
 	res = KSI_ExtendPdu_parse(handle->ctx, raw, len, &pdu);
 	if(res != KSI_OK){
-		int networkStatus = handle->client->getStausCode ? handle->client->getStausCode(handle->client) : 0; 
-		
+		int networkStatus = handle->client->getStausCode ? handle->client->getStausCode(handle->client) : 0;
+
 		if (networkStatus >= 400 && networkStatus < 600) {
 			KSI_FAIL_EXT(&err, KSI_HTTP_ERROR, networkStatus, "HTTP returned error. Unable to parse extend pdu.");
 		} else {
 			KSI_FAIL_EXT(&err, res, networkStatus, "Unable to parse extend pdu.");
 		}
-		
+
 		goto cleanup;
 	}
 
 	res = KSI_ExtendPdu_getError(pdu, &error);
 	KSI_CATCH(&err, res) goto cleanup;
-	
+
 	if (error != NULL) {
 		KSI_Utf8String *errorMsg = NULL;
 		KSI_Integer *status = NULL;
-		
+
 		res = KSI_ErrorPdu_getErrorMessage(error, &errorMsg);
 		KSI_CATCH(&err, res) goto cleanup;
-		
+
 		res = KSI_ErrorPdu_getStatus(error, &status);
 		KSI_CATCH(&err, res) goto cleanup;
-		
+
 		KSI_FAIL_EXT(&err, KSI_convertExtenderStatusCode(status), (long)KSI_Integer_getUInt64(status), KSI_Utf8String_cstr(errorMsg));
 		goto cleanup;
 	}
-		
+
 	res = KSI_ExtendPdu_getHeader(pdu, &header);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -465,17 +465,17 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 
 	if (respHmac == NULL){
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, "A successful extension response must have a HMAC.");
-		goto cleanup;	
+		goto cleanup;
 	}
-	
+
 	/*Get response object*/
 	res = KSI_ExtendPdu_getResponse(pdu, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->extPass, 
+	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->extPass,
 			(int (*)(void*, int, const char*, KSI_DataHash**))KSI_ExtendPdu_calculateHmac,
 			(void*)pdu);
-	
+
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_ExtendPdu_setResponse(pdu, NULL);
@@ -483,13 +483,13 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 
 	*resp = tmp;
 	tmp = NULL;
-	
+
 	KSI_SUCCESS(&err);
 
 cleanup:
 
 	KSI_ExtendPdu_free(pdu);
-	
+
 	return KSI_RETURN(&err);
 }
 
@@ -504,8 +504,8 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 	KSI_AggregationResp *tmp = NULL;
 	const unsigned char *raw = NULL;
 	unsigned len;
-	
-	
+
+
 	KSI_PRE(&err, handle != NULL) goto cleanup;
 	KSI_PRE(&err, handle->client != NULL) goto cleanup;
 	KSI_PRE(&err, handle->client->aggrPass != NULL) goto cleanup;
@@ -514,25 +514,25 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 
 	res = KSI_RequestHandle_getResponse(handle, &raw, &len);
 	KSI_CATCH(&err, res) goto cleanup;
-	
+
 	KSI_LOG_logBlob(handle->ctx, KSI_LOG_DEBUG, "Parsing aggregation response from", raw, len);
-	
+
 	/*Get PDU object*/
 	res = KSI_AggregationPdu_parse(handle->ctx, raw, len, &pdu);
 	if(res != KSI_OK){
-		int networkStatus = handle->client->getStausCode ? handle->client->getStausCode(handle->client) : 0; 
-		
+		int networkStatus = handle->client->getStausCode ? handle->client->getStausCode(handle->client) : 0;
+
 		if(networkStatus >= 400 && networkStatus < 600)
 			KSI_FAIL_EXT(&err, KSI_HTTP_ERROR, networkStatus, "HTTP returned error. Unable to parse aggregation pdu.");
 		else
 			KSI_FAIL_EXT(&err, res, networkStatus, "Unable to parse aggregation pdu.");
-		
+
 		goto cleanup;
 	}
 
 	res = KSI_AggregationPdu_getError(pdu, &error);
 	KSI_CATCH(&err, res) goto cleanup;
-	
+
 	if(error){
 		KSI_Utf8String *errorMsg = NULL;
 		KSI_Integer *status = NULL;
@@ -541,7 +541,7 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 		KSI_FAIL_EXT(&err, KSI_convertAggregatorStatusCode(status), (long)KSI_Integer_getUInt64(status), KSI_Utf8String_cstr(errorMsg));
 		goto cleanup;
 	}
-	
+
 	res = KSI_AggregationPdu_getHeader(pdu, &header);
 	KSI_CATCH(&err, res) goto cleanup;
 
@@ -555,18 +555,18 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 
 	if (respHmac == NULL){
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, "A successful aggregation response must have a HMAC.");
-		goto cleanup;	
+		goto cleanup;
 	}
-	
+
 	/* Check HMAC. */
 	res = KSI_AggregationPdu_getHmac(pdu, &respHmac);
 	KSI_CATCH(&err, res) goto cleanup;
-	
+
 	/*Get response object*/
 	res = KSI_AggregationPdu_getResponse(pdu, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
 
-	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->aggrPass, 
+	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->aggrPass,
 			(int (*)(void*, int, const char*, KSI_DataHash**))KSI_AggregationPdu_calculateHmac,
 			(void*)pdu);
 
@@ -577,7 +577,7 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 
 	*resp = tmp;
 	tmp = NULL;
-	
+
 	KSI_SUCCESS(&err);
 
 cleanup:
@@ -650,7 +650,7 @@ int KSI_NetworkClient_init(KSI_CTX *ctx, KSI_NetworkClient *client) {
 	client->sendPublicationRequest = NULL;
 	client->sendSignRequest = NULL;
 	client->getStausCode = NULL;
-	
+
 	res = KSI_OK;
 
 cleanup:
@@ -728,7 +728,7 @@ int KSI_UriSplitBasic(const char *uri, char **scheme, char **host, unsigned *por
 	}
 
 	if ((parser.field_set & (1 << UF_SCHEMA)) && (scheme != NULL)) {
-		/* Extract shcema. */
+		/* Extract schema. */
 		int len = parser.field_data[UF_SCHEMA].len + 1;
 		tmpSchema = KSI_malloc(len);
 		if (tmpSchema == NULL) {

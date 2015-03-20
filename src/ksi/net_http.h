@@ -88,7 +88,7 @@ extern "C" {
 	int KSI_HttpClient_setPublicationUrl(KSI_HttpClient *client, const char *val);
 
 	/**
-	 * Setter for the connetion timeout in seconds.
+	 * Setter for the connection timeout in seconds.
 	 * \param[in]	client		Pointer to the http client.
 	 * \param[in]	val			Timeout in seconds.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).

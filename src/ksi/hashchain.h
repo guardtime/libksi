@@ -31,7 +31,7 @@ extern "C" {
 
 /**
  * \addtogroup hashchain Hashchain computation.
- * This module contains hasch chain computation methods.
+ * This module contains hash chain computation methods.
  * General hash chains are represented as a list of #KSI_HashChainLink objects, where the first
  * element is also the first sibling.
  * @{
@@ -67,7 +67,7 @@ extern "C" {
 	/**
 	 * Creates a new empty #KSI_HashChainLink.
 	 * \param[in]	ctx		KSI context.
-	 * \param[out]	t		Pointer to the receiving ponter.
+	 * \param[out]	t		Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_HashChainLink_free
 	 */
@@ -130,7 +130,7 @@ extern "C" {
 	 * \param[in]	t					Pointer to #KSI_HashChainLink.
 	 * \param[in]	levelCorrection		Pointer to receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \note After celling the setter, the the object belongs to \c t and will be freed by #KSI_HashChainLink_free.
+	 * \note After calling the setter, the the object belongs to \c t and will be freed by #KSI_HashChainLink_free.
 	 */
 	int KSI_HashChainLink_setLevelCorrection(KSI_HashChainLink *t, KSI_Integer *levelCorrection);
 
@@ -139,7 +139,7 @@ extern "C" {
 	 * \param[in]	t					Pointer to #KSI_HashChainLink.
 	 * \param[in]	metaHash			Pointer to receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \note After celling the setter, the the object belongs to \c t and will be freed by #KSI_HashChainLink_free.
+	 * \note After calling the setter, the the object belongs to \c t and will be freed by #KSI_HashChainLink_free.
 	 */
 	int KSI_HashChainLink_setMetaHash(KSI_HashChainLink *t, KSI_DataHash *metaHash);
 
@@ -148,7 +148,7 @@ extern "C" {
 	 * \param[in]	t					Pointer to #KSI_HashChainLink.
 	 * \param[in]	metaData			Pointer to receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \note After celling the setter, the the object belongs to \c t and will be freed by #KSI_HashChainLink_free.
+	 * \note After calling the setter, the the object belongs to \c t and will be freed by #KSI_HashChainLink_free.
 	 */
 	int KSI_HashChainLink_setMetaData(KSI_HashChainLink *t, KSI_MetaData *metaData);
 
@@ -157,7 +157,7 @@ extern "C" {
 	 * \param[in]	t					Pointer to #KSI_HashChainLink.
 	 * \param[in]	imprint				Pointer to receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \note After celling the setter, the the object belongs to \c t and will be freed by #KSI_HashChainLink_free.
+	 * \note After calling the setter, the the object belongs to \c t and will be freed by #KSI_HashChainLink_free.
 	 */
 	int KSI_HashChainLink_setImprint(KSI_HashChainLink *t, KSI_DataHash *imprint);
 

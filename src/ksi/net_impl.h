@@ -67,7 +67,7 @@ extern "C" {
 
 		KSI_NetworkClient *client;
 
-		/** Addidtional context for the trasnport layer. */
+		/** Additional context for the transport layer. */
 		void *implCtx;
 		void (*implCtx_free)(void *);
 	};

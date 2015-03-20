@@ -51,7 +51,7 @@ const char *KSI_getErrorString(int statusCode) {
 		case KSI_UNTRUSTED_HASH_ALGORITHM:
 			return "The hash algorithm is not trusted.";
 		case KSI_UNAVAILABLE_HASH_ALGORITHM:
-			return "The hash algorith is not implemented or unavailable.";
+			return "The hash algorithm is not implemented or unavailable.";
 		case KSI_BUFFER_OVERFLOW:
 			return "Buffer overflow.";
 		case KSI_TLV_PAYLOAD_TYPE_MISMATCH:
@@ -170,12 +170,12 @@ int KSI_CTX_new(KSI_CTX **context) {
 
 	res = KSI_UriClient_new(ctx, &client);
 	if (res != KSI_OK) goto cleanup;
-	
+
 	res = KSI_setNetworkProvider(ctx, (KSI_NetworkClient *)client);
 	if (res != KSI_OK) goto cleanup;
 	ctx->isCustomNetProvider = 0;
 	client = NULL;
-	
+
 	/* Create and set the PKI truststore */
 	res = KSI_PKITruststore_new(ctx, 1, &pkiTruststore);
 	if (res != KSI_OK) goto cleanup;
@@ -240,7 +240,7 @@ static void globalCleanup(KSI_CTX *ctx) {
 	for (pos = 0; pos < KSI_List_length(ctx->cleanupFnList); pos++) {
 		res = KSI_List_elementAt(ctx->cleanupFnList, pos, (void **)&fn);
 		if (res != KSI_OK) {
-			KSI_LOG_error(ctx, "Unable to retreive cleanupfunction.");
+			KSI_LOG_error(ctx, "Unable to retrieve cleanup function.");
 			break;
 		}
 
@@ -596,7 +596,7 @@ void KSI_ERR_push(KSI_CTX *ctx, int statusCode, long extErrorCode, const char *f
 	/* Do nothing if the context is missing. */
 	if (ctx == NULL) return;
 
-	/* Do notihng if there's no error. */
+	/* Do nothing if there's no error. */
 	if (statusCode == KSI_OK) return;
 
 	/* Get the error container to use for storage. */
@@ -680,23 +680,23 @@ cleanup:
 
 int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *error, int *ext){
 	KSI_ERR *err = NULL;
-	
+
 	if (ctx == NULL || buf == NULL){
 		return KSI_INVALID_ARGUMENT;
-	} 
-	
+	}
+
 	err = ctx->errors;
-	
+
 	if (error != NULL)	*error = err->statusCode;
 	if (ext != NULL)	*ext = err->extErrorCode;
 
 	if(ctx->errors_count)
-		KSI_strncpy(buf, err->message, len);		
+		KSI_strncpy(buf, err->message, len);
 	else
-		KSI_strncpy(buf, "", len);		
-	
+		KSI_strncpy(buf, "", len);
+
 	return KSI_OK;
-} 
+}
 
 void *KSI_malloc(size_t size) {
 	return malloc(size);
@@ -719,7 +719,7 @@ int KSI_CTX_getStatus(KSI_CTX *ctx) {
 }
 
 static int KSI_CTX_setUri(KSI_CTX *ctx,
-		const char *uri, const char *loginId, const char *key, 
+		const char *uri, const char *loginId, const char *key,
 		int (*setter)(KSI_UriClient*, const char*, const char *, const char *)){
 	KSI_ERR err;
 	int res;
@@ -733,17 +733,17 @@ static int KSI_CTX_setUri(KSI_CTX *ctx,
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Unable to set url after initial network provider replacement.");
 		goto cleanup;
 	}
-	
+
 	client = (KSI_UriClient*)ctx->netProvider;
-	
+
 	res = setter(client, uri, loginId, key);
 	KSI_CATCH(&err, res) goto cleanup;
-	
+
 	KSI_SUCCESS(&err);
-	
+
 cleanup:
-		
-	return KSI_RETURN(&err);	
+
+	return KSI_RETURN(&err);
 }
 
 static int KSI_UriClient_setPublicationUrl_wrapper(KSI_UriClient *client, const char *uri, const char *not_used_1, const char *not_used_2){
@@ -774,17 +774,17 @@ static int KSI_CTX_setTimeoutSeconds(KSI_CTX *ctx, int timeout, int (*setter)(KS
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Unable to set timeout after initial network provider replacement.");
 		goto cleanup;
 	}
-	
+
 	client = (KSI_UriClient*)ctx->netProvider;
-	
+
 	res = setter(client, timeout);
 	KSI_CATCH(&err, res) goto cleanup;
-	
+
 	KSI_SUCCESS(&err);
-	
+
 cleanup:
-		
-	return KSI_RETURN(&err);	
+
+	return KSI_RETURN(&err);
 }
 
 int KSI_CTX_setConnectionTimeoutSeconds(KSI_CTX *ctx, int timeout){
@@ -834,20 +834,20 @@ CTX_VALUEP_GETTER(netProvider, NetworkProvider, KSI_NetworkClient)
 
 int KSI_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *netProvider){
     int res = KSI_UNKNOWN_ERROR;
-    
+
 	if (ctx == NULL){
         res = KSI_INVALID_ARGUMENT;
         goto cleanup;
     }
-    
+
 	if (ctx->netProvider != NULL) {
         KSI_NetworkClient_free (ctx->netProvider);
     }
-    
+
 	ctx->netProvider = netProvider;
     ctx->isCustomNetProvider = 1;
 	res = KSI_OK;
-	
+
 cleanup:
 	return res;
 }
@@ -894,7 +894,7 @@ int KSI_setPublicationCertEmail(KSI_CTX *ctx, const char *email) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
-	
+
 	if (email != NULL && email[0] != '\0') {
 		size_t len = strlen(email);
 		tmp = KSI_calloc(len + 1, 1);

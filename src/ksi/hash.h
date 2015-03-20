@@ -128,7 +128,7 @@ extern "C" {
 	int KSI_DataHash_clone(KSI_DataHash *from, KSI_DataHash **to);
 
 	/**
-	 * Interneal data access method.
+	 * Internal data access method.
 	 *
 	 * \param[in]	hash			Data hash object.
 	 * \param[out]	hash_id			Algorithm used to compute the hash.
@@ -146,7 +146,7 @@ extern "C" {
 	 * \param[in]		ctx				KSI context.
 	 * \param[in]		hash_id			Algorithm used to compute the digest value.
 	 * \param[in]		digest			Binary digest value.
-	 * \param[in]		digest_length	Lengt of the binary digest value.
+	 * \param[in]		digest_length	Length of the binary digest value.
 	 * \param[in]		hash			Pointer that will receive pointer to the hash object.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -155,11 +155,11 @@ extern "C" {
 	int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *digest, unsigned int digest_length, KSI_DataHash **hash);
 
 	/**
-	 * Encodes the data hash object as an imprtint.
+	 * Encodes the data hash object as an imprint.
 	 *
 	 * \param[in]	hash			Data hash object.
 	 * \param[out]	imprint			Pointer that will receive pointer to the imprint.
-	 * \param[out]	imprint_length	Pointer that will reveive the length of the imprint.
+	 * \param[out]	imprint_length	Pointer that will receive the length of the imprint.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
@@ -250,10 +250,10 @@ extern "C" {
 	int KSI_DataHash_getHashAlg(const KSI_DataHash *hash, int *hashAlg);
 
 	/**
-	 * Parses the metha value if the hash value is formatted:
+	 * Parses the meta value if the hash value is formatted:
 	 * - 2 bytes of length (n).
 	 * - n bytes of metadata.
-	 * - digest length - n bytse of padding with zero values.
+	 * - digest length - n bytes of padding with zero values.
 	 * \param[in]	metaHash		Metahash value.
 	 * \param[out]	data			Pointer to the receiving pointer.
 	 * \param[out]	data_len		Pointer to the receiving length variable.

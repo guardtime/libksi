@@ -1426,7 +1426,7 @@ int KSI_TLV_clone(const KSI_TLV *tlv, KSI_TLV **clone) {
 
 	KSI_ERR_clearErrors(tlv->ctx);
 
-	/* Selialize the entire tlv */
+	/* Serialize the entire tlv */
 	res = KSI_TLV_serialize(tlv, &buf, &buf_len);
 	if (res != KSI_OK) {
 		KSI_pushError(tlv->ctx, res, NULL);

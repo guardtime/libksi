@@ -162,7 +162,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 *
-	 * \note Extending to a specific time will remove calenendar auth record and publication record.
+	 * \note Extending to a specific time will remove calendar auth record and publication record.
 	 */
 	int KSI_Signature_extendTo(const KSI_Signature *signature, KSI_CTX *ctx, KSI_Integer *to, KSI_Signature **extended);
 
@@ -246,7 +246,7 @@ extern "C" {
 	
 	/**
 	 * This function verifies given hash value \c hsh using the signature \c sig. If
-	 * the hash value does not match the input hash value of the signeture, a
+	 * the hash value does not match the input hash value of the signature, a
 	 * #KSI_VERIFICATION_FAILURE error code is returned.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
@@ -256,7 +256,7 @@ extern "C" {
 	/**
 	 * Accessor method for verification results.
 	 * \param[in]	sig			KSI signature.
-	 * \param[out]	info		Pointer to the receiving ponter.
+	 * \param[out]	info		Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */

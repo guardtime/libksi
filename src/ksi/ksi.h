@@ -102,27 +102,27 @@ enum KSI_StatusCode {
 	 */
 	KSI_OUT_OF_MEMORY = 0x200,
 	/**
-	 * IO error occured.
+	 * IO error occurred.
 	 */
 	KSI_IO_ERROR = 0x201,
 	/**
-	 * A network error occured.
+	 * A network error occurred.
 	 */
 	KSI_NETWORK_ERROR = 0x202,
 	/**
-	 * A network connection timeout occured.
+	 * A network connection timeout occurred.
 	 */
 	KSI_NETWORK_CONNECTION_TIMEOUT = 0x203,
 	/**
-	 * A network send timeout occured.
+	 * A network send timeout occurred.
 	 */
 	KSI_NETWORK_SEND_TIMEOUT = 0x204,
 	/**
-	 * A network recieve timeout occured.
+	 * A network receive timeout occurred.
 	 */
 	KSI_NETWORK_RECIEVE_TIMEOUT = 0x205,
 	/**
-	 * A HTTP error occured.
+	 * A HTTP error occurred.
 	 */
 	KSI_HTTP_ERROR = 0x206,
 	/**
@@ -134,7 +134,7 @@ enum KSI_StatusCode {
 	 */
 	KSI_EXTEND_NO_SUITABLE_PUBLICATION = 0x208,
 	/**
-	 * The publication in the signature was not fround in the publications file.
+	 * The publication in the signature was not found in the publications file.
 	 */
 	KSI_VERIFICATION_FAILURE = 0x20a,
 	/**
@@ -153,7 +153,7 @@ enum KSI_StatusCode {
 	KSI_CRYPTO_FAILURE = 0x20d,
 	
 	/**
-	 * HMAC mismatch occured
+	 * HMAC mismatch occurred
 	 */
 	KSI_HMAC_MISMATCH = 0x20e,
 
@@ -196,7 +196,7 @@ enum KSI_StatusCode {
 	KSI_SERVICE_AGGR_REQUEST_TOO_LARGE = 0x407,
 	/**
 	 * The request combined with other requests from the same client in the same round would create an aggregation sub-tree
-	 * larger than allowed for the client (retrying in a later round could soucceed).
+	 * larger than allowed for the client (retrying in a later round could succeed).
 	 */
 	KSI_SERVICE_AGGR_REQUEST_OVER_QUOTA = 0x408,
 
@@ -229,7 +229,7 @@ enum KSI_StatusCode {
 	KSI_SERVICE_EXTENDER_REQUEST_TIME_IN_FUTURE = 0x40e,
 
 	/**
-	 * Unknown error occured.
+	 * Unknown error occurred.
 	 */
 	KSI_UNKNOWN_ERROR = 0xffff
 };
@@ -237,7 +237,7 @@ enum KSI_StatusCode {
 /**
  * This function returns a pointer to a constant string describing the
  * version number of the package.
- * \return A constant pointer to a sring.
+ * \return A constant pointer to a string.
  */
 const char *KSI_getVersion(void);
 
@@ -353,7 +353,7 @@ enum KSI_HashAlgorithm_en {
 	KSI_HASHALG_SHA3_256 = 0x08,
 	/** The SHA3-384 algorithm. */
 	KSI_HASHALG_SHA3_384 = 0x09,
-	/** The SHA3-512 algoritm */
+	/** The SHA3-512 algorithm */
 	KSI_HASHALG_SHA3_512 = 0x0a,
 	/** The SM3 algorithm.*/
 	KSI_HASHALG_SM3 = 0x0b,

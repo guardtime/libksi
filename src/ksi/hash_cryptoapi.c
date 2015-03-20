@@ -44,13 +44,13 @@ static void CRYPTO_HASH_CTX_free(CRYPTO_HASH_CTX *cryptoCtxt){
 static int CRYPTO_HASH_CTX_new(CRYPTO_HASH_CTX **cryptoCTX){
 	CRYPTO_HASH_CTX *tmp_crypto_ctx = NULL;
 	int res = KSI_UNKNOWN_ERROR;
-	
+
 	tmp_crypto_ctx = KSI_new(CRYPTO_HASH_CTX);
 	if (tmp_crypto_ctx == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 		}
-	
+
 	tmp_crypto_ctx->pt_CSP = 0;
 	tmp_crypto_ctx->pt_hHash = 0;
 	*cryptoCTX = tmp_crypto_ctx;
@@ -138,18 +138,18 @@ void KSI_DataHasher_free(KSI_DataHasher *hasher) {
 	}
 }
 
-//Teeb uue hasher obj, kontrollib, kas algoritm on ok ja restardib hasheri.
+
 int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
 	KSI_ERR err;
 	int res;
 	KSI_DataHasher *tmp_hasher = NULL;			//Abstract hasher object
 	CRYPTO_HASH_CTX *tmp_cryptoCTX = NULL;		//Hasher object helper struct
 	HCRYPTPROV tmp_CSP = 0;							//Crypto service provider
-	
+
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, hasher != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
-	
+
 	/*Test if hash algorithm is valid*/
 	if (!KSI_isHashAlgorithmSupported(hash_id)) {
 		KSI_FAIL(&err, KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
@@ -174,7 +174,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
 		KSI_FAIL(&err, res, NULL);
 		goto cleanup;
 	}
-		
+
 	/*Create new crypto service provider (CSP)*/
 	if (!CryptAcquireContext(&tmp_CSP, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)){
 		char errm[1024];
@@ -182,18 +182,18 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, errm);
 		goto cleanup;
 		}
-	
+
 	/*Set CSP in helper struct*/
 	tmp_cryptoCTX->pt_CSP = tmp_CSP;
 	/*Set helper struct in abstract struct*/
 	tmp_hasher->hashContext = tmp_cryptoCTX;
-	
+
 	res = KSI_DataHasher_reset(tmp_hasher);
 	if (res != KSI_OK) {
 		KSI_FAIL(&err, res, NULL);
 		goto cleanup;
 	}
-	
+
 	*hasher = tmp_hasher;
 	tmp_hasher = NULL;
 	tmp_cryptoCTX = NULL;
@@ -233,7 +233,7 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 	if (pTmp_hash != 0){
 		CryptDestroyHash(pTmp_hash);
 		}
-	
+
 	/*Create new hasher object*/
 	if (!CryptCreateHash(pCSP, msHashAlg, 0,0,&pTmp_hash)) {
 		DWORD error = GetLastError();
@@ -245,7 +245,7 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 	pCryptoCTX->pt_hHash = pTmp_hash;
 
 	pTmp_hash = 0;
-	
+
 	KSI_SUCCESS(&err);
 
 cleanup:
@@ -259,16 +259,16 @@ int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_len
 	KSI_CTX *ctx = NULL;
 	CRYPTO_HASH_CTX * pCryptoCTX = NULL;	//Crypto helper struct
 	HCRYPTHASH pHash = 0;			//Hash object
-	
+
 	KSI_PRE(&err, hasher != NULL) goto cleanup;
 	KSI_PRE(&err, data != NULL || data_length == 0) goto cleanup;
 	KSI_BEGIN(hasher->ctx, &err);
 
 	ctx = hasher->ctx;
-	
+
 	pCryptoCTX = (CRYPTO_HASH_CTX*)hasher->hashContext;
 	pHash = pCryptoCTX->pt_hHash;
-	
+
 	if (data_length > 0) {
 		if (!CryptHashData(pHash, data, data_length, 0)){
 			DWORD error = GetLastError();

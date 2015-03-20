@@ -208,7 +208,7 @@ static char *track_str(struct tlv_track_s *tr, size_t tr_len, size_t tr_size, ch
 	/* Make sure, the return value is null-terminated. */
 	buf[0] = '\0';
 
-	/* Generate the printable result string, by sepparating values with "->" */
+	/* Generate the printable result string, by separating values with "->" */
 	for (i = 0; i < tr_len && i < tr_size; i++) {
 		if (i != 0) len += KSI_snprintf(buf + len, buf_len - len, "->");
 		len += KSI_snprintf(buf + len, buf_len - len, "[0x%02x]%s", tr[i].tag, tr[i].desc != NULL ? tr[i].desc : "");
@@ -246,7 +246,7 @@ static int storeObjectValue(KSI_CTX *ctx, const KSI_TlvTemplate *tmpl, void *pay
 		}
 		res = tmpl->getValue(payload, &listp);
 		if (res != KSI_OK) goto cleanup;
-		
+
 		if (listp == NULL) {
 			/* Make sure we have required function pointers. */
 			if (tmpl->listNew == NULL || tmpl->listFree == NULL) {
@@ -261,13 +261,13 @@ static int storeObjectValue(KSI_CTX *ctx, const KSI_TlvTemplate *tmpl, void *pay
 
 			listp = list;
 		}
-		
+
 		res = tmpl->listAppend(listp, (void *) val);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
 		}
-		
+
 		res = tmpl->setValue(payload, listp);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
@@ -388,7 +388,7 @@ int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, unsigned raw_l
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tlv = NULL;
 	struct tlv_track_s tr[0xf];
-	
+
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || raw == NULL || tmpl == NULL || payload == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
@@ -525,7 +525,7 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 
 			if (valuep != NULL && !tmpl[i].multiple) {
 				compositeVal = NULL;
-				KSI_LOG_error(ctx, "Multiple occurrances of a unique tag 0x%02x", tmpl[i].tag);
+				KSI_LOG_error(ctx, "Multiple occurrences of a unique tag 0x%02x", tmpl[i].tag);
 				KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "To avoid memory leaks, a value may not be set more than once while parsing.");
 				goto cleanup;
 			}
