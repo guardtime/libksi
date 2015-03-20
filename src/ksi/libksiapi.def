@@ -183,6 +183,7 @@ EXPORTS
     KSI_LOG_logBlob
     KSI_LOG_logTlv
     KSI_LOG_logDataHash
+    KSI_LOG_logCtxError
     KSI_LOG_StreamLogger
     KSI_CTX_setLoggerCallback
 

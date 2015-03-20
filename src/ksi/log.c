@@ -183,6 +183,41 @@ cleanup:
 	return res;
 }
 
+int KSI_LOG_logCtxError(KSI_CTX *ctx, int level) {
+	KSI_ERR *err = NULL;
+	unsigned int i;
+	int res = KSI_UNKNOWN_ERROR;
+
+	if(ctx == NULL) goto cleanup;
+
+	if (level < ctx->logLevel) {
+		res = KSI_OK;
+		goto cleanup;
+	}
+	KSI_LOG_log(ctx, level, "KSI error trace:");
+	if (ctx->errors_count == 0) {
+		KSI_LOG_log(ctx, level, "  No errors.");
+		goto cleanup;
+	}
+
+	/* List all errors, starting from the most general. */
+	for (i = 0; i < ctx->errors_count && i < ctx->errors_size; i++) {
+		err = ctx->errors + ((ctx->errors_count - i - 1) % ctx->errors_size);
+		KSI_LOG_log(ctx, level, "  %3u) %s:%u - (%d/%ld) %s", ctx->errors_count - i, err->fileName, err->lineNr,err->statusCode, err->extErrorCode, err->message);
+	}
+
+	/* If there where more errors than buffers for the errors, indicate the fact */
+	if (ctx->errors_count > ctx->errors_size) {
+		KSI_LOG_log(ctx, level, "  ... (more errors)");
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 int KSI_LOG_StreamLogger(void *logCtx, int logLevel, const char *message) {
 	char time_buf[32];
 	struct tm *tm_info;
