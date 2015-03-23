@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <ksi/ksi.h>
-#include <ksi/net_http.h>
 
 int main(int argc, char **argv) {
 	int res = KSI_UNKNOWN_ERROR;
