@@ -27,7 +27,6 @@ int main(int argc, char **argv) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ksi = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_HttpClient *net = NULL;
 	KSI_DataHash *hsh = NULL;
 	KSI_DataHasher *hsr = NULL;
 	FILE *in = NULL;
@@ -60,30 +59,20 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	res = KSI_HttpClient_new(ksi, &net);
+	res = KSI_CTX_setExtender(ksi, argv[3], "anon", "anon");
 	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to create new network provider.\n");
+		fprintf(stderr, "Unable to set extender parameters.\n");
 		goto cleanup;
 	}
 
-	res = KSI_HttpClient_setExtender(net, argv[3], "anon", "anon");
-	if (res != KSI_OK) goto cleanup;
-
 	if (strncmp("-", argv[4], 1)) {
 		/* Set the publications file url. */
-		res = KSI_HttpClient_setPublicationUrl(net, argv[4]);
+		res = KSI_CTX_setPublicationUrl(ksi, argv[4]);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable to set publications file url.\n");
 			goto cleanup;
 		}
 	}
-
-	res = KSI_setNetworkProvider(ksi, (KSI_NetworkClient *)net);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to set new network provider.\n");
-		goto cleanup;
-	}
-	net = NULL;
 
 	printf("Reading signature... ");
 	/* Read the signature. */
@@ -168,7 +157,6 @@ cleanup:
 
 	if (in != NULL) fclose(in);
 
-	KSI_HttpClient_free(net);
 	KSI_Signature_free(sig);
 	KSI_DataHasher_free(hsr);
 	KSI_DataHash_free(hsh);
