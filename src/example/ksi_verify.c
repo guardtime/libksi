@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
 	/* Check parameters. */
 	if (argc != 5) {
 		fprintf(stderr, "Usage\n"
-				"  %s <data file> <signature> <extender url> <pub-file url | ->\n", argv[0]);
+				"  %s <data file | -> <signature> <extender url> <pub-file url | ->\n", argv[0]);
 		goto cleanup;
 	}
 
@@ -90,31 +90,36 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	in = fopen(argv[1], "rb");
-	if (in == NULL) {
-		fprintf(stderr, "Unable to open data file '%s'.\n", argv[1]);
-		goto cleanup;
-	}
-
-	/* Calculate the hash of the document. */
-	while (!feof(in)) {
-		buf_len = (unsigned)fread(buf, 1, sizeof(buf), in);
-		res = KSI_DataHasher_add(hsr, buf, buf_len);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Unable hash the document.\n");
+	if (strcmp(argv[1], "-")) {
+		in = fopen(argv[1], "rb");
+		if (in == NULL) {
+			fprintf(stderr, "Unable to open data file '%s'.\n", argv[1]);
 			goto cleanup;
 		}
+		/* Calculate the hash of the document. */
+		while (!feof(in)) {
+			buf_len = (unsigned)fread(buf, 1, sizeof(buf), in);
+			res = KSI_DataHasher_add(hsr, buf, buf_len);
+			if (res != KSI_OK) {
+				fprintf(stderr, "Unable hash the document.\n");
+				goto cleanup;
+			}
+		}
+
+		/* Finalize the hash computation. */
+		res = KSI_DataHasher_close(hsr, &hsh);
+		if (res != KSI_OK) {
+			fprintf(stderr, "Failed to close the hashing process.\n");
+			goto cleanup;
+		}
+
+		printf("Verifying document hash... ");
+		res = KSI_Signature_verifyDataHash(sig, ksi, hsh);
+	} else {
+		printf("Verifiyng signature...");
+		res = KSI_Signature_verify(sig, ksi);
 	}
 
-	/* Finalize the hash computation. */
-	res = KSI_DataHasher_close(hsr, &hsh);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Failed to close the hashing process.\n");
-		goto cleanup;
-	}
-
-	printf("Verifying document hash... ");
-	res = KSI_Signature_verifyDataHash(sig, ksi, hsh);
 	switch (res) {
 		case KSI_OK:
 			printf("ok\n");
