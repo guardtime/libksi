@@ -33,9 +33,6 @@
 #include "tlv.h"
 #include "pkitruststore.h"
 
-/* Hide the following line to deactivate. */
-#define MAGIC_EMAIL "publications@guardtime.com"
-
 static const char *defaultCaFile =
 #ifdef OPENSSL_CA_FILE
 	OPENSSL_CA_FILE;
