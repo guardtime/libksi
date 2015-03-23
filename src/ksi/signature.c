@@ -2171,8 +2171,8 @@ static int KSI_Signature_verifyPolicy(KSI_Signature *sig, unsigned *policy, KSI_
 
 		if (sig->verificationResult.stepsFailed & pol) {
 			KSI_LOG_debug(sig->ctx, "Verification failed with steps: 0x%02x", sig->verificationResult.stepsFailed);
-			KSI_FAIL(&err, KSI_VERIFICATION_FAILURE, "One of the performed verification steps failed.");
-			continue;
+			KSI_FAIL(&err, KSI_VERIFICATION_FAILURE, KSI_VerificationResult_lastFailureMessage(&sig->verificationResult));
+			goto cleanup;
 		}
 
 		if ((pol & sig->verificationResult.stepsPerformed) == pol) {
