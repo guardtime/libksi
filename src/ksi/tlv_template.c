@@ -434,7 +434,6 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 	KSI_TLV *tlv = NULL;
 	char buf[1024];
 
-	KSI_uint64_t uint64Val = 0;
 	void *voidVal = NULL;
 	void *compositeVal = NULL;
 	void *valuep = NULL;
@@ -470,7 +469,6 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 
 	while (1) {
 		int matchCount = 0;
-		size_t len = 0;
 		res = generator(generatorCtx, &tlv);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);

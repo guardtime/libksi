@@ -28,7 +28,7 @@
 
 #ifndef _WIN32
 #  include "sys/socket.h"
-#  define socket_error errno 
+#  define socket_error errno
 #  define socketTimedOut EWOULDBLOCK
 #else
 #  define socket_error WSAGetLastError()
@@ -374,7 +374,7 @@ cleanup:
 static int readFromSocket(KSI_RDR *rdr, unsigned char *buffer, const size_t size, size_t *readCount) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t count = 0;
-	
+
 	if (rdr == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
@@ -387,8 +387,13 @@ static int readFromSocket(KSI_RDR *rdr, unsigned char *buffer, const size_t size
 		goto cleanup;
 	}
 
+	if(size > INT_MAX){
+		KSI_pushError(rdr->ctx, res = KSI_INVALID_ARGUMENT, "Unable to read more than MAX_INT from the socket.");
+		goto cleanup;
+	}
+
 	while (!rdr->eof && size > count) {
-		int c = recv(rdr->data.socketfd, (char *)buffer + count, (size - count), 0);
+		int c = recv(rdr->data.socketfd, (char *)buffer + count, (int)(size - count), 0);
 
 		if (c < 0) {
 			if (socket_error == socketTimedOut) {

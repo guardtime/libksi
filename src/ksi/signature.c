@@ -1017,7 +1017,6 @@ cleanup:
 
 int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI_PublicationRecord *pubRec, KSI_Signature **extended) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_Integer *respStatus = NULL;
 	KSI_Integer *pubTime = NULL;
 	KSI_PublicationRecord *pubRecClone = NULL;
 	KSI_Signature *tmp = NULL;
@@ -1591,7 +1590,7 @@ static int verifyInternallyAggregationChain(KSI_Signature *sig) {
 				res = KSI_VerificationResult_addFailure(info, step, "Unexpected chain index length in aggregation chain.");
 				goto cleanup;
 			} else {
-				int j;
+				unsigned j;
 				for (j = 0; j < KSI_IntegerList_length(aggregationChain->chainIndex); j++) {
 					KSI_Integer *chainIndex1 = NULL;
 					KSI_Integer *chainIndex2 = NULL;

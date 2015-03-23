@@ -44,13 +44,14 @@ const char* getMSError(DWORD dw)
         dw,
         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
         (LPTSTR) &lpMsgBuf,
-        0, NULL );
+        0, NULL);
 
 	tmp = (char*)lpMsgBuf;
 	tmp[strlen(tmp)-2] = 0;
-	KSI_snprintf(ms_error, sizeof(ms_error),"CryptoAPI: %s", lpMsgBuf);
+	KSI_snprintf(ms_error, sizeof(ms_error), "CryptoAPI: %s", lpMsgBuf);
     LocalFree(lpMsgBuf);
-    return ms_error;
+
+	return ms_error;
 }
 
 static int KSI_PKITruststore_global_initCount = 0;
@@ -89,11 +90,11 @@ static void cryptopapiGlobal_cleanup(void) {
 }
 
 static ALG_ID algIdFromOID(const char *OID){
-	if (strcmp(OID,szOID_RSA_SHA256RSA) == 0) return CALG_SHA_256;
-	else if (strcmp(OID,szOID_RSA_SHA1RSA) == 0) return CALG_SHA1;
-	else if (strcmp(OID,szOID_RSA_SHA384RSA) == 0) return CALG_SHA_384;
-	else if (strcmp(OID,szOID_RSA_SHA512RSA) == 0) return CALG_SHA_512;
-	else return -1;
+	if (strcmp(OID, szOID_RSA_SHA256RSA) == 0) return CALG_SHA_256;
+	else if (strcmp(OID, szOID_RSA_SHA1RSA) == 0) return CALG_SHA1;
+	else if (strcmp(OID, szOID_RSA_SHA384RSA) == 0) return CALG_SHA_384;
+	else if (strcmp(OID, szOID_RSA_SHA512RSA) == 0) return CALG_SHA_512;
+	else return 0;
 	}
 
 /*TODO: Check CertClose error handling*/
@@ -215,7 +216,7 @@ cleanup:
 	if (tmp_FileTrustStore) CertCloseStore(tmp_FileTrustStore, CERT_CLOSE_STORE_CHECK_FLAG);
 	return KSI_RETURN(&err);
 }
-/*+ TODO: Is CertOpenSystemStore as "ROOT" OK*/
+
 int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **trust) {
 	KSI_ERR err;
 	KSI_PKITruststore *tmp = NULL;
@@ -442,7 +443,7 @@ int KSI_PKICertificate_new(KSI_CTX *ctx, const void *der, size_t der_len, KSI_PK
 	x509 = CertCreateCertificateContext(X509_ASN_ENCODING, der, (unsigned)der_len);
 	if (x509 == NULL) {
 		DWORD error = GetLastError();
-		char *errmsg = getMSError(error);
+		const char *errmsg = getMSError(error);
 		if (error == CRYPT_E_ASN1_EOD)
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, "Invalid PKI certificate. ASN.1 unexpected end of data.");
 		else if (error == CRYPT_E_ASN1_MEMORY	)
@@ -779,10 +780,9 @@ static int isUntrustedRootCertInStore(const KSI_PKITruststore *pki, const PCCERT
 		if (element->TrustStatus.dwErrorStatus&CERT_TRUST_IS_UNTRUSTED_ROOT && element->TrustStatus.dwInfoStatus&CERT_TRUST_IS_SELF_SIGNED){
 			pUntrustedRootCert = element->pCertContext;
 
-			while (certFound = CertEnumCertificatesInStore(pki->collectionStore,certFound)){
+			while ((certFound = CertEnumCertificatesInStore(pki->collectionStore, certFound)) != NULL){
 				if (certFound->cbCertEncoded == pUntrustedRootCert->cbCertEncoded){
 						if (memcmp(certFound->pbCertEncoded, pUntrustedRootCert->pbCertEncoded, certFound->cbCertEncoded)==0){
-//							printf("Untrusted root is in collection store\n");
 							CertFreeCertificateContext(certFound);
 							return true;
 					}
@@ -859,7 +859,7 @@ static int KSI_PKITruststore_verifyCertificate(const KSI_PKITruststore *pki, con
 	policyPara.cbSize = sizeof(CERT_CHAIN_POLICY_PARA);
 	policyPara.pvExtraPolicyPara = 0;
 
-	if (!CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE,pChainContext, &policyPara, &policyStatus)) {
+	if (!CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, pChainContext, &policyPara, &policyStatus)) {
 		KSI_LOG_debug(pki->ctx, "%s", getMSError(GetLastError()));
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, NULL);
 		goto cleanup;
@@ -933,7 +933,7 @@ int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned cha
 	KSI_CTX *ctx = NULL;
 	PCCERT_CONTEXT subjectCert = NULL;
 	CRYPT_VERIFY_MESSAGE_PARA msgPara;
-
+	DWORD dLen;
 
 	KSI_PRE(&err, pki != NULL) goto cleanup;
 	KSI_PRE(&err, data != NULL) goto cleanup;
@@ -954,27 +954,23 @@ int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned cha
     msgPara.hCryptProv = 0;
     msgPara.pfnGetSignerCertificate = NULL;
     msgPara.pvGetArg = NULL;
+	dLen = (DWORD)data_len;
 
-	if (!CryptVerifyDetachedMessageSignature(&msgPara,0,signature->pkcs7.pbData,signature->pkcs7.cbData,1,&data,&data_len,&subjectCert)){
+	if (!CryptVerifyDetachedMessageSignature(&msgPara, 0, signature->pkcs7.pbData, signature->pkcs7.cbData, 1, &data, &dLen, &subjectCert)){
 		DWORD error = GetLastError();
 		const char *errmsg = 	getMSError(error);
 		KSI_LOG_debug(pki->ctx, "%s", errmsg);
-//		for debugging
-//		printCertInfo(subjectCert);
+
 		if (error == E_INVALIDARG || error == CRYPT_E_UNEXPECTED_MSG_TYPE || error == CRYPT_E_NO_SIGNER)
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, errmsg);
-		else if (NTE_BAD_ALGID)
+		else if (error == NTE_BAD_ALGID)
 			KSI_FAIL(&err, KSI_INVALID_PKI_SIGNATURE, errmsg);
-		else if (NTE_BAD_SIGNATURE)
+		else if (error == NTE_BAD_SIGNATURE)
 			KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Verification of PKI signature failed.");
 		else
 			KSI_FAIL(&err, KSI_CRYPTO_FAILURE, errmsg);
 		goto cleanup;
 	}
-
-//	TODO: for debugging
-//	KSI_LOG_debug(ctx, "CryptoAPI: Subjects PKI Certificate info:");
-//	printCertInfo(subjectCert);
 
 	res = KSI_PKITruststore_verifyCertificate(pki, subjectCert);
 	KSI_CATCH(&err, res) goto cleanup;
@@ -1014,7 +1010,7 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 
 
 	algorithm = algIdFromOID(algoOid);
-	if (algorithm == -1) {
+	if (algorithm == 0) {
 		KSI_FAIL(&err, KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
 		goto cleanup;
 	}

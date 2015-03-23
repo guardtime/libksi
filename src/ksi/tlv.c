@@ -528,6 +528,10 @@ int KSI_TLV_fromReader(KSI_RDR *rdr, KSI_TLV **tlv) {
 	res = KSI_TLV_readTlv(rdr, buf, sizeof(buf), &consumed);
 	if (res != KSI_OK) goto cleanup;
 
+	if(consumed > UINT_MAX){
+		KSI_pushError(KSI_RDR_getCtx(rdr), res = KSI_INVALID_ARGUMENT, "Unable to parse more data than UINT_MAX.");
+		goto cleanup;
+	}
 
 	if (consumed > 0) {
 		raw = KSI_malloc(consumed);
@@ -537,7 +541,7 @@ int KSI_TLV_fromReader(KSI_RDR *rdr, KSI_TLV **tlv) {
 		}
 		memcpy(raw, buf, consumed);
 
-		res = KSI_TLV_parseBlob2(KSI_RDR_getCtx(rdr), raw, consumed, 1, &tmp);
+		res = KSI_TLV_parseBlob2(KSI_RDR_getCtx(rdr), raw, (unsigned)consumed, 1, &tmp);
 		if (res != KSI_OK) goto cleanup;
 
 		raw = NULL;

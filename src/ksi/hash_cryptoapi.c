@@ -77,7 +77,7 @@ static const ALG_ID hashAlgorithmToALG_ID(int hash_id)
 		case KSI_HASHALG_SHA2_512:
 			return CALG_SHA_512;
 		default:
-			return -1;
+			return 0;
 	}
 }
 
@@ -115,7 +115,12 @@ static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 	/*After final call pHash is can not be used further*/
 	CryptGetHashParam(pHash, HP_HASHVAL, data_hash->imprint + 1, &digest_length,0);
 
-	data_hash->imprint[0] = hasher->algorithm;
+	if (hasher->algorithm > 0xff) {
+		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Hash algorithm ID is larger than one byte.");
+		goto cleanup;
+	}
+
+	data_hash->imprint[0] = (unsigned char)hasher->algorithm;
 	data_hash->imprint_length = digest_length + 1;
 
 	KSI_SUCCESS(&err);
@@ -127,7 +132,7 @@ cleanup:
 
 
 int KSI_isHashAlgorithmSupported(int hash_id) {
-	return hashAlgorithmToALG_ID(hash_id) != -1;
+	return hashAlgorithmToALG_ID(hash_id) != 0;
 }
 
 
@@ -224,7 +229,7 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 
 	/*Convert hash algorithm into crypto api style*/
 	msHashAlg = hashAlgorithmToALG_ID(hasher->algorithm);
-	if (msHashAlg == -1) {
+	if (msHashAlg == 0) {
 		KSI_FAIL(&err, KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
 		goto cleanup;
 	}
@@ -269,8 +274,13 @@ int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_len
 	pCryptoCTX = (CRYPTO_HASH_CTX*)hasher->hashContext;
 	pHash = pCryptoCTX->pt_hHash;
 
+	if(data_length > UINT_MAX){
+		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Cryptoapi: Unable to add mote than UINT_MAX data to the hasher.");
+		goto cleanup;
+	}
+
 	if (data_length > 0) {
-		if (!CryptHashData(pHash, data, data_length, 0)){
+		if (!CryptHashData(pHash, data, (DWORD)data_length, 0)){
 			DWORD error = GetLastError();
 			KSI_LOG_debug(ctx, "Cryptoapi: HashData error %i\n", error);
 			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Cryptoapi: Unable to add data to the hash");
