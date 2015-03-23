@@ -97,6 +97,13 @@ void KSI_ERR_success(KSI_ERR *err);
 void KSI_ERR_push(KSI_CTX *ctx, int statusCode, long extErrorCode, const char *fileName, unsigned int lineNr, const char *message);
 
 /**
+ * Finalizes the current error stack.
+ * \param[in]		err		Pointer to the error object.
+ */
+int KSI_ERR_apply(KSI_ERR *err);
+int KSI_ERR_pre(KSI_ERR *err, int cond, char *fileName, int lineNr);
+
+/**
  * @}
  */
 #ifdef __cplusplus

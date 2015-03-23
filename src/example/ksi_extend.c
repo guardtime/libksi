@@ -75,14 +75,12 @@ int main(int argc, char **argv) {
 		if (res != KSI_OK) goto cleanup;
 	}
 
-	res = KSI_setNetworkProvider(ksi, (KSI_NetworkClient *)net);
+	res = KSI_CTX_setNetworkProvider(ksi, (KSI_NetworkClient *)net);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to set new network provider.\n");
 		goto cleanup;
 	}
 
-	/* Clear the errors. */
-	KSI_ERR_clearErrors(ksi);
 	/* Read the signature. */
 	res = KSI_Signature_fromFile(ksi, argv[1], &sig);
 	if (res != KSI_OK) {

@@ -872,3 +872,4 @@ EXPORTS
     KSI_VerificationStepResult_getStep
     KSI_VerificationStepResult_isSuccess
     KSI_VerificationStepResult_getDescription
+    KSI_VerificationResult_lastFailureMessage

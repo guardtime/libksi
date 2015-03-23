@@ -25,13 +25,10 @@
 #include <stdint.h>
 
 #include "types.h"
-#include "err.h"
 #include "hash.h"
 #include "publicationsfile.h"
 #include "log.h"
-#include "net.h"
 #include "signature.h"
-#include "pkitruststore.h"
 #include "verification.h"
 
 #ifdef __cplusplus
@@ -291,22 +288,6 @@ void KSI_CTX_free(KSI_CTX *ctx);
 int KSI_CTX_registerGlobals(KSI_CTX *ctx, int (*initFn)(void), void (*cleanupFn)(void));
 
 /**
- * Returns the current status of the error container.
- * \param[in]	ctx		KSI context.
- *
- * \return The current status code of the KSI \c ctx. If \c ctx is NULL a
- * #KSI_INVALID_ARGUMENT is returned.
- */
-int KSI_CTX_getStatus(KSI_CTX *ctx);
-
-/**
- * Finalizes the current error stack.
- * \param[in]		err		Pointer to the error object.
- */
-int KSI_ERR_apply(KSI_ERR *err);
-int KSI_ERR_pre(KSI_ERR *err, int cond, char *fileName, int lineNr);
-
-/**
  * Dump error stack trace to stream.
  * \param[in]		ctx		KSI context object.
  * \param[in]		f		Output stream.
@@ -481,18 +462,6 @@ int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extend
 int KSI_CTX_setLogLevel(KSI_CTX *ctx, int level);
 
 /**
- * Set the log output file.
- * \param[in]		ctx			KSI context.
- * \param[in]		fileName	Output file name.
- *
- * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- * \note When the fileName is set to \c NULL the log is sent to the standard output. To
- * turn the logger off use #KSI_CTX_setLogLevel with #KSI_LOG_NONE.
- * \see #KSI_CTX_setLogLevel
- */
-KSI_FN_DEPRECATED(int KSI_CTX_setLogFile(KSI_CTX *ctx, char *fileName));
-
-/**
  * This function sets the callback for logging for the context.
  * \param[in]	ctx		KSI context.
  * \param[in]	cb		Logger callback function.
@@ -512,21 +481,109 @@ int KSI_CTX_setLoggerCallback(KSI_CTX *ctx, KSI_LoggerCallback cb, void *logCtx)
  */
 int KSI_CTX_setRequestHeaderCallback(KSI_CTX *ctx, KSI_RequestHeaderCallback cb);
 
+/**
+ * Setter for publications file url.
+ * \param[in]	ctx		KSI_context.
+ * \param[in]	uri		URL to the publications file.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
 int KSI_CTX_setPublicationUrl(KSI_CTX *ctx, const char *uri);
+
+/**
+ * Configuration method for the extender.
+ * \param[in]	ctx		KSI context.
+ * \param[in]	uri		Extending service URI.
+ * \param[in]	loginId The login id for the service.
+ * \param[in]	key		Key for the loginId.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
 int KSI_CTX_setExtender(KSI_CTX *ctx, const char *uri, const char *loginId, const char *key);
+
+/**
+ * Configuration method for the aggregator.
+ * \param[in]	ctx		KSI context.
+ * \param[in]	uri		Aggregation service URI.
+ * \param[in]	loginId The login id for the service.
+ * \param[in]	key		Key for the loginId.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
 int KSI_CTX_setAggregator(KSI_CTX *ctx, const char *uri, const char *loginId, const char *key);
+
+/**
+ * Setter for transfer timeout.
+ * \param[in]	ctx		KSI context.
+ * \param[in]	timeout	Transfer timeout in seconds.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
 int KSI_CTX_setTransferTimeoutSeconds(KSI_CTX *ctx, int timeout);
+
+/**
+ * Setter for connection timeout.
+ * \param[in]	ctx		KSI context.
+ * \param[in]	timeout	Connection timeout in seconds.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
 int KSI_CTX_setConnectionTimeoutSeconds(KSI_CTX *ctx, int timeout);
 
-int KSI_getPKITruststore(KSI_CTX *ctx, KSI_PKITruststore **pki);
-int KSI_getNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient **net);
-int KSI_setPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile *var);
-int KSI_getPublicationCertEmail(KSI_CTX *ctx, const char **address);
+/**
+ * Setter function for the publications file.
+ * \param[in]	ctx		KSI context.
+ * \param[in]	var		Publications file.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
+int KSI_CTX_setPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile *var);
 
-int KSI_setPKITruststore(KSI_CTX *ctx, KSI_PKITruststore *pki);
-int KSI_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *net);
-int KSI_getPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **var);
-int KSI_setPublicationCertEmail(KSI_CTX *ctx, const char *email);
+/**
+ * Setter for the PKI truststore.
+ * \param[in]	ctx		KSI context.
+ * \param[in]	pki		PKI trust store.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
+int KSI_CTX_setPKITruststore(KSI_CTX *ctx, KSI_PKITruststore *pki);
+
+/**
+ * Setter for the network provider.
+ * \param[in]	ctx		KSI context,.
+ * \param[in]	net		Network provider.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
+int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *net);
+
+/**
+ * Setter for the e-mail address used to verify the PKI signature in the publications file.
+ * \param[in]	ctx		KSI context.
+ * \param[in]	email	Email address.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \note After a successful call to this function the original pointer to email can be freed.
+ */
+int KSI_CTX_setPublicationCertEmail(KSI_CTX *ctx, const char *email);
+
+/**
+ * Getter function for the PKI truststore object.
+ * \param[in]	ctx		KSI context.
+ * \param[out]	pki		Pointer to the receiving PKI trust store pointer.
+  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
+int KSI_CTX_getPKITruststore(KSI_CTX *ctx, KSI_PKITruststore **pki);
+
+/**
+ * Getter function for the publications file.
+ * \param[in]	ctx		KSI context.
+ * \param[out]	var		Pointer to the receiving pointer to publications file.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
+int KSI_CTX_getPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **var);
+
+/**
+ * Getter function for the e-mail address used to verify the publications file PKI signature.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \param[in]	ctx		KSI context.
+ * \param[out]	address	Pointer to the receiving pointer.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \note The user may not free the output pointer, as it belongs to the context.
+ */
+int KSI_CTX_getPublicationCertEmail(KSI_CTX *ctx, const char **address);
+
 /**
  * @}
  */

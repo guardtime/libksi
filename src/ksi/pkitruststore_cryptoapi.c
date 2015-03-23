@@ -29,6 +29,7 @@
 #include <Wincrypt.h>
 
 #include "tlv.h"
+#include "pkitruststore.h"
 
 const char* getMSError(DWORD dw) 
 { 

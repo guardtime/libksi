@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
 	}
 
 	/* Set the new network provider. */
-	res = KSI_setNetworkProvider(ksi, (KSI_NetworkClient*)net);
+	res = KSI_CTX_setNetworkProvider(ksi, (KSI_NetworkClient*)net);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to set network provider.\n");
 		res = KSI_UNKNOWN_ERROR;

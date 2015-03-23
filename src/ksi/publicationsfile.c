@@ -30,6 +30,7 @@
 #include "publicationsfile_impl.h"
 #include "tlv.h"
 #include "tlv_template.h"
+#include "pkitruststore.h"
 
 #define PUB_FILE_HEADER_ID "KSIPUBLF"
 
@@ -285,7 +286,7 @@ int KSI_PublicationsFile_verify(KSI_PublicationsFile *pubFile, KSI_CTX *ctx) {
 		goto cleanup;
 	}
 
-	res = KSI_getPKITruststore(useCtx, &pki);
+	res = KSI_CTX_getPKITruststore(useCtx, &pki);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_PKITruststore_verifySignature(pki, pubFile->raw, pubFile->signedDataLength, pubFile->signature);

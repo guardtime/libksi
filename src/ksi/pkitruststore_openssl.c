@@ -31,6 +31,7 @@
 #include <openssl/x509.h>
 
 #include "tlv.h"
+#include "pkitruststore.h"
 
 /* Hide the following line to deactivate. */
 #define MAGIC_EMAIL "publications@guardtime.com"
@@ -670,7 +671,7 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 
 	KSI_LOG_debug(pki->ctx, "Verifying PKI signature certificate.");
 
-	res = KSI_getPublicationCertEmail(pki->ctx, &magicEmail);
+	res = KSI_CTX_getPublicationCertEmail(pki->ctx, &magicEmail);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	if (magicEmail != NULL) {

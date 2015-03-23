@@ -22,8 +22,9 @@
 #include <string.h>
 
 #include <ksi/ksi.h>
-
 #include <ksi/compatibility.h>
+#include <ksi/publicationsfile.h>
+#include <ksi/pkitruststore.h>
 
 int toHex(KSI_OctetString *certId, char **hex) {
 	int res = KSI_UNKNOWN_ERROR;
