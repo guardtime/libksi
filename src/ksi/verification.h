@@ -167,6 +167,14 @@ extern "C" {
 	int KSI_VerificationResult_isStepSuccess(const KSI_VerificationResult *info, enum KSI_VerificationStep_en step);
 
 	/**
+	 * Returns a pointer to the last failure message. If there are no failure messages or
+	 * an error occurred \c NULL is returned.
+	 * \param[in]	info		Verification result.
+	 * \returns Pointer to the last failure message or \c NULL.
+	 */
+	const char *KSI_VerificationResult_lastFailureMessage(const KSI_VerificationResult *info);
+
+	/**
 	 * Returns the #KSI_VerificationStep value or 0 on an error.
 	 * \param[in]	result 		Verification step result.
 	 * \returns 0 if the given verification step was unsuccessful or not performed.
