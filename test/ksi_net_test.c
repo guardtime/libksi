@@ -698,9 +698,6 @@ static void smartServiceSetterSchemeTest(CuTest *tc, KSI_CTX *ctx, const char *s
 	res = KSI_snprintf(scheme_ext_url, sizeof(scheme_ext_url), "%sext.com:8011/", scheme);
 	CuAssert(tc, "Unable to generate extender url.", res != -1);
 
-	res = KSI_CTX_new(&ctx);
-	CuAssert(tc, "KSI_CTX_init did not return KSI_OK.", res == KSI_OK);
-
 	client = (KSI_UriClient*)ctx->netProvider;
 	CuAssert(tc, "KSI_CTX has no network provider.", client != NULL);
 	CuAssert(tc, "KSI_CTX network provider is not initial.", ctx->isCustomNetProvider == 0);
