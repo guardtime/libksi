@@ -76,29 +76,6 @@ static void TestCtxInit(CuTest* tc) {
 	KSI_CTX_free(ctx);
 }
 
-
-
-static void TestCtxAddFailure(CuTest* tc) {
-	int res = KSI_UNKNOWN_ERROR;
-
-	KSI_CTX *ctx = NULL;
-	res = KSI_CTX_new(&ctx);
-	CuAssert(tc, "Unable to create ctx", res == KSI_OK && ctx != NULL);
-
-	res = failingMethod(ctx, 1);
-	CuAssert(tc, "Adding first fault failed.", res == KSI_INVALID_ARGUMENT);
-
-	CuAssert(tc, "Context does not detect failure.", KSI_CTX_getStatus(ctx) != KSI_OK);
-
-	KSI_ERR_clearErrors(ctx);
-	CuAssert(tc, "Clear error may not set state to success.", KSI_CTX_getStatus(ctx) != KSI_OK);
-
-	res = failingMethod(ctx, 0);
-	CuAssert(tc, "Context did not succeed", res == KSI_OK && KSI_CTX_getStatus(ctx) == KSI_OK);
-
-	KSI_CTX_free(ctx);
-}
-
 static void TestCtxAddFailureOverflow(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
 	int i;
@@ -149,7 +126,6 @@ CuSuite* KSITest_CTX_getSuite(void)
 	CuSuite* suite = CuSuiteNew();
 
 	SUITE_ADD_TEST(suite, TestCtxInit);
-	SUITE_ADD_TEST(suite, TestCtxAddFailure);
 	SUITE_ADD_TEST(suite, TestCtxAddFailureOverflow);
 	SUITE_ADD_TEST(suite, TestCtxFailingPreCondition);
 	SUITE_ADD_TEST(suite, TestRegisterGlobals);

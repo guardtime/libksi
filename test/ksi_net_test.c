@@ -19,6 +19,9 @@
  */
 
 #include <string.h>
+#include <ksi/net.h>
+#include <ksi/pkitruststore.h>
+
 #include "all_tests.h"
 #include "../src/ksi/ctx_impl.h"
 #include "../src/ksi/net_http_impl.h"
@@ -56,7 +59,7 @@ static void testSigning(CuTest* tc) {
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
 
-	res = KSI_setNetworkProvider(ctx, pr);
+	res = KSI_CTX_setNetworkProvider(ctx, pr);
 	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
@@ -96,7 +99,7 @@ static void testAggreAuthFailure(CuTest* tc) {
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
 
-	res = KSI_setNetworkProvider(ctx, pr);
+	res = KSI_CTX_setNetworkProvider(ctx, pr);
 	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
@@ -190,7 +193,7 @@ static void testAggregationHeader(CuTest* tc) {
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
 
-	res = KSI_setNetworkProvider(ctx, pr);
+	res = KSI_CTX_setNetworkProvider(ctx, pr);
 	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
@@ -364,7 +367,7 @@ static void testExtAuthFailure(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_getPKITruststore(ctx, &pki);
+	res = KSI_CTX_getPKITruststore(ctx, &pki);
 	CuAssert(tc, "Unable to get PKI Truststore", res == KSI_OK && pki != NULL);
 
 	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
@@ -373,7 +376,7 @@ static void testExtAuthFailure(CuTest* tc) {
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
 
-	res = KSI_setNetworkProvider(ctx, pr);
+	res = KSI_CTX_setNetworkProvider(ctx, pr);
 	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
@@ -406,7 +409,7 @@ static void testExtendingWithoutPublication(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_getPKITruststore(ctx, &pki);
+	res = KSI_CTX_getPKITruststore(ctx, &pki);
 	CuAssert(tc, "Unable to get PKI Truststore", res == KSI_OK && pki != NULL);
 
 	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
@@ -415,7 +418,7 @@ static void testExtendingWithoutPublication(CuTest* tc) {
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
 
-	res = KSI_setNetworkProvider(ctx, pr);
+	res = KSI_CTX_setNetworkProvider(ctx, pr);
 	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
@@ -463,7 +466,7 @@ static void testExtendingToNULL(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_getPKITruststore(ctx, &pki);
+	res = KSI_CTX_getPKITruststore(ctx, &pki);
 	CuAssert(tc, "Unable to get PKI Truststore", res == KSI_OK && pki != NULL);
 
 	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
@@ -472,7 +475,7 @@ static void testExtendingToNULL(CuTest* tc) {
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
 
-	res = KSI_setNetworkProvider(ctx, pr);
+	res = KSI_CTX_setNetworkProvider(ctx, pr);
 	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
@@ -517,7 +520,7 @@ static void testSigningInvalidResponse(CuTest* tc){
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
 
-	res = KSI_setNetworkProvider(ctx, pr);
+	res = KSI_CTX_setNetworkProvider(ctx, pr);
 	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
@@ -543,7 +546,7 @@ static void testSigningErrorResponse(CuTest *tc) {
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
 
-	res = KSI_setNetworkProvider(ctx, pr);
+	res = KSI_CTX_setNetworkProvider(ctx, pr);
 	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
@@ -567,7 +570,7 @@ static void testExtendingErrorResponse(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_getPKITruststore(ctx, &pki);
+	res = KSI_CTX_getPKITruststore(ctx, &pki);
 	CuAssert(tc, "Unable to get PKI Truststore", res == KSI_OK && pki != NULL);
 
 	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
@@ -576,7 +579,7 @@ static void testExtendingErrorResponse(CuTest *tc) {
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
 
-	res = KSI_setNetworkProvider(ctx, pr);
+	res = KSI_CTX_setNetworkProvider(ctx, pr);
 	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);

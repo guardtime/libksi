@@ -42,7 +42,6 @@ int main(int argc, char **argv) {
 	unsigned buf_len;
 
 	char *signerIdentity = NULL;
-	KSI_UriClient *net = NULL;
 
 	FILE *logFile = NULL;
 
@@ -80,32 +79,16 @@ int main(int argc, char **argv) {
 
 	KSI_LOG_info(ksi, "Using KSI version: '%s'", KSI_getVersion());
 
-	/* Check if uri's are specified. */
-	res = KSI_UriClient_new(ksi, &net);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to create new network provider.\n");
-		goto cleanup;
-	}
-
-	res = KSI_UriClient_setAggregator(net, argv[3], argv[4], argv[5]);
+	res = KSI_CTX_setAggregator(ksi, argv[3], argv[4], argv[5]);
 	if (res != KSI_OK) goto cleanup;
 
 	/* Check publications file url. */
 	if (strncmp("-", argv[6], 1)) {
-		res = KSI_UriClient_setPublicationUrl(net, argv[6]);
+		res = KSI_CTX_setPublicationUrl(ksi, argv[6]);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable to set publications file url.\n");
 			goto cleanup;
 		}
-	}
-
-	/* Set the new network provider. */
-	res = KSI_setNetworkProvider(ksi, (KSI_NetworkClient*)net);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to set network provider.\n");
-		res = KSI_UNKNOWN_ERROR;
-
-		goto cleanup;
 	}
 
 	/* Create a data hasher using default algorithm. */

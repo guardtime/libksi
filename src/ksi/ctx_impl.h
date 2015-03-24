@@ -40,9 +40,6 @@ extern "C" {
 		 *  ERROR HANDLING.
 		 ******************/
 
-		/* Status code of the last executed function. */
-		int statusCode;
-
 		/* Array of errors. */
 		KSI_ERR *errors;
 

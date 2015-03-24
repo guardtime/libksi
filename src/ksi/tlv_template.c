@@ -25,6 +25,7 @@
 #include "tlv.h"
 #include "tlv_template.h"
 #include "hashchain.h"
+#include "pkitruststore.h"
 
 /* At the moment value 0xff should be enough for everyone (actually less than 10 is used). */
 #define MAX_TEMPLATE_SIZE 0xff

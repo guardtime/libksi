@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ksi/pkitruststore.h>
 
 #include "cutest/CuTest.h"
 #include "all_tests.h"
@@ -34,7 +35,7 @@ static void TestAddInvalidLookupFile(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_getPKITruststore(ctx, &pki);
+	res = KSI_CTX_getPKITruststore(ctx, &pki);
 	CuAssert(tc, "Unable to get PKI trustsore.", res == KSI_OK && pki != NULL);
 
 	res = KSI_PKITruststore_addLookupFile(pki, "KSI_ThisFileDoesProbablyNotExist");
@@ -48,7 +49,7 @@ static void TestAddValidLookupFile(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_getPKITruststore(ctx, &pki);
+	res = KSI_CTX_getPKITruststore(ctx, &pki);
 	CuAssert(tc, "Unable to get PKI trustsore.", res == KSI_OK && pki != NULL);
 
 	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));

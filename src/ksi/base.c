@@ -26,6 +26,7 @@
 #include "net_http.h"
 #include "net_uri.h"
 #include "ctx_impl.h"
+#include "pkitruststore.h"
 
 KSI_IMPLEMENT_LIST(GlobalCleanupFn, NULL);
 
@@ -171,7 +172,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	res = KSI_UriClient_new(ctx, &client);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_setNetworkProvider(ctx, (KSI_NetworkClient *)client);
+	res = KSI_CTX_setNetworkProvider(ctx, (KSI_NetworkClient *)client);
 	if (res != KSI_OK) goto cleanup;
 	ctx->isCustomNetProvider = 0;
 	client = NULL;
@@ -179,11 +180,11 @@ int KSI_CTX_new(KSI_CTX **context) {
 	/* Create and set the PKI truststore */
 	res = KSI_PKITruststore_new(ctx, 1, &pkiTruststore);
 	if (res != KSI_OK) goto cleanup;
-	res = KSI_setPKITruststore(ctx, pkiTruststore);
+	res = KSI_CTX_setPKITruststore(ctx, pkiTruststore);
 	if (res != KSI_OK) goto cleanup;
 	pkiTruststore = NULL;
 
-	res = KSI_setPublicationCertEmail(ctx, "publications@guardtime.com");
+	res = KSI_CTX_setPublicationCertEmail(ctx, "publications@guardtime.com");
 	if (res != KSI_OK) goto cleanup;
 
 	/* Return the context. */
@@ -582,8 +583,6 @@ int KSI_ERR_apply(KSI_ERR *err) {
 
 			ctx->errors_count++;
 		}
-
-		ctx->statusCode = err->statusCode;
 	}
 	/* Return the result, which does not indicate the result of this method. */
 	return err->statusCode;
@@ -644,7 +643,6 @@ int KSI_ERR_fail(KSI_ERR *err, int statusCode, long extErrorCode, char *fileName
 
 void KSI_ERR_clearErrors(KSI_CTX *ctx) {
 	if (ctx != NULL) {
-		ctx->statusCode = KSI_UNKNOWN_ERROR;
 		ctx->errors_count = 0;
 	}
 }
@@ -708,14 +706,6 @@ void *KSI_calloc(size_t num, size_t size) {
 
 void KSI_free(void *ptr) {
 	free(ptr);
-}
-
-/**
- *
- */
-int KSI_CTX_getStatus(KSI_CTX *ctx) {
-	/* Will fail with segfault if context is null. */
-	return ctx == NULL ? KSI_INVALID_ARGUMENT : ctx->statusCode;
 }
 
 static int KSI_CTX_setUri(KSI_CTX *ctx,
@@ -796,7 +786,7 @@ int KSI_CTX_setTransferTimeoutSeconds(KSI_CTX *ctx, int timeout){
 }
 
 #define CTX_VALUEP_SETTER(var, nam, typ, fre)												\
-int KSI_set##nam(KSI_CTX *ctx, typ *var) { 													\
+int KSI_CTX_set##nam(KSI_CTX *ctx, typ *var) { 												\
 	int res = KSI_UNKNOWN_ERROR;															\
 	if (ctx == NULL) {																		\
 		res = KSI_INVALID_ARGUMENT;															\
@@ -812,7 +802,7 @@ cleanup:																					\
 } 																							\
 
 #define CTX_VALUEP_GETTER(var, nam, typ) 													\
-int KSI_get##nam(KSI_CTX *ctx, typ **var) { 												\
+int KSI_CTX_get##nam(KSI_CTX *ctx, typ **var) { 											\
 	int res = KSI_UNKNOWN_ERROR;															\
 	if (ctx == NULL || var == NULL) {														\
 		res = KSI_INVALID_ARGUMENT;															\
@@ -830,9 +820,8 @@ cleanup:																					\
 
 CTX_GET_SET_VALUE(pkiTruststore, PKITruststore, KSI_PKITruststore, KSI_PKITruststore_free)
 CTX_GET_SET_VALUE(publicationsFile, PublicationsFile, KSI_PublicationsFile, KSI_PublicationsFile_free)
-CTX_VALUEP_GETTER(netProvider, NetworkProvider, KSI_NetworkClient)
 
-int KSI_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *netProvider){
+int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *netProvider){
     int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL){
@@ -887,7 +876,7 @@ cleanup:
 }
 
 
-int KSI_setPublicationCertEmail(KSI_CTX *ctx, const char *email) {
+int KSI_CTX_setPublicationCertEmail(KSI_CTX *ctx, const char *email) {
 	int res = KSI_UNKNOWN_ERROR;
 	char *tmp = NULL;
 	if (ctx == NULL) {

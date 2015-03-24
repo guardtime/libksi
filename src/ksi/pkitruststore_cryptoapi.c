@@ -29,6 +29,7 @@
 #include <Wincrypt.h>
 
 #include "tlv.h"
+#include "pkitruststore.h"
 
 const char* getMSError(DWORD dw)
 {
@@ -898,7 +899,7 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 
 	//printCertInfo(subjectCert);
 
-	res=KSI_getPublicationCertEmail(ctx, &magicEmail);
+	res=KSI_CTX_getPublicationCertEmail(ctx, &magicEmail);
 	KSI_CATCH(&err, res) goto cleanup;
 
 	if (magicEmail != NULL){

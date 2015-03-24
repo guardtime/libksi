@@ -25,6 +25,7 @@
 #include "cutest/CuTest.h"
 #include "ksi_net_mock.h"
 #include <ksi/compatibility.h>
+#include <ksi/err.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -127,7 +127,6 @@ EXPORTS
     KSI_CTX_new
     KSI_CTX_free
     KSI_CTX_registerGlobals
-    KSI_CTX_getStatus
     KSI_ERR_apply
     KSI_ERR_pre
     KSI_ERR_statusDump
@@ -144,14 +143,13 @@ EXPORTS
     KSI_createSignature
     KSI_extendSignature
     KSI_CTX_setLogLevel
-    KSI_getPKITruststore
-    KSI_getNetworkProvider
-    KSI_setPublicationsFile
-    KSI_getPublicationCertEmail
-    KSI_setPKITruststore
-    KSI_setNetworkProvider
-    KSI_getPublicationsFile
-    KSI_setPublicationCertEmail
+    KSI_CTX_getPKITruststore
+    KSI_CTX_setPublicationsFile
+    KSI_CTX_getPublicationCertEmail
+    KSI_CTX_setPKITruststore
+    KSI_CTX_setNetworkProvider
+    KSI_CTX_getPublicationsFile
+    KSI_CTX_setPublicationCertEmail
     KSI_CTX_setRequestHeaderCallback
     KSI_CTX_setPublicationUrl
     KSI_CTX_setExtender
@@ -873,3 +871,4 @@ EXPORTS
     KSI_VerificationStepResult_getStep
     KSI_VerificationStepResult_isSuccess
     KSI_VerificationStepResult_getDescription
+    KSI_VerificationResult_lastFailureMessage

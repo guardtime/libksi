@@ -21,13 +21,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <ksi/ksi.h>
-#include <ksi/net_http.h>
 
 int main(int argc, char **argv) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ksi = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_HttpClient *net = NULL;
 	KSI_DataHash *hsh = NULL;
 	KSI_DataHasher *hsr = NULL;
 	FILE *in = NULL;
@@ -56,34 +54,24 @@ int main(int argc, char **argv) {
 	/* Check parameters. */
 	if (argc != 5) {
 		fprintf(stderr, "Usage\n"
-				"  %s <data file> <signature> <extender url> <pub-file url | ->\n", argv[0]);
+				"  %s <data file | -> <signature> <extender url> <pub-file url | ->\n", argv[0]);
 		goto cleanup;
 	}
 
-	res = KSI_HttpClient_new(ksi, &net);
+	res = KSI_CTX_setExtender(ksi, argv[3], "anon", "anon");
 	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to create new network provider.\n");
+		fprintf(stderr, "Unable to set extender parameters.\n");
 		goto cleanup;
 	}
-
-	res = KSI_HttpClient_setExtender(net, argv[3], "anon", "anon");
-	if (res != KSI_OK) goto cleanup;
 
 	if (strncmp("-", argv[4], 1)) {
 		/* Set the publications file url. */
-		res = KSI_HttpClient_setPublicationUrl(net, argv[4]);
+		res = KSI_CTX_setPublicationUrl(ksi, argv[4]);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable to set publications file url.\n");
 			goto cleanup;
 		}
 	}
-
-	res = KSI_setNetworkProvider(ksi, (KSI_NetworkClient *)net);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to set new network provider.\n");
-		goto cleanup;
-	}
-	net = NULL;
 
 	printf("Reading signature... ");
 	/* Read the signature. */
@@ -101,31 +89,36 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	in = fopen(argv[1], "rb");
-	if (in == NULL) {
-		fprintf(stderr, "Unable to open data file '%s'.\n", argv[1]);
-		goto cleanup;
-	}
-
-	/* Calculate the hash of the document. */
-	while (!feof(in)) {
-		buf_len = (unsigned)fread(buf, 1, sizeof(buf), in);
-		res = KSI_DataHasher_add(hsr, buf, buf_len);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Unable hash the document.\n");
+	if (strcmp(argv[1], "-")) {
+		in = fopen(argv[1], "rb");
+		if (in == NULL) {
+			fprintf(stderr, "Unable to open data file '%s'.\n", argv[1]);
 			goto cleanup;
 		}
+		/* Calculate the hash of the document. */
+		while (!feof(in)) {
+			buf_len = (unsigned)fread(buf, 1, sizeof(buf), in);
+			res = KSI_DataHasher_add(hsr, buf, buf_len);
+			if (res != KSI_OK) {
+				fprintf(stderr, "Unable hash the document.\n");
+				goto cleanup;
+			}
+		}
+
+		/* Finalize the hash computation. */
+		res = KSI_DataHasher_close(hsr, &hsh);
+		if (res != KSI_OK) {
+			fprintf(stderr, "Failed to close the hashing process.\n");
+			goto cleanup;
+		}
+
+		printf("Verifying document hash... ");
+		res = KSI_Signature_verifyDataHash(sig, ksi, hsh);
+	} else {
+		printf("Verifiyng signature...");
+		res = KSI_Signature_verify(sig, ksi);
 	}
 
-	/* Finalize the hash computation. */
-	res = KSI_DataHasher_close(hsr, &hsh);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Failed to close the hashing process.\n");
-		goto cleanup;
-	}
-
-	printf("Verifying document hash... ");
-	res = KSI_Signature_verifyDataHash(sig, ksi, hsh);
 	switch (res) {
 		case KSI_OK:
 			printf("ok\n");
@@ -168,7 +161,6 @@ cleanup:
 
 	if (in != NULL) fclose(in);
 
-	KSI_HttpClient_free(net);
 	KSI_Signature_free(sig);
 	KSI_DataHasher_free(hsr);
 	KSI_DataHash_free(hsh);

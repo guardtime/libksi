@@ -19,6 +19,7 @@
  */
 
 #include <stdlib.h>
+#include "pkitruststore.h"
 
 #include "internal.h"
 
