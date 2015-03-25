@@ -20,6 +20,7 @@
 #
 
 BUILD_DIR=~/rpmbuild
+version=$(tr -d [:space:] <VERSION)
 
 autoreconf -if && \
 ./configure $* && \
@@ -29,5 +30,5 @@ mkdir -p $BUILD_DIR/{BUILD,RPMS,SOURCES,SPECS,SRPMS,tmp} && \
 cp redhat/libksi.spec $BUILD_DIR/SPECS/ && \
 cp libksi-*.tar.gz $BUILD_DIR/SOURCES/ && \
 rpmbuild -ba $BUILD_DIR/SPECS/libksi.spec && \
-cp $BUILD_DIR/RPMS/*/libksi-*.rpm . && \
-cp $BUILD_DIR/SRPMS/libksi-*.rpm .
+cp $BUILD_DIR/RPMS/*/libksi-*$version*.rpm . && \
+cp $BUILD_DIR/SRPMS/libksi-*$version*.rpm .
