@@ -308,6 +308,10 @@ int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, unsigned len, KSI_Utf8Stri
 	if (res != KSI_OK) goto cleanup;
 
 	tmp->value = KSI_malloc(len);
+	if (tmp->value == NULL) {
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
 	memcpy(tmp->value, str, len);
 
 	tmp->len = len;
@@ -642,13 +646,15 @@ int KSI_Integer_toTlv(KSI_CTX *ctx, KSI_Integer *o, unsigned tag, int isNonCriti
 	KSI_TLV *tmp = NULL;
 	unsigned char raw[8];
 	unsigned len = 0;
-	KSI_uint64_t val = o->value;
+	KSI_uint64_t val;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || o == NULL || tlv == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
+
+	val = o->value;
 
 	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
 	if (res != KSI_OK) {

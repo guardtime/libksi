@@ -31,7 +31,7 @@ extern "C" {
 	 * \addtogroup network Network Interface
 	 * This module contains two networking concepts used in this API:
 	 * - Network provider (#KSI_NetworkClient), this object takes care of network
-	 * transtport.
+	 * transport.
 	 * - Network handle (#KSI_RequestHandle), this object contains a single request and
 	 * is used to access the response.
 	 * @{
@@ -109,7 +109,7 @@ extern "C" {
 	 *
 	 * \param[in]		handle			Network handle.
 	 * \param[out]		request			Pointer to the receiving pointer.
-	 * \param[out]		request_len		Pointer to the reveiving length value.
+	 * \param[out]		request_len		Pointer to the receiving length value.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note The output memory may not be freed by the caller.
@@ -140,7 +140,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, unsigned char **response, unsigned *response_len);
+	int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, const unsigned char **response, unsigned *response_len);
 
 	/**
 	 * TODO!
@@ -160,7 +160,7 @@ extern "C" {
 	 * Constructor for network handle object.
 	 * \param[in]		ctx				KSI context.
 	 * \param[in]		request			Pointer to request.
-	 * \param[in]		request_length	Lengt of the request.
+	 * \param[in]		request_length	Length of the request.
 	 * \param[out]		handle			Pointer to the receiving network handle pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
@@ -173,7 +173,7 @@ extern "C" {
 	/**
 	 * As network handles may be created by using several KSI contexts with different network providers and/or
 	 * the network provider of a KSI context may be changed during runtime, it is necessary to state the function
-	 * to be called to reveive the response.
+	 * to be called to receive the response.
 	 * \param[in]		handle			Network handle.
 	 * \param[in]		fn				Pointer to response reader function.
 	 *

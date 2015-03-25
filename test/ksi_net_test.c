@@ -19,8 +19,15 @@
  */
 
 #include <string.h>
+#include <ksi/net.h>
+#include <ksi/pkitruststore.h>
+
 #include "all_tests.h"
 #include "../src/ksi/ctx_impl.h"
+#include "../src/ksi/net_http_impl.h"
+#include "../src/ksi/net_uri_impl.h"
+#include "../src/ksi/net_tcp_impl.h"
+#include "ksi/net_uri.h"
 
 extern KSI_CTX *ctx;
 
@@ -52,7 +59,7 @@ static void testSigning(CuTest* tc) {
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
 
-	res = KSI_setNetworkProvider(ctx, pr);
+	res = KSI_CTX_setNetworkProvider(ctx, pr);
 	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
@@ -92,7 +99,7 @@ static void testAggreAuthFailure(CuTest* tc) {
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
 
-	res = KSI_setNetworkProvider(ctx, pr);
+	res = KSI_CTX_setNetworkProvider(ctx, pr);
 	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
@@ -102,7 +109,7 @@ static void testAggreAuthFailure(CuTest* tc) {
 
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Aggregation should fail with service error.", res == KSI_SERVICE_AUTHENTICATION_FAILURE && sig == NULL);
-	
+
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
 }
@@ -186,7 +193,7 @@ static void testAggregationHeader(CuTest* tc) {
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
 
-	res = KSI_setNetworkProvider(ctx, pr);
+	res = KSI_CTX_setNetworkProvider(ctx, pr);
 	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
@@ -360,7 +367,7 @@ static void testExtAuthFailure(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_getPKITruststore(ctx, &pki);
+	res = KSI_CTX_getPKITruststore(ctx, &pki);
 	CuAssert(tc, "Unable to get PKI Truststore", res == KSI_OK && pki != NULL);
 
 	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
@@ -369,7 +376,7 @@ static void testExtAuthFailure(CuTest* tc) {
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
 
-	res = KSI_setNetworkProvider(ctx, pr);
+	res = KSI_CTX_setNetworkProvider(ctx, pr);
 	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
@@ -402,7 +409,7 @@ static void testExtendingWithoutPublication(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_getPKITruststore(ctx, &pki);
+	res = KSI_CTX_getPKITruststore(ctx, &pki);
 	CuAssert(tc, "Unable to get PKI Truststore", res == KSI_OK && pki != NULL);
 
 	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
@@ -411,7 +418,7 @@ static void testExtendingWithoutPublication(CuTest* tc) {
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
 
-	res = KSI_setNetworkProvider(ctx, pr);
+	res = KSI_CTX_setNetworkProvider(ctx, pr);
 	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
@@ -459,7 +466,7 @@ static void testExtendingToNULL(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_getPKITruststore(ctx, &pki);
+	res = KSI_CTX_getPKITruststore(ctx, &pki);
 	CuAssert(tc, "Unable to get PKI Truststore", res == KSI_OK && pki != NULL);
 
 	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
@@ -468,7 +475,7 @@ static void testExtendingToNULL(CuTest* tc) {
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
 
-	res = KSI_setNetworkProvider(ctx, pr);
+	res = KSI_CTX_setNetworkProvider(ctx, pr);
 	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
@@ -513,7 +520,7 @@ static void testSigningInvalidResponse(CuTest* tc){
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
 
-	res = KSI_setNetworkProvider(ctx, pr);
+	res = KSI_CTX_setNetworkProvider(ctx, pr);
 	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
@@ -539,7 +546,7 @@ static void testSigningErrorResponse(CuTest *tc) {
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
 
-	res = KSI_setNetworkProvider(ctx, pr);
+	res = KSI_CTX_setNetworkProvider(ctx, pr);
 	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
@@ -563,7 +570,7 @@ static void testExtendingErrorResponse(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_getPKITruststore(ctx, &pki);
+	res = KSI_CTX_getPKITruststore(ctx, &pki);
 	CuAssert(tc, "Unable to get PKI Truststore", res == KSI_OK && pki != NULL);
 
 	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
@@ -572,7 +579,7 @@ static void testExtendingErrorResponse(CuTest *tc) {
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
 
-	res = KSI_setNetworkProvider(ctx, pr);
+	res = KSI_CTX_setNetworkProvider(ctx, pr);
 	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
@@ -629,6 +636,111 @@ static void testUrlSplit(CuTest *tc) {
 
 }
 
+void assert_isHttpClientSetCorrectly(CuTest *tc, KSI_UriClient *client,
+		const char *a_url, const char *a_host, int a_port, const char *a_user, const char *a_key,
+		const char *e_url, const char *e_host, int e_port, const char *e_user, const char *e_key){
+	KSI_HttpClient *http = (KSI_HttpClient*)client->httpClient;
+
+	CuAssert(tc, "Http client is not set.", http != NULL);
+	CuAssert(tc, "Http client is not set as aggregator and extender service.",
+			(void*)http == (void*)(client->pAggregationClient) &&
+			(void*)http == (void*)(client->pExtendClient));
+
+	CuAssert(tc, "Http aggregator url mismatch.", strcmp(http->urlAggregator, strstr(a_url, "ksi+") == a_url ? a_url+4 : a_url) == 0 ||
+			(strstr(a_url, "ksi://") == a_url && strstr(http->urlAggregator, "http://") == http->urlAggregator && strcmp(http->urlAggregator+7, a_url+6) == 0));
+	CuAssert(tc, "Http aggregator key mismatch.", strcmp(http->parent.aggrPass, a_key) == 0);
+	CuAssert(tc, "Http aggregator user mismatch.", strcmp(http->parent.aggrUser, a_user) == 0);
+	CuAssert(tc, "Http extender url mismatch.", strcmp(http->urlExtender, strstr(e_url, "ksi+") == e_url ? e_url+4 : e_url) == 0 ||
+			(strstr(e_url, "ksi://") == e_url && strstr(http->urlExtender, "http://") == http->urlExtender && strcmp(http->urlExtender+7, e_url+6) == 0));
+	CuAssert(tc, "Http extender key mismatch.", strcmp(http->parent.extPass, e_key) == 0);
+	CuAssert(tc, "Http extender user mismatch.", strcmp(http->parent.extUser, e_user) == 0);
+}
+
+void assert_isTcpClientSetCorrectly(CuTest *tc, KSI_UriClient *client,
+		const char *a_url, const char *a_host, int a_port, const char *a_user, const char *a_key,
+		const char *e_url, const char *e_host, int e_port, const char *e_user, const char *e_key){
+	KSI_TcpClient *tcp = client->tcpClient;
+
+	CuAssert(tc, "Tcp client is not set (NULL).", tcp != NULL);
+	CuAssert(tc, "Tcp client is not set as aggregator and extender service.",
+			(void*)tcp == (void*)(client->pAggregationClient) &&
+			(void*)tcp == (void*)(client->pExtendClient));
+
+	CuAssert(tc, "Tcp aggregator host mismatch.", strcmp(tcp->aggrHost, a_host) == 0);
+	CuAssert(tc, "Tcp aggregator port mismatch.", tcp->aggrPort == a_port);
+	CuAssert(tc, "Tcp aggregator key mismatch.", strcmp(tcp->parent.aggrPass, a_key) == 0);
+	CuAssert(tc, "Tcp aggregator user mismatch.", strcmp(tcp->parent.aggrUser, a_user) == 0);
+	CuAssert(tc, "Tcp extender url mismatch.", strcmp(tcp->extHost, e_host) == 0);
+	CuAssert(tc, "Tcp extender host mismatch.", tcp->extPort == e_port);
+	CuAssert(tc, "Tcp extender key mismatch.", strcmp(tcp->parent.extPass, e_key) == 0);
+	CuAssert(tc, "Tcp extender user mismatch.", strcmp(tcp->parent.extUser, e_user) == 0);
+
+}
+
+static void smartServiceSetterSchemeTest(CuTest *tc, KSI_CTX *ctx, const char *scheme,
+		void (*assertClient)(CuTest*, KSI_UriClient*, const char*, const char*, int, const char*, const char*, const char*, const char*, int, const char*, const char*)){
+	int res;
+	KSI_UriClient *client = NULL;
+
+	char *scheme_aggre_host = "aggre.com";
+	int scheme_aggre_port = 3331;
+	char *scheme_aggre_user = "tcp_aggre_user";
+	char *scheme_aggre_key = "tcp_aggre_key";
+	char *scheme_ext_host = "ext.com";
+	int scheme_ext_port = 8011;
+	char *scheme_ext_user = "tcp_ext_user";
+	char *scheme_ext_key = "tcp_ext_key";
+	char scheme_aggre_url[1024];
+	char scheme_ext_url[1024];
+
+	res = KSI_snprintf(scheme_aggre_url, sizeof(scheme_aggre_url), "%saggre.com:3331/", scheme);
+	CuAssert(tc, "Unable to generate aggregator url.", res != -1);
+	res = KSI_snprintf(scheme_ext_url, sizeof(scheme_ext_url), "%sext.com:8011/", scheme);
+	CuAssert(tc, "Unable to generate extender url.", res != -1);
+
+	client = (KSI_UriClient*)ctx->netProvider;
+	CuAssert(tc, "KSI_CTX has no network provider.", client != NULL);
+	CuAssert(tc, "KSI_CTX network provider is not initial.", ctx->isCustomNetProvider == 0);
+
+	/*Testing client*/
+
+	res = KSI_CTX_setAggregator(ctx, scheme_aggre_url, scheme_aggre_user, scheme_aggre_key);
+	CuAssert(tc, "Unable to set aggregator.", res == KSI_OK);
+
+	res = KSI_CTX_setExtender(ctx, scheme_ext_url, scheme_ext_user, scheme_ext_key);
+	CuAssert(tc, "Unable to set extender.", res == KSI_OK);
+
+	assertClient(tc, client,
+			scheme_aggre_url, scheme_aggre_host, scheme_aggre_port, scheme_aggre_user, scheme_aggre_key,
+			scheme_ext_url, scheme_ext_host, scheme_ext_port, scheme_ext_user, scheme_ext_key);
+
+	return;
+}
+
+
+static void testSmartServiceSetters(CuTest *tc) {
+
+	int res;
+	KSI_CTX *ctx = NULL;
+	KSI_UriClient *client = NULL;
+
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "KSI_CTX_init did not return KSI_OK.", res == KSI_OK);
+
+	client = (KSI_UriClient*)ctx->netProvider;
+	CuAssert(tc, "KSI_CTX has no network provider.", client != NULL);
+	CuAssert(tc, "KSI_CTX network provider is not initial.", ctx->isCustomNetProvider == 0);
+
+	smartServiceSetterSchemeTest(tc, ctx, "ksi://", assert_isHttpClientSetCorrectly);
+	smartServiceSetterSchemeTest(tc, ctx, "http://", assert_isHttpClientSetCorrectly);
+	smartServiceSetterSchemeTest(tc, ctx, "https://", assert_isHttpClientSetCorrectly);
+	smartServiceSetterSchemeTest(tc, ctx, "ksi+https://", assert_isHttpClientSetCorrectly);
+	smartServiceSetterSchemeTest(tc, ctx, "ksi+http://", assert_isHttpClientSetCorrectly);
+	smartServiceSetterSchemeTest(tc, ctx, "ksi+tcp://", assert_isTcpClientSetCorrectly);
+
+	KSI_CTX_free(ctx);
+}
+
 CuSuite* KSITest_NET_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -647,6 +759,7 @@ CuSuite* KSITest_NET_getSuite(void) {
 	SUITE_ADD_TEST(suite, testSigningErrorResponse);
 	SUITE_ADD_TEST(suite, testExtendingErrorResponse);
 	SUITE_ADD_TEST(suite, testUrlSplit);
+	SUITE_ADD_TEST(suite, testSmartServiceSetters);
 
 	return suite;
 }

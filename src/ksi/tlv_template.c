@@ -19,11 +19,16 @@
  */
 
 #include <limits.h>
+#include <string.h>
 #include "internal.h"
 
 #include "tlv.h"
 #include "tlv_template.h"
 #include "hashchain.h"
+#include "pkitruststore.h"
+
+/* At the moment value 0xff should be enough for everyone (actually less than 10 is used). */
+#define MAX_TEMPLATE_SIZE 0xff
 
 #define KSI_CalAuthRecPKISignedData_new KSI_PKISignedData_new
 #define KSI_CalAuthRecPKISignedData_free KSI_PKISignedData_free
@@ -204,7 +209,7 @@ static char *track_str(struct tlv_track_s *tr, size_t tr_len, size_t tr_size, ch
 	/* Make sure, the return value is null-terminated. */
 	buf[0] = '\0';
 
-	/* Generate the printable result string, by sepparating values with "->" */
+	/* Generate the printable result string, by separating values with "->" */
 	for (i = 0; i < tr_len && i < tr_size; i++) {
 		if (i != 0) len += KSI_snprintf(buf + len, buf_len - len, "->");
 		len += KSI_snprintf(buf + len, buf_len - len, "[0x%02x]%s", tr[i].tag, tr[i].desc != NULL ? tr[i].desc : "");
@@ -242,7 +247,7 @@ static int storeObjectValue(KSI_CTX *ctx, const KSI_TlvTemplate *tmpl, void *pay
 		}
 		res = tmpl->getValue(payload, &listp);
 		if (res != KSI_OK) goto cleanup;
-		
+
 		if (listp == NULL) {
 			/* Make sure we have required function pointers. */
 			if (tmpl->listNew == NULL || tmpl->listFree == NULL) {
@@ -257,13 +262,13 @@ static int storeObjectValue(KSI_CTX *ctx, const KSI_TlvTemplate *tmpl, void *pay
 
 			listp = list;
 		}
-		
+
 		res = tmpl->listAppend(listp, (void *) val);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
 		}
-		
+
 		res = tmpl->setValue(payload, listp);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
@@ -286,7 +291,7 @@ static int storeObjectValue(KSI_CTX *ctx, const KSI_TlvTemplate *tmpl, void *pay
 cleanup:
 
 	KSI_nofree(listp);
-	if (tmpl->listFree != NULL) tmpl->listFree(list);
+	if (tmpl != NULL && tmpl->listFree != NULL) tmpl->listFree(list);
 
 	return res;
 }
@@ -380,18 +385,18 @@ int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI
 	return res;
 }
 
-int KSI_TlvTemplate_parse(KSI_CTX *ctx, unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *tmpl, void *payload) {
+int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *tmpl, void *payload) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tlv = NULL;
 	struct tlv_track_s tr[0xf];
-	
+
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || raw == NULL || tmpl == NULL || payload == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
 
-	res = KSI_TLV_parseBlob2(ctx, raw, raw_len, 0, &tlv);
+	res = KSI_TLV_parseBlob2(ctx, (unsigned char *)raw, raw_len, 0, &tlv);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -430,14 +435,13 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 	KSI_TLV *tlv = NULL;
 	char buf[1024];
 
-	KSI_uint64_t uint64Val = 0;
 	void *voidVal = NULL;
 	void *compositeVal = NULL;
 	void *valuep = NULL;
 	KSI_TLV *tlvVal = NULL;
 
 	size_t template_len = 0;
-	bool *templateHit = NULL;
+	bool templateHit[MAX_TEMPLATE_SIZE];
 	bool groupHit[2] = {false, false};
 	bool oneOf[2] = {false, false};
 	size_t i;
@@ -449,22 +453,23 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 		goto cleanup;
 	}
 
+	/* Analyze the template. */
 	template_len = getTemplateLength(tmpl);
 
 	if (template_len == 0) {
-		KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Empty template suggests invalid state.");
-		goto cleanup;
-	}
-	/* Create the hit buffer with all values set to zero. */
-	templateHit = KSI_calloc(template_len, sizeof(bool));
-	if (templateHit == NULL) {
-		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Empty template suggests invalid state.");
 		goto cleanup;
 	}
 
+	/* Make sure there will be no buffer overflow. */
+	if (template_len > MAX_TEMPLATE_SIZE) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Template too big");
+		goto cleanup;
+	}
+	memset(templateHit, 0, sizeof(templateHit));
+
 	while (1) {
 		int matchCount = 0;
-		size_t len = 0;
 		res = generator(generatorCtx, &tlv);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
@@ -519,7 +524,7 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 
 			if (valuep != NULL && !tmpl[i].multiple) {
 				compositeVal = NULL;
-				KSI_LOG_error(ctx, "Multiple occurrances of a unique tag 0x%02x", tmpl[i].tag);
+				KSI_LOG_error(ctx, "Multiple occurrences of a unique tag 0x%02x", tmpl[i].tag);
 				KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "To avoid memory leaks, a value may not be set more than once while parsing.");
 				goto cleanup;
 			}
@@ -613,7 +618,6 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 
 cleanup:
 
-	KSI_free(templateHit);
 	KSI_TLV_free(tlvVal);
 
 	return res;
@@ -632,7 +636,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 	int isForward = 0;
 
 	size_t template_len = 0;
-	bool *templateHit = NULL;
+	bool templateHit[MAX_TEMPLATE_SIZE];
 	bool groupHit[2] = {false, false};
 	bool oneOf[2] = {false, false};
 
@@ -645,11 +649,21 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 		goto cleanup;
 	}
 
+	/* Calculate the template length. */
 	template_len = getTemplateLength(tmpl);
 
-	if (template_len > 0) {
-		templateHit = KSI_calloc(template_len, sizeof(bool));
+	if (template_len == 0) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "A template may not be empty.");
+		goto cleanup;
 	}
+
+	if (template_len > MAX_TEMPLATE_SIZE) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Template too big.");
+		goto cleanup;
+	}
+
+	memset(templateHit, 0, sizeof(templateHit));
+
 
 	for (i = 0; i < template_len; i++) {
 		if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_NO_SERIALIZE) != 0) continue;
@@ -715,7 +729,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 								goto cleanup;
 							}
 
-							res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
+							res = KSI_TLV_appendNestedTlv(tlv, tmp);
 							if (res != KSI_OK) {
 								KSI_pushError(ctx, res, NULL);
 								goto cleanup;
@@ -732,7 +746,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 							goto cleanup;
 						}
 
-						res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
+						res = KSI_TLV_appendNestedTlv(tlv, tmp);
 						if (res != KSI_OK) {
 							KSI_pushError(ctx, res, NULL);
 							goto cleanup;
@@ -766,7 +780,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 								goto cleanup;
 							}
 
-							res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
+							res = KSI_TLV_appendNestedTlv(tlv, tmp);
 							if (res != KSI_OK) {
 								KSI_pushError(ctx, res, NULL);
 								goto cleanup;
@@ -786,7 +800,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 							goto cleanup;
 						}
 
-						res = KSI_TLV_appendNestedTlv(tlv, NULL, tmp);
+						res = KSI_TLV_appendNestedTlv(tlv, tmp);
 						if (res != KSI_OK) {
 							KSI_pushError(ctx, res, NULL);
 							goto cleanup;
@@ -826,7 +840,6 @@ cleanup:
 
 	KSI_nofree(payloadp);
 
-	KSI_free(templateHit);
 	KSI_TLV_free(tmp);
 
 	return res;

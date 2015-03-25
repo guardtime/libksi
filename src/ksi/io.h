@@ -52,17 +52,17 @@ extern "C" {
 	int KSI_RDR_getOffset(KSI_RDR *rdr, size_t *offset);
 
 	/* TODO!
-	 * Reads at maximum #bufferLength bytes into #buffer and strores number of read bytes in #readCount.
+	 * Reads at maximum #bufferLength bytes into #buffer and stores number of read bytes in #readCount.
 	 *
-	 * \return KSI_OK when no errors occured.
+	 * \return KSI_OK when no errors occurred.
 	 */
 	int KSI_RDR_read_ex(KSI_RDR *rdr, unsigned char *buffer, const size_t bufferLength, size_t *readCount);
 
 	/* TODO!
-	 * Method for reading from reader without copyng data. The pointer #ptr will point to the parent payload
+	 * Method for reading from reader without copying data. The pointer #ptr will point to the parent payload
 	 * area (which itself may not belong to the parent).
 	 *
-	 * \return The method will return KSI_OK when no error occured.
+	 * \return The method will return KSI_OK when no error occurred.
 	 *
 	 * \note This method can be applied to only #KSI_RDR which is based on a memory buffer.
 	 */

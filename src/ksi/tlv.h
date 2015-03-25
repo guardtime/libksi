@@ -281,7 +281,7 @@ extern "C" {
 	 *							If the parameter is NULL, the TLV is added to the end.
 	 *	\param[in]	tlv			The TLV to be appended.
 	 */
-	int KSI_TLV_appendNestedTlv(KSI_TLV *target, KSI_TLV *after, KSI_TLV *tlv);
+	int KSI_TLV_appendNestedTlv(KSI_TLV *target, KSI_TLV *tlv);
 
 	/**
 	 * Removes the given TLV from the parent if the given TLV is a immediate child

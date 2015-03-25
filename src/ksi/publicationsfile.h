@@ -68,8 +68,8 @@ extern "C" {
 	 * 
 	 * @param[in]		ctx			KSI context.
 	 * @param[in]		pubFile		Publications file.
-	 * @param[out]          raw	Pointer to the pointer to output buffer. 
-	 * @param[out]          raw_len	Pointer to the length of the buffer variable.
+	 * @param[out]		raw	Pointer to the pointer to output buffer. 
+	 * @param[out]		raw_len	Pointer to the length of the buffer variable.
 	 * @return 
 	 */
     int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, char **raw, unsigned* raw_len);
@@ -96,7 +96,7 @@ extern "C" {
 
 	/**
 	 * Publicationsfile certificate list getter method.
-	 * \param[in]	pubFile			PublicationsFille.
+	 * \param[in]	pubFile			Publications file.
 	 * \param[out]	certificates	Pointer to receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
@@ -107,7 +107,7 @@ extern "C" {
 
 	/**
 	 * Publicationsfile publications list getter method.
-	 * \param[in]	pubFile			PublicationsFille.
+	 * \param[in]	pubFile			Publications file.
 	 * \param[out]	publications	Pointer to receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
@@ -118,7 +118,7 @@ extern "C" {
 
 	/**
 	 * Publicationsfile signature getter method.
-	 * \param[in]	pubFile			PublicationsFille.
+	 * \param[in]	pubFile			Publications file.
 	 * \param[out]	signature		Pointer to receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
@@ -129,7 +129,7 @@ extern "C" {
 
 	/**
 	 * PKI Certificate search function by certificate Id.
-	 * \param[in]	pubFile			PublicationsFille.
+	 * \param[in]	pubFile			Publications file.
 	 * \param[in]	id				Certificate id.
 	 * \param[out]	cert			Pointer to receiving pointer.
 	 *
@@ -142,7 +142,7 @@ extern "C" {
 	/**
 	 * Search publication by exact time. The publication is returned via output
 	 * parameter \c pubRec if found, otherwise \c pubRec is evaluated to NULL.
-	 * \param[in]	pubFile			PublicationsFille.
+	 * \param[in]	pubFile			Publications file.
 	 * \param[in]	pubTime			Publication time.
 	 * \param[out]	pubRec			Pointer to receiving pointer.
 	 *
@@ -155,7 +155,7 @@ extern "C" {
 	/**
 	 * Search publication by publication string. The publication is returned via output
 	 * parameter \c pubRec if found, otherwise \c pubRec is evaluated to NULL.
-	 * \param[in]	pubFile			PublicationsFille.
+	 * \param[in]	pubFile			Publications file.
 	 * \param[in]	pubString		Publication string.
 	 * \param[out]	pubRec			Pointer to receiving pointer.
 	 *
@@ -169,7 +169,7 @@ extern "C" {
 	 * Search nearest publication by time. The next available publication (published
 	 * after the given time \c pubTime) is returned via the output parameter \c pubRec
 	 * if found, otherwise \c pubRec is evaluated to NULL.
-	 * \param[in]	pubFile			PublicationsFille.
+	 * \param[in]	pubFile			Publications file.
 	 * \param[in]	pubTime			Publication time.
 	 * \param[out]	pubRec			Pointer to receiving pointer.
 	 *
@@ -183,7 +183,7 @@ extern "C" {
 	 * Search nearest publication by time. The next available publication (published
 	 * after the given time \c pubTime) is returned via the output parameter \c pubRec
 	 * if found, otherwise \c pubRec is evaluated to NULL.
-	 * \param[in]	pubFile			PublicationsFille.
+	 * \param[in]	pubFile			Publications file.
 	 * \param[in]	pubTime			Publication time.
 	 * \param[out]	pubRec			Pointer to receiving pointer.
 	 *
@@ -213,12 +213,12 @@ extern "C" {
 	int KSI_PublicationData_fromBase32(KSI_CTX *ctx, const char *publication, KSI_PublicationData **published_data);
 
 	/**
-	 * Functioin to concert the published data into a base-32 encoded null-terminated string.
+	 * Function to concert the published data into a base-32 encoded null-terminated string.
 	 * \param[in]		published_data		Pointer to the published data object.
 	 * \param[out]		publication			Pointer to the receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \note The putput memory has to be freed by the caller using #KSI_free.
+	 * \note The output memory has to be freed by the caller using #KSI_free.
 	 */
 	int KSI_PublicationData_toBase32(const KSI_PublicationData *published_data, char **publication);
 

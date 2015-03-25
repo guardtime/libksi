@@ -104,22 +104,23 @@ void KSI_DataHasher_free(KSI_DataHasher *hasher) {
 }
 
 int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHasher *tmp_hasher = NULL;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, hasher != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || hasher == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	if (!KSI_isHashAlgorithmSupported(hash_id)) {
-		KSI_FAIL(&err, KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
+		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
 		goto cleanup;
 	}
 
 	tmp_hasher = KSI_new(KSI_DataHasher);
 	if (tmp_hasher == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
@@ -130,20 +131,20 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
 
 	res = KSI_DataHasher_reset(tmp_hasher);
 	if (res != KSI_OK) {
-		KSI_FAIL(&err, res, NULL);
+		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
 	*hasher = tmp_hasher;
 	tmp_hasher = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_DataHasher_free(tmp_hasher);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 

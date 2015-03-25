@@ -26,6 +26,8 @@
 #include "tlv_template.h"
 #include "hashchain.h"
 #include "ctx_impl.h"
+#include "pkitruststore.h"
+#include "net.h"
 
 KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendPdu);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu)
@@ -243,7 +245,7 @@ int KSI_ErrorPdu_new(KSI_CTX *ctx, KSI_ErrorPdu **t) {
 	tmp->ctx = ctx;
 	tmp->status = NULL;
 	tmp->errorMsg = NULL;
-	
+
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -289,7 +291,7 @@ int KSI_ExtendPdu_new(KSI_CTX *ctx, KSI_ExtendPdu **t) {
 	tmp->response = NULL;
 	tmp->error = NULL;
 	tmp->hmac = NULL;
-	
+
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -344,34 +346,34 @@ static int pdu_calculateHmac(KSI_CTX* ctx, void* pdu,
 	unsigned header_len;
 	const unsigned char *raw_payload = NULL;
 	unsigned payload_len;
-	void *request = NULL; 
-	void *response = NULL; 
+	void *request = NULL;
+	void *response = NULL;
 	unsigned char *buf = NULL;
 	KSI_DataHash *tmp = NULL;
-	
+
 	bool freeRawHeader = false;
 	bool freeRawPayload = false;
-	
+
 	KSI_PRE(&err, pdu != NULL) goto cleanup;
 	KSI_PRE(&err, key != NULL) goto cleanup;
 	KSI_PRE(&err, hmac != NULL) goto cleanup;
 	KSI_BEGIN(ctx, &err);
-	
+
 	res = getHeader(pdu, &header);
 	if (res != KSI_OK || header == NULL){
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Missing header.");
 		goto cleanup;
 	}
-	
+
 	res = getObjectsRawValue(ctx, header, (int (*)(void*, KSI_OctetString**))KSI_Header_getRaw, KSI_TLV_TEMPLATE(KSI_Header), 0x01, &raw_header, &header_len, &freeRawHeader);
 	KSI_CATCH(&err, res) goto cleanup;
-	
+
 	res = getRequest(pdu, &request);
 	KSI_CATCH(&err, res) goto cleanup;
-	
+
 	res = getResponse(pdu, &response);
 	KSI_CATCH(&err, res) goto cleanup;
-	
+
 	if (request != NULL) {
 		res = getObjectsRawValue(ctx, request, getRequest_raw, reqTemplate, reqTag, &raw_payload, &payload_len, &freeRawPayload);
 		KSI_CATCH(&err, res) goto cleanup;
@@ -382,38 +384,38 @@ static int pdu_calculateHmac(KSI_CTX* ctx, void* pdu,
 		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Missing payload.");
 		goto cleanup;
 	}
-	
+
 	buf = KSI_malloc(payload_len + header_len);
 	if (buf == NULL) {
 		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
-	
+
 	memcpy(buf, raw_header, header_len);
 	memcpy(buf+header_len, raw_payload, payload_len);
-	
+
 	res = KSI_HMAC_create(header->ctx, hashAlg, key, buf, header_len + payload_len, &tmp);
 	KSI_CATCH(&err, res) goto cleanup;
-	
+
 	*hmac = tmp;
 	tmp = NULL;
-	
+
 	KSI_SUCCESS(&err);
-	
+
 cleanup:
 
 	if (freeRawHeader) KSI_free((void *)raw_header);
 	if (freeRawPayload)	KSI_free((void *)raw_payload);
 	KSI_free(buf);
 	KSI_DataHash_free(tmp);
-	
+
 	return KSI_RETURN(&err);
 }
 
 int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, int hashAlg, const char *key, KSI_DataHash **hmac){
 	int res = KSI_OK;
 	if (t)
-		res = pdu_calculateHmac(t->ctx, (void*)t, 
+		res = pdu_calculateHmac(t->ctx, (void*)t,
 				(int (*)(void*, KSI_Header**))KSI_ExtendPdu_getHeader,
 				(int (*)(void*, void**))KSI_ExtendPdu_getResponse,
 				(int (*)(void*, KSI_OctetString**))KSI_ExtendResp_getRaw,
@@ -422,7 +424,7 @@ int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, int hashAlg, const char *key, 
 				0x301,0x302, KSI_TLV_TEMPLATE(KSI_ExtendReq),KSI_TLV_TEMPLATE(KSI_ExtendResp),
 				hashAlg, key, hmac);
 	else return KSI_INVALID_ARGUMENT;
-	
+
 	return res;
 }
 
@@ -457,7 +459,7 @@ int KSI_ExtendReq_enclose(KSI_ExtendReq *req, char *loginId, char *key, KSI_Exte
 	KSI_ExtendPdu *tmp = NULL;
 	KSI_Header *hdr = NULL;
 	size_t loginLen;
-	
+
 	if (req == NULL || loginId == NULL || key == NULL || pdu == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
@@ -468,7 +470,7 @@ int KSI_ExtendReq_enclose(KSI_ExtendReq *req, char *loginId, char *key, KSI_Exte
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
-	
+
 	/* Create the pdu */
 	res = KSI_ExtendPdu_new(req->ctx, &tmp);
 	if (res != KSI_OK) goto cleanup;
@@ -554,7 +556,7 @@ int KSI_AggregationPdu_new(KSI_CTX *ctx, KSI_AggregationPdu **t) {
 	tmp->response = NULL;
 	tmp->error = NULL;
 	tmp->hmac = NULL;
-	
+
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -566,7 +568,7 @@ cleanup:
 int KSI_AggregationPdu_calculateHmac(KSI_AggregationPdu *t, int hashAlg, const char *key, KSI_DataHash **hmac){
 	int res = KSI_OK;
 	if (t)
-		res = pdu_calculateHmac(t->ctx, (void*)t, 
+		res = pdu_calculateHmac(t->ctx, (void*)t,
 				(int (*)(void*, KSI_Header**))KSI_AggregationPdu_getHeader,
 				(int (*)(void*, void**))KSI_AggregationPdu_getResponse,
 				(int (*)(void*, KSI_OctetString**))KSI_AggregationResp_getRaw,
@@ -575,7 +577,7 @@ int KSI_AggregationPdu_calculateHmac(KSI_AggregationPdu *t, int hashAlg, const c
 				0x201,0x202, KSI_TLV_TEMPLATE(KSI_AggregationReq),KSI_TLV_TEMPLATE(KSI_AggregationResp),
 				hashAlg, key, hmac);
 	else return KSI_INVALID_ARGUMENT;
-	
+
 	return res;
 }
 
@@ -610,7 +612,7 @@ int KSI_AggregationReq_enclose(KSI_AggregationReq *req, char *loginId, char *key
 	KSI_AggregationPdu *tmp = NULL;
 	KSI_Header *hdr = NULL;
 	size_t loginLen;
-	
+
 	if (req == NULL || loginId == NULL || key == NULL || pdu == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
@@ -621,7 +623,7 @@ int KSI_AggregationReq_enclose(KSI_AggregationReq *req, char *loginId, char *key
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
-	
+
 	/* Create the pdu */
 	res = KSI_AggregationPdu_new(req->ctx, &tmp);
 	if (res != KSI_OK) goto cleanup;
@@ -822,7 +824,7 @@ KSI_IMPLEMENT_SETTER(KSI_AggregationReq, KSI_Config*, config, Config);
 KSI_IMPLEMENT_OBJECT_PARSE(KSI_AggregationReq, 0x201);
 KSI_IMPLEMENT_OBJECT_SERIALIZE(KSI_AggregationReq, 0x201, 0, 0)
 
-KSI_IMPLEMENT_FROMTLV(KSI_AggregationReq, 0x201, FROMTLV_ADD_RAW(raw, 0));		
+KSI_IMPLEMENT_FROMTLV(KSI_AggregationReq, 0x201, FROMTLV_ADD_RAW(raw, 0));
 KSI_IMPLEMENT_TOTLV(KSI_AggregationReq);
 
 /**

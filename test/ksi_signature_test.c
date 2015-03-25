@@ -261,6 +261,16 @@ static void testSignerIdentity(CuTest *tc) {
 
 }
 
+static void testSignatureWith2Anchors(CuTest *tc) {
+	KSI_Signature *sig = NULL;
+	int res;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/nok-sig-two-anchors.tlv"), &sig);
+	CuAssert(tc, "Reading a signature with more than one trust anchor should result in format error.", res == KSI_INVALID_FORMAT && sig == NULL);
+
+	KSI_Signature_free(sig);
+}
+
 CuSuite* KSITest_Signature_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -273,6 +283,7 @@ CuSuite* KSITest_Signature_getSuite(void) {
 	SUITE_ADD_TEST(suite, testVerifySignatureWithPublication);
 	SUITE_ADD_TEST(suite, testVerifySignatureExtendedToHead);
 	SUITE_ADD_TEST(suite, testSignerIdentity);
+	SUITE_ADD_TEST(suite, testSignatureWith2Anchors);
 
 	return suite;
 }

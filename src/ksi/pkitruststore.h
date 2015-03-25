@@ -117,7 +117,7 @@ extern "C" {
 
 	/**
 	 * Function for verifying a raw PKCS#1 signature. TODO! - explain in detail!
-	 * \param[in]	ctx				KSI contetx.
+	 * \param[in]	ctx				KSI context.
 	 * \param[in]	data			Pointer to input data.
 	 * \param[in]	data_len		Input data len.
 	 * \param[in]	algoOid			Algorithm OID used to sign the input data.

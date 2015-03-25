@@ -63,7 +63,7 @@ extern "C" {
 	typedef int (*cb_encode_t)(KSI_CTX *ctx, KSI_TLV *, const void *, const KSI_TlvTemplate *);
 
 	/**
-	 * TLV template strcuture.
+	 * TLV template structure.
 	 */
 	struct KSI_TlvTemplate_st {
 		/**
@@ -250,7 +250,7 @@ extern "C" {
 	 * \param[in]	gttr			Getter function.
 	 * \param[in]	sttr			Setter function.
 	 * \param[in]	constr			Constructor function.
-	 * \param[in]	destr			Destructor functionn.
+	 * \param[in]	destr			Destructor function.
 	 * \param[in]	subTmpl			Sub-template.
 	 * \param[in]	list_append		List append function.
 	 * \param[in]	mul				Are multiple values allowed inside a single TLV?
@@ -278,7 +278,7 @@ extern "C" {
 
 	/**
 	 * This macro starts a #KSI_TlvTemplate definition. The definition is ended with #KSI_END_TLV_TEMPLATE .
-	 * \param[in]	name		Template name - recomended to use the object type name.
+	 * \param[in]	name		Template name - recommended to use the object type name.
 	 */
 	#define KSI_DEFINE_TLV_TEMPLATE(name)	const KSI_TlvTemplate name##_template[] = {
 
@@ -415,7 +415,7 @@ extern "C" {
 	#define KSI_TLV_COMPOSITE_LIST(tg, flg, gttr, sttr, sub, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_COMPOSITE, tg, flg, gttr, sttr, sub##_new, sub##_free, sub##_template, sub##List_append, 1, sub##List_new, sub##List_free, sub##List_length, sub##List_elementAt, NULL, NULL, descr)
 
 	/**
-	 * A special TLV template to retreive the absolute position of the TLV.
+	 * A special TLV template to retrieve the absolute position of the TLV.
 	 * \param[in]	tg				TLV tag value.
 	 * \param[in]	sttr			Setter function for int value.
 	 */
@@ -441,12 +441,12 @@ extern "C" {
 	 * Parses a given raw data into a pre-existing element. The caller needs to know the outcome type and create it.
 	 * \param[in]	ctx			KSI context.
 	 * \param[in]	raw			Pointer to the raw data.
-	 * \param[in]	raw_len		Lenght of the raw data.
+	 * \param[in]	raw_len		Length of the raw data.
 	 * \param[in]	tmpl		Template.
 	 * \param[in]	payload		Pointer to the payload which will be populated with the parsed data.
 	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	 int KSI_TlvTemplate_parse(KSI_CTX *ctx, unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *tmpl, void *payload);
+	 int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *tmpl, void *payload);
 
 	/**
 	 * This function acts similarly as #KSI_TlvTemplate_extract but allows the caller to specify how the top level
@@ -477,7 +477,7 @@ extern "C" {
 
 	/**
 	 * Deepcopy an object using TLV templates. The object is first transformed internally into a #KSI_TLV tree and
-	 * the process is reversed and the result is stoed, thus all values are copied.
+	 * the process is reversed and the result is stored, thus all values are copied.
 	 * \param[in]	ctx			KSI context.
 	 * \param[in]	from		Object to be copied from.
 	 * \param[in]	tmpl		Template.
@@ -510,7 +510,7 @@ extern "C" {
 	 * \param[in]	tag			Tag of the concrete TLV.
 	 */
 	#define KSI_IMPLEMENT_OBJECT_PARSE(type, tag) \
-		int type##_parse(KSI_CTX *ctx, unsigned char *raw, unsigned len, type **t) { \
+		int type##_parse(KSI_CTX *ctx, const unsigned char *raw, unsigned len, type **t) { \
 			int res = KSI_UNKNOWN_ERROR; \
 			KSI_TLV *tlv = NULL; \
 			type *tmp = NULL; \
@@ -518,7 +518,7 @@ extern "C" {
 				res = KSI_INVALID_ARGUMENT; \
 				goto cleanup; \
 			} \
-			res = KSI_TLV_parseBlob2(ctx, raw, len, 0, &tlv); \
+			res = KSI_TLV_parseBlob2(ctx, (unsigned char *)raw, len, 0, &tlv); \
 			if (res != KSI_OK) goto cleanup; \
 			if (KSI_TLV_getTag(tlv) != (tag)) { \
 				res = KSI_INVALID_FORMAT; \

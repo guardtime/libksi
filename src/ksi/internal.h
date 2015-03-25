@@ -35,7 +35,7 @@
 #define KSI_IMPL_WININET		2
 #define KSI_IMPL_WINHTTP		3
  /**
-  * Crypo implementations.
+  * Crypto implementations.
   */
 #define KSI_IMPL_OPENSSL		4
 #define KSI_IMPL_CRYPTOAPI			5
@@ -212,7 +212,7 @@ cleanup: \
 		raw = NULL; \
 	}while(0);
 
-/*TODO: Is it safe to not free baseTlv, as on error baseTlv is still NULL and after setting "name", objects tmp free handles the meory.*/
+/*TODO: Is it safe to not free baseTlv, as on error baseTlv is still NULL and after setting "name", objects tmp free handles the memory.*/
 #define FROMTLV_ADD_BASETLV(name) \
 	do{ \
 		KSI_TLV *baseTlv = NULL; \

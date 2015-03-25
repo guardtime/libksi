@@ -40,9 +40,6 @@ extern "C" {
 		 *  ERROR HANDLING.
 		 ******************/
 
-		/* Status code of the last executed function. */
-		int statusCode;
-
 		/* Array of errors. */
 		KSI_ERR *errors;
 
@@ -73,7 +70,7 @@ extern "C" {
 		/* List of cleanup functions to be called when the #KSI_CTX_free is called. */
 		KSI_List *cleanupFnList;
 
-		/** Userdefined function to be called on the request pdu header befor sending it. */
+		/** User defined function to be called on the request pdu header before sending it. */
 		KSI_RequestHeaderCallback requestHeaderCB;
 
 		/** Counter for the requests sent by this context. */

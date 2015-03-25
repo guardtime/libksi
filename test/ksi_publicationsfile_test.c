@@ -19,6 +19,8 @@
  */
 
 #include <string.h>
+#include <ksi/publicationsfile.h>
+#include <ksi/pkitruststore.h>
 #include "all_tests.h"
 
 extern KSI_CTX *ctx;
@@ -67,7 +69,7 @@ static void testVerifyPublicationsFile(CuTest *tc) {
 	res = KSI_PKITruststore_new(ctx, 0, &pki);
 	CuAssert(tc, "Unable to get PKI truststore from context.", res == KSI_OK && pki != NULL);
 
-	res = KSI_setPKITruststore(ctx, pki);
+	res = KSI_CTX_setPKITruststore(ctx, pki);
 	CuAssert(tc, "Unable to set new pki truststrore for ksi context.", res == KSI_OK);
 
 	/* Verification should fail. */

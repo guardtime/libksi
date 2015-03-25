@@ -76,7 +76,7 @@ typedef struct type##_list_st KSI_LIST(type);									\
  */																				\
 void KSI_LIST_FN_NAME(type, free)(KSI_LIST(type) *list);						\
 /*! Creates a new list of \ref type.
-	\param[out]	list	Pointer ot the receiving pointer.
+	\param[out]	list	Pointer to the receiving pointer.
 	\return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */																				\
 int KSI_LIST_FN_NAME(type, new)(KSI_LIST(type) **list);					\
@@ -91,7 +91,7 @@ int KSI_LIST_FN_NAME(type, append)(KSI_LIST(type) *list, type *el);				\
 /*! This function finds the index of a given element.
 	\param[in]	list	Pointer to the list.
 	\param[in]	el		Pointer to the element.
-	\param[out]	pos		Pointer to the receiving ponter.
+	\param[out]	pos		Pointer to the receiving pointer.
 	\return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */																				\
 int KSI_LIST_FN_NAME(type, indexOf)(KSI_LIST(type) *list, type *el, size_t **pos);		\
@@ -127,7 +127,7 @@ int KSI_LIST_FN_NAME(type, replaceAt)(KSI_LIST(type) *list, size_t pos, type *el
 int KSI_LIST_FN_NAME(type, remove)(KSI_LIST(type) *list, size_t pos, type **el);			\
 /*! Returns the list of the element.
 	\param[in]	list	Pointer to the list.
-	\return Returns the lenght of the list or 0 if the list is \c NULL.
+	\return Returns the length of the list or 0 if the list is \c NULL.
 */ \
 size_t KSI_LIST_FN_NAME(type, length)(KSI_LIST(type) *list);						\
 /*! Method for accessing an element at any given position.
@@ -158,7 +158,7 @@ size_t KSI_List_length(KSI_List *list);
 int KSI_List_sort(KSI_List *list, int (*)(const void *, const void *));
 
 /**
- * This macto implements all the functions of a list for a given type.
+ * This macro implements all the functions of a list for a given type.
  * \param[in]	type	The type of the elements stored in the list.
  * \param[in]	free_fn	Function pointer to the free method of stored elements. May be \c NULL
  */

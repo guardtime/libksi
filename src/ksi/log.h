@@ -150,6 +150,15 @@ extern "C" {
 	int KSI_LOG_logDataHash(KSI_CTX *ctx, int level, const char *prefix, const KSI_DataHash *hsh);
 
 	/**
+	 * A helper function for logging KSI context error trace. 
+	 * \param[in]	ctx			KSI context.
+	 * \param[in]	level		Log level.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_ERR_statusDump
+	 */
+	int KSI_LOG_logCtxError(KSI_CTX *ctx, int level);
+	
+	/**
 	 * The stream logger is a simple logging call-back to be used with #KSI_CTX_setLoggerCallback.
 	 * It will output the value to a \c FILE stream.
 	 * \param[in]	logCtx		A stream to write the log messages.
