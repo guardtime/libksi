@@ -121,6 +121,8 @@ const char *KSI_getErrorString(int statusCode) {
 			return "The request asked for hash values older than the oldest round in the server's database.";
 		case KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_NEW:
 			return "The request asked for hash values newer than the newest round in the server's database.";
+		case KSI_SERVICE_EXTENDER_REQUEST_TIME_IN_FUTURE:
+			return "The request asked for hash values newer than the current real time";
 		case KSI_UNKNOWN_ERROR:
 			return "Unknown internal error.";
 		default:
