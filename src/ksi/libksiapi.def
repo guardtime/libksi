@@ -218,8 +218,6 @@ EXPORTS
 ;net_http.h
 EXPORTS
     KSI_HttpClient_new
-    KSI_HttpClient_setSignerUrl
-    KSI_HttpClient_setExtenderUrl
     KSI_HttpClient_setPublicationUrl
     KSI_HttpClient_setConnectTimeoutSeconds
     KSI_HttpClient_setReadTimeoutSeconds
