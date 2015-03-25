@@ -61,24 +61,6 @@ void KSI_HttpClient_free(KSI_HttpClient *http);
 int KSI_HttpClientImpl_init(KSI_HttpClient *http);
 
 /**
- * Setter for the signer (aggregator) URL. The value will be copied and thus
- * can be freed after successful call.
- * \param[in]	client		Pointer to the http client.
- * \param[in]	val			Null-terminated URL.
- * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- */
-KSI_FN_DEPRECATED(int KSI_HttpClient_setSignerUrl(KSI_HttpClient *client, const char *val));
-
-/**
- * Setter for the extender URL. The value will be copied and thus
- * can be freed after successful call.
- * \param[in]	client		Pointer to the http client.
- * \param[in]	val			Null-terminated URL.
- * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- */
-KSI_FN_DEPRECATED(int KSI_HttpClient_setExtenderUrl(KSI_HttpClient *client, const char *val));
-
-/**
  * Setter for the publications file URL. The value will be copied and thus
  * can be freed after successful call.
  * \param[in]	client		Pointer to the http client.
@@ -105,25 +87,23 @@ int KSI_HttpClient_setReadTimeoutSeconds(KSI_HttpClient *client, int val);
 
 /**
  * Setter for the http client extender parameters.
- * \param[in	client		Pointer to http client.
- * \param[in]	host		Host name.
- * \param[in]	port		Port number.
+ * \param[in]	client		Pointer to http client.
+ * \param[in]	url			Host name.
  * \param[in]	user		User name.
- * \param[in]	pass		Password.
+ * \param[in]	key			HMAC shared secret.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_HttpClient_setExtender(KSI_HttpClient *client, const char *url, const char *user, const char *pass);
+int KSI_HttpClient_setExtender(KSI_HttpClient *client, const char *url, const char *user, const char *key);
 
 /**
  * Setter for the http aggregator parameters.
- * \param[in	client		Pointer to http client.
- * \param[in]	host		Host name.
- * \param[in]	port		Port number.
+ * \param[in]	client		Pointer to http client.
+ * \param[in]	url			Host URL.
  * \param[in]	user		User name.
- * \param[in]	pass		Password.
+ * \param[in]	key			HMAC shared secret.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_HttpClient_setAggregator(KSI_HttpClient *client, const char *url, const char *user, const char *pass);
+int KSI_HttpClient_setAggregator(KSI_HttpClient *client, const char *url, const char *user, const char *key);
 
 
 #ifdef __cplusplus

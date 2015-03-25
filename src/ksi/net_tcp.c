@@ -502,16 +502,18 @@ cleanup:
 }
 
 int KSI_TcpClient_setTransferTimeoutSeconds (KSI_TcpClient *client, int transferTimeoutSeconds ) {
-    KSI_ERR err;
-	
-	KSI_PRE(&err, client != NULL) goto cleanup;
-	KSI_BEGIN(((KSI_NetworkClient*)client)->ctx, &err);
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (client == NULL || transferTimeoutSeconds < 0) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 	
     client->transferTimeoutSeconds = transferTimeoutSeconds ;
     
-	KSI_SUCCESS(&err);
-	
+    res = KSI_OK;
+
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }

@@ -65,25 +65,25 @@ extern "C" {
 	
 	/**
 	 * Setter for the tcp client extender parameters.
-     * \param[in	client		Pointer to tcp client.
+     * \param[in]	client		Pointer to tcp client.
      * \param[in]	host		Host name.
      * \param[in]	port		Port number.
      * \param[in]	user		User name.
-     * \param[in]	pass		Password.
+     * \param[in]	key			HMAC shared secret.
      * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
      */
-	int KSI_TcpClient_setExtender(KSI_TcpClient *client, const char *host, unsigned port, const char *user, const char *pass);
+	int KSI_TcpClient_setExtender(KSI_TcpClient *client, const char *host, unsigned port, const char *user, const char *key);
 	
 	/**
 	 * Setter for the tcp aggregator parameters.
-     * \param[in	client		Pointer to tcp client.
+     * \param[in]	client		Pointer to tcp client.
      * \param[in]	host		Host name.
      * \param[in]	port		Port number.
      * \param[in]	user		User name.
-     * \param[in]	pass		Password.
+     * \param[in]	key			HMAC shared secret.
      * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
      */
-	int KSI_TcpClient_setAggregator(KSI_TcpClient *client, const char *host, unsigned port, const char *user, const char *pass);
+	int KSI_TcpClient_setAggregator(KSI_TcpClient *client, const char *host, unsigned port, const char *user, const char *key);
 	
 	/**
 	 * Setter for the read, write, timeout in seconds.
@@ -91,7 +91,7 @@ extern "C" {
 	 * \param[in]	val			Timeout in seconds.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_TcpClient_setTransferTimeoutSeconds(KSI_TcpClient *client, int transferTimeoutSeconds);
+	int KSI_TcpClient_setTransferTimeoutSeconds(KSI_TcpClient *client, int val);
 
 #ifdef __cplusplus
 }

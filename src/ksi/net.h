@@ -185,7 +185,7 @@ extern "C" {
 	/**
 	 * Initialized for an existing abstract network provider.
 	 * \param[in]		ctx				KSI context.
-	 * \param[out]		provider		Abstract network provider.
+	 * \param[out]		client			Abstract network client.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 *
@@ -195,53 +195,53 @@ extern "C" {
 
 	/**
 	 * Setter for the implementation specific networking context.
-	 * \param[in]		provider		Network provider.
+	 * \param[in]		client			Network client.
 	 * \param[in]		netCtx			Implementation specific context.
 	 * \param[in]		netCtx_free		Pointer to the implementation specific network context cleanup method.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetworkClient_setNetCtx(KSI_NetworkClient *provider, void *netCtx, void (*netCtx_free)(void *));
+	int KSI_NetworkClient_setNetCtx(KSI_NetworkClient *client, void *netCtx, void (*netCtx_free)(void *));
 
 	/**
 	 * Setter for sign request function.
-	 * \param[in]		provider		Network provider.
+	 * \param[in]		client			Network client.
 	 * \param[in]		fn				Pointer to sign request function.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetworkClient_setSendSignRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_AggregationReq *, KSI_RequestHandle **));
+	int KSI_NetworkClient_setSendSignRequestFn(KSI_NetworkClient *client, int (*fn)(KSI_NetworkClient *, KSI_AggregationReq *, KSI_RequestHandle **));
 
 	/**
 	 * Setter for sign request function.
-	 * \param[in]		provider		Network provider.
+	 * \param[in]		client			Network client.
 	 * \param[in]		fn				Pointer to extend request function.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_NetworkClient_setSendExtendRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **));
+	int KSI_NetworkClient_setSendExtendRequestFn(KSI_NetworkClient *client, int (*fn)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **));
 
 	/**
 	 * Setter for sign request function.
-	 * \param[in]		provider		Network provider.
+	 * \param[in]		client			Network client.
 	 * \param[in]		fn				Pointer to publicationsfile request function.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_NetworkClient_setSendPublicationRequestFn(KSI_NetworkClient *provider, int (*fn)(KSI_NetworkClient *, KSI_RequestHandle **));
+	int KSI_NetworkClient_setSendPublicationRequestFn(KSI_NetworkClient *client, int (*fn)(KSI_NetworkClient *, KSI_RequestHandle **));
 
-	int KSI_NetworkClient_setExtenderUser(KSI_NetworkClient *netProvider, const char *val);
-	int KSI_NetworkClient_setExtenderPass(KSI_NetworkClient *netProvider, const char *val);
-	int KSI_NetworkClient_setAggregatorUser(KSI_NetworkClient *netProvider, const char *val);
-	int KSI_NetworkClient_setAggregatorPass(KSI_NetworkClient *netProvider, const char *val);
+	int KSI_NetworkClient_setExtenderUser(KSI_NetworkClient *net, const char *val);
+	int KSI_NetworkClient_setExtenderPass(KSI_NetworkClient *net, const char *val);
+	int KSI_NetworkClient_setAggregatorUser(KSI_NetworkClient *net, const char *val);
+	int KSI_NetworkClient_setAggregatorPass(KSI_NetworkClient *net, const char *val);
 	
-	int KSI_NetworkClient_getExtenderUser(const KSI_NetworkClient *netProvider, const char **val);
-	int KSI_NetworkClient_getExtenderPass(const KSI_NetworkClient *netProvider, const char **val);
-	int KSI_NetworkClient_getAggregatorUser(const KSI_NetworkClient *netProvider, const char **val);
-	int KSI_NetworkClient_getAggregatorPass(const KSI_NetworkClient *netProvider, const char **val);
+	int KSI_NetworkClient_getExtenderUser(const KSI_NetworkClient *net, const char **val);
+	int KSI_NetworkClient_getExtenderPass(const KSI_NetworkClient *net, const char **val);
+	int KSI_NetworkClient_getAggregatorUser(const KSI_NetworkClient *net, const char **val);
+	int KSI_NetworkClient_getAggregatorPass(const KSI_NetworkClient *net, const char **val);
 
 	/**
 	 * This function converts the aggregator response status code into a KSI status code.
@@ -263,7 +263,7 @@ extern "C" {
 	 * \param[out]	scheme		Pointer to the receiving pointer of the scheme (may be \c NULL).
 	 * \param[out]	host		Pointer to the receiving pointer of the host (may be \c NULL).
 	 * \param[out]	port		Pointer to the receiving variable (may be \c NULL).
-	 * \param[out]	path		Pointer to the receiving pointer of the path (may be \NULL).
+	 * \param[out]	path		Pointer to the receiving pointer of the path (may be \c NULL).
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note All aquired pointers have to be freed by the caller using #KSI_free.
