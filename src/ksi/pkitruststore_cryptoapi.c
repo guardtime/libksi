@@ -31,28 +31,32 @@
 #include "tlv.h"
 #include "pkitruststore.h"
 
-const char* getMSError(DWORD dw)
-{
-	static char ms_error[1024];
+const char* getMSError(DWORD error, char *buf, unsigned len){
     LPVOID lpMsgBuf;
-    char *tmp;
+    char *tmp = NULL;
+    char *ret = NULL;
 
-    FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER |
-        FORMAT_MESSAGE_FROM_SYSTEM |
-        FORMAT_MESSAGE_IGNORE_INSERTS,
-        NULL,
-        dw,
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        (LPTSTR) &lpMsgBuf,
-        0, NULL);
+	if(buf == NULL) goto cleanup;
+
+    if(!FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+					NULL, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) &lpMsgBuf,
+					0, NULL)){
+		goto cleanup;
+	}
 
 	tmp = (char*)lpMsgBuf;
 	tmp[strlen(tmp)-2] = 0;
-	KSI_snprintf(ms_error, sizeof(ms_error), "CryptoAPI: %s", lpMsgBuf);
+
+	if(KSI_strncpy(buf, tmp, len) == NULL)
+		goto cleanup;
+
+	ret = buf;
+
+cleanup:
+
     LocalFree(lpMsgBuf);
 
-	return ms_error;
+	return ret;
 }
 
 static int KSI_PKITruststore_global_initCount = 0;
@@ -100,10 +104,12 @@ static ALG_ID algIdFromOID(const char *OID){
 
 /*TODO: Check CertClose error handling*/
 void KSI_PKITruststore_free(KSI_PKITruststore *trust) {
+	char buf[1024];
+
 	if (trust != NULL) {
 		if (trust->collectionStore != NULL){
 			if (!CertCloseStore(trust->collectionStore, CERT_CLOSE_STORE_CHECK_FLAG)){
-				KSI_LOG_debug(trust->ctx, "%s", getMSError(GetLastError()));
+				KSI_LOG_debug(trust->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
 				}
 		}
 		KSI_free(trust);
@@ -188,7 +194,7 @@ int KSI_PKITruststore_addLookupDir(KSI_PKITruststore *trust, const char *path) {
 int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) {
 	KSI_ERR err;
 	HCERTSTORE tmp_FileTrustStore = NULL;
-
+	char buf[1024];
 	KSI_PRE(&err, trust != NULL) goto cleanup;
 	KSI_PRE(&err, path != NULL) goto cleanup;
 	KSI_BEGIN(trust->ctx, &err);
@@ -196,14 +202,14 @@ int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) 
 	/*Open new store */
 	tmp_FileTrustStore = CertOpenStore(CERT_STORE_PROV_FILENAME_A, 0, 0, 0, path);
 	if (tmp_FileTrustStore == NULL) {
-		KSI_LOG_debug(trust->ctx, "%s", getMSError(GetLastError()));
+		KSI_LOG_debug(trust->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
 		goto cleanup;
 	}
 
 	/*Update with priority 0 store*/
 	if (!CertAddStoreToCollection(trust->collectionStore, tmp_FileTrustStore, 0, 0)) {
-		KSI_LOG_debug(trust->ctx, "%s", getMSError(GetLastError()));
+		KSI_LOG_debug(trust->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
 		goto cleanup;
 	}
@@ -222,6 +228,7 @@ int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **tru
 	KSI_ERR err;
 	KSI_PKITruststore *tmp = NULL;
 	HCERTSTORE collectionStore = NULL;
+	char buf[1024];
 	int res;
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
@@ -235,7 +242,7 @@ int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **tru
 	/*Open certificate store as collection of other stores*/
 	collectionStore = CertOpenStore(CERT_STORE_PROV_COLLECTION, PKCS_7_ASN_ENCODING | X509_ASN_ENCODING, 0, 0, NULL);
 	if (collectionStore == NULL) {
-		KSI_LOG_debug(ctx, "%s", getMSError(GetLastError()));
+		KSI_LOG_debug(ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, NULL);
 		goto cleanup;
 	}
@@ -428,6 +435,7 @@ int KSI_PKICertificate_new(KSI_CTX *ctx, const void *der, size_t der_len, KSI_PK
 	KSI_ERR err;
 	PCCERT_CONTEXT x509 = NULL;
 	KSI_PKICertificate *tmp = NULL;
+	char buf[1024];
 
 	KSI_PRE(&err, ctx != NULL) goto cleanup;
 	KSI_PRE(&err, der != NULL) goto cleanup;
@@ -444,7 +452,9 @@ int KSI_PKICertificate_new(KSI_CTX *ctx, const void *der, size_t der_len, KSI_PK
 	x509 = CertCreateCertificateContext(X509_ASN_ENCODING, der, (unsigned)der_len);
 	if (x509 == NULL) {
 		DWORD error = GetLastError();
-		const char *errmsg = getMSError(error);
+		const char *errmsg = getMSError(GetLastError(), buf, sizeof(buf));
+		KSI_LOG_debug(ctx, "%s", errmsg);
+
 		if (error == CRYPT_E_ASN1_EOD)
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, "Invalid PKI certificate. ASN.1 unexpected end of data.");
 		else if (error == CRYPT_E_ASN1_MEMORY	)
@@ -452,8 +462,6 @@ int KSI_PKICertificate_new(KSI_CTX *ctx, const void *der, size_t der_len, KSI_PK
 		else
 			KSI_FAIL(&err, KSI_INVALID_FORMAT, errmsg);
 
-		printf(">>>> %i, %x, %s", error, error, errmsg);
-		KSI_LOG_debug(ctx, "%s", errmsg);
 		goto cleanup;
 	}
 
@@ -484,6 +492,7 @@ int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, 
 	KSI_ERR err;
 	unsigned char *tmp_serialized = NULL;
 	DWORD len = 0;
+	char buf[1024];
 
 	KSI_PRE(&err, cert != NULL) goto cleanup;
 	KSI_PRE(&err, raw != NULL) goto cleanup;
@@ -491,7 +500,7 @@ int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, 
 	KSI_BEGIN(cert->ctx, &err);
 
 	if (!CertSerializeCertificateStoreElement(cert->x509, 0, NULL, &len)) {
-		KSI_LOG_debug(cert->ctx, "%s", getMSError(GetLastError()));
+		KSI_LOG_debug(cert->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Unable to serialize PKI certificate.");
 		goto cleanup;
 	}
@@ -503,7 +512,7 @@ int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, 
 	}
 
 	if (!CertSerializeCertificateStoreElement(cert->x509, 0, (BYTE*)tmp_serialized, &len)){
-		KSI_LOG_debug(cert->ctx, "%s", getMSError(GetLastError()));
+		KSI_LOG_debug(cert->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Unable to serialize PKI certificate.");
 		goto cleanup;
 	}
@@ -619,6 +628,7 @@ static int extractSigningCertificate(const KSI_PKISignature *signature, PCCERT_C
 	HCRYPTMSG signaturMSG = NULL;
 	PCCERT_CONTEXT signing_cert = NULL;
 	BYTE *dataRecieved = NULL;
+	char buf[1024];
 	DWORD dataLen = 0;
 
 
@@ -630,7 +640,7 @@ static int extractSigningCertificate(const KSI_PKISignature *signature, PCCERT_C
 	/*Get Signature certificates as a certificate store*/
 	certStore = CryptGetMessageCertificates(PKCS_7_ASN_ENCODING | X509_ASN_ENCODING, (HCRYPTPROV_LEGACY)NULL, 0, signature->pkcs7.pbData, signature->pkcs7.cbData);
 	if (certStore == NULL){
-		KSI_LOG_debug(signature->ctx, "%s", getMSError(GetLastError()));
+		KSI_LOG_debug(signature->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Unable to get signatures PKI certificates.");
 		goto cleanup;
 	 }
@@ -638,7 +648,7 @@ static int extractSigningCertificate(const KSI_PKISignature *signature, PCCERT_C
 	/*Counting signing certificates*/
 	signerCount = CryptGetMessageSignerCount(PKCS_7_ASN_ENCODING, signature->pkcs7.pbData, signature->pkcs7.cbData);
 	if (signerCount == -1){
-		KSI_LOG_debug(signature->ctx, "%s", getMSError(GetLastError()));
+		KSI_LOG_debug(signature->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Unable to count PKI signatures certificates.");
 		goto cleanup;
 	}
@@ -653,7 +663,7 @@ static int extractSigningCertificate(const KSI_PKISignature *signature, PCCERT_C
 	signaturMSG = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0,0, NULL, NULL);
 	if (signaturMSG == NULL){
 		DWORD error = GetLastError();
-		const char *errmsg = getMSError(error);
+		const char *errmsg = getMSError(GetLastError(), buf, sizeof(buf));
 		KSI_LOG_debug(signature->ctx, "%s", errmsg);
 
 		if (error == E_INVALIDARG)
@@ -668,7 +678,7 @@ static int extractSigningCertificate(const KSI_PKISignature *signature, PCCERT_C
 
 	if (!CryptMsgUpdate(signaturMSG, signature->pkcs7.pbData, signature->pkcs7.cbData, TRUE)){
 		DWORD error = GetLastError();
-		const char *errmsg = getMSError(error);
+		const char *errmsg = getMSError(GetLastError(), buf, sizeof(buf));
 		KSI_LOG_debug(signature->ctx, "%s", errmsg);
 
 		if (error == E_OUTOFMEMORY)
@@ -686,7 +696,7 @@ static int extractSigningCertificate(const KSI_PKISignature *signature, PCCERT_C
 	/*Get signatures signing cert id*/
 	if (!CryptMsgGetParam (signaturMSG, CMSG_SIGNER_CERT_INFO_PARAM, 0, NULL, &dataLen)){
 		DWORD error = GetLastError();
-		const char *errmsg = getMSError(error);
+		const char *errmsg = getMSError(GetLastError(), buf, sizeof(buf));
 		KSI_LOG_debug(signature->ctx, "%s", errmsg);
 
 		if (error == CRYPT_E_ATTRIBUTES_MISSING)
@@ -703,7 +713,7 @@ static int extractSigningCertificate(const KSI_PKISignature *signature, PCCERT_C
 	}
 
 	if (!CryptMsgGetParam (signaturMSG, CMSG_SIGNER_CERT_INFO_PARAM, 0, dataRecieved, &dataLen)){
-		KSI_LOG_debug(signature->ctx, "%s", getMSError(GetLastError()));
+		KSI_LOG_debug(signature->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
 		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Unable to get PKI signatures signing certificate id.");
 		goto cleanup;
 	}
@@ -713,7 +723,7 @@ static int extractSigningCertificate(const KSI_PKISignature *signature, PCCERT_C
 	/*Get signing cert*/
 	signing_cert = CertGetSubjectCertificateFromStore(certStore, X509_ASN_ENCODING, pSignerCertInfo);
 	if (signing_cert == NULL){
-		KSI_LOG_debug(signature->ctx, "%s", getMSError(GetLastError()));
+		KSI_LOG_debug(signature->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Unable to get PKI signatures signer certificate.");
 		goto cleanup;
 	}
@@ -804,6 +814,7 @@ static int KSI_PKITruststore_verifyCertificate(const KSI_PKITruststore *pki, con
 	PCCERT_CHAIN_CONTEXT pChainContext = NULL;
 	CERT_CHAIN_POLICY_PARA policyPara;
 	CERT_CHAIN_POLICY_STATUS policyStatus;
+	char buf[1024];
 
 	KSI_PRE(&err, pki != NULL) goto cleanup;
 	KSI_PRE(&err, cert != NULL) goto cleanup;
@@ -825,7 +836,7 @@ static int KSI_PKITruststore_verifyCertificate(const KSI_PKITruststore *pki, con
 	 It is useful when there is need to remove default cert from system store*/
 	/*Build Certificate Chain from top to root certificate*/
 	if (!CertGetCertificateChain(NULL, cert, NULL, pki->collectionStore, &chainPara, 0, NULL, &pChainContext)) {
-		KSI_LOG_debug(pki->ctx, "%s", getMSError(GetLastError()));
+		KSI_LOG_debug(pki->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Unable to get PKI certificate chain");
 		goto cleanup;
 	}
@@ -861,7 +872,7 @@ static int KSI_PKITruststore_verifyCertificate(const KSI_PKITruststore *pki, con
 	policyPara.pvExtraPolicyPara = 0;
 
 	if (!CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, pChainContext, &policyPara, &policyStatus)) {
-		KSI_LOG_debug(pki->ctx, "%s", getMSError(GetLastError()));
+		KSI_LOG_debug(pki->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, NULL);
 		goto cleanup;
 	}
@@ -935,6 +946,7 @@ int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned cha
 	PCCERT_CONTEXT subjectCert = NULL;
 	CRYPT_VERIFY_MESSAGE_PARA msgPara;
 	DWORD dLen;
+	char buf[1024];
 
 	KSI_PRE(&err, pki != NULL) goto cleanup;
 	KSI_PRE(&err, data != NULL) goto cleanup;
@@ -959,7 +971,7 @@ int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned cha
 
 	if (!CryptVerifyDetachedMessageSignature(&msgPara, 0, signature->pkcs7.pbData, signature->pkcs7.cbData, 1, &data, &dLen, &subjectCert)){
 		DWORD error = GetLastError();
-		const char *errmsg = 	getMSError(error);
+		const char *errmsg = getMSError(GetLastError(), buf, sizeof(buf));
 		KSI_LOG_debug(pki->ctx, "%s", errmsg);
 
 		if (error == E_INVALIDARG || error == CRYPT_E_UNEXPECTED_MSG_TYPE || error == CRYPT_E_NO_SIGNER)
@@ -1001,6 +1013,7 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 	BYTE *little_endian_pkcs1= NULL;
 	DWORD pkcs1_len = 0;
 	HCRYPTHASH hash = 0;
+	char buf[1024];
 
 	KSI_PRE(&err, data != NULL && data_len > 0) goto cleanup;
 	KSI_PRE(&err, signature != NULL && signature_len > 0) goto cleanup;
@@ -1018,7 +1031,7 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 
 	// Get the CSP context
 	if (!CryptAcquireContext(&hCryptProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)){
-		KSI_LOG_debug(ctx, "%s", getMSError(GetLastError()));
+		KSI_LOG_debug(ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Unable to get cryptographic provider.");
 		goto cleanup;
 	}
@@ -1026,7 +1039,7 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 	// Get the public key from the issuer certificate
 	subjectCert = certificate->x509;
 	if (!CryptImportPublicKeyInfo(hCryptProv, X509_ASN_ENCODING,&subjectCert->pCertInfo->SubjectPublicKeyInfo,&publicKey)){
-		KSI_LOG_debug(ctx, "%s", getMSError(GetLastError()));
+		KSI_LOG_debug(ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
 		KSI_FAIL(&err, KSI_PKI_CERTIFICATE_NOT_TRUSTED, "Failed to read PKI public key.");
 		goto cleanup;
 	}
@@ -1046,13 +1059,13 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 
 	// Create the hash object and hash input data.
 	if (!CryptCreateHash(hCryptProv, algorithm, 0, 0, &hash)){
-		KSI_LOG_debug(ctx, "%s", getMSError(GetLastError()));
+		KSI_LOG_debug(ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Unable to create hasher.");
 		goto cleanup;
 	}
 
 	if (!CryptHashData(hash, (BYTE*)data, data_len,0)){
-		KSI_LOG_debug(ctx, "%s", getMSError(GetLastError()));
+		KSI_LOG_debug(ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
 		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Unable to hash data.");
 		goto cleanup;
 	}
@@ -1060,7 +1073,7 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 	/*Verify the signature. The format MUST be PKCS#1*/
 	if (!CryptVerifySignature(hash, (BYTE*)little_endian_pkcs1, pkcs1_len, publicKey, NULL, 0)){
 		DWORD error = GetLastError();
-		const char *errmsg = getMSError(error);
+		const char *errmsg = getMSError(GetLastError(), buf, sizeof(buf));
 		KSI_LOG_debug(ctx, "%s", errmsg);
 
 		if (error == NTE_BAD_SIGNATURE)
@@ -1086,4 +1099,3 @@ cleanup:
 }
 
 #endif
-
