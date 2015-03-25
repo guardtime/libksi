@@ -102,6 +102,7 @@ extern "C" {
 	/**
 	 * Initializes the #KSI_VerificationResult object.
 	 * \param[in]	info		Pointer to #KSI_VerificationResult.
+	 * \param[in]	ctx			KSI context.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */

@@ -457,17 +457,20 @@ int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extend
  * \param[in]		level		Log level.
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- * \see #KSI_LOG_LVL_en, #KSI_CTX_setLogFile.
+ * \see #KSI_LOG_LVL_en, #KSI_CTX_setLoggerCallback.
  */
 int KSI_CTX_setLogLevel(KSI_CTX *ctx, int level);
 
 /**
- * This function sets the callback for logging for the context.
+ * This function sets the callback for logging for the context. For logging to streams
+ * #KSI_LOG_StreamLogger can be used.
  * \param[in]	ctx		KSI context.
  * \param[in]	cb		Logger callback function.
  * \param[in]	logCtx	Pointer to logger context, may be \c NULL.
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \see #KSI_LOG_StreamLogger, KSI_CTX_setLogLevel
+ * \note The stream must be freed by the caller.
  */
 int KSI_CTX_setLoggerCallback(KSI_CTX *ctx, KSI_LoggerCallback cb, void *logCtx);
 

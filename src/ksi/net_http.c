@@ -295,8 +295,6 @@ cleanup:
 			return res;																					\
 		}																								\
 
-KSI_NET_IMPLEMENT_SETTER(SignerUrl, const char *, urlAggregator, setStringParam);
-KSI_NET_IMPLEMENT_SETTER(ExtenderUrl, const char *, urlExtender, setStringParam);
 KSI_NET_IMPLEMENT_SETTER(PublicationUrl, const char *, urlPublication, setStringParam);
 KSI_NET_IMPLEMENT_SETTER(ConnectTimeoutSeconds, int, connectionTimeoutSeconds, setIntParam);
 KSI_NET_IMPLEMENT_SETTER(ReadTimeoutSeconds, int, readTimeoutSeconds, setIntParam);
