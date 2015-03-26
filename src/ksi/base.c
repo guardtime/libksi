@@ -279,110 +279,126 @@ void KSI_CTX_free(KSI_CTX *ctx) {
 }
 
 int KSI_sendSignRequest(KSI_CTX *ctx, KSI_AggregationReq *request, KSI_RequestHandle **handle) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_RequestHandle *tmp = NULL;
-	int res;
 	KSI_NetworkClient *netProvider = NULL;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, request != NULL) goto cleanup;
-	KSI_PRE(&err, handle != NULL) goto cleanup;
-
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || request == NULL || handle == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	netProvider = ctx->netProvider;
 
 	res = KSI_NetworkClient_sendSignRequest(netProvider, request, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
 
 	*handle = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_RequestHandle_free(tmp);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_sendExtendRequest(KSI_CTX *ctx, KSI_ExtendReq *request, KSI_RequestHandle **handle) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_RequestHandle *tmp = NULL;
-	int res;
 	KSI_NetworkClient *netProvider = NULL;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, request != NULL) goto cleanup;
-	KSI_PRE(&err, handle != NULL) goto cleanup;
-
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || request == NULL || handle == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	netProvider = ctx->netProvider;
 
 	res = KSI_NetworkClient_sendExtendRequest(netProvider, request, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
 
 	*handle = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_RequestHandle_free(tmp);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_RequestHandle **handle) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_NetworkClient *netProvider = NULL;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || handle == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	netProvider = ctx->netProvider;
 
 	res = KSI_NetworkClient_sendPublicationsFileRequest(netProvider, handle);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 
 }
 
 int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_RequestHandle *handle = NULL;
 	const unsigned char *raw = NULL;
 	unsigned raw_len = 0;
 	KSI_PublicationsFile *tmp = NULL;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, pubFile != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || pubFile == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+	}
 
 	/* TODO! Implement mechanism for reloading (e.g cache timeout) */
 	if (ctx->publicationsFile == NULL) {
 		KSI_LOG_debug(ctx, "Receiving publications file.");
 
 		res = KSI_sendPublicationRequest(ctx, NULL, 0, &handle);
-		KSI_CATCH(&err, res) goto cleanup;
+		if (res != KSI_OK) {
+			KSI_pushError(ctx,res, NULL);
+			goto cleanup;
+		}
 
 		res = KSI_RequestHandle_getResponse(handle, &raw, &raw_len);
-		KSI_CATCH(&err, res) goto cleanup;
+		if (res != KSI_OK) {
+			KSI_pushError(ctx,res, NULL);
+			goto cleanup;
+		}
 
 		res = KSI_PublicationsFile_parse(ctx, raw, raw_len, &tmp);
-		KSI_CATCH(&err, res) goto cleanup;
+		if (res != KSI_OK) {
+			KSI_pushError(ctx,res, NULL);
+			goto cleanup;
+		}
 
 		ctx->publicationsFile = tmp;
 		tmp = NULL;
@@ -392,173 +408,219 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 
 	*pubFile = ctx->publicationsFile;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_RequestHandle_free(handle);
 	KSI_PublicationsFile_free(tmp);
 
-	return KSI_RETURN(&err);
+	return res;
 
 }
 
 int KSI_verifyPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile *pubFile) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, pubFile != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || pubFile == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_PublicationsFile_verify(pubFile, ctx);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, sig != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || sig == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_Signature_verify(sig, ctx);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_createSignature(KSI_CTX *ctx, KSI_DataHash *dataHash, KSI_Signature **sig) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_Signature *tmp = NULL;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, dataHash != NULL) goto cleanup;
-	KSI_PRE(&err, sig != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || dataHash == NULL || sig == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_Signature_create(ctx, dataHash, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
 
 	*sig = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_Signature_free(tmp);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extended) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationsFile *pubFile = NULL;
 	KSI_Integer *signingTime = NULL;
 	KSI_PublicationRecord *pubRec = NULL;
 	KSI_Signature *extSig = NULL;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, sig != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || sig == NULL || extended == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_receivePublicationsFile(ctx, &pubFile);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
+
 
 	res = KSI_Signature_getSigningTime(sig, &signingTime);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
+
 
 	res = KSI_PublicationsFile_getNearestPublication(pubFile, signingTime, &pubRec);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
 
 	if (pubRec == NULL) {
-		KSI_FAIL(&err, KSI_EXTEND_NO_SUITABLE_PUBLICATION, NULL);
+		KSI_pushError(ctx, res = KSI_EXTEND_NO_SUITABLE_PUBLICATION, NULL);
 		goto cleanup;
 	}
 
 	res = KSI_Signature_extend(sig, ctx, pubRec, &extSig);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
+
 
 	*extended = extSig;
 	extSig = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_Signature_free(extSig);
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_extendSignatureToPublication(KSI_CTX *ctx, KSI_Signature *sig, char *pubString, KSI_Signature **extended) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationsFile *pubFile = NULL;
 	KSI_Integer *signingTime = NULL;
 	KSI_PublicationRecord *pubRec = NULL;
 	KSI_Signature *extSig = NULL;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, sig != NULL) goto cleanup;
-	KSI_PRE(&err, pubString != NULL) goto cleanup;
-	KSI_PRE(&err, extended != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || sig == NULL || pubString == NULL || extended == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_receivePublicationsFile(ctx, &pubFile);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
+
 
 	res = KSI_Signature_getSigningTime(sig, &signingTime);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
+
 
 	res = KSI_PublicationsFile_getNearestPublication(pubFile, signingTime, &pubRec);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
+
 
 	if (pubRec == NULL) {
-		KSI_FAIL(&err, KSI_EXTEND_NO_SUITABLE_PUBLICATION, NULL);
+		KSI_pushError(ctx, res = KSI_EXTEND_NO_SUITABLE_PUBLICATION, NULL);
 		goto cleanup;
 	}
 
 	res = KSI_Signature_extend(sig, ctx, pubRec, &extSig);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
+
 
 	*extended = extSig;
 	extSig = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_Signature_free(extSig);
-	return KSI_RETURN(&err);
+
+	return res;
 }
 
 int KSI_CTX_setLogLevel(KSI_CTX *ctx, int level) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	ctx->logLevel = level;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_ERR_init(KSI_CTX *ctx, KSI_ERR *err) {
@@ -713,29 +775,33 @@ void KSI_free(void *ptr) {
 static int KSI_CTX_setUri(KSI_CTX *ctx,
 		const char *uri, const char *loginId, const char *key,
 		int (*setter)(KSI_UriClient*, const char*, const char *, const char *)){
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_UriClient *client = NULL;
 
-	KSI_PRE(&err, ctx != NULL && ctx->netProvider) goto cleanup;
-	KSI_PRE(&err, uri != NULL && loginId != NULL && key != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || uri == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	if (ctx->isCustomNetProvider){
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Unable to set url after initial network provider replacement.");
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Unable to set url after initial network provider replacement.");
 		goto cleanup;
 	}
 
 	client = (KSI_UriClient*)ctx->netProvider;
 
 	res = setter(client, uri, loginId, key);
-	KSI_CATCH(&err, res) goto cleanup;
+		if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 static int KSI_UriClient_setPublicationUrl_wrapper(KSI_UriClient *client, const char *uri, const char *not_used_1, const char *not_used_2){
@@ -755,28 +821,33 @@ int KSI_CTX_setPublicationUrl(KSI_CTX *ctx, const char *uri){
 }
 
 static int KSI_CTX_setTimeoutSeconds(KSI_CTX *ctx, int timeout, int (*setter)(KSI_UriClient*, int)){
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_UriClient *client = NULL;
 
-	KSI_PRE(&err, ctx != NULL && ctx->netProvider) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || ctx->netProvider == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	if (ctx->isCustomNetProvider){
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Unable to set timeout after initial network provider replacement.");
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Unable to set timeout after initial network provider replacement.");
 		goto cleanup;
 	}
 
 	client = (KSI_UriClient*)ctx->netProvider;
 
 	res = setter(client, timeout);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_CTX_setConnectionTimeoutSeconds(KSI_CTX *ctx, int timeout){
