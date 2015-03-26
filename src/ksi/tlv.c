@@ -77,7 +77,6 @@ KSI_IMPLEMENT_LIST(KSI_TLV, KSI_TLV_free);
 static int createOwnBuffer(KSI_TLV *tlv, int copy) {
 	int res = KSI_UNKNOWN_ERROR;
 	unsigned char *buf = NULL;
-	unsigned buf_size = KSI_BUFFER_SIZE;
 	unsigned buf_len = 0;
 
 	if (tlv == NULL) {
@@ -91,7 +90,7 @@ static int createOwnBuffer(KSI_TLV *tlv, int copy) {
 		goto cleanup;
 	}
 
-	buf = KSI_calloc(buf_size, 1);
+	buf = KSI_malloc(KSI_BUFFER_SIZE);
 	if (buf == NULL) {
 		KSI_pushError(tlv->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
@@ -109,7 +108,7 @@ static int createOwnBuffer(KSI_TLV *tlv, int copy) {
 	tlv->datap = tlv->buffer;
 	tlv->datap_len = buf_len;
 
-	tlv->buffer_size = buf_size;
+	tlv->buffer_size = KSI_BUFFER_SIZE;
 
 	res = KSI_OK;
 
@@ -417,7 +416,7 @@ int KSI_TLV_setRawValue(KSI_TLV *tlv, const void *data, unsigned data_len) {
 		goto cleanup;
 	}
 
-	if (data_len > KSI_BUFFER_SIZE) {
+	if (data_len >= KSI_BUFFER_SIZE) {
 		KSI_pushError(tlv->ctx, res = KSI_BUFFER_OVERFLOW, NULL);
 		goto cleanup;
 	}
@@ -432,6 +431,12 @@ int KSI_TLV_setRawValue(KSI_TLV *tlv, const void *data, unsigned data_len) {
 
 	tlv->datap = tlv->buffer;
 	tlv->datap_len = data_len;
+
+	/* Double check the boundaries. */
+	if (tlv->buffer_size < data_len) {
+		KSI_pushError(tlv->ctx, res = KSI_BUFFER_OVERFLOW, NULL);
+		goto cleanup;
+	}
 
 	memcpy(tlv->datap, data, data_len);
 

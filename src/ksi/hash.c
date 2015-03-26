@@ -21,6 +21,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "hash.h"
 #include "internal.h"
 #include "hash_impl.h"
 #include "tlv.h"
