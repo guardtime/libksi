@@ -4,23 +4,23 @@ T1 - Signing Tutorial
 Disclaimer
 ----------
 
-For simplicity reasons, the error handling in thsi tutorial mostly omitted.
+For simplicity reasons, the error handling in this tutorial mostly omitted.
 In practice almost all the functions in the SDK return a status code which
 value should be checked to be #KSI_OK, which means all went well.
 
-1. Preparattion
+1. Preparation
 ---------------
 
 The first thing by using the SDK, we need to create a KSI context variable
 and initialize it. The context contains all the configurations and can be used
-for debuging. The following example shows the initialization of a new #KSI_CTX
+for debugging. The following example shows the initialization of a new #KSI_CTX
 object.
 
     #include <ksi/ksi.h>
     KSI_CTX *ksi = NULL; /* Must be feed at the end. */
     KSI_CTX_new(&ksi); /* Must be initialized only once per thread. */
 
-The next step would be to configure the contetx, as there are no default service
+The next step would be to configure the context, as there are no default service
 locations to send the signing request to. Let's assume the signing service address is
 \c signservice.somehost:1234 and it is authenticated by \c user:key. We can configure
 the signing service provider by calling #KSI_CTX_setAggregator.
@@ -28,7 +28,7 @@ the signing service provider by calling #KSI_CTX_setAggregator.
     KSI_CTX_setAggregator(ksi, "signingservice.somehost:1234", "user", "key");
 
 The context is ready to be used for signing (for extending, the extending service
-must be configured see [Extending Turorial](t3_extending.md)).
+must be configured see [Extending Tutorial](t3_extending.md)).
 
 2. Hashing
 ----------
@@ -49,7 +49,7 @@ memory buffer and we can use the #KSI_DataHash_create function. We will use the
 ----------
 
 At this point we should have all we need to sign document (actually only the hash value of it). To
-do so, we need to call #KSI_createSignaure.
+do so, we need to call #KSI_createSignature.
 
     KSI_Signature *sig = NULL;
     KSI_createSignature(ksi, hsh, &sig);
@@ -65,7 +65,7 @@ to call the #KSI_Signature_serialize method.
     
     KSI_Signature_serialize(sig, &serialized, &serialized_len);
 
-Now the user may strore the contents of \c serialized with lengt \c serialised_len how ever needed.
+Now the user may store the contents of \c serialized with length \c serialized_len how ever needed.
 
 5. Cleanup
 ----------

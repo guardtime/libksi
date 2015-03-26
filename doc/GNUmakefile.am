@@ -19,7 +19,7 @@
 
 AUTOMAKE_OPTIONS = foreign
 
-all: doc
+all:
 
 doc: htmldoc 
 
