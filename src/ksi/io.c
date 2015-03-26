@@ -272,7 +272,7 @@ cleanup:
 
 int KSI_RDR_fromSocket(KSI_CTX *ctx, int socketfd, KSI_RDR **rdr) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_RDR *reader = NULL;
+	KSI_RDR *tmp = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || socketfd < 0 || rdr == NULL) {
@@ -280,22 +280,22 @@ int KSI_RDR_fromSocket(KSI_CTX *ctx, int socketfd, KSI_RDR **rdr) {
 		goto cleanup;
 	}
 
-	reader = newReader(ctx, KSI_IO_SOCKET);
-	if (reader == NULL) {
+	tmp = newReader(ctx, KSI_IO_SOCKET);
+	if (tmp == NULL) {
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
-	reader->data.socketfd = socketfd;
+	tmp->data.socketfd = socketfd;
 
-	*rdr = reader;
-	reader = NULL;
+	*rdr = tmp;
+	tmp = NULL;
 
 	res = KSI_OK;
 
 cleanup:
 
-	KSI_RDR_close(rdr);
+	KSI_RDR_close(tmp);
 
 	return res;
 }
