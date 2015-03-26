@@ -55,21 +55,24 @@ static const EVP_MD *hashAlgorithmToEVP(int hash_id)
 }
 
 static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 	unsigned int hash_length;
 
-	KSI_PRE(&err, hasher != NULL) goto cleanup;
-	KSI_PRE(&err, data_hash != NULL) goto cleanup;
-	KSI_BEGIN(hasher->ctx, &err);
+	if (hasher == NULL || data_hash == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(hasher->ctx);
 	
+	/* Make sure the algorithm id fits into a single  byte. */
 	if (hasher->algorithm > 0xff) {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Algorithm ID too large.");
+		KSI_pushError(hasher->ctx, res = KSI_INVALID_ARGUMENT, "Algorithm ID too large.");
 		goto cleanup;
 	}
 
 	hash_length = KSI_getHashLength(hasher->algorithm);
 	if (hash_length == 0) {
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Error finding digest length.");
+		KSI_pushError(hasher->ctx, res = KSI_UNKNOWN_ERROR, "Error finding digest length.");
 		goto cleanup;
 	}
 
@@ -78,18 +81,18 @@ static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 
 	/* Make sure the hash length is the same. */
 	if (hash_length != data_hash->imprint_length) {
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Internal hash lengths mismatch.");
+		KSI_pushError(hasher->ctx, res = KSI_UNKNOWN_ERROR, "Internal hash lengths mismatch.");
 		goto cleanup;
 	}
 
 	data_hash->imprint[0] = (0xff & hasher->algorithm);
 	data_hash->imprint_length++;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_isHashAlgorithmSupported(int hash_id) {
@@ -149,16 +152,19 @@ cleanup:
 
 
 int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 	const EVP_MD *evp_md = NULL;
 	void *context = NULL;
 
-	KSI_PRE(&err, hasher != NULL) goto cleanup;
-	KSI_BEGIN(hasher->ctx, &err);
+	if (hasher == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(hasher->ctx);
 
 	evp_md = hashAlgorithmToEVP(hasher->algorithm);
 	if (evp_md == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(hasher->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
@@ -166,7 +172,7 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 	if (context == NULL) {
 		context = KSI_new(EVP_MD_CTX);
 		if (context == NULL) {
-			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+			KSI_pushError(hasher->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 			goto cleanup;
 		}
 
@@ -176,33 +182,35 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 	}
 
 	if (!EVP_DigestInit(context, evp_md)) {
-		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, NULL);
+		KSI_pushError(hasher->ctx, res = KSI_CRYPTO_FAILURE, NULL);
 		goto cleanup;
 	}
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_length) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 
-	KSI_PRE(&err, hasher != NULL) goto cleanup;
-	KSI_PRE(&err, data != NULL || data_length == 0) goto cleanup;
-	KSI_BEGIN(hasher->ctx, &err);
+	if (hasher == NULL || data == NULL || data_length == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(hasher->ctx);
 
 	if (data_length > 0) {
 		EVP_DigestUpdate(hasher->hashContext, data, data_length);
 	}
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 #endif
