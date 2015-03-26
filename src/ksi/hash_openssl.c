@@ -196,7 +196,7 @@ cleanup:
 int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_length) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	if (hasher == NULL || data == NULL || data_length == NULL) {
+	if (hasher == NULL || data == NULL || data_length == 0) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}

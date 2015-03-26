@@ -93,8 +93,7 @@ cleanup:
 }
 
 static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink *link) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	int mode = 0;
 	const unsigned char *imprint = NULL;
 	unsigned int imprint_len;
@@ -103,18 +102,29 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 	KSI_DataHash *hash = NULL;
 	KSI_OctetString *tmpOctStr = NULL;
 
-	KSI_PRE(&err, hsr != NULL) goto cleanup;
-	KSI_PRE(&err, link != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || hsr == NULL || link == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_HashChainLink_getImprint(link, &hash);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_HashChainLink_getMetaData(link, &metaData);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_HashChainLink_getMetaHash(link, &metaHash);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	if (hash != NULL) mode |= 0x01;
 	if (metaHash != NULL) mode |= 0x02;
@@ -123,28 +133,43 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 	switch (mode) {
 		case 0x01:
 			res = KSI_DataHash_getImprint(hash, &imprint, &imprint_len);
-			KSI_CATCH(&err, res) goto cleanup;
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
 			break;
 		case 0x02:
 			res = KSI_DataHash_getImprint(metaHash, &imprint, &imprint_len);
-			KSI_CATCH(&err, res) goto cleanup;
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
 			break;
 		case 0x04:
 			res = KSI_MetaData_getRaw(metaData, &tmpOctStr);
-			KSI_CATCH(&err, res) goto cleanup;
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
 
 			res = KSI_OctetString_extract(tmpOctStr, &imprint, &imprint_len);
-			KSI_CATCH(&err, res) goto cleanup;
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
 			break;
 		default:
-			KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL);
+			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
 			goto cleanup;
 	}
 
 	res = KSI_DataHasher_add(hsr, imprint, imprint_len);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
@@ -154,12 +179,11 @@ cleanup:
 	KSI_nofree(imprint);
 	KSI_nofree(tmpOctStr);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, int startLevel, int hash_id, int isCalendar, int *endLevel, KSI_DataHash **outputHash) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	int level = startLevel;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
@@ -169,28 +193,33 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 	char logMsg[0xff];
 	size_t i;
 
-
-	KSI_PRE(&err, chain != NULL) goto cleanup;
-	KSI_PRE(&err, inputHash != NULL) goto cleanup;
-	KSI_PRE(&err, outputHash != NULL) goto cleanup;
-
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || chain == NULL || inputHash == NULL || outputHash == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	sprintf(logMsg, "Starting %s hash chain aggregation with input hash.", isCalendar ? "calendar": "aggregation");
 	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, logMsg, inputHash);
 
 	for (i = 0; i < KSI_HashChainLinkList_length(chain); i++) {
 		res = KSI_HashChainLinkList_elementAt(chain, i, &link);
-		KSI_CATCH(&err, res) goto cleanup;
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
 
 		if (!isCalendar) {
 			KSI_uint64_t levelCorrection = KSI_Integer_getUInt64(link->levelCorrection);
 			if (levelCorrection > 0xff || level + levelCorrection + 1 > 0xff)
-				KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Aggregation chain level out of range.");
+				KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Aggregation chain level out of range.");
 			level += (int)levelCorrection + 1;
 		} else {
 			res = KSI_DataHash_extract(link->imprint, &algo_id, NULL, NULL);
-			KSI_CATCH(&err, res) goto cleanup;
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
 		}
 
 		/* Create or reset the hasher. */
@@ -199,25 +228,40 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 		} else {
 			res = KSI_DataHasher_reset(hsr);
 		}
-		KSI_CATCH(&err, res) goto cleanup;
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
 
 		if (link->isLeft) {
 			res = addNvlImprint(hsh, inputHash, hsr);
-			KSI_CATCH(&err, res) goto cleanup;
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
 
 			res = addChainImprint(ctx, hsr, link);
-			KSI_CATCH(&err, res) goto cleanup;
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
 		} else {
 			res = addChainImprint(ctx, hsr, link);
-			KSI_CATCH(&err, res) goto cleanup;
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
 
 			res = addNvlImprint(hsh, inputHash, hsr);
-			KSI_CATCH(&err, res) goto cleanup;
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
 		}
 
 
 		if (level > 0xff) {
-			KSI_FAIL(&err, KSI_INVALID_FORMAT, "Aggregation chain length exceeds 0xff.");
+			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Aggregation chain length exceeds 0xff.");
 			goto cleanup;
 		}
 
@@ -229,7 +273,10 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 		} else {
 			res = KSI_DataHasher_close(hsr, &hsh);
 		}
-		KSI_CATCH(&err, res) goto cleanup;
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
 	}
 
 
@@ -240,14 +287,14 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 	sprintf(logMsg, "Finished %s hash chain aggregation with output hash.", isCalendar ? "calendar": "aggregation");
 	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, logMsg, *outputHash);
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_DataHasher_free(hsr);
 	KSI_DataHash_free(hsh);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 /**
@@ -359,38 +406,47 @@ cleanup:
 }
 
 int KSI_CalendarHashChain_aggregate(KSI_CalendarHashChain *chain, KSI_DataHash **hsh) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 
-	KSI_PRE(&err, chain != NULL) goto cleanup;
-	KSI_PRE(&err, hsh != NULL) goto cleanup;
-	KSI_BEGIN(chain->ctx, &err);
+	if (chain == NULL || hsh == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(chain->ctx);
 
 	res = KSI_HashChain_aggregateCalendar(chain->ctx, chain->hashChain, chain->inputHash, hsh);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(chain->ctx, res, NULL);
+		goto cleanup;
+	}
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_CalendarHashChain_calculateAggregationTime(KSI_CalendarHashChain *chain, time_t *aggrTime) {
-	KSI_ERR err;
-	int res;
-	KSI_PRE(&err, chain != NULL) goto cleanup;
-	KSI_PRE(&err, aggrTime != NULL) goto cleanup;
-	KSI_BEGIN(chain->ctx, &err);
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (chain == NULL || aggrTime == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(chain->ctx);
 
 	res = calculateCalendarAggregationTime(chain->hashChain, chain->publicationTime, aggrTime);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(chain->ctx, res, NULL);
+		goto cleanup;
+	}
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 
 }
 
@@ -452,34 +508,46 @@ cleanup:
 
 
 int KSI_CalendarHashChainLink_fromTlv(KSI_TLV *tlv, KSI_CalendarHashChainLink **link) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_HashChainLink *tmp = NULL;
 	KSI_DataHash *hsh = NULL;
 	int isLeft = 0;
+	KSI_CTX *ctx = NULL;
 
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, link != NULL) goto cleanup;
-	KSI_BEGIN(KSI_TLV_getCtx(tlv), &err);
+	if (tlv == NULL || link == NULL) {
+		res = KSI_UNKNOWN_ERROR;
+		goto cleanup;
+	}
+	ctx = KSI_TLV_getCtx(tlv);
+	KSI_ERR_clearErrors(ctx);
 
+	/* Determine if it is a left or right link. */
 	switch (KSI_TLV_getTag(tlv)) {
 		case 0x07: isLeft = 1; break;
 		case 0x08: isLeft = 0; break;
 		default: {
 			char errm[0xff];
 			KSI_snprintf(errm, sizeof(errm), "Unknown tag for hash chain link: 0x%02x", KSI_TLV_getTag(tlv));
-			KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
+			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, errm);
 			goto cleanup;
 		}
 	}
 
-	res = KSI_HashChainLink_new(KSI_TLV_getCtx(tlv), &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	/* Create a new link. */
+	res = KSI_HashChainLink_new(ctx, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	tmp->isLeft = isLeft;
 
+	/* Encode the input TLV as a data hash object. */
 	res = KSI_DataHash_fromTlv(tlv, &hsh);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	tmp->imprint = hsh;
 	hsh = NULL;
@@ -487,54 +555,61 @@ int KSI_CalendarHashChainLink_fromTlv(KSI_TLV *tlv, KSI_CalendarHashChainLink **
 	*link = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_HashChainLink_free(tmp);
 	KSI_DataHash_free(hsh);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 
 int KSI_CalendarHashChainLink_toTlv(KSI_CTX *ctx, KSI_CalendarHashChainLink *link, unsigned tag, int isNonCritica, int isForward, KSI_TLV **tlv) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tmp = NULL;
 	unsigned tagOverride = 0;
 
-	KSI_PRE(&err, link != NULL) goto cleanup;
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || link == NULL || tlv == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
 	if (link->isLeft) tagOverride = 0x07;
 	else tagOverride = 0x08;
 
 	res = KSI_DataHash_toTlv(ctx, link->imprint, tagOverride, isNonCritica, isForward, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	*tlv = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_TLV_free(tmp);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_HashChainLink_fromTlv(KSI_TLV *tlv, KSI_HashChainLink **link) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_HashChainLink *tmp = NULL;
 	int isLeft;
+	KSI_CTX *ctx = NULL;
 
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, link != NULL) goto cleanup;
-	KSI_BEGIN(KSI_TLV_getCtx(tlv), &err);
+	if (tlv == NULL || link == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = KSI_TLV_getCtx(tlv);
+	KSI_ERR_clearErrors(ctx);
 
 	switch (KSI_TLV_getTag(tlv)) {
 		case 0x07: isLeft = 1; break;
@@ -542,61 +617,77 @@ int KSI_HashChainLink_fromTlv(KSI_TLV *tlv, KSI_HashChainLink **link) {
 		default: {
 			char errm[0xff];
 			KSI_snprintf(errm, sizeof(errm), "Unknown tag for hash chain link: 0x%02x", KSI_TLV_getTag(tlv));
-			KSI_FAIL(&err, KSI_INVALID_FORMAT, errm);
+			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, errm);
 			goto cleanup;
 		}
 	}
 
-	res = KSI_HashChainLink_new(KSI_TLV_getCtx(tlv), &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	res = KSI_HashChainLink_new(ctx, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
-	res = KSI_TlvTemplate_extract(KSI_TLV_getCtx(tlv), tmp, tlv, KSI_TLV_TEMPLATE(KSI_HashChainLink));
-	KSI_CATCH(&err, res) goto cleanup;
+	res = KSI_TlvTemplate_extract(ctx, tmp, tlv, KSI_TLV_TEMPLATE(KSI_HashChainLink));
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	tmp->isLeft = isLeft;
 
 	*link = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_HashChainLink_free(tmp);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 
 int KSI_HashChainLink_toTlv(KSI_CTX *ctx, KSI_HashChainLink *link, unsigned tag, int isNonCritica, int isForward, KSI_TLV **tlv) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tmp = NULL;
 	unsigned tagOverride = 0;
 
-	KSI_PRE(&err, link != NULL) goto cleanup;
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || link == NULL || tlv == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
-	if (link->isLeft) tagOverride = 0x07;
-	else tagOverride = 0x08;
+	if (link->isLeft) {
+		tagOverride = 0x07;
+	} else {
+		tagOverride = 0x08;
+	}
 
 	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, tagOverride, isNonCritica, isForward, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_TlvTemplate_construct(ctx, tmp, link, KSI_TLV_TEMPLATE(KSI_HashChainLink));
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	*tlv = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_TLV_free(tmp);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 

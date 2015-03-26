@@ -792,7 +792,7 @@ static int KSI_CTX_setUri(KSI_CTX *ctx,
 	client = (KSI_UriClient*)ctx->netProvider;
 
 	res = setter(client, uri, loginId, key);
-		if (res != KSI_OK) {
+	if (res != KSI_OK) {
 		KSI_pushError(ctx,res, NULL);
 		goto cleanup;
 	}
