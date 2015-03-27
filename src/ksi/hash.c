@@ -21,6 +21,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "hash.h"
 #include "internal.h"
 #include "hash_impl.h"
 #include "tlv.h"
@@ -98,11 +99,13 @@ unsigned int KSI_getHashLength(int hash_id) {
  *
  */
 int KSI_DataHash_extract(const KSI_DataHash *hash, int *hash_id, const unsigned char **digest, unsigned int *digest_length) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 
-	KSI_PRE(&err, hash != NULL) goto cleanup;
-
-	KSI_BEGIN(hash->ctx, &err);
+	if (hash == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(hash->ctx);
 
 	if (digest_length != NULL) *digest_length = hash->imprint_length - 1;
 	if (hash_id != NULL) *hash_id = hash->imprint[0];
@@ -110,39 +113,41 @@ int KSI_DataHash_extract(const KSI_DataHash *hash, int *hash_id, const unsigned 
 		*digest = hash->imprint + 1;
 	}
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 /**
  *
  */
 int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *digest, unsigned int digest_length, KSI_DataHash **hash) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *tmp_hash = NULL;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, digest != NULL) goto cleanup;
-	KSI_PRE(&err, digest_length > 0) goto cleanup;
-	KSI_PRE(&err, hash != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
-
-	if (KSI_getHashLength(hash_id) != digest_length) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Digest length does not match with algorithm.");
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || digest == NULL || digest_length == 0 || hash == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
 
+	/* Verify the length of the digest with the algorithm. */
+	if (KSI_getHashLength(hash_id) != digest_length) {
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Digest length does not match with algorithm.");
+		goto cleanup;
+	}
+
+	/* Make sure it fits. */
 	if (digest_length > KSI_MAX_IMPRINT_LEN) {
-		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, "Internal buffer too short to hold imprint");
+		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, "Internal buffer too short to hold imprint");
 		goto cleanup;
 	}
 
 	tmp_hash = KSI_new(KSI_DataHash);
 	if (tmp_hash == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
@@ -156,34 +161,34 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *dige
 	*hash = tmp_hash;
 	tmp_hash = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_DataHash_free(tmp_hash);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 /**
  *
  */
 int KSI_DataHash_getImprint(const KSI_DataHash *hash, const unsigned char **imprint, unsigned int *imprint_length) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 
-	KSI_PRE(&err, hash != NULL) goto cleanup;
-	KSI_PRE(&err, imprint != NULL) goto cleanup;
-	KSI_PRE(&err, imprint_length != NULL) goto cleanup;
-	KSI_BEGIN(hash->ctx, &err);
+	if (hash == NULL || imprint == NULL || imprint_length == NULL) {
+		res = KSI_SERVICE_UNKNOWN_ERROR;
+		goto cleanup;
+	}
 
 	*imprint_length = hash->imprint_length;
 	*imprint = hash->imprint;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 /**
@@ -258,50 +263,66 @@ cleanup:
  *
  */
 int KSI_DataHash_create(KSI_CTX *ctx, const void *data, size_t data_length, int hash_id, KSI_DataHash **hash) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
 	KSI_DataHasher *hsr = NULL;
-	int res;
 
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || hash == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_DataHasher_open(ctx, hash_id, &hsr);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
-	res = KSI_DataHasher_add(hsr, data, data_length);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (data != NULL && data_length >= 0) {
+		res = KSI_DataHasher_add(hsr, data, data_length);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+	}
 
 	res = KSI_DataHasher_close(hsr, &hsh);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	*hash = hsh;
 	hsh = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_DataHash_free(hsh);
 	KSI_DataHasher_free(hsr);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_DataHash_clone(KSI_DataHash *from, KSI_DataHash **to) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 
-	KSI_PRE(&err, from != NULL) goto cleanup;
-	KSI_PRE(&err, to != NULL) goto cleanup;
-	KSI_BEGIN(from->ctx, &err);
+	if (from == NULL || to == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(from->ctx);
 
 	from->refCount++;
 	*to = from;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_DataHash_equals(const KSI_DataHash *left, const KSI_DataHash *right) {
@@ -310,32 +331,41 @@ int KSI_DataHash_equals(const KSI_DataHash *left, const KSI_DataHash *right) {
 }
 
 int KSI_DataHash_fromTlv(KSI_TLV *tlv, KSI_DataHash **hsh) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	int res;
 	const unsigned char *raw = NULL;
 	unsigned int raw_len = 0;
 	KSI_DataHash *tmp = NULL;
 
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, hsh != NULL) goto cleanup;
-
 	ctx = KSI_TLV_getCtx(tlv);
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (tlv == NULL || hsh == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
 	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_RAW);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_TLV_getRawValue(tlv, &raw, &raw_len);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_DataHash_fromImprint(ctx, raw, raw_len, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	*hsh = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
@@ -343,40 +373,50 @@ cleanup:
 	KSI_nofree(raw);
 	KSI_DataHash_free(tmp);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_DataHash_toTlv(KSI_CTX *ctx, KSI_DataHash *hsh, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tmp = NULL;
 	const unsigned char *raw = NULL;
 	unsigned int raw_len = 0;
 
-	KSI_PRE(&err, hsh != NULL) goto cleanup;
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || hsh == NULL || tlv == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
 	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_DataHash_getImprint(hsh, &raw, &raw_len);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_TLV_setRawValue(tmp, raw, raw_len);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	*tlv = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_nofree(raw);
 	KSI_TLV_free(tmp);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_DataHash_getHashAlg(const KSI_DataHash *hash, int *hashAlg){
@@ -390,32 +430,33 @@ return KSI_OK;
 }
 
 int KSI_DataHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned char **data, int *data_len) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 	unsigned len;
 	unsigned i;
 
-	KSI_PRE(&err, metaHash != NULL) goto cleanup;
-	KSI_PRE(&err, data != NULL) goto cleanup;
-	KSI_PRE(&err, data_len != NULL) goto cleanup;
-	KSI_BEGIN(metaHash->ctx, &err);
+	if (metaHash == NULL || data == NULL || data_len == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(metaHash->ctx);
 
 	/* Just be paranoid, and check for the length (the length should be determined by the algorithm anyway) .*/
 	if (metaHash->imprint_length < 3) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Imprint too short for a metahash value.");
+		KSI_pushError(metaHash->ctx, res = KSI_INVALID_FORMAT, "Imprint too short for a metahash value.");
 		goto cleanup;
 	}
 
 	len = ((metaHash->imprint[1] << 8) & 0xff) | (metaHash->imprint[2] & 0xff);
 
 	if (len + 3 > metaHash->imprint_length) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Metadata length greater than imprint length");
+		KSI_pushError(metaHash->ctx, res = KSI_INVALID_FORMAT, "Metadata length greater than imprint length");
 		goto cleanup;
 	}
 
 	/* Verify padding. */
 	for (i = len + (int)3; i < metaHash->imprint_length; i++) {
 		if (metaHash->imprint[i] != 0) {
-			KSI_FAIL(&err, KSI_INVALID_FORMAT, "Metahash not padded with zeros.");
+			KSI_pushError(metaHash->ctx, res = KSI_INVALID_FORMAT, "Metahash not padded with zeros.");
 			goto cleanup;
 		}
 	}
@@ -423,35 +464,42 @@ int KSI_DataHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned
 	*data = metaHash->imprint + 3;
 	*data_len = len;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 
 }
 
 int KSI_DataHash_MetaHash_fromTlv(KSI_TLV *tlv, KSI_DataHash **hsh) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_DataHash *tmp = NULL;
 	const unsigned char *data = NULL;
 	int data_len;
 
-	KSI_PRE(&err, tlv != NULL) goto cleanup;
-	KSI_PRE(&err, hsh != NULL) goto cleanup;
-
 	ctx = KSI_TLV_getCtx(tlv);
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+
+	if (tlv == NULL || hsh == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
 	/* Parse as an imprint */
 	res = KSI_DataHash_fromTlv(tlv, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	/* Try to extract the meta value to validate format. */
 	res = KSI_DataHash_MetaHash_parseMeta(tmp, &data, &data_len);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	/* Make sure that the contents of this imprint is a null terminated sequence of bytes. */
 	tmp->imprint[KSI_MAX_IMPRINT_LEN] = 0; /* Write extra 0 */
@@ -459,15 +507,16 @@ int KSI_DataHash_MetaHash_fromTlv(KSI_TLV *tlv, KSI_DataHash **hsh) {
 	*hsh = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_nofree(ctx);
 	KSI_DataHash_free(tmp);
 
-	return KSI_RETURN(&err);
+	return res;
 }
+
 char *KSI_DataHash_toString(const KSI_DataHash *hsh, char *buf, unsigned buf_len) {
 	char *ret = NULL;
 	unsigned i;
@@ -487,34 +536,38 @@ cleanup:
 }
 
 int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
 
-	KSI_PRE(&err, hasher != NULL) goto cleanup;
-	KSI_PRE(&err, data_hash != NULL) goto cleanup;
-	KSI_BEGIN(hasher->ctx, &err);
+	if (hasher == NULL || data_hash == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(hasher->ctx);
 
 	hsh = KSI_new(KSI_DataHash);
 	if (hsh == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(hasher->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 	hsh->refCount = 1;
 	hsh->ctx = hasher->ctx;
 
 	res = hasher->closeExisting(hasher, hsh);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(hasher->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	*data_hash = hsh;
 	hsh = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_DataHash_free(hsh);
 
-	return KSI_RETURN(&err);
+	return res;
 
 }

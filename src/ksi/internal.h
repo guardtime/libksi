@@ -108,25 +108,30 @@ KSI_CTX *type##_getCtx(const type *o) {			 			\
 
 #define KSI_IMPLEMENT_SETTER(baseType, valueType, valueName, alias)			\
 KSI_DEFINE_SETTER(baseType, valueType, valueName, alias) {					\
-	KSI_ERR err;															\
-	KSI_PRE(&err, o != NULL) goto cleanup;									\
-	KSI_BEGIN(o->ctx, &err);												\
+	int res = KSI_UNKNOWN_ERROR;											\
+	if (o == NULL) {														\
+		res = KSI_INVALID_ARGUMENT;											\
+		goto cleanup;														\
+	}																		\
+	KSI_ERR_clearErrors(o->ctx);											\
 	o->valueName = valueName;												\
-	KSI_SUCCESS(&err);														\
+	res = KSI_OK;															\
 cleanup:																	\
-	return KSI_RETURN(&err);												\
+	return res;																\
 }																			\
 
 #define KSI_IMPLEMENT_GETTER(baseType, valueType, valueName, alias)			\
 KSI_DEFINE_GETTER(baseType, valueType, valueName, alias) {					\
-	KSI_ERR err;															\
-	KSI_PRE(&err, o != NULL) goto cleanup;									\
-	KSI_PRE(&err, valueName != NULL) goto cleanup;							\
-	KSI_BEGIN(o->ctx, &err);												\
+	int res = KSI_UNKNOWN_ERROR;											\
+	if (o == NULL || valueName == NULL) {									\
+		res = KSI_INVALID_ARGUMENT;											\
+		goto cleanup;														\
+	}																		\
+	KSI_ERR_clearErrors(o->ctx);											\
 	*valueName = o->valueName;												\
-	KSI_SUCCESS(&err);														\
+	res = KSI_OK;															\
 cleanup:																	\
-	return KSI_RETURN(&err);												\
+	return res;																\
 }																			\
 
 #define KSI_IMPLEMENT_TOTLV(type) \

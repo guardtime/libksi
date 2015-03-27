@@ -44,7 +44,7 @@ extern "C" {
 
 		/** Extender user. */
 		char *extUser;
-		/** Extender password. */
+		/** Extender shared HMAC secret. */
 		char *extPass;
 		
 		/** Cleanup for the provider, gets the #providerCtx as parameter. */
@@ -58,6 +58,7 @@ extern "C" {
 		unsigned char *request;
 		/** Length of the original request. */
 		unsigned request_length;
+
 		/** Response for the request. NULL if not yet present. */
 		unsigned char *response;
 		/** Length of the response. */
