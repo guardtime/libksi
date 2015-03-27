@@ -293,7 +293,7 @@ int KSI_sendSignRequest(KSI_CTX *ctx, KSI_AggregationReq *request, KSI_RequestHa
 
 	res = KSI_NetworkClient_sendSignRequest(netProvider, request, &tmp);
 	if (res != KSI_OK) {
-		KSI_pushError(ctx,res, NULL);
+		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 

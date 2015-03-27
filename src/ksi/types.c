@@ -339,7 +339,6 @@ static int pdu_calculateHmac(KSI_CTX* ctx, void* pdu,
 		int reqTag,	int respTag,
 		const KSI_TlvTemplate *reqTemplate, const KSI_TlvTemplate *respTemplate,
 		int hashAlg, const char *key, KSI_DataHash **hmac){
-	KSI_ERR err;
 	int res;
 	KSI_Header *header = NULL;
 	const unsigned char *raw_header = NULL;
@@ -354,40 +353,67 @@ static int pdu_calculateHmac(KSI_CTX* ctx, void* pdu,
 	bool freeRawHeader = false;
 	bool freeRawPayload = false;
 
-	KSI_PRE(&err, pdu != NULL) goto cleanup;
-	KSI_PRE(&err, key != NULL) goto cleanup;
-	KSI_PRE(&err, hmac != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || pdu == NULL || key == NULL || hmac == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	if (getHeader == NULL || getResponse == NULL || getResponse_raw == NULL ||
+			getRequest == NULL || getRequest_raw == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Function pointers not initialized.");
+		goto cleanup;
+	}
 
 	res = getHeader(pdu, &header);
-	if (res != KSI_OK || header == NULL){
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Missing header.");
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (header == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Missing header from pdu.");
 		goto cleanup;
 	}
 
 	res = getObjectsRawValue(ctx, header, (int (*)(void*, KSI_OctetString**))KSI_Header_getRaw, KSI_TLV_TEMPLATE(KSI_Header), 0x01, &raw_header, &header_len, &freeRawHeader);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = getRequest(pdu, &request);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = getResponse(pdu, &response);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	if (request != NULL) {
 		res = getObjectsRawValue(ctx, request, getRequest_raw, reqTemplate, reqTag, &raw_payload, &payload_len, &freeRawPayload);
-		KSI_CATCH(&err, res) goto cleanup;
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
 	} else if (response != NULL) {
 		res = getObjectsRawValue(ctx, response, getResponse_raw, respTemplate, respTag, &raw_payload, &payload_len, &freeRawPayload);
-		KSI_CATCH(&err, res) goto cleanup;
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
 	} else {
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Missing payload.");
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Missing payload.");
 		goto cleanup;
 	}
 
 	buf = KSI_malloc(payload_len + header_len);
 	if (buf == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
@@ -395,12 +421,15 @@ static int pdu_calculateHmac(KSI_CTX* ctx, void* pdu,
 	memcpy(buf+header_len, raw_payload, payload_len);
 
 	res = KSI_HMAC_create(header->ctx, hashAlg, key, buf, header_len + payload_len, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	*hmac = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
@@ -409,7 +438,7 @@ cleanup:
 	KSI_free(buf);
 	KSI_DataHash_free(tmp);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, int hashAlg, const char *key, KSI_DataHash **hmac){
@@ -429,29 +458,36 @@ int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, int hashAlg, const char *key, 
 }
 
 int KSI_ExtendPdu_updateHmac(KSI_ExtendPdu *pdu, int algorithm, const char *key) {
-	KSI_ERR err;
 	int res;
 	KSI_DataHash *hmac = NULL;
 
-	KSI_PRE(&err, pdu != NULL) goto cleanup;
-	KSI_BEGIN(pdu->ctx, &err);
+	if (pdu == NULL || pdu->ctx == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(pdu->ctx);
 
 	res = KSI_ExtendPdu_calculateHmac(pdu, algorithm, key, &hmac);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(pdu->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	if (pdu->hmac != NULL) {
 		KSI_DataHash_free(pdu->hmac);
 	}
+
 	pdu->hmac = hmac;
 	hmac = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_DataHash_free(hmac);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_ExtendReq_enclose(KSI_ExtendReq *req, char *loginId, char *key, KSI_ExtendPdu **pdu) {
@@ -582,29 +618,36 @@ int KSI_AggregationPdu_calculateHmac(KSI_AggregationPdu *t, int hashAlg, const c
 }
 
 int KSI_AggregationPdu_updateHmac(KSI_AggregationPdu *pdu, int algorithm, const char *key) {
-	KSI_ERR err;
 	int res;
 	KSI_DataHash *hmac = NULL;
 
-	KSI_PRE(&err, pdu != NULL) goto cleanup;
-	KSI_BEGIN(pdu->ctx, &err);
+	if (pdu == NULL || pdu->ctx == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(pdu->ctx);
 
 	res = KSI_AggregationPdu_calculateHmac(pdu, algorithm, key, &hmac);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(pdu->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	if (pdu->hmac != NULL) {
 		KSI_DataHash_free(pdu->hmac);
 	}
+
 	pdu->hmac = hmac;
 	hmac = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_DataHash_free(hmac);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_AggregationReq_enclose(KSI_AggregationReq *req, char *loginId, char *key, KSI_AggregationPdu **pdu) {
@@ -1044,7 +1087,7 @@ int KSI_ExtendResp_verifyWithRequest(KSI_ExtendResp *resp, KSI_ExtendReq *req) {
 
 	KSI_ERR_clearErrors(resp->ctx);
 
-	if ( req == NULL) {
+	if (req == NULL) {
 		KSI_pushError(resp->ctx, res = KSI_INVALID_ARGUMENT, "A non-NULL response may not originate from a NULL request."); // TODO! Declare new error code
 		goto cleanup;
 	}
