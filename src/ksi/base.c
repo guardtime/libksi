@@ -96,7 +96,7 @@ const char *KSI_getErrorString(int statusCode) {
 		case KSI_HMAC_MISMATCH:
 			return "HMAC mismatch.";
 		case KSI_SERVICE_INVALID_REQUEST:
-			return "Pattern for errors with client request.";
+			return "The request had invalid format.";
 		case KSI_SERVICE_AUTHENTICATION_FAILURE:
 			return "The request could not be authenticated.";
 		case KSI_SERVICE_INVALID_PAYLOAD:
@@ -112,7 +112,7 @@ const char *KSI_getErrorString(int statusCode) {
 		case KSI_SERVICE_AGGR_REQUEST_OVER_QUOTA:
 			return "The request combined with other requests from the same client in the same round would create an aggregation sub-tree larger than allowed for the client.";
 		case KSI_SERVICE_EXTENDER_INVALID_TIME_RANGE:
-			return "The request asked for a hash chain going backwards in time Pattern for local errors in the server.";
+			return "The request asked for a hash chain going backwards in time.";
 		case KSI_SERVICE_EXTENDER_DATABASE_MISSING:
 			return "The server misses the internal database needed to service the request.";
 		case KSI_SERVICE_EXTENDER_DATABASE_CORRUPT:
