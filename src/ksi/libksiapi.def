@@ -110,7 +110,6 @@ EXPORTS
 ;io.h
 EXPORTS
     KSI_RDR_fromStream
-    KSI_RDR_fromMem
     KSI_RDR_fromSharedMem
     KSI_RDR_isEOF
     KSI_RDR_getOffset
