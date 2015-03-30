@@ -63,46 +63,55 @@ static int prepareRequest(
 		KSI_RequestHandle **handle,
 		char *url,
 		const char *desc) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_HttpClient *http = (KSI_HttpClient *)client;
 	KSI_RequestHandle *tmp = NULL;
 	unsigned char *raw = NULL;
 	unsigned raw_len = 0;
 
-	KSI_PRE(&err, client != NULL) goto cleanup;
-	KSI_PRE(&err, pdu != NULL) goto cleanup;
-	KSI_PRE(&err, handle != NULL) goto cleanup;
-	KSI_BEGIN(client->ctx, &err);
+	if (client == NULL || pdu == NULL || handle == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(client->ctx);
 
 	res = serialize(pdu, &raw, &raw_len);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(client->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	KSI_LOG_logBlob(client->ctx, KSI_LOG_DEBUG, desc, raw, raw_len);
 
 	/* Create a new request handle */
 	res = KSI_RequestHandle_new(client->ctx, raw, raw_len, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(client->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	if (http->sendRequest == NULL) {
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Send request not initialized.");
+		KSI_pushError(client->ctx, res = KSI_UNKNOWN_ERROR, "Send request not initialized.");
 		goto cleanup;
 	}
 
 	res = http->sendRequest(client, tmp, url);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(client->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	*handle = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_RequestHandle_free(tmp);
 	KSI_free(raw);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, KSI_RequestHandle **handle) {
@@ -155,25 +164,32 @@ cleanup:
 }
 
 static int preparePublicationsFileRequest(KSI_NetworkClient *client, KSI_RequestHandle **handle) {
-	KSI_ERR err;
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_HttpClient *http = (KSI_HttpClient *) client;
 	KSI_RequestHandle *tmp = NULL;
 
-	KSI_PRE(&err, client != NULL) goto cleanup;
-	KSI_PRE(&err, handle != NULL) goto cleanup;
-	KSI_BEGIN(client->ctx, &err);
+	if (client == NULL || handle == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(client->ctx);
 
 	if (http->sendRequest == NULL) {
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Send request not initialized.");
+		KSI_pushError(client->ctx, res = KSI_UNKNOWN_ERROR, "Send request not initialized.");
 		goto cleanup;
 	}
 
 	res = KSI_RequestHandle_new(client->ctx, NULL, 0, &tmp);
-	if (res != KSI_OK) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(client->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = http->sendRequest(client, tmp, http->urlPublication);
-	if (res != KSI_OK) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(client->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	*handle = tmp;
 	tmp = NULL;
@@ -211,15 +227,19 @@ static int getHttpStatusCode(KSI_NetworkClient *client){
  *
  */
 int KSI_HttpClient_init(KSI_CTX *ctx, KSI_HttpClient *client) {
-	KSI_ERR err;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, client != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || client == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_NetworkClient_init(ctx, &client->parent);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	client->agentName = NULL;
 	client->sendRequest = NULL;
@@ -241,45 +261,56 @@ int KSI_HttpClient_init(KSI_CTX *ctx, KSI_HttpClient *client) {
 	setStringParam(&client->agentName, "KSI HTTP Client"); /** Should be only user provided */
 
 	res = KSI_HttpClientImpl_init(client);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 /**
  *
  */
 int KSI_HttpClient_new(KSI_CTX *ctx, KSI_HttpClient **http) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_HttpClient *tmp = NULL;
-	int res;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || http == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	tmp = KSI_new(KSI_HttpClient);
 	if (tmp == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
 		goto cleanup;
 	}
 
 	res = KSI_HttpClient_init(ctx, tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	*http = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_HttpClient_free(tmp);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 
