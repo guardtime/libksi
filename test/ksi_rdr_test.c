@@ -62,15 +62,15 @@ struct KSI_RDR_st {
 };
 
 
-static void TestRdrFileBadFileName(CuTest* tc) {
+static void TestRdrFileBadStream(CuTest* tc) {
 	int res;
 	KSI_RDR *rdr = NULL;
 
 	/* Init reader from non existing file name */
-	res = KSI_RDR_fromFile(ctx, "doesnotexist.tmp", "r", &rdr);
+	res = KSI_RDR_fromStream(ctx, NULL, &rdr);
 
 	/* Assert failure to initialize */
-	CuAssert(tc, "Reader initzialisation did not fail from bad input file name.", res != KSI_OK);
+	CuAssert(tc, "Reader initzialisation did not fail from bad input stream.", res != KSI_OK);
 
 	/* Assert there is no reader object. */
 	CuAssert(tc, "There should be no reader object after failure.", rdr == NULL);
@@ -96,8 +96,9 @@ static void TestRdrFileFileReading(CuTest* tc) {
 	CuAssert(tc, "Unable to write temporary file", fprintf(f, "%s", testStr) > 0);
 	CuAssert(tc, "Unable to close temporary file", !fclose(f));
 
+	f = fopen(getFullResourcePath(TMP_FILE), "rb");
 	/* Try reading it back. */
-	res = KSI_RDR_fromFile(ctx, getFullResourcePath(TMP_FILE), "r", &rdr);
+	res = KSI_RDR_fromStream(ctx, f, &rdr);
 	CuAssert(tc, "Error creating reader from file.", res == KSI_OK);
 	CuAssert(tc, "Creating reader from file did not fail, but object is still NULL", rdr != NULL);
 	/* Read as a single block. */
@@ -106,6 +107,7 @@ static void TestRdrFileFileReading(CuTest* tc) {
 	CuAssert(tc, "Wrong length read", readCount == strlen(testStr));
 
 	CuAssert(tc, "Reader is not at EOF", rdr->eof);
+	fclose(f);
 	KSI_RDR_close(rdr);
 
 	/* Remove temporary file */
@@ -132,7 +134,8 @@ static void TestRdrFileReadingChuncks(CuTest* tc) {
 	CuAssert(tc, "Unable to close temporary file", !fclose(f));
 
 	/* Try reading it back. */
-	res = KSI_RDR_fromFile(ctx, getFullResourcePath(TMP_FILE), "r", &rdr);
+	f = fopen(getFullResourcePath(TMP_FILE), "r");
+	res = KSI_RDR_fromStream(ctx, f, &rdr);
 	CuAssert(tc, "Error creating reader from file.", res == KSI_OK);
 	CuAssert(tc, "Creating reader from file did not fail, but object is still NULL", rdr != NULL);
 	/* Read blocks of size 10. */
@@ -144,6 +147,7 @@ static void TestRdrFileReadingChuncks(CuTest* tc) {
 	CuAssert(tc, "Wrong length read", size == strlen(testStr));
 
 	CuAssert(tc, "Reader is not at EOF", rdr->eof);
+	fclose(f);
 	KSI_RDR_close(rdr);
 
 	/* Remove temporary file */
@@ -175,7 +179,7 @@ CuSuite* KSITest_RDR_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
 
-	SUITE_ADD_TEST(suite, TestRdrFileBadFileName);
+	SUITE_ADD_TEST(suite, TestRdrFileBadStream);
 	SUITE_ADD_TEST(suite, TestRdrFileFileReading);
 	SUITE_ADD_TEST(suite, TestRdrFileReadingChuncks);
 

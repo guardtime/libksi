@@ -141,45 +141,6 @@ cleanup:
 	return res;
 }
 
-int KSI_RDR_fromFile(KSI_CTX *ctx, const char *fileName, const char *flags, KSI_RDR **rdr) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_RDR *reader = NULL;
-	FILE *file = NULL;
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || fileName == NULL || flags == NULL || rdr == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	file = fopen(fileName, flags);
-	if (file == NULL) {
-		KSI_pushError(ctx, res = KSI_IO_ERROR, "Unable to open file");
-		goto cleanup;
-	}
-
-	res = KSI_RDR_fromStream(ctx, file, &reader);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	file = NULL;
-
-	*rdr = reader;
-	reader = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	if (file != NULL) fclose(file);
-	KSI_RDR_close(reader);
-
-	return res;
-}
-
-
 static int createReader_fromMem(KSI_CTX *ctx, unsigned char *buffer, const size_t buffer_length, int ownCopy, KSI_RDR **rdr) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_RDR *reader = NULL;
@@ -521,12 +482,6 @@ void KSI_RDR_close(KSI_RDR *rdr)  {
 
 	switch (rdr->ioType) {
 		case KSI_IO_FILE:
-			if (rdr->data.file != NULL) {
-				if (fclose(rdr->data.file)) {
-					rdr->data.file = NULL;
-					KSI_LOG_warn(ctx, "Unable to close log file.");
-				}
-			}
 			rdr->data.file = NULL;
 			break;
 		case KSI_IO_MEM:

@@ -68,10 +68,12 @@ extern KSI_CTX *ctx;
 static int tlvFromFile(const char *fileName, KSI_TLV **tlv) {
 	int res;
 	KSI_RDR *rdr = NULL;
+	FILE *f = NULL;
 
 	KSI_LOG_debug(ctx, "Open TLV file: '%s'", fileName);
 
-	res = KSI_RDR_fromFile(ctx, fileName, "rb", &rdr);
+	f = fopen(fileName, "rb");
+	res = KSI_RDR_fromStream(ctx, f, &rdr);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_TLV_fromReader(rdr, tlv);
@@ -79,6 +81,7 @@ static int tlvFromFile(const char *fileName, KSI_TLV **tlv) {
 
 cleanup:
 
+	if (f != NULL) fclose(f);
 	KSI_RDR_close(rdr);
 
 	return res;
@@ -337,10 +340,12 @@ static void testErrorMessage(CuTest* tc, const char *expected, const char *tlv_f
 	KSI_RDR *rdr = NULL;
 	char buf[1024];
 	size_t len;
+	FILE *f = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_RDR_fromFile(ctx, getFullResourcePath(tlv_file), "r", &rdr);
+	f = fopen(getFullResourcePath(tlv_file), "r");
+	res = KSI_RDR_fromStream(ctx, f, &rdr);
 	CuAssert(tc, "Failed to open reader", res == KSI_OK);
 	
 	res = KSI_RDR_read_ex(rdr, (unsigned char *)buf, sizeof(buf), &len);
@@ -357,6 +362,7 @@ static void testErrorMessage(CuTest* tc, const char *expected, const char *tlv_f
 
 	CuAssert(tc, "Wrong error message.", strcmp(buf, expected) == 0);
 	
+	if (f != NULL) fclose(f);
 	obj_free(obj);
 	KSI_RDR_close(rdr);
 }
