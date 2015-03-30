@@ -34,27 +34,6 @@ extern "C" {
  * @{
  */
 
-/* Error structure.*/
-struct KSI_ERR_st {
-	/* Free text error message to be displayed. */
-	char message[1024];
-
-	/* Filename of the error. */
-	char fileName[1024];
-
-	/* Line number where the error was logd. */
-	unsigned int lineNr;
-
-	/* Status code. */
-	int statusCode;
-
-	/* Error code */
-	long extErrorCode;
-
-	/* Pointer to parent context. */
-	KSI_CTX *ctx;
-};
-
 /**
  * Init error environment.
  * \param[in]	ctx			KSI context.
