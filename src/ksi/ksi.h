@@ -61,7 +61,7 @@ enum KSI_StatusCode {
 	 */
 	KSI_INVALID_FORMAT = 0x101,
 	/**
-	 * The given hash algorithm is considered untrustworthy by
+	 * The given hash algorithm is considered as untrusted by
 	 * the verification policy.
 	 */
 	KSI_UNTRUSTED_HASH_ALGORITHM = 0x102,

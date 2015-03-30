@@ -113,31 +113,30 @@ cleanup:
 
 int KSI_RDR_fromStream(KSI_CTX *ctx, FILE *file, KSI_RDR **rdr) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_RDR *reader = NULL;
+	KSI_RDR *tmp = NULL;
 
 	KSI_ERR_clearErrors(ctx);
-
 	if (ctx == NULL || file == NULL || rdr == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
 
-	reader = newReader(ctx, KSI_IO_FILE);
-	if (reader == NULL) {
+	tmp = newReader(ctx, KSI_IO_FILE);
+	if (tmp == NULL) {
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
-	reader->data.file = file;
+	tmp->data.file = file;
 
-	*rdr = reader;
-	reader = NULL;
+	*rdr = tmp;
+	tmp = NULL;
 
 	res = KSI_OK;
 
 cleanup:
 
-	KSI_RDR_close(reader);
+	KSI_RDR_close(tmp);
 
 	return res;
 }
