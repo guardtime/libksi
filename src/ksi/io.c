@@ -141,7 +141,7 @@ cleanup:
 	return res;
 }
 
-static int createReader_fromMem(KSI_CTX *ctx, unsigned char *buffer, const size_t buffer_length, int ownCopy, KSI_RDR **rdr) {
+static int createReader_fromMem(KSI_CTX *ctx, unsigned char *buffer, const size_t buffer_length, KSI_RDR **rdr) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_RDR *reader = NULL;
 
@@ -160,7 +160,6 @@ static int createReader_fromMem(KSI_CTX *ctx, unsigned char *buffer, const size_
 	reader->data.mem.buffer = buffer;
 
 	reader->data.mem.buffer_length = buffer_length;
-	reader->data.mem.ownCopy = ownCopy;
 
 	*rdr = reader;
 	reader = NULL;
@@ -174,40 +173,6 @@ cleanup:
 	return res;
 }
 
-int KSI_RDR_fromMem(KSI_CTX *ctx, const unsigned char *buffer, const size_t buffer_length, KSI_RDR **rdr) {
-	int res = KSI_UNKNOWN_ERROR;
-	unsigned char *buf = NULL;
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || buffer == NULL || rdr == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	buf = KSI_calloc(buffer_length, 1);
-	if (buf == NULL) {
-		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-	memcpy(buf, buffer, buffer_length);
-
-	res = createReader_fromMem(ctx, buf, buffer_length, 1, rdr);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	buf = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_free(buf);
-
-	return res;
-}
-
 int KSI_RDR_fromSharedMem(KSI_CTX *ctx, unsigned char *buffer, const size_t buffer_length, KSI_RDR **rdr) {
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -217,7 +182,7 @@ int KSI_RDR_fromSharedMem(KSI_CTX *ctx, unsigned char *buffer, const size_t buff
 		goto cleanup;
 	}
 
-	res = createReader_fromMem(ctx, buffer, buffer_length, 0, rdr);
+	res = createReader_fromMem(ctx, buffer, buffer_length, rdr);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -485,10 +450,7 @@ void KSI_RDR_close(KSI_RDR *rdr)  {
 			rdr->data.file = NULL;
 			break;
 		case KSI_IO_MEM:
-			if (rdr->data.mem.ownCopy) {
-				KSI_free(rdr->data.mem.buffer);
-				rdr->data.mem.buffer = NULL;
-			}
+			rdr->data.mem.buffer = NULL;
 			break;
 		case KSI_IO_SOCKET:
 			break;
