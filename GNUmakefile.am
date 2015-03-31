@@ -17,6 +17,8 @@
 # Guardtime Inc.
 #
 
+.PHONY: doc test
+
 AUTOMAKE_OPTIONS = foreign
 SUBDIRS = src/ksi src/example test doc
 
@@ -28,6 +30,9 @@ pkgconfig_DATA = libksi.pc
 
 EXTRA_DIST = changelog build*.txt makefile lic*.txt \
              */makefile doc/doxy* test/*
+             
+ZIPDOC_DIR = ${PACKAGE}-${VERSION}-htmldoc
+
 test: check 
 	./test/runner ./test
 
@@ -37,8 +42,12 @@ test: check
 memtest: check 
 	valgrind --xml=yes --xml-file=valgrind.xml ./test/runner ./test 
 
-doc:
-	cd doc; make doc; cd ..
+doc: doc/doxyfile
+	$(MAKE) -C doc htmldoc
+
+doc-zip: doc
+	cp -r doc/html ${ZIPDOC_DIR}
+	zip -r ${ZIPDOC_DIR}.zip ${ZIPDOC_DIR} 
 
 # You'll need gcovr for this target:
 #
@@ -51,5 +60,6 @@ coverage: clean
 	cd ./src/ksi; gcovr -r . --xml-pretty > coverage.xml
 
 clean-local:
-	rm -fr coverage.xml valgrind.xml test.log testsuite-xunit.xml
-
+	rm -fr ${ZIPDOC_DIR} coverage.xml valgrind.xml test.log testsuite-xunit.xml
+	$(MAKE) -C doc clean
+	$(MAKE) -C test clean

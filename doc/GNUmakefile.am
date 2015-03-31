@@ -19,7 +19,7 @@
 
 AUTOMAKE_OPTIONS = foreign
 
-all:
+all: doc
 
 doc: htmldoc 
 
@@ -27,5 +27,5 @@ htmldoc:
 	doxygen $(builddir)/doxyfile
 
 clean-local:
-	rm -rf html latex 
+	rm -rf html latex
 
