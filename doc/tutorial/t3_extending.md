@@ -4,7 +4,7 @@ T1 - Extending Tutorial
 Disclaimer
 ----------
 
-For simplicity reasons, the error handling in this tutorial mostly omitted.
+For simplicity reasons, the error handling in this tutorial is mostly omitted.
 In practice almost all the functions in the SDK return a status code which
 value should be checked to be #KSI_OK, which means all went well.
 
@@ -20,12 +20,12 @@ object.
 The next step would be to configure the context, as there are no default service
 locations configured. The verification process may on some cases access to the
 extender service. Let's assume the extending service address is
-\c extendservice.somehost:4321 and it is authenticated by \c user:key. We can configure
+\c http://extendservice.somehost:4321 and it is authenticated by \c user:key. We can configure
 the service provider by calling #KSI_CTX_setExtender.
 
-    KSI_CTX_setExtender(ksi, "signingservice.somehost:1234", "user", "key");
+    KSI_CTX_setExtender(ksi, "http://signingservice.somehost:1234", "user", "key");
 
-The context is ready to be used for verification.
+The context is ready to be used for extending.
 
 2. Parsing
 ----------

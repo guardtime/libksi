@@ -4,7 +4,7 @@ T1 - Signing Tutorial
 Disclaimer
 ----------
 
-For simplicity reasons, the error handling in this tutorial mostly omitted.
+For simplicity reasons, the error handling in this tutorial is mostly omitted.
 In practice almost all the functions in the SDK return a status code which
 value should be checked to be #KSI_OK, which means all went well.
 
@@ -22,10 +22,10 @@ object.
 
 The next step would be to configure the context, as there are no default service
 locations to send the signing request to. Let's assume the signing service address is
-\c signservice.somehost:1234 and it is authenticated by \c user:key. We can configure
+\c http://signservice.somehost:1234 and it is authenticated by \c user:key. We can configure
 the signing service provider by calling #KSI_CTX_setAggregator.
 
-    KSI_CTX_setAggregator(ksi, "signingservice.somehost:1234", "user", "key");
+    KSI_CTX_setAggregator(ksi, "http://signingservice.somehost:1234", "user", "key");
 
 The context is ready to be used for signing (for extending, the extending service
 must be configured see [Extending Tutorial](t3_extending.md)).
@@ -48,7 +48,7 @@ memory buffer and we can use the #KSI_DataHash_create function. We will use the
 3. Signing
 ----------
 
-At this point we should have all we need to sign document (actually only the hash value of it). To
+At this point we should have all we need to sign the document (actually only the hash value of it). To
 do so, we need to call #KSI_createSignature.
 
     KSI_Signature *sig = NULL;
@@ -71,7 +71,7 @@ Now the user may store the contents of \c serialized with length \c serialized_l
 ----------
 
 As the final step we need to free all the allocated resources. Note that the KSI context may
-be reused as much as needed (within a single thread) and must not be creates every time. It is
+be reused as much as needed (within a single thread) and must not be created every time. It is
 also important to point out that the context must be freed last.
 
     KSI_DataHash_free(hsh);
