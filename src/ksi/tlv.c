@@ -159,7 +159,8 @@ static int readHeader(KSI_RDR *rdr, unsigned char *dest, size_t *headerLen, int 
 		*headerLen = 4;
 
 		if (tag != NULL) *tag = ((dest[0] & KSI_TLV_MASK_TLV8_TYPE) << 8 ) | dest[1];
-		if (length != NULL) *length = ((unsigned)dest[2] << 8) | (unsigned)dest[3];
+		/* Added masking for Fortify. */
+		if (length != NULL) *length = ((dest[2] << 8) | (unsigned)dest[3]) & 0xffff;
 	} else {
 		/* TLV8 */
 		*headerLen = 2;
@@ -260,7 +261,8 @@ static unsigned readFirstTlv(KSI_CTX *ctx, unsigned char *data, unsigned data_le
 		hdrLen = 4;
 
 		tag = ((data[0] & KSI_TLV_MASK_TLV8_TYPE) << 8 ) | data[1];
-		length = ((unsigned)data[2] << 8) | (unsigned)data[3];
+		/* Added masking for fortify. */
+		length = ((data[2] << 8) | data[3]) & 0xffff;
 	} else {
 		/* TLV8 */
 		if (data_length < 2) goto cleanup;
