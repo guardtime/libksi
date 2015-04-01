@@ -155,9 +155,9 @@ const char *KSI_VerificationResult_lastFailureMessage(const KSI_VerificationResu
 	if (info == NULL) goto cleanup;
 	if (info->steps_len == 0) goto cleanup;
 	if (info->stepsFailed == 0) goto cleanup;
-	for (i = info->steps_len; i >= 0; i--) {
-		if (!info->steps[i].succeeded) {
-			msg = info->steps[i].description;
+	for (i = info->steps_len + 1; i > 0; i--) {
+		if (!info->steps[i - 1].succeeded) {
+			msg = info->steps[i - 1].description;
 			goto cleanup;
 		}
 	}

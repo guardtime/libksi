@@ -523,7 +523,7 @@ void KSI_TLV_ref(KSI_TLV *tlv) {
 int KSI_TLV_fromReader(KSI_RDR *rdr, KSI_TLV **tlv) {
 	int res = KSI_UNKNOWN_ERROR;
 	unsigned char buf[0xffff + 4];
-	char *raw = NULL;
+	unsigned char *raw = NULL;
 	size_t consumed = 0;
 	KSI_TLV *tmp = NULL;
 	size_t offset = 0;
