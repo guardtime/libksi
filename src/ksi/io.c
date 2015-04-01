@@ -301,6 +301,8 @@ cleanup:
 static int readFromSocket(KSI_RDR *rdr, unsigned char *buffer, const size_t size, size_t *readCount) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t count = 0;
+	unsigned char *bp = buffer;
+	size_t bp_len = size;
 
 	if (rdr == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -314,13 +316,13 @@ static int readFromSocket(KSI_RDR *rdr, unsigned char *buffer, const size_t size
 		goto cleanup;
 	}
 
-	if(size > INT_MAX){
+	if(bp_len > INT_MAX){
 		KSI_pushError(rdr->ctx, res = KSI_INVALID_ARGUMENT, "Unable to read more than MAX_INT from the socket.");
 		goto cleanup;
 	}
 
-	while (!rdr->eof && size > count) {
-		int c = recv(rdr->data.socketfd, (char *)buffer + count, (int)(size - count), 0);
+	while (!rdr->eof && bp_len > 0) {
+		int c = recv(rdr->data.socketfd, bp, bp_len, 0);
 
 		if (c < 0) {
 			if (socket_error == socketTimedOut) {
@@ -330,6 +332,9 @@ static int readFromSocket(KSI_RDR *rdr, unsigned char *buffer, const size_t size
 			}
 			goto cleanup;
 		}
+
+		bp_len -= c;
+		bp += c;
 
 		rdr->eof = (c == 0);
 		count += c;
