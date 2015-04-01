@@ -376,6 +376,7 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || pubFile == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
 	}
 
 	/* TODO! Implement mechanism for reloading (e.g cache timeout) */
