@@ -279,7 +279,7 @@ int KSI_DataHash_create(KSI_CTX *ctx, const void *data, size_t data_length, int 
 		goto cleanup;
 	}
 
-	if (data != NULL && data_length >= 0) {
+	if (data != NULL && data_length > 0) {
 		res = KSI_DataHasher_add(hsr, data, data_length);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);

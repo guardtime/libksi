@@ -376,6 +376,7 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || pubFile == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
 	}
 
 	/* TODO! Implement mechanism for reloading (e.g cache timeout) */
@@ -725,7 +726,7 @@ int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f) {
 	/* List all errors, starting from the most general. */
 	for (i = 0; i < ctx->errors_count && i < ctx->errors_size; i++) {
 		err = ctx->errors + ((ctx->errors_count - i - 1) % ctx->errors_size);
-		fprintf(f, "  %3u) %s:%u - (%d/%ld) %s\n", ctx->errors_count - i, err->fileName, err->lineNr,err->statusCode, err->extErrorCode, err->message);
+		fprintf(f, "  %3lu) %s:%u - (%d/%ld) %s\n", ctx->errors_count - i, err->fileName, err->lineNr,err->statusCode, err->extErrorCode, err->message);
 	}
 
 	/* If there where more errors than buffers for the errors, indicate the fact */
