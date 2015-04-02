@@ -56,6 +56,7 @@ static int CRYPTO_HASH_CTX_new(CRYPTO_HASH_CTX **cryptoCTX){
 	*cryptoCTX = tmp_crypto_ctx;
 	tmp_crypto_ctx = NULL;
 	res = KSI_OK;
+
 cleanup:
 
 	CRYPTO_HASH_CTX_free(tmp_crypto_ctx);
@@ -82,24 +83,25 @@ static const ALG_ID hashAlgorithmToALG_ID(int hash_id)
 }
 
 static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 	DWORD digest_length = 0;
 	DWORD digestLenSize = 0;	//The size of digest_length variable
 	DWORD hash_length = 0;
 	CRYPTO_HASH_CTX * pCryptoCTX = NULL;	//Crypto helper struct
 	HCRYPTHASH pHash = 0;				//Hash object
 
-
-	KSI_PRE(&err, hasher != NULL) goto cleanup;
-	KSI_PRE(&err, data_hash != NULL) goto cleanup;
-	KSI_BEGIN(hasher->ctx, &err);
+	if (hasher == NULL || data_hash == NULL){
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(hasher->ctx);
 
 	pCryptoCTX = (CRYPTO_HASH_CTX*)hasher->hashContext;
 	pHash = pCryptoCTX->pt_hHash;
 
 	hash_length = KSI_getHashLength(hasher->algorithm);
 	if (hash_length == 0) {
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Error finding digest length.");
+		KSI_pushError(hasher->ctx, KSI_UNKNOWN_ERROR, "Error finding digest length.");
 		goto cleanup;
 	}
 
@@ -108,26 +110,26 @@ static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 
 	/* Make sure the hash length is the same. */
 	if (hash_length != digest_length) {
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Internal hash lengths mismatch.");
+		KSI_pushError(hasher->ctx, KSI_UNKNOWN_ERROR, "Internal hash lengths mismatch.");
 		goto cleanup;
 	}
 
 	/*After final call pHash is can not be used further*/
-	CryptGetHashParam(pHash, HP_HASHVAL, data_hash->imprint + 1, &digest_length,0);
+	CryptGetHashParam(pHash, HP_HASHVAL, data_hash->imprint + 1, &digest_length, 0);
 
 	if (hasher->algorithm > 0xff) {
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "Hash algorithm ID is larger than one byte.");
+		KSI_pushError(hasher->ctx, KSI_INVALID_FORMAT, "Hash algorithm ID is larger than one byte.");
 		goto cleanup;
 	}
 
 	data_hash->imprint[0] = (unsigned char)hasher->algorithm;
 	data_hash->imprint_length = digest_length + 1;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 
@@ -145,26 +147,27 @@ void KSI_DataHasher_free(KSI_DataHasher *hasher) {
 
 
 int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
-	KSI_ERR err;
-	int res;
-	KSI_DataHasher *tmp_hasher = NULL;			//Abstract hasher object
-	CRYPTO_HASH_CTX *tmp_cryptoCTX = NULL;		//Hasher object helper struct
-	HCRYPTPROV tmp_CSP = 0;							//Crypto service provider
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHasher *tmp_hasher = NULL;
+	CRYPTO_HASH_CTX *tmp_cryptoCTX = NULL;
+	HCRYPTPROV tmp_CSP = 0;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, hasher != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || hasher == NULL){
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
 	/*Test if hash algorithm is valid*/
 	if (!KSI_isHashAlgorithmSupported(hash_id)) {
-		KSI_FAIL(&err, KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
+		KSI_pushError(ctx, KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
 		goto cleanup;
 	}
 
 	/*Create new abstract data hasher object*/
 	tmp_hasher = KSI_new(KSI_DataHasher);
 	if (tmp_hasher == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(ctx, KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
@@ -176,7 +179,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
 	/*Create new helper context for crypto api*/
 	res = CRYPTO_HASH_CTX_new(&tmp_cryptoCTX);
 	if (res != KSI_OK) {
-		KSI_FAIL(&err, res, NULL);
+		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
@@ -184,7 +187,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
 	if (!CryptAcquireContext(&tmp_CSP, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)){
 		char errm[1024];
 		KSI_snprintf(errm, sizeof(errm), "Wincrypt Error (%d)", GetLastError());
-		KSI_FAIL(&err, KSI_CRYPTO_FAILURE, errm);
+		KSI_pushError(ctx, KSI_CRYPTO_FAILURE, errm);
 		goto cleanup;
 		}
 
@@ -195,7 +198,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
 
 	res = KSI_DataHasher_reset(tmp_hasher);
 	if (res != KSI_OK) {
-		KSI_FAIL(&err, res, NULL);
+		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
@@ -203,25 +206,30 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
 	tmp_hasher = NULL;
 	tmp_cryptoCTX = NULL;
 	tmp_CSP = 0;
-	KSI_SUCCESS(&err);
+
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_DataHasher_free(tmp_hasher);
 	if (tmp_CSP) CryptReleaseContext(tmp_CSP, 0);
 	CRYPTO_HASH_CTX_free(tmp_cryptoCTX);
-	return KSI_RETURN(&err);
+
+	return res;
 }
 
 int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 	ALG_ID msHashAlg = 0;
 	CRYPTO_HASH_CTX * pCryptoCTX = NULL;	//Crypto helper struct
 	HCRYPTPROV pCSP = 0;					//Crypto service provider
 	HCRYPTHASH pTmp_hash = 0;			//Hash object
 
-	KSI_PRE(&err, hasher != NULL) goto cleanup;
-	KSI_BEGIN(hasher->ctx, &err);
+	if (hasher == NULL){
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(hasher->ctx);
 
 	/*Shortcuts for pointers*/
 	pCryptoCTX = (CRYPTO_HASH_CTX*)hasher->hashContext;
@@ -230,7 +238,7 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 	/*Convert hash algorithm into crypto api style*/
 	msHashAlg = hashAlgorithmToALG_ID(hasher->algorithm);
 	if (msHashAlg == 0) {
-		KSI_FAIL(&err, KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
+		KSI_pushError(hasher->ctx, KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
 		goto cleanup;
 	}
 
@@ -242,57 +250,59 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 	/*Create new hasher object*/
 	if (!CryptCreateHash(pCSP, msHashAlg, 0,0,&pTmp_hash)) {
 		DWORD error = GetLastError();
-		printf("Error %i \n", error);
-			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
-			goto cleanup;
+		KSI_LOG_debug(hasher->ctx, "Cryptoapi: Create hash error %i\n", error);
+		KSI_pushError(hasher->ctx, KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
 		}
 
 	pCryptoCTX->pt_hHash = pTmp_hash;
 
 	pTmp_hash = 0;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	if (pTmp_hash) CryptDestroyHash(pTmp_hash);
-	return KSI_RETURN(&err);
+
+	return res;
 }
 
 int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_length) {
-	KSI_ERR err;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	CRYPTO_HASH_CTX * pCryptoCTX = NULL;	//Crypto helper struct
 	HCRYPTHASH pHash = 0;			//Hash object
 
-	KSI_PRE(&err, hasher != NULL) goto cleanup;
-	KSI_PRE(&err, data != NULL || data_length == 0) goto cleanup;
-	KSI_BEGIN(hasher->ctx, &err);
 
+	if (hasher == NULL || data == NULL){
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 	ctx = hasher->ctx;
+	KSI_ERR_clearErrors(ctx);
+
 
 	pCryptoCTX = (CRYPTO_HASH_CTX*)hasher->hashContext;
 	pHash = pCryptoCTX->pt_hHash;
 
 	if(data_length > UINT_MAX){
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Cryptoapi: Unable to add mote than UINT_MAX data to the hasher.");
+		KSI_pushError(ctx, KSI_UNKNOWN_ERROR, "Cryptoapi: Unable to add mote than UINT_MAX data to the hasher.");
 		goto cleanup;
 	}
 
-	if (data_length > 0) {
-		if (!CryptHashData(pHash, data, (DWORD)data_length, 0)){
-			DWORD error = GetLastError();
-			KSI_LOG_debug(ctx, "Cryptoapi: HashData error %i\n", error);
-			KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Cryptoapi: Unable to add data to the hash");
-			goto cleanup;
-			}
-	}
+	if (!CryptHashData(pHash, data, (DWORD)data_length, 0)){
+		DWORD error = GetLastError();
+		KSI_LOG_debug(ctx, "Cryptoapi: HashData error %i\n", error);
+		KSI_pushError(ctx, KSI_UNKNOWN_ERROR, "Cryptoapi: Unable to add data to the hash");
+		goto cleanup;
+		}
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 #endif

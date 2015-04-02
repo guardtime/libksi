@@ -118,7 +118,7 @@ void KSI_PKITruststore_free(KSI_PKITruststore *trust) {
 
 int KSI_PKICertificate_fromTlv(KSI_TLV *tlv, KSI_PKICertificate **cert) {
 	KSI_CTX *ctx = NULL;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 
 	KSI_PKICertificate *tmp = NULL;
 	const unsigned char *raw = NULL;
@@ -159,7 +159,7 @@ cleanup:
 }
 
 int KSI_PKICertificate_toTlv(KSI_CTX *ctx, KSI_PKICertificate *cert, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tmp = NULL;
 	unsigned char *raw = NULL;
 	unsigned raw_len = 0;
@@ -208,7 +208,7 @@ int KSI_PKITruststore_addLookupDir(KSI_PKITruststore *trust, const char *path) {
 
 /*TODO: Not supported*/
 int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) {
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	HCERTSTORE tmp_FileTrustStore = NULL;
 	char buf[1024];
 
@@ -244,7 +244,7 @@ cleanup:
 }
 
 int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **trust) {
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_PKITruststore *tmp = NULL;
 	HCERTSTORE collectionStore = NULL;
 	char buf[1024];
@@ -307,7 +307,7 @@ void KSI_PKISignature_free(KSI_PKISignature *sig) {
 }
 
 int KSI_PKISignature_serialize(KSI_PKISignature *sig, unsigned char **raw, unsigned *raw_len) {
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	unsigned char *tmp = NULL;
 
 	if (sig == NULL || raw == NULL || raw_len == NULL){
@@ -341,7 +341,7 @@ cleanup:
 
 int KSI_PKISignature_fromTlv(KSI_TLV *tlv, KSI_PKISignature **sig) {
 	KSI_CTX *ctx = NULL;
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 
 	KSI_PKISignature *tmp = NULL;
 	const unsigned char *raw = NULL;
@@ -383,7 +383,7 @@ cleanup:
 }
 
 int KSI_PKISignature_toTlv(KSI_CTX *ctx, KSI_PKISignature *sig, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tmp = NULL;
 	unsigned char *raw = NULL;
 	unsigned raw_len = 0;
@@ -429,7 +429,7 @@ cleanup:
 }
 
 int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, unsigned raw_len, KSI_PKISignature **signature) {
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_PKISignature *tmp = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -475,7 +475,7 @@ cleanup:
 }
 
 int KSI_PKICertificate_new(KSI_CTX *ctx, const void *der, size_t der_len, KSI_PKICertificate **cert) {
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	PCCERT_CONTEXT x509 = NULL;
 	KSI_PKICertificate *tmp = NULL;
 	char buf[1024];
@@ -532,7 +532,7 @@ cleanup:
 }
 
 int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, unsigned *raw_len) {
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	unsigned char *tmp_serialized = NULL;
 	DWORD len = 0;
 	char buf[1024];
@@ -665,7 +665,7 @@ static void printCertChain(const PCCERT_CHAIN_CONTEXT pChainContext){
 
 /*cert obj must be freed*/
 static int extractSigningCertificate(const KSI_PKISignature *signature, PCCERT_CONTEXT *cert) {
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	HCERTSTORE certStore = NULL;
 	DWORD signerCount = 0;
@@ -854,7 +854,7 @@ static int isUntrustedRootCertInStore(const KSI_PKITruststore *pki, const PCCERT
 }
 
 static int KSI_PKITruststore_verifyCertificate(const KSI_PKITruststore *pki, const PCCERT_CONTEXT cert){
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	CERT_ENHKEY_USAGE enhkeyUsage;
 	CERT_USAGE_MATCH certUsage;
@@ -943,7 +943,7 @@ cleanup:
 }
 
 static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore *pki, const KSI_PKISignature *signature) {
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	PCCERT_CONTEXT subjectCert = NULL;
 	char tmp[256];
@@ -1000,7 +1000,7 @@ cleanup:
 }
 
 int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned char *data, size_t data_len, const KSI_PKISignature *signature) {
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	PCCERT_CONTEXT subjectCert = NULL;
 	CRYPT_VERIFY_MESSAGE_PARA msgPara;
@@ -1071,7 +1071,7 @@ cleanup:
 }
 
 int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, unsigned data_len, const char *algoOid, const unsigned char *signature, unsigned signature_len, const KSI_PKICertificate *certificate) {
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	ALG_ID algorithm=0;
 	HCRYPTPROV hCryptProv = 0;
     PCCERT_CONTEXT subjectCert = NULL;

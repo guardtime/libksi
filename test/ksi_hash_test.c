@@ -59,6 +59,39 @@ static void TestSHA256(CuTest* tc) {
 	KSI_DataHash_free(hsh);
 }
 
+static void TestSHA256OnEmptyData(CuTest* tc) {
+	int res;
+	KSI_DataHasher *hsr = NULL;
+	KSI_DataHash *hsh = NULL;
+	char buf[1];
+	unsigned char expected[] = {0xe3, 0xb0, 0xc4, 0x42, 0x98, 0xfc, 0x1c, 0x14, 0x9a, 0xfb, 0xf4, 0xc8, 0x99, 0x6f, 0xb9, 0x24, 0x27, 0xae, 0x41, 0xe4, 0x64, 0x9b, 0x93, 0x4c, 0xa4, 0x95, 0x99, 0x1b, 0x78, 0x52, 0xb8, 0x55};
+
+	const unsigned char *digest = NULL;
+	unsigned digest_length = 0;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA2_256, &hsr);
+	KSITest_assertCreateCall(tc, "Failed to open DataHasher", res, hsr);
+
+	res = KSI_DataHasher_add(hsr, (unsigned char *)buf, 0);
+	CuAssert(tc, "Failed to add data of length 0.", res == KSI_OK);
+
+	res = KSI_DataHasher_close(hsr, &hsh);
+	KSITest_assertCreateCall(tc, "Failed to close hasher.", res, hsh);
+
+	res = KSI_DataHash_extract(hsh, NULL, &digest, &digest_length);
+	CuAssert(tc, "Failed to parse imprint.", res == KSI_OK);
+
+	CuAssert(tc, "Digest lenght mismatch", sizeof(expected) == digest_length);
+	CuAssert(tc, "Digest value mismatch", !memcmp(expected, digest, digest_length));
+
+
+	KSI_DataHasher_free(hsr);
+	KSI_DataHash_free(hsh);
+}
+
+
 static void TestSHA256Parts(CuTest* tc) {
 	int res;
 	KSI_DataHasher *hsr = NULL;
@@ -431,6 +464,7 @@ CuSuite* KSITest_Hash_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
 	SUITE_ADD_TEST(suite, TestSHA256);
+	SUITE_ADD_TEST(suite, TestSHA256OnEmptyData);
 	SUITE_ADD_TEST(suite, TestSHA256Parts);
 	SUITE_ADD_TEST(suite, TestSHA256Reset);
 	SUITE_ADD_TEST(suite, TestSHA256Empty);

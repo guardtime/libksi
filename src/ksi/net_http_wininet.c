@@ -121,10 +121,10 @@ static int winINet_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **
 	/*Get the length of the payload*/
 	dwordLen = sizeof(DWORD);
 	if (!HttpQueryInfo(handle, HTTP_QUERY_CONTENT_LENGTH | HTTP_QUERY_FLAG_NUMBER, &http_payload_len, &dwordLen, 0)){
-			WININET_ERROR_1(reqHandle->ctx, ERROR_INSUFFICIENT_BUFFER, KSI_INVALID_ARGUMENT, "WinINet: Insufficient buffer.")
-			WININET_ERROR_m(reqHandle->ctx, ERROR_HTTP_HEADER_NOT_FOUND, KSI_NETWORK_ERROR, "WinINet: HTTP content length not found.")
-			WININET_ERROR_N(reqHandle->ctx, KSI_UNKNOWN_ERROR, "WinINet: Unable to get HTTP content length.")
-		}
+		WININET_ERROR_1(reqHandle->ctx, ERROR_INSUFFICIENT_BUFFER, KSI_INVALID_ARGUMENT, "WinINet: Insufficient buffer.")
+		WININET_ERROR_m(reqHandle->ctx, ERROR_HTTP_HEADER_NOT_FOUND, KSI_NETWORK_ERROR, "WinINet: HTTP content length not found.")
+		WININET_ERROR_N(reqHandle->ctx, KSI_UNKNOWN_ERROR, "WinINet: Unable to get HTTP content length.")
+	}
 
 	/*Get memory for the HTTP payload*/
 	tmp_len = http_payload_len;

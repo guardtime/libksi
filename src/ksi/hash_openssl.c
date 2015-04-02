@@ -64,7 +64,7 @@ static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 		goto cleanup;
 	}
 	KSI_ERR_clearErrors(hasher->ctx);
-	
+
 	/* Make sure the algorithm id fits into a single  byte. */
 	if (hasher->algorithm > 0xff) {
 		KSI_pushError(hasher->ctx, res = KSI_INVALID_ARGUMENT, "Algorithm ID too large.");
@@ -197,7 +197,7 @@ cleanup:
 int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_length) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	if (hasher == NULL || data == NULL || data_length == 0) {
+	if (hasher == NULL || data == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
