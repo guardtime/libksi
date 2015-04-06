@@ -113,7 +113,7 @@ static int curlReceive(KSI_RequestHandle *handle) {
 	KSI_ERR_clearErrors(handle->ctx);
 
 	http = (KSI_HttpClient *)handle->client;
-	
+
 	implCtx = handle->implCtx;
 
     curl_easy_setopt(implCtx->curl, CURLOPT_ERRORBUFFER, curlErr);
@@ -236,7 +236,7 @@ int KSI_HttpClientImpl_init(KSI_HttpClient *http) {
 
 	curl = curl_easy_init();
 	if (curl == NULL) {
-		KSI_pushError(http->parent.ctx, KSI_OUT_OF_MEMORY, "Unable to init CURL");
+		KSI_pushError(http->parent.ctx, res = KSI_OUT_OF_MEMORY, "Unable to init CURL");
 		goto cleanup;
 	}
 

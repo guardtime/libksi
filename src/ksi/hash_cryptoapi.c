@@ -100,7 +100,7 @@ static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 
 	hash_length = KSI_getHashLength(hasher->algorithm);
 	if (hash_length == 0) {
-		KSI_pushError(hasher->ctx, KSI_UNKNOWN_ERROR, "Error finding digest length.");
+		KSI_pushError(hasher->ctx, res = KSI_UNKNOWN_ERROR, "Error finding digest length.");
 		goto cleanup;
 	}
 
@@ -109,7 +109,7 @@ static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 
 	/* Make sure the hash length is the same. */
 	if (hash_length != digest_length) {
-		KSI_pushError(hasher->ctx, KSI_UNKNOWN_ERROR, "Internal hash lengths mismatch.");
+		KSI_pushError(hasher->ctx, res = KSI_UNKNOWN_ERROR, "Internal hash lengths mismatch.");
 		goto cleanup;
 	}
 
@@ -117,7 +117,7 @@ static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 	CryptGetHashParam(pHash, HP_HASHVAL, data_hash->imprint + 1, &digest_length, 0);
 
 	if (hasher->algorithm > 0xff) {
-		KSI_pushError(hasher->ctx, KSI_INVALID_FORMAT, "Hash algorithm ID is larger than one byte.");
+		KSI_pushError(hasher->ctx, res = KSI_INVALID_FORMAT, "Hash algorithm ID is larger than one byte.");
 		goto cleanup;
 	}
 
@@ -159,14 +159,14 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
 
 	/*Test if hash algorithm is valid*/
 	if (!KSI_isHashAlgorithmSupported(hash_id)) {
-		KSI_pushError(ctx, KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
+		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
 		goto cleanup;
 	}
 
 	/*Create new abstract data hasher object*/
 	tmp_hasher = KSI_new(KSI_DataHasher);
 	if (tmp_hasher == NULL) {
-		KSI_pushError(ctx, KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
@@ -186,7 +186,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
 	if (!CryptAcquireContext(&tmp_CSP, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)){
 		char errm[1024];
 		KSI_snprintf(errm, sizeof(errm), "Wincrypt Error (%d)", GetLastError());
-		KSI_pushError(ctx, KSI_CRYPTO_FAILURE, errm);
+		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, errm);
 		goto cleanup;
 		}
 
@@ -237,7 +237,7 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 	/*Convert hash algorithm into crypto api style*/
 	msHashAlg = hashAlgorithmToALG_ID(hasher->algorithm);
 	if (msHashAlg == 0) {
-		KSI_pushError(hasher->ctx, KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
+		KSI_pushError(hasher->ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
 		goto cleanup;
 	}
 
@@ -250,7 +250,7 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 	if (!CryptCreateHash(pCSP, msHashAlg, 0,0,&pTmp_hash)) {
 		DWORD error = GetLastError();
 		KSI_LOG_debug(hasher->ctx, "Cryptoapi: Create hash error %i\n", error);
-		KSI_pushError(hasher->ctx, KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(hasher->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 		}
 
@@ -286,14 +286,14 @@ int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_len
 	pHash = pCryptoCTX->pt_hHash;
 
 	if(data_length > UINT_MAX){
-		KSI_pushError(ctx, KSI_UNKNOWN_ERROR, "Cryptoapi: Unable to add mote than UINT_MAX data to the hasher.");
+		KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Cryptoapi: Unable to add mote than UINT_MAX data to the hasher.");
 		goto cleanup;
 	}
 
 	if (!CryptHashData(pHash, data, (DWORD)data_length, 0)){
 		DWORD error = GetLastError();
 		KSI_LOG_debug(ctx, "Cryptoapi: HashData error %i\n", error);
-		KSI_pushError(ctx, KSI_UNKNOWN_ERROR, "Cryptoapi: Unable to add data to the hash");
+		KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Cryptoapi: Unable to add data to the hash");
 		goto cleanup;
 		}
 
