@@ -20,7 +20,7 @@
 
 #include "internal.h"
 
-#if KSI_NET_HTTP_IMPL==KSI_IMPL_WININET || 1
+#if KSI_NET_HTTP_IMPL==KSI_IMPL_WININET
 
 #include <windows.h>
 #include <wininet.h>
@@ -133,7 +133,7 @@ static int winINet_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **
 	tmp_len = http_payload_len;
 	tmp = (unsigned char*)KSI_malloc(tmp_len);
 	if (tmp == NULL){
-		KSI_pushError(ctx, KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
@@ -144,7 +144,7 @@ static int winINet_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **
 	}
 
 	if (tmp_len != http_payload_len){
-		KSI_pushError(ctx, KSI_UNKNOWN_ERROR, "WinINet: Unable to read all bytes.");
+		KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "WinINet: Unable to read all bytes.");
 		goto cleanup;
 	}
 
