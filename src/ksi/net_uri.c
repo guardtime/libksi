@@ -54,18 +54,19 @@ cleanup:
 }
 
 int KSI_UriClient_new(KSI_CTX *ctx, KSI_UriClient **client) {
-	KSI_ERR err;
 	int res;
 	KSI_UriClient *tmp = NULL;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, client != NULL) goto cleanup;
+	KSI_ERR_clearErrors(ctx);
 
-	KSI_BEGIN(ctx, &err);
+	if (ctx == NULL || client == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	tmp = KSI_new(KSI_UriClient);
 	if (tmp == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
@@ -75,18 +76,21 @@ int KSI_UriClient_new(KSI_CTX *ctx, KSI_UriClient **client) {
 	tmp->pExtendClient = NULL;
 
 	res = KSI_UriClient_init(ctx, tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	*client = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_UriClient_free(tmp);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 static void uriClient_free(KSI_UriClient *client) {
@@ -98,18 +102,27 @@ static void uriClient_free(KSI_UriClient *client) {
 }
 
 int KSI_UriClient_init(KSI_CTX *ctx, KSI_UriClient *client) {
-	KSI_ERR err;
 	int res;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, client != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+
+	if (ctx == NULL || client == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
 
 	res = KSI_NetworkClient_init(ctx, &client->parent);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_HttpClient_new(ctx, &client->httpClient);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	client->pExtendClient = (KSI_NetworkClient *)client->httpClient;
 	client->pAggregationClient = (KSI_NetworkClient *)client->httpClient;
@@ -119,11 +132,11 @@ int KSI_UriClient_init(KSI_CTX *ctx, KSI_UriClient *client) {
 	client->parent.sendPublicationRequest = sendPublicationRequest;
 	client->parent.implFree = (void (*)(void *))uriClient_free;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 void KSI_UriClient_free(KSI_UriClient *client) {
