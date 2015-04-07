@@ -61,17 +61,19 @@ cleanup:
  *
  */
 int KSI_RequestHandle_new(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_RequestHandle **handle) {
-	KSI_ERR err;
+	int res;
 	KSI_RequestHandle *tmp = NULL;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, handle != NULL) goto cleanup;
+	KSI_ERR_clearErrors(ctx);
 
-	KSI_BEGIN(ctx, &err);
+	if (ctx == NULL || handle == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	tmp = KSI_new(KSI_RequestHandle);
 	if (tmp == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
@@ -83,7 +85,7 @@ int KSI_RequestHandle_new(KSI_CTX *ctx, const unsigned char *request, unsigned r
 	if (request != NULL && request_length > 0) {
 		tmp->request = KSI_calloc(request_length, 1);
 		if (tmp->request == NULL) {
-			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+			KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 			goto cleanup;
 		}
 		memcpy(tmp->request, request, request_length);
@@ -98,28 +100,37 @@ int KSI_RequestHandle_new(KSI_CTX *ctx, const unsigned char *request, unsigned r
 	*handle = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_RequestHandle_free(tmp);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_RequestHandle_getNetContext(KSI_RequestHandle *handle, void **c) {
-	KSI_ERR err;
-	KSI_PRE(&err, handle != NULL) goto cleanup;
-	KSI_PRE(&err, c != NULL) goto cleanup;
-	KSI_BEGIN(handle->ctx, &err);
+	int res;
+
+	if (handle == NULL || c == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(handle->ctx);
+
+	if (c == NULL) {
+		KSI_pushError(handle->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	*c = handle->implCtx;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 /**
@@ -169,51 +180,71 @@ cleanup:
 }
 
 int KSI_NetworkClient_sendExtendRequest(KSI_NetworkClient *provider, KSI_ExtendReq *request, KSI_RequestHandle **handle) {
-	KSI_ERR err;
 	int res;
 
-	KSI_PRE(&err, provider != NULL) goto cleanup;
-	KSI_PRE(&err, handle != NULL) goto cleanup;
+	if (provider == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
-	KSI_BEGIN(provider->ctx, &err);
+	KSI_ERR_clearErrors(provider->ctx);
+
+	if (request == NULL || handle == NULL) {
+		KSI_pushError(provider->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
 
 	if (provider->sendExtendRequest == NULL) {
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Extend request sender not initialized.");
+		KSI_pushError(provider->ctx, res = KSI_UNKNOWN_ERROR, "Extend request sender not initialized.");
 		goto cleanup;
 	}
 
 	res = provider->sendExtendRequest(provider, request, handle);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(provider->ctx, res, NULL);
+		goto cleanup;
+	}
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_NetworkClient_sendPublicationsFileRequest(KSI_NetworkClient *provider, KSI_RequestHandle **handle) {
-	KSI_ERR err;
 	int res;
 
-	KSI_PRE(&err, provider != NULL) goto cleanup;
-	KSI_PRE(&err, handle != NULL) goto cleanup;
+	if (provider == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
-	KSI_BEGIN(provider->ctx, &err);
+	KSI_ERR_clearErrors(provider->ctx);
+
+	if (handle == NULL) {
+		KSI_pushError(provider->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
 
 	if (provider->sendPublicationRequest == NULL) {
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Publications file request sender not initialized.");
+		KSI_pushError(provider->ctx, res = KSI_UNKNOWN_ERROR, "Publications file request sender not initialized.");
 		goto cleanup;
 	}
 
 	res = provider->sendPublicationRequest(provider, handle);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(provider->ctx, res, NULL);
+		goto cleanup;
+	}
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 void KSI_NetworkClient_free(KSI_NetworkClient *provider) {
@@ -231,16 +262,21 @@ void KSI_NetworkClient_free(KSI_NetworkClient *provider) {
 }
 
 int KSI_RequestHandle_setResponse(KSI_RequestHandle *handle, const unsigned char *response, unsigned response_len) {
-	KSI_ERR err;
+	int res;
 	unsigned char *resp = NULL;
 
-	KSI_PRE(&err, handle != NULL) goto cleanup;
-	KSI_BEGIN(handle->ctx, &err);
+	if (handle == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(handle->ctx);
+
 
 	if (response != NULL && response_len > 0) {
 		resp = KSI_calloc(response_len, 1);
 		if (resp == NULL) {
-			KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+			KSI_pushError(handle->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 			goto cleanup;
 		}
 		memcpy(resp, response, response_len);
@@ -251,19 +287,24 @@ int KSI_RequestHandle_setResponse(KSI_RequestHandle *handle, const unsigned char
 
 	resp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_free(resp);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_RequestHandle_setImplContext(KSI_RequestHandle *handle, void *netCtx, void (*netCtx_free)(void *)) {
-	KSI_ERR err;
-	KSI_PRE(&err, handle != NULL) goto cleanup;
-	KSI_BEGIN(handle->ctx, &err);
+	int res;
+
+	if (handle == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(handle->ctx);
 
 	if (handle->implCtx != netCtx && handle->implCtx != NULL && handle->implCtx_free != NULL) {
 		handle->implCtx_free(handle->implCtx);
@@ -271,62 +312,79 @@ int KSI_RequestHandle_setImplContext(KSI_RequestHandle *handle, void *netCtx, vo
 	handle->implCtx = netCtx;
 	handle->implCtx_free = netCtx_free;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_RequestHandle_setReadResponseFn(KSI_RequestHandle *handle, int (*fn)(KSI_RequestHandle *)) {
-	KSI_ERR err;
-	KSI_PRE(&err, handle != NULL) goto cleanup;
-	KSI_BEGIN(handle->ctx, &err);
+	int res;
+
+	if (handle == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(handle->ctx);
 
 	handle->readResponse = fn;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_RequestHandle_getRequest(KSI_RequestHandle *handle, const unsigned char **request, unsigned *request_len) {
-	KSI_ERR err;
-	KSI_PRE(&err, handle != NULL) goto cleanup;
-	KSI_BEGIN(handle->ctx, &err);
+	int res;
+
+	if (handle == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(handle->ctx);
 
 	*request = handle->request;
 	*request_len = handle->request_length;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 static int receiveResponse(KSI_RequestHandle *handle) {
-	KSI_ERR err;
 	int res;
 
-	KSI_PRE(&err, handle != NULL) goto cleanup;
-	KSI_BEGIN(handle->ctx, &err);
-
-	if (handle->readResponse == NULL) {
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, NULL);
+	if (handle == NULL) {
+		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	res = handle->readResponse(handle);
-	KSI_CATCH(&err, res) goto cleanup;
+	KSI_ERR_clearErrors(handle->ctx);
 
-	KSI_SUCCESS(&err);
+	if (handle->readResponse == NULL) {
+		KSI_pushError(handle->ctx, res = KSI_UNKNOWN_ERROR, NULL);
+		goto cleanup;
+	}
+
+
+	res = handle->readResponse(handle);
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, const unsigned char **response, unsigned *response_len) {
@@ -343,6 +401,7 @@ int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, const unsigned char
 		KSI_pushError(handle->ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
+
 
 	if (handle->response == NULL) {
 		KSI_LOG_debug(handle->ctx, "Waiting for response.");
@@ -364,44 +423,49 @@ cleanup:
 }
 
 int pdu_verify_hmac(KSI_CTX *ctx, KSI_DataHash *hmac,const char *key, int (*calculateHmac)(void*, int, const char*, KSI_DataHash**) ,void *PDU){
-	KSI_ERR err;
 	int res;
 	KSI_DataHash *actualHmac = NULL;
 	int hashAlg;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, hmac != NULL) goto cleanup;
-	KSI_PRE(&err, key != NULL) goto cleanup;
-	KSI_PRE(&err, calculateHmac != NULL) goto cleanup;
-	KSI_PRE(&err, PDU != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+
+	if (ctx == NULL || hmac == NULL || key == NULL || calculateHmac == NULL || PDU == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
 
 	/* Check HMAC. */
 	res = KSI_DataHash_getHashAlg(hmac, &hashAlg);
-	KSI_CATCH(&err, res);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = calculateHmac(PDU, hashAlg, key, &actualHmac);
-	KSI_CATCH(&err, res);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	if (!KSI_DataHash_equals(hmac, actualHmac)){
 		KSI_LOG_debug(ctx, "Verifying HMAC failed.");
 		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Calculated HMAC", actualHmac);
 		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "HMAC from response", hmac);
-		KSI_FAIL(&err, KSI_HMAC_MISMATCH, NULL);
+		KSI_pushError(ctx, res = KSI_HMAC_MISMATCH, NULL);
 		goto cleanup;
 	}
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_DataHash_free(actualHmac);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendResp **resp) {
-	KSI_ERR err;
 	int res;
 	KSI_ExtendPdu *pdu = NULL;
 	KSI_ErrorPdu *error = NULL;
@@ -411,13 +475,24 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 	const unsigned char *raw = NULL;
 	unsigned len = 0;
 
+	if (handle == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
-	KSI_PRE(&err, handle != NULL) goto cleanup;
-	KSI_PRE(&err, resp != NULL) goto cleanup;
-	KSI_BEGIN(handle->ctx, &err);
+	KSI_ERR_clearErrors(handle->ctx);
+
+	if (resp == NULL) {
+		KSI_pushError(handle->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
 
 	res = KSI_RequestHandle_getResponse(handle, &raw, &len);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	KSI_LOG_logBlob(handle->ctx, KSI_LOG_DEBUG, "Parsing extend response from", raw, len);
 
@@ -427,74 +502,97 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 		int networkStatus = handle->client->getStausCode ? handle->client->getStausCode(handle->client) : 0;
 
 		if (networkStatus >= 400 && networkStatus < 600) {
-			KSI_FAIL_EXT(&err, KSI_HTTP_ERROR, networkStatus, "HTTP returned error. Unable to parse extend pdu.");
+			KSI_ERR_push(handle->ctx, res = KSI_HTTP_ERROR, networkStatus, __FILE__, __LINE__, "HTTP returned error. Unable to parse extend pdu.");
 		} else {
-			KSI_FAIL_EXT(&err, res, networkStatus, "Unable to parse extend pdu.");
+			KSI_ERR_push(handle->ctx, res, networkStatus, __FILE__, __LINE__, "Unable to parse extend pdu.");
 		}
 
 		goto cleanup;
 	}
 
 	res = KSI_ExtendPdu_getError(pdu, &error);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	if (error != NULL) {
 		KSI_Utf8String *errorMsg = NULL;
 		KSI_Integer *status = NULL;
 
 		res = KSI_ErrorPdu_getErrorMessage(error, &errorMsg);
-		KSI_CATCH(&err, res) goto cleanup;
+		if (res != KSI_OK) {
+			KSI_pushError(handle->ctx, res, NULL);
+			goto cleanup;
+		}
 
 		res = KSI_ErrorPdu_getStatus(error, &status);
-		KSI_CATCH(&err, res) goto cleanup;
+		if (res != KSI_OK) {
+			KSI_pushError(handle->ctx, res, NULL);
+			goto cleanup;
+		}
 
-		KSI_FAIL_EXT(&err, KSI_convertExtenderStatusCode(status), (long)KSI_Integer_getUInt64(status), KSI_Utf8String_cstr(errorMsg));
+		KSI_ERR_push(handle->ctx, res = KSI_convertExtenderStatusCode(status), (long)KSI_Integer_getUInt64(status), __FILE__, __LINE__, KSI_Utf8String_cstr(errorMsg));
 		goto cleanup;
 	}
 
 	res = KSI_ExtendPdu_getHeader(pdu, &header);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_ExtendPdu_getHmac(pdu, &respHmac);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	if (header == NULL){
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "A successful extension response must have a Header.");
+		KSI_pushError(handle->ctx, res = KSI_INVALID_FORMAT, "A successful extension response must have a Header.");
 		goto cleanup;
 	}
 
 	if (respHmac == NULL){
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "A successful extension response must have a HMAC.");
+		KSI_pushError(handle->ctx, res = KSI_INVALID_FORMAT, "A successful extension response must have a HMAC.");
 		goto cleanup;
 	}
 
 	/*Get response object*/
 	res = KSI_ExtendPdu_getResponse(pdu, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->extPass,
 			(int (*)(void*, int, const char*, KSI_DataHash**))KSI_ExtendPdu_calculateHmac,
 			(void*)pdu);
 
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_ExtendPdu_setResponse(pdu, NULL);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	*resp = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_ExtendPdu_free(pdu);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_AggregationResp **resp) {
-	KSI_ERR err;
 	int res;
 	KSI_AggregationPdu *pdu = NULL;
 	KSI_ErrorPdu *error = NULL;
@@ -505,15 +603,24 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 	const unsigned char *raw = NULL;
 	unsigned len;
 
+	if (handle == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
-	KSI_PRE(&err, handle != NULL) goto cleanup;
-	KSI_PRE(&err, handle->client != NULL) goto cleanup;
-	KSI_PRE(&err, handle->client->aggrPass != NULL) goto cleanup;
-	KSI_PRE(&err, resp != NULL) goto cleanup;
-	KSI_BEGIN(handle->ctx, &err);
+	KSI_ERR_clearErrors(handle->ctx);
+
+	if (handle->client == NULL || handle->client->aggrPass == NULL || resp == NULL) {
+		KSI_pushError(handle->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
 
 	res = KSI_RequestHandle_getResponse(handle, &raw, &len);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	KSI_LOG_logBlob(handle->ctx, KSI_LOG_DEBUG, "Parsing aggregation response from", raw, len);
 
@@ -523,113 +630,141 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 		int networkStatus = handle->client->getStausCode ? handle->client->getStausCode(handle->client) : 0;
 
 		if(networkStatus >= 400 && networkStatus < 600)
-			KSI_FAIL_EXT(&err, KSI_HTTP_ERROR, networkStatus, "HTTP returned error. Unable to parse aggregation pdu.");
+			KSI_ERR_push(handle->ctx, res = KSI_HTTP_ERROR, networkStatus, __FILE__, __LINE__, "HTTP returned error. Unable to parse aggregation pdu.");
 		else
-			KSI_FAIL_EXT(&err, res, networkStatus, "Unable to parse aggregation pdu.");
+			KSI_ERR_push(handle->ctx, res, networkStatus, __FILE__, __LINE__, "Unable to parse aggregation pdu.");
 
 		goto cleanup;
 	}
 
 	res = KSI_AggregationPdu_getError(pdu, &error);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	if(error){
 		KSI_Utf8String *errorMsg = NULL;
 		KSI_Integer *status = NULL;
 		KSI_ErrorPdu_getErrorMessage(error, &errorMsg);
 		KSI_ErrorPdu_getStatus(error, &status);
-		KSI_FAIL_EXT(&err, KSI_convertAggregatorStatusCode(status), (long)KSI_Integer_getUInt64(status), KSI_Utf8String_cstr(errorMsg));
+		KSI_ERR_push(handle->ctx, res = KSI_convertAggregatorStatusCode(status), (long)KSI_Integer_getUInt64(status), __FILE__, __LINE__, KSI_Utf8String_cstr(errorMsg));
 		goto cleanup;
 	}
 
 	res = KSI_AggregationPdu_getHeader(pdu, &header);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_AggregationPdu_getHmac(pdu, &respHmac);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	if (header == NULL){
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "A successful aggregation response must have a Header.");
+		KSI_pushError(handle->ctx, res = KSI_INVALID_FORMAT, "A successful aggregation response must have a Header.");
 		goto cleanup;
 	}
 
 	if (respHmac == NULL){
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, "A successful aggregation response must have a HMAC.");
+		KSI_pushError(handle->ctx, res = KSI_INVALID_FORMAT, "A successful aggregation response must have a HMAC.");
 		goto cleanup;
 	}
 
 	/* Check HMAC. */
 	res = KSI_AggregationPdu_getHmac(pdu, &respHmac);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	/*Get response object*/
 	res = KSI_AggregationPdu_getResponse(pdu, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->aggrPass,
 			(int (*)(void*, int, const char*, KSI_DataHash**))KSI_AggregationPdu_calculateHmac,
 			(void*)pdu);
 
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_AggregationPdu_setResponse(pdu, NULL);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	*resp = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_DataHash_free(actualHmac);
 	KSI_AggregationPdu_free(pdu);
-	return KSI_RETURN(&err);
+
+	return res;
 }
 
 int KSI_NetworkClient_setSendSignRequestFn(KSI_NetworkClient *client, int (*fn)(KSI_NetworkClient *, KSI_AggregationReq *, KSI_RequestHandle **)) {
-	KSI_ERR err;
+	int res;
 
-	KSI_PRE(&err, client != NULL) goto cleanup;
-	KSI_BEGIN(client->ctx, &err);
+	if (client == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
 	client->sendSignRequest = fn;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_NetworkClient_setSendExtendRequestFn(KSI_NetworkClient *client, int (*fn)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **)) {
-	KSI_ERR err;
+	int res;
 
-	KSI_PRE(&err, client != NULL) goto cleanup;
-	KSI_BEGIN(client->ctx, &err);
+	if (client == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
 	client->sendExtendRequest = fn;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_NetworkClient_setSendPublicationRequestFn(KSI_NetworkClient *client, int (*fn)(KSI_NetworkClient *, KSI_RequestHandle **)) {
-	KSI_ERR err;
+	int res;
 
-	KSI_PRE(&err, client != NULL) goto cleanup;
-	KSI_BEGIN(client->ctx, &err);
+	if (client == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
 	client->sendPublicationRequest = fn;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_NetworkClient_init(KSI_CTX *ctx, KSI_NetworkClient *client) {
