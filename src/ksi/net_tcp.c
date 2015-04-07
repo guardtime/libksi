@@ -27,7 +27,7 @@
 #include "io.h"
 #include "tlv.h"
 
-#ifndef _WIN32 
+#ifndef _WIN32
 #  include <unistd.h>
 #  include <sys/socket.h>
 #  include <netinet/in.h>
@@ -84,7 +84,6 @@ static int setIntParam(int *param, int val) {
 }
 
 static int readResponse(KSI_RequestHandle *handle) {
-	KSI_ERR err;
 	int res;
 	TcpClientCtx *tcp = NULL;
 	KSI_TcpClient *client = NULL;
@@ -99,34 +98,37 @@ static int readResponse(KSI_RequestHandle *handle) {
 #else
 	struct timeval  transferTimeout;
 #endif
-	
-	KSI_PRE(&err, handle != NULL) goto cleanup;
-	KSI_BEGIN(handle->ctx, &err);
+
+	if (handle == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(handle->ctx);
 
 	tcp = handle->implCtx;
 	client = (KSI_TcpClient*)handle->client;
-	
+
     sockfd = (int)socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
-    	KSI_FAIL(&err, KSI_NETWORK_ERROR, "Unable to open socket.");
+    	KSI_pushError(handle->ctx, res = KSI_NETWORK_ERROR, "Unable to open socket.");
     	goto cleanup;
     }
-	
 #ifdef _WIN32
 	transferTimeout = client->transferTimeoutSeconds*1000;
 #else
 	transferTimeout.tv_sec = client->transferTimeoutSeconds;
     transferTimeout.tv_usec = 0;
-	
-#endif	
-	
+
+#endif
+
 	/*Set socket options*/
 	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (void*)&transferTimeout, sizeof(transferTimeout));
 	setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (void*)&transferTimeout, sizeof(transferTimeout));
 
     server = gethostbyname(tcp->host);
     if (server == NULL) {
-    	KSI_FAIL(&err, KSI_NETWORK_ERROR, "Unable to open host.");
+    	KSI_pushError(handle->ctx, res = KSI_NETWORK_ERROR, "Unable to open host.");
     	goto cleanup;
     }
 
@@ -138,7 +140,8 @@ static int readResponse(KSI_RequestHandle *handle) {
     serv_addr.sin_port = htons(tcp->port);
 
     if ((res = connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr))) < 0) {
-    	KSI_FAIL_EXT(&err, KSI_NETWORK_ERROR, res, "Unable to connect.");
+    	KSI_ERR_push(handle->ctx, KSI_NETWORK_ERROR, res, __FILE__, __LINE__, "Unable to connect.");
+		res = KSI_NETWORK_ERROR;
     	goto cleanup;
     }
 
@@ -148,56 +151,67 @@ static int readResponse(KSI_RequestHandle *handle) {
     	int c;
 		c = send(sockfd, (char*)handle->request, handle->request_length, 0);
 		if (c < 0) {
-			KSI_FAIL(&err, KSI_NETWORK_ERROR, "Unable to write to socket.");
+			KSI_pushError(handle->ctx, res = KSI_NETWORK_ERROR, "Unable to write to socket.");
 			goto cleanup;
 		}
 		count += c;
     }
-	
+
     res = KSI_RDR_fromSocket(handle->ctx, sockfd, &rdr);
-    KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
     res = KSI_TLV_readTlv(rdr, buffer, sizeof(buffer), &count);
     if (res != KSI_OK || count == 0){
-		KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Unable to read TLV from socket.");
+		KSI_pushError(handle->ctx, res = KSI_INVALID_ARGUMENT, "Unable to read TLV from socket.");
 		goto cleanup;
 	}
 
 	if(count > UINT_MAX){
-		KSI_FAIL(&err, KSI_BUFFER_OVERFLOW, "Too much data read from socket.");
+		KSI_pushError(handle->ctx, res = KSI_BUFFER_OVERFLOW, "Too much data read from socket.");
 		goto cleanup;
 	}
-	
+
 	handle->response = KSI_malloc(count);
 	if (handle->response == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(handle->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 	memcpy(handle->response, buffer, count);
 	handle->response_length = (unsigned)count;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	if (sockfd >= 0) close(sockfd);
 	KSI_RDR_close(rdr);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, char *host, unsigned port) {
-	KSI_ERR err;
 	int res;
 	TcpClientCtx *tc = NULL;
 
-	KSI_PRE(&err, client != NULL) goto cleanup;
-	KSI_PRE(&err, handle != NULL) goto cleanup;
-	KSI_BEGIN(handle->ctx, &err);
+	if (handle == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(handle->ctx);
+
+	if (client == NULL || host == NULL) {
+		KSI_pushError(handle->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
 
 	tc = KSI_new(TcpClientCtx);
 	if (tc == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(handle->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 	tc->host = NULL;
@@ -207,7 +221,7 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 
 	tc->host = KSI_malloc(strlen(host) + 1);
 	if (tc->host == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(handle->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 	KSI_strncpy(tc->host, host, strlen(host) + 1);
@@ -217,14 +231,17 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 	handle->client = client;
 
     res = KSI_RequestHandle_setImplContext(handle, tc, (void (*)(void *))TcpClientCtx_free);
-    KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 static int prepareRequest(
@@ -235,46 +252,61 @@ static int prepareRequest(
 		char *host,
 		unsigned port,
 		const char *desc) {
-	KSI_ERR err;
 	int res;
 	KSI_TcpClient *tcp = (KSI_TcpClient *)client;
 	KSI_RequestHandle *tmp = NULL;
 	unsigned char *raw = NULL;
 	unsigned raw_len = 0;
 
-	KSI_PRE(&err, client != NULL) goto cleanup;
-	KSI_PRE(&err, pdu != NULL) goto cleanup;
-	KSI_PRE(&err, handle != NULL) goto cleanup;
-	KSI_BEGIN(client->ctx, &err);
+	if (client->ctx == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(client->ctx);
+
+	if (pdu == NULL || handle == NULL) {
+		KSI_pushError(client->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	res = serialize(pdu, &raw, &raw_len);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(client->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	KSI_LOG_logBlob(client->ctx, KSI_LOG_DEBUG, desc, raw, raw_len);
 
 	/* Create a new request handle */
 	res = KSI_RequestHandle_new(client->ctx, raw, raw_len, &tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(client->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	if (tcp->sendRequest == NULL) {
-		KSI_FAIL(&err, KSI_UNKNOWN_ERROR, "Send request not initialized.");
+		KSI_pushError(client->ctx, res = KSI_UNKNOWN_ERROR, "Send request not initialized.");
 		goto cleanup;
 	}
 
 	res = tcp->sendRequest(client, tmp, host, port);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(client->ctx, res, NULL);
+		goto cleanup;
+	}
 
 	*handle = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_RequestHandle_free(tmp);
 	KSI_free(raw);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, KSI_RequestHandle **handle) {
@@ -363,16 +395,20 @@ void KSI_TcpClient_free(KSI_TcpClient *tcp) {
  *
  */
 int KSI_TcpClient_init(KSI_CTX *ctx, KSI_TcpClient *client) {
-	KSI_ERR err;
-
 	int res;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, client != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+
+	if (ctx == NULL || client == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_NetworkClient_init(ctx, &client->parent);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	client->sendRequest = sendRequest;
 	client->aggrHost = NULL;
@@ -380,11 +416,14 @@ int KSI_TcpClient_init(KSI_CTX *ctx, KSI_TcpClient *client) {
 	client->extHost = NULL;
 	client->extPort = 0;
 	client->http = NULL;
-	
+
 	client->transferTimeoutSeconds = 10;
-	
+
 	res = KSI_HttpClient_new(ctx, &client->http);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	client->parent.sendExtendRequest = prepareExtendRequest;
 	client->parent.sendSignRequest = prepareAggregationRequest;
@@ -392,43 +431,50 @@ int KSI_TcpClient_init(KSI_CTX *ctx, KSI_TcpClient *client) {
 	client->parent.getStausCode = NULL;
 	client->parent.implFree = (void (*)(void *))tcpClient_free;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 /**
  *
  */
 int KSI_TcpClient_new(KSI_CTX *ctx, KSI_TcpClient **tcp) {
-	KSI_ERR err;
 	int res;
 	KSI_TcpClient *tmp = NULL;
 
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+
+	if (ctx == NULL || tcp == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
 
 	tmp = KSI_new(KSI_TcpClient);
 	if (tmp == NULL) {
-		KSI_FAIL(&err, KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
 	res = KSI_TcpClient_init(ctx, tmp);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	*tcp = tmp;
 	tmp = NULL;
 
-	KSI_SUCCESS(&err);
+	res = KSI_OK;
 
 cleanup:
 
 	KSI_TcpClient_free(tmp);
 
-	return KSI_RETURN(&err);
+	return res;
 }
 
 int KSI_TcpClient_setExtender(KSI_TcpClient *client, const char *host, unsigned port, const char *user, const char *pass) {
@@ -507,9 +553,9 @@ int KSI_TcpClient_setTransferTimeoutSeconds (KSI_TcpClient *client, int transfer
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
-	
+
     client->transferTimeoutSeconds = transferTimeoutSeconds ;
-    
+
     res = KSI_OK;
 
 cleanup:
