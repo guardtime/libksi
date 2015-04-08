@@ -33,37 +33,6 @@ static void mock_cleanup(void) {
 	mockInitCount--;
 }
 
-static int failingMethod(KSI_CTX *ctx, int caseNr) {
-	KSI_ERR err;
-	KSI_ERR_init(ctx, &err);
-
-	switch (caseNr) {
-		case 0: /* No failure */
-			KSI_SUCCESS(&err);
-			break;
-		case 1:
-			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, "Some random error.");
-			break;
-		case 2:
-			/* Forget to fail or succeed. */
-			break;
-	}
-
-	return KSI_RETURN(&err);
-}
-
-static int failingPreCondition() {
-	KSI_ERR err;
-
-	KSI_PRE(&err, 1 > 2) goto cleanup;
-
-	KSI_SUCCESS(&err);
-
-cleanup:
-
-	return KSI_RETURN(&err);
-}
-
 static void TestCtxInit(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -93,13 +62,6 @@ static void TestCtxAddFailureOverflow(CuTest* tc) {
 	KSI_CTX_free(ctx);
 }
 
-static void TestCtxFailingPreCondition(CuTest* tc) {
-	int res;
-
-	res = failingPreCondition();
-	CuAssert(tc, "Precondition was unsuccessful", res == KSI_INVALID_ARGUMENT);
-}
-
 static void TestRegisterGlobals(CuTest *tc) {
 	int res;
 	KSI_CTX *ctx = NULL;
@@ -125,8 +87,6 @@ CuSuite* KSITest_CTX_getSuite(void)
 	CuSuite* suite = CuSuiteNew();
 
 	SUITE_ADD_TEST(suite, TestCtxInit);
-	SUITE_ADD_TEST(suite, TestCtxAddFailureOverflow);
-	SUITE_ADD_TEST(suite, TestCtxFailingPreCondition);
 	SUITE_ADD_TEST(suite, TestRegisterGlobals);
 
 	return suite;
