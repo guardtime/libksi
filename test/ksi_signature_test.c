@@ -68,10 +68,93 @@ static void testVerifySignatureWithPublication(CuTest *tc) {
 
 	res = KSI_verifySignature(ctx, sig);
 
-	CuAssert(tc, "Unable to verify signature online.", res == KSI_OK);
+	CuAssert(tc, "Unable to verify signature with publication.", res == KSI_OK);
 
 	KSI_Signature_free(sig);
 
+}
+
+static void testVerifyLegacySignatureAndDoc(CuTest *tc) {
+	int res;
+	char doc[] = "This is a test data file.\x0d\x0a";
+	KSI_Signature *sig = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-legacy-sig-2015-01.gtts"), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_verifyDocument(sig, ctx, doc, strlen(doc));
+	CuAssert(tc, "Failed to verify valid document", res == KSI_OK);
+
+	res = KSI_Signature_verifyDocument(sig, ctx, doc, sizeof(doc));
+	CuAssert(tc, "Verification did not fail with expected error.", res == KSI_VERIFICATION_FAILURE);
+
+	KSI_Signature_free(sig);
+}
+
+static void testVerifyLegacyExtendedSignatureAndDoc(CuTest *tc) {
+	int res;
+	char doc[] = "This is a test data file.\x0d\x0a";
+	KSI_Signature *sig = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-legacy-sig-2015-01-extended.gtts"), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_verifyDocument(sig, ctx, doc, strlen(doc));
+	CuAssert(tc, "Failed to verify valid document", res == KSI_OK);
+
+	res = KSI_Signature_verifyDocument(sig, ctx, doc, sizeof(doc));
+	CuAssert(tc, "Verification did not fail with expected error.", res == KSI_VERIFICATION_FAILURE);
+
+	KSI_Signature_free(sig);
+}
+
+static void testRFC3161WrongChainIndex(CuTest *tc) {
+	int res;
+	KSI_Signature *sig = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/nok-legacy-sig-2015-01-chainIndex.gtts"), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_verify(sig, ctx);
+	CuAssert(tc, "Failed to verify valid document", res == KSI_OK);
+
+	KSI_Signature_free(sig);
+}
+
+static void testRFC3161WrongAggreTime(CuTest *tc) {
+	int res;
+	KSI_Signature *sig = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/nok-legacy-sig-2015-01-aggretime.gtts"), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_verify(sig, ctx);
+	CuAssert(tc, "Failed to verify valid document", res == KSI_VERIFICATION_FAILURE);
+
+	KSI_Signature_free(sig);
+}
+
+static void testRFC3161WrongInputHash(CuTest *tc) {
+	int res;
+	KSI_Signature *sig = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/nok-legacy-sig-2015-01-inHash.gtts"), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_verify(sig, ctx);
+	CuAssert(tc, "Failed to verify valid document", res == KSI_VERIFICATION_FAILURE);
+
+	KSI_Signature_free(sig);
 }
 
 static void testVerifySignatureExtendedToHead(CuTest *tc) {
@@ -85,10 +168,10 @@ static void testVerifySignatureExtendedToHead(CuTest *tc) {
 
 	/* Set the extend response. */
 	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-head-extend_response.tlv"));
-	
+
 	res = KSI_Signature_verifyOnline(sig, ctx);
 	CuAssert(tc, "Signature should verify", res == KSI_OK);
-	
+
 	KSI_Signature_free(sig);
 
 }
@@ -282,6 +365,14 @@ CuSuite* KSITest_Signature_getSuite(void) {
 	SUITE_ADD_TEST(suite, testVerifySignatureNew);
 	SUITE_ADD_TEST(suite, testVerifySignatureWithPublication);
 	SUITE_ADD_TEST(suite, testVerifySignatureExtendedToHead);
+/**
+ * Cert has expired
+ */
+//	SUITE_ADD_TEST(suite, testVerifyLegacySignatureAndDoc);
+//	SUITE_ADD_TEST(suite, testVerifyLegacyExtendedSignatureAndDoc);
+//	SUITE_ADD_TEST(suite, testRFC3161WrongChainIndex);
+	SUITE_ADD_TEST(suite, testRFC3161WrongAggreTime);
+	SUITE_ADD_TEST(suite, testRFC3161WrongInputHash);
 	SUITE_ADD_TEST(suite, testSignerIdentity);
 	SUITE_ADD_TEST(suite, testSignatureWith2Anchors);
 
