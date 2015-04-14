@@ -97,9 +97,19 @@ static void createSuiteXMLSummary(CuSuite* testSuite, CuString* summary) {
 			escapeStr(testCase->message, tmpCuStr);
 
 			CuStringAppend(summary, ">\n");
-			CuStringAppendFormat(summary, "\t\t<failure type=\"AssertionFailure\">%s</failure>", tmpCuStr->buffer);
+			CuStringAppendFormat(summary, "\t\t<failure type=\"AssertionFailure\">%s</failure>\n", tmpCuStr->buffer);
 			CuStringAppend(summary, "\t</testcase>\n");
-		} else {
+		} else if(testCase->skip){
+			CuStringDelete(tmpCuStr);
+			tmpCuStr = CuStringNew();
+			escapeStr(testCase->skipMessage, tmpCuStr);
+			CuStringAppendFormat(tmpCuStr, " Skipped by %s.", testCase->skippedBy);
+
+			CuStringAppend(summary, ">\n");
+			CuStringAppendFormat(summary, "\t\t<skipped>%s</skipped>\n", tmpCuStr->buffer);
+			CuStringAppend(summary, "\t</testcase>\n");
+
+		}else {
 			CuStringAppend(summary, " />\n");
 		}
 	}
@@ -139,7 +149,7 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSITest_Truststore_getSuite);
 	addSuite(suite, KSITest_compatibility_getSuite);
 	addSuite(suite, KSITest_uriClient_getSuite);
-	
+
 	return suite;
 }
 
