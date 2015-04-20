@@ -134,6 +134,11 @@ tests: $(DLL)$(RTL)
 
 test: tests
 	$(BIN_DIR)\alltests.exe test
+
+resigner: $(DLL)$(RTL)
+	cd $(TEST_DIR)
+	nmake $(MODEL) $(EXTRA) resigner
+	cd ..
 	
 clean:
 	@for %i in ($(OBJ_DIR) $(OUT_DIR)) do @if exist .\%i rmdir /s /q .\%i

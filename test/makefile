@@ -70,6 +70,8 @@ ALLTESTS_OBJ = \
 	$(OBJ_DIR)\compatibility_test.obj \
 	$(OBJ_DIR)\uri_client_test.obj
 
+RESIGNER_OBJ = \
+	$(OBJ_DIR)\resigner.obj
 	
 #Compiler and linker configuration
 #external libraries used for linking. 
@@ -92,6 +94,7 @@ EXT_LIB = $(EXT_LIB) winhttp.lib
 !IF "$(HASH_PROVIDER)" == "OPENSSL" || "$(TRUST_PROVIDER)" == "OPENSSL"
 EXT_LIB = $(EXT_LIB) libeay32$(RTL).lib advapi32.lib
 LDFLAGS = $(LDFLAGS) /LIBPATH:$(OPENSSL_DIR)\$(DLL)
+CCFLAGS = $(CCFLAGS) /I"$(OPENSSL_DIR)\include"
 !ENDIF
 
 !IF "$(HASH_PROVIDER)" == "CRYPTOAPI" || "$(TRUST_PROVIDER)" == "CRYPTOAPI"
@@ -103,7 +106,7 @@ EXT_LIB = $(EXT_LIB) Crypt32.lib advapi32.lib
 
 
 #/NODEFAULTLIB:libcmtd.lib
-CCFLAGS = /nologo /W3 /D_CRT_SECURE_NO_DEPRECATE /I$(SRC_DIR) /I$(INC_DIR) /I$(CUTEST_DIR)
+CCFLAGS = $(CCFLAGS) /nologo /W3 /D_CRT_SECURE_NO_DEPRECATE /I$(SRC_DIR) /I$(INC_DIR) /I$(CUTEST_DIR)
 LDFLAGS = $(LDFLAGS) /NOLOGO /LIBPATH:$(LIB_DIR) 
 
 !IF "$(RTL)" == "MT" || "$(RTL)" == "MD"
@@ -122,9 +125,27 @@ LDFLAGS = $(LDFLAGS) $(LDEXTRA)
 
 default: $(BIN_DIR)\alltests.exe 
 
+resigner: $(BIN_DIR)\resigner.exe
 
 $(BIN_DIR)\alltests.exe: $(BIN_DIR) $(ALLTESTS_OBJ)
 	link $(LDFLAGS) /OUT:$@ $(ALLTESTS_OBJ) $(EXT_LIB) 
+!IF "$(DLL)" == "dll"
+	copy "$(LIB_DIR)\libksiapi$(RTL).dll" "$(BIN_DIR)\" /Y /D
+!IF "$(NET_PROVIDER)" == "CURL"
+!IF "$(RTL)" == "MT" || "$(RTL)" == "MD"
+	copy "$(CURL_DIR)\$(DLL)\libcurl$(RTL).dll" "$(BIN_DIR)\libcurl.dll" /Y
+!ELSE	
+	copy "$(CURL_DIR)\$(DLL)\libcurl$(RTL).dll" "$(BIN_DIR)\libcurl_debug.dll" /Y
+!ENDIF
+!ENDIF
+!IF "$(HASH_PROVIDER)" == "OPENSSL" || "$(TRUST_PROVIDER)" == "OPENSSL"
+	copy "$(OPENSSL_DIR)\$(DLL)\libeay32$(RTL).dll" "$(BIN_DIR)\libeay32.dll" /Y
+!ENDIF
+!ENDIF
+
+
+$(BIN_DIR)\resigner.exe: $(BIN_DIR) $(RESIGNER_OBJ)
+	link $(LDFLAGS) /OUT:$@ $(RESIGNER_OBJ) $(EXT_LIB) 
 !IF "$(DLL)" == "dll"
 	copy "$(LIB_DIR)\libksiapi$(RTL).dll" "$(BIN_DIR)\" /Y /D
 !IF "$(NET_PROVIDER)" == "CURL"
@@ -143,6 +164,10 @@ $(BIN_DIR)\alltests.exe: $(BIN_DIR) $(ALLTESTS_OBJ)
 	
 #Creates OBJ_DIR for ALLTESTS_OBJ
 $(ALLTESTS_OBJ): $(OBJ_DIR)
+
+#Creates OBJ_DIR for RESIGNER_OBJ
+$(RESIGNER_OBJ): $(OBJ_DIR)
+
 
 #C file compilation  	
 {$(SRC_DIR)\}.c{$(OBJ_DIR)\}.obj:
