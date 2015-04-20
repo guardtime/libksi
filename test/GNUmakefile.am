@@ -19,7 +19,7 @@
 
 AM_CFLAGS=-g -Wall -I$(top_builddir)/src/
 AM_LDFLAGS=-L$(top_builddir)/src/ksi -no-install -lksi
-check_PROGRAMS=runner parse-benchmark serialize-benchmark
+check_PROGRAMS=runner parse-benchmark serialize-benchmark resigner
 
 runner_SOURCES= \
 		./all_tests.c \
@@ -44,6 +44,7 @@ runner_SOURCES= \
 
 parse_benchmark_SOURCES=parse_benchmark.c
 serialize_benchmark_SOURCES=serialize_benchmark.c
+resigner_SOURCES=resigner.c
 
 clean-local:
 	rm -fr *.gcda *.gcno
