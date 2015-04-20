@@ -1030,7 +1030,7 @@ int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned cha
 
 	if (!CryptVerifyDetachedMessageSignature(&msgPara, 0, signature->pkcs7.pbData, signature->pkcs7.cbData, 1, &data, &dLen, &subjectCert)){
 		DWORD error = GetLastError();
-		const char *errmsg = getMSError(GetLastError(), buf, sizeof(buf));
+		const char *errmsg = getMSError(error, buf, sizeof(buf));
 		KSI_LOG_debug(pki->ctx, "%s", errmsg);
 
 		if (error == E_INVALIDARG || error == CRYPT_E_UNEXPECTED_MSG_TYPE || error == CRYPT_E_NO_SIGNER)
