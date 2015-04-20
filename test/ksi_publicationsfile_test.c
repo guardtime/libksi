@@ -280,7 +280,7 @@ CuSuite* KSITest_Publicationsfile_getSuite(void) {
 	/**
 	 * Cert has expired
 	 */
-	SUITE_SKIP_TEST(suite, testVerifyPublicationsFile, "Taavi Valjaots", "Cert has expired.");
+	SUITE_ADD_TEST(suite, testVerifyPublicationsFile);
 	SUITE_ADD_TEST(suite, testPublicationStringEncodingAndDecoding);
 	SUITE_ADD_TEST(suite, testFindPublicationByPubStr);
 	SUITE_ADD_TEST(suite, testFindPublicationByTime);

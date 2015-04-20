@@ -238,19 +238,20 @@ int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) 
 	KSI_ERR_clearErrors(trust->ctx);
 
 	if (path == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		KSI_pushError(trust->ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
 
 
 	lookup = X509_STORE_add_lookup(trust->store, X509_LOOKUP_file());
 	if (lookup == NULL) {
-		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		KSI_pushError(trust->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
+
 	if (!X509_LOOKUP_load_file(lookup, path, X509_FILETYPE_PEM)) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
+		KSI_pushError(trust->ctx, res = KSI_INVALID_FORMAT, NULL);
 		goto cleanup;
 	}
 

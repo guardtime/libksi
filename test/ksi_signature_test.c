@@ -365,9 +365,9 @@ CuSuite* KSITest_Signature_getSuite(void) {
 	SUITE_ADD_TEST(suite, testVerifySignatureNew);
 	SUITE_ADD_TEST(suite, testVerifySignatureWithPublication);
 	SUITE_ADD_TEST(suite, testVerifySignatureExtendedToHead);
-	SUITE_SKIP_TEST(suite, testVerifyLegacySignatureAndDoc, "Taavi Valjaots", "Cert has expired.");
-	SUITE_SKIP_TEST(suite, testVerifyLegacyExtendedSignatureAndDoc, "Taavi Valjaots", "Cert has expired.");
-	SUITE_SKIP_TEST(suite, testRFC3161WrongChainIndex, "Taavi Valjaots", "Cert has expired.");
+	SUITE_SKIP_TEST(suite, testVerifyLegacySignatureAndDoc, "Taavi Valjaots", "Cert not found.");
+	SUITE_SKIP_TEST(suite, testVerifyLegacyExtendedSignatureAndDoc, "Taavi Valjaots", "Cert not found.");
+	SUITE_SKIP_TEST(suite, testRFC3161WrongChainIndex, "Taavi Valjaots", "Cert not found.");
 	SUITE_ADD_TEST(suite, testRFC3161WrongAggreTime);
 	SUITE_ADD_TEST(suite, testRFC3161WrongInputHash);
 	SUITE_ADD_TEST(suite, testSignerIdentity);

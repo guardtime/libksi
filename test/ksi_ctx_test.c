@@ -45,24 +45,6 @@ static void TestCtxInit(CuTest* tc) {
 	KSI_CTX_free(ctx);
 }
 
-static void TestCtxAddFailureOverflow(CuTest* tc) {
-	int res = KSI_UNKNOWN_ERROR;
-	int i;
-
-	KSI_CTX *ctx = NULL;
-	res = KSI_CTX_new(&ctx);
-	CuAssert(tc, "Unable to create ctx", res == KSI_OK && ctx != NULL);
-
-	for (i = 0;
-			i < 1000;
-			i++) {
-		res = failingMethod(ctx, 1);
-		CuAssert(tc, "Failed adding failure to failure stack.", res == KSI_INVALID_ARGUMENT);
-	}
-
-	KSI_CTX_free(ctx);
-}
-
 static void TestRegisterGlobals(CuTest *tc) {
 	int res;
 	KSI_CTX *ctx = NULL;
