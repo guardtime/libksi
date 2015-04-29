@@ -301,7 +301,7 @@ extern "C" {
 	 * \param[in]	buffer		Pointer to variable receiving the string.
 	 * \param[in]	buffer_len	Length of the buffer.
 	 *
-	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+	 * \return On success returns \c buffer and \c NULL on error.
 	 */
 	char *KSI_TLV_toString(const KSI_TLV *tlv, char *buffer, unsigned buffer_len);
 
