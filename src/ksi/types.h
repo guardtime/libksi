@@ -119,7 +119,14 @@ extern "C" {
 	 * Representation of the aggregation authentication record.
 	 */
 	typedef struct KSI_AggregationAuthRec_st KSI_AggregationAuthRec;
+	
+	/**
+	 * Helper data structure for encoding parts of the RFC 3161 envelope.
+	 */
+	typedef struct KSI_RFC3161_st KSI_RFC3161;
 
+	
+	
 	KSI_DEFINE_LIST(KSI_MetaData);
 	KSI_DEFINE_LIST(KSI_HashChainLink);
 	KSI_DEFINE_LIST(KSI_CalendarHashChainLink);
@@ -424,6 +431,34 @@ int KSI_CalendarAuthRec_getSignatureData(const KSI_CalendarAuthRec *rec, KSI_PKI
 int KSI_CalendarAuthRec_setPublishedData(KSI_CalendarAuthRec *rec, KSI_PublicationData *pubData);
 int KSI_CalendarAuthRec_setSignatureAlgo(KSI_CalendarAuthRec *rec, KSI_Utf8String *signatureAlgo);
 int KSI_CalendarAuthRec_setSignatureData(KSI_CalendarAuthRec *rec, KSI_PKISignedData *signatureData);
+
+/**
+ *	KSI_RFC3161 
+ */
+
+void KSI_RFC3161_free(KSI_RFC3161 *rfc);
+int KSI_RFC3161_new(KSI_CTX *ctx, KSI_RFC3161 **out);
+
+int KSI_RFC3161_getAggregationTime (const KSI_RFC3161 *o, KSI_Integer **aggregationTime);
+int KSI_RFC3161_getChainIndex (const KSI_RFC3161 *o, KSI_IntegerList **chainIndex);
+int KSI_RFC3161_getInputHash (const KSI_RFC3161 *o, KSI_DataHash **inputHash);
+int KSI_RFC3161_getTstInfoPrefix (const KSI_RFC3161 *o, KSI_OctetString **tstInfoPrefix);
+int KSI_RFC3161_getTstInfoSuffix (const KSI_RFC3161 *o, KSI_OctetString **tstInfoSuffix);
+int KSI_RFC3161_getTstInfoAlgo (const KSI_RFC3161 *o, KSI_Integer **tstInfoAlgo);
+int KSI_RFC3161_getSigAttrPrefix (const KSI_RFC3161 *o, KSI_OctetString **sigAttrPrefix);
+int KSI_RFC3161_getSigAttrSuffix (const KSI_RFC3161 *o, KSI_OctetString **sigAttrSuffix);
+int KSI_RFC3161_getSigAttrAlgo (const KSI_RFC3161 *o, KSI_Integer **sigAttrAlgo);
+
+int KSI_RFC3161_setAggregationTime (KSI_RFC3161 *o, KSI_Integer *aggregationTime);
+int KSI_RFC3161_setChainIndex (KSI_RFC3161 *o, KSI_IntegerList *chainIndex);
+int KSI_RFC3161_setInputHash (KSI_RFC3161 *o, KSI_DataHash *inputHash);
+int KSI_RFC3161_setTstInfoPrefix (KSI_RFC3161 *o, KSI_OctetString *tstInfoPrefix);
+int KSI_RFC3161_setTstInfoSuffix (KSI_RFC3161 *o, KSI_OctetString *tstInfoSuffix);
+int KSI_RFC3161_setTstInfoAlgo (KSI_RFC3161 *o, KSI_Integer *tstInfoAlgo);
+int KSI_RFC3161_setSigAttrPrefix (KSI_RFC3161 *o, KSI_OctetString *sigAttrPrefix);
+int KSI_RFC3161_setSigAttrSuffix (KSI_RFC3161 *o, KSI_OctetString *sigAttrSuffix);
+int KSI_RFC3161_setSigAttrAlgo (KSI_RFC3161 *o, KSI_Integer *sigAttrAlgo);
+
 
 /**
  * @}

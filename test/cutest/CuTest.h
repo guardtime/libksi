@@ -46,7 +46,10 @@ struct CuTest
 	TestFunction function;
 	int failed;
 	int ran;
+	int skip;
 	const char* message;
+	const char* skipMessage;
+	const char* skippedBy;
 	jmp_buf *jumpBuf;
 	void (*preTest)(void);
 };
@@ -95,11 +98,19 @@ void CuAssertPtrEquals_LineMsg(CuTest* tc,
 #define MAX_TEST_CASES	1024
 
 #define SUITE_ADD_TEST(SUITE,TEST)	CuSuiteAdd(SUITE, CuTestNew(#TEST, TEST))
+#define SUITE_SKIP_TEST(SUITE, TEST, SKIPPED_BY, MSG) do{ \
+	CuTest* t = CuTestNew(#TEST, TEST);\
+	t->skip = 1; \
+	t->skippedBy = SKIPPED_BY; \
+	t->skipMessage = MSG; \
+	CuSuiteAdd(SUITE, t); \
+	} while(0) \
 
 typedef struct
 {
 	int count;
 	CuTest* list[MAX_TEST_CASES];
+	int skipCount;
 	int failCount;
 	void (*preTest)(void);
 } CuSuite;

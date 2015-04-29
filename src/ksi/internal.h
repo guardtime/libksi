@@ -76,14 +76,6 @@
 
 #define KSI_pushError(ctx, statusCode, message) KSI_ERR_push((ctx), (statusCode), 0, __FILE__, __LINE__, (message))
 
-#define KSI_BEGIN(ctx, err) KSI_ERR_init((ctx), (err))
-#define KSI_PRE(err, cond) if (KSI_ERR_pre(err, cond, __FILE__, __LINE__) || !(cond))
-#define KSI_RETURN(err) KSI_ERR_apply((err))
-#define KSI_FAIL_EXT(err, statusCode, extErrCode, message) (KSI_ERR_fail((err), (statusCode), (extErrCode), __FILE__, __LINE__, (message)))
-#define KSI_FAIL(err, statusCode, message) (KSI_ERR_fail((err), (statusCode), 0, __FILE__, __LINE__, (message)))
-#define KSI_CATCH(err, res) if ((KSI_FAIL((err), res, NULL) != KSI_OK) || ((res) != KSI_OK))
-#define KSI_SUCCESS(err) KSI_ERR_success((err))
-
 #define KSI_UINT16_MINSIZE(val) (((val) > 0xff) ? 2 : ((val) == 0 ? 0 : 1))
 #define KSI_UINT32_MINSIZE(val) (((val) > 0xffff) ? (2 + KSI_UINT16_MINSIZE((val) >> 16)) : KSI_UINT16_MINSIZE((val)))
 #define KSI_UINT64_MINSIZE(val) (((val) > 0xffffffff) ? (4 + KSI_UINT32_MINSIZE((val) >> 32)) : KSI_UINT32_MINSIZE((val)))
@@ -135,35 +127,42 @@ cleanup:																	\
 
 #define KSI_IMPLEMENT_TOTLV(type) \
 int type##_toTlv(KSI_CTX *ctx, const type *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) { \
-	KSI_ERR err; \
 	int res; \
 	KSI_TLV *tmp = NULL; \
 	\
-	KSI_PRE(&err, data != NULL) goto cleanup; \
-	KSI_PRE(&err, tlv != NULL) goto cleanup; \
-	KSI_BEGIN(ctx, &err); \
+	KSI_ERR_clearErrors(ctx);\
+	\
+	if (ctx == NULL || data == NULL || tlv == NULL) { \
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL); \
+		goto cleanup; \
+	} \
 	\
 	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, tag, isNonCritical, isForward, &tmp); \
-	KSI_CATCH(&err, res) goto cleanup; \
+	if (res != KSI_OK) { \
+		KSI_pushError(ctx, res, NULL); \
+		goto cleanup; \
+	} \
 	\
 	res = KSI_TlvTemplate_construct(ctx, tmp, data, KSI_TLV_TEMPLATE(type)); \
-	KSI_CATCH(&err, res) goto cleanup; \
+	if (res != KSI_OK) { \
+		KSI_pushError(ctx, res, NULL); \
+		goto cleanup; \
+	} \
 	\
 	*tlv = tmp; \
 	tmp = NULL; \
 	\
-	KSI_SUCCESS(&err); \
+	res = KSI_OK; \
 	\
 cleanup: \
 	\
 	KSI_TLV_free(tmp); \
 	\
-	return KSI_RETURN(&err); \
+	return res; \
 }
 
 #define KSI_IMPLEMENT_FROMTLV(type, tag, addon) \
 int type##_fromTlv(KSI_TLV *tlv, type **data) { \
-	KSI_ERR err; \
 	int res; \
 	type *tmp = NULL; \
 	int isLeft = 0; \
@@ -171,46 +170,66 @@ int type##_fromTlv(KSI_TLV *tlv, type **data) { \
 	KSI_OctetString *raw = NULL; \
 	KSI_CTX *ctx = KSI_TLV_getCtx(tlv); \
 	\
-	KSI_PRE(&err, tlv != NULL) goto cleanup; \
-	KSI_PRE(&err, data != NULL) goto cleanup; \
-	KSI_BEGIN(ctx, &err); \
+	if (tlv == NULL) { \
+		res = KSI_INVALID_ARGUMENT;\
+		goto cleanup;\
+	} \
+	\
+	KSI_ERR_clearErrors(ctx);\
+	\
+	if (data == NULL) { \
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL); \
+		goto cleanup; \
+	} \
 	\
 	if (KSI_TLV_getTag(tlv) != tag){ \
-		KSI_FAIL(&err, KSI_INVALID_FORMAT, NULL); \
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL); \
 		goto cleanup; \
 	} \
 	\
 	res = type##_new(KSI_TLV_getCtx(tlv), &tmp); \
-	KSI_CATCH(&err, res) goto cleanup; \
+	if (res != KSI_OK) { \
+		KSI_pushError(ctx, res, NULL); \
+		goto cleanup; \
+	} \
 	\
 	res = KSI_TlvTemplate_extract(KSI_TLV_getCtx(tlv), tmp, tlv, KSI_TLV_TEMPLATE(type)); \
-	KSI_CATCH(&err, res) goto cleanup; \
+	if (res != KSI_OK) { \
+		KSI_pushError(ctx, res, NULL); \
+		goto cleanup; \
+	} \
 	addon \
 	*data = tmp; \
 	tmp = NULL; \
 	\
-	KSI_SUCCESS(&err); \
+	res = KSI_OK; \
 	\
 cleanup: \
 	\
 	type##_free(tmp); \
 	KSI_free(tlvData); \
 	KSI_OctetString_free(raw); \
-	return KSI_RETURN(&err); \
+	return res; \
 }
 	
 #define FROMTLV_ADD_RAW(name, offset) \
 	do{ \
 		unsigned len; \
 		res = KSI_TLV_serialize(tlv, &tlvData, &len); \
-		KSI_CATCH(&err, res) goto cleanup; \
+		if (res != KSI_OK) { \
+			KSI_pushError(ctx, res, NULL); \
+			goto cleanup; \
+		} \
 		\
 		if (len-offset <= 0){ \
-			KSI_FAIL(&err, KSI_INVALID_ARGUMENT, NULL); \
+			KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL); \
 			goto cleanup; \
 		} \
 		res = KSI_OctetString_new(ctx, tlvData+offset, len-offset, &raw); \
-		KSI_CATCH(&err, res) goto cleanup; \
+		if (res != KSI_OK) { \
+			KSI_pushError(ctx, res, NULL); \
+			goto cleanup; \
+		} \
 		\
 		tmp->name = raw; \
 		raw = NULL; \
@@ -221,7 +240,10 @@ cleanup: \
 	do{ \
 		KSI_TLV *baseTlv = NULL; \
 		res = KSI_TLV_clone(tlv, &baseTlv); \
-		KSI_CATCH(&err, res) goto cleanup; \
+		if (res != KSI_OK) { \
+			KSI_pushError(ctx, res, NULL); \
+			goto cleanup; \
+		} \
 		tmp->name = baseTlv; \
 	}while(0);
 	

@@ -121,6 +121,20 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationHashChain)
 	KSI_TLV_OBJECT_LIST(0x08, KSI_TLV_TMPL_FLG_LEAST_ONE_G0 | KSI_TLV_TMPL_FLG_NO_SERIALIZE, KSI_AggregationHashChain_getChain, KSI_AggregationHashChain_setChain, KSI_HashChainLink, "aggr_chain")
 KSI_END_TLV_TEMPLATE
 
+KSI_DEFINE_TLV_TEMPLATE(KSI_RFC3161)
+	KSI_TLV_TIME_S(0x02, KSI_TLV_TMPL_FLG_MANDATORY, KSI_RFC3161_getAggregationTime, KSI_RFC3161_setAggregationTime, "aggr_time")
+	KSI_TLV_INTEGER_LIST(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_RFC3161_getChainIndex, KSI_RFC3161_setChainIndex, "chain_index")
+	KSI_TLV_IMPRINT(0x05, KSI_TLV_TMPL_FLG_MANDATORY, KSI_RFC3161_getInputHash, KSI_RFC3161_setInputHash, "input_hash")
+
+	KSI_TLV_OCTET_STRING(0x10, KSI_TLV_TMPL_FLG_MANDATORY, KSI_RFC3161_getTstInfoPrefix, KSI_RFC3161_setTstInfoPrefix, "tst_info_prefix")
+	KSI_TLV_OCTET_STRING(0x11, KSI_TLV_TMPL_FLG_MANDATORY, KSI_RFC3161_getTstInfoSuffix, KSI_RFC3161_setTstInfoSuffix, "tst_info_suffix")
+	KSI_TLV_INTEGER(0x12, KSI_TLV_TMPL_FLG_MANDATORY, KSI_RFC3161_getTstInfoAlgo, KSI_RFC3161_setTstInfoAlgo, "tst_info_algo")
+
+	KSI_TLV_OCTET_STRING(0x13, KSI_TLV_TMPL_FLG_MANDATORY, KSI_RFC3161_getSigAttrPrefix, KSI_RFC3161_setSigAttrPrefix, "sig_attr_prefix")
+	KSI_TLV_OCTET_STRING(0x14, KSI_TLV_TMPL_FLG_MANDATORY, KSI_RFC3161_getSigAttrSuffix, KSI_RFC3161_setSigAttrSuffix, "sig_attr_suffix")
+	KSI_TLV_INTEGER(0x15, KSI_TLV_TMPL_FLG_MANDATORY, KSI_RFC3161_getSigAttrAlgo, KSI_RFC3161_setSigAttrAlgo, "sig_attr_algo")
+KSI_END_TLV_TEMPLATE
+
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationAuthRec)
 	KSI_TLV_TIME_S(0x02, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationAuthRec_getAggregationTime, KSI_AggregationAuthRec_setAggregationTime, "aggr_time")
 	KSI_TLV_INTEGER_LIST(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationAuthRec_getChainIndex, KSI_AggregationAuthRec_setChainIndex, "chain_index")
@@ -153,6 +167,8 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_CalendarHashChain)
 	KSI_TLV_OBJECT_LIST(0x08, KSI_TLV_TMPL_FLG_LEAST_ONE_G0 | KSI_TLV_TMPL_FLG_NO_SERIALIZE, KSI_CalendarHashChain_getHashChain, KSI_CalendarHashChain_setHashChain, KSI_CalendarHashChainLink, "chain")
 KSI_END_TLV_TEMPLATE
 
+
+
 KSI_DEFINE_TLV_TEMPLATE(KSI_ErrorPdu)
 	KSI_TLV_INTEGER(0x04, KSI_TLV_TMPL_FLG_MANDATORY, KSI_ErrorPdu_getStatus, KSI_ErrorPdu_setStatus, "status")
 	KSI_TLV_UTF8_STRING(0x05, KSI_TLV_TMPL_FLG_NONE, KSI_ErrorPdu_getErrorMessage, KSI_ErrorPdu_setErrorMessage, "err_message")
@@ -168,7 +184,6 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationResp)
 	KSI_TLV_COMPOSITE(0x0802, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getCalendarChain, KSI_AggregationResp_setCalendarChain, KSI_CalendarHashChain, "cal_chain")
 	KSI_TLV_COMPOSITE(0x0804, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getAggregationAuthRec, KSI_AggregationResp_setAggregationAuthRec, KSI_AggregationAuthRec, "aggr_auth_rec") /* TODO! Future work. */
 	KSI_TLV_COMPOSITE(0x0805, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getCalendarAuthRec, KSI_AggregationResp_setCalendarAuthRec, KSI_CalendarAuthRec, "cal_auth_rec")
-
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationPdu)

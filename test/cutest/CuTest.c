@@ -117,6 +117,9 @@ void CuTestInit(CuTest* t, const char* name, TestFunction function)
 	t->message = NULL;
 	t->function = function;
 	t->jumpBuf = NULL;
+	t->skip = 0;
+	t->skipMessage = NULL;
+	t->skippedBy = NULL;
 	t->preTest = NULL;
 }
 
@@ -140,8 +143,10 @@ void CuTestRun(CuTest* tc)
 	tc->jumpBuf = &buf;
 	if (setjmp(buf) == 0)
 	{
-		tc->ran = 1;
-		(tc->function)(tc);
+		if (tc->skip == 0) {
+			tc->ran = 1;
+			(tc->function)(tc);
+		}
 	}
 	tc->jumpBuf = 0;
 }
@@ -163,7 +168,7 @@ void CuFail_Line(CuTest* tc, const char* file, int line, const char* message2, c
 	CuString string;
 
 	CuStringInit(&string);
-	if (message2 != NULL) 
+	if (message2 != NULL)
 	{
 		CuStringAppend(&string, message2);
 		CuStringAppend(&string, ": ");
@@ -178,7 +183,7 @@ void CuAssert_Line(CuTest* tc, const char* file, int line, const char* message, 
 	CuFail_Line(tc, file, line, NULL, message);
 }
 
-void CuAssertStrEquals_LineMsg(CuTest* tc, const char* file, int line, const char* message, 
+void CuAssertStrEquals_LineMsg(CuTest* tc, const char* file, int line, const char* message,
 	const char* expected, const char* actual)
 {
 	CuString string;
@@ -190,7 +195,7 @@ void CuAssertStrEquals_LineMsg(CuTest* tc, const char* file, int line, const cha
 	}
 
 	CuStringInit(&string);
-	if (message != NULL) 
+	if (message != NULL)
 	{
 		CuStringAppend(&string, message);
 		CuStringAppend(&string, ": ");
@@ -203,7 +208,7 @@ void CuAssertStrEquals_LineMsg(CuTest* tc, const char* file, int line, const cha
 	CuFailInternal(tc, file, line, &string);
 }
 
-void CuAssertIntEquals_LineMsg(CuTest* tc, const char* file, int line, const char* message, 
+void CuAssertIntEquals_LineMsg(CuTest* tc, const char* file, int line, const char* message,
 	int expected, int actual)
 {
 	char buf[STRING_MAX];
@@ -212,17 +217,17 @@ void CuAssertIntEquals_LineMsg(CuTest* tc, const char* file, int line, const cha
 	CuFail_Line(tc, file, line, message, buf);
 }
 
-void CuAssertDblEquals_LineMsg(CuTest* tc, const char* file, int line, const char* message, 
+void CuAssertDblEquals_LineMsg(CuTest* tc, const char* file, int line, const char* message,
 	double expected, double actual, double delta)
 {
 	char buf[STRING_MAX];
 	if (fabs(expected - actual) <= delta) return;
-	sprintf(buf, "expected <%f> but was <%f>", expected, actual); 
+	sprintf(buf, "expected <%f> but was <%f>", expected, actual);
 
 	CuFail_Line(tc, file, line, message, buf);
 }
 
-void CuAssertPtrEquals_LineMsg(CuTest* tc, const char* file, int line, const char* message, 
+void CuAssertPtrEquals_LineMsg(CuTest* tc, const char* file, int line, const char* message,
 	void* expected, void* actual)
 {
 	char buf[STRING_MAX];
@@ -239,6 +244,7 @@ void CuAssertPtrEquals_LineMsg(CuTest* tc, const char* file, int line, const cha
 void CuSuiteInit(CuSuite* testSuite)
 {
 	testSuite->count = 0;
+	testSuite->skipCount = 0;
 	testSuite->failCount = 0;
         memset(testSuite->list, 0, sizeof(testSuite->list));
     testSuite->preTest = NULL;
@@ -272,6 +278,8 @@ void CuSuiteAdd(CuSuite* testSuite, CuTest *testCase)
 	assert(testSuite->count < MAX_TEST_CASES);
 	testSuite->list[testSuite->count] = testCase;
 	testSuite->count++;
+	if (testCase->skip)
+		testSuite->skipCount++;
 }
 
 void CuSuiteAddSuite(CuSuite* testSuite, CuSuite* testSuite2)
@@ -313,15 +321,36 @@ void CuSuiteDetails(CuSuite* testSuite, CuString* details)
 {
 	int i;
 	int failCount = 0;
+	int skipCount = 0;
 
 	if (testSuite->failCount == 0)
 	{
-		int passCount = testSuite->count - testSuite->failCount;
+		int passCount = testSuite->count - testSuite->failCount - testSuite->skipCount;
 		const char* testWord = passCount == 1 ? "test" : "tests";
 		CuStringAppendFormat(details, "OK (%d %s)\n", passCount, testWord);
 	}
-	else
-	{
+	if (testSuite->skipCount != 0) {
+		if (testSuite->failCount == 0)
+			CuStringAppend(details, "\n");
+
+		if (testSuite->skipCount > 0) {
+			const char* testWord = testSuite->skipCount == 1 ? "test" : "tests";
+			CuStringAppendFormat(details, "There were %d skipped %s:\n", testSuite->skipCount, testWord);
+
+			for (i = 0 ; i < testSuite->count ; ++i) {
+				CuTest* testCase = testSuite->list[i];
+				if (testCase->skip) 	{
+					skipCount++;
+					CuStringAppendFormat(details, "%d) %s: %s Skipped by %s.\n",
+						skipCount, testCase->name, testCase->skipMessage, testCase->skippedBy);
+				}
+			}
+		}
+
+	CuStringAppend(details, "\n");
+	}
+
+	if (testSuite->failCount != 0) {
 		if (testSuite->failCount == 1)
 			CuStringAppend(details, "There was 1 failure:\n");
 		else
@@ -343,4 +372,6 @@ void CuSuiteDetails(CuSuite* testSuite, CuString* details)
 		CuStringAppendFormat(details, "Passes: %d ", testSuite->count - testSuite->failCount);
 		CuStringAppendFormat(details, "Fails: %d\n",  testSuite->failCount);
 	}
+
+
 }
