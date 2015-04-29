@@ -198,9 +198,20 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 		goto cleanup;
 	}
 
+	/* If we are calculating the calendar chain, initialize the hash algorithm id using
+	 * the input hash. */
+	if (isCalendar) {
+		res = KSI_DataHash_extract(inputHash, &algo_id, NULL, NULL);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+
 	sprintf(logMsg, "Starting %s hash chain aggregation with input hash.", isCalendar ? "calendar": "aggregation");
 	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, logMsg, inputHash);
 
+	/* Loop over all the links in the chain. */
 	for (i = 0; i < KSI_HashChainLinkList_length(chain); i++) {
 		res = KSI_HashChainLinkList_elementAt(chain, i, &link);
 		if (res != KSI_OK) {
@@ -214,10 +225,13 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 				KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Aggregation chain level out of range.");
 			level += (int)levelCorrection + 1;
 		} else {
-			res = KSI_DataHash_extract(link->imprint, &algo_id, NULL, NULL);
-			if (res != KSI_OK) {
-				KSI_pushError(ctx, res, NULL);
-				goto cleanup;
+			/* Update the hash algo id when we encounter a left link. */
+			if (link->isLeft) {
+				res = KSI_DataHash_extract(link->imprint, &algo_id, NULL, NULL);
+				if (res != KSI_OK) {
+					KSI_pushError(ctx, res, NULL);
+					goto cleanup;
+				}
 			}
 		}
 
