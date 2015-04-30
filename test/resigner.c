@@ -41,7 +41,7 @@
 int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days);
 int add_ext(X509 *cert, int nid, char *value);
 
-int publicationsFile_changePKCS7_signature(KSI_PublicationsFile *publicationsFile, const char *sig_der, unsigned sig_der_len, const char *out) {
+int publicationsFile_changePKCS7_signature(KSI_PublicationsFile *publicationsFile, const unsigned char *sig_der, unsigned sig_der_len, const char *out) {
 	int res;
 	int ret = 0;
 	KSI_CTX *ctx = NULL;
@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
 	EVP_PKEY *pkey=NULL;
 	PKCS7 *signature;
 	unsigned char *buf = NULL;
-	char *p = NULL;
+	unsigned char *p = NULL;
 	int len;
 	FILE *cert_out = NULL;
 	FILE *sign_out = NULL;
@@ -197,7 +197,12 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	if (!BIO_write(bio, pubFile->raw, pubFile->signedDataLength)) {
+	if (pubFile->signedDataLength >= INT_MAX) {
+		fprintf(stderr, "Error: publication file too large.");
+		goto cleanup;
+	}
+
+	if (!BIO_write(bio, pubFile->raw, (int)pubFile->signedDataLength)) {
 		fprintf(stderr, "Error: Unable read publications file date from publications file.");
 		goto cleanup;
 	}
@@ -309,6 +314,11 @@ int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days)
 	EVP_PKEY *pk;
 	RSA *rsa;
 	X509_NAME *name=NULL;
+	const unsigned char country[] = "EE";
+	const unsigned char orgName[] = "Guardtime AS";
+	const unsigned char email[] = "publications@guardtime.com";
+
+
 
 	if ((pkeyp == NULL) || (*pkeyp == NULL))
 		{
@@ -350,11 +360,11 @@ int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days)
 	 * Normally we'd check the return value for errors...
 	 */
 	X509_NAME_add_entry_by_txt(name,"C",
-				MBSTRING_ASC, "EE", -1, -1, 0);
+				MBSTRING_ASC, country, -1, -1, 0);
 	X509_NAME_add_entry_by_txt(name,"organizationName",
-				MBSTRING_ASC, "Guardtime AS", -1, -1, 0);
+				MBSTRING_ASC, orgName, -1, -1, 0);
 	X509_NAME_add_entry_by_txt(name,"emailAddress",
-				MBSTRING_ASC, "publications@guardtime.com", -1, -1, 0);
+				MBSTRING_ASC, email, -1, -1, 0);
 
 	/* Its self signed so set the issuer name to be the same as the
  	 * subject.
