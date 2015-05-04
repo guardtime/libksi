@@ -417,9 +417,9 @@ static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, con
 	int res;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *tmp = NULL;
-	unsigned char *imprint = NULL;
+	const unsigned char *imprint = NULL;
 	unsigned imprint_len = 0;
-	unsigned char *data;
+	const unsigned char *data;
 	unsigned data_len;
 
 	KSI_ERR_clearErrors(ctx);
@@ -586,7 +586,7 @@ static int rfc3161_getInputToAggreChain(const KSI_Signature *sig, KSI_DataHash *
 	KSI_DataHasher *hsr = NULL;
 	KSI_RFC3161 *rfc = NULL;
 	int algToUse = -1;
-	unsigned char *imprint = NULL;
+	const unsigned char *imprint = NULL;
 	unsigned imprint_len = 0;
 	int algId;
 
@@ -1598,7 +1598,7 @@ void KSI_Signature_free(KSI_Signature *sig) {
 }
 
 
-int KSI_Signature_getDocumentHash(KSI_Signature *sig, const KSI_DataHash **hsh) {
+int KSI_Signature_getDocumentHash(KSI_Signature *sig, KSI_DataHash **hsh) {
 	KSI_AggregationHashChain *aggr = NULL;
 	int res;
 
@@ -1992,7 +1992,7 @@ KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_CalendarAuthRec*, calendarAuthRec, Calen
 KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_PublicationRecord*, publication, PublicationRecord)
 
 int KSI_Signature_getHashAlgorithm(KSI_Signature *sig, int *hash_id) {
-	const KSI_DataHash *hsh = NULL;
+	KSI_DataHash *hsh = NULL;
 	int res;
 	int tmp = -1;
 

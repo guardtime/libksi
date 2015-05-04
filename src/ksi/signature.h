@@ -175,7 +175,7 @@ extern "C" {
 	 *
 	 * \note The output hash \c hsh may not be freed by the caller.
 	 */
-	int KSI_Signature_getDocumentHash(KSI_Signature *sig, const KSI_DataHash ** hsh);
+	int KSI_Signature_getDocumentHash(KSI_Signature *sig, KSI_DataHash ** hsh);
 
 	/**
 	 * Access method for the hash algorithm used to hash the signed document.
