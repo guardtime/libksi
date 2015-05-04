@@ -419,8 +419,8 @@ static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, con
 	KSI_DataHash *tmp = NULL;
 	const unsigned char *imprint = NULL;
 	unsigned imprint_len = 0;
-	const unsigned char *data;
-	unsigned data_len;
+	const unsigned char *data = NULL;
+	unsigned data_len = 0;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || prefix == NULL || hsh == NULL || suffix == NULL || out == NULL) {
@@ -588,7 +588,7 @@ static int rfc3161_getInputToAggreChain(const KSI_Signature *sig, KSI_DataHash *
 	int algToUse = -1;
 	const unsigned char *imprint = NULL;
 	unsigned imprint_len = 0;
-	int algId;
+	int algId = -1;
 
 
 	if (sig == NULL) {
