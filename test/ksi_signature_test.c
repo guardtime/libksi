@@ -21,6 +21,9 @@
 #include "all_tests.h"
 #include "ksi/signature.h"
 
+#include "../src/ksi/ctx_impl.h"
+
+
 extern KSI_CTX *ctx;
 
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
@@ -270,6 +273,39 @@ static void testSignatureWith2Anchors(CuTest *tc) {
 	KSI_Signature_free(sig);
 }
 
+static void testVerifyCalendarChainAlgoChange(CuTest *tc) {
+	int res;
+
+	unsigned char in[0x1ffff];
+	unsigned in_len = 0;
+
+	FILE *f = NULL;
+	KSI_Signature *sig = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	f = fopen(getFullResourcePath("resource/tlv/cal_algo_switch.ksig"), "rb");
+	CuAssert(tc, "Unable to open signature file.", f != NULL);
+
+	in_len = (unsigned)fread(in, 1, sizeof(in), f);
+	CuAssert(tc, "Nothing read from signature file.", in_len > 0);
+
+	fclose(f);
+
+	res = KSI_Signature_parse(ctx, in, in_len, &sig);
+	CuAssert(tc, "Failed to parse signature", res == KSI_OK && sig != NULL);
+
+	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/cal_algo_switch-extend_resposne.tlv"));
+
+	ctx->requestCounter = 0;
+
+	res = KSI_Signature_verifyOnline(sig, ctx);
+	CuAssert(tc, "Failed to verify valid document", res == KSI_OK);
+
+	KSI_Signature_free(sig);
+}
+
+
 CuSuite* KSITest_Signature_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -283,6 +319,7 @@ CuSuite* KSITest_Signature_getSuite(void) {
 	SUITE_ADD_TEST(suite, testVerifySignatureExtendedToHead);
 	SUITE_ADD_TEST(suite, testSignerIdentity);
 	SUITE_ADD_TEST(suite, testSignatureWith2Anchors);
+	SUITE_ADD_TEST(suite, testVerifyCalendarChainAlgoChange);
 
 	return suite;
 }
