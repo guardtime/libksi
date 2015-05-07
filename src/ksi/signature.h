@@ -253,6 +253,16 @@ extern "C" {
 	int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_CTX *ctx, const KSI_DataHash *docHash);
 
 	/**
+	 * This function verifies signature using given publication.  
+	 * \param[in]	sig			KSI signature.
+	 * \param[in]	ctx			KSI context.
+	 * \param[in]	publication	Publication data used in verification process.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 */
+	int KSI_Signature_verifyWithPublication(KSI_Signature *sig, KSI_CTX *ctx, const KSI_PublicationData *publication);
+	
+	/**
 	 * Accessor method for verification results.
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	info		Pointer to the receiving pointer.

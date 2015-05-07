@@ -73,6 +73,39 @@ static void testVerifySignatureWithPublication(CuTest *tc) {
 
 }
 
+static void testVerifySignatureWithUserPublication(CuTest *tc) {
+	int res;
+	KSI_Signature *sig = NULL;
+	const char pubStr[] = "AAAAAA-CTOQBY-AAMJYH-XZPM6T-UO6U6V-2WJMHQ-EJMVXR-JEAGID-2OY7P5-XFFKYI-QIF2LG-YOV7SO";
+	const char pubStr_bad[] = "AAAAAA-CT5VGY-AAPUCF-L3EKCC-NRSX56-AXIDFL-VZJQK4-WDCPOE-3KIWGB-XGPPM3-O5BIMW-REOVR4";
+	KSI_PublicationData *pubData = NULL;
+	KSI_PublicationData *pubData_bad = NULL;
+
+
+	KSI_ERR_clearErrors(ctx);
+
+
+	res = KSI_PublicationData_fromBase32(ctx, pubStr, &pubData);
+	CuAssert(tc, "Unable to parse publication string.", res == KSI_OK && pubData != NULL);
+
+	res = KSI_PublicationData_fromBase32(ctx, pubStr_bad, &pubData_bad);
+	CuAssert(tc, "Unable to parse publication string.", res == KSI_OK && pubData_bad != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-extended.ksig"), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_verifyWithPublication(sig, ctx, pubData);
+	CuAssert(tc, "Unable to verify signature with publication.", res == KSI_OK);
+
+	res = KSI_Signature_verifyWithPublication(sig, ctx, pubData_bad);
+	CuAssert(tc, "Unable to verify signature with publication.", res != KSI_OK);
+
+
+	KSI_PublicationData_free(pubData);
+	KSI_PublicationData_free(pubData_bad);
+	KSI_Signature_free(sig);
+}
+
 static void testVerifyLegacySignatureAndDoc(CuTest *tc) {
 	int res;
 	char doc[] = "This is a test data file.\x0d\x0a";
@@ -363,6 +396,7 @@ CuSuite* KSITest_Signature_getSuite(void) {
 	SUITE_ADD_TEST(suite, testVerifyDocumentHash);
 	SUITE_ADD_TEST(suite, testVerifySignatureNew);
 	SUITE_ADD_TEST(suite, testVerifySignatureWithPublication);
+	SUITE_ADD_TEST(suite, testVerifySignatureWithUserPublication);
 	SUITE_ADD_TEST(suite, testVerifySignatureExtendedToHead);
 	SUITE_SKIP_TEST(suite, testVerifyLegacySignatureAndDoc, "Taavi Valjaots", "Cert not found.");
 	SUITE_SKIP_TEST(suite, testVerifyLegacyExtendedSignatureAndDoc, "Taavi Valjaots", "Cert not found.");

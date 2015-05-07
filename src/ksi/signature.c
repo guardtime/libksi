@@ -50,6 +50,7 @@ KSI_END_VERIFICATION_POLICY
 
 KSI_DEFINE_VERIFICATION_POLICY(KSI_VP_OFFLINE)
 	KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC | KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE,
+	KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION | KSI_VERIFY_PUBLICATION_WITH_PUBSTRING,
 	KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION | KSI_VERIFY_PUBLICATION_WITH_PUBFILE
 KSI_END_VERIFICATION_POLICY
 
@@ -59,12 +60,14 @@ KSI_END_VERIFICATION_POLICY
 
 KSI_DEFINE_VERIFICATION_POLICY(KSI_VP_DOCUMENT)
 	KSI_VERIFY_DOCUMENT | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC | KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE,
+	KSI_VERIFY_DOCUMENT | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION | KSI_VERIFY_PUBLICATION_WITH_PUBSTRING,
 	KSI_VERIFY_DOCUMENT | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION | KSI_VERIFY_PUBLICATION_WITH_PUBFILE,
 	KSI_VERIFY_DOCUMENT | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_ONLINE
 KSI_END_VERIFICATION_POLICY
 
 KSI_DEFINE_VERIFICATION_POLICY(KSI_VP_SIGNATURE)
 	KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC | KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE,
+	KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION | KSI_VERIFY_PUBLICATION_WITH_PUBSTRING,
 	KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION | KSI_VERIFY_PUBLICATION_WITH_PUBFILE,
 	KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_ONLINE
 KSI_END_VERIFICATION_POLICY
@@ -72,6 +75,7 @@ KSI_END_VERIFICATION_POLICY
 
 KSI_DEFINE_VERIFICATION_POLICY(KSI_VP_PARANOID)
 	KSI_VERIFY_PUBFILE_SIGNATURE | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC | KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE | KSI_VERIFY_CALCHAIN_ONLINE,
+	KSI_VERIFY_PUBFILE_SIGNATURE | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION | KSI_VERIFY_PUBLICATION_WITH_PUBSTRING | KSI_VERIFY_CALCHAIN_ONLINE,
 	KSI_VERIFY_PUBFILE_SIGNATURE | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION | KSI_VERIFY_PUBLICATION_WITH_PUBFILE | KSI_VERIFY_CALCHAIN_ONLINE,
 	KSI_VERIFY_PUBFILE_SIGNATURE | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_ONLINE
 KSI_END_VERIFICATION_POLICY
@@ -2471,6 +2475,75 @@ cleanup:
 	return res;
 }
 
+static int verifyPublicationWithPubString(KSI_CTX *ctx, KSI_Signature *sig) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBSTRING;
+	KSI_VerificationResult *info = &sig->verificationResult;
+	KSI_Integer *time1 = NULL;
+	KSI_Integer *time2 = NULL;
+	KSI_DataHash *hsh1 = NULL;
+	KSI_DataHash *hsh2 = NULL;
+
+
+	if (sig->publication == NULL || sig->verificationResult.useUserPublication == false) {
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+
+	KSI_LOG_info(sig->ctx, "Verifying publication with publication string");
+
+	if (sig->verificationResult.userPublication == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_PublicationData_getTime(sig->verificationResult.userPublication, &time1);
+	if (res != KSI_OK) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_PublicationData_getImprint(sig->verificationResult.userPublication, &hsh1);
+	if (res != KSI_OK) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_PublicationData_getTime(sig->publication->publishedData, &time2);
+	if (res != KSI_OK) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_PublicationData_getImprint(sig->publication->publishedData, &hsh2);
+	if (res != KSI_OK) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (KSI_Integer_compare(time1, time2) != 0) {
+		KSI_LOG_debug(sig->ctx, "Publication time from publication record:", time2);
+		KSI_LOG_debug(sig->ctx, "Publication time from user publication  :", time1);
+		res = KSI_VerificationResult_addFailure(info, step, "Publication not trusted.");
+		goto cleanup;
+	}
+
+	if (KSI_DataHash_equals(hsh1, hsh2) != 1) {
+		KSI_LOG_logDataHash(sig->ctx, KSI_LOG_DEBUG, "Root hash from publication record:", hsh2);
+		KSI_LOG_logDataHash(sig->ctx, KSI_LOG_DEBUG, "Root hash from user publication:", hsh1);
+		res = KSI_VerificationResult_addFailure(info, step, "Publication not trusted.");
+		goto cleanup;
+	}
+
+	res = KSI_VerificationResult_addSuccess(info, step, "Publication trusted.");
+
+
+cleanup:
+
+	return res;
+}
+
 static int verifyDocument(KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
@@ -2777,6 +2850,14 @@ static int KSI_Signature_verifyPolicy(KSI_Signature *sig, unsigned *policy, KSI_
 			}
 		}
 
+		if (performVerification(pol, sig,  KSI_VERIFY_PUBLICATION_WITH_PUBSTRING)) {
+			res = verifyPublicationWithPubString(ctx, sig);
+			if (res != KSI_OK) {
+				KSI_pushError(sig->ctx, res, NULL);
+				goto cleanup;
+			}
+		}
+
 		if (performVerification(pol, sig,  KSI_VERIFY_PUBLICATION_WITH_PUBFILE)) {
 			res = verifyPublication(ctx, sig);
 			if (res != KSI_OK) {
@@ -2891,6 +2972,40 @@ int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_CTX *ctx, const KSI_Dat
 	sig->verificationResult.verifyDocumentHash = true;
 
 	res = KSI_Signature_verifyPolicy(sig, KSI_VP_DOCUMENT, useCtx);
+	if (res != KSI_OK) {
+		KSI_pushError(sig->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_Signature_verifyWithPublication(KSI_Signature *sig, KSI_CTX *ctx, const KSI_PublicationData *publication) {
+	int res;
+	KSI_CTX *useCtx = ctx;
+
+	if (sig == NULL || ctx == NULL || publication == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(sig->ctx);
+
+
+	if (useCtx == NULL) {
+		useCtx = sig->ctx;
+	}
+
+	KSI_VerificationResult_reset(&sig->verificationResult);
+
+	/* Set the document hash. */
+	sig->verificationResult.userPublication = publication;
+	sig->verificationResult.useUserPublication = true;
+
+	res = KSI_Signature_verifyPolicy(sig, KSI_VP_OFFLINE, useCtx);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
 		goto cleanup;
