@@ -34,6 +34,7 @@ int KSI_VerificationResult_reset(KSI_VerificationResult *info) {
 
 	info->verifyDocumentHash = false;
 	info->documentHash = NULL;
+	info->docAggrLevel = 0;
 
 	info->useUserPublication = false;
 	info->userPublication = NULL;
@@ -155,8 +156,8 @@ const char *KSI_VerificationResult_lastFailureMessage(const KSI_VerificationResu
 	if (info->steps_len == 0) goto cleanup;
 	if (info->stepsFailed == 0) goto cleanup;
 	for (i = info->steps_len; i >= 0; i--) {
-		if (!info->steps[i].succeeded) {
-			msg = info->steps[i].description;
+		if (!info->steps[i - 1].succeeded) {
+			msg = info->steps[i - 1].description;
 			goto cleanup;
 		}
 	}

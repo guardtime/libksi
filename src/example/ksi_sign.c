@@ -117,15 +117,16 @@ int main(int argc, char **argv) {
 	}
 
 	/* Sign the data hash. */
-	res = KSI_createSignature(ksi, hsh, &sign);
+	res = KSI_Signature_createAggregated(ksi, hsh, 4, &sign);
+//	res = KSI_createSignature(ksi, hsh, &sign);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to sign %d.\n", res);
 		goto cleanup;
 	}
 
-	res = KSI_verifySignature(ksi, sign);
+	res = KSI_Signature_verifyAggregated(sign, ksi, 4);
 	if (res != KSI_OK) {
-		fprintf(stderr, "Failed to verify signature.");
+		fprintf(stderr, "Failed to verify signature.\n");
 		goto cleanup;
 	}
 

@@ -309,6 +309,8 @@ EXPORTS
 EXPORTS
     KSI_Signature_free
     KSI_Signature_verify
+    KSI_Signature_verifyAggregated
+    KSI_Signature_verifyAggregatedHash
     KSI_Signature_verifyOnline
     KSI_Signature_verifyDocument
     KSI_Signature_clone
@@ -316,6 +318,7 @@ EXPORTS
     KSI_Signature_fromFile
     KSI_Signature_serialize
     KSI_Signature_create
+    KSI_Signature_createAggregated
     KSI_Signature_extend
     KSI_Signature_extendTo
     KSI_Signature_getDocumentHash

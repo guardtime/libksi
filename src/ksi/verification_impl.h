@@ -49,6 +49,9 @@ extern "C" {
 		/** Indicates if the document hash should be verified */
 		bool verifyDocumentHash;
 
+		/* Initial aggregation level. */
+		KSI_uint64_t docAggrLevel;
+
 		/** Document hash to be verified. */
 		const KSI_DataHash *documentHash;
 
