@@ -473,15 +473,21 @@ cleanup:
 /***************
  * SIGN REQUEST
  ***************/
-static int createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_AggregationReq **request) {
-	int res;
+static int createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, int lvl, KSI_AggregationReq **request) {
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationReq *tmp = NULL;
-
+	KSI_Integer *level = NULL;
 	KSI_DataHash *tmpHash = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || hsh == NULL || request == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	/* For now, the level may be just a single byte. */
+	if (lvl < 0 || lvl > 0xff) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Aggregation level may be only between 0x00 and 0xff");
 		goto cleanup;
 	}
 
@@ -492,22 +498,47 @@ static int createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_AggregationReq
 		goto cleanup;
 	}
 
+	/* Add the request Id. */
 	res = addAggregationRequestId(ctx, tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
+
+	/* Make sure it is safe to pass the pointer to the request object. */
 	res = KSI_DataHash_clone(hsh, &tmpHash);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
+
 	/* Add the hash to the request */
 	res = KSI_AggregationReq_setRequestHash(tmp, tmpHash);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
-	}	tmpHash = NULL;
+	}
+	/* Will be freed by KSI_AggregationReq_free. */
+	tmpHash = NULL;
+
+	/* If the level is specified, add it to the request. */
+	if (lvl > 0) {
+		/* Create a new integer object. */
+		res = KSI_Integer_new(ctx, (KSI_uint64_t) lvl, &level);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		/* Attach it to the request. */
+		res = KSI_AggregationReq_setRequestLevel(tmp, level);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+		/* Will be freed by KSI_AggregationReq_free */
+		level = NULL;
+	}
 
 	*request = tmp;
 	tmp = NULL;
@@ -516,7 +547,7 @@ static int createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_AggregationReq
 
 cleanup:
 
-
+	KSI_Integer_free(level);
 	KSI_DataHash_free(tmpHash);
 	KSI_AggregationReq_free(tmp);
 
@@ -831,7 +862,8 @@ cleanup:
 	return res;
 }
 
-static int KSI_parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp, KSI_Signature **signature) {
+static int parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp, KSI_Signature **signature) {
+	KSI_ERR err;
 	int res;
 	KSI_TLV *tmpTlv = NULL;
 	KSI_TLV *respTlv = NULL;
@@ -1008,7 +1040,8 @@ cleanup:
 }
 
 
-int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature) {
+int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature) {
+	KSI_ERR err;
 	int res;
 	KSI_RequestHandle *handle = NULL;
 	KSI_AggregationResp *response = NULL;
@@ -1016,17 +1049,14 @@ int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signat
 
 	KSI_AggregationReq *req = NULL;
 
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || hsh == NULL || signature == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
+	KSI_PRE(&err, rootHash != NULL) goto cleanup;
+	KSI_PRE(&err, ctx != NULL) goto cleanup;
+	KSI_PRE(&err, signature != NULL) goto cleanup;
 
-	res = createSignRequest(ctx, hsh, &req);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
+	KSI_BEGIN(ctx, &err);
+
+	res = createSignRequest(ctx, rootHash, rootLevel, &req);
+	KSI_CATCH(&err, res) goto cleanup;
 
 	res = KSI_sendSignRequest(ctx, req, &handle);
 	if (res != KSI_OK) {
@@ -1040,11 +1070,8 @@ int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signat
 		goto cleanup;
 	}
 
-	res = KSI_parseAggregationResponse(ctx, response, &sign);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
+	res = parseAggregationResponse(ctx, response, &sign);
+	KSI_CATCH(&err, res) goto cleanup;
 
 	*signature = sign;
 	sign = NULL;
@@ -1059,6 +1086,10 @@ cleanup:
 	KSI_AggregationReq_free(req);
 
 	return res;
+}
+
+int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature) {
+	return KSI_Signature_createAggregated(ctx, hsh, 0, signature);
 }
 
 int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *to, KSI_Signature **extended) {
@@ -1791,7 +1822,9 @@ static int verifyInternallyAggregationChain(KSI_Signature *sig) {
 
 	/* Aggregate aggregation chains. */
 	hsh = NULL;
-	level = 0;
+
+	/* The aggregation level might not be 0 in case of local aggregation. */
+	level = sig->verificationResult.docAggrLevel;
 
 	KSI_LOG_info(sig->ctx, "Verifying aggregation hash chain internal consistency.");
 
@@ -2449,7 +2482,8 @@ cleanup:
 
 }
 
-int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx) {
+int KSI_Signature_verifyAggregated(KSI_Signature *sig, KSI_CTX *ctx, KSI_uint64_t level) {
+	KSI_ERR err;
 	int res;
 	KSI_CTX *useCtx = ctx;
 
@@ -2464,6 +2498,9 @@ int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx) {
 		useCtx = sig->ctx;
 	}
 
+	KSI_VerificationResult_reset(&sig->verificationResult);
+	sig->verificationResult.docAggrLevel = level;
+
 	res = KSI_Signature_verifyPolicy(sig, KSI_VP_SIGNATURE, useCtx);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
@@ -2475,6 +2512,10 @@ int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx) {
 cleanup:
 
 	return res;
+}
+
+int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx) {
+	return KSI_Signature_verifyAggregated(sig, ctx, 0);
 }
 
 int KSI_Signature_verifyOnline(KSI_Signature *sig, KSI_CTX *ctx){
@@ -2504,17 +2545,17 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_CTX *ctx, const KSI_DataHash *docHash) {
-	int res;
+int KSI_Signature_verifyAggregatedHash(KSI_Signature *sig, KSI_CTX *ctx, const KSI_DataHash *rootHash, KSI_uint64_t rootLevel) {
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *useCtx = ctx;
 
-	if (sig == NULL || ctx == NULL || docHash == NULL) {
-		res = KSI_INVALID_ARGUMENT;
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || sig == NULL || rootHash == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
-	KSI_ERR_clearErrors(sig->ctx);
 
-
+	/* Pick a context to use. */
 	if (useCtx == NULL) {
 		useCtx = sig->ctx;
 	}
@@ -2522,12 +2563,13 @@ int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_CTX *ctx, const KSI_Dat
 	KSI_VerificationResult_reset(&sig->verificationResult);
 
 	/* Set the document hash. */
-	sig->verificationResult.documentHash = docHash;
+	sig->verificationResult.documentHash = rootHash;
+	sig->verificationResult.docAggrLevel = rootLevel;
 	sig->verificationResult.verifyDocumentHash = true;
 
 	res = KSI_Signature_verifyPolicy(sig, KSI_VP_DOCUMENT, useCtx);
 	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
+		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
@@ -2536,6 +2578,10 @@ int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_CTX *ctx, const KSI_Dat
 cleanup:
 
 	return res;
+}
+
+int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_CTX *ctx, const KSI_DataHash *docHash) {
+	return KSI_Signature_verifyAggregatedHash(sig, ctx, docHash, 0);
 }
 
 int KSI_Signature_getVerificationResult(KSI_Signature *sig, const KSI_VerificationResult **info) {

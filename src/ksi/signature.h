@@ -48,14 +48,32 @@ extern "C" {
 	 * using the publications file. Otherwise, the signature is verified by
 	 * an attempt to extend it.
 	 *
+	 * \param[in]	sig			KSI signature.
+	 * \param[in]	ctx			KSI context, if NULL the context of the signature is used.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_Signature_verifyAggregated, #KSI_Signature_verifyAggregatedHash, #KSI_Signature_verifyDataHash
 	 */
 	int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx);
 
 	/**
+	 * This function behaves like #KSI_Signature_verify except, it takes an extra parameter
+	 * \c level, which indicates the level of the local aggregation.
+	 *
+	 * \param[in]	sig			KSI signature.
+	 * \param[in]	ctx			KSI context, if NULL the context of the signature is used.
+	 * \param[in]	level		The local aggregation level.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_Signature_verify, #KSI_Signature_verifyAggregatedHash, #KSI_Signature_verifyDataHash
+	 */
+	int KSI_Signature_verifyAggregated(KSI_Signature *sig, KSI_CTX *ctx, KSI_uint64_t level);
+
+	/**
 	 * This function verifies the signature using online resources. The signature is
-	 * verified by an attempt to extend it.
+	 * verified by an attempt to extend it. If the extending and verification are successful,
+	 * the signature itself is not modified.
 	 * 
+	 * \param[in]	sig			KSI signature.
+	 * \param[in]	ctx			KSI context, if NULL the context of the signature is used.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
      */
 	int KSI_Signature_verifyOnline(KSI_Signature *sig, KSI_CTX *ctx);
@@ -120,7 +138,7 @@ extern "C" {
 	int KSI_Signature_serialize(KSI_Signature *sig, unsigned char **raw, unsigned *raw_len);
 
 	/**
-	 * This function signs the given data hash \c hsh. This function requires a access to
+	 * This function signs the given data hash \c hsh. This function requires access to
 	 * a working aggregator and fails if it is not accessible.
 	 * \param[in]		ctx			KSI context.
 	 * \param[in]		hsh			Document hash.
@@ -130,9 +148,23 @@ extern "C" {
 	 * error code).
 	 * \note For signing hash values, the use of #KSI_createSignature is strongly
 	 * recomended.
-	 * \see #KSI_createSignature
+	 * \see #KSI_createSignature, KSI_Signature_free
 	 */
 	int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature);
+
+	/**
+	 * This function signs the given root hash value (\c rootHash) with the aggregation level (\c rootLevel)
+	 * of a locally aggregated hash tree. This function requires access to a working aggregaton and fails if
+	 * it is not accessible.
+	 * \param[in]		ctx			KSI context.
+	 * \param[in]		rootHash	Root value of the hash tree.
+	 * \param[in]		rootLevel	Level of the root node (0 =< x <= 0xff).
+	 * \param[out]		signature	Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 * \see #KSI_createSignature, KSI_Signature_create, KSI_Signature_free.
+	 */
+	int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature);
 
 	/**
 	 * This function extends the signature to the given publication \c pubRec. If \c pubRec is \c NULL the signature is
@@ -247,10 +279,34 @@ extern "C" {
 	 * This function verifies given hash value \c hsh using the signature \c sig. If
 	 * the hash value does not match the input hash value of the signature, a
 	 * #KSI_VERIFICATION_FAILURE error code is returned.
+	 *
+	 * This function does not allow the document hash to be NULL, if you only need to
+	 * verify the signature without having the original document (or document hash) use
+	 * #KSI_Signature_verify.
+	 *
+	 * \param[in]	sig			KSI signature.
+	 * \param[in]	ctx			KSI context - if NULL, the context of the signature is used.
+	 * \param[in]	docHash		The signed document hash. The hash may not be NULL.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
 	int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_CTX *ctx, const KSI_DataHash *docHash);
+
+	/**
+	 * This function behaves similar to #KSI_Signature_verifyDataHash except it takes an extra parameter
+	 * \c rootLevel which indicates the local aggregation level.
+	 *
+	 * This function does not allow the document hash to be NULL, if you only need to
+	 * verify the signature without having the original document (or document hash) use
+	 * #KSI_Signature_verifyAggregated.
+	 *
+	 * \param[in]	sig			KSI signature.
+	 * \param[in]	ctx			KSI context - if NULL, the context of the signature is used.
+	 * \param[in]	rootHash	The signed aggregation root hash.
+	 * \param[in]	rootLevel	The level of the root hash.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_Signature_verifyAggregatedHash(KSI_Signature *sig, KSI_CTX *ctx, const KSI_DataHash *rootHash, KSI_uint64_t rootLevel);
 
 	/**
 	 * Accessor method for verification results.
