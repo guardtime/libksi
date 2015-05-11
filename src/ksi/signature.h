@@ -71,13 +71,13 @@ extern "C" {
 	 * This function verifies the signature using online resources. The signature is
 	 * verified by an attempt to extend it. If the extending and verification are successful,
 	 * the signature itself is not modified.
-	 * 
+	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[in]	ctx			KSI context, if NULL the context of the signature is used.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
      */
 	int KSI_Signature_verifyOnline(KSI_Signature *sig, KSI_CTX *ctx);
-	
+
 	/**
 	 * Verifies that the document matches the signature.
 	 * \param[in]	sig			KSI signature.
@@ -274,7 +274,7 @@ extern "C" {
 	 * error code).
 	 */
 	int KSI_Signature_getCalendarAuthRec (const KSI_Signature *sig, KSI_CalendarAuthRec **calendarAuthRec);
-	
+
 	/**
 	 * This function verifies given hash value \c hsh using the signature \c sig. If
 	 * the hash value does not match the input hash value of the signature, a
@@ -325,7 +325,7 @@ extern "C" {
 	 * error code).
 	 */
 	int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain);
-	
+
 	/**
 	 * Replaces the existing publication record of the signature.
 	 * \param[in]	sig		KSI signature.
