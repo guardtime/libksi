@@ -35,7 +35,7 @@ extern "C" {
 		int (*sendExtendRequest)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **);
 		int (*sendPublicationRequest)(KSI_NetworkClient *, KSI_RequestHandle **);
 		int (*getStausCode)(KSI_NetworkClient *);
-		
+	
 		/** Aggregator user. */
 		char *aggrUser;
 		/** Aggregator pass phrase. */
@@ -45,7 +45,7 @@ extern "C" {
 		char *extUser;
 		/** Extender shared HMAC secret. */
 		char *extPass;
-		
+	
 		/** Cleanup for the provider, gets the #providerCtx as parameter. */
 		void (*implFree)(void *);
 	};
