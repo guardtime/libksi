@@ -61,7 +61,7 @@ extern "C" {
 	 */
 	int KSI_TcpClient_setPublicationUrl(KSI_TcpClient *client, const char *val);
 
-	
+
 	/**
 	 * Setter for the tcp client extender parameters.
      * \param[in]	client		Pointer to tcp client.
@@ -72,7 +72,7 @@ extern "C" {
      * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
      */
 	int KSI_TcpClient_setExtender(KSI_TcpClient *client, const char *host, unsigned port, const char *user, const char *key);
-	
+
 	/**
 	 * Setter for the tcp aggregator parameters.
      * \param[in]	client		Pointer to tcp client.
@@ -83,7 +83,7 @@ extern "C" {
      * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
      */
 	int KSI_TcpClient_setAggregator(KSI_TcpClient *client, const char *host, unsigned port, const char *user, const char *key);
-	
+
 	/**
 	 * Setter for the read, write, timeout in seconds.
 	 * \param[in]	client		Pointer to the tcp client.

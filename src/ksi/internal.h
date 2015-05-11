@@ -211,7 +211,7 @@ cleanup: \
 	KSI_OctetString_free(raw); \
 	return res; \
 }
-	
+
 #define FROMTLV_ADD_RAW(name, offset) \
 	do{ \
 		unsigned len; \
@@ -246,7 +246,7 @@ cleanup: \
 		} \
 		tmp->name = baseTlv; \
 	}while(0);
-	
+
 struct KSI_Object_st {
 	KSI_CTX *ctx;
 	unsigned refCount;

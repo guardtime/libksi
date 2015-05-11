@@ -370,7 +370,7 @@ extern "C" {
 	 * \return The absolute offset of the TLV object.
 	 */
 	size_t KSI_TLV_getRelativeOffset(const KSI_TLV *tlv);
-	
+
 	KSI_DEFINE_GET_CTX(KSI_TLV);
 
 	/**

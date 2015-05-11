@@ -147,7 +147,7 @@ enum KSI_StatusCode {
 	 * resources.
 	 */
 	KSI_CRYPTO_FAILURE = 0x20d,
-	
+
 	/**
 	 * HMAC mismatch occurred
 	 */
@@ -218,7 +218,7 @@ enum KSI_StatusCode {
 	 * The request asked for hash values newer than the newest round in the server's database.
 	 */
 	KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_NEW = 0x40d,
-	
+
 	/**
 	 * The request asked for hash values newer than the current real time.
 	 */
@@ -301,10 +301,10 @@ int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f);
  * \param[in]		ctx		KSI context object.
  * \param[out]		buf		Buffer for storing error message.
  * \param[in]		len		The length of the buffer.
- * \param[out]		error	Pointer to buffer for base error code. Can be NULL.		 
- * \param[out]		ext		Pointer to buffer for external component error code. Can be NULL.		 
+ * \param[out]		error	Pointer to buffer for base error code. Can be NULL.		
+ * \param[out]		ext		Pointer to buffer for external component error code. Can be NULL.		
  * \return status code (#KSI_OK, when operation succeeded, otherwise an
- * error code). 
+ * error code).
  */
 int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *error, int *ext);
 

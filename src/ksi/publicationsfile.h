@@ -64,12 +64,12 @@ extern "C" {
 	int KSI_PublicationsFile_fromFile(KSI_CTX *ctx, const char *fileName, KSI_PublicationsFile **pubFile);
 
 	/**
-	 * 
+	 *
 	 * @param[in]		ctx			KSI context.
 	 * @param[in]		pubFile		Publications file.
-	 * @param[out]		raw	Pointer to the pointer to output buffer. 
+	 * @param[out]		raw	Pointer to the pointer to output buffer.
 	 * @param[out]		raw_len	Pointer to the length of the buffer variable.
-	 * @return 
+	 * @return
 	 */
     int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, char **raw, unsigned* raw_len);
 
@@ -199,7 +199,7 @@ extern "C" {
 	void KSI_PublicationsFile_free(KSI_PublicationsFile *pubFile);
 
 	int KSI_PublicationsFile_findPublication(const KSI_PublicationsFile *trust, KSI_PublicationRecord *inRec, KSI_PublicationRecord **outRec);
-	
+
 	/**
 	 * Converts the base-32 encoded publicationstring into #KSI_PublicationData object.
 	 * \param[in]		ctx				KSI context.

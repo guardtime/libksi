@@ -32,7 +32,7 @@ extern "C" {
  */
 
 /**
- * Platform independent version of snprintf. 
+ * Platform independent version of snprintf.
  * \param[in]		buf		Pointer to buffer.
  * \param[in]		n		Maximum number of bytes to be written into buffer. Includes terminating NULL character.
  * \param[in]		format	Format string.
@@ -42,7 +42,7 @@ extern "C" {
 int KSI_snprintf(char *buf, size_t n, const char *format, ... );
 
 /**
- * Platform independent version of vsnprintf. 
+ * Platform independent version of vsnprintf.
  * \param[in]		buf		Pointer to buffer.
  * \param[in]		n		Maximum number of bytes to be written into buffer. Includes terminating NULL character.
  * \param[in]		format	Format string.
@@ -52,8 +52,8 @@ int KSI_snprintf(char *buf, size_t n, const char *format, ... );
 int KSI_vsnprintf(char *buf, size_t n, const char *format, va_list va);
 
 /**
- * Platform independent version of strncpy that guarantees NULL terminated 
- * destination. To copy N characters from source to destination n and size of 
+ * Platform independent version of strncpy that guarantees NULL terminated
+ * destination. To copy N characters from source to destination n and size of
  * source must be N+1.
  * \param[in]		destination Pointer to destination.
  * \param[in]		source		Pointer to source.
