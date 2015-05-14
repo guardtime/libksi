@@ -1053,14 +1053,17 @@ int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uin
 
 	KSI_AggregationReq *req = NULL;
 
-	KSI_PRE(&err, rootHash != NULL) goto cleanup;
-	KSI_PRE(&err, ctx != NULL) goto cleanup;
-	KSI_PRE(&err, signature != NULL) goto cleanup;
-
-	KSI_BEGIN(ctx, &err);
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || rootHash == NULL || signature == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
 
 	res = createSignRequest(ctx, rootHash, rootLevel, &req);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_sendSignRequest(ctx, req, &handle);
 	if (res != KSI_OK) {
@@ -1075,7 +1078,10 @@ int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uin
 	}
 
 	res = parseAggregationResponse(ctx, response, &sign);
-	KSI_CATCH(&err, res) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	*signature = sign;
 	sign = NULL;
