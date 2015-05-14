@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	logFile = fopen("ksi_sign.log", "w");
+	logFile = fopen("ksi_sign_aggr.log", "w");
 	if (logFile == NULL) {
 		fprintf(stderr, "Unable to open log file.\n");
 	}
