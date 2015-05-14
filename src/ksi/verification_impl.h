@@ -62,7 +62,7 @@ extern "C" {
 		KSI_PublicationsFile *publicationsFile;
 
 		/** Publication string to be used. */
-		KSI_PublicationData *userPublication;
+		const KSI_PublicationData *userPublication;
 
 		KSI_DataHash *aggregationHash;
 	};

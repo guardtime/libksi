@@ -95,6 +95,11 @@ extern "C" {
 	     * Check if publication record is stored in KSI Trust provider
 	     */
 	    KSI_VERIFY_PUBLICATION_WITH_PUBFILE = 0x200,
+	    
+		/**
+	     * Check if publication record equals to publication string
+	     */
+	    KSI_VERIFY_PUBLICATION_WITH_PUBSTRING = 0x400,
 
 	} KSI_VerificationStep;
 

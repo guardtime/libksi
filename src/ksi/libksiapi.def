@@ -313,6 +313,7 @@ EXPORTS
     KSI_Signature_verifyAggregatedHash
     KSI_Signature_verifyOnline
     KSI_Signature_verifyDocument
+    KSI_Signature_verifyWithPublication
     KSI_Signature_clone
     KSI_Signature_parse
     KSI_Signature_fromFile
