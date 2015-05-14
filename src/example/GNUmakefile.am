@@ -19,11 +19,19 @@
 
 AM_CFLAGS=-g -Wall -I$(top_builddir)/src
 AM_LDFLAGS=-L$(top_builddir)/src/ksi -no-install -lksi
+<<<<<<< HEAD
 check_PROGRAMS=ksi_sign ksi_sign_aggr ksi_extend ksi_verify ksi_pubfiledump ksi_aggr
+=======
+check_PROGRAMS=ksi_sign ksi_extend ksi_verify ksi_pubfiledump ksi_aggr ksi_verify_pub
+>>>>>>> b77821b8b5e042e20571a6d3ff9c42bf6aad5ce1
 	
 ksi_sign_SOURCES=ksi_sign.c
 ksi_extend_SOURCES=ksi_extend.c
 ksi_verify_SOURCES=ksi_verify.c
 ksi_pubfiledump_SOURCES=ksi_pubfiledump.c
 ksi_aggr_SOURCES=ksi_aggr.c
+<<<<<<< HEAD
 ksi_sign_aggr_SOURCES=ksi_sign_aggr.c
+=======
+ksi_verify_pub_SOURCES=ksi_verify_pub.c
+>>>>>>> b77821b8b5e042e20571a6d3ff9c42bf6aad5ce1
