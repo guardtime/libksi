@@ -121,12 +121,12 @@ static void testVerifySignatureExtendedToHead(CuTest *tc) {
 
 	/* Set the extend response. */
 	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-head-extend_response.tlv"));
-	
+
 	ctx->requestCounter = 0;
 
 	res = KSI_Signature_verifyOnline(sig, ctx);
 	CuAssert(tc, "Signature should verify", res == KSI_OK);
-	
+
 	KSI_Signature_free(sig);
 
 }

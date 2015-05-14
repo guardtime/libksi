@@ -2221,7 +2221,7 @@ cleanup:
 
 static int verifyDocument(KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
-	const KSI_DataHash *hsh = NULL;
+	KSI_DataHash *hsh = NULL;
 	KSI_VerificationStep step = KSI_VERIFY_DOCUMENT;
 	KSI_VerificationResult *info = &sig->verificationResult;
 
