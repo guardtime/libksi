@@ -593,7 +593,8 @@ static int rfc3161_getInputToAggreChain(const KSI_Signature *sig, KSI_DataHash *
 	const unsigned char *imprint = NULL;
 	unsigned imprint_len = 0;
 	int algId = -1;
-
+	int tstInfoAlgo;
+	int sigAttrAlgo;
 
 	if (sig == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -616,13 +617,22 @@ static int rfc3161_getInputToAggreChain(const KSI_Signature *sig, KSI_DataHash *
 	}
 
 
-	res = rfc3161_preSufHasher(ctx, rfc->tstInfoPrefix, rfc->inputHash, rfc->tstInfoSuffix, KSI_Integer_getUInt64(rfc->tstInfoAlgo), &hsh_tstInfo);
+
+	if (KSI_Integer_getUInt64(rfc->tstInfoAlgo) > 0xff || KSI_Integer_getUInt64(rfc->sigAttrAlgo) > 0xff) {
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Hash algorithm can't be larger than 0xff.");
+		goto cleanup;
+	} else {
+		tstInfoAlgo = (int)KSI_Integer_getUInt64(rfc->tstInfoAlgo);
+		sigAttrAlgo = (int)KSI_Integer_getUInt64(rfc->sigAttrAlgo);
+	}
+
+	res = rfc3161_preSufHasher(ctx, rfc->tstInfoPrefix, rfc->inputHash, rfc->tstInfoSuffix, tstInfoAlgo, &hsh_tstInfo);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = rfc3161_preSufHasher(ctx, rfc->sigAttrPrefix, hsh_tstInfo, rfc->sigAttrSuffix, KSI_Integer_getUInt64(rfc->sigAttrAlgo), &hsh_sigAttr);
+	res = rfc3161_preSufHasher(ctx, rfc->sigAttrPrefix, hsh_tstInfo, rfc->sigAttrSuffix, sigAttrAlgo, &hsh_sigAttr);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1202,7 +1212,6 @@ cleanup:
 }
 
 static int parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp, KSI_Signature **signature) {
-	KSI_ERR err;
 	int res;
 	KSI_TLV *tmpTlv = NULL;
 	KSI_TLV *respTlv = NULL;
@@ -1378,7 +1387,6 @@ cleanup:
 
 
 int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature) {
-	KSI_ERR err;
 	int res;
 	KSI_RequestHandle *handle = NULL;
 	KSI_AggregationResp *response = NULL;
@@ -1392,7 +1400,12 @@ int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uin
 		goto cleanup;
 	}
 
-	res = createSignRequest(ctx, rootHash, rootLevel, &req);
+	if (rootLevel > 0xff) {
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Aggregation level can't be larger than 0xff.");
+		goto cleanup;
+	}
+
+	res = createSignRequest(ctx, rootHash, (int)rootLevel, &req);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -2169,7 +2182,12 @@ static int verifyInternallyAggregationChain(KSI_Signature *sig) {
 	hsh = NULL;
 
 	/* The aggregation level might not be 0 in case of local aggregation. */
-	level = sig->verificationResult.docAggrLevel;
+	if (sig->verificationResult.docAggrLevel > 0xff) {
+		KSI_pushError(sig->ctx, res = KSI_INVALID_FORMAT, "Aggregation level can't be larger than 0xff.");
+		goto cleanup;
+	}
+
+	level = (int)sig->verificationResult.docAggrLevel;
 
 	KSI_LOG_info(sig->ctx, "Verifying aggregation hash chain internal consistency.");
 
@@ -2933,7 +2951,6 @@ cleanup:
 }
 
 int KSI_Signature_verifyAggregated(KSI_Signature *sig, KSI_CTX *ctx, KSI_uint64_t level) {
-	KSI_ERR err;
 	int res;
 	KSI_CTX *useCtx = ctx;
 
