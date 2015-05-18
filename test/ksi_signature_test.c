@@ -117,7 +117,7 @@ static void testVerifyLegacySignatureAndDoc(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-legacy-sig-2015-01.gtts"), &sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-legacy-sig-2014-06.gtts.ksig"), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_verifyDocument(sig, ctx, doc, strlen(doc));
@@ -136,7 +136,7 @@ static void testVerifyLegacyExtendedSignatureAndDoc(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-legacy-sig-2015-01-extended.gtts"), &sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-legacy-sig-2014-06-extended.gtts.ksig"), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_verifyDocument(sig, ctx, doc, strlen(doc));
@@ -437,7 +437,7 @@ CuSuite* KSITest_Signature_getSuite(void) {
 	SUITE_ADD_TEST(suite, testVerifySignatureWithUserPublication);
 	SUITE_ADD_TEST(suite, testVerifySignatureExtendedToHead);
 	SUITE_ADD_TEST(suite, testVerifyLegacySignatureAndDoc);
-	SUITE_SKIP_TEST(suite, testVerifyLegacyExtendedSignatureAndDoc, "Taavi Valjaots", "Cert not found.");
+	SUITE_ADD_TEST(suite, testVerifyLegacyExtendedSignatureAndDoc);
 	SUITE_ADD_TEST(suite, testRFC3161WrongChainIndex);
 	SUITE_ADD_TEST(suite, testRFC3161WrongAggreTime);
 	SUITE_ADD_TEST(suite, testRFC3161WrongInputHash);
