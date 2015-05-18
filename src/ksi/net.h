@@ -150,7 +150,7 @@ extern "C" {
 	 * TODO!
 	 */
 	int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_AggregationResp **resp);
-	
+
 	/**
 	 * TODO!
 	 */
@@ -236,7 +236,7 @@ extern "C" {
 	int KSI_NetworkClient_setExtenderPass(KSI_NetworkClient *net, const char *val);
 	int KSI_NetworkClient_setAggregatorUser(KSI_NetworkClient *net, const char *val);
 	int KSI_NetworkClient_setAggregatorPass(KSI_NetworkClient *net, const char *val);
-	
+
 	int KSI_NetworkClient_getExtenderUser(const KSI_NetworkClient *net, const char **val);
 	int KSI_NetworkClient_getExtenderPass(const KSI_NetworkClient *net, const char **val);
 	int KSI_NetworkClient_getAggregatorUser(const KSI_NetworkClient *net, const char **val);
