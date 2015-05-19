@@ -31,11 +31,11 @@ extern "C" {
 
 	struct KSI_TcpClient_st {
 		KSI_NetworkClient parent;
-		
+	
 
 		/* TODO: Is it required to be a signed int? */
 		int transferTimeoutSeconds;
-		
+	
 		char *aggrHost;
 		unsigned aggrPort;
 

@@ -62,17 +62,17 @@ void CuTestDelete(CuTest *t);
 /* Internal versions of assert functions -- use the public versions */
 void CuFail_Line(CuTest* tc, const char* file, int line, const char* message2, const char* message);
 void CuAssert_Line(CuTest* tc, const char* file, int line, const char* message, int condition);
-void CuAssertStrEquals_LineMsg(CuTest* tc, 
-	const char* file, int line, const char* message, 
+void CuAssertStrEquals_LineMsg(CuTest* tc,
+	const char* file, int line, const char* message,
 	const char* expected, const char* actual);
-void CuAssertIntEquals_LineMsg(CuTest* tc, 
-	const char* file, int line, const char* message, 
+void CuAssertIntEquals_LineMsg(CuTest* tc,
+	const char* file, int line, const char* message,
 	int expected, int actual);
-void CuAssertDblEquals_LineMsg(CuTest* tc, 
-	const char* file, int line, const char* message, 
+void CuAssertDblEquals_LineMsg(CuTest* tc,
+	const char* file, int line, const char* message,
 	double expected, double actual, double delta);
-void CuAssertPtrEquals_LineMsg(CuTest* tc, 
-	const char* file, int line, const char* message, 
+void CuAssertPtrEquals_LineMsg(CuTest* tc,
+	const char* file, int line, const char* message,
 	void* expected, void* actual);
 
 /* public assert functions */
@@ -98,13 +98,8 @@ void CuAssertPtrEquals_LineMsg(CuTest* tc,
 #define MAX_TEST_CASES	1024
 
 #define SUITE_ADD_TEST(SUITE,TEST)	CuSuiteAdd(SUITE, CuTestNew(#TEST, TEST))
-#define SUITE_SKIP_TEST(SUITE, TEST, SKIPPED_BY, MSG) do{ \
-	CuTest* t = CuTestNew(#TEST, TEST);\
-	t->skip = 1; \
-	t->skippedBy = SKIPPED_BY; \
-	t->skipMessage = MSG; \
-	CuSuiteAdd(SUITE, t); \
-	} while(0) \
+#define SUITE_SKIP_TEST(SUITE, TEST, SKIPPED_BY, MSG) CuSuiteSkip(SUITE, CuTestNew(#TEST, TEST), SKIPPED_BY, MSG)
+
 
 typedef struct
 {
@@ -120,6 +115,7 @@ void CuSuiteInit(CuSuite* testSuite);
 CuSuite* CuSuiteNew(void);
 void CuSuiteDelete(CuSuite *testSuite);
 void CuSuiteAdd(CuSuite* testSuite, CuTest *testCase);
+void CuSuiteSkip(CuSuite* testSuite, CuTest *testCase, const char *skippedBy, const char *msg);
 void CuSuiteAddSuite(CuSuite* testSuite, CuSuite* testSuite2);
 void CuSuiteRun(CuSuite* testSuite);
 void CuSuiteSummary(CuSuite* testSuite, CuString* summary);

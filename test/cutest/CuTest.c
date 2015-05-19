@@ -282,6 +282,14 @@ void CuSuiteAdd(CuSuite* testSuite, CuTest *testCase)
 		testSuite->skipCount++;
 }
 
+void CuSuiteSkip(CuSuite* testSuite, CuTest *testCase, const char *skippedBy, const char *msg)
+{
+	testCase->skip = 1;
+	testCase->skippedBy = skippedBy; \
+	testCase->skipMessage = msg; \
+	CuSuiteAdd(testSuite, testCase); \
+}
+
 void CuSuiteAddSuite(CuSuite* testSuite, CuSuite* testSuite2)
 {
 	int i;

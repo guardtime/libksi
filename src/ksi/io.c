@@ -314,14 +314,19 @@ static int readFromSocket(KSI_RDR *rdr, unsigned char *buffer, const size_t size
 		KSI_pushError(rdr->ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
-
+#ifdef _WIN32
 	if(bp_len > INT_MAX){
 		KSI_pushError(rdr->ctx, res = KSI_INVALID_ARGUMENT, "Unable to read more than MAX_INT from the socket.");
 		goto cleanup;
 	}
+#endif
 
 	while (!rdr->eof && bp_len > 0) {
+#ifdef _WIN32
+		int c = recv(rdr->data.socketfd, bp, (int)bp_len, 0);
+#else
 		int c = recv(rdr->data.socketfd, bp, bp_len, 0);
+#endif
 
 		if (c < 0) {
 			if (socket_error == socketTimedOut) {

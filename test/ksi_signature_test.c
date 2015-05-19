@@ -19,7 +19,8 @@
 
 #include <string.h>
 #include "all_tests.h"
-#include "ksi/signature.h"
+#include <ksi/signature.h>
+#include "../src/ksi/ctx_impl.h"
 
 #include "../src/ksi/ctx_impl.h"
 
@@ -116,7 +117,7 @@ static void testVerifyLegacySignatureAndDoc(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-legacy-sig-2015-01.gtts"), &sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-legacy-sig-2014-06.gtts.ksig"), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_verifyDocument(sig, ctx, doc, strlen(doc));
@@ -135,7 +136,7 @@ static void testVerifyLegacyExtendedSignatureAndDoc(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-legacy-sig-2015-01-extended.gtts"), &sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-legacy-sig-2014-06-extended.gtts.ksig"), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_verifyDocument(sig, ctx, doc, strlen(doc));
@@ -204,6 +205,7 @@ static void testVerifySignatureExtendedToHead(CuTest *tc) {
 	/* Set the extend response. */
 	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-head-extend_response.tlv"));
 
+	ctx->requestCounter = 0;
 	res = KSI_Signature_verifyOnline(sig, ctx);
 	CuAssert(tc, "Signature should verify", res == KSI_OK);
 
@@ -434,9 +436,9 @@ CuSuite* KSITest_Signature_getSuite(void) {
 	SUITE_ADD_TEST(suite, testVerifySignatureWithPublication);
 	SUITE_ADD_TEST(suite, testVerifySignatureWithUserPublication);
 	SUITE_ADD_TEST(suite, testVerifySignatureExtendedToHead);
-	SUITE_SKIP_TEST(suite, testVerifyLegacySignatureAndDoc, "Taavi Valjaots", "Cert not found.");
-	SUITE_SKIP_TEST(suite, testVerifyLegacyExtendedSignatureAndDoc, "Taavi Valjaots", "Cert not found.");
-	SUITE_SKIP_TEST(suite, testRFC3161WrongChainIndex, "Taavi Valjaots", "Cert not found.");
+	SUITE_ADD_TEST(suite, testVerifyLegacySignatureAndDoc);
+	SUITE_ADD_TEST(suite, testVerifyLegacyExtendedSignatureAndDoc);
+	SUITE_ADD_TEST(suite, testRFC3161WrongChainIndex);
 	SUITE_ADD_TEST(suite, testRFC3161WrongAggreTime);
 	SUITE_ADD_TEST(suite, testRFC3161WrongInputHash);
 	SUITE_ADD_TEST(suite, testSignerIdentity);

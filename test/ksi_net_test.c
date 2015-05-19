@@ -740,6 +740,31 @@ static void testSmartServiceSetters(CuTest *tc) {
 	KSI_CTX_free(ctx);
 }
 
+static void testLocalAggregationSigning(CuTest* tc) {
+	int res;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
+	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+
+	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok-local_aggr_lvl4_resp.tlv"));
+
+	res = KSI_Signature_createAggregated(ctx, hsh, 4, &sig);
+	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_verify(sig, NULL);
+	CuAssert(tc, "Signature should not be verifiable without local aggregation level.", res == KSI_VERIFICATION_FAILURE);
+
+	res = KSI_Signature_verifyAggregated(sig, NULL, 4);
+	CuAssert(tc, "Locally aggregated signature was not verifiable.", res == KSI_OK);
+
+	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
+}
+
 CuSuite* KSITest_NET_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -759,6 +784,7 @@ CuSuite* KSITest_NET_getSuite(void) {
 	SUITE_ADD_TEST(suite, testExtendingErrorResponse);
 	SUITE_ADD_TEST(suite, testUrlSplit);
 	SUITE_ADD_TEST(suite, testSmartServiceSetters);
+	SUITE_ADD_TEST(suite, testLocalAggregationSigning);
 
 	return suite;
 }

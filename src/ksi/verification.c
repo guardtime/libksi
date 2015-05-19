@@ -34,6 +34,7 @@ int KSI_VerificationResult_reset(KSI_VerificationResult *info) {
 
 	info->verifyDocumentHash = false;
 	info->documentHash = NULL;
+	info->docAggrLevel = 0;
 
 	info->useUserPublication = false;
 	info->userPublication = NULL;
