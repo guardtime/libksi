@@ -1,0 +1,50 @@
+#
+# Copyright 2013-2015 Guardtime, Inc.
+#
+# This file is part of the Guardtime client SDK.
+#
+# Licensed under the Apache License, Version 2.0 (the "License").
+# You may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#     http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES, CONDITIONS, OR OTHER LICENSES OF ANY KIND, either
+# express or implied. See the License for the specific language governing
+# permissions and limitations under the License.
+# "Guardtime" and "KSI" are trademarks or registered trademarks of
+# Guardtime, Inc., and no license to trademarks is granted; Guardtime
+# reserves and retains all trademark rights.
+#
+
+AM_CFLAGS=-g -Wall -I$(top_builddir)/src/
+AM_LDFLAGS=-L$(top_builddir)/src/ksi -no-install -lksi
+check_PROGRAMS=runner parse-benchmark serialize-benchmark resigner
+
+runner_SOURCES= \
+		./all_tests.c \
+		./all_tests.h \
+		./cutest/CuTest.c \
+		./cutest/CuTest.h \
+		./ksi_ctx_test.c \
+		./ksi_hashchain_test.c \
+		./ksi_hash_test.c \
+		./ksi_hmac_test.c \
+		./ksi_net_mock.c \
+		./ksi_net_mock.h \
+		./ksi_net_test.c \
+		./ksi_publicationsfile_test.c \
+		./ksi_rdr_test.c \
+		./ksi_signature_test.c \
+		./ksi_tlv_sample_test.c \
+		./ksi_tlv_test.c \
+		./ksi_truststore_test.c \
+		./compatibility_test.c \
+		./uri_client_test.c
+
+parse_benchmark_SOURCES=parse_benchmark.c
+serialize_benchmark_SOURCES=serialize_benchmark.c
+resigner_SOURCES=resigner.c
+
+clean-local:
+	rm -fr *.gcda *.gcno

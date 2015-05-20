@@ -1,0 +1,115 @@
+#
+# Copyright 2013-2015 Guardtime, Inc.
+#
+# This file is part of the Guardtime client SDK.
+#
+# Licensed under the Apache License, Version 2.0 (the "License").
+# You may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#     http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES, CONDITIONS, OR OTHER LICENSES OF ANY KIND, either
+# express or implied. See the License for the specific language governing
+# permissions and limitations under the License.
+# "Guardtime" and "KSI" are trademarks or registered trademarks of
+# Guardtime, Inc., and no license to trademarks is granted; Guardtime
+# reserves and retains all trademark rights.
+#
+
+clean-local:
+	rm -fr *.gcno
+
+lib_LTLIBRARIES = libksi.la
+
+libksi_la_SOURCES = \
+	base32.c \
+	base32.h \
+	common.h \
+	base.c \
+	config.h \
+	crc32.c \
+	crc32.h \
+	ctx_impl.h \
+	err.h \
+	hash.c \
+	hashchain.c \
+	hashchain.h \
+	hash.h \
+	hash_impl.h \
+	hash_openssl.c \
+	hmac.h \
+	hmac.c \
+	http_parser.h \
+	http_parser.c \
+	internal.h \
+	io.c \
+	io.h \
+	ksi.h \
+	list.c \
+	list.h \
+	log.c \
+	log.h \
+	net.c \
+	net.h \
+	net_http.c \
+	net_http_curl.c \
+	net_http.h \
+	net_http_impl.h \
+	net_impl.h \
+	net_tcp.c \
+	net_tcp.h \
+	net_tcp_impl.h \
+	net_uri.c \
+	net_uri.h \
+	net_uri_impl.h \
+	pkitruststore.h \
+	pkitruststore_openssl.c \
+	publicationsfile.c \
+	publicationsfile.h \
+	publicationsfile_impl.h \
+	signature.c \
+	signature.h \
+	signature_impl.h \
+	tlv.c \
+	tlv.h \
+	tlv_template.c \
+	tlv_template.h \
+	types_base.c \
+	types_base.h \
+	types.c \
+	types.h \
+	verification.c \
+	verification.h \
+	verification_impl.h \
+	compatibility.h \
+	compatibility.c
+
+otherincludedir = $(includedir)/ksi
+otherinclude_HEADERS = \
+	base32.h \
+	common.h \
+	crc32.h \
+    err.h \
+	hash.h \
+	hashchain.h \
+	hmac.h \
+	io.h \
+	list.h \
+	log.h \
+	pkitruststore.h \
+	publicationsfile.h \
+	signature.h \
+	tlv.h \
+	tlv_template.h \
+	types.h \
+	types_base.h \
+	net.h \
+	net_http.h \
+	net_tcp.h \
+	net_uri.h \
+	ksi.h \
+	verification.h \
+	compatibility.h
+
+
