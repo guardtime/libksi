@@ -103,12 +103,51 @@ static void testTlvSetRaw(CuTest* tc) {
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
 	res = KSI_TLV_setRawValue(tlv, tmp, sizeof(tmp));
-	CuAssert(tc, "Failed to set raw value", res == KSI_OK);
+	CuAssert(tc, "Failed to set raw value.", res == KSI_OK);
 
 	res = KSI_TLV_getRawValue(tlv, &val, &val_len);
-	CuAssert(tc, "Failed to get raw value", res == KSI_OK);
+	CuAssert(tc, "Failed to get raw value.", res == KSI_OK);
 
-	CuAssert(tc, "Raw value mismatch", val_len == sizeof(tmp) && !memcmp(val, tmp, val_len));
+	CuAssert(tc, "Raw value mismatch.", val_len == sizeof(tmp) && !memcmp(val, tmp, val_len));
+
+	KSI_TLV_free(tlv);
+}
+
+static void testTlvSetRawAsNull(CuTest* tc) {
+	KSI_TLV *tlv = NULL;
+	int res;
+
+	unsigned char *tmp = NULL;
+	const unsigned char *val = NULL;
+	unsigned val_len = 0;
+	unsigned char tmp_not_null[2]= {0x01, 0x02};
+
+	KSI_ERR_clearErrors(ctx);
+
+
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, 0x12, 0, 0, &tlv);
+	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
+	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
+
+	res = KSI_TLV_setRawValue(tlv, tmp, 0);
+	CuAssert(tc, "Failed to set raw value.", res == KSI_OK);
+
+	res = KSI_TLV_getRawValue(tlv, &val, &val_len);
+	CuAssert(tc, "Failed to get raw value.", res == KSI_OK);
+	CuAssert(tc, "Raw value mismatch", val_len == 0 && val == NULL);
+
+
+	res = KSI_TLV_setRawValue(tlv, tmp_not_null, 0);
+	CuAssert(tc, "Failed to set raw value.", res == KSI_OK);
+
+	res = KSI_TLV_getRawValue(tlv, &val, &val_len);
+	CuAssert(tc, "Failed to get raw value.", res == KSI_OK);
+	CuAssert(tc, "Raw value mismatch", val_len == 0 && val == NULL);
+
+
+	res = KSI_TLV_setRawValue(tlv, tmp, 2);
+	CuAssert(tc, "Set NULL value with length greater than 0 must fail.", res == KSI_INVALID_ARGUMENT);
+
 
 	KSI_TLV_free(tlv);
 }
@@ -535,6 +574,7 @@ CuSuite* KSITest_TLV_getSuite(void)
 
 	SUITE_ADD_TEST(suite, testTlvInitOwnMem);
 	SUITE_ADD_TEST(suite, testTlvSetRaw);
+	SUITE_ADD_TEST(suite, testTlvSetRawAsNull);
 	SUITE_ADD_TEST(suite, testTlv8FromReader);
 	SUITE_ADD_TEST(suite, testTlv8getRawValueSharedMem);
 	SUITE_ADD_TEST(suite, testTlv16FromReader);
