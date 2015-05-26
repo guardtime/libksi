@@ -209,28 +209,28 @@ enum KSI_StatusCode {
 	/**
 	 * The request asked for a hash chain going backwards in time Pattern for local errors in the server.
 	 */
-	KSI_SERVICE_EXTENDER_INVALID_TIME_RANGE = 0x409,
+	KSI_SERVICE_EXTENDER_INVALID_TIME_RANGE = 0x501,
 	/**
 	 * The server misses the internal database needed to service the request (most likely it has not been initialized yet).
 	 */
-	KSI_SERVICE_EXTENDER_DATABASE_MISSING = 0x40a,
+	KSI_SERVICE_EXTENDER_DATABASE_MISSING = 0x502,
 	/**
 	 * The server's internal database is in an inconsistent state.
 	 */
-	KSI_SERVICE_EXTENDER_DATABASE_CORRUPT = 0x40b,
+	KSI_SERVICE_EXTENDER_DATABASE_CORRUPT = 0x503,
 	/**
 	 * The request asked for hash values older than the oldest round in the server's database.
 	 */
-	KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_OLD = 0x40c,
+	KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_OLD = 0x504,
 	/**
 	 * The request asked for hash values newer than the newest round in the server's database.
 	 */
-	KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_NEW = 0x40d,
+	KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_NEW = 0x505,
 
 	/**
 	 * The request asked for hash values newer than the current real time.
 	 */
-	KSI_SERVICE_EXTENDER_REQUEST_TIME_IN_FUTURE = 0x40e,
+	KSI_SERVICE_EXTENDER_REQUEST_TIME_IN_FUTURE = 0x506,
 
 	/**
 	 * Unknown error occurred.
