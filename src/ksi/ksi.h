@@ -199,6 +199,10 @@ enum KSI_StatusCode {
 	 * Too many requests from the client in the same round (retrying in a later round could succeed)
 	 */
 	KSI_SERVICE_AGGR_TOO_MANY_REQUESTS = 0x409,
+	/**
+	 * Input hash value in the client request is longer than the server allows.
+	 */
+	KSI_SERVICE_AGGR_INPUT_TOO_LONG = 0x40a,
 
 	/* Extender status codes. */
 
