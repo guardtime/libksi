@@ -195,6 +195,10 @@ enum KSI_StatusCode {
 	 * larger than allowed for the client (retrying in a later round could succeed).
 	 */
 	KSI_SERVICE_AGGR_REQUEST_OVER_QUOTA = 0x408,
+	/**
+	 * Too many requests from the client in the same round (retrying in a later round could succeed)
+	 */
+	KSI_SERVICE_AGGR_TOO_MANY_REQUESTS = 0x409,
 
 	/* Extender status codes. */
 
