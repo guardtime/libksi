@@ -28,3 +28,4 @@ doc/latex
 nbproject/
 vsproject/
 
+/src/ksi/.libs/
