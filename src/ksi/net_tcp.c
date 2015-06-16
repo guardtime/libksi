@@ -222,6 +222,7 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 	tc->host = KSI_malloc(strlen(host) + 1);
 	if (tc->host == NULL) {
 		KSI_pushError(handle->ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		TcpClientCtx_free(tc);
 		goto cleanup;
 	}
 	KSI_strncpy(tc->host, host, strlen(host) + 1);
