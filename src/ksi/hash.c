@@ -34,7 +34,6 @@ static char *KSI_HASHALG_RIPEMD160_aliases[] = { "RIPEMD160", ""};
 static char *KSI_HASHALG_SHA2_224_aliases[] = { "SHA224", "SHA-224", ""};
 static char *KSI_HASHALG_SHA2_384_aliases[] = { "SHA384", "SHA-384", ""};
 static char *KSI_HASHALG_SHA2_512_aliases[] = { "SHA512", "SHA-512", ""};
-static char *KSI_HASHALG_RIPEMD_256_aliases[] = { "RIPEMD256", ""};
 static char *KSI_HASHALG_SHA3_244_aliases[] = { ""};
 static char *KSI_HASHALG_SHA3_256_aliases[] = { ""};
 static char *KSI_HASHALG_SHA3_384_aliases[] = { ""};
@@ -59,7 +58,7 @@ static struct KSI_hashAlgorithmInfo_st {
 		HASH_ALGO(KSI_HASHALG_SHA2_224,		"SHA2-224", 	224, 1),
 		HASH_ALGO(KSI_HASHALG_SHA2_384,		"SHA2-384", 	384, 1),
 		HASH_ALGO(KSI_HASHALG_SHA2_512,		"SHA2-512", 	512, 1),
-		HASH_ALGO(KSI_HASHALG_RIPEMD_256,	"RIPEMD-256", 	256, 1),
+		{0x06, NULL, 0, 0, NULL}, /* Deprecated algorithm - do not reuse. */
 		HASH_ALGO(KSI_HASHALG_SHA3_244,		"SHA3-224", 	224, 1),
 		HASH_ALGO(KSI_HASHALG_SHA3_256,		"SHA3-256", 	256, 1),
 		HASH_ALGO(KSI_HASHALG_SHA3_384,		"SHA3-384", 	384, 1),
@@ -234,6 +233,9 @@ int KSI_getHashAlgorithmByName(const char *name) {
 	upperName[algorithm_id] = '\0';
 
 	for (algorithm_id = 0; algorithm_id < KSI_NUMBER_OF_KNOWN_HASHALGS; algorithm_id++) {
+		/* Skip all records without a name. */
+		if (KSI_hashAlgorithmInfo[algorithm_id].name == NULL) continue;
+
 		/* Do we have a bingo? */
 		if (!strcmp(upperName, KSI_hashAlgorithmInfo[algorithm_id].name)) {
 			hash_id = algorithm_id;

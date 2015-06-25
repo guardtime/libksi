@@ -110,6 +110,10 @@ const char *KSI_getErrorString(int statusCode) {
 			return "The request indicated client-side aggregation tree larger than allowed for the client.";
 		case KSI_SERVICE_AGGR_REQUEST_OVER_QUOTA:
 			return "The request combined with other requests from the same client in the same round would create an aggregation sub-tree larger than allowed for the client.";
+		case KSI_SERVICE_AGGR_INPUT_TOO_LONG:
+			return "Input hash value in the client request is longer than the server allows";
+		case KSI_SERVICE_AGGR_TOO_MANY_REQUESTS:
+			return "Too many requests from the client in the same round";
 		case KSI_SERVICE_EXTENDER_INVALID_TIME_RANGE:
 			return "The request asked for a hash chain going backwards in time.";
 		case KSI_SERVICE_EXTENDER_DATABASE_MISSING:
