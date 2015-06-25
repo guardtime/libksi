@@ -103,8 +103,6 @@ mkdir -p $tmp_dir_devel/libksi-devel/$inc_install_dir
 mkdir -p $tmp_dir_devel/libksi-devel/$doc_install_dir
 
 mkdir -p $tmp_dir_src
-#mkdir -p $tmp_dir_src/libksi/$inc_install_dir
-#mkdir -p $tmp_dir_src/libksi/$src_install_dir
 
 mkdir -p $tmp_dir_lib/libksi/DEBIAN
 mkdir -p $tmp_dir_devel/libksi-devel/DEBIAN
