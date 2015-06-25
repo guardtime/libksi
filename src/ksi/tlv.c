@@ -422,7 +422,7 @@ int KSI_TLV_setRawValue(KSI_TLV *tlv, const void *data, unsigned data_len) {
 		goto cleanup;
 	}
 
-	if (tlv->buffer == NULL && data != NULL && data_len != NULL) {
+	if (tlv->buffer == NULL && data != NULL && data_len != 0) {
 		res = createOwnBuffer(tlv, 0);
 		if (res != KSI_OK) {
 			KSI_pushError(tlv->ctx, res, NULL);

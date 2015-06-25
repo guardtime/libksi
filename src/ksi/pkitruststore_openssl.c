@@ -180,7 +180,6 @@ cleanup:
 }
 
 int KSI_PKICertificate_toTlv(KSI_CTX *ctx, KSI_PKICertificate *cert, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
-	KSI_ERR err;
 	int res;
 	KSI_TLV *tmp = NULL;
 	unsigned char *raw = NULL;
@@ -893,7 +892,6 @@ cleanup:
 }
 
 int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, unsigned data_len, const char *algoOid, const unsigned char *signature, unsigned signature_len, const KSI_PKICertificate *certificate) {
-	KSI_ERR err;
 	int res;
 	ASN1_OBJECT* algorithm = NULL;
     EVP_MD_CTX md_ctx;
