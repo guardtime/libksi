@@ -191,7 +191,47 @@ extern "C" {
 	 * \note The output object may not be freed by the user.
 	 */
 	int KSI_PublicationsFile_getLatestPublication(const KSI_PublicationsFile *pubFile, const KSI_Integer *pubTime, KSI_PublicationRecord **pubRec);
-
+	
+	/**
+	 * Publicationsfile header setter method.
+	 * \param[in]	pubFile			Publications file.
+	 * \param[in]	header	Pointer to the list of certificates.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 */
+	int KSI_PublicationsFile_setHeader(KSI_PublicationsFile *pubFile, KSI_PublicationsHeader *header);
+	
+	/**
+	 * Publicationsfile certificate list setter method.
+	 * \param[in]	pubFile			Publications file.
+	 * \param[in]	certificates	Pointer to the list of certificates.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 */
+	int KSI_PublicationsFile_setCertificates(KSI_PublicationsFile *pubFile, KSI_LIST(KSI_CertificateRecord) *certificates);
+	
+	/**
+	 * Publicationsfile publications list setter method.
+	 * \param[in]	pubFile			Publications file.
+	 * \param[in]	publications	Pointer to the list of publications.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 */
+	int KSI_PublicationsFile_setPublications(KSI_PublicationsFile *pubFile, KSI_LIST(KSI_PublicationRecord) *publications);
+	
+	/**
+	 * Publicationsfile signature setter method.
+	 * \param[in]	pubFile			Publications file.
+	 * \param[in]	signature		Pointer to KSI signature object.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 */
+	int KSI_PublicationsFile_setSignature(KSI_PublicationsFile *pubFile, KSI_PKISignature *signature);
+	
 	/**
 	 * Function for freeing publicationsfile object.
 	 * \param[in]	pubFile		Publicationsfile to be freed.

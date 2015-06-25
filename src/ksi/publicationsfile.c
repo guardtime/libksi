@@ -42,16 +42,11 @@ KSI_IMPLEMENT_LIST(KSI_PublicationRecord, KSI_PublicationRecord_free);
 
 
 
-static int publicationsFile_setHeader(KSI_PublicationsFile *t, KSI_PublicationsHeader *header);
-static int publicationsFile_setCertificates(KSI_PublicationsFile *t, KSI_LIST(KSI_CertificateRecord) *certificates);
-static int publicationsFile_setPublications(KSI_PublicationsFile *t, KSI_LIST(KSI_PublicationRecord) *publications);
-static int publicationsFile_setSignature(KSI_PublicationsFile *t, KSI_PKISignature *signature);
-
 KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationsFile)
-	KSI_TLV_COMPOSITE(0x0701, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getHeader, publicationsFile_setHeader, KSI_PublicationsHeader, "pub_header")
-	KSI_TLV_COMPOSITE_LIST(0x0702, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getCertificates, publicationsFile_setCertificates, KSI_CertificateRecord, "cert_rec")
-	KSI_TLV_COMPOSITE_LIST(0x0703, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getPublications, publicationsFile_setPublications, KSI_PublicationRecord, "pub_rec")
-	KSI_TLV_OBJECT(0x0704, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_MORE_DEFS, KSI_PublicationsFile_getSignature, publicationsFile_setSignature, KSI_PKISignature_fromTlv, KSI_PKISignature_toTlv, KSI_PKISignature_free, "pki_signature")
+	KSI_TLV_COMPOSITE(0x0701, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getHeader, KSI_PublicationsFile_setHeader, KSI_PublicationsHeader, "pub_header")
+	KSI_TLV_COMPOSITE_LIST(0x0702, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getCertificates, KSI_PublicationsFile_setCertificates, KSI_CertificateRecord, "cert_rec")
+	KSI_TLV_COMPOSITE_LIST(0x0703, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getPublications, KSI_PublicationsFile_setPublications, KSI_PublicationRecord, "pub_rec")
+	KSI_TLV_OBJECT(0x0704, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_MORE_DEFS, KSI_PublicationsFile_getSignature, KSI_PublicationsFile_setSignature, KSI_PKISignature_fromTlv, KSI_PKISignature_toTlv, KSI_PKISignature_free, "pki_signature")
 KSI_END_TLV_TEMPLATE
 
 struct generator_st {
@@ -108,54 +103,6 @@ cleanup:
 	KSI_free(buf);
 
 	return res;
-}
-
-static int publicationsFile_setHeader(KSI_PublicationsFile *t, KSI_PublicationsHeader *header) {
-	int res = KSI_UNKNOWN_ERROR;
-	if (t == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	t->header = header;
-	res = KSI_OK;
-cleanup:
-	 return res;
-}
-
-static int publicationsFile_setCertificates(KSI_PublicationsFile *t, KSI_LIST(KSI_CertificateRecord) *certificates) {
-	int res = KSI_UNKNOWN_ERROR;
-	if (t == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	t->certificates = certificates;
-	res = KSI_OK;
-cleanup:
-	 return res;
-}
-
-static int publicationsFile_setPublications(KSI_PublicationsFile *t, KSI_LIST(KSI_PublicationRecord) *publications) {
-	int res = KSI_UNKNOWN_ERROR;
-	if (t == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	t->publications = publications;
-	res = KSI_OK;
-cleanup:
-	 return res;
-}
-
-static int publicationsFile_setSignature(KSI_PublicationsFile *t, KSI_PKISignature *signature) {
-	int res = KSI_UNKNOWN_ERROR;
-	if (t == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	t->signature = signature;
-	res = KSI_OK;
-cleanup:
-	 return res;
 }
 
 /*
@@ -442,41 +389,15 @@ void KSI_PublicationsFile_free(KSI_PublicationsFile *t) {
 	}
 }
 
-int KSI_PublicationsFile_getHeader(const KSI_PublicationsFile *t, KSI_PublicationsHeader **header) {
-	int res = KSI_UNKNOWN_ERROR;
-	if (t == NULL || header == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	*header = t->header;
-	res = KSI_OK;
-cleanup:
-	 return res;
-}
+KSI_IMPLEMENT_GETTER(KSI_PublicationsFile, KSI_PublicationsHeader*, header, Header);
+KSI_IMPLEMENT_GETTER(KSI_PublicationsFile, KSI_LIST(KSI_CertificateRecord)*, certificates, Certificates);
+KSI_IMPLEMENT_GETTER(KSI_PublicationsFile, KSI_LIST(KSI_PublicationRecord)*, publications, Publications);
+KSI_IMPLEMENT_GETTER(KSI_PublicationsFile, KSI_PKISignature *, signature, Signature);
 
-int KSI_PublicationsFile_getCertificates(const KSI_PublicationsFile *t, KSI_LIST(KSI_CertificateRecord) **certificates) {
-	int res = KSI_UNKNOWN_ERROR;
-	if (t == NULL || certificates == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	*certificates = t->certificates;
-	res = KSI_OK;
-cleanup:
-	 return res;
-}
-
-int KSI_PublicationsFile_getPublications(const KSI_PublicationsFile *t, KSI_LIST(KSI_PublicationRecord) **publications) {
-	int res = KSI_UNKNOWN_ERROR;
-	if (t == NULL || publications == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	*publications = t->publications;
-	res = KSI_OK;
-cleanup:
-	 return res;
-}
+KSI_IMPLEMENT_SETTER(KSI_PublicationsFile, KSI_PublicationsHeader*, header, Header);
+KSI_IMPLEMENT_SETTER(KSI_PublicationsFile, KSI_LIST(KSI_CertificateRecord)*, certificates, Certificates);
+KSI_IMPLEMENT_SETTER(KSI_PublicationsFile, KSI_LIST(KSI_PublicationRecord)*, publications, Publications);
+KSI_IMPLEMENT_SETTER(KSI_PublicationsFile, KSI_PKISignature *, signature, Signature);
 
 int KSI_PublicationsFile_getPKICertificateById(const KSI_PublicationsFile *pubFile, const KSI_OctetString *id, KSI_PKICertificate **cert) {
 	int res;
@@ -857,17 +778,6 @@ cleanup:
 	return res;
 }
 
-int KSI_PublicationsFile_getSignature(const KSI_PublicationsFile *t, KSI_PKISignature **signature) {
-	int res = KSI_UNKNOWN_ERROR;
-	if (t == NULL || signature == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	*signature = t->signature;
-	res = KSI_OK;
-cleanup:
-	 return res;
-}
 
 int KSI_PublicationData_fromBase32(KSI_CTX *ctx, const char *publication, KSI_PublicationData **published_data) {
 	int res = KSI_UNKNOWN_ERROR;
