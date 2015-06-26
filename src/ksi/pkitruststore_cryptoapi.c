@@ -19,7 +19,7 @@
 
 #include "internal.h"
 
-#if KSI_PKI_TRUSTSTORE_IMPL == KSI_IMPL_CRYPTOAPI
+#if KSI_PKI_TRUSTSTORE_IMPL == KSI_IMPL_CRYPTOAPI || 1
 
 #include <string.h>
 #include <limits.h>
@@ -187,14 +187,15 @@ int KSI_PKICertificate_toTlv(KSI_CTX *ctx, KSI_PKICertificate *cert, unsigned ta
 		goto cleanup;
 	}
 
+	
 	*tlv = tmp;
 	tmp = NULL;
-
+	
 	res = KSI_OK;
 
 cleanup:
 
-	KSI_nofree(raw);
+	KSI_free(raw);
 	KSI_TLV_free(tmp);
 
 	return res;
@@ -411,17 +412,16 @@ int KSI_PKISignature_toTlv(KSI_CTX *ctx, KSI_PKISignature *sig, unsigned tag, in
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-
-
+	
 	*tlv = tmp;
 	tmp = NULL;
 
+
 	res = KSI_OK;
-
-
+	
 cleanup:
 
-	KSI_nofree(raw);
+	KSI_free(raw);
 	KSI_TLV_free(tmp);
 
 	return res;
@@ -536,29 +536,21 @@ int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, 
 	DWORD len = 0;
 	char buf[1024];
 
+
 	if (cert == NULL || raw == NULL || raw_len == NULL){
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 	KSI_ERR_clearErrors(cert->ctx);
 
-	if (!CertSerializeCertificateStoreElement(cert->x509, 0, NULL, &len)) {
-		KSI_LOG_debug(cert->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
-		KSI_pushError(cert->ctx, res = KSI_CRYPTO_FAILURE, "Unable to serialize PKI certificate.");
-		goto cleanup;
-	}
-
+	len = cert->x509->cbCertEncoded;
 	tmp_serialized = KSI_malloc(len);
 	if (tmp_serialized == NULL) {
 		KSI_pushError(cert->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
-	if (!CertSerializeCertificateStoreElement(cert->x509, 0, (BYTE*)tmp_serialized, &len)){
-		KSI_LOG_debug(cert->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
-		KSI_pushError(cert->ctx, res = KSI_CRYPTO_FAILURE, "Unable to serialize PKI certificate.");
-		goto cleanup;
-	}
+	memcpy(tmp_serialized, cert->x509->pbCertEncoded, len);
 
 	*raw = tmp_serialized;
 	*raw_len = (unsigned)len;

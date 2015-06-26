@@ -21,12 +21,36 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ksi/pkitruststore.h>
+#include "ksi/tlv.h"
+#include "ksi/io.h"
 
 #include "cutest/CuTest.h"
 #include "all_tests.h"
 
 extern KSI_CTX *ctx;
 char tmp_path[1024];
+
+static int tlvFromFile(const char *fileName, KSI_TLV **tlv) {
+	int res;
+	KSI_RDR *rdr = NULL;
+	FILE *f = NULL;
+
+	KSI_LOG_debug(ctx, "Open TLV file: '%s'", fileName);
+
+	f = fopen(fileName, "rb");
+	res = KSI_RDR_fromStream(ctx, f, &rdr);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_TLV_fromReader(rdr, tlv);
+	if (res != KSI_OK) goto cleanup;
+
+cleanup:
+
+	if (f != NULL) fclose(f);
+	KSI_RDR_close(rdr);
+
+	return res;
+}
 
 static void TestAddInvalidLookupFile(CuTest *tc) {
 	int res;
@@ -57,12 +81,45 @@ static void TestAddValidLookupFile(CuTest *tc) {
 }
 
 
+
+static void TestParseAndSeraializeCert(CuTest *tc) {
+	int res;
+	KSI_TLV *tlv = NULL;
+	KSI_PKICertificate *cert = NULL;
+	char *raw_crt = NULL;
+	unsigned raw_crt_len;
+	char *raw = NULL;
+	unsigned raw_len;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = tlvFromFile(getFullResourcePath("resource/tlv/ok-crt.tlv"), &tlv);
+	CuAssert(tc, "Unable to read tlv from file.", res == KSI_OK && tlv != NULL);
+
+	res = KSI_PKICertificate_fromTlv(tlv, &cert);
+	CuAssert(tc, "Unable to get cert from tlv.", res == KSI_OK && cert != NULL);
+
+	res = KSI_PKICertificate_serialize(cert, &raw_crt, &raw_crt_len);
+	CuAssert(tc, "Unable to serialize certificate.", res == KSI_OK && raw_crt != NULL && raw_crt_len > 0);
+
+	res = KSI_TLV_getRawValue(tlv, &raw, &raw_len);
+	CuAssert(tc, "Unable to get raw cert value.", res == KSI_OK && raw != NULL && raw_len > 0);
+
+	CuAssert(tc, "Certificate and its serialized value length mismatch.", raw_len == raw_crt_len);
+	CuAssert(tc, "Certificate and its serialized value mismatch.", memcmp(raw, raw_crt, raw_len) == 0);
+
+	KSI_TLV_free(tlv);
+	KSI_PKICertificate_free(cert);
+	KSI_free(raw_crt);
+}
+
 CuSuite* KSITest_Truststore_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
 
 	SUITE_ADD_TEST(suite, TestAddInvalidLookupFile);
 	SUITE_ADD_TEST(suite, TestAddValidLookupFile);
+	SUITE_ADD_TEST(suite, TestParseAndSeraializeCert);
 
 	return suite;
 }
