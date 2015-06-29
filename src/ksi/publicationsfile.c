@@ -349,9 +349,63 @@ cleanup:
 	return res;
 }
 
+static int publicationsFileTLV_getSignedDataLen(KSI_TLV *pubFileTlv, size_t *len) {
+	int res;
+	KSI_TLVList *list = NULL;
+	KSI_TLV *tlvSig = NULL;
+	unsigned char *raw = NULL;
+	unsigned raw_len;
+	size_t sig_len;
+	KSI_CTX *ctx = NULL;
+
+	if (pubFileTlv == NULL && len == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	ctx = KSI_TLV_getCtx(pubFileTlv);
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_TLV_getNestedList(pubFileTlv, &list);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_TLVList_elementAt(list, KSI_TLVList_length(list) - 1, &tlvSig);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (KSI_TLV_getTag(tlvSig) != 0x704) {
+		KSI_pushError(ctx, res, "Last TLV in publications file must be signature (0x704)");
+		goto cleanup;
+	}
+
+	res = KSI_TLV_getRawValue(tlvSig, &raw, &raw_len);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	sig_len = raw_len;
+	sig_len += 4;
+	*len = sig_len;
+
+cleanup:
+
+	return res;
+}
 
 int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, char **raw, unsigned* raw_len) {
 	int res;
+	char *buf = NULL;
+	unsigned buf_len = 0;
+	KSI_TLV *tlv = NULL;
+	char *tmp = NULL;
+	unsigned tmp_len = 0;
+	size_t sig_len;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -360,23 +414,87 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 		goto cleanup;
 	}
 
+	/**
+	 * Create TLV 0x700 that contains nested list of publication file TLVs.
+	 * Calculate signed data length assuming that signature TLV is always the last.
+     */
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, 0x700, 0, 0, &tlv);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
-	*raw_len = pubFile->raw_len;
-	*raw = (char*)KSI_malloc(*raw_len);
-	if (*raw == NULL){
+	res = KSI_TlvTemplate_construct(ctx, tlv, pubFile, KSI_TLV_TEMPLATE(KSI_PublicationsFile));
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = publicationsFileTLV_getSignedDataLen(tlv, &sig_len);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/**
+	 * Cast publications file TLV to raw and retrieve its raw value.
+	 */
+	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_RAW);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_TLV_getRawValue(tlv, &buf, &buf_len);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+
+	/**
+	 * Append raw value to publication file header. Copy raw publication file into
+	 * internal and external buffer.
+     */
+	tmp_len = buf_len + sizeof(PUB_FILE_HEADER_ID) - 1;
+	tmp = (char*)KSI_malloc(tmp_len);
+	if (tmp == NULL) {
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
-	memcpy(*raw, pubFile->raw, *raw_len);
+	if (KSI_strncpy(tmp, PUB_FILE_HEADER_ID, tmp_len) == NULL) {
+		KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, NULL);
+		goto cleanup;
+	}
+
+	memcpy(tmp + sizeof(PUB_FILE_HEADER_ID) - 1, buf, buf_len);
+
+	if (pubFile->raw != NULL) KSI_free(pubFile->raw);
+	pubFile->raw = tmp;
+	pubFile->raw_len = tmp_len;
+	pubFile->signedDataLength = sig_len;
+	tmp = NULL;
+
+	tmp = (char*)KSI_malloc(pubFile->raw_len);
+	if (tmp == NULL) {
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	memcpy(tmp, pubFile->raw, pubFile->raw_len);
+	*raw = tmp;
+	*raw_len = pubFile->raw_len;
+	tmp = NULL;
 
 	res = KSI_OK;
 
 cleanup:
 
+	KSI_TLV_free(tlv);
+	KSI_free(tmp);
 	return res;
 }
-
 
 void KSI_PublicationsFile_free(KSI_PublicationsFile *t) {
 	if (t != NULL) {
