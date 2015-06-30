@@ -50,6 +50,8 @@ extern "C" {
 	 * \param[in]	raw				Pointer to the raw publications file.
 	 * \param[in]	raw_len			Length of the raw publications file.
 	 * \param[out]	pubFile			Pointer to the receiving pointer to the publications file object.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, unsigned raw_len, KSI_PublicationsFile **pubFile);
 
@@ -64,12 +66,12 @@ extern "C" {
 	int KSI_PublicationsFile_fromFile(KSI_CTX *ctx, const char *fileName, KSI_PublicationsFile **pubFile);
 
 	/**
-	 *
-	 * @param[in]		ctx			KSI context.
-	 * @param[in]		pubFile		Publications file.
-	 * @param[out]		raw	Pointer to the pointer to output buffer.
-	 * @param[out]		raw_len	Pointer to the length of the buffer variable.
-	 * @return
+	 * This function serializes the publications file object into raw data.
+	 * \param[in]		ctx			KSI context.
+	 * \param[in]		pubFile		Publications file.
+	 * \param[out]		raw			Pointer to the pointer to output buffer.
+	 * \param[out]		raw_len		Pointer to the length of the buffer variable.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
     int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, char **raw, unsigned* raw_len);
 
@@ -231,6 +233,15 @@ extern "C" {
 	 * error code).
 	 */
 	int KSI_PublicationsFile_setSignature(KSI_PublicationsFile *pubFile, KSI_PKISignature *signature);
+	
+	/**
+	 * This function creates an empty publications file.
+     * \param[in]	ctx		KSI context.
+     * \param[out]	pubFile	Pointer to receiving pointer.
+	 * 
+	 * 	\return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+     */
+	int KSI_PublicationsFile_new(KSI_CTX *ctx, KSI_PublicationsFile **pubFile);
 	
 	/**
 	 * Function for freeing publicationsfile object.

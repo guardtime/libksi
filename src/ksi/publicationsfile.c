@@ -109,7 +109,7 @@ cleanup:
  * FIXME! At the moment the users may not create publications files, as there are
  * missing functions to manipulate its contents.
  */
-static int KSI_PublicationsFile_new(KSI_CTX *ctx, KSI_PublicationsFile **t) {
+int KSI_PublicationsFile_new(KSI_CTX *ctx, KSI_PublicationsFile **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationsFile *tmp = NULL;
 	tmp = KSI_new(KSI_PublicationsFile);
