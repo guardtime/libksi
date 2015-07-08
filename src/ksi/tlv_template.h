@@ -497,7 +497,7 @@ extern "C" {
 	 * \note Thre returned pointer raw belongs to the caller and it needs to be freed using #KSI_free
 	 * \see #KSI_free
 	 */
-	int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag, int isNc, int isFwd, const KSI_TlvTemplate *tmpl, unsigned char **raw, unsigned *raw_len);
+	int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag, int isNc, int isFwd, const KSI_TlvTemplate *tmpl, unsigned char **raw, size_t *raw_len);
 
 	/**
 	 * Macro to generate object parsers.
@@ -505,7 +505,7 @@ extern "C" {
 	 * \param[in]	tag			Tag of the concrete TLV.
 	 */
 	#define KSI_IMPLEMENT_OBJECT_PARSE(type, tag) \
-		int type##_parse(KSI_CTX *ctx, const unsigned char *raw, unsigned len, type **t) { \
+		int type##_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len, type **t) { \
 			int res = KSI_UNKNOWN_ERROR; \
 			KSI_TLV *tlv = NULL; \
 			type *tmp = NULL; \
@@ -540,7 +540,7 @@ extern "C" {
 	 * \param[in]	fwd			Forward flag.
 	 */
 	#define KSI_IMPLEMENT_OBJECT_SERIALIZE(type, tag, nc, fwd) \
-		int type##_serialize(const type *t, unsigned char **raw, unsigned *len) { \
+		int type##_serialize(const type *t, unsigned char **raw, size_t *len) { \
 			int res = KSI_UNKNOWN_ERROR; \
 			if (t == NULL || raw == NULL || len == NULL) { \
 				res = KSI_INVALID_ARGUMENT; \

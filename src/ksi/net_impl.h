@@ -56,12 +56,12 @@ extern "C" {
 		/** Request destination. */
 		unsigned char *request;
 		/** Length of the original request. */
-		unsigned request_length;
+		size_t request_length;
 
 		/** Response for the request. NULL if not yet present. */
 		unsigned char *response;
 		/** Length of the response. */
-		unsigned response_length;
+		size_t response_length;
 
 		int (*readResponse)(KSI_RequestHandle *);
 

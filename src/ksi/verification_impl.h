@@ -37,14 +37,14 @@ extern "C" {
 		KSI_CTX *ctx;
 
 		/** Bitmap of performed steps (#KSI_VerificationStep_en values). */
-		unsigned stepsPerformed;
+		size_t stepsPerformed;
 
 		/** Bitmap of failed steps (#KSI_VerificationStep_en values). */
-		unsigned stepsFailed;
+		size_t stepsFailed;
 
 		/** List of performed verification steps and the outcomes. */
 		KSI_VerificationStepResult steps[32];
-		unsigned steps_len;
+		size_t steps_len;
 
 		/** Indicates if the document hash should be verified */
 		bool verifyDocumentHash;

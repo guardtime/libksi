@@ -59,7 +59,7 @@ cleanup:
 /**
  *
  */
-int KSI_RequestHandle_new(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_RequestHandle **handle) {
+int KSI_RequestHandle_new(KSI_CTX *ctx, const unsigned char *request, size_t request_length, KSI_RequestHandle **handle) {
 	int res;
 	KSI_RequestHandle *tmp = NULL;
 
@@ -260,7 +260,7 @@ void KSI_NetworkClient_free(KSI_NetworkClient *provider) {
 	}
 }
 
-int KSI_RequestHandle_setResponse(KSI_RequestHandle *handle, const unsigned char *response, unsigned response_len) {
+int KSI_RequestHandle_setResponse(KSI_RequestHandle *handle, const unsigned char *response, size_t response_len) {
 	int res;
 	unsigned char *resp = NULL;
 
@@ -337,7 +337,7 @@ cleanup:
 	return res;
 }
 
-int KSI_RequestHandle_getRequest(KSI_RequestHandle *handle, const unsigned char **request, unsigned *request_len) {
+int KSI_RequestHandle_getRequest(KSI_RequestHandle *handle, const unsigned char **request, size_t *request_len) {
 	int res;
 
 	if (handle == NULL) {
@@ -386,7 +386,7 @@ cleanup:
 	return res;
 }
 
-int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, const unsigned char **response, unsigned *response_len) {
+int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, const unsigned char **response, size_t *response_len) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (handle == NULL) {
@@ -472,7 +472,7 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 	KSI_Header *header = NULL;
 	KSI_ExtendResp *tmp = NULL;
 	const unsigned char *raw = NULL;
-	unsigned len = 0;
+	size_t len = 0;
 
 	if (handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -600,7 +600,7 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 	KSI_DataHash *actualHmac = NULL;
 	KSI_AggregationResp *tmp = NULL;
 	const unsigned char *raw = NULL;
-	unsigned len;
+	size_t len;
 
 	if (handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;

@@ -378,7 +378,7 @@ static int extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTempl
 
 	iter.idx = 0;
 
-	/*When extracting second tlv there is no need to register it twice because it is mention in lower level.*/
+	/* When extracting second tlv there is no need to register it twice because it is mention in lower level. */
 	if (tr_len == 0) {
 		tr[tr_len].tag = KSI_TLV_getTag(tlv);
 		tr[tr_len].desc = NULL;
@@ -462,7 +462,7 @@ static size_t getTemplateLength(const KSI_TlvTemplate *tmpl) {
 static int extractObject(KSI_CTX *ctx, const KSI_TlvTemplate *tmpl, void *payload, KSI_TLV *tlv) {
 	int res = KSI_UNKNOWN_ERROR;
 	unsigned char *raw = NULL;
-	unsigned len;
+	size_t len;
 	void *tmp = NULL;
 
 	if (tmpl->fromTlv == NULL && tmpl->parser == NULL) {
@@ -931,11 +931,11 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 	return construct(ctx, tlv, payload, tmpl, tr, 0, sizeof(tr));
 }
 
-int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag, int isNc, int isFwd, const KSI_TlvTemplate *tmpl, unsigned char **raw, unsigned *raw_len) {
+int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag, int isNc, int isFwd, const KSI_TlvTemplate *tmpl, unsigned char **raw, size_t *raw_len) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tlv = NULL;
 	unsigned char *tmp = NULL;
-	unsigned tmp_len = 0;
+	size_t tmp_len = 0;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || obj == NULL || tmpl == NULL || raw == NULL || raw_len == NULL) {

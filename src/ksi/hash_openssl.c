@@ -56,7 +56,8 @@ static const EVP_MD *hashAlgorithmToEVP(int hash_id)
 
 static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 	int res = KSI_UNKNOWN_ERROR;
-	unsigned int hash_length;
+	size_t hash_length;
+	unsigned tmp;
 
 	if (hasher == NULL || data_hash == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -77,16 +78,16 @@ static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 	}
 
 
-	EVP_DigestFinal(hasher->hashContext, data_hash->imprint + 1, &data_hash->imprint_length);
+	EVP_DigestFinal(hasher->hashContext, data_hash->imprint + 1, &tmp);
 
 	/* Make sure the hash length is the same. */
-	if (hash_length != data_hash->imprint_length) {
+	if (hash_length != tmp) {
 		KSI_pushError(hasher->ctx, res = KSI_UNKNOWN_ERROR, "Internal hash lengths mismatch.");
 		goto cleanup;
 	}
 
 	data_hash->imprint[0] = (0xff & hasher->algorithm);
-	data_hash->imprint_length++;
+	data_hash->imprint_length = hash_length + 1;
 
 	res = KSI_OK;
 

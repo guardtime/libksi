@@ -133,7 +133,7 @@ int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned tag, int isNonCritical, int isFor
 	 * \param[in]	buf_len	Length of the buffer.
 	 * \return On success returns buf and NULL if an error occurred.
 	 */
-	char *KSI_Integer_toDateString(const KSI_Integer *o, char *buf, unsigned buf_len);
+	char *KSI_Integer_toDateString(const KSI_Integer *o, char *buf, size_t buf_len);
 
 	/**
 	 * Returns the native 64-bit value of the #KSI_Integer.
@@ -206,8 +206,8 @@ int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned tag, int isNonCritical, int isFor
 	 * \param[in]	data_len	Length of the data.
 	 * \param[out]	t			Pointer to the receiving pointer.
 	 */
-	int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, unsigned int data_len, KSI_OctetString **t);
-	int KSI_OctetString_extract(const KSI_OctetString *t, const unsigned char **data, unsigned int *data_len);
+	int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, size_t data_len, KSI_OctetString **t);
+	int KSI_OctetString_extract(const KSI_OctetString *t, const unsigned char **data, size_t *data_len);
 
 	/**
 	 * Function to check for the equality of two octet strings.
@@ -247,7 +247,7 @@ int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned tag, int isNonCritical, int isFor
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 * \see #KSI_Utf8String_free, #KSI_Utf8String_cstr
 	 */
-	int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, unsigned len, KSI_Utf8String **t);
+	int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, size_t len, KSI_Utf8String **t);
 
 	/**
 	 * Returns the actual size of the string in bytes.

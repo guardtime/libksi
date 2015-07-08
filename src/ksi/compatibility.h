@@ -39,7 +39,7 @@ extern "C" {
  * \param[in]		...		Extra parameters for formatting.
  * \return The number of characters written, not including terminating NUL character. On error -1 is returned.
  */
-int KSI_snprintf(char *buf, size_t n, const char *format, ... );
+size_t KSI_snprintf(char *buf, size_t n, const char *format, ... );
 
 /**
  * Platform independent version of vsnprintf.
@@ -49,7 +49,7 @@ int KSI_snprintf(char *buf, size_t n, const char *format, ... );
  * \param[in]		va		variable list.
  * \return The number of characters written, not including terminating NUL character. On error -1 is returned.
  */
-int KSI_vsnprintf(char *buf, size_t n, const char *format, va_list va);
+size_t KSI_vsnprintf(char *buf, size_t n, const char *format, va_list va);
 
 /**
  * Platform independent version of strncpy that guarantees NULL terminated

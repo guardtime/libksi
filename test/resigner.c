@@ -44,7 +44,7 @@ int publicationsFile_changePKCS7_signature(KSI_PublicationsFile *publicationsFil
 	KSI_CTX *ctx = NULL;
 	KSI_TLV *tlv_tmp = NULL;
 	unsigned char *tlv_serialized = NULL;
-	unsigned tlv_len;
+	size_t tlv_len;
 	unsigned char *buf = NULL;
 	size_t buf_len;
 	FILE *signedPubFile = NULL;

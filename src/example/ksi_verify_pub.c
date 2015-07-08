@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
 	unsigned char buf[1024];
 
 	/* Length of the buffer content. */
-	unsigned buf_len;
+	size_t buf_len;
 
 	/* Verification info object. */
 	const KSI_VerificationResult *info = NULL;

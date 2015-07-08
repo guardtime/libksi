@@ -422,9 +422,9 @@ static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, con
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *tmp = NULL;
 	const unsigned char *imprint = NULL;
-	unsigned imprint_len = 0;
+	size_t imprint_len = 0;
 	const unsigned char *data = NULL;
-	unsigned data_len = 0;
+	size_t data_len = 0;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || prefix == NULL || hsh == NULL || suffix == NULL || out == NULL) {
@@ -591,7 +591,7 @@ static int rfc3161_getInputToAggreChain(const KSI_Signature *sig, KSI_DataHash *
 	KSI_RFC3161 *rfc = NULL;
 	int algToUse = -1;
 	const unsigned char *imprint = NULL;
-	unsigned imprint_len = 0;
+	size_t imprint_len = 0;
 	int algId = -1;
 	int tstInfoAlgo;
 	int sigAttrAlgo;
@@ -1864,10 +1864,10 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_serialize(KSI_Signature *sig, unsigned char **raw, unsigned *raw_len) {
+int KSI_Signature_serialize(KSI_Signature *sig, unsigned char **raw, size_t *raw_len) {
 	int res;
 	unsigned char *tmp = NULL;
-	unsigned tmp_len;
+	size_t tmp_len;
 
 	if (sig == NULL || raw == NULL || raw_len == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1956,7 +1956,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 
 			if (metaHash != NULL) {
 				const char *tmp = NULL;
-				int tmp_len;
+				size_t tmp_len;
 
 				res = KSI_DataHash_MetaHash_parseMeta(metaHash, (const unsigned char **)&tmp, &tmp_len);
 				if (res != KSI_OK) {
@@ -2424,9 +2424,9 @@ static int verifyCalAuthRec(KSI_CTX *ctx, KSI_Signature *sig) {
 	KSI_OctetString *signatureValue = NULL;
 	KSI_Utf8String *sigtype = NULL;
 	const unsigned char *rawSignature = NULL;
-	unsigned rawSignature_len;
+	size_t rawSignature_len;
 	unsigned char *rawData = NULL;
-	unsigned rawData_len;
+	size_t rawData_len;
 	KSI_VerificationStep step = KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE;
 	KSI_VerificationResult *info = &sig->verificationResult;
 

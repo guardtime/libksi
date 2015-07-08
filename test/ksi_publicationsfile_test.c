@@ -121,7 +121,7 @@ static void testFindPublicationByPubStr(CuTest *tc) {
 	KSI_Integer *pubTime = NULL;
 	KSI_DataHash *expHsh = NULL;
 	unsigned char buf[0xff];
-	unsigned len;
+	size_t len;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -161,7 +161,7 @@ static void testFindPublicationByTime(CuTest *tc) {
 	KSI_DataHash *expHsh = NULL;
 	KSI_LIST(KSI_Utf8String) *pubRefList = NULL;
 	unsigned char buf[0xff];
-	unsigned len;
+	size_t len;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -241,10 +241,10 @@ static void testSerializePublicationsFile(CuTest *tc) {
 	int res;
 	KSI_PublicationsFile *pubFile = NULL;
 	char *raw = NULL;
-	unsigned raw_len = 0;
+	size_t raw_len = 0;
 	FILE *f = NULL;
 	int symbol = 0;
-	unsigned i= 0;
+	size_t i = 0;
 
 	KSI_ERR_clearErrors(ctx);
 

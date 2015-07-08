@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
 	KSI_DataHasher *hsr = NULL;
 	FILE *in = NULL;
 	unsigned char buf[1024];
-	unsigned buf_len;
+	size_t buf_len;
 	const KSI_VerificationResult *info = NULL;
 	FILE *logFile = NULL;
 

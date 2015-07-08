@@ -82,7 +82,7 @@ extern "C" {
 	 * \param[out]	raw			Pointer to the receiving pointer.
 	 * \param[out]	raw_len		Serialized length.
 	 */
-	int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, unsigned *raw_len);
+	int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, size_t *raw_len);
 
 	/**
 	 * Constructor for PKI Signature object.
@@ -93,7 +93,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, unsigned raw_len, KSI_PKISignature **signature);
+	int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, size_t raw_len, KSI_PKISignature **signature);
 
 	/**
 	 * Destructor for the PKI Signature object.
@@ -109,7 +109,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_PKISignature_serialize(KSI_PKISignature *sig, unsigned char **raw, unsigned *raw_len);
+	int KSI_PKISignature_serialize(KSI_PKISignature *sig, unsigned char **raw, size_t *raw_len);
 
 	KSI_DEFINE_FN_FROM_TLV(KSI_PKISignature);
 	KSI_DEFINE_FN_TO_TLV(KSI_PKISignature);
@@ -127,7 +127,7 @@ extern "C" {
 	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, unsigned data_len, const char *algoOid, const unsigned char *signature, unsigned signature_len, const KSI_PKICertificate *cert);
+	int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, unsigned data_len, const char *algoOid, const unsigned char *signature, size_t signature_len, const KSI_PKICertificate *cert);
 
 	/**
 	 * Function for verifying the data with PKI Signature.
@@ -169,7 +169,7 @@ extern "C" {
      * \param[in] buf_len	Length of the receiving buffer.
      * \return
      */
-	char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, unsigned buf_len);
+	char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, size_t buf_len);
 
 /**
  * @}

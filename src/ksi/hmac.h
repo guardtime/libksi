@@ -41,7 +41,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_DataHash_free
 	 */
-	int KSI_HMAC_create(KSI_CTX *ctx, int hash_id, const char *key, const unsigned char *data, unsigned data_len, KSI_DataHash **hmac);
+	int KSI_HMAC_create(KSI_CTX *ctx, int hash_id, const char *key, const unsigned char *data, size_t data_len, KSI_DataHash **hmac);
 
 	/**
 	 * @}

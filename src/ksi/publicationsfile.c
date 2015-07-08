@@ -186,7 +186,7 @@ cleanup:
 	return res;
 }
 
-int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, unsigned raw_len, KSI_PublicationsFile **pubFile) {
+int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, size_t raw_len, KSI_PublicationsFile **pubFile) {
 	int res;
 	unsigned char hdr[8];
 	size_t hdr_len = 0;
@@ -403,7 +403,7 @@ cleanup:
 }
 
 
-int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, char **raw, unsigned* raw_len) {
+int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, char **raw, size_t *raw_len) {
 	int res;
 
 	KSI_ERR_clearErrors(ctx);
@@ -981,9 +981,9 @@ cleanup:
 }
 
 int KSI_PublicationData_toBase32(const KSI_PublicationData *pubData, char **pubStr) {
-	const unsigned char *imprint = NULL;
-	unsigned int imprint_len = 0;
 	int res;
+	const unsigned char *imprint = NULL;
+	size_t imprint_len = 0;
 	KSI_uint64_t publication_identifier = 0;
 	unsigned char *binPub = NULL;
 	size_t binPub_length;
@@ -1119,10 +1119,10 @@ cleanup:
 	return res;
 }
 
-char *KSI_PublicationData_toString(KSI_PublicationData *t, char *buffer, unsigned buffer_len) {
+char *KSI_PublicationData_toString(KSI_PublicationData *t, char *buffer, size_t buffer_len) {
 	int res = KSI_UNKNOWN_ERROR;
 	char *ret = NULL;
-	unsigned len = 0;
+	size_t len = 0;
 	char *pubStr = NULL;
 	char tmp[256];
 
@@ -1132,7 +1132,7 @@ char *KSI_PublicationData_toString(KSI_PublicationData *t, char *buffer, unsigne
 		goto cleanup;
 	}
 
-	len+= KSI_snprintf(buffer + len, buffer_len - len, "Publication string: %s\nPublication date: %s", pubStr, KSI_Integer_toDateString(t->time, tmp, sizeof(tmp)));
+	len += KSI_snprintf(buffer + len, buffer_len - len, "Publication string: %s\nPublication date: %s", pubStr, KSI_Integer_toDateString(t->time, tmp, sizeof(tmp)));
 	KSI_snprintf(buffer + len, buffer_len - len, "\nPublished hash: %s", KSI_DataHash_toString(t->imprint, tmp, sizeof(tmp)));
 
 	ret = buffer;
@@ -1144,7 +1144,7 @@ cleanup:
 	return ret;
 }
 
-char *KSI_PublicationRecord_toString(KSI_PublicationRecord *t, char *buffer, unsigned buffer_len) {
+char *KSI_PublicationRecord_toString(KSI_PublicationRecord *t, char *buffer, size_t buffer_len) {
 	int res = KSI_UNKNOWN_ERROR;
 	char *ret = NULL;
 	char tmp[256];

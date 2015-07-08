@@ -172,7 +172,7 @@ extern "C" {
 	 * \note If an output variable is set to \c NULL the value will be ignored.
 	 * \see #KSI_DataHash_free, #KSI_DataHash_create, #KSI_DataHash_fromDigest
 	 */
-	int KSI_DataHash_extract(const KSI_DataHash *hash, int *hash_id, const unsigned char **digest, unsigned int *digest_length);
+	int KSI_DataHash_extract(const KSI_DataHash *hash, int *hash_id, const unsigned char **digest, size_t *digest_length);
 
 	/**
 	 * Constructor for #KSI_DataHash object from existing hash value.
@@ -185,7 +185,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_DataHash_free, #KSI_DataHash_extract, #KSI_DataHash_fromImprint, #KSI_DataHash_create, #KSI_DataHasher_close
 	 */
-	int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *digest, unsigned int digest_length, KSI_DataHash **hash);
+	int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *digest, size_t digest_length, KSI_DataHash **hash);
 
 	/**
 	 * Encodes the data hash object as an imprint.
@@ -196,7 +196,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_DataHash_getImprint(const KSI_DataHash *hash, const unsigned char **imprint, unsigned int *imprint_length);
+	int KSI_DataHash_getImprint(const KSI_DataHash *hash, const unsigned char **imprint, size_t *imprint_length);
 
 	/**
 	 * Constructor for #KSI_DataHash object from existing imprint.
@@ -209,7 +209,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_DataHash_free, #KSI_DataHash_getImprint, #KSI_DataHash_fromDigest
 	 */
-	int KSI_DataHash_fromImprint(KSI_CTX *ctx, const unsigned char *imprint, unsigned int imprint_length, KSI_DataHash **hash);
+	int KSI_DataHash_fromImprint(KSI_CTX *ctx, const unsigned char *imprint, size_t imprint_length, KSI_DataHash **hash);
 
 	/**
 	 * Returns the hash algorithm specified by the \c name parameter. If the algorithm
@@ -294,7 +294,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_DataHash_free, #KSI_DataHash_toTlv
 	 */
-	int KSI_DataHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned char **data, int *data_len);
+	int KSI_DataHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned char **data, size_t *data_len);
 
 	/**
 	 * Works the same way as #KSI_DataHash_fromTlv, but performs an additional
@@ -312,7 +312,7 @@ extern "C" {
 	 * \param[in,out]	buf		Pointer to the receiving buffer.
 	 * \param[in]		buf_len	Length of the receiving buffer.
 	 */
-	char *KSI_DataHash_toString(const KSI_DataHash *hsh, char *buf, unsigned buf_len);
+	char *KSI_DataHash_toString(const KSI_DataHash *hsh, char *buf, size_t buf_len);
 
 /**
  * @}

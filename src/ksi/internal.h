@@ -220,7 +220,7 @@ cleanup: \
 
 #define FROMTLV_ADD_RAW(name, offset) \
 	do{ \
-		unsigned len; \
+		size_t len; \
 		res = KSI_TLV_serialize(tlv, &tlvData, &len); \
 		if (res != KSI_OK) { \
 			KSI_pushError(ctx, res, NULL); \

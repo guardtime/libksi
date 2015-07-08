@@ -135,7 +135,7 @@ extern "C" {
 	 * \note The output memory buffer belongs to the caller and needs to be freed
 	 * by the caller using #KSI_free.
 	 */
-	int KSI_Signature_serialize(KSI_Signature *sig, unsigned char **raw, unsigned *raw_len);
+	int KSI_Signature_serialize(KSI_Signature *sig, unsigned char **raw, size_t *raw_len);
 
 	/**
 	 * This function signs the given data hash \c hsh. This function requires a access to

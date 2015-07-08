@@ -168,9 +168,7 @@ static void testVerifySignatureWithUserPublication(CuTest *tc) {
 	KSI_PublicationData *pubData = NULL;
 	KSI_PublicationData *pubData_bad = NULL;
 
-
 	KSI_ERR_clearErrors(ctx);
-
 
 	res = KSI_PublicationData_fromBase32(ctx, pubStr, &pubData);
 	CuAssert(tc, "Unable to parse publication string.", res == KSI_OK && pubData != NULL);
@@ -240,10 +238,10 @@ static void testSerializeSignature(CuTest *tc) {
 	int res;
 
 	unsigned char in[0x1ffff];
-	unsigned in_len = 0;
+	size_t in_len = 0;
 
 	unsigned char *out = NULL;
-	unsigned out_len = 0;
+	size_t out_len = 0;
 
 	FILE *f = NULL;
 
@@ -275,7 +273,7 @@ static void testVerifyDocument(CuTest *tc) {
 	int res;
 
 	unsigned char in[0x1ffff];
-	unsigned in_len = 0;
+	size_t in_len = 0;
 
 	char doc[] = "LAPTOP";
 
@@ -308,7 +306,7 @@ static void testVerifyDocumentHash(CuTest *tc) {
 	int res;
 
 	unsigned char in[0x1ffff];
-	unsigned in_len = 0;
+	size_t in_len = 0;
 
 	char doc[] = "LAPTOP";
 	KSI_DataHash *hsh = NULL;
@@ -395,7 +393,7 @@ static void testVerifyCalendarChainAlgoChange(CuTest *tc) {
 	int res;
 
 	unsigned char in[0x1ffff];
-	unsigned in_len = 0;
+	size_t in_len = 0;
 
 	FILE *f = NULL;
 	KSI_Signature *sig = NULL;

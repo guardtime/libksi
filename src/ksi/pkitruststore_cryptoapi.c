@@ -30,7 +30,7 @@
 #include "tlv.h"
 #include "pkitruststore.h"
 
-const char* getMSError(DWORD error, char *buf, unsigned len){
+const char* getMSError(DWORD error, char *buf, size_t len){
     LPVOID lpMsgBuf;
     char *tmp = NULL;
     char *ret = NULL;
@@ -121,7 +121,7 @@ int KSI_PKICertificate_fromTlv(KSI_TLV *tlv, KSI_PKICertificate **cert) {
 
 	KSI_PKICertificate *tmp = NULL;
 	const unsigned char *raw = NULL;
-	unsigned int raw_len = 0;
+	size_t raw_len = 0;
 
 	if (tlv == NULL || cert == NULL){
 		res = KSI_INVALID_ARGUMENT;
@@ -161,7 +161,7 @@ int KSI_PKICertificate_toTlv(KSI_CTX *ctx, KSI_PKICertificate *cert, unsigned ta
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tmp = NULL;
 	unsigned char *raw = NULL;
-	unsigned raw_len = 0;
+	size_t raw_len = 0;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || cert == NULL || tlv == NULL){
@@ -305,7 +305,7 @@ void KSI_PKISignature_free(KSI_PKISignature *sig) {
 	}
 }
 
-int KSI_PKISignature_serialize(KSI_PKISignature *sig, unsigned char **raw, unsigned *raw_len) {
+int KSI_PKISignature_serialize(KSI_PKISignature *sig, unsigned char **raw, size_t *raw_len) {
 	int res = KSI_UNKNOWN_ERROR;
 	unsigned char *tmp = NULL;
 
@@ -325,7 +325,7 @@ int KSI_PKISignature_serialize(KSI_PKISignature *sig, unsigned char **raw, unsig
 	memcpy(tmp, sig->pkcs7.pbData, sig->pkcs7.cbData);
 
 	*raw = tmp;
-	*raw_len = (unsigned)sig->pkcs7.cbData;
+	*raw_len = (size_t)sig->pkcs7.cbData;
 
 	tmp = NULL;
 
@@ -344,7 +344,7 @@ int KSI_PKISignature_fromTlv(KSI_TLV *tlv, KSI_PKISignature **sig) {
 
 	KSI_PKISignature *tmp = NULL;
 	const unsigned char *raw = NULL;
-	unsigned int raw_len = 0;
+	size_t raw_len = 0;
 
 	if (tlv == NULL || sig == NULL){
 		res = KSI_INVALID_ARGUMENT;
@@ -385,7 +385,7 @@ int KSI_PKISignature_toTlv(KSI_CTX *ctx, KSI_PKISignature *sig, unsigned tag, in
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tmp = NULL;
 	unsigned char *raw = NULL;
-	unsigned raw_len = 0;
+	size_t raw_len = 0;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || sig == NULL || tlv == NULL){
@@ -427,7 +427,7 @@ cleanup:
 	return res;
 }
 
-int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, unsigned raw_len, KSI_PKISignature **signature) {
+int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, size_t raw_len, KSI_PKISignature **signature) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PKISignature *tmp = NULL;
 
@@ -530,7 +530,7 @@ cleanup:
 	return res;
 }
 
-int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, unsigned *raw_len) {
+int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, size_t *raw_len) {
 	int res = KSI_UNKNOWN_ERROR;
 	unsigned char *tmp_serialized = NULL;
 	DWORD len = 0;
@@ -561,7 +561,7 @@ int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, 
 	}
 
 	*raw = tmp_serialized;
-	*raw_len = (unsigned)len;
+	*raw_len = (size_t)len;
 	tmp_serialized = NULL;
 
 	res = KSI_OK;
@@ -573,7 +573,7 @@ cleanup:
 	return res;
 }
 
-char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, unsigned buf_len){
+char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, size_t buf_len){
 	char *ret = NULL;
 	char strSubjectname[256];
 	char strIssuerName[256];
@@ -1069,14 +1069,14 @@ cleanup:
 	return res;
 }
 
-int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, unsigned data_len, const char *algoOid, const unsigned char *signature, unsigned signature_len, const KSI_PKICertificate *certificate) {
+int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, size_t data_len, const char *algoOid, const unsigned char *signature, size_t signature_len, const KSI_PKICertificate *certificate) {
 	int res = KSI_UNKNOWN_ERROR;
 	ALG_ID algorithm=0;
 	HCRYPTPROV hCryptProv = 0;
     PCCERT_CONTEXT subjectCert = NULL;
 	HCRYPTKEY publicKey = 0;
-	DWORD i=0;
-	BYTE *little_endian_pkcs1= NULL;
+	DWORD i = 0;
+	BYTE *little_endian_pkcs1 = NULL;
 	DWORD pkcs1_len = 0;
 	HCRYPTHASH hash = 0;
 	char buf[1024];
@@ -1087,7 +1087,6 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
-
 
 	algorithm = algIdFromOID(algoOid);
 	if (algorithm == 0) {
@@ -1110,7 +1109,7 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 		goto cleanup;
 	}
 
-	/*Convert big-endian to little-endian PKCS#1 signature*/
+	/* Convert big-endian to little-endian PKCS#1 signature. */
 	pkcs1_len = signature_len;
 	little_endian_pkcs1 = (BYTE*)KSI_malloc(pkcs1_len);
 
@@ -1119,12 +1118,12 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 		goto cleanup;
 	}
 
-	for (i=0; i<pkcs1_len; i++){
+	for (i = 0; i < pkcs1_len; i++){
 		little_endian_pkcs1[pkcs1_len-1-i] = signature[i];
 	}
 
 	// Create the hash object and hash input data.
-	if (!CryptCreateHash(hCryptProv, algorithm, 0, 0, &hash)){
+	if (!CryptCreateHash(hCryptProv, algorithm, 0, 0, &hash)) {
 		KSI_LOG_debug(ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
 		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, "Unable to create hasher.");
 		goto cleanup;
@@ -1137,7 +1136,7 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 	}
 
 	/*Verify the signature. The format MUST be PKCS#1*/
-	if (!CryptVerifySignature(hash, (BYTE*)little_endian_pkcs1, pkcs1_len, publicKey, NULL, 0)){
+	if (!CryptVerifySignature(hash, (BYTE*) little_endian_pkcs1, pkcs1_len, publicKey, NULL, 0)){
 		DWORD error = GetLastError();
 		const char *errmsg = getMSError(GetLastError(), buf, sizeof(buf));
 		KSI_LOG_debug(ctx, "%s", errmsg);

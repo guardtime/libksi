@@ -95,6 +95,11 @@ int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned 
 	size_t logStr_len = 0;
 	size_t i;
 
+	if (ctx == NULL || (data == NULL && data_len != 0) || (data != NULL && data_len == 0)) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
 	if (level < ctx->logLevel) goto cleanup;
 
 	logStr_size = data_len * 2 + 1;
@@ -106,9 +111,9 @@ int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned 
 	}
 
 	for (i = 0; i < data_len; i++) {
-		int written;
+		size_t written;
 		written = KSI_snprintf(logStr + logStr_len, logStr_size - logStr_len, "%02x", data[i]);
-		if (written <= 0 || (size_t)written > logStr_size - logStr_len) {
+		if (written == 0 || (size_t) written > logStr_size - logStr_len) {
 			res = KSI_BUFFER_OVERFLOW;
 			goto cleanup;
 		}
@@ -155,7 +160,7 @@ cleanup:
 int KSI_LOG_logDataHash(KSI_CTX *ctx, int level, const char *prefix, const KSI_DataHash *hsh) {
 	int res = KSI_UNKNOWN_ERROR;
 	const unsigned char *imprint = NULL;
-	unsigned int imprint_len = 0;
+	size_t imprint_len = 0;
 
 	if (level < ctx->logLevel) {
 		res = KSI_OK;

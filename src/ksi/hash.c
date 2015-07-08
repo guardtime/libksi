@@ -96,7 +96,7 @@ unsigned int KSI_getHashLength(int hash_id) {
 /**
  *
  */
-int KSI_DataHash_extract(const KSI_DataHash *hash, int *hash_id, const unsigned char **digest, unsigned int *digest_length) {
+int KSI_DataHash_extract(const KSI_DataHash *hash, int *hash_id, const unsigned char **digest, size_t *digest_length) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (hash == NULL) {
@@ -121,7 +121,7 @@ cleanup:
 /**
  *
  */
-int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *digest, unsigned int digest_length, KSI_DataHash **hash) {
+int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *digest, size_t digest_length, KSI_DataHash **hash) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *tmp_hash = NULL;
 
@@ -171,7 +171,7 @@ cleanup:
 /**
  *
  */
-int KSI_DataHash_getImprint(const KSI_DataHash *hash, const unsigned char **imprint, unsigned int *imprint_length) {
+int KSI_DataHash_getImprint(const KSI_DataHash *hash, const unsigned char **imprint, size_t *imprint_length) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (hash == NULL || imprint == NULL || imprint_length == NULL) {
@@ -192,7 +192,7 @@ cleanup:
 /**
  *
  */
-int KSI_DataHash_fromImprint(KSI_CTX *ctx, const unsigned char *imprint, unsigned int imprint_length, KSI_DataHash **hash) {
+int KSI_DataHash_fromImprint(KSI_CTX *ctx, const unsigned char *imprint, size_t imprint_length, KSI_DataHash **hash) {
 	return KSI_DataHash_fromDigest(ctx, *imprint, imprint + 1, imprint_length - 1, hash);
 }
 
@@ -335,7 +335,7 @@ int KSI_DataHash_fromTlv(KSI_TLV *tlv, KSI_DataHash **hsh) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	const unsigned char *raw = NULL;
-	unsigned int raw_len = 0;
+	size_t raw_len = 0;
 	KSI_DataHash *tmp = NULL;
 
 	ctx = KSI_TLV_getCtx(tlv);
@@ -381,7 +381,7 @@ int KSI_DataHash_toTlv(KSI_CTX *ctx, KSI_DataHash *hsh, unsigned tag, int isNonC
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tmp = NULL;
 	const unsigned char *raw = NULL;
-	unsigned int raw_len = 0;
+	size_t raw_len = 0;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || hsh == NULL || tlv == NULL) {
@@ -430,9 +430,9 @@ int KSI_DataHash_getHashAlg(const KSI_DataHash *hash, int *hashAlg){
 return KSI_OK;
 }
 
-int KSI_DataHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned char **data, int *data_len) {
+int KSI_DataHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned char **data, size_t *data_len) {
 	int res = KSI_UNKNOWN_ERROR;
-	unsigned len;
+	size_t len;
 	unsigned i;
 
 	if (metaHash == NULL || data == NULL || data_len == NULL) {
@@ -478,7 +478,7 @@ int KSI_DataHash_MetaHash_fromTlv(KSI_TLV *tlv, KSI_DataHash **hsh) {
 	KSI_CTX *ctx = NULL;
 	KSI_DataHash *tmp = NULL;
 	const unsigned char *data = NULL;
-	int data_len;
+	size_t data_len;
 
 	ctx = KSI_TLV_getCtx(tlv);
 	KSI_ERR_clearErrors(ctx);
@@ -518,7 +518,7 @@ cleanup:
 	return res;
 }
 
-char *KSI_DataHash_toString(const KSI_DataHash *hsh, char *buf, unsigned buf_len) {
+char *KSI_DataHash_toString(const KSI_DataHash *hsh, char *buf, size_t buf_len) {
 	char *ret = NULL;
 	unsigned i;
 	unsigned len = 0;

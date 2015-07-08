@@ -23,23 +23,24 @@
 #include <limits.h>
 
 /*TODO: Is it possible to avoid pointless buffer filling?*/
-int KSI_vsnprintf(char *buf, size_t n, const char *format, va_list va){
-	int ret=0;
-	if (n==0 || buf == NULL || format == NULL || n > INT_MAX) return -1;
+size_t KSI_vsnprintf(char *buf, size_t n, const char *format, va_list va){
+	size_t ret = 0;
+	int tmp;
+	if (n == 0 || buf == NULL || format == NULL || n > INT_MAX) return 0;
 #ifdef _WIN32
 	/*NOTE: If there is empty space in buf, it will be filled with 0x00 or 0xfe*/
-	ret = vsnprintf_s(buf, n, _TRUNCATE, format, va);
-	if (ret == -1) return (int)n-1; 
+	tmp = vsnprintf_s(buf, n, _TRUNCATE, format, va);
+	if (tmp == -1) return n - 1;
 #else
 	ret = vsnprintf(buf, n, format, va);
-	if (ret >= n) return n-1;
+	if (ret >= n) return n - 1;
 #endif
 	
 	return ret;
 }
 
-int KSI_snprintf(char *buf, size_t n, const char *format, ... ){
-	int ret;
+size_t KSI_snprintf(char *buf, size_t n, const char *format, ... ){
+	size_t ret;
 	va_list va;
 	va_start(va, format);
 	ret = KSI_vsnprintf(buf, n, format, va);

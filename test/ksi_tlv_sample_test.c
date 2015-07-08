@@ -200,8 +200,8 @@ static void TestSerialize(CuTest* tc) {
 	unsigned char out[0xffff + 4];
 	char errstr[1024];
 
-	unsigned out_len;
-	unsigned in_len;
+	size_t out_len;
+	size_t in_len;
 
 	FILE *f = NULL;
 	int i = 0;
@@ -246,8 +246,8 @@ static void TestClone(CuTest *tc) {
 	unsigned char out1[0xffff + 4];
 	char errstr[1024];
 
-	unsigned out_len;
-	unsigned in_len;
+	size_t out_len;
+	size_t in_len;
 
 	FILE *f = NULL;
 	int i = 0;
@@ -258,7 +258,7 @@ static void TestClone(CuTest *tc) {
 		f = fopen(getFullResourcePath(ok_sample[i]), "rb");
 		CuAssert(tc, "Unable to open test file.", f != NULL);
 
-		in_len = (unsigned)fread(in, 1, sizeof(in), f);
+		in_len = (unsigned) fread(in, 1, sizeof(in), f);
 
 		fclose(f);
 		f = NULL;
@@ -289,13 +289,13 @@ static void TestClone(CuTest *tc) {
 	}
 }
 
-static void testObjectSerialization(CuTest *tc, const char *sample, int (*parse)(KSI_CTX *, unsigned char *, unsigned, void **), int (*serialize)(void *, unsigned char **, unsigned *), void (*objFree)(void *)) {
+static void testObjectSerialization(CuTest *tc, const char *sample, int (*parse)(KSI_CTX *, unsigned char *, unsigned, void **), int (*serialize)(void *, unsigned char **, size_t *), void (*objFree)(void *)) {
 	int res;
 	void *pdu = NULL;
 	unsigned char in[0xffff + 4];
-	unsigned in_len;
+	size_t in_len;
 	unsigned char *out = NULL;
-	unsigned out_len;
+	size_t out_len;
 	FILE *f = NULL;
 	char errm[1024];
 
@@ -329,14 +329,14 @@ static void testObjectSerialization(CuTest *tc, const char *sample, int (*parse)
 static void aggregationPduTest(CuTest *tc) {
 	testObjectSerialization(tc, getFullResourcePath("resource/tlv/aggr_response.tlv"),
 			(int (*)(KSI_CTX *, unsigned char *, unsigned, void **))KSI_AggregationPdu_parse,
-			(int (*)(void *, unsigned char **, unsigned *))KSI_AggregationPdu_serialize,
+			(int (*)(void *, unsigned char **, size_t *))KSI_AggregationPdu_serialize,
 			( void (*)(void *))KSI_AggregationPdu_free);
 }
 
 static void extendPduTest(CuTest *tc) {
 	testObjectSerialization(tc, getFullResourcePath("resource/tlv/extend_response.tlv"),
 			(int (*)(KSI_CTX *, unsigned char *, unsigned, void **))KSI_ExtendPdu_parse,
-			(int (*)(void *, unsigned char **, unsigned *))KSI_ExtendPdu_serialize,
+			(int (*)(void *, unsigned char **, size_t *))KSI_ExtendPdu_serialize,
 			( void (*)(void *))KSI_ExtendPdu_free);
 }
 
@@ -369,6 +369,7 @@ static void testErrorMessage(CuTest* tc, const char *expected, const char *tlv_f
 	res = KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL, NULL);
 	CuAssert(tc, "Unable to get base error message.", res == KSI_OK);
 
+	if (strcmp(buf, expected) != 0) printf("buf = '%s', exp = '%s'\n", buf, expected);
 	CuAssert(tc, "Wrong error message.", strcmp(buf, expected) == 0);
 
 	if (f != NULL) fclose(f);

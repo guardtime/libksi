@@ -305,7 +305,7 @@ static KSI_IMPLEMENT_GETTER(KSI_AggregationReq, KSI_OctetString*, raw, Raw);
 static KSI_IMPLEMENT_GETTER(KSI_AggregationResp, KSI_OctetString*, raw, Raw);
 static KSI_IMPLEMENT_GETTER(KSI_Header, KSI_OctetString*, raw, Raw);
 
-static int getObjectsRawValue(KSI_CTX* ctx, void* obj, int (*getRaw)(void*, KSI_OctetString**), const KSI_TlvTemplate *template, int tag, const unsigned char **data, unsigned *len, bool* mustBeFreed){
+static int getObjectsRawValue(KSI_CTX* ctx, void* obj, int (*getRaw)(void*, KSI_OctetString**), const KSI_TlvTemplate *template, int tag, const unsigned char **data, size_t *len, bool* mustBeFreed){
 	int res = KSI_OK;
 	KSI_OctetString *raw = NULL;
 	*mustBeFreed = false;
@@ -341,9 +341,9 @@ static int pdu_calculateHmac(KSI_CTX* ctx, void* pdu,
 	int res;
 	KSI_Header *header = NULL;
 	const unsigned char *raw_header = NULL;
-	unsigned header_len;
+	size_t header_len;
 	const unsigned char *raw_payload = NULL;
-	unsigned payload_len;
+	size_t payload_len;
 	void *request = NULL;
 	void *response = NULL;
 	unsigned char *buf = NULL;
