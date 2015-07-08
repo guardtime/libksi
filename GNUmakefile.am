@@ -28,7 +28,11 @@ dist_doc_DATA = changelog license.txt
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libksi.pc
 
+<<<<<<< HEAD
 EXTRA_DIST = changelog build*.txt makefile lic*.txt \
+=======
+EXTRA_DIST = VERSION changelog build*.txt makefile lic*.txt \
+>>>>>>> 6ce542cdc6af0eba1185287000f83bb235b81c33
              */makefile doc/doxy* test/*
              
 ZIPDOC_DIR = ${PACKAGE}-${VERSION}-htmldoc
