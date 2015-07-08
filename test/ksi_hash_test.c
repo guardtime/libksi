@@ -409,7 +409,7 @@ static void testAllHashing(CuTest *tc) {
 	expected[KSI_HASHALG_SHA2_224] = "e57a7d602733b326b2368d922e754f0a04c7c433d7dfd89ea8d3f54a";
 	expected[KSI_HASHALG_SHA2_384] = "4495385793894ac9a2cc1b2d8760da3ce50d14a193b19166417d503d853ad3588689e5a6b0e65675367394a207cac264";
 	expected[KSI_HASHALG_SHA2_512] = "2dcee3bebeeec061751c7e2c886fddb069502c3c71e1f70272d77a64c092e51b6a262d208939cc557de7650da347b08f643d515ff8009a7342454e73247761dd";
-	expected[KSI_HASHALG_RIPEMD_256] = "4b28ccc7d757abe6f987455b40b83c55103cb90e8274e8b317ed88cdeff2b055";
+	expected[0x06] = NULL; /* Deprecated hash function. */
 	expected[KSI_HASHALG_SHA3_244] = "TODO!";
 	expected[KSI_HASHALG_SHA3_256] = "TODO!";
 	expected[KSI_HASHALG_SHA3_384] = "TODO!";
@@ -417,45 +417,47 @@ static void testAllHashing(CuTest *tc) {
 	expected[KSI_HASHALG_SM3] = "TODO!";
 
 	for (hashId = 0; hashId < KSI_NUMBER_OF_KNOWN_HASHALGS; hashId++) {
-		if (KSI_isHashAlgorithmSupported(hashId)) {
-			unsigned char expectedImprint[0xff];
-			unsigned expectedLen = 0;
-			const unsigned char *imprint = NULL;
-			unsigned imprintLen;
-			char errm[0x1ff];
-			char tmp[0xff];
+		unsigned char expectedImprint[0xff];
+		unsigned expectedLen = 0;
+		const unsigned char *imprint = NULL;
+		unsigned imprintLen;
+		char errm[0x1ff];
+		char tmp[0xff];
 
-			res = KSI_DataHasher_open(ctx, hashId, &hsr);
-			CuAssert(tc, "Unable to initialize hasher", res == KSI_OK && hsr != NULL);
+		/* Skip unsupported. */
+		if (!KSI_isHashAlgorithmSupported(hashId)) continue;
 
-			res = KSI_DataHasher_add(hsr, input, strlen(input));
-			CuAssert(tc, "Unable to add data to the hasher.", res == KSI_OK);
 
-			KSI_snprintf(errm, sizeof(errm), "Unable to close data hasher for hashId=%d (%s)", hashId, KSI_getHashAlgorithmName(hashId));
+		res = KSI_DataHasher_open(ctx, hashId, &hsr);
+		CuAssert(tc, "Unable to initialize hasher", res == KSI_OK && hsr != NULL);
 
-			res = KSI_DataHasher_close(hsr, &hsh);
+		res = KSI_DataHasher_add(hsr, input, strlen(input));
+		CuAssert(tc, "Unable to add data to the hasher.", res == KSI_OK);
 
-			CuAssert(tc, errm, res == KSI_OK && hsh != NULL);
+		KSI_snprintf(errm, sizeof(errm), "Unable to close data hasher for hashId=%d (%s)", hashId, KSI_getHashAlgorithmName(hashId));
 
-			KSI_snprintf(tmp, sizeof(tmp), "%02x%s", hashId, expected[hashId]);
-			KSITest_decodeHexStr(tmp, expectedImprint, sizeof(expectedImprint), &expectedLen);
+		res = KSI_DataHasher_close(hsr, &hsh);
 
-			res = KSI_DataHash_getImprint(hsh, &imprint, &imprintLen);
+		CuAssert(tc, errm, res == KSI_OK && hsh != NULL);
 
-			CuAssert(tc, "Unable to retreive imprint value", res == KSI_OK && imprint != NULL && imprintLen > 0);
+		KSI_snprintf(tmp, sizeof(tmp), "%02x%s", hashId, expected[hashId]);
+		KSITest_decodeHexStr(tmp, expectedImprint, sizeof(expectedImprint), &expectedLen);
 
-			KSI_snprintf(errm, sizeof(errm), "Hash values mismatch for hashId=%d (%s)", hashId, KSI_getHashAlgorithmName(hashId));
-			CuAssert(tc, errm, imprintLen == expectedLen && !memcmp(imprint, expectedImprint, imprintLen));
+		res = KSI_DataHash_getImprint(hsh, &imprint, &imprintLen);
 
-			imprint = NULL;
-			imprintLen = 0;
+		CuAssert(tc, "Unable to retreive imprint value", res == KSI_OK && imprint != NULL && imprintLen > 0);
 
-			KSI_DataHash_free(hsh);
-			hsh = NULL;
+		KSI_snprintf(errm, sizeof(errm), "Hash values mismatch for hashId=%d (%s)", hashId, KSI_getHashAlgorithmName(hashId));
+		CuAssert(tc, errm, imprintLen == expectedLen && !memcmp(imprint, expectedImprint, imprintLen));
 
-			KSI_DataHasher_free(hsr);
-			hsr = NULL;
-		}
+		imprint = NULL;
+		imprintLen = 0;
+
+		KSI_DataHash_free(hsh);
+		hsh = NULL;
+
+		KSI_DataHasher_free(hsr);
+		hsr = NULL;
 	}
 }
 

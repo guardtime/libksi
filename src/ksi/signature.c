@@ -37,6 +37,7 @@ KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationRecord);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationHashChain)
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationAuthRec)
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarAuthRec)
+KSI_IMPORT_TLV_TEMPLATE(KSI_RFC3161)
 
 static int KSI_Signature_verifyPolicy(KSI_Signature *sig, unsigned *policy, KSI_CTX *ctx);
 
@@ -148,12 +149,14 @@ static KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_CalendarHashChain*, calendarChain
 static KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_LIST(KSI_AggregationHashChain)*, aggregationChainList, AggregationChainList)
 static KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_CalendarAuthRec*, calendarAuthRec, CalendarAuthRecord)
 static KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_AggregationAuthRec*, aggregationAuthRec, AggregationAuthRecord)
+static KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_RFC3161*, rfc3161, RFC3161)
 
 static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_CalendarHashChain*, calendarChain, CalendarChain)
 static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_LIST(KSI_AggregationHashChain)*, aggregationChainList, AggregationChainList)
 static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_CalendarAuthRec*, calendarAuthRec, CalendarAuthRecord)
 static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_AggregationAuthRec*, aggregationAuthRec, AggregationAuthRecord)
 static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_PublicationRecord*, publication, PublicationRecord)
+static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_RFC3161*, rfc3161, RFC3161)
 
 static int checkSignatureInternals(KSI_Signature *sig) {
 	if (sig == NULL) return KSI_INVALID_ARGUMENT;
@@ -347,7 +350,348 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_Signature)
 	KSI_TLV_COMPOSITE(0x0803, KSI_TLV_TMPL_FLG_MOST_ONE_G0, KSI_Signature_getPublicationRecord, KSI_Signature_setPublicationRecord, KSI_PublicationRecord, "pub_rec")
 	KSI_TLV_COMPOSITE(0x0804, KSI_TLV_TMPL_FLG_NONE, KSI_Signature_getAggregationAuthRecord, KSI_Signature_setAggregationAuthRecord, KSI_AggregationAuthRec, "aggr_auth_rec")
 	KSI_TLV_COMPOSITE(0x0805, KSI_TLV_TMPL_FLG_MOST_ONE_G0, KSI_Signature_getCalendarAuthRecord, KSI_Signature_setCalendarAuthRecord, KSI_CalendarAuthRec, "cal_auth_rec")
+	KSI_TLV_COMPOSITE(0x0806, KSI_TLV_TMPL_FLG_NONE, KSI_Signature_getRFC3161, KSI_Signature_setRFC3161, KSI_RFC3161, "rfc3161_rec")
 KSI_END_TLV_TEMPLATE
+
+
+/**
+ * KSI_RFC3161
+ */
+void KSI_RFC3161_free(KSI_RFC3161 *rfc) {
+	if (rfc != NULL) {
+		KSI_Integer_free(rfc->aggregationTime);
+		KSI_IntegerList_free(rfc->chainIndex);
+		KSI_DataHash_free(rfc->inputHash);
+
+		KSI_OctetString_free(rfc->tstInfoPrefix);
+		KSI_OctetString_free(rfc->tstInfoSuffix);
+		KSI_Integer_free(rfc->tstInfoAlgo);
+
+		KSI_OctetString_free(rfc->sigAttrPrefix);
+		KSI_OctetString_free(rfc->sigAttrSuffix);
+		KSI_Integer_free(rfc->sigAttrAlgo);
+
+		KSI_free(rfc);
+	}
+}
+
+int KSI_RFC3161_new(KSI_CTX *ctx, KSI_RFC3161 **out) {
+	KSI_RFC3161 *tmp = NULL;
+	int res;
+
+	KSI_ERR_clearErrors(ctx);
+
+	if (ctx == NULL || out == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	tmp = KSI_new(KSI_RFC3161);
+	if (tmp == NULL) {
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->aggregationTime = NULL;
+	tmp->chainIndex = NULL;
+	tmp->inputHash = NULL;
+
+	tmp->tstInfoPrefix = NULL;
+	tmp->tstInfoSuffix = NULL;
+	tmp->tstInfoAlgo = NULL;
+
+	tmp->sigAttrPrefix = NULL;
+	tmp->sigAttrSuffix = NULL;
+	tmp->sigAttrAlgo = NULL;
+
+	*out = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_RFC3161_free(tmp);
+
+	return res;
+}
+
+static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, const KSI_DataHash *hsh, const KSI_OctetString *suffix, int hsh_id, KSI_DataHash **out) {
+	int res;
+	KSI_DataHasher *hsr = NULL;
+	KSI_DataHash *tmp = NULL;
+	const unsigned char *imprint = NULL;
+	unsigned imprint_len = 0;
+	const unsigned char *data = NULL;
+	unsigned data_len = 0;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || prefix == NULL || hsh == NULL || suffix == NULL || out == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	/*Generate TST Info structure and get its hash*/
+	res = KSI_DataHasher_open(ctx, hsh_id, &hsr);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OctetString_extract(prefix, &data, &data_len);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (data != NULL) {
+		res = KSI_DataHasher_add(hsr, data, data_len);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+
+	res = KSI_DataHash_getImprint(hsh, &imprint, &imprint_len);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_DataHasher_add(hsr, imprint + 1, imprint_len - 1);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OctetString_extract(suffix, &data, &data_len);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (data != NULL) {
+		res = KSI_DataHasher_add(hsr, data, data_len);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+
+
+	/*Get hash and its imprint*/
+	res = KSI_DataHasher_close(hsr, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+
+	*out = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_DataHasher_free(hsr);
+	KSI_DataHash_free(tmp);
+
+	return res;
+}
+
+/*TODO: check chain index verification*/
+static int rfc3161_verify(const KSI_Signature *sig) {
+	int res;
+	KSI_CTX *ctx = NULL;
+	KSI_RFC3161 *rfc3161 = NULL;
+	KSI_AggregationHashChainList *aggreChain = NULL;
+	KSI_AggregationHashChain *firstChain = NULL;
+	KSI_Integer *aggreTime = NULL;
+	unsigned i;
+
+
+	if (sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = sig->ctx;
+	KSI_ERR_clearErrors(ctx);
+
+
+	rfc3161 = sig->rfc3161;
+	if (rfc3161 == NULL) {
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	aggreChain = sig->aggregationChainList;
+	if (aggreChain == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_SIGNATURE, "Aggregation chain is missing.");
+		goto cleanup;
+	}
+
+	res = KSI_AggregationHashChainList_elementAt(aggreChain, 0, &firstChain);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (KSI_Integer_compare(firstChain->aggregationTime, rfc3161->aggregationTime) != 0) {
+		KSI_LOG_debug(ctx, "Signatures aggregation time: %i.", KSI_Integer_getUInt64(firstChain->aggregationTime));
+		KSI_LOG_debug(ctx, "RFC 3161 aggregation time:   %i.", KSI_Integer_getUInt64(rfc3161->aggregationTime));
+		KSI_pushError(ctx, res = KSI_VERIFICATION_FAILURE, "Aggregation chain and RFC 3161 aggregation time mismatch.");
+		goto cleanup;
+	}
+
+	if (KSI_IntegerList_length(firstChain->chainIndex) != KSI_IntegerList_length(rfc3161->chainIndex)) {
+		KSI_LOG_debug(ctx, "Aggregation chain and RFC 3161 chain index mismatch.", KSI_IntegerList_length(firstChain->chainIndex));
+		KSI_LOG_debug(ctx, "Signatures chain index length: %i.", KSI_IntegerList_length(firstChain->chainIndex));
+		KSI_LOG_debug(ctx, "RFC 3161 chain index length:   %i.", KSI_IntegerList_length(rfc3161->chainIndex));
+	}else {
+		for (i = 0; i < KSI_IntegerList_length(firstChain->chainIndex); i++){
+			KSI_Integer *ch1 = NULL;
+			KSI_Integer *ch2 = NULL;
+
+			res = KSI_IntegerList_elementAt(firstChain->chainIndex, i, &ch1);
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
+
+			res = KSI_IntegerList_elementAt(rfc3161->chainIndex, i, &ch2);
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
+
+			if (KSI_Integer_compare(ch1, ch2) != 0) {
+				KSI_LOG_debug(ctx, "Aggregation chain and RFC 3161 chain index mismatch.", KSI_IntegerList_length(firstChain->chainIndex));
+				break;
+			}
+		}
+	}
+
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+static int rfc3161_getInputToAggreChain(const KSI_Signature *sig, KSI_DataHash **inputToAggre) {
+	int res;
+	KSI_CTX *ctx = NULL;
+	KSI_DataHash *hsh_tstInfo = NULL;
+	KSI_DataHash *hsh_sigAttr = NULL;
+	KSI_DataHash *tmp = NULL;
+	KSI_DataHasher *hsr = NULL;
+	KSI_RFC3161 *rfc = NULL;
+	int algToUse = -1;
+	const unsigned char *imprint = NULL;
+	unsigned imprint_len = 0;
+	int algId = -1;
+	int tstInfoAlgo;
+	int sigAttrAlgo;
+
+	if (sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	ctx = sig->ctx;
+	KSI_ERR_clearErrors(ctx);
+
+
+	if (inputToAggre == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	rfc = sig->rfc3161;
+	if (rfc == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+
+
+	if (KSI_Integer_getUInt64(rfc->tstInfoAlgo) > 0xff || KSI_Integer_getUInt64(rfc->sigAttrAlgo) > 0xff) {
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Hash algorithm can't be larger than 0xff.");
+		goto cleanup;
+	} else {
+		tstInfoAlgo = (int)KSI_Integer_getUInt64(rfc->tstInfoAlgo);
+		sigAttrAlgo = (int)KSI_Integer_getUInt64(rfc->sigAttrAlgo);
+	}
+
+	res = rfc3161_preSufHasher(ctx, rfc->tstInfoPrefix, rfc->inputHash, rfc->tstInfoSuffix, tstInfoAlgo, &hsh_tstInfo);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = rfc3161_preSufHasher(ctx, rfc->sigAttrPrefix, hsh_tstInfo, rfc->sigAttrSuffix, sigAttrAlgo, &hsh_sigAttr);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_DataHash_getImprint(hsh_sigAttr, &imprint, &imprint_len);
+	if (res != KSI_OK) {
+		KSI_pushError(sig->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_Signature_getHashAlgorithm((KSI_Signature *)sig, &algId);
+	if (res != KSI_OK) {
+		KSI_pushError(sig->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_DataHash_create(ctx, imprint, imprint_len, algId, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(sig->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	*inputToAggre = tmp;
+	tmp = NULL;
+
+cleanup:
+
+	KSI_DataHasher_free(hsr);
+	KSI_DataHash_free(hsh_tstInfo);
+	KSI_DataHash_free(hsh_sigAttr);
+	KSI_DataHash_free(tmp);
+
+	return res;
+}
+
+
+KSI_IMPLEMENT_GETTER(KSI_RFC3161, KSI_Integer*, aggregationTime, AggregationTime)
+KSI_IMPLEMENT_GETTER(KSI_RFC3161, KSI_LIST(KSI_Integer)*, chainIndex, ChainIndex)
+KSI_IMPLEMENT_GETTER(KSI_RFC3161, KSI_DataHash*, inputHash, InputHash)
+KSI_IMPLEMENT_GETTER(KSI_RFC3161, KSI_OctetString*, tstInfoPrefix, TstInfoPrefix)
+KSI_IMPLEMENT_GETTER(KSI_RFC3161, KSI_OctetString*, tstInfoSuffix, TstInfoSuffix)
+KSI_IMPLEMENT_GETTER(KSI_RFC3161, KSI_Integer*, tstInfoAlgo, TstInfoAlgo)
+KSI_IMPLEMENT_GETTER(KSI_RFC3161, KSI_OctetString*, sigAttrPrefix, SigAttrPrefix)
+KSI_IMPLEMENT_GETTER(KSI_RFC3161, KSI_OctetString*, sigAttrSuffix, SigAttrSuffix)
+KSI_IMPLEMENT_GETTER(KSI_RFC3161, KSI_Integer*, sigAttrAlgo, SigAttrAlgo)
+
+
+KSI_IMPLEMENT_SETTER(KSI_RFC3161, KSI_Integer*, aggregationTime, AggregationTime)
+KSI_IMPLEMENT_SETTER(KSI_RFC3161, KSI_LIST(KSI_Integer)*, chainIndex, ChainIndex)
+KSI_IMPLEMENT_SETTER(KSI_RFC3161, KSI_DataHash*, inputHash, InputHash)
+KSI_IMPLEMENT_SETTER(KSI_RFC3161, KSI_OctetString*, tstInfoPrefix, TstInfoPrefix)
+KSI_IMPLEMENT_SETTER(KSI_RFC3161, KSI_OctetString*, tstInfoSuffix, TstInfoSuffix)
+KSI_IMPLEMENT_SETTER(KSI_RFC3161, KSI_Integer*, tstInfoAlgo, TstInfoAlgo)
+KSI_IMPLEMENT_SETTER(KSI_RFC3161, KSI_OctetString*, sigAttrPrefix, SigAttrPrefix)
+KSI_IMPLEMENT_SETTER(KSI_RFC3161, KSI_OctetString*, sigAttrSuffix, SigAttrSuffix)
+KSI_IMPLEMENT_SETTER(KSI_RFC3161, KSI_Integer*, sigAttrAlgo, SigAttrAlgo)
+
+
 
 static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -373,6 +717,7 @@ static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
 	tmp->aggregationAuthRec = NULL;
 	tmp->aggregationChainList = NULL;
 	tmp->calendarAuthRec = NULL;
+	tmp->rfc3161 = NULL;
 	tmp->publication = NULL;
 
 	res = KSI_VerificationResult_init(&tmp->verificationResult, ctx);
@@ -732,7 +1077,6 @@ static int removeCalAuthAndPublication(KSI_Signature *sig) {
 	}
 	KSI_ERR_clearErrors(sig->ctx);
 
-
 	res = KSI_TLV_getNestedList(sig->baseTlv, &nested);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
@@ -867,7 +1211,6 @@ cleanup:
 }
 
 static int parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp, KSI_Signature **signature) {
-	KSI_ERR err;
 	int res;
 	KSI_TLV *tmpTlv = NULL;
 	KSI_TLV *respTlv = NULL;
@@ -883,8 +1226,6 @@ static int parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp, KSI
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
-
-
 
 	/* Parse the pdu */
 	res = KSI_AggregationResp_getBaseTlv(resp, &respTlv);
@@ -1045,7 +1386,6 @@ cleanup:
 
 
 int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature) {
-	KSI_ERR err;
 	int res;
 	KSI_RequestHandle *handle = NULL;
 	KSI_AggregationResp *response = NULL;
@@ -1059,7 +1399,12 @@ int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uin
 		goto cleanup;
 	}
 
-	res = createSignRequest(ctx, rootHash, rootLevel, &req);
+	if (rootLevel > 0xff) {
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Aggregation level can't be larger than 0xff.");
+		goto cleanup;
+	}
+
+	res = createSignRequest(ctx, rootHash, (int)rootLevel, &req);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1296,6 +1641,7 @@ void KSI_Signature_free(KSI_Signature *sig) {
 		KSI_CalendarAuthRec_free(sig->calendarAuthRec);
 		KSI_AggregationAuthRec_free(sig->aggregationAuthRec);
 		KSI_PublicationRecord_free(sig->publication);
+		KSI_RFC3161_free(sig->rfc3161);
 		KSI_VerificationResult_reset(&sig->verificationResult);
 
 		KSI_free(sig);
@@ -1823,6 +2169,7 @@ cleanup:
 static int verifyInternallyAggregationChain(KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
+	KSI_DataHash *inputHash = NULL;
 	int level;
 	size_t i;
 	int successCount = 0;
@@ -1834,10 +2181,26 @@ static int verifyInternallyAggregationChain(KSI_Signature *sig) {
 	hsh = NULL;
 
 	/* The aggregation level might not be 0 in case of local aggregation. */
-	level = sig->verificationResult.docAggrLevel;
+	if (sig->verificationResult.docAggrLevel > 0xff) {
+		KSI_pushError(sig->ctx, res = KSI_INVALID_FORMAT, "Aggregation level can't be larger than 0xff.");
+		goto cleanup;
+	}
+
+	level = (int)sig->verificationResult.docAggrLevel;
 
 	KSI_LOG_info(sig->ctx, "Verifying aggregation hash chain internal consistency.");
 
+	if (sig->rfc3161 != NULL) {
+		KSI_LOG_info(sig->ctx, "Using input hash calculated from RFC 3161 for aggregation.");
+		res = rfc3161_getInputToAggreChain(sig, &inputHash);
+		if (res != KSI_OK) goto cleanup;
+
+		res = rfc3161_verify(sig);
+		if (res != KSI_OK){
+			res = KSI_VerificationResult_addFailure(info, step, "RFC 3161 does not belong to this aggregation hash chain.");
+			goto cleanup;
+		}
+	}
 
 	/* Aggregate all the aggregation chains. */
 	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
@@ -1884,6 +2247,15 @@ static int verifyInternallyAggregationChain(KSI_Signature *sig) {
 
 		}
 
+		if (i == 0 && inputHash != NULL){
+			if (!KSI_DataHash_equals(inputHash, aggregationChain->inputHash)) {
+				KSI_LOG_logDataHash(sig->ctx, KSI_LOG_DEBUG, "Input hash from RFC 3161 :", inputHash);
+				KSI_LOG_logDataHash(sig->ctx, KSI_LOG_DEBUG, "Expected input hash      :", aggregationChain->inputHash);
+				res = KSI_VerificationResult_addFailure(info, step, "Aggregation hash chain's input hash does not match with RFC 3161 input hash.");
+				goto cleanup;
+			}
+		}
+
 		if (hsh != NULL) {
 			/* Validate input hash */
 			if (!KSI_DataHash_equals(hsh, aggregationChain->inputHash)) {
@@ -1923,6 +2295,7 @@ static int verifyInternallyAggregationChain(KSI_Signature *sig) {
 cleanup:
 
 	KSI_DataHash_free(hsh);
+	KSI_DataHash_free(inputHash);
 
 	return res;
 }
@@ -2239,8 +2612,15 @@ static int verifyDocument(KSI_Signature *sig) {
 	KSI_LOG_info(sig->ctx, "Verifying document hash.");
 	KSI_LOG_logDataHash(sig->ctx, KSI_LOG_DEBUG, "Verifying document hash", sig->verificationResult.documentHash);
 
-	res = KSI_Signature_getDocumentHash(sig, &hsh);
-	if (res != KSI_OK) goto cleanup;
+	if (sig->rfc3161 != NULL) {
+		KSI_LOG_info(sig->ctx, "Document hash is compared with RFC 3161 input hash.");
+		res = KSI_RFC3161_getInputHash(sig->rfc3161, &hsh);
+		if (res != KSI_OK) goto cleanup;
+	} else {
+		res = KSI_Signature_getDocumentHash(sig, &hsh);
+		if (res != KSI_OK) goto cleanup;
+	}
+
 
 	if (!KSI_DataHash_equals(hsh, sig->verificationResult.documentHash)) {
 		KSI_LOG_logDataHash(sig->ctx, KSI_LOG_DEBUG, "Document hash", sig->verificationResult.documentHash);
@@ -2570,7 +2950,6 @@ cleanup:
 }
 
 int KSI_Signature_verifyAggregated(KSI_Signature *sig, KSI_CTX *ctx, KSI_uint64_t level) {
-	KSI_ERR err;
 	int res;
 	KSI_CTX *useCtx = ctx;
 
@@ -2637,6 +3016,7 @@ int KSI_Signature_verifyAggregatedHash(KSI_Signature *sig, KSI_CTX *ctx, const K
 	KSI_CTX *useCtx = ctx;
 
 	KSI_ERR_clearErrors(ctx);
+
 	if (ctx == NULL || sig == NULL || rootHash == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
@@ -2656,7 +3036,7 @@ int KSI_Signature_verifyAggregatedHash(KSI_Signature *sig, KSI_CTX *ctx, const K
 
 	res = KSI_Signature_verifyPolicy(sig, KSI_VP_DOCUMENT, useCtx);
 	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
+		KSI_pushError(sig->ctx, res, NULL);
 		goto cleanup;
 	}
 

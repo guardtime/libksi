@@ -98,13 +98,8 @@ void CuAssertPtrEquals_LineMsg(CuTest* tc,
 #define MAX_TEST_CASES	1024
 
 #define SUITE_ADD_TEST(SUITE,TEST)	CuSuiteAdd(SUITE, CuTestNew(#TEST, TEST))
-#define SUITE_SKIP_TEST(SUITE, TEST, SKIPPED_BY, MSG) do{ \
-	CuTest* t = CuTestNew(#TEST, TEST);\
-	t->skip = 1; \
-	t->skippedBy = SKIPPED_BY; \
-	t->skipMessage = MSG; \
-	CuSuiteAdd(SUITE, t); \
-	} while(0) \
+#define SUITE_SKIP_TEST(SUITE, TEST, SKIPPED_BY, MSG) CuSuiteSkip(SUITE, CuTestNew(#TEST, TEST), SKIPPED_BY, MSG)
+
 
 typedef struct
 {
@@ -120,6 +115,7 @@ void CuSuiteInit(CuSuite* testSuite);
 CuSuite* CuSuiteNew(void);
 void CuSuiteDelete(CuSuite *testSuite);
 void CuSuiteAdd(CuSuite* testSuite, CuTest *testCase);
+void CuSuiteSkip(CuSuite* testSuite, CuTest *testCase, const char *skippedBy, const char *msg);
 void CuSuiteAddSuite(CuSuite* testSuite, CuSuite* testSuite2);
 void CuSuiteRun(CuSuite* testSuite);
 void CuSuiteSummary(CuSuite* testSuite, CuString* summary);

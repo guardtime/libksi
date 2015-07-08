@@ -54,8 +54,6 @@ extern "C" {
 		KSI_HASHALG_SHA2_384 = 0x04,
 		/** The SHA-512 algorithm. */
 		KSI_HASHALG_SHA2_512 = 0x05,
-		/** The RIPEMD-256 algorithm. */
-		KSI_HASHALG_RIPEMD_256 = 0x06,
 		/** The SHA3-244 algorithm. */
 		KSI_HASHALG_SHA3_244 = 0x07,
 		/** The SHA3-256 algorithm. */

@@ -1,0 +1,12 @@
+Source: libksi
+Section: devel
+Priority: optional
+Build-Depends: libcurl3, libssl1.0.0
+Maintainer: Guardtime <support@guardtime.com>
+
+Package: libksi
+Architecture: any
+Section: devel
+Priority: optional
+Depends: libcurl3, libssl1.0.0
+Description: KSI C API.

@@ -388,6 +388,31 @@ EXPORTS
 ;TLV templates
 EXPORTS
     KSI_AggregationPdu_template DATA
+    KSI_Signature_template DATA
+    KSI_CalAuthRecPKISignedData_template DATA
+    KSI_AggrAuthRecPKISignedData_template DATA
+    KSI_PublicationsHeader_template DATA
+    KSI_CertificateRecord_template DATA
+    KSI_PublicationData_template DATA
+    KSI_PublicationRecord_template DATA
+    KSI_MetaData_template DATA
+    KSI_HashChainLink_template DATA
+    KSI_Header_template DATA
+    KSI_Config_template DATA
+    KSI_AggregationHashChain_template DATA
+    KSI_RFC3161_template DATA
+    KSI_AggregationAuthRec_template DATA
+    KSI_CalendarAuthRec_template DATA
+    KSI_AggregationReq_template DATA
+    KSI_RequestAck_template DATA
+    KSI_CalendarHashChain_template DATA
+    KSI_ErrorPdu_template DATA
+    KSI_AggregationResp_template DATA
+    KSI_AggregationPdu_template DATA
+    KSI_ExtendReq_template DATA
+    KSI_ExtendResp_template DATA
+    KSI_ExtendPdu_template DATA
+    KSI_PublicationsFile_template DATA
 
 ;types.h
 EXPORTS

@@ -236,10 +236,13 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 		goto cleanup;
 	}
 
+	tc = NULL;
 
 	res = KSI_OK;
 
 cleanup:
+
+	TcpClientCtx_free(tc);
 
 	return res;
 }
