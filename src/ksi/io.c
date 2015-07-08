@@ -301,7 +301,7 @@ int KSI_IO_readSocket(int fd, void *buf, size_t size, size_t *readCount) {
 	int res = KSI_UNKNOWN_ERROR;
 	int c;
 	size_t rd = 0;
-	void *ptr = buf;
+	unsigned char *ptr = (unsigned char *) buf;
 	size_t len = size;
 
 	if (fd < 0 || buf == NULL || size == 0) {
@@ -310,8 +310,8 @@ int KSI_IO_readSocket(int fd, void *buf, size_t size, size_t *readCount) {
 	}
 
 #ifdef _WIN32
-	if(len > INT_MAX){
-		KSI_pushError(rdr->ctx, res = KSI_INVALID_ARGUMENT, "Unable to read more than MAX_INT from the socket.");
+	if (len > INT_MAX) {
+		res = KSI_BUFFER_OVERFLOW;
 		goto cleanup;
 	}
 #endif
@@ -319,7 +319,7 @@ int KSI_IO_readSocket(int fd, void *buf, size_t size, size_t *readCount) {
 
 	while (len > 0) {
 #ifdef _WIN32
-		c = recv(fd, ptr, (int)len, 0);
+		c = recv(fd, ptr, (int) len, 0);
 #else
 		c = recv(fd, ptr, len, 0);
 #endif
