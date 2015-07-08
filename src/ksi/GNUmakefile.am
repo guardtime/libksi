@@ -92,8 +92,8 @@ otherinclude_HEADERS = \
 	base32.h \
 	common.h \
 	crc32.h \
-    err.h \
-    fast_tlv.h \
+	err.h \
+	fast_tlv.h \
 	hash.h \
 	hashchain.h \
 	hmac.h \
