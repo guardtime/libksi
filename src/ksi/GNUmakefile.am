@@ -32,6 +32,8 @@ libksi_la_SOURCES = \
 	crc32.h \
 	ctx_impl.h \
 	err.h \
+	fast_tlv.h \
+	fast_tlv.c \
 	hash.c \
 	hashchain.c \
 	hashchain.h \
@@ -91,6 +93,7 @@ otherinclude_HEADERS = \
 	common.h \
 	crc32.h \
     err.h \
+    fast_tlv.h \
 	hash.h \
 	hashchain.h \
 	hmac.h \

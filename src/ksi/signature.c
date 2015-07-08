@@ -1563,14 +1563,9 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 	if (pubRec != NULL) {
 		KSI_PublicationData *pubData = NULL;
 
-		/* Make a copy of the original publication record .*/
-		res = KSI_PublicationRecord_new(signature->ctx, &pubRecClone);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
 
-		res = KSI_TlvTemplate_deepCopy(signature->ctx, pubRec, KSI_TLV_TEMPLATE(KSI_PublicationRecord), pubRecClone);
+		/* Make a copy of the original publication record .*/
+		res = KSI_PublicationRecord_clone(pubRec, &pubRecClone);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;

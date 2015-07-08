@@ -642,7 +642,7 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 		goto cleanup;
 	}
 
-	if(error){
+	if (error != NULL){
 		KSI_Utf8String *errorMsg = NULL;
 		KSI_Integer *status = NULL;
 		KSI_ErrorPdu_getErrorMessage(error, &errorMsg);

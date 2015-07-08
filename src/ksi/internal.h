@@ -27,6 +27,12 @@
 #include "err.h"
 #include "compatibility.h"
 
+#define KSI_TLV_MASK_TLV16 0x80u
+#define KSI_TLV_MASK_LENIENT 0x40u
+#define KSI_TLV_MASK_FORWARD 0x20u
+
+#define KSI_TLV_MASK_TLV8_TYPE 0x1fu
+
 /**
  * HTTP network client implementations.
  */

@@ -20,14 +20,9 @@
 #include <string.h>
 
 #include "internal.h"
+#include "fast_tlv.h"
 #include "tlv.h"
 #include "io.h"
-
-#define KSI_TLV_MASK_TLV16 0x80u
-#define KSI_TLV_MASK_LENIENT 0x40u
-#define KSI_TLV_MASK_FORWARD 0x20u
-
-#define KSI_TLV_MASK_TLV8_TYPE 0x1fu
 
 #define KSI_BUFFER_SIZE 0xffff + 1
 
@@ -239,52 +234,27 @@ static unsigned readFirstTlv(KSI_CTX *ctx, unsigned char *data, unsigned data_le
 	unsigned bytesConsumed = 0;
 
 	KSI_TLV *tmp = NULL;
-	int isNonCritical = 0;
-	int isForward = 0;
-	unsigned tag = 0;
-	unsigned hdrLen = 0;
-	unsigned length = 0;
+	KSI_FTLV ftlv;
 
 	if (ctx == NULL || data == NULL || tlv == NULL || data_length == 0) {
 		goto cleanup;
 	}
 
-	isNonCritical = data[0] & KSI_TLV_MASK_LENIENT;
-	isForward = data[0] & KSI_TLV_MASK_FORWARD;
+	memset(&ftlv, 0, sizeof(KSI_FTLV));
 
-	/* Is it a TLV8 or TLV16 */
-	if (data[0] & KSI_TLV_MASK_TLV16) {
-		/* TLV16 */
-		if (data_length < 4) goto cleanup;
-
-		hdrLen = 4;
-
-		tag = ((data[0] & KSI_TLV_MASK_TLV8_TYPE) << 8 ) | data[1];
-		/* Added masking for fortify. */
-		length = ((data[2] << 8) | data[3]) & 0xffff;
-	} else {
-		/* TLV8 */
-		if (data_length < 2) goto cleanup;
-
-		hdrLen = 2;
-		tag = data[0] & KSI_TLV_MASK_TLV8_TYPE;
-		length = data[1];
-	}
-
-	if (hdrLen + length > data_length) {
-		goto cleanup;
-	}
-
-	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
+	res = KSI_FTLV_memRead(data, data_length, &ftlv);
 	if (res != KSI_OK) goto cleanup;
 
-	tmp->datap = data + hdrLen;
-	tmp->datap_len = length;
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, ftlv.tag, ftlv.is_nc, ftlv.is_fwd, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	tmp->datap = data + ftlv.hdr_len;
+	tmp->datap_len = ftlv.dat_len;
 
 	*tlv = tmp;
 	tmp = NULL;
 
-	bytesConsumed = hdrLen + length;
+	bytesConsumed = ftlv.hdr_len + ftlv.dat_len;
 
 cleanup:
 
@@ -528,27 +498,40 @@ int KSI_TLV_fromReader(KSI_RDR *rdr, KSI_TLV **tlv) {
 	size_t consumed = 0;
 	KSI_TLV *tmp = NULL;
 	size_t offset = 0;
+	KSI_CTX *ctx = NULL;
 
+	if (rdr == NULL || tlv == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(ctx = KSI_RDR_getCtx(rdr));
 	KSI_RDR_getOffset(rdr, &offset);
 
 	res = KSI_TLV_readTlv(rdr, buf, sizeof(buf), &consumed);
-	if (res != KSI_OK) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	if(consumed > UINT_MAX){
-		KSI_pushError(KSI_RDR_getCtx(rdr), res = KSI_INVALID_ARGUMENT, "Unable to parse more data than UINT_MAX.");
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Unable to parse more data than UINT_MAX.");
 		goto cleanup;
 	}
 
 	if (consumed > 0) {
 		raw = KSI_malloc(consumed);
 		if (raw == NULL) {
-			res = KSI_OUT_OF_MEMORY;
+			KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 			goto cleanup;
 		}
 		memcpy(raw, buf, consumed);
+		KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Last raw read:", raw, consumed);
 
 		res = KSI_TLV_parseBlob2(KSI_RDR_getCtx(rdr), raw, (unsigned)consumed, 1, &tmp);
-		if (res != KSI_OK) goto cleanup;
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
 
 		raw = NULL;
 
