@@ -718,7 +718,7 @@ void KSI_ERR_clearErrors(KSI_CTX *ctx) {
 int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ERR *err = NULL;
-	unsigned int i;
+	size_t i;
 
 	fprintf(f, "KSI error trace:\n");
 	if (ctx->errors_count == 0) {
