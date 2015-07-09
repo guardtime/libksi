@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
 
 	/* Read the input file and calculate the hash of its contents. */
 	while (!feof(in)) {
-		buf_len = (unsigned)fread(buf, 1, sizeof(buf), in);
+		buf_len = fread(buf, 1, sizeof(buf), in);
 
 		/* Add  next block to the calculation. */
 		res = KSI_DataHasher_add(hsr, buf, buf_len);
