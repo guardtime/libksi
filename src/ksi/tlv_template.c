@@ -48,17 +48,6 @@ struct tlv_track_s {
 	const char *desc;
 };
 
-typedef struct KSI_TlvIndex_st {
-	struct {
-		KSI_FTLV tlv;
-		void *dat;
-		const void *ptr;
-		size_t lvl;
-		const KSI_TlvTemplate *tmpl;
-	} stack[512];
-	size_t len;
-} KSI_TlvIndex;
-
 static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, const KSI_TlvTemplate *tmpl, int (*generator)(void *, KSI_TLV **), struct tlv_track_s *tr, size_t tr_len, size_t tr_size);
 static int extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTemplate *tmpl, struct tlv_track_s *tr, size_t tr_len, size_t tr_size);
 
@@ -416,8 +405,6 @@ int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, unsigned raw_l
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tlv = NULL;
 	struct tlv_track_s tr[0xf];
-	KSI_TlvIndex ti;
-	KSI_FTLV ftlv;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || raw == NULL || tmpl == NULL || payload == NULL) {
