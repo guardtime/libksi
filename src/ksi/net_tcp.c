@@ -149,7 +149,16 @@ static int readResponse(KSI_RequestHandle *handle) {
     count = 0;
     while (count < handle->request_length) {
     	int c;
+
+#ifdef _WIN32
+    	if (handle->request_length > INT_MAX) {
+    		KSI_pushError(handle->ctx, res = KSI_BUFFER_OVERFLOW, "Unable to send more than MAX_INT bytes.");
+    		goto cleanup;
+    	}
+		c = send(sockfd, (char*)handle->request, (int) handle->request_length, 0);
+#else
 		c = send(sockfd, (char*)handle->request, handle->request_length, 0);
+#endif
 		if (c < 0) {
 			KSI_pushError(handle->ctx, res = KSI_NETWORK_ERROR, "Unable to write to socket.");
 			goto cleanup;

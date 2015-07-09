@@ -220,7 +220,7 @@ cleanup:
 	return res;
 }
 
-static int verifyUtf8(const unsigned char *str, unsigned len) {
+static int verifyUtf8(const unsigned char *str, size_t len) {
 	int res = KSI_UNKNOWN_ERROR;
     size_t i = 0;
     size_t charContinuationLen = 0;

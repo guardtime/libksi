@@ -75,8 +75,13 @@
 
 #ifdef _WIN32
 	typedef enum { false = 0, true = !false } bool;
+
 #  ifndef gmtime_r
 #    define gmtime_r(time, resultp) gmtime_s(resultp, time)
+#  endif
+
+#  ifndef DWORD_MAX
+#    define DWORD_MAX ((((size_t) 1) << (sizeof(DWORD) << 3)) - 1)
 #  endif
 #endif
 

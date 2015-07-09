@@ -1765,7 +1765,7 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_parse(KSI_CTX *ctx, unsigned char *raw, unsigned raw_len, KSI_Signature **sig) {
+int KSI_Signature_parse(KSI_CTX *ctx, unsigned char *raw, size_t raw_len, KSI_Signature **sig) {
 	KSI_TLV *tlv = NULL;
 	KSI_Signature *tmp = NULL;
 	int res;

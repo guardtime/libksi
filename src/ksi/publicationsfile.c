@@ -1148,7 +1148,7 @@ char *KSI_PublicationRecord_toString(KSI_PublicationRecord *t, char *buffer, siz
 	int res = KSI_UNKNOWN_ERROR;
 	char *ret = NULL;
 	char tmp[256];
-	unsigned len = 0;
+	size_t len = 0;
 	size_t i;
 
 	len += KSI_snprintf(buffer + len, buffer_len - len, "%s", KSI_PublicationData_toString(t->publishedData, tmp, sizeof(tmp)));

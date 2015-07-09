@@ -333,7 +333,7 @@ int KSI_IO_readSocket(int fd, void *buf, size_t size, size_t *readCount) {
 		}
 
 		/* Do this check just to be safe. */
-		if (c > len) {
+		if ((size_t) c > len) {
 			res = KSI_BUFFER_OVERFLOW;
 			goto cleanup;
 		}

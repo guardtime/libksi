@@ -689,11 +689,12 @@ static void smartServiceSetterSchemeTest(CuTest *tc, KSI_CTX *ctx, const char *s
 	char *scheme_ext_key = "tcp_ext_key";
 	char scheme_aggre_url[1024];
 	char scheme_ext_url[1024];
+	size_t len;
 
-	res = KSI_snprintf(scheme_aggre_url, sizeof(scheme_aggre_url), "%saggre.com:3331/", scheme);
-	CuAssert(tc, "Unable to generate aggregator url.", res != -1);
-	res = KSI_snprintf(scheme_ext_url, sizeof(scheme_ext_url), "%sext.com:8011/", scheme);
-	CuAssert(tc, "Unable to generate extender url.", res != -1);
+	len = KSI_snprintf(scheme_aggre_url, sizeof(scheme_aggre_url), "%saggre.com:3331/", scheme);
+	CuAssert(tc, "Unable to generate aggregator url.", len != 0);
+	len = KSI_snprintf(scheme_ext_url, sizeof(scheme_ext_url), "%sext.com:8011/", scheme);
+	CuAssert(tc, "Unable to generate extender url.", len != 0);
 
 	client = (KSI_UriClient*)ctx->netProvider;
 	CuAssert(tc, "KSI_CTX has no network provider.", client != NULL);

@@ -174,10 +174,14 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 	ctx = KSI_RequestHandle_getCtx(handle);
 	KSI_ERR_clearErrors(ctx);
 
+	if (handle->request_length > DWORD_MAX) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Request length is more than DWORD_MAX.");
+		goto cleanup;
+	}
 
 	wininetHandle = handle->implCtx;
 
-	if (!HttpSendRequestA(wininetHandle->request_handle, NULL, 0, (LPVOID) handle->request, handle->request_length)) {
+	if (!HttpSendRequestA(wininetHandle->request_handle, NULL, 0, (LPVOID) handle->request, (DWORD) handle->request_length)) {
 		WININET_ERROR_1(ctx, ERROR_INTERNET_CANNOT_CONNECT, KSI_NETWORK_ERROR, "WinINet: Unable to resolve host.")
 		WININET_ERROR_m(ctx, ERROR_INTERNET_NAME_NOT_RESOLVED, KSI_NETWORK_ERROR, "WinINet: HTTP status code header not found.")
 		WININET_ERROR_m(ctx, ERROR_INTERNET_TIMEOUT, KSI_NETWORK_SEND_TIMEOUT, NULL)
@@ -264,7 +268,7 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		goto cleanup;
 	}
 
-	if (handle->request_length > LONG_MAX) {
+	if (handle->request_length > DWORD_MAX) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "WinINet: Request too long.");
 		goto cleanup;
 	}

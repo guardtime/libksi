@@ -122,7 +122,7 @@ extern "C" {
 	 * \param[in]	data_len	Length of the data.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned char *data, unsigned data_len);
+	int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned char *data, size_t data_len);
 
 	/**
 	 * A helper function for logging plain #KSI_TLV objects. The log message will be prefixed

@@ -891,7 +891,7 @@ cleanup:
 	return res;
 }
 
-int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, unsigned data_len, const char *algoOid, const unsigned char *signature, size_t signature_len, const KSI_PKICertificate *certificate) {
+int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, size_t data_len, const char *algoOid, const unsigned char *signature, size_t signature_len, const KSI_PKICertificate *certificate) {
 	int res;
 	ASN1_OBJECT* algorithm = NULL;
     EVP_MD_CTX md_ctx;

@@ -433,7 +433,7 @@ return KSI_OK;
 int KSI_DataHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned char **data, size_t *data_len) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t len;
-	unsigned i;
+	size_t i;
 
 	if (metaHash == NULL || data == NULL || data_len == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -455,7 +455,7 @@ int KSI_DataHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned
 	}
 
 	/* Verify padding. */
-	for (i = len + (int)3; i < metaHash->imprint_length; i++) {
+	for (i = len + 3; i < metaHash->imprint_length; i++) {
 		if (metaHash->imprint[i] != 0) {
 			KSI_pushError(metaHash->ctx, res = KSI_INVALID_FORMAT, "Metahash not padded with zeros.");
 			goto cleanup;
@@ -520,8 +520,8 @@ cleanup:
 
 char *KSI_DataHash_toString(const KSI_DataHash *hsh, char *buf, size_t buf_len) {
 	char *ret = NULL;
-	unsigned i;
-	unsigned len = 0;
+	size_t i;
+	size_t len = 0;
 
 	if (hsh == NULL || buf == NULL) goto cleanup;
 

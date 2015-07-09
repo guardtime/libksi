@@ -127,7 +127,7 @@ extern "C" {
 	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, unsigned data_len, const char *algoOid, const unsigned char *signature, size_t signature_len, const KSI_PKICertificate *cert);
+	int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, size_t data_len, const char *algoOid, const unsigned char *signature, size_t signature_len, const KSI_PKICertificate *cert);
 
 	/**
 	 * Function for verifying the data with PKI Signature.

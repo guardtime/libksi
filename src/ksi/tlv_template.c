@@ -401,7 +401,7 @@ int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI
 	return res;
 }
 
-int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *tmpl, void *payload) {
+int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, size_t raw_len, const KSI_TlvTemplate *tmpl, void *payload) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tlv = NULL;
 	struct tlv_track_s tr[0xf];

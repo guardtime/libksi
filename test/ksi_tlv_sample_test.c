@@ -289,7 +289,7 @@ static void TestClone(CuTest *tc) {
 	}
 }
 
-static void testObjectSerialization(CuTest *tc, const char *sample, int (*parse)(KSI_CTX *, unsigned char *, unsigned, void **), int (*serialize)(void *, unsigned char **, size_t *), void (*objFree)(void *)) {
+static void testObjectSerialization(CuTest *tc, const char *sample, int (*parse)(KSI_CTX *, unsigned char *, size_t, void **), int (*serialize)(void *, unsigned char **, size_t *), void (*objFree)(void *)) {
 	int res;
 	void *pdu = NULL;
 	unsigned char in[0xffff + 4];
@@ -328,14 +328,14 @@ static void testObjectSerialization(CuTest *tc, const char *sample, int (*parse)
 
 static void aggregationPduTest(CuTest *tc) {
 	testObjectSerialization(tc, getFullResourcePath("resource/tlv/aggr_response.tlv"),
-			(int (*)(KSI_CTX *, unsigned char *, unsigned, void **))KSI_AggregationPdu_parse,
+			(int (*)(KSI_CTX *, unsigned char *, size_t, void **))KSI_AggregationPdu_parse,
 			(int (*)(void *, unsigned char **, size_t *))KSI_AggregationPdu_serialize,
 			( void (*)(void *))KSI_AggregationPdu_free);
 }
 
 static void extendPduTest(CuTest *tc) {
 	testObjectSerialization(tc, getFullResourcePath("resource/tlv/extend_response.tlv"),
-			(int (*)(KSI_CTX *, unsigned char *, unsigned, void **))KSI_ExtendPdu_parse,
+			(int (*)(KSI_CTX *, unsigned char *, size_t, void **))KSI_ExtendPdu_parse,
 			(int (*)(void *, unsigned char **, size_t *))KSI_ExtendPdu_serialize,
 			( void (*)(void *))KSI_ExtendPdu_free);
 }

@@ -454,7 +454,7 @@ extern "C" {
 	 * \param[in]	payload		Pointer to the payload which will be populated with the parsed data.
 	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	 int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *tmpl, void *payload);
+	 int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, size_t raw_len, const KSI_TlvTemplate *tmpl, void *payload);
 
 	/**
 	 * This function acts similarly as #KSI_TlvTemplate_extract but allows the caller to specify how the top level
