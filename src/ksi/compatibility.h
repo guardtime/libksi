@@ -37,7 +37,7 @@ extern "C" {
  * \param[in]		n		Maximum number of bytes to be written into buffer. Includes terminating NULL character.
  * \param[in]		format	Format string.
  * \param[in]		...		Extra parameters for formatting.
- * \return The number of characters written, not including terminating NUL character. On error -1 is returned.
+ * \return The number of characters written, not including terminating NUL character. On error 0 is returned.
  */
 size_t KSI_snprintf(char *buf, size_t n, const char *format, ... );
 
@@ -47,7 +47,7 @@ size_t KSI_snprintf(char *buf, size_t n, const char *format, ... );
  * \param[in]		n		Maximum number of bytes to be written into buffer. Includes terminating NULL character.
  * \param[in]		format	Format string.
  * \param[in]		va		variable list.
- * \return The number of characters written, not including terminating NUL character. On error -1 is returned.
+ * \return The number of characters written, not including terminating NUL character. On error 0 is returned.
  */
 size_t KSI_vsnprintf(char *buf, size_t n, const char *format, va_list va);
 
