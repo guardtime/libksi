@@ -24,6 +24,7 @@
 #include "types_base.h"
 #include "list.h"
 #include "common.h"
+#include "hash.h"
 
 
 #ifdef __cplusplus
@@ -79,18 +80,6 @@ extern "C" {
 	 * Implementation independent PKI truststore.
 	 */
 	typedef struct KSI_PKITruststore_st KSI_PKITruststore;
-
-	/**
-	 * This structure is used for calculating the hash values.
-	 * \see #KSI_DataHash, #KSI_DataHasher_open, #KSI_DataHasher_reset, #KSI_DataHasher_close, #KSI_DataHasher_free
-	 */
-	typedef struct KSI_DataHasher_st KSI_DataHasher;
-
-	/**
-	 * This structure represents hashed data.
-	 * \see #KSI_DataHasher, #KSI_DataHasher_close, #KSI_DataHash_free
-	 */
-	typedef struct KSI_DataHash_st KSI_DataHash;
 
 	/**
 	 * Network resource handle returned from functions sending or preparing network requests.
@@ -175,8 +164,8 @@ int KSI_MetaData_fromTlv(KSI_TLV *tlv, KSI_MetaData **metaData);
  */
 void KSI_ExtendPdu_free(KSI_ExtendPdu *t);
 int KSI_ExtendPdu_new(KSI_CTX *ctx, KSI_ExtendPdu **t);
-int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, int hashAlg, const char *key, KSI_DataHash **hmac);
-int KSI_ExtendPdu_updateHmac(KSI_ExtendPdu *pdu, int algorithm, const char *key);
+int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, KSI_HashAlgorithm algo_id, const char *key, KSI_DataHash **hmac);
+int KSI_ExtendPdu_updateHmac(KSI_ExtendPdu *pdu, KSI_HashAlgorithm algo_id, const char *key);
 int KSI_ExtendPdu_getHeader(const KSI_ExtendPdu *t, KSI_Header **header);
 int KSI_ExtendPdu_getRequest(const KSI_ExtendPdu *t, KSI_ExtendReq **request);
 int KSI_ExtendPdu_getResponse(const KSI_ExtendPdu *t, KSI_ExtendResp **response);
@@ -208,8 +197,8 @@ int KSI_ErrorPdu_setErrorMessage(KSI_ErrorPdu *pdu, KSI_Utf8String *errorMsg);
 
 void KSI_AggregationPdu_free(KSI_AggregationPdu *t);
 int KSI_AggregationPdu_new(KSI_CTX *ctx, KSI_AggregationPdu **t);
-int KSI_AggregationPdu_calculateHmac(KSI_AggregationPdu *t, int hashAlg, const char *key, KSI_DataHash **hmac);
-int KSI_AggregationPdu_updateHmac(KSI_AggregationPdu *pdu, int algorithm, const char *key);
+int KSI_AggregationPdu_calculateHmac(KSI_AggregationPdu *t, KSI_HashAlgorithm algo_id, const char *key, KSI_DataHash **hmac);
+int KSI_AggregationPdu_updateHmac(KSI_AggregationPdu *pdu, KSI_HashAlgorithm algo_id, const char *key);
 int KSI_AggregationPdu_getHeader(const KSI_AggregationPdu *t, KSI_Header **header);
 int KSI_AggregationPdu_getRequest(const KSI_AggregationPdu *t, KSI_AggregationReq **request);
 int KSI_AggregationPdu_getResponse(const KSI_AggregationPdu *t, KSI_AggregationResp **response);

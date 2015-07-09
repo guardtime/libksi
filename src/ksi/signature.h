@@ -212,13 +212,13 @@ extern "C" {
 	/**
 	 * Access method for the hash algorithm used to hash the signed document.
 	 * \param[in]		sig			KSI signature.
-	 * \param[out]		hash_id		Pointer to the receiving hash id variable.
+	 * \param[out]		algo_id		Pointer to the receiving hash id variable.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_DataHasher_open, #KSI_DataHash_create, #KSI_DataHasher_close,
 	 * #KSI_Signature_createDataHasher.
 	 */
-	int KSI_Signature_getHashAlgorithm(KSI_Signature *sig, int *hash_id);
+	int KSI_Signature_getHashAlgorithm(KSI_Signature *sig, KSI_HashAlgorithm *algo_id);
 
 	/**
 	 * This method creates a data hasher object to be used on the signed data.

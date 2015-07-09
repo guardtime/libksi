@@ -424,7 +424,7 @@ cleanup:
 int pdu_verify_hmac(KSI_CTX *ctx, KSI_DataHash *hmac,const char *key, int (*calculateHmac)(void*, int, const char*, KSI_DataHash**) ,void *PDU){
 	int res;
 	KSI_DataHash *actualHmac = NULL;
-	int hashAlg;
+	KSI_HashAlgorithm algo_id;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -435,13 +435,13 @@ int pdu_verify_hmac(KSI_CTX *ctx, KSI_DataHash *hmac,const char *key, int (*calc
 
 
 	/* Check HMAC. */
-	res = KSI_DataHash_getHashAlg(hmac, &hashAlg);
+	res = KSI_DataHash_getHashAlg(hmac, &algo_id);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = calculateHmac(PDU, hashAlg, key, &actualHmac);
+	res = calculateHmac(PDU, algo_id, key, &actualHmac);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;

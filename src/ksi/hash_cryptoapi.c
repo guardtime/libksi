@@ -65,9 +65,9 @@ cleanup:
 /**
  * Converts hash function ID from hash chain to crypto api identifier
  */
-static const ALG_ID hashAlgorithmToALG_ID(int hash_id)
+static const ALG_ID hashAlgorithmToALG_ID(KSI_HashAlgorithm algo_id)
 {
-	switch (hash_id) {
+	switch (algo_id) {
 		case KSI_HASHALG_SHA1:
 			return CALG_SHA1;
 		case KSI_HASHALG_SHA2_256:
@@ -121,7 +121,7 @@ static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 		goto cleanup;
 	}
 
-	data_hash->imprint[0] = (unsigned char)hasher->algorithm;
+	data_hash->imprint[0] = (unsigned char) hasher->algorithm;
 	data_hash->imprint_length = digest_length + 1;
 
 	res = KSI_OK;
@@ -132,8 +132,8 @@ cleanup:
 }
 
 
-int KSI_isHashAlgorithmSupported(int hash_id) {
-	return hashAlgorithmToALG_ID(hash_id) != 0;
+int KSI_isHashAlgorithmSupported(KSI_HashAlgorithm algo_id) {
+	return hashAlgorithmToALG_ID(algo_id) != 0;
 }
 
 
@@ -145,7 +145,7 @@ void KSI_DataHasher_free(KSI_DataHasher *hasher) {
 }
 
 
-int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
+int KSI_DataHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHasher **hasher) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHasher *tmp_hasher = NULL;
 	CRYPTO_HASH_CTX *tmp_cryptoCTX = NULL;
@@ -158,7 +158,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
 	}
 
 	/*Test if hash algorithm is valid*/
-	if (!KSI_isHashAlgorithmSupported(hash_id)) {
+	if (!KSI_isHashAlgorithmSupported(algo_id)) {
 		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
 		goto cleanup;
 	}
@@ -172,7 +172,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
 
 	tmp_hasher->hashContext = NULL;
 	tmp_hasher->ctx = ctx;
-	tmp_hasher->algorithm = hash_id;
+	tmp_hasher->algorithm = algo_id;
 	tmp_hasher->closeExisting = closeExisting;
 
 	/*Create new helper context for crypto api*/

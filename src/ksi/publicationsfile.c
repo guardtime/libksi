@@ -877,8 +877,8 @@ int KSI_PublicationData_fromBase32(KSI_CTX *ctx, const char *publication, KSI_Pu
 	unsigned i;
 	unsigned long tmp_ulong;
 	KSI_uint64_t tmp_uint64;
-	int hash_alg;
-	unsigned int hash_size;
+	KSI_HashAlgorithm algo_id;
+	size_t hash_size;
 	KSI_DataHash *pubHash = NULL;
 	KSI_Integer *pubTime = NULL;
 
@@ -940,13 +940,13 @@ int KSI_PublicationData_fromBase32(KSI_CTX *ctx, const char *publication, KSI_Pu
 	pubTime = NULL;
 
 
-	hash_alg = binary_publication[8];
-	if (!KSI_isHashAlgorithmSupported(hash_alg)) {
+	algo_id = binary_publication[8];
+	if (!KSI_isHashAlgorithmSupported(algo_id)) {
 		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
 		goto cleanup;
 	}
 
-	hash_size = KSI_getHashLength(hash_alg);
+	hash_size = KSI_getHashLength(algo_id);
 	if (binary_publication_length != 8 + 1 + hash_size + 4) {
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
 		goto cleanup;

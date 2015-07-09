@@ -589,12 +589,11 @@ static int rfc3161_getInputToAggreChain(const KSI_Signature *sig, KSI_DataHash *
 	KSI_DataHash *tmp = NULL;
 	KSI_DataHasher *hsr = NULL;
 	KSI_RFC3161 *rfc = NULL;
-	int algToUse = -1;
 	const unsigned char *imprint = NULL;
 	size_t imprint_len = 0;
-	int algId = -1;
-	int tstInfoAlgo;
-	int sigAttrAlgo;
+	KSI_HashAlgorithm algo_id = -1;
+	KSI_HashAlgorithm tstInfoAlgoId;
+	KSI_HashAlgorithm sigAttrAlgoId;
 
 	if (sig == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -622,17 +621,17 @@ static int rfc3161_getInputToAggreChain(const KSI_Signature *sig, KSI_DataHash *
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Hash algorithm can't be larger than 0xff.");
 		goto cleanup;
 	} else {
-		tstInfoAlgo = (int)KSI_Integer_getUInt64(rfc->tstInfoAlgo);
-		sigAttrAlgo = (int)KSI_Integer_getUInt64(rfc->sigAttrAlgo);
+		tstInfoAlgoId = (int)KSI_Integer_getUInt64(rfc->tstInfoAlgo);
+		sigAttrAlgoId = (int)KSI_Integer_getUInt64(rfc->sigAttrAlgo);
 	}
 
-	res = rfc3161_preSufHasher(ctx, rfc->tstInfoPrefix, rfc->inputHash, rfc->tstInfoSuffix, tstInfoAlgo, &hsh_tstInfo);
+	res = rfc3161_preSufHasher(ctx, rfc->tstInfoPrefix, rfc->inputHash, rfc->tstInfoSuffix, tstInfoAlgoId, &hsh_tstInfo);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = rfc3161_preSufHasher(ctx, rfc->sigAttrPrefix, hsh_tstInfo, rfc->sigAttrSuffix, sigAttrAlgo, &hsh_sigAttr);
+	res = rfc3161_preSufHasher(ctx, rfc->sigAttrPrefix, hsh_tstInfo, rfc->sigAttrSuffix, sigAttrAlgoId, &hsh_sigAttr);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -644,13 +643,13 @@ static int rfc3161_getInputToAggreChain(const KSI_Signature *sig, KSI_DataHash *
 		goto cleanup;
 	}
 
-	res = KSI_Signature_getHashAlgorithm((KSI_Signature *)sig, &algId);
+	res = KSI_Signature_getHashAlgorithm((KSI_Signature *)sig, &algo_id);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = KSI_DataHash_create(ctx, imprint, imprint_len, algId, &tmp);
+	res = KSI_DataHash_create(ctx, imprint, imprint_len, algo_id, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
 		goto cleanup;
@@ -2037,10 +2036,10 @@ KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_CalendarAuthRec*, calendarAuthRec, Calen
 
 KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_PublicationRecord*, publication, PublicationRecord)
 
-int KSI_Signature_getHashAlgorithm(KSI_Signature *sig, int *hash_id) {
+int KSI_Signature_getHashAlgorithm(KSI_Signature *sig, KSI_HashAlgorithm *algo_id) {
 	KSI_DataHash *hsh = NULL;
 	int res;
-	int tmp = -1;
+	KSI_HashAlgorithm tmp = -1;
 
 	if (sig == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -2061,7 +2060,7 @@ int KSI_Signature_getHashAlgorithm(KSI_Signature *sig, int *hash_id) {
 		goto cleanup;
 	}
 
-	*hash_id = tmp;
+	*algo_id = tmp;
 
 	res = KSI_OK;
 
@@ -2076,7 +2075,7 @@ int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, si
 	int res;
 	KSI_DataHash *hsh = NULL;
 
-	int hash_id = -1;
+	KSI_HashAlgorithm algo_id = -1;
 
 	KSI_ERR_clearErrors(ctx);
 	if (sig == NULL || ctx == NULL || doc == NULL) {
@@ -2084,14 +2083,13 @@ int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, si
 		goto cleanup;
 	}
 
-
-	res = KSI_Signature_getHashAlgorithm(sig, &hash_id);
+	res = KSI_Signature_getHashAlgorithm(sig, &algo_id);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = KSI_DataHash_create(ctx, doc, doc_len, hash_id, &hsh);
+	res = KSI_DataHash_create(ctx, doc, doc_len, algo_id, &hsh);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -2115,7 +2113,7 @@ cleanup:
 int KSI_Signature_createDataHasher(KSI_Signature *sig, KSI_DataHasher **hsr) {
 	int res;
 	KSI_DataHasher *tmp = NULL;
-	int hash_id = -1;
+	KSI_HashAlgorithm algo_id = -1;
 
 	if (sig == NULL || hsr == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -2123,13 +2121,13 @@ int KSI_Signature_createDataHasher(KSI_Signature *sig, KSI_DataHasher **hsr) {
 	}
 	KSI_ERR_clearErrors(sig->ctx);
 
-	res = KSI_Signature_getHashAlgorithm(sig, &hash_id);
+	res = KSI_Signature_getHashAlgorithm(sig, &algo_id);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = KSI_DataHasher_open(sig->ctx, hash_id, &tmp);
+	res = KSI_DataHasher_open(sig->ctx, algo_id, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
 		goto cleanup;

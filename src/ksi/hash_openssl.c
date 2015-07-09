@@ -28,7 +28,7 @@
 /**
  * Converts hash function ID from hash chain to OpenSSL identifier
  */
-static const EVP_MD *hashAlgorithmToEVP(int hash_id)
+static const EVP_MD *hashAlgorithmToEVP(KSI_HashAlgorithm hash_id)
 {
 	switch (hash_id) {
 #ifndef OPENSSL_NO_SHA
@@ -65,9 +65,9 @@ static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 	}
 	KSI_ERR_clearErrors(hasher->ctx);
 
-	/* Make sure the algorithm id fits into a single  byte. */
-	if (hasher->algorithm > 0xff) {
-		KSI_pushError(hasher->ctx, res = KSI_INVALID_ARGUMENT, "Algorithm ID too large.");
+	/* Make sure the algorithm is supported. */
+	if (!KSI_isHashAlgorithmSupported(hasher->algorithm)) {
+		KSI_pushError(hasher->ctx, res = KSI_INVALID_ARGUMENT, "Algorithm ID not supported.");
 		goto cleanup;
 	}
 
@@ -96,8 +96,8 @@ cleanup:
 	return res;
 }
 
-int KSI_isHashAlgorithmSupported(int hash_id) {
-	return hashAlgorithmToEVP(hash_id) != NULL;
+int KSI_isHashAlgorithmSupported(KSI_HashAlgorithm algo_id) {
+	return hashAlgorithmToEVP(algo_id) != NULL;
 }
 
 void KSI_DataHasher_free(KSI_DataHasher *hasher) {
@@ -107,7 +107,7 @@ void KSI_DataHasher_free(KSI_DataHasher *hasher) {
 	}
 }
 
-int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
+int KSI_DataHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHasher **hasher) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHasher *tmp_hasher = NULL;
 
@@ -117,7 +117,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
 		goto cleanup;
 	}
 
-	if (!KSI_isHashAlgorithmSupported(hash_id)) {
+	if (!KSI_isHashAlgorithmSupported(algo_id)) {
 		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
 		goto cleanup;
 	}
@@ -130,7 +130,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, int hash_id, KSI_DataHasher **hasher) {
 
 	tmp_hasher->hashContext = NULL;
 	tmp_hasher->ctx = ctx;
-	tmp_hasher->algorithm = hash_id;
+	tmp_hasher->algorithm = algo_id;
 	tmp_hasher->closeExisting = closeExisting;
 
 	res = KSI_DataHasher_reset(tmp_hasher);

@@ -42,7 +42,7 @@ static char *KSI_HASHALG_SM3_aliases[] = { "SM-3", ""};
 
 static struct KSI_hashAlgorithmInfo_st {
 	/* Hash algorithm id (should mirror the array index in #KSI_hashAlgorithmInfo) */
-	int algo_id;
+	KSI_HashAlgorithm algo_id;
 	/** Upper-case name. */
 	char *name;
 	/** Hash bit count. */
@@ -79,16 +79,16 @@ void KSI_DataHash_free(KSI_DataHash *hash) {
 /**
  *
  */
-int KSI_isHashAlgorithmTrusted(int hash_id) {
-	if (hash_id >= 0 && hash_id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
-		return KSI_hashAlgorithmInfo[hash_id].trusted;
+int KSI_isHashAlgorithmTrusted(KSI_HashAlgorithm algo_id) {
+	if (algo_id >= 0 && algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
+		return KSI_hashAlgorithmInfo[algo_id].trusted;
 	}
 	return 0;
 }
 
-unsigned int KSI_getHashLength(int hash_id) {
-	if (hash_id >= 0 && hash_id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
-		return (KSI_hashAlgorithmInfo[hash_id].bitCount) >> 3;
+unsigned int KSI_getHashLength(KSI_HashAlgorithm algo_id) {
+	if (algo_id >= 0 && algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
+		return (KSI_hashAlgorithmInfo[algo_id].bitCount) >> 3;
 	}
 	return 0;
 }
@@ -96,7 +96,7 @@ unsigned int KSI_getHashLength(int hash_id) {
 /**
  *
  */
-int KSI_DataHash_extract(const KSI_DataHash *hash, int *hash_id, const unsigned char **digest, size_t *digest_length) {
+int KSI_DataHash_extract(const KSI_DataHash *hash, KSI_HashAlgorithm *algo_id, const unsigned char **digest, size_t *digest_length) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (hash == NULL) {
@@ -106,7 +106,7 @@ int KSI_DataHash_extract(const KSI_DataHash *hash, int *hash_id, const unsigned 
 	KSI_ERR_clearErrors(hash->ctx);
 
 	if (digest_length != NULL) *digest_length = hash->imprint_length - 1;
-	if (hash_id != NULL) *hash_id = hash->imprint[0];
+	if (algo_id != NULL) *algo_id = hash->imprint[0];
 	if (digest != NULL) {
 		*digest = hash->imprint + 1;
 	}
@@ -121,7 +121,7 @@ cleanup:
 /**
  *
  */
-int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *digest, size_t digest_length, KSI_DataHash **hash) {
+int KSI_DataHash_fromDigest(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const unsigned char *digest, size_t digest_length, KSI_DataHash **hash) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *tmp_hash = NULL;
 
@@ -132,7 +132,7 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *dige
 	}
 
 	/* Verify the length of the digest with the algorithm. */
-	if (KSI_getHashLength(hash_id) != digest_length) {
+	if (KSI_getHashLength(algo_id) != digest_length) {
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Digest length does not match with algorithm.");
 		goto cleanup;
 	}
@@ -152,7 +152,7 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, int hash_id, const unsigned char *dige
 	tmp_hash->refCount = 1;
 	tmp_hash->ctx = ctx;
 
-	tmp_hash->imprint[0] = (unsigned char)hash_id;
+	tmp_hash->imprint[0] = (unsigned char)algo_id;
 	memcpy(tmp_hash->imprint + 1, digest, digest_length);
 	tmp_hash->imprint_length = digest_length + 1;
 
@@ -199,9 +199,9 @@ int KSI_DataHash_fromImprint(KSI_CTX *ctx, const unsigned char *imprint, size_t 
 /**
  *
  */
-const char *KSI_getHashAlgorithmName(int hash_id) {
-	if (hash_id >= 0 && hash_id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
-		return KSI_hashAlgorithmInfo[hash_id].name;
+const char *KSI_getHashAlgorithmName(KSI_HashAlgorithm algo_id) {
+	if (algo_id >= 0 && algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
+		return KSI_hashAlgorithmInfo[algo_id].name;
 	}
 	return NULL;
 }
@@ -209,9 +209,9 @@ const char *KSI_getHashAlgorithmName(int hash_id) {
 /**
  *
  */
-int KSI_getHashAlgorithmByName(const char *name) {
-	int algorithm_id;
-	int hash_id = -1;
+KSI_HashAlgorithm KSI_getHashAlgorithmByName(const char *name) {
+	size_t i;
+	KSI_HashAlgorithm algo_id = -1;
 	int alias_id;
 
 	char *alias = NULL;
@@ -223,30 +223,30 @@ int KSI_getHashAlgorithmByName(const char *name) {
 	if (upperName == NULL) goto cleanup;
 
 	/* Create upper-case name */
-	for (algorithm_id = 0; algorithm_id < (int)strlen(name); algorithm_id++) {
-		if (name[algorithm_id] == '_') {
-			upperName[algorithm_id] = '-';
+	for (i = 0; i < (int) strlen(name); i++) {
+		if (name[i] == '_') {
+			upperName[i] = '-';
 		} else {
-			upperName[algorithm_id] = (char)toupper(name[algorithm_id]);
+			upperName[i] = (char) toupper(name[i]);
 		}
 	}
-	upperName[algorithm_id] = '\0';
+	upperName[i] = '\0';
 
-	for (algorithm_id = 0; algorithm_id < KSI_NUMBER_OF_KNOWN_HASHALGS; algorithm_id++) {
+	for (i = 0; i < KSI_NUMBER_OF_KNOWN_HASHALGS; i++) {
 		/* Skip all records without a name. */
-		if (KSI_hashAlgorithmInfo[algorithm_id].name == NULL) continue;
+		if (KSI_hashAlgorithmInfo[i].name == NULL) continue;
 
 		/* Do we have a bingo? */
-		if (!strcmp(upperName, KSI_hashAlgorithmInfo[algorithm_id].name)) {
-			hash_id = algorithm_id;
+		if (!strcmp(upperName, KSI_hashAlgorithmInfo[i].name)) {
+			algo_id = i;
 			goto cleanup;
 		}
 
 		alias_id = 0;
 		/* Loop until a null pointer or empty string. */
-		while ((alias = KSI_hashAlgorithmInfo[algorithm_id].aliases[alias_id++]) && *alias) {
+		while ((alias = KSI_hashAlgorithmInfo[i].aliases[alias_id++]) && *alias) {
 			if (!strcmp(upperName, alias)) {
-				hash_id = algorithm_id;
+				algo_id = i;
 				goto cleanup;
 			}
 		}
@@ -257,13 +257,13 @@ cleanup:
 	KSI_free(upperName);
 	KSI_nofree(alias);
 
-	return hash_id;
+	return algo_id;
 }
 
 /**
  *
  */
-int KSI_DataHash_create(KSI_CTX *ctx, const void *data, size_t data_length, int hash_id, KSI_DataHash **hash) {
+int KSI_DataHash_create(KSI_CTX *ctx, const void *data, size_t data_length, KSI_HashAlgorithm algo_id, KSI_DataHash **hash) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
 	KSI_DataHasher *hsr = NULL;
@@ -274,7 +274,7 @@ int KSI_DataHash_create(KSI_CTX *ctx, const void *data, size_t data_length, int 
 		goto cleanup;
 	}
 
-	res = KSI_DataHasher_open(ctx, hash_id, &hsr);
+	res = KSI_DataHasher_open(ctx, algo_id, &hsr);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -420,14 +420,14 @@ cleanup:
 	return res;
 }
 
-int KSI_DataHash_getHashAlg(const KSI_DataHash *hash, int *hashAlg){
+int KSI_DataHash_getHashAlg(const KSI_DataHash *hash, KSI_HashAlgorithm *algo_id){
 	if (hash == NULL) return KSI_INVALID_ARGUMENT;
-	if (hashAlg == NULL) return KSI_INVALID_ARGUMENT;
+	if (algo_id == NULL) return KSI_INVALID_ARGUMENT;
 	if (hash->imprint == NULL) return KSI_INVALID_ARGUMENT;
 	
-	*hashAlg = hash->imprint[0];
+	*algo_id = hash->imprint[0];
 	
-return KSI_OK;
+	return KSI_OK;
 }
 
 int KSI_DataHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned char **data, size_t *data_len) {

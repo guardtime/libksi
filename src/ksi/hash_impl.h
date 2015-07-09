@@ -47,7 +47,7 @@ extern "C" {
 		void *hashContext;
 
 		/** Algorithm id */
-		int algorithm;
+		KSI_HashAlgorithm algorithm;
 
 		/** This function functions similarly to #KSI_DataHasher_close except, it
 		 * modifies an existing #KSI_DataHash. This function may not be publicly
