@@ -22,13 +22,12 @@
 #include <stdio.h>
 #include <limits.h>
 
-/*TODO: Is it possible to avoid pointless buffer filling?*/
 size_t KSI_vsnprintf(char *buf, size_t n, const char *format, va_list va){
 	size_t ret = 0;
 	int tmp;
 	if (n == 0 || buf == NULL || format == NULL || n > INT_MAX) return 0;
 #ifdef _WIN32
-	/*NOTE: If there is empty space in buf, it will be filled with 0x00 or 0xfe*/
+	/* NOTE: If there is empty space in buf, it will be filled with 0x00 or 0xfe */
 	tmp = vsnprintf_s(buf, n, _TRUNCATE, format, va);
 	if (tmp == -1) return n - 1;
 #else
@@ -49,9 +48,14 @@ size_t KSI_snprintf(char *buf, size_t n, const char *format, ... ){
 }
 
 char *KSI_strncpy (char *destination, const char *source, size_t n){
-	char *ret;
-	if (n==0 || destination == NULL || source == NULL) return NULL;
-	destination[n-1] = 0;
-	ret = strncpy(destination, source, n-1);
+	char *ret = NULL;
+	if (n == 0 || destination == NULL || source == NULL) {
+		goto cleanup;
+	}
+	ret = strncpy(destination, source, n - 1);
+	destination[n - 1] = 0;
+
+cleanup:
+
 	return ret;
 }
