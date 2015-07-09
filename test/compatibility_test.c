@@ -35,15 +35,15 @@ static void Test_KSI_snprintf(CuTest* tc) {
 	memset(empty, 0xFF, sizeof(empty));
 
 	len = KSI_snprintf(dest, 8, "%s", "1234567890");
-	CuAssert(tc, "KSI_snprintf failed.", len == 7 && dest[7] == 0 && strcmp(dest, "1234567") == 0);
+	CuAssert(tc, "KSI_snprintf failed.", len == 7 && dest[7] == 0 && !strcmp(dest, "1234567"));
 	memset(dest, 0xFF, sizeof(dest));
 	
 	len = KSI_snprintf(dest, 4, "%d%c%d%d%d%d%d%d%d%d", 1, '2', 3, 4, 5, 6, 7, 8, 9, 0);
-	CuAssert(tc, "KSI_snprintf failed.", len == 3 && dest[3] == 0 && strcmp(dest, "123") == 0);
+	CuAssert(tc, "KSI_snprintf failed.", len == 3 && dest[3] == 0 && !strcmp(dest, "123"));
 	memset(dest, 0xFF, sizeof(dest));
 	
 	len = KSI_snprintf(dest, 8, "%s", "12345");
-	CuAssert(tc, "KSI_snprintf failed.", len == 5 && dest[5] == 0 && strcmp(dest, "12345") == 0);
+	CuAssert(tc, "KSI_snprintf failed.", len == 5 && dest[5] == 0 && !strcmp(dest, "12345") );
 	memset(dest, 0xFF, sizeof(dest));
 	
 	len = KSI_snprintf(dest, 0, "%s", "12345");

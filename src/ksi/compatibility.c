@@ -25,16 +25,25 @@
 size_t KSI_vsnprintf(char *buf, size_t n, const char *format, va_list va){
 	size_t ret = 0;
 	int tmp;
-	if (n == 0 || buf == NULL || format == NULL || n > INT_MAX) return 0;
+	if (n == 0 || buf == NULL || format == NULL || n > INT_MAX) goto cleanup;
 #ifdef _WIN32
-	/* NOTE: If there is empty space in buf, it will be filled with 0x00 or 0xfe */
+	/* NOTE: If there is empty space in buf, it will be filled with 0x00 or 0xfe. */
 	tmp = vsnprintf_s(buf, n, _TRUNCATE, format, va);
-	if (tmp == -1) return n - 1;
+	if (tmp < 0) {
+		ret = n - 1;
+		goto cleanup;
+	}
+	ret = (size_t) tmp;
 #else
 	ret = vsnprintf(buf, n, format, va);
-	if (ret >= n) return n - 1;
+	if (ret >= n) {
+		ret = n - 1;
+		goto cleanup;
+	}
 #endif
 	
+cleanup:
+
 	return ret;
 }
 
