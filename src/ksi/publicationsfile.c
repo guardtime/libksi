@@ -354,7 +354,7 @@ static int publicationsFileTLV_getSignedDataLen(KSI_TLV *pubFileTlv, size_t *len
 	KSI_TLVList *list = NULL;
 	KSI_TLV *tlvSig = NULL;
 	unsigned char *raw = NULL;
-	unsigned raw_len;
+	size_t raw_len;
 	size_t sig_len;
 	KSI_CTX *ctx = NULL;
 
@@ -401,10 +401,10 @@ cleanup:
 int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, char **raw, size_t *raw_len) {
 	int res;
 	char *buf = NULL;
-	unsigned buf_len = 0;
+	size_t buf_len = 0;
 	KSI_TLV *tlv = NULL;
 	char *tmp = NULL;
-	unsigned tmp_len = 0;
+	size_t tmp_len = 0;
 	size_t sig_len;
 
 	KSI_ERR_clearErrors(ctx);

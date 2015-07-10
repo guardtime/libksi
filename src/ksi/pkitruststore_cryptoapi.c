@@ -187,10 +187,10 @@ int KSI_PKICertificate_toTlv(KSI_CTX *ctx, KSI_PKICertificate *cert, unsigned ta
 		goto cleanup;
 	}
 
-	
+
 	*tlv = tmp;
 	tmp = NULL;
-	
+
 	res = KSI_OK;
 
 cleanup:
@@ -412,13 +412,13 @@ int KSI_PKISignature_toTlv(KSI_CTX *ctx, KSI_PKISignature *sig, unsigned tag, in
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-	
+
 	*tlv = tmp;
 	tmp = NULL;
 
 
 	res = KSI_OK;
-	
+
 cleanup:
 
 	KSI_free(raw);
@@ -534,7 +534,6 @@ int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, 
 	int res = KSI_UNKNOWN_ERROR;
 	unsigned char *tmp_serialized = NULL;
 	DWORD len = 0;
-	char buf[1024];
 
 
 	if (cert == NULL || raw == NULL || raw_len == NULL){

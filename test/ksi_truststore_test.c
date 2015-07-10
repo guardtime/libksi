@@ -87,9 +87,9 @@ static void TestParseAndSeraializeCert(CuTest *tc) {
 	KSI_TLV *tlv = NULL;
 	KSI_PKICertificate *cert = NULL;
 	char *raw_crt = NULL;
-	unsigned raw_crt_len;
+	size_t raw_crt_len;
 	char *raw = NULL;
-	unsigned raw_len;
+	size_t raw_len;
 
 	KSI_ERR_clearErrors(ctx);
 
