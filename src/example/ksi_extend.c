@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
 	KSI_Signature *ext = NULL;
 	KSI_HttpClient *net = NULL;
 	unsigned char *raw = NULL;
-	unsigned raw_len;
+	size_t raw_len;
 	unsigned count;
 	FILE *logFile = NULL;
 
@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	count = (unsigned)fwrite(raw, 1, raw_len, out);
+	count = (unsigned) fwrite(raw, 1, raw_len, out);
 	if (count != raw_len) {
 		fprintf(stderr, "Failed to write output file.\n");
 		res = KSI_IO_ERROR;

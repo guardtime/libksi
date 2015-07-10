@@ -37,10 +37,10 @@ int main(int argc, char **argv) {
 	KSI_Signature *sign = NULL;
 
 	unsigned char *raw = NULL;
-	unsigned raw_len;
+	size_t raw_len;
 
 	unsigned char buf[1024];
-	unsigned buf_len;
+	size_t buf_len;
 
 	char *signerIdentity = NULL;
 	KSI_TcpClient *net = NULL;

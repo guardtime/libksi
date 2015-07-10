@@ -194,7 +194,7 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 	int res;
 	winhttpNetHandleCtx *nhc = NULL;
 	unsigned char *request = NULL;
-	unsigned request_len = 0;
+	size_t request_len = 0;
 	unsigned char *resp = NULL;
 	DWORD resp_len = 0;
 	KSI_CTX *ctx = NULL;
@@ -218,8 +218,13 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 		goto cleanup;
 	}
 
-	/*Send request*/
-	if (!WinHttpSendRequest(nhc->request_handle, WINHTTP_NO_ADDITIONAL_HEADERS,0, (LPVOID) request, request_len, request_len,0)) {
+	if (request_len > DWORD_MAX) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Request length larger than DWORD_MAX");
+		goto cleanup;
+	}
+
+	/* Send request. */
+	if (!WinHttpSendRequest(nhc->request_handle, WINHTTP_NO_ADDITIONAL_HEADERS,0, (LPVOID) request, (DWORD) request_len, (DWORD) request_len, 0)) {
 		WINHTTP_ERROR_1(ctx, ERROR_WINHTTP_CANNOT_CONNECT, KSI_NETWORK_ERROR, "WinHTTP: Unable to connect.")
 		WINHTTP_ERROR_m(ctx, ERROR_WINHTTP_TIMEOUT, KSI_NETWORK_SEND_TIMEOUT, NULL)
 		WINHTTP_ERROR_m(ctx, ERROR_WINHTTP_NAME_NOT_RESOLVED, KSI_NETWORK_ERROR, "WinHTTP: Could not resolve host.")
@@ -260,7 +265,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	LPWSTR W_host = NULL;
 	LPWSTR W_query = NULL;
 	unsigned char *request = NULL;
-	unsigned request_len = 0;
+	size_t request_len = 0;
 
 	if (client == NULL || handle == NULL || url == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -330,7 +335,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-	if (request_len > LONG_MAX) {
+	if (request_len > DWORD_MAX) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "WinHTTP: Request too long.");
 		goto cleanup;
 	}

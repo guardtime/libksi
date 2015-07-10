@@ -33,7 +33,7 @@ extern "C" {
 	/**
 	 * Creates a #KSI_DataHash representing the HMAC value calculated by the key and data using \c alg as the hash algorithm.
 	 * \param[in]	ctx			KSI context.
-	 * \param[in]	hash_id		Hash algorithm ID see KSI_Hash
+	 * \param[in]	algo_id		Hash algorithm ID see KSI_Hash
 	 * \param[in]	key			Key value for the HMAC.
 	 * \param[in]	data		Pointer to the data to be HMAC'ed.
 	 * \param[in]	data_len	Length of the data.
@@ -41,7 +41,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_DataHash_free
 	 */
-	int KSI_HMAC_create(KSI_CTX *ctx, int hash_id, const char *key, const unsigned char *data, unsigned data_len, KSI_DataHash **hmac);
+	int KSI_HMAC_create(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, const unsigned char *data, size_t data_len, KSI_DataHash **hmac);
 
 	/**
 	 * @}

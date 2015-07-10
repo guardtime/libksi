@@ -422,9 +422,9 @@ static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, con
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *tmp = NULL;
 	const unsigned char *imprint = NULL;
-	unsigned imprint_len = 0;
+	size_t imprint_len = 0;
 	const unsigned char *data = NULL;
-	unsigned data_len = 0;
+	size_t data_len = 0;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || prefix == NULL || hsh == NULL || suffix == NULL || out == NULL) {
@@ -589,12 +589,11 @@ static int rfc3161_getInputToAggreChain(const KSI_Signature *sig, KSI_DataHash *
 	KSI_DataHash *tmp = NULL;
 	KSI_DataHasher *hsr = NULL;
 	KSI_RFC3161 *rfc = NULL;
-	int algToUse = -1;
 	const unsigned char *imprint = NULL;
-	unsigned imprint_len = 0;
-	int algId = -1;
-	int tstInfoAlgo;
-	int sigAttrAlgo;
+	size_t imprint_len = 0;
+	KSI_HashAlgorithm algo_id = -1;
+	KSI_HashAlgorithm tstInfoAlgoId;
+	KSI_HashAlgorithm sigAttrAlgoId;
 
 	if (sig == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -622,17 +621,17 @@ static int rfc3161_getInputToAggreChain(const KSI_Signature *sig, KSI_DataHash *
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Hash algorithm can't be larger than 0xff.");
 		goto cleanup;
 	} else {
-		tstInfoAlgo = (int)KSI_Integer_getUInt64(rfc->tstInfoAlgo);
-		sigAttrAlgo = (int)KSI_Integer_getUInt64(rfc->sigAttrAlgo);
+		tstInfoAlgoId = (int)KSI_Integer_getUInt64(rfc->tstInfoAlgo);
+		sigAttrAlgoId = (int)KSI_Integer_getUInt64(rfc->sigAttrAlgo);
 	}
 
-	res = rfc3161_preSufHasher(ctx, rfc->tstInfoPrefix, rfc->inputHash, rfc->tstInfoSuffix, tstInfoAlgo, &hsh_tstInfo);
+	res = rfc3161_preSufHasher(ctx, rfc->tstInfoPrefix, rfc->inputHash, rfc->tstInfoSuffix, tstInfoAlgoId, &hsh_tstInfo);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = rfc3161_preSufHasher(ctx, rfc->sigAttrPrefix, hsh_tstInfo, rfc->sigAttrSuffix, sigAttrAlgo, &hsh_sigAttr);
+	res = rfc3161_preSufHasher(ctx, rfc->sigAttrPrefix, hsh_tstInfo, rfc->sigAttrSuffix, sigAttrAlgoId, &hsh_sigAttr);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -644,13 +643,13 @@ static int rfc3161_getInputToAggreChain(const KSI_Signature *sig, KSI_DataHash *
 		goto cleanup;
 	}
 
-	res = KSI_Signature_getHashAlgorithm((KSI_Signature *)sig, &algId);
+	res = KSI_Signature_getHashAlgorithm((KSI_Signature *)sig, &algo_id);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = KSI_DataHash_create(ctx, imprint, imprint_len, algId, &tmp);
+	res = KSI_DataHash_create(ctx, imprint, imprint_len, algo_id, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
 		goto cleanup;
@@ -1076,7 +1075,6 @@ static int removeCalAuthAndPublication(KSI_Signature *sig) {
 		goto cleanup;
 	}
 	KSI_ERR_clearErrors(sig->ctx);
-
 
 	res = KSI_TLV_getNestedList(sig->baseTlv, &nested);
 	if (res != KSI_OK) {
@@ -1564,14 +1562,9 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 	if (pubRec != NULL) {
 		KSI_PublicationData *pubData = NULL;
 
-		/* Make a copy of the original publication record .*/
-		res = KSI_PublicationRecord_new(signature->ctx, &pubRecClone);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
 
-		res = KSI_TlvTemplate_deepCopy(signature->ctx, pubRec, KSI_TLV_TEMPLATE(KSI_PublicationRecord), pubRecClone);
+		/* Make a copy of the original publication record .*/
+		res = KSI_PublicationRecord_clone(pubRec, &pubRecClone);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
@@ -1771,7 +1764,7 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_parse(KSI_CTX *ctx, unsigned char *raw, unsigned raw_len, KSI_Signature **sig) {
+int KSI_Signature_parse(KSI_CTX *ctx, unsigned char *raw, size_t raw_len, KSI_Signature **sig) {
 	KSI_TLV *tlv = NULL;
 	KSI_Signature *tmp = NULL;
 	int res;
@@ -1870,10 +1863,10 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_serialize(KSI_Signature *sig, unsigned char **raw, unsigned *raw_len) {
+int KSI_Signature_serialize(KSI_Signature *sig, unsigned char **raw, size_t *raw_len) {
 	int res;
 	unsigned char *tmp = NULL;
-	unsigned tmp_len;
+	size_t tmp_len;
 
 	if (sig == NULL || raw == NULL || raw_len == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1962,7 +1955,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 
 			if (metaHash != NULL) {
 				const char *tmp = NULL;
-				int tmp_len;
+				size_t tmp_len;
 
 				res = KSI_DataHash_MetaHash_parseMeta(metaHash, (const unsigned char **)&tmp, &tmp_len);
 				if (res != KSI_OK) {
@@ -2043,10 +2036,10 @@ KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_CalendarAuthRec*, calendarAuthRec, Calen
 
 KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_PublicationRecord*, publication, PublicationRecord)
 
-int KSI_Signature_getHashAlgorithm(KSI_Signature *sig, int *hash_id) {
+int KSI_Signature_getHashAlgorithm(KSI_Signature *sig, KSI_HashAlgorithm *algo_id) {
 	KSI_DataHash *hsh = NULL;
 	int res;
-	int tmp = -1;
+	KSI_HashAlgorithm tmp = -1;
 
 	if (sig == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -2067,7 +2060,7 @@ int KSI_Signature_getHashAlgorithm(KSI_Signature *sig, int *hash_id) {
 		goto cleanup;
 	}
 
-	*hash_id = tmp;
+	*algo_id = tmp;
 
 	res = KSI_OK;
 
@@ -2082,7 +2075,7 @@ int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, si
 	int res;
 	KSI_DataHash *hsh = NULL;
 
-	int hash_id = -1;
+	KSI_HashAlgorithm algo_id = -1;
 
 	KSI_ERR_clearErrors(ctx);
 	if (sig == NULL || ctx == NULL || doc == NULL) {
@@ -2090,14 +2083,13 @@ int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, si
 		goto cleanup;
 	}
 
-
-	res = KSI_Signature_getHashAlgorithm(sig, &hash_id);
+	res = KSI_Signature_getHashAlgorithm(sig, &algo_id);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = KSI_DataHash_create(ctx, doc, doc_len, hash_id, &hsh);
+	res = KSI_DataHash_create(ctx, doc, doc_len, algo_id, &hsh);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -2121,7 +2113,7 @@ cleanup:
 int KSI_Signature_createDataHasher(KSI_Signature *sig, KSI_DataHasher **hsr) {
 	int res;
 	KSI_DataHasher *tmp = NULL;
-	int hash_id = -1;
+	KSI_HashAlgorithm algo_id = -1;
 
 	if (sig == NULL || hsr == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -2129,13 +2121,13 @@ int KSI_Signature_createDataHasher(KSI_Signature *sig, KSI_DataHasher **hsr) {
 	}
 	KSI_ERR_clearErrors(sig->ctx);
 
-	res = KSI_Signature_getHashAlgorithm(sig, &hash_id);
+	res = KSI_Signature_getHashAlgorithm(sig, &algo_id);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = KSI_DataHasher_open(sig->ctx, hash_id, &tmp);
+	res = KSI_DataHasher_open(sig->ctx, algo_id, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
 		goto cleanup;
@@ -2430,9 +2422,9 @@ static int verifyCalAuthRec(KSI_CTX *ctx, KSI_Signature *sig) {
 	KSI_OctetString *signatureValue = NULL;
 	KSI_Utf8String *sigtype = NULL;
 	const unsigned char *rawSignature = NULL;
-	unsigned rawSignature_len;
+	size_t rawSignature_len;
 	unsigned char *rawData = NULL;
-	unsigned rawData_len;
+	size_t rawData_len;
 	KSI_VerificationStep step = KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE;
 	KSI_VerificationResult *info = &sig->verificationResult;
 

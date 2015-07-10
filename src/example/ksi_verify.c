@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
 	KSI_DataHasher *hsr = NULL;
 	FILE *in = NULL;
 	unsigned char buf[1024];
-	unsigned buf_len;
+	size_t buf_len;
 	const KSI_VerificationResult *info = NULL;
 	FILE *logFile = NULL;
 
@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
 		}
 		/* Calculate the hash of the document. */
 		while (!feof(in)) {
-			buf_len = (unsigned)fread(buf, 1, sizeof(buf), in);
+			buf_len = fread(buf, 1, sizeof(buf), in);
 			res = KSI_DataHasher_add(hsr, buf, buf_len);
 			if (res != KSI_OK) {
 				fprintf(stderr, "Unable hash the document.\n");

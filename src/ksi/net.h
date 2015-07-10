@@ -113,7 +113,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note The output memory may not be freed by the caller.
 	 */
-	int KSI_RequestHandle_getRequest(KSI_RequestHandle *handle, const unsigned char **request, unsigned *request_len);
+	int KSI_RequestHandle_getRequest(KSI_RequestHandle *handle, const unsigned char **request, size_t *request_len);
 
 	/**
 	 * Response value setter. Should be called only by the actual network provider implementation.
@@ -126,7 +126,7 @@ extern "C" {
 	 * \note The \c response memory may be freed after a successful call to this method, as the
 	 * contents is copied internally.
 	 */
-	int KSI_RequestHandle_setResponse(KSI_RequestHandle *handle, const unsigned char *response, unsigned response_len);
+	int KSI_RequestHandle_setResponse(KSI_RequestHandle *handle, const unsigned char *response, size_t response_len);
 
 	/**
 	 * A blocking function to read the response to the request. The function is blocking only
@@ -139,7 +139,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, const unsigned char **response, unsigned *response_len);
+	int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, const unsigned char **response, size_t *response_len);
 
 	/**
 	 * TODO!
@@ -167,7 +167,7 @@ extern "C" {
 	 * \note The \c request value may be freed after a successful call to this function as
 	 * its contents is copied internally.
 	 */
-	int KSI_RequestHandle_new(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_RequestHandle **handle);
+	int KSI_RequestHandle_new(KSI_CTX *ctx, const unsigned char *request, size_t request_length, KSI_RequestHandle **handle);
 
 	/**
 	 * As network handles may be created by using several KSI contexts with different network providers and/or

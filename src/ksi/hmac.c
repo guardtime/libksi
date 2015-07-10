@@ -30,7 +30,7 @@
 static const unsigned char ipad[MAX_KEY_LEN]={ipad8,ipad8,ipad8,ipad8,ipad8,ipad8,ipad8,ipad8};
 static const unsigned char opad[MAX_KEY_LEN]={opad8,opad8,opad8,opad8,opad8,opad8,opad8,opad8};
 
-int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, const unsigned char *data, unsigned data_len, KSI_DataHash **hmac) {
+int KSI_HMAC_create(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, const unsigned char *data, size_t data_len, KSI_DataHash **hmac) {
 	int res;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hashedKey = NULL;
@@ -40,12 +40,12 @@ int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, const unsigned char 
 
 	size_t key_len;
 	const unsigned char *bufKey = NULL;
-	unsigned buf_len = 0;
+	size_t buf_len = 0;
 	unsigned char ipadXORkey[MAX_KEY_LEN];
 	unsigned char opadXORkey[MAX_KEY_LEN];
 	const unsigned char *digest = NULL;
-	unsigned digest_len = 0;
-	unsigned i =0;
+	size_t digest_len = 0;
+	unsigned i = 0;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || key == NULL || data == NULL || data_len == 0 || hmac == NULL) {
@@ -59,13 +59,13 @@ int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, const unsigned char 
 		goto cleanup;
 	}
 
-	if (KSI_getHashLength(alg) > MAX_KEY_LEN) {
+	if (KSI_getHashLength(algo_id) > MAX_KEY_LEN) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "The hash length is greater than 64");
 		goto cleanup;
 	}
 
 	/* Open the hasher. */
-	res = KSI_DataHasher_open(ctx, alg, &hsr);
+	res = KSI_DataHasher_open(ctx, algo_id, &hsr);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -100,8 +100,8 @@ int KSI_HMAC_create(KSI_CTX *ctx, int alg, const char *key, const unsigned char 
 		bufKey = digest;
 		buf_len = digest_len;
 	} else{
-		bufKey = (unsigned char *)key;
-		buf_len = (unsigned)key_len;
+		bufKey = (unsigned char *) key;
+		buf_len = (unsigned) key_len;
 	}
 
 	for (i = 0; i < buf_len; i++) {

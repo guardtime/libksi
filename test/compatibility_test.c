@@ -25,9 +25,8 @@
 #include <ksi/compatibility.h>
 
 static void Test_KSI_snprintf(CuTest* tc) {
-	int ret;
 	int i = 0;
-	int len = 0;
+	size_t len = 0;
 	char dest[8];
 	char empty[8];
 	char bigdest[0xFF];
@@ -35,25 +34,26 @@ static void Test_KSI_snprintf(CuTest* tc) {
 	memset(dest, 0xFF, sizeof(dest));
 	memset(empty, 0xFF, sizeof(empty));
 
-	ret = KSI_snprintf(dest, 8, "%s", "1234567890");
-	CuAssert(tc, "KSI_snprintf failed.", ret == 7 && dest[7] == 0 && strcmp(dest, "1234567") == 0);
+	len = KSI_snprintf(dest, 8, "%s", "1234567890");
+	CuAssert(tc, "KSI_snprintf failed.", len == 7 && dest[7] == 0 && !strcmp(dest, "1234567"));
 	memset(dest, 0xFF, sizeof(dest));
 	
-	ret = KSI_snprintf(dest, 4, "%d%c%d%d%d%d%d%d%d%d", 1, '2', 3, 4, 5, 6, 7, 8, 9, 0);
-	CuAssert(tc, "KSI_snprintf failed.", ret == 3 && dest[3] == 0 && strcmp(dest, "123") == 0);
+	len = KSI_snprintf(dest, 4, "%d%c%d%d%d%d%d%d%d%d", 1, '2', 3, 4, 5, 6, 7, 8, 9, 0);
+	CuAssert(tc, "KSI_snprintf failed.", len == 3 && dest[3] == 0 && !strcmp(dest, "123"));
 	memset(dest, 0xFF, sizeof(dest));
 	
-	ret = KSI_snprintf(dest, 8, "%s", "12345");
-	CuAssert(tc, "KSI_snprintf failed.", ret == 5 && dest[5] == 0 && strcmp(dest, "12345") == 0);
+	len = KSI_snprintf(dest, 8, "%s", "12345");
+	CuAssert(tc, "KSI_snprintf failed.", len == 5 && dest[5] == 0 && !strcmp(dest, "12345") );
 	memset(dest, 0xFF, sizeof(dest));
 	
-	ret = KSI_snprintf(dest, 0, "%s", "12345");
-	CuAssert(tc, "KSI_snprintf failed.", ret == -1 && memcmp(dest, empty, sizeof(dest)) == 0);
+	len = KSI_snprintf(dest, 0, "%s", "12345");
+	CuAssert(tc, "KSI_snprintf failed.", len == 0 && memcmp(dest, empty, sizeof(dest)) == 0);
 	
-	ret = KSI_snprintf(NULL, 5, "%s", "12345");
-	CuAssert(tc, "KSI_snprintf failed.", ret == -1 && memcmp(dest, empty, sizeof(dest)) == 0);
+	len = KSI_snprintf(NULL, 5, "%s", "12345");
+	CuAssert(tc, "KSI_snprintf failed.", len == 0 && memcmp(dest, empty, sizeof(dest)) == 0);
 	
-	for (i=0 ; i < 0xFF + 1; i++){
+	len = 0;
+	for (i = 0 ; i < 0xff + 1; i++){
 		len += KSI_snprintf(bigdest + len, sizeof(bigdest) - len, "%s", "F");
 	}
 	

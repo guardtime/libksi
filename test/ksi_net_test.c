@@ -48,9 +48,9 @@ static void testSigning(CuTest* tc) {
 	KSI_Signature *sig = NULL;
 	KSI_NetworkClient *pr = NULL;
 	unsigned char *raw = NULL;
-	unsigned raw_len = 0;
+	size_t raw_len = 0;
 	unsigned char expected[0x1ffff];
-	unsigned expected_len = 0;
+	size_t expected_len = 0;
 	FILE *f = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -180,7 +180,7 @@ static void testAggregationHeader(CuTest* tc) {
 	KSI_Header *hdr = NULL;
 	KSI_Integer *reqId = NULL;
 	const unsigned char *raw = NULL;
-	unsigned raw_len = 0;
+	size_t raw_len = 0;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -253,9 +253,9 @@ static void testExtending(CuTest* tc) {
 	KSI_Signature *sig = NULL;
 	KSI_Signature *ext = NULL;
 	unsigned char *serialized = NULL;
-	unsigned serialized_len = 0;
+	size_t serialized_len = 0;
 	unsigned char expected[0x1ffff];
-	unsigned expected_len = 0;
+	size_t expected_len = 0;
 	FILE *f = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -292,9 +292,9 @@ static void testExtendTo(CuTest* tc) {
 	KSI_Signature *sig = NULL;
 	KSI_Signature *ext = NULL;
 	unsigned char *serialized = NULL;
-	unsigned serialized_len = 0;
+	size_t serialized_len = 0;
 	unsigned char expected[0x1ffff];
-	unsigned expected_len = 0;
+	size_t expected_len = 0;
 	FILE *f = NULL;
 	KSI_Integer *to = NULL;
 
@@ -400,9 +400,9 @@ static void testExtendingWithoutPublication(CuTest* tc) {
 	KSI_NetworkClient *pr = NULL;
 	KSI_Signature *ext = NULL;
 	unsigned char *serialized = NULL;
-	unsigned serialized_len = 0;
+	size_t serialized_len = 0;
 	unsigned char expected[0x1ffff];
-	unsigned expected_len = 0;
+	size_t expected_len = 0;
 	FILE *f = NULL;
 	KSI_PKITruststore *pki = NULL;
 
@@ -457,9 +457,9 @@ static void testExtendingToNULL(CuTest* tc) {
 	KSI_NetworkClient *pr = NULL;
 	KSI_Signature *ext = NULL;
 	unsigned char *serialized = NULL;
-	unsigned serialized_len = 0;
+	size_t serialized_len = 0;
 	unsigned char expected[0x1ffff];
-	unsigned expected_len = 0;
+	size_t expected_len = 0;
 	FILE *f = NULL;
 	KSI_PKITruststore *pki = NULL;
 
@@ -515,7 +515,6 @@ static void testSigningInvalidResponse(CuTest* tc){
 
 	KSI_ERR_clearErrors(ctx);
 
-
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
 
@@ -540,7 +539,6 @@ static void testSigningErrorResponse(CuTest *tc) {
 	KSI_NetworkClient *pr = NULL;
 
 	KSI_ERR_clearErrors(ctx);
-
 
 	res = KSI_NET_MOCK_new(ctx, &pr);
 	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
@@ -691,11 +689,12 @@ static void smartServiceSetterSchemeTest(CuTest *tc, KSI_CTX *ctx, const char *s
 	char *scheme_ext_key = "tcp_ext_key";
 	char scheme_aggre_url[1024];
 	char scheme_ext_url[1024];
+	size_t len;
 
-	res = KSI_snprintf(scheme_aggre_url, sizeof(scheme_aggre_url), "%saggre.com:3331/", scheme);
-	CuAssert(tc, "Unable to generate aggregator url.", res != -1);
-	res = KSI_snprintf(scheme_ext_url, sizeof(scheme_ext_url), "%sext.com:8011/", scheme);
-	CuAssert(tc, "Unable to generate extender url.", res != -1);
+	len = KSI_snprintf(scheme_aggre_url, sizeof(scheme_aggre_url), "%saggre.com:3331/", scheme);
+	CuAssert(tc, "Unable to generate aggregator url.", len != 0);
+	len = KSI_snprintf(scheme_ext_url, sizeof(scheme_ext_url), "%sext.com:8011/", scheme);
+	CuAssert(tc, "Unable to generate extender url.", len != 0);
 
 	client = (KSI_UriClient*)ctx->netProvider;
 	CuAssert(tc, "KSI_CTX has no network provider.", client != NULL);

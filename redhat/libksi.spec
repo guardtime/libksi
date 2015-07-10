@@ -73,6 +73,7 @@ make install DESTDIR=%{buildroot}
 %{_includedir}/ksi/crc32.h
 %{_includedir}/ksi/common.h
 %{_includedir}/ksi/err.h
+%{_includedir}/ksi/fast_tlv.h
 %{_includedir}/ksi/hash.h
 %{_includedir}/ksi/hashchain.h
 %{_includedir}/ksi/hmac.h

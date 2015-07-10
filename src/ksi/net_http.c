@@ -26,7 +26,6 @@ static int setStringParam(char **param, const char *val) {
 	char *tmp = NULL;
 	int res = KSI_UNKNOWN_ERROR;
 
-
 	tmp = KSI_calloc(strlen(val) + 1, 1);
 	if (tmp == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -58,7 +57,7 @@ static int setIntParam(int *param, int val) {
 static int prepareRequest(
 		KSI_NetworkClient *client,
 		void *pdu,
-		int (*serialize)(void *, unsigned char **, unsigned *),
+		int (*serialize)(void *, unsigned char **, size_t *),
 		KSI_RequestHandle **handle,
 		char *url,
 		const char *desc) {
@@ -66,7 +65,7 @@ static int prepareRequest(
 	KSI_HttpClient *http = (KSI_HttpClient *)client;
 	KSI_RequestHandle *tmp = NULL;
 	unsigned char *raw = NULL;
-	unsigned raw_len = 0;
+	size_t raw_len = 0;
 
 	if (client == NULL || pdu == NULL || handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -123,7 +122,7 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 	res = prepareRequest(
 			client,
 			pdu,
-			(int (*)(void *, unsigned char **, unsigned *))KSI_ExtendPdu_serialize,
+			(int (*)(void *, unsigned char **, size_t *))KSI_ExtendPdu_serialize,
 			handle,
 			((KSI_HttpClient*)client)->urlExtender,
 			"Extend request");
@@ -150,7 +149,7 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 	res = prepareRequest(
 			client,
 			pdu,
-			(int (*)(void *, unsigned char **, unsigned *))KSI_AggregationPdu_serialize,
+			(int (*)(void *, unsigned char **, size_t *))KSI_AggregationPdu_serialize,
 			handle,
 			((KSI_HttpClient*)client)->urlAggregator,
 			"Aggregation request");

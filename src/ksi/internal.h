@@ -27,6 +27,12 @@
 #include "err.h"
 #include "compatibility.h"
 
+#define KSI_TLV_MASK_TLV16 0x80u
+#define KSI_TLV_MASK_LENIENT 0x40u
+#define KSI_TLV_MASK_FORWARD 0x20u
+
+#define KSI_TLV_MASK_TLV8_TYPE 0x1fu
+
 /**
  * HTTP network client implementations.
  */
@@ -69,8 +75,13 @@
 
 #ifdef _WIN32
 	typedef enum { false = 0, true = !false } bool;
+
 #  ifndef gmtime_r
 #    define gmtime_r(time, resultp) gmtime_s(resultp, time)
+#  endif
+
+#  ifndef DWORD_MAX
+#    define DWORD_MAX ((((size_t) 1) << (sizeof(DWORD) << 3)) - 1)
 #  endif
 #endif
 
@@ -214,7 +225,7 @@ cleanup: \
 
 #define FROMTLV_ADD_RAW(name, offset) \
 	do{ \
-		unsigned len; \
+		size_t len; \
 		res = KSI_TLV_serialize(tlv, &tlvData, &len); \
 		if (res != KSI_OK) { \
 			KSI_pushError(ctx, res, NULL); \

@@ -297,62 +297,82 @@ cleanup:
 	return res;
 }
 
-static int readFromSocket(KSI_RDR *rdr, unsigned char *buffer, const size_t size, size_t *readCount) {
+int KSI_IO_readSocket(int fd, void *buf, size_t size, size_t *readCount) {
 	int res = KSI_UNKNOWN_ERROR;
-	size_t count = 0;
-	unsigned char *bp = buffer;
-	size_t bp_len = size;
+	int c;
+	size_t rd = 0;
+	unsigned char *ptr = (unsigned char *) buf;
+	size_t len = size;
 
-	if (rdr == NULL) {
+	if (fd < 0 || buf == NULL || size == 0) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	KSI_ERR_clearErrors(rdr->ctx);
-
-	if (buffer == NULL || readCount == NULL) {
-		KSI_pushError(rdr->ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
 #ifdef _WIN32
-	if(bp_len > INT_MAX){
-		KSI_pushError(rdr->ctx, res = KSI_INVALID_ARGUMENT, "Unable to read more than MAX_INT from the socket.");
+	if (len > INT_MAX) {
+		res = KSI_BUFFER_OVERFLOW;
 		goto cleanup;
 	}
 #endif
 
-	while (!rdr->eof && bp_len > 0) {
+
+	while (len > 0) {
 #ifdef _WIN32
-		int c = recv(rdr->data.socketfd, bp, (int)bp_len, 0);
+		c = recv(fd, ptr, (int) len, 0);
 #else
-		int c = recv(rdr->data.socketfd, bp, bp_len, 0);
+		c = recv(fd, ptr, len, 0);
 #endif
-
 		if (c < 0) {
 			if (socket_error == socketTimedOut) {
-				KSI_pushError(rdr->ctx, res = KSI_NETWORK_RECIEVE_TIMEOUT, "Unable to read from socket."); // TODO! Add errno
+				res = KSI_NETWORK_RECIEVE_TIMEOUT;
 			} else {
-				KSI_pushError(rdr->ctx, res = KSI_IO_ERROR, "Unable to read from socket."); // TODO! Add errno
+				res = KSI_IO_ERROR;
 			}
 			goto cleanup;
 		}
 
-		bp_len -= c;
-		bp += c;
+		/* Do this check just to be safe. */
+		if ((size_t) c > len) {
+			res = KSI_BUFFER_OVERFLOW;
+			goto cleanup;
+		}
+		rd += c;
 
-		rdr->eof = (c == 0);
-		count += c;
+		len -= c;
+		ptr += c;
 	}
-	/* Update metadata */
-	rdr->offset += count;
 
-	if (readCount != NULL) *readCount = count;
+
 
 	res = KSI_OK;
 
 cleanup:
 
+	if (readCount != NULL) *readCount = rd;
+
 	return res;
+}
+
+int KSI_IO_readFile(FILE *f, void *buf, size_t size, size_t *count) {
+	int res = KSI_UNKNOWN_ERROR;
+	size_t rd = 0;
+
+	if (f == NULL || buf == NULL || size == 0) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	rd = fread(buf, 1, size, f);
+
+	res = KSI_OK;
+
+cleanup:
+
+	if (count != NULL) *count = rd;
+
+	return res;
+
 }
 
 int KSI_RDR_read_ex(KSI_RDR *rdr, unsigned char *buffer, const size_t bufferLength, size_t *readCount)  {
@@ -376,9 +396,6 @@ int KSI_RDR_read_ex(KSI_RDR *rdr, unsigned char *buffer, const size_t bufferLeng
 			break;
 		case KSI_IO_MEM:
 			res = readFromMem(rdr, buffer, bufferLength, readCount);
-			break;
-		case KSI_IO_SOCKET:
-			res = readFromSocket(rdr, buffer, bufferLength, readCount);
 			break;
 		default:
 			KSI_pushError(rdr->ctx, res = KSI_UNKNOWN_ERROR, "Unsupported KSI IO TYPE");
@@ -460,8 +477,6 @@ void KSI_RDR_close(KSI_RDR *rdr)  {
 			break;
 		case KSI_IO_MEM:
 			rdr->data.mem.buffer = NULL;
-			break;
-		case KSI_IO_SOCKET:
 			break;
 		default:
 			KSI_LOG_warn(ctx, "Unsupported KSI IO-type - possible MEMORY LEAK");

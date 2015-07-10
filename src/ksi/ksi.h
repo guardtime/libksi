@@ -314,7 +314,7 @@ int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f);
  * \return status code (#KSI_OK, when operation succeeded, otherwise an
  * error code).
  */
-int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *error, int *ext);
+int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, size_t len, int *error, int *ext);
 
 /**
  * Allocates \c size bytes of memory.
@@ -370,7 +370,7 @@ int KSI_sendExtendRequest(KSI_CTX *ctx, KSI_ExtendReq *request, KSI_RequestHandl
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_RequestHandle **handle);
+int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, size_t request_length, KSI_RequestHandle **handle);
 
 /**
  * Accessor method for the publications file. It will download the publications file from

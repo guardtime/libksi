@@ -117,7 +117,8 @@ EXPORTS
     KSI_RDR_read_ptr
     KSI_RDR_close
     KSI_RDR_verifyEnd
-
+	KSI_IO_readSocket
+	KSI_IO_readFile
 ;ksi.h
 EXPORTS
 	KSI_getVersion
@@ -382,7 +383,6 @@ EXPORTS
     KSI_TlvTemplate_parse
     KSI_TlvTemplate_extractGenerator
     KSI_TlvTemplate_construct
-    KSI_TlvTemplate_deepCopy
     KSI_TlvTemplate_serializeObject
 
 ;TLV templates

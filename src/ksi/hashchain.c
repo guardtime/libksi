@@ -66,7 +66,7 @@ static int addNvlImprint(const KSI_DataHash *first, const KSI_DataHash *second, 
 	int res = KSI_UNKNOWN_ERROR;
 	const KSI_DataHash *hsh = first;
 	const unsigned char *imprint = NULL;
-	unsigned int imprint_len;
+	size_t imprint_len;
 
 	if (hsh == NULL) {
 		if (second == NULL) {
@@ -95,7 +95,7 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 	int res = KSI_UNKNOWN_ERROR;
 	int mode = 0;
 	const unsigned char *imprint = NULL;
-	unsigned int imprint_len;
+	size_t imprint_len;
 	KSI_MetaData *metaData = NULL;
 	KSI_DataHash *metaHash = NULL;
 	KSI_DataHash *hash = NULL;
@@ -181,13 +181,13 @@ cleanup:
 	return res;
 }
 
-static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, int startLevel, int hash_id, int isCalendar, int *endLevel, KSI_DataHash **outputHash) {
+static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, int startLevel, KSI_HashAlgorithm aggr_algo_id, int isCalendar, int *endLevel, KSI_DataHash **outputHash) {
 	int res = KSI_UNKNOWN_ERROR;
 	int level = startLevel;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
 	KSI_HashChainLink *link = NULL;
-	int algo_id = hash_id;
+	KSI_HashAlgorithm algo_id = aggr_algo_id;
 	char chr_level;
 	char logMsg[0xff];
 	size_t i;
@@ -372,8 +372,8 @@ cleanup:
 /**
  *
  */
-int KSI_HashChain_aggregate(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, int startLevel, int hash_id, int *endLevel, KSI_DataHash **outputHash) {
-	return aggregateChain(ctx, chain, inputHash, startLevel, hash_id, 0, endLevel, outputHash);
+int KSI_HashChain_aggregate(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, int startLevel, KSI_HashAlgorithm algo_id, int *endLevel, KSI_DataHash **outputHash) {
+	return aggregateChain(ctx, chain, inputHash, startLevel, algo_id, 0, endLevel, outputHash);
 }
 
 /**

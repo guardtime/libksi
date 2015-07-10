@@ -45,7 +45,7 @@ extern "C" {
 		 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 		 * \see \ref typ##_serialize
 		 */ \
-		int typ##_parse(KSI_CTX *ctx, const unsigned char *raw, unsigned len, typ **t);
+		int typ##_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len, typ **t);
 
 	#define KSI_DEFINE_OBJECT_SERIALIZE(typ) \
 		/*!
@@ -57,7 +57,7 @@ extern "C" {
 		 * \see \ref typ##_parse
 		 * @return
 		 */\
-		int typ##_serialize(const typ *t, unsigned char **raw, unsigned *len);
+		int typ##_serialize(const typ *t, unsigned char **raw, size_t *len);
 
 #ifdef __cplusplus
 }

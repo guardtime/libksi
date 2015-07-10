@@ -1,20 +1,21 @@
-/*
- * Copyright 2013-2015 Guardtime, Inc.
+/**************************************************************************
  *
- * This file is part of the Guardtime client SDK.
+ * GUARDTIME CONFIDENTIAL
  *
- * Licensed under the Apache License, Version 2.0 (the "License").
- * You may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *     http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES, CONDITIONS, OR OTHER LICENSES OF ANY KIND, either
- * express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
+ * Copyright (C) [2015] Guardtime, Inc
+ * All Rights Reserved
+ *
+ * NOTICE:  All information contained herein is, and remains, the
+ * property of Guardtime Inc and its suppliers, if any.
+ * The intellectual and technical concepts contained herein are
+ * proprietary to Guardtime Inc and its suppliers and may be
+ * covered by U.S. and Foreign Patents and patents in process,
+ * and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this
+ * material is strictly forbidden unless prior written permission
+ * is obtained from Guardtime Inc.
  * "Guardtime" and "KSI" are trademarks or registered trademarks of
- * Guardtime, Inc., and no license to trademarks is granted; Guardtime
- * reserves and retains all trademark rights.
+ * Guardtime Inc.
  */
 
 #ifndef KSI_TLV_H_
@@ -125,7 +126,7 @@ extern "C" {
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_parseBlob(KSI_CTX *ctx, const unsigned char *data, unsigned data_length, KSI_TLV **tlv);
+	int KSI_TLV_parseBlob(KSI_CTX *ctx, const unsigned char *data, size_t data_length, KSI_TLV **tlv);
 
 	/**
 	 * Parses a raw TLV into a #KSI_TLV.
@@ -138,7 +139,7 @@ extern "C" {
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 *
 	 */
-	int KSI_TLV_parseBlob2(KSI_CTX *ctx, unsigned char *data, unsigned data_length, int ownMemory, KSI_TLV **tlv);
+	int KSI_TLV_parseBlob2(KSI_CTX *ctx, unsigned char *data, size_t data_length, int ownMemory, KSI_TLV **tlv);
 
 	/**
 	 * This function extracts the binary data from the TLV.
@@ -152,7 +153,7 @@ extern "C" {
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_getRawValue(KSI_TLV *tlv, const unsigned char **buf, unsigned int *len);
+	int KSI_TLV_getRawValue(KSI_TLV *tlv, const unsigned char **buf, size_t *len);
 
 	/**
 	 * Integer value accessor method.
@@ -235,7 +236,7 @@ extern "C" {
 	 * \param[out]		len				Length of the serialized data.
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_serialize_ex(const KSI_TLV *tlv, unsigned char *buf, unsigned int buf_size, unsigned int *len);
+	int KSI_TLV_serialize_ex(const KSI_TLV *tlv, unsigned char *buf, size_t buf_size, size_t *len);
 
 	/**
 	 *  This function serialises the TLV value into a buffer. The output buffer value
@@ -245,7 +246,7 @@ extern "C" {
 	 *  \param[out]		buf		Pointer to the receiving buffer pointer.
 	 *  \param[out]		buf_len	Pointer to the receiving buffer length variable.
 	 */
-	int KSI_TLV_serialize(const KSI_TLV *tlv, unsigned char **buf, unsigned *buf_len);
+	int KSI_TLV_serialize(const KSI_TLV *tlv, unsigned char **buf, size_t *buf_len);
 
 	/**
 	 * This function serialises the tlv payload into a given buffer with \c len bytes of free
@@ -257,7 +258,7 @@ extern "C" {
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_serializePayload(KSI_TLV *tlv, unsigned char *buf, unsigned int *len);
+	int KSI_TLV_serializePayload(KSI_TLV *tlv, unsigned char *buf, size_t *len);
 
 	/**
 	 * Replaces a nested TLV.
@@ -300,9 +301,9 @@ extern "C" {
 	 * \param[in]	buffer		Pointer to variable receiving the string.
 	 * \param[in]	buffer_len	Length of the buffer.
 	 *
-	 * \return On success returns \c buffer and \c NULL on error.
+	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	char *KSI_TLV_toString(const KSI_TLV *tlv, char *buffer, unsigned buffer_len);
+	char *KSI_TLV_toString(const KSI_TLV *tlv, char *buffer, size_t buffer_len);
 
 	/**
 	 * This functions makes an identical copy of a TLV by serializing, parsing
@@ -334,7 +335,7 @@ extern "C" {
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 * \note This function checks the payload type of the TLV object an will fail if it is not equal to #KSI_TLV_PAYLOAD_RAW.
 	 */
-	int KSI_TLV_setRawValue(KSI_TLV *tlv, const void *data, unsigned data_len);
+	int KSI_TLV_setRawValue(KSI_TLV *tlv, const void *data, size_t data_len);
 
 	/**
 	 * Read and create a new TLV object from reader (see #KSI_RDR).
@@ -370,7 +371,7 @@ extern "C" {
 	 * \return The absolute offset of the TLV object.
 	 */
 	size_t KSI_TLV_getRelativeOffset(const KSI_TLV *tlv);
-
+	
 	KSI_DEFINE_GET_CTX(KSI_TLV);
 
 	/**

@@ -28,7 +28,7 @@ extern KSI_CTX *ctx;
 
 
 struct testData {
-	int hashAlg;
+	KSI_HashAlgorithm algo_id;
 	
 	char *key;
 	
@@ -59,14 +59,14 @@ struct testData {
 
 
 
-static void dotest(CuTest* tc, struct testData *data, int count){
+static void dotest(CuTest* tc, struct testData *data, int count) {
 	int res;
 	KSI_DataHash *hmac = NULL;
 	char buf[1024];
 	int i = 0;
 	
 	for (;i<count;i++){
-		res = KSI_HMAC_create(ctx, data[i].hashAlg, data[i].key, data[i].message, data[i].message_len, &hmac);
+		res = KSI_HMAC_create(ctx, data[i].algo_id, data[i].key, data[i].message, data[i].message_len, &hmac);
 		CuAssert(tc, "Failed crete HMAC", res == KSI_OK && hmac != NULL);
 		KSI_DataHash_toString(hmac,buf, sizeof(buf));
 		CuAssert(tc, "HMAC mismatch", strcmp(data[i].ref_result, buf)==0);

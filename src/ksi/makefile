@@ -63,6 +63,7 @@ LIB_OBJ = \
 	$(OBJ_DIR)\base.obj \
 	$(OBJ_DIR)\base32.obj \
 	$(OBJ_DIR)\crc32.obj \
+	$(OBJ_DIR)\fast_tlv.obj \
 	$(OBJ_DIR)\hash.obj \
 	$(OBJ_DIR)\hashchain.obj \
 	$(OBJ_DIR)\http_parser.obj \
@@ -86,6 +87,7 @@ LIB_OBJ = \
 INC_FILES = \
 	base32.h \
 	common.h \
+	fast_tlv.h \
 	hmac.h \
 	net.h \
 	types.h \

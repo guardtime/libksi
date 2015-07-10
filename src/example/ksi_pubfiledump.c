@@ -27,9 +27,9 @@
 
 int toHex(KSI_OctetString *certId, char **hex) {
 	int res = KSI_UNKNOWN_ERROR;
-	unsigned len;
+	size_t len;
 	const unsigned char *raw = NULL;
-	unsigned int raw_len = 0;
+	size_t raw_len = 0;
 	char *tmp = NULL;
 	unsigned int i;
 
@@ -67,7 +67,7 @@ static int printCerts(KSI_PublicationsFile *pubFile) {
 	size_t i;
 	char *hex = NULL;
 	unsigned char *raw = NULL;
-	unsigned len = 0;
+	size_t len = 0;
 	FILE *f = NULL;
 
 	printf("[certificates]\n");

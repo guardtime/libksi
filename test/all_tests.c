@@ -243,7 +243,7 @@ int KSITest_DataHash_fromStr(KSI_CTX *ctx, const char *hexstr, KSI_DataHash **hs
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *tmp = NULL;
 	unsigned char raw[0xff];
-	unsigned len = 0;
+	size_t len = 0;
 
 	res = KSITest_decodeHexStr(hexstr, raw, sizeof(raw), &len);
 	if (res != KSI_OK) goto cleanup;
@@ -261,10 +261,10 @@ cleanup:
 	return res;
 }
 
-int KSITest_decodeHexStr(const char *hexstr, unsigned char *buf, unsigned buf_size, unsigned *buf_length) {
+int KSITest_decodeHexStr(const char *hexstr, unsigned char *buf, size_t buf_size, size_t *buf_length) {
 	int res = KSI_UNKNOWN_ERROR;
-	int i = 0;
-	unsigned len = 0;
+	size_t i = 0;
+	size_t len = 0;
 	int count = 0;
 
 	if (hexstr != NULL) {

@@ -77,39 +77,6 @@ static void testVerifySignatureWithPublication(CuTest *tc) {
 
 }
 
-static void testVerifySignatureWithUserPublication(CuTest *tc) {
-	int res;
-	KSI_Signature *sig = NULL;
-	const char pubStr[] = "AAAAAA-CTOQBY-AAMJYH-XZPM6T-UO6U6V-2WJMHQ-EJMVXR-JEAGID-2OY7P5-XFFKYI-QIF2LG-YOV7SO";
-	const char pubStr_bad[] = "AAAAAA-CT5VGY-AAPUCF-L3EKCC-NRSX56-AXIDFL-VZJQK4-WDCPOE-3KIWGB-XGPPM3-O5BIMW-REOVR4";
-	KSI_PublicationData *pubData = NULL;
-	KSI_PublicationData *pubData_bad = NULL;
-
-
-	KSI_ERR_clearErrors(ctx);
-
-
-	res = KSI_PublicationData_fromBase32(ctx, pubStr, &pubData);
-	CuAssert(tc, "Unable to parse publication string.", res == KSI_OK && pubData != NULL);
-
-	res = KSI_PublicationData_fromBase32(ctx, pubStr_bad, &pubData_bad);
-	CuAssert(tc, "Unable to parse publication string.", res == KSI_OK && pubData_bad != NULL);
-
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-extended.ksig"), &sig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
-
-	res = KSI_Signature_verifyWithPublication(sig, ctx, pubData);
-	CuAssert(tc, "Unable to verify signature with publication.", res == KSI_OK);
-
-	res = KSI_Signature_verifyWithPublication(sig, ctx, pubData_bad);
-	CuAssert(tc, "Unable to verify signature with publication.", res != KSI_OK);
-
-
-	KSI_PublicationData_free(pubData);
-	KSI_PublicationData_free(pubData_bad);
-	KSI_Signature_free(sig);
-}
-
 static void testVerifyLegacySignatureAndDoc(CuTest *tc) {
 	int res;
 	char doc[] = "This is a test data file.\x0d\x0a";
@@ -193,6 +160,37 @@ static void testRFC3161WrongInputHash(CuTest *tc) {
 	KSI_Signature_free(sig);
 }
 
+static void testVerifySignatureWithUserPublication(CuTest *tc) {
+	int res;
+	KSI_Signature *sig = NULL;
+	const char pubStr[] = "AAAAAA-CTOQBY-AAMJYH-XZPM6T-UO6U6V-2WJMHQ-EJMVXR-JEAGID-2OY7P5-XFFKYI-QIF2LG-YOV7SO";
+	const char pubStr_bad[] = "AAAAAA-CT5VGY-AAPUCF-L3EKCC-NRSX56-AXIDFL-VZJQK4-WDCPOE-3KIWGB-XGPPM3-O5BIMW-REOVR4";
+	KSI_PublicationData *pubData = NULL;
+	KSI_PublicationData *pubData_bad = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_PublicationData_fromBase32(ctx, pubStr, &pubData);
+	CuAssert(tc, "Unable to parse publication string.", res == KSI_OK && pubData != NULL);
+
+	res = KSI_PublicationData_fromBase32(ctx, pubStr_bad, &pubData_bad);
+	CuAssert(tc, "Unable to parse publication string.", res == KSI_OK && pubData_bad != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-extended.ksig"), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_verifyWithPublication(sig, ctx, pubData);
+	CuAssert(tc, "Unable to verify signature with publication.", res == KSI_OK);
+
+	res = KSI_Signature_verifyWithPublication(sig, ctx, pubData_bad);
+	CuAssert(tc, "Unable to verify signature with publication.", res != KSI_OK);
+
+
+	KSI_PublicationData_free(pubData);
+	KSI_PublicationData_free(pubData_bad);
+	KSI_Signature_free(sig);
+}
+
 static void testVerifySignatureExtendedToHead(CuTest *tc) {
 	int res;
 	KSI_Signature *sig = NULL;
@@ -240,10 +238,10 @@ static void testSerializeSignature(CuTest *tc) {
 	int res;
 
 	unsigned char in[0x1ffff];
-	unsigned in_len = 0;
+	size_t in_len = 0;
 
 	unsigned char *out = NULL;
-	unsigned out_len = 0;
+	size_t out_len = 0;
 
 	FILE *f = NULL;
 
@@ -275,7 +273,7 @@ static void testVerifyDocument(CuTest *tc) {
 	int res;
 
 	unsigned char in[0x1ffff];
-	unsigned in_len = 0;
+	size_t in_len = 0;
 
 	char doc[] = "LAPTOP";
 
@@ -308,7 +306,7 @@ static void testVerifyDocumentHash(CuTest *tc) {
 	int res;
 
 	unsigned char in[0x1ffff];
-	unsigned in_len = 0;
+	size_t in_len = 0;
 
 	char doc[] = "LAPTOP";
 	KSI_DataHash *hsh = NULL;
@@ -395,7 +393,7 @@ static void testVerifyCalendarChainAlgoChange(CuTest *tc) {
 	int res;
 
 	unsigned char in[0x1ffff];
-	unsigned in_len = 0;
+	size_t in_len = 0;
 
 	FILE *f = NULL;
 	KSI_Signature *sig = NULL;

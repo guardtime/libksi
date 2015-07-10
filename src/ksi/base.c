@@ -343,7 +343,7 @@ cleanup:
 	return res;
 }
 
-int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_RequestHandle **handle) {
+int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, size_t request_length, KSI_RequestHandle **handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_NetworkClient *netProvider = NULL;
 
@@ -373,7 +373,7 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_RequestHandle *handle = NULL;
 	const unsigned char *raw = NULL;
-	unsigned raw_len = 0;
+	size_t raw_len = 0;
 	KSI_PublicationsFile *tmp = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -718,7 +718,7 @@ void KSI_ERR_clearErrors(KSI_CTX *ctx) {
 int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ERR *err = NULL;
-	unsigned int i;
+	size_t i;
 
 	fprintf(f, "KSI error trace:\n");
 	if (ctx->errors_count == 0) {
@@ -744,7 +744,7 @@ cleanup:
 	return res;
 }
 
-int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *error, int *ext){
+int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, size_t len, int *error, int *ext){
 	KSI_ERR *err = NULL;
 
 	if (ctx == NULL || buf == NULL){
@@ -756,10 +756,11 @@ int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *erro
 	if (error != NULL)	*error = err->statusCode;
 	if (ext != NULL)	*ext = err->extErrorCode;
 
-	if(ctx->errors_count)
+	if (ctx->errors_count) {
 		KSI_strncpy(buf, err->message, len);
-	else
+	} else {
 		KSI_strncpy(buf, "", len);
+	}
 
 	return KSI_OK;
 }

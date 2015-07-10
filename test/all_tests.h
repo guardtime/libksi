@@ -37,7 +37,7 @@ const char* getFullResourcePath(const char* resource);
 int KSITest_memcmp(void *ptr1, void *ptr2, size_t len);
 
 int KSITest_DataHash_fromStr(KSI_CTX *ctx, const char *hexstr, KSI_DataHash **hsh);
-int KSITest_decodeHexStr(const char *hexstr, unsigned char *buf, unsigned buf_size, unsigned *buf_length);
+int KSITest_decodeHexStr(const char *hexstr, unsigned char *buf, size_t buf_size, size_t *buf_length);
 void KSITest_setFileMockResponse(CuTest *tc, const char *fileName);
 
 int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetworkClient **provider);

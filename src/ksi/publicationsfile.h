@@ -53,7 +53,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, unsigned raw_len, KSI_PublicationsFile **pubFile);
+	int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, size_t raw_len, KSI_PublicationsFile **pubFile);
 
 	/**
 	 * A convenience function for loading a publications file from an actual file.
@@ -73,7 +73,7 @@ extern "C" {
 	 * \param[out]		raw_len		Pointer to the length of the buffer variable.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-    int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, char **raw, unsigned* raw_len);
+    int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, char **raw, size_t *raw_len);
 
 	/**
 	 * Verify PKI signature of the publications file using the PKI truststore.
@@ -283,7 +283,7 @@ extern "C" {
 	int KSI_PublicationData_setBaseTlv ( KSI_PublicationData *o, KSI_TLV* baseTlv);
 	int KSI_PublicationData_setTime(KSI_PublicationData *t, KSI_Integer *time);
 	int KSI_PublicationData_setImprint(KSI_PublicationData *t, KSI_DataHash *imprint);
-	char *KSI_PublicationData_toString(KSI_PublicationData *t, char *buffer, unsigned buffer_len);
+	char *KSI_PublicationData_toString(KSI_PublicationData *t, char *buffer, size_t buffer_len);
 	int KSI_PublicationData_fromTlv (KSI_TLV *tlv, KSI_PublicationData **data);
 	int KSI_PublicationData_toTlv (KSI_CTX *ctx, const KSI_PublicationData *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
@@ -298,7 +298,7 @@ extern "C" {
 	int KSI_PublicationRecord_setPublishedData(KSI_PublicationRecord *t, KSI_PublicationData *publishedData);
 	int KSI_PublicationRecord_setPublicationRefList(KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) *publicationRef);
 	int KSI_PublicationRecord_setRepositoryUriList(KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) *repUriList);
-	char *KSI_PublicationRecord_toString(KSI_PublicationRecord *t, char *buffer, unsigned buffer_len);
+	char *KSI_PublicationRecord_toString(KSI_PublicationRecord *t, char *buffer, size_t buffer_len);
 	int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_PublicationRecord **clone);
 
 	/**

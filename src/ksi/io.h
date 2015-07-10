@@ -69,6 +69,28 @@ extern "C" {
 
 	int KSI_RDR_verifyEnd(KSI_RDR *rdr);
 
+	/**
+	 * Reads \c size bytes from the socket.
+	 * \param[in]	fd		Socket descriptor
+	 * \param[in]	buf		Pointer to pre-allocated buffer.
+	 * \param[in]	size	Size of \c buf.
+	 * \param[out]	count	Output of read bytes.
+	 *
+	 * \return The method will return KSI_OK when no error occurred.
+	 */
+	int KSI_IO_readSocket(int fd, void *buf, size_t size, size_t *count);
+
+	/**
+	 * Reads \c size bytes from the file stream.
+	 * \param[in]	f		File descriptor
+	 * \param[in]	buf		Pointer to pre-allocated buffer.
+	 * \param[in]	size	Size of \c buf.
+	 * \param[out]	count	Output of read bytes.
+	 *
+	 * \return The method will return KSI_OK when no error occurred.
+	 */
+	int KSI_IO_readFile(FILE *f, void *buf, size_t size, size_t *count);
+
 	KSI_DEFINE_GET_CTX(KSI_RDR);
 
 
