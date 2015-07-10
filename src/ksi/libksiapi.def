@@ -35,6 +35,7 @@ EXPORTS
     KSI_snprintf
     KSI_vsnprintf
     KSI_strncpy
+	KSI_strdup
 
 ;err.h
 EXPORTS

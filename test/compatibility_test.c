@@ -24,7 +24,7 @@
 #include "all_tests.h"
 #include <ksi/compatibility.h>
 
-static void Test_KSI_snprintf(CuTest* tc) {
+static void test_KSI_snprintf(CuTest* tc) {
 	int i = 0;
 	size_t len = 0;
 	char dest[8];
@@ -60,7 +60,7 @@ static void Test_KSI_snprintf(CuTest* tc) {
 	CuAssert(tc, "KSI_snprintf failed.", len == 0xFF-1);
 }
 
-static void Test_KSI_strncpy(CuTest* tc) {
+static void test_KSI_strncpy(CuTest* tc) {
 	char *ret;
 	char dest[8];
 	char empty[8];
@@ -87,12 +87,23 @@ static void Test_KSI_strncpy(CuTest* tc) {
 	CuAssert(tc, "KSI_strncpy failed.", ret == NULL && memcmp(dest, empty, sizeof(dest)) == 0);
 }
 
+static void test_KSI_strdup(CuTest *tc) {
+	int res;
+	char *data = "Some random string.";
+	char *dup = NULL;
+
+	res = KSI_strdup(data, &dup);
+	CuAssert(tc, "Duplicating string failed.", res == KSI_OK && dup != NULL && !strcmo(data, dup));
+
+	KSI_free(dup);
+}
 
 CuSuite* KSITest_compatibility_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
-	SUITE_ADD_TEST(suite, Test_KSI_snprintf);
-	SUITE_ADD_TEST(suite, Test_KSI_strncpy);
+	SUITE_ADD_TEST(suite, test_KSI_snprintf);
+	SUITE_ADD_TEST(suite, test_KSI_strncpy);
+	SUITE_ADD_TEST(suite, test_KSI_strdup);
 
 	return suite;
 }
