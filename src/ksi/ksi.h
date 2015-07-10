@@ -532,7 +532,19 @@ int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *net);
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  * \note After a successful call to this function the original pointer to email can be freed.
  */
-int KSI_CTX_setPublicationCertEmail(KSI_CTX *ctx, const char *email);
+KSI_FN_DEPRECATED(int KSI_CTX_setPublicationCertEmail(KSI_CTX *ctx, const char *email));
+
+/**
+ * This method adds or replaces expected OID values for publications file verification.
+ * \param[in]	ctx		KSI context.
+ * \param[in]	oid		OID null-terminated string.
+ * \param[in]	exp		Expected null-terminated value string of the OID. When this
+ * 						value is set to NULL the constraint is removed.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \note If a call to this function fails, the publications file verification is no longer
+ * safe - a new context should be created-
+ */
+int KSI_CTX_putPubFileCertConstraint(KSI_CTX *ctx, const char *oid, const char *exp);
 
 /**
  * Getter function for the PKI truststore object.

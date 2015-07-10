@@ -33,6 +33,11 @@ extern "C" {
 
 	KSI_DEFINE_LIST(GlobalCleanupFn)
 
+	struct KSI_CertConstraint_st {
+		char *oid;
+		char *val;
+	};
+
 	struct KSI_CTX_st {
 
 		/******************
@@ -74,6 +79,9 @@ extern "C" {
 
 		/** Counter for the requests sent by this context. */
 		KSI_uint64_t requestCounter;
+
+		/** A list of key-value pairs of OID and expected values for publications file certificate verification. */
+		KSI_List *certConstraints;
 	};
 
 #ifdef __cplusplus
