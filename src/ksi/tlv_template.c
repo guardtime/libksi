@@ -509,7 +509,7 @@ static int extractComposite(KSI_CTX *ctx, const KSI_TlvTemplate *tmpl, void *pay
 
 	res = extract(ctx, tmp, tlv, tmpl->subTemplate, tr, tr_len + 1, tr_size);
 	if (res != KSI_OK) {
-		KSI_LOG_error(ctx, "Unable to parse composite TLV: %s", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));
+		KSI_LOG_debug(ctx, "Unable to parse composite TLV: %s", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
@@ -576,8 +576,6 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 
 		if (tlv == NULL) break;
 
-		KSI_LOG_trace(ctx, "Starting to parse TLV[0x%02x]", KSI_TLV_getTag(tlv));
-
 		if (tr_len < tr_size) {
 			tr[tr_len].tag = KSI_TLV_getTag(tlv);
 			tr[tr_len].desc = NULL;
@@ -621,14 +619,13 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 			}
 
 			if (valuep != NULL && !tmpl[i].multiple) {
-				KSI_LOG_error(ctx, "Multiple occurrences of a unique tag 0x%02x", tmpl[i].tag);
+				KSI_LOG_debug(ctx, "Multiple occurrences of a unique tag 0x%02x", tmpl[i].tag);
 				KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "To avoid memory leaks, a value may not be set more than once while parsing.");
 				goto cleanup;
 			}
 			/* Parse the current TLV */
 			switch (tmpl[i].type) {
 				case KSI_TLV_TEMPLATE_OBJECT:
-					KSI_LOG_trace(ctx, "Extracting single TLV object.");
 					res = extractObject(ctx, &tmpl[i], payload, tlv);
 					if (res != KSI_OK) {
 						KSI_pushError(ctx, res, NULL);
@@ -636,7 +633,6 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 					}
 					break;
 				case KSI_TLV_TEMPLATE_COMPOSITE:
-					KSI_LOG_trace(ctx, "Extracting composite TLV.");
 
 					res = extractComposite(ctx, &tmpl[i], payload, tlv, tr, tr_len, tr_size);
 					if (res != KSI_OK) {
@@ -645,7 +641,7 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 					}
 					break;
 				default:
-					KSI_LOG_error(ctx, "No template found.");
+					KSI_LOG_error(ctx, "No template found - this might be caused by memory corruption.");
 					/* Should not happen, but just in case. */
 					KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Undefined template type");
 					goto cleanup;
@@ -658,7 +654,7 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 		if (matchCount == 0 && !KSI_TLV_isNonCritical(tlv)) {
 			char errm[1024];
 			KSI_snprintf(errm, sizeof(errm), "Unknown critical tag: %s", track_str(tr, tr_len + 1, tr_size, buf, sizeof(buf)));
-			KSI_LOG_error(ctx, errm);
+			KSI_LOG_debug(ctx, errm);
 			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, errm);
 			goto cleanup;
 		}
@@ -877,7 +873,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 					}
 					break;
 				default:
-					KSI_LOG_error(ctx, "Unimplemented template type: %d", tmpl[i].type);
+					KSI_LOG_warn(ctx, "Unimplemented template type: %d", tmpl[i].type);
 					KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Unimplemented template type.");
 					goto cleanup;
 			}

@@ -27,12 +27,11 @@
 
 static const char *level2str(int level) {
 	switch (level) {
-		case KSI_LOG_TRACE: return "TRACE";
 		case KSI_LOG_DEBUG: return "DEBUG";
-		case KSI_LOG_WARN: return "WARN";
 		case KSI_LOG_INFO: return "INFO";
+		case KSI_LOG_NOTICE: return "NOTICE";
+		case KSI_LOG_WARN: return "WARN";
 		case KSI_LOG_ERROR: return "ERROR";
-		case KSI_LOG_FATAL: return "FATAL";
 		default: return "UNKNOWN LOG LEVEL";
 	}
 }
@@ -81,12 +80,11 @@ int KSI_LOG_##suffix(KSI_CTX *ctx, char *format, ...) { \
 	return res; \
 }
 
-KSI_LOG_FN(trace, TRACE);
 KSI_LOG_FN(debug, DEBUG);
-KSI_LOG_FN(warn, WARN);
 KSI_LOG_FN(info, INFO);
+KSI_LOG_FN(notice, NOTICE);
+KSI_LOG_FN(warn, WARN);
 KSI_LOG_FN(error, ERROR);
-KSI_LOG_FN(fatal, FATAL);
 
 int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned char *data, size_t data_len) {
 	int res = KSI_UNKNOWN_ERROR;
