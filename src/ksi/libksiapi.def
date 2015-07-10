@@ -156,6 +156,7 @@ EXPORTS
     KSI_CTX_setAggregator
     KSI_CTX_setTransferTimeoutSeconds
     KSI_CTX_setConnectionTimeoutSeconds
+    KSI_CTX_putPubFileCertConstraint
 
 ;list.h
 EXPORTS

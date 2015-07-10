@@ -530,9 +530,15 @@ int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *net);
  * \param[in]	ctx		KSI context.
  * \param[in]	email	Email address.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- * \note After a successful call to this function the original pointer to email can be freed.
+ * \note This method is deprecated and will be removed in later versions, use
+ * #KSI_CTX_putPubFileCertConstraint with #KSI_CERT_EMAIL instead.
  */
 KSI_FN_DEPRECATED(int KSI_CTX_setPublicationCertEmail(KSI_CTX *ctx, const char *email));
+
+#define KSI_CERT_EMAIL "1.2.840.113549.1.9.1"
+#define KSI_CERT_COMMON_NAME "2.5.4.3"
+#define KSI_CERT_COUNTRY "2.5.4.6"
+#define KSI_CERT_ORGANIZATION "2.5.4.10"
 
 /**
  * This method adds or replaces expected OID values for publications file verification.
@@ -541,8 +547,8 @@ KSI_FN_DEPRECATED(int KSI_CTX_setPublicationCertEmail(KSI_CTX *ctx, const char *
  * \param[in]	exp		Expected null-terminated value string of the OID. When this
  * 						value is set to NULL the constraint is removed.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- * \note If a call to this function fails, the publications file verification is no longer
- * safe - a new context should be created-
+ * \note There are some pre-defined oid-values starting with the prefix KSI_CERT_*, like
+ * #KSI_CERT_EMAIL, #KSI_CERT_COMMON_NAME, #KSI_CERT_COUNTRY, #KSI_CERT_ORGANIZATION.
  */
 int KSI_CTX_putPubFileCertConstraint(KSI_CTX *ctx, const char *oid, const char *exp);
 

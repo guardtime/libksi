@@ -203,9 +203,8 @@ int KSI_CTX_new(KSI_CTX **context) {
 	if (res != KSI_OK) goto cleanup;
 
 	/* Set the default value for the e-mail address. */
-	res = KSI_CTX_setPublicationCertEmail(ctx, "publications@guardtime.com");
+	res = KSI_CTX_putPubFileCertConstraint(ctx, KSI_CERT_EMAIL, "publications@guardtime.com");
 	if (res != KSI_OK) goto cleanup;
-
 
 	/* Return the context. */
 	*context = ctx;

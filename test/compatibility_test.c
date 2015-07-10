@@ -93,7 +93,7 @@ static void test_KSI_strdup(CuTest *tc) {
 	char *dup = NULL;
 
 	res = KSI_strdup(data, &dup);
-	CuAssert(tc, "Duplicating string failed.", res == KSI_OK && dup != NULL && !strcmo(data, dup));
+	CuAssert(tc, "Duplicating string failed.", res == KSI_OK && dup != NULL && !strcmp(data, dup));
 
 	KSI_free(dup);
 }
