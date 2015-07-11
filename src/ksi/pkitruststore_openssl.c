@@ -747,7 +747,6 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	ASN1_OBJECT *oid = NULL;
 	X509_STORE_CTX *storeCtx = NULL;
 	char tmp[256];
-	const char *magicEmail = NULL;
 	size_t i;
 
 	if (pki == NULL) {
@@ -769,12 +768,6 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	}
 
 	KSI_LOG_debug(pki->ctx, "Verifying PKI signature certificate.");
-
-	res = KSI_CTX_getPublicationCertEmail(pki->ctx, &magicEmail);
-	if (res != KSI_OK) {
-		KSI_pushError(pki->ctx, res, NULL);
-		goto cleanup;
-	}
 
 	subj = X509_get_subject_name(cert);
 	if (subj == NULL) {
@@ -840,8 +833,6 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	res = KSI_OK;
 
 cleanup:
-
-	KSI_nofree(magicEmail);
 
 	if (storeCtx != NULL) X509_STORE_CTX_free(storeCtx);
 	if (oid != NULL) ASN1_OBJECT_free(oid);
