@@ -31,6 +31,7 @@
 
 #include "tlv.h"
 #include "pkitruststore.h"
+#include "ctx_impl.h"
 
 static const char *defaultCaFile =
 #ifdef OPENSSL_CA_FILE
@@ -746,7 +747,7 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	ASN1_OBJECT *oid = NULL;
 	X509_STORE_CTX *storeCtx = NULL;
 	char tmp[256];
-	const char *magicEmail = NULL;
+	size_t i;
 
 	if (pki == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -768,34 +769,41 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 
 	KSI_LOG_debug(pki->ctx, "Verifying PKI signature certificate.");
 
-	res = KSI_CTX_getPublicationCertEmail(pki->ctx, &magicEmail);
-	if (res != KSI_OK) {
-		KSI_pushError(pki->ctx, res, NULL);
+	subj = X509_get_subject_name(cert);
+	if (subj == NULL) {
+		KSI_pushError(pki->ctx, res = KSI_CRYPTO_FAILURE, "Unable to get subject name from certificate.");
 		goto cleanup;
 	}
 
-	if (magicEmail != NULL) {
-		KSI_LOG_debug(pki->ctx, "Verifying PKI signature certificate with e-mail address '%s'.", magicEmail);
+	for (i = 0; i < KSI_List_length(pki->ctx->certConstraints); i++) {
+		struct KSI_CertConstraint_st *ptr;
 
-		subj = X509_get_subject_name(cert);
-		if (subj == NULL) {
-			KSI_pushError(pki->ctx, res = KSI_CRYPTO_FAILURE, "Unable to get subject name from certificate.");
+		res = KSI_List_elementAt(pki->ctx->certConstraints, i, (void **) &ptr);
+		if (res != KSI_OK) {
+			KSI_pushError(pki->ctx, res, "Unable to get OID constraint.");
 			goto cleanup;
 		}
-		oid = OBJ_txt2obj("1.2.840.113549.1.9.1", 1);
+
+		KSI_LOG_info(pki->ctx, "%d. Verifying PKI signature certificate with oid = '%s' expected value '%s'.", i + 1, ptr->oid, ptr->val);
+
+		oid = OBJ_txt2obj(ptr->oid, 1);
 		if (oid == NULL) {
 			KSI_pushError(pki->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 			goto cleanup;
 		}
+
 		res = X509_NAME_get_text_by_OBJ(subj, oid, tmp, sizeof(tmp));
 		if (res < 0) {
 			KSI_pushError(pki->ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, NULL);
 			goto cleanup;
 		}
-		if (strcmp(tmp, magicEmail)) {
+		if (strcmp(tmp, ptr->val)) {
 			KSI_pushError(pki->ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, "Wrong subject name.");
 			goto cleanup;
 		}
+
+		ASN1_OBJECT_free(oid);
+		oid = NULL;
 	}
 
 	storeCtx = X509_STORE_CTX_new();
@@ -825,8 +833,6 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	res = KSI_OK;
 
 cleanup:
-
-	KSI_nofree(magicEmail);
 
 	if (storeCtx != NULL) X509_STORE_CTX_free(storeCtx);
 	if (oid != NULL) ASN1_OBJECT_free(oid);

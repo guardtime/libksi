@@ -35,6 +35,7 @@ EXPORTS
     KSI_snprintf
     KSI_vsnprintf
     KSI_strncpy
+	KSI_strdup
 
 ;err.h
 EXPORTS
@@ -155,6 +156,7 @@ EXPORTS
     KSI_CTX_setAggregator
     KSI_CTX_setTransferTimeoutSeconds
     KSI_CTX_setConnectionTimeoutSeconds
+    KSI_CTX_putPubFileCertConstraint
 
 ;list.h
 EXPORTS
@@ -171,12 +173,11 @@ EXPORTS
 
 ;log.h
 EXPORTS
-    KSI_LOG_trace
     KSI_LOG_debug
-    KSI_LOG_warn
     KSI_LOG_info
+	KSI_LOG_notice
+    KSI_LOG_warn
     KSI_LOG_error
-    KSI_LOG_fatal
     KSI_LOG_logBlob
     KSI_LOG_logTlv
     KSI_LOG_logDataHash

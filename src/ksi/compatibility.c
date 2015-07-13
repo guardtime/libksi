@@ -17,10 +17,13 @@
  * reserves and retains all trademark rights.
  */
 
-#include "compatibility.h"
 #include <string.h>
 #include <stdio.h>
 #include <limits.h>
+
+#include "ksi.h"
+#include "compatibility.h"
+
 
 size_t KSI_vsnprintf(char *buf, size_t n, const char *format, va_list va){
 	size_t ret = 0;
@@ -67,4 +70,36 @@ char *KSI_strncpy (char *destination, const char *source, size_t n){
 cleanup:
 
 	return ret;
+}
+
+int KSI_strdup(const char *from, char **to) {
+	int res = KSI_UNKNOWN_ERROR;
+	size_t len;
+	char *tmp = NULL;
+
+	if (from == NULL || to == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	len = strlen(from) + 1;
+
+	tmp = KSI_malloc(len);
+	if (tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	KSI_strncpy(tmp, from, len);
+
+	*to = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_free(tmp);
+
+	return res;
 }

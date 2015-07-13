@@ -89,6 +89,121 @@ static void testVerifyPublicationsFile(CuTest *tc) {
 	KSI_PublicationsFile_free(pubFile);
 }
 
+static void testVerifyPublicationsFileWithOrganization(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	setFileMockResponse(tc, getFullResourcePath(TEST_PUBLICATIONS_FILE));
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_CTX_putPubFileCertConstraint(ctx, "2.5.4.10", "Guardtime AS");
+	CuAssert(tc, "Unable to set OID 2.5.4.10", res == KSI_OK);
+
+	/* Verification should fail. */
+	res = KSI_PublicationsFile_verify(pubFile, ctx);
+	CuAssert(tc, "Publications file must verify with OID='2.5.4.10' value 'Guardtime AS'.", res == KSI_OK);
+
+	res = KSI_CTX_putPubFileCertConstraint(ctx, "2.5.4.10", "Guardtime US");
+	CuAssert(tc, "Unable to set OID 2.5.4.10", res == KSI_OK);
+
+	/* Verification should fail. */
+	res = KSI_PublicationsFile_verify(pubFile, ctx);
+	CuAssert(tc, "Publications file must not verify with OID='2.5.4.10' value 'Fake Company'.", res != KSI_OK);
+	/* Verification should succeed. */
+
+	res = KSI_CTX_putPubFileCertConstraint(ctx, "2.5.4.10", NULL);
+	CuAssert(tc, "Unable to remove OID 2.5.4.10", res == KSI_OK);
+
+	/* Verification should fail. */
+	res = KSI_PublicationsFile_verify(pubFile, ctx);
+	CuAssert(tc, "Publications file must verify with OID='2.5.4.10' removed from the constraints", res == KSI_OK);
+
+	CuAssert(tc, "Publications file should verify with mock certificate.", res == KSI_OK);
+
+	KSI_PublicationsFile_free(pubFile);
+}
+
+static void testVerifyPublicationsFileWithNoConstraints(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	setFileMockResponse(tc, getFullResourcePath(TEST_PUBLICATIONS_FILE));
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_CTX_putPubFileCertConstraint(ctx, "1.2.840.113549.1.9.1", NULL);
+	CuAssert(tc, "Unable to delete OID 1.2.840.113549.1.9.1", res == KSI_OK);
+
+	/* Verification should not fail. */
+	res = KSI_PublicationsFile_verify(pubFile, ctx);
+	CuAssert(tc, "Publications file must verify with no constraints.", res == KSI_OK);
+
+	res = KSI_CTX_putPubFileCertConstraint(ctx, "1.2.840.113549.1.9.1", "publications@guardtime.com");
+	CuAssert(tc, "Unable to set OID 1.2.840.113549.1.9.1 back to normal", res == KSI_OK);
+
+	/* Verification should not fail. */
+	res = KSI_PublicationsFile_verify(pubFile, ctx);
+	CuAssert(tc, "Publications file must verify with e-mail.", res == KSI_OK);
+
+	KSI_PublicationsFile_free(pubFile);
+}
+
+static void testVerifyPublicationsFileWithAttributeNotPresent(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	setFileMockResponse(tc, getFullResourcePath(TEST_PUBLICATIONS_FILE));
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_CTX_putPubFileCertConstraint(ctx, "2.5.4.9", "Local pub");
+	CuAssert(tc, "Unable to delete OID 2.5.4.9", res == KSI_OK);
+
+	/* Verification should fail. */
+	res = KSI_PublicationsFile_verify(pubFile, ctx);
+	CuAssert(tc, "Publications file must verify with address.", res != KSI_OK);
+
+	res = KSI_CTX_putPubFileCertConstraint(ctx, "2.5.4.9", NULL);
+	CuAssert(tc, "Unable to set OID 2.5.4.9 back to normal", res == KSI_OK);
+
+	/* Verification should not fail. */
+	res = KSI_PublicationsFile_verify(pubFile, ctx);
+	CuAssert(tc, "Publications file must verify.", res == KSI_OK);
+
+	KSI_PublicationsFile_free(pubFile);
+}
+
+static void testVerifyPublicationsFileWithRemoveNone(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	setFileMockResponse(tc, getFullResourcePath(TEST_PUBLICATIONS_FILE));
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_CTX_putPubFileCertConstraint(ctx, "2.5.4.9", NULL);
+	CuAssert(tc, "Unable to delete nonexistent OID 2.5.4.9 (should not fail)", res == KSI_OK);
+
+	/* Verification should not fail. */
+	res = KSI_PublicationsFile_verify(pubFile, ctx);
+	CuAssert(tc, "Publications file must verify with address.", res == KSI_OK);
+
+	KSI_PublicationsFile_free(pubFile);
+}
+
 
 static void testPublicationStringEncodingAndDecoding(CuTest *tc) {
 	static const char publication[] = "AAAAAA-CTJR3I-AANBWU-RY76YF-7TH2M5-KGEZVA-WLLRGD-3GKYBG-AM5WWV-4MCLSP-XPRDDI-UFMHBA";
@@ -285,6 +400,10 @@ CuSuite* KSITest_Publicationsfile_getSuite(void) {
 	SUITE_ADD_TEST(suite, testFindPublicationByTime);
 	SUITE_ADD_TEST(suite, testFindPublicationRef);
 	SUITE_ADD_TEST(suite, testSerializePublicationsFile);
+	SUITE_ADD_TEST(suite, testVerifyPublicationsFileWithOrganization);
+	SUITE_ADD_TEST(suite, testVerifyPublicationsFileWithNoConstraints);
+	SUITE_ADD_TEST(suite, testVerifyPublicationsFileWithAttributeNotPresent);
+	SUITE_ADD_TEST(suite, testVerifyPublicationsFileWithRemoveNone);
 
 	return suite;
 }

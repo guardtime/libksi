@@ -29,6 +29,7 @@
 
 #include "tlv.h"
 #include "pkitruststore.h"
+#include "ctx_impl.h"
 
 const char* getMSError(DWORD error, char *buf, size_t len){
     LPVOID lpMsgBuf;
@@ -937,7 +938,7 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	KSI_CTX *ctx = NULL;
 	PCCERT_CONTEXT subjectCert = NULL;
 	char tmp[256];
-	char *magicEmail = NULL;
+	size_t i;
 
 	if (pki == NULL || signature == NULL){
 		res = KSI_INVALID_ARGUMENT;
@@ -952,24 +953,25 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 		goto cleanup;
 	}
 
-	//printCertInfo(subjectCert);
+	for (i = 0; i < KSI_List_length(pki->ctx->certConstraints); i++) {
+		struct KSI_CertConstraint_st *ptr;
 
-	res=KSI_CTX_getPublicationCertEmail(ctx, &magicEmail);
-	if (res != KSI_OK){
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	if (magicEmail != NULL){
-		if (CertGetNameString(subjectCert, CERT_NAME_EMAIL_TYPE, 0, NULL, tmp, sizeof(tmp))==1){
-			KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, "Unable to get subjects name from PKI certificate.");
+		res = KSI_List_elementAt(pki->ctx->certConstraints, i, (void **) &ptr);
+		if (res != KSI_OK) {
+			KSI_pushError(pki->ctx, res, "Unable to get OID constraint.");
 			goto cleanup;
 		}
 
-		KSI_LOG_debug(ctx, "CryptoAPI: Subjects E-mail: %s.", tmp);
+		KSI_LOG_info(pki->ctx, "Verifying PKI signature certificate with oid = '%s' expected value '%s'.", ptr->oid, ptr->val);
 
-		if (strcmp(tmp, magicEmail) != 0) {
-			KSI_pushError(ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, "Wrong subject name.");
+		if (CertGetNameString(subjectCert, CERT_NAME_ATTR_TYPE, 0, ptr->oid, tmp, sizeof(tmp)) == 1){
+			KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, "Unable to get OID value.");
+			goto cleanup;
+		}
+
+		if (strcmp(tmp, ptr->val) != 0) {
+			KSI_LOG_debug(pki->ctx, "Unexpected value for OID='%s': '%s'", ptr->oid, tmp);
+			KSI_pushError(ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, "Unexpected OID value.");
 			goto cleanup;
 		}
 	}
