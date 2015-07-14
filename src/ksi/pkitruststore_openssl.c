@@ -219,7 +219,7 @@ int KSI_PKICertificate_toTlv(KSI_CTX *ctx, KSI_PKICertificate *cert, unsigned ta
 
 cleanup:
 
-	KSI_nofree(raw);
+	KSI_free(raw);
 	KSI_TLV_free(tmp);
 
 	return res;
@@ -515,7 +515,7 @@ int KSI_PKISignature_toTlv(KSI_CTX *ctx, KSI_PKISignature *sig, unsigned tag, in
 
 cleanup:
 
-	KSI_nofree(raw);
+	KSI_free(raw);
 	KSI_TLV_free(tmp);
 
 	return res;
