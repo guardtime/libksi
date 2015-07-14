@@ -129,6 +129,18 @@ extern "C" {
 	int KSI_PublicationsFile_getSignature(const KSI_PublicationsFile *pubFile, KSI_PKISignature **signature);
 
 	/**
+	 * Publications file signed data length getter. It describes how many first
+	 * bytes of serialized publications file are or are going to be signed with
+	 * PKI signature. If publications file is changed it must be serialized to
+	 * get valid result \see #KSI_PublicationsFile_serialize.
+	 * \param[in]	pubFile			Publications file.
+     * \param signedDataLength
+	 * 
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+     */
+	int KSI_PublicationsFile_getSignedDataLength (const KSI_PublicationsFile *pubFile, size_t *signedDataLength);
+	/**
 	 * PKI Certificate search function by certificate Id.
 	 * \param[in]	pubFile			Publications file.
 	 * \param[in]	id				Certificate id.

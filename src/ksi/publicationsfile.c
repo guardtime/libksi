@@ -511,6 +511,7 @@ KSI_IMPLEMENT_GETTER(KSI_PublicationsFile, KSI_PublicationsHeader*, header, Head
 KSI_IMPLEMENT_GETTER(KSI_PublicationsFile, KSI_LIST(KSI_CertificateRecord)*, certificates, Certificates);
 KSI_IMPLEMENT_GETTER(KSI_PublicationsFile, KSI_LIST(KSI_PublicationRecord)*, publications, Publications);
 KSI_IMPLEMENT_GETTER(KSI_PublicationsFile, KSI_PKISignature *, signature, Signature);
+KSI_IMPLEMENT_GETTER(KSI_PublicationsFile, size_t, signedDataLength, SignedDataLength);
 
 KSI_IMPLEMENT_SETTER(KSI_PublicationsFile, KSI_PublicationsHeader*, header, Header);
 KSI_IMPLEMENT_SETTER(KSI_PublicationsFile, KSI_LIST(KSI_CertificateRecord)*, certificates, Certificates);
