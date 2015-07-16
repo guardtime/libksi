@@ -349,7 +349,7 @@ cleanup:
 	return res;
 }
 
-static int publicationsFileTLV_getSignedDataLen(KSI_TLV *pubFileTlv, size_t *len) {
+static int publicationsFileTLV_getSignatureTLVLength(KSI_TLV *pubFileTlv, size_t *len) {
 	int res;
 	KSI_TLVList *list = NULL;
 	KSI_TLV *tlvSig = NULL;
@@ -430,7 +430,7 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 		goto cleanup;
 	}
 
-	res = publicationsFileTLV_getSignedDataLen(tlv, &sig_len);
+	res = publicationsFileTLV_getSignatureTLVLength(tlv, &sig_len);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -473,7 +473,7 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 	if (pubFile->raw != NULL) KSI_free(pubFile->raw);
 	pubFile->raw = tmp;
 	pubFile->raw_len = tmp_len;
-	pubFile->signedDataLength = sig_len;
+	pubFile->signedDataLength = tmp_len - sig_len;
 	tmp = NULL;
 
 	tmp = (char*)KSI_malloc(pubFile->raw_len);
