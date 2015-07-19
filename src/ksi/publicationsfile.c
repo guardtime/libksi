@@ -726,6 +726,7 @@ int KSI_PublicationsFile_getNearestPublication(const KSI_PublicationsFile *trust
 
 		/* Check if current publication time is after given time. */
 		if (KSI_Integer_compare(pubTime, tm) < 0) {
+			/* Check if current publication time is before the earliest so far. */
 			if (result_tm == NULL || KSI_Integer_compare(result_tm, tm) > 0) {
 				result = pr;
 				result_tm = tm;
@@ -790,11 +791,10 @@ int KSI_PublicationsFile_getLatestPublication(const KSI_PublicationsFile *trust,
 			goto cleanup;
 		}
 
-		/* Check if current publication time is after given time. If
-		 * pubTime is NULL, the latest available publication is returned. */
+		/* Check if current publication time is after given time. */
 		if (pubTime == NULL || KSI_Integer_compare(pubTime, tm) < 0) {
-			/* Check if the current publication time is after the last found time. */
-			if (result_tm == NULL || KSI_Integer_compare(result_tm, tm) > 0) {
+			/* Check if current publication time is after the latest so far. */
+			if (result_tm == NULL || KSI_Integer_compare(result_tm, tm) < 0) {
 				result = pr;
 				result_tm = tm;
 			}
