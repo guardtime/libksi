@@ -725,8 +725,8 @@ int KSI_PublicationsFile_getNearestPublication(const KSI_PublicationsFile *trust
 		}
 
 		/* Check, if current publication time is after given time. */
-		if (KSI_Integer_compare(pubTime, tm) < 0) {
-			if (result_tm == NULL || KSI_Integer_compare(result_tm, tm) > 0) {
+		if (KSI_Integer_compare(pubTime, tm) <= 0) {
+			if (result_tm == NULL || KSI_Integer_compare(result_tm, tm) >= 0) {
 				result = pr;
 				result_tm = tm;
 			}
