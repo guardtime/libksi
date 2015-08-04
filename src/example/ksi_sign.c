@@ -45,7 +45,6 @@ int main(int argc, char **argv) {
 	FILE *logFile = NULL;
 
 	/* Handle command line parameters */
-	/* Handle command line parameters */
 	if (argc != 7) {
 		fprintf(stderr, "Usage:\n"
 				"  %s <in-data-file> <out-sign-file> <aggregator-uri> <user> <pass> <pub-file url | -> \n", argv[0]);
