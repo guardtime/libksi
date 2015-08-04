@@ -193,11 +193,11 @@ extern "C" {
 	int KSI_PublicationsFile_getNearestPublication(const KSI_PublicationsFile *pubFile, const KSI_Integer *pubTime, KSI_PublicationRecord **pubRec);
 
 	/**
-	 * Search nearest publication by time. The next available publication (published
+	 * Search latest publication by time. The last available publication (published
 	 * after the given time \c pubTime) is returned via the output parameter \c pubRec
 	 * if found, otherwise \c pubRec is evaluated to NULL.
 	 * \param[in]	pubFile			Publications file.
-	 * \param[in]	pubTime			Publication time.
+	 * \param[in]	pubTime			Publication time. If this is \c NULL, latest publication in the file is returned.
 	 * \param[out]	pubRec			Pointer to receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
