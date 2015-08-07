@@ -115,7 +115,6 @@ KSI_DEFINE_SETTER(baseType, valueType, valueName, alias) {					\
 		res = KSI_INVALID_ARGUMENT;											\
 		goto cleanup;														\
 	}																		\
-	KSI_ERR_clearErrors(o->ctx);											\
 	o->valueName = valueName;												\
 	res = KSI_OK;															\
 cleanup:																	\
