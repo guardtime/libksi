@@ -219,7 +219,7 @@ int KSI_PKICertificate_toTlv(KSI_CTX *ctx, KSI_PKICertificate *cert, unsigned ta
 
 cleanup:
 
-	KSI_nofree(raw);
+	KSI_free(raw);
 	KSI_TLV_free(tmp);
 
 	return res;
@@ -515,7 +515,7 @@ int KSI_PKISignature_toTlv(KSI_CTX *ctx, KSI_PKISignature *sig, unsigned tag, in
 
 cleanup:
 
-	KSI_nofree(raw);
+	KSI_free(raw);
 	KSI_TLV_free(tmp);
 
 	return res;
@@ -959,7 +959,7 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
     	goto cleanup;
     }
 
-    res = EVP_VerifyFinal(&md_ctx, (unsigned char *)signature, signature_len, pubKey);
+    res = EVP_VerifyFinal(&md_ctx, (unsigned char *)signature, (unsigned)signature_len, pubKey);
     if (res < 0) {
 		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, NULL);
 		goto cleanup;

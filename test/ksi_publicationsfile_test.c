@@ -360,6 +360,9 @@ static void testSerializePublicationsFile(CuTest *tc) {
 	FILE *f = NULL;
 	int symbol = 0;
 	size_t i = 0;
+	size_t signedDataLengthAtLoading;
+	size_t signedDataLengthAtSerialization;
+
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -368,8 +371,14 @@ static void testSerializePublicationsFile(CuTest *tc) {
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
 
+	res = KSI_PublicationsFile_getSignedDataLength(pubFile, &signedDataLengthAtLoading);
+	CuAssert(tc, "Unable to get signed data length.", res == KSI_OK);
+
 	res = KSI_PublicationsFile_serialize(ctx, pubFile, &raw, &raw_len);
 	CuAssert(tc, "Unable to serialize publications file", res == KSI_OK && raw != NULL && raw_len != 0);
+
+	res = KSI_PublicationsFile_getSignedDataLength(pubFile, &signedDataLengthAtSerialization);
+	CuAssert(tc, "Unable to get signed data length.", res == KSI_OK);
 
 	f = fopen(getFullResourcePath(TEST_PUBLICATIONS_FILE), "rb");
 	CuAssert(tc, "Unable to open publications file", res == KSI_OK && f != NULL);
@@ -379,7 +388,11 @@ static void testSerializePublicationsFile(CuTest *tc) {
 		i++;
 	}
 
-	CuAssert(tc, "Serialized publications file length  mismatch", i == raw_len);
+	CuAssert(tc, "Serialized publications file length mismatch", i == raw_len);
+
+	CuAssert(tc, "Serialized publications file length mismatch", signedDataLengthAtSerialization == signedDataLengthAtLoading);
+
+
 
 	KSI_PublicationsFile_free(pubFile);
 	KSI_free(raw);
