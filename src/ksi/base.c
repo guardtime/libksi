@@ -1058,7 +1058,7 @@ int KSI_CTX_setDefaultPubFileCertConstraints(KSI_CTX *ctx, const KSI_CertConstra
 			goto cleanup;
 		}
 
-		if (tmp[i].val == NULL) {
+		if (arr[i].val == NULL) {
 			KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Expected OID value may not be NULL");
 			goto cleanup;
 		}
