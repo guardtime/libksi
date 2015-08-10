@@ -1071,7 +1071,8 @@ int KSI_CTX_setDefaultPubFileCertConstraints(KSI_CTX *ctx, const KSI_CertConstra
 	}
 
 	/* Add terminator for the array. */
-	tmp[i] = (KSI_CertConstraint) { NULL, NULL};
+	tmp[i].oid = NULL;
+	tmp[i].val = NULL;
 
 	/* Free the existing constraints. */
 	freeCertConstraintsArray(ctx->certConstraints);
