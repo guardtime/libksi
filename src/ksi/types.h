@@ -54,6 +54,10 @@ extern "C" {
 	typedef struct KSI_PublicationData_st KSI_PublicationData;
 	typedef struct KSI_PublicationRecord_st KSI_PublicationRecord;
 	typedef struct KSI_ErrorPdu_st KSI_ErrorPdu;
+
+	/* Typedef for the struct KSI_CertConstraint_st */
+	typedef struct KSI_CertConstraint_st KSI_CertConstraint;
+
 	/**
 	 * Callback for request header.
 	 * \param[in]	hdr		Pointer to the header.
@@ -114,7 +118,13 @@ extern "C" {
 	 */
 	typedef struct KSI_RFC3161_st KSI_RFC3161;
 
-	
+	/** Pair of OID and value. */
+	struct KSI_CertConstraint_st {
+		/** The OID for the constraint. */
+		char *oid;
+		/** Expected value. */
+		char *val;
+	};
 	
 	KSI_DEFINE_LIST(KSI_MetaData);
 	KSI_DEFINE_LIST(KSI_HashChainLink);

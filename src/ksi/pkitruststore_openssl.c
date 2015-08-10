@@ -775,14 +775,8 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 		goto cleanup;
 	}
 
-	for (i = 0; i < KSI_List_length(pki->ctx->certConstraints); i++) {
-		struct KSI_CertConstraint_st *ptr;
-
-		res = KSI_List_elementAt(pki->ctx->certConstraints, i, (void **) &ptr);
-		if (res != KSI_OK) {
-			KSI_pushError(pki->ctx, res, "Unable to get OID constraint.");
-			goto cleanup;
-		}
+	for (i = 0; pki->ctx->certConstraints[i].oid != NULL; i++) {
+		KSI_CertConstraint *ptr = &pki->ctx->certConstraints[i];
 
 		KSI_LOG_info(pki->ctx, "%d. Verifying PKI signature certificate with oid = '%s' expected value '%s'.", i + 1, ptr->oid, ptr->val);
 

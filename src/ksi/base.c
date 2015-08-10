@@ -40,6 +40,24 @@ const char *KSI_getVersion(void) {
 	return versionString;
 }
 
+const KSI_CertConstraint KSI_defaultPubFileCertConstraints[] = {
+		{ KSI_CERT_EMAIL, "publications@guardtime.com"},
+		{ NULL, NULL }
+};
+
+static void freeCertConstraintsArray(KSI_CertConstraint *arr) {
+	size_t i;
+
+	if (arr != NULL) {;
+		for (i = 0; arr[i].oid != NULL; i++) {
+			KSI_free(arr[i].oid);
+			KSI_free(arr[i].val);
+		}
+
+		KSI_free(arr);
+	}
+}
+
 const char *KSI_getErrorString(int statusCode) {
 	switch (statusCode) {
 		case KSI_OK:
@@ -164,7 +182,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->publicationsFile = NULL;
 	ctx->pkiTruststore = NULL;
 	ctx->netProvider = NULL;
-	ctx->publicationCertEmail = NULL;
+	ctx->publicationCertEmail_DEPRECATED = NULL;
 	ctx->loggerCB = NULL;
 	ctx->requestHeaderCB = NULL;
 	ctx->loggerCtx = NULL;
@@ -198,12 +216,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	if (res != KSI_OK) goto cleanup;
 	pkiTruststore = NULL;
 
-	/* Create lists for cert constrain value pairs. */
-	res = KSI_List_new((void (*)(void *)) KSI_CertConstraint_free, &ctx->certConstraints);
-	if (res != KSI_OK) goto cleanup;
-
-	/* Set the default value for the e-mail address. */
-	res = KSI_CTX_putPubFileCertConstraint(ctx, KSI_CERT_EMAIL, "publications@guardtime.com");
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, KSI_defaultPubFileCertConstraints);
 	if (res != KSI_OK) goto cleanup;
 
 	/* Return the context. */
@@ -289,9 +302,9 @@ void KSI_CTX_free(KSI_CTX *ctx) {
 		KSI_PKITruststore_free(ctx->pkiTruststore);
 
 		KSI_PublicationsFile_free(ctx->publicationsFile);
-		KSI_free(ctx->publicationCertEmail);
+		KSI_free(ctx->publicationCertEmail_DEPRECATED);
 
-		KSI_List_free(ctx->certConstraints);
+		freeCertConstraintsArray(ctx->certConstraints);
 
 		KSI_free(ctx);
 	}
@@ -973,17 +986,26 @@ cleanup:
 int KSI_CTX_setPublicationCertEmail(KSI_CTX *ctx, const char *email) {
 	int res = KSI_UNKNOWN_ERROR;
 	char *tmp = NULL;
+	KSI_CertConstraint arr[] = {
+			{ KSI_CERT_EMAIL, NULL },
+			{ NULL, NULL }
+	};
+
 	if (ctx == NULL || email == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	res = KSI_CTX_putPubFileCertConstraint(ctx, "1.2.840.113549.1.9.1", email);
+	/* The value is only read - cast is safe. */
+	arr[0].val = (char *) email;
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, arr);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
+	/* Keep the value for compatibility. */
 	if (email != NULL && email[0] != '\0') {
 		size_t len = strlen(email);
 		tmp = KSI_calloc(len + 1, 1);
@@ -995,8 +1017,8 @@ int KSI_CTX_setPublicationCertEmail(KSI_CTX *ctx, const char *email) {
 		memcpy(tmp, email, len + 1);
 	}
 
-	KSI_free(ctx->publicationCertEmail);
-	ctx->publicationCertEmail = tmp;
+	KSI_free(ctx->publicationCertEmail_DEPRECATED);
+	ctx->publicationCertEmail_DEPRECATED = tmp;
 	tmp = NULL;
 
 	res = KSI_OK;
@@ -1005,145 +1027,65 @@ cleanup:
 	return res;
 }
 
-static struct KSI_CertConstraint_st *findConstraintIndex(KSI_CTX *ctx, const char *oid) {
+int KSI_CTX_setDefaultPubFileCertConstraints(KSI_CTX *ctx, const KSI_CertConstraint *arr) {
 	int res = KSI_UNKNOWN_ERROR;
+	KSI_CertConstraint *tmp = NULL;
+	size_t count = 0;
 	size_t i;
-	struct KSI_CertConstraint_st *ptr = NULL;
-
-	for (i = 0; i < KSI_List_length(ctx->certConstraints); i++) {
-		res = KSI_List_elementAt(ctx->certConstraints, i, (void **) &ptr);
-		if (res != KSI_OK) goto cleanup;
-
-		if (!strcmp(oid, ptr->oid)) break;
-	}
-
-	ptr = NULL;
-
-cleanup:
-
-	return ptr;
-}
-
-static int deleteConstraintIndex(KSI_CTX *ctx, const char *oid) {
-	int res = KSI_UNKNOWN_ERROR;
-	size_t pos;
 
 	KSI_ERR_clearErrors(ctx);
-
-	if (ctx == NULL || oid == NULL) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	for (pos = KSI_List_length(ctx->certConstraints); pos > 0; pos--) {
-		struct KSI_CertConstraint_st *ptr;
-
-		res = KSI_List_elementAt(ctx->certConstraints, pos - 1, (void **) &ptr);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
-
-		if (!strcmp(oid, ptr->oid)) {
-			res = KSI_List_remove(ctx->certConstraints, pos - 1, NULL);
-			if (res != KSI_OK) {
-				KSI_pushError(ctx, res, NULL);
-				goto cleanup;
-			}
-		}
-
-	}
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
-int KSI_CTX_putPubFileCertConstraint(KSI_CTX *ctx, const char *oid, const char *exp) {
-	int res = KSI_UNKNOWN_ERROR;
-	char *val = NULL;
-	char *key = NULL;
-	size_t len = 0;
-	struct KSI_CertConstraint_st *ptr = NULL;
-	struct KSI_CertConstraint_st *tmp = NULL;
-
-	KSI_ERR_clearErrors(ctx);
-
-	if (ctx == NULL || oid == NULL) {
+	if (ctx == NULL || arr == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
 
-	/* Remove the constraint if expected value is NULL. */
-	if (exp == NULL) {
-		res = deleteConstraintIndex(ctx, oid);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-		}
+	/* Count the input. */
+	while(arr[count++].oid != NULL);
 
-		/* Goto cleanup in any way, even if the call was successful. */
+	/* Allocate buffer with extra space for the trailing {NULL, NULL}. */
+	tmp = KSI_calloc(count, sizeof(KSI_CertConstraint));
+	if (tmp == NULL) {
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
+	memset(tmp, 0, count * sizeof(KSI_CertConstraint));
 
-	len = strlen(exp) + 1;
-
-	/* Copy the expected value. */
-	res = KSI_strdup(exp, &val);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Check if the value exists. */
-	ptr = findConstraintIndex(ctx,  oid);
-	if (ptr != NULL) {
-		KSI_free(ptr->val);
-		ptr->val = val;
-		val = NULL;
-	} else {
-		/* Copy the oid value. */
-		res = KSI_strdup(oid, &key);
+	/* Copy the values. */
+	for (i = 0; arr[i].oid != NULL; i++) {
+		res = KSI_strdup(arr[i].oid, &tmp[i].oid);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
 		}
 
-		/* Create the container. */
-		tmp = KSI_malloc(sizeof(struct KSI_CertConstraint_st));
-		if (tmp == NULL) {
-			KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		if (tmp[i].val == NULL) {
+			KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Expected OID value may not be NULL");
 			goto cleanup;
 		}
 
-		tmp->oid = key;
-		key = NULL;
-
-		tmp->val = val;
-		val = NULL;
-
-		/* Add the container to the list. */
-		res = KSI_List_append(ctx->certConstraints, (void *) tmp);
+		res = KSI_strdup(arr[i].val, &tmp[i].val);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
 		}
-
-		tmp = NULL;
 	}
+
+	/* Add terminator for the array. */
+	tmp[i] = (KSI_CertConstraint) { NULL, NULL};
+
+	/* Free the existing constraints. */
+	freeCertConstraintsArray(ctx->certConstraints);
+
+	ctx->certConstraints = tmp;
+	tmp = NULL;
 
 	res = KSI_OK;
 
 cleanup:
 
-	KSI_nofree(ptr);
-
-	KSI_CertConstraint_free(tmp);
-	KSI_free(key);
-	KSI_free(val);
+	freeCertConstraintsArray(tmp);
 
 	return res;
 }
 
-CTX_VALUEP_GETTER(publicationCertEmail, PublicationCertEmail, const char)
+CTX_VALUEP_GETTER(publicationCertEmail_DEPRECATED, PublicationCertEmail, const char)
