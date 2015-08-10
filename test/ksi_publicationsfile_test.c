@@ -105,7 +105,8 @@ static void testVerifyPublicationsFileWithOrganization(CuTest *tc) {
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
 
-	arr[1] = (KSI_CertConstraint) { KSI_CERT_ORGANIZATION, "Guardtime AS" };
+	arr[1].oid = KSI_CERT_ORGANIZATION;
+	arr[1].val = "Guardtime AS";
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, arr);
 	CuAssert(tc, "Unable to set OID 2.5.4.10", res == KSI_OK);
 
@@ -113,7 +114,7 @@ static void testVerifyPublicationsFileWithOrganization(CuTest *tc) {
 	res = KSI_PublicationsFile_verify(pubFile, ctx);
 	CuAssert(tc, "Publications file must verify with OID='2.5.4.10' value 'Guardtime AS'.", res == KSI_OK);
 
-	arr[1] = (KSI_CertConstraint) { KSI_CERT_ORGANIZATION, "Guardtime US" };
+	arr[1].val = "Guardtime US";
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, arr);
 	CuAssert(tc, "Unable to set OID 2.5.4.10", res == KSI_OK);
 
@@ -122,7 +123,8 @@ static void testVerifyPublicationsFileWithOrganization(CuTest *tc) {
 	CuAssert(tc, "Publications file may not verify with wrong company'.", res != KSI_OK);
 	/* Verification should succeed. */
 
-	arr[1] = (KSI_CertConstraint) { NULL, NULL };
+	arr[1].oid = NULL;
+	arr[1].val = NULL;
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, arr);
 	CuAssert(tc, "Unable to set OID 2.5.4.10", res == KSI_OK);
 
@@ -157,7 +159,8 @@ static void testVerifyPublicationsFileWithNoConstraints(CuTest *tc) {
 	res = KSI_PublicationsFile_verify(pubFile, ctx);
 	CuAssert(tc, "Publications file must verify with no constraints.", res == KSI_OK);
 
-	arr[0] = (KSI_CertConstraint) { KSI_CERT_EMAIL, "publications@guardtime.com" };
+	arr[0].oid = KSI_CERT_EMAIL;
+	arr[0].val = "publications@guardtime.com";
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, arr);
 	CuAssert(tc, "Unable to set OID 1.2.840.113549.1.9.1 back to normal", res == KSI_OK);
 
@@ -183,7 +186,8 @@ static void testVerifyPublicationsFileWithAttributeNotPresent(CuTest *tc) {
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
 
-	arr[0] = (KSI_CertConstraint) { "2.5.4.9", "Local pub" };
+	arr[0].oid = "2.5.4.9";
+	arr[0].val = "Local pub";
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, arr);
 	CuAssert(tc, "Unable to delete OID 2.5.4.9", res == KSI_OK);
 
@@ -191,7 +195,8 @@ static void testVerifyPublicationsFileWithAttributeNotPresent(CuTest *tc) {
 	res = KSI_PublicationsFile_verify(pubFile, ctx);
 	CuAssert(tc, "Publications file must verify with address.", res != KSI_OK);
 
-	arr[0] = (KSI_CertConstraint) { KSI_CERT_EMAIL, "publications@guardtime.com" };
+	arr[0].oid = KSI_CERT_EMAIL;
+	arr[0].val = "publications@guardtime.com";
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, arr);
 	CuAssert(tc, "Unable to set OID 2.5.4.9 back to normal", res == KSI_OK);
 
