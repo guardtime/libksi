@@ -65,7 +65,7 @@ int KSI_RequestHandle_new(KSI_CTX *ctx, const unsigned char *request, size_t req
 
 	KSI_ERR_clearErrors(ctx);
 
-	if (ctx == NULL || handle == NULL) {
+	if (ctx == NULL || handle == NULL || (request == NULL && request_length != 0) || (request != NULL && request_length == 0)) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
