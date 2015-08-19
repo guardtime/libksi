@@ -1,5 +1,6 @@
 
-	Copyright 2013-2015 Guardtime, Inc.
+
+    	Copyright 2013-2015 Guardtime, Inc.
 	
 	This file is part of the Guardtime client SDK.
 	
@@ -38,6 +39,19 @@ Prerequisites
 			3.1) OpenSSL 0.9.8g (recommended)
 			3.2) Windows native CryptoAPI
 		
+	Lib Curl must be build from binaries when Visual Studio 14 and lib Curl are 
+	used for building API:
+        1) Download cURL 7.37 binaries from git.
+        2) Build cURL using Visual Studio Command prompt and the following command
+            in cURL winbuild directory:
+            nmake /f MakeFile.vc mode=static VC=12 MACHINE=x86
+        3) Find out what kind of RTL was used from bulding logs.
+        4) Rename libcurl_a.lib to correct name depending on which RTL
+            was used (e.g. rename to libcurlMD.lib if MD was used).
+        5) Install cURL:
+            5.1) move build to desired location and rename the directory
+            5.2) Copy curl.exe from bin folder to system32
+            5.3) Add curl path to system variables
 	
 	When KSI API uses OpenSSl or Curl the location of libraries must be specified.
 	See make file options CURL_DIR, OPENSSL_DIR. The structure of the directories
@@ -189,7 +203,12 @@ Configuring build scripts
 		
 Examples
 =====================================
-	
+
+	Build static library linked against Windows native libraries and RTL as MD 
+	using cURL as network provider and CryptoAPI as hash provider:
+	nmake RTL=MD DLL=lib CURL_DIR=<path to cURL dir> NET_PROVIDER=CURL 
+	CRYPTO_PROVIDER=CRYPTOAPI
+
 	Build static library linked against Windows native libraries and RTL as MT:
 	nmake RTL=MT DLL=lib NET_PROVIDER=WININET CRYPTO_PROVIDER=CRYPTOAPI 
 
