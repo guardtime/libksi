@@ -19,7 +19,7 @@
 
 AM_CFLAGS=-g -Wall -I$(top_builddir)/src/
 AM_LDFLAGS=-L$(top_builddir)/src/ksi -no-install -lksi
-check_PROGRAMS=runner parse-benchmark serialize-benchmark resigner
+check_PROGRAMS=runner parse-benchmark serialize-benchmark resigner integration-tests
 
 runner_SOURCES= \
 		./all_tests.c \
@@ -42,9 +42,21 @@ runner_SOURCES= \
 		./compatibility_test.c \
 		./uri_client_test.c
 
+integration-tests_SOURCES= \
+	./all_integration_tests.c \
+	./all_integration_tests.h \
+	./cutest/CuTest.c \
+	./cutest/CuTest.h \
+	./aggre_integration_test.c \
+	./ext_integration_tests.c \
+	./support_tests.c \
+	./support_tests.h
+
 parse_benchmark_SOURCES=parse_benchmark.c
 serialize_benchmark_SOURCES=serialize_benchmark.c
 resigner_SOURCES=resigner.c
+
+
 
 clean-local:
 	rm -fr *.gcda *.gcno
