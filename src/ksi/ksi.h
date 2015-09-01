@@ -541,16 +541,25 @@ KSI_FN_DEPRECATED(int KSI_CTX_setPublicationCertEmail(KSI_CTX *ctx, const char *
 #define KSI_CERT_ORGANIZATION "2.5.4.10"
 
 /**
- * This method adds or replaces expected OID values for publications file verification.
+ * This method specifies the default constraints for verifying the publications file PKI certificate.
+ * The input consists of an array of OID and expected value pairs terminated by a pair of two NULLs. Except
+ * in the last terminating NULL pair, the expected value may not be NULL - this will make the function
+ * to return #KSI_INVALID_ARGUMENT.
  * \param[in]	ctx		KSI context.
- * \param[in]	oid		OID null-terminated string.
- * \param[in]	exp		Expected null-terminated value string of the OID. When this
- * 						value is set to NULL the constraint is removed.
+ * \param[in]	arr		Array of OID and value pairs, terminated by a pair of NULLs.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- * \note There are some pre-defined oid-values starting with the prefix KSI_CERT_*, like
- * #KSI_CERT_EMAIL, #KSI_CERT_COMMON_NAME, #KSI_CERT_COUNTRY, #KSI_CERT_ORGANIZATION.
+ * \note The function does not take ownership of the input array and makes a copy of it, thus the
+ * caller is responsible for freeing the memory which can be done right after a successful call
+ * to this function.
+ * \code{.c}
+ * KSI_CertConstraint arr[] = {
+ * 		{ KSI_CERT_EMAIL, "publications@guardtime.com"},
+ * 		{ NULL, NULL }
+ * };
+ * res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, arr);
+ * \endcode
  */
-int KSI_CTX_putPubFileCertConstraint(KSI_CTX *ctx, const char *oid, const char *exp);
+int KSI_CTX_setDefaultPubFileCertConstraints(KSI_CTX *ctx, const KSI_CertConstraint *arr);
 
 /**
  * Getter function for the PKI truststore object.

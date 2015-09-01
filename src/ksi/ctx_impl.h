@@ -33,11 +33,6 @@ extern "C" {
 
 	KSI_DEFINE_LIST(GlobalCleanupFn)
 
-	struct KSI_CertConstraint_st {
-		char *oid;
-		char *val;
-	};
-
 	struct KSI_CTX_st {
 
 		/******************
@@ -69,7 +64,8 @@ extern "C" {
 
 		KSI_PublicationsFile *publicationsFile;
 
-		char *publicationCertEmail;
+		/** This field is kept only for compatibility - will be removed in the future. */
+		char *publicationCertEmail_DEPRECATED;
 
 		/* List of cleanup functions to be called when the #KSI_CTX_free is called. */
 		KSI_List *cleanupFnList;
@@ -80,8 +76,8 @@ extern "C" {
 		/** Counter for the requests sent by this context. */
 		KSI_uint64_t requestCounter;
 
-		/** A list of key-value pairs of OID and expected values for publications file certificate verification. */
-		KSI_List *certConstraints;
+		/** A NULL-terminated array of key-value pairs of OID and expected values for publications file certificate verification. */
+		KSI_CertConstraint *certConstraints;
 	};
 
 #ifdef __cplusplus
