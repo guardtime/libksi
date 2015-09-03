@@ -371,6 +371,9 @@ extern "C" {
 	int KSI_AggregationHashChain_setInputHash(KSI_AggregationHashChain * aggr, KSI_DataHash *inputHash);
 	int KSI_AggregationHashChain_setAggrHashId(KSI_AggregationHashChain * aggr, KSI_Integer *aggrHashId);
 	int KSI_AggregationHashChain_setChain(KSI_AggregationHashChain * aggr, KSI_LIST(KSI_HashChainLink) *chain);
+	KSI_DEFINE_REF(KSI_AggregationHashChain);
+	KSI_DEFINE_WRITE_BYTES(KSI_AggregationHashChain);
+
 
 /**
  * @}

@@ -962,3 +962,46 @@ cleanup:
 
 	return res;
 }
+
+int KSI_TlvTemplate_writeBytes(KSI_CTX *ctx, const void *obj, unsigned tag, int isNc, int isFwd, const KSI_TlvTemplate *tmpl, unsigned char *raw, size_t raw_size, size_t *raw_len, int opt) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_TLV *tlv = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || obj == NULL || tmpl == NULL || (raw == NULL && raw_size != 0) || raw_len == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	/* Create TLV for the PDU object. */
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, tag, isFwd, isNc, &tlv);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Evaluate the TLV. */
+	res = KSI_TlvTemplate_construct(ctx, tlv, obj, tmpl);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Serializing object", tlv);
+
+	/* Serialize the TLV. */
+	res = KSI_TLV_writeBytes(tlv, raw, raw_size, raw_len, opt);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_TLV_free(tlv);
+
+	return res;
+}
+

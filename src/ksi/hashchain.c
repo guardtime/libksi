@@ -24,28 +24,14 @@
 #include "hashchain.h"
 #include "tlv.h"
 #include "tlv_template.h"
+#include "hashchain_impl.h"
 
 /* For optimization reasons, we need need access to KSI_DataHasher->closeExisting() function. */
 #include "hash_impl.h"
 
-KSI_IMPORT_TLV_TEMPLATE(KSI_HashChainLink)
+KSI_IMPORT_TLV_TEMPLATE(KSI_HashChainLink);
+KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarHashChain);
 
-struct KSI_HashChainLink_st {
-	KSI_CTX *ctx;
-	int isLeft;
-	KSI_Integer *levelCorrection;
-	KSI_DataHash *metaHash;
-	KSI_MetaData *metaData;
-	KSI_DataHash *imprint;
-};
-
-struct KSI_CalendarHashChain_st {
-	KSI_CTX *ctx;
-	KSI_Integer *publicationTime;
-	KSI_Integer *aggregationTime;
-	KSI_DataHash *inputHash;
-	KSI_LIST(KSI_HashChainLink) *hashChain;
-};
 
 KSI_IMPLEMENT_LIST(KSI_HashChainLink, KSI_HashChainLink_free);
 KSI_IMPLEMENT_LIST(KSI_CalendarHashChainLink, KSI_HashChainLink_free);
@@ -387,7 +373,7 @@ int KSI_HashChain_aggregateCalendar(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *c
  * KSI_CalendarHashChain
  */
 void KSI_CalendarHashChain_free(KSI_CalendarHashChain *t) {
-	if (t != NULL) {
+	if (t != NULL && --t->ref == 0) {
 		KSI_Integer_free(t->publicationTime);
 		KSI_Integer_free(t->aggregationTime);
 		KSI_DataHash_free(t->inputHash);
@@ -406,6 +392,7 @@ int KSI_CalendarHashChain_new(KSI_CTX *ctx, KSI_CalendarHashChain **t) {
 	}
 
 	tmp->ctx = ctx;
+	tmp->ref = 1;
 	tmp->publicationTime = NULL;
 	tmp->aggregationTime = NULL;
 	tmp->inputHash = NULL;
@@ -417,6 +404,9 @@ cleanup:
 	KSI_CalendarHashChain_free(tmp);
 	return res;
 }
+
+KSI_IMPLEMENT_REF(KSI_CalendarHashChain);
+KSI_IMPLEMENT_WRITE_BYTES(KSI_CalendarHashChain, 0x0802, 0, 0);
 
 int KSI_CalendarHashChain_aggregate(KSI_CalendarHashChain *chain, KSI_DataHash **hsh) {
 	int res = KSI_UNKNOWN_ERROR;

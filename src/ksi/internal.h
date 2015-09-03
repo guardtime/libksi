@@ -115,7 +115,6 @@ KSI_DEFINE_SETTER(baseType, valueType, valueName, alias) {					\
 		res = KSI_INVALID_ARGUMENT;											\
 		goto cleanup;														\
 	}																		\
-	KSI_ERR_clearErrors(o->ctx);											\
 	o->valueName = valueName;												\
 	res = KSI_OK;															\
 cleanup:																	\
@@ -129,11 +128,16 @@ KSI_DEFINE_GETTER(baseType, valueType, valueName, alias) {					\
 		res = KSI_INVALID_ARGUMENT;											\
 		goto cleanup;														\
 	}																		\
-	KSI_ERR_clearErrors(o->ctx);											\
 	*valueName = o->valueName;												\
 	res = KSI_OK;															\
 cleanup:																	\
 	return res;																\
+}																			\
+
+#define KSI_IMPLEMENT_REF(baseType)											\
+KSI_DEFINE_REF(baseType) {													\
+	if (o != NULL) o->ref++;												\
+	return KSI_OK;															\
 }																			\
 
 #define KSI_IMPLEMENT_TOTLV(type) \

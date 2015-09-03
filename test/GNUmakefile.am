@@ -40,7 +40,8 @@ runner_SOURCES= \
 		./ksi_tlv_test.c \
 		./ksi_truststore_test.c \
 		./compatibility_test.c \
-		./uri_client_test.c
+		./uri_client_test.c \
+		./multi_signature_test.c
 
 parse_benchmark_SOURCES=parse_benchmark.c
 serialize_benchmark_SOURCES=serialize_benchmark.c

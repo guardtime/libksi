@@ -17,43 +17,34 @@
  * reserves and retains all trademark rights.
  */
 
-#ifndef PUBLICATIONSFILE_IMPL_H_
-#define PUBLICATIONSFILE_IMPL_H_
+#ifndef HASHCHAIN_IMPL_H_
+#define HASHCHAIN_IMPL_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-	struct KSI_PublicationsFile_st {
-		KSI_CTX *ctx;
-		unsigned char *raw;
-		size_t raw_len;
-		KSI_PublicationsHeader *header;
-		KSI_LIST(KSI_CertificateRecord) *certificates;
-		KSI_LIST(KSI_PublicationRecord) *publications;
-		size_t signedDataLength;
-		KSI_PKISignature *signature;
-	};
+struct KSI_HashChainLink_st {
+	KSI_CTX *ctx;
+	int isLeft;
+	KSI_Integer *levelCorrection;
+	KSI_DataHash *metaHash;
+	KSI_MetaData *metaData;
+	KSI_DataHash *imprint;
+};
 
-	struct KSI_PublicationData_st {
-		KSI_CTX *ctx;
-		KSI_Integer *time;
-		KSI_DataHash *imprint;
-		KSI_TLV *baseTlv;
-	};
-
-	struct KSI_PublicationRecord_st {
-		KSI_CTX *ctx;
-		size_t ref;
-
-		KSI_PublicationData *publishedData;
-		KSI_LIST(KSI_Utf8String) *publicationRef;
-		KSI_LIST(KSI_Utf8String) *repositoryUriList;
-	};
+struct KSI_CalendarHashChain_st {
+	KSI_CTX *ctx;
+	size_t ref;
+	KSI_Integer *publicationTime;
+	KSI_Integer *aggregationTime;
+	KSI_DataHash *inputHash;
+	KSI_LIST(KSI_HashChainLink) *hashChain;
+};
 
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PUBLICATIONSFILE_IMPL_H_ */
+#endif /* HASHCHAIN_IMPL_H_ */

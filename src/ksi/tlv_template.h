@@ -18,6 +18,7 @@
  */
 
 #include <stdlib.h>
+#include "common.h"
 #include "types.h"
 
 #ifndef KSI_TLV_TEMPLATE_H_
@@ -551,6 +552,12 @@ extern "C" {
 			res = KSI_OK; \
 		cleanup: \
 			return res; \
+		} \
+
+	#define KSI_IMPLEMENT_WRITE_BYTES(typ, tag, nc, fwd) \
+		KSI_DEFINE_WRITE_BYTES(typ) { \
+			if (o == NULL) return KSI_INVALID_ARGUMENT; \
+			return KSI_TlvTemplate_writeBytes(o->ctx, (void *)o, tag, nc, fwd, KSI_TLV_TEMPLATE(typ), buf, buf_size, buf_len, opt); \
 		} \
 
 	/**

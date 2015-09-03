@@ -63,6 +63,13 @@ extern "C" {
 		KSI_TLV_PAYLOAD_TLV
 	};
 
+	enum KSI_Serialize_Opt_en {
+		/** Do not write the header while serializing. */
+		KSI_TLV_OPT_NO_HEADER = 0x01,
+		/** Keep the TLV serialized to the end of the buffer. */
+		KSI_TLV_OPT_NO_MOVE = 0x02,
+	};
+
 	KSI_DEFINE_GET_CTX(KSI_TLV);
 	/**
 	 * This function creates an new TLV.

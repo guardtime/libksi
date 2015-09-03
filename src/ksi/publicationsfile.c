@@ -1213,7 +1213,7 @@ KSI_IMPLEMENT_TOTLV(KSI_PublicationData);
  * KSI_PublicationRecord
  */
 void KSI_PublicationRecord_free(KSI_PublicationRecord *t) {
-	if (t != NULL) {
+	if (t != NULL && --t->ref == 0) {
 		KSI_PublicationData_free(t->publishedData);
 		KSI_Utf8StringList_free(t->publicationRef);
 		KSI_Utf8StringList_free(t->repositoryUriList);
@@ -1235,6 +1235,7 @@ int KSI_PublicationRecord_new(KSI_CTX *ctx, KSI_PublicationRecord **t) {
 	}
 
 	tmp->ctx = ctx;
+	tmp->ref = 1;
 	tmp->publishedData = NULL;
 	tmp->repositoryUriList = NULL;
 	tmp->publicationRef = NULL;
@@ -1245,6 +1246,10 @@ cleanup:
 	KSI_PublicationRecord_free(tmp);
 	return res;
 }
+
+KSI_IMPLEMENT_REF(KSI_PublicationRecord);
+KSI_IMPLEMENT_WRITE_BYTES(KSI_PublicationRecord, 0x0803, 0, 0);
+
 
 int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_PublicationRecord **clone){
 	int res = KSI_UNKNOWN_ERROR;

@@ -169,7 +169,7 @@ static int checkSignatureInternals(KSI_Signature *sig) {
  * KSI_AggregationHashChain
  */
 void KSI_AggregationHashChain_free(KSI_AggregationHashChain *aggr) {
-	if (aggr != NULL) {
+	if (aggr != NULL && --aggr->ref == 0) {
 		KSI_Integer_free(aggr->aggrHashId);
 		KSI_Integer_free(aggr->aggregationTime);
 		KSI_IntegerList_free(aggr->chainIndex);
@@ -197,6 +197,7 @@ int KSI_AggregationHashChain_new(KSI_CTX *ctx, KSI_AggregationHashChain **out) {
 	}
 
 	tmp->ctx = ctx;
+	tmp->ref = 1;
 	tmp->aggregationTime = NULL;
 	tmp->chain = NULL;
 	tmp->chainIndex = NULL;
@@ -216,25 +217,27 @@ cleanup:
 	return res;
 }
 
-KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_Integer*, aggregationTime, AggregationTime)
-KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_LIST(KSI_Integer)*, chainIndex, ChainIndex)
-KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_OctetString*, inputData, InputData)
-KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_DataHash*, inputHash, InputHash)
-KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_Integer*, aggrHashId, AggrHashId)
-KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_LIST(KSI_HashChainLink) *, chain, Chain)
+KSI_IMPLEMENT_REF(KSI_AggregationHashChain);
+KSI_IMPLEMENT_WRITE_BYTES(KSI_AggregationHashChain, 0x0801, 0, 0);
+KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_Integer*, aggregationTime, AggregationTime);
+KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_LIST(KSI_Integer)*, chainIndex, ChainIndex);
+KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_OctetString*, inputData, InputData);
+KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_DataHash*, inputHash, InputHash);
+KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_Integer*, aggrHashId, AggrHashId);
+KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_LIST(KSI_HashChainLink) *, chain, Chain);
 
-KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_Integer*, aggregationTime, AggregationTime)
-KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_LIST(KSI_Integer)*, chainIndex, ChainIndex)
-KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_OctetString*, inputData, InputData)
-KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_DataHash*, inputHash, InputHash)
-KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_Integer*, aggrHashId, AggrHashId)
-KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_LIST(KSI_HashChainLink) *, chain, Chain)
+KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_Integer*, aggregationTime, AggregationTime);
+KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_LIST(KSI_Integer)*, chainIndex, ChainIndex);
+KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_OctetString*, inputData, InputData);
+KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_DataHash*, inputHash, InputHash);
+KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_Integer*, aggrHashId, AggrHashId);
+KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_LIST(KSI_HashChainLink) *, chain, Chain);
 
 /**
  * KSI_AggregationAuthRec
  */
 void KSI_AggregationAuthRec_free(KSI_AggregationAuthRec *aar) {
-	if (aar != NULL) {
+	if (aar != NULL && --aar->ref == 0) {
 		KSI_Integer_free(aar->aggregationTime);
 		KSI_IntegerList_free(aar->chainIndexesList);
 		KSI_DataHash_free(aar->inputHash);
@@ -267,6 +270,8 @@ int KSI_AggregationAuthRec_new(KSI_CTX *ctx, KSI_AggregationAuthRec **out) {
 
 	tmp->inputHash = NULL;
 	tmp->ctx = ctx;
+	tmp->ref = 1;
+
 	tmp->signatureData = NULL;
 	tmp->aggregationTime = NULL;
 
@@ -282,6 +287,8 @@ cleanup:
 	return res;
 }
 
+KSI_IMPLEMENT_REF(KSI_AggregationAuthRec);
+KSI_IMPLEMENT_WRITE_BYTES(KSI_AggregationAuthRec, 0x0804, 0, 0);
 KSI_IMPLEMENT_GETTER(KSI_AggregationAuthRec, KSI_Integer*, aggregationTime, AggregationTime)
 KSI_IMPLEMENT_GETTER(KSI_AggregationAuthRec, KSI_LIST(KSI_Integer)*, chainIndexesList, ChainIndex)
 KSI_IMPLEMENT_GETTER(KSI_AggregationAuthRec, KSI_DataHash*, inputHash, InputHash)
@@ -292,12 +299,13 @@ KSI_IMPLEMENT_SETTER(KSI_AggregationAuthRec, KSI_LIST(KSI_Integer)*, chainIndexe
 KSI_IMPLEMENT_SETTER(KSI_AggregationAuthRec, KSI_DataHash*, inputHash, InputHash)
 KSI_IMPLEMENT_SETTER(KSI_AggregationAuthRec, KSI_PKISignedData*, signatureData, SigData)
 
+KSI_IMPLEMENT_LIST(KSI_AggregationAuthRec, KSI_AggregationAuthRec_free);
 /**
  * KSI_CalendarAuthRec
  */
 
 void KSI_CalendarAuthRec_free(KSI_CalendarAuthRec *calAuth) {
-	if (calAuth != NULL) {
+	if (calAuth != NULL && --calAuth->ref == 0) {
 		KSI_PublicationData_free(calAuth->pubData);
 		KSI_PKISignedData_free(calAuth->signatureData);
 
@@ -322,6 +330,8 @@ int KSI_CalendarAuthRec_new(KSI_CTX *ctx, KSI_CalendarAuthRec **out) {
 	}
 
 	tmp->ctx = ctx;
+	tmp->ref = 1;
+
 	tmp->pubData = NULL;
 	tmp->signatureData = NULL;
 
@@ -336,11 +346,14 @@ cleanup:
 
 	return res;
 }
-KSI_IMPLEMENT_SETTER(KSI_CalendarAuthRec, KSI_PublicationData*, pubData, PublishedData)
-KSI_IMPLEMENT_SETTER(KSI_CalendarAuthRec, KSI_PKISignedData*, signatureData, SignatureData)
 
-KSI_IMPLEMENT_GETTER(KSI_CalendarAuthRec, KSI_PublicationData*, pubData, PublishedData)
-KSI_IMPLEMENT_GETTER(KSI_CalendarAuthRec, KSI_PKISignedData*, signatureData, SignatureData)
+KSI_IMPLEMENT_REF(KSI_CalendarAuthRec);
+KSI_IMPLEMENT_WRITE_BYTES(KSI_CalendarAuthRec, 0x0805, 0, 0);
+KSI_IMPLEMENT_SETTER(KSI_CalendarAuthRec, KSI_PublicationData*, pubData, PublishedData);
+KSI_IMPLEMENT_SETTER(KSI_CalendarAuthRec, KSI_PKISignedData*, signatureData, SignatureData);
+
+KSI_IMPLEMENT_GETTER(KSI_CalendarAuthRec, KSI_PublicationData*, pubData, PublishedData);
+KSI_IMPLEMENT_GETTER(KSI_CalendarAuthRec, KSI_PKISignedData*, signatureData, SignatureData);
 
 KSI_IMPLEMENT_LIST(KSI_AggregationHashChain, KSI_AggregationHashChain_free);
 
@@ -353,12 +366,13 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_Signature)
 	KSI_TLV_COMPOSITE(0x0806, KSI_TLV_TMPL_FLG_NONE, KSI_Signature_getRFC3161, KSI_Signature_setRFC3161, KSI_RFC3161, "rfc3161_rec")
 KSI_END_TLV_TEMPLATE
 
+KSI_IMPLEMENT_LIST(KSI_CalendarAuthRec, KSI_CalendarAuthRec_free);
 
 /**
  * KSI_RFC3161
  */
 void KSI_RFC3161_free(KSI_RFC3161 *rfc) {
-	if (rfc != NULL) {
+	if (rfc != NULL && --rfc->ref == 0) {
 		KSI_Integer_free(rfc->aggregationTime);
 		KSI_IntegerList_free(rfc->chainIndex);
 		KSI_DataHash_free(rfc->inputHash);
@@ -393,6 +407,7 @@ int KSI_RFC3161_new(KSI_CTX *ctx, KSI_RFC3161 **out) {
 	}
 
 	tmp->ctx = ctx;
+	tmp->ref = 1;
 	tmp->aggregationTime = NULL;
 	tmp->chainIndex = NULL;
 	tmp->inputHash = NULL;
@@ -416,6 +431,9 @@ cleanup:
 
 	return res;
 }
+
+KSI_IMPLEMENT_REF(KSI_RFC3161);
+
 
 static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, const KSI_DataHash *hsh, const KSI_OctetString *suffix, int hsh_id, KSI_DataHash **out) {
 	int res;
@@ -690,7 +708,7 @@ KSI_IMPLEMENT_SETTER(KSI_RFC3161, KSI_OctetString*, sigAttrPrefix, SigAttrPrefix
 KSI_IMPLEMENT_SETTER(KSI_RFC3161, KSI_OctetString*, sigAttrSuffix, SigAttrSuffix)
 KSI_IMPLEMENT_SETTER(KSI_RFC3161, KSI_Integer*, sigAttrAlgo, SigAttrAlgo)
 
-
+KSI_IMPLEMENT_LIST(KSI_RFC3161, KSI_RFC3161_free);
 
 static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -2235,9 +2253,6 @@ static int verifyInternallyAggregationChain(KSI_Signature *sig) {
 					}
 				}
 			}
-
-
-
 		}
 
 		if (i == 0 && inputHash != NULL){
