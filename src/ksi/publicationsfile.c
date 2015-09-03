@@ -102,6 +102,7 @@ static int generateNextTlv(struct generator_st *gen, KSI_TLV **tlv) {
 
 		if (KSI_TLV_getTag(gen->tlv) == 0x0704) {
 			gen->sig_offset = gen->offset;
+			gen->hasSignature = true;
 		}
 	}
 
