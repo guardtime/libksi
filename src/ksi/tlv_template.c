@@ -41,7 +41,7 @@
 
 #define KSI_CalendarHashChainLink_free KSI_HashChainLink_free
 
-#define FLAGSET(tmpl, flg) (((tmpl).flags & flg) != 0)
+#define IS_FLAG_SET(tmpl, flg) (((tmpl).flags & flg) != 0)
 
 struct tlv_track_s {
 	unsigned tag;
@@ -544,6 +544,7 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 	bool oneOf[2] = {false, false};
 	size_t i;
 	size_t tmplStart = 0;
+	size_t maxOrder = 0;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || payload == NULL || generatorCtx == NULL || tmpl == NULL || generator == NULL || tr == NULL) {
@@ -589,10 +590,17 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 
 			matchCount++;
 			templateHit[i] = true;
-			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G0) != 0) groupHit[0] = true;
-			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G1) != 0) groupHit[1] = true;
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_LEAST_ONE_G0)) groupHit[0] = true;
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_LEAST_ONE_G1)) groupHit[1] = true;
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_FIXED_ORDER)) {
+				if (i < maxOrder) {
+					KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Element at wrong position.");
+					goto cleanup;
+				}
+				maxOrder = i;
+			}
 
-			if (FLAGSET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G0)) {
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G0)) {
 				if (oneOf[0]) {
 					KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Mutually exclusive elements present within group 0.");
 					goto cleanup;
@@ -600,7 +608,7 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 				oneOf[0] = true;
 			}
 
-			if (FLAGSET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G1)) {
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G1)) {
 				if (oneOf[1]) {
 					KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Mutually exclusive elements present within group 0.");
 					goto cleanup;
@@ -750,7 +758,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 
 			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G0) != 0) groupHit[0] = true;
 			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G1) != 0) groupHit[1] = true;
-			if (FLAGSET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G0)) {
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G0)) {
 				if (oneOf[0]) {
 					char errm[1000];
 					KSI_snprintf(errm, sizeof(errm), "Mutually exclusive elements present within group 0 (%s).", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));
@@ -758,7 +766,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 				}
 				oneOf[0] = true;
 			}
-			if (FLAGSET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G1)) {
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G1)) {
 				if (oneOf[1]) {
 					char errm[1000];
 					KSI_snprintf(errm, sizeof(errm), "Mutually exclusive elements present within group 1 (%s).", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));

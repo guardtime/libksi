@@ -43,10 +43,10 @@ KSI_IMPLEMENT_LIST(KSI_PublicationRecord, KSI_PublicationRecord_free);
 
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationsFile)
-	KSI_TLV_COMPOSITE(0x0701, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getHeader, KSI_PublicationsFile_setHeader, KSI_PublicationsHeader, "pub_header")
-	KSI_TLV_COMPOSITE_LIST(0x0702, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getCertificates, KSI_PublicationsFile_setCertificates, KSI_CertificateRecord, "cert_rec")
-	KSI_TLV_COMPOSITE_LIST(0x0703, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getPublications, KSI_PublicationsFile_setPublications, KSI_PublicationRecord, "pub_rec")
-	KSI_TLV_OBJECT(0x0704, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_MORE_DEFS, KSI_PublicationsFile_getSignature, KSI_PublicationsFile_setSignature, KSI_PKISignature_fromTlv, KSI_PKISignature_toTlv, KSI_PKISignature_free, "pki_signature")
+	KSI_TLV_COMPOSITE(0x0701, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_FIXED_ORDER, KSI_PublicationsFile_getHeader, KSI_PublicationsFile_setHeader, KSI_PublicationsHeader, "pub_header")
+	KSI_TLV_COMPOSITE_LIST(0x0702, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_FIXED_ORDER, KSI_PublicationsFile_getCertificates, KSI_PublicationsFile_setCertificates, KSI_CertificateRecord, "cert_rec")
+	KSI_TLV_COMPOSITE_LIST(0x0703, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_FIXED_ORDER, KSI_PublicationsFile_getPublications, KSI_PublicationsFile_setPublications, KSI_PublicationRecord, "pub_rec")
+	KSI_TLV_OBJECT(0x0704, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_FIXED_ORDER, KSI_PublicationsFile_getSignature, KSI_PublicationsFile_setSignature, KSI_PKISignature_fromTlv, KSI_PKISignature_toTlv, KSI_PKISignature_free, "pki_signature")
 KSI_END_TLV_TEMPLATE
 
 struct generator_st {
@@ -54,6 +54,7 @@ struct generator_st {
 	KSI_TLV *tlv;
 	size_t offset;
 	size_t sig_offset;
+	bool hasSignature;
 };
 
 static int generateNextTlv(struct generator_st *gen, KSI_TLV **tlv) {
@@ -69,21 +70,33 @@ static int generateNextTlv(struct generator_st *gen, KSI_TLV **tlv) {
 
 	buf = KSI_malloc(0xffff + 4);
 	if (buf == NULL) {
-		res = KSI_OUT_OF_MEMORY;
+		KSI_pushError(KSI_RDR_getCtx(gen->reader), res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
 	res = KSI_TLV_readTlv(gen->reader, buf, 0xffff + 4, &consumed);
-	if (res != KSI_OK) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(KSI_RDR_getCtx(gen->reader), res, NULL);
+		goto cleanup;
+	}
 
-	if(consumed > UINT_MAX){
-		res = KSI_INVALID_FORMAT;
+	if (consumed > UINT_MAX){
+		KSI_pushError(KSI_RDR_getCtx(gen->reader), res = KSI_INVALID_FORMAT, "Input too large.");
 		goto cleanup;
 	}
 
 	if (consumed > 0) {
+		if (gen->hasSignature) {
+			/* The signature must be the last element. */
+			KSI_pushError(KSI_RDR_getCtx(gen->reader), res = KSI_INVALID_FORMAT, "The signature must be the last element.");
+			goto cleanup;
+		}
+
 		res = KSI_TLV_parseBlob2(KSI_RDR_getCtx(gen->reader), buf, (unsigned)consumed, 1, &gen->tlv);
-		if (res != KSI_OK) goto cleanup;
+		if (res != KSI_OK) {
+			KSI_pushError(KSI_RDR_getCtx(gen->reader), res, NULL);
+			goto cleanup;
+		}
 
 		buf = NULL;
 
@@ -139,7 +152,7 @@ int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, size_t raw_len, KS
 	size_t hdr_len = 0;
 	KSI_PublicationsFile *tmp = NULL;
 	KSI_RDR *reader = NULL;
-	struct generator_st gen = {NULL, NULL, 0, 0};
+	struct generator_st gen = {NULL, NULL, 0, 0, false};
 	unsigned char *tmpRaw = NULL;
 
 	KSI_ERR_clearErrors(ctx);

@@ -240,6 +240,12 @@ extern "C" {
 	#define KSI_TLV_TMPL_FLG_MOST_ONE_G1	0x100
 
 	/**
+	 * All the sub elements with this flag enabled may be present in the TLV only in the same
+	 * order as they appear in the template.
+	 */
+	#define KSI_TLV_TMPL_FLG_FIXED_ORDER 0x200
+
+	/**
 	 * One and only one of the group 0 must be present.
 	 */
 	#define KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0 KSI_TLV_TMPL_FLG_LEAST_ONE_G0 | KSI_TLV_TMPL_FLG_MOST_ONE_G0
