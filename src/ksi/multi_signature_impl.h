@@ -55,14 +55,14 @@ extern "C" {
 		/** Chain index container for this concrete round. */
 		KSI_LIST(chainIndexMapper) *chainIndexeList;
 
-		/** Calendar hash chains starting at this round, */
-		KSI_LIST(KSI_CalendarHashChain) *calendarChainList;
+		/** Calendar hash chain starting at this round, */
+		KSI_CalendarHashChain *calendarChain;
 
 		/** Calendar auth record for calendar chain ending on this round. */
 		KSI_CalendarAuthRec *calendarAuthRec;
 
 		/** Publication record for this round. */
-		KSI_PublicationRecord *pubRec;
+		KSI_PublicationRecord *publication;
 
 		/** A flag for "painting" the instance for cleanup purpuses. */
 		bool paint;

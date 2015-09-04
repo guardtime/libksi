@@ -389,6 +389,61 @@ static void testSerializeLength(CuTest *tc) {
 
 }
 
+static void testParse(CuTest *tc) {
+	int res;
+	FILE *f = NULL;
+	unsigned char buf[0xffff]; /* Increase the size if more samples are added to the file. */
+	size_t buf_len;
+	KSI_MultiSignature *ms = NULL;
+
+	f = fopen(getFullResourcePath("resource/multi_sig/test1.mksi"), "rb");
+	CuAssert(tc, "Unable to load test file.", f != NULL);
+
+	buf_len = fread(buf, 1, sizeof(buf), f);
+	fclose(f);
+	CuAssert(tc, "Read 0 bytes from input file.", buf_len > 0);
+
+	res = KSI_MultiSignature_parse(ctx, buf, buf_len, &ms);
+	KSI_ERR_statusDump(ctx, stderr);
+	CuAssert(tc, "Unable to parse multi signature container file.", res == KSI_OK && ms != NULL);
+
+	KSI_MultiSignature_free(ms);
+}
+
+static void testParseAndVerifySingle(CuTest *tc) {
+	int res;
+	FILE *f = NULL;
+	unsigned char buf[0xffff]; /* Increase the size if more samples are added to the file. */
+	size_t buf_len;
+	KSI_MultiSignature *ms = NULL;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+
+
+	f = fopen(getFullResourcePath("resource/multi_sig/test1.mksi"), "rb");
+	CuAssert(tc, "Unable to load test file.", f != NULL);
+
+	buf_len = fread(buf, 1, sizeof(buf), f);
+	fclose(f);
+	CuAssert(tc, "Read 0 bytes from input file.", buf_len > 0);
+
+	res = KSI_MultiSignature_parse(ctx, buf, buf_len, &ms);
+	CuAssert(tc, "Unable to parse multi signature container file.", res == KSI_OK && ms != NULL);
+
+	KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
+
+	res = KSI_MultiSignature_get(ms, hsh, &sig);
+	CuAssert(tc, "Unable to get signature from container.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_verify(sig, ctx);
+	CuAssert(tc, "Unable to verify signature extracted from container.", res == KSI_OK);
+
+	KSI_Signature_free(sig);
+	KSI_DataHash_free(hsh);
+	KSI_MultiSignature_free(ms);
+}
+
+
 
 CuSuite* KSITest_multiSignature_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
@@ -407,6 +462,9 @@ CuSuite* KSITest_multiSignature_getSuite(void) {
 
 	SUITE_ADD_TEST(suite, testSerialize);
 	SUITE_ADD_TEST(suite, testSerializeLength);
+
+	SUITE_ADD_TEST(suite, testParse);
+	SUITE_ADD_TEST(suite, testParseAndVerifySingle);
 
 	return suite;
 }

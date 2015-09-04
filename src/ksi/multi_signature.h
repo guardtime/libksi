@@ -122,7 +122,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_MultiSignature_parse(KSI_CTX *ctx, unsigned char *raw, size_t raw_len, KSI_MultiSignature **ms);
+	int KSI_MultiSignature_parse(KSI_CTX *ctx, const unsigned char *raw, size_t raw_len, KSI_MultiSignature **ms);
 
 	/**
 	 * @}
