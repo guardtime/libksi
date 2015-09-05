@@ -175,6 +175,7 @@ int KSI_MultiSignature_new(KSI_CTX *ctx, KSI_MultiSignature **ms) {
 	}
 
 	tmp->ctx = ctx;
+	tmp->timeList_ordered = false;
 	tmp->timeList = NULL;
 
 
@@ -441,22 +442,22 @@ cleanup:
 
 static int addRfc3161(KSI_RFC3161 *rfc, void *fctx) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_MultiSignature *ms = fctx;
+	KSI_LIST(timeMapper) *tmList = fctx;
 	chainIndexMapper *last = NULL;
 	timeMapper *tm = NULL;
 
-	if (rfc == NULL || ms == NULL) {
+	if (rfc == NULL || tmList == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
 
-	res = timeMapperList_select(&ms->timeList, rfc->aggregationTime, &tm, 1);
+	res = timeMapperList_select(&tmList, rfc->aggregationTime, &tm, 1);
 	if (res != KSI_OK) goto cleanup;
 
 	res = chainIndexMapperList_select(&tm->chainIndexeList, rfc->chainIndex, NULL, &last);
 	if (res != KSI_OK) {
-		KSI_pushError(ms->ctx, res, NULL);
+		KSI_pushError(rfc->ctx, res, NULL);
 		goto cleanup;
 	}
 
@@ -474,18 +475,18 @@ cleanup:
 
 static int addCalendarChain(KSI_CalendarHashChain *cal, void *fctx) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_MultiSignature *ms = fctx;
+	KSI_LIST(timeMapper) *tmList = fctx;
 	timeMapper *calTm = NULL;
 	timeMapper *newTm = NULL;
 	timeMapper *oldTm = NULL;
 
-	if (cal == NULL || ms == NULL) {
+	if (cal == NULL || tmList == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
 
-	res = timeMapperList_select(&ms->timeList, cal->aggregationTime, &calTm, 1);
+	res = timeMapperList_select(&tmList, cal->aggregationTime, &calTm, 1);
 	if (res != KSI_OK) goto cleanup;
 
 	if (calTm->calendarChain == NULL) {
@@ -496,10 +497,10 @@ static int addCalendarChain(KSI_CalendarHashChain *cal, void *fctx) {
 		bool prefer_newer;
 		/* Update the calendar chain only if it has a stronger proof or if equally strong,
 		 * use the nearest (oldest). */
-		res = timeMapperList_select(&ms->timeList, cal->publicationTime, &newTm, 0);
+		res = timeMapperList_select(&tmList, cal->publicationTime, &newTm, 0);
 		if (res != KSI_OK) goto cleanup;
 
-		res = timeMapperList_select(&ms->timeList, calTm->calendarChain->publicationTime, &oldTm, 0);
+		res = timeMapperList_select(&tmList, calTm->calendarChain->publicationTime, &oldTm, 0);
 		if (res != KSI_OK) goto cleanup;
 
 		prefer_newer = KSI_Integer_compare(cal->publicationTime, calTm->calendarChain->publicationTime) < 0;
@@ -532,17 +533,17 @@ cleanup:
 
 static int addCalendarAuthRec(KSI_CalendarAuthRec *auth, void *fctx) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_MultiSignature *ms = fctx;
+	KSI_LIST(timeMapper) *tmList = fctx;
 	timeMapper *tm = NULL;
 
-	if (auth == NULL || ms == NULL) {
+	if (auth == NULL || tmList == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	KSI_ERR_clearErrors(ms->ctx);
+	KSI_ERR_clearErrors(auth->ctx);
 
-	res = timeMapperList_select(&ms->timeList, auth->pubData->time, &tm, 1);
+	res = timeMapperList_select(&tmList, auth->pubData->time, &tm, 1);
 	if (res != KSI_OK) goto cleanup;
 
 	if (tm->calendarAuthRec == NULL && tm->publication == NULL) {
@@ -551,7 +552,7 @@ static int addCalendarAuthRec(KSI_CalendarAuthRec *auth, void *fctx) {
 
 		tm->calendarAuthRec = auth;
 	} else {
-		KSI_LOG_debug(ms->ctx, "Discarding calendar authentication record, as it is already present.");
+		KSI_LOG_debug(auth->ctx, "Discarding calendar authentication record, as it is already present.");
 	}
 
 	res = KSI_OK;
@@ -563,7 +564,7 @@ cleanup:
 
 static int addPublication(KSI_PublicationRecord *pub, void *fctx) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_MultiSignature *ms = fctx;
+	KSI_LIST(timeMapper) *tmList = fctx;
 	timeMapper *tm = NULL;
 
 	if (pub == NULL || fctx == NULL) {
@@ -571,18 +572,18 @@ static int addPublication(KSI_PublicationRecord *pub, void *fctx) {
 		goto cleanup;
 	}
 
-	KSI_ERR_clearErrors(ms->ctx);
+	KSI_ERR_clearErrors(pub->ctx);
 
-	res = timeMapperList_select(&ms->timeList, pub->publishedData->time, &tm, 1);
+	res = timeMapperList_select(&tmList, pub->publishedData->time, &tm, 1);
 	if (res != KSI_OK) {
-		KSI_pushError(ms->ctx, res, NULL);
+		KSI_pushError(pub->ctx, res, NULL);
 		goto cleanup;
 	}
 
 	if (tm->publication == NULL) {
 		res = KSI_PublicationRecord_ref(pub);
 		if (res != KSI_OK) {
-			KSI_pushError(ms->ctx, res, NULL);
+			KSI_pushError(pub->ctx, res, NULL);
 			goto cleanup;
 		}
 
@@ -596,7 +597,7 @@ static int addPublication(KSI_PublicationRecord *pub, void *fctx) {
 	} else {
 		char buf[1024];
 		/* TODO! We could try merging the publication records instead. */
-		KSI_LOG_debug(ms->ctx, "Discarding publication as a value already present: %s", KSI_PublicationRecord_toString(pub, buf, sizeof(buf)));
+		KSI_LOG_debug(pub->ctx, "Discarding publication as a value already present: %s", KSI_PublicationRecord_toString(pub, buf, sizeof(buf)));
 	}
 
 	res = KSI_OK;
@@ -608,7 +609,7 @@ cleanup:
 
 static int addAggregationAuthRec(KSI_AggregationAuthRec *auth, void *fctx) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_MultiSignature *ms = fctx;
+	KSI_LIST(timeMapper) *ms = fctx;
 	timeMapper *tm = NULL;
 	chainIndexMapper *last = NULL;
 
@@ -617,33 +618,33 @@ static int addAggregationAuthRec(KSI_AggregationAuthRec *auth, void *fctx) {
 		goto cleanup;
 	}
 
-	KSI_ERR_clearErrors(ms->ctx);
+	KSI_ERR_clearErrors(auth->ctx);
 
 
 	/* Select the appropriate time element. */
-	res = timeMapperList_select(&ms->timeList, auth->aggregationTime, &tm, 1);
+	res = timeMapperList_select(&ms, auth->aggregationTime, &tm, 1);
 	if (res != KSI_OK) {
-		KSI_pushError(ms->ctx, res, NULL);
+		KSI_pushError(auth->ctx, res, NULL);
 		goto cleanup;
 	}
 
 	/* Add the element to the container. */
 	res = chainIndexMapperList_select(&tm->chainIndexeList, auth->chainIndexesList, NULL, &last);
 	if (res != KSI_OK) {
-		KSI_pushError(ms->ctx, res, NULL);
+		KSI_pushError(auth->ctx, res, NULL);
 		goto cleanup;
 	}
 
 	if (last->aggrAuthRec == NULL) {
 		res = KSI_AggregationAuthRec_ref(auth);
 		if (res != KSI_OK) {
-			KSI_pushError(ms->ctx, res, NULL);
+			KSI_pushError(auth->ctx, res, NULL);
 			goto cleanup;
 		}
 
 		last->aggrAuthRec = auth;
 	} else {
-		KSI_LOG_debug(ms->ctx, "Discarding aggregation auth record, as it already is present.");
+		KSI_LOG_debug(auth->ctx, "Discarding aggregation auth record, as it already is present.");
 	}
 
 	res = KSI_OK;
@@ -680,7 +681,7 @@ int KSI_MultiSignature_add(KSI_MultiSignature *ms, const KSI_Signature *sig) {
 
 	/* Add the rfc3161 element. */
 	if (sig->rfc3161 != NULL) {
-		res = addRfc3161(sig->rfc3161, ms);
+		res = addRfc3161(sig->rfc3161, ms->timeList);
 		if (res != KSI_OK) {
 			KSI_pushError(ms->ctx, res, NULL);
 			goto cleanup;
@@ -689,7 +690,7 @@ int KSI_MultiSignature_add(KSI_MultiSignature *ms, const KSI_Signature *sig) {
 
 	/* Add the publication. */
 	if (sig->publication != NULL) {
-		res = addPublication(sig->publication, ms);
+		res = addPublication(sig->publication, ms->timeList);
 		if (res != KSI_OK) {
 			KSI_pushError(ms->ctx, res, NULL);
 			goto cleanup;
@@ -698,7 +699,7 @@ int KSI_MultiSignature_add(KSI_MultiSignature *ms, const KSI_Signature *sig) {
 
 	/* Add the calendar auth record. */
 	if (sig->calendarAuthRec != NULL) {
-		res = addCalendarAuthRec(sig->calendarAuthRec, ms);
+		res = addCalendarAuthRec(sig->calendarAuthRec, ms->timeList);
 		if (res != KSI_OK) {
 			KSI_pushError(ms->ctx, res, NULL);
 			goto cleanup;
@@ -708,7 +709,7 @@ int KSI_MultiSignature_add(KSI_MultiSignature *ms, const KSI_Signature *sig) {
 	/* Add the calendar chain.
 	 * NB! Before this, the publication and calendar auth record must be stored. */
 	if (sig->calendarChain != NULL) {
-		res = addCalendarChain(sig->calendarChain, ms);
+		res = addCalendarChain(sig->calendarChain, ms->timeList);
 		if (res != KSI_OK) {
 			KSI_pushError(ms->ctx, res, NULL);
 			goto cleanup;
@@ -717,12 +718,15 @@ int KSI_MultiSignature_add(KSI_MultiSignature *ms, const KSI_Signature *sig) {
 
 	/* Add the aggregation auth record. */
 	if (sig->aggregationAuthRec != NULL) {
-		res = addAggregationAuthRec(sig->aggregationAuthRec, ms);
+		res = addAggregationAuthRec(sig->aggregationAuthRec, ms->timeList);
 		if (res != KSI_OK) {
 			KSI_pushError(ms->ctx, res, NULL);
 			goto cleanup;
 		}
 	}
+
+	/* The list is now probably out of order. */
+	ms->timeList_ordered = false;
 
 	res = KSI_OK;
 
@@ -829,6 +833,12 @@ cleanup:
 	return res;
 }
 
+static int timeMapper_cmp(const timeMapper **a, const timeMapper **b) {
+	/* NB! We assume a and b are not NULL - otherwise, there is something wrong with
+	 * the container. Null checks added only for safety. */
+	return (*a == NULL || *b == NULL) ? 0 : KSI_Integer_compare((*a)->key_time, (*b)->key_time);
+}
+
 int KSI_MultiSignature_get(KSI_MultiSignature *ms, const KSI_DataHash *hsh, KSI_Signature **sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Signature *tmp = NULL;
@@ -858,6 +868,18 @@ int KSI_MultiSignature_get(KSI_MultiSignature *ms, const KSI_DataHash *hsh, KSI_
 	tmp->publication = NULL;
 	tmp->rfc3161 = NULL;
 	memset(&tmp->verificationResult, 0, sizeof(tmp->verificationResult));
+
+	/* If the list is not ordered, order it, to find always the earliest signature possible. This
+	 * is an issue if there are more than one signatures for the same inputhash. */
+	if (!ms->timeList_ordered && ms->timeList != NULL) {
+		res = timeMapperList_sort(ms->timeList, timeMapper_cmp);
+		if (res != KSI_OK) {
+			KSI_pushError(ms->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		ms->timeList_ordered = true;
+	}
 
 	/* Select all the hash chains. */
 	res = findAggregationHashChain(ms->timeList, hsh, &tm, &tmp->aggregationChainList);
@@ -1248,10 +1270,80 @@ cleanup:
 	return res;
 }
 
+static int extendUnextended(timeMapper *tm, void *fctx) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_LIST(timeMapper) *tmList = fctx;
+	KSI_RequestHandle *handle = NULL;
+	KSI_ExtendReq *req = NULL;
+	KSI_ExtendResp *resp = NULL;
+	KSI_Integer *aggregationTime = NULL;
+	KSI_Integer *publicationTime = NULL;
+
+	if (tm == NULL || tmList == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	/* Handle only calendar chains. */
+	if (tm->calendarChain != NULL) {
+		timeMapper *proof = NULL;
+		res = timeMapperList_select(&tmList, tm->calendarChain->publicationTime, &proof, 0);
+		if (res != KSI_OK) goto cleanup;
+
+		if (proof->publication == NULL) {
+			KSI_PublicationsFile *pubFile = NULL;
+			KSI_PublicationRecord *pubRec = NULL;
+			/* As there is no publication attached, try to find suitable publication. */
+			res = KSI_receivePublicationsFile(tm->calendarChain->ctx, &pubFile);
+			if (res != KSI_OK) goto cleanup;
+
+			res = KSI_PublicationsFile_getNearestPublication(pubFile, tm->calendarChain->publicationTime, &pubRec);
+			if (res != KSI_OK) goto cleanup;
+
+			/* Only continue, if there is such a publication available. */
+			if (pubRec != NULL) {
+				KSI_CalendarHashChain *chn = NULL;
+
+				res = addPublication(pubRec, tmList);
+				if (res != KSI_OK) goto cleanup;
+
+				res = KSI_ExtendReq_new(tm->calendarChain->ctx, &req);
+				if (res != KSI_OK) goto cleanup;
+
+				KSI_Integer_ref(aggregationTime = tm->calendarChain->aggregationTime);
+				KSI_Integer_ref(publicationTime = pubRec->publishedData->time);
+
+				KSI_ExtendReq_setAggregationTime(req, aggregationTime);
+				KSI_ExtendReq_setPublicationTime(req, publicationTime);
+
+				res = KSI_sendExtendRequest(tm->calendarChain->ctx, req, &handle);
+				if (res != KSI_OK) goto cleanup;
+
+				res = KSI_RequestHandle_getExtendResponse(handle, &resp);
+				if (res != KSI_OK) goto cleanup;
+
+				res = KSI_ExtendResp_getCalendarHashChain(resp, &chn);
+				if (res != KSI_OK) goto cleanup;
+
+				res = addCalendarChain(chn, tmList);
+				if (res != KSI_OK) goto cleanup;
+			}
+		}
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_RequestHandle_free(handle);
+	KSI_ExtendReq_free(req);
+	KSI_ExtendResp_free(resp);
+
+	return res;
+}
+
 int KSI_MultiSignature_extend(KSI_MultiSignature *ms) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_PublicationRecord *latestPubRec = NULL;
-	KSI_PublicationsFile *pubFile = NULL;
 	size_t i;
 
 	if (ms == NULL) {
@@ -1261,23 +1353,10 @@ int KSI_MultiSignature_extend(KSI_MultiSignature *ms) {
 
 	KSI_ERR_clearErrors(ms->ctx);
 
-	/* Get the publications file from the context. */
-	res = KSI_receivePublicationsFile(ms->ctx, &pubFile);
+	res = timeMapperList_foldl(ms->timeList, ms->timeList, extendUnextended);
 	if (res != KSI_OK) {
 		KSI_pushError(ms->ctx, res, NULL);
 		goto cleanup;
-	}
-
-	/* Get the latest publication record. */
-	res = KSI_PublicationsFile_getLatestPublication(pubFile, NULL, &latestPubRec);
-	if (res != KSI_OK) {
-		KSI_pushError(ms->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Find all calendar hash chains without a publication attached to it. */
-	for (i = 0; i < timeMapperList_length(ms->timeList); i++) {
-
 	}
 
 	res = KSI_OK;
@@ -1455,6 +1534,10 @@ int KSI_MultiSignature_writeBytes(KSI_MultiSignature *ms, unsigned char *buf, si
 		for (i = 0; i < len; i++) {
 			buf[i] = buf[buf_size - len + i];
 		}
+
+		if (len < 0xffff) {
+			KSI_LOG_logBlob(ms->ctx, KSI_LOG_DEBUG, "Serialized multi signature container", buf, len);
+		}
 	}
 
 	*buf_len = len;
@@ -1568,14 +1651,14 @@ int KSI_MultiSignature_parse(KSI_CTX *ctx, const unsigned char *raw, size_t raw_
 	}
 
 	/* Add all the publications to the container. */
-	res = KSI_PublicationRecordList_foldl(hlpr.publicationRecordList, tmp, addPublication);
+	res = KSI_PublicationRecordList_foldl(hlpr.publicationRecordList, tmp->timeList, addPublication);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
 	/* Add all the calendar auth records to the container. */
-	res = KSI_CalendarAuthRecList_foldl(hlpr.calendarAuthRecordList, tmp, addCalendarAuthRec);
+	res = KSI_CalendarAuthRecList_foldl(hlpr.calendarAuthRecordList, tmp->timeList, addCalendarAuthRec);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1583,21 +1666,21 @@ int KSI_MultiSignature_parse(KSI_CTX *ctx, const unsigned char *raw, size_t raw_
 
 	/* Add all the calendar hash chains to the container.
 	 * NB! It is essential that the publications and calendar auth records are processed by now. */
-	res = KSI_CalendarHashChainList_foldl(hlpr.calendarChainList, tmp, addCalendarChain);
+	res = KSI_CalendarHashChainList_foldl(hlpr.calendarChainList, tmp->timeList, addCalendarChain);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
 	/* Add all the aggregation auth records to the container. */
-	res = KSI_AggregationAuthRecList_foldl(hlpr.aggregationAuthRecordList, tmp, addAggregationAuthRec);
+	res = KSI_AggregationAuthRecList_foldl(hlpr.aggregationAuthRecordList, tmp->timeList, addAggregationAuthRec);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
 	/* Add all the rfc3161 elements to the container. */
-	res = KSI_RFC3161List_foldl(hlpr.rfc3161List, tmp, addRfc3161);
+	res = KSI_RFC3161List_foldl(hlpr.rfc3161List, tmp->timeList, addRfc3161);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;

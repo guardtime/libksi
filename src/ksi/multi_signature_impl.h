@@ -71,6 +71,7 @@ extern "C" {
 
 	struct KSI_MultiSignature_st {
 		KSI_CTX *ctx;
+		bool timeList_ordered;
 		KSI_LIST(timeMapper) *timeList;
 	};
 
