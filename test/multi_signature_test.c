@@ -353,6 +353,23 @@ static void createMultiSignature(KSI_MultiSignature **ms) {
 	*ms = tmp;
 }
 
+static void createMultiSignatureFromFile(CuTest *tc, const char *fn, KSI_MultiSignature **ms) {
+	int res;
+	FILE *f = NULL;
+	size_t buf_len;
+	unsigned char buf[0x1ffff]; /* Hope this is enough for all the tests. */
+
+	f = fopen(getFullResourcePath("resource/multi_sig/test1.mksi"), "rb");
+	CuAssert(tc, "Unable to load test file.", f != NULL);
+
+	buf_len = fread(buf, 1, sizeof(buf), f);
+	fclose(f);
+	CuAssert(tc, "Read 0 bytes from input file.", buf_len > 0);
+
+	res = KSI_MultiSignature_parse(ctx, buf, buf_len, ms);
+	CuAssert(tc, "Unable to parse multi signature container file.", res == KSI_OK && ms != NULL);
+}
+
 static void testSerialize(CuTest *tc) {
 	int res;
 	KSI_MultiSignature *ms = NULL;
@@ -404,7 +421,6 @@ static void testParse(CuTest *tc) {
 	CuAssert(tc, "Read 0 bytes from input file.", buf_len > 0);
 
 	res = KSI_MultiSignature_parse(ctx, buf, buf_len, &ms);
-	KSI_ERR_statusDump(ctx, stderr);
 	CuAssert(tc, "Unable to parse multi signature container file.", res == KSI_OK && ms != NULL);
 
 	KSI_MultiSignature_free(ms);
@@ -412,23 +428,11 @@ static void testParse(CuTest *tc) {
 
 static void testParseAndVerifySingle(CuTest *tc) {
 	int res;
-	FILE *f = NULL;
-	unsigned char buf[0xffff]; /* Increase the size if more samples are added to the file. */
-	size_t buf_len;
 	KSI_MultiSignature *ms = NULL;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
 
-
-	f = fopen(getFullResourcePath("resource/multi_sig/test1.mksi"), "rb");
-	CuAssert(tc, "Unable to load test file.", f != NULL);
-
-	buf_len = fread(buf, 1, sizeof(buf), f);
-	fclose(f);
-	CuAssert(tc, "Read 0 bytes from input file.", buf_len > 0);
-
-	res = KSI_MultiSignature_parse(ctx, buf, buf_len, &ms);
-	CuAssert(tc, "Unable to parse multi signature container file.", res == KSI_OK && ms != NULL);
+	createMultiSignatureFromFile(tc, getFullResourcePath("resource/multi_sig/test1.mksi"), &ms);
 
 	KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
 
@@ -443,7 +447,60 @@ static void testParseAndVerifySingle(CuTest *tc) {
 	KSI_MultiSignature_free(ms);
 }
 
+static void testGetOldest(CuTest *tc) {
+	int res;
+	KSI_MultiSignature *ms = NULL;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+	KSI_Integer *tm = NULL;
 
+	createMultiSignatureFromFile(tc, getFullResourcePath("resource/multi_sig/test2.mksi"), &ms);
+
+	KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
+
+	res = KSI_MultiSignature_get(ms, hsh, &sig);
+	CuAssert(tc, "Unable to get signature from container.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_verify(sig, ctx);
+	CuAssert(tc, "Unable to verify signature extracted from container.", res == KSI_OK);
+
+	res = KSI_Signature_getSigningTime(sig, &tm);
+	CuAssert(tc, "Wrong signing time (probably returning the newer signature).", res == KSI_OK && KSI_Integer_equalsUInt(tm, 1398866256));
+
+	KSI_Signature_free(sig);
+	KSI_DataHash_free(hsh);
+	KSI_MultiSignature_free(ms);
+}
+
+static void testExtend(CuTest *tc) {
+	int res;
+	KSI_MultiSignature *ms = NULL;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
+
+	createMultiSignatureFromFile(tc, getFullResourcePath("resource/multi_sig/test2.mksi"), &ms);
+
+	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"));
+
+	res = KSI_MultiSignature_extend(ms);
+	CuAssert(tc, "Unable to perform multi signature container extension.", res == KSI_OK);
+
+	KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
+
+	res = KSI_MultiSignature_get(ms, hsh, &sig);
+	CuAssert(tc, "Unable to get signature from container.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_verify(sig, ctx);
+	CuAssert(tc, "Unable to verify signature extracted from container.", res == KSI_OK);
+
+	res = KSI_Signature_getPublicationRecord(sig, &pubRec);
+	CuAssert(tc, "Signature should be extended.", res == KSI_OK && pubRec != NULL);
+
+	KSI_Signature_free(sig);
+	KSI_DataHash_free(hsh);
+	KSI_MultiSignature_free(ms);
+}
 
 CuSuite* KSITest_multiSignature_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
@@ -465,6 +522,9 @@ CuSuite* KSITest_multiSignature_getSuite(void) {
 
 	SUITE_ADD_TEST(suite, testParse);
 	SUITE_ADD_TEST(suite, testParseAndVerifySingle);
+
+	SUITE_ADD_TEST(suite, testExtend);
+	SUITE_ADD_TEST(suite, testGetOldest);
 
 	return suite;
 }

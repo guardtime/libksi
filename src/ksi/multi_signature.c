@@ -1397,7 +1397,7 @@ static int chainIndexMapper_writeBytes(KSI_LIST(chainIndexMapper) *cimList, unsi
 		if (res != KSI_OK) goto cleanup;
 
 		len += tmp_len;
-		if (buf != NULL && len >= buf_size) {
+		if (buf != NULL && len > buf_size) {
 			res = KSI_BUFFER_OVERFLOW;
 			goto cleanup;
 		}
@@ -1407,7 +1407,7 @@ static int chainIndexMapper_writeBytes(KSI_LIST(chainIndexMapper) *cimList, unsi
 			if (res != KSI_OK) goto cleanup;
 
 			len += tmp_len;
-			if (buf != NULL && len >= buf_size) {
+			if (buf != NULL && len > buf_size) {
 				res = KSI_BUFFER_OVERFLOW;
 				goto cleanup;
 			}
@@ -1418,7 +1418,7 @@ static int chainIndexMapper_writeBytes(KSI_LIST(chainIndexMapper) *cimList, unsi
 			if (res != KSI_OK) goto cleanup;
 
 			len += tmp_len;
-			if (buf != NULL && len >= buf_size) {
+			if (buf != NULL && len > buf_size) {
 				res = KSI_BUFFER_OVERFLOW;
 				goto cleanup;
 			}
@@ -1465,7 +1465,7 @@ int KSI_MultiSignature_writeBytes(KSI_MultiSignature *ms, unsigned char *buf, si
 
 			len += tmp_len;
 			/* Just to be sure - should never happen. */
-			if (buf != NULL & len >= buf_size) {
+			if (buf != NULL & len > buf_size) {
 				KSI_pushError(ms->ctx, res = KSI_BUFFER_OVERFLOW, NULL);
 				goto cleanup;
 			}
@@ -1481,7 +1481,7 @@ int KSI_MultiSignature_writeBytes(KSI_MultiSignature *ms, unsigned char *buf, si
 
 			len += tmp_len;
 			/* Just to be sure - should never happen. */
-			if (buf != NULL && len >= buf_size) {
+			if (buf != NULL && len > buf_size) {
 				KSI_pushError(ms->ctx, res = KSI_BUFFER_OVERFLOW, NULL);
 				goto cleanup;
 			}
@@ -1496,7 +1496,7 @@ int KSI_MultiSignature_writeBytes(KSI_MultiSignature *ms, unsigned char *buf, si
 
 			len += tmp_len;
 			/* Just to be sure - should never happen. */
-			if (buf != NULL && len >= buf_size) {
+			if (buf != NULL && len > buf_size) {
 				KSI_pushError(ms->ctx, res = KSI_BUFFER_OVERFLOW, NULL);
 				goto cleanup;
 			}
@@ -1510,7 +1510,7 @@ int KSI_MultiSignature_writeBytes(KSI_MultiSignature *ms, unsigned char *buf, si
 
 		len += tmp_len;
 		/* Just to be sure - should never happen. */
-		if (buf != NULL && len >= buf_size) {
+		if (buf != NULL && len > buf_size) {
 			KSI_pushError(ms->ctx, res = KSI_BUFFER_OVERFLOW, NULL);
 			goto cleanup;
 		}
@@ -1521,7 +1521,7 @@ int KSI_MultiSignature_writeBytes(KSI_MultiSignature *ms, unsigned char *buf, si
 		len += hdr_len;
 
 		if (buf != NULL) {
-			if (len + hdr_len >= buf_size) {
+			if (len > buf_size) {
 				KSI_pushError(ms->ctx, res = KSI_BUFFER_OVERFLOW, NULL);
 				goto cleanup;
 			}
@@ -1531,10 +1531,18 @@ int KSI_MultiSignature_writeBytes(KSI_MultiSignature *ms, unsigned char *buf, si
 	}
 
 	if ((opt & KSI_TLV_OPT_NO_MOVE) == 0 && buf != NULL) {
+		/* Just be sure. */
+		if (len > buf_size) {
+			KSI_pushError(ms->ctx, res = KSI_BUFFER_OVERFLOW, NULL);
+			goto cleanup;
+		}
+
+		/* Shift all the bytes to the beginning of the buffer. */
 		for (i = 0; i < len; i++) {
 			buf[i] = buf[buf_size - len + i];
 		}
 
+		/* If the serialized value is short enough, log its value for debug'ing. */
 		if (len < 0xffff) {
 			KSI_LOG_logBlob(ms->ctx, KSI_LOG_DEBUG, "Serialized multi signature container", buf, len);
 		}
