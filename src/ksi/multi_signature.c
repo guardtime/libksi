@@ -18,6 +18,7 @@
  */
 
 #include <string.h>
+#include <stdio.h>
 
 #include "multi_signature_impl.h"
 #include "types.h"
@@ -32,6 +33,7 @@
 #include "hashchain.h"
 #include "fast_tlv.h"
 #include "ctx_impl.h"
+#include "net.h"
 
 #define KSI_MULTI_SIGNATURE_HDR "MULTISIG"
 
@@ -660,8 +662,6 @@ int KSI_MultiSignature_add(KSI_MultiSignature *ms, const KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	TimeMapper *mpr = NULL;
 
-	size_t i;
-
 	if (ms == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
@@ -847,7 +847,6 @@ int KSI_MultiSignature_get(KSI_MultiSignature *ms, const KSI_DataHash *hsh, KSI_
 	ChainIndexMapper *cim = NULL;
 	KSI_LIST(ChainIndexMapper) *cimList = NULL;
 	TimeMapper *tm = NULL;
-	size_t i;
 
 	if (ms == NULL || hsh == NULL || sig == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1510,7 +1509,7 @@ cleanup:
 int KSI_MultiSignature_writeBytes(KSI_MultiSignature *ms, unsigned char *buf, size_t buf_size, size_t *buf_len, int opt) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t len = 0;
-	size_t i, j;
+	size_t i;
 
 	if (ms == NULL || (buf == NULL && buf_size != 0)) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1529,7 +1528,7 @@ int KSI_MultiSignature_writeBytes(KSI_MultiSignature *ms, unsigned char *buf, si
 		if (tm->calendarAuthRec != NULL) {
 
 			/* Write the bytes to the end of the buffer. */
-			res = KSI_CalendarAuthRec_writeBytes(tm->calendarAuthRec, buf, (buf == NULL ? 0 : buf_size - len), &tmp_len, KSI_TLV_OPT_NO_MOVE);
+			res = KSI_CalendarAuthRec_writeBytes(tm->calendarAuthRec, buf, ((buf == NULL) ? 0 : buf_size - len), &tmp_len, KSI_TLV_OPT_NO_MOVE);
 			if (res != KSI_OK) {
 				KSI_pushError(ms->ctx, res, NULL);
 				goto cleanup;
@@ -1785,6 +1784,22 @@ cleanup:
 	return res;
 }
 
+static void ParserHelper_init(KSI_CTX *ctx, ParserHelper *h) {
+	if (h != NULL) {
+		h->ctx = ctx;
+		h->aggregationAuthRecordList = NULL;
+		h->aggregationChainList = NULL;
+		h->calendarAuthRecordList = NULL;
+		h->calendarChainList = NULL;
+		h->file = NULL;
+		h->ptr = NULL;
+		h->ptr_len = 0;
+		h->publicationRecordList = NULL;
+		h->rfc3161List = NULL;
+		h->tlv = NULL;
+	}
+}
+
 int KSI_MultiSignature_parse(KSI_CTX *ctx, const unsigned char *raw, size_t raw_len, KSI_MultiSignature **ms) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_MultiSignature *tmp = NULL;
@@ -1792,7 +1807,8 @@ int KSI_MultiSignature_parse(KSI_CTX *ctx, const unsigned char *raw, size_t raw_
 	size_t len;
 	size_t hdr_len;
 
-	hlpr = (ParserHelper) {ctx, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+	ParserHelper_init(ctx, &hlpr);
+
 	hdr_len = strlen(KSI_MULTI_SIGNATURE_HDR);
 
 	KSI_ERR_clearErrors(ctx);
@@ -1841,7 +1857,7 @@ int KSI_MultiSignature_fromFile(KSI_CTX *ctx, const char *fileName, KSI_MultiSig
 	size_t hdr_len;
 	char buf[1024];
 
-	hlpr = (ParserHelper) {ctx, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+	ParserHelper_init(ctx, &hlpr);
 	hdr_len = strlen(KSI_MULTI_SIGNATURE_HDR);
 
 	KSI_ERR_clearErrors(ctx);
