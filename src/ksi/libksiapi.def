@@ -389,6 +389,7 @@ EXPORTS
     KSI_TlvTemplate_extractGenerator
     KSI_TlvTemplate_construct
     KSI_TlvTemplate_serializeObject
+	KSI_TlvTemplate_writeBytes
 
 ;TLV templates
 EXPORTS

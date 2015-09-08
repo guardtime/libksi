@@ -507,6 +507,22 @@ extern "C" {
 	int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag, int isNc, int isFwd, const KSI_TlvTemplate *tmpl, unsigned char **raw, size_t *raw_len);
 
 	/**
+	 * This function serializes the given object based on the template.
+	 * \param[in]	ctx			KSI context.
+	 * \param[in]	obj			Object to be serialized.
+	 * \param[in]	tag			Tag of the outer TLV.
+	 * \param[in]	isNc		Flag of the outer TLV: is non-critical
+	 * \param[in]	isFwd		Flag of the outer TLV: is forward
+	 * \param[in]	tmpl		Template
+	 * \param[in]	raw			Pointer to target buffer
+	 * \param[in]	raw_size	Size of the target buffer
+	 * \param[out]	raw_len		Length of the serialization.
+	 * \param[in]	opt			Options.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_TlvTemplate_writeBytes(KSI_CTX *ctx, const void *obj, unsigned tag, int isNc, int isFwd, const KSI_TlvTemplate *tmpl, unsigned char *raw, size_t raw_size, size_t *raw_len, int opt);
+
+	/**
 	 * Macro to generate object parsers.
 	 * \param[in]	type		Type name.
 	 * \param[in]	tag			Tag of the concrete TLV.
