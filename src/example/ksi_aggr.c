@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
 	/* Handle command line parameters */
 	if (argc != 8) {
 		fprintf(stderr, "Usage:\n"
-				"  %s <in-file> <out-file> <aggregator> <port> <user> <pass> <pub-file url | -> \n", argv[0]);
+				"  %s <in-file> <out-file> <aggregator> <port> <user> <pass> <pub-file url> \n", argv[0]);
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -90,12 +90,10 @@ int main(int argc, char **argv) {
 	if (res != KSI_OK) goto cleanup;
 
 	/* Check publications file url. */
-	if (strncmp("-", argv[7], 1)) {
-		res = KSI_TcpClient_setPublicationUrl(net, argv[7]);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Unable to set publications file url.\n");
-			goto cleanup;
-		}
+	res = KSI_TcpClient_setPublicationUrl(net, argv[7]);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to set publications file url.\n");
+		goto cleanup;
 	}
 
 	/* Set the new network provider. */

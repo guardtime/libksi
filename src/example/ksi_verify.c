@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
 	/* Check parameters. */
 	if (argc != 5) {
 		fprintf(stderr, "Usage\n"
-				"  %s <data file | -> <signature> <extender url> <pub-file url | ->\n", argv[0]);
+				"  %s <data file | -> <signature> <extender url> <pub-file url>\n", argv[0]);
 		goto cleanup;
 	}
 
@@ -63,13 +63,11 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	if (strncmp("-", argv[4], 1)) {
-		/* Set the publications file url. */
-		res = KSI_CTX_setPublicationUrl(ksi, argv[4]);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Unable to set publications file url.\n");
-			goto cleanup;
-		}
+	/* Set the publications file url. */
+	res = KSI_CTX_setPublicationUrl(ksi, argv[4]);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to set publications file url.\n");
+		goto cleanup;
 	}
 
 	printf("Reading signature... ");

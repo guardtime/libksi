@@ -62,6 +62,12 @@ const char *KSI_getErrorString(int statusCode) {
 	switch (statusCode) {
 		case KSI_OK:
 			return "No errors.";
+		case KSI_AGGREGATOR_NOT_CONFIGURED:
+			return "The context is not (properly) configured to use the aggregator service.";
+		case KSI_EXTENDER_NOT_CONFIGURED:
+			return "The context is not (properly) configured to use the extender service.";
+		case KSI_PUBLICATIONS_FILE_NOT_CONFIGURED:
+			return "The context is not (properly) configured to retrieve the publications file.";
 		case KSI_INVALID_ARGUMENT:
 			return "Invalid argument.";
 		case KSI_INVALID_FORMAT:

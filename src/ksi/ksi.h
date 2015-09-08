@@ -39,14 +39,25 @@ extern "C" {
  * @{
  */
 
-#define KSI_DEFAULT_URI_PUBLICATIONS_FILE "http://verify.guardtime.com/ksi-publications.bin"
-
 /**
  * KSI function returnvalues.
  */
 enum KSI_StatusCode {
 /* RETURN CODES WHICH ARE NOT ERRORS */
 	KSI_OK = 0,
+
+	/**
+	 * The aggregator has not been configured.
+	 */
+	KSI_AGGREGATOR_NOT_CONFIGURED = 0x01,
+	/**
+	 * The extender has not been configured.
+	 */
+	KSI_EXTENDER_NOT_CONFIGURED = 0x02,
+	/**
+	 * The publications file url has not been configured.
+	 */
+	KSI_PUBLICATIONS_FILE_NOT_CONFIGURED = 0x03,
 
 /* SYNTAX ERRORS */
 	/**

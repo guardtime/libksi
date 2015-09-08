@@ -30,7 +30,6 @@ int main(int argc, char **argv) {
 	FILE *out = NULL;
 	KSI_Signature *sig = NULL;
 	KSI_Signature *ext = NULL;
-	KSI_HttpClient *net = NULL;
 	unsigned char *raw = NULL;
 	size_t raw_len;
 	unsigned count;
@@ -38,7 +37,7 @@ int main(int argc, char **argv) {
 
 	if (argc != 5) {
 		printf("Usage:\n"
-				"  %s <signature> <extended> <extender uri> <pub-file uri| ->\n", argv[0]);
+				"  %s <signature> <extended> <extender uri> <pub-file url>\n", argv[0]);
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -60,25 +59,11 @@ int main(int argc, char **argv) {
 
 	KSI_LOG_info(ksi, "Using KSI version: '%s'", KSI_getVersion());
 
-	res = KSI_HttpClient_new(ksi, &net);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to create new network provider.\n");
-		goto cleanup;
-	}
-
-	res = KSI_HttpClient_setExtender(net, argv[3], "anon", "anon");
+	res = KSI_CTX_setExtender(ksi, argv[3], "anon", "anon");
 	if (res != KSI_OK) goto cleanup;
 
-	if (strcmp(argv[4], "-")) {
-		res = KSI_HttpClient_setPublicationUrl(net, argv[4]);
-		if (res != KSI_OK) goto cleanup;
-	}
-
-	res = KSI_CTX_setNetworkProvider(ksi, (KSI_NetworkClient *)net);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to set new network provider.\n");
-		goto cleanup;
-	}
+	res = KSI_CTX_setPublicationUrl(ksi, argv[4]);
+	if (res != KSI_OK) goto cleanup;
 
 	/* Read the signature. */
 	res = KSI_Signature_fromFile(ksi, argv[1], &sig);
