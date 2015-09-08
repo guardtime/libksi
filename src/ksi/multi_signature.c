@@ -1668,7 +1668,7 @@ static int parserGenerator(void *pctx, KSI_TLV **tlv) {
 
 			tlv_len = ftlv.hdr_len + ftlv.dat_len;
 
-			res = KSI_TLV_parseBlob2(hlpr->ctx, buf, tlv_len, 0, &hlpr->tlv);
+			res = KSI_TLV_parseBlob(hlpr->ctx, buf, tlv_len, &hlpr->tlv);
 			if (res != KSI_OK) {
 				KSI_pushError(hlpr->ctx, res, NULL);
 				goto cleanup;
