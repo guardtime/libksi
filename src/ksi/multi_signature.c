@@ -31,6 +31,7 @@
 #include "tlv_template.h"
 #include "hashchain.h"
 #include "fast_tlv.h"
+#include "ctx_impl.h"
 
 #define KSI_MULTI_SIGNATURE_HDR "MULTISIG"
 
@@ -46,6 +47,7 @@ typedef struct ParserHelper_st {
 	const unsigned char *ptr;
 	size_t ptr_len;
 	KSI_TLV *tlv;
+	FILE *file;
 	KSI_LIST(KSI_AggregationHashChain) *aggregationChainList;
 	KSI_LIST(KSI_CalendarHashChain) *calendarChainList;
 	KSI_LIST(KSI_PublicationRecord) *publicationRecordList;
@@ -77,21 +79,21 @@ KSI_DEFINE_TLV_TEMPLATE(ParserHelper)
 	KSI_TLV_COMPOSITE_LIST(0x0806, KSI_TLV_TMPL_FLG_NONE, ParserHelper_getRfc3161List, ParserHelper_setRfc3161List, KSI_RFC3161, "rfc3161_rec")
 KSI_END_TLV_TEMPLATE
 
-static void chainIndexMapper_free(chainIndexMapper *cim) {
+static void ChainIndexMapper_free(ChainIndexMapper *cim) {
 	if (cim != NULL) {
 		KSI_Integer_free(cim->key_index);
 		KSI_AggregationHashChain_free(cim->aggrChain);
-		chainIndexMapperList_free(cim->children);
+		ChainIndexMapperList_free(cim->children);
 		KSI_RFC3161_free(cim->rfc3161);
 		KSI_free(cim);
 	}
 }
 
-static int chainIndexMapper_new(chainIndexMapper **cim) {
+static int ChainIndexMapper_new(ChainIndexMapper **cim) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	chainIndexMapper *tmp = NULL;
-	tmp = KSI_new(chainIndexMapper);
+	ChainIndexMapper *tmp = NULL;
+	tmp = KSI_new(ChainIndexMapper);
 	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
@@ -110,15 +112,15 @@ static int chainIndexMapper_new(chainIndexMapper **cim) {
 
 cleanup:
 
-	chainIndexMapper_free(tmp);
+	ChainIndexMapper_free(tmp);
 
 	return res;
 }
 
-static void timeMapper_free(timeMapper *tm) {
+static void TimeMapper_free(TimeMapper *tm) {
 	if (tm != NULL) {
 		KSI_Integer_free(tm->key_time);
-		chainIndexMapperList_free(tm->chainIndexeList);
+		ChainIndexMapperList_free(tm->chainIndexeList);
 		KSI_CalendarHashChain_free(tm->calendarChain);
 		KSI_CalendarAuthRec_free(tm->calendarAuthRec);
 		KSI_PublicationRecord_free(tm->publication);
@@ -126,11 +128,11 @@ static void timeMapper_free(timeMapper *tm) {
 	}
 }
 
-static int timeMapper_new(timeMapper **tm) {
+static int TimeMapper_new(TimeMapper **tm) {
 	int res = KSI_UNKNOWN_ERROR;
-	timeMapper *tmp = NULL;
+	TimeMapper *tmp = NULL;
 
-	tmp = KSI_new(timeMapper);
+	tmp = KSI_new(TimeMapper);
 	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
@@ -149,14 +151,14 @@ static int timeMapper_new(timeMapper **tm) {
 
 cleanup:
 
-	timeMapper_free(tmp);
+	TimeMapper_free(tmp);
 
 	return res;
 }
 
 
-KSI_IMPLEMENT_LIST(chainIndexMapper, chainIndexMapper_free);
-KSI_IMPLEMENT_LIST(timeMapper, timeMapper_free);
+KSI_IMPLEMENT_LIST(ChainIndexMapper, ChainIndexMapper_free);
+KSI_IMPLEMENT_LIST(TimeMapper, TimeMapper_free);
 
 int KSI_MultiSignature_new(KSI_CTX *ctx, KSI_MultiSignature **ms) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -193,18 +195,18 @@ cleanup:
 
 void KSI_MultiSignature_free(KSI_MultiSignature *ms) {
 	if (ms != NULL) {
-		timeMapperList_free(ms->timeList);
+		TimeMapperList_free(ms->timeList);
 		KSI_free(ms);
 	}
 }
 
 
-static int timeMapperList_select(KSI_LIST(timeMapper) **mapper, KSI_Integer *tm, timeMapper **exact, int create) {
+static int TimeMapperList_select(KSI_LIST(TimeMapper) **mapper, KSI_Integer *tm, TimeMapper **exact, int create) {
 	int res = KSI_UNKNOWN_ERROR;
-	timeMapper *hit = NULL;
-	timeMapper *hitp = NULL;
-	KSI_LIST(timeMapper) *list = NULL;
-	KSI_LIST(timeMapper) *listp = NULL;
+	TimeMapper *hit = NULL;
+	TimeMapper *hitp = NULL;
+	KSI_LIST(TimeMapper) *list = NULL;
+	KSI_LIST(TimeMapper) *listp = NULL;
 	size_t i;
 
 	if (mapper == NULL || tm == NULL || exact == NULL) {
@@ -221,16 +223,16 @@ static int timeMapperList_select(KSI_LIST(timeMapper) **mapper, KSI_Integer *tm,
 	listp = *mapper;
 
 	if (listp == NULL) {
-		res = timeMapperList_new(&list);
+		res = TimeMapperList_new(&list);
 		if (res != KSI_OK) goto cleanup;
 
 		listp = list;
 	}
 
-	for (i = 0; i < timeMapperList_length(listp); i++) {
-		timeMapper *ptr = NULL;
+	for (i = 0; i < TimeMapperList_length(listp); i++) {
+		TimeMapper *ptr = NULL;
 
-		res = timeMapperList_elementAt(listp, i, &ptr);
+		res = TimeMapperList_elementAt(listp, i, &ptr);
 		if (res != KSI_OK) goto cleanup;
 
 		if (KSI_Integer_equals(ptr->key_time, tm)) {
@@ -244,7 +246,7 @@ static int timeMapperList_select(KSI_LIST(timeMapper) **mapper, KSI_Integer *tm,
 			res = KSI_OK;
 			goto cleanup;
 		}
-		res = timeMapper_new(&hit);
+		res = TimeMapper_new(&hit);
 		if (res != KSI_OK) goto cleanup;
 
 		res = KSI_Integer_ref(tm);
@@ -252,7 +254,7 @@ static int timeMapperList_select(KSI_LIST(timeMapper) **mapper, KSI_Integer *tm,
 
 		hit->key_time = tm;
 
-		res = timeMapperList_append(listp, hit);
+		res = TimeMapperList_append(listp, hit);
 		if (res != KSI_OK) goto cleanup;
 
 		hitp = hit;
@@ -271,22 +273,22 @@ static int timeMapperList_select(KSI_LIST(timeMapper) **mapper, KSI_Integer *tm,
 
 cleanup:
 
-	timeMapperList_free(list);
-	timeMapper_free(hit);
+	TimeMapperList_free(list);
+	TimeMapper_free(hit);
 
 	return res;
 
 }
 
-static int chainIndexMapperList_selectCreate(KSI_LIST(chainIndexMapper) **mapper, KSI_LIST(KSI_Integer) *index, size_t lvl, KSI_LIST(chainIndexMapper) *out, chainIndexMapper **exact) {
+static int ChainIndexMapperList_selectCreate(KSI_LIST(ChainIndexMapper) **mapper, KSI_LIST(KSI_Integer) *index, size_t lvl, KSI_LIST(ChainIndexMapper) *out, ChainIndexMapper **exact) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i;
 
 	KSI_Integer *key = NULL;
-	chainIndexMapper *hit = NULL;
-	chainIndexMapper *hitp = NULL;
-	KSI_LIST(chainIndexMapper) *list = NULL;
-	KSI_LIST(chainIndexMapper) *listp = NULL;
+	ChainIndexMapper *hit = NULL;
+	ChainIndexMapper *hitp = NULL;
+	KSI_LIST(ChainIndexMapper) *list = NULL;
+	KSI_LIST(ChainIndexMapper) *listp = NULL;
 
 
 	if (mapper == NULL || index == NULL || lvl >= KSI_IntegerList_length(index)) {
@@ -303,16 +305,16 @@ static int chainIndexMapperList_selectCreate(KSI_LIST(chainIndexMapper) **mapper
 	listp = *mapper;
 	/* Create a new list, if empty. */
 	if (listp == NULL) {
-		res = chainIndexMapperList_new(&list);
+		res = ChainIndexMapperList_new(&list);
 		if (res != KSI_OK) goto cleanup;
 
 		listp = list;
 	}
 
 	/* Search for the container with the matching key. */
-	for (i = 0; i < chainIndexMapperList_length(listp); i++) {
-		chainIndexMapper *ptr = NULL;
-		res = chainIndexMapperList_elementAt(listp, i, &ptr);
+	for (i = 0; i < ChainIndexMapperList_length(listp); i++) {
+		ChainIndexMapper *ptr = NULL;
+		res = ChainIndexMapperList_elementAt(listp, i, &ptr);
 		if (res != KSI_OK) goto cleanup;
 
 		if (KSI_Integer_equals(ptr->key_index, key)) {
@@ -323,13 +325,13 @@ static int chainIndexMapperList_selectCreate(KSI_LIST(chainIndexMapper) **mapper
 
 	/* Create a new container, if it does not exist. */
 	if (hitp == NULL) {
-		res = chainIndexMapper_new(&hit);
+		res = ChainIndexMapper_new(&hit);
 		if (res != KSI_OK) goto cleanup;
 
 		hit->key_index = key;
 		key = NULL;
 
-		res = chainIndexMapperList_append(listp, hit);
+		res = ChainIndexMapperList_append(listp, hit);
 		if (res != KSI_OK) goto cleanup;
 
 		hitp = hit;
@@ -338,13 +340,13 @@ static int chainIndexMapperList_selectCreate(KSI_LIST(chainIndexMapper) **mapper
 
 	/* Add the container to the output result. */
 	if (out != NULL) {
-		res = chainIndexMapperList_append(out, hitp);
+		res = ChainIndexMapperList_append(out, hitp);
 		if (res != KSI_OK) goto cleanup;
 	}
 
 	/* Continue search if the chain index continues. */
 	if (lvl + 1 < KSI_IntegerList_length(index)) {
-		res = chainIndexMapperList_selectCreate(&hitp->children, index, lvl + 1, out, exact);
+		res = ChainIndexMapperList_selectCreate(&hitp->children, index, lvl + 1, out, exact);
 		if (res != KSI_OK) goto cleanup;
 	} else {
 		if (exact != NULL) {
@@ -359,16 +361,16 @@ static int chainIndexMapperList_selectCreate(KSI_LIST(chainIndexMapper) **mapper
 
 cleanup:
 
-	chainIndexMapperList_free(list);
-	chainIndexMapper_free(hit);
+	ChainIndexMapperList_free(list);
+	ChainIndexMapper_free(hit);
 	KSI_Integer_free(key);
 
 	return res;
 }
 
-static int chainIndexMapperList_select(KSI_LIST(chainIndexMapper) **mapper, KSI_LIST(KSI_Integer) *index, KSI_LIST(chainIndexMapper) **path, chainIndexMapper **exact) {
+static int ChainIndexMapperList_select(KSI_LIST(ChainIndexMapper) **mapper, KSI_LIST(KSI_Integer) *index, KSI_LIST(ChainIndexMapper) **path, ChainIndexMapper **exact) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_LIST(chainIndexMapper) *list = NULL;
+	KSI_LIST(ChainIndexMapper) *list = NULL;
 
 	if (mapper == NULL || index == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -376,11 +378,11 @@ static int chainIndexMapperList_select(KSI_LIST(chainIndexMapper) **mapper, KSI_
 	}
 
 	if (path != NULL) {
-		res = chainIndexMapperList_new(&list);
+		res = ChainIndexMapperList_new(&list);
 		if (res != KSI_OK) goto cleanup;
 	}
 
-	res = chainIndexMapperList_selectCreate(mapper, index, 0, list, exact);
+	res = ChainIndexMapperList_selectCreate(mapper, index, 0, list, exact);
 	if (res != KSI_OK) goto cleanup;
 
 	if (path != NULL) {
@@ -392,7 +394,7 @@ static int chainIndexMapperList_select(KSI_LIST(chainIndexMapper) **mapper, KSI_
 
 cleanup:
 
-	chainIndexMapperList_free(list);
+	ChainIndexMapperList_free(list);
 
 	return res;
 }
@@ -400,8 +402,8 @@ cleanup:
 static int addAggregationHashChain(KSI_AggregationHashChain *chn, void *fctx) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_MultiSignature *ms = fctx;
-	timeMapper *tm = NULL;
-	chainIndexMapper *last = NULL;
+	TimeMapper *tm = NULL;
+	ChainIndexMapper *last = NULL;
 
 	if (chn == NULL || ms == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -411,11 +413,11 @@ static int addAggregationHashChain(KSI_AggregationHashChain *chn, void *fctx) {
 	KSI_ERR_clearErrors(ms->ctx);
 
 	/* Select the appropriate time element. */
-	res = timeMapperList_select(&ms->timeList, chn->aggregationTime, &tm, 1);
+	res = TimeMapperList_select(&ms->timeList, chn->aggregationTime, &tm, 1);
 	if (res != KSI_OK) goto cleanup;
 
 	/* Add the element to the container. */
-	res = chainIndexMapperList_select(&tm->chainIndexeList, chn->chainIndex, NULL, &last);
+	res = ChainIndexMapperList_select(&tm->chainIndexeList, chn->chainIndex, NULL, &last);
 	if (res != KSI_OK) {
 		KSI_pushError(ms->ctx, res, NULL);
 		goto cleanup;
@@ -442,9 +444,9 @@ cleanup:
 
 static int addRfc3161(KSI_RFC3161 *rfc, void *fctx) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_LIST(timeMapper) *tmList = fctx;
-	chainIndexMapper *last = NULL;
-	timeMapper *tm = NULL;
+	KSI_LIST(TimeMapper) *tmList = fctx;
+	ChainIndexMapper *last = NULL;
+	TimeMapper *tm = NULL;
 
 	if (rfc == NULL || tmList == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -452,10 +454,10 @@ static int addRfc3161(KSI_RFC3161 *rfc, void *fctx) {
 	}
 
 
-	res = timeMapperList_select(&tmList, rfc->aggregationTime, &tm, 1);
+	res = TimeMapperList_select(&tmList, rfc->aggregationTime, &tm, 1);
 	if (res != KSI_OK) goto cleanup;
 
-	res = chainIndexMapperList_select(&tm->chainIndexeList, rfc->chainIndex, NULL, &last);
+	res = ChainIndexMapperList_select(&tm->chainIndexeList, rfc->chainIndex, NULL, &last);
 	if (res != KSI_OK) {
 		KSI_pushError(rfc->ctx, res, NULL);
 		goto cleanup;
@@ -475,10 +477,10 @@ cleanup:
 
 static int addCalendarChain(KSI_CalendarHashChain *cal, void *fctx) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_LIST(timeMapper) *tmList = fctx;
-	timeMapper *calTm = NULL;
-	timeMapper *newTm = NULL;
-	timeMapper *oldTm = NULL;
+	KSI_LIST(TimeMapper) *tmList = fctx;
+	TimeMapper *calTm = NULL;
+	TimeMapper *newTm = NULL;
+	TimeMapper *oldTm = NULL;
 
 	if (cal == NULL || tmList == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -486,7 +488,7 @@ static int addCalendarChain(KSI_CalendarHashChain *cal, void *fctx) {
 	}
 
 
-	res = timeMapperList_select(&tmList, cal->aggregationTime, &calTm, 1);
+	res = TimeMapperList_select(&tmList, cal->aggregationTime, &calTm, 1);
 	if (res != KSI_OK) goto cleanup;
 
 	if (calTm->calendarChain == NULL) {
@@ -497,10 +499,10 @@ static int addCalendarChain(KSI_CalendarHashChain *cal, void *fctx) {
 		bool prefer_newer;
 		/* Update the calendar chain only if it has a stronger proof or if equally strong,
 		 * use the nearest (oldest). */
-		res = timeMapperList_select(&tmList, cal->publicationTime, &newTm, 0);
+		res = TimeMapperList_select(&tmList, cal->publicationTime, &newTm, 0);
 		if (res != KSI_OK) goto cleanup;
 
-		res = timeMapperList_select(&tmList, calTm->calendarChain->publicationTime, &oldTm, 0);
+		res = TimeMapperList_select(&tmList, calTm->calendarChain->publicationTime, &oldTm, 0);
 		if (res != KSI_OK) goto cleanup;
 
 		prefer_newer = KSI_Integer_compare(cal->publicationTime, calTm->calendarChain->publicationTime) < 0;
@@ -533,8 +535,8 @@ cleanup:
 
 static int addCalendarAuthRec(KSI_CalendarAuthRec *auth, void *fctx) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_LIST(timeMapper) *tmList = fctx;
-	timeMapper *tm = NULL;
+	KSI_LIST(TimeMapper) *tmList = fctx;
+	TimeMapper *tm = NULL;
 
 	if (auth == NULL || tmList == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -543,7 +545,7 @@ static int addCalendarAuthRec(KSI_CalendarAuthRec *auth, void *fctx) {
 
 	KSI_ERR_clearErrors(auth->ctx);
 
-	res = timeMapperList_select(&tmList, auth->pubData->time, &tm, 1);
+	res = TimeMapperList_select(&tmList, auth->pubData->time, &tm, 1);
 	if (res != KSI_OK) goto cleanup;
 
 	if (tm->calendarAuthRec == NULL && tm->publication == NULL) {
@@ -564,8 +566,8 @@ cleanup:
 
 static int addPublication(KSI_PublicationRecord *pub, void *fctx) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_LIST(timeMapper) *tmList = fctx;
-	timeMapper *tm = NULL;
+	KSI_LIST(TimeMapper) *tmList = fctx;
+	TimeMapper *tm = NULL;
 
 	if (pub == NULL || fctx == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -574,7 +576,7 @@ static int addPublication(KSI_PublicationRecord *pub, void *fctx) {
 
 	KSI_ERR_clearErrors(pub->ctx);
 
-	res = timeMapperList_select(&tmList, pub->publishedData->time, &tm, 1);
+	res = TimeMapperList_select(&tmList, pub->publishedData->time, &tm, 1);
 	if (res != KSI_OK) {
 		KSI_pushError(pub->ctx, res, NULL);
 		goto cleanup;
@@ -609,9 +611,9 @@ cleanup:
 
 static int addAggregationAuthRec(KSI_AggregationAuthRec *auth, void *fctx) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_LIST(timeMapper) *ms = fctx;
-	timeMapper *tm = NULL;
-	chainIndexMapper *last = NULL;
+	KSI_LIST(TimeMapper) *ms = fctx;
+	TimeMapper *tm = NULL;
+	ChainIndexMapper *last = NULL;
 
 	if (auth == NULL || ms == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -622,14 +624,14 @@ static int addAggregationAuthRec(KSI_AggregationAuthRec *auth, void *fctx) {
 
 
 	/* Select the appropriate time element. */
-	res = timeMapperList_select(&ms, auth->aggregationTime, &tm, 1);
+	res = TimeMapperList_select(&ms, auth->aggregationTime, &tm, 1);
 	if (res != KSI_OK) {
 		KSI_pushError(auth->ctx, res, NULL);
 		goto cleanup;
 	}
 
 	/* Add the element to the container. */
-	res = chainIndexMapperList_select(&tm->chainIndexeList, auth->chainIndexesList, NULL, &last);
+	res = ChainIndexMapperList_select(&tm->chainIndexeList, auth->chainIndexesList, NULL, &last);
 	if (res != KSI_OK) {
 		KSI_pushError(auth->ctx, res, NULL);
 		goto cleanup;
@@ -656,7 +658,7 @@ cleanup:
 
 int KSI_MultiSignature_add(KSI_MultiSignature *ms, const KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
-	timeMapper *mpr = NULL;
+	TimeMapper *mpr = NULL;
 
 	size_t i;
 
@@ -735,18 +737,18 @@ cleanup:
 	return res;
 }
 
-static int findAggregationHashChainList(KSI_LIST(chainIndexMapper) *cimList, const KSI_DataHash *hsh, KSI_LIST(KSI_AggregationHashChain) *aggList) {
+static int findAggregationHashChainList(KSI_LIST(ChainIndexMapper) *cimList, const KSI_DataHash *hsh, KSI_LIST(KSI_AggregationHashChain) *aggList) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i;
-	chainIndexMapper *cim = NULL;
+	ChainIndexMapper *cim = NULL;
 
 	if (hsh == NULL || aggList == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	for (i = 0; i < chainIndexMapperList_length(cimList); i++) {
-		res = chainIndexMapperList_elementAt(cimList, i, &cim);
+	for (i = 0; i < ChainIndexMapperList_length(cimList); i++) {
+		res = ChainIndexMapperList_elementAt(cimList, i, &cim);
 		if (res != KSI_OK) goto cleanup;
 
 		if (cim->aggrChain == NULL) {
@@ -765,7 +767,7 @@ static int findAggregationHashChainList(KSI_LIST(chainIndexMapper) *cimList, con
 		}
 
 		/* Search for sub elements. */
-		if (chainIndexMapperList_length(cim->children) > 0) {
+		if (ChainIndexMapperList_length(cim->children) > 0) {
 			res = findAggregationHashChainList(cim->children, hsh, aggList);
 			if (res != KSI_OK) goto cleanup;
 
@@ -788,10 +790,10 @@ cleanup:
 	return res;
 }
 
-static int findAggregationHashChain(KSI_LIST(timeMapper) *tmList, const KSI_DataHash *hsh, timeMapper **mapper, KSI_LIST(KSI_AggregationHashChain) **aggrList) {
+static int findAggregationHashChain(KSI_LIST(TimeMapper) *tmList, const KSI_DataHash *hsh, TimeMapper **mapper, KSI_LIST(KSI_AggregationHashChain) **aggrList) {
 	int res = KSI_SERVICE_UNKNOWN_ERROR;
 	size_t i;
-	timeMapper *tm = NULL;
+	TimeMapper *tm = NULL;
 	KSI_LIST(KSI_AggregationHashChain) *agl = NULL;
 
 	if (hsh == NULL || mapper == NULL || aggrList == NULL) {
@@ -802,8 +804,8 @@ static int findAggregationHashChain(KSI_LIST(timeMapper) *tmList, const KSI_Data
 	res = KSI_AggregationHashChainList_new(&agl);
 	if (res != KSI_OK) goto cleanup;
 
-	for (i = 0; i < timeMapperList_length(tmList); i++) {
-		res = timeMapperList_elementAt(tmList, i, &tm);
+	for (i = 0; i < TimeMapperList_length(tmList); i++) {
+		res = TimeMapperList_elementAt(tmList, i, &tm);
 		if (res != KSI_OK) goto cleanup;
 
 		res = findAggregationHashChainList(tm->chainIndexeList, hsh, agl);
@@ -833,7 +835,7 @@ cleanup:
 	return res;
 }
 
-static int timeMapper_cmp(const timeMapper **a, const timeMapper **b) {
+static int TimeMapper_cmp(const TimeMapper **a, const TimeMapper **b) {
 	/* NB! We assume a and b are not NULL - otherwise, there is something wrong with
 	 * the container. Null checks added only for safety. */
 	return (*a == NULL || *b == NULL) ? 0 : KSI_Integer_compare((*a)->key_time, (*b)->key_time);
@@ -842,9 +844,9 @@ static int timeMapper_cmp(const timeMapper **a, const timeMapper **b) {
 int KSI_MultiSignature_get(KSI_MultiSignature *ms, const KSI_DataHash *hsh, KSI_Signature **sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Signature *tmp = NULL;
-	chainIndexMapper *cim = NULL;
-	KSI_LIST(chainIndexMapper) *cimList = NULL;
-	timeMapper *tm = NULL;
+	ChainIndexMapper *cim = NULL;
+	KSI_LIST(ChainIndexMapper) *cimList = NULL;
+	TimeMapper *tm = NULL;
 	size_t i;
 
 	if (ms == NULL || hsh == NULL || sig == NULL) {
@@ -872,7 +874,7 @@ int KSI_MultiSignature_get(KSI_MultiSignature *ms, const KSI_DataHash *hsh, KSI_
 	/* If the list is not ordered, order it, to find always the earliest signature possible. This
 	 * is an issue if there are more than one signatures for the same inputhash. */
 	if (!ms->timeList_ordered && ms->timeList != NULL) {
-		res = timeMapperList_sort(ms->timeList, timeMapper_cmp);
+		res = TimeMapperList_sort(ms->timeList, TimeMapper_cmp);
 		if (res != KSI_OK) {
 			KSI_pushError(ms->ctx, res, NULL);
 			goto cleanup;
@@ -896,12 +898,12 @@ int KSI_MultiSignature_get(KSI_MultiSignature *ms, const KSI_DataHash *hsh, KSI_
 	tmp->calendarChain = tm->calendarChain;
 
 	if (tmp->calendarChain != NULL) {
-		timeMapper *proof = NULL;
+		TimeMapper *proof = NULL;
 
 		/* Make a reference. */
 		KSI_CalendarHashChain_ref(tmp->calendarChain);
 		/* Find proof. */
-		res = timeMapperList_select(&ms->timeList, tmp->calendarChain->publicationTime, &proof, 0);
+		res = TimeMapperList_select(&ms->timeList, tmp->calendarChain->publicationTime, &proof, 0);
 		if (res != KSI_OK) goto cleanup;
 
 		if (proof != NULL) {
@@ -930,19 +932,19 @@ cleanup:
 /**
  * Remove all empty nodes in this list (non-recursive).
  */
-static int chainIndexMapperList_vacuum(KSI_LIST(chainIndexMapper) *cimList) {
+static int ChainIndexMapperList_vacuum(KSI_LIST(ChainIndexMapper) *cimList) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i;
 
-	for (i = chainIndexMapperList_length(cimList); i > 0; i--) {
-		chainIndexMapper *cim = NULL;
+	for (i = ChainIndexMapperList_length(cimList); i > 0; i--) {
+		ChainIndexMapper *cim = NULL;
 
-		res = chainIndexMapperList_elementAt(cimList, i - 1, &cim);
+		res = ChainIndexMapperList_elementAt(cimList, i - 1, &cim);
 		if (res != KSI_OK) goto cleanup;
 
 		/* Check if the chain index mapper should be removed. */
-		if ((cim->aggrAuthRec == NULL && cim->aggrChain == NULL) || (cim->children != NULL && chainIndexMapperList_length(cim->children) == 0)) {
-			res = chainIndexMapperList_remove(cimList, i - 1, NULL);
+		if ((cim->aggrAuthRec == NULL && cim->aggrChain == NULL) || (cim->children != NULL && ChainIndexMapperList_length(cim->children) == 0)) {
+			res = ChainIndexMapperList_remove(cimList, i - 1, NULL);
 			if (res != KSI_OK) goto cleanup;
 		}
 	}
@@ -954,13 +956,13 @@ cleanup:
 	return res;
 }
 
-static int timeMapper_unpaint(timeMapper *tm, void *foldCtx) {
+static int TimeMapper_unpaint(TimeMapper *tm, void *foldCtx) {
 	if (tm == NULL) return KSI_INVALID_ARGUMENT;
 	tm->paint = false;
 	return KSI_OK;
 }
 
-static int chainIndexMapper_deleteSignature(chainIndexMapper *cim, void *foldCtx) {
+static int ChainIndexMapper_deleteSignature(ChainIndexMapper *cim, void *foldCtx) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = foldCtx;
 
@@ -972,9 +974,9 @@ static int chainIndexMapper_deleteSignature(chainIndexMapper *cim, void *foldCtx
 	/* Deletion should be performed only on leafs. */
 	if (cim->children != NULL) {
 		/* Intermediate node. */
-		res = chainIndexMapperList_foldl(cim->children, foldCtx, chainIndexMapper_deleteSignature);
+		res = ChainIndexMapperList_foldl(cim->children, foldCtx, ChainIndexMapper_deleteSignature);
 		if (res != KSI_OK) goto cleanup;
-		res = chainIndexMapperList_vacuum(cim->children);
+		res = ChainIndexMapperList_vacuum(cim->children);
 
 	} else {
 		/* Leaf node. */
@@ -1004,13 +1006,13 @@ cleanup:
 	return res;
 }
 
-static int timeMapper_deleteSignature(timeMapper *tm, void *foldCtx) {
+static int TimeMapper_deleteSignature(TimeMapper *tm, void *foldCtx) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	res = chainIndexMapperList_foldl(tm->chainIndexeList, foldCtx, chainIndexMapper_deleteSignature);
+	res = ChainIndexMapperList_foldl(tm->chainIndexeList, foldCtx, ChainIndexMapper_deleteSignature);
 	if (res != KSI_OK) goto cleanup;
 
-	res = chainIndexMapperList_vacuum(tm->chainIndexeList);
+	res = ChainIndexMapperList_vacuum(tm->chainIndexeList);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_OK;
@@ -1020,23 +1022,23 @@ cleanup:
 	return res;
 }
 
-static int timeMapper_markUsedCalendarChains(timeMapper *tm, void *foldCtx) {
+static int TimeMapper_markUsedCalendarChains(TimeMapper *tm, void *foldCtx) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_LIST(timeMapper) *tmList = foldCtx;
+	KSI_LIST(TimeMapper) *tmList = foldCtx;
 	size_t i;
 
 	if (tm == NULL || foldCtx == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 	}
 
-	for (i = 0; i < chainIndexMapperList_length(tm->chainIndexeList); i++) {
-		chainIndexMapper *cim = NULL;
-		timeMapper *calTm = NULL;
-		res = chainIndexMapperList_elementAt(tm->chainIndexeList, i, &cim);
+	for (i = 0; i < ChainIndexMapperList_length(tm->chainIndexeList); i++) {
+		ChainIndexMapper *cim = NULL;
+		TimeMapper *calTm = NULL;
+		res = ChainIndexMapperList_elementAt(tm->chainIndexeList, i, &cim);
 		if (res != KSI_OK) goto cleanup;
 
 		if (cim->aggrChain != NULL) {
-			res = timeMapperList_select(&tmList, cim->aggrChain->aggregationTime, &calTm, 0);
+			res = TimeMapperList_select(&tmList, cim->aggrChain->aggregationTime, &calTm, 0);
 			if (res != KSI_OK) goto cleanup;
 
 			if (calTm == NULL) {
@@ -1048,7 +1050,7 @@ static int timeMapper_markUsedCalendarChains(timeMapper *tm, void *foldCtx) {
 		}
 
 		if (cim->rfc3161 != NULL) {
-			res = timeMapperList_select(&tmList, cim->rfc3161->aggregationTime, &calTm, 0);
+			res = TimeMapperList_select(&tmList, cim->rfc3161->aggregationTime, &calTm, 0);
 			if (res != KSI_OK) goto cleanup;
 
 			if (calTm == NULL) {
@@ -1067,9 +1069,9 @@ cleanup:
 	return res;
 }
 
-static int timeMapper_markUsedProofs(timeMapper *tm, void *foldCtx) {
+static int TimeMapper_markUsedProofs(TimeMapper *tm, void *foldCtx) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_LIST(timeMapper) *tmList = foldCtx;
+	KSI_LIST(TimeMapper) *tmList = foldCtx;
 	size_t i;
 
 	if (tm == NULL || foldCtx == NULL) {
@@ -1080,9 +1082,9 @@ static int timeMapper_markUsedProofs(timeMapper *tm, void *foldCtx) {
 	if (!tm->paint) return KSI_OK;
 
 	if (tm->calendarChain != NULL) {
-		timeMapper *pubTm = NULL;
+		TimeMapper *pubTm = NULL;
 
-		res = timeMapperList_select(&tmList,  tm->calendarChain->publicationTime, &pubTm, 0);
+		res = TimeMapperList_select(&tmList,  tm->calendarChain->publicationTime, &pubTm, 0);
 		if (res != KSI_OK) goto cleanup;
 
 		if (pubTm->calendarAuthRec != NULL || pubTm->publication != NULL) {
@@ -1097,17 +1099,17 @@ cleanup:
 	return res;
 }
 
-static int timeMapperList_vacuum(KSI_LIST(timeMapper) *tmList) {
+static int TimeMapperList_vacuum(KSI_LIST(TimeMapper) *tmList) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i;
 
-	for (i = timeMapperList_length(tmList); i > 0; i--) {
-		timeMapper *tm = NULL;
-		res = timeMapperList_elementAt(tmList, i - 1, &tm);
+	for (i = TimeMapperList_length(tmList); i > 0; i--) {
+		TimeMapper *tm = NULL;
+		res = TimeMapperList_elementAt(tmList, i - 1, &tm);
 		if (res != KSI_OK) goto cleanup;
 
-		if (!tm->paint && chainIndexMapperList_length(tm->chainIndexeList) == 0) {
-			res = timeMapperList_remove(tmList, i - 1, NULL);
+		if (!tm->paint && ChainIndexMapperList_length(tm->chainIndexeList) == 0) {
+			res = TimeMapperList_remove(tmList, i - 1, NULL);
 			if (res != KSI_OK) goto cleanup;
 		}
 	}
@@ -1127,7 +1129,7 @@ int KSI_MultiSignature_remove(KSI_MultiSignature *ms, const KSI_DataHash *hsh) {
 		goto cleanup;
 	}
 
-	res = timeMapperList_foldl(ms->timeList, (void *)hsh, timeMapper_deleteSignature);
+	res = TimeMapperList_foldl(ms->timeList, (void *)hsh, TimeMapper_deleteSignature);
 	if (res != KSI_OK) {
 		KSI_pushError(ms->ctx, res, NULL);
 		goto cleanup;
@@ -1136,18 +1138,18 @@ int KSI_MultiSignature_remove(KSI_MultiSignature *ms, const KSI_DataHash *hsh) {
 	/* Cleanup. */
 
 	/* Reset the paint markers. */
-	res = timeMapperList_foldl(ms->timeList, NULL, timeMapper_unpaint);
+	res = TimeMapperList_foldl(ms->timeList, NULL, TimeMapper_unpaint);
 	if (res != KSI_OK) goto cleanup;
 
 	/* Mark all the used calendar chains. */
-	res = timeMapperList_foldl(ms->timeList, ms->timeList, timeMapper_markUsedCalendarChains);
+	res = TimeMapperList_foldl(ms->timeList, ms->timeList, TimeMapper_markUsedCalendarChains);
 	if (res != KSI_OK) goto cleanup;
 
 	/* Mark all the proofs used by the marked calendars. */
-	res = timeMapperList_foldl(ms->timeList, ms->timeList, timeMapper_markUsedProofs);
+	res = TimeMapperList_foldl(ms->timeList, ms->timeList, TimeMapper_markUsedProofs);
 	if (res != KSI_OK) goto cleanup;
 
-	res = timeMapperList_vacuum(ms->timeList);
+	res = TimeMapperList_vacuum(ms->timeList);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_OK;
@@ -1161,13 +1163,13 @@ struct hash_finder_st {
 	bool used[KSI_NUMBER_OF_KNOWN_HASHALGS];
 };
 
-static int chainIndexMapper_findAlgos(chainIndexMapper *ciMap, void *fc) {
+static int ChainIndexMapper_findAlgos(ChainIndexMapper *ciMap, void *fc) {
 	int res = KSI_UNKNOWN_ERROR;
 	struct hash_finder_st *foldCtx = fc;
 
 	if (ciMap != NULL) {
-		if (chainIndexMapperList_length(ciMap->children) > 0) {
-			res = chainIndexMapperList_foldl(ciMap->children, foldCtx, chainIndexMapper_findAlgos);
+		if (ChainIndexMapperList_length(ciMap->children) > 0) {
+			res = ChainIndexMapperList_foldl(ciMap->children, foldCtx, ChainIndexMapper_findAlgos);
 			if (res != KSI_OK) goto cleanup;
 		} else {
 			KSI_HashAlgorithm hashAlgo;
@@ -1205,11 +1207,11 @@ cleanup:
 }
 
 
-static int timeMapper_findAlgos(timeMapper *tmMap, void *foldCtx) {
+static int TimeMapper_findAlgos(TimeMapper *tmMap, void *foldCtx) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (tmMap != NULL) {
-		res = chainIndexMapperList_foldl(tmMap->chainIndexeList, foldCtx, chainIndexMapper_findAlgos);
+		res = ChainIndexMapperList_foldl(tmMap->chainIndexeList, foldCtx, ChainIndexMapper_findAlgos);
 		if (res != KSI_OK) goto cleanup;
 	}
 	res = KSI_OK;
@@ -1233,7 +1235,7 @@ int KSI_MultiSignature_getUsedHashAlgorithms(KSI_MultiSignature *ms, KSI_HashAlg
 
 	memset(&used, 0, sizeof(used));
 
-	res = timeMapperList_foldl(ms->timeList, &used, timeMapper_findAlgos);
+	res = TimeMapperList_foldl(ms->timeList, &used, TimeMapper_findAlgos);
 	if (res != KSI_OK) goto cleanup;
 
 	for (i = 0; i < KSI_NUMBER_OF_KNOWN_HASHALGS; i++) {
@@ -1270,62 +1272,112 @@ cleanup:
 	return res;
 }
 
-static int extendUnextended(timeMapper *tm, void *fctx) {
+typedef struct ExtendHelper_st {
+	KSI_LIST(TimeMapper) *tmList;
+	KSI_PublicationRecord *pubRec;
+} ExtendHelper;
+
+static int extendUnextended(TimeMapper *tm, void *fctx) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_LIST(timeMapper) *tmList = fctx;
+	ExtendHelper *helper = fctx;
 	KSI_RequestHandle *handle = NULL;
 	KSI_ExtendReq *req = NULL;
 	KSI_ExtendResp *resp = NULL;
 	KSI_Integer *aggregationTime = NULL;
 	KSI_Integer *publicationTime = NULL;
+	KSI_Integer *reqId = NULL; /* FIXME: should not be specified here. */
 
-	if (tm == NULL || tmList == NULL) {
+	if (tm == NULL || helper == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
 	/* Handle only calendar chains. */
 	if (tm->calendarChain != NULL) {
-		timeMapper *proof = NULL;
-		res = timeMapperList_select(&tmList, tm->calendarChain->publicationTime, &proof, 0);
+		TimeMapper *proof = NULL;
+
+		res = TimeMapperList_select(&helper->tmList, tm->calendarChain->publicationTime, &proof, 0);
 		if (res != KSI_OK) goto cleanup;
 
-		if (proof->publication == NULL) {
+		/* Extend only if there is no publication, or there is a publication given. */
+		if (proof->publication == NULL || helper->pubRec != NULL) {
 			KSI_PublicationsFile *pubFile = NULL;
 			KSI_PublicationRecord *pubRec = NULL;
+
 			/* As there is no publication attached, try to find suitable publication. */
 			res = KSI_receivePublicationsFile(tm->calendarChain->ctx, &pubFile);
 			if (res != KSI_OK) goto cleanup;
 
-			res = KSI_PublicationsFile_getNearestPublication(pubFile, tm->calendarChain->publicationTime, &pubRec);
-			if (res != KSI_OK) goto cleanup;
+			if (helper->pubRec != NULL) {
+				KSI_Integer *pubRecTime = NULL;
+				KSI_PublicationData *pubDat = NULL;
+
+				/* Extract the published data from the publication record. */
+				res = KSI_PublicationRecord_getPublishedData(helper->pubRec, &pubDat);
+				if (res != KSI_OK) goto cleanup;
+
+				/* Extract the publication time from the publication data. */
+				res = KSI_PublicationData_getTime(pubDat, &pubRecTime);
+				if (res != KSI_OK) goto cleanup;
+
+				/* Update the publication record only if it is applicable to the current chain. */
+				if (KSI_Integer_compare(pubRecTime, aggregationTime) > 0) {
+					pubRec = helper->pubRec;
+				}
+			} else {
+				/* Find the nearest publication. */
+				res = KSI_PublicationsFile_getNearestPublication(pubFile, tm->calendarChain->publicationTime, &pubRec);
+				if (res != KSI_OK) goto cleanup;
+			}
 
 			/* Only continue, if there is such a publication available. */
 			if (pubRec != NULL) {
 				KSI_CalendarHashChain *chn = NULL;
 
-				res = addPublication(pubRec, tmList);
+				/* Add the publication to the container. */
+				res = addPublication(pubRec, helper->tmList);
 				if (res != KSI_OK) goto cleanup;
 
+				/* Create a new extension request. */
 				res = KSI_ExtendReq_new(tm->calendarChain->ctx, &req);
 				if (res != KSI_OK) goto cleanup;
 
-				KSI_Integer_ref(aggregationTime = tm->calendarChain->aggregationTime);
-				KSI_Integer_ref(publicationTime = pubRec->publishedData->time);
+				/* Create a reference to aggregation time. */
+				res = KSI_Integer_ref(aggregationTime = tm->calendarChain->aggregationTime);
+				if (res != KSI_OK) goto cleanup;
 
-				KSI_ExtendReq_setAggregationTime(req, aggregationTime);
-				KSI_ExtendReq_setPublicationTime(req, publicationTime);
+				/* Create reference to publication time. */
+				res = KSI_Integer_ref(publicationTime = pubRec->publishedData->time);
+				if (res != KSI_OK) goto cleanup;
 
+				/* Populate the aggregation time. */
+				res = KSI_ExtendReq_setAggregationTime(req, aggregationTime);
+				if (res != KSI_OK) goto cleanup;
+
+				/* Populate the publication time. */
+				res = KSI_ExtendReq_setPublicationTime(req, publicationTime);
+				if (res != KSI_OK) goto cleanup;
+
+				/* FIXME! The caller should not be bothered with request id - this must be done within the network client. */
+				res = KSI_Integer_new(tm->calendarChain->ctx, ++tm->calendarChain->ctx->requestCounter, &reqId);
+				if (res != KSI_OK) goto cleanup;
+				res = KSI_ExtendReq_setRequestId(req, reqId);
+				if (res != KSI_OK) goto cleanup;
+
+				/* Send the extension request. */
 				res = KSI_sendExtendRequest(tm->calendarChain->ctx, req, &handle);
 				if (res != KSI_OK) goto cleanup;
 
+				/* Call a blocking call to receive the response. */
 				res = KSI_RequestHandle_getExtendResponse(handle, &resp);
 				if (res != KSI_OK) goto cleanup;
 
+				/* Extract the calendar chain from the extension request. */
 				res = KSI_ExtendResp_getCalendarHashChain(resp, &chn);
 				if (res != KSI_OK) goto cleanup;
 
-				res = addCalendarChain(chn, tmList);
+				/* Add the response calendar chain to the multi signature. */
+				res = addCalendarChain(chn, helper->tmList);
 				if (res != KSI_OK) goto cleanup;
 			}
 		}
@@ -1342,9 +1394,10 @@ cleanup:
 	return res;
 }
 
-int KSI_MultiSignature_extend(KSI_MultiSignature *ms) {
+static int extend(KSI_MultiSignature *ms, const KSI_PublicationRecord *pubRec) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i;
+	ExtendHelper helper;
 
 	if (ms == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1353,30 +1406,49 @@ int KSI_MultiSignature_extend(KSI_MultiSignature *ms) {
 
 	KSI_ERR_clearErrors(ms->ctx);
 
-	res = timeMapperList_foldl(ms->timeList, ms->timeList, extendUnextended);
+	memset(&helper, 0, sizeof(helper));
+
+	helper.tmList = ms->timeList;
+	helper.pubRec = (KSI_PublicationRecord *) pubRec;
+
+	res = TimeMapperList_foldl(ms->timeList, &helper, extendUnextended);
 	if (res != KSI_OK) {
 		KSI_pushError(ms->ctx, res, NULL);
 		goto cleanup;
 	}
 
+	/* Reset the paint markers. */
+	res = TimeMapperList_foldl(ms->timeList, NULL, TimeMapper_unpaint);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Mark all the used calendar chains. */
+	res = TimeMapperList_foldl(ms->timeList, ms->timeList, TimeMapper_markUsedCalendarChains);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Mark all the proofs used by the marked calendars. */
+	res = TimeMapperList_foldl(ms->timeList, ms->timeList, TimeMapper_markUsedProofs);
+	if (res != KSI_OK) goto cleanup;
+
+	res = TimeMapperList_vacuum(ms->timeList);
+	if (res != KSI_OK) goto cleanup;
+
 	res = KSI_OK;
 
 cleanup:
 
 	return res;
+}
+
+
+int KSI_MultiSignature_extend(KSI_MultiSignature *ms) {
+	return extend(ms, NULL);
 }
 
 int KSI_MultiSignature_extendToPublication(KSI_MultiSignature *ms, const KSI_PublicationRecord *pubRec) {
-	int res = KSI_UNKNOWN_ERROR;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
+	return extend(ms, pubRec);
 }
 
-static int chainIndexMapper_writeBytes(KSI_LIST(chainIndexMapper) *cimList, unsigned char *buf, size_t buf_size, size_t *buf_len) {
+static int ChainIndexMapper_writeBytes(KSI_LIST(ChainIndexMapper) *cimList, unsigned char *buf, size_t buf_size, size_t *buf_len) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i;
 	size_t len = 0;
@@ -1387,13 +1459,13 @@ static int chainIndexMapper_writeBytes(KSI_LIST(chainIndexMapper) *cimList, unsi
 		goto cleanup;
 	}
 
-	for (i = chainIndexMapperList_length(cimList); i > 0; i--) {
-		chainIndexMapper *cim = NULL;
-		res = chainIndexMapperList_elementAt(cimList, i - 1, &cim);
+	for (i = ChainIndexMapperList_length(cimList); i > 0; i--) {
+		ChainIndexMapper *cim = NULL;
+		res = ChainIndexMapperList_elementAt(cimList, i - 1, &cim);
 		if (res != KSI_OK) goto cleanup;
 
 		/* Write the children. */
-		res = chainIndexMapper_writeBytes(cim->children, buf, (buf == NULL ? 0 : buf_size - len), &tmp_len);
+		res = ChainIndexMapper_writeBytes(cim->children, buf, (buf == NULL ? 0 : buf_size - len), &tmp_len);
 		if (res != KSI_OK) goto cleanup;
 
 		len += tmp_len;
@@ -1440,18 +1512,18 @@ int KSI_MultiSignature_writeBytes(KSI_MultiSignature *ms, unsigned char *buf, si
 	size_t len = 0;
 	size_t i, j;
 
-	if (ms == NULL || (buf == NULL && buf_size != 0) || buf_len == NULL) {
+	if (ms == NULL || (buf == NULL && buf_size != 0)) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
 	KSI_ERR_clearErrors(ms->ctx);
 
-	for (i = 0; i < timeMapperList_length(ms->timeList); i++) {
-		timeMapper *tm = NULL;
+	for (i = 0; i < TimeMapperList_length(ms->timeList); i++) {
+		TimeMapper *tm = NULL;
 		size_t tmp_len;
 
-		res = timeMapperList_elementAt(ms->timeList, i, &tm);
+		res = TimeMapperList_elementAt(ms->timeList, i, &tm);
 		if (res != KSI_OK) goto cleanup;
 
 		if (tm->calendarAuthRec != NULL) {
@@ -1502,7 +1574,7 @@ int KSI_MultiSignature_writeBytes(KSI_MultiSignature *ms, unsigned char *buf, si
 			}
 		}
 
-		res = chainIndexMapper_writeBytes(tm->chainIndexeList, buf, (buf == NULL ? 0 : buf_size - len), &tmp_len);
+		res = ChainIndexMapper_writeBytes(tm->chainIndexeList, buf, (buf == NULL ? 0 : buf_size - len), &tmp_len);
 		if (res != KSI_OK) {
 			KSI_pushError(ms->ctx, res, NULL);
 			goto cleanup;
@@ -1548,7 +1620,9 @@ int KSI_MultiSignature_writeBytes(KSI_MultiSignature *ms, unsigned char *buf, si
 		}
 	}
 
-	*buf_len = len;
+	if (buf_len != NULL) {
+		*buf_len = len;
+	}
 
 	res = KSI_OK;
 
@@ -1576,35 +1650,137 @@ static int parserGenerator(void *pctx, KSI_TLV **tlv) {
 
 	KSI_ERR_clearErrors(hlpr->ctx);
 
-	if (hlpr->ptr_len > 0) {
+	if (hlpr->ptr_len > 0 || (hlpr->file != NULL && !feof(hlpr->file))) {
 		size_t tlv_len;
-		res = KSI_FTLV_memRead(hlpr->ptr, hlpr->ptr_len, &ftlv);
-		if (res != KSI_OK) {
-			KSI_pushError(hlpr->ctx, res, NULL);
-			goto cleanup;
-		}
 
-		tlv_len = ftlv.hdr_len + ftlv.dat_len;
-		if (tlv_len > hlpr->ptr_len) {
-			KSI_pushError(hlpr->ctx, res = KSI_INVALID_FORMAT, NULL);
-			goto cleanup;
-		}
+		if (hlpr->file != NULL) {
+			unsigned char buf[0xffff + 4];
+			res = KSI_FTLV_fileRead(hlpr->file, buf, sizeof(buf), NULL, &ftlv);
+			if (res != KSI_OK) {
+				if (feof(hlpr->file)) {
+					*tlv = NULL;
+					res = KSI_OK;
+					goto cleanup;
+				}
+				KSI_pushError(hlpr->ctx, res, NULL);
+				goto cleanup;
+			}
 
-		/* Cast is safe, as the data is not modified. */
-		res = KSI_TLV_parseBlob2(hlpr->ctx, (unsigned char *)hlpr->ptr, tlv_len, 0, &hlpr->tlv);
-		if (res != KSI_OK) {
-			KSI_pushError(hlpr->ctx, res, NULL);
-			goto cleanup;
-		}
+			tlv_len = ftlv.hdr_len + ftlv.dat_len;
 
-		hlpr->ptr += tlv_len;
-		hlpr->ptr_len -= tlv_len;
+			res = KSI_TLV_parseBlob2(hlpr->ctx, buf, tlv_len, 0, &hlpr->tlv);
+			if (res != KSI_OK) {
+				KSI_pushError(hlpr->ctx, res, NULL);
+				goto cleanup;
+			}
+		} else {
+			res = KSI_FTLV_memRead(hlpr->ptr, hlpr->ptr_len, &ftlv);
+			if (res != KSI_OK) {
+				KSI_pushError(hlpr->ctx, res, NULL);
+				goto cleanup;
+			}
+
+			tlv_len = ftlv.hdr_len + ftlv.dat_len;
+			if (tlv_len > hlpr->ptr_len) {
+				KSI_pushError(hlpr->ctx, res = KSI_INVALID_FORMAT, NULL);
+				goto cleanup;
+			}
+
+			/* Cast is safe, as the data is not modified. */
+			res = KSI_TLV_parseBlob2(hlpr->ctx, (unsigned char *)hlpr->ptr, tlv_len, 0, &hlpr->tlv);
+			if (res != KSI_OK) {
+				KSI_pushError(hlpr->ctx, res, NULL);
+				goto cleanup;
+			}
+
+			hlpr->ptr += tlv_len;
+			hlpr->ptr_len -= tlv_len;
+		}
 	}
 
 	*tlv = hlpr->tlv;
 	res = KSI_OK;
 
 cleanup:
+
+	return res;
+}
+
+static int readMultiSignature(KSI_CTX *ctx, ParserHelper *hlpr, KSI_MultiSignature **ms) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_MultiSignature *tmp = NULL;
+
+	res = KSI_TlvTemplate_extractGenerator(ctx, hlpr, hlpr, KSI_TLV_TEMPLATE(ParserHelper), parserGenerator);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Create an empty multi signature container. */
+	res = KSI_MultiSignature_new(ctx, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Add all the aggregation hash chains to the container. */
+	res = KSI_AggregationHashChainList_foldl(hlpr->aggregationChainList, tmp, addAggregationHashChain);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Add all the publications to the container. */
+	res = KSI_PublicationRecordList_foldl(hlpr->publicationRecordList, tmp->timeList, addPublication);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Add all the calendar auth records to the container. */
+	res = KSI_CalendarAuthRecList_foldl(hlpr->calendarAuthRecordList, tmp->timeList, addCalendarAuthRec);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Add all the calendar hash chains to the container.
+	 * NB! It is essential that the publications and calendar auth records are processed by now. */
+	res = KSI_CalendarHashChainList_foldl(hlpr->calendarChainList, tmp->timeList, addCalendarChain);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Add all the aggregation auth records to the container. */
+	res = KSI_AggregationAuthRecList_foldl(hlpr->aggregationAuthRecordList, tmp->timeList, addAggregationAuthRec);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Add all the rfc3161 elements to the container. */
+	res = KSI_RFC3161List_foldl(hlpr->rfc3161List, tmp->timeList, addRfc3161);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	*ms = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_MultiSignature_free(tmp);
+	KSI_AggregationHashChainList_free(hlpr->aggregationChainList);
+	KSI_CalendarHashChainList_free(hlpr->calendarChainList);
+	KSI_PublicationRecordList_free(hlpr->publicationRecordList);
+	KSI_AggregationAuthRecList_free(hlpr->aggregationAuthRecordList);
+	KSI_CalendarAuthRecList_free(hlpr->calendarAuthRecordList);
+	KSI_RFC3161List_free(hlpr->rfc3161List);
+	KSI_TLV_free(hlpr->tlv);
 
 	return res;
 }
@@ -1616,7 +1792,7 @@ int KSI_MultiSignature_parse(KSI_CTX *ctx, const unsigned char *raw, size_t raw_
 	size_t len;
 	size_t hdr_len;
 
-	hlpr = (ParserHelper) {ctx, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+	hlpr = (ParserHelper) {ctx, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 	hdr_len = strlen(KSI_MULTI_SIGNATURE_HDR);
 
 	KSI_ERR_clearErrors(ctx);
@@ -1638,57 +1814,7 @@ int KSI_MultiSignature_parse(KSI_CTX *ctx, const unsigned char *raw, size_t raw_
 	hlpr.ptr = raw + hdr_len;
 	hlpr.ptr_len = raw_len - hdr_len;
 
-	res = KSI_TlvTemplate_extractGenerator(ctx, &hlpr, &hlpr, KSI_TLV_TEMPLATE(ParserHelper), parserGenerator);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Create an empty multi signature container. */
-	res = KSI_MultiSignature_new(ctx, &tmp);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Add all the aggregation hash chains to the container. */
-	res = KSI_AggregationHashChainList_foldl(hlpr.aggregationChainList, tmp, addAggregationHashChain);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Add all the publications to the container. */
-	res = KSI_PublicationRecordList_foldl(hlpr.publicationRecordList, tmp->timeList, addPublication);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Add all the calendar auth records to the container. */
-	res = KSI_CalendarAuthRecList_foldl(hlpr.calendarAuthRecordList, tmp->timeList, addCalendarAuthRec);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Add all the calendar hash chains to the container.
-	 * NB! It is essential that the publications and calendar auth records are processed by now. */
-	res = KSI_CalendarHashChainList_foldl(hlpr.calendarChainList, tmp->timeList, addCalendarChain);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Add all the aggregation auth records to the container. */
-	res = KSI_AggregationAuthRecList_foldl(hlpr.aggregationAuthRecordList, tmp->timeList, addAggregationAuthRec);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Add all the rfc3161 elements to the container. */
-	res = KSI_RFC3161List_foldl(hlpr.rfc3161List, tmp->timeList, addRfc3161);
+	res = readMultiSignature(ctx, &hlpr, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1702,15 +1828,63 @@ int KSI_MultiSignature_parse(KSI_CTX *ctx, const unsigned char *raw, size_t raw_
 cleanup:
 
 	KSI_MultiSignature_free(tmp);
-	KSI_AggregationHashChainList_free(hlpr.aggregationChainList);
-	KSI_CalendarHashChainList_free(hlpr.calendarChainList);
-	KSI_PublicationRecordList_free(hlpr.publicationRecordList);
-	KSI_AggregationAuthRecList_free(hlpr.aggregationAuthRecordList);
-	KSI_CalendarAuthRecList_free(hlpr.calendarAuthRecordList);
-	KSI_RFC3161List_free(hlpr.rfc3161List);
-	KSI_TLV_free(hlpr.tlv);
 
 	return res;
 }
 
+int KSI_MultiSignature_fromFile(KSI_CTX *ctx, const char *fileName, KSI_MultiSignature **ms) {
+	int res = KSI_UNKNOWN_ERROR;
+	FILE *fd = NULL;
+	KSI_MultiSignature *tmp = NULL;
+	ParserHelper hlpr;
+	size_t len;
+	size_t hdr_len;
+	char buf[1024];
+
+	hlpr = (ParserHelper) {ctx, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+	hdr_len = strlen(KSI_MULTI_SIGNATURE_HDR);
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || fileName == NULL || *fileName == '\0' || ms == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	fd = fopen(fileName, "rb");
+	if (fd == NULL) {
+		snprintf(buf, sizeof(buf), "Unable to open file '%s'", fileName);
+		KSI_pushError(ctx, res = KSI_IO_ERROR, buf);
+		goto cleanup;
+	}
+
+	len = fread(buf, 1, hdr_len, fd);
+	if (len != hdr_len) {
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Input shorter than expected magic number.");
+		goto cleanup;
+	}
+
+	if (strncmp(buf, KSI_MULTI_SIGNATURE_HDR, hdr_len)) {
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Multi signature container magic number mismatch.");
+		goto cleanup;
+	}
+
+	hlpr.file = fd;
+
+	res = readMultiSignature(ctx, &hlpr, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	*ms = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_MultiSignature_free(tmp);
+
+	return res;
+}
 

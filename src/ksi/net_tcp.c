@@ -321,7 +321,6 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 	res = KSI_ExtendReq_enclose(req, client->extUser, client->extPass, &pdu);
 	if (res != KSI_OK) goto cleanup;
 
-
 	res = prepareRequest(
 			client,
 			pdu,

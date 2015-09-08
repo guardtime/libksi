@@ -118,11 +118,20 @@ extern "C" {
 	 * \param[in]		raw			Pointer to the raw signature.
 	 * \param[in]		raw_len		Length of the raw signature.
 	 * \param[out]		ms			Pointer to the receiving pointer.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_MultiSignature_free
 	 */
 	int KSI_MultiSignature_parse(KSI_CTX *ctx, const unsigned char *raw, size_t raw_len, KSI_MultiSignature **ms);
+
+	/**
+	 * This function reads and parses the multi signature container from a file.
+	 * \param[in]		ctx			KSI context.
+	 * \param[in]		fileName	File name of the multi signature container.
+	 * \param[out]		ms			Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_MultiSignature_free
+	 */
+	int KSI_MultiSignature_fromFile(KSI_CTX *ctx, const char *fileName, KSI_MultiSignature **ms);
 
 	/**
 	 * @}

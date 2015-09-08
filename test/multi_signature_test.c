@@ -329,7 +329,7 @@ static void testDeleteLast(CuTest *tc) {
 
 	res = KSI_MultiSignature_get(ms, hsh, &sig);
 	CuAssert(tc, "There should not be a signature with this hash value anymore.", res == KSI_MULTISIG_NOT_FOUND && sig == NULL);
-	CuAssert(tc, "The internal structure should be empty", timeMapperList_length(ms->timeList) == 0);
+	CuAssert(tc, "The internal structure should be empty", TimeMapperList_length(ms->timeList) == 0);
 
 	KSI_MultiSignature_free(ms);
 	KSI_DataHash_free(hsh);
@@ -454,7 +454,8 @@ static void testGetOldest(CuTest *tc) {
 	KSI_Signature *sig = NULL;
 	KSI_Integer *tm = NULL;
 
-	createMultiSignatureFromFile(tc, getFullResourcePath("resource/multi_sig/test2.mksi"), &ms);
+	res = KSI_MultiSignature_fromFile(ctx, getFullResourcePath("resource/multi_sig/test2.mksi"), &ms);
+	CuAssert(tc, "Unable to read multi signature container from file.", res == KSI_OK && ms != NULL);
 
 	KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
 
@@ -479,7 +480,8 @@ static void testExtend(CuTest *tc) {
 	KSI_Signature *sig = NULL;
 	KSI_PublicationRecord *pubRec = NULL;
 
-	createMultiSignatureFromFile(tc, getFullResourcePath("resource/multi_sig/test2.mksi"), &ms);
+	res = KSI_MultiSignature_fromFile(ctx, getFullResourcePath("resource/multi_sig/test2.mksi"), &ms);
+	CuAssert(tc, "Unable to read multi signature container from file.", res == KSI_OK && ms != NULL);
 
 	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"));
 

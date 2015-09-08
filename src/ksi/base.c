@@ -687,6 +687,11 @@ int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f) {
 	KSI_ERR *err = NULL;
 	size_t i;
 
+	if (ctx == NULL || f == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
 	fprintf(f, "KSI error trace:\n");
 	if (ctx->errors_count == 0) {
 		printf("  No errors.\n");

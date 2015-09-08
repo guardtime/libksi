@@ -1891,12 +1891,19 @@ int KSI_Signature_serialize(KSI_Signature *sig, unsigned char **raw, size_t *raw
 	}
 	KSI_ERR_clearErrors(sig->ctx);
 
-
-	/* We assume that the baseTlv tree is up to date! */
-	res = KSI_TLV_serialize(sig->baseTlv, &tmp, &tmp_len);
-	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
-		goto cleanup;
+	if (sig->baseTlv != NULL) {
+		/* We assume that the baseTlv tree is up to date! */
+		res = KSI_TLV_serialize(sig->baseTlv, &tmp, &tmp_len);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+	} else {
+		res = KSI_TlvTemplate_serializeObject(sig->ctx, sig, 0x0800, 0, 0, KSI_TLV_TEMPLATE(KSI_Signature), &tmp, &tmp_len);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
 	}
 
 	*raw = tmp;

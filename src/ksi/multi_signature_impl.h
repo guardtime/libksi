@@ -26,13 +26,13 @@
 extern "C" {
 #endif
 
-	typedef struct chainIndexMapper_st chainIndexMapper;
-	typedef struct timeMapper_st timeMapper;
+	typedef struct ChainIndexMapper_st ChainIndexMapper;
+	typedef struct TimeMapper_st TimeMapper;
 
-	KSI_DEFINE_LIST(chainIndexMapper);
-	KSI_DEFINE_LIST(timeMapper);
+	KSI_DEFINE_LIST(ChainIndexMapper);
+	KSI_DEFINE_LIST(TimeMapper);
 
-	struct chainIndexMapper_st {
+	struct ChainIndexMapper_st {
 		/** Part of the chain index. */
 		KSI_Integer *key_index;
 
@@ -40,7 +40,7 @@ extern "C" {
 		KSI_AggregationHashChain *aggrChain;
 
 		/** Child elements (with a longer chain index). */
-		KSI_LIST(chainIndexMapper) *children;
+		KSI_LIST(ChainIndexMapper) *children;
 
 		/** Aggregation authentication record for this chain index. */
 		KSI_AggregationAuthRec *aggrAuthRec;
@@ -48,12 +48,12 @@ extern "C" {
 		KSI_RFC3161 *rfc3161;
 	};
 
-	struct timeMapper_st {
+	struct TimeMapper_st {
 		/** Time value. */
 		KSI_Integer *key_time;
 
 		/** Chain index container for this concrete round. */
-		KSI_LIST(chainIndexMapper) *chainIndexeList;
+		KSI_LIST(ChainIndexMapper) *chainIndexeList;
 
 		/** Calendar hash chain starting at this round, */
 		KSI_CalendarHashChain *calendarChain;
@@ -72,7 +72,7 @@ extern "C" {
 	struct KSI_MultiSignature_st {
 		KSI_CTX *ctx;
 		bool timeList_ordered;
-		KSI_LIST(timeMapper) *timeList;
+		KSI_LIST(TimeMapper) *timeList;
 	};
 
 #ifdef __cplusplus

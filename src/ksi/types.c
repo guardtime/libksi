@@ -522,15 +522,16 @@ int KSI_ExtendReq_enclose(KSI_ExtendReq *req, char *loginId, char *key, KSI_Exte
 	tmp->header = hdr;
 	hdr = NULL;
 
-	/* Calculate the HMAC using the provided key and the default hash algorithm. */
-	res = KSI_ExtendPdu_updateHmac(tmp, KSI_getHashAlgorithmByName("default"), key);
-	if (res != KSI_OK) goto cleanup;
-
 	/* Every request must have a header, and at this point, this is guaranteed. */
 	if (req->ctx->requestHeaderCB != NULL) {
 		res = req->ctx->requestHeaderCB(tmp->header);
 		if (res != KSI_OK) goto cleanup;
 	}
+
+	/* Calculate the HMAC using the provided key and the default hash algorithm. */
+	res = KSI_ExtendPdu_updateHmac(tmp, KSI_getHashAlgorithmByName("default"), key);
+	if (res != KSI_OK) goto cleanup;
+
 
 	*pdu = tmp;
 	tmp = NULL;
