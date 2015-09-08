@@ -1888,3 +1888,32 @@ cleanup:
 	return res;
 }
 
+int KSI_MultiSignature_serialize(KSI_MultiSignature *ms, unsigned char **raw, size_t *raw_len) {
+	int res = KSI_UNKNOWN_ERROR;
+	unsigned char *buf = NULL;
+	size_t len;
+
+	res = KSI_MultiSignature_writeBytes(ms, NULL, 0, &len, 0);
+	if (res != KSI_OK) goto cleanup;
+
+	buf = KSI_malloc(len);
+	if (buf == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	res = KSI_MultiSignature_writeBytes(ms, buf, len, NULL, 0);
+	if (res != KSI_OK) goto cleanup;
+
+	*raw = buf;
+	buf = NULL;
+	*raw_len = len;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_free(buf);
+	return res;
+}
+

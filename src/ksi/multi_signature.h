@@ -134,6 +134,16 @@ extern "C" {
 	int KSI_MultiSignature_fromFile(KSI_CTX *ctx, const char *fileName, KSI_MultiSignature **ms);
 
 	/**
+	 * This function allocates enough memory and serializes the multi signature container into it.
+	 * \param[in]		ms			KSI multi signature container.
+	 * \param[out]		raw			Pointer to the receiving pointer.
+	 * \param[out]		raw_len		Pointer to the reveiving length variable.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_MultiSignature_fromFile, #KSI_MultiSignature_parse
+	 */
+	int KSI_MultiSignature_serialize(KSI_MultiSignature *ms, unsigned char **raw, size_t *raw_len);
+
+	/**
 	 * @}
 	 */
 
