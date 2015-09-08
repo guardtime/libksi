@@ -53,6 +53,7 @@ libksi_la_SOURCES = \
 	list.h \
 	log.c \
 	log.h \
+	multi_signature_impl.h \
 	multi_signature.h \
 	multi_signature.c \
 	net.c \
