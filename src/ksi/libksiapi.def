@@ -39,7 +39,6 @@ EXPORTS
 
 ;err.h
 EXPORTS
-    KSI_ERR_init
     KSI_ERR_clearErrors
 
 ;hash.h
