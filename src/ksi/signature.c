@@ -433,6 +433,7 @@ cleanup:
 }
 
 KSI_IMPLEMENT_REF(KSI_RFC3161);
+KSI_IMPLEMENT_WRITE_BYTES(KSI_RFC3161, 0x0806, 0, 0);
 
 static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, const KSI_DataHash *hsh, const KSI_OctetString *suffix, int hsh_id, KSI_DataHash **out) {
 	int res;

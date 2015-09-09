@@ -1493,6 +1493,17 @@ static int ChainIndexMapper_writeBytes(KSI_LIST(ChainIndexMapper) *cimList, unsi
 			}
 		}
 
+		if (cim->rfc3161 != NULL) {
+			res = KSI_RFC3161_writeBytes(cim->rfc3161, buf, (buf == NULL ? 0 : buf_size - len), &tmp_len, KSI_TLV_OPT_NO_MOVE);
+			if (res != KSI_OK) goto cleanup;
+
+			len += tmp_len;
+			if (buf != NULL && len > buf_size) {
+				res = KSI_BUFFER_OVERFLOW;
+				goto cleanup;
+			}
+		}
+
 	}
 
 	*buf_len = len;
