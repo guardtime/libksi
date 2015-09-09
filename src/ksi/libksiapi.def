@@ -41,8 +41,6 @@ EXPORTS
 EXPORTS
     KSI_ERR_init
     KSI_ERR_clearErrors
-    KSI_ERR_fail
-    KSI_ERR_success
 
 ;hash.h
 EXPORTS
@@ -128,8 +126,6 @@ EXPORTS
     KSI_CTX_new
     KSI_CTX_free
     KSI_CTX_registerGlobals
-    KSI_ERR_apply
-    KSI_ERR_pre
     KSI_ERR_statusDump
     KSI_ERR_getBaseErrorMessage
     KSI_malloc
