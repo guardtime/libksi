@@ -1865,7 +1865,7 @@ int KSI_MultiSignature_fromFile(KSI_CTX *ctx, const char *fileName, KSI_MultiSig
 
 	fd = fopen(fileName, "rb");
 	if (fd == NULL) {
-		snprintf(buf, sizeof(buf), "Unable to open file '%s'", fileName);
+		KSI_snprintf(buf, sizeof(buf), "Unable to open file '%s'", fileName);
 		KSI_pushError(ctx, res = KSI_IO_ERROR, buf);
 		goto cleanup;
 	}
