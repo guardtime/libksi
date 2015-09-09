@@ -23,7 +23,7 @@
 #include <ksi/multi_signature.h>
 #include "../src/ksi/multi_signature_impl.h"
 #include "all_tests.h"
-#include "tlv.h"
+#include "ksi/tlv.h"
 
 extern KSI_CTX *ctx;
 
