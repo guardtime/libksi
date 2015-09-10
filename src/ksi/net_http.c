@@ -116,6 +116,16 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ExtendPdu *pdu = NULL;
 
+	if (client == NULL || req == NULL || handle == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (((KSI_HttpClient*)client)->urlExtender == NULL) {
+		res = KSI_EXTENDER_NOT_CONFIGURED;
+		goto cleanup;
+	}
+
 	res = KSI_ExtendReq_enclose(req, client->extUser, client->extPass, &pdu);
 	if (res != KSI_OK) goto cleanup;
 
@@ -142,6 +152,17 @@ cleanup:
 static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationReq *req, KSI_RequestHandle **handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationPdu *pdu = NULL;
+
+	if (client == NULL || req == NULL || handle == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (((KSI_HttpClient*)client)->urlAggregator == NULL) {
+		res = KSI_AGGREGATOR_NOT_CONFIGURED;
+		goto cleanup;
+	}
+
 
 	res = KSI_AggregationReq_enclose(req, client->aggrUser, client->aggrPass, &pdu);
 	if (res != KSI_OK) goto cleanup;
@@ -171,6 +192,11 @@ static int preparePublicationsFileRequest(KSI_NetworkClient *client, KSI_Request
 		goto cleanup;
 	}
 	KSI_ERR_clearErrors(client->ctx);
+
+	if (http->urlPublication == NULL) {
+		KSI_pushError(client->ctx, res = KSI_PUBLICATIONS_FILE_NOT_CONFIGURED, "The publications file URL has not been configured.");
+		goto cleanup;
+	}
 
 	if (http->sendRequest == NULL) {
 		KSI_pushError(client->ctx, res = KSI_UNKNOWN_ERROR, "Send request not initialized.");
@@ -255,7 +281,6 @@ int KSI_HttpClient_init(KSI_CTX *ctx, KSI_HttpClient *client) {
 
 	setIntParam(&client->connectionTimeoutSeconds, 10);
 	setIntParam(&client->readTimeoutSeconds, 10);
-	setStringParam(&client->urlPublication, KSI_DEFAULT_URI_PUBLICATIONS_FILE);
 	setStringParam(&client->agentName, "KSI HTTP Client"); /** Should be only user provided */
 
 	res = KSI_HttpClientImpl_init(client);

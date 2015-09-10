@@ -862,6 +862,12 @@ static int KSI_PKITruststore_verifyCertificate(const KSI_PKITruststore *pki, con
 	ctx = pki->ctx;
 	KSI_ERR_clearErrors(ctx);
 
+	/* Make sure the publications file verification constraints are configured. */
+	if (pki->ctx->certConstraints == NULL || pki->ctx->certConstraints[0].oid == NULL) {
+		KSI_pushError(pki->ctx, res = KSI_PUBFILE_VERIFICATION_NOT_CONFIGURED, NULL);
+		goto cleanup;
+	}
+
 	/* Get the certificate chain of certificate under verification. */
 	/*OID List for certificate trust list extensions*/
 	enhkeyUsage.cUsageIdentifier = 0;
@@ -881,8 +887,6 @@ static int KSI_PKITruststore_verifyCertificate(const KSI_PKITruststore *pki, con
 		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, "Unable to get PKI certificate chain");
 		goto cleanup;
 	}
-//TODO: debugging
-//	printCertChain(pChainContext);
 
 	/*TODO: REMOVE*/
 	/*If chain is based on untrusted root, determine if it's in pki->collectionStore.

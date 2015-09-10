@@ -1537,7 +1537,7 @@ int KSI_MultiSignature_writeBytes(KSI_MultiSignature *ms, unsigned char *buf, si
 		if (tm->calendarAuthRec != NULL) {
 
 			/* Write the bytes to the end of the buffer. */
-			res = KSI_CalendarAuthRec_writeBytes(tm->calendarAuthRec, buf, (buf == NULL ? 0 : buf_size - len), &tmp_len, KSI_TLV_OPT_NO_MOVE);
+			res = KSI_CalendarAuthRec_writeBytes(tm->calendarAuthRec, buf, ((buf == NULL) ? 0 : buf_size - len), &tmp_len, KSI_TLV_OPT_NO_MOVE);
 			if (res != KSI_OK) {
 				KSI_pushError(ms->ctx, res, NULL);
 				goto cleanup;

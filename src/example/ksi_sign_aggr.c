@@ -44,11 +44,15 @@ int main(int argc, char **argv) {
 
 	FILE *logFile = NULL;
 
-	/* Handle command line parameters */
+	const KSI_CertConstraint pubFileCertConstr[] = {
+			{ KSI_CERT_EMAIL, "publications@guardtime.com"},
+			{ NULL, NULL }
+	};
+
 	/* Handle command line parameters */
 	if (argc != 7) {
 		fprintf(stderr, "Usage:\n"
-				"  %s <in-data-file> <out-sign-file> <aggregator-uri> <user> <pass> <pub-file url | -> \n", argv[0]);
+				"  %s <in-data-file> <out-sign-file> <aggregator-uri> <user> <pass> <pub-file url> \n", argv[0]);
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -82,12 +86,10 @@ int main(int argc, char **argv) {
 	if (res != KSI_OK) goto cleanup;
 
 	/* Check publications file url. */
-	if (strncmp("-", argv[6], 1)) {
-		res = KSI_CTX_setPublicationUrl(ksi, argv[6]);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Unable to set publications file url.\n");
-			goto cleanup;
-		}
+	res = KSI_CTX_setPublicationUrl(ksi, argv[6]);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to set publications file url.\n");
+		goto cleanup;
 	}
 
 	/* Create a data hasher using default algorithm. */
