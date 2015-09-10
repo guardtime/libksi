@@ -41,7 +41,7 @@
 
 #define KSI_CalendarHashChainLink_free KSI_HashChainLink_free
 
-#define FLAGSET(tmpl, flg) (((tmpl).flags & flg) != 0)
+#define IS_FLAG_SET(tmpl, flg) (((tmpl).flags & flg) != 0)
 
 struct tlv_track_s {
 	unsigned tag;
@@ -544,6 +544,7 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 	bool oneOf[2] = {false, false};
 	size_t i;
 	size_t tmplStart = 0;
+	size_t maxOrder = 0;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || payload == NULL || generatorCtx == NULL || tmpl == NULL || generator == NULL || tr == NULL) {
@@ -589,10 +590,17 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 
 			matchCount++;
 			templateHit[i] = true;
-			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G0) != 0) groupHit[0] = true;
-			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G1) != 0) groupHit[1] = true;
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_LEAST_ONE_G0)) groupHit[0] = true;
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_LEAST_ONE_G1)) groupHit[1] = true;
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_FIXED_ORDER)) {
+				if (i < maxOrder) {
+					KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Element at wrong position.");
+					goto cleanup;
+				}
+				maxOrder = i;
+			}
 
-			if (FLAGSET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G0)) {
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G0)) {
 				if (oneOf[0]) {
 					KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Mutually exclusive elements present within group 0.");
 					goto cleanup;
@@ -600,7 +608,7 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 				oneOf[0] = true;
 			}
 
-			if (FLAGSET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G1)) {
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G1)) {
 				if (oneOf[1]) {
 					KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Mutually exclusive elements present within group 0.");
 					goto cleanup;
@@ -750,7 +758,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 
 			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G0) != 0) groupHit[0] = true;
 			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G1) != 0) groupHit[1] = true;
-			if (FLAGSET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G0)) {
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G0)) {
 				if (oneOf[0]) {
 					char errm[1000];
 					KSI_snprintf(errm, sizeof(errm), "Mutually exclusive elements present within group 0 (%s).", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));
@@ -758,7 +766,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 				}
 				oneOf[0] = true;
 			}
-			if (FLAGSET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G1)) {
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G1)) {
 				if (oneOf[1]) {
 					char errm[1000];
 					KSI_snprintf(errm, sizeof(errm), "Mutually exclusive elements present within group 1 (%s).", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));
@@ -962,3 +970,46 @@ cleanup:
 
 	return res;
 }
+
+int KSI_TlvTemplate_writeBytes(KSI_CTX *ctx, const void *obj, unsigned tag, int isNc, int isFwd, const KSI_TlvTemplate *tmpl, unsigned char *raw, size_t raw_size, size_t *raw_len, int opt) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_TLV *tlv = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || obj == NULL || tmpl == NULL || (raw == NULL && raw_size != 0) || raw_len == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	/* Create TLV for the PDU object. */
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, tag, isFwd, isNc, &tlv);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Evaluate the TLV. */
+	res = KSI_TlvTemplate_construct(ctx, tlv, obj, tmpl);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Serializing object", tlv);
+
+	/* Serialize the TLV. */
+	res = KSI_TLV_writeBytes(tlv, raw, raw_size, raw_len, opt);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_TLV_free(tlv);
+
+	return res;
+}
+

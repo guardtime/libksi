@@ -43,10 +43,10 @@ KSI_IMPLEMENT_LIST(KSI_PublicationRecord, KSI_PublicationRecord_free);
 
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationsFile)
-	KSI_TLV_COMPOSITE(0x0701, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getHeader, KSI_PublicationsFile_setHeader, KSI_PublicationsHeader, "pub_header")
-	KSI_TLV_COMPOSITE_LIST(0x0702, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getCertificates, KSI_PublicationsFile_setCertificates, KSI_CertificateRecord, "cert_rec")
-	KSI_TLV_COMPOSITE_LIST(0x0703, KSI_TLV_TMPL_FLG_MANDATORY, KSI_PublicationsFile_getPublications, KSI_PublicationsFile_setPublications, KSI_PublicationRecord, "pub_rec")
-	KSI_TLV_OBJECT(0x0704, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_MORE_DEFS, KSI_PublicationsFile_getSignature, KSI_PublicationsFile_setSignature, KSI_PKISignature_fromTlv, KSI_PKISignature_toTlv, KSI_PKISignature_free, "pki_signature")
+	KSI_TLV_COMPOSITE(0x0701, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_FIXED_ORDER, KSI_PublicationsFile_getHeader, KSI_PublicationsFile_setHeader, KSI_PublicationsHeader, "pub_header")
+	KSI_TLV_COMPOSITE_LIST(0x0702, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_FIXED_ORDER, KSI_PublicationsFile_getCertificates, KSI_PublicationsFile_setCertificates, KSI_CertificateRecord, "cert_rec")
+	KSI_TLV_COMPOSITE_LIST(0x0703, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_FIXED_ORDER, KSI_PublicationsFile_getPublications, KSI_PublicationsFile_setPublications, KSI_PublicationRecord, "pub_rec")
+	KSI_TLV_OBJECT(0x0704, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_FIXED_ORDER, KSI_PublicationsFile_getSignature, KSI_PublicationsFile_setSignature, KSI_PKISignature_fromTlv, KSI_PKISignature_toTlv, KSI_PKISignature_free, "pki_signature")
 KSI_END_TLV_TEMPLATE
 
 struct generator_st {
@@ -54,6 +54,7 @@ struct generator_st {
 	KSI_TLV *tlv;
 	size_t offset;
 	size_t sig_offset;
+	bool hasSignature;
 };
 
 static int generateNextTlv(struct generator_st *gen, KSI_TLV **tlv) {
@@ -69,26 +70,39 @@ static int generateNextTlv(struct generator_st *gen, KSI_TLV **tlv) {
 
 	buf = KSI_malloc(0xffff + 4);
 	if (buf == NULL) {
-		res = KSI_OUT_OF_MEMORY;
+		KSI_pushError(KSI_RDR_getCtx(gen->reader), res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
 	res = KSI_TLV_readTlv(gen->reader, buf, 0xffff + 4, &consumed);
-	if (res != KSI_OK) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(KSI_RDR_getCtx(gen->reader), res, NULL);
+		goto cleanup;
+	}
 
-	if(consumed > UINT_MAX){
-		res = KSI_INVALID_FORMAT;
+	if (consumed > UINT_MAX){
+		KSI_pushError(KSI_RDR_getCtx(gen->reader), res = KSI_INVALID_FORMAT, "Input too large.");
 		goto cleanup;
 	}
 
 	if (consumed > 0) {
+		if (gen->hasSignature) {
+			/* The signature must be the last element. */
+			KSI_pushError(KSI_RDR_getCtx(gen->reader), res = KSI_INVALID_FORMAT, "The signature must be the last element.");
+			goto cleanup;
+		}
+
 		res = KSI_TLV_parseBlob2(KSI_RDR_getCtx(gen->reader), buf, (unsigned)consumed, 1, &gen->tlv);
-		if (res != KSI_OK) goto cleanup;
+		if (res != KSI_OK) {
+			KSI_pushError(KSI_RDR_getCtx(gen->reader), res, NULL);
+			goto cleanup;
+		}
 
 		buf = NULL;
 
 		if (KSI_TLV_getTag(gen->tlv) == 0x0704) {
 			gen->sig_offset = gen->offset;
+			gen->hasSignature = true;
 		}
 	}
 
@@ -139,7 +153,7 @@ int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, size_t raw_len, KS
 	size_t hdr_len = 0;
 	KSI_PublicationsFile *tmp = NULL;
 	KSI_RDR *reader = NULL;
-	struct generator_st gen = {NULL, NULL, 0, 0};
+	struct generator_st gen = {NULL, NULL, 0, 0, false};
 	unsigned char *tmpRaw = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -1213,7 +1227,7 @@ KSI_IMPLEMENT_TOTLV(KSI_PublicationData);
  * KSI_PublicationRecord
  */
 void KSI_PublicationRecord_free(KSI_PublicationRecord *t) {
-	if (t != NULL) {
+	if (t != NULL && --t->ref == 0) {
 		KSI_PublicationData_free(t->publishedData);
 		KSI_Utf8StringList_free(t->publicationRef);
 		KSI_Utf8StringList_free(t->repositoryUriList);
@@ -1235,6 +1249,7 @@ int KSI_PublicationRecord_new(KSI_CTX *ctx, KSI_PublicationRecord **t) {
 	}
 
 	tmp->ctx = ctx;
+	tmp->ref = 1;
 	tmp->publishedData = NULL;
 	tmp->repositoryUriList = NULL;
 	tmp->publicationRef = NULL;
@@ -1245,6 +1260,10 @@ cleanup:
 	KSI_PublicationRecord_free(tmp);
 	return res;
 }
+
+KSI_IMPLEMENT_REF(KSI_PublicationRecord);
+KSI_IMPLEMENT_WRITE_BYTES(KSI_PublicationRecord, 0x0803, 0, 0);
+
 
 int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_PublicationRecord **clone){
 	int res = KSI_UNKNOWN_ERROR;

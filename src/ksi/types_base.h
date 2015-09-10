@@ -52,6 +52,52 @@ int typ##_fromTlv(KSI_TLV *tlv, typ **o	);
 */ \
 int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
+
+#define KSI_DEFINE_REF(typ) \
+	/*!
+	 * Increases the inner reference count of that object.
+	 * \param[in]	o		Pointer to \ref typ
+	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see \ref typ##_free
+	 */ \
+	int typ##_ref(typ *o)
+
+#define KSI_DEFINE_OBJECT_PARSE(typ) \
+	/*!
+	 * This function is used to parse a raw blob into a \ref typ object.
+	 * \param[in]	ctx		KSI context.
+	 * \param[in]	raw		Pointer to the raw blob to be parsed.
+	 * \param[in]	len		Length of the raw blob.
+	 * \param[out]	t		Pointer to the receiving pointer to the \ref typ object.
+	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+	 * \see \ref typ##_serialize
+	 */ \
+	int typ##_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len, typ **t);
+
+#define KSI_DEFINE_OBJECT_SERIALIZE(typ) \
+	/*!
+	 * This function serializes \ref #typ object into a blob.
+	 * \param[in]	t		Pointer to the \ref typ object.
+	 * \param[out]	raw		Pointer to the receiving pointer.
+	 * \param[out]	len		Pointer to the receiving length variable.
+	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+	 * \see \ref typ##_parse
+	 * @return
+	 */\
+	int typ##_serialize(const typ *t, unsigned char **raw, size_t *len);
+
+#define KSI_DEFINE_WRITE_BYTES(typ) \
+	/*!
+	 * This function serializes the #typ object and writes the result into a pre-allocated buffer.
+	 * \param[in]	o			Object to be serialized.
+	 * \param[in]	buf			Pointer to pre-allocated buffer.
+	 * \param[in]	buf_size	Buffer size.
+	 * \param[out]	buf_len		Serialized buffer length.
+	 * \param[in]	opt			Serialization options.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */\
+	 int typ##_writeBytes(typ *o, unsigned char *buf, size_t buf_size, size_t *buf_len, int opt)
+
 /**
  * \addtogroup base_types Base types
  *  @{
@@ -179,19 +225,10 @@ int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned tag, int isNonCritical, int isFor
 	 */
 	int KSI_Integer_equalsUInt(const KSI_Integer *o, KSI_uint64_t i);
 
-	/**
-	 * Increases the inner reference count of that object.
-	 * \param[in]	o		Pointer to #KSI_Integer
-	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_Integer_free
-	 */
-	int KSI_Integer_ref(KSI_Integer *o);
 
+	KSI_DEFINE_REF(KSI_Integer);
 	KSI_DEFINE_FN_FROM_TLV(KSI_Integer);
 	KSI_DEFINE_FN_TO_TLV(KSI_Integer);
-	/*
-	 * KSI_OctetString
-	 */
 
 	/**
 	 * Free the object.
@@ -217,14 +254,7 @@ int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned tag, int isNonCritical, int isFor
 	 */
 	int KSI_OctetString_equals(const KSI_OctetString *left, const KSI_OctetString *right);
 
-	/**
-	 * Increases the inner reference count of that object.
-	 * \param[in]	o		Pointer to #KSI_OctetString.
-	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_Integer_free
-	 */
-	int KSI_OctetString_ref(KSI_OctetString *o);
-
+	KSI_DEFINE_REF(KSI_OctetString);
 	KSI_DEFINE_FN_FROM_TLV(KSI_OctetString);
 	KSI_DEFINE_FN_TO_TLV(KSI_OctetString);
 
@@ -265,16 +295,9 @@ int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned tag, int isNonCritical, int isFor
 	 */
 	const char *KSI_Utf8String_cstr(const KSI_Utf8String *o);
 
-	KSI_DEFINE_FN_FROM_TLV(KSI_Utf8String)
-	KSI_DEFINE_FN_TO_TLV(KSI_Utf8String)
-
-	/**
-	 * Increases the inner reference count of that object.
-	 * \param[in]	o		Pointer to #KSI_Utf8String.
-	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_Integer_free
-	 */
-	int KSI_Utf8String_ref(KSI_Utf8String *o);
+	KSI_DEFINE_REF(KSI_Utf8String);
+	KSI_DEFINE_FN_FROM_TLV(KSI_Utf8String);
+	KSI_DEFINE_FN_TO_TLV(KSI_Utf8String);
 
 	/**
 	 * Functions as #KSI_Utf8String_fromTlv, but adds constraint to the content not

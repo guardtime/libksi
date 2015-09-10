@@ -144,6 +144,10 @@ int KSI_LIST_FN_NAME(type, elementAt)(KSI_LIST(type) *list, size_t pos, type **e
 	\return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 */ \
 int KSI_LIST_FN_NAME(type, sort)(KSI_LIST(type) *list, int (*fn)(const type **, const type **));	\
+/*!
+ *
+ */ \
+int KSI_LIST_FN_NAME(type, foldl) (KSI_LIST(type) *list, void *foldCtx, int (*fn)(type *, void *foldCtx)); \
 
 void KSI_List_free(KSI_List *list);
 int KSI_List_new(void (*obj_free)(void *), KSI_List **list);
@@ -155,6 +159,7 @@ int KSI_List_replaceAt(KSI_List *list, size_t pos, void *o);
 int KSI_List_elementAt(KSI_List *list, size_t pos, void **o);
 size_t KSI_List_length(KSI_List *list);
 int KSI_List_sort(KSI_List *list, int (*)(const void *, const void *));
+int KSI_List_foldl(KSI_List *list, void *foldCtx, int (*fn)(void *el, void *foldCtx)); \
 
 /**
  * This macro implements all the functions of a list for a given type.
@@ -196,6 +201,11 @@ int KSI_LIST_FN_NAME(type, sort)(													\
 		KSI_LIST(type) *list, int (*cmp)(const type **a, const type **b)) {			\
 	return KSI_List_sort(															\
 		(KSI_List *)list, (int (*)(const void *, const void *)) cmp);				\
+}																					\
+int KSI_LIST_FN_NAME(type, foldl) (KSI_LIST(type) *list, void *foldCtx, int (*fn)(	\
+		type *, void *foldCtx)) { 													\
+	return KSI_List_foldl(															\
+		(KSI_List *) list, foldCtx, (int (*)(void *, void *))fn);					\
 }																					\
 
 /**

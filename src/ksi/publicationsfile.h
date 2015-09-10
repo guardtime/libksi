@@ -312,7 +312,8 @@ extern "C" {
 	int KSI_PublicationRecord_setRepositoryUriList(KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) *repUriList);
 	char *KSI_PublicationRecord_toString(KSI_PublicationRecord *t, char *buffer, size_t buffer_len);
 	int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_PublicationRecord **clone);
-
+	KSI_DEFINE_REF(KSI_PublicationRecord);
+	KSI_DEFINE_WRITE_BYTES(KSI_PublicationRecord);
 	/**
 	 * @}
 	 */
