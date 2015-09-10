@@ -58,6 +58,10 @@ enum KSI_StatusCode {
 	 * The publications file url has not been configured.
 	 */
 	KSI_PUBLICATIONS_FILE_NOT_CONFIGURED = 0x03,
+	/**
+	 * The publications file can not be verified, as the constraints are not configured.
+	 */
+	KSI_PUBFILE_VERIFICATION_NOT_CONFIGURED = 0x04,
 
 /* SYNTAX ERRORS */
 	/**

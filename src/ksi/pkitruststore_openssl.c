@@ -761,6 +761,12 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 		goto cleanup;
 	}
 
+	/* Make sure the publications file verification constraints are configured. */
+	if (pki->ctx->certConstraints == NULL || pki->ctx->certConstraints[0].oid == NULL) {
+		KSI_pushError(pki->ctx, res = KSI_PUBFILE_VERIFICATION_NOT_CONFIGURED, NULL);
+		goto cleanup;
+	}
+
 	res = extractCertificate(signature, &cert);
 	if (res != KSI_OK) {
 		KSI_pushError(pki->ctx, res, NULL);

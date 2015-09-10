@@ -33,10 +33,21 @@ int main(int argc, char **argv) {
 	const KSI_VerificationResult *info = NULL;
 	FILE *logFile = NULL;
 
+	const KSI_CertConstraint pubFileCertConstr[] = {
+			{ KSI_CERT_EMAIL, "publications@guardtime.com"},
+			{ NULL, NULL }
+	};
+
 	/* Init context. */
 	res = KSI_CTX_new(&ksi);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to init KSI context.\n");
+		goto cleanup;
+	}
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ksi, pubFileCertConstr);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to configure publications file cert constraints.\n");
 		goto cleanup;
 	}
 

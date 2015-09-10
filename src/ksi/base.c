@@ -40,11 +40,6 @@ const char *KSI_getVersion(void) {
 	return versionString;
 }
 
-const KSI_CertConstraint KSI_defaultPubFileCertConstraints[] = {
-		{ KSI_CERT_EMAIL, "publications@guardtime.com"},
-		{ NULL, NULL }
-};
-
 static void freeCertConstraintsArray(KSI_CertConstraint *arr) {
 	size_t i;
 
@@ -68,6 +63,8 @@ const char *KSI_getErrorString(int statusCode) {
 			return "The context is not (properly) configured to use the extender service.";
 		case KSI_PUBLICATIONS_FILE_NOT_CONFIGURED:
 			return "The context is not (properly) configured to retrieve the publications file.";
+		case KSI_PUBFILE_VERIFICATION_NOT_CONFIGURED:
+			return "The publications file can not be verified, as the constraints are not defined.";
 		case KSI_INVALID_ARGUMENT:
 			return "Invalid argument.";
 		case KSI_INVALID_FORMAT:
@@ -217,9 +214,6 @@ int KSI_CTX_new(KSI_CTX **context) {
 	res = KSI_CTX_setPKITruststore(ctx, pkiTruststore);
 	if (res != KSI_OK) goto cleanup;
 	pkiTruststore = NULL;
-
-	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, KSI_defaultPubFileCertConstraints);
-	if (res != KSI_OK) goto cleanup;
 
 	/* Return the context. */
 	*context = ctx;

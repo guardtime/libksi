@@ -44,6 +44,11 @@ int main(int argc, char **argv) {
 
 	FILE *logFile = NULL;
 
+	const KSI_CertConstraint pubFileCertConstr[] = {
+			{ KSI_CERT_EMAIL, "publications@guardtime.com"},
+			{ NULL, NULL }
+	};
+
 	/* Handle command line parameters */
 	if (argc != 7) {
 		fprintf(stderr, "Usage:\n"

@@ -131,6 +131,11 @@ int main(int argc, char **argv) {
 	/* File descriptor for logging. */
 	FILE *logFile = NULL;
 
+	const KSI_CertConstraint pubFileCertConstr[] = {
+			{ KSI_CERT_EMAIL, "publications@guardtime.com"},
+			{ NULL, NULL }
+	};
+
 	/* Init context. */
 	res = KSI_CTX_new(&ksi);
 	if (res != KSI_OK) {
@@ -141,6 +146,12 @@ int main(int argc, char **argv) {
 	logFile = fopen("ksi_verify.log", "w");
 	if (logFile == NULL) {
 		fprintf(stderr, "Unable to open log file.\n");
+	}
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ksi, pubFileCertConstr);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to configure publications file cert constraints.\n");
+		goto cleanup;
 	}
 
 	/* Configure the logger. */

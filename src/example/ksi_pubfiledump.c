@@ -132,7 +132,7 @@ cleanup:
 }
 
 int main(int argc, char **argv) {
-	KSI_CTX *ctx = NULL;
+	KSI_CTX *ksi = NULL;
 	int res;
 	KSI_PublicationsFile *publicationsFile = NULL;
 	KSI_LIST(KSI_PublicationRecord) *publications = NULL;
@@ -140,12 +140,17 @@ int main(int argc, char **argv) {
 
 	const char *fileName = NULL;
 
+	const KSI_CertConstraint pubFileCertConstr[] = {
+			{ KSI_CERT_EMAIL, "publications@guardtime.com"},
+			{ NULL, NULL }
+	};
+
 	if (argc != 2) {
 		printf("Usage:\n  %s <publications file>\n\n", *argv);
 		goto cleanup;
 	}
 
-	res = KSI_CTX_new(&ctx);
+	res = KSI_CTX_new(&ksi);
 	if (res != KSI_OK) {
 		printf("Unable to create context.\n");
 		goto cleanup;
@@ -153,25 +158,31 @@ int main(int argc, char **argv) {
 
 	if (argc == 2 && strncmp(argv[1], "-", 1)) {
 		fileName = argv[1];
-		res = KSI_PublicationsFile_fromFile(ctx, fileName, &publicationsFile);
+		res = KSI_PublicationsFile_fromFile(ksi, fileName, &publicationsFile);
 		if (res != KSI_OK) {
-			KSI_ERR_statusDump(ctx, stdout);
+			KSI_ERR_statusDump(ksi, stdout);
 			fprintf(stderr, "Unable to read publications file.\n");
 			goto cleanup;
 		}
 	} else {
-		res = KSI_receivePublicationsFile(ctx, &publicationsFile);
+		res = KSI_receivePublicationsFile(ksi, &publicationsFile);
 		if (res != KSI_OK) {
-			KSI_ERR_statusDump(ctx, stdout);
+			KSI_ERR_statusDump(ksi, stdout);
 			fprintf(stderr, "Unable to read publications file.\n");
 			goto cleanup;
 		}
 	}
 
-	res = KSI_verifyPublicationsFile(ctx, publicationsFile);
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ksi, pubFileCertConstr);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to configure publications file cert constraints.\n");
+		goto cleanup;
+	}
+
+	res = KSI_verifyPublicationsFile(ksi, publicationsFile);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Failed to verify publications file");
-		KSI_ERR_statusDump(ctx, stderr);
+		KSI_ERR_statusDump(ksi, stderr);
 	}
 
 	res = KSI_PublicationsFile_getPublications(publicationsFile, &publications);
@@ -256,7 +267,7 @@ int main(int argc, char **argv) {
 
 cleanup:
 
-	KSI_CTX_free(ctx);
+	KSI_CTX_free(ksi);
 
 	return 0;
 

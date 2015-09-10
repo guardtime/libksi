@@ -35,6 +35,11 @@ int main(int argc, char **argv) {
 	unsigned count;
 	FILE *logFile = NULL;
 
+	const KSI_CertConstraint pubFileCertConstr[] = {
+			{ KSI_CERT_EMAIL, "publications@guardtime.com"},
+			{ NULL, NULL }
+	};
+
 	if (argc != 5) {
 		printf("Usage:\n"
 				"  %s <signature> <extended> <extender uri> <pub-file url>\n", argv[0]);
@@ -52,6 +57,12 @@ int main(int argc, char **argv) {
 	logFile = fopen("ksi_extend.log", "w");
 	if (logFile == NULL) {
 		fprintf(stderr, "Unable to open log file.\n");
+	}
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ksi, pubFileCertConstr);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to configure publications file cert constraints.\n");
+		goto cleanup;
 	}
 
 	KSI_CTX_setLoggerCallback(ksi, KSI_LOG_StreamLogger, logFile);
