@@ -35,7 +35,7 @@ as it is not referenced by the signature.
 3. Extending
 ------------
 
-After parsing and before extending the signature, we can verify it ( see [Verifying tutorial](t2_verifying.md)),
+After parsing and before extending the signature, we can verify it ( see [Verifying tutorial](tutorial/t2_verifying.md)),
 but if the signature has not been extended for many years, the verification may fail (which is one of the 
 reasons why signatures should be extended as soon as possible). Furthermore, if the extending process succeeds,
 the signature is automatically verified (i.e a bad signature will fail eventually anyway).
@@ -53,7 +53,7 @@ The extending of a signature can be done using the #KSI_extendSignature function
 ~~~~~~~~~~
 
 If the signature is successfully extended, the old signature may be replaced with the new
-signature. To serialize the new signature see the [Signing tutorial](t1_signing.md).
+signature. To serialize the new signature see the [Signing tutorial](tutorial/t1_signing.md).
 
 5. Cleanup
 ----------

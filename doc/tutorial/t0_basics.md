@@ -89,9 +89,7 @@ the previous one:
 
 ~~~~~~~~~~
 
-The context is ready to be used for signing (for extending, the extending service
-must be configured see [Extending Tutorial](t3_extending.md)).
-
+The context is ready to be used.
 
 2. Offline Publications File
 ----------------------------
