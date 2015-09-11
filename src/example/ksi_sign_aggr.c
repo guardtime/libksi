@@ -77,6 +77,12 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "Unable to open log file.\n");
 	}
 
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ksi, pubFileCertConstr);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to configure publications file cert constraints.\n");
+		goto cleanup;
+	}
+
 	KSI_CTX_setLoggerCallback(ksi, KSI_LOG_StreamLogger, logFile);
 	KSI_CTX_setLogLevel(ksi, KSI_LOG_DEBUG);
 
