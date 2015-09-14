@@ -38,6 +38,11 @@ int main (int argc, char **argv) {
 	FILE *fd = NULL;
 	size_t written;
 
+	const KSI_CertConstraint pubFileCertConstr[] = {
+			{ KSI_CERT_EMAIL, "publications@guardtime.com"},
+			{ NULL, NULL }
+	};
+
 	if (argc != 7) {
 		fprintf(stdout, "Usage:\n"
 				"  %s <in> <out> <extender url> <user> <key> <pub file>\n", argv[0]);
@@ -58,6 +63,12 @@ int main (int argc, char **argv) {
 	res = KSI_CTX_setExtender(ksi, uri, user, key);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to set extender.\n");
+		goto cleanup;
+	}
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ksi, pubFileCertConstr);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to configure publications file cert constraints.\n");
 		goto cleanup;
 	}
 

@@ -329,7 +329,8 @@ static void testDeleteLast(CuTest *tc) {
 
 	res = KSI_MultiSignature_get(ms, hsh, &sig);
 	CuAssert(tc, "There should not be a signature with this hash value anymore.", res == KSI_MULTISIG_NOT_FOUND && sig == NULL);
-	CuAssert(tc, "The internal structure should be empty", TimeMapperList_length(ms->timeList) == 0);
+	/* TimeMapper list functions are not exported so we need to cast to generic list. */
+	CuAssert(tc, "The internal structure should be empty", KSI_List_length((KSI_List *)ms->timeList) == 0);
 
 	KSI_MultiSignature_free(ms);
 	KSI_DataHash_free(hsh);

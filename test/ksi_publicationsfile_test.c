@@ -158,7 +158,7 @@ static void testVerifyPublicationsFileWithNoConstraints(CuTest *tc) {
 
 	/* Verification should not fail. */
 	res = KSI_PublicationsFile_verify(pubFile, ctx);
-	CuAssert(tc, "Publications file must verify with no constraints.", res == KSI_OK);
+	CuAssert(tc, "Publications file may not verify with no constraints.", res == KSI_PUBFILE_VERIFICATION_NOT_CONFIGURED);
 
 	arr[0].oid = KSI_CERT_EMAIL;
 	arr[0].val = "publications@guardtime.com";
