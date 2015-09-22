@@ -784,6 +784,7 @@ int KSI_NetworkClient_init(KSI_CTX *ctx, KSI_NetworkClient *client) {
 	client->sendPublicationRequest = NULL;
 	client->sendSignRequest = NULL;
 	client->getStausCode = NULL;
+	client->requestCount = 0;
 
 	res = KSI_OK;
 

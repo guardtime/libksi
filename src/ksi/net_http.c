@@ -115,6 +115,8 @@ cleanup:
 static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, KSI_RequestHandle **handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ExtendPdu *pdu = NULL;
+	KSI_Integer *pReqId = NULL;
+	KSI_Integer *reqId = NULL;
 
 	if (client == NULL || req == NULL || handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -124,6 +126,19 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 	if (((KSI_HttpClient*)client)->urlExtender == NULL) {
 		res = KSI_EXTENDER_NOT_CONFIGURED;
 		goto cleanup;
+	}
+
+	res = KSI_ExtendReq_getRequestId(req, &pReqId);
+	if (res != KSI_OK) goto cleanup;
+
+	if (pReqId == NULL) {
+		res = KSI_Integer_new(client->ctx, ++client->requestCount, &reqId);
+		if (res != KSI_OK) goto cleanup;
+
+		res = KSI_ExtendReq_setRequestId(req, reqId);
+		if (res != KSI_OK) goto cleanup;
+
+		reqId = NULL;
 	}
 
 	res = KSI_ExtendReq_enclose(req, client->extUser, client->extPass, &pdu);
@@ -143,6 +158,7 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 
 cleanup:
 
+	KSI_Integer_free(reqId);
 	KSI_ExtendPdu_setRequest(pdu, NULL);
 	KSI_ExtendPdu_free(pdu);
 
@@ -152,6 +168,8 @@ cleanup:
 static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationReq *req, KSI_RequestHandle **handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationPdu *pdu = NULL;
+	KSI_Integer *pReqId = NULL;
+	KSI_Integer *reqId = NULL;
 
 	if (client == NULL || req == NULL || handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -163,6 +181,18 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 		goto cleanup;
 	}
 
+	res = KSI_AggregationReq_getRequestId(req, &pReqId);
+	if (res != KSI_OK) goto cleanup;
+
+	if (pReqId == NULL) {
+		res = KSI_Integer_new(client->ctx, ++client->requestCount, &reqId);
+		if (res != KSI_OK) goto cleanup;
+
+		res = KSI_AggregationReq_setRequestId(req, reqId);
+		if (res != KSI_OK) goto cleanup;
+
+		reqId = NULL;
+	}
 
 	res = KSI_AggregationReq_enclose(req, client->aggrUser, client->aggrPass, &pdu);
 	if (res != KSI_OK) goto cleanup;
@@ -176,6 +206,7 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 			"Aggregation request");
 cleanup:
 
+	KSI_Integer_free(reqId);
 	KSI_AggregationPdu_setRequest(pdu, NULL);
 	KSI_AggregationPdu_free(pdu);
 

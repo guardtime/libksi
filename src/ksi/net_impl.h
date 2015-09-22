@@ -48,6 +48,8 @@ extern "C" {
 	
 		/** Cleanup for the provider, gets the #providerCtx as parameter. */
 		void (*implFree)(void *);
+
+		size_t requestCount;
 	};
 
 	struct KSI_NetHandle_st {

@@ -317,6 +317,8 @@ cleanup:
 static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, KSI_RequestHandle **handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ExtendPdu *pdu = NULL;
+	KSI_Integer *pReqId = NULL;
+	KSI_Integer *reqId = NULL;
 
 	if (client == NULL || req == NULL || handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -326,6 +328,19 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 	if (((KSI_TcpClient*)client)->extHost == NULL || ((KSI_TcpClient*)client)->extPort == 0) {
 		res = KSI_EXTENDER_NOT_CONFIGURED;
 		goto cleanup;
+	}
+
+	res = KSI_ExtendReq_getRequestId(req, &pReqId);
+	if (res != KSI_OK) goto cleanup;
+
+	if (pReqId == NULL) {
+		res = KSI_Integer_new(client->ctx, ++client->requestCount, &reqId);
+		if (res != KSI_OK) goto cleanup;
+
+		res = KSI_ExtendReq_setRequestId(req, reqId);
+		if (res != KSI_OK) goto cleanup;
+
+		reqId = NULL;
 	}
 
 	res = KSI_ExtendReq_enclose(req, client->extUser, client->extPass, &pdu);
@@ -353,6 +368,8 @@ cleanup:
 static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationReq *req, KSI_RequestHandle **handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationPdu *pdu = NULL;
+	KSI_Integer *pReqId = NULL;
+	KSI_Integer *reqId = NULL;
 
 	if (client == NULL || req == NULL || handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -362,6 +379,19 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 	if (((KSI_TcpClient*)client)->aggrHost == NULL || ((KSI_TcpClient*)client)->aggrPort == 0) {
 		res = KSI_AGGREGATOR_NOT_CONFIGURED;
 		goto cleanup;
+	}
+
+	res = KSI_AggregationReq_getRequestId(req, &pReqId);
+	if (res != KSI_OK) goto cleanup;
+
+	if (pReqId == NULL) {
+		res = KSI_Integer_new(client->ctx, ++client->requestCount, &reqId);
+		if (res != KSI_OK) goto cleanup;
+
+		res = KSI_AggregationReq_setRequestId(req, reqId);
+		if (res != KSI_OK) goto cleanup;
+
+		reqId = NULL;
 	}
 
 	res = KSI_AggregationReq_enclose(req, client->aggrUser, client->aggrPass, &pdu);
@@ -454,6 +484,7 @@ int KSI_TcpClient_init(KSI_CTX *ctx, KSI_TcpClient *client) {
 	client->parent.sendPublicationRequest = sendPublicationRequest;
 	client->parent.getStausCode = NULL;
 	client->parent.implFree = (void (*)(void *))tcpClient_free;
+	client->parent.requestCount = 0;
 
 	res = KSI_OK;
 

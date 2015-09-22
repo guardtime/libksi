@@ -130,6 +130,7 @@ int KSI_UriClient_init(KSI_CTX *ctx, KSI_UriClient *client) {
 	client->parent.sendSignRequest = prepareAggregationRequest;
 	client->parent.sendPublicationRequest = sendPublicationRequest;
 	client->parent.implFree = (void (*)(void *))uriClient_free;
+	client->parent.requestCount = 0;
 
 	res = KSI_OK;
 
