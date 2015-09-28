@@ -824,7 +824,10 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 		goto cleanup;
 	}
 	if (res != 1) {
-		KSI_pushError(pki->ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, NULL);
+		char msg[1024];
+		int x509_err = X509_STORE_CTX_get_error(storeCtx);
+		KSI_snprintf(msg, sizeof(msg), "Unable to verify certificate: (error = %d) %s", x509_err, X509_verify_cert_error_string(x509_err));
+		KSI_pushError(pki->ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, msg);
 		goto cleanup;
 	}
 
@@ -876,7 +879,11 @@ int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned cha
 		goto cleanup;
 	}
 	if (res != 1) {
-		KSI_pushError(pki->ctx, res = KSI_INVALID_PKI_SIGNATURE, "PKI Signature not verified.");
+		char msg[1024];
+		char buf[1024];
+		ERR_error_string_n(res, msg, sizeof(buf));
+		KSI_snprintf(msg, sizeof(msg), "PKI Signature not verified: %s", buf);
+		KSI_pushError(pki->ctx, res = KSI_INVALID_PKI_SIGNATURE, msg);
 		goto cleanup;
 	}
 
