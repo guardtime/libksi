@@ -123,13 +123,18 @@ int main(int argc, char **argv) {
 	unsigned char buf[1024];
 
 	/* Length of the buffer content. */
-	unsigned buf_len;
+	size_t buf_len;
 
 	/* Verification info object. */
 	const KSI_VerificationResult *info = NULL;
 
 	/* File descriptor for logging. */
 	FILE *logFile = NULL;
+
+	const KSI_CertConstraint pubFileCertConstr[] = {
+			{ KSI_CERT_EMAIL, "publications@guardtime.com"},
+			{ NULL, NULL }
+	};
 
 	/* Init context. */
 	res = KSI_CTX_new(&ksi);
@@ -143,6 +148,12 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "Unable to open log file.\n");
 	}
 
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ksi, pubFileCertConstr);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to configure publications file cert constraints.\n");
+		goto cleanup;
+	}
+
 	/* Configure the logger. */
 	KSI_CTX_setLoggerCallback(ksi, KSI_LOG_StreamLogger, logFile);
 	KSI_CTX_setLogLevel(ksi, KSI_LOG_DEBUG);
@@ -152,7 +163,7 @@ int main(int argc, char **argv) {
 	/* Check parameters. */
 	if (argc != 6) {
 		fprintf(stderr, "Usage\n"
-				"  %s <data file | -> <signature> <publication-str> <extender url> <pub-file url | ->\n", argv[0]);
+				"  %s <data file | -> <signature> <publication-str> <extender url> <pub-file url>\n", argv[0]);
 		goto cleanup;
 	}
 
@@ -163,14 +174,11 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	/* Configure publications file url. */
-	if (strncmp("-", argv[5], 1)) {
-		/* Set the publications file url. */
-		res = KSI_CTX_setPublicationUrl(ksi, argv[4]);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Unable to set publications file url.\n");
-			goto cleanup;
-		}
+	/* Set the publications file url. */
+	res = KSI_CTX_setPublicationUrl(ksi, argv[4]);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to set publications file url.\n");
+		goto cleanup;
 	}
 
 	printf("Reading signature... ");
@@ -211,7 +219,7 @@ int main(int argc, char **argv) {
 		}
 		/* Calculate the hash of the document. */
 		while (!feof(in)) {
-			buf_len = (unsigned)fread(buf, 1, sizeof(buf), in);
+			buf_len = fread(buf, 1, sizeof(buf), in);
 			res = KSI_DataHasher_add(hsr, buf, buf_len);
 			if (res != KSI_OK) {
 				fprintf(stderr, "Unable hash the document.\n");

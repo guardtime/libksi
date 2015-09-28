@@ -31,12 +31,12 @@ extern "C" {
 		KSI_CTX *ctx;
 
 		/** Reference count for shared pointer. */
-		unsigned refCount;
+		size_t refCount;
 
 		/** Imprint: 1 byte for algorithm and #KSI_MAX_IMPRINT_LEN bytes for the actual digest. */
 		unsigned char imprint[KSI_MAX_IMPRINT_LEN + 1]; /* For an extra '0' for meta hash. */
 		/** Length of the imprint actual value. */
-		unsigned int imprint_length;
+		size_t imprint_length;
 	};
 
 	struct KSI_DataHasher_st {
@@ -47,7 +47,7 @@ extern "C" {
 		void *hashContext;
 
 		/** Algorithm id */
-		int algorithm;
+		KSI_HashAlgorithm algorithm;
 
 		/** This function functions similarly to #KSI_DataHasher_close except, it
 		 * modifies an existing #KSI_DataHash. This function may not be publicly

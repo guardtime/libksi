@@ -305,7 +305,7 @@ static KSI_IMPLEMENT_GETTER(KSI_AggregationReq, KSI_OctetString*, raw, Raw);
 static KSI_IMPLEMENT_GETTER(KSI_AggregationResp, KSI_OctetString*, raw, Raw);
 static KSI_IMPLEMENT_GETTER(KSI_Header, KSI_OctetString*, raw, Raw);
 
-static int getObjectsRawValue(KSI_CTX* ctx, void* obj, int (*getRaw)(void*, KSI_OctetString**), const KSI_TlvTemplate *template, int tag, const unsigned char **data, unsigned *len, bool* mustBeFreed){
+static int getObjectsRawValue(KSI_CTX* ctx, void* obj, int (*getRaw)(void*, KSI_OctetString**), const KSI_TlvTemplate *template, int tag, const unsigned char **data, size_t *len, bool* mustBeFreed){
 	int res = KSI_OK;
 	KSI_OctetString *raw = NULL;
 	*mustBeFreed = false;
@@ -337,13 +337,13 @@ static int pdu_calculateHmac(KSI_CTX* ctx, void* pdu,
 		int (*getRequest_raw)(void*, KSI_OctetString**),
 		int reqTag,	int respTag,
 		const KSI_TlvTemplate *reqTemplate, const KSI_TlvTemplate *respTemplate,
-		int hashAlg, const char *key, KSI_DataHash **hmac){
+		KSI_HashAlgorithm algo_id, const char *key, KSI_DataHash **hmac) {
 	int res;
 	KSI_Header *header = NULL;
 	const unsigned char *raw_header = NULL;
-	unsigned header_len;
+	size_t header_len;
 	const unsigned char *raw_payload = NULL;
-	unsigned payload_len;
+	size_t payload_len;
 	void *request = NULL;
 	void *response = NULL;
 	unsigned char *buf = NULL;
@@ -419,7 +419,7 @@ static int pdu_calculateHmac(KSI_CTX* ctx, void* pdu,
 	memcpy(buf, raw_header, header_len);
 	memcpy(buf+header_len, raw_payload, payload_len);
 
-	res = KSI_HMAC_create(header->ctx, hashAlg, key, buf, header_len + payload_len, &tmp);
+	res = KSI_HMAC_create(header->ctx, algo_id, key, buf, header_len + payload_len, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -440,7 +440,7 @@ cleanup:
 	return res;
 }
 
-int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, int hashAlg, const char *key, KSI_DataHash **hmac){
+int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, KSI_HashAlgorithm algo_id, const char *key, KSI_DataHash **hmac){
 	int res = KSI_OK;
 	if (t)
 		res = pdu_calculateHmac(t->ctx, (void*)t,
@@ -450,13 +450,13 @@ int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, int hashAlg, const char *key, 
 				(int (*)(void*, void**))KSI_ExtendPdu_getRequest,
 				(int (*)(void*, KSI_OctetString**))KSI_ExtendReq_getRaw,
 				0x301,0x302, KSI_TLV_TEMPLATE(KSI_ExtendReq),KSI_TLV_TEMPLATE(KSI_ExtendResp),
-				hashAlg, key, hmac);
+				algo_id, key, hmac);
 	else return KSI_INVALID_ARGUMENT;
 
 	return res;
 }
 
-int KSI_ExtendPdu_updateHmac(KSI_ExtendPdu *pdu, int algorithm, const char *key) {
+int KSI_ExtendPdu_updateHmac(KSI_ExtendPdu *pdu, KSI_HashAlgorithm algo_id, const char *key) {
 	int res;
 	KSI_DataHash *hmac = NULL;
 
@@ -467,7 +467,7 @@ int KSI_ExtendPdu_updateHmac(KSI_ExtendPdu *pdu, int algorithm, const char *key)
 
 	KSI_ERR_clearErrors(pdu->ctx);
 
-	res = KSI_ExtendPdu_calculateHmac(pdu, algorithm, key, &hmac);
+	res = KSI_ExtendPdu_calculateHmac(pdu, algo_id, key, &hmac);
 	if (res != KSI_OK) {
 		KSI_pushError(pdu->ctx, res, NULL);
 		goto cleanup;
@@ -522,15 +522,16 @@ int KSI_ExtendReq_enclose(KSI_ExtendReq *req, char *loginId, char *key, KSI_Exte
 	tmp->header = hdr;
 	hdr = NULL;
 
-	/* Calculate the HMAC using the provided key and the default hash algorithm. */
-	res = KSI_ExtendPdu_updateHmac(tmp, KSI_getHashAlgorithmByName("default"), key);
-	if (res != KSI_OK) goto cleanup;
-
 	/* Every request must have a header, and at this point, this is guaranteed. */
 	if (req->ctx->requestHeaderCB != NULL) {
 		res = req->ctx->requestHeaderCB(tmp->header);
 		if (res != KSI_OK) goto cleanup;
 	}
+
+	/* Calculate the HMAC using the provided key and the default hash algorithm. */
+	res = KSI_ExtendPdu_updateHmac(tmp, KSI_getHashAlgorithmByName("default"), key);
+	if (res != KSI_OK) goto cleanup;
+
 
 	*pdu = tmp;
 	tmp = NULL;
@@ -600,7 +601,7 @@ cleanup:
 	return res;
 }
 
-int KSI_AggregationPdu_calculateHmac(KSI_AggregationPdu *t, int hashAlg, const char *key, KSI_DataHash **hmac){
+int KSI_AggregationPdu_calculateHmac(KSI_AggregationPdu *t, KSI_HashAlgorithm algo_id, const char *key, KSI_DataHash **hmac){
 	int res = KSI_OK;
 	if (t)
 		res = pdu_calculateHmac(t->ctx, (void*)t,
@@ -610,13 +611,13 @@ int KSI_AggregationPdu_calculateHmac(KSI_AggregationPdu *t, int hashAlg, const c
 				(int (*)(void*, void**))KSI_AggregationPdu_getRequest,
 				(int (*)(void*, KSI_OctetString**))KSI_AggregationReq_getRaw,
 				0x201,0x202, KSI_TLV_TEMPLATE(KSI_AggregationReq),KSI_TLV_TEMPLATE(KSI_AggregationResp),
-				hashAlg, key, hmac);
+				algo_id, key, hmac);
 	else return KSI_INVALID_ARGUMENT;
 
 	return res;
 }
 
-int KSI_AggregationPdu_updateHmac(KSI_AggregationPdu *pdu, int algorithm, const char *key) {
+int KSI_AggregationPdu_updateHmac(KSI_AggregationPdu *pdu, KSI_HashAlgorithm algo_id, const char *key) {
 	int res;
 	KSI_DataHash *hmac = NULL;
 
@@ -627,7 +628,7 @@ int KSI_AggregationPdu_updateHmac(KSI_AggregationPdu *pdu, int algorithm, const 
 
 	KSI_ERR_clearErrors(pdu->ctx);
 
-	res = KSI_AggregationPdu_calculateHmac(pdu, algorithm, key, &hmac);
+	res = KSI_AggregationPdu_calculateHmac(pdu, algo_id, key, &hmac);
 	if (res != KSI_OK) {
 		KSI_pushError(pdu->ctx, res, NULL);
 		goto cleanup;

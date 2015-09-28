@@ -40,10 +40,31 @@ const char *KSI_getVersion(void) {
 	return versionString;
 }
 
+static void freeCertConstraintsArray(KSI_CertConstraint *arr) {
+	size_t i;
+
+	if (arr != NULL) {;
+		for (i = 0; arr[i].oid != NULL; i++) {
+			KSI_free(arr[i].oid);
+			KSI_free(arr[i].val);
+		}
+
+		KSI_free(arr);
+	}
+}
+
 const char *KSI_getErrorString(int statusCode) {
 	switch (statusCode) {
 		case KSI_OK:
 			return "No errors.";
+		case KSI_AGGREGATOR_NOT_CONFIGURED:
+			return "The context is not (properly) configured to use the aggregator service.";
+		case KSI_EXTENDER_NOT_CONFIGURED:
+			return "The context is not (properly) configured to use the extender service.";
+		case KSI_PUBLICATIONS_FILE_NOT_CONFIGURED:
+			return "The context is not (properly) configured to retrieve the publications file.";
+		case KSI_PUBFILE_VERIFICATION_NOT_CONFIGURED:
+			return "The publications file can not be verified, as the constraints are not defined.";
 		case KSI_INVALID_ARGUMENT:
 			return "Invalid argument.";
 		case KSI_INVALID_FORMAT:
@@ -110,6 +131,10 @@ const char *KSI_getErrorString(int statusCode) {
 			return "The request indicated client-side aggregation tree larger than allowed for the client.";
 		case KSI_SERVICE_AGGR_REQUEST_OVER_QUOTA:
 			return "The request combined with other requests from the same client in the same round would create an aggregation sub-tree larger than allowed for the client.";
+		case KSI_SERVICE_AGGR_INPUT_TOO_LONG:
+			return "Input hash value in the client request is longer than the server allows";
+		case KSI_SERVICE_AGGR_TOO_MANY_REQUESTS:
+			return "Too many requests from the client in the same round";
 		case KSI_SERVICE_EXTENDER_INVALID_TIME_RANGE:
 			return "The request asked for a hash chain going backwards in time.";
 		case KSI_SERVICE_EXTENDER_DATABASE_MISSING:
@@ -122,6 +147,10 @@ const char *KSI_getErrorString(int statusCode) {
 			return "The request asked for hash values newer than the newest round in the server's database.";
 		case KSI_SERVICE_EXTENDER_REQUEST_TIME_IN_FUTURE:
 			return "The request asked for hash values newer than the current real time";
+		case KSI_MULTISIG_NOT_FOUND:
+			return "The signature was not found in the given multi signature container.";
+		case KSI_MULTISIG_INVALID_STATE:
+			return "The multi signature container is in an invalid state.";
 		case KSI_UNKNOWN_ERROR:
 			return "Unknown internal error.";
 		default:
@@ -152,11 +181,12 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->publicationsFile = NULL;
 	ctx->pkiTruststore = NULL;
 	ctx->netProvider = NULL;
-	ctx->publicationCertEmail = NULL;
+	ctx->publicationCertEmail_DEPRECATED = NULL;
 	ctx->loggerCB = NULL;
 	ctx->requestHeaderCB = NULL;
 	ctx->loggerCtx = NULL;
 	ctx->requestCounter = 0;
+	ctx->certConstraints = NULL;
 	KSI_ERR_clearErrors(ctx);
 
 	/* Create global cleanup list as the first thing. */
@@ -184,9 +214,6 @@ int KSI_CTX_new(KSI_CTX **context) {
 	res = KSI_CTX_setPKITruststore(ctx, pkiTruststore);
 	if (res != KSI_OK) goto cleanup;
 	pkiTruststore = NULL;
-
-	res = KSI_CTX_setPublicationCertEmail(ctx, "publications@guardtime.com");
-	if (res != KSI_OK) goto cleanup;
 
 	/* Return the context. */
 	*context = ctx;
@@ -271,7 +298,9 @@ void KSI_CTX_free(KSI_CTX *ctx) {
 		KSI_PKITruststore_free(ctx->pkiTruststore);
 
 		KSI_PublicationsFile_free(ctx->publicationsFile);
-		KSI_free(ctx->publicationCertEmail);
+		KSI_free(ctx->publicationCertEmail_DEPRECATED);
+
+		freeCertConstraintsArray(ctx->certConstraints);
 
 		KSI_free(ctx);
 	}
@@ -339,7 +368,7 @@ cleanup:
 	return res;
 }
 
-int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_RequestHandle **handle) {
+int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, size_t request_length, KSI_RequestHandle **handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_NetworkClient *netProvider = NULL;
 
@@ -369,7 +398,7 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_RequestHandle *handle = NULL;
 	const unsigned char *raw = NULL;
-	unsigned raw_len = 0;
+	size_t raw_len = 0;
 	KSI_PublicationsFile *tmp = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -623,35 +652,6 @@ cleanup:
 	return res;
 }
 
-int KSI_ERR_init(KSI_CTX *ctx, KSI_ERR *err) {
-	err->ctx = ctx;
-
-	KSI_ERR_fail(err, KSI_UNKNOWN_ERROR, 0, "null", 0, "Internal error: Probably a function returned without a distinctive success or error.");
-
-	return KSI_OK;
-}
-
-int KSI_ERR_apply(KSI_ERR *err) {
-	KSI_CTX *ctx = err->ctx;
-	KSI_ERR *ctxErr = NULL;
-
-	if (ctx != NULL) {
-		if (err->statusCode != KSI_OK) {
-			ctxErr = &ctx->errors[ctx->errors_count % ctx->errors_size];
-
-			ctxErr->statusCode = err->statusCode;
-			ctxErr->extErrorCode = err->extErrorCode;
-			ctxErr->lineNr = err->lineNr;
-			KSI_strncpy(ctxErr->fileName, KSI_strnvl(err->fileName), sizeof(err->fileName));
-			KSI_strncpy(ctxErr->message, KSI_strnvl(err->message), sizeof(err->message));
-
-			ctx->errors_count++;
-		}
-	}
-	/* Return the result, which does not indicate the result of this method. */
-	return err->statusCode;
-}
-
 void KSI_ERR_push(KSI_CTX *ctx, int statusCode, long extErrorCode, const char *fileName, unsigned int lineNr, const char *message) {
 	KSI_ERR *ctxErr = NULL;
 	const char *tmp = NULL;
@@ -676,35 +676,6 @@ void KSI_ERR_push(KSI_CTX *ctx, int statusCode, long extErrorCode, const char *f
 	ctx->errors_count++;
 }
 
-void KSI_ERR_success(KSI_ERR *err) {
-	err->statusCode = KSI_OK;
-	*err->message = '\0';
-}
-
-int KSI_ERR_pre(KSI_ERR *err, int cond, char *fileName, int lineNr) {
-	if (!cond) {
-		KSI_ERR_init(NULL, err);
-		KSI_ERR_fail(err, KSI_INVALID_ARGUMENT, 0, fileName, lineNr, NULL);
-	}
-
-	return !cond;
-}
-
-int KSI_ERR_fail(KSI_ERR *err, int statusCode, long extErrorCode, char *fileName, unsigned int lineNr, const char *message) {
-	if (statusCode != KSI_OK) {
-		err->extErrorCode = extErrorCode;
-		err->statusCode = statusCode;
-		if (message == NULL) {
-			KSI_strncpy(err->message, KSI_getErrorString(statusCode), sizeof(err->message));
-		} else {
-			KSI_strncpy(err->message, KSI_strnvl(message), sizeof(err->message));
-		}
-		KSI_strncpy(err->fileName, KSI_strnvl(fileName), sizeof(err->fileName));
-		err->lineNr = lineNr;
-	}
-	return statusCode;
-}
-
 void KSI_ERR_clearErrors(KSI_CTX *ctx) {
 	if (ctx != NULL) {
 		ctx->errors_count = 0;
@@ -714,7 +685,12 @@ void KSI_ERR_clearErrors(KSI_CTX *ctx) {
 int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ERR *err = NULL;
-	unsigned int i;
+	size_t i;
+
+	if (ctx == NULL || f == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
 	fprintf(f, "KSI error trace:\n");
 	if (ctx->errors_count == 0) {
@@ -725,7 +701,7 @@ int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f) {
 	/* List all errors, starting from the most general. */
 	for (i = 0; i < ctx->errors_count && i < ctx->errors_size; i++) {
 		err = ctx->errors + ((ctx->errors_count - i - 1) % ctx->errors_size);
-		fprintf(f, "  %3lu) %s:%u - (%d/%ld) %s\n", ctx->errors_count - i, err->fileName, err->lineNr,err->statusCode, err->extErrorCode, err->message);
+		fprintf(f, "  %3lu) %s:%u - (%d/%ld) %s\n", ctx->errors_count - i, err->fileName, err->lineNr,err->statusCode, err->extErrorCode, *err->message != '\0' ? err->message : KSI_getErrorString(err->statusCode));
 	}
 
 	/* If there where more errors than buffers for the errors, indicate the fact */
@@ -740,7 +716,7 @@ cleanup:
 	return res;
 }
 
-int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *error, int *ext){
+int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, size_t len, int *error, int *ext){
 	KSI_ERR *err = NULL;
 
 	if (ctx == NULL || buf == NULL){
@@ -752,10 +728,11 @@ int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *erro
 	if (error != NULL)	*error = err->statusCode;
 	if (ext != NULL)	*ext = err->extErrorCode;
 
-	if(ctx->errors_count)
+	if (ctx->errors_count) {
 		KSI_strncpy(buf, err->message, len);
-	else
+	} else {
 		KSI_strncpy(buf, "", len);
+	}
 
 	return KSI_OK;
 }
@@ -952,11 +929,26 @@ cleanup:
 int KSI_CTX_setPublicationCertEmail(KSI_CTX *ctx, const char *email) {
 	int res = KSI_UNKNOWN_ERROR;
 	char *tmp = NULL;
-	if (ctx == NULL) {
+	KSI_CertConstraint arr[] = {
+			{ KSI_CERT_EMAIL, NULL },
+			{ NULL, NULL }
+	};
+
+	if (ctx == NULL || email == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
+	/* The value is only read - cast is safe. */
+	arr[0].val = (char *) email;
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, arr);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Keep the value for compatibility. */
 	if (email != NULL && email[0] != '\0') {
 		size_t len = strlen(email);
 		tmp = KSI_calloc(len + 1, 1);
@@ -968,8 +960,8 @@ int KSI_CTX_setPublicationCertEmail(KSI_CTX *ctx, const char *email) {
 		memcpy(tmp, email, len + 1);
 	}
 
-	KSI_free(ctx->publicationCertEmail);
-	ctx->publicationCertEmail = tmp;
+	KSI_free(ctx->publicationCertEmail_DEPRECATED);
+	ctx->publicationCertEmail_DEPRECATED = tmp;
 	tmp = NULL;
 
 	res = KSI_OK;
@@ -977,4 +969,67 @@ cleanup:
 	KSI_free(tmp);
 	return res;
 }
-CTX_VALUEP_GETTER(publicationCertEmail, PublicationCertEmail, const char)
+
+int KSI_CTX_setDefaultPubFileCertConstraints(KSI_CTX *ctx, const KSI_CertConstraint *arr) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CertConstraint *tmp = NULL;
+	size_t count = 0;
+	size_t i;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || arr == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	/* Count the input. */
+	while(arr[count++].oid != NULL);
+
+	/* Allocate buffer with extra space for the trailing {NULL, NULL}. */
+	tmp = KSI_calloc(count, sizeof(KSI_CertConstraint));
+	if (tmp == NULL) {
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+	memset(tmp, 0, count * sizeof(KSI_CertConstraint));
+
+	/* Copy the values. */
+	for (i = 0; arr[i].oid != NULL; i++) {
+		res = KSI_strdup(arr[i].oid, &tmp[i].oid);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		if (arr[i].val == NULL) {
+			KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Expected OID value may not be NULL");
+			goto cleanup;
+		}
+
+		res = KSI_strdup(arr[i].val, &tmp[i].val);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+
+	/* Add terminator for the array. */
+	tmp[i].oid = NULL;
+	tmp[i].val = NULL;
+
+	/* Free the existing constraints. */
+	freeCertConstraintsArray(ctx->certConstraints);
+
+	ctx->certConstraints = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	freeCertConstraintsArray(tmp);
+
+	return res;
+}
+
+CTX_VALUEP_GETTER(publicationCertEmail_DEPRECATED, PublicationCertEmail, const char)

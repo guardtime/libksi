@@ -26,6 +26,7 @@ extern "C" {
 
 	struct KSI_CalendarAuthRec_st {
 		KSI_CTX *ctx;
+		size_t ref;
 
 		KSI_PublicationData *pubData;
 		KSI_PKISignedData *signatureData;
@@ -33,6 +34,8 @@ extern "C" {
 
 	struct KSI_AggregationAuthRec_st {
 		KSI_CTX *ctx;
+		size_t ref;
+
 		KSI_Integer *aggregationTime;
 		KSI_LIST(KSI_Integer) *chainIndexesList;
 		KSI_DataHash *inputHash;
@@ -42,6 +45,8 @@ extern "C" {
 
 	struct KSI_AggregationHashChain_st {
 		KSI_CTX *ctx;
+		size_t ref;
+
 		KSI_Integer *aggregationTime;
 		KSI_LIST(KSI_Integer) *chainIndex;
 		KSI_OctetString *inputData;
@@ -50,6 +55,23 @@ extern "C" {
 		KSI_LIST(KSI_HashChainLink) *chain;
 	};
 
+	struct KSI_RFC3161_st {
+		KSI_CTX *ctx;
+		size_t ref;
+		
+		KSI_Integer *aggregationTime;
+		KSI_LIST(KSI_Integer) *chainIndex;
+		KSI_DataHash *inputHash;
+		
+		KSI_OctetString *tstInfoPrefix;
+		KSI_OctetString *tstInfoSuffix;
+		KSI_Integer *tstInfoAlgo;
+		
+		KSI_OctetString *sigAttrPrefix;
+		KSI_OctetString *sigAttrSuffix;
+		KSI_Integer *sigAttrAlgo;
+	};
+	
 	/**
 	 * KSI Signature object
 	 */
@@ -63,6 +85,8 @@ extern "C" {
 
 		KSI_LIST(KSI_AggregationHashChain) *aggregationChainList;
 
+		KSI_RFC3161 *rfc3161;
+		
 		KSI_CalendarAuthRec *calendarAuthRec;
 		KSI_AggregationAuthRec *aggregationAuthRec;
 		KSI_PublicationRecord *publication;

@@ -39,36 +39,24 @@ extern "C" {
 		/** Logging is turned off. */
 		KSI_LOG_NONE = 0x00,
 
-		/** Fatal log level. */
-		KSI_LOG_FATAL = 0x01,
+		/** Error log level - unrecoverable fatal errors only - gasp of death - code cannot continue and will terminate. */
+		KSI_LOG_ERROR = 0x01,
 
-		/** Error log level. */
-		KSI_LOG_ERROR = 0x02,
+		/** Warning log level - changes in state that affects the service degradation. */
+		KSI_LOG_WARN = 0x02,
 
-		/** Info log level. */
-		KSI_LOG_INFO = 0x03,
+		/** Notice log level - changes in state that do not necessarily cause service degradation. */
+		KSI_LOG_NOTICE = 0x03,
 
-		/** Warn log level. */
-		KSI_LOG_WARN = 0x05,
+		/** Info log level - events that have no effect on service, but can aid in performance, status and statistics monitoring. */
+		KSI_LOG_INFO = 0x04,
 
-		/** Debug log level. */
-		KSI_LOG_DEBUG = 0x06,
-
-		/** Trace log level. */
-		KSI_LOG_TRACE = 0x07
+		/** Debug log level - events generated to aid in debugging, application flow and detailed service troubleshooting. */
+		KSI_LOG_DEBUG = 0x05,
 	};
 
 	/**
-	 * Logging for trace level. Works as \c printf, but takes the KSI context as its first parameter.
-	 * \param[in]	ctx			KSI context.
-	 * \param[in]	format		Format string.
-	 * \param[in]	...			Arguments.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_LOG_trace(KSI_CTX *ctx, char *format, ...);
-
-	/**
-	 * Logging for debug level. Works as \c printf, but takes the KSI context as its first parameter.
+	 * Logging for debug level. Events generated to aid in debugging, application flow and detailed service troubleshooting.
 	 * \param[in]	ctx			KSI context.
 	 * \param[in]	format		Format string.
 	 * \param[in]	...			Arguments.
@@ -77,16 +65,7 @@ extern "C" {
 	int KSI_LOG_debug(KSI_CTX *ctx, char *format, ...);
 
 	/**
-	 * Logging for warn level. Works as \c printf, but takes the KSI context as its first parameter.
-	 * \param[in]	ctx			KSI context.
-	 * \param[in]	format		Format string.
-	 * \param[in]	...			Arguments.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_LOG_warn(KSI_CTX *ctx, char *format, ...);
-
-	/**
-	 * Logging for info level. Works as \c printf, but takes the KSI context as its first parameter.
+	 * Logging for info level. Events that have no effect on service, but can aid in performance, status and statistics monitoring.
 	 * \param[in]	ctx			KSI context.
 	 * \param[in]	format		Format string.
 	 * \param[in]	...			Arguments.
@@ -95,22 +74,31 @@ extern "C" {
 	int KSI_LOG_info(KSI_CTX *ctx, char *format, ...);
 
 	/**
-	 * Logging for error level. Works as \c printf, but takes the KSI context as its first parameter.
+	 * Logging for info level. Changes in state that do not necessarily cause service degradation.
+	 * \param[in]	ctx			KSI context.
+	 * \param[in]	format		Format string.
+	 * \param[in]	...			Arguments.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_LOG_notice(KSI_CTX *ctx, char *format, ...);
+
+	/**
+	 * Logging for warning level. Changes in state that affects the service degradation.
+	 * \param[in]	ctx			KSI context.
+	 * \param[in]	format		Format string.
+	 * \param[in]	...			Arguments.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_LOG_warn(KSI_CTX *ctx, char *format, ...);
+
+	/**
+	 * Logging for error level. Unrecoverable fatal errors only - gasp of death - code cannot continue and will terinate.
 	 * \param[in]	ctx			KSI context.
 	 * \param[in]	format		Format string.
 	 * \param[in]	...			Arguments.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_LOG_error(KSI_CTX *ctx, char *format, ...);
-
-	/**
-	 * Logging for fatal level. Works as \c printf, but takes the KSI context as its first parameter.
-	 * \param[in]	ctx			KSI context.
-	 * \param[in]	format		Format string.
-	 * \param[in]	...			Arguments.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_LOG_fatal(KSI_CTX *ctx, char *format, ...);
 
 	/**
 	 * A helper function for logging raw data. The log message will be prefixed with \c prefix and
@@ -122,7 +110,7 @@ extern "C" {
 	 * \param[in]	data_len	Length of the data.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned char *data, unsigned data_len);
+	int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned char *data, size_t data_len);
 
 	/**
 	 * A helper function for logging plain #KSI_TLV objects. The log message will be prefixed

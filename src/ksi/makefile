@@ -63,12 +63,14 @@ LIB_OBJ = \
 	$(OBJ_DIR)\base.obj \
 	$(OBJ_DIR)\base32.obj \
 	$(OBJ_DIR)\crc32.obj \
+	$(OBJ_DIR)\fast_tlv.obj \
 	$(OBJ_DIR)\hash.obj \
 	$(OBJ_DIR)\hashchain.obj \
 	$(OBJ_DIR)\http_parser.obj \
 	$(OBJ_DIR)\io.obj \
 	$(OBJ_DIR)\list.obj \
 	$(OBJ_DIR)\log.obj \
+	$(OBJ_DIR)\multi_signature.obj \
 	$(OBJ_DIR)\net.obj \
 	$(OBJ_DIR)\net_http.obj \
 	$(OBJ_DIR)\net_uri.obj \
@@ -86,6 +88,7 @@ LIB_OBJ = \
 INC_FILES = \
 	base32.h \
 	common.h \
+	fast_tlv.h \
 	hmac.h \
 	net.h \
 	types.h \
@@ -107,7 +110,8 @@ INC_FILES = \
 	log.h \
 	publicationsfile.h \
 	tlv_template.h \
-	compatibility.h
+	compatibility.h \
+	multi_signature.h
 
 #Compiler and linker configuration
 EXT_LIB = wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib  

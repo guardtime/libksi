@@ -24,10 +24,9 @@
 #include "all_tests.h"
 #include <ksi/compatibility.h>
 
-static void Test_KSI_snprintf(CuTest* tc) {
-	int ret;
+static void test_KSI_snprintf(CuTest* tc) {
 	int i = 0;
-	int len = 0;
+	size_t len = 0;
 	char dest[8];
 	char empty[8];
 	char bigdest[0xFF];
@@ -35,32 +34,33 @@ static void Test_KSI_snprintf(CuTest* tc) {
 	memset(dest, 0xFF, sizeof(dest));
 	memset(empty, 0xFF, sizeof(empty));
 
-	ret = KSI_snprintf(dest, 8, "%s", "1234567890");
-	CuAssert(tc, "KSI_snprintf failed.", ret == 7 && dest[7] == 0 && strcmp(dest, "1234567") == 0);
+	len = KSI_snprintf(dest, 8, "%s", "1234567890");
+	CuAssert(tc, "KSI_snprintf failed.", len == 7 && dest[7] == 0 && !strcmp(dest, "1234567"));
 	memset(dest, 0xFF, sizeof(dest));
 	
-	ret = KSI_snprintf(dest, 4, "%d%c%d%d%d%d%d%d%d%d", 1, '2', 3, 4, 5, 6, 7, 8, 9, 0);
-	CuAssert(tc, "KSI_snprintf failed.", ret == 3 && dest[3] == 0 && strcmp(dest, "123") == 0);
+	len = KSI_snprintf(dest, 4, "%d%c%d%d%d%d%d%d%d%d", 1, '2', 3, 4, 5, 6, 7, 8, 9, 0);
+	CuAssert(tc, "KSI_snprintf failed.", len == 3 && dest[3] == 0 && !strcmp(dest, "123"));
 	memset(dest, 0xFF, sizeof(dest));
 	
-	ret = KSI_snprintf(dest, 8, "%s", "12345");
-	CuAssert(tc, "KSI_snprintf failed.", ret == 5 && dest[5] == 0 && strcmp(dest, "12345") == 0);
+	len = KSI_snprintf(dest, 8, "%s", "12345");
+	CuAssert(tc, "KSI_snprintf failed.", len == 5 && dest[5] == 0 && !strcmp(dest, "12345") );
 	memset(dest, 0xFF, sizeof(dest));
 	
-	ret = KSI_snprintf(dest, 0, "%s", "12345");
-	CuAssert(tc, "KSI_snprintf failed.", ret == -1 && memcmp(dest, empty, sizeof(dest)) == 0);
+	len = KSI_snprintf(dest, 0, "%s", "12345");
+	CuAssert(tc, "KSI_snprintf failed.", len == 0 && memcmp(dest, empty, sizeof(dest)) == 0);
 	
-	ret = KSI_snprintf(NULL, 5, "%s", "12345");
-	CuAssert(tc, "KSI_snprintf failed.", ret == -1 && memcmp(dest, empty, sizeof(dest)) == 0);
+	len = KSI_snprintf(NULL, 5, "%s", "12345");
+	CuAssert(tc, "KSI_snprintf failed.", len == 0 && memcmp(dest, empty, sizeof(dest)) == 0);
 	
-	for (i=0 ; i < 0xFF + 1; i++){
+	len = 0;
+	for (i = 0 ; i < 0xff + 1; i++){
 		len += KSI_snprintf(bigdest + len, sizeof(bigdest) - len, "%s", "F");
 	}
 	
 	CuAssert(tc, "KSI_snprintf failed.", len == 0xFF-1);
 }
 
-static void Test_KSI_strncpy(CuTest* tc) {
+static void test_KSI_strncpy(CuTest* tc) {
 	char *ret;
 	char dest[8];
 	char empty[8];
@@ -87,12 +87,23 @@ static void Test_KSI_strncpy(CuTest* tc) {
 	CuAssert(tc, "KSI_strncpy failed.", ret == NULL && memcmp(dest, empty, sizeof(dest)) == 0);
 }
 
+static void test_KSI_strdup(CuTest *tc) {
+	int res;
+	char *data = "Some random string.";
+	char *dup = NULL;
+
+	res = KSI_strdup(data, &dup);
+	CuAssert(tc, "Duplicating string failed.", res == KSI_OK && dup != NULL && !strcmp(data, dup));
+
+	KSI_free(dup);
+}
 
 CuSuite* KSITest_compatibility_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
-	SUITE_ADD_TEST(suite, Test_KSI_snprintf);
-	SUITE_ADD_TEST(suite, Test_KSI_strncpy);
+	SUITE_ADD_TEST(suite, test_KSI_snprintf);
+	SUITE_ADD_TEST(suite, test_KSI_strncpy);
+	SUITE_ADD_TEST(suite, test_KSI_strdup);
 
 	return suite;
 }

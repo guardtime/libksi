@@ -24,6 +24,7 @@
 #include "types_base.h"
 #include "list.h"
 #include "common.h"
+#include "hash.h"
 
 
 #ifdef __cplusplus
@@ -53,6 +54,10 @@ extern "C" {
 	typedef struct KSI_PublicationData_st KSI_PublicationData;
 	typedef struct KSI_PublicationRecord_st KSI_PublicationRecord;
 	typedef struct KSI_ErrorPdu_st KSI_ErrorPdu;
+
+	/* Typedef for the struct KSI_CertConstraint_st */
+	typedef struct KSI_CertConstraint_st KSI_CertConstraint;
+
 	/**
 	 * Callback for request header.
 	 * \param[in]	hdr		Pointer to the header.
@@ -81,18 +86,6 @@ extern "C" {
 	typedef struct KSI_PKITruststore_st KSI_PKITruststore;
 
 	/**
-	 * This structure is used for calculating the hash values.
-	 * \see #KSI_DataHash, #KSI_DataHasher_open, #KSI_DataHasher_reset, #KSI_DataHasher_close, #KSI_DataHasher_free
-	 */
-	typedef struct KSI_DataHasher_st KSI_DataHasher;
-
-	/**
-	 * This structure represents hashed data.
-	 * \see #KSI_DataHasher, #KSI_DataHasher_close, #KSI_DataHash_free
-	 */
-	typedef struct KSI_DataHash_st KSI_DataHash;
-
-	/**
 	 * Network resource handle returned from functions sending or preparing network requests.
 	 *
 	 *	\see #KSI_NetworkClient_sendExtendRequest, #KSI_NetworkClient_sendSignRequest, #KSI_NetworkClient_sendPublicationsFileRequest
@@ -119,7 +112,20 @@ extern "C" {
 	 * Representation of the aggregation authentication record.
 	 */
 	typedef struct KSI_AggregationAuthRec_st KSI_AggregationAuthRec;
+	
+	/**
+	 * Helper data structure for encoding parts of the RFC 3161 envelope.
+	 */
+	typedef struct KSI_RFC3161_st KSI_RFC3161;
 
+	/** Pair of OID and value. */
+	struct KSI_CertConstraint_st {
+		/** The OID for the constraint. */
+		char *oid;
+		/** Expected value. */
+		char *val;
+	};
+	
 	KSI_DEFINE_LIST(KSI_MetaData);
 	KSI_DEFINE_LIST(KSI_HashChainLink);
 	KSI_DEFINE_LIST(KSI_CalendarHashChainLink);
@@ -143,8 +149,11 @@ extern "C" {
 	KSI_DEFINE_LIST(KSI_Utf8String);
 	KSI_DEFINE_LIST(KSI_Utf8StringNZ);
 	KSI_DEFINE_LIST(KSI_AggregationHashChain)
+	KSI_DEFINE_LIST(KSI_CalendarAuthRec)
 	KSI_DEFINE_LIST(KSI_TLV);
 	KSI_DEFINE_LIST(KSI_PKICertificate);
+	KSI_DEFINE_LIST(KSI_AggregationAuthRec);
+	KSI_DEFINE_LIST(KSI_RFC3161);
 
 /*
  * KSI_MetaData
@@ -168,8 +177,8 @@ int KSI_MetaData_fromTlv(KSI_TLV *tlv, KSI_MetaData **metaData);
  */
 void KSI_ExtendPdu_free(KSI_ExtendPdu *t);
 int KSI_ExtendPdu_new(KSI_CTX *ctx, KSI_ExtendPdu **t);
-int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, int hashAlg, const char *key, KSI_DataHash **hmac);
-int KSI_ExtendPdu_updateHmac(KSI_ExtendPdu *pdu, int algorithm, const char *key);
+int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, KSI_HashAlgorithm algo_id, const char *key, KSI_DataHash **hmac);
+int KSI_ExtendPdu_updateHmac(KSI_ExtendPdu *pdu, KSI_HashAlgorithm algo_id, const char *key);
 int KSI_ExtendPdu_getHeader(const KSI_ExtendPdu *t, KSI_Header **header);
 int KSI_ExtendPdu_getRequest(const KSI_ExtendPdu *t, KSI_ExtendReq **request);
 int KSI_ExtendPdu_getResponse(const KSI_ExtendPdu *t, KSI_ExtendResp **response);
@@ -201,8 +210,8 @@ int KSI_ErrorPdu_setErrorMessage(KSI_ErrorPdu *pdu, KSI_Utf8String *errorMsg);
 
 void KSI_AggregationPdu_free(KSI_AggregationPdu *t);
 int KSI_AggregationPdu_new(KSI_CTX *ctx, KSI_AggregationPdu **t);
-int KSI_AggregationPdu_calculateHmac(KSI_AggregationPdu *t, int hashAlg, const char *key, KSI_DataHash **hmac);
-int KSI_AggregationPdu_updateHmac(KSI_AggregationPdu *pdu, int algorithm, const char *key);
+int KSI_AggregationPdu_calculateHmac(KSI_AggregationPdu *t, KSI_HashAlgorithm algo_id, const char *key, KSI_DataHash **hmac);
+int KSI_AggregationPdu_updateHmac(KSI_AggregationPdu *pdu, KSI_HashAlgorithm algo_id, const char *key);
 int KSI_AggregationPdu_getHeader(const KSI_AggregationPdu *t, KSI_Header **header);
 int KSI_AggregationPdu_getRequest(const KSI_AggregationPdu *t, KSI_AggregationReq **request);
 int KSI_AggregationPdu_getResponse(const KSI_AggregationPdu *t, KSI_AggregationResp **response);
@@ -410,6 +419,8 @@ int KSI_AggregationAuthRec_setChainIndex(KSI_AggregationAuthRec *rec, KSI_LIST(K
 int KSI_AggregationAuthRec_setInputHash(KSI_AggregationAuthRec *rec, KSI_DataHash *inputHash);
 int KSI_AggregationAuthRec_setSigAlgo(KSI_AggregationAuthRec *rec, KSI_Utf8String *signatureAlgo);
 int KSI_AggregationAuthRec_setSigData(KSI_AggregationAuthRec *rec, KSI_PKISignedData *signatureData);
+KSI_DEFINE_REF(KSI_AggregationAuthRec);
+KSI_DEFINE_WRITE_BYTES(KSI_AggregationAuthRec);
 
 /*
  * KSI_CalendarAuthRec
@@ -424,7 +435,36 @@ int KSI_CalendarAuthRec_getSignatureData(const KSI_CalendarAuthRec *rec, KSI_PKI
 int KSI_CalendarAuthRec_setPublishedData(KSI_CalendarAuthRec *rec, KSI_PublicationData *pubData);
 int KSI_CalendarAuthRec_setSignatureAlgo(KSI_CalendarAuthRec *rec, KSI_Utf8String *signatureAlgo);
 int KSI_CalendarAuthRec_setSignatureData(KSI_CalendarAuthRec *rec, KSI_PKISignedData *signatureData);
+KSI_DEFINE_REF(KSI_CalendarAuthRec);
+KSI_DEFINE_WRITE_BYTES(KSI_CalendarAuthRec);
+/**
+ *	KSI_RFC3161 
+ */
 
+void KSI_RFC3161_free(KSI_RFC3161 *rfc);
+int KSI_RFC3161_new(KSI_CTX *ctx, KSI_RFC3161 **out);
+
+int KSI_RFC3161_getAggregationTime (const KSI_RFC3161 *o, KSI_Integer **aggregationTime);
+int KSI_RFC3161_getChainIndex (const KSI_RFC3161 *o, KSI_IntegerList **chainIndex);
+int KSI_RFC3161_getInputHash (const KSI_RFC3161 *o, KSI_DataHash **inputHash);
+int KSI_RFC3161_getTstInfoPrefix (const KSI_RFC3161 *o, KSI_OctetString **tstInfoPrefix);
+int KSI_RFC3161_getTstInfoSuffix (const KSI_RFC3161 *o, KSI_OctetString **tstInfoSuffix);
+int KSI_RFC3161_getTstInfoAlgo (const KSI_RFC3161 *o, KSI_Integer **tstInfoAlgo);
+int KSI_RFC3161_getSigAttrPrefix (const KSI_RFC3161 *o, KSI_OctetString **sigAttrPrefix);
+int KSI_RFC3161_getSigAttrSuffix (const KSI_RFC3161 *o, KSI_OctetString **sigAttrSuffix);
+int KSI_RFC3161_getSigAttrAlgo (const KSI_RFC3161 *o, KSI_Integer **sigAttrAlgo);
+
+int KSI_RFC3161_setAggregationTime (KSI_RFC3161 *o, KSI_Integer *aggregationTime);
+int KSI_RFC3161_setChainIndex (KSI_RFC3161 *o, KSI_IntegerList *chainIndex);
+int KSI_RFC3161_setInputHash (KSI_RFC3161 *o, KSI_DataHash *inputHash);
+int KSI_RFC3161_setTstInfoPrefix (KSI_RFC3161 *o, KSI_OctetString *tstInfoPrefix);
+int KSI_RFC3161_setTstInfoSuffix (KSI_RFC3161 *o, KSI_OctetString *tstInfoSuffix);
+int KSI_RFC3161_setTstInfoAlgo (KSI_RFC3161 *o, KSI_Integer *tstInfoAlgo);
+int KSI_RFC3161_setSigAttrPrefix (KSI_RFC3161 *o, KSI_OctetString *sigAttrPrefix);
+int KSI_RFC3161_setSigAttrSuffix (KSI_RFC3161 *o, KSI_OctetString *sigAttrSuffix);
+int KSI_RFC3161_setSigAttrAlgo (KSI_RFC3161 *o, KSI_Integer *sigAttrAlgo);
+KSI_DEFINE_REF(KSI_RFC3161);
+KSI_DEFINE_WRITE_BYTES(KSI_RFC3161);
 /**
  * @}
  */

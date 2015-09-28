@@ -59,13 +59,13 @@ cleanup:
 /**
  *
  */
-int KSI_RequestHandle_new(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_RequestHandle **handle) {
+int KSI_RequestHandle_new(KSI_CTX *ctx, const unsigned char *request, size_t request_length, KSI_RequestHandle **handle) {
 	int res;
 	KSI_RequestHandle *tmp = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
-	if (ctx == NULL || handle == NULL) {
+	if (ctx == NULL || handle == NULL || (request == NULL && request_length != 0) || (request != NULL && request_length == 0)) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
@@ -260,7 +260,7 @@ void KSI_NetworkClient_free(KSI_NetworkClient *provider) {
 	}
 }
 
-int KSI_RequestHandle_setResponse(KSI_RequestHandle *handle, const unsigned char *response, unsigned response_len) {
+int KSI_RequestHandle_setResponse(KSI_RequestHandle *handle, const unsigned char *response, size_t response_len) {
 	int res;
 	unsigned char *resp = NULL;
 
@@ -337,7 +337,7 @@ cleanup:
 	return res;
 }
 
-int KSI_RequestHandle_getRequest(KSI_RequestHandle *handle, const unsigned char **request, unsigned *request_len) {
+int KSI_RequestHandle_getRequest(KSI_RequestHandle *handle, const unsigned char **request, size_t *request_len) {
 	int res;
 
 	if (handle == NULL) {
@@ -386,7 +386,7 @@ cleanup:
 	return res;
 }
 
-int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, const unsigned char **response, unsigned *response_len) {
+int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, const unsigned char **response, size_t *response_len) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (handle == NULL) {
@@ -424,7 +424,7 @@ cleanup:
 int pdu_verify_hmac(KSI_CTX *ctx, KSI_DataHash *hmac,const char *key, int (*calculateHmac)(void*, int, const char*, KSI_DataHash**) ,void *PDU){
 	int res;
 	KSI_DataHash *actualHmac = NULL;
-	int hashAlg;
+	KSI_HashAlgorithm algo_id;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -435,13 +435,13 @@ int pdu_verify_hmac(KSI_CTX *ctx, KSI_DataHash *hmac,const char *key, int (*calc
 
 
 	/* Check HMAC. */
-	res = KSI_DataHash_getHashAlg(hmac, &hashAlg);
+	res = KSI_DataHash_getHashAlg(hmac, &algo_id);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = calculateHmac(PDU, hashAlg, key, &actualHmac);
+	res = calculateHmac(PDU, algo_id, key, &actualHmac);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -472,7 +472,7 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 	KSI_Header *header = NULL;
 	KSI_ExtendResp *tmp = NULL;
 	const unsigned char *raw = NULL;
-	unsigned len = 0;
+	size_t len = 0;
 
 	if (handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -600,7 +600,7 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 	KSI_DataHash *actualHmac = NULL;
 	KSI_AggregationResp *tmp = NULL;
 	const unsigned char *raw = NULL;
-	unsigned len;
+	size_t len;
 
 	if (handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -642,7 +642,7 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 		goto cleanup;
 	}
 
-	if(error){
+	if (error != NULL){
 		KSI_Utf8String *errorMsg = NULL;
 		KSI_Integer *status = NULL;
 		KSI_ErrorPdu_getErrorMessage(error, &errorMsg);
@@ -802,6 +802,8 @@ int KSI_convertAggregatorStatusCode(KSI_Integer *statusCode) {
 		case 0x0103: return KSI_SERVICE_INVALID_PAYLOAD;
 		case 0x0104: return KSI_SERVICE_AGGR_REQUEST_TOO_LARGE;
 		case 0x0105: return KSI_SERVICE_AGGR_REQUEST_OVER_QUOTA;
+		case 0x0106: return KSI_SERVICE_AGGR_TOO_MANY_REQUESTS;
+		case 0x0107: return KSI_SERVICE_AGGR_INPUT_TOO_LONG;
 		case 0x0200: return KSI_SERVICE_INTERNAL_ERROR;
 		case 0x0300: return KSI_SERVICE_UPSTREAM_ERROR;
 		case 0x0301: return KSI_SERVICE_UPSTREAM_TIMEOUT;

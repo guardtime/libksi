@@ -26,14 +26,14 @@ int main() {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ksi = NULL;
 	unsigned char raw[0xffff];
-	unsigned len;
+	size_t len;
 	FILE *f = NULL;
 	time_t start;
 	time_t end;
 	size_t count = 0;
 	KSI_AggregationPdu *pdu = NULL;
 	unsigned char *serialized = NULL;
-	unsigned serialized_len;
+	size_t serialized_len;
 
 	res = KSI_CTX_new(&ksi);
 	if (res != KSI_OK) {
@@ -49,7 +49,7 @@ int main() {
 
 	len = fread(raw, 1, sizeof(raw), f);
 
-	printf("Len = %d\n", len);
+	printf("Len = %llu\n", (unsigned long long) len);
 
 	res = KSI_AggregationPdu_parse(ksi, raw, len, &pdu);
 	if (res != KSI_OK) {

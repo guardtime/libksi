@@ -43,6 +43,7 @@ static char *ok_sample[] = {
 		"resource/tlv/ok_nested-7.tlv",
 		"resource/tlv/ok_nested-8.tlv",
 		"resource/tlv/ok_nested-9.tlv",
+		"resource/tlv/ok_nested-10.tlv",
 		"resource/tlv/ok_str-1.tlv",
 		"resource/tlv/ok_str-2.tlv",
 		"resource/tlv/ok_str-3.tlv",
@@ -50,6 +51,8 @@ static char *ok_sample[] = {
 		"resource/tlv/ok_str-5.tlv",
 		"resource/tlv/ok_str-6.tlv",
 		"resource/tlv/ok_str-7.tlv",
+		"resource/tlv/ok_oct-1.tlv",
+		"resource/tlv/ok_oct-2.tlv",
 		NULL
 };
 
@@ -93,6 +96,7 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 	size_t i;
 	KSI_Utf8String *utf = NULL;
 	KSI_Integer *integer = NULL;
+	KSI_OctetString *octet = NULL;
 
 	switch (KSI_TLV_getTag(tlv)) {
 		case 0x01:
@@ -126,6 +130,11 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 				if (res != KSI_OK) goto cleanup;
 			}
 			break;
+		case 0x04:
+			/* Cast as octet string*/
+			res = KSI_OctetString_fromTlv(tlv, &octet);
+			if (res != KSI_OK) goto cleanup;
+			break;
 		default:
 			res = KSI_INVALID_FORMAT;
 			goto cleanup;
@@ -133,6 +142,7 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 
 cleanup:
 
+	KSI_OctetString_free(octet);
 	KSI_Utf8String_free(utf);
 	KSI_Integer_free(integer);
 	return res;
@@ -190,8 +200,8 @@ static void TestSerialize(CuTest* tc) {
 	unsigned char out[0xffff + 4];
 	char errstr[1024];
 
-	unsigned out_len;
-	unsigned in_len;
+	size_t out_len;
+	size_t in_len;
 
 	FILE *f = NULL;
 	int i = 0;
@@ -236,8 +246,8 @@ static void TestClone(CuTest *tc) {
 	unsigned char out1[0xffff + 4];
 	char errstr[1024];
 
-	unsigned out_len;
-	unsigned in_len;
+	size_t out_len;
+	size_t in_len;
 
 	FILE *f = NULL;
 	int i = 0;
@@ -248,7 +258,7 @@ static void TestClone(CuTest *tc) {
 		f = fopen(getFullResourcePath(ok_sample[i]), "rb");
 		CuAssert(tc, "Unable to open test file.", f != NULL);
 
-		in_len = (unsigned)fread(in, 1, sizeof(in), f);
+		in_len = (unsigned) fread(in, 1, sizeof(in), f);
 
 		fclose(f);
 		f = NULL;
@@ -279,13 +289,13 @@ static void TestClone(CuTest *tc) {
 	}
 }
 
-static void testObjectSerialization(CuTest *tc, const char *sample, int (*parse)(KSI_CTX *, unsigned char *, unsigned, void **), int (*serialize)(void *, unsigned char **, unsigned *), void (*objFree)(void *)) {
+static void testObjectSerialization(CuTest *tc, const char *sample, int (*parse)(KSI_CTX *, unsigned char *, size_t, void **), int (*serialize)(void *, unsigned char **, size_t *), void (*objFree)(void *)) {
 	int res;
 	void *pdu = NULL;
 	unsigned char in[0xffff + 4];
-	unsigned in_len;
+	size_t in_len;
 	unsigned char *out = NULL;
-	unsigned out_len;
+	size_t out_len;
 	FILE *f = NULL;
 	char errm[1024];
 
@@ -318,15 +328,15 @@ static void testObjectSerialization(CuTest *tc, const char *sample, int (*parse)
 
 static void aggregationPduTest(CuTest *tc) {
 	testObjectSerialization(tc, getFullResourcePath("resource/tlv/aggr_response.tlv"),
-			(int (*)(KSI_CTX *, unsigned char *, unsigned, void **))KSI_AggregationPdu_parse,
-			(int (*)(void *, unsigned char **, unsigned *))KSI_AggregationPdu_serialize,
+			(int (*)(KSI_CTX *, unsigned char *, size_t, void **))KSI_AggregationPdu_parse,
+			(int (*)(void *, unsigned char **, size_t *))KSI_AggregationPdu_serialize,
 			( void (*)(void *))KSI_AggregationPdu_free);
 }
 
 static void extendPduTest(CuTest *tc) {
 	testObjectSerialization(tc, getFullResourcePath("resource/tlv/extend_response.tlv"),
-			(int (*)(KSI_CTX *, unsigned char *, unsigned, void **))KSI_ExtendPdu_parse,
-			(int (*)(void *, unsigned char **, unsigned *))KSI_ExtendPdu_serialize,
+			(int (*)(KSI_CTX *, unsigned char *, size_t, void **))KSI_ExtendPdu_parse,
+			(int (*)(void *, unsigned char **, size_t *))KSI_ExtendPdu_serialize,
 			( void (*)(void *))KSI_ExtendPdu_free);
 }
 
@@ -346,21 +356,22 @@ static void testErrorMessage(CuTest* tc, const char *expected, const char *tlv_f
 	f = fopen(getFullResourcePath(tlv_file), "r");
 	res = KSI_RDR_fromStream(ctx, f, &rdr);
 	CuAssert(tc, "Failed to open reader", res == KSI_OK);
-	
+
 	res = KSI_RDR_read_ex(rdr, (unsigned char *)buf, sizeof(buf), &len);
 	CuAssert(tc, "Failed read from file", res == KSI_OK);
-	
+
 	res = obj_new(ctx, &obj);
 	CuAssert(tc, "Unable create new obj", res == KSI_OK);
-	
+
 	res = KSI_TlvTemplate_parse(ctx, (unsigned char *)buf, (unsigned)len, tmplete, obj);
 	CuAssert(tc, "Parsing invalid obj must fail", res != KSI_OK);
-	
+
 	res = KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL, NULL);
 	CuAssert(tc, "Unable to get base error message.", res == KSI_OK);
 
+	if (strcmp(buf, expected) != 0) printf("buf = '%s', exp = '%s'\n", buf, expected);
 	CuAssert(tc, "Wrong error message.", strcmp(buf, expected) == 0);
-	
+
 	if (f != NULL) fclose(f);
 	obj_free(obj);
 	KSI_RDR_close(rdr);
@@ -373,20 +384,20 @@ KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu);
 
 static void testUnknownCriticalTagError(CuTest* tc) {
 	testErrorMessage(tc, "Unknown critical tag: [0x200]->[0x203]aggr_error_pdu->[0x01]",
-			"resource/tlv/tlv_unknown_tag.tlv", 
+			"resource/tlv/tlv_unknown_tag.tlv",
 			(int (*)(KSI_CTX *ctx, void **))KSI_AggregationPdu_new,
 			(void (*)(void*))KSI_AggregationPdu_free,
 			KSI_TLV_TEMPLATE(KSI_AggregationPdu)
-			);	
+			);
 }
 
 static void testMissingMandatoryTagError(CuTest* tc) {
 		testErrorMessage(tc, "Mandatory element missing: [0x200]->[0x203]aggr_error_pdu->[0x4]status",
-			"resource/tlv/tlv_missing_tag.tlv", 
+			"resource/tlv/tlv_missing_tag.tlv",
 			(int (*)(KSI_CTX *ctx, void **))KSI_AggregationPdu_new,
 			(void (*)(void*))KSI_AggregationPdu_free,
 			KSI_TLV_TEMPLATE(KSI_AggregationPdu)
-			);	
+			);
 }
 
 
@@ -402,6 +413,6 @@ CuSuite* KSITest_TLV_Sample_getSuite(void)
 	SUITE_ADD_TEST(suite, extendPduTest);
 	SUITE_ADD_TEST(suite, testUnknownCriticalTagError);
 	SUITE_ADD_TEST(suite, testMissingMandatoryTagError);
-	
+
 	return suite;
 }

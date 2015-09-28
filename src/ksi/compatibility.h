@@ -37,9 +37,9 @@ extern "C" {
  * \param[in]		n		Maximum number of bytes to be written into buffer. Includes terminating NULL character.
  * \param[in]		format	Format string.
  * \param[in]		...		Extra parameters for formatting.
- * \return The number of characters written, not including terminating NUL character. On error -1 is returned.
+ * \return The number of characters written, not including terminating NUL character. On error 0 is returned.
  */
-int KSI_snprintf(char *buf, size_t n, const char *format, ... );
+size_t KSI_snprintf(char *buf, size_t n, const char *format, ... );
 
 /**
  * Platform independent version of vsnprintf.
@@ -47,9 +47,9 @@ int KSI_snprintf(char *buf, size_t n, const char *format, ... );
  * \param[in]		n		Maximum number of bytes to be written into buffer. Includes terminating NULL character.
  * \param[in]		format	Format string.
  * \param[in]		va		variable list.
- * \return The number of characters written, not including terminating NUL character. On error -1 is returned.
+ * \return The number of characters written, not including terminating NUL character. On error 0 is returned.
  */
-int KSI_vsnprintf(char *buf, size_t n, const char *format, va_list va);
+size_t KSI_vsnprintf(char *buf, size_t n, const char *format, va_list va);
 
 /**
  * Platform independent version of strncpy that guarantees NULL terminated
@@ -62,6 +62,14 @@ int KSI_vsnprintf(char *buf, size_t n, const char *format, va_list va);
  */
 char *KSI_strncpy (char *destination, const char *source, size_t n);
 
+/**
+ * Platform independent string duplicate function. It will create a new null-terminated string from the
+ * initial version.
+ * \param[in]	from		String to be copied.
+ * \param[in]	to 			Pointer to the receiving pointer.
+ * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+ */
+int KSI_strdup(const char *from, char **to);
 
 /*
  * @}

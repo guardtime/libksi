@@ -31,6 +31,7 @@
 
 #include "tlv.h"
 #include "pkitruststore.h"
+#include "ctx_impl.h"
 
 static const char *defaultCaFile =
 #ifdef OPENSSL_CA_FILE
@@ -136,7 +137,7 @@ int KSI_PKICertificate_fromTlv(KSI_TLV *tlv, KSI_PKICertificate **cert) {
 
 	KSI_PKICertificate *tmp = NULL;
 	const unsigned char *raw = NULL;
-	unsigned int raw_len = 0;
+	size_t raw_len = 0;
 
 
 	if (tlv == NULL) {
@@ -180,11 +181,10 @@ cleanup:
 }
 
 int KSI_PKICertificate_toTlv(KSI_CTX *ctx, KSI_PKICertificate *cert, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
-	KSI_ERR err;
 	int res;
 	KSI_TLV *tmp = NULL;
 	unsigned char *raw = NULL;
-	unsigned raw_len = 0;
+	size_t raw_len = 0;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -219,7 +219,7 @@ int KSI_PKICertificate_toTlv(KSI_CTX *ctx, KSI_PKICertificate *cert, unsigned ta
 
 cleanup:
 
-	KSI_nofree(raw);
+	KSI_free(raw);
 	KSI_TLV_free(tmp);
 
 	return res;
@@ -380,7 +380,7 @@ void KSI_PKISignature_free(KSI_PKISignature *sig) {
 	}
 }
 
-int KSI_PKISignature_serialize(KSI_PKISignature *sig, unsigned char **raw, unsigned *raw_len) {
+int KSI_PKISignature_serialize(KSI_PKISignature *sig, unsigned char **raw, size_t *raw_len) {
 	int res;
 	unsigned char *tmpOssl = NULL;
 	unsigned char *tmp = NULL;
@@ -405,7 +405,7 @@ int KSI_PKISignature_serialize(KSI_PKISignature *sig, unsigned char **raw, unsig
 		goto cleanup;
 	}
 
-	tmp = KSI_calloc((unsigned)len, 1);
+	tmp = KSI_calloc((size_t) len, 1);
 	if (tmp == NULL) {
 		KSI_pushError(sig->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
@@ -415,7 +415,7 @@ int KSI_PKISignature_serialize(KSI_PKISignature *sig, unsigned char **raw, unsig
 	i2d_PKCS7(sig->pkcs7, &tmpOssl);
 
 	*raw = tmp;
-	*raw_len = (unsigned)len;
+	*raw_len = (size_t) len;
 
 	tmp = NULL;
 
@@ -429,12 +429,12 @@ cleanup:
 }
 
 int KSI_PKISignature_fromTlv(KSI_TLV *tlv, KSI_PKISignature **sig) {
-	KSI_CTX *ctx = NULL;
 	int res;
+	KSI_CTX *ctx = NULL;
 
 	KSI_PKISignature *tmp = NULL;
 	const unsigned char *raw = NULL;
-	unsigned int raw_len = 0;
+	size_t raw_len = 0;
 
 	if (tlv == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -480,7 +480,7 @@ int KSI_PKISignature_toTlv(KSI_CTX *ctx, KSI_PKISignature *sig, unsigned tag, in
 	int res;
 	KSI_TLV *tmp = NULL;
 	unsigned char *raw = NULL;
-	unsigned raw_len = 0;
+	size_t raw_len = 0;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -515,13 +515,13 @@ int KSI_PKISignature_toTlv(KSI_CTX *ctx, KSI_PKISignature *sig, unsigned tag, in
 
 cleanup:
 
-	KSI_nofree(raw);
+	KSI_free(raw);
 	KSI_TLV_free(tmp);
 
 	return res;
 }
 
-int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, unsigned raw_len, KSI_PKISignature **signature) {
+int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, size_t raw_len, KSI_PKISignature **signature) {
 	int res;
 	KSI_PKISignature *tmp = NULL;
 	PKCS7 *pkcs7 = NULL;
@@ -620,7 +620,7 @@ cleanup:
 	return res;
 }
 
-int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, unsigned *raw_len) {
+int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, size_t *raw_len) {
 	int res;
 	unsigned char *tmp_ossl = NULL;
 	unsigned char *tmp = NULL;
@@ -654,16 +654,16 @@ int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, 
 	tmp = tmp_ossl;
 	i2d_X509(cert->x509, &tmp);
 
-	tmp = KSI_calloc((unsigned)len, 1);
+	tmp = KSI_calloc((size_t) len, 1);
 	if (tmp == NULL) {
 		KSI_pushError(cert->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
-	memcpy(tmp, tmp_ossl, (unsigned)len);
+	memcpy(tmp, tmp_ossl, (size_t) len);
 
 	*raw = tmp;
-	*raw_len = (unsigned)len;
+	*raw_len = (size_t) len;
 
 	tmp = NULL;
 	res = KSI_OK;
@@ -676,7 +676,7 @@ cleanup:
 	return res;
 }
 
-char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, unsigned buf_len){
+char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, size_t buf_len){
 	ASN1_OBJECT *oid = NULL;
 	X509_NAME *issuer = NULL;
 	X509_NAME *subject = NULL;
@@ -747,7 +747,7 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	ASN1_OBJECT *oid = NULL;
 	X509_STORE_CTX *storeCtx = NULL;
 	char tmp[256];
-	const char *magicEmail = NULL;
+	size_t i;
 
 	if (pki == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -761,6 +761,12 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 		goto cleanup;
 	}
 
+	/* Make sure the publications file verification constraints are configured. */
+	if (pki->ctx->certConstraints == NULL || pki->ctx->certConstraints[0].oid == NULL) {
+		KSI_pushError(pki->ctx, res = KSI_PUBFILE_VERIFICATION_NOT_CONFIGURED, NULL);
+		goto cleanup;
+	}
+
 	res = extractCertificate(signature, &cert);
 	if (res != KSI_OK) {
 		KSI_pushError(pki->ctx, res, NULL);
@@ -769,34 +775,35 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 
 	KSI_LOG_debug(pki->ctx, "Verifying PKI signature certificate.");
 
-	res = KSI_CTX_getPublicationCertEmail(pki->ctx, &magicEmail);
-	if (res != KSI_OK) {
-		KSI_pushError(pki->ctx, res, NULL);
+	subj = X509_get_subject_name(cert);
+	if (subj == NULL) {
+		KSI_pushError(pki->ctx, res = KSI_CRYPTO_FAILURE, "Unable to get subject name from certificate.");
 		goto cleanup;
 	}
 
-	if (magicEmail != NULL) {
-		KSI_LOG_debug(pki->ctx, "Verifying PKI signature certificate with e-mail address '%s'.", magicEmail);
+	for (i = 0; pki->ctx->certConstraints[i].oid != NULL; i++) {
+		KSI_CertConstraint *ptr = &pki->ctx->certConstraints[i];
 
-		subj = X509_get_subject_name(cert);
-		if (subj == NULL) {
-			KSI_pushError(pki->ctx, res = KSI_CRYPTO_FAILURE, "Unable to get subject name from certificate.");
-			goto cleanup;
-		}
-		oid = OBJ_txt2obj("1.2.840.113549.1.9.1", 1);
+		KSI_LOG_info(pki->ctx, "%d. Verifying PKI signature certificate with oid = '%s' expected value '%s'.", i + 1, ptr->oid, ptr->val);
+
+		oid = OBJ_txt2obj(ptr->oid, 1);
 		if (oid == NULL) {
 			KSI_pushError(pki->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 			goto cleanup;
 		}
+
 		res = X509_NAME_get_text_by_OBJ(subj, oid, tmp, sizeof(tmp));
 		if (res < 0) {
 			KSI_pushError(pki->ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, NULL);
 			goto cleanup;
 		}
-		if (strcmp(tmp, magicEmail)) {
+		if (strcmp(tmp, ptr->val)) {
 			KSI_pushError(pki->ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, "Wrong subject name.");
 			goto cleanup;
 		}
+
+		ASN1_OBJECT_free(oid);
+		oid = NULL;
 	}
 
 	storeCtx = X509_STORE_CTX_new();
@@ -826,8 +833,6 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	res = KSI_OK;
 
 cleanup:
-
-	KSI_nofree(magicEmail);
 
 	if (storeCtx != NULL) X509_STORE_CTX_free(storeCtx);
 	if (oid != NULL) ASN1_OBJECT_free(oid);
@@ -892,8 +897,7 @@ cleanup:
 	return res;
 }
 
-int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, unsigned data_len, const char *algoOid, const unsigned char *signature, unsigned signature_len, const KSI_PKICertificate *certificate) {
-	KSI_ERR err;
+int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, size_t data_len, const char *algoOid, const unsigned char *signature, size_t signature_len, const KSI_PKICertificate *certificate) {
 	int res;
 	ASN1_OBJECT* algorithm = NULL;
     EVP_MD_CTX md_ctx;
@@ -955,7 +959,7 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
     	goto cleanup;
     }
 
-    res = EVP_VerifyFinal(&md_ctx, (unsigned char *)signature, signature_len, pubKey);
+    res = EVP_VerifyFinal(&md_ctx, (unsigned char *)signature, (unsigned)signature_len, pubKey);
     if (res < 0) {
 		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, NULL);
 		goto cleanup;

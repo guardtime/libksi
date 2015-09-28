@@ -27,7 +27,7 @@ echo "Old version: $old_version"
 function inc {
 	VERSION[$1]=$((${VERSION[$1]} + 1))
 	i=$(($1 + 1))
-	while [ $i -lt 3 ]; do
+	while [ $i -lt 4 ]; do
 		VERSION[$i]=0
 		i=$((i + 1))
 	done;

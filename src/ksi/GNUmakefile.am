@@ -32,9 +32,12 @@ libksi_la_SOURCES = \
 	crc32.h \
 	ctx_impl.h \
 	err.h \
+	fast_tlv.h \
+	fast_tlv.c \
 	hash.c \
 	hashchain.c \
 	hashchain.h \
+	hashchain_impl.h \
 	hash.h \
 	hash_impl.h \
 	hash_openssl.c \
@@ -50,6 +53,9 @@ libksi_la_SOURCES = \
 	list.h \
 	log.c \
 	log.h \
+	multi_signature_impl.h \
+	multi_signature.h \
+	multi_signature.c \
 	net.c \
 	net.h \
 	net_http.c \
@@ -90,7 +96,8 @@ otherinclude_HEADERS = \
 	base32.h \
 	common.h \
 	crc32.h \
-    err.h \
+	err.h \
+	fast_tlv.h \
 	hash.h \
 	hashchain.h \
 	hmac.h \
@@ -104,6 +111,7 @@ otherinclude_HEADERS = \
 	tlv_template.h \
 	types.h \
 	types_base.h \
+	multi_signature.h \
 	net.h \
 	net_http.h \
 	net_tcp.h \

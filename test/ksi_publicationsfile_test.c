@@ -27,6 +27,7 @@ extern unsigned char *KSI_NET_MOCK_response;
 extern unsigned KSI_NET_MOCK_response_len;
 
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
+#define TAMPERED_PUBLICATIONS_FILE "resource/tlv/publications-fake-publication.tlv"
 
 static void setFileMockResponse(CuTest *tc, const char *fileName) {
 	FILE *f = NULL;
@@ -89,6 +90,135 @@ static void testVerifyPublicationsFile(CuTest *tc) {
 	KSI_PublicationsFile_free(pubFile);
 }
 
+static void testVerifyPublicationsFileWithOrganization(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_CertConstraint arr[] = {
+			{KSI_CERT_EMAIL, "publications@guardtime.com"},
+			{NULL, NULL},
+			{NULL, NULL}
+	};
+
+	KSI_ERR_clearErrors(ctx);
+
+	setFileMockResponse(tc, getFullResourcePath(TEST_PUBLICATIONS_FILE));
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	arr[1].oid = KSI_CERT_ORGANIZATION;
+	arr[1].val = "Guardtime AS";
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, arr);
+	CuAssert(tc, "Unable to set OID 2.5.4.10", res == KSI_OK);
+
+	/* Verification should fail. */
+	res = KSI_PublicationsFile_verify(pubFile, ctx);
+	CuAssert(tc, "Publications file must verify with OID='2.5.4.10' value 'Guardtime AS'.", res == KSI_OK);
+
+	arr[1].val = "Guardtime US";
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, arr);
+	CuAssert(tc, "Unable to set OID 2.5.4.10", res == KSI_OK);
+
+	/* Verification should fail. */
+	res = KSI_PublicationsFile_verify(pubFile, ctx);
+	CuAssert(tc, "Publications file may not verify with wrong company'.", res != KSI_OK);
+	/* Verification should succeed. */
+
+	arr[1].oid = NULL;
+	arr[1].val = NULL;
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, arr);
+	CuAssert(tc, "Unable to set OID 2.5.4.10", res == KSI_OK);
+
+	/* Verification should fail. */
+	res = KSI_PublicationsFile_verify(pubFile, ctx);
+	CuAssert(tc, "Publications file must verify with OID='2.5.4.10' removed from the constraints", res == KSI_OK);
+
+	CuAssert(tc, "Publications file should verify with mock certificate.", res == KSI_OK);
+
+	KSI_PublicationsFile_free(pubFile);
+}
+
+static void testVerifyPublicationsFileWithNoConstraints(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_CertConstraint arr[] = {
+			{NULL, NULL},
+			{NULL, NULL}
+	};
+
+	KSI_ERR_clearErrors(ctx);
+
+	setFileMockResponse(tc, getFullResourcePath(TEST_PUBLICATIONS_FILE));
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, arr);
+	CuAssert(tc, "Unable to delete OID 1.2.840.113549.1.9.1", res == KSI_OK);
+
+	/* Verification should not fail. */
+	res = KSI_PublicationsFile_verify(pubFile, ctx);
+	CuAssert(tc, "Publications file may not verify with no constraints.", res == KSI_PUBFILE_VERIFICATION_NOT_CONFIGURED);
+
+	arr[0].oid = KSI_CERT_EMAIL;
+	arr[0].val = "publications@guardtime.com";
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, arr);
+	CuAssert(tc, "Unable to set OID 1.2.840.113549.1.9.1 back to normal", res == KSI_OK);
+
+	/* Verification should not fail. */
+	res = KSI_PublicationsFile_verify(pubFile, ctx);
+	CuAssert(tc, "Publications file must verify with e-mail.", res == KSI_OK);
+
+	KSI_PublicationsFile_free(pubFile);
+}
+
+static void testVerifyPublicationsFileWithAttributeNotPresent(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_CertConstraint arr[] = {
+			{NULL, NULL},
+			{NULL, NULL}
+	};
+
+	KSI_ERR_clearErrors(ctx);
+
+	setFileMockResponse(tc, getFullResourcePath(TEST_PUBLICATIONS_FILE));
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	arr[0].oid = "2.5.4.9";
+	arr[0].val = "Local pub";
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, arr);
+	CuAssert(tc, "Unable to delete OID 2.5.4.9", res == KSI_OK);
+
+	/* Verification should fail. */
+	res = KSI_PublicationsFile_verify(pubFile, ctx);
+	CuAssert(tc, "Publications file must verify with address.", res != KSI_OK);
+
+	arr[0].oid = KSI_CERT_EMAIL;
+	arr[0].val = "publications@guardtime.com";
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, arr);
+	CuAssert(tc, "Unable to set OID 2.5.4.9 back to normal", res == KSI_OK);
+
+	/* Verification should not fail. */
+	res = KSI_PublicationsFile_verify(pubFile, ctx);
+	CuAssert(tc, "Publications file must verify.", res == KSI_OK);
+
+	KSI_PublicationsFile_free(pubFile);
+}
+
+static void testVerifyPublicationsFileAddidionalPublications(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TAMPERED_PUBLICATIONS_FILE), &pubFile);
+	CuAssert(tc, "This publications file does not follow the correct format.", res != KSI_OK && pubFile == NULL);
+
+	KSI_PublicationsFile_free(pubFile);
+}
 
 static void testPublicationStringEncodingAndDecoding(CuTest *tc) {
 	static const char publication[] = "AAAAAA-CTJR3I-AANBWU-RY76YF-7TH2M5-KGEZVA-WLLRGD-3GKYBG-AM5WWV-4MCLSP-XPRDDI-UFMHBA";
@@ -121,7 +251,7 @@ static void testFindPublicationByPubStr(CuTest *tc) {
 	KSI_Integer *pubTime = NULL;
 	KSI_DataHash *expHsh = NULL;
 	unsigned char buf[0xff];
-	unsigned len;
+	size_t len;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -161,7 +291,7 @@ static void testFindPublicationByTime(CuTest *tc) {
 	KSI_DataHash *expHsh = NULL;
 	KSI_LIST(KSI_Utf8String) *pubRefList = NULL;
 	unsigned char buf[0xff];
-	unsigned len;
+	size_t len;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -241,11 +371,14 @@ static void testSerializePublicationsFile(CuTest *tc) {
 	int res;
 	KSI_PublicationsFile *pubFile = NULL;
 	char *raw = NULL;
-	unsigned raw_len = 0;
+	size_t raw_len = 0;
 	FILE *f = NULL;
 	int symbol = 0;
-	unsigned i= 0;
-	
+	size_t i = 0;
+	size_t signedDataLengthAtLoading;
+	size_t signedDataLengthAtSerialization;
+
+
 	KSI_ERR_clearErrors(ctx);
 
 	setFileMockResponse(tc, getFullResourcePath(TEST_PUBLICATIONS_FILE));
@@ -253,22 +386,219 @@ static void testSerializePublicationsFile(CuTest *tc) {
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
 
+	res = KSI_PublicationsFile_getSignedDataLength(pubFile, &signedDataLengthAtLoading);
+	CuAssert(tc, "Unable to get signed data length.", res == KSI_OK);
+
 	res = KSI_PublicationsFile_serialize(ctx, pubFile, &raw, &raw_len);
 	CuAssert(tc, "Unable to serialize publications file", res == KSI_OK && raw != NULL && raw_len != 0);
-	
+
+	res = KSI_PublicationsFile_getSignedDataLength(pubFile, &signedDataLengthAtSerialization);
+	CuAssert(tc, "Unable to get signed data length.", res == KSI_OK);
+
 	f = fopen(getFullResourcePath(TEST_PUBLICATIONS_FILE), "rb");
 	CuAssert(tc, "Unable to open publications file", res == KSI_OK && f != NULL);
-	
+
 	while ((symbol = getc(f)) != EOF && i<raw_len){
-		CuAssert(tc, "Serialized publications file mismatch", (char)symbol == raw[i]);
+		CuAssert(tc, "Serialized publications file mismatch", (char) symbol == raw[i]);
 		i++;
 	}
-	
-	CuAssert(tc, "Serialized publications file length  mismatch", i == raw_len);
-	
+
+	CuAssert(tc, "Serialized publications file length mismatch", i == raw_len);
+
+	CuAssert(tc, "Serialized publications file length mismatch", signedDataLengthAtSerialization == signedDataLengthAtLoading);
+
+
+
 	KSI_PublicationsFile_free(pubFile);
 	KSI_free(raw);
 	if (f) fclose(f);
+}
+
+static void testGetNearestPublication(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
+	KSI_Integer *tm = NULL;
+	KSI_PublicationData *pubDat = NULL;
+	KSI_Integer *pubTm = NULL;
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_Integer_new(ctx, 1289779234, &tm);
+	CuAssert(tc, "Unable to create integer", res == KSI_OK && tm != NULL);
+
+	res = KSI_PublicationsFile_getNearestPublication(pubFile, tm, &pubRec);
+	CuAssert(tc, "Unable to find nearest publication", res == KSI_OK && pubRec != NULL);
+
+	res = KSI_PublicationRecord_getPublishedData(pubRec, &pubDat);
+	CuAssert(tc, "Unable to get published data", res == KSI_OK && pubDat != NULL);
+
+	res = KSI_PublicationData_getTime(pubDat, &pubTm);
+	CuAssert(tc, "Unable to get publication time", res == KSI_OK && pubTm != NULL);
+
+	CuAssert(tc, "Unexpected publication time", KSI_Integer_equalsUInt(pubTm, 1292371200));
+
+	KSI_PublicationsFile_free(pubFile);
+	KSI_Integer_free(tm);
+}
+
+
+static void testGetNearestPublicationOf0(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
+	KSI_Integer *tm = NULL;
+	KSI_PublicationData *pubDat = NULL;
+	KSI_Integer *pubTm = NULL;
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	/* With time set to 0, the result should be the first publication record in the publications file. */
+	res = KSI_Integer_new(ctx, 0, &tm);
+	CuAssert(tc, "Unable to create integer", res == KSI_OK && tm != NULL);
+
+	res = KSI_PublicationsFile_getNearestPublication(pubFile, tm, &pubRec);
+	CuAssert(tc, "Unable to find nearest publication", res == KSI_OK && pubRec != NULL);
+
+	res = KSI_PublicationRecord_getPublishedData(pubRec, &pubDat);
+	CuAssert(tc, "Unable to get published data", res == KSI_OK && pubDat != NULL);
+
+	res = KSI_PublicationData_getTime(pubDat, &pubTm);
+	CuAssert(tc, "Unable to get publication time", res == KSI_OK && pubTm != NULL);
+
+	CuAssert(tc, "Unexpected publication time", KSI_Integer_equalsUInt(pubTm, 1208217600));
+
+	KSI_PublicationsFile_free(pubFile);
+	KSI_Integer_free(tm);
+}
+
+static void testGetNearestPublicationWithPubTime(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
+	KSI_Integer *tm = NULL;
+	KSI_PublicationData *pubDat = NULL;
+	KSI_Integer *pubTm = NULL;
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	/* With time set to 0, the result should be the first publication record in the publications file. */
+	res = KSI_Integer_new(ctx, 1208217600, &tm);
+	CuAssert(tc, "Unable to create integer", res == KSI_OK && tm != NULL);
+
+	res = KSI_PublicationsFile_getNearestPublication(pubFile, tm, &pubRec);
+	CuAssert(tc, "Unable to find nearest publication", res == KSI_OK && pubRec != NULL);
+
+	res = KSI_PublicationRecord_getPublishedData(pubRec, &pubDat);
+	CuAssert(tc, "Unable to get published data", res == KSI_OK && pubDat != NULL);
+
+	res = KSI_PublicationData_getTime(pubDat, &pubTm);
+	CuAssert(tc, "Unable to get publication time", res == KSI_OK && pubTm != NULL);
+
+	CuAssert(tc, "Unexpected publication time", KSI_Integer_equalsUInt(pubTm, 1208217600));
+
+	KSI_PublicationsFile_free(pubFile);
+	KSI_Integer_free(tm);
+}
+
+static void testGetNearestPublicationOfFuture(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
+	KSI_Integer *tm = NULL;
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	/* With time set to 0, the result should be the first publication record in the publications file. */
+	res = KSI_Integer_new(ctx, 2208217600, &tm);
+	CuAssert(tc, "Unable to create integer", res == KSI_OK && tm != NULL);
+
+	res = KSI_PublicationsFile_getNearestPublication(pubFile, tm, &pubRec);
+	CuAssert(tc, "There should not be a valid publication", res == KSI_OK && pubRec == NULL);
+
+	KSI_PublicationsFile_free(pubFile);
+	KSI_Integer_free(tm);
+}
+
+static void testGetLatestPublicationOf0(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
+	KSI_Integer *tm = NULL;
+	KSI_PublicationData *pubDat = NULL;
+	KSI_Integer *pubTm = NULL;
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_Integer_new(ctx, 1289779234, &tm);
+	CuAssert(tc, "Unable to create integer", res == KSI_OK && tm != NULL);
+
+	res = KSI_PublicationsFile_getLatestPublication(pubFile, tm, &pubRec);
+	CuAssert(tc, "Unable to find nearest publication", res == KSI_OK && pubRec != NULL);
+
+	res = KSI_PublicationRecord_getPublishedData(pubRec, &pubDat);
+	CuAssert(tc, "Unable to get published data", res == KSI_OK && pubDat != NULL);
+
+	res = KSI_PublicationData_getTime(pubDat, &pubTm);
+	CuAssert(tc, "Unable to get publication time", res == KSI_OK && pubTm != NULL);
+
+	CuAssert(tc, "Unexpected publication time (this test might fail, if you have recently updated the publications file in the tests)", KSI_Integer_equalsUInt(pubTm, 1405382400));
+
+	KSI_PublicationsFile_free(pubFile);
+	KSI_Integer_free(tm);
+}
+
+static void testGetLatestPublicationOfLast(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
+	KSI_Integer *tm = NULL;
+	KSI_PublicationData *pubDat = NULL;
+	KSI_Integer *pubTm = NULL;
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_Integer_new(ctx, 1405382400, &tm);
+	CuAssert(tc, "Unable to create integer", res == KSI_OK && tm != NULL);
+
+	res = KSI_PublicationsFile_getLatestPublication(pubFile, tm, &pubRec);
+	CuAssert(tc, "Unable to find nearest publication", res == KSI_OK && pubRec != NULL);
+
+	res = KSI_PublicationRecord_getPublishedData(pubRec, &pubDat);
+	CuAssert(tc, "Unable to get published data", res == KSI_OK && pubDat != NULL);
+
+	res = KSI_PublicationData_getTime(pubDat, &pubTm);
+	CuAssert(tc, "Unable to get publication time", res == KSI_OK && pubTm != NULL);
+
+	CuAssert(tc, "Unexpected publication time (this test might fail, if you have recently updated the publications file in the tests)", KSI_Integer_equalsUInt(pubTm, 1405382400));
+
+	KSI_PublicationsFile_free(pubFile);
+	KSI_Integer_free(tm);
+}
+
+static void testGetLatestPublicationOfFuture(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
+	KSI_Integer *tm = NULL;
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_Integer_new(ctx, 2405382400, &tm);
+	CuAssert(tc, "Unable to create integer", res == KSI_OK && tm != NULL);
+
+	res = KSI_PublicationsFile_getLatestPublication(pubFile, tm, &pubRec);
+	CuAssert(tc, "This publication should not exist.", res == KSI_OK && pubRec == NULL);
+
+	KSI_PublicationsFile_free(pubFile);
+	KSI_Integer_free(tm);
 }
 
 
@@ -282,6 +612,17 @@ CuSuite* KSITest_Publicationsfile_getSuite(void) {
 	SUITE_ADD_TEST(suite, testFindPublicationByTime);
 	SUITE_ADD_TEST(suite, testFindPublicationRef);
 	SUITE_ADD_TEST(suite, testSerializePublicationsFile);
+	SUITE_ADD_TEST(suite, testVerifyPublicationsFileWithOrganization);
+	SUITE_ADD_TEST(suite, testVerifyPublicationsFileWithNoConstraints);
+	SUITE_ADD_TEST(suite, testVerifyPublicationsFileWithAttributeNotPresent);
+	SUITE_ADD_TEST(suite, testVerifyPublicationsFileAddidionalPublications);
+	SUITE_ADD_TEST(suite, testGetNearestPublication);
+	SUITE_ADD_TEST(suite, testGetNearestPublicationOf0);
+	SUITE_ADD_TEST(suite, testGetNearestPublicationWithPubTime);
+	SUITE_ADD_TEST(suite, testGetNearestPublicationOfFuture);
+	SUITE_ADD_TEST(suite, testGetLatestPublicationOf0);
+	SUITE_ADD_TEST(suite, testGetLatestPublicationOfLast);
+	SUITE_ADD_TEST(suite, testGetLatestPublicationOfFuture);
 
 	return suite;
 }

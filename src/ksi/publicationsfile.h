@@ -50,8 +50,10 @@ extern "C" {
 	 * \param[in]	raw				Pointer to the raw publications file.
 	 * \param[in]	raw_len			Length of the raw publications file.
 	 * \param[out]	pubFile			Pointer to the receiving pointer to the publications file object.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, unsigned raw_len, KSI_PublicationsFile **pubFile);
+	int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, size_t raw_len, KSI_PublicationsFile **pubFile);
 
 	/**
 	 * A convenience function for loading a publications file from an actual file.
@@ -64,14 +66,14 @@ extern "C" {
 	int KSI_PublicationsFile_fromFile(KSI_CTX *ctx, const char *fileName, KSI_PublicationsFile **pubFile);
 
 	/**
-	 *
-	 * @param[in]		ctx			KSI context.
-	 * @param[in]		pubFile		Publications file.
-	 * @param[out]		raw	Pointer to the pointer to output buffer.
-	 * @param[out]		raw_len	Pointer to the length of the buffer variable.
-	 * @return
+	 * This function serializes the publications file object into raw data.
+	 * \param[in]		ctx			KSI context.
+	 * \param[in]		pubFile		Publications file.
+	 * \param[out]		raw			Pointer to the pointer to output buffer.
+	 * \param[out]		raw_len		Pointer to the length of the buffer variable.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-    int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, char **raw, unsigned* raw_len);
+    int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, char **raw, size_t *raw_len);
 
 	/**
 	 * Verify PKI signature of the publications file using the PKI truststore.
@@ -127,6 +129,18 @@ extern "C" {
 	int KSI_PublicationsFile_getSignature(const KSI_PublicationsFile *pubFile, KSI_PKISignature **signature);
 
 	/**
+	 * Publications file signed data length getter. It describes how many first
+	 * bytes of serialized publications file are or are going to be signed with
+	 * PKI signature. If publications file is changed it must be serialized to
+	 * get valid result \see #KSI_PublicationsFile_serialize.
+	 * \param[in]	pubFile			Publications file.
+     * \param signedDataLength
+	 * 
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+     */
+	int KSI_PublicationsFile_getSignedDataLength (const KSI_PublicationsFile *pubFile, size_t *signedDataLength);
+	/**
 	 * PKI Certificate search function by certificate Id.
 	 * \param[in]	pubFile			Publications file.
 	 * \param[in]	id				Certificate id.
@@ -179,11 +193,11 @@ extern "C" {
 	int KSI_PublicationsFile_getNearestPublication(const KSI_PublicationsFile *pubFile, const KSI_Integer *pubTime, KSI_PublicationRecord **pubRec);
 
 	/**
-	 * Search nearest publication by time. The next available publication (published
+	 * Search latest publication by time. The last available publication (published
 	 * after the given time \c pubTime) is returned via the output parameter \c pubRec
 	 * if found, otherwise \c pubRec is evaluated to NULL.
 	 * \param[in]	pubFile			Publications file.
-	 * \param[in]	pubTime			Publication time.
+	 * \param[in]	pubTime			Publication time. If this is \c NULL, latest publication in the file is returned.
 	 * \param[out]	pubRec			Pointer to receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
@@ -191,7 +205,56 @@ extern "C" {
 	 * \note The output object may not be freed by the user.
 	 */
 	int KSI_PublicationsFile_getLatestPublication(const KSI_PublicationsFile *pubFile, const KSI_Integer *pubTime, KSI_PublicationRecord **pubRec);
-
+	
+	/**
+	 * Publicationsfile header setter method.
+	 * \param[in]	pubFile			Publications file.
+	 * \param[in]	header	Pointer to the list of certificates.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 */
+	int KSI_PublicationsFile_setHeader(KSI_PublicationsFile *pubFile, KSI_PublicationsHeader *header);
+	
+	/**
+	 * Publicationsfile certificate list setter method.
+	 * \param[in]	pubFile			Publications file.
+	 * \param[in]	certificates	Pointer to the list of certificates.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 */
+	int KSI_PublicationsFile_setCertificates(KSI_PublicationsFile *pubFile, KSI_LIST(KSI_CertificateRecord) *certificates);
+	
+	/**
+	 * Publicationsfile publications list setter method.
+	 * \param[in]	pubFile			Publications file.
+	 * \param[in]	publications	Pointer to the list of publications.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 */
+	int KSI_PublicationsFile_setPublications(KSI_PublicationsFile *pubFile, KSI_LIST(KSI_PublicationRecord) *publications);
+	
+	/**
+	 * Publicationsfile signature setter method.
+	 * \param[in]	pubFile			Publications file.
+	 * \param[in]	signature		Pointer to KSI signature object.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 */
+	int KSI_PublicationsFile_setSignature(KSI_PublicationsFile *pubFile, KSI_PKISignature *signature);
+	
+	/**
+	 * This function creates an empty publications file.
+     * \param[in]	ctx		KSI context.
+     * \param[out]	pubFile	Pointer to receiving pointer.
+	 * 
+	 * 	\return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+     */
+	int KSI_PublicationsFile_new(KSI_CTX *ctx, KSI_PublicationsFile **pubFile);
+	
 	/**
 	 * Function for freeing publicationsfile object.
 	 * \param[in]	pubFile		Publicationsfile to be freed.
@@ -232,7 +295,7 @@ extern "C" {
 	int KSI_PublicationData_setBaseTlv ( KSI_PublicationData *o, KSI_TLV* baseTlv);
 	int KSI_PublicationData_setTime(KSI_PublicationData *t, KSI_Integer *time);
 	int KSI_PublicationData_setImprint(KSI_PublicationData *t, KSI_DataHash *imprint);
-	char *KSI_PublicationData_toString(KSI_PublicationData *t, char *buffer, unsigned buffer_len);
+	char *KSI_PublicationData_toString(KSI_PublicationData *t, char *buffer, size_t buffer_len);
 	int KSI_PublicationData_fromTlv (KSI_TLV *tlv, KSI_PublicationData **data);
 	int KSI_PublicationData_toTlv (KSI_CTX *ctx, const KSI_PublicationData *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
@@ -247,9 +310,10 @@ extern "C" {
 	int KSI_PublicationRecord_setPublishedData(KSI_PublicationRecord *t, KSI_PublicationData *publishedData);
 	int KSI_PublicationRecord_setPublicationRefList(KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) *publicationRef);
 	int KSI_PublicationRecord_setRepositoryUriList(KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) *repUriList);
-	char *KSI_PublicationRecord_toString(KSI_PublicationRecord *t, char *buffer, unsigned buffer_len);
+	char *KSI_PublicationRecord_toString(KSI_PublicationRecord *t, char *buffer, size_t buffer_len);
 	int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_PublicationRecord **clone);
-
+	KSI_DEFINE_REF(KSI_PublicationRecord);
+	KSI_DEFINE_WRITE_BYTES(KSI_PublicationRecord);
 	/**
 	 * @}
 	 */

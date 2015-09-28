@@ -27,7 +27,7 @@ extern "C" {
 	struct KSI_PublicationsFile_st {
 		KSI_CTX *ctx;
 		unsigned char *raw;
-		unsigned raw_len;
+		size_t raw_len;
 		KSI_PublicationsHeader *header;
 		KSI_LIST(KSI_CertificateRecord) *certificates;
 		KSI_LIST(KSI_PublicationRecord) *publications;
@@ -44,6 +44,8 @@ extern "C" {
 
 	struct KSI_PublicationRecord_st {
 		KSI_CTX *ctx;
+		size_t ref;
+
 		KSI_PublicationData *publishedData;
 		KSI_LIST(KSI_Utf8String) *publicationRef;
 		KSI_LIST(KSI_Utf8String) *repositoryUriList;

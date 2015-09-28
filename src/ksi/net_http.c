@@ -26,7 +26,6 @@ static int setStringParam(char **param, const char *val) {
 	char *tmp = NULL;
 	int res = KSI_UNKNOWN_ERROR;
 
-
 	tmp = KSI_calloc(strlen(val) + 1, 1);
 	if (tmp == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -58,7 +57,7 @@ static int setIntParam(int *param, int val) {
 static int prepareRequest(
 		KSI_NetworkClient *client,
 		void *pdu,
-		int (*serialize)(void *, unsigned char **, unsigned *),
+		int (*serialize)(void *, unsigned char **, size_t *),
 		KSI_RequestHandle **handle,
 		char *url,
 		const char *desc) {
@@ -66,7 +65,7 @@ static int prepareRequest(
 	KSI_HttpClient *http = (KSI_HttpClient *)client;
 	KSI_RequestHandle *tmp = NULL;
 	unsigned char *raw = NULL;
-	unsigned raw_len = 0;
+	size_t raw_len = 0;
 
 	if (client == NULL || pdu == NULL || handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -117,13 +116,23 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ExtendPdu *pdu = NULL;
 
+	if (client == NULL || req == NULL || handle == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (((KSI_HttpClient*)client)->urlExtender == NULL) {
+		res = KSI_EXTENDER_NOT_CONFIGURED;
+		goto cleanup;
+	}
+
 	res = KSI_ExtendReq_enclose(req, client->extUser, client->extPass, &pdu);
 	if (res != KSI_OK) goto cleanup;
 
 	res = prepareRequest(
 			client,
 			pdu,
-			(int (*)(void *, unsigned char **, unsigned *))KSI_ExtendPdu_serialize,
+			(int (*)(void *, unsigned char **, size_t *))KSI_ExtendPdu_serialize,
 			handle,
 			((KSI_HttpClient*)client)->urlExtender,
 			"Extend request");
@@ -144,13 +153,24 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationPdu *pdu = NULL;
 
+	if (client == NULL || req == NULL || handle == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (((KSI_HttpClient*)client)->urlAggregator == NULL) {
+		res = KSI_AGGREGATOR_NOT_CONFIGURED;
+		goto cleanup;
+	}
+
+
 	res = KSI_AggregationReq_enclose(req, client->aggrUser, client->aggrPass, &pdu);
 	if (res != KSI_OK) goto cleanup;
 
 	res = prepareRequest(
 			client,
 			pdu,
-			(int (*)(void *, unsigned char **, unsigned *))KSI_AggregationPdu_serialize,
+			(int (*)(void *, unsigned char **, size_t *))KSI_AggregationPdu_serialize,
 			handle,
 			((KSI_HttpClient*)client)->urlAggregator,
 			"Aggregation request");
@@ -172,6 +192,11 @@ static int preparePublicationsFileRequest(KSI_NetworkClient *client, KSI_Request
 		goto cleanup;
 	}
 	KSI_ERR_clearErrors(client->ctx);
+
+	if (http->urlPublication == NULL) {
+		KSI_pushError(client->ctx, res = KSI_PUBLICATIONS_FILE_NOT_CONFIGURED, "The publications file URL has not been configured.");
+		goto cleanup;
+	}
 
 	if (http->sendRequest == NULL) {
 		KSI_pushError(client->ctx, res = KSI_UNKNOWN_ERROR, "Send request not initialized.");
@@ -256,7 +281,6 @@ int KSI_HttpClient_init(KSI_CTX *ctx, KSI_HttpClient *client) {
 
 	setIntParam(&client->connectionTimeoutSeconds, 10);
 	setIntParam(&client->readTimeoutSeconds, 10);
-	setStringParam(&client->urlPublication, KSI_DEFAULT_URI_PUBLICATIONS_FILE);
 	setStringParam(&client->agentName, "KSI HTTP Client"); /** Should be only user provided */
 
 	res = KSI_HttpClientImpl_init(client);

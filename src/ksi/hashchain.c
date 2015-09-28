@@ -24,28 +24,14 @@
 #include "hashchain.h"
 #include "tlv.h"
 #include "tlv_template.h"
+#include "hashchain_impl.h"
 
 /* For optimization reasons, we need need access to KSI_DataHasher->closeExisting() function. */
 #include "hash_impl.h"
 
-KSI_IMPORT_TLV_TEMPLATE(KSI_HashChainLink)
+KSI_IMPORT_TLV_TEMPLATE(KSI_HashChainLink);
+KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarHashChain);
 
-struct KSI_HashChainLink_st {
-	KSI_CTX *ctx;
-	int isLeft;
-	KSI_Integer *levelCorrection;
-	KSI_DataHash *metaHash;
-	KSI_MetaData *metaData;
-	KSI_DataHash *imprint;
-};
-
-struct KSI_CalendarHashChain_st {
-	KSI_CTX *ctx;
-	KSI_Integer *publicationTime;
-	KSI_Integer *aggregationTime;
-	KSI_DataHash *inputHash;
-	KSI_LIST(KSI_HashChainLink) *hashChain;
-};
 
 KSI_IMPLEMENT_LIST(KSI_HashChainLink, KSI_HashChainLink_free);
 KSI_IMPLEMENT_LIST(KSI_CalendarHashChainLink, KSI_HashChainLink_free);
@@ -66,7 +52,7 @@ static int addNvlImprint(const KSI_DataHash *first, const KSI_DataHash *second, 
 	int res = KSI_UNKNOWN_ERROR;
 	const KSI_DataHash *hsh = first;
 	const unsigned char *imprint = NULL;
-	unsigned int imprint_len;
+	size_t imprint_len;
 
 	if (hsh == NULL) {
 		if (second == NULL) {
@@ -95,7 +81,7 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 	int res = KSI_UNKNOWN_ERROR;
 	int mode = 0;
 	const unsigned char *imprint = NULL;
-	unsigned int imprint_len;
+	size_t imprint_len;
 	KSI_MetaData *metaData = NULL;
 	KSI_DataHash *metaHash = NULL;
 	KSI_DataHash *hash = NULL;
@@ -181,13 +167,13 @@ cleanup:
 	return res;
 }
 
-static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, int startLevel, int hash_id, int isCalendar, int *endLevel, KSI_DataHash **outputHash) {
+static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, int startLevel, KSI_HashAlgorithm aggr_algo_id, int isCalendar, int *endLevel, KSI_DataHash **outputHash) {
 	int res = KSI_UNKNOWN_ERROR;
 	int level = startLevel;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
 	KSI_HashChainLink *link = NULL;
-	int algo_id = hash_id;
+	KSI_HashAlgorithm algo_id = aggr_algo_id;
 	char chr_level;
 	char logMsg[0xff];
 	size_t i;
@@ -372,8 +358,8 @@ cleanup:
 /**
  *
  */
-int KSI_HashChain_aggregate(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, int startLevel, int hash_id, int *endLevel, KSI_DataHash **outputHash) {
-	return aggregateChain(ctx, chain, inputHash, startLevel, hash_id, 0, endLevel, outputHash);
+int KSI_HashChain_aggregate(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, const KSI_DataHash *inputHash, int startLevel, KSI_HashAlgorithm algo_id, int *endLevel, KSI_DataHash **outputHash) {
+	return aggregateChain(ctx, chain, inputHash, startLevel, algo_id, 0, endLevel, outputHash);
 }
 
 /**
@@ -387,7 +373,7 @@ int KSI_HashChain_aggregateCalendar(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *c
  * KSI_CalendarHashChain
  */
 void KSI_CalendarHashChain_free(KSI_CalendarHashChain *t) {
-	if (t != NULL) {
+	if (t != NULL && --t->ref == 0) {
 		KSI_Integer_free(t->publicationTime);
 		KSI_Integer_free(t->aggregationTime);
 		KSI_DataHash_free(t->inputHash);
@@ -406,6 +392,7 @@ int KSI_CalendarHashChain_new(KSI_CTX *ctx, KSI_CalendarHashChain **t) {
 	}
 
 	tmp->ctx = ctx;
+	tmp->ref = 1;
 	tmp->publicationTime = NULL;
 	tmp->aggregationTime = NULL;
 	tmp->inputHash = NULL;
@@ -417,6 +404,9 @@ cleanup:
 	KSI_CalendarHashChain_free(tmp);
 	return res;
 }
+
+KSI_IMPLEMENT_REF(KSI_CalendarHashChain);
+KSI_IMPLEMENT_WRITE_BYTES(KSI_CalendarHashChain, 0x0802, 0, 0);
 
 int KSI_CalendarHashChain_aggregate(KSI_CalendarHashChain *chain, KSI_DataHash **hsh) {
 	int res = KSI_UNKNOWN_ERROR;

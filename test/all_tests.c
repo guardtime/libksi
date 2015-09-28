@@ -46,6 +46,11 @@ KSI_CTX *ctx = NULL;
 extern unsigned char *KSI_NET_MOCK_response;
 extern unsigned KSI_NET_MOCK_response_len;
 
+const KSI_CertConstraint testPubFileCertConstraints[] = {
+		{ KSI_CERT_EMAIL, "publications@guardtime.com"},
+		{ NULL, NULL }
+};
+
 
 void KSITest_setFileMockResponse(CuTest *tc, const char *fileName) {
 	FILE *f = NULL;
@@ -149,6 +154,7 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSITest_Truststore_getSuite);
 	addSuite(suite, KSITest_compatibility_getSuite);
 	addSuite(suite, KSITest_uriClient_getSuite);
+	addSuite(suite, KSITest_multiSignature_getSuite);
 
 	return suite;
 }
@@ -192,6 +198,12 @@ static int RunAllTests() {
 	res = KSI_CTX_new(&ctx);
 	if (ctx == NULL || res != KSI_OK){
 		fprintf(stderr, "Error: Unable to init KSI context (%s)!\n", KSI_getErrorString(res));
+		exit(EXIT_FAILURE);
+	}
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, testPubFileCertConstraints);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to set publications file verification constraints.\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -243,7 +255,7 @@ int KSITest_DataHash_fromStr(KSI_CTX *ctx, const char *hexstr, KSI_DataHash **hs
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *tmp = NULL;
 	unsigned char raw[0xff];
-	unsigned len = 0;
+	size_t len = 0;
 
 	res = KSITest_decodeHexStr(hexstr, raw, sizeof(raw), &len);
 	if (res != KSI_OK) goto cleanup;
@@ -261,10 +273,10 @@ cleanup:
 	return res;
 }
 
-int KSITest_decodeHexStr(const char *hexstr, unsigned char *buf, unsigned buf_size, unsigned *buf_length) {
+int KSITest_decodeHexStr(const char *hexstr, unsigned char *buf, size_t buf_size, size_t *buf_length) {
 	int res = KSI_UNKNOWN_ERROR;
-	int i = 0;
-	unsigned len = 0;
+	size_t i = 0;
+	size_t len = 0;
 	int count = 0;
 
 	if (hexstr != NULL) {

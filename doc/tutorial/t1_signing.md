@@ -11,24 +11,7 @@ value should be checked to be #KSI_OK, which means all went well.
 1. Preparation
 ---------------
 
-The first thing by using the SDK, we need to create a KSI context variable
-and initialize it. The context contains all the configurations and can be used
-for debugging. The following example shows the initialization of a new #KSI_CTX
-object.
-
-    #include <ksi/ksi.h>
-    KSI_CTX *ksi = NULL; /* Must be feed at the end. */
-    KSI_CTX_new(&ksi); /* Must be initialized only once per thread. */
-
-The next step would be to configure the context, as there are no default service
-locations to send the signing request to. Let's assume the signing service address is
-\c http://signservice.somehost:1234 and it is authenticated by \c user:key. We can configure
-the signing service provider by calling #KSI_CTX_setAggregator.
-
-    KSI_CTX_setAggregator(ksi, "http://signingservice.somehost:1234", "user", "key");
-
-The context is ready to be used for signing (for extending, the extending service
-must be configured see [Extending Tutorial](t3_extending.md)).
+For preparation see [Basics Tutorial](tutorial/t0_basics.md).
 
 2. Hashing
 ----------
@@ -42,8 +25,12 @@ hash calculation in chunks. In our example, the data is already stored in a sing
 memory buffer and we can use the #KSI_DataHash_create function. We will use the 
 #KSI_HASHALG_SHA2_256 algorithm.
 
+~~~~~~~~~~{.c}
+
     KSI_DataHash *hsh = NULL; /* Must be freed. */
     KSI_DataHash_create(ksi, data, data_len, &hsh);
+
+~~~~~~~~~~
 
 3. Signing
 ----------
@@ -51,8 +38,12 @@ memory buffer and we can use the #KSI_DataHash_create function. We will use the
 At this point we should have all we need to sign the document (actually only the hash value of it). To
 do so, we need to call #KSI_createSignature.
 
-    KSI_Signature *sig = NULL;
-    KSI_createSignature(ksi, hsh, &sig);
+~~~~~~~~~~{.c}
+
+	KSI_Signature *sig = NULL;
+	KSI_createSignature(ksi, hsh, &sig);
+
+~~~~~~~~~~
 
 4. Saving
 ---------
@@ -60,10 +51,14 @@ do so, we need to call #KSI_createSignature.
 To save the signature to a file or database we need to serialize it's content. To do so, we simply need
 to call the #KSI_Signature_serialize method.
 
-    unsigned char *serialized = NULL; /* Must be freed. */
-    size_t serialized_len;
-    
-    KSI_Signature_serialize(sig, &serialized, &serialized_len);
+~~~~~~~~~~{.c}
+
+	unsigned char *serialized = NULL; /* Must be freed. */
+	size_t serialized_len;
+	
+	KSI_Signature_serialize(sig, &serialized, &serialized_len);
+
+~~~~~~~~~~
 
 Now the user may store the contents of \c serialized with length \c serialized_len how ever needed.
 
@@ -74,7 +69,11 @@ As the final step we need to free all the allocated resources. Note that the KSI
 be reused as much as needed (within a single thread) and must not be created every time. It is
 also important to point out that the context must be freed last.
 
-    KSI_DataHash_free(hsh);
-    KSI_Signature_free(sig);
-    KSI_free(serialized);
-    KSI_CTX_free(ksi); /* Must be freed last. */
+~~~~~~~~~~{.c}
+
+	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
+	KSI_free(serialized);
+	KSI_CTX_free(ksi); /* Must be freed last. */
+
+~~~~~~~~~~

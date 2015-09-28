@@ -18,6 +18,7 @@
  */
 
 #include <stdlib.h>
+#include "common.h"
 #include "types.h"
 
 #ifndef KSI_TLV_TEMPLATE_H_
@@ -59,7 +60,9 @@ extern "C" {
 	/**
 	 * Generic encode function type.
 	 */
-	typedef int (*cb_encode_t)(KSI_CTX *ctx, KSI_TLV *, const void *, const KSI_TlvTemplate *);
+	typedef int (*cb_encode_t)(KSI_CTX *, KSI_TLV *, const void *, const KSI_TlvTemplate *);
+
+	typedef int (*parse_t)(KSI_CTX *, unsigned char *, size_t, int, void *);
 
 	/**
 	 * TLV template structure.
@@ -149,6 +152,12 @@ extern "C" {
 		 * Free text description of the template.
 		 */
 		const char *descr;
+
+		/* Object parser. */
+		parse_t parser;
+		int parser_opt;
+
+		int (*setRaw)(void *, KSI_OctetString *);
 	};
 
 
@@ -232,6 +241,12 @@ extern "C" {
 	#define KSI_TLV_TMPL_FLG_MOST_ONE_G1	0x100
 
 	/**
+	 * All the sub elements with this flag enabled may be present in the TLV only in the same
+	 * order as they appear in the template.
+	 */
+	#define KSI_TLV_TMPL_FLG_FIXED_ORDER 0x200
+
+	/**
 	 * One and only one of the group 0 must be present.
 	 */
 	#define KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0 KSI_TLV_TMPL_FLG_LEAST_ONE_G0 | KSI_TLV_TMPL_FLG_MOST_ONE_G0
@@ -261,10 +276,10 @@ extern "C" {
 	 * \param[in]	toTlv			Create TLV from object function.
 	 * \param[in]	descr			Short description.
 	 */
-	#define KSI_TLV_FULL_TEMPLATE_DEF(typ, tg, flg, gttr, sttr, constr, destr, subTmpl, list_append, mul, list_new, list_free, list_len, list_elAt, fromTlv, toTlv, descr) 												\
+	#define KSI_TLV_FULL_TEMPLATE_DEF(typ, tg, flg, gttr, sttr, constr, destr, subTmpl, list_append, mul, list_new, list_free, list_len, list_elAt, fromTlv, toTlv, descr, parser, p_opt, setRaw) \
 				{ typ, tg, flg , (getter_t)gttr, (setter_t)sttr, (int (*)(KSI_CTX *, void **)) constr, (void (*)(void *)) destr, subTmpl, 																			\
 				(int (*)(void *, void *))list_append, mul, (int (*)(void **)) list_new, (void (*)(void *)) list_free, (int (*)(const void *)) list_len, (int (*)(const void *, int, void **))list_elAt, 	\
-				(int (*)(KSI_TLV *, void **)) fromTlv, (int (*)(KSI_CTX *, void *, unsigned, int, int, KSI_TLV **))toTlv, descr},																										\
+				(int (*)(KSI_TLV *, void **)) fromTlv, (int (*)(KSI_CTX *, void *, unsigned, int, int, KSI_TLV **))toTlv, (descr), (parse_t)(parser), (p_opt), (int (*)(void *, KSI_OctetString *))(setRaw)},																										\
 
 	/**
 	 * A helper macro for defining primitive templates.
@@ -275,7 +290,7 @@ extern "C" {
 	 * \param[in]	sttr			Setter function.
 	 * \param[in]	descr			Short description.
 	 */
-	#define KSI_TLV_PRIMITIVE_TEMPLATE_DEF(typ, tg, flg, gttr, sttr, descr) KSI_TLV_FULL_TEMPLATE_DEF(typ, tg, flg, gttr, sttr, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, descr)
+	#define KSI_TLV_PRIMITIVE_TEMPLATE_DEF(typ, tg, flg, gttr, sttr, descr) KSI_TLV_FULL_TEMPLATE_DEF(typ, tg, flg, gttr, sttr, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, descr, NULL, 0, NULL)
 
 	/**
 	 * This macro starts a #KSI_TlvTemplate definition. The definition is ended with #KSI_END_TLV_TEMPLATE .
@@ -294,7 +309,9 @@ extern "C" {
 	 * \param[in]	destr			Destructor function pointer.
 	 * \param[in]	descr			Short description.
 	 */
-	#define KSI_TLV_OBJECT(tg, flg, gttr, sttr, fromTlv, toTlv, destr, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, flg, gttr, sttr, NULL, destr, NULL, NULL, 0, NULL, NULL, NULL, NULL, fromTlv, toTlv, descr)
+	#define KSI_TLV_OBJECT(tg, flg, gttr, sttr, fromTlv, toTlv, destr, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, flg, gttr, sttr, NULL, destr, NULL, NULL, 0, NULL, NULL, NULL, NULL, fromTlv, toTlv, descr, NULL, 0, NULL)
+	#define KSI_TLV_WRAP_OBJECT(tg, flg, gttr, sttr, parser, toTlv, destr, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, flg, gttr, sttr, NULL, destr, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, toTlv, descr, (parser), 0, NULL)
+	#define KSI_TLV_COMPOSITE_OBJECT(tg, flg, gttr, sttr, fromTlv, toTlv, destr, tmpl, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, flg, gttr, sttr, NULL, destr, (tmpl), NULL, 0, NULL, NULL, NULL, NULL, fromTlv, toTlv, descr, NULL, 0, NULL)
 
 	/**
 	 * TLV template for #KSI_Utf8String type.
@@ -335,6 +352,7 @@ extern "C" {
 	 * \param[in]	descr			Short description.
 	 */
 	#define KSI_TLV_IMPRINT(tg, flg, gttr, sttr, descr) KSI_TLV_OBJECT(tg, flg, gttr, sttr, KSI_DataHash_fromTlv, KSI_DataHash_toTlv, KSI_DataHash_free, descr)
+	#define KSI_TLV_WRAP_IMPRINT(tg, flg, gttr, sttr, descr) KSI_TLV_WRAP_OBJECT(tg, flg, gttr, sttr, KSI_DataHash_parse, KSI_DataHash_toTlv, KSI_DataHash_free, descr)
 
 	/**
 	 * This template works as #KSI_TLV_IMPRINT, but performs additional digest format check and
@@ -349,20 +367,11 @@ extern "C" {
 	#define KSI_TLV_META_IMPRINT(tg, flg, gttr, sttr, descr) KSI_TLV_OBJECT(tg, flg, gttr, sttr, KSI_DataHash_MetaHash_fromTlv, KSI_DataHash_toTlv, KSI_DataHash_free, descr)
 
 	/**
-	 * Native unsigned integer template.
-	 * \param[in]	tg				TLV tag value.
-	 * \param[in]	flg				Flags for the template.
-	 * \param[in]	gttr			Getter function.
-	 * \param[in]	sttr			Setter function.
-	 */
-	#define KSI_TLV_NATIVE_INT(tg, flg, gttr, sttr) KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_NATIVE_INT, tg, flg, gttr, sttr)
-
-	/**
 	 * TLV templates for time representation
 	 */
 	#define KSI_TLV_TIME_S KSI_TLV_INTEGER
 	#define KSI_TLV_TIME_US KSI_TLV_INTEGER
-
+	
 	/**
 	 * Generic object list template. The \c obj parameter may be only a type
 	 * for which there is a list type defined (see #KSI_DEFINE_LIST and #KSI_IMPLEMENT_LIST).
@@ -373,7 +382,7 @@ extern "C" {
 	 * \param[in]	obj				Type of object stored in the list.
 	 * \param[in]	descr			Short description.
 	 */
-	#define KSI_TLV_OBJECT_LIST(tg, flg, gttr, sttr, obj, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, flg, gttr, sttr, NULL, NULL, NULL, obj##List_append, 1, obj##List_new, KSI_OctetStringList_free, obj##List_length, obj##List_elementAt, obj##_fromTlv, obj##_toTlv, descr)
+	#define KSI_TLV_OBJECT_LIST(tg, flg, gttr, sttr, obj, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, flg, gttr, sttr, NULL, obj##_free, NULL, obj##List_append, 1, obj##List_new, obj##List_free, obj##List_length, obj##List_elementAt, obj##_fromTlv, obj##_toTlv, descr, NULL, 0, NULL)
 
 	/**
 	 * TLV template for list of #KSI_OctetString types.
@@ -414,7 +423,7 @@ extern "C" {
 	 * \param[in]	sub				Composite element template.
 	 * \param[in]	descr			Short description.
 	 */
-	#define KSI_TLV_COMPOSITE(tg, flg, gttr, sttr, sub, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_COMPOSITE, tg, flg, gttr, sttr, sub##_new, sub##_free, sub##_template, NULL, 0,  NULL, NULL, NULL, NULL, NULL, NULL, descr)
+	#define KSI_TLV_COMPOSITE(tg, flg, gttr, sttr, sub, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_COMPOSITE, tg, flg, gttr, sttr, sub##_new, sub##_free, sub##_template, NULL, 0,  NULL, NULL, NULL, NULL, NULL, NULL, descr, NULL, 0, NULL)
 
 	/**
 	 * TLV template for list of composite objects.
@@ -425,12 +434,12 @@ extern "C" {
 	 * \param[in]	sub				Composite element template.
 	 * \param[in]	descr			Short description.
 	 */
-	#define KSI_TLV_COMPOSITE_LIST(tg, flg, gttr, sttr, sub, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_COMPOSITE, tg, flg, gttr, sttr, sub##_new, sub##_free, sub##_template, sub##List_append, 1, sub##List_new, sub##List_free, sub##List_length, sub##List_elementAt, NULL, NULL, descr)
+	#define KSI_TLV_COMPOSITE_LIST(tg, flg, gttr, sttr, sub, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_COMPOSITE, tg, flg, gttr, sttr, sub##_new, sub##_free, sub##_template, sub##List_append, 1, sub##List_new, sub##List_free, sub##List_length, sub##List_elementAt, NULL, NULL, descr, NULL, 0, NULL)
 
 	/**
 	 * This macro ends the #KSI_TlvTemplate definition started by #KSI_TLV_TEMPLATE.
 	 */
-	#define KSI_END_TLV_TEMPLATE { -1, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL}};
+	#define KSI_END_TLV_TEMPLATE { -1, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL}};
 
 	/**
 	 * Given a TLV object, template and a initialized target payload, this function evaluates the payload objects
@@ -452,7 +461,7 @@ extern "C" {
 	 * \param[in]	payload		Pointer to the payload which will be populated with the parsed data.
 	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	 int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *tmpl, void *payload);
+	 int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, size_t raw_len, const KSI_TlvTemplate *tmpl, void *payload);
 
 	/**
 	 * This function acts similarly as #KSI_TlvTemplate_extract but allows the caller to specify how the top level
@@ -482,19 +491,6 @@ extern "C" {
 	int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_TlvTemplate *tmpl);
 
 	/**
-	 * Deepcopy an object using TLV templates. The object is first transformed internally into a #KSI_TLV tree and
-	 * the process is reversed and the result is stored, thus all values are copied.
-	 * \param[in]	ctx			KSI context.
-	 * \param[in]	from		Object to be copied from.
-	 * \param[in]	tmpl		Template.
-	 * \param[in]	to			Values to be copied to.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \note If the TLV template is incomplete and discards by encoding or decoding some values, the result is not an
-	 * exact copy of the original.
-	 */
-	int KSI_TlvTemplate_deepCopy(KSI_CTX *ctx, const void *from, const KSI_TlvTemplate *tmpl, void *to);
-
-	/**
 	 * Serializes an object using #KSI_TlvTemplate.
 	 * \param[in]	ctx		KSI context.
 	 * \param[in]	obj		Object to be serialized.
@@ -508,7 +504,23 @@ extern "C" {
 	 * \note Thre returned pointer raw belongs to the caller and it needs to be freed using #KSI_free
 	 * \see #KSI_free
 	 */
-	int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag, int isNc, int isFwd, const KSI_TlvTemplate *tmpl, unsigned char **raw, unsigned *raw_len);
+	int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag, int isNc, int isFwd, const KSI_TlvTemplate *tmpl, unsigned char **raw, size_t *raw_len);
+
+	/**
+	 * This function serializes the given object based on the template.
+	 * \param[in]	ctx			KSI context.
+	 * \param[in]	obj			Object to be serialized.
+	 * \param[in]	tag			Tag of the outer TLV.
+	 * \param[in]	isNc		Flag of the outer TLV: is non-critical
+	 * \param[in]	isFwd		Flag of the outer TLV: is forward
+	 * \param[in]	tmpl		Template
+	 * \param[in]	raw			Pointer to target buffer
+	 * \param[in]	raw_size	Size of the target buffer
+	 * \param[out]	raw_len		Length of the serialization.
+	 * \param[in]	opt			Options.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_TlvTemplate_writeBytes(KSI_CTX *ctx, const void *obj, unsigned tag, int isNc, int isFwd, const KSI_TlvTemplate *tmpl, unsigned char *raw, size_t raw_size, size_t *raw_len, int opt);
 
 	/**
 	 * Macro to generate object parsers.
@@ -516,7 +528,7 @@ extern "C" {
 	 * \param[in]	tag			Tag of the concrete TLV.
 	 */
 	#define KSI_IMPLEMENT_OBJECT_PARSE(type, tag) \
-		int type##_parse(KSI_CTX *ctx, const unsigned char *raw, unsigned len, type **t) { \
+		int type##_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len, type **t) { \
 			int res = KSI_UNKNOWN_ERROR; \
 			KSI_TLV *tlv = NULL; \
 			type *tmp = NULL; \
@@ -551,7 +563,7 @@ extern "C" {
 	 * \param[in]	fwd			Forward flag.
 	 */
 	#define KSI_IMPLEMENT_OBJECT_SERIALIZE(type, tag, nc, fwd) \
-		int type##_serialize(const type *t, unsigned char **raw, unsigned *len) { \
+		int type##_serialize(const type *t, unsigned char **raw, size_t *len) { \
 			int res = KSI_UNKNOWN_ERROR; \
 			if (t == NULL || raw == NULL || len == NULL) { \
 				res = KSI_INVALID_ARGUMENT; \
@@ -562,6 +574,12 @@ extern "C" {
 			res = KSI_OK; \
 		cleanup: \
 			return res; \
+		} \
+
+	#define KSI_IMPLEMENT_WRITE_BYTES(typ, tag, nc, fwd) \
+		KSI_DEFINE_WRITE_BYTES(typ) { \
+			if (o == NULL) return KSI_INVALID_ARGUMENT; \
+			return KSI_TlvTemplate_writeBytes(o->ctx, (void *)o, tag, nc, fwd, KSI_TLV_TEMPLATE(typ), buf, buf_size, buf_len, opt); \
 		} \
 
 	/**

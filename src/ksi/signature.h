@@ -109,7 +109,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_Signature_parse(KSI_CTX *ctx, unsigned char *raw, unsigned raw_len, KSI_Signature **sig);
+	int KSI_Signature_parse(KSI_CTX *ctx, unsigned char *raw, size_t raw_len, KSI_Signature **sig);
 
 	/**
 	 * A convenience function for reading a signature from a file.
@@ -135,7 +135,7 @@ extern "C" {
 	 * \note The output memory buffer belongs to the caller and needs to be freed
 	 * by the caller using #KSI_free.
 	 */
-	int KSI_Signature_serialize(KSI_Signature *sig, unsigned char **raw, unsigned *raw_len);
+	int KSI_Signature_serialize(KSI_Signature *sig, unsigned char **raw, size_t *raw_len);
 
 	/**
 	 * This function signs the given data hash \c hsh. This function requires a access to
@@ -212,13 +212,13 @@ extern "C" {
 	/**
 	 * Access method for the hash algorithm used to hash the signed document.
 	 * \param[in]		sig			KSI signature.
-	 * \param[out]		hash_id		Pointer to the receiving hash id variable.
+	 * \param[out]		algo_id		Pointer to the receiving hash id variable.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_DataHasher_open, #KSI_DataHash_create, #KSI_DataHasher_close,
 	 * #KSI_Signature_createDataHasher.
 	 */
-	int KSI_Signature_getHashAlgorithm(KSI_Signature *sig, int *hash_id);
+	int KSI_Signature_getHashAlgorithm(KSI_Signature *sig, KSI_HashAlgorithm *algo_id);
 
 	/**
 	 * This method creates a data hasher object to be used on the signed data.
@@ -371,6 +371,9 @@ extern "C" {
 	int KSI_AggregationHashChain_setInputHash(KSI_AggregationHashChain * aggr, KSI_DataHash *inputHash);
 	int KSI_AggregationHashChain_setAggrHashId(KSI_AggregationHashChain * aggr, KSI_Integer *aggrHashId);
 	int KSI_AggregationHashChain_setChain(KSI_AggregationHashChain * aggr, KSI_LIST(KSI_HashChainLink) *chain);
+	KSI_DEFINE_REF(KSI_AggregationHashChain);
+	KSI_DEFINE_WRITE_BYTES(KSI_AggregationHashChain);
+
 
 /**
  * @}

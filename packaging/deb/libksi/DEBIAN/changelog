@@ -1,0 +1,18 @@
+libksi (3.2.2.1) UNRELEASED; urgency=low
+
+    *TODO.
+
+ -- Guardtime AS <info@guardtime.com>  Tue, 19 May 2015 15:11:00 +0200
+
+libksi (3.2.2.0) RELEASED; urgency=low
+
+    * Added functions for signing locally aggregated root hashes.
+    * Added convenience functions for verifying a signature with user provided publication.
+
+ -- Guardtime AS <info@guardtime.com>  Thu, 14 May 2015 00:00:00 +0200
+
+libksi (3.2.1.0) RELEASED; urgency=low
+
+    * First public release.
+
+ -- Guardtime AS <info@guardtime.com>  Mon, 1 Dec 2015 00:00:00 +0200

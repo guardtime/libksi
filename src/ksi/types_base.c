@@ -27,7 +27,7 @@ struct KSI_OctetString_st {
 	KSI_CTX *ctx;
 	size_t refCount;
 	unsigned char *data;
-	unsigned int data_len;
+	size_t data_len;
 };
 
 struct KSI_Integer_st {
@@ -69,7 +69,7 @@ void KSI_OctetString_free(KSI_OctetString *o) {
 	}
 }
 
-int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, unsigned int data_len, KSI_OctetString **o) {
+int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, size_t data_len, KSI_OctetString **o) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_OctetString *tmp = NULL;
 
@@ -117,7 +117,7 @@ int KSI_OctetString_ref(KSI_OctetString *o) {
 	return KSI_OK;
 }
 
-int KSI_OctetString_extract(const KSI_OctetString *o, const unsigned char **data, unsigned int *data_len) {
+int KSI_OctetString_extract(const KSI_OctetString *o, const unsigned char **data, size_t *data_len) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (o == NULL || data == NULL) {
@@ -144,7 +144,7 @@ int KSI_OctetString_fromTlv(KSI_TLV *tlv, KSI_OctetString **o) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	const unsigned char *raw = NULL;
-	unsigned int raw_len = 0;
+	size_t raw_len = 0;
 	KSI_OctetString *tmp = NULL;
 
 	ctx = KSI_TLV_getCtx(tlv);
@@ -220,7 +220,7 @@ cleanup:
 	return res;
 }
 
-static int verifyUtf8(const unsigned char *str, unsigned len) {
+static int verifyUtf8(const unsigned char *str, size_t len) {
 	int res = KSI_UNKNOWN_ERROR;
     size_t i = 0;
     size_t charContinuationLen = 0;
@@ -276,7 +276,7 @@ void KSI_Utf8String_free(KSI_Utf8String *o) {
 	}
 }
 
-int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, unsigned len, KSI_Utf8String **o) {
+int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, size_t len, KSI_Utf8String **o) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Utf8String *tmp = NULL;
 
@@ -347,7 +347,7 @@ int KSI_Utf8String_fromTlv(KSI_TLV *tlv, KSI_Utf8String **o) {
 	KSI_CTX *ctx = NULL;
 	const char *cstr = NULL;
 	KSI_Utf8String *tmp = NULL;
-	unsigned len;
+	size_t len;
 
 	ctx = KSI_TLV_getCtx(tlv);
 
@@ -506,7 +506,7 @@ int KSI_Integer_ref(KSI_Integer *o) {
 	return KSI_OK;
 }
 
-char *KSI_Integer_toDateString(const KSI_Integer *o, char *buf, unsigned buf_len) {
+char *KSI_Integer_toDateString(const KSI_Integer *o, char *buf, size_t buf_len) {
 	char *ret = NULL;
 	time_t pubTm;
 	struct tm tm;
@@ -588,8 +588,8 @@ int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_Integer **o) {
 	KSI_CTX *ctx = NULL;
 	KSI_Integer *tmp = NULL;
 	const unsigned char *raw = NULL;
-	unsigned len;
-	unsigned i;
+	size_t len;
+	size_t i;
 	KSI_uint64_t val = 0;
 
 	ctx = KSI_TLV_getCtx(tlv);

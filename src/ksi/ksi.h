@@ -39,14 +39,29 @@ extern "C" {
  * @{
  */
 
-#define KSI_DEFAULT_URI_PUBLICATIONS_FILE "http://verify.guardtime.com/ksi-publications.bin"
-
 /**
  * KSI function returnvalues.
  */
 enum KSI_StatusCode {
 /* RETURN CODES WHICH ARE NOT ERRORS */
 	KSI_OK = 0,
+
+	/**
+	 * The aggregator has not been configured.
+	 */
+	KSI_AGGREGATOR_NOT_CONFIGURED = 0x01,
+	/**
+	 * The extender has not been configured.
+	 */
+	KSI_EXTENDER_NOT_CONFIGURED = 0x02,
+	/**
+	 * The publications file url has not been configured.
+	 */
+	KSI_PUBLICATIONS_FILE_NOT_CONFIGURED = 0x03,
+	/**
+	 * The publications file can not be verified, as the constraints are not configured.
+	 */
+	KSI_PUBFILE_VERIFICATION_NOT_CONFIGURED = 0x04,
 
 /* SYNTAX ERRORS */
 	/**
@@ -195,34 +210,51 @@ enum KSI_StatusCode {
 	 * larger than allowed for the client (retrying in a later round could succeed).
 	 */
 	KSI_SERVICE_AGGR_REQUEST_OVER_QUOTA = 0x408,
+	/**
+	 * Too many requests from the client in the same round (retrying in a later round could succeed)
+	 */
+	KSI_SERVICE_AGGR_TOO_MANY_REQUESTS = 0x409,
+	/**
+	 * Input hash value in the client request is longer than the server allows.
+	 */
+	KSI_SERVICE_AGGR_INPUT_TOO_LONG = 0x40a,
 
 	/* Extender status codes. */
 
 	/**
 	 * The request asked for a hash chain going backwards in time Pattern for local errors in the server.
 	 */
-	KSI_SERVICE_EXTENDER_INVALID_TIME_RANGE = 0x409,
+	KSI_SERVICE_EXTENDER_INVALID_TIME_RANGE = 0x501,
 	/**
 	 * The server misses the internal database needed to service the request (most likely it has not been initialized yet).
 	 */
-	KSI_SERVICE_EXTENDER_DATABASE_MISSING = 0x40a,
+	KSI_SERVICE_EXTENDER_DATABASE_MISSING = 0x502,
 	/**
 	 * The server's internal database is in an inconsistent state.
 	 */
-	KSI_SERVICE_EXTENDER_DATABASE_CORRUPT = 0x40b,
+	KSI_SERVICE_EXTENDER_DATABASE_CORRUPT = 0x503,
 	/**
 	 * The request asked for hash values older than the oldest round in the server's database.
 	 */
-	KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_OLD = 0x40c,
+	KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_OLD = 0x504,
 	/**
 	 * The request asked for hash values newer than the newest round in the server's database.
 	 */
-	KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_NEW = 0x40d,
+	KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_NEW = 0x505,
 
 	/**
 	 * The request asked for hash values newer than the current real time.
 	 */
-	KSI_SERVICE_EXTENDER_REQUEST_TIME_IN_FUTURE = 0x40e,
+	KSI_SERVICE_EXTENDER_REQUEST_TIME_IN_FUTURE = 0x506,
+
+	/**
+	 * The signature was not found in the multi signature container.
+	 */
+	KSI_MULTISIG_NOT_FOUND = 0x601,
+	/**
+	 * The multi signature container is in an invalid state.
+	 */
+	KSI_MULTISIG_INVALID_STATE = 0x602,
 
 	/**
 	 * Unknown error occurred.
@@ -306,7 +338,7 @@ int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f);
  * \return status code (#KSI_OK, when operation succeeded, otherwise an
  * error code).
  */
-int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, unsigned len, int *error, int *ext);
+int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, size_t len, int *error, int *ext);
 
 /**
  * Allocates \c size bytes of memory.
@@ -362,7 +394,7 @@ int KSI_sendExtendRequest(KSI_CTX *ctx, KSI_ExtendReq *request, KSI_RequestHandl
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, unsigned request_length, KSI_RequestHandle **handle);
+int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, size_t request_length, KSI_RequestHandle **handle);
 
 /**
  * Accessor method for the publications file. It will download the publications file from
@@ -522,9 +554,36 @@ int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *net);
  * \param[in]	ctx		KSI context.
  * \param[in]	email	Email address.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- * \note After a successful call to this function the original pointer to email can be freed.
+ * \note This method is deprecated and will be removed in later versions, use
+ * #KSI_CTX_putPubFileCertConstraint with #KSI_CERT_EMAIL instead.
  */
-int KSI_CTX_setPublicationCertEmail(KSI_CTX *ctx, const char *email);
+KSI_FN_DEPRECATED(int KSI_CTX_setPublicationCertEmail(KSI_CTX *ctx, const char *email));
+
+#define KSI_CERT_EMAIL "1.2.840.113549.1.9.1"
+#define KSI_CERT_COMMON_NAME "2.5.4.3"
+#define KSI_CERT_COUNTRY "2.5.4.6"
+#define KSI_CERT_ORGANIZATION "2.5.4.10"
+
+/**
+ * This method specifies the default constraints for verifying the publications file PKI certificate.
+ * The input consists of an array of OID and expected value pairs terminated by a pair of two NULLs. Except
+ * in the last terminating NULL pair, the expected value may not be NULL - this will make the function
+ * to return #KSI_INVALID_ARGUMENT.
+ * \param[in]	ctx		KSI context.
+ * \param[in]	arr		Array of OID and value pairs, terminated by a pair of NULLs.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \note The function does not take ownership of the input array and makes a copy of it, thus the
+ * caller is responsible for freeing the memory which can be done right after a successful call
+ * to this function.
+ * \code{.c}
+ * KSI_CertConstraint arr[] = {
+ * 		{ KSI_CERT_EMAIL, "publications@guardtime.com"},
+ * 		{ NULL, NULL }
+ * };
+ * res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, arr);
+ * \endcode
+ */
+int KSI_CTX_setDefaultPubFileCertConstraints(KSI_CTX *ctx, const KSI_CertConstraint *arr);
 
 /**
  * Getter function for the PKI truststore object.

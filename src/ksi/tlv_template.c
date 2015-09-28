@@ -25,6 +25,7 @@
 #include "tlv_template.h"
 #include "hashchain.h"
 #include "pkitruststore.h"
+#include "fast_tlv.h"
 
 /* At the moment value 0xff should be enough for everyone (actually less than 10 is used). */
 #define MAX_TEMPLATE_SIZE 0xff
@@ -38,7 +39,9 @@
 #define KSI_Utf8StringNZ_new KSI_Utf8String_new
 #define KSI_Utf8StringNZ_free KSI_Utf8String_free
 
-#define FLAGSET(tmpl, flg) (((tmpl).flags & flg) != 0)
+#define KSI_CalendarHashChainLink_free KSI_HashChainLink_free
+
+#define IS_FLAG_SET(tmpl, flg) (((tmpl).flags & flg) != 0)
 
 struct tlv_track_s {
 	unsigned tag;
@@ -95,7 +98,7 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_HashChainLink)
 	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_HashChainLink_getLevelCorrection, KSI_HashChainLink_setLevelCorrection, "level_correction")
 	KSI_TLV_IMPRINT(0x02, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getImprint, KSI_HashChainLink_setImprint, "imprint")
 	KSI_TLV_META_IMPRINT(0x03, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getMetaHash, KSI_HashChainLink_setMetaHash, "meta_hash")
-	KSI_TLV_OBJECT(0x04, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getMetaData, KSI_HashChainLink_setMetaData, KSI_MetaData_fromTlv, KSI_MetaData_toTlv, KSI_MetaData_free, "meta_data")
+	KSI_TLV_COMPOSITE_OBJECT(0x04, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getMetaData, KSI_HashChainLink_setMetaData, KSI_MetaData_fromTlv, KSI_MetaData_toTlv, KSI_MetaData_free, KSI_TLV_TEMPLATE(KSI_MetaData), "meta_data")
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_Header)
@@ -121,6 +124,20 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationHashChain)
 	KSI_TLV_OBJECT_LIST(0x08, KSI_TLV_TMPL_FLG_LEAST_ONE_G0 | KSI_TLV_TMPL_FLG_NO_SERIALIZE, KSI_AggregationHashChain_getChain, KSI_AggregationHashChain_setChain, KSI_HashChainLink, "aggr_chain")
 KSI_END_TLV_TEMPLATE
 
+KSI_DEFINE_TLV_TEMPLATE(KSI_RFC3161)
+	KSI_TLV_TIME_S(0x02, KSI_TLV_TMPL_FLG_MANDATORY, KSI_RFC3161_getAggregationTime, KSI_RFC3161_setAggregationTime, "aggr_time")
+	KSI_TLV_INTEGER_LIST(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_RFC3161_getChainIndex, KSI_RFC3161_setChainIndex, "chain_index")
+	KSI_TLV_IMPRINT(0x05, KSI_TLV_TMPL_FLG_MANDATORY, KSI_RFC3161_getInputHash, KSI_RFC3161_setInputHash, "input_hash")
+
+	KSI_TLV_OCTET_STRING(0x10, KSI_TLV_TMPL_FLG_MANDATORY, KSI_RFC3161_getTstInfoPrefix, KSI_RFC3161_setTstInfoPrefix, "tst_info_prefix")
+	KSI_TLV_OCTET_STRING(0x11, KSI_TLV_TMPL_FLG_MANDATORY, KSI_RFC3161_getTstInfoSuffix, KSI_RFC3161_setTstInfoSuffix, "tst_info_suffix")
+	KSI_TLV_INTEGER(0x12, KSI_TLV_TMPL_FLG_MANDATORY, KSI_RFC3161_getTstInfoAlgo, KSI_RFC3161_setTstInfoAlgo, "tst_info_algo")
+
+	KSI_TLV_OCTET_STRING(0x13, KSI_TLV_TMPL_FLG_MANDATORY, KSI_RFC3161_getSigAttrPrefix, KSI_RFC3161_setSigAttrPrefix, "sig_attr_prefix")
+	KSI_TLV_OCTET_STRING(0x14, KSI_TLV_TMPL_FLG_MANDATORY, KSI_RFC3161_getSigAttrSuffix, KSI_RFC3161_setSigAttrSuffix, "sig_attr_suffix")
+	KSI_TLV_INTEGER(0x15, KSI_TLV_TMPL_FLG_MANDATORY, KSI_RFC3161_getSigAttrAlgo, KSI_RFC3161_setSigAttrAlgo, "sig_attr_algo")
+KSI_END_TLV_TEMPLATE
+
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationAuthRec)
 	KSI_TLV_TIME_S(0x02, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationAuthRec_getAggregationTime, KSI_AggregationAuthRec_setAggregationTime, "aggr_time")
 	KSI_TLV_INTEGER_LIST(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationAuthRec_getChainIndex, KSI_AggregationAuthRec_setChainIndex, "chain_index")
@@ -129,7 +146,7 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationAuthRec)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_CalendarAuthRec)
-	KSI_TLV_OBJECT(0x10, KSI_TLV_TMPL_FLG_FORWARD | KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarAuthRec_getPublishedData, KSI_CalendarAuthRec_setPublishedData, KSI_PublicationData_fromTlv, KSI_PublicationData_toTlv, KSI_PublicationData_free, "pub_data")
+	KSI_TLV_COMPOSITE_OBJECT(0x10, KSI_TLV_TMPL_FLG_FORWARD | KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarAuthRec_getPublishedData, KSI_CalendarAuthRec_setPublishedData, KSI_PublicationData_fromTlv, KSI_PublicationData_toTlv, KSI_PublicationData_free, KSI_TLV_TEMPLATE(KSI_PublicationData), "pub_data")
 	KSI_TLV_COMPOSITE(0x0b, KSI_TLV_TMPL_FLG_MANDATORY, KSI_CalendarAuthRec_getSignatureData, KSI_CalendarAuthRec_setSignatureData, KSI_CalAuthRecPKISignedData, "pki_signature")
 KSI_END_TLV_TEMPLATE
 
@@ -194,10 +211,10 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendResp)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendPdu)
-	KSI_TLV_OBJECT(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendPdu_getHeader, KSI_ExtendPdu_setHeader, KSI_Header_fromTlv, KSI_Header_toTlv, KSI_Header_free, "header")
-	KSI_TLV_OBJECT(0x301, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_ExtendPdu_getRequest, KSI_ExtendPdu_setRequest, KSI_ExtendReq_fromTlv, KSI_ExtendReq_toTlv, KSI_ExtendReq_free, "ext_req")
-	KSI_TLV_OBJECT(0x302, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_ExtendPdu_getResponse, KSI_ExtendPdu_setResponse, KSI_ExtendResp_fromTlv, KSI_ExtendResp_toTlv, KSI_ExtendResp_free, "ext_resp")
-	KSI_TLV_COMPOSITE(0x303, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_ExtendPdu_getError, KSI_ExtendPdu_setError, KSI_ErrorPdu, "ext_error_pdu")
+	KSI_TLV_COMPOSITE_OBJECT(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendPdu_getHeader, KSI_ExtendPdu_setHeader, KSI_Header_fromTlv, KSI_Header_toTlv, KSI_Header_free, KSI_TLV_TEMPLATE(KSI_Header), "header")
+	KSI_TLV_COMPOSITE_OBJECT(0x301, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_ExtendPdu_getRequest, KSI_ExtendPdu_setRequest, KSI_ExtendReq_fromTlv, KSI_ExtendReq_toTlv, KSI_ExtendReq_free, KSI_TLV_TEMPLATE(KSI_ExtendReq), "ext_req")
+	KSI_TLV_COMPOSITE_OBJECT(0x302, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_ExtendPdu_getResponse, KSI_ExtendPdu_setResponse, KSI_ExtendResp_fromTlv, KSI_ExtendResp_toTlv, KSI_ExtendResp_free, KSI_TLV_TEMPLATE(KSI_ExtendResp), "ext_resp")
+	KSI_TLV_COMPOSITE(0x303, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_ExtendPdu_getError, KSI_ExtendPdu_setError, KSI_ErrorPdu, "ext_error_resp")
 	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendPdu_getHmac, KSI_ExtendPdu_setHmac, "hmac")
 KSI_END_TLV_TEMPLATE
 
@@ -350,7 +367,7 @@ static int extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTempl
 
 	iter.idx = 0;
 
-	/*When extracting second tlv there is no need to register it twice because it is mention in lower level.*/
+	/* When extracting second tlv there is no need to register it twice because it is mention in lower level. */
 	if (tr_len == 0) {
 		tr[tr_len].tag = KSI_TLV_getTag(tlv);
 		tr[tr_len].desc = NULL;
@@ -384,7 +401,7 @@ int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI
 	return res;
 }
 
-int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, unsigned raw_len, const KSI_TlvTemplate *tmpl, void *payload) {
+int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, size_t raw_len, const KSI_TlvTemplate *tmpl, void *payload) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tlv = NULL;
 	struct tlv_track_s tr[0xf];
@@ -429,13 +446,95 @@ static size_t getTemplateLength(const KSI_TlvTemplate *tmpl) {
 	return len;
 }
 
+static int extractObject(KSI_CTX *ctx, const KSI_TlvTemplate *tmpl, void *payload, KSI_TLV *tlv) {
+	int res = KSI_UNKNOWN_ERROR;
+	unsigned char *raw = NULL;
+	size_t len;
+	void *tmp = NULL;
+
+	if (tmpl->fromTlv == NULL && tmpl->parser == NULL) {
+		KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR,
+		        "Invalid template: no method for converting from tlv to object.");
+		goto cleanup;
+	}
+
+	/* Parse the object. */
+	if (tmpl->parser != NULL) {
+		res = KSI_TLV_getRawValue(tlv, (const unsigned char **) &raw, &len);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+		
+		res = tmpl->parser(ctx, raw, len, tmpl->parser_opt, &tmp);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+	} else {
+		res = tmpl->fromTlv(tlv, &tmp);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+
+	res = storeObjectValue(ctx, tmpl, payload, tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	tmpl->destruct(tmp);
+
+	return res;
+}
+
+static int extractComposite(KSI_CTX *ctx, const KSI_TlvTemplate *tmpl, void *payload, KSI_TLV *tlv, struct tlv_track_s *tr, size_t tr_len, size_t tr_size) {
+	int res = KSI_UNKNOWN_ERROR;
+	char buf[1024];
+	void *tmp = NULL;
+
+	res = tmpl->construct(ctx, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = extract(ctx, tmp, tlv, tmpl->subTemplate, tr, tr_len + 1, tr_size);
+	if (res != KSI_OK) {
+		KSI_LOG_debug(ctx, "Unable to parse composite TLV: %s", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = storeObjectValue(ctx, tmpl, payload, (void *)tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	tmpl->destruct(tmp);
+
+	return res;
+}
+
 static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, const KSI_TlvTemplate *tmpl, int (*generator)(void *, KSI_TLV **), struct tlv_track_s *tr, size_t tr_len, size_t tr_size) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tlv = NULL;
 	char buf[1024];
 
-	void *voidVal = NULL;
-	void *compositeVal = NULL;
 	void *valuep = NULL;
 	KSI_TLV *tlvVal = NULL;
 
@@ -445,6 +544,7 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 	bool oneOf[2] = {false, false};
 	size_t i;
 	size_t tmplStart = 0;
+	size_t maxOrder = 0;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || payload == NULL || generatorCtx == NULL || tmpl == NULL || generator == NULL || tr == NULL) {
@@ -477,8 +577,6 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 
 		if (tlv == NULL) break;
 
-		KSI_LOG_trace(ctx, "Starting to parse TLV[0x%02x]", KSI_TLV_getTag(tlv));
-
 		if (tr_len < tr_size) {
 			tr[tr_len].tag = KSI_TLV_getTag(tlv);
 			tr[tr_len].desc = NULL;
@@ -492,10 +590,17 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 
 			matchCount++;
 			templateHit[i] = true;
-			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G0) != 0) groupHit[0] = true;
-			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G1) != 0) groupHit[1] = true;
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_LEAST_ONE_G0)) groupHit[0] = true;
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_LEAST_ONE_G1)) groupHit[1] = true;
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_FIXED_ORDER)) {
+				if (i < maxOrder) {
+					KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Element at wrong position.");
+					goto cleanup;
+				}
+				maxOrder = i;
+			}
 
-			if (FLAGSET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G0)) {
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G0)) {
 				if (oneOf[0]) {
 					KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Mutually exclusive elements present within group 0.");
 					goto cleanup;
@@ -503,7 +608,7 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 				oneOf[0] = true;
 			}
 
-			if (FLAGSET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G1)) {
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G1)) {
 				if (oneOf[1]) {
 					KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Mutually exclusive elements present within group 0.");
 					goto cleanup;
@@ -522,61 +627,29 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 			}
 
 			if (valuep != NULL && !tmpl[i].multiple) {
-				compositeVal = NULL;
-				KSI_LOG_error(ctx, "Multiple occurrences of a unique tag 0x%02x", tmpl[i].tag);
+				KSI_LOG_debug(ctx, "Multiple occurrences of a unique tag 0x%02x", tmpl[i].tag);
 				KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "To avoid memory leaks, a value may not be set more than once while parsing.");
 				goto cleanup;
 			}
 			/* Parse the current TLV */
 			switch (tmpl[i].type) {
 				case KSI_TLV_TEMPLATE_OBJECT:
-					KSI_LOG_trace(ctx, "Detected object template for TLV value extraction.");
-					if (tmpl[i].fromTlv == NULL) {
-						KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Invalid template: fromTlv not set.");
-						goto cleanup;
-					}
-
-					res = tmpl[i].fromTlv(tlv, &voidVal);
+					res = extractObject(ctx, &tmpl[i], payload, tlv);
 					if (res != KSI_OK) {
 						KSI_pushError(ctx, res, NULL);
 						goto cleanup;
 					}
-
-					res = storeObjectValue(ctx, &tmpl[i], payload, voidVal);
-					if (res != KSI_OK) {
-						tmpl[i].destruct(voidVal); // FIXME: Make sure, it is a valid pointer.
-						goto cleanup;
-					}
-
 					break;
 				case KSI_TLV_TEMPLATE_COMPOSITE:
-				{
-					KSI_LOG_trace(ctx, "Detected composite template for TLV value extraction.");
 
-					res = tmpl[i].construct(ctx, &compositeVal);
+					res = extractComposite(ctx, &tmpl[i], payload, tlv, tr, tr_len, tr_size);
 					if (res != KSI_OK) {
 						KSI_pushError(ctx, res, NULL);
 						goto cleanup;
 					}
-
-					res = extract(ctx, compositeVal, tlv, tmpl[i].subTemplate, tr, tr_len + 1, tr_size);
-					if (res != KSI_OK) {
-						KSI_LOG_error(ctx, "Unable to parse composite TLV: %s", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));
-						tmpl[i].destruct(compositeVal); // FIXME: Make sure is is a valid pointer.
-						goto cleanup;
-					}
-
-					res = storeObjectValue(ctx, &tmpl[i], payload, (void *)compositeVal);
-					if (res != KSI_OK) {
-						KSI_pushError(ctx, res, NULL);
-						goto cleanup;
-					}
-
-					/* Reset the buffer. */
 					break;
-				}
 				default:
-					KSI_LOG_error(ctx, "No template found.");
+					KSI_LOG_error(ctx, "No template found - this might be caused by memory corruption.");
 					/* Should not happen, but just in case. */
 					KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Undefined template type");
 					goto cleanup;
@@ -589,7 +662,7 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 		if (matchCount == 0 && !KSI_TLV_isNonCritical(tlv)) {
 			char errm[1024];
 			KSI_snprintf(errm, sizeof(errm), "Unknown critical tag: %s", track_str(tr, tr_len + 1, tr_size, buf, sizeof(buf)));
-			KSI_LOG_error(ctx, errm);
+			KSI_LOG_debug(ctx, errm);
 			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, errm);
 			goto cleanup;
 		}
@@ -685,7 +758,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 
 			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G0) != 0) groupHit[0] = true;
 			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G1) != 0) groupHit[1] = true;
-			if (FLAGSET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G0)) {
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G0)) {
 				if (oneOf[0]) {
 					char errm[1000];
 					KSI_snprintf(errm, sizeof(errm), "Mutually exclusive elements present within group 0 (%s).", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));
@@ -693,7 +766,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 				}
 				oneOf[0] = true;
 			}
-			if (FLAGSET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G1)) {
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G1)) {
 				if (oneOf[1]) {
 					char errm[1000];
 					KSI_snprintf(errm, sizeof(errm), "Mutually exclusive elements present within group 1 (%s).", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));
@@ -808,7 +881,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 					}
 					break;
 				default:
-					KSI_LOG_error(ctx, "Unimplemented template type: %d", tmpl[i].type);
+					KSI_LOG_warn(ctx, "Unimplemented template type: %d", tmpl[i].type);
 					KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Unimplemented template type.");
 					goto cleanup;
 			}
@@ -849,51 +922,11 @@ int KSI_TlvTemplate_construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, c
 	return construct(ctx, tlv, payload, tmpl, tr, 0, sizeof(tr));
 }
 
-int KSI_TlvTemplate_deepCopy(KSI_CTX *ctx, const void *from, const KSI_TlvTemplate *baseTemplate, void *to) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_TLV *tmpTlv = NULL;
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || from == NULL || baseTemplate == NULL || to == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	/* Create a dummy TLV */
-	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, 0x0, 0, 0, &tmpTlv);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Create a TLV object */
-	res = KSI_TlvTemplate_construct(ctx, tmpTlv, from, baseTemplate);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Evaluate the cloned object */
-	res = KSI_TlvTemplate_extract(ctx, to, tmpTlv, baseTemplate);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_TLV_free(tmpTlv);
-
-	return res;
-}
-
-int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag, int isNc, int isFwd, const KSI_TlvTemplate *tmpl, unsigned char **raw, unsigned *raw_len) {
+int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag, int isNc, int isFwd, const KSI_TlvTemplate *tmpl, unsigned char **raw, size_t *raw_len) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tlv = NULL;
 	unsigned char *tmp = NULL;
-	unsigned tmp_len = 0;
+	size_t tmp_len = 0;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || obj == NULL || tmpl == NULL || raw == NULL || raw_len == NULL) {
@@ -937,3 +970,46 @@ cleanup:
 
 	return res;
 }
+
+int KSI_TlvTemplate_writeBytes(KSI_CTX *ctx, const void *obj, unsigned tag, int isNc, int isFwd, const KSI_TlvTemplate *tmpl, unsigned char *raw, size_t raw_size, size_t *raw_len, int opt) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_TLV *tlv = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || obj == NULL || tmpl == NULL || (raw == NULL && raw_size != 0) || raw_len == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	/* Create TLV for the PDU object. */
+	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, tag, isFwd, isNc, &tlv);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Evaluate the TLV. */
+	res = KSI_TlvTemplate_construct(ctx, tlv, obj, tmpl);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Serializing object", tlv);
+
+	/* Serialize the TLV. */
+	res = KSI_TLV_writeBytes(tlv, raw, raw_size, raw_len, opt);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_TLV_free(tlv);
+
+	return res;
+}
+
