@@ -1,0 +1,65 @@
+#
+# Copyright 2013-2015 Guardtime, Inc.
+#
+# This file is part of the Guardtime client SDK.
+#
+# Licensed under the Apache License, Version 2.0 (the "License").
+# You may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#     http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES, CONDITIONS, OR OTHER LICENSES OF ANY KIND, either
+# express or implied. See the License for the specific language governing
+# permissions and limitations under the License.
+# "Guardtime" and "KSI" are trademarks or registered trademarks of
+# Guardtime, Inc., and no license to trademarks is granted; Guardtime
+# reserves and retains all trademark rights.
+#
+
+.PHONY: doc test
+
+AUTOMAKE_OPTIONS = foreign
+SUBDIRS = src/ksi src/example test doc
+
+docdir = ${datadir}/doc/${PACKAGE}
+dist_doc_DATA = changelog license.txt
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = libksi.pc
+
+EXTRA_DIST = VERSION changelog build*.txt makefile lic*.txt \
+             */makefile doc/doxy* test/*
+             
+ZIPDOC_DIR = ${PACKAGE}-${VERSION}-htmldoc
+
+test: check 
+	./test/runner ./test
+
+# You'll need valgrind for this target.
+#
+# yum install valgrind	
+memtest: check 
+	valgrind --xml=yes --xml-file=valgrind.xml ./test/runner ./test 
+
+doc: doc/doxyfile
+	$(MAKE) -C doc htmldoc
+
+doc-zip: doc
+	cp -r doc/html ${ZIPDOC_DIR}
+	zip -r ${ZIPDOC_DIR}.zip ${ZIPDOC_DIR} 
+
+# You'll need gcovr for this target:
+#
+# yum install python-pip
+# pip install gcovr
+#
+coverage: clean
+	make check CFLAGS="-g -fprofile-arcs -ftest-coverage -fPIC -O0"
+	./test/runner ./test
+	cd ./src/ksi; gcovr -r . --xml-pretty > coverage.xml
+
+clean-local:
+	rm -fr ${ZIPDOC_DIR} coverage.xml valgrind.xml test.log testsuite-xunit.xml
+	$(MAKE) -C doc clean
+	$(MAKE) -C test clean
