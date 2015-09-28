@@ -120,4 +120,5 @@ otherinclude_HEADERS = \
 	verification.h \
 	compatibility.h
 
+libksi_la_LDFLAGS=-version-info @LTVER@
 
