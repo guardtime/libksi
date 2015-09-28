@@ -91,7 +91,7 @@ To verify the document hash with the signature we need to call #KSI_Signature_ve
 
 We did not describe the branches when the verification functions did not return #KSI_OK. It is important to
 note, that if the verification process does not return #KSI_OK, it does not mean the document or the signature
-are invalid - in some cases bad configuration (e.g. missing or bad can be the root cause). Only #KSI_VERIFICATION_FAILURE
+are invalid - in some cases bad configuration (e.g. missing or bad can be the root cause). Only #KSI_VERIFICATION_ERROR
 as the return value indicates, the signature or the document is invalid. The simplest error handling could be
 written as:
 

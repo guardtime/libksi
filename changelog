@@ -9,7 +9,7 @@ Version 3.4
 * Fixed getLatestPublication and getNearestPublication.
 * Restructured logging (new log levels).
 * All size variables changed to size_t.
-* Hash algorithm id changed from int to KSI_HahsAlgorithm.
+* Hash algorithm id changed from int to KSI_HashAlgorithm.
 * Debian packaging.
 * Publications file creation and signing support.
 * Hashing algorithm RIPEMD-256 removed.
