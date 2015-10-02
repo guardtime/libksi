@@ -67,6 +67,7 @@ if test -z "$with_cafile" ; then
             /etc/pki/tls/certs/ca-bundle.trust.crt \
             /usr/share/ssl/certs/ca-bundle.trust.crt \
             /usr/local/share/certs/ca-root.trust.crt \
+            /usr/local/etc/openssl/cert.pem \
             /etc/ssl/cert.pem ; do
         if test -f "$cafile" ; then
             with_cafile="$cafile"
