@@ -1,0 +1,84 @@
+# http://www.gnu.org/software/automake
+
+GNUMakefile.in
+config.h.in
+Makefile.in
+/m4
+
+# http://www.gnu.org/software/autoconf
+
+/autom4te.cache
+/aclocal.m4
+/compile
+/configure
+/depcomp
+/install-sh
+/missing
+/stamp-h1
+/config
+config.status
+config.log
+
+GNUMakefile
+config.h
+
+.deps
+libksi.pc
+src/ksi/stamp-h1
+
+libtool
+
+#Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+
+# Binaries and log files
+ksi_verify.log
+src/example/.libs/
+src/example/ksi_extend
+src/example/ksi_multisig_add
+src/example/ksi_multisig_extend
+src/example/ksi_pubfiledump
+src/example/ksi_sign
+src/example/ksi_sign_aggr
+src/example/ksi_verify
+src/example/ksi_verify_pub
+src/ksi/.libs/
+test.log
+test/.dirstamp
+test/.libs/
+test/cutest/.dirstamp
+test/parse-benchmark
+test/resigner
+test/runner
+test/serialize-benchmark
+testsuite-xunit.xml
