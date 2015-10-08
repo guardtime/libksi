@@ -214,8 +214,8 @@ $(LIB_DIR)\$(LIB_NAME)$(RTL).dll: $(OBJ_DIR) $(LIB_DIR) $(LIB_OBJ) $(LIB_DEF)
 
 	
 include: $(INCLUDE_DIR)
-	if not exist $(INCLUDE_DIR)\*.h for /R $(SRC_DIR) %%f in ($(INC_FILES)) do @xcopy "%%f" $(INCLUDE_DIR) /D > nul
-	
+	for %%f in ($(INC_FILES)) do @xcopy $(SRC_DIR)\%%f $(INCLUDE_DIR) /D /Y > nul
+
 $(OBJ_DIR) $(LIB_DIR) $(INCLUDE_DIR):
 	@if not exist $@ mkdir $@
 	
