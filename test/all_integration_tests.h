@@ -30,12 +30,25 @@
 extern "C" {
 #endif
 
-extern const char *aggreURL;
-extern const char *aggreUser;
-extern const char *aggrePass;
-extern const char *extURL;
-extern const char *extUser;
-extern const char *extPass;	
+#define CONF_FIELD_SIZE 1024
+typedef struct CONF_st {
+	char extender_url[CONF_FIELD_SIZE];
+	char extender_pass[CONF_FIELD_SIZE];
+	char extender_user[CONF_FIELD_SIZE];
+
+	char aggregator_url[CONF_FIELD_SIZE];
+	char aggregator_pass[CONF_FIELD_SIZE];
+	char aggregator_user[CONF_FIELD_SIZE];
+
+	char publications_file_url[CONF_FIELD_SIZE];
+	char publications_file_cnstr[CONF_FIELD_SIZE];
+
+	char tcp_url[CONF_FIELD_SIZE];
+	char tcp_user[CONF_FIELD_SIZE];
+	char tcp_pass[CONF_FIELD_SIZE];
+} CONF;
+	
+extern CONF conf;
 	
 const char *getFullResourcePath(const char* resource);
 

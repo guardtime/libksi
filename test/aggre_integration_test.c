@@ -161,12 +161,12 @@ static void Test_CreateSignatureWrongHMAC(CuTest* tc) {
 	res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), "c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
 	CuAssert(tc, "Unable to create hash.", res == KSI_OK && hsh != NULL);
 
-	res = KSI_CTX_setAggregator(ctx, aggreURL, "test-test", "tset-tset");
+	res = KSI_CTX_setAggregator(ctx, conf.aggregator_url, "test-test", "tset-tset");
 	CuAssert(tc, "Unable to spoil aggregator authentication data.", res == KSI_OK);
 
 	/*Reset old aggregator password.*/
 	res = KSI_Signature_create(ctx, hsh, &sig);
-	KSI_CTX_setAggregator(ctx, aggreURL, aggreUser, aggrePass);
+	KSI_CTX_setAggregator(ctx, conf.aggregator_url, conf.aggregator_user, conf.aggregator_pass);
 	CuAssert(tc, "Unable to create signature.", res == KSI_SERVICE_AUTHENTICATION_FAILURE && sig == NULL);
 
 	KSI_DataHash_free(hsh);

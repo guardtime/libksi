@@ -25,6 +25,7 @@
 #include "cutest/CuTest.h"
 #include "all_integration_tests.h"
 #include "support_tests.h"
+#include "ksi/compatibility.h"
 
 #ifndef UNIT_TEST_OUTPUT_XML
 #  define UNIT_TEST_OUTPUT_XML "_testsuite.xml"
@@ -64,8 +65,8 @@ static int RunAllTests() {
 	KSI_CTX_setLoggerCallback(ctx, KSI_LOG_StreamLogger, logFile);
 	KSI_CTX_setLogLevel(ctx, KSI_LOG_DEBUG);
 
-	KSI_CTX_setAggregator(ctx, aggreURL, aggreUser, aggrePass);
-	KSI_CTX_setExtender(ctx, extURL, extUser, extPass);
+	KSI_CTX_setAggregator(ctx, conf.aggregator_url, conf.aggregator_user, conf.aggregator_pass);
+	KSI_CTX_setExtender(ctx, conf.extender_url, conf.extender_user, conf.extender_pass);
 
 	CuSuiteRun(suite);
 
@@ -86,27 +87,136 @@ static int RunAllTests() {
 	return failCount;
 }
 
-const char *aggreURL = NULL;
-const char *aggreUser = NULL;
-const char *aggrePass = NULL;
-const char *extURL = NULL;
-const char *extUser = NULL;
-const char *extPass = NULL;
+#define CONF_cpy(name, param, value) \
+	if (conf->name[0] == '\0' && strcmp(param, #name) == 0) {\
+		KSI_strncpy(conf->name, value, CONF_FIELD_SIZE);\
+	}\
+
+static void conf_append(CONF *conf, const char *param, const char *value) {
+	CONF_cpy(extender_url, param, value);
+	CONF_cpy(extender_pass, param, value);
+	CONF_cpy(extender_user, param, value);
+
+	CONF_cpy(aggregator_url, param, value);
+	CONF_cpy(aggregator_pass, param, value);
+	CONF_cpy(aggregator_user, param, value);
+
+	CONF_cpy(publications_file_url, param, value);
+	CONF_cpy(publications_file_cnstr, param, value);
+
+	CONF_cpy(tcp_url, param, value);
+	CONF_cpy(tcp_user, param, value);
+	CONF_cpy(tcp_pass, param, value);
+}
+
+static void conf_clear(CONF *conf) {
+	conf->aggregator_url[0] = '\0';
+	conf->aggregator_pass[0] = '\0';
+	conf->aggregator_user[0] = '\0';
+	conf->extender_url[0] = '\0';
+	conf->extender_pass[0] = '\0';
+	conf->extender_user[0] = '\0';
+	conf->publications_file_url[0] = '\0';
+	conf->publications_file_cnstr[0] = '\0';
+	conf->tcp_url[0] = '\0';
+	conf->tcp_pass[0] = '\0';
+	conf->tcp_user[0] = '\0';
+}
+
+#define CONF_CONTROL(_conf, _param, _res) \
+	if(_conf -> _param [0] == '\0') {\
+		fprintf(stderr, "Error: parameter '%s' in conf file must have valeue.\n", #_param);\
+		_res = 1; \
+	}
+
+static int conf_control(CONF *conf) {
+	int res = 0;
+	CONF_CONTROL(conf, aggregator_url, res);
+	CONF_CONTROL(conf, aggregator_pass, res);
+	CONF_CONTROL(conf, aggregator_user, res);
+	CONF_CONTROL(conf, extender_url, res);
+	CONF_CONTROL(conf, extender_pass, res);
+	CONF_CONTROL(conf, extender_user, res);
+	CONF_CONTROL(conf, publications_file_url, res);
+	CONF_CONTROL(conf, publications_file_cnstr, res);
+	CONF_CONTROL(conf, tcp_url, res);
+	CONF_CONTROL(conf, tcp_pass, res);
+	CONF_CONTROL(conf, tcp_user, res);
+	/*Return 1 if conf contains errors*/
+	return res;
+}
+
+/*Returns 0 if successful, 1 otherwise.*/
+static int conf_load(const char *confFile, CONF *conf) {
+	int res = 0;
+	FILE *file = NULL;
+	char tmp[2048];
+	char line[2048];
+	char *ln = NULL;
+	char *equal = NULL;
+	char *param = NULL;
+	char *value = NULL;
+
+	file = fopen(confFile, "r");
+	if(file == NULL) {
+		fprintf(stderr, "Error: Unable to open conf. file '%s'.\n", confFile);
+		res = 1;
+		goto cleanup;
+	}
+
+	/*Initialize configuration object*/
+	conf_clear(conf);
+
+	while(fgets(line, sizeof(line), file)){
+		if ((ln = strchr(line, 0x0D)) != NULL) *ln = 0;
+		else if ((ln = strchr(line, 0x0A)) != NULL) *ln = 0;
+		else continue;
+
+		/*Remove whitespace character. If invalid line, continue!*/
+		if (sscanf(line ,"%1023s", tmp) == 0) continue;
+		/*Its a comment, continue!*/
+		if(tmp[0] == '#') continue;
+
+		/*Entry in conf file must contain =*/
+		equal = strchr(line, '=');
+		if(equal == NULL) {
+			/*Its a unknown line, continue!*/
+			continue;
+		} else {
+			*equal = '\0';
+			param = line;
+			value = equal + 1;
+
+			conf_append(conf, param, value);
+		}
+	}
+
+	res = conf_control(conf);
+
+cleanup:
+
+	return res;
+}
+
+
+/**
+ * Configuration object for integration tests.
+ */
+CONF conf;
 
 
 int main(int argc, char** argv) {
-	if (argc != 8) {
-		printf("Usage:\n %s <path to test root> <aggr url> <aggr user> <aggr pass> <ext url> <ext user> <ext pass>\n", argv[0]);
+	if (argc != 2) {
+		printf("Usage:\n %s <path to test root>\n", argv[0]);
 		exit(EXIT_FAILURE);
 	}
+
 	initFullResourcePath(argv[1]);
 
-	aggreURL = argv[2];
-	aggreUser = argv[3];
-	aggrePass = argv[4];
-	extURL = argv[5];
-	extUser = argv[6];
-	extPass = argv[7];
+	if (conf_load(getFullResourcePath("integrationtest.conf"), &conf)) {
+		exit(EXIT_FAILURE);
+	}
+
 
 	return RunAllTests();
 }
