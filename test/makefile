@@ -68,7 +68,8 @@ ALLTESTS_OBJ = \
 	$(OBJ_DIR)\ksi_hmac_test.obj \
 	$(OBJ_DIR)\CuTest.obj \
 	$(OBJ_DIR)\compatibility_test.obj \
-	$(OBJ_DIR)\uri_client_test.obj
+	$(OBJ_DIR)\uri_client_test.obj \
+	$(OBJ_DIR)\support_tests.obj
 
 INTTESTS_OBJ = \
 	$(OBJ_DIR)\all_integration_tests.obj \

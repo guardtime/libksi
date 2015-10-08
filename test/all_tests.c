@@ -25,16 +25,11 @@
 #include "cutest/CuTest.h"
 #include "all_tests.h"
 
+
 #ifndef _WIN32
 #  ifdef HAVE_CONFIG_H
 #    include "../src/ksi/config.h"
 #  endif
-#endif
-
-#ifdef _WIN32
-#  define DIR_SEP '\\'
-#else
-#  define DIR_SEP '/'
 #endif
 
 #ifndef UNIT_TEST_OUTPUT_XML
@@ -58,81 +53,6 @@ void KSITest_setFileMockResponse(CuTest *tc, const char *fileName) {
 	fclose(f);
 }
 
-static void escapeStr(const char *str, CuString *escaped) {
-	int p;
-	static const char *replIndex = "<>&\"'";
-	static const char *repl[] = { "lt", "gt", "amp", "quot", "#39"};
-	while (*str) {
-		/* Find the index of current char. */
-		p = (int)(strchr(replIndex, *str) - replIndex);
-		/* If the character is found, use the replacement */
-		if (p >= 0) {
-			CuStringAppendFormat(escaped, "&%s", repl[p]);
-		} else {
-			CuStringAppendChar(escaped, *str);
-		}
-		str++;
-	}
-}
-
-static void createSuiteXMLSummary(CuSuite* testSuite, CuString* summary) {
-	int i;
-	CuString *tmpCuStr = NULL;
-
-	CuStringAppendFormat(summary, "<testsuite tests=\"%d\">\n", testSuite->count);
-
-	for (i = 0 ; i < testSuite->count ; ++i) {
-		CuTest* testCase = testSuite->list[i];
-
-		/* Escape the test case name. */
-		CuStringDelete(tmpCuStr);
-		tmpCuStr = CuStringNew();
-		escapeStr(testCase->name, tmpCuStr);
-
-		CuStringAppendFormat(summary, "\t<testcase classname=\"CuTest\" name=\"%s\"", tmpCuStr->buffer);
-		if (testCase->failed) {
-			/* Escape the fault message. */
-			CuStringDelete(tmpCuStr);
-			tmpCuStr = CuStringNew();
-			escapeStr(testCase->message, tmpCuStr);
-
-			CuStringAppend(summary, ">\n");
-			CuStringAppendFormat(summary, "\t\t<failure type=\"AssertionFailure\">%s</failure>\n", tmpCuStr->buffer);
-			CuStringAppend(summary, "\t</testcase>\n");
-		} else if(testCase->skip){
-			CuStringDelete(tmpCuStr);
-			tmpCuStr = CuStringNew();
-			escapeStr(testCase->skipMessage, tmpCuStr);
-			CuStringAppendFormat(tmpCuStr, " Skipped by %s.", testCase->skippedBy);
-
-			CuStringAppend(summary, ">\n");
-			CuStringAppendFormat(summary, "\t\t<skipped>%s</skipped>\n", tmpCuStr->buffer);
-			CuStringAppend(summary, "\t</testcase>\n");
-
-		}else {
-			CuStringAppend(summary, " />\n");
-		}
-	}
-	CuStringAppend(summary, "</testsuite>\n");
-
-	/* Cleanup */
-	CuStringDelete(tmpCuStr);
-
-}
-
-static void addSuite(CuSuite *suite, CuSuite* (*fn)(void)) {
-	int i;
-	CuSuite *tmp = fn();
-
-	for (i = 0 ; i < tmp->count ; ++i) {
-		CuTest* testCase = tmp->list[i];
-		CuSuiteAdd(suite, testCase);
-		tmp->list[i] = NULL;
-	}
-
-	CuSuiteDelete(tmp);
-}
-
 static CuSuite* initSuite(void) {
 	CuSuite *suite = CuSuiteNew();
 
@@ -151,35 +71,6 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSITest_uriClient_getSuite);
 
 	return suite;
-}
-
-static void printStats(CuSuite *suite) {
-	CuString *output = CuStringNew();
-	CuSuiteDetails(suite, output);
-
-	printf("\n\n==== TEST RESULTS ====\n\n");
-	printf("%s\n", output->buffer);
-
-	CuStringDelete(output);
-}
-
-static void writeXmlReport(CuSuite *suite) {
-	CuString *xmlOutput = CuStringNew();
-	FILE *f = NULL;
-
-	createSuiteXMLSummary(suite, xmlOutput);
-
-	f = fopen(UNIT_TEST_OUTPUT_XML, "w");
-	if (f == NULL) {
-		fprintf(stderr, "Unable to open '%s' for writing results.", UNIT_TEST_OUTPUT_XML);
-	} else {
-		fprintf(f, "%s\n", xmlOutput->buffer);
-	}
-
-	/* Cleanup. */
-	if (f) fclose(f);
-
-	CuStringDelete(xmlOutput);
 }
 
 static int RunAllTests() {
@@ -206,9 +97,9 @@ static int RunAllTests() {
 
 	CuSuiteRun(suite);
 
-	printStats(suite);
+	printStats(suite, "==== TEST RESULTS ====");
 
-	writeXmlReport(suite);
+	writeXmlReport(suite, UNIT_TEST_OUTPUT_XML);
 
 	failCount = suite->failCount;
 
@@ -312,19 +203,13 @@ cleanup:
 	return res;
 }
 
-static const char *projectRoot = NULL;
-static char pathBuffer[2048];
-
-const char *getFullResourcePath(const char* resource){
-	KSI_snprintf(pathBuffer, sizeof(pathBuffer), "%s%c%s", projectRoot, DIR_SEP, resource);
-	return pathBuffer;
-}
-
 int main(int argc, char** argv) {
 	if (argc != 2) {
 		printf("Usage:\n %s <path to test root>\n", argv[0]);
 		exit(EXIT_FAILURE);
 	}
-	projectRoot = argv[1];
+
+	initFullResourcePath(argv[1]);
+
 	return RunAllTests();
 }

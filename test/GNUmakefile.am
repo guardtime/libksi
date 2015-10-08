@@ -40,9 +40,11 @@ runner_SOURCES= \
 		./ksi_tlv_test.c \
 		./ksi_truststore_test.c \
 		./compatibility_test.c \
-		./uri_client_test.c
+		./uri_client_test.c \
+		./support_tests.c \
+		./support_tests.h
 
-integration-tests_SOURCES= \
+integration_tests_SOURCES= \
 	./all_integration_tests.c \
 	./all_integration_tests.h \
 	./cutest/CuTest.c \
