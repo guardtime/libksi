@@ -143,7 +143,33 @@ static void Test_CreateSignature(CuTest* tc) {
 	CuAssert(tc, "Unable to create signature.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_verifyDataHash(sig, ctx, hsh);
-	CuAssert(tc, "Unable to create signature.", res == KSI_OK);
+	CuAssert(tc, "Unable to verify signature.", res == KSI_OK);
+
+	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
+	return;
+}
+
+static void Test_TCPCreateSignature(CuTest* tc) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), "c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
+	CuAssert(tc, "Unable to create hash.", res == KSI_OK && hsh != NULL);
+
+	res = KSI_CTX_setAggregator(ctx, conf.tcp_url, conf.tcp_user, conf.tcp_pass);
+	CuAssert(tc, "Unable to spoil aggregator authentication data.", res == KSI_OK);
+
+	res = KSI_Signature_create(ctx, hsh, &sig);
+	KSI_CTX_setAggregator(ctx, conf.aggregator_url, conf.aggregator_user, conf.aggregator_pass);
+	CuAssert(tc, "Unable to create signature.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_verifyDataHash(sig, ctx, hsh);
+	CuAssert(tc, "Unable to verify signature.", res == KSI_OK);
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
@@ -180,6 +206,7 @@ CuSuite* AggreIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_CreateSignature);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureWrongHMAC);
 	SUITE_ADD_TEST(suite, Test_NOKAggr_TreeTooLarge);
+	SUITE_ADD_TEST(suite, Test_TCPCreateSignature);
 
 	return suite;
 }
