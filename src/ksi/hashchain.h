@@ -182,6 +182,8 @@ extern "C" {
 	int KSI_CalendarHashChain_setAggregationTime(KSI_CalendarHashChain *t, KSI_Integer *aggregationTime);
 	int KSI_CalendarHashChain_setInputHash(KSI_CalendarHashChain *t, KSI_DataHash *inputHash);
 	int KSI_CalendarHashChain_setHashChain(KSI_CalendarHashChain *t, KSI_LIST(KSI_HashChainLink) *hashChain);
+	KSI_DEFINE_REF(KSI_CalendarHashChain);
+	KSI_DEFINE_WRITE_BYTES(KSI_CalendarHashChain);
 
 /**
  * @}

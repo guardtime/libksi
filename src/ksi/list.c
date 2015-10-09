@@ -167,7 +167,7 @@ static int insertElementAt(KSI_List *list, size_t pos, void *o) {
 	if (res != KSI_OK) goto cleanup;
 
 	/* Shift the elements */
-	for (i = pos + 1; i < list->arr_len; i++) {
+	for (i = list->arr_len - 1; i > pos; i--) {
 		list->arr[i] = list->arr[i - 1];
 	}
 	list->arr[pos] = o;
@@ -482,6 +482,31 @@ int KSI_List_sort(KSI_List *list, int (*cmp)(const void *a, const void *b)) {
 	}
 
 	qsort(list->arr, list->arr_len, sizeof(void *), cmp);
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_List_foldl(KSI_List *list, void *foldCtx, int (*fn)(void *, void *)) {
+	int res = KSI_UNKNOWN_ERROR;
+	void *el;
+	size_t i;
+
+	if (fn == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	for (i = 0; i < KSI_List_length(list); i++) {
+		res = KSI_List_elementAt(list, i, &el);
+		if (res != KSI_OK) goto cleanup;
+
+		res = fn(el, foldCtx);
+		if (res != KSI_OK) goto cleanup;
+	}
 
 	res = KSI_OK;
 

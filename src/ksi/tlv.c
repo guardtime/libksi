@@ -962,13 +962,13 @@ cleanup:
 	return res;
 }
 
-static int serializeTlv(const KSI_TLV *tlv, unsigned char *buf, size_t *buf_free, int serializeHeader);
+static int serializeTlv(const KSI_TLV *tlv, unsigned char *buf, size_t buf_size, size_t *buf_len, int serializeHeader);
 
-static int serializeRaw(const KSI_TLV *tlv, unsigned char *buf, size_t *len) {
+static int serializeRaw(const KSI_TLV *tlv, unsigned char *buf, size_t buf_size, size_t *buf_len) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t payloadLength;
 
-	if (tlv == NULL || buf == NULL || len == NULL) {
+	if (tlv == NULL || (buf == NULL && buf_size != 0) || buf_len == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -982,14 +982,15 @@ static int serializeRaw(const KSI_TLV *tlv, unsigned char *buf, size_t *len) {
 
 	payloadLength = tlv->datap_len;
 
-	if (*len < payloadLength) {
-		KSI_pushError(tlv->ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
+	if (buf != NULL) {
+		if (buf_size < payloadLength) {
+			KSI_pushError(tlv->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+			goto cleanup;
+		}
+		memcpy(buf + buf_size - payloadLength, tlv->datap, payloadLength);
 	}
 
-	memcpy(buf + *len - payloadLength, tlv->datap, payloadLength);
-
-	*len-=payloadLength;
+	*buf_len = payloadLength;
 
 	res = KSI_OK;
 
@@ -998,59 +999,17 @@ cleanup:
 	return res;
 }
 
-static int serializeTlvList(KSI_CTX *ctx, KSI_LIST(KSI_TLV) *nestedList, unsigned idx, unsigned char *buf, size_t *buf_free) {
+static int serializeNested(const KSI_TLV *tlv, unsigned char *buf, size_t buf_size, size_t *buf_len) {
 	int res = KSI_UNKNOWN_ERROR;
-	size_t bf = *buf_free;
-	KSI_TLV *tlv = NULL;
+	size_t len = 0;
 
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || nestedList == NULL || buf == NULL || buf_free == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	if (KSI_TLVList_length(nestedList) > idx) {
-		/* Cast required, as the iterator is advanced by one. */
-		res = KSI_TLVList_elementAt(nestedList, idx, &tlv);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
-
-		res = serializeTlvList(ctx, nestedList, idx + 1, buf, &bf);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
-
-		res = serializeTlv(tlv, buf, &bf, 1);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
-
-		*buf_free = bf;
-	}
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
-static int serializeNested(const KSI_TLV *tlv, unsigned char *buf, size_t *buf_free) {
-	int res = KSI_UNKNOWN_ERROR;
-	size_t bf;
-
-	if (tlv == NULL || buf == NULL || buf_free == NULL) {
+	if (tlv == NULL || (buf == NULL && buf_size != 0) || buf_len == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
 	KSI_ERR_clearErrors(tlv->ctx);
 
-	bf = *buf_free;
 
 	if (tlv->payloadType != KSI_TLV_PAYLOAD_TLV) {
 		KSI_pushError(tlv->ctx, res = KSI_INVALID_ARGUMENT, NULL);
@@ -1058,14 +1017,30 @@ static int serializeNested(const KSI_TLV *tlv, unsigned char *buf, size_t *buf_f
 	}
 
 	if (tlv->nested != NULL) {
-		res = serializeTlvList(tlv->ctx, tlv->nested, 0, buf, &bf);
-		if (res != KSI_OK) {
-			KSI_pushError(tlv->ctx, res, NULL);
-			goto cleanup;
+		size_t i;
+		size_t tmp_len = 0;
+
+		for (i = KSI_TLVList_length(tlv->nested); i > 0; i--) {
+			KSI_TLV *tmp = NULL;
+
+			res = KSI_TLVList_elementAt(tlv->nested, i - 1, &tmp);
+			if (res != KSI_OK) {
+				KSI_pushError(tlv->ctx, res, NULL);
+				goto cleanup;
+			}
+
+			res = serializeTlv(tmp, buf, (buf == NULL ? 0 : buf_size - len), &tmp_len, 0);
+			if (res != KSI_OK) {
+				KSI_pushError(tlv->ctx, res, NULL);
+				goto cleanup;
+			}
+
+			len += tmp_len;
 		}
+
 	}
 
-	*buf_free = bf;
+	*buf_len = len;
 
 	res = KSI_OK;
 
@@ -1074,11 +1049,10 @@ cleanup:
 	return res;
 }
 
-static int serializePayload(const KSI_TLV *tlv, unsigned char *buf, size_t *buf_free) {
+static int serializePayload(const KSI_TLV *tlv, unsigned char *buf, size_t buf_size, size_t *buf_len) {
 	int res = KSI_UNKNOWN_ERROR;
-	size_t bf = *buf_free;
 
-	if (tlv == NULL || buf == NULL || buf_free == NULL) {
+	if (tlv == NULL || buf_len == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -1087,10 +1061,10 @@ static int serializePayload(const KSI_TLV *tlv, unsigned char *buf, size_t *buf_
 
 	switch (tlv->payloadType) {
 		case KSI_TLV_PAYLOAD_RAW:
-			res = serializeRaw(tlv, buf, &bf);
+			res = serializeRaw(tlv, buf, buf_size, buf_len);
 			break;
 		case KSI_TLV_PAYLOAD_TLV:
-			res = serializeNested(tlv, buf, &bf);
+			res = serializeNested(tlv, buf, buf_size, buf_len);
 			break;
 		default:
 			KSI_pushError(tlv->ctx, res = KSI_UNKNOWN_ERROR, "Dont know how to serialize unknown payload type.");
@@ -1101,8 +1075,6 @@ static int serializePayload(const KSI_TLV *tlv, unsigned char *buf, size_t *buf_
 		goto cleanup;
 	}
 
-	*buf_free = bf;
-
 	res = KSI_OK;
 
 cleanup:
@@ -1110,57 +1082,62 @@ cleanup:
 	return res;
 }
 
-static int serializeTlv(const KSI_TLV *tlv, unsigned char *buf, size_t *buf_free, int serializeHeader) {
+static int serializeTlv(const KSI_TLV *tlv, unsigned char *buf, size_t buf_size, size_t *buf_len, int opt) {
 	int res = KSI_UNKNOWN_ERROR;
-	size_t bf;
-	size_t payloadLength;
 	unsigned char *ptr = NULL;
+	size_t len;
+	size_t hdr_len = 0;
 
-	if (tlv == NULL || buf == NULL || buf_free == NULL) {
+	if (tlv == NULL || (buf == NULL && buf_size != 0) || buf_len == NULL) {
 		res = KSI_UNKNOWN_ERROR;
 		goto cleanup;
 	}
 
 	KSI_ERR_clearErrors(tlv->ctx);
 
-	bf = *buf_free;
-
-	res = serializePayload(tlv, buf, &bf);
+	res = serializePayload(tlv, buf, buf_size, &len);
 	if (res != KSI_OK) {
 		KSI_pushError(tlv->ctx, res, NULL);
 		goto cleanup;
 	}
 
-	payloadLength = *buf_free - bf;
-	ptr = buf + bf - 1;
+	if (buf != NULL) {
+		ptr = buf + buf_size - len - 1;
+	}
 
-	if (serializeHeader) {
+	if ((opt & KSI_TLV_OPT_NO_HEADER) == 0) {
 		/* Write header */
-		if (payloadLength > 0xff || tlv->tag > KSI_TLV_MASK_TLV8_TYPE) {
-			/* Encode as TLV16 */
-			if (bf < 4) {
-				KSI_pushError(tlv->ctx, res = KSI_BUFFER_OVERFLOW, NULL);
-				goto cleanup;
-			}
-			bf -= 4;
-			*ptr-- = 0xff & payloadLength;
-			*ptr-- = 0xff & payloadLength >> 8;
-			*ptr-- = tlv->tag & 0xff;
-			*ptr-- = (unsigned char) (KSI_TLV_MASK_TLV16 | (tlv->isNonCritical ? KSI_TLV_MASK_LENIENT : 0) | (tlv->isForwardable ? KSI_TLV_MASK_FORWARD : 0) | (tlv->tag >> 8));
+		if (len > 0xff || tlv->tag > KSI_TLV_MASK_TLV8_TYPE) {
+			hdr_len = 4;
 
-		} else {
-			/* Encode as TLV8 */
-			if (bf < 2) {
-				KSI_pushError(tlv->ctx, res = KSI_BUFFER_OVERFLOW, NULL);
-				goto cleanup;
+			if (ptr != NULL) {
+				/* Encode as TLV16 */
+				if (buf_size < hdr_len + len) {
+					KSI_pushError(tlv->ctx, res = KSI_BUFFER_OVERFLOW, NULL);
+					goto cleanup;
+				}
+				*ptr-- = 0xff & len;
+				*ptr-- = 0xff & len >> 8;
+				*ptr-- = tlv->tag & 0xff;
+				*ptr-- = (unsigned char) (KSI_TLV_MASK_TLV16 | (tlv->isNonCritical ? KSI_TLV_MASK_LENIENT : 0) | (tlv->isForwardable ? KSI_TLV_MASK_FORWARD : 0) | (tlv->tag >> 8));
 			}
-			bf -= 2;
-			*ptr-- = payloadLength & 0xff;
-			*ptr-- = (unsigned char) (0x00 | (tlv->isNonCritical ? KSI_TLV_MASK_LENIENT : 0) | (tlv->isForwardable ? KSI_TLV_MASK_FORWARD : 0) | tlv->tag);
+		} else {
+			hdr_len = 2;
+
+			if (ptr != NULL) {
+				/* Encode as TLV8 */
+				if (buf_size < hdr_len + len) {
+					KSI_pushError(tlv->ctx, res = KSI_BUFFER_OVERFLOW, NULL);
+					goto cleanup;
+				}
+				*ptr-- = len & 0xff;
+				*ptr-- = (unsigned char) (0x00 | (tlv->isNonCritical ? KSI_TLV_MASK_LENIENT : 0) | (tlv->isForwardable ? KSI_TLV_MASK_FORWARD : 0) | tlv->tag);
+
+			}
 		}
 	}
 
-	*buf_free = bf;
+	*buf_len = len + hdr_len;
 
 	res = KSI_OK;
 
@@ -1169,37 +1146,34 @@ cleanup:
 	return res;
 }
 
-static int serialize(const KSI_TLV *tlv, unsigned char *buf, size_t *len, int serializeHeader) {
+int KSI_TLV_writeBytes(const KSI_TLV *tlv, unsigned char *buf, size_t buf_size, size_t *buf_len, int opt) {
 	int res = KSI_UNKNOWN_ERROR;
-	size_t bf = *len;
-	size_t payloadLength;
 	unsigned char *ptr = NULL;
 	size_t i;
-	size_t tmpLen;
+	size_t len;
 
-	if (tlv == NULL || buf == NULL || len == NULL) {
+	if (tlv == NULL || buf_len == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
 	KSI_ERR_clearErrors(tlv->ctx);
 
-	res = serializeTlv(tlv, buf, &bf, serializeHeader);
+	res = serializeTlv(tlv, buf, buf_size, &len, opt);
 	if (res != KSI_OK) {
 		KSI_pushError(tlv->ctx, res, NULL);
 		goto cleanup;
 	}
 
-	payloadLength = *len - bf;
-	/* Move the serialized value to the begin of the buffer. */
-	ptr = buf;
-	tmpLen = 0;
-	for (i = 0; i < payloadLength; i++) {
-		*ptr++ = *(buf + bf + i);
-		tmpLen++;
+	if ((opt & KSI_TLV_OPT_NO_MOVE) == 0 && buf != NULL) {
+		/* Move the serialized value to the begin of the buffer. */
+		ptr = buf;
+		for (i = 0; i < len; i++) {
+			*ptr++ = *(buf + buf_size - len + i);
+		}
 	}
 
-	*len = tmpLen;
+	*buf_len = len;
 
 	res = KSI_OK;
 
@@ -1212,12 +1186,9 @@ cleanup:
 
 int KSI_TLV_serialize_ex(const KSI_TLV *tlv, unsigned char *buf, size_t buf_size, size_t *len) {
 	int res = KSI_UNKNOWN_ERROR;
-	size_t buf_free = buf_size;
 
-	res = serialize(tlv, buf, &buf_free, 1);
+	res = KSI_TLV_writeBytes(tlv, buf, buf_size, len, 0);
 	if (res != KSI_OK) goto cleanup;
-
-	*len = buf_free;
 
 cleanup:
 
@@ -1256,7 +1227,7 @@ cleanup:
  *
  */
 int KSI_TLV_serializePayload(KSI_TLV *tlv, unsigned char *buf, size_t *len) {
-	return serialize(tlv, buf, len, 0);
+	return KSI_TLV_writeBytes(tlv, buf, *len, len, KSI_TLV_OPT_NO_HEADER);
 }
 
 #define NOTNEG(a) (a) < 0 ? 0 : a

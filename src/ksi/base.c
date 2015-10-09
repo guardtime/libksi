@@ -40,11 +40,6 @@ const char *KSI_getVersion(void) {
 	return versionString;
 }
 
-const KSI_CertConstraint KSI_defaultPubFileCertConstraints[] = {
-		{ KSI_CERT_EMAIL, "publications@guardtime.com"},
-		{ NULL, NULL }
-};
-
 static void freeCertConstraintsArray(KSI_CertConstraint *arr) {
 	size_t i;
 
@@ -62,6 +57,14 @@ const char *KSI_getErrorString(int statusCode) {
 	switch (statusCode) {
 		case KSI_OK:
 			return "No errors.";
+		case KSI_AGGREGATOR_NOT_CONFIGURED:
+			return "The context is not (properly) configured to use the aggregator service.";
+		case KSI_EXTENDER_NOT_CONFIGURED:
+			return "The context is not (properly) configured to use the extender service.";
+		case KSI_PUBLICATIONS_FILE_NOT_CONFIGURED:
+			return "The context is not (properly) configured to retrieve the publications file.";
+		case KSI_PUBFILE_VERIFICATION_NOT_CONFIGURED:
+			return "The publications file can not be verified, as the constraints are not defined.";
 		case KSI_INVALID_ARGUMENT:
 			return "Invalid argument.";
 		case KSI_INVALID_FORMAT:
@@ -144,18 +147,14 @@ const char *KSI_getErrorString(int statusCode) {
 			return "The request asked for hash values newer than the newest round in the server's database.";
 		case KSI_SERVICE_EXTENDER_REQUEST_TIME_IN_FUTURE:
 			return "The request asked for hash values newer than the current real time";
+		case KSI_MULTISIG_NOT_FOUND:
+			return "The signature was not found in the given multi signature container.";
+		case KSI_MULTISIG_INVALID_STATE:
+			return "The multi signature container is in an invalid state.";
 		case KSI_UNKNOWN_ERROR:
 			return "Unknown internal error.";
 		default:
 			return "Unknown status code.";
-	}
-}
-
-static void KSI_CertConstraint_free(struct KSI_CertConstraint_st *cc) {
-	if (cc != NULL) {
-		KSI_free(cc->oid);
-		KSI_free(cc->val);
-		KSI_free(cc);
 	}
 }
 
@@ -215,9 +214,6 @@ int KSI_CTX_new(KSI_CTX **context) {
 	res = KSI_CTX_setPKITruststore(ctx, pkiTruststore);
 	if (res != KSI_OK) goto cleanup;
 	pkiTruststore = NULL;
-
-	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, KSI_defaultPubFileCertConstraints);
-	if (res != KSI_OK) goto cleanup;
 
 	/* Return the context. */
 	*context = ctx;
@@ -656,35 +652,6 @@ cleanup:
 	return res;
 }
 
-int KSI_ERR_init(KSI_CTX *ctx, KSI_ERR *err) {
-	err->ctx = ctx;
-
-	KSI_ERR_fail(err, KSI_UNKNOWN_ERROR, 0, "null", 0, "Internal error: Probably a function returned without a distinctive success or error.");
-
-	return KSI_OK;
-}
-
-int KSI_ERR_apply(KSI_ERR *err) {
-	KSI_CTX *ctx = err->ctx;
-	KSI_ERR *ctxErr = NULL;
-
-	if (ctx != NULL) {
-		if (err->statusCode != KSI_OK) {
-			ctxErr = &ctx->errors[ctx->errors_count % ctx->errors_size];
-
-			ctxErr->statusCode = err->statusCode;
-			ctxErr->extErrorCode = err->extErrorCode;
-			ctxErr->lineNr = err->lineNr;
-			KSI_strncpy(ctxErr->fileName, KSI_strnvl(err->fileName), sizeof(err->fileName));
-			KSI_strncpy(ctxErr->message, KSI_strnvl(err->message), sizeof(err->message));
-
-			ctx->errors_count++;
-		}
-	}
-	/* Return the result, which does not indicate the result of this method. */
-	return err->statusCode;
-}
-
 void KSI_ERR_push(KSI_CTX *ctx, int statusCode, long extErrorCode, const char *fileName, unsigned int lineNr, const char *message) {
 	KSI_ERR *ctxErr = NULL;
 	const char *tmp = NULL;
@@ -709,35 +676,6 @@ void KSI_ERR_push(KSI_CTX *ctx, int statusCode, long extErrorCode, const char *f
 	ctx->errors_count++;
 }
 
-void KSI_ERR_success(KSI_ERR *err) {
-	err->statusCode = KSI_OK;
-	*err->message = '\0';
-}
-
-int KSI_ERR_pre(KSI_ERR *err, int cond, char *fileName, int lineNr) {
-	if (!cond) {
-		KSI_ERR_init(NULL, err);
-		KSI_ERR_fail(err, KSI_INVALID_ARGUMENT, 0, fileName, lineNr, NULL);
-	}
-
-	return !cond;
-}
-
-int KSI_ERR_fail(KSI_ERR *err, int statusCode, long extErrorCode, char *fileName, unsigned int lineNr, const char *message) {
-	if (statusCode != KSI_OK) {
-		err->extErrorCode = extErrorCode;
-		err->statusCode = statusCode;
-		if (message == NULL) {
-			KSI_strncpy(err->message, KSI_getErrorString(statusCode), sizeof(err->message));
-		} else {
-			KSI_strncpy(err->message, KSI_strnvl(message), sizeof(err->message));
-		}
-		KSI_strncpy(err->fileName, KSI_strnvl(fileName), sizeof(err->fileName));
-		err->lineNr = lineNr;
-	}
-	return statusCode;
-}
-
 void KSI_ERR_clearErrors(KSI_CTX *ctx) {
 	if (ctx != NULL) {
 		ctx->errors_count = 0;
@@ -749,6 +687,11 @@ int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f) {
 	KSI_ERR *err = NULL;
 	size_t i;
 
+	if (ctx == NULL || f == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
 	fprintf(f, "KSI error trace:\n");
 	if (ctx->errors_count == 0) {
 		printf("  No errors.\n");
@@ -758,7 +701,7 @@ int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f) {
 	/* List all errors, starting from the most general. */
 	for (i = 0; i < ctx->errors_count && i < ctx->errors_size; i++) {
 		err = ctx->errors + ((ctx->errors_count - i - 1) % ctx->errors_size);
-		fprintf(f, "  %3lu) %s:%u - (%d/%ld) %s\n", ctx->errors_count - i, err->fileName, err->lineNr,err->statusCode, err->extErrorCode, err->message);
+		fprintf(f, "  %3lu) %s:%u - (%d/%ld) %s\n", ctx->errors_count - i, err->fileName, err->lineNr,err->statusCode, err->extErrorCode, *err->message != '\0' ? err->message : KSI_getErrorString(err->statusCode));
 	}
 
 	/* If there where more errors than buffers for the errors, indicate the fact */

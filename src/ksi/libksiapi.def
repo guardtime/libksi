@@ -39,10 +39,7 @@ EXPORTS
 
 ;err.h
 EXPORTS
-    KSI_ERR_init
     KSI_ERR_clearErrors
-    KSI_ERR_fail
-    KSI_ERR_success
 
 ;hash.h
 EXPORTS
@@ -103,6 +100,7 @@ EXPORTS
     KSI_CalendarHashChain_setAggregationTime
     KSI_CalendarHashChain_setInputHash
     KSI_CalendarHashChain_setHashChain
+	KSI_CalendarHashChain_writeBytes
 
 ;hmac.h
 EXPORTS
@@ -127,8 +125,6 @@ EXPORTS
     KSI_CTX_new
     KSI_CTX_free
     KSI_CTX_registerGlobals
-    KSI_ERR_apply
-    KSI_ERR_pre
     KSI_ERR_statusDump
     KSI_ERR_getBaseErrorMessage
     KSI_malloc
@@ -303,6 +299,7 @@ EXPORTS
     KSI_PublicationRecord_setRepositoryUriList
     KSI_PublicationRecord_toString
     KSI_PublicationRecord_clone
+    KSI_PublicationRecord_writeBytes
     KSI_PublicationData_fromTlv
     KSI_PublicationData_toTlv
     KSI_PublicationData_getBaseTlv
@@ -350,6 +347,7 @@ EXPORTS
     KSI_AggregationHashChain_setInputHash
     KSI_AggregationHashChain_setAggrHashId
     KSI_AggregationHashChain_setChain
+    KSI_AggregationHashChain_writeBytes
 
 ;tlv.h
 EXPORTS
@@ -386,6 +384,7 @@ EXPORTS
     KSI_TlvTemplate_extractGenerator
     KSI_TlvTemplate_construct
     KSI_TlvTemplate_serializeObject
+	KSI_TlvTemplate_writeBytes
 
 ;TLV templates
 EXPORTS
@@ -570,7 +569,28 @@ EXPORTS
     KSI_ErrorPdu_getErrorMessage
     KSI_ErrorPdu_setStatus
     KSI_ErrorPdu_setErrorMessage
-
+	KSI_RFC3161_free
+	KSI_RFC3161_new
+	KSI_RFC3161_getAggregationTime 
+	KSI_RFC3161_getChainIndex 
+	KSI_RFC3161_getInputHash 
+	KSI_RFC3161_getTstInfoPrefix 
+	KSI_RFC3161_getTstInfoSuffix 
+	KSI_RFC3161_getTstInfoAlgo 
+	KSI_RFC3161_getSigAttrPrefix 
+	KSI_RFC3161_getSigAttrSuffix 
+	KSI_RFC3161_getSigAttrAlgo 
+	KSI_RFC3161_setAggregationTime 
+	KSI_RFC3161_setChainIndex 
+	KSI_RFC3161_setInputHash 
+	KSI_RFC3161_setTstInfoPrefix 
+	KSI_RFC3161_setTstInfoSuffix 
+	KSI_RFC3161_setTstInfoAlgo 
+	KSI_RFC3161_setSigAttrPrefix 
+	KSI_RFC3161_setSigAttrSuffix 
+	KSI_RFC3161_setSigAttrAlgo 
+	KSI_RFC3161_ref
+	KSI_RFC3161_writeBytes
 
 ;types_base.h
 EXPORTS
@@ -608,12 +628,14 @@ EXPORTS
     KSI_AggregationAuthRec_setChainIndex
     KSI_AggregationAuthRec_setInputHash
     KSI_AggregationAuthRec_setSigData
+    KSI_AggregationAuthRec_writeBytes
     KSI_CalendarAuthRec_free
     KSI_CalendarAuthRec_new
     KSI_CalendarAuthRec_getPublishedData
     KSI_CalendarAuthRec_getSignatureData
     KSI_CalendarAuthRec_setPublishedData
     KSI_CalendarAuthRec_setSignatureData
+	KSI_CalendarAuthRec_writeBytes
     KSI_TLV_getCtx
     KSI_NetworkClient_getCtx
     KSI_RequestHandle_getCtx
@@ -899,3 +921,19 @@ EXPORTS
     KSI_VerificationStepResult_isSuccess
     KSI_VerificationStepResult_getDescription
     KSI_VerificationResult_lastFailureMessage
+
+;mulsti_signature_h
+EXPORTS
+    KSI_MultiSignature_new
+    KSI_MultiSignature_free
+    KSI_MultiSignature_add
+    KSI_MultiSignature_get
+    KSI_MultiSignature_remove
+    KSI_MultiSignature_getUsedHashAlgorithms
+    KSI_MultiSignature_extend
+    KSI_MultiSignature_extendToPublication
+    KSI_MultiSignature_writeBytes
+    KSI_MultiSignature_parse
+    KSI_MultiSignature_fromFile
+    KSI_MultiSignature_serialize
+    

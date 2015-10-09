@@ -41,6 +41,11 @@ KSI_CTX *ctx = NULL;
 extern unsigned char *KSI_NET_MOCK_response;
 extern unsigned KSI_NET_MOCK_response_len;
 
+const KSI_CertConstraint testPubFileCertConstraints[] = {
+		{ KSI_CERT_EMAIL, "publications@guardtime.com"},
+		{ NULL, NULL }
+};
+
 
 void KSITest_setFileMockResponse(CuTest *tc, const char *fileName) {
 	FILE *f = NULL;
@@ -69,6 +74,7 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSITest_Truststore_getSuite);
 	addSuite(suite, KSITest_compatibility_getSuite);
 	addSuite(suite, KSITest_uriClient_getSuite);
+	addSuite(suite, KSITest_multiSignature_getSuite);
 
 	return suite;
 }
@@ -83,6 +89,12 @@ static int RunAllTests() {
 	res = KSI_CTX_new(&ctx);
 	if (ctx == NULL || res != KSI_OK){
 		fprintf(stderr, "Error: Unable to init KSI context (%s)!\n", KSI_getErrorString(res));
+		exit(EXIT_FAILURE);
+	}
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, testPubFileCertConstraints);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to set publications file verification constraints.\n");
 		exit(EXIT_FAILURE);
 	}
 

@@ -149,8 +149,11 @@ extern "C" {
 	KSI_DEFINE_LIST(KSI_Utf8String);
 	KSI_DEFINE_LIST(KSI_Utf8StringNZ);
 	KSI_DEFINE_LIST(KSI_AggregationHashChain)
+	KSI_DEFINE_LIST(KSI_CalendarAuthRec)
 	KSI_DEFINE_LIST(KSI_TLV);
 	KSI_DEFINE_LIST(KSI_PKICertificate);
+	KSI_DEFINE_LIST(KSI_AggregationAuthRec);
+	KSI_DEFINE_LIST(KSI_RFC3161);
 
 /*
  * KSI_MetaData
@@ -416,6 +419,8 @@ int KSI_AggregationAuthRec_setChainIndex(KSI_AggregationAuthRec *rec, KSI_LIST(K
 int KSI_AggregationAuthRec_setInputHash(KSI_AggregationAuthRec *rec, KSI_DataHash *inputHash);
 int KSI_AggregationAuthRec_setSigAlgo(KSI_AggregationAuthRec *rec, KSI_Utf8String *signatureAlgo);
 int KSI_AggregationAuthRec_setSigData(KSI_AggregationAuthRec *rec, KSI_PKISignedData *signatureData);
+KSI_DEFINE_REF(KSI_AggregationAuthRec);
+KSI_DEFINE_WRITE_BYTES(KSI_AggregationAuthRec);
 
 /*
  * KSI_CalendarAuthRec
@@ -430,7 +435,8 @@ int KSI_CalendarAuthRec_getSignatureData(const KSI_CalendarAuthRec *rec, KSI_PKI
 int KSI_CalendarAuthRec_setPublishedData(KSI_CalendarAuthRec *rec, KSI_PublicationData *pubData);
 int KSI_CalendarAuthRec_setSignatureAlgo(KSI_CalendarAuthRec *rec, KSI_Utf8String *signatureAlgo);
 int KSI_CalendarAuthRec_setSignatureData(KSI_CalendarAuthRec *rec, KSI_PKISignedData *signatureData);
-
+KSI_DEFINE_REF(KSI_CalendarAuthRec);
+KSI_DEFINE_WRITE_BYTES(KSI_CalendarAuthRec);
 /**
  *	KSI_RFC3161 
  */
@@ -457,8 +463,8 @@ int KSI_RFC3161_setTstInfoAlgo (KSI_RFC3161 *o, KSI_Integer *tstInfoAlgo);
 int KSI_RFC3161_setSigAttrPrefix (KSI_RFC3161 *o, KSI_OctetString *sigAttrPrefix);
 int KSI_RFC3161_setSigAttrSuffix (KSI_RFC3161 *o, KSI_OctetString *sigAttrSuffix);
 int KSI_RFC3161_setSigAttrAlgo (KSI_RFC3161 *o, KSI_Integer *sigAttrAlgo);
-
-
+KSI_DEFINE_REF(KSI_RFC3161);
+KSI_DEFINE_WRITE_BYTES(KSI_RFC3161);
 /**
  * @}
  */

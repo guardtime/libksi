@@ -81,6 +81,7 @@ make install DESTDIR=%{buildroot}
 %{_includedir}/ksi/ksi.h
 %{_includedir}/ksi/list.h
 %{_includedir}/ksi/log.h
+%{_includedir}/ksi/multi_signature.h
 %{_includedir}/ksi/net.h
 %{_includedir}/ksi/net_http.h
 %{_includedir}/ksi/net_tcp.h

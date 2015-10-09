@@ -172,7 +172,11 @@ extern "C" {
 	int KSI_DataHash_clone(KSI_DataHash *from, KSI_DataHash **to);
 
 	/**
-	 * Internal data access method.
+	 * Extracts the hashing algorithm, digest and its length from the #KSI_DataHash. If any
+	 * of the output pointers is \c NULL, it is ignored. The digest is a pointer to an
+	 * internal field of the #KSI_DataHash thus extracting the digest does not make a
+	 * copy of the buffer. This means the digest pointer is valid until #KSI_DataHash_free
+	 * is called on the object.
 	 *
 	 * \param[in]	hash			Data hash object.
 	 * \param[out]	algo_id			Algorithm used to compute the hash.
@@ -187,6 +191,7 @@ extern "C" {
 
 	/**
 	 * Constructor for #KSI_DataHash object from existing hash value.
+	 *
 	 * \param[in]		ctx				KSI context.
 	 * \param[in]		algo_id			Algorithm used to compute the digest value.
 	 * \param[in]		digest			Binary digest value.

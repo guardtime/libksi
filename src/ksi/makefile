@@ -70,6 +70,7 @@ LIB_OBJ = \
 	$(OBJ_DIR)\io.obj \
 	$(OBJ_DIR)\list.obj \
 	$(OBJ_DIR)\log.obj \
+	$(OBJ_DIR)\multi_signature.obj \
 	$(OBJ_DIR)\net.obj \
 	$(OBJ_DIR)\net_http.obj \
 	$(OBJ_DIR)\net_uri.obj \
@@ -109,7 +110,8 @@ INC_FILES = \
 	log.h \
 	publicationsfile.h \
 	tlv_template.h \
-	compatibility.h
+	compatibility.h \
+	multi_signature.h
 
 #Compiler and linker configuration
 EXT_LIB = wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib  

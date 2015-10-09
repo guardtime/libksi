@@ -221,13 +221,13 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 
 	KSI_LOG_debug(handle->ctx, "Tcp: Sending request to: %s:%u", host, port);
 
-	tc->host = KSI_malloc(strlen(host) + 1);
-	if (tc->host == NULL) {
-		KSI_pushError(handle->ctx, res = KSI_OUT_OF_MEMORY, NULL);
+	res = KSI_strdup(host, &tc->host);
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
 		goto cleanup;
 	}
-	KSI_strncpy(tc->host, host, strlen(host) + 1);
 	tc->port = port;
+
 
 	handle->readResponse = readResponse;
 	handle->client = client;
@@ -318,9 +318,18 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ExtendPdu *pdu = NULL;
 
+	if (client == NULL || req == NULL || handle == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (((KSI_TcpClient*)client)->extHost == NULL || ((KSI_TcpClient*)client)->extPort == 0) {
+		res = KSI_EXTENDER_NOT_CONFIGURED;
+		goto cleanup;
+	}
+
 	res = KSI_ExtendReq_enclose(req, client->extUser, client->extPass, &pdu);
 	if (res != KSI_OK) goto cleanup;
-
 
 	res = prepareRequest(
 			client,
@@ -344,6 +353,16 @@ cleanup:
 static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationReq *req, KSI_RequestHandle **handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationPdu *pdu = NULL;
+
+	if (client == NULL || req == NULL || handle == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (((KSI_TcpClient*)client)->aggrHost == NULL || ((KSI_TcpClient*)client)->aggrPort == 0) {
+		res = KSI_AGGREGATOR_NOT_CONFIGURED;
+		goto cleanup;
+	}
 
 	res = KSI_AggregationReq_enclose(req, client->aggrUser, client->aggrPass, &pdu);
 	if (res != KSI_OK) goto cleanup;

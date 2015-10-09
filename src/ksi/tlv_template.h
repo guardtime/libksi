@@ -18,6 +18,7 @@
  */
 
 #include <stdlib.h>
+#include "common.h"
 #include "types.h"
 
 #ifndef KSI_TLV_TEMPLATE_H_
@@ -238,6 +239,12 @@ extern "C" {
 	 * None or at most one TLV in the group 1 may be present.
 	 */
 	#define KSI_TLV_TMPL_FLG_MOST_ONE_G1	0x100
+
+	/**
+	 * All the sub elements with this flag enabled may be present in the TLV only in the same
+	 * order as they appear in the template.
+	 */
+	#define KSI_TLV_TMPL_FLG_FIXED_ORDER 0x200
 
 	/**
 	 * One and only one of the group 0 must be present.
@@ -500,6 +507,22 @@ extern "C" {
 	int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag, int isNc, int isFwd, const KSI_TlvTemplate *tmpl, unsigned char **raw, size_t *raw_len);
 
 	/**
+	 * This function serializes the given object based on the template.
+	 * \param[in]	ctx			KSI context.
+	 * \param[in]	obj			Object to be serialized.
+	 * \param[in]	tag			Tag of the outer TLV.
+	 * \param[in]	isNc		Flag of the outer TLV: is non-critical
+	 * \param[in]	isFwd		Flag of the outer TLV: is forward
+	 * \param[in]	tmpl		Template
+	 * \param[in]	raw			Pointer to target buffer
+	 * \param[in]	raw_size	Size of the target buffer
+	 * \param[out]	raw_len		Length of the serialization.
+	 * \param[in]	opt			Options.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_TlvTemplate_writeBytes(KSI_CTX *ctx, const void *obj, unsigned tag, int isNc, int isFwd, const KSI_TlvTemplate *tmpl, unsigned char *raw, size_t raw_size, size_t *raw_len, int opt);
+
+	/**
 	 * Macro to generate object parsers.
 	 * \param[in]	type		Type name.
 	 * \param[in]	tag			Tag of the concrete TLV.
@@ -551,6 +574,12 @@ extern "C" {
 			res = KSI_OK; \
 		cleanup: \
 			return res; \
+		} \
+
+	#define KSI_IMPLEMENT_WRITE_BYTES(typ, tag, nc, fwd) \
+		KSI_DEFINE_WRITE_BYTES(typ) { \
+			if (o == NULL) return KSI_INVALID_ARGUMENT; \
+			return KSI_TlvTemplate_writeBytes(o->ctx, (void *)o, tag, nc, fwd, KSI_TLV_TEMPLATE(typ), buf, buf_size, buf_len, opt); \
 		} \
 
 	/**

@@ -27,6 +27,7 @@ extern unsigned char *KSI_NET_MOCK_response;
 extern unsigned KSI_NET_MOCK_response_len;
 
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
+#define TAMPERED_PUBLICATIONS_FILE "resource/tlv/publications-fake-publication.tlv"
 
 static void setFileMockResponse(CuTest *tc, const char *fileName) {
 	FILE *f = NULL;
@@ -157,7 +158,7 @@ static void testVerifyPublicationsFileWithNoConstraints(CuTest *tc) {
 
 	/* Verification should not fail. */
 	res = KSI_PublicationsFile_verify(pubFile, ctx);
-	CuAssert(tc, "Publications file must verify with no constraints.", res == KSI_OK);
+	CuAssert(tc, "Publications file may not verify with no constraints.", res == KSI_PUBFILE_VERIFICATION_NOT_CONFIGURED);
 
 	arr[0].oid = KSI_CERT_EMAIL;
 	arr[0].val = "publications@guardtime.com";
@@ -203,6 +204,18 @@ static void testVerifyPublicationsFileWithAttributeNotPresent(CuTest *tc) {
 	/* Verification should not fail. */
 	res = KSI_PublicationsFile_verify(pubFile, ctx);
 	CuAssert(tc, "Publications file must verify.", res == KSI_OK);
+
+	KSI_PublicationsFile_free(pubFile);
+}
+
+static void testVerifyPublicationsFileAddidionalPublications(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TAMPERED_PUBLICATIONS_FILE), &pubFile);
+	CuAssert(tc, "This publications file does not follow the correct format.", res != KSI_OK && pubFile == NULL);
 
 	KSI_PublicationsFile_free(pubFile);
 }
@@ -602,6 +615,7 @@ CuSuite* KSITest_Publicationsfile_getSuite(void) {
 	SUITE_ADD_TEST(suite, testVerifyPublicationsFileWithOrganization);
 	SUITE_ADD_TEST(suite, testVerifyPublicationsFileWithNoConstraints);
 	SUITE_ADD_TEST(suite, testVerifyPublicationsFileWithAttributeNotPresent);
+	SUITE_ADD_TEST(suite, testVerifyPublicationsFileAddidionalPublications);
 	SUITE_ADD_TEST(suite, testGetNearestPublication);
 	SUITE_ADD_TEST(suite, testGetNearestPublicationOf0);
 	SUITE_ADD_TEST(suite, testGetNearestPublicationWithPubTime);

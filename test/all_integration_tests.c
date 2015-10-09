@@ -33,6 +33,10 @@
 
 KSI_CTX *ctx = NULL;
 
+const KSI_CertConstraint testPubFileCertConstraints[] = {
+		{ KSI_CERT_EMAIL, "publications@guardtime.com"},
+		{ NULL, NULL }
+};
 
 static CuSuite* initSuite(void) {
 	CuSuite *suite = CuSuiteNew();
@@ -53,6 +57,18 @@ static int RunAllTests() {
 	res = KSI_CTX_new(&ctx);
 	if (ctx == NULL || res != KSI_OK){
 		fprintf(stderr, "Error: Unable to init KSI context (%s)!\n", KSI_getErrorString(res));
+		exit(EXIT_FAILURE);
+	}
+
+	res = KSI_CTX_setPublicationUrl(ctx, conf.publications_file_url);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to set publications file URL.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, testPubFileCertConstraints);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to set publications file verification constraints.\n");
 		exit(EXIT_FAILURE);
 	}
 
