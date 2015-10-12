@@ -26,17 +26,13 @@
 #include "all_integration_tests.h"
 #include "support_tests.h"
 #include "ksi/compatibility.h"
+#include <ctype.h>
 
 #ifndef UNIT_TEST_OUTPUT_XML
 #  define UNIT_TEST_OUTPUT_XML "_testsuite.xml"
 #endif
 
 KSI_CTX *ctx = NULL;
-
-const KSI_CertConstraint testPubFileCertConstraints[] = {
-		{ KSI_CERT_EMAIL, "publications@guardtime.com"},
-		{ NULL, NULL }
-};
 
 static CuSuite* initSuite(void) {
 	CuSuite *suite = CuSuiteNew();
@@ -66,7 +62,7 @@ static int RunAllTests() {
 		exit(EXIT_FAILURE);
 	}
 
-	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, testPubFileCertConstraints);
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, conf.testPubFileCertConstraints);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to set publications file verification constraints.\n");
 		exit(EXIT_FAILURE);
@@ -108,7 +104,33 @@ static int RunAllTests() {
 		KSI_strncpy(conf->name, value, CONF_FIELD_SIZE);\
 	}\
 
+static char *string_getBetweenWhitespace(char *strn) {
+	char *beginning = strn;
+	char *end = NULL;
+	unsigned strn_len;
+
+	if (strn == NULL) return NULL;
+	strn_len = strlen(strn);
+	if (strn_len == 0) return strn;
+	end = strn + strn_len - 1;
+
+	/*Replace trailing whitespace with string end characters*/
+	while(end != strn && isspace(*end)) {
+		*end = '\0';
+		end--;
+	}
+
+	while(*beginning != '\0' && isspace(*beginning)) beginning++;
+	return beginning;
+	}
+
 static void conf_append(CONF *conf, const char *param, const char *value) {
+	char tmp[CONF_FIELD_SIZE];
+	char *equal = NULL;
+	char *OID = NULL;
+	char *oid_value = NULL;
+
+
 	CONF_cpy(extender_url, param, value);
 	CONF_cpy(extender_pass, param, value);
 	CONF_cpy(extender_user, param, value);
@@ -118,14 +140,52 @@ static void conf_append(CONF *conf, const char *param, const char *value) {
 	CONF_cpy(aggregator_user, param, value);
 
 	CONF_cpy(publications_file_url, param, value);
-	CONF_cpy(publications_file_cnstr, param, value);
 
 	CONF_cpy(tcp_url, param, value);
 	CONF_cpy(tcp_user, param, value);
 	CONF_cpy(tcp_pass, param, value);
+
+	if (strcmp(param, "publications_file_cnstr") == 0) {
+		if (conf->constraints >= CONF_MAX_CONSTRAINTS) {
+			fprintf(stderr, "Error: Publications file constraint count too large. Max is %i\n", CONF_MAX_CONSTRAINTS);
+			exit(EXIT_FAILURE);
+		}
+		KSI_strncpy(tmp, value, sizeof(tmp));
+		/*Entry in conf file must contain '='*/
+		equal = strchr(tmp, '=');
+		if(equal == NULL) {
+			fprintf(stderr, "Error: Publications file constraint must have format <oid>=<value>, but is '%s'!\n", value);
+			exit(EXIT_FAILURE);
+		} else {
+			*equal = '\0';
+			OID = string_getBetweenWhitespace(tmp);
+			oid_value = string_getBetweenWhitespace(equal + 1);
+
+			if(strlen(OID) == 0) {
+				fprintf(stderr, "Error: Publications file constraint OID must not be empty string!\n");
+				fprintf(stderr, "Error: Invalid entry '%s'\n", value);
+				exit(EXIT_FAILURE);
+			}
+
+			if(strlen(oid_value) == 0) {
+				fprintf(stderr, "Error: Publications file constraint value must not be empty string!\n");
+				fprintf(stderr, "Error: Invalid entry '%s'\n", value);
+				exit(EXIT_FAILURE);
+			}
+			KSI_strncpy(conf->oid[conf->constraints], OID, CONF_FIELD_SIZE);
+			KSI_strncpy(conf->val[conf->constraints], oid_value, CONF_FIELD_SIZE);
+
+			conf->testPubFileCertConstraints[conf->constraints].oid = conf->oid[conf->constraints];
+			conf->testPubFileCertConstraints[conf->constraints].val = conf->val[conf->constraints];
+			conf->constraints++;
+		}
+
+	}
 }
 
 static void conf_clear(CONF *conf) {
+	unsigned int i;
+
 	conf->aggregator_url[0] = '\0';
 	conf->aggregator_pass[0] = '\0';
 	conf->aggregator_user[0] = '\0';
@@ -137,6 +197,16 @@ static void conf_clear(CONF *conf) {
 	conf->tcp_url[0] = '\0';
 	conf->tcp_pass[0] = '\0';
 	conf->tcp_user[0] = '\0';
+
+	conf->constraints = 0;
+	for (i = 0; i < CONF_MAX_CONSTRAINTS + 1; i++) {
+		conf->testPubFileCertConstraints[i].oid = NULL;
+		conf->testPubFileCertConstraints[i].val = NULL;
+		if (i < CONF_MAX_CONSTRAINTS) {
+			conf->oid[i][0] = '\0';
+			conf->val[i][0] = '\0';
+		}
+	}
 }
 
 #define CONF_CONTROL(_conf, _param, _res) \
@@ -154,10 +224,14 @@ static int conf_control(CONF *conf) {
 	CONF_CONTROL(conf, extender_pass, res);
 	CONF_CONTROL(conf, extender_user, res);
 	CONF_CONTROL(conf, publications_file_url, res);
-	CONF_CONTROL(conf, publications_file_cnstr, res);
 	CONF_CONTROL(conf, tcp_url, res);
 	CONF_CONTROL(conf, tcp_pass, res);
 	CONF_CONTROL(conf, tcp_user, res);
+
+	if (conf->constraints == 0) {
+		fprintf(stderr, "Error: At least 1 publications file certificate constraint must be defined in conf file.\n");
+		res = 1;
+	}
 	/*Return 1 if conf contains errors*/
 	return res;
 }
@@ -167,7 +241,7 @@ static int conf_load(const char *confFile, CONF *conf) {
 	int res = 0;
 	FILE *file = NULL;
 	char tmp[2048];
-	char line[2048];
+	char *line = NULL;
 	char *ln = NULL;
 	char *equal = NULL;
 	char *param = NULL;
@@ -183,15 +257,14 @@ static int conf_load(const char *confFile, CONF *conf) {
 	/*Initialize configuration object*/
 	conf_clear(conf);
 
-	while(fgets(line, sizeof(line), file)){
-		if ((ln = strchr(line, 0x0D)) != NULL) *ln = 0;
-		else if ((ln = strchr(line, 0x0A)) != NULL) *ln = 0;
+	while(fgets(tmp, sizeof(tmp), file)){
+		if ((ln = strchr(tmp, 0x0D)) != NULL) *ln = 0;
+		else if ((ln = strchr(tmp, 0x0A)) != NULL) *ln = 0;
 		else continue;
 
 		/*Remove whitespace character. If invalid line, continue!*/
-		if (sscanf(line ,"%1023s", tmp) == 0) continue;
-		/*Its a comment, continue!*/
-		if(tmp[0] == '#') continue;
+		line = string_getBetweenWhitespace(tmp);
+		if (line == NULL || line[0] == '\0' || line[0] == '#') continue;
 
 		/*Entry in conf file must contain =*/
 		equal = strchr(line, '=');
@@ -200,9 +273,8 @@ static int conf_load(const char *confFile, CONF *conf) {
 			continue;
 		} else {
 			*equal = '\0';
-			param = line;
-			value = equal + 1;
-
+			param = string_getBetweenWhitespace(line);
+			value = string_getBetweenWhitespace(equal + 1);
 			conf_append(conf, param, value);
 		}
 	}
