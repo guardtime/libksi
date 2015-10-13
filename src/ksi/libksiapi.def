@@ -35,7 +35,8 @@ EXPORTS
     KSI_snprintf
     KSI_vsnprintf
     KSI_strncpy
-	KSI_strdup
+    KSI_strdup
+    KSI_CalendarTimeToUnixTime
 
 ;err.h
 EXPORTS
