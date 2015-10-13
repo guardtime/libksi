@@ -52,6 +52,47 @@ cleanup:
 	return res;
 }
 
+static int DER_CertFromFile(KSI_CTX *ctx, const char *fileName, KSI_PKICertificate **cert) {
+	int res;
+	FILE *f = NULL;
+	char der[0xffff];
+	size_t der_len;
+	KSI_PKICertificate *tmp = NULL;
+
+	if (ctx == NULL || fileName == NULL || cert == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_LOG_debug(ctx, "Open Certificate file: '%s'", fileName);
+
+	f = fopen(fileName, "rb");
+	if (f == NULL) {
+		res = KSI_IO_ERROR;
+		goto cleanup;
+	}
+
+	der_len = fread(der, 1, sizeof (der), f);
+	if (der_len == 0) {
+		res = KSI_IO_ERROR;
+		goto cleanup;
+	}
+
+	res = KSI_PKICertificate_new(ctx, der, der_len , &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	*cert = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+
+cleanup:
+
+	if (f != NULL) fclose(f);
+	KSI_PKICertificate_free(tmp);
+
+	return res;
+}
+
 static void TestAddInvalidLookupFile(CuTest *tc) {
 	int res;
 	KSI_PKITruststore *pki = NULL;
@@ -113,6 +154,27 @@ static void TestParseAndSeraializeCert(CuTest *tc) {
 	KSI_free(raw_crt);
 }
 
+static void TestRetreiveValidityDate (CuTest *tc) {
+	int res;
+	KSI_PKICertificate *cert = NULL;
+	KSI_uint64_t notafter, notbefore;
+
+	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/mock.crt.der"), &cert);
+	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert != NULL);
+
+	res = KSI_PKICertificate_getValidityNotBefore(cert, &notbefore);
+	CuAssert(tc, "Unable to get validity time not before.", res == KSI_OK);
+
+	res = KSI_PKICertificate_getValidityNotAfter(cert, &notafter);
+	CuAssert(tc, "Unable to get validity time not after.", res == KSI_OK);
+
+
+	CuAssert(tc, "Unexpected value of validity date not before.", notbefore == 1431084558);
+	CuAssert(tc, "Unexpected value of validity date not after.", notafter == 1462620558);
+
+	KSI_PKICertificate_free(cert);
+}
+
 CuSuite* KSITest_Truststore_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
@@ -120,6 +182,7 @@ CuSuite* KSITest_Truststore_getSuite(void)
 	SUITE_ADD_TEST(suite, TestAddInvalidLookupFile);
 	SUITE_ADD_TEST(suite, TestAddValidLookupFile);
 	SUITE_ADD_TEST(suite, TestParseAndSeraializeCert);
+	SUITE_ADD_TEST(suite, TestRetreiveValidityDate);
 
 	return suite;
 }

@@ -160,6 +160,28 @@ extern "C" {
 	 * error code).
 	 */
 	int KSI_PKITruststore_addLookupDir(KSI_PKITruststore *store, const char *path);
+	 
+	/**
+	 * Retrieves the beginning of PKI certificates validity period as the number of seconds
+	 * since 1970-01-01 00:00:00 UTC.
+     * \param[in]	cert	input certificate object.
+     * \param[out]	time	retrieved time value.
+	 * 	
+	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 */
+	int KSI_PKICertificate_getValidityNotBefore(const KSI_PKICertificate *cert, KSI_uint64_t *time);
+
+	/**
+	 * Retrieves the end of PKI certificates validity period as the number of seconds
+	 * since 1970-01-01 00:00:00 UTC.
+     * \param[in]	cert	input certificate object.
+     * \param[out]	time	retrieved time value.
+	 * 	
+	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 */
+	int KSI_PKICertificate_getValidityNotAfter(const KSI_PKICertificate *cert, KSI_uint64_t *time);
 
 	/**
 	 * Creates a string representation of a PKI Certificate.

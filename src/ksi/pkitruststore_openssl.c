@@ -32,6 +32,7 @@
 #include "tlv.h"
 #include "pkitruststore.h"
 #include "ctx_impl.h"
+#include "compatibility.h"
 
 static const char *defaultCaFile =
 #ifdef OPENSSL_CA_FILE
@@ -674,6 +675,77 @@ cleanup:
 	if (tmp_ossl != NULL) OPENSSL_free(tmp_ossl);
 
 	return res;
+}
+
+static time_t ASN1_GetTimeT(ASN1_TIME* time){
+    struct tm t;
+    const char* str = (const char*) time->data;
+    size_t i = 0;
+
+	if (time == NULL) return 0;
+    memset(&t, 0, sizeof(t));
+
+    if (time->type == V_ASN1_UTCTIME) {/* two digit year */
+        t.tm_year = (str[i++] - '0') * 10;
+        t.tm_year += (str[i++] - '0');
+        if (t.tm_year < 70)
+            t.tm_year += 100;
+    } else if (time->type == V_ASN1_GENERALIZEDTIME) {/* four digit year */
+        t.tm_year = (str[i++] - '0') * 1000;
+        t.tm_year+= (str[i++] - '0') * 100;
+        t.tm_year+= (str[i++] - '0') * 10;
+        t.tm_year+= (str[i++] - '0');
+        t.tm_year -= 1900;
+    }
+    t.tm_mon  = (str[i++] - '0') * 10;
+    t.tm_mon += (str[i++] - '0') - 1; // -1 since January is 0 not 1.
+    t.tm_mday = (str[i++] - '0') * 10;
+    t.tm_mday+= (str[i++] - '0');
+    t.tm_hour = (str[i++] - '0') * 10;
+    t.tm_hour+= (str[i++] - '0');
+    t.tm_min  = (str[i++] - '0') * 10;
+    t.tm_min += (str[i++] - '0');
+    t.tm_sec  = (str[i++] - '0') * 10;
+    t.tm_sec += (str[i++] - '0');
+
+    /* Note: we did not adjust the time based on time zone information */
+    return KSI_CalendarTimeToUnixTime(&t);
+}
+
+#define NOT_AFTER 0
+#define NOT_BEFORE 1
+
+static int pki_certificate_getValidityTime(const KSI_PKICertificate *cert, int type, KSI_uint64_t *time) {
+	int res;
+	ASN1_TIME *t = NULL;
+
+
+	if (cert == NULL || cert->x509 == NULL  || time == NULL){
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (type == NOT_AFTER) {
+		t = X509_get_notAfter(cert->x509);
+	} else {
+		t = X509_get_notBefore(cert->x509);
+	}
+
+	*time = ASN1_GetTimeT(t);
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_PKICertificate_getValidityNotBefore(const KSI_PKICertificate *cert, KSI_uint64_t *time) {
+	return pki_certificate_getValidityTime(cert, NOT_BEFORE, time);
+}
+
+int KSI_PKICertificate_getValidityNotAfter(const KSI_PKICertificate *cert, KSI_uint64_t *time) {
+	return pki_certificate_getValidityTime(cert, NOT_AFTER, time);
 }
 
 char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, size_t buf_len){

@@ -261,6 +261,8 @@ EXPORTS
     KSI_PKITruststore_verifySignature
     KSI_PKITruststore_addLookupFile
     KSI_PKITruststore_addLookupDir
+    KSI_PKICertificate_getValidityNotBefore
+    KSI_PKICertificate_getValidityNotAfter
     KSI_PKICertificate_toString
 
 ;publicationsfile.h

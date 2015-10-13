@@ -565,6 +565,48 @@ cleanup:
 	return res;
 }
 
+#define WINDOWS_TICK 10000000
+#define SEC_TO_UNIX_EPOCH 11644473600LL
+#define NOT_AFTER 0
+#define NOT_BEFORE 1
+
+static KSI_uint64_t WindowsTickToUnixSeconds(KSI_uint64_t windowsTicks) {
+     return (KSI_uint64_t)(windowsTicks / WINDOWS_TICK - SEC_TO_UNIX_EPOCH);
+}
+
+static int pki_certificate_getValidityTime(const KSI_PKICertificate *cert, int type, KSI_uint64_t *time) {
+	int res;
+	KSI_uint64_t H, L;
+
+	if (cert == NULL || cert->x509 == NULL  || time == NULL){
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (type == NOT_AFTER) {
+		H = cert->x509->pCertInfo->NotAfter.dwHighDateTime;
+		L = cert->x509->pCertInfo->NotAfter.dwLowDateTime;
+	} else {
+		H = cert->x509->pCertInfo->NotBefore.dwHighDateTime;
+		L = cert->x509->pCertInfo->NotBefore.dwLowDateTime;
+	}
+
+	*time = WindowsTickToUnixSeconds(H << 32 | L);
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_PKICertificate_getValidityNotBefore(const KSI_PKICertificate *cert, KSI_uint64_t *time) {
+	return pki_certificate_getValidityTime(cert, NOT_BEFORE, time);
+}
+
+int KSI_PKICertificate_getValidityNotAfter(const KSI_PKICertificate *cert, KSI_uint64_t *time) {
+	return pki_certificate_getValidityTime(cert, NOT_AFTER, time);
+}
+
 char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, size_t buf_len){
 	char *ret = NULL;
 	char strSubjectname[256];
