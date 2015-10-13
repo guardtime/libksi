@@ -185,7 +185,6 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->loggerCB = NULL;
 	ctx->requestHeaderCB = NULL;
 	ctx->loggerCtx = NULL;
-	ctx->requestCounter = 0;
 	ctx->certConstraints = NULL;
 	KSI_ERR_clearErrors(ctx);
 

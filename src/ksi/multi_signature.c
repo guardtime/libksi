@@ -1356,12 +1356,6 @@ static int extendUnextended(TimeMapper *tm, void *fctx) {
 				res = KSI_ExtendReq_setPublicationTime(req, publicationTime);
 				if (res != KSI_OK) goto cleanup;
 
-				/* FIXME! The caller should not be bothered with request id - this must be done within the network client. */
-				res = KSI_Integer_new(tm->calendarChain->ctx, ++tm->calendarChain->ctx->requestCounter, &reqId);
-				if (res != KSI_OK) goto cleanup;
-				res = KSI_ExtendReq_setRequestId(req, reqId);
-				if (res != KSI_OK) goto cleanup;
-
 				/* Send the extension request. */
 				res = KSI_sendExtendRequest(tm->calendarChain->ctx, req, &handle);
 				if (res != KSI_OK) goto cleanup;

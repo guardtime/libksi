@@ -154,6 +154,7 @@ extern "C" {
 	KSI_DEFINE_LIST(KSI_PKICertificate);
 	KSI_DEFINE_LIST(KSI_AggregationAuthRec);
 	KSI_DEFINE_LIST(KSI_RFC3161);
+	KSI_DEFINE_LIST(KSI_RequestHandle);
 
 /*
  * KSI_MetaData

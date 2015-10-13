@@ -21,6 +21,7 @@
 #define NET_IMPL_H_
 
 #include "net.h"
+#include "internal.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,11 +49,22 @@ extern "C" {
 	
 		/** Cleanup for the provider, gets the #providerCtx as parameter. */
 		void (*implFree)(void *);
+
+		size_t requestCount;
+
+		int (*performAll)(KSI_NetworkClient *client, KSI_RequestHandle **arr, size_t arr_len);
 	};
 
 	struct KSI_NetHandle_st {
 		/** KSI context. */
 		KSI_CTX *ctx;
+
+		/** Instance reference count. */
+		size_t ref;
+
+		/** Has the request completeted. */
+		bool completed;
+
 		/** Request destination. */
 		unsigned char *request;
 		/** Length of the original request. */
