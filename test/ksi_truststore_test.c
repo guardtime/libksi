@@ -219,7 +219,7 @@ static void TestRetrieveIntermediateCertNames (CuTest *tc) {
 	KSI_PKICertificate_free(cert);
 }
 
-static void TestCertificateCRC32 (CuTest *tc) {
+static void TestCertificateCRC32(CuTest *tc) {
 	int res = 0;
 	KSI_CertificateRecordList *certReclist = NULL;
 	KSI_CertificateRecord *certRec = NULL;
@@ -255,6 +255,22 @@ static void TestCertificateCRC32 (CuTest *tc) {
 	return;
 }
 
+static void TestGetPKICertificateSerialNumber(CuTest *tc) {
+	int res;
+	char *ret = NULL;
+	KSI_PKICertificate *cert = NULL;
+	unsigned long serial_number = 0;
+
+	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/CA_3.crt.der"), &cert);
+	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert != NULL);
+
+	res = KSI_PKICertificate_getSerialNumber(cert, &serial_number);
+	CuAssert(tc, "Unable to retrieve certificates serial number.", res == KSI_OK);
+	CuAssert(tc, "PKI certificate serial number mismatch.", serial_number == 6985214);
+
+	KSI_PKICertificate_free(cert);
+}
+
 CuSuite* KSITest_Truststore_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
@@ -266,6 +282,7 @@ CuSuite* KSITest_Truststore_getSuite(void)
 	SUITE_ADD_TEST(suite, TestRetrieveSelfSignedCertNames);
 	SUITE_ADD_TEST(suite, TestRetrieveIntermediateCertNames);
 	SUITE_ADD_TEST(suite, TestCertificateCRC32);
+	SUITE_ADD_TEST(suite, TestGetPKICertificateSerialNumber);
 
 	return suite;
 }

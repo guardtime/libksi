@@ -468,6 +468,35 @@ char* KSI_PKICertificate_subjectToString(const KSI_PKICertificate *cert, char *b
 	return pki_certificate_nameToString(cert, SUBJECT, buf, buf_len);
 }
 
+int KSI_PKICertificate_getSerialNumber(const KSI_PKICertificate *cert, unsigned long *serial_number) {
+	int res;
+	DWORD count;
+	BYTE *data;
+	unsigned i;
+	long tmp;
+
+	if (cert == NULL || cert->x509 == NULL  || serial_number == NULL){
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	count = cert->x509->pCertInfo->SerialNumber.cbData;
+	/*Data is stored as little-endian. 0xFFFFFF88 is stored as {0x88, 0xFF, 0xFF, 0xFF}.*/
+	data = cert->x509->pCertInfo->SerialNumber.pbData;
+
+	for(i = 0, tmp = 0; i < count; i++) {
+		tmp |= (long)data[i] << (8 * i);
+	}
+
+
+	*serial_number = tmp;
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 /*TODO: for debugging*/
 static void printCertInfo(PCCERT_CONTEXT cert){
 	char strMail[256];

@@ -214,6 +214,15 @@ extern "C" {
 	int KSI_PKICertificate_calculateCRC32(KSI_PKICertificate *cert, KSI_OctetString **crc);
 	
 	/**
+	 * Getter for PKI Certificate serial number.
+     * \param[in]	cert			input certificate object.
+     * \param[out]	serial_number	pointer to receiving long integer.
+     * \return status code (\c #KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+     */
+	int KSI_PKICertificate_getSerialNumber(const KSI_PKICertificate *cert, unsigned long *serial_number);
+	
+	/**
 	 * Creates a string representation of a PKI Certificate.
 	 *
      * \param[in]	cert		input certificate object.

@@ -600,6 +600,34 @@ char* KSI_PKICertificate_subjectToString(const KSI_PKICertificate *cert, char *b
 	return pki_certificate_nameToString(cert, SUBJECT, buf, buf_len);
 }
 
+int KSI_PKICertificate_getSerialNumber(const KSI_PKICertificate *cert, unsigned long *serial_number) {
+	int res;
+	ASN1_INTEGER *integer = NULL;
+	long tmp;
+
+	if (cert == NULL || cert->x509 == NULL  || serial_number == NULL){
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+
+	integer = X509_get_serialNumber(cert->x509);
+	if (integer == NULL) {
+		res = KSI_UNKNOWN_ERROR;
+		KSI_pushError(cert->ctx, res, "Unable to extract PKI certificate serial number.");
+	}
+
+	tmp = (unsigned long)ASN1_INTEGER_get(integer);
+
+
+	*serial_number = tmp;
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 static int extractCertificate(const KSI_PKISignature *signature, X509 **cert) {
 	int res = KSI_UNKNOWN_ERROR;
 	X509 *signing_cert = NULL;
