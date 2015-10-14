@@ -265,6 +265,7 @@ EXPORTS
     KSI_PKICertificate_getValidityNotAfter
     KSI_PKICertificate_issuerToString
     KSI_PKICertificate_subjectToString
+    KSI_PKICertificate_calculateCRC32
     KSI_PKICertificate_toString
 
 ;publicationsfile.h

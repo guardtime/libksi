@@ -19,7 +19,7 @@
 
 #include "internal.h"
 
-#if KSI_PKI_TRUSTSTORE_IMPL == KSI_IMPL_CRYPTOAPI || 1
+#if KSI_PKI_TRUSTSTORE_IMPL == KSI_IMPL_CRYPTOAPI
 
 #include <string.h>
 #include <limits.h>

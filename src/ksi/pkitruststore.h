@@ -204,6 +204,16 @@ extern "C" {
 	char* KSI_PKICertificate_subjectToString(const KSI_PKICertificate *cert, char *buf, size_t buf_len);
 	
 	/**
+	 * Calculates the CRC32 of PKI certificates that can be used as the certificate ID in the publications file.
+     * \param[in]	cert		input certificate object.
+     * \param[out]	crc			pointer to receiving pointer. 
+	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 * \note Function caller must free the \c #KSI_OctetString object.
+     */
+	int KSI_PKICertificate_calculateCRC32(KSI_PKICertificate *cert, KSI_OctetString **crc);
+	
+	/**
 	 * Creates a string representation of a PKI Certificate.
 	 *
      * \param[in]	cert		input certificate object.

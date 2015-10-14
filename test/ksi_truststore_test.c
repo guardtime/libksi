@@ -219,6 +219,42 @@ static void TestRetrieveIntermediateCertNames (CuTest *tc) {
 	KSI_PKICertificate_free(cert);
 }
 
+static void TestCertificateCRC32 (CuTest *tc) {
+	int res = 0;
+	KSI_CertificateRecordList *certReclist = NULL;
+	KSI_CertificateRecord *certRec = NULL;
+	KSI_PKICertificate *cert = NULL;
+	KSI_OctetString *id = NULL;
+	KSI_OctetString *calculated_id = NULL;
+	int i=0;
+	KSI_PublicationsFile *pubfile = NULL;
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath("resource/tlv/publications.tlv"), &pubfile);
+	CuAssert(tc, "Unable to load publications file from file.", res == KSI_OK);
+
+	res = KSI_PublicationsFile_getCertificates(pubfile, &certReclist);
+	CuAssert(tc, "Unable to get publications file certificates", res == KSI_OK && certReclist != NULL);
+
+	for(i = 0; i < KSI_CertificateRecordList_length(certReclist); i++){
+		res = KSI_CertificateRecordList_elementAt(certReclist, i, &certRec);
+		CuAssert(tc, "Unable to get certificate record from certificate record list.", res == KSI_OK && certRec != NULL);
+
+		res = KSI_CertificateRecord_getCert(certRec, &cert);
+		CuAssert(tc, "Unable to get cert from certificate record.", res == KSI_OK && cert != NULL);
+
+		res = KSI_CertificateRecord_getCertId(certRec, &id);
+		CuAssert(tc, "Unable to get cert ID (crc32 of certificate).", res == KSI_OK && id != NULL);
+
+		res = KSI_PKICertificate_calculateCRC32(cert, &calculated_id);
+		CuAssert(tc, "Unable to get cert ID (crc32 of certificate).", res == KSI_OK && calculated_id != NULL);
+		CuAssert(tc, "Certificate ID and calculated id mismatch.", KSI_OctetString_equals(id, calculated_id));
+
+		KSI_OctetString_free(calculated_id);
+	}
+
+	return;
+}
+
 CuSuite* KSITest_Truststore_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
@@ -229,6 +265,7 @@ CuSuite* KSITest_Truststore_getSuite(void)
 	SUITE_ADD_TEST(suite, TestRetrieveValidityDate);
 	SUITE_ADD_TEST(suite, TestRetrieveSelfSignedCertNames);
 	SUITE_ADD_TEST(suite, TestRetrieveIntermediateCertNames);
+	SUITE_ADD_TEST(suite, TestCertificateCRC32);
 
 	return suite;
 }

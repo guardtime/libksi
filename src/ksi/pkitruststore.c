@@ -20,6 +20,7 @@
 #include "internal.h"
 #include "pkitruststore.h"
 #include "tlv.h"
+#include "crc32.h"
 
 
 int KSI_PKISignature_fromTlv(KSI_TLV *tlv, KSI_PKISignature **sig) {
@@ -265,4 +266,55 @@ cleanup:
 	KSI_Integer_free(notBefore);
 
 	return ret;
+}
+
+int KSI_PKICertificate_calculateCRC32(KSI_PKICertificate *cert, KSI_OctetString **crc) {
+	int res;
+	KSI_OctetString *tmp = NULL;
+	unsigned long ID;
+	unsigned char buf[4];
+	unsigned char *raw = NULL;
+	size_t raw_len;
+	KSI_CTX *ctx = NULL;
+
+	if (cert == NULL || crc == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	ctx = KSI_PKICertificate_getCtx(cert);
+	if (ctx == NULL) {
+		res = KSI_UNKNOWN_ERROR;
+		goto cleanup;
+	}
+
+	res = KSI_PKICertificate_serialize(cert, &raw, &raw_len);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, "Unable to serialize PKI certificate.");
+		goto cleanup;
+	}
+
+	ID = KSI_crc32(raw, raw_len, 0);
+
+	buf[0] = 0xff & (ID >> 24);
+	buf[1] = 0xff & (ID >> 16);
+	buf[2] = 0xff & (ID >> 8);
+	buf[3] = 0xff & (ID >> 0);
+
+	res = KSI_OctetString_new(ctx, buf, sizeof(buf), &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	*crc = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_free(raw);
+	KSI_OctetString_free(tmp);
+
+	return res;
 }
