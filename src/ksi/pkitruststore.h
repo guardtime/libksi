@@ -183,13 +183,33 @@ extern "C" {
 	 */
 	int KSI_PKICertificate_getValidityNotAfter(const KSI_PKICertificate *cert, KSI_uint64_t *time);
 
+	KSI_DEFINE_GET_CTX(KSI_PKICertificate);
+	
+	/**
+	 * Creates a string representation of PKI Certificate issuer name.
+     * \param[in]	cert		input certificate object.
+     * \param[out]	buf			pointer to the receiving buffer.
+     * \param[in]	buf_len		length of the receiving buffer.
+     * \return buf if successful, NULL otherwise;
+     */
+	char* KSI_PKICertificate_issuerToString(const KSI_PKICertificate *cert, char *buf, size_t buf_len);
+
+	/**
+	 * Creates a string representation of PKI Certificate subject name.
+     * \param[in]	cert		input certificate object.
+     * \param[out]	buf			pointer to the receiving buffer.
+     * \param[in]	buf_len		length of the receiving buffer.
+     * \return buf if successful, NULL otherwise;
+     */
+	char* KSI_PKICertificate_subjectToString(const KSI_PKICertificate *cert, char *buf, size_t buf_len);
+	
 	/**
 	 * Creates a string representation of a PKI Certificate.
 	 *
-     * \param[in] cert		input certificate object.
-     * \param[in, out] buf	Pointer to the receiving buffer.
-     * \param[in] buf_len	Length of the receiving buffer.
-     * \return
+     * \param[in]	cert		input certificate object.
+     * \param[out]	buf			pointer to the receiving buffer.
+     * \param[in]	buf_len		length of the receiving buffer.
+     * \return buf if successful, NULL otherwise;
      */
 	char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, size_t buf_len);
 

@@ -154,7 +154,7 @@ static void TestParseAndSeraializeCert(CuTest *tc) {
 	KSI_free(raw_crt);
 }
 
-static void TestRetreiveValidityDate (CuTest *tc) {
+static void TestRetrieveValidityDate (CuTest *tc) {
 	int res;
 	KSI_PKICertificate *cert = NULL;
 	KSI_uint64_t notafter, notbefore;
@@ -175,6 +175,50 @@ static void TestRetreiveValidityDate (CuTest *tc) {
 	KSI_PKICertificate_free(cert);
 }
 
+static void TestRetrieveSelfSignedCertNames (CuTest *tc) {
+	int res;
+	char *ret = NULL;
+	KSI_PKICertificate *cert = NULL;
+	char issuer[1024];
+	char subject[1024];
+
+	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/CA_root.crt.der"), &cert);
+	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert != NULL);
+
+	ret = KSI_PKICertificate_issuerToString(cert, issuer, sizeof(issuer));
+	CuAssert(tc, "Unable to retrieve issuer name.", ret == issuer);
+
+	ret = KSI_PKICertificate_subjectToString(cert, subject, sizeof(subject));
+	CuAssert(tc, "Unable to retrieve subject name.", ret == subject);
+
+	CuAssert(tc, "Invalid issuer name.", strcmp(issuer, "Guardtime AS") == 0);
+	CuAssert(tc, "Invalid subject name.", strcmp(subject, "Guardtime AS") == 0);
+
+	KSI_PKICertificate_free(cert);
+}
+
+static void TestRetrieveIntermediateCertNames (CuTest *tc) {
+	int res;
+	char *ret = NULL;
+	KSI_PKICertificate *cert = NULL;
+	char issuer[1024];
+	char subject[1024];
+
+	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/CA_2.crt.der"), &cert);
+	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert != NULL);
+
+	ret = KSI_PKICertificate_issuerToString(cert, issuer, sizeof(issuer));
+	CuAssert(tc, "Unable to retrieve issuer name.", ret == issuer);
+
+	ret = KSI_PKICertificate_subjectToString(cert, subject, sizeof(subject));
+	CuAssert(tc, "Unable to retrieve subject name.", ret == subject);
+
+	CuAssert(tc, "Invalid issuer name.", strcmp(issuer, "Guardtime AS") == 0);
+	CuAssert(tc, "Invalid subject name.", strcmp(subject, "Unit Testing") == 0);
+
+	KSI_PKICertificate_free(cert);
+}
+
 CuSuite* KSITest_Truststore_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
@@ -182,7 +226,9 @@ CuSuite* KSITest_Truststore_getSuite(void)
 	SUITE_ADD_TEST(suite, TestAddInvalidLookupFile);
 	SUITE_ADD_TEST(suite, TestAddValidLookupFile);
 	SUITE_ADD_TEST(suite, TestParseAndSeraializeCert);
-	SUITE_ADD_TEST(suite, TestRetreiveValidityDate);
+	SUITE_ADD_TEST(suite, TestRetrieveValidityDate);
+	SUITE_ADD_TEST(suite, TestRetrieveSelfSignedCertNames);
+	SUITE_ADD_TEST(suite, TestRetrieveIntermediateCertNames);
 
 	return suite;
 }

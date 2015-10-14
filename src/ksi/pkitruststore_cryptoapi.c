@@ -19,7 +19,7 @@
 
 #include "internal.h"
 
-#if KSI_PKI_TRUSTSTORE_IMPL == KSI_IMPL_CRYPTOAPI
+#if KSI_PKI_TRUSTSTORE_IMPL == KSI_IMPL_CRYPTOAPI || 1
 
 #include <string.h>
 #include <limits.h>
@@ -27,7 +27,6 @@
 #include <windows.h>
 #include <Wincrypt.h>
 
-#include "tlv.h"
 #include "pkitruststore.h"
 #include "ctx_impl.h"
 
@@ -116,91 +115,6 @@ void KSI_PKITruststore_free(KSI_PKITruststore *trust) {
 	}
 }
 
-int KSI_PKICertificate_fromTlv(KSI_TLV *tlv, KSI_PKICertificate **cert) {
-	KSI_CTX *ctx = NULL;
-	int res = KSI_UNKNOWN_ERROR;
-
-	KSI_PKICertificate *tmp = NULL;
-	const unsigned char *raw = NULL;
-	size_t raw_len = 0;
-
-	if (tlv == NULL || cert == NULL){
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	ctx = KSI_TLV_getCtx(tlv);
-	KSI_ERR_clearErrors(ctx);
-
-	res = KSI_TLV_getRawValue(tlv, &raw, &raw_len);
-	if (res != KSI_OK){
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_PKICertificate_new(ctx, raw, raw_len, &tmp);
-	if (res != KSI_OK){
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	*cert = tmp;
-	tmp = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_nofree(raw);
-
-	KSI_PKICertificate_free(tmp);
-
-	return res;
-}
-
-int KSI_PKICertificate_toTlv(KSI_CTX *ctx, KSI_PKICertificate *cert, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_TLV *tmp = NULL;
-	unsigned char *raw = NULL;
-	size_t raw_len = 0;
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || cert == NULL || tlv == NULL){
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
-	if (res != KSI_OK){
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_PKICertificate_serialize(cert, &raw, &raw_len);
-	if (res != KSI_OK){
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_TLV_setRawValue(tmp, raw, raw_len);
-	if (res != KSI_OK){
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-
-	*tlv = tmp;
-	tmp = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_free(raw);
-	KSI_TLV_free(tmp);
-
-	return res;
-}
 /*TODO: Not supported*/
 int KSI_PKITruststore_addLookupDir(KSI_PKITruststore *trust, const char *path) {
 	KSI_LOG_debug(trust->ctx, "CryptoAPI: Not implemented.");
@@ -300,6 +214,8 @@ void KSI_PKICertificate_free(KSI_PKICertificate *cert) {
 	}
 }
 
+KSI_IMPLEMENT_GET_CTX(KSI_PKICertificate);
+
 void KSI_PKISignature_free(KSI_PKISignature *sig) {
 	if (sig != NULL) {
 		if (sig->pkcs7.pbData != NULL) KSI_free(sig->pkcs7.pbData);
@@ -336,94 +252,6 @@ int KSI_PKISignature_serialize(KSI_PKISignature *sig, unsigned char **raw, size_
 cleanup:
 
 	KSI_free(tmp);
-
-	return res;
-}
-
-int KSI_PKISignature_fromTlv(KSI_TLV *tlv, KSI_PKISignature **sig) {
-	KSI_CTX *ctx = NULL;
-	int res = KSI_UNKNOWN_ERROR;
-
-	KSI_PKISignature *tmp = NULL;
-	const unsigned char *raw = NULL;
-	size_t raw_len = 0;
-
-	if (tlv == NULL || sig == NULL){
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	ctx = KSI_TLV_getCtx(tlv);
-	KSI_ERR_clearErrors(ctx);
-
-
-	res = KSI_TLV_getRawValue(tlv, &raw, &raw_len);
-	if (res != KSI_OK){
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_PKISignature_new(ctx, raw, raw_len, &tmp);
-	if (res != KSI_OK){
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	*sig = tmp;
-	tmp = NULL;
-
-	res = KSI_OK;
-
-
-cleanup:
-
-	KSI_nofree(raw);
-
-	KSI_PKISignature_free(tmp);
-
-	return res;
-}
-
-int KSI_PKISignature_toTlv(KSI_CTX *ctx, KSI_PKISignature *sig, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_TLV *tmp = NULL;
-	unsigned char *raw = NULL;
-	size_t raw_len = 0;
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || sig == NULL || tlv == NULL){
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-
-	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
-	if (res != KSI_OK){
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_PKISignature_serialize(sig, &raw, &raw_len);
-	if (res != KSI_OK){
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_TLV_setRawValue(tmp, raw, raw_len);
-	if (res != KSI_OK){
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	*tlv = tmp;
-	tmp = NULL;
-
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_free(raw);
-	KSI_TLV_free(tmp);
 
 	return res;
 }
@@ -569,6 +397,8 @@ cleanup:
 #define SEC_TO_UNIX_EPOCH 11644473600LL
 #define NOT_AFTER 0
 #define NOT_BEFORE 1
+#define ISSUER 0
+#define SUBJECT 1
 
 static KSI_uint64_t WindowsTickToUnixSeconds(KSI_uint64_t windowsTicks) {
      return (KSI_uint64_t)(windowsTicks / WINDOWS_TICK - SEC_TO_UNIX_EPOCH);
@@ -607,22 +437,35 @@ int KSI_PKICertificate_getValidityNotAfter(const KSI_PKICertificate *cert, KSI_u
 	return pki_certificate_getValidityTime(cert, NOT_AFTER, time);
 }
 
-char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, size_t buf_len){
+char* pki_certificate_nameToString(const KSI_PKICertificate *cert, int type, char *buf, size_t buf_len) {
 	char *ret = NULL;
-	char strSubjectname[256];
-	char strIssuerName[256];
 
-	if (cert == NULL  || buf == NULL) goto cleanup;
+	if (cert == NULL || buf == NULL || buf_len == 0 || buf_len > INT_MAX) {
+		goto cleanup;
+	}
 
-	CertGetNameString(cert->x509, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, strSubjectname, sizeof(strSubjectname));
-	CertGetNameString(cert->x509, CERT_NAME_SIMPLE_DISPLAY_TYPE , CERT_NAME_ISSUER_FLAG, 0,strIssuerName, sizeof(strIssuerName));
-	KSI_snprintf(buf, buf_len, "Subject: '%s',  Issuer '%s'.", strSubjectname, strIssuerName);
+	if (type == ISSUER) {
+		CertGetNameString(cert->x509, CERT_NAME_SIMPLE_DISPLAY_TYPE , CERT_NAME_ISSUER_FLAG, 0, buf, (DWORD)buf_len);
+	} else {
+		CertGetNameString(cert->x509, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, buf, (DWORD)buf_len);
+	}
+
+	if (buf[0] == '\0')
+		return NULL;
 
 	ret = buf;
 
 cleanup:
 
-return ret;
+	return ret;
+}
+
+char* KSI_PKICertificate_issuerToString(const KSI_PKICertificate *cert, char *buf, size_t buf_len) {
+	return pki_certificate_nameToString(cert, ISSUER, buf, buf_len);
+}
+
+char* KSI_PKICertificate_subjectToString(const KSI_PKICertificate *cert, char *buf, size_t buf_len) {
+	return pki_certificate_nameToString(cert, SUBJECT, buf, buf_len);
 }
 
 /*TODO: for debugging*/

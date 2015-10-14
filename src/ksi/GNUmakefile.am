@@ -69,6 +69,7 @@ libksi_la_SOURCES = \
 	net_uri.c \
 	net_uri.h \
 	net_uri_impl.h \
+	pkitruststore.c \
 	pkitruststore.h \
 	pkitruststore_openssl.c \
 	publicationsfile.c \
