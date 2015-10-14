@@ -617,6 +617,7 @@ EXPORTS
     KSI_OctetString_equals
     KSI_OctetString_fromTlv
     KSI_OctetString_toTlv
+    KSI_OctetString_toString
     KSI_OctetString_ref
     KSI_Utf8String_free
     KSI_Utf8String_new
