@@ -1,6 +1,9 @@
 *.o
+*.lo
+*.rpm
 .cproject
 .project
+/m4
 GNUmakefile
 GNUmakefile.in
 aclocal.m4

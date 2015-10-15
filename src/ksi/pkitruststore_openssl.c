@@ -589,6 +589,8 @@ char* pki_certificate_nameToString(const KSI_PKICertificate *cert, int type, cha
 
 cleanup:
 
+	if (oid != NULL) ASN1_OBJECT_free(oid);
+
 	return ret;
 }
 
