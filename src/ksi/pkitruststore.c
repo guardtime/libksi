@@ -215,6 +215,7 @@ char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, size_t bu
 	char *ret = NULL;
 	char subjectName[1024];
 	char issuerName[1024];
+	char ID[1024];
 	char date_before[64];
 	char date_after[64];
 	KSI_uint64_t int_notBefore;
@@ -222,6 +223,8 @@ char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, size_t bu
 	KSI_Integer *notBefore = NULL;
 	KSI_Integer *notAfter = NULL;
 	KSI_CTX *ctx = NULL;
+	long serial_number;
+	KSI_OctetString *crc32 = NULL;
 
 	if (cert == NULL || buf == NULL || buf_len == 0) {
 		return NULL;
@@ -255,8 +258,22 @@ char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, size_t bu
 	if (KSI_Integer_toDateString(notBefore, date_before, sizeof(date_before)) == NULL) goto cleanup;
 	if (KSI_Integer_toDateString(notAfter, date_after, sizeof(date_after)) == NULL) goto cleanup;
 
-	KSI_snprintf(buf, buf_len, "Subject: '%s',  Issuer '%s', Valid from %s to %s.",
-		subjectName, issuerName, date_before, date_after);
+	res = KSI_PKICertificate_calculateCRC32(cert, &crc32);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_PKICertificate_getSerialNumber(cert, &serial_number);
+	if (res != KSI_OK) goto cleanup;
+
+	if (KSI_OctetString_toString(crc32, ':', ID, sizeof(ID)) == NULL) {
+		goto cleanup;
+	}
+
+	KSI_snprintf(buf, buf_len, "PKI Certificate (%s):\n"
+			"  * Issued to: %s\n"
+			"  * Issuer by '%s'\n"
+			"  * Valid from %s to %s\n"
+			"  * Serial Number: 0x%02x\n",
+		ID,subjectName, issuerName, date_before, date_after, serial_number);
 
 	ret = buf;
 
@@ -264,6 +281,7 @@ cleanup:
 
 	KSI_Integer_free(notAfter);
 	KSI_Integer_free(notBefore);
+	KSI_OctetString_free(crc32);
 
 	return ret;
 }
