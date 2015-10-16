@@ -252,7 +252,6 @@ static void TestCertificateCRC32(CuTest *tc) {
 		KSI_OctetString_free(calculated_id);
 	}
 
-	KSI_OctetString_free(calculated_id);
 	KSI_PublicationsFile_free(pubfile);
 	return;
 }
