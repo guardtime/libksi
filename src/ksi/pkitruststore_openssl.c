@@ -563,6 +563,48 @@ int KSI_PKICertificate_getValidityNotAfter(const KSI_PKICertificate *cert, KSI_u
 	return pki_certificate_getValidityTime(cert, NOT_AFTER, time);
 }
 
+char* ksi_pki_certificate_getString_by_oid(KSI_PKICertificate *cert, int type, const char *OID, char *buf, size_t buf_len) {
+	char *ret = NULL;
+	ASN1_OBJECT *oid = NULL;
+	X509_NAME *name = NULL;
+
+	if(cert == NULL || cert->x509 == NULL || OID == NULL || buf == NULL || buf_len == 0) {
+		goto cleanup;
+	}
+
+	oid = OBJ_txt2obj(OID, 1);
+
+	if (type == ISSUER) {
+		name = X509_get_issuer_name(cert->x509);
+	} else {
+		name = X509_get_subject_name(cert->x509);
+	}
+
+	if (name == NULL) {
+		goto cleanup;
+	}
+
+	if (X509_NAME_get_text_by_OBJ(name, oid, buf, (int)buf_len) < 0) {
+		goto cleanup;
+	}
+
+	ret = buf;
+
+cleanup:
+
+	if (oid != NULL) ASN1_OBJECT_free(oid);
+
+return ret;
+}
+
+char* KSI_PKICertificate_issuerOIDToString(KSI_PKICertificate *cert, const char *OID, char *buf, size_t buf_len) {
+	return ksi_pki_certificate_getString_by_oid(cert, ISSUER, OID ,buf, buf_len);
+}
+
+char* KSI_PKICertificate_subjectOIDToString(KSI_PKICertificate *cert, const char *OID, char *buf, size_t buf_len) {
+	return ksi_pki_certificate_getString_by_oid(cert, SUBJECT, OID ,buf, buf_len);
+}
+
 char* pki_certificate_nameToString(const KSI_PKICertificate *cert, int type, char *buf, size_t buf_len) {
 	char *ret = NULL;
 	ASN1_OBJECT *oid = NULL;

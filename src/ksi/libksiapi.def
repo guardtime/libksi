@@ -268,6 +268,8 @@ EXPORTS
     KSI_PKICertificate_calculateCRC32
     KSI_PKICertificate_getSerialNumber
     KSI_PKISignature_extractCertificate
+    KSI_PKICertificate_issuerOIDToString
+    KSI_PKICertificate_subjectOIDToString
     KSI_PKICertificate_toString
 
 ;publicationsfile.h

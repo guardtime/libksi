@@ -256,6 +256,70 @@ static void TestCertificateCRC32(CuTest *tc) {
 	return;
 }
 
+static void TestIssuerOIDToSTring (CuTest *tc) {
+	int res;
+	char *ret = NULL;
+	KSI_PKICertificate *cert = NULL;
+	char email[1024];
+	char country[1024];
+	char org[1024];
+	char commonname[1024];
+
+	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/CA_2.crt.der"), &cert);
+	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert != NULL);
+
+	ret = KSI_PKICertificate_issuerOIDToString(cert, KSI_CERT_EMAIL, email, sizeof(email));
+	CuAssert(tc, "Unable to get email by OID.", ret == email);
+
+	ret = KSI_PKICertificate_issuerOIDToString(cert, KSI_CERT_COUNTRY, country, sizeof(country));
+	CuAssert(tc, "Unable to get country by OID.", ret == country);
+
+	ret = KSI_PKICertificate_issuerOIDToString(cert, KSI_CERT_ORGANIZATION, org, sizeof(org));
+	CuAssert(tc, "Unable to get organization by OID.", ret == org);
+
+	ret = KSI_PKICertificate_issuerOIDToString(cert, KSI_CERT_COMMON_NAME, commonname, sizeof(commonname));
+	CuAssert(tc, "Unable to get organization by OID.", ret == commonname);
+
+	CuAssert(tc, "Invalid email.", strcmp(email, "publications@guardtime.com") == 0);
+	CuAssert(tc, "Invalid country.", strcmp(country, "EE") == 0);
+	CuAssert(tc, "Invalid organization.", strcmp(org, "Guardtime AS") == 0);
+	CuAssert(tc, "Invalid commone name.", strcmp(commonname, "Guardtime AS") == 0);
+
+	KSI_PKICertificate_free(cert);
+}
+
+static void TestSubjectOIDToSTring (CuTest *tc) {
+	int res;
+	char *ret = NULL;
+	KSI_PKICertificate *cert = NULL;
+	char email[1024];
+	char country[1024];
+	char org[1024];
+	char commonname[1024];
+
+	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/CA_2.crt.der"), &cert);
+	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert != NULL);
+
+	ret = KSI_PKICertificate_subjectOIDToString(cert, KSI_CERT_EMAIL, email, sizeof(email));
+	CuAssert(tc, "Unable to get email by OID.", ret == email);
+
+	ret = KSI_PKICertificate_subjectOIDToString(cert, KSI_CERT_COUNTRY, country, sizeof(country));
+	CuAssert(tc, "Unable to get country by OID.", ret == country);
+
+	ret = KSI_PKICertificate_subjectOIDToString(cert, KSI_CERT_ORGANIZATION, org, sizeof(org));
+	CuAssert(tc, "Unable to get organization by OID.", ret == org);
+
+	ret = KSI_PKICertificate_subjectOIDToString(cert, KSI_CERT_COMMON_NAME, commonname, sizeof(commonname));
+	CuAssert(tc, "Unable to get organization by OID.", ret == commonname);
+
+	CuAssert(tc, "Invalid email.", strcmp(email, "ksicapi@test.com") == 0);
+	CuAssert(tc, "Invalid country.", strcmp(country, "EE") == 0);
+	CuAssert(tc, "Invalid organization.", strcmp(org, "Unit Testing") == 0);
+	CuAssert(tc, "Invalid commone name.", strcmp(commonname, "Unit Testing") == 0);
+
+	KSI_PKICertificate_free(cert);
+}
+
 static void TestGetPKICertificateSerialNumber(CuTest *tc) {
 	int res;
 	char *ret = NULL;
@@ -284,6 +348,8 @@ CuSuite* KSITest_Truststore_getSuite(void)
 	SUITE_ADD_TEST(suite, TestRetrieveIntermediateCertNames);
 	SUITE_ADD_TEST(suite, TestCertificateCRC32);
 	SUITE_ADD_TEST(suite, TestGetPKICertificateSerialNumber);
+	SUITE_ADD_TEST(suite, TestIssuerOIDToSTring);
+	SUITE_ADD_TEST(suite, TestSubjectOIDToSTring);
 
 	return suite;
 }

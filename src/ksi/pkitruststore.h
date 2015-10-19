@@ -213,6 +213,26 @@ extern "C" {
 	char* KSI_PKICertificate_subjectToString(const KSI_PKICertificate *cert, char *buf, size_t buf_len);
 	
 	/**
+	 * Creates a string representation of PKI Certificate issuer OID object.
+     * \param[in]	cert		input certificate object.
+	 * \param[in]	OID			pointer to NULL terminated OID string.
+     * \param[out]	buf			pointer to the receiving buffer.
+     * \param[in]	buf_len		length of the receiving buffer.
+     * \return buf if successful, NULL otherwise;
+     */
+	char* KSI_PKICertificate_issuerOIDToString(KSI_PKICertificate *cert, const char *OID, char *buf, size_t buf_len);
+	
+	/**
+	 * Creates a string representation of PKI Certificate subject OID object.
+     * \param[in]	cert		input certificate object.
+	 * \param[in]	OID			pointer to NULL terminated OID string.
+     * \param[out]	buf			pointer to the receiving buffer.
+     * \param[in]	buf_len		length of the receiving buffer.
+     * \return buf if successful, NULL otherwise;
+     */
+	char* KSI_PKICertificate_subjectOIDToString(KSI_PKICertificate *cert, const char *OID, char *buf, size_t buf_len);
+	
+	/**
 	 * Calculates the CRC32 of PKI certificates that can be used as the certificate ID in the publications file.
      * \param[in]	cert		input certificate object.
      * \param[out]	crc			pointer to receiving pointer. 
