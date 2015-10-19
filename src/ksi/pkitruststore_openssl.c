@@ -630,10 +630,12 @@ cleanup:
 	return res;
 }
 
-static int extractCertificate(const KSI_PKISignature *signature, X509 **cert) {
+int KSI_PKISignature_extractCertificate(const KSI_PKISignature *signature, KSI_PKICertificate **cert) {
 	int res = KSI_UNKNOWN_ERROR;
 	X509 *signing_cert = NULL;
+	X509 *copy_of_signing_cert = NULL;
 	STACK_OF(X509) *certs = NULL;
+	KSI_PKICertificate *tmp = NULL;
 
 	if (signature == NULL || cert == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -652,16 +654,31 @@ static int extractCertificate(const KSI_PKISignature *signature, X509 **cert) {
 	}
 
 	signing_cert = sk_X509_delete(certs, 0);
+	copy_of_signing_cert = X509_dup(signing_cert);
+	if (copy_of_signing_cert == NULL) {
+		res = KSI_CRYPTO_FAILURE;
+		goto cleanup;
+	}
 
-	*cert = signing_cert;
-	signing_cert = NULL;
+	tmp = KSI_new(KSI_PKICertificate);
+	if (tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
 
+	tmp->ctx = signature->ctx;
+	tmp->x509 = copy_of_signing_cert;
+	*cert = tmp;
+
+	tmp = NULL;
+	copy_of_signing_cert = NULL;
 	res = KSI_OK;
 
 cleanup:
 
 	if (certs != NULL) sk_X509_free(certs);
-	X509_free(signing_cert);
+	X509_free(copy_of_signing_cert);
+	KSI_PKICertificate_free(tmp);
 
 	return res;
 }
@@ -674,6 +691,8 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	X509_STORE_CTX *storeCtx = NULL;
 	char tmp[256];
 	size_t i;
+	KSI_PKICertificate *ksi_pki_cert = NULL;
+
 
 	if (pki == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -693,11 +712,13 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 		goto cleanup;
 	}
 
-	res = extractCertificate(signature, &cert);
+	res = KSI_PKISignature_extractCertificate(signature, &ksi_pki_cert);
 	if (res != KSI_OK) {
 		KSI_pushError(pki->ctx, res, NULL);
 		goto cleanup;
 	}
+
+	cert = ksi_pki_cert->x509;
 
 	KSI_LOG_debug(pki->ctx, "Verifying PKI signature certificate.");
 
@@ -763,6 +784,7 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 
 cleanup:
 
+	KSI_PKICertificate_free(ksi_pki_cert);
 	if (storeCtx != NULL) X509_STORE_CTX_free(storeCtx);
 	if (oid != NULL) ASN1_OBJECT_free(oid);
 

@@ -102,6 +102,15 @@ extern "C" {
 	void KSI_PKISignature_free(KSI_PKISignature *sig);
 
 	/**
+	 * Extracts a PKI certificate from PKI signature.
+	 * \param[in]	signature			PKI Signature object.
+	 * \param[out]	cert				Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+     */
+	int KSI_PKISignature_extractCertificate(const KSI_PKISignature *signature, KSI_PKICertificate **cert);
+
+	
+	/**
 	 * Serializes the #KSI_PKISignature object.
 	 * \param[in]	sig			Pointer to the PKI signature.
 	 * \param[out]	raw			Pointer to the receiving pointer.

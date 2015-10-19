@@ -569,7 +569,7 @@ static void printCertChain(const PCCERT_CHAIN_CONTEXT pChainContext){
 }
 
 /*cert obj must be freed*/
-static int extractSigningCertificate(const KSI_PKISignature *signature, PCCERT_CONTEXT *cert) {
+int KSI_PKISignature_extractCertificate(const KSI_PKISignature *signature, KSI_PKICertificate **cert) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	HCERTSTORE certStore = NULL;
@@ -580,6 +580,8 @@ static int extractSigningCertificate(const KSI_PKISignature *signature, PCCERT_C
 	BYTE *dataRecieved = NULL;
 	char buf[1024];
 	DWORD dataLen = 0;
+	KSI_PKICertificate *tmp;
+
 
 	if (signature == NULL || cert == NULL){
 		res = KSI_INVALID_ARGUMENT;
@@ -684,7 +686,12 @@ static int extractSigningCertificate(const KSI_PKISignature *signature, PCCERT_C
 	/*The copy of the object is NOT created. Just its reference value is incremented*/
 	signing_cert = CertDuplicateCertificateContext(signing_cert);
 
-	*cert = signing_cert;
+	tmp = KSI_new(KSI_PKICertificate);
+	tmp->ctx = signature->ctx;
+	tmp->x509 = signing_cert;
+	*cert = tmp;
+
+	tmp = NULL;
 	signing_cert = NULL;
 
 
@@ -692,6 +699,7 @@ static int extractSigningCertificate(const KSI_PKISignature *signature, PCCERT_C
 
 cleanup:
 
+	KSI_PKICertificate_free(tmp);
 	if (signing_cert) CertFreeCertificateContext(signing_cert);
 	if (certStore) CertCloseStore(certStore, CERT_CLOSE_STORE_CHECK_FLAG);
 	if (signaturMSG) CryptMsgClose(signaturMSG);
@@ -857,6 +865,7 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	PCCERT_CONTEXT subjectCert = NULL;
 	char tmp[256];
 	size_t i;
+	KSI_PKICertificate *ksi_pki_cert = NULL;
 
 	if (pki == NULL || signature == NULL){
 		res = KSI_INVALID_ARGUMENT;
@@ -865,11 +874,13 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	ctx = pki->ctx;
 	KSI_ERR_clearErrors(ctx);
 
-	res = extractSigningCertificate(signature, &subjectCert);
+	res = KSI_PKISignature_extractCertificate(signature, &ksi_pki_cert);
 	if (res != KSI_OK){
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
+
+	subjectCert = ksi_pki_cert->x509;
 
 	for (i = 0; pki->ctx->certConstraints[i].oid != NULL; i++) {
 		KSI_CertConstraint *ptr = &pki->ctx->certConstraints[i];
@@ -898,7 +909,7 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 
 cleanup:
 
-	if (subjectCert) CertFreeCertificateContext(subjectCert);
+	KSI_PKICertificate_free(ksi_pki_cert);
 
 	return res;
 }
