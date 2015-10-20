@@ -37,6 +37,7 @@ EXPORTS
     KSI_strncpy
     KSI_strdup
     KSI_CalendarTimeToUnixTime
+    KSI_strcasecmp
 
 ;err.h
 EXPORTS

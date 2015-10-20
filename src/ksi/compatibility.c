@@ -113,3 +113,13 @@ time_t KSI_CalendarTimeToUnixTime(struct tm *time) {
 	return timegm(time);
 #endif
 }
+
+int KSI_strcasecmp(const char *s1, const char *s2) {
+	if (s1 == NULL || s2 == NULL) return KSI_INVALID_ARGUMENT;
+
+	#ifdef _WIN32
+		return _stricmp(s1, s2);
+	#else
+		return strcasecmp(s1, s2);
+	#endif
+}

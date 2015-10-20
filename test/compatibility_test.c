@@ -143,6 +143,31 @@ static void test_CalendarTimeToUnixTime(CuTest *tc) {
 	CuAssert(tc, "Unable to convert calendar time to Unix time.", KSI_CalendarTimeToUnixTime(&time) == 856178461);
 }
 
+static void test_KSI_strcasecmp(CuTest *tc) {
+	int ret;
+
+	ret = KSI_strcasecmp("KSI test", "ksi Test");
+	CuAssert(tc, "strcasecmp failure on with similar strings.", ret == 0);
+
+	ret = KSI_strcasecmp("", "");
+	CuAssert(tc, "strcasecmp failure on with empty strings.", ret == 0);
+
+	ret = KSI_strcasecmp(NULL, "ksi Test");
+	CuAssert(tc, "strcasecmp failure when s1 = NULL.", ret == KSI_INVALID_ARGUMENT);
+
+	ret = KSI_strcasecmp("ksi Test", NULL);
+	CuAssert(tc, "strcasecmp failure when s2 = NULL.", ret == KSI_INVALID_ARGUMENT);
+
+	ret = KSI_strcasecmp(NULL, NULL);
+	CuAssert(tc, "strcasecmp failure when s1 = s2 = NULL.", ret == KSI_INVALID_ARGUMENT);
+
+	ret = KSI_strcasecmp("KSI test", "ksi");
+	CuAssert(tc, "strcasecmp failure with different strings.", ret != 0);
+
+	ret = KSI_strcasecmp("KSI", "ksi Test");
+	CuAssert(tc, "strcasecmp failure with different strings.", ret != 0);
+}
+
 CuSuite* KSITest_compatibility_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -150,6 +175,7 @@ CuSuite* KSITest_compatibility_getSuite(void) {
 	SUITE_ADD_TEST(suite, test_KSI_strncpy);
 	SUITE_ADD_TEST(suite, test_KSI_strdup);
 	SUITE_ADD_TEST(suite, test_CalendarTimeToUnixTime);
+	SUITE_ADD_TEST(suite, test_KSI_strcasecmp);
 
 	return suite;
 }

@@ -81,6 +81,13 @@ int KSI_strdup(const char *from, char **to);
  */
 time_t KSI_CalendarTimeToUnixTime(struct tm *time);
 
+/**
+ * Platform independent case-insensitive string compare.
+ * \param[in]	s1		String 1 to be compared.
+ * \param[in]	s2		String 2 to be compared.
+ * @return retruns 0 if both are equal. If one of the arguments is NULL, KSI_INVALID_ARGUMENT is returnd.
+ */
+int KSI_strcasecmp(const char *s1, const char *s2);
 /*
  * @}
  */
