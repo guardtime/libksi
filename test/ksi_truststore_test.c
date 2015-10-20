@@ -360,6 +360,29 @@ static void TestGetPKICertificateSerialNumber(CuTest *tc) {
 	KSI_PKICertificate_free(cert);
 }
 
+static void TestPKICertificateToString(CuTest *tc) {
+	int res;
+	KSI_PKICertificate *cert = NULL;
+	char tmp[2048];
+	char *ret;
+
+	const char expectedValue[] =	"PKI Certificate (30:46:fe:e4):\n"
+									"  * Issued to: E=ksicapi@test.com CN=Unit Testing O=Unit Testing C=EE\n"
+									"  * Issued by: E=publications@guardtime.com CN=Guardtime AS O=Guardtime AS C=EE\n"
+									"  * Valid from: 2015-10-14 08:27:04 UTC to 2018-10-13 08:27:04 UTC\n"
+									"  * Serial Number: 0x01\n";
+
+	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/CA_2.crt.der"), &cert);
+	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert != NULL);
+
+	ret = KSI_PKICertificate_toString(cert, tmp, sizeof(tmp));
+	CuAssert(tc, "Unable to format PKI certificate as string.", ret == tmp && strcmp(tmp, expectedValue) == 0);
+
+	KSI_PKICertificate_free(cert);
+}
+
+
+
 CuSuite* KSITest_Truststore_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
@@ -375,6 +398,7 @@ CuSuite* KSITest_Truststore_getSuite(void)
 	SUITE_ADD_TEST(suite, TestIssuerOIDToSTring);
 	SUITE_ADD_TEST(suite, TestSubjectOIDToSTring);
 	SUITE_ADD_TEST(suite, TestExtractingOfPKICertificate);
+	SUITE_ADD_TEST(suite, TestPKICertificateToString);
 
 	return suite;
 }

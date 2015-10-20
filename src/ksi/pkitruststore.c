@@ -271,7 +271,7 @@ char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, size_t bu
 
 	KSI_snprintf(buf, buf_len, "PKI Certificate (%s):\n"
 			"  * Issued to: %s\n"
-			"  * Issuer by: %s\n"
+			"  * Issued by: %s\n"
 			"  * Valid from: %s to %s\n"
 			"  * Serial Number: 0x%02x\n",
 		ID,subjectName, issuerName, date_before, date_after, serial_number);
