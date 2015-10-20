@@ -17,6 +17,7 @@
  * reserves and retains all trademark rights.
  */
 
+#include <string.h>
 #include "internal.h"
 #include "pkitruststore.h"
 #include "tlv.h"
@@ -270,8 +271,8 @@ char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, size_t bu
 
 	KSI_snprintf(buf, buf_len, "PKI Certificate (%s):\n"
 			"  * Issued to: %s\n"
-			"  * Issuer by '%s'\n"
-			"  * Valid from %s to %s\n"
+			"  * Issuer by: %s\n"
+			"  * Valid from: %s to %s\n"
 			"  * Serial Number: 0x%02x\n",
 		ID,subjectName, issuerName, date_before, date_after, serial_number);
 
@@ -335,4 +336,76 @@ cleanup:
 	KSI_OctetString_free(tmp);
 
 	return res;
+}
+
+/**
+ * OID description array must have the following format:
+ * [OID][short name][long name][alias 1][..][alias N][NULL]
+ * where OID, short and long name are mandatory. Array must end with NULL.
+ */
+static char *OID_EMAIL[] = {KSI_CERT_EMAIL, "E", "email", "e-mail", "e_mail", "emailAddress", NULL};
+static char *OID_COMMON_NAME[] = {KSI_CERT_COMMON_NAME, "CN", "common name", "common_name", NULL};
+static char *OID_COUNTRY[] = {KSI_CERT_COUNTRY, "C", "country", NULL};
+static char *OID_ORGANIZATION[] = {KSI_CERT_ORGANIZATION, "O", "org", "organization", NULL};
+
+static char **OID_INFO[] = {OID_EMAIL, OID_COMMON_NAME, OID_COUNTRY, OID_ORGANIZATION, NULL};
+
+static const char *ksi_get_description_string_by_oid_and_index(const char *OID, size_t index) {
+	unsigned i = 0;
+
+	if (OID == NULL) return NULL;
+
+	while (OID_INFO[i] != NULL) {
+		if (strcmp(OID_INFO[i][0], OID) == 0) return OID_INFO[i][index];
+		i++;
+	}
+
+	return NULL;
+}
+
+static const char *ksi_getShortDescriptionStringByOID(const char *OID) {
+	return ksi_get_description_string_by_oid_and_index(OID, 1);
+}
+
+static char* pki_certificate_nameToString(KSI_PKICertificate *cert, char* (*getter_byOID)(KSI_PKICertificate *, const char *, char *, size_t), char *buf, size_t buf_len) {
+	char *ret = NULL;
+	const char *OID[] = {KSI_CERT_EMAIL, KSI_CERT_COMMON_NAME, KSI_CERT_ORGANIZATION, KSI_CERT_COUNTRY, NULL};
+	unsigned i = 0;
+	char tmp[1024];
+	size_t count;
+	char *strn = NULL;
+	size_t elements_defined = 0;
+
+	if (cert == NULL || buf == NULL || buf_len == 0 || buf_len > INT_MAX || getter_byOID == NULL) {
+		goto cleanup;
+	}
+
+	count = 0;
+	while(OID[i] != NULL) {
+		strn = getter_byOID(cert, OID[i], tmp, sizeof(tmp));
+
+		if (strn == tmp) {
+			count += KSI_snprintf(buf + count, buf_len - count, "%s%s=%s",
+					elements_defined == 0 ? "" : " ",
+					ksi_getShortDescriptionStringByOID(OID[i]), tmp);
+
+			elements_defined++;
+		}
+
+		i++;
+	}
+
+	ret = buf;
+
+cleanup:
+
+	return ret;
+}
+
+char* KSI_PKICertificate_issuerToString(const KSI_PKICertificate *cert, char *buf, size_t buf_len) {
+	return pki_certificate_nameToString(cert, KSI_PKICertificate_issuerOIDToString, buf, buf_len);
+}
+
+char* KSI_PKICertificate_subjectToString(const KSI_PKICertificate *cert, char *buf, size_t buf_len) {
+	return pki_certificate_nameToString(cert, KSI_PKICertificate_subjectOIDToString, buf, buf_len);
 }

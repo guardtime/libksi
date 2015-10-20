@@ -468,37 +468,6 @@ char* KSI_PKICertificate_subjectOIDToString(KSI_PKICertificate *cert, const char
 	return ksi_pki_certificate_getString_by_oid(cert, SUBJECT, OID ,buf, buf_len);
 }
 
-char* pki_certificate_nameToString(const KSI_PKICertificate *cert, int type, char *buf, size_t buf_len) {
-	char *ret = NULL;
-
-	if (cert == NULL || buf == NULL || buf_len == 0 || buf_len > INT_MAX) {
-		goto cleanup;
-	}
-
-	if (type == ISSUER) {
-		CertGetNameString(cert->x509, CERT_NAME_SIMPLE_DISPLAY_TYPE , CERT_NAME_ISSUER_FLAG, 0, buf, (DWORD)buf_len);
-	} else {
-		CertGetNameString(cert->x509, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, buf, (DWORD)buf_len);
-	}
-
-	if (buf[0] == '\0')
-		return NULL;
-
-	ret = buf;
-
-cleanup:
-
-	return ret;
-}
-
-char* KSI_PKICertificate_issuerToString(const KSI_PKICertificate *cert, char *buf, size_t buf_len) {
-	return pki_certificate_nameToString(cert, ISSUER, buf, buf_len);
-}
-
-char* KSI_PKICertificate_subjectToString(const KSI_PKICertificate *cert, char *buf, size_t buf_len) {
-	return pki_certificate_nameToString(cert, SUBJECT, buf, buf_len);
-}
-
 int KSI_PKICertificate_getSerialNumber(const KSI_PKICertificate *cert, unsigned long *serial_number) {
 	int res;
 	DWORD count;

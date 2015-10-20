@@ -191,8 +191,8 @@ static void TestRetrieveSelfSignedCertNames (CuTest *tc) {
 	ret = KSI_PKICertificate_subjectToString(cert, subject, sizeof(subject));
 	CuAssert(tc, "Unable to retrieve subject name.", ret == subject);
 
-	CuAssert(tc, "Invalid issuer name.", strcmp(issuer, "Guardtime AS") == 0);
-	CuAssert(tc, "Invalid subject name.", strcmp(subject, "Guardtime AS") == 0);
+	CuAssert(tc, "Invalid issuer name.", strcmp(issuer, "E=publications@guardtime.com CN=Guardtime AS O=Guardtime AS C=EE") == 0);
+	CuAssert(tc, "Invalid subject name.", strcmp(subject, "E=publications@guardtime.com CN=Guardtime AS O=Guardtime AS C=EE") == 0);
 
 	KSI_PKICertificate_free(cert);
 }
@@ -213,8 +213,8 @@ static void TestRetrieveIntermediateCertNames (CuTest *tc) {
 	ret = KSI_PKICertificate_subjectToString(cert, subject, sizeof(subject));
 	CuAssert(tc, "Unable to retrieve subject name.", ret == subject);
 
-	CuAssert(tc, "Invalid issuer name.", strcmp(issuer, "Guardtime AS") == 0);
-	CuAssert(tc, "Invalid subject name.", strcmp(subject, "Unit Testing") == 0);
+	CuAssert(tc, "Invalid issuer name.", strcmp(issuer, "E=publications@guardtime.com CN=Guardtime AS O=Guardtime AS C=EE") == 0);
+	CuAssert(tc, "Invalid subject name.", strcmp(subject, "E=ksicapi@test.com CN=Unit Testing O=Unit Testing C=EE") == 0);
 
 	KSI_PKICertificate_free(cert);
 }
@@ -322,7 +322,6 @@ static void TestSubjectOIDToSTring (CuTest *tc) {
 
 static void TestGetPKICertificateSerialNumber(CuTest *tc) {
 	int res;
-	char *ret = NULL;
 	KSI_PKICertificate *cert = NULL;
 	unsigned long serial_number = 0;
 
