@@ -320,6 +320,31 @@ static void TestSubjectOIDToSTring (CuTest *tc) {
 	KSI_PKICertificate_free(cert);
 }
 
+static void TestExtractingOfPKICertificate(CuTest *tc) {
+	int res = 0;
+	KSI_PKICertificate *cert = NULL;
+	KSI_PublicationsFile *pubfile = NULL;
+	KSI_PKISignature *pki_sig;
+	char issuer[1024];
+	char *tmp = NULL;
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath("resource/tlv/publications.tlv"), &pubfile);
+	CuAssert(tc, "Unable to load publications file from file.", res == KSI_OK && pubfile != NULL);
+
+	res = KSI_PublicationsFile_getSignature(pubfile, &pki_sig);
+	CuAssert(tc, "Unable to get PKI signature from publication file.", res == KSI_OK && pki_sig != NULL);
+
+	res = KSI_PKISignature_extractCertificate(pki_sig, &cert);
+	CuAssert(tc, "Unable to extract certificate from PKI signature.", res == KSI_OK && cert != NULL);
+
+	tmp = KSI_PKICertificate_issuerToString(cert, issuer, sizeof(issuer));
+	CuAssert(tc, "Wrong certificate extracted!", tmp != NULL && strcmp(issuer, "E=publications@guardtime.com O=Guardtime AS C=EE") == 0);
+
+	KSI_PKICertificate_free(cert);
+	KSI_PublicationsFile_free(pubfile);
+	return;
+}
+
 static void TestGetPKICertificateSerialNumber(CuTest *tc) {
 	int res;
 	KSI_PKICertificate *cert = NULL;
@@ -349,6 +374,7 @@ CuSuite* KSITest_Truststore_getSuite(void)
 	SUITE_ADD_TEST(suite, TestGetPKICertificateSerialNumber);
 	SUITE_ADD_TEST(suite, TestIssuerOIDToSTring);
 	SUITE_ADD_TEST(suite, TestSubjectOIDToSTring);
+	SUITE_ADD_TEST(suite, TestExtractingOfPKICertificate);
 
 	return suite;
 }
