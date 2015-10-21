@@ -165,7 +165,7 @@ static void TestExtractingOfPKICertificate(CuTest *tc) {
 	const char expectedValue[] =	"PKI Certificate (34:ec:3d:cc):\n"
 									"  * Issued to: E=publications@guardtime.com O=Guardtime AS C=EE\n"
 									"  * Issued by: E=publications@guardtime.com O=Guardtime AS C=EE\n"
-									"  * Valid from: 2015-05-08 11:29:18 UTC to 2016-05-07 11:29:18 UTC\n"
+									"  * Valid from: 2015-05-08 11:29:18 UTC to 2016-05-07 11:29:18 UTC [valid]\n"
 									"  * Serial Number: 00\n";
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath("resource/tlv/publications.tlv"), &pubfile);
@@ -191,27 +191,40 @@ static void TestPKICertificateToString(CuTest *tc) {
 	KSI_PKICertificate *cert_1 = NULL;
 	KSI_PKICertificate *cert_2 = NULL;
 	KSI_PKICertificate *cert_3 = NULL;
+	KSI_PKICertificate *cert_4 = NULL;
+	KSI_PKICertificate *cert_5 = NULL;
 	char tmp[2048];
 	char *ret;
 
 	const char expectedValue_1[] =	"PKI Certificate (b5:b8:2c:f1):\n"
 									"  * Issued to: E=publications@guardtime.com CN=Guardtime AS O=Guardtime AS C=EE\n"
 									"  * Issued by: E=publications@guardtime.com CN=Guardtime AS O=Guardtime AS C=EE\n"
-									"  * Valid from: 2015-10-14 08:11:32 UTC to 2025-10-11 08:11:32 UTC\n"
+									"  * Valid from: 2015-10-14 08:11:32 UTC to 2025-10-11 08:11:32 UTC [valid]\n"
 									"  * Serial Number: 8b:f2:c0:4e:f9:1c:8d:0f\n";
 
 	const char expectedValue_2[] =	"PKI Certificate (30:46:fe:e4):\n"
 									"  * Issued to: E=ksicapi@test.com CN=Unit Testing O=Unit Testing C=EE\n"
 									"  * Issued by: E=publications@guardtime.com CN=Guardtime AS O=Guardtime AS C=EE\n"
-									"  * Valid from: 2015-10-14 08:27:04 UTC to 2018-10-13 08:27:04 UTC\n"
+									"  * Valid from: 2015-10-14 08:27:04 UTC to 2018-10-13 08:27:04 UTC [valid]\n"
 									"  * Serial Number: 01\n";
 
 	const char expectedValue_3[] =	"PKI Certificate (c1:c2:80:cb):\n"
 									"  * Issued to: E=serial@test.com CN=Serial Test O=Serial Test C=EE\n"
 									"  * Issued by: E=ksicapi@test.com CN=Unit Testing O=Unit Testing C=EE\n"
-									"  * Valid from: 2015-10-14 12:28:15 UTC to 2018-10-13 12:28:15 UTC\n"
+									"  * Valid from: 2015-10-14 12:28:15 UTC to 2018-10-13 12:28:15 UTC [valid]\n"
 									"  * Serial Number: 6a:95:fe\n";
 
+	const char expectedValue_4[] =	"PKI Certificate (00:d7:ce:f3):\n"
+									"  * Issued to: E=publications@guardtime.com O=Guardtime AS C=EE\n"
+									"  * Issued by: E=publications@guardtime.com O=Guardtime AS C=EE\n"
+									"  * Valid from: 2014-04-09 13:35:08 UTC to 2015-04-09 13:35:08 UTC [expired]\n"
+									"  * Serial Number: d5:5f:8b:04:a8:98:18:90\n";
+
+	const char expectedValue_5[] =	"PKI Certificate (c2:92:37:91):\n"
+									"  * Issued to: E=test@test.com O=Testing As C=EE\n"
+									"  * Issued by: E=test@test.com O=Testing As C=EE\n"
+									"  * Valid from: 2025-10-21 10:47:26 UTC to 2026-10-21 10:47:26 UTC [invalid]\n"
+									"  * Serial Number: 92:85:e4:9d:01:71:a2:d5\n";
 
 	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/CA_root.crt.der"), &cert_1);
 	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert_1 != NULL);
@@ -222,6 +235,13 @@ static void TestPKICertificateToString(CuTest *tc) {
 	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/CA_3.crt.der"), &cert_3);
 	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert_3 != NULL);
 
+	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/expired.crt.der"), &cert_4);
+	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert_4 != NULL);
+
+	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/future.crt.der"), &cert_5);
+	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert_5 != NULL);
+
+
 	ret = KSI_PKICertificate_toString(cert_1, tmp, sizeof(tmp));
 	CuAssert(tc, "Unable to format PKI certificate as string.", ret == tmp && strcmp(tmp, expectedValue_1) == 0);
 
@@ -231,11 +251,19 @@ static void TestPKICertificateToString(CuTest *tc) {
 	ret = KSI_PKICertificate_toString(cert_3, tmp, sizeof(tmp));
 	CuAssert(tc, "Unable to format PKI certificate as string.", ret == tmp && strcmp(tmp, expectedValue_3) == 0);
 
+	ret = KSI_PKICertificate_toString(cert_4, tmp, sizeof(tmp));
+	CuAssert(tc, "Unable to format PKI certificate as string.", ret == tmp && strcmp(tmp, expectedValue_4) == 0);
+
+	ret = KSI_PKICertificate_toString(cert_5, tmp, sizeof(tmp));
+	CuAssert(tc, "Unable to format PKI certificate as string.", ret == tmp && strcmp(tmp, expectedValue_5) == 0);
+
 
 
 	KSI_PKICertificate_free(cert_1);
 	KSI_PKICertificate_free(cert_2);
 	KSI_PKICertificate_free(cert_3);
+	KSI_PKICertificate_free(cert_4);
+	KSI_PKICertificate_free(cert_5);
 }
 
 

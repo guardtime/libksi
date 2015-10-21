@@ -437,6 +437,50 @@ static int pki_certificate_getValidityNotAfter(const KSI_PKICertificate *cert, K
 	return pki_certificate_getValidityTime(cert, NOT_AFTER, time);
 }
 
+static int pki_certificate_getValidityState(const KSI_PKICertificate *cert, int *isExpired) {
+	int res;
+	KSI_uint64_t cert_time_notBefore = 0;
+	KSI_uint64_t cert_time_notAfter = 0;
+	KSI_uint64_t current_time = 0;
+	time_t timer = 0;
+	int state = 0;
+
+	if (cert == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	timer = time(NULL);
+	if (timer == -1) {
+		res = KSI_UNKNOWN_ERROR;
+		goto cleanup;
+	}
+
+	current_time = timer;
+
+
+	res = pki_certificate_getValidityNotBefore(cert, &cert_time_notBefore);
+	if (res != KSI_OK) goto cleanup;
+
+	res = pki_certificate_getValidityNotAfter(cert, &cert_time_notAfter);
+	if (res != KSI_OK) goto cleanup;
+
+	if (current_time < cert_time_notBefore) {
+		state = -1;
+	} else if (current_time >= cert_time_notBefore && current_time <= cert_time_notAfter) {
+		state = 0;
+	} else {
+		state = 1;
+	}
+
+	*isExpired = state;
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 char* ksi_pki_certificate_getString_by_oid(KSI_PKICertificate *cert, int type, char *OID, char *buf, size_t buf_len) {
 	char *ret = NULL;
 
@@ -1169,6 +1213,8 @@ char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, size_t bu
 	KSI_CTX *ctx = NULL;
 	KSI_OctetString *serial_number = NULL;
 	KSI_OctetString *crc32 = NULL;
+	int state;
+	const char *stateString = NULL;
 
 	if (cert == NULL || buf == NULL || buf_len == 0) {
 		return NULL;
@@ -1216,12 +1262,22 @@ char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, size_t bu
 		goto cleanup;
 	}
 
+	res = pki_certificate_getValidityState(cert, &state);
+	if (res != KSI_OK) goto cleanup;
+
+	switch(state) {
+		case -1: stateString = "invalid"; break;
+		case 0: stateString = "valid"; break;
+		case 1: stateString = "expired"; break;
+		default: stateString = "state unknown"; break;
+	}
+
 	KSI_snprintf(buf, buf_len, "PKI Certificate (%s):\n"
 			"  * Issued to: %s\n"
 			"  * Issued by: %s\n"
-			"  * Valid from: %s to %s\n"
+			"  * Valid from: %s to %s [%s]\n"
 			"  * Serial Number: %s\n",
-		ID,subjectName, issuerName, date_before, date_after, serial);
+		ID,	subjectName, issuerName, date_before, date_after, stateString, serial);
 
 	ret = buf;
 
