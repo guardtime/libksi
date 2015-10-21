@@ -154,179 +154,19 @@ static void TestParseAndSeraializeCert(CuTest *tc) {
 	KSI_free(raw_crt);
 }
 
-static void TestRetrieveValidityDate (CuTest *tc) {
-	int res;
-	KSI_PKICertificate *cert = NULL;
-	KSI_uint64_t notafter, notbefore;
-
-	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/mock.crt.der"), &cert);
-	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert != NULL);
-
-	res = KSI_PKICertificate_getValidityNotBefore(cert, &notbefore);
-	CuAssert(tc, "Unable to get validity time not before.", res == KSI_OK);
-
-	res = KSI_PKICertificate_getValidityNotAfter(cert, &notafter);
-	CuAssert(tc, "Unable to get validity time not after.", res == KSI_OK);
-
-
-	CuAssert(tc, "Unexpected value of validity date not before.", notbefore == 1431084558);
-	CuAssert(tc, "Unexpected value of validity date not after.", notafter == 1462620558);
-
-	KSI_PKICertificate_free(cert);
-}
-
-static void TestRetrieveSelfSignedCertNames (CuTest *tc) {
-	int res;
-	char *ret = NULL;
-	KSI_PKICertificate *cert = NULL;
-	char issuer[1024];
-	char subject[1024];
-
-	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/CA_root.crt.der"), &cert);
-	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert != NULL);
-
-	ret = KSI_PKICertificate_issuerToString(cert, issuer, sizeof(issuer));
-	CuAssert(tc, "Unable to retrieve issuer name.", ret == issuer);
-
-	ret = KSI_PKICertificate_subjectToString(cert, subject, sizeof(subject));
-	CuAssert(tc, "Unable to retrieve subject name.", ret == subject);
-
-	CuAssert(tc, "Invalid issuer name.", strcmp(issuer, "E=publications@guardtime.com CN=Guardtime AS O=Guardtime AS C=EE") == 0);
-	CuAssert(tc, "Invalid subject name.", strcmp(subject, "E=publications@guardtime.com CN=Guardtime AS O=Guardtime AS C=EE") == 0);
-
-	KSI_PKICertificate_free(cert);
-}
-
-static void TestRetrieveIntermediateCertNames (CuTest *tc) {
-	int res;
-	char *ret = NULL;
-	KSI_PKICertificate *cert = NULL;
-	char issuer[1024];
-	char subject[1024];
-
-	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/CA_2.crt.der"), &cert);
-	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert != NULL);
-
-	ret = KSI_PKICertificate_issuerToString(cert, issuer, sizeof(issuer));
-	CuAssert(tc, "Unable to retrieve issuer name.", ret == issuer);
-
-	ret = KSI_PKICertificate_subjectToString(cert, subject, sizeof(subject));
-	CuAssert(tc, "Unable to retrieve subject name.", ret == subject);
-
-	CuAssert(tc, "Invalid issuer name.", strcmp(issuer, "E=publications@guardtime.com CN=Guardtime AS O=Guardtime AS C=EE") == 0);
-	CuAssert(tc, "Invalid subject name.", strcmp(subject, "E=ksicapi@test.com CN=Unit Testing O=Unit Testing C=EE") == 0);
-
-	KSI_PKICertificate_free(cert);
-}
-
-static void TestCertificateCRC32(CuTest *tc) {
-	int res = 0;
-	KSI_CertificateRecordList *certReclist = NULL;
-	KSI_CertificateRecord *certRec = NULL;
-	KSI_PKICertificate *cert = NULL;
-	KSI_OctetString *id = NULL;
-	KSI_OctetString *calculated_id = NULL;
-	int i=0;
-	KSI_PublicationsFile *pubfile = NULL;
-
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath("resource/tlv/publications.tlv"), &pubfile);
-	CuAssert(tc, "Unable to load publications file from file.", res == KSI_OK);
-
-	res = KSI_PublicationsFile_getCertificates(pubfile, &certReclist);
-	CuAssert(tc, "Unable to get publications file certificates", res == KSI_OK && certReclist != NULL);
-
-	for(i = 0; i < KSI_CertificateRecordList_length(certReclist); i++){
-		res = KSI_CertificateRecordList_elementAt(certReclist, i, &certRec);
-		CuAssert(tc, "Unable to get certificate record from certificate record list.", res == KSI_OK && certRec != NULL);
-
-		res = KSI_CertificateRecord_getCert(certRec, &cert);
-		CuAssert(tc, "Unable to get cert from certificate record.", res == KSI_OK && cert != NULL);
-
-		res = KSI_CertificateRecord_getCertId(certRec, &id);
-		CuAssert(tc, "Unable to get cert ID (crc32 of certificate).", res == KSI_OK && id != NULL);
-
-		res = KSI_PKICertificate_calculateCRC32(cert, &calculated_id);
-		CuAssert(tc, "Unable to get cert ID (crc32 of certificate).", res == KSI_OK && calculated_id != NULL);
-		CuAssert(tc, "Certificate ID and calculated id mismatch.", KSI_OctetString_equals(id, calculated_id));
-
-		KSI_OctetString_free(calculated_id);
-	}
-
-	KSI_PublicationsFile_free(pubfile);
-	return;
-}
-
-static void TestIssuerOIDToSTring (CuTest *tc) {
-	int res;
-	char *ret = NULL;
-	KSI_PKICertificate *cert = NULL;
-	char email[1024];
-	char country[1024];
-	char org[1024];
-	char commonname[1024];
-
-	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/CA_2.crt.der"), &cert);
-	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert != NULL);
-
-	ret = KSI_PKICertificate_issuerOIDToString(cert, KSI_CERT_EMAIL, email, sizeof(email));
-	CuAssert(tc, "Unable to get email by OID.", ret == email);
-
-	ret = KSI_PKICertificate_issuerOIDToString(cert, KSI_CERT_COUNTRY, country, sizeof(country));
-	CuAssert(tc, "Unable to get country by OID.", ret == country);
-
-	ret = KSI_PKICertificate_issuerOIDToString(cert, KSI_CERT_ORGANIZATION, org, sizeof(org));
-	CuAssert(tc, "Unable to get organization by OID.", ret == org);
-
-	ret = KSI_PKICertificate_issuerOIDToString(cert, KSI_CERT_COMMON_NAME, commonname, sizeof(commonname));
-	CuAssert(tc, "Unable to get organization by OID.", ret == commonname);
-
-	CuAssert(tc, "Invalid email.", strcmp(email, "publications@guardtime.com") == 0);
-	CuAssert(tc, "Invalid country.", strcmp(country, "EE") == 0);
-	CuAssert(tc, "Invalid organization.", strcmp(org, "Guardtime AS") == 0);
-	CuAssert(tc, "Invalid commone name.", strcmp(commonname, "Guardtime AS") == 0);
-
-	KSI_PKICertificate_free(cert);
-}
-
-static void TestSubjectOIDToSTring (CuTest *tc) {
-	int res;
-	char *ret = NULL;
-	KSI_PKICertificate *cert = NULL;
-	char email[1024];
-	char country[1024];
-	char org[1024];
-	char commonname[1024];
-
-	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/CA_2.crt.der"), &cert);
-	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert != NULL);
-
-	ret = KSI_PKICertificate_subjectOIDToString(cert, KSI_CERT_EMAIL, email, sizeof(email));
-	CuAssert(tc, "Unable to get email by OID.", ret == email);
-
-	ret = KSI_PKICertificate_subjectOIDToString(cert, KSI_CERT_COUNTRY, country, sizeof(country));
-	CuAssert(tc, "Unable to get country by OID.", ret == country);
-
-	ret = KSI_PKICertificate_subjectOIDToString(cert, KSI_CERT_ORGANIZATION, org, sizeof(org));
-	CuAssert(tc, "Unable to get organization by OID.", ret == org);
-
-	ret = KSI_PKICertificate_subjectOIDToString(cert, KSI_CERT_COMMON_NAME, commonname, sizeof(commonname));
-	CuAssert(tc, "Unable to get organization by OID.", ret == commonname);
-
-	CuAssert(tc, "Invalid email.", strcmp(email, "ksicapi@test.com") == 0);
-	CuAssert(tc, "Invalid country.", strcmp(country, "EE") == 0);
-	CuAssert(tc, "Invalid organization.", strcmp(org, "Unit Testing") == 0);
-	CuAssert(tc, "Invalid commone name.", strcmp(commonname, "Unit Testing") == 0);
-
-	KSI_PKICertificate_free(cert);
-}
-
 static void TestExtractingOfPKICertificate(CuTest *tc) {
 	int res = 0;
 	KSI_PKICertificate *cert = NULL;
 	KSI_PublicationsFile *pubfile = NULL;
 	KSI_PKISignature *pki_sig;
-	char issuer[1024];
-	char *tmp = NULL;
+	char buf[2048];
+	char *ret = NULL;
+
+	const char expectedValue[] =	"PKI Certificate (34:ec:3d:cc):\n"
+									"  * Issued to: E=publications@guardtime.com O=Guardtime AS C=EE\n"
+									"  * Issued by: E=publications@guardtime.com O=Guardtime AS C=EE\n"
+									"  * Valid from: 2015-05-08 11:29:18 UTC to 2016-05-07 11:29:18 UTC\n"
+									"  * Serial Number: 00\n";
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath("resource/tlv/publications.tlv"), &pubfile);
 	CuAssert(tc, "Unable to load publications file from file.", res == KSI_OK && pubfile != NULL);
@@ -337,48 +177,65 @@ static void TestExtractingOfPKICertificate(CuTest *tc) {
 	res = KSI_PKISignature_extractCertificate(pki_sig, &cert);
 	CuAssert(tc, "Unable to extract certificate from PKI signature.", res == KSI_OK && cert != NULL);
 
-	tmp = KSI_PKICertificate_issuerToString(cert, issuer, sizeof(issuer));
-	CuAssert(tc, "Wrong certificate extracted!", tmp != NULL && strcmp(issuer, "E=publications@guardtime.com O=Guardtime AS C=EE") == 0);
+	ret = KSI_PKICertificate_toString(cert, buf, sizeof(buf));
+	CuAssert(tc, "Wrong or invalid certificate extracted.", ret == buf && strcmp(buf, expectedValue) == 0);
+
 
 	KSI_PKICertificate_free(cert);
 	KSI_PublicationsFile_free(pubfile);
 	return;
 }
 
-static void TestGetPKICertificateSerialNumber(CuTest *tc) {
-	int res;
-	KSI_PKICertificate *cert = NULL;
-	unsigned long serial_number = 0;
-
-	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/CA_3.crt.der"), &cert);
-	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert != NULL);
-
-	res = KSI_PKICertificate_getSerialNumber(cert, &serial_number);
-	CuAssert(tc, "Unable to retrieve certificates serial number.", res == KSI_OK);
-	CuAssert(tc, "PKI certificate serial number mismatch.", serial_number == 6985214);
-
-	KSI_PKICertificate_free(cert);
-}
-
 static void TestPKICertificateToString(CuTest *tc) {
 	int res;
-	KSI_PKICertificate *cert = NULL;
+	KSI_PKICertificate *cert_1 = NULL;
+	KSI_PKICertificate *cert_2 = NULL;
+	KSI_PKICertificate *cert_3 = NULL;
 	char tmp[2048];
 	char *ret;
 
-	const char expectedValue[] =	"PKI Certificate (30:46:fe:e4):\n"
+	const char expectedValue_1[] =	"PKI Certificate (b5:b8:2c:f1):\n"
+									"  * Issued to: E=publications@guardtime.com CN=Guardtime AS O=Guardtime AS C=EE\n"
+									"  * Issued by: E=publications@guardtime.com CN=Guardtime AS O=Guardtime AS C=EE\n"
+									"  * Valid from: 2015-10-14 08:11:32 UTC to 2025-10-11 08:11:32 UTC\n"
+									"  * Serial Number: 8b:f2:c0:4e:f9:1c:8d:0f\n";
+
+	const char expectedValue_2[] =	"PKI Certificate (30:46:fe:e4):\n"
 									"  * Issued to: E=ksicapi@test.com CN=Unit Testing O=Unit Testing C=EE\n"
 									"  * Issued by: E=publications@guardtime.com CN=Guardtime AS O=Guardtime AS C=EE\n"
 									"  * Valid from: 2015-10-14 08:27:04 UTC to 2018-10-13 08:27:04 UTC\n"
-									"  * Serial Number: 0x01\n";
+									"  * Serial Number: 01\n";
 
-	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/CA_2.crt.der"), &cert);
-	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert != NULL);
+	const char expectedValue_3[] =	"PKI Certificate (c1:c2:80:cb):\n"
+									"  * Issued to: E=serial@test.com CN=Serial Test O=Serial Test C=EE\n"
+									"  * Issued by: E=ksicapi@test.com CN=Unit Testing O=Unit Testing C=EE\n"
+									"  * Valid from: 2015-10-14 12:28:15 UTC to 2018-10-13 12:28:15 UTC\n"
+									"  * Serial Number: 6a:95:fe\n";
 
-	ret = KSI_PKICertificate_toString(cert, tmp, sizeof(tmp));
-	CuAssert(tc, "Unable to format PKI certificate as string.", ret == tmp && strcmp(tmp, expectedValue) == 0);
 
-	KSI_PKICertificate_free(cert);
+	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/CA_root.crt.der"), &cert_1);
+	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert_1 != NULL);
+
+	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/CA_2.crt.der"), &cert_2);
+	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert_2 != NULL);
+
+	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/CA_3.crt.der"), &cert_3);
+	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert_3 != NULL);
+
+	ret = KSI_PKICertificate_toString(cert_1, tmp, sizeof(tmp));
+	CuAssert(tc, "Unable to format PKI certificate as string.", ret == tmp && strcmp(tmp, expectedValue_1) == 0);
+
+	ret = KSI_PKICertificate_toString(cert_2, tmp, sizeof(tmp));
+	CuAssert(tc, "Unable to format PKI certificate as string.", ret == tmp && strcmp(tmp, expectedValue_2) == 0);
+
+	ret = KSI_PKICertificate_toString(cert_3, tmp, sizeof(tmp));
+	CuAssert(tc, "Unable to format PKI certificate as string.", ret == tmp && strcmp(tmp, expectedValue_3) == 0);
+
+
+
+	KSI_PKICertificate_free(cert_1);
+	KSI_PKICertificate_free(cert_2);
+	KSI_PKICertificate_free(cert_3);
 }
 
 
@@ -390,13 +247,6 @@ CuSuite* KSITest_Truststore_getSuite(void)
 	SUITE_ADD_TEST(suite, TestAddInvalidLookupFile);
 	SUITE_ADD_TEST(suite, TestAddValidLookupFile);
 	SUITE_ADD_TEST(suite, TestParseAndSeraializeCert);
-	SUITE_ADD_TEST(suite, TestRetrieveValidityDate);
-	SUITE_ADD_TEST(suite, TestRetrieveSelfSignedCertNames);
-	SUITE_ADD_TEST(suite, TestRetrieveIntermediateCertNames);
-	SUITE_ADD_TEST(suite, TestCertificateCRC32);
-	SUITE_ADD_TEST(suite, TestGetPKICertificateSerialNumber);
-	SUITE_ADD_TEST(suite, TestIssuerOIDToSTring);
-	SUITE_ADD_TEST(suite, TestSubjectOIDToSTring);
 	SUITE_ADD_TEST(suite, TestExtractingOfPKICertificate);
 	SUITE_ADD_TEST(suite, TestPKICertificateToString);
 

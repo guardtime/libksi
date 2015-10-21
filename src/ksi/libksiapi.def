@@ -262,15 +262,7 @@ EXPORTS
     KSI_PKITruststore_verifySignature
     KSI_PKITruststore_addLookupFile
     KSI_PKITruststore_addLookupDir
-    KSI_PKICertificate_getValidityNotBefore
-    KSI_PKICertificate_getValidityNotAfter
-    KSI_PKICertificate_issuerToString
-    KSI_PKICertificate_subjectToString
-    KSI_PKICertificate_calculateCRC32
-    KSI_PKICertificate_getSerialNumber
     KSI_PKISignature_extractCertificate
-    KSI_PKICertificate_issuerOIDToString
-    KSI_PKICertificate_subjectOIDToString
     KSI_PKICertificate_toString
 
 ;publicationsfile.h
