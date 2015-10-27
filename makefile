@@ -86,7 +86,7 @@ COM_ID = \
 
 default:
 	cd $(SRC_DIR)\ksi
-	nmake $(MODEL) $(EXTRA)
+	nmake $(MODEL) $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
 	cd ..\..
 
 all: libraries example tests
