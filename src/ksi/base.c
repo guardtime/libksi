@@ -113,6 +113,8 @@ const char *KSI_getErrorString(int statusCode) {
 			return "The publications file is not signed.";
 		case KSI_CRYPTO_FAILURE:
 			return "Cryptographic failure.";
+		case KSI_REQUEST_PENDING:
+			return "The request is sill pending.";
 		case KSI_HMAC_MISMATCH:
 			return "HMAC mismatch.";
 		case KSI_SERVICE_INVALID_REQUEST:
@@ -162,7 +164,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	KSI_CTX *ctx = NULL;
-	KSI_UriClient *client = NULL;
+	KSI_NetworkClient *client = NULL;
 	KSI_PKITruststore *pkiTruststore = NULL;
 
 	ctx = KSI_new(KSI_CTX);
@@ -202,7 +204,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	res = KSI_UriClient_new(ctx, &client);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_CTX_setNetworkProvider(ctx, (KSI_NetworkClient *)client);
+	res = KSI_CTX_setNetworkProvider(ctx, client);
 	if (res != KSI_OK) goto cleanup;
 	ctx->isCustomNetProvider = 0;
 	client = NULL;
@@ -222,7 +224,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 
 cleanup:
 
-	KSI_UriClient_free(client);
+	KSI_NetworkClient_free(client);
 	KSI_PKITruststore_free(pkiTruststore);
 
 	KSI_CTX_free(ctx);
@@ -411,6 +413,12 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 		KSI_LOG_debug(ctx, "Receiving publications file.");
 
 		res = KSI_sendPublicationRequest(ctx, NULL, 0, &handle);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx,res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_RequestHandle_perform(handle);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx,res, NULL);
 			goto cleanup;
@@ -750,9 +758,8 @@ void KSI_free(void *ptr) {
 
 static int KSI_CTX_setUri(KSI_CTX *ctx,
 		const char *uri, const char *loginId, const char *key,
-		int (*setter)(KSI_UriClient*, const char*, const char *, const char *)){
+		int (*setter)(KSI_NetworkClient*, const char*, const char *, const char *)){
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_UriClient *client = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || uri == NULL) {
@@ -765,9 +772,7 @@ static int KSI_CTX_setUri(KSI_CTX *ctx,
 		goto cleanup;
 	}
 
-	client = (KSI_UriClient*)ctx->netProvider;
-
-	res = setter(client, uri, loginId, key);
+	res = setter(ctx->netProvider, uri, loginId, key);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx,res, NULL);
 		goto cleanup;
@@ -780,7 +785,7 @@ cleanup:
 	return res;
 }
 
-static int KSI_UriClient_setPublicationUrl_wrapper(KSI_UriClient *client, const char *uri, const char *not_used_1, const char *not_used_2){
+static int KSI_UriClient_setPublicationUrl_wrapper(KSI_NetworkClient *client, const char *uri, const char *not_used_1, const char *not_used_2){
 	return KSI_UriClient_setPublicationUrl(client, uri);
 }
 
@@ -796,9 +801,9 @@ int KSI_CTX_setPublicationUrl(KSI_CTX *ctx, const char *uri){
 	return KSI_CTX_setUri(ctx, uri, uri, uri, KSI_UriClient_setPublicationUrl_wrapper);
 }
 
-static int KSI_CTX_setTimeoutSeconds(KSI_CTX *ctx, int timeout, int (*setter)(KSI_UriClient*, int)){
+static int KSI_CTX_setTimeoutSeconds(KSI_CTX *ctx, int timeout, int (*setter)(KSI_NetworkClient*, int)){
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_UriClient *client = NULL;
+	KSI_NetworkClient *client = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || ctx->netProvider == NULL) {
@@ -811,7 +816,7 @@ static int KSI_CTX_setTimeoutSeconds(KSI_CTX *ctx, int timeout, int (*setter)(KS
 		goto cleanup;
 	}
 
-	client = (KSI_UriClient*)ctx->netProvider;
+	client = ctx->netProvider;
 
 	res = setter(client, timeout);
 	if (res != KSI_OK) {

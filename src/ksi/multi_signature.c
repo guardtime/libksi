@@ -1360,6 +1360,10 @@ static int extendUnextended(TimeMapper *tm, void *fctx) {
 				res = KSI_sendExtendRequest(tm->calendarChain->ctx, req, &handle);
 				if (res != KSI_OK) goto cleanup;
 
+				/* Perform the request. */
+				res = KSI_RequestHandle_perform(handle);
+				if (res != KSI_OK) goto cleanup;
+
 				/* Call a blocking call to receive the response. */
 				res = KSI_RequestHandle_getExtendResponse(handle, &resp);
 				if (res != KSI_OK) goto cleanup;

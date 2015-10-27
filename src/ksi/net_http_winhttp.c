@@ -19,7 +19,7 @@
 
 #include "internal.h"
 
-#if KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP
+#if 1 || KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP
 
 #include <windows.h>
 #include <Winhttp.h>
@@ -148,7 +148,7 @@ static int winHTTP_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **
 		WINHTTP_ERROR_N(ctx, KSI_NETWORK_ERROR, "WinHTTP: Unable to get HTTP status.")
 	}
 
-	http->httpStatus = http_status;
+//	http->httpStatus = http_status;
 
 	/*Get response length*/
 	dwordLen = sizeof(DWORD);
@@ -256,7 +256,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	int res;
 	KSI_CTX *ctx = NULL;
 	winhttpNetHandleCtx *implCtx = NULL;
-	KSI_HttpClient *http = (KSI_HttpClient *)client;
+	KSI_HttpClient *http = NULL;
 	char msg[128];
 	char *scheme = NULL;
 	char *hostName = NULL;
@@ -271,6 +271,8 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+
+	http = client->impl;
 	ctx = handle->ctx;
 	KSI_ERR_clearErrors(ctx);
 
@@ -388,20 +390,25 @@ static void implCtx_free(void *hInternet){
 	WinHttpCloseHandle((HINTERNET)hInternet);
 }
 
-int KSI_HttpClientImpl_init(KSI_HttpClient *http) {
+int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	int res;
-	KSI_CTX *ctx = NULL;
+	KSI_NetworkClient *tmp = NULL;
+	KSI_HttpClient *http = NULL;
 	LPWSTR agent_name = NULL;
 	HINTERNET session_handle = NULL;
 	ULONG buf;
 
-	if (http == NULL || http->parent.ctx == NULL) {
+	if (ctx == NULL || client == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
-	ctx = http->parent.ctx;
+
 	KSI_ERR_clearErrors(ctx);
 
+	res = KSI_AbstractHttpClient_new(ctx, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	http = tmp->impl;
 
 	res = LPWSTR_new(http->agentName, &agent_name);
 	if (res != KSI_OK) {
@@ -431,9 +438,13 @@ int KSI_HttpClientImpl_init(KSI_HttpClient *http) {
 	session_handle = NULL;
 	http->sendRequest = winhttpSendRequest;
 
+	*client = tmp;
+
 	res = KSI_OK;
 
 cleanup:
+
+	KSI_NetworkClient_free(tmp);
 
 	WinHttpCloseHandle(session_handle);
 	LPWSTR_free(agent_name);

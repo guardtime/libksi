@@ -27,15 +27,12 @@
 extern "C" {
 #endif
 
-	#define KSI_NETWORK_CLIENT_INIT(ctx)  (KSI_NetworkClient) {(ctx), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}
-
 	struct KSI_NetworkClient_st {
 		KSI_CTX *ctx;
 
 		int (*sendSignRequest)(KSI_NetworkClient *, KSI_AggregationReq *, KSI_RequestHandle **);
 		int (*sendExtendRequest)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **);
 		int (*sendPublicationRequest)(KSI_NetworkClient *, KSI_RequestHandle **);
-		int (*getStausCode)(KSI_NetworkClient *);
 	
 		/** Aggregator user. */
 		char *aggrUser;
@@ -47,6 +44,8 @@ extern "C" {
 		/** Extender shared HMAC secret. */
 		char *extPass;
 	
+		/** Implementation context. */
+		void *impl;
 		/** Cleanup for the provider, gets the #providerCtx as parameter. */
 		void (*implFree)(void *);
 
@@ -61,6 +60,8 @@ extern "C" {
 
 		/** Instance reference count. */
 		size_t ref;
+
+		KSI_RequestHandleStatus err;
 
 		/** Has the request completeted. */
 		bool completed;
@@ -82,6 +83,10 @@ extern "C" {
 		/** Additional context for the transport layer. */
 		void *implCtx;
 		void (*implCtx_free)(void *);
+
+		/** Function to retrieve the status of the last perform call. Will return #KSI_REQUEST_PENDING if
+		 * the request has not been performed. */
+		int (*status)(KSI_RequestHandle *);
 	};
 
 #ifdef __cplusplus

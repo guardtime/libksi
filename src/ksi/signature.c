@@ -1358,6 +1358,12 @@ int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uin
 		goto cleanup;
 	}
 
+	res = KSI_RequestHandle_perform(handle);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
+
 	res = KSI_RequestHandle_getAggregationResponse(handle, &response);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -1430,6 +1436,12 @@ int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *
 	res = KSI_sendExtendRequest(ctx, req, &handle);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_RequestHandle_perform(handle);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
 		goto cleanup;
 	}
 
@@ -2638,6 +2650,12 @@ static int verifyOnline(KSI_CTX *ctx, KSI_Signature *sig) {
 
 	res = KSI_sendExtendRequest(ctx, req, &handle);
 	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_RequestHandle_perform(handle);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_RequestHandle_getExtendResponse(handle, &resp);
 	if (res != KSI_OK) goto cleanup;

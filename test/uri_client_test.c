@@ -63,31 +63,37 @@ static const char *invalidUri[] = {
 
 static void testUriClientInit(CuTest* tc) {
 	int res;
+	KSI_NetworkClient *net = NULL;
 	KSI_UriClient *uri = NULL;
 
-	res = KSI_UriClient_new(ctx, &uri);
+	res = KSI_UriClient_new(ctx, &net);
+	uri = net->impl;
+
 	CuAssert(tc, "Unable to create URI client.", res == KSI_OK && uri != NULL);
 	CuAssert(tc, "URI client not initialized properly.", uri->httpClient != NULL);
 	CuAssert(tc, "TCP client should not be initialized by default.", uri->tcpClient == NULL);
 	CuAssert(tc, "Default client for aggregation should be the HTTP client", uri->pAggregationClient == (KSI_NetworkClient *)uri->httpClient);
 	CuAssert(tc, "Default client for extending should be the HTTP client", uri->pExtendClient == (KSI_NetworkClient *)uri->httpClient);
 
-	KSI_UriClient_free(uri);
+	KSI_NetworkClient_free(net);
 }
 
 static void testValidAggregatorHttpUri(CuTest* tc) {
 	int res;
+	KSI_NetworkClient *net = NULL;
 	KSI_UriClient *uri = NULL;
 	int i = 0;
 
-	res = KSI_UriClient_new(ctx, &uri);
-	CuAssert(tc, "Unable to create URI client.", res == KSI_OK && uri != NULL);
+	res = KSI_UriClient_new(ctx, &net);
+	CuAssert(tc, "Unable to create URI client.", res == KSI_OK && net != NULL);
+
+	uri = net->impl;
 
 	while (validHttpUri[i]) {
 		char errm[1024];
 		uri->pAggregationClient = NULL;
 
-		res = KSI_UriClient_setAggregator(uri, validHttpUri[i], "dummy", "dummy");
+		res = KSI_UriClient_setAggregator(net, validHttpUri[i], "dummy", "dummy");
 		KSI_snprintf(errm, sizeof(errm), "Unable to set valid URI for aggregator address '%s'", validHttpUri[i]);
 		CuAssert(tc, errm, res == KSI_OK);
 
@@ -96,23 +102,26 @@ static void testValidAggregatorHttpUri(CuTest* tc) {
 		i++;
 	}
 
-	KSI_UriClient_free(uri);
+	KSI_NetworkClient_free(net);
 }
 
 static void testValidExtenderHttpUri(CuTest* tc) {
 	int res;
+	KSI_NetworkClient *net = NULL;
 	KSI_UriClient *uri = NULL;
 	int i = 0;
 
-	res = KSI_UriClient_new(ctx, &uri);
-	CuAssert(tc, "Unable to create URI client.", res == KSI_OK && uri != NULL);
+	res = KSI_UriClient_new(ctx, &net);
+	CuAssert(tc, "Unable to create URI client.", res == KSI_OK && net != NULL);
+
+	uri = net->impl;
 
 	while (validHttpUri[i]) {
 		char errm[1024];
 
 		uri->pExtendClient = NULL;
 
-		res = KSI_UriClient_setExtender(uri, validHttpUri[i], "dummy", "dummy");
+		res = KSI_UriClient_setExtender(net, validHttpUri[i], "dummy", "dummy");
 		KSI_snprintf(errm, sizeof(errm), "Unable to set valid URI for extender address '%s'", validHttpUri[i]);
 		CuAssert(tc, errm, res == KSI_OK);
 
@@ -121,25 +130,28 @@ static void testValidExtenderHttpUri(CuTest* tc) {
 		i++;
 	}
 
-	KSI_UriClient_free(uri);
+	KSI_NetworkClient_free(net);
 }
 
 static void testValidAggregatorTcpUri(CuTest* tc) {
 	int res;
+	KSI_NetworkClient *net = NULL;
 	KSI_UriClient *uri = NULL;
 	int i = 0;
 
-	res = KSI_UriClient_new(ctx, &uri);
-	CuAssert(tc, "Unable to create URI client.", res == KSI_OK && uri != NULL);
+	res = KSI_UriClient_new(ctx, &net);
+	CuAssert(tc, "Unable to create URI client.", res == KSI_OK && net != NULL);
+
+	uri = net->impl;
 
 	while (validTcpUri[i]) {
 		char errm[1024];
 		uri->pAggregationClient = NULL;
 
-		KSI_TcpClient_free(uri->tcpClient);
+		KSI_NetworkClient_free(uri->tcpClient);
 		uri->tcpClient = NULL;
 
-		res = KSI_UriClient_setAggregator(uri, validTcpUri[i], "dummy", "dummy");
+		res = KSI_UriClient_setAggregator(net, validTcpUri[i], "dummy", "dummy");
 
 		KSI_snprintf(errm, sizeof(errm), "Unable to set valid URI for aggregator address '%s'", validTcpUri[i]);
 		CuAssert(tc, errm, res == KSI_OK);
@@ -152,90 +164,99 @@ static void testValidAggregatorTcpUri(CuTest* tc) {
 		i++;
 	}
 
-	KSI_UriClient_free(uri);
+	KSI_NetworkClient_free(net);
 }
 
 static void testValidExtenderTcpUri(CuTest* tc) {
 	int res;
+	KSI_NetworkClient *net = NULL;
 	KSI_UriClient *uri = NULL;
 	int i = 0;
 
-	res = KSI_UriClient_new(ctx, &uri);
-	CuAssert(tc, "Unable to create URI client.", res == KSI_OK && uri != NULL);
+	res = KSI_UriClient_new(ctx, &net);
+	CuAssert(tc, "Unable to create URI client.", res == KSI_OK && net != NULL);
+
+	uri = net->impl;
 
 	while (validTcpUri[i]) {
 		char errm[1024];
 
 		uri->pExtendClient = NULL;
 
-		KSI_TcpClient_free(uri->tcpClient);
+		KSI_NetworkClient_free(uri->tcpClient);
 		uri->tcpClient = NULL;
 
-		res = KSI_UriClient_setExtender(uri, validTcpUri[i], "dummy", "dummy");
+		res = KSI_UriClient_setExtender(net, validTcpUri[i], "dummy", "dummy");
 		KSI_snprintf(errm, sizeof(errm), "Unable to set valid URI for extender address '%s'", validTcpUri[i]);
 		CuAssert(tc, errm, res == KSI_OK);
 
 		KSI_snprintf(errm, sizeof(errm), "TCP client should be initialized for address '%s'", validTcpUri[i]);
 		CuAssert(tc, errm, uri->tcpClient != NULL);
 
-		CuAssert(tc, "Extender client should be the TCP client", uri->pExtendClient == (KSI_NetworkClient *)uri->tcpClient);
+		CuAssert(tc, "Extender client should be the TCP client", uri->pExtendClient == (KSI_NetworkClient *) uri->tcpClient);
 
 		i++;
 	}
 
-	KSI_UriClient_free(uri);
+	KSI_NetworkClient_free(net);
 }
 
 static void testInvalidExtenderUri(CuTest* tc) {
 	int res;
+	KSI_NetworkClient *net = NULL;
 	KSI_UriClient *uri = NULL;
 	int i = 0;
 
-	res = KSI_UriClient_new(ctx, &uri);
-	CuAssert(tc, "Unable to create URI client.", res == KSI_OK && uri != NULL);
+	res = KSI_UriClient_new(ctx, &net);
+	CuAssert(tc, "Unable to create URI client.", res == KSI_OK && net != NULL);
+
+	uri = net->impl;
 
 	while (invalidUri[i]) {
 		char errm[1024];
 
 		uri->pExtendClient = NULL;
 
-		KSI_TcpClient_free(uri->tcpClient);
+		KSI_NetworkClient_free(uri->tcpClient);
 		uri->tcpClient = NULL;
 
-		res = KSI_UriClient_setExtender(uri, invalidUri[i], "dummy", "dummy");
+		res = KSI_UriClient_setExtender(net, invalidUri[i], "dummy", "dummy");
 		KSI_snprintf(errm, sizeof(errm), "Invalid URI for extender should fail: '%s'", invalidUri[i]);
 		CuAssert(tc, errm, res != KSI_OK);
 
 		i++;
 	}
 
-	KSI_UriClient_free(uri);
+	KSI_NetworkClient_free(net);
 }
 
 static void testInvalidAggregatorUri(CuTest* tc) {
 	int res;
+	KSI_NetworkClient *net = NULL;
 	KSI_UriClient *uri = NULL;
 	int i = 0;
 
-	res = KSI_UriClient_new(ctx, &uri);
-	CuAssert(tc, "Unable to create URI client.", res == KSI_OK && uri != NULL);
+	res = KSI_UriClient_new(ctx, &net);
+	CuAssert(tc, "Unable to create URI client.", res == KSI_OK && net != NULL);
+
+	uri = net->impl;
 
 	while (invalidUri[i]) {
 		char errm[1024];
 
 		uri->pExtendClient = NULL;
 
-		KSI_TcpClient_free(uri->tcpClient);
+		KSI_NetworkClient_free(uri->tcpClient);
 		uri->tcpClient = NULL;
 
-		res = KSI_UriClient_setExtender(uri, invalidUri[i], "dummy", "dummy");
+		res = KSI_UriClient_setExtender(net, invalidUri[i], "dummy", "dummy");
 		KSI_snprintf(errm, sizeof(errm), "Invalid URI for extender should fail: '%s'", invalidUri[i]);
 		CuAssert(tc, errm, res != KSI_OK);
 
 		i++;
 	}
 
-	KSI_UriClient_free(uri);
+	KSI_NetworkClient_free(net);
 }
 
 CuSuite* KSITest_uriClient_getSuite(void) {

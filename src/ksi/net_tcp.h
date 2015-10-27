@@ -35,22 +35,7 @@ extern "C" {
 	 * \param[out]	client		Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_TcpClient_new(KSI_CTX *ctx, KSI_TcpClient **client);
-
-	/**
-	 * Initializes an existing TCP client.
-	 * \param[in]	ctx			KSI context.
-	 * \param[out]	client		Pointer to the receiving pointer.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_TcpClient_init(KSI_CTX *ctx, KSI_TcpClient *client);
-
-	/**
-	 * Cleanup method for #KSI_HttpClient.
-	 * \param[in]	client	Pointer to the HTTP client.
-	 */
-	void KSI_TcpClient_free(KSI_TcpClient *client);
-
+	int KSI_TcpClient_new(KSI_CTX *ctx, KSI_NetworkClient **client);
 
 	/**
 	 * Setter for the publications file URL. The value will be copied and thus
@@ -59,7 +44,7 @@ extern "C" {
 	 * \param[in]	val			Null-terminated URL.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_TcpClient_setPublicationUrl(KSI_TcpClient *client, const char *val);
+	int KSI_TcpClient_setPublicationUrl(KSI_NetworkClient *client, const char *val);
 
 
 	/**
@@ -71,7 +56,7 @@ extern "C" {
      * \param[in]	key			HMAC shared secret.
      * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
      */
-	int KSI_TcpClient_setExtender(KSI_TcpClient *client, const char *host, unsigned port, const char *user, const char *key);
+	int KSI_TcpClient_setExtender(KSI_NetworkClient *client, const char *host, unsigned port, const char *user, const char *key);
 
 	/**
 	 * Setter for the tcp aggregator parameters.
@@ -82,7 +67,7 @@ extern "C" {
      * \param[in]	key			HMAC shared secret.
      * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
      */
-	int KSI_TcpClient_setAggregator(KSI_TcpClient *client, const char *host, unsigned port, const char *user, const char *key);
+	int KSI_TcpClient_setAggregator(KSI_NetworkClient *client, const char *host, unsigned port, const char *user, const char *key);
 
 	/**
 	 * Setter for the read, write, timeout in seconds.
@@ -90,7 +75,7 @@ extern "C" {
 	 * \param[in]	val			Timeout in seconds.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_TcpClient_setTransferTimeoutSeconds(KSI_TcpClient *client, int val);
+	int KSI_TcpClient_setTransferTimeoutSeconds(KSI_NetworkClient *client, int val);
 
 #ifdef __cplusplus
 }
