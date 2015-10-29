@@ -25,20 +25,20 @@
 
 struct KSI_OctetString_st {
 	KSI_CTX *ctx;
-	size_t refCount;
+	size_t ref;
 	unsigned char *data;
 	size_t data_len;
 };
 
 struct KSI_Integer_st {
 	int staticAlloc;
-	size_t refCount;
+	size_t ref;
 	KSI_uint64_t value;
 };
 
 struct KSI_Utf8String_st {
 	KSI_CTX *ctx;
-	size_t refCount;
+	size_t ref;
 	char *value;
 	size_t len;
 };
@@ -63,7 +63,7 @@ KSI_IMPLEMENT_LIST(KSI_OctetString, KSI_OctetString_free);
  * KSI_OctetString
  */
 void KSI_OctetString_free(KSI_OctetString *o) {
-	if (o != NULL && --o->refCount == 0) {
+	if (o != NULL && --o->ref == 0) {
 		KSI_free(o->data);
 		KSI_free(o);
 	}
@@ -88,7 +88,7 @@ int KSI_OctetString_new(KSI_CTX *ctx, const unsigned char *data, size_t data_len
 	tmp->ctx = ctx;
 	tmp->data = NULL;
 	tmp->data_len = data_len;
-	tmp->refCount = 1;
+	tmp->ref = 1;
 
 	if (data_len > 0) {
 		tmp->data = KSI_malloc(data_len);
@@ -110,12 +110,7 @@ cleanup:
 	return res;
 }
 
-int KSI_OctetString_ref(KSI_OctetString *o) {
-	if (o != NULL) {
-		++o->refCount;
-	}
-	return KSI_OK;
-}
+KSI_IMPLEMENT_REF(KSI_OctetString);
 
 int KSI_OctetString_extract(const KSI_OctetString *o, const unsigned char **data, size_t *data_len) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -270,7 +265,7 @@ cleanup:
  * Utf8String
  */
 void KSI_Utf8String_free(KSI_Utf8String *o) {
-	if (o != NULL && --o->refCount == 0) {
+	if (o != NULL && --o->ref == 0) {
 		KSI_free(o->value);
 		KSI_free(o);
 	}
@@ -294,7 +289,7 @@ int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, size_t len, KSI_Utf8String
 
 	tmp->ctx = ctx;
 	tmp->value = NULL;
-	tmp->refCount = 1;
+	tmp->ref = 1;
 	
 	/* Verify that it is a null-terminated string. */
 	if (len == 0 || str[len - 1] != '\0') {
@@ -327,12 +322,7 @@ cleanup:
 	return res;
 }
 
-int KSI_Utf8String_ref(KSI_Utf8String *o) {
-	if (o != NULL) {
-		++o->refCount;
-	}
-	return KSI_OK;
-}
+KSI_IMPLEMENT_REF(KSI_Utf8String);
 
 size_t KSI_Utf8String_size(const KSI_Utf8String *o) {
 	return o != NULL ? o->len : 0;
@@ -494,17 +484,12 @@ cleanup:
 }
 
 void KSI_Integer_free(KSI_Integer *o) {
-	if (o != NULL && !o->staticAlloc && --o->refCount == 0) {
+	if (o != NULL && !o->staticAlloc && --o->ref == 0) {
 		KSI_free(o);
 	}
 }
 
-int KSI_Integer_ref(KSI_Integer *o) {
-	if (o != NULL && !o->staticAlloc) {
-		++o->refCount;
-	}
-	return KSI_OK;
-}
+KSI_IMPLEMENT_REF(KSI_Integer);
 
 char *KSI_Integer_toDateString(const KSI_Integer *o, char *buf, size_t buf_len) {
 	char *ret = NULL;
@@ -568,7 +553,7 @@ int KSI_Integer_new(KSI_CTX *ctx, KSI_uint64_t value, KSI_Integer **o) {
 
 		tmp->staticAlloc = 0;
 		tmp->value = value;
-		tmp->refCount = 1;
+		tmp->ref = 1;
 	}
 
 	*o = tmp;

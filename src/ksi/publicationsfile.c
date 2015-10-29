@@ -1300,13 +1300,7 @@ int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_Publicatio
 			goto cleanup;
 		}
 
-		res = KSI_Utf8String_ref(str);
-		if (res != KSI_OK) {
-			KSI_pushError(rec->ctx, res, NULL);
-			goto cleanup;
-		}
-
-		res = KSI_Utf8StringList_append(tmp->publicationRef, str);
+		res = KSI_Utf8StringList_append(tmp->publicationRef, KSI_Utf8String_ref(str));
 		if (res != KSI_OK) {
 			KSI_pushError(rec->ctx, res, NULL);
 			goto cleanup;

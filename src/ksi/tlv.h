@@ -204,7 +204,7 @@ extern "C" {
 	/**
 	 * TODO!
 	 */
-	void KSI_TLV_ref(KSI_TLV *tlv);
+	KSI_TLV *KSI_TLV_ref(KSI_TLV *tlv);
 	/**
 	 * This is an access method for the TLV lenient-flag.
 	 *

@@ -33,9 +33,6 @@ struct KSI_TLV_st {
 	/** Reference count */
 	unsigned refCount;
 
-	/** Reference to parent TLV */
-	KSI_TLV *parent;
-
 	/** Flags */
 	int isNonCritical;
 	int isForwardable;
@@ -447,7 +444,6 @@ int KSI_TLV_new(KSI_CTX *ctx, int payloadType, unsigned tag, int isLenient, int 
 
 	tmp->nested = NULL;
 	tmp->refCount = 1;
-	tmp->parent = NULL;
 
 	tmp->buffer_size = 0;
 	tmp->buffer = NULL;
@@ -485,10 +481,12 @@ void KSI_TLV_free(KSI_TLV *tlv) {
 	}
 }
 
-void KSI_TLV_ref(KSI_TLV *tlv) {
+KSI_TLV *KSI_TLV_ref(KSI_TLV *tlv) {
 	if (tlv != NULL) {
 		tlv->refCount++;
 	}
+
+	return tlv;
 }
 
 int KSI_TLV_fromReader(KSI_RDR *rdr, KSI_TLV **tlv) {
