@@ -35,7 +35,7 @@
 #include "ctx_impl.h"
 #include "net.h"
 
-#define KSI_MULTI_SIGNATURE_HDR "MULTISIG"
+#define KSI_MULTI_SIGNATURE_HDR (const char *) "MULTISIG"
 
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationHashChain);
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarHashChain);
@@ -631,7 +631,6 @@ cleanup:
 
 int KSI_MultiSignature_add(KSI_MultiSignature *ms, const KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
-	TimeMapper *mpr = NULL;
 
 	if (ms == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -809,8 +808,6 @@ static int TimeMapper_cmp(const TimeMapper **a, const TimeMapper **b) {
 int KSI_MultiSignature_get(KSI_MultiSignature *ms, const KSI_DataHash *hsh, KSI_Signature **sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Signature *tmp = NULL;
-	ChainIndexMapper *cim = NULL;
-	KSI_LIST(ChainIndexMapper) *cimList = NULL;
 	TimeMapper *tm = NULL;
 
 	if (ms == NULL || hsh == NULL || sig == NULL) {
@@ -1248,7 +1245,6 @@ static int extendUnextended(TimeMapper *tm, void *fctx) {
 	KSI_ExtendResp *resp = NULL;
 	KSI_Integer *aggregationTime = NULL;
 	KSI_Integer *publicationTime = NULL;
-	KSI_Integer *reqId = NULL; /* FIXME: should not be specified here. */
 
 	if (tm == NULL || helper == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1791,7 +1787,7 @@ int KSI_MultiSignature_parse(KSI_CTX *ctx, const unsigned char *raw, size_t raw_
 		goto cleanup;
 	}
 
-	if (strncmp(raw, KSI_MULTI_SIGNATURE_HDR, hdr_len)) {
+	if (memcmp(raw, KSI_MULTI_SIGNATURE_HDR, hdr_len)) {
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Multi signature container magic number mismatch.");
 		goto cleanup;
 	}
