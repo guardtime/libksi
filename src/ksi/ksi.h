@@ -168,6 +168,11 @@ enum KSI_StatusCode {
 	 */
 	KSI_HMAC_MISMATCH = 0x20e,
 
+	/**
+	 * The request is still pending.
+	 */
+	KSI_REQUEST_PENDING = 0x20f,
+
 	/* Generic service errors */
 
 	/**

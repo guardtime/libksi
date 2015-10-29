@@ -36,10 +36,8 @@ extern "C" {
 	};
 
 	struct KSI_UriClient_st {
-		KSI_NetworkClient parent;
-
-		KSI_HttpClient *httpClient;
-		KSI_TcpClient *tcpClient;
+		KSI_NetworkClient *httpClient;
+		KSI_NetworkClient *tcpClient;
 
 		KSI_NetworkClient *pExtendClient;
 		KSI_NetworkClient *pAggregationClient;

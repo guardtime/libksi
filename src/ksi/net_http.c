@@ -62,7 +62,7 @@ static int prepareRequest(
 		char *url,
 		const char *desc) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_HttpClient *http = (KSI_HttpClient *)client;
+	KSI_HttpClient *http = client->impl;
 	KSI_RequestHandle *tmp = NULL;
 	unsigned char *raw = NULL;
 	size_t raw_len = 0;
@@ -170,13 +170,16 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 	KSI_AggregationPdu *pdu = NULL;
 	KSI_Integer *pReqId = NULL;
 	KSI_Integer *reqId = NULL;
+	KSI_HttpClient *http = NULL;
 
 	if (client == NULL || req == NULL || handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	if (((KSI_HttpClient*)client)->urlAggregator == NULL) {
+	http = client->impl;
+
+	if (http->urlAggregator == NULL) {
 		res = KSI_AGGREGATOR_NOT_CONFIGURED;
 		goto cleanup;
 	}
@@ -202,7 +205,7 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 			pdu,
 			(int (*)(void *, unsigned char **, size_t *))KSI_AggregationPdu_serialize,
 			handle,
-			((KSI_HttpClient*)client)->urlAggregator,
+			http->urlAggregator,
 			"Aggregation request");
 cleanup:
 
@@ -215,7 +218,7 @@ cleanup:
 
 static int preparePublicationsFileRequest(KSI_NetworkClient *client, KSI_RequestHandle **handle) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_HttpClient *http = (KSI_HttpClient *) client;
+	KSI_HttpClient *http = NULL;
 	KSI_RequestHandle *tmp = NULL;
 
 	if (client == NULL || handle == NULL) {
@@ -223,6 +226,8 @@ static int preparePublicationsFileRequest(KSI_NetworkClient *client, KSI_Request
 		goto cleanup;
 	}
 	KSI_ERR_clearErrors(client->ctx);
+
+	http = client->impl;
 
 	if (http->urlPublication == NULL) {
 		KSI_pushError(client->ctx, res = KSI_PUBLICATIONS_FILE_NOT_CONFIGURED, "The publications file URL has not been configured.");
@@ -268,73 +273,10 @@ static void httpClient_free(KSI_HttpClient *http) {
 	}
 }
 
-void KSI_HttpClient_free(KSI_HttpClient *http) {
-	KSI_NetworkClient_free((KSI_NetworkClient*)http);
-}
-
-static int getHttpStatusCode(KSI_NetworkClient *client){
-	KSI_HttpClient *http = (KSI_HttpClient*)client;
-	return http->httpStatus;
-}
-
-
-/**
- *
- */
-int KSI_HttpClient_init(KSI_CTX *ctx, KSI_HttpClient *client) {
+int KSI_AbstractHttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **http) {
 	int res = KSI_UNKNOWN_ERROR;
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || client == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_NetworkClient_init(ctx, &client->parent);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	client->agentName = NULL;
-	client->sendRequest = NULL;
-	client->urlExtender = NULL;
-	client->urlPublication = NULL;
-	client->urlAggregator = NULL;
-	client->httpStatus = 0;
-	client->implCtx = NULL;
-	client->implCtx_free = NULL;
-
-	client->parent.performAll = NULL;
-	client->parent.sendExtendRequest = prepareExtendRequest;
-	client->parent.sendSignRequest = prepareAggregationRequest;
-	client->parent.sendPublicationRequest = preparePublicationsFileRequest;
-	client->parent.getStausCode = getHttpStatusCode;
-	client->parent.implFree = (void (*)(void *))httpClient_free;
-
-	setIntParam(&client->connectionTimeoutSeconds, 10);
-	setIntParam(&client->readTimeoutSeconds, 10);
-	setStringParam(&client->agentName, "KSI HTTP Client"); /** Should be only user provided */
-
-	res = KSI_HttpClientImpl_init(client);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
-/**
- *
- */
-int KSI_HttpClient_new(KSI_CTX *ctx, KSI_HttpClient **http) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_HttpClient *tmp = NULL;
+	KSI_NetworkClient *tmp = NULL;
+	KSI_HttpClient *c = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || http == NULL) {
@@ -342,20 +284,37 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_HttpClient **http) {
 		goto cleanup;
 	}
 
-	tmp = KSI_new(KSI_HttpClient);
-	if (tmp == NULL) {
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
-		goto cleanup;
-	}
-
-	res = KSI_HttpClient_init(ctx, tmp);
+	res = KSI_AbstractNetworkClient_new(ctx, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
+
+	c = KSI_new(KSI_HttpClient);
+	if (c == NULL) {
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	c->agentName = NULL;
+	c->sendRequest = NULL;
+	c->urlExtender = NULL;
+	c->urlPublication = NULL;
+	c->urlAggregator = NULL;
+	c->implCtx = NULL;
+	c->implCtx_free = NULL;
+
+	tmp->sendExtendRequest = prepareExtendRequest;
+	tmp->sendSignRequest = prepareAggregationRequest;
+	tmp->sendPublicationRequest = preparePublicationsFileRequest;
+
+	setIntParam(&c->connectionTimeoutSeconds, 10); /* FIXME! Magic constants. */
+	setIntParam(&c->readTimeoutSeconds, 10);
+	setStringParam(&c->agentName, "KSI HTTP Client"); /** Should be only user provided */
+
+	tmp->impl = c;
+	tmp->implFree = (void (*)(void*))httpClient_free;
+	c = NULL;
 
 	*http = tmp;
 	tmp = NULL;
@@ -364,20 +323,23 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_HttpClient **http) {
 
 cleanup:
 
-	KSI_HttpClient_free(tmp);
+	httpClient_free(c);
+	KSI_NetworkClient_free(tmp);
 
 	return res;
 }
 
 
 #define KSI_NET_IMPLEMENT_SETTER(name, type, var, fn) 													\
-		int KSI_HttpClient_set##name(KSI_HttpClient *client, type val) {								\
+		int KSI_HttpClient_set##name(KSI_NetworkClient *client, type val) {								\
 			int res = KSI_UNKNOWN_ERROR;																\
+			KSI_HttpClient *http = NULL;																\
 			if (client == NULL) {																		\
 				res = KSI_INVALID_ARGUMENT;																\
 				goto cleanup;																			\
 			}																							\
-			res = (fn)(&client->var, val);																\
+			http = client->impl;																		\
+			res = (fn)(&http->var, val);																\
 		cleanup:																						\
 			return res;																					\
 		}																								\
@@ -386,20 +348,23 @@ KSI_NET_IMPLEMENT_SETTER(PublicationUrl, const char *, urlPublication, setString
 KSI_NET_IMPLEMENT_SETTER(ConnectTimeoutSeconds, int, connectionTimeoutSeconds, setIntParam);
 KSI_NET_IMPLEMENT_SETTER(ReadTimeoutSeconds, int, readTimeoutSeconds, setIntParam);
 
-int KSI_HttpClient_setExtender(KSI_HttpClient *client, const char *url, const char *user, const char *pass) {
+int KSI_HttpClient_setExtender(KSI_NetworkClient *client, const char *url, const char *user, const char *pass) {
 	int res = KSI_UNKNOWN_ERROR;
+	KSI_HttpClient *http = NULL;
 	if (client == NULL || url == NULL || user == NULL || pass == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	res = setStringParam(&client->urlExtender, url);
+	http = client->impl;
+
+	res = setStringParam(&http->urlExtender, url);
 	if (res != KSI_OK) goto cleanup;
 
-	res = setStringParam(&client->parent.extUser, user);
+	res = setStringParam(&client->extUser, user);
 	if (res != KSI_OK) goto cleanup;
 
-	res = setStringParam(&client->parent.extPass, pass);
+	res = setStringParam(&client->extPass, pass);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_OK;
@@ -409,20 +374,23 @@ cleanup:
 	return res;
 }
 
-int KSI_HttpClient_setAggregator(KSI_HttpClient *client, const char *url, const char *user, const char *pass) {
+int KSI_HttpClient_setAggregator(KSI_NetworkClient *client, const char *url, const char *user, const char *pass) {
 	int res = KSI_UNKNOWN_ERROR;
+	KSI_HttpClient *http = NULL;
 	if (client == NULL || url == NULL || user == NULL || pass == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	res = setStringParam(&client->urlAggregator, url);
+	http = client->impl;
+
+	res = setStringParam(&http->urlAggregator, url);
 	if (res != KSI_OK) goto cleanup;
 
-	res = setStringParam(&client->parent.aggrUser, user);
+	res = setStringParam(&client->aggrUser, user);
 	if (res != KSI_OK) goto cleanup;
 
-	res = setStringParam(&client->parent.aggrPass, pass);
+	res = setStringParam(&client->aggrPass, pass);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_OK;

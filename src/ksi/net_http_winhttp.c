@@ -114,6 +114,7 @@ static void LPWSTR_free(LPWSTR wstr){
 
 static int winHTTP_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **buf, DWORD *len){
 	KSI_HttpClient *http = NULL;
+	KSI_NetworkClient *client = NULL;
 	HINTERNET handle;
 	DWORD dwordLen;
 	DWORD http_payload_len = 0;
@@ -132,8 +133,8 @@ static int winHTTP_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **
 
 
 	handle = ((winhttpNetHandleCtx*)reqHandle->implCtx)->request_handle;
-	http = (KSI_HttpClient*)reqHandle->client;
-
+	client = reqHandle->client;
+	http = client->impl;
 
 	if (!WinHttpReceiveResponse(handle, NULL)){
 		WINHTTP_ERROR_1(ctx, ERROR_WINHTTP_TIMEOUT, KSI_NETWORK_RECIEVE_TIMEOUT, NULL)
@@ -148,7 +149,7 @@ static int winHTTP_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **
 		WINHTTP_ERROR_N(ctx, KSI_NETWORK_ERROR, "WinHTTP: Unable to get HTTP status.")
 	}
 
-	http->httpStatus = http_status;
+//	http->httpStatus = http_status;
 
 	/*Get response length*/
 	dwordLen = sizeof(DWORD);
@@ -256,7 +257,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	int res;
 	KSI_CTX *ctx = NULL;
 	winhttpNetHandleCtx *implCtx = NULL;
-	KSI_HttpClient *http = (KSI_HttpClient *)client;
+	KSI_HttpClient *http = NULL;
 	char msg[128];
 	char *scheme = NULL;
 	char *hostName = NULL;
@@ -271,6 +272,8 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+
+	http = client->impl;
 	ctx = handle->ctx;
 	KSI_ERR_clearErrors(ctx);
 
@@ -292,19 +295,19 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	implCtx->session_handle = http->implCtx;
 
 	res = KSI_UriSplitBasic(url, &scheme, &hostName, &port, &query);
-	if(res != KSI_OK){
+	if (res != KSI_OK){
 		KSI_snprintf(msg, sizeof(msg), "WinHTTP: Unable to crack url '%s'.", url);
 		KSI_pushError(ctx, res, msg);
 		goto cleanup;
 	}
 
-	if(scheme == NULL || strcmp("http", scheme) != 0 && strcmp("https", scheme) != 0){
+	if (scheme == NULL || strcmp("http", scheme) != 0 && strcmp("https", scheme) != 0){
 		KSI_snprintf(msg, sizeof(msg), "WinHTTP: unknown Internet scheme '%s'.", scheme);
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, msg);
 		goto cleanup;
 	}
 
-	if(hostName == NULL || query == NULL){
+	if (hostName == NULL || query == NULL){
 		KSI_snprintf(msg, sizeof(msg), "WinHTTP: Invalid url '%s'.", url);
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, msg);
 		goto cleanup;
@@ -388,20 +391,25 @@ static void implCtx_free(void *hInternet){
 	WinHttpCloseHandle((HINTERNET)hInternet);
 }
 
-int KSI_HttpClientImpl_init(KSI_HttpClient *http) {
+int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	int res;
-	KSI_CTX *ctx = NULL;
+	KSI_NetworkClient *tmp = NULL;
+	KSI_HttpClient *http = NULL;
 	LPWSTR agent_name = NULL;
 	HINTERNET session_handle = NULL;
 	ULONG buf;
 
-	if (http == NULL || http->parent.ctx == NULL) {
+	if (ctx == NULL || client == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
-	ctx = http->parent.ctx;
+
 	KSI_ERR_clearErrors(ctx);
 
+	res = KSI_AbstractHttpClient_new(ctx, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	http = tmp->impl;
 
 	res = LPWSTR_new(http->agentName, &agent_name);
 	if (res != KSI_OK) {
@@ -409,7 +417,7 @@ int KSI_HttpClientImpl_init(KSI_HttpClient *http) {
 		goto cleanup;
 	}
 
-	//Initializes an application's use of the Win32 Internet functions.
+	/* Initializes an application's use of the Win32 Internet functions. */
 	session_handle = WinHttpOpen(agent_name, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
 	if (session_handle == NULL) {
 		WINHTTP_ERROR(ctx, GetLastError(), KSI_UNKNOWN_ERROR, "WinHTTP: Unable to init.");
@@ -431,11 +439,16 @@ int KSI_HttpClientImpl_init(KSI_HttpClient *http) {
 	session_handle = NULL;
 	http->sendRequest = winhttpSendRequest;
 
+	*client = tmp;
+	tmp = NULL;
+
 	res = KSI_OK;
 
 cleanup:
 
-	WinHttpCloseHandle(session_handle);
+	KSI_NetworkClient_free(tmp);
+
+	implCtx_free(session_handle);
 	LPWSTR_free(agent_name);
 
 	return res;
