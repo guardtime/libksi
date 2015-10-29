@@ -19,7 +19,7 @@
 
 #include "internal.h"
 
-#if 1 || KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP
+#if KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP
 
 #include <windows.h>
 #include <Winhttp.h>
@@ -114,6 +114,7 @@ static void LPWSTR_free(LPWSTR wstr){
 
 static int winHTTP_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **buf, DWORD *len){
 	KSI_HttpClient *http = NULL;
+	KSI_NetworkClient *client = NULL;
 	HINTERNET handle;
 	DWORD dwordLen;
 	DWORD http_payload_len = 0;
@@ -132,8 +133,8 @@ static int winHTTP_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **
 
 
 	handle = ((winhttpNetHandleCtx*)reqHandle->implCtx)->request_handle;
-	http = (KSI_HttpClient*)reqHandle->client;
-
+	client = reqHandle->client;
+	http = client->impl;
 
 	if (!WinHttpReceiveResponse(handle, NULL)){
 		WINHTTP_ERROR_1(ctx, ERROR_WINHTTP_TIMEOUT, KSI_NETWORK_RECIEVE_TIMEOUT, NULL)
@@ -294,19 +295,19 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	implCtx->session_handle = http->implCtx;
 
 	res = KSI_UriSplitBasic(url, &scheme, &hostName, &port, &query);
-	if(res != KSI_OK){
+	if (res != KSI_OK){
 		KSI_snprintf(msg, sizeof(msg), "WinHTTP: Unable to crack url '%s'.", url);
 		KSI_pushError(ctx, res, msg);
 		goto cleanup;
 	}
 
-	if(scheme == NULL || strcmp("http", scheme) != 0 && strcmp("https", scheme) != 0){
+	if (scheme == NULL || strcmp("http", scheme) != 0 && strcmp("https", scheme) != 0){
 		KSI_snprintf(msg, sizeof(msg), "WinHTTP: unknown Internet scheme '%s'.", scheme);
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, msg);
 		goto cleanup;
 	}
 
-	if(hostName == NULL || query == NULL){
+	if (hostName == NULL || query == NULL){
 		KSI_snprintf(msg, sizeof(msg), "WinHTTP: Invalid url '%s'.", url);
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, msg);
 		goto cleanup;
@@ -416,7 +417,7 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 		goto cleanup;
 	}
 
-	//Initializes an application's use of the Win32 Internet functions.
+	/* Initializes an application's use of the Win32 Internet functions. */
 	session_handle = WinHttpOpen(agent_name, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
 	if (session_handle == NULL) {
 		WINHTTP_ERROR(ctx, GetLastError(), KSI_UNKNOWN_ERROR, "WinHTTP: Unable to init.");
@@ -439,6 +440,7 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	http->sendRequest = winhttpSendRequest;
 
 	*client = tmp;
+	tmp = NULL;
 
 	res = KSI_OK;
 
@@ -446,7 +448,7 @@ cleanup:
 
 	KSI_NetworkClient_free(tmp);
 
-	WinHttpCloseHandle(session_handle);
+	implCtx_free(session_handle);
 	LPWSTR_free(agent_name);
 
 	return res;
