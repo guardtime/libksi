@@ -355,6 +355,24 @@ static void testExtenderWrongData(CuTest* tc) {
 
 }
 
+static void testExtendInvalidSignature(CuTest* tc) {
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_Signature *ext = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/nok-sig-wrong-aggre-time.tlv"), &sig);
+	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
+
+	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/nok-sig-wrong-aggre-time-extend_response.tlv"));
+
+	res = KSI_Signature_extendTo(sig, ctx, NULL, &ext);
+	CuAssert(tc, "It should not be possible to extend this signature.", res == KSI_EXTEND_WRONG_CAL_CHAIN && ext == NULL);
+
+	KSI_Signature_free(sig);
+	KSI_Signature_free(ext);
+}
 
 static void testExtAuthFailure(CuTest* tc) {
 	int res;
@@ -784,6 +802,7 @@ CuSuite* KSITest_NET_getSuite(void) {
 	SUITE_ADD_TEST(suite, testUrlSplit);
 	SUITE_ADD_TEST(suite, testSmartServiceSetters);
 	SUITE_ADD_TEST(suite, testLocalAggregationSigning);
+	SUITE_ADD_TEST(suite, testExtendInvalidSignature);
 
 	return suite;
 }

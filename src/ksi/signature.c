@@ -1448,13 +1448,21 @@ int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *
 	}
 
 	/* Extract the calendar hash chain */
-	KSI_ExtendResp_getCalendarHashChain(resp, &calHashChain);
-
-	/* Remove the chain from the structure, as it will be freed when this function finishes. */
-	KSI_ExtendResp_setCalendarHashChain(resp, NULL);
+	res = KSI_ExtendResp_getCalendarHashChain(resp, &calHashChain);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	/* Add the hash chain to the signature. */
 	res = KSI_Signature_replaceCalendarChain(tmp, calHashChain);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Remove the chain from the structure, as it will be freed when this function finishes. */
+	res = KSI_ExtendResp_setCalendarHashChain(resp, NULL);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
