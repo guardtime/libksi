@@ -186,7 +186,6 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 	int res = KSI_UNKNOWN_ERROR;
 	CurlNetHandleCtx *implCtx = NULL;
 	KSI_HttpClient *http = client->impl;
-	size_t len;
 
 	if (client == NULL || handle == NULL || url == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -270,8 +269,6 @@ static int performN(KSI_NetworkClient *client, KSI_RequestHandle **arr, size_t a
 	fd_set fdexcep;
 	int maxfd = -1;
 	struct timeval timeout;
-	CURLMsg *m = NULL;
-	long timeo;
 
 	FD_ZERO(&fdread);
 	FD_ZERO(&fdwrite);
@@ -325,7 +322,7 @@ static int performN(KSI_NetworkClient *client, KSI_RequestHandle **arr, size_t a
 		}
 	} while (count > 0 || cres == CURLM_CALL_MULTI_PERFORM);
 
-	/* Remove handles */
+	/* Remove the handles from the multi container. */
 	for (i = 0; i < arr_len; i++) {
 		CurlNetHandleCtx *pctx = arr[i]->implCtx;
 		cres = curl_multi_remove_handle(cm, pctx->curl);
