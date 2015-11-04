@@ -69,7 +69,15 @@ ALLTESTS_OBJ = \
 	$(OBJ_DIR)\CuTest.obj \
 	$(OBJ_DIR)\compatibility_test.obj \
 	$(OBJ_DIR)\uri_client_test.obj \
+	$(OBJ_DIR)\support_tests.obj \
 	$(OBJ_DIR)\multi_signature_test.obj  
+
+INTTESTS_OBJ = \
+	$(OBJ_DIR)\all_integration_tests.obj \
+	$(OBJ_DIR)\aggre_integration_test.obj \
+	$(OBJ_DIR)\ext_integration_tests.obj \
+	$(OBJ_DIR)\support_tests.obj \
+	$(OBJ_DIR)\CuTest.obj
 
 RESIGNER_OBJ = \
 	$(OBJ_DIR)\resigner.obj
@@ -124,12 +132,29 @@ LDFLAGS = $(LDFLAGS) $(LDEXTRA)
 
  
 
-default: $(BIN_DIR)\alltests.exe 
+default: $(BIN_DIR)\alltests.exe $(BIN_DIR)\integrationtests.exe
 
 resigner: $(BIN_DIR)\resigner.exe
 
 $(BIN_DIR)\alltests.exe: $(BIN_DIR) $(ALLTESTS_OBJ)
 	link $(LDFLAGS) /OUT:$@ $(ALLTESTS_OBJ) $(EXT_LIB) 
+!IF "$(DLL)" == "dll"
+	copy "$(LIB_DIR)\libksiapi$(RTL).dll" "$(BIN_DIR)\" /Y /D
+!IF "$(NET_PROVIDER)" == "CURL"
+!IF "$(RTL)" == "MT" || "$(RTL)" == "MD"
+	copy "$(CURL_DIR)\$(DLL)\libcurl$(RTL).dll" "$(BIN_DIR)\libcurl.dll" /Y
+!ELSE	
+	copy "$(CURL_DIR)\$(DLL)\libcurl$(RTL).dll" "$(BIN_DIR)\libcurl_debug.dll" /Y
+!ENDIF
+!ENDIF
+!IF "$(HASH_PROVIDER)" == "OPENSSL" || "$(TRUST_PROVIDER)" == "OPENSSL"
+	copy "$(OPENSSL_DIR)\$(DLL)\libeay32$(RTL).dll" "$(BIN_DIR)\libeay32.dll" /Y
+!ENDIF
+!ENDIF
+
+
+$(BIN_DIR)\integrationtests.exe: $(BIN_DIR) $(INTTESTS_OBJ)
+	link $(LDFLAGS) /OUT:$@ $(INTTESTS_OBJ) $(EXT_LIB) 
 !IF "$(DLL)" == "dll"
 	copy "$(LIB_DIR)\libksiapi$(RTL).dll" "$(BIN_DIR)\" /Y /D
 !IF "$(NET_PROVIDER)" == "CURL"
