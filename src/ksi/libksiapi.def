@@ -373,6 +373,7 @@ EXPORTS
     KSI_TLV_getAbsoluteOffset
     KSI_TLV_getRelativeOffset
     KSI_TLV_parseBlob2
+    KSI_TLV_writeBytes
 
 ;tlvtemplates.h
 EXPORTS
