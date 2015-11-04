@@ -669,7 +669,7 @@ int KSI_HashChainLink_toTlv(KSI_CTX *ctx, KSI_HashChainLink *link, unsigned tag,
 		tagOverride = 0x08;
 	}
 
-	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, tagOverride, isNonCritica, isForward, &tmp);
+	res = KSI_TLV_new(ctx, tagOverride, isNonCritica, isForward, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;

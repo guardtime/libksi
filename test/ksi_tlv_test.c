@@ -32,7 +32,7 @@ static void testTlvInitOwnMem(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, 0x11, 1, 1, &tlv);
+	res = KSI_TLV_new(ctx, 0x11, 1, 1, &tlv);
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
@@ -48,7 +48,7 @@ static void testTlvLenientFlag(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_TLV_new(ctx,KSI_TLV_PAYLOAD_RAW, 0x11, 1, 1, &tlv);
+	res = KSI_TLV_new(ctx, 0x11, 1, 1, &tlv);
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
@@ -56,7 +56,7 @@ static void testTlvLenientFlag(CuTest* tc) {
 
 	KSI_TLV_free(tlv);
 
-	res = KSI_TLV_new(ctx,KSI_TLV_PAYLOAD_RAW, 0x11, 0, 1, &tlv);
+	res = KSI_TLV_new(ctx, 0x11, 0, 1, &tlv);
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
@@ -71,7 +71,7 @@ static void testTlvForwardFlag(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_TLV_new(ctx,KSI_TLV_PAYLOAD_RAW, 0x11, 1, 1, &tlv);
+	res = KSI_TLV_new(ctx, 0x11, 1, 1, &tlv);
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
@@ -79,7 +79,7 @@ static void testTlvForwardFlag(CuTest* tc) {
 
 	KSI_TLV_free(tlv);
 
-	res = KSI_TLV_new(ctx,KSI_TLV_PAYLOAD_RAW, 0x11, 0, 0, &tlv);
+	res = KSI_TLV_new(ctx, 0x11, 0, 0, &tlv);
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
@@ -98,7 +98,7 @@ static void testTlvSetRaw(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_TLV_new(ctx,KSI_TLV_PAYLOAD_RAW, 0x12, 0, 0, &tlv);
+	res = KSI_TLV_new(ctx, 0x12, 0, 0, &tlv);
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
@@ -124,7 +124,7 @@ static void testTlvSetRawAsNull(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, 0x12, 0, 0, &tlv);
+	res = KSI_TLV_new(ctx, 0x12, 0, 0, &tlv);
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
@@ -327,10 +327,6 @@ static void testTlvGetNextNested(CuTest* tc) {
 	res = KSI_TLV_fromReader(rdr, &tlv);
 	CuAssert(tc, "Unable to read TLV.", res == KSI_OK && tlv != NULL);
 
-	/* Cast payload type */
-	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_TLV);
-	CuAssert(tc, "TLV cast failed", res == KSI_OK);
-
 	res = KSI_TLV_getNestedList(tlv, &list);
 	CuAssert(tc, "Unable to get nested list from TLV.", res == KSI_OK && list != NULL);
 
@@ -376,10 +372,6 @@ static void testTlvGetNextNestedSharedMemory(CuTest* tc) {
 
 	res = KSI_TLV_fromReader(rdr, &tlv);
 	CuAssert(tc, "Unable to read TLV.", res == KSI_OK && tlv != NULL);
-
-	/* Cast payload type */
-	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_TLV);
-	CuAssert(tc, "TLV cast failed", res == KSI_OK);
 
 	res = KSI_TLV_getNestedList(tlv, &list);
 	CuAssert(tc, "Unable to get nested list from TLV.", res == KSI_OK && list != NULL);
@@ -482,10 +474,6 @@ static void testTlvSerializeNested(CuTest* tc) {
 	res = KSI_TLV_fromReader(rdr, &tlv);
 	CuAssert(tc, "Unable to read TLV.", res == KSI_OK && tlv != NULL);
 
-	/* Cast payload type */
-	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_TLV);
-	CuAssert(tc, "TLV cast failed", res == KSI_OK);
-
 	res = KSI_TLV_getNestedList(tlv, &list);
 	CuAssert(tc, "Unable to get nested list from TLV.", res == KSI_OK && list != NULL);
 
@@ -527,7 +515,7 @@ static void testBadUtf8(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_TLV_new(ctx,KSI_TLV_PAYLOAD_RAW, 0x12, 0, 0, &tlv);
+	res = KSI_TLV_new(ctx, 0x12, 0, 0, &tlv);
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 
@@ -550,7 +538,7 @@ static void testBadUtf8WithZeros(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_TLV_new(ctx,KSI_TLV_PAYLOAD_RAW, 0x12, 0, 0, &tlv);
+	res = KSI_TLV_new(ctx, 0x12, 0, 0, &tlv);
 	CuAssert(tc, "Failed to create TLV.", res == KSI_OK);
 	CuAssert(tc, "Created TLV is NULL.", tlv != NULL);
 

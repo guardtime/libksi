@@ -112,10 +112,6 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 			break;
 		case 0x03:
 		case 0x1003:
-			/* Cast as nested TLV */
-			res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_TLV);
-			if (res != KSI_OK) goto cleanup;
-
 			res = KSI_TLV_getNestedList(tlv, &list);
 			if (res != KSI_OK) goto cleanup;
 

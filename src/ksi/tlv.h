@@ -49,19 +49,6 @@ extern "C" {
 	 * @{
 	 */
 
-	/**
-	 * This enum contains all the legal values for a TLV payload type.
-	 */
-	enum KSI_TLV_PayloadType_en {
-		/* The payload of the TLV is encoded as a raw blob. */
-		KSI_TLV_PAYLOAD_RAW,
-		/* The payload is encoded as a 64 bit unsigned integer.
-		 * \note The value will be serialized as big-endian. */
-		KSI_TLV_PAYLOAD_INT,
-		/* The payload of this TLV is a list of TLV's. */
-		KSI_TLV_PAYLOAD_TLV
-	};
-
 	enum KSI_Serialize_Opt_en {
 		/** Do not write the header while serializing. */
 		KSI_TLV_OPT_NO_HEADER = 0x01,
@@ -74,7 +61,6 @@ extern "C" {
 	 * This function creates an new TLV.
 	 *
 	 * \param[in]	ctx			KSI context.
-	 * \param[in]	payloadType	Payload type of the TLV.
 	 * \param[in]	tag			Numeric TLV tag.
 	 * \param[in]	isLenient	Value of the lenient-flag (1 or 0).
 	 * \param[in]	isForward	Value of the forward-flag (1 or 0).
@@ -82,7 +68,7 @@ extern "C" {
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_new(KSI_CTX *ctx, int payloadType, unsigned tag, int isLenient, int isForward, KSI_TLV **tlv);
+	int KSI_TLV_new(KSI_CTX *ctx, unsigned tag, int isLenient, int isForward, KSI_TLV **tlv);
 
 	/**
 	 * This function creates a new TLV and initializes its payload with the given \c uint value.
@@ -113,14 +99,6 @@ extern "C" {
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
 	int KSI_TLV_fromString(KSI_CTX *ctx, unsigned tag, int isLenient, int isForward, char *str, KSI_TLV **tlv);
-	/**
-	 * This function changes the internal representation of the TLV payload.
-	 * \param[in]	tlv			TLV which payload will be casted.
-	 * \param[in]	payloadType	Payload type (see #KSI_TLV_PayloadType_en).
-	 *
-	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
-	 */
-	int KSI_TLV_cast(KSI_TLV *tlv, int payloadType);
 
 	/**
 	 * Parses a memory area and creates a new TLV.
@@ -201,10 +179,6 @@ extern "C" {
 	 */
 	void KSI_TLV_free(KSI_TLV *tlv);
 
-	/**
-	 * TODO!
-	 */
-	KSI_TLV *KSI_TLV_ref(KSI_TLV *tlv);
 	/**
 	 * This is an access method for the TLV lenient-flag.
 	 *
