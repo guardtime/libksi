@@ -120,6 +120,9 @@ static void Test_OKExtendSignature(CuTest* tc) {
 	CuAssert(tc, "Unable to verify signature", res == KSI_OK);
 
 	KSI_ERR_clearErrors(ctx);
+
+	KSI_Signature_free(sig);
+	KSI_Signature_free(ext);
 }
 
 static void Test_NOKExtendRequestToTheFuture(CuTest* tc) {
