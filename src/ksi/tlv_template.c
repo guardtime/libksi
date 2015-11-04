@@ -353,12 +353,6 @@ static int extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI_TlvTempl
 		goto cleanup;
 	}
 
-	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_TLV);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
 	res = KSI_TLV_getNestedList(tlv, &iter.list);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -834,7 +828,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 						for (j = 0; j < tmpl[i].listLength(payloadp); j++) {
 							void *listElement = NULL;
 
-							res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, tmpl[i].tag, isNonCritical, isForward, &tmp);
+							res = KSI_TLV_new(ctx, tmpl[i].tag, isNonCritical, isForward, &tmp);
 							if (res != KSI_OK) {
 								KSI_pushError(ctx, res, NULL);
 								goto cleanup;
@@ -860,7 +854,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 							tmp = NULL;
 						}
 					} else {
-						res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, tmpl[i].tag, isNonCritical, isForward, &tmp);
+						res = KSI_TLV_new(ctx, tmpl[i].tag, isNonCritical, isForward, &tmp);
 						if (res != KSI_OK) {
 							KSI_pushError(ctx, res, NULL);
 							goto cleanup;
@@ -935,7 +929,7 @@ int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag,
 	}
 
 	/* Create TLV for the PDU object. */
-	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, tag, isFwd, isNc, &tlv);
+	res = KSI_TLV_new(ctx, tag, isFwd, isNc, &tlv);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -982,7 +976,7 @@ int KSI_TlvTemplate_writeBytes(KSI_CTX *ctx, const void *obj, unsigned tag, int 
 	}
 
 	/* Create TLV for the PDU object. */
-	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, tag, isFwd, isNc, &tlv);
+	res = KSI_TLV_new(ctx, tag, isFwd, isNc, &tlv);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;

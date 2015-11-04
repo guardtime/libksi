@@ -80,68 +80,6 @@ KSI_DEFINE_VERIFICATION_POLICY(KSI_VP_PARANOID)
 	KSI_VERIFY_PUBFILE_SIGNATURE | KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_ONLINE
 KSI_END_VERIFICATION_POLICY
 
-static int addRequestId(
-		KSI_CTX *ctx,
-		void *req,
-		int(getId)(void *, KSI_Integer **),
-		int(setId)(void *, KSI_Integer *)) {
-	KSI_Integer *reqId = NULL;
-	int res;
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || req == NULL || getId == NULL || setId == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	res = getId(req, &reqId);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	if (reqId != NULL) {
-		KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Request already contains a request Id.");
-		goto cleanup;
-	}
-
-	res = KSI_Integer_new(ctx, ++ctx->requestCounter, &reqId);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-	res = setId(req, reqId);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-	reqId = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_Integer_free(reqId);
-
-	return res;
-}
-
-static int addExtendRequestId(KSI_CTX *ctx, KSI_ExtendReq *req) {
-	return addRequestId(
-			ctx,
-			req,
-			(int(*)(void *, KSI_Integer **))KSI_ExtendReq_getRequestId,
-			(int(*)(void *, KSI_Integer *))KSI_ExtendReq_setRequestId);
-}
-
-static int addAggregationRequestId(KSI_CTX *ctx, KSI_AggregationReq *req) {
-	return addRequestId(
-			ctx,
-			req,
-			(int(*)(void *, KSI_Integer **))KSI_AggregationReq_getRequestId,
-			(int(*)(void *, KSI_Integer *))KSI_AggregationReq_setRequestId);
-}
-
 /**
  * KSI_Signature
  */
@@ -864,13 +802,6 @@ static int createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, int lvl, KSI_Aggre
 		goto cleanup;
 	}
 
-	/* Add the request Id. */
-	res = addAggregationRequestId(ctx, tmp);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
 	/* Make sure it is safe to pass the pointer to the request object. */
 	res = KSI_DataHash_clone(hsh, &tmpHash);
 	if (res != KSI_OK) {
@@ -942,12 +873,6 @@ static int createExtendRequest(KSI_CTX *ctx, KSI_Integer *start, KSI_Integer *en
 
 	/* Create extend request object. */
 	res = KSI_ExtendReq_new(ctx, &tmp);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = addExtendRequestId(ctx, tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1040,7 +965,7 @@ int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain
 		if (KSI_TLV_getTag(oldCalChainTlv) == 0x0802) break;
 	}
 
-	res = KSI_TLV_new(sig->ctx, KSI_TLV_PAYLOAD_TLV, 0x0802, 0, 0, &newCalChainTlv);
+	res = KSI_TLV_new(sig->ctx, 0x0802, 0, 0, &newCalChainTlv);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
 		goto cleanup;
@@ -1163,7 +1088,7 @@ int KSI_Signature_replacePublicationRecord(KSI_Signature *sig, KSI_PublicationRe
 		}
 
 		/* Create a new TLV object */
-		res = KSI_TLV_new(sig->ctx, KSI_TLV_PAYLOAD_TLV, 0x0803, 0, 0, &newPubTlv);
+		res = KSI_TLV_new(sig->ctx, 0x0803, 0, 0, &newPubTlv);
 		if (res != KSI_OK) {
 			KSI_pushError(sig->ctx, res, NULL);
 			goto cleanup;
@@ -1332,7 +1257,7 @@ static int parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp, KSI
 
 
 	/* Create signature TLV */
-	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, 0x0800, 0, 0, &tmpTlv);
+	res = KSI_TLV_new(ctx, 0x0800, 0, 0, &tmpTlv);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1433,6 +1358,12 @@ int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uin
 		goto cleanup;
 	}
 
+	res = KSI_RequestHandle_perform(handle);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
+
 	res = KSI_RequestHandle_getAggregationResponse(handle, &response);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -1508,6 +1439,12 @@ int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *
 		goto cleanup;
 	}
 
+	res = KSI_RequestHandle_perform(handle);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
+
 	/* Get and parse the response. */
 	res = KSI_RequestHandle_getExtendResponse(handle, &resp);
 	if (res != KSI_OK) {
@@ -1523,13 +1460,21 @@ int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *
 	}
 
 	/* Extract the calendar hash chain */
-	KSI_ExtendResp_getCalendarHashChain(resp, &calHashChain);
-
-	/* Remove the chain from the structure, as it will be freed when this function finishes. */
-	KSI_ExtendResp_setCalendarHashChain(resp, NULL);
+	res = KSI_ExtendResp_getCalendarHashChain(resp, &calHashChain);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	/* Add the hash chain to the signature. */
 	res = KSI_Signature_replaceCalendarChain(tmp, calHashChain);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Remove the chain from the structure, as it will be freed when this function finishes. */
+	res = KSI_ExtendResp_setCalendarHashChain(resp, NULL);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -2713,6 +2658,12 @@ static int verifyOnline(KSI_CTX *ctx, KSI_Signature *sig) {
 
 	res = KSI_sendExtendRequest(ctx, req, &handle);
 	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_RequestHandle_perform(handle);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_RequestHandle_getExtendResponse(handle, &resp);
 	if (res != KSI_OK) goto cleanup;

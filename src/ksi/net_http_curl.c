@@ -33,8 +33,8 @@ typedef struct CurlNetHandleCtx_st {
 	KSI_CTX *ctx;
 	CURL *curl;
 	unsigned char *raw;
-    unsigned len;
-    char *url;
+    size_t len;
+	char curlErr[CURL_ERROR_SIZE];
 } CurlNetHandleCtx;
 
 static int curlGlobal_init(void) {
@@ -64,8 +64,8 @@ static void curlGlobal_cleanup(void) {
 
 static void CurlNetHandleCtx_free(CurlNetHandleCtx *handleCtx) {
 	if (handleCtx != NULL) {
-		KSI_free(handleCtx->url);
 		KSI_free(handleCtx->raw);
+		if (handleCtx->curl != NULL) curl_easy_cleanup(handleCtx->curl);
 		KSI_free(handleCtx);
 	}
 }
@@ -74,8 +74,6 @@ static size_t receiveDataFromLibCurl(void *ptr, size_t size, size_t nmemb, void 
 	size_t bytesCount = 0;
 	unsigned char *tmp_buffer = NULL;
 	CurlNetHandleCtx *nc = (CurlNetHandleCtx *) stream;
-
-	KSI_LOG_debug(nc->ctx, "Curl: Receive data size=%lld, nmemb=%lld", size, nmemb);
 
 	bytesCount = nc->len + size * nmemb;
 	if (bytesCount > UINT_MAX) {
@@ -89,8 +87,10 @@ static size_t receiveDataFromLibCurl(void *ptr, size_t size, size_t nmemb, void 
 
 	KSI_free(nc->raw);
 	nc->raw = tmp_buffer;
-	nc->len = (unsigned)bytesCount;
+	nc->len = bytesCount;
 	tmp_buffer = NULL;
+
+	KSI_LOG_debug(nc->ctx, "0x%x: Received %llu bytes (%llu so far)", nc, (unsigned long long) bytesCount, nc->len);
 
 	bytesCount = size * nmemb;
 
@@ -100,9 +100,40 @@ cleanup:
 	return bytesCount;
 }
 
+static int updateStatus(KSI_RequestHandle *handle) {
+	int res = KSI_UNKNOWN_ERROR;
+	CurlNetHandleCtx *impl = NULL;
+	CURLcode cc;
+	long httpCode = 0;
+
+	if (handle == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	impl = handle->implCtx;
+	if (impl == NULL) {
+		res = KSI_UNKNOWN_ERROR;
+		goto cleanup;
+	}
+
+	cc = curl_easy_getinfo(impl->curl, CURLINFO_RESPONSE_CODE, &httpCode);
+	if (cc != CURLE_OK) {
+		res = KSI_UNKNOWN_ERROR;
+		goto cleanup;
+	}
+
+	handle->err.code = httpCode;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 static int curlReceive(KSI_RequestHandle *handle) {
 	int res = KSI_UNKNOWN_ERROR;
-	char curlErr[CURL_ERROR_SIZE];
 	CurlNetHandleCtx *implCtx = NULL;
 	KSI_HttpClient *http = NULL;
 
@@ -112,11 +143,81 @@ static int curlReceive(KSI_RequestHandle *handle) {
 	}
 	KSI_ERR_clearErrors(handle->ctx);
 
-	http = (KSI_HttpClient *)handle->client;
+	http = handle->client->impl;
 
 	implCtx = handle->implCtx;
 
-    curl_easy_setopt(implCtx->curl, CURLOPT_ERRORBUFFER, curlErr);
+	KSI_LOG_debug(handle->ctx, "Sending request.");
+
+    res = curl_easy_perform(implCtx->curl);
+    if (res != CURLE_OK) {
+    	long httpCode;
+    	if (res == CURLE_HTTP_RETURNED_ERROR && curl_easy_getinfo(implCtx->curl, CURLINFO_HTTP_CODE, &httpCode) == CURLE_OK) {
+    		updateStatus(handle);
+    		KSI_LOG_debug(handle->ctx, "Received HTTP error code %d. Curl error '%s'.", httpCode, implCtx->curlErr);
+		} else {
+    		KSI_pushError(handle->ctx, res = KSI_NETWORK_ERROR, implCtx->curlErr);
+			goto cleanup;
+    	}
+	}
+
+    KSI_LOG_debug(handle->ctx, "Received %llu bytes.", (unsigned long long)implCtx->len);
+
+    res = KSI_RequestHandle_setResponse(handle, implCtx->raw, implCtx->len);
+    if (res != KSI_OK) {
+    	KSI_pushError(handle->ctx, res, NULL);
+    	goto cleanup;
+    }
+
+    /* Cleanup on success.*/
+    KSI_free(implCtx->raw);
+    implCtx->raw = NULL;
+    implCtx->len = 0;
+    handle->completed = true;
+
+    res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, char *url) {
+	int res = KSI_UNKNOWN_ERROR;
+	CurlNetHandleCtx *implCtx = NULL;
+	KSI_HttpClient *http = client->impl;
+
+	if (client == NULL || handle == NULL || url == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(client->ctx);
+
+	implCtx = KSI_new(CurlNetHandleCtx);
+	if (implCtx == NULL) {
+		KSI_pushError(client->ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	implCtx->ctx = handle->ctx;
+	implCtx->curl = NULL;
+	implCtx->len = 0;
+	implCtx->raw = NULL;
+	implCtx->curlErr[0] = '\0';
+
+	KSI_LOG_debug(handle->ctx, "Curl: Preparing request to: %s", url);
+
+	implCtx->curl = curl_easy_init();
+	if (implCtx->curl == NULL) {
+		KSI_pushError(client->ctx, res = KSI_OUT_OF_MEMORY, "Unable to init CURL");
+		goto cleanup;
+	}
+
+    curl_easy_setopt(implCtx->curl, CURLOPT_VERBOSE, 0);
+	curl_easy_setopt(implCtx->curl, CURLOPT_WRITEFUNCTION, receiveDataFromLibCurl);
+	curl_easy_setopt(implCtx->curl, CURLOPT_NOPROGRESS, 1);
+
+    curl_easy_setopt(implCtx->curl, CURLOPT_ERRORBUFFER, implCtx->curlErr);
     if (http->agentName != NULL) {
     	curl_easy_setopt(implCtx->curl, CURLOPT_USERAGENT, http->agentName);
     }
@@ -134,74 +235,10 @@ static int curlReceive(KSI_RequestHandle *handle) {
     curl_easy_setopt(implCtx->curl, CURLOPT_CONNECTTIMEOUT, http->connectionTimeoutSeconds);
     curl_easy_setopt(implCtx->curl, CURLOPT_TIMEOUT, http->readTimeoutSeconds);
 
-	curl_easy_setopt(implCtx->curl, CURLOPT_URL, implCtx->url);
-
-    res = curl_easy_perform(implCtx->curl);
-    if (res != CURLE_OK) {
-    	long httpCode;
-    	if (res == CURLE_HTTP_RETURNED_ERROR && curl_easy_getinfo(implCtx->curl, CURLINFO_HTTP_CODE, &httpCode) == CURLE_OK) {
-    		KSI_LOG_debug(handle->ctx, "Received HTTP error code %d. Curl error '%s'.", httpCode, curlErr);
-			http->httpStatus = httpCode;
-		} else {
-    		KSI_pushError(handle->ctx, res = KSI_NETWORK_ERROR, curlErr);
-			goto cleanup;
-    	}
-	}
-
-    res = KSI_RequestHandle_setResponse(handle, implCtx->raw, implCtx->len);
-    if (res != KSI_OK) {
-    	KSI_pushError(handle->ctx, res, NULL);
-    	goto cleanup;
-    }
-
-    /* Cleanup on success.*/
-    KSI_free(implCtx->raw);
-    implCtx->raw = NULL;
-    implCtx->len = 0;
-
-    res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
-
-static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, char *url) {
-	int res = KSI_UNKNOWN_ERROR;
-	CurlNetHandleCtx *implCtx = NULL;
-	KSI_HttpClient *http = (KSI_HttpClient *)client;
-	size_t len;
-
-	if (client == NULL || handle == NULL || url == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	KSI_ERR_clearErrors(client->ctx);
-
-	implCtx = KSI_new(CurlNetHandleCtx);
-	if (implCtx == NULL) {
-		KSI_pushError(client->ctx, res = KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	implCtx->ctx = handle->ctx;
-	implCtx->curl = http->implCtx;
-	implCtx->len = 0;
-	implCtx->raw = NULL;
-
-	KSI_LOG_debug(handle->ctx, "Curl: Sending request to: %s", url);
+	curl_easy_setopt(implCtx->curl, CURLOPT_URL, url);
 
 	handle->readResponse = curlReceive;
 	handle->client = client;
-
-	len = strlen(url) + 1;
-	implCtx->url = KSI_calloc(len, 1);
-	if (implCtx->url == NULL) {
-		KSI_pushError(client->ctx, res = KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-	strncpy(implCtx->url, url, len);
 
     res = KSI_RequestHandle_setImplContext(handle, implCtx, (void (*)(void *))CurlNetHandleCtx_free);
     if (res != KSI_OK) {
@@ -220,50 +257,167 @@ cleanup:
 	return res;
 }
 
-int KSI_HttpClientImpl_init(KSI_HttpClient *http) {
+static int performN(KSI_NetworkClient *client, KSI_RequestHandle **arr, size_t arr_len) {
 	int res = KSI_UNKNOWN_ERROR;
-	CURL *curl = NULL;
+	CURLM *cm = NULL;
+	CURLMcode cres;
+	size_t i;
+	int count;
+	char buf[1024];
+	fd_set fdread;
+	fd_set fdwrite;
+	fd_set fdexcep;
+	int maxfd = -1;
+	struct timeval timeout;
 
-	if (http == NULL) {
+	FD_ZERO(&fdread);
+	FD_ZERO(&fdwrite);
+	FD_ZERO(&fdexcep);
+
+	if (client == NULL || (arr == NULL && arr_len != 0)) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	if (http == NULL) {
-		KSI_pushError(http->parent.ctx, res = KSI_INVALID_ARGUMENT, "HttpClient network client context not initialized.");
+	KSI_ERR_clearErrors(client->ctx);
+
+	KSI_LOG_debug(client->ctx, "Starting cURL multi perform.");
+
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 100;
+
+	cm = curl_multi_init();
+	if (cm == NULL) {
+		KSI_pushError(client->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
-	curl = curl_easy_init();
-	if (curl == NULL) {
-		KSI_pushError(http->parent.ctx, res = KSI_OUT_OF_MEMORY, "Unable to init CURL");
+	for (i = 0; i < arr_len; i++) {
+		CurlNetHandleCtx *pctx = arr[i]->implCtx;
+		cres = curl_multi_add_handle(cm, pctx->curl);
+		if (cres != CURLM_OK) {
+			KSI_snprintf(buf, sizeof(buf), "Curl error occurred: %s", curl_multi_strerror(cres));
+			KSI_pushError(client->ctx, res = KSI_UNKNOWN_ERROR, buf);
+			goto cleanup;
+		}
+	}
+
+	curl_multi_setopt(cm, CURLMOPT_PIPELINING, 1);
+
+	do {
+		cres  = curl_multi_fdset(cm, &fdread, &fdwrite, &fdexcep, &maxfd);
+		if (cres != CURLM_OK) {
+			KSI_snprintf(buf, sizeof(buf), "Curl error occurred: %s", curl_multi_strerror(cres));
+			KSI_pushError(client->ctx, res = KSI_UNKNOWN_ERROR, buf);
+			goto cleanup;
+		}
+
+		select(maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout);
+
+		cres = curl_multi_perform(cm, &count);
+		if (cres != CURLM_OK && cres != CURLM_CALL_MULTI_PERFORM) {
+			KSI_snprintf(buf, sizeof(buf), "Curl error occurred: %s", curl_multi_strerror(cres));
+			KSI_pushError(client->ctx, res = KSI_UNKNOWN_ERROR, buf);
+			goto cleanup;
+		}
+	} while (count > 0 || cres == CURLM_CALL_MULTI_PERFORM);
+
+	/* Remove the handles from the multi container. */
+	for (i = 0; i < arr_len; i++) {
+		CurlNetHandleCtx *pctx = arr[i]->implCtx;
+		cres = curl_multi_remove_handle(cm, pctx->curl);
+		if (cres != CURLM_OK) {
+			KSI_snprintf(buf, sizeof(buf), "Curl error occurred: %s", curl_multi_strerror(cres));
+			KSI_pushError(client->ctx, res = KSI_UNKNOWN_ERROR, buf);
+			goto cleanup;
+		}
+		arr[i]->response = pctx->raw;
+		pctx->raw = NULL;
+
+		arr[i]->response_length = pctx->len;
+		arr[i]->completed = true;
+
+		res = updateStatus(arr[i]);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	KSI_LOG_debug(client->ctx, "Finished cURL multi perform.");
+
+
+	res = KSI_OK;
+
+cleanup:
+
+	if (cm != NULL) curl_multi_cleanup(cm);
+
+	return res;
+
+}
+
+static int performAll(KSI_NetworkClient *client, KSI_RequestHandle **arr, size_t arr_len) {
+	int res = KSI_UNKNOWN_ERROR;
+	const size_t MAX_BLOCK = 1000;
+	size_t start;
+
+	if (client == NULL || (arr == NULL && arr_len != 0)) {
+		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-    curl_easy_setopt(curl, CURLOPT_VERBOSE, 0);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, receiveDataFromLibCurl);
-	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
-	http->implCtx = curl;
-	http->implCtx_free = curl_easy_cleanup;
-	curl = NULL;
+	start = 0;
+	while (start < arr_len) {
+		size_t len = arr_len - start;
+		if (len > MAX_BLOCK) {
+			len = MAX_BLOCK;
+		}
 
-	http->sendRequest = sendRequest;
+		res = performN(client, arr + start, len);
+		if (res != KSI_OK) goto cleanup;
 
-	/* Register global init and cleanup methods. */
-	res = KSI_CTX_registerGlobals(http->parent.ctx, curlGlobal_init, curlGlobal_cleanup);
-	if (res != KSI_OK) {
-		KSI_pushError(http->parent.ctx, res, NULL);
-		goto cleanup;
+		start += len;
 	}
 
 	res = KSI_OK;
 
 cleanup:
 
-	if (curl != NULL) curl_easy_cleanup(curl);
+	return res;
+}
+
+int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_NetworkClient *tmp = NULL;
+	KSI_HttpClient *http = NULL;
+
+	if (ctx == NULL || client == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_AbstractHttpClient_new(ctx, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	http = tmp->impl;
+
+	http->sendRequest = sendRequest;
+	tmp->performAll = performAll;
+
+	res = KSI_CTX_registerGlobals(ctx, curlGlobal_init, curlGlobal_cleanup);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	*client = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_NetworkClient_free(tmp);
 
 	return res;
-
 }
 
 #endif

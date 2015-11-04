@@ -172,7 +172,7 @@ cleanup:
 
 int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_HttpClient *http = NULL;
+	KSI_NetworkClient *http = NULL;
 
 	if (ctx == NULL || client == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -188,12 +188,12 @@ int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	res = KSI_HttpClient_setExtender(http, "mock-extender", "anon", "anon");
 	if (res != KSI_OK) goto cleanup;
 
-	http->sendRequest = sendRequest;
+	((KSI_HttpClient *)http->impl)->sendRequest = sendRequest;
 
 	res = KSI_CTX_registerGlobals(ctx, mockInit, mockCleanup);
 	if (res != KSI_OK) goto cleanup;
 
-	http->parent.sendPublicationRequest = mockSendPublicationsFileRequest;
+	http->sendPublicationRequest = mockSendPublicationsFileRequest;
 
 	*client = (KSI_NetworkClient *)http;
 	http = NULL;
@@ -202,7 +202,7 @@ int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 
 cleanup:
 
-	KSI_HttpClient_free(http);
+	KSI_NetworkClient_free(http);
 
 	return res;
 }

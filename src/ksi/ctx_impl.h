@@ -39,29 +39,38 @@ extern "C" {
 		 *  ERROR HANDLING.
 		 ******************/
 
-		/* Array of errors. */
+		/** Array of errors. */
 		KSI_ERR *errors;
 
-		/* Length of error array. */
+		/** Length of error array. */
 		unsigned int errors_size;
 
-		/* Count of errors (usually #error_end - #error_start + 1, unless error count > #errors_size. */
+		/** Count of errors (usually #error_end - #error_start + 1, unless error count > #errors_size. */
 		size_t errors_count;
 
+		/** Logger callback function. */
 		KSI_LoggerCallback loggerCB;
+
+		/** Logger log level. */
 		int logLevel;
+
+		/** Logger context. */
 		void *loggerCtx;
 
 		/************
 		 * TRANSPORT.
 		 ************/
 	
+		/** Flag indicating if the user has provided a custom network provider. */
 		int isCustomNetProvider;
 	
+		/** Network provider. */
 		KSI_NetworkClient *netProvider;
 
+		/** PKI trust provider. */
 		KSI_PKITruststore *pkiTruststore;
 
+		/** Pointer to an instance of a publications file. */
 		KSI_PublicationsFile *publicationsFile;
 
 		/** This field is kept only for compatibility - will be removed in the future. */

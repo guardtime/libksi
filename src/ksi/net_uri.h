@@ -37,22 +37,7 @@ extern "C" {
 	 * \param[out]	client		Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_UriClient_new(KSI_CTX *ctx, KSI_UriClient **client);
-
-	/**
-	 * Initializes an existing URI client.
-	 * \param[in]	ctx			KSI context.
-	 * \param[out]	client		Pointer to the receiving pointer.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_UriClient_init(KSI_CTX *ctx, KSI_UriClient *client);
-
-	/**
-	 * Cleanup method for #KSI_UriClient.
-	 * \param[in]	client	Pointer to the HTTP client.
-	 */
-	void KSI_UriClient_free(KSI_UriClient *client);
-
+	int KSI_UriClient_new(KSI_CTX *ctx, KSI_NetworkClient **client);
 
 	/**
 	 * Setter for the publications file URL. The value will be copied and thus
@@ -61,13 +46,13 @@ extern "C" {
 	 * \param[in]	val			Null-terminated URL.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_UriClient_setPublicationUrl(KSI_UriClient *client, const char *val);
+	int KSI_UriClient_setPublicationUrl(KSI_NetworkClient *client, const char *val);
 
-	int KSI_UriClient_setExtender(KSI_UriClient *client, const char *uri, const char *loginId, const char *key);
-	int KSI_UriClient_setAggregator(KSI_UriClient *client, const char *uri, const char *loginId, const char *key);
+	int KSI_UriClient_setExtender(KSI_NetworkClient *client, const char *uri, const char *loginId, const char *key);
+	int KSI_UriClient_setAggregator(KSI_NetworkClient *client, const char *uri, const char *loginId, const char *key);
 
-	int KSI_UriClient_setTransferTimeoutSeconds(KSI_UriClient *client, int timeout);
-	int KSI_UriClient_setConnectionTimeoutSeconds(KSI_UriClient *client, int timeout);
+	int KSI_UriClient_setTransferTimeoutSeconds(KSI_NetworkClient *client, int timeout);
+	int KSI_UriClient_setConnectionTimeoutSeconds(KSI_NetworkClient *client, int timeout);
 
 #ifdef __cplusplus
 }

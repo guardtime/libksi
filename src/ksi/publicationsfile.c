@@ -417,7 +417,7 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 	const unsigned char *buf = NULL;
 	size_t buf_len = 0;
 	KSI_TLV *tlv = NULL;
-	char *tmp = NULL;
+	unsigned char *tmp = NULL;
 	size_t tmp_len = 0;
 	size_t sig_len;
 
@@ -432,7 +432,7 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 	 * Create TLV 0x700 that contains nested list of publication file TLVs.
 	 * Calculate signed data length assuming that signature TLV is always the last.
      */
-	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, 0x700, 0, 0, &tlv);
+	res = KSI_TLV_new(ctx, 0x700, 0, 0, &tlv);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -450,15 +450,6 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 		goto cleanup;
 	}
 
-	/**
-	 * Cast publications file TLV to raw and retrieve its raw value.
-	 */
-	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_RAW);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
 	res = KSI_TLV_getRawValue(tlv, &buf, &buf_len);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -471,13 +462,13 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 	 * internal and external buffer.
      */
 	tmp_len = buf_len + sizeof(PUB_FILE_HEADER_ID) - 1;
-	tmp = (char*)KSI_malloc(tmp_len);
+	tmp = (char *) KSI_malloc(tmp_len);
 	if (tmp == NULL) {
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
-	if (KSI_strncpy(tmp, PUB_FILE_HEADER_ID, tmp_len) == NULL) {
+	if (KSI_strncpy((char *)tmp, PUB_FILE_HEADER_ID, tmp_len) == NULL) {
 		KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, NULL);
 		goto cleanup;
 	}
@@ -490,7 +481,7 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 	pubFile->signedDataLength = tmp_len - sig_len;
 	tmp = NULL;
 
-	tmp = (char*)KSI_malloc(pubFile->raw_len);
+	tmp = (char *) KSI_malloc(pubFile->raw_len);
 	if (tmp == NULL) {
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
@@ -1300,13 +1291,7 @@ int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_Publicatio
 			goto cleanup;
 		}
 
-		res = KSI_Utf8String_ref(str);
-		if (res != KSI_OK) {
-			KSI_pushError(rec->ctx, res, NULL);
-			goto cleanup;
-		}
-
-		res = KSI_Utf8StringList_append(tmp->publicationRef, str);
+		res = KSI_Utf8StringList_append(tmp->publicationRef, KSI_Utf8String_ref(str));
 		if (res != KSI_OK) {
 			KSI_pushError(rec->ctx, res, NULL);
 			goto cleanup;

@@ -345,12 +345,6 @@ int KSI_DataHash_fromTlv(KSI_TLV *tlv, KSI_DataHash **hsh) {
 		goto cleanup;
 	}
 
-	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_RAW);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
 	res = KSI_TLV_getRawValue(tlv, &raw, &raw_len);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -389,7 +383,7 @@ int KSI_DataHash_toTlv(KSI_CTX *ctx, KSI_DataHash *hsh, unsigned tag, int isNonC
 		goto cleanup;
 	}
 
-	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
+	res = KSI_TLV_new(ctx, tag, isNonCritical, isForward, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;

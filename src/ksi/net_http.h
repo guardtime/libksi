@@ -29,35 +29,22 @@ extern "C" {
 
 typedef struct KSI_HttpClient_st KSI_HttpClient;
 
+
 /**
  * Creates a new http client.
  * \param[in]	ctx			KSI context.
  * \param[out]	http		Pointer to the receiving pointer.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_HttpClient_new(KSI_CTX *ctx, KSI_HttpClient **http);
+int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **http);
 
 /**
- * Initialized an existing http client.
+ * Creates a new http client.
  * \param[in]	ctx			KSI context.
- * \param[in]	http		Pointer to the HTTP client.
+ * \param[out]	http		Pointer to the receiving pointer.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_HttpClient_init(KSI_CTX *ctx, KSI_HttpClient *http);
-
-/**
- * Cleanup method for #KSI_HttpClient.
- * \param[in]	http	Pointer to the HTTP client.
- */
-void KSI_HttpClient_free(KSI_HttpClient *http);
-
-/**
- * Implementation specific function for initializing.
- * the HTTP client.
- * \param[in]	http		Pointer to HTTP client.
- * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- */
-int KSI_HttpClientImpl_init(KSI_HttpClient *http);
+int KSI_AbstractHttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **http);
 
 /**
  * Setter for the publications file URL. The value will be copied and thus
@@ -66,7 +53,7 @@ int KSI_HttpClientImpl_init(KSI_HttpClient *http);
  * \param[in]	val			Null-terminated URL.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_HttpClient_setPublicationUrl(KSI_HttpClient *client, const char *val);
+int KSI_HttpClient_setPublicationUrl(KSI_NetworkClient *client, const char *val);
 
 /**
  * Setter for the connection timeout in seconds.
@@ -74,7 +61,7 @@ int KSI_HttpClient_setPublicationUrl(KSI_HttpClient *client, const char *val);
  * \param[in]	val			Timeout in seconds.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_HttpClient_setConnectTimeoutSeconds(KSI_HttpClient *client, int val);
+int KSI_HttpClient_setConnectTimeoutSeconds(KSI_NetworkClient *client, int val);
 
 /**
  * Setter for the read timeout in seconds.
@@ -82,7 +69,7 @@ int KSI_HttpClient_setConnectTimeoutSeconds(KSI_HttpClient *client, int val);
  * \param[in]	val			Timeout in seconds.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_HttpClient_setReadTimeoutSeconds(KSI_HttpClient *client, int val);
+int KSI_HttpClient_setReadTimeoutSeconds(KSI_NetworkClient *client, int val);
 
 /**
  * Setter for the http client extender parameters.
@@ -92,7 +79,7 @@ int KSI_HttpClient_setReadTimeoutSeconds(KSI_HttpClient *client, int val);
  * \param[in]	key			HMAC shared secret.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_HttpClient_setExtender(KSI_HttpClient *client, const char *url, const char *user, const char *key);
+int KSI_HttpClient_setExtender(KSI_NetworkClient *client, const char *url, const char *user, const char *key);
 
 /**
  * Setter for the http aggregator parameters.
@@ -102,7 +89,7 @@ int KSI_HttpClient_setExtender(KSI_HttpClient *client, const char *url, const ch
  * \param[in]	key			HMAC shared secret.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_HttpClient_setAggregator(KSI_HttpClient *client, const char *url, const char *user, const char *key);
+int KSI_HttpClient_setAggregator(KSI_NetworkClient *client, const char *url, const char *user, const char *key);
 
 
 #ifdef __cplusplus
