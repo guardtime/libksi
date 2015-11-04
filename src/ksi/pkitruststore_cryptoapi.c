@@ -828,8 +828,11 @@ static int KSI_PKITruststore_verifyCertificate(const KSI_PKITruststore *pki, con
 	}
 
 	if (policyStatus.dwError) {
-		KSI_LOG_debug(ctx, "CryptoAPI: PKI chain policy error %X.", policyStatus.dwError);
- 		KSI_pushError(ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, NULL);
+		char buf[1024];
+		char msg[2048];
+		KSI_snprintf(msg, sizeof(msg), "Unable to verify certificate: (error = %i) %s", policyStatus.dwError, getMSError(policyStatus.dwError, buf, sizeof(buf)));
+		KSI_LOG_debug(ctx, "CryptoAPI: %s", msg);
+		KSI_pushError(ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, msg);
 		goto cleanup;
 	}
 
