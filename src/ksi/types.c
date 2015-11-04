@@ -169,7 +169,7 @@ KSI_IMPLEMENT_LIST(KSI_ExtendResp, KSI_ExtendResp_free);
 KSI_IMPLEMENT_LIST(KSI_PKISignedData, KSI_PKISignedData_free);
 KSI_IMPLEMENT_LIST(KSI_PublicationsHeader, KSI_PublicationsHeader_free);
 KSI_IMPLEMENT_LIST(KSI_CertificateRecord, KSI_CertificateRecord_free);
-
+KSI_IMPLEMENT_LIST(KSI_RequestHandle, KSI_RequestHandle_free);
 
 /**
  * KSI_MetaData

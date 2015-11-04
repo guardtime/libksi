@@ -57,10 +57,10 @@ int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned tag, int isNonCritical, int isFor
 	/*!
 	 * Increases the inner reference count of that object.
 	 * \param[in]	o		Pointer to \ref typ
-	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
+	 * \return Returns the input pointer on success or \c NULL on error.
 	 * \see \ref typ##_free
 	 */ \
-	int typ##_ref(typ *o)
+	typ *typ##_ref(typ *o)
 
 #define KSI_DEFINE_OBJECT_PARSE(typ) \
 	/*!

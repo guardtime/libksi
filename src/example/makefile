@@ -61,7 +61,6 @@ EXAMPLE_OBJ = \
 	$(OBJ_DIR)\ksi_multisig_add.ojb \
 	$(OBJ_DIR)\ksi_multisig_extend.ojb \
 	$(OBJ_DIR)\ksi_verify_pub.obj 
-	
 
 #Output exe files. Must have the same base name as corresponding obj file. 
 EXAMPLE_BIN = \
@@ -73,7 +72,6 @@ EXAMPLE_BIN = \
 	$(BIN_DIR)\ksi_multisig_add.exe \
 	$(BIN_DIR)\ksi_multisig_extend.exe \
 	$(BIN_DIR)\ksi_verify_pub.exe \
-
 	
 #external libraries used for linking. 
 EXT_LIB = $(LIB_NAME)$(RTL).lib \
@@ -116,10 +114,6 @@ LDFLAGS = $(LDFLAGS) /DEBUG
 
 CCFLAGS = $(CCFLAGS) $(CCEXTRA)
 LDFLAGS = $(LDFLAGS) $(LDEXTRA)
-
-
-
-
 
 default: $(EXAMPLE_BIN) 
 

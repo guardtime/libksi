@@ -23,11 +23,15 @@
 #include "../src/ksi/ctx_impl.h"
 
 #include "../src/ksi/ctx_impl.h"
-
+#include "../src/ksi/net_impl.h"
 
 extern KSI_CTX *ctx;
 
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+
+static void preTest(void) {
+	ctx->netProvider->requestCount = 0;
+}
 
 static void testLoadSignatureFromFile(CuTest *tc) {
 	int res;
@@ -203,7 +207,6 @@ static void testVerifySignatureExtendedToHead(CuTest *tc) {
 	/* Set the extend response. */
 	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-head-extend_response.tlv"));
 
-	ctx->requestCounter = 0;
 	res = KSI_Signature_verifyOnline(sig, ctx);
 	CuAssert(tc, "Signature should verify", res == KSI_OK);
 
@@ -413,8 +416,6 @@ static void testVerifyCalendarChainAlgoChange(CuTest *tc) {
 
 	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/cal_algo_switch-extend_resposne.tlv"));
 
-	ctx->requestCounter = 0;
-
 	res = KSI_Signature_verifyOnline(sig, ctx);
 	CuAssert(tc, "Failed to verify valid document", res == KSI_OK);
 
@@ -424,6 +425,8 @@ static void testVerifyCalendarChainAlgoChange(CuTest *tc) {
 
 CuSuite* KSITest_Signature_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
+
+	suite->preTest = preTest;
 
 	SUITE_ADD_TEST(suite, testLoadSignatureFromFile);
 	SUITE_ADD_TEST(suite, testSignatureSigningTime);

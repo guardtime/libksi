@@ -256,7 +256,7 @@ extern "C" {
 
 	/**
 	 * Accessor method for the published data. If the signature does not have a publication
-	 * record the \c pubData will be set to \c NULL.
+	 * record the \c pubRec will be set to \c NULL.
 	 * \param[in]		sig			KSI signature.
 	 * \param[out]		pubRec		Pointer to receiving pointer.
 	 *

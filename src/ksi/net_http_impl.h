@@ -29,11 +29,8 @@ extern "C" {
 #endif
 
 	struct KSI_HttpClient_st {
-		KSI_NetworkClient parent;
-
 		int connectionTimeoutSeconds;
 		int readTimeoutSeconds;
-		int httpStatus;
 		char *urlAggregator;
 		char *urlExtender;
 		char *urlPublication;
@@ -44,7 +41,6 @@ extern "C" {
 		void *implCtx;
 		void (*implCtx_free)(void *);
 	};
-
 
 #ifdef __cplusplus
 }

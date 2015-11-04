@@ -186,6 +186,8 @@ static int readResponse(KSI_RequestHandle *handle) {
 	memcpy(handle->response, buffer, count);
 	handle->response_length = count;
 
+	handle->completed = true;
+
 	res = KSI_OK;
 
 cleanup:
@@ -317,6 +319,8 @@ cleanup:
 static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, KSI_RequestHandle **handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ExtendPdu *pdu = NULL;
+	KSI_Integer *pReqId = NULL;
+	KSI_Integer *reqId = NULL;
 
 	if (client == NULL || req == NULL || handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -326,6 +330,19 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 	if (((KSI_TcpClient*)client)->extHost == NULL || ((KSI_TcpClient*)client)->extPort == 0) {
 		res = KSI_EXTENDER_NOT_CONFIGURED;
 		goto cleanup;
+	}
+
+	res = KSI_ExtendReq_getRequestId(req, &pReqId);
+	if (res != KSI_OK) goto cleanup;
+
+	if (pReqId == NULL) {
+		res = KSI_Integer_new(client->ctx, ++client->requestCount, &reqId);
+		if (res != KSI_OK) goto cleanup;
+
+		res = KSI_ExtendReq_setRequestId(req, reqId);
+		if (res != KSI_OK) goto cleanup;
+
+		reqId = NULL;
 	}
 
 	res = KSI_ExtendReq_enclose(req, client->extUser, client->extPass, &pdu);
@@ -353,6 +370,8 @@ cleanup:
 static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationReq *req, KSI_RequestHandle **handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationPdu *pdu = NULL;
+	KSI_Integer *pReqId = NULL;
+	KSI_Integer *reqId = NULL;
 
 	if (client == NULL || req == NULL || handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -362,6 +381,19 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 	if (((KSI_TcpClient*)client)->aggrHost == NULL || ((KSI_TcpClient*)client)->aggrPort == 0) {
 		res = KSI_AGGREGATOR_NOT_CONFIGURED;
 		goto cleanup;
+	}
+
+	res = KSI_AggregationReq_getRequestId(req, &pReqId);
+	if (res != KSI_OK) goto cleanup;
+
+	if (pReqId == NULL) {
+		res = KSI_Integer_new(client->ctx, ++client->requestCount, &reqId);
+		if (res != KSI_OK) goto cleanup;
+
+		res = KSI_AggregationReq_setRequestId(req, reqId);
+		if (res != KSI_OK) goto cleanup;
+
+		reqId = NULL;
 	}
 
 	res = KSI_AggregationReq_enclose(req, client->aggrUser, client->aggrPass, &pdu);
@@ -389,7 +421,7 @@ cleanup:
 
 static int sendPublicationRequest(KSI_NetworkClient *client, KSI_RequestHandle **handle) {
 	int res;
-	KSI_TcpClient *tcpClient = (KSI_TcpClient *)client;
+	KSI_TcpClient *tcpClient = (KSI_TcpClient *)client->impl;
 
 	res = KSI_NetworkClient_sendPublicationsFileRequest((KSI_NetworkClient *)tcpClient->http, handle);
 	if (res != KSI_OK) goto cleanup;
@@ -405,69 +437,18 @@ static void tcpClient_free(KSI_TcpClient *tcp) {
 	if (tcp != NULL) {
 		KSI_free(tcp->aggrHost);
 		KSI_free(tcp->extHost);
-		KSI_HttpClient_free(tcp->http);
+		KSI_NetworkClient_free(tcp->http);
 		KSI_free(tcp);
 	}
 }
 
-void KSI_TcpClient_free(KSI_TcpClient *tcp) {
-	KSI_NetworkClient_free((KSI_NetworkClient*)tcp);
-}
-
-
 /**
  *
  */
-int KSI_TcpClient_init(KSI_CTX *ctx, KSI_TcpClient *client) {
+int KSI_TcpClient_new(KSI_CTX *ctx, KSI_NetworkClient **tcp) {
 	int res;
-
-	KSI_ERR_clearErrors(ctx);
-
-	if (ctx == NULL || client == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_NetworkClient_init(ctx, &client->parent);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	client->sendRequest = sendRequest;
-	client->aggrHost = NULL;
-	client->aggrPort = 0;
-	client->extHost = NULL;
-	client->extPort = 0;
-	client->http = NULL;
-
-	client->transferTimeoutSeconds = 10;
-
-	res = KSI_HttpClient_new(ctx, &client->http);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	client->parent.sendExtendRequest = prepareExtendRequest;
-	client->parent.sendSignRequest = prepareAggregationRequest;
-	client->parent.sendPublicationRequest = sendPublicationRequest;
-	client->parent.getStausCode = NULL;
-	client->parent.implFree = (void (*)(void *))tcpClient_free;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
-/**
- *
- */
-int KSI_TcpClient_new(KSI_CTX *ctx, KSI_TcpClient **tcp) {
-	int res;
-	KSI_TcpClient *tmp = NULL;
+	KSI_NetworkClient *tmp = NULL;
+	KSI_TcpClient *t = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -476,18 +457,40 @@ int KSI_TcpClient_new(KSI_CTX *ctx, KSI_TcpClient **tcp) {
 		goto cleanup;
 	}
 
-
-	tmp = KSI_new(KSI_TcpClient);
+	res = KSI_AbstractNetworkClient_new(ctx, &tmp);
 	if (tmp == NULL) {
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
-	res = KSI_TcpClient_init(ctx, tmp);
+	t = KSI_new(KSI_TcpClient);
+	if (tmp == NULL) {
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	t->sendRequest = sendRequest;
+	t->transferTimeoutSeconds = 10;
+	t->aggrHost = NULL;
+	t->aggrPort = 0;
+	t->extHost = NULL;
+	t->extPort = 0;
+	t->http = NULL;
+
+	res = KSI_HttpClient_new(ctx, &t->http);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
+
+	tmp->sendExtendRequest = prepareExtendRequest;
+	tmp->sendSignRequest = prepareAggregationRequest;
+	tmp->sendPublicationRequest = sendPublicationRequest;
+	tmp->implFree = (void (*)(void *))tcpClient_free;
+	tmp->requestCount = 0;
+
+	tmp->impl = t;
+	t = NULL;
 
 	*tcp = tmp;
 	tmp = NULL;
@@ -496,27 +499,32 @@ int KSI_TcpClient_new(KSI_CTX *ctx, KSI_TcpClient **tcp) {
 
 cleanup:
 
-	KSI_TcpClient_free(tmp);
+	tcpClient_free(t);
+	KSI_NetworkClient_free(tmp);
 
 	return res;
 }
 
-int KSI_TcpClient_setExtender(KSI_TcpClient *client, const char *host, unsigned port, const char *user, const char *pass) {
+int KSI_TcpClient_setExtender(KSI_NetworkClient *client, const char *host, unsigned port, const char *user, const char *pass) {
 	int res = KSI_UNKNOWN_ERROR;
+	KSI_TcpClient *tcp = NULL;
+
 	if (client == NULL || host == NULL || user == NULL || pass == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	res = setStringParam(&client->extHost, host);
+	tcp = (KSI_TcpClient *)client->impl;
+
+	res = setStringParam(&tcp->extHost, host);
 	if (res != KSI_OK) goto cleanup;
 
-	client->extPort = port;
+	tcp->extPort = port;
 
-	res = setStringParam(&client->parent.extUser, user);
+	res = setStringParam(&client->extUser, user);
 	if (res != KSI_OK) goto cleanup;
 
-	res = setStringParam(&client->parent.extPass, pass);
+	res = setStringParam(&client->extPass, pass);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_OK;
@@ -526,23 +534,26 @@ cleanup:
 	return res;
 }
 
-int KSI_TcpClient_setAggregator(KSI_TcpClient *client, const char *host, unsigned port, const char *user, const char *pass) {
+int KSI_TcpClient_setAggregator(KSI_NetworkClient *client, const char *host, unsigned port, const char *user, const char *pass) {
 	int res = KSI_UNKNOWN_ERROR;
+	KSI_TcpClient *tcp = NULL;
 
 	if (client == NULL || host == NULL || user == NULL || pass == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	res = setStringParam(&client->aggrHost, host);
+	tcp = client->impl;
+
+	res = setStringParam(&tcp->aggrHost, host);
 	if (res != KSI_OK) goto cleanup;
 
-	client->aggrPort = port;
+	tcp->aggrPort = port;
 
-	res = setStringParam(&client->parent.aggrUser, user);
+	res = setStringParam(&client->aggrUser, user);
 	if (res != KSI_OK) goto cleanup;
 
-	res = setStringParam(&client->parent.aggrPass, pass);
+	res = setStringParam(&client->aggrPass, pass);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_OK;
@@ -552,15 +563,18 @@ cleanup:
 	return res;
 }
 
-int KSI_TcpClient_setPublicationUrl(KSI_TcpClient *client, const char *val) {
+int KSI_TcpClient_setPublicationUrl(KSI_NetworkClient *client, const char *val) {
 	int res = KSI_UNKNOWN_ERROR;
+	KSI_TcpClient *tcp = NULL;
 
 	if (client == NULL || val == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	res = KSI_HttpClient_setPublicationUrl(client->http, val);
+	tcp = client->impl;
+
+	res = KSI_HttpClient_setPublicationUrl(tcp->http, val);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_OK;
@@ -570,15 +584,18 @@ cleanup:
 	return res;
 }
 
-int KSI_TcpClient_setTransferTimeoutSeconds (KSI_TcpClient *client, int transferTimeoutSeconds ) {
+int KSI_TcpClient_setTransferTimeoutSeconds (KSI_NetworkClient *client, int transferTimeoutSeconds ) {
 	int res = KSI_UNKNOWN_ERROR;
+	KSI_TcpClient *tcp = NULL;
 
 	if (client == NULL || transferTimeoutSeconds < 0) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-    client->transferTimeoutSeconds = transferTimeoutSeconds ;
+	tcp = (KSI_TcpClient *)client->impl;
+
+    tcp->transferTimeoutSeconds = transferTimeoutSeconds ;
 
     res = KSI_OK;
 

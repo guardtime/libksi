@@ -36,6 +36,26 @@ extern "C" {
 	 * @{
 	 */
 
+	typedef struct KSI_RequestHandleStatus_st {
+		/** Error message. */
+		char errm[1024];
+
+		/** Implementation error code. */
+		long code;
+
+		/** Sdk specific error code. */
+		int res;
+	} KSI_RequestHandleStatus;
+
+	/**
+	 * Constructor for the abstract network client.
+	 * \param[in]		ctx		KSI context.
+	 * \param[out]		client	Abstract network client.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 */
+	int KSI_AbstractNetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **client);
+
 	/**
 	 * Free network handle object.
 	 * \param[in]		handle			Network handle.
@@ -182,15 +202,25 @@ extern "C" {
 	int KSI_RequestHandle_setReadResponseFn(KSI_RequestHandle *handle, int (*fn)(KSI_RequestHandle *));
 
 	/**
-	 * Initialized for an existing abstract network provider.
-	 * \param[in]		ctx				KSI context.
-	 * \param[out]		client			Abstract network client.
-	 *
+	 * Performs the request. This can be called on a handle several times - this is useful
+	 * if the previous call was unsuccessful or the caller wishes to send the request
+	 * again.
+	 * \param[in]		handle			Network handle.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 *
-	 * \note Do not use, unless implementing a new network client.
 	 */
-	int KSI_NetworkClient_init(KSI_CTX *ctx, KSI_NetworkClient *client);
+	int KSI_RequestHandle_perform(KSI_RequestHandle *handle);
+
+	/**
+	 * Returns the status of the handle.
+	 * \param[in]		handle			Network handle.
+	 * \return status code of the last call or #KSI_NETWORL_PENDING if #KSI_RequestHandle_perform nor
+	 * #KSI_NetworkClient_performAll have been called on the handle.
+	 * \param[out]		err				Pointer to the status structure.
+	 * \note The function will return #KSI_INVALID_ARGUMENT if handle is \c NULL.
+	 * \note The pointer to the err structure is only valid as long as the
+	 * handle itself is valid.
+	 */
+	int KSI_RequestHandle_getResponseStatus(KSI_RequestHandle *handle, const KSI_RequestHandleStatus **err);
 
 	/**
 	 * Setter for the implementation specific networking context.
@@ -268,6 +298,19 @@ extern "C" {
 	 * \note All aquired pointers have to be freed by the caller using #KSI_free.
 	 */
 	int KSI_UriSplitBasic(const char *uri, char **scheme, char **host, unsigned *port, char **path);
+
+	/**
+	 * Perform all the requests in the array \c add of length \c arr_len;
+	 * \param[in]	arr			Array of request handles.
+	 * \param[in]	arr_len		Length of the array.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note The caller is responsible for not mixing request handles created from different
+	 * network clients. Mixing clients and handles may cause unpredictable behavior (inc
+	 * corrupted memory and data).
+	 */
+	int KSI_NetworkClient_performAll(KSI_NetworkClient *client, KSI_RequestHandle **arr, size_t arr_len);
+
+	KSI_DEFINE_REF(KSI_RequestHandle);
 	/**
 	 * @}
 	 */

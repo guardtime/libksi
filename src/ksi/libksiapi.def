@@ -212,23 +212,23 @@ EXPORTS
     KSI_convertAggregatorStatusCode
     KSI_convertExtenderStatusCode
     KSI_UriSplitBasic
+    KSI_AbstractNetworkClient_new
+    KSI_RequestHandle_perform
+    KSI_RequestHandle_getResponseStatus
 	
 ;net_http.h
 EXPORTS
     KSI_HttpClient_new
+    KSI_AbstractHttpClient_new
     KSI_HttpClient_setPublicationUrl
     KSI_HttpClient_setConnectTimeoutSeconds
     KSI_HttpClient_setReadTimeoutSeconds
     KSI_HttpClient_setAggregator
     KSI_HttpClient_setExtender
-    KSI_HttpClient_init
-    KSI_HttpClient_free
 
 ;net_tcp.h
 
     KSI_TcpClient_new
-    KSI_TcpClient_init
-    KSI_TcpClient_free
     KSI_TcpClient_setPublicationUrl
     KSI_TcpClient_setExtender
     KSI_TcpClient_setAggregator
@@ -236,8 +236,6 @@ EXPORTS
 
 ;net_uri.h
     KSI_UriClient_new
-    KSI_UriClient_init
-    KSI_UriClient_free
     KSI_UriClient_setPublicationUrl
     KSI_UriClient_setExtender
     KSI_UriClient_setAggregator

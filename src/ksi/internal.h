@@ -137,7 +137,7 @@ cleanup:																	\
 #define KSI_IMPLEMENT_REF(baseType)											\
 KSI_DEFINE_REF(baseType) {													\
 	if (o != NULL) o->ref++;												\
-	return KSI_OK;															\
+	return o;																\
 }																			\
 
 #define KSI_IMPLEMENT_TOTLV(type) \
@@ -267,24 +267,24 @@ struct KSI_Object_st {
 	unsigned refCount;
 };
 
-/* Error structure.*/
+/* Error structure. */
 struct KSI_ERR_st {
-	/* Free text error message to be displayed. */
+	/** Free text error message to be displayed. */
 	char message[1024];
 
-	/* Filename of the error. */
+	/** Filename of the error. */
 	char fileName[1024];
 
-	/* Line number where the error was logd. */
+	/** Line number where the error was logded. */
 	unsigned int lineNr;
 
-	/* Status code. */
+	/** Status code. */
 	int statusCode;
 
-	/* Error code */
+	/** External error code from a library or sth. */
 	long extErrorCode;
 
-	/* Pointer to parent context. */
+	/** Pointer to parent context. */
 	KSI_CTX *ctx;
 };
 
