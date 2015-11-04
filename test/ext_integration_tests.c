@@ -122,25 +122,6 @@ static void Test_OKExtendSignature(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 }
 
-static void Test_NOKExtendRequestToTheFuture2(CuTest* tc) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_ExtendResp *response = NULL;
-	KSI_Integer *resp_status = NULL;
-
-	KSI_ERR_clearErrors(ctx);
-	getExtResponse(tc, 0x01, 1435740789, 2435827189, &response);
-	CuAssert(tc, "Unable to send (prepare) sign request.", response != NULL);
-
-	res = KSI_ExtendResp_getStatus(response, &resp_status);
-	CuAssert(tc, "Unable to get response status.", res == KSI_OK && resp_status != NULL);
-	CuAssert(tc, "Wrong error.", KSI_Integer_equalsUInt(resp_status, 0x107));
-
-
-	KSI_ExtendResp_free(response);
-
-	return;
-}
-
 static void Test_NOKExtendRequestToTheFuture(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ExtendResp *response = NULL;
