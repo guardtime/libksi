@@ -263,6 +263,8 @@ extern "C" {
 	 */
 	int KSI_TLV_appendNestedTlv(KSI_TLV *target, KSI_TLV *tlv);
 
+	int KSI_TLV_writeBytes(const KSI_TLV *tlv, unsigned char *buf, size_t buf_size, size_t *buf_len, int opt);
+	
 	/**
 	 * Removes the given TLV from the parent if the given TLV is a immediate child
 	 * of the parent.

@@ -118,12 +118,16 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 	KSI_Integer *pReqId = NULL;
 	KSI_Integer *reqId = NULL;
 
+	KSI_HttpClient *http = NULL;
+
 	if (client == NULL || req == NULL || handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	if (((KSI_HttpClient*)client)->urlExtender == NULL) {
+	http = client->impl;
+
+	if (http->urlExtender == NULL) {
 		res = KSI_EXTENDER_NOT_CONFIGURED;
 		goto cleanup;
 	}
@@ -149,7 +153,7 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 			pdu,
 			(int (*)(void *, unsigned char **, size_t *))KSI_ExtendPdu_serialize,
 			handle,
-			((KSI_HttpClient*)client)->urlExtender,
+			http->urlExtender,
 			"Extend request");
 
 	if (res != KSI_OK) goto cleanup;

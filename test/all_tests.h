@@ -25,14 +25,13 @@
 #include "ksi_net_mock.h"
 #include <ksi/compatibility.h>
 #include <ksi/err.h>
+#include "support_tests.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define lprintf //printf("%s:%d - ", __FILE__, __LINE__); printf
-
-const char* getFullResourcePath(const char* resource);
 
 int KSITest_memcmp(void *ptr1, void *ptr2, size_t len);
 
