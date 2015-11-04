@@ -17,7 +17,7 @@
 # reserves and retains all trademark rights.
 #
 
-.PHONY: doc test
+.PHONY: doc test int-test
 
 AUTOMAKE_OPTIONS = foreign
 SUBDIRS = src/ksi src/example test doc
@@ -35,6 +35,9 @@ ZIPDOC_DIR = ${PACKAGE}-${VERSION}-htmldoc
 
 test: check 
 	./test/runner ./test
+
+int-test: check
+	./test/integration-tests ./test
 
 # You'll need valgrind for this target.
 #
