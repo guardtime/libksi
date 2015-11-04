@@ -2481,7 +2481,7 @@ static int verifyCalAuthRec(KSI_CTX *ctx, KSI_Signature *sig) {
 	if (res != KSI_OK) goto cleanup;
 
 	if (cert == NULL) {
-		res = KSI_VerificationResult_addFailure(info, step, "Certificate not found");
+		res = KSI_VerificationResult_addFailure(info, step, "Certificate not found.");
 		goto cleanup;
 	}
 
@@ -2649,7 +2649,7 @@ static int verifyDocument(KSI_Signature *sig) {
 		KSI_LOG_logDataHash(sig->ctx, KSI_LOG_DEBUG, "Document hash", sig->verificationResult.documentHash);
 		KSI_LOG_logDataHash(sig->ctx, KSI_LOG_DEBUG, "Signed   hash", hsh);
 
-		res = KSI_VerificationResult_addFailure(info, step, "Wrong document");
+		res = KSI_VerificationResult_addFailure(info, step, "Wrong document.");
 		goto cleanup;
 	}
 
