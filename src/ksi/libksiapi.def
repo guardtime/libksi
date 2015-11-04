@@ -227,8 +227,6 @@ EXPORTS
 ;net_tcp.h
 
     KSI_TcpClient_new
-    KSI_TcpClient_init
-    KSI_TcpClient_free
     KSI_TcpClient_setPublicationUrl
     KSI_TcpClient_setExtender
     KSI_TcpClient_setAggregator
@@ -236,8 +234,6 @@ EXPORTS
 
 ;net_uri.h
     KSI_UriClient_new
-    KSI_UriClient_init
-    KSI_UriClient_free
     KSI_UriClient_setPublicationUrl
     KSI_UriClient_setExtender
     KSI_UriClient_setAggregator

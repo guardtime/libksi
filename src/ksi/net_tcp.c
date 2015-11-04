@@ -442,10 +442,6 @@ static void tcpClient_free(KSI_TcpClient *tcp) {
 	}
 }
 
-void KSI_TcpClient_free(KSI_TcpClient *tcp) {
-	KSI_NetworkClient_free((KSI_NetworkClient*)tcp);
-}
-
 /**
  *
  */
