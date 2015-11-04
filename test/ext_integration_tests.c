@@ -67,6 +67,9 @@ static void getExtResponse(CuTest* tc, KSI_uint64_t id, KSI_uint64_t aggrTime, K
 	res = KSI_sendExtendRequest(ctx, request, &handle);
 	CuAssert(tc, "Unable to send (prepare) sign request.", res == KSI_OK);
 
+	res = KSI_RequestHandle_perform(handle);
+	CuAssert(tc, "Unable to send perform (send) sign request.", res == KSI_OK);
+
 	res = KSI_RequestHandle_getExtendResponse(handle, &tmp);
 	CuAssert(tc, "Unable to get (send and get) sign request.", res == KSI_OK && tmp != NULL);
 

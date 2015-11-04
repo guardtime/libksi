@@ -526,7 +526,7 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 
 	/*Get response PDU*/
 	res = KSI_ExtendPdu_parse(handle->ctx, raw, len, &pdu);
-	if(res != KSI_OK){
+	if (res != KSI_OK) {
 		int networkStatus = handle->err.code;
 
 		if (networkStatus >= 400 && networkStatus < 600) {

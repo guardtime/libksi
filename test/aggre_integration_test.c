@@ -66,6 +66,9 @@ static void Test_NOKAggr_TreeTooLarge(CuTest* tc) {
 	res = KSI_sendSignRequest(ctx, request, &handle);
 	CuAssert(tc, "Unable to send (prepare) sign request.", res == KSI_OK);
 
+	res = KSI_RequestHandle_perform(handle);
+	CuAssert(tc, "Unable to send (perform) sign request.", res == KSI_OK);
+
 	res = KSI_RequestHandle_getAggregationResponse(handle, &response);
 	CuAssert(tc, "Unable to get (send and get) sign request.", res == KSI_OK && response != NULL);
 
