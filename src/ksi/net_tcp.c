@@ -260,7 +260,7 @@ static int prepareRequest(
 		unsigned port,
 		const char *desc) {
 	int res;
-	KSI_TcpClient *tcp = (KSI_TcpClient *)client;
+	KSI_TcpClient *tcp = client->impl;
 	KSI_RequestHandle *tmp = NULL;
 	unsigned char *raw = NULL;
 	size_t raw_len = 0;
@@ -373,12 +373,16 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 	KSI_Integer *pReqId = NULL;
 	KSI_Integer *reqId = NULL;
 
+	KSI_TcpClient *tcp = NULL;
+
 	if (client == NULL || req == NULL || handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	if (((KSI_TcpClient*)client)->aggrHost == NULL || ((KSI_TcpClient*)client)->aggrPort == 0) {
+	tcp = client->impl;
+
+	if (tcp->aggrHost == NULL || tcp->aggrPort == 0) {
 		res = KSI_AGGREGATOR_NOT_CONFIGURED;
 		goto cleanup;
 	}
@@ -404,8 +408,8 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 			pdu,
 			(int (*)(void *, unsigned char **, size_t *))KSI_AggregationPdu_serialize,
 			handle,
-			((KSI_TcpClient*)client)->aggrHost,
-			((KSI_TcpClient*)client)->aggrPort,
+			tcp->aggrHost,
+			tcp->aggrPort,
 			"Aggregation request");
 	if (res != KSI_OK) goto cleanup;
 
@@ -421,9 +425,9 @@ cleanup:
 
 static int sendPublicationRequest(KSI_NetworkClient *client, KSI_RequestHandle **handle) {
 	int res;
-	KSI_TcpClient *tcpClient = (KSI_TcpClient *)client->impl;
+	KSI_TcpClient *tcpClient = client->impl;
 
-	res = KSI_NetworkClient_sendPublicationsFileRequest((KSI_NetworkClient *)tcpClient->http, handle);
+	res = KSI_NetworkClient_sendPublicationsFileRequest(tcpClient->http, handle);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_OK;
@@ -514,7 +518,7 @@ int KSI_TcpClient_setExtender(KSI_NetworkClient *client, const char *host, unsig
 		goto cleanup;
 	}
 
-	tcp = (KSI_TcpClient *)client->impl;
+	tcp = client->impl;
 
 	res = setStringParam(&tcp->extHost, host);
 	if (res != KSI_OK) goto cleanup;
@@ -593,7 +597,7 @@ int KSI_TcpClient_setTransferTimeoutSeconds (KSI_NetworkClient *client, int tran
 		goto cleanup;
 	}
 
-	tcp = (KSI_TcpClient *)client->impl;
+	tcp = client->impl;
 
     tcp->transferTimeoutSeconds = transferTimeoutSeconds ;
 

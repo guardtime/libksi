@@ -355,7 +355,6 @@ EXPORTS
     KSI_TLV_getCtx
     KSI_TLV_new
     KSI_TLV_fromUint
-    KSI_TLV_cast
     KSI_TLV_parseBlob
     KSI_TLV_getRawValue
     KSI_TLV_getNestedList
@@ -377,6 +376,7 @@ EXPORTS
     KSI_TLV_getAbsoluteOffset
     KSI_TLV_getRelativeOffset
     KSI_TLV_parseBlob2
+    KSI_TLV_writeBytes
 
 ;tlvtemplates.h
 EXPORTS

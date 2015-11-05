@@ -57,7 +57,7 @@ int publicationsFile_changePKCS7_signature(KSI_PublicationsFile *publicationsFil
 	ctx = publicationsFile->ctx;
 
 	/* Create Signature TLV from PKCS7 encoded PKI signature */
-	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, 0x704, 0, 0, &tlv_tmp);
+	res = KSI_TLV_new(ctx, 0x704, 0, 0, &tlv_tmp);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Error: unable to create TLV for new signature.");
 		goto cleanup;

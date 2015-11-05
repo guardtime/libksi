@@ -152,7 +152,7 @@ int type##_toTlv(KSI_CTX *ctx, const type *data, unsigned tag, int isNonCritical
 		goto cleanup; \
 	} \
 	\
-	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, tag, isNonCritical, isForward, &tmp); \
+	res = KSI_TLV_new(ctx, tag, isNonCritical, isForward, &tmp); \
 	if (res != KSI_OK) { \
 		KSI_pushError(ctx, res, NULL); \
 		goto cleanup; \
@@ -180,7 +180,6 @@ cleanup: \
 int type##_fromTlv(KSI_TLV *tlv, type **data) { \
 	int res; \
 	type *tmp = NULL; \
-	int isLeft = 0; \
 	unsigned char *tlvData = NULL; \
 	KSI_OctetString *raw = NULL; \
 	KSI_CTX *ctx = KSI_TLV_getCtx(tlv); \

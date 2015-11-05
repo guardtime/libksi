@@ -67,6 +67,9 @@ static void getExtResponse(CuTest* tc, KSI_uint64_t id, KSI_uint64_t aggrTime, K
 	res = KSI_sendExtendRequest(ctx, request, &handle);
 	CuAssert(tc, "Unable to send (prepare) sign request.", res == KSI_OK);
 
+	res = KSI_RequestHandle_perform(handle);
+	CuAssert(tc, "Unable to send perform (send) sign request.", res == KSI_OK);
+
 	res = KSI_RequestHandle_getExtendResponse(handle, &tmp);
 	CuAssert(tc, "Unable to get (send and get) sign request.", res == KSI_OK && tmp != NULL);
 
@@ -120,25 +123,9 @@ static void Test_OKExtendSignature(CuTest* tc) {
 	CuAssert(tc, "Unable to verify signature", res == KSI_OK);
 
 	KSI_ERR_clearErrors(ctx);
-}
 
-static void Test_NOKExtendRequestToTheFuture2(CuTest* tc) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_ExtendResp *response = NULL;
-	KSI_Integer *resp_status = NULL;
-
-	KSI_ERR_clearErrors(ctx);
-	getExtResponse(tc, 0x01, 1435740789, 2435827189, &response);
-	CuAssert(tc, "Unable to send (prepare) sign request.", response != NULL);
-
-	res = KSI_ExtendResp_getStatus(response, &resp_status);
-	CuAssert(tc, "Unable to get response status.", res == KSI_OK && resp_status != NULL);
-	CuAssert(tc, "Wrong error.", KSI_Integer_equalsUInt(resp_status, 0x107));
-
-
-	KSI_ExtendResp_free(response);
-
-	return;
+	KSI_Signature_free(sig);
+	KSI_Signature_free(ext);
 }
 
 static void Test_NOKExtendRequestToTheFuture(CuTest* tc) {

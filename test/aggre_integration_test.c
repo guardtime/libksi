@@ -24,51 +24,6 @@
 extern KSI_CTX *ctx;
 
 
-static void generateNewRequest(void) {
-	int res;
-
-	KSI_AggregationReq *request = NULL;
-	KSI_DataHash *hsh = NULL;
-	KSI_Integer *ID = NULL;
-	KSI_Integer *requestLevel = NULL;
-	KSI_Integer *resp_status = NULL;
-
-	KSI_Header *header = NULL;
-	KSI_Utf8String *login_id = NULL;
-	KSI_Integer *inst_id = NULL;
-	KSI_Integer *msg_id = NULL;
-
-	KSI_DataHash *hmac = NULL;
-
-	KSI_AggregationPdu *pdu = NULL;
-
-	KSI_RequestHandle *handle = NULL;
-
-	unsigned char *raw;
-	size_t raw_len;
-
-	res = KSI_AggregationReq_new(ctx, &request);
-	res = KSI_AggregationReq_setRequestLevel(request, requestLevel);
-	res = KSI_AggregationReq_setRequestId(request, ID);
-	res = KSI_AggregationReq_setRequestHash(request, hsh);
-
-
-	res = KSI_Header_new(ctx, &header);
-	res = KSI_Header_setLoginId(header, login_id);
-	res = KSI_Header_setInstanceId(header, inst_id);
-	res = KSI_Header_setMessageId(header, msg_id);
-
-	res = KSI_AggregationPdu_new(ctx, &pdu);
-	res = KSI_AggregationPdu_setHeader(pdu, header);
-	res = KSI_AggregationPdu_setRequest(pdu, request);
-	res = KSI_AggregationPdu_calculateHmac(pdu, KSI_getHashAlgorithmByName("default"), "key", &hmac);
-	res = KSI_AggregationPdu_setHmac(pdu, hmac);
-	res = KSI_AggregationPdu_serialize(pdu, &raw, &raw_len);
-
-	res = KSI_RequestHandle_new(ctx, raw, raw_len, &handle);
-}
-
-
 static void Test_NOKAggr_TreeTooLarge(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationReq *request = NULL;
@@ -110,6 +65,9 @@ static void Test_NOKAggr_TreeTooLarge(CuTest* tc) {
 
 	res = KSI_sendSignRequest(ctx, request, &handle);
 	CuAssert(tc, "Unable to send (prepare) sign request.", res == KSI_OK);
+
+	res = KSI_RequestHandle_perform(handle);
+	CuAssert(tc, "Unable to send (perform) sign request.", res == KSI_OK);
 
 	res = KSI_RequestHandle_getAggregationResponse(handle, &response);
 	CuAssert(tc, "Unable to get (send and get) sign request.", res == KSI_OK && response != NULL);

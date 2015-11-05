@@ -965,7 +965,7 @@ int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain
 		if (KSI_TLV_getTag(oldCalChainTlv) == 0x0802) break;
 	}
 
-	res = KSI_TLV_new(sig->ctx, KSI_TLV_PAYLOAD_TLV, 0x0802, 0, 0, &newCalChainTlv);
+	res = KSI_TLV_new(sig->ctx, 0x0802, 0, 0, &newCalChainTlv);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
 		goto cleanup;
@@ -1088,7 +1088,7 @@ int KSI_Signature_replacePublicationRecord(KSI_Signature *sig, KSI_PublicationRe
 		}
 
 		/* Create a new TLV object */
-		res = KSI_TLV_new(sig->ctx, KSI_TLV_PAYLOAD_TLV, 0x0803, 0, 0, &newPubTlv);
+		res = KSI_TLV_new(sig->ctx, 0x0803, 0, 0, &newPubTlv);
 		if (res != KSI_OK) {
 			KSI_pushError(sig->ctx, res, NULL);
 			goto cleanup;
@@ -1257,7 +1257,7 @@ static int parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp, KSI
 
 
 	/* Create signature TLV */
-	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_TLV, 0x0800, 0, 0, &tmpTlv);
+	res = KSI_TLV_new(ctx, 0x0800, 0, 0, &tmpTlv);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
