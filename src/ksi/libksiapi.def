@@ -35,7 +35,9 @@ EXPORTS
     KSI_snprintf
     KSI_vsnprintf
     KSI_strncpy
-	KSI_strdup
+    KSI_strdup
+    KSI_CalendarTimeToUnixTime
+    KSI_strcasecmp
 
 ;err.h
 EXPORTS
@@ -258,6 +260,7 @@ EXPORTS
     KSI_PKITruststore_verifySignature
     KSI_PKITruststore_addLookupFile
     KSI_PKITruststore_addLookupDir
+    KSI_PKISignature_extractCertificate
     KSI_PKICertificate_toString
 
 ;publicationsfile.h
@@ -608,6 +611,7 @@ EXPORTS
     KSI_OctetString_equals
     KSI_OctetString_fromTlv
     KSI_OctetString_toTlv
+    KSI_OctetString_toString
     KSI_OctetString_ref
     KSI_Utf8String_free
     KSI_Utf8String_new

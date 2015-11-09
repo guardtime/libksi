@@ -29,9 +29,11 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 
-#include "tlv.h"
 #include "pkitruststore.h"
 #include "ctx_impl.h"
+#include "compatibility.h"
+#include "crc32.h"
+
 
 static const char *defaultCaFile =
 #ifdef OPENSSL_CA_FILE
@@ -129,100 +131,6 @@ void KSI_PKITruststore_free(KSI_PKITruststore *trust) {
 		if (trust->store != NULL) X509_STORE_free(trust->store);
 		KSI_free(trust);
 	}
-}
-
-int KSI_PKICertificate_fromTlv(KSI_TLV *tlv, KSI_PKICertificate **cert) {
-	KSI_CTX *ctx = NULL;
-	int res;
-
-	KSI_PKICertificate *tmp = NULL;
-	const unsigned char *raw = NULL;
-	size_t raw_len = 0;
-
-
-	if (tlv == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	ctx = KSI_TLV_getCtx(tlv);
-	KSI_ERR_clearErrors(ctx);
-
-	if (cert == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-
-	res = KSI_TLV_getRawValue(tlv, &raw, &raw_len);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_PKICertificate_new(ctx, raw, raw_len, &tmp);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	*cert = tmp;
-	tmp = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_nofree(raw);
-
-	KSI_PKICertificate_free(tmp);
-
-	return res;
-}
-
-int KSI_PKICertificate_toTlv(KSI_CTX *ctx, KSI_PKICertificate *cert, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
-	int res;
-	KSI_TLV *tmp = NULL;
-	unsigned char *raw = NULL;
-	size_t raw_len = 0;
-
-	KSI_ERR_clearErrors(ctx);
-
-	if (cert == NULL || tlv == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-
-	res = KSI_TLV_new(ctx, tag, isNonCritical, isForward, &tmp);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_PKICertificate_serialize(cert, &raw, &raw_len);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_TLV_setRawValue(tmp, raw, raw_len);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	*tlv = tmp;
-	tmp = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_free(raw);
-	KSI_TLV_free(tmp);
-
-	return res;
 }
 
 int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) {
@@ -365,7 +273,6 @@ cleanup:
 	return res;
 }
 
-/**/
 void KSI_PKICertificate_free(KSI_PKICertificate *cert) {
 	if (cert != NULL) {
 		if (cert->x509 != NULL) X509_free(cert->x509);
@@ -424,99 +331,6 @@ int KSI_PKISignature_serialize(KSI_PKISignature *sig, unsigned char **raw, size_
 cleanup:
 
 	KSI_free(tmp);
-
-	return res;
-}
-
-int KSI_PKISignature_fromTlv(KSI_TLV *tlv, KSI_PKISignature **sig) {
-	int res;
-	KSI_CTX *ctx = NULL;
-
-	KSI_PKISignature *tmp = NULL;
-	const unsigned char *raw = NULL;
-	size_t raw_len = 0;
-
-	if (tlv == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	ctx = KSI_TLV_getCtx(tlv);
-	KSI_ERR_clearErrors(ctx);
-
-	if (sig == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-
-	res = KSI_TLV_getRawValue(tlv, &raw, &raw_len);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_PKISignature_new(ctx, raw, raw_len, &tmp);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	*sig = tmp;
-	tmp = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_nofree(raw);
-
-	KSI_PKISignature_free(tmp);
-
-	return res;
-}
-
-int KSI_PKISignature_toTlv(KSI_CTX *ctx, KSI_PKISignature *sig, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
-	int res;
-	KSI_TLV *tmp = NULL;
-	unsigned char *raw = NULL;
-	size_t raw_len = 0;
-
-	KSI_ERR_clearErrors(ctx);
-
-	if (ctx == NULL || sig == NULL || tlv == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-
-	res = KSI_TLV_new(ctx, tag, isNonCritical, isForward, &tmp);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_PKISignature_serialize(sig, &raw, &raw_len);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_TLV_setRawValue(tmp, raw, raw_len);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	*tlv = tmp;
-	tmp = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_free(raw);
-	KSI_TLV_free(tmp);
 
 	return res;
 }
@@ -676,38 +490,201 @@ cleanup:
 	return res;
 }
 
-char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, size_t buf_len){
-	ASN1_OBJECT *oid = NULL;
-	X509_NAME *issuer = NULL;
-	X509_NAME *subject = NULL;
-	char subjectName[1024];
-	char issuerName[1024];
+static time_t ASN1_GetTimeT(ASN1_TIME* time){
+    struct tm t;
+    const char* str = (const char*) time->data;
+    size_t i = 0;
+
+	if (time == NULL) return 0;
+    memset(&t, 0, sizeof(t));
+
+    if (time->type == V_ASN1_UTCTIME) {/* two digit year */
+        t.tm_year = (str[i++] - '0') * 10;
+        t.tm_year += (str[i++] - '0');
+        if (t.tm_year < 70)
+            t.tm_year += 100;
+    } else if (time->type == V_ASN1_GENERALIZEDTIME) {/* four digit year */
+        t.tm_year = (str[i++] - '0') * 1000;
+        t.tm_year+= (str[i++] - '0') * 100;
+        t.tm_year+= (str[i++] - '0') * 10;
+        t.tm_year+= (str[i++] - '0');
+        t.tm_year -= 1900;
+    }
+    t.tm_mon  = (str[i++] - '0') * 10;
+    t.tm_mon += (str[i++] - '0') - 1; // -1 since January is 0 not 1.
+    t.tm_mday = (str[i++] - '0') * 10;
+    t.tm_mday+= (str[i++] - '0');
+    t.tm_hour = (str[i++] - '0') * 10;
+    t.tm_hour+= (str[i++] - '0');
+    t.tm_min  = (str[i++] - '0') * 10;
+    t.tm_min += (str[i++] - '0');
+    t.tm_sec  = (str[i++] - '0') * 10;
+    t.tm_sec += (str[i++] - '0');
+
+    /* Note: we did not adjust the time based on time zone information */
+    return KSI_CalendarTimeToUnixTime(&t);
+}
+
+#define NOT_AFTER 0
+#define NOT_BEFORE 1
+#define ISSUER 0
+#define SUBJECT 1
+
+static int pki_certificate_getValidityTime(const KSI_PKICertificate *cert, int type, KSI_uint64_t *time) {
+	int res;
+	ASN1_TIME *t = NULL;
+
+
+	if (cert == NULL || cert->x509 == NULL  || time == NULL){
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (type == NOT_AFTER) {
+		t = X509_get_notAfter(cert->x509);
+	} else {
+		t = X509_get_notBefore(cert->x509);
+	}
+
+	*time = ASN1_GetTimeT(t);
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+static int pki_certificate_getValidityNotBefore(const KSI_PKICertificate *cert, KSI_uint64_t *time) {
+	return pki_certificate_getValidityTime(cert, NOT_BEFORE, time);
+}
+
+static int pki_certificate_getValidityNotAfter(const KSI_PKICertificate *cert, KSI_uint64_t *time) {
+	return pki_certificate_getValidityTime(cert, NOT_AFTER, time);
+}
+
+static int pki_certificate_getValidityState(const KSI_PKICertificate *cert, int *isExpired) {
+	int res;
+	KSI_uint64_t cert_time_notBefore = 0;
+	KSI_uint64_t cert_time_notAfter = 0;
+	KSI_uint64_t current_time = 0;
+	time_t timer = 0;
+	int state = 0;
+
+	if (cert == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	timer = time(NULL);
+	if (timer == -1) {
+		res = KSI_UNKNOWN_ERROR;
+		goto cleanup;
+	}
+
+	current_time = timer;
+
+
+	res = pki_certificate_getValidityNotBefore(cert, &cert_time_notBefore);
+	if (res != KSI_OK) goto cleanup;
+
+	res = pki_certificate_getValidityNotAfter(cert, &cert_time_notAfter);
+	if (res != KSI_OK) goto cleanup;
+
+	if (current_time < cert_time_notBefore) {
+		state = -1;
+	} else if (current_time >= cert_time_notBefore && current_time <= cert_time_notAfter) {
+		state = 0;
+	} else {
+		state = 1;
+	}
+
+	*isExpired = state;
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+static char* ksi_pki_certificate_getString_by_oid(KSI_PKICertificate *cert, int type, const char *OID, char *buf, size_t buf_len) {
 	char *ret = NULL;
+	ASN1_OBJECT *oid = NULL;
+	X509_NAME *name = NULL;
 
-	/*Get CommonName*/
-	oid = OBJ_txt2obj("2.5.4.3", 1);
+	if(cert == NULL || cert->x509 == NULL || OID == NULL || buf == NULL || buf_len == 0) {
+		goto cleanup;
+	}
 
-	issuer = X509_get_issuer_name(cert->x509);
-	subject = X509_get_subject_name(cert->x509);
+	oid = OBJ_txt2obj(OID, 1);
 
-	if (X509_NAME_get_text_by_OBJ(subject, oid, issuerName, sizeof(issuerName)) < 0)
-		issuerName[0] = 0;
+	if (type == ISSUER) {
+		name = X509_get_issuer_name(cert->x509);
+	} else {
+		name = X509_get_subject_name(cert->x509);
+	}
 
-	if (X509_NAME_get_text_by_OBJ(issuer, oid, subjectName, sizeof(subjectName)) < 0)
-		subjectName[0] = 0;
+	if (name == NULL) {
+		goto cleanup;
+	}
 
-	KSI_snprintf(buf, buf_len, "Subject: '%s',  Issuer '%s'.", subjectName, issuerName);
+	if (X509_NAME_get_text_by_OBJ(name, oid, buf, (int)buf_len) < 0) {
+		goto cleanup;
+	}
 
 	ret = buf;
 
+cleanup:
+
 	if (oid != NULL) ASN1_OBJECT_free(oid);
-	return ret;
+
+return ret;
 }
 
-static int extractCertificate(const KSI_PKISignature *signature, X509 **cert) {
+static char* pki_certificate_issuerOIDToString(KSI_PKICertificate *cert, const char *OID, char *buf, size_t buf_len) {
+	return ksi_pki_certificate_getString_by_oid(cert, ISSUER, OID ,buf, buf_len);
+}
+
+static char* pki_certificate_subjectOIDToString(KSI_PKICertificate *cert, const char *OID, char *buf, size_t buf_len) {
+	return ksi_pki_certificate_getString_by_oid(cert, SUBJECT, OID ,buf, buf_len);
+}
+
+static int pki_certificate_getSerialNumber(const KSI_PKICertificate *cert, KSI_OctetString **serial_number) {
+	int res;
+	ASN1_INTEGER *integer = NULL;
+	KSI_OctetString *tmp;
+
+	if (cert == NULL || cert->x509 == NULL  || serial_number == NULL){
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	integer = X509_get_serialNumber(cert->x509);
+	if (integer == NULL) {
+		res = KSI_UNKNOWN_ERROR;
+		KSI_pushError(cert->ctx, res, "Unable to extract PKI certificate serial number.");
+	}
+
+	res = KSI_OctetString_new(cert->ctx, integer->data, integer->length, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	*serial_number = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_OctetString_free(tmp);
+
+	return res;
+}
+
+int KSI_PKISignature_extractCertificate(const KSI_PKISignature *signature, KSI_PKICertificate **cert) {
 	int res = KSI_UNKNOWN_ERROR;
 	X509 *signing_cert = NULL;
+	X509 *copy_of_signing_cert = NULL;
 	STACK_OF(X509) *certs = NULL;
+	KSI_PKICertificate *tmp = NULL;
 
 	if (signature == NULL || cert == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -726,16 +703,31 @@ static int extractCertificate(const KSI_PKISignature *signature, X509 **cert) {
 	}
 
 	signing_cert = sk_X509_delete(certs, 0);
+	copy_of_signing_cert = X509_dup(signing_cert);
+	if (copy_of_signing_cert == NULL) {
+		res = KSI_CRYPTO_FAILURE;
+		goto cleanup;
+	}
 
-	*cert = signing_cert;
-	signing_cert = NULL;
+	tmp = KSI_new(KSI_PKICertificate);
+	if (tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
 
+	tmp->ctx = signature->ctx;
+	tmp->x509 = copy_of_signing_cert;
+	*cert = tmp;
+
+	tmp = NULL;
+	copy_of_signing_cert = NULL;
 	res = KSI_OK;
 
 cleanup:
 
 	if (certs != NULL) sk_X509_free(certs);
-	X509_free(signing_cert);
+	X509_free(copy_of_signing_cert);
+	KSI_PKICertificate_free(tmp);
 
 	return res;
 }
@@ -748,6 +740,8 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	X509_STORE_CTX *storeCtx = NULL;
 	char tmp[256];
 	size_t i;
+	KSI_PKICertificate *ksi_pki_cert = NULL;
+
 
 	if (pki == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -767,11 +761,13 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 		goto cleanup;
 	}
 
-	res = extractCertificate(signature, &cert);
+	res = KSI_PKISignature_extractCertificate(signature, &ksi_pki_cert);
 	if (res != KSI_OK) {
 		KSI_pushError(pki->ctx, res, NULL);
 		goto cleanup;
 	}
+
+	cert = ksi_pki_cert->x509;
 
 	KSI_LOG_debug(pki->ctx, "Verifying PKI signature certificate.");
 
@@ -837,6 +833,7 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 
 cleanup:
 
+	KSI_PKICertificate_free(ksi_pki_cert);
 	if (storeCtx != NULL) X509_STORE_CTX_free(storeCtx);
 	if (oid != NULL) ASN1_OBJECT_free(oid);
 
@@ -988,5 +985,225 @@ cleanup:
 
 	return res;
 }
+
+/**
+ * OID description array must have the following format:
+ * [OID][short name][long name][alias 1][..][alias N][NULL]
+ * where OID, short and long name are mandatory. Array must end with NULL.
+ */
+static char *OID_EMAIL[] = {KSI_CERT_EMAIL, "E", "email", "e-mail", "e_mail", "emailAddress", NULL};
+static char *OID_COMMON_NAME[] = {KSI_CERT_COMMON_NAME, "CN", "common name", "common_name", NULL};
+static char *OID_COUNTRY[] = {KSI_CERT_COUNTRY, "C", "country", NULL};
+static char *OID_ORGANIZATION[] = {KSI_CERT_ORGANIZATION, "O", "org", "organization", NULL};
+
+static char **OID_INFO[] = {OID_EMAIL, OID_COMMON_NAME, OID_COUNTRY, OID_ORGANIZATION, NULL};
+
+static const char *ksi_getShortDescriptionStringByOID(const char *OID) {
+	unsigned i = 0;
+
+	if (OID == NULL) return NULL;
+
+	while (OID_INFO[i] != NULL) {
+		if (strcmp(OID_INFO[i][0], OID) == 0) return OID_INFO[i][1];
+		i++;
+	}
+
+	return NULL;
+}
+
+static char* pki_certificate_nameToString(KSI_PKICertificate *cert, int type, char *buf, size_t buf_len) {
+	char *ret = NULL;
+	const char *OID[] = {KSI_CERT_EMAIL, KSI_CERT_COMMON_NAME, KSI_CERT_ORGANIZATION, KSI_CERT_COUNTRY, NULL};
+	unsigned i = 0;
+	char tmp[1024];
+	size_t count;
+	char *strn = NULL;
+	size_t elements_defined = 0;
+
+	if (cert == NULL || buf == NULL || buf_len == 0 || buf_len > INT_MAX) {
+		goto cleanup;
+	}
+
+	count = 0;
+	while(OID[i] != NULL) {
+		if (type == ISSUER) {
+			strn = pki_certificate_issuerOIDToString(cert, OID[i], tmp, sizeof(tmp));
+		} else {
+			strn = pki_certificate_subjectOIDToString(cert, OID[i], tmp, sizeof(tmp));
+		}
+
+		if (strn == tmp) {
+			count += KSI_snprintf(buf + count, buf_len - count, "%s%s=%s",
+					elements_defined == 0 ? "" : " ",
+					ksi_getShortDescriptionStringByOID(OID[i]), tmp);
+
+			elements_defined++;
+		}
+
+		i++;
+	}
+
+	ret = buf;
+
+cleanup:
+
+	return ret;
+}
+
+static char* pki_certificate_issuerToString(KSI_PKICertificate *cert, char *buf, size_t buf_len) {
+	return pki_certificate_nameToString(cert, ISSUER, buf, buf_len);
+}
+
+static char* pki_certificate_subjectToString(KSI_PKICertificate *cert, char *buf, size_t buf_len) {
+	return pki_certificate_nameToString(cert, SUBJECT, buf, buf_len);
+}
+
+static int pki_certificate_calculateCRC32(KSI_PKICertificate *cert, KSI_OctetString **crc) {
+	int res;
+	KSI_OctetString *tmp = NULL;
+	unsigned long ID;
+	unsigned char buf[4];
+	unsigned char *raw = NULL;
+	size_t raw_len;
+	KSI_CTX *ctx = NULL;
+
+	if (cert == NULL || crc == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	ctx = cert->ctx;
+	if (ctx == NULL) {
+		res = KSI_UNKNOWN_ERROR;
+		goto cleanup;
+	}
+
+	res = KSI_PKICertificate_serialize(cert, &raw, &raw_len);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, "Unable to serialize PKI certificate.");
+		goto cleanup;
+	}
+
+	ID = KSI_crc32(raw, raw_len, 0);
+
+	buf[0] = 0xff & (ID >> 24);
+	buf[1] = 0xff & (ID >> 16);
+	buf[2] = 0xff & (ID >> 8);
+	buf[3] = 0xff & (ID >> 0);
+
+	res = KSI_OctetString_new(ctx, buf, sizeof(buf), &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	*crc = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_free(raw);
+	KSI_OctetString_free(tmp);
+
+	return res;
+}
+
+char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, size_t buf_len){
+	int res;
+	char *ret = NULL;
+	char subjectName[1024];
+	char issuerName[1024];
+	char ID[1024];
+	char serial[1024];
+	char date_before[64];
+	char date_after[64];
+	KSI_uint64_t int_notBefore;
+	KSI_uint64_t int_notAfter;
+	KSI_Integer *notBefore = NULL;
+	KSI_Integer *notAfter = NULL;
+	KSI_CTX *ctx = NULL;
+	KSI_OctetString *serial_number = NULL;
+	KSI_OctetString *crc32 = NULL;
+	int state;
+	const char *stateString = NULL;
+
+	if (cert == NULL || buf == NULL || buf_len == 0) {
+		return NULL;
+	}
+
+	ctx = cert->ctx;
+	if (ctx == NULL){
+		return NULL;
+	}
+
+	if (pki_certificate_issuerToString(cert, issuerName, sizeof(issuerName)) == NULL) {
+		goto cleanup;
+	}
+
+	if (pki_certificate_subjectToString(cert, subjectName, sizeof(subjectName)) == NULL) {
+		goto cleanup;
+	}
+
+	res = pki_certificate_getValidityNotBefore(cert, &int_notBefore);
+	if (res != KSI_OK) goto cleanup;
+
+	res = pki_certificate_getValidityNotAfter(cert, &int_notAfter);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_Integer_new(ctx, int_notBefore, &notBefore);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_Integer_new(ctx, int_notAfter, &notAfter);
+	if (res != KSI_OK) goto cleanup;
+
+	if (KSI_Integer_toDateString(notBefore, date_before, sizeof(date_before)) == NULL) goto cleanup;
+	if (KSI_Integer_toDateString(notAfter, date_after, sizeof(date_after)) == NULL) goto cleanup;
+
+	res = pki_certificate_calculateCRC32(cert, &crc32);
+	if (res != KSI_OK) goto cleanup;
+
+	res = pki_certificate_getSerialNumber(cert, &serial_number);
+	if (res != KSI_OK) goto cleanup;
+
+	if (KSI_OctetString_toString(crc32, ':', ID, sizeof(ID)) == NULL) {
+		goto cleanup;
+	}
+
+	if (KSI_OctetString_toString(serial_number, ':', serial, sizeof(serial)) == NULL) {
+		goto cleanup;
+	}
+
+	res = pki_certificate_getValidityState(cert, &state);
+	if (res != KSI_OK) goto cleanup;
+
+	switch(state) {
+		case -1: stateString = "invalid"; break;
+		case 0: stateString = "valid"; break;
+		case 1: stateString = "expired"; break;
+		default: stateString = "state unknown"; break;
+	}
+
+	KSI_snprintf(buf, buf_len, "PKI Certificate (%s):\n"
+			"  * Issued to: %s\n"
+			"  * Issued by: %s\n"
+			"  * Valid from: %s to %s [%s]\n"
+			"  * Serial Number: %s\n",
+		ID,	subjectName, issuerName, date_before, date_after, stateString, serial);
+
+	ret = buf;
+
+cleanup:
+
+	KSI_Integer_free(notAfter);
+	KSI_Integer_free(notBefore);
+	KSI_OctetString_free(serial_number);
+	KSI_OctetString_free(crc32);
+
+	return ret;
+}
+
+
+
 
 #endif

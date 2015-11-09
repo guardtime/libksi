@@ -21,6 +21,7 @@
 #define	COMPATIBILITY_H
 #include <stddef.h>
 #include <stdarg.h>
+#include <time.h>
 
 #ifdef	__cplusplus
 extern "C" {
@@ -71,6 +72,22 @@ char *KSI_strncpy (char *destination, const char *source, size_t n);
  */
 int KSI_strdup(const char *from, char **to);
 
+/**
+ * Platform independent modified version of mktime that takes calendar time interpreted
+ * as UTC time (local time zone is ignored) as input and converts the value to Unix time.
+ * \param[in]	time	Pointer to struct tm containing calendar time broken into its components.
+ * \return The number of seconds elapsed since 1970-01-01 00:00:00 UTC. If a 
+ * calendar time cannot be represented or time is NULL, -1 is returned.  
+ */
+time_t KSI_CalendarTimeToUnixTime(struct tm *time);
+
+/**
+ * Platform independent case-insensitive string compare.
+ * \param[in]	s1		String 1 to be compared.
+ * \param[in]	s2		String 2 to be compared.
+ * @return retruns 0 if both are equal. If one of the arguments is NULL, KSI_INVALID_ARGUMENT is returnd.
+ */
+int KSI_strcasecmp(const char *s1, const char *s2);
 /*
  * @}
  */

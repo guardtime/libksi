@@ -209,6 +209,33 @@ cleanup:
 	return res;
 }
 
+char* KSI_OctetString_toString(const KSI_OctetString *id, char separator, char *buf, size_t buf_len) {
+	int res = 0;
+	const unsigned char *raw = NULL;
+	size_t raw_len;
+	size_t written = 0;
+	size_t i = 0;
+
+
+	if (id == NULL || buf == NULL || buf_len == 0) {
+		return NULL;
+	}
+
+	res = KSI_OctetString_extract(id, &raw, &raw_len);
+	if(res != KSI_OK || raw == NULL) return NULL;
+
+	for (i = 0; i < raw_len; i++) {
+		if(buf_len - written <= 0) return NULL;
+		if(separator == '\0' || i == raw_len - 1)
+			written += KSI_snprintf(buf + written, buf_len - written, "%02x", raw[i]);
+		else
+			written += KSI_snprintf(buf + written, buf_len - written, "%02x%c", raw[i], separator);
+		if (written == 0) return NULL;
+	}
+
+	return buf;
+}
+
 static int verifyUtf8(const unsigned char *str, size_t len) {
 	int res = KSI_UNKNOWN_ERROR;
     size_t i = 0;
@@ -387,7 +414,7 @@ int KSI_Utf8String_toTlv(KSI_CTX *ctx, KSI_Utf8String *o, unsigned tag, int isNo
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "UTF8 string too long for TLV conversion.");
 		goto cleanup;
 	}
-	
+
 	res = KSI_TLV_setRawValue(tmp, o->value, (unsigned)o->len);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);

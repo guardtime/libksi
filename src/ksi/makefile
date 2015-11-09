@@ -83,7 +83,8 @@ LIB_OBJ = \
 	$(OBJ_DIR)\verification.obj \
 	$(OBJ_DIR)\hmac.obj \
 	$(OBJ_DIR)\net_tcp.obj \
-	$(OBJ_DIR)\compatibility.obj
+	$(OBJ_DIR)\compatibility.obj \
+	$(OBJ_DIR)\pkitruststore.obj
 
 INC_FILES = \
 	base32.h \
