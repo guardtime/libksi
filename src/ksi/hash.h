@@ -53,6 +53,9 @@ extern "C" {
 	 * instances of #KSI_DataHasher and #KSI_DataHash.
 	 */
 	typedef enum KSI_HashAlgorithm_en {
+		/** An invalid hash algorithm. This is returned from #KSI_getHashAlgorithmByName,  */
+		KSI_HASHALG_INVALID = -1,
+
 		/** The SHA-1 algorithm. */
 		KSI_HASHALG_SHA1 = 0x00,
 		/** The SHA-256 algorithm. */
@@ -169,7 +172,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_DataHash_clone(KSI_DataHash *from, KSI_DataHash **to);
+	KSI_FN_DEPRECATED(int KSI_DataHash_clone(KSI_DataHash *from, KSI_DataHash **to));
 
 	/**
 	 * Extracts the hashing algorithm, digest and its length from the #KSI_DataHash. If any
@@ -229,7 +232,9 @@ extern "C" {
 
 	/**
 	 * Returns the hash algorithm specified by the \c name parameter. If the algorithm
-	 * name is not recognized -1 is returned.
+	 * name is not recognized the value of KSI_HASHALG_INVALID, witch is not a
+	 * correct hashing algorithm, is returned. To verify the correctness of the returned
+	 * value #KSI_isHashAlgorithmSupported or #KSI_isHashAlgorithmTrusted function must be used.
 	 * \param[in]	name			Name of the hash function.
 	 *
 	 * \return The hash algorithm id or -1 if it was not found.
@@ -330,6 +335,7 @@ extern "C" {
 	 */
 	char *KSI_DataHash_toString(const KSI_DataHash *hsh, char *buf, size_t buf_len);
 
+	KSI_DEFINE_REF(KSI_DataHash);
 /**
  * @}
  */
