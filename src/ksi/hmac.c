@@ -36,7 +36,6 @@ int KSI_HMAC_create(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, co
 	KSI_DataHash *hashedKey = NULL;
 	KSI_DataHash *innerHash = NULL;
 	KSI_DataHash *outerHash = NULL;
-	KSI_DataHash *tmp = NULL;
 
 	size_t key_len;
 	const unsigned char *bufKey = NULL;
@@ -170,14 +169,7 @@ int KSI_HMAC_create(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, co
 		goto cleanup;
 	}
 
-	res = KSI_DataHash_clone(outerHash, &tmp);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	*hmac = tmp;
-	tmp = NULL;
+	*hmac = KSI_DataHash_ref(outerHash);
 
 	res = KSI_OK;
 
@@ -187,7 +179,6 @@ cleanup:
 	KSI_DataHash_free(hashedKey);
 	KSI_DataHash_free(innerHash);
 	KSI_DataHash_free(outerHash);
-	KSI_DataHash_free(tmp);
 
 	return res;
 }

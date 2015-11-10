@@ -33,6 +33,8 @@ int KSI_VerificationResult_reset(KSI_VerificationResult *info) {
 	info->stepsPerformed = 0;
 
 	info->verifyDocumentHash = false;
+
+	KSI_DataHash_free(info->documentHash);
 	info->documentHash = NULL;
 	info->docAggrLevel = 0;
 
@@ -62,6 +64,7 @@ int KSI_VerificationResult_init(KSI_VerificationResult *info, KSI_CTX *ctx) {
 
 	info->ctx = ctx;
 	info->aggregationHash = NULL;
+	info->documentHash = NULL;
 	res = KSI_VerificationResult_reset(info);
 	if (res != KSI_OK) goto cleanup;
 

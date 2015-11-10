@@ -40,6 +40,11 @@ int main(int argc, char **argv) {
 
 	KSI_DataHasher *hsr = NULL;
 
+	const KSI_CertConstraint pubFileCertConstr[] = {
+			{ KSI_CERT_EMAIL, "publications@guardtime.com"},
+			{ NULL, NULL }
+	};
+
 	struct {
 		size_t ok;
 		size_t nok;
@@ -49,10 +54,6 @@ int main(int argc, char **argv) {
 	stat.nok = 0;
 
 
-	const KSI_CertConstraint pubFileCertConstr[] = {
-			{ KSI_CERT_EMAIL, "publications@guardtime.com"},
-			{ NULL, NULL }
-	};
 
 
 	/* Create new KSI context for this thread. */

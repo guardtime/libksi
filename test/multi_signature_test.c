@@ -66,7 +66,7 @@ static void testExtractingSingle(CuTest* tc) {
 	res = KSI_Signature_getDocumentHash(sig, &hsh);
 	CuAssert(tc, "Unable to get signed hash value.", res == KSI_OK && hsh != NULL);
 
-	KSI_DataHash_clone(hsh, &hsh);
+	KSI_DataHash_ref(hsh);
 
 	res = KSI_MultiSignature_new(ctx, &ms);
 	CuAssert(tc, "Unable to create multi signature container.", res == KSI_OK && ms != NULL);
@@ -103,7 +103,7 @@ static void testExtractingSingleLegacy(CuTest* tc) {
 	res = KSI_Signature_getDocumentHash(sig, &hsh);
 	CuAssert(tc, "Unable to get signed hash value.", res == KSI_OK && hsh != NULL);
 
-	KSI_DataHash_clone(hsh, &hsh);
+	KSI_DataHash_ref(hsh);
 
 	res = KSI_MultiSignature_new(ctx, &ms);
 	CuAssert(tc, "Unable to create multi signature container.", res == KSI_OK && ms != NULL);
@@ -315,8 +315,7 @@ static void testDeleteLast(CuTest *tc) {
 
 	res = KSI_Signature_getDocumentHash(sig, &hsh);
 	CuAssert(tc, "Unable to retrieve signed document hash from the signature.", res == KSI_OK && hsh != NULL);
-	KSI_DataHash_clone(hsh, &hsh);
-
+	KSI_DataHash_ref(hsh);
 
 	res = KSI_MultiSignature_add(ms, sig);
 	CuAssert(tc, "Unable to add signature to multi signature container.", res == KSI_OK);

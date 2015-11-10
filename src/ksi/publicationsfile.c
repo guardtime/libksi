@@ -1307,15 +1307,8 @@ int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_Publicatio
 
 	tmp->publishedData->ctx = rec->ctx;
 
-	res = KSI_DataHash_clone(rec->publishedData->imprint, &(tmp->publishedData->imprint));
-	if (res != KSI_OK) {
-		KSI_pushError(rec->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	KSI_Integer_ref(rec->publishedData->time);
-
-	tmp->publishedData->time = rec->publishedData->time;
+	tmp->publishedData->imprint = KSI_DataHash_ref(rec->publishedData->imprint);
+	tmp->publishedData->time = KSI_Integer_ref(rec->publishedData->time);
 
 	*clone = tmp;
 	tmp = NULL;

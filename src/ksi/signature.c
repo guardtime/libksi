@@ -781,7 +781,6 @@ static int createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, int lvl, KSI_Aggre
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationReq *tmp = NULL;
 	KSI_Integer *level = NULL;
-	KSI_DataHash *tmpHash = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || hsh == NULL || request == NULL) {
@@ -802,21 +801,12 @@ static int createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, int lvl, KSI_Aggre
 		goto cleanup;
 	}
 
-	/* Make sure it is safe to pass the pointer to the request object. */
-	res = KSI_DataHash_clone(hsh, &tmpHash);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
 	/* Add the hash to the request */
-	res = KSI_AggregationReq_setRequestHash(tmp, tmpHash);
+	res = KSI_AggregationReq_setRequestHash(tmp, KSI_DataHash_ref(hsh));
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-	/* Will be freed by KSI_AggregationReq_free. */
-	tmpHash = NULL;
 
 	/* If the level is specified, add it to the request. */
 	if (lvl > 0) {
@@ -845,7 +835,6 @@ static int createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, int lvl, KSI_Aggre
 cleanup:
 
 	KSI_Integer_free(level);
-	KSI_DataHash_free(tmpHash);
 	KSI_AggregationReq_free(tmp);
 
 	return res;
@@ -2977,7 +2966,7 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_verifyAggregatedHash(KSI_Signature *sig, KSI_CTX *ctx, const KSI_DataHash *rootHash, KSI_uint64_t rootLevel) {
+int KSI_Signature_verifyAggregatedHash(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *useCtx = ctx;
 
@@ -2996,7 +2985,7 @@ int KSI_Signature_verifyAggregatedHash(KSI_Signature *sig, KSI_CTX *ctx, const K
 	KSI_VerificationResult_reset(&sig->verificationResult);
 
 	/* Set the document hash. */
-	sig->verificationResult.documentHash = rootHash;
+	sig->verificationResult.documentHash = KSI_DataHash_ref(rootHash);
 	sig->verificationResult.docAggrLevel = rootLevel;
 	sig->verificationResult.verifyDocumentHash = true;
 
@@ -3013,7 +3002,7 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_CTX *ctx, const KSI_DataHash *docHash) {
+int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *docHash) {
 	return KSI_Signature_verifyAggregatedHash(sig, ctx, docHash, 0);
 }
 

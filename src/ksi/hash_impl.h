@@ -31,7 +31,7 @@ extern "C" {
 		KSI_CTX *ctx;
 
 		/** Reference count for shared pointer. */
-		size_t refCount;
+		size_t ref;
 
 		/** Imprint: 1 byte for algorithm and #KSI_MAX_IMPRINT_LEN bytes for the actual digest. */
 		unsigned char imprint[KSI_MAX_IMPRINT_LEN + 1]; /* For an extra '0' for meta hash. */
