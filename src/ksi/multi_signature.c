@@ -1864,6 +1864,8 @@ int KSI_MultiSignature_fromFile(KSI_CTX *ctx, const char *fileName, KSI_MultiSig
 
 cleanup:
 
+	if (fd != NULL) fclose(fd);
+
 	KSI_MultiSignature_free(tmp);
 
 	return res;
