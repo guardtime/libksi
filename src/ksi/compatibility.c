@@ -44,7 +44,7 @@ size_t KSI_vsnprintf(char *buf, size_t n, const char *format, va_list va){
 		goto cleanup;
 	}
 #endif
-	
+
 cleanup:
 
 	return ret;
@@ -102,4 +102,24 @@ cleanup:
 	KSI_free(tmp);
 
 	return res;
+}
+
+time_t KSI_CalendarTimeToUnixTime(struct tm *time) {
+	if (time == NULL) return -1;
+
+#ifdef _WIN32
+	return _mkgmtime(time);
+#else
+	return timegm(time);
+#endif
+}
+
+int KSI_strcasecmp(const char *s1, const char *s2) {
+	if (s1 == NULL || s2 == NULL) return KSI_INVALID_ARGUMENT;
+
+	#ifdef _WIN32
+		return _stricmp(s1, s2);
+	#else
+		return strcasecmp(s1, s2);
+	#endif
 }

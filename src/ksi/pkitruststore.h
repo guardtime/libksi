@@ -102,6 +102,15 @@ extern "C" {
 	void KSI_PKISignature_free(KSI_PKISignature *sig);
 
 	/**
+	 * Extracts a PKI certificate from PKI signature.
+	 * \param[in]	signature			PKI Signature object.
+	 * \param[out]	cert				Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_PKISignature_extractCertificate(const KSI_PKISignature *signature, KSI_PKICertificate **cert);
+
+	
+	/**
 	 * Serializes the #KSI_PKISignature object.
 	 * \param[in]	sig			Pointer to the PKI signature.
 	 * \param[out]	raw			Pointer to the receiving pointer.
@@ -160,15 +169,15 @@ extern "C" {
 	 * error code).
 	 */
 	int KSI_PKITruststore_addLookupDir(KSI_PKITruststore *store, const char *path);
-
+	 
 	/**
 	 * Creates a string representation of a PKI Certificate.
 	 *
-     * \param[in] cert		input certificate object.
-     * \param[in, out] buf	Pointer to the receiving buffer.
-     * \param[in] buf_len	Length of the receiving buffer.
-     * \return
-     */
+	 * \param[in]	cert		input certificate object.
+	 * \param[out]	buf			pointer to the receiving buffer.
+	 * \param[in]	buf_len		length of the receiving buffer.
+	 * \return buf if successful, NULL otherwise;
+	 */
 	char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, size_t buf_len);
 
 /**

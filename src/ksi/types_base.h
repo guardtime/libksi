@@ -258,6 +258,8 @@ int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned tag, int isNonCritical, int isFor
 	KSI_DEFINE_FN_FROM_TLV(KSI_OctetString);
 	KSI_DEFINE_FN_TO_TLV(KSI_OctetString);
 
+	char* KSI_OctetString_toString(const KSI_OctetString *id, char separator, char *buf, size_t buf_len);
+	
 	/*
 	 * KSI_Utf8String
 	 */
