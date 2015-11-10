@@ -292,7 +292,7 @@ int KSI_IO_readSocket(int fd, void *buf, size_t size, size_t *readCount) {
 #else
 		c = recv(fd, ptr, len, 0);
 #endif
-		if (c < 0) {
+		if (c <= 0) {
 			if (socket_error == socketTimedOut) {
 				res = KSI_NETWORK_RECIEVE_TIMEOUT;
 			} else {

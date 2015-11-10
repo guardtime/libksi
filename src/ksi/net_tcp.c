@@ -89,11 +89,11 @@ static int readResponse(KSI_RequestHandle *handle) {
 	TcpClientCtx *tcp = NULL;
 	KSI_TcpClient *client = NULL;
 	int sockfd = -1;
-    struct sockaddr_in serv_addr;
-    struct hostent *server = NULL;
-    size_t count;
-    unsigned char buffer[0xffff + 4];
-    KSI_FTLV ftlv;
+	struct sockaddr_in serv_addr;
+	struct hostent *server = NULL;
+	size_t count;
+	unsigned char buffer[0xffff + 4];
+	KSI_FTLV ftlv;
 #ifdef _WIN32
 	DWORD transferTimeout = 0;
 #else
@@ -108,54 +108,53 @@ static int readResponse(KSI_RequestHandle *handle) {
 	KSI_ERR_clearErrors(handle->ctx);
 
 	tcp = handle->implCtx;
-	client = (KSI_TcpClient*)handle->client;
+	client = handle->client->impl;
 
-    sockfd = (int)socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) {
-    	KSI_pushError(handle->ctx, res = KSI_NETWORK_ERROR, "Unable to open socket.");
-    	goto cleanup;
-    }
+	sockfd = (int)socket(AF_INET, SOCK_STREAM, 0);
+	if (sockfd < 0) {
+		KSI_pushError(handle->ctx, res = KSI_NETWORK_ERROR, "Unable to open socket.");
+		goto cleanup;
+	}
 #ifdef _WIN32
 	transferTimeout = client->transferTimeoutSeconds * 1000;
 #else
 	transferTimeout.tv_sec = client->transferTimeoutSeconds;
-    transferTimeout.tv_usec = 0;
-
+	transferTimeout.tv_usec = 0;
 #endif
 
 	/*Set socket options*/
 	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (void*)&transferTimeout, sizeof(transferTimeout));
 	setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (void*)&transferTimeout, sizeof(transferTimeout));
 
-    server = gethostbyname(tcp->host);
-    if (server == NULL) {
-    	KSI_pushError(handle->ctx, res = KSI_NETWORK_ERROR, "Unable to open host.");
-    	goto cleanup;
-    }
+	server = gethostbyname(tcp->host);
+	if (server == NULL) {
+		KSI_pushError(handle->ctx, res = KSI_NETWORK_ERROR, "Unable to open host.");
+		goto cleanup;
+	}
 
 	memset((char *) &serv_addr, 0, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
+	serv_addr.sin_family = AF_INET;
 
 	memmove((char *)&serv_addr.sin_addr.s_addr, (char *)server->h_addr, server->h_length);
 
-    serv_addr.sin_port = htons(tcp->port);
+	serv_addr.sin_port = htons(tcp->port);
 
-    if ((res = connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr))) < 0) {
-    	KSI_ERR_push(handle->ctx, KSI_NETWORK_ERROR, res, __FILE__, __LINE__, "Unable to connect.");
+	if ((res = connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr))) < 0) {
+		KSI_ERR_push(handle->ctx, KSI_NETWORK_ERROR, res, __FILE__, __LINE__, "Unable to connect.");
 		res = KSI_NETWORK_ERROR;
-    	goto cleanup;
-    }
+		goto cleanup;
+	}
 
-    KSI_LOG_logBlob(handle->ctx, KSI_LOG_DEBUG, "Sending request", handle->request, handle->request_length);
-    count = 0;
-    while (count < handle->request_length) {
-    	int c;
+	KSI_LOG_logBlob(handle->ctx, KSI_LOG_DEBUG, "Sending request", handle->request, handle->request_length);
+	count = 0;
+	while (count < handle->request_length) {
+		int c;
 
 #ifdef _WIN32
-    	if (handle->request_length > INT_MAX) {
-    		KSI_pushError(handle->ctx, res = KSI_BUFFER_OVERFLOW, "Unable to send more than MAX_INT bytes.");
-    		goto cleanup;
-    	}
+		if (handle->request_length > INT_MAX) {
+			KSI_pushError(handle->ctx, res = KSI_BUFFER_OVERFLOW, "Unable to send more than MAX_INT bytes.");
+			goto cleanup;
+		}
 		c = send(sockfd, (char *) handle->request, (int) handle->request_length, 0);
 #else
 		c = send(sockfd, (char *) handle->request, handle->request_length, 0);
@@ -165,10 +164,10 @@ static int readResponse(KSI_RequestHandle *handle) {
 			goto cleanup;
 		}
 		count += c;
-    }
+	}
 
 	res = KSI_FTLV_socketRead(sockfd, buffer, sizeof(buffer), &count, &ftlv);
-    if (res != KSI_OK || count == 0){
+	if (res != KSI_OK || count == 0) {
 		KSI_pushError(handle->ctx, res = KSI_INVALID_ARGUMENT, "Unable to read TLV from socket.");
 		goto cleanup;
 	}
