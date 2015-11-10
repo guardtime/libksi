@@ -53,6 +53,7 @@ EXPORTS
     KSI_DataHash_free
     KSI_DataHash_create
     KSI_DataHash_clone
+    KSI_DataHash_ref
     KSI_DataHash_extract
     KSI_DataHash_fromDigest
     KSI_DataHash_getImprint
