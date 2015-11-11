@@ -689,31 +689,34 @@ void KSI_ERR_clearErrors(KSI_CTX *ctx) {
 	}
 }
 
-int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f) {
+static int ksi_err_toPrinter(KSI_CTX *ctx, void *to, size_t buf_len, void* (*printer)(void *to, size_t to_len, size_t *count, const char *format, ...)) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ERR *err = NULL;
 	size_t i;
+	size_t count = 0;
+	void *nextWrite = to;
 
-	if (ctx == NULL || f == NULL) {
+	if (ctx == NULL || to == NULL || buf_len == 0 || printer == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	fprintf(f, "KSI error trace:\n");
+	nextWrite = printer(nextWrite, buf_len - count, &count, "KSI error trace:\n");
 	if (ctx->errors_count == 0) {
-		printf("  No errors.\n");
+		nextWrite = printer(nextWrite, buf_len - count, &count, "No errors.\n");
+		res = KSI_OK;
 		goto cleanup;
 	}
 
 	/* List all errors, starting from the most general. */
 	for (i = 0; i < ctx->errors_count && i < ctx->errors_size; i++) {
 		err = ctx->errors + ((ctx->errors_count - i - 1) % ctx->errors_size);
-		fprintf(f, "  %3lu) %s:%u - (%d/%ld) %s\n", ctx->errors_count - i, err->fileName, err->lineNr,err->statusCode, err->extErrorCode, *err->message != '\0' ? err->message : KSI_getErrorString(err->statusCode));
+		nextWrite = printer(nextWrite, buf_len - count, &count, "  %3lu) %s:%u - (%d/%ld) %s\n", ctx->errors_count - i, err->fileName, err->lineNr,err->statusCode, err->extErrorCode, *err->message != '\0' ? err->message : KSI_getErrorString(err->statusCode));
 	}
 
 	/* If there where more errors than buffers for the errors, indicate the fact */
 	if (ctx->errors_count > ctx->errors_size) {
-		fprintf(f, "  ... (more errors)\n");
+		nextWrite = printer(nextWrite, buf_len - count, &count, "  ... (more errors)\n");
 	}
 
 	res = KSI_OK;
@@ -721,6 +724,34 @@ int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f) {
 cleanup:
 
 	return res;
+}
+
+static void* printer_stream_wrapper(void *toStream, size_t to_len, size_t *count, const char *format, ...) {
+	va_list va;
+	va_start(va, format);
+	*count = vfprintf((FILE*)toStream, format, va);
+	va_end(va);
+	return toStream;
+}
+
+static void* printer_buf_wrapper(void *toStream, size_t to_len, size_t *count, const char *format, ...) {
+	size_t c = 0;
+	va_list va;
+	va_start(va, format);
+	c = KSI_vsnprintf((char*)toStream, to_len, format, va);
+	va_end(va);
+	*count += c;
+	return (char*)toStream + c;
+}
+
+int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f) {
+	return ksi_err_toPrinter(ctx, stderr, 1, printer_stream_wrapper);
+}
+
+char *KSI_ERR_toString(KSI_CTX *ctx, char *buf, size_t buf_len) {
+	int res;
+	res = ksi_err_toPrinter(ctx, buf, buf_len, printer_buf_wrapper);
+	return (res == KSI_OK) ? buf : NULL;
 }
 
 int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, size_t len, int *error, int *ext){
