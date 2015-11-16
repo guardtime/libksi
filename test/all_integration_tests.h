@@ -24,7 +24,7 @@
 #include "cutest/CuTest.h"
 #include <ksi/compatibility.h>
 #include <ksi/err.h>
-
+#include "support_tests.h"
 
 #ifdef	__cplusplus
 extern "C" {

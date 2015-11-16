@@ -158,6 +158,34 @@ static void Test_CreateSignatureWrongHMAC(CuTest* tc) {
 	return;
 }
 
+static void Test_CreateSignatureUsingExtender(CuTest* tc) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+	KSI_CTX *ctx = NULL;
+
+	/* Create the context. */
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create ctx.", res == KSI_OK && ctx != NULL);
+
+	res = KSI_CTX_setAggregator(ctx, conf.extender_url, conf.extender_user, conf.extender_pass);
+	CuAssert(tc, "Unable to set configure extender as aggregator.", res == KSI_OK);
+
+	res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), "c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
+	CuAssert(tc, "Unable to create hash.", res == KSI_OK && hsh != NULL);
+
+	res = KSI_Signature_create(ctx, hsh, &sig);
+	CuAssert(tc, "The creation of signature must fail.", sig == NULL);
+	CuAssert(tc, "Invalid KSI status code for mixed up request.", res == KSI_HTTP_ERROR);
+	CuAssert(tc, "External error (HTTP) must be 400.", ctx_get_base_external_error(ctx) == 400);
+
+
+	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
+	KSI_CTX_free(ctx);
+	return;
+}
+
 CuSuite* AggreIntegrationTests_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -165,6 +193,7 @@ CuSuite* AggreIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_CreateSignatureWrongHMAC);
 	SUITE_ADD_TEST(suite, Test_NOKAggr_TreeTooLarge);
 	SUITE_ADD_TEST(suite, Test_TCPCreateSignature);
+	SUITE_ADD_TEST(suite, Test_CreateSignatureUsingExtender);
 
 	return suite;
 }

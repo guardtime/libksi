@@ -166,6 +166,37 @@ static void Test_NOKExtendRequestToPast(CuTest* tc) {
 	return;
 }
 
+static void Test_ExtendSignatureUsingAggregator(CuTest* tc) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Signature *sig = NULL;
+	KSI_Signature *ext = NULL;
+	KSI_CTX *ctx = NULL;
+
+	/* Create the context. */
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create ctx.", res == KSI_OK && ctx != NULL);
+
+	res = KSI_CTX_setPublicationUrl(ctx, conf.publications_file_url);
+	CuAssert(tc, "Unable to set publications file url.", res == KSI_OK);
+
+	res = KSI_CTX_setExtender(ctx, conf.aggregator_url, conf.aggregator_user, conf.aggregator_pass);
+	CuAssert(tc, "Unable to set configure aggregator as extender.", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-sig-2014-07-01.1.ksig"), &sig);
+	CuAssert(tc, "Unable to set read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_extend(sig, ctx, NULL, &ext);
+	CuAssert(tc, "The extending of signature must fail.", ext == NULL);
+	CuAssert(tc, "Invalid KSI status code for mixed up request.", res == KSI_HTTP_ERROR);
+	CuAssert(tc, "External error (HTTP) must be 400.", ctx_get_base_external_error(ctx) == 400);
+
+
+	KSI_Signature_free(sig);
+	KSI_Signature_free(ext);
+	KSI_CTX_free(ctx);
+	return;
+}
+
 CuSuite* ExtIntegrationTests_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -173,6 +204,7 @@ CuSuite* ExtIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_NOKExtendRequestToTheFuture);
 	SUITE_ADD_TEST(suite, Test_NOKExtendRequestToPast);
 	SUITE_ADD_TEST(suite, Test_OKExtendSignature);
+	SUITE_ADD_TEST(suite, Test_ExtendSignatureUsingAggregator);
 
 	return suite;
 }
