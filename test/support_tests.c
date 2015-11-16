@@ -32,6 +32,19 @@
 #  define DIR_SEP '/'
 #endif
 
+int ctx_get_base_external_error(KSI_CTX *ctx) {
+	char buf[1024];
+	int ext_error = 0;
+
+	if (ctx == NULL) return -1;
+
+	if (KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL, &ext_error) != KSI_OK) {
+		return -1;
+	}
+
+	return ext_error;
+}
+
 void addSuite(CuSuite *suite, CuSuite* (*fn)(void)) {
 	int i;
 	CuSuite *tmp = fn();

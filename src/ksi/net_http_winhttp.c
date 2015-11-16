@@ -149,7 +149,7 @@ static int winHTTP_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **
 		WINHTTP_ERROR_N(ctx, KSI_NETWORK_ERROR, "WinHTTP: Unable to get HTTP status.")
 	}
 
-//	http->httpStatus = http_status;
+	reqHandle->err.code = http_status;
 
 	/*Get response length*/
 	dwordLen = sizeof(DWORD);
