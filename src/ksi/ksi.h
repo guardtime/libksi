@@ -334,6 +334,16 @@ int KSI_CTX_registerGlobals(KSI_CTX *ctx, int (*initFn)(void), void (*cleanupFn)
 int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f);
 
 /**
+ * Get error stack trace NUL terminated c string representation.
+ * \param[in]		ctx			KSI context object.
+ * \param[in]		buf			Pointer to receiving buffer.
+ * \param[in]		buf_len		Size of buf.
+ *
+ * \return buf if successful, NULL otherwise;
+ */
+char *KSI_ERR_toString(KSI_CTX *ctx, char *buf, size_t buf_len);
+
+/**
  * Get base error message.
  * \param[in]		ctx		KSI context object.
  * \param[out]		buf		Buffer for storing error message.
