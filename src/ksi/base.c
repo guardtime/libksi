@@ -270,12 +270,12 @@ static void globalCleanup(KSI_CTX *ctx) {
 	for (pos = 0; pos < KSI_List_length(ctx->cleanupFnList); pos++) {
 		res = KSI_List_elementAt(ctx->cleanupFnList, pos, (void **)&fn);
 		if (res != KSI_OK) {
-			KSI_LOG_error(ctx, "Unable to retrieve cleanup function - possible MEMORY LEAK.");
+			KSI_LOG_error(ctx, "Unable to retrieve cleanup function - possible MEMORY CURRUPTION.");
 			break;
 		}
 
 		if (fn == NULL) {
-			KSI_LOG_error(ctx, "Got NULL as global cleanup method - possible MEMORY LEAK.");
+			KSI_LOG_error(ctx, "Got NULL as global cleanup method - possible MEMORY CURRUPTION.");
 			break;
 		}
 

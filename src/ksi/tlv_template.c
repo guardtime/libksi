@@ -875,7 +875,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 					}
 					break;
 				default:
-					KSI_LOG_error(ctx, "Unimplemented template type: %d - possible MEMORY LEAK.", tmpl[i].type);
+					KSI_LOG_error(ctx, "Unimplemented template type: %d - possible MEMORY CURRUPTION.", tmpl[i].type);
 					KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Unimplemented template type.");
 					goto cleanup;
 			}

@@ -448,7 +448,7 @@ void KSI_RDR_close(KSI_RDR *rdr)  {
 			rdr->data.mem.buffer = NULL;
 			break;
 		default:
-			KSI_LOG_error(ctx, "Unsupported KSI IO-type - possible MEMORY LEAK.");
+			KSI_LOG_error(ctx, "Unsupported KSI IO-type - possible MEMORY CURRUPTION.");
 	}
 
 	KSI_free(rdr);
