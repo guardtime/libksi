@@ -871,16 +871,17 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	for (i = 0; pki->ctx->certConstraints[i].oid != NULL; i++) {
 		KSI_CertConstraint *ptr = &pki->ctx->certConstraints[i];
 
-		KSI_LOG_info(pki->ctx, "Verifying PKI signature certificate with oid = '%s' expected value '%s'.", ptr->oid, ptr->val);
+		KSI_LOG_info(pki->ctx, "Verifying PKI signature certificate with OID: '%s' expected value: '%s'.", ptr->oid, ptr->val);
 
 		if (CertGetNameString(subjectCert, CERT_NAME_ATTR_TYPE, 0, ptr->oid, tmp, sizeof(tmp)) == 1){
-			KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, "Unable to get OID value.");
+			KSI_LOG_debug(pki->ctx, "Value for OID: '%s' does not exist.", ptr->oid);
+			KSI_pushError(ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, NULL);
 			goto cleanup;
 		}
 
 		if (strcmp(tmp, ptr->val) != 0) {
-			KSI_LOG_debug(pki->ctx, "Unexpected value for OID='%s': '%s'", ptr->oid, tmp);
-			KSI_pushError(ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, "Unexpected OID value.");
+			KSI_LOG_debug(pki->ctx, "Unexpected value: '%s' for OID: '%s'.", tmp, ptr->oid);
+			KSI_pushError(ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, "Unexpected OID value for PKI Certificate constraint.");
 			goto cleanup;
 		}
 	}

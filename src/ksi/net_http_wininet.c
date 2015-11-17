@@ -68,7 +68,7 @@ cleanup:
 
 
 #define WININET_ERROR(_ctx, _error, _ksier, _msg) \
-		KSI_LOG_error(_ctx, "WinINet returned error %i at line %i in file %s.", _error, __LINE__, __FILE__); \
+		KSI_LOG_debug(_ctx, "WinINet returned error %i in file %s at line %i.", _error, __FILE__, __LINE__); \
 		KSI_ERR_push(_ctx, res = _ksier, _error, __FILE__, __LINE__, _msg); \
 		goto cleanup;
 
