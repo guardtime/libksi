@@ -337,7 +337,7 @@ static void implCtx_free(void * hInternet){
 	InternetCloseHandle((HINTERNET)hInternet);
 }
 
-int KSI_HttpClient_new(KSI_CTX *ctx, KSI_HttpClient **client) {
+int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	KSI_NetworkClient *tmp = NULL;
 	KSI_HttpClient *http = NULL;
 	HINTERNET internet_handle;
