@@ -136,6 +136,7 @@ static int curlReceive(KSI_RequestHandle *handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	CurlNetHandleCtx *implCtx = NULL;
 	KSI_HttpClient *http = NULL;
+	long httpCode;
 
 	if (handle == NULL || handle->client == NULL || handle->implCtx == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -150,18 +151,17 @@ static int curlReceive(KSI_RequestHandle *handle) {
 	KSI_LOG_debug(handle->ctx, "Sending request.");
 
     res = curl_easy_perform(implCtx->curl);
-    if (res != CURLE_OK) {
-    	long httpCode;
-    	if (res == CURLE_HTTP_RETURNED_ERROR && curl_easy_getinfo(implCtx->curl, CURLINFO_HTTP_CODE, &httpCode) == CURLE_OK) {
-    		updateStatus(handle);
-    		KSI_LOG_debug(handle->ctx, "Received HTTP error code %d. Curl error '%s'.", httpCode, implCtx->curlErr);
-		} else {
-    		KSI_pushError(handle->ctx, res = KSI_NETWORK_ERROR, implCtx->curlErr);
-			goto cleanup;
-    	}
+    KSI_LOG_debug(handle->ctx, "Received %llu bytes.", (unsigned long long)implCtx->len);
+
+	if (curl_easy_getinfo(implCtx->curl, CURLINFO_HTTP_CODE, &httpCode) == CURLE_OK) {
+		updateStatus(handle);
+		KSI_LOG_debug(handle->ctx, "Received HTTP error code %d. Curl error '%s'.", httpCode, implCtx->curlErr);
 	}
 
-    KSI_LOG_debug(handle->ctx, "Received %llu bytes.", (unsigned long long)implCtx->len);
+	if (res != CURLE_OK) {
+		KSI_pushError(handle->ctx, res = KSI_NETWORK_ERROR, implCtx->curlErr);
+		goto cleanup;
+	}
 
     res = KSI_RequestHandle_setResponse(handle, implCtx->raw, implCtx->len);
     if (res != KSI_OK) {

@@ -780,7 +780,7 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	for (i = 0; pki->ctx->certConstraints[i].oid != NULL; i++) {
 		KSI_CertConstraint *ptr = &pki->ctx->certConstraints[i];
 
-		KSI_LOG_info(pki->ctx, "%d. Verifying PKI signature certificate with oid = '%s' expected value '%s'.", i + 1, ptr->oid, ptr->val);
+		KSI_LOG_info(pki->ctx, "%d. Verifying PKI signature certificate with OID: '%s' expected value: '%s'.", i + 1, ptr->oid, ptr->val);
 
 		oid = OBJ_txt2obj(ptr->oid, 1);
 		if (oid == NULL) {
@@ -790,11 +790,14 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 
 		res = X509_NAME_get_text_by_OBJ(subj, oid, tmp, sizeof(tmp));
 		if (res < 0) {
+			KSI_LOG_debug(pki->ctx, "Value for OID: '%s' does not exist.", ptr->oid);
 			KSI_pushError(pki->ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, NULL);
 			goto cleanup;
 		}
+
 		if (strcmp(tmp, ptr->val)) {
-			KSI_pushError(pki->ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, "Wrong subject name.");
+			KSI_LOG_debug(pki->ctx, "Unexpected value: '%s' for OID: '%s'.", tmp, ptr->oid);
+			KSI_pushError(pki->ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, "Unexpected OID value for PKI Certificate constraint.");
 			goto cleanup;
 		}
 

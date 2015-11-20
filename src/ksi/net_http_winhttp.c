@@ -72,7 +72,7 @@ return res;
 }
 
 #define WINHTTP_ERROR(_ctx, _error, _ksier, _msg) \
-		KSI_LOG_error(_ctx, "WinHTTP returned error %i at line %i in file %s.", _error, __LINE__, __FILE__); \
+		KSI_LOG_debug(_ctx, "WinHTTP returned error %i in file %s at line %i.", _error, __FILE__, __LINE__); \
 		KSI_ERR_push(_ctx, res = _ksier, _error, __FILE__, __LINE__, _msg); \
 		goto cleanup;
 
@@ -149,7 +149,7 @@ static int winHTTP_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **
 		WINHTTP_ERROR_N(ctx, KSI_NETWORK_ERROR, "WinHTTP: Unable to get HTTP status.")
 	}
 
-//	http->httpStatus = http_status;
+	reqHandle->err.code = http_status;
 
 	/*Get response length*/
 	dwordLen = sizeof(DWORD);

@@ -459,7 +459,7 @@ static int extractObject(KSI_CTX *ctx, const KSI_TlvTemplate *tmpl, void *payloa
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
 		}
-		
+
 		res = tmpl->parser(ctx, raw, len, tmpl->parser_opt, &tmp);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
@@ -875,7 +875,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 					}
 					break;
 				default:
-					KSI_LOG_warn(ctx, "Unimplemented template type: %d", tmpl[i].type);
+					KSI_LOG_error(ctx, "Unimplemented template type: %d - possible MEMORY CURRUPTION.", tmpl[i].type);
 					KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Unimplemented template type.");
 					goto cleanup;
 			}
