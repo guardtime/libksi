@@ -124,6 +124,13 @@ extern "C" {
 	int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_length);
 
 	/**
+	 * Adds the imprint of the given datahash to the hasher.
+	 * \param[in]	hasher				Hasher object.
+	 * \param[in]	hsh					Datahash object.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_DataHasher_addImprint(KSI_DataHasher *hasher, const KSI_DataHash *hsh);
+	/**
 	 * Finalizes a hash computation.
 	 * \param[in]	hasher			Hasher object.
 	 * \param[out]	hash			Pointer that will receive pointer to the hash object.

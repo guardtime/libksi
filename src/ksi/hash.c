@@ -564,4 +564,35 @@ cleanup:
 
 }
 
+int KSI_DataHasher_addImprint(KSI_DataHasher *hasher, const KSI_DataHash *hsh) {
+	int res = KSI_UNKNOWN_ERROR;
+	const unsigned char *imprint;
+	size_t imprint_len;
+
+	if (hasher == NULL || hsh == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(hasher->ctx);
+
+	res = KSI_DataHash_getImprint(hsh, &imprint, &imprint_len);
+	if (res != KSI_OK) {
+		KSI_pushError(hasher->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_DataHasher_add(hasher, imprint, imprint_len);
+	if (res != KSI_OK) {
+		KSI_pushError(hasher->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 KSI_IMPLEMENT_REF(KSI_DataHash);

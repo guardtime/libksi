@@ -48,7 +48,7 @@ static long long int highBit(long long int n) {
 }
 
 
-static int addNvlImprint(const KSI_DataHash *first, const KSI_DataHash *second, KSI_DataHasher *hsr) {
+static int addNvlImprint(KSI_DataHash *first, const KSI_DataHash *second, KSI_DataHasher *hsr) {
 	int res = KSI_UNKNOWN_ERROR;
 	const KSI_DataHash *hsh = first;
 	const unsigned char *imprint = NULL;
@@ -62,10 +62,7 @@ static int addNvlImprint(const KSI_DataHash *first, const KSI_DataHash *second, 
 		hsh = second;
 	}
 
-	res = KSI_DataHash_getImprint(hsh, &imprint, &imprint_len);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_DataHasher_add(hsr, imprint, imprint_len);
+	res = KSI_DataHasher_addImprint(hsr, hsh);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_OK;
