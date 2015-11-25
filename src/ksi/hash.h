@@ -339,6 +339,7 @@ extern "C" {
 	 * \param[in]		hsh		Input hash object.
 	 * \param[in,out]	buf		Pointer to the receiving buffer.
 	 * \param[in]		buf_len	Length of the receiving buffer.
+	 * \return Returns the pointer to the buffer or NULL on error.
 	 */
 	char *KSI_DataHash_toString(const KSI_DataHash *hsh, char *buf, size_t buf_len);
 
