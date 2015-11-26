@@ -28,23 +28,22 @@
 KSI_IMPLEMENT_GET_CTX(KSI_NetworkClient);
 KSI_IMPLEMENT_GET_CTX(KSI_RequestHandle);
 
-static int setStringParam(char **param, const char *val) {
+static int newStringFromExisting(char **string, const char *val, int val_len) {
 	char *tmp = NULL;
 	int res = KSI_UNKNOWN_ERROR;
+	size_t new_len = (val_len < 0) ? (strlen(val) + 1) : (val_len);
 
-
-	tmp = KSI_calloc(strlen(val) + 1, 1);
+	tmp = KSI_malloc(strlen(val) + 1);
 	if (tmp == NULL) {
-		res = KSI_INVALID_ARGUMENT;
+		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
-	memcpy(tmp, val, strlen(val) + 1);
+	memcpy(tmp, val, new_len);
+	tmp[new_len - 1] = '\0';
 
-	if (*param != NULL) {
-		KSI_free(*param);
-	}
+	if (*string != NULL) KSI_free(*string);
 
-	*param = tmp;
+	*string = tmp;
 	tmp = NULL;
 
 	res = KSI_OK;
@@ -54,6 +53,10 @@ cleanup:
 	KSI_free(tmp);
 
 	return res;
+}
+
+static int setStringParam(char **param, const char *val) {
+	return newStringFromExisting(param, val, -1);
 }
 
 /**
