@@ -64,39 +64,6 @@ static void TcpClientCtx_free(TcpClientCtx *t) {
 
 #define TcpClient_Endpoint_free TcpClientCtx_free
 
-static int setStringParam(char **param, const char *val) {
-	char *tmp = NULL;
-	int res = KSI_UNKNOWN_ERROR;
-
-
-	tmp = KSI_calloc(strlen(val) + 1, 1);
-	if (tmp == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	memcpy(tmp, val, strlen(val) + 1);
-
-	if (*param != NULL) {
-		KSI_free(*param);
-	}
-
-	*param = tmp;
-	tmp = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_free(tmp);
-
-	return res;
-}
-
-static int setIntParam(int *param, int val) {
-	*param = val;
-	return KSI_OK;
-}
-
 static int readResponse(KSI_RequestHandle *handle) {
 	int res;
 	TcpClientCtx *tcp = NULL;
@@ -567,7 +534,7 @@ cleanup:
 	return res;
 }
 
-static int ksi_TcpClient_setService(KSI_NetEndpoint *abs_endp, const char *host, unsigned port, const char *user, const char *pass) {
+static int ksi_TcpClient_setService(KSI_NetworkClient *client, KSI_NetEndpoint *abs_endp, const char *host, unsigned port, const char *user, const char *pass) {
 	int res = KSI_UNKNOWN_ERROR;
 	TcpClient_Endpoint *endp = NULL;
 
@@ -578,15 +545,15 @@ static int ksi_TcpClient_setService(KSI_NetEndpoint *abs_endp, const char *host,
 
 	endp = abs_endp->implCtx;
 
-	res = setStringParam(&endp->host, host);
+	res = client->setStringParam(&endp->host, host);
 	if (res != KSI_OK) goto cleanup;
 
 	endp->port = port;
 
-	res = setStringParam(&abs_endp->ksi_user, user);
+	res = client->setStringParam(&abs_endp->ksi_user, user);
 	if (res != KSI_OK) goto cleanup;
 
-	res = setStringParam(&abs_endp->ksi_pass, pass);
+	res = client->setStringParam(&abs_endp->ksi_pass, pass);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_OK;
@@ -597,12 +564,12 @@ cleanup:
 }
 int KSI_TcpClient_setExtender(KSI_NetworkClient *client, const char *host, unsigned port, const char *user, const char *pass) {
 	if (client == NULL || client->extender == NULL) return KSI_INVALID_ARGUMENT;
-	return ksi_TcpClient_setService(client->extender, host, port, user, pass);
+	return ksi_TcpClient_setService(client, client->extender, host, port, user, pass);
 }
 
 int KSI_TcpClient_setAggregator(KSI_NetworkClient *client, const char *host, unsigned port, const char *user, const char *pass) {
 	if (client == NULL || client->extender == NULL) return KSI_INVALID_ARGUMENT;
-	return ksi_TcpClient_setService(client->aggregator, host, port, user, pass);
+	return ksi_TcpClient_setService(client, client->aggregator, host, port, user, pass);
 }
 
 int KSI_TcpClient_setPublicationUrl(KSI_NetworkClient *client, const char *val) {
