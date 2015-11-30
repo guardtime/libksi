@@ -62,8 +62,7 @@ make install DESTDIR=%{buildroot}
 %files
 %defattr(644,root,root,755)
 %{_libdir}/libksi.so
-%{_libdir}/libksi.so.0
-%{_libdir}/libksi.so.0.0.0
+%{_libdir}/libksi.so.*
 %{_docdir}/%{name}/changelog
 %{_docdir}/%{name}/license.txt
 

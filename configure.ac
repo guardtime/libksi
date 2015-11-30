@@ -24,6 +24,19 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([src/ksi/config.h])
 AC_CANONICAL_TARGET
 
+# Before making a release, the LTVER string should be modified. The
+# string is of the form c:r:a. Follow these instructions sequentially:
+#   1. If the library source code has changed at all since the last update, then
+#      increment revision ('c:r:a' becomes 'c:r+1:a').
+#   2. If any interfaces have been added, removed, or changed since the last
+#      update, increment current, and set revision to 0 ('c:r:a' becomes 'c+1:0:a').
+#   3. If any interfaces have been added since the last public release, then
+#      increment age ('c:r:a' becomes 'c:r:a+1').
+#   4. If any interfaces have been removed or changed since the last public
+#      release, then set age to 0 ('c:r:a' becomes 'c:r:0'). 
+LTVER="1:0:0"
+AC_SUBST(LTVER)
+
 AM_INIT_AUTOMAKE([subdir-objects foreign -Wall -Werror])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 # Checks for programs.
