@@ -59,6 +59,113 @@ static int setStringParam(char **param, const char *val) {
 	return newStringFromExisting(param, val, -1);
 }
 
+static int uriSplit(const char *uri, char **scheme, char **user, char **pass, char **host, unsigned *port, char **path) {
+	int res = KSI_UNKNOWN_ERROR;
+	struct http_parser_url parser;
+	char *tmpHost = NULL;
+	char *tmpSchema = NULL;
+	char *tmpPath = NULL;
+	char *tmpUserInfo = NULL;
+	char *tmpUser = NULL;
+	char *tmpPass = NULL;
+
+	if (uri == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	memset(&parser, 0, sizeof(struct http_parser_url));
+
+	res = http_parser_parse_url(uri, strlen(uri), 0, &parser);
+	if (res != 0) {
+		res = KSI_INVALID_FORMAT;
+		goto cleanup;
+	}
+
+	/* Extract host. */
+	if ((parser.field_set & (1 << UF_HOST)) && (host != NULL)) {
+		res = newStringFromExisting(&tmpHost, uri + parser.field_data[UF_HOST].off, parser.field_data[UF_HOST].len + 1);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	/* Extract user info. */
+	if ((parser.field_set & (1 << UF_USERINFO)) && (user != NULL || pass != NULL)) {
+		char *startOfPass = NULL;
+		res = newStringFromExisting(&tmpUserInfo, uri + parser.field_data[UF_USERINFO].off, parser.field_data[UF_USERINFO].len + 1);
+		if (res != KSI_OK) goto cleanup;
+
+		startOfPass = strchr(tmpUserInfo, ':');
+		if (startOfPass == NULL) {
+			res = KSI_INVALID_FORMAT;
+			goto cleanup;
+		}
+
+		*startOfPass++ = '\0';
+
+		if (user != NULL) {
+			res = newStringFromExisting(&tmpUser, tmpUserInfo, -1);
+			if (res != KSI_OK) goto cleanup;
+		}
+
+		if (pass != NULL) {
+			res = newStringFromExisting(&tmpPass, startOfPass, -1);
+			if (res != KSI_OK) goto cleanup;
+		}
+	}
+
+	/* Extract schema. */
+	if ((parser.field_set & (1 << UF_SCHEMA)) && (scheme != NULL)) {
+		res = newStringFromExisting(&tmpSchema, uri + parser.field_data[UF_SCHEMA].off, parser.field_data[UF_SCHEMA].len + 1);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	/* Extract path. */
+	if ((parser.field_set & (1 << UF_PATH)) && (path != NULL)) {
+		res = newStringFromExisting(&tmpPath, uri + parser.field_data[UF_PATH].off, parser.field_data[UF_PATH].len + 1);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	if (host != NULL) {
+		*host = tmpHost;
+		tmpHost = NULL;
+	}
+
+	if (scheme != NULL) {
+		*scheme = tmpSchema;
+		tmpSchema = NULL;
+	}
+
+	if (path != NULL) {
+		*path = tmpPath;
+		tmpPath = NULL;
+	}
+
+	if (user != NULL) {
+		*user = tmpUser;
+		tmpUser = NULL;
+	}
+
+	if (pass != NULL) {
+		*pass = tmpPass;
+		tmpPass = NULL;
+	}
+
+	if (port != NULL) *port = parser.port;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_free(tmpHost);
+	KSI_free(tmpSchema);
+	KSI_free(tmpPath);
+	KSI_free(tmpUserInfo);
+	KSI_free(tmpUser);
+	KSI_free(tmpPass);
+
+	return res;
+}
+
 void KSI_NetEndpoint_free(KSI_NetEndpoint *endPoint) {
 	if (endPoint == NULL) return;
 
@@ -915,6 +1022,9 @@ int KSI_AbstractNetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	tmp->requestCount = 0;
 	tmp->performAll = simplePerformAll;
 
+	/* Configure private helper functions. */
+	tmp->setStringParam = setStringParam;
+	tmp->uriSplit = uriSplit;
 
 	/* Create Abstract endpoints. */
 	res = KSI_AbstractNetEndpoint_new(ctx, &aggrEndpoint);
@@ -989,115 +1099,36 @@ int KSI_convertExtenderStatusCode(KSI_Integer *statusCode) {
 	}
 }
 
-static int ksi_UriSplit(const char *uri, char **scheme, char **user, char **pass, char **host, unsigned *port, char **path) {
-	int res = KSI_UNKNOWN_ERROR;
-	struct http_parser_url parser;
-	char *tmpHost = NULL;
-	char *tmpSchema = NULL;
-	char *tmpPath = NULL;
-	char *tmpUserInfo = NULL;
-	char *tmpUser = NULL;
-	char *tmpPass = NULL;
+int KSI_UriSplitBasic(const char *uri, char **scheme, char **host, unsigned *port, char **path) {
+	return uriSplit(uri, scheme, NULL, NULL, host, port, path);
+}
 
-	if (uri == NULL) {
+int KSI_NetworkClient_performAll(KSI_NetworkClient *client, KSI_RequestHandle **arr, size_t arr_len) {
+	int res = KSI_UNKNOWN_ERROR;
+	if (client == NULL || (arr == NULL && arr_len != 0)) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	memset(&parser, 0, sizeof(struct http_parser_url));
-
-	res = http_parser_parse_url(uri, strlen(uri), 0, &parser);
-	if (res != 0) {
-		res = KSI_INVALID_FORMAT;
+	if (client->performAll == NULL) {
+		KSI_pushError(client->ctx, res = KSI_UNKNOWN_ERROR, "Network client does not implement performAll() method.");
 		goto cleanup;
 	}
 
-	/* Extract host. */
-	if ((parser.field_set & (1 << UF_HOST)) && (host != NULL)) {
-		res = newStringFromExisting(&tmpHost, uri + parser.field_data[UF_HOST].off, parser.field_data[UF_HOST].len + 1);
-		if (res != KSI_OK) goto cleanup;
-	}
-
-	/* Extract user info. */
-	if ((parser.field_set & (1 << UF_USERINFO)) && (user != NULL || pass != NULL)) {
-		char *startOfPass = NULL;
-		res = newStringFromExisting(&tmpUserInfo, uri + parser.field_data[UF_USERINFO].off, parser.field_data[UF_USERINFO].len + 1);
-		if (res != KSI_OK) goto cleanup;
-
-		startOfPass = strchr(tmpUserInfo, ':');
-		if (startOfPass == NULL) {
-			res = KSI_INVALID_FORMAT;
+	if (arr != NULL && arr_len != 0) {
+		res = client->performAll(client, arr, arr_len);
+		if (res != KSI_OK) {
+			KSI_pushError(client->ctx, res, NULL);
 			goto cleanup;
 		}
-
-		*startOfPass++ = '\0';
-
-		if (user != NULL) {
-			res = newStringFromExisting(&tmpUser, tmpUserInfo, -1);
-			if (res != KSI_OK) goto cleanup;
-		}
-
-		if (pass != NULL) {
-			res = newStringFromExisting(&tmpPass, startOfPass, -1);
-			if (res != KSI_OK) goto cleanup;
-		}
 	}
-
-	/* Extract schema. */
-	if ((parser.field_set & (1 << UF_SCHEMA)) && (scheme != NULL)) {
-		res = newStringFromExisting(&tmpSchema, uri + parser.field_data[UF_SCHEMA].off, parser.field_data[UF_SCHEMA].len + 1);
-		if (res != KSI_OK) goto cleanup;
-	}
-
-	/* Extract path. */
-	if ((parser.field_set & (1 << UF_PATH)) && (path != NULL)) {
-		res = newStringFromExisting(&tmpPath, uri + parser.field_data[UF_PATH].off, parser.field_data[UF_PATH].len + 1);
-		if (res != KSI_OK) goto cleanup;
-	}
-
-	if (host != NULL) {
-		*host = tmpHost;
-		tmpHost = NULL;
-	}
-
-	if (scheme != NULL) {
-		*scheme = tmpSchema;
-		tmpSchema = NULL;
-	}
-
-	if (path != NULL) {
-		*path = tmpPath;
-		tmpPath = NULL;
-	}
-
-	if (user != NULL) {
-		*user = tmpUser;
-		tmpUser = NULL;
-	}
-
-	if (pass != NULL) {
-		*pass = tmpPass;
-		tmpPass = NULL;
-	}
-
-	if (port != NULL) *port = parser.port;
 
 	res = KSI_OK;
 
 cleanup:
 
-	KSI_free(tmpHost);
-	KSI_free(tmpSchema);
-	KSI_free(tmpPath);
-	KSI_free(tmpUserInfo);
-	KSI_free(tmpUser);
-	KSI_free(tmpPass);
-
 	return res;
-}
 
-int KSI_UriSplitBasic(const char *uri, char **scheme, char **host, unsigned *port, char **path) {
-	return ksi_UriSplit(uri, scheme, NULL, NULL, host, port, path);
 }
 
 int KSI_NetworkClient_performAll(KSI_NetworkClient *client, KSI_RequestHandle **arr, size_t arr_len) {
