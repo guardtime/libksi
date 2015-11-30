@@ -86,6 +86,11 @@ extern "C" {
 	typedef struct KSI_PKITruststore_st KSI_PKITruststore;
 
 	/**
+	 * Network endpoint description that must have implementation according to the type of transport layer used.
+	 */
+	typedef struct KSI_NetEndpoint_st KSI_NetEndpoint;
+	
+	/**
 	 * Network resource handle returned from functions sending or preparing network requests.
 	 *
 	 *	\see #KSI_NetworkClient_sendExtendRequest, #KSI_NetworkClient_sendSignRequest, #KSI_NetworkClient_sendPublicationsFileRequest

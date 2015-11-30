@@ -656,21 +656,24 @@ void assert_isHttpClientSetCorrectly(CuTest *tc, KSI_NetworkClient *client,
 		const char *e_url, const char *e_host, int e_port, const char *e_user, const char *e_key){
 	KSI_UriClient *uri = client->impl;
 	KSI_NetworkClient *http = uri->httpClient;
-	KSI_HttpClient *httpi = http->impl;
+	KSI_NetEndpoint *endp_aggr = http->aggregator;
+	KSI_NetEndpoint *endp_ext = http->extender;
+	struct HttpClient_Endpoint_st *endp_aggr_impl = endp_aggr->implCtx;
+	struct HttpClient_Endpoint_st *endp_ext_impl = endp_ext->implCtx;
 
 	CuAssert(tc, "Http client is not set.", http != NULL);
 	CuAssert(tc, "Http client is not set as aggregator and extender service.",
 			(void*)http == (void*)(uri->pAggregationClient) &&
 			(void*)http == (void*)(uri->pExtendClient));
 
-	CuAssert(tc, "Http aggregator url mismatch.", strcmp(httpi->urlAggregator, strstr(a_url, "ksi+") == a_url ? a_url+4 : a_url) == 0 ||
-			(strstr(a_url, "ksi://") == a_url && strstr(httpi->urlAggregator, "http://") == httpi->urlAggregator && strcmp(httpi->urlAggregator+7, a_url+6) == 0));
-	CuAssert(tc, "Http aggregator key mismatch.", strcmp(http->aggrPass, a_key) == 0);
-	CuAssert(tc, "Http aggregator user mismatch.", strcmp(http->aggrUser, a_user) == 0);
-	CuAssert(tc, "Http extender url mismatch.", strcmp(httpi->urlExtender, strstr(e_url, "ksi+") == e_url ? e_url+4 : e_url) == 0 ||
-			(strstr(e_url, "ksi://") == e_url && strstr(httpi->urlExtender, "http://") == httpi->urlExtender && strcmp(httpi->urlExtender+7, e_url+6) == 0));
-	CuAssert(tc, "Http extender key mismatch.", strcmp(http->extPass, e_key) == 0);
-	CuAssert(tc, "Http extender user mismatch.", strcmp(http->extUser, e_user) == 0);
+	CuAssert(tc, "Http aggregator url mismatch.", strcmp(endp_aggr_impl->url, strstr(a_url, "ksi+") == a_url ? a_url+4 : a_url) == 0 ||
+			(strstr(a_url, "ksi://") == a_url && strstr(endp_aggr_impl->url, "http://") == endp_aggr_impl->url && strcmp(endp_aggr_impl->url+7, a_url+6) == 0));
+	CuAssert(tc, "Http aggregator key mismatch.", strcmp(endp_aggr->ksi_pass, a_key) == 0);
+	CuAssert(tc, "Http aggregator user mismatch.", strcmp(endp_aggr->ksi_user, a_user) == 0);
+	CuAssert(tc, "Http extender url mismatch.", strcmp(endp_ext_impl->url, strstr(e_url, "ksi+") == e_url ? e_url+4 : e_url) == 0 ||
+			(strstr(e_url, "ksi://") == e_url && strstr(endp_ext_impl->url, "http://") == endp_ext_impl->url && strcmp(endp_ext_impl->url+7, e_url+6) == 0));
+	CuAssert(tc, "Http extender key mismatch.", strcmp(endp_ext->ksi_pass, e_key) == 0);
+	CuAssert(tc, "Http extender user mismatch.", strcmp(endp_ext->ksi_user, e_user) == 0);
 }
 
 void assert_isTcpClientSetCorrectly(CuTest *tc, KSI_NetworkClient *client,
@@ -678,21 +681,24 @@ void assert_isTcpClientSetCorrectly(CuTest *tc, KSI_NetworkClient *client,
 		const char *e_url, const char *e_host, int e_port, const char *e_user, const char *e_key){
 	KSI_UriClient *uri = client->impl;
 	KSI_NetworkClient *tcp = uri->tcpClient;
-	KSI_TcpClient *tcpi = tcp->impl;
+	KSI_NetEndpoint *endp_aggr = tcp->aggregator;
+	KSI_NetEndpoint *endp_ext = tcp->extender;
+	struct TcpClient_Endpoint_st *endp_aggr_impl = endp_aggr->implCtx;
+	struct TcpClient_Endpoint_st *endp_ext_impl = endp_ext->implCtx;
 
 	CuAssert(tc, "Tcp client is not set (NULL).", tcp != NULL);
 	CuAssert(tc, "Tcp client is not set as aggregator and extender service.",
 			(void*)tcp == (void*)(uri->pAggregationClient) &&
 			(void*)tcp == (void*)(uri->pExtendClient));
 
-	CuAssert(tc, "Tcp aggregator host mismatch.", strcmp(tcpi->aggrHost, a_host) == 0);
-	CuAssert(tc, "Tcp aggregator port mismatch.", tcpi->aggrPort == a_port);
-	CuAssert(tc, "Tcp aggregator key mismatch.", strcmp(tcp->aggrPass, a_key) == 0);
-	CuAssert(tc, "Tcp aggregator user mismatch.", strcmp(tcp->aggrUser, a_user) == 0);
-	CuAssert(tc, "Tcp extender url mismatch.", strcmp(tcpi->extHost, e_host) == 0);
-	CuAssert(tc, "Tcp extender host mismatch.", tcpi->extPort == e_port);
-	CuAssert(tc, "Tcp extender key mismatch.", strcmp(tcp->extPass, e_key) == 0);
-	CuAssert(tc, "Tcp extender user mismatch.", strcmp(tcp->extUser, e_user) == 0);
+	CuAssert(tc, "Tcp aggregator host mismatch.", strcmp(endp_aggr_impl->host, a_host) == 0);
+	CuAssert(tc, "Tcp aggregator port mismatch.", endp_aggr_impl->port == a_port);
+	CuAssert(tc, "Tcp aggregator key mismatch.", strcmp(endp_aggr->ksi_pass, a_key) == 0);
+	CuAssert(tc, "Tcp aggregator user mismatch.", strcmp(endp_aggr->ksi_user, a_user) == 0);
+	CuAssert(tc, "Tcp extender url mismatch.", strcmp(endp_ext_impl->host, e_host) == 0);
+	CuAssert(tc, "Tcp extender host mismatch.", endp_ext_impl->port == e_port);
+	CuAssert(tc, "Tcp extender key mismatch.", strcmp(endp_ext->ksi_pass, e_key) == 0);
+	CuAssert(tc, "Tcp extender user mismatch.", strcmp(endp_ext->ksi_user, e_user) == 0);
 }
 
 static void smartServiceSetterSchemeTest(CuTest *tc, KSI_CTX *ctx, const char *scheme,

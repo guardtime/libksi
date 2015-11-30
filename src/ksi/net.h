@@ -63,6 +63,40 @@ extern "C" {
 	void KSI_RequestHandle_free(KSI_RequestHandle *handle);
 
 	/**
+	 * Constructor for abstract network endpoint object. The implementations must
+	 * be configured (\see #KSI_NetEndpoint_setImplContext).
+	 * \param[in]		ctx				KSI context.
+	 * \param[out]		endp			Pointer to the receiving network endpoint pointer.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise and
+	 * error code).
+	 */
+	int KSI_AbstractNetEndpoint_new(KSI_CTX *ctx, KSI_NetEndpoint **endp);
+
+	/**
+	 * Free network endpoint object.
+	 * \param[in]		endp			Network endpoint.
+	 */
+	void KSI_NetEndpoint_free(KSI_NetEndpoint *endp);
+
+	/**
+	 * Setter for the implementation specific endpoint context.
+	 * \param[in]		endp			Endpoint.
+	 * \param[in]		implCtx			Implementation specific context.
+	 * \param[in]		implCtx_free	Pointer to the implementation specific network endpoint cleanup method.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise and
+	 * error code).
+	 */
+	int KSI_NetEndpoint_setImplContext(KSI_NetEndpoint *endp, void *implCtx, void (*implCtx_free)(void *));
+
+	int KSI_NetEndpoint_setPass(KSI_NetEndpoint *endp, const char *ksi_pass);
+	int KSI_NetEndpoint_setUser(KSI_NetEndpoint *endp, const char *ksi_user);
+
+	int KSI_NetEndpoint_getUser(const KSI_NetEndpoint *endp, const char **ksi_user);
+	int KSI_NetEndpoint_getPass(const KSI_NetEndpoint *endp, const char **ksi_pass);
+
+	/**
 	 * Free network provider object.
 	 * \param[in]		provider		Network provider.
 	 */
@@ -309,6 +343,14 @@ extern "C" {
 	 * corrupted memory and data).
 	 */
 	int KSI_NetworkClient_performAll(KSI_NetworkClient *client, KSI_RequestHandle **arr, size_t arr_len);
+
+	int KSI_NetworkClient_getAggregatorEndpoint(const KSI_NetworkClient *net, KSI_NetEndpoint **endp);
+	int KSI_NetworkClient_getExtenderEndpoint(const KSI_NetworkClient *net, KSI_NetEndpoint **endp);
+	int KSI_NetworkClient_getPublicationsFileEndpoint (const KSI_NetworkClient *net, KSI_NetEndpoint **endp);
+
+	int KSI_NetworkClient_setAggregatorEndpoint(KSI_NetworkClient *net, KSI_NetEndpoint *endp);
+	int KSI_NetworkClient_setExtenderEndpoint(KSI_NetworkClient *net, KSI_NetEndpoint *endp);
+	int KSI_NetworkClient_setPublicationsFileEndpoint(KSI_NetworkClient *net, KSI_NetEndpoint *endp);
 
 	KSI_DEFINE_REF(KSI_RequestHandle);
 	/**

@@ -59,6 +59,76 @@ static int setStringParam(char **param, const char *val) {
 	return newStringFromExisting(param, val, -1);
 }
 
+void KSI_NetEndpoint_free(KSI_NetEndpoint *endPoint) {
+	if (endPoint == NULL) return;
+
+	KSI_free(endPoint->ksi_pass);
+	KSI_free(endPoint->ksi_user);
+
+	if (endPoint->implCtx_free != NULL) {
+		endPoint->implCtx_free(endPoint->implCtx);
+	}
+
+	KSI_free(endPoint);
+}
+
+int KSI_AbstractNetEndpoint_new(KSI_CTX *ctx, KSI_NetEndpoint **endPoint) {
+	int res;
+	KSI_NetEndpoint *tmp = NULL;
+
+	if (ctx == NULL || endPoint == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	tmp = KSI_new(KSI_NetEndpoint);
+	if (tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->ksi_pass = NULL;
+	tmp->ksi_user = NULL;
+	tmp->implCtx = NULL;
+	tmp->implCtx_free = NULL;
+
+	*endPoint = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_NetEndpoint_free(tmp);
+
+	return res;
+}
+
+int KSI_NetEndpoint_setImplContext(KSI_NetEndpoint *endPoint, void *implCtx, void (*implCtx_free)(void *)) {
+	int res;
+
+	if (endPoint == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(endPoint->ctx);
+
+	if (endPoint->implCtx != implCtx && endPoint->implCtx != NULL && endPoint->implCtx_free != NULL) {
+		endPoint->implCtx_free(endPoint->implCtx);
+	}
+
+	endPoint->implCtx = implCtx;
+	endPoint->implCtx_free = implCtx_free;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 /**
  *
  */
@@ -272,10 +342,10 @@ cleanup:
 
 void KSI_NetworkClient_free(KSI_NetworkClient *provider) {
 	if (provider != NULL) {
-		KSI_free(provider->aggrPass);
-		KSI_free(provider->aggrUser);
-		KSI_free(provider->extPass);
-		KSI_free(provider->extUser);
+		KSI_NetEndpoint_free(provider->aggregator);
+		KSI_NetEndpoint_free(provider->extender);
+		KSI_NetEndpoint_free(provider->publicationsFile);
+
 		if (provider->implFree != NULL) {
 			provider->implFree(provider->impl);
 		}
@@ -596,7 +666,7 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 		goto cleanup;
 	}
 
-	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->extPass,
+	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->extender->ksi_pass,
 			(int (*)(void*, int, const char*, KSI_DataHash**))KSI_ExtendPdu_calculateHmac,
 			(void*)pdu);
 
@@ -641,7 +711,7 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 
 	KSI_ERR_clearErrors(handle->ctx);
 
-	if (handle->client == NULL || handle->client->aggrPass == NULL || resp == NULL) {
+	if (handle->client == NULL || handle->client->aggregator->ksi_pass == NULL || resp == NULL) {
 		KSI_pushError(handle->ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
@@ -718,7 +788,7 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 		goto cleanup;
 	}
 
-	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->aggrPass,
+	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->aggregator->ksi_pass,
 			(int (*)(void*, int, const char*, KSI_DataHash**))KSI_AggregationPdu_calculateHmac,
 			(void*)pdu);
 
@@ -817,15 +887,20 @@ cleanup:
 	return res;
 
 }
+
 int KSI_AbstractNetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_NetworkClient *tmp = NULL;
+	KSI_NetEndpoint *aggrEndpoint = NULL;
+	KSI_NetEndpoint *extEndpoint = NULL;
+	KSI_NetEndpoint *pubEndpoint = NULL;
 
 	if (ctx == NULL || client == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
+	/* Create and initialize abstract network provider. */
 	tmp = KSI_new(KSI_NetworkClient);
 	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
@@ -833,16 +908,32 @@ int KSI_AbstractNetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	}
 
 	tmp->ctx = ctx;
-	tmp->aggrPass = NULL;
-	tmp->aggrUser = NULL;
-	tmp->extPass = NULL;
-	tmp->extUser = NULL;
 	tmp->implFree = NULL;
 	tmp->sendExtendRequest = NULL;
 	tmp->sendPublicationRequest = NULL;
 	tmp->sendSignRequest = NULL;
 	tmp->requestCount = 0;
 	tmp->performAll = simplePerformAll;
+
+
+	/* Create Abstract endpoints. */
+	res = KSI_AbstractNetEndpoint_new(ctx, &aggrEndpoint);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_AbstractNetEndpoint_new(ctx, &extEndpoint);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_AbstractNetEndpoint_new(ctx, &pubEndpoint);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Set Abstract endpoints. */
+	tmp->aggregator = aggrEndpoint;
+	tmp->extender = extEndpoint;
+	tmp->publicationsFile = pubEndpoint;
+	aggrEndpoint = NULL;
+	extEndpoint = NULL;
+	pubEndpoint = NULL;
+
 
 	*client = tmp;
 	tmp = NULL;
@@ -852,6 +943,9 @@ int KSI_AbstractNetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 cleanup:
 
 	KSI_NetworkClient_free(tmp);
+	KSI_NetEndpoint_free(aggrEndpoint);
+	KSI_NetEndpoint_free(extEndpoint);
+	KSI_NetEndpoint_free(pubEndpoint);
 
 	return res;
 
@@ -1034,9 +1128,8 @@ cleanup:
 
 }
 
-
-#define KSI_NET_IMPLEMENT_SETTER(name, type, var, fn) 														\
-		int KSI_NetworkClient_set##name(KSI_NetworkClient *client, type val) {								\
+#define KSI_NET_OBJ_IMPLEMENT_SETTER(obj, name, type, var, fn) 														\
+		int obj##_set##name(obj *client, type val) {								\
 			int res = KSI_UNKNOWN_ERROR;																\
 			if (client == NULL) {																		\
 				res = KSI_INVALID_ARGUMENT;																\
@@ -1048,14 +1141,46 @@ cleanup:
 			return res;																					\
 		}
 
-KSI_NET_IMPLEMENT_SETTER(ExtenderUser, const char *, extUser, setStringParam);
-KSI_NET_IMPLEMENT_SETTER(ExtenderPass, const char *, extPass, setStringParam);
-KSI_NET_IMPLEMENT_SETTER(AggregatorUser, const char *, aggrUser, setStringParam);
-KSI_NET_IMPLEMENT_SETTER(AggregatorPass, const char *, aggrPass, setStringParam);
+#define KSI_NET_IMPLEMENT_GETTER(baseType, valueType, valueName, alias)			\
+	KSI_DEFINE_GETTER(baseType, valueType, alias, alias) {					\
+	int res = KSI_UNKNOWN_ERROR;											\
+	if (o == NULL || alias == NULL) {									\
+		res = KSI_INVALID_ARGUMENT;											\
+		goto cleanup;														\
+	}																		\
+	*alias = o->valueName;												\
+	res = KSI_OK;															\
+cleanup:																	\
+	return res;																\
+}
 
-KSI_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, extUser, ExtenderUser);
-KSI_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, extPass, ExtenderPass);
-KSI_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, aggrUser, AggregatorUser);
-KSI_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, aggrPass, AggregatorPass);
+/* KSI_NetEndpoint */
+KSI_NET_OBJ_IMPLEMENT_SETTER(KSI_NetEndpoint, User, const char *, ksi_user, setStringParam);
+KSI_NET_OBJ_IMPLEMENT_SETTER(KSI_NetEndpoint, Pass, const char *, ksi_pass, setStringParam);
+
+KSI_IMPLEMENT_GETTER(KSI_NetEndpoint, const char *, ksi_user, User);
+KSI_IMPLEMENT_GETTER(KSI_NetEndpoint, const char *, ksi_pass, Pass);
+
+
+/* KSI_NetworkClient */
+KSI_NET_OBJ_IMPLEMENT_SETTER(KSI_NetworkClient, ExtenderUser, const char *, extender->ksi_user, setStringParam);
+KSI_NET_OBJ_IMPLEMENT_SETTER(KSI_NetworkClient, ExtenderPass, const char *, extender->ksi_pass, setStringParam);
+KSI_NET_OBJ_IMPLEMENT_SETTER(KSI_NetworkClient, AggregatorUser, const char *, aggregator->ksi_user, setStringParam);
+KSI_NET_OBJ_IMPLEMENT_SETTER(KSI_NetworkClient, AggregatorPass, const char *, aggregator->ksi_pass, setStringParam);
+
+KSI_IMPLEMENT_SETTER(KSI_NetworkClient, KSI_NetEndpoint *, aggregator, AggregatorEndpoint);
+KSI_IMPLEMENT_SETTER(KSI_NetworkClient, KSI_NetEndpoint *, extender, ExtenderEndpoint);
+KSI_IMPLEMENT_SETTER(KSI_NetworkClient, KSI_NetEndpoint *, publicationsFile, PublicationsFileEndpoint);
+
+KSI_NET_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, extender->ksi_user, ExtenderUser);
+KSI_NET_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, extender->ksi_pass, ExtenderPass);
+KSI_NET_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, aggregator->ksi_user, AggregatorUser);
+KSI_NET_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, aggregator->ksi_pass, AggregatorPass);
+
+KSI_IMPLEMENT_GETTER(KSI_NetworkClient, KSI_NetEndpoint *, aggregator, AggregatorEndpoint);
+KSI_IMPLEMENT_GETTER(KSI_NetworkClient, KSI_NetEndpoint *, extender, ExtenderEndpoint);
+KSI_IMPLEMENT_GETTER(KSI_NetworkClient, KSI_NetEndpoint *, publicationsFile, PublicationsFileEndpoint);
+
+
 
 KSI_IMPLEMENT_REF(KSI_RequestHandle);
