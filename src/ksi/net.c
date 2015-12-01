@@ -1131,34 +1131,6 @@ cleanup:
 
 }
 
-int KSI_NetworkClient_performAll(KSI_NetworkClient *client, KSI_RequestHandle **arr, size_t arr_len) {
-	int res = KSI_UNKNOWN_ERROR;
-	if (client == NULL || (arr == NULL && arr_len != 0)) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	if (client->performAll == NULL) {
-		KSI_pushError(client->ctx, res = KSI_UNKNOWN_ERROR, "Network client does not implement performAll() method.");
-		goto cleanup;
-	}
-
-	if (arr != NULL && arr_len != 0) {
-		res = client->performAll(client, arr, arr_len);
-		if (res != KSI_OK) {
-			KSI_pushError(client->ctx, res, NULL);
-			goto cleanup;
-		}
-	}
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-
-}
-
 #define KSI_NET_OBJ_IMPLEMENT_SETTER(obj, name, type, var, fn) 														\
 		int obj##_set##name(obj *client, type val) {								\
 			int res = KSI_UNKNOWN_ERROR;																\
