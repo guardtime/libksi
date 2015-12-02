@@ -210,7 +210,7 @@ static int uriCompose(const char *scheme, const char *user, const char *pass, co
 
 	count += KSI_snprintf(buf + count, len - count, "%s", host);
 
-	if (port != NULL) {
+	if (port != 0) {
 		count += KSI_snprintf(buf + count, len - count, ":%d", port);
 	}
 

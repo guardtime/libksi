@@ -18,7 +18,7 @@
  */
 
 #include "cutest/CuTest.h"
-
+#include <string.h>
 #include "all_tests.h"
 #include "../src/ksi/internal.h"
 
@@ -72,7 +72,7 @@ static void TestErrorsToString(CuTest *tc) {
 	int line2;
 	int line3;
 	int line4;
-	const char expected_output[250];
+	char expected_output[250];
 	char *ret = NULL;
 	char buf[250];
 

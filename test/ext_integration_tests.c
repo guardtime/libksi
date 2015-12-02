@@ -46,10 +46,10 @@ static void getExtResponse(CuTest* tc, KSI_uint64_t id, KSI_uint64_t aggrTime, K
 	CuAssert(tc, "Unable to create request ID.", res == KSI_OK && ID != NULL);
 
 	res = KSI_Integer_new(ctx, aggrTime, &aggr_time);
-	CuAssert(tc, "Unable to aggr time.", res == KSI_OK && &aggr_time);
+	CuAssert(tc, "Unable to aggr time.", res == KSI_OK && aggr_time != NULL);
 
 	res = KSI_Integer_new(ctx, pubTime, &pub_time);
-	CuAssert(tc, "Unable to pub time.", res == KSI_OK && &pub_time);
+	CuAssert(tc, "Unable to pub time.", res == KSI_OK && pub_time != NULL);
 
 
 	/*Combine objects*/

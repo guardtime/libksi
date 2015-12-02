@@ -44,7 +44,7 @@ static void Test_NOKAggr_TreeTooLarge(CuTest* tc) {
 	res = KSI_AggregationReq_new(ctx, &request);
 	CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && request != NULL);
 
-	res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), "c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
+	res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), (const unsigned char*)"c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
 	CuAssert(tc, "Unable to create hash.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_Integer_new(ctx, 0x5544332211, &ID);
@@ -96,7 +96,7 @@ static void Test_CreateSignatureDefProvider(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), "c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
+	res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), (const unsigned char*)"c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
 	CuAssert(tc, "Unable to create hash.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_Signature_create(ctx, hsh, &sig);
@@ -118,7 +118,7 @@ static void Test_TCPCreateSignatureDefProvider(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), "c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
+	res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), (const unsigned char*)"c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
 	CuAssert(tc, "Unable to create hash.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, conf.tcp_url, conf.tcp_user, conf.tcp_pass);
@@ -144,7 +144,7 @@ static void Test_CreateSignatureWrongHMAC(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 
-	res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), "c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
+	res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), (const unsigned char*)"c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
 	CuAssert(tc, "Unable to create hash.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, conf.aggregator_url, "test-test", "tset-tset");
@@ -173,7 +173,7 @@ static void Test_CreateSignatureUsingExtender(CuTest* tc) {
 	res = KSI_CTX_setAggregator(ctx, conf.extender_url, conf.extender_user, conf.extender_pass);
 	CuAssert(tc, "Unable to set configure extender as aggregator.", res == KSI_OK);
 
-	res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), "c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
+	res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), (const unsigned char*)"c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
 	CuAssert(tc, "Unable to create hash.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_Signature_create(ctx, hsh, &sig);
@@ -211,7 +211,7 @@ static void Test_CreateSignature_useProvider(CuTest* tc, const char *uri_host, u
 	CuAssert(tc, "Unable to set new network client.", res == KSI_OK);
 	client = NULL;
 
-	res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), "c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
+	res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), (const unsigned char*)"c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
 	CuAssert(tc, "Unable to create hash.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_Signature_create(ctx, hsh, &sig);
