@@ -651,121 +651,6 @@ static void testUrlSplit(CuTest *tc) {
 
 }
 
-void assert_isHttpClientSetCorrectly(CuTest *tc, KSI_NetworkClient *client,
-		const char *a_url, const char *a_host, int a_port, const char *a_user, const char *a_key,
-		const char *e_url, const char *e_host, int e_port, const char *e_user, const char *e_key){
-	KSI_UriClient *uri = client->impl;
-	KSI_NetworkClient *http = uri->httpClient;
-	KSI_NetEndpoint *endp_aggr = http->aggregator;
-	KSI_NetEndpoint *endp_ext = http->extender;
-	struct HttpClient_Endpoint_st *endp_aggr_impl = endp_aggr->implCtx;
-	struct HttpClient_Endpoint_st *endp_ext_impl = endp_ext->implCtx;
-
-	CuAssert(tc, "Http client is not set.", http != NULL);
-	CuAssert(tc, "Http client is not set as aggregator and extender service.",
-			(void*)http == (void*)(uri->pAggregationClient) &&
-			(void*)http == (void*)(uri->pExtendClient));
-
-	CuAssert(tc, "Http aggregator url mismatch.", strcmp(endp_aggr_impl->url, strstr(a_url, "ksi+") == a_url ? a_url+4 : a_url) == 0 ||
-			(strstr(a_url, "ksi://") == a_url && strstr(endp_aggr_impl->url, "http://") == endp_aggr_impl->url && strcmp(endp_aggr_impl->url+7, a_url+6) == 0));
-	CuAssert(tc, "Http aggregator key mismatch.", strcmp(endp_aggr->ksi_pass, a_key) == 0);
-	CuAssert(tc, "Http aggregator user mismatch.", strcmp(endp_aggr->ksi_user, a_user) == 0);
-	CuAssert(tc, "Http extender url mismatch.", strcmp(endp_ext_impl->url, strstr(e_url, "ksi+") == e_url ? e_url+4 : e_url) == 0 ||
-			(strstr(e_url, "ksi://") == e_url && strstr(endp_ext_impl->url, "http://") == endp_ext_impl->url && strcmp(endp_ext_impl->url+7, e_url+6) == 0));
-	CuAssert(tc, "Http extender key mismatch.", strcmp(endp_ext->ksi_pass, e_key) == 0);
-	CuAssert(tc, "Http extender user mismatch.", strcmp(endp_ext->ksi_user, e_user) == 0);
-}
-
-void assert_isTcpClientSetCorrectly(CuTest *tc, KSI_NetworkClient *client,
-		const char *a_url, const char *a_host, int a_port, const char *a_user, const char *a_key,
-		const char *e_url, const char *e_host, int e_port, const char *e_user, const char *e_key){
-	KSI_UriClient *uri = client->impl;
-	KSI_NetworkClient *tcp = uri->tcpClient;
-	KSI_NetEndpoint *endp_aggr = tcp->aggregator;
-	KSI_NetEndpoint *endp_ext = tcp->extender;
-	struct TcpClient_Endpoint_st *endp_aggr_impl = endp_aggr->implCtx;
-	struct TcpClient_Endpoint_st *endp_ext_impl = endp_ext->implCtx;
-
-	CuAssert(tc, "Tcp client is not set (NULL).", tcp != NULL);
-	CuAssert(tc, "Tcp client is not set as aggregator and extender service.",
-			(void*)tcp == (void*)(uri->pAggregationClient) &&
-			(void*)tcp == (void*)(uri->pExtendClient));
-
-	CuAssert(tc, "Tcp aggregator host mismatch.", strcmp(endp_aggr_impl->host, a_host) == 0);
-	CuAssert(tc, "Tcp aggregator port mismatch.", endp_aggr_impl->port == a_port);
-	CuAssert(tc, "Tcp aggregator key mismatch.", strcmp(endp_aggr->ksi_pass, a_key) == 0);
-	CuAssert(tc, "Tcp aggregator user mismatch.", strcmp(endp_aggr->ksi_user, a_user) == 0);
-	CuAssert(tc, "Tcp extender url mismatch.", strcmp(endp_ext_impl->host, e_host) == 0);
-	CuAssert(tc, "Tcp extender host mismatch.", endp_ext_impl->port == e_port);
-	CuAssert(tc, "Tcp extender key mismatch.", strcmp(endp_ext->ksi_pass, e_key) == 0);
-	CuAssert(tc, "Tcp extender user mismatch.", strcmp(endp_ext->ksi_user, e_user) == 0);
-}
-
-static void smartServiceSetterSchemeTest(CuTest *tc, KSI_CTX *ctx, const char *scheme,
-		void (*assertClient)(CuTest*, KSI_NetworkClient*, const char*, const char*, int, const char*, const char*, const char*, const char*, int, const char*, const char*)){
-	int res;
-	KSI_NetworkClient *client = NULL;
-
-	char *scheme_aggre_host = "aggre.com";
-	int scheme_aggre_port = 3331;
-	char *scheme_aggre_user = "tcp_aggre_user";
-	char *scheme_aggre_key = "tcp_aggre_key";
-	char *scheme_ext_host = "ext.com";
-	int scheme_ext_port = 8011;
-	char *scheme_ext_user = "tcp_ext_user";
-	char *scheme_ext_key = "tcp_ext_key";
-	char scheme_aggre_url[1024];
-	char scheme_ext_url[1024];
-	size_t len;
-
-	len = KSI_snprintf(scheme_aggre_url, sizeof(scheme_aggre_url), "%saggre.com:3331/", scheme);
-	CuAssert(tc, "Unable to generate aggregator url.", len != 0);
-	len = KSI_snprintf(scheme_ext_url, sizeof(scheme_ext_url), "%sext.com:8011/", scheme);
-	CuAssert(tc, "Unable to generate extender url.", len != 0);
-
-	client = ctx->netProvider;
-	CuAssert(tc, "KSI_CTX has no network provider.", client != NULL);
-	CuAssert(tc, "KSI_CTX network provider is not initial.", ctx->isCustomNetProvider == 0);
-
-	/*Testing client*/
-
-	res = KSI_CTX_setAggregator(ctx, scheme_aggre_url, scheme_aggre_user, scheme_aggre_key);
-	CuAssert(tc, "Unable to set aggregator.", res == KSI_OK);
-
-	res = KSI_CTX_setExtender(ctx, scheme_ext_url, scheme_ext_user, scheme_ext_key);
-	CuAssert(tc, "Unable to set extender.", res == KSI_OK);
-
-	assertClient(tc, client,
-			scheme_aggre_url, scheme_aggre_host, scheme_aggre_port, scheme_aggre_user, scheme_aggre_key,
-			scheme_ext_url, scheme_ext_host, scheme_ext_port, scheme_ext_user, scheme_ext_key);
-
-	return;
-}
-
-
-static void testSmartServiceSetters(CuTest *tc) {
-
-	int res;
-	KSI_CTX *ctx = NULL;
-	KSI_UriClient *client = NULL;
-
-	res = KSI_CTX_new(&ctx);
-	CuAssert(tc, "KSI_CTX_init did not return KSI_OK.", res == KSI_OK);
-
-	client = (KSI_UriClient*)ctx->netProvider;
-	CuAssert(tc, "KSI_CTX has no network provider.", client != NULL);
-	CuAssert(tc, "KSI_CTX network provider is not initial.", ctx->isCustomNetProvider == 0);
-
-	smartServiceSetterSchemeTest(tc, ctx, "ksi://", assert_isHttpClientSetCorrectly);
-	smartServiceSetterSchemeTest(tc, ctx, "http://", assert_isHttpClientSetCorrectly);
-	smartServiceSetterSchemeTest(tc, ctx, "https://", assert_isHttpClientSetCorrectly);
-	smartServiceSetterSchemeTest(tc, ctx, "ksi+https://", assert_isHttpClientSetCorrectly);
-	smartServiceSetterSchemeTest(tc, ctx, "ksi+http://", assert_isHttpClientSetCorrectly);
-	smartServiceSetterSchemeTest(tc, ctx, "ksi+tcp://", assert_isTcpClientSetCorrectly);
-
-	KSI_CTX_free(ctx);
-}
-
 static void testLocalAggregationSigning(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
@@ -900,7 +785,6 @@ CuSuite* KSITest_NET_getSuite(void) {
 	SUITE_ADD_TEST(suite, testSigningErrorResponse);
 	SUITE_ADD_TEST(suite, testExtendingErrorResponse);
 	SUITE_ADD_TEST(suite, testUrlSplit);
-	SUITE_ADD_TEST(suite, testSmartServiceSetters);
 	SUITE_ADD_TEST(suite, testUriSpiltAndCompose);
 	SUITE_ADD_TEST(suite, testLocalAggregationSigning);
 	SUITE_ADD_TEST(suite, testExtendInvalidSignature);
