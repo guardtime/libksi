@@ -71,7 +71,7 @@ extern "C" {
 
 		/** Private helper functions. */
 		int (*setStringParam)(char **param, const char *val);
-		int (*uriSplit)(const char *uri, char **scheme, char **user, char **pass, char **host, unsigned *port, char **path);
+		int (*uriSplit)(const char *uri, char **scheme, char **user, char **pass, char **host, unsigned *port, char **path, char **query, char **fragment);
 	};
 
 	struct KSI_NetHandle_st {

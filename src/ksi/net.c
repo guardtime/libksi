@@ -59,12 +59,14 @@ static int setStringParam(char **param, const char *val) {
 	return newStringFromExisting(param, val, -1);
 }
 
-static int uriSplit(const char *uri, char **scheme, char **user, char **pass, char **host, unsigned *port, char **path) {
+static int uriSplit(const char *uri, char **scheme, char **user, char **pass, char **host, unsigned *port, char **path, char **query, char **fragment) {
 	int res = KSI_UNKNOWN_ERROR;
 	struct http_parser_url parser;
 	char *tmpHost = NULL;
 	char *tmpSchema = NULL;
 	char *tmpPath = NULL;
+	char *tmpQuery = NULL;
+	char *tmpFragment = NULL;
 	char *tmpUserInfo = NULL;
 	char *tmpUser = NULL;
 	char *tmpPass = NULL;
@@ -125,6 +127,18 @@ static int uriSplit(const char *uri, char **scheme, char **user, char **pass, ch
 		if (res != KSI_OK) goto cleanup;
 	}
 
+	/* Extract query. */
+	if ((parser.field_set & (1 << UF_QUERY)) && (query != NULL)) {
+		res = newStringFromExisting(&tmpQuery, uri + parser.field_data[UF_QUERY].off, parser.field_data[UF_QUERY].len + 1);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	/* Extract fragment. */
+	if ((parser.field_set & (1 << UF_FRAGMENT)) && (fragment != NULL)) {
+		res = newStringFromExisting(&tmpFragment, uri + parser.field_data[UF_FRAGMENT].off, parser.field_data[UF_FRAGMENT].len + 1);
+		if (res != KSI_OK) goto cleanup;
+	}
+
 	if (host != NULL) {
 		*host = tmpHost;
 		tmpHost = NULL;
@@ -138,6 +152,16 @@ static int uriSplit(const char *uri, char **scheme, char **user, char **pass, ch
 	if (path != NULL) {
 		*path = tmpPath;
 		tmpPath = NULL;
+	}
+
+	if (query != NULL) {
+		*query = tmpQuery;
+		tmpQuery = NULL;
+	}
+
+	if (fragment != NULL) {
+		*fragment = tmpFragment;
+		tmpFragment = NULL;
 	}
 
 	if (user != NULL) {
@@ -160,6 +184,8 @@ cleanup:
 	KSI_free(tmpSchema);
 	KSI_free(tmpPath);
 	KSI_free(tmpUserInfo);
+	KSI_free(tmpQuery);
+	KSI_free(tmpFragment);
 	KSI_free(tmpUser);
 	KSI_free(tmpPass);
 
@@ -1100,7 +1126,7 @@ int KSI_convertExtenderStatusCode(KSI_Integer *statusCode) {
 }
 
 int KSI_UriSplitBasic(const char *uri, char **scheme, char **host, unsigned *port, char **path) {
-	return uriSplit(uri, scheme, NULL, NULL, host, port, path);
+	return uriSplit(uri, scheme, NULL, NULL, host, port, path, NULL, NULL);
 }
 
 int KSI_NetworkClient_performAll(KSI_NetworkClient *client, KSI_RequestHandle **arr, size_t arr_len) {
