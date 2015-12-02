@@ -19,6 +19,8 @@
 
 #include "cutest/CuTest.h"
 #include "all_integration_tests.h"
+#include <ksi/net_uri.h>
+#include <ksi/net_http.h>
 #include <ksi/net.h>
 
 extern KSI_CTX *ctx;
@@ -86,7 +88,7 @@ static void Test_NOKAggr_TreeTooLarge(CuTest* tc) {
 	return;
 }
 
-static void Test_CreateSignature(CuTest* tc) {
+static void Test_CreateSignatureDefProvider(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
@@ -108,7 +110,7 @@ static void Test_CreateSignature(CuTest* tc) {
 	return;
 }
 
-static void Test_TCPCreateSignature(CuTest* tc) {
+static void Test_TCPCreateSignatureDefProvider(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
@@ -186,14 +188,90 @@ static void Test_CreateSignatureUsingExtender(CuTest* tc) {
 	return;
 }
 
+static void Test_CreateSignature_useProvider(CuTest* tc, const char *uri_host, unsigned port, const char *user, const char *key,
+		int (*createProvider)(KSI_CTX *ctx, KSI_NetworkClient **http),
+		int (*setAggregator)(KSI_NetworkClient *client, const char *url_host, unsigned port, const char *user, const char *pass)) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+	KSI_NetworkClient *client = NULL;
+	KSI_CTX *ctx = NULL;
+
+	/* Create the context. */
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create ctx.", res == KSI_OK && ctx != NULL);
+
+	res = createProvider(ctx, &client);
+	CuAssert(tc, "Unable to create network client.", res == KSI_OK && client != NULL);
+
+	res = setAggregator(client, uri_host, port, user, key);
+	CuAssert(tc, "Unable to set aggregator.", res == KSI_OK);
+
+	res = KSI_CTX_setNetworkProvider(ctx, client);
+	CuAssert(tc, "Unable to set new network client.", res == KSI_OK);
+	client = NULL;
+
+	res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), "c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
+	CuAssert(tc, "Unable to create hash.", res == KSI_OK && hsh != NULL);
+
+	res = KSI_Signature_create(ctx, hsh, &sig);
+	CuAssert(tc, "The creation of signature must not fail.", sig != NULL);
+
+
+	KSI_NetworkClient_free(client);
+	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
+	KSI_CTX_free(ctx);
+	return;
+}
+
+static int http_setAggrWrapper(KSI_NetworkClient *client, const char *url_host, unsigned port, const char *user, const char *pass) {
+	return KSI_HttpClient_setAggregator(client, url_host, user, pass);
+}
+
+static int uri_setAggrWrapper(KSI_NetworkClient *client, const char *url_host, unsigned port, const char *user, const char *pass) {
+	return KSI_UriClient_setAggregator(client, url_host, user, pass);
+}
+
+static int tcp_setAggrWrapper(KSI_NetworkClient *client, const char *url_host, unsigned port, const char *user, const char *pass) {
+	return KSI_TcpClient_setAggregator(client, url_host, port, user, pass);
+}
+
+static void Test_CreateSignatureDifferentProviders(CuTest* tc) {
+	/* Http provider. */
+	Test_CreateSignature_useProvider(tc,
+			conf.aggregator_url, 0, conf.aggregator_user, conf.aggregator_pass,
+			KSI_HttpClient_new,
+			http_setAggrWrapper);
+
+	/* Tcp provider. */
+	Test_CreateSignature_useProvider(tc,
+			conf.tcp_host, conf.tcp_port, conf.tcp_user, conf.tcp_pass,
+			KSI_TcpClient_new,
+			tcp_setAggrWrapper);
+
+	/* Uri provider - all info is extracted from uri. */
+	Test_CreateSignature_useProvider(tc,
+			conf.aggregator_url, 0, NULL, NULL,
+			KSI_UriClient_new,
+			uri_setAggrWrapper);
+
+	Test_CreateSignature_useProvider(tc,
+			conf.tcp_url, 0, NULL, NULL,
+			KSI_UriClient_new,
+			uri_setAggrWrapper);
+	return;
+}
+
 CuSuite* AggreIntegrationTests_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
-	SUITE_ADD_TEST(suite, Test_CreateSignature);
+	SUITE_ADD_TEST(suite, Test_CreateSignatureDefProvider);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureWrongHMAC);
 	SUITE_ADD_TEST(suite, Test_NOKAggr_TreeTooLarge);
-	SUITE_ADD_TEST(suite, Test_TCPCreateSignature);
+	SUITE_ADD_TEST(suite, Test_TCPCreateSignatureDefProvider);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureUsingExtender);
+	SUITE_ADD_TEST(suite, Test_CreateSignatureDifferentProviders);
 
 	return suite;
 }
