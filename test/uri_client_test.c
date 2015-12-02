@@ -272,6 +272,7 @@ static void assert_isHttpEndpointSetCorrectly(CuTest *tc, KSI_NetEndpoint *endp,
 	CuAssert(tc, "Http url mismatch.", host != NULL && strstr(endp_impl->url, host) != NULL);
 	CuAssert(tc, "Http key mismatch.", strcmp(endp->ksi_pass, key) == 0);
 	CuAssert(tc, "Http user mismatch.", strcmp(endp->ksi_user, user) == 0);
+	KSI_free(host);
 }
 
 static void assert_isTcpEndpointSetCorrectly(CuTest *tc, KSI_NetEndpoint *endp,
