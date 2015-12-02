@@ -791,6 +791,97 @@ static void testLocalAggregationSigning(CuTest* tc) {
 	KSI_Signature_free(sig);
 }
 
+static 	const char *validUri[] = {
+		"ksi://localhost",
+		"ksi://localhost/",
+		"ksi://localhost/a",
+		"ksi://localhost/a.txt",
+		"ksi://localhost/?key=value",
+		"ksi://localhost?key=value",
+		"ksi://localhost?key=value#fragment",
+		"ksi://localhost/#fragment",
+		"ksi+http://localhost",
+		"ksi://localhost:12345",
+		"ksi+http://localhost:1234/",
+		"http://u:p@127.0.0.1:80",
+		"http://u:p@127.0.0.1:80/",
+		"http://u:p@127.0.0.1:80/test",
+		"http://u:p@127.0.0.1:80/test/",
+		"http://u:p@127.0.0.1:80/test/a",
+		"http://u:p@127.0.0.1:80/test/b/",
+		"http://u:p@127.0.0.1:80/test/c//",
+		"http://u:p@127.0.0.1:80/test/c/test.file",
+		"http://u:p@127.0.0.1:80/test/c?a=test&b=test&c=test",
+		"http://u:p@127.0.0.1:80/test/c.txt?a=test&b=test&c=test",
+		"http://u:p@127.0.0.1:80/test/c.txt?a=test&b=test&c=test#fragment1",
+		"http://u:p@127.0.0.1:80/test/c.txt#fragment1",
+		NULL
+};
+
+static void testUriSpiltAndCompose(CuTest* tc) {
+	int res;
+	KSI_NetworkClient *tmp = NULL;
+	size_t i = 0;
+	const char *uri = NULL;
+
+	char error[0xffff];
+	char new_uri[0xffff];
+	char *scheme = NULL;
+	char *user = NULL;
+	char *pass = NULL;
+	char *host = NULL;
+	unsigned port = 0;
+	char *path = NULL;
+	char *query = NULL;
+	char *fragment = NULL;
+
+	res = KSI_AbstractNetworkClient_new(ctx, &tmp);
+	CuAssert(tc, "Unable to create abstract network provider.", res == KSI_OK && tmp != NULL);
+
+
+	while ((uri = validUri[i++]) != NULL) {
+		scheme = NULL;
+		user = NULL;
+		pass = NULL;
+		host = NULL;
+		port = 0;
+		path = NULL;
+		query = NULL;
+		fragment = NULL;
+		error[0] = '\0';
+		new_uri[0] = '\0';
+
+		res = tmp->uriSplit(uri, &scheme, &user, &pass, &host, &port, &path, &query, &fragment);
+		if (res != KSI_OK) {
+			KSI_snprintf(error, sizeof(error), "Unable to split uri '%s'.", uri);
+			CuAssert(tc, error, 0);
+		}
+
+		res = tmp->uriCompose(scheme, user, pass, host, port, path, query, fragment, new_uri, sizeof(new_uri));
+		if (res != KSI_OK) {
+			KSI_snprintf(error, sizeof(error), "Unable to compose uri '%s'.", uri);
+			CuAssert(tc, error, 0);
+		}
+
+		if (strcmp(uri, new_uri) != 0) {
+			KSI_snprintf(error, sizeof(error), "New uri is '%s', but expected '%s'.", new_uri, uri);
+			CuAssert(tc, error, 0);
+		}
+
+
+		KSI_free(scheme);
+		KSI_free(user);
+		KSI_free(pass);
+		KSI_free(path);
+		KSI_free(host);
+		KSI_free(query);
+		KSI_free(fragment);
+	}
+
+	KSI_NetworkClient_free(tmp);
+}
+
+
 CuSuite* KSITest_NET_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -810,6 +901,7 @@ CuSuite* KSITest_NET_getSuite(void) {
 	SUITE_ADD_TEST(suite, testExtendingErrorResponse);
 	SUITE_ADD_TEST(suite, testUrlSplit);
 	SUITE_ADD_TEST(suite, testSmartServiceSetters);
+	SUITE_ADD_TEST(suite, testUriSpiltAndCompose);
 	SUITE_ADD_TEST(suite, testLocalAggregationSigning);
 	SUITE_ADD_TEST(suite, testExtendInvalidSignature);
 

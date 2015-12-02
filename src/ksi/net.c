@@ -192,6 +192,43 @@ cleanup:
 	return res;
 }
 
+static int uriCompose(const char *scheme, const char *user, const char *pass, const char *host, unsigned port, const char *path, const char *query, const char *fragment, char *buf, size_t len) {
+	size_t count = 0;
+	//scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
+
+	if (host == NULL || (user != NULL && pass == NULL) || (pass != NULL && user == NULL)) {
+		return KSI_INVALID_ARGUMENT;
+	}
+
+	if (scheme != NULL) {
+		count += KSI_snprintf(buf + count, len - count, "%s://", scheme);
+	}
+
+	if (user != NULL && pass != NULL) {
+		count += KSI_snprintf(buf + count, len - count, "%s:%s@", user, pass);
+	}
+
+	count += KSI_snprintf(buf + count, len - count, "%s", host);
+
+	if (port != NULL) {
+		count += KSI_snprintf(buf + count, len - count, ":%d", port);
+	}
+
+	if (path != NULL) {
+		count += KSI_snprintf(buf + count, len - count, "%s%s", (path[0] == '/') ? "" : "/", path);
+	}
+
+	if (query != NULL) {
+		count += KSI_snprintf(buf + count, len - count, "?%s", query);
+	}
+
+	if (fragment != NULL) {
+		count += KSI_snprintf(buf + count, len - count, "#%s", fragment);
+	}
+
+	return KSI_OK;
+}
+
 void KSI_NetEndpoint_free(KSI_NetEndpoint *endPoint) {
 	if (endPoint == NULL) return;
 
@@ -1051,6 +1088,7 @@ int KSI_AbstractNetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	/* Configure private helper functions. */
 	tmp->setStringParam = setStringParam;
 	tmp->uriSplit = uriSplit;
+	tmp->uriCompose = uriCompose;
 
 	/* Create Abstract endpoints. */
 	res = KSI_AbstractNetEndpoint_new(ctx, &aggrEndpoint);
