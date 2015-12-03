@@ -45,6 +45,8 @@ typedef struct CONF_st {
 	char publications_file_cnstr[CONF_FIELD_SIZE];
 
 	char tcp_url[CONF_FIELD_SIZE];
+	char tcp_host[CONF_FIELD_SIZE];
+	unsigned tcp_port;
 	char tcp_user[CONF_FIELD_SIZE];
 	char tcp_pass[CONF_FIELD_SIZE];
 	

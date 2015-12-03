@@ -28,14 +28,15 @@
 extern "C" {
 #endif
 
+	struct HttpClient_Endpoint_st {
+		char *url;
+	};
+
 	struct KSI_HttpClient_st {
 		int connectionTimeoutSeconds;
 		int readTimeoutSeconds;
-		char *urlAggregator;
-		char *urlExtender;
-		char *urlPublication;
 		char *agentName;
-	
+
 		int (*sendRequest)(KSI_NetworkClient *, KSI_RequestHandle *, char *);
 
 		void *implCtx;
