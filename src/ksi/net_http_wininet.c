@@ -222,7 +222,7 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	char msg[1024];
 	char *scheme = NULL;
 	char *hostName = NULL;
-	char *query = NULL;
+	char *path = NULL;
 	int port = 0;
 
 	if (client == NULL || handle == NULL || url == NULL) {
@@ -250,7 +250,7 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	wininetHandle->ctx = ctx;
 	internetHandle = http->implCtx;
 
-	res = KSI_UriSplitBasic(url, &scheme, &hostName, &port, &query);
+	res = KSI_UriSplitBasic(url, &scheme, &hostName, &port, &path);
 	if (res != KSI_OK){
 		KSI_snprintf(msg, sizeof(msg), "WinINet: Unable to crack url '%s'.", url);
 		KSI_pushError(ctx, res, msg);
@@ -263,7 +263,7 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		goto cleanup;
 	}
 
-	if (hostName == NULL || query == NULL){
+	if (hostName == NULL) {
 		KSI_snprintf(msg, sizeof(msg), "WinINet: Invalid url '%s'.", url);
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, msg);
 		goto cleanup;
@@ -284,7 +284,7 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 
 	wininetHandle->request_handle = HttpOpenRequestA(wininetHandle->session_handle,
 		(handle->request == NULL ? "GET" : "POST"),
-		query, NULL, NULL, NULL,
+		path, NULL, NULL, NULL,
 		(strcmp("https", scheme) == 0 ? INTERNET_FLAG_SECURE : 0),
 		0);
 
@@ -326,7 +326,7 @@ cleanup:
 
 	wininetNetHandleCtx_free(wininetHandle);
 
-	KSI_free(query);
+	KSI_free(path);
 	KSI_free(hostName);
 	KSI_free(scheme);
 
