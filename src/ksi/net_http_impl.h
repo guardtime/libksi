@@ -36,7 +36,8 @@ extern "C" {
 		int connectionTimeoutSeconds;
 		int readTimeoutSeconds;
 		char *agentName;
-
+		char *mimeType;
+		
 		int (*sendRequest)(KSI_NetworkClient *, KSI_RequestHandle *, char *);
 
 		void *implCtx;

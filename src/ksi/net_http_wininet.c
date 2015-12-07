@@ -220,6 +220,7 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	KSI_HttpClient *http = NULL;
 	HINTERNET internetHandle;
 	char msg[1024];
+	char mimeTypeHeader[1024];
 	char *scheme = NULL;
 	char *hostName = NULL;
 	char *query = NULL;
@@ -290,6 +291,15 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 
 	if (wininetHandle->request_handle == NULL){
 		WININET_ERROR(ctx, GetLastError(), KSI_NETWORK_ERROR, "WinINet: Unable to initialize request handle.");
+	}
+
+	if (http->mimeType != NULL) {
+		KSI_snprintf(mimeTypeHeader, sizeof(mimeTypeHeader) ,"Content-Type: %s", http->mimeType);
+
+		if (!HttpAddRequestHeaders(wininetHandle->request_handle, mimeTypeHeader, -1L,
+				HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE)) {
+			WININET_ERROR(ctx, GetLastError(), KSI_NETWORK_ERROR, "WinINet: Unable to set MIME type.");
+		}
 	}
 
 	/*TODO Timeout is set, but seems to have no effect*/

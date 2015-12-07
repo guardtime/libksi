@@ -264,6 +264,7 @@ cleanup:
 static void httpClient_free(KSI_HttpClient *http) {
 	if (http != NULL) {
 		KSI_free(http->agentName);
+		KSI_free(http->mimeType);
 
 		if (http->implCtx_free != NULL) http->implCtx_free(http->implCtx);
 		KSI_free(http);
@@ -299,13 +300,25 @@ int KSI_AbstractHttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **http) {
 	}
 
 	c->agentName = NULL;
+	c->mimeType = NULL;
 	c->sendRequest = NULL;
 	c->implCtx = NULL;
 	c->implCtx_free = NULL;
 
 	c->connectionTimeoutSeconds = 10; /* FIXME! Magic constants. */
 	c->readTimeoutSeconds = 10;
-	tmp->setStringParam(&c->agentName, "KSI HTTP Client"); /** Should be only user provided */
+
+	res = tmp->setStringParam(&c->agentName, "KSI HTTP Client"); /** Should be only user provided */
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	tmp->setStringParam(&c->mimeType, "application/ksi-request");
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	/* Create implementations for abstract endpoints. */
 	res = HttpClient_Endpoint_new(&endp_aggr);

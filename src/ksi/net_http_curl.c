@@ -33,7 +33,8 @@ typedef struct CurlNetHandleCtx_st {
 	KSI_CTX *ctx;
 	CURL *curl;
 	unsigned char *raw;
-    size_t len;
+	size_t len;
+	struct curl_slist *httpHeaders;
 	char curlErr[CURL_ERROR_SIZE];
 } CurlNetHandleCtx;
 
@@ -65,9 +66,45 @@ static void curlGlobal_cleanup(void) {
 static void CurlNetHandleCtx_free(CurlNetHandleCtx *handleCtx) {
 	if (handleCtx != NULL) {
 		KSI_free(handleCtx->raw);
+		if (handleCtx->httpHeaders != NULL) curl_slist_free_all(handleCtx->httpHeaders);
 		if (handleCtx->curl != NULL) curl_easy_cleanup(handleCtx->curl);
 		KSI_free(handleCtx);
 	}
+}
+
+static int CurlNetHandleCtx_new(KSI_CTX *ctx, CurlNetHandleCtx **handleCtx) {
+	int res = KSI_UNKNOWN_ERROR;
+	CurlNetHandleCtx *tmp = NULL;
+
+	if (handleCtx == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	tmp = KSI_new(CurlNetHandleCtx);
+	if (tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->curl = NULL;
+	tmp->len = 0;
+	tmp->raw = NULL;
+	tmp->curlErr[0] = '\0';
+	tmp->httpHeaders = NULL;
+
+
+	*handleCtx = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	CurlNetHandleCtx_free(tmp);
+
+return res;
 }
 
 static size_t receiveDataFromLibCurl(void *ptr, size_t size, size_t nmemb, void *stream) {
@@ -186,30 +223,25 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 	int res = KSI_UNKNOWN_ERROR;
 	CurlNetHandleCtx *implCtx = NULL;
 	KSI_HttpClient *http = client->impl;
+	char mimeTypeHeader[1024];
 
-	if (client == NULL || handle == NULL || url == NULL) {
+	if (client == NULL || client->ctx == NULL || handle == NULL || url == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 	KSI_ERR_clearErrors(client->ctx);
 
-	implCtx = KSI_new(CurlNetHandleCtx);
-	if (implCtx == NULL) {
-		KSI_pushError(client->ctx, res = KSI_OUT_OF_MEMORY, NULL);
+	res = CurlNetHandleCtx_new(client->ctx, &implCtx);
+	if (res != KSI_OK) {
+		KSI_pushError(client->ctx, res, NULL);
 		goto cleanup;
 	}
-
-	implCtx->ctx = handle->ctx;
-	implCtx->curl = NULL;
-	implCtx->len = 0;
-	implCtx->raw = NULL;
-	implCtx->curlErr[0] = '\0';
 
 	KSI_LOG_debug(handle->ctx, "Curl: Preparing request to: %s", url);
 
 	implCtx->curl = curl_easy_init();
 	if (implCtx->curl == NULL) {
-		KSI_pushError(client->ctx, res = KSI_OUT_OF_MEMORY, "Unable to init CURL");
+		KSI_pushError(client->ctx, res = KSI_OUT_OF_MEMORY, "Unable to init CURL.");
 		goto cleanup;
 	}
 
@@ -221,6 +253,12 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
     if (http->agentName != NULL) {
     	curl_easy_setopt(implCtx->curl, CURLOPT_USERAGENT, http->agentName);
     }
+
+	if (http->mimeType != NULL) {
+		KSI_snprintf(mimeTypeHeader, sizeof(mimeTypeHeader) ,"Content-Type: %s", http->mimeType);
+		implCtx->httpHeaders = curl_slist_append(implCtx->httpHeaders, mimeTypeHeader);
+		curl_easy_setopt(implCtx->curl, CURLOPT_HTTPHEADER, implCtx->httpHeaders);
+	}
 
 	if (handle->request != NULL) {
 		curl_easy_setopt(implCtx->curl, CURLOPT_POST, 1);
