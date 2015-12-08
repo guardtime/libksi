@@ -52,6 +52,7 @@ integration_tests_SOURCES= \
 	./cutest/CuTest.h \
 	./aggre_integration_test.c \
 	./ext_integration_tests.c \
+	./pub_integration_tests.c \
 	./support_tests.c \
 	./support_tests.h
 

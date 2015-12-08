@@ -63,6 +63,7 @@ const char *getFullResourcePath(const char* resource);
 
 CuSuite* AggreIntegrationTests_getSuite(void);
 CuSuite* ExtIntegrationTests_getSuite(void);
+CuSuite* PubIntegrationTests_getSuite(void);
 
 #ifdef	__cplusplus
 }
