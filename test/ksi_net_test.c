@@ -265,6 +265,9 @@ static void testExtending(CuTest* tc) {
 
 	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"));
 
+	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
+	CuAssert(tc, "Unable to set default pubfil, default cert and default pki constraints.", res == KSI_OK);
+
 	res = KSI_extendSignature(ctx, sig, &ext);
 	CuAssert(tc, "Unable to extend the signature", res == KSI_OK && ext != NULL);
 

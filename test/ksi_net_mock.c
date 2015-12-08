@@ -32,7 +32,7 @@ unsigned char *KSI_NET_MOCK_request = NULL;
 size_t KSI_NET_MOCK_request_len = 0;
 unsigned char *KSI_NET_MOCK_response = NULL;
 size_t KSI_NET_MOCK_response_len = 0;
-
+char KSI_NET_MOCK_pubfileUri[2048] = "resource/tlv/publications.tlv";
 static size_t mockInitCount = 0;
 
 static int mockPublicationsFileReceive(KSI_RequestHandle *handle) {
@@ -41,12 +41,12 @@ static int mockPublicationsFileReceive(KSI_RequestHandle *handle) {
 	unsigned char *raw = NULL;
 	unsigned len;
 	long int raw_size = 0;
-	
+
 	if (handle == NULL) goto cleanup;
 
 	KSI_LOG_debug(ctx, "Connecting to MOCK publications file service");
-	
-	f = fopen(getFullResourcePath("resource/tlv/publications.tlv"), "rb");
+
+	f = fopen(KSI_NET_MOCK_pubfileUri, "rb");
 	if (f == NULL) {
 		res = KSI_IO_ERROR;
 		goto cleanup;
@@ -170,6 +170,16 @@ cleanup:
 	return res;
 }
 
+int KSI_NET_MOCK_setPubfileUri(const char *uri) {
+	if (uri == NULL) return KSI_INVALID_ARGUMENT;
+	if (strcmp(uri, "default") == 0) {
+		KSI_strncpy(KSI_NET_MOCK_pubfileUri, getFullResourcePath("resource/tlv/publications.tlv"), sizeof(KSI_NET_MOCK_pubfileUri));
+	} else {
+		KSI_strncpy(KSI_NET_MOCK_pubfileUri, uri, sizeof(KSI_NET_MOCK_pubfileUri));
+	}
+	return KSI_OK;
+}
+
 int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_NetworkClient *http = NULL;
@@ -194,6 +204,8 @@ int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	if (res != KSI_OK) goto cleanup;
 
 	http->sendPublicationRequest = mockSendPublicationsFileRequest;
+
+	KSI_NET_MOCK_setPubfileUri("default");
 
 	*client = (KSI_NetworkClient *)http;
 	http = NULL;

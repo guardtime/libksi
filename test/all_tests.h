@@ -40,6 +40,8 @@ int KSITest_decodeHexStr(const char *hexstr, unsigned char *buf, size_t buf_size
 void KSITest_setFileMockResponse(CuTest *tc, const char *fileName);
 
 int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetworkClient **provider);
+int KSI_NET_MOCK_setPubfileUri(const char *uri);
+int KSITest_setDefaultPubfileAndVerInfo(KSI_CTX *ctx);
 
 CuSuite* KSITest_CTX_getSuite(void);
 CuSuite* KSITest_RDR_getSuite(void);
