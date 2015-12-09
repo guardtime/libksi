@@ -122,3 +122,4 @@ otherinclude_HEADERS = \
 	compatibility.h
 
 libksi_la_LDFLAGS=-version-info @LTVER@
+
