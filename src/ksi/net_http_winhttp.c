@@ -258,13 +258,14 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	KSI_CTX *ctx = NULL;
 	winhttpNetHandleCtx *implCtx = NULL;
 	KSI_HttpClient *http = NULL;
-	char msg[128];
+	char msg[1024];
 	char *scheme = NULL;
 	char *hostName = NULL;
 	char *query = NULL;
 	unsigned port = 0;
 	LPWSTR W_host = NULL;
 	LPWSTR W_query = NULL;
+	LPWSTR W_mimeTypeHeader = NULL;
 	unsigned char *request = NULL;
 	size_t request_len = 0;
 
@@ -324,6 +325,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
+
 	res = LPWSTR_new(query, &W_query);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -362,6 +364,23 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		WINHTTP_ERROR(ctx, GetLastError(), KSI_NETWORK_ERROR, "WinHTTP: Unable to initialize request handle.");
 	}
 
+	/* Add MIME type header. */
+	if (http->mimeType != NULL) {
+		char tmp[1024];
+		KSI_snprintf(tmp, sizeof(tmp) ,"Content-Type: %s", http->mimeType);
+
+		res = LPWSTR_new(tmp, &W_mimeTypeHeader);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		if (!WinHttpAddRequestHeaders(implCtx->request_handle, W_mimeTypeHeader, -1L,
+				WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE)) {
+			WINHTTP_ERROR(ctx, GetLastError(), KSI_NETWORK_ERROR, "WinHTTP: Unable to set MIME type.");
+		}
+	}
+
 	if (!WinHttpSetTimeouts(implCtx->request_handle,0, http->connectionTimeoutSeconds*1000, 0, http->readTimeoutSeconds*1000)){
 		WINHTTP_ERROR(ctx, GetLastError(), KSI_NETWORK_ERROR, "WinHTTP: Unable to set timeouts.");
 	}
@@ -383,6 +402,7 @@ cleanup:
 	KSI_free(query);
 	LPWSTR_free(W_host);
 	LPWSTR_free(W_query);
+	LPWSTR_free(W_mimeTypeHeader);
 
 	return res;
 }
