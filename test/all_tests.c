@@ -24,6 +24,8 @@
 
 #include "cutest/CuTest.h"
 #include "all_tests.h"
+#include "../src/ksi/pkitruststore.h"
+#include "../src/ksi/ksi.h"
 
 
 #ifndef _WIN32
@@ -56,6 +58,48 @@ void KSITest_setFileMockResponse(CuTest *tc, const char *fileName) {
 
 	KSI_NET_MOCK_response_len = (unsigned)fread(KSI_NET_MOCK_response, 1, MOCK_BUFFER_SIZE, f);
 	fclose(f);
+}
+
+int KSITest_setDefaultPubfileAndVerInfo(KSI_CTX *ctx) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_PKITruststore *pki = NULL;
+
+	if (ctx == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_setPublicationsFile(ctx, NULL);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_NET_MOCK_setPubfileUri("default");
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, testPubFileCertConstraints);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_CTX_setPKITruststore(ctx, NULL);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_PKITruststore_new(ctx, 0, &pki);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_CTX_setPKITruststore(ctx, pki);
+	if (res != KSI_OK) goto cleanup;
+
+	pki = NULL;
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_PKITruststore_free(pki);
+
+return res;
 }
 
 static CuSuite* initSuite(void) {

@@ -19,6 +19,8 @@
 
 #include "cutest/CuTest.h"
 #include "all_integration_tests.h"
+#include <ksi/net_http.h>
+#include <ksi/net_uri.h>
 #include <ksi/net.h>
 
 extern KSI_CTX *ctx;
@@ -44,10 +46,10 @@ static void getExtResponse(CuTest* tc, KSI_uint64_t id, KSI_uint64_t aggrTime, K
 	CuAssert(tc, "Unable to create request ID.", res == KSI_OK && ID != NULL);
 
 	res = KSI_Integer_new(ctx, aggrTime, &aggr_time);
-	CuAssert(tc, "Unable to aggr time.", res == KSI_OK && &aggr_time);
+	CuAssert(tc, "Unable to aggr time.", res == KSI_OK && aggr_time != NULL);
 
 	res = KSI_Integer_new(ctx, pubTime, &pub_time);
-	CuAssert(tc, "Unable to pub time.", res == KSI_OK && &pub_time);
+	CuAssert(tc, "Unable to pub time.", res == KSI_OK && pub_time != NULL);
 
 
 	/*Combine objects*/
@@ -87,8 +89,7 @@ static void getExtResponse(CuTest* tc, KSI_uint64_t id, KSI_uint64_t aggrTime, K
 	KSI_RequestHandle_free(handle);
 }
 
-
-static void Test_SendOKExtendRequest(CuTest* tc) {
+static void Test_SendOKExtendRequestDefProvider(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ExtendResp *response = NULL;
 	KSI_Integer *resp_status = NULL;
@@ -108,7 +109,7 @@ static void Test_SendOKExtendRequest(CuTest* tc) {
 	return;
 }
 
-static void Test_OKExtendSignature(CuTest* tc) {
+static void Test_OKExtendSignatureDefProvider(CuTest* tc) {
 	int res;
 	KSI_Signature *sig = NULL;
 	KSI_Signature *ext = NULL;
@@ -197,14 +198,82 @@ static void Test_ExtendSignatureUsingAggregator(CuTest* tc) {
 	return;
 }
 
+static void Test_ExtendSignature_useProvider(CuTest* tc, const char *uri_host, unsigned port, const char *user, const char *key, const char *pub_uri,
+		int (*createProvider)(KSI_CTX *ctx, KSI_NetworkClient **http),
+		int (*setPubfail)(KSI_NetworkClient *client, const char *url),
+		int (*setExtender)(KSI_NetworkClient *client, const char *url_host, unsigned port, const char *user, const char *pass)) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Signature *sig = NULL;
+	KSI_Signature *ext = NULL;
+	KSI_NetworkClient *client = NULL;
+	KSI_CTX *ctx = NULL;
+
+	/* Create the context. */
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create ctx.", res == KSI_OK && ctx != NULL);
+
+	res = createProvider(ctx, &client);
+	CuAssert(tc, "Unable to create network client.", res == KSI_OK && client != NULL);
+
+	res = setExtender(client, uri_host, port, user, key);
+	CuAssert(tc, "Unable to set extender.", res == KSI_OK);
+
+	res = setPubfail(client, pub_uri);
+	CuAssert(tc, "Unable to set publications file url.", res == KSI_OK);
+
+	res = KSI_CTX_setNetworkProvider(ctx, client);
+	CuAssert(tc, "Unable to set new network client.", res == KSI_OK);
+	client = NULL;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-sig-2014-07-01.1.ksig"), &sig);
+	CuAssert(tc, "Unable to set read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_extend(sig, ctx, NULL, &ext);
+	CuAssert(tc, "The extending of signature must not fail.", res == KSI_OK && ext != NULL);
+
+	KSI_NetworkClient_free(client);
+	KSI_Signature_free(sig);
+	KSI_Signature_free(ext);
+	KSI_CTX_free(ctx);
+	return;
+}
+
+
+static int http_setExtWrapper(KSI_NetworkClient *client, const char *url_host, unsigned port, const char *user, const char *pass) {
+	return KSI_HttpClient_setExtender(client, url_host, user, pass);
+}
+
+static int uri_setExtWrapper(KSI_NetworkClient *client, const char *url_host, unsigned port, const char *user, const char *pass) {
+	return KSI_UriClient_setExtender(client, url_host, user, pass);
+}
+
+static void Test_ExtendSignatureDifferentProviders(CuTest* tc) {
+	/* Http provider. */
+	Test_ExtendSignature_useProvider(tc,
+			conf.extender_url, 0, conf.extender_user, conf.extender_pass, conf.publications_file_url,
+			KSI_HttpClient_new,
+			KSI_HttpClient_setPublicationUrl,
+			http_setExtWrapper);
+
+	/* Uri provider - all inf is extracted from uri. */
+	Test_ExtendSignature_useProvider(tc,
+			conf.extender_url, 0, NULL, NULL, conf.publications_file_url,
+			KSI_UriClient_new,
+			KSI_UriClient_setPublicationUrl,
+			uri_setExtWrapper);
+	return;
+}
+
+
 CuSuite* ExtIntegrationTests_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
-	SUITE_ADD_TEST(suite, Test_SendOKExtendRequest);
+	SUITE_ADD_TEST(suite, Test_SendOKExtendRequestDefProvider);
 	SUITE_ADD_TEST(suite, Test_NOKExtendRequestToTheFuture);
 	SUITE_ADD_TEST(suite, Test_NOKExtendRequestToPast);
-	SUITE_ADD_TEST(suite, Test_OKExtendSignature);
+	SUITE_ADD_TEST(suite, Test_OKExtendSignatureDefProvider);
 	SUITE_ADD_TEST(suite, Test_ExtendSignatureUsingAggregator);
+	SUITE_ADD_TEST(suite, Test_ExtendSignatureDifferentProviders);
 
 	return suite;
 }
