@@ -41,9 +41,7 @@ lib_dir=src/ksi/.libs
 
 #File list for libksi installion 
 libksi_libs="$lib_dir/libksi.so \
-    $lib_dir/libksi.so.0 \
-    $lib_dir/libksi.so.0.0.0"
-    
+    $lib_dir/libksi.so.*"
 
 libksi_doc="changelog \
     license.txt"

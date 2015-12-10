@@ -27,26 +27,14 @@ extern unsigned char *KSI_NET_MOCK_response;
 extern unsigned KSI_NET_MOCK_response_len;
 
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
+#define TEST_PUBLICATIONS_FILE_INVALID_PKI "resource/tlv/publfile-nok-pki.tlv"
 #define TAMPERED_PUBLICATIONS_FILE "resource/tlv/publications-fake-publication.tlv"
-
-static void setFileMockResponse(CuTest *tc, const char *fileName) {
-	FILE *f = NULL;
-
-	/* Read response from file. */
-	f = fopen(fileName, "rb");
-	CuAssert(tc, "Unable to open sample response file", f != NULL);
-
-	KSI_NET_MOCK_response_len = (unsigned)fread(KSI_NET_MOCK_response, 1, MOCK_BUFFER_SIZE, f);
-	fclose(f);
-}
 
 static void testLoadPublicationsFile(CuTest *tc) {
 	int res;
 	KSI_PublicationsFile *pubFile = NULL;
 
 	KSI_ERR_clearErrors(ctx);
-
-	setFileMockResponse(tc, getFullResourcePath(TEST_PUBLICATIONS_FILE));
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
@@ -60,8 +48,6 @@ static void testVerifyPublicationsFile(CuTest *tc) {
 	KSI_PKITruststore *pki = NULL;
 
 	KSI_ERR_clearErrors(ctx);
-
-	setFileMockResponse(tc, getFullResourcePath(TEST_PUBLICATIONS_FILE));
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
@@ -90,6 +76,74 @@ static void testVerifyPublicationsFile(CuTest *tc) {
 	KSI_PublicationsFile_free(pubFile);
 }
 
+static void testReceivePublicationsFileInvalidConstraints(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_PKITruststore *pki = NULL;
+	KSI_CertConstraint arr[] = {
+			{KSI_CERT_EMAIL, "wrong@email.com"},
+			{NULL, NULL}
+	};
+
+	KSI_ERR_clearErrors(ctx);
+
+	KSI_NET_MOCK_setPubfileUri("default");
+
+	/* Clear default publications file from CTX. */
+	res = KSI_CTX_setPublicationsFile(ctx, NULL);
+	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
+
+	/* Configure expected PIK cert and constraints for pub. file. */
+	res = KSI_PKITruststore_new(ctx, 0, &pki);
+	CuAssert(tc, "Unable to get PKI truststore from context.", res == KSI_OK && pki != NULL);
+
+	res = KSI_CTX_setPKITruststore(ctx, pki);
+	CuAssert(tc, "Unable to set new pki truststrore for ksi context.", res == KSI_OK);
+
+	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
+	CuAssert(tc, "Unable to read certificate", res == KSI_OK);
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, arr);
+	CuAssert(tc, "Unable to set OID 2.5.4.10", res == KSI_OK);
+
+	res = KSI_receivePublicationsFile(ctx, &pubFile);
+	CuAssert(tc, "Publications file should NOT verify as PKI constraint is wrong.", res != KSI_OK && pubFile == NULL);
+}
+
+static void testReceivePublicationsFileInvalidPki(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_PKITruststore *pki = NULL;
+	KSI_CertConstraint arr[] = {
+			{KSI_CERT_EMAIL, "publications@guardtime.com"},
+			{NULL, NULL}
+	};
+
+	KSI_ERR_clearErrors(ctx);
+
+	KSI_NET_MOCK_setPubfileUri(getFullResourcePath(TEST_PUBLICATIONS_FILE_INVALID_PKI));
+
+	/* Clear default publications file from CTX. */
+	res = KSI_CTX_setPublicationsFile(ctx, NULL);
+	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
+
+	/* Configure expected PIK cert and constraints for pub. file. */
+	res = KSI_PKITruststore_new(ctx, 0, &pki);
+	CuAssert(tc, "Unable to get PKI truststore from context.", res == KSI_OK && pki != NULL);
+
+	res = KSI_CTX_setPKITruststore(ctx, pki);
+	CuAssert(tc, "Unable to set new pki truststrore for ksi context.", res == KSI_OK);
+
+	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
+	CuAssert(tc, "Unable to read certificate", res == KSI_OK);
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, arr);
+	CuAssert(tc, "Unable to set OID 2.5.4.10", res == KSI_OK);
+
+	res = KSI_receivePublicationsFile(ctx, &pubFile);
+	CuAssert(tc, "Publications file should NOT verify as PKI signature is wrong.", res != KSI_OK && pubFile == NULL);
+}
+
 static void testVerifyPublicationsFileWithOrganization(CuTest *tc) {
 	int res;
 	KSI_PublicationsFile *pubFile = NULL;
@@ -101,7 +155,6 @@ static void testVerifyPublicationsFileWithOrganization(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	setFileMockResponse(tc, getFullResourcePath(TEST_PUBLICATIONS_FILE));
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
@@ -148,7 +201,6 @@ static void testVerifyPublicationsFileWithNoConstraints(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	setFileMockResponse(tc, getFullResourcePath(TEST_PUBLICATIONS_FILE));
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
@@ -182,7 +234,6 @@ static void testVerifyPublicationsFileWithAttributeNotPresent(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	setFileMockResponse(tc, getFullResourcePath(TEST_PUBLICATIONS_FILE));
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
@@ -255,6 +306,8 @@ static void testFindPublicationByPubStr(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
+	KSI_NET_MOCK_setPubfileUri("default");
+
 	res = KSI_receivePublicationsFile(ctx, &pubFile);
 	CuAssert(tc, "Unable to get publications file.", res == KSI_OK && pubFile != NULL);
 
@@ -294,6 +347,8 @@ static void testFindPublicationByTime(CuTest *tc) {
 	size_t len;
 
 	KSI_ERR_clearErrors(ctx);
+
+	KSI_NET_MOCK_setPubfileUri("default");
 
 	res = KSI_receivePublicationsFile(ctx, &pubFile);
 	CuAssert(tc, "Unable to get publications file.", res == KSI_OK && pubFile != NULL);
@@ -340,6 +395,8 @@ static void testFindPublicationRef(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
+	KSI_NET_MOCK_setPubfileUri("default");
+
 	res = KSI_receivePublicationsFile(ctx, &pubFile);
 	CuAssert(tc, "Unable to get publications file.", res == KSI_OK && pubFile != NULL);
 
@@ -381,7 +438,6 @@ static void testSerializePublicationsFile(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	setFileMockResponse(tc, getFullResourcePath(TEST_PUBLICATIONS_FILE));
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
@@ -623,6 +679,8 @@ CuSuite* KSITest_Publicationsfile_getSuite(void) {
 	SUITE_ADD_TEST(suite, testGetLatestPublicationOf0);
 	SUITE_ADD_TEST(suite, testGetLatestPublicationOfLast);
 	SUITE_ADD_TEST(suite, testGetLatestPublicationOfFuture);
+	SUITE_ADD_TEST(suite, testReceivePublicationsFileInvalidConstraints);
+	SUITE_ADD_TEST(suite, testReceivePublicationsFileInvalidPki);
 
 	return suite;
 }

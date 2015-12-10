@@ -39,6 +39,7 @@ static CuSuite* initSuite(void) {
 
 	addSuite(suite, AggreIntegrationTests_getSuite);
 	addSuite(suite, ExtIntegrationTests_getSuite);
+	addSuite(suite, PubIntegrationTests_getSuite);
 
 	return suite;
 }
@@ -142,8 +143,13 @@ static void conf_append(CONF *conf, const char *param, const char *value) {
 	CONF_cpy(publications_file_url, param, value);
 
 	CONF_cpy(tcp_url, param, value);
+	CONF_cpy(tcp_host, param, value);
 	CONF_cpy(tcp_user, param, value);
 	CONF_cpy(tcp_pass, param, value);
+
+	if (conf->tcp_port == 0 && strcmp(param, "tcp_port") == 0) {
+		conf->tcp_port = atoi(value);
+	}
 
 	if (strcmp(param, "publications_file_cnstr") == 0) {
 		if (conf->constraints >= CONF_MAX_CONSTRAINTS) {
@@ -195,6 +201,8 @@ static void conf_clear(CONF *conf) {
 	conf->publications_file_url[0] = '\0';
 	conf->publications_file_cnstr[0] = '\0';
 	conf->tcp_url[0] = '\0';
+	conf->tcp_host[0] = '\0';
+	conf->tcp_port = 0;
 	conf->tcp_pass[0] = '\0';
 	conf->tcp_user[0] = '\0';
 
@@ -225,8 +233,14 @@ static int conf_control(CONF *conf) {
 	CONF_CONTROL(conf, extender_user, res);
 	CONF_CONTROL(conf, publications_file_url, res);
 	CONF_CONTROL(conf, tcp_url, res);
+	CONF_CONTROL(conf, tcp_host, res);
 	CONF_CONTROL(conf, tcp_pass, res);
 	CONF_CONTROL(conf, tcp_user, res);
+
+	if(conf->tcp_port == 0) {
+		fprintf(stderr, "Error: parameter 'tcp_port' in conf file must have valeue (not 0).\n");
+		res = 1;
+	}
 
 	if (conf->constraints == 0) {
 		fprintf(stderr, "Error: At least 1 publications file certificate constraint must be defined in conf file.\n");

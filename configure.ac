@@ -34,7 +34,6 @@ AC_CANONICAL_TARGET
 #      increment age ('c:r:a' becomes 'c:r:a+1').
 #   4. If any interfaces have been removed or changed since the last public
 #      release, then set age to 0 ('c:r:a' becomes 'c:r:0'). 
-#LIBKSI_VERSION=1:0:0
 LTVER="2:0:0"
 AC_SUBST(LTVER)
 
