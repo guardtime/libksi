@@ -261,10 +261,10 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	char msg[1024];
 	char *scheme = NULL;
 	char *hostName = NULL;
-	char *query = NULL;
+	char *path = NULL;
 	unsigned port = 0;
 	LPWSTR W_host = NULL;
-	LPWSTR W_query = NULL;
+	LPWSTR W_path = NULL;
 	LPWSTR W_mimeTypeHeader = NULL;
 	unsigned char *request = NULL;
 	size_t request_len = 0;
@@ -295,7 +295,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	implCtx->ctx = ctx;
 	implCtx->session_handle = http->implCtx;
 
-	res = KSI_UriSplitBasic(url, &scheme, &hostName, &port, &query);
+	res = KSI_UriSplitBasic(url, &scheme, &hostName, &port, &path);
 	if (res != KSI_OK){
 		KSI_snprintf(msg, sizeof(msg), "WinHTTP: Unable to crack url '%s'.", url);
 		KSI_pushError(ctx, res, msg);
@@ -308,7 +308,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		goto cleanup;
 	}
 
-	if (hostName == NULL || query == NULL){
+	if (hostName == NULL) {
 		KSI_snprintf(msg, sizeof(msg), "WinHTTP: Invalid url '%s'.", url);
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, msg);
 		goto cleanup;
@@ -325,11 +325,12 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-
-	res = LPWSTR_new(query, &W_query);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
+	if (path != NULL) {
+		res = LPWSTR_new(path, &W_path);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
 	}
 
 	/*Preparing request*/
@@ -357,7 +358,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 
 	implCtx->request_handle = WinHttpOpenRequest(implCtx->connection_handle,
 			(request == NULL ? L"GET" : L"POST"),
-			W_query,
+			W_path,
 			NULL, NULL, NULL,0);
 
 	if (implCtx->request_handle == NULL){
@@ -399,9 +400,9 @@ cleanup:
 	winhttpNetHandleCtx_free(implCtx);
 	KSI_free(scheme);
 	KSI_free(hostName);
-	KSI_free(query);
+	KSI_free(path);
 	LPWSTR_free(W_host);
-	LPWSTR_free(W_query);
+	LPWSTR_free(W_path);
 	LPWSTR_free(W_mimeTypeHeader);
 
 	return res;
