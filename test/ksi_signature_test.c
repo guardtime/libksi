@@ -119,6 +119,38 @@ static void testVerifyLegacyExtendedSignatureAndDoc(CuTest *tc) {
 	KSI_Signature_free(sig);
 }
 
+static void testExtractInputHashLegacySignature(CuTest *tc) {
+	int res;
+	char doc[] = "This is a test data file.\x0d\x0a";
+	KSI_Signature *sig = NULL;
+	KSI_DataHash *sig_input_hash = NULL;
+	KSI_DataHash *doc_hash = NULL;
+	KSI_DataHasher *hsr = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_DataHasher_open(ctx, KSI_getHashAlgorithmByName("sha-256"), &hsr);
+	CuAssert(tc, "Unable to open hasher.", res == KSI_OK && hsr != NULL);
+
+	res = KSI_DataHasher_add(hsr, doc, strlen(doc));
+	CuAssert(tc, "Unable to hash document.", res == KSI_OK);
+
+	res = KSI_DataHasher_close(hsr, &doc_hash);
+	CuAssert(tc, "Unable to hash document.", res == KSI_OK && doc_hash != NULL);
+
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-legacy-sig-2014-06.gtts.ksig"), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_getDocumentHash(sig, &sig_input_hash);
+	CuAssert(tc, "Unable to get signatures input hash.", res == KSI_OK);
+	CuAssert(tc, "Signature input hash does not equal documents hash!", KSI_DataHash_equals(sig_input_hash, doc_hash));
+
+	KSI_Signature_free(sig);
+	KSI_DataHasher_free(hsr);
+	KSI_DataHash_free(doc_hash);
+}
+
 static void testRFC3161WrongChainIndex(CuTest *tc) {
 	int res;
 	KSI_Signature *sig = NULL;
@@ -445,6 +477,7 @@ CuSuite* KSITest_Signature_getSuite(void) {
 	SUITE_ADD_TEST(suite, testSignerIdentity);
 	SUITE_ADD_TEST(suite, testSignatureWith2Anchors);
 	SUITE_ADD_TEST(suite, testVerifyCalendarChainAlgoChange);
+	SUITE_ADD_TEST(suite, testExtractInputHashLegacySignature);
 
 	return suite;
 }
