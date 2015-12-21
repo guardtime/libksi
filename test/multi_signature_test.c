@@ -303,7 +303,7 @@ static void testgetUsedHashAlgorithmsFromSingleLegacy(CuTest *tc) {
 	KSI_free(arr);
 }
 
-static void testDeleteLast(CuTest *tc) {
+static void testDeleteSignatureAppendedFromFile(CuTest *tc, const char *fname) {
 	int res;
 	KSI_MultiSignature *ms = NULL;
 	KSI_Signature *sig = NULL;
@@ -313,7 +313,7 @@ static void testDeleteLast(CuTest *tc) {
 	res = KSI_MultiSignature_new(ctx, &ms);
 	CuAssert(tc, "Unable to create multi signature container.", res == KSI_OK && ms != NULL);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	res = KSI_Signature_fromFile(ctx, fname, &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_getDocumentHash(sig, &hsh);
@@ -339,6 +339,13 @@ static void testDeleteLast(CuTest *tc) {
 	KSI_free(arr);
 }
 
+static void testDeleteLast(CuTest *tc) {
+	testDeleteSignatureAppendedFromFile(tc, getFullResourcePath(TEST_SIGNATURE_FILE));
+}
+
+static void testDeleteLegacySignature(CuTest *tc) {
+	testDeleteSignatureAppendedFromFile(tc, getFullResourcePath("resource/tlv/ok-legacy-sig-2014-06.gtts.ksig"));
+}
 
 static void createMultiSignature(KSI_MultiSignature **ms) {
 	const char *signatures[] = {TEST_SIGNATURE_FILE, TEST_EX_SIGNATURE_FILE, NULL};
@@ -521,6 +528,7 @@ CuSuite* KSITest_multiSignature_getSuite(void) {
 	SUITE_ADD_TEST(suite, testgetUsedHashAlgorithmsFromSingle);
 	SUITE_ADD_TEST(suite, testgetUsedHashAlgorithmsFromSingleLegacy);
 	SUITE_ADD_TEST(suite, testDeleteLast);
+	SUITE_ADD_TEST(suite, testDeleteLegacySignature);
 
 	SUITE_ADD_TEST(suite, testSerialize);
 	SUITE_ADD_TEST(suite, testSerializeLength);

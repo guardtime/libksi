@@ -1,3 +1,7 @@
+* Bug fix. KSI_Signature_getDocumentHash fixed when applied to legacy signature.
+* Bug fix. KSI_MultiSignature_get fixed when extracting legacy signature.
+* Bug fix. KSI_MultiSignature_remove fixed when removing legacy signature.
+
 Version 3.4
 
 2015-12-09 release(3.4.0.6)

@@ -711,6 +711,7 @@ static int findAggregationHashChainList(KSI_LIST(ChainIndexMapper) *cimList, con
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i;
 	ChainIndexMapper *cim = NULL;
+	KSI_DataHash *inputHash = NULL;
 
 	if (hsh == NULL || aggList == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -722,11 +723,18 @@ static int findAggregationHashChainList(KSI_LIST(ChainIndexMapper) *cimList, con
 		if (res != KSI_OK) goto cleanup;
 
 		if (cim->aggrChain == NULL) {
-			/* When there is no calendar chain, there are no siblings containing a chain either. */
+			/* When there is no aggregation chain, there are no siblings containing a chain either. */
 			continue;
 		}
 
-		if (KSI_DataHash_equals(cim->aggrChain->inputHash, hsh)) {
+		/* If RFC3161 record exist, extract the real input hash! */
+		if (cim->rfc3161 != NULL) {
+			inputHash = cim->rfc3161->inputHash;
+		} else {
+			inputHash = cim->aggrChain->inputHash;
+		}
+
+		if (KSI_DataHash_equals(inputHash, hsh)) {
 			res = KSI_AggregationHashChainList_append(aggList, KSI_AggregationHashChain_ref(cim->aggrChain));
 			if (res != KSI_OK) goto cleanup;
 
@@ -941,7 +949,8 @@ static int ChainIndexMapper_deleteSignature(ChainIndexMapper *cim, void *foldCtx
 
 	} else {
 		/* Leaf node. */
-		if (cim->aggrChain != NULL && KSI_DataHash_equals(cim->aggrChain->inputHash, hsh)) {
+		if ((cim->rfc3161 != NULL && KSI_DataHash_equals(cim->rfc3161->inputHash, hsh))
+				|| (cim->rfc3161 == NULL && cim->aggrChain != NULL && KSI_DataHash_equals(cim->aggrChain->inputHash, hsh))) {
 			/* Remove the KSI aggregation hash chain. */
 			KSI_AggregationHashChain_free(cim->aggrChain);
 			cim->aggrChain = NULL;
@@ -1770,7 +1779,6 @@ int KSI_MultiSignature_parse(KSI_CTX *ctx, const unsigned char *raw, size_t raw_
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_MultiSignature *tmp = NULL;
 	ParserHelper hlpr;
-	size_t len;
 	size_t hdr_len;
 
 	ParserHelper_init(ctx, &hlpr);
