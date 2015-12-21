@@ -19,7 +19,7 @@
 
 Summary: Guardtime KSI Client API for C
 Name: libksi
-Version: %(cat VERSION)
+Version: @VERSION@
 Release: STABLE 
 License: ASL 2.0
 Group: Development/Libraries
@@ -30,6 +30,9 @@ Packager: Guardtime AS <info@guardtime.com>
 Requires: openssl
 Requires: curl
 Requires: ca-certificates
+BuildRequires: autoconf
+BuildRequires: automake
+BuildRequires: libtool
 BuildRequires: openssl-devel
 BuildRequires: curl-devel
 
@@ -50,6 +53,7 @@ Guardtime's Keyless Signature Service.
 
 %prep
 %setup
+autoreconf -iv
 
 %build
 %configure
