@@ -1597,6 +1597,7 @@ void KSI_Signature_free(KSI_Signature *sig) {
 
 int KSI_Signature_getDocumentHash(KSI_Signature *sig, KSI_DataHash **hsh) {
 	KSI_AggregationHashChain *aggr = NULL;
+	KSI_DataHash *inputHash = NULL;
 	int res;
 
 	if (sig == NULL || hsh == NULL) {
@@ -1605,14 +1606,19 @@ int KSI_Signature_getDocumentHash(KSI_Signature *sig, KSI_DataHash **hsh) {
 	}
 	KSI_ERR_clearErrors(sig->ctx);
 
+	if (sig->rfc3161 == NULL) {
+		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &aggr);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
 
-	res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &aggr);
-	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
-		goto cleanup;
+		inputHash = aggr->inputHash;;
+	} else {
+		inputHash = sig->rfc3161->inputHash;
 	}
 
-	*hsh = aggr->inputHash;
+	*hsh = inputHash;
 
 	res = KSI_OK;
 
