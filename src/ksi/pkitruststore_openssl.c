@@ -881,7 +881,7 @@ int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned cha
 	if (res != 1) {
 		char msg[1024];
 		char buf[1024];
-		ERR_error_string_n(res, msg, sizeof(buf));
+		ERR_error_string_n(res, buf, sizeof(buf));
 		KSI_snprintf(msg, sizeof(msg), "PKI Signature not verified: %s", buf);
 		KSI_pushError(pki->ctx, res = KSI_INVALID_PKI_SIGNATURE, msg);
 		goto cleanup;
