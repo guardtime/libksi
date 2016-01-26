@@ -1,6 +1,14 @@
-* Bug fix. KSI_Signature_getDocumentHash fixed when applied to legacy signature.
-* Bug fix. KSI_MultiSignature_get fixed when extracting legacy signature.
-* Bug fix. KSI_MultiSignature_remove fixed when removing legacy signature.
+Version 3.7
+
+2016-01-26 release(3.7.1037)
+* BUGFIX: Fixed building from SRPM
+  Thanks to Peter Portante
+* BUGFIX: Compilation issues under Fedora 21
+  Thanks to Peter Portante
+* IMPROVEMENT: Versioning includes 
+* BUGFIX: KSI_Signature_getDocumentHash fixed when applied to legacy signature.
+* BUGFIX: KSI_MultiSignature_get fixed when extracting legacy signature.
+* BUGFIX: KSI_MultiSignature_remove fixed when removing legacy signature.
 
 Version 3.4
 
