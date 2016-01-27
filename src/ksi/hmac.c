@@ -22,29 +22,24 @@
 #include "internal.h"
 #include "hmac.h"
 
-#define MAX_KEY_LEN 64
-
-#define ipad8 0x36,0x36,0x36,0x36,0x36,0x36,0x36,0x36
-#define opad8 0x5c,0x5c,0x5c,0x5c,0x5c,0x5c,0x5c,0x5c
-
-static const unsigned char ipad[MAX_KEY_LEN]={ipad8,ipad8,ipad8,ipad8,ipad8,ipad8,ipad8,ipad8};
-static const unsigned char opad[MAX_KEY_LEN]={opad8,opad8,opad8,opad8,opad8,opad8,opad8,opad8};
+#define MAX_BUF_LEN 128
 
 int KSI_HMAC_create(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, const unsigned char *data, size_t data_len, KSI_DataHash **hmac) {
-	int res;
+	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hashedKey = NULL;
 	KSI_DataHash *innerHash = NULL;
 	KSI_DataHash *outerHash = NULL;
+	unsigned blockSize = 0;
 
 	size_t key_len;
 	const unsigned char *bufKey = NULL;
-	size_t buf_len = 0;
-	unsigned char ipadXORkey[MAX_KEY_LEN];
-	unsigned char opadXORkey[MAX_KEY_LEN];
+	size_t buf_len;
+	unsigned char ipadXORkey[MAX_BUF_LEN];
+	unsigned char opadXORkey[MAX_BUF_LEN];
 	const unsigned char *digest = NULL;
 	size_t digest_len = 0;
-	unsigned i = 0;
+	size_t i;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || key == NULL || data == NULL || data_len == 0 || hmac == NULL) {
@@ -58,8 +53,14 @@ int KSI_HMAC_create(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, co
 		goto cleanup;
 	}
 
-	if (KSI_getHashLength(algo_id) > MAX_KEY_LEN) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "The hash length is greater than 64");
+	blockSize = KSI_HashAlgorithm_getBlockSize(algo_id);
+	if (blockSize == 0) {
+		KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Unknown buffer length for hash algorithm.");
+		goto cleanup;
+	}
+
+	if (KSI_getHashLength(algo_id) > MAX_BUF_LEN || blockSize > MAX_BUF_LEN) {
+		KSI_pushError(ctx, res = KSI_BUFFER_OVERFLOW, "Internal buffer too short to calculate HMAC.");
 		goto cleanup;
 	}
 
@@ -72,7 +73,7 @@ int KSI_HMAC_create(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, co
 
 	/* Prepare the key for hashing. */
 	/* If the key is longer than 64, hash it. If the key or its hash is shorter than 64 bit, append zeros. */
-	if (key_len > MAX_KEY_LEN) {
+	if (key_len > blockSize) {
 		res = KSI_DataHasher_add(hsr, key, key_len);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
@@ -91,24 +92,24 @@ int KSI_HMAC_create(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, co
 			goto cleanup;
 		}
 
-		if (digest == NULL || digest_len > MAX_KEY_LEN) {
+		if (digest == NULL || digest_len > blockSize) {
 			KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "The hash of the key is invalid");
 			goto cleanup;
 		}
 
 		bufKey = digest;
 		buf_len = digest_len;
-	} else{
-		bufKey = (unsigned char *) key;
-		buf_len = (unsigned) key_len;
+	} else {
+		bufKey = (const unsigned char *) key;
+		buf_len = key_len;
 	}
 
 	for (i = 0; i < buf_len; i++) {
-		ipadXORkey[i] = ipad[i] ^ bufKey[i];
-		opadXORkey[i] = opad[i] ^ bufKey[i];
+		ipadXORkey[i] = 0x36 ^ bufKey[i];
+		opadXORkey[i] = 0x5c ^ bufKey[i];
 	}
 
-	for (; i < MAX_KEY_LEN; i++) {
+	for (; i < blockSize; i++) {
 		ipadXORkey[i] = 0x36;
 		opadXORkey[i] = 0x5c;
 	}
@@ -120,17 +121,21 @@ int KSI_HMAC_create(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, co
 		goto cleanup;
 	}
 
-	res = KSI_DataHasher_add(hsr, ipadXORkey, MAX_KEY_LEN);
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Adding ipad", ipadXORkey, blockSize);
+	res = KSI_DataHasher_add(hsr, ipadXORkey, blockSize);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "data:", data, data_len);
 	res = KSI_DataHasher_add(hsr, data, data_len);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
+
+	KSI_LOG_debug(ctx, "Closing inner hasher");
 
 	res = KSI_DataHasher_close(hsr, &innerHash);
 	if (res != KSI_OK) {
@@ -145,7 +150,8 @@ int KSI_HMAC_create(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, co
 		goto cleanup;
 	}
 
-	res = KSI_DataHasher_add(hsr, opadXORkey, MAX_KEY_LEN);
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Adding opad", opadXORkey, blockSize);
+	res = KSI_DataHasher_add(hsr, opadXORkey, blockSize);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -157,11 +163,14 @@ int KSI_HMAC_create(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, co
 		goto cleanup;
 	}
 
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Adding inner hash", digest, digest_len);
 	res = KSI_DataHasher_add(hsr, digest, digest_len);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
+
+	KSI_LOG_debug(ctx, "Closing outer hasher");
 
 	res = KSI_DataHasher_close(hsr, &outerHash);
 	if (res != KSI_OK) {
