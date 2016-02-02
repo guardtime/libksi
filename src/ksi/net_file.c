@@ -639,6 +639,8 @@ int KSI_FsClient_extractPath(const char *uri, char **path) {
     *path = tmpPath;
     tmpPath = NULL;
 
+    res = KSI_OK;
+
 cleanup:
     if (tmpPath) KSI_free(tmpPath);
     return res;
