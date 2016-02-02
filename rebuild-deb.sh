@@ -63,6 +63,7 @@ libksi_devel_includes="\
     $include_dir/net.h \
     $include_dir/net_http.h \
     $include_dir/net_tcp.h \
+    $include_dir/net_file.h \
     $include_dir/net_uri.h\
     $include_dir/pkitruststore.h \
     $include_dir/publicationsfile.h \
