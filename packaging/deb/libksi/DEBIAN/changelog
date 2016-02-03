@@ -1,3 +1,15 @@
+libksi (3.7.1037) UNRELEASED; urgency=low
+
+  * BUGFIX: Fixed building from SRPM
+    Thanks to Peter Portante
+  * BUGFIX: Compilation issues under Fedora 21
+    Thanks to Peter Portante
+  * IMPROVEMENT: Versioning includes 
+  * BUGFIX: KSI_Signature_getDocumentHash fixed when applied to legacy signature.
+  * BUGFIX: KSI_MultiSignature_get fixed when extracting legacy signature.
+  * BUGFIX: KSI_MultiSignature_remove fixed when removing legacy signature.
+
+
 libksi (3.5.1) UNRELEASED; urgency=low
 
     * Added integration tests.

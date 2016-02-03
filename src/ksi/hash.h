@@ -255,10 +255,17 @@ extern "C" {
 	 *
 	 * \param[in]	algo_id		Hash algorithm id
 	 *
-	 * \return Length of the hash value calculated by the given hash algorithm. Returns value -1 on error.
+	 * \return Length of the hash value calculated by the given hash algorithm. Returns value 0 on error.
 	 */
 	unsigned int KSI_getHashLength(KSI_HashAlgorithm algo_id);
 
+	/**
+	 * Returns the size of the data block the underlying hash algorithm
+	 *  operates upon in bytes.
+	 *  \param[in]	algo_id			Hash algorithm id.
+	 *  \return Returns the size of the data block the underlying hash algorithm or 0 on errir.
+	 */
+	unsigned int KSI_HashAlgorithm_getBlockSize(KSI_HashAlgorithm algo_id);
 	/**
 	 * This function is used to check if the given hash algorithm is trusted. If
 	 * the hash algorithm is trusted it returns 1, in all other cases 0.

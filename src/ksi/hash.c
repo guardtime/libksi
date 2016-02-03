@@ -25,7 +25,7 @@
 #include "hash_impl.h"
 #include "tlv.h"
 
-#define HASH_ALGO(id, name, bitcount, trusted) {(id), (name), (bitcount), (trusted), id##_aliases}
+#define HASH_ALGO(id, name, bitcount, blocksize, trusted) {(id), (name), (bitcount), (blocksize), (trusted), id##_aliases}
 
 /** Hash algorithm aliases. The last alias has to be an empty string */
 static char *KSI_HASHALG_SHA1_aliases[] = {"SHA-1", ""};
@@ -45,25 +45,27 @@ static struct KSI_hashAlgorithmInfo_st {
 	KSI_HashAlgorithm algo_id;
 	/** Upper-case name. */
 	char *name;
-	/** Hash bit count. */
-	unsigned int bitCount;
+	/** Output digest bit count. */
+	unsigned int outputBitCount;
+	/** Internal bit count */
+	unsigned int blockSize;
 	/** Is the hash algorithm trusted? */
 	int trusted;
 	/** Accepted aliases for this hash algorithm. */
 	char **aliases;
 } KSI_hashAlgorithmInfo[] = {
-		HASH_ALGO(KSI_HASHALG_SHA1,			"SHA1", 		160, 1),
-		HASH_ALGO(KSI_HASHALG_SHA2_256,		"SHA2-256", 	256, 1),
-		HASH_ALGO(KSI_HASHALG_RIPEMD160,	"RIPEMD-160", 	160, 1),
-		HASH_ALGO(KSI_HASHALG_SHA2_224,		"SHA2-224", 	224, 1),
-		HASH_ALGO(KSI_HASHALG_SHA2_384,		"SHA2-384", 	384, 1),
-		HASH_ALGO(KSI_HASHALG_SHA2_512,		"SHA2-512", 	512, 1),
-		{0x06, NULL, 0, 0, NULL}, /* Deprecated algorithm - do not reuse. */
-		HASH_ALGO(KSI_HASHALG_SHA3_244,		"SHA3-224", 	224, 1),
-		HASH_ALGO(KSI_HASHALG_SHA3_256,		"SHA3-256", 	256, 1),
-		HASH_ALGO(KSI_HASHALG_SHA3_384,		"SHA3-384", 	384, 1),
-		HASH_ALGO(KSI_HASHALG_SHA3_512,		"SHA3-512", 	512, 1),
-		HASH_ALGO(KSI_HASHALG_SM3, 			"SM3", 			256, 1)
+		HASH_ALGO(KSI_HASHALG_SHA1,			"SHA1", 		160, 512, 1),
+		HASH_ALGO(KSI_HASHALG_SHA2_256,		"SHA2-256", 	256, 512, 1),
+		HASH_ALGO(KSI_HASHALG_RIPEMD160,	"RIPEMD-160", 	160, 512, 1),
+		HASH_ALGO(KSI_HASHALG_SHA2_224,		"SHA2-224", 	224, 512, 1),
+		HASH_ALGO(KSI_HASHALG_SHA2_384,		"SHA2-384", 	384, 1024, 1),
+		HASH_ALGO(KSI_HASHALG_SHA2_512,		"SHA2-512", 	512, 1024, 1),
+		{0x06, NULL, 0, 0, 0, NULL}, /* Deprecated algorithm - do not reuse. */
+		HASH_ALGO(KSI_HASHALG_SHA3_244,		"SHA3-224", 	224, 1152, 1),
+		HASH_ALGO(KSI_HASHALG_SHA3_256,		"SHA3-256", 	256, 1088, 1),
+		HASH_ALGO(KSI_HASHALG_SHA3_384,		"SHA3-384", 	384, 832, 1),
+		HASH_ALGO(KSI_HASHALG_SHA3_512,		"SHA3-512", 	512, 576, 1),
+		HASH_ALGO(KSI_HASHALG_SM3, 			"SM3", 			256, 512, 1)
 };
 
 /**
@@ -88,7 +90,14 @@ int KSI_isHashAlgorithmTrusted(KSI_HashAlgorithm algo_id) {
 
 unsigned int KSI_getHashLength(KSI_HashAlgorithm algo_id) {
 	if (algo_id >= 0 && algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
-		return (KSI_hashAlgorithmInfo[algo_id].bitCount) >> 3;
+		return (KSI_hashAlgorithmInfo[algo_id].outputBitCount) >> 3;
+	}
+	return 0;
+}
+
+unsigned int KSI_HashAlgorithm_getBlockSize(KSI_HashAlgorithm algo_id) {
+	if (algo_id >= 0 && algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
+		return (KSI_hashAlgorithmInfo[algo_id].blockSize) >> 3;
 	}
 	return 0;
 }
