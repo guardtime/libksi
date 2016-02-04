@@ -87,7 +87,8 @@ static void testReceivePublicationsFileInvalidConstraints(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	KSI_NET_MOCK_setPubfileUri("default");
+	res = KSI_CTX_setPublicationUrl(ctx, getFullResourcePathUri(TEST_PUBLICATIONS_FILE));
+	CuAssert(tc, "Unable to set pubfile URI.", res == KSI_OK);
 
 	/* Clear default publications file from CTX. */
 	res = KSI_CTX_setPublicationsFile(ctx, NULL);
@@ -121,7 +122,8 @@ static void testReceivePublicationsFileInvalidPki(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	KSI_NET_MOCK_setPubfileUri(getFullResourcePath(TEST_PUBLICATIONS_FILE_INVALID_PKI));
+	res = KSI_CTX_setPublicationUrl(ctx, getFullResourcePathUri(TEST_PUBLICATIONS_FILE_INVALID_PKI));
+	CuAssert(tc, "Unable to clear pubfile URI.", res == KSI_OK);
 
 	/* Clear default publications file from CTX. */
 	res = KSI_CTX_setPublicationsFile(ctx, NULL);
@@ -306,7 +308,8 @@ static void testFindPublicationByPubStr(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	KSI_NET_MOCK_setPubfileUri("default");
+	res = KSI_CTX_setPublicationUrl(ctx, getFullResourcePathUri(TEST_PUBLICATIONS_FILE));
+	CuAssert(tc, "Unable to set pubfile URI.", res == KSI_OK);
 
 	res = KSI_receivePublicationsFile(ctx, &pubFile);
 	CuAssert(tc, "Unable to get publications file.", res == KSI_OK && pubFile != NULL);
@@ -348,7 +351,8 @@ static void testFindPublicationByTime(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	KSI_NET_MOCK_setPubfileUri("default");
+	res = KSI_CTX_setPublicationUrl(ctx, getFullResourcePathUri(TEST_PUBLICATIONS_FILE));
+	CuAssert(tc, "Unable to set pubfile URI.", res == KSI_OK);
 
 	res = KSI_receivePublicationsFile(ctx, &pubFile);
 	CuAssert(tc, "Unable to get publications file.", res == KSI_OK && pubFile != NULL);
@@ -395,7 +399,8 @@ static void testFindPublicationRef(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	KSI_NET_MOCK_setPubfileUri("default");
+	res = KSI_CTX_setPublicationUrl(ctx, getFullResourcePathUri(TEST_PUBLICATIONS_FILE));
+	CuAssert(tc, "Unable to set pubfile URI.", res == KSI_OK);
 
 	res = KSI_receivePublicationsFile(ctx, &pubFile);
 	CuAssert(tc, "Unable to get publications file.", res == KSI_OK && pubFile != NULL);

@@ -26,11 +26,7 @@
 #include "support_tests.h"
 #include "all_integration_tests.h"
 
-#ifdef _WIN32
-#  define DIR_SEP '\\'
-#else
-#  define DIR_SEP '/'
-#endif
+#define DIR_SEP '/'
 
 int ctx_get_base_external_error(KSI_CTX *ctx) {
 	char buf[1024];
@@ -75,6 +71,11 @@ static char pathBuffer[2048];
 
 const char *getFullResourcePath(const char* resource) {
 	KSI_snprintf(pathBuffer, sizeof(pathBuffer), "%s%c%s", projectRoot, DIR_SEP, resource);
+	return pathBuffer;
+}
+
+const char *getFullResourcePathUri(const char* resource) {
+	KSI_snprintf(pathBuffer, sizeof(pathBuffer), "file://%s%c%s", projectRoot, DIR_SEP, resource);
 	return pathBuffer;
 }
 
