@@ -23,8 +23,6 @@
 #include "all_tests.h"
 
 extern KSI_CTX *ctx;
-extern unsigned char *KSI_NET_MOCK_response;
-extern unsigned KSI_NET_MOCK_response_len;
 
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 #define TEST_PUBLICATIONS_FILE_INVALID_PKI "resource/tlv/publfile-nok-pki.tlv"
