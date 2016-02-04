@@ -913,19 +913,19 @@ CTX_GET_SET_VALUE(pkiTruststore, PKITruststore, KSI_PKITruststore, KSI_PKITrusts
 CTX_GET_SET_VALUE(publicationsFile, PublicationsFile, KSI_PublicationsFile, KSI_PublicationsFile_free)
 
 int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *netProvider){
-    int res = KSI_UNKNOWN_ERROR;
+	int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL){
-        res = KSI_INVALID_ARGUMENT;
-        goto cleanup;
-    }
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
 	if (ctx->netProvider != NULL) {
-        KSI_NetworkClient_free (ctx->netProvider);
-    }
+		KSI_NetworkClient_free (ctx->netProvider);
+	}
 
 	ctx->netProvider = netProvider;
-    ctx->isCustomNetProvider = 1;
+	ctx->isCustomNetProvider = 1;
 	res = KSI_OK;
 
 cleanup:

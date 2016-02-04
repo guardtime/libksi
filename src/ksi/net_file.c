@@ -159,6 +159,8 @@ cleanup:
 }
 
 static int prepareRequest(KSI_NetworkClient *client,
+						  void *pdu,
+						  int (*serialize)(void *, unsigned char **, size_t *),
 						  KSI_RequestHandle **handle,
 						  char *path,
 						  const char *desc) {
@@ -168,19 +170,21 @@ static int prepareRequest(KSI_NetworkClient *client,
 	unsigned char *raw = NULL;
 	size_t raw_len = 0;
 
-	if (client->ctx == NULL) {
+	if (client == NULL || pdu == NULL || handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	KSI_LOG_debug(client->ctx, "File: %s", desc);
-
 	KSI_ERR_clearErrors(client->ctx);
 
-	if (handle == NULL) {
-		KSI_pushError(client->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+	KSI_LOG_debug(client->ctx, "File: %s", desc);
+
+	res = serialize(pdu, &raw, &raw_len);
+	if (res != KSI_OK) {
+		KSI_pushError(client->ctx, res, NULL);
 		goto cleanup;
 	}
+	KSI_LOG_logBlob(client->ctx, KSI_LOG_DEBUG, desc, raw, raw_len);
 
 	/* Create a new request handle */
 	res = KSI_RequestHandle_new(client->ctx, raw, raw_len, &tmp);
@@ -217,6 +221,7 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 	FsClient_Endpoint *endp = NULL;
 	KSI_Integer *pReqId = NULL;
 	KSI_Integer *reqId = NULL;
+	KSI_ExtendPdu *pdu = NULL;
 
 	if (client == NULL || req == NULL || handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -243,11 +248,16 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 		reqId = NULL;
 	}
 
+	res = KSI_ExtendReq_enclose(req, client->extender->ksi_user, client->extender->ksi_pass, &pdu);
+	if (res != KSI_OK) goto cleanup;
+
 	res = prepareRequest(
-				client,
-				handle,
-				endp->path,
-				"Extend request");
+			  client,
+			  pdu,
+			  (int (*)(void *, unsigned char **, size_t *))KSI_ExtendPdu_serialize,
+			  handle,
+			  endp->path,
+			  "Extend request");
 	if (res != KSI_OK) goto cleanup;
 	res = KSI_OK;
 
@@ -262,6 +272,7 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 	FsClient_Endpoint *endp = NULL;
 	KSI_Integer *pReqId = NULL;
 	KSI_Integer *reqId = NULL;
+	KSI_AggregationPdu *pdu = NULL;
 
 	if (client == NULL || req == NULL || handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -288,17 +299,24 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 		reqId = NULL;
 	}
 
+	res = KSI_AggregationReq_enclose(req, client->aggregator->ksi_user, client->aggregator->ksi_pass, &pdu);
+	if (res != KSI_OK) goto cleanup;
+
 	res = prepareRequest(
-				client,
-				handle,
-				endp->path,
-				"Aggregation request");
+			  client,
+			  pdu,
+			  (int (*)(void *, unsigned char **, size_t *))KSI_AggregationPdu_serialize,
+			  handle,
+			  endp->path,
+			  "Aggregation request");
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_OK;
 
 cleanup:
 	KSI_Integer_free(reqId);
+	KSI_AggregationPdu_setRequest(pdu, NULL);
+	KSI_AggregationPdu_free(pdu);
 
 	return res;
 }
