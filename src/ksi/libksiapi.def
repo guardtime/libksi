@@ -238,6 +238,14 @@ EXPORTS
     KSI_TcpClient_setAggregator
     KSI_TcpClient_setTransferTimeoutSeconds
 
+;net_file.h
+
+    KSI_FsClient_new
+    KSI_FsClient_setPublicationUrl
+    KSI_FsClient_setExtender
+    KSI_FsClient_setAggregator
+    KSI_FsClient_extractPath
+
 ;net_uri.h
     KSI_UriClient_new
     KSI_UriClient_setPublicationUrl
