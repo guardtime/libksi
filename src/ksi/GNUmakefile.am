@@ -42,6 +42,7 @@ libksi_la_SOURCES = \
 	hash_impl.h \
 	hash_openssl.c \
 	hmac.h \
+	hmac_impl.h\
 	hmac.c \
 	http_parser.h \
 	http_parser.c \

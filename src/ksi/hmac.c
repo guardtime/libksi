@@ -21,28 +21,64 @@
 
 #include "internal.h"
 #include "hmac.h"
-
-#define MAX_BUF_LEN 128
+#include "hmac_impl.h"
 
 int KSI_HMAC_create(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, const unsigned char *data, size_t data_len, KSI_DataHash **hmac) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_DataHasher *hsr = NULL;
+	KSI_HmacHasher *hasher = NULL;
+	KSI_DataHash *tmp_hmac = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || hmac == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_HmacHasher_open(ctx, algo_id, key, &hasher);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_HmacHasher_add(hasher, data, data_len);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_HmacHasher_close(hasher, &tmp_hmac);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	*hmac = tmp_hmac;
+	tmp_hmac = NULL;
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_DataHash_free(tmp_hmac);
+	KSI_HmacHasher_free(hasher);
+
+	return res;
+}
+
+int KSI_HmacHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, KSI_HmacHasher **hasher) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_HmacHasher *tmp_hasher = NULL;
 	KSI_DataHash *hashedKey = NULL;
-	KSI_DataHash *innerHash = NULL;
-	KSI_DataHash *outerHash = NULL;
 	unsigned blockSize = 0;
 
 	size_t key_len;
 	const unsigned char *bufKey = NULL;
 	size_t buf_len;
-	unsigned char ipadXORkey[MAX_BUF_LEN];
-	unsigned char opadXORkey[MAX_BUF_LEN];
 	const unsigned char *digest = NULL;
 	size_t digest_len = 0;
 	size_t i;
 
 	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || key == NULL || data == NULL || data_len == 0 || hmac == NULL) {
+	if (ctx == NULL || key == NULL || hasher == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
@@ -64,23 +100,32 @@ int KSI_HMAC_create(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, co
 		goto cleanup;
 	}
 
-	/* Open the hasher. */
-	res = KSI_DataHasher_open(ctx, algo_id, &hsr);
+	tmp_hasher = KSI_new(KSI_HmacHasher);
+	if (tmp_hasher == NULL) {
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	/* Open the data hasher. */
+	res = KSI_DataHasher_open(ctx, algo_id, &tmp_hasher->dataHasher);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
+	tmp_hasher->ctx = ctx;
+	tmp_hasher->blockSize = blockSize;
+
 	/* Prepare the key for hashing. */
 	/* If the key is longer than 64, hash it. If the key or its hash is shorter than 64 bit, append zeros. */
 	if (key_len > blockSize) {
-		res = KSI_DataHasher_add(hsr, key, key_len);
+		res = KSI_DataHasher_add(tmp_hasher->dataHasher, key, key_len);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
 		}
 
-		res = KSI_DataHasher_close(hsr, &hashedKey);
+		res = KSI_DataHasher_close(tmp_hasher->dataHasher, &hashedKey);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
@@ -105,76 +150,139 @@ int KSI_HMAC_create(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, co
 	}
 
 	for (i = 0; i < buf_len; i++) {
-		ipadXORkey[i] = 0x36 ^ bufKey[i];
-		opadXORkey[i] = 0x5c ^ bufKey[i];
+		tmp_hasher->ipadXORkey[i] = 0x36 ^ bufKey[i];
+		tmp_hasher->opadXORkey[i] = 0x5c ^ bufKey[i];
 	}
 
 	for (; i < blockSize; i++) {
-		ipadXORkey[i] = 0x36;
-		opadXORkey[i] = 0x5c;
+		tmp_hasher->ipadXORkey[i] = 0x36;
+		tmp_hasher->opadXORkey[i] = 0x5c;
+	}
+
+	res = KSI_HmacHasher_reset(tmp_hasher);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	*hasher = tmp_hasher;
+	tmp_hasher = NULL;
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_DataHash_free(hashedKey);
+	KSI_HmacHasher_free(tmp_hasher);
+
+	return res;
+}
+
+int KSI_HmacHasher_reset(KSI_HmacHasher *hasher) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (hasher == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(hasher->ctx);
+
+	res = KSI_DataHasher_reset(hasher->dataHasher);
+	if (res != KSI_OK) {
+		KSI_pushError(hasher->ctx, res, NULL);
+		goto cleanup;
 	}
 
 	/* Hash inner data. */
-	res = KSI_DataHasher_reset(hsr);
+	KSI_LOG_logBlob(hasher->ctx, KSI_LOG_DEBUG, "Adding ipad", hasher->ipadXORkey, hasher->blockSize);
+	res = KSI_DataHasher_add(hasher->dataHasher, hasher->ipadXORkey, hasher->blockSize);
 	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
+		KSI_pushError(hasher->ctx, res, NULL);
 		goto cleanup;
 	}
 
-	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Adding ipad", ipadXORkey, blockSize);
-	res = KSI_DataHasher_add(hsr, ipadXORkey, blockSize);
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_HmacHasher_add(KSI_HmacHasher *hasher, const void *data, size_t data_length) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (hasher == NULL || data == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(hasher->ctx);
+
+	res = KSI_DataHasher_add(hasher->dataHasher, data, data_length);
 	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
+		KSI_pushError(hasher->ctx, res, NULL);
 		goto cleanup;
 	}
 
-	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "data:", data, data_len);
-	res = KSI_DataHasher_add(hsr, data, data_len);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_HmacHasher_close(KSI_HmacHasher *hasher, KSI_DataHash **hmac) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *innerHash = NULL;
+	KSI_DataHash *outerHash = NULL;
+
+	const unsigned char *digest = NULL;
+	size_t digest_len = 0;
+
+	if (hasher == NULL || hmac == NULL) {
+		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+	KSI_ERR_clearErrors(hasher->ctx);
 
-	KSI_LOG_debug(ctx, "Closing inner hasher");
+	KSI_LOG_debug(hasher->ctx, "Closing inner hasher");
 
-	res = KSI_DataHasher_close(hsr, &innerHash);
+	res = KSI_DataHasher_close(hasher->dataHasher, &innerHash);
 	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
+		KSI_pushError(hasher->ctx, res, NULL);
 		goto cleanup;
 	}
 
 	/* Hash outer data. */
-	res = KSI_DataHasher_reset(hsr);
+	res = KSI_DataHasher_reset(hasher->dataHasher);
 	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
+		KSI_pushError(hasher->ctx, res, NULL);
 		goto cleanup;
 	}
 
-	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Adding opad", opadXORkey, blockSize);
-	res = KSI_DataHasher_add(hsr, opadXORkey, blockSize);
+	KSI_LOG_logBlob(hasher->ctx, KSI_LOG_DEBUG, "Adding opad", hasher->opadXORkey, hasher->blockSize);
+	res = KSI_DataHasher_add(hasher->dataHasher, hasher->opadXORkey, hasher->blockSize);
 	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
+		KSI_pushError(hasher->ctx, res, NULL);
 		goto cleanup;
 	}
 
 	res = KSI_DataHash_extract(innerHash, NULL, &digest, &digest_len);
 	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
+		KSI_pushError(hasher->ctx, res, NULL);
 		goto cleanup;
 	}
 
-	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Adding inner hash", digest, digest_len);
-	res = KSI_DataHasher_add(hsr, digest, digest_len);
+	KSI_LOG_logBlob(hasher->ctx, KSI_LOG_DEBUG, "Adding inner hash", digest, digest_len);
+	res = KSI_DataHasher_add(hasher->dataHasher, digest, digest_len);
 	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
+		KSI_pushError(hasher->ctx, res, NULL);
 		goto cleanup;
 	}
 
-	KSI_LOG_debug(ctx, "Closing outer hasher");
+	KSI_LOG_debug(hasher->ctx, "Closing outer hasher");
 
-	res = KSI_DataHasher_close(hsr, &outerHash);
+	res = KSI_DataHasher_close(hasher->dataHasher, &outerHash);
 	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
+		KSI_pushError(hasher->ctx, res, NULL);
 		goto cleanup;
 	}
 
@@ -184,10 +292,15 @@ int KSI_HMAC_create(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, co
 
 cleanup:
 
-	KSI_DataHasher_free(hsr);
-	KSI_DataHash_free(hashedKey);
 	KSI_DataHash_free(innerHash);
 	KSI_DataHash_free(outerHash);
 
 	return res;
+}
+
+void KSI_HmacHasher_free(KSI_HmacHasher *hasher) {
+	if (hasher != NULL) {
+		KSI_DataHasher_free(hasher->dataHasher);
+		KSI_free(hasher);
+	}
 }

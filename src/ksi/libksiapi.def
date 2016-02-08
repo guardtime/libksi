@@ -110,6 +110,11 @@ EXPORTS
 ;hmac.h
 EXPORTS
     KSI_HMAC_create
+	KSI_HmacHasher_open
+	KSI_HmacHasher_reset
+	KSI_HmacHasher_add
+	KSI_HmacHasher_close
+	KSI_HmacHasher_free
 
 ;io.h
 EXPORTS
