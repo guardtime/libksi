@@ -83,6 +83,8 @@ test/resigner
 test/runner
 test/serialize-benchmark
 testsuite-xunit.xml
+coverage.info
+coverage/
 
 # Configuration files
 test/integrationtest.conf
