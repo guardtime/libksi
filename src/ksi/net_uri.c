@@ -29,6 +29,8 @@
 #include "net_file.h"
 #include "http_parser.h"
 
+static int getClientByUriScheme(const char *uri, const char *scheme, const char **replaceScheme);
+
 static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, KSI_RequestHandle **handle) {
 	KSI_UriClient *uriClient = client->impl;
 	return KSI_NetworkClient_sendExtendRequest(uriClient->pExtendClient, req, handle);
@@ -57,7 +59,7 @@ static void uriClient_free(KSI_UriClient *client) {
 	if (client != NULL) {
 		KSI_NetworkClient_free(client->httpClient);
 		KSI_NetworkClient_free(client->tcpClient);
-        KSI_NetworkClient_free(client->fsClient);
+		KSI_NetworkClient_free(client->fsClient);
 		KSI_free(client);
 	}
 }
@@ -130,44 +132,9 @@ cleanup:
 	return res;
 }
 
-static int getClientByUriScheme(const char *uri, const char *scheme, const char **replaceScheme) {
-	int netClient = -1;
-
-	static const struct {
-		const char *scheme;
-		const char *replace;
-		enum client_e client;
-	} schemeMap[] = {
-			{"ksi", "http", URI_HTTP },
-			{"ksi+http", "http",URI_HTTP},
-			{"ksi+https", "https", URI_HTTP},
-			{"ksi+tcp", NULL, URI_TCP},
-			{"file", NULL, URI_FILE},
-			{NULL, NULL, -1}
-	};
-
-	if (scheme != NULL) {
-		int i = 0;
-		while (schemeMap[i].scheme != NULL) {
-			if (strcmp(schemeMap[i].scheme, scheme) == 0) {
-				netClient = schemeMap[i].client;
-				*replaceScheme = schemeMap[i].replace;
-				break;
-			}
-			i++;
-		}
-	}
-
-	if (netClient == -1) {
-		netClient = URI_HTTP;
-	}
-
-	return netClient;
-}
-
 int KSI_UriClient_setPublicationUrl(KSI_NetworkClient *client, const char *val) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_UriClient *uriClient;
+	KSI_UriClient *uriClient = NULL;
 	int c;
 	char *schm = NULL;
 	char *host = NULL;
@@ -229,6 +196,41 @@ cleanup:
 	return res;
 }
 
+static int getClientByUriScheme(const char *uri, const char *scheme, const char **replaceScheme) {
+	int netClient = -1;
+
+	static const struct {
+		const char *scheme;
+		const char *replace;
+		enum client_e client;
+	} schemeMap[] = {
+			{"ksi", "http", URI_HTTP },
+			{"ksi+http", "http",URI_HTTP},
+			{"ksi+https", "https", URI_HTTP},
+			{"ksi+tcp", NULL, URI_TCP},
+			{"file", NULL, URI_FILE},
+			{NULL, NULL, -1}
+	};
+
+	if (scheme != NULL) {
+		int i = 0;
+		while (schemeMap[i].scheme != NULL) {
+			if (strcmp(schemeMap[i].scheme, scheme) == 0) {
+				netClient = schemeMap[i].client;
+				*replaceScheme = schemeMap[i].replace;
+				break;
+			}
+			i++;
+		}
+	}
+
+	if (netClient == -1) {
+		netClient = URI_HTTP;
+	}
+
+	return netClient;
+}
+
 static int uriClient_setService(KSI_NetworkClient *client, const char *uri, const char *loginId, const char *key,
 		int (*HttpClient_setService)(KSI_NetworkClient *client, const char *url, const char *user, const char *pass),
 		int (*TcpClient_setService)(KSI_NetworkClient *client, const char *host, unsigned port, const char *user, const char *pass),
@@ -250,105 +252,105 @@ static int uriClient_setService(KSI_NetworkClient *client, const char *uri, cons
 	int unableToParse = 0;
 	int c;
 
-    if (client == NULL || serviceClient == NULL || uri == NULL ||
-        HttpClient_setService == NULL || TcpClient_setService == NULL || FsClient_setService == NULL) {
-        res = KSI_INVALID_ARGUMENT;
-        goto cleanup;
-    }
+	if (client == NULL || serviceClient == NULL || uri == NULL ||
+		HttpClient_setService == NULL || TcpClient_setService == NULL || FsClient_setService == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
-    uri_client = client->impl;
+	uri_client = client->impl;
 
-    res = client->uriSplit(uri, &schm, &ksi_user, &ksi_pass, &host, &port, &path, &query, &fragment);
-    if (res != KSI_OK) unableToParse = 1;
+	res = client->uriSplit(uri, &schm, &ksi_user, &ksi_pass, &host, &port, &path, &query, &fragment);
+	if (res != KSI_OK) unableToParse = 1;
 
-    c = getClientByUriScheme(uri, schm, &replace);
-    scheme = (replace != NULL) ? replace : schm;
+	c = getClientByUriScheme(uri, schm, &replace);
+	scheme = (replace != NULL) ? replace : schm;
 
 
-    switch (c) {
-        case URI_HTTP:
+	switch (c) {
+		case URI_HTTP:
 
-            if (unableToParse == 0) {
-                /* Create a new URL where the scheme is replaced with the correct one and KSI user and pass is removed. */
-                res = client->uriCompose(scheme, NULL, NULL, host, port, path, query, fragment, addr, sizeof(addr));
-                if (res != KSI_OK) goto cleanup;
-            }
-            res = HttpClient_setService(uri_client->httpClient,
-                    unableToParse == 1 ? uri : addr,
-                    loginId != NULL ? loginId : ksi_user,
-                    key != NULL ? key : ksi_pass);
-            if (res != KSI_OK) goto cleanup;
+			if (unableToParse == 0) {
+				/* Create a new URL where the scheme is replaced with the correct one and KSI user and pass is removed. */
+				res = client->uriCompose(scheme, NULL, NULL, host, port, path, query, fragment, addr, sizeof(addr));
+				if (res != KSI_OK) goto cleanup;
+			}
+			res = HttpClient_setService(uri_client->httpClient,
+					unableToParse == 1 ? uri : addr,
+					loginId != NULL ? loginId : ksi_user,
+					key != NULL ? key : ksi_pass);
+			if (res != KSI_OK) goto cleanup;
 
-            /* Set the client to be used in extending requests. */
-            *serviceClient = (KSI_NetworkClient *)uri_client->httpClient;
+			/* Set the client to be used in extending requests. */
+			*serviceClient = (KSI_NetworkClient *)uri_client->httpClient;
 
-            break;
-        case URI_TCP:
+			break;
+		case URI_TCP:
 
-            if (host == NULL || port == 0) {
-                res = KSI_INVALID_ARGUMENT;
-                goto cleanup;
-            }
+			if (host == NULL || port == 0) {
+				res = KSI_INVALID_ARGUMENT;
+				goto cleanup;
+			}
 
-            /* Make sure the TCP client is initialized. */
-            if (uri_client->tcpClient == NULL) {
-                res = KSI_TcpClient_new(client->ctx, &uri_client->tcpClient);
-                if (res != KSI_OK) goto cleanup;
-            }
+			/* Make sure the TCP client is initialized. */
+			if (uri_client->tcpClient == NULL) {
+				res = KSI_TcpClient_new(client->ctx, &uri_client->tcpClient);
+				if (res != KSI_OK) goto cleanup;
+			}
 
-            res = TcpClient_setService(uri_client->tcpClient, host, port,
-                    loginId != NULL ? loginId : ksi_user,
-                    key != NULL ? key : ksi_pass);
-            if (res != KSI_OK) goto cleanup;
+			res = TcpClient_setService(uri_client->tcpClient, host, port,
+					loginId != NULL ? loginId : ksi_user,
+					key != NULL ? key : ksi_pass);
+			if (res != KSI_OK) goto cleanup;
 
-            /* Set the client to be used in extending requests. */
-            *serviceClient = (KSI_NetworkClient *)uri_client->tcpClient;
+			/* Set the client to be used in extending requests. */
+			*serviceClient = (KSI_NetworkClient *)uri_client->tcpClient;
 
-            break;
-        case URI_FILE:
+			break;
+		case URI_FILE:
 
-            if (path != NULL) {
-                KSI_free(path);
-                path = NULL;
-            }
-            KSI_FsClient_extractPath(uri, &path);
+			if (path != NULL) {
+				KSI_free(path);
+				path = NULL;
+			}
+			KSI_FsClient_extractPath(uri, &path);
 
-            if (path == NULL) {
-                res = KSI_INVALID_ARGUMENT;
-                goto cleanup;
-            }
+			if (path == NULL) {
+				res = KSI_INVALID_ARGUMENT;
+				goto cleanup;
+			}
 
-            /* Make sure the File client is initialized. */
-            if (uri_client->fsClient == NULL) {
-                res = KSI_FsClient_new(client->ctx, &uri_client->fsClient);
-                if (res != KSI_OK) goto cleanup;
-            }
+			/* Make sure the File client is initialized. */
+			if (uri_client->fsClient == NULL) {
+				res = KSI_FsClient_new(client->ctx, &uri_client->fsClient);
+				if (res != KSI_OK) goto cleanup;
+			}
 
-            res = FsClient_setService(uri_client->fsClient, path, loginId, key);
-            if (res != KSI_OK) goto cleanup;
+			res = FsClient_setService(uri_client->fsClient, path, loginId, key);
+			if (res != KSI_OK) goto cleanup;
 
-            /* Set the client to be used in extending requests. */
-            *serviceClient = (KSI_NetworkClient *)uri_client->fsClient;
+			/* Set the client to be used in extending requests. */
+			*serviceClient = (KSI_NetworkClient *)uri_client->fsClient;
 
-            break;
-        default:
-            res = KSI_UNKNOWN_ERROR;
-            goto cleanup;
-    }
+			break;
+		default:
+			res = KSI_UNKNOWN_ERROR;
+			goto cleanup;
+	}
 
-    res = KSI_OK;
+	res = KSI_OK;
 
 cleanup:
 
-    KSI_free(schm);
-    KSI_free(ksi_user);
-    KSI_free(ksi_pass);
-    KSI_free(host);
-    KSI_free(path);
-    KSI_free(query);
-    KSI_free(fragment);
+	KSI_free(schm);
+	KSI_free(ksi_user);
+	KSI_free(ksi_pass);
+	KSI_free(host);
+	KSI_free(path);
+	KSI_free(query);
+	KSI_free(fragment);
 
-    return res;
+	return res;
 }
 
 int KSI_UriClient_setExtender(KSI_NetworkClient *client, const char *uri, const char *loginId, const char *key) {
