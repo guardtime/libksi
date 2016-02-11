@@ -1,3 +1,5 @@
+* IMPROVEMENT: Handling for reading server responses from tlv files.
+
 Version 3.7
 
 * BUGFIX: Fixed HMAC for hash functions with other than 512 bit internal block size.
