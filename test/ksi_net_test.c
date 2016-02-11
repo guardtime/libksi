@@ -509,7 +509,6 @@ static void testExtendingToNULL(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_NetworkClient *pr = NULL;
 	KSI_Signature *ext = NULL;
 	unsigned char *serialized = NULL;
 	size_t serialized_len = 0;
@@ -616,7 +615,6 @@ static void testExtendingErrorResponse(CuTest *tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_NetworkClient *pr = NULL;
 	KSI_Signature *ext = NULL;
 	KSI_PKITruststore *pki = NULL;
 

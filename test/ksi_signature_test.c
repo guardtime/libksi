@@ -27,8 +27,6 @@
 
 extern KSI_CTX *ctx;
 
-//#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
-//#define TEST_EXTEND_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
 #define TEST_USER "anon"
 #define TEST_PASS "anon"
 
