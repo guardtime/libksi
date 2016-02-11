@@ -493,7 +493,8 @@ static void testExtend(CuTest *tc) {
 	res = KSI_MultiSignature_fromFile(ctx, getFullResourcePath("resource/multi_sig/test2.mksi"), &ms);
 	CuAssert(tc, "Unable to read multi signature container from file.", res == KSI_OK && ms != NULL);
 
-	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"));
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri("resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"), "anon", "anon");
+	CuAssert(tc, "Unable to set extender response from file", res == KSI_OK);
 
 	res = KSI_MultiSignature_extend(ms);
 	CuAssert(tc, "Unable to perform multi signature container extension.", res == KSI_OK);

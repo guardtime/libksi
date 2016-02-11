@@ -30,8 +30,6 @@ runner_SOURCES= \
 		./ksi_hashchain_test.c \
 		./ksi_hash_test.c \
 		./ksi_hmac_test.c \
-		./ksi_net_mock.c \
-		./ksi_net_mock.h \
 		./ksi_net_test.c \
 		./ksi_publicationsfile_test.c \
 		./ksi_rdr_test.c \

@@ -108,7 +108,7 @@ static int RunAllTests() {
 static char *string_getBetweenWhitespace(char *strn) {
 	char *beginning = strn;
 	char *end = NULL;
-	unsigned strn_len;
+	size_t strn_len;
 
 	if (strn == NULL) return NULL;
 	strn_len = strlen(strn);
