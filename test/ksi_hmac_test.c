@@ -358,6 +358,7 @@ static void TestInvalidParams(CuTest* tc) {
 	CuAssert(tc, "HMAC NULL accepted", res != KSI_OK);
 
 	KSI_HmacHasher_free(hasher);
+	KSI_DataHash_free(hmac);
 }
 
 CuSuite* KSITest_HMAC_getSuite(void) {
