@@ -1,3 +1,5 @@
+* IMPROVEMENT: Created KSI_HmacHasher interface for incremental HMAC computation.
+
 Version 3.7
 
 * IMPROVEMENT: Added detailed coverage report in html format.
