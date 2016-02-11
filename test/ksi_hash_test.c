@@ -474,6 +474,19 @@ static void testAllHashing(CuTest *tc) {
 	}
 }
 
+static void testReset(CuTest *tc) {
+	int res;
+	KSI_DataHasher *hsr = NULL;
+
+	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA1, &hsr);
+	CuAssert(tc, "Unable to create data hasher.", res == KSI_OK && hsr != NULL);
+
+	res = KSI_DataHasher_reset(hsr);
+	CuAssert(tc, "Immediate hasher reset failed.", res == KSI_OK);
+
+	KSI_DataHasher_free(hsr);
+}
+
 CuSuite* KSITest_Hash_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -490,6 +503,7 @@ CuSuite* KSITest_Hash_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestIncorrectHashLen);
 	SUITE_ADD_TEST(suite, TestParseMetaHash);
 	SUITE_ADD_TEST(suite, testAllHashing);
+	SUITE_ADD_TEST(suite, testReset);
 
 	return suite;
 }

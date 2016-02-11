@@ -1,7 +1,10 @@
-Version 3.7
+Version 3.8
 
 * IMPROVEMENT: Added detailed coverage report in html format.
+* BUGFIX: KSI_DataHasher memory leak on immediate reset after open.
 * BUGFIX: Fixed HMAC for hash functions with other than 512 bit internal block size.
+
+Version 3.7
 
 2016-01-26 release(3.7.1037)
 * BUGFIX: Fixed building from SRPM
