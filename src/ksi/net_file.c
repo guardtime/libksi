@@ -212,6 +212,7 @@ static int prepareRequest(KSI_NetworkClient *client,
 cleanup:
 
 	KSI_RequestHandle_free(tmp);
+	KSI_free(raw);
 
 	return res;
 }
@@ -263,6 +264,8 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 
 cleanup:
 	KSI_Integer_free(reqId);
+	KSI_ExtendPdu_setRequest(pdu, NULL);
+	KSI_ExtendPdu_free(pdu);
 
 	return res;
 }
