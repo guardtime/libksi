@@ -93,6 +93,8 @@ libksi_la_SOURCES = \
 	verification.c \
 	verification.h \
 	verification_impl.h \
+	verification_rule.c \
+	verification_rule.h \
 	compatibility.h \
 	compatibility.c
 
