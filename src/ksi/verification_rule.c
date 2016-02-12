@@ -18,9 +18,10 @@
  */
 
 #include "verification_rule.h"
+#include "policy.h"
 
 int KSI_VerificationRule_AggregationChainInputHashVerification(
-		KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result) {
+		KSI_CTX *ctx, KSI_Signature *sig, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL || sig == NULL || result == NULL) {
@@ -38,7 +39,7 @@ cleanup:
 }
 
 int KSI_VerificationRule_AggregationHashChainConsistency(
-		KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result) {
+		KSI_CTX *ctx, KSI_Signature *sig, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL || sig == NULL || result == NULL) {
@@ -56,7 +57,7 @@ cleanup:
 }
 
 int KSI_VerificationRule_AggregationHashChainTimeConsistency(
-		KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result) {
+		KSI_CTX *ctx, KSI_Signature *sig, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL || sig == NULL || result == NULL) {
@@ -74,7 +75,7 @@ cleanup:
 }
 
 int KSI_VerificationRule_CalendarHashChainInputHashVerification(
-		KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result) {
+		KSI_CTX *ctx, KSI_Signature *sig, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL || sig == NULL || result == NULL) {
@@ -92,7 +93,7 @@ cleanup:
 }
 
 int KSI_VerificationRule_CalendarHashChainAggregationTime(
-		KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result) {
+		KSI_CTX *ctx, KSI_Signature *sig, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL || sig == NULL || result == NULL) {
@@ -110,7 +111,7 @@ cleanup:
 }
 
 int KSI_VerificationRule_CalendarHashChainRegistrationTime(
-		KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result) {
+		KSI_CTX *ctx, KSI_Signature *sig, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL || sig == NULL || result == NULL) {
@@ -128,7 +129,7 @@ cleanup:
 }
 
 int KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash(
-		KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result) {
+		KSI_CTX *ctx, KSI_Signature *sig, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL || sig == NULL || result == NULL) {
@@ -146,7 +147,7 @@ cleanup:
 }
 
 int KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime(
-		KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result) {
+		KSI_CTX *ctx, KSI_Signature *sig, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL || sig == NULL || result == NULL) {
@@ -164,7 +165,7 @@ cleanup:
 }
 
 int KSI_VerificationRule_SignaturePublicationRecordPublicationHash(
-		KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result) {
+		KSI_CTX *ctx, KSI_Signature *sig, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL || sig == NULL || result == NULL) {
@@ -182,7 +183,7 @@ cleanup:
 }
 
 int KSI_VerificationRule_SignaturePublicationRecordPublicationTime(
-		KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result) {
+		KSI_CTX *ctx, KSI_Signature *sig, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL || sig == NULL || result == NULL) {
@@ -200,7 +201,7 @@ cleanup:
 }
 
 int KSI_VerificationRule_DocumentHashVerification(
-		KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result) {
+		KSI_CTX *ctx, KSI_Signature *sig, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL || sig == NULL || result == NULL) {
@@ -218,7 +219,7 @@ cleanup:
 }
 
 int KSI_VerificationRule_SignatureDoesNotContainPublication(
-		KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result) {
+		KSI_CTX *ctx, KSI_Signature *sig, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL || sig == NULL || result == NULL) {
@@ -236,7 +237,7 @@ cleanup:
 }
 
 int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches(
-		KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result) {
+		KSI_CTX *ctx, KSI_Signature *sig, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL || sig == NULL || result == NULL) {
@@ -254,7 +255,7 @@ cleanup:
 }
 
 int KSI_VerificationRule_SignaturePublicationRecordExistence(
-		KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result) {
+		KSI_CTX *ctx, KSI_Signature *sig, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL || sig == NULL || result == NULL) {
@@ -272,7 +273,7 @@ cleanup:
 }
 
 int KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash(
-		KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result) {
+		KSI_CTX *ctx, KSI_Signature *sig, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL || sig == NULL || result == NULL) {
@@ -290,7 +291,7 @@ cleanup:
 }
 
 int KSI_VerificationRule_CalendarHashChainDoesNotExist(
-		KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result) {
+		KSI_CTX *ctx, KSI_Signature *sig, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL || sig == NULL || result == NULL) {
@@ -308,7 +309,7 @@ cleanup:
 }
 
 int KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(
-		KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result) {
+		KSI_CTX *ctx, KSI_Signature *sig, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL || sig == NULL || result == NULL) {
@@ -326,7 +327,7 @@ cleanup:
 }
 
 int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(
-		KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result) {
+		KSI_CTX *ctx, KSI_Signature *sig, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL || sig == NULL || result == NULL) {
@@ -344,7 +345,7 @@ cleanup:
 }
 
 int KSI_VerificationRule_CalendarHashChainExistence(
-		KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result) {
+		KSI_CTX *ctx, KSI_Signature *sig, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL || sig == NULL || result == NULL) {
