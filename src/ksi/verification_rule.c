@@ -18,6 +18,7 @@
  */
 
 #include "verification_rule.h"
+#include "policy.h"
 #include "internal.h"
 #include "verification_impl.h"
 #include "signature_impl.h"
@@ -125,7 +126,6 @@ cleanup:
 	return res;
 }
 
-/*TODO: check chain index verification*/
 static int rfc3161_verify(const KSI_Signature *sig) {
 	int res;
 	KSI_CTX *ctx = NULL;
@@ -277,7 +277,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_AggregationChainInputHashVerification(KSI_Signature *sig, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_AggregationChainInputHashVerification(KSI_Signature *sig, KSI_VerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *rfc3161_outputHash = NULL;
 	KSI_AggregationHashChain* firstChain = NULL;

@@ -21,6 +21,7 @@
 #define VERIFICATION_RULE_H_
 
 #include "ksi.h"
+#include "policy.h"
 
 #ifdef __cplusplus
 extern "C" {

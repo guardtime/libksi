@@ -86,7 +86,8 @@ LIB_OBJ = \
 	$(OBJ_DIR)\net_tcp.obj \
 	$(OBJ_DIR)\compatibility.obj \
 	$(OBJ_DIR)\pkitruststore.obj \
-	$(OBJ_DIR)\net_file.obj
+	$(OBJ_DIR)\net_file.obj \
+	$(OBJ_DIR)\policy.obj
 
 INC_FILES = \
 	base32.h \
@@ -116,7 +117,8 @@ INC_FILES = \
 	publicationsfile.h \
 	tlv_template.h \
 	compatibility.h \
-	multi_signature.h
+	multi_signature.h \
+	policy.h
 
 #Compiler and linker configuration
 EXT_LIB = wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib
