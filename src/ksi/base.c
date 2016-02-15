@@ -769,13 +769,14 @@ int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, size_t len, int *error,
 
 	err = ctx->errors;
 
-	if (error != NULL)	*error = err->statusCode;
-	if (ext != NULL)	*ext = err->extErrorCode;
-
 	if (ctx->errors_count) {
 		KSI_strncpy(buf, err->message, len);
+		if (error != NULL)	*error = err->statusCode;
+		if (ext != NULL)	*ext = err->extErrorCode;
 	} else {
-		KSI_strncpy(buf, "", len);
+		KSI_strncpy(buf, KSI_getErrorString(KSI_OK), len);
+		if (error != NULL)	*error = KSI_OK;
+		if (ext != NULL)	*ext = 0;
 	}
 
 	return KSI_OK;
