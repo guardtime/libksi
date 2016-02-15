@@ -487,6 +487,20 @@ static void testReset(CuTest *tc) {
 	KSI_DataHasher_free(hsr);
 }
 
+static void test_free_without_close(CuTest *tc) {
+	int res;
+	KSI_DataHasher *hsr = NULL;
+	char data[3] = "aa\0";
+
+	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA1, &hsr);
+	CuAssert(tc, "Unable to create data hasher.", res == KSI_OK && hsr != NULL);
+
+	res = KSI_DataHasher_add(hsr, data, sizeof(data));
+	CuAssert(tc, "Unable to add to the hasher.", res == KSI_OK);
+
+	KSI_DataHasher_free(hsr);
+}
+
 CuSuite* KSITest_Hash_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -504,6 +518,7 @@ CuSuite* KSITest_Hash_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestParseMetaHash);
 	SUITE_ADD_TEST(suite, testAllHashing);
 	SUITE_ADD_TEST(suite, testReset);
+	SUITE_ADD_TEST(suite, test_free_without_close);
 
 	return suite;
 }
