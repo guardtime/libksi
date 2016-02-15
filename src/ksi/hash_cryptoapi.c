@@ -253,10 +253,11 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 		goto cleanup;
 	}
 
-	/* If hasher object already exists, destroy one. */
-	if (pTmp_hash != 0){
-		CryptDestroyHash(pTmp_hash);
-		}
+	/* If hash object already exists, destroy it. */
+	if (pCryptoCTX->pt_hHash != 0){
+		CryptDestroyHash(pCryptoCTX->pt_hHash);
+		pCryptoCTX->pt_hHash = 0;
+	}
 
 	/* Create new hasher object. */
 	if (!CryptCreateHash(pCSP, msHashAlg, 0,0,&pTmp_hash)) {
@@ -267,7 +268,6 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 		}
 
 	pCryptoCTX->pt_hHash = pTmp_hash;
-
 	pTmp_hash = 0;
 
 
