@@ -27,188 +27,174 @@ extern "C" {
 #endif
 
 	/**
-	 * 
-	 * \param[in]	ctx			KSI context.
+	 * This rule verifies that if RFC3161 record is present then the calculated output hash (from RFC3161 record) equals to
+	 * aggregation chain input hash. If RFC3161 record is missing then the status {@link VerificationResultCode#OK} is
+	 * returned.
+	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_AggregationChainInputHashVerification(KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result);
-	
-	/**
-	 * 
-	 * \param[in]	ctx			KSI context.
-	 * \param[in]	sig			KSI signature.
-	 * \param[out]	result		Verification result.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_VerificationRule_AggregationHashChainConsistency(KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result);
+	int KSI_VerificationRule_AggregationChainInputHashVerification(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
-	 * 
-	 * \param[in]	ctx			KSI context.
+	 * This rule verifies that all aggregation hash chains are consistent (e.g previous aggregation output hash equals to
+	 * current aggregation chain input hash).
+	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_AggregationHashChainTimeConsistency(KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result);
+	int KSI_VerificationRule_AggregationHashChainConsistency(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
-	 * 
-	 * \param[in]	ctx			KSI context.
+	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_CalendarHashChainInputHashVerification(KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result);
+	int KSI_VerificationRule_AggregationHashChainTimeConsistency(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
-	 * 
-	 * \param[in]	ctx			KSI context.
+	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_CalendarHashChainAggregationTime(KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result);
+	int KSI_VerificationRule_CalendarHashChainInputHashVerification(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
-	 * 
-	 * \param[in]	ctx			KSI context.
+	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_CalendarHashChainRegistrationTime(KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result);
+	int KSI_VerificationRule_CalendarHashChainAggregationTime(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
-	 * 
-	 * \param[in]	ctx			KSI context.
+	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash(KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result);
+	int KSI_VerificationRule_CalendarHashChainRegistrationTime(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
-	 * 
-	 * \param[in]	ctx			KSI context.
+	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime(KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result);
+	int KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
-	 * 
-	 * \param[in]	ctx			KSI context.
+	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_SignaturePublicationRecordPublicationHash(KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result);
+	int KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
-	 * 
-	 * \param[in]	ctx			KSI context.
+	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_SignaturePublicationRecordPublicationTime(KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result);
+	int KSI_VerificationRule_SignaturePublicationRecordPublicationHash(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
-	 * 
-	 * \param[in]	ctx			KSI context.
+	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_DocumentHashVerification(KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result);
+	int KSI_VerificationRule_SignaturePublicationRecordPublicationTime(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
-	 * 
-	 * \param[in]	ctx			KSI context.
+	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_SignatureDoesNotContainPublication(KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result);
+	int KSI_VerificationRule_DocumentHashVerification(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
-	 * 
-	 * \param[in]	ctx			KSI context.
+	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches(KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result);
+	int KSI_VerificationRule_SignatureDoesNotContainPublication(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
-	 * 
-	 * \param[in]	ctx			KSI context.
+	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_SignaturePublicationRecordExistence(KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result);
+	int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
-	 * 
-	 * \param[in]	ctx			KSI context.
+	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash(KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result);
+	int KSI_VerificationRule_SignaturePublicationRecordExistence(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
-	 * 
-	 * \param[in]	ctx			KSI context.
+	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_CalendarHashChainDoesNotExist(KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result);
+	int KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
-	 * 
-	 * \param[in]	ctx			KSI context.
+	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result);
+	int KSI_VerificationRule_CalendarHashChainDoesNotExist(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
-	 * 
-	 * \param[in]	ctx			KSI context.
+	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result);
+	int KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
-	 * 
-	 * \param[in]	ctx			KSI context.
+	 *
+	 * \param[in]	sig			KSI signature.
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(KSI_Signature *sig, KSI_RuleVerificationResult *result);
+
+	/**
+	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
 	 *
@@ -216,14 +202,13 @@ extern "C" {
 	 */
 
 	/**
-	 * 
-	 * \param[in]	ctx			KSI context.
+	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_CalendarHashChainExistence(KSI_CTX *ctx, KSI_Signature *sig, KSI_VerificationResult *result);
+	int KSI_VerificationRule_CalendarHashChainExistence(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 
 #ifdef __cplusplus
