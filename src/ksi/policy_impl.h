@@ -36,7 +36,7 @@ typedef enum RuleType_en {
 	RULE_TYPE_COMPOSITE
 } RuleType;
 
-typedef int (*Verifier)(KSI_CTX *, KSI_Signature *, KSI_RuleVerificationResult *);
+typedef int (*Verifier)(KSI_Signature *, KSI_RuleVerificationResult *);
 
 typedef struct BasicRule_st {
 	KSI_RuleVerificationResult result;

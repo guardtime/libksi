@@ -46,7 +46,7 @@ static void Rule_free(Rule *rule) {
 }
 
 BasicRule_verify(BasicRule *rule, VerificationContext *context) {
-	rule->verifySignature(context->ctx, context->sig, &rule->result);
+	rule->verifySignature(context->sig, &rule->result);
 }
 
 CompositeRule_verify(CompositeRule *rule, VerificationContext *context) {
@@ -314,7 +314,7 @@ cleanup:
 	CompositeRule_free(composite_rule4);
 	CompositeRule_free(signatureDoesNotContainCalendarChainRule);
 	CompositeRule_free(alreadyExtendedSignatureRule);
-	Policy_free(tmp);
+	KSI_Policy_free(tmp);
 
 	return res;
 }

@@ -277,7 +277,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_AggregationChainInputHashVerification(KSI_Signature *sig, KSI_VerificationResult *result) {
+int KSI_VerificationRule_AggregationChainInputHashVerification(KSI_Signature *sig, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *rfc3161_outputHash = NULL;
 	KSI_AggregationHashChain* firstChain = NULL;
