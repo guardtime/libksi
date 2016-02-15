@@ -21,16 +21,50 @@
 #include "policy_impl.h"
 #include "verification_rule.h"
 
-static void Rule_verify(Rule *rule, VerificationContext *context);
-
 static void Rule_free(Rule *rule);
+static void CompositeRule_free(CompositeRule *rule);
+static int BasicRule_verify(BasicRule *rule, VerificationContext *context);
+static int CompositeRule_verify(CompositeRule *rule, VerificationContext *context);
 
 KSI_IMPLEMENT_LIST(Rule, Rule_free);
 
-static void CompositeRule_free(CompositeRule *rule) {
-	if (rule != NULL) {
-		RuleList_free(rule->rules);
+static int Rule_create(Rule **rule) {
+	int res = KSI_UNKNOWN_ERROR;
+	Rule *tmp = NULL;
+
+	if (rule == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
 	}
+
+	tmp = KSI_new(Rule);
+	if (tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	*rule = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+
+cleanup:
+
+	Rule_free(tmp);
+	return res;
+}
+
+static int Rule_verify(Rule *rule, VerificationContext *context) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (rule->type == RULE_TYPE_BASIC) {
+		res = BasicRule_verify(rule->rule.basicRule, context);
+		rule->result = rule->rule.basicRule->result;
+	}
+	else if (rule->type == RULE_TYPE_COMPOSITE) {
+		res = CompositeRule_verify(rule->rule.compositeRule, context);
+		rule->result = rule->rule.compositeRule->result;
+	}
+	return res;
 }
 
 static void Rule_free(Rule *rule) {
@@ -45,18 +79,142 @@ static void Rule_free(Rule *rule) {
 	}
 }
 
-BasicRule_verify(BasicRule *rule, VerificationContext *context) {
-	rule->verifySignature(context->sig, &rule->result);
+static int BasicRule_create(Verifier verifier, Rule **rule) {
+	int res = KSI_UNKNOWN_ERROR;
+	Rule *tmp = NULL;
+
+	if (verifier == NULL || rule == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = Rule_create(&tmp);
+	if (res != KSI_OK) {
+		goto cleanup;
+	}
+
+	tmp->rule.basicRule = KSI_new(BasicRule);
+	if (tmp->rule.basicRule == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->rule.basicRule->verifySignature = verifier;
+	tmp->type = RULE_TYPE_BASIC;
+	*rule = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+
+cleanup:
+
+	Rule_free(tmp);
+	return res;
 }
 
-CompositeRule_verify(CompositeRule *rule, VerificationContext *context) {
+static int BasicRule_verify(BasicRule *rule, VerificationContext *context) {
+	return rule->verifySignature(context->sig, &rule->result);
+}
+
+static int CompositeRule_create(bool skip, CompositeRule **rule) {
+	int res = KSI_UNKNOWN_ERROR;
+	CompositeRule *tmp = NULL;
+
+	if (rule == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	tmp = KSI_new(CompositeRule);
+	if (tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->skipOnFirstOk = skip;
+	res = RuleList_new(&tmp->rules);
+	if (res != KSI_OK) {
+		goto cleanup;
+	}
+
+	*rule = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+
+cleanup:
+
+	CompositeRule_free(tmp);
+	return res;
+}
+
+static int CompositeRule_addBasicRule(CompositeRule *rule, Verifier verifier) {
+	int res = KSI_UNKNOWN_ERROR;
+	Rule *tmp = NULL;
+
+	if (rule == NULL || verifier == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = BasicRule_create(verifier, &tmp);
+	if (res != KSI_OK) {
+		goto cleanup;
+	}
+
+	res = RuleList_append(rule->rules, tmp);
+	if (res != KSI_OK) {
+		goto cleanup;
+	}
+
+	tmp = NULL;
+	res = KSI_OK;
+
+cleanup:
+
+	Rule_free(tmp);
+	return res;
+}
+
+static int CompositeRule_addCompositeRule(CompositeRule *rule, CompositeRule *next) {
+	int res = KSI_UNKNOWN_ERROR;
+	Rule *tmp = NULL;
+
+	if (rule == NULL || next == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	tmp = KSI_new(Rule);
+	if (tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->type = RULE_TYPE_COMPOSITE;
+	tmp->rule.compositeRule = next;
+	res = RuleList_append(rule->rules, tmp);
+	if (res != KSI_OK) {
+		goto cleanup;
+	}
+
+	tmp = NULL;
+	res = KSI_OK;
+
+cleanup:
+
+	Rule_free(tmp);
+	return res;
+}
+
+static int CompositeRule_verify(CompositeRule *rule, VerificationContext *context) {
 	int i;
+	int res = KSI_UNKNOWN_ERROR;
 
 	rule->result.resultCode = OK;
 	for (i = 0; i < RuleList_length(rule->rules); i++) {
 		Rule *sub_rule;
+
 		RuleList_elementAt(rule->rules, i, &sub_rule);
-		Rule_verify(sub_rule, context);
+		res = Rule_verify(sub_rule, context);
 		/* TODO: add rule result? */
 		rule->result = sub_rule->result;
 		if (rule->result.resultCode == OK && rule->skipOnFirstOk) {
@@ -66,142 +224,104 @@ CompositeRule_verify(CompositeRule *rule, VerificationContext *context) {
 			break;
 		}
 	}
+	return res;
 }
 
-void Rule_verify(Rule *rule, VerificationContext *context) {
-	if (rule->type == RULE_TYPE_BASIC) {
-		BasicRule_verify(rule->rule.basicRule, context);
-		rule->result = rule->rule.basicRule->result;
+static void CompositeRule_free(CompositeRule *rule) {
+	if (rule != NULL) {
+		RuleList_free(rule->rules);
 	}
-	else if (rule->type == RULE_TYPE_COMPOSITE) {
-		CompositeRule_verify(rule->rule.compositeRule, context);
-		rule->result = rule->rule.compositeRule->result;
-	}
-}
-
-Policy_verifySignature(KSI_Policy *policy, VerificationContext *context) {
-	int i;
-
-	for (i = 0; i < RuleList_length(policy->rules); i++) {
-		Rule *rule;
-		RuleList_elementAt(policy->rules, i, &rule);
-		Rule_verify(rule, context);
-		policy->result = rule->result;
-		/* Alternatively for more fine-tuned status: */
-		/* Policy_resultSet(policy, rule->result); */
-		if (policy->result.resultCode != OK) {
-			break;
-		}
-	}
-}
-
-KSI_Policy_verify(KSI_Policy *policy, VerificationContext *context) {
-	KSI_Policy *currentPolicy;
-
-	currentPolicy = policy;
-	while (currentPolicy != NULL) {
-		Policy_verifySignature(currentPolicy, context);
-		if (currentPolicy->result.resultCode != OK) {
-			currentPolicy = currentPolicy->fallbackPolicy;
-		}
-		else {
-			currentPolicy = NULL;
-		}
-	}
+	KSI_free(rule);
 }
 
 static int Policy_create(KSI_Policy **policy) {
-	int res;
-	KSI_Policy *tmp;
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Policy *tmp = NULL;
+
+	if (policy == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
 	tmp = KSI_new(KSI_Policy);
-	RuleList_new(&tmp->rules);
+	if (tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	res = RuleList_new(&tmp->rules);
+	if (res != KSI_OK) {
+		goto cleanup;
+	}
+
 	tmp->fallbackPolicy = NULL;
 	*policy = tmp;
 	tmp = NULL;
 	res = KSI_OK;
+
+cleanup:
+
+	KSI_Policy_free(tmp);
 	return res;
-}
-
-Rule_create(Rule **rule) {
-	Rule *tmp;
-
-	tmp = KSI_new(Rule);
-	*rule = tmp;
-	tmp = NULL;
-}
-
-BasicRule_create(Verifier verifier, Rule **rule) {
-	Rule *tmp;
-
-	Rule_create(&tmp);
-	tmp->rule.basicRule = KSI_new(BasicRule);
-	tmp->rule.basicRule->verifySignature = verifier;
-	tmp->type = RULE_TYPE_BASIC;
-	*rule = tmp;
-	tmp = NULL;
 }
 
 static int Policy_addBasicRule(KSI_Policy *policy, Verifier verifier) {
-	int res;
-	Rule *rule;
+	int res = KSI_UNKNOWN_ERROR;
+	Rule *tmp = NULL;
 
-	BasicRule_create(verifier, &rule);
-	RuleList_append(policy->rules, rule);
+	if (policy == NULL || verifier == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = BasicRule_create(verifier, &tmp);
+	if (res != KSI_OK) {
+		goto cleanup;
+	}
+
+	res = RuleList_append(policy->rules, tmp);
+	if (res != KSI_OK) {
+		goto cleanup;
+	}
+
+	tmp = NULL;
 	res = KSI_OK;
+
+cleanup:
+
+	Rule_free(tmp);
 	return res;
-}
-
-CompositeRule_create(bool skip, CompositeRule **rule) {
-	CompositeRule *tmp;
-
-	tmp = KSI_new(CompositeRule);
-	tmp->skipOnFirstOk = skip;
-	RuleList_new(&tmp->rules);
-	*rule = tmp;
-	tmp = NULL;
-}
-
-CompositeRule_addBasicRule(CompositeRule *rule, Verifier verifier) {
-	Rule *tmp;
-
-	BasicRule_create(verifier, &tmp);
-	RuleList_append(rule->rules, tmp);
-	tmp = NULL;
-}
-
-CompositeRule_addCompositeRule(CompositeRule *rule, CompositeRule *next) {
-	Rule *tmp;
-
-	tmp = KSI_new(Rule);
-	tmp->type = RULE_TYPE_COMPOSITE;
-	tmp->rule.compositeRule = next;
-	RuleList_append(rule->rules, tmp);
-	tmp = NULL;
 }
 
 static int Policy_addCompositeRule(KSI_Policy *policy, CompositeRule *next) {
 	int res = KSI_UNKNOWN_ERROR;
 	Rule *tmp = NULL;
 
+	if (policy == NULL || next == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
 	tmp = KSI_new(Rule);
-	tmp->type = RULE_TYPE_COMPOSITE;
+	if (tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
 	tmp->type = RULE_TYPE_COMPOSITE;
 	tmp->rule.compositeRule = next;
-	RuleList_append(policy->rules, tmp);
+	res = RuleList_append(policy->rules, tmp);
+	if (res != KSI_OK) {
+		goto cleanup;
+	}
+
 	tmp = NULL;
 	res = KSI_OK;
 
 cleanup:
 
+	Rule_free(tmp);
 	return res;
-}
-
-void KSI_Policy_free(KSI_Policy *policy) {
-	if (policy != NULL) {
-		RuleList_free(policy->rules);
-		KSI_free(policy);
-	}
 }
 
 #define TRY_CATCH(statement) \
@@ -211,7 +331,7 @@ void KSI_Policy_free(KSI_Policy *policy) {
 		goto cleanup;\
 	}\
 
-int KSI_Policy_createInternal(KSI_CTX *ctx, KSI_Policy **policy) {
+static int KSI_Policy_createInternal(KSI_CTX *ctx, KSI_Policy **policy) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Policy *tmp = NULL;
 
@@ -304,10 +424,17 @@ int KSI_Policy_createCalendarBased(KSI_CTX *ctx, KSI_Policy **policy) {
 
 	*policy = tmp;
 	tmp = NULL;
+	composite_rule1 = NULL;
+	composite_rule2 = NULL;
+	composite_rule3 = NULL;
+	composite_rule4 = NULL;
+	signatureDoesNotContainCalendarChainRule = NULL;
+	alreadyExtendedSignatureRule = NULL;
 	res = KSI_OK;
 
 cleanup:
 
+	/* In what order should the rules be cleaned up? */
 	CompositeRule_free(composite_rule1);
 	CompositeRule_free(composite_rule2);
 	CompositeRule_free(composite_rule3);
@@ -318,3 +445,99 @@ cleanup:
 
 	return res;
 }
+
+int KSI_Policy_createKeyBased(KSI_CTX *ctx, KSI_Policy **policy) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Policy *tmp = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || policy == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+cleanup:
+
+	KSI_Policy_free(tmp);
+
+	return res;
+}
+
+int KSI_Policy_createPublicationsFileBased(KSI_CTX *ctx, KSI_Policy **policy) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Policy *tmp = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || policy == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+cleanup:
+
+	KSI_Policy_free(tmp);
+
+	return res;
+}
+
+int KSI_Policy_createUserProvidedPublicationBased(KSI_CTX *ctx, KSI_Policy **policy) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Policy *tmp = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || policy == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+cleanup:
+
+	KSI_Policy_free(tmp);
+
+	return res;
+}
+
+static int Policy_verifySignature(KSI_Policy *policy, VerificationContext *context) {
+	int i;
+	int res = KSI_UNKNOWN_ERROR;
+
+	for (i = 0; i < RuleList_length(policy->rules); i++) {
+		Rule *rule;
+
+		RuleList_elementAt(policy->rules, i, &rule);
+		res = Rule_verify(rule, context);
+		policy->result = rule->result;
+		/* Alternatively for more fine-tuned status: */
+		/* Policy_resultSet(policy, rule->result); */
+		if (policy->result.resultCode != OK) {
+			break;
+		}
+	}
+	return res;
+}
+
+int KSI_Policy_verify(KSI_Policy *policy, VerificationContext *context, KSI_PolicyVerificationResult **result) {
+	KSI_Policy *currentPolicy;
+	int res = KSI_UNKNOWN_ERROR;
+
+	currentPolicy = policy;
+	while (currentPolicy != NULL) {
+		res = Policy_verifySignature(currentPolicy, context);
+		/* TODO! Add each policy result to list of results. */
+		if (currentPolicy->result.resultCode != OK) {
+			currentPolicy = currentPolicy->fallbackPolicy;
+		}
+		else {
+			currentPolicy = NULL;
+		}
+	}
+	return res;
+}
+
+void KSI_Policy_free(KSI_Policy *policy) {
+	if (policy != NULL) {
+		RuleList_free(policy->rules);
+		KSI_free(policy);
+	}
+}
+
