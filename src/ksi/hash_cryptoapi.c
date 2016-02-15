@@ -186,16 +186,17 @@ int KSI_DataHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHasher 
 		goto cleanup;
 	}
 
-	/*Create new crypto service provider (CSP)*/
+	/* Create new crypto service provider (CSP). */
 	if (!CryptAcquireContext(&tmp_CSP, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)){
 		char errm[1024];
 		KSI_snprintf(errm, sizeof(errm), "Wincrypt Error (%d)", GetLastError());
 		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, errm);
 		goto cleanup;
-		}
+	}
 
 	/* Set CSP in helper struct. */
 	tmp_cryptoCTX->pt_CSP = tmp_CSP;
+
 	/* Set helper struct in abstract struct. */
 	tmp_hasher->hashContext = tmp_cryptoCTX;
 
@@ -241,14 +242,6 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 
 	KSI_ERR_clearErrors(hasher->ctx);
 
-	if (hasher->open) {
-		res = KSI_DataHasher_close(hasher, NULL);
-		if (res != KSI_OK) {
-			KSI_pushError(hasher->ctx, res, NULL);
-			goto cleanup;
-		}
-	}
-
 	/* Shortcuts for pointers. */
 	pCryptoCTX = (CRYPTO_HASH_CTX*)hasher->hashContext;
 	pCSP = pCryptoCTX->pt_CSP;
@@ -277,7 +270,6 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 
 	pTmp_hash = 0;
 
-	hasher->open = true;
 
 	res = KSI_OK;
 
@@ -296,7 +288,7 @@ int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_len
 	CRYPTO_HASH_CTX * pCryptoCTX = NULL;
 
 	/* Hash object. */
-	HCRYPTHASH pHash = 0
+	HCRYPTHASH pHash = 0;
 
 	if (hasher == NULL || data == NULL){
 		res = KSI_INVALID_ARGUMENT;

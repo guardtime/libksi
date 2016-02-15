@@ -32,15 +32,18 @@ extern "C" {
 	enum client_e {
 		URI_HTTP,
 		URI_TCP,
+		URI_FILE,
 		URI_CLIENT_COUNT
 	};
 
 	struct KSI_UriClient_st {
 		KSI_NetworkClient *httpClient;
 		KSI_NetworkClient *tcpClient;
+		KSI_NetworkClient *fsClient;
 
 		KSI_NetworkClient *pExtendClient;
 		KSI_NetworkClient *pAggregationClient;
+		KSI_NetworkClient *pPublicationClient;
 	};
 
 #ifdef __cplusplus

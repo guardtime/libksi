@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2016 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -17,18 +17,29 @@
  * reserves and retains all trademark rights.
  */
 
-#ifndef KSI_NET_MOCK_H_
-#define KSI_NET_MOCK_H_
+#ifndef NET_FILE_IMPL_H_
+#define NET_FILE_IMPL_H_
 
-#define MOCK_BUFFER_SIZE 0xffff
+#include "internal.h"
+#include "net_impl.h"
+#include "net_http_impl.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+    struct FsClient_Endpoint_st {
+        char *path;
+    };
+
+    struct KSI_FsClient_st {
+        int (*sendRequest)(KSI_NetworkClient *, KSI_RequestHandle *, char *path);
+        KSI_NetworkClient *http;
+    };
 
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* KSI_NET_MOCK_H_ */
+#endif /* NET_FILE_IMPL_H_ */

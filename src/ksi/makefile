@@ -84,7 +84,8 @@ LIB_OBJ = \
 	$(OBJ_DIR)\hmac.obj \
 	$(OBJ_DIR)\net_tcp.obj \
 	$(OBJ_DIR)\compatibility.obj \
-	$(OBJ_DIR)\pkitruststore.obj
+	$(OBJ_DIR)\pkitruststore.obj \
+	$(OBJ_DIR)\net_file.obj
 
 INC_FILES = \
 	base32.h \
@@ -96,6 +97,7 @@ INC_FILES = \
 	crc32.h \
 	net_http.h \
 	net_tcp.h \
+	net_file.h \
 	net_uri.h \
 	signature.h \
 	types_base.h \
