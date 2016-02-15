@@ -25,19 +25,17 @@
 #include <windows.h>
 #include <Wincrypt.h>
 
-
-
 typedef struct CRYPTO_HASH_CTX_st {
 	HCRYPTPROV pt_CSP;		//Crypto Service Provider
 	HCRYPTHASH pt_hHash;	//hasher object
-	} CRYPTO_HASH_CTX;
+} CRYPTO_HASH_CTX;
 
 static void CRYPTO_HASH_CTX_free(CRYPTO_HASH_CTX *cryptoCtxt){
 	if (cryptoCtxt != NULL){
 		if (cryptoCtxt->pt_CSP) CryptReleaseContext(cryptoCtxt->pt_CSP, 0);
 		if (cryptoCtxt->pt_hHash) CryptDestroyHash(cryptoCtxt->pt_hHash);
 		KSI_free(cryptoCtxt);
-		}
+	}
 }
 
 static int CRYPTO_HASH_CTX_new(CRYPTO_HASH_CTX **cryptoCTX){
@@ -60,7 +58,7 @@ cleanup:
 
 	CRYPTO_HASH_CTX_free(tmp_crypto_ctx);
 	return res;
-	}
+}
 
 /**
  * Converts hash function ID from hash chain to crypto api identifier
@@ -84,10 +82,16 @@ static const ALG_ID hashAlgorithmToALG_ID(KSI_HashAlgorithm algo_id)
 static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 	int res = KSI_UNKNOWN_ERROR;
 	DWORD digest_length = 0;
-	DWORD digestLenSize = 0;	//The size of digest_length variable
+
+	/* The size of digest_length variable. */
+	DWORD digestLenSize = 0;
 	DWORD hash_length = 0;
-	CRYPTO_HASH_CTX * pCryptoCTX = NULL;	//Crypto helper struct
-	HCRYPTHASH pHash = 0;				//Hash object
+
+	/* Crypto helper structure. */
+	CRYPTO_HASH_CTX * pCryptoCTX = NULL;
+
+	/* Hash object. */
+	HCRYPTHASH pHash = 0;
 
 	if (hasher == NULL || data_hash == NULL){
 		res = KSI_INVALID_ARGUMENT;
@@ -113,7 +117,7 @@ static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 		goto cleanup;
 	}
 
-	/*After final call pHash is can not be used further*/
+	/* After final call pHash is can not be used further. */
 	CryptGetHashParam(pHash, HP_HASHVAL, data_hash->imprint + 1, &digest_length, 0);
 
 	if (hasher->algorithm > 0xff) {
@@ -157,13 +161,13 @@ int KSI_DataHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHasher 
 		goto cleanup;
 	}
 
-	/*Test if hash algorithm is valid*/
+	/* Test if the hash algorithm is valid. */
 	if (!KSI_isHashAlgorithmSupported(algo_id)) {
 		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
 		goto cleanup;
 	}
 
-	/*Create new abstract data hasher object*/
+	/* Create new abstract data hasher object. */
 	tmp_hasher = KSI_new(KSI_DataHasher);
 	if (tmp_hasher == NULL) {
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
@@ -175,24 +179,25 @@ int KSI_DataHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHasher 
 	tmp_hasher->algorithm = algo_id;
 	tmp_hasher->closeExisting = closeExisting;
 
-	/*Create new helper context for crypto api*/
+	/* Create new helper context for crypto api. */
 	res = CRYPTO_HASH_CTX_new(&tmp_cryptoCTX);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	/*Create new crypto service provider (CSP)*/
+	/* Create new crypto service provider (CSP). */
 	if (!CryptAcquireContext(&tmp_CSP, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)){
 		char errm[1024];
 		KSI_snprintf(errm, sizeof(errm), "Wincrypt Error (%d)", GetLastError());
 		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, errm);
 		goto cleanup;
-		}
+	}
 
-	/*Set CSP in helper struct*/
+	/* Set CSP in helper struct. */
 	tmp_cryptoCTX->pt_CSP = tmp_CSP;
-	/*Set helper struct in abstract struct*/
+
+	/* Set helper struct in abstract struct. */
 	tmp_hasher->hashContext = tmp_cryptoCTX;
 
 	res = KSI_DataHasher_reset(tmp_hasher);
@@ -220,33 +225,41 @@ cleanup:
 int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 	int res = KSI_UNKNOWN_ERROR;
 	ALG_ID msHashAlg = 0;
-	CRYPTO_HASH_CTX * pCryptoCTX = NULL;	//Crypto helper struct
-	HCRYPTPROV pCSP = 0;					//Crypto service provider
-	HCRYPTHASH pTmp_hash = 0;			//Hash object
+
+	/* Crypto helper struct. */
+	CRYPTO_HASH_CTX * pCryptoCTX = NULL;
+
+	/* Crypto service porvider. */
+	HCRYPTPROV pCSP = 0;
+
+	/* Hash object. */
+	HCRYPTHASH pTmp_hash = 0;
 
 	if (hasher == NULL){
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+
 	KSI_ERR_clearErrors(hasher->ctx);
 
-	/*Shortcuts for pointers*/
+	/* Shortcuts for pointers. */
 	pCryptoCTX = (CRYPTO_HASH_CTX*)hasher->hashContext;
 	pCSP = pCryptoCTX->pt_CSP;
 
-	/*Convert hash algorithm into crypto api style*/
+	/* Convert hash algorithm into crypto api style. */
 	msHashAlg = hashAlgorithmToALG_ID(hasher->algorithm);
 	if (msHashAlg == 0) {
 		KSI_pushError(hasher->ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
 		goto cleanup;
 	}
 
-	/*If hasher object already exists, destroy one*/
-	if (pTmp_hash != 0){
-		CryptDestroyHash(pTmp_hash);
-		}
+	/* If hash object already exists, destroy it. */
+	if (pCryptoCTX->pt_hHash != 0){
+		CryptDestroyHash(pCryptoCTX->pt_hHash);
+		pCryptoCTX->pt_hHash = 0;
+	}
 
-	/*Create new hasher object*/
+	/* Create new hasher object. */
 	if (!CryptCreateHash(pCSP, msHashAlg, 0,0,&pTmp_hash)) {
 		DWORD error = GetLastError();
 		KSI_LOG_debug(hasher->ctx, "Cryptoapi: Create hash error %i\n", error);
@@ -255,8 +268,8 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 		}
 
 	pCryptoCTX->pt_hHash = pTmp_hash;
-
 	pTmp_hash = 0;
+
 
 	res = KSI_OK;
 
@@ -270,9 +283,12 @@ cleanup:
 int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_length) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	CRYPTO_HASH_CTX * pCryptoCTX = NULL;	//Crypto helper struct
-	HCRYPTHASH pHash = 0;			//Hash object
 
+	/* Crypto helper struct. */
+	CRYPTO_HASH_CTX * pCryptoCTX = NULL;
+
+	/* Hash object. */
+	HCRYPTHASH pHash = 0;
 
 	if (hasher == NULL || data == NULL){
 		res = KSI_INVALID_ARGUMENT;
