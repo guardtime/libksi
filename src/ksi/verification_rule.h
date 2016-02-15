@@ -51,6 +51,8 @@ extern "C" {
 	int KSI_VerificationRule_AggregationHashChainConsistency(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
+	 * This rule is used to check that aggregation hash chain aggregation times are consistent (e.g previous aggregation
+	 * hash chain aggregation time to current aggregation hash chain aggregation time).
 	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
@@ -60,6 +62,8 @@ extern "C" {
 	int KSI_VerificationRule_AggregationHashChainTimeConsistency(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
+	 * This rule is used to verify that last aggregation hash chain output hash equals to calendar hash chain input hash.
+	 * If calendar hash chain is missing then status code #KSI_OK will be returned.
 	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
@@ -69,6 +73,8 @@ extern "C" {
 	int KSI_VerificationRule_CalendarHashChainInputHashVerification(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
+	 * This rule is used to verify that calendar hash chain aggregation time equals to last aggregation hash chain
+	 * aggregation time. If calendar hash chain is missing then status code #KSI_OK is returned.
 	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
@@ -78,6 +84,9 @@ extern "C" {
 	int KSI_VerificationRule_CalendarHashChainAggregationTime(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
+	 * This rule is used to verify that calendar hash chain registration time (calculated from the shape of the calendar
+	 * hash chain) equals to calendar hash chain aggregation time. If calendar hash chain is missing then status code
+	 * #KSI_OK will be returned.
 	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
@@ -87,6 +96,8 @@ extern "C" {
 	int KSI_VerificationRule_CalendarHashChainRegistrationTime(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
+	 * This rule is used to verify that calendar authentication record publication hash equals to calendar hash chain
+	 * publication hash. If calendar authentication record is missing then status code #KSI_OK is returned.
 	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
@@ -96,6 +107,8 @@ extern "C" {
 	int KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
+	 * This rule is used to verify that calendar authentication record publication time equals to calendar hash chain
+	 * publication time. If calendar authentication record is missing then status code #KSI_OK is returned.
 	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
@@ -105,6 +118,8 @@ extern "C" {
 	int KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
+	 * This rule is used to check if keyless signature contains publication record or not. If publication record is
+	 * missing then status code #KSI_OK will be returned.
 	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
@@ -114,7 +129,9 @@ extern "C" {
 	int KSI_VerificationRule_SignaturePublicationRecordPublicationHash(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
-	 *
+	 * This rule is used to check if keyless signature contains correct publication record publication time.
+	 * If publication record is missing then status code #KSI_OK will ne returned.
+
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
 	 *
@@ -123,6 +140,9 @@ extern "C" {
 	int KSI_VerificationRule_SignaturePublicationRecordPublicationTime(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
+	 * This rule is used to verify document hash. If RFC3161 record is present then the document hash must equal to RFC3161
+	 * input hash. If RFC3161 record isn't present then document hash must equal to first aggregation hash chain input hash.
+	 * If document hash isn't provided the status code #KSI_OK will be returned.
 	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
