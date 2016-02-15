@@ -1,3 +1,5 @@
+  * IMPROVEMENT: Handling for reading server responses from tlv files.
+
 libksi (3.7.1037) UNRELEASED; urgency=low
 
   * BUGFIX: Fixed building from SRPM
