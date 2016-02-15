@@ -123,22 +123,22 @@ static void TestGetBaseError(CuTest *tc) {
 	CuAssert(tc, "Unable to create KSI context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf) ,&ksi_error, &ext_error);
-	CuAssert(tc, "Unable to get base error.", res == KSI_OK && *buf == '\0' && ksi_error == KSI_OK && ext_error == 0);
+	CuAssert(tc, "Unable to get base error.", res == KSI_OK && strcmp(buf, KSI_getErrorString(KSI_OK)) == 0 && ksi_error == KSI_OK && ext_error == 0);
 
 	KSI_ERR_push(ctx, KSI_INVALID_ARGUMENT, 10, __FILE__, __LINE__, "Error: test A.");
 	KSI_ERR_push(ctx, KSI_UNKNOWN_ERROR, 11, __FILE__, __LINE__, "Error: test B.");
 
 	res = KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL, NULL);
-	CuAssert(tc, "Unable to get correct error data.", res == KSI_OK && strcmp(buf, "Error: test A.") == NULL);
+	CuAssert(tc, "Unable to get correct error data.", res == KSI_OK && strcmp(buf, "Error: test A.") == 0);
 
 	res = KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), &ksi_error, NULL);
-	CuAssert(tc, "Unable to get correct error data.", res == KSI_OK && strcmp(buf, "Error: test A.") == NULL && ksi_error == KSI_INVALID_ARGUMENT);
+	CuAssert(tc, "Unable to get correct error data.", res == KSI_OK && strcmp(buf, "Error: test A.") == 0 && ksi_error == KSI_INVALID_ARGUMENT);
 
 	res = KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL, &ext_error);
-	CuAssert(tc, "Unable to get correct error data.", res == KSI_OK && strcmp(buf, "Error: test A.") == NULL && ext_error == 10);
+	CuAssert(tc, "Unable to get correct error data.", res == KSI_OK && strcmp(buf, "Error: test A.") == 0 && ext_error == 10);
 
 	res = KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), &ksi_error, &ext_error);
-	CuAssert(tc, "Unable to get correct error data.", res == KSI_OK && strcmp(buf, "Error: test A.") == NULL
+	CuAssert(tc, "Unable to get correct error data.", res == KSI_OK && strcmp(buf, "Error: test A.") == 0
 			&& ext_error == 10 && ksi_error == KSI_INVALID_ARGUMENT);
 
 

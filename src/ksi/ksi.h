@@ -345,8 +345,8 @@ char *KSI_ERR_toString(KSI_CTX *ctx, char *buf, size_t buf_len);
 
 /**
  * Get base error message and optional internal and external error code. If there
- * are no errors, \c buf will contain empty string, \c error will be equal to \c KSI_OK and
- * \c ext will be equal to 0.
+ * are no errors, \c buf will contain string returned by KSI_getErrorString(KSI_OK),
+ * \c error will be equal to \c KSI_OK and \c ext will be equal to 0.
  * \param[in]		ctx		KSI context object.
  * \param[out]		buf		Buffer for storing error message.
  * \param[in]		len		The length of the buffer.
