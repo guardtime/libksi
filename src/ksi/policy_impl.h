@@ -36,7 +36,7 @@ typedef enum RuleType_en {
 	RULE_TYPE_COMPOSITE
 } RuleType;
 
-typedef int (*Verifier)(KSI_Signature *, KSI_RuleVerificationResult *);
+typedef int (*Verifier)(VerificationContext *, KSI_RuleVerificationResult *);
 
 typedef struct BasicRule_st {
 	KSI_RuleVerificationResult result;
@@ -65,9 +65,33 @@ struct VerificationPolicy_st {
 };
 
 struct VerificationContext_st {
-	bool extendingAllowed;
 	KSI_CTX *ctx;
 	KSI_Signature *sig;
+
+	/** Indicates whether signature extention is allowed */
+	bool extendingAllowed;
+	/** Temporary extended signature */
+	KSI_Signature *extendedSig;
+
+	/** Indicates if the document hash should be verified */
+	bool verifyDocumentHash;
+
+	/** Initial aggregation level. */
+	KSI_uint64_t docAggrLevel;
+
+	/** Document hash to be verified. */
+	KSI_DataHash *documentHash;
+
+	/** Indicates if the publication string should be used. */
+	bool useUserPublication;
+
+	/** Publicationsfile to be used. */
+	KSI_PublicationsFile *publicationsFile;
+
+	/** Publication string to be used. */
+	const KSI_PublicationData *userPublication;
+
+	KSI_DataHash *aggregationHash;
 };
 
 #ifdef	__cplusplus

@@ -112,7 +112,7 @@ cleanup:
 }
 
 static int BasicRule_verify(BasicRule *rule, VerificationContext *context) {
-	return rule->verifySignature(context->sig, &rule->result);
+	return rule->verifySignature(context, &rule->result);
 }
 
 static int CompositeRule_create(bool skip, CompositeRule **rule) {
