@@ -247,8 +247,6 @@ static int isUserInfoInsideUrl(const char *url) {
 
 static int conf_control(CONF *conf) {
 	int res = 0;
-	char *aggre_scheme = NULL;
-	char *ext_scheme = NULL;
 
 	CONF_CONTROL(conf, aggregator_url, res);
 	CONF_CONTROL(conf, aggregator_pass, res);
