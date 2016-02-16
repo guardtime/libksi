@@ -963,10 +963,14 @@ int KSI_VerificationRule_SignatureDoesNotContainPublication(KSI_Signature *sig, 
 
 	if (sig == NULL || result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
+		packVerificationErrorResult(result, NA, GEN_2);
 		goto cleanup;
 	}
 
-
+	if (sig->publication != NULL) {
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
 
 	res = KSI_OK;
 
@@ -997,10 +1001,14 @@ int KSI_VerificationRule_SignaturePublicationRecordExistence(KSI_Signature *sig,
 
 	if (sig == NULL || result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
+		packVerificationErrorResult(result, NA, GEN_2);
 		goto cleanup;
 	}
 
-
+	if (sig->publication == NULL) {
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
 
 	res = KSI_OK;
 
@@ -1031,10 +1039,14 @@ int KSI_VerificationRule_CalendarHashChainDoesNotExist(KSI_Signature *sig, KSI_R
 
 	if (sig == NULL || result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
+		packVerificationErrorResult(result, NA, GEN_2);
 		goto cleanup;
 	}
 
-
+	if (sig->calendarChain != NULL) {
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
 
 	res = KSI_OK;
 
@@ -1082,10 +1094,14 @@ int KSI_VerificationRule_CalendarHashChainExistence(KSI_Signature *sig, KSI_Rule
 
 	if (sig == NULL || result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
+		packVerificationErrorResult(result, NA, GEN_2);
 		goto cleanup;
 	}
 
-
+	if (sig->calendarChain == NULL) {
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
 
 	res = KSI_OK;
 

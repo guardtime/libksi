@@ -152,6 +152,7 @@ extern "C" {
 	int KSI_VerificationRule_DocumentHashVerification(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
+	 * This rule checks that signature does not contain publication record.
 	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
@@ -161,6 +162,9 @@ extern "C" {
 	int KSI_VerificationRule_SignatureDoesNotContainPublication(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
+	 * This rule checks that:
+	 * - the extended signature contains the same count of right aggregation hash chain links
+	 * - the extended signature right aggregation hash chain links are equal to the not extended signature right links
 	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
@@ -170,6 +174,7 @@ extern "C" {
 	int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
+	 * This rule is used to check if keyless signature contains publication record or not.
 	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
@@ -188,6 +193,7 @@ extern "C" {
 	int KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash(KSI_Signature *sig, KSI_RuleVerificationResult *result);
 
 	/**
+	 * Rule to check that keyless signature does not contain calendar hash chain.
 	 *
 	 * \param[in]	sig			KSI signature.
 	 * \param[out]	result		Verification result.
