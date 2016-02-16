@@ -27,6 +27,7 @@ static int BasicRule_verify(BasicRule *rule, VerificationContext *context);
 static int CompositeRule_verify(CompositeRule *rule, VerificationContext *context);
 
 KSI_IMPLEMENT_LIST(Rule, Rule_free);
+//KSI_IMPLEMENT_LIST(PolicyVerificationResult, NULL);
 
 static int Rule_create(Rule **rule) {
 	int res = KSI_UNKNOWN_ERROR;
