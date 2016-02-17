@@ -21,8 +21,6 @@
 #define	POLICY_H
 
 #include "types_base.h"
-/* TODO: remove this include after development */
-//#include "policy_impl.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -92,15 +90,16 @@ extern "C" {
 	};
 
 	typedef struct VerificationResult_st KSI_RuleVerificationResult;
+	typedef struct VerificationResult_st KSI_RuleResult;
 
-	typedef struct VerificationResult_st KSI_PolicyVerificationResult;
+	typedef struct VerificationResult_st KSI_PolicyResult;
 
-	typedef struct PolicyVerificationResultList KSI_PolicyVerificationResultList;
+	typedef struct PolicyResultList KSI_PolicyResultList;
 
-	typedef struct KSI_PolicyResult_st {
-		KSI_PolicyVerificationResult finalResult;
-		KSI_PolicyVerificationResultList *results;
-	} KSI_PolicyResult;
+	typedef struct KSI_PolicyVerificationResult_st {
+		KSI_PolicyResult finalResult;
+		KSI_LIST(KSI_PolicyResult) *results;
+	} KSI_PolicyVerificationResult;
 
 	typedef struct VerificationPolicy_st KSI_Policy;
 

@@ -31,8 +31,8 @@ extern "C" {
 typedef struct Rule_st Rule;
 KSI_DEFINE_LIST(Rule);
 
-typedef struct VerificationResult_st PolicyVerificationResult;
-KSI_DEFINE_LIST(PolicyVerificationResult);
+typedef struct PolicyResult_st PolicyResult;
+KSI_DEFINE_LIST(PolicyResult);
 
 typedef enum RuleType_en {
 	RULE_TYPE_BASIC,
@@ -62,7 +62,6 @@ struct Rule_st {
 };
 
 struct VerificationPolicy_st {
-	KSI_PolicyVerificationResult result;
 	KSI_Policy *fallbackPolicy;
 	KSI_LIST(Rule) *rules;
 };

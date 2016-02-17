@@ -25,9 +25,10 @@ static void Rule_free(Rule *rule);
 static void CompositeRule_free(CompositeRule *rule);
 static int BasicRule_verify(BasicRule *rule, VerificationContext *context);
 static int CompositeRule_verify(CompositeRule *rule, VerificationContext *context);
+static void PolicyResult_free(KSI_PolicyResult *result);
 
 KSI_IMPLEMENT_LIST(Rule, Rule_free);
-//KSI_IMPLEMENT_LIST(PolicyVerificationResult, NULL);
+KSI_IMPLEMENT_LIST(KSI_PolicyResult, PolicyResult_free);
 
 static int Rule_create(Rule **rule) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -498,40 +499,158 @@ cleanup:
 	return res;
 }
 
-static int Policy_verifySignature(KSI_Policy *policy, VerificationContext *context) {
+static void PolicyResult_free(KSI_PolicyResult *result) {
+	KSI_free(result);
+}
+
+static int PolicyVerificationResult_create(KSI_PolicyVerificationResult **result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_PolicyVerificationResult *tmp = NULL;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	tmp = KSI_new(KSI_PolicyVerificationResult);
+	if (tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	res = KSI_PolicyResultList_new(&tmp->results);
+	if (res != KSI_OK) {
+		goto cleanup;
+	}
+
+	tmp->finalResult.resultCode = NA;
+	tmp->finalResult.errorCode = GEN_2;
+	*result = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_PolicyVerificationResult_free(tmp);
+	return res;
+}
+
+static int PolicyVerificationResult_addResult(KSI_PolicyVerificationResult *result, KSI_PolicyResult *next) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (result == NULL || next == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	/* TODO: Do we overwrite the final result? */
+	result->finalResult = *next;
+	res = KSI_PolicyResultList_append(result->results, next);
+
+cleanup:
+
+	return res;
+}
+
+static int Policy_verifySignature(KSI_Policy *policy, VerificationContext *context, KSI_PolicyResult **result) {
 	int i;
 	int res = KSI_UNKNOWN_ERROR;
+	KSI_PolicyResult *tmp = NULL;
+
+	if (policy == NULL || context == NULL || context->ctx == NULL || result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	tmp = KSI_new(KSI_PolicyResult);
+	if (tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
 
 	for (i = 0; i < RuleList_length(policy->rules); i++) {
 		Rule *rule;
 
 		RuleList_elementAt(policy->rules, i, &rule);
 		res = Rule_verify(rule, context);
-		policy->result = rule->result;
-		/* Alternatively for more fine-tuned status: */
-		/* Policy_resultSet(policy, rule->result); */
-		if (policy->result.resultCode != OK) {
+		if (res != KSI_OK) goto cleanup;
+
+		/* Keep the last rule result as the policy result. */
+		*tmp = rule->result;
+		if (tmp->resultCode != OK) {
 			break;
 		}
 	}
+
+	*result = tmp;
+	tmp = NULL;
+
+cleanup:
+
+	PolicyResult_free(tmp);
+	return res;
+}
+
+int KSI_Policy_setFallback(KSI_CTX *ctx, KSI_Policy *policy, KSI_Policy *fallback) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (ctx == NULL || policy == NULL || fallback == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	policy->fallbackPolicy = policy;
+	res = KSI_OK;
+
+cleanup:
+
 	return res;
 }
 
 int KSI_Policy_verify(KSI_Policy *policy, VerificationContext *context, KSI_PolicyVerificationResult **result) {
 	KSI_Policy *currentPolicy;
 	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	KSI_PolicyVerificationResult *tmp = NULL;
+	KSI_PolicyResult *tmp_result = NULL;
+
+	if (policy == NULL || context == NULL || context->ctx == NULL || result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	ctx = context->ctx;
+	res = PolicyVerificationResult_create(&tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	currentPolicy = policy;
 	while (currentPolicy != NULL) {
-		res = Policy_verifySignature(currentPolicy, context);
-		/* TODO! Add each policy result to list of results. */
-		if (currentPolicy->result.resultCode != OK) {
+		res = Policy_verifySignature(currentPolicy, context, &tmp_result);
+		/* Stop verifying the policy whenever there is an internal error (invalid arguments, out of memory, etc). */
+		if (res != KSI_OK) goto cleanup;
+
+		res = PolicyVerificationResult_addResult(tmp, tmp_result);
+		if (res != KSI_OK) goto cleanup;
+
+		if (tmp_result->resultCode != OK) {
 			currentPolicy = currentPolicy->fallbackPolicy;
 		}
 		else {
 			currentPolicy = NULL;
 		}
 	}
+
+	*result = tmp;
+	tmp = NULL;
+	tmp_result = NULL;
+
+cleanup:
+
+	PolicyResult_free(tmp_result);
+	KSI_PolicyVerificationResult_free(tmp);
 	return res;
 }
 
@@ -539,6 +658,15 @@ void KSI_Policy_free(KSI_Policy *policy) {
 	if (policy != NULL) {
 		RuleList_free(policy->rules);
 		KSI_free(policy);
+	}
+}
+
+
+
+void KSI_PolicyVerificationResult_free(KSI_PolicyVerificationResult *result) {
+	if (result != NULL) {
+		KSI_PolicyResultList_free(result->results);
+		KSI_free(result);
 	}
 }
 
