@@ -25,6 +25,21 @@
 #include "signature_impl.h"
 #include "hashchain.h"
 
+#define CATCH_KSI_ERR(func) \
+	res = func; \
+	if (res != KSI_OK) { \
+		packVerificationErrorResult(result, NA, GEN_2); \
+		goto cleanup; \
+	}
+
+static int packVerificationErrorResult(KSI_RuleVerificationResult *result, VerificationResultCode resCode, VerificationErrorCode errCode);
+static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, const KSI_DataHash *hsh, const KSI_OctetString *suffix, int hsh_id, KSI_DataHash **out);
+static int rfc3161_verify(KSI_CTX *ctx, const KSI_Signature *sig);
+static int rfc3161_getOutputHash(const KSI_Signature *sig, KSI_DataHash **outputHash);
+static int aggrHashChain_getOutputHash(KSI_CTX *ctx, KSI_Signature *sig, int level, KSI_DataHash **outputHash);
+static int getExtendedCalendarHashChain(VerificationContext *info, KSI_Integer *pubTime, KSI_CalendarHashChain **extCalHashChain);
+
+
 static int packVerificationErrorResult(KSI_RuleVerificationResult *result, VerificationResultCode resCode, VerificationErrorCode errCode) {
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -127,19 +142,16 @@ cleanup:
 	return res;
 }
 
-static int rfc3161_verify(const KSI_Signature *sig) {
+static int rfc3161_verify(KSI_CTX *ctx, const KSI_Signature *sig) {
 	int res;
-	KSI_CTX *ctx = NULL;
 	KSI_RFC3161 *rfc3161 = NULL;
 	KSI_AggregationHashChain *firstChain = NULL;
 	unsigned i;
 
-
-	if (sig == NULL) {
+	if (ctx == NULL || sig == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
-	ctx = sig->ctx;
 	KSI_ERR_clearErrors(ctx);
 
 	rfc3161 = sig->rfc3161;
@@ -299,7 +311,7 @@ int KSI_VerificationRule_AggregationChainInputHashVerification(VerificationConte
 	KSI_LOG_info(ctx, "Verifying aggregation hash input hash.");
 
 	if (sig->rfc3161 != NULL) {
-		res = rfc3161_verify(sig);
+		res = rfc3161_verify(ctx, sig);
 		if (res != KSI_OK){
 			KSI_LOG_info(ctx, "RFC 3161 does not belong to this aggregation hash chain.");
 			packVerificationErrorResult(result, FAIL, GEN_2);
@@ -307,11 +319,7 @@ int KSI_VerificationRule_AggregationChainInputHashVerification(VerificationConte
 		}
 
 		KSI_LOG_info(ctx, "Using input hash calculated from RFC 3161 for aggregation.");
-		res = rfc3161_getOutputHash(sig, &rfc3161_outputHash);
-		if (res != KSI_OK) {
-			packVerificationErrorResult(result, FAIL, GEN_2);
-			goto cleanup;
-		}
+		CATCH_KSI_ERR(rfc3161_getOutputHash(sig, &rfc3161_outputHash));
 
 		if (sig->aggregationChainList == NULL) {
 			res = KSI_INVALID_SIGNATURE;
@@ -320,11 +328,7 @@ int KSI_VerificationRule_AggregationChainInputHashVerification(VerificationConte
 			goto cleanup;
 		}
 
-		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &firstChain);
-		if (res != KSI_OK) {
-			packVerificationErrorResult(result, FAIL, GEN_2);
-			goto cleanup;
-		}
+		CATCH_KSI_ERR(KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &firstChain));
 
 		if (rfc3161_outputHash != NULL){
 			if (!KSI_DataHash_equals(rfc3161_outputHash, firstChain->inputHash)) {
@@ -372,7 +376,8 @@ int KSI_VerificationRule_AggregationHashChainConsistency(VerificationContext *in
 
 	/* The aggregation level might not be 0 in case of local aggregation. */
 	if (info->docAggrLevel > 0xff) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Aggregation level can't be larger than 0xff.");
+		/* Aggregation level can't be larger than 0xff */
+		res = KSI_INVALID_FORMAT;
 		packVerificationErrorResult(result, NA, GEN_2);
 		goto cleanup;
 	}
@@ -386,13 +391,8 @@ int KSI_VerificationRule_AggregationHashChainConsistency(VerificationContext *in
 		const KSI_AggregationHashChain* aggregationChain = NULL;
 		KSI_DataHash *tmpHash = NULL;
 
-		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, (KSI_AggregationHashChain **)&aggregationChain);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			packVerificationErrorResult(result, NA, GEN_2);
-			goto cleanup;
+		CATCH_KSI_ERR(KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, (KSI_AggregationHashChain **)&aggregationChain));
 
-		}
 		if (aggregationChain == NULL) break;
 
 		if (prevChain != NULL) {
@@ -407,17 +407,9 @@ int KSI_VerificationRule_AggregationHashChainConsistency(VerificationContext *in
 					KSI_Integer *chainIndex1 = NULL;
 					KSI_Integer *chainIndex2 = NULL;
 
-					res = KSI_IntegerList_elementAt(prevChain->chainIndex, j, &chainIndex1);
-					if (res != KSI_OK) {
-						packVerificationErrorResult(result, NA, GEN_2);
-						goto cleanup;
-					}
+					CATCH_KSI_ERR(KSI_IntegerList_elementAt(prevChain->chainIndex, j, &chainIndex1));
 
-					res = KSI_IntegerList_elementAt(aggregationChain->chainIndex, j, &chainIndex2);
-					if (res != KSI_OK) {
-						packVerificationErrorResult(result, NA, GEN_2);
-						goto cleanup;
-					}
+					CATCH_KSI_ERR(KSI_IntegerList_elementAt(aggregationChain->chainIndex, j, &chainIndex2));
 
 					if (!KSI_Integer_equals(chainIndex1, chainIndex2)) {
 						KSI_LOG_debug(ctx, "Aggregation chain chain index is not continuation of previous chain index.");
@@ -438,12 +430,8 @@ int KSI_VerificationRule_AggregationHashChainConsistency(VerificationContext *in
 			}
 		}
 
-		res = KSI_HashChain_aggregate(aggregationChain->ctx, aggregationChain->chain, aggregationChain->inputHash,
-									  level, (int)KSI_Integer_getUInt64(aggregationChain->aggrHashId), &level, &tmpHash);
-		if (res != KSI_OK){
-			packVerificationErrorResult(result, NA, GEN_2);
-			goto cleanup;
-		}
+		CATCH_KSI_ERR(KSI_HashChain_aggregate(aggregationChain->ctx, aggregationChain->chain, aggregationChain->inputHash,
+											  level, (int)KSI_Integer_getUInt64(aggregationChain->aggrHashId), &level, &tmpHash));
 
 		if (hsh != NULL) {
 			KSI_DataHash_free(hsh);
@@ -497,11 +485,7 @@ int KSI_VerificationRule_AggregationHashChainTimeConsistency(VerificationContext
 	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
 		const KSI_AggregationHashChain* aggregationChain = NULL;
 
-		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, (KSI_AggregationHashChain **)&aggregationChain);
-		if (res != KSI_OK) {
-			packVerificationErrorResult(result, NA, GEN_2);
-			goto cleanup;
-		}
+		CATCH_KSI_ERR(KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, (KSI_AggregationHashChain **)&aggregationChain));
 
 		if (aggregationChain == NULL) break;
 
@@ -524,7 +508,7 @@ cleanup:
 	return res;
 }
 
-static int aggrChain_getOutputHash(KSI_CTX *ctx, KSI_Signature *sig, int level, KSI_DataHash **outputHash) {
+static int aggrHashChain_getOutputHash(KSI_CTX *ctx, KSI_Signature *sig, int level, KSI_DataHash **outputHash) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i;
 	KSI_DataHash *tmp = NULL;
@@ -597,17 +581,9 @@ int KSI_VerificationRule_CalendarHashChainInputHashVerification(VerificationCont
 
 	KSI_LOG_info(ctx, "Verifying calendar hash chain input hash consistency");
 
-	res = aggrChain_getOutputHash(ctx, sig, (int)info->docAggrLevel, &aggrOutputHash);
-	if (res != KSI_OK) {
-		packVerificationErrorResult(result, NA, GEN_2);
-		goto cleanup;
-	}
+	CATCH_KSI_ERR(aggrHashChain_getOutputHash(ctx, sig, (int)info->docAggrLevel, &aggrOutputHash));
 
-	res = KSI_CalendarHashChain_getInputHash(sig->calendarChain, &calInputHash);
-	if (res != KSI_OK) {
-		packVerificationErrorResult(result, NA, GEN_2);
-		goto cleanup;
-	}
+	CATCH_KSI_ERR(KSI_CalendarHashChain_getInputHash(sig->calendarChain, &calInputHash));
 
 	if (aggrOutputHash == NULL  || calInputHash == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -659,19 +635,10 @@ int KSI_VerificationRule_CalendarHashChainAggregationTime(VerificationContext *i
 
 	KSI_LOG_info(ctx, "Verifying calendar aggregation time consistency");
 
-	/* Take the first aggregation hash chain, as all of the chain should have
-	 * the same value for "aggregation time". */
-	res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &aggregationChain);
-	if (res != KSI_OK) {
-		packVerificationErrorResult(result, NA, GEN_2);
-		goto cleanup;
-	}
+	/* Take the first aggregation hash chain, as all of the chain should have the same value for "aggregation time". */
+	CATCH_KSI_ERR(KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &aggregationChain));
 
-	res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &calAggrTime);
-	if (res != KSI_OK) {
-		packVerificationErrorResult(result, NA, GEN_2);
-		goto cleanup;
-	}
+	CATCH_KSI_ERR(KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &calAggrTime));
 
 	if (!KSI_Integer_equals(calAggrTime, aggregationChain->aggregationTime)) {
 		res = KSI_VERIFICATION_FAILURE;
@@ -689,8 +656,8 @@ cleanup:
 
 int KSI_VerificationRule_CalendarHashChainRegistrationTime(VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
-	time_t calculatedAggrTm;
-	KSI_Integer *calendarAggrTm = NULL;
+	time_t calculatedAggrTime;
+	KSI_Integer *calendarAggrTime = NULL;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
 
@@ -714,19 +681,10 @@ int KSI_VerificationRule_CalendarHashChainRegistrationTime(VerificationContext *
 
 	KSI_LOG_info(ctx, "Verifying calendar hash chain time consistency");
 
-	res = KSI_CalendarHashChain_calculateAggregationTime(sig->calendarChain, &calculatedAggrTm);
-	if (res != KSI_OK) {
-		packVerificationErrorResult(result, NA, GEN_2);
-		goto cleanup;
-	}
+	CATCH_KSI_ERR(KSI_CalendarHashChain_calculateAggregationTime(sig->calendarChain, &calculatedAggrTime));
+	CATCH_KSI_ERR(KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &calendarAggrTime));
 
-	res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &calendarAggrTm);
-	if (res != KSI_OK) {
-		packVerificationErrorResult(result, NA, GEN_2);
-		goto cleanup;
-	}
-
-	if (!KSI_Integer_equalsUInt(calendarAggrTm, (KSI_uint64_t) calculatedAggrTm)) {
+	if (!KSI_Integer_equalsUInt(calendarAggrTime, (KSI_uint64_t) calculatedAggrTime)) {
 		res = KSI_VERIFICATION_FAILURE;
 		KSI_LOG_info(ctx, "Calendar chain internally inconsistent.");
 		packVerificationErrorResult(result, FAIL, INT_5);
@@ -769,25 +727,11 @@ int KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash(Verificatio
 	KSI_LOG_info(sig->ctx, "Verifying calendar authentication record.");
 
 	/* Calculate the root hash value. */
-	res = KSI_CalendarHashChain_aggregate(sig->calendarChain, &rootHash);
-	if (res != KSI_OK) {
-		packVerificationErrorResult(result, NA, GEN_2);
-		goto cleanup;
-	}
-
+	CATCH_KSI_ERR(KSI_CalendarHashChain_aggregate(sig->calendarChain, &rootHash));
 	/* Get publication data. */
-	res = KSI_CalendarAuthRec_getPublishedData(sig->calendarAuthRec, &pubData);
-	if (res != KSI_OK) {
-		packVerificationErrorResult(result, NA, GEN_2);
-		goto cleanup;
-	}
-
+	CATCH_KSI_ERR(KSI_CalendarAuthRec_getPublishedData(sig->calendarAuthRec, &pubData));
 	/* Get published hash value. */
-	res = KSI_PublicationData_getImprint(pubData, &pubHash);
-	if (res != KSI_OK) {
-		packVerificationErrorResult(result, NA, GEN_2);
-		goto cleanup;
-	}
+	CATCH_KSI_ERR(KSI_PublicationData_getImprint(pubData, &pubHash));
 
 	if (!KSI_DataHash_equals(rootHash, pubHash)) {
 		res = KSI_VERIFICATION_FAILURE;
@@ -833,25 +777,11 @@ int KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime(Verificatio
 	KSI_LOG_info(sig->ctx, "Verifying calendar authentication record publication time.");
 
 	/* Get the publication time from calendar hash chain. */
-	res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &calPubTime);
-	if (res != KSI_OK) {
-		packVerificationErrorResult(result, NA, GEN_2);
-		goto cleanup;
-	}
-
+	CATCH_KSI_ERR(KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &calPubTime));
 	/* Get publication data. */
-	res = KSI_CalendarAuthRec_getPublishedData(sig->calendarAuthRec, &pubData);
-	if (res != KSI_OK) {
-		packVerificationErrorResult(result, NA, GEN_2);
-		goto cleanup;
-	}
-
+	CATCH_KSI_ERR(KSI_CalendarAuthRec_getPublishedData(sig->calendarAuthRec, &pubData));
 	/* Get publication time. */
-	res = KSI_PublicationData_getTime(pubData, &pubTime);
-	if (res != KSI_OK) {
-		packVerificationErrorResult(result, NA, GEN_2);
-		goto cleanup;
-	}
+	CATCH_KSI_ERR(KSI_PublicationData_getTime(pubData, &pubTime));
 
 	if (!KSI_Integer_equals(calPubTime, pubTime)) {
 		res = KSI_VERIFICATION_FAILURE;
@@ -897,25 +827,11 @@ int KSI_VerificationRule_SignaturePublicationRecordPublicationHash(VerificationC
 	KSI_LOG_info(sig->ctx, "Verifying calendar chain with publication");
 
 	/* Calculate calendar aggregation root hash value. */
-	res = KSI_CalendarHashChain_aggregate(sig->calendarChain, &rootHash);
-	if (res != KSI_OK) {
-		packVerificationErrorResult(result, NA, GEN_2);
-		goto cleanup;
-	}
-
+	CATCH_KSI_ERR(KSI_CalendarHashChain_aggregate(sig->calendarChain, &rootHash));
 	/* Get publication data from publication record */
-	res = KSI_PublicationRecord_getPublishedData(sig->publication, &pubData);
-	if (res != KSI_OK) {
-		packVerificationErrorResult(result, NA, GEN_2);
-		goto cleanup;
-	}
-
+	CATCH_KSI_ERR(KSI_PublicationRecord_getPublishedData(sig->publication, &pubData));
 	/* Get published hash value. */
-	res = KSI_PublicationData_getImprint(pubData, &publishedHash);
-	if (res != KSI_OK) {
-		packVerificationErrorResult(result, NA, GEN_2);
-		goto cleanup;
-	}
+	CATCH_KSI_ERR(KSI_PublicationData_getImprint(pubData, &publishedHash));
 
 	if (!KSI_DataHash_equals(rootHash, publishedHash)) {
 		res = KSI_VERIFICATION_FAILURE;
@@ -960,33 +876,20 @@ int KSI_VerificationRule_SignaturePublicationRecordPublicationTime(VerificationC
 		goto cleanup;
 	}
 
-	KSI_LOG_info(sig->ctx, "Verifying calendar chain publication time consistency.");
+	KSI_LOG_info(ctx, "Verifying calendar chain publication time consistency.");
 
 	/* Get the publication time from calendar hash chain. */
-	res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &calPubTime);
-	if (res != KSI_OK) {
-		packVerificationErrorResult(result, NA, GEN_2);
-		goto cleanup;
-	}
-
+	CATCH_KSI_ERR(KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &calPubTime));
 	/* Get publication data from publication record */
-	res = KSI_PublicationRecord_getPublishedData(sig->publication, &pubData);
-	if (res != KSI_OK) {
-		packVerificationErrorResult(result, NA, GEN_2);
-		goto cleanup;
-	}
+	CATCH_KSI_ERR(KSI_PublicationRecord_getPublishedData(sig->publication, &pubData));
 
-	res = KSI_PublicationData_getTime(pubData, &sigPubTime);
-	if (res != KSI_OK) {
-		packVerificationErrorResult(result, NA, GEN_2);
-		goto cleanup;
-	}
+	CATCH_KSI_ERR(KSI_PublicationData_getTime(pubData, &sigPubTime));
 
 	if (!KSI_Integer_equals(calPubTime, sigPubTime)){
 		res = KSI_VERIFICATION_FAILURE;
-		KSI_LOG_info(sig->ctx, "Calendar hash chain publication time mismatch.");
-		KSI_LOG_debug(sig->ctx, "Calendar hash chain publication time: %i.", KSI_Integer_getUInt64(calPubTime));
-		KSI_LOG_debug(sig->ctx, "Published publication time:           %i.", KSI_Integer_getUInt64(sigPubTime));
+		KSI_LOG_info(ctx, "Calendar hash chain publication time mismatch.");
+		KSI_LOG_debug(ctx, "Calendar hash chain publication time: %i.", KSI_Integer_getUInt64(calPubTime));
+		KSI_LOG_debug(ctx, "Published publication time:           %i.", KSI_Integer_getUInt64(sigPubTime));
 		packVerificationErrorResult(result, FAIL, INT_7);
 		goto cleanup;
 	}
@@ -1027,17 +930,9 @@ int KSI_VerificationRule_DocumentHashVerification(VerificationContext *info, KSI
 
 	if (sig->rfc3161 != NULL) {
 		KSI_LOG_info(sig->ctx, "Document hash is compared with RFC 3161 input hash.");
-		res = KSI_RFC3161_getInputHash(sig->rfc3161, &hsh);
-		if (res != KSI_OK) {
-			packVerificationErrorResult(result, NA, GEN_2);
-			goto cleanup;
-		}
+		CATCH_KSI_ERR(KSI_RFC3161_getInputHash(sig->rfc3161, &hsh));
 	} else {
-		res = KSI_Signature_getDocumentHash(sig, &hsh);
-		if (res != KSI_OK) {
-			packVerificationErrorResult(result, NA, GEN_2);
-			goto cleanup;
-		}
+		CATCH_KSI_ERR(KSI_Signature_getDocumentHash(sig, &hsh));
 	}
 
 	if (!KSI_DataHash_equals(hsh, sig->verificationResult.documentHash)) {
@@ -1052,6 +947,7 @@ int KSI_VerificationRule_DocumentHashVerification(VerificationContext *info, KSI
 	res = KSI_OK;
 
 cleanup:
+	KSI_nofree(hsh);
 
 	return res;
 }
@@ -1101,6 +997,9 @@ int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches(Veri
 	sig = info->sig;
 
 
+	/* TODO...*/
+
+
 
 	res = KSI_OK;
 
@@ -1139,6 +1038,10 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash(VerificationCont
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
+	KSI_Integer *pubTime = NULL;
+	KSI_CalendarHashChain *extCalHashChain = NULL;
+	KSI_DataHash *rootHash = NULL;
+	KSI_DataHash *extRootHash = NULL;
 
 	if (result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1153,11 +1056,33 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash(VerificationCont
 	ctx = info->ctx;
 	sig = info->sig;
 
+	if (sig->calendarChain == NULL) {
+		res = KSI_OK;
+		goto cleanup;
+	}
 
+	CATCH_KSI_ERR(KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &pubTime));
+
+	CATCH_KSI_ERR(getExtendedCalendarHashChain(info, pubTime, &extCalHashChain));
+
+	CATCH_KSI_ERR(KSI_CalendarHashChain_aggregate(sig->calendarChain, &rootHash));
+
+	CATCH_KSI_ERR(KSI_CalendarHashChain_aggregate(extCalHashChain, &extRootHash));
+
+	if (!KSI_DataHash_equals(rootHash, extRootHash)) {
+		res = KSI_VERIFICATION_FAILURE;
+		KSI_LOG_info(sig->ctx, "Calendar hash chain root hash and extehded calendar hash chain root hash mismatch.");
+		KSI_LOG_logDataHash(sig->ctx, KSI_LOG_DEBUG, "Calendar root hash     :", rootHash);
+		KSI_LOG_logDataHash(sig->ctx, KSI_LOG_DEBUG, "Ext calendar root hash :", extRootHash);
+		packVerificationErrorResult(result, FAIL, CAL_1);
+		goto cleanup;
+	}
 
 	res = KSI_OK;
 
 cleanup:
+	KSI_DataHash_free(rootHash);
+	KSI_DataHash_free(extRootHash);
 
 	return res;
 }
@@ -1188,11 +1113,51 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(VerificationContext *info, KSI_RuleVerificationResult *result) {
+static int getExtendedCalendarHashChain(VerificationContext *info, KSI_Integer *pubTime, KSI_CalendarHashChain **extCalHashChain) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_Integer *pubTime = NULL;
+	KSI_Signature *tmp = NULL;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
+
+	if (info == NULL || info->ctx == NULL || info->sig == NULL || extCalHashChain == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->sig;
+
+	/* Check if signature has been already extended */
+	if (info->extendedSig == NULL) {
+		/* Extend the signature to the publication time as attached calendar chain, or to head if time is NULL */
+		res = KSI_Signature_extendTo(sig, ctx, pubTime, &tmp);
+		if (res != KSI_OK) {
+			goto cleanup;
+		}
+		if (tmp == NULL) {
+			res = KSI_UNKNOWN_ERROR;
+			goto cleanup;
+		}
+		info->extendedSig = tmp;
+		tmp = NULL;
+	}
+	*extCalHashChain = info->extendedSig->calendarChain;
+
+	res = KSI_OK;
+
+cleanup:
+	KSI_Signature_free(tmp);
+
+	return res;
+}
+
+int KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *sig = NULL;
+	KSI_Integer *pubTime = NULL;
+	KSI_CalendarHashChain *extCalHashChain = NULL;
+	KSI_DataHash *calInputHash = NULL;
+	KSI_DataHash *aggrOutputHash = NULL;
 
 	if (result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1208,15 +1173,29 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(VerificationCon
 	sig = info->sig;
 
 	if (sig->calendarChain != NULL) {
-		packVerificationErrorResult(result, NA, GEN_2);
-		goto cleanup;
+		CATCH_KSI_ERR(KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &pubTime));
 	}
 
-	res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &pubTime);
+	CATCH_KSI_ERR(getExtendedCalendarHashChain(info, pubTime, &extCalHashChain));
+
+	CATCH_KSI_ERR(KSI_CalendarHashChain_getInputHash(extCalHashChain, &calInputHash));
+
+	CATCH_KSI_ERR(aggrHashChain_getOutputHash(ctx, sig, (int)info->docAggrLevel, &aggrOutputHash));
+
+	if (!KSI_DataHash_equals(aggrOutputHash, calInputHash)) {
+		res = KSI_VERIFICATION_FAILURE;
+		KSI_LOG_info(ctx, "Calendar hash chain's input hash does not match with aggregation root hash.");
+		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Input hash from aggregation :", aggrOutputHash);
+		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Expected input hash         :", calInputHash);
+		packVerificationErrorResult(result, FAIL, CAL_2);
+		goto cleanup;
+	}
 
 	res = KSI_OK;
 
 cleanup:
+
+	KSI_DataHash_free(aggrOutputHash);
 
 	return res;
 }
@@ -1225,6 +1204,10 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(Verificat
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
+	KSI_CalendarHashChain *extCalHashChain = NULL;
+	time_t calculatedAggrTime;
+	KSI_AggregationHashChain *aggregationChain = NULL;
+	KSI_Integer *pubTime = NULL;
 
 	if (result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1239,7 +1222,24 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(Verificat
 	ctx = info->ctx;
 	sig = info->sig;
 
+	if (sig->calendarChain != NULL) {
+		CATCH_KSI_ERR(KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &pubTime));
+	}
 
+	CATCH_KSI_ERR(getExtendedCalendarHashChain(info, pubTime, &extCalHashChain));
+
+	CATCH_KSI_ERR(KSI_CalendarHashChain_calculateAggregationTime(extCalHashChain, &calculatedAggrTime));
+	/* Take the first aggregation hash chain, as all of the chain should have the same value for "aggregation time". */
+	CATCH_KSI_ERR(KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &aggregationChain));
+
+	if (!KSI_Integer_equalsUInt(aggregationChain->aggregationTime, (KSI_uint64_t) calculatedAggrTime)) {
+		res = KSI_VERIFICATION_FAILURE;
+		KSI_LOG_info(ctx, "Invalid extended signature calendar calendar chain aggregation time.");
+		KSI_LOG_debug(ctx, "Calendar hash chain aggregation time: %i.", calculatedAggrTime);
+		KSI_LOG_debug(ctx, "Aggregation time:                     %i.", KSI_Integer_getUInt64(aggregationChain->aggregationTime));
+		packVerificationErrorResult(result, FAIL, CAL_3);
+		goto cleanup;
+	}
 
 	res = KSI_OK;
 

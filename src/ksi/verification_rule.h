@@ -32,7 +32,7 @@ extern "C" {
 	 * aggregation chain input hash. If RFC3161 record is missing then the status {@link VerificationResultCode#OK} is
 	 * returned.
 	 *
-	 * \param[in]	sig			KSI signature.
+	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -43,7 +43,7 @@ extern "C" {
 	 * This rule verifies that all aggregation hash chains are consistent (e.g previous aggregation output hash equals to
 	 * current aggregation chain input hash).
 	 *
-	 * \param[in]	sig			KSI signature.
+	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -54,7 +54,7 @@ extern "C" {
 	 * This rule is used to check that aggregation hash chain aggregation times are consistent (e.g previous aggregation
 	 * hash chain aggregation time to current aggregation hash chain aggregation time).
 	 *
-	 * \param[in]	sig			KSI signature.
+	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -65,7 +65,7 @@ extern "C" {
 	 * This rule is used to verify that last aggregation hash chain output hash equals to calendar hash chain input hash.
 	 * If calendar hash chain is missing then status code #KSI_OK will be returned.
 	 *
-	 * \param[in]	sig			KSI signature.
+	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -76,7 +76,7 @@ extern "C" {
 	 * This rule is used to verify that calendar hash chain aggregation time equals to last aggregation hash chain
 	 * aggregation time. If calendar hash chain is missing then status code #KSI_OK is returned.
 	 *
-	 * \param[in]	sig			KSI signature.
+	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -88,7 +88,7 @@ extern "C" {
 	 * hash chain) equals to calendar hash chain aggregation time. If calendar hash chain is missing then status code
 	 * #KSI_OK will be returned.
 	 *
-	 * \param[in]	sig			KSI signature.
+	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -99,7 +99,7 @@ extern "C" {
 	 * This rule is used to verify that calendar authentication record publication hash equals to calendar hash chain
 	 * publication hash. If calendar authentication record is missing then status code #KSI_OK is returned.
 	 *
-	 * \param[in]	sig			KSI signature.
+	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -110,7 +110,7 @@ extern "C" {
 	 * This rule is used to verify that calendar authentication record publication time equals to calendar hash chain
 	 * publication time. If calendar authentication record is missing then status code #KSI_OK is returned.
 	 *
-	 * \param[in]	sig			KSI signature.
+	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -121,7 +121,7 @@ extern "C" {
 	 * This rule is used to check if keyless signature contains publication record or not. If publication record is
 	 * missing then status code #KSI_OK will be returned.
 	 *
-	 * \param[in]	sig			KSI signature.
+	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -132,7 +132,7 @@ extern "C" {
 	 * This rule is used to check if keyless signature contains correct publication record publication time.
 	 * If publication record is missing then status code #KSI_OK will ne returned.
 
-	 * \param[in]	sig			KSI signature.
+	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -144,7 +144,7 @@ extern "C" {
 	 * input hash. If RFC3161 record isn't present then document hash must equal to first aggregation hash chain input hash.
 	 * If document hash isn't provided the status code #KSI_OK will be returned.
 	 *
-	 * \param[in]	sig			KSI signature.
+	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -154,7 +154,7 @@ extern "C" {
 	/**
 	 * This rule checks that signature does not contain publication record.
 	 *
-	 * \param[in]	sig			KSI signature.
+	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -166,7 +166,7 @@ extern "C" {
 	 * - the extended signature contains the same count of right aggregation hash chain links
 	 * - the extended signature right aggregation hash chain links are equal to the not extended signature right links
 	 *
-	 * \param[in]	sig			KSI signature.
+	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -176,7 +176,7 @@ extern "C" {
 	/**
 	 * This rule is used to check if keyless signature contains publication record or not.
 	 *
-	 * \param[in]	sig			KSI signature.
+	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -184,8 +184,13 @@ extern "C" {
 	int KSI_VerificationRule_SignaturePublicationRecordExistence(VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
+	 * This rule is used to check that reproduced calendar hash chain (reproduced by sending extension request with the
+	 * same aggregation and publication time as the attached calendar chain) matches with the already present calendar
+	 * hash chain root hash.
+	 * If signature (that is being validated), does not contain calendar hash chain then status code #KSI_OK will be
+	 * returned.
 	 *
-	 * \param[in]	sig			KSI signature.
+	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -195,7 +200,7 @@ extern "C" {
 	/**
 	 * Rule to check that keyless signature does not contain calendar hash chain.
 	 *
-	 * \param[in]	sig			KSI signature.
+	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -206,7 +211,7 @@ extern "C" {
 	 * This rule is used to check that extended signature contains correct calendar hash chain input hash (e.g  matches
 	 * with aggregation chain root hash).
 	 *
-	 * \param[in]	sig			KSI signature.
+	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -214,8 +219,9 @@ extern "C" {
 	int KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
+	 * This rule is used to check that extended signature contains correct aggregation time.
 	 *
-	 * \param[in]	sig			KSI signature.
+	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -223,16 +229,10 @@ extern "C" {
 	int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
+	 * Rule to check if keyless signature contains calendar hash chain. Used by key-based and publication-based
+	 * verification policies.
 	 *
-	 * \param[in]	sig			KSI signature.
-	 * \param[out]	result		Verification result.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-
-	/**
-	 *
-	 * \param[in]	sig			KSI signature.
+	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
