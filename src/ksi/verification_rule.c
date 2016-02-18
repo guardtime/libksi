@@ -1658,3 +1658,184 @@ cleanup:
 	return res;
 }
 
+int KSI_VerificationRule_UserProvidedPublicationExistence(VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *sig = NULL;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->sig;
+
+
+	/* TODO...*/
+
+
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_UserProvidedPublicationVerification(VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *sig = NULL;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->sig;
+
+
+	/* TODO...*/
+
+
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+
+int KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *sig = NULL;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->sig;
+
+
+	/* TODO...*/
+
+
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse(VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *sig = NULL;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->sig;
+
+
+	/* TODO...*/
+
+
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse(VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *sig = NULL;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->sig;
+
+
+	/* TODO...*/
+
+
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash(VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *sig = NULL;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->sig;
+
+
+	/* TODO...*/
+
+
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+

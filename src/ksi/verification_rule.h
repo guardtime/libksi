@@ -310,24 +310,15 @@ extern "C" {
 	 */
 	int KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(VerificationContext *info, KSI_RuleVerificationResult *result);
 
-	/**
-	 *
-	 * \param[in]	info		Verification context to be used for given rule
-	 * \param[out]	result		Verification result.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
 	int KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse(VerificationContext *info, KSI_RuleVerificationResult *result);
-
-	/**
-	 *
-	 * \param[in]	info		Verification context to be used for given rule
-	 * \param[out]	result		Verification result.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
 	int KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash(VerificationContext *info, KSI_RuleVerificationResult *result);
 
+	int KSI_VerificationRule_UserProvidedPublicationExistence(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_UserProvidedPublicationVerification(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash(VerificationContext *info, KSI_RuleVerificationResult *result);
 
 
 #ifdef __cplusplus
