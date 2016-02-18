@@ -24,6 +24,10 @@
 #include "verification_impl.h"
 #include "signature_impl.h"
 #include "hashchain.h"
+#include "publicationsfile_impl.h"
+#include "tlv.h"
+#include "pkitruststore.h"
+
 
 #define CATCH_KSI_ERR(func) \
 	res = func; \
@@ -32,12 +36,15 @@
 		goto cleanup; \
 	}
 
+
+
 static int packVerificationErrorResult(KSI_RuleVerificationResult *result, VerificationResultCode resCode, VerificationErrorCode errCode);
 static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, const KSI_DataHash *hsh, const KSI_OctetString *suffix, int hsh_id, KSI_DataHash **out);
 static int rfc3161_verify(KSI_CTX *ctx, const KSI_Signature *sig);
 static int rfc3161_getOutputHash(const KSI_Signature *sig, KSI_DataHash **outputHash);
 static int aggrHashChain_getOutputHash(KSI_CTX *ctx, KSI_Signature *sig, int level, KSI_DataHash **outputHash);
 static int getExtendedCalendarHashChain(VerificationContext *info, KSI_Integer *pubTime, KSI_CalendarHashChain **extCalHashChain);
+static int initPublicationsFile(VerificationContext *verCtx);
 
 
 static int packVerificationErrorResult(KSI_RuleVerificationResult *result, VerificationResultCode resCode, VerificationErrorCode errCode) {
@@ -967,6 +974,7 @@ int KSI_VerificationRule_SignatureDoesNotContainPublication(VerificationContext 
 	}
 
 	if (info->sig->publication != NULL) {
+		res = KSI_INVALID_FORMAT;
 		packVerificationErrorResult(result, NA, GEN_2);
 		goto cleanup;
 	}
@@ -1023,6 +1031,7 @@ int KSI_VerificationRule_SignaturePublicationRecordExistence(VerificationContext
 	}
 
 	if (info->sig->publication == NULL) {
+		res = KSI_INVALID_FORMAT;
 		packVerificationErrorResult(result, NA, GEN_2);
 		goto cleanup;
 	}
@@ -1102,6 +1111,7 @@ int KSI_VerificationRule_CalendarHashChainDoesNotExist(VerificationContext *info
 	}
 
 	if (info->sig->calendarChain != NULL) {
+		res = KSI_INVALID_FORMAT;
 		packVerificationErrorResult(result, NA, GEN_2);
 		goto cleanup;
 	}
@@ -1263,9 +1273,383 @@ int KSI_VerificationRule_CalendarHashChainExistence(VerificationContext *info, K
 	}
 
 	if (info->sig->calendarChain == NULL) {
+		res = KSI_INVALID_FORMAT;
 		packVerificationErrorResult(result, NA, GEN_2);
 		goto cleanup;
 	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_CalendarAuthenticationRecordExistence(VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+
+	if (info->sig->calendarAuthRec == NULL) {
+		res = KSI_INVALID_FORMAT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+static int initPublicationsFile(VerificationContext *verCtx) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (verCtx->publicationsFile == NULL) {
+		res = KSI_receivePublicationsFile(verCtx->ctx, &verCtx->publicationsFile);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_CertificateExistence(VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *sig = NULL;
+	KSI_OctetString *certId = NULL;
+	KSI_PKICertificate *cert = NULL;
+	KSI_PublicationsFile *pubFile = NULL;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->sig;
+
+	KSI_LOG_info(sig->ctx, "Verifying calendar authentication record certificate.");
+
+	if (sig->calendarAuthRec == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+
+	CATCH_KSI_ERR(KSI_PKISignedData_getCertId(sig->calendarAuthRec->signatureData, &certId));
+
+	CATCH_KSI_ERR(initPublicationsFile(info));
+
+	CATCH_KSI_ERR(KSI_PublicationsFile_getPKICertificateById(info->publicationsFile, certId, &cert));
+
+	if (cert == NULL) {
+		res = KSI_VERIFICATION_FAILURE;
+		KSI_LOG_info(ctx, "Certificate not found");
+		packVerificationErrorResult(result, FAIL, KEY_1);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification(VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *sig = NULL;
+	KSI_OctetString *certId = NULL;
+	KSI_PKICertificate *cert = NULL;
+	KSI_OctetString *signatureValue = NULL;
+	const unsigned char *rawSignature = NULL;
+	size_t rawSignature_len;
+	unsigned char *rawData = NULL;
+	size_t rawData_len;
+	KSI_Utf8String *sigtype = NULL;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->sig;
+
+	KSI_LOG_info(sig->ctx, "Verifying calendar authentication record signature.");
+
+	if (sig->calendarAuthRec == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+
+	CATCH_KSI_ERR(KSI_PKISignedData_getCertId(sig->calendarAuthRec->signatureData, &certId));
+
+	if (certId == NULL) {
+		res = KSI_INVALID_FORMAT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+
+	CATCH_KSI_ERR(initPublicationsFile(info));
+
+	CATCH_KSI_ERR(KSI_PublicationsFile_getPKICertificateById(info->publicationsFile, certId, &cert));
+
+	if (cert == NULL) {
+		res = KSI_INVALID_FORMAT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+
+	CATCH_KSI_ERR(KSI_PKISignedData_getSignatureValue(sig->calendarAuthRec->signatureData, &signatureValue));
+
+	CATCH_KSI_ERR(KSI_OctetString_extract(signatureValue, &rawSignature, &rawSignature_len));
+
+	CATCH_KSI_ERR(KSI_TLV_serialize(sig->calendarAuthRec->pubData->baseTlv, &rawData, &rawData_len));
+
+	CATCH_KSI_ERR(KSI_PKISignedData_getSigType(sig->calendarAuthRec->signatureData, &sigtype));
+
+	res = KSI_PKITruststore_verifyRawSignature(ctx, rawData, rawData_len, KSI_Utf8String_cstr(sigtype),
+											   rawSignature, rawSignature_len, cert);
+	if (res != KSI_OK) {
+		res = KSI_VERIFICATION_FAILURE;
+		packVerificationErrorResult(result, FAIL, KEY_2);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+	KSI_free(rawData);
+
+	return res;
+}
+
+int KSI_VerificationRule_PublicationsFileContainsSignaturePublication(VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *sig = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->sig;
+
+	KSI_LOG_info(sig->ctx, "Verifying signature publication");
+
+	if (sig->publication == NULL) {
+		res = KSI_INVALID_FORMAT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+
+	CATCH_KSI_ERR(initPublicationsFile(info));
+
+	CATCH_KSI_ERR(KSI_PublicationsFile_findPublication(info->publicationsFile, sig->publication, &pubRec));
+
+	if (pubRec == NULL) {
+		res = KSI_INVALID_FORMAT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_PublicationsFileContainsPublication(VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *sig = NULL;
+	KSI_Integer *pubTime = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->sig;
+
+	KSI_LOG_info(sig->ctx, "Verifying publication existence");
+
+	CATCH_KSI_ERR(KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &pubTime));
+
+	CATCH_KSI_ERR(initPublicationsFile(info));
+
+	CATCH_KSI_ERR(KSI_PublicationsFile_getNearestPublication(info->publicationsFile, pubTime, &pubRec));
+
+	if (pubRec == NULL) {
+		res = KSI_INVALID_FORMAT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_ExtendingPermittedVerification(VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+
+	if (info->extendingAllowed == false) {
+		res = KSI_INVALID_FORMAT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *sig = NULL;
+	KSI_Integer *pubTime = NULL;
+	KSI_CalendarHashChain *extCalHashChain = NULL;
+	KSI_DataHash *extCalRootHash = NULL;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->sig;
+
+	KSI_LOG_info(sig->ctx, "Verifying publication hash");
+
+	/* TODO...*/
+
+
+	res = KSI_OK;
+
+cleanup:
+	KSI_DataHash_free(extCalRootHash);
+
+	return res;
+}
+
+int KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse(VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *sig = NULL;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->sig;
+
+
+	/* TODO...*/
+
+
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash(VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *sig = NULL;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->sig;
+
+
+	/* TODO...*/
+
+
 
 	res = KSI_OK;
 

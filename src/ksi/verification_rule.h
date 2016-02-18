@@ -239,6 +239,96 @@ extern "C" {
 	 */
 	int KSI_VerificationRule_CalendarHashChainExistence(VerificationContext *info, KSI_RuleVerificationResult *result);
 
+	/**
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_CalendarAuthenticationRecordExistence(VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * This rule ise used to check if publications file contains certificate with certificate id present in calendar
+	 * authentication record.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_CertificateExistence(VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * This rule is used to validate calendar authentication record signature. At first X.509 certificate is searched from
+	 * publications file and when the certificate is found then the PKI signature is validated.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification(VerificationContext *info, KSI_RuleVerificationResult *result);
+
+
+	/**
+	 * This rule can be used to check if publications file contains signature publication.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_PublicationsFileContainsSignaturePublication(VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * This rule is used to check if publications file contains publication closest to signature registration time.	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_PublicationsFileContainsPublication(VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * This rule can be used to check if signature extending is permitted or not.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_ExtendingPermittedVerification(VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * This rule is used to verify that publications file publication hash matches with extender response calendar root hash.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse(VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash(VerificationContext *info, KSI_RuleVerificationResult *result);
+
+
 
 #ifdef __cplusplus
 }
