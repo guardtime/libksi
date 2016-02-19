@@ -32,9 +32,13 @@
 #  include <unistd.h>
 #  include <sys/socket.h>
 #  include <netinet/in.h>
-#  define __USE_MISC
-#  include <netdb.h>
-#  undef __USE_MISC
+#  ifndef __USE_MISC
+#    define __USE_MISC
+#    include <netdb.h>
+#    undef __USE_MISC
+#  else
+#    include <netdb.h>
+#  endif
 #  include <sys/time.h>
 #else
 #  include <winsock2.h>
