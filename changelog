@@ -3,6 +3,7 @@ Version 3.8
 * IMPROVEMENT: Integration tests configuration file error handling improved.
 * IMPROVEMENT: Handling for reading server responses from tlv files.
 * BUGFIX: Removed unused function.
+* BUGFIX: Fixed macro redefinition issue.
 * IMPROVEMENT: Created KSI_HmacHasher interface for incremental HMAC computation.
 * IMPROVEMENT: Added detailed coverage report in html format.
 * IMPROVEMENT: In case of no errors KSI_ERR_getBaseErrorMessag returns string indicating that there are no errors.
