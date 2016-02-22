@@ -1102,11 +1102,13 @@ int KSI_VerificationRule_SignaturePublicationRecordExistence(VerificationContext
 		goto cleanup;
 	}
 
-	if (info == NULL || info->sig == NULL) {
+	if (info == NULL || info->sig == NULL || info->ctx == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		packVerificationErrorResult(result, NA, GEN_2);
 		goto cleanup;
 	}
+
+	KSI_LOG_info(info->ctx, "Verify signature publication record existence");
 
 	if (info->sig->publication == NULL) {
 		res = KSI_INVALID_FORMAT;
@@ -1182,11 +1184,13 @@ int KSI_VerificationRule_CalendarHashChainDoesNotExist(VerificationContext *info
 		goto cleanup;
 	}
 
-	if (info == NULL || info->sig == NULL) {
+	if (info == NULL || info->sig == NULL || info->ctx == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		packVerificationErrorResult(result, NA, GEN_2);
 		goto cleanup;
 	}
+
+	KSI_LOG_info(info->ctx, "Verifying calendar hash chain does not exist");
 
 	if (info->sig->calendarChain != NULL) {
 		res = KSI_INVALID_FORMAT;
@@ -1356,6 +1360,8 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(VerificationCon
 	ctx = info->ctx;
 	sig = info->sig;
 
+	KSI_LOG_info(ctx, "Verifying extended signature calendar hash chain input hash");
+
 	if (sig->calendarChain != NULL) {
 		CATCH_KSI_ERR(KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &pubTime));
 	}
@@ -1470,6 +1476,8 @@ int KSI_VerificationRule_CalendarAuthenticationRecordExistence(VerificationConte
 		packVerificationErrorResult(result, NA, GEN_2);
 		goto cleanup;
 	}
+
+	KSI_LOG_info(info->ctx, "Verifying calendar authentication record existence.");
 
 	if (info->sig->calendarAuthRec == NULL) {
 		res = KSI_INVALID_FORMAT;

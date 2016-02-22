@@ -19,9 +19,17 @@
 
 #include <string.h>
 #include "all_tests.h"
+#include "../src/ksi/verification_rule.h"
+#include "../src/ksi/policy_impl.h"
+#include "../src/ksi/policy.h"
+#include "../src/ksi/internal.h"
+#include "../src/ksi/verification_impl.h"
+#include "../src/ksi/verification.h"
+#include "../src/ksi/signature_impl.h"
 #include "../src/ksi/signature.h"
 #include "../src/ksi/ctx_impl.h"
 #include "../src/ksi/net_impl.h"
+#include "../src/ksi/hashchain.h"
 
 extern KSI_CTX *ctx;
 
@@ -86,7 +94,24 @@ static void testRule_ExtendedSignatureAggregationChainRightLinksMatches(CuTest *
 }
 
 static void testRule_SignaturePublicationRecordExistence(CuTest *tc) {
-	CuFail(tc, "Test not implemented!");
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+
+	int res = KSI_OK;
+	KSI_Signature *sig = NULL;
+	VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes = {OK, GEN_1};
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	verCtx.ctx = ctx;
+	verCtx.sig = sig;
+	res = KSI_VerificationRule_SignaturePublicationRecordExistence(&verCtx, &verRes);
+	CuAssert(tc, "Signature should not contain publication record.", res == KSI_OK && verRes.resultCode == OK);
+
+	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testRule_ExtendedSignatureCalendarChainRootHash(CuTest *tc) {
@@ -94,7 +119,29 @@ static void testRule_ExtendedSignatureCalendarChainRootHash(CuTest *tc) {
 }
 
 static void testRule_CalendarHashChainDoesNotExist(CuTest *tc) {
-	CuFail(tc, "Test not implemented!");
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+
+	int res = KSI_OK;
+	KSI_Signature *sig = NULL;
+	VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes = {OK, GEN_1};
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	KSI_CalendarHashChain_free(sig->calendarChain);
+	sig->calendarChain = NULL;
+
+	verCtx.ctx = ctx;
+	verCtx.sig = sig;
+	res = KSI_VerificationRule_CalendarHashChainDoesNotExist(&verCtx, &verRes);
+	CuAssert(tc, "Signature should not contain calendar hash chain.", res == KSI_OK && verRes.resultCode == OK);
+
+	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testRule_ExtendedSignatureCalendarChainInputHash(CuTest *tc) {
@@ -106,11 +153,72 @@ static void testRule_ExtendedSignatureCalendarChainAggregationTime(CuTest *tc) {
 }
 
 static void testRule_CalendarHashChainExistence(CuTest *tc) {
-	CuFail(tc, "Test not implemented!");
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+
+	int res;
+	KSI_Signature *sig = NULL;
+	VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes = {OK, GEN_1};
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	verCtx.ctx = ctx;
+	verCtx.sig = sig;
+	res = KSI_VerificationRule_CalendarHashChainExistence(&verCtx, &verRes);
+	CuAssert(tc, "Signature should contain calendar hash chain.", res == KSI_OK && verRes.resultCode == OK);
+
+	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testRule_CalendarAuthenticationRecordExistence(CuTest *tc) {
-	CuFail(tc, "Test not implemented!");
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+
+	int res;
+	KSI_Signature *sig = NULL;
+	VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes = {OK, GEN_1};
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	verCtx.ctx = ctx;
+	verCtx.sig = sig;
+	res = KSI_VerificationRule_CalendarAuthenticationRecordExistence(&verCtx, &verRes);
+	CuAssert(tc, "Signature should contain calendar authentication record.", res == KSI_OK && verRes.resultCode == OK);
+
+	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_CalendarAuthenticationRecordExistence_verifyVerificationResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-calendar-authentication-record-missing.ksig"
+
+	int res;
+	KSI_Signature *sig = NULL;
+	VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes = {OK, GEN_1};
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	verCtx.ctx = ctx;
+	verCtx.sig = sig;
+	res = KSI_VerificationRule_CalendarAuthenticationRecordExistence(&verCtx, &verRes);
+	CuAssert(tc, "Rule returned wrong error result", res == KSI_INVALID_FORMAT && verRes.resultCode == NA && verRes.errorCode == GEN_2);
+
+	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testRule_CertificateExistence(CuTest *tc) {
@@ -193,6 +301,7 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_ExtendedSignatureCalendarChainAggregationTime         );
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainExistence                            );
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordExistence                 );
+	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordExistence_verifyVerificationResult );
 	SUITE_ADD_TEST(suite, testRule_CertificateExistence                                  );
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordSignatureVerification     );
 	SUITE_ADD_TEST(suite, testRule_PublicationsFileContainsSignaturePublication          );
