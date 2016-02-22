@@ -69,7 +69,8 @@ ALLTESTS_OBJ = \
 	$(OBJ_DIR)\compatibility_test.obj \
 	$(OBJ_DIR)\uri_client_test.obj \
 	$(OBJ_DIR)\support_tests.obj \
-	$(OBJ_DIR)\multi_signature_test.obj
+	$(OBJ_DIR)\multi_signature_test.obj \
+	$(OBJ_DIR)\verification_rule_tests.obj
 
 INTTESTS_OBJ = \
 	$(OBJ_DIR)\all_integration_tests.obj \
