@@ -54,6 +54,7 @@ CuSuite* KSITest_compatibility_getSuite(void);
 CuSuite* KSITest_uriClient_getSuite(void);
 CuSuite* KSITest_multiSignature_getSuite(void);
 CuSuite* KSITest_VerificationRules_getSuite(void);
+CuSuite* KSITest_Policy_getSuite(void);
 
 
 #ifdef __cplusplus
