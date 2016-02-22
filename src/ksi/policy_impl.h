@@ -66,6 +66,17 @@ struct VerificationPolicy_st {
 	KSI_LIST(Rule) *rules;
 };
 
+typedef struct SimplifiedRule_st {
+	RuleType ruleType;
+	bool skipOnFirstOk;
+	const void *rule;
+} SimplifiedRule;
+
+struct VerificationPolicySimplified_st {
+	KSI_PolicySimplified *fallbackPolicy;
+	const SimplifiedRule *rules;
+};
+
 struct VerificationContext_st {
 	KSI_CTX *ctx;
 	KSI_Signature *sig;

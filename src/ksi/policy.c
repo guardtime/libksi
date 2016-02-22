@@ -326,6 +326,182 @@ cleanup:
 	return res;
 }
 
+const SimplifiedRule internalRules[] = {
+	{RULE_TYPE_BASIC, false, KSI_VerificationRule_AggregationChainInputHashVerification},
+	{RULE_TYPE_BASIC, false, KSI_VerificationRule_AggregationHashChainConsistency},
+	{RULE_TYPE_BASIC, false, KSI_VerificationRule_AggregationHashChainTimeConsistency},
+	{RULE_TYPE_BASIC, false, KSI_VerificationRule_CalendarHashChainInputHashVerification},
+	{RULE_TYPE_BASIC, false, KSI_VerificationRule_CalendarHashChainAggregationTime},
+	{RULE_TYPE_BASIC, false, KSI_VerificationRule_CalendarHashChainRegistrationTime},
+	{RULE_TYPE_BASIC, false, KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash},
+	{RULE_TYPE_BASIC, false, KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime},
+	{RULE_TYPE_BASIC, false, KSI_VerificationRule_SignaturePublicationRecordPublicationHash},
+	{RULE_TYPE_BASIC, false, KSI_VerificationRule_SignaturePublicationRecordPublicationTime},
+	{RULE_TYPE_BASIC, false, KSI_VerificationRule_DocumentHashVerification},
+	{RULE_TYPE_BASIC, false, NULL}
+};
+
+int KSI_PolicySimplified_createCalendarBased(KSI_CTX *ctx, KSI_PolicySimplified **policy) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_PolicySimplified *tmp = NULL;
+
+	static const SimplifiedRule rules1[] = {
+		{RULE_TYPE_BASIC, false, KSI_VerificationRule_SignatureDoesNotContainPublication},
+		{RULE_TYPE_BASIC, false, KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches},
+		{RULE_TYPE_BASIC, false, NULL}
+	};
+
+	static const SimplifiedRule rules2[] = {
+		{RULE_TYPE_BASIC, false, KSI_VerificationRule_SignaturePublicationRecordExistence},
+		{RULE_TYPE_BASIC, false, KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash},
+		{RULE_TYPE_BASIC, false, NULL}
+	};
+
+	static const SimplifiedRule rules3[] = {
+		{RULE_TYPE_COMPOSITE, true, rules1},
+		{RULE_TYPE_COMPOSITE, true, rules2},
+		{RULE_TYPE_COMPOSITE, true, NULL}
+	};
+
+	static const SimplifiedRule rules4[] = {
+		{RULE_TYPE_BASIC, false, KSI_VerificationRule_CalendarHashChainDoesNotExist},
+		{RULE_TYPE_BASIC, false, KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash},
+		{RULE_TYPE_BASIC, false, KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime}
+	};
+
+	static const SimplifiedRule rules5[] = {
+		{RULE_TYPE_BASIC, false, KSI_VerificationRule_CalendarHashChainExistence},
+		{RULE_TYPE_COMPOSITE, false, rules3},
+		{RULE_TYPE_BASIC, false, KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash},
+		{RULE_TYPE_BASIC, false, KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime},
+	};
+
+	static const SimplifiedRule rules6[] = {
+		{RULE_TYPE_COMPOSITE, true, rules4},
+		{RULE_TYPE_COMPOSITE, true, rules5},
+		{RULE_TYPE_COMPOSITE, true, NULL}
+	};
+
+	static const SimplifiedRule calendarBasedRules[] = {
+		{RULE_TYPE_COMPOSITE, false, internalRules},
+		{RULE_TYPE_COMPOSITE, false, rules6},
+		{RULE_TYPE_COMPOSITE, false, NULL}
+	};
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || policy == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	tmp = KSI_new(KSI_PolicySimplified);
+	if (tmp == NULL) {
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	tmp->fallbackPolicy = NULL;
+	tmp->rules = calendarBasedRules;
+	*policy = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_free(tmp);
+	return res;
+}
+
+int KSI_PolicySimplified_createKeyBased(KSI_CTX *ctx, KSI_PolicySimplified **policy) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_PolicySimplified *tmp = NULL;
+
+	static const SimplifiedRule keyBasedRules[] = {
+		{RULE_TYPE_COMPOSITE, false, internalRules},
+		{RULE_TYPE_BASIC, false, KSI_VerificationRule_CalendarHashChainExistence},
+		{RULE_TYPE_BASIC, false, KSI_VerificationRule_CalendarAuthenticationRecordExistence},
+		{RULE_TYPE_BASIC, false, KSI_VerificationRule_CertificateExistence},
+		{RULE_TYPE_BASIC, false, KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification},
+		{RULE_TYPE_BASIC, false, NULL}
+	};
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || policy == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	tmp = KSI_new(KSI_PolicySimplified);
+	if (tmp == NULL) {
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	tmp->fallbackPolicy = NULL;
+	tmp->rules = keyBasedRules;
+	*policy = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_free(tmp);
+	return res;
+}
+
+int KSI_PolicySimplified_createPublicationsFileBased(KSI_CTX *ctx, KSI_PolicySimplified **policy) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_PolicySimplified *tmp = NULL;
+
+	static const SimplifiedRule publicationPresentRules[] = {
+		{RULE_TYPE_BASIC, false, KSI_VerificationRule_SignaturePublicationRecordExistence},
+		{RULE_TYPE_BASIC, false, KSI_VerificationRule_PublicationsFileContainsSignaturePublication},
+		{RULE_TYPE_BASIC, false, NULL}
+	};
+	static const SimplifiedRule useExtendingRules[] = {
+		{RULE_TYPE_BASIC, false, KSI_VerificationRule_SignatureDoesNotContainPublication},
+		{RULE_TYPE_BASIC, false, KSI_VerificationRule_PublicationsFileContainsPublication},
+		{RULE_TYPE_BASIC, false, KSI_VerificationRule_ExtendingPermittedVerification},
+		{RULE_TYPE_BASIC, false, KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse},
+		{RULE_TYPE_BASIC, false, KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse},
+		{RULE_TYPE_BASIC, false, KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash},
+		{RULE_TYPE_BASIC, false, NULL}
+	};
+
+	static const SimplifiedRule publicationsFileBasedRules[] = {
+		{RULE_TYPE_COMPOSITE, true, internalRules},
+		{RULE_TYPE_COMPOSITE, true, publicationPresentRules},
+		{RULE_TYPE_COMPOSITE, true, useExtendingRules},
+		{RULE_TYPE_COMPOSITE, true, NULL}
+	};
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || policy == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	tmp = KSI_new(KSI_PolicySimplified);
+	if (tmp == NULL) {
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	tmp->fallbackPolicy = NULL;
+	tmp->rules = publicationsFileBasedRules;
+	*policy = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_free(tmp);
+	return res;
+}
+
 static int KSI_Policy_createInternal(KSI_CTX *ctx, KSI_Policy **policy) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Policy *tmp = NULL;
@@ -396,36 +572,144 @@ int KSI_Policy_createCalendarBased(KSI_CTX *ctx, KSI_Policy **policy) {
 	}
 
 	res = CompositeRule_create(false, &composite_rule2);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
+
 	res = CompositeRule_addBasicRule(composite_rule2, KSI_VerificationRule_SignatureDoesNotContainPublication);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
+
 	res = CompositeRule_addBasicRule(composite_rule2, KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
 
 	res = CompositeRule_create(false, &composite_rule3);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
+
 	res = CompositeRule_addBasicRule(composite_rule3, KSI_VerificationRule_SignaturePublicationRecordExistence);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
+
 	res = CompositeRule_addBasicRule(composite_rule3, KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
 
 	res = CompositeRule_create(true, &composite_rule1);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
+
 	res = CompositeRule_addCompositeRule(composite_rule1, composite_rule2);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
+
 	res = CompositeRule_addCompositeRule(composite_rule1, composite_rule3);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
 
 	res = CompositeRule_create(false, &signatureDoesNotContainCalendarChainRule);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
+
 	res = CompositeRule_addBasicRule(signatureDoesNotContainCalendarChainRule, KSI_VerificationRule_CalendarHashChainDoesNotExist);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
+
 	res = CompositeRule_addBasicRule(signatureDoesNotContainCalendarChainRule, KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
+
 	res = CompositeRule_addBasicRule(signatureDoesNotContainCalendarChainRule, KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
 
 	res = CompositeRule_create(false, &alreadyExtendedSignatureRule);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
+
 	res = CompositeRule_addBasicRule(alreadyExtendedSignatureRule, KSI_VerificationRule_CalendarHashChainExistence);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
+
 	res = CompositeRule_addCompositeRule(alreadyExtendedSignatureRule, composite_rule1);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
+
 	res = CompositeRule_addBasicRule(alreadyExtendedSignatureRule, KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
+
 	res = CompositeRule_addBasicRule(alreadyExtendedSignatureRule, KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
 
 	res = CompositeRule_create(true, &composite_rule4);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
+
 	res = CompositeRule_addCompositeRule(composite_rule4, signatureDoesNotContainCalendarChainRule);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
+
 	res = CompositeRule_addCompositeRule(composite_rule4, alreadyExtendedSignatureRule);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
 
 	/* First create internal verification policy. */
 	res = KSI_Policy_createInternal(ctx, &tmp);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
+
 	/* Then add all rules (extend) to internal verification policy. */
 	res = Policy_addCompositeRule(tmp, composite_rule4);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
 
 	*policy = tmp;
 	tmp = NULL;
@@ -468,6 +752,14 @@ int KSI_Policy_createKeyBased(KSI_CTX *ctx, KSI_Policy **policy) {
 		goto cleanup;
 	}
 
+	/* First create internal verification policy. */
+	res = KSI_Policy_createInternal(ctx, &tmp);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
+
+	/* Then add all rules (extend) to internal verification policy. */
 	for (i = 0; i < sizeof(verifiers) / sizeof(Verifier); i++) {
 		res = Policy_addBasicRule(tmp, verifiers[i]);
 		if (res != KSI_OK) {
@@ -616,6 +908,14 @@ int KSI_Policy_createPublicationsFileBased(KSI_CTX *ctx, KSI_Policy **policy) {
 	}
 #endif
 
+	/* First create internal verification policy. */
+	res = KSI_Policy_createInternal(ctx, &tmp);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
+
+	/* Then add all rules (extend) to internal verification policy. */
 	res = Policy_addCompositeRule(tmp, composite_rule);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -733,6 +1033,14 @@ int KSI_Policy_createUserProvidedPublicationBased(KSI_CTX *ctx, KSI_Policy **pol
 		goto cleanup;
 	}
 
+	/* First create internal verification policy. */
+	res = KSI_Policy_createInternal(ctx, &tmp);
+	if (res != KSI_OK) {\
+		KSI_pushError(ctx, res, NULL);\
+		goto cleanup;\
+	}\
+
+	/* Then add all rules (extend) to internal verification policy. */
 	res = Policy_addCompositeRule(tmp, composite_rule);
 
 	*policy = tmp;

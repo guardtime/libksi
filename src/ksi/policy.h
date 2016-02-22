@@ -103,6 +103,8 @@ extern "C" {
 
 	typedef struct VerificationPolicy_st KSI_Policy;
 
+	typedef struct VerificationPolicySimplified_st KSI_PolicySimplified;
+
 	typedef struct VerificationContext_st VerificationContext;
 
 	/**
