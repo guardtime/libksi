@@ -41,29 +41,15 @@ typedef enum RuleType_en {
 
 typedef int (*Verifier)(VerificationContext *, KSI_RuleVerificationResult *);
 
-typedef struct BasicRule_st {
-	KSI_RuleVerificationResult result;
-	Verifier verifySignature;
-} BasicRule;
-
-typedef struct CompositeRule_st {
-	KSI_RuleVerificationResult result;
-	bool skipOnFirstOk;
-	KSI_LIST(Rule) *rules;
-} CompositeRule;
-
-struct Rule_st {
+typedef struct Rule_st {
 	RuleType type;
-	KSI_RuleVerificationResult result;
-	union {
-		BasicRule *basicRule;
-		CompositeRule *compositeRule;
-	} rule;
-};
+	bool skipOnFirstOk;
+	const void *rule;
+} Rule;
 
 struct VerificationPolicy_st {
 	KSI_Policy *fallbackPolicy;
-	KSI_LIST(Rule) *rules;
+	const Rule *rules;
 };
 
 struct VerificationContext_st {
