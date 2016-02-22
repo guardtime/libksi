@@ -777,7 +777,7 @@ cleanup:
 /***************
  * SIGN REQUEST
  ***************/
-static int createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, int lvl, KSI_AggregationReq **request) {
+int KSI_createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, int lvl, KSI_AggregationReq **request) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationReq *tmp = NULL;
 	KSI_Integer *level = NULL;
@@ -843,7 +843,7 @@ cleanup:
 /*****************
  * EXTEND REQUEST
  *****************/
-static int createExtendRequest(KSI_CTX *ctx, KSI_Integer *start, KSI_Integer *end, KSI_ExtendReq **request) {
+int KSI_createExtendRequest(KSI_CTX *ctx, KSI_Integer *start, KSI_Integer *end, KSI_ExtendReq **request) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ExtendReq *tmp = NULL;
 
@@ -1335,7 +1335,7 @@ int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uin
 		goto cleanup;
 	}
 
-	res = createSignRequest(ctx, rootHash, (int)rootLevel, &req);
+	res = KSI_createSignRequest(ctx, rootHash, (int)rootLevel, &req);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1415,7 +1415,7 @@ int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *
 	}
 
 	/* Create request. */
-	res = createExtendRequest(ctx, signTime, to, &req);
+	res = KSI_createExtendRequest(ctx, signTime, to, &req);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -2648,7 +2648,7 @@ static int verifyOnline(KSI_CTX *ctx, KSI_Signature *sig) {
 		res = KSI_PublicationData_getTime(sig->verificationResult.userPublication, &end);
 		if (res != KSI_OK) goto cleanup;
 	}
-	res = createExtendRequest(sig->ctx, start, end, &req);
+	res = KSI_createExtendRequest(sig->ctx, start, end, &req);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_sendExtendRequest(ctx, req, &handle);

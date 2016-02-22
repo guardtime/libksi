@@ -79,7 +79,7 @@ struct VerificationContext_st {
 	/** Publication string to be used. */
 	const KSI_PublicationData *userPublication;
 
-	KSI_DataHash *aggregationHash;
+	KSI_DataHash *aggregationOutputHash;
 };
 
 #ifdef	__cplusplus
