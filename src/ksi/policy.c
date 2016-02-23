@@ -545,12 +545,12 @@ int KSI_VerificationContext_create(KSI_CTX *ctx, VerificationContext **context) 
 	}
 
 	tmp->ctx = ctx;
-	tmp->sig = NULL;
-	tmp->extendedSig = NULL;
-	tmp->documentHash = NULL;
-	tmp->aggregationOutputHash = NULL;
-	tmp->publicationsFile = NULL;
-	tmp->userPublication = NULL;
+	tmp->userData.sig = NULL;
+	tmp->tempData.extendedSig = NULL;
+	tmp->userData.documentHash = NULL;
+	tmp->tempData.aggregationOutputHash = NULL;
+	tmp->tempData.publicationsFile = NULL;
+	tmp->userData.userPublication = NULL;
 	*context = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -563,12 +563,12 @@ cleanup:
 
 void KSI_VerificationContext_free(VerificationContext *context) {
 	if (context != NULL) {
-		KSI_Signature_free(context->sig);
-		KSI_Signature_free(context->extendedSig);
-		KSI_DataHash_free(context->documentHash);
-		KSI_DataHash_free(context->aggregationOutputHash);
-		KSI_PublicationsFile_free(context->publicationsFile);
-		KSI_PublicationData_free(context->userPublication);
+		KSI_Signature_free(context->userData.sig);
+		KSI_Signature_free(context->tempData.extendedSig);
+		KSI_DataHash_free(context->userData.documentHash);
+		KSI_DataHash_free(context->tempData.aggregationOutputHash);
+		KSI_PublicationsFile_free(context->tempData.publicationsFile);
+		KSI_PublicationData_free((KSI_PublicationData *)context->userData.userPublication);
 		KSI_free(context);
 	}
 }
