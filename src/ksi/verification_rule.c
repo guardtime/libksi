@@ -1822,8 +1822,8 @@ int KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse(
 
 	if (!KSI_Integer_equals(pubDataPubTime, extPubTime)) {
 		KSI_LOG_info(ctx, "Invalid extended signature calendar calendar chain aggregation time.");
-		KSI_LOG_debug(ctx, "Publication file publication time:  %i.", pubDataPubTime);
-		KSI_LOG_debug(ctx, "Extended response publication time: %i.", extPubTime);
+		KSI_LOG_debug(ctx, "Publication file publication time:  %i.", KSI_Integer_getUInt64(pubDataPubTime));
+		KSI_LOG_debug(ctx, "Extended response publication time: %i.", KSI_Integer_getUInt64(extPubTime));
 		packVerificationErrorResult(result, FAIL, PUB_2);
 	}
 
@@ -1944,9 +1944,15 @@ int KSI_VerificationRule_UserProvidedPublicationVerification(VerificationContext
 	CATCH_KSI_ERR(KSI_PublicationData_getTime(info->userData.userPublication, &usrPubTime));
 	CATCH_KSI_ERR(KSI_PublicationData_getImprint(info->userData.userPublication, &usrPubHash));
 
+	if (usrPubTime == NULL || usrPubHash == NULL) {
+		res = KSI_INVALID_FORMAT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+
 	if (KSI_Integer_compare(sigPubTime, usrPubTime) != 0) {
-		KSI_LOG_debug(ctx, "Publication time from publication record:", sigPubTime);
-		KSI_LOG_debug(ctx, "Publication time from user publication  :", usrPubTime);
+		KSI_LOG_debug(ctx, "Publication time from publication record: %i", KSI_Integer_getUInt64(sigPubTime));
+		KSI_LOG_debug(ctx, "Publication time from user publication  : %i", KSI_Integer_getUInt64(usrPubTime));
 		res = KSI_OK;
 		packVerificationErrorResult(result, NA, GEN_2);
 		goto cleanup;
@@ -1974,7 +1980,7 @@ int KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(Verific
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
 	KSI_Integer *sigPubTime = NULL;
-	KSI_Integer *usrPubTime = NULL;
+	KSI_Integer *usrPubDataTime = NULL;
 
 	if (result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1991,13 +1997,19 @@ int KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(Verific
 
 	KSI_LOG_info(ctx, "Verifying user publication time");
 
-	CATCH_KSI_ERR(KSI_PublicationData_getTime(sig->publication->publishedData, &sigPubTime));
+	CATCH_KSI_ERR(KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &sigPubTime));
 
-	CATCH_KSI_ERR(KSI_PublicationData_getTime(info->userData.userPublication, &usrPubTime));
+	CATCH_KSI_ERR(KSI_PublicationData_getTime(info->userData.userPublication, &usrPubDataTime));
 
-	if (KSI_Integer_compare(sigPubTime, usrPubTime) != -1) {
-		KSI_LOG_debug(ctx, "Publication time from publication record:", sigPubTime);
-		KSI_LOG_debug(ctx, "Publication time from user publication  :", usrPubTime);
+	if (usrPubDataTime == NULL) {
+		res = KSI_INVALID_FORMAT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+
+	if (KSI_Integer_compare(sigPubTime, usrPubDataTime) != -1) {
+		KSI_LOG_debug(ctx, "Publication time from publication record: %i", KSI_Integer_getUInt64(sigPubTime));
+		KSI_LOG_debug(ctx, "Publication time from user publication  : %i", KSI_Integer_getUInt64(usrPubDataTime));
 		packVerificationErrorResult(result, NA, GEN_2);
 	}
 
@@ -2015,7 +2027,7 @@ int KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse(Veri
 	KSI_Integer *usrPubTime = NULL;
 	KSI_CalendarHashChain *extCalHashChain = NULL;
 	KSI_DataHash *extRootHash = NULL;
-	KSI_DataHash *usrPubHash = NULL;
+	KSI_DataHash *usrPubDataHash = NULL;
 
 	if (result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -2034,16 +2046,22 @@ int KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse(Veri
 
 	CATCH_KSI_ERR(KSI_PublicationData_getTime(info->userData.userPublication, &usrPubTime));
 
+	if (usrPubTime == NULL) {
+		res = KSI_INVALID_FORMAT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
+
 	CATCH_KSI_ERR(getExtendedCalendarHashChain(info, usrPubTime, &extCalHashChain));
 
 	CATCH_KSI_ERR(KSI_CalendarHashChain_aggregate(extCalHashChain, &extRootHash));
 
-	CATCH_KSI_ERR(KSI_PublicationData_getImprint(info->userData.userPublication, &usrPubHash));
+	CATCH_KSI_ERR(KSI_PublicationData_getImprint(info->userData.userPublication, &usrPubDataHash));
 
-	if (!KSI_DataHash_equals(extRootHash, usrPubHash)) {
+	if (!KSI_DataHash_equals(extRootHash, usrPubDataHash)) {
 		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Root hash extender response     :", extRootHash);
-		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Root hash from user publication :", usrPubHash);
-		packVerificationErrorResult(result, NA, PUB_1);
+		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Root hash from user publication :", usrPubDataHash);
+		packVerificationErrorResult(result, FAIL, PUB_1);
 	}
 
 	res = KSI_OK;
@@ -2078,6 +2096,12 @@ int KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse(Veri
 	KSI_LOG_info(ctx, "Verifying user publication time with extender response");
 
 	CATCH_KSI_ERR(KSI_PublicationData_getTime(info->userData.userPublication, &usrPubTime));
+
+	if (usrPubTime == NULL) {
+		res = KSI_INVALID_FORMAT;
+		packVerificationErrorResult(result, NA, GEN_2);
+		goto cleanup;
+	}
 
 	CATCH_KSI_ERR(getExtendedCalendarHashChain(info, usrPubTime, &extCalHashChain));
 

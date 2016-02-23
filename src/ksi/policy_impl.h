@@ -66,7 +66,7 @@ typedef struct VerificationUserData_st {
 	KSI_DataHash *documentHash;
 
 	/** Publication string to be used. */
-	const KSI_PublicationData *userPublication;
+	KSI_PublicationData *userPublication;
 } VerificationUserData;
 
 typedef struct VerificationTempData_st {
