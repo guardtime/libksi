@@ -52,17 +52,12 @@ struct VerificationPolicy_st {
 	const Rule *rules;
 };
 
-struct VerificationContext_st {
-	KSI_CTX *ctx;
+typedef struct VerificationUserData_st {
+	/** Signature to be verified */
 	KSI_Signature *sig;
 
 	/** Indicates whether signature extention is allowed */
 	bool extendingAllowed;
-	/** Temporary extended signature */
-	KSI_Signature *extendedSig;
-
-	/** Indicates if the document hash should be verified */
-	bool verifyDocumentHash;
 
 	/** Initial aggregation level. */
 	KSI_uint64_t docAggrLevel;
@@ -70,16 +65,28 @@ struct VerificationContext_st {
 	/** Document hash to be verified. */
 	KSI_DataHash *documentHash;
 
-	/** Indicates if the publication string should be used. */
-	bool useUserPublication;
+	/** Publication string to be used. */
+	const KSI_PublicationData *userPublication;
+} VerificationUserData;
+
+typedef struct VerificationTempData_st {
+
+	/** Temporary extended signature */
+	KSI_Signature *extendedSig;
 
 	/** Publicationsfile to be used. */
 	KSI_PublicationsFile *publicationsFile;
 
-	/** Publication string to be used. */
-	const KSI_PublicationData *userPublication;
-
+	/**  */
 	KSI_DataHash *aggregationOutputHash;
+} VerificationTempData;
+
+struct VerificationContext_st {
+	KSI_CTX *ctx;
+
+	VerificationUserData userData;
+
+	VerificationTempData tempData;
 };
 
 #ifdef	__cplusplus
