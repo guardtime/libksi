@@ -191,6 +191,23 @@ extern "C" {
 	 */
 	void KSI_PolicyVerificationResult_free(KSI_PolicyVerificationResult *result);
 
+	/**
+	 * Creates a verification context.
+	 * \param[in]	ctx		KSI context.
+	 * \param[out]	context	Pointer to the receiving pointer.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationContext_create(KSI_CTX *ctx, VerificationContext **context);
+
+	/**
+	 * Frees the verification context object, including all internal objects.
+	 * \param[in]	context		Verification context to be freed.
+	 *
+	 * \see #KSI_VerificationContext_create
+	 */
+	void KSI_VerificationContext_free(VerificationContext *context);
+
 #ifdef	__cplusplus
 }
 #endif

@@ -418,7 +418,7 @@ static int Policy_verifySignature(KSI_Policy *policy, VerificationContext *conte
 	KSI_PolicyResult *tmp = NULL;
 	const Rule *currentRule = NULL;
 
-	if (policy == NULL || policy->rules || context == NULL || context->ctx == NULL || result == NULL) {
+	if (policy == NULL || policy->rules == NULL || context == NULL || context->ctx == NULL || result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -487,6 +487,11 @@ int KSI_Policy_verify(KSI_Policy *policy, VerificationContext *context, KSI_Poli
 		goto cleanup;
 	}
 
+	tmp->finalResult.resultCode = NA;
+	tmp->finalResult.errorCode = GEN_2;
+	*result = tmp;
+	tmp = NULL;
+
 	currentPolicy = policy;
 	while (currentPolicy != NULL) {
 		res = Policy_verifySignature(currentPolicy, context, &tmp_result);
@@ -504,8 +509,6 @@ int KSI_Policy_verify(KSI_Policy *policy, VerificationContext *context, KSI_Poli
 		}
 	}
 
-	*result = tmp;
-	tmp = NULL;
 	tmp_result = NULL;
 
 cleanup:
@@ -525,3 +528,48 @@ void KSI_PolicyVerificationResult_free(KSI_PolicyVerificationResult *result) {
 		KSI_free(result);
 	}
 }
+
+int KSI_VerificationContext_create(KSI_CTX *ctx, VerificationContext **context) {
+	int res = KSI_UNKNOWN_ERROR;
+	VerificationContext *tmp = NULL;
+
+	if (ctx == NULL || context == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	tmp = KSI_new(VerificationContext);
+	if (tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->sig = NULL;
+	tmp->extendedSig = NULL;
+	tmp->documentHash = NULL;
+	tmp->aggregationOutputHash = NULL;
+	tmp->publicationsFile = NULL;
+	tmp->userPublication = NULL;
+	*context = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_VerificationContext_free(tmp);
+	return res;
+}
+
+void KSI_VerificationContext_free(VerificationContext *context) {
+	if (context != NULL) {
+		KSI_Signature_free(context->sig);
+		KSI_Signature_free(context->extendedSig);
+		KSI_DataHash_free(context->documentHash);
+		KSI_DataHash_free(context->aggregationOutputHash);
+		KSI_PublicationsFile_free(context->publicationsFile);
+		KSI_PublicationData_free(context->userPublication);
+		KSI_free(context);
+	}
+}
+
