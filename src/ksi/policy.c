@@ -21,8 +21,6 @@
 #include "policy_impl.h"
 #include "verification_rule.h"
 
-static int BasicRule_verify(Verifier verifier, VerificationContext *context, KSI_RuleResult *result);
-static int CompositeRule_verify(Rule *rule, VerificationContext *context, KSI_RuleResult *result);
 static void PolicyResult_free(KSI_PolicyResult *result);
 
 KSI_IMPLEMENT_LIST(KSI_PolicyResult, PolicyResult_free);
@@ -30,44 +28,6 @@ KSI_IMPLEMENT_LIST(KSI_PolicyResult, PolicyResult_free);
 static int Rule_verify(const Rule *rule, VerificationContext *context, KSI_RuleResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_RuleResult ruleResult;
-
-	if (rule == NULL || context == NULL || result == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	if (rule->type == RULE_TYPE_BASIC) {
-		res = BasicRule_verify((Verifier)rule->rule, context, &ruleResult);
-	}
-	else if (rule->type == RULE_TYPE_COMPOSITE) {
-		res = CompositeRule_verify((Rule *)rule->rule, context, &ruleResult);
-	}
-	else {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	if (res != KSI_OK) goto cleanup;
-	/* TODO: add rule result? */
-	*result = ruleResult;
-
-cleanup:
-
-	return res;
-}
-
-static int BasicRule_verify(Verifier verifier, VerificationContext *context, KSI_RuleResult *result) {
-	if (verifier == NULL || context == NULL || result == NULL) {
-		return KSI_INVALID_ARGUMENT;
-	}
-	else {
-		return verifier(context, result);
-	}
-}
-
-static int CompositeRule_verify(Rule *rule, VerificationContext *context, KSI_RuleResult *result) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_RuleResult ruleResult = {NA, GEN_2};
 	const Rule *currentRule = NULL;
 
 	if (rule == NULL || context == NULL || result == NULL) {
@@ -77,48 +37,39 @@ static int CompositeRule_verify(Rule *rule, VerificationContext *context, KSI_Ru
 
 	currentRule = rule;
 	while (currentRule->rule) {
-		res = Rule_verify(currentRule, context, &ruleResult);
-		if (res != KSI_OK) goto cleanup;
-		/* TODO: add rule result? */
-		*result = ruleResult;
-		if (ruleResult.resultCode == OK && currentRule->skipOnFirstOk) {
-			break;
+		if (currentRule->type == RULE_TYPE_BASIC) {
+			res = ((Verifier)(currentRule->rule))(context, &ruleResult);
+		} else if (currentRule->type == RULE_TYPE_COMPOSITE) {
+			res = Rule_verify((Rule *)currentRule->rule, context, &ruleResult);
+		} else {
+			res = KSI_INVALID_ARGUMENT;
+			goto cleanup;
 		}
-		if ((ruleResult.resultCode == FAIL || ruleResult.resultCode == NA) && !currentRule->skipOnFirstOk) {
-			break;
+
+		if (res != KSI_OK) {
+			ruleResult.resultCode = NA;
+			ruleResult.errorCode = GEN_2;
+		}
+
+		if (ruleResult.resultCode == OK) {
+			if (currentRule->type == RULE_TYPE_COMPOSITE && currentRule->skipOnFirstOk == true) {
+				/* Do not handle the next rule(s) because the first OK is enough. */
+				break;
+			}
+		} else {
+			if (currentRule->type == RULE_TYPE_BASIC || (currentRule->type == RULE_TYPE_COMPOSITE && currentRule->skipOnFirstOk == false)) {
+				/* Do not handle the next rule(s) because the first FAIL or NA is enough. */
+				break;
+			}
 		}
 		currentRule++;
 	}
+	*result = ruleResult;
+
+	/* TODO: add rule result? */
 
 cleanup:
 
-	return res;
-}
-
-static int Policy_create(KSI_Policy **policy) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_Policy *tmp = NULL;
-
-	if (policy == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	tmp = KSI_new(KSI_Policy);
-	if (tmp == NULL) {
-		res = KSI_OUT_OF_MEMORY;
-		goto cleanup;
-	}
-
-	tmp->rules = NULL;
-	tmp->fallbackPolicy = NULL;
-	*policy = tmp;
-	tmp = NULL;
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_free(tmp);
 	return res;
 }
 
@@ -416,7 +367,6 @@ cleanup:
 static int Policy_verifySignature(KSI_Policy *policy, VerificationContext *context, KSI_PolicyResult **result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PolicyResult *tmp = NULL;
-	const Rule *currentRule = NULL;
 
 	if (policy == NULL || policy->rules == NULL || context == NULL || context->ctx == NULL || result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -429,19 +379,8 @@ static int Policy_verifySignature(KSI_Policy *policy, VerificationContext *conte
 		goto cleanup;
 	}
 
-	currentRule = policy->rules;
-	while (currentRule->rule) {
-		KSI_RuleResult ruleResult;
-		res = Rule_verify(currentRule, context, &ruleResult);
-		if (res != KSI_OK) goto cleanup;
-
-		/* Keep the last rule result as the policy result. */
-		*tmp = ruleResult;
-		if (tmp->resultCode != OK) {
-			break;
-		}
-		currentRule++;
-	}
+	res = Rule_verify(policy->rules, context, tmp);
+	if (res != KSI_OK) goto cleanup;
 
 	*result = tmp;
 	tmp = NULL;
@@ -498,7 +437,7 @@ int KSI_Policy_verify(KSI_Policy *policy, VerificationContext *context, KSI_Poli
 		/* Stop verifying the policy whenever there is an internal error (invalid arguments, out of memory, etc). */
 		if (res != KSI_OK) goto cleanup;
 
-		res = PolicyVerificationResult_addResult(tmp, tmp_result);
+		res = PolicyVerificationResult_addResult(*result, tmp_result);
 		if (res != KSI_OK) goto cleanup;
 
 		if (tmp_result->resultCode != OK) {
@@ -568,8 +507,18 @@ void KSI_VerificationContext_free(VerificationContext *context) {
 		KSI_DataHash_free(context->userData.documentHash);
 		KSI_DataHash_free(context->tempData.aggregationOutputHash);
 		KSI_PublicationsFile_free(context->tempData.publicationsFile);
-		KSI_PublicationData_free((KSI_PublicationData *)context->userData.userPublication);
+		KSI_PublicationData_free(context->userData.userPublication);
 		KSI_free(context);
 	}
 }
 
+void KSI_VerificationContext_clean(VerificationContext *context) {
+	if (context != NULL) {
+		KSI_Signature_free(context->tempData.extendedSig);
+		context->tempData.extendedSig = NULL;
+		KSI_DataHash_free(context->tempData.aggregationOutputHash);
+		context->tempData.aggregationOutputHash = NULL;
+		KSI_PublicationsFile_free(context->tempData.publicationsFile);
+		context->tempData.publicationsFile = NULL;
+	}
+}

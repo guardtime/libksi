@@ -204,9 +204,18 @@ extern "C" {
 	 * Frees the verification context object, including all internal objects.
 	 * \param[in]	context		Verification context to be freed.
 	 *
-	 * \see #KSI_VerificationContext_create
+	 * \see #KSI_VerificationContext_create, #KSI_VerificationContext_clean
 	 */
 	void KSI_VerificationContext_free(VerificationContext *context);
+
+	/**
+	 * Frees the temporary data in the context object.
+	 * \param[in]	context		Verification context to be cleaned.
+	 *
+	 * \see #KSI_VerificationContext_create, #KSI_VerificationContext_free
+	 */
+	void KSI_VerificationContext_clean(VerificationContext *context);
+
 
 #ifdef	__cplusplus
 }
