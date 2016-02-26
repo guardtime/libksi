@@ -220,6 +220,7 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithCalHashChain(
 
 	verCtx.ctx = ctx;
 	verCtx.userData.sig = NULL;
+	verCtx.userData.docAggrLevel = 0;
 	verCtx.tempData.aggregationOutputHash = NULL;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
@@ -234,12 +235,8 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithCalHashChain(
 #undef TEST_SIGNATURE_FILE
 }
 
-#ifdef TODO
-//TODO: can we parse a signature without a calendar chain
-//tlv_template.c:671 - (257/0) Mandatory element missing: [0x800]->[0x802]cal_chain
-
 static void testRule_CalendarHashChainInputHashVerification_sigWithoutCalHashChain(CuTest *tc) {
-#define TEST_SIGNATURE_FILE "resource/tlv/signature-without-calendar-hash-chain.ksig"
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
@@ -249,11 +246,15 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithoutCalHashCha
 
 	verCtx.ctx = ctx;
 	verCtx.userData.sig = NULL;
+	verCtx.userData.docAggrLevel = 0;
 	verCtx.tempData.aggregationOutputHash = NULL;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
 	KSI_ERR_statusDump(ctx, stdout);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.userData.sig != NULL);
+
+	KSI_CalendarHashChain_free(verCtx.userData.sig->calendarChain);
+	verCtx.userData.sig->calendarChain = NULL;
 
 	res = KSI_VerificationRule_CalendarHashChainInputHashVerification(&verCtx, &verRes);
 	CuAssert(tc, "Signature should not contain calendar hash chain", res == KSI_OK && verRes.resultCode == OK);
@@ -263,7 +264,6 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithoutCalHashCha
 
 #undef TEST_SIGNATURE_FILE
 }
-#endif
 
 static void testRule_CalendarHashChainInputHashVerification_verifyErrorResult(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-calendar-hash-chain.ksig"
@@ -276,6 +276,7 @@ static void testRule_CalendarHashChainInputHashVerification_verifyErrorResult(Cu
 
 	verCtx.ctx = ctx;
 	verCtx.userData.sig = NULL;
+	verCtx.userData.docAggrLevel = 0;
 	verCtx.tempData.aggregationOutputHash = NULL;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
@@ -421,7 +422,7 @@ static void testRule_CalendarAuthenticationRecordAggregationHash_missingAutRec(C
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash(&verCtx, &verRes);
-	CuAssert(tc, "Signature should contain not contain authentication record.", res == KSI_OK && verRes.resultCode == OK);
+	CuAssert(tc, "Signature should not contain contain authentication record.", res == KSI_OK && verRes.resultCode == OK);
 
 	KSI_Signature_free(verCtx.userData.sig);
 
@@ -452,10 +453,79 @@ static void testRule_CalendarAuthenticationRecordAggregationHash_verifyErrorResu
 }
 
 static void testRule_CalendarAuthenticationRecordAggregationTime(CuTest *tc) {
-	CuFail(tc, "Test not implemented!");
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+
+	int res = KSI_OK;
+	VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes = {OK, GEN_1};
+
+	KSI_ERR_clearErrors(ctx);
+
+	verCtx.ctx = ctx;
+	verCtx.userData.sig = NULL;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.userData.sig != NULL);
+
+	res = KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime(&verCtx, &verRes);
+	CuAssert(tc, "Signature should contain correct calendar hash chain.", res == KSI_OK && verRes.resultCode == OK);
+
+	KSI_Signature_free(verCtx.userData.sig);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_CalendarAuthenticationRecordAggregationTime_missingAutRec(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-without-calendar-authentication-record.ksig"
+
+	int res = KSI_OK;
+	VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes = {OK, GEN_1};
+
+	KSI_ERR_clearErrors(ctx);
+
+	verCtx.ctx = ctx;
+	verCtx.userData.sig = NULL;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.userData.sig != NULL);
+
+	res = KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime(&verCtx, &verRes);
+	CuAssert(tc, "Signature should not contain contain authentication record.", res == KSI_OK && verRes.resultCode == OK);
+
+	KSI_Signature_free(verCtx.userData.sig);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_CalendarAuthenticationRecordAggregationTime_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-authentication-record-publication-time.ksig"
+
+	int res = KSI_OK;
+	VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes = {OK, GEN_1};
+
+	KSI_ERR_clearErrors(ctx);
+
+	verCtx.ctx = ctx;
+	verCtx.userData.sig = NULL;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.userData.sig != NULL);
+
+	res = KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime(&verCtx, &verRes);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == FAIL && verRes.errorCode == INT_6);
+
+	KSI_Signature_free(verCtx.userData.sig);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testRule_SignaturePublicationRecordPublicationHash(CuTest *tc) {
+	CuFail(tc, "Test not implemented!");
+}
+
+static void testRule_SignaturePublicationRecordPublicationHash_verifyErrorResult(CuTest *tc) {
 	CuFail(tc, "Test not implemented!");
 }
 
@@ -463,7 +533,15 @@ static void testRule_SignaturePublicationRecordPublicationTime(CuTest *tc) {
 	CuFail(tc, "Test not implemented!");
 }
 
+static void testRule_SignaturePublicationRecordPublicationTime_verifyErrorResult(CuTest *tc) {
+	CuFail(tc, "Test not implemented!");
+}
+
 static void testRule_DocumentHashVerification(CuTest *tc) {
+	CuFail(tc, "Test not implemented!");
+}
+
+static void testRule_DocumentHashVerification_verifyErrorResult(CuTest *tc) {
 	CuFail(tc, "Test not implemented!");
 }
 
@@ -471,7 +549,15 @@ static void testRule_SignatureDoesNotContainPublication(CuTest *tc) {
 	CuFail(tc, "Test not implemented!");
 }
 
+static void testRule_SignatureDoesNotContainPublication_verifyErrorResult(CuTest *tc) {
+	CuFail(tc, "Test not implemented!");
+}
+
 static void testRule_ExtendedSignatureAggregationChainRightLinksMatches(CuTest *tc) {
+	CuFail(tc, "Test not implemented!");
+}
+
+static void testRule_ExtendedSignatureAggregationChainRightLinksMatches_verifyErrorResult(CuTest *tc) {
 	CuFail(tc, "Test not implemented!");
 }
 
@@ -491,7 +577,30 @@ static void testRule_SignaturePublicationRecordExistence(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.userData.sig != NULL);
 
 	res = KSI_VerificationRule_SignaturePublicationRecordExistence(&verCtx, &verRes);
-	CuAssert(tc, "Signature should not contain publication record.", res == KSI_OK && verRes.resultCode == OK);
+	CuAssert(tc, "Signature should contain publication record.", res == KSI_OK && verRes.resultCode == OK);
+
+	KSI_Signature_free(verCtx.userData.sig);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_SignaturePublicationRecordExistence_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+
+	int res = KSI_OK;
+	VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes = {OK, GEN_1};
+
+	KSI_ERR_clearErrors(ctx);
+
+	verCtx.ctx = ctx;
+	verCtx.userData.sig = NULL;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.userData.sig != NULL);
+
+	res = KSI_VerificationRule_SignaturePublicationRecordExistence(&verCtx, &verRes);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == NA && verRes.errorCode == GEN_2);
 
 	KSI_Signature_free(verCtx.userData.sig);
 
@@ -1426,7 +1535,7 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_AggregationHashChainTimeConsistency);
 	SUITE_ADD_TEST(suite, testRule_AggregationHashChainTimeConsistency_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainInputHashVerification_sigWithCalHashChain);
-//	SUITE_ADD_TEST(suite, testRule_CalendarHashChainInputHashVerification_sigWithoutCalHashChain);
+	SUITE_ADD_TEST(suite, testRule_CalendarHashChainInputHashVerification_sigWithoutCalHashChain);
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainInputHashVerification_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainAggregationTime);
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainAggregationTime_verifyErrorResult);
@@ -1435,30 +1544,38 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordAggregationHash);
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordAggregationHash_missingAutRec);
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordAggregationHash_verifyErrorResult);
-	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordAggregationTime           );
+	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordAggregationTime);
+	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordAggregationTime_missingAutRec);
+	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordAggregationTime_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_SignaturePublicationRecordPublicationHash             );
+	SUITE_ADD_TEST(suite, testRule_SignaturePublicationRecordPublicationHash_verifyErrorResult             );
 	SUITE_ADD_TEST(suite, testRule_SignaturePublicationRecordPublicationTime             );
+	SUITE_ADD_TEST(suite, testRule_SignaturePublicationRecordPublicationTime_verifyErrorResult             );
 	SUITE_ADD_TEST(suite, testRule_DocumentHashVerification                              );
+	SUITE_ADD_TEST(suite, testRule_DocumentHashVerification_verifyErrorResult                              );
 	SUITE_ADD_TEST(suite, testRule_SignatureDoesNotContainPublication                    );
+	SUITE_ADD_TEST(suite, testRule_SignatureDoesNotContainPublication_verifyErrorResult                    );
 	SUITE_ADD_TEST(suite, testRule_ExtendedSignatureAggregationChainRightLinksMatches    );
-	SUITE_ADD_TEST(suite, testRule_SignaturePublicationRecordExistence                   );
+	SUITE_ADD_TEST(suite, testRule_ExtendedSignatureAggregationChainRightLinksMatches_verifyErrorResult    );
+	SUITE_ADD_TEST(suite, testRule_SignaturePublicationRecordExistence);
+	SUITE_ADD_TEST(suite, testRule_SignaturePublicationRecordExistence_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_ExtendedSignatureCalendarChainRootHash                );
-	SUITE_ADD_TEST(suite, testRule_CalendarHashChainDoesNotExist                         );
-	SUITE_ADD_TEST(suite, testRule_CalendarHashChainDoesNotExist_verifyErrorResult       );
+	SUITE_ADD_TEST(suite, testRule_CalendarHashChainDoesNotExist);
+	SUITE_ADD_TEST(suite, testRule_CalendarHashChainDoesNotExist_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_ExtendedSignatureCalendarChainInputHash               );
 	SUITE_ADD_TEST(suite, testRule_ExtendedSignatureCalendarChainAggregationTime         );
-	SUITE_ADD_TEST(suite, testRule_CalendarHashChainExistence                            );
-	SUITE_ADD_TEST(suite, testRule_CalendarHashChainExistence_verifyErrorResult          );
-	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordExistence                 );
+	SUITE_ADD_TEST(suite, testRule_CalendarHashChainExistence);
+	SUITE_ADD_TEST(suite, testRule_CalendarHashChainExistence_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordExistence);
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordExistence_verifyErrorResult);
-	SUITE_ADD_TEST(suite, testRule_CertificateExistence                                  );
-	SUITE_ADD_TEST(suite, testRule_CertificateExistence_verifyErrorResult                );
+	SUITE_ADD_TEST(suite, testRule_CertificateExistence);
+	SUITE_ADD_TEST(suite, testRule_CertificateExistence_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordSignatureVerification     );
 	SUITE_ADD_TEST(suite, testRule_PublicationsFileContainsSignaturePublication          );
 	SUITE_ADD_TEST(suite, testRule_PublicationsFileContainsPublication                   );
 	SUITE_ADD_TEST(suite, testRule_ExtendingPermittedVerification                        );
-	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationHashMatchesExtenderResponse);
-	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationTimeMatchesExtenderResponse);
+	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationHashMatchesExtenderResponse		);
+	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationTimeMatchesExtenderResponse		);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFileExtendedSignatureInputHash            );
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationExistence);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationExistence_pubDataMissing_verifyErrorResult);

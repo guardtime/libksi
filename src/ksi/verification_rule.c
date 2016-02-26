@@ -816,7 +816,6 @@ int KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime(Verificatio
 		packVerificationErrorResult(result, FAIL, INT_6);
 	}
 
-
 	res = KSI_OK;
 
 cleanup:
