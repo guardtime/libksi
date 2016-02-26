@@ -1286,10 +1286,10 @@ cleanup:
 	return res;
 }
 
-static int getExtendedCalendarHashChain(VerificationContext *info, KSI_Integer *pubTime, KSI_CalendarHashChain **extCalHashChain) {
+static int getExtendedCalendarHashChain(VerificationContext *info, KSI_Integer *pubTime, KSI_CalendarHashChain **chain) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	if (info == NULL || info->ctx == NULL || info->userData.sig == NULL || extCalHashChain == NULL) {
+	if (info == NULL || info->ctx == NULL || info->userData.sig == NULL || chain == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -1313,7 +1313,7 @@ static int getExtendedCalendarHashChain(VerificationContext *info, KSI_Integer *
 		if (res != KSI_OK) goto cleanup;
 	}
 
-	*extCalHashChain = info->tempData.extendedSig->calendarChain;
+	*chain = info->tempData.extendedSig->calendarChain;
 
 	res = KSI_OK;
 
@@ -1603,6 +1603,7 @@ int KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification(Verif
 	res = KSI_PKITruststore_verifyRawSignature(ctx, rawData, rawData_len, KSI_Utf8String_cstr(sigtype),
 											   rawSignature, rawSignature_len, cert);
 	if (res != KSI_OK) {
+		KSI_LOG_info(ctx, "Failed to verify raw signature.");
 		packVerificationErrorResult(result, FAIL, KEY_2);
 	}
 
@@ -1644,7 +1645,6 @@ int KSI_VerificationRule_PublicationsFileContainsSignaturePublication(Verificati
 	CATCH_KSI_ERR(initPublicationsFile(info));
 
 	CATCH_KSI_ERR(KSI_PublicationsFile_findPublication(info->tempData.publicationsFile, sig->publication, &pubRec));
-
 	if (pubRec == NULL) {
 		KSI_LOG_info(ctx, "Publication file does not contain signature publication");
 		packVerificationErrorResult(result, NA, GEN_2);
@@ -1661,7 +1661,8 @@ int KSI_VerificationRule_PublicationsFileContainsPublication(VerificationContext
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_Integer *pubTime = NULL;
+	time_t aggrTime;
+	KSI_Integer *tempTime = NULL;
 	KSI_PublicationRecord *pubRec = NULL;
 
 	if (result == NULL) {
@@ -1679,12 +1680,13 @@ int KSI_VerificationRule_PublicationsFileContainsPublication(VerificationContext
 
 	KSI_LOG_info(ctx, "Verifying publication existence");
 
-	CATCH_KSI_ERR(KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &pubTime));
+	CATCH_KSI_ERR(KSI_CalendarHashChain_calculateAggregationTime(sig->calendarChain, &aggrTime));
+
+	CATCH_KSI_ERR(KSI_Integer_new(ctx, aggrTime, &tempTime));
 
 	CATCH_KSI_ERR(initPublicationsFile(info));
 
-	CATCH_KSI_ERR(KSI_PublicationsFile_getNearestPublication(info->tempData.publicationsFile, pubTime, &pubRec));
-
+	CATCH_KSI_ERR(KSI_PublicationsFile_getNearestPublication(info->tempData.publicationsFile, tempTime, &pubRec));
 	if (pubRec == NULL) {
 		KSI_LOG_info(ctx, "Publication not found");
 		packVerificationErrorResult(result, NA, GEN_2);
@@ -1693,6 +1695,8 @@ int KSI_VerificationRule_PublicationsFileContainsPublication(VerificationContext
 	res = KSI_OK;
 
 cleanup:
+
+	KSI_Integer_free(tempTime);
 
 	return res;
 }
@@ -1727,7 +1731,6 @@ int KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
-	time_t calculatedAggrTime;
 	KSI_Integer *pubTime = NULL;
 	KSI_CalendarHashChain *extCalHashChain = NULL;
 	KSI_DataHash *extCalRootHash = NULL;
@@ -1749,9 +1752,7 @@ int KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(
 
 	KSI_LOG_info(ctx, "Verifying publication hash");
 
-	CATCH_KSI_ERR(KSI_CalendarHashChain_calculateAggregationTime(sig->calendarChain, &calculatedAggrTime));
-
-	CATCH_KSI_ERR(KSI_Integer_new(ctx, calculatedAggrTime, &pubTime));
+	CATCH_KSI_ERR(KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &pubTime));
 
 	CATCH_KSI_ERR(getExtendedCalendarHashChain(info, pubTime, &extCalHashChain));
 
@@ -1780,7 +1781,6 @@ int KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(
 
 cleanup:
 
-	KSI_Integer_free(pubTime);
 	KSI_DataHash_free(extCalRootHash);
 
 	return res;

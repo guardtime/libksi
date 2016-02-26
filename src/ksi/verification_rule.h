@@ -282,7 +282,8 @@ extern "C" {
 	int KSI_VerificationRule_PublicationsFileContainsSignaturePublication(VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
-	 * This rule is used to check if publications file contains publication closest to signature registration time.	 *
+	 * This rule is used to check if publications file contains publication closest to signature registration time.
+	 *
 	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
