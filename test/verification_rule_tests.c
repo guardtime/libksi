@@ -1512,7 +1512,7 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification(CuTest *t
 }
 
 static void testRule_CalendarAuthenticationRecordSignatureVerification_verifyErrorResult(CuTest *tc) {
-#define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-06-2.ksig"
+#define TEST_SIGNATURE_FILE    "resource/tlv/signature-cal-auth-wrong-signing-value.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 #define TEST_CERT_FILE         "resource/tlv/mock.crt"
 
@@ -1524,8 +1524,6 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification_verifyErr
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
 		{NULL, NULL}
 	};
-
-	CuFail(tc, "Can not figure out how to verify!");
 
 	KSI_ERR_clearErrors(ctx);
 
