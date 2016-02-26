@@ -660,11 +660,141 @@ static void testRule_SignaturePublicationRecordPublicationTime_verifyErrorResult
 }
 
 static void testRule_DocumentHashVerification(CuTest *tc) {
-	CuFail(tc, "Test not implemented!");
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+
+	int res = KSI_OK;
+	VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes = {OK, GEN_1};
+
+	KSI_ERR_clearErrors(ctx);
+
+	verCtx.ctx = ctx;
+	verCtx.userData.sig = NULL;
+	verCtx.userData.documentHash = NULL;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.userData.sig != NULL);
+
+	res = KSI_Signature_getDocumentHash(verCtx.userData.sig, &verCtx.userData.documentHash);
+	CuAssert(tc, "Unable to read signature document hash", res == KSI_OK && verCtx.userData.sig != NULL);
+
+	res = KSI_VerificationRule_DocumentHashVerification(&verCtx, &verRes);
+	CuAssert(tc, "Signature should contain publication record.", res == KSI_OK && verRes.resultCode == OK);
+
+	KSI_Signature_free(verCtx.userData.sig);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_DocumentHashVerification_missingDocHash(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+
+	int res = KSI_OK;
+	VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes = {OK, GEN_1};
+
+	KSI_ERR_clearErrors(ctx);
+
+	verCtx.ctx = ctx;
+	verCtx.userData.sig = NULL;
+	verCtx.userData.documentHash = NULL;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.userData.sig != NULL);
+
+	res = KSI_VerificationRule_DocumentHashVerification(&verCtx, &verRes);
+	CuAssert(tc, "Signature should contain publication record.", res == KSI_OK && verRes.resultCode == OK);
+
+	KSI_Signature_free(verCtx.userData.sig);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testRule_DocumentHashVerification_verifyErrorResult(CuTest *tc) {
-	CuFail(tc, "Test not implemented!");
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+#define TEST_MOCK_IMPRINT   "01db27c0db0aebb8d3963c3a720985cedb600f91854cdb1e45ad631611c39284dd"
+
+	int res = KSI_OK;
+	VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes = {OK, GEN_1};
+
+	KSI_ERR_clearErrors(ctx);
+
+	verCtx.ctx = ctx;
+	verCtx.userData.sig = NULL;
+	verCtx.userData.documentHash = NULL;
+
+	res = KSITest_DataHash_fromStr(ctx, TEST_MOCK_IMPRINT, &verCtx.userData.documentHash);
+	CuAssert(tc, "Unable to create mock hash from string", res == KSI_OK && verCtx.userData.documentHash != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.userData.sig != NULL);
+
+	res = KSI_VerificationRule_DocumentHashVerification(&verCtx, &verRes);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == FAIL && verRes.errorCode == GEN_1);
+
+	KSI_Signature_free(verCtx.userData.sig);
+	KSI_DataHash_free(verCtx.userData.documentHash);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_MOCK_IMPRINT
+}
+
+static void testRule_DocumentHashVerification_rfc3161(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-with-rfc3161-record-ok.ksig"
+
+	int res = KSI_OK;
+	VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes = {OK, GEN_1};
+
+	KSI_ERR_clearErrors(ctx);
+
+	verCtx.ctx = ctx;
+	verCtx.userData.sig = NULL;
+	verCtx.userData.documentHash = NULL;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.userData.sig != NULL);
+
+	res = KSI_RFC3161_getInputHash(verCtx.userData.sig->rfc3161, &verCtx.userData.documentHash);
+	CuAssert(tc, "Unable to read signature RFC3161 input hash", res == KSI_OK && verCtx.userData.sig != NULL);
+
+	res = KSI_VerificationRule_DocumentHashVerification(&verCtx, &verRes);
+	CuAssert(tc, "Signature should contain publication record.", res == KSI_OK && verRes.resultCode == OK);
+
+	KSI_Signature_free(verCtx.userData.sig);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_DocumentHashVerification_rfc3161_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-with-rfc3161-record-ok.ksig"
+#define TEST_MOCK_IMPRINT   "01db27c0db0aebb8d3963c3a720985cedb600f91854cdb1e45ad631611c39284dd"
+
+	int res = KSI_OK;
+	VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes = {OK, GEN_1};
+
+	KSI_ERR_clearErrors(ctx);
+
+	verCtx.ctx = ctx;
+	verCtx.userData.sig = NULL;
+	verCtx.userData.documentHash = NULL;
+
+	res = KSITest_DataHash_fromStr(ctx, TEST_MOCK_IMPRINT, &verCtx.userData.documentHash);
+	CuAssert(tc, "Unable to create mock hash from string", res == KSI_OK && verCtx.userData.documentHash != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.userData.sig != NULL);
+
+	res = KSI_VerificationRule_DocumentHashVerification(&verCtx, &verRes);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == FAIL && verRes.errorCode == GEN_1);
+
+	KSI_Signature_free(verCtx.userData.sig);
+	KSI_DataHash_free(verCtx.userData.documentHash);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_MOCK_IMPRINT
 }
 
 static void testRule_SignatureDoesNotContainPublication(CuTest *tc) {
@@ -1675,8 +1805,11 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_SignaturePublicationRecordPublicationTime);
 	SUITE_ADD_TEST(suite, testRule_SignaturePublicationRecordPublicationTime_missingPubRec);
 	SUITE_ADD_TEST(suite, testRule_SignaturePublicationRecordPublicationTime_verifyErrorResult);
-	SUITE_ADD_TEST(suite, testRule_DocumentHashVerification                              );
-	SUITE_ADD_TEST(suite, testRule_DocumentHashVerification_verifyErrorResult                              );
+	SUITE_ADD_TEST(suite, testRule_DocumentHashVerification);
+	SUITE_ADD_TEST(suite, testRule_DocumentHashVerification_missingDocHash);
+	SUITE_ADD_TEST(suite, testRule_DocumentHashVerification_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_DocumentHashVerification_rfc3161);
+	SUITE_ADD_TEST(suite, testRule_DocumentHashVerification_rfc3161_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_SignatureDoesNotContainPublication                    );
 	SUITE_ADD_TEST(suite, testRule_SignatureDoesNotContainPublication_verifyErrorResult                    );
 	SUITE_ADD_TEST(suite, testRule_ExtendedSignatureAggregationChainRightLinksMatches    );
