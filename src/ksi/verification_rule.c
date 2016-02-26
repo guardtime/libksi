@@ -1294,6 +1294,7 @@ static int getExtendedCalendarHashChain(VerificationContext *info, KSI_Integer *
 		goto cleanup;
 	}
 
+#ifdef SHOULD_WE_CHECK_FOR_PUBLICATION_TIME_Q
 	/* Delete the extended signature if it is extended to a different publication time */
 	if (info->tempData.extendedSig != NULL) {
 		KSI_Integer *extSigPubTime = NULL;
@@ -1303,6 +1304,7 @@ static int getExtendedCalendarHashChain(VerificationContext *info, KSI_Integer *
 			KSI_Signature_free(info->tempData.extendedSig);
 		}
 	}
+#endif
 
 	/* Check if signature has been already extended */
 	if (info->tempData.extendedSig == NULL) {
