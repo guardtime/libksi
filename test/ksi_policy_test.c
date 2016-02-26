@@ -136,28 +136,28 @@ IMPLEMENT_DUMMY_VERIFIER(KSI_OK, NA, GEN_1);
 IMPLEMENT_DUMMY_VERIFIER(KSI_INVALID_ARGUMENT, OK, CAL_1);
 
 static const Rule singleRule1[] = {
-	{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-	{RULE_TYPE_BASIC, false, NULL}
+	{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
+	{RULE_TYPE_BASIC, NULL}
 };
 
 static const Rule singleRule2[] = {
-	{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, OK, PUB_2)},
-	{RULE_TYPE_BASIC, false, NULL}
+	{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_2)},
+	{RULE_TYPE_BASIC, NULL}
 };
 
 static const Rule singleRule3[] = {
-	{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, FAIL, INT_1)},
-	{RULE_TYPE_BASIC, false, NULL}
+	{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, FAIL, INT_1)},
+	{RULE_TYPE_BASIC, NULL}
 };
 
 static const Rule singleRule4[] = {
-	{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, NA, GEN_1)},
-	{RULE_TYPE_BASIC, false, NULL}
+	{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, NA, GEN_1)},
+	{RULE_TYPE_BASIC, NULL}
 };
 
 static const Rule singleRule5[] = {
-	{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_INVALID_ARGUMENT, OK, CAL_1)},
-	{RULE_TYPE_BASIC, false, NULL}
+	{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_INVALID_ARGUMENT, OK, CAL_1)},
+	{RULE_TYPE_BASIC, NULL}
 };
 
 static void TestSingleRulePolicy(CuTest* tc) {
@@ -201,39 +201,39 @@ static void TestBasicRulesPolicy(CuTest* tc) {
 	KSI_PolicyVerificationResult *result = NULL;
 
 	static const Rule basicRules1[] = {
-		{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, OK, PUB_2)},
-		{RULE_TYPE_BASIC, false, NULL}
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_2)},
+		{RULE_TYPE_BASIC, NULL}
 	};
 
 	static const Rule basicRules2[] = {
-		{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, FAIL, INT_1)},
-		{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, OK, PUB_2)},
-		{RULE_TYPE_BASIC, false, NULL}
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, FAIL, INT_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_2)},
+		{RULE_TYPE_BASIC, NULL}
 	};
 
 	static const Rule basicRules3[] = {
-		{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, NA, GEN_1)},
-		{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, OK, PUB_2)},
-		{RULE_TYPE_BASIC, false, NULL}
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, NA, GEN_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_2)},
+		{RULE_TYPE_BASIC, NULL}
 	};
 
 	static const Rule basicRules4[] = {
-		{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_INVALID_ARGUMENT, OK, CAL_1)},
-		{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, false, DUMMY_VERIFIER(KSI_OK, OK, PUB_2)},
-		{RULE_TYPE_BASIC, false, NULL}
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_INVALID_ARGUMENT, OK, CAL_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_2)},
+		{RULE_TYPE_BASIC, NULL}
 	};
 
 	TestRule rules[] = {
@@ -269,75 +269,75 @@ static void TestCompositeRulesPolicy(CuTest* tc) {
 	KSI_PolicyVerificationResult *result = NULL;
 
 	static const Rule compositeRule1[] = {
-		{RULE_TYPE_COMPOSITE, false, singleRule1},
-		{RULE_TYPE_COMPOSITE, false, singleRule2},
-		{RULE_TYPE_COMPOSITE, false, NULL}
+		{RULE_TYPE_COMPOSITE_AND, singleRule1},
+		{RULE_TYPE_COMPOSITE_AND, singleRule2},
+		{RULE_TYPE_COMPOSITE_AND, NULL}
 	};
 
 	static const Rule compositeRule2[] = {
-		{RULE_TYPE_COMPOSITE, false, singleRule2},
-		{RULE_TYPE_COMPOSITE, false, singleRule1},
-		{RULE_TYPE_COMPOSITE, false, NULL}
+		{RULE_TYPE_COMPOSITE_AND, singleRule2},
+		{RULE_TYPE_COMPOSITE_AND, singleRule1},
+		{RULE_TYPE_COMPOSITE_AND, NULL}
 	};
 
 	static const Rule compositeRule3[] = {
-		{RULE_TYPE_COMPOSITE, true, singleRule2},
-		{RULE_TYPE_COMPOSITE, true, singleRule1},
-		{RULE_TYPE_COMPOSITE, true, NULL}
+		{RULE_TYPE_COMPOSITE_OR, singleRule2},
+		{RULE_TYPE_COMPOSITE_OR, singleRule1},
+		{RULE_TYPE_COMPOSITE_OR, NULL}
 	};
 
 	static const Rule compositeRule4[] = {
-		{RULE_TYPE_COMPOSITE, true, singleRule1},
-		{RULE_TYPE_COMPOSITE, true, singleRule2},
-		{RULE_TYPE_COMPOSITE, true, NULL}
+		{RULE_TYPE_COMPOSITE_OR, singleRule1},
+		{RULE_TYPE_COMPOSITE_OR, singleRule2},
+		{RULE_TYPE_COMPOSITE_OR, NULL}
 	};
 
 	static const Rule compositeRule5[] = {
-		{RULE_TYPE_COMPOSITE, false, singleRule1},
-		{RULE_TYPE_COMPOSITE, false, singleRule3},
-		{RULE_TYPE_COMPOSITE, false, NULL}
+		{RULE_TYPE_COMPOSITE_AND, singleRule1},
+		{RULE_TYPE_COMPOSITE_AND, singleRule3},
+		{RULE_TYPE_COMPOSITE_AND, NULL}
 	};
 
 	static const Rule compositeRule6[] = {
-		{RULE_TYPE_COMPOSITE, false, singleRule4},
-		{RULE_TYPE_COMPOSITE, false, singleRule1},
-		{RULE_TYPE_COMPOSITE, false, NULL}
+		{RULE_TYPE_COMPOSITE_AND, singleRule4},
+		{RULE_TYPE_COMPOSITE_AND, singleRule1},
+		{RULE_TYPE_COMPOSITE_AND, NULL}
 	};
 
 	static const Rule compositeRule7[] = {
-		{RULE_TYPE_COMPOSITE, true, singleRule1},
-		{RULE_TYPE_COMPOSITE, true, singleRule4},
-		{RULE_TYPE_COMPOSITE, true, NULL}
+		{RULE_TYPE_COMPOSITE_OR, singleRule1},
+		{RULE_TYPE_COMPOSITE_OR, singleRule4},
+		{RULE_TYPE_COMPOSITE_OR, NULL}
 	};
 
 	static const Rule compositeRule8[] = {
-		{RULE_TYPE_COMPOSITE, true, singleRule3},
-		{RULE_TYPE_COMPOSITE, true, singleRule1},
-		{RULE_TYPE_COMPOSITE, true, NULL}
+		{RULE_TYPE_COMPOSITE_OR, singleRule3},
+		{RULE_TYPE_COMPOSITE_OR, singleRule1},
+		{RULE_TYPE_COMPOSITE_OR, NULL}
 	};
 
 	static const Rule compositeRule9[] = {
-		{RULE_TYPE_COMPOSITE, false, singleRule1},
-		{RULE_TYPE_COMPOSITE, false, singleRule5},
-		{RULE_TYPE_COMPOSITE, false, NULL}
+		{RULE_TYPE_COMPOSITE_AND, singleRule1},
+		{RULE_TYPE_COMPOSITE_AND, singleRule5},
+		{RULE_TYPE_COMPOSITE_AND, NULL}
 	};
 
 	static const Rule compositeRule10[] = {
-		{RULE_TYPE_COMPOSITE, false, singleRule5},
-		{RULE_TYPE_COMPOSITE, false, singleRule1},
-		{RULE_TYPE_COMPOSITE, false, NULL}
+		{RULE_TYPE_COMPOSITE_AND, singleRule5},
+		{RULE_TYPE_COMPOSITE_AND, singleRule1},
+		{RULE_TYPE_COMPOSITE_AND, NULL}
 	};
 
 	static const Rule compositeRule11[] = {
-		{RULE_TYPE_COMPOSITE, true, singleRule1},
-		{RULE_TYPE_COMPOSITE, true, singleRule5},
-		{RULE_TYPE_COMPOSITE, true, NULL}
+		{RULE_TYPE_COMPOSITE_OR, singleRule1},
+		{RULE_TYPE_COMPOSITE_OR, singleRule5},
+		{RULE_TYPE_COMPOSITE_OR, NULL}
 	};
 
 	static const Rule compositeRule12[] = {
-		{RULE_TYPE_COMPOSITE, true, singleRule5},
-		{RULE_TYPE_COMPOSITE, true, singleRule1},
-		{RULE_TYPE_COMPOSITE, true, NULL}
+		{RULE_TYPE_COMPOSITE_OR, singleRule5},
+		{RULE_TYPE_COMPOSITE_OR, singleRule1},
+		{RULE_TYPE_COMPOSITE_OR, NULL}
 	};
 
 	TestRule rules[] = {
