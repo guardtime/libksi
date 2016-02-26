@@ -77,7 +77,7 @@ typedef struct VerificationTempData_st {
 	/** Publicationsfile to be used. */
 	KSI_PublicationsFile *publicationsFile;
 
-	/**  */
+	/** Signature aggregation output hash (calendar chain input hash) */
 	KSI_DataHash *aggregationOutputHash;
 } VerificationTempData;
 
