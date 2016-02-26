@@ -36,14 +36,14 @@ KSI_DEFINE_LIST(PolicyResult);
 
 typedef enum RuleType_en {
 	RULE_TYPE_BASIC,
-	RULE_TYPE_COMPOSITE
+	RULE_TYPE_COMPOSITE_AND,
+	RULE_TYPE_COMPOSITE_OR
 } RuleType;
 
 typedef int (*Verifier)(VerificationContext *, KSI_RuleVerificationResult *);
 
 typedef struct Rule_st {
 	RuleType type;
-	bool skipOnFirstOk;
 	const void *rule;
 } Rule;
 
