@@ -679,7 +679,7 @@ static void testRule_DocumentHashVerification(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature document hash", res == KSI_OK && verCtx.userData.sig != NULL);
 
 	res = KSI_VerificationRule_DocumentHashVerification(&verCtx, &verRes);
-	CuAssert(tc, "Signature should contain publication record.", res == KSI_OK && verRes.resultCode == OK);
+	CuAssert(tc, "Signature document hash and provided hash should be equal", res == KSI_OK && verRes.resultCode == OK);
 
 	KSI_Signature_free(verCtx.userData.sig);
 
@@ -703,7 +703,7 @@ static void testRule_DocumentHashVerification_missingDocHash(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.userData.sig != NULL);
 
 	res = KSI_VerificationRule_DocumentHashVerification(&verCtx, &verRes);
-	CuAssert(tc, "Signature should contain publication record.", res == KSI_OK && verRes.resultCode == OK);
+	CuAssert(tc, "Document hash should not be provided.", res == KSI_OK && verRes.resultCode == OK && verCtx.userData.documentHash == NULL);
 
 	KSI_Signature_free(verCtx.userData.sig);
 
@@ -760,7 +760,7 @@ static void testRule_DocumentHashVerification_rfc3161(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature RFC3161 input hash", res == KSI_OK && verCtx.userData.sig != NULL);
 
 	res = KSI_VerificationRule_DocumentHashVerification(&verCtx, &verRes);
-	CuAssert(tc, "Signature should contain publication record.", res == KSI_OK && verRes.resultCode == OK);
+	CuAssert(tc, "Signature RFC3161 input hash should be ok.", res == KSI_OK && verRes.resultCode == OK);
 
 	KSI_Signature_free(verCtx.userData.sig);
 
@@ -798,11 +798,49 @@ static void testRule_DocumentHashVerification_rfc3161_verifyErrorResult(CuTest *
 }
 
 static void testRule_SignatureDoesNotContainPublication(CuTest *tc) {
-	CuFail(tc, "Test not implemented!");
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+
+	int res = KSI_OK;
+	VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes = {OK, GEN_1};
+
+	KSI_ERR_clearErrors(ctx);
+
+	verCtx.ctx = ctx;
+	verCtx.userData.sig = NULL;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.userData.sig != NULL);
+
+	res = KSI_VerificationRule_SignatureDoesNotContainPublication(&verCtx, &verRes);
+	CuAssert(tc, "Signature should not contain publication record.", res == KSI_OK && verRes.resultCode == OK);
+
+	KSI_Signature_free(verCtx.userData.sig);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testRule_SignatureDoesNotContainPublication_verifyErrorResult(CuTest *tc) {
-	CuFail(tc, "Test not implemented!");
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
+
+	int res = KSI_OK;
+	VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes = {OK, GEN_1};
+
+	KSI_ERR_clearErrors(ctx);
+
+	verCtx.ctx = ctx;
+	verCtx.userData.sig = NULL;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.userData.sig != NULL);
+
+	res = KSI_VerificationRule_SignatureDoesNotContainPublication(&verCtx, &verRes);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == NA && verRes.errorCode == GEN_2);
+
+	KSI_Signature_free(verCtx.userData.sig);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testRule_ExtendedSignatureAggregationChainRightLinksMatches(CuTest *tc) {
