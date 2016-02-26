@@ -1403,7 +1403,7 @@ static void testRule_CertificateExistence(CuTest *tc) {
 
 static void testRule_CertificateExistence_verifyErrorResult(CuTest *tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1.ksig"
-#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications-one-cert-one-publication-record-with-wrong-hash.tlv"
 #define TEST_CERT_FILE         "resource/tlv/mock.crt"
 
 	int res = KSI_UNKNOWN_ERROR;
@@ -1414,8 +1414,6 @@ static void testRule_CertificateExistence_verifyErrorResult(CuTest *tc) {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
 		{NULL, NULL}
 	};
-
-	CuFail(tc, "Test not ready!");
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1514,11 +1512,7 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification(CuTest *t
 }
 
 static void testRule_CalendarAuthenticationRecordSignatureVerification_verifyErrorResult(CuTest *tc) {
-	CuFail(tc, "Test not implemented!");
-}
-
-static void testRule_PublicationsFileContainsSignaturePublication(CuTest *tc) {
-#define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+#define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-06-2.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 #define TEST_CERT_FILE         "resource/tlv/mock.crt"
 
@@ -1530,6 +1524,8 @@ static void testRule_PublicationsFileContainsSignaturePublication(CuTest *tc) {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
 		{NULL, NULL}
 	};
+
+	CuFail(tc, "Can not figure out how to verify!");
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1560,6 +1556,50 @@ static void testRule_PublicationsFileContainsSignaturePublication(CuTest *tc) {
 
 	res = KSI_CTX_setPKITruststore(ctx, pki);
 	CuAssert(tc, "Unable to set new PKI truststrore for KSI context.", res == KSI_OK);
+
+	res = KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification(&verCtx, &verRes);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == FAIL && verRes.errorCode == KEY_2);
+
+	KSI_Signature_free(verCtx.userData.sig);
+	KSI_PublicationsFile_free(verCtx.tempData.publicationsFile);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_PUBLICATIONS_FILE
+#undef TEST_CERT_FILE
+}
+
+static void testRule_PublicationsFileContainsSignaturePublication(CuTest *tc) {
+#define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
+
+	int res = KSI_UNKNOWN_ERROR;
+	VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes = {OK, GEN_1};
+	const KSI_CertConstraint certCnst[] = {
+		{KSI_CERT_EMAIL, "publications@guardtime.com"},
+		{NULL, NULL}
+	};
+
+	KSI_ERR_clearErrors(ctx);
+
+	verCtx.ctx = ctx;
+	verCtx.userData.sig = NULL;
+	verCtx.tempData.publicationsFile = NULL;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.userData.sig != NULL);
+
+	res = KSI_CTX_setPublicationsFile(ctx, NULL);
+	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.tempData.publicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.tempData.publicationsFile != NULL);
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
+	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
+
+	res = KSI_CTX_setPKITruststore(ctx, NULL);
+	CuAssert(tc, "Unable to set clear PKI truststrore for KSI context.", res == KSI_OK);
 
 	res = KSI_VerificationRule_PublicationsFileContainsSignaturePublication(&verCtx, &verRes);
 	CuAssert(tc, "Publications file should contain signature publication", res == KSI_OK && verRes.resultCode == OK);
@@ -1569,22 +1609,15 @@ static void testRule_PublicationsFileContainsSignaturePublication(CuTest *tc) {
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
-#undef TEST_CERT_FILE
 }
 
 static void testRule_PublicationsFileContainsSignaturePublication_verifyErrorResult(CuTest *tc) {
-	CuFail(tc, "Test not implemented!");
-}
-
-static void testRule_PublicationsFileContainsPublication(CuTest *tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
-#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
-#define TEST_CERT_FILE         "resource/tlv/mock.crt"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.15042014.tlv"
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes = {OK, GEN_1};
-	KSI_PKITruststore *pki = NULL;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
 		{NULL, NULL}
@@ -1608,17 +1641,45 @@ static void testRule_PublicationsFileContainsPublication(CuTest *tc) {
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
 
-	res = KSI_CTX_setPKITruststore(ctx, NULL);
-	CuAssert(tc, "Unable to set clear PKI truststrore for KSI context.", res == KSI_OK);
+	res = KSI_VerificationRule_PublicationsFileContainsSignaturePublication(&verCtx, &verRes);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == NA && verRes.errorCode == GEN_2);
 
-	res = KSI_PKITruststore_new(ctx, 0, &pki);
-	CuAssert(tc, "Unable to get PKI truststore from context.", res == KSI_OK && pki != NULL);
+	KSI_Signature_free(verCtx.userData.sig);
+	KSI_PublicationsFile_free(verCtx.tempData.publicationsFile);
 
-	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath(TEST_CERT_FILE));
-	CuAssert(tc, "Unable to read certificate", res == KSI_OK);
+#undef TEST_SIGNATURE_FILE
+#undef TEST_PUBLICATIONS_FILE
+}
 
-	res = KSI_CTX_setPKITruststore(ctx, pki);
-	CuAssert(tc, "Unable to set new PKI truststrore for KSI context.", res == KSI_OK);
+static void testRule_PublicationsFileContainsPublication(CuTest *tc) {
+#define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
+
+	int res = KSI_UNKNOWN_ERROR;
+	VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes = {OK, GEN_1};
+	const KSI_CertConstraint certCnst[] = {
+		{KSI_CERT_EMAIL, "publications@guardtime.com"},
+		{NULL, NULL}
+	};
+
+	KSI_ERR_clearErrors(ctx);
+
+	verCtx.ctx = ctx;
+	verCtx.userData.sig = NULL;
+	verCtx.tempData.publicationsFile = NULL;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.userData.sig != NULL);
+
+	res = KSI_CTX_setPublicationsFile(ctx, NULL);
+	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.tempData.publicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.tempData.publicationsFile != NULL);
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
+	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
 
 	res = KSI_VerificationRule_PublicationsFileContainsPublication(&verCtx, &verRes);
 	CuAssert(tc, "Publications file should contain signature publication", res == KSI_OK && verRes.resultCode == OK);
@@ -1628,11 +1689,46 @@ static void testRule_PublicationsFileContainsPublication(CuTest *tc) {
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
-#undef TEST_CERT_FILE
 }
 
 static void testRule_PublicationsFileContainsPublication_verifyErrorResult(CuTest *tc) {
-	CuFail(tc, "Test not implemented!");
+#define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.15042014.tlv"
+
+	int res = KSI_UNKNOWN_ERROR;
+	VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes = {OK, GEN_1};
+	const KSI_CertConstraint certCnst[] = {
+		{KSI_CERT_EMAIL, "publications@guardtime.com"},
+		{NULL, NULL}
+	};
+
+	KSI_ERR_clearErrors(ctx);
+
+	verCtx.ctx = ctx;
+	verCtx.userData.sig = NULL;
+	verCtx.tempData.publicationsFile = NULL;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.userData.sig != NULL);
+
+	res = KSI_CTX_setPublicationsFile(ctx, NULL);
+	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.tempData.publicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.tempData.publicationsFile != NULL);
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
+	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
+
+	res = KSI_VerificationRule_PublicationsFileContainsPublication(&verCtx, &verRes);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == NA && verRes.errorCode == GEN_2);
+
+	KSI_Signature_free(verCtx.userData.sig);
+	KSI_PublicationsFile_free(verCtx.tempData.publicationsFile);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_PUBLICATIONS_FILE
 }
 
 static void testRule_ExtendingPermittedVerification(CuTest *tc) {
@@ -2440,8 +2536,7 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse(CuTest *
 static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse_verifyErrorResult(CuTest *tc) {
 #define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
-//#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
-#define TEST_TIMESTAMP         1396608816
+#define TEST_TIMESTAMP          1396608816
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
@@ -2463,9 +2558,6 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse_verifyEr
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.tempData.extendedSig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.tempData.extendedSig != NULL);
-
-//	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
-//	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 	res = KSI_Signature_getPublicationRecord(verCtx.userData.sig, &tempRec);
 	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && tempRec != NULL);
