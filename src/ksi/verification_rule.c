@@ -1391,6 +1391,8 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(Verificat
 	ctx = info->ctx;
 	sig = info->userData.sig;
 
+	KSI_LOG_info(ctx, "Verifying extended signature calendar hash chain aggregation time");
+
 	if (sig->calendarChain != NULL) {
 		CATCH_KSI_ERR(KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &pubTime));
 	}
@@ -1404,7 +1406,7 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(Verificat
 	if (!KSI_Integer_equalsUInt(aggregationChain->aggregationTime, (KSI_uint64_t) calculatedAggrTime)) {
 		KSI_LOG_info(ctx, "Invalid extended signature calendar calendar chain aggregation time.");
 		KSI_LOG_debug(ctx, "Calendar hash chain aggregation time: %i.", calculatedAggrTime);
-		KSI_LOG_debug(ctx, "Aggregation time:                     %i.", KSI_Integer_getUInt64(aggregationChain->aggregationTime));
+		KSI_LOG_debug(ctx, "Signature aggregation time:           %i.", KSI_Integer_getUInt64(aggregationChain->aggregationTime));
 		packVerificationErrorResult(result, FAIL, CAL_3);
 	}
 
