@@ -905,7 +905,7 @@ int KSI_VerificationRule_SignaturePublicationRecordPublicationTime(VerificationC
 	CATCH_KSI_ERR(KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &calPubTime));
 	/* Get publication data from publication record */
 	CATCH_KSI_ERR(KSI_PublicationRecord_getPublishedData(sig->publication, &pubData));
-
+	/* Get publication time */
 	CATCH_KSI_ERR(KSI_PublicationData_getTime(pubData, &sigPubTime));
 
 	if (!KSI_Integer_equals(calPubTime, sigPubTime)){
