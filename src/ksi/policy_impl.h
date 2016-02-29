@@ -28,9 +28,6 @@
 extern "C" {
 #endif
 
-typedef struct Rule_st Rule;
-KSI_DEFINE_LIST(Rule);
-
 typedef struct PolicyResult_st PolicyResult;
 KSI_DEFINE_LIST(PolicyResult);
 
@@ -46,6 +43,8 @@ typedef struct Rule_st {
 	RuleType type;
 	const void *rule;
 } Rule;
+
+KSI_DEFINE_LIST(Rule);
 
 struct VerificationPolicy_st {
 	KSI_Policy *fallbackPolicy;

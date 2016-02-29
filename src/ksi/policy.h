@@ -20,7 +20,7 @@
 #ifndef POLICY_H
 #define	POLICY_H
 
-#include "types_base.h"
+#include "types.h"
 
 #ifdef	__cplusplus
 extern "C" {
