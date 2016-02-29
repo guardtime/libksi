@@ -40,6 +40,35 @@ static void testLoadPublicationsFile(CuTest *tc) {
 	KSI_PublicationsFile_free(pubFile);
 }
 
+static void testLoadPublicationsFileWithNoCerts(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_LIST(KSI_CertificateRecord) *certList = NULL;
+	KSI_PKICertificate *cert = NULL;
+
+	unsigned char dummy[] = {0xca, 0xfe, 0xba, 0xbe};
+	KSI_OctetString *certId = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath("resource/publications/publications-nocerts.bin"), &pubFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_PublicationsFile_getCertificates(pubFile, &certList);
+	CuAssert(tc, "Unable to get certificate list", res == KSI_OK);
+	CuAssert(tc, "Unexpected certificate list length.", KSI_CertificateRecordList_length(certList) == 0);
+
+	res = KSI_OctetString_new(ctx, dummy, sizeof(dummy), &certId);
+	CuAssert(tc, "Creating an octetstring failed", res == KSI_OK && certId != NULL);
+
+	res = KSI_PublicationsFile_getPKICertificateById(pubFile, certId, &cert);
+	CuAssert(tc, "Searching for a non existend certificate failed", res == KSI_OK && cert == NULL);
+
+	KSI_OctetString_free(certId);
+	KSI_PublicationsFile_free(pubFile);
+}
+
+
 static void testVerifyPublicationsFile(CuTest *tc) {
 	int res;
 	KSI_PublicationsFile *pubFile = NULL;
@@ -665,6 +694,7 @@ CuSuite* KSITest_Publicationsfile_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
 	SUITE_ADD_TEST(suite, testLoadPublicationsFile);
+	SUITE_ADD_TEST(suite, testLoadPublicationsFileWithNoCerts);
 	SUITE_ADD_TEST(suite, testVerifyPublicationsFile);
 	SUITE_ADD_TEST(suite, testPublicationStringEncodingAndDecoding);
 	SUITE_ADD_TEST(suite, testFindPublicationByPubStr);
