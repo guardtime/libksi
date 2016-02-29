@@ -1150,7 +1150,6 @@ static void testRule_ExtendedSignatureCalendarChainInputHash_nokAggrOutHash_veri
 
 	KSI_Signature_free(verCtx.userData.sig);
 	KSI_Signature_free(verCtx.tempData.extendedSig);
-	KSI_DataHash_free(verCtx.tempData.aggregationOutputHash);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
@@ -1595,9 +1594,6 @@ static void testRule_PublicationsFileContainsSignaturePublication(CuTest *tc) {
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
-
-	res = KSI_CTX_setPKITruststore(ctx, NULL);
-	CuAssert(tc, "Unable to set clear PKI truststrore for KSI context.", res == KSI_OK);
 
 	res = KSI_VerificationRule_PublicationsFileContainsSignaturePublication(&verCtx, &verRes);
 	CuAssert(tc, "Publications file should contain signature publication", res == KSI_OK && verRes.resultCode == OK);
@@ -2144,6 +2140,9 @@ static void testRule_UserProvidedPublicationExistence_pubHashMissing_verifyError
 	res = KSI_PublicationData_getTime(tempPubData, &pubTime);
 	CuAssert(tc, "Unable to read signature publication time", res == KSI_OK && pubTime != NULL);
 
+	/* Make a virtual copy of the time object. */
+	KSI_Integer_ref(pubTime);
+
 	res = KSI_PublicationData_setTime(verCtx.userData.userPublication, pubTime);
 	CuAssert(tc, "Unable to set publication time.", res == KSI_OK);
 
@@ -2186,6 +2185,9 @@ static void testRule_UserProvidedPublicationExistence_pubTimeMissing_verifyError
 
 	res = KSI_PublicationData_getImprint(tempPubData, &pubHash);
 	CuAssert(tc, "Unable to read signature publication hash", res == KSI_OK && pubHash != NULL);
+
+	/* Make a virtual copy of the hash object. */
+	KSI_DataHash_ref(pubHash);
 
 	res = KSI_PublicationData_setImprint(verCtx.userData.userPublication, pubHash);
 	CuAssert(tc, "Unable to set publication hash.", res == KSI_OK);
@@ -2257,17 +2259,20 @@ static void testRule_UserProvidedPublicationVerification_timeMismatch_verifyErro
 	res = KSI_PublicationRecord_getPublishedData(tempRec, &tempPubData);
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && tempPubData != NULL);
 
+	res = KSI_PublicationData_new(ctx, &verCtx.userData.userPublication);
+	CuAssert(tc, "Unable to create publication data", res == KSI_OK && verCtx.userData.userPublication != NULL);
+
 	res = KSI_Integer_new(ctx, TEST_TIMESTAMP, &pubTime);
 	CuAssert(tc, "Unable to create publication time", res == KSI_OK && pubTime != NULL);
+
+	res = KSI_PublicationData_setTime(verCtx.userData.userPublication, pubTime);
+	CuAssert(tc, "Unable to set publication time.", res == KSI_OK);
 
 	res = KSI_PublicationData_getImprint(tempPubData, &pubHash);
 	CuAssert(tc, "Unable to read signature publication hash", res == KSI_OK && pubHash != NULL);
 
-	res = KSI_PublicationData_new(ctx, &verCtx.userData.userPublication);
-	CuAssert(tc, "Unable to create publication data", res == KSI_OK && verCtx.userData.userPublication != NULL);
-
-	res = KSI_PublicationData_setTime(verCtx.userData.userPublication, pubTime);
-	CuAssert(tc, "Unable to set publication time.", res == KSI_OK);
+	/* Make a virtual copy of the hash object. */
+	KSI_DataHash_ref(pubHash);
 
 	res = KSI_PublicationData_setImprint(verCtx.userData.userPublication, pubHash);
 	CuAssert(tc, "Unable to set publication hash.", res == KSI_OK);
@@ -2284,7 +2289,7 @@ static void testRule_UserProvidedPublicationVerification_timeMismatch_verifyErro
 
 static void testRule_UserProvidedPublicationVerification_hashMismatch_verifyErrorResult(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
-#define TEST_DATA_HASH_NOK  "AAAAAA-CT5VGY-AAPUCF-L3EKCC-NRSX56-AXIDFL-VZJQK4-WDCPOE-3KIWGB-XGPPM3-O5BIMW-REOVR4"
+#define TEST_MOCK_IMPRINT   "01db27c0db0aebb8d3963c3a720985cedb600f91854cdb1e45ad631611c39284dd"
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
@@ -2292,6 +2297,7 @@ static void testRule_UserProvidedPublicationVerification_hashMismatch_verifyErro
 	KSI_Integer *pubTime = NULL;
 	KSI_PublicationRecord *sigPubRec = NULL;
 	KSI_PublicationData *sigPubData = NULL;
+	KSI_DataHash *mockPubHash = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2308,14 +2314,23 @@ static void testRule_UserProvidedPublicationVerification_hashMismatch_verifyErro
 	res = KSI_PublicationRecord_getPublishedData(sigPubRec, &sigPubData);
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && sigPubData != NULL);
 
+	res = KSI_PublicationData_new(ctx, &verCtx.userData.userPublication);
+	CuAssert(tc, "Unable to create publication data", res == KSI_OK && verCtx.userData.userPublication != NULL);
+
 	res = KSI_PublicationData_getTime(sigPubData, &pubTime);
 	CuAssert(tc, "Unable to read signature publication time", res == KSI_OK && pubTime != NULL);
 
-	res = KSI_PublicationData_fromBase32(ctx, TEST_DATA_HASH_NOK, &verCtx.userData.userPublication);
-	CuAssert(tc, "Unable to create publication data", res == KSI_OK && verCtx.userData.userPublication != NULL);
+	/* Make a virtual copy of the time object. */
+	KSI_Integer_ref(pubTime);
 
 	res = KSI_PublicationData_setTime(verCtx.userData.userPublication, pubTime);
 	CuAssert(tc, "Unable to set publication time.", res == KSI_OK);
+
+	res = KSITest_DataHash_fromStr(ctx, TEST_MOCK_IMPRINT, &mockPubHash);
+	CuAssert(tc, "Unable to create mock hash from string", res == KSI_OK && mockPubHash != NULL);
+
+	res = KSI_PublicationData_setImprint(verCtx.userData.userPublication, mockPubHash);
+	CuAssert(tc, "Unable to set publication mock hash.", res == KSI_OK);
 
 	res = KSI_VerificationRule_UserProvidedPublicationVerification(&verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned", res == KSI_CRYPTO_FAILURE && verRes.resultCode == NA && verRes.errorCode == GEN_2);
@@ -2324,7 +2339,7 @@ static void testRule_UserProvidedPublicationVerification_hashMismatch_verifyErro
 	KSI_PublicationData_free(verCtx.userData.userPublication);
 
 #undef TEST_SIGNATURE_FILE
-#undef TEST_DATA_HASH_NOK
+#undef TEST_MOCK_IMPRINT
 }
 
 static void testRule_UserProvidedPublicationCreationTimeVerification(CuTest *tc) {
@@ -2442,7 +2457,6 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_verifyEr
 	VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes = {OK, GEN_1};
 	KSI_Integer *pubTime = NULL;
-	KSI_DataHash *pubHash = NULL;
 	KSI_DataHash *mockPubHash = NULL;
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_PublicationData *tempPubData = NULL;
@@ -2471,6 +2485,9 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_verifyEr
 
 	res = KSI_PublicationData_getTime(tempPubData, &pubTime);
 	CuAssert(tc, "Unable to read signature publication time", res == KSI_OK && pubTime != NULL);
+
+	/* Make a virtual copy of the time object. */
+	KSI_Integer_ref(pubTime);
 
 	res = KSI_PublicationData_setTime(verCtx.userData.userPublication, pubTime);
 	CuAssert(tc, "Unable to set publication time.", res == KSI_OK);
@@ -2574,6 +2591,9 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse_verifyEr
 
 	res = KSI_PublicationData_getImprint(tempPubData, &pubHash);
 	CuAssert(tc, "Unable to read signature publication hash", res == KSI_OK && pubHash != NULL);
+
+	/* Make a virtual copy of the hash object. */
+	KSI_DataHash_ref(pubHash);
 
 	res = KSI_PublicationData_setImprint(verCtx.userData.userPublication, pubHash);
 	CuAssert(tc, "Unable to set publication hash.", res == KSI_OK);
