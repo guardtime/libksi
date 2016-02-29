@@ -47,7 +47,7 @@ static void testRule_AggregationChainInputHashVerification_validRfc3161(CuTest *
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -70,7 +70,7 @@ static void testRule_AggregationChainInputHashVerification_invalidRfc3161_verify
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -93,7 +93,7 @@ static void testRule_AggregationChainInputHashVerification_missingRfc3161(CuTest
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -116,7 +116,7 @@ static void testRule_AggregationHashChainConsistency(CuTest *tc) {
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -142,7 +142,7 @@ static void testRule_AggregationHashChainConsistency_verifyErrorResult(CuTest *t
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -168,7 +168,7 @@ static void testRule_AggregationHashChainTimeConsistency(CuTest *tc) {
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -191,7 +191,7 @@ static void testRule_AggregationHashChainTimeConsistency_verifyErrorResult(CuTes
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -214,7 +214,7 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithCalHashChain(
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -240,7 +240,7 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithoutCalHashCha
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -269,7 +269,7 @@ static void testRule_CalendarHashChainInputHashVerification_verifyErrorResult(Cu
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -295,7 +295,7 @@ static void testRule_CalendarHashChainAggregationTime(CuTest *tc) {
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -318,7 +318,7 @@ static void testRule_CalendarHashChainAggregationTime_verifyErrorResult(CuTest *
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -341,7 +341,7 @@ static void testRule_CalendarHashChainRegistrationTime(CuTest *tc) {
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -364,7 +364,7 @@ static void testRule_CalendarHashChainRegistrationTime_verifyErrorResult(CuTest 
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -387,7 +387,7 @@ static void testRule_CalendarAuthenticationRecordAggregationHash(CuTest *tc) {
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -410,7 +410,7 @@ static void testRule_CalendarAuthenticationRecordAggregationHash_missingAutRec(C
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -433,7 +433,7 @@ static void testRule_CalendarAuthenticationRecordAggregationHash_verifyErrorResu
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -456,7 +456,7 @@ static void testRule_CalendarAuthenticationRecordAggregationTime(CuTest *tc) {
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -479,7 +479,7 @@ static void testRule_CalendarAuthenticationRecordAggregationTime_missingAutRec(C
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -502,7 +502,7 @@ static void testRule_CalendarAuthenticationRecordAggregationTime_verifyErrorResu
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -525,7 +525,7 @@ static void testRule_SignaturePublicationRecordPublicationHash(CuTest *tc) {
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -548,7 +548,7 @@ static void testRule_SignaturePublicationRecordPublicationHash_missingPubRec(CuT
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -571,7 +571,7 @@ static void testRule_SignaturePublicationRecordPublicationHash_verifyErrorResult
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -594,7 +594,7 @@ static void testRule_SignaturePublicationRecordPublicationTime(CuTest *tc) {
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -617,7 +617,7 @@ static void testRule_SignaturePublicationRecordPublicationTime_missingPubRec(CuT
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -640,7 +640,7 @@ static void testRule_SignaturePublicationRecordPublicationTime_verifyErrorResult
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -663,7 +663,7 @@ static void testRule_DocumentHashVerification(CuTest *tc) {
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -690,7 +690,7 @@ static void testRule_DocumentHashVerification_missingDocHash(CuTest *tc) {
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -715,7 +715,7 @@ static void testRule_DocumentHashVerification_verifyErrorResult(CuTest *tc) {
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -744,7 +744,7 @@ static void testRule_DocumentHashVerification_rfc3161(CuTest *tc) {
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -772,7 +772,7 @@ static void testRule_DocumentHashVerification_rfc3161_verifyErrorResult(CuTest *
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -801,7 +801,7 @@ static void testRule_SignatureDoesNotContainPublication(CuTest *tc) {
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -824,7 +824,7 @@ static void testRule_SignatureDoesNotContainPublication_verifyErrorResult(CuTest
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -848,7 +848,7 @@ static void testRule_ExtendedSignatureAggregationChainRightLinksMatches(CuTest *
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -878,7 +878,7 @@ static void testRule_ExtendedSignatureAggregationChainRightLinksMatches_linkCoun
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -908,7 +908,7 @@ static void testRule_ExtendedSignatureAggregationChainRightLinksMatches_rightLin
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -937,7 +937,7 @@ static void testRule_SignaturePublicationRecordExistence(CuTest *tc) {
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -960,7 +960,7 @@ static void testRule_SignaturePublicationRecordExistence_verifyErrorResult(CuTes
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -984,7 +984,7 @@ static void testRule_ExtendedSignatureCalendarChainRootHash(CuTest *tc) {
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1014,7 +1014,7 @@ static void testRule_ExtendedSignatureCalendarChainRootHash_verifyErrorResult(Cu
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1043,7 +1043,7 @@ static void testRule_CalendarHashChainDoesNotExist(CuTest *tc) {
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1069,7 +1069,7 @@ static void testRule_CalendarHashChainDoesNotExist_verifyErrorResult(CuTest *tc)
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1093,7 +1093,7 @@ static void testRule_ExtendedSignatureCalendarChainInputHash(CuTest *tc) {
 
 	int res;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1126,7 +1126,7 @@ static void testRule_ExtendedSignatureCalendarChainInputHash_nokAggrOutHash_veri
 
 	int res;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1161,7 +1161,7 @@ static void testRule_ExtendedSignatureCalendarChainInputHash_verifyErrorResult(C
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1194,7 +1194,7 @@ static void testRule_ExtendedSignatureCalendarChainAggregationTime(CuTest *tc) {
 
 	int res;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1224,7 +1224,7 @@ static void testRule_ExtendedSignatureCalendarChainAggregationTime_verifyErrorRe
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1253,7 +1253,7 @@ static void testRule_CalendarHashChainExistence(CuTest *tc) {
 
 	int res;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1276,7 +1276,7 @@ static void testRule_CalendarHashChainExistence_verifyErrorResult(CuTest *tc) {
 
 	int res;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1302,7 +1302,7 @@ static void testRule_CalendarAuthenticationRecordExistence(CuTest *tc) {
 
 	int res;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1325,7 +1325,7 @@ static void testRule_CalendarAuthenticationRecordExistence_verifyErrorResult(CuT
 
 	int res;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1350,7 +1350,7 @@ static void testRule_CertificateExistence(CuTest *tc) {
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	KSI_PKITruststore *pki = NULL;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
@@ -1407,7 +1407,7 @@ static void testRule_CertificateExistence_verifyErrorResult(CuTest *tc) {
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	KSI_PKITruststore *pki = NULL;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
@@ -1462,7 +1462,7 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification(CuTest *t
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	KSI_PKITruststore *pki = NULL;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
@@ -1517,7 +1517,7 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification_verifyErr
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	KSI_PKITruststore *pki = NULL;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
@@ -1571,7 +1571,7 @@ static void testRule_PublicationsFileContainsSignaturePublication(CuTest *tc) {
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
 		{NULL, NULL}
@@ -1611,7 +1611,7 @@ static void testRule_PublicationsFileContainsSignaturePublication_verifyErrorRes
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
 		{NULL, NULL}
@@ -1651,7 +1651,7 @@ static void testRule_PublicationsFileContainsPublication(CuTest *tc) {
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
 		{NULL, NULL}
@@ -1691,7 +1691,7 @@ static void testRule_PublicationsFileContainsPublication_verifyErrorResult(CuTes
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
 		{NULL, NULL}
@@ -1730,7 +1730,7 @@ static void testRule_ExtendingPermittedVerification(CuTest *tc) {
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	verCtx.ctx = ctx;
 	verCtx.userData.sig = NULL;
@@ -1752,7 +1752,7 @@ static void testRule_ExtendingPermittedVerification_verifyErrorResult(CuTest *tc
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	verCtx.ctx = ctx;
 	verCtx.userData.sig = NULL;
@@ -1776,7 +1776,7 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse(CuTe
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
 		{NULL, NULL}
@@ -1823,7 +1823,7 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse_veri
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
 		{NULL, NULL}
@@ -1869,7 +1869,7 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(CuTe
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
 		{NULL, NULL}
@@ -1916,7 +1916,7 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_veri
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
 		{NULL, NULL}
@@ -1962,7 +1962,7 @@ static void testRule_PublicationsFileExtendedSignatureInputHash(CuTest *tc) {
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
 		{NULL, NULL}
@@ -2012,7 +2012,7 @@ static void testRule_PublicationsFileExtendedSignatureInputHash_verifyErrorResul
 
 	int res = KSI_OK;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
 		{NULL, NULL}
@@ -2059,7 +2059,7 @@ static void testRule_UserProvidedPublicationExistence(CuTest *tc) {
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -2090,7 +2090,7 @@ static void testRule_UserProvidedPublicationExistence_pubDataMissing_verifyError
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2114,7 +2114,7 @@ static void testRule_UserProvidedPublicationExistence_pubHashMissing_verifyError
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_PublicationData *tempPubData = NULL;
 	KSI_Integer *pubTime = NULL;
@@ -2160,7 +2160,7 @@ static void testRule_UserProvidedPublicationExistence_pubTimeMissing_verifyError
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_PublicationData *tempPubData = NULL;
 	KSI_DataHash *pubHash = NULL;
@@ -2206,7 +2206,7 @@ static void testRule_UserProvidedPublicationVerification(CuTest *tc) {
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -2238,7 +2238,7 @@ static void testRule_UserProvidedPublicationVerification_timeMismatch_verifyErro
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	KSI_Integer *pubTime = NULL;
 	KSI_DataHash *pubHash = NULL;
 	KSI_PublicationRecord *tempRec = NULL;
@@ -2293,7 +2293,7 @@ static void testRule_UserProvidedPublicationVerification_hashMismatch_verifyErro
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	KSI_Integer *pubTime = NULL;
 	KSI_PublicationRecord *sigPubRec = NULL;
 	KSI_PublicationData *sigPubData = NULL;
@@ -2347,7 +2347,7 @@ static void testRule_UserProvidedPublicationCreationTimeVerification(CuTest *tc)
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -2379,7 +2379,7 @@ static void testRule_UserProvidedPublicationCreationTimeVerification_verifyError
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	KSI_Integer *mockTime = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -2416,7 +2416,7 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse(CuTest *
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -2455,7 +2455,7 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_verifyEr
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	KSI_Integer *pubTime = NULL;
 	KSI_DataHash *mockPubHash = NULL;
 	KSI_PublicationRecord *tempRec = NULL;
@@ -2516,7 +2516,7 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse(CuTest *
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -2555,7 +2555,7 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse_verifyEr
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	KSI_Integer *mockPubTime = NULL;
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_PublicationData *tempPubData = NULL;
@@ -2616,7 +2616,7 @@ static void testRule_UserProvidedPublicationExtendedSignatureInputHash(CuTest *t
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -2658,7 +2658,7 @@ static void testRule_UserProvidedPublicationExtendedSignatureInputHash_verifyErr
 
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes = {VER_RES_OK, VER_ERR_GEN_1};
+	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 
 	KSI_ERR_clearErrors(ctx);
