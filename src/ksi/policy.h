@@ -31,11 +31,11 @@ extern "C" {
 	 */
 	typedef enum VerificationResultCode_en {
 		/** Verification succeeded, which means there's a way to prove the correctness of the signature. */
-		OK,
+		VER_RES_OK,
 		/** Verification not possible, which means there is not enough data to prove or disprove the correctness of the signature. */
-		NA,
+		VER_RES_NA,
 		/** Verification failed, which means the signature is definitely invalid or the document does not match with the signature. */
-		FAIL
+		VER_RES_FAIL
 	} VerificationResultCode;
 
 	/**
@@ -43,45 +43,47 @@ extern "C" {
 	 */
 	typedef enum VerificationErrorCode_en {
 		/** Wrong document. */
-		GEN_1,
+		VER_ERR_GEN_1,
 		/** Verification inconclusive. */
-		GEN_2,
+		VER_ERR_GEN_2,
 		/** Inconsistent aggregation hash chains. */
-		INT_1,
+		VER_ERR_INT_1,
 		/** Inconsistent aggregation hash chain aggregation times. */
-		INT_2,
+		VER_ERR_INT_2,
 		/** Calendar hash chain input hash mismatch. */
-		INT_3,
+		VER_ERR_INT_3,
 		/** Calendar hash chain aggregation time mismatch. */
-		INT_4,
+		VER_ERR_INT_4,
 		/** Calendar hash chain shape inconsistent with aggregation time. */
-		INT_5,
+		VER_ERR_INT_5,
 		/** Calendar hash chain time inconsistent with calendar auth record time. */
-		INT_6,
+		VER_ERR_INT_6,
 		/** Calendar hash chain time inconsistent with publication time. */
-		INT_7,
+		VER_ERR_INT_7,
 		/** Calendar hash chain root has inconsistent with calendar auth record time. */
-		INT_8,
+		VER_ERR_INT_8,
 		/** Calendar hash chain root has inconsistent with publication time. */
-		INT_9,
+		VER_ERR_INT_9,
 		/** Extender response calendar root hash mismatch. */
-		PUB_1,
+		VER_ERR_PUB_1,
 		/** Extender response inconsistent. */
-		PUB_2,
+		VER_ERR_PUB_2,
 		/** Extender response input hash mismatch. */
-		PUB_3,
+		VER_ERR_PUB_3,
 		/** Certificate not found. */
-		KEY_1,
+		VER_ERR_KEY_1,
 		/** PKI signature not verified with certificate. */
-		KEY_2,
+		VER_ERR_KEY_2,
 		/** Calendar root hash mismatch. */
-		CAL_1,
+		VER_ERR_CAL_1,
 		/** Aggregation hash chain root hash and calendar hash chain input hash mismatch. */
-		CAL_2,
+		VER_ERR_CAL_2,
 		/** Aggregation time mismatch. */
-		CAL_3,
+		VER_ERR_CAL_3,
 		/** Aggregation hash chain right links are inconsistent. */
-		CAL_4
+		VER_ERR_CAL_4,
+		/** No error. */
+		VER_ERR_NONE
 	} VerificationErrorCode;
 
 	struct VerificationResult_st {

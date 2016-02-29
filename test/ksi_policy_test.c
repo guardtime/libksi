@@ -129,34 +129,34 @@ static int DUMMY_VERIFIER(resValue, resultValue, errorValue)(VerificationContext
 	return resValue;\
 }
 
-IMPLEMENT_DUMMY_VERIFIER(KSI_OK, OK, PUB_1);
-IMPLEMENT_DUMMY_VERIFIER(KSI_OK, OK, PUB_2);
-IMPLEMENT_DUMMY_VERIFIER(KSI_OK, FAIL, INT_1);
-IMPLEMENT_DUMMY_VERIFIER(KSI_OK, NA, GEN_1);
-IMPLEMENT_DUMMY_VERIFIER(KSI_INVALID_ARGUMENT, OK, CAL_1);
+IMPLEMENT_DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1);
+IMPLEMENT_DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_2);
+IMPLEMENT_DUMMY_VERIFIER(KSI_OK, VER_RES_FAIL, VER_ERR_INT_1);
+IMPLEMENT_DUMMY_VERIFIER(KSI_OK, VER_RES_NA, VER_ERR_GEN_1);
+IMPLEMENT_DUMMY_VERIFIER(KSI_INVALID_ARGUMENT, VER_RES_OK, VER_ERR_CAL_1);
 
 static const Rule singleRule1[] = {
-	{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
+	{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
 	{RULE_TYPE_BASIC, NULL}
 };
 
 static const Rule singleRule2[] = {
-	{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_2)},
+	{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_2)},
 	{RULE_TYPE_BASIC, NULL}
 };
 
 static const Rule singleRule3[] = {
-	{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, FAIL, INT_1)},
+	{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_FAIL, VER_ERR_INT_1)},
 	{RULE_TYPE_BASIC, NULL}
 };
 
 static const Rule singleRule4[] = {
-	{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, NA, GEN_1)},
+	{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_NA, VER_ERR_GEN_1)},
 	{RULE_TYPE_BASIC, NULL}
 };
 
 static const Rule singleRule5[] = {
-	{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_INVALID_ARGUMENT, OK, CAL_1)},
+	{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_INVALID_ARGUMENT, VER_RES_OK, VER_ERR_CAL_1)},
 	{RULE_TYPE_BASIC, NULL}
 };
 
@@ -168,11 +168,11 @@ static void TestSingleRulePolicy(CuTest* tc) {
 	KSI_PolicyVerificationResult *result = NULL;
 
 	TestRule rules[] = {
-		{singleRule1, KSI_OK,				OK,		PUB_1},
-		{singleRule2, KSI_OK,				OK,		PUB_2},
-		{singleRule3, KSI_OK,				FAIL,	INT_1},
-		{singleRule4, KSI_OK,				NA,		GEN_1},
-		{singleRule5, KSI_INVALID_ARGUMENT,	NA,		GEN_2},
+		{singleRule1, KSI_OK,				VER_RES_OK,		VER_ERR_PUB_1},
+		{singleRule2, KSI_OK,				VER_RES_OK,		VER_ERR_PUB_2},
+		{singleRule3, KSI_OK,				VER_RES_FAIL,	VER_ERR_INT_1},
+		{singleRule4, KSI_OK,				VER_RES_NA,		VER_ERR_GEN_1},
+		{singleRule5, KSI_INVALID_ARGUMENT,	VER_RES_NA,		VER_ERR_GEN_2},
 	};
 
 	KSI_ERR_clearErrors(ctx);
@@ -201,46 +201,46 @@ static void TestBasicRulesPolicy(CuTest* tc) {
 	KSI_PolicyVerificationResult *result = NULL;
 
 	static const Rule basicRules1[] = {
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_2)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_2)},
 		{RULE_TYPE_BASIC, NULL}
 	};
 
 	static const Rule basicRules2[] = {
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, FAIL, INT_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_2)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_FAIL, VER_ERR_INT_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_2)},
 		{RULE_TYPE_BASIC, NULL}
 	};
 
 	static const Rule basicRules3[] = {
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, NA, GEN_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_2)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_NA, VER_ERR_GEN_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_2)},
 		{RULE_TYPE_BASIC, NULL}
 	};
 
 	static const Rule basicRules4[] = {
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_INVALID_ARGUMENT, OK, CAL_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, OK, PUB_2)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_INVALID_ARGUMENT, VER_RES_OK, VER_ERR_CAL_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_2)},
 		{RULE_TYPE_BASIC, NULL}
 	};
 
 	TestRule rules[] = {
-		{basicRules1, KSI_OK,				OK,		PUB_2},
-		{basicRules2, KSI_OK,				FAIL,	INT_1},
-		{basicRules3, KSI_OK,				NA,		GEN_1},
-		{basicRules4, KSI_INVALID_ARGUMENT,	NA,		GEN_2},
+		{basicRules1, KSI_OK,				VER_RES_OK,		VER_ERR_PUB_2},
+		{basicRules2, KSI_OK,				VER_RES_FAIL,	VER_ERR_INT_1},
+		{basicRules3, KSI_OK,				VER_RES_NA,		VER_ERR_GEN_1},
+		{basicRules4, KSI_INVALID_ARGUMENT,	VER_RES_NA,		VER_ERR_GEN_2},
 	};
 
 	KSI_ERR_clearErrors(ctx);
@@ -341,18 +341,18 @@ static void TestCompositeRulesPolicy(CuTest* tc) {
 	};
 
 	TestRule rules[] = {
-		{compositeRule1,	KSI_OK,					OK,		PUB_2},
-		{compositeRule2,	KSI_OK,					OK,		PUB_1},
-		{compositeRule3,	KSI_OK,					OK,		PUB_2},
-		{compositeRule4,	KSI_OK,					OK,		PUB_1},
-		{compositeRule5,	KSI_OK,					FAIL,	INT_1},
-		{compositeRule6,	KSI_OK,					NA,		GEN_1},
-		{compositeRule7,	KSI_OK,					OK,		PUB_1},
-		{compositeRule8,	KSI_OK,					OK,		PUB_1},
-		{compositeRule9,	KSI_INVALID_ARGUMENT,	NA,		GEN_2},
-		{compositeRule10,	KSI_INVALID_ARGUMENT,	NA,		GEN_2},
-		{compositeRule11,	KSI_OK,					OK,		PUB_1},
-		{compositeRule12,	KSI_OK,					OK,		PUB_1}
+		{compositeRule1,	KSI_OK,					VER_RES_OK,		VER_ERR_PUB_2},
+		{compositeRule2,	KSI_OK,					VER_RES_OK,		VER_ERR_PUB_1},
+		{compositeRule3,	KSI_OK,					VER_RES_OK,		VER_ERR_PUB_2},
+		{compositeRule4,	KSI_OK,					VER_RES_OK,		VER_ERR_PUB_1},
+		{compositeRule5,	KSI_OK,					VER_RES_FAIL,	VER_ERR_INT_1},
+		{compositeRule6,	KSI_OK,					VER_RES_NA,		VER_ERR_GEN_1},
+		{compositeRule7,	KSI_OK,					VER_RES_OK,		VER_ERR_PUB_1},
+		{compositeRule8,	KSI_OK,					VER_RES_OK,		VER_ERR_PUB_1},
+		{compositeRule9,	KSI_INVALID_ARGUMENT,	VER_RES_NA,		VER_ERR_GEN_2},
+		{compositeRule10,	KSI_INVALID_ARGUMENT,	VER_RES_NA,		VER_ERR_GEN_2},
+		{compositeRule11,	KSI_OK,					VER_RES_OK,		VER_ERR_PUB_1},
+		{compositeRule12,	KSI_OK,					VER_RES_OK,		VER_ERR_PUB_1}
 	};
 
 	KSI_ERR_clearErrors(ctx);
@@ -365,7 +365,6 @@ static void TestCompositeRulesPolicy(CuTest* tc) {
 		KSI_ERR_clearErrors(ctx);
 		policy.rules = rules[i].rule;
 		res = KSI_Policy_verify(&policy, context, &result);
-		KSI_LOG_debug(ctx, "Test %i res %i", i, res);
 		CuAssert(tc, "Policy verification failed", res == rules[i].res);
 		CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == rules[i].result && result->finalResult.errorCode == rules[i].error);
 		KSI_PolicyVerificationResult_free(result);
@@ -374,11 +373,43 @@ static void TestCompositeRulesPolicy(CuTest* tc) {
 	KSI_VerificationContext_free(context);
 }
 
+static void TestCalendarBasedPolicy(CuTest* tc) {
+	int res;
+	KSI_Policy *policy = NULL;
+	VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-with-rfc3161-record-ok.ksig"
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_createCalendarBased(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	KSI_ERR_clearErrors(ctx);
+	KSI_LOG_debug(ctx, "Testing calendar based policy verification");
+	res = KSI_Policy_verify(policy, context, &result);
+	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_VerificationContext_free(context);
+	KSI_Policy_free(policy);
+#undef TEST_SIGNATURE_FILE
+}
+
 CuSuite* KSITest_Policy_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 	SUITE_ADD_TEST(suite, TestInvalidParams);
 	SUITE_ADD_TEST(suite, TestSingleRulePolicy);
 	SUITE_ADD_TEST(suite, TestBasicRulesPolicy);
 	SUITE_ADD_TEST(suite, TestCompositeRulesPolicy);
+	SUITE_ADD_TEST(suite, TestCalendarBasedPolicy);
 	return suite;
 }

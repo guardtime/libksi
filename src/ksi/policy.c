@@ -35,6 +35,7 @@ static int Rule_verify(const Rule *rule, VerificationContext *context, KSI_RuleR
 		goto cleanup;
 	}
 
+	KSI_LOG_debug(context->ctx, "Rule_verify");
 	currentRule = rule;
 	while (currentRule->rule) {
 		switch (currentRule->type) {
@@ -53,11 +54,11 @@ static int Rule_verify(const Rule *rule, VerificationContext *context, KSI_RuleR
 		}
 
 		if (res != KSI_OK) {
-			ruleResult.resultCode = NA;
-			ruleResult.errorCode = GEN_2;
+			ruleResult.resultCode = VER_RES_NA;
+			ruleResult.errorCode = VER_ERR_GEN_2;
 		}
 
-		if (ruleResult.resultCode == OK) {
+		if (ruleResult.resultCode == VER_RES_OK) {
 			if (currentRule->type == RULE_TYPE_COMPOSITE_OR) {
 				/* Do not handle the next rule(s) because the first OK result is enough. */
 				break;
@@ -341,8 +342,8 @@ static int PolicyVerificationResult_create(KSI_PolicyVerificationResult **result
 		goto cleanup;
 	}
 
-	tmp->finalResult.resultCode = NA;
-	tmp->finalResult.errorCode = GEN_2;
+	tmp->finalResult.resultCode = VER_RES_NA;
+	tmp->finalResult.errorCode = VER_ERR_GEN_2;
 	*result = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -385,6 +386,7 @@ static int Policy_verifySignature(KSI_Policy *policy, VerificationContext *conte
 		goto cleanup;
 	}
 
+	KSI_LOG_debug(context->ctx, "Policy_verifySignature");
 	res = Rule_verify(policy->rules, context, tmp);
 	if (res != KSI_OK) goto cleanup;
 
@@ -432,11 +434,12 @@ int KSI_Policy_verify(KSI_Policy *policy, VerificationContext *context, KSI_Poli
 		goto cleanup;
 	}
 
-	tmp->finalResult.resultCode = NA;
-	tmp->finalResult.errorCode = GEN_2;
+	tmp->finalResult.resultCode = VER_RES_NA;
+	tmp->finalResult.errorCode = VER_ERR_GEN_2;
 	*result = tmp;
 	tmp = NULL;
 
+	KSI_LOG_debug(ctx, "KSI_Policy_verify");
 	currentPolicy = policy;
 	while (currentPolicy != NULL) {
 		res = Policy_verifySignature(currentPolicy, context, &tmp_result);
@@ -446,7 +449,7 @@ int KSI_Policy_verify(KSI_Policy *policy, VerificationContext *context, KSI_Poli
 		res = PolicyVerificationResult_addResult(*result, tmp_result);
 		if (res != KSI_OK) goto cleanup;
 
-		if (tmp_result->resultCode != OK) {
+		if (tmp_result->resultCode != VER_RES_OK) {
 			currentPolicy = currentPolicy->fallbackPolicy;
 		}
 		else {
@@ -491,6 +494,7 @@ int KSI_VerificationContext_create(KSI_CTX *ctx, VerificationContext **context) 
 
 	tmp->ctx = ctx;
 	tmp->userData.sig = NULL;
+	tmp->userData.docAggrLevel = 0;
 	tmp->tempData.extendedSig = NULL;
 	tmp->userData.documentHash = NULL;
 	tmp->tempData.aggregationOutputHash = NULL;
