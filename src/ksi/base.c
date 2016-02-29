@@ -589,64 +589,6 @@ cleanup:
 	return res;
 }
 
-int KSI_extendSignatureToPublication(KSI_CTX *ctx, KSI_Signature *sig, char *pubString, KSI_Signature **extended) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_PublicationsFile *pubFile = NULL;
-	KSI_Integer *signingTime = NULL;
-	KSI_PublicationRecord *pubRec = NULL;
-	KSI_Signature *extSig = NULL;
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || sig == NULL || pubString == NULL || extended == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_receivePublicationsFile(ctx, &pubFile);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx,res, NULL);
-		goto cleanup;
-	}
-
-
-	res = KSI_Signature_getSigningTime(sig, &signingTime);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx,res, NULL);
-		goto cleanup;
-	}
-
-
-	res = KSI_PublicationsFile_getNearestPublication(pubFile, signingTime, &pubRec);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx,res, NULL);
-		goto cleanup;
-	}
-
-
-	if (pubRec == NULL) {
-		KSI_pushError(ctx, res = KSI_EXTEND_NO_SUITABLE_PUBLICATION, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_Signature_extend(sig, ctx, pubRec, &extSig);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx,res, NULL);
-		goto cleanup;
-	}
-
-
-	*extended = extSig;
-	extSig = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_Signature_free(extSig);
-
-	return res;
-}
-
 int KSI_CTX_setLogLevel(KSI_CTX *ctx, int level) {
 	int res = KSI_UNKNOWN_ERROR;
 
