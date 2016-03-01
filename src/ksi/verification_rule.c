@@ -515,8 +515,8 @@ cleanup:
 
 static int getAggrHashChainOutputHash(KSI_CTX *ctx, KSI_Signature *sig, int level, KSI_DataHash **outputHash) {
 	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *hsh = NULL;
 	size_t i;
-	KSI_DataHash *tmp = NULL;
 
 	if (ctx == NULL || sig == NULL || outputHash == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -532,6 +532,7 @@ static int getAggrHashChainOutputHash(KSI_CTX *ctx, KSI_Signature *sig, int leve
 	/* Aggregate all the aggregation chains. */
 	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
 		const KSI_AggregationHashChain* aggregationChain = NULL;
+		KSI_DataHash *tmp = NULL;
 
 		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, (KSI_AggregationHashChain **)&aggregationChain);
 		if (res != KSI_OK) {
@@ -547,14 +548,21 @@ static int getAggrHashChainOutputHash(KSI_CTX *ctx, KSI_Signature *sig, int leve
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
 		}
+
+		if (hsh != NULL) {
+			KSI_DataHash_free(hsh);
+		}
+		hsh = tmp;
 	}
 
-	*outputHash = tmp;
-	tmp = NULL;
+	*outputHash = hsh;
+	hsh = NULL;
+
+	res = KSI_OK;
 
 cleanup:
 
-	KSI_DataHash_free(tmp);
+	KSI_DataHash_free(hsh);
 
 	return res;
 }
