@@ -1,5 +1,6 @@
 Version 3.8
 
+* IMPROVEMENT: KSI_LIST may contain NULL values.
 * BUGFIX: Certificate and publication records are not mandatory for publications file.
 * IMPROVEMENT: Integration tests configuration file error handling improved.
 * IMPROVEMENT: Handling for reading server responses from tlv files.
