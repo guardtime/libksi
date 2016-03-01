@@ -27,13 +27,19 @@
 
 extern KSI_CTX *ctx;
 
-#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+//#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+//#define TEST_EXTEND_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_USER "anon"
+#define TEST_PASS "anon"
+
 
 static void preTest(void) {
 	ctx->netProvider->requestCount = 0;
 }
 
 static void testLoadSignatureFromFile(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+
 	int res;
 	KSI_Signature *sig = NULL;
 
@@ -43,9 +49,14 @@ static void testLoadSignatureFromFile(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testVerifySignatureNew(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+
 	int res;
 	KSI_Signature *sig = NULL;
 
@@ -54,23 +65,27 @@ static void testVerifySignatureNew(CuTest *tc) {
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
-	/* Set the extend response. */
-	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"));
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Unable to verify signature online.", res == KSI_OK);
 
 	KSI_Signature_free(sig);
 
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
 }
 
 static void testVerifySignatureWithPublication(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+
 	int res;
 	KSI_Signature *sig = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-extended.ksig"), &sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_verifySignature(ctx, sig);
@@ -79,16 +94,19 @@ static void testVerifySignatureWithPublication(CuTest *tc) {
 
 	KSI_Signature_free(sig);
 
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testVerifyLegacySignatureAndDoc(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-legacy-sig-2014-06.gtts.ksig"
+
 	int res;
 	char doc[] = "This is a test data file.\x0d\x0a";
 	KSI_Signature *sig = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-legacy-sig-2014-06.gtts.ksig"), &sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_verifyDocument(sig, ctx, doc, strlen(doc));
@@ -98,16 +116,20 @@ static void testVerifyLegacySignatureAndDoc(CuTest *tc) {
 	CuAssert(tc, "Verification did not fail with expected error.", res == KSI_VERIFICATION_FAILURE);
 
 	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testVerifyLegacyExtendedSignatureAndDoc(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-legacy-sig-2014-06-extended.gtts.ksig"
+
 	int res;
 	char doc[] = "This is a test data file.\x0d\x0a";
 	KSI_Signature *sig = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-legacy-sig-2014-06-extended.gtts.ksig"), &sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_verifyDocument(sig, ctx, doc, strlen(doc));
@@ -117,9 +139,13 @@ static void testVerifyLegacyExtendedSignatureAndDoc(CuTest *tc) {
 	CuAssert(tc, "Verification did not fail with expected error.", res == KSI_VERIFICATION_FAILURE);
 
 	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testExtractInputHashLegacySignature(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-legacy-sig-2014-06.gtts.ksig"
+
 	int res;
 	char doc[] = "This is a test data file.\x0d\x0a";
 	KSI_Signature *sig = NULL;
@@ -139,7 +165,7 @@ static void testExtractInputHashLegacySignature(CuTest *tc) {
 	CuAssert(tc, "Unable to hash document.", res == KSI_OK && doc_hash != NULL);
 
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-legacy-sig-2014-06.gtts.ksig"), &sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_getDocumentHash(sig, &sig_input_hash);
@@ -149,54 +175,70 @@ static void testExtractInputHashLegacySignature(CuTest *tc) {
 	KSI_Signature_free(sig);
 	KSI_DataHasher_free(hsr);
 	KSI_DataHash_free(doc_hash);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testRFC3161WrongChainIndex(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-legacy-sig-2015-01-chainIndex.gtts"
+
 	int res;
 	KSI_Signature *sig = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/nok-legacy-sig-2015-01-chainIndex.gtts"), &sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_verify(sig, ctx);
 	CuAssert(tc, "Failed to verify valid document", res == KSI_OK);
 
 	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testRFC3161WrongAggreTime(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-legacy-sig-2015-01-aggretime.gtts"
+
 	int res;
 	KSI_Signature *sig = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/nok-legacy-sig-2015-01-aggretime.gtts"), &sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_verify(sig, ctx);
 	CuAssert(tc, "Failed to verify valid document", res == KSI_VERIFICATION_FAILURE);
 
 	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testRFC3161WrongInputHash(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-legacy-sig-2015-01-inHash.gtts"
+
 	int res;
 	KSI_Signature *sig = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/nok-legacy-sig-2015-01-inHash.gtts"), &sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_verify(sig, ctx);
 	CuAssert(tc, "Failed to verify valid document", res == KSI_VERIFICATION_FAILURE);
 
 	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testVerifySignatureWithUserPublication(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+
 	int res;
 	KSI_Signature *sig = NULL;
 	const char pubStr[] = "AAAAAA-CTOQBY-AAMJYH-XZPM6T-UO6U6V-2WJMHQ-EJMVXR-JEAGID-2OY7P5-XFFKYI-QIF2LG-YOV7SO";
@@ -212,7 +254,7 @@ static void testVerifySignatureWithUserPublication(CuTest *tc) {
 	res = KSI_PublicationData_fromBase32(ctx, pubStr_bad, &pubData_bad);
 	CuAssert(tc, "Unable to parse publication string.", res == KSI_OK && pubData_bad != NULL);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-extended.ksig"), &sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_verifyWithPublication(sig, ctx, pubData);
@@ -225,29 +267,38 @@ static void testVerifySignatureWithUserPublication(CuTest *tc) {
 	KSI_PublicationData_free(pubData);
 	KSI_PublicationData_free(pubData_bad);
 	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testVerifySignatureExtendedToHead(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-head.ksig"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-head-extend_response.tlv"
 	int res;
 	KSI_Signature *sig = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-head.ksig"), &sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Signature should have either a calendar auth record or publication", res == KSI_OK && sig != NULL);
 
 	/* Set the extend response. */
-	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-head-extend_response.tlv"));
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 	res = KSI_Signature_verifyOnline(sig, ctx);
 	CuAssert(tc, "Signature should verify", res == KSI_OK);
 
 	KSI_Signature_free(sig);
 
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
 }
 
 
 static void testSignatureSigningTime(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+
 	int res;
 	KSI_Signature *sig = NULL;
 	KSI_Integer *sigTime = NULL;
@@ -266,9 +317,12 @@ static void testSignatureSigningTime(CuTest *tc) {
 	CuAssert(tc, "Unexpected signature signing time.", utc == 1398866256);
 
 	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testSignatureSigningTimeNoCalendarChain(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-only_aggr.ksig"
 	int res;
 	KSI_Signature *sig = NULL;
 	KSI_Integer *sigTime = NULL;
@@ -276,7 +330,7 @@ static void testSignatureSigningTimeNoCalendarChain(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-only_aggr.ksig"), &sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to read signature containing only aggregation chains from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_getSigningTime(sig, &sigTime);
@@ -287,10 +341,12 @@ static void testSignatureSigningTimeNoCalendarChain(CuTest *tc) {
 	CuAssert(tc, "Unexpected signature signing time.", utc == 1398866256);
 
 	KSI_Signature_free(sig);
+#undef TEST_SIGNATURE_FILE
 }
 
-
 static void testSerializeSignature(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+
 	int res;
 
 	unsigned char in[0x1ffff];
@@ -323,9 +379,13 @@ static void testSerializeSignature(CuTest *tc) {
 
 	KSI_free(out);
 	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testVerifyDocument(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+
 	int res;
 
 	unsigned char in[0x1ffff];
@@ -356,9 +416,13 @@ static void testVerifyDocument(CuTest *tc) {
 	CuAssert(tc, "Verification did not fail with expected error.", res == KSI_VERIFICATION_FAILURE);
 
 	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testVerifyDocumentHash(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+
 	int res;
 
 	unsigned char in[0x1ffff];
@@ -414,15 +478,19 @@ static void testVerifyDocumentHash(CuTest *tc) {
 
 
 	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testSignerIdentity(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-08-01.1.ksig"
+
 	int res;
 	const char id_expected[] = "GT :: testA :: 36-test";
 	KSI_Signature *sig = NULL;
 	char *id_actual = NULL;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-sig-2014-08-01.1.ksig"), &sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to load signature", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_getSignerIdentity(sig, &id_actual);
@@ -433,21 +501,28 @@ static void testSignerIdentity(CuTest *tc) {
 	KSI_Signature_free(sig);
 	KSI_free(id_actual);
 
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testSignatureWith2Anchors(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-two-anchors.tlv"
+
 	KSI_Signature *sig = NULL;
 	int res;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/nok-sig-two-anchors.tlv"), &sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Reading a signature with more than one trust anchor should result in format error.", res == KSI_INVALID_FORMAT && sig == NULL);
 
 	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 static void testVerifyCalendarChainAlgoChange(CuTest *tc) {
-	int res;
+#define TEST_SIGNATURE_FILE "resource/tlv/cal_algo_switch.ksig"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/cal_algo_switch-extend_resposne.tlv"
 
+	int res;
 	unsigned char in[0x1ffff];
 	size_t in_len = 0;
 
@@ -456,7 +531,7 @@ static void testVerifyCalendarChainAlgoChange(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	f = fopen(getFullResourcePath("resource/tlv/cal_algo_switch.ksig"), "rb");
+	f = fopen(getFullResourcePath(TEST_SIGNATURE_FILE), "rb");
 	CuAssert(tc, "Unable to open signature file.", f != NULL);
 
 	in_len = (unsigned)fread(in, 1, sizeof(in), f);
@@ -467,12 +542,16 @@ static void testVerifyCalendarChainAlgoChange(CuTest *tc) {
 	res = KSI_Signature_parse(ctx, in, in_len, &sig);
 	CuAssert(tc, "Failed to parse signature", res == KSI_OK && sig != NULL);
 
-	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/cal_algo_switch-extend_resposne.tlv"));
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 	res = KSI_Signature_verifyOnline(sig, ctx);
 	CuAssert(tc, "Failed to verify valid document", res == KSI_OK);
 
 	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
 }
 
 
