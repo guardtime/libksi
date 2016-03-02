@@ -472,8 +472,7 @@ int KSI_Policy_verify(KSI_Policy *policy, VerificationContext *context, KSI_Poli
 
 		if (tmp_result->resultCode != VER_RES_OK) {
 			currentPolicy = currentPolicy->fallbackPolicy;
-		}
-		else {
+		} else {
 			currentPolicy = NULL;
 		}
 	}
