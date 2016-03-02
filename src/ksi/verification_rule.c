@@ -1401,14 +1401,11 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(VerificationCon
 
 	KSI_LOG_info(ctx, "Verify extended signature calendar hash chain input hash");
 
-	if (sig->calendarChain == NULL) {
-		KSI_LOG_info(ctx, "Signature calendar hash chain is missing");
-		VERIFICATION_RESULT(VER_RES_NA, VER_ERR_GEN_2);
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
+	/* If the calendar chain is available, then take the publication from calendar chain. */
+	/* Otherwice the extender will extend to head (pubTime == NULL) */
+	if (sig->calendarChain != NULL) {
+		CATCH_KSI_ERR(KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &pubTime));
 	}
-
-	CATCH_KSI_ERR(KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &pubTime));
 
 	CATCH_KSI_ERR(getExtendedCalendarHashChain(info, pubTime, &extCalHashChain));
 
@@ -1457,14 +1454,11 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(Verificat
 
 	KSI_LOG_info(ctx, "Verify extended signature calendar hash chain aggregation time");
 
-	if (sig->calendarChain == NULL) {
-		KSI_LOG_info(ctx, "Signature calendar hash chain is missing");
-		VERIFICATION_RESULT(VER_RES_NA, VER_ERR_GEN_2);
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
+	/* If the calendar chain is available, then take the publication from calendar chain. */
+	/* Otherwice the extender will extend to head (pubTime == NULL) */
+	if (sig->calendarChain != NULL) {
+		CATCH_KSI_ERR(KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &pubTime));
 	}
-
-	CATCH_KSI_ERR(KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &pubTime));
 
 	CATCH_KSI_ERR(getExtendedCalendarHashChain(info, pubTime, &extCalHashChain));
 
