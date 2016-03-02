@@ -514,6 +514,7 @@ int KSI_VerificationContext_create(KSI_CTX *ctx, VerificationContext **context) 
 
 	tmp->ctx = ctx;
 	tmp->userData.sig = NULL;
+	tmp->userData.extendingAllowed = false;
 	tmp->userData.docAggrLevel = 0;
 	tmp->tempData.extendedSig = NULL;
 	tmp->userData.documentHash = NULL;

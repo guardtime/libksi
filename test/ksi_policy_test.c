@@ -851,12 +851,13 @@ static void TestKeyBasedPolicy_OK(CuTest* tc) {
 #undef TEST_PUBLICATIONS_FILE
 }
 
-static void TestPublicationsFileBasedPolicy(CuTest* tc) {
+static void TestPublicationsFileBasedPolicy_OK_WithPublicationRecord(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
-#define TEST_SIGNATURE_FILE "resource/tlv/signature-with-rfc3161-record-ok.ksig"
+#define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
 	KSI_LOG_debug(ctx, __FUNCTION__);
 
@@ -872,15 +873,242 @@ static void TestPublicationsFileBasedPolicy(CuTest* tc) {
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
 
+	res = KSI_CTX_setPublicationsFile(ctx, NULL);
+	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context->tempData.publicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context->tempData.publicationsFile != NULL);
+
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_verify(policy, context, &result);
 	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_OK && result->finalResult.errorCode == VER_ERR_NONE);
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
 	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
+#undef TEST_PUBLICATIONS_FILE
+}
+
+static void TestPublicationsFileBasedPolicy_NA_WithPublicationRecord(CuTest* tc) {
+	int res;
+	KSI_Policy *policy = NULL;
+	VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+#define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.15042014.tlv"
+
+	KSI_LOG_debug(ctx, __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_createPublicationsFileBased(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_CTX_setPublicationsFile(ctx, NULL);
+	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context->tempData.publicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context->tempData.publicationsFile != NULL);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_verify(policy, context, &result);
+	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_NA && result->finalResult.errorCode == VER_ERR_GEN_2);
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_VerificationContext_free(context);
+	KSI_Policy_free(policy);
+#undef TEST_SIGNATURE_FILE
+#undef TEST_PUBLICATIONS_FILE
+}
+
+static void TestPublicationsFileBasedPolicy_NA_WithoutSuitablePublication(CuTest* tc) {
+	int res;
+	KSI_Policy *policy = NULL;
+	VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.15042014.tlv"
+
+	KSI_LOG_debug(ctx, __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_createPublicationsFileBased(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_CTX_setPublicationsFile(ctx, NULL);
+	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context->tempData.publicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context->tempData.publicationsFile != NULL);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_verify(policy, context, &result);
+	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_NA && result->finalResult.errorCode == VER_ERR_GEN_2);
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_VerificationContext_free(context);
+	KSI_Policy_free(policy);
+#undef TEST_SIGNATURE_FILE
+#undef TEST_PUBLICATIONS_FILE
+}
+
+static void TestPublicationsFileBasedPolicy_NA_WithSuitablePublication(CuTest* tc) {
+	int res;
+	KSI_Policy *policy = NULL;
+	VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
+
+	KSI_LOG_debug(ctx, __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_createPublicationsFileBased(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_CTX_setPublicationsFile(ctx, NULL);
+	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context->tempData.publicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context->tempData.publicationsFile != NULL);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_verify(policy, context, &result);
+	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_NA && result->finalResult.errorCode == VER_ERR_GEN_2);
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_VerificationContext_free(context);
+	KSI_Policy_free(policy);
+#undef TEST_SIGNATURE_FILE
+#undef TEST_PUBLICATIONS_FILE
+}
+
+static void TestPublicationsFileBasedPolicy_OK_WithSuitablePublication(CuTest* tc) {
+	int res;
+	KSI_Policy *policy = NULL;
+	VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
+#define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
+
+	KSI_LOG_debug(ctx, __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_createPublicationsFileBased(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &context->tempData.extendedSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->tempData.extendedSig != NULL);
+
+	res = KSI_CTX_setPublicationsFile(ctx, NULL);
+	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context->tempData.publicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context->tempData.publicationsFile != NULL);
+
+	context->userData.extendingAllowed = true;
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_verify(policy, context, &result);
+	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_OK && result->finalResult.errorCode == VER_ERR_NONE);
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_VerificationContext_free(context);
+	KSI_Policy_free(policy);
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_SIGNATURE_FILE
+#undef TEST_PUBLICATIONS_FILE
+}
+
+static void TestPublicationsFileBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
+	int res;
+	KSI_Policy *policy = NULL;
+	VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
+#define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
+
+	KSI_LOG_debug(ctx, __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_createPublicationsFileBased(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &context->tempData.extendedSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->tempData.extendedSig != NULL);
+
+	res = KSI_CTX_setPublicationsFile(ctx, NULL);
+	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context->tempData.publicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context->tempData.publicationsFile != NULL);
+
+	context->userData.extendingAllowed = true;
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_verify(policy, context, &result);
+	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_FAIL && result->finalResult.errorCode == VER_ERR_PUB_1);
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_VerificationContext_free(context);
+	KSI_Policy_free(policy);
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_SIGNATURE_FILE
+#undef TEST_PUBLICATIONS_FILE
 }
 
 static void TestUserProvidedPublicationBasedPolicy(CuTest* tc) {
@@ -908,6 +1136,7 @@ static void TestUserProvidedPublicationBasedPolicy(CuTest* tc) {
 	res = KSI_Policy_verify(policy, context, &result);
 	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_OK && result->finalResult.errorCode == VER_ERR_NONE);
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -934,7 +1163,12 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestKeyBasedPolicy_FAIL_WithoutCertificate);
 	SUITE_ADD_TEST(suite, TestKeyBasedPolicy_FAIL_WithCertificate);
 	SUITE_ADD_TEST(suite, TestKeyBasedPolicy_OK);
-	//SUITE_ADD_TEST(suite, TestPublicationsFileBasedPolicy);
+	SUITE_ADD_TEST(suite, TestPublicationsFileBasedPolicy_OK_WithPublicationRecord);
+	SUITE_ADD_TEST(suite, TestPublicationsFileBasedPolicy_NA_WithPublicationRecord);
+	SUITE_ADD_TEST(suite, TestPublicationsFileBasedPolicy_NA_WithoutSuitablePublication);
+	SUITE_ADD_TEST(suite, TestPublicationsFileBasedPolicy_NA_WithSuitablePublication);
+	SUITE_ADD_TEST(suite, TestPublicationsFileBasedPolicy_OK_WithSuitablePublication);
+	SUITE_ADD_TEST(suite, TestPublicationsFileBasedPolicy_FAIL_AfterExtending);
 	//SUITE_ADD_TEST(suite, TestUserProvidedPublicationBasedPolicy);
 	return suite;
 }
