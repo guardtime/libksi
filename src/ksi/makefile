@@ -114,7 +114,8 @@ INC_FILES = \
 	publicationsfile.h \
 	tlv_template.h \
 	compatibility.h \
-	multi_signature.h
+	multi_signature.h \
+	version.h
 
 #Compiler and linker configuration
 EXT_LIB = wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib  
