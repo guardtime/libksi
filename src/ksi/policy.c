@@ -35,17 +35,18 @@ static int Rule_verify(const Rule *rule, VerificationContext *context, KSI_RuleR
 		goto cleanup;
 	}
 
-	KSI_LOG_debug(context->ctx, "Rule_verify");
 	currentRule = rule;
 	while (currentRule->rule) {
 		switch (currentRule->type) {
 			case RULE_TYPE_BASIC:
 				res = ((Verifier)(currentRule->rule))(context, &ruleResult);
+				KSI_LOG_debug(context->ctx, "Rule result: %i %i %i %s", res, ruleResult.resultCode, ruleResult.errorCode, ruleResult.ruleName);
 				break;
 
 			case RULE_TYPE_COMPOSITE_AND:
 			case RULE_TYPE_COMPOSITE_OR:
 				res = Rule_verify((Rule *)currentRule->rule, context, &ruleResult);
+				KSI_LOG_debug(context->ctx, "Rule res comp: %i %i %i", res, ruleResult.resultCode, ruleResult.errorCode);
 				break;
 
 			default:
@@ -58,14 +59,17 @@ static int Rule_verify(const Rule *rule, VerificationContext *context, KSI_RuleR
 			ruleResult.errorCode = VER_ERR_GEN_2;
 		}
 
-		if (ruleResult.resultCode == VER_RES_OK) {
+		if (ruleResult.resultCode == VER_RES_FAIL) {
+			/* If a rule fails, no more rules in the policy should be processed. */
+			break;
+		} else if (ruleResult.resultCode == VER_RES_OK) {
+			/* If a rule succeeds, the following OR-type rules should be skipped. */
 			if (currentRule->type == RULE_TYPE_COMPOSITE_OR) {
-				/* Do not handle the next rule(s) because the first OK result is enough. */
 				break;
 			}
-		} else {
+		} else /* if (ruleResult.resultCode == VER_RES_NA) */ {
+			/* If an OR-type rule result is not conclusive, the next rule should be processed. */
 			if (currentRule->type == RULE_TYPE_BASIC || currentRule->type == RULE_TYPE_COMPOSITE_AND) {
-				/* Do not handle the next rule(s) because the first FAIL or NA result is enough. */
 				break;
 			}
 		}
@@ -80,10 +84,13 @@ cleanup:
 	return res;
 }
 
-const Rule internalRules[] = {
-	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainInputHashVerification},
-	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainConsistency},
-	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainTimeConsistency},
+const Rule rule1[] = {
+	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainDoesNotExist},
+	{RULE_TYPE_BASIC, NULL}
+};
+
+const Rule rule2[] = {
+	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainExistence},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainInputHashVerification},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainAggregationTime},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainRegistrationTime},
@@ -91,6 +98,20 @@ const Rule internalRules[] = {
 	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordPublicationHash},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordPublicationTime},
+	{RULE_TYPE_BASIC, NULL}
+};
+
+const Rule calendarHashChainPresentRule[] = {
+	{RULE_TYPE_COMPOSITE_OR, rule1},
+	{RULE_TYPE_COMPOSITE_OR, rule2},
+	{RULE_TYPE_COMPOSITE_OR, NULL}
+};
+
+const Rule internalRules[] = {
+	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainInputHashVerification},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainConsistency},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainTimeConsistency},
+	{RULE_TYPE_COMPOSITE_AND, calendarHashChainPresentRule},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_DocumentHashVerification},
 	{RULE_TYPE_BASIC, NULL}
 };
@@ -120,7 +141,8 @@ int KSI_Policy_createCalendarBased(KSI_CTX *ctx, KSI_Policy **policy) {
 	static const Rule rules4[] = {
 		{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainDoesNotExist},
 		{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime}
+		{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime},
+		{RULE_TYPE_BASIC, NULL}
 	};
 
 	static const Rule rules5[] = {
@@ -128,6 +150,7 @@ int KSI_Policy_createCalendarBased(KSI_CTX *ctx, KSI_Policy **policy) {
 		{RULE_TYPE_COMPOSITE_AND, rules3},
 		{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash},
 		{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime},
+		{RULE_TYPE_BASIC, NULL}
 	};
 
 	static const Rule rules6[] = {
@@ -386,7 +409,6 @@ static int Policy_verifySignature(KSI_Policy *policy, VerificationContext *conte
 		goto cleanup;
 	}
 
-	KSI_LOG_debug(context->ctx, "Policy_verifySignature");
 	res = Rule_verify(policy->rules, context, tmp);
 	if (res != KSI_OK) goto cleanup;
 
@@ -439,7 +461,6 @@ int KSI_Policy_verify(KSI_Policy *policy, VerificationContext *context, KSI_Poli
 	*result = tmp;
 	tmp = NULL;
 
-	KSI_LOG_debug(ctx, "KSI_Policy_verify");
 	currentPolicy = policy;
 	while (currentPolicy != NULL) {
 		res = Policy_verifySignature(currentPolicy, context, &tmp_result);
