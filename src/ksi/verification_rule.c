@@ -1548,6 +1548,11 @@ cleanup:
 static int initPublicationsFile(VerificationContext *verCtx) {
 	int res = KSI_UNKNOWN_ERROR;
 
+	/* Check first if user has provided a publication file */
+	if (verCtx->userData.userPublicationsFile != NULL) {
+		verCtx->tempData.publicationsFile = verCtx->userData.userPublicationsFile;
+	}
+
 	if (verCtx->tempData.publicationsFile == NULL) {
 		res = KSI_receivePublicationsFile(verCtx->ctx, &verCtx->tempData.publicationsFile);
 		if (res != KSI_OK) goto cleanup;

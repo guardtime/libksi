@@ -1361,6 +1361,7 @@ static void testRule_CertificateExistence(CuTest *tc) {
 
 	verCtx.ctx = ctx;
 	verCtx.userData.sig = NULL;
+	verCtx.userData.userPublicationsFile = NULL;
 	verCtx.tempData.publicationsFile = NULL;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
@@ -1370,8 +1371,8 @@ static void testRule_CertificateExistence(CuTest *tc) {
 	res = KSI_CTX_setPublicationsFile(ctx, NULL);
 	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.tempData.publicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.tempData.publicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userData.userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userData.userPublicationsFile != NULL);
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -1393,7 +1394,7 @@ static void testRule_CertificateExistence(CuTest *tc) {
 	CuAssert(tc, "Signature autentication record certificate not found", res == KSI_OK && verRes.resultCode == VER_RES_OK);
 
 	KSI_Signature_free(verCtx.userData.sig);
-	KSI_PublicationsFile_free(verCtx.tempData.publicationsFile);
+	KSI_PublicationsFile_free(verCtx.userData.userPublicationsFile);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
@@ -1418,6 +1419,7 @@ static void testRule_CertificateExistence_verifyErrorResult(CuTest *tc) {
 
 	verCtx.ctx = ctx;
 	verCtx.userData.sig = NULL;
+	verCtx.userData.userPublicationsFile = NULL;
 	verCtx.tempData.publicationsFile = NULL;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
@@ -1426,8 +1428,8 @@ static void testRule_CertificateExistence_verifyErrorResult(CuTest *tc) {
 	res = KSI_CTX_setPublicationsFile(ctx, NULL);
 	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.tempData.publicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.tempData.publicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userData.userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userData.userPublicationsFile != NULL);
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints for email", res == KSI_OK);
@@ -1448,7 +1450,7 @@ static void testRule_CertificateExistence_verifyErrorResult(CuTest *tc) {
 	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_KEY_1);
 
 	KSI_Signature_free(verCtx.userData.sig);
-	KSI_PublicationsFile_free(verCtx.tempData.publicationsFile);
+	KSI_PublicationsFile_free(verCtx.userData.userPublicationsFile);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
@@ -1473,6 +1475,7 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification(CuTest *t
 
 	verCtx.ctx = ctx;
 	verCtx.userData.sig = NULL;
+	verCtx.userData.userPublicationsFile = NULL;
 	verCtx.tempData.publicationsFile = NULL;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
@@ -1481,8 +1484,8 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification(CuTest *t
 	res = KSI_CTX_setPublicationsFile(ctx, NULL);
 	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.tempData.publicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.tempData.publicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userData.userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userData.userPublicationsFile != NULL);
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -1503,7 +1506,7 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification(CuTest *t
 	CuAssert(tc, "Failed to verify calendar authentication record signature", res == KSI_OK && verRes.resultCode == VER_RES_OK);
 
 	KSI_Signature_free(verCtx.userData.sig);
-	KSI_PublicationsFile_free(verCtx.tempData.publicationsFile);
+	KSI_PublicationsFile_free(verCtx.userData.userPublicationsFile);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
@@ -1528,6 +1531,7 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification_verifyErr
 
 	verCtx.ctx = ctx;
 	verCtx.userData.sig = NULL;
+	verCtx.userData.userPublicationsFile = NULL;
 	verCtx.tempData.publicationsFile = NULL;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
@@ -1536,8 +1540,8 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification_verifyErr
 	res = KSI_CTX_setPublicationsFile(ctx, NULL);
 	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.tempData.publicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.tempData.publicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userData.userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userData.userPublicationsFile != NULL);
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -1558,7 +1562,7 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification_verifyErr
 	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_KEY_2);
 
 	KSI_Signature_free(verCtx.userData.sig);
-	KSI_PublicationsFile_free(verCtx.tempData.publicationsFile);
+	KSI_PublicationsFile_free(verCtx.userData.userPublicationsFile);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
@@ -1581,6 +1585,7 @@ static void testRule_PublicationsFileContainsSignaturePublication(CuTest *tc) {
 
 	verCtx.ctx = ctx;
 	verCtx.userData.sig = NULL;
+	verCtx.userData.userPublicationsFile = NULL;
 	verCtx.tempData.publicationsFile = NULL;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
@@ -1589,8 +1594,8 @@ static void testRule_PublicationsFileContainsSignaturePublication(CuTest *tc) {
 	res = KSI_CTX_setPublicationsFile(ctx, NULL);
 	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.tempData.publicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.tempData.publicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userData.userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userData.userPublicationsFile != NULL);
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -1599,7 +1604,7 @@ static void testRule_PublicationsFileContainsSignaturePublication(CuTest *tc) {
 	CuAssert(tc, "Publications file should contain signature publication", res == KSI_OK && verRes.resultCode == VER_RES_OK);
 
 	KSI_Signature_free(verCtx.userData.sig);
-	KSI_PublicationsFile_free(verCtx.tempData.publicationsFile);
+	KSI_PublicationsFile_free(verCtx.userData.userPublicationsFile);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
@@ -1621,6 +1626,7 @@ static void testRule_PublicationsFileContainsSignaturePublication_verifyErrorRes
 
 	verCtx.ctx = ctx;
 	verCtx.userData.sig = NULL;
+	verCtx.userData.userPublicationsFile = NULL;
 	verCtx.tempData.publicationsFile = NULL;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
@@ -1629,8 +1635,8 @@ static void testRule_PublicationsFileContainsSignaturePublication_verifyErrorRes
 	res = KSI_CTX_setPublicationsFile(ctx, NULL);
 	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.tempData.publicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.tempData.publicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userData.userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userData.userPublicationsFile != NULL);
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -1639,7 +1645,7 @@ static void testRule_PublicationsFileContainsSignaturePublication_verifyErrorRes
 	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_NA && verRes.errorCode == VER_ERR_GEN_2);
 
 	KSI_Signature_free(verCtx.userData.sig);
-	KSI_PublicationsFile_free(verCtx.tempData.publicationsFile);
+	KSI_PublicationsFile_free(verCtx.userData.userPublicationsFile);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
@@ -1661,6 +1667,7 @@ static void testRule_PublicationsFileContainsPublication(CuTest *tc) {
 
 	verCtx.ctx = ctx;
 	verCtx.userData.sig = NULL;
+	verCtx.userData.userPublicationsFile = NULL;
 	verCtx.tempData.publicationsFile = NULL;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
@@ -1669,8 +1676,8 @@ static void testRule_PublicationsFileContainsPublication(CuTest *tc) {
 	res = KSI_CTX_setPublicationsFile(ctx, NULL);
 	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.tempData.publicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.tempData.publicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userData.userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userData.userPublicationsFile != NULL);
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -1679,7 +1686,7 @@ static void testRule_PublicationsFileContainsPublication(CuTest *tc) {
 	CuAssert(tc, "Publications file should contain signature publication", res == KSI_OK && verRes.resultCode == VER_RES_OK);
 
 	KSI_Signature_free(verCtx.userData.sig);
-	KSI_PublicationsFile_free(verCtx.tempData.publicationsFile);
+	KSI_PublicationsFile_free(verCtx.userData.userPublicationsFile);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
@@ -1701,6 +1708,7 @@ static void testRule_PublicationsFileContainsPublication_verifyErrorResult(CuTes
 
 	verCtx.ctx = ctx;
 	verCtx.userData.sig = NULL;
+	verCtx.userData.userPublicationsFile = NULL;
 	verCtx.tempData.publicationsFile = NULL;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
@@ -1709,8 +1717,8 @@ static void testRule_PublicationsFileContainsPublication_verifyErrorResult(CuTes
 	res = KSI_CTX_setPublicationsFile(ctx, NULL);
 	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.tempData.publicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.tempData.publicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userData.userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userData.userPublicationsFile != NULL);
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -1719,7 +1727,7 @@ static void testRule_PublicationsFileContainsPublication_verifyErrorResult(CuTes
 	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_NA && verRes.errorCode == VER_ERR_GEN_2);
 
 	KSI_Signature_free(verCtx.userData.sig);
-	KSI_PublicationsFile_free(verCtx.tempData.publicationsFile);
+	KSI_PublicationsFile_free(verCtx.userData.userPublicationsFile);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
@@ -1787,6 +1795,7 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse(CuTe
 	verCtx.ctx = ctx;
 	verCtx.userData.sig = NULL;
 	verCtx.tempData.extendedSig = NULL;
+	verCtx.userData.userPublicationsFile = NULL;
 	verCtx.tempData.publicationsFile = NULL;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
@@ -1798,8 +1807,8 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse(CuTe
 	res = KSI_CTX_setPublicationsFile(ctx, NULL);
 	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.tempData.publicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.tempData.publicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userData.userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userData.userPublicationsFile != NULL);
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -1809,7 +1818,7 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse(CuTe
 
 	KSI_Signature_free(verCtx.userData.sig);
 	KSI_Signature_free(verCtx.tempData.extendedSig);
-	KSI_PublicationsFile_free(verCtx.tempData.publicationsFile);
+	KSI_PublicationsFile_free(verCtx.userData.userPublicationsFile);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
@@ -1833,6 +1842,8 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse_veri
 
 	verCtx.ctx = ctx;
 	verCtx.userData.sig = NULL;
+	verCtx.userData.userPublicationsFile = NULL;
+	verCtx.tempData.publicationsFile = NULL;
 	verCtx.tempData.extendedSig = NULL;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
@@ -1844,8 +1855,8 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse_veri
 	res = KSI_CTX_setPublicationsFile(ctx, NULL);
 	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.tempData.publicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.tempData.publicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userData.userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userData.userPublicationsFile != NULL);
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -1855,7 +1866,7 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse_veri
 
 	KSI_Signature_free(verCtx.userData.sig);
 	KSI_Signature_free(verCtx.tempData.extendedSig);
-	KSI_PublicationsFile_free(verCtx.tempData.publicationsFile);
+	KSI_PublicationsFile_free(verCtx.userData.userPublicationsFile);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_SIGNATURE_FILE
@@ -1879,8 +1890,9 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(CuTe
 
 	verCtx.ctx = ctx;
 	verCtx.userData.sig = NULL;
-	verCtx.tempData.extendedSig = NULL;
+	verCtx.userData.userPublicationsFile = NULL;
 	verCtx.tempData.publicationsFile = NULL;
+	verCtx.tempData.extendedSig = NULL;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.userData.sig != NULL);
@@ -1891,8 +1903,8 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(CuTe
 	res = KSI_CTX_setPublicationsFile(ctx, NULL);
 	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.tempData.publicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.tempData.publicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userData.userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userData.userPublicationsFile != NULL);
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -1901,8 +1913,8 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(CuTe
 	CuAssert(tc, "Extender response time should match publications file publication time", res == KSI_OK && verRes.resultCode == VER_RES_OK);
 
 	KSI_Signature_free(verCtx.userData.sig);
+	KSI_PublicationsFile_free(verCtx.userData.userPublicationsFile);
 	KSI_Signature_free(verCtx.tempData.extendedSig);
-	KSI_PublicationsFile_free(verCtx.tempData.publicationsFile);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
@@ -1926,6 +1938,8 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_veri
 
 	verCtx.ctx = ctx;
 	verCtx.userData.sig = NULL;
+	verCtx.userData.userPublicationsFile = NULL;
+	verCtx.tempData.publicationsFile = NULL;
 	verCtx.tempData.extendedSig = NULL;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
@@ -1937,8 +1951,8 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_veri
 	res = KSI_CTX_setPublicationsFile(ctx, NULL);
 	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.tempData.publicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.tempData.publicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userData.userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userData.userPublicationsFile != NULL);
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -1947,8 +1961,8 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_veri
 	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_PUB_2);
 
 	KSI_Signature_free(verCtx.userData.sig);
+	KSI_PublicationsFile_free(verCtx.userData.userPublicationsFile);
 	KSI_Signature_free(verCtx.tempData.extendedSig);
-	KSI_PublicationsFile_free(verCtx.tempData.publicationsFile);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_SIGNATURE_FILE
@@ -1973,8 +1987,9 @@ static void testRule_PublicationsFileExtendedSignatureInputHash(CuTest *tc) {
 	verCtx.ctx = ctx;
 	verCtx.userData.sig = NULL;
 	verCtx.userData.docAggrLevel = 0;
-	verCtx.tempData.extendedSig = NULL;
+	verCtx.userData.userPublicationsFile = NULL;
 	verCtx.tempData.publicationsFile = NULL;
+	verCtx.tempData.extendedSig = NULL;
 	verCtx.tempData.aggregationOutputHash = NULL;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.userData.sig);
@@ -1986,8 +2001,8 @@ static void testRule_PublicationsFileExtendedSignatureInputHash(CuTest *tc) {
 	res = KSI_CTX_setPublicationsFile(ctx, NULL);
 	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.tempData.publicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.tempData.publicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userData.userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userData.userPublicationsFile != NULL);
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -1997,7 +2012,7 @@ static void testRule_PublicationsFileExtendedSignatureInputHash(CuTest *tc) {
 
 	KSI_Signature_free(verCtx.userData.sig);
 	KSI_Signature_free(verCtx.tempData.extendedSig);
-	KSI_PublicationsFile_free(verCtx.tempData.publicationsFile);
+	KSI_PublicationsFile_free(verCtx.userData.userPublicationsFile);
 	KSI_DataHash_free(verCtx.tempData.aggregationOutputHash);
 
 #undef TEST_SIGNATURE_FILE
@@ -2023,6 +2038,8 @@ static void testRule_PublicationsFileExtendedSignatureInputHash_verifyErrorResul
 	verCtx.ctx = ctx;
 	verCtx.userData.sig = NULL;
 	verCtx.userData.docAggrLevel = 0;
+	verCtx.userData.userPublicationsFile = NULL;
+	verCtx.tempData.publicationsFile = NULL;
 	verCtx.tempData.extendedSig = NULL;
 	verCtx.tempData.aggregationOutputHash = NULL;
 
@@ -2035,8 +2052,8 @@ static void testRule_PublicationsFileExtendedSignatureInputHash_verifyErrorResul
 	res = KSI_CTX_setPublicationsFile(ctx, NULL);
 	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.tempData.publicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.tempData.publicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userData.userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userData.userPublicationsFile != NULL);
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -2046,7 +2063,7 @@ static void testRule_PublicationsFileExtendedSignatureInputHash_verifyErrorResul
 
 	KSI_Signature_free(verCtx.userData.sig);
 	KSI_Signature_free(verCtx.tempData.extendedSig);
-	KSI_PublicationsFile_free(verCtx.tempData.publicationsFile);
+	KSI_PublicationsFile_free(verCtx.userData.userPublicationsFile);
 	KSI_DataHash_free(verCtx.tempData.aggregationOutputHash);
 
 #undef TEST_SIGNATURE_FILE
