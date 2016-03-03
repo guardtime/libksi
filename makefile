@@ -67,6 +67,7 @@ OUT_DIR = out
 LIB_DIR = $(OUT_DIR)\$(DLL)
 BIN_DIR = $(OUT_DIR)\bin
 VERSION_FILE = VERSION
+VERSION_H = $(SRC_DIR)\ksi\version.h
 COMM_ID_FILE = COMMIT_ID
 
 VER = \
@@ -121,7 +122,7 @@ dllMDd:
 	nmake DLL=dll RTL=MDd $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
 
 ver:
-	version.bat $(VERSION_FILE) $(SRC_DIR)\ksi\version.h
+	version.bat $(VERSION_FILE) $(VERSION_H)
 	
 example: $(DLL)$(RTL)
 	cd $(SRC_DIR)\example
@@ -144,3 +145,4 @@ resigner: $(DLL)$(RTL)
 clean:
 	@for %i in ($(OBJ_DIR) $(OUT_DIR)) do @if exist .\%i rmdir /s /q .\%i
 	@for %i in ($(SRC_DIR)\ksi $(SRC_DIR)\example $(TEST_DIR)) do @if exist .\%i\*.pdb del /q .\%i\*.pdb	
+	@if exist .\$(VERSION_H) del /q .\$(VERSION_H)
