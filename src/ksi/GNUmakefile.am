@@ -94,7 +94,8 @@ libksi_la_SOURCES = \
 	verification.h \
 	verification_impl.h \
 	compatibility.h \
-	compatibility.c
+	compatibility.c \
+	version.h
 
 otherincludedir = $(includedir)/ksi
 otherinclude_HEADERS = \
@@ -124,7 +125,8 @@ otherinclude_HEADERS = \
 	net_uri.h \
 	ksi.h \
 	verification.h \
-	compatibility.h
+	compatibility.h \
+	version.h
 
 libksi_la_LDFLAGS=-version-info @LTVER@
 
