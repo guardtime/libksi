@@ -1367,6 +1367,194 @@ static void TestUserProvidedPublicationBasedPolicy_FAIL_AfterExtending(CuTest* t
 #undef TEST_SIGNATURE_FILE_WITH_PUBLICATION
 }
 
+static void TestFallbackPolicy_KeyBased_NA_CalendarBased_OK(CuTest* tc) {
+	int res;
+	KSI_Policy *policy = NULL;
+	KSI_Policy *fallbackPolicy = NULL;
+	VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+
+	KSI_LOG_debug(ctx, __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_createKeyBased(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_Policy_createCalendarBased(ctx, &fallbackPolicy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_Policy_setFallback(ctx, policy, fallbackPolicy);
+	CuAssert(tc, "Fallback policy setup failed", res == KSI_OK);
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &context->tempData.extendedSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->tempData.extendedSig != NULL);
+
+	KSI_CalendarHashChain_free(context->userData.sig->calendarChain);
+	context->userData.sig->calendarChain = NULL;
+
+	res = KSI_Policy_verify(policy, context, &result);
+	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_OK && result->finalResult.errorCode == VER_ERR_NONE);
+
+	KSI_PolicyVerificationResult_free(result);
+	context->ctx->publicationsFile = NULL;
+	KSI_VerificationContext_free(context);
+	KSI_Policy_free(policy);
+	KSI_Policy_free(fallbackPolicy);
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_SIGNATURE_FILE
+}
+
+static void TestFallbackPolicy_CalendarBased_OK_KeyBased_NA(CuTest* tc) {
+	int res;
+	KSI_Policy *policy = NULL;
+	KSI_Policy *fallbackPolicy = NULL;
+	VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+
+	KSI_LOG_debug(ctx, __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_createCalendarBased(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_Policy_createKeyBased(ctx, &fallbackPolicy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_Policy_setFallback(ctx, policy, fallbackPolicy);
+	CuAssert(tc, "Fallback policy setup failed", res == KSI_OK);
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &context->tempData.extendedSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->tempData.extendedSig != NULL);
+
+	KSI_CalendarHashChain_free(context->userData.sig->calendarChain);
+	context->userData.sig->calendarChain = NULL;
+
+	res = KSI_Policy_verify(policy, context, &result);
+	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_OK && result->finalResult.errorCode == VER_ERR_NONE);
+
+	KSI_PolicyVerificationResult_free(result);
+	context->ctx->publicationsFile = NULL;
+	KSI_VerificationContext_free(context);
+	KSI_Policy_free(policy);
+	KSI_Policy_free(fallbackPolicy);
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_SIGNATURE_FILE
+}
+
+static void TestFallbackPolicy_KeyBased_NA_CalendarBased_FAIL(CuTest* tc) {
+	int res;
+	KSI_Policy *policy = NULL;
+	KSI_Policy *fallbackPolicy = NULL;
+	VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
+
+	KSI_LOG_debug(ctx, __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_createKeyBased(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_Policy_createCalendarBased(ctx, &fallbackPolicy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_Policy_setFallback(ctx, policy, fallbackPolicy);
+	CuAssert(tc, "Fallback policy setup failed", res == KSI_OK);
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &context->tempData.extendedSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->tempData.extendedSig != NULL);
+
+	KSI_CalendarHashChain_free(context->userData.sig->calendarChain);
+	context->userData.sig->calendarChain = NULL;
+
+	res = KSI_Policy_verify(policy, context, &result);
+	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_FAIL && result->finalResult.errorCode == VER_ERR_CAL_2);
+
+	KSI_PolicyVerificationResult_free(result);
+	context->ctx->publicationsFile = NULL;
+	KSI_VerificationContext_free(context);
+	KSI_Policy_free(policy);
+	KSI_Policy_free(fallbackPolicy);
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_SIGNATURE_FILE
+}
+
+static void TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA(CuTest* tc) {
+	int res;
+	KSI_Policy *policy = NULL;
+	KSI_Policy *fallbackPolicy = NULL;
+	VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
+
+	KSI_LOG_debug(ctx, __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_createCalendarBased(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_Policy_createKeyBased(ctx, &fallbackPolicy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_Policy_setFallback(ctx, policy, fallbackPolicy);
+	CuAssert(tc, "Fallback policy setup failed", res == KSI_OK);
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &context->tempData.extendedSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->tempData.extendedSig != NULL);
+
+	KSI_CalendarHashChain_free(context->userData.sig->calendarChain);
+	context->userData.sig->calendarChain = NULL;
+
+	res = KSI_Policy_verify(policy, context, &result);
+	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_NA && result->finalResult.errorCode == VER_ERR_GEN_2);
+
+	KSI_PolicyVerificationResult_free(result);
+	context->ctx->publicationsFile = NULL;
+	KSI_VerificationContext_free(context);
+	KSI_Policy_free(policy);
+	KSI_Policy_free(fallbackPolicy);
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_SIGNATURE_FILE
+}
+
 CuSuite* KSITest_Policy_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 	suite->preTest = preTest;
@@ -1398,5 +1586,9 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestUserProvidedPublicationBasedPolicy_NA_WithSignatureBeforePublication);
 	SUITE_ADD_TEST(suite, TestUserProvidedPublicationBasedPolicy_OK_WithoutPublicationRecord);
 	SUITE_ADD_TEST(suite, TestUserProvidedPublicationBasedPolicy_FAIL_AfterExtending);
+	SUITE_ADD_TEST(suite, TestFallbackPolicy_KeyBased_NA_CalendarBased_OK);
+	SUITE_ADD_TEST(suite, TestFallbackPolicy_CalendarBased_OK_KeyBased_NA);
+	SUITE_ADD_TEST(suite, TestFallbackPolicy_KeyBased_NA_CalendarBased_FAIL);
+	SUITE_ADD_TEST(suite, TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA);
 	return suite;
 }

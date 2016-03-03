@@ -429,7 +429,7 @@ int KSI_Policy_setFallback(KSI_CTX *ctx, KSI_Policy *policy, KSI_Policy *fallbac
 		goto cleanup;
 	}
 
-	policy->fallbackPolicy = policy;
+	policy->fallbackPolicy = fallback;
 	res = KSI_OK;
 
 cleanup:
@@ -472,6 +472,10 @@ int KSI_Policy_verify(KSI_Policy *policy, VerificationContext *context, KSI_Poli
 
 		if (tmp_result->resultCode != VER_RES_OK) {
 			currentPolicy = currentPolicy->fallbackPolicy;
+			if (currentPolicy != NULL) {
+				KSI_LOG_debug(ctx, "Verifying fallback policy");
+				/* Should the temporary data in verification context be cleaned? */
+			}
 		} else {
 			currentPolicy = NULL;
 		}
