@@ -1,3 +1,3 @@
 #define KSI_SDK_VER_MAJOR 0
-#define KSI_SDK_VER_MANOR 0
+#define KSI_SDK_VER_MINOR 0
 #define KSI_SDK_VER_BUILD 0
