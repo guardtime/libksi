@@ -956,3 +956,39 @@ EXPORTS
     KSI_MultiSignature_fromFile
     KSI_MultiSignature_serialize
     
+;verification_rule.h
+EXPORTS
+    KSI_VerificationRule_AggregationChainInputHashVerification
+    KSI_VerificationRule_AggregationHashChainConsistency
+    KSI_VerificationRule_AggregationHashChainTimeConsistency
+    KSI_VerificationRule_CalendarHashChainInputHashVerification
+    KSI_VerificationRule_CalendarHashChainAggregationTime
+    KSI_VerificationRule_CalendarHashChainRegistrationTime
+    KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash
+    KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime
+    KSI_VerificationRule_SignaturePublicationRecordPublicationHash
+    KSI_VerificationRule_SignaturePublicationRecordPublicationTime
+    KSI_VerificationRule_DocumentHashVerification
+    KSI_VerificationRule_SignatureDoesNotContainPublication
+    KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches
+    KSI_VerificationRule_SignaturePublicationRecordExistence
+    KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash
+    KSI_VerificationRule_CalendarHashChainDoesNotExist
+    KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash
+    KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime
+    KSI_VerificationRule_CalendarHashChainExistence
+    KSI_VerificationRule_CalendarAuthenticationRecordExistence
+    KSI_VerificationRule_CertificateExistence
+    KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification
+    KSI_VerificationRule_PublicationsFileContainsSignaturePublication
+    KSI_VerificationRule_PublicationsFileContainsPublication
+    KSI_VerificationRule_ExtendingPermittedVerification
+    KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse
+    KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse
+    KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash
+    KSI_VerificationRule_UserProvidedPublicationExistence
+    KSI_VerificationRule_UserProvidedPublicationVerification
+    KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification
+    KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse
+    KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse
+    KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash
