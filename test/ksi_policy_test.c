@@ -28,6 +28,7 @@
 #include "../src/ksi/verification_impl.h"
 #include "../src/ksi/signature_impl.h"
 #include "../src/ksi/hashchain.h"
+#include "../src/ksi/publicationsfile_impl.h"
 
 extern KSI_CTX *ctx;
 
@@ -1215,6 +1216,7 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureAfterPublicat
 	res = KSI_Integer_new(ctx, TEST_TIMESTAMP, &mockTime);
 	CuAssert(tc, "Unable to create publication time", res == KSI_OK && mockTime != NULL);
 
+	KSI_Integer_free(context->userData.userPublication->time);
 	res = KSI_PublicationData_setTime(context->userData.userPublication, mockTime);
 	CuAssert(tc, "Unable to set publication time.", res == KSI_OK);
 
