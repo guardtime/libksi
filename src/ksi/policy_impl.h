@@ -66,6 +66,9 @@ typedef struct VerificationUserData_st {
 
 	/** Publication string to be used. */
 	KSI_PublicationData *userPublication;
+
+	/** Publication file to be used. */
+	KSI_PublicationsFile *userPublicationsFile;
 } VerificationUserData;
 
 typedef struct VerificationTempData_st {
@@ -73,7 +76,7 @@ typedef struct VerificationTempData_st {
 	/** Temporary extended signature */
 	KSI_Signature *extendedSig;
 
-	/** Publicationsfile to be used. */
+	/** Publicationsfile to be used. The memory may not be freed! */
 	KSI_PublicationsFile *publicationsFile;
 
 	/** Signature aggregation output hash (calendar chain input hash) */
