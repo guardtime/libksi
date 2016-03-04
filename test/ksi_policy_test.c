@@ -1168,7 +1168,6 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithPublicationRecord(CuTe
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
-	KSI_PublicationRecord_free(tempRec);
 	context->userData.userPublication = NULL;
 	KSI_VerificationContext_free(context);
 	KSI_Policy_free(policy);
@@ -1224,7 +1223,6 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureAfterPublicat
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
-	KSI_PublicationRecord_free(tempRec);
 	context->userData.userPublication = NULL;
 	KSI_Signature_free(sig);
 	KSI_VerificationContext_free(context);
@@ -1275,7 +1273,6 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureBeforePublica
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
-	KSI_PublicationRecord_free(tempRec);
 	context->userData.userPublication = NULL;
 	KSI_Signature_free(sig);
 	KSI_VerificationContext_free(context);
@@ -1327,7 +1324,6 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithoutPublicationRecord(C
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
-	KSI_PublicationRecord_free(tempRec);
 	context->userData.userPublication = NULL;
 	KSI_Signature_free(sig);
 	KSI_VerificationContext_free(context);
@@ -1383,7 +1379,6 @@ static void TestUserProvidedPublicationBasedPolicy_FAIL_AfterExtending(CuTest* t
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
-	KSI_PublicationRecord_free(tempRec);
 	context->userData.userPublication = NULL;
 	KSI_Signature_free(sig);
 	KSI_VerificationContext_free(context);
