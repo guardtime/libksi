@@ -22,7 +22,7 @@
 #include <stdlib.h>
 
 #include "all_tests.h"
-#include "../src/ksi/version.h"
+#include <ksi/ksi.h>
 
 #define BUFF_SIZE 100
 #define VERSION_FILE "VERSION"
