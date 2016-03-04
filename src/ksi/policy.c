@@ -46,7 +46,6 @@ static int Rule_verify(const Rule *rule, VerificationContext *context, KSI_RuleR
 			case RULE_TYPE_COMPOSITE_AND:
 			case RULE_TYPE_COMPOSITE_OR:
 				res = Rule_verify((Rule *)currentRule->rule, context, &ruleResult);
-				KSI_LOG_debug(context->ctx, "Rule res comp: %i %i %i", res, ruleResult.resultCode, ruleResult.errorCode);
 				break;
 
 			default:
