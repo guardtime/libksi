@@ -122,8 +122,8 @@ dllMDd:
 	nmake DLL=dll RTL=MDd $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
 
 ver:
-	version.bat $(VERSION_FILE) $(VERSION_H)
-	
+	mkversion_h.bat $(VERSION_FILE) $(VERSION_H)
+
 example: $(DLL)$(RTL)
 	cd $(SRC_DIR)\example
 	nmake $(MODEL) $(EXTRA)
