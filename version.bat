@@ -31,9 +31,12 @@ set TARGET_FILE=%2
 @echo Generating new version file to: %TARGET_FILE%
 
 for /F "tokens=1,2,3 delims=." %%a in ("%VERSION_STR%") do (
-	echo.#define KSI_SDK_VER_MAJOR %%a  > %TARGET_FILE%
+	echo.#ifndef VERSION_H              > %TARGET_FILE%
+	echo.#define VERSION_H             >> %TARGET_FILE%
+	echo.#define KSI_SDK_VER_MAJOR %%a >> %TARGET_FILE%
 	echo.#define KSI_SDK_VER_MINOR %%b >> %TARGET_FILE%
 	echo.#define KSI_SDK_VER_BUILD %%c >> %TARGET_FILE%
+	echo.#endif //VERSION_H            >> %TARGET_FILE%
 )
 
 
