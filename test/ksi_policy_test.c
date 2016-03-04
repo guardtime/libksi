@@ -19,6 +19,7 @@
 
 #include "cutest/CuTest.h"
 #include "all_tests.h"
+#include <string.h>
 #include "../src/ksi/policy.h"
 #include "../src/ksi/internal.h"
 #include "../src/ksi/policy_impl.h"
@@ -374,11 +375,36 @@ static void TestCompositeRulesPolicy(CuTest* tc) {
 	KSI_VerificationContext_free(context);
 }
 
+bool ResultsMatch(KSI_PolicyResult *expected, KSI_PolicyResult *actual) {
+	bool match = true;
+
+	if (expected->resultCode != actual->resultCode) {
+		KSI_LOG_debug(ctx, "Expected result: %i, actual result: %i", expected->resultCode, actual->resultCode);
+		match = false;
+	}
+	if (expected->errorCode != actual->errorCode) {
+		KSI_LOG_debug(ctx, "Expected error: %i, actual error: %i", expected->errorCode, actual->errorCode);
+		match = false;
+	}
+	if (strcmp(expected->ruleName, actual->ruleName)) {
+		KSI_LOG_debug(ctx, "Expected rule name: %s", expected->ruleName);
+		KSI_LOG_debug(ctx, "Actual rule name: %s", actual->ruleName);
+		match = false;
+	}
+
+	return match;
+}
+
 static void TestCalendarBasedPolicy_OK_WithPublicationRecord(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_OK,
+		VER_ERR_NONE,
+		"KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime"
+	};
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 #define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
 
@@ -398,9 +424,8 @@ static void TestCalendarBasedPolicy_OK_WithPublicationRecord(CuTest* tc) {
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_OK && result->finalResult.errorCode == VER_ERR_NONE);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -414,6 +439,11 @@ static void TestCalendarBasedPolicy_FAIL_WithPublicationRecord(CuTest* tc) {
 	KSI_Policy *policy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_FAIL,
+		VER_ERR_CAL_1,
+		"KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash"
+	};
 #define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 
@@ -433,9 +463,8 @@ static void TestCalendarBasedPolicy_FAIL_WithPublicationRecord(CuTest* tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->tempData.extendedSig != NULL);
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_FAIL && result->finalResult.errorCode == VER_ERR_CAL_1);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -449,6 +478,11 @@ static void TestCalendarBasedPolicy_OK_WithoutPublicationRecord(CuTest* tc) {
 	KSI_Policy *policy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_OK,
+		VER_ERR_NONE,
+		"KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime"
+	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 
@@ -468,9 +502,8 @@ static void TestCalendarBasedPolicy_OK_WithoutPublicationRecord(CuTest* tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->tempData.extendedSig != NULL);
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_OK && result->finalResult.errorCode == VER_ERR_NONE);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -484,6 +517,11 @@ static void TestCalendarBasedPolicy_FAIL_WithoutPublicationRecord(CuTest* tc) {
 	KSI_Policy *policy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_FAIL,
+		VER_ERR_CAL_4,
+		"KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches"
+	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 
@@ -503,9 +541,8 @@ static void TestCalendarBasedPolicy_FAIL_WithoutPublicationRecord(CuTest* tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->tempData.extendedSig != NULL);
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_FAIL && result->finalResult.errorCode == VER_ERR_CAL_4);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -519,6 +556,11 @@ static void TestCalendarBasedPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 	KSI_Policy *policy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_OK,
+		VER_ERR_NONE,
+		"KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime"
+	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
@@ -541,9 +583,8 @@ static void TestCalendarBasedPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 	context->userData.sig->calendarChain = NULL;
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_OK && result->finalResult.errorCode == VER_ERR_NONE);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -557,6 +598,11 @@ static void TestCalendarBasedPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 	KSI_Policy *policy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_FAIL,
+		VER_ERR_CAL_2,
+		"KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash"
+	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 
@@ -579,9 +625,8 @@ static void TestCalendarBasedPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 	context->userData.sig->calendarChain = NULL;
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_FAIL && result->finalResult.errorCode == VER_ERR_CAL_2);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -595,6 +640,11 @@ static void TestKeyBasedPolicy_NA_WithoutCalendarHashChain(CuTest* tc) {
 	KSI_Policy *policy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_NA,
+		VER_ERR_GEN_2,
+		"KSI_VerificationRule_CalendarHashChainExistence"
+	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 
 	KSI_LOG_debug(ctx, __FUNCTION__);
@@ -613,9 +663,8 @@ static void TestKeyBasedPolicy_NA_WithoutCalendarHashChain(CuTest* tc) {
 	context->userData.sig->calendarChain = NULL;
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_NA && result->finalResult.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -628,6 +677,11 @@ static void TestKeyBasedPolicy_NA_WithoutCalendarAuthenticationRecord(CuTest* tc
 	KSI_Policy *policy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_NA,
+		VER_ERR_GEN_2,
+		"KSI_VerificationRule_CalendarAuthenticationRecordExistence"
+	};
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-calendar-authentication-record-missing.ksig"
 
 	KSI_LOG_debug(ctx, __FUNCTION__);
@@ -643,9 +697,8 @@ static void TestKeyBasedPolicy_NA_WithoutCalendarAuthenticationRecord(CuTest* tc
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_NA && result->finalResult.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -658,6 +711,11 @@ static void TestKeyBasedPolicy_FAIL_WithCalendarAuthenticationRecord(CuTest* tc)
 	KSI_Policy *policy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_FAIL,
+		VER_ERR_INT_8,
+		"KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash"
+	};
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-calendar-authentication-record-hash.ksig"
 
 	KSI_LOG_debug(ctx, __FUNCTION__);
@@ -673,9 +731,8 @@ static void TestKeyBasedPolicy_FAIL_WithCalendarAuthenticationRecord(CuTest* tc)
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_FAIL && result->finalResult.errorCode == VER_ERR_INT_8);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -688,6 +745,11 @@ static void TestKeyBasedPolicy_FAIL_WithoutCertificate(CuTest* tc) {
 	KSI_Policy *policy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_FAIL,
+		VER_ERR_KEY_1,
+		"KSI_VerificationRule_CertificateExistence"
+	};
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications-one-cert-one-publication-record-with-wrong-hash.tlv"
 
@@ -710,9 +772,8 @@ static void TestKeyBasedPolicy_FAIL_WithoutCertificate(CuTest* tc) {
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context->tempData.publicationsFile != NULL);
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_FAIL && result->finalResult.errorCode == VER_ERR_KEY_1);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -726,6 +787,11 @@ static void TestKeyBasedPolicy_FAIL_WithCertificate(CuTest* tc) {
 	KSI_Policy *policy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_FAIL,
+		VER_ERR_KEY_2,
+		"KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification"
+	};
 #define TEST_SIGNATURE_FILE    "resource/tlv/signature-cal-auth-wrong-signing-value.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
@@ -748,9 +814,8 @@ static void TestKeyBasedPolicy_FAIL_WithCertificate(CuTest* tc) {
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context->tempData.publicationsFile != NULL);
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_FAIL && result->finalResult.errorCode == VER_ERR_KEY_2);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -764,6 +829,11 @@ static void TestKeyBasedPolicy_OK(CuTest* tc) {
 	KSI_Policy *policy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_OK,
+		VER_ERR_NONE,
+		"KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification"
+	};
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
@@ -786,9 +856,8 @@ static void TestKeyBasedPolicy_OK(CuTest* tc) {
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context->tempData.publicationsFile != NULL);
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_OK && result->finalResult.errorCode == VER_ERR_NONE);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -802,6 +871,11 @@ static void TestPublicationsFileBasedPolicy_OK_WithPublicationRecord(CuTest* tc)
 	KSI_Policy *policy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_OK,
+		VER_ERR_NONE,
+		"KSI_VerificationRule_PublicationsFileContainsSignaturePublication"
+	};
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
@@ -824,9 +898,8 @@ static void TestPublicationsFileBasedPolicy_OK_WithPublicationRecord(CuTest* tc)
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context->tempData.publicationsFile != NULL);
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_OK && result->finalResult.errorCode == VER_ERR_NONE);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -840,6 +913,11 @@ static void TestPublicationsFileBasedPolicy_NA_WithPublicationRecord(CuTest* tc)
 	KSI_Policy *policy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_NA,
+		VER_ERR_GEN_2,
+		"KSI_VerificationRule_SignatureDoesNotContainPublication"
+	};
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.15042014.tlv"
 
@@ -862,9 +940,8 @@ static void TestPublicationsFileBasedPolicy_NA_WithPublicationRecord(CuTest* tc)
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context->tempData.publicationsFile != NULL);
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_NA && result->finalResult.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -878,6 +955,11 @@ static void TestPublicationsFileBasedPolicy_NA_WithoutSuitablePublication(CuTest
 	KSI_Policy *policy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_NA,
+		VER_ERR_GEN_2,
+		"KSI_VerificationRule_PublicationsFileContainsPublication"
+	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.15042014.tlv"
 
@@ -900,9 +982,8 @@ static void TestPublicationsFileBasedPolicy_NA_WithoutSuitablePublication(CuTest
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context->tempData.publicationsFile != NULL);
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_NA && result->finalResult.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -916,6 +997,11 @@ static void TestPublicationsFileBasedPolicy_NA_WithSuitablePublication(CuTest* t
 	KSI_Policy *policy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_NA,
+		VER_ERR_GEN_2,
+		"KSI_VerificationRule_ExtendingPermittedVerification"
+	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
@@ -938,9 +1024,8 @@ static void TestPublicationsFileBasedPolicy_NA_WithSuitablePublication(CuTest* t
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context->tempData.publicationsFile != NULL);
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_NA && result->finalResult.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -954,6 +1039,11 @@ static void TestPublicationsFileBasedPolicy_OK_WithSuitablePublication(CuTest* t
 	KSI_Policy *policy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_OK,
+		VER_ERR_NONE,
+		"KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash"
+	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
@@ -982,9 +1072,8 @@ static void TestPublicationsFileBasedPolicy_OK_WithSuitablePublication(CuTest* t
 	context->userData.extendingAllowed = true;
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_OK && result->finalResult.errorCode == VER_ERR_NONE);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -999,6 +1088,11 @@ static void TestPublicationsFileBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
 	KSI_Policy *policy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_FAIL,
+		VER_ERR_PUB_1,
+		"KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse"
+	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
@@ -1027,9 +1121,8 @@ static void TestPublicationsFileBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
 	context->userData.extendingAllowed = true;
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_FAIL && result->finalResult.errorCode == VER_ERR_PUB_1);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -1045,6 +1138,11 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithPublicationRecord(CuTe
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PublicationRecord *tempRec = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_OK,
+		VER_ERR_NONE,
+		"KSI_VerificationRule_UserProvidedPublicationVerification"
+	};
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
 	KSI_LOG_debug(ctx, __FUNCTION__);
@@ -1066,9 +1164,8 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithPublicationRecord(CuTe
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && context->userData.userPublication != NULL);
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_OK && result->finalResult.errorCode == VER_ERR_NONE);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_PublicationRecord_free(tempRec);
@@ -1086,6 +1183,11 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureAfterPublicat
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_Integer *mockTime = NULL;
 	KSI_Signature *sig = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_NA,
+		VER_ERR_GEN_2,
+		"KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification"
+	};
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_SIGNATURE_FILE_WITH_PUBLICATION  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 #define TEST_TIMESTAMP      1396608816
@@ -1118,9 +1220,8 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureAfterPublicat
 	CuAssert(tc, "Unable to set publication time.", res == KSI_OK);
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_NA && result->finalResult.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_PublicationRecord_free(tempRec);
@@ -1140,6 +1241,11 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureBeforePublica
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_Signature *sig = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_NA,
+		VER_ERR_GEN_2,
+		"KSI_VerificationRule_ExtendingPermittedVerification"
+	};
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_SIGNATURE_FILE_WITH_PUBLICATION  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
@@ -1165,9 +1271,8 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureBeforePublica
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && context->userData.userPublication != NULL);
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_NA && result->finalResult.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_PublicationRecord_free(tempRec);
@@ -1186,6 +1291,11 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithoutPublicationRecord(C
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_Signature *sig = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_OK,
+		VER_ERR_NONE,
+		"KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash"
+	};
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_SIGNATURE_FILE_WITH_PUBLICATION  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
@@ -1213,9 +1323,8 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithoutPublicationRecord(C
 	context->userData.extendingAllowed = true;
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_OK && result->finalResult.errorCode == VER_ERR_NONE);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_PublicationRecord_free(tempRec);
@@ -1234,6 +1343,11 @@ static void TestUserProvidedPublicationBasedPolicy_FAIL_AfterExtending(CuTest* t
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_Signature *sig = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_FAIL,
+		VER_ERR_PUB_1,
+		"KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse"
+	};
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 #define TEST_SIGNATURE_FILE_WITH_PUBLICATION  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
@@ -1265,9 +1379,8 @@ static void TestUserProvidedPublicationBasedPolicy_FAIL_AfterExtending(CuTest* t
 	context->userData.extendingAllowed = true;
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_FAIL && result->finalResult.errorCode == VER_ERR_PUB_1);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_PublicationRecord_free(tempRec);
@@ -1286,6 +1399,11 @@ static void TestFallbackPolicy_KeyBased_NA_CalendarBased_OK(CuTest* tc) {
 	KSI_Policy *fallbackPolicy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_OK,
+		VER_ERR_NONE,
+		"KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime"
+	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
@@ -1314,9 +1432,8 @@ static void TestFallbackPolicy_KeyBased_NA_CalendarBased_OK(CuTest* tc) {
 	context->userData.sig->calendarChain = NULL;
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_OK && result->finalResult.errorCode == VER_ERR_NONE);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	context->ctx->publicationsFile = NULL;
@@ -1333,6 +1450,11 @@ static void TestFallbackPolicy_CalendarBased_OK_KeyBased_NA(CuTest* tc) {
 	KSI_Policy *fallbackPolicy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_OK,
+		VER_ERR_NONE,
+		"KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime"
+	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
@@ -1361,9 +1483,8 @@ static void TestFallbackPolicy_CalendarBased_OK_KeyBased_NA(CuTest* tc) {
 	context->userData.sig->calendarChain = NULL;
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_OK && result->finalResult.errorCode == VER_ERR_NONE);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	context->ctx->publicationsFile = NULL;
@@ -1380,6 +1501,11 @@ static void TestFallbackPolicy_KeyBased_NA_CalendarBased_FAIL(CuTest* tc) {
 	KSI_Policy *fallbackPolicy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_FAIL,
+		VER_ERR_CAL_2,
+		"KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash"
+	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 
@@ -1408,9 +1534,8 @@ static void TestFallbackPolicy_KeyBased_NA_CalendarBased_FAIL(CuTest* tc) {
 	context->userData.sig->calendarChain = NULL;
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_FAIL && result->finalResult.errorCode == VER_ERR_CAL_2);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	context->ctx->publicationsFile = NULL;
@@ -1427,6 +1552,11 @@ static void TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA(CuTest* tc) {
 	KSI_Policy *fallbackPolicy = NULL;
 	VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
+	KSI_PolicyResult expected = {
+		VER_RES_NA,
+		VER_ERR_GEN_2,
+		"KSI_VerificationRule_CalendarHashChainExistence"
+	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 
@@ -1455,9 +1585,8 @@ static void TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA(CuTest* tc) {
 	context->userData.sig->calendarChain = NULL;
 
 	res = KSI_Policy_verify(policy, context, &result);
-	KSI_LOG_debug(ctx, "Policy verification res = %i, result = %i, error = %i", res, result->finalResult.resultCode, result->finalResult.errorCode);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == VER_RES_NA && result->finalResult.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	context->ctx->publicationsFile = NULL;
