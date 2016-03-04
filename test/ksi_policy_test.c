@@ -172,7 +172,7 @@ static void TestSingleRulePolicy(CuTest* tc) {
 		{singleRule5, KSI_INVALID_ARGUMENT,	VER_RES_NA,		VER_ERR_GEN_2},
 	};
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -242,7 +242,7 @@ static void TestBasicRulesPolicy(CuTest* tc) {
 		{basicRules4, KSI_INVALID_ARGUMENT,	VER_RES_NA,		VER_ERR_GEN_2},
 	};
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -356,7 +356,7 @@ static void TestCompositeRulesPolicy(CuTest* tc) {
 		{compositeRule12,	KSI_OK,					VER_RES_OK,		VER_ERR_PUB_1}
 	};
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -409,7 +409,7 @@ static void TestCalendarBasedPolicy_OK_WithPublicationRecord(CuTest* tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 #define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createCalendarBased(ctx, &policy);
@@ -448,7 +448,7 @@ static void TestCalendarBasedPolicy_FAIL_WithPublicationRecord(CuTest* tc) {
 #define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createCalendarBased(ctx, &policy);
@@ -487,7 +487,7 @@ static void TestCalendarBasedPolicy_OK_WithoutPublicationRecord(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createCalendarBased(ctx, &policy);
@@ -526,7 +526,7 @@ static void TestCalendarBasedPolicy_FAIL_WithoutPublicationRecord(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createCalendarBased(ctx, &policy);
@@ -565,7 +565,7 @@ static void TestCalendarBasedPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createCalendarBased(ctx, &policy);
@@ -607,7 +607,7 @@ static void TestCalendarBasedPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createCalendarBased(ctx, &policy);
@@ -648,7 +648,7 @@ static void TestKeyBasedPolicy_NA_WithoutCalendarHashChain(CuTest* tc) {
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createKeyBased(ctx, &policy);
@@ -685,7 +685,7 @@ static void TestKeyBasedPolicy_NA_WithoutCalendarAuthenticationRecord(CuTest* tc
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-calendar-authentication-record-missing.ksig"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createKeyBased(ctx, &policy);
@@ -719,7 +719,7 @@ static void TestKeyBasedPolicy_FAIL_WithCalendarAuthenticationRecord(CuTest* tc)
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-calendar-authentication-record-hash.ksig"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createKeyBased(ctx, &policy);
@@ -754,7 +754,7 @@ static void TestKeyBasedPolicy_FAIL_WithoutCertificate(CuTest* tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications-one-cert-one-publication-record-with-wrong-hash.tlv"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createKeyBased(ctx, &policy);
@@ -796,7 +796,7 @@ static void TestKeyBasedPolicy_FAIL_WithCertificate(CuTest* tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/signature-cal-auth-wrong-signing-value.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createKeyBased(ctx, &policy);
@@ -838,7 +838,7 @@ static void TestKeyBasedPolicy_OK(CuTest* tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createKeyBased(ctx, &policy);
@@ -880,7 +880,7 @@ static void TestPublicationsFileBasedPolicy_OK_WithPublicationRecord(CuTest* tc)
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createPublicationsFileBased(ctx, &policy);
@@ -922,7 +922,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithPublicationRecord(CuTest* tc)
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.15042014.tlv"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createPublicationsFileBased(ctx, &policy);
@@ -964,7 +964,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithoutSuitablePublication(CuTest
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.15042014.tlv"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createPublicationsFileBased(ctx, &policy);
@@ -1006,7 +1006,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithSuitablePublication(CuTest* t
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createPublicationsFileBased(ctx, &policy);
@@ -1049,7 +1049,7 @@ static void TestPublicationsFileBasedPolicy_OK_WithSuitablePublication(CuTest* t
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createPublicationsFileBased(ctx, &policy);
@@ -1098,7 +1098,7 @@ static void TestPublicationsFileBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createPublicationsFileBased(ctx, &policy);
@@ -1146,7 +1146,7 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithPublicationRecord(CuTe
 	};
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createUserProvidedPublicationBased(ctx, &policy);
@@ -1192,7 +1192,7 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureAfterPublicat
 #define TEST_SIGNATURE_FILE_WITH_PUBLICATION  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 #define TEST_TIMESTAMP      1396608816
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createUserProvidedPublicationBased(ctx, &policy);
@@ -1249,7 +1249,7 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureBeforePublica
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_SIGNATURE_FILE_WITH_PUBLICATION  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createUserProvidedPublicationBased(ctx, &policy);
@@ -1298,7 +1298,7 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithoutPublicationRecord(C
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_SIGNATURE_FILE_WITH_PUBLICATION  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createUserProvidedPublicationBased(ctx, &policy);
@@ -1350,7 +1350,7 @@ static void TestUserProvidedPublicationBasedPolicy_FAIL_AfterExtending(CuTest* t
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 #define TEST_SIGNATURE_FILE_WITH_PUBLICATION  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createUserProvidedPublicationBased(ctx, &policy);
@@ -1404,7 +1404,7 @@ static void TestFallbackPolicy_KeyBased_NA_CalendarBased_OK(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createKeyBased(ctx, &policy);
@@ -1455,7 +1455,7 @@ static void TestFallbackPolicy_CalendarBased_OK_KeyBased_NA(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createCalendarBased(ctx, &policy);
@@ -1506,7 +1506,7 @@ static void TestFallbackPolicy_KeyBased_NA_CalendarBased_FAIL(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createKeyBased(ctx, &policy);
@@ -1557,7 +1557,7 @@ static void TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 
-	KSI_LOG_debug(ctx, __FUNCTION__);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_Policy_createCalendarBased(ctx, &policy);
