@@ -1,3 +1,4 @@
+* IMPROVEMENT: Added signature verification according to policies.
 * IMPROVEMENT: Created KSI_HmacHasher interface for incremental HMAC computation.
 
 Version 3.7
