@@ -90,7 +90,7 @@ default:
 	nmake $(MODEL) $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
 	cd ..\..
 
-all: ver libraries example tests
+all: version-h libraries example tests
 
 libraries: libMT libMTd libMD libMDd dllMT dllMTd dllMD dllMDd
 
@@ -121,7 +121,7 @@ dllMD:
 dllMDd:
 	nmake DLL=dll RTL=MDd $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
 
-ver:
+version-h:
 	mkversion_h.bat $(VERSION_FILE) $(VERSION_H)
 
 example: $(DLL)$(RTL)
