@@ -60,7 +60,7 @@ doc-zip: doc
 # yum install python-pip
 # pip install gcovr
 
-coverage-base: clean
+coverage-base: clean version-h
 	make check CFLAGS="-g -fprofile-arcs -ftest-coverage -fPIC -O0"
 	./test/runner ./test
 
