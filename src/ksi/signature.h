@@ -358,6 +358,16 @@ extern "C" {
 	void KSI_AggregationHashChain_free(KSI_AggregationHashChain *aggr);
 	int KSI_AggregationHashChain_new(KSI_CTX *ctx, KSI_AggregationHashChain **out);
 
+	/**
+	 * Aggregate the aggregation chain.
+	 * \param[in]	aggr		The aggregation chain.
+	 * \param[in]	startLevel	The level of the first chain link.
+	 * \param[out]	endLevel	The level of the root node. Can be NULL.
+	 * \param[out]	root		Pointer to the receiving pointer. Can be NULL.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_AggregationHashChain_aggregate(const KSI_AggregationHashChain *aggr, int startLevel, int *endLevel, KSI_DataHash **root);
+
 	int KSI_AggregationHashChain_getAggregationTime(const KSI_AggregationHashChain *aggr, KSI_Integer **aggregationTime);
 	int KSI_AggregationHashChain_getChainIndex(const KSI_AggregationHashChain * aggr, KSI_LIST(KSI_Integer) **chainIndex);
 	int KSI_AggregationHashChain_getInputData(const KSI_AggregationHashChain * aggr, KSI_OctetString **inputData);

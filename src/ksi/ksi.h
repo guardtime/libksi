@@ -107,6 +107,10 @@ enum KSI_StatusCode {
 	 * The PKI signature is not trusted by the API.
 	 */
 	KSI_PKI_CERTIFICATE_NOT_TRUSTED = 0x109,
+	/**
+	 * The objects used are in an invalid state.
+	 */
+	KSI_INVALID_STATE = 0x10a,
 /* SYSTEM ERRORS */
 	/**
 	 * Out of memory.

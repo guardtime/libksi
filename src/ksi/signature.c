@@ -118,6 +118,34 @@ void KSI_AggregationHashChain_free(KSI_AggregationHashChain *aggr) {
 	}
 }
 
+int KSI_AggregationHashChain_aggregate(const KSI_AggregationHashChain *aggr, int startLevel, int *endLevel, KSI_DataHash **root) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (aggr == NULL || startLevel < 0 || startLevel > 0xff) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(aggr->ctx);
+
+	if (aggr->aggrHashId == NULL || aggr->chain == NULL || aggr->inputHash == NULL) {
+		KSI_pushError(aggr->ctx, res = KSI_INVALID_STATE, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_HashChain_aggregate(aggr->ctx, aggr->chain, aggr->inputHash, startLevel, KSI_Integer_getUInt64(aggr->aggrHashId), endLevel, root);
+	if (res != KSI_OK) {
+		KSI_pushError(aggr->ctx, res = KSI_INVALID_STATE, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 int KSI_AggregationHashChain_new(KSI_CTX *ctx, KSI_AggregationHashChain **out) {
 	KSI_AggregationHashChain *tmp = NULL;
 	int res;
@@ -2220,7 +2248,7 @@ static int verifyInternallyAggregationChain(KSI_Signature *sig) {
 			}
 		}
 
-		res = KSI_HashChain_aggregate(aggregationChain->ctx, aggregationChain->chain, aggregationChain->inputHash, level, (int)KSI_Integer_getUInt64(aggregationChain->aggrHashId), &level, &tmpHash);
+		res = KSI_AggregationHashChain_aggregate(aggregationChain, level, &level, &tmpHash);
 		if (res != KSI_OK) goto cleanup;
 
 		/* TODO! Instead of freeing the object - reuse it */
