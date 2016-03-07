@@ -328,7 +328,7 @@ static int publicationFileReceive(KSI_RequestHandle *handle) {
 	int res;
 	FsClientCtx *fs = NULL;
 	size_t count = 0;
-	size_t size = 0;
+	long int size = 0;
 	unsigned char *buffer = NULL;
 	FILE *f = NULL;
 
@@ -356,7 +356,7 @@ static int publicationFileReceive(KSI_RequestHandle *handle) {
 		goto cleanup;
 	}
 	size = ftell(f);
-	if (size < 0) {
+    if (size < 0) {
 		KSI_pushError(handle->ctx, res = KSI_IO_ERROR, NULL);
 		goto cleanup;
 	}

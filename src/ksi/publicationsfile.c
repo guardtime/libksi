@@ -417,7 +417,7 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 	const unsigned char *buf = NULL;
 	size_t buf_len = 0;
 	KSI_TLV *tlv = NULL;
-	unsigned char *tmp = NULL;
+    char *tmp = NULL;
 	size_t tmp_len = 0;
 	size_t sig_len;
 
@@ -476,7 +476,7 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 	memcpy(tmp + sizeof(PUB_FILE_HEADER_ID) - 1, buf, buf_len);
 
 	if (pubFile->raw != NULL) KSI_free(pubFile->raw);
-	pubFile->raw = tmp;
+	pubFile->raw = (unsigned char *)tmp;
 	pubFile->raw_len = tmp_len;
 	pubFile->signedDataLength = tmp_len - sig_len;
 	tmp = NULL;
