@@ -700,7 +700,7 @@ static void testLocalAggregationSigning(CuTest* tc) {
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
 
-	res = KSI_Signature_createAggregated(ctx, hsh, 4, &sig);
+	res = KSI_Signature_signAggregated(ctx, hsh, 4, &sig);
 	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_verify(sig, NULL);

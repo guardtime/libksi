@@ -150,7 +150,13 @@ extern "C" {
 	 * recomended.
 	 * \see #KSI_createSignature, KSI_Signature_free
 	 */
-	int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature);
+	int KSI_Signature_sign(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature);
+
+	/**
+	 * \deprecated This function is deprecated and #KSI_Signature_sign should be used instead.
+	 * \see #KSI_Signature_sign
+	 */
+	KSI_FN_DEPRECATED(int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature));
 
 	/**
 	 * This function signs the given root hash value (\c rootHash) with the aggregation level (\c rootLevel)
@@ -164,7 +170,13 @@ extern "C" {
 	 * error code).
 	 * \see #KSI_createSignature, KSI_Signature_create, KSI_Signature_free.
 	 */
-	int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature);
+	int KSI_Signature_signAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature);
+
+	/**
+	 * \deprecated This function is deprecated and #KSI_Signature_signAggregated should be used instead.
+	 * \see #KSI_Signature_signAggregated
+	 */
+	KSI_FN_DEPRECATED(int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature));
 
 	/**
 	 * This function extends the signature to the given publication \c pubRec. If \c pubRec is \c NULL the signature is

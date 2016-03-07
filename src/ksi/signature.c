@@ -1483,8 +1483,7 @@ cleanup:
 	return res;
 }
 
-
-int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature) {
+int KSI_Signature_signAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature) {
 	int res;
 	KSI_RequestHandle *handle = NULL;
 	KSI_AggregationResp *response = NULL;
@@ -1548,8 +1547,17 @@ cleanup:
 	return res;
 }
 
+int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature) {
+	return KSI_Signature_signAggregated(ctx, rootHash, rootLevel, signature);
+}
+
+
+int KSI_Signature_sign(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature) {
+	return KSI_Signature_signAggregated(ctx, hsh, 0, signature);
+}
+
 int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature) {
-	return KSI_Signature_createAggregated(ctx, hsh, 0, signature);
+	return KSI_Signature_sign(ctx, hsh, signature);
 }
 
 int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *to, KSI_Signature **extended) {

@@ -517,7 +517,7 @@ int KSI_createSignature(KSI_CTX *ctx, KSI_DataHash *dataHash, KSI_Signature **si
 		goto cleanup;
 	}
 
-	res = KSI_Signature_create(ctx, dataHash, &tmp);
+	res = KSI_Signature_sign(ctx, dataHash, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx,res, NULL);
 		goto cleanup;
