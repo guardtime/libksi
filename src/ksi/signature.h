@@ -359,6 +359,15 @@ extern "C" {
 	int KSI_AggregationHashChain_new(KSI_CTX *ctx, KSI_AggregationHashChain **out);
 
 	/**
+	 * This function appends the aggregation chain to the signature. This function also updates
+	 * the aggregation time and chain index.
+	 * \param[in]	sig			KSI signature.
+	 * \param[in]	aggr		Aggregation chain.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHashChain *aggr);
+
+	/**
 	 * Aggregate the aggregation chain.
 	 * \param[in]	aggr		The aggregation chain.
 	 * \param[in]	startLevel	The level of the first chain link.

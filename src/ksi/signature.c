@@ -118,6 +118,102 @@ void KSI_AggregationHashChain_free(KSI_AggregationHashChain *aggr) {
 	}
 }
 
+int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHashChain *aggr) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Integer *pAggrTm = NULL;
+	KSI_AggregationHashChain *pCurrent = NULL;
+	size_t listLen;
+	size_t i;
+	KSI_TLV *tlv = NULL;
+
+	if (sig == NULL || aggr == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(sig->ctx);
+
+	/* Get and update the aggregation time. */
+	res = KSI_Signature_getSigningTime(sig, &pAggrTm);
+	if (res != KSI_OK) {
+		KSI_pushError(sig->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	aggr->aggregationTime = KSI_Integer_ref(pAggrTm);
+
+	/* Update the aggregation chain. */
+	listLen = KSI_AggregationHashChainList_length(sig->aggregationChainList);
+	if (listLen == 0) {
+		KSI_pushError(sig->ctx, res = KSI_INVALID_STATE, "Signature does not contain any aggregation hash chains.");
+		goto cleanup;
+	}
+
+	/* Just make sure there is a chain index present. */
+	if (aggr->chainIndex == NULL) {
+		KSI_pushError(sig->ctx, res = KSI_INVALID_STATE, "The aggregation chain does not contain a valid chain index.");
+		goto cleanup;
+	}
+
+	/* We assume the aggregation hash chain is ordered and the first aggregation chain is the one
+	 * with the longest chain index.
+	 */
+	res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &pCurrent);
+	if (res != KSI_OK) {
+		KSI_pushError(sig->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Traverse the chain index from back to forth, and add the values to the begin of the
+	 * aggregation chain.
+	 */
+	for (i = KSI_IntegerList_length(pCurrent->chainIndex); i > 0; i--) {
+		KSI_Integer *tmp = NULL;
+
+		res = KSI_IntegerList_elementAt(pCurrent->chainIndex, i - 1, &tmp);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_IntegerList_insertAt(aggr->chainIndex, 0, KSI_Integer_ref(tmp));
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+
+	/* Prepend the aggregation chain to the signature. */
+	res = KSI_AggregationHashChainList_insertAt(sig->aggregationChainList, 0, KSI_AggregationHashChain_ref(aggr));
+	if (res != KSI_OK) {
+		KSI_pushError(sig->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/** Serialize and append the TLV structure to the signature. */
+	res = KSI_TlvTemplate_construct(sig->ctx, tlv, aggr, KSI_TLV_TEMPLATE(KSI_AggregationHashChain));
+	if (res != KSI_OK) {
+		KSI_pushError(sig->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_TLV_appendNestedTlv(sig->baseTlv, tlv);
+	if (res != KSI_OK) {
+		KSI_pushError(sig->ctx, res, NULL);
+		goto cleanup;
+	}
+	tlv = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_TLV_free(tlv);
+
+	return res;
+}
+
+
 int KSI_AggregationHashChain_aggregate(const KSI_AggregationHashChain *aggr, int startLevel, int *endLevel, KSI_DataHash **root) {
 	int res = KSI_UNKNOWN_ERROR;
 
