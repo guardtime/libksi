@@ -146,6 +146,50 @@ cleanup:
 	return res;
 }
 
+int KSI_AggregationHashChain_calculateShape(KSI_AggregationHashChain *chn, KSI_uint64_t *shape) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_uint64_t tmp;
+	size_t i;
+
+	if (chn == NULL || shape == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	/* Left pad the value with 1. */
+	tmp = 1;
+
+	i = KSI_HashChainLinkList_length(chn->chain);
+	if (i > (sizeof(KSI_uint64_t) << 3) + 1) {
+		res = KSI_INVALID_STATE;
+		goto cleanup;
+	}
+
+	for (; i > 0; i--) {
+		KSI_HashChainLink *p = NULL;
+		int isLeft;
+		res = KSI_HashChainLinkList_elementAt(chn->chain, i - 1, &p);
+		if (res != KSI_OK) goto cleanup;
+
+		tmp <<= 1;
+
+		res = KSI_HashChainLink_getIsLeft(p, &isLeft);
+		if (res != KSI_OK) goto cleanup;
+
+		if (!isLeft) {
+			tmp |= 1;
+		}
+	}
+
+	*shape = tmp;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 int KSI_AggregationHashChain_new(KSI_CTX *ctx, KSI_AggregationHashChain **out) {
 	KSI_AggregationHashChain *tmp = NULL;
 	int res;

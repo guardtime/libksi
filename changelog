@@ -1,5 +1,6 @@
 Version 3.8
 
+* IMPROVEMENT: Added KSI_AggregationHashChain_calculateShape.
 * IMPROVEMENT: KSI_HashChain_aggregate and KSI_HashChain_aggregateCalendar no longer require not NULL output parameters.
 * IMPROVEMENT: Added KSI_AggregationHashChain_aggregate function.
 * IMPROVEMENT: KSI_LIST may contain NULL values.

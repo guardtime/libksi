@@ -276,7 +276,7 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 	}
 
 	sprintf(logMsg, "Finished %s hash chain aggregation with output hash.", isCalendar ? "calendar": "aggregation");
-	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, logMsg, *hsh);
+	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, logMsg, hsh);
 
 	if (endLevel != NULL) *endLevel = level;
 	if (outputHash != NULL) *outputHash = hsh;

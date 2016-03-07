@@ -368,6 +368,17 @@ extern "C" {
 	 */
 	int KSI_AggregationHashChain_aggregate(const KSI_AggregationHashChain *aggr, int startLevel, int *endLevel, KSI_DataHash **root);
 
+	/**
+	 * This function will represent the shape of the aggregation chain. The bits represent the path from the root
+	 * of the tree to the location of a hash value as a sequence of moves from a parent node in the tree to either
+	 * the left or right child (bit values 0 and 1, respectively). Each bit sequence starts with a 1-bit to make
+	 * sure no left most 0-bits are lost.
+	 * \param[in]	chn			The aggregation chain.
+	 * \param[out]	shape		Pointer to the receiving variable.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_AggregationHashChain_calculateShape(KSI_AggregationHashChain *chn, KSI_uint64_t *shape);
+
 	int KSI_AggregationHashChain_getAggregationTime(const KSI_AggregationHashChain *aggr, KSI_Integer **aggregationTime);
 	int KSI_AggregationHashChain_getChainIndex(const KSI_AggregationHashChain * aggr, KSI_LIST(KSI_Integer) **chainIndex);
 	int KSI_AggregationHashChain_getInputData(const KSI_AggregationHashChain * aggr, KSI_OctetString **inputData);
