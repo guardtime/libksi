@@ -43,9 +43,10 @@ extern "C" {
 	 * \param[in]	client		Pointer to the http client.
 	 * \param[in]	path		Null-terminated file path.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \note It must be noted that access to metadata supported by some file systems is
-	 * limited by the use of function fopen. Alternate Data Streams (WIndows NTFS) and
-	 * Resource Forks (OS X HFS) are not supported.
+	 * \note It must be noted that access to metadata, supported by some file systems,
+	 * is limited by the use of function \c fopen. Alternate Data Streams (WIndows NTFS)
+	 * and Resource Forks (OS X HFS) may or may not be supported, depending on the
+	 * C standard library used in the application.
 	 */
 	int KSI_FsClient_setPublicationUrl(KSI_NetworkClient *client, const char *path);
 
@@ -57,9 +58,10 @@ extern "C" {
 	 * \param[in]	user		NULL-terminated user name
 	 * \param[in]	pass		NULL-terminated password
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \note It must be noted that access to metadata supported by some file systems is
-	 * limited by the use of function fopen. Alternate Data Streams (WIndows NTFS) and
-	 * Resource Forks (OS X HFS) are not supported.
+	 * \note It must be noted that access to metadata, supported by some file systems,
+	 * is limited by the use of function \c fopen. Alternate Data Streams (WIndows NTFS)
+	 * and Resource Forks (OS X HFS) may or may not be supported, depending on the
+	 * C standard library used in the application.
 	 */
 	int KSI_FsClient_setExtender(KSI_NetworkClient *client, const char *path, const char *user, const char *pass);
 
@@ -70,9 +72,10 @@ extern "C" {
 	 * \param[in]	user		NULL-terminated user name
 	 * \param[in]	pass		NULL-terminated password
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \note It must be noted that access to metadata supported by some file systems is
-	 * limited by the use of function fopen. Alternate Data Streams (WIndows NTFS) and
-	 * Resource Forks (OS X HFS) are not supported.
+	 * \note It must be noted that access to metadata, supported by some file systems,
+	 * is limited by the use of function \c fopen. Alternate Data Streams (WIndows NTFS)
+	 * and Resource Forks (OS X HFS) may or may not be supported, depending on the
+	 * C standard library used in the application.
 	 */
 	int KSI_FsClient_setAggregator(KSI_NetworkClient *client, const char *path, const char *user, const char *pass);
 

@@ -130,9 +130,10 @@ extern "C" {
 	 * \param[out]		ms			Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_MultiSignature_free
-	 * \note It must be noted that access to metadata supported by some file systems is
-	 * limited by the use of function fopen. Alternate Data Streams (WIndows NTFS) and
-	 * Resource Forks (OS X HFS) are not supported.
+	 * \note It must be noted that access to metadata, supported by some file systems,
+	 * is limited by the use of function \c fopen. Alternate Data Streams (WIndows NTFS)
+	 * and Resource Forks (OS X HFS) may or may not be supported, depending on the
+	 * C standard library used in the application.
 	 */
 	int KSI_MultiSignature_fromFile(KSI_CTX *ctx, const char *fileName, KSI_MultiSignature **ms);
 
