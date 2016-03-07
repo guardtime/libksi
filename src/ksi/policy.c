@@ -25,9 +25,9 @@ static void PolicyResult_free(KSI_PolicyResult *result);
 
 KSI_IMPLEMENT_LIST(KSI_PolicyResult, PolicyResult_free);
 
-static int Rule_verify(const Rule *rule, VerificationContext *context, KSI_RuleResult *result) {
+static int Rule_verify(const Rule *rule, VerificationContext *context, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_RuleResult ruleResult;
+	KSI_RuleVerificationResult ruleResult;
 	const Rule *currentRule = NULL;
 
 	if (rule == NULL || context == NULL || result == NULL) {
@@ -535,6 +535,28 @@ cleanup:
 	KSI_VerificationContext_free(tmp);
 	return res;
 }
+
+#define CONTEXT_DEFINE_SETTER(baseType, valueType, valueName, alias) int KSI_##baseType##_set##alias(baseType *o, valueType valueName)
+
+#define CONTEXT_IMPLEMENT_SETTER(baseType, valueType, valueName, alias)			\
+CONTEXT_DEFINE_SETTER(baseType, valueType, valueName, alias) {					\
+	int res = KSI_UNKNOWN_ERROR;											\
+	if (o == NULL) {														\
+		res = KSI_INVALID_ARGUMENT;											\
+		goto cleanup;														\
+	}																		\
+	o->userData.valueName = valueName;												\
+	res = KSI_OK;															\
+cleanup:																	\
+	return res;																\
+}																			\
+
+CONTEXT_IMPLEMENT_SETTER(VerificationContext, KSI_Signature *, sig, Signature);
+CONTEXT_IMPLEMENT_SETTER(VerificationContext, KSI_DataHash *, documentHash, DocumentHash);
+CONTEXT_IMPLEMENT_SETTER(VerificationContext, KSI_PublicationData *, userPublication, UserPublication);
+CONTEXT_IMPLEMENT_SETTER(VerificationContext, KSI_PublicationsFile *, userPublicationsFile, PublicationsFile);
+CONTEXT_IMPLEMENT_SETTER(VerificationContext, bool, extendingAllowed, ExtendingAllowed);
+CONTEXT_IMPLEMENT_SETTER(VerificationContext, KSI_uint64_t, docAggrLevel, AggregationLevel);
 
 void KSI_VerificationContext_free(VerificationContext *context) {
 	if (context != NULL) {

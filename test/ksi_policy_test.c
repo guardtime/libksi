@@ -29,6 +29,7 @@
 #include "../src/ksi/signature_impl.h"
 #include "../src/ksi/hashchain.h"
 #include "../src/ksi/publicationsfile_impl.h"
+#include "../src/ksi/hash_impl.h"
 
 extern KSI_CTX *ctx;
 
@@ -98,6 +99,21 @@ static void TestInvalidParams(CuTest* tc) {
 	res = KSI_VerificationContext_create(ctx, &context);
 	CuAssert(tc, "Create verification context failed", res == KSI_OK);
 
+	res = KSI_VerificationContext_setSignature(NULL, NULL);
+	CuAssert(tc, "Verification context NULL accepted", res == KSI_INVALID_ARGUMENT);
+
+	res = KSI_VerificationContext_setDocumentHash(NULL, NULL);
+	CuAssert(tc, "Verification context NULL accepted", res == KSI_INVALID_ARGUMENT);
+
+	res = KSI_VerificationContext_setUserPublication(NULL, NULL);
+	CuAssert(tc, "Verification context NULL accepted", res == KSI_INVALID_ARGUMENT);
+
+	res = KSI_VerificationContext_setPublicationsFile(NULL, NULL);
+	CuAssert(tc, "Verification context NULL accepted", res == KSI_INVALID_ARGUMENT);
+
+	res = KSI_VerificationContext_setExtendingAllowed(NULL, true);
+	CuAssert(tc, "Verification context NULL accepted", res == KSI_INVALID_ARGUMENT);
+
 	res = KSI_Policy_verify(NULL, context, &result);
 	CuAssert(tc, "Policy NULL accepted", res == KSI_INVALID_ARGUMENT);
 
@@ -115,6 +131,93 @@ static void TestInvalidParams(CuTest* tc) {
 	KSI_Policy_free(policy);
 	KSI_VerificationContext_free(context);
 	KSI_PolicyVerificationResult_free(result);
+}
+
+static void TestVerificationContext(CuTest* tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+#define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
+#define TEST_MOCK_IMPRINT   "01db27c0db0aebb8d3963c3a720985cedb600f91854cdb1e45ad631611c39284dd"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
+	int res;
+	VerificationContext *context = NULL;
+	KSI_Signature *sig = NULL;
+	KSI_Signature *extSig = NULL;
+	KSI_DataHash *hash = NULL;
+	KSI_DataHash *aggrHash = NULL;
+	KSI_PublicationData *userPublication = NULL;
+	KSI_PublicationsFile *userPublicationsFile = NULL;
+	KSI_PublicationsFile *publicationsFile = NULL;
+	static const char publicationString[] = "AAAAAA-CTJR3I-AANBWU-RY76YF-7TH2M5-KGEZVA-WLLRGD-3GKYBG-AM5WWV-4MCLSP-XPRDDI-UFMHBA";
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Create verification context failed", res == KSI_OK && context != NULL && context->ctx == ctx);
+	CuAssert(tc, "Non-empty verification context created",
+			 context->userData.sig == NULL &&
+			 context->userData.documentHash == NULL &&
+			 context->userData.userPublication == NULL &&
+			 context->userData.userPublicationsFile == NULL &&
+			 context->userData.extendingAllowed == false &&
+			 context->userData.docAggrLevel == 0 &&
+			 context->tempData.extendedSig == NULL &&
+			 context->tempData.publicationsFile == NULL &&
+			 context->tempData.aggregationOutputHash == NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && extSig != NULL);
+
+	res = KSITest_DataHash_fromStr(ctx, TEST_MOCK_IMPRINT, &hash);
+	CuAssert(tc, "Unable to create mock hash from string", res == KSI_OK && hash != NULL);
+
+	res = KSITest_DataHash_fromStr(ctx, TEST_MOCK_IMPRINT, &aggrHash);
+	CuAssert(tc, "Unable to create mock hash from string", res == KSI_OK && aggrHash != NULL);
+
+	res = KSI_PublicationData_fromBase32(ctx, publicationString, &userPublication);
+	CuAssert(tc, "Failed decoding publication string.", res == KSI_OK && userPublication != NULL);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &publicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && publicationsFile != NULL);
+
+	res = KSI_VerificationContext_setSignature(context, sig);
+	CuAssert(tc, "Failed to set signature", res == KSI_OK && context->userData.sig == sig);
+
+	res = KSI_VerificationContext_setDocumentHash(context, hash);
+	CuAssert(tc, "Failed to set document hash", res == KSI_OK && context->userData.documentHash == hash);
+
+	res = KSI_VerificationContext_setUserPublication(context, userPublication);
+	CuAssert(tc, "Failed to set user publication", res == KSI_OK && context->userData.userPublication == userPublication);
+
+	res = KSI_VerificationContext_setPublicationsFile(context, userPublicationsFile);
+	CuAssert(tc, "Failed to set publications file", res == KSI_OK && context->userData.userPublicationsFile == userPublicationsFile);
+
+	res = KSI_VerificationContext_setExtendingAllowed(context, true);
+	CuAssert(tc, "Failed to set extending allowed flag", res == KSI_OK && context->userData.extendingAllowed == true);
+
+	res = KSI_VerificationContext_setAggregationLevel(context, 10);
+	CuAssert(tc, "Failed to set extending allowed flag", res == KSI_OK && context->userData.docAggrLevel == 10);
+
+	context->tempData.extendedSig = extSig;
+	context->tempData.aggregationOutputHash = aggrHash;
+	context->tempData.publicationsFile = publicationsFile;
+
+	KSI_VerificationContext_clean(context);
+	CuAssert(tc, "Verification context not cleaned",
+			 context->tempData.extendedSig == NULL &&
+			 context->tempData.aggregationOutputHash == NULL &&
+			 context->tempData.publicationsFile == NULL);
+
+	KSI_VerificationContext_free(context);
+	KSI_PublicationsFile_free(publicationsFile);
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_SIGNATURE_FILE
+#undef TEST_MOCK_IMPRINT
+#undef TEST_PUBLICATIONS_FILE
 }
 
 #define DUMMY_VERIFIER(resValue, resultValue, errorValue) DummyRule_Return_##resValue##_##resultValue##_##errorValue
@@ -1599,6 +1702,7 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	suite->preTest = preTest;
 
 	SUITE_ADD_TEST(suite, TestInvalidParams);
+	SUITE_ADD_TEST(suite, TestVerificationContext);
 	SUITE_ADD_TEST(suite, TestSingleRulePolicy);
 	SUITE_ADD_TEST(suite, TestBasicRulesPolicy);
 	SUITE_ADD_TEST(suite, TestCompositeRulesPolicy);

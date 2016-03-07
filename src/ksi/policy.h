@@ -21,6 +21,8 @@
 #define	POLICY_H
 
 #include "types.h"
+#include "internal.h"
+#include "ksi.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -93,7 +95,6 @@ extern "C" {
 	};
 
 	typedef struct VerificationResult_st KSI_RuleVerificationResult;
-	typedef struct VerificationResult_st KSI_RuleResult;
 
 	typedef struct VerificationResult_st KSI_PolicyResult;
 
@@ -105,8 +106,6 @@ extern "C" {
 	} KSI_PolicyVerificationResult;
 
 	typedef struct VerificationPolicy_st KSI_Policy;
-
-	typedef struct VerificationPolicySimplified_st KSI_PolicySimplified;
 
 	typedef struct VerificationContext_st VerificationContext;
 
@@ -196,12 +195,66 @@ extern "C" {
 
 	/**
 	 * Creates a verification context.
-	 * \param[in]	ctx		KSI context.
-	 * \param[out]	context	Pointer to the receiving pointer.
+	 * \param[in]	ctx			KSI context.
+	 * \param[out]	context		Pointer to the receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_VerificationContext_create(KSI_CTX *ctx, VerificationContext **context);
+
+	/**
+	 * Sets signature for verification context.
+	 * \param[in]	context		Verification context to be configured.
+	 * \param[in]	sig			KSI signature to be verified.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationContext_setSignature(VerificationContext *context, KSI_Signature *sig);
+
+	/**
+	 * Sets document hash for verification context.
+	 * \param[in]	context		Verification context to be configured.
+	 * \param[in]	hash		Document hash to be used in verification.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationContext_setDocumentHash(VerificationContext *context, KSI_DataHash *hash);
+
+	/**
+	 * Sets user publication string for verification context.
+	 * \param[in]	context				Verification context to be configured.
+	 * \param[in]	userPublication		User publication string to be used in verification.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationContext_setUserPublication(VerificationContext *context, KSI_PublicationData *userPublication);
+
+	/**
+	 * Sets publications file for verification context.
+	 * \param[in]	context				Verification context to be configured.
+	 * \param[in]	publicationsFile	Publications file to be used in verification.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationContext_setPublicationsFile(VerificationContext *context, KSI_PublicationsFile *publicationsFile);
+
+	/**
+	 * Enables or disables extending in verification context.
+	 * \param[in]	context		Verification context to be configured.
+	 * \param[in]	allowed		Flag that allows extending in verification.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationContext_setExtendingAllowed(VerificationContext *context, bool allowed);
+
+	/**
+	 * Sets initial aggregation level in verification context.
+	 * \param[in]	context		Verification context to be configured.
+	 * \param[in]	level		Initial aggregation level in verification.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationContext_setAggregationLevel(VerificationContext *context, KSI_uint64_t level);
 
 	/**
 	 * Frees the verification context object, including all internal objects.
