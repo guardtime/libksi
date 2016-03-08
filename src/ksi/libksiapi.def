@@ -337,7 +337,11 @@ EXPORTS
     KSI_Signature_fromFile
     KSI_Signature_serialize
     KSI_Signature_create
+	KSI_Signature_sign
     KSI_Signature_createAggregated
+	KSI_Signature_signAggregated
+	KSI_Signature_signAggregationChain
+	KSI_Signature_appendAggregationChain
     KSI_Signature_extend
     KSI_Signature_extendTo
     KSI_Signature_getDocumentHash
@@ -432,6 +436,15 @@ EXPORTS
     KSI_ExtendResp_template DATA
     KSI_ExtendPdu_template DATA
     KSI_PublicationsFile_template DATA
+
+;tree_builder.h
+	KSI_TreeLeafHandle_free
+	KSI_TreeLeafHandle_getAggregationChain
+	KSI_TreeBuilder_new
+	KSI_TreeBuilder_free
+	KSI_TreeBuilder_addDataHash
+	KSI_TreeBuilder_addMetaData
+	KSI_TreeBuilder_close
 
 ;types.h
 EXPORTS
