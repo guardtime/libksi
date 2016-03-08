@@ -1000,7 +1000,7 @@ EXPORTS
 	KSI_Policy_createPublicationsFileBased
 	KSI_Policy_createUserProvidedPublicationBased
 	KSI_Policy_setFallback
-	KSI_Policy_verify
+	KSI_SignatureVerifier_verify
 	KSI_Policy_free
 	KSI_PolicyVerificationResult_free
 	KSI_VerificationContext_create

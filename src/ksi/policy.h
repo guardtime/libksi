@@ -115,7 +115,7 @@ extern "C" {
 	 * \param[out]	policy		Pointer to the receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_Policy_setFallback, #KSI_Policy_verify, #KSI_Policy_free
+	 * \see #KSI_Policy_setFallback, #KSI_SignatureVerifier_verify, #KSI_Policy_free
 	 */
 	int KSI_Policy_createCalendarBased(KSI_CTX *ctx, KSI_Policy **policy);
 
@@ -125,7 +125,7 @@ extern "C" {
 	 * \param[out]	policy		Pointer to the receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_Policy_setFallback, #KSI_Policy_verify, #KSI_Policy_free
+	 * \see #KSI_Policy_setFallback, #KSI_SignatureVerifier_verify, #KSI_Policy_free
 	 */
 	int KSI_Policy_createKeyBased(KSI_CTX *ctx, KSI_Policy **policy);
 
@@ -135,7 +135,7 @@ extern "C" {
 	 * \param[out]	policy		Pointer to the receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_Policy_setFallback, #KSI_Policy_verify, #KSI_Policy_free
+	 * \see #KSI_Policy_setFallback, #KSI_SignatureVerifier_verify, #KSI_Policy_free
 	 */
 	int KSI_Policy_createPublicationsFileBased(KSI_CTX *ctx, KSI_Policy **policy);
 
@@ -145,7 +145,7 @@ extern "C" {
 	 * \param[out]	policy		Pointer to the receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_Policy_setFallback, #KSI_Policy_verify, #KSI_Policy_free
+	 * \see #KSI_Policy_setFallback, #KSI_SignatureVerifier_verify, #KSI_Policy_free
 	 */
 	int KSI_Policy_createUserProvidedPublicationBased(KSI_CTX *ctx, KSI_Policy **policy);
 
@@ -156,7 +156,7 @@ extern "C" {
 	 * \param[in]	fallback	Fallback policy.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_Policy_createxxx, #KSI_Policy_verify, #KSI_Policy_free
+	 * \see #KSI_Policy_createxxx, #KSI_SignatureVerifier_verify, #KSI_Policy_free
 	 */
 	int KSI_Policy_setFallback(KSI_CTX *ctx, KSI_Policy *policy, KSI_Policy *fallback);
 
@@ -174,7 +174,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_Policy_setFallback, #KSI_Policy_free, #KSI_PolicyVerificationResult_free
 	 */
-	int KSI_Policy_verify(KSI_Policy *policy, VerificationContext *context, KSI_PolicyVerificationResult **result);
+	int KSI_SignatureVerifier_verify(KSI_Policy *policy, VerificationContext *context, KSI_PolicyVerificationResult **result);
 
 	/**
 	 * Frees the \c policy object. The function does not free any potential

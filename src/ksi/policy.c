@@ -436,7 +436,7 @@ cleanup:
 	return res;
 }
 
-int KSI_Policy_verify(KSI_Policy *policy, VerificationContext *context, KSI_PolicyVerificationResult **result) {
+int KSI_SignatureVerifier_verify(KSI_Policy *policy, VerificationContext *context, KSI_PolicyVerificationResult **result) {
 	KSI_Policy *currentPolicy;
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
