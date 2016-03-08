@@ -179,6 +179,18 @@ extern "C" {
 	KSI_FN_DEPRECATED(int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature));
 
 	/**
+	 * This function creates a new signature using the aggrehation hash chain as the input. The aggregation hash chain will
+	 * be included in the signature itself.
+	 * \param[in]		ctx			KSI context.
+	 * \param[in]		level		The level of the input hash of the aggregation hash chain.
+	 * \param[in]		chn			Aggregation hash chain.
+	 * \param[out]		signature	Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note The function does not consume the aggregation hash chain - the caller must free the resource.
+	 */
+	int KSI_Signature_signAggregationChain(KSI_CTX *ctx, int level, KSI_AggregationHashChain *chn, KSI_Signature **signature);
+
+	/**
 	 * This function extends the signature to the given publication \c pubRec. If \c pubRec is \c NULL the signature is
 	 * extended to the head of the calendar database. This function requires access to a working KSI extender or it will
 	 * fail with an error.
@@ -367,7 +379,18 @@ extern "C" {
 	 */
 	int KSI_Signature_replacePublicationRecord(KSI_Signature *sig, KSI_PublicationRecord *pubRec);
 
+	/**
+	 * Cleanup method for the aggregation hash chain.
+	 * \param[in]	aggr		Aggregation hash chain.
+	 */
 	void KSI_AggregationHashChain_free(KSI_AggregationHashChain *aggr);
+
+	/**
+	 * Aggregation hash chain constructor.
+	 * \param[in]	ctx			KSI context.
+	 * \param[out]	out			Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
 	int KSI_AggregationHashChain_new(KSI_CTX *ctx, KSI_AggregationHashChain **out);
 
 	/**

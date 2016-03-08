@@ -39,6 +39,7 @@ KSI_IMPORT_TLV_TEMPLATE(KSI_MetaData);
 
 struct KSI_MetaData_st {
 	KSI_CTX *ctx;
+	size_t ref;
 	KSI_OctetString *raw;
 	KSI_Utf8String *clientId;
 	KSI_Utf8String *machineId;
@@ -171,11 +172,12 @@ KSI_IMPLEMENT_LIST(KSI_PublicationsHeader, KSI_PublicationsHeader_free);
 KSI_IMPLEMENT_LIST(KSI_CertificateRecord, KSI_CertificateRecord_free);
 KSI_IMPLEMENT_LIST(KSI_RequestHandle, KSI_RequestHandle_free);
 
+KSI_IMPLEMENT_REF(KSI_MetaData);
 /**
  * KSI_MetaData
  */
 void KSI_MetaData_free(KSI_MetaData *t) {
-	if (t != NULL) {
+	if (t != NULL && --t->ref == 0) {
 		KSI_OctetString_free(t->raw);
 		KSI_Utf8String_free(t->clientId);
 		KSI_Utf8String_free(t->machineId);
@@ -195,6 +197,7 @@ int KSI_MetaData_new(KSI_CTX *ctx, KSI_MetaData **t) {
 	}
 
 	tmp->ctx = ctx;
+	tmp->ref = 1;
 	tmp->raw = NULL;
 	tmp->clientId = NULL;
 	tmp->machineId = NULL;
@@ -208,8 +211,39 @@ cleanup:
 	return res;
 }
 
+int KSI_MetaData_getRaw(const KSI_MetaData *metaData, KSI_OctetString **raw) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_OctetString *tmp = NULL;
+	unsigned char buf[0xffff + 4];
+	size_t len;
 
-KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_OctetString*, raw, Raw);
+	if (metaData == NULL || raw == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (metaData->raw != NULL) {
+		tmp = KSI_OctetString_ref(metaData->raw);
+	} else {
+		res = KSI_TlvTemplate_writeBytes(metaData->ctx, metaData, 0, 0, 0, KSI_TLV_TEMPLATE(KSI_MetaData), buf, sizeof(buf), &len, KSI_TLV_OPT_NO_HEADER);
+		if (res != KSI_OK) goto cleanup;
+
+		res = KSI_OctetString_new(metaData->ctx, buf, len, &tmp);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	*raw = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_OctetString_free(tmp);
+
+	return res;
+}
+
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Utf8String*, clientId, ClientId);
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Utf8String*, machineId, MachineId);
 KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Integer*, sequenceNr, SequenceNr);

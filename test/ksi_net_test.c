@@ -27,6 +27,7 @@
 #include "../src/ksi/net_uri_impl.h"
 #include "../src/ksi/net_tcp_impl.h"
 #include "ksi/net_uri.h"
+#include "ksi/tree_builder.h"
 
 extern KSI_CTX *ctx;
 
@@ -807,6 +808,83 @@ static void testUriSpiltAndCompose(CuTest* tc) {
 	KSI_NetworkClient_free(tmp);
 }
 
+static void testCreateAggregated(CuTest *tc) {
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2016-03-08-aggr_response.tlv"
+	int res;
+	const char data[] = "Test";
+	const char clientStr[] = "Dummy";
+
+	KSI_DataHash *docHash = NULL;
+	KSI_MetaData *metaData = NULL;
+	KSI_Utf8String *clientId = NULL;
+
+	KSI_AggregationHashChain *chn = NULL;
+
+	KSI_TreeBuilder *tb = NULL;
+	KSI_TreeLeafHandle *leaf = NULL;
+
+	unsigned char *raw = NULL;
+	size_t raw_len = 0;
+
+	KSI_Signature *sig = NULL;
+
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+
+	/* Create the hash for the initial document. */
+	res = KSI_DataHash_create(ctx, data, sizeof(data), KSI_HASHALG_SHA2_256, &docHash);
+	CuAssert(tc, "Unable to create data hash", res == KSI_OK && docHash != NULL);
+
+	/* Create client id object. */
+	res = KSI_Utf8String_new(ctx, clientStr, sizeof(clientStr), &clientId);
+	CuAssert(tc, "Unable to create client id", res == KSI_OK && clientId != NULL);
+
+	/* Create the metadata object. */
+	res = KSI_MetaData_new(ctx, &metaData);
+	CuAssert(tc, "Unable to create metadata", res == KSI_OK && metaData != NULL);
+
+	res = KSI_MetaData_setClientId(metaData, clientId);
+	CuAssert(tc, "Unable to set meta data client id", res == KSI_OK);
+
+	/* Create a tree builder. */
+	res = KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &tb);
+	CuAssert(tc, "Unable to create tree builder.", res == KSI_OK && tb != NULL);
+
+	/* Add the document hash as the first leaf. */
+	res = KSI_TreeBuilder_addDataHash(tb, docHash, 0, &leaf);
+	CuAssert(tc, "Unable to add leaf to the tree builder.", res == KSI_OK && leaf != NULL);
+
+	res = KSI_TreeBuilder_addMetaData(tb, metaData, 0, NULL);
+	CuAssert(tc, "Unable to add meta data to the tree builder.", res == KSI_OK);
+
+	/* Finalize the tree. */
+	res = KSI_TreeBuilder_close(tb);
+	CuAssert(tc, "Unable to close the tree.", res == KSI_OK);
+
+	/* Extract the aggregation hash chain. */
+	res = KSI_TreeLeafHandle_getAggregationChain(leaf, &chn);
+	CuAssert(tc, "Unable to extract the aggregation hash chain.", res == KSI_OK && chn != NULL);
+
+	res = KSI_Signature_signAggregationChain(ctx, 0, chn, &sig);
+	CuAssert(tc, "Unable to sign aggregation chain.", res == KSI_OK && sig != NULL);
+
+	/* Serialize the signature. */
+	res = KSI_Signature_serialize(sig, &raw, &raw_len);
+	CuAssert(tc, "Unable to serialize signature.", res == KSI_OK && raw != NULL && raw_len > 0);
+
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Serialized signature", raw, raw_len);
+
+	KSI_AggregationHashChain_free(chn);
+	KSI_TreeBuilder_free(tb);
+	KSI_TreeLeafHandle_free(leaf);
+	KSI_DataHash_free(docHash);
+	KSI_MetaData_free(metaData);
+	KSI_Signature_free(sig);
+	KSI_free(raw);
+
+#undef TEST_AGGR_RESPONSE_FILE
+}
+
 
 CuSuite* KSITest_NET_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
@@ -829,6 +907,7 @@ CuSuite* KSITest_NET_getSuite(void) {
 	SUITE_ADD_TEST(suite, testUriSpiltAndCompose);
 	SUITE_ADD_TEST(suite, testLocalAggregationSigning);
 	SUITE_ADD_TEST(suite, testExtendInvalidSignature);
+	SUITE_ADD_TEST(suite, testCreateAggregated);
 
 	return suite;
 }

@@ -32,7 +32,6 @@
 KSI_IMPORT_TLV_TEMPLATE(KSI_HashChainLink);
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarHashChain);
 
-
 KSI_IMPLEMENT_LIST(KSI_HashChainLink, KSI_HashChainLink_free);
 KSI_IMPLEMENT_LIST(KSI_CalendarHashChainLink, KSI_HashChainLink_free);
 KSI_IMPLEMENT_LIST(KSI_CalendarHashChain, KSI_CalendarHashChain_free);
@@ -83,6 +82,7 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 	KSI_DataHash *metaHash = NULL;
 	KSI_DataHash *hash = NULL;
 	KSI_OctetString *tmpOctStr = NULL;
+	unsigned char buf[0xffff + 4];
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || hsr == NULL || link == NULL) {
@@ -159,7 +159,7 @@ cleanup:
 	KSI_nofree(metaHash);
 	KSI_nofree(metaData);
 	KSI_nofree(imprint);
-	KSI_nofree(tmpOctStr);
+	KSI_OctetString_free(tmpOctStr);
 
 	return res;
 }

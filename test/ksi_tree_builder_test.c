@@ -40,7 +40,7 @@ static void testCreateTreeBuilder(CuTest* tc) {
 static void testTreeBuilderAddLeafs(CuTest* tc) {
 	int res;
 	KSI_TreeBuilder *builder = NULL;
-	char *data[] = { "test1", "test2", "test3", "test4", NULL};
+	char *data[] = { "test1", "test2", "test3", "test4", "test5", "test6", NULL};
 	size_t i;
 	KSI_DataHash *hsh = NULL;
 
@@ -51,7 +51,7 @@ static void testTreeBuilderAddLeafs(CuTest* tc) {
 		res = KSI_DataHash_create(ctx, data[i], strlen(data[i]), KSI_HASHALG_SHA2_256, &hsh);
 		CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
 
-		res = KSI_TreeBuilder_addLeaf(builder, hsh, i, NULL);
+		res = KSI_TreeBuilder_addDataHash(builder, hsh, i, NULL);
 		if (res != KSI_OK) {
 			KSI_ERR_statusDump(ctx, stderr);
 			exit(1);
@@ -62,8 +62,75 @@ static void testTreeBuilderAddLeafs(CuTest* tc) {
 		hsh = NULL;
 	}
 
+	res = KSI_TreeBuilder_close(builder);
+	CuAssert(tc, "Unable to close a valid builder.", res == KSI_OK);
+
 	KSI_TreeBuilder_free(builder);
 }
+
+static void testGetAggregationChain(CuTest* tc) {
+	int res;
+	KSI_TreeBuilder *builder = NULL;
+	char *data[] = { "test1", "test2", "test3", "test4", "test5", "test6", NULL};
+	KSI_TreeLeafHandle *handles[] = {NULL, NULL, NULL, NULL, NULL, NULL};
+	size_t i;
+	KSI_DataHash *hsh = NULL;
+	KSI_AggregationHashChain *chn = NULL;
+	KSI_DataHash *root = NULL;
+	KSI_DataHash *tmp = NULL;
+
+	res = KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
+	CuAssert(tc, "Unable to create tree builder.", res == KSI_OK && builder != NULL);
+
+	for (i = 0; data[i] != NULL; i++) {
+
+		res = KSI_DataHash_create(ctx, data[i], strlen(data[i]), KSI_HASHALG_SHA1, &hsh);
+		CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
+
+		res = KSI_TreeBuilder_addDataHash(builder, hsh, i, &handles[i]);
+		if (res != KSI_OK) {
+			KSI_ERR_statusDump(ctx, stderr);
+			exit(1);
+		}
+		CuAssert(tc, "Unable to add data hash to the tree builder", res == KSI_OK);
+
+		KSI_DataHash_free(hsh);
+		hsh = NULL;
+	}
+
+	/* Finalize the tree. */
+	res = KSI_TreeBuilder_close(builder);
+	CuAssert(tc, "Unable to close a valid builder.", res == KSI_OK);
+
+	/* Calculate the root hash for every aggr chain. */
+	for (i = 0; data[i] != NULL; i++) {
+		res = KSI_TreeLeafHandle_getAggregationChain(handles[i], &chn);
+		CuAssert(tc, "Unable to extract aggregation chain,", res == KSI_OK && chn != NULL);
+
+		res = KSI_AggregationHashChain_aggregate(chn, i, NULL, &tmp);
+		CuAssert(tc, "Unable to aggregate the aggregation hash chain.", res == KSI_OK && tmp != NULL);
+
+		if (root == NULL) {
+			root = tmp;
+		} else {
+			KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Expected root hash", root);
+			KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Actual root hash  ", tmp);
+			CuAssert(tc, "Root hashes mismatch", KSI_DataHash_equals(root, tmp));
+			KSI_DataHash_free(tmp);
+			tmp = NULL;
+		}
+
+		KSI_AggregationHashChain_free(chn);
+		chn = NULL;
+
+		KSI_TreeLeafHandle_free(handles[i]);
+	}
+
+
+	KSI_DataHash_free(root);
+	KSI_TreeBuilder_free(builder);
+}
+
 
 
 CuSuite* KSITest_TreeBuilder_getSuite(void)
@@ -72,6 +139,7 @@ CuSuite* KSITest_TreeBuilder_getSuite(void)
 
 	SUITE_ADD_TEST(suite, testCreateTreeBuilder);
 	SUITE_ADD_TEST(suite, testTreeBuilderAddLeafs);
+	SUITE_ADD_TEST(suite, testGetAggregationChain);
 
 	return suite;
 }

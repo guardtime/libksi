@@ -27,44 +27,11 @@
 extern "C" {
 #endif
 
-/**
- * An object representing an arbitrary node of an aggregation tree.
- */
-typedef struct KSI_TreeNode_st KSI_TreeNode;
+typedef struct KSI_TreeLeafHandle_st KSI_TreeLeafHandle;
 
-/**
- * TODO!
- * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
- */
-int KSI_TreeNode_new(KSI_CTX *ctx, KSI_DataHash *hash, unsigned level, KSI_TreeNode **node);
+void KSI_TreeLeafHandle_free(KSI_TreeLeafHandle *handle);
 
-/**
- *
- */
-void KSI_TreeNode_free(KSI_TreeNode *node);
-
-/**
- * TODO!
- * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
- */
-int KSI_TreeNode_join(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeNode *leftSibling, KSI_TreeNode *rightSibling, KSI_TreeNode **root);
-
-KSI_DEFINE_REF(KSI_TreeNode);
-
-KSI_DEFINE_LIST(KSI_TreeNode);
-
-/* =================== */
-
-/**
- * A structure to reference a leaf of an aggregation chain.
- */
-typedef struct KSI_TreeLeaf_st KSI_TreeLeaf;
-
-/**
- * Destructor for #KSI_TreeLeaf object.
- * \param[in]	leaf		Pointer to the object.
- */
-void KSI_TreeLeaf_free(KSI_TreeLeaf *leaf);
+int KSI_TreeLeafHandle_getAggregationChain(KSI_TreeLeafHandle *handle, KSI_AggregationHashChain **chain);
 
 /* =================== */
 
@@ -91,11 +58,34 @@ int KSI_TreeBuilder_new(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeBuilder **
 void KSI_TreeBuilder_free(KSI_TreeBuilder *builder);
 
 /**
- *
+ * Adds a new leaf to the tree being build by the #KSI_TreeBuilder object.
+ * \param[in]	builder		The builder.
+ * \param[in]	hsh			The data hash of the leaf.
+ * \param[in]	level		The level of the leaf.
+ * \param[out]	leaf		Pointer to the receiving pointer for the handle.
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
  * \see #KSI_TreeLeaf_free
  */
-int KSI_TreeBuilder_addLeaf(KSI_TreeBuilder *builder, KSI_DataHash *hsh, unsigned level, KSI_TreeLeaf **leaf);
+int KSI_TreeBuilder_addDataHash(KSI_TreeBuilder *builder, KSI_DataHash *hsh, int level, KSI_TreeLeafHandle **leaf);
+
+/**
+ * Adds a new leaf to the tree containing a meta-data value instead of the data hash as in #KSI_TreeBuilder_addDataHash.
+ * \param[in]	builder		The builder.
+ * \param[in]	metaData	The meta-data of the leaf.
+ * \param[in]	level		The level of the leaf.
+ * \param[out]	leaf		Pointer to the receiving pointer for the handle.
+ * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+ * \see #KSI_TreeLeaf_free
+ */
+int KSI_TreeBuilder_addMetaData(KSI_TreeBuilder *builder, KSI_MetaData *metaData, int level, KSI_TreeLeafHandle **leaf);
+
+/**
+ * This function finalizes the building of the tree. After calling this function no more leafs
+ * may be added to the computation and doing so would result in an error.
+ * \param[in]	buillder 	The builder.
+ * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+ */
+int KSI_TreeBuilder_close(KSI_TreeBuilder *builder);
 
 #ifdef __cplusplus
 }

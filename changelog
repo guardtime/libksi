@@ -1,5 +1,6 @@
 Version 3.8
 
+* IMPROVEMENT: Added support for local aggregation.
 * IMPROVEMENT: Functions KSI_Signature_create* are deprecated and KSI_Signature_sign will replace them.
 * IMPROVEMENT: Added function KSI_Signature_appendAggregationChain.
 * IMPROVEMENT: Added function KSI_AggregationHashChain_calculateShape.

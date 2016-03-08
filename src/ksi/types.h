@@ -178,6 +178,7 @@ int KSI_MetaData_setSequenceNr(KSI_MetaData *t, KSI_Integer *sequenceNr);
 int KSI_MetaData_setRequestTimeInMicros(KSI_MetaData *t, KSI_Integer *reqTime);
 int KSI_MetaData_toTlv(KSI_CTX *ctx, const KSI_MetaData *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 int KSI_MetaData_fromTlv(KSI_TLV *tlv, KSI_MetaData **metaData);
+KSI_DEFINE_REF(KSI_MetaData);
 /*
  * KSI_ExtendPdu
  */
