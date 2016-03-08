@@ -22,6 +22,7 @@
 
 #include "ksi.h"
 #include "verification.h"
+#include "internal.h"
 
 #ifdef __cplusplus
 extern "C" {

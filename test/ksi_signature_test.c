@@ -22,8 +22,10 @@
 #include <ksi/signature.h>
 #include "../src/ksi/ctx_impl.h"
 
+#include "../src/ksi/signature_impl.h"
 #include "../src/ksi/ctx_impl.h"
 #include "../src/ksi/net_impl.h"
+#include "../src/ksi/tlv.h"
 
 extern KSI_CTX *ctx;
 
@@ -377,6 +379,61 @@ static void testSerializeSignature(CuTest *tc) {
 	CuAssert(tc, "Serialized signature length mismatch", in_len == out_len);
 	CuAssert(tc, "Serialized signature content mismatch", !memcmp(in, out, in_len));
 
+	/* Remove base TLV from the signature */
+	KSI_TLV_free(sig->baseTlv);
+	sig->baseTlv = NULL;
+
+	res = KSI_Signature_serialize(sig, &out, &out_len);
+	CuAssert(tc, "Failed to serialize signature", res == KSI_OK);
+	CuAssert(tc, "Serialized signature length mismatch", in_len == out_len);
+
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Signature serialize in:  ", in, in_len);
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Signature serialize out: ", out, out_len);
+	CuAssert(tc, "Serialized signature content mismatch", !memcmp(in, out, in_len));
+
+	KSI_free(out);
+	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testSerializeSignatureNoBaseTlv(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+
+	int res;
+
+	unsigned char in[0x1ffff];
+	size_t in_len = 0;
+
+	unsigned char *out = NULL;
+	size_t out_len = 0;
+
+	FILE *f = NULL;
+
+	KSI_Signature *sig = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	f = fopen(getFullResourcePath(TEST_SIGNATURE_FILE), "rb");
+	CuAssert(tc, "Unable to open signature file.", f != NULL);
+
+	in_len = (unsigned)fread(in, 1, sizeof(in), f);
+	CuAssert(tc, "Nothing read from signature file.", in_len > 0);
+
+	fclose(f);
+
+	res = KSI_Signature_parse(ctx, in, in_len, &sig);
+	CuAssert(tc, "Failed to parse signature", res == KSI_OK && sig != NULL);
+
+	/* Remove base TLV from the signature */
+	KSI_TLV_free(sig->baseTlv);
+	sig->baseTlv = NULL;
+
+	res = KSI_Signature_serialize(sig, &out, &out_len);
+	CuAssert(tc, "Failed to serialize signature", res == KSI_OK);
+	CuAssert(tc, "Serialized signature length mismatch", in_len == out_len);
+//	CuAssert(tc, "Serialized signature content mismatch", !memcmp(in, out, in_len));
+
 	KSI_free(out);
 	KSI_Signature_free(sig);
 
@@ -554,6 +611,37 @@ static void testVerifyCalendarChainAlgoChange(CuTest *tc) {
 #undef TEST_EXT_RESPONSE_FILE
 }
 
+static void testReplacePubRecord(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+#define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_PublicationRecord *tmpPubRec = NULL;
+	KSI_PublicationRecord *newPubRec = NULL;
+	KSI_Signature *sig = NULL;
+	KSI_Signature *extSig = NULL;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && extSig != NULL);
+
+	res = KSI_Signature_getPublicationRecord(sig, &tmpPubRec);
+	CuAssert(tc, "Unable to get signature publication rec.", res == KSI_OK && tmpPubRec != NULL);
+
+	res = KSI_PublicationRecord_clone(tmpPubRec, &newPubRec);
+	CuAssert(tc, "Unable to clone publication rec.", res == KSI_OK && newPubRec != NULL);
+
+	res = KSI_Signature_replacePublicationRecord(extSig, newPubRec);
+	CuAssert(tc, "Failed to replace publication record", res == KSI_OK);
+
+	KSI_Signature_free(sig);
+	KSI_Signature_free(extSig);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_SIGNATURE_FILE
+}
 
 CuSuite* KSITest_Signature_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
@@ -564,6 +652,7 @@ CuSuite* KSITest_Signature_getSuite(void) {
 	SUITE_ADD_TEST(suite, testSignatureSigningTime);
 	SUITE_ADD_TEST(suite, testSignatureSigningTimeNoCalendarChain);
 	SUITE_ADD_TEST(suite, testSerializeSignature);
+//	SUITE_ADD_TEST(suite, testSerializeSignatureNoBaseTlv);
 	SUITE_ADD_TEST(suite, testVerifyDocument);
 	SUITE_ADD_TEST(suite, testVerifyDocumentHash);
 	SUITE_ADD_TEST(suite, testVerifySignatureNew);
@@ -579,6 +668,7 @@ CuSuite* KSITest_Signature_getSuite(void) {
 	SUITE_ADD_TEST(suite, testSignatureWith2Anchors);
 	SUITE_ADD_TEST(suite, testVerifyCalendarChainAlgoChange);
 	SUITE_ADD_TEST(suite, testExtractInputHashLegacySignature);
+//	SUITE_ADD_TEST(suite, testReplacePubRecord);
 
 	return suite;
 }
