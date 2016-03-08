@@ -27,6 +27,8 @@
 
 extern KSI_CTX *ctx;
 
+//#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+//#define TEST_EXTEND_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
 #define TEST_USER "anon"
 #define TEST_PASS "anon"
 
@@ -319,6 +321,28 @@ static void testSignatureSigningTime(CuTest *tc) {
 #undef TEST_SIGNATURE_FILE
 }
 
+static void testSignatureSigningTimeNoCalendarChain(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-only_aggr.ksig"
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_Integer *sigTime = NULL;
+	KSI_uint64_t utc = 0;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to read signature containing only aggregation chains from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_getSigningTime(sig, &sigTime);
+	CuAssert(tc, "Unable to get signing time from signature containing only aggregation chains.", res == KSI_OK && sigTime != NULL);
+
+	utc = KSI_Integer_getUInt64(sigTime);
+
+	CuAssert(tc, "Unexpected signature signing time.", utc == 1398866256);
+
+	KSI_Signature_free(sig);
+#undef TEST_SIGNATURE_FILE
+}
 
 static void testSerializeSignature(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
@@ -538,6 +562,7 @@ CuSuite* KSITest_Signature_getSuite(void) {
 
 	SUITE_ADD_TEST(suite, testLoadSignatureFromFile);
 	SUITE_ADD_TEST(suite, testSignatureSigningTime);
+	SUITE_ADD_TEST(suite, testSignatureSigningTimeNoCalendarChain);
 	SUITE_ADD_TEST(suite, testSerializeSignature);
 	SUITE_ADD_TEST(suite, testVerifyDocument);
 	SUITE_ADD_TEST(suite, testVerifyDocumentHash);

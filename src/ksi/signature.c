@@ -525,7 +525,7 @@ KSI_IMPLEMENT_LIST(KSI_AggregationHashChain, KSI_AggregationHashChain_free);
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_Signature)
 	KSI_TLV_COMPOSITE_LIST(0x0801, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Signature_getAggregationChainList, KSI_Signature_setAggregationChainList, KSI_AggregationHashChain, "aggr_chain")
-	KSI_TLV_COMPOSITE(0x0802, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Signature_getCalendarChain, KSI_Signature_setCalendarChain, KSI_CalendarHashChain, "cal_chain")
+	KSI_TLV_COMPOSITE(0x0802, KSI_TLV_TMPL_FLG_NONE, KSI_Signature_getCalendarChain, KSI_Signature_setCalendarChain, KSI_CalendarHashChain, "cal_chain")
 	KSI_TLV_COMPOSITE(0x0803, KSI_TLV_TMPL_FLG_MOST_ONE_G0, KSI_Signature_getPublicationRecord, KSI_Signature_setPublicationRecord, KSI_PublicationRecord, "pub_rec")
 	KSI_TLV_COMPOSITE(0x0804, KSI_TLV_TMPL_FLG_NONE, KSI_Signature_getAggregationAuthRecord, KSI_Signature_setAggregationAuthRecord, KSI_AggregationAuthRec, "aggr_auth_rec")
 	KSI_TLV_COMPOSITE(0x0805, KSI_TLV_TMPL_FLG_MOST_ONE_G0, KSI_Signature_getCalendarAuthRecord, KSI_Signature_setCalendarAuthRecord, KSI_CalendarAuthRec, "cal_auth_rec")
@@ -1926,29 +1926,26 @@ int KSI_Signature_getSigningTime(const KSI_Signature *sig, KSI_Integer **signTim
 		goto cleanup;
 	}
 
-	if (sig->calendarChain == NULL) {
-		KSI_pushError(sig->ctx, res = KSI_INVALID_FORMAT, NULL);
-		goto cleanup;
-	}
+	if (sig->calendarChain != NULL) {
+		res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &tmp);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+	} else {
+		KSI_AggregationHashChain *ptr = NULL;
 
-	res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &tmp);
-	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	if (tmp == NULL) {
-		res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &tmp);
+		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &ptr);
 		if (res != KSI_OK) {
 			KSI_pushError(sig->ctx, res, NULL);
 			goto cleanup;
 		}
 
-		if (tmp == NULL){
-			KSI_pushError(sig->ctx, res = KSI_INVALID_SIGNATURE, NULL);
+		res = KSI_AggregationHashChain_getAggregationTime(ptr, &tmp);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
 			goto cleanup;
 		}
-
 	}
 
 	*signTime = tmp;
