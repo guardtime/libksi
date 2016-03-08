@@ -872,7 +872,12 @@ static void testCreateAggregated(CuTest *tc) {
 	res = KSI_Signature_serialize(sig, &raw, &raw_len);
 	CuAssert(tc, "Unable to serialize signature.", res == KSI_OK && raw != NULL && raw_len > 0);
 
-	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Serialized signature", raw, raw_len);
+	KSI_Signature_free(sig);
+	sig = NULL;
+
+	/* Parse the signature. */
+	res = KSI_Signature_parse(ctx, raw, raw_len, &sig);
+	CuAssert(tc, "Unable to parse the serialized signature.", res == KSI_OK && sig != NULL);
 
 	KSI_AggregationHashChain_free(chn);
 	KSI_TreeBuilder_free(tb);
