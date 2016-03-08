@@ -1146,7 +1146,7 @@ int KSI_ExtendResp_verifyWithRequest(KSI_ExtendResp *resp, KSI_ExtendReq *req) {
 	if (req->publicationTime != NULL) {
 
 		if (!KSI_Integer_equals(tm, req->publicationTime)) {
-			KSI_pushError(resp->ctx, res = KSI_INVALID_ARGUMENT, "Aggregation time mismatch.");
+			KSI_pushError(resp->ctx, res = KSI_INVALID_ARGUMENT, "Publication time mismatch.");
 			goto cleanup;
 		}
 

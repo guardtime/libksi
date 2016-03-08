@@ -1,3 +1,5 @@
+* BUGFIX: Invalid and misleading exception message on response publication time check.
+
 Version 3.8
 
 * IMPROVEMENT: Added support for local aggregation.
