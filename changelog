@@ -18,6 +18,7 @@ Version 3.8
 * IMPROVEMENT: In case of no errors KSI_ERR_getBaseErrorMessag returns string indicating that there are no errors.
 * BUGFIX: KSI_ERR_getBaseErrorMessage error code returned by the output parameter fixed when error count is zero.
 * BUGFIX: KSI_DataHasher memory leak on immediate reset after open.
+* IMPROVEMENT: Added detailed coverage report in html format.
 * BUGFIX: Fixed HMAC for hash functions with other than 512 bit internal block size.
 
 Version 3.7
