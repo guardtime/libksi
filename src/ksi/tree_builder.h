@@ -27,13 +27,35 @@
 extern "C" {
 #endif
 
+/**
+ * \addtogroup treebuilder Tree Builder
+ * The tree builder is used create an aggregation tree locally. This can be used to create
+ * multiple signatures with a single aggregation request.
+ * @{
+ */
+
+/**
+ * The tree leaf handle is used to generate an aggregation hash chain for
+ * a specific leaf added to the tree builder.
+ */
 typedef struct KSI_TreeLeafHandle_st KSI_TreeLeafHandle;
 
+/**
+ * Free the tree leaf handle.
+ * \param[in]	handle		The tree leaf handle.
+ * \see #KSI_TreeBuilder_addDataHash and #KSI_TreeBuilder_addMetaData
+ */
 void KSI_TreeLeafHandle_free(KSI_TreeLeafHandle *handle);
 
+/**
+ * Generates an aggregation chain starting from the added leaf that the tree leaf handle
+ * is based on. The resulting object must be feed by the caller.
+ * \param[in]	handle		The tree leaf handle.
+ * \param[out]	chain		Pointer to the receiving pointer.
+ * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+ * \see #KSI_AggregationHashChain_free.
+ */
 int KSI_TreeLeafHandle_getAggregationChain(KSI_TreeLeafHandle *handle, KSI_AggregationHashChain **chain);
-
-/* =================== */
 
 /**
  * An object for building an aggregation tree on the fly.
@@ -64,7 +86,7 @@ void KSI_TreeBuilder_free(KSI_TreeBuilder *builder);
  * \param[in]	level		The level of the leaf.
  * \param[out]	leaf		Pointer to the receiving pointer for the handle.
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
- * \see #KSI_TreeLeaf_free
+ * \see #KSI_TreeLeafHandle_free
  */
 int KSI_TreeBuilder_addDataHash(KSI_TreeBuilder *builder, KSI_DataHash *hsh, int level, KSI_TreeLeafHandle **leaf);
 
@@ -75,7 +97,7 @@ int KSI_TreeBuilder_addDataHash(KSI_TreeBuilder *builder, KSI_DataHash *hsh, int
  * \param[in]	level		The level of the leaf.
  * \param[out]	leaf		Pointer to the receiving pointer for the handle.
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
- * \see #KSI_TreeLeaf_free
+ * \see #KSI_TreeLeafHandle_free
  */
 int KSI_TreeBuilder_addMetaData(KSI_TreeBuilder *builder, KSI_MetaData *metaData, int level, KSI_TreeLeafHandle **leaf);
 
@@ -87,6 +109,9 @@ int KSI_TreeBuilder_addMetaData(KSI_TreeBuilder *builder, KSI_MetaData *metaData
  */
 int KSI_TreeBuilder_close(KSI_TreeBuilder *builder);
 
+/**
+ * @}
+ */
 #ifdef __cplusplus
 }
 #endif
