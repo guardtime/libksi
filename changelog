@@ -1,3 +1,5 @@
+* IMPROVEMENT: Add preprocessor parseable version no.
+
 Version 3.8
 
 * IMPROVEMENT: KSI_LIST may contain NULL values.
