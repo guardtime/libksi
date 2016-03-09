@@ -417,7 +417,7 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 	const unsigned char *buf = NULL;
 	size_t buf_len = 0;
 	KSI_TLV *tlv = NULL;
-    char *tmp = NULL;
+    unsigned char *tmp = NULL;
 	size_t tmp_len = 0;
 	size_t sig_len;
 
@@ -462,7 +462,7 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 	 * internal and external buffer.
      */
 	tmp_len = buf_len + sizeof(PUB_FILE_HEADER_ID) - 1;
-	tmp = (char *) KSI_malloc(tmp_len);
+	tmp = (unsigned char *) KSI_malloc(tmp_len);
 	if (tmp == NULL) {
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
@@ -476,19 +476,19 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 	memcpy(tmp + sizeof(PUB_FILE_HEADER_ID) - 1, buf, buf_len);
 
 	if (pubFile->raw != NULL) KSI_free(pubFile->raw);
-	pubFile->raw = (unsigned char *)tmp;
+	pubFile->raw = tmp;
 	pubFile->raw_len = tmp_len;
 	pubFile->signedDataLength = tmp_len - sig_len;
 	tmp = NULL;
 
-	tmp = (char *) KSI_malloc(pubFile->raw_len);
+	tmp = (unsigned char *) KSI_malloc(pubFile->raw_len);
 	if (tmp == NULL) {
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
 	memcpy(tmp, pubFile->raw, pubFile->raw_len);
-	*raw = tmp;
+	*raw = (char *)tmp;
 	*raw_len = pubFile->raw_len;
 	tmp = NULL;
 

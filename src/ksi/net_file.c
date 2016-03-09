@@ -328,7 +328,8 @@ static int publicationFileReceive(KSI_RequestHandle *handle) {
 	int res;
 	FsClientCtx *fs = NULL;
 	size_t count = 0;
-	long int size = 0;
+    size_t size = 0;
+    long int tmp_size = 0;
 	unsigned char *buffer = NULL;
 	FILE *f = NULL;
 
@@ -355,11 +356,13 @@ static int publicationFileReceive(KSI_RequestHandle *handle) {
 		KSI_pushError(handle->ctx, res = KSI_IO_ERROR, NULL);
 		goto cleanup;
 	}
-	size = ftell(f);
-    if (size < 0) {
+    
+    tmp_size = ftell(f);
+    if (tmp_size < 0) {
 		KSI_pushError(handle->ctx, res = KSI_IO_ERROR, NULL);
 		goto cleanup;
 	}
+    size = tmp_size;
 
 	if (size > INT_MAX) {
 		KSI_pushError(handle->ctx, res = KSI_IO_ERROR, NULL);
