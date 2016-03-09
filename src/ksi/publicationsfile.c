@@ -417,7 +417,7 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 	const unsigned char *buf = NULL;
 	size_t buf_len = 0;
 	KSI_TLV *tlv = NULL;
-    unsigned char *tmp = NULL;
+	unsigned char *tmp = NULL;
 	size_t tmp_len = 0;
 	size_t sig_len;
 
