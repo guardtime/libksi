@@ -25,7 +25,6 @@ version=$(tr -d [:space:] <VERSION)
 autoreconf -if && \
 ./configure $* && \
 make clean && \
-make version-h && \
 make dist && \
 mkdir -p $BUILD_DIR/{BUILD,RPMS,SOURCES,SPECS,SRPMS,tmp} && \
 cp redhat/libksi.spec $BUILD_DIR/SPECS/ && \

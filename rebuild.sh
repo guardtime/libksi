@@ -30,7 +30,6 @@ echo Running configure script... && \
 ./configure $* && \
 echo Running make... && \
 make clean && \
-make version-h && \
 make && \
 make check && \
 make test \

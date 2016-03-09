@@ -60,7 +60,7 @@ doc-zip: doc
 # yum install python-pip
 # pip install gcovr
 
-coverage-base: clean version-h
+coverage-base: clean
 	make check CFLAGS="-g -fprofile-arcs -ftest-coverage -fPIC -O0"
 	./test/runner ./test
 
@@ -74,11 +74,8 @@ coverage-html: coverage-base
 
 coverage: clean coverage-xml coverage-html
 
-version-h:
-	./mkversion_h.sh VERSION ./src/ksi/version.h
-
 clean-local:
-	rm -fr ${ZIPDOC_DIR} converage coverage.xml coverage.info valgrind.xml test.log testsuite-xunit.xml 
+	rm -fr ${ZIPDOC_DIR} converage coverage.xml coverage.info valgrind.xml test.log testsuite-xunit.xml
 	rm -f ./src/ksi/version.h
 	$(MAKE) -C doc clean
 	$(MAKE) -C test clean
