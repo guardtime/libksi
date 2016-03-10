@@ -2113,6 +2113,9 @@ static int initPublicationsFile(KSI_VerificationResult *info, KSI_CTX *ctx) {
 	if (info->publicationsFile == NULL) {
 		res = KSI_receivePublicationsFile(ctx, &info->publicationsFile);
 		if (res != KSI_OK) goto cleanup;
+
+		res = KSI_verifyPublicationsFile(ctx, info->publicationsFile);
+		if (res != KSI_OK) goto cleanup;
 	}
 
 	res = KSI_OK;
@@ -2464,6 +2467,9 @@ static int verifyPublication(KSI_CTX *ctx, KSI_Signature *sig) {
 	}
 
 	res = KSI_receivePublicationsFile(ctx, &pubFile);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_verifyPublicationsFile(ctx, pubFile);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_PublicationsFile_findPublication(pubFile, sig->publication, &pubRec);

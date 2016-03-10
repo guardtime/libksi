@@ -1276,6 +1276,9 @@ static int extendUnextended(TimeMapper *tm, void *fctx) {
 			res = KSI_receivePublicationsFile(tm->calendarChain->ctx, &pubFile);
 			if (res != KSI_OK) goto cleanup;
 
+			res = KSI_verifyPublicationsFile(tm->calendarChain->ctx, pubFile);
+			if (res != KSI_OK) goto cleanup;
+
 			if (helper->pubRec != NULL) {
 				KSI_Integer *pubRecTime = NULL;
 				KSI_PublicationData *pubDat = NULL;

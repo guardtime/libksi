@@ -436,12 +436,6 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 			goto cleanup;
 		}
 
-		res = KSI_verifyPublicationsFile(ctx, tmp);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx,res, NULL);
-			goto cleanup;
-		}
-
 		ctx->publicationsFile = tmp;
 		tmp = NULL;
 
@@ -552,6 +546,11 @@ int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extend
 		goto cleanup;
 	}
 
+	res = KSI_verifyPublicationsFile(ctx, pubFile);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_Signature_getSigningTime(sig, &signingTime);
 	if (res != KSI_OK) {
