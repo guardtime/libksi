@@ -64,15 +64,52 @@ static int KSI_TreeNode_join(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeNode 
 
 KSI_DEFINE_REF(KSI_TreeNode);
 
-static void KSI_TreeNode_free(KSI_TreeNode *node) {
-	if (node != NULL && --node->ref == 0) {
-		KSI_DataHash_free(node->hash);
-		KSI_MetaData_free(node->metaData);
+static void KSI_TreeNode_cleanup(KSI_TreeNode *node) {
+	if (node != NULL &&
+			node->leftChild != NULL && node->leftChild->ref <= 1 &&
+			node->rightChild != NULL && node->rightChild->ref <= 1) {
+		/* We have confirmed, that both of the left and right children
+		 * are only referenced by this tree node thus we can free the memory.
+		 */
 		KSI_TreeNode_free(node->leftChild);
+		node->leftChild = NULL;
+
 		KSI_TreeNode_free(node->rightChild);
-		KSI_free(node);
+		node->rightChild = NULL;
 	}
 }
+
+/**
+ * This cleanup method does not only cleanup the downstream objects but also
+ * invokes #KSI_TreeNode_cleanup on the nodes parent if the reference count
+ * equals 1 - this indicates the parent is the only object referencing this
+ * one. We can free this object, if its sibling object is also only referenced
+ * by the common parent.
+ */
+static void KSI_TreeNode_free(KSI_TreeNode *node) {
+
+	if (node != NULL ) {
+		if (--node->ref == 0) {
+			if (node->parent != NULL) {
+				if (node->parent->leftChild == node)
+					node->parent->leftChild = NULL;
+				if (node->parent->rightChild == node)
+					node->parent->rightChild = NULL;
+			}
+			KSI_DataHash_free(node->hash);
+			KSI_MetaData_free(node->metaData);
+			KSI_TreeNode_free(node->leftChild);
+			KSI_TreeNode_free(node->rightChild);
+			KSI_free(node);
+		} else if (node->ref == 1) {
+			/* If the sibling node is also only referenced by the common
+			 * parent, this node will be freed.
+			 */
+			KSI_TreeNode_cleanup(node->parent);
+		}
+	}
+}
+
 
 static int KSI_TreeNode_new(KSI_CTX *ctx, KSI_DataHash *hash, KSI_MetaData *metaData, int level, KSI_TreeNode **node) {
 	int res = KSI_UNKNOWN_ERROR;
