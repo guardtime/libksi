@@ -1545,6 +1545,37 @@ cleanup:
 	return res;
 }
 
+int KSI_VerificationRule_CalendarAuthenticationRecordDoesNotExist(VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->userData.sig == NULL) {
+		VERIFICATION_RESULT(VER_RES_NA, VER_ERR_GEN_2);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_LOG_info(info->ctx, "Verifying calendar authentication record does not exist.");
+
+	if (info->userData.sig->calendarAuthRec != NULL) {
+		KSI_LOG_info(info->ctx, "Calendar authentication record is not missing.");
+		VERIFICATION_RESULT(VER_RES_NA, VER_ERR_GEN_2);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT(VER_RES_OK, VER_ERR_NONE);
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 static int initPublicationsFile(VerificationContext *verCtx) {
 	int res = KSI_UNKNOWN_ERROR;
 

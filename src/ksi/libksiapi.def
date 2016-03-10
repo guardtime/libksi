@@ -978,6 +978,7 @@ EXPORTS
     KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime
     KSI_VerificationRule_CalendarHashChainExistence
     KSI_VerificationRule_CalendarAuthenticationRecordExistence
+    KSI_VerificationRule_CalendarAuthenticationRecordDoesNotExist
     KSI_VerificationRule_CertificateExistence
     KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification
     KSI_VerificationRule_PublicationsFileContainsSignaturePublication

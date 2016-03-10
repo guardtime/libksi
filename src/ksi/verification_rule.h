@@ -249,6 +249,15 @@ extern "C" {
 	int KSI_VerificationRule_CalendarAuthenticationRecordExistence(VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_CalendarAuthenticationRecordDoesNotExist(VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
 	 * This rule ise used to check if publications file contains certificate with certificate id present in calendar
 	 * authentication record.
 	 *

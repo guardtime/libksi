@@ -83,26 +83,51 @@ cleanup:
 	return res;
 }
 
-const Rule rule1[] = {
-	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainDoesNotExist},
+const Rule noPublicationOrCalendarAuthenticationRecordRule[] = {
+	{RULE_TYPE_BASIC, KSI_VerificationRule_SignatureDoesNotContainPublication},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordDoesNotExist},
 	{RULE_TYPE_BASIC, NULL}
 };
 
-const Rule rule2[] = {
-	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainExistence},
-	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainInputHashVerification},
-	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainAggregationTime},
-	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainRegistrationTime},
+const Rule calendarAuthenticationRecordVerificationRule[] = {
+	{RULE_TYPE_BASIC, KSI_VerificationRule_SignatureDoesNotContainPublication},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordExistence},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime},
+	{RULE_TYPE_BASIC, NULL}
+};
+
+const Rule publicationRecordVerificationRule[] = {
+	{RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordExistence},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordPublicationHash},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordPublicationTime},
 	{RULE_TYPE_BASIC, NULL}
 };
 
-const Rule calendarHashChainPresentRule[] = {
-	{RULE_TYPE_COMPOSITE_OR, rule1},
-	{RULE_TYPE_COMPOSITE_OR, rule2},
+const Rule publicationOrCalendarAuthenticationRecordRule[] = {
+	{RULE_TYPE_COMPOSITE_OR, noPublicationOrCalendarAuthenticationRecordRule},
+	{RULE_TYPE_COMPOSITE_OR, calendarAuthenticationRecordVerificationRule},
+	{RULE_TYPE_COMPOSITE_OR, publicationRecordVerificationRule},
+	{RULE_TYPE_COMPOSITE_OR, NULL}
+};
+
+const Rule noCalendarHashChainRule[] = {
+	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainDoesNotExist},
+	{RULE_TYPE_BASIC, NULL}
+};
+
+const Rule calendarHashChainVerificationRule[] = {
+	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainExistence},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainInputHashVerification},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainAggregationTime},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainRegistrationTime},
+	{RULE_TYPE_COMPOSITE_AND, publicationOrCalendarAuthenticationRecordRule},
+	{RULE_TYPE_BASIC, NULL}
+};
+
+const Rule calendarHashChainRule[] = {
+	{RULE_TYPE_COMPOSITE_OR, noCalendarHashChainRule},
+	{RULE_TYPE_COMPOSITE_OR, calendarHashChainVerificationRule},
 	{RULE_TYPE_COMPOSITE_OR, NULL}
 };
 
@@ -110,7 +135,7 @@ const Rule internalRules[] = {
 	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainInputHashVerification},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainConsistency},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainTimeConsistency},
-	{RULE_TYPE_COMPOSITE_AND, calendarHashChainPresentRule},
+	{RULE_TYPE_COMPOSITE_AND, calendarHashChainRule},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_DocumentHashVerification},
 	{RULE_TYPE_BASIC, NULL}
 };

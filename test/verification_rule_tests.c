@@ -1296,6 +1296,52 @@ static void testRule_CalendarAuthenticationRecordExistence_verifyErrorResult(CuT
 #undef TEST_SIGNATURE_FILE
 }
 
+static void testRule_CalendarAuthenticationRecordDoesNotExist(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-calendar-authentication-record-missing.ksig"
+
+	int res;
+	VerificationContext *verCtx = NULL;
+	KSI_RuleVerificationResult verRes;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_create(ctx, &verCtx);
+	CuAssert(tc, "Unable to create verification context", res == KSI_OK && verCtx != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
+
+	res = KSI_VerificationRule_CalendarAuthenticationRecordDoesNotExist(verCtx, &verRes);
+	CuAssert(tc, "Signature should not contain calendar authentication record.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+
+	KSI_VerificationContext_free(verCtx);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_CalendarAuthenticationRecordDoesNotExist_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+
+	int res;
+	VerificationContext *verCtx = NULL;
+	KSI_RuleVerificationResult verRes;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_create(ctx, &verCtx);
+	CuAssert(tc, "Unable to create verification context", res == KSI_OK && verCtx != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
+
+	res = KSI_VerificationRule_CalendarAuthenticationRecordDoesNotExist(verCtx, &verRes);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_NA && verRes.errorCode == VER_ERR_GEN_2);
+
+	KSI_VerificationContext_free(verCtx);
+
+#undef TEST_SIGNATURE_FILE
+}
+
 static void testRule_CertificateExistence(CuTest *tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
@@ -2632,6 +2678,8 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainExistence_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordExistence);
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordExistence_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordDoesNotExist);
+	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordDoesNotExist_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_CertificateExistence);
 	SUITE_ADD_TEST(suite, testRule_CertificateExistence_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordSignatureVerification);
