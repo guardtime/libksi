@@ -16,7 +16,7 @@
  * Guardtime, Inc., and no license to trademarks is granted; Guardtime
  * reserves and retains all trademark rights.
  */
- 
+
 #ifndef _VERSION_H_
 #define _VERSION_H_
 
