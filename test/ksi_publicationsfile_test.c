@@ -173,7 +173,10 @@ static void testReceivePublicationsFileInvalidPki(CuTest *tc) {
 	CuAssert(tc, "Unable to set OID 2.5.4.10", res == KSI_OK);
 
 	res = KSI_receivePublicationsFile(ctx, &pubFile);
-	CuAssert(tc, "Publications file should NOT verify as PKI signature is wrong.", res != KSI_OK && pubFile == NULL);
+	CuAssert(tc, "Unable to receive publications file.", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_verifyPublicationsFile(ctx, pubFile);
+	CuAssert(tc, "Publications file should NOT verify as PKI signature is wrong.", res == KSI_INVALID_PKI_SIGNATURE);
 }
 
 static void testVerifyPublicationsFileWithOrganization(CuTest *tc) {
