@@ -941,9 +941,9 @@ int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned cha
 		else if (error == NTE_BAD_ALGID)
 			KSI_pushError(ctx, res = KSI_INVALID_PKI_SIGNATURE, errmsg);
 		else if (error == NTE_BAD_SIGNATURE)
-			KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, "Verification of PKI signature failed.");
+			KSI_pushError(ctx, res = KSI_INVALID_PKI_SIGNATURE, "Verification of PKI signature failed.");
 		else
-			KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, errmsg);
+			KSI_pushError(ctx, res = KSI_INVALID_PKI_SIGNATURE, errmsg);
 
 		goto cleanup;
 	}
