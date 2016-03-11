@@ -135,7 +135,10 @@ static void testReceivePublicationsFileInvalidConstraints(CuTest *tc) {
 	CuAssert(tc, "Unable to set OID 2.5.4.10", res == KSI_OK);
 
 	res = KSI_receivePublicationsFile(ctx, &pubFile);
-	CuAssert(tc, "Publications file should NOT verify as PKI constraint is wrong.", res != KSI_OK && pubFile == NULL);
+	CuAssert(tc, "Unable to get publications file.", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_verifyPublicationsFile(ctx, pubFile);
+	CuAssert(tc, "Publications file should NOT verify as PKI constraint is wrong.", res != KSI_OK);
 }
 
 static void testReceivePublicationsFileInvalidPki(CuTest *tc) {
@@ -341,6 +344,9 @@ static void testFindPublicationByPubStr(CuTest *tc) {
 	res = KSI_receivePublicationsFile(ctx, &pubFile);
 	CuAssert(tc, "Unable to get publications file.", res == KSI_OK && pubFile != NULL);
 
+	res = KSI_verifyPublicationsFile(ctx, pubFile);
+	CuAssert(tc, "Unable to verify publications file.", res == KSI_OK);
+
 	res = KSI_PublicationsFile_getPublicationDataByPublicationString(pubFile, publication, &pubRec);
 	CuAssert(tc, "Unable to get publication record by publication string.", res == KSI_OK && pubRec != NULL);
 
@@ -383,6 +389,9 @@ static void testFindPublicationByTime(CuTest *tc) {
 
 	res = KSI_receivePublicationsFile(ctx, &pubFile);
 	CuAssert(tc, "Unable to get publications file.", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_verifyPublicationsFile(ctx, pubFile);
+	CuAssert(tc, "Unable to verify publications file.", res == KSI_OK);
 
 	res = KSI_Integer_new(ctx, 1397520000, &pubTime);
 	CuAssert(tc, "Unable to create ksi integer object.", res == KSI_OK && pubTime != NULL);
@@ -431,6 +440,9 @@ static void testFindPublicationRef(CuTest *tc) {
 
 	res = KSI_receivePublicationsFile(ctx, &pubFile);
 	CuAssert(tc, "Unable to get publications file.", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_verifyPublicationsFile(ctx, pubFile);
+	CuAssert(tc, "Unable to verify publications file.", res == KSI_OK);
 
 	res = KSI_Integer_new(ctx, 1397520000, &pubTime);
 	CuAssert(tc, "Unable to create ksi integer object.", res == KSI_OK && pubTime != NULL);
