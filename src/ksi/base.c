@@ -533,6 +533,7 @@ int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extend
 	KSI_Integer *signingTime = NULL;
 	KSI_PublicationRecord *pubRec = NULL;
 	KSI_Signature *extSig = NULL;
+	bool verifyPubFile = (ctx->publicationsFile == NULL);
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || sig == NULL || extended == NULL) {
@@ -546,10 +547,12 @@ int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extend
 		goto cleanup;
 	}
 
-	res = KSI_verifyPublicationsFile(ctx, pubFile);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx,res, NULL);
-		goto cleanup;
+	if (verifyPubFile == true) {
+		res = KSI_verifyPublicationsFile(ctx, pubFile);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx,res, NULL);
+			goto cleanup;
+		}
 	}
 
 	res = KSI_Signature_getSigningTime(sig, &signingTime);

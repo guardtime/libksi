@@ -171,13 +171,6 @@ int main(int argc, char **argv) {
 			fprintf(stderr, "Unable to read publications file.\n");
 			goto cleanup;
 		}
-
-		res = KSI_verifyPublicationsFile(ksi, publicationsFile);
-		if (res != KSI_OK) {
-			KSI_ERR_statusDump(ksi, stdout);
-			fprintf(stderr, "Unable to verify publications file.\n");
-			goto cleanup;
-		}
 	}
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ksi, pubFileCertConstr);

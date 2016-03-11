@@ -2111,11 +2111,15 @@ static int initPublicationsFile(KSI_VerificationResult *info, KSI_CTX *ctx) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (info->publicationsFile == NULL) {
+		bool verifyPubFile = (ctx->publicationsFile == NULL);
+
 		res = KSI_receivePublicationsFile(ctx, &info->publicationsFile);
 		if (res != KSI_OK) goto cleanup;
 
-		res = KSI_verifyPublicationsFile(ctx, info->publicationsFile);
-		if (res != KSI_OK) goto cleanup;
+		if (verifyPubFile == true) {
+			res = KSI_verifyPublicationsFile(ctx, info->publicationsFile);
+			if (res != KSI_OK) goto cleanup;
+		}
 	}
 
 	res = KSI_OK;
@@ -2452,7 +2456,7 @@ static int verifyPublication(KSI_CTX *ctx, KSI_Signature *sig) {
 	KSI_PublicationRecord *pubRec = NULL;
 	KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBFILE;
 	KSI_VerificationResult *info = &sig->verificationResult;
-
+	bool verifyPubFile = (ctx->publicationsFile == NULL);
 
 	if (sig->publication == NULL) {
 		res = KSI_OK;
@@ -2469,8 +2473,10 @@ static int verifyPublication(KSI_CTX *ctx, KSI_Signature *sig) {
 	res = KSI_receivePublicationsFile(ctx, &pubFile);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_verifyPublicationsFile(ctx, pubFile);
-	if (res != KSI_OK) goto cleanup;
+	if (verifyPubFile == true) {
+		res = KSI_verifyPublicationsFile(ctx, pubFile);
+		if (res != KSI_OK) goto cleanup;
+	}
 
 	res = KSI_PublicationsFile_findPublication(pubFile, sig->publication, &pubRec);
 	if (res != KSI_OK) goto cleanup;
