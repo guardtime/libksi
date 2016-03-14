@@ -76,6 +76,5 @@ coverage: clean coverage-xml coverage-html
 
 clean-local:
 	rm -fr ${ZIPDOC_DIR} converage coverage.xml coverage.info valgrind.xml test.log testsuite-xunit.xml
-	rm -f ./src/ksi/version.h
 	$(MAKE) -C doc clean
 	$(MAKE) -C test clean
