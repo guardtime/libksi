@@ -107,7 +107,7 @@ extern "C" {
 
 	typedef struct VerificationPolicy_st KSI_Policy;
 
-	typedef struct VerificationContext_st VerificationContext;
+	typedef struct KSI_VerificationContext_st KSI_VerificationContext;
 
 	/**
 	 * Creates a #KSI_Policy containing the rules for calendar based verification.
@@ -174,7 +174,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_Policy_setFallback, #KSI_Policy_free, #KSI_PolicyVerificationResult_free
 	 */
-	int KSI_SignatureVerifier_verify(KSI_Policy *policy, VerificationContext *context, KSI_PolicyVerificationResult **result);
+	int KSI_SignatureVerifier_verify(KSI_Policy *policy, KSI_VerificationContext *context, KSI_PolicyVerificationResult **result);
 
 	/**
 	 * Frees the \c policy object. The function does not free any potential
@@ -200,7 +200,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationContext_create(KSI_CTX *ctx, VerificationContext **context);
+	int KSI_VerificationContext_create(KSI_CTX *ctx, KSI_VerificationContext **context);
 
 	/**
 	 * Sets signature for verification context.
@@ -209,7 +209,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationContext_setSignature(VerificationContext *context, KSI_Signature *sig);
+	int KSI_VerificationContext_setSignature(KSI_VerificationContext *context, KSI_Signature *sig);
 
 	/**
 	 * Sets document hash for verification context.
@@ -218,7 +218,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationContext_setDocumentHash(VerificationContext *context, KSI_DataHash *hash);
+	int KSI_VerificationContext_setDocumentHash(KSI_VerificationContext *context, KSI_DataHash *hash);
 
 	/**
 	 * Sets user publication string for verification context.
@@ -227,7 +227,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationContext_setUserPublication(VerificationContext *context, KSI_PublicationData *userPublication);
+	int KSI_VerificationContext_setUserPublication(KSI_VerificationContext *context, KSI_PublicationData *userPublication);
 
 	/**
 	 * Sets publications file for verification context.
@@ -236,7 +236,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationContext_setPublicationsFile(VerificationContext *context, KSI_PublicationsFile *publicationsFile);
+	int KSI_VerificationContext_setPublicationsFile(KSI_VerificationContext *context, KSI_PublicationsFile *publicationsFile);
 
 	/**
 	 * Enables or disables extending in verification context.
@@ -245,7 +245,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationContext_setExtendingAllowed(VerificationContext *context, bool allowed);
+	int KSI_VerificationContext_setExtendingAllowed(KSI_VerificationContext *context, bool allowed);
 
 	/**
 	 * Sets initial aggregation level in verification context.
@@ -254,7 +254,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationContext_setAggregationLevel(VerificationContext *context, KSI_uint64_t level);
+	int KSI_VerificationContext_setAggregationLevel(KSI_VerificationContext *context, KSI_uint64_t level);
 
 	/**
 	 * Frees the verification context object, including all internal objects.
@@ -262,7 +262,7 @@ extern "C" {
 	 *
 	 * \see #KSI_VerificationContext_create, #KSI_VerificationContext_clean
 	 */
-	void KSI_VerificationContext_free(VerificationContext *context);
+	void KSI_VerificationContext_free(KSI_VerificationContext *context);
 
 	/**
 	 * Frees the temporary data in the context object.
@@ -270,7 +270,7 @@ extern "C" {
 	 *
 	 * \see #KSI_VerificationContext_create, #KSI_VerificationContext_free
 	 */
-	void KSI_VerificationContext_clean(VerificationContext *context);
+	void KSI_VerificationContext_clean(KSI_VerificationContext *context);
 
 
 #ifdef	__cplusplus

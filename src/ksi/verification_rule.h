@@ -37,7 +37,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_AggregationChainInputHashVerification(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_AggregationChainInputHashVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule verifies that all aggregation hash chains are consistent (e.g previous aggregation output hash equals to
@@ -48,7 +48,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_AggregationHashChainConsistency(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to check that aggregation hash chain aggregation times are consistent (e.g previous aggregation
@@ -59,7 +59,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_AggregationHashChainTimeConsistency(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_AggregationHashChainTimeConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to verify that last aggregation hash chain output hash equals to calendar hash chain input hash.
@@ -70,7 +70,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_CalendarHashChainInputHashVerification(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_CalendarHashChainInputHashVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to verify that calendar hash chain aggregation time equals to last aggregation hash chain
@@ -81,7 +81,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_CalendarHashChainAggregationTime(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_CalendarHashChainAggregationTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to verify that calendar hash chain registration time (calculated from the shape of the calendar
@@ -93,7 +93,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_CalendarHashChainRegistrationTime(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_CalendarHashChainRegistrationTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to verify that calendar authentication record publication hash equals to calendar hash chain
@@ -104,7 +104,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to verify that calendar authentication record publication time equals to calendar hash chain
@@ -115,7 +115,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to check if keyless signature contains publication record or not. If publication record is
@@ -126,7 +126,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_SignaturePublicationRecordPublicationHash(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_SignaturePublicationRecordPublicationHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to check if keyless signature contains correct publication record publication time.
@@ -137,7 +137,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_SignaturePublicationRecordPublicationTime(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_SignaturePublicationRecordPublicationTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to verify document hash. If RFC3161 record is present then the document hash must equal to RFC3161
@@ -149,7 +149,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_DocumentHashVerification(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_DocumentHashVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule checks that signature does not contain publication record.
@@ -159,7 +159,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_SignatureDoesNotContainPublication(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_SignatureDoesNotContainPublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule checks that:
@@ -171,7 +171,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to check if keyless signature contains publication record or not.
@@ -181,7 +181,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_SignaturePublicationRecordExistence(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_SignaturePublicationRecordExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to check that reproduced calendar hash chain (reproduced by sending extension request with the
@@ -195,7 +195,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * Rule to check that keyless signature does not contain calendar hash chain.
@@ -205,7 +205,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_CalendarHashChainDoesNotExist(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_CalendarHashChainDoesNotExist(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to check that extended signature contains correct calendar hash chain input hash (e.g  matches
@@ -216,7 +216,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to check that extended signature contains correct aggregation time.
@@ -226,7 +226,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * Rule to check if keyless signature contains calendar hash chain. Used by key-based and publication-based
@@ -237,7 +237,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_CalendarHashChainExistence(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_CalendarHashChainExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 *
@@ -246,7 +246,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_CalendarAuthenticationRecordExistence(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_CalendarAuthenticationRecordExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 *
@@ -255,7 +255,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_CalendarAuthenticationRecordDoesNotExist(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_CalendarAuthenticationRecordDoesNotExist(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule ise used to check if publications file contains certificate with certificate id present in calendar
@@ -266,7 +266,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_CertificateExistence(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_CertificateExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to validate calendar authentication record signature. At first X.509 certificate is searched from
@@ -277,7 +277,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 
 	/**
@@ -288,7 +288,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_PublicationsFileContainsSignaturePublication(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_PublicationsFileContainsSignaturePublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to check if publications file contains publication closest to signature registration time.
@@ -298,7 +298,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_PublicationsFileContainsPublication(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_PublicationsFileContainsPublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule can be used to check if signature extending is permitted or not.
@@ -308,7 +308,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_ExtendingPermittedVerification(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_ExtendingPermittedVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to verify that publications file publication hash matches with extender response calendar root hash.
@@ -318,7 +318,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to verify that publications file publication time matches with extender response calendar chain
@@ -329,7 +329,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule can be used to check that extender response input hash equals with signature aggregation root hash.
@@ -339,7 +339,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to verify if user has provided the publication
@@ -349,7 +349,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_UserProvidedPublicationExistence(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_UserProvidedPublicationExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used verify that user provided publication equals to publication inside the signature.
@@ -359,7 +359,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_UserProvidedPublicationVerification(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_UserProvidedPublicationVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule checks that signature is created before user provided publication.
@@ -369,7 +369,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to verify that user provided publication hash matches with extender response calendar root hash
@@ -379,7 +379,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to verify that user provided publication time matches with extender response calendar chain shape.
@@ -389,7 +389,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule can be used to check that extender response input hash equals with signature aggregation root hash.
@@ -399,7 +399,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash(VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 
 

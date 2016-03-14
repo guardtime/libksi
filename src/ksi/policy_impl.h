@@ -37,7 +37,7 @@ typedef enum RuleType_en {
 	RULE_TYPE_COMPOSITE_OR
 } RuleType;
 
-typedef int (*Verifier)(VerificationContext *, KSI_RuleVerificationResult *);
+typedef int (*Verifier)(KSI_VerificationContext *, KSI_RuleVerificationResult *);
 
 typedef struct Rule_st {
 	RuleType type;
@@ -83,7 +83,7 @@ typedef struct VerificationTempData_st {
 	KSI_DataHash *aggregationOutputHash;
 } VerificationTempData;
 
-struct VerificationContext_st {
+struct KSI_VerificationContext_st {
 	KSI_CTX *ctx;
 
 	VerificationUserData userData;

@@ -46,7 +46,7 @@ static void testRule_AggregationChainInputHashVerification_validRfc3161(CuTest *
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-rfc3161-record-ok.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -69,7 +69,7 @@ static void testRule_AggregationChainInputHashVerification_invalidRfc3161_verify
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-rfc3161-output-hash.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -92,7 +92,7 @@ static void testRule_AggregationChainInputHashVerification_missingRfc3161(CuTest
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -115,7 +115,7 @@ static void testRule_AggregationHashChainConsistency(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -138,7 +138,7 @@ static void testRule_AggregationHashChainConsistency_verifyErrorResult(CuTest *t
 #define TEST_SIGNATURE_FILE "resource/tlv/bad-aggregation-chain.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -161,7 +161,7 @@ static void testRule_AggregationHashChainTimeConsistency(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -184,7 +184,7 @@ static void testRule_AggregationHashChainTimeConsistency_verifyErrorResult(CuTes
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-inconsistent-aggregation-chain-time.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -207,7 +207,7 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithCalHashChain(
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -230,7 +230,7 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithoutCalHashCha
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -256,7 +256,7 @@ static void testRule_CalendarHashChainInputHashVerification_verifyErrorResult(Cu
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-calendar-hash-chain.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -279,7 +279,7 @@ static void testRule_CalendarHashChainAggregationTime(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -302,7 +302,7 @@ static void testRule_CalendarHashChainAggregationTime_verifyErrorResult(CuTest *
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-calendar-chain-aggregation-time.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -325,7 +325,7 @@ static void testRule_CalendarHashChainRegistrationTime(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -348,7 +348,7 @@ static void testRule_CalendarHashChainRegistrationTime_verifyErrorResult(CuTest 
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-calendar-chain-aggregation-time.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -371,7 +371,7 @@ static void testRule_CalendarAuthenticationRecordAggregationHash(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -394,7 +394,7 @@ static void testRule_CalendarAuthenticationRecordAggregationHash_missingAutRec(C
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-without-calendar-authentication-record.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -417,7 +417,7 @@ static void testRule_CalendarAuthenticationRecordAggregationHash_verifyErrorResu
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-calendar-authentication-record-hash.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -440,7 +440,7 @@ static void testRule_CalendarAuthenticationRecordAggregationTime(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -463,7 +463,7 @@ static void testRule_CalendarAuthenticationRecordAggregationTime_missingAutRec(C
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-without-calendar-authentication-record.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -486,7 +486,7 @@ static void testRule_CalendarAuthenticationRecordAggregationTime_verifyErrorResu
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-authentication-record-publication-time.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -509,7 +509,7 @@ static void testRule_SignaturePublicationRecordPublicationHash(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -532,7 +532,7 @@ static void testRule_SignaturePublicationRecordPublicationHash_missingPubRec(CuT
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -555,7 +555,7 @@ static void testRule_SignaturePublicationRecordPublicationHash_verifyErrorResult
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-publication-record-publication-data-hash.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -578,7 +578,7 @@ static void testRule_SignaturePublicationRecordPublicationTime(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -601,7 +601,7 @@ static void testRule_SignaturePublicationRecordPublicationTime_missingPubRec(CuT
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -624,7 +624,7 @@ static void testRule_SignaturePublicationRecordPublicationTime_verifyErrorResult
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-publication-record-publication-data-time.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -647,7 +647,7 @@ static void testRule_DocumentHashVerification(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -674,7 +674,7 @@ static void testRule_DocumentHashVerification_missingDocHash(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -698,7 +698,7 @@ static void testRule_DocumentHashVerification_verifyErrorResult(CuTest *tc) {
 #define TEST_MOCK_IMPRINT   "01db27c0db0aebb8d3963c3a720985cedb600f91854cdb1e45ad631611c39284dd"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -725,7 +725,7 @@ static void testRule_DocumentHashVerification_rfc3161(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-rfc3161-record-ok.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -753,7 +753,7 @@ static void testRule_DocumentHashVerification_rfc3161_verifyErrorResult(CuTest *
 #define TEST_MOCK_IMPRINT   "01db27c0db0aebb8d3963c3a720985cedb600f91854cdb1e45ad631611c39284dd"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -780,7 +780,7 @@ static void testRule_SignatureDoesNotContainPublication(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -803,7 +803,7 @@ static void testRule_SignatureDoesNotContainPublication_verifyErrorResult(CuTest
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -827,7 +827,7 @@ static void testRule_ExtendedSignatureAggregationChainRightLinksMatches(CuTest *
 #define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -855,7 +855,7 @@ static void testRule_ExtendedSignatureAggregationChainRightLinksMatches_linkCoun
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -883,7 +883,7 @@ static void testRule_ExtendedSignatureAggregationChainRightLinksMatches_rightLin
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/signature-invalid-calendar-right-link-sig-2014-04-30.1-extended.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -910,7 +910,7 @@ static void testRule_SignaturePublicationRecordExistence(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -933,7 +933,7 @@ static void testRule_SignaturePublicationRecordExistence_verifyErrorResult(CuTes
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -957,7 +957,7 @@ static void testRule_ExtendedSignatureCalendarChainRootHash(CuTest *tc) {
 #define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -985,7 +985,7 @@ static void testRule_ExtendedSignatureCalendarChainRootHash_verifyErrorResult(Cu
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -1012,7 +1012,7 @@ static void testRule_CalendarHashChainDoesNotExist(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -1038,7 +1038,7 @@ static void testRule_CalendarHashChainDoesNotExist_verifyErrorResult(CuTest *tc)
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -1062,7 +1062,7 @@ static void testRule_ExtendedSignatureCalendarChainInputHash(CuTest *tc) {
 #define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
 
 	int res;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -1090,7 +1090,7 @@ static void testRule_ExtendedSignatureCalendarChainInputHash_nokAggrOutHash_veri
 #define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
 
 	int res;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -1122,7 +1122,7 @@ static void testRule_ExtendedSignatureCalendarChainInputHash_verifyErrorResult(C
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -1150,7 +1150,7 @@ static void testRule_ExtendedSignatureCalendarChainAggregationTime(CuTest *tc) {
 #define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
 
 	int res;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -1178,7 +1178,7 @@ static void testRule_ExtendedSignatureCalendarChainAggregationTime_verifyErrorRe
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -1205,7 +1205,7 @@ static void testRule_CalendarHashChainExistence(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 
 	int res;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -1228,7 +1228,7 @@ static void testRule_CalendarHashChainExistence_verifyErrorResult(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 
 	int res;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -1254,7 +1254,7 @@ static void testRule_CalendarAuthenticationRecordExistence(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
 	int res;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -1277,7 +1277,7 @@ static void testRule_CalendarAuthenticationRecordExistence_verifyErrorResult(CuT
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-calendar-authentication-record-missing.ksig"
 
 	int res;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -1300,7 +1300,7 @@ static void testRule_CalendarAuthenticationRecordDoesNotExist(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-calendar-authentication-record-missing.ksig"
 
 	int res;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -1323,7 +1323,7 @@ static void testRule_CalendarAuthenticationRecordDoesNotExist_verifyErrorResult(
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
 	int res;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -1348,7 +1348,7 @@ static void testRule_CertificateExistence(CuTest *tc) {
 #define TEST_CERT_FILE         "resource/tlv/mock.crt"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	KSI_PKITruststore *pki = NULL;
 	const KSI_CertConstraint certCnst[] = {
@@ -1403,7 +1403,7 @@ static void testRule_CertificateExistence_verifyErrorResult(CuTest *tc) {
 #define TEST_CERT_FILE         "resource/tlv/mock.crt"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	KSI_PKITruststore *pki = NULL;
 	const KSI_CertConstraint certCnst[] = {
@@ -1456,7 +1456,7 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification(CuTest *t
 #define TEST_CERT_FILE         "resource/tlv/mock.crt"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	KSI_PKITruststore *pki = NULL;
 	const KSI_CertConstraint certCnst[] = {
@@ -1509,7 +1509,7 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification_verifyErr
 #define TEST_CERT_FILE         "resource/tlv/mock.crt"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	KSI_PKITruststore *pki = NULL;
 	const KSI_CertConstraint certCnst[] = {
@@ -1561,7 +1561,7 @@ static void testRule_PublicationsFileContainsSignaturePublication(CuTest *tc) {
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
@@ -1599,7 +1599,7 @@ static void testRule_PublicationsFileContainsSignaturePublication_verifyErrorRes
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.15042014.tlv"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
@@ -1637,7 +1637,7 @@ static void testRule_PublicationsFileContainsPublication(CuTest *tc) {
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
@@ -1675,7 +1675,7 @@ static void testRule_PublicationsFileContainsPublication_verifyErrorResult(CuTes
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.15042014.tlv"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
@@ -1712,7 +1712,7 @@ static void testRule_ExtendingPermittedVerification(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	res = KSI_VerificationContext_create(ctx, &verCtx);
@@ -1735,7 +1735,7 @@ static void testRule_ExtendingPermittedVerification_verifyErrorResult(CuTest *tc
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	res = KSI_VerificationContext_create(ctx, &verCtx);
@@ -1760,7 +1760,7 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse(CuTe
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
@@ -1803,7 +1803,7 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse_veri
 #define TEST_PUBLICATIONS_FILE  "resource/tlv/publications.tlv"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
@@ -1846,7 +1846,7 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(CuTe
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
@@ -1889,7 +1889,7 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_veri
 #define TEST_PUBLICATIONS_FILE  "resource/tlv/publications.tlv"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
@@ -1932,7 +1932,7 @@ static void testRule_PublicationsFileExtendedSignatureInputHash(CuTest *tc) {
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
@@ -1975,7 +1975,7 @@ static void testRule_PublicationsFileExtendedSignatureInputHash_verifyErrorResul
 #define TEST_PUBLICATIONS_FILE  "resource/tlv/publications.tlv"
 
 	int res = KSI_OK;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	const KSI_CertConstraint certCnst[] = {
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
@@ -2016,7 +2016,7 @@ static void testRule_UserProvidedPublicationExistence(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 
@@ -2047,7 +2047,7 @@ static void testRule_UserProvidedPublicationExistence_pubDataMissing_verifyError
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 
 	KSI_ERR_clearErrors(ctx);
@@ -2070,7 +2070,7 @@ static void testRule_UserProvidedPublicationExistence_pubHashMissing_verifyError
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_PublicationData *tempPubData = NULL;
@@ -2114,7 +2114,7 @@ static void testRule_UserProvidedPublicationExistence_pubTimeMissing_verifyError
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_PublicationData *tempPubData = NULL;
@@ -2158,7 +2158,7 @@ static void testRule_UserProvidedPublicationVerification(CuTest *tc) {
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 
@@ -2190,7 +2190,7 @@ static void testRule_UserProvidedPublicationVerification_timeMismatch_verifyErro
 #define TEST_TIMESTAMP      1396608816
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	KSI_Integer *pubTime = NULL;
 	KSI_DataHash *pubHash = NULL;
@@ -2243,7 +2243,7 @@ static void testRule_UserProvidedPublicationVerification_hashMismatch_verifyErro
 #define TEST_MOCK_IMPRINT   "01db27c0db0aebb8d3963c3a720985cedb600f91854cdb1e45ad631611c39284dd"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	KSI_Integer *pubTime = NULL;
 	KSI_PublicationRecord *sigPubRec = NULL;
@@ -2295,7 +2295,7 @@ static void testRule_UserProvidedPublicationCreationTimeVerification(CuTest *tc)
 #define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 
@@ -2327,7 +2327,7 @@ static void testRule_UserProvidedPublicationCreationTimeVerification_verifyError
 #define TEST_TIMESTAMP      1396608816
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	KSI_Integer *mockTime = NULL;
 
@@ -2362,7 +2362,7 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse(CuTest *
 #define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 
@@ -2399,7 +2399,7 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_verifyEr
 #define TEST_MOCK_IMPRINT      "01db27c0db0aebb8d3963c3a720985cedb600f91854cdb1e45ad631611c39284dd"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	KSI_Integer *pubTime = NULL;
 	KSI_DataHash *mockPubHash = NULL;
@@ -2456,7 +2456,7 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse(CuTest *
 #define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 
@@ -2493,7 +2493,7 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse_verifyEr
 #define TEST_TIMESTAMP          1396608816
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	KSI_Integer *mockPubTime = NULL;
 	KSI_PublicationRecord *tempRec = NULL;
@@ -2550,7 +2550,7 @@ static void testRule_UserProvidedPublicationExtendedSignatureInputHash(CuTest *t
 #define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 
@@ -2587,7 +2587,7 @@ static void testRule_UserProvidedPublicationExtendedSignatureInputHash_verifyErr
 #define TEST_MOCK_IMPRINT      "01db27c0db0aebb8d3963c3a720985cedb600f91854cdb1e45ad631611c39284dd"
 
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *verCtx = NULL;
+	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 
