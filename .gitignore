@@ -88,3 +88,6 @@ coverage/
 
 # Configuration files
 test/integrationtest.conf
+
+# Generated header files
+version.h

@@ -20,7 +20,7 @@
 Summary: Guardtime KSI Client API for C
 Name: libksi
 Version: @VERSION@
-Release: 1 
+Release: 1
 License: ASL 2.0
 Group: Development/Libraries
 Source: http://download.guardtime.com/%{name}-%{version}.tar.gz
@@ -62,7 +62,7 @@ make
 %install
 rm -rf %{buildroot}
 make install DESTDIR=%{buildroot}
- 
+
 %files
 %defattr(644,root,root,755)
 %{_libdir}/libksi.so
@@ -99,6 +99,7 @@ make install DESTDIR=%{buildroot}
 %{_includedir}/ksi/types_base.h
 %{_includedir}/ksi/verification.h
 %{_includedir}/ksi/compatibility.h
+%{_includedir}/ksi/version.h
 %{_libdir}/libksi.a
 %{_libdir}/libksi.la
 %{_libdir}/pkgconfig/libksi.pc

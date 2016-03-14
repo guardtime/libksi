@@ -67,6 +67,9 @@ OUT_DIR = out
 LIB_DIR = $(OUT_DIR)\$(DLL)
 BIN_DIR = $(OUT_DIR)\bin
 VERSION_FILE = VERSION
+VERSION_H = $(SRC_DIR)\ksi\version.h
+VERSION_H_IN=$(VERSION_H).in
+VERSION_H_TEMP_SCRIPT=tmp.bat
 COMM_ID_FILE = COMMIT_ID
 
 VER = \
@@ -81,8 +84,18 @@ COM_ID = \
 !MESSAGE File $(COMM_ID_FILE) deleted.
 !ENDIF
 !ELSE
-!MESSAGE Git is not installed. 
-!ENDIF 
+!MESSAGE Git is not installed.
+!ENDIF
+
+!IF [echo echo off ^& setlocal EnableDelayedExpansion ^& for /f "tokens=1,2,3 delims=." %%a in ("$(VER)") do (echo. 2^>$(VERSION_H) ^& for /f "delims=" %%x in ($(VERSION_H_IN)) do (set line=%%x ^& set line=!line:@VER_MAJOR@=%%a! ^& set line=!line:@VER_MINOR@=%%b! ^& set line=!line:@VER_BUILD@=%%c! ^& echo !line!^>^>$(VERSION_H) ^& echo !line!)) ^& endlocal > $(VERSION_H_TEMP_SCRIPT)]
+!MESSAGE Generate version.h temp script file
+!ENDIF
+!IF [.\$(VERSION_H_TEMP_SCRIPT)]
+!MESSAGE Generate version.h
+!ENDIF
+!IF [ERASE $(VERSION_H_TEMP_SCRIPT)]
+!MESSAGE Remove version.h temp script file
+!ENDIF
 
 default:
 	cd $(SRC_DIR)\ksi
@@ -106,8 +119,6 @@ libMD:
 libMDd:
 	nmake DLL=lib RTL=MDd $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
 
-	
-
 dllMT:
 	nmake DLL=dll RTL=MT $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
 
@@ -120,17 +131,15 @@ dllMD:
 dllMDd:
 	nmake DLL=dll RTL=MDd $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
 
-	
-	
 example: $(DLL)$(RTL)
 	cd $(SRC_DIR)\example
 	nmake $(MODEL) $(EXTRA)
 	cd ..\..
-	
+
 tests: $(DLL)$(RTL)
 	cd $(TEST_DIR)
 	nmake $(MODEL) $(EXTRA)
-	cd ..	
+	cd ..
 
 test: tests
 	$(BIN_DIR)\alltests.exe test
@@ -139,7 +148,8 @@ resigner: $(DLL)$(RTL)
 	cd $(TEST_DIR)
 	nmake $(MODEL) $(EXTRA) resigner
 	cd ..
-	
+
 clean:
 	@for %i in ($(OBJ_DIR) $(OUT_DIR)) do @if exist .\%i rmdir /s /q .\%i
-	@for %i in ($(SRC_DIR)\ksi $(SRC_DIR)\example $(TEST_DIR)) do @if exist .\%i\*.pdb del /q .\%i\*.pdb	
+	@for %i in ($(SRC_DIR)\ksi $(SRC_DIR)\example $(TEST_DIR)) do @if exist .\%i\*.pdb del /q .\%i\*.pdb
+	@if exist .\$(VERSION_H) del /q .\$(VERSION_H)
