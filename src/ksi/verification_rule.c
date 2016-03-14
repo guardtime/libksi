@@ -48,10 +48,10 @@ static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, con
 static int rfc3161_verify(KSI_CTX *ctx, const KSI_Signature *sig);
 static int getRfc3161OutputHash(const KSI_Signature *sig, KSI_DataHash **outputHash);
 static int getAggrHashChainOutputHash(KSI_CTX *ctx, KSI_Signature *sig, int level, KSI_DataHash **outputHash);
-static int getExtendedCalendarHashChain(VerificationContext *info, KSI_Integer *pubTime, KSI_CalendarHashChain **extCalHashChain);
-static int initPublicationsFile(VerificationContext *verCtx);
-static int initExtendedSignature(VerificationContext *verCtx, KSI_Integer *endTime);
-static int initAggregationOutputHash(VerificationContext *verCtx);
+static int getExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Integer *pubTime, KSI_CalendarHashChain **extCalHashChain);
+static int initPublicationsFile(KSI_VerificationContext *verCtx);
+static int initExtendedSignature(KSI_VerificationContext *verCtx, KSI_Integer *endTime);
+static int initAggregationOutputHash(KSI_VerificationContext *verCtx);
 
 
 static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, const KSI_DataHash *hsh, const KSI_OctetString *suffix, int hsh_id, KSI_DataHash **out) {
@@ -287,7 +287,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_AggregationChainInputHashVerification(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_AggregationChainInputHashVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *rfc3161_outputHash = NULL;
 	KSI_AggregationHashChain* firstChain = NULL;
@@ -347,7 +347,7 @@ cleanup:
 }
 
 
-int KSI_VerificationRule_AggregationHashChainConsistency(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	const KSI_AggregationHashChain *prevChain = NULL;
 	KSI_DataHash *hsh = NULL;
@@ -462,7 +462,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_AggregationHashChainTimeConsistency(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_AggregationHashChainTimeConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	const KSI_AggregationHashChain *prevChain = NULL;
 	size_t i;
@@ -567,7 +567,7 @@ cleanup:
 	return res;
 }
 
-static int initAggregationOutputHash(VerificationContext *verCtx) {
+static int initAggregationOutputHash(KSI_VerificationContext *verCtx) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (verCtx == NULL || verCtx->ctx == NULL || verCtx->userData.sig == NULL) {
@@ -587,7 +587,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_CalendarHashChainInputHashVerification(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_CalendarHashChainInputHashVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *calInputHash = NULL;
 	KSI_CTX *ctx = NULL;
@@ -643,7 +643,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_CalendarHashChainAggregationTime(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_CalendarHashChainAggregationTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationHashChain *aggregationChain = NULL;
 	KSI_Integer *calAggrTime = NULL;
@@ -692,7 +692,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_CalendarHashChainRegistrationTime(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_CalendarHashChainRegistrationTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	time_t calculatedAggrTime;
 	KSI_Integer *calendarAggrTime = NULL;
@@ -739,7 +739,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationData *pubData = NULL;
 	KSI_DataHash *pubHash = NULL;
@@ -792,7 +792,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationData *pubData = NULL;
 	KSI_Integer *pubTime = NULL;
@@ -844,7 +844,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_SignaturePublicationRecordPublicationHash(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_SignaturePublicationRecordPublicationHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationData *pubData = NULL;
 	KSI_DataHash *publishedHash = NULL;
@@ -899,7 +899,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_SignaturePublicationRecordPublicationTime(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_SignaturePublicationRecordPublicationTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationData *pubData = NULL;
 	KSI_Integer *calPubTime = NULL;
@@ -953,7 +953,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_DocumentHashVerification(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_DocumentHashVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
 	KSI_CTX *ctx = NULL;
@@ -1007,7 +1007,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_SignatureDoesNotContainPublication(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_SignatureDoesNotContainPublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (result == NULL) {
@@ -1038,7 +1038,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
@@ -1122,7 +1122,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_SignaturePublicationRecordExistence(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_SignaturePublicationRecordExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (result == NULL) {
@@ -1153,7 +1153,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
@@ -1211,7 +1211,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_CalendarHashChainDoesNotExist(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_CalendarHashChainDoesNotExist(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (result == NULL) {
@@ -1242,7 +1242,7 @@ cleanup:
 	return res;
 }
 
-static int initExtendedSignature(VerificationContext *verCtx, KSI_Integer *endTime) {
+static int initExtendedSignature(KSI_VerificationContext *verCtx, KSI_Integer *endTime) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
@@ -1342,7 +1342,7 @@ cleanup:
 	return res;
 }
 
-static int getExtendedCalendarHashChain(VerificationContext *info, KSI_Integer *pubTime, KSI_CalendarHashChain **chain) {
+static int getExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Integer *pubTime, KSI_CalendarHashChain **chain) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (info == NULL || info->ctx == NULL || info->userData.sig == NULL || chain == NULL) {
@@ -1378,7 +1378,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
@@ -1430,7 +1430,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
@@ -1483,7 +1483,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_CalendarHashChainExistence(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_CalendarHashChainExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (result == NULL) {
@@ -1514,7 +1514,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_CalendarAuthenticationRecordExistence(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_CalendarAuthenticationRecordExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (result == NULL) {
@@ -1545,7 +1545,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_CalendarAuthenticationRecordDoesNotExist(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_CalendarAuthenticationRecordDoesNotExist(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (result == NULL) {
@@ -1576,7 +1576,7 @@ cleanup:
 	return res;
 }
 
-static int initPublicationsFile(VerificationContext *verCtx) {
+static int initPublicationsFile(KSI_VerificationContext *verCtx) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (verCtx->tempData.publicationsFile == NULL) {
@@ -1595,7 +1595,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_CertificateExistence(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_CertificateExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
@@ -1651,7 +1651,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
@@ -1730,7 +1730,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_PublicationsFileContainsSignaturePublication(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_PublicationsFileContainsSignaturePublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
@@ -1776,7 +1776,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_PublicationsFileContainsPublication(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_PublicationsFileContainsPublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
@@ -1823,7 +1823,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_ExtendingPermittedVerification(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_ExtendingPermittedVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (result == NULL) {
@@ -1854,7 +1854,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
@@ -1916,7 +1916,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
@@ -1976,7 +1976,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
@@ -2032,7 +2032,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_UserProvidedPublicationExistence(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_UserProvidedPublicationExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (result == NULL) {
@@ -2064,7 +2064,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_UserProvidedPublicationVerification(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_UserProvidedPublicationVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
@@ -2126,7 +2126,7 @@ cleanup:
 }
 
 
-int KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
@@ -2174,7 +2174,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
@@ -2229,7 +2229,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
@@ -2297,7 +2297,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash(VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;

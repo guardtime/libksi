@@ -50,7 +50,7 @@ typedef struct {
 static void TestInvalidParams(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -139,7 +139,7 @@ static void TestVerificationContext(CuTest* tc) {
 #define TEST_MOCK_IMPRINT   "01db27c0db0aebb8d3963c3a720985cedb600f91854cdb1e45ad631611c39284dd"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 	int res;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_Signature *sig = NULL;
 	KSI_Signature *extSig = NULL;
 	KSI_DataHash *hash = NULL;
@@ -222,7 +222,7 @@ static void TestVerificationContext(CuTest* tc) {
 
 #define DUMMY_VERIFIER(resValue, resultValue, errorValue) DummyRule_Return_##resValue##_##resultValue##_##errorValue
 #define IMPLEMENT_DUMMY_VERIFIER(resValue, resultValue, errorValue) \
-static int DUMMY_VERIFIER(resValue, resultValue, errorValue)(VerificationContext *context, KSI_RuleVerificationResult *result) {\
+static int DUMMY_VERIFIER(resValue, resultValue, errorValue)(KSI_VerificationContext *context, KSI_RuleVerificationResult *result) {\
 	result->resultCode = resultValue;\
 	result->errorCode = errorValue;\
 	result->ruleName = __FUNCTION__;\
@@ -264,7 +264,7 @@ static void TestSingleRulePolicy(CuTest* tc) {
 	int res;
 	int i;
 	KSI_Policy policy;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 
 	TestRule rules[] = {
@@ -299,7 +299,7 @@ static void TestBasicRulesPolicy(CuTest* tc) {
 	int res;
 	int i;
 	KSI_Policy policy;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 
 	static const Rule basicRules1[] = {
@@ -369,7 +369,7 @@ static void TestCompositeRulesPolicy(CuTest* tc) {
 	int res;
 	int i;
 	KSI_Policy policy;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 
 	static const Rule compositeRule1[] = {
@@ -502,7 +502,7 @@ bool ResultsMatch(KSI_PolicyResult *expected, KSI_PolicyResult *actual) {
 static void TestCalendarBasedPolicy_OK_WithPublicationRecord(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PolicyResult expected = {
 		VER_RES_OK,
@@ -541,7 +541,7 @@ static void TestCalendarBasedPolicy_OK_WithPublicationRecord(CuTest* tc) {
 static void TestCalendarBasedPolicy_FAIL_WithPublicationRecord(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PolicyResult expected = {
 		VER_RES_FAIL,
@@ -580,7 +580,7 @@ static void TestCalendarBasedPolicy_FAIL_WithPublicationRecord(CuTest* tc) {
 static void TestCalendarBasedPolicy_OK_WithoutPublicationRecord(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PolicyResult expected = {
 		VER_RES_OK,
@@ -619,7 +619,7 @@ static void TestCalendarBasedPolicy_OK_WithoutPublicationRecord(CuTest* tc) {
 static void TestCalendarBasedPolicy_FAIL_WithoutPublicationRecord(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PolicyResult expected = {
 		VER_RES_FAIL,
@@ -658,7 +658,7 @@ static void TestCalendarBasedPolicy_FAIL_WithoutPublicationRecord(CuTest* tc) {
 static void TestCalendarBasedPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PolicyResult expected = {
 		VER_RES_OK,
@@ -700,7 +700,7 @@ static void TestCalendarBasedPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 static void TestCalendarBasedPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PolicyResult expected = {
 		VER_RES_FAIL,
@@ -742,7 +742,7 @@ static void TestCalendarBasedPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 static void TestKeyBasedPolicy_NA_WithoutCalendarHashChain(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PolicyResult expected = {
 		VER_RES_NA,
@@ -779,7 +779,7 @@ static void TestKeyBasedPolicy_NA_WithoutCalendarHashChain(CuTest* tc) {
 static void TestKeyBasedPolicy_NA_WithoutCalendarAuthenticationRecord(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PolicyResult expected = {
 		VER_RES_NA,
@@ -813,7 +813,7 @@ static void TestKeyBasedPolicy_NA_WithoutCalendarAuthenticationRecord(CuTest* tc
 static void TestKeyBasedPolicy_FAIL_WithCalendarAuthenticationRecord(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PolicyResult expected = {
 		VER_RES_FAIL,
@@ -847,7 +847,7 @@ static void TestKeyBasedPolicy_FAIL_WithCalendarAuthenticationRecord(CuTest* tc)
 static void TestKeyBasedPolicy_FAIL_WithoutCertificate(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PolicyResult expected = {
 		VER_RES_FAIL,
@@ -889,7 +889,7 @@ static void TestKeyBasedPolicy_FAIL_WithoutCertificate(CuTest* tc) {
 static void TestKeyBasedPolicy_FAIL_WithCertificate(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PolicyResult expected = {
 		VER_RES_FAIL,
@@ -931,7 +931,7 @@ static void TestKeyBasedPolicy_FAIL_WithCertificate(CuTest* tc) {
 static void TestKeyBasedPolicy_OK(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PolicyResult expected = {
 		VER_RES_OK,
@@ -973,7 +973,7 @@ static void TestKeyBasedPolicy_OK(CuTest* tc) {
 static void TestPublicationsFileBasedPolicy_OK_WithPublicationRecord(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PolicyResult expected = {
 		VER_RES_OK,
@@ -1015,7 +1015,7 @@ static void TestPublicationsFileBasedPolicy_OK_WithPublicationRecord(CuTest* tc)
 static void TestPublicationsFileBasedPolicy_NA_WithPublicationRecord(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PolicyResult expected = {
 		VER_RES_NA,
@@ -1057,7 +1057,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithPublicationRecord(CuTest* tc)
 static void TestPublicationsFileBasedPolicy_NA_WithoutSuitablePublication(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PolicyResult expected = {
 		VER_RES_NA,
@@ -1099,7 +1099,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithoutSuitablePublication(CuTest
 static void TestPublicationsFileBasedPolicy_NA_WithSuitablePublication(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PolicyResult expected = {
 		VER_RES_NA,
@@ -1141,7 +1141,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithSuitablePublication(CuTest* t
 static void TestPublicationsFileBasedPolicy_OK_WithSuitablePublication(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PolicyResult expected = {
 		VER_RES_OK,
@@ -1190,7 +1190,7 @@ static void TestPublicationsFileBasedPolicy_OK_WithSuitablePublication(CuTest* t
 static void TestPublicationsFileBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PolicyResult expected = {
 		VER_RES_FAIL,
@@ -1239,7 +1239,7 @@ static void TestPublicationsFileBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
 static void TestUserProvidedPublicationBasedPolicy_OK_WithPublicationRecord(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_PolicyResult expected = {
@@ -1281,7 +1281,7 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithPublicationRecord(CuTe
 static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureAfterPublication(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_Integer *mockTime = NULL;
@@ -1340,7 +1340,7 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureAfterPublicat
 static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureBeforePublication(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_Signature *sig = NULL;
@@ -1389,7 +1389,7 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureBeforePublica
 static void TestUserProvidedPublicationBasedPolicy_OK_WithoutPublicationRecord(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_Signature *sig = NULL;
@@ -1440,7 +1440,7 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithoutPublicationRecord(C
 static void TestUserProvidedPublicationBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_Signature *sig = NULL;
@@ -1497,7 +1497,7 @@ static void TestFallbackPolicy_KeyBased_NA_CalendarBased_OK(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
 	KSI_Policy *fallbackPolicy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PolicyResult expected = {
 		VER_RES_OK,
@@ -1548,7 +1548,7 @@ static void TestFallbackPolicy_CalendarBased_OK_KeyBased_NA(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
 	KSI_Policy *fallbackPolicy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PolicyResult expected = {
 		VER_RES_OK,
@@ -1599,7 +1599,7 @@ static void TestFallbackPolicy_KeyBased_NA_CalendarBased_FAIL(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
 	KSI_Policy *fallbackPolicy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PolicyResult expected = {
 		VER_RES_FAIL,
@@ -1650,7 +1650,7 @@ static void TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
 	KSI_Policy *fallbackPolicy = NULL;
-	VerificationContext *context = NULL;
+	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PolicyResult expected = {
 		VER_RES_NA,

@@ -25,7 +25,7 @@ static void PolicyResult_free(KSI_PolicyResult *result);
 
 KSI_IMPLEMENT_LIST(KSI_PolicyResult, PolicyResult_free);
 
-static int Rule_verify(const Rule *rule, VerificationContext *context, KSI_RuleVerificationResult *result) {
+static int Rule_verify(const Rule *rule, KSI_VerificationContext *context, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_RuleVerificationResult ruleResult;
 	const Rule *currentRule = NULL;
@@ -418,7 +418,7 @@ cleanup:
 	return res;
 }
 
-static int Policy_verifySignature(KSI_Policy *policy, VerificationContext *context, KSI_PolicyResult **result) {
+static int Policy_verifySignature(KSI_Policy *policy, KSI_VerificationContext *context, KSI_PolicyResult **result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PolicyResult *tmp = NULL;
 
@@ -461,7 +461,7 @@ cleanup:
 	return res;
 }
 
-int KSI_SignatureVerifier_verify(KSI_Policy *policy, VerificationContext *context, KSI_PolicyVerificationResult **result) {
+int KSI_SignatureVerifier_verify(KSI_Policy *policy, KSI_VerificationContext *context, KSI_PolicyVerificationResult **result) {
 	KSI_Policy *currentPolicy;
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
@@ -526,16 +526,16 @@ void KSI_PolicyVerificationResult_free(KSI_PolicyVerificationResult *result) {
 	}
 }
 
-int KSI_VerificationContext_create(KSI_CTX *ctx, VerificationContext **context) {
+int KSI_VerificationContext_create(KSI_CTX *ctx, KSI_VerificationContext **context) {
 	int res = KSI_UNKNOWN_ERROR;
-	VerificationContext *tmp = NULL;
+	KSI_VerificationContext *tmp = NULL;
 
 	if (ctx == NULL || context == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	tmp = KSI_new(VerificationContext);
+	tmp = KSI_new(KSI_VerificationContext);
 	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
@@ -561,7 +561,7 @@ cleanup:
 	return res;
 }
 
-#define CONTEXT_DEFINE_SETTER(baseType, valueType, valueName, alias) int KSI_##baseType##_set##alias(baseType *o, valueType valueName)
+#define CONTEXT_DEFINE_SETTER(baseType, valueType, valueName, alias) int baseType##_set##alias(baseType *o, valueType valueName)
 
 #define CONTEXT_IMPLEMENT_SETTER(baseType, valueType, valueName, alias)			\
 CONTEXT_DEFINE_SETTER(baseType, valueType, valueName, alias) {					\
@@ -576,14 +576,14 @@ cleanup:																	\
 	return res;																\
 }																			\
 
-CONTEXT_IMPLEMENT_SETTER(VerificationContext, KSI_Signature *, sig, Signature);
-CONTEXT_IMPLEMENT_SETTER(VerificationContext, KSI_DataHash *, documentHash, DocumentHash);
-CONTEXT_IMPLEMENT_SETTER(VerificationContext, KSI_PublicationData *, userPublication, UserPublication);
-CONTEXT_IMPLEMENT_SETTER(VerificationContext, KSI_PublicationsFile *, userPublicationsFile, PublicationsFile);
-CONTEXT_IMPLEMENT_SETTER(VerificationContext, bool, extendingAllowed, ExtendingAllowed);
-CONTEXT_IMPLEMENT_SETTER(VerificationContext, KSI_uint64_t, docAggrLevel, AggregationLevel);
+CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, KSI_Signature *, sig, Signature);
+CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, KSI_DataHash *, documentHash, DocumentHash);
+CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, KSI_PublicationData *, userPublication, UserPublication);
+CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, KSI_PublicationsFile *, userPublicationsFile, PublicationsFile);
+CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, bool, extendingAllowed, ExtendingAllowed);
+CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, KSI_uint64_t, docAggrLevel, AggregationLevel);
 
-void KSI_VerificationContext_free(VerificationContext *context) {
+void KSI_VerificationContext_free(KSI_VerificationContext *context) {
 	if (context != NULL) {
 		KSI_Signature_free(context->userData.sig);
 		KSI_Signature_free(context->tempData.extendedSig);
@@ -596,7 +596,7 @@ void KSI_VerificationContext_free(VerificationContext *context) {
 	}
 }
 
-void KSI_VerificationContext_clean(VerificationContext *context) {
+void KSI_VerificationContext_clean(KSI_VerificationContext *context) {
 	if (context != NULL) {
 		KSI_Signature_free(context->tempData.extendedSig);
 		context->tempData.extendedSig = NULL;
