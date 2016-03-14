@@ -13,7 +13,7 @@ Version 3.8
 * BUGFIX: KSI_ERR_getBaseErrorMessage error code returned by the output parameter fixed when error count is zero.
 * BUGFIX: KSI_DataHasher memory leak on immediate reset after open.
 * BUGFIX: Fixed HMAC for hash functions with other than 512 bit internal block size.
-* IMPROVEMENT: Removed build warnings on OSX (KSIAPI-268).
+* IMPROVEMENT: Removed build warnings on OSX.
 
 Version 3.7
 
