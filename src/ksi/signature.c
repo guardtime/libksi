@@ -1054,12 +1054,9 @@ cleanup:
 
 int KSI_Signature_replacePublicationRecord(KSI_Signature *sig, KSI_PublicationRecord *pubRec) {
 	KSI_TLV *newPubTlv = NULL;
-	size_t oldPubTlvPos = 0;
-	bool oldPubTlvPos_found = false;
 
 	KSI_LIST(KSI_TLV) *nestedList = NULL;
 	int res;
-	size_t i;
 
 	if (sig == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1097,35 +1094,10 @@ int KSI_Signature_replacePublicationRecord(KSI_Signature *sig, KSI_PublicationRe
 			goto cleanup;
 		}
 
-		for (i = 0; i < KSI_TLVList_length(nestedList); i++) {
-			KSI_TLV *tmp = NULL;
-			res = KSI_TLVList_elementAt(nestedList, i, &tmp);
-			if (res != KSI_OK) {
-				KSI_pushError(sig->ctx, res, NULL);
-				goto cleanup;
-			}
-
-			if (KSI_TLV_getTag(tmp) == 0x0803) {
-				oldPubTlvPos = i;
-				oldPubTlvPos_found = true;
-				break;
-			}
-
-			KSI_nofree(tmp);
-		}
-
-		if (oldPubTlvPos_found) {
-			res = KSI_TLVList_replaceAt(nestedList, oldPubTlvPos, newPubTlv);
-			if (res != KSI_OK) {
-				KSI_pushError(sig->ctx, res, NULL);
-				goto cleanup;
-			}
-		} else {
-			res = KSI_TLVList_append(nestedList, newPubTlv);
-			if (res != KSI_OK) {
-				KSI_pushError(sig->ctx, res, NULL);
-				goto cleanup;
-			}
+		res = KSI_TLVList_append(nestedList, newPubTlv);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
 		}
 
 		if (sig->publication != NULL) {
@@ -1552,15 +1524,8 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 	}
 	pubRecClone = NULL;
 
-	/* To be sure we won't return a bad signature, lets verify it. */
-	if (pubRecClone == NULL) {
-		/* Just to be sure, verify the internals. */
-		res = KSI_Signature_verifyPolicy(tmp, KSI_VP_INTERNAL, ctx);
-	} else {
-		/* Perform an actual verification. */
-		res = KSI_Signature_verifyPolicy(tmp, KSI_VP_OFFLINE, ctx);
-	}
-
+	/* To be sure we won't return a bad signature, lets verify the internals. */
+	res = KSI_Signature_verifyPolicy(tmp, KSI_VP_INTERNAL, ctx);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
