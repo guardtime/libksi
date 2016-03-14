@@ -28,7 +28,7 @@
 #include "tlv.h"
 #include "pkitruststore.h"
 #include "net.h"
-
+#include "ctx_impl.h"
 
 #define VERIFICATION_RESULT(vrc, vec) \
 	result->resultCode = vrc;         \
@@ -1583,8 +1583,15 @@ static int initPublicationsFile(VerificationContext *verCtx) {
 		if (verCtx->userData.userPublicationsFile != NULL) {
 			verCtx->tempData.publicationsFile = verCtx->userData.userPublicationsFile;
 		} else {
+			bool verifyPubFile = (verCtx->ctx->publicationsFile == NULL);
+
 			res = KSI_receivePublicationsFile(verCtx->ctx, &verCtx->tempData.publicationsFile);
 			if (res != KSI_OK) goto cleanup;
+
+			if (verifyPubFile == true) {
+				res = KSI_verifyPublicationsFile(verCtx->ctx, verCtx->tempData.publicationsFile);
+				if (res != KSI_OK) goto cleanup;
+			}
 		}
 	}
 
