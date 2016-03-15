@@ -21,9 +21,9 @@
 #include "policy_impl.h"
 #include "verification_rule.h"
 
-static void PolicyResult_free(KSI_PolicyResult *result);
+static void RuleVerificationResult_free(KSI_RuleVerificationResult *result);
 
-KSI_IMPLEMENT_LIST(KSI_PolicyResult, PolicyResult_free);
+KSI_IMPLEMENT_LIST(KSI_RuleVerificationResult, RuleVerificationResult_free);
 
 static int Rule_verify(const Rule *rule, KSI_VerificationContext *context, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -365,7 +365,7 @@ cleanup:
 	return res;
 }
 
-static void PolicyResult_free(KSI_PolicyResult *result) {
+static void RuleVerificationResult_free(KSI_RuleVerificationResult *result) {
 	KSI_free(result);
 }
 
@@ -384,7 +384,7 @@ static int PolicyVerificationResult_create(KSI_PolicyVerificationResult **result
 		goto cleanup;
 	}
 
-	res = KSI_PolicyResultList_new(&tmp->results);
+	res = KSI_RuleVerificationResultList_new(&tmp->results);
 	if (res != KSI_OK) {
 		goto cleanup;
 	}
@@ -401,7 +401,7 @@ cleanup:
 	return res;
 }
 
-static int PolicyVerificationResult_addResult(KSI_PolicyVerificationResult *result, KSI_PolicyResult *next) {
+static int PolicyVerificationResult_addResult(KSI_PolicyVerificationResult *result, KSI_RuleVerificationResult *next) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (result == NULL || next == NULL) {
@@ -411,23 +411,23 @@ static int PolicyVerificationResult_addResult(KSI_PolicyVerificationResult *resu
 
 	/* TODO: Do we overwrite the final result? */
 	result->finalResult = *next;
-	res = KSI_PolicyResultList_append(result->results, next);
+	res = KSI_RuleVerificationResultList_append(result->results, next);
 
 cleanup:
 
 	return res;
 }
 
-static int Policy_verifySignature(KSI_Policy *policy, KSI_VerificationContext *context, KSI_PolicyResult **result) {
+static int Policy_verifySignature(KSI_Policy *policy, KSI_VerificationContext *context, KSI_RuleVerificationResult **result) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_PolicyResult *tmp = NULL;
+	KSI_RuleVerificationResult *tmp = NULL;
 
 	if (policy == NULL || policy->rules == NULL || context == NULL || context->ctx == NULL || result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	tmp = KSI_new(KSI_PolicyResult);
+	tmp = KSI_new(KSI_RuleVerificationResult);
 	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
@@ -441,7 +441,7 @@ static int Policy_verifySignature(KSI_Policy *policy, KSI_VerificationContext *c
 
 cleanup:
 
-	PolicyResult_free(tmp);
+	RuleVerificationResult_free(tmp);
 	return res;
 }
 
@@ -466,7 +466,7 @@ int KSI_SignatureVerifier_verify(KSI_Policy *policy, KSI_VerificationContext *co
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_PolicyVerificationResult *tmp = NULL;
-	KSI_PolicyResult *tmp_result = NULL;
+	KSI_RuleVerificationResult *tmp_result = NULL;
 
 	if (policy == NULL || context == NULL || context->ctx == NULL || result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -509,7 +509,7 @@ int KSI_SignatureVerifier_verify(KSI_Policy *policy, KSI_VerificationContext *co
 
 cleanup:
 
-	PolicyResult_free(tmp_result);
+	RuleVerificationResult_free(tmp_result);
 	KSI_PolicyVerificationResult_free(tmp);
 	return res;
 }
@@ -520,7 +520,7 @@ void KSI_Policy_free(KSI_Policy *policy) {
 
 void KSI_PolicyVerificationResult_free(KSI_PolicyVerificationResult *result) {
 	if (result != NULL) {
-		KSI_PolicyResultList_free(result->results);
+		KSI_RuleVerificationResultList_free(result->results);
 		KSI_free(result);
 	}
 }

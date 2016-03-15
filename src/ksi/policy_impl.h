@@ -28,9 +28,6 @@
 extern "C" {
 #endif
 
-typedef struct PolicyResult_st PolicyResult;
-KSI_DEFINE_LIST(PolicyResult);
-
 typedef enum RuleType_en {
 	RULE_TYPE_BASIC,
 	RULE_TYPE_COMPOSITE_AND,

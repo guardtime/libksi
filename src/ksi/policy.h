@@ -87,21 +87,19 @@ extern "C" {
 		VER_ERR_NONE
 	} VerificationErrorCode;
 
-	struct VerificationResult_st {
+	struct KSI_RuleVerificationResult_st {
 		VerificationResultCode resultCode;
 		VerificationErrorCode errorCode;
 		const char *ruleName;
 	};
 
-	typedef struct VerificationResult_st KSI_RuleVerificationResult;
+	typedef struct KSI_RuleVerificationResult_st KSI_RuleVerificationResult;
 
-	typedef struct VerificationResult_st KSI_PolicyResult;
-
-	typedef struct PolicyResultList KSI_PolicyResultList;
+	KSI_DEFINE_LIST(KSI_RuleVerificationResult);
 
 	typedef struct KSI_PolicyVerificationResult_st {
-		KSI_PolicyResult finalResult;
-		KSI_LIST(KSI_PolicyResult) *results;
+		KSI_RuleVerificationResult finalResult;
+		KSI_LIST(KSI_RuleVerificationResult) *results;
 	} KSI_PolicyVerificationResult;
 
 	typedef struct KSI_Policy_st KSI_Policy;
