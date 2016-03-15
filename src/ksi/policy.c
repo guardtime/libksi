@@ -17,7 +17,6 @@
  * reserves and retains all trademark rights.
  */
 
-#include "internal.h"
 #include "policy.h"
 #include "policy_impl.h"
 #include "verification_rule.h"
@@ -543,7 +542,7 @@ int KSI_VerificationContext_create(KSI_CTX *ctx, KSI_VerificationContext **conte
 
 	tmp->ctx = ctx;
 	tmp->userData.sig = NULL;
-	tmp->userData.extendingAllowed = false;
+	tmp->userData.extendingAllowed = 0;
 	tmp->userData.docAggrLevel = 0;
 	tmp->tempData.extendedSig = NULL;
 	tmp->userData.documentHash = NULL;
@@ -580,7 +579,7 @@ CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, KSI_Signature *, sig, Signatur
 CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, KSI_DataHash *, documentHash, DocumentHash);
 CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, KSI_PublicationData *, userPublication, UserPublication);
 CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, KSI_PublicationsFile *, userPublicationsFile, PublicationsFile);
-CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, bool, extendingAllowed, ExtendingAllowed);
+CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, int, extendingAllowed, ExtendingAllowed);
 CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, KSI_uint64_t, docAggrLevel, AggregationLevel);
 
 void KSI_VerificationContext_free(KSI_VerificationContext *context) {

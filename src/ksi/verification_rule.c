@@ -17,7 +17,6 @@
  * reserves and retains all trademark rights.
  */
 
-#include "internal.h"
 #include "verification_rule.h"
 #include "policy_impl.h"
 #include "policy.h"
@@ -1839,7 +1838,7 @@ int KSI_VerificationRule_ExtendingPermittedVerification(KSI_VerificationContext 
 
 	KSI_LOG_info(info->ctx, "Verify extending permitted");
 
-	if (info->userData.extendingAllowed == false) {
+	if (info->userData.extendingAllowed == 0) {
 		KSI_LOG_info(info->ctx, "Extending not allowed");
 		VERIFICATION_RESULT(VER_RES_NA, VER_ERR_GEN_2);
 		res = KSI_OK;
