@@ -19,10 +19,10 @@
 
 #include <string.h>
 #include "all_tests.h"
+#include "../src/ksi/internal.h"
 #include "../src/ksi/verification_rule.h"
 #include "../src/ksi/policy_impl.h"
 #include "../src/ksi/policy.h"
-#include "../src/ksi/internal.h"
 #include "../src/ksi/verification_impl.h"
 #include "../src/ksi/verification.h"
 #include "../src/ksi/signature_impl.h"

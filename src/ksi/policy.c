@@ -17,6 +17,7 @@
  * reserves and retains all trademark rights.
  */
 
+#include "internal.h"
 #include "policy.h"
 #include "policy_impl.h"
 #include "verification_rule.h"
