@@ -21,7 +21,6 @@
 #define	POLICY_H
 
 #include "types.h"
-#include "internal.h"
 #include "ksi.h"
 
 #ifdef	__cplusplus

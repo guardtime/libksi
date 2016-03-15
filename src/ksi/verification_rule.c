@@ -17,10 +17,10 @@
  * reserves and retains all trademark rights.
  */
 
+#include "internal.h"
 #include "verification_rule.h"
 #include "policy_impl.h"
 #include "policy.h"
-#include "internal.h"
 #include "verification_impl.h"
 #include "signature_impl.h"
 #include "hashchain.h"

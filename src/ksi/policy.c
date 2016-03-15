@@ -17,6 +17,7 @@
  * reserves and retains all trademark rights.
  */
 
+#include "internal.h"
 #include "policy.h"
 #include "policy_impl.h"
 #include "verification_rule.h"
@@ -499,7 +500,6 @@ int KSI_SignatureVerifier_verify(KSI_Policy *policy, KSI_VerificationContext *co
 			if (currentPolicy != NULL) {
 				KSI_VerificationContext_clean(context);
 				KSI_LOG_debug(ctx, "Verifying fallback policy");
-				/* Should the temporary data in verification context be cleaned? */
 			}
 		} else {
 			currentPolicy = NULL;

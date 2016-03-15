@@ -20,8 +20,8 @@
 #include "cutest/CuTest.h"
 #include "all_tests.h"
 #include <string.h>
-#include "../src/ksi/policy.h"
 #include "../src/ksi/internal.h"
+#include "../src/ksi/policy.h"
 #include "../src/ksi/policy_impl.h"
 #include "../src/ksi/ctx_impl.h"
 #include "../src/ksi/net_impl.h"
