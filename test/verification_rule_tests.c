@@ -19,7 +19,6 @@
 
 #include <string.h>
 #include "all_tests.h"
-#include "../src/ksi/internal.h"
 #include "../src/ksi/verification_rule.h"
 #include "../src/ksi/policy_impl.h"
 #include "../src/ksi/policy.h"
@@ -1718,7 +1717,7 @@ static void testRule_ExtendingPermittedVerification(CuTest *tc) {
 	res = KSI_VerificationContext_create(ctx, &verCtx);
 	CuAssert(tc, "Unable to create verification context", res == KSI_OK && verCtx != NULL);
 
-	verCtx->userData.extendingAllowed = true;
+	verCtx->userData.extendingAllowed = 1;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
@@ -1741,7 +1740,7 @@ static void testRule_ExtendingPermittedVerification_verifyErrorResult(CuTest *tc
 	res = KSI_VerificationContext_create(ctx, &verCtx);
 	CuAssert(tc, "Unable to create verification context", res == KSI_OK && verCtx != NULL);
 
-	verCtx->userData.extendingAllowed = false;
+	verCtx->userData.extendingAllowed = 0;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);

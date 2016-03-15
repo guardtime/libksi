@@ -104,7 +104,7 @@ extern "C" {
 		KSI_LIST(KSI_PolicyResult) *results;
 	} KSI_PolicyVerificationResult;
 
-	typedef struct VerificationPolicy_st KSI_Policy;
+	typedef struct KSI_Policy_st KSI_Policy;
 
 	typedef struct KSI_VerificationContext_st KSI_VerificationContext;
 
@@ -244,7 +244,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationContext_setExtendingAllowed(KSI_VerificationContext *context, bool allowed);
+	int KSI_VerificationContext_setExtendingAllowed(KSI_VerificationContext *context, int allowed);
 
 	/**
 	 * Sets initial aggregation level in verification context.

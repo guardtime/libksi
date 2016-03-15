@@ -20,7 +20,6 @@
 #include "cutest/CuTest.h"
 #include "all_tests.h"
 #include <string.h>
-#include "../src/ksi/internal.h"
 #include "../src/ksi/policy.h"
 #include "../src/ksi/policy_impl.h"
 #include "../src/ksi/ctx_impl.h"
@@ -111,7 +110,7 @@ static void TestInvalidParams(CuTest* tc) {
 	res = KSI_VerificationContext_setPublicationsFile(NULL, NULL);
 	CuAssert(tc, "Verification context NULL accepted", res == KSI_INVALID_ARGUMENT);
 
-	res = KSI_VerificationContext_setExtendingAllowed(NULL, true);
+	res = KSI_VerificationContext_setExtendingAllowed(NULL, 1);
 	CuAssert(tc, "Verification context NULL accepted", res == KSI_INVALID_ARGUMENT);
 
 	res = KSI_SignatureVerifier_verify(NULL, context, &result);
@@ -157,7 +156,7 @@ static void TestVerificationContext(CuTest* tc) {
 			 context->userData.documentHash == NULL &&
 			 context->userData.userPublication == NULL &&
 			 context->userData.userPublicationsFile == NULL &&
-			 context->userData.extendingAllowed == false &&
+			 context->userData.extendingAllowed == 0 &&
 			 context->userData.docAggrLevel == 0 &&
 			 context->tempData.extendedSig == NULL &&
 			 context->tempData.publicationsFile == NULL &&
@@ -196,8 +195,8 @@ static void TestVerificationContext(CuTest* tc) {
 	res = KSI_VerificationContext_setPublicationsFile(context, userPublicationsFile);
 	CuAssert(tc, "Failed to set publications file", res == KSI_OK && context->userData.userPublicationsFile == userPublicationsFile);
 
-	res = KSI_VerificationContext_setExtendingAllowed(context, true);
-	CuAssert(tc, "Failed to set extending allowed flag", res == KSI_OK && context->userData.extendingAllowed == true);
+	res = KSI_VerificationContext_setExtendingAllowed(context, 1);
+	CuAssert(tc, "Failed to set extending allowed flag", res == KSI_OK && context->userData.extendingAllowed == 1);
 
 	res = KSI_VerificationContext_setAggregationLevel(context, 10);
 	CuAssert(tc, "Failed to set extending allowed flag", res == KSI_OK && context->userData.docAggrLevel == 10);
@@ -1173,7 +1172,7 @@ static void TestPublicationsFileBasedPolicy_OK_WithSuitablePublication(CuTest* t
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context->userData.userPublicationsFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context->userData.userPublicationsFile != NULL);
 
-	context->userData.extendingAllowed = true;
+	context->userData.extendingAllowed = 1;
 
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -1222,7 +1221,7 @@ static void TestPublicationsFileBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context->userData.userPublicationsFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context->userData.userPublicationsFile != NULL);
 
-	context->userData.extendingAllowed = true;
+	context->userData.extendingAllowed = 1;
 
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -1422,7 +1421,7 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithoutPublicationRecord(C
 	res = KSI_PublicationRecord_getPublishedData(tempRec, &context->userData.userPublication);
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && context->userData.userPublication != NULL);
 
-	context->userData.extendingAllowed = true;
+	context->userData.extendingAllowed = 1;
 
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -1477,7 +1476,7 @@ static void TestUserProvidedPublicationBasedPolicy_FAIL_AfterExtending(CuTest* t
 	res = KSI_PublicationRecord_getPublishedData(tempRec, &context->userData.userPublication);
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && context->userData.userPublication != NULL);
 
-	context->userData.extendingAllowed = true;
+	context->userData.extendingAllowed = 1;
 
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);

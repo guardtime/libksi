@@ -46,7 +46,7 @@ typedef struct Rule_st {
 
 KSI_DEFINE_LIST(Rule);
 
-struct VerificationPolicy_st {
+struct KSI_Policy_st {
 	KSI_Policy *fallbackPolicy;
 	const Rule *rules;
 };
@@ -56,7 +56,7 @@ typedef struct VerificationUserData_st {
 	KSI_Signature *sig;
 
 	/** Indicates whether signature extention is allowed */
-	bool extendingAllowed;
+	int extendingAllowed;
 
 	/** Initial aggregation level. */
 	KSI_uint64_t docAggrLevel;
