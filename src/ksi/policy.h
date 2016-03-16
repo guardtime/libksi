@@ -177,7 +177,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_Policy_getxxx, #KSI_SignatureVerifier_verify, #KSI_Policy_free
 	 */
-	int KSI_Policy_setFallback(KSI_CTX *ctx, KSI_Policy *policy, KSI_Policy *fallback);
+	int KSI_Policy_setFallback(KSI_CTX *ctx, KSI_Policy *policy, const KSI_Policy *fallback);
 
 	/**
 	 * Verifies a KSI signature (provided in \c context) according to specified \c policy.
@@ -193,7 +193,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_Policy_getxxx, #KSI_Policy_setFallback, #KSI_PolicyVerificationResult_free
 	 */
-	int KSI_SignatureVerifier_verify(KSI_Policy *policy, KSI_VerificationContext *context, KSI_PolicyVerificationResult **result);
+	int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationContext *context, KSI_PolicyVerificationResult **result);
 
 	/**
 	 * Frees a cloned #KSI_Policy object. The function does not free any potential

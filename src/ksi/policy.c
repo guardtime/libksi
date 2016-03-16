@@ -381,7 +381,7 @@ int KSI_Policy_clone(KSI_CTX *ctx, const KSI_Policy *policy, KSI_Policy **clone)
 	}
 
 	tmp->rules = policy->rules;
-	tmp->fallbackPolicy = NULL;
+	tmp->fallbackPolicy = policy->fallbackPolicy;
 	*clone = tmp;
 	tmp = NULL;
 
@@ -446,7 +446,7 @@ cleanup:
 	return res;
 }
 
-static int Policy_verifySignature(KSI_Policy *policy, KSI_VerificationContext *context, KSI_RuleVerificationResult **result) {
+static int Policy_verifySignature(const KSI_Policy *policy, KSI_VerificationContext *context, KSI_RuleVerificationResult **result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_RuleVerificationResult *tmp = NULL;
 
@@ -473,7 +473,7 @@ cleanup:
 	return res;
 }
 
-int KSI_Policy_setFallback(KSI_CTX *ctx, KSI_Policy *policy, KSI_Policy *fallback) {
+int KSI_Policy_setFallback(KSI_CTX *ctx, KSI_Policy *policy, const KSI_Policy *fallback) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL || policy == NULL || fallback == NULL) {
@@ -490,8 +490,8 @@ cleanup:
 	return res;
 }
 
-int KSI_SignatureVerifier_verify(KSI_Policy *policy, KSI_VerificationContext *context, KSI_PolicyVerificationResult **result) {
-	KSI_Policy *currentPolicy;
+int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationContext *context, KSI_PolicyVerificationResult **result) {
+	const KSI_Policy *currentPolicy;
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_PolicyVerificationResult *tmp = NULL;
