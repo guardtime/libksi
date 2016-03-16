@@ -739,7 +739,6 @@ static void testExtendExtended(CuTest* tc) {
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_Signature_getPublicationRecord(sig, &pubRec);
-	KSI_ERR_statusDump(ctx, stdout);
 	CuAssert(tc, "Unable to get signature publication record", res == KSI_OK && pubRec != NULL);
 
 	res = KSI_Signature_extend(sig, ctx, pubRec, &ext);
