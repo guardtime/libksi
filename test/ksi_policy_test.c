@@ -53,31 +53,31 @@ static void TestInvalidParams(CuTest* tc) {
 	KSI_PolicyVerificationResult *result = NULL;
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createCalendarBased(NULL, &policy);
+	res = KSI_Policy_getCalendarBased(NULL, &policy);
 	CuAssert(tc, "Context NULL accepted", res == KSI_INVALID_ARGUMENT);
 
-	res = KSI_Policy_createKeyBased(NULL, &policy);
+	res = KSI_Policy_getKeyBased(NULL, &policy);
 	CuAssert(tc, "Context NULL accepted", res == KSI_INVALID_ARGUMENT);
 
-	res = KSI_Policy_createPublicationsFileBased(NULL, &policy);
+	res = KSI_Policy_getPublicationsFileBased(NULL, &policy);
 	CuAssert(tc, "Context NULL accepted", res == KSI_INVALID_ARGUMENT);
 
-	res = KSI_Policy_createUserProvidedPublicationBased(NULL, &policy);
+	res = KSI_Policy_getUserProvidedPublicationBased(NULL, &policy);
 	CuAssert(tc, "Context NULL accepted", res == KSI_INVALID_ARGUMENT);
 
-	res = KSI_Policy_createCalendarBased(ctx, NULL);
+	res = KSI_Policy_getCalendarBased(ctx, NULL);
 	CuAssert(tc, "Policy NULL accepted", res == KSI_INVALID_ARGUMENT);
 
-	res = KSI_Policy_createKeyBased(ctx, NULL);
+	res = KSI_Policy_getKeyBased(ctx, NULL);
 	CuAssert(tc, "Policy NULL accepted", res == KSI_INVALID_ARGUMENT);
 
-	res = KSI_Policy_createPublicationsFileBased(ctx, NULL);
+	res = KSI_Policy_getPublicationsFileBased(ctx, NULL);
 	CuAssert(tc, "Policy NULL accepted", res == KSI_INVALID_ARGUMENT);
 
-	res = KSI_Policy_createUserProvidedPublicationBased(ctx, NULL);
+	res = KSI_Policy_getUserProvidedPublicationBased(ctx, NULL);
 	CuAssert(tc, "Policy NULL accepted", res == KSI_INVALID_ARGUMENT);
 
-	res = KSI_Policy_createUserProvidedPublicationBased(ctx, &policy);
+	res = KSI_Policy_getUserProvidedPublicationBased(ctx, &policy);
 	CuAssert(tc, "Create policy failed", res == KSI_OK);
 
 	res = KSI_Policy_setFallback(NULL, policy, policy);
@@ -127,7 +127,6 @@ static void TestInvalidParams(CuTest* tc) {
 	CuAssert(tc, "Policy verification accepted empty context", res == KSI_INVALID_ARGUMENT);
 
 	KSI_ERR_clearErrors(ctx);
-	KSI_Policy_free(policy);
 	KSI_VerificationContext_free(context);
 	KSI_PolicyVerificationResult_free(result);
 }
@@ -553,7 +552,7 @@ static void TestCalendarBasedPolicy_OK_WithPublicationRecord(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createCalendarBased(ctx, &policy);
+	res = KSI_Policy_getCalendarBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -571,7 +570,6 @@ static void TestCalendarBasedPolicy_OK_WithPublicationRecord(CuTest* tc) {
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
 }
@@ -592,7 +590,7 @@ static void TestCalendarBasedPolicy_FAIL_WithPublicationRecord(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createCalendarBased(ctx, &policy);
+	res = KSI_Policy_getCalendarBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -610,7 +608,6 @@ static void TestCalendarBasedPolicy_FAIL_WithPublicationRecord(CuTest* tc) {
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_SIGNATURE_FILE
 }
@@ -631,7 +628,7 @@ static void TestCalendarBasedPolicy_OK_WithoutPublicationRecord(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createCalendarBased(ctx, &policy);
+	res = KSI_Policy_getCalendarBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -649,7 +646,6 @@ static void TestCalendarBasedPolicy_OK_WithoutPublicationRecord(CuTest* tc) {
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_SIGNATURE_FILE
 }
@@ -670,7 +666,7 @@ static void TestCalendarBasedPolicy_FAIL_WithoutPublicationRecord(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createCalendarBased(ctx, &policy);
+	res = KSI_Policy_getCalendarBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -688,7 +684,6 @@ static void TestCalendarBasedPolicy_FAIL_WithoutPublicationRecord(CuTest* tc) {
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_SIGNATURE_FILE
 }
@@ -709,7 +704,7 @@ static void TestCalendarBasedPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createCalendarBased(ctx, &policy);
+	res = KSI_Policy_getCalendarBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -730,7 +725,6 @@ static void TestCalendarBasedPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_SIGNATURE_FILE
 }
@@ -751,7 +745,7 @@ static void TestCalendarBasedPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createCalendarBased(ctx, &policy);
+	res = KSI_Policy_getCalendarBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -772,7 +766,6 @@ static void TestCalendarBasedPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_SIGNATURE_FILE
 }
@@ -792,7 +785,7 @@ static void TestKeyBasedPolicy_NA_WithoutCalendarHashChain(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createKeyBased(ctx, &policy);
+	res = KSI_Policy_getKeyBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -810,7 +803,6 @@ static void TestKeyBasedPolicy_NA_WithoutCalendarHashChain(CuTest* tc) {
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 }
 
@@ -829,7 +821,7 @@ static void TestKeyBasedPolicy_NA_WithoutCalendarAuthenticationRecord(CuTest* tc
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createKeyBased(ctx, &policy);
+	res = KSI_Policy_getKeyBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -844,7 +836,6 @@ static void TestKeyBasedPolicy_NA_WithoutCalendarAuthenticationRecord(CuTest* tc
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 }
 
@@ -863,7 +854,7 @@ static void TestKeyBasedPolicy_FAIL_WithCalendarAuthenticationRecord(CuTest* tc)
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createKeyBased(ctx, &policy);
+	res = KSI_Policy_getKeyBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -878,7 +869,6 @@ static void TestKeyBasedPolicy_FAIL_WithCalendarAuthenticationRecord(CuTest* tc)
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 }
 
@@ -898,7 +888,7 @@ static void TestKeyBasedPolicy_FAIL_WithoutCertificate(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createKeyBased(ctx, &policy);
+	res = KSI_Policy_getKeyBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -919,7 +909,6 @@ static void TestKeyBasedPolicy_FAIL_WithoutCertificate(CuTest* tc) {
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
 }
@@ -940,7 +929,7 @@ static void TestKeyBasedPolicy_FAIL_WithCertificate(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createKeyBased(ctx, &policy);
+	res = KSI_Policy_getKeyBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -961,7 +950,6 @@ static void TestKeyBasedPolicy_FAIL_WithCertificate(CuTest* tc) {
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
 }
@@ -982,7 +970,7 @@ static void TestKeyBasedPolicy_OK(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createKeyBased(ctx, &policy);
+	res = KSI_Policy_getKeyBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -1003,7 +991,6 @@ static void TestKeyBasedPolicy_OK(CuTest* tc) {
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
 }
@@ -1024,7 +1011,7 @@ static void TestPublicationsFileBasedPolicy_OK_WithPublicationRecord(CuTest* tc)
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createPublicationsFileBased(ctx, &policy);
+	res = KSI_Policy_getPublicationsFileBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -1045,7 +1032,6 @@ static void TestPublicationsFileBasedPolicy_OK_WithPublicationRecord(CuTest* tc)
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
 }
@@ -1066,7 +1052,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithPublicationRecord(CuTest* tc)
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createPublicationsFileBased(ctx, &policy);
+	res = KSI_Policy_getPublicationsFileBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -1087,7 +1073,6 @@ static void TestPublicationsFileBasedPolicy_NA_WithPublicationRecord(CuTest* tc)
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
 }
@@ -1108,7 +1093,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithoutSuitablePublication(CuTest
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createPublicationsFileBased(ctx, &policy);
+	res = KSI_Policy_getPublicationsFileBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -1129,7 +1114,6 @@ static void TestPublicationsFileBasedPolicy_NA_WithoutSuitablePublication(CuTest
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
 }
@@ -1150,7 +1134,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithSuitablePublication(CuTest* t
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createPublicationsFileBased(ctx, &policy);
+	res = KSI_Policy_getPublicationsFileBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -1171,7 +1155,6 @@ static void TestPublicationsFileBasedPolicy_NA_WithSuitablePublication(CuTest* t
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
 }
@@ -1193,7 +1176,7 @@ static void TestPublicationsFileBasedPolicy_OK_WithSuitablePublication(CuTest* t
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createPublicationsFileBased(ctx, &policy);
+	res = KSI_Policy_getPublicationsFileBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -1219,7 +1202,6 @@ static void TestPublicationsFileBasedPolicy_OK_WithSuitablePublication(CuTest* t
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
@@ -1242,7 +1224,7 @@ static void TestPublicationsFileBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createPublicationsFileBased(ctx, &policy);
+	res = KSI_Policy_getPublicationsFileBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -1268,7 +1250,6 @@ static void TestPublicationsFileBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
@@ -1290,7 +1271,7 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithPublicationRecord(CuTe
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createUserProvidedPublicationBased(ctx, &policy);
+	res = KSI_Policy_getUserProvidedPublicationBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -1312,7 +1293,6 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithPublicationRecord(CuTe
 	KSI_PolicyVerificationResult_free(result);
 	context->userData.userPublication = NULL;
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 }
 
@@ -1336,7 +1316,7 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureAfterPublicat
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createUserProvidedPublicationBased(ctx, &policy);
+	res = KSI_Policy_getUserProvidedPublicationBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -1369,7 +1349,6 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureAfterPublicat
 	context->userData.userPublication = NULL;
 	KSI_Signature_free(sig);
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_SIGNATURE_FILE_WITH_PUBLICATION
 #undef TEST_TIMESTAMP
@@ -1393,7 +1372,7 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureBeforePublica
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createUserProvidedPublicationBased(ctx, &policy);
+	res = KSI_Policy_getUserProvidedPublicationBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -1419,7 +1398,6 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureBeforePublica
 	context->userData.userPublication = NULL;
 	KSI_Signature_free(sig);
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_SIGNATURE_FILE_WITH_PUBLICATION
 }
@@ -1442,7 +1420,7 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithoutPublicationRecord(C
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createUserProvidedPublicationBased(ctx, &policy);
+	res = KSI_Policy_getUserProvidedPublicationBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -1470,7 +1448,6 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithoutPublicationRecord(C
 	context->userData.userPublication = NULL;
 	KSI_Signature_free(sig);
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_SIGNATURE_FILE_WITH_PUBLICATION
 }
@@ -1494,7 +1471,7 @@ static void TestUserProvidedPublicationBasedPolicy_FAIL_AfterExtending(CuTest* t
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createUserProvidedPublicationBased(ctx, &policy);
+	res = KSI_Policy_getUserProvidedPublicationBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -1525,12 +1502,12 @@ static void TestUserProvidedPublicationBasedPolicy_FAIL_AfterExtending(CuTest* t
 	context->userData.userPublication = NULL;
 	KSI_Signature_free(sig);
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_SIGNATURE_FILE
 #undef TEST_SIGNATURE_FILE_WITH_PUBLICATION
 }
 
+#ifdef VERIFICATION_CONTEXT_CLEANUP
 static void TestFallbackPolicy_KeyBased_NA_CalendarBased_OK(CuTest* tc) {
 	int res;
 	KSI_Policy *policy = NULL;
@@ -1548,61 +1525,10 @@ static void TestFallbackPolicy_KeyBased_NA_CalendarBased_OK(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createKeyBased(ctx, &policy);
+	res = KSI_Policy_getKeyBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
-	res = KSI_Policy_createCalendarBased(ctx, &fallbackPolicy);
-	CuAssert(tc, "Policy creation failed", res == KSI_OK);
-
-	res = KSI_Policy_setFallback(ctx, policy, fallbackPolicy);
-	CuAssert(tc, "Fallback policy setup failed", res == KSI_OK);
-
-	res = KSI_VerificationContext_create(ctx, &context);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
-
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
-
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &context->tempData.extendedSig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->tempData.extendedSig != NULL);
-
-	KSI_CalendarHashChain_free(context->userData.sig->calendarChain);
-	context->userData.sig->calendarChain = NULL;
-
-	res = KSI_SignatureVerifier_verify(policy, context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-
-	KSI_PolicyVerificationResult_free(result);
-	context->ctx->publicationsFile = NULL;
-	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
-	KSI_Policy_free(fallbackPolicy);
-#undef TEST_SIGNATURE_FILE
-#undef TEST_EXT_SIGNATURE_FILE
-}
-
-static void TestFallbackPolicy_CalendarBased_OK_KeyBased_NA(CuTest* tc) {
-	int res;
-	KSI_Policy *policy = NULL;
-	KSI_Policy *fallbackPolicy = NULL;
-	KSI_VerificationContext *context = NULL;
-	KSI_PolicyVerificationResult *result = NULL;
-	KSI_RuleVerificationResult expected = {
-		VER_RES_OK,
-		VER_ERR_NONE,
-		"KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime"
-	};
-#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
-#define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-
-	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createCalendarBased(ctx, &policy);
-	CuAssert(tc, "Policy creation failed", res == KSI_OK);
-
-	res = KSI_Policy_createKeyBased(ctx, &fallbackPolicy);
+	res = KSI_Policy_getCalendarBased(ctx, &fallbackPolicy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_Policy_setFallback(ctx, policy, fallbackPolicy);
@@ -1627,8 +1553,6 @@ static void TestFallbackPolicy_CalendarBased_OK_KeyBased_NA(CuTest* tc) {
 	KSI_PolicyVerificationResult_free(result);
 	context->ctx->publicationsFile = NULL;
 	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
-	KSI_Policy_free(fallbackPolicy);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_SIGNATURE_FILE
 }
@@ -1650,10 +1574,64 @@ static void TestFallbackPolicy_KeyBased_NA_CalendarBased_FAIL(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createKeyBased(ctx, &policy);
+	res = KSI_Policy_getKeyBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
-	res = KSI_Policy_createCalendarBased(ctx, &fallbackPolicy);
+	res = KSI_Policy_getCalendarBased(ctx, &fallbackPolicy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_Policy_setFallback(ctx, policy, fallbackPolicy);
+	CuAssert(tc, "Fallback policy setup failed", res == KSI_OK);
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &context->tempData.extendedSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->tempData.extendedSig != NULL);
+
+	KSI_CalendarHashChain_free(context->userData.sig->calendarChain);
+	context->userData.sig->calendarChain = NULL;
+
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+
+	KSI_PolicyVerificationResult_free(result);
+	context->ctx->publicationsFile = NULL;
+	KSI_VerificationContext_free(context);
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_SIGNATURE_FILE
+}
+#endif
+
+static void TestFallbackPolicy_CalendarBased_OK_KeyBased_NA(CuTest* tc) {
+	int res;
+	const KSI_Policy *org = NULL;
+	KSI_Policy *policy = NULL;
+	KSI_Policy *fallbackPolicy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		VER_RES_OK,
+		VER_ERR_NONE,
+		"KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime"
+	};
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_getCalendarBased(ctx, &org);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_Policy_clone(ctx, org, &policy);
+	CuAssert(tc, "Policy cloning failed", res == KSI_OK);
+
+	res = KSI_Policy_getKeyBased(ctx, &fallbackPolicy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_Policy_setFallback(ctx, policy, fallbackPolicy);
@@ -1679,13 +1657,13 @@ static void TestFallbackPolicy_KeyBased_NA_CalendarBased_FAIL(CuTest* tc) {
 	context->ctx->publicationsFile = NULL;
 	KSI_VerificationContext_free(context);
 	KSI_Policy_free(policy);
-	KSI_Policy_free(fallbackPolicy);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_SIGNATURE_FILE
 }
 
 static void TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA(CuTest* tc) {
 	int res;
+	const KSI_Policy *org = NULL;
 	KSI_Policy *policy = NULL;
 	KSI_Policy *fallbackPolicy = NULL;
 	KSI_VerificationContext *context = NULL;
@@ -1701,10 +1679,13 @@ static void TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_createCalendarBased(ctx, &policy);
+	res = KSI_Policy_getCalendarBased(ctx, &org);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
-	res = KSI_Policy_createKeyBased(ctx, &fallbackPolicy);
+	res = KSI_Policy_clone(ctx, org, &policy);
+	CuAssert(tc, "Policy cloning failed", res == KSI_OK);
+
+	res = KSI_Policy_getKeyBased(ctx, &fallbackPolicy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_Policy_setFallback(ctx, policy, fallbackPolicy);
@@ -1730,7 +1711,6 @@ static void TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA(CuTest* tc) {
 	context->ctx->publicationsFile = NULL;
 	KSI_VerificationContext_free(context);
 	KSI_Policy_free(policy);
-	KSI_Policy_free(fallbackPolicy);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_SIGNATURE_FILE
 }

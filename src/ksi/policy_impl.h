@@ -44,8 +44,8 @@ typedef struct Rule_st {
 KSI_DEFINE_LIST(Rule);
 
 struct KSI_Policy_st {
-	KSI_Policy *fallbackPolicy;
 	const Rule *rules;
+	KSI_Policy *fallbackPolicy;
 };
 
 typedef struct VerificationUserData_st {

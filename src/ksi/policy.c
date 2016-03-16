@@ -83,13 +83,13 @@ cleanup:
 	return res;
 }
 
-const Rule noPublicationOrCalendarAuthenticationRecordRule[] = {
+static const Rule noPublicationOrCalendarAuthenticationRecordRule[] = {
 	{RULE_TYPE_BASIC, KSI_VerificationRule_SignatureDoesNotContainPublication},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordDoesNotExist},
 	{RULE_TYPE_BASIC, NULL}
 };
 
-const Rule calendarAuthenticationRecordVerificationRule[] = {
+static const Rule calendarAuthenticationRecordVerificationRule[] = {
 	{RULE_TYPE_BASIC, KSI_VerificationRule_SignatureDoesNotContainPublication},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordExistence},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash},
@@ -97,26 +97,26 @@ const Rule calendarAuthenticationRecordVerificationRule[] = {
 	{RULE_TYPE_BASIC, NULL}
 };
 
-const Rule publicationRecordVerificationRule[] = {
+static const Rule publicationRecordVerificationRule[] = {
 	{RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordExistence},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordPublicationHash},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordPublicationTime},
 	{RULE_TYPE_BASIC, NULL}
 };
 
-const Rule publicationOrCalendarAuthenticationRecordRule[] = {
+static const Rule publicationOrCalendarAuthenticationRecordRule[] = {
 	{RULE_TYPE_COMPOSITE_OR, noPublicationOrCalendarAuthenticationRecordRule},
 	{RULE_TYPE_COMPOSITE_OR, calendarAuthenticationRecordVerificationRule},
 	{RULE_TYPE_COMPOSITE_OR, publicationRecordVerificationRule},
 	{RULE_TYPE_COMPOSITE_OR, NULL}
 };
 
-const Rule noCalendarHashChainRule[] = {
+static const Rule noCalendarHashChainRule[] = {
 	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainDoesNotExist},
 	{RULE_TYPE_BASIC, NULL}
 };
 
-const Rule calendarHashChainVerificationRule[] = {
+static const Rule calendarHashChainVerificationRule[] = {
 	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainExistence},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainInputHashVerification},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainAggregationTime},
@@ -125,13 +125,13 @@ const Rule calendarHashChainVerificationRule[] = {
 	{RULE_TYPE_BASIC, NULL}
 };
 
-const Rule calendarHashChainRule[] = {
+static const Rule calendarHashChainRule[] = {
 	{RULE_TYPE_COMPOSITE_OR, noCalendarHashChainRule},
 	{RULE_TYPE_COMPOSITE_OR, calendarHashChainVerificationRule},
 	{RULE_TYPE_COMPOSITE_OR, NULL}
 };
 
-const Rule internalRules[] = {
+static const Rule internalRules[] = {
 	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainInputHashVerification},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainConsistency},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainTimeConsistency},
@@ -140,9 +140,31 @@ const Rule internalRules[] = {
 	{RULE_TYPE_BASIC, NULL}
 };
 
-int KSI_Policy_createCalendarBased(KSI_CTX *ctx, KSI_Policy **policy) {
+int KSI_Policy_getInternal(KSI_CTX *ctx, const KSI_Policy **policy) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_Policy *tmp = NULL;
+
+	static const KSI_Policy internalPolicy = {
+		internalRules,
+		NULL
+	};
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || policy == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	*policy = &internalPolicy;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_Policy_getCalendarBased(KSI_CTX *ctx, const KSI_Policy **policy) {
+	int res = KSI_UNKNOWN_ERROR;
 
 	static const Rule rules1[] = {
 		{RULE_TYPE_BASIC, KSI_VerificationRule_SignatureDoesNotContainPublication},
@@ -189,34 +211,28 @@ int KSI_Policy_createCalendarBased(KSI_CTX *ctx, KSI_Policy **policy) {
 		{RULE_TYPE_COMPOSITE_AND, NULL}
 	};
 
+	static const KSI_Policy calendarBasedPolicy = {
+		calendarBasedRules,
+		NULL
+	};
+
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || policy == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
 
-	tmp = KSI_new(KSI_Policy);
-	if (tmp == NULL) {
-		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	tmp->fallbackPolicy = NULL;
-	tmp->rules = calendarBasedRules;
-	*policy = tmp;
-	tmp = NULL;
+	*policy = &calendarBasedPolicy;
 
 	res = KSI_OK;
 
 cleanup:
 
-	KSI_free(tmp);
 	return res;
 }
 
-int KSI_Policy_createKeyBased(KSI_CTX *ctx, KSI_Policy **policy) {
+int KSI_Policy_getKeyBased(KSI_CTX *ctx, const KSI_Policy **policy) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_Policy *tmp = NULL;
 
 	static const Rule keyBasedRules[] = {
 		{RULE_TYPE_COMPOSITE_AND, internalRules},
@@ -227,34 +243,28 @@ int KSI_Policy_createKeyBased(KSI_CTX *ctx, KSI_Policy **policy) {
 		{RULE_TYPE_BASIC, NULL}
 	};
 
+	static const KSI_Policy keyBasedPolicy = {
+		keyBasedRules,
+		NULL
+	};
+
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || policy == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
 
-	tmp = KSI_new(KSI_Policy);
-	if (tmp == NULL) {
-		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	tmp->fallbackPolicy = NULL;
-	tmp->rules = keyBasedRules;
-	*policy = tmp;
-	tmp = NULL;
+	*policy = &keyBasedPolicy;
 
 	res = KSI_OK;
 
 cleanup:
 
-	KSI_free(tmp);
 	return res;
 }
 
-int KSI_Policy_createPublicationsFileBased(KSI_CTX *ctx, KSI_Policy **policy) {
+int KSI_Policy_getPublicationsFileBased(KSI_CTX *ctx, const KSI_Policy **policy) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_Policy *tmp = NULL;
 
 	static const Rule publicationPresentRules[] = {
 		{RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordExistence},
@@ -283,34 +293,28 @@ int KSI_Policy_createPublicationsFileBased(KSI_CTX *ctx, KSI_Policy **policy) {
 		{RULE_TYPE_COMPOSITE_AND, NULL}
 	};
 
+	static const KSI_Policy publicationsFileBasedPolicy = {
+		publicationsFileBasedRules,
+		NULL
+	};
+
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || policy == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
 
-	tmp = KSI_new(KSI_Policy);
-	if (tmp == NULL) {
-		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	tmp->fallbackPolicy = NULL;
-	tmp->rules = publicationsFileBasedRules;
-	*policy = tmp;
-	tmp = NULL;
+	*policy = &publicationsFileBasedPolicy;
 
 	res = KSI_OK;
 
 cleanup:
 
-	KSI_free(tmp);
 	return res;
 }
 
-int KSI_Policy_createUserProvidedPublicationBased(KSI_CTX *ctx, KSI_Policy **policy) {
+int KSI_Policy_getUserProvidedPublicationBased(KSI_CTX *ctx, const KSI_Policy **policy) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_Policy *tmp = NULL;
 
 	static const Rule userPublicationRules[] = {
 		{RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordExistence},
@@ -340,28 +344,52 @@ int KSI_Policy_createUserProvidedPublicationBased(KSI_CTX *ctx, KSI_Policy **pol
 		{RULE_TYPE_COMPOSITE_AND, NULL}
 	};
 
+	static const KSI_Policy userProvidedPublicationBasedPolicy = {
+		userProvidedPublicationBasedRules,
+		NULL
+	};
+
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || policy == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
 
-	tmp = KSI_new(KSI_Policy);
-	if (tmp == NULL) {
-		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+	*policy = &userProvidedPublicationBasedPolicy;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_Policy_clone(KSI_CTX *ctx, const KSI_Policy *policy, KSI_Policy **clone) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Policy *tmp = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || policy == NULL || clone == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
 
+	tmp = KSI_new(KSI_Policy);
+	if (tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->rules = policy->rules;
 	tmp->fallbackPolicy = NULL;
-	tmp->rules = userProvidedPublicationBasedRules;
-	*policy = tmp;
+	*clone = tmp;
 	tmp = NULL;
 
 	res = KSI_OK;
 
 cleanup:
 
-	KSI_free(tmp);
+	KSI_Policy_free(tmp);
 	return res;
 }
 
@@ -454,6 +482,7 @@ int KSI_Policy_setFallback(KSI_CTX *ctx, KSI_Policy *policy, KSI_Policy *fallbac
 	}
 
 	policy->fallbackPolicy = fallback;
+
 	res = KSI_OK;
 
 cleanup:
