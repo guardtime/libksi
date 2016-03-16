@@ -996,10 +996,12 @@ EXPORTS
 
 ;policy.h
 EXPORTS
-	KSI_Policy_createCalendarBased
-	KSI_Policy_createKeyBased
-	KSI_Policy_createPublicationsFileBased
-	KSI_Policy_createUserProvidedPublicationBased
+	KSI_Policy_getInternal
+	KSI_Policy_getCalendarBased
+	KSI_Policy_getKeyBased
+	KSI_Policy_getPublicationsFileBased
+	KSI_Policy_getUserProvidedPublicationBased
+	KSI_Policy_clone
 	KSI_Policy_setFallback
 	KSI_SignatureVerifier_verify
 	KSI_Policy_free

@@ -87,21 +87,19 @@ extern "C" {
 		VER_ERR_NONE
 	} VerificationErrorCode;
 
-	struct VerificationResult_st {
+	struct KSI_RuleVerificationResult_st {
 		VerificationResultCode resultCode;
 		VerificationErrorCode errorCode;
 		const char *ruleName;
 	};
 
-	typedef struct VerificationResult_st KSI_RuleVerificationResult;
+	typedef struct KSI_RuleVerificationResult_st KSI_RuleVerificationResult;
 
-	typedef struct VerificationResult_st KSI_PolicyResult;
-
-	typedef struct PolicyResultList KSI_PolicyResultList;
+	KSI_DEFINE_LIST(KSI_RuleVerificationResult);
 
 	typedef struct KSI_PolicyVerificationResult_st {
-		KSI_PolicyResult finalResult;
-		KSI_LIST(KSI_PolicyResult) *results;
+		KSI_RuleVerificationResult finalResult;
+		KSI_LIST(KSI_RuleVerificationResult) *results;
 	} KSI_PolicyVerificationResult;
 
 	typedef struct KSI_Policy_st KSI_Policy;
@@ -109,53 +107,75 @@ extern "C" {
 	typedef struct KSI_VerificationContext_st KSI_VerificationContext;
 
 	/**
-	 * Creates a #KSI_Policy containing the rules for calendar based verification.
+	 * Gets a pointer to a #KSI_Policy object with rules for internal verification.
 	 * \param[in]	ctx			KSI context.
 	 * \param[out]	policy		Pointer to the receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_Policy_setFallback, #KSI_SignatureVerifier_verify, #KSI_Policy_free
+	 * \see #KSI_SignatureVerifier_verify
 	 */
-	int KSI_Policy_createCalendarBased(KSI_CTX *ctx, KSI_Policy **policy);
+	int KSI_Policy_getInternal(KSI_CTX *ctx, const KSI_Policy **policy);
 
 	/**
-	 * Creates a #KSI_Policy containing the rules for key based verification.
+	 * Gets a pointer to a #KSI_Policy object with rules for calendar based verification.
 	 * \param[in]	ctx			KSI context.
 	 * \param[out]	policy		Pointer to the receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_Policy_setFallback, #KSI_SignatureVerifier_verify, #KSI_Policy_free
+	 * \see #KSI_SignatureVerifier_verify
 	 */
-	int KSI_Policy_createKeyBased(KSI_CTX *ctx, KSI_Policy **policy);
+	int KSI_Policy_getCalendarBased(KSI_CTX *ctx, const KSI_Policy **policy);
 
 	/**
-	 * Creates a #KSI_Policy containing the rules for publications file based verification.
+	 * Gets a pointer to a #KSI_Policy object with rules for key based verification.
 	 * \param[in]	ctx			KSI context.
 	 * \param[out]	policy		Pointer to the receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_Policy_setFallback, #KSI_SignatureVerifier_verify, #KSI_Policy_free
+	 * \see #KSI_SignatureVerifier_verify
 	 */
-	int KSI_Policy_createPublicationsFileBased(KSI_CTX *ctx, KSI_Policy **policy);
+	int KSI_Policy_getKeyBased(KSI_CTX *ctx, const KSI_Policy **policy);
 
 	/**
-	 * Creates a #KSI_Policy containing the rules for user provided publication based verification.
+	 * Gets a pointer to a #KSI_Policy object with rules for publications file based verification.
 	 * \param[in]	ctx			KSI context.
 	 * \param[out]	policy		Pointer to the receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_Policy_setFallback, #KSI_SignatureVerifier_verify, #KSI_Policy_free
+	 * \see #KSI_SignatureVerifier_verify
 	 */
-	int KSI_Policy_createUserProvidedPublicationBased(KSI_CTX *ctx, KSI_Policy **policy);
+	int KSI_Policy_getPublicationsFileBased(KSI_CTX *ctx, const KSI_Policy **policy);
 
 	/**
-	 * Sets a fallback policy for a primary policy.
+	 * Gets a pointer to a #KSI_Policy object with rules for user provided publication based verification.
+	 * \param[in]	ctx			KSI context.
+	 * \param[out]	policy		Pointer to the receiving pointer.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_SignatureVerifier_verify
+	 */
+	int KSI_Policy_getUserProvidedPublicationBased(KSI_CTX *ctx, const KSI_Policy **policy);
+
+	/**
+	 * Clones a #KSI_Policy, allowing the user to change the default fallback policy later.
+	 * User gets ownership of the cloned policy and is responsible for freeing the policy.
+	 * \param[in]	ctx			KSI context.
+	 * \param[in]	policy		Policy to be cloned.
+	 * \param[out]	clone		Pointer to the receiving pointer.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_Policy_setFallback, #KSI_SignatureVerifier_verify, #KSI_Policy_free
+	 */
+	int KSI_Policy_clone(KSI_CTX *ctx, const KSI_Policy *policy, KSI_Policy **clone);
+
+	/**
+	 * Sets a fallback policy for a primary policy. The primary policy must be a cloned policy.
 	 * \param[in]	ctx			KSI context.
 	 * \param[in]	policy		Primary policy to be secured with a fallback policy.
 	 * \param[in]	fallback	Fallback policy.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_Policy_createxxx, #KSI_SignatureVerifier_verify, #KSI_Policy_free
+	 * \see #KSI_Policy_getxxx, #KSI_SignatureVerifier_verify, #KSI_Policy_free
 	 */
 	int KSI_Policy_setFallback(KSI_CTX *ctx, KSI_Policy *policy, KSI_Policy *fallback);
 
@@ -171,16 +191,16 @@ extern "C" {
 	 * \param[out]	result		List of verification results
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_Policy_setFallback, #KSI_Policy_free, #KSI_PolicyVerificationResult_free
+	 * \see #KSI_Policy_getxxx, #KSI_Policy_setFallback, #KSI_PolicyVerificationResult_free
 	 */
 	int KSI_SignatureVerifier_verify(KSI_Policy *policy, KSI_VerificationContext *context, KSI_PolicyVerificationResult **result);
 
 	/**
-	 * Frees the \c policy object. The function does not free any potential
+	 * Frees a cloned #KSI_Policy object. The function does not free any potential
 	 * fallback policy objects which the user must free separately.
 	 * \param[in] policy
 	 *
-	 * \see #KSI_Policy_createxxx
+	 * \see #KSI_Policy_clone
 	 */
 	void KSI_Policy_free(KSI_Policy *policy);
 
