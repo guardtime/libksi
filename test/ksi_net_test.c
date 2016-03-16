@@ -716,7 +716,7 @@ static void testLocalAggregationSigning(CuTest* tc) {
 }
 
 static void testExtendExtended(CuTest* tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.2-extended.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
 #define TEST_RES_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
@@ -728,7 +728,6 @@ static void testExtendExtended(CuTest* tc) {
 	unsigned char expected[0x1ffff];
 	size_t expected_len = 0;
 	FILE *f = NULL;
-	KSI_PublicationRecord *pubRec = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -738,11 +737,7 @@ static void testExtendExtended(CuTest* tc) {
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
-	res = KSI_Signature_getPublicationRecord(sig, &pubRec);
-	KSI_ERR_statusDump(ctx, stdout);
-	CuAssert(tc, "Unable to get signature publication record", res == KSI_OK && pubRec != NULL);
-
-	res = KSI_Signature_extend(sig, ctx, pubRec, &ext);
+	res = KSI_extendSignature(ctx, sig, &ext);
 	CuAssert(tc, "Unable to extend the signature", res == KSI_OK && ext != NULL);
 
 	res = KSI_Signature_serialize(ext, &serialized, &serialized_len);
