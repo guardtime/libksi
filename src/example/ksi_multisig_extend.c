@@ -90,21 +90,7 @@ int main (int argc, char **argv) {
 		goto cleanup;
 	}
 
-	/* Serialize the container. */
-	res = KSI_MultiSignature_writeBytes(ms, NULL, 0, &buf_len, 0);
-	if (res != KSI_OK) {
-		fprintf(stderr, "%s: Unable to calculate serialized multi signature container lenght: %s\n", infn, KSI_getErrorString(res));
-		goto cleanup;
-	}
-
-	buf = KSI_malloc(buf_len);
-	if (buf == NULL) {
-		fprintf(stderr, "Ooops, you've run out ouf memory!");
-		res = KSI_OUT_OF_MEMORY;
-		goto cleanup;
-	}
-
-	res = KSI_MultiSignature_writeBytes(ms, buf, buf_len, NULL, 0);
+	res = KSI_MultiSignature_serialize(ms, &buf, &buf_len);
 	if (res != KSI_OK) {
 		fprintf(stderr, "%s: Unable to serialize multi signature container: %s\n", infn, KSI_getErrorString(res));
 		goto cleanup;
