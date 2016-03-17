@@ -29,6 +29,7 @@
 #include "../src/ksi/hashchain.h"
 #include "../src/ksi/publicationsfile_impl.h"
 #include "../src/ksi/hash_impl.h"
+#include "../src/ksi/signature_verify.h"
 
 extern KSI_CTX *ctx;
 
@@ -1757,6 +1758,145 @@ static void TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA(CuTest* tc) {
 #undef TEST_EXT_SIGNATURE_FILE
 }
 
+static void TestSignatureVerify_InternalConsistency(CuTest* tc) {
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		VER_RES_OK,
+		VER_ERR_NONE,
+		"KSI_VerificationRule_DocumentHashVerification"
+	};
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_SignatureVerify_internalConsistency(sig, ctx, &result);
+	CuAssert(tc, "Signature verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+
+	KSI_Signature_free(sig);
+	KSI_PolicyVerificationResult_free(result);
+#undef TEST_SIGNATURE_FILE
+}
+
+static void TestSignatureVerify_PublicationBasedWithUserPub_ExtNotPermitted(CuTest* tc) {
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_Signature *extSig = NULL;
+	KSI_PublicationRecord *tempRec = NULL;
+	KSI_PublicationData *pubData = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		VER_RES_NA,
+		VER_ERR_GEN_2,
+		"KSI_VerificationRule_ExtendingPermittedVerification"
+	};
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_getPublicationRecord(extSig, &tempRec);
+	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && tempRec != NULL);
+
+	res = KSI_PublicationRecord_getPublishedData(tempRec, &pubData);
+	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && pubData != NULL);
+
+	res = KSI_SignatureVerify_UserProvidedPublicationBased(sig, ctx, pubData, 0, &result);
+	CuAssert(tc, "Signature verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+
+	KSI_Signature_free(sig);
+	KSI_Signature_free(extSig);
+	KSI_PolicyVerificationResult_free(result);
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_SIGNATURE_FILE
+}
+
+static void TestSignatureVerify_PublicationBasedWithPubFile_ExtNotPermitted(CuTest* tc) {
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_PublicationsFile *publicationsFile = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		VER_RES_NA,
+		VER_ERR_GEN_2,
+		"KSI_VerificationRule_ExtendingPermittedVerification"
+	};
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &publicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && publicationsFile != NULL);
+
+	res = KSI_SignatureVerify_PublicationsFileBased(sig, ctx, publicationsFile, 0, &result);
+	CuAssert(tc, "Signature verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+
+	KSI_Signature_free(sig);
+	KSI_PublicationsFile_free(publicationsFile);
+	KSI_PolicyVerificationResult_free(result);
+#undef TEST_SIGNATURE_FILE
+#undef TEST_PUBLICATIONS_FILE
+}
+
+static void TestSignatureVerify_KeyBased(CuTest* tc) {
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_PublicationsFile *publicationsFile = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		VER_RES_OK,
+		VER_ERR_NONE,
+		"KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification"
+	};
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &publicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && publicationsFile != NULL);
+
+	res = KSI_CTX_setPublicationsFile(ctx, publicationsFile);
+	CuAssert(tc, "Unable to set ctx publications file", res == KSI_OK);
+
+	res = KSI_SignatureVerify_KeyBased(sig, ctx, &result);
+	CuAssert(tc, "Signature verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+
+	KSI_Signature_free(sig);
+	KSI_PolicyVerificationResult_free(result);
+#undef TEST_SIGNATURE_FILE
+#undef TEST_PUBLICATIONS_FILE
+}
+
 CuSuite* KSITest_Policy_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 	suite->preTest = preTest;
@@ -1798,5 +1938,11 @@ CuSuite* KSITest_Policy_getSuite(void) {
 #endif
 	SUITE_ADD_TEST(suite, TestFallbackPolicy_CalendarBased_OK_KeyBased_NA);
 	SUITE_ADD_TEST(suite, TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA);
+
+	SUITE_ADD_TEST(suite, TestSignatureVerify_InternalConsistency);
+	SUITE_ADD_TEST(suite, TestSignatureVerify_PublicationBasedWithUserPub_ExtNotPermitted);
+	SUITE_ADD_TEST(suite, TestSignatureVerify_PublicationBasedWithPubFile_ExtNotPermitted);
+	SUITE_ADD_TEST(suite, TestSignatureVerify_KeyBased);
+
 	return suite;
 }
