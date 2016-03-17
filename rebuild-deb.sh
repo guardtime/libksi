@@ -68,6 +68,7 @@ libksi_devel_includes="\
 	$include_dir/pkitruststore.h \
 	$include_dir/publicationsfile.h \
 	$include_dir/signature.h \
+	$include_dir/signature_verify.h \
 	$include_dir/tlv.h \
 	$include_dir/tlv_template.h \
 	$include_dir/types.h \
