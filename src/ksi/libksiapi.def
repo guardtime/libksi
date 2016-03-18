@@ -322,6 +322,8 @@ EXPORTS
     KSI_PublicationData_toTlv
     KSI_PublicationData_getBaseTlv
     KSI_PublicationData_setBaseTlv
+	KSI_PublicationsFile_getCertConstraints
+	KSI_PublicationsFile_setCertConstraints
 
 ;signature.h
 EXPORTS

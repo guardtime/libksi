@@ -287,4 +287,7 @@ struct KSI_ERR_st {
 	KSI_CTX *ctx;
 };
 
+/* Frees the certificate constraints array. */
+void freeCertConstraintsArray(KSI_CertConstraint *arr);
+
 #endif

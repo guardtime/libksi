@@ -759,6 +759,7 @@ static int KSI_PKITruststore_verifyCertificate(const KSI_PKITruststore *pki, con
 	CERT_CHAIN_POLICY_PARA policyPara;
 	CERT_CHAIN_POLICY_STATUS policyStatus;
 	char buf[1024];
+	KSI_CertConstraint *certConstraints = NULL;
 
 	if (pki == NULL || cert == NULL){
 		res = KSI_INVALID_ARGUMENT;
@@ -767,8 +768,20 @@ static int KSI_PKITruststore_verifyCertificate(const KSI_PKITruststore *pki, con
 	ctx = pki->ctx;
 	KSI_ERR_clearErrors(ctx);
 
+	/* Use certificate constraints specific to publications file, if set. */
+	if (pki->ctx->publicationsFile != NULL) {
+		res = KSI_PublicationsFile_getCertConstraints(pki->ctx->publicationsFile, &certConstraints);
+		if (res != KSI_OK) {
+			KSI_pushError(pki->ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+	if (certConstraints == NULL) {
+		certConstraints = pki->ctx->certConstraints;
+	}
+
 	/* Make sure the publications file verification constraints are configured. */
-	if (pki->ctx->certConstraints == NULL || pki->ctx->certConstraints[0].oid == NULL) {
+	if (certConstraints == NULL || certConstraints[0].oid == NULL) {
 		KSI_pushError(pki->ctx, res = KSI_PUBFILE_VERIFICATION_NOT_CONFIGURED, NULL);
 		goto cleanup;
 	}
@@ -852,6 +865,7 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 	char tmp[256];
 	size_t i;
 	KSI_PKICertificate *ksi_pki_cert = NULL;
+	KSI_CertConstraint *certConstraints = NULL;
 
 	if (pki == NULL || signature == NULL){
 		res = KSI_INVALID_ARGUMENT;
@@ -868,8 +882,20 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 
 	subjectCert = ksi_pki_cert->x509;
 
-	for (i = 0; pki->ctx->certConstraints[i].oid != NULL; i++) {
-		KSI_CertConstraint *ptr = &pki->ctx->certConstraints[i];
+	/* Use certificate constraints specific to publications file, if set. */
+	if (pki->ctx->publicationsFile != NULL) {
+		res = KSI_PublicationsFile_getCertConstraints(pki->ctx->publicationsFile, &certConstraints);
+		if (res != KSI_OK) {
+			KSI_pushError(pki->ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+	if (certConstraints == NULL) {
+		certConstraints = pki->ctx->certConstraints;
+	}
+
+	for (i = 0; certConstraints[i].oid != NULL; i++) {
+		KSI_CertConstraint *ptr = &certConstraints[i];
 
 		KSI_LOG_info(pki->ctx, "Verifying PKI signature certificate with OID: '%s' expected value: '%s'.", ptr->oid, ptr->val);
 

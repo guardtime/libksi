@@ -40,7 +40,7 @@ const char *KSI_getVersion(void) {
 	return versionString;
 }
 
-static void freeCertConstraintsArray(KSI_CertConstraint *arr) {
+void freeCertConstraintsArray(KSI_CertConstraint *arr) {
 	size_t i;
 
 	if (arr != NULL) {;
@@ -977,7 +977,6 @@ int KSI_CTX_setDefaultPubFileCertConstraints(KSI_CTX *ctx, const KSI_CertConstra
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
-	memset(tmp, 0, count * sizeof(KSI_CertConstraint));
 
 	/* Copy the values. */
 	for (i = 0; arr[i].oid != NULL; i++) {

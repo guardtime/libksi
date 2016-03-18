@@ -139,6 +139,7 @@ int KSI_PublicationsFile_new(KSI_CTX *ctx, KSI_PublicationsFile **t) {
 	tmp->certificates = NULL;
 	tmp->publications = NULL;
 	tmp->signature = NULL;
+	tmp->certConstraints = NULL;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -508,6 +509,7 @@ void KSI_PublicationsFile_free(KSI_PublicationsFile *t) {
 		KSI_PublicationRecordList_free(t->publications);
 		KSI_PKISignature_free(t->signature);
 		KSI_free(t->raw);
+		freeCertConstraintsArray(t->certConstraints);
 		KSI_free(t);
 	}
 }
@@ -517,6 +519,7 @@ KSI_IMPLEMENT_GETTER(KSI_PublicationsFile, KSI_LIST(KSI_CertificateRecord)*, cer
 KSI_IMPLEMENT_GETTER(KSI_PublicationsFile, KSI_LIST(KSI_PublicationRecord)*, publications, Publications);
 KSI_IMPLEMENT_GETTER(KSI_PublicationsFile, KSI_PKISignature *, signature, Signature);
 KSI_IMPLEMENT_GETTER(KSI_PublicationsFile, size_t, signedDataLength, SignedDataLength);
+KSI_IMPLEMENT_GETTER(KSI_PublicationsFile, KSI_CertConstraint*, certConstraints, CertConstraints);
 
 KSI_IMPLEMENT_SETTER(KSI_PublicationsFile, KSI_PublicationsHeader*, header, Header);
 KSI_IMPLEMENT_SETTER(KSI_PublicationsFile, KSI_LIST(KSI_CertificateRecord)*, certificates, Certificates);
@@ -902,6 +905,69 @@ cleanup:
 	return res;
 }
 
+int KSI_PublicationsFile_setCertConstraints(KSI_PublicationsFile *pubFile, const KSI_CertConstraint *arr) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CertConstraint *tmp = NULL;
+	KSI_CTX *ctx = NULL;
+	size_t count = 0;
+	size_t i;
+
+	if (pubFile == NULL || pubFile->ctx == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = pubFile->ctx;
+	KSI_ERR_clearErrors(ctx);
+
+	if (arr != NULL) {
+		/* Count the input. */
+		while(arr[count++].oid != NULL);
+
+		/* Allocate buffer with extra space for the trailing {NULL, NULL}. */
+		tmp = KSI_calloc(count, sizeof(KSI_CertConstraint));
+		if (tmp == NULL) {
+			KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+			goto cleanup;
+		}
+
+		/* Copy the values. */
+		for (i = 0; arr[i].oid != NULL; i++) {
+			res = KSI_strdup(arr[i].oid, &tmp[i].oid);
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
+
+			if (arr[i].val == NULL) {
+				KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Expected OID value may not be NULL");
+				goto cleanup;
+			}
+
+			res = KSI_strdup(arr[i].val, &tmp[i].val);
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
+		}
+
+		/* Add terminator for the array. */
+		tmp[i].oid = NULL;
+		tmp[i].val = NULL;
+	}
+	/* Free the existing constraints. */
+	freeCertConstraintsArray(pubFile->certConstraints);
+
+	pubFile->certConstraints = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	freeCertConstraintsArray(tmp);
+
+	return res;
+}
 
 int KSI_PublicationData_fromBase32(KSI_CTX *ctx, const char *publication, KSI_PublicationData **published_data) {
 	int res = KSI_UNKNOWN_ERROR;
