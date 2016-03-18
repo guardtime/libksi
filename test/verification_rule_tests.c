@@ -1753,8 +1753,7 @@ static void testRule_ExtendingPermittedVerification_verifyErrorResult(CuTest *tc
 #undef TEST_SIGNATURE_FILE
 }
 
-static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse(CuTest *tc) {
-#define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse(CuTest *tc, char *testSignatureFile) {
 #define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
@@ -1771,7 +1770,7 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse(CuTe
 	res = KSI_VerificationContext_create(ctx, &verCtx);
 	CuAssert(tc, "Unable to create verification context", res == KSI_OK && verCtx != NULL);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(testSignatureFile), &verCtx->userData.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
@@ -1791,13 +1790,24 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse(CuTe
 
 	KSI_VerificationContext_free(verCtx);
 
-#undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
 #undef TEST_PUBLICATIONS_FILE
 }
 
+static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse_notExtended(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+	testRule_PublicationsFilePublicationHashMatchesExtenderResponse(tc, TEST_SIGNATURE_FILE);
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse_extended(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+	testRule_PublicationsFilePublicationHashMatchesExtenderResponse(tc, TEST_SIGNATURE_FILE);
+#undef TEST_SIGNATURE_FILE
+}
+
 static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse_verifyErrorResult(CuTest *tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 #define TEST_PUBLICATIONS_FILE  "resource/tlv/publications.tlv"
 
@@ -1839,8 +1849,7 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse_veri
 #undef TEST_PUBLICATIONS_FILE
 }
 
-static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(CuTest *tc) {
-#define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(CuTest *tc, char *testSignatureFile) {
 #define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
@@ -1857,7 +1866,7 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(CuTe
 	res = KSI_VerificationContext_create(ctx, &verCtx);
 	CuAssert(tc, "Unable to create verification context", res == KSI_OK && verCtx != NULL);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(testSignatureFile), &verCtx->userData.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
@@ -1877,13 +1886,24 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(CuTe
 
 	KSI_VerificationContext_free(verCtx);
 
-#undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
 #undef TEST_PUBLICATIONS_FILE
 }
 
+static void testRule_testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_notExtended(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+	testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(tc, TEST_SIGNATURE_FILE);
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_extended(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+	testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(tc, TEST_SIGNATURE_FILE);
+#undef TEST_SIGNATURE_FILE
+}
+
 static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_verifyErrorResult(CuTest *tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 #define TEST_PUBLICATIONS_FILE  "resource/tlv/publications.tlv"
 
@@ -1925,8 +1945,7 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_veri
 #undef TEST_PUBLICATIONS_FILE
 }
 
-static void testRule_PublicationsFileExtendedSignatureInputHash(CuTest *tc) {
-#define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+static void testRule_PublicationsFileExtendedSignatureInputHash(CuTest *tc, char *testSignatureFile) {
 #define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
@@ -1943,7 +1962,7 @@ static void testRule_PublicationsFileExtendedSignatureInputHash(CuTest *tc) {
 	res = KSI_VerificationContext_create(ctx, &verCtx);
 	CuAssert(tc, "Unable to create verification context", res == KSI_OK && verCtx != NULL);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(testSignatureFile), &verCtx->userData.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
@@ -1963,13 +1982,24 @@ static void testRule_PublicationsFileExtendedSignatureInputHash(CuTest *tc) {
 
 	KSI_VerificationContext_free(verCtx);
 
-#undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
 #undef TEST_PUBLICATIONS_FILE
 }
 
+static void testRule_PublicationsFileExtendedSignatureInputHash_notExtended(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+	testRule_PublicationsFileExtendedSignatureInputHash(tc, TEST_SIGNATURE_FILE);
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_PublicationsFileExtendedSignatureInputHash_extended(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+	testRule_PublicationsFileExtendedSignatureInputHash(tc, TEST_SIGNATURE_FILE);
+#undef TEST_SIGNATURE_FILE
+}
+
 static void testRule_PublicationsFileExtendedSignatureInputHash_verifyErrorResult(CuTest *tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 #define TEST_PUBLICATIONS_FILE  "resource/tlv/publications.tlv"
 
@@ -2689,11 +2719,14 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_PublicationsFileContainsPublication_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_ExtendingPermittedVerification);
 	SUITE_ADD_TEST(suite, testRule_ExtendingPermittedVerification_verifyErrorResult);
-	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationHashMatchesExtenderResponse);
+	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationHashMatchesExtenderResponse_notExtended);
+	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationHashMatchesExtenderResponse_extended);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationHashMatchesExtenderResponse_verifyErrorResult);
-	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationTimeMatchesExtenderResponse);
+	SUITE_ADD_TEST(suite, testRule_testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_notExtended);
+	SUITE_ADD_TEST(suite, testRule_testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_extended);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_verifyErrorResult);
-	SUITE_ADD_TEST(suite, testRule_PublicationsFileExtendedSignatureInputHash);
+	SUITE_ADD_TEST(suite, testRule_PublicationsFileExtendedSignatureInputHash_notExtended);
+	SUITE_ADD_TEST(suite, testRule_PublicationsFileExtendedSignatureInputHash_extended);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFileExtendedSignatureInputHash_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationExistence);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationExistence_pubDataMissing_verifyErrorResult);
