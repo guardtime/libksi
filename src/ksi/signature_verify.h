@@ -30,20 +30,30 @@ extern "C" {
 
 
 	/**
+	 * This functions is used to verify signature \c sig internal consistency. This function behaves as
+	 * #KSI_SignatureVerify_internalConsistency except it takes two extra optional parametest \c hsh \c lvl
 	 *
 	 * \param[in]		sig	    KSI signature to be verified.
+	 * \param[in]		ctx		KSI context
+	 * \param[in]		hsh	    Document hash or aggregation root hash when used with root level \c lvl.
+	 * If set to NULL, the hash value in the provided signature is not verified
+	 * \param[in]		lvl	    Local aggregation level. Base level is 0
 	 * \param[out]		result	Pointer to the verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 *
+	 * \see #KSI_SignatureVerify_internalConsistency
+	 *
 	 * \note The output memory buffer belongs to the caller and needs to be freed
 	 * by the caller using #KSI_PolicyVerificationResult_free.
 	 */
-	int KSI_SignatureVerify_internal(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *hsh, KSI_uint64_t rootLevel, KSI_PolicyVerificationResult **result);
+	int KSI_SignatureVerify_internal(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *hsh, KSI_uint64_t lvl, KSI_PolicyVerificationResult **result);
 
 	/**
-	 * This function verified signature internal consistency
+	 * This functions is used to verify signature \c sig internal consistency.
+	 *
 	 * \param[in]		sig	    KSI signature to be verified.
+	 * \param[in]		ctx		KSI context
 	 * \param[out]		result	Pointer to the verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -54,17 +64,19 @@ extern "C" {
 	int KSI_SignatureVerify_internalConsistency(KSI_Signature *sig, KSI_CTX *ctx, KSI_PolicyVerificationResult **result);
 
 	/**
-	 * This function verifies given hash value \c hsh using the signature \c sig.
-	 *
-	 * This function does not allow the document hash to be NULL, if you only need to
-	 * verify the signature without having the original document (or document hash) use
-	 * #KSI_SignatureVerify_internalConsistency.
+	 * This function verifies given hash value \c hsh using the signature \c sig. This function behaves as
+	 * #KSI_SignatureVerify_internalConsistency except it takes an extra parametest \c hsh. This function does
+	 * not allow the document hash to be NULL, if you only need to verify the signature without having the
+	 * original document (or document hash) use #KSI_SignatureVerify_internalConsistency.
 	 *
 	 * \param[in]		sig	    KSI signature to be verified.
+	 * \param[in]		ctx		KSI context
 	 * \param[in]		hsh	    The signed document hash. The hash may not be NULL.
 	 * \param[out]		result	Pointer to the verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \see #KSI_SignatureVerify_internalConsistency
 	 *
 	 * \note The output memory buffer belongs to the caller and needs to be freed
 	 * by the caller using #KSI_PolicyVerificationResult_free.
@@ -73,8 +85,10 @@ extern "C" {
 
 
 	/**
+	 * This function can be used to verify signature \c sig using user provided publication data \c pubData
 	 *
 	 * \param[in]		sig	    KSI signature to be verified.
+	 * \param[in]		ctx		KSI context
 	 * \param[out]		result	Pointer to the verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -82,11 +96,15 @@ extern "C" {
 	 * \note The output memory buffer belongs to the caller and needs to be freed
 	 * by the caller using #KSI_PolicyVerificationResult_free.
 	 */
-	int KSI_SignatureVerify_UserProvidedPublicationBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_PublicationData *pubData, int extPerm, KSI_PolicyVerificationResult **result);
+	int KSI_SignatureVerify_userProvidedPublicationBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_PublicationData *pubData, int extPerm, KSI_PolicyVerificationResult **result);
 
 	/**
+	 * This function can be used to verify signature \c sig using publications file \c pubFile
 	 *
 	 * \param[in]		sig	    KSI signature to be verified.
+	 * \param[in]		ctx		KSI context
+	 * \param[in]		pubFile	Publications files
+	 * \param[in]		extPerm Extending persimmion flag
 	 * \param[out]		result	Pointer to the verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -94,11 +112,16 @@ extern "C" {
 	 * \note The output memory buffer belongs to the caller and needs to be freed
 	 * by the caller using #KSI_PolicyVerificationResult_free.
 	 */
-	int KSI_SignatureVerify_PublicationsFileBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_PublicationsFile *pubFile, int extPerm, KSI_PolicyVerificationResult **result);
+	int KSI_SignatureVerify_publicationsFileBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_PublicationsFile *pubFile, int extPerm, KSI_PolicyVerificationResult **result);
 
 	/**
+	 * This function can be used if the signature \c sig contains a calendar hash chain and a calendar
+	 * authentication record. Key-based verification should be used for short-term verification before a
+	 * publication becomes available.
 	 *
 	 * \param[in]		sig	    KSI signature to be verified.
+	 * \param[in]		ctx		KSI context
+	 * \param[in]		extPerm Extending persimmion flag
 	 * \param[out]		result	Pointer to the verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -106,11 +129,14 @@ extern "C" {
 	 * \note The output memory buffer belongs to the caller and needs to be freed
 	 * by the caller using #KSI_PolicyVerificationResult_free.
 	 */
-	int KSI_SignatureVerify_KeyBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_PolicyVerificationResult **result);
+	int KSI_SignatureVerify_keyBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_PolicyVerificationResult **result);
 
 	/**
+	 * This function is used to verify the signature \c sig on-line services. It requires access to the extending
+	 * service and allows verification using the calendar database as the trust anchor.
 	 *
 	 * \param[in]		sig	    KSI signature to be verified.
+	 * \param[in]		ctx		KSI context
 	 * \param[out]		result	Pointer to the verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -118,7 +144,7 @@ extern "C" {
 	 * \note The output memory buffer belongs to the caller and needs to be freed
 	 * by the caller using #KSI_PolicyVerificationResult_free.
 	 */
-	int KSI_SignatureVerify_CalendarBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_PolicyVerificationResult **result);
+	int KSI_SignatureVerify_calendarBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_PolicyVerificationResult **result);
 
 
 

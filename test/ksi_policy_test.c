@@ -1816,7 +1816,7 @@ static void TestSignatureVerify_PublicationBasedWithUserPub_ExtNotPermitted(CuTe
 	res = KSI_PublicationRecord_getPublishedData(tempRec, &pubData);
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && pubData != NULL);
 
-	res = KSI_SignatureVerify_UserProvidedPublicationBased(sig, ctx, pubData, 0, &result);
+	res = KSI_SignatureVerify_userProvidedPublicationBased(sig, ctx, pubData, 0, &result);
 	CuAssert(tc, "Signature verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
@@ -1850,7 +1850,7 @@ static void TestSignatureVerify_PublicationBasedWithPubFile_ExtNotPermitted(CuTe
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &publicationsFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && publicationsFile != NULL);
 
-	res = KSI_SignatureVerify_PublicationsFileBased(sig, ctx, publicationsFile, 0, &result);
+	res = KSI_SignatureVerify_publicationsFileBased(sig, ctx, publicationsFile, 0, &result);
 	CuAssert(tc, "Signature verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
@@ -1864,7 +1864,6 @@ static void TestSignatureVerify_PublicationBasedWithPubFile_ExtNotPermitted(CuTe
 static void TestSignatureVerify_KeyBased(CuTest* tc) {
 	int res;
 	KSI_Signature *sig = NULL;
-	KSI_PublicationsFile *publicationsFile = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
 		VER_RES_OK,
@@ -1872,7 +1871,6 @@ static void TestSignatureVerify_KeyBased(CuTest* tc) {
 		"KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
-#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
@@ -1881,20 +1879,13 @@ static void TestSignatureVerify_KeyBased(CuTest* tc) {
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &publicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && publicationsFile != NULL);
-
-	res = KSI_CTX_setPublicationsFile(ctx, publicationsFile);
-	CuAssert(tc, "Unable to set ctx publications file", res == KSI_OK);
-
-	res = KSI_SignatureVerify_KeyBased(sig, ctx, &result);
+	res = KSI_SignatureVerify_keyBased(sig, ctx, &result);
 	CuAssert(tc, "Signature verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_Signature_free(sig);
 	KSI_PolicyVerificationResult_free(result);
 #undef TEST_SIGNATURE_FILE
-#undef TEST_PUBLICATIONS_FILE
 }
 
 CuSuite* KSITest_Policy_getSuite(void) {

@@ -131,7 +131,7 @@ cleanup:
 	return res;
 }
 
-int KSI_SignatureVerify_internal(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *hsh, KSI_uint64_t rootLevel, KSI_PolicyVerificationResult **result) {
+int KSI_SignatureVerify_internal(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *hsh, KSI_uint64_t lvl, KSI_PolicyVerificationResult **result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (sig == NULL || ctx == NULL || result == NULL) {
@@ -141,7 +141,7 @@ int KSI_SignatureVerify_internal(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash 
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = verify_signature(sig, ctx, hsh, rootLevel, 0, NULL, NULL, KSI_Policy_getInternal, result);
+	res = verify_signature(sig, ctx, hsh, lvl, 0, NULL, NULL, KSI_Policy_getInternal, result);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -199,7 +199,7 @@ cleanup:
 	return res;
 }
 
-int KSI_SignatureVerify_UserProvidedPublicationBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_PublicationData *pubData, int extPerm, KSI_PolicyVerificationResult **result) {
+int KSI_SignatureVerify_userProvidedPublicationBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_PublicationData *pubData, int extPerm, KSI_PolicyVerificationResult **result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (sig == NULL || ctx == NULL || result == NULL) {
@@ -225,7 +225,7 @@ cleanup:
 	return res;
 }
 
-int KSI_SignatureVerify_PublicationsFileBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_PublicationsFile *pubFile, int extPerm, KSI_PolicyVerificationResult **result) {
+int KSI_SignatureVerify_publicationsFileBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_PublicationsFile *pubFile, int extPerm, KSI_PolicyVerificationResult **result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (sig == NULL || ctx == NULL || result == NULL) {
@@ -251,7 +251,7 @@ cleanup:
 	return res;
 }
 
-int KSI_SignatureVerify_KeyBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_PolicyVerificationResult **result) {
+int KSI_SignatureVerify_keyBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_PolicyVerificationResult **result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (sig == NULL || ctx == NULL || result == NULL) {
@@ -272,7 +272,7 @@ cleanup:
 	return res;
 }
 
-int KSI_SignatureVerify_CalendarBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_PolicyVerificationResult **result) {
+int KSI_SignatureVerify_calendarBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_PolicyVerificationResult **result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (sig == NULL || ctx == NULL || result == NULL) {
