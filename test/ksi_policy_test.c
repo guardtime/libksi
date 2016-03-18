@@ -551,6 +551,438 @@ static void TestVerificationResult(CuTest* tc) {
 	KSI_VerificationContext_free(context);
 }
 
+static void TestInternalPolicy_FAIL_WithInvalidRfc3161(CuTest* tc) {
+	int res;
+	const KSI_Policy *policy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		VER_RES_FAIL,
+		VER_ERR_INT_1,
+		"KSI_VerificationRule_AggregationChainInputHashVerification"
+	};
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-rfc3161-output-hash.ksig"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_getInternal(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_VerificationContext_free(context);
+#undef TEST_SIGNATURE_FILE
+}
+
+static void TestInternalPolicy_FAIL_WithInvalidAggregationChain(CuTest* tc) {
+	int res;
+	const KSI_Policy *policy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		VER_RES_FAIL,
+		VER_ERR_INT_1,
+		"KSI_VerificationRule_AggregationHashChainConsistency"
+	};
+#define TEST_SIGNATURE_FILE "resource/tlv/bad-aggregation-chain.ksig"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_getInternal(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_VerificationContext_free(context);
+#undef TEST_SIGNATURE_FILE
+}
+
+static void TestInternalPolicy_FAIL_WithInconsistentAggregationChainTime(CuTest* tc) {
+	int res;
+	const KSI_Policy *policy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		VER_RES_FAIL,
+		VER_ERR_INT_2,
+		"KSI_VerificationRule_AggregationHashChainTimeConsistency"
+	};
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-inconsistent-aggregation-chain-time.ksig"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_getInternal(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_VerificationContext_free(context);
+#undef TEST_SIGNATURE_FILE
+}
+
+static void TestInternalPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
+	int res;
+	const KSI_Policy *policy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		VER_RES_OK,
+		VER_ERR_NONE,
+		"KSI_VerificationRule_DocumentHashVerification"
+	};
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_getInternal(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	KSI_CalendarHashChain_free(context->userData.sig->calendarChain);
+	context->userData.sig->calendarChain = NULL;
+
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_VerificationContext_free(context);
+#undef TEST_SIGNATURE_FILE
+}
+
+static void TestInternalPolicy_FAIL_WithInvalidCalendarHashChain(CuTest* tc) {
+	int res;
+	const KSI_Policy *policy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		VER_RES_FAIL,
+		VER_ERR_INT_3,
+		"KSI_VerificationRule_CalendarHashChainInputHashVerification"
+	};
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-calendar-hash-chain.ksig"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_getInternal(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_VerificationContext_free(context);
+#undef TEST_SIGNATURE_FILE
+}
+
+static void TestInternalPolicy_FAIL_WithInvalidCalendarHashChainAggregationTime(CuTest* tc) {
+	int res;
+	const KSI_Policy *policy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		VER_RES_FAIL,
+		VER_ERR_INT_4,
+		"KSI_VerificationRule_CalendarHashChainAggregationTime"
+	};
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-calendar-chain-aggregation-time.ksig"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_getInternal(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_VerificationContext_free(context);
+#undef TEST_SIGNATURE_FILE
+}
+
+static void TestInternalPolicy_OK_WithoutCalendarAuthenticationRecord(CuTest* tc) {
+	int res;
+	const KSI_Policy *policy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		VER_RES_OK,
+		VER_ERR_NONE,
+		"KSI_VerificationRule_DocumentHashVerification"
+	};
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_getInternal(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_VerificationContext_free(context);
+#undef TEST_SIGNATURE_FILE
+}
+
+static void TestInternalPolicy_FAIL_WithInvalidCalendarAuthenticationRecordHash(CuTest* tc) {
+	int res;
+	const KSI_Policy *policy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		VER_RES_FAIL,
+		VER_ERR_INT_8,
+		"KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash"
+	};
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-calendar-authentication-record-hash.ksig"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_getInternal(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_VerificationContext_free(context);
+#undef TEST_SIGNATURE_FILE
+}
+
+static void TestInternalPolicy_FAIL_WithInvalidCalendarAuthenticationRecordTime(CuTest* tc) {
+	int res;
+	const KSI_Policy *policy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		VER_RES_FAIL,
+		VER_ERR_INT_6,
+		"KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime"
+	};
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-authentication-record-publication-time.ksig"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_getInternal(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_VerificationContext_free(context);
+#undef TEST_SIGNATURE_FILE
+}
+
+static void TestInternalPolicy_OK_WithoutPublicationRecord(CuTest* tc) {
+	int res;
+	const KSI_Policy *policy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		VER_RES_OK,
+		VER_ERR_NONE,
+		"KSI_VerificationRule_DocumentHashVerification"
+	};
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_getInternal(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_VerificationContext_free(context);
+#undef TEST_SIGNATURE_FILE
+}
+
+static void TestInternalPolicy_FAIL_WithInvalidPublicationRecordHash(CuTest* tc) {
+	int res;
+	const KSI_Policy *policy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		VER_RES_FAIL,
+		VER_ERR_INT_9,
+		"KSI_VerificationRule_SignaturePublicationRecordPublicationHash"
+	};
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-publication-record-publication-data-hash.ksig"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_getInternal(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_VerificationContext_free(context);
+#undef TEST_SIGNATURE_FILE
+}
+
+static void TestInternalPolicy_FAIL_WithInvalidPublicationRecordTime(CuTest* tc) {
+	int res;
+	const KSI_Policy *policy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		VER_RES_FAIL,
+		VER_ERR_INT_7,
+		"KSI_VerificationRule_SignaturePublicationRecordPublicationTime"
+	};
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-publication-record-publication-data-time.ksig"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_getInternal(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_VerificationContext_free(context);
+#undef TEST_SIGNATURE_FILE
+}
+
+static void TestInternalPolicy_OK_WithPublicationRecord(CuTest* tc) {
+	int res;
+	const KSI_Policy *policy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		VER_RES_OK,
+		VER_ERR_NONE,
+		"KSI_VerificationRule_DocumentHashVerification"
+	};
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_getInternal(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_VerificationContext_free(context);
+#undef TEST_SIGNATURE_FILE
+}
+
 static void TestCalendarBasedPolicy_OK_WithPublicationRecord(CuTest* tc) {
 	int res;
 	const KSI_Policy *policy = NULL;
@@ -1540,116 +1972,6 @@ static void TestPolicyCloning(CuTest* tc) {
 	KSI_Policy_free(policy);
 }
 
-#ifdef VERIFICATION_CONTEXT_CLEANUP
-static void TestFallbackPolicy_KeyBased_NA_CalendarBased_OK(CuTest* tc) {
-	int res;
-	const KSI_Policy *org = NULL;
-	KSI_Policy *policy = NULL;
-	KSI_Policy *fallbackPolicy = NULL;
-	KSI_VerificationContext *context = NULL;
-	KSI_PolicyVerificationResult *result = NULL;
-	KSI_RuleVerificationResult expected = {
-		VER_RES_OK,
-		VER_ERR_NONE,
-		"KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime"
-	};
-#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
-#define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-
-	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_getKeyBased(ctx, &org);
-	CuAssert(tc, "Policy creation failed", res == KSI_OK);
-
-	res = KSI_Policy_clone(ctx, org, &policy);
-	CuAssert(tc, "Policy cloning failed", res == KSI_OK);
-
-	res = KSI_Policy_getCalendarBased(ctx, &fallbackPolicy);
-	CuAssert(tc, "Policy creation failed", res == KSI_OK);
-
-	res = KSI_Policy_setFallback(ctx, policy, fallbackPolicy);
-	CuAssert(tc, "Fallback policy setup failed", res == KSI_OK);
-
-	res = KSI_VerificationContext_create(ctx, &context);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
-
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
-
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &context->tempData.extendedSig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->tempData.extendedSig != NULL);
-
-	KSI_CalendarHashChain_free(context->userData.sig->calendarChain);
-	context->userData.sig->calendarChain = NULL;
-
-	res = KSI_SignatureVerifier_verify(policy, context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-
-	KSI_PolicyVerificationResult_free(result);
-	context->ctx->publicationsFile = NULL;
-	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
-#undef TEST_SIGNATURE_FILE
-#undef TEST_EXT_SIGNATURE_FILE
-}
-
-static void TestFallbackPolicy_KeyBased_NA_CalendarBased_FAIL(CuTest* tc) {
-	int res;
-	const KSI_Policy *org = NULL;
-	KSI_Policy *policy = NULL;
-	KSI_Policy *fallbackPolicy = NULL;
-	KSI_VerificationContext *context = NULL;
-	KSI_PolicyVerificationResult *result = NULL;
-	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_CAL_2,
-		"KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash"
-	};
-#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
-#define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-
-	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_getKeyBased(ctx, &org);
-	CuAssert(tc, "Policy creation failed", res == KSI_OK);
-
-	res = KSI_Policy_clone(ctx, org, &policy);
-	CuAssert(tc, "Policy cloning failed", res == KSI_OK);
-
-	res = KSI_Policy_getCalendarBased(ctx, &fallbackPolicy);
-	CuAssert(tc, "Policy creation failed", res == KSI_OK);
-
-	res = KSI_Policy_setFallback(ctx, policy, fallbackPolicy);
-	CuAssert(tc, "Fallback policy setup failed", res == KSI_OK);
-
-	res = KSI_VerificationContext_create(ctx, &context);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
-
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
-
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &context->tempData.extendedSig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->tempData.extendedSig != NULL);
-
-	KSI_CalendarHashChain_free(context->userData.sig->calendarChain);
-	context->userData.sig->calendarChain = NULL;
-
-	res = KSI_SignatureVerifier_verify(policy, context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-
-	KSI_PolicyVerificationResult_free(result);
-	context->ctx->publicationsFile = NULL;
-	KSI_VerificationContext_free(context);
-	KSI_Policy_free(policy);
-#undef TEST_SIGNATURE_FILE
-#undef TEST_EXT_SIGNATURE_FILE
-}
-#endif
-
 static void TestFallbackPolicy_CalendarBased_OK_KeyBased_NA(CuTest* tc) {
 	int res;
 	const KSI_Policy *org = NULL;
@@ -1898,6 +2220,19 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestBasicRulesPolicy);
 	SUITE_ADD_TEST(suite, TestCompositeRulesPolicy);
 	SUITE_ADD_TEST(suite, TestVerificationResult);
+	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInvalidRfc3161);
+	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInvalidAggregationChain);
+	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInconsistentAggregationChainTime);
+	SUITE_ADD_TEST(suite, TestInternalPolicy_OK_WithoutCalendarHashChain);
+	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInvalidCalendarHashChain);
+	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInvalidCalendarHashChainAggregationTime);
+	SUITE_ADD_TEST(suite, TestInternalPolicy_OK_WithoutCalendarAuthenticationRecord);
+	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInvalidCalendarAuthenticationRecordHash);
+	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInvalidCalendarAuthenticationRecordTime);
+	SUITE_ADD_TEST(suite, TestInternalPolicy_OK_WithoutPublicationRecord);
+	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInvalidPublicationRecordHash);
+	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInvalidPublicationRecordTime);
+	SUITE_ADD_TEST(suite, TestInternalPolicy_OK_WithPublicationRecord);
 	SUITE_ADD_TEST(suite, TestCalendarBasedPolicy_OK_WithPublicationRecord);
 	SUITE_ADD_TEST(suite, TestCalendarBasedPolicy_FAIL_WithPublicationRecord);
 	SUITE_ADD_TEST(suite, TestCalendarBasedPolicy_OK_WithoutPublicationRecord);
@@ -1922,11 +2257,6 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestUserProvidedPublicationBasedPolicy_OK_WithoutPublicationRecord);
 	SUITE_ADD_TEST(suite, TestUserProvidedPublicationBasedPolicy_FAIL_AfterExtending);
 	SUITE_ADD_TEST(suite, TestPolicyCloning);
-	/* TODO! Rewrite tests to test against cleanup of temporary verification context. */
-#ifdef VERIFICATION_CONTEXT_CLEANUP
-	SUITE_ADD_TEST(suite, TestFallbackPolicy_KeyBased_NA_CalendarBased_OK);
-	SUITE_ADD_TEST(suite, TestFallbackPolicy_KeyBased_NA_CalendarBased_FAIL);
-#endif
 	SUITE_ADD_TEST(suite, TestFallbackPolicy_CalendarBased_OK_KeyBased_NA);
 	SUITE_ADD_TEST(suite, TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA);
 
