@@ -1072,6 +1072,8 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 cleanup:
 
 	KSI_free(little_endian_pkcs1);
+	/* All hash objects that have been created by using a specific CSP must be  destroyed before that CSP
+	 * handle is released with the CryptReleaseContext function. */
 	if (hash) CryptDestroyHash(hash);
 	if (hCryptProv) CryptReleaseContext(hCryptProv, 0);
 
