@@ -33,13 +33,13 @@
 
 
 const char* getMSError(DWORD error, char *buf, size_t len){
-    LPVOID lpMsgBuf;
-    char *tmp = NULL;
-    char *ret = NULL;
+	LPVOID lpMsgBuf;
+	char *tmp = NULL;
+	char *ret = NULL;
 
 	if(buf == NULL) goto cleanup;
 
-    if(!FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+	if(!FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 					NULL, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) &lpMsgBuf,
 					0, NULL)){
 		goto cleanup;
@@ -55,7 +55,7 @@ const char* getMSError(DWORD error, char *buf, size_t len){
 
 cleanup:
 
-    LocalFree(lpMsgBuf);
+	LocalFree(lpMsgBuf);
 
 	return ret;
 }
@@ -401,7 +401,7 @@ cleanup:
 #define SUBJECT 1
 
 static KSI_uint64_t WindowsTickToUnixSeconds(KSI_uint64_t windowsTicks) {
-     return (KSI_uint64_t)(windowsTicks / WINDOWS_TICK - SEC_TO_UNIX_EPOCH);
+	return (KSI_uint64_t)(windowsTicks / WINDOWS_TICK - SEC_TO_UNIX_EPOCH);
 }
 
 static int pki_certificate_getValidityTime(const KSI_PKICertificate *cert, int type, KSI_uint64_t *time) {
@@ -925,10 +925,10 @@ int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned cha
 
 	/* Verify signature and signed data. Certificate is extracted from signature. */
 	msgPara.cbSize = sizeof(CRYPT_VERIFY_MESSAGE_PARA);
-    msgPara.dwMsgAndCertEncodingType = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
-    msgPara.hCryptProv = 0;
-    msgPara.pfnGetSignerCertificate = NULL;
-    msgPara.pvGetArg = NULL;
+	msgPara.dwMsgAndCertEncodingType = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
+	msgPara.hCryptProv = 0;
+	msgPara.pfnGetSignerCertificate = NULL;
+	msgPara.pvGetArg = NULL;
 	dLen = (DWORD) data_len;
 
 	if (!CryptVerifyDetachedMessageSignature(&msgPara, 0, signature->pkcs7.pbData, signature->pkcs7.cbData, 1, &data, &dLen, &subjectCert)){
@@ -976,7 +976,7 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 	int res = KSI_UNKNOWN_ERROR;
 	ALG_ID algorithm = 0;
 	HCRYPTPROV hCryptProv = 0;
-    PCCERT_CONTEXT subjectCert = NULL;
+	PCCERT_CONTEXT subjectCert = NULL;
 	HCRYPTKEY publicKey = 0;
 	DWORD i = 0;
 	BYTE *little_endian_pkcs1 = NULL;
@@ -1072,8 +1072,8 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 cleanup:
 
 	KSI_free(little_endian_pkcs1);
-	if (hCryptProv) CryptReleaseContext(hCryptProv, 0);
 	if (hash) CryptDestroyHash(hash);
+	if (hCryptProv) CryptReleaseContext(hCryptProv, 0);
 
 	return res;
 }
