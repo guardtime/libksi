@@ -119,6 +119,9 @@ static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 
 	/* After final call pHash is can not be used further. */
 	CryptGetHashParam(pHash, HP_HASHVAL, data_hash->imprint + 1, &digest_length, 0);
+	/* Destroy the hash object */
+	CryptDestroyHash(pHash);
+	pHash = 0;
 
 	if (hasher->algorithm > 0xff) {
 		KSI_pushError(hasher->ctx, res = KSI_INVALID_FORMAT, "Hash algorithm ID is larger than one byte.");
