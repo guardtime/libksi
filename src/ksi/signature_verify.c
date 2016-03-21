@@ -235,11 +235,6 @@ int KSI_SignatureVerify_publicationsFileBased(KSI_Signature *sig, KSI_CTX *ctx, 
 
 	KSI_ERR_clearErrors(ctx);
 
-	if (pubFile == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
-		goto cleanup;
-	}
-
 	return verify_signature(sig, ctx, NULL, 0, extPerm, pubFile, NULL, KSI_Policy_getPublicationsFileBased, result);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -251,7 +246,7 @@ cleanup:
 	return res;
 }
 
-int KSI_SignatureVerify_keyBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_PolicyVerificationResult **result) {
+int KSI_SignatureVerify_keyBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_PublicationsFile *pubFile, KSI_PolicyVerificationResult **result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (sig == NULL || ctx == NULL || result == NULL) {
@@ -261,7 +256,7 @@ int KSI_SignatureVerify_keyBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_PolicyVer
 
 	KSI_ERR_clearErrors(ctx);
 
-	return verify_signature(sig, ctx, NULL, 0, 0, NULL, NULL, KSI_Policy_getKeyBased, result);
+	return verify_signature(sig, ctx, NULL, 0, 0, pubFile, NULL, KSI_Policy_getKeyBased, result);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;

@@ -89,6 +89,8 @@ extern "C" {
 	 *
 	 * \param[in]		sig	    KSI signature to be verified.
 	 * \param[in]		ctx		KSI context
+	 * \param[in]		pubData	Publication data
+	 * \param[in]		extPerm Extending permission flag
 	 * \param[out]		result	Pointer to the verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -103,8 +105,8 @@ extern "C" {
 	 *
 	 * \param[in]		sig	    KSI signature to be verified.
 	 * \param[in]		ctx		KSI context
-	 * \param[in]		pubFile	Publications files
-	 * \param[in]		extPerm Extending persimmion flag
+	 * \param[in]		pubFile	Publications file. This parameres is optional, set to NULL if common publications file should be used.
+	 * \param[in]		extPerm Extending permission flag
 	 * \param[out]		result	Pointer to the verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -121,7 +123,7 @@ extern "C" {
 	 *
 	 * \param[in]		sig	    KSI signature to be verified.
 	 * \param[in]		ctx		KSI context
-	 * \param[in]		extPerm Extending persimmion flag
+	 * \param[in]		pubFile	Publications file. This parameres is optional, set to NULL if common publications file should be used.
 	 * \param[out]		result	Pointer to the verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -129,7 +131,7 @@ extern "C" {
 	 * \note The output memory buffer belongs to the caller and needs to be freed
 	 * by the caller using #KSI_PolicyVerificationResult_free.
 	 */
-	int KSI_SignatureVerify_keyBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_PolicyVerificationResult **result);
+	int KSI_SignatureVerify_keyBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_PublicationsFile *pubFile, KSI_PolicyVerificationResult **result);
 
 	/**
 	 * This function is used to verify the signature \c sig on-line services. It requires access to the extending

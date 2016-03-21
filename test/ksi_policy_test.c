@@ -2405,7 +2405,7 @@ static void TestSignatureVerify_KeyBased(CuTest* tc) {
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
-	res = KSI_SignatureVerify_keyBased(sig, ctx, &result);
+	res = KSI_SignatureVerify_keyBased(sig, ctx, NULL, &result);
 	CuAssert(tc, "Signature verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
