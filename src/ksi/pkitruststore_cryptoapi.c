@@ -101,7 +101,7 @@ static ALG_ID algIdFromOID(const char *OID){
 	else if (strcmp(OID, szOID_RSA_SHA384RSA) == 0) return CALG_SHA_384;
 	else if (strcmp(OID, szOID_RSA_SHA512RSA) == 0) return CALG_SHA_512;
 	else return 0;
-	}
+}
 
 
 void KSI_PKITruststore_free(KSI_PKITruststore *trust) {
@@ -111,7 +111,7 @@ void KSI_PKITruststore_free(KSI_PKITruststore *trust) {
 		if (trust->collectionStore != NULL){
 			if (!CertCloseStore(trust->collectionStore, CERT_CLOSE_STORE_CHECK_FLAG)){
 				KSI_LOG_debug(trust->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
-				}
+			}
 		}
 		KSI_free(trust);
 	}
