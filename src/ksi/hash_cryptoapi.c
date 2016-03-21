@@ -32,8 +32,10 @@ typedef struct CRYPTO_HASH_CTX_st {
 
 static void CRYPTO_HASH_CTX_free(CRYPTO_HASH_CTX *cryptoCtxt){
 	if (cryptoCtxt != NULL){
-		if (cryptoCtxt->pt_CSP) CryptReleaseContext(cryptoCtxt->pt_CSP, 0);
+		/* All hash objects that have been created by using a specific CSP must be  destroyed before that CSP
+		 * handle is released with the CryptReleaseContext function. */
 		if (cryptoCtxt->pt_hHash) CryptDestroyHash(cryptoCtxt->pt_hHash);
+		if (cryptoCtxt->pt_CSP) CryptReleaseContext(cryptoCtxt->pt_CSP, 0);
 		KSI_free(cryptoCtxt);
 	}
 }
@@ -119,9 +121,6 @@ static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 
 	/* After final call pHash is can not be used further. */
 	CryptGetHashParam(pHash, HP_HASHVAL, data_hash->imprint + 1, &digest_length, 0);
-	/* Destroy the hash object */
-	CryptDestroyHash(pHash);
-	pHash = 0;
 
 	if (hasher->algorithm > 0xff) {
 		KSI_pushError(hasher->ctx, res = KSI_INVALID_FORMAT, "Hash algorithm ID is larger than one byte.");
@@ -268,7 +267,7 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 		KSI_LOG_debug(hasher->ctx, "Cryptoapi: Create hash error %i\n", error);
 		KSI_pushError(hasher->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
-		}
+	}
 
 	pCryptoCTX->pt_hHash = pTmp_hash;
 	pTmp_hash = 0;
@@ -314,7 +313,7 @@ int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_len
 		KSI_LOG_debug(ctx, "Cryptoapi: HashData error %i\n", error);
 		KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Cryptoapi: Unable to add data to the hash");
 		goto cleanup;
-		}
+	}
 
 	res = KSI_OK;
 
