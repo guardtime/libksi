@@ -150,8 +150,7 @@ AC_ARG_WITH(unit-test-xml,
 AC_DEFINE_UNQUOTED(UNIT_TEST_OUTPUT_XML, "$with_unit_test_xml", [Location of the unit test xml results.])
 
 AC_MSG_NOTICE([Update version.h])
-VERSION_H="src/ksi/version.h"
-rm -f "$VERSION_H"
+rm -f src/ksi/version.h
 VER=($(echo $PACKAGE_VERSION | tr "." " "))
 VER_MAJOR=${VER[[0]]}
 VER_MINOR=${VER[[1]]}
@@ -159,7 +158,7 @@ VER_BUILD=${VER[[2]]}
 AC_SUBST(VER_MAJOR)
 AC_SUBST(VER_MINOR)
 AC_SUBST(VER_BUILD)
-AC_CONFIG_FILES("$VERSION_H")
+AC_CONFIG_FILES([src/ksi/version.h])
 
-AC_CONFIG_FILES(GNUmakefile src/ksi/GNUmakefile test/GNUmakefile doc/GNUmakefile src/example/GNUmakefile)
+AC_CONFIG_FILES([GNUmakefile src/ksi/GNUmakefile test/GNUmakefile doc/GNUmakefile src/example/GNUmakefile])
 AC_OUTPUT
