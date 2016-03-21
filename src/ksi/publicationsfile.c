@@ -275,6 +275,12 @@ int KSI_PublicationsFile_verify(KSI_PublicationsFile *pubFile, KSI_CTX *ctx) {
 		goto cleanup;
 	}
 
+	res = KSI_PKITruststore_verifyCertificateConstraints(pki, pubFile->signature, pubFile->certConstraints);
+	if (res != KSI_OK) {
+		KSI_pushError(useCtx, res, "PKI certificates not trusted.");
+		goto cleanup;
+	}
+
 	res = KSI_OK;
 
 cleanup:

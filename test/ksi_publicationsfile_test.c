@@ -348,14 +348,14 @@ static void testVerifyPublicationsFileWithFileSpecificConstraints(CuTest *tc) {
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, email);
 	CuAssert(tc, "Unable to set default certificate constraints", res == KSI_OK);
 
-	res = KSI_CTX_getPublicationsFile(ctx, &pubFile);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
 
 	res = KSI_PublicationsFile_setCertConstraints(pubFile, NULL);
 	CuAssert(tc, "Unable to set publications file certificate constraints.", res == KSI_OK);
 
 	res = KSI_verifyPublicationsFile(ctx, pubFile);
-	CuAssert(tc, "Unable to verify publications file.", res == KSI_OK);
+	CuAssert(tc, "Unable to verify publications file with context based constraints.", res == KSI_OK);
 
 	res = KSI_PublicationsFile_setCertConstraints(pubFile, empty);
 	CuAssert(tc, "Unable to set publications file certificate constraints.", res == KSI_OK);
@@ -367,7 +367,7 @@ static void testVerifyPublicationsFileWithFileSpecificConstraints(CuTest *tc) {
 	CuAssert(tc, "Unable to set publications file certificate constraints.", res == KSI_OK);
 
 	res = KSI_verifyPublicationsFile(ctx, pubFile);
-	CuAssert(tc, "Unable to verify publications file.", res == KSI_OK);
+	CuAssert(tc, "Unable to verify publications file with email.", res == KSI_OK);
 
 	res = KSI_PublicationsFile_setCertConstraints(pubFile, wrong);
 	CuAssert(tc, "Unable to set publications file certificate constraints.", res == KSI_OK);
@@ -382,7 +382,9 @@ static void testVerifyPublicationsFileWithFileSpecificConstraints(CuTest *tc) {
 	CuAssert(tc, "Unable to set publications file certificate constraints.", res == KSI_OK);
 
 	res = KSI_verifyPublicationsFile(ctx, pubFile);
-	CuAssert(tc, "Unable to verify publications file.", res == KSI_OK);
+	CuAssert(tc, "Unable to verify publications file with email.", res == KSI_OK);
+
+	KSI_PublicationsFile_free(pubFile);
 }
 
 static void testVerifyPublicationsFileAdditionalPublications(CuTest *tc) {

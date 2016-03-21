@@ -759,7 +759,6 @@ static int KSI_PKITruststore_verifyCertificate(const KSI_PKITruststore *pki, con
 	CERT_CHAIN_POLICY_PARA policyPara;
 	CERT_CHAIN_POLICY_STATUS policyStatus;
 	char buf[1024];
-	KSI_CertConstraint *certConstraints = NULL;
 
 	if (pki == NULL || cert == NULL){
 		res = KSI_INVALID_ARGUMENT;
@@ -767,24 +766,6 @@ static int KSI_PKITruststore_verifyCertificate(const KSI_PKITruststore *pki, con
 	}
 	ctx = pki->ctx;
 	KSI_ERR_clearErrors(ctx);
-
-	/* Use certificate constraints specific to publications file, if set. */
-	if (pki->ctx->publicationsFile != NULL) {
-		res = KSI_PublicationsFile_getCertConstraints(pki->ctx->publicationsFile, &certConstraints);
-		if (res != KSI_OK) {
-			KSI_pushError(pki->ctx, res, NULL);
-			goto cleanup;
-		}
-	}
-	if (certConstraints == NULL) {
-		certConstraints = pki->ctx->certConstraints;
-	}
-
-	/* Make sure the publications file verification constraints are configured. */
-	if (certConstraints == NULL || certConstraints[0].oid == NULL) {
-		KSI_pushError(pki->ctx, res = KSI_PUBFILE_VERIFICATION_NOT_CONFIGURED, NULL);
-		goto cleanup;
-	}
 
 	/* Get the certificate chain of certificate under verification. */
 	/*OID List for certificate trust list extensions*/
@@ -858,40 +839,36 @@ cleanup:
 	return res;
 }
 
-static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore *pki, const KSI_PKISignature *signature) {
+int KSI_PKITruststore_verifyCertificateConstraints(const KSI_PKITruststore *pki, const KSI_PKISignature *signature, KSI_CertConstraint *certConstraints) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_CTX *ctx = NULL;
 	PCCERT_CONTEXT subjectCert = NULL;
 	char tmp[256];
 	size_t i;
 	KSI_PKICertificate *ksi_pki_cert = NULL;
-	KSI_CertConstraint *certConstraints = NULL;
 
-	if (pki == NULL || signature == NULL){
+	if (pki == NULL || pki->ctx == NULL || signature == NULL){
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
-	ctx = pki->ctx;
-	KSI_ERR_clearErrors(ctx);
+	KSI_ERR_clearErrors(pki->ctx);
 
 	res = KSI_PKISignature_extractCertificate(signature, &ksi_pki_cert);
 	if (res != KSI_OK){
-		KSI_pushError(ctx, res, NULL);
+		KSI_pushError(pki->ctx, res, NULL);
 		goto cleanup;
 	}
 
 	subjectCert = ksi_pki_cert->x509;
 
-	/* Use certificate constraints specific to publications file, if set. */
-	if (pki->ctx->publicationsFile != NULL) {
-		res = KSI_PublicationsFile_getCertConstraints(pki->ctx->publicationsFile, &certConstraints);
-		if (res != KSI_OK) {
-			KSI_pushError(pki->ctx, res, NULL);
-			goto cleanup;
-		}
-	}
+	/* If publications file does not have certificate constraints configured, use context based constraints. */
 	if (certConstraints == NULL) {
 		certConstraints = pki->ctx->certConstraints;
+	}
+
+	/* Make sure the publications file verification constraints are configured. */
+	if (certConstraints == NULL || certConstraints[0].oid == NULL) {
+		KSI_pushError(pki->ctx, res = KSI_PUBFILE_VERIFICATION_NOT_CONFIGURED, NULL);
+		goto cleanup;
 	}
 
 	for (i = 0; certConstraints[i].oid != NULL; i++) {
@@ -901,20 +878,20 @@ static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore 
 
 		if (CertGetNameString(subjectCert, CERT_NAME_ATTR_TYPE, 0, ptr->oid, tmp, sizeof(tmp)) == 1){
 			KSI_LOG_debug(pki->ctx, "Value for OID: '%s' does not exist.", ptr->oid);
-			KSI_pushError(ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, NULL);
+			KSI_pushError(pki->ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, NULL);
 			goto cleanup;
 		}
 
 		if (strcmp(tmp, ptr->val) != 0) {
 			KSI_LOG_debug(pki->ctx, "Unexpected value: '%s' for OID: '%s'.", tmp, ptr->oid);
-			KSI_pushError(ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, "Unexpected OID value for PKI Certificate constraint.");
+			KSI_pushError(pki->ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, "Unexpected OID value for PKI Certificate constraint.");
 			goto cleanup;
 		}
 	}
 
 	res = KSI_PKITruststore_verifyCertificate(pki, subjectCert);
 	if (res != KSI_OK){
-		KSI_pushError(ctx, res, NULL);
+		KSI_pushError(pki->ctx, res, NULL);
 		goto cleanup;
 	}
 
@@ -975,12 +952,6 @@ int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned cha
 	}
 
 	res = KSI_PKITruststore_verifyCertificate(pki, subjectCert);
-	if (res != KSI_OK){
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_PKITruststore_verifySignatureCertificate(pki, signature);
 	if (res != KSI_OK){
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;

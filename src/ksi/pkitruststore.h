@@ -139,6 +139,17 @@ extern "C" {
 	int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, size_t data_len, const char *algoOid, const unsigned char *signature, size_t signature_len, const KSI_PKICertificate *cert);
 
 	/**
+	 * Verifies PKI signature certificate constraints. This function can be used to explicitly verify
+	 * against certificate constraints of the publications file. If NULL is passed as \c certConstraints,
+	 * the verification is performed implicitly against context based certificate constraints.
+	 * \param[in]	pki				PKI Truststore.
+	 * \param[in]	signature		PKI signature object.
+	 * \param[in]	certConstraints	Array of OID and value pairs, terminated by a pair of NULLs.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_PKITruststore_verifyCertificateConstraints(const KSI_PKITruststore *pki, const KSI_PKISignature *signature, KSI_CertConstraint * certConstraints);
+
+	/**
 	 * Function for verifying the data with PKI Signature.
 	 * \param[in]	pki			PKI Truststore.
 	 * \param[in]	data		Pointer to signed data.
