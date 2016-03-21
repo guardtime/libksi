@@ -274,8 +274,8 @@ EXPORTS
     KSI_PKISignature_fromTlv
     KSI_PKISignature_toTlv
     KSI_PKITruststore_verifyRawSignature
-	KSI_PKITruststore_verifyCertificateConstraints
     KSI_PKITruststore_verifySignature
+    KSI_PKITruststore_verifyPKISignature
     KSI_PKITruststore_addLookupFile
     KSI_PKITruststore_addLookupDir
     KSI_PKISignature_extractCertificate

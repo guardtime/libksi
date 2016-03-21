@@ -797,7 +797,7 @@ cleanup:
 	return res;
 }
 
-int KSI_PKITruststore_verifyCertificateConstraints(const KSI_PKITruststore *pki, const KSI_PKISignature *signature, KSI_CertConstraint *certConstraints) {
+static int pki_truststore_verifyCertificateConstraints(const KSI_PKITruststore *pki, const KSI_PKISignature *signature, KSI_CertConstraint *certConstraints) {
 	size_t i;
 	int res;
 	KSI_PKICertificate *ksi_pki_cert = NULL;
@@ -873,6 +873,94 @@ cleanup:
 
 	KSI_PKICertificate_free(ksi_pki_cert);
 	if (oid != NULL) ASN1_OBJECT_free(oid);
+
+	return res;
+}
+
+static int pki_truststore_verifySignature(KSI_PKITruststore *pki, const unsigned char *data, size_t data_len, const KSI_PKISignature *signature) {
+	int res;
+	BIO *bio = NULL;
+
+	if (pki == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(pki->ctx);
+
+	if (data == NULL || signature == NULL) {
+		KSI_pushError(pki->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+
+	KSI_LOG_debug(pki->ctx, "Starting to verify publications file signature.");
+
+	if (data_len > INT_MAX) {
+		KSI_pushError(pki->ctx, res = KSI_INVALID_ARGUMENT, "Data too long (more than MAX_INT).");
+		goto cleanup;
+	}
+
+	bio = BIO_new_mem_buf((void *)data, (int)data_len);
+	if (bio == NULL) {
+		KSI_pushError(pki->ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	res = PKCS7_verify(signature->pkcs7, NULL, NULL, bio, NULL, PKCS7_NOVERIFY);
+	if (res < 0) {
+		KSI_pushError(pki->ctx, res = KSI_CRYPTO_FAILURE, "Unable to verify signature.");
+		goto cleanup;
+	}
+	if (res != 1) {
+		char msg[1024];
+		char buf[1024];
+		ERR_error_string_n(res, buf, sizeof(buf));
+		KSI_snprintf(msg, sizeof(msg), "PKI Signature not verified: %s", buf);
+		KSI_pushError(pki->ctx, res = KSI_INVALID_PKI_SIGNATURE, msg);
+		goto cleanup;
+	}
+
+	KSI_LOG_debug(pki->ctx, "Signature verified.");
+
+	res = KSI_PKITruststore_verifySignatureCertificate(pki, signature);
+	if (res != KSI_OK) {
+		KSI_pushError(pki->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	BIO_free(bio);
+
+	return res;
+}
+
+int KSI_PKITruststore_verifyPKISignature(KSI_PKITruststore *pki, const unsigned char *data, size_t data_len, const KSI_PKISignature *signature, KSI_CertConstraint *certConstraints) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (pki == NULL || pki->ctx == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = pki_truststore_verifySignature(pki, data, data_len, signature);
+	if (res != KSI_OK) {
+		KSI_pushError(pki->ctx, res, "Publications file not trusted.");
+		goto cleanup;
+	}
+
+	res = pki_truststore_verifyCertificateConstraints(pki, signature, certConstraints);
+	if (res != KSI_OK) {
+		KSI_pushError(pki->ctx, res, "PKI certificates not trusted.");
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
 
 	return res;
 }

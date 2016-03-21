@@ -269,15 +269,9 @@ int KSI_PublicationsFile_verify(KSI_PublicationsFile *pubFile, KSI_CTX *ctx) {
 		goto cleanup;
 	}
 
-	res = KSI_PKITruststore_verifySignature(pki, pubFile->raw, pubFile->signedDataLength, pubFile->signature);
+	res = KSI_PKITruststore_verifyPKISignature(pki, pubFile->raw, pubFile->signedDataLength, pubFile->signature, pubFile->certConstraints);
 	if (res != KSI_OK) {
-		KSI_pushError(useCtx, res, "Publications file not trusted.");
-		goto cleanup;
-	}
-
-	res = KSI_PKITruststore_verifyCertificateConstraints(pki, pubFile->signature, pubFile->certConstraints);
-	if (res != KSI_OK) {
-		KSI_pushError(useCtx, res, "PKI certificates not trusted.");
+		KSI_pushError(useCtx, res, "Signature not verified.");
 		goto cleanup;
 	}
 
