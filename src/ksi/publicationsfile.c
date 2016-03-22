@@ -30,6 +30,7 @@
 #include "tlv.h"
 #include "tlv_template.h"
 #include "pkitruststore.h"
+#include "ctx_impl.h"
 
 #define PUB_FILE_HEADER_ID "KSIPUBLF"
 
@@ -509,7 +510,9 @@ void KSI_PublicationsFile_free(KSI_PublicationsFile *t) {
 		KSI_PublicationRecordList_free(t->publications);
 		KSI_PKISignature_free(t->signature);
 		KSI_free(t->raw);
-		freeCertConstraintsArray(t->certConstraints);
+		if(t->ctx->freeCertConstraintsArray != NULL) {
+			t->ctx->freeCertConstraintsArray(t->certConstraints);
+		}
 		KSI_free(t);
 	}
 }
@@ -955,7 +958,9 @@ int KSI_PublicationsFile_setCertConstraints(KSI_PublicationsFile *pubFile, const
 		tmp[i].val = NULL;
 	}
 	/* Free the existing constraints. */
-	freeCertConstraintsArray(pubFile->certConstraints);
+	if (pubFile->ctx->freeCertConstraintsArray != NULL) {
+		pubFile->ctx->freeCertConstraintsArray(pubFile->certConstraints);
+	}
 
 	pubFile->certConstraints = tmp;
 	tmp = NULL;
@@ -964,7 +969,9 @@ int KSI_PublicationsFile_setCertConstraints(KSI_PublicationsFile *pubFile, const
 
 cleanup:
 
-	freeCertConstraintsArray(tmp);
+	if (pubFile->ctx->freeCertConstraintsArray != NULL) {
+		pubFile->ctx->freeCertConstraintsArray(tmp);
+	}
 
 	return res;
 }

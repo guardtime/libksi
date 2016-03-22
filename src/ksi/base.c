@@ -40,7 +40,7 @@ const char *KSI_getVersion(void) {
 	return versionString;
 }
 
-void freeCertConstraintsArray(KSI_CertConstraint *arr) {
+static void freeCertConstraintsArray(KSI_CertConstraint *arr) {
 	size_t i;
 
 	if (arr != NULL) {;
@@ -188,6 +188,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->requestHeaderCB = NULL;
 	ctx->loggerCtx = NULL;
 	ctx->certConstraints = NULL;
+	ctx->freeCertConstraintsArray = freeCertConstraintsArray;
 	KSI_ERR_clearErrors(ctx);
 
 	/* Create global cleanup list as the first thing. */
