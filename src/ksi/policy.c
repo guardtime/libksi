@@ -43,6 +43,7 @@ cleanup:
 static int Rule_verify(const Rule *rule, KSI_VerificationContext *context, KSI_RuleVerificationResult *result, KSI_PolicyVerificationResult *policyResult) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_RuleVerificationResult ruleResult;
+	KSI_RuleVerificationResult *tmp = NULL;
 	const Rule *currentRule = NULL;
 
 	if (rule == NULL || context == NULL || result == NULL) {
@@ -74,7 +75,13 @@ static int Rule_verify(const Rule *rule, KSI_VerificationContext *context, KSI_R
 		}
 
 		if (currentRule->type == RULE_TYPE_BASIC) {
-			PolicyVerificationResult_addRuleResult(policyResult, &ruleResult);
+			tmp = KSI_new(KSI_RuleVerificationResult);
+			if (tmp == NULL) {
+				res = KSI_OUT_OF_MEMORY;
+				goto cleanup;
+			}
+			*tmp = ruleResult;
+			PolicyVerificationResult_addRuleResult(policyResult, tmp);
 		}
 
 		if (ruleResult.resultCode == VER_RES_FAIL) {
@@ -94,9 +101,11 @@ static int Rule_verify(const Rule *rule, KSI_VerificationContext *context, KSI_R
 		currentRule++;
 	}
 	*result = ruleResult;
+	tmp = NULL;
 
 cleanup:
 
+	RuleVerificationResult_free(tmp);
 	return res;
 }
 
