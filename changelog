@@ -1,7 +1,8 @@
-* BUGFIX: Correcting memory leaks when using Windows Crypt32 library
+* IMPROVEMENT: Certificate constraints can be set and verified per publications file.
 * IMPROVEMENT: Add preprocessor parseable version no.
 * IMPROVEMENT: KSI_receivePublicationsFile must not verify publications file automatically.
 * BUGFIX: Invalid and misleading exception message on response publication time check.
+* BUGFIX: Correcting memory leaks when using Windows Crypt32 library
 
 Version 3.8
 
