@@ -25,7 +25,22 @@ static void RuleVerificationResult_free(KSI_RuleVerificationResult *result);
 
 KSI_IMPLEMENT_LIST(KSI_RuleVerificationResult, RuleVerificationResult_free);
 
-static int Rule_verify(const Rule *rule, KSI_VerificationContext *context, KSI_RuleVerificationResult *result) {
+static int PolicyVerificationResult_addRuleResult(KSI_PolicyVerificationResult *result, KSI_RuleVerificationResult *next) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (result == NULL || next == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_RuleVerificationResultList_append(result->ruleResults, next);
+
+cleanup:
+
+	return res;
+}
+
+static int Rule_verify(const Rule *rule, KSI_VerificationContext *context, KSI_RuleVerificationResult *result, KSI_PolicyVerificationResult *policyResult) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_RuleVerificationResult ruleResult;
 	const Rule *currentRule = NULL;
@@ -45,7 +60,7 @@ static int Rule_verify(const Rule *rule, KSI_VerificationContext *context, KSI_R
 
 			case RULE_TYPE_COMPOSITE_AND:
 			case RULE_TYPE_COMPOSITE_OR:
-				res = Rule_verify((Rule *)currentRule->rule, context, &ruleResult);
+				res = Rule_verify((Rule *)currentRule->rule, context, &ruleResult, policyResult);
 				break;
 
 			default:
@@ -56,6 +71,10 @@ static int Rule_verify(const Rule *rule, KSI_VerificationContext *context, KSI_R
 		if (res != KSI_OK) {
 			ruleResult.resultCode = VER_RES_NA;
 			ruleResult.errorCode = VER_ERR_GEN_2;
+		}
+
+		if (currentRule->type == RULE_TYPE_BASIC) {
+			PolicyVerificationResult_addRuleResult(policyResult, &ruleResult);
 		}
 
 		if (ruleResult.resultCode == VER_RES_FAIL) {
@@ -75,8 +94,6 @@ static int Rule_verify(const Rule *rule, KSI_VerificationContext *context, KSI_R
 		currentRule++;
 	}
 	*result = ruleResult;
-
-	/* TODO: add rule result? */
 
 cleanup:
 
@@ -412,7 +429,12 @@ static int PolicyVerificationResult_create(KSI_PolicyVerificationResult **result
 		goto cleanup;
 	}
 
-	res = KSI_RuleVerificationResultList_new(&tmp->results);
+	res = KSI_RuleVerificationResultList_new(&tmp->ruleResults);
+	if (res != KSI_OK) {
+		goto cleanup;
+	}
+
+	res = KSI_RuleVerificationResultList_new(&tmp->policyResults);
 	if (res != KSI_OK) {
 		goto cleanup;
 	}
@@ -429,7 +451,7 @@ cleanup:
 	return res;
 }
 
-static int PolicyVerificationResult_addResult(KSI_PolicyVerificationResult *result, KSI_RuleVerificationResult *next) {
+static int PolicyVerificationResult_addPolicyResult(KSI_PolicyVerificationResult *result, KSI_RuleVerificationResult *next) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (result == NULL || next == NULL) {
@@ -439,14 +461,14 @@ static int PolicyVerificationResult_addResult(KSI_PolicyVerificationResult *resu
 
 	/* TODO: Do we overwrite the final result? */
 	result->finalResult = *next;
-	res = KSI_RuleVerificationResultList_append(result->results, next);
+	res = KSI_RuleVerificationResultList_append(result->policyResults, next);
 
 cleanup:
 
 	return res;
 }
 
-static int Policy_verifySignature(const KSI_Policy *policy, KSI_VerificationContext *context, KSI_RuleVerificationResult **result) {
+static int Policy_verifySignature(const KSI_Policy *policy, KSI_VerificationContext *context, KSI_RuleVerificationResult **result, KSI_PolicyVerificationResult *policyResult) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_RuleVerificationResult *tmp = NULL;
 
@@ -461,7 +483,7 @@ static int Policy_verifySignature(const KSI_Policy *policy, KSI_VerificationCont
 		goto cleanup;
 	}
 
-	res = Rule_verify(policy->rules, context, tmp);
+	res = Rule_verify(policy->rules, context, tmp, policyResult);
 	if (res != KSI_OK) goto cleanup;
 
 	*result = tmp;
@@ -516,11 +538,11 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 
 	currentPolicy = policy;
 	while (currentPolicy != NULL) {
-		res = Policy_verifySignature(currentPolicy, context, &tmp_result);
+		res = Policy_verifySignature(currentPolicy, context, &tmp_result, *result);
 		/* Stop verifying the policy whenever there is an internal error (invalid arguments, out of memory, etc). */
 		if (res != KSI_OK) goto cleanup;
 
-		res = PolicyVerificationResult_addResult(*result, tmp_result);
+		res = PolicyVerificationResult_addPolicyResult(*result, tmp_result);
 		if (res != KSI_OK) goto cleanup;
 
 		if (tmp_result->resultCode != VER_RES_OK) {
@@ -549,7 +571,8 @@ void KSI_Policy_free(KSI_Policy *policy) {
 
 void KSI_PolicyVerificationResult_free(KSI_PolicyVerificationResult *result) {
 	if (result != NULL) {
-		KSI_RuleVerificationResultList_free(result->results);
+		KSI_RuleVerificationResultList_free(result->ruleResults);
+		KSI_RuleVerificationResultList_free(result->policyResults);
 		KSI_free(result);
 	}
 }
