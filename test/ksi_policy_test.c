@@ -540,9 +540,9 @@ static void TestVerificationResult(CuTest* tc) {
 	res = KSI_SignatureVerifier_verify(&policies[0], context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected final verification result", ResultsMatch(&expected[2], &result->finalResult));
-	CuAssert(tc, "Unexpected number of results", KSI_RuleVerificationResultList_length(result->results) == 3);
-	for (i = 0; i < KSI_RuleVerificationResultList_length(result->results); i++) {
-		res = KSI_RuleVerificationResultList_elementAt(result->results, i, &temp);
+	CuAssert(tc, "Unexpected number of results", KSI_RuleVerificationResultList_length(result->policyResults) == 3);
+	for (i = 0; i < KSI_RuleVerificationResultList_length(result->policyResults); i++) {
+		res = KSI_RuleVerificationResultList_elementAt(result->policyResults, i, &temp);
 		CuAssert(tc, "Could not retrieve result", res == KSI_OK);
 		CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected[i], temp));
 	}

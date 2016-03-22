@@ -99,7 +99,9 @@ extern "C" {
 
 	typedef struct KSI_PolicyVerificationResult_st {
 		KSI_RuleVerificationResult finalResult;
-		KSI_LIST(KSI_RuleVerificationResult) *results;
+		KSI_RuleVerificationResult latestResult;
+		KSI_LIST(KSI_RuleVerificationResult) *ruleResults;
+		KSI_LIST(KSI_RuleVerificationResult) *policyResults;
 	} KSI_PolicyVerificationResult;
 
 	typedef struct KSI_Policy_st KSI_Policy;
