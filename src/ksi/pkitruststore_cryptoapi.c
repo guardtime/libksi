@@ -150,8 +150,6 @@ int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) 
 		goto cleanup;
 	}
 
-	tmp_FileTrustStore = NULL;
-
 	res = KSI_OK;
 
 cleanup:
