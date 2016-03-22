@@ -149,7 +149,7 @@ test: tests
 # http://drmemory.org/
 memtest: tests
 	@if not exist .\$(DRMEMORY_LOGS) mkdir .\$(DRMEMORY_LOGS)
-	drmemory -logdir $(DRMEMORY_LOGS) -report_leak_max -1 -batch -- $(BIN_DIR)\alltests.exe test
+	drmemory -logdir $(DRMEMORY_LOGS) -report_leak_max -1 -batch -leaks_only -- $(BIN_DIR)\alltests.exe test
 
 resigner: $(DLL)$(RTL)
 	cd $(TEST_DIR)
