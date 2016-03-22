@@ -24,7 +24,7 @@
 
 static int verify_signature(KSI_Signature *sig, KSI_CTX *ctx,
 							KSI_DataHash *hsh, KSI_uint64_t rootLevel, int extAllowed, KSI_PublicationsFile *pubFile, KSI_PublicationData *pubData,
-							int (*getPolicy)(KSI_CTX *, const KSI_Policy **),
+							int (*getPolicy)(KSI_CTX *, const KSI_Policy **), KSI_Policy *customPolicy,
 							KSI_PolicyVerificationResult **result) {
 
 	int res = KSI_UNKNOWN_ERROR;
@@ -98,11 +98,15 @@ static int verify_signature(KSI_Signature *sig, KSI_CTX *ctx,
 		goto cleanup;
 	}
 
-	/* Get the desired verification policy */
-	res = getPolicy(ctx, &policy);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
+	if (customPolicy != NULL) {
+		policy = customPolicy;
+	} else {
+		/* Get the desired verification policy */
+		res = getPolicy(ctx, &policy);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
 	}
 
 	/* Verify signature */
@@ -131,6 +135,100 @@ cleanup:
 	return res;
 }
 
+int KSI_SignatureVerify_general(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *hsh,
+								KSI_PublicationsFile *pubFile, KSI_PublicationData *pubData, int extPerm,
+								KSI_PolicyVerificationResult **result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Policy *tmpPolicy = NULL;
+	KSI_Policy *pubPolicyClone = NULL;
+	KSI_Policy *keyPolicyClone = NULL;
+
+
+	if (sig == NULL || ctx == NULL || result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(ctx);
+
+	/* In case user publications are provided, the signature should be verified agains those */
+	if (pubFile != NULL || pubData != NULL) {
+		int (*getter)(KSI_CTX *, const KSI_Policy **);
+
+		(pubData != NULL) ? (getter = KSI_Policy_getUserProvidedPublicationBased) :
+							(getter = KSI_Policy_getPublicationsFileBased);
+
+		/* Verify singature */
+		res = verify_signature(sig, ctx, hsh, 0, extPerm, pubFile, pubData, getter, NULL, result);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+	} else {
+		/* Otherwise build a chain of verification policies */
+
+		/* Get first verification policy. */
+		res = KSI_Policy_getPublicationsFileBased(ctx, &tmpPolicy);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+		/* Clone the policy in order to set fallback policy */
+		res = KSI_Policy_clone(ctx, tmpPolicy, &pubPolicyClone);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		/* Fallback to PKI key verification */
+		res = KSI_Policy_getKeyBased(ctx, &tmpPolicy);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+		/* Clone the policy in order to set fallback policy */
+		res = KSI_Policy_clone(ctx, tmpPolicy, &keyPolicyClone);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+		/* Make chain pubBasedPolicy->KeyBasedPolicy */
+		res = KSI_Policy_setFallback(ctx, pubPolicyClone, keyPolicyClone);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		/* Fallback to online verifycation */
+		res = KSI_Policy_getCalendarBased(ctx, &tmpPolicy);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+		/* Make chain PubBasedPolicy->KeyBasedPolicy->CalendarBasedPolicy */
+		res = KSI_Policy_setFallback(ctx, keyPolicyClone, tmpPolicy);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		/* Verify singature */
+		res = verify_signature(sig, ctx, hsh, 0, extPerm, pubFile, pubData, NULL, pubPolicyClone, result);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+
+	res = KSI_OK;
+cleanup:
+	KSI_Policy_free(pubPolicyClone);
+	KSI_Policy_free(keyPolicyClone);
+
+	return res;
+}
+
 int KSI_SignatureVerify_internal(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *hsh, KSI_uint64_t lvl, KSI_PolicyVerificationResult **result) {
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -141,7 +239,7 @@ int KSI_SignatureVerify_internal(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash 
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = verify_signature(sig, ctx, hsh, lvl, 0, NULL, NULL, KSI_Policy_getInternal, result);
+	res = verify_signature(sig, ctx, hsh, lvl, 0, NULL, NULL, KSI_Policy_getInternal, NULL, result);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -214,7 +312,7 @@ int KSI_SignatureVerify_userProvidedPublicationBased(KSI_Signature *sig, KSI_CTX
 		goto cleanup;
 	}
 
-	res = verify_signature(sig, ctx, NULL, 0, extPerm, NULL, pubData, KSI_Policy_getUserProvidedPublicationBased, result);
+	res = verify_signature(sig, ctx, NULL, 0, extPerm, NULL, pubData, KSI_Policy_getUserProvidedPublicationBased, NULL, result);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -235,7 +333,7 @@ int KSI_SignatureVerify_publicationsFileBased(KSI_Signature *sig, KSI_CTX *ctx, 
 
 	KSI_ERR_clearErrors(ctx);
 
-	return verify_signature(sig, ctx, NULL, 0, extPerm, pubFile, NULL, KSI_Policy_getPublicationsFileBased, result);
+	return verify_signature(sig, ctx, NULL, 0, extPerm, pubFile, NULL, KSI_Policy_getPublicationsFileBased, NULL, result);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -256,7 +354,7 @@ int KSI_SignatureVerify_keyBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_Publicati
 
 	KSI_ERR_clearErrors(ctx);
 
-	return verify_signature(sig, ctx, NULL, 0, 0, pubFile, NULL, KSI_Policy_getKeyBased, result);
+	return verify_signature(sig, ctx, NULL, 0, 0, pubFile, NULL, KSI_Policy_getKeyBased, NULL, result);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -277,7 +375,7 @@ int KSI_SignatureVerify_calendarBased(KSI_Signature *sig, KSI_CTX *ctx, KSI_Poli
 
 	KSI_ERR_clearErrors(ctx);
 
-	return verify_signature(sig, ctx, NULL, 0, 1, NULL, NULL, KSI_Policy_getCalendarBased, result);
+	return verify_signature(sig, ctx, NULL, 0, 1, NULL, NULL, KSI_Policy_getCalendarBased, NULL, result);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;

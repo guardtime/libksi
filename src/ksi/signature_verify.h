@@ -28,6 +28,26 @@
 extern "C" {
 #endif
 
+	/**
+	 * This function can be used to verify signature \c sig in best possible way by building a verification policy chain.
+	 *
+	 * \param[in]		sig	    KSI signature to be verified.
+	 * \param[in]		ctx		KSI context
+	 * \param[in]		pubFile	Publications file. This parameres is optional, set to NULL if common publications file should be used.
+	 * \param[in]		pubData	Publication data. This parameres is optional, if not used should be set to NULL
+	 * \param[in]		extPerm Extending permission flag
+	 * \param[out]		result	Pointer to the verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \note In case publication data \c pubData is provided, the publications file \c pubFile is ignored
+	 *
+	 * \note The output memory buffer belongs to the caller and needs to be freed
+	 * by the caller using #KSI_PolicyVerificationResult_free.
+	 */
+	int KSI_SignatureVerify_general(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *hsh,
+									KSI_PublicationsFile *pubFile, KSI_PublicationData *pubData, int extPerm,
+									KSI_PolicyVerificationResult **result);
 
 	/**
 	 * This functions is used to verify signature \c sig internal consistency. This function behaves as
