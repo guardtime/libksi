@@ -33,6 +33,7 @@ extern "C" {
 		KSI_LIST(KSI_PublicationRecord) *publications;
 		size_t signedDataLength;
 		KSI_PKISignature *signature;
+		KSI_CertConstraint *certConstraints;
 	};
 
 	struct KSI_PublicationData_st {
