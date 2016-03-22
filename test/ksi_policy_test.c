@@ -2446,6 +2446,135 @@ static void TestSignatureVerify_CalendarBased(CuTest* tc) {
 #undef TEST_EXT_RESPONSE_FILE
 }
 
+static void TestSignatureVerify_GeneralWithUserPub(CuTest* tc) {
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_Signature *extSig = NULL;
+	KSI_PublicationRecord *tempRec = NULL;
+	KSI_PublicationData *pubData = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		VER_RES_OK,
+		VER_ERR_NONE,
+		"KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash"
+	};
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_getPublicationRecord(extSig, &tempRec);
+	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && tempRec != NULL);
+
+	res = KSI_PublicationRecord_getPublishedData(tempRec, &pubData);
+	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && pubData != NULL);
+
+	res = KSI_SignatureVerify_general(sig, ctx, NULL, NULL, pubData, 1, &result);
+	CuAssert(tc, "Signature verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+
+	KSI_Signature_free(sig);
+	KSI_Signature_free(extSig);
+	KSI_PolicyVerificationResult_free(result);
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+}
+
+static void TestSignatureVerify_GeneralWithUserPubFile(CuTest* tc) {
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_PublicationsFile *publicationsFile = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		VER_RES_OK,
+		VER_ERR_NONE,
+		"KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash"
+	};
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &publicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && publicationsFile != NULL);
+
+	res = KSI_SignatureVerify_general(sig, ctx, NULL, publicationsFile, NULL, 1, &result);
+	CuAssert(tc, "Signature verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+
+	KSI_Signature_free(sig);
+	KSI_PublicationsFile_free(publicationsFile);
+	KSI_PolicyVerificationResult_free(result);
+#undef TEST_SIGNATURE_FILE
+#undef TEST_PUBLICATIONS_FILE
+#undef TEST_EXT_RESPONSE_FILE
+}
+
+static void TestSignatureVerify_GeneralWithCtxPubFile(CuTest* tc) {
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_PublicationsFile *publicationsFile = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		VER_RES_OK,
+		VER_ERR_NONE,
+		"KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash"
+	};
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &publicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && publicationsFile != NULL);
+
+	res = KSI_CTX_setPublicationsFile(ctx, publicationsFile);
+	CuAssert(tc, "Unable set context publications file", res == KSI_OK);
+
+	res = KSI_SignatureVerify_general(sig, ctx, NULL, NULL, NULL, 1, &result);
+	CuAssert(tc, "Signature verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+
+	KSI_Signature_free(sig);
+	KSI_PolicyVerificationResult_free(result);
+#undef TEST_SIGNATURE_FILE
+#undef TEST_PUBLICATIONS_FILE
+#undef TEST_EXT_RESPONSE_FILE
+}
+
+
+
 CuSuite* KSITest_Policy_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 	suite->preTest = preTest;
@@ -2507,6 +2636,9 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestSignatureVerify_PublicationBasedWithPubFile_ExtNotPermitted);
 	SUITE_ADD_TEST(suite, TestSignatureVerify_KeyBased);
 	SUITE_ADD_TEST(suite, TestSignatureVerify_CalendarBased);
+	SUITE_ADD_TEST(suite, TestSignatureVerify_GeneralWithUserPub);
+	SUITE_ADD_TEST(suite, TestSignatureVerify_GeneralWithUserPubFile);
+	SUITE_ADD_TEST(suite, TestSignatureVerify_GeneralWithCtxPubFile);
 
 	return suite;
 }

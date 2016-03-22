@@ -141,7 +141,7 @@ int KSI_SignatureVerify_general(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Policy *tmpPolicy = NULL;
 	KSI_Policy *pubPolicyClone = NULL;
-	KSI_Policy *keyPolicyClone = NULL;
+	KSI_Policy *calPolicyClone = NULL;
 
 
 	if (sig == NULL || ctx == NULL || result == NULL) {
@@ -167,6 +167,7 @@ int KSI_SignatureVerify_general(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *
 
 	} else {
 		/* Otherwise build a chain of verification policies */
+		/* Construct a policy chain: PubBasedPolicy->CalendarBasedPolicy->KeyBasedPolicy */
 
 		/* Get first verification policy. */
 		res = KSI_Policy_getPublicationsFileBased(ctx, &tmpPolicy);
@@ -182,32 +183,31 @@ int KSI_SignatureVerify_general(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *
 		}
 
 		/* Fallback to PKI key verification */
-		res = KSI_Policy_getKeyBased(ctx, &tmpPolicy);
+		res = KSI_Policy_getCalendarBased(ctx, &tmpPolicy);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
 		}
 		/* Clone the policy in order to set fallback policy */
-		res = KSI_Policy_clone(ctx, tmpPolicy, &keyPolicyClone);
+		res = KSI_Policy_clone(ctx, tmpPolicy, &calPolicyClone);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
 		}
 		/* Make chain pubBasedPolicy->KeyBasedPolicy */
-		res = KSI_Policy_setFallback(ctx, pubPolicyClone, keyPolicyClone);
+		res = KSI_Policy_setFallback(ctx, pubPolicyClone, calPolicyClone);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
 		}
 
 		/* Fallback to online verifycation */
-		res = KSI_Policy_getCalendarBased(ctx, &tmpPolicy);
+		res = KSI_Policy_getKeyBased(ctx, &tmpPolicy);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
 		}
-		/* Make chain PubBasedPolicy->KeyBasedPolicy->CalendarBasedPolicy */
-		res = KSI_Policy_setFallback(ctx, keyPolicyClone, tmpPolicy);
+		res = KSI_Policy_setFallback(ctx, calPolicyClone, tmpPolicy);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
@@ -224,7 +224,7 @@ int KSI_SignatureVerify_general(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *
 	res = KSI_OK;
 cleanup:
 	KSI_Policy_free(pubPolicyClone);
-	KSI_Policy_free(keyPolicyClone);
+	KSI_Policy_free(calPolicyClone);
 
 	return res;
 }
