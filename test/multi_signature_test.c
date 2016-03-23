@@ -416,6 +416,23 @@ static void testSerializeLength(CuTest *tc) {
 
 }
 
+static void testMultiSerializeSignature(CuTest *tc) {
+	int res;
+	KSI_MultiSignature *ms = NULL;
+	unsigned char *buf = NULL;
+	size_t buf_len;
+
+	createMultiSignature(&ms);
+
+	res = KSI_MultiSignature_serialize(ms, &buf, &buf_len);
+	CuAssert(tc, "Unable to serialize multi signature container.", res == KSI_OK && buf_len > 0);
+
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Multi signature", buf, buf_len);
+
+	KSI_MultiSignature_free(ms);
+	KSI_free(buf);
+}
+
 static void testParse(CuTest *tc) {
 	int res;
 	FILE *f = NULL;
@@ -533,6 +550,7 @@ CuSuite* KSITest_multiSignature_getSuite(void) {
 
 	SUITE_ADD_TEST(suite, testSerialize);
 	SUITE_ADD_TEST(suite, testSerializeLength);
+	SUITE_ADD_TEST(suite, testMultiSerializeSignature);
 
 	SUITE_ADD_TEST(suite, testParse);
 	SUITE_ADD_TEST(suite, testParseAndVerifySingle);

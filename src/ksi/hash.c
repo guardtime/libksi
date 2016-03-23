@@ -423,7 +423,6 @@ cleanup:
 int KSI_DataHash_getHashAlg(const KSI_DataHash *hash, KSI_HashAlgorithm *algo_id){
 	if (hash == NULL) return KSI_INVALID_ARGUMENT;
 	if (algo_id == NULL) return KSI_INVALID_ARGUMENT;
-	if (hash->imprint == NULL) return KSI_INVALID_ARGUMENT;
 	
 	*algo_id = hash->imprint[0];
 	
@@ -540,7 +539,7 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
 
-	if (hasher == NULL || data_hash == NULL) {
+	if (hasher == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -560,8 +559,11 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 		goto cleanup;
 	}
 
-	*data_hash = hsh;
-	hsh = NULL;
+
+	if (data_hash != NULL) {
+		*data_hash = hsh;
+		hsh = NULL;
+	}
 
 	res = KSI_OK;
 

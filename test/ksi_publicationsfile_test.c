@@ -21,6 +21,7 @@
 #include <ksi/publicationsfile.h>
 #include <ksi/pkitruststore.h>
 #include "all_tests.h"
+#include "../src/ksi/publicationsfile_impl.h"
 
 extern KSI_CTX *ctx;
 
@@ -39,6 +40,35 @@ static void testLoadPublicationsFile(CuTest *tc) {
 
 	KSI_PublicationsFile_free(pubFile);
 }
+
+static void testLoadPublicationsFileWithNoCerts(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_LIST(KSI_CertificateRecord) *certList = NULL;
+	KSI_PKICertificate *cert = NULL;
+
+	unsigned char dummy[] = {0xca, 0xfe, 0xba, 0xbe};
+	KSI_OctetString *certId = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath("resource/publications/publications-nocerts.bin"), &pubFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_PublicationsFile_getCertificates(pubFile, &certList);
+	CuAssert(tc, "Unable to get certificate list", res == KSI_OK);
+	CuAssert(tc, "Unexpected certificate list length.", KSI_CertificateRecordList_length(certList) == 0);
+
+	res = KSI_OctetString_new(ctx, dummy, sizeof(dummy), &certId);
+	CuAssert(tc, "Creating an octetstring failed", res == KSI_OK && certId != NULL);
+
+	res = KSI_PublicationsFile_getPKICertificateById(pubFile, certId, &cert);
+	CuAssert(tc, "Searching for a non existend certificate failed", res == KSI_OK && cert == NULL);
+
+	KSI_OctetString_free(certId);
+	KSI_PublicationsFile_free(pubFile);
+}
+
 
 static void testVerifyPublicationsFile(CuTest *tc) {
 	int res;
@@ -106,7 +136,10 @@ static void testReceivePublicationsFileInvalidConstraints(CuTest *tc) {
 	CuAssert(tc, "Unable to set OID 2.5.4.10", res == KSI_OK);
 
 	res = KSI_receivePublicationsFile(ctx, &pubFile);
-	CuAssert(tc, "Publications file should NOT verify as PKI constraint is wrong.", res != KSI_OK && pubFile == NULL);
+	CuAssert(tc, "Unable to get publications file.", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_verifyPublicationsFile(ctx, pubFile);
+	CuAssert(tc, "Publications file should NOT verify as PKI constraint is wrong.", res != KSI_OK);
 }
 
 static void testReceivePublicationsFileInvalidPki(CuTest *tc) {
@@ -141,7 +174,10 @@ static void testReceivePublicationsFileInvalidPki(CuTest *tc) {
 	CuAssert(tc, "Unable to set OID 2.5.4.10", res == KSI_OK);
 
 	res = KSI_receivePublicationsFile(ctx, &pubFile);
-	CuAssert(tc, "Publications file should NOT verify as PKI signature is wrong.", res != KSI_OK && pubFile == NULL);
+	CuAssert(tc, "Unable to receive publications file.", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_verifyPublicationsFile(ctx, pubFile);
+	CuAssert(tc, "Publications file should NOT verify as PKI signature is wrong.", res == KSI_INVALID_PKI_SIGNATURE);
 }
 
 static void testVerifyPublicationsFileWithOrganization(CuTest *tc) {
@@ -259,7 +295,99 @@ static void testVerifyPublicationsFileWithAttributeNotPresent(CuTest *tc) {
 	KSI_PublicationsFile_free(pubFile);
 }
 
-static void testVerifyPublicationsFileAddidionalPublications(CuTest *tc) {
+static void testSetPublicationsFileConstraints(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_CertConstraint empty[] = {
+			{NULL, NULL},
+			{NULL, NULL}
+	};
+	KSI_CertConstraint email[] = {
+			{KSI_CERT_EMAIL, "publications@guardtime.com"},
+			{NULL, NULL}
+	};
+
+	res = KSI_CTX_getPublicationsFile(ctx, &pubFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_PublicationsFile_setCertConstraints(pubFile, empty);
+	CuAssert(tc, "Unable to set publications file certificate constraints.", res == KSI_OK && pubFile->certConstraints != NULL);
+	CuAssert(tc, "Unexpected certificate constraint values", pubFile->certConstraints[0].oid == NULL && pubFile->certConstraints[0].val == NULL);
+
+	res = KSI_PublicationsFile_setCertConstraints(pubFile, email);
+	CuAssert(tc, "Unable to set publications file certificate constraints.", res == KSI_OK && pubFile->certConstraints != NULL);
+	CuAssert(tc, "Unexpected certificate constraint values",
+			 !strcmp(pubFile->certConstraints[0].oid, email[0].oid) &&
+			 !strcmp(pubFile->certConstraints[0].val, email[0].val));
+
+	res = KSI_PublicationsFile_setCertConstraints(pubFile, empty);
+	CuAssert(tc, "Unable to set publications file certificate constraints.", res == KSI_OK && pubFile->certConstraints != NULL);
+	CuAssert(tc, "Unexpected certificate constraint values", pubFile->certConstraints[0].oid == NULL && pubFile->certConstraints[0].val == NULL);
+
+	res = KSI_PublicationsFile_setCertConstraints(pubFile, NULL);
+	CuAssert(tc, "Unable to set publications file certificate constraints.", res == KSI_OK && pubFile->certConstraints == NULL);
+}
+
+static void testVerifyPublicationsFileWithFileSpecificConstraints(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_CertConstraint empty[] = {
+			{NULL, NULL},
+			{NULL, NULL}
+	};
+	KSI_CertConstraint email[] = {
+			{KSI_CERT_EMAIL, "publications@guardtime.com"},
+			{NULL, NULL}
+	};
+
+	KSI_CertConstraint wrong[] = {
+			{KSI_CERT_EMAIL, "wrong@email.com"},
+			{NULL, NULL}
+	};
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, email);
+	CuAssert(tc, "Unable to set default certificate constraints", res == KSI_OK);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_PublicationsFile_setCertConstraints(pubFile, NULL);
+	CuAssert(tc, "Unable to set publications file certificate constraints.", res == KSI_OK);
+
+	res = KSI_verifyPublicationsFile(ctx, pubFile);
+	CuAssert(tc, "Unable to verify publications file with context based constraints.", res == KSI_OK);
+
+	res = KSI_PublicationsFile_setCertConstraints(pubFile, empty);
+	CuAssert(tc, "Unable to set publications file certificate constraints.", res == KSI_OK);
+
+	res = KSI_verifyPublicationsFile(ctx, pubFile);
+	CuAssert(tc, "Publications file should not verify with empty certificate constraints.", res != KSI_OK);
+
+	res = KSI_PublicationsFile_setCertConstraints(pubFile, email);
+	CuAssert(tc, "Unable to set publications file certificate constraints.", res == KSI_OK);
+
+	res = KSI_verifyPublicationsFile(ctx, pubFile);
+	CuAssert(tc, "Unable to verify publications file with email.", res == KSI_OK);
+
+	res = KSI_PublicationsFile_setCertConstraints(pubFile, wrong);
+	CuAssert(tc, "Unable to set publications file certificate constraints.", res == KSI_OK);
+
+	res = KSI_verifyPublicationsFile(ctx, pubFile);
+	CuAssert(tc, "Publications file should not verify with wrong certificate constraints.", res != KSI_OK);
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, wrong);
+	CuAssert(tc, "Unable to set default certificate constraints", res == KSI_OK);
+
+	res = KSI_PublicationsFile_setCertConstraints(pubFile, email);
+	CuAssert(tc, "Unable to set publications file certificate constraints.", res == KSI_OK);
+
+	res = KSI_verifyPublicationsFile(ctx, pubFile);
+	CuAssert(tc, "Unable to verify publications file with email.", res == KSI_OK);
+
+	KSI_PublicationsFile_free(pubFile);
+}
+
+static void testVerifyPublicationsFileAdditionalPublications(CuTest *tc) {
 	int res;
 	KSI_PublicationsFile *pubFile = NULL;
 
@@ -312,6 +440,9 @@ static void testFindPublicationByPubStr(CuTest *tc) {
 	res = KSI_receivePublicationsFile(ctx, &pubFile);
 	CuAssert(tc, "Unable to get publications file.", res == KSI_OK && pubFile != NULL);
 
+	res = KSI_verifyPublicationsFile(ctx, pubFile);
+	CuAssert(tc, "Unable to verify publications file.", res == KSI_OK);
+
 	res = KSI_PublicationsFile_getPublicationDataByPublicationString(pubFile, publication, &pubRec);
 	CuAssert(tc, "Unable to get publication record by publication string.", res == KSI_OK && pubRec != NULL);
 
@@ -354,6 +485,9 @@ static void testFindPublicationByTime(CuTest *tc) {
 
 	res = KSI_receivePublicationsFile(ctx, &pubFile);
 	CuAssert(tc, "Unable to get publications file.", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_verifyPublicationsFile(ctx, pubFile);
+	CuAssert(tc, "Unable to verify publications file.", res == KSI_OK);
 
 	res = KSI_Integer_new(ctx, 1397520000, &pubTime);
 	CuAssert(tc, "Unable to create ksi integer object.", res == KSI_OK && pubTime != NULL);
@@ -402,6 +536,9 @@ static void testFindPublicationRef(CuTest *tc) {
 
 	res = KSI_receivePublicationsFile(ctx, &pubFile);
 	CuAssert(tc, "Unable to get publications file.", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_verifyPublicationsFile(ctx, pubFile);
+	CuAssert(tc, "Unable to verify publications file.", res == KSI_OK);
 
 	res = KSI_Integer_new(ctx, 1397520000, &pubTime);
 	CuAssert(tc, "Unable to create ksi integer object.", res == KSI_OK && pubTime != NULL);
@@ -665,6 +802,7 @@ CuSuite* KSITest_Publicationsfile_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
 	SUITE_ADD_TEST(suite, testLoadPublicationsFile);
+	SUITE_ADD_TEST(suite, testLoadPublicationsFileWithNoCerts);
 	SUITE_ADD_TEST(suite, testVerifyPublicationsFile);
 	SUITE_ADD_TEST(suite, testPublicationStringEncodingAndDecoding);
 	SUITE_ADD_TEST(suite, testFindPublicationByPubStr);
@@ -674,7 +812,9 @@ CuSuite* KSITest_Publicationsfile_getSuite(void) {
 	SUITE_ADD_TEST(suite, testVerifyPublicationsFileWithOrganization);
 	SUITE_ADD_TEST(suite, testVerifyPublicationsFileWithNoConstraints);
 	SUITE_ADD_TEST(suite, testVerifyPublicationsFileWithAttributeNotPresent);
-	SUITE_ADD_TEST(suite, testVerifyPublicationsFileAddidionalPublications);
+	SUITE_ADD_TEST(suite, testSetPublicationsFileConstraints);
+	SUITE_ADD_TEST(suite, testVerifyPublicationsFileWithFileSpecificConstraints);
+	SUITE_ADD_TEST(suite, testVerifyPublicationsFileAdditionalPublications);
 	SUITE_ADD_TEST(suite, testGetNearestPublication);
 	SUITE_ADD_TEST(suite, testGetNearestPublicationOf0);
 	SUITE_ADD_TEST(suite, testGetNearestPublicationWithPubTime);

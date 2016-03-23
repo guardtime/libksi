@@ -87,6 +87,10 @@ extern "C" {
 
 		/** A NULL-terminated array of key-value pairs of OID and expected values for publications file certificate verification. */
 		KSI_CertConstraint *certConstraints;
+
+		/** Pointer to function for freeing the certificate constraints array. */
+		void (*freeCertConstraintsArray)(KSI_CertConstraint *);
+
 	};
 
 #ifdef __cplusplus

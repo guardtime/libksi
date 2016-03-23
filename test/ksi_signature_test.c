@@ -22,11 +22,15 @@
 #include <ksi/signature.h>
 #include "../src/ksi/ctx_impl.h"
 
+#include "../src/ksi/signature_impl.h"
 #include "../src/ksi/ctx_impl.h"
 #include "../src/ksi/net_impl.h"
+#include "../src/ksi/tlv.h"
 
 extern KSI_CTX *ctx;
 
+//#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+//#define TEST_EXTEND_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
 #define TEST_USER "anon"
 #define TEST_PASS "anon"
 
@@ -319,6 +323,28 @@ static void testSignatureSigningTime(CuTest *tc) {
 #undef TEST_SIGNATURE_FILE
 }
 
+static void testSignatureSigningTimeNoCalendarChain(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-only_aggr.ksig"
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_Integer *sigTime = NULL;
+	KSI_uint64_t utc = 0;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to read signature containing only aggregation chains from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_getSigningTime(sig, &sigTime);
+	CuAssert(tc, "Unable to get signing time from signature containing only aggregation chains.", res == KSI_OK && sigTime != NULL);
+
+	utc = KSI_Integer_getUInt64(sigTime);
+
+	CuAssert(tc, "Unexpected signature signing time.", utc == 1398866256);
+
+	KSI_Signature_free(sig);
+#undef TEST_SIGNATURE_FILE
+}
 
 static void testSerializeSignature(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
@@ -480,6 +506,27 @@ static void testSignerIdentity(CuTest *tc) {
 #undef TEST_SIGNATURE_FILE
 }
 
+static void testSignerIdentityMetaData(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2015-09-13_21-34-00.ksig"
+
+	int res;
+	const char id_expected[] = "GT :: GT :: release test :: anon http";
+	KSI_Signature *sig = NULL;
+	char *id_actual = NULL;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to load signature", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_getSignerIdentity(sig, &id_actual);
+	CuAssert(tc, "Unable to get signer identity from signature.", res == KSI_OK && id_actual != NULL);
+	CuAssert(tc, "Unexpected signer identity", !strncmp(id_expected, id_actual, strlen(id_expected)));
+
+	KSI_Signature_free(sig);
+	KSI_free(id_actual);
+
+#undef TEST_SIGNATURE_FILE
+}
+
 static void testSignatureWith2Anchors(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-two-anchors.tlv"
 
@@ -530,6 +577,15 @@ static void testVerifyCalendarChainAlgoChange(CuTest *tc) {
 #undef TEST_EXT_RESPONSE_FILE
 }
 
+static void testCreateAggregationAuthRec(CuTest *tc) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_AggregationAuthRec *auhtRec = NULL;
+
+	res = KSI_AggregationAuthRec_new(ctx, &auhtRec);
+	CuAssert(tc, "Unable to create aggregation authentication record", res == KSI_OK && auhtRec != NULL);
+
+	KSI_AggregationAuthRec_free(auhtRec);
+}
 
 CuSuite* KSITest_Signature_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
@@ -538,6 +594,7 @@ CuSuite* KSITest_Signature_getSuite(void) {
 
 	SUITE_ADD_TEST(suite, testLoadSignatureFromFile);
 	SUITE_ADD_TEST(suite, testSignatureSigningTime);
+	SUITE_ADD_TEST(suite, testSignatureSigningTimeNoCalendarChain);
 	SUITE_ADD_TEST(suite, testSerializeSignature);
 	SUITE_ADD_TEST(suite, testVerifyDocument);
 	SUITE_ADD_TEST(suite, testVerifyDocumentHash);
@@ -551,9 +608,11 @@ CuSuite* KSITest_Signature_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRFC3161WrongAggreTime);
 	SUITE_ADD_TEST(suite, testRFC3161WrongInputHash);
 	SUITE_ADD_TEST(suite, testSignerIdentity);
+	SUITE_ADD_TEST(suite, testSignerIdentityMetaData);
 	SUITE_ADD_TEST(suite, testSignatureWith2Anchors);
 	SUITE_ADD_TEST(suite, testVerifyCalendarChainAlgoChange);
 	SUITE_ADD_TEST(suite, testExtractInputHashLegacySignature);
+	SUITE_ADD_TEST(suite, testCreateAggregationAuthRec);
 
 	return suite;
 }

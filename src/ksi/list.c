@@ -136,7 +136,7 @@ cleanup:
 static int replaceElementAt(KSI_List *list, size_t pos, void *o) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	if (list == NULL || o == NULL || pos > list->arr_len) {
+	if (list == NULL || pos > list->arr_len) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -157,7 +157,7 @@ static int insertElementAt(KSI_List *list, size_t pos, void *o) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i;
 
-	if (list == NULL || o == NULL || pos > list->arr_len) {
+	if (list == NULL || pos > list->arr_len) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -326,7 +326,7 @@ cleanup:
 int KSI_List_append(KSI_List *list, void *obj) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	if (list == NULL || obj == NULL) {
+	if (list == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -349,7 +349,7 @@ cleanup:
 int KSI_List_indexOf(KSI_List *list, void *o, size_t **pos) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	if (list == NULL || o == NULL || pos == NULL) {
+	if (list == NULL || pos == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -372,7 +372,7 @@ cleanup:
 int KSI_List_replaceAt(KSI_List *list, size_t pos, void *o) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	if (list == NULL || o == NULL) {
+	if (list == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -395,7 +395,7 @@ cleanup:
 int KSI_List_insertAt(KSI_List *list, size_t pos, void *o) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	if (list == NULL || o == NULL) {
+	if (list == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}

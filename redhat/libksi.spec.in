@@ -101,6 +101,7 @@ make install DESTDIR=%{buildroot}
 %{_includedir}/ksi/verification_rule.h
 %{_includedir}/ksi/policy.h
 %{_includedir}/ksi/compatibility.h
+%{_includedir}/ksi/version.h
 %{_libdir}/libksi.a
 %{_libdir}/libksi.la
 %{_libdir}/pkgconfig/libksi.pc

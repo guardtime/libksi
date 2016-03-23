@@ -75,7 +75,8 @@ libksi_devel_includes="\
 	$include_dir/verification.h \
 	$include_dir/verification_rule.h \
 	$include_dir/policy.h \
-	$include_dir/compatibility.h"
+	$include_dir/compatibility.h \
+	$include_dir/version.h"
 
 
 libksi_devel_libs="\
