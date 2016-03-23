@@ -226,7 +226,7 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithCalHashChain(
 }
 
 static void testRule_CalendarHashChainInputHashVerification_sigWithoutCalHashChain(CuTest *tc) {
-#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
 
 	int res = KSI_OK;
 	KSI_VerificationContext *verCtx = NULL;
@@ -239,9 +239,6 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithoutCalHashCha
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
-
-	KSI_CalendarHashChain_free(verCtx->userData.sig->calendarChain);
-	verCtx->userData.sig->calendarChain = NULL;
 
 	res = KSI_VerificationRule_CalendarHashChainInputHashVerification(verCtx, &verRes);
 	CuAssert(tc, "Signature should not contain calendar hash chain", res == KSI_OK && verRes.resultCode == VER_RES_OK);
@@ -1008,7 +1005,7 @@ static void testRule_ExtendedSignatureCalendarChainRootHash_verifyErrorResult(Cu
 }
 
 static void testRule_CalendarHashChainDoesNotExist(CuTest *tc) {
-#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
 
 	int res = KSI_OK;
 	KSI_VerificationContext *verCtx = NULL;
@@ -1021,9 +1018,6 @@ static void testRule_CalendarHashChainDoesNotExist(CuTest *tc) {
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
-
-	KSI_CalendarHashChain_free(verCtx->userData.sig->calendarChain);
-	verCtx->userData.sig->calendarChain = NULL;
 
 	res = KSI_VerificationRule_CalendarHashChainDoesNotExist(verCtx, &verRes);
 	CuAssert(tc, "Signature should not contain calendar hash chain.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
@@ -1224,7 +1218,7 @@ static void testRule_CalendarHashChainExistence(CuTest *tc) {
 }
 
 static void testRule_CalendarHashChainExistence_verifyErrorResult(CuTest *tc) {
-#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
 
 	int res;
 	KSI_VerificationContext *verCtx = NULL;
@@ -1237,9 +1231,6 @@ static void testRule_CalendarHashChainExistence_verifyErrorResult(CuTest *tc) {
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
-
-	KSI_CalendarHashChain_free(verCtx->userData.sig->calendarChain);
-	verCtx->userData.sig->calendarChain = NULL;
 
 	res = KSI_VerificationRule_CalendarHashChainExistence(verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned.",  res == KSI_OK && verRes.resultCode == VER_RES_NA && verRes.errorCode == VER_ERR_GEN_2);
