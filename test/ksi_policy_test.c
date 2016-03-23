@@ -660,8 +660,7 @@ static void TestInternalPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 		VER_ERR_NONE,
 		"KSI_VerificationRule_DocumentHashVerification"
 	};
-#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
-
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
@@ -673,9 +672,6 @@ static void TestInternalPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
-
-	KSI_CalendarHashChain_free(context->userData.sig->calendarChain);
-	context->userData.sig->calendarChain = NULL;
 
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -1145,7 +1141,7 @@ static void TestCalendarBasedPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 		VER_ERR_NONE,
 		"KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime"
 	};
-#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -1162,9 +1158,6 @@ static void TestCalendarBasedPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &context->tempData.extendedSig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->tempData.extendedSig != NULL);
-
-	KSI_CalendarHashChain_free(context->userData.sig->calendarChain);
-	context->userData.sig->calendarChain = NULL;
 
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -1186,7 +1179,7 @@ static void TestCalendarBasedPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 		VER_ERR_CAL_2,
 		"KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash"
 	};
-#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -1203,9 +1196,6 @@ static void TestCalendarBasedPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &context->tempData.extendedSig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->tempData.extendedSig != NULL);
-
-	KSI_CalendarHashChain_free(context->userData.sig->calendarChain);
-	context->userData.sig->calendarChain = NULL;
 
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -1227,7 +1217,7 @@ static void TestKeyBasedPolicy_NA_WithoutCalendarHashChain(CuTest* tc) {
 		VER_ERR_GEN_2,
 		"KSI_VerificationRule_CalendarHashChainExistence"
 	};
-#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
@@ -1240,9 +1230,6 @@ static void TestKeyBasedPolicy_NA_WithoutCalendarHashChain(CuTest* tc) {
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
-
-	KSI_CalendarHashChain_free(context->userData.sig->calendarChain);
-	context->userData.sig->calendarChain = NULL;
 
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -1984,7 +1971,7 @@ static void TestFallbackPolicy_CalendarBased_OK_KeyBased_NA(CuTest* tc) {
 		VER_ERR_NONE,
 		"KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime"
 	};
-#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -2011,9 +1998,6 @@ static void TestFallbackPolicy_CalendarBased_OK_KeyBased_NA(CuTest* tc) {
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &context->tempData.extendedSig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->tempData.extendedSig != NULL);
 
-	KSI_CalendarHashChain_free(context->userData.sig->calendarChain);
-	context->userData.sig->calendarChain = NULL;
-
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
@@ -2038,7 +2022,7 @@ static void TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA(CuTest* tc) {
 		VER_ERR_GEN_2,
 		"KSI_VerificationRule_CalendarHashChainExistence"
 	};
-#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -2064,9 +2048,6 @@ static void TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA(CuTest* tc) {
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &context->tempData.extendedSig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->tempData.extendedSig != NULL);
-
-	KSI_CalendarHashChain_free(context->userData.sig->calendarChain);
-	context->userData.sig->calendarChain = NULL;
 
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
