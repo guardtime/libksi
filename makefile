@@ -68,9 +68,10 @@ LIB_DIR = $(OUT_DIR)\$(DLL)
 BIN_DIR = $(OUT_DIR)\bin
 VERSION_FILE = VERSION
 VERSION_H = $(SRC_DIR)\ksi\version.h
-VERSION_H_IN=$(VERSION_H).in
-VERSION_H_TEMP_SCRIPT=tmp.bat
+VERSION_H_IN = $(VERSION_H).in
+VERSION_H_TEMP_SCRIPT = tmp.bat
 COMM_ID_FILE = COMMIT_ID
+DRMEMORY_LOGS = $(OUT_DIR)\drmemory_logs
 
 VER = \
 !INCLUDE <$(VERSION_FILE)>
@@ -143,6 +144,12 @@ tests: $(DLL)$(RTL)
 
 test: tests
 	$(BIN_DIR)\alltests.exe test
+
+# You'll need drmemory for this target.
+# http://drmemory.org/
+memtest: tests
+	@if not exist .\$(DRMEMORY_LOGS) mkdir .\$(DRMEMORY_LOGS)
+	drmemory -logdir $(DRMEMORY_LOGS) -report_leak_max -1 -batch -leaks_only -- $(BIN_DIR)\alltests.exe test
 
 resigner: $(DLL)$(RTL)
 	cd $(TEST_DIR)
