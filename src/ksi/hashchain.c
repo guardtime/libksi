@@ -139,6 +139,9 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 				KSI_pushError(ctx, res, NULL);
 				goto cleanup;
 			}
+
+			KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Serialized metadata:", imprint, imprint_len);
+
 			break;
 		default:
 			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);

@@ -868,9 +868,11 @@ static void testCreateAggregated(CuTest *tc) {
 	res = KSI_Signature_signAggregationChain(ctx, 0, chn, &sig);
 	CuAssert(tc, "Unable to sign aggregation chain.", res == KSI_OK && sig != NULL);
 
+
 	/* Serialize the signature. */
 	res = KSI_Signature_serialize(sig, &raw, &raw_len);
 	CuAssert(tc, "Unable to serialize signature.", res == KSI_OK && raw != NULL && raw_len > 0);
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Serialized:", raw, raw_len);
 
 	KSI_Signature_free(sig);
 	sig = NULL;

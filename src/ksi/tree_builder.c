@@ -17,17 +17,20 @@
  * reserves and retains all trademark rights.
  */
 
+#include <string.h>
+
 #include "internal.h"
 #include "tree_builder.h"
 
-#define IS_VALID_LEVEL(level) (((level) >= 0) && ((level) < 0xff))
+#define IS_VALID_LEVEL(level) (((level) >= 0) && ((level) <= 0xff))
+#define STACK_LEN 0x100
 
 typedef struct KSI_TreeNode_st KSI_TreeNode;
-KSI_DEFINE_LIST(KSI_TreeNode);
+
+
 
 struct KSI_TreeNode_st {
 	KSI_CTX *ctx;
-	size_t ref;
 	KSI_DataHash *hash;
 	KSI_MetaData *metaData;
 	unsigned level;
@@ -35,7 +38,6 @@ struct KSI_TreeNode_st {
 	KSI_TreeNode *leftChild;
 	KSI_TreeNode *rightChild;
 };
-
 
 struct KSI_TreeBuilder_st {
 	/** KSI context. */
@@ -47,7 +49,7 @@ struct KSI_TreeBuilder_st {
 	/** Hashing algorithm for the internal nodes. */
 	KSI_HashAlgorithm algo;
 	/** Stack of the root nodes of complete binary trees. */
-	KSI_LIST(KSI_TreeNode) *stack;
+	KSI_TreeNode *stack[STACK_LEN];
 };
 
 struct KSI_TreeLeafHandle_st {
@@ -64,49 +66,13 @@ static int KSI_TreeNode_join(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeNode 
 
 KSI_DEFINE_REF(KSI_TreeNode);
 
-static void KSI_TreeNode_cleanup(KSI_TreeNode *node) {
-	if (node != NULL &&
-			node->leftChild != NULL && node->leftChild->ref <= 1 &&
-			node->rightChild != NULL && node->rightChild->ref <= 1) {
-		/* We have confirmed, that both of the left and right children
-		 * are only referenced by this tree node thus we can free the memory.
-		 */
-		KSI_TreeNode_free(node->leftChild);
-		node->leftChild = NULL;
-
-		KSI_TreeNode_free(node->rightChild);
-		node->rightChild = NULL;
-	}
-}
-
-/**
- * This cleanup method does not only cleanup the downstream objects but also
- * invokes #KSI_TreeNode_cleanup on the nodes parent if the reference count
- * equals 1 - this indicates the parent is the only object referencing this
- * one. We can free this object, if its sibling object is also only referenced
- * by the common parent.
- */
 static void KSI_TreeNode_free(KSI_TreeNode *node) {
-
 	if (node != NULL ) {
-		if (--node->ref == 0) {
-			if (node->parent != NULL) {
-				if (node->parent->leftChild == node)
-					node->parent->leftChild = NULL;
-				if (node->parent->rightChild == node)
-					node->parent->rightChild = NULL;
-			}
-			KSI_DataHash_free(node->hash);
-			KSI_MetaData_free(node->metaData);
-			KSI_TreeNode_free(node->leftChild);
-			KSI_TreeNode_free(node->rightChild);
-			KSI_free(node);
-		} else if (node->ref == 1) {
-			/* If the sibling node is also only referenced by the common
-			 * parent, this node will be freed.
-			 */
-			KSI_TreeNode_cleanup(node->parent);
-		}
+		KSI_DataHash_free(node->hash);
+		KSI_MetaData_free(node->metaData);
+		KSI_TreeNode_free(node->leftChild);
+		KSI_TreeNode_free(node->rightChild);
+		KSI_free(node);
 	}
 }
 
@@ -129,7 +95,6 @@ static int KSI_TreeNode_new(KSI_CTX *ctx, KSI_DataHash *hash, KSI_MetaData *meta
 	}
 
 	tmp->ctx = ctx;
-	tmp->ref = 1;
 	tmp->hash = KSI_DataHash_ref(hash);
 	tmp->metaData = KSI_MetaData_ref(metaData);
 	tmp->level = level;
@@ -250,6 +215,11 @@ static int KSI_TreeNode_join(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeNode 
 		goto cleanup;
 	}
 
+	if (!IS_VALID_LEVEL(leftSibling->level) || !IS_VALID_LEVEL(rightSibling->level)) {
+		KSI_pushError(ctx, res = KSI_INVALID_STATE, "One of the subtrees has an invalid level.");
+		goto cleanup;
+	}
+
 	KSI_ERR_clearErrors(ctx);
 
 	level = (leftSibling->level > rightSibling->level ? leftSibling->level : rightSibling->level) + 1;
@@ -278,8 +248,8 @@ static int KSI_TreeNode_join(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeNode 
 	leftSibling->parent = tmp;
 	rightSibling->parent = tmp;
 
-	tmp->leftChild = KSI_TreeNode_ref(leftSibling);
-	tmp->rightChild = KSI_TreeNode_ref(rightSibling);
+	tmp->leftChild = leftSibling;
+	tmp->rightChild = rightSibling;
 
 	*root = tmp;
 	tmp = NULL;
@@ -293,10 +263,6 @@ cleanup:
 
 	return res;
 }
-
-KSI_IMPLEMENT_REF(KSI_TreeNode);
-
-KSI_IMPLEMENT_LIST(KSI_TreeNode, KSI_TreeNode_free);
 
 /**/
 
@@ -321,13 +287,7 @@ int KSI_TreeBuilder_new(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeBuilder **
 	tmp->ref = 1;
 	tmp->rootNode = NULL;
 	tmp->algo = algo;
-	tmp->stack = NULL;
-
-	res = KSI_TreeNodeList_new(&tmp->stack);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
+	memset(tmp->stack, 0, sizeof(tmp->stack));
 
 	*builder = tmp;
 	tmp = NULL;
@@ -343,37 +303,15 @@ cleanup:
 
 void KSI_TreeBuilder_free(KSI_TreeBuilder *builder) {
 	if (builder != NULL && --builder->ref == 0) {
+		size_t i;
 		KSI_TreeNode_free(builder->rootNode);
-		KSI_TreeNodeList_free(builder->stack);
+
+		/* If the tree was not closed propperly, we have to check the stack. */
+		for (i = 0; i < STACK_LEN; i++) {
+			KSI_TreeNode_free(builder->stack[i]);
+		}
 		KSI_free(builder);
 	}
-}
-
-int growStack(KSI_TreeBuilder *builder, int level) {
-	int res = KSI_UNKNOWN_ERROR;
-	size_t i;
-
-	if (builder == NULL || !IS_VALID_LEVEL(level)) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	for (i = KSI_TreeNodeList_length(builder->stack); i <= level; i++) {
-		res = KSI_TreeNodeList_append(builder->stack, NULL);
-		if (res != KSI_OK) goto cleanup;
-	}
-
-	/* Just make sure the stack is actually the required size. */
-	if (KSI_TreeNodeList_length(builder->stack) < level) {
-		res = KSI_UNKNOWN_ERROR;
-		goto cleanup;
-	}
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
 }
 
 static int insertNode(KSI_TreeBuilder *builder, KSI_TreeNode *node) {
@@ -386,27 +324,17 @@ static int insertNode(KSI_TreeBuilder *builder, KSI_TreeNode *node) {
 		goto cleanup;
 	}
 
-	/* Make sure the stack is big enough. */
-	res = growStack(builder, node->level);
-	if (res != KSI_OK) {
-		KSI_pushError(builder->ctx, res, NULL);
+	if (!IS_VALID_LEVEL(node->level)) {
+		res = KSI_INVALID_STATE;
 		goto cleanup;
 	}
 
 	/* Get the current value from the stack. */
-	res = KSI_TreeNodeList_elementAt(builder->stack, node->level, &pSlot);
-	if (res != KSI_OK) {
-		KSI_pushError(builder->ctx, res, NULL);
-		goto cleanup;
-	}
+	pSlot = builder->stack[node->level];
 
 	if (pSlot == NULL) {
 		/* The slot is empty - reuse the slot. */
-		res = KSI_TreeNodeList_replaceAt(builder->stack, node->level, KSI_TreeNode_ref(node));
-		if (res != KSI_OK) {
-			KSI_pushError(builder->ctx, res, NULL);
-			goto cleanup;
-		}
+		builder->stack[node->level] = node;
 	} else {
 		/* The slot is taken - create a new node from the existing ones. */
 		res = KSI_TreeNode_join(builder->ctx, builder->algo, pSlot, node, &root);
@@ -416,18 +344,18 @@ static int insertNode(KSI_TreeBuilder *builder, KSI_TreeNode *node) {
 		}
 
 		/* Remove the existing element. */
-		res = KSI_TreeNodeList_replaceAt(builder->stack, node->level, NULL);
-		if (res != KSI_OK) {
-			KSI_pushError(builder->ctx, res, NULL);
-			goto cleanup;
-		}
+		builder->stack[node->level] = NULL;
 
 		res = insertNode(builder, root);
 		if (res != KSI_OK) {
 			KSI_pushError(builder->ctx, res, NULL);
 			goto cleanup;
 		}
+
+		root = NULL;
 	}
+
+	res = KSI_OK;
 
 cleanup:
 
@@ -475,12 +403,14 @@ static int addLeaf(KSI_TreeBuilder *builder, KSI_DataHash *hsh, KSI_MetaData *me
 		}
 
 		tmp->builder = KSI_TreeBuilder_ref(builder);
-		tmp->leafNode = KSI_TreeNode_ref(node);
+		tmp->leafNode = node;
 		tmp->ref = 1;
 
 		*leaf = tmp;
 		tmp = NULL;
 	}
+
+	node = NULL;
 
 	res = KSI_OK;
 
@@ -500,49 +430,12 @@ int KSI_TreeBuilder_addMetaData(KSI_TreeBuilder *builder, KSI_MetaData *metaData
 	return addLeaf(builder, NULL, metaData, level, leaf);
 }
 
-struct KSI_TreeNodeFinalize_st {
-	KSI_TreeBuilder *builder;
-	KSI_TreeNode *root;
-};
-
-static int finalizeTree(KSI_TreeNode *node, void *foldCtx) {
-	int res = KSI_UNKNOWN_ERROR;
-	struct KSI_TreeNodeFinalize_st *c = foldCtx;
-	KSI_TreeNode *root = NULL;
-
-	if (c == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	if (node != NULL) {
-		if (c->root == NULL) {
-			root = KSI_TreeNode_ref(node);
-		} else {
-			res = KSI_TreeNode_join(c->builder->ctx, c->builder->algo, node, c->root, &root);
-			if (res != KSI_OK) {
-				KSI_pushError(c->builder->ctx, res, NULL);
-				goto cleanup;
-			}
-		}
-
-		KSI_TreeNode_free(c->root);
-		c->root = root;
-		root = NULL;
-	}
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_TreeNode_free(root);
-
-	return res;
-}
-
 int KSI_TreeBuilder_close(KSI_TreeBuilder *builder) {
 	int res = KSI_UNKNOWN_ERROR;
-	struct KSI_TreeNodeFinalize_st foldCtx;
+	KSI_TreeNode *root = NULL;
+	KSI_TreeNode *tmp = NULL;
+
+	size_t i;
 
 	if  (builder == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -557,29 +450,38 @@ int KSI_TreeBuilder_close(KSI_TreeBuilder *builder) {
 		goto cleanup;
 	}
 
-	foldCtx.builder = builder;
-	foldCtx.root = NULL;
-
 	/* Finalize the forest of complete binary trees into a single tree. */
-	res = KSI_TreeNodeList_foldl(builder->stack, &foldCtx, finalizeTree);
-	if (res != KSI_OK) {
-		KSI_pushError(builder->ctx, res, NULL);
-		goto cleanup;
+	for (i = 0; i < STACK_LEN; i++) {
+		KSI_TreeNode *node = builder->stack[i];
+		builder->stack[i] = NULL;
+
+		if (node == NULL) continue;
+
+		if (root == NULL) {
+			root = node;
+		} else {
+			res = KSI_TreeNode_join(builder->ctx, builder->algo, node, root, &tmp);
+			if (res != KSI_OK) goto cleanup;
+
+			root = tmp;
+			tmp = NULL;
+		}
+
 	}
 
-	if (foldCtx.root == NULL) {
+
+	if (root == NULL) {
 		KSI_pushError(builder->ctx, res = KSI_INVALID_STATE, "The tree has no leafs.");
 		goto cleanup;
 	}
 
-	builder->rootNode = foldCtx.root;
-	foldCtx.root = NULL;
+	builder->rootNode = root;
 
 	res = KSI_OK;
 
 cleanup:
 
-	KSI_TreeNode_free(foldCtx.root);
+	KSI_TreeNode_free(tmp);
 
 	return res;
 }
@@ -587,7 +489,6 @@ cleanup:
 void KSI_TreeLeafHandle_free(KSI_TreeLeafHandle *handle) {
 	if (handle != NULL && --handle->ref == 0) {
 		KSI_TreeBuilder_free(handle->builder);
-		KSI_TreeNode_free(handle->leafNode);
 		KSI_free(handle);
 	}
 }
