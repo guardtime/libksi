@@ -33,13 +33,13 @@
 
 
 const char* getMSError(DWORD error, char *buf, size_t len){
-    LPVOID lpMsgBuf;
-    char *tmp = NULL;
-    char *ret = NULL;
+	LPVOID lpMsgBuf;
+	char *tmp = NULL;
+	char *ret = NULL;
 
 	if(buf == NULL) goto cleanup;
 
-    if(!FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+	if(!FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 					NULL, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) &lpMsgBuf,
 					0, NULL)){
 		goto cleanup;
@@ -55,7 +55,7 @@ const char* getMSError(DWORD error, char *buf, size_t len){
 
 cleanup:
 
-    LocalFree(lpMsgBuf);
+	LocalFree(lpMsgBuf);
 
 	return ret;
 }
@@ -101,7 +101,7 @@ static ALG_ID algIdFromOID(const char *OID){
 	else if (strcmp(OID, szOID_RSA_SHA384RSA) == 0) return CALG_SHA_384;
 	else if (strcmp(OID, szOID_RSA_SHA512RSA) == 0) return CALG_SHA_512;
 	else return 0;
-	}
+}
 
 
 void KSI_PKITruststore_free(KSI_PKITruststore *trust) {
@@ -111,7 +111,7 @@ void KSI_PKITruststore_free(KSI_PKITruststore *trust) {
 		if (trust->collectionStore != NULL){
 			if (!CertCloseStore(trust->collectionStore, CERT_CLOSE_STORE_CHECK_FLAG)){
 				KSI_LOG_debug(trust->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
-				}
+			}
 		}
 		KSI_free(trust);
 	}
@@ -149,8 +149,6 @@ int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) 
 		KSI_pushError(trust->ctx, res = KSI_INVALID_FORMAT, NULL);
 		goto cleanup;
 	}
-
-	tmp_FileTrustStore = NULL;
 
 	res = KSI_OK;
 
@@ -401,7 +399,7 @@ cleanup:
 #define SUBJECT 1
 
 static KSI_uint64_t WindowsTickToUnixSeconds(KSI_uint64_t windowsTicks) {
-     return (KSI_uint64_t)(windowsTicks / WINDOWS_TICK - SEC_TO_UNIX_EPOCH);
+	return (KSI_uint64_t)(windowsTicks / WINDOWS_TICK - SEC_TO_UNIX_EPOCH);
 }
 
 static int pki_certificate_getValidityTime(const KSI_PKICertificate *cert, int type, KSI_uint64_t *time) {
@@ -1127,7 +1125,7 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 	int res = KSI_UNKNOWN_ERROR;
 	ALG_ID algorithm = 0;
 	HCRYPTPROV hCryptProv = 0;
-    PCCERT_CONTEXT subjectCert = NULL;
+	PCCERT_CONTEXT subjectCert = NULL;
 	HCRYPTKEY publicKey = 0;
 	DWORD i = 0;
 	BYTE *little_endian_pkcs1 = NULL;
@@ -1223,8 +1221,10 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 cleanup:
 
 	KSI_free(little_endian_pkcs1);
-	if (hCryptProv) CryptReleaseContext(hCryptProv, 0);
+	/* All hash objects that have been created by using a specific CSP must be  destroyed before that CSP
+	 * handle is released with the CryptReleaseContext function. */
 	if (hash) CryptDestroyHash(hash);
+	if (hCryptProv) CryptReleaseContext(hCryptProv, 0);
 
 	return res;
 }
