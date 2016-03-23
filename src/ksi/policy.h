@@ -91,6 +91,7 @@ extern "C" {
 		VerificationResultCode resultCode;
 		VerificationErrorCode errorCode;
 		const char *ruleName;
+		const char *policyName;
 	};
 
 	typedef struct KSI_RuleVerificationResult_st KSI_RuleVerificationResult;

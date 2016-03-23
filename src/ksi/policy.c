@@ -67,11 +67,12 @@ static int Rule_verify(const Rule *rule, KSI_VerificationContext *context, KSI_P
 		switch (currentRule->type) {
 			case RULE_TYPE_BASIC:
 				res = ((Verifier)(currentRule->rule))(context, &policyResult->latestResult);
-				KSI_LOG_debug(context->ctx, "Rule result: %i %i %i %s",
+				KSI_LOG_debug(context->ctx, "Rule result: %i %i %i %s %s",
 							  res,
 							  policyResult->latestResult.resultCode,
 							  policyResult->latestResult.errorCode,
-							  policyResult->latestResult.ruleName);
+							  policyResult->latestResult.ruleName,
+							  policyResult->latestResult.policyName);
 				break;
 
 			case RULE_TYPE_COMPOSITE_AND:
@@ -177,7 +178,8 @@ int KSI_Policy_getInternal(KSI_CTX *ctx, const KSI_Policy **policy) {
 
 	static const KSI_Policy internalPolicy = {
 		internalRules,
-		NULL
+		NULL,
+		"Internal policy"
 	};
 
 	KSI_ERR_clearErrors(ctx);
@@ -245,7 +247,8 @@ int KSI_Policy_getCalendarBased(KSI_CTX *ctx, const KSI_Policy **policy) {
 
 	static const KSI_Policy calendarBasedPolicy = {
 		calendarBasedRules,
-		NULL
+		NULL,
+		"Calendar based policy"
 	};
 
 	KSI_ERR_clearErrors(ctx);
@@ -277,7 +280,8 @@ int KSI_Policy_getKeyBased(KSI_CTX *ctx, const KSI_Policy **policy) {
 
 	static const KSI_Policy keyBasedPolicy = {
 		keyBasedRules,
-		NULL
+		NULL,
+		"Key based policy"
 	};
 
 	KSI_ERR_clearErrors(ctx);
@@ -327,7 +331,8 @@ int KSI_Policy_getPublicationsFileBased(KSI_CTX *ctx, const KSI_Policy **policy)
 
 	static const KSI_Policy publicationsFileBasedPolicy = {
 		publicationsFileBasedRules,
-		NULL
+		NULL,
+		"Publications file based policy"
 	};
 
 	KSI_ERR_clearErrors(ctx);
@@ -378,7 +383,8 @@ int KSI_Policy_getUserProvidedPublicationBased(KSI_CTX *ctx, const KSI_Policy **
 
 	static const KSI_Policy userProvidedPublicationBasedPolicy = {
 		userProvidedPublicationBasedRules,
-		NULL
+		NULL,
+		"User provided publication based policy"
 	};
 
 	KSI_ERR_clearErrors(ctx);
@@ -414,6 +420,7 @@ int KSI_Policy_clone(KSI_CTX *ctx, const KSI_Policy *policy, KSI_Policy **clone)
 
 	tmp->rules = policy->rules;
 	tmp->fallbackPolicy = policy->fallbackPolicy;
+	tmp->policyName = policy->policyName;
 	*clone = tmp;
 	tmp = NULL;
 
@@ -552,6 +559,7 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 
 	currentPolicy = policy;
 	while (currentPolicy != NULL) {
+		(*result)->latestResult.policyName = currentPolicy->policyName;
 		res = Policy_verifySignature(currentPolicy, context, *result);
 		/* Stop verifying the policy whenever there is an internal error (invalid arguments, out of memory, etc). */
 		if (res != KSI_OK) goto cleanup;

@@ -294,6 +294,7 @@ static void TestSingleRulePolicy(CuTest* tc) {
 	CuAssert(tc, "Create verification context failed", res == KSI_OK);
 
 	policy.fallbackPolicy = NULL;
+	policy.policyName = "Single rules policy";
 
 	for (i = 0; i < sizeof(rules) / sizeof(TestRule); i++) {
 		KSI_ERR_clearErrors(ctx);
@@ -364,6 +365,7 @@ static void TestBasicRulesPolicy(CuTest* tc) {
 	CuAssert(tc, "Create verification context failed", res == KSI_OK);
 
 	policy.fallbackPolicy = NULL;
+	policy.policyName = "Basic rules policy";
 
 	for (i = 0; i < sizeof(rules) / sizeof(TestRule); i++) {
 		KSI_ERR_clearErrors(ctx);
@@ -478,6 +480,7 @@ static void TestCompositeRulesPolicy(CuTest* tc) {
 	CuAssert(tc, "Create verification context failed", res == KSI_OK);
 
 	policy.fallbackPolicy = NULL;
+	policy.policyName = "Composite rules policy";
 
 	for (i = 0; i < sizeof(rules) / sizeof(TestRule); i++) {
 		KSI_ERR_clearErrors(ctx);
@@ -525,9 +528,17 @@ static void TestVerificationResult(CuTest* tc) {
 		{VER_RES_OK,	VER_ERR_PUB_1,	"DummyRule_Return_KSI_OK_VER_RES_OK_VER_ERR_PUB_1"}
 	};
 
+	const char *names[4] = {
+		"Single rules policy 3",
+		"Single rules policy 2",
+		"Single rules policy 1",
+		"Single rules policy 0"
+	};
+
 	for (i = 0; i < 4; i++) {
 		policies[i].rules = singleRules[3 - i];
 		policies[i].fallbackPolicy = &policies[i + 1];
+		policies[i].policyName = names[i];
 	}
 	policies[3].fallbackPolicy = NULL;
 
@@ -545,6 +556,7 @@ static void TestVerificationResult(CuTest* tc) {
 		res = KSI_RuleVerificationResultList_elementAt(result->policyResults, i, &temp);
 		CuAssert(tc, "Could not retrieve result", res == KSI_OK);
 		CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected[i], temp));
+		CuAssert(tc, "Unexpected policy name", !strcmp(temp->policyName, names[i]));
 	}
 
 	KSI_PolicyVerificationResult_free(result);
@@ -1954,7 +1966,9 @@ static void TestPolicyCloning(CuTest* tc) {
 
 	res = KSI_Policy_clone(ctx, org, &policy);
 	CuAssert(tc, "Policy cloning failed", res == KSI_OK && org != policy &&
-			 policy->rules == org->rules && policy->fallbackPolicy == org->fallbackPolicy);
+			 policy->rules == org->rules &&
+			 policy->fallbackPolicy == org->fallbackPolicy &&
+			 !strcmp(policy->policyName, org->policyName));
 
 	KSI_Policy_free(policy);
 }
