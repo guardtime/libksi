@@ -1014,13 +1014,3 @@ EXPORTS
 	KSI_VerificationContext_setAggregationLevel
 	KSI_VerificationContext_free
 	KSI_VerificationContext_clean
-
-;signature_verify.h
-EXPORTS
-	KSI_SignatureVerify_internalConsistency
-	KSI_SignatureVerify_documentHash
-	KSI_SignatureVerify_internal
-	KSI_SignatureVerify_userProvidedPublicationBased
-	KSI_SignatureVerify_publicationsFileBased
-	KSI_SignatureVerify_keyBased
-	KSI_SignatureVerify_calendarBased
