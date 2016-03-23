@@ -241,7 +241,7 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithoutCalHashCha
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarHashChainInputHashVerification(verCtx, &verRes);
-	CuAssert(tc, "Signature should not contain calendar hash chain", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should not contain calendar hash chain", res != KSI_OK && verRes.resultCode == VER_RES_NA);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -402,7 +402,7 @@ static void testRule_CalendarAuthenticationRecordAggregationHash_missingAutRec(C
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash(verCtx, &verRes);
-	CuAssert(tc, "Signature should not contain contain authentication record.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should not contain contain authentication record.", res != KSI_OK && verRes.resultCode == VER_RES_NA);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -471,7 +471,7 @@ static void testRule_CalendarAuthenticationRecordAggregationTime_missingAutRec(C
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime(verCtx, &verRes);
-	CuAssert(tc, "Signature should not contain contain authentication record.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should not contain contain authentication record.", res != KSI_OK && verRes.resultCode == VER_RES_NA);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -540,7 +540,7 @@ static void testRule_SignaturePublicationRecordPublicationHash_missingPubRec(CuT
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_SignaturePublicationRecordPublicationHash(verCtx, &verRes);
-	CuAssert(tc, "Signature should not contain publication record.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should not contain publication record.", res != KSI_OK && verRes.resultCode == VER_RES_NA);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -609,7 +609,7 @@ static void testRule_SignaturePublicationRecordPublicationTime_missingPubRec(CuT
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_SignaturePublicationRecordPublicationTime(verCtx, &verRes);
-	CuAssert(tc, "Signature should not contain publication record.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should not contain publication record.", res != KSI_OK && verRes.resultCode == VER_RES_NA);
 
 	KSI_VerificationContext_free(verCtx);
 
