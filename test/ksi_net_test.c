@@ -583,7 +583,7 @@ static void testSigningInvalidResponse(CuTest* tc){
 #undef TEST_AGGR_RESPONSE_FILE
 }
 
-static void testSigningAggrChainReturned(CuTest* tc){
+static void testSigningInvalidAggrChainReturned(CuTest* tc){
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/nok_aggr_response-invalid-aggr-chain.tlv"
 
 	int res;
@@ -894,7 +894,7 @@ CuSuite* KSITest_NET_getSuite(void) {
 	SUITE_ADD_TEST(suite, testExtendingWithoutPublication);
 	SUITE_ADD_TEST(suite, testExtendingToNULL);
 	SUITE_ADD_TEST(suite, testSigningInvalidResponse);
-	SUITE_ADD_TEST(suite, testSigningAggrChainReturned);
+	SUITE_ADD_TEST(suite, testSigningInvalidAggrChainReturned);
 	SUITE_ADD_TEST(suite, testAggregationHeader);
 	SUITE_ADD_TEST(suite, testSigningErrorResponse);
 	SUITE_ADD_TEST(suite, testExtendingErrorResponse);
