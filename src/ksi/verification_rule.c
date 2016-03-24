@@ -941,6 +941,68 @@ cleanup:
 	return res;
 }
 
+int KSI_VerificationRule_DocumentHashDoesNotExist(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL) {
+		VERIFICATION_RESULT(VER_RES_NA, VER_ERR_GEN_2);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_LOG_info(info->ctx, "Verifying document hash does not exist");
+
+	if (info->userData.documentHash != NULL) {
+		KSI_LOG_info(info->ctx, "Document hash is not missing");
+		VERIFICATION_RESULT(VER_RES_NA, VER_ERR_GEN_2);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT(VER_RES_OK, VER_ERR_NONE);
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_DocumentHashExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL) {
+		VERIFICATION_RESULT(VER_RES_NA, VER_ERR_GEN_2);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_LOG_info(info->ctx, "Verify document hash existence");
+
+	if (info->userData.documentHash == NULL) {
+		KSI_LOG_info(info->ctx, "Document hash is missing");
+		VERIFICATION_RESULT(VER_RES_NA, VER_ERR_GEN_2);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT(VER_RES_OK, VER_ERR_NONE);
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 int KSI_VerificationRule_DocumentHashVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
@@ -961,13 +1023,6 @@ int KSI_VerificationRule_DocumentHashVerification(KSI_VerificationContext *info,
 	}
 	ctx = info->ctx;
 	sig = info->userData.sig;
-
-	if (info->userData.documentHash == NULL) {
-		KSI_LOG_info(ctx, "Document hash is not set");
-		VERIFICATION_RESULT(VER_RES_OK, VER_ERR_NONE);
-		res = KSI_OK;
-		goto cleanup;
-	}
 
 	KSI_LOG_info(ctx, "Verify document hash.");
 	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Verifying document hash", info->userData.documentHash);

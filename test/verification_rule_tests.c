@@ -639,6 +639,92 @@ static void testRule_SignaturePublicationRecordPublicationTime_verifyErrorResult
 #undef TEST_SIGNATURE_FILE
 }
 
+static void testRule_DocumentHashDoesNotExist(CuTest *tc) {
+	int res = KSI_OK;
+	KSI_VerificationContext *verCtx = NULL;
+	KSI_RuleVerificationResult verRes;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_create(ctx, &verCtx);
+	CuAssert(tc, "Unable to create verification context", res == KSI_OK && verCtx != NULL);
+
+	res = KSI_VerificationRule_DocumentHashDoesNotExist(verCtx, &verRes);
+	CuAssert(tc, "Document hash should not be provided.", res == KSI_OK && verRes.resultCode == VER_RES_OK && verCtx->userData.documentHash == NULL);
+
+	KSI_VerificationContext_free(verCtx);
+}
+
+static void testRule_DocumentHashDoesNotExist_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+
+	int res = KSI_OK;
+	KSI_VerificationContext *verCtx = NULL;
+	KSI_RuleVerificationResult verRes;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_create(ctx, &verCtx);
+	CuAssert(tc, "Unable to create verification context", res == KSI_OK && verCtx != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
+
+	res = KSI_Signature_getDocumentHash(verCtx->userData.sig, &verCtx->userData.documentHash);
+	CuAssert(tc, "Unable to read signature document hash", res == KSI_OK && verCtx->userData.sig != NULL);
+
+	res = KSI_VerificationRule_DocumentHashDoesNotExist(verCtx, &verRes);
+	CuAssert(tc, "Document hash not found.", res == KSI_OK && verRes.resultCode == VER_RES_NA && verCtx->userData.documentHash != NULL);
+
+	KSI_nofree(verCtx->userData.documentHash);
+	KSI_VerificationContext_free(verCtx);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_DocumentHashExistence(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+
+	int res = KSI_OK;
+	KSI_VerificationContext *verCtx = NULL;
+	KSI_RuleVerificationResult verRes;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_create(ctx, &verCtx);
+	CuAssert(tc, "Unable to create verification context", res == KSI_OK && verCtx != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
+
+	res = KSI_Signature_getDocumentHash(verCtx->userData.sig, &verCtx->userData.documentHash);
+	CuAssert(tc, "Unable to read signature document hash", res == KSI_OK && verCtx->userData.sig != NULL);
+
+	res = KSI_VerificationRule_DocumentHashExistence(verCtx, &verRes);
+	CuAssert(tc, "Document hash not found.", res == KSI_OK && verRes.resultCode == VER_RES_OK && verCtx->userData.documentHash != NULL);
+
+	KSI_nofree(verCtx->userData.documentHash);
+	KSI_VerificationContext_free(verCtx);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_DocumentHashExistence_verifyErrorResult(CuTest *tc) {
+	int res = KSI_OK;
+	KSI_VerificationContext *verCtx = NULL;
+	KSI_RuleVerificationResult verRes;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_create(ctx, &verCtx);
+	CuAssert(tc, "Unable to create verification context", res == KSI_OK && verCtx != NULL);
+
+	res = KSI_VerificationRule_DocumentHashExistence(verCtx, &verRes);
+	CuAssert(tc, "Document hash should not be provided.", res == KSI_OK && verRes.resultCode == VER_RES_NA && verCtx->userData.documentHash == NULL);
+
+	KSI_VerificationContext_free(verCtx);
+}
+
 static void testRule_DocumentHashVerification(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
@@ -682,7 +768,7 @@ static void testRule_DocumentHashVerification_missingDocHash(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_DocumentHashVerification(verCtx, &verRes);
-	CuAssert(tc, "Document hash should not be provided.", res == KSI_OK && verRes.resultCode == VER_RES_OK && verCtx->userData.documentHash == NULL);
+	CuAssert(tc, "Document hash should not be provided.", res == KSI_OK && verRes.resultCode != VER_RES_OK && verCtx->userData.documentHash == NULL);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -2673,6 +2759,10 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_SignaturePublicationRecordPublicationTime);
 	SUITE_ADD_TEST(suite, testRule_SignaturePublicationRecordPublicationTime_missingPubRec);
 	SUITE_ADD_TEST(suite, testRule_SignaturePublicationRecordPublicationTime_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_DocumentHashDoesNotExist);
+	SUITE_ADD_TEST(suite, testRule_DocumentHashDoesNotExist_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_DocumentHashExistence);
+	SUITE_ADD_TEST(suite, testRule_DocumentHashExistence_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_DocumentHashVerification);
 	SUITE_ADD_TEST(suite, testRule_DocumentHashVerification_missingDocHash);
 	SUITE_ADD_TEST(suite, testRule_DocumentHashVerification_verifyErrorResult);

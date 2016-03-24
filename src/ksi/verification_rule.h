@@ -140,6 +140,26 @@ extern "C" {
 	int KSI_VerificationRule_SignaturePublicationRecordPublicationTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
+	 * Rule to check that document hash has not been provided for verification.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_DocumentHashDoesNotExist(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * This rule is used to check if document hash has been provided for verification.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_DocumentHashExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
 	 * This rule is used to verify document hash. If RFC3161 record is present then the document hash must equal to RFC3161
 	 * input hash. If RFC3161 record isn't present then document hash must equal to first aggregation hash chain input hash.
 	 * If document hash isn't provided the status code #KSI_OK will be returned.

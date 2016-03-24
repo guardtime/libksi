@@ -164,12 +164,29 @@ static const Rule calendarHashChainRule[] = {
 	{RULE_TYPE_COMPOSITE_OR, NULL}
 };
 
+static const Rule noDocumentHashRule[] = {
+	{RULE_TYPE_BASIC, KSI_VerificationRule_DocumentHashDoesNotExist},
+	{RULE_TYPE_BASIC, NULL}
+};
+
+static const Rule documentHashVerificationRule[] = {
+	{RULE_TYPE_BASIC, KSI_VerificationRule_DocumentHashExistence},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_DocumentHashVerification},
+	{RULE_TYPE_BASIC, NULL}
+};
+
+static const Rule documentHashRule[] = {
+	{RULE_TYPE_COMPOSITE_OR, noDocumentHashRule},
+	{RULE_TYPE_COMPOSITE_OR, documentHashVerificationRule},
+	{RULE_TYPE_COMPOSITE_OR, NULL}
+};
+
 static const Rule internalRules[] = {
 	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainInputHashVerification},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainConsistency},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainTimeConsistency},
 	{RULE_TYPE_COMPOSITE_AND, calendarHashChainRule},
-	{RULE_TYPE_BASIC, KSI_VerificationRule_DocumentHashVerification},
+	{RULE_TYPE_COMPOSITE_AND, documentHashRule},
 	{RULE_TYPE_BASIC, NULL}
 };
 
