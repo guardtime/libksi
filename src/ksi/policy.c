@@ -553,6 +553,9 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 
 	tmp->finalResult.resultCode = VER_RES_NA;
 	tmp->finalResult.errorCode = VER_ERR_GEN_2;
+	tmp->finalResult.stepsPerformed = 0;
+	tmp->finalResult.stepsFailed = 0;
+	tmp->finalResult.stepsSuccessful = 0;
 	*result = tmp;
 	tmp = NULL;
 

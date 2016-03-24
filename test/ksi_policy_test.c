@@ -513,6 +513,36 @@ bool ResultsMatch(KSI_RuleVerificationResult *expected, KSI_RuleVerificationResu
 	return match;
 }
 
+bool SuccessfulProperty(KSI_RuleVerificationResult *result, size_t property) {
+	size_t mask;
+	mask = result->stepsPerformed & result->stepsSuccessful & ~result->stepsFailed;
+	if ((mask & property) == property) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+bool FailedProperty(KSI_RuleVerificationResult *result, size_t property) {
+	size_t mask;
+	mask = result->stepsPerformed & result->stepsFailed & ~result->stepsSuccessful;
+	if ((mask & property) == property) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+bool InconclusiveProperty(KSI_RuleVerificationResult *result, size_t property) {
+	size_t mask;
+	mask = result->stepsPerformed & ~result->stepsFailed & ~result->stepsSuccessful;
+	if ((mask & property) == property) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
 static void TestVerificationResult(CuTest* tc) {
 	int res;
 	size_t i;
@@ -589,6 +619,7 @@ static void TestInternalPolicy_FAIL_WithInvalidRfc3161(CuTest* tc) {
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -622,6 +653,7 @@ static void TestInternalPolicy_FAIL_WithInvalidAggregationChain(CuTest* tc) {
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -655,6 +687,7 @@ static void TestInternalPolicy_FAIL_WithInconsistentAggregationChainTime(CuTest*
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -687,6 +720,7 @@ static void TestInternalPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -720,6 +754,8 @@ static void TestInternalPolicy_FAIL_WithInvalidCalendarHashChain(CuTest* tc) {
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -753,6 +789,8 @@ static void TestInternalPolicy_FAIL_WithInvalidCalendarHashChainAggregationTime(
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -786,6 +824,8 @@ static void TestInternalPolicy_OK_WithoutCalendarAuthenticationRecord(CuTest* tc
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -819,6 +859,9 @@ static void TestInternalPolicy_FAIL_WithInvalidCalendarAuthenticationRecordHash(
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -852,6 +895,9 @@ static void TestInternalPolicy_FAIL_WithInvalidCalendarAuthenticationRecordTime(
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -885,6 +931,9 @@ static void TestInternalPolicy_OK_WithoutPublicationRecord(CuTest* tc) {
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -918,6 +967,9 @@ static void TestInternalPolicy_FAIL_WithInvalidPublicationRecordHash(CuTest* tc)
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -951,6 +1003,9 @@ static void TestInternalPolicy_FAIL_WithInvalidPublicationRecordTime(CuTest* tc)
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -984,6 +1039,9 @@ static void TestInternalPolicy_OK_WithPublicationRecord(CuTest* tc) {
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -1021,6 +1079,9 @@ static void TestCalendarBasedPolicy_OK_WithPublicationRecord(CuTest* tc) {
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -1059,6 +1120,9 @@ static void TestCalendarBasedPolicy_FAIL_WithPublicationRecord(CuTest* tc) {
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -1097,6 +1161,9 @@ static void TestCalendarBasedPolicy_OK_WithoutPublicationRecord(CuTest* tc) {
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -1135,6 +1202,9 @@ static void TestCalendarBasedPolicy_FAIL_WithoutPublicationRecord(CuTest* tc) {
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -1173,6 +1243,8 @@ static void TestCalendarBasedPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -1211,6 +1283,8 @@ static void TestCalendarBasedPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -1245,6 +1319,7 @@ static void TestKeyBasedPolicy_NA_WithoutCalendarHashChain(CuTest* tc) {
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -1278,6 +1353,8 @@ static void TestKeyBasedPolicy_NA_WithoutCalendarAuthenticationRecord(CuTest* tc
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -1311,6 +1388,9 @@ static void TestKeyBasedPolicy_FAIL_WithCalendarAuthenticationRecord(CuTest* tc)
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -1351,6 +1431,9 @@ static void TestKeyBasedPolicy_FAIL_WithoutCertificate(CuTest* tc) {
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -1392,6 +1475,9 @@ static void TestKeyBasedPolicy_FAIL_WithCertificate(CuTest* tc) {
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -1433,6 +1519,9 @@ static void TestKeyBasedPolicy_OK(CuTest* tc) {
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -1474,6 +1563,9 @@ static void TestPublicationsFileBasedPolicy_OK_WithPublicationRecord(CuTest* tc)
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -1515,6 +1607,9 @@ static void TestPublicationsFileBasedPolicy_NA_WithPublicationRecord(CuTest* tc)
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
+	CuAssert(tc, "Unexpected verification property", InconclusiveProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -1556,6 +1651,9 @@ static void TestPublicationsFileBasedPolicy_NA_WithoutSuitablePublication(CuTest
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", InconclusiveProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -1597,6 +1695,9 @@ static void TestPublicationsFileBasedPolicy_NA_WithSuitablePublication(CuTest* t
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", InconclusiveProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -1644,6 +1745,9 @@ static void TestPublicationsFileBasedPolicy_OK_WithSuitablePublication(CuTest* t
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -1692,6 +1796,9 @@ static void TestPublicationsFileBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -1734,6 +1841,9 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithPublicationRecord(CuTe
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
 
 	KSI_PolicyVerificationResult_free(result);
 	context->userData.userPublication = NULL;
@@ -1789,6 +1899,9 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureAfterPublicat
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", InconclusiveProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
 
 	KSI_PolicyVerificationResult_free(result);
 	context->userData.userPublication = NULL;
@@ -1838,6 +1951,9 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureBeforePublica
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", InconclusiveProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
 
 	KSI_PolicyVerificationResult_free(result);
 	context->userData.userPublication = NULL;
@@ -1888,6 +2004,9 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithoutPublicationRecord(C
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
 
 	KSI_PolicyVerificationResult_free(result);
 	context->userData.userPublication = NULL;
@@ -1942,6 +2061,9 @@ static void TestUserProvidedPublicationBasedPolicy_FAIL_AfterExtending(CuTest* t
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
 
 	KSI_PolicyVerificationResult_free(result);
 	context->userData.userPublication = NULL;
