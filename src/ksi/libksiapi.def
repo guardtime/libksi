@@ -371,6 +371,17 @@ EXPORTS
     KSI_AggregationHashChain_setChain
     KSI_AggregationHashChain_writeBytes
 
+;tlv_element.h
+EXPORTS
+    KSI_TlvElement_new
+    KSI_TlvElement_free
+    KSI_TlvElement_serialize
+    KSI_TlvElement_getUtf8String
+    KSI_TlvElement_getOctetString
+    KSI_TlvElement_getInteger
+    KSI_TlvElement_setUtf8String
+    KSI_TlvElement_setInteger
+
 ;tlv.h
 EXPORTS
     KSI_TLV_getCtx
@@ -399,7 +410,17 @@ EXPORTS
     KSI_TLV_parseBlob2
     KSI_TLV_writeBytes
 
-;tlvtemplates.h
+;tree_builder.h
+EXPORTS
+    KSI_TreeLeafHandle_free
+    KSI_TreeLeafHandle_getAggregationChain
+    KSI_TreeBuilder_new
+    KSI_TreeBuilder_free
+    KSI_TreeBuilder_addDataHash
+    KSI_TreeBuilder_addMetaData
+    KSI_TreeBuilder_close
+
+;tlv_template.h
 EXPORTS
     KSI_TlvTemplate_extract
     KSI_TlvTemplate_parse
