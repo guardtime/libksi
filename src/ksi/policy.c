@@ -179,7 +179,7 @@ int KSI_Policy_getInternal(KSI_CTX *ctx, const KSI_Policy **policy) {
 	static const KSI_Policy internalPolicy = {
 		internalRules,
 		NULL,
-		"Internal policy"
+		"InternalPolicy"
 	};
 
 	KSI_ERR_clearErrors(ctx);
@@ -248,7 +248,7 @@ int KSI_Policy_getCalendarBased(KSI_CTX *ctx, const KSI_Policy **policy) {
 	static const KSI_Policy calendarBasedPolicy = {
 		calendarBasedRules,
 		NULL,
-		"Calendar based policy"
+		"CalendarBasedPolicy"
 	};
 
 	KSI_ERR_clearErrors(ctx);
@@ -281,7 +281,7 @@ int KSI_Policy_getKeyBased(KSI_CTX *ctx, const KSI_Policy **policy) {
 	static const KSI_Policy keyBasedPolicy = {
 		keyBasedRules,
 		NULL,
-		"Key based policy"
+		"KeyBasedPolicy"
 	};
 
 	KSI_ERR_clearErrors(ctx);
@@ -332,7 +332,7 @@ int KSI_Policy_getPublicationsFileBased(KSI_CTX *ctx, const KSI_Policy **policy)
 	static const KSI_Policy publicationsFileBasedPolicy = {
 		publicationsFileBasedRules,
 		NULL,
-		"Publications file based policy"
+		"PublicationsFileBasedPolicy"
 	};
 
 	KSI_ERR_clearErrors(ctx);
@@ -384,7 +384,7 @@ int KSI_Policy_getUserProvidedPublicationBased(KSI_CTX *ctx, const KSI_Policy **
 	static const KSI_Policy userProvidedPublicationBasedPolicy = {
 		userProvidedPublicationBasedRules,
 		NULL,
-		"User provided publication based policy"
+		"UserProvidedPublicationBasedPolicy"
 	};
 
 	KSI_ERR_clearErrors(ctx);
