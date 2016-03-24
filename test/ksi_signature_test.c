@@ -22,8 +22,10 @@
 #include <ksi/signature.h>
 #include "../src/ksi/ctx_impl.h"
 
+#include "../src/ksi/signature_impl.h"
 #include "../src/ksi/ctx_impl.h"
 #include "../src/ksi/net_impl.h"
+#include "../src/ksi/tlv.h"
 
 extern KSI_CTX *ctx;
 
@@ -504,6 +506,27 @@ static void testSignerIdentity(CuTest *tc) {
 #undef TEST_SIGNATURE_FILE
 }
 
+static void testSignerIdentityMetaData(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2015-09-13_21-34-00.ksig"
+
+	int res;
+	const char id_expected[] = "GT :: GT :: release test :: anon http";
+	KSI_Signature *sig = NULL;
+	char *id_actual = NULL;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to load signature", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_getSignerIdentity(sig, &id_actual);
+	CuAssert(tc, "Unable to get signer identity from signature.", res == KSI_OK && id_actual != NULL);
+	CuAssert(tc, "Unexpected signer identity", !strncmp(id_expected, id_actual, strlen(id_expected)));
+
+	KSI_Signature_free(sig);
+	KSI_free(id_actual);
+
+#undef TEST_SIGNATURE_FILE
+}
+
 static void testSignatureWith2Anchors(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-two-anchors.tlv"
 
@@ -554,6 +577,15 @@ static void testVerifyCalendarChainAlgoChange(CuTest *tc) {
 #undef TEST_EXT_RESPONSE_FILE
 }
 
+static void testCreateAggregationAuthRec(CuTest *tc) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_AggregationAuthRec *auhtRec = NULL;
+
+	res = KSI_AggregationAuthRec_new(ctx, &auhtRec);
+	CuAssert(tc, "Unable to create aggregation authentication record", res == KSI_OK && auhtRec != NULL);
+
+	KSI_AggregationAuthRec_free(auhtRec);
+}
 
 CuSuite* KSITest_Signature_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
@@ -576,9 +608,11 @@ CuSuite* KSITest_Signature_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRFC3161WrongAggreTime);
 	SUITE_ADD_TEST(suite, testRFC3161WrongInputHash);
 	SUITE_ADD_TEST(suite, testSignerIdentity);
+	SUITE_ADD_TEST(suite, testSignerIdentityMetaData);
 	SUITE_ADD_TEST(suite, testSignatureWith2Anchors);
 	SUITE_ADD_TEST(suite, testVerifyCalendarChainAlgoChange);
 	SUITE_ADD_TEST(suite, testExtractInputHashLegacySignature);
+	SUITE_ADD_TEST(suite, testCreateAggregationAuthRec);
 
 	return suite;
 }

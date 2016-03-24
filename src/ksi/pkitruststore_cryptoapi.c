@@ -33,13 +33,13 @@
 
 
 const char* getMSError(DWORD error, char *buf, size_t len){
-    LPVOID lpMsgBuf;
-    char *tmp = NULL;
-    char *ret = NULL;
+	LPVOID lpMsgBuf;
+	char *tmp = NULL;
+	char *ret = NULL;
 
 	if(buf == NULL) goto cleanup;
 
-    if(!FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+	if(!FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 					NULL, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) &lpMsgBuf,
 					0, NULL)){
 		goto cleanup;
@@ -55,7 +55,7 @@ const char* getMSError(DWORD error, char *buf, size_t len){
 
 cleanup:
 
-    LocalFree(lpMsgBuf);
+	LocalFree(lpMsgBuf);
 
 	return ret;
 }
@@ -101,7 +101,7 @@ static ALG_ID algIdFromOID(const char *OID){
 	else if (strcmp(OID, szOID_RSA_SHA384RSA) == 0) return CALG_SHA_384;
 	else if (strcmp(OID, szOID_RSA_SHA512RSA) == 0) return CALG_SHA_512;
 	else return 0;
-	}
+}
 
 
 void KSI_PKITruststore_free(KSI_PKITruststore *trust) {
@@ -111,7 +111,7 @@ void KSI_PKITruststore_free(KSI_PKITruststore *trust) {
 		if (trust->collectionStore != NULL){
 			if (!CertCloseStore(trust->collectionStore, CERT_CLOSE_STORE_CHECK_FLAG)){
 				KSI_LOG_debug(trust->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
-				}
+			}
 		}
 		KSI_free(trust);
 	}
@@ -149,8 +149,6 @@ int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) 
 		KSI_pushError(trust->ctx, res = KSI_INVALID_FORMAT, NULL);
 		goto cleanup;
 	}
-
-	tmp_FileTrustStore = NULL;
 
 	res = KSI_OK;
 
@@ -401,7 +399,7 @@ cleanup:
 #define SUBJECT 1
 
 static KSI_uint64_t WindowsTickToUnixSeconds(KSI_uint64_t windowsTicks) {
-     return (KSI_uint64_t)(windowsTicks / WINDOWS_TICK - SEC_TO_UNIX_EPOCH);
+	return (KSI_uint64_t)(windowsTicks / WINDOWS_TICK - SEC_TO_UNIX_EPOCH);
 }
 
 static int pki_certificate_getValidityTime(const KSI_PKICertificate *cert, int type, KSI_uint64_t *time) {
@@ -767,12 +765,6 @@ static int KSI_PKITruststore_verifyCertificate(const KSI_PKITruststore *pki, con
 	ctx = pki->ctx;
 	KSI_ERR_clearErrors(ctx);
 
-	/* Make sure the publications file verification constraints are configured. */
-	if (pki->ctx->certConstraints == NULL || pki->ctx->certConstraints[0].oid == NULL) {
-		KSI_pushError(pki->ctx, res = KSI_PUBFILE_VERIFICATION_NOT_CONFIGURED, NULL);
-		goto cleanup;
-	}
-
 	/* Get the certificate chain of certificate under verification. */
 	/*OID List for certificate trust list extensions*/
 	enhkeyUsage.cUsageIdentifier = 0;
@@ -845,6 +837,136 @@ cleanup:
 	return res;
 }
 
+static int pki_truststore_verifyCertificateConstraints(const KSI_PKITruststore *pki, const KSI_PKISignature *signature, KSI_CertConstraint *certConstraints) {
+	int res = KSI_UNKNOWN_ERROR;
+	PCCERT_CONTEXT subjectCert = NULL;
+	char tmp[256];
+	size_t i;
+	KSI_PKICertificate *ksi_pki_cert = NULL;
+
+	if (pki == NULL || pki->ctx == NULL || signature == NULL){
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(pki->ctx);
+
+	res = KSI_PKISignature_extractCertificate(signature, &ksi_pki_cert);
+	if (res != KSI_OK){
+		KSI_pushError(pki->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	subjectCert = ksi_pki_cert->x509;
+
+	/* If publications file does not have certificate constraints configured, use context based constraints. */
+	if (certConstraints == NULL) {
+		certConstraints = pki->ctx->certConstraints;
+	}
+
+	/* Make sure the publications file verification constraints are configured. */
+	if (certConstraints == NULL || certConstraints[0].oid == NULL) {
+		KSI_pushError(pki->ctx, res = KSI_PUBFILE_VERIFICATION_NOT_CONFIGURED, NULL);
+		goto cleanup;
+	}
+
+	for (i = 0; certConstraints[i].oid != NULL; i++) {
+		KSI_CertConstraint *ptr = &certConstraints[i];
+
+		KSI_LOG_info(pki->ctx, "Verifying PKI signature certificate with OID: '%s' expected value: '%s'.", ptr->oid, ptr->val);
+
+		if (CertGetNameString(subjectCert, CERT_NAME_ATTR_TYPE, 0, ptr->oid, tmp, sizeof(tmp)) == 1){
+			KSI_LOG_debug(pki->ctx, "Value for OID: '%s' does not exist.", ptr->oid);
+			KSI_pushError(pki->ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, NULL);
+			goto cleanup;
+		}
+
+		if (strcmp(tmp, ptr->val) != 0) {
+			KSI_LOG_debug(pki->ctx, "Unexpected value: '%s' for OID: '%s'.", tmp, ptr->oid);
+			KSI_pushError(pki->ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, "Unexpected OID value for PKI Certificate constraint.");
+			goto cleanup;
+		}
+	}
+
+	res = KSI_PKITruststore_verifyCertificate(pki, subjectCert);
+	if (res != KSI_OK){
+		KSI_pushError(pki->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_PKICertificate_free(ksi_pki_cert);
+
+	return res;
+}
+
+static int pki_truststore_verifySignature(KSI_PKITruststore *pki, const unsigned char *data, size_t data_len, const KSI_PKISignature *signature) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	PCCERT_CONTEXT subjectCert = NULL;
+	CRYPT_VERIFY_MESSAGE_PARA msgPara;
+	DWORD dLen;
+	char buf[1024];
+
+	if (pki == NULL || data == NULL || signature == NULL){
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = pki->ctx;
+	KSI_ERR_clearErrors(ctx);
+
+	KSI_LOG_debug(ctx, "CryptoAPI: Start PKI signature verification.");
+
+	if (data_len > DWORD_MAX) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Data too long (more than DWORD_MAX).");
+		goto cleanup;
+	}
+
+	/* Verify signature and signed data. Certificate is extracted from signature. */
+	msgPara.cbSize = sizeof(CRYPT_VERIFY_MESSAGE_PARA);
+    msgPara.dwMsgAndCertEncodingType = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
+    msgPara.hCryptProv = 0;
+    msgPara.pfnGetSignerCertificate = NULL;
+    msgPara.pvGetArg = NULL;
+	dLen = (DWORD) data_len;
+
+	if (!CryptVerifyDetachedMessageSignature(&msgPara, 0, signature->pkcs7.pbData, signature->pkcs7.cbData, 1, &data, &dLen, &subjectCert)){
+		DWORD error = GetLastError();
+		const char *errmsg = getMSError(error, buf, sizeof(buf));
+		KSI_LOG_debug(pki->ctx, "%s", errmsg);
+
+		if (error == E_INVALIDARG || error == CRYPT_E_UNEXPECTED_MSG_TYPE || error == CRYPT_E_NO_SIGNER)
+			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, errmsg);
+		else if (error == NTE_BAD_ALGID)
+			KSI_pushError(ctx, res = KSI_INVALID_PKI_SIGNATURE, errmsg);
+		else if (error == NTE_BAD_SIGNATURE)
+			KSI_pushError(ctx, res = KSI_INVALID_PKI_SIGNATURE, "Verification of PKI signature failed.");
+		else
+			KSI_pushError(ctx, res = KSI_INVALID_PKI_SIGNATURE, errmsg);
+
+		goto cleanup;
+	}
+
+	res = KSI_PKITruststore_verifyCertificate(pki, subjectCert);
+	if (res != KSI_OK){
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+
+	KSI_LOG_debug(ctx, "CryptoAPI: PKI signature verified successfully.");
+
+	res = KSI_OK;
+
+cleanup:
+
+	if (subjectCert) CertFreeCertificateContext(subjectCert);
+
+	return res;
+}
+
 static int KSI_PKITruststore_verifySignatureCertificate(const KSI_PKITruststore *pki, const KSI_PKISignature *signature) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
@@ -901,6 +1023,33 @@ cleanup:
 	return res;
 }
 
+int KSI_PKITruststore_verifyPKISignature(KSI_PKITruststore *pki, const unsigned char *data, size_t data_len, const KSI_PKISignature *signature, KSI_CertConstraint *certConstraints) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (pki == NULL || pki->ctx == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = pki_truststore_verifySignature(pki, data, data_len, signature);
+	if (res != KSI_OK) {
+		KSI_pushError(pki->ctx, res, "Publications file not trusted.");
+		goto cleanup;
+	}
+
+	res = pki_truststore_verifyCertificateConstraints(pki, signature, certConstraints);
+	if (res != KSI_OK) {
+		KSI_pushError(pki->ctx, res, "PKI certificates not trusted.");
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned char *data, size_t data_len, const KSI_PKISignature *signature) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
@@ -925,10 +1074,10 @@ int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned cha
 
 	/* Verify signature and signed data. Certificate is extracted from signature. */
 	msgPara.cbSize = sizeof(CRYPT_VERIFY_MESSAGE_PARA);
-    msgPara.dwMsgAndCertEncodingType = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
-    msgPara.hCryptProv = 0;
-    msgPara.pfnGetSignerCertificate = NULL;
-    msgPara.pvGetArg = NULL;
+	msgPara.dwMsgAndCertEncodingType = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
+	msgPara.hCryptProv = 0;
+	msgPara.pfnGetSignerCertificate = NULL;
+	msgPara.pvGetArg = NULL;
 	dLen = (DWORD) data_len;
 
 	if (!CryptVerifyDetachedMessageSignature(&msgPara, 0, signature->pkcs7.pbData, signature->pkcs7.cbData, 1, &data, &dLen, &subjectCert)){
@@ -941,9 +1090,9 @@ int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned cha
 		else if (error == NTE_BAD_ALGID)
 			KSI_pushError(ctx, res = KSI_INVALID_PKI_SIGNATURE, errmsg);
 		else if (error == NTE_BAD_SIGNATURE)
-			KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, "Verification of PKI signature failed.");
+			KSI_pushError(ctx, res = KSI_INVALID_PKI_SIGNATURE, "Verification of PKI signature failed.");
 		else
-			KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, errmsg);
+			KSI_pushError(ctx, res = KSI_INVALID_PKI_SIGNATURE, errmsg);
 
 		goto cleanup;
 	}
@@ -976,7 +1125,7 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 	int res = KSI_UNKNOWN_ERROR;
 	ALG_ID algorithm = 0;
 	HCRYPTPROV hCryptProv = 0;
-    PCCERT_CONTEXT subjectCert = NULL;
+	PCCERT_CONTEXT subjectCert = NULL;
 	HCRYPTKEY publicKey = 0;
 	DWORD i = 0;
 	BYTE *little_endian_pkcs1 = NULL;
@@ -1072,8 +1221,10 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 cleanup:
 
 	KSI_free(little_endian_pkcs1);
-	if (hCryptProv) CryptReleaseContext(hCryptProv, 0);
+	/* All hash objects that have been created by using a specific CSP must be  destroyed before that CSP
+	 * handle is released with the CryptReleaseContext function. */
 	if (hash) CryptDestroyHash(hash);
+	if (hCryptProv) CryptReleaseContext(hCryptProv, 0);
 
 	return res;
 }

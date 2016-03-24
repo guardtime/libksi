@@ -1271,10 +1271,16 @@ static int extendUnextended(TimeMapper *tm, void *fctx) {
 		if (proof->publication == NULL || helper->pubRec != NULL) {
 			KSI_PublicationsFile *pubFile = NULL;
 			KSI_PublicationRecord *pubRec = NULL;
+			bool verifyPubFile = (tm->calendarChain->ctx->publicationsFile == NULL);
 
 			/* As there is no publication attached, try to find suitable publication. */
 			res = KSI_receivePublicationsFile(tm->calendarChain->ctx, &pubFile);
 			if (res != KSI_OK) goto cleanup;
+
+			if (verifyPubFile == true) {
+				res = KSI_verifyPublicationsFile(tm->calendarChain->ctx, pubFile);
+				if (res != KSI_OK) goto cleanup;
+			}
 
 			if (helper->pubRec != NULL) {
 				KSI_Integer *pubRecTime = NULL;

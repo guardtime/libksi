@@ -108,6 +108,7 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSITest_uriClient_getSuite);
 	addSuite(suite, KSITest_multiSignature_getSuite);
 	addSuite(suite, KSITest_TreeBuilder_getSuite);
+	addSuite(suite, KSITest_versionNumber_getSuite);
 
 	return suite;
 }

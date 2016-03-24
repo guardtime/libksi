@@ -62,8 +62,10 @@ static void Test_DownloadPubfileInvalidConstraints(CuTest* tc) {
 	CuAssert(tc, "Unable to set publications file constraints.", res == KSI_OK);
 
 	res = KSI_receivePublicationsFile(ctx, &pubfile);
-	CuAssert(tc, "Receiving of publications file must fail as the constraints do not match.", pubfile == NULL);
-	CuAssert(tc, "Wrong error code.", res == KSI_PKI_CERTIFICATE_NOT_TRUSTED);
+	CuAssert(tc, "Unable to receive publications file.", res == KSI_OK && pubfile != NULL);
+
+	res = KSI_verifyPublicationsFile(ctx, pubfile);
+	CuAssert(tc, "Wrong error code. Must fail as the constraints do not match.", res == KSI_PKI_CERTIFICATE_NOT_TRUSTED);
 
 	KSI_CTX_free(ctx);
 	return;

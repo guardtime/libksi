@@ -1,4 +1,8 @@
+* IMPROVEMENT: Certificate constraints can be set and verified per publications file.
+* IMPROVEMENT: Add preprocessor parseable version no.
+* IMPROVEMENT: KSI_receivePublicationsFile must not verify publications file automatically.
 * BUGFIX: Invalid and misleading exception message on response publication time check.
+* BUGFIX: Correcting memory leaks when using Windows Crypt32 library.
 
 Version 3.8
 
@@ -22,6 +26,7 @@ Version 3.8
 * BUGFIX: KSI_DataHasher memory leak on immediate reset after open.
 * IMPROVEMENT: Added detailed coverage report in html format.
 * BUGFIX: Fixed HMAC for hash functions with other than 512 bit internal block size.
+* IMPROVEMENT: Removed build warnings on OSX.
 
 Version 3.7
 
@@ -30,7 +35,7 @@ Version 3.7
   Thanks to Peter Portante
 * BUGFIX: Compilation issues under Fedora 21
   Thanks to Peter Portante
-* IMPROVEMENT: Versioning includes 
+* IMPROVEMENT: Versioning includes
 * BUGFIX: KSI_Signature_getDocumentHash fixed when applied to legacy signature.
 * BUGFIX: KSI_MultiSignature_get fixed when extracting legacy signature.
 * BUGFIX: KSI_MultiSignature_remove fixed when removing legacy signature.
@@ -56,7 +61,7 @@ Version 3.4
 * Local aggregation support.
 * Fixed calendar hash chain calculation.
 
-Version 3.2 
+Version 3.2
 
 2015-05-14 release (3.2.2.0)
 * Added functions for signing locally aggregated root hashes.

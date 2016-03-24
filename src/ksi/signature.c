@@ -1282,12 +1282,9 @@ cleanup:
 
 int KSI_Signature_replacePublicationRecord(KSI_Signature *sig, KSI_PublicationRecord *pubRec) {
 	KSI_TLV *newPubTlv = NULL;
-	size_t oldPubTlvPos = 0;
-	bool oldPubTlvPos_found = false;
 
 	KSI_LIST(KSI_TLV) *nestedList = NULL;
 	int res;
-	size_t i;
 
 	if (sig == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1325,35 +1322,10 @@ int KSI_Signature_replacePublicationRecord(KSI_Signature *sig, KSI_PublicationRe
 			goto cleanup;
 		}
 
-		for (i = 0; i < KSI_TLVList_length(nestedList); i++) {
-			KSI_TLV *tmp = NULL;
-			res = KSI_TLVList_elementAt(nestedList, i, &tmp);
-			if (res != KSI_OK) {
-				KSI_pushError(sig->ctx, res, NULL);
-				goto cleanup;
-			}
-
-			if (KSI_TLV_getTag(tmp) == 0x0803) {
-				oldPubTlvPos = i;
-				oldPubTlvPos_found = true;
-				break;
-			}
-
-			KSI_nofree(tmp);
-		}
-
-		if (oldPubTlvPos_found) {
-			res = KSI_TLVList_replaceAt(nestedList, oldPubTlvPos, newPubTlv);
-			if (res != KSI_OK) {
-				KSI_pushError(sig->ctx, res, NULL);
-				goto cleanup;
-			}
-		} else {
-			res = KSI_TLVList_append(nestedList, newPubTlv);
-			if (res != KSI_OK) {
-				KSI_pushError(sig->ctx, res, NULL);
-				goto cleanup;
-			}
+		res = KSI_TLVList_append(nestedList, newPubTlv);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
 		}
 
 		if (sig->publication != NULL) {
@@ -1833,15 +1805,8 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 	}
 	pubRecClone = NULL;
 
-	/* To be sure we won't return a bad signature, lets verify it. */
-	if (pubRecClone == NULL) {
-		/* Just to be sure, verify the internals. */
-		res = KSI_Signature_verifyPolicy(tmp, KSI_VP_INTERNAL, ctx);
-	} else {
-		/* Perform an actual verification. */
-		res = KSI_Signature_verifyPolicy(tmp, KSI_VP_OFFLINE, ctx);
-	}
-
+	/* To be sure we won't return a bad signature, lets verify the internals. */
+	res = KSI_Signature_verifyPolicy(tmp, KSI_VP_INTERNAL, ctx);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -2392,8 +2357,15 @@ static int initPublicationsFile(KSI_VerificationResult *info, KSI_CTX *ctx) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (info->publicationsFile == NULL) {
+		bool verifyPubFile = (ctx->publicationsFile == NULL);
+
 		res = KSI_receivePublicationsFile(ctx, &info->publicationsFile);
 		if (res != KSI_OK) goto cleanup;
+
+		if (verifyPubFile == true) {
+			res = KSI_verifyPublicationsFile(ctx, info->publicationsFile);
+			if (res != KSI_OK) goto cleanup;
+		}
 	}
 
 	res = KSI_OK;
@@ -2730,7 +2702,7 @@ static int verifyPublication(KSI_CTX *ctx, KSI_Signature *sig) {
 	KSI_PublicationRecord *pubRec = NULL;
 	KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBFILE;
 	KSI_VerificationResult *info = &sig->verificationResult;
-
+	bool verifyPubFile = (ctx->publicationsFile == NULL);
 
 	if (sig->publication == NULL) {
 		res = KSI_OK;
@@ -2746,6 +2718,11 @@ static int verifyPublication(KSI_CTX *ctx, KSI_Signature *sig) {
 
 	res = KSI_receivePublicationsFile(ctx, &pubFile);
 	if (res != KSI_OK) goto cleanup;
+
+	if (verifyPubFile == true) {
+		res = KSI_verifyPublicationsFile(ctx, pubFile);
+		if (res != KSI_OK) goto cleanup;
+	}
 
 	res = KSI_PublicationsFile_findPublication(pubFile, sig->publication, &pubRec);
 	if (res != KSI_OK) goto cleanup;

@@ -73,7 +73,8 @@ libksi_devel_includes="\
     $include_dir/types.h \
     $include_dir/types_base.h \
     $include_dir/verification.h \
-    $include_dir/compatibility.h"
+    $include_dir/compatibility.h \
+    $include_dir/version.h"
 
     
 libksi_devel_libs="\

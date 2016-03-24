@@ -275,6 +275,7 @@ EXPORTS
     KSI_PKISignature_toTlv
     KSI_PKITruststore_verifyRawSignature
     KSI_PKITruststore_verifySignature
+    KSI_PKITruststore_verifyPKISignature
     KSI_PKITruststore_addLookupFile
     KSI_PKITruststore_addLookupDir
     KSI_PKISignature_extractCertificate
@@ -322,6 +323,8 @@ EXPORTS
     KSI_PublicationData_toTlv
     KSI_PublicationData_getBaseTlv
     KSI_PublicationData_setBaseTlv
+	KSI_PublicationsFile_getCertConstraints
+	KSI_PublicationsFile_setCertConstraints
 
 ;signature.h
 EXPORTS

@@ -54,7 +54,7 @@ CuSuite* KSITest_compatibility_getSuite(void);
 CuSuite* KSITest_uriClient_getSuite(void);
 CuSuite* KSITest_multiSignature_getSuite(void);
 CuSuite* KSITest_TreeBuilder_getSuite(void);
-
+CuSuite* KSITest_versionNumber_getSuite(void);
 
 #ifdef __cplusplus
 }
