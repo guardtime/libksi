@@ -119,6 +119,8 @@ otherinclude_HEADERS = \
 	signature.h \
 	tlv.h \
 	tlv_template.h \
+	tlv_element.h \
+	tree_builder.h \
 	types.h \
 	types_base.h \
 	multi_signature.h \
