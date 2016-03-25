@@ -1337,6 +1337,14 @@ int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uin
 		goto cleanup;
 	}
 
+	/* Just to be sure, verify the internals. */
+	sign->verificationResult.docAggrLevel = rootLevel;
+	res = KSI_Signature_verifyPolicy(sign, KSI_VP_INTERNAL , ctx);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
 	*signature = sign;
 	sign = NULL;
 
