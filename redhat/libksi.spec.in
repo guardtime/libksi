@@ -53,7 +53,7 @@ Guardtime's Keyless Signature Service.
 
 %prep
 %setup
-autoreconf -iv
+autoreconf -ifv
 
 %build
 %configure
