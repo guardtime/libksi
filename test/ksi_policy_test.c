@@ -1083,6 +1083,7 @@ static void TestInternalPolicy_OK_WithDocumentHash(CuTest* tc) {
 	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_DOCUMENT));
 
 	KSI_PolicyVerificationResult_free(result);
+	KSI_nofree(context->userData.documentHash);
 	KSI_VerificationContext_free(context);
 #undef TEST_SIGNATURE_FILE
 }
