@@ -51,6 +51,21 @@ TRUSTSTORE_MACROS = $(TRUSTSTORE_MACROS) /DOPENSSL_CA_FILE=\"$(OPENSSL_CA_FILE:\
 TRUSTSTORE_MACROS = $(TRUSTSTORE_MACROS) /DOPENSSL_CA_DIR=\"$(OPENSSL_CA_DIR:\=\\)\"
 !ENDIF
 
+#Generate version.h file
+VERSION_H = version.h
+VERSION_H_IN = $(VERSION_H).in
+VERSION_H_TEMP_SCRIPT=tmp.bat
+!MESSAGE Generating $(VERSION_H) file
+!IF [echo echo off ^& setlocal EnableDelayedExpansion ^& for /f "tokens=1,2,3 delims=." %%a in ("$(VER)") do (echo. 2^>$(VERSION_H) ^& for /f "delims=" %%x in ($(VERSION_H_IN)) do (set line=%%x ^& set line=!line:@VER_MAJOR@=%%a! ^& set line=!line:@VER_MINOR@=%%b! ^& set line=!line:@VER_BUILD@=%%c! ^& @echo !line!^>^>$(VERSION_H))) ^& endlocal > $(VERSION_H_TEMP_SCRIPT)]
+!MESSAGE Generate version.h temp script file
+!ENDIF
+!IF [.\$(VERSION_H_TEMP_SCRIPT)]
+!MESSAGE Generate version.h
+!ENDIF
+!IF [ERASE $(VERSION_H_TEMP_SCRIPT)]
+!MESSAGE Remove version.h temp script file
+!ENDIF
+
 SRC_DIR = .
 OBJ_DIR = ..\..\obj\$(DLL)$(RTL)
 LIB_DIR = ..\..\out\$(DLL)
@@ -120,8 +135,8 @@ INC_FILES = \
 	compatibility.h \
 	multi_signature.h \
 	policy.h \
-	version.h \
-	verify_deprecated.h
+	verify_deprecated.h \
+	$(VERSION_H)
 
 #Compiler and linker configuration
 EXT_LIB = wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib

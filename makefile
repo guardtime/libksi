@@ -68,8 +68,6 @@ LIB_DIR = $(OUT_DIR)\$(DLL)
 BIN_DIR = $(OUT_DIR)\bin
 VERSION_FILE = VERSION
 VERSION_H = $(SRC_DIR)\ksi\version.h
-VERSION_H_IN = $(VERSION_H).in
-VERSION_H_TEMP_SCRIPT = tmp.bat
 COMM_ID_FILE = COMMIT_ID
 DRMEMORY_LOGS = $(OUT_DIR)\drmemory_logs
 
@@ -81,22 +79,13 @@ VER = \
 COM_ID = \
 !INCLUDE <$(COMM_ID_FILE)>
 !MESSAGE Git OK. Include commit ID.
-!IF [rm $(COMM_ID_FILE)] == 0
+!IF [del $(COMM_ID_FILE)] == 0
 !MESSAGE File $(COMM_ID_FILE) deleted.
 !ENDIF
 !ELSE
 !MESSAGE Git is not installed.
 !ENDIF
 
-!IF [echo echo off ^& setlocal EnableDelayedExpansion ^& for /f "tokens=1,2,3 delims=." %%a in ("$(VER)") do (echo. 2^>$(VERSION_H) ^& for /f "delims=" %%x in ($(VERSION_H_IN)) do (set line=%%x ^& set line=!line:@VER_MAJOR@=%%a! ^& set line=!line:@VER_MINOR@=%%b! ^& set line=!line:@VER_BUILD@=%%c! ^& echo !line!^>^>$(VERSION_H) ^& echo !line!)) ^& endlocal > $(VERSION_H_TEMP_SCRIPT)]
-!MESSAGE Generate version.h temp script file
-!ENDIF
-!IF [.\$(VERSION_H_TEMP_SCRIPT)]
-!MESSAGE Generate version.h
-!ENDIF
-!IF [ERASE $(VERSION_H_TEMP_SCRIPT)]
-!MESSAGE Remove version.h temp script file
-!ENDIF
 
 default:
 	cd $(SRC_DIR)\ksi
