@@ -26,6 +26,7 @@
 #include "net_uri.h"
 #include "ctx_impl.h"
 #include "pkitruststore.h"
+#include "policy.h"
 
 KSI_IMPLEMENT_LIST(GlobalCleanupFn, NULL);
 
@@ -478,6 +479,101 @@ cleanup:
 	return res;
 }
 
+static bool SuccessfulProperty(KSI_RuleVerificationResult *result, size_t property) {
+	size_t mask;
+	mask = result->stepsPerformed & result->stepsSuccessful & ~result->stepsFailed;
+	if ((mask & property) == property) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ctx) {
+	int res;
+	const KSI_Policy *keyPolicy = NULL;
+	const KSI_Policy *pubFilePolicy = NULL;
+	KSI_Policy *clonePolicy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_Signature *sigClone = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	if (ctx == NULL || sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_Policy_getKeyBased(ctx, &keyPolicy);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_Policy_getPublicationsFileBased(ctx, &pubFilePolicy);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_Policy_clone(ctx, keyPolicy, &clonePolicy);
+	res = KSI_Policy_setFallback(ctx, clonePolicy, pubFilePolicy);
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_Signature_clone(sig, &sigClone);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_VerificationContext_setSignature(context, sigClone);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_SignatureVerifier_verify(clonePolicy, context, &result);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, "Internal verification of signature not completed.");
+		goto cleanup;
+	}
+
+	if (result->finalResult.resultCode != VER_RES_OK) {
+		res = KSI_VERIFICATION_FAILURE;
+		KSI_pushError(ctx, res, "Internal verification of signature failed.");
+		goto cleanup;
+	}
+
+	if (!SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY)) {
+		res = KSI_VERIFICATION_FAILURE;
+		KSI_pushError(ctx, res, "Internal verification of signature failed.");
+		goto cleanup;
+	}
+
+	if (!SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC | KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE) &&
+		!SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_PUBLICATION | KSI_VERIFY_PUBLICATION_WITH_PUBFILE)) {
+		res = KSI_VERIFICATION_FAILURE;
+		KSI_pushError(ctx, res, "Key based and publications file based verification of signature failed.");
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_VerificationContext_free(context);
+	KSI_PolicyVerificationResult_free(result);
+	KSI_Policy_free(clonePolicy);
+
+	return res;
+}
+
 int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -487,7 +583,7 @@ int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig) {
 		goto cleanup;
 	}
 
-	res = KSI_Signature_verify(sig, ctx);
+	res = KSI_SignatureVerifier_verifySignature(sig, ctx);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx,res, NULL);
 		goto cleanup;
