@@ -1,3 +1,5 @@
+* IMPROVEMENT: Added signature verification according to policies.
+* IMPROVEMENT: Created KSI_HmacHasher interface for incremental HMAC computation.
 * IMPROVEMENT: Certificate constraints can be set and verified per publications file.
 * IMPROVEMENT: Add preprocessor parseable version no.
 * IMPROVEMENT: KSI_receivePublicationsFile must not verify publications file automatically.
