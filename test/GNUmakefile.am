@@ -42,6 +42,8 @@ runner_SOURCES= \
 		./support_tests.c \
 		./support_tests.h \
 		./multi_signature_test.c \
+		./verification_rule_tests.c \
+		./ksi_policy_test.c \
 		./ksi_sdk_version_test.c 
 
 integration_tests_SOURCES= \
