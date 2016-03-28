@@ -621,15 +621,15 @@ static void testSignatureGetPublicationInfo(CuTest *tc) {
 
 #if DUMP_RESULT
 	KSI_LOG_debug(ctx, "Publication string: %s", pubStr);
-	KSI_LOG_debug(ctx, "Publication date:   %s", pubDate);
-	KSI_LOG_debug(ctx, "Publication hash:   %s", pubHsh);
+	KSI_LOG_debug(ctx, "Publication date:   %s", pubDateStr);
+	KSI_LOG_debug(ctx, "Publication hash:   %s", pubHshStr);
 	KSI_LOG_debug(ctx, "Publication refs:   %d", nofRefs);
 	for (i = 0; i < nofRefs; i++) {
-		KSI_LOG_debug(ctx, "  %d: %s", i, pubRefs[i]);
+		KSI_LOG_debug(ctx, "  %d: %s", i, pubRefStrList[i]);
 	}
 	KSI_LOG_debug(ctx, "Publication URLs:   %d", nofUrls);
 	for (i = 0; i < nofUrls; i++) {
-		KSI_LOG_debug(ctx, "  %d: %s", i, pubUrls[i]);
+		KSI_LOG_debug(ctx, "  %d: %s", i, repUrlStrList[i]);
 	}
 #endif
 
