@@ -105,16 +105,16 @@ EXPORTS
     KSI_CalendarHashChain_setAggregationTime
     KSI_CalendarHashChain_setInputHash
     KSI_CalendarHashChain_setHashChain
-	KSI_CalendarHashChain_writeBytes
+    KSI_CalendarHashChain_writeBytes
 
 ;hmac.h
 EXPORTS
     KSI_HMAC_create
-	KSI_HmacHasher_open
-	KSI_HmacHasher_reset
-	KSI_HmacHasher_add
-	KSI_HmacHasher_close
-	KSI_HmacHasher_free
+    KSI_HmacHasher_open
+    KSI_HmacHasher_reset
+    KSI_HmacHasher_add
+    KSI_HmacHasher_close
+    KSI_HmacHasher_free
 
 ;io.h
 EXPORTS
@@ -163,7 +163,7 @@ EXPORTS
     KSI_CTX_setAggregator
     KSI_CTX_setTransferTimeoutSeconds
     KSI_CTX_setConnectionTimeoutSeconds
-	KSI_CTX_setDefaultPubFileCertConstraints
+    KSI_CTX_setDefaultPubFileCertConstraints
 
 ;list.h
 EXPORTS
@@ -323,8 +323,8 @@ EXPORTS
     KSI_PublicationData_toTlv
     KSI_PublicationData_getBaseTlv
     KSI_PublicationData_setBaseTlv
-	KSI_PublicationsFile_getCertConstraints
-	KSI_PublicationsFile_setCertConstraints
+    KSI_PublicationsFile_getCertConstraints
+    KSI_PublicationsFile_setCertConstraints
 
 ;signature.h
 EXPORTS
@@ -369,6 +369,7 @@ EXPORTS
     KSI_AggregationHashChain_setAggrHashId
     KSI_AggregationHashChain_setChain
     KSI_AggregationHashChain_writeBytes
+    KSI_Signature_getPublicationInfo
 
 ;tlv.h
 EXPORTS

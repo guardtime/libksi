@@ -75,7 +75,7 @@ extern "C" {
 	 * \param[in]	sig			KSI signature.
 	 * \param[in]	ctx			KSI context, if NULL the context of the signature is used.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-     */
+	 */
 	int KSI_Signature_verifyOnline(KSI_Signature *sig, KSI_CTX *ctx);
 
 	/**
@@ -297,7 +297,7 @@ extern "C" {
 	int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *docHash);
 
 	/**
-	 * This function verifies signature using given publication.  
+	 * This function verifies signature using given publication.
 	 * \param[in]	sig			KSI signature.
 	 * \param[in]	ctx			KSI context.
 	 * \param[in]	publication	Publication data used in verification process.
@@ -305,7 +305,7 @@ extern "C" {
 	 * error code).
 	 */
 	int KSI_Signature_verifyWithPublication(KSI_Signature *sig, KSI_CTX *ctx, const KSI_PublicationData *publication);
-	
+
 	/**
 	 * This function behaves similar to #KSI_Signature_verifyDataHash except it takes an extra parameter
 	 * \c rootLevel which indicates the local aggregation level.
@@ -321,9 +321,9 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_Signature_verifyAggregatedHash(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel);
-	
+
 	/**
-	 * This function verifies signature using given publication.  
+	 * This function verifies signature using given publication.
 	 * \param[in]	sig			KSI signature.
 	 * \param[in]	ctx			KSI context.
 	 * \param[in]	publication	Publication data used in verification process.
@@ -331,7 +331,7 @@ extern "C" {
 	 * error code).
 	 */
 	int KSI_Signature_verifyWithPublication(KSI_Signature *sig, KSI_CTX *ctx, const KSI_PublicationData *publication);
-	
+
 	/**
 	 * Accessor method for verification results.
 	 * \param[in]	sig			KSI signature.
@@ -378,6 +378,22 @@ extern "C" {
 	KSI_DEFINE_REF(KSI_AggregationHashChain);
 	KSI_DEFINE_WRITE_BYTES(KSI_AggregationHashChain);
 
+	/**
+	 * Function for getting string representations of the publication information from an extended signature.
+	 * \param [in]		sig			Extended signature including publication record.
+	 * \param [out]		pubHsh		A string representation of the publication hash.
+	 * \param [out]		pubStr		Publication data converted into a base-32 encoded string.
+	 * \param [out]		pubDate		A string representation of the publicatoin date with the following format: "%Y-%m-%d %H:%M:%S UTC".
+	 * \param [out]		pubRefs		An array of string representing publication references.
+	 * \param [out]		nofRefs		Number of strings in \c pubRefs array.
+	 * \param [out]		repUrls		An array of strings representing URI of a publications repositories (publication file).
+	 * \param [out]		nofUrls		Number of strings in \c repUrls array.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \note	The output memory has to be freed by the caller using #KSI_free. However, the string in \c pubRefs
+	 *			and \c repUrls arrays may not be freed.
+	 */
+	int KSI_Signature_getPublicationInfo(KSI_Signature *sig, char **pubHsh, char **pubStr, char **pubDate, char ***pubRefs, int *nofRefs, char ***repUrls, int *nofUrls);
 
 /**
  * @}
