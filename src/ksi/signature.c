@@ -3051,7 +3051,8 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_getPublicationInfo(KSI_Signature *sig, char **pubHsh, char **pubStr, char **pubDate, char ***pubRefs, int *nofRefs, char ***repUrls, int *nofUrls) {
+int KSI_Signature_getPublicationInfo(KSI_Signature *sig, char **pubHsh, char **pubStr, char **pubDate,
+									 char ***pubRefs, int *nofRefs, char ***repUrls, int *nofUrls) {
 	int res;
 	KSI_PublicationRecord *pubRec = NULL;
 	KSI_PublicationData *pubData = NULL;
@@ -3065,7 +3066,8 @@ int KSI_Signature_getPublicationInfo(KSI_Signature *sig, char **pubHsh, char **p
 	int i;
 	char buf[(1 + 64) * 2];
 
-	if (sig == NULL) {
+	if (sig == NULL || pubHsh == NULL || pubStr == NULL || pubDate == NULL ||
+		pubRefs == NULL || nofRefs == NULL || repUrls == NULL || nofUrls == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
