@@ -583,6 +583,32 @@ static void testSigningInvalidResponse(CuTest* tc){
 #undef TEST_AGGR_RESPONSE_FILE
 }
 
+static void testSigningInvalidAggrChainReturned(CuTest* tc){
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/nok_aggr_response-invalid-aggr-chain.tlv"
+
+	int res;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+	unsigned char imprint[] = {0x01, 0xc5, 0xf3, 0x30, 0x84, 0x32, 0x8a, 0x04, 0xa4, 0xee, 0x5c, 0x75, 0xa9, 0xeb, 0x8c, 0x9a, 0xe0, 0x0c, 0x22, 0x14, 0xdf, 0x70, 0x4c, 0x7c, 0xf6, 0x8b, 0xb3, 0x09, 0x5c, 0xec, 0xbc, 0x71, 0xca};
+
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_DataHash_fromImprint(ctx, imprint, sizeof(imprint), &hsh);
+	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+
+	res = KSI_createSignature(ctx, hsh, &sig);
+	CuAssert(tc, "Signature should not be created with invalid aggregation response", res != KSI_OK);
+
+	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
+
+#undef TEST_AGGR_RESPONSE_FILE
+}
+
 static void testSigningErrorResponse(CuTest *tc) {
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok_aggr_err_response-1.tlv"
 
@@ -715,6 +741,52 @@ static void testLocalAggregationSigning(CuTest* tc) {
 #undef TEST_AGGR_RESPONSE_FILE
 }
 
+static void testExtendExtended(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.2-extended.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_RES_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_Signature *ext = NULL;
+	unsigned char *serialized = NULL;
+	size_t serialized_len = 0;
+	unsigned char expected[0x1ffff];
+	size_t expected_len = 0;
+	FILE *f = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
+
+	res = KSI_extendSignature(ctx, sig, &ext);
+	CuAssert(tc, "Unable to extend the signature", res == KSI_OK && ext != NULL);
+
+	res = KSI_Signature_serialize(ext, &serialized, &serialized_len);
+	CuAssert(tc, "Unable to serialize extended signature", res == KSI_OK && serialized != NULL && serialized_len > 0);
+
+	/* Read in the expected result */
+	f = fopen(getFullResourcePath(TEST_RES_SIGNATURE_FILE), "rb");
+	CuAssert(tc, "Unable to read expected result file", f != NULL);
+	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
+	fclose(f);
+
+	CuAssert(tc, "Expected result length mismatch", expected_len == serialized_len);
+	CuAssert(tc, "Unexpected extended signature.", !KSITest_memcmp(expected, serialized, expected_len));
+
+	KSI_free(serialized);
+	KSI_Signature_free(sig);
+	KSI_Signature_free(ext);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+#undef TEST_RES_SIGNATURE_FILE
+}
+
 static 	const char *validUri[] = {
 		"ksi://localhost",
 		"ksi://localhost/",
@@ -822,6 +894,7 @@ CuSuite* KSITest_NET_getSuite(void) {
 	SUITE_ADD_TEST(suite, testExtendingWithoutPublication);
 	SUITE_ADD_TEST(suite, testExtendingToNULL);
 	SUITE_ADD_TEST(suite, testSigningInvalidResponse);
+	SUITE_ADD_TEST(suite, testSigningInvalidAggrChainReturned);
 	SUITE_ADD_TEST(suite, testAggregationHeader);
 	SUITE_ADD_TEST(suite, testSigningErrorResponse);
 	SUITE_ADD_TEST(suite, testExtendingErrorResponse);
@@ -829,6 +902,7 @@ CuSuite* KSITest_NET_getSuite(void) {
 	SUITE_ADD_TEST(suite, testUriSpiltAndCompose);
 	SUITE_ADD_TEST(suite, testLocalAggregationSigning);
 	SUITE_ADD_TEST(suite, testExtendInvalidSignature);
+	SUITE_ADD_TEST(suite, testExtendExtended);
 
 	return suite;
 }

@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include "version.h"
 #include "types.h"
 #include "hash.h"
 #include "publicationsfile.h"
@@ -350,8 +351,8 @@ char *KSI_ERR_toString(KSI_CTX *ctx, char *buf, size_t buf_len);
  * \param[in]		ctx		KSI context object.
  * \param[out]		buf		Buffer for storing error message.
  * \param[in]		len		The length of the buffer.
- * \param[out]		error	Pointer to buffer for base error code. Can be NULL.		
- * \param[out]		ext		Pointer to buffer for external component error code. Can be NULL.		
+ * \param[out]		error	Pointer to buffer for base error code. Can be NULL.
+ * \param[out]		ext		Pointer to buffer for external component error code. Can be NULL.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an
  * error code).
  */

@@ -423,7 +423,6 @@ cleanup:
 int KSI_DataHash_getHashAlg(const KSI_DataHash *hash, KSI_HashAlgorithm *algo_id){
 	if (hash == NULL) return KSI_INVALID_ARGUMENT;
 	if (algo_id == NULL) return KSI_INVALID_ARGUMENT;
-	if (hash->imprint == NULL) return KSI_INVALID_ARGUMENT;
 	
 	*algo_id = hash->imprint[0];
 	

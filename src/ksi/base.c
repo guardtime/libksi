@@ -165,7 +165,6 @@ int KSI_CTX_new(KSI_CTX **context) {
 
 	KSI_CTX *ctx = NULL;
 	KSI_NetworkClient *client = NULL;
-	KSI_PKITruststore *pkiTruststore = NULL;
 
 	ctx = KSI_new(KSI_CTX);
 	if (ctx == NULL) {
@@ -188,6 +187,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->requestHeaderCB = NULL;
 	ctx->loggerCtx = NULL;
 	ctx->certConstraints = NULL;
+	ctx->freeCertConstraintsArray = freeCertConstraintsArray;
 	KSI_ERR_clearErrors(ctx);
 
 	/* Create global cleanup list as the first thing. */
@@ -209,13 +209,6 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->isCustomNetProvider = 0;
 	client = NULL;
 
-	/* Create and set the PKI truststore */
-	res = KSI_PKITruststore_new(ctx, 1, &pkiTruststore);
-	if (res != KSI_OK) goto cleanup;
-	res = KSI_CTX_setPKITruststore(ctx, pkiTruststore);
-	if (res != KSI_OK) goto cleanup;
-	pkiTruststore = NULL;
-
 	/* Return the context. */
 	*context = ctx;
 	ctx = NULL;
@@ -225,7 +218,6 @@ int KSI_CTX_new(KSI_CTX **context) {
 cleanup:
 
 	KSI_NetworkClient_free(client);
-	KSI_PKITruststore_free(pkiTruststore);
 
 	KSI_CTX_free(ctx);
 
@@ -436,12 +428,6 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 			goto cleanup;
 		}
 
-		res = KSI_verifyPublicationsFile(ctx, tmp);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx,res, NULL);
-			goto cleanup;
-		}
-
 		ctx->publicationsFile = tmp;
 		tmp = NULL;
 
@@ -539,6 +525,7 @@ int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extend
 	KSI_Integer *signingTime = NULL;
 	KSI_PublicationRecord *pubRec = NULL;
 	KSI_Signature *extSig = NULL;
+	bool verifyPubFile = (ctx->publicationsFile == NULL);
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || sig == NULL || extended == NULL) {
@@ -552,6 +539,13 @@ int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extend
 		goto cleanup;
 	}
 
+	if (verifyPubFile == true) {
+		res = KSI_verifyPublicationsFile(ctx, pubFile);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx,res, NULL);
+			goto cleanup;
+		}
+	}
 
 	res = KSI_Signature_getSigningTime(sig, &signingTime);
 	if (res != KSI_OK) {
@@ -852,8 +846,37 @@ cleanup:																					\
 	CTX_VALUEP_SETTER(var, nam, typ, fre)													\
 	CTX_VALUEP_GETTER(var, nam, typ)														\
 
-CTX_GET_SET_VALUE(pkiTruststore, PKITruststore, KSI_PKITruststore, KSI_PKITruststore_free)
+CTX_VALUEP_SETTER(pkiTruststore, PKITruststore, KSI_PKITruststore, KSI_PKITruststore_free)
 CTX_GET_SET_VALUE(publicationsFile, PublicationsFile, KSI_PublicationsFile, KSI_PublicationsFile_free)
+
+int KSI_CTX_getPKITruststore(KSI_CTX *ctx, KSI_PKITruststore **pki) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_PKITruststore *pkiTruststore = NULL;
+
+	if (ctx == NULL || pki == NULL){
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	/* In case the PKI truststore is not available, create a default */
+	if (ctx->pkiTruststore == NULL) {
+		/* Create and set the PKI truststore */
+		res = KSI_PKITruststore_new(ctx, 1, &pkiTruststore);
+		if (res != KSI_OK) goto cleanup;
+		res = KSI_CTX_setPKITruststore(ctx, pkiTruststore);
+		if (res != KSI_OK) goto cleanup;
+		pkiTruststore = NULL;
+	}
+
+	*pki = ctx->pkiTruststore;
+	res = KSI_OK;
+
+cleanup:
+	KSI_PKITruststore_free(pkiTruststore);
+
+	return res;
+}
+
 
 int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *netProvider){
 	int res = KSI_UNKNOWN_ERROR;
@@ -975,7 +998,6 @@ int KSI_CTX_setDefaultPubFileCertConstraints(KSI_CTX *ctx, const KSI_CertConstra
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
-	memset(tmp, 0, count * sizeof(KSI_CertConstraint));
 
 	/* Copy the values. */
 	for (i = 0; arr[i].oid != NULL; i++) {
