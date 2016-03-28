@@ -93,7 +93,6 @@ make install DESTDIR=%{buildroot}
 %{_includedir}/ksi/pkitruststore.h
 %{_includedir}/ksi/publicationsfile.h
 %{_includedir}/ksi/signature.h
-%{_includedir}/ksi/signature_deprecated.h
 %{_includedir}/ksi/tlv.h
 %{_includedir}/ksi/tlv_template.h
 %{_includedir}/ksi/types.h
@@ -103,6 +102,7 @@ make install DESTDIR=%{buildroot}
 %{_includedir}/ksi/policy.h
 %{_includedir}/ksi/compatibility.h
 %{_includedir}/ksi/version.h
+%{_includedir}/ksi/verify_deprecated.h
 %{_libdir}/libksi.a
 %{_libdir}/libksi.la
 %{_libdir}/pkgconfig/libksi.pc

@@ -17,8 +17,8 @@
  * reserves and retains all trademark rights.
  */
 
-#ifndef KSI_SIGNATURE_DEPRECATED_H_
-#define KSI_SIGNATURE_DEPRECATED_H_
+#ifndef KSI_VERIFY_DEPRECATED_H_
+#define KSI_VERIFY_DEPRECATED_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -154,4 +154,4 @@ KSI_FN_DEPRECATED(int KSI_Signature_getVerificationResult(KSI_Signature *sig, co
 }
 #endif
 
-#endif /* KSI_SIGNATURE_DEPRECATED_H_ */
+#endif /* KSI_VERIFY_DEPRECATED_H_ */

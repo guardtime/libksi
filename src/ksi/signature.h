@@ -22,7 +22,7 @@
 
 #include "types.h"
 #include "verification.h"
-#include "signature_deprecated.h"
+#include "verify_deprecated.h"
 
 #ifdef __cplusplus
 extern "C" {

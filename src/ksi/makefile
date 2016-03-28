@@ -76,7 +76,6 @@ LIB_OBJ = \
 	$(OBJ_DIR)\net_uri.obj \
 	$(OBJ_DIR)\publicationsfile.obj \
 	$(OBJ_DIR)\signature.obj \
-	$(OBJ_DIR)\signature_deprecated.obj \
 	$(OBJ_DIR)\tlv.obj \
 	$(OBJ_DIR)\tlv_template.obj \
 	$(OBJ_DIR)\types.obj \
@@ -88,7 +87,8 @@ LIB_OBJ = \
 	$(OBJ_DIR)\compatibility.obj \
 	$(OBJ_DIR)\pkitruststore.obj \
 	$(OBJ_DIR)\net_file.obj \
-	$(OBJ_DIR)\policy.obj
+	$(OBJ_DIR)\policy.obj \
+	$(OBJ_DIR)\verify_deprecated.obj
 
 INC_FILES = \
 	base32.h \
@@ -103,7 +103,6 @@ INC_FILES = \
 	net_file.h \
 	net_uri.h \
 	signature.h \
-	signature_deprecated.h \
 	types_base.h \
 	err.h \
 	io.h \
@@ -121,7 +120,8 @@ INC_FILES = \
 	compatibility.h \
 	multi_signature.h \
 	policy.h \
-	version.h
+	version.h \
+	verify_deprecated.h
 
 #Compiler and linker configuration
 EXT_LIB = wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib

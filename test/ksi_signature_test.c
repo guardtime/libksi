@@ -119,6 +119,7 @@ static void testVerifyLegacySignatureAndDoc(CuTest *tc) {
 	CuAssert(tc, "Verification did not fail with expected error.", res == KSI_VERIFICATION_FAILURE);
 
 	res = KSI_Signature_getVerificationResult(sig, &info);
+	CuAssert(tc, "Unable to get verification result.", res == KSI_OK);
 
 	KSI_Signature_free(sig);
 
