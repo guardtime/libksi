@@ -42,9 +42,8 @@ runner_SOURCES= \
 		uri_client_test.c \
 		support_tests.c \
 		support_tests.h \
-		multi_signature_test.c
-		./multi_signature_test.c \
-		./ksi_sdk_version_test.c 
+		multi_signature_test.c \
+		ksi_sdk_version_test.c 
 
 integration_tests_SOURCES= \
 	all_integration_tests.c \
