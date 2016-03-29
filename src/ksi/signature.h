@@ -379,21 +379,19 @@ extern "C" {
 	KSI_DEFINE_WRITE_BYTES(KSI_AggregationHashChain);
 
 	/**
-	 * Function for getting string representations of the publication information from an extended signature.
+	 * Function for getting publication information from an extended signature.
 	 * \param [in]		sig			Extended signature including publication record.
-	 * \param [out]		pubHsh		A string representation of the publication hash.
+	 * \param [out]		pubHsh		Publication hash.
 	 * \param [out]		pubStr		Publication data converted into a base-32 encoded string.
-	 * \param [out]		pubDate		A string representation of the publicatoin date with the following format: "%Y-%m-%d %H:%M:%S UTC".
-	 * \param [out]		pubRefs		An array of string representing publication references.
-	 * \param [out]		nofRefs		Number of strings in \c pubRefs array.
-	 * \param [out]		repUrls		An array of strings representing URI of a publications repositories (publication file).
-	 * \param [out]		nofUrls		Number of strings in \c repUrls array.
+	 * \param [out]		pubDate		Publicatoin date
+	 * \param [out]		pubRefs		Publication references.
+	 * \param [out]		repUrls		Publication URL repositories.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 *
-	 * \note	The output memory has to be freed by the caller using #KSI_free. However, the string in \c pubRefs
-	 *			and \c repUrls arrays may not be freed.
+	 * \note	The output memory has to be freed by the caller
+	 * \see		#KSI_DataHash_free, #KSI_Utf8String_free, #KSI_Utf8StringList_free
 	 */
-	int KSI_Signature_getPublicationInfo(KSI_Signature *sig, char **pubHsh, char **pubStr, char **pubDate, char ***pubRefs, int *nofRefs, char ***repUrls, int *nofUrls);
+	int KSI_Signature_getPublicationInfo(KSI_Signature *sig, KSI_DataHash **pubHsh, KSI_Utf8String **pubStr, time_t *pubDate, KSI_LIST(KSI_Utf8String) **pubRefs, KSI_LIST(KSI_Utf8String) **repUrls);
 
 /**
  * @}

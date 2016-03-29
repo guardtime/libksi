@@ -3051,26 +3051,28 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_getPublicationInfo(KSI_Signature *sig, char **pubHsh, char **pubStr, char **pubDate,
-									 char ***pubRefs, int *nofRefs, char ***repUrls, int *nofUrls) {
+static int copyUtf8StringElement(KSI_Utf8String *str, KSI_LIST(KSI_Utf8String) *list) {
+	return KSI_Utf8StringList_append(list, KSI_Utf8String_ref(str));
+}
+
+int KSI_Signature_getPublicationInfo(KSI_Signature *sig,
+									 KSI_DataHash **pubHsh, KSI_Utf8String **pubStr, time_t *pubDate,
+									 KSI_LIST(KSI_Utf8String) **pubRefs, KSI_LIST(KSI_Utf8String) **repUrls) {
 	int res;
 	KSI_PublicationRecord *pubRec = NULL;
 	KSI_PublicationData *pubData = NULL;
-	char *tmpPubHsh = NULL;
-	char *tmpPubStr = NULL;
-	char *tmpPubDate = NULL;
-	char **tmpPubRefs = NULL;
-	char **tmpRepUrls = NULL;
-	int tmpNofRefs = 0;
-	int tmpNofUrls = 0;
-	int i;
-	char buf[(1 + 64) * 2];
+	char *tmpStr = NULL;
+	KSI_DataHash *tmpPubHsh = NULL;
+	KSI_Utf8String *tmpPubStr = NULL;
+	time_t tmpPubDate = 0;
+	KSI_LIST(KSI_Utf8String) *tmpPubRefs = NULL;
+	KSI_LIST(KSI_Utf8String) *tmpRepUrls = NULL;
 
-	if (sig == NULL || pubHsh == NULL || pubStr == NULL || pubDate == NULL ||
-		pubRefs == NULL || nofRefs == NULL || repUrls == NULL || nofUrls == NULL) {
+	if (sig == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+
 	KSI_ERR_clearErrors(sig->ctx);
 
 	res = KSI_Signature_getPublicationRecord(sig, &pubRec);
@@ -3085,40 +3087,32 @@ int KSI_Signature_getPublicationInfo(KSI_Signature *sig, char **pubHsh, char **p
 	}
 
 	/* Get publication reference list */
-	tmpPubRefs = (char**)KSI_malloc(sizeof(char*) * KSI_Utf8StringList_length(pubRec->publicationRef));
-	if (tmpPubRefs == NULL) {
-		KSI_pushError(sig->ctx, res = KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-	for (i = 0; i < KSI_Utf8StringList_length(pubRec->publicationRef); i++) {
-		KSI_Utf8String *ref = NULL;
-
-		res = KSI_Utf8StringList_elementAt(pubRec->publicationRef, i, &ref);
+	if (pubRefs != NULL) {
+		res = KSI_Utf8StringList_new(&tmpPubRefs);
 		if (res != KSI_OK) {
 			KSI_pushError(sig->ctx, res, NULL);
 			goto cleanup;
 		}
-		tmpPubRefs[i] = (char*)KSI_Utf8String_cstr(ref);
+		res = KSI_Utf8StringList_foldl(pubRec->publicationRef, tmpPubRefs, copyUtf8StringElement);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
 	}
-	tmpNofRefs = i;
 
 	/* Get Repository URL list*/
-	tmpRepUrls = (char**)KSI_malloc(sizeof(char*) * KSI_Utf8StringList_length(pubRec->repositoryUriList));
-	if (tmpRepUrls == NULL) {
-		KSI_pushError(sig->ctx, res = KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-	for (i = 0; i < KSI_Utf8StringList_length(pubRec->repositoryUriList); i++) {
-		KSI_Utf8String *url = NULL;
-
-		res = KSI_Utf8StringList_elementAt(pubRec->repositoryUriList, i, &url);
+	if (repUrls != NULL) {
+		res = KSI_Utf8StringList_new(&tmpRepUrls);
 		if (res != KSI_OK) {
 			KSI_pushError(sig->ctx, res, NULL);
 			goto cleanup;
 		}
-		tmpRepUrls[i] = (char*)KSI_Utf8String_cstr(url);
+		res = KSI_Utf8StringList_foldl(pubRec->repositoryUriList, tmpRepUrls, copyUtf8StringElement);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
 	}
-	tmpNofUrls = i;
 
 	/* Get publication data */
 	res = KSI_PublicationRecord_getPublishedData(pubRec, &pubData);
@@ -3128,51 +3122,50 @@ int KSI_Signature_getPublicationInfo(KSI_Signature *sig, char **pubHsh, char **p
 	}
 
 	/* Convert publication data into base-32 string */
-	res = KSI_PublicationData_toBase32(pubData, &tmpPubStr);
-	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
-		goto cleanup;
+	if (pubStr != NULL) {
+		res = KSI_PublicationData_toBase32(pubData, &tmpStr);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+		res = KSI_Utf8String_new(sig->ctx, tmpStr, strlen(tmpStr) + 1, &tmpPubStr);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
 	}
 
 	/* Get publication time */
-	tmpPubDate = KSI_malloc(sizeof(char) * strlen(KSI_Integer_toDateString(pubData->time, buf, sizeof(buf))) + 1);
-	if (tmpPubDate == NULL) {
-		KSI_pushError(sig->ctx, res = KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
+	if (pubDate != NULL) {
+		tmpPubDate = KSI_Integer_getUInt64(pubData->time);
 	}
-	strcpy(tmpPubDate, buf);
 
 	/* Get data hash imprint */
-	tmpPubHsh = KSI_malloc(sizeof(char) * strlen(KSI_DataHash_toString(pubData->imprint, buf, sizeof(buf))) + 1);
-	if (tmpPubHsh == NULL) {
-		KSI_pushError(sig->ctx, res = KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
+	if (pubHsh != NULL) {
+		tmpPubHsh = KSI_DataHash_ref(pubData->imprint);
 	}
-	strcpy(tmpPubHsh, buf);
-
 
 	*pubHsh = tmpPubHsh;
 	tmpPubHsh = NULL;
 	*pubStr = tmpPubStr;
 	tmpPubStr = NULL;
 	*pubDate = tmpPubDate;
-	tmpPubDate = NULL;
 	*pubRefs = tmpPubRefs;
 	tmpPubRefs = NULL;
-	*nofRefs = tmpNofRefs;
 	*repUrls = tmpRepUrls;
 	tmpRepUrls = NULL;
-	*nofUrls = tmpNofUrls;
 
 	res = KSI_OK;
 
 cleanup:
 
-	if (tmpPubHsh) KSI_free(tmpPubHsh);
-	if (tmpPubStr) KSI_free(tmpPubStr);
-	if (tmpPubDate) KSI_free(tmpPubDate);
-	if (tmpPubRefs) KSI_free(tmpPubRefs);
-	if (tmpRepUrls) KSI_free(tmpRepUrls);
+	if (tmpStr) KSI_free(tmpStr);
+
+	KSI_DataHash_free(tmpPubHsh);
+	KSI_Utf8String_free(tmpPubStr);
+	KSI_Utf8StringList_free(tmpPubRefs);
+	KSI_Utf8StringList_free(tmpRepUrls);
+
 
 	return res;
 }
