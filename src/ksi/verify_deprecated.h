@@ -55,29 +55,6 @@ KSI_FN_DEPRECATED(int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx));
 KSI_FN_DEPRECATED(int KSI_Signature_verifyAggregated(KSI_Signature *sig, KSI_CTX *ctx, KSI_uint64_t level));
 
 /**
- * This function verifies the signature internally without attempting to extend it.
- * A publication, if attached to the signature, is not verified.
- *
- * \param[in]	sig			KSI signature.
- * \param[in]	ctx			KSI context, if NULL the context of the signature is used.
- * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- * \see #KSI_Signature_verifyAggregated, #KSI_Signature_verifyAggregatedHash, #KSI_Signature_verifyDataHash
- */
-KSI_FN_DEPRECATED(int KSI_Signature_verifyInternally(KSI_Signature *sig, KSI_CTX *ctx));
-
-/**
- * This function verifies the signature offline without attempting to extend it.
- * If the signature has a publication attached to it, the publication is verified
- * using the publications file.
- *
- * \param[in]	sig			KSI signature.
- * \param[in]	ctx			KSI context, if NULL the context of the signature is used.
- * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- * \see #KSI_Signature_verifyAggregated, #KSI_Signature_verifyAggregatedHash, #KSI_Signature_verifyDataHash
- */
-KSI_FN_DEPRECATED(int KSI_Signature_verifyOffline(KSI_Signature *sig, KSI_CTX *ctx));
-
-/**
  * This function verifies the signature using online resources. The signature is
  * verified by an attempt to extend it. If the extending and verification are successful,
  * the signature itself is not modified.

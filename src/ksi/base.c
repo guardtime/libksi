@@ -479,16 +479,6 @@ cleanup:
 	return res;
 }
 
-static bool SuccessfulProperty(KSI_RuleVerificationResult *result, size_t property) {
-	size_t mask;
-	mask = result->stepsPerformed & result->stepsSuccessful & ~result->stepsFailed;
-	if ((mask & property) == property) {
-		return true;
-	} else {
-		return false;
-	}
-}
-
 static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ctx) {
 	int res;
 	const KSI_Policy *keyPolicy = NULL;
@@ -540,26 +530,13 @@ static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ct
 
 	res = KSI_SignatureVerifier_verify(clonePolicy, context, &result);
 	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, "Internal verification of signature not completed.");
+		KSI_pushError(ctx, res, "Verification of signature not completed.");
 		goto cleanup;
 	}
 
 	if (result->finalResult.resultCode != VER_RES_OK) {
 		res = KSI_VERIFICATION_FAILURE;
-		KSI_pushError(ctx, res, "Internal verification of signature failed.");
-		goto cleanup;
-	}
-
-	if (!SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY)) {
-		res = KSI_VERIFICATION_FAILURE;
-		KSI_pushError(ctx, res, "Internal verification of signature failed.");
-		goto cleanup;
-	}
-
-	if (!SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC | KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE) &&
-		!SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_PUBLICATION | KSI_VERIFY_PUBLICATION_WITH_PUBFILE)) {
-		res = KSI_VERIFICATION_FAILURE;
-		KSI_pushError(ctx, res, "Key based and publications file based verification of signature failed.");
+		KSI_pushError(ctx, res, "Verification of signature failed.");
 		goto cleanup;
 	}
 

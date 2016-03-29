@@ -513,7 +513,7 @@ bool ResultsMatch(KSI_RuleVerificationResult *expected, KSI_RuleVerificationResu
 	return match;
 }
 
-static bool SuccessfulProperty(KSI_RuleVerificationResult *result, size_t property) {
+bool SuccessfulProperty(KSI_RuleVerificationResult *result, size_t property) {
 	size_t mask;
 	mask = result->stepsPerformed & result->stepsSuccessful & ~result->stepsFailed;
 	if ((mask & property) == property) {
@@ -523,7 +523,7 @@ static bool SuccessfulProperty(KSI_RuleVerificationResult *result, size_t proper
 	}
 }
 
-static bool FailedProperty(KSI_RuleVerificationResult *result, size_t property) {
+bool FailedProperty(KSI_RuleVerificationResult *result, size_t property) {
 	size_t mask;
 	mask = result->stepsPerformed & result->stepsFailed & ~result->stepsSuccessful;
 	if ((mask & property) == property) {
@@ -533,7 +533,7 @@ static bool FailedProperty(KSI_RuleVerificationResult *result, size_t property) 
 	}
 }
 
-static bool InconclusiveProperty(KSI_RuleVerificationResult *result, size_t property) {
+bool InconclusiveProperty(KSI_RuleVerificationResult *result, size_t property) {
 	size_t mask;
 	mask = result->stepsPerformed & ~result->stepsFailed & ~result->stepsSuccessful;
 	if ((mask & property) == property) {

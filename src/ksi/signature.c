@@ -995,16 +995,6 @@ cleanup:
 	return res;
 }
 
-static bool SuccessfulProperty(KSI_RuleVerificationResult *result, size_t property) {
-	size_t mask;
-	mask = result->stepsPerformed & result->stepsSuccessful & ~result->stepsFailed;
-	if ((mask & property) == property) {
-		return true;
-	} else {
-		return false;
-	}
-}
-
 static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *sig, KSI_uint64_t rootLevel) {
 	int res;
 	const KSI_Policy *policy = NULL;
@@ -1061,12 +1051,6 @@ static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *s
 	}
 
 	if (result->finalResult.resultCode != VER_RES_OK) {
-		res = KSI_VERIFICATION_FAILURE;
-		KSI_pushError(ctx, res, "Internal verification of signature failed.");
-		goto cleanup;
-	}
-
-	if (!SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY)) {
 		res = KSI_VERIFICATION_FAILURE;
 		KSI_pushError(ctx, res, "Internal verification of signature failed.");
 		goto cleanup;
