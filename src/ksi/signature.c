@@ -3051,8 +3051,8 @@ cleanup:
 	return res;
 }
 
-static int copyUtf8StringElement(KSI_Utf8String *str, KSI_LIST(KSI_Utf8String) *list) {
-	return KSI_Utf8StringList_append(list, KSI_Utf8String_ref(str));
+static int copyUtf8StringElement(KSI_Utf8String *str, void *list) {
+	return KSI_Utf8StringList_append((KSI_LIST(KSI_Utf8String)*)list, KSI_Utf8String_ref(str));
 }
 
 int KSI_Signature_getPublicationInfo(KSI_Signature *sig,

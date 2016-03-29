@@ -599,8 +599,6 @@ static void testSignatureGetPublicationInfo(CuTest *tc) {
 	KSI_DataHash *pubHsh = NULL;
 	KSI_Integer *pubDate = NULL;
 	int i;
-	char buf[256];
-	struct tm tm;
 	KSI_Utf8StringList *infoPubRef = NULL;
 	KSI_Utf8StringList *infoPubRepUrl = NULL;
 	KSI_Utf8String *infoPubStr = NULL;
@@ -615,23 +613,29 @@ static void testSignatureGetPublicationInfo(CuTest *tc) {
 	res = KSI_Signature_getPublicationInfo(sig, &infoPubHsh, &infoPubStr, &infoPubDate, &infoPubRef, &infoPubRepUrl);
 	CuAssert(tc, "Unable to get signature publication info.", res == KSI_OK);
 
+#define DUMP_RESULT 1
 #if DUMP_RESULT
-	KSI_LOG_debug(ctx, "Publication string: %s", KSI_Utf8String_cstr(infoPubStr));
-	gmtime_r(&infoPubDate, &tm);
-	strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S UTC", &tm);
-	KSI_LOG_debug(ctx, "Publication date:   %s (Unix epoc time %d)", buf, infoPubDate);
-	KSI_LOG_debug(ctx, "Publication hash:   %s", KSI_DataHash_toString(infoPubHsh, buf, sizeof(buf)));
-	KSI_LOG_debug(ctx, "Publication refs:   %d", KSI_Utf8StringList_length(infoPubRef));
-	for (i = 0; i < KSI_Utf8StringList_length(infoPubRef); i++) {
-		KSI_Utf8String *el = NULL;
-		res = KSI_Utf8StringList_elementAt(infoPubRef, i, &el);
-		KSI_LOG_debug(ctx, "  %d: %s", i, KSI_Utf8String_cstr(el));
-	}
-	KSI_LOG_debug(ctx, "Publication URLs:   %d", KSI_Utf8StringList_length(infoPubRepUrl));
-	for (i = 0; i < KSI_Utf8StringList_length(infoPubRepUrl); i++) {
-		KSI_Utf8String *el = NULL;
-		KSI_Utf8StringList_elementAt(infoPubRepUrl, i, &el);
-		KSI_LOG_debug(ctx, "  %d: %s", i, KSI_Utf8String_cstr(el));
+	{
+		char buf[256];
+		struct tm tm;
+
+		KSI_LOG_debug(ctx, "Publication string: %s", KSI_Utf8String_cstr(infoPubStr));
+		gmtime_r(&infoPubDate, &tm);
+		strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S UTC", &tm);
+		KSI_LOG_debug(ctx, "Publication date:   %s (Unix epoc time %d)", buf, infoPubDate);
+		KSI_LOG_debug(ctx, "Publication hash:   %s", KSI_DataHash_toString(infoPubHsh, buf, sizeof(buf)));
+		KSI_LOG_debug(ctx, "Publication refs:   %d", KSI_Utf8StringList_length(infoPubRef));
+		for (i = 0; i < KSI_Utf8StringList_length(infoPubRef); i++) {
+			KSI_Utf8String *el = NULL;
+			res = KSI_Utf8StringList_elementAt(infoPubRef, i, &el);
+			KSI_LOG_debug(ctx, "  %d: %s", i, KSI_Utf8String_cstr(el));
+		}
+		KSI_LOG_debug(ctx, "Publication URLs:   %d", KSI_Utf8StringList_length(infoPubRepUrl));
+		for (i = 0; i < KSI_Utf8StringList_length(infoPubRepUrl); i++) {
+			KSI_Utf8String *el = NULL;
+			KSI_Utf8StringList_elementAt(infoPubRepUrl, i, &el);
+			KSI_LOG_debug(ctx, "  %d: %s", i, KSI_Utf8String_cstr(el));
+		}
 	}
 #endif
 
