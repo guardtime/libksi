@@ -47,55 +47,6 @@ extern "C" {
 	void KSI_Signature_free(KSI_Signature *signature);
 
 	/**
-<<<<<<< HEAD
-	 * This function verifies the signature using online resources. If the
-	 * signature has a publication attached to it, the publication is verified
-	 * using the publications file. Otherwise, the signature is verified by
-	 * an attempt to extend it.
-	 *
-	 * \param[in]	sig			KSI signature.
-	 * \param[in]	ctx			KSI context, if NULL the context of the signature is used.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_Signature_verifyAggregated, #KSI_Signature_verifyAggregatedHash, #KSI_Signature_verifyDataHash
-	 */
-	int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx);
-
-	/**
-	 * This function behaves like #KSI_Signature_verify except, it takes an extra parameter
-	 * \c level, which indicates the level of the local aggregation.
-	 *
-	 * \param[in]	sig			KSI signature.
-	 * \param[in]	ctx			KSI context, if NULL the context of the signature is used.
-	 * \param[in]	level		The local aggregation level.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_Signature_verify, #KSI_Signature_verifyAggregatedHash, #KSI_Signature_verifyDataHash
-	 */
-	int KSI_Signature_verifyAggregated(KSI_Signature *sig, KSI_CTX *ctx, KSI_uint64_t level);
-
-	/**
-	 * This function verifies the signature using online resources. The signature is
-	 * verified by an attempt to extend it. If the extending and verification are successful,
-	 * the signature itself is not modified.
-	 *
-	 * \param[in]	sig			KSI signature.
-	 * \param[in]	ctx			KSI context, if NULL the context of the signature is used.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_Signature_verifyOnline(KSI_Signature *sig, KSI_CTX *ctx);
-
-	/**
-	 * Verifies that the document matches the signature.
-	 * \param[in]	sig			KSI signature.
-	 * \param[in]	ctx			KSI context.
-	 * \param[in]	doc			Pointer to document.
-	 * \param[in]	doc_len		Document length.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, size_t doc_len);
-
-	/**
-=======
->>>>>>> develop
 	 * Creates a clone of the signature object.
 	 * \param[in]		sig			Signature to be cloned.
 	 * \param[out]		clone		Pointer to the receiving pointer.
