@@ -485,7 +485,6 @@ static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ct
 	const KSI_Policy *pubFilePolicy = NULL;
 	KSI_Policy *clonePolicy = NULL;
 	KSI_VerificationContext *context = NULL;
-	KSI_Signature *sigClone = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -516,13 +515,7 @@ static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ct
 		goto cleanup;
 	}
 
-	res = KSI_Signature_clone(sig, &sigClone);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_VerificationContext_setSignature(context, sigClone);
+	res = KSI_VerificationContext_setSignature(context, sig);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -544,6 +537,7 @@ static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ct
 
 cleanup:
 
+	KSI_VerificationContext_setSignature(context, NULL); /* Prevent the freeing of signature. */
 	KSI_VerificationContext_free(context);
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Policy_free(clonePolicy);

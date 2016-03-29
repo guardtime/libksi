@@ -196,7 +196,7 @@ static void testRFC3161WrongChainIndex(CuTest *tc) {
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_verify(sig, ctx);
+	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Failed to verify valid document", res == KSI_OK);
 
 	KSI_Signature_free(sig);
@@ -215,7 +215,7 @@ static void testRFC3161WrongAggreTime(CuTest *tc) {
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_verify(sig, ctx);
+	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Failed to verify valid document", res == KSI_VERIFICATION_FAILURE);
 
 	KSI_Signature_free(sig);
@@ -234,7 +234,7 @@ static void testRFC3161WrongInputHash(CuTest *tc) {
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_verify(sig, ctx);
+	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Failed to verify valid document", res == KSI_VERIFICATION_FAILURE);
 
 	KSI_Signature_free(sig);

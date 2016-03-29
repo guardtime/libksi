@@ -729,7 +729,7 @@ static void testLocalAggregationSigning(CuTest* tc) {
 	res = KSI_Signature_createAggregated(ctx, hsh, 4, &sig);
 	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_verify(sig, NULL);
+	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Signature should not be verifiable without local aggregation level.", res == KSI_VERIFICATION_FAILURE);
 
 	res = KSI_Signature_verifyAggregated(sig, NULL, 4);
