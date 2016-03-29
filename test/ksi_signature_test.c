@@ -105,6 +105,7 @@ static void testVerifyLegacySignatureAndDoc(CuTest *tc) {
 	int res;
 	char doc[] = "This is a test data file.\x0d\x0a";
 	KSI_Signature *sig = NULL;
+	KSI_VerificationResult *info = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -116,6 +117,9 @@ static void testVerifyLegacySignatureAndDoc(CuTest *tc) {
 
 	res = KSI_Signature_verifyDocument(sig, ctx, doc, sizeof(doc));
 	CuAssert(tc, "Verification did not fail with expected error.", res == KSI_VERIFICATION_FAILURE);
+
+	res = KSI_Signature_getVerificationResult(sig, &info);
+	CuAssert(tc, "Unable to get verification result.", res == KSI_OK);
 
 	KSI_Signature_free(sig);
 

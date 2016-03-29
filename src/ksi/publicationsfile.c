@@ -193,7 +193,7 @@ int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, size_t raw_len, KS
 
 	tmp->signedDataLength = strlen(PUB_FILE_HEADER_ID);
 
-        /* Initialize generator. */
+	/* Initialize generator. */
 	gen.reader = reader;
 	gen.tlv = NULL;
 
@@ -433,7 +433,7 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 	/**
 	 * Create TLV 0x700 that contains nested list of publication file TLVs.
 	 * Calculate signed data length assuming that signature TLV is always the last.
-     */
+	 */
 	res = KSI_TLV_new(ctx, 0x700, 0, 0, &tlv);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -462,7 +462,7 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 	/**
 	 * Append raw value to publication file header. Copy raw publication file into
 	 * internal and external buffer.
-     */
+	 */
 	tmp_len = buf_len + sizeof(PUB_FILE_HEADER_ID) - 1;
 	tmp = (unsigned char *) KSI_malloc(tmp_len);
 	if (tmp == NULL) {

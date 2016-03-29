@@ -76,6 +76,9 @@ libksi_la_SOURCES = \
 	pkitruststore.c \
 	pkitruststore.h \
 	pkitruststore_openssl.c \
+	policy.c \
+	policy.h \
+	policy_impl.h \
 	publicationsfile.c \
 	publicationsfile.h \
 	publicationsfile_impl.h \
@@ -93,9 +96,13 @@ libksi_la_SOURCES = \
 	verification.c \
 	verification.h \
 	verification_impl.h \
+	verification_rule.c \
+	verification_rule.h \
 	compatibility.h \
 	compatibility.c \
-	version.h
+	version.h \
+	verify_deprecated.c \
+	verify_deprecated.h
 
 otherincludedir = $(includedir)/ksi
 otherinclude_HEADERS = \
@@ -111,6 +118,7 @@ otherinclude_HEADERS = \
 	list.h \
 	log.h \
 	pkitruststore.h \
+	policy.h \
 	publicationsfile.h \
 	signature.h \
 	tlv.h \
@@ -125,8 +133,10 @@ otherinclude_HEADERS = \
 	net_uri.h \
 	ksi.h \
 	verification.h \
+	verification_rule.h \
 	compatibility.h \
-	version.h
+	version.h \
+	verify_deprecated.h
 
 libksi_la_LDFLAGS=-version-info @LTVER@
 
