@@ -6,6 +6,7 @@
 * IMPROVEMENT: KSI_receivePublicationsFile must not verify publications file automatically.
 * BUGFIX: Invalid and misleading exception message on response publication time check.
 * BUGFIX: Correcting memory leaks when using Windows Crypt32 library.
+* BUGFIX: Correcting usage of isForward and isNonCritical flags in KSI_TlvTemplate_serializeObject
 
 Version 3.8
 
