@@ -29,7 +29,7 @@ extern "C" {
 
 /**
  * \addtogroup treebuilder Tree Builder
- * The tree builder is used create an aggregation tree locally. This can be used to create
+ * The tree builder is used to create an aggregation tree locally. This can be used to create
  * multiple signatures with a single aggregation request.
  * @{
  */
@@ -80,7 +80,7 @@ int KSI_TreeBuilder_new(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeBuilder **
 void KSI_TreeBuilder_free(KSI_TreeBuilder *builder);
 
 /**
- * Adds a new leaf to the tree being build by the #KSI_TreeBuilder object.
+ * Adds a new leaf to the tree.
  * \param[in]	builder		The builder.
  * \param[in]	hsh			The data hash of the leaf.
  * \param[in]	level		The level of the leaf.

@@ -446,7 +446,7 @@ int KSI_TreeBuilder_close(KSI_TreeBuilder *builder) {
 
 	/* Make sure the builder is in a correct state. */
 	if (builder->rootNode) {
-		KSI_pushError(builder->ctx, res = KSI_INVALID_STATE, "The tree has been finished, new leafs may not be added.");
+		KSI_pushError(builder->ctx, res = KSI_INVALID_STATE, "Double close.");
 		goto cleanup;
 	}
 

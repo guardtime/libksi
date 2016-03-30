@@ -217,7 +217,7 @@ int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHash
 		goto cleanup;
 	}
 
-	/* Traverse the chain index from back to forth, and add the values to the begin of the
+	/* Traverse the chain index from back to forth, and add the values to the begining of the
 	 * aggregation chain.
 	 */
 	for (i = KSI_IntegerList_length(pCurrent->chainIndex); i > 0; i--) {
