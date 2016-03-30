@@ -1753,8 +1753,8 @@ static int copyUtf8StringElement(KSI_Utf8String *str, void *list) {
 }
 
 int KSI_Signature_getPublicationInfo(KSI_Signature *sig,
-									 KSI_DataHash **pubHsh, KSI_Utf8String **pubStr, time_t *pubDate,
-									 KSI_LIST(KSI_Utf8String) **pubRefs, KSI_LIST(KSI_Utf8String) **repUrls) {
+		KSI_DataHash **pubHsh, KSI_Utf8String **pubStr, time_t *pubDate,
+		KSI_LIST(KSI_Utf8String) **pubRefs, KSI_LIST(KSI_Utf8String) **repUrls) {
 	int res;
 	KSI_PublicationRecord *pubRec = NULL;
 	KSI_PublicationData *pubData = NULL;
@@ -1842,15 +1842,25 @@ int KSI_Signature_getPublicationInfo(KSI_Signature *sig,
 		tmpPubHsh = KSI_DataHash_ref(pubData->imprint);
 	}
 
-	*pubHsh = tmpPubHsh;
-	tmpPubHsh = NULL;
-	*pubStr = tmpPubStr;
-	tmpPubStr = NULL;
-	*pubDate = tmpPubDate;
-	*pubRefs = tmpPubRefs;
-	tmpPubRefs = NULL;
-	*repUrls = tmpRepUrls;
-	tmpRepUrls = NULL;
+	if (pubHsh != NULL) {
+		*pubHsh = tmpPubHsh;
+		tmpPubHsh = NULL;
+	}
+	if (pubStr != NULL) {
+		*pubStr = tmpPubStr;
+		tmpPubStr = NULL;
+	}
+	if (pubDate != NULL) {
+		*pubDate = tmpPubDate;
+	}
+	if (pubRefs != NULL) {
+		*pubRefs = tmpPubRefs;
+		tmpPubRefs = NULL;
+	}
+	if (repUrls != NULL) {
+		*repUrls = tmpRepUrls;
+		tmpRepUrls = NULL;
+	}
 
 	res = KSI_OK;
 
@@ -1862,7 +1872,6 @@ cleanup:
 	KSI_Utf8String_free(tmpPubStr);
 	KSI_Utf8StringList_free(tmpPubRefs);
 	KSI_Utf8StringList_free(tmpRepUrls);
-
 
 	return res;
 }
