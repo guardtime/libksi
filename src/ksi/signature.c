@@ -1747,3 +1747,131 @@ cleanup:
 
 	return res;
 }
+
+static int copyUtf8StringElement(KSI_Utf8String *str, void *list) {
+	return KSI_Utf8StringList_append((KSI_LIST(KSI_Utf8String)*)list, KSI_Utf8String_ref(str));
+}
+
+int KSI_Signature_getPublicationInfo(KSI_Signature *sig,
+		KSI_DataHash **pubHsh, KSI_Utf8String **pubStr, time_t *pubDate,
+		KSI_LIST(KSI_Utf8String) **pubRefs, KSI_LIST(KSI_Utf8String) **repUrls) {
+	int res;
+	KSI_PublicationRecord *pubRec = NULL;
+	KSI_PublicationData *pubData = NULL;
+	char *tmpStr = NULL;
+	KSI_DataHash *tmpPubHsh = NULL;
+	KSI_Utf8String *tmpPubStr = NULL;
+	time_t tmpPubDate = 0;
+	KSI_LIST(KSI_Utf8String) *tmpPubRefs = NULL;
+	KSI_LIST(KSI_Utf8String) *tmpRepUrls = NULL;
+
+	if (sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(sig->ctx);
+
+	res = KSI_Signature_getPublicationRecord(sig, &pubRec);
+	if (res != KSI_OK) {
+		KSI_pushError(sig->ctx, res, NULL);
+		goto cleanup;
+	}
+	/* Check whether publication record is valid */
+	if (pubRec == NULL) {
+		KSI_pushError(sig->ctx, res = KSI_INVALID_FORMAT, NULL);
+		goto cleanup;
+	}
+
+	/* Get publication reference list */
+	if (pubRefs != NULL) {
+		res = KSI_Utf8StringList_new(&tmpPubRefs);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+		res = KSI_Utf8StringList_foldl(pubRec->publicationRef, tmpPubRefs, copyUtf8StringElement);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+
+	/* Get Repository URL list*/
+	if (repUrls != NULL) {
+		res = KSI_Utf8StringList_new(&tmpRepUrls);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+		res = KSI_Utf8StringList_foldl(pubRec->repositoryUriList, tmpRepUrls, copyUtf8StringElement);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+
+	/* Get publication data */
+	res = KSI_PublicationRecord_getPublishedData(pubRec, &pubData);
+	if (res != KSI_OK) {
+		KSI_pushError(sig->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Convert publication data into base-32 string */
+	if (pubStr != NULL) {
+		res = KSI_PublicationData_toBase32(pubData, &tmpStr);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+		res = KSI_Utf8String_new(sig->ctx, tmpStr, strlen(tmpStr) + 1, &tmpPubStr);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+
+	/* Get publication time */
+	if (pubDate != NULL) {
+		tmpPubDate = KSI_Integer_getUInt64(pubData->time);
+	}
+
+	/* Get data hash imprint */
+	if (pubHsh != NULL) {
+		tmpPubHsh = KSI_DataHash_ref(pubData->imprint);
+	}
+
+	if (pubHsh != NULL) {
+		*pubHsh = tmpPubHsh;
+		tmpPubHsh = NULL;
+	}
+	if (pubStr != NULL) {
+		*pubStr = tmpPubStr;
+		tmpPubStr = NULL;
+	}
+	if (pubDate != NULL) {
+		*pubDate = tmpPubDate;
+	}
+	if (pubRefs != NULL) {
+		*pubRefs = tmpPubRefs;
+		tmpPubRefs = NULL;
+	}
+	if (repUrls != NULL) {
+		*repUrls = tmpRepUrls;
+		tmpRepUrls = NULL;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	if (tmpStr) KSI_free(tmpStr);
+
+	KSI_DataHash_free(tmpPubHsh);
+	KSI_Utf8String_free(tmpPubStr);
+	KSI_Utf8StringList_free(tmpPubRefs);
+	KSI_Utf8StringList_free(tmpRepUrls);
+
+	return res;
+}

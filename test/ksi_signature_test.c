@@ -591,6 +591,187 @@ static void testCreateAggregationAuthRec(CuTest *tc) {
 	KSI_AggregationAuthRec_free(auhtRec);
 }
 
+static void testSignatureGetPublicationInfo(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
+	KSI_PublicationData *pubData = NULL;
+	KSI_Utf8StringList *pubRef = NULL;
+	KSI_Utf8StringList *pubRepUrl = NULL;
+	KSI_DataHash *pubHsh = NULL;
+	KSI_Integer *pubDate = NULL;
+	int i;
+	KSI_Utf8StringList *infoPubRef = NULL;
+	KSI_Utf8StringList *infoPubRepUrl = NULL;
+	KSI_Utf8String *infoPubStr = NULL;
+	KSI_DataHash *infoPubHsh = NULL;
+	time_t infoPubDate;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_getPublicationInfo(sig, &infoPubHsh, &infoPubStr, &infoPubDate, &infoPubRef, &infoPubRepUrl);
+	CuAssert(tc, "Unable to get signature publication info.", res == KSI_OK);
+
+#if DUMP_RESULT
+	{
+		char buf[256];
+		struct tm tm;
+
+		KSI_LOG_debug(ctx, "Publication string: %s", KSI_Utf8String_cstr(infoPubStr));
+		gmtime_r(&infoPubDate, &tm);
+		strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S UTC", &tm);
+		KSI_LOG_debug(ctx, "Publication date:   %s (Unix epoc time %d)", buf, infoPubDate);
+		KSI_LOG_debug(ctx, "Publication hash:   %s", KSI_DataHash_toString(infoPubHsh, buf, sizeof(buf)));
+		KSI_LOG_debug(ctx, "Publication refs:   %d", KSI_Utf8StringList_length(infoPubRef));
+		for (i = 0; i < KSI_Utf8StringList_length(infoPubRef); i++) {
+			KSI_Utf8String *el = NULL;
+			res = KSI_Utf8StringList_elementAt(infoPubRef, i, &el);
+			KSI_LOG_debug(ctx, "  %d: %s", i, KSI_Utf8String_cstr(el));
+		}
+		KSI_LOG_debug(ctx, "Publication URLs:   %d", KSI_Utf8StringList_length(infoPubRepUrl));
+		for (i = 0; i < KSI_Utf8StringList_length(infoPubRepUrl); i++) {
+			KSI_Utf8String *el = NULL;
+			KSI_Utf8StringList_elementAt(infoPubRepUrl, i, &el);
+			KSI_LOG_debug(ctx, "  %d: %s", i, KSI_Utf8String_cstr(el));
+		}
+	}
+#endif
+
+	res = KSI_Signature_getPublicationRecord(sig, &pubRec);
+	CuAssert(tc, "Unable to read signature publication record.", res == KSI_OK && pubRec != NULL);
+
+	res = KSI_PublicationRecord_getPublicationRefList(pubRec, &pubRef);
+	CuAssert(tc, "Unable to read signature publication references.", res == KSI_OK && pubRef != NULL);
+
+	CuAssert(tc, "Publication reference number mismatch.", KSI_Utf8StringList_length(infoPubRef) == KSI_Utf8StringList_length(pubRef));
+
+	for (i = 0; i < KSI_Utf8StringList_length(pubRef); i++) {
+		KSI_Utf8String *ref = NULL;
+		KSI_Utf8String *infRef = NULL;
+
+		res = KSI_Utf8StringList_elementAt(pubRef, i, &ref);
+		CuAssert(tc, "Unable to read publication reference.", res == KSI_OK && ref != NULL);
+
+		res = KSI_Utf8StringList_elementAt(infoPubRef, i, &infRef);
+		CuAssert(tc, "Unable to read publication reference.", res == KSI_OK && ref != NULL);
+
+		CuAssert(tc, "Publication reference mismatch.", strcmp(KSI_Utf8String_cstr(infRef), KSI_Utf8String_cstr(ref)) == 0);
+	}
+
+	res = KSI_PublicationRecord_getRepositoryUriList(pubRec, &pubRepUrl);
+	CuAssert(tc, "Signature publication repository URLs are not availale.", res == KSI_OK && pubRepUrl == NULL);
+
+	res = KSI_PublicationRecord_getPublishedData(pubRec, &pubData);
+	CuAssert(tc, "Unable to read signature publication data.", res == KSI_OK && pubData != NULL);
+
+	res = KSI_PublicationData_getImprint(pubData, &pubHsh);
+	CuAssert(tc, "Unable to read signature publication data.", res == KSI_OK && pubHsh != NULL);
+
+	CuAssert(tc, "Published hash mismatch.", KSI_DataHash_equals(pubHsh, infoPubHsh) != 0);
+
+	KSI_PublicationData_getTime(pubData, &pubDate);
+	CuAssert(tc, "Unable to read signature publication time.", res == KSI_OK && pubDate != NULL);
+	CuAssert(tc, "Publication date mismatch.", KSI_Integer_equalsUInt(pubDate, infoPubDate) != 0);
+
+	/* Release resources */
+	KSI_DataHash_free(infoPubHsh);
+	KSI_Utf8String_free(infoPubStr);
+	KSI_Utf8StringList_free(infoPubRef);
+	KSI_Utf8StringList_free(infoPubRepUrl);
+	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testSignatureGetPublicationInfo_verifyNullPointer(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
+	KSI_PublicationData *pubData = NULL;
+	KSI_Utf8StringList *pubRef = NULL;
+	KSI_Utf8StringList *pubRepUrl = NULL;
+	KSI_DataHash *pubHsh = NULL;
+	KSI_Integer *pubDate = NULL;
+	int i;
+	KSI_Utf8StringList *infoPubRef = NULL;
+	KSI_Utf8StringList *infoPubRepUrl = NULL;
+	KSI_Utf8String *infoPubStr = NULL;
+	KSI_DataHash *infoPubHsh = NULL;
+	time_t infoPubDate;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_getPublicationInfo(sig, &infoPubHsh, NULL, NULL, NULL, NULL);
+	CuAssert(tc, "Unable to get signature publication info publication hash.", res == KSI_OK && infoPubHsh != NULL);
+
+	res = KSI_Signature_getPublicationInfo(sig, NULL, &infoPubStr, NULL, NULL, NULL);
+	CuAssert(tc, "Unable to get signature publication info publication string.", res == KSI_OK && infoPubStr != NULL);
+
+	res = KSI_Signature_getPublicationInfo(sig, NULL, NULL, &infoPubDate, NULL, NULL);
+	CuAssert(tc, "Unable to get signature publication info publication date.", res == KSI_OK);
+
+	res = KSI_Signature_getPublicationInfo(sig, NULL, NULL, NULL, &infoPubRef, NULL);
+	CuAssert(tc, "Unable to get signature publication info publication refs.", res == KSI_OK && infoPubRef != NULL);
+
+	res = KSI_Signature_getPublicationInfo(sig, NULL, NULL, NULL, NULL, &infoPubRepUrl);
+	CuAssert(tc, "Unable to get signature publication info repository URLs.", res == KSI_OK && infoPubRepUrl != NULL);
+
+	res = KSI_Signature_getPublicationRecord(sig, &pubRec);
+	CuAssert(tc, "Unable to read signature publication record.", res == KSI_OK && pubRec != NULL);
+
+	res = KSI_PublicationRecord_getPublicationRefList(pubRec, &pubRef);
+	CuAssert(tc, "Unable to read signature publication references.", res == KSI_OK && pubRef != NULL);
+
+	CuAssert(tc, "Publication reference number mismatch.", KSI_Utf8StringList_length(infoPubRef) == KSI_Utf8StringList_length(pubRef));
+
+	for (i = 0; i < KSI_Utf8StringList_length(pubRef); i++) {
+		KSI_Utf8String *ref = NULL;
+		KSI_Utf8String *infRef = NULL;
+
+		res = KSI_Utf8StringList_elementAt(pubRef, i, &ref);
+		CuAssert(tc, "Unable to read publication reference.", res == KSI_OK && ref != NULL);
+
+		res = KSI_Utf8StringList_elementAt(infoPubRef, i, &infRef);
+		CuAssert(tc, "Unable to read publication reference.", res == KSI_OK && ref != NULL);
+
+		CuAssert(tc, "Publication reference mismatch.", strcmp(KSI_Utf8String_cstr(infRef), KSI_Utf8String_cstr(ref)) == 0);
+	}
+
+	res = KSI_PublicationRecord_getRepositoryUriList(pubRec, &pubRepUrl);
+	CuAssert(tc, "Signature publication repository URLs are not availale.", res == KSI_OK && pubRepUrl == NULL);
+
+	res = KSI_PublicationRecord_getPublishedData(pubRec, &pubData);
+	CuAssert(tc, "Unable to read signature publication data.", res == KSI_OK && pubData != NULL);
+
+	res = KSI_PublicationData_getImprint(pubData, &pubHsh);
+	CuAssert(tc, "Unable to read signature publication data.", res == KSI_OK && pubHsh != NULL);
+
+	CuAssert(tc, "Published hash mismatch.", KSI_DataHash_equals(pubHsh, infoPubHsh) != 0);
+
+	KSI_PublicationData_getTime(pubData, &pubDate);
+	CuAssert(tc, "Unable to read signature publication time.", res == KSI_OK && pubDate != NULL);
+	CuAssert(tc, "Publication date mismatch.", KSI_Integer_equalsUInt(pubDate, infoPubDate) != 0);
+
+	/* Release resources */
+	KSI_DataHash_free(infoPubHsh);
+	KSI_Utf8String_free(infoPubStr);
+	KSI_Utf8StringList_free(infoPubRef);
+	KSI_Utf8StringList_free(infoPubRepUrl);
+	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
+}
+
 CuSuite* KSITest_Signature_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -617,6 +798,8 @@ CuSuite* KSITest_Signature_getSuite(void) {
 	SUITE_ADD_TEST(suite, testVerifyCalendarChainAlgoChange);
 	SUITE_ADD_TEST(suite, testExtractInputHashLegacySignature);
 	SUITE_ADD_TEST(suite, testCreateAggregationAuthRec);
+	SUITE_ADD_TEST(suite, testSignatureGetPublicationInfo);
+	SUITE_ADD_TEST(suite, testSignatureGetPublicationInfo_verifyNullPointer);
 
 	return suite;
 }

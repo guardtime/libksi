@@ -277,6 +277,20 @@ extern "C" {
 	KSI_DEFINE_REF(KSI_AggregationHashChain);
 	KSI_DEFINE_WRITE_BYTES(KSI_AggregationHashChain);
 
+	/**
+	 * Function for getting publication information from an extended signature.
+	 * \param [in]		sig			Extended signature including publication record.
+	 * \param [out]		pubHsh		Publication hash.
+	 * \param [out]		pubStr		Publication data converted into a base-32 encoded string.
+	 * \param [out]		pubDate		Publicatoin date
+	 * \param [out]		pubRefs		Publication references.
+	 * \param [out]		repUrls		Publication URL repositories.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \note	The output memory has to be freed by the caller
+	 * \see		#KSI_DataHash_free, #KSI_Utf8String_free, #KSI_Utf8StringList_free
+	 */
+	int KSI_Signature_getPublicationInfo(KSI_Signature *sig, KSI_DataHash **pubHsh, KSI_Utf8String **pubStr, time_t *pubDate, KSI_LIST(KSI_Utf8String) **pubRefs, KSI_LIST(KSI_Utf8String) **repUrls);
 
 /**
  * @}
