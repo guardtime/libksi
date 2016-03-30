@@ -525,12 +525,7 @@ int KSI_TlvElement_getUtf8String(KSI_TlvElement *parent, KSI_CTX *ctx, unsigned 
 	if (res != KSI_OK) goto cleanup;
 
 	if (el != NULL) {
-		if (el->ftlv.hdr_len > len) {
-			res = KSI_INVALID_STATE;
-			goto cleanup;
-		}
-
-		res = KSI_TlvElement_serialize(el, buf + el->ftlv.hdr_len, sizeof(buf) - el->ftlv.hdr_len, &len, KSI_TLV_OPT_NO_HEADER);
+		res = KSI_TlvElement_serialize(el, buf, sizeof(buf), &len, KSI_TLV_OPT_NO_HEADER);
 		if (res != KSI_OK) goto cleanup;
 
 		res = KSI_Utf8String_new(ctx, (char *)buf, len, &tmp);
@@ -566,12 +561,7 @@ int KSI_TlvElement_getOctetString(KSI_TlvElement *parent, KSI_CTX *ctx, unsigned
 	if (res != KSI_OK) goto cleanup;
 
 	if (el != NULL) {
-		if (el->ftlv.hdr_len > len) {
-			res = KSI_INVALID_STATE;
-			goto cleanup;
-		}
-
-		res = KSI_TlvElement_serialize(el, buf + el->ftlv.hdr_len, sizeof(buf) - el->ftlv.hdr_len, &len, KSI_TLV_OPT_NO_HEADER);
+		res = KSI_TlvElement_serialize(el, buf, sizeof(buf), &len, KSI_TLV_OPT_NO_HEADER);
 		if (res != KSI_OK) goto cleanup;
 
 		res = KSI_OctetString_new(ctx, (char *)buf, len, &tmp);
