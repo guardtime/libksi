@@ -32,11 +32,83 @@ call #KSI_Signature_parse:
 After a successful call to #KSI_Signature_parse the buffer \c raw can be freed by the caller
 as it is not referenced by the signature.
 
-3. Signature-only Verification
+3. Policies
+-----------
+
+Signatures are verified according to one or more policies. A verification policy is a set of ordered
+rules that verify relevant signature properties. Verifying a signature according to a policy results
+in one of three possible outcomes:
+- Verification is successful, which means that there is enough data to prove that the signature is correct.
+- Verification is not possible, which means that there is not enough data to prove or disprove the correctness
+of the signature. Note: with some other policy it might still be possible to prove the correctness of the signature.
+- Verification failed, which means that the signature is definitely invalid or the document does not match
+the signature.
+
+The SDK provides the following predefined policies for verification:
+- Internal policy. This policy verifies the consistency of various internal components of the signature without
+requiring any additional data from the user. The verified components are the aggregation chain, calendar chain (optional),
+calendar authentication record (optional) and publication record (optional). Additionally, if a document hash is provided,
+the signature is verified against it.
+- Key-based policy. This policy verifies the PKI signature and calendar chain data in the calendar authentication record of the signature.
+For conclusive results, a calendar hash chain and calendar authentication record must be present in the signature.
+A publication file must be provided for performing lookup of a matching certificate.
+- Publications file based policy. This policy verifies the signature publication record against a publication
+in the publication file. If necessary (and permitted), the signature is extended to the publication. For conclusive results
+the signature must either contain a publication record with a suitable publication or signature extending must be allowed.
+A publications file must be provided for lookup and an extender must be configured. 
+- User provided publication string based policy. This policy verifies the signature publication record against the
+publication string. if necessary (and permitted), the signature is extended to the user publication. For conclusive results
+the signature must either contain a publication record with a suitable publication or signature extending must be allowed.
+A publication string must be provided and an extender must be configured.
+- Calendar-based policy. This policy first extends the signature to either the head of the calendar or to the 
+same time as the calendar chain of the signature. The extended signature calendar chain is then verified against
+aggregation chain of the signature. For conclusive results the extender must be configured.
+
+Note: all of the policies perform internal verification as a prerequisite to the specific verification.
+
+4. Verifying a signature according to a policy
+----------------------------------------------
+
+To perform verification according to a policy, we first need to get a pointer to it. To use any of the predefined
+policies, we can simply call one the corresponding functions, e.g. #KSI_Policy_getInternal. Second, we need to create
+a context for verification by calling #KSI_VerificationContext_create. As a bare minimum, we must set the signature
+in the verification context by calling #KSI_VerificationContext_setSignature. When we have set up the verification
+context (see more examples below), we can verify the signature by calling #KSI_SignatureVerifier_verify which creates
+a verification result object. The function also returns a status code which should be #KSI_OK if the verification process
+was completed without any internal errors (e.g. invalid parameters, out of memory errors, no extender configured, etc).
+#KSI_OK does not indicate a successful verification, so we must inspect the verification result for details:
+
+~~~~~~~~~~{.c}
+	
+	int res; /* The return value. */
+	const KSI_Policy *policy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+
+	res = KSI_Policy_getInternal(ksi, &policy);
+	res = KSI_VerificationContext_create(ksi, &context);
+	res = KSI_VerificationContext_setSignature(context, sig);
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	if (res == KSI_OK) {
+		if (result->finalResult.resultCode == VER_RES_OK)
+			printf("Signature verified successfully!\n");
+		} else {
+			/* Error handling. Verification failed or was inconclusive. */
+			/* Check result->finalResult.errorCode for error code. */
+		}
+	} else {
+		/* Error handling. Verification not completed due to some error. */
+	}
+
+
+~~~~~~~~~~
+ 
+
+5. Signature-only Verification
 ------------------------------
 
 Sometimes it is enough to verify only the signature itself without having the original
-document that was signed. To verify the signature we must call #KSI_Signature_verify. At this point
+document that was signed. To verify the signature we must call #KSI_verifySignature. At this point
 it is vital to check the return value. Unless the return value was #KSI_OK there was something
 wrong in the verification process (NB! This does not mean the signature is bad - it might be a
 connectivity issue with the extender or sth.):
@@ -44,7 +116,7 @@ connectivity issue with the extender or sth.):
 ~~~~~~~~~~{.c}
 
 	int res; /* The return value. */
-	res = KSI_Signature_verify(sig, ksi);
+	res = KSI_verifySignature(ksi, sig);
 	if (res == KSI_OK) {
 	    printf("The signature looks fine!\n");
 	} else {
@@ -53,7 +125,7 @@ connectivity issue with the extender or sth.):
 
 ~~~~~~~~~~
 
-4. Document verification
+6. Document verification
 ----------
 
 Lets assume our document to be verified is stored in a variable called \c data and it's
@@ -86,7 +158,7 @@ To verify the document hash with the signature we need to call #KSI_Signature_ve
 
 ~~~~~~~~~~
 
-5. When something went wrong.
+7. When something went wrong.
 -----------------------------
 
 We did not describe the branches when the verification functions did not return #KSI_OK. It is important to
@@ -117,7 +189,7 @@ problem is to add more status codes to the statement, but in general it is enoug
 For this, there are two methods #KSI_getErrorString, which converts the status code into a null-terminated string. To get a more
 detailed error message we can use #KSI_ERR_getBaseErrorMessage.
 
-6. Cleanup
+8. Cleanup
 ----------
 
 As the final step we need to free all the allocated resources. Note that the KSI context may
