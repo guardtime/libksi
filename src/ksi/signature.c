@@ -999,7 +999,6 @@ static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *s
 	int res;
 	const KSI_Policy *policy = NULL;
 	KSI_VerificationContext *context = NULL;
-	KSI_Signature *clone = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -1026,13 +1025,7 @@ static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *s
 		goto cleanup;
 	}
 
-	res = KSI_Signature_clone(sig, &clone);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_VerificationContext_setSignature(context, clone);
+	res = KSI_VerificationContext_setSignature(context, sig);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1060,6 +1053,7 @@ static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *s
 
 cleanup:
 
+	KSI_VerificationContext_setSignature(context, NULL);
 	KSI_VerificationContext_free(context);
 	KSI_PolicyVerificationResult_free(result);
 
