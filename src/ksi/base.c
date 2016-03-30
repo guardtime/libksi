@@ -167,7 +167,6 @@ int KSI_CTX_new(KSI_CTX **context) {
 
 	KSI_CTX *ctx = NULL;
 	KSI_NetworkClient *client = NULL;
-	KSI_PKITruststore *pkiTruststore = NULL;
 
 	ctx = KSI_new(KSI_CTX);
 	if (ctx == NULL) {
@@ -212,13 +211,6 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->isCustomNetProvider = 0;
 	client = NULL;
 
-	/* Create and set the PKI truststore */
-	res = KSI_PKITruststore_new(ctx, 1, &pkiTruststore);
-	if (res != KSI_OK) goto cleanup;
-	res = KSI_CTX_setPKITruststore(ctx, pkiTruststore);
-	if (res != KSI_OK) goto cleanup;
-	pkiTruststore = NULL;
-
 	/* Return the context. */
 	*context = ctx;
 	ctx = NULL;
@@ -228,7 +220,6 @@ int KSI_CTX_new(KSI_CTX **context) {
 cleanup:
 
 	KSI_NetworkClient_free(client);
-	KSI_PKITruststore_free(pkiTruststore);
 
 	KSI_CTX_free(ctx);
 
@@ -857,8 +848,37 @@ cleanup:																					\
 	CTX_VALUEP_SETTER(var, nam, typ, fre)													\
 	CTX_VALUEP_GETTER(var, nam, typ)														\
 
-CTX_GET_SET_VALUE(pkiTruststore, PKITruststore, KSI_PKITruststore, KSI_PKITruststore_free)
+CTX_VALUEP_SETTER(pkiTruststore, PKITruststore, KSI_PKITruststore, KSI_PKITruststore_free)
 CTX_GET_SET_VALUE(publicationsFile, PublicationsFile, KSI_PublicationsFile, KSI_PublicationsFile_free)
+
+int KSI_CTX_getPKITruststore(KSI_CTX *ctx, KSI_PKITruststore **pki) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_PKITruststore *pkiTruststore = NULL;
+
+	if (ctx == NULL || pki == NULL){
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	/* In case the PKI truststore is not available, create a default */
+	if (ctx->pkiTruststore == NULL) {
+		/* Create and set the PKI truststore */
+		res = KSI_PKITruststore_new(ctx, 1, &pkiTruststore);
+		if (res != KSI_OK) goto cleanup;
+		res = KSI_CTX_setPKITruststore(ctx, pkiTruststore);
+		if (res != KSI_OK) goto cleanup;
+		pkiTruststore = NULL;
+	}
+
+	*pki = ctx->pkiTruststore;
+	res = KSI_OK;
+
+cleanup:
+	KSI_PKITruststore_free(pkiTruststore);
+
+	return res;
+}
+
 
 int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *netProvider){
 	int res = KSI_UNKNOWN_ERROR;

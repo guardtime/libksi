@@ -584,6 +584,32 @@ static void testSigningInvalidResponse(CuTest* tc){
 #undef TEST_AGGR_RESPONSE_FILE
 }
 
+static void testSigningInvalidAggrChainReturned(CuTest* tc){
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/nok_aggr_response-invalid-aggr-chain.tlv"
+
+	int res;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+	unsigned char imprint[] = {0x01, 0xc5, 0xf3, 0x30, 0x84, 0x32, 0x8a, 0x04, 0xa4, 0xee, 0x5c, 0x75, 0xa9, 0xeb, 0x8c, 0x9a, 0xe0, 0x0c, 0x22, 0x14, 0xdf, 0x70, 0x4c, 0x7c, 0xf6, 0x8b, 0xb3, 0x09, 0x5c, 0xec, 0xbc, 0x71, 0xca};
+
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_DataHash_fromImprint(ctx, imprint, sizeof(imprint), &hsh);
+	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+
+	res = KSI_createSignature(ctx, hsh, &sig);
+	CuAssert(tc, "Signature should not be created with invalid aggregation response", res != KSI_OK);
+
+	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
+
+#undef TEST_AGGR_RESPONSE_FILE
+}
+
 static void testSigningErrorResponse(CuTest *tc) {
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok_aggr_err_response-1.tlv"
 
@@ -953,6 +979,7 @@ CuSuite* KSITest_NET_getSuite(void) {
 	SUITE_ADD_TEST(suite, testExtendingWithoutPublication);
 	SUITE_ADD_TEST(suite, testExtendingToNULL);
 	SUITE_ADD_TEST(suite, testSigningInvalidResponse);
+	SUITE_ADD_TEST(suite, testSigningInvalidAggrChainReturned);
 	SUITE_ADD_TEST(suite, testAggregationHeader);
 	SUITE_ADD_TEST(suite, testSigningErrorResponse);
 	SUITE_ADD_TEST(suite, testExtendingErrorResponse);

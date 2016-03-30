@@ -37,13 +37,13 @@ KSI_IMPLEMENT_LIST(KSI_CalendarHashChainLink, KSI_HashChainLink_free);
 KSI_IMPLEMENT_LIST(KSI_CalendarHashChain, KSI_CalendarHashChain_free);
 
 static long long int highBit(long long int n) {
-    n |= (n >>  1);
-    n |= (n >>  2);
-    n |= (n >>  4);
-    n |= (n >>  8);
-    n |= (n >> 16);
-    n |= (n >> 32);
-    return n - (n >> 1);
+	n |= (n >>  1);
+	n |= (n >>  2);
+	n |= (n >>  4);
+	n |= (n >>  8);
+	n |= (n >> 16);
+	n |= (n >> 32);
+	return n - (n >> 1);
 }
 
 
@@ -51,7 +51,6 @@ static int addNvlImprint(KSI_DataHash *first, const KSI_DataHash *second, KSI_Da
 	int res = KSI_UNKNOWN_ERROR;
 	const KSI_DataHash *hsh = first;
 	const unsigned char *imprint = NULL;
-	size_t imprint_len;
 
 	if (hsh == NULL) {
 		if (second == NULL) {

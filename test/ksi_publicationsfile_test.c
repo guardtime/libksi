@@ -96,8 +96,6 @@ static void testVerifyPublicationsFile(CuTest *tc) {
 	CuAssert(tc, "Unable to read certificate", res == KSI_OK);
 
 	res = KSI_PublicationsFile_verify(pubFile, ctx);
-//	KSI_ERR_statusDump(ctx, stdout);
-//	exit(1);
 
 	CuAssert(tc, "Publications file should verify with mock certificate.", res == KSI_OK);
 

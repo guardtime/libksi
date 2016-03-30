@@ -34,15 +34,17 @@ runner_SOURCES= \
 		ksi_publicationsfile_test.c \
 		ksi_rdr_test.c \
 		ksi_signature_test.c \
-		ksi_tree_builder_test.c \
 		ksi_tlv_sample_test.c \
 		ksi_tlv_test.c \
+		ksi_tree_builder_test.c \
 		ksi_truststore_test.c \
 		compatibility_test.c \
 		uri_client_test.c \
 		support_tests.c \
 		support_tests.h \
 		multi_signature_test.c \
+		verification_rule_tests.c \
+		ksi_policy_test.c \
 		ksi_sdk_version_test.c 
 
 integration_tests_SOURCES= \
