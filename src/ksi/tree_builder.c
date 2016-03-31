@@ -27,7 +27,13 @@
 
 typedef struct KSI_TreeNode_st KSI_TreeNode;
 
+typedef struct {
+	int (*fn)(KSI_TreeNode *in, void *c, KSI_TreeNode **out);
+	void *c;
+} TreeBuilderCB;
 
+KSI_DEFINE_LIST(TreeBuilderCB);
+KSI_IMPLEMENT_LIST(TreeBuilderCB, NULL);
 
 struct KSI_TreeNode_st {
 	KSI_CTX *ctx;
@@ -50,6 +56,10 @@ struct KSI_TreeBuilder_st {
 	KSI_HashAlgorithm algo;
 	/** Stack of the root nodes of complete binary trees. */
 	KSI_TreeNode *stack[STACK_LEN];
+	/** Callback functions for the leaf node. They are executed as a sequence
+	 * where the last output tree node is the input node for the next call. The
+	 * final output node is added to the tree. */
+	KSI_LIST(TreeBuilderCB) *cbList;
 };
 
 struct KSI_TreeLeafHandle_st {
@@ -287,6 +297,7 @@ int KSI_TreeBuilder_new(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeBuilder **
 	tmp->ref = 1;
 	tmp->rootNode = NULL;
 	tmp->algo = algo;
+	tmp->cbList = NULL;
 	memset(tmp->stack, 0, sizeof(tmp->stack));
 
 	*builder = tmp;
@@ -310,6 +321,9 @@ void KSI_TreeBuilder_free(KSI_TreeBuilder *builder) {
 		for (i = 0; i < STACK_LEN; i++) {
 			KSI_TreeNode_free(builder->stack[i]);
 		}
+
+		TreeBuilderCBList_free(builder->cbList);
+
 		KSI_free(builder);
 	}
 }
@@ -364,6 +378,40 @@ cleanup:
 	return res;
 }
 
+static int processAndInsertNode(KSI_TreeBuilder *builder, KSI_TreeNode *node) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_TreeNode *tmp = node;
+	size_t i;
+
+	if (builder == NULL || node == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	for (i = 0; i < TreeBuilderCBList_length(builder->cbList); i++) {
+		TreeBuilderCB *cb = NULL;
+		res = TreeBuilderCBList_elementAt(builder->cbList, i, &cb);
+		if (res != KSI_OK || cb == NULL || cb->fn == NULL) {
+			res = KSI_INVALID_STATE;
+			goto cleanup;
+		}
+
+		res = cb->fn(tmp, cb->c, &tmp);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	res = insertNode(builder, tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	tmp = NULL;
+
+cleanup:
+
+	KSI_TreeNode_free(tmp);
+
+	return res;
+}
+
 static int addLeaf(KSI_TreeBuilder *builder, KSI_DataHash *hsh, KSI_MetaData *metaData, int level, KSI_TreeLeafHandle **leaf) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TreeNode *node = NULL;
@@ -389,7 +437,7 @@ static int addLeaf(KSI_TreeBuilder *builder, KSI_DataHash *hsh, KSI_MetaData *me
 	}
 
 	/* Insert the leaf. */
-	res = insertNode(builder, node);
+	res = processAndInsertNode(builder, node);
 	if (res != KSI_OK) {
 		KSI_pushError(builder->ctx, res, NULL);
 		goto cleanup;
