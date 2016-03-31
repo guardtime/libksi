@@ -1170,14 +1170,6 @@ cleanup:
 
 }
 
-int KSI_Signature_verifyInternally(KSI_Signature *sig, KSI_CTX *ctx) {
-	return KSI_Signature_verifyPolicy(sig, KSI_VP_INTERNAL, ctx);
-}
-
-int KSI_Signature_verifyOffline(KSI_Signature *sig, KSI_CTX *ctx) {
-	return KSI_Signature_verifyPolicy(sig, KSI_VP_OFFLINE, ctx);
-}
-
 int KSI_Signature_verifyAggregated(KSI_Signature *sig, KSI_CTX *ctx, KSI_uint64_t level) {
 	int res;
 	KSI_CTX *useCtx = ctx;
