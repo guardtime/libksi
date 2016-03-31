@@ -976,7 +976,7 @@ int KSI_TlvTemplate_writeBytes(KSI_CTX *ctx, const void *obj, unsigned tag, int 
 	}
 
 	/* Create TLV for the PDU object. */
-	res = KSI_TLV_new(ctx, tag, isFwd, isNc, &tlv);
+	res = KSI_TLV_new(ctx, tag, isNc, isFwd, &tlv);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
