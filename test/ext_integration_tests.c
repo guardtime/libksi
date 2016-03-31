@@ -120,7 +120,7 @@ static void Test_OKExtendSignatureDefProvider(CuTest* tc) {
 	res = KSI_Signature_extend(sig, ctx, NULL, &ext);
 	CuAssert(tc, "Unable to extend signature", res == KSI_OK && ext != NULL);
 
-	res = KSI_Signature_verify(sig, ctx);
+	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Unable to verify signature", res == KSI_OK);
 
 	KSI_ERR_clearErrors(ctx);
