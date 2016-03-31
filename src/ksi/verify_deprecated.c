@@ -17,6 +17,8 @@
  * reserves and retains all trademark rights.
  */
 
+#define __KSI_NO_DEPRECATE__
+
 #include "internal.h"
 #include "verification_impl.h"
 #include "signature_impl.h"

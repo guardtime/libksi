@@ -7,9 +7,6 @@
 * BUGFIX: Invalid and misleading exception message on response publication time check.
 * BUGFIX: Correcting memory leaks when using Windows Crypt32 library.
 * BUGFIX: Correcting usage of isForward and isNonCritical flags in KSI_TlvTemplate_serializeObject and KSI_TlvTemplate_writeBytes. Added tests to cover this bug.
-
-Version 3.8
-
 * IMPROVEMENT: KSI_LIST may contain NULL values.
 * BUGFIX: Certificate and publication records are not mandatory for publications file.
 * IMPROVEMENT: Integration tests configuration file error handling improved.
@@ -24,6 +21,7 @@ Version 3.8
 * BUGFIX: KSI_DataHasher memory leak on immediate reset after open.
 * BUGFIX: Fixed HMAC for hash functions with other than 512 bit internal block size.
 * IMPROVEMENT: Removed build warnings on OSX.
+* IMPROVEMENT: Added mechanism to disable deprecation warnings.
 
 Version 3.7
 
