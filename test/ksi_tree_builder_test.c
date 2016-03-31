@@ -72,7 +72,7 @@ static void testGetAggregationChain(CuTest* tc) {
 	int res;
 	KSI_TreeBuilder *builder = NULL;
 	char *data[] = { "test1", "test2", "test3", "test4", "test5", "test6", "test7", "test8", "test9", "test10", NULL};
-	KSI_TreeLeafHandle *handles[] = {NULL, NULL, NULL, NULL, NULL, NULL};
+	KSI_TreeLeafHandle *handles[] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 	size_t i;
 	KSI_DataHash *hsh = NULL;
 	KSI_AggregationHashChain *chn = NULL;
