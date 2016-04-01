@@ -64,6 +64,8 @@ static int Rule_verify(const Rule *rule, KSI_VerificationContext *context, KSI_P
 
 	currentRule = rule;
 	while (currentRule->rule) {
+		policyResult->finalResult.resultCode = VER_RES_NA;
+		policyResult->finalResult.errorCode = VER_ERR_GEN_2;
 		switch (currentRule->type) {
 			case RULE_TYPE_BASIC:
 				res = ((Verifier)(currentRule->rule))(context, &policyResult->finalResult);
@@ -85,16 +87,14 @@ static int Rule_verify(const Rule *rule, KSI_VerificationContext *context, KSI_P
 				break;
 		}
 
-		if (res != KSI_OK) {
-			policyResult->finalResult.resultCode = VER_RES_NA;
-			policyResult->finalResult.errorCode = VER_ERR_GEN_2;
-		}
-
 		if (currentRule->type == RULE_TYPE_BASIC) {
 			PolicyVerificationResult_addLatestRuleResult(policyResult);
 		}
 
-		if (policyResult->finalResult.resultCode == VER_RES_FAIL) {
+		if (res != KSI_OK) {
+			/* If verification cannot be completed due to an internal error, no more rules should be processed. */
+			break;
+		} else if (policyResult->finalResult.resultCode == VER_RES_FAIL) {
 			/* If a rule fails, no more rules in the policy should be processed. */
 			break;
 		} else if (policyResult->finalResult.resultCode == VER_RES_OK) {
