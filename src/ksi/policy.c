@@ -423,11 +423,11 @@ int KSI_Policy_clone(KSI_CTX *ctx, const KSI_Policy *policy, KSI_Policy **clone)
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Policy *tmp = NULL;
 
+	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || policy == NULL || clone == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
-	KSI_ERR_clearErrors(ctx);
 
 	tmp = KSI_new(KSI_Policy);
 	if (tmp == NULL) {
