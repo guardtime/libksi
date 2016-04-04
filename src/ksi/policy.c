@@ -199,8 +199,9 @@ int KSI_Policy_getInternal(KSI_CTX *ctx, const KSI_Policy **policy) {
 		"InternalPolicy"
 	};
 
+	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || policy == NULL) {
-		res = KSI_INVALID_ARGUMENT;
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
 
@@ -267,8 +268,9 @@ int KSI_Policy_getCalendarBased(KSI_CTX *ctx, const KSI_Policy **policy) {
 		"CalendarBasedPolicy"
 	};
 
+	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || policy == NULL) {
-		res = KSI_INVALID_ARGUMENT;
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
 
@@ -299,8 +301,9 @@ int KSI_Policy_getKeyBased(KSI_CTX *ctx, const KSI_Policy **policy) {
 		"KeyBasedPolicy"
 	};
 
+	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || policy == NULL) {
-		res = KSI_INVALID_ARGUMENT;
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
 
@@ -349,8 +352,9 @@ int KSI_Policy_getPublicationsFileBased(KSI_CTX *ctx, const KSI_Policy **policy)
 		"PublicationsFileBasedPolicy"
 	};
 
+	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || policy == NULL) {
-		res = KSI_INVALID_ARGUMENT;
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
 
@@ -400,8 +404,9 @@ int KSI_Policy_getUserProvidedPublicationBased(KSI_CTX *ctx, const KSI_Policy **
 		"UserProvidedPublicationBasedPolicy"
 	};
 
+	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || policy == NULL) {
-		res = KSI_INVALID_ARGUMENT;
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
 
