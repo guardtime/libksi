@@ -90,7 +90,8 @@ static int Rule_verify(const Rule *rule, KSI_VerificationContext *context, KSI_P
 			policyResult->finalResult.errorCode = VER_ERR_GEN_2;
 		}
 
-		if (currentRule->type == RULE_TYPE_BASIC) {
+		if (currentRule->type == RULE_TYPE_BASIC && !(res == KSI_OK && policyResult->finalResult.resultCode == VER_RES_NA)) {
+			/* For better readability, only add results of basic rules which do not confirm lack or existence of a component. */
 			PolicyVerificationResult_addLatestRuleResult(policyResult);
 		}
 
@@ -116,14 +117,12 @@ cleanup:
 	return res;
 }
 
-static const Rule noPublicationOrCalendarAuthenticationRecordRule[] = {
-	{RULE_TYPE_BASIC, KSI_VerificationRule_SignatureDoesNotContainPublication},
+static const Rule noCalendarAuthenticationRecordRule[] = {
 	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordDoesNotExist},
 	{RULE_TYPE_BASIC, NULL}
 };
 
 static const Rule calendarAuthenticationRecordVerificationRule[] = {
-	{RULE_TYPE_BASIC, KSI_VerificationRule_SignatureDoesNotContainPublication},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordExistence},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime},
@@ -137,9 +136,20 @@ static const Rule publicationRecordVerificationRule[] = {
 	{RULE_TYPE_BASIC, NULL}
 };
 
-static const Rule publicationOrCalendarAuthenticationRecordRule[] = {
-	{RULE_TYPE_COMPOSITE_OR, noPublicationOrCalendarAuthenticationRecordRule},
+static const Rule calendarAuthenticationRecordRule[] = {
+	{RULE_TYPE_COMPOSITE_OR, noCalendarAuthenticationRecordRule},
 	{RULE_TYPE_COMPOSITE_OR, calendarAuthenticationRecordVerificationRule},
+	{RULE_TYPE_BASIC, NULL}
+};
+
+static const Rule noPublicationRecordRule[] = {
+	{RULE_TYPE_BASIC, KSI_VerificationRule_SignatureDoesNotContainPublication},
+	{RULE_TYPE_COMPOSITE_AND, calendarAuthenticationRecordRule},
+	{RULE_TYPE_BASIC, NULL}
+};
+
+static const Rule publicationOrCalendarAuthenticationRecordRule[] = {
+	{RULE_TYPE_COMPOSITE_OR, noPublicationRecordRule},
 	{RULE_TYPE_COMPOSITE_OR, publicationRecordVerificationRule},
 	{RULE_TYPE_COMPOSITE_OR, NULL}
 };
