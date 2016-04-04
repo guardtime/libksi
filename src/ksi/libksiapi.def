@@ -332,8 +332,6 @@ EXPORTS
 	KSI_Signature_verify
 	KSI_Signature_verifyAggregated
 	KSI_Signature_verifyAggregatedHash
-	KSI_Signature_verifyInternally
-	KSI_Signature_verifyOffline
 	KSI_Signature_verifyOnline
 	KSI_Signature_verifyDocument
 	KSI_Signature_verifyWithPublication

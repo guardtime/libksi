@@ -172,7 +172,7 @@ static int rfc3161_verify(KSI_CTX *ctx, const KSI_Signature *sig) {
 		KSI_LOG_info(ctx, "Aggregation hash chain and RFC 3161 aggregation time mismatch.");
 		KSI_LOG_debug(ctx, "Signatures aggregation time: %i.", KSI_Integer_getUInt64(firstChain->aggregationTime));
 		KSI_LOG_debug(ctx, "RFC 3161 aggregation time:   %i.", KSI_Integer_getUInt64(rfc3161->aggregationTime));
-		KSI_pushError(ctx, res = KSI_VERIFICATION_FAILURE, "Aggregation chain and RFC 3161 aggregation time mismatch.");
+		KSI_pushError(ctx, res = KSI_VERIFICATION_FAILURE, "Aggregation hash chain and RFC 3161 aggregation time mismatch.");
 		goto cleanup;
 	}
 
@@ -180,28 +180,30 @@ static int rfc3161_verify(KSI_CTX *ctx, const KSI_Signature *sig) {
 		KSI_LOG_info(ctx, "Aggregation hash chain and RFC 3161 chain index mismatch.", KSI_IntegerList_length(firstChain->chainIndex));
 		KSI_LOG_debug(ctx, "Signatures chain index length: %i.", KSI_IntegerList_length(firstChain->chainIndex));
 		KSI_LOG_debug(ctx, "RFC 3161 chain index length:   %i.", KSI_IntegerList_length(rfc3161->chainIndex));
-		KSI_pushError(ctx, res = KSI_VERIFICATION_FAILURE, "Aggregation chain and RFC 3161 aggregation index mismatch.");
-	} else {
-		for (i = 0; i < KSI_IntegerList_length(firstChain->chainIndex); i++){
-			KSI_Integer *ch1 = NULL;
-			KSI_Integer *ch2 = NULL;
+		KSI_pushError(ctx, res = KSI_VERIFICATION_FAILURE, "Aggregation hash chain and RFC 3161 aggregation index mismatch.");
+		goto cleanup;
+	}
 
-			res = KSI_IntegerList_elementAt(firstChain->chainIndex, i, &ch1);
-			if (res != KSI_OK) {
-				KSI_pushError(ctx, res, NULL);
-				goto cleanup;
-			}
+	for (i = 0; i < KSI_IntegerList_length(firstChain->chainIndex); i++){
+		KSI_Integer *ch1 = NULL;
+		KSI_Integer *ch2 = NULL;
 
-			res = KSI_IntegerList_elementAt(rfc3161->chainIndex, i, &ch2);
-			if (res != KSI_OK) {
-				KSI_pushError(ctx, res, NULL);
-				goto cleanup;
-			}
+		res = KSI_IntegerList_elementAt(firstChain->chainIndex, i, &ch1);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
 
-			if (KSI_Integer_compare(ch1, ch2) != 0) {
-				KSI_LOG_debug(ctx, "Aggregation hash chain and RFC 3161 chain index mismatch.");
-				break;
-			}
+		res = KSI_IntegerList_elementAt(rfc3161->chainIndex, i, &ch2);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		if (KSI_Integer_compare(ch1, ch2) != 0) {
+			KSI_LOG_debug(ctx, "Aggregation hash chain and RFC 3161 chain index mismatch.");
+			KSI_pushError(ctx, res = KSI_VERIFICATION_FAILURE, "Aggregation chain and RFC 3161 aggregation index mismatch.");
+			goto cleanup;
 		}
 	}
 

@@ -29,6 +29,7 @@
 #include "hashchain.h"
 #include "net.h"
 #include "pkitruststore.h"
+#include "policy.h"
 
 typedef struct headerRec_st HeaderRec;
 
@@ -994,13 +995,76 @@ cleanup:
 	return res;
 }
 
+static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *sig, KSI_uint64_t rootLevel) {
+	int res;
+	const KSI_Policy *policy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	if (ctx == NULL || sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (rootLevel > 0xff) {
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Aggregation level can't be larger than 0xff.");
+		goto cleanup;
+	}
+
+	res = KSI_Policy_getInternal(ctx, &policy);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_VerificationContext_setSignature(context, sig);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_VerificationContext_setAggregationLevel(context, rootLevel);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, "Internal verification of signature not completed.");
+		goto cleanup;
+	}
+
+	if (result->finalResult.resultCode != VER_RES_OK) {
+		res = KSI_VERIFICATION_FAILURE;
+		KSI_pushError(ctx, res, "Internal verification of signature failed.");
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_VerificationContext_setSignature(context, NULL);
+	KSI_VerificationContext_free(context);
+	KSI_PolicyVerificationResult_free(result);
+
+	return res;
+}
 
 int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature) {
 	int res;
 	KSI_RequestHandle *handle = NULL;
 	KSI_AggregationResp *response = NULL;
 	KSI_Signature *sign = NULL;
-
 	KSI_AggregationReq *req = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -1044,9 +1108,7 @@ int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uin
 		goto cleanup;
 	}
 
-	/* Just to be sure, verify the internals. */
-	sign->verificationResult.docAggrLevel = rootLevel;
-	res = KSI_Signature_verifyInternally(sign, ctx);
+	res = KSI_SignatureVerifier_verifyInternally(ctx, sign, rootLevel);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1164,7 +1226,7 @@ int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *
 	}
 
 	/* Just to be sure, verify the internals. */
-	res = KSI_Signature_verifyInternally(tmp, ctx);
+	res = KSI_SignatureVerifier_verifyInternally(ctx, tmp, 0);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1240,7 +1302,7 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 	pubRecClone = NULL;
 
 	/* To be sure we won't return a bad signature, lets verify the internals. */
-	res = KSI_Signature_verifyInternally(tmp, ctx);
+	res = KSI_SignatureVerifier_verifyInternally(ctx, tmp, 0);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
