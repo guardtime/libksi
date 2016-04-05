@@ -39,8 +39,6 @@ static const EVP_MD *hashAlgorithmToEVP(KSI_HashAlgorithm hash_id)
 		case KSI_HASHALG_RIPEMD160:
 			return EVP_ripemd160();
 #endif
-		case KSI_HASHALG_SHA2_224:
-			return EVP_sha224();
 		case KSI_HASHALG_SHA2_256:
 			return EVP_sha256();
 #ifndef OPENSSL_NO_SHA512

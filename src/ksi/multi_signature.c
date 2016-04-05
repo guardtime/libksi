@@ -1813,7 +1813,6 @@ int KSI_MultiSignature_parse(KSI_CTX *ctx, const unsigned char *raw, size_t raw_
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_MultiSignature *tmp = NULL;
 	ParserHelper hlpr;
-	size_t len;
 	size_t hdr_len;
 
 	ParserHelper_init(ctx, &hlpr);

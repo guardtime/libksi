@@ -91,13 +91,13 @@ extern "C" {
 	int KSI_HashChainLink_getLevelCorrection(const KSI_HashChainLink *t, KSI_Integer **levelCorrection);
 
 	/**
-	 * Getter method for \c metaHash.
+	 * Getter method for \c legacyId.
 	 * \param[in]	t					Pointer to #KSI_HashChainLink.
-	 * \param[out]	metaHash			Pointer to receiving pointer.
+	 * \param[out]	legacyId			Pointer to receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note The output object still belongs to \c t.
 	 */
-	int KSI_HashChainLink_getMetaHash(const KSI_HashChainLink *t, KSI_DataHash **metaHash);
+	int KSI_HashChainLink_getLegacyId(const KSI_HashChainLink *t, KSI_OctetString **legacyId);
 
 	/**
 	 * Getter method for \c metaData.
@@ -135,13 +135,13 @@ extern "C" {
 	int KSI_HashChainLink_setLevelCorrection(KSI_HashChainLink *t, KSI_Integer *levelCorrection);
 
 	/**
-	 * Setter method for \c metaHash.
+	 * Setter method for \c legacyId.
 	 * \param[in]	t					Pointer to #KSI_HashChainLink.
-	 * \param[in]	metaHash			Pointer to receiving pointer.
+	 * \param[in]	legacyId			Pointer to receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note After calling the setter, the the object belongs to \c t and will be freed by #KSI_HashChainLink_free.
 	 */
-	int KSI_HashChainLink_setMetaHash(KSI_HashChainLink *t, KSI_DataHash *metaHash);
+	int KSI_HashChainLink_setLegacyId(KSI_HashChainLink *t, KSI_OctetString *legacyId);
 
 	/**
 	 * Setter method for \c metaData.

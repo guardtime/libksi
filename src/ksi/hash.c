@@ -31,7 +31,6 @@
 static char *KSI_HASHALG_SHA1_aliases[] = {"SHA-1", ""};
 static char *KSI_HASHALG_SHA2_256_aliases[] = {"DEFAULT", "SHA-2", "SHA2", "SHA256", "SHA-256", ""};
 static char *KSI_HASHALG_RIPEMD160_aliases[] = { "RIPEMD160", ""};
-static char *KSI_HASHALG_SHA2_224_aliases[] = { "SHA224", "SHA-224", ""};
 static char *KSI_HASHALG_SHA2_384_aliases[] = { "SHA384", "SHA-384", ""};
 static char *KSI_HASHALG_SHA2_512_aliases[] = { "SHA512", "SHA-512", ""};
 static char *KSI_HASHALG_SHA3_244_aliases[] = { ""};
@@ -55,7 +54,7 @@ static struct KSI_hashAlgorithmInfo_st {
 		HASH_ALGO(KSI_HASHALG_SHA1,			"SHA1", 		160, 1),
 		HASH_ALGO(KSI_HASHALG_SHA2_256,		"SHA2-256", 	256, 1),
 		HASH_ALGO(KSI_HASHALG_RIPEMD160,	"RIPEMD-160", 	160, 1),
-		HASH_ALGO(KSI_HASHALG_SHA2_224,		"SHA2-224", 	224, 1),
+		{0x03, NULL, 0, 0, NULL}, /* Deprecated algorithm - do not reuse. */
 		HASH_ALGO(KSI_HASHALG_SHA2_384,		"SHA2-384", 	384, 1),
 		HASH_ALGO(KSI_HASHALG_SHA2_512,		"SHA2-512", 	512, 1),
 		{0x06, NULL, 0, 0, NULL}, /* Deprecated algorithm - do not reuse. */
@@ -424,98 +423,10 @@ int KSI_DataHash_getHashAlg(const KSI_DataHash *hash, KSI_HashAlgorithm *algo_id
 	if (hash == NULL) return KSI_INVALID_ARGUMENT;
 	if (algo_id == NULL) return KSI_INVALID_ARGUMENT;
 	if (hash->imprint == NULL) return KSI_INVALID_ARGUMENT;
-	
+
 	*algo_id = hash->imprint[0];
-	
+
 	return KSI_OK;
-}
-
-int KSI_DataHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned char **data, size_t *data_len) {
-	int res = KSI_UNKNOWN_ERROR;
-	size_t len;
-	size_t i;
-
-	if (metaHash == NULL || data == NULL || data_len == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	KSI_ERR_clearErrors(metaHash->ctx);
-
-	/* Just be paranoid, and check for the length (the length should be determined by the algorithm anyway) .*/
-	if (metaHash->imprint_length < 3) {
-		KSI_pushError(metaHash->ctx, res = KSI_INVALID_FORMAT, "Imprint too short for a metahash value.");
-		goto cleanup;
-	}
-
-	len = ((metaHash->imprint[1] << 8) & 0xff) | (metaHash->imprint[2] & 0xff);
-
-	if (len + 3 > metaHash->imprint_length) {
-		KSI_pushError(metaHash->ctx, res = KSI_INVALID_FORMAT, "Metadata length greater than imprint length");
-		goto cleanup;
-	}
-
-	/* Verify padding. */
-	for (i = len + 3; i < metaHash->imprint_length; i++) {
-		if (metaHash->imprint[i] != 0) {
-			KSI_pushError(metaHash->ctx, res = KSI_INVALID_FORMAT, "Metahash not padded with zeros.");
-			goto cleanup;
-		}
-	}
-
-	*data = metaHash->imprint + 3;
-	*data_len = len;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-
-}
-
-int KSI_DataHash_MetaHash_fromTlv(KSI_TLV *tlv, KSI_DataHash **hsh) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_CTX *ctx = NULL;
-	KSI_DataHash *tmp = NULL;
-	const unsigned char *data = NULL;
-	size_t data_len;
-
-	ctx = KSI_TLV_getCtx(tlv);
-	KSI_ERR_clearErrors(ctx);
-
-	if (tlv == NULL || hsh == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	/* Parse as an imprint */
-	res = KSI_DataHash_fromTlv(tlv, &tmp);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Try to extract the meta value to validate format. */
-	res = KSI_DataHash_MetaHash_parseMeta(tmp, &data, &data_len);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Make sure that the contents of this imprint is a null terminated sequence of bytes. */
-	tmp->imprint[KSI_MAX_IMPRINT_LEN] = 0; /* Write extra 0 */
-
-	*hsh = tmp;
-	tmp = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_nofree(ctx);
-	KSI_DataHash_free(tmp);
-
-	return res;
 }
 
 char *KSI_DataHash_toString(const KSI_DataHash *hsh, char *buf, size_t buf_len) {

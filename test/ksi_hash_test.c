@@ -367,31 +367,6 @@ static void TestIncorrectHashLen(CuTest* tc) {
 
 }
 
-static void TestParseMetaHash(CuTest *tc) {
-	unsigned char metaImprint[33];
-	const char *metaVal = "Meta-methanol";
-	KSI_DataHash *metaHash = NULL;
-	const unsigned char *tmp = NULL;
-	size_t tmp_len;
-	int res;
-
-	memset(metaImprint, 0, sizeof(metaImprint));
-	metaImprint[0] = KSI_HASHALG_SHA2_256;
-	metaImprint[1] = (unsigned char) (strlen(metaVal) >> 8 & 0xff);
-	metaImprint[2] = (unsigned char) (strlen(metaVal) & 0xff);
-	memcpy(metaImprint + 3, metaVal, strlen(metaVal));
-
-	res = KSI_DataHash_fromImprint(ctx, metaImprint, sizeof(metaImprint), &metaHash);
-	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "MetaImprint", metaImprint, sizeof(metaImprint));
-	CuAssert(tc, "Unable to create meta data hash.", res == KSI_OK && metaHash != NULL);
-
-	res = KSI_DataHash_MetaHash_parseMeta(metaHash, &tmp, &tmp_len);
-	CuAssert(tc, "Unable to parse valid meta datahash", res == KSI_OK && tmp != NULL && tmp_len > 0);
-	CuAssert(tc, "Metadata value mismatch", !memcmp(metaVal, tmp, tmp_len));
-
-	KSI_DataHash_free(metaHash);
-}
-
 static void testAllHashing(CuTest *tc) {
 	const char *input = "Once I was blind but now I C!";
 	const char *expected[KSI_NUMBER_OF_KNOWN_HASHALGS];
@@ -405,7 +380,7 @@ static void testAllHashing(CuTest *tc) {
 	expected[KSI_HASHALG_SHA1] = "17feaf7afb41e469c907170915eab91aa9114c05";
 	expected[KSI_HASHALG_SHA2_256] = "4d151c05f29a9757ff252ff1000fdcd28f88caaa52c020bc7d25e683890e7335";
 	expected[KSI_HASHALG_RIPEMD160] = "404a79f20439e1d82492ed73ad413b6d95d643a6";
-	expected[KSI_HASHALG_SHA2_224] = "e57a7d602733b326b2368d922e754f0a04c7c433d7dfd89ea8d3f54a";
+	expected[0x03] = NULL; /* Deprecated hash function. */
 	expected[KSI_HASHALG_SHA2_384] = "4495385793894ac9a2cc1b2d8760da3ce50d14a193b19166417d503d853ad3588689e5a6b0e65675367394a207cac264";
 	expected[KSI_HASHALG_SHA2_512] = "2dcee3bebeeec061751c7e2c886fddb069502c3c71e1f70272d77a64c092e51b6a262d208939cc557de7650da347b08f643d515ff8009a7342454e73247761dd";
 	expected[0x06] = NULL; /* Deprecated hash function. */
@@ -474,7 +449,6 @@ CuSuite* KSITest_Hash_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestParallelHashing);
 	SUITE_ADD_TEST(suite, TestHashGetAlgByName);
 	SUITE_ADD_TEST(suite, TestIncorrectHashLen);
-	SUITE_ADD_TEST(suite, TestParseMetaHash);
 	SUITE_ADD_TEST(suite, testAllHashing);
 
 	return suite;
