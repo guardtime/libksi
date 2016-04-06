@@ -37,12 +37,14 @@ static void TestSerializeObjectFlags(CuTest* tc) {
 	unsigned char in[TEST_SIG_BUF_SIZE];
 	size_t in_len = 0;
 
-	unsigned char *out = NULL;
+	unsigned char *outIsNcSet = NULL;
+	unsigned char *outIsFwdSet = NULL;
 	size_t out_len = 0;
 
 	FILE *f = NULL;
 
-	KSI_Signature *sig = NULL;
+	KSI_Signature *sigIsNcSet = NULL;
+	KSI_Signature *sigIsFwdSet = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -55,28 +57,31 @@ static void TestSerializeObjectFlags(CuTest* tc) {
 	fclose(f);
 
 
-	res = KSI_Signature_parse(ctx, in, in_len, &sig);
-	CuAssert(tc, "Failed to parse signature", res == KSI_OK && sig != NULL);
+	res = KSI_Signature_parse(ctx, in, in_len, &sigIsNcSet);
+	CuAssert(tc, "Failed to parse signature", res == KSI_OK && sigIsNcSet != NULL);
 
 	/* KSI_TlvTemplate_serializeObject is used because it is needed to test it specifically */
-	res = KSI_TlvTemplate_serializeObject(ctx, sig, 0x0800, 1, 0, KSI_TLV_TEMPLATE(KSI_Signature), &out, &out_len);
+	res = KSI_TlvTemplate_serializeObject(ctx, sigIsNcSet, 0x0800, 1, 0, KSI_TLV_TEMPLATE(KSI_Signature), &outIsNcSet, &out_len);
 
-	CuAssert(tc, "Failed to serialize signature", res == KSI_OK && sig != NULL);
-	CuAssert(tc, "Failed to set isNonCritical flag", *out & IS_NON_CRITICAL_FLAG_MASK);
+	CuAssert(tc, "Failed to serialize signature", res == KSI_OK && out_len != 0);
+	CuAssert(tc, "Failed to set isNonCritical flag", *outIsNcSet & IS_NON_CRITICAL_FLAG_MASK);
 
 
-	res = KSI_Signature_parse(ctx, in, in_len, &sig);
-	CuAssert(tc, "Failed to parse signature", res == KSI_OK && sig != NULL);
+	res = KSI_Signature_parse(ctx, in, in_len, &sigIsFwdSet);
+	CuAssert(tc, "Failed to parse signature", res == KSI_OK && sigIsFwdSet != NULL);
 
+	out_len = 0;
 	/* KSI_TlvTemplate_serializeObject is used because it is needed to test it specifically */
-	res = KSI_TlvTemplate_serializeObject(ctx, sig, 0x0800, 0, 1, KSI_TLV_TEMPLATE(KSI_Signature), &out, &out_len);
-	
-	CuAssert(tc, "Failed to serialize signature", res == KSI_OK && sig != NULL);
-	CuAssert(tc, "Failed to set isForward flag", *out & IS_FORWARD_FLAG_MASK);
+	res = KSI_TlvTemplate_serializeObject(ctx, sigIsFwdSet, 0x0800, 0, 1, KSI_TLV_TEMPLATE(KSI_Signature), &outIsFwdSet, &out_len);
+
+	CuAssert(tc, "Failed to serialize signature", res == KSI_OK && out_len != 0);
+	CuAssert(tc, "Failed to set isForward flag", *outIsFwdSet & IS_FORWARD_FLAG_MASK);
 
 
-	KSI_free(out);
-	KSI_Signature_free(sig);
+	KSI_free(outIsNcSet);
+	KSI_free(outIsFwdSet);
+	KSI_Signature_free(sigIsNcSet);
+	KSI_Signature_free(sigIsFwdSet);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -94,7 +99,8 @@ static void TestWriteBytesFlags(CuTest* tc) {
 
 	FILE *f = NULL;
 
-	KSI_Signature *sig = NULL;
+	KSI_Signature *sigIsNcSet = NULL;
+	KSI_Signature *sigIsFwdSet = NULL;
 
 	unsigned char no_option = 0x00;
 
@@ -109,26 +115,28 @@ static void TestWriteBytesFlags(CuTest* tc) {
 	fclose(f);
 
 
-	res = KSI_Signature_parse(ctx, in, in_len, &sig);
-	CuAssert(tc, "Failed to parse signature", res == KSI_OK && sig != NULL);
+	res = KSI_Signature_parse(ctx, in, in_len, &sigIsNcSet);
+	CuAssert(tc, "Failed to parse signature", res == KSI_OK && sigIsNcSet != NULL);
 
 	/* KSI_TlvTemplate_writeBytes is used because it is needed to test it specifically */
-	res = KSI_TlvTemplate_writeBytes(ctx, sig, 0x0800, 1, 0, KSI_TLV_TEMPLATE(KSI_Signature), out, TEST_SIG_BUF_SIZE, &out_len, no_option);
+	res = KSI_TlvTemplate_writeBytes(ctx, sigIsNcSet, 0x0800, 1, 0, KSI_TLV_TEMPLATE(KSI_Signature), out, TEST_SIG_BUF_SIZE, &out_len, no_option);
 
-	CuAssert(tc, "Failed to serialize signature", res == KSI_OK && sig != NULL);
+	CuAssert(tc, "Failed to serialize signature", res == KSI_OK && out_len != 0);
 	CuAssert(tc, "Failed to set isNonCritical flag", out[0] & IS_NON_CRITICAL_FLAG_MASK);
 
 
-	res = KSI_Signature_parse(ctx, in, in_len, &sig);
-	CuAssert(tc, "Failed to parse signature", res == KSI_OK && sig != NULL);
+	res = KSI_Signature_parse(ctx, in, in_len, &sigIsFwdSet);
+	CuAssert(tc, "Failed to parse signature", res == KSI_OK && sigIsFwdSet != NULL);
 
+	out_len = 0;
 	/* KSI_TlvTemplate_writeBytes is used because it is needed to test it specifically */
-	res = KSI_TlvTemplate_writeBytes(ctx, sig, 0x0800, 0, 1, KSI_TLV_TEMPLATE(KSI_Signature), out, TEST_SIG_BUF_SIZE, &out_len, no_option);
-	
-	CuAssert(tc, "Failed to serialize signature", res == KSI_OK && sig != NULL);
+	res = KSI_TlvTemplate_writeBytes(ctx, sigIsFwdSet, 0x0800, 0, 1, KSI_TLV_TEMPLATE(KSI_Signature), out, TEST_SIG_BUF_SIZE, &out_len, no_option);
+
+	CuAssert(tc, "Failed to serialize signature", res == KSI_OK && out_len != 0);
 	CuAssert(tc, "Failed to set isForward flag", out[0] & IS_FORWARD_FLAG_MASK);
 
-	KSI_Signature_free(sig);
+	KSI_Signature_free(sigIsNcSet);
+	KSI_Signature_free(sigIsFwdSet);
 
 #undef TEST_SIGNATURE_FILE
 }
