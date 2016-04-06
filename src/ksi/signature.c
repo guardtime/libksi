@@ -2238,7 +2238,7 @@ static int verifyIdentityTag(KSI_HashChainLinkList *chainList, KSI_CTX *ctx) {
 
 		/* Verify legacyId. */
 		if (id != NULL) {
-			KSI_OctetString_LegacyId_getUtf8String(id, &tmp);
+			res = KSI_OctetString_LegacyId_getUtf8String(id, &tmp);
 			if (res != KSI_OK) {
 				KSI_pushError(ctx, res, NULL);
 				goto cleanup;

@@ -26,7 +26,7 @@
 
 extern KSI_CTX *ctx;
 
-static int KSI_HashChain_appendLink(KSI_DataHash *siblingHash, KSI_Utf8String *legacyId, KSI_MetaData *metaData, int isLeft, int levelCorrection, KSI_LIST(KSI_HashChainLink) **chain) {
+static int KSI_HashChain_appendLink(KSI_DataHash *siblingHash, KSI_OctetString *legacyId, KSI_MetaData *metaData, int isLeft, int levelCorrection, KSI_LIST(KSI_HashChainLink) **chain) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_HashChainLink *link = NULL;
 	KSI_LIST(KSI_HashChainLink) *tmp = NULL;
