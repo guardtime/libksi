@@ -229,7 +229,7 @@ int KSI_Policy_getCalendarBased(KSI_CTX *ctx, const KSI_Policy **policy) {
 
 	static const Rule rules1[] = {
 		{RULE_TYPE_BASIC, KSI_VerificationRule_SignatureDoesNotContainPublication},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches},
+		{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch},
 		{RULE_TYPE_BASIC, NULL}
 	};
 

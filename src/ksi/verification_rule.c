@@ -1122,7 +1122,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
@@ -1151,7 +1151,7 @@ int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches(KSI_
 	ctx = info->ctx;
 	sig = info->userData.sig;
 
-	KSI_LOG_info(ctx, "Verify aggregation chain right link count and right link hashes");
+	KSI_LOG_info(ctx, "Verify calendar chain right link count and right link hashes");
 
 	CATCH_KSI_ERR(KSI_CalendarHashChain_getHashChain(sig->calendarChain, &sigList));
 
@@ -1166,7 +1166,7 @@ int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches(KSI_
 	CATCH_KSI_ERR(countHashChainRightLinks(extSigList, &extSigListNofRightLinks));
 
 	if (sigListNofRightLinks != extSigListNofRightLinks) {
-		KSI_LOG_info(ctx, "Extended signature aggregation chain right links count does not match with initial signature aggregation chain right links count.");
+		KSI_LOG_info(ctx, "Extended signature calendar chain right links count does not match with initial signature calendar chain right links count.");
 		result->stepsFailed |= KSI_VERIFY_CALCHAIN_ONLINE;
 		VERIFICATION_RESULT(VER_RES_FAIL, VER_ERR_CAL_4);
 		res = KSI_OK;
@@ -1197,7 +1197,7 @@ int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches(KSI_
 		CATCH_KSI_ERR(KSI_HashChainLink_getImprint(extSigRightLink, &extSigRightLinkHash));
 
 		if (!KSI_DataHash_equals(sigRightLinkHash, extSigRightLinkHash)) {
-			KSI_LOG_info(ctx, "Extended signature contains different aggregation hash chain right link");
+			KSI_LOG_info(ctx, "Extended signature contains different calendar hash chain right link");
 			KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Signature right link hash     :", sigRightLinkHash);
 			KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Ext signature right link hash :", extSigRightLinkHash);
 			result->stepsFailed |= KSI_VERIFY_CALCHAIN_ONLINE;

@@ -1260,7 +1260,7 @@ static void TestCalendarBasedPolicy_FAIL_WithoutPublicationRecord(CuTest* tc) {
 	KSI_RuleVerificationResult expected = {
 		VER_RES_FAIL,
 		VER_ERR_CAL_4,
-		"KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches"
+		"KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
