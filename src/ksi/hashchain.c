@@ -124,7 +124,7 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 			}
 			break;
 		case 0x02:
-			res = KSI_OctetString_extract(tmpOctStr, &imprint, &imprint_len);
+			res = KSI_OctetString_extract(legacyId, &imprint, &imprint_len);
 			if (res != KSI_OK) {
 				KSI_pushError(ctx, res, NULL);
 				goto cleanup;
