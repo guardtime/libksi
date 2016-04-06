@@ -2188,7 +2188,6 @@ cleanup:
 static int verifyIdentityTag(KSI_HashChainLinkList *chainList, KSI_CTX *ctx) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i;
-	KSI_Utf8String *tmp = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2238,17 +2237,19 @@ static int verifyIdentityTag(KSI_HashChainLinkList *chainList, KSI_CTX *ctx) {
 
 		/* Verify legacyId. */
 		if (id != NULL) {
+			KSI_Utf8String *tmp = NULL;
+			/* If we get a response, then the field is valid. */
 			res = KSI_OctetString_LegacyId_getUtf8String(id, &tmp);
 			if (res != KSI_OK) {
 				KSI_pushError(ctx, res, NULL);
 				goto cleanup;
 			}
+			KSI_Utf8String_free(tmp);
 		}
 	}
 
 	res = KSI_OK;
 cleanup:
-	KSI_Utf8String_free(tmp);
 
 	return res;
 }
