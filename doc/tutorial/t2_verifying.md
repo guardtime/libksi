@@ -154,7 +154,7 @@ No special set up is needed for calendar based policy. The interfaces for gettin
 For allowing extension of signature for publication based policies, we have to enable it in the verification context by
 calling #KSI_VerificationContext_setExtendingAllowed. By default the extending is not allowed and this can lead to
 inconclusive verification results if a suitable publication is not found. Note: if extending is allowed, a valid extender
-should also be configured (see Basics tutorial).
+should also be configured (see [Basics Tutorial](tutorial/t0_basics.md)).
 
 ~~~~~~~~~~{.c}
 
@@ -280,7 +280,104 @@ It is also important to point out that the context, if freed, must be freed last
 
 ~~~~~~~~~~
 
-9. Building your own policies
+9. Migrating to the new verification functionality
+---------------------------------------------------
+
+The above described new policy-based verification replaces the old verification functionality. In particular, the following interfaces
+are deprecated and will be removed from future SDK releases:
+
+- int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx)
+- int KSI_Signature_verifyAggregated(KSI_Signature *sig, KSI_CTX *ctx, KSI_uint64_t level)
+- int KSI_Signature_verifyOnline(KSI_Signature *sig, KSI_CTX *ctx)
+- int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, size_t doc_len)
+- int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *docHash)
+- int KSI_Signature_verifyWithPublication(KSI_Signature *sig, KSI_CTX *ctx, const KSI_PublicationData *publication)
+- int KSI_Signature_verifyAggregatedHash(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel)
+- int KSI_Signature_getVerificationResult(KSI_Signature *sig, const KSI_VerificationResult **info)
+
+When replacing the usage of deprecated verification functionality, the first step is to chain relevant policies for verification. If we
+do not plan to provide a publication string for verification, we can skip the user publication based policy. If we plan to perform only
+publication based verification without extending the signature, we can skip the calendar based policy. If we only want to verify
+an extended signature, we can skip all but the calendar based policy. Note: for brevity, all error handling has been removed in the
+following examples.
+
+~~~~~~~~~~{.c}
+
+	/* For replacing all but one of the deprecated verification interfaces we need to chain all available policies as seen below. */
+	/* Exception: for #KSI_Signature_verifyOnline we can skip to calendar based policy. */
+	KSI_Policy_getKeyBased(ksi, &policy);
+	KSI_Policy_clone(ksi, policy, &keyPolicy);
+	KSI_Policy_getPublicationsFileBased(ksi, &policy);
+	KSI_Policy_clone(ksi, policy, &pubFilePolicy);
+	KSI_Policy_setFallback(ksi, keyPolicy, pubFilePolicy);
+
+	/* If we do not supply a publication string, the user publication based policy can be skipped. */
+	KSI_Policy_getUserProvidedPublicationBased(ksi, &policy);
+	KSI_Policy_clone(ksi, policy, &pubStringPolicy);
+	KSI_Policy_setFallback(ksi, pubFilePolicy, pubStringPolicy);
+
+	/* For publication based verification with #KSI_Signature_verifyWithPublication, we can skip the calendar based policy. */
+	/* For #KSI_Signature_verifyOnline it is enough to use just the calendar based policy. */
+	KSI_Policy_getCalendarBased(ksi, &calendarPolicy);
+	KSI_Policy_setFallback(ksi, pubStringPolicy, calendarPolicy);
+
+~~~~~~~~~~
+
+Depending on the policies we chained together for verification and on the deprecated verification interface we plan to replace, we need
+to set up relevant data in the verification context:
+
+~~~~~~~~~~{.c}
+
+	/* The signature is the only mandatory component in the verification context. */
+	KSI_VerificationContext_create(ksi, context);
+	KSI_VerificationContext_setSignature(ksi, sig);
+
+	/* Publications can be skipped if we only plan to verify an extended signature with #KSI_Signature_verifyOnline. */
+	KSI_VerificationContext_setPublicationsFile(context, pubFile);
+	KSI_VerificationContext_setUserPublication(context, pubString);
+
+	/* Extending must be allowed if we want to allow extending in a publication based policy. */
+	/* By default extending is not allowed in a publication based policy. */
+	KSI_VerificationContext_setExtendingAllowed(context, 1);
+
+	/* Setting the document hash is mandatory for #KSI_Signature_verifyDataHash and #KSI_Signature_verifyAggregatedHash. */
+	/* The document hash, if provided, will be verified as part of any predefined policy. */
+	KSI_VerificationContext_setDocumentHash(context, hsh);
+
+	/* Setting the initial aggregation level is mandatory for #KSI_Signature_verifyAggregated and #KSI_Signature_verifyAggregatedHash. */
+	/* By default initial aggregation level 0 is used in verification. */
+	KSI_VerificationContext_setAggregationLevel(context, level);
+
+~~~~~~~~~~
+
+The verification result is an output parameter of #KSI_SignatureVerifier_verify, so the #KSI_Signature_getVerificationResult interface
+is now obsolete. A typical verification result inspection could look like this:
+
+~~~~~~~~~~{.c}
+
+	res = KSI_SignatureVerifier_verify(keyPolicy, context, &result);
+	if (res == KSI_OK) {
+		switch (result->finalResult.resultCode) {
+			case VER_RES_OK:
+				printf("Verification successful, signature is valid.\n");
+				break;
+			case VER_RES_FAIL:
+				printf("Verification failed, signature is not valid.\n");
+				printf("Verification error code: %d\n", result->finalResult.errorCode);
+				break;
+			case VER_RES_NA:
+				printf("Verification inconclusive, not enough data to prove or disprove signature correctness.\n");
+				break;
+	} else {
+		/* Error handling, policy could not be verified. */
+	}
+
+~~~~~~~~~~
+
+If we need to verify a document, as previously implemented by #KSI_Signature_verifyDocument, we need to calculate a hash of the document
+and choose an appropriate verification policy. An example of this can be found above, in chapter 5.
+
+10. Building your own policies
 -----------------------------
 
 If the predefined policies do not meet our needs of verification, we can still build our own policies. For this we need
@@ -452,3 +549,4 @@ upper level rules.
 on the same level is checked. This is the only exception where verification is guaranteed to continue even if the result is not
 #KSI_RES_OK.
 8. The result of the last checked rule on any level is always propagated one level higher.
+
