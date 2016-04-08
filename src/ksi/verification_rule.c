@@ -2014,7 +2014,17 @@ int KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(
 
 	CATCH_KSI_ERR(KSI_PublicationData_getTime(pubRec->publishedData, &pubDataPubTime));
 
-	CATCH_KSI_ERR(getExtendedCalendarHashChain(info, pubDataPubTime, &extCalHashChain));
+	res = getExtendedCalendarHashChain(info, pubDataPubTime, &extCalHashChain);
+	if (res != KSI_OK) {
+		if (res = KSI_EXTEND_WRONG_CAL_CHAIN) {
+			result->stepsFailed |= KSI_VERIFY_PUBLICATION_WITH_PUBFILE;
+			VERIFICATION_RESULT(VER_RES_FAIL, VER_ERR_PUB_1);
+			res = KSI_OK;
+		} else {
+			VERIFICATION_RESULT(VER_RES_NA, VER_ERR_GEN_2);
+		}
+		goto cleanup;
+	}
 
 	CATCH_KSI_ERR(KSI_CalendarHashChain_aggregate(extCalHashChain, &extCalRootHash));
 
@@ -2357,7 +2367,17 @@ int KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse(KSI_
 		goto cleanup;
 	}
 
-	CATCH_KSI_ERR(getExtendedCalendarHashChain(info, usrPubTime, &extCalHashChain));
+	res = getExtendedCalendarHashChain(info, usrPubTime, &extCalHashChain);
+	if (res != KSI_OK) {
+		if (res = KSI_EXTEND_WRONG_CAL_CHAIN) {
+			result->stepsFailed |= KSI_VERIFY_PUBLICATION_WITH_PUBSTRING;
+			VERIFICATION_RESULT(VER_RES_FAIL, VER_ERR_PUB_1);
+			res = KSI_OK;
+		} else {
+			VERIFICATION_RESULT(VER_RES_NA, VER_ERR_GEN_2);
+		}
+		goto cleanup;
+	}
 
 	CATCH_KSI_ERR(KSI_CalendarHashChain_aggregate(extCalHashChain, &extRootHash));
 
