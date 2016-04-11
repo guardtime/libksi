@@ -34,11 +34,61 @@ extern "C" {
  * @{
  */
 
+#define KSI_TREE_BUILDER_STACK_LEN 0x100
+
+typedef struct KSI_TreeNode_st KSI_TreeNode;
+
+struct KSI_TreeNode_st {
+	KSI_CTX *ctx;
+	KSI_DataHash *hash;
+	KSI_MetaData *metaData;
+	unsigned level;
+	KSI_TreeNode *parent;
+	KSI_TreeNode *leftChild;
+	KSI_TreeNode *rightChild;
+};
+
+typedef struct {
+	int (*fn)(KSI_TreeNode *in, void *c, KSI_TreeNode **out);
+	void *c;
+} KSI_TreeBuilderLeafProcessor;
+
+KSI_DEFINE_LIST(KSI_TreeBuilderLeafProcessor);
+
+struct KSI_TreeBuilder_st {
+	/** KSI context. */
+	KSI_CTX *ctx;
+	/** Reference counter for the object. */
+	size_t ref;
+	/** The root node of the computed tree. If set, the computation is finished. */
+	KSI_TreeNode *rootNode;
+	/** Hashing algorithm for the internal nodes. */
+	KSI_HashAlgorithm algo;
+	/** Stack of the root nodes of complete binary trees. */
+	KSI_TreeNode *stack[KSI_TREE_BUILDER_STACK_LEN];
+	/** Callback functions for the leaf node. They are executed as a sequence
+	 * where the last output tree node is the input node for the next call. The
+	 * final output node is added to the tree. */
+	KSI_LIST(KSI_TreeBuilderLeafProcessor) *cbList;
+};
+
 /**
  * The tree leaf handle is used to generate an aggregation hash chain for
  * a specific leaf added to the tree builder.
  */
 typedef struct KSI_TreeLeafHandle_st KSI_TreeLeafHandle;
+KSI_DEFINE_LIST(KSI_TreeLeafHandle);
+KSI_DEFINE_REF(KSI_TreeLeafHandle);
+
+/**
+ * TODO!
+ */
+int KSI_TreeNode_new(KSI_CTX *ctx, KSI_DataHash *hash, KSI_MetaData *metaData, int level, KSI_TreeNode **node);
+
+/**
+ * TODO!
+ */
+void KSI_TreeNode_free(KSI_TreeNode *node);
 
 /**
  * Free the tree leaf handle.

@@ -1145,19 +1145,19 @@ static int stringify(const KSI_TLV *tlv, int indent, char *str, size_t size, siz
 		goto cleanup;
 	}
 	if (indent != 0) {
-		l += (size_t) KSI_snprintf(str + l, NOTNEG(size - l), "\n%*s", indent, "");
+		l += KSI_snprintf(str + l, NOTNEG(size - l), "\n%*s", indent, "");
 	}
 	if (tlv->tag > 0xff) {
-		l += (size_t) KSI_snprintf(str + l, NOTNEG(size - l), "TLV[0x%04x]", tlv->tag);
+		l += KSI_snprintf(str + l, NOTNEG(size - l), "TLV[0x%04x]", tlv->tag);
 	} else {
-		l += (size_t) KSI_snprintf(str + l, NOTNEG(size - l), "TLV[0x%02x]", tlv->tag);
+		l += KSI_snprintf(str + l, NOTNEG(size - l), "TLV[0x%02x]", tlv->tag);
 	}
 
-	l += (size_t) KSI_snprintf(str + l, NOTNEG(size - l), " %c", tlv->isNonCritical ? 'L' : '-');
-	l += (size_t) KSI_snprintf(str + l, NOTNEG(size - l), " %c", tlv->isForwardable ? 'F' : '-');
+	l += KSI_snprintf(str + l, NOTNEG(size - l), " %c", tlv->isNonCritical ? 'L' : '-');
+	l += KSI_snprintf(str + l, NOTNEG(size - l), " %c", tlv->isForwardable ? 'F' : '-');
 
 	if (tlv->nested != NULL) {
-		l += (size_t) KSI_snprintf(str + l, NOTNEG(size - l), ":");
+		l += KSI_snprintf(str + l, NOTNEG(size - l), ":");
 		for (i = 0; i < KSI_TLVList_length(tlv->nested); i++) {
 			KSI_TLV *tmp = NULL;
 
@@ -1168,9 +1168,9 @@ static int stringify(const KSI_TLV *tlv, int indent, char *str, size_t size, siz
 			if (res != KSI_OK) goto cleanup;
 		}
 	} else {
-		l += (size_t) KSI_snprintf(str + l, NOTNEG(size - l), " len = %llu : ", (unsigned long long)tlv->datap_len);
+		l += KSI_snprintf(str + l, NOTNEG(size - l), " len = %llu : ", (unsigned long long)tlv->datap_len);
 		for (i = 0; i < tlv->datap_len; i++) {
-			l += (size_t) KSI_snprintf(str + l, NOTNEG(size - l), "%02x", tlv->datap[i]);
+			l += KSI_snprintf(str + l, NOTNEG(size - l), "%02x", tlv->datap[i]);
 		}
 	}
 

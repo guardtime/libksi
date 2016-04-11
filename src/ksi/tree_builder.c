@@ -23,60 +23,24 @@
 #include "tree_builder.h"
 
 #define IS_VALID_LEVEL(level) (((level) >= 0) && ((level) <= 0xff))
-#define STACK_LEN 0x100
 
-typedef struct KSI_TreeNode_st KSI_TreeNode;
-
-typedef struct {
-	int (*fn)(KSI_TreeNode *in, void *c, KSI_TreeNode **out);
-	void *c;
-} TreeBuilderCB;
-
-KSI_DEFINE_LIST(TreeBuilderCB);
-KSI_IMPLEMENT_LIST(TreeBuilderCB, NULL);
-
-struct KSI_TreeNode_st {
-	KSI_CTX *ctx;
-	KSI_DataHash *hash;
-	KSI_MetaData *metaData;
-	unsigned level;
-	KSI_TreeNode *parent;
-	KSI_TreeNode *leftChild;
-	KSI_TreeNode *rightChild;
-};
-
-struct KSI_TreeBuilder_st {
-	/** KSI context. */
-	KSI_CTX *ctx;
-	/** Reference counter for the object. */
-	size_t ref;
-	/** The root node of the computed tree. If set, the computation is finished. */
-	KSI_TreeNode *rootNode;
-	/** Hashing algorithm for the internal nodes. */
-	KSI_HashAlgorithm algo;
-	/** Stack of the root nodes of complete binary trees. */
-	KSI_TreeNode *stack[STACK_LEN];
-	/** Callback functions for the leaf node. They are executed as a sequence
-	 * where the last output tree node is the input node for the next call. The
-	 * final output node is added to the tree. */
-	KSI_LIST(TreeBuilderCB) *cbList;
-};
+KSI_IMPLEMENT_LIST(KSI_TreeBuilderLeafProcessor, NULL);
 
 struct KSI_TreeLeafHandle_st {
 	size_t ref;
-	KSI_TreeBuilder *builder;
+	KSI_TreeBuilder *pBuilder;
 	KSI_TreeNode *leafNode;
 };
 
-static KSI_IMPLEMENT_REF(KSI_TreeBuilder);
 static KSI_DEFINE_REF(KSI_TreeBuilder);
+static KSI_IMPLEMENT_REF(KSI_TreeBuilder);
+KSI_IMPLEMENT_REF(KSI_TreeLeafHandle);
 
-static void KSI_TreeNode_free(KSI_TreeNode *node);
+KSI_IMPLEMENT_LIST(KSI_TreeLeafHandle, KSI_TreeLeafHandle_free);
+
 static int KSI_TreeNode_join(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeNode *leftSibling, KSI_TreeNode *rightSibling, KSI_TreeNode **root);
 
-KSI_DEFINE_REF(KSI_TreeNode);
-
-static void KSI_TreeNode_free(KSI_TreeNode *node) {
+void KSI_TreeNode_free(KSI_TreeNode *node) {
 	if (node != NULL ) {
 		KSI_DataHash_free(node->hash);
 		KSI_MetaData_free(node->metaData);
@@ -87,7 +51,7 @@ static void KSI_TreeNode_free(KSI_TreeNode *node) {
 }
 
 
-static int KSI_TreeNode_new(KSI_CTX *ctx, KSI_DataHash *hash, KSI_MetaData *metaData, int level, KSI_TreeNode **node) {
+int KSI_TreeNode_new(KSI_CTX *ctx, KSI_DataHash *hash, KSI_MetaData *metaData, int level, KSI_TreeNode **node) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TreeNode *tmp = NULL;
 
@@ -300,6 +264,12 @@ int KSI_TreeBuilder_new(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeBuilder **
 	tmp->cbList = NULL;
 	memset(tmp->stack, 0, sizeof(tmp->stack));
 
+	res = KSI_TreeBuilderLeafProcessorList_new(&tmp->cbList);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
 	*builder = tmp;
 	tmp = NULL;
 
@@ -318,11 +288,11 @@ void KSI_TreeBuilder_free(KSI_TreeBuilder *builder) {
 		KSI_TreeNode_free(builder->rootNode);
 
 		/* If the tree was not closed propperly, we have to check the stack. */
-		for (i = 0; i < STACK_LEN; i++) {
+		for (i = 0; i < KSI_TREE_BUILDER_STACK_LEN; i++) {
 			KSI_TreeNode_free(builder->stack[i]);
 		}
 
-		TreeBuilderCBList_free(builder->cbList);
+		KSI_TreeBuilderLeafProcessorList_free(builder->cbList);
 
 		KSI_free(builder);
 	}
@@ -380,7 +350,8 @@ cleanup:
 
 static int processAndInsertNode(KSI_TreeBuilder *builder, KSI_TreeNode *node) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_TreeNode *tmp = node;
+	KSI_TreeNode *localRoot = NULL;
+	KSI_TreeNode *tmp = NULL;
 	size_t i;
 
 	if (builder == NULL || node == NULL) {
@@ -388,19 +359,27 @@ static int processAndInsertNode(KSI_TreeBuilder *builder, KSI_TreeNode *node) {
 		goto cleanup;
 	}
 
-	for (i = 0; i < TreeBuilderCBList_length(builder->cbList); i++) {
-		TreeBuilderCB *cb = NULL;
-		res = TreeBuilderCBList_elementAt(builder->cbList, i, &cb);
+	for (i = 0; i < KSI_TreeBuilderLeafProcessorList_length(builder->cbList); i++) {
+		KSI_TreeBuilderLeafProcessor *cb = NULL;
+
+		tmp = NULL;
+
+		res = KSI_TreeBuilderLeafProcessorList_elementAt(builder->cbList, i, &cb);
 		if (res != KSI_OK || cb == NULL || cb->fn == NULL) {
 			res = KSI_INVALID_STATE;
 			goto cleanup;
 		}
 
-		res = cb->fn(tmp, cb->c, &tmp);
+		res = cb->fn((localRoot == NULL ? node : localRoot), cb->c, &tmp);
 		if (res != KSI_OK) goto cleanup;
+
+		if (tmp != NULL) {
+			res = KSI_TreeNode_join(builder->ctx, builder->algo, localRoot == NULL ? node : localRoot, tmp, &localRoot);
+			if (res != KSI_OK) goto cleanup;
+		}
 	}
 
-	res = insertNode(builder, tmp);
+	res = insertNode(builder, localRoot == NULL ? node : localRoot);
 	if (res != KSI_OK) goto cleanup;
 
 	tmp = NULL;
@@ -450,7 +429,7 @@ static int addLeaf(KSI_TreeBuilder *builder, KSI_DataHash *hsh, KSI_MetaData *me
 			goto cleanup;
 		}
 
-		tmp->builder = KSI_TreeBuilder_ref(builder);
+		tmp->pBuilder = builder;
 		tmp->leafNode = node;
 		tmp->ref = 1;
 
@@ -492,32 +471,27 @@ int KSI_TreeBuilder_close(KSI_TreeBuilder *builder) {
 
 	KSI_ERR_clearErrors(builder->ctx);
 
-	/* Make sure the builder is in a correct state. */
-	if (builder->rootNode) {
-		KSI_pushError(builder->ctx, res = KSI_INVALID_STATE, "Double close.");
-		goto cleanup;
-	}
+	if (builder->rootNode == NULL) {
+		/* Finalize the forest of complete binary trees into a single tree. */
+		for (i = 0; i < KSI_TREE_BUILDER_STACK_LEN; i++) {
+			KSI_TreeNode *node = builder->stack[i];
+			builder->stack[i] = NULL;
 
-	/* Finalize the forest of complete binary trees into a single tree. */
-	for (i = 0; i < STACK_LEN; i++) {
-		KSI_TreeNode *node = builder->stack[i];
-		builder->stack[i] = NULL;
+			if (node == NULL) continue;
 
-		if (node == NULL) continue;
+			if (root == NULL) {
+				root = node;
+			} else {
+				res = KSI_TreeNode_join(builder->ctx, builder->algo, node, root, &tmp);
+				if (res != KSI_OK) goto cleanup;
 
-		if (root == NULL) {
-			root = node;
-		} else {
-			res = KSI_TreeNode_join(builder->ctx, builder->algo, node, root, &tmp);
-			if (res != KSI_OK) goto cleanup;
-
-			root = tmp;
-			tmp = NULL;
+				root = tmp;
+				tmp = NULL;
+			}
 		}
-
 	}
 
-
+	/* Check if all is well. */
 	if (root == NULL) {
 		KSI_pushError(builder->ctx, res = KSI_INVALID_STATE, "The tree has no leafs.");
 		goto cleanup;
@@ -536,7 +510,6 @@ cleanup:
 
 void KSI_TreeLeafHandle_free(KSI_TreeLeafHandle *handle) {
 	if (handle != NULL && --handle->ref == 0) {
-		KSI_TreeBuilder_free(handle->builder);
 		KSI_free(handle);
 	}
 }
@@ -652,50 +625,50 @@ int KSI_TreeLeafHandle_getAggregationChain(KSI_TreeLeafHandle *handle, KSI_Aggre
 	}
 
 	/* Create new object. */
-	res = KSI_AggregationHashChain_new(handle->builder->ctx, &tmp);
+	res = KSI_AggregationHashChain_new(handle->pBuilder->ctx, &tmp);
 	if (res != KSI_OK) {
-		KSI_pushError(handle->builder->ctx, res, NULL);
+		KSI_pushError(handle->pBuilder->ctx, res, NULL);
 		goto cleanup;
 	}
 
 	/* Create new list. */
 	res = KSI_HashChainLinkList_new(&links);
 	if (res != KSI_OK) {
-		KSI_pushError(handle->builder->ctx, res, NULL);
+		KSI_pushError(handle->pBuilder->ctx, res, NULL);
 		goto cleanup;
 	}
 
 	/* Extract the hash chain links. */
 	res = getHashChainLinks(handle->leafNode, links);
 	if (res != KSI_OK) {
-		KSI_pushError(handle->builder->ctx, res, NULL);
+		KSI_pushError(handle->pBuilder->ctx, res, NULL);
 		goto cleanup;
 	}
 
 	/* Set the hash chain links to the container. */
 	res = KSI_AggregationHashChain_setChain(tmp, links);
 	if (res != KSI_OK) {
-		KSI_pushError(handle->builder->ctx, res, NULL);
+		KSI_pushError(handle->pBuilder->ctx, res, NULL);
 		goto cleanup;
 	}
 
 	/* Set the input hash. */
 	res = KSI_AggregationHashChain_setInputHash(tmp, KSI_DataHash_ref(handle->leafNode->hash));
 	if (res != KSI_OK) {
-		KSI_pushError(handle->builder->ctx, res, NULL);
+		KSI_pushError(handle->pBuilder->ctx, res, NULL);
 		goto cleanup;
 	}
 
 	/* Set the aggregation algorithm. */
-	res = KSI_Integer_new(handle->builder->ctx, handle->builder->algo, &algoId);
+	res = KSI_Integer_new(handle->pBuilder->ctx, handle->pBuilder->algo, &algoId);
 	if (res != KSI_OK) {
-		KSI_pushError(handle->builder->ctx, res, NULL);
+		KSI_pushError(handle->pBuilder->ctx, res, NULL);
 		goto cleanup;
 	}
 
 	res = KSI_AggregationHashChain_setAggrHashId(tmp, algoId);
 	if (res != KSI_OK) {
-		KSI_pushError(handle->builder->ctx, res, NULL);
+		KSI_pushError(handle->pBuilder->ctx, res, NULL);
 		goto cleanup;
 	}
 	algoId = NULL;
