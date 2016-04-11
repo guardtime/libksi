@@ -675,7 +675,7 @@ int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain
 	res = (sig->calendarChain == NULL) ?
 			/* Calculate calendar input hash from signature aggregation hash chain list. */
 			KSI_AggregationHashChainList_aggregate(sig->aggregationChainList, sig->ctx, 0, &oldInputHash) :
-			/* Get calendar inout hash from calendar hash chain. */
+			/* Get calendar input hash from calendar hash chain. */
 			KSI_CalendarHashChain_getInputHash(sig->calendarChain, &oldInputHash);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
@@ -694,19 +694,21 @@ int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain
 		goto cleanup;
 	}
 
-	for (i = 0; i < KSI_TLVList_length(nestedList); i++) {
-		res = KSI_TLVList_elementAt(nestedList,i, &oldCalChainTlv);
-		if (res != KSI_OK) {
-			KSI_pushError(sig->ctx, res, NULL);
-			goto cleanup;
-		}
+	if (sig->calendarChain != NULL) {
+		for (i = 0; i < KSI_TLVList_length(nestedList); i++) {
+			res = KSI_TLVList_elementAt(nestedList,i, &oldCalChainTlv);
+			if (res != KSI_OK) {
+				KSI_pushError(sig->ctx, res, NULL);
+				goto cleanup;
+			}
 
-		if (oldCalChainTlv == NULL) {
-			KSI_pushError(sig->ctx, res = KSI_INVALID_SIGNATURE, "Signature does not contain calendar chain.");
-			goto cleanup;
-		}
+			if (oldCalChainTlv == NULL) {
+				KSI_pushError(sig->ctx, res = KSI_INVALID_SIGNATURE, "Signature TLV element missing.");
+				goto cleanup;
+			}
 
-		if (KSI_TLV_getTag(oldCalChainTlv) == 0x0802) break;
+			if (KSI_TLV_getTag(oldCalChainTlv) == 0x0802) break;
+		}
 	}
 
 	res = KSI_TLV_new(sig->ctx, 0x0802, 0, 0, &newCalChainTlv);
@@ -721,7 +723,11 @@ int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain
 		goto cleanup;
 	}
 
-	res = KSI_TLV_replaceNestedTlv(sig->baseTlv, oldCalChainTlv, newCalChainTlv);
+	res = (sig->calendarChain == NULL) ?
+			/* In case there is no calendar hash chain attached, append a new one. */
+			KSI_TLV_appendNestedTlv(sig->baseTlv, newCalChainTlv) :
+			/* Otherwise replace the calendar hash chain. */
+			KSI_TLV_replaceNestedTlv(sig->baseTlv, oldCalChainTlv, newCalChainTlv);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
 		goto cleanup;
