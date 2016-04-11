@@ -197,7 +197,7 @@ static void testRFC3161WrongChainIndex(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_verifySignature(ctx, sig);
-	CuAssert(tc, "Failed to verify valid document", res == KSI_OK);
+	CuAssert(tc, "Failed to verify valid document", res == KSI_VERIFICATION_FAILURE);
 
 	KSI_Signature_free(sig);
 
