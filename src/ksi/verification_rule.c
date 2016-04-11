@@ -202,7 +202,7 @@ static int rfc3161_verify(KSI_CTX *ctx, const KSI_Signature *sig) {
 
 		if (KSI_Integer_compare(ch1, ch2) != 0) {
 			KSI_LOG_debug(ctx, "Aggregation hash chain and RFC 3161 chain index mismatch.");
-			KSI_pushError(ctx, res = KSI_VERIFICATION_FAILURE, "Aggregation chain and RFC 3161 aggregation index mismatch.");
+			KSI_pushError(ctx, res = KSI_VERIFICATION_FAILURE, "Aggregation hash chain and RFC 3161 aggregation index mismatch.");
 			goto cleanup;
 		}
 	}
