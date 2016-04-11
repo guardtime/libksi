@@ -87,8 +87,6 @@ static void openSslGlobal_cleanup(void) {
 
 
 static int KSI_MD2hashAlg(EVP_MD *hash_alg) {
-	if (hash_alg == EVP_sha224())
-		return KSI_HASHALG_SHA2_224;
 	if (hash_alg == EVP_sha256())
 		return KSI_HASHALG_SHA2_256;
 #ifndef OPENSSL_NO_SHA
@@ -1029,13 +1027,13 @@ cleanup:
 int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, size_t data_len, const char *algoOid, const unsigned char *signature, size_t signature_len, const KSI_PKICertificate *certificate) {
 	int res;
 	ASN1_OBJECT* algorithm = NULL;
-    EVP_MD_CTX md_ctx;
-    X509 *x509 = NULL;
+	EVP_MD_CTX md_ctx;
+	X509 *x509 = NULL;
 	const EVP_MD *evp_md;
 	EVP_PKEY *pubKey = NULL;
 
 	/* Needs to be initialized before jumping to cleanup. */
-    EVP_MD_CTX_init(&md_ctx);
+	EVP_MD_CTX_init(&md_ctx);
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1078,25 +1076,25 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 		goto cleanup;
 	}
 
-    if (!EVP_VerifyInit(&md_ctx, evp_md)) {
-    	KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, NULL);
-    	goto cleanup;
-    }
-
-    if (!EVP_VerifyUpdate(&md_ctx, (unsigned char *)data, data_len)) {
-    	KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, NULL);
-    	goto cleanup;
-    }
-
-    res = EVP_VerifyFinal(&md_ctx, (unsigned char *)signature, (unsigned)signature_len, pubKey);
-    if (res < 0) {
+	if (!EVP_VerifyInit(&md_ctx, evp_md)) {
 		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, NULL);
 		goto cleanup;
-    }
-    if (res == 0) {
+	}
+
+	if (!EVP_VerifyUpdate(&md_ctx, (unsigned char *)data, data_len)) {
+		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, NULL);
+		goto cleanup;
+	}
+
+	res = EVP_VerifyFinal(&md_ctx, (unsigned char *)signature, (unsigned)signature_len, pubKey);
+	if (res < 0) {
+		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, NULL);
+		goto cleanup;
+	}
+	if (res == 0) {
 		KSI_pushError(ctx, res = KSI_INVALID_PKI_SIGNATURE, NULL);
 		goto cleanup;
-    }
+	}
 
 	KSI_LOG_debug(certificate->ctx, "PKI signature verified successfully.");
 

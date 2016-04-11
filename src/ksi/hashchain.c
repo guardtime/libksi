@@ -79,7 +79,7 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 	const unsigned char *imprint = NULL;
 	size_t imprint_len;
 	KSI_MetaData *metaData = NULL;
-	KSI_DataHash *metaHash = NULL;
+	KSI_OctetString *legacyId = NULL;
 	KSI_DataHash *hash = NULL;
 	KSI_OctetString *tmpOctStr = NULL;
 
@@ -101,14 +101,14 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 		goto cleanup;
 	}
 
-	res = KSI_HashChainLink_getMetaHash(link, &metaHash);
+	res = KSI_HashChainLink_getLegacyId(link, &legacyId);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
 	if (hash != NULL) mode |= 0x01;
-	if (metaHash != NULL) mode |= 0x02;
+	if (legacyId != NULL) mode |= 0x02;
 	if (metaData != NULL) mode |= 0x04;
 
 	switch (mode) {
@@ -120,7 +120,7 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 			}
 			break;
 		case 0x02:
-			res = KSI_DataHash_getImprint(metaHash, &imprint, &imprint_len);
+			res = KSI_OctetString_extract(legacyId, &imprint, &imprint_len);
 			if (res != KSI_OK) {
 				KSI_pushError(ctx, res, NULL);
 				goto cleanup;
@@ -155,7 +155,7 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 cleanup:
 
 	KSI_nofree(hash);
-	KSI_nofree(metaHash);
+	KSI_nofree(legacyId);
 	KSI_nofree(metaData);
 	KSI_nofree(imprint);
 	KSI_nofree(tmpOctStr);
@@ -464,7 +464,7 @@ KSI_IMPLEMENT_SETTER(KSI_CalendarHashChain, KSI_LIST(KSI_HashChainLink)*, hashCh
  */
 void KSI_HashChainLink_free(KSI_HashChainLink *t) {
 	if (t != NULL) {
-		KSI_DataHash_free(t->metaHash);
+		KSI_OctetString_free(t->legacyId);
 		KSI_MetaData_free(t->metaData);
 		KSI_DataHash_free(t->imprint);
 		KSI_Integer_free(t->levelCorrection);
@@ -490,7 +490,7 @@ int KSI_HashChainLink_new(KSI_CTX *ctx, KSI_HashChainLink **t) {
 	tmp->ctx = ctx;
 	tmp->isLeft = 0;
 	tmp->levelCorrection = NULL;
-	tmp->metaHash = NULL;
+	tmp->legacyId = NULL;
 	tmp->metaData = NULL;
 	tmp->imprint = NULL;
 
@@ -689,16 +689,15 @@ cleanup:
 	return res;
 }
 
-
 KSI_IMPLEMENT_GETTER(KSI_HashChainLink, int, isLeft, IsLeft);
 KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_Integer*, levelCorrection, LevelCorrection);
-KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_DataHash*, metaHash, MetaHash);
+KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_OctetString*, legacyId, LegacyId);
 KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_MetaData*, metaData, MetaData);
 KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_DataHash*, imprint, Imprint);
 
 KSI_IMPLEMENT_SETTER(KSI_HashChainLink, int, isLeft, IsLeft);
 KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_Integer*, levelCorrection, LevelCorrection);
-KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_DataHash*, metaHash, MetaHash);
+KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_OctetString*, legacyId, LegacyId);
 KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_MetaData*, metaData, MetaData);
 KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_DataHash*, imprint, Imprint);
 
