@@ -1,5 +1,7 @@
 Version 3.4
 
+* Protection against demoting meta_hash and metadata to sibling_hash
+
 2015-09-14 release(3.4.0.1)
 * Removed all default endpoints.
 * Added multi signature container.

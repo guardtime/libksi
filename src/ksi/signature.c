@@ -1925,7 +1925,7 @@ cleanup:
 int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 	int res;
 	size_t i, j;
-	KSI_List *idList = NULL;
+	KSI_Utf8StringList *idList = NULL;
 	char *signerId = NULL;
 	size_t signerId_size = 1; // At least 1 for trailing zero.
 	size_t signerId_len = 0;
@@ -1937,7 +1937,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 	KSI_ERR_clearErrors(sig->ctx);
 
 	/* Create a list of separate signer identities. */
-	res = KSI_List_new(NULL, &idList);
+	res = KSI_Utf8StringList_new(&idList);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
 		goto cleanup;
@@ -1956,7 +1956,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 		for (j = KSI_HashChainLinkList_length(aggrRec->chain); j-- > 0;) {
 			KSI_HashChainLink *link = NULL;
 			KSI_MetaData *metaData = NULL;
-			KSI_DataHash *metaHash = NULL;
+			KSI_OctetString *legacyId = NULL;
 
 			res = KSI_HashChainLinkList_elementAt(aggrRec->chain, j, &link);
 			if (res != KSI_OK) {
@@ -1964,8 +1964,8 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 				goto cleanup;
 			}
 
-			/* Extract MetaHash */
-			res = KSI_HashChainLink_getMetaHash(link, &metaHash);
+			/* Extract legacyId */
+			res = KSI_HashChainLink_getLegacyId(link, &legacyId);
 			if (res != KSI_OK) {
 				KSI_pushError(sig->ctx, res, NULL);
 				goto cleanup;
@@ -1978,19 +1978,18 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 				goto cleanup;
 			}
 
-			if (metaHash != NULL) {
-				const char *tmp = NULL;
-				size_t tmp_len;
+			if (legacyId != NULL) {
+				KSI_Utf8String *clientId = NULL;
 
-				res = KSI_DataHash_MetaHash_parseMeta(metaHash, (const unsigned char **)&tmp, &tmp_len);
+				res = KSI_OctetString_LegacyId_getUtf8String(legacyId, &clientId);
 				if (res != KSI_OK) {
 					KSI_pushError(sig->ctx, res, NULL);
 					goto cleanup;
 				}
 
-				signerId_size += tmp_len + 4;
+				signerId_size += KSI_Utf8String_size(clientId) + 4;
 
-				res = KSI_List_append(idList, (void *)tmp);
+				res = KSI_Utf8StringList_append(idList, clientId);
 				if (res != KSI_OK) {
 					KSI_pushError(sig->ctx, res, NULL);
 					goto cleanup;
@@ -2005,22 +2004,24 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 					goto cleanup;
 				}
 
-				signerId_size += KSI_Utf8String_size(clientId) + 4;
-
-				res = KSI_List_append(idList, (void *)KSI_Utf8String_cstr(clientId));
+				res = KSI_Utf8String_ref(clientId);
 				if (res != KSI_OK) {
 					KSI_pushError(sig->ctx, res, NULL);
 					goto cleanup;
 				}
 
-				clientId = NULL;
+				signerId_size += KSI_Utf8String_size(clientId) + 4;
+
+				res = KSI_Utf8StringList_append(idList, clientId);
+				if (res != KSI_OK) {
+					KSI_pushError(sig->ctx, res, NULL);
+					goto cleanup;
+				}
 
 			} else {
 				/* Exit inner loop if this chain link does not contain a meta value block. */
 				continue;
 			}
-
-
 		}
 	}
 
@@ -2032,16 +2033,16 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 	}
 
 	/* Concatenate all together. */
-	for (i = 0; i < KSI_List_length(idList); i++) {
-		const char *tmp = NULL;
+	for (i = 0; i < KSI_Utf8StringList_length(idList); i++) {
+		KSI_Utf8String *tmp = NULL;
 
-		res = KSI_List_elementAt(idList, i, (void **)&tmp);
+		res = KSI_Utf8StringList_elementAt(idList, i, &tmp);
 		if (res != KSI_OK) {
 			KSI_pushError(sig->ctx, res, NULL);
 			goto cleanup;
 		}
 
-		signerId_len += (unsigned)KSI_snprintf(signerId + signerId_len, signerId_size - signerId_len, "%s%s", signerId_len > 0 ? " :: " : "", tmp);
+		signerId_len += (unsigned)KSI_snprintf(signerId + signerId_len, signerId_size - signerId_len, "%s%s", signerId_len > 0 ? " :: " : "", KSI_Utf8String_cstr(tmp));
 	}
 
 	*signerIdentity = signerId;
@@ -2052,7 +2053,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 cleanup:
 
 	KSI_free(signerId);
-	KSI_List_free(idList);
+	KSI_Utf8StringList_free(idList);
 
 	return res;
 }
@@ -2184,6 +2185,75 @@ cleanup:
 	return res;
 }
 
+static int verifyIdentityTag(KSI_HashChainLinkList *chainList, KSI_CTX *ctx) {
+	int res = KSI_UNKNOWN_ERROR;
+	size_t i;
+
+	KSI_ERR_clearErrors(ctx);
+
+	for (i = 0; i < KSI_HashChainLinkList_length(chainList); i++) {
+		KSI_HashChainLink *link = NULL;
+		KSI_DataHash *hash = NULL;
+		KSI_OctetString *id = NULL;
+
+		res = KSI_HashChainLinkList_elementAt(chainList, i, &link);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		if (link == NULL) {
+			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Hash chain link missing.");
+			goto cleanup;
+		}
+
+		res = KSI_HashChainLink_getImprint(link, &hash);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		/* Verify sibling hash algorithm. */
+		if (hash != NULL) {
+			KSI_HashAlgorithm algo_id;
+			res = KSI_DataHash_getHashAlg(hash, &algo_id);
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
+
+			if (!KSI_isHashAlgorithmTrusted(algo_id)) {
+				KSI_pushError(ctx, res = KSI_UNTRUSTED_HASH_ALGORITHM, "Sibling hash algorithm is not trusted.");
+				KSI_LOG_debug(ctx, "Sibling hash algorithm is NOT trusted: %s.", KSI_getHashAlgorithmName(algo_id));
+				goto cleanup;
+			}
+		}
+
+		res = KSI_HashChainLink_getLegacyId(link, &id);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		/* Verify legacyId. */
+		if (id != NULL) {
+			KSI_Utf8String *tmp = NULL;
+			/* If we get a response, then the field is valid. */
+			res = KSI_OctetString_LegacyId_getUtf8String(id, &tmp);
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
+			KSI_Utf8String_free(tmp);
+		}
+	}
+
+	res = KSI_OK;
+cleanup:
+
+	return res;
+}
+
 static int verifyInternallyAggregationChain(KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
@@ -2225,11 +2295,17 @@ static int verifyInternallyAggregationChain(KSI_Signature *sig) {
 		const KSI_AggregationHashChain* aggregationChain = NULL;
 		KSI_DataHash *tmpHash = NULL;
 
-
 		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, (KSI_AggregationHashChain **)&aggregationChain);
 		if (res != KSI_OK) goto cleanup;
 
 		if (aggregationChain == NULL) break;
+
+		/* Verify identity tag consistency. */
+		res = verifyIdentityTag(aggregationChain->chain, sig->ctx);
+		if (res != KSI_OK){
+			res = KSI_VerificationResult_addFailure(info, step, "Aggregation hash chain identity tag verification failed.");
+			goto cleanup;
+		}
 
 		if (prevChain != NULL) {
 			/* Verify aggregation time. */

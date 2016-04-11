@@ -220,51 +220,137 @@ cleanup:
 	return res;
 }
 
-static int verifyUtf8(const unsigned char *str, size_t len) {
+static int verifyLegacyId(KSI_CTX *ctx, const unsigned char *raw, size_t raw_len) {
 	int res = KSI_UNKNOWN_ERROR;
-    size_t i = 0;
-    size_t charContinuationLen = 0;
+	size_t i;
 
-    while (i < len) {
-        if (i + 1 != len && str[i] == 0) {
-        	/* The string contains a '\0' byte where not allowed. */
-        	res = KSI_INVALID_FORMAT;
-        	goto cleanup;
-        } else if (str[i] <= 0x7f)
-            charContinuationLen = 0;
-        else if (str[i] >= 0xc0 /*11000000*/ && str[i] <= 0xdf /*11011111*/)
-            charContinuationLen = 1;
-        else if (str[i] >= 0xe0 /*11100000*/ && str[i] <= 0xef /*11101111*/)
-            charContinuationLen = 2;
-        else if (str[i] >= 0xf0 /*11110000*/ && str[i] <= 0xf4 /* Cause of RFC 3629 */)
-            charContinuationLen = 3;
-        else {
-        	res = KSI_INVALID_FORMAT;
-        	goto cleanup;
-        }
-        if (i + charContinuationLen >= len) {
-        	res = KSI_BUFFER_OVERFLOW;
-        	goto cleanup;
-        }
+	/* Verify the data. Legacy id structure:
+	 * +------+------+---------+------------------+------+
+	 * | 0x03 | 0x00 | str_len | ... UTF8_str ... | '\0' |
+	 * +------+------+---------+------------------+------+
+	 * For example, the name 'Test' is encoded as the
+	 * sequence 03 00 04 54=T 65=e 73=s 74=t 00 00 00 00 00 00 00 00 00
+	 * 00 00 00 00 00 00 00 00 00 00 00 00 00 (all octet values in the
+	 * example are given in hexadecimal).
+	 */
+	if (raw == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
+		goto cleanup;
+	}
+	/* Legacy id data lenght is fixed to 29 octets. */
+	if (raw_len != 29) {
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID data lenght mismatch.");
+		KSI_LOG_debug(ctx, "Legacy ID data lenght: %d.", raw_len);
+		goto cleanup;
+	}
+	/* First two octets have fixed values. */
+	if (!(raw[0] == 0x03 && raw[1] == 0x00)) {
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID fixed data mismatch.");
+		KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Legacy ID data: ", raw, raw_len);
+		goto cleanup;
+	}
+	/* Verify padding. */
+	for (i = raw[2] + 3; i < raw_len; i++) {
+		if (raw[i] != 0) {
+			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID not padded with zeros.");
+			goto cleanup;
+		}
+	}
 
-        ++i;
-
-        while (i < len && charContinuationLen > 0
-               && str[i] >= 0x80 /*10000000*/ && str[i] <= 0xbf /*10111111*/) {
-            ++i;
-            --charContinuationLen;
-        }
-        if (charContinuationLen != 0) {
-        	res = KSI_INVALID_FORMAT;
-        	goto cleanup;
-        }
-    }
-
-    res = KSI_OK;
+	res = KSI_OK;
 
 cleanup:
 
-    return res;
+	return res;
+}
+
+int KSI_OctetString_LegacyId_getUtf8String(KSI_OctetString *id, KSI_Utf8String **str) {
+	int res = KSI_UNKNOWN_ERROR;
+	const unsigned char *raw = NULL;
+	size_t raw_len;
+	KSI_Utf8String *tmp = NULL;
+
+	if (id == NULL || str == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(id->ctx);
+
+	res = KSI_OctetString_extract(id, &raw, &raw_len);
+	if (res != KSI_OK) {
+		KSI_pushError(id->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = verifyLegacyId(id->ctx, raw, raw_len);
+	if (res != KSI_OK) {
+		KSI_pushError(id->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Now that the data consintency has been verified, lets extract the id string. */
+	res = KSI_Utf8String_new(id->ctx, &(raw[3]), raw[2] + 1, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(id->ctx, res, NULL);
+		goto cleanup;
+	}
+	*str = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+	KSI_Utf8String_free(tmp);
+
+	return res;
+}
+
+static int verifyUtf8(const unsigned char *str, size_t len) {
+	int res = KSI_UNKNOWN_ERROR;
+	size_t i = 0;
+	size_t charContinuationLen = 0;
+
+	while (i < len) {
+		if (i + 1 != len && str[i] == 0) {
+			/* The string contains a '\0' byte where not allowed. */
+			res = KSI_INVALID_FORMAT;
+			goto cleanup;
+		} else if (str[i] <= 0x7f)
+			charContinuationLen = 0;
+		else if (str[i] >= 0xc0 /*11000000*/ && str[i] <= 0xdf /*11011111*/)
+			charContinuationLen = 1;
+		else if (str[i] >= 0xe0 /*11100000*/ && str[i] <= 0xef /*11101111*/)
+			charContinuationLen = 2;
+		else if (str[i] >= 0xf0 /*11110000*/ && str[i] <= 0xf4 /* Cause of RFC 3629 */)
+			charContinuationLen = 3;
+		else {
+			res = KSI_INVALID_FORMAT;
+			goto cleanup;
+		}
+		if (i + charContinuationLen >= len) {
+			res = KSI_BUFFER_OVERFLOW;
+			goto cleanup;
+		}
+
+		++i;
+
+		while (i < len && charContinuationLen > 0
+			   && str[i] >= 0x80 /*10000000*/ && str[i] <= 0xbf /*10111111*/) {
+			++i;
+			--charContinuationLen;
+		}
+		if (charContinuationLen != 0) {
+			res = KSI_INVALID_FORMAT;
+			goto cleanup;
+		}
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
 }
 /**
  * Utf8String
@@ -295,7 +381,7 @@ int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, size_t len, KSI_Utf8String
 	tmp->ctx = ctx;
 	tmp->value = NULL;
 	tmp->refCount = 1;
-	
+
 	/* Verify that it is a null-terminated string. */
 	if (len == 0 || str[len - 1] != '\0') {
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "String value is not null-terminated.");
@@ -403,7 +489,7 @@ int KSI_Utf8String_toTlv(KSI_CTX *ctx, KSI_Utf8String *o, unsigned tag, int isNo
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "UTF8 string too long for TLV conversion.");
 		goto cleanup;
 	}
-	
+
 	res = KSI_TLV_setRawValue(tmp, o->value, (unsigned)o->len);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -627,7 +713,7 @@ int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_Integer **o) {
 		goto cleanup;
 	}
 
- 	*o = tmp;
+	*o = tmp;
 	tmp = NULL;
 
 	res = KSI_OK;
