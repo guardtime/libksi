@@ -57,7 +57,7 @@ EXAMPLE_OBJ = \
 	$(OBJ_DIR)\ksi_extend.obj \
 	$(OBJ_DIR)\ksi_pubfiledump.obj \
 	$(OBJ_DIR)\ksi_verify.obj \
-	$(OBJ_DIR)\ksi_aggr.obj
+	$(OBJ_DIR)\ksi_sign_aggr.obj
 	
 
 #Output exe files. Must have the same base name as corresponding obj file. 
@@ -65,7 +65,7 @@ EXAMPLE_BIN = \
 	$(BIN_DIR)\ksi_sign.exe \
 	$(BIN_DIR)\ksi_extend.exe \
 	$(BIN_DIR)\ksi_pubfiledump.exe \
-	$(BIN_DIR)\ksi_aggr.exe \
+	$(BIN_DIR)\ksi_sign_aggr.exe \
 	$(BIN_DIR)\ksi_verify.exe 
 
 	
