@@ -47,7 +47,7 @@
 static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, const KSI_DataHash *hsh, const KSI_OctetString *suffix, int hsh_id, KSI_DataHash **out);
 static int rfc3161_verify(KSI_CTX *ctx, const KSI_Signature *sig);
 static int getRfc3161OutputHash(const KSI_Signature *sig, KSI_DataHash **outputHash);
-static int getAggrHashChainOutputHash(KSI_CTX *ctx, KSI_Signature *sig, int level, KSI_DataHash **outputHash);
+//static int getAggrHashChainOutputHash(KSI_CTX *ctx, KSI_Signature *sig, int level, KSI_DataHash **outputHash);
 static int getExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Integer *pubTime, KSI_CalendarHashChain **extCalHashChain);
 static int initPublicationsFile(KSI_VerificationContext *verCtx);
 static int initExtendedSignature(KSI_VerificationContext *verCtx, KSI_Integer *endTime);
@@ -527,60 +527,6 @@ cleanup:
 	return res;
 }
 
-static int getAggrHashChainOutputHash(KSI_CTX *ctx, KSI_Signature *sig, int level, KSI_DataHash **outputHash) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_DataHash *hsh = NULL;
-	size_t i;
-
-	if (ctx == NULL || sig == NULL || outputHash == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	/* The aggregation level might not be 0 in case of local aggregation. */
-	if (level > 0xff) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Aggregation level can't be larger than 0xff.");
-		goto cleanup;
-	}
-
-	/* Aggregate all the aggregation chains. */
-	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
-		const KSI_AggregationHashChain* aggregationChain = NULL;
-		KSI_DataHash *tmp = NULL;
-
-		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, (KSI_AggregationHashChain **)&aggregationChain);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-
-		}
-		if (aggregationChain == NULL) break;
-
-		res = KSI_HashChain_aggregate(ctx, aggregationChain->chain, aggregationChain->inputHash,
-									  level, (int)KSI_Integer_getUInt64(aggregationChain->aggrHashId), &level, &tmp);
-		if (res != KSI_OK){
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
-
-		if (hsh != NULL) {
-			KSI_DataHash_free(hsh);
-		}
-		hsh = tmp;
-	}
-
-	*outputHash = hsh;
-	hsh = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_DataHash_free(hsh);
-
-	return res;
-}
-
 static int initAggregationOutputHash(KSI_VerificationContext *verCtx) {
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -590,8 +536,8 @@ static int initAggregationOutputHash(KSI_VerificationContext *verCtx) {
 	}
 
 	if (verCtx->tempData.aggregationOutputHash == NULL) {
-		getAggrHashChainOutputHash(verCtx->ctx, verCtx->userData.sig, (int)verCtx->userData.docAggrLevel,
-									&verCtx->tempData.aggregationOutputHash);
+		KSI_AggregationHashChainList_aggregate(verCtx->userData.sig->aggregationChainList, verCtx->ctx,
+				(int)verCtx->userData.docAggrLevel, &verCtx->tempData.aggregationOutputHash);
 	}
 
 	res = KSI_OK;
@@ -1342,6 +1288,7 @@ static int initExtendedSignature(KSI_VerificationContext *verCtx, KSI_Integer *e
 	KSI_Integer *status = NULL;
 	KSI_CalendarHashChain *calChain = NULL;
 	KSI_Signature *tmp = NULL;
+	KSI_AggregationHashChain *aggr = NULL;
 
 	if (verCtx == NULL || verCtx->ctx == NULL || verCtx->userData.sig == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1358,8 +1305,20 @@ static int initExtendedSignature(KSI_VerificationContext *verCtx, KSI_Integer *e
 	}
 
 	/* Extract start time */
-	res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &startTime);
-	if (res != KSI_OK) goto cleanup;
+	if (sig->calendarChain != NULL) {
+		res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &startTime);
+		if (res != KSI_OK) goto cleanup;
+	} else {
+		/* Take the first aggregation hash chain, as all of the chain should have the same value for "aggregation time". */
+		res = (KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &aggr));
+		if (res != KSI_OK) goto cleanup;
+
+		res = KSI_AggregationHashChain_getAggregationTime(aggr, &startTime);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx,res, NULL);
+			goto cleanup;
+		}
+	}
 
 	/* Clone the start time object */
 	KSI_Integer_ref(startTime);

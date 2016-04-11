@@ -369,6 +369,7 @@ EXPORTS
 	KSI_AggregationHashChain_setAggrHashId
 	KSI_AggregationHashChain_setChain
 	KSI_AggregationHashChain_writeBytes
+	KSI_AggregationHashChainList_aggregate
 	KSI_Signature_getPublicationInfo
 
 ;tlv.h
