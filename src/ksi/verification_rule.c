@@ -1087,7 +1087,40 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+static int getNextRightLink(KSI_HashChainLinkList *list, size_t *pos, KSI_HashChainLink **link) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (list == NULL || pos == NULL || link == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	while (*pos < KSI_HashChainLinkList_length(list)) {
+		int isLeft;
+		res = KSI_HashChainLinkList_elementAt(list, *pos, link);
+		if (res != KSI_OK) {
+			goto cleanup;
+		}
+		res = KSI_HashChainLink_getIsLeft(*link, &isLeft);
+		if (res != KSI_OK) {
+			goto cleanup;
+		}
+		if (!isLeft) {
+			res = KSI_OK;
+			goto cleanup;
+		}
+		++*pos;
+	}
+
+	*link = NULL;
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
@@ -1095,9 +1128,8 @@ int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches(KSI_
 	KSI_CalendarHashChain *extCalHashChain = NULL;
 	KSI_HashChainLinkList *sigList = NULL;
 	KSI_HashChainLinkList *extSigList = NULL;
-	size_t sigListSize;
-	size_t extSigListSize;
-	size_t i;
+	size_t sigListPos = 0;
+	size_t extSigListPos = 0;
 
 	if (result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1114,7 +1146,7 @@ int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches(KSI_
 	ctx = info->ctx;
 	sig = info->userData.sig;
 
-	KSI_LOG_info(ctx, "Verify aggregation chain right link count and right link hashes");
+	KSI_LOG_info(ctx, "Verify that right links in calendar hash chains match");
 
 	CATCH_KSI_ERR(KSI_CalendarHashChain_getHashChain(sig->calendarChain, &sigList));
 
@@ -1124,51 +1156,49 @@ int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches(KSI_
 
 	CATCH_KSI_ERR(KSI_CalendarHashChain_getHashChain(extCalHashChain, &extSigList));
 
+	for ( ; ; ) {
+		KSI_HashChainLink *sigRightLink = NULL;
+		KSI_HashChainLink *extSigRightLink = NULL;
+		KSI_DataHash *sigRightLinkHash = NULL;
+		KSI_DataHash *extSigRightLinkHash = NULL;
 
-	sigListSize = KSI_HashChainLinkList_length(sigList);
-	extSigListSize = KSI_HashChainLinkList_length(extSigList);
+		CATCH_KSI_ERR(getNextRightLink(sigList, &sigListPos, &sigRightLink));
+		CATCH_KSI_ERR(getNextRightLink(extSigList, &extSigListPos, &extSigRightLink));
 
-	if (sigListSize != extSigListSize) {
-		KSI_LOG_info(ctx, "Extended signature aggregation chain links count does not match with initial signature aggregation chain links count.");
-		result->stepsFailed |= KSI_VERIFY_CALCHAIN_ONLINE;
-		VERIFICATION_RESULT(VER_RES_FAIL, VER_ERR_CAL_4);
-		res = KSI_OK;
-		goto cleanup;
-	}
-
-	for (i = 0; i < extSigListSize; i++) {
-		KSI_HashChainLink *extLink = NULL;
-		int isLeft;
-
-		CATCH_KSI_ERR(KSI_HashChainLinkList_elementAt(extSigList, i, &extLink));
-
-		CATCH_KSI_ERR(KSI_HashChainLink_getIsLeft(extLink, &isLeft));
-
-		if (!isLeft) {
-			KSI_HashChainLink *sigLink = NULL;
-			KSI_DataHash *extLinkHash = NULL;
-			KSI_DataHash *sigLinkHash = NULL;
-
-			CATCH_KSI_ERR(KSI_HashChainLinkList_elementAt(sigList, i, &sigLink));
-
-			CATCH_KSI_ERR(KSI_HashChainLink_getImprint(sigLink, &sigLinkHash));
-
-			CATCH_KSI_ERR(KSI_HashChainLink_getImprint(extLink, &extLinkHash));
-
-			if (!KSI_DataHash_equals(sigLinkHash, extLinkHash)) {
-				KSI_LOG_info(ctx, "Extended signature contains different aggregation hash chain right link");
-				KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Signature right link hash     :", sigLinkHash);
-				KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Ext signature right link hash :", extLinkHash);
-				result->stepsFailed |= KSI_VERIFY_CALCHAIN_ONLINE;
-				VERIFICATION_RESULT(VER_RES_FAIL, VER_ERR_CAL_4);
-				res = KSI_OK;
-				goto cleanup;
-			}
+		if (sigRightLink == NULL && extSigRightLink == NULL) {
+			/* Match: both chains over at same time. */
+			VERIFICATION_RESULT(VER_RES_OK, VER_ERR_NONE);
+			res = KSI_OK;
+			goto cleanup;
 		}
-	}
 
-	VERIFICATION_RESULT(VER_RES_OK, VER_ERR_NONE);
-	res = KSI_OK;
+		if (sigRightLink == NULL || extSigRightLink == NULL) {
+			/* Mismatch: one chain over before the other. */
+			KSI_LOG_info(ctx, "Different number of right links in calendar hash chains");
+			result->stepsFailed |= KSI_VERIFY_CALCHAIN_ONLINE;
+			VERIFICATION_RESULT(VER_RES_FAIL, VER_ERR_CAL_4);
+			res = KSI_OK;
+			goto cleanup;
+		}
+
+		CATCH_KSI_ERR(KSI_HashChainLink_getImprint(sigRightLink, &sigRightLinkHash));
+		CATCH_KSI_ERR(KSI_HashChainLink_getImprint(extSigRightLink, &extSigRightLinkHash));
+
+		if (!KSI_DataHash_equals(sigRightLinkHash, extSigRightLinkHash)) {
+			/* Mismatch: different hash values. */
+			KSI_LOG_info(ctx, "Different sibling hashes in right links in calendar hash chains");
+			KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Signature right link hash     :", sigRightLinkHash);
+			KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Ext signature right link hash :", extSigRightLinkHash);
+			result->stepsFailed |= KSI_VERIFY_CALCHAIN_ONLINE;
+			VERIFICATION_RESULT(VER_RES_FAIL, VER_ERR_CAL_4);
+			res = KSI_OK;
+			goto cleanup;
+		}
+
+		/* Current links match, advance in both chains. */
+		++sigListPos;
+		++extSigListPos;
+	}
 
 cleanup:
 

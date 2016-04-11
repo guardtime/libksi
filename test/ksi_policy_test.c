@@ -283,7 +283,7 @@ static void TestSingleRulePolicy(CuTest* tc) {
 		{singleRules[1], KSI_OK,				VER_RES_OK,		VER_ERR_PUB_2},
 		{singleRules[2], KSI_OK,				VER_RES_FAIL,	VER_ERR_INT_1},
 		{singleRules[3], KSI_OK,				VER_RES_NA,		VER_ERR_GEN_1},
-		{singleRules[4], KSI_INVALID_ARGUMENT,	VER_RES_NA,		VER_ERR_GEN_2},
+		{singleRules[4], KSI_INVALID_ARGUMENT,	VER_RES_OK,		VER_ERR_CAL_1},
 	};
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -354,7 +354,7 @@ static void TestBasicRulesPolicy(CuTest* tc) {
 		{basicRules1, KSI_OK,				VER_RES_OK,		VER_ERR_PUB_2},
 		{basicRules2, KSI_OK,				VER_RES_FAIL,	VER_ERR_INT_1},
 		{basicRules3, KSI_OK,				VER_RES_NA,		VER_ERR_GEN_1},
-		{basicRules4, KSI_INVALID_ARGUMENT,	VER_RES_NA,		VER_ERR_GEN_2},
+		{basicRules4, KSI_INVALID_ARGUMENT,	VER_RES_OK,		VER_ERR_CAL_1},
 	};
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -466,10 +466,10 @@ static void TestCompositeRulesPolicy(CuTest* tc) {
 		{compositeRule6,	KSI_OK,					VER_RES_NA,		VER_ERR_GEN_1},
 		{compositeRule7,	KSI_OK,					VER_RES_OK,		VER_ERR_PUB_1},
 		{compositeRule8,	KSI_OK,					VER_RES_FAIL,	VER_ERR_INT_1},
-		{compositeRule9,	KSI_INVALID_ARGUMENT,	VER_RES_NA,		VER_ERR_GEN_2},
-		{compositeRule10,	KSI_INVALID_ARGUMENT,	VER_RES_NA,		VER_ERR_GEN_2},
+		{compositeRule9,	KSI_INVALID_ARGUMENT,	VER_RES_OK,		VER_ERR_CAL_1},
+		{compositeRule10,	KSI_INVALID_ARGUMENT,	VER_RES_OK,		VER_ERR_CAL_1},
 		{compositeRule11,	KSI_OK,					VER_RES_OK,		VER_ERR_PUB_1},
-		{compositeRule12,	KSI_OK,					VER_RES_OK,		VER_ERR_PUB_1}
+		{compositeRule12,	KSI_INVALID_ARGUMENT,	VER_RES_OK,		VER_ERR_CAL_1}
 	};
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -1260,7 +1260,7 @@ static void TestCalendarBasedPolicy_FAIL_WithoutPublicationRecord(CuTest* tc) {
 	KSI_RuleVerificationResult expected = {
 		VER_RES_FAIL,
 		VER_ERR_CAL_4,
-		"KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches"
+		"KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
