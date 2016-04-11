@@ -2016,7 +2016,7 @@ int KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(
 
 	res = getExtendedCalendarHashChain(info, pubDataPubTime, &extCalHashChain);
 	if (res != KSI_OK) {
-		if (res = KSI_EXTEND_WRONG_CAL_CHAIN) {
+		if (res == KSI_EXTEND_WRONG_CAL_CHAIN) {
 			result->stepsFailed |= KSI_VERIFY_PUBLICATION_WITH_PUBFILE;
 			VERIFICATION_RESULT(VER_RES_FAIL, VER_ERR_PUB_1);
 			res = KSI_OK;
@@ -2369,7 +2369,7 @@ int KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse(KSI_
 
 	res = getExtendedCalendarHashChain(info, usrPubTime, &extCalHashChain);
 	if (res != KSI_OK) {
-		if (res = KSI_EXTEND_WRONG_CAL_CHAIN) {
+		if (res == KSI_EXTEND_WRONG_CAL_CHAIN) {
 			result->stepsFailed |= KSI_VERIFY_PUBLICATION_WITH_PUBSTRING;
 			VERIFICATION_RESULT(VER_RES_FAIL, VER_ERR_PUB_1);
 			res = KSI_OK;
