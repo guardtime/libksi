@@ -1683,15 +1683,9 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 					goto cleanup;
 				}
 
-				res = KSI_Utf8String_ref(clientId);
-				if (res != KSI_OK) {
-					KSI_pushError(sig->ctx, res, NULL);
-					goto cleanup;
-				}
-
 				signerId_size += KSI_Utf8String_size(clientId) + 4;
 
-				res = KSI_Utf8StringList_append(idList, clientId);
+				res = KSI_Utf8StringList_append(idList, KSI_Utf8String_ref(clientId));
 				if (res != KSI_OK) {
 					KSI_pushError(sig->ctx, res, NULL);
 					goto cleanup;
