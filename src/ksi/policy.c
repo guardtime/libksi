@@ -234,7 +234,7 @@ cleanup:
 
 static const Rule AggregationChainRightLinksVerificationRule[] = {
 	{RULE_TYPE_BASIC, KSI_VerificationRule_SignatureDoesNotContainPublication},
-	{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch},
 	{RULE_TYPE_BASIC, NULL}
 };
 
@@ -498,7 +498,7 @@ int KSI_Policy_clone(KSI_CTX *ctx, const KSI_Policy *policy, KSI_Policy **clone)
 
 	tmp = KSI_new(KSI_Policy);
 	if (tmp == NULL) {
-		res = KSI_OUT_OF_MEMORY;
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
@@ -629,6 +629,8 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 	}
 
 	ctx = context->ctx;
+	KSI_ERR_clearErrors(ctx);
+
 	res = PolicyVerificationResult_create(&tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -648,10 +650,16 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 		(*result)->finalResult.policyName = currentPolicy->policyName;
 		res = Policy_verifySignature(currentPolicy, context, *result);
 		/* Stop verifying the policy whenever there is an internal error (invalid arguments, out of memory, etc). */
-		if (res != KSI_OK) goto cleanup;
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
 
 		res = PolicyVerificationResult_addLatestPolicyResult(*result);
-		if (res != KSI_OK) goto cleanup;
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
 
 		if ((*result)->finalResult.resultCode != VER_RES_OK) {
 			currentPolicy = currentPolicy->fallbackPolicy;
@@ -690,10 +698,11 @@ int KSI_VerificationContext_create(KSI_CTX *ctx, KSI_VerificationContext **conte
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+	KSI_ERR_clearErrors(ctx);
 
 	tmp = KSI_new(KSI_VerificationContext);
 	if (tmp == NULL) {
-		res = KSI_OUT_OF_MEMORY;
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
