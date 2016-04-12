@@ -648,8 +648,9 @@ cleanup:
 
 int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain) {
 	int res;
-	KSI_DataHash *newInputHash = NULL;
-	KSI_DataHash *oldInputHash = NULL;
+	KSI_DataHash *newCalInputHash = NULL;
+	KSI_DataHash *oldCalInputHash = NULL;
+	KSI_DataHash *aggrOutputHash = NULL;
 	KSI_TLV *oldCalChainTlv = NULL;
 	KSI_TLV *newCalChainTlv = NULL;
 	KSI_LIST(KSI_TLV) *nestedList = NULL;
@@ -661,29 +662,29 @@ int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain
 	}
 	KSI_ERR_clearErrors(sig->ctx);
 
-	res = KSI_CalendarHashChain_getInputHash(calendarHashChain, &newInputHash);
+	res = KSI_CalendarHashChain_getInputHash(calendarHashChain, &newCalInputHash);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
 		goto cleanup;
 	}
 
-	if (newInputHash == NULL) {
+	if (newCalInputHash == NULL) {
 		KSI_pushError(sig->ctx, res = KSI_INVALID_FORMAT, "Given calendar hash chain does not contain an input hash.");
 		goto cleanup;
 	}
 
 	res = (sig->calendarChain == NULL) ?
 			/* Calculate calendar input hash from signature aggregation hash chain list. */
-			KSI_AggregationHashChainList_aggregate(sig->aggregationChainList, sig->ctx, 0, &oldInputHash) :
+			KSI_AggregationHashChainList_aggregate(sig->aggregationChainList, sig->ctx, 0, &aggrOutputHash) :
 			/* Get calendar input hash from calendar hash chain. */
-			KSI_CalendarHashChain_getInputHash(sig->calendarChain, &oldInputHash);
+			KSI_CalendarHashChain_getInputHash(sig->calendarChain, &oldCalInputHash);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
 		goto cleanup;
 	}
 
 	/* The output hash and input hash have to be equal */
-	if (!KSI_DataHash_equals(newInputHash, oldInputHash)) {
+	if (!KSI_DataHash_equals(newCalInputHash, (aggrOutputHash ? aggrOutputHash : oldCalInputHash))) {
 		KSI_pushError(sig->ctx, res = KSI_EXTEND_WRONG_CAL_CHAIN, NULL);
 		goto cleanup;
 	}
@@ -747,12 +748,11 @@ int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain
 cleanup:
 
 	KSI_nofree(nestedList);
-	KSI_nofree(oldInputHash);
-	KSI_nofree(newInputHash);
+	KSI_nofree(oldCalInputHash);
+	KSI_nofree(newCalInputHash);
 
+	KSI_DataHash_free(aggrOutputHash);
 	KSI_TLV_free(newCalChainTlv);
-
-	KSI_nofree(newInputHash);
 
 	return res;
 }
