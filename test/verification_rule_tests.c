@@ -184,7 +184,7 @@ static void testRule_AggregationHashChainConsistency_idTagConsistancyFail(CuTest
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_AggregationHashChainConsistency(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_INT_10);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_INT_11);
 
 	KSI_VerificationContext_free(verCtx);
 }

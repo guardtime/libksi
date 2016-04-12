@@ -65,8 +65,10 @@ extern "C" {
 		VER_ERR_INT_8,
 		/** Calendar hash chain root has inconsistent with publication time. */
 		VER_ERR_INT_9,
-		/** Inconsistent aggregation hash chains identity tag */
+		/** Aggregation hash chain chain index mismatch. */
 		VER_ERR_INT_10,
+		/** Invalid legacy meta-data format. */
+		VER_ERR_INT_11,
 		/** Extender response calendar root hash mismatch. */
 		VER_ERR_PUB_1,
 		/** Extender response inconsistent. */

@@ -481,19 +481,6 @@ int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext
 
 		if (aggregationChain == NULL) break;
 
-		/* Verify aggregation hash chain identity tag consistency. */
-		res = identityTagConsistency_verify(aggregationChain->chain, ctx);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			if (res == KSI_INVALID_FORMAT || res == KSI_UNTRUSTED_HASH_ALGORITHM) {
-				VERIFICATION_RESULT(VER_RES_FAIL, VER_ERR_INT_10);
-				res = KSI_OK;
-			} else {
-				VERIFICATION_RESULT(VER_RES_NA, VER_ERR_GEN_2);
-			}
-			goto cleanup;
-		}
-
 		if (prevChain != NULL) {
 			/* Verify chain index length. */
 			if (KSI_IntegerList_length(prevChain->chainIndex) != KSI_IntegerList_length(aggregationChain->chainIndex) + 1) {
@@ -529,6 +516,19 @@ int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext
 					}
 				}
 			}
+		}
+
+		/* Verify aggregation hash chain identity tag consistency. */
+		res = identityTagConsistency_verify(aggregationChain->chain, ctx);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			if (res == KSI_INVALID_FORMAT || res == KSI_UNTRUSTED_HASH_ALGORITHM) {
+				VERIFICATION_RESULT(VER_RES_FAIL, VER_ERR_INT_11);
+				res = KSI_OK;
+			} else {
+				VERIFICATION_RESULT(VER_RES_NA, VER_ERR_GEN_2);
+			}
+			goto cleanup;
 		}
 
 		if (hsh != NULL) {
