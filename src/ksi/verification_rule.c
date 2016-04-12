@@ -38,7 +38,7 @@
 static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, const KSI_DataHash *hsh, const KSI_OctetString *suffix, int hsh_id, KSI_DataHash **out);
 static int rfc3161_verify(KSI_CTX *ctx, const KSI_Signature *sig);
 static int getRfc3161OutputHash(const KSI_Signature *sig, KSI_DataHash **outputHash);
-static int identityTagConsistency_verify(KSI_HashChainLinkList *chainList, KSI_CTX *ctx);
+static int legacyIdConsistency_verify(KSI_HashChainLinkList *chainList, KSI_CTX *ctx);
 static int getExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Integer *pubTime, KSI_CalendarHashChain **extCalHashChain);
 static int initPublicationsFile(KSI_VerificationContext *verCtx);
 static int initExtendedSignature(KSI_VerificationContext *verCtx, KSI_Integer *endTime);
@@ -361,75 +361,6 @@ cleanup:
 	return res;
 }
 
-static int identityTagConsistency_verify(KSI_HashChainLinkList *chainList, KSI_CTX *ctx) {
-	int res = KSI_UNKNOWN_ERROR;
-	size_t i;
-
-	KSI_ERR_clearErrors(ctx);
-
-	for (i = 0; i < KSI_HashChainLinkList_length(chainList); i++) {
-		KSI_HashChainLink *link = NULL;
-		KSI_DataHash *hash = NULL;
-		KSI_OctetString *id = NULL;
-
-		res = KSI_HashChainLinkList_elementAt(chainList, i, &link);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
-
-		if (link == NULL) {
-			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Hash chain link missing.");
-			goto cleanup;
-		}
-
-		res = KSI_HashChainLink_getImprint(link, &hash);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
-
-		/* Verify sibling hash algorithm. */
-		if (hash != NULL) {
-			KSI_HashAlgorithm algo_id;
-			res = KSI_DataHash_getHashAlg(hash, &algo_id);
-			if (res != KSI_OK) {
-				KSI_pushError(ctx, res, NULL);
-				goto cleanup;
-			}
-
-			if (!KSI_isHashAlgorithmTrusted(algo_id)) {
-				KSI_pushError(ctx, res = KSI_UNTRUSTED_HASH_ALGORITHM, "Sibling hash algorithm is not trusted.");
-				KSI_LOG_debug(ctx, "Sibling hash algorithm is NOT trusted: %s.", KSI_getHashAlgorithmName(algo_id));
-				goto cleanup;
-			}
-		}
-
-		res = KSI_HashChainLink_getLegacyId(link, &id);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
-
-		/* Verify legacyId. */
-		if (id != NULL) {
-			KSI_Utf8String *tmp = NULL;
-			/* If we get a response, then the field is valid. */
-			res = KSI_OctetString_LegacyId_getUtf8String(id, &tmp);
-			if (res != KSI_OK) {
-				KSI_pushError(ctx, res, NULL);
-				goto cleanup;
-			}
-			KSI_Utf8String_free(tmp);
-		}
-	}
-
-	res = KSI_OK;
-cleanup:
-
-	return res;
-}
-
 int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	const KSI_AggregationHashChain *prevChain = NULL;
@@ -518,19 +449,6 @@ int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext
 			}
 		}
 
-		/* Verify aggregation hash chain identity tag consistency. */
-		res = identityTagConsistency_verify(aggregationChain->chain, ctx);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			if (res == KSI_INVALID_FORMAT || res == KSI_UNTRUSTED_HASH_ALGORITHM) {
-				VERIFICATION_RESULT(VER_RES_FAIL, VER_ERR_INT_11);
-				res = KSI_OK;
-			} else {
-				VERIFICATION_RESULT(VER_RES_NA, VER_ERR_GEN_2);
-			}
-			goto cleanup;
-		}
-
 		if (hsh != NULL) {
 			/* Validate input hash */
 			if (!KSI_DataHash_equals(hsh, aggregationChain->inputHash)) {
@@ -581,6 +499,137 @@ cleanup:
 	KSI_DataHash_free(hsh);
 
 	return res;
+}
+
+static int legacyIdConsistency_verify(KSI_HashChainLinkList *chainList, KSI_CTX *ctx) {
+	int res = KSI_UNKNOWN_ERROR;
+	size_t i;
+
+	KSI_ERR_clearErrors(ctx);
+
+	for (i = 0; i < KSI_HashChainLinkList_length(chainList); i++) {
+		KSI_HashChainLink *link = NULL;
+		KSI_DataHash *hash = NULL;
+		KSI_OctetString *id = NULL;
+
+		res = KSI_HashChainLinkList_elementAt(chainList, i, &link);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		if (link == NULL) {
+			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Hash chain link missing.");
+			goto cleanup;
+		}
+
+		res = KSI_HashChainLink_getImprint(link, &hash);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		/* Verify sibling hash algorithm. */
+		if (hash != NULL) {
+			KSI_HashAlgorithm algo_id;
+			res = KSI_DataHash_getHashAlg(hash, &algo_id);
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
+
+			if (!KSI_isHashAlgorithmTrusted(algo_id)) {
+				KSI_pushError(ctx, res = KSI_UNTRUSTED_HASH_ALGORITHM, "Sibling hash algorithm is not trusted.");
+				KSI_LOG_debug(ctx, "Sibling hash algorithm is NOT trusted: %s.", KSI_getHashAlgorithmName(algo_id));
+				goto cleanup;
+			}
+		}
+
+		res = KSI_HashChainLink_getLegacyId(link, &id);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		/* Verify legacyId. */
+		if (id != NULL) {
+			KSI_Utf8String *tmp = NULL;
+			/* If we get a response, then the field is valid. */
+			res = KSI_OctetString_LegacyId_getUtf8String(id, &tmp);
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
+			KSI_Utf8String_free(tmp);
+		}
+	}
+
+	res = KSI_OK;
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_AggregationHashChainLegacyId(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	size_t i;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *sig = NULL;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	result->stepsPerformed |= KSI_VERIFY_AGGRCHAIN_INTERNALLY;
+
+	if (info == NULL || info->ctx == NULL || info->userData.sig == NULL) {
+		VERIFICATION_RESULT(VER_RES_NA, VER_ERR_GEN_2);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->userData.sig;
+	KSI_ERR_clearErrors(ctx);
+
+	KSI_LOG_info(ctx, "Verify aggregation hash chain identity tag consistency.");
+
+	/* Aggregate all the aggregation chains. */
+	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
+		const KSI_AggregationHashChain* aggregationChain = NULL;
+
+		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, (KSI_AggregationHashChain **)&aggregationChain);
+		if (res != KSI_OK) {
+			VERIFICATION_RESULT(VER_RES_NA, VER_ERR_GEN_2);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		if (aggregationChain == NULL) break;
+
+		/* Verify aggregation hash chain identity tag consistency. */
+		res = legacyIdConsistency_verify(aggregationChain->chain, ctx);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			if (res == KSI_INVALID_FORMAT || res == KSI_UNTRUSTED_HASH_ALGORITHM) {
+				result->stepsFailed |= KSI_VERIFY_AGGRCHAIN_INTERNALLY;
+				VERIFICATION_RESULT(VER_RES_FAIL, VER_ERR_INT_11);
+				res = KSI_OK;
+			} else {
+				VERIFICATION_RESULT(VER_RES_NA, VER_ERR_GEN_2);
+			}
+			goto cleanup;
+		}
+	}
+
+	result->stepsSuccessful |= KSI_VERIFY_AGGRCHAIN_INTERNALLY;
+	VERIFICATION_RESULT(VER_RES_OK, VER_ERR_NONE);
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+
 }
 
 int KSI_VerificationRule_AggregationHashChainTimeConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {

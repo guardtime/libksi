@@ -265,6 +265,12 @@ static int verifyLegacyId(KSI_CTX *ctx, const unsigned char *raw, size_t raw_len
 		KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Legacy ID data: ", raw, raw_len);
 		goto cleanup;
 	}
+	/* Verify string lenght (at most 25). */
+	if (raw[2] > 25) {
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID string lenght mismatch.");
+		KSI_LOG_debug(ctx, "Legacy ID string lenght mismatch: %d.", raw[2]);
+		goto cleanup;
+	}
 	/* Verify padding. */
 	for (i = raw[2] + 3; i < raw_len; i++) {
 		if (raw[i] != 0) {
