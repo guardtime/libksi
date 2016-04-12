@@ -347,6 +347,55 @@ static void testExtendTo(CuTest* tc) {
 #undef TEST_RES_SIGNATURE_FILE
 }
 
+static void testExtendSigNoCalChain(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_RES_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_Signature *ext = NULL;
+	unsigned char *serialized = NULL;
+	size_t serialized_len = 0;
+	unsigned char expected[0x1ffff];
+	size_t expected_len = 0;
+	FILE *f = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
+
+	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
+	CuAssert(tc, "Unable to set default pubfile, default cert and default pki constraints.", res == KSI_OK);
+
+	res = KSI_extendSignature(ctx, sig, &ext);
+	CuAssert(tc, "Unable to extend the signature", res == KSI_OK && ext != NULL);
+
+	res = KSI_Signature_serialize(ext, &serialized, &serialized_len);
+	CuAssert(tc, "Unable to serialize extended signature", res == KSI_OK && serialized != NULL && serialized_len > 0);
+
+	/* Read in the expected result */
+	f = fopen(getFullResourcePath(TEST_RES_SIGNATURE_FILE), "rb");
+	CuAssert(tc, "Unable to read expected result file", f != NULL);
+	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
+	fclose(f);
+
+	CuAssert(tc, "Expected result length mismatch", expected_len == serialized_len);
+
+	KSI_free(serialized);
+
+	KSI_Signature_free(sig);
+	KSI_Signature_free(ext);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+#undef TEST_RES_SIGNATURE_FILE
+}
+
 static void testExtenderWrongData(CuTest* tc) {
 #define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
@@ -730,7 +779,7 @@ static void testLocalAggregationSigning(CuTest* tc) {
 	res = KSI_Signature_signAggregated(ctx, hsh, 4, &sig);
 	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_verify(sig, NULL);
+	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Signature should not be verifiable without local aggregation level.", res == KSI_VERIFICATION_FAILURE);
 
 	res = KSI_Signature_verifyAggregated(sig, NULL, 4);
@@ -974,6 +1023,7 @@ CuSuite* KSITest_NET_getSuite(void) {
 	SUITE_ADD_TEST(suite, testAggreAuthFailure);
 	SUITE_ADD_TEST(suite, testExtending);
 	SUITE_ADD_TEST(suite, testExtendTo);
+	SUITE_ADD_TEST(suite, testExtendSigNoCalChain);
 	SUITE_ADD_TEST(suite, testExtenderWrongData);
 	SUITE_ADD_TEST(suite, testExtAuthFailure);
 	SUITE_ADD_TEST(suite, testExtendingWithoutPublication);

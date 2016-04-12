@@ -343,6 +343,19 @@ extern "C" {
 	KSI_DEFINE_WRITE_BYTES(KSI_AggregationHashChain);
 
 	/**
+	 * This function aggregates the aggregation hash chain list and returns the result hash via \c outputHash parameter.
+	 * \param[in]	chainList		Hash chain list (list of hash chains)
+	 * \param[in]	ctx				KSI context
+	 * \param[in]	level			Aggregation level
+	 * \param[out]	outputHash		Pointer to the receiving pointer to data hash object.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \note The output memory buffer belongs to the caller and needs to be freed
+	 * by the caller using #KSI_free.
+	 */
+	int KSI_AggregationHashChainList_aggregate(KSI_AggregationHashChainList *chainList, KSI_CTX *ctx, int level, KSI_DataHash **outputHash);
+
+	/**
 	 * Function for getting publication information from an extended signature.
 	 * \param [in]		sig			Extended signature including publication record.
 	 * \param [out]		pubHsh		Publication hash.

@@ -283,7 +283,7 @@ static void TestSingleRulePolicy(CuTest* tc) {
 		{singleRules[1], KSI_OK,				VER_RES_OK,		VER_ERR_PUB_2},
 		{singleRules[2], KSI_OK,				VER_RES_FAIL,	VER_ERR_INT_1},
 		{singleRules[3], KSI_OK,				VER_RES_NA,		VER_ERR_GEN_1},
-		{singleRules[4], KSI_INVALID_ARGUMENT,	VER_RES_NA,		VER_ERR_GEN_2},
+		{singleRules[4], KSI_INVALID_ARGUMENT,	VER_RES_OK,		VER_ERR_CAL_1},
 	};
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -354,7 +354,7 @@ static void TestBasicRulesPolicy(CuTest* tc) {
 		{basicRules1, KSI_OK,				VER_RES_OK,		VER_ERR_PUB_2},
 		{basicRules2, KSI_OK,				VER_RES_FAIL,	VER_ERR_INT_1},
 		{basicRules3, KSI_OK,				VER_RES_NA,		VER_ERR_GEN_1},
-		{basicRules4, KSI_INVALID_ARGUMENT,	VER_RES_NA,		VER_ERR_GEN_2},
+		{basicRules4, KSI_INVALID_ARGUMENT,	VER_RES_OK,		VER_ERR_CAL_1},
 	};
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -466,10 +466,10 @@ static void TestCompositeRulesPolicy(CuTest* tc) {
 		{compositeRule6,	KSI_OK,					VER_RES_NA,		VER_ERR_GEN_1},
 		{compositeRule7,	KSI_OK,					VER_RES_OK,		VER_ERR_PUB_1},
 		{compositeRule8,	KSI_OK,					VER_RES_FAIL,	VER_ERR_INT_1},
-		{compositeRule9,	KSI_INVALID_ARGUMENT,	VER_RES_NA,		VER_ERR_GEN_2},
-		{compositeRule10,	KSI_INVALID_ARGUMENT,	VER_RES_NA,		VER_ERR_GEN_2},
+		{compositeRule9,	KSI_INVALID_ARGUMENT,	VER_RES_OK,		VER_ERR_CAL_1},
+		{compositeRule10,	KSI_INVALID_ARGUMENT,	VER_RES_OK,		VER_ERR_CAL_1},
 		{compositeRule11,	KSI_OK,					VER_RES_OK,		VER_ERR_PUB_1},
-		{compositeRule12,	KSI_OK,					VER_RES_OK,		VER_ERR_PUB_1}
+		{compositeRule12,	KSI_INVALID_ARGUMENT,	VER_RES_OK,		VER_ERR_CAL_1}
 	};
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -1129,6 +1129,70 @@ static void TestInternalPolicy_FAIL_WithDocumentHash(CuTest* tc) {
 #undef TEST_MOCK_IMPRINT
 }
 
+static void TestCalendarBasedPolicy_NA_ExtenderErrors(CuTest* tc) {
+	int res;
+	size_t i;
+	const KSI_Policy *policy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		VER_RES_NA,
+		VER_ERR_GEN_2,
+		"KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch"
+	};
+
+	struct extErrResp_st {
+		const char *name;
+		int res;
+	};
+	struct extErrResp_st testArray[] = {
+		{"resource/tlv/ok_extender_error_response_101.tlv", KSI_SERVICE_INVALID_REQUEST},
+		{"resource/tlv/ok_extender_error_response_102.tlv", KSI_SERVICE_AUTHENTICATION_FAILURE},
+		{"resource/tlv/ok_extender_error_response_103.tlv", KSI_SERVICE_INVALID_PAYLOAD},
+		{"resource/tlv/ok_extender_error_response_104.tlv", KSI_SERVICE_EXTENDER_INVALID_TIME_RANGE},
+		{"resource/tlv/ok_extender_error_response_105.tlv", KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_OLD},
+		{"resource/tlv/ok_extender_error_response_106.tlv", KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_NEW},
+		{"resource/tlv/ok_extender_error_response_107.tlv", KSI_SERVICE_EXTENDER_REQUEST_TIME_IN_FUTURE},
+		{"resource/tlv/ok_extender_error_response_200.tlv", KSI_SERVICE_INTERNAL_ERROR},
+		{"resource/tlv/ok_extender_error_response_201.tlv", KSI_SERVICE_EXTENDER_DATABASE_MISSING},
+		{"resource/tlv/ok_extender_error_response_202.tlv", KSI_SERVICE_EXTENDER_DATABASE_CORRUPT},
+		{"resource/tlv/ok_extender_error_response_300.tlv", KSI_SERVICE_UPSTREAM_ERROR},
+		{"resource/tlv/ok_extender_error_response_301.tlv", KSI_SERVICE_UPSTREAM_TIMEOUT}
+	};
+
+#define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-06-2.ksig"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_getCalendarBased(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	for (i = 0; i < sizeof(testArray) / sizeof(testArray[0]); i++) {
+		KSI_LOG_debug(ctx, "Extender error test no %d", i);
+		res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(testArray[i].name), TEST_USER, TEST_PASS);
+		CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
+
+		res = KSI_SignatureVerifier_verify(policy, context, &result);
+		CuAssert(tc, "Policy verification must not succeed.", res == testArray[i].res);
+		CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+		CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
+		CuAssert(tc, "Unexpected verification property", InconclusiveProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
+
+		KSI_PolicyVerificationResult_free(result);
+	}
+
+	KSI_VerificationContext_free(context);
+#undef TEST_SIGNATURE_FILE
+}
+
 static void TestCalendarBasedPolicy_OK_WithPublicationRecord(CuTest* tc) {
 	int res;
 	const KSI_Policy *policy = NULL;
@@ -1260,7 +1324,7 @@ static void TestCalendarBasedPolicy_FAIL_WithoutPublicationRecord(CuTest* tc) {
 	KSI_RuleVerificationResult expected = {
 		VER_RES_FAIL,
 		VER_ERR_CAL_4,
-		"KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches"
+		"KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
@@ -2303,6 +2367,7 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestInternalPolicy_OK_WithPublicationRecord);
 	SUITE_ADD_TEST(suite, TestInternalPolicy_OK_WithDocumentHash);
 	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithDocumentHash);
+	SUITE_ADD_TEST(suite, TestCalendarBasedPolicy_NA_ExtenderErrors);
 	SUITE_ADD_TEST(suite, TestCalendarBasedPolicy_OK_WithPublicationRecord);
 	SUITE_ADD_TEST(suite, TestCalendarBasedPolicy_FAIL_WithPublicationRecord);
 	SUITE_ADD_TEST(suite, TestCalendarBasedPolicy_OK_WithoutPublicationRecord);

@@ -15,6 +15,7 @@ Version 3.8
 * IMPROVEMENT: Added function KSI_AggregationHashChain_calculateShape.
 * IMPROVEMENT: KSI_HashChain_aggregate and KSI_HashChain_aggregateCalendar no longer require not NULL output parameters.
 * IMPROVEMENT: Added KSI_AggregationHashChain_aggregate function.
+* BUGFIX: Correcting usage of isForward and isNonCritical flags in KSI_TlvTemplate_serializeObject and KSI_TlvTemplate_writeBytes. Added tests to cover this bug.
 * IMPROVEMENT: KSI_LIST may contain NULL values.
 * BUGFIX: Certificate and publication records are not mandatory for publications file.
 * IMPROVEMENT: Integration tests configuration file error handling improved.
@@ -30,6 +31,7 @@ Version 3.8
 * IMPROVEMENT: Added detailed coverage report in html format.
 * BUGFIX: Fixed HMAC for hash functions with other than 512 bit internal block size.
 * IMPROVEMENT: Removed build warnings on OSX.
+* IMPROVEMENT: Added mechanism to disable deprecation warnings.
 
 Version 3.7
 
