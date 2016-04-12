@@ -66,16 +66,6 @@ KSI_FN_DEPRECATED(int KSI_Signature_verifyAggregated(KSI_Signature *sig, KSI_CTX
 KSI_FN_DEPRECATED(int KSI_Signature_verifyOnline(KSI_Signature *sig, KSI_CTX *ctx));
 
 /**
- * Verifies that the document matches the signature.
- * \param[in]	sig			KSI signature.
- * \param[in]	ctx			KSI context.
- * \param[in]	doc			Pointer to document.
- * \param[in]	doc_len		Document length.
- * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- */
-KSI_FN_DEPRECATED(int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, size_t doc_len));
-
-/**
  * This function verifies given hash value \c hsh using the signature \c sig. If
  * the hash value does not match the input hash value of the signature, a
  * #KSI_VERIFICATION_FAILURE error code is returned.

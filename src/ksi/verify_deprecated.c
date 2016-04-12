@@ -319,45 +319,6 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, size_t doc_len) {
-	int res;
-	KSI_DataHash *hsh = NULL;
-
-	KSI_HashAlgorithm algo_id = -1;
-
-	KSI_ERR_clearErrors(ctx);
-	if (sig == NULL || ctx == NULL || doc == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_Signature_getHashAlgorithm(sig, &algo_id);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_DataHash_create(ctx, doc, doc_len, algo_id, &hsh);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_Signature_verifyDataHash(sig, ctx, hsh);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_DataHash_free(hsh);
-
-	return res;
-}
-
 static int initPublicationsFile(KSI_VerificationResult *info, KSI_CTX *ctx) {
 	int res = KSI_UNKNOWN_ERROR;
 

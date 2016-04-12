@@ -1990,3 +1990,78 @@ cleanup:
 
 	return res;
 }
+
+int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, size_t doc_len) {
+	int res;
+	KSI_DataHash *hsh = NULL;
+	const KSI_Policy *policy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_HashAlgorithm algo_id = -1;
+
+	KSI_ERR_clearErrors(ctx);
+	if (sig == NULL || ctx == NULL || doc == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_Signature_getHashAlgorithm(sig, &algo_id);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_DataHash_create(ctx, doc, doc_len, algo_id, &hsh);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_Policy_getGeneral(ctx, &policy);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_VerificationContext_setSignature(context, sig);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_VerificationContext_setDocumentHash(context, hsh);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, "Verification of signature not completed.");
+		goto cleanup;
+	}
+
+	if (result->finalResult.resultCode != VER_RES_OK) {
+		res = KSI_VERIFICATION_FAILURE;
+		KSI_pushError(ctx, res, "Verification of signature failed.");
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_VerificationContext_setSignature(context, NULL); /* Prevent the freeing of signature. */
+	KSI_VerificationContext_setDocumentHash(context, NULL); /* Prevent the freeing of document hash. */
+	KSI_VerificationContext_free(context);
+	KSI_PolicyVerificationResult_free(result);
+	KSI_DataHash_free(hsh);
+
+	return res;
+}
