@@ -1138,7 +1138,7 @@ static void TestCalendarBasedPolicy_NA_ExtenderErrors(CuTest* tc) {
 	KSI_RuleVerificationResult expected = {
 		VER_RES_NA,
 		VER_ERR_GEN_2,
-		"KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatches"
+		"KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch"
 	};
 
 	struct extErrResp_st {
