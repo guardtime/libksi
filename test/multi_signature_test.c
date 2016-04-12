@@ -83,7 +83,7 @@ static void testExtractingSingle(CuTest* tc) {
 	res = KSI_MultiSignature_get(ms, hsh, &sig);
 	CuAssert(tc, "Unable to extract signature from multi signature container.", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_verify(sig, ctx);
+	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Unable to verify extracted signature.", res == KSI_OK);
 
 	KSI_DataHash_free(hsh);
@@ -120,7 +120,7 @@ static void testExtractingSingleLegacy(CuTest* tc) {
 	res = KSI_MultiSignature_get(ms, hsh, &sig);
 	CuAssert(tc, "Unable to extract signature from multi signature container.", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_verify(sig, ctx);
+	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Unable to verify extracted signature.", res == KSI_OK);
 
 	KSI_DataHash_free(hsh);
@@ -171,6 +171,7 @@ static void testOnlyStrongestProofReturned(CuTest* tc) {
 
 
 	KSI_ERR_clearErrors(ctx);
+
 	res = KSI_MultiSignature_new(ctx, &ms);
 	CuAssert(tc, "Unable to create multi signature container.", res == KSI_OK && ms != NULL);
 
@@ -193,7 +194,7 @@ static void testOnlyStrongestProofReturned(CuTest* tc) {
 	res = KSI_MultiSignature_get(ms, hsh, &sig3);
 	CuAssert(tc, "Unable to extract signature from multi signature container.", res == KSI_OK && sig3 != NULL);
 
-	res = KSI_Signature_verify(sig3, ctx);
+	res = KSI_verifySignature(ctx, sig3);
 	CuAssert(tc, "Unable to verify extracted signature.", res == KSI_OK);
 
 	/* Verify the signature has a publication attached to it. */
@@ -466,7 +467,7 @@ static void testParseAndVerifySingle(CuTest *tc) {
 	res = KSI_MultiSignature_get(ms, hsh, &sig);
 	CuAssert(tc, "Unable to get signature from container.", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_verify(sig, ctx);
+	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Unable to verify signature extracted from container.", res == KSI_OK);
 
 	KSI_Signature_free(sig);
@@ -489,7 +490,7 @@ static void testGetOldest(CuTest *tc) {
 	res = KSI_MultiSignature_get(ms, hsh, &sig);
 	CuAssert(tc, "Unable to get signature from container.", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_verify(sig, ctx);
+	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Unable to verify signature extracted from container.", res == KSI_OK);
 
 	res = KSI_Signature_getSigningTime(sig, &tm);
@@ -521,7 +522,7 @@ static void testExtend(CuTest *tc) {
 	res = KSI_MultiSignature_get(ms, hsh, &sig);
 	CuAssert(tc, "Unable to get signature from container.", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_verify(sig, ctx);
+	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Unable to verify signature extracted from container.", res == KSI_OK);
 
 	res = KSI_Signature_getPublicationRecord(sig, &pubRec);

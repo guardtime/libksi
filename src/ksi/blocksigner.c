@@ -189,6 +189,7 @@ void KSI_Blocksigner_free(KSI_Blocksigner *signer) {
 	if (signer != NULL && --signer->ref == 0) {
 		KSI_TreeBuilder_free(signer->builder);
 		KSI_BlocksignerHandleList_free(signer->leafList);
+		KSI_Signature_free(signer->signature);
 		KSI_free(signer);
 	}
 }
@@ -205,13 +206,16 @@ int KSI_Blocksigner_close(KSI_Blocksigner *signer, KSI_MultiSignature **ms) {
 
 	KSI_ERR_clearErrors(signer->ctx);
 
+	KSI_LOG_debug(signer->ctx, "Closing block signer instance.");
+
 	/* Finalize the tree. */
 	res = KSI_TreeBuilder_close(signer->builder);
-	if (tmp == NULL) {
+	if (res != KSI_OK) {
 		KSI_pushError(signer->ctx, res, NULL);
 		goto cleanup;
 	}
 
+	KSI_LOG_debug(signer->ctx, "Signing the root hash value of the block signer.");
 	/* Sign the root hash. */
 	res = KSI_Signature_signAggregated(signer->ctx, signer->builder->rootNode->hash, signer->builder->rootNode->level, &signer->signature);
 	if (res != KSI_OK) {
@@ -222,6 +226,9 @@ int KSI_Blocksigner_close(KSI_Blocksigner *signer, KSI_MultiSignature **ms) {
 	/* If the output parameter is set, populate the multi signature container. */
 	if (ms != NULL) {
 		size_t i;
+
+		KSI_LOG_debug(signer->ctx, "Creating a multi signature output value for the block signer.");
+
 		res = KSI_MultiSignature_new(signer->ctx, &tmp);
 		if (res != KSI_OK) {
 			KSI_pushError(signer->ctx, res, NULL);
