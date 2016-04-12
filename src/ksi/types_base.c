@@ -261,7 +261,7 @@ static int verifyLegacyId(KSI_CTX *ctx, const unsigned char *raw, size_t raw_len
 	}
 	/* First two octets have fixed values. */
 	if (!(raw[0] == 0x03 && raw[1] == 0x00)) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID fixed data mismatch.");
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID header mismatch.");
 		KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Legacy ID data: ", raw, raw_len);
 		goto cleanup;
 	}
@@ -397,7 +397,7 @@ int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, size_t len, KSI_Utf8String
 	tmp->ctx = ctx;
 	tmp->value = NULL;
 	tmp->ref = 1;
-	
+
 	/* Verify that it is a null-terminated string. */
 	if (len == 0 || str[len - 1] != '\0') {
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "String value is not null-terminated.");

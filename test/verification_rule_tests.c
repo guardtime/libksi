@@ -156,6 +156,63 @@ static void testRule_AggregationHashChainConsistency_verifyErrorResult(CuTest *t
 #undef TEST_SIGNATURE_FILE
 }
 
+static void testRule_AggregationHashChainConsistency_idTagConsistancy_siblingContainsLegacyId_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-2014-04-30.1-legacyId-in-sibling.ksig"
+
+	int res = KSI_OK;
+	KSI_Signature *sig = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Signature parsing should fail.", res == KSI_INVALID_FORMAT && sig == NULL);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationHashChainConsistency_idTagConsistancyFail(CuTest *tc, char *testSignatureFile) {
+	int res = KSI_OK;
+	KSI_VerificationContext *verCtx = NULL;
+	KSI_RuleVerificationResult verRes;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_create(ctx, &verCtx);
+	CuAssert(tc, "Unable to create verification context.", res == KSI_OK && verCtx != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(testSignatureFile), &verCtx->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
+
+	res = KSI_VerificationRule_AggregationHashChainConsistency(verCtx, &verRes);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_INT_10);
+
+	KSI_VerificationContext_free(verCtx);
+}
+
+static void testRule_AggregationHashChainConsistency_idTagConsistancy_invalidHeader_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-2014-04-30.1-legacyId-invalid-header.ksig"
+
+	testRule_AggregationHashChainConsistency_idTagConsistancyFail(tc, TEST_SIGNATURE_FILE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationHashChainConsistency_idTagConsistancy_invalidLenght_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-2014-04-30.1-legacyId-invalid-lenght.ksig"
+
+	testRule_AggregationHashChainConsistency_idTagConsistancyFail(tc, TEST_SIGNATURE_FILE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationHashChainConsistency_idTagConsistancy_invalidPadding_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-2014-04-30.1-legacyId-invalid-padding.ksig"
+
+	testRule_AggregationHashChainConsistency_idTagConsistancyFail(tc, TEST_SIGNATURE_FILE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
 static void testRule_AggregationHashChainTimeConsistency(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 
@@ -1967,13 +2024,13 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(CuTe
 #undef TEST_PUBLICATIONS_FILE
 }
 
-static void testRule_testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_notExtended(CuTest *tc) {
+static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_notExtended(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 	testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(tc, TEST_SIGNATURE_FILE);
 #undef TEST_SIGNATURE_FILE
 }
 
-static void testRule_testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_extended(CuTest *tc) {
+static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_extended(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 	testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(tc, TEST_SIGNATURE_FILE);
 #undef TEST_SIGNATURE_FILE
@@ -2738,6 +2795,10 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_AggregationChainInputHashVerification_missingRfc3161);
 	SUITE_ADD_TEST(suite, testRule_AggregationHashChainConsistency);
 	SUITE_ADD_TEST(suite, testRule_AggregationHashChainConsistency_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_AggregationHashChainConsistency_idTagConsistancy_siblingContainsLegacyId_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_AggregationHashChainConsistency_idTagConsistancy_invalidHeader_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_AggregationHashChainConsistency_idTagConsistancy_invalidLenght_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_AggregationHashChainConsistency_idTagConsistancy_invalidPadding_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_AggregationHashChainTimeConsistency);
 	SUITE_ADD_TEST(suite, testRule_AggregationHashChainTimeConsistency_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainInputHashVerification_sigWithCalHashChain);
@@ -2803,8 +2864,8 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationHashMatchesExtenderResponse_notExtended);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationHashMatchesExtenderResponse_extended);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationHashMatchesExtenderResponse_verifyErrorResult);
-	SUITE_ADD_TEST(suite, testRule_testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_notExtended);
-	SUITE_ADD_TEST(suite, testRule_testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_extended);
+	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_notExtended);
+	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_extended);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFileExtendedSignatureInputHash_notExtended);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFileExtendedSignatureInputHash_extended);

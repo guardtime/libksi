@@ -481,11 +481,16 @@ int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext
 
 		if (aggregationChain == NULL) break;
 
-		/*  Verify aggregation hash chain identity tag consistency*/
+		/* Verify aggregation hash chain identity tag consistency. */
 		res = identityTagConsistency_verify(aggregationChain->chain, ctx);
 		if (res != KSI_OK) {
-			VERIFICATION_RESULT(VER_RES_NA, VER_ERR_GEN_2);
 			KSI_pushError(ctx, res, NULL);
+			if (res == KSI_INVALID_FORMAT || res == KSI_UNTRUSTED_HASH_ALGORITHM) {
+				VERIFICATION_RESULT(VER_RES_FAIL, VER_ERR_INT_10);
+				res = KSI_OK;
+			} else {
+				VERIFICATION_RESULT(VER_RES_NA, VER_ERR_GEN_2);
+			}
 			goto cleanup;
 		}
 
