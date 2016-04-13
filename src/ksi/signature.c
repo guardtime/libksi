@@ -143,86 +143,88 @@ int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHash
 
 	KSI_ERR_clearErrors(sig->ctx);
 
-	/* Get and update the aggregation time. */
-	res = KSI_Signature_getSigningTime(sig, &pAggrTm);
-	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	aggr->aggregationTime = KSI_Integer_ref(pAggrTm);
-
-	/* Update the aggregation chain. */
-	listLen = KSI_AggregationHashChainList_length(sig->aggregationChainList);
-	if (listLen == 0) {
-		KSI_pushError(sig->ctx, res = KSI_INVALID_STATE, "Signature does not contain any aggregation hash chains.");
-		goto cleanup;
-	}
-
-	/* Just make sure there is a chain index present. */
-	if (aggr->chainIndex == NULL) {
-		res = addChainIndex(sig->ctx, aggr);
-		if (res != KSI_OK) {
-			KSI_pushError(sig->ctx, res, NULL);
-			goto cleanup;
-		}
-	}
-
-	/* We assume the aggregation hash chain is ordered and the first aggregation chain is the one
-	 * with the longest chain index.
-	 */
-	res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &pCurrent);
-	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Traverse the chain index from back to forth, and add the values to the begining of the
-	 * aggregation chain.
-	 */
-	for (i = KSI_IntegerList_length(pCurrent->chainIndex); i > 0; i--) {
-		KSI_Integer *tmp = NULL;
-
-		res = KSI_IntegerList_elementAt(pCurrent->chainIndex, i - 1, &tmp);
+	if (KSI_HashChainLinkList_length(aggr->chain) > 0) {
+		/* Get and update the aggregation time. */
+		res = KSI_Signature_getSigningTime(sig, &pAggrTm);
 		if (res != KSI_OK) {
 			KSI_pushError(sig->ctx, res, NULL);
 			goto cleanup;
 		}
 
-		res = KSI_IntegerList_insertAt(aggr->chainIndex, 0, KSI_Integer_ref(tmp));
+		aggr->aggregationTime = KSI_Integer_ref(pAggrTm);
+
+		/* Update the aggregation chain. */
+		listLen = KSI_AggregationHashChainList_length(sig->aggregationChainList);
+		if (listLen == 0) {
+			KSI_pushError(sig->ctx, res = KSI_INVALID_STATE, "Signature does not contain any aggregation hash chains.");
+			goto cleanup;
+		}
+
+		/* Just make sure there is a chain index present. */
+		if (aggr->chainIndex == NULL) {
+			res = addChainIndex(sig->ctx, aggr);
+			if (res != KSI_OK) {
+				KSI_pushError(sig->ctx, res, NULL);
+				goto cleanup;
+			}
+		}
+
+		/* We assume the aggregation hash chain is ordered and the first aggregation chain is the one
+		 * with the longest chain index.
+		 */
+		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &pCurrent);
 		if (res != KSI_OK) {
 			KSI_pushError(sig->ctx, res, NULL);
 			goto cleanup;
 		}
-	}
 
-	/* Prepend the aggregation chain to the signature. */
-	res = KSI_AggregationHashChainList_insertAt(sig->aggregationChainList, 0, KSI_AggregationHashChain_ref(aggr));
-	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
-		goto cleanup;
-	}
+		/* Traverse the chain index from back to forth, and add the values to the begining of the
+		 * aggregation chain.
+		 */
+		for (i = KSI_IntegerList_length(pCurrent->chainIndex); i > 0; i--) {
+			KSI_Integer *tmp = NULL;
 
-	res = KSI_TLV_new(sig->ctx, 0x0801, 0, 0, &tlv);
-	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
-		goto cleanup;
-	}
+			res = KSI_IntegerList_elementAt(pCurrent->chainIndex, i - 1, &tmp);
+			if (res != KSI_OK) {
+				KSI_pushError(sig->ctx, res, NULL);
+				goto cleanup;
+			}
+
+			res = KSI_IntegerList_insertAt(aggr->chainIndex, 0, KSI_Integer_ref(tmp));
+			if (res != KSI_OK) {
+				KSI_pushError(sig->ctx, res, NULL);
+				goto cleanup;
+			}
+		}
+
+		/* Prepend the aggregation chain to the signature. */
+		res = KSI_AggregationHashChainList_insertAt(sig->aggregationChainList, 0, KSI_AggregationHashChain_ref(aggr));
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_TLV_new(sig->ctx, 0x0801, 0, 0, &tlv);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
 
 
-	/** Serialize and append the TLV structure to the signature. */
-	res = KSI_TlvTemplate_construct(sig->ctx, tlv, aggr, KSI_TLV_TEMPLATE(KSI_AggregationHashChain));
-	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
-		goto cleanup;
-	}
+		/** Serialize and append the TLV structure to the signature. */
+		res = KSI_TlvTemplate_construct(sig->ctx, tlv, aggr, KSI_TLV_TEMPLATE(KSI_AggregationHashChain));
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
 
-	res = KSI_TLV_appendNestedTlv(sig->baseTlv, tlv);
-	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
-		goto cleanup;
+		res = KSI_TLV_appendNestedTlv(sig->baseTlv, tlv);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+		tlv = NULL;
 	}
-	tlv = NULL;
 
 	res = KSI_OK;
 

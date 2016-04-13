@@ -166,12 +166,12 @@ int KSI_Blocksigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *pr
 	tmp->prevLeaf = KSI_DataHash_ref(prevLeaf);
 	tmp->iv = KSI_OctetString_ref(initVal);
 
+	/* Add the client id handle. */
 	res = KSI_TreeBuilderLeafProcessorList_append(tmp->builder->cbList, &tmp->metaDataProcessor);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-	/* Add the client id handle. */
 
 	*signer = tmp;
 	tmp = NULL;
@@ -275,6 +275,7 @@ cleanup:
 int KSI_Blocksigner_reset(KSI_Blocksigner *signer) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TreeBuilder *builder = NULL;
+	KSI_LIST(KSI_BlocksignerHandle) *leafList = NULL;
 
 	if (signer == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -283,24 +284,35 @@ int KSI_Blocksigner_reset(KSI_Blocksigner *signer) {
 
 	KSI_ERR_clearErrors(signer->ctx);
 
-	signer->builder = NULL;
-
 	res = KSI_TreeBuilder_new(signer->ctx, signer->builder->algo, &builder);
 	if (res != KSI_OK) {
 		KSI_pushError(signer->ctx, res, NULL);
 		goto cleanup;
 	}
 
-	KSI_TreeBuilder_free(signer->builder);
+	res = KSI_BlocksignerHandleList_new(&leafList);
+	if (res != KSI_OK) {
+		KSI_pushError(signer->ctx, res, NULL);
+		goto cleanup;
+	}
 
+	KSI_Signature_free(signer->signature);
+	signer->signature = NULL;
+
+	KSI_TreeBuilder_free(signer->builder);
 	signer->builder = builder;
 	builder = NULL;
+
+	KSI_BlocksignerHandleList_free(signer->leafList);
+	signer->leafList = leafList;
+	leafList = NULL;
 
 	res = KSI_OK;
 
 cleanup:
 
 	KSI_TreeBuilder_free(builder);
+	KSI_BlocksignerHandleList_free(leafList);
 
 	return res;
 }
