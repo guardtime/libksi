@@ -62,6 +62,16 @@ extern "C" {
 	int KSI_VerificationRule_AggregationHashChainTimeConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
+	 * This rule is used to check whether the shape of the aggregation hash chain does match with the chain index.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
 	 * This rule is used to verify that last aggregation hash chain output hash equals to calendar hash chain input hash.
 	 * If calendar hash chain is missing then status code #KSI_OK will be returned.
 	 *
