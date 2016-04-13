@@ -305,6 +305,16 @@ extern "C" {
 	 */
 	int KSI_Signature_getPublicationInfo(KSI_Signature *sig, KSI_DataHash **pubHsh, KSI_Utf8String **pubStr, time_t *pubDate, KSI_LIST(KSI_Utf8String) **pubRefs, KSI_LIST(KSI_Utf8String) **repUrls);
 
+	/**
+	 * Verifies that the document matches the signature.
+	 * \param[in]	sig			KSI signature.
+	 * \param[in]	ctx			KSI context.
+	 * \param[in]	doc			Pointer to document.
+	 * \param[in]	doc_len		Document length.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, size_t doc_len);
+
 /**
  * @}
  */

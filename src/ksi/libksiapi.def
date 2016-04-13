@@ -1008,6 +1008,7 @@ EXPORTS
 	KSI_Policy_getKeyBased
 	KSI_Policy_getPublicationsFileBased
 	KSI_Policy_getUserProvidedPublicationBased
+	KSI_Policy_getGeneral
 	KSI_Policy_clone
 	KSI_Policy_setFallback
 	KSI_SignatureVerifier_verify

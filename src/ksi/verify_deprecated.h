@@ -66,16 +66,6 @@ KSI_FN_DEPRECATED(int KSI_Signature_verifyAggregated(KSI_Signature *sig, KSI_CTX
 KSI_FN_DEPRECATED(int KSI_Signature_verifyOnline(KSI_Signature *sig, KSI_CTX *ctx));
 
 /**
- * Verifies that the document matches the signature.
- * \param[in]	sig			KSI signature.
- * \param[in]	ctx			KSI context.
- * \param[in]	doc			Pointer to document.
- * \param[in]	doc_len		Document length.
- * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- */
-KSI_FN_DEPRECATED(int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, size_t doc_len));
-
-/**
  * This function verifies given hash value \c hsh using the signature \c sig. If
  * the hash value does not match the input hash value of the signature, a
  * #KSI_VERIFICATION_FAILURE error code is returned.
@@ -126,6 +116,86 @@ KSI_FN_DEPRECATED(int KSI_Signature_verifyAggregatedHash(KSI_Signature *sig, KSI
  * error code).
  */
 KSI_FN_DEPRECATED(int KSI_Signature_getVerificationResult(KSI_Signature *sig, const KSI_VerificationResult **info));
+
+/**
+ * Mark the verification step as failure.
+ * \param[in]	info		Verification result.
+ * \param[in]	step		Verification step.
+ * \param[in]	desc		Verification failure message.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
+KSI_FN_DEPRECATED(int KSI_VerificationResult_addFailure(KSI_VerificationResult *info, KSI_VerificationStep step, const char *desc));
+
+/**
+ * Mark the verification step as success.
+ * \param[in]	info		Verification result.
+ * \param[in]	step		Verification step.
+ * \param[in]	desc		Verification success message.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
+KSI_FN_DEPRECATED(int KSI_VerificationResult_addSuccess(KSI_VerificationResult *info, KSI_VerificationStep step, const char *desc));
+
+/**
+ * Returns the performed step count.
+ * \param[in]	info		Verification result.
+ * \return count of elements in the verification info.
+ */
+KSI_FN_DEPRECATED(size_t KSI_VerificationResult_getStepResultCount(const KSI_VerificationResult *info));
+
+/**
+ * Get the a verification step with the given index.
+ * \param[in]	info		Verification result.
+ * \param[in]	index		Index of the step.
+ * \param[out]	result		Verification step result.
+ *
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
+KSI_FN_DEPRECATED(int KSI_VerificationResult_getStepResult(const KSI_VerificationResult *info, size_t index, const KSI_VerificationStepResult **result));
+
+/**
+ * Returns 0 if the given verification step is not performed.
+ * \param[in]	info		Verification result.
+ * \param[in]	step		Verification step.
+ * \return 0 is the given verification step is not performed.
+ */
+KSI_FN_DEPRECATED(int KSI_VerificationResult_isStepPerformed(const KSI_VerificationResult *info, enum KSI_VerificationStep_en step));
+
+/**
+ * Returns 0 if the given verification step is not performed or the performed step was
+ * unsuccessful.
+ * \param[in]	info		Verification result.
+ * \param[in]	step		Verification step.
+ * \returns 0 if the given verification step was unsuccessful or not performed.
+ */
+KSI_FN_DEPRECATED(int KSI_VerificationResult_isStepSuccess(const KSI_VerificationResult *info, enum KSI_VerificationStep_en step));
+
+/**
+ * Returns a pointer to the last failure message. If there are no failure messages or
+ * an error occurred \c NULL is returned.
+ * \param[in]	info		Verification result.
+ * \returns Pointer to the last failure message or \c NULL.
+ */
+KSI_FN_DEPRECATED(const char *KSI_VerificationResult_lastFailureMessage(const KSI_VerificationResult *info));
+
+/**
+ * Returns the #KSI_VerificationStep value or 0 on an error.
+ * \param[in]	result 		Verification step result.
+ * \returns 0 if the given verification step was unsuccessful or not performed.
+ */
+KSI_FN_DEPRECATED(int KSI_VerificationStepResult_getStep(const KSI_VerificationStepResult *result));
+
+/**
+ * Returns if the verification step result was successful.
+ * \param[in]	result		Verification step result.
+ * \return If the step was not successful 0 is returned, otherwise !0.
+ */
+KSI_FN_DEPRECATED(int KSI_VerificationStepResult_isSuccess(const KSI_VerificationStepResult *result));
+
+/**
+ * Returns a pointer to the description of this step result.
+ * \param[in]	result		Verification step result.
+ */
+KSI_FN_DEPRECATED(const char *KSI_VerificationStepResult_getDescription(const KSI_VerificationStepResult *result));
 
 #ifdef __cplusplus
 }
