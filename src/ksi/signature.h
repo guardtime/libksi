@@ -277,6 +277,33 @@ extern "C" {
 	KSI_DEFINE_REF(KSI_AggregationHashChain);
 	KSI_DEFINE_WRITE_BYTES(KSI_AggregationHashChain);
 
+	/**
+	 * This function aggregates the aggregation hash chain list and returns the result hash via \c outputHash parameter.
+	 * \param[in]	chainList		Hash chain list (list of hash chains)
+	 * \param[in]	ctx				KSI context
+	 * \param[in]	level			Aggregation level
+	 * \param[out]	outputHash		Pointer to the receiving pointer to data hash object.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \note The output memory buffer belongs to the caller and needs to be freed
+	 * by the caller using #KSI_free.
+	 */
+	int KSI_AggregationHashChainList_aggregate(KSI_AggregationHashChainList *chainList, KSI_CTX *ctx, int level, KSI_DataHash **outputHash);
+
+	/**
+	 * Function for getting publication information from an extended signature.
+	 * \param [in]		sig			Extended signature including publication record.
+	 * \param [out]		pubHsh		Publication hash.
+	 * \param [out]		pubStr		Publication data converted into a base-32 encoded string.
+	 * \param [out]		pubDate		Publicatoin date
+	 * \param [out]		pubRefs		Publication references.
+	 * \param [out]		repUrls		Publication URL repositories.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \note	The output memory has to be freed by the caller
+	 * \see		#KSI_DataHash_free, #KSI_Utf8String_free, #KSI_Utf8StringList_free
+	 */
+	int KSI_Signature_getPublicationInfo(KSI_Signature *sig, KSI_DataHash **pubHsh, KSI_Utf8String **pubStr, time_t *pubDate, KSI_LIST(KSI_Utf8String) **pubRefs, KSI_LIST(KSI_Utf8String) **repUrls);
 
 /**
  * @}

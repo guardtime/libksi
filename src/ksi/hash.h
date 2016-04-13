@@ -21,6 +21,7 @@
 #define KSI_HASH_H_
 
 #include "types_base.h"
+#include "common.h"
 
 #ifdef __cplusplus
 extern "C" {

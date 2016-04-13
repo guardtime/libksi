@@ -17,6 +17,8 @@
  * reserves and retains all trademark rights.
  */
 
+#define __KSI_NO_DEPRECATE__
+
 #include "internal.h"
 #include "verification_impl.h"
 #include "signature_impl.h"
@@ -26,8 +28,6 @@
 #include "net.h"
 #include "pkitruststore.h"
 #include "ctx_impl.h"
-
-int createExtendRequest(KSI_CTX *ctx, KSI_Integer *start, KSI_Integer *end, KSI_ExtendReq **request);
 
 #define KSI_DEFINE_VERIFICATION_POLICY(name) unsigned name[] = {
 #define KSI_END_VERIFICATION_POLICY , 0};
