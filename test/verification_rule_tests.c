@@ -2608,8 +2608,6 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_wrongCor
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
-	KSI_PublicationRecord *tempRec = NULL;
-	KSI_Signature *extSig = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2628,7 +2626,6 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_wrongCor
 	res = KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse(verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_PUB_1);
 
-	KSI_nofree(verCtx->userData.userPublication);
 	KSI_VerificationContext_free(verCtx);
 
 #undef TEST_SIGNATURE_FILE
