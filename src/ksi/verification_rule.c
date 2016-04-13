@@ -2190,6 +2190,12 @@ int KSI_VerificationRule_PublicationsFileContainsPublication(KSI_VerificationCon
 
 	KSI_LOG_info(ctx, "Verify publication record existence.");
 
+	if (sig->calendarChain == NULL) {
+		VERIFICATION_RESULT(VER_RES_NA, VER_ERR_GEN_2);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
 	res = KSI_CalendarHashChain_calculateAggregationTime(sig->calendarChain, &aggrTime);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT(VER_RES_NA, VER_ERR_GEN_2);
