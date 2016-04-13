@@ -29,8 +29,6 @@
 
 extern KSI_CTX *ctx;
 
-//#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
-//#define TEST_EXTEND_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
 #define TEST_USER "anon"
 #define TEST_PASS "anon"
 
@@ -197,7 +195,7 @@ static void testRFC3161WrongChainIndex(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_verifySignature(ctx, sig);
-	CuAssert(tc, "Failed to verify valid document", res == KSI_OK);
+	CuAssert(tc, "Failed to verify valid document", res == KSI_VERIFICATION_FAILURE);
 
 	KSI_Signature_free(sig);
 
