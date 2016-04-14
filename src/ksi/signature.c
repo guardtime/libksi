@@ -1278,7 +1278,7 @@ cleanup:
 	return res;
 }
 
-static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *sig, KSI_uint64_t rootLevel) {
+static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *sig, KSI_uint64_t rootLevel, KSI_DataHash *docHsh) {
 	int res;
 	const KSI_Policy *policy = NULL;
 	KSI_VerificationContext *context = NULL;
@@ -1318,6 +1318,14 @@ static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *s
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
+	}
+
+	if (docHsh != NULL) {
+		res = KSI_VerificationContext_setDocumentHash(context, KSI_DataHash_ref(docHsh));
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
 	}
 
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
@@ -1391,7 +1399,7 @@ int KSI_Signature_signAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint6
 		goto cleanup;
 	}
 
-	res = KSI_SignatureVerifier_verifyInternally(ctx, sign, rootLevel);
+	res = KSI_SignatureVerifier_verifyInternally(ctx, sign, rootLevel, rootHash);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1563,7 +1571,7 @@ int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *
 	}
 
 	/* Just to be sure, verify the internals. */
-	res = KSI_SignatureVerifier_verifyInternally(ctx, tmp, 0);
+	res = KSI_SignatureVerifier_verifyInternally(ctx, tmp, 0, NULL);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1639,7 +1647,7 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 	pubRecClone = NULL;
 
 	/* To be sure we won't return a bad signature, lets verify the internals. */
-	res = KSI_SignatureVerifier_verifyInternally(ctx, tmp, 0);
+	res = KSI_SignatureVerifier_verifyInternally(ctx, tmp, 0, NULL);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -2271,6 +2279,81 @@ cleanup:
 	KSI_Utf8String_free(tmpPubStr);
 	KSI_Utf8StringList_free(tmpPubRefs);
 	KSI_Utf8StringList_free(tmpRepUrls);
+
+	return res;
+}
+
+int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, size_t doc_len) {
+	int res;
+	KSI_DataHash *hsh = NULL;
+	const KSI_Policy *policy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_HashAlgorithm algo_id = -1;
+
+	KSI_ERR_clearErrors(ctx);
+	if (sig == NULL || ctx == NULL || doc == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_Signature_getHashAlgorithm(sig, &algo_id);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_DataHash_create(ctx, doc, doc_len, algo_id, &hsh);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_Policy_getGeneral(ctx, &policy);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_VerificationContext_setSignature(context, sig);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_VerificationContext_setDocumentHash(context, hsh);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, "Verification of signature not completed.");
+		goto cleanup;
+	}
+
+	if (result->finalResult.resultCode != VER_RES_OK) {
+		res = KSI_VERIFICATION_FAILURE;
+		KSI_pushError(ctx, res, "Verification of signature failed.");
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_VerificationContext_setSignature(context, NULL); /* Prevent the freeing of signature. */
+	KSI_VerificationContext_setDocumentHash(context, NULL); /* Prevent the freeing of document hash. */
+	KSI_VerificationContext_free(context);
+	KSI_PolicyVerificationResult_free(result);
+	KSI_DataHash_free(hsh);
 
 	return res;
 }

@@ -117,6 +117,10 @@ cleanup:
 	return res;
 }
 
+/******************
+ * INTERNAL POLICY
+ ******************/
+
 static const Rule noCalendarAuthenticationRecordRule[] = {
 	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordDoesNotExist},
 	{RULE_TYPE_BASIC, NULL}
@@ -168,7 +172,7 @@ static const Rule calendarHashChainVerificationRule[] = {
 	{RULE_TYPE_BASIC, NULL}
 };
 
-static const Rule calendarHashChainRule[] = {
+static const Rule calendarHashChainRule_int[] = {
 	{RULE_TYPE_COMPOSITE_OR, noCalendarHashChainRule},
 	{RULE_TYPE_COMPOSITE_OR, calendarHashChainVerificationRule},
 	{RULE_TYPE_COMPOSITE_OR, NULL}
@@ -195,7 +199,7 @@ static const Rule internalRules[] = {
 	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainInputHashVerification},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainConsistency},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainTimeConsistency},
-	{RULE_TYPE_COMPOSITE_AND, calendarHashChainRule},
+	{RULE_TYPE_COMPOSITE_AND, calendarHashChainRule_int},
 	{RULE_TYPE_COMPOSITE_AND, documentHashRule},
 	{RULE_TYPE_BASIC, NULL}
 };
@@ -224,53 +228,57 @@ cleanup:
 	return res;
 }
 
+/************************
+ * CALENDAR-BASED POLICY
+ ************************/
+
+static const Rule AggregationChainRightLinksVerificationRule[] = {
+	{RULE_TYPE_BASIC, KSI_VerificationRule_SignatureDoesNotContainPublication},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch},
+	{RULE_TYPE_BASIC, NULL}
+};
+
+static const Rule CalendarChainRootHashVerificationRule[] = {
+	{RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordExistence},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash},
+	{RULE_TYPE_BASIC, NULL}
+};
+
+static const Rule publicationRecordRule_cal[] = {
+	{RULE_TYPE_COMPOSITE_OR, AggregationChainRightLinksVerificationRule},
+	{RULE_TYPE_COMPOSITE_OR, CalendarChainRootHashVerificationRule},
+	{RULE_TYPE_COMPOSITE_OR, NULL}
+};
+
+static const Rule extendToHeadRule[] = {
+	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainDoesNotExist},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime},
+	{RULE_TYPE_BASIC, NULL}
+};
+
+static const Rule extendToCalendarChainRule[] = {
+	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainExistence},
+	{RULE_TYPE_COMPOSITE_AND, publicationRecordRule_cal},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime},
+	{RULE_TYPE_BASIC, NULL}
+};
+
+static const Rule calendarHashChainRule_cal[] = {
+	{RULE_TYPE_COMPOSITE_OR, extendToHeadRule},
+	{RULE_TYPE_COMPOSITE_OR, extendToCalendarChainRule},
+	{RULE_TYPE_COMPOSITE_OR, NULL}
+};
+
+static const Rule calendarBasedRules[] = {
+	{RULE_TYPE_COMPOSITE_AND, internalRules},
+	{RULE_TYPE_COMPOSITE_AND, calendarHashChainRule_cal},
+	{RULE_TYPE_COMPOSITE_AND, NULL}
+};
+
 int KSI_Policy_getCalendarBased(KSI_CTX *ctx, const KSI_Policy **policy) {
 	int res = KSI_UNKNOWN_ERROR;
-
-	static const Rule rules1[] = {
-		{RULE_TYPE_BASIC, KSI_VerificationRule_SignatureDoesNotContainPublication},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch},
-		{RULE_TYPE_BASIC, NULL}
-	};
-
-	static const Rule rules2[] = {
-		{RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordExistence},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash},
-		{RULE_TYPE_BASIC, NULL}
-	};
-
-	static const Rule rules3[] = {
-		{RULE_TYPE_COMPOSITE_OR, rules1},
-		{RULE_TYPE_COMPOSITE_OR, rules2},
-		{RULE_TYPE_COMPOSITE_OR, NULL}
-	};
-
-	static const Rule rules4[] = {
-		{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainDoesNotExist},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime},
-		{RULE_TYPE_BASIC, NULL}
-	};
-
-	static const Rule rules5[] = {
-		{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainExistence},
-		{RULE_TYPE_COMPOSITE_AND, rules3},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime},
-		{RULE_TYPE_BASIC, NULL}
-	};
-
-	static const Rule rules6[] = {
-		{RULE_TYPE_COMPOSITE_OR, rules4},
-		{RULE_TYPE_COMPOSITE_OR, rules5},
-		{RULE_TYPE_COMPOSITE_OR, NULL}
-	};
-
-	static const Rule calendarBasedRules[] = {
-		{RULE_TYPE_COMPOSITE_AND, internalRules},
-		{RULE_TYPE_COMPOSITE_AND, rules6},
-		{RULE_TYPE_COMPOSITE_AND, NULL}
-	};
 
 	static const KSI_Policy calendarBasedPolicy = {
 		calendarBasedRules,
@@ -293,17 +301,21 @@ cleanup:
 	return res;
 }
 
+/*******************
+ * KEY-BASED POLICY
+ *******************/
+
+static const Rule keyBasedRules[] = {
+	{RULE_TYPE_COMPOSITE_AND, internalRules},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainExistence},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordExistence},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_CertificateExistence},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification},
+	{RULE_TYPE_BASIC, NULL}
+};
+
 int KSI_Policy_getKeyBased(KSI_CTX *ctx, const KSI_Policy **policy) {
 	int res = KSI_UNKNOWN_ERROR;
-
-	static const Rule keyBasedRules[] = {
-		{RULE_TYPE_COMPOSITE_AND, internalRules},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainExistence},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordExistence},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_CertificateExistence},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification},
-		{RULE_TYPE_BASIC, NULL}
-	};
 
 	static const KSI_Policy keyBasedPolicy = {
 		keyBasedRules,
@@ -326,35 +338,39 @@ cleanup:
 	return res;
 }
 
+/*********************************************
+ * PUBLICATION-BASED POLICY: PUBLICATION FILE
+ *********************************************/
+
+static const Rule publicationPresentRule[] = {
+	{RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordExistence},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileContainsSignaturePublication},
+	{RULE_TYPE_BASIC, NULL}
+};
+static const Rule extendToPublicationRule[] = {
+	{RULE_TYPE_BASIC, KSI_VerificationRule_SignatureDoesNotContainPublication},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileContainsPublication},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendingPermittedVerification},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash},
+	{RULE_TYPE_BASIC, NULL}
+};
+
+static const Rule publicationRecordRule_pubFile[] = {
+	{RULE_TYPE_COMPOSITE_OR, publicationPresentRule},
+	{RULE_TYPE_COMPOSITE_OR, extendToPublicationRule},
+	{RULE_TYPE_COMPOSITE_OR, NULL}
+};
+
+static const Rule publicationsFileBasedRules[] = {
+	{RULE_TYPE_COMPOSITE_AND, internalRules},
+	{RULE_TYPE_COMPOSITE_AND, publicationRecordRule_pubFile},
+	{RULE_TYPE_COMPOSITE_AND, NULL}
+};
+
 int KSI_Policy_getPublicationsFileBased(KSI_CTX *ctx, const KSI_Policy **policy) {
 	int res = KSI_UNKNOWN_ERROR;
-
-	static const Rule publicationPresentRules[] = {
-		{RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordExistence},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileContainsSignaturePublication},
-		{RULE_TYPE_BASIC, NULL}
-	};
-	static const Rule useExtendingRules[] = {
-		{RULE_TYPE_BASIC, KSI_VerificationRule_SignatureDoesNotContainPublication},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileContainsPublication},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendingPermittedVerification},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash},
-		{RULE_TYPE_BASIC, NULL}
-	};
-
-	static const Rule rules1[] = {
-		{RULE_TYPE_COMPOSITE_OR, publicationPresentRules},
-		{RULE_TYPE_COMPOSITE_OR, useExtendingRules},
-		{RULE_TYPE_COMPOSITE_OR, NULL}
-	};
-
-	static const Rule publicationsFileBasedRules[] = {
-		{RULE_TYPE_COMPOSITE_AND, internalRules},
-		{RULE_TYPE_COMPOSITE_AND, rules1},
-		{RULE_TYPE_COMPOSITE_AND, NULL}
-	};
 
 	static const KSI_Policy publicationsFileBasedPolicy = {
 		publicationsFileBasedRules,
@@ -377,36 +393,40 @@ cleanup:
 	return res;
 }
 
+/*********************************************
+ * PUBLICATION-BASED POLICY: USER PUBLICATION
+ *********************************************/
+
+static const Rule userPublicationMatchRule[] = {
+	{RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordExistence},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationVerification},
+	{RULE_TYPE_BASIC, NULL}
+};
+
+static const Rule extendToUserPublicationRule[] = {
+	{RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendingPermittedVerification},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash},
+	{RULE_TYPE_BASIC, NULL}
+};
+
+static const Rule publicationRecordRule_pubString[] = {
+	{RULE_TYPE_COMPOSITE_OR, userPublicationMatchRule},
+	{RULE_TYPE_COMPOSITE_OR, extendToUserPublicationRule},
+	{RULE_TYPE_COMPOSITE_OR, NULL}
+};
+
+static const Rule userProvidedPublicationBasedRules[] = {
+	{RULE_TYPE_COMPOSITE_AND, internalRules},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationExistence},
+	{RULE_TYPE_COMPOSITE_AND, publicationRecordRule_pubString},
+	{RULE_TYPE_COMPOSITE_AND, NULL}
+};
+
 int KSI_Policy_getUserProvidedPublicationBased(KSI_CTX *ctx, const KSI_Policy **policy) {
 	int res = KSI_UNKNOWN_ERROR;
-
-	static const Rule userPublicationRules[] = {
-		{RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordExistence},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationVerification},
-		{RULE_TYPE_BASIC, NULL}
-	};
-
-	static const Rule useExtendingRules[] = {
-		{RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendingPermittedVerification},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash},
-		{RULE_TYPE_BASIC, NULL}
-	};
-
-	static const Rule rules1[] = {
-		{RULE_TYPE_COMPOSITE_OR, userPublicationRules},
-		{RULE_TYPE_COMPOSITE_OR, useExtendingRules},
-		{RULE_TYPE_COMPOSITE_OR, NULL}
-	};
-
-	static const Rule userProvidedPublicationBasedRules[] = {
-		{RULE_TYPE_COMPOSITE_AND, internalRules},
-		{RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationExistence},
-		{RULE_TYPE_COMPOSITE_AND, rules1},
-		{RULE_TYPE_COMPOSITE_AND, NULL}
-	};
 
 	static const KSI_Policy userProvidedPublicationBasedPolicy = {
 		userProvidedPublicationBasedRules,
@@ -421,6 +441,43 @@ int KSI_Policy_getUserProvidedPublicationBased(KSI_CTX *ctx, const KSI_Policy **
 	}
 
 	*policy = &userProvidedPublicationBasedPolicy;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+/*****************
+ * GENERAL POLICY
+ *****************/
+
+static const Rule generalRules[] = {
+	{RULE_TYPE_COMPOSITE_AND, internalRules},
+	{RULE_TYPE_COMPOSITE_OR, keyBasedRules},
+	{RULE_TYPE_COMPOSITE_OR, publicationsFileBasedRules},
+	{RULE_TYPE_COMPOSITE_OR, userProvidedPublicationBasedRules},
+	{RULE_TYPE_COMPOSITE_OR, calendarBasedRules},
+	{RULE_TYPE_COMPOSITE_OR, NULL}
+};
+
+int KSI_Policy_getGeneral(KSI_CTX *ctx, const KSI_Policy **policy) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	static const KSI_Policy generalPolicy = {
+		generalRules,
+		NULL,
+		"GeneralPolicy"
+	};
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || policy == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	*policy = &generalPolicy;
 
 	res = KSI_OK;
 

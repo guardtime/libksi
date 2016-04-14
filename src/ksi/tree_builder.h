@@ -98,7 +98,7 @@ void KSI_TreeNode_free(KSI_TreeNode *node);
 void KSI_TreeLeafHandle_free(KSI_TreeLeafHandle *handle);
 
 /**
- * Generates an aggregation chain starting from the added leaf that the tree leaf handle
+ * Generates an aggregation hash chain starting from the added leaf that the tree leaf handle
  * is based on. The resulting object must be feed by the caller.
  * \param[in]	handle		The tree leaf handle.
  * \param[out]	chain		Pointer to the receiving pointer.

@@ -19,13 +19,16 @@ extern "C" {
 	 * of data is copied - all the substructures use the pointer of its parent.
 	 */
 	struct KSI_TlvElement_st {
-		KSI_FTLV ftlv;
-		unsigned char *ptr;
-		int ptr_own;
-
-		KSI_LIST(KSI_TlvElement) *subList;
-
+		/** Reference counter. */
 		size_t ref;
+		/** Basic properties of the TLV. */
+		KSI_FTLV ftlv;
+		/** Pointer to the underlying TLV. Payload begins at ptr + ftlv.hdr_len. */
+		unsigned char *ptr;
+		/** Does the element own the pointer (can and should it be freed by #KSI_TlvElement_free and #KSI_TlvElement_detach). */
+		int ptr_own;
+		/** List of sub elements. */
+		KSI_LIST(KSI_TlvElement) *subList;
 	};
 
 	/**
@@ -34,6 +37,27 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_TlvElement_new(KSI_TlvElement **out);
+
+	/**
+	 * Parses the input as a #KSI_TlvElement object. The parsing process does not consume
+	 * the input data pointer thus the data pointer may not be freed or modified. To detatch
+	 * the data pointer from the object use #KSI_TlvElement_detach.
+	 * \param[in]	dat		Pointer to the serialized TLV.
+	 * \param[in]	dat_len	Length of the serialized TLV.
+	 * \param[out]	out		Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_TlvElement_free, #KSI_TlvElement_detatch.
+	 */
+	int KSI_TlvElement_parse(unsigned char *dat, size_t dat_len, KSI_TlvElement **out);
+
+	/**
+	 * This function detaches the element from outer resources. This is useful after
+	 * #KSI_TlvElement_parse function call if the underlying pointer needs to be reused or
+	 * if the element has been altered (new sub-elements added or removed).
+	 * \param[in]	el		The #KSI_TlvElement.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_TlvElement_detatch(KSI_TlvElement *el);
 
 	/**
 	 * Cleanup method for the #KSI_TlvElement.
@@ -53,6 +77,36 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_TlvElement_serialize(KSI_TlvElement *element, unsigned char *buf, size_t buf_size, size_t *len, int opt);
+
+	/**
+	 * Append an element as the last child. The caller is responsible of freeing the sub element.
+	 * \param[in]	parent		The parent element.
+	 * \param[in]	child		The child element.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_TlvElement_appendElement(KSI_TlvElement *parent, KSI_TlvElement *child);
+
+	/**
+	 * Inserts or replaces an element with the concrete TLV tag. There process will fail
+	 * if there are already more than one elements with the same tag. The caller is
+	 * responsible of freeing the sub element.
+	 * \param[in]	parent		The parent element.
+	 * \param[in]	child		The child element.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_TlvElement_setElement(KSI_TlvElement *parent, KSI_TlvElement *child);
+
+	/**
+	 * Find and extract a sub element. The output variable will be \c NULL if the element
+	 * does not exist. If there are more than one elements with the given tag, the process
+	 * will fail with an error.
+	 * \param[in]	parent		Parent element.
+	 * \param[in]	tag			Tag value of the element being extracted.
+	 * \param[out]	el			Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note It is the responsibility of the caller to free the output element.
+	 */
+	int KSI_TlvElement_getElement(KSI_TlvElement *parent, unsigned tag, KSI_TlvElement **el);
 
 	/**
 	 * Access method for a nested #KSI_Utf8String value  by the given tag. If there is no value with the

@@ -162,6 +162,16 @@ extern "C" {
 	int KSI_Policy_getUserProvidedPublicationBased(KSI_CTX *ctx, const KSI_Policy **policy);
 
 	/**
+	 * Gets a pointer to a #KSI_Policy object with rules for general verification.
+	 * \param[in]	ctx			KSI context.
+	 * \param[out]	policy		Pointer to the receiving pointer.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_SignatureVerifier_verify
+	 */
+	int KSI_Policy_getGeneral(KSI_CTX *ctx, const KSI_Policy **policy);
+
+	/**
 	 * Clones a #KSI_Policy, allowing the user to change the default fallback policy later.
 	 * User gets ownership of the cloned policy and is responsible for freeing the policy.
 	 * \param[in]	ctx			KSI context.
