@@ -373,8 +373,8 @@ EXPORTS
     KSI_AggregationHashChain_setChain
     KSI_AggregationHashChain_writeBytes
     KSI_Signature_getPublicationInfo
-	KSI_AggregationHashChainList_aggregate
-	KSI_Signature_getPublicationInfo
+    KSI_AggregationHashChainList_aggregate
+    KSI_Signature_getPublicationInfo
 
 ;tlv_element.h
 EXPORTS
@@ -1040,12 +1040,16 @@ EXPORTS
     KSI_Policy_getKeyBased
     KSI_Policy_getPublicationsFileBased
     KSI_Policy_getUserProvidedPublicationBased
+    KSI_Policy_getGeneral
     KSI_Policy_clone
     KSI_Policy_setFallback
     KSI_SignatureVerifier_verify
     KSI_Policy_free
     KSI_PolicyVerificationResult_free
+    KSI_RuleVerificationResultList_length
+    KSI_RuleVerificationResultList_elementAt
     KSI_VerificationContext_create
+    KSI_VerificationContext_setSignature
     KSI_VerificationContext_setDocumentHash
     KSI_VerificationContext_setUserPublication
     KSI_VerificationContext_setPublicationsFile
@@ -1053,4 +1057,3 @@ EXPORTS
     KSI_VerificationContext_setAggregationLevel
     KSI_VerificationContext_free
     KSI_VerificationContext_clean
-

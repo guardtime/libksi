@@ -474,9 +474,7 @@ cleanup:
 
 static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ctx) {
 	int res;
-	const KSI_Policy *keyPolicy = NULL;
-	const KSI_Policy *pubFilePolicy = NULL;
-	KSI_Policy *clonePolicy = NULL;
+	const KSI_Policy *policy = NULL;
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 
@@ -487,20 +485,11 @@ static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ct
 		goto cleanup;
 	}
 
-	res = KSI_Policy_getKeyBased(ctx, &keyPolicy);
+	res = KSI_Policy_getGeneral(ctx, &policy);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-
-	res = KSI_Policy_getPublicationsFileBased(ctx, &pubFilePolicy);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_Policy_clone(ctx, keyPolicy, &clonePolicy);
-	res = KSI_Policy_setFallback(ctx, clonePolicy, pubFilePolicy);
 
 	res = KSI_VerificationContext_create(ctx, &context);
 	if (res != KSI_OK) {
@@ -514,7 +503,7 @@ static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ct
 		goto cleanup;
 	}
 
-	res = KSI_SignatureVerifier_verify(clonePolicy, context, &result);
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, "Verification of signature not completed.");
 		goto cleanup;
@@ -533,7 +522,6 @@ cleanup:
 	KSI_VerificationContext_setSignature(context, NULL); /* Prevent the freeing of signature. */
 	KSI_VerificationContext_free(context);
 	KSI_PolicyVerificationResult_free(result);
-	KSI_Policy_free(clonePolicy);
 
 	return res;
 }
