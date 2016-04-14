@@ -97,7 +97,7 @@ KSI_END_TLV_TEMPLATE
 KSI_DEFINE_TLV_TEMPLATE(KSI_HashChainLink)
 	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_HashChainLink_getLevelCorrection, KSI_HashChainLink_setLevelCorrection, "level_correction")
 	KSI_TLV_IMPRINT(0x02, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getImprint, KSI_HashChainLink_setImprint, "imprint")
-	KSI_TLV_OCTET_STRING(0x03, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getLegacyId, KSI_HashChainLink_setLegacyId, "legacy_id")
+	KSI_TLV_OBJECT(0x03, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getLegacyId, KSI_HashChainLink_setLegacyId, KSI_HashChainLink_LegacyId_fromTlv, KSI_HashChainLink_LegacyId_toTlv, KSI_OctetString_free, "legacy_id")
 	KSI_TLV_COMPOSITE_OBJECT(0x04, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getMetaData, KSI_HashChainLink_setMetaData, KSI_MetaData_fromTlv, KSI_MetaData_toTlv, KSI_MetaData_free, KSI_TLV_TEMPLATE(KSI_MetaData), "meta_data")
 KSI_END_TLV_TEMPLATE
 

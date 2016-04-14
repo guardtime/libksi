@@ -164,6 +164,9 @@ extern "C" {
 	KSI_DEFINE_FN_FROM_TLV(KSI_HashChainLink);
 	KSI_DEFINE_FN_TO_TLV(KSI_HashChainLink);
 
+	int KSI_HashChainLink_LegacyId_fromTlv(KSI_TLV *tlv, KSI_OctetString **legacyId);
+	int KSI_HashChainLink_LegacyId_toTlv(KSI_CTX *ctx, KSI_OctetString *legacyId, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+
 	KSI_DEFINE_FN_FROM_TLV(KSI_CalendarHashChainLink);
 	KSI_DEFINE_FN_TO_TLV(KSI_CalendarHashChainLink);
 
