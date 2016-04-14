@@ -53,9 +53,6 @@ struct KSI_BlocksignerHandle_st {
 	KSI_Blocksigner *signer;
 };
 
-static KSI_DEFINE_REF(KSI_Blocksigner);
-static KSI_IMPLEMENT_REF(KSI_Blocksigner);
-
 static KSI_DEFINE_REF(KSI_BlocksignerHandle);
 static KSI_IMPLEMENT_REF(KSI_BlocksignerHandle);
 
@@ -263,6 +260,9 @@ int KSI_Blocksigner_close(KSI_Blocksigner *signer, KSI_MultiSignature **ms) {
 			KSI_Signature_free(sig);
 			sig = NULL;
 		}
+
+		*ms = tmp;
+		tmp = NULL;
 	}
 
 	res = KSI_OK;

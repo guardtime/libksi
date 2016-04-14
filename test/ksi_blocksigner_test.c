@@ -29,15 +29,16 @@ extern KSI_CTX *ctx;
 #define TEST_USER "anon"
 #define TEST_PASS "anon"
 
+static const char *input_data[] = { "test1", "test2", "test3", "test4", "test5", "test6", "test7", NULL };
+
 static void addInput(CuTest *tc, KSI_Blocksigner *bs) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i;
-	const char *dat[] = { "test1", "test2", "test3", "test4", "test5", "test6", "test7", NULL };
 	KSI_DataHash *hsh = NULL;
 
 
-	for (i = 0; dat[i] != NULL; i++) {
-		res = KSI_DataHash_create(ctx, dat[i], strlen(dat[i]), KSI_HASHALG_SHA2_256, &hsh);
+	for (i = 0; input_data[i] != NULL; i++) {
+		res = KSI_DataHash_create(ctx, input_data[i], strlen(input_data[i]), KSI_HASHALG_SHA2_256, &hsh);
 		CuAssert(tc, "Unable to create datahash.", res == KSI_OK && hsh != NULL);
 
 		res = KSI_Blocksigner_add(bs, hsh);
@@ -48,7 +49,7 @@ static void addInput(CuTest *tc, KSI_Blocksigner *bs) {
 	}
 }
 
-static void testBasic(CuTest *tc) {
+static void testFreeBeforeClose(CuTest *tc) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Blocksigner *bs = NULL;
 
@@ -59,6 +60,51 @@ static void testBasic(CuTest *tc) {
 
 	KSI_Blocksigner_free(bs);
 }
+
+static void testMultiSig(CuTest *tc) {
+#define TEST_AGGR_RESPONSE_FILE  "resource/tlv/ok-aggr-resp-1460631424.tlv"
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Blocksigner *bs = NULL;
+	KSI_MultiSignature *ms = NULL;
+	size_t i;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+
+	res = KSI_Blocksigner_new(ctx, KSI_HASHALG_SHA1, NULL, NULL, &bs);
+	CuAssert(tc, "Unable to create block signer instance.", res == KSI_OK && bs != NULL);
+
+	addInput(tc, bs);
+
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+
+	res = KSI_Blocksigner_close(bs, &ms);
+	CuAssert(tc, "Unable to close block signer and extract multi signature.", res == KSI_OK && ms != NULL);
+
+	/* Lets loop over all the inputs and try to verify them. */
+	for (i = 0; input_data[i] != NULL; i++) {
+		res = KSI_DataHash_create(ctx, input_data[i], strlen(input_data[i]), KSI_HASHALG_SHA2_256, &hsh);
+		CuAssert(tc, "Unable to create datahash.", res == KSI_OK && hsh != NULL);
+
+		res = KSI_MultiSignature_get(ms, hsh, &sig);
+		CuAssert(tc, "Unable to extract signature from the multi signature container.", res == KSI_OK && sig != NULL);
+
+		res = KSI_Signature_verifyDocument(sig, ctx, input_data[i], strlen(input_data[i]));
+		CuAssert(tc, "Unable to verify the input data.", res == KSI_OK);
+
+		KSI_Signature_free(sig);
+		sig = NULL;
+
+		KSI_DataHash_free(hsh);
+		hsh = NULL;
+	}
+
+	KSI_DataHash_free(hsh);
+	KSI_MultiSignature_free(ms);
+	KSI_Blocksigner_free(bs);
+#undef TEST_AGGR_RESPONSE_FILE
+}
+
 
 static int createMetaData(const char *userId, KSI_MetaData **md) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -272,7 +318,8 @@ static void dummy(CuTest *tc) {
 CuSuite* KSITest_Blocksigner_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
-	SUITE_ADD_TEST(suite, testBasic);
+	SUITE_ADD_TEST(suite, testFreeBeforeClose);
+	SUITE_ADD_TEST(suite, testMultiSig);
 	SUITE_ADD_TEST(suite, testMedaData);
 	SUITE_ADD_TEST(suite, testSingle);
 	SUITE_ADD_TEST(suite, testReset);
