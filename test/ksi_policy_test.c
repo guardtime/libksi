@@ -2670,16 +2670,16 @@ static void TestGeneralPolicy_NA_ExtenderError(CuTest* tc) {
 	KSI_RuleVerificationResult expected = {
 		VER_RES_NA,
 		VER_ERR_GEN_2,
-		"KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch"
+		"KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash"
 	};
 
-#define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-06-2.ksig"
+#define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
 #define TEST_EXT_RESPONSE_FILE "resource/tlv/ok_extender_error_response_101.tlv"
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_getCalendarBased(ctx, &policy);
+	res = KSI_Policy_getGeneral(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -2694,9 +2694,8 @@ static void TestGeneralPolicy_NA_ExtenderError(CuTest* tc) {
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification must not succeed.", res == KSI_SERVICE_INVALID_REQUEST);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
-			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
-	CuAssert(tc, "Unexpected verification property", InconclusiveProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", InconclusiveProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE | KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
