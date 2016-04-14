@@ -486,6 +486,36 @@ cleanup:
 	return res;
 }
 
+int KSI_Policy_create(KSI_CTX *ctx, const Rule *rules, const char *name, KSI_Policy **policy) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Policy *tmp = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || rules == NULL || name == NULL || policy == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	tmp = KSI_new(KSI_Policy);
+	if (tmp == NULL) {
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	tmp->rules = rules;
+	tmp->policyName = name;
+	tmp->fallbackPolicy = NULL;
+	*policy = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_Policy_free(tmp);
+	return res;
+}
+
 int KSI_Policy_clone(KSI_CTX *ctx, const KSI_Policy *policy, KSI_Policy **clone) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Policy *tmp = NULL;
@@ -593,6 +623,12 @@ static int Policy_verifySignature(const KSI_Policy *policy, KSI_VerificationCont
 	}
 
 	res = Rule_verify(policy->rules, context, policyResult);
+	KSI_LOG_debug(context->ctx, "Policy result: %i %i %i %s %s",
+				  res,
+				  policyResult->finalResult.resultCode,
+				  policyResult->finalResult.errorCode,
+				  policyResult->finalResult.ruleName,
+				  policyResult->finalResult.policyName);
 	if (res != KSI_OK) goto cleanup;
 
 cleanup:

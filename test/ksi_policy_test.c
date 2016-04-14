@@ -283,10 +283,32 @@ static const Rule singleRules[5][2] = {
 	}
 };
 
+static void TestPolicyCreation(CuTest* tc) {
+	int res;
+	KSI_Policy *policy = NULL;
+
+	res = KSI_Policy_create(NULL, singleRules[0], "PolicyName", &policy);
+	CuAssert(tc, "Context NULL accepted", res == KSI_INVALID_ARGUMENT && policy == NULL);
+
+	res = KSI_Policy_create(ctx, NULL, "PolicyName", &policy);
+	CuAssert(tc, "Rule NULL accepted", res == KSI_INVALID_ARGUMENT && policy == NULL);
+
+	res = KSI_Policy_create(ctx, singleRules[0], NULL, &policy);
+	CuAssert(tc, "Name NULL accepted", res == KSI_INVALID_ARGUMENT && policy == NULL);
+
+	res = KSI_Policy_create(ctx, singleRules[0], "PolicyName", NULL);
+	CuAssert(tc, "Policy NULL accepted", res == KSI_INVALID_ARGUMENT && policy == NULL);
+
+	res = KSI_Policy_create(ctx, singleRules[0], "PolicyName", &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK && policy != NULL);
+
+	KSI_Policy_free(policy);
+}
+
 static void TestSingleRulePolicy(CuTest* tc) {
 	int res;
 	int i;
-	KSI_Policy policy;
+	KSI_Policy *policy = NULL;
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 
@@ -304,16 +326,15 @@ static void TestSingleRulePolicy(CuTest* tc) {
 	res = KSI_VerificationContext_create(ctx, &context);
 	CuAssert(tc, "Create verification context failed", res == KSI_OK);
 
-	policy.fallbackPolicy = NULL;
-	policy.policyName = "Single rules policy";
-
 	for (i = 0; i < sizeof(rules) / sizeof(TestRule); i++) {
 		KSI_ERR_clearErrors(ctx);
-		policy.rules = rules[i].rule;
-		res = KSI_SignatureVerifier_verify(&policy, context, &result);
+		res = KSI_Policy_create(ctx, rules[i].rule, "Single rules policy", &policy);
+		CuAssert(tc, "Policy creation failed", res == KSI_OK);
+		res = KSI_SignatureVerifier_verify(policy, context, &result);
 		CuAssert(tc, "Policy verification failed", res == rules[i].res);
 		CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == rules[i].result && result->finalResult.errorCode == rules[i].error);
 		KSI_PolicyVerificationResult_free(result);
+		KSI_Policy_free(policy);
 	}
 
 	KSI_VerificationContext_free(context);
@@ -322,7 +343,7 @@ static void TestSingleRulePolicy(CuTest* tc) {
 static void TestBasicRulesPolicy(CuTest* tc) {
 	int res;
 	int i;
-	KSI_Policy policy;
+	KSI_Policy *policy = NULL;
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 
@@ -375,16 +396,15 @@ static void TestBasicRulesPolicy(CuTest* tc) {
 	res = KSI_VerificationContext_create(ctx, &context);
 	CuAssert(tc, "Create verification context failed", res == KSI_OK);
 
-	policy.fallbackPolicy = NULL;
-	policy.policyName = "Basic rules policy";
-
 	for (i = 0; i < sizeof(rules) / sizeof(TestRule); i++) {
 		KSI_ERR_clearErrors(ctx);
-		policy.rules = rules[i].rule;
-		res = KSI_SignatureVerifier_verify(&policy, context, &result);
+		res = KSI_Policy_create(ctx, rules[i].rule, "Basic rules policy", &policy);
+		CuAssert(tc, "Policy creation failed", res == KSI_OK);
+		res = KSI_SignatureVerifier_verify(policy, context, &result);
 		CuAssert(tc, "Policy verification failed", res == rules[i].res);
 		CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == rules[i].result && result->finalResult.errorCode == rules[i].error);
 		KSI_PolicyVerificationResult_free(result);
+		KSI_Policy_free(policy);
 	}
 
 	KSI_VerificationContext_free(context);
@@ -393,7 +413,7 @@ static void TestBasicRulesPolicy(CuTest* tc) {
 static void TestCompositeRulesPolicy(CuTest* tc) {
 	int res;
 	int i;
-	KSI_Policy policy;
+	KSI_Policy *policy = NULL;
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 
@@ -490,16 +510,15 @@ static void TestCompositeRulesPolicy(CuTest* tc) {
 	res = KSI_VerificationContext_create(ctx, &context);
 	CuAssert(tc, "Create verification context failed", res == KSI_OK);
 
-	policy.fallbackPolicy = NULL;
-	policy.policyName = "Composite rules policy";
-
 	for (i = 0; i < sizeof(rules) / sizeof(TestRule); i++) {
 		KSI_ERR_clearErrors(ctx);
-		policy.rules = rules[i].rule;
-		res = KSI_SignatureVerifier_verify(&policy, context, &result);
+		res = KSI_Policy_create(ctx, rules[i].rule, "Composite rules policy", &policy);
+		CuAssert(tc, "Policy creation failed", res == KSI_OK);
+		res = KSI_SignatureVerifier_verify(policy, context, &result);
 		CuAssert(tc, "Policy verification failed", res == rules[i].res);
 		CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == rules[i].result && result->finalResult.errorCode == rules[i].error);
 		KSI_PolicyVerificationResult_free(result);
+		KSI_Policy_free(policy);
 	}
 
 	KSI_VerificationContext_free(context);
@@ -2832,6 +2851,7 @@ CuSuite* KSITest_Policy_getSuite(void) {
 
 	SUITE_ADD_TEST(suite, TestInvalidParams);
 	SUITE_ADD_TEST(suite, TestVerificationContext);
+	SUITE_ADD_TEST(suite, TestPolicyCreation);
 	SUITE_ADD_TEST(suite, TestSingleRulePolicy);
 	SUITE_ADD_TEST(suite, TestBasicRulesPolicy);
 	SUITE_ADD_TEST(suite, TestCompositeRulesPolicy);

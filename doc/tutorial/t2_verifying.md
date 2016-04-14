@@ -418,23 +418,12 @@ As always, used resources need to be freed. See previous chapters on how to free
 
 If the predefined policies do not meet our needs of verification, we can build our own policies. For this we need
 to put rules (implemented as verification functions) in some order that meets our verification needs. We can reuse
-predefined rules  or define our own rules for this purpose. We start off by initializing a policy structure first:
+predefined rules or define our own rules for this purpose. Let's create a policy based on our own rules, defined in
+the rules array \c customRules. Let's name our policy "CustomPolicy".
 
 ~~~~~~~~~~{.c}
 
-	static const KSI_Policy customPolicy = {
-		customRules,	/* Pointer to rules. */
-		NULL,			/* Pointer to fallback policy. */
-		"CustomPolicy"	/* Name of the policy. */
-	};
-
-~~~~~~~~~~
-
-We are referencing a \c customRules object, which is the array of rules that perform the verification functionality
-of this policy. So let's create this array:
-
-~~~~~~~~~~{.c}
-
+	KSI_Policy *policy = NULL;	/* Must be freed later. */
 	static const Rule customRules[] = {
 		{RULE_TYPE_BASIC, VerifyingFunction1},
 		{RULE_TYPE_BASIC, VerifyingFunction2},
@@ -442,9 +431,11 @@ of this policy. So let's create this array:
 		{RULE_TYPE_BASIC, NULL}					/* Every rule array has to end with this empty rule. */
 	};
 
+	res = KSI_Policy_create(ksi, customRules, "CustomPolicy", &customPolicy);
+
 ~~~~~~~~~~
 
-Each element in this array consists of two parts: rule type and a pointer. For this first example, we will use the
+Each element in \c customRules array consists of two parts: rule type and a pointer. In our first example, we use the
 basic rule type #RULE_TYPE_BASIC, which means that the second part - pointer - is a pointer to a verifying function.
 When a policy is verified by #KSI_SignatureVerifier_verify, it goes through this array and checks the rule type.
 If the rule type is #RULE_TYPE_BASIC, it calls the verifying function and examines the verification result of this
@@ -505,6 +496,7 @@ deciding on the result of the policy. We can write it down like this:
 
 ~~~~~~~~~~{.c}
 
+	KSI_Policy *complexPolicy = NULL;	/* Must be freed later. */
 	static const Rule pathARules[] = {
 		{RULE_TYPE_BASIC, VerifyingFunction1},
 		{RULE_TYPE_BASIC, VerifyingFunction2},
@@ -539,11 +531,7 @@ deciding on the result of the policy. We can write it down like this:
 		{RULE_TYPE_BASIC, NULL}					/* Every rule array has to end with this empty rule. */
 	};
 
-	static const KSI_Policy complexPolicy = {
-		complexRules,	/* Pointer to rules. */
-		NULL,			/* Pointer to fallback policy. */
-		"ComplexPolicy"	/* Name of the policy. */
-	};
+	res = KSI_Policy_create(ksi, complexRules, "ComplexPolicy", &complexPolicy);
 
 ~~~~~~~~~~
 
@@ -564,7 +552,7 @@ is verified. If this rule result is also inconclusive, the rule \c pathCRules is
 with #VER_RES_FAIL, the rule \c chooseABCRule has also failed. 
 
 In our example the rule \c chooseABCRule itself is a composite AND-type rule, which means that its result must be successful for
-the verification to continue. So for a successful result of the \c complexPolicy, both \c chooseABCRule and \c VerifyingFunction10
+the verification to continue. So for a successful result of our \c complexPolicy, both \c chooseABCRule and \c VerifyingFunction10
 must verify successfully. If an AND-type rule fails, the whole rule array of which it is part of, fails as well (no further rules
 are verified). 
 
@@ -587,25 +575,21 @@ on the same level is checked. This is the only exception where verification is g
 8. The result of the last checked rule on any level is always propagated one level higher.
 
 For an additional level of customization we can chain policies to each other to allow automatic fallback to a different verification
-policy if the original policy fails. For our own policies we can set the fallback policy pointer directly when defining and initializing
-the policies. If we want to use one of the predefined policies as the original policy, we first need to clone it by calling #KSI_Policy_clone
-and then set a desired fallback policy by calling #KSI_Policy_setFallback. Predefined policies cannot be modified, so fallback policies cannot
-be attached to them directly. When we have cloned a policy, we also need to free it after use by calling #KSI_Policy_free.
+policy if the original policy fails. For our own policies that we have created with #KSI_Policy_create, we can set the fallback policy
+pointer by calling #KSI_Policy_setFallback. If we want to use one of the predefined policies as the original policy, we first need to
+clone it by calling #KSI_Policy_clone. When we have created or cloned a policy, we also need to free it after use by calling #KSI_Policy_free.
 
 ~~~~~~~~~~{.c}
 
 	/* Chaining our own policies: customPolicy->complexPolicy */
-	static const KSI_Policy complexPolicy = {
-		complexRules,	/* Pointer to rules. */
-		NULL,			/* Pointer to fallback policy. */
-		"ComplexPolicy"	/* Name of the policy. */
-	};
-
-	static const KSI_Policy customPolicy = {
-		customRules,	/* Pointer to rules. */
-		&complexPolicy,	/* Pointer to fallback policy. */
-		"CustomPolicy"	/* Name of the policy. */
-	};
+	res = KSI_Policy_create(ksi, customRules, "CustomPolicy", &customPolicy);
+	res = KSI_Policy_create(ksi, complexRules, "ComplexPolicy", &complexPolicy);
+	res = KSI_Policy_setFallback(ksi, customPolicy, complexPolicy);
+	/* Set up the verification context. */
+	res = KSI_SignatureVerifier_verify(customPolicy, context, &result);
+	/* Error handling. */
+	KSI_Policy_free(customPolicy);
+	KSI_Policy_free(complexPolicy);
 
 	/* Chaining predefined policies: keyBased->publicationsFilebased */
 	res = KSI_Policy_getKeyBased(ksi, &orgPolicy);
