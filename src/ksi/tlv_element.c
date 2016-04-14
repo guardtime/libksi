@@ -401,7 +401,6 @@ cleanup:
 int KSI_TlvElement_setElement(KSI_TlvElement *parent, KSI_TlvElement *child) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t *pos = NULL;
-	int found = 0;
 	struct filter_st fc;
 	KSI_TlvElement *ptr = NULL;
 

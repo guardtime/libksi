@@ -21,6 +21,7 @@
 
 #include "internal.h"
 #include "tree_builder.h"
+#include "hashchain.h"
 
 #define IS_VALID_LEVEL(level) (((level) >= 0) && ((level) <= 0xff))
 #define STACK_LEN 0x100
@@ -226,7 +227,7 @@ static int KSI_TreeNode_join(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeNode 
 
 	/* Sanity check. */
 	if (!IS_VALID_LEVEL(level)) {
-		KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Tree too large");
+		KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Tree too large.");
 		goto cleanup;
 	}
 
