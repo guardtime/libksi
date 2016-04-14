@@ -195,7 +195,6 @@ static const Rule internalRules[] = {
 	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainInputHashVerification},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainConsistency},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainTimeConsistency},
-	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainLegacyId},
 	{RULE_TYPE_COMPOSITE_AND, calendarHashChainRule},
 	{RULE_TYPE_COMPOSITE_AND, documentHashRule},
 	{RULE_TYPE_BASIC, NULL}

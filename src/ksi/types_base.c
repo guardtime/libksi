@@ -236,55 +236,8 @@ char* KSI_OctetString_toString(const KSI_OctetString *id, char separator, char *
 	return buf;
 }
 
-static int verifyLegacyId(KSI_CTX *ctx, const unsigned char *raw, size_t raw_len) {
-	int res = KSI_UNKNOWN_ERROR;
-	size_t i;
-
-	/* Verify the data. Legacy id structure:
-	 * +------+------+---------+------------------+------+
-	 * | 0x03 | 0x00 | str_len | ... UTF8_str ... | '\0' |
-	 * +------+------+---------+------------------+------+
-	 * For example, the name 'Test' is encoded as the
-	 * sequence 03 00 04 54=T 65=e 73=s 74=t 00 00 00 00 00 00 00 00 00
-	 * 00 00 00 00 00 00 00 00 00 00 00 00 00 (all octet values in the
-	 * example are given in hexadecimal).
-	 */
-	if (raw == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
-		goto cleanup;
-	}
-	/* Legacy id data lenght is fixed to 29 octets. */
-	if (raw_len != 29) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID data lenght mismatch.");
-		KSI_LOG_debug(ctx, "Legacy ID data lenght: %d.", raw_len);
-		goto cleanup;
-	}
-	/* First two octets have fixed values. */
-	if (!(raw[0] == 0x03 && raw[1] == 0x00)) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID header mismatch.");
-		KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Legacy ID data: ", raw, raw_len);
-		goto cleanup;
-	}
-	/* Verify string lenght (at most 25). */
-	if (raw[2] > 25) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID string lenght mismatch.");
-		KSI_LOG_debug(ctx, "Legacy ID string lenght mismatch: %d.", raw[2]);
-		goto cleanup;
-	}
-	/* Verify padding. */
-	for (i = raw[2] + 3; i < raw_len; i++) {
-		if (raw[i] != 0) {
-			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID not padded with zeros.");
-			goto cleanup;
-		}
-	}
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
+#define LEGACY_ID_STR_LEN_POS 2
+#define LEGACY_ID_STR_POS 3
 
 int KSI_OctetString_LegacyId_getUtf8String(KSI_OctetString *id, KSI_Utf8String **str) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -305,14 +258,7 @@ int KSI_OctetString_LegacyId_getUtf8String(KSI_OctetString *id, KSI_Utf8String *
 		goto cleanup;
 	}
 
-	res = verifyLegacyId(id->ctx, raw, raw_len);
-	if (res != KSI_OK) {
-		KSI_pushError(id->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Now that the data consintency has been verified, lets extract the id string. */
-	res = KSI_Utf8String_new(id->ctx, &(raw[3]), raw[2] + 1, &tmp);
+	res = KSI_Utf8String_new(id->ctx, &(raw[LEGACY_ID_STR_POS]), raw[LEGACY_ID_STR_LEN_POS] + 1, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(id->ctx, res, NULL);
 		goto cleanup;

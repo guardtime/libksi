@@ -50,19 +50,6 @@ extern "C" {
 	int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
-	 * This rule verifies that the legacy client identifier:
-	 * - value is exactly 29 octets;</li> <li>first two octets are 03 and 00.
-	 * - the value of the third octet (at most 25) defines the length of the embedded name and is followed by that many octets of an UTF-8 string.
-	 * - the value is padded with 00 octets to the final length (note that at least one padding octet will exist in any valid structure).
-	 *
-	 * \param[in]	info		Verification context to be used for given rule
-	 * \param[out]	result		Verification result.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_VerificationRule_AggregationHashChainLegacyId(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
-
-	/**
 	 * This rule is used to check that aggregation hash chain aggregation times are consistent (e.g previous aggregation
 	 * hash chain aggregation time to current aggregation hash chain aggregation time).
 	 *

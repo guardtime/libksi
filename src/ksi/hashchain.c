@@ -689,15 +689,160 @@ cleanup:
 	return res;
 }
 
-KSI_IMPLEMENT_GETTER(KSI_HashChainLink, int, isLeft, IsLeft);
-KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_Integer*, levelCorrection, LevelCorrection);
-KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_OctetString*, legacyId, LegacyId);
-KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_MetaData*, metaData, MetaData);
-KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_DataHash*, imprint, Imprint);
+KSI_IMPLEMENT_GETTER(KSI_HashChainLink, int, isLeft, IsLeft)
+KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_Integer*, levelCorrection, LevelCorrection)
+KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_OctetString*, legacyId, LegacyId)
+KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_MetaData*, metaData, MetaData)
+KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_DataHash*, imprint, Imprint)
 
-KSI_IMPLEMENT_SETTER(KSI_HashChainLink, int, isLeft, IsLeft);
-KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_Integer*, levelCorrection, LevelCorrection);
-KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_OctetString*, legacyId, LegacyId);
-KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_MetaData*, metaData, MetaData);
-KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_DataHash*, imprint, Imprint);
+KSI_IMPLEMENT_SETTER(KSI_HashChainLink, int, isLeft, IsLeft)
+KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_Integer*, levelCorrection, LevelCorrection)
+KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_MetaData*, metaData, MetaData)
+KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_DataHash*, imprint, Imprint)
 
+static int verifyLegacyId(KSI_OctetString *id) {
+	int res = KSI_UNKNOWN_ERROR;
+	size_t i;
+	const unsigned char *raw = NULL;
+	size_t raw_len;
+
+	res = KSI_OctetString_extract(id, &raw, &raw_len);
+	if (res != KSI_OK) {
+		goto cleanup;
+	}
+
+	/* Verify the data. Legacy id structure:
+	 * +------+------+---------+------------------+------+
+	 * | 0x03 | 0x00 | str_len | ... UTF8_str ... | '\0' |
+	 * +------+------+---------+------------------+------+
+	 * For example, the name 'Test' is encoded as the
+	 * sequence 03 00 04 54=T 65=e 73=s 74=t 00 00 00 00 00 00 00 00 00
+	 * 00 00 00 00 00 00 00 00 00 00 00 00 00 (all octet values in the
+	 * example are given in hexadecimal).
+	 */
+	if (raw == NULL) {
+		res = KSI_INVALID_FORMAT;
+		goto cleanup;
+	}
+	/* Legacy id data lenght is fixed to 29 octets. */
+	if (raw_len != 29) {
+		res = KSI_INVALID_FORMAT;
+		goto cleanup;
+	}
+	/* First two octets have fixed values. */
+	if (!(raw[0] == 0x03 && raw[1] == 0x00)) {
+		res = KSI_INVALID_FORMAT;
+		goto cleanup;
+	}
+	/* Verify string lenght (at most 25). */
+	if (raw[2] > 25) {
+		res = KSI_INVALID_FORMAT;
+		goto cleanup;
+	}
+	/* Verify padding. */
+	for (i = raw[2] + 3; i < raw_len; i++) {
+		if (raw[i] != 0) {
+			res = KSI_INVALID_FORMAT;
+			goto cleanup;
+		}
+	}
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_nofree(raw);
+
+	return res;
+}
+
+int KSI_HashChainLink_setLegacyId(KSI_HashChainLink *t, KSI_OctetString *legacyId){
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = verifyLegacyId(legacyId);
+	if (res != KSI_OK) {
+		goto cleanup;
+	}
+
+	t->legacyId = legacyId;
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+#if 0
+static int legacyIdConsistency_verify(KSI_HashChainLinkList *chainList, KSI_CTX *ctx) {
+	int res = KSI_UNKNOWN_ERROR;
+	size_t i;
+
+	KSI_ERR_clearErrors(ctx);
+
+	for (i = 0; i < KSI_HashChainLinkList_length(chainList); i++) {
+		KSI_HashChainLink *link = NULL;
+		KSI_DataHash *hash = NULL;
+		KSI_OctetString *id = NULL;
+
+		res = KSI_HashChainLinkList_elementAt(chainList, i, &link);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		if (link == NULL) {
+			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Hash chain link missing.");
+			goto cleanup;
+		}
+
+		res = KSI_HashChainLink_getImprint(link, &hash);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		/* Verify sibling hash algorithm. */
+		if (hash != NULL) {
+			KSI_HashAlgorithm algo_id;
+			res = KSI_DataHash_getHashAlg(hash, &algo_id);
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
+
+			if (!KSI_isHashAlgorithmTrusted(algo_id)) {
+				KSI_pushError(ctx, res = KSI_UNTRUSTED_HASH_ALGORITHM, "Sibling hash algorithm is not trusted.");
+				KSI_LOG_debug(ctx, "Sibling hash algorithm is NOT trusted: %s.", KSI_getHashAlgorithmName(algo_id));
+				goto cleanup;
+			}
+		}
+
+		res = KSI_HashChainLink_getLegacyId(link, &id);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		/* Verify legacyId. */
+		if (id != NULL) {
+			KSI_Utf8String *tmp = NULL;
+			/* If we get a response, then the field is valid. */
+			res = KSI_OctetString_LegacyId_getUtf8String(id, &tmp);
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
+			KSI_Utf8String_free(tmp);
+		}
+	}
+
+	res = KSI_OK;
+cleanup:
+
+	return res;
+}
+#endif
