@@ -1,6 +1,6 @@
 Version 3.8
 
-2016-04-18 release(3.8.1428)
+2016-04-18 release(3.8.1432)
 
 * IMPROVEMENT: Removed SHA-224 support.
 * IMPROVEMENT: Removed Unused function KSI_RDR_verifyEnd.
