@@ -323,6 +323,21 @@ int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned tag, int isNonCritical, int isFor
 	 */
 	int KSI_Utf8StringNZ_toTlv(KSI_CTX *ctx, KSI_Utf8String *o, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
+
+	/*
+	 * Helper functions
+	 */
+
+	/**
+	 * Creates a #KSI_Utf8String object initialized with signer id.
+	 * \param[in]		id			Legacy ID.
+	 * \param[out]		str			Pointer to the receiving pointer.
+	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+	 * \see #KSI_Utf8String_free, #KSI_Utf8String_cstr
+	 */
+	int KSI_OctetString_LegacyId_getUtf8String(KSI_OctetString *id, KSI_Utf8String **str);
+
+
 /**
  * @}
  */

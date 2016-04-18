@@ -46,6 +46,7 @@ EXPORTS
 
 ;hash.h
 EXPORTS
+<<<<<<< HEAD
     KSI_DataHasher_open
     KSI_DataHasher_reset
     KSI_DataHasher_add
@@ -125,7 +126,6 @@ EXPORTS
     KSI_RDR_read_ex
     KSI_RDR_read_ptr
     KSI_RDR_close
-    KSI_RDR_verifyEnd
     KSI_IO_readSocket
     KSI_IO_readFile
 ;ksi.h

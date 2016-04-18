@@ -40,8 +40,7 @@ extern "C" {
 	int KSI_VerificationRule_AggregationChainInputHashVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
-	 * This rule verifies that all aggregation hash chains are consistent (e.g previous aggregation output hash equals to
-	 * current aggregation chain input hash).
+	 * This rule verifies that all aggregation hash chains are consistent (e.g, previous aggregation output hash equals to current aggregation chain input hash)
 	 *
 	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.

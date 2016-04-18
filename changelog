@@ -1,3 +1,9 @@
+Version 3.8
+
+2016-04-18 release(3.8.1428)
+
+* IMPROVEMENT: Removed SHA-224 support.
+* IMPROVEMENT: Removed Unused function KSI_RDR_verifyEnd.
 * IMPROVEMENT: PKI truststore initialization is performed on the need basis.
 * IMPROVEMENT: Added signature verification according to policies.
 * IMPROVEMENT: Created KSI_HmacHasher interface for incremental HMAC computation.
@@ -49,6 +55,7 @@ Version 3.4
 
 2015-12-09 release(3.4.0.6)
 * Added mime-type to http requests.
+* Protection against demoting meta_hash and metadata to sibling_hash
 
 2015-09-14 release(3.4.0.1)
 * Removed all default endpoints.
