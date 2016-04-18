@@ -66,8 +66,6 @@ extern "C" {
 	 */
 	void KSI_RDR_close(KSI_RDR *rdr);
 
-	int KSI_RDR_verifyEnd(KSI_RDR *rdr);
-
 	/**
 	 * Reads \c size bytes from the socket.
 	 * \param[in]	fd		Socket descriptor
