@@ -1967,13 +1967,13 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(CuTe
 #undef TEST_PUBLICATIONS_FILE
 }
 
-static void testRule_testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_notExtended(CuTest *tc) {
+static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_notExtended(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 	testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(tc, TEST_SIGNATURE_FILE);
 #undef TEST_SIGNATURE_FILE
 }
 
-static void testRule_testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_extended(CuTest *tc) {
+static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_extended(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 	testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(tc, TEST_SIGNATURE_FILE);
 #undef TEST_SIGNATURE_FILE
@@ -2803,8 +2803,8 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationHashMatchesExtenderResponse_notExtended);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationHashMatchesExtenderResponse_extended);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationHashMatchesExtenderResponse_verifyErrorResult);
-	SUITE_ADD_TEST(suite, testRule_testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_notExtended);
-	SUITE_ADD_TEST(suite, testRule_testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_extended);
+	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_notExtended);
+	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_extended);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFileExtendedSignatureInputHash_notExtended);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFileExtendedSignatureInputHash_extended);

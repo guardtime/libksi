@@ -69,8 +69,6 @@ EXPORTS
 	KSI_DataHash_fromTlv
 	KSI_DataHash_toTlv
 	KSI_DataHash_getHashAlg
-	KSI_DataHash_MetaHash_parseMeta
-	KSI_DataHash_MetaHash_fromTlv
 	KSI_DataHash_toString
 
 ;hashchain.h
@@ -81,12 +79,12 @@ EXPORTS
 	KSI_HashChainLink_new
 	KSI_HashChainLink_getIsLeft
 	KSI_HashChainLink_getLevelCorrection
-	KSI_HashChainLink_getMetaHash
+	KSI_HashChainLink_getLegacyId
 	KSI_HashChainLink_getMetaData
 	KSI_HashChainLink_getImprint
 	KSI_HashChainLink_setIsLeft
 	KSI_HashChainLink_setLevelCorrection
-	KSI_HashChainLink_setMetaHash
+	KSI_HashChainLink_setLegacyId
 	KSI_HashChainLink_setMetaData
 	KSI_HashChainLink_setImprint
 	KSI_HashChainLink_fromTlv

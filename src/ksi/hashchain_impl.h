@@ -28,7 +28,7 @@ struct KSI_HashChainLink_st {
 	KSI_CTX *ctx;
 	int isLeft;
 	KSI_Integer *levelCorrection;
-	KSI_DataHash *metaHash;
+	KSI_OctetString *legacyId;
 	KSI_MetaData *metaData;
 	KSI_DataHash *imprint;
 };

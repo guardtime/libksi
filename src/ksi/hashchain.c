@@ -79,7 +79,7 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 	const unsigned char *imprint = NULL;
 	size_t imprint_len;
 	KSI_MetaData *metaData = NULL;
-	KSI_DataHash *metaHash = NULL;
+	KSI_OctetString *legacyId = NULL;
 	KSI_DataHash *hash = NULL;
 	KSI_OctetString *tmpOctStr = NULL;
 
@@ -101,14 +101,14 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 		goto cleanup;
 	}
 
-	res = KSI_HashChainLink_getMetaHash(link, &metaHash);
+	res = KSI_HashChainLink_getLegacyId(link, &legacyId);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
 	if (hash != NULL) mode |= 0x01;
-	if (metaHash != NULL) mode |= 0x02;
+	if (legacyId != NULL) mode |= 0x02;
 	if (metaData != NULL) mode |= 0x04;
 
 	switch (mode) {
@@ -120,7 +120,7 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 			}
 			break;
 		case 0x02:
-			res = KSI_DataHash_getImprint(metaHash, &imprint, &imprint_len);
+			res = KSI_OctetString_extract(legacyId, &imprint, &imprint_len);
 			if (res != KSI_OK) {
 				KSI_pushError(ctx, res, NULL);
 				goto cleanup;
@@ -155,7 +155,7 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 cleanup:
 
 	KSI_nofree(hash);
-	KSI_nofree(metaHash);
+	KSI_nofree(legacyId);
 	KSI_nofree(metaData);
 	KSI_nofree(imprint);
 	KSI_nofree(tmpOctStr);
@@ -464,7 +464,7 @@ KSI_IMPLEMENT_SETTER(KSI_CalendarHashChain, KSI_LIST(KSI_HashChainLink)*, hashCh
  */
 void KSI_HashChainLink_free(KSI_HashChainLink *t) {
 	if (t != NULL) {
-		KSI_DataHash_free(t->metaHash);
+		KSI_OctetString_free(t->legacyId);
 		KSI_MetaData_free(t->metaData);
 		KSI_DataHash_free(t->imprint);
 		KSI_Integer_free(t->levelCorrection);
@@ -490,7 +490,7 @@ int KSI_HashChainLink_new(KSI_CTX *ctx, KSI_HashChainLink **t) {
 	tmp->ctx = ctx;
 	tmp->isLeft = 0;
 	tmp->levelCorrection = NULL;
-	tmp->metaHash = NULL;
+	tmp->legacyId = NULL;
 	tmp->metaData = NULL;
 	tmp->imprint = NULL;
 
@@ -689,16 +689,118 @@ cleanup:
 	return res;
 }
 
+KSI_IMPLEMENT_GETTER(KSI_HashChainLink, int, isLeft, IsLeft)
+KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_Integer*, levelCorrection, LevelCorrection)
+KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_OctetString*, legacyId, LegacyId)
+KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_MetaData*, metaData, MetaData)
+KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_DataHash*, imprint, Imprint)
 
-KSI_IMPLEMENT_GETTER(KSI_HashChainLink, int, isLeft, IsLeft);
-KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_Integer*, levelCorrection, LevelCorrection);
-KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_DataHash*, metaHash, MetaHash);
-KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_MetaData*, metaData, MetaData);
-KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_DataHash*, imprint, Imprint);
+KSI_IMPLEMENT_SETTER(KSI_HashChainLink, int, isLeft, IsLeft)
+KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_Integer*, levelCorrection, LevelCorrection)
+KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_OctetString*, legacyId, LegacyId)
+KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_MetaData*, metaData, MetaData)
+KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_DataHash*, imprint, Imprint)
 
-KSI_IMPLEMENT_SETTER(KSI_HashChainLink, int, isLeft, IsLeft);
-KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_Integer*, levelCorrection, LevelCorrection);
-KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_DataHash*, metaHash, MetaHash);
-KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_MetaData*, metaData, MetaData);
-KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_DataHash*, imprint, Imprint);
+static int legacyId_verify(KSI_CTX *ctx, const unsigned char *raw, size_t raw_len) {
+	int res = KSI_UNKNOWN_ERROR;
+	size_t i;
 
+	/* Verify the data. Legacy id structure:
+	 * +------+------+---------+------------------+------+
+	 * | 0x03 | 0x00 | str_len | ... UTF8_str ... | '\0' |
+	 * +------+------+---------+------------------+------+
+	 * For example, the name 'Test' is encoded as the
+	 * sequence 03 00 04 54=T 65=e 73=s 74=t 00 00 00 00 00 00 00 00 00
+	 * 00 00 00 00 00 00 00 00 00 00 00 00 00 (all octet values in the
+	 * example are given in hexadecimal).
+	 */
+	if (raw == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
+		goto cleanup;
+	}
+	/* Legacy id data lenght is fixed to 29 octets. */
+	if (raw_len != 29) {
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID data lenght mismatch.");
+		KSI_LOG_debug(ctx, "Legacy ID data lenght: %d.", raw_len);
+		goto cleanup;
+	}
+	/* First two octets have fixed values. */
+	if (!(raw[0] == 0x03 && raw[1] == 0x00)) {
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID header mismatch.");
+		KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Legacy ID data: ", raw, raw_len);
+		goto cleanup;
+	}
+	/* Verify string lenght (at most 25). */
+	if (raw[2] > 25) {
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID string lenght mismatch.");
+		KSI_LOG_debug(ctx, "Legacy ID string lenght mismatch: %d.", raw[2]);
+		goto cleanup;
+	}
+	/* Verify padding. */
+	for (i = raw[2] + 3; i < raw_len; i++) {
+		if (raw[i] != 0) {
+			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID not padded with zeros.");
+			goto cleanup;
+		}
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_HashChainLink_LegacyId_fromTlv(KSI_TLV *tlv, KSI_OctetString **legacyId) {
+	int res;
+	KSI_OctetString *tmp = NULL;
+	KSI_CTX *ctx = KSI_TLV_getCtx(tlv);
+	const unsigned char *raw = NULL;
+	size_t raw_len = 0;
+
+	if (tlv == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(ctx);
+
+	if (legacyId == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_TLV_getRawValue(tlv, &raw, &raw_len);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = legacyId_verify(ctx, raw, raw_len);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OctetString_new(ctx, raw, raw_len, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	*legacyId = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_nofree(raw);
+	KSI_OctetString_free(tmp);
+
+	return res;
+}
+
+int KSI_HashChainLink_LegacyId_toTlv(KSI_CTX *ctx, KSI_OctetString *legacyId, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+	return KSI_OctetString_toTlv(ctx, legacyId, tag, isNonCritical, isForward, tlv);
+}

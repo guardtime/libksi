@@ -38,6 +38,7 @@
 static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, const KSI_DataHash *hsh, const KSI_OctetString *suffix, int hsh_id, KSI_DataHash **out);
 static int rfc3161_verify(KSI_CTX *ctx, const KSI_Signature *sig);
 static int getRfc3161OutputHash(const KSI_Signature *sig, KSI_DataHash **outputHash);
+static int legacyIdConsistency_verify(KSI_HashChainLinkList *chainList, KSI_CTX *ctx);
 static int getExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Integer *pubTime, KSI_CalendarHashChain **extCalHashChain);
 static int initPublicationsFile(KSI_VerificationContext *verCtx);
 static int initExtendedSignature(KSI_VerificationContext *verCtx, KSI_Integer *endTime);
@@ -359,7 +360,6 @@ cleanup:
 
 	return res;
 }
-
 
 int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;

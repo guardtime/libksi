@@ -39,6 +39,7 @@ Version 3.4
 
 2015-12-09 release(3.4.0.6)
 * Added mime-type to http requests.
+* Protection against demoting meta_hash and metadata to sibling_hash
 
 2015-09-14 release(3.4.0.1)
 * Removed all default endpoints.
