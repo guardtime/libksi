@@ -1,7 +1,8 @@
 Version 3.8
 
-2016-04-18 release(3.8.1427)
+2016-04-18 release(3.8.1428)
 
+* IMPROVEMENT: Removed SHA-224 support.
 * IMPROVEMENT: Removed Unused function KSI_RDR_verifyEnd.
 * IMPROVEMENT: PKI truststore initialization is performed on the need basis.
 * IMPROVEMENT: Added signature verification according to policies.
