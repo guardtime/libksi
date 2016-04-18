@@ -39,8 +39,6 @@ static const EVP_MD *hashAlgorithmToEVP(KSI_HashAlgorithm hash_id)
 		case KSI_HASHALG_RIPEMD160:
 			return EVP_ripemd160();
 #endif
-		case KSI_HASHALG_SHA2_224:
-			return EVP_sha224();
 		case KSI_HASHALG_SHA2_256:
 			return EVP_sha256();
 #ifndef OPENSSL_NO_SHA512
@@ -78,7 +76,7 @@ static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 	}
 
 
-	EVP_DigestFinal(hasher->hashContext, data_hash->imprint + 1, &tmp);
+	EVP_DigestFinal_ex(hasher->hashContext, data_hash->imprint + 1, &tmp);
 
 	/* Make sure the hash length is the same. */
 	if (hash_length != tmp) {
@@ -102,6 +100,9 @@ int KSI_isHashAlgorithmSupported(KSI_HashAlgorithm algo_id) {
 
 void KSI_DataHasher_free(KSI_DataHasher *hasher) {
 	if (hasher != NULL) {
+		if (hasher->hashContext != NULL) {
+			EVP_MD_CTX_cleanup(hasher->hashContext);
+		}
 		KSI_free(hasher->hashContext);
 		KSI_free(hasher);
 	}
@@ -177,12 +178,12 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 			goto cleanup;
 		}
 
+		EVP_MD_CTX_init(context);
+
 		hasher->hashContext = context;
-	} else {
-		EVP_MD_CTX_cleanup(context);
 	}
 
-	if (!EVP_DigestInit(context, evp_md)) {
+	if (!EVP_DigestInit_ex(context, evp_md, NULL)) {
 		KSI_pushError(hasher->ctx, res = KSI_CRYPTO_FAILURE, NULL);
 		goto cleanup;
 	}

@@ -22,7 +22,6 @@
 
 #include <ksi/ksi.h>
 #include "cutest/CuTest.h"
-#include "ksi_net_mock.h"
 #include <ksi/compatibility.h>
 #include <ksi/err.h>
 #include "support_tests.h"
@@ -37,10 +36,6 @@ int KSITest_memcmp(void *ptr1, void *ptr2, size_t len);
 
 int KSITest_DataHash_fromStr(KSI_CTX *ctx, const char *hexstr, KSI_DataHash **hsh);
 int KSITest_decodeHexStr(const char *hexstr, unsigned char *buf, size_t buf_size, size_t *buf_length);
-void KSITest_setFileMockResponse(CuTest *tc, const char *fileName);
-
-int KSI_NET_MOCK_new(KSI_CTX *ctx, KSI_NetworkClient **provider);
-int KSI_NET_MOCK_setPubfileUri(const char *uri);
 int KSITest_setDefaultPubfileAndVerInfo(KSI_CTX *ctx);
 
 CuSuite* KSITest_CTX_getSuite(void);
@@ -58,6 +53,10 @@ CuSuite* KSITest_HMAC_getSuite(void);
 CuSuite* KSITest_compatibility_getSuite(void);
 CuSuite* KSITest_uriClient_getSuite(void);
 CuSuite* KSITest_multiSignature_getSuite(void);
+CuSuite* KSITest_VerificationRules_getSuite(void);
+CuSuite* KSITest_Policy_getSuite(void);
+CuSuite* KSITest_versionNumber_getSuite(void);
+CuSuite* KSITest_Flags_getSuite(void);
 
 #ifdef __cplusplus
 }

@@ -40,25 +40,13 @@
 
 KSI_CTX *ctx = NULL;
 
-extern unsigned char *KSI_NET_MOCK_response;
-extern unsigned KSI_NET_MOCK_response_len;
+#define TEST_DEFAULT_PUB_FILE "resource/tlv/publications.tlv"
 
 const KSI_CertConstraint testPubFileCertConstraints[] = {
 		{ KSI_CERT_EMAIL, "publications@guardtime.com"},
 		{ NULL, NULL }
 };
 
-
-void KSITest_setFileMockResponse(CuTest *tc, const char *fileName) {
-	FILE *f = NULL;
-
-	/* Read response from file. */
-	f = fopen(fileName, "rb");
-	CuAssert(tc, "Unable to open sample response file", f != NULL);
-
-	KSI_NET_MOCK_response_len = (unsigned)fread(KSI_NET_MOCK_response, 1, MOCK_BUFFER_SIZE, f);
-	fclose(f);
-}
 
 int KSITest_setDefaultPubfileAndVerInfo(KSI_CTX *ctx) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -74,7 +62,7 @@ int KSITest_setDefaultPubfileAndVerInfo(KSI_CTX *ctx) {
 	res = KSI_CTX_setPublicationsFile(ctx, NULL);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_NET_MOCK_setPubfileUri("default");
+	res = KSI_CTX_setPublicationUrl(ctx, getFullResourcePathUri(TEST_DEFAULT_PUB_FILE));
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, testPubFileCertConstraints);
@@ -119,6 +107,10 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSITest_compatibility_getSuite);
 	addSuite(suite, KSITest_uriClient_getSuite);
 	addSuite(suite, KSITest_multiSignature_getSuite);
+	addSuite(suite, KSITest_VerificationRules_getSuite);
+	addSuite(suite, KSITest_Policy_getSuite);
+	addSuite(suite, KSITest_versionNumber_getSuite);
+    addSuite(suite, KSITest_Flags_getSuite);
 
 	return suite;
 }

@@ -32,9 +32,13 @@
 #  include <unistd.h>
 #  include <sys/socket.h>
 #  include <netinet/in.h>
-#  define __USE_MISC
-#  include <netdb.h>
-#  undef __USE_MISC
+#  ifndef __USE_MISC
+#    define __USE_MISC
+#    include <netdb.h>
+#    undef __USE_MISC
+#  else
+#    include <netdb.h>
+#  endif
 #  include <sys/time.h>
 #else
 #  include <winsock2.h>
@@ -571,7 +575,7 @@ int KSI_TcpClient_setExtender(KSI_NetworkClient *client, const char *host, unsig
 }
 
 int KSI_TcpClient_setAggregator(KSI_NetworkClient *client, const char *host, unsigned port, const char *user, const char *pass) {
-	if (client == NULL || client->extender == NULL) return KSI_INVALID_ARGUMENT;
+	if (client == NULL || client->aggregator == NULL) return KSI_INVALID_ARGUMENT;
 	return ksi_TcpClient_setService(client, client->aggregator, host, port, user, pass);
 }
 

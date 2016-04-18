@@ -26,6 +26,7 @@
 #include "net_uri.h"
 #include "ctx_impl.h"
 #include "pkitruststore.h"
+#include "policy.h"
 
 KSI_IMPLEMENT_LIST(GlobalCleanupFn, NULL);
 
@@ -165,7 +166,6 @@ int KSI_CTX_new(KSI_CTX **context) {
 
 	KSI_CTX *ctx = NULL;
 	KSI_NetworkClient *client = NULL;
-	KSI_PKITruststore *pkiTruststore = NULL;
 
 	ctx = KSI_new(KSI_CTX);
 	if (ctx == NULL) {
@@ -188,6 +188,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->requestHeaderCB = NULL;
 	ctx->loggerCtx = NULL;
 	ctx->certConstraints = NULL;
+	ctx->freeCertConstraintsArray = freeCertConstraintsArray;
 	KSI_ERR_clearErrors(ctx);
 
 	/* Create global cleanup list as the first thing. */
@@ -209,13 +210,6 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->isCustomNetProvider = 0;
 	client = NULL;
 
-	/* Create and set the PKI truststore */
-	res = KSI_PKITruststore_new(ctx, 1, &pkiTruststore);
-	if (res != KSI_OK) goto cleanup;
-	res = KSI_CTX_setPKITruststore(ctx, pkiTruststore);
-	if (res != KSI_OK) goto cleanup;
-	pkiTruststore = NULL;
-
 	/* Return the context. */
 	*context = ctx;
 	ctx = NULL;
@@ -225,7 +219,6 @@ int KSI_CTX_new(KSI_CTX **context) {
 cleanup:
 
 	KSI_NetworkClient_free(client);
-	KSI_PKITruststore_free(pkiTruststore);
 
 	KSI_CTX_free(ctx);
 
@@ -436,12 +429,6 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 			goto cleanup;
 		}
 
-		res = KSI_verifyPublicationsFile(ctx, tmp);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx,res, NULL);
-			goto cleanup;
-		}
-
 		ctx->publicationsFile = tmp;
 		tmp = NULL;
 
@@ -483,6 +470,60 @@ cleanup:
 	return res;
 }
 
+static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ctx) {
+	int res;
+	const KSI_Policy *policy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	if (ctx == NULL || sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_Policy_getGeneral(ctx, &policy);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_VerificationContext_setSignature(context, sig);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, "Verification of signature not completed.");
+		goto cleanup;
+	}
+
+	if (result->finalResult.resultCode != VER_RES_OK) {
+		res = KSI_VERIFICATION_FAILURE;
+		KSI_pushError(ctx, res, "Verification of signature failed.");
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_VerificationContext_setSignature(context, NULL); /* Prevent the freeing of signature. */
+	KSI_VerificationContext_free(context);
+	KSI_PolicyVerificationResult_free(result);
+
+	return res;
+}
+
 int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -492,7 +533,7 @@ int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig) {
 		goto cleanup;
 	}
 
-	res = KSI_Signature_verify(sig, ctx);
+	res = KSI_SignatureVerifier_verifySignature(sig, ctx);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx,res, NULL);
 		goto cleanup;
@@ -539,6 +580,7 @@ int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extend
 	KSI_Integer *signingTime = NULL;
 	KSI_PublicationRecord *pubRec = NULL;
 	KSI_Signature *extSig = NULL;
+	bool verifyPubFile = (ctx->publicationsFile == NULL);
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || sig == NULL || extended == NULL) {
@@ -552,6 +594,13 @@ int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extend
 		goto cleanup;
 	}
 
+	if (verifyPubFile == true) {
+		res = KSI_verifyPublicationsFile(ctx, pubFile);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx,res, NULL);
+			goto cleanup;
+		}
+	}
 
 	res = KSI_Signature_getSigningTime(sig, &signingTime);
 	if (res != KSI_OK) {
@@ -586,64 +635,6 @@ int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extend
 cleanup:
 
 	KSI_Signature_free(extSig);
-	return res;
-}
-
-int KSI_extendSignatureToPublication(KSI_CTX *ctx, KSI_Signature *sig, char *pubString, KSI_Signature **extended) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_PublicationsFile *pubFile = NULL;
-	KSI_Integer *signingTime = NULL;
-	KSI_PublicationRecord *pubRec = NULL;
-	KSI_Signature *extSig = NULL;
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || sig == NULL || pubString == NULL || extended == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_receivePublicationsFile(ctx, &pubFile);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx,res, NULL);
-		goto cleanup;
-	}
-
-
-	res = KSI_Signature_getSigningTime(sig, &signingTime);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx,res, NULL);
-		goto cleanup;
-	}
-
-
-	res = KSI_PublicationsFile_getNearestPublication(pubFile, signingTime, &pubRec);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx,res, NULL);
-		goto cleanup;
-	}
-
-
-	if (pubRec == NULL) {
-		KSI_pushError(ctx, res = KSI_EXTEND_NO_SUITABLE_PUBLICATION, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_Signature_extend(sig, ctx, pubRec, &extSig);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx,res, NULL);
-		goto cleanup;
-	}
-
-
-	*extended = extSig;
-	extSig = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_Signature_free(extSig);
-
 	return res;
 }
 
@@ -769,13 +760,14 @@ int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, size_t len, int *error,
 
 	err = ctx->errors;
 
-	if (error != NULL)	*error = err->statusCode;
-	if (ext != NULL)	*ext = err->extErrorCode;
-
 	if (ctx->errors_count) {
 		KSI_strncpy(buf, err->message, len);
+		if (error != NULL)	*error = err->statusCode;
+		if (ext != NULL)	*ext = err->extErrorCode;
 	} else {
-		KSI_strncpy(buf, "", len);
+		KSI_strncpy(buf, KSI_getErrorString(KSI_OK), len);
+		if (error != NULL)	*error = KSI_OK;
+		if (ext != NULL)	*ext = 0;
 	}
 
 	return KSI_OK;
@@ -909,23 +901,52 @@ cleanup:																					\
 	CTX_VALUEP_SETTER(var, nam, typ, fre)													\
 	CTX_VALUEP_GETTER(var, nam, typ)														\
 
-CTX_GET_SET_VALUE(pkiTruststore, PKITruststore, KSI_PKITruststore, KSI_PKITruststore_free)
+CTX_VALUEP_SETTER(pkiTruststore, PKITruststore, KSI_PKITruststore, KSI_PKITruststore_free)
 CTX_GET_SET_VALUE(publicationsFile, PublicationsFile, KSI_PublicationsFile, KSI_PublicationsFile_free)
 
+int KSI_CTX_getPKITruststore(KSI_CTX *ctx, KSI_PKITruststore **pki) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_PKITruststore *pkiTruststore = NULL;
+
+	if (ctx == NULL || pki == NULL){
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	/* In case the PKI truststore is not available, create a default */
+	if (ctx->pkiTruststore == NULL) {
+		/* Create and set the PKI truststore */
+		res = KSI_PKITruststore_new(ctx, 1, &pkiTruststore);
+		if (res != KSI_OK) goto cleanup;
+		res = KSI_CTX_setPKITruststore(ctx, pkiTruststore);
+		if (res != KSI_OK) goto cleanup;
+		pkiTruststore = NULL;
+	}
+
+	*pki = ctx->pkiTruststore;
+	res = KSI_OK;
+
+cleanup:
+	KSI_PKITruststore_free(pkiTruststore);
+
+	return res;
+}
+
+
 int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *netProvider){
-    int res = KSI_UNKNOWN_ERROR;
+	int res = KSI_UNKNOWN_ERROR;
 
 	if (ctx == NULL){
-        res = KSI_INVALID_ARGUMENT;
-        goto cleanup;
-    }
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
 	if (ctx->netProvider != NULL) {
-        KSI_NetworkClient_free (ctx->netProvider);
-    }
+		KSI_NetworkClient_free (ctx->netProvider);
+	}
 
 	ctx->netProvider = netProvider;
-    ctx->isCustomNetProvider = 1;
+	ctx->isCustomNetProvider = 1;
 	res = KSI_OK;
 
 cleanup:
@@ -1032,7 +1053,6 @@ int KSI_CTX_setDefaultPubFileCertConstraints(KSI_CTX *ctx, const KSI_CertConstra
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
-	memset(tmp, 0, count * sizeof(KSI_CertConstraint));
 
 	/* Copy the values. */
 	for (i = 0; arr[i].oid != NULL; i++) {

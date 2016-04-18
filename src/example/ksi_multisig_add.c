@@ -88,19 +88,7 @@ static int saveMultiSignature(const char *mf, KSI_MultiSignature *ms) {
 	size_t buf_len;
 	size_t written;
 
-	res = KSI_MultiSignature_writeBytes(ms, NULL, 0, &buf_len, 0);
-	if (res != KSI_OK) {
-		fprintf(stderr, "%s: Unable to serialize multi signature container: %s\n", mf, KSI_getErrorString(res));
-		goto cleanup;
-	}
-
-	buf = KSI_malloc(buf_len);
-	if (buf == NULL) {
-		res = KSI_OUT_OF_MEMORY;
-		goto cleanup;
-	}
-
-	res = KSI_MultiSignature_writeBytes(ms, buf, buf_len, &buf_len, 0);
+	res = KSI_MultiSignature_serialize(ms, &buf, &buf_len);
 	if (res != KSI_OK) {
 		fprintf(stderr, "%s: Unable to actually serialize the multi signature container (should never hapen): %s\n", mf, KSI_getErrorString(res));
 		goto cleanup;

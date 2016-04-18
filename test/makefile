@@ -58,7 +58,6 @@ ALLTESTS_OBJ = \
 	$(OBJ_DIR)\ksi_hash_test.obj \
 	$(OBJ_DIR)\ksi_hashchain_test.obj \
 	$(OBJ_DIR)\ksi_publicationsfile_test.obj \
-	$(OBJ_DIR)\ksi_net_mock.obj \
 	$(OBJ_DIR)\ksi_net_test.obj \
 	$(OBJ_DIR)\ksi_rdr_test.obj \
 	$(OBJ_DIR)\ksi_signature_test.obj \
@@ -70,7 +69,11 @@ ALLTESTS_OBJ = \
 	$(OBJ_DIR)\compatibility_test.obj \
 	$(OBJ_DIR)\uri_client_test.obj \
 	$(OBJ_DIR)\support_tests.obj \
-	$(OBJ_DIR)\multi_signature_test.obj  
+	$(OBJ_DIR)\multi_signature_test.obj \
+	$(OBJ_DIR)\verification_rule_tests.obj \
+	$(OBJ_DIR)\ksi_policy_test.obj \
+	$(OBJ_DIR)\ksi_sdk_version_test.obj \
+	$(OBJ_DIR)\ksi_flags_test.obj
 
 INTTESTS_OBJ = \
 	$(OBJ_DIR)\all_integration_tests.obj \
@@ -82,9 +85,9 @@ INTTESTS_OBJ = \
 
 RESIGNER_OBJ = \
 	$(OBJ_DIR)\resigner.obj
-	
+
 #Compiler and linker configuration
-#external libraries used for linking. 
+#external libraries used for linking.
 EXT_LIB = $(LIB_NAME)$(RTL).lib \
 	wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib
 
@@ -96,9 +99,9 @@ LDFLAGS = $(LDFLAGS) /LIBPATH:$(CURL_DIR)\$(DLL)
 
 !ELSE IF "$(NET_PROVIDER)" == "WININET"
 EXT_LIB = $(EXT_LIB) wininet.lib
- 
-!ELSE IF "$(NET_PROVIDER)" == "WINHTTP" 
-EXT_LIB = $(EXT_LIB) winhttp.lib 
+
+!ELSE IF "$(NET_PROVIDER)" == "WINHTTP"
+EXT_LIB = $(EXT_LIB) winhttp.lib
 !ENDIF
 
 !IF "$(HASH_PROVIDER)" == "OPENSSL" || "$(TRUST_PROVIDER)" == "OPENSSL"
@@ -117,7 +120,7 @@ EXT_LIB = $(EXT_LIB) Crypt32.lib advapi32.lib
 
 #/NODEFAULTLIB:libcmtd.lib
 CCFLAGS = $(CCFLAGS) /nologo /W3 /D_CRT_SECURE_NO_DEPRECATE /I$(SRC_DIR) /I$(INC_DIR) /I$(CUTEST_DIR)
-LDFLAGS = $(LDFLAGS) /NOLOGO /LIBPATH:$(LIB_DIR) 
+LDFLAGS = $(LDFLAGS) /NOLOGO /LIBPATH:$(LIB_DIR)
 
 !IF "$(RTL)" == "MT" || "$(RTL)" == "MD"
 CCFLAGS = $(CCFLAGS) /DNDEBUG /O2
@@ -127,24 +130,24 @@ CCFLAGS = $(CCFLAGS) /D_DEBUG /Od /RTC1 /Zi
 LDFLAGS = $(LDFLAGS) /DEBUG
 !ENDIF
 
-CCFLAGS = $(CCFLAGS) $(CCEXTRA) 
+CCFLAGS = $(CCFLAGS) $(CCEXTRA)
 LDFLAGS = $(LDFLAGS) $(LDEXTRA)
 
 
- 
+
 
 default: $(BIN_DIR)\alltests.exe $(BIN_DIR)\integrationtests.exe
 
 resigner: $(BIN_DIR)\resigner.exe
 
 $(BIN_DIR)\alltests.exe: $(BIN_DIR) $(ALLTESTS_OBJ)
-	link $(LDFLAGS) /OUT:$@ $(ALLTESTS_OBJ) $(EXT_LIB) 
+	link $(LDFLAGS) /OUT:$@ $(ALLTESTS_OBJ) $(EXT_LIB)
 !IF "$(DLL)" == "dll"
 	copy "$(LIB_DIR)\libksiapi$(RTL).dll" "$(BIN_DIR)\" /Y /D
 !IF "$(NET_PROVIDER)" == "CURL"
 !IF "$(RTL)" == "MT" || "$(RTL)" == "MD"
 	copy "$(CURL_DIR)\$(DLL)\libcurl$(RTL).dll" "$(BIN_DIR)\libcurl.dll" /Y
-!ELSE	
+!ELSE
 	copy "$(CURL_DIR)\$(DLL)\libcurl$(RTL).dll" "$(BIN_DIR)\libcurl_debug.dll" /Y
 !ENDIF
 !ENDIF
@@ -155,13 +158,13 @@ $(BIN_DIR)\alltests.exe: $(BIN_DIR) $(ALLTESTS_OBJ)
 
 
 $(BIN_DIR)\integrationtests.exe: $(BIN_DIR) $(INTTESTS_OBJ)
-	link $(LDFLAGS) /OUT:$@ $(INTTESTS_OBJ) $(EXT_LIB) 
+	link $(LDFLAGS) /OUT:$@ $(INTTESTS_OBJ) $(EXT_LIB)
 !IF "$(DLL)" == "dll"
 	copy "$(LIB_DIR)\libksiapi$(RTL).dll" "$(BIN_DIR)\" /Y /D
 !IF "$(NET_PROVIDER)" == "CURL"
 !IF "$(RTL)" == "MT" || "$(RTL)" == "MD"
 	copy "$(CURL_DIR)\$(DLL)\libcurl$(RTL).dll" "$(BIN_DIR)\libcurl.dll" /Y
-!ELSE	
+!ELSE
 	copy "$(CURL_DIR)\$(DLL)\libcurl$(RTL).dll" "$(BIN_DIR)\libcurl_debug.dll" /Y
 !ENDIF
 !ENDIF
@@ -172,13 +175,13 @@ $(BIN_DIR)\integrationtests.exe: $(BIN_DIR) $(INTTESTS_OBJ)
 
 
 $(BIN_DIR)\resigner.exe: $(BIN_DIR) $(RESIGNER_OBJ)
-	link $(LDFLAGS) /OUT:$@ $(RESIGNER_OBJ) $(EXT_LIB) 
+	link $(LDFLAGS) /OUT:$@ $(RESIGNER_OBJ) $(EXT_LIB)
 !IF "$(DLL)" == "dll"
 	copy "$(LIB_DIR)\libksiapi$(RTL).dll" "$(BIN_DIR)\" /Y /D
 !IF "$(NET_PROVIDER)" == "CURL"
 !IF "$(RTL)" == "MT" || "$(RTL)" == "MD"
 	copy "$(CURL_DIR)\$(DLL)\libcurl$(RTL).dll" "$(BIN_DIR)\libcurl.dll" /Y
-!ELSE	
+!ELSE
 	copy "$(CURL_DIR)\$(DLL)\libcurl$(RTL).dll" "$(BIN_DIR)\libcurl_debug.dll" /Y
 !ENDIF
 !ENDIF
@@ -187,8 +190,8 @@ $(BIN_DIR)\resigner.exe: $(BIN_DIR) $(RESIGNER_OBJ)
 !ENDIF
 !ENDIF
 
-	
-	
+
+
 #Creates OBJ_DIR for ALLTESTS_OBJ
 $(ALLTESTS_OBJ): $(OBJ_DIR)
 
@@ -196,13 +199,13 @@ $(ALLTESTS_OBJ): $(OBJ_DIR)
 $(RESIGNER_OBJ): $(OBJ_DIR)
 
 
-#C file compilation  	
+#C file compilation
 {$(SRC_DIR)\}.c{$(OBJ_DIR)\}.obj:
 	cl /c /$(RTL) $(CCFLAGS) /Fo$@ $<
 
 {$(CUTEST_DIR)\}.c{$(OBJ_DIR)\}.obj:
 	cl /c /$(RTL) $(CCFLAGS) /Fo$@ $<
 
-#Folder factory	
+#Folder factory
 $(OBJ_DIR) $(BIN_DIR):
 	@if not exist $@ mkdir $@

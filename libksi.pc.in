@@ -22,7 +22,7 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: libgt
+Name: libksi
 Description: GuardTime KSI API
 Version: @VERSION@
 Libs: -L${libdir} -lksi -lcurl -lcrypto -lrt

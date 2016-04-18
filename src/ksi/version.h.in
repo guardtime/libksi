@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2016 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -17,18 +17,11 @@
  * reserves and retains all trademark rights.
  */
 
-#ifndef KSI_NET_MOCK_H_
-#define KSI_NET_MOCK_H_
+#ifndef _VERSION_H_
+#define _VERSION_H_
 
-#define MOCK_BUFFER_SIZE 0xffff
+#define KSI_SDK_VER_MAJOR @VER_MAJOR@
+#define KSI_SDK_VER_MINOR @VER_MINOR@
+#define KSI_SDK_VER_BUILD @VER_BUILD@
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* KSI_NET_MOCK_H_ */
+#endif /* _VERSION_H_ */

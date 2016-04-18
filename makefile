@@ -67,7 +67,9 @@ OUT_DIR = out
 LIB_DIR = $(OUT_DIR)\$(DLL)
 BIN_DIR = $(OUT_DIR)\bin
 VERSION_FILE = VERSION
+VERSION_H = $(SRC_DIR)\ksi\version.h
 COMM_ID_FILE = COMMIT_ID
+DRMEMORY_LOGS = $(OUT_DIR)\drmemory_logs
 
 VER = \
 !INCLUDE <$(VERSION_FILE)>
@@ -77,12 +79,13 @@ VER = \
 COM_ID = \
 !INCLUDE <$(COMM_ID_FILE)>
 !MESSAGE Git OK. Include commit ID.
-!IF [rm $(COMM_ID_FILE)] == 0
+!IF [del $(COMM_ID_FILE)] == 0
 !MESSAGE File $(COMM_ID_FILE) deleted.
 !ENDIF
 !ELSE
-!MESSAGE Git is not installed. 
-!ENDIF 
+!MESSAGE Git is not installed.
+!ENDIF
+
 
 default:
 	cd $(SRC_DIR)\ksi
@@ -106,8 +109,6 @@ libMD:
 libMDd:
 	nmake DLL=lib RTL=MDd $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
 
-	
-
 dllMT:
 	nmake DLL=dll RTL=MT $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
 
@@ -120,26 +121,31 @@ dllMD:
 dllMDd:
 	nmake DLL=dll RTL=MDd $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
 
-	
-	
 example: $(DLL)$(RTL)
 	cd $(SRC_DIR)\example
 	nmake $(MODEL) $(EXTRA)
 	cd ..\..
-	
+
 tests: $(DLL)$(RTL)
 	cd $(TEST_DIR)
 	nmake $(MODEL) $(EXTRA)
-	cd ..	
+	cd ..
 
 test: tests
 	$(BIN_DIR)\alltests.exe test
+
+# You'll need drmemory for this target.
+# http://drmemory.org/
+memtest: tests
+	@if not exist .\$(DRMEMORY_LOGS) mkdir .\$(DRMEMORY_LOGS)
+	drmemory -logdir $(DRMEMORY_LOGS) -report_leak_max -1 -batch -leaks_only -- $(BIN_DIR)\alltests.exe test
 
 resigner: $(DLL)$(RTL)
 	cd $(TEST_DIR)
 	nmake $(MODEL) $(EXTRA) resigner
 	cd ..
-	
+
 clean:
 	@for %i in ($(OBJ_DIR) $(OUT_DIR)) do @if exist .\%i rmdir /s /q .\%i
-	@for %i in ($(SRC_DIR)\ksi $(SRC_DIR)\example $(TEST_DIR)) do @if exist .\%i\*.pdb del /q .\%i\*.pdb	
+	@for %i in ($(SRC_DIR)\ksi $(SRC_DIR)\example $(TEST_DIR)) do @if exist .\%i\*.pdb del /q .\%i\*.pdb
+	@if exist .\$(VERSION_H) del /q .\$(VERSION_H)

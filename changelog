@@ -1,13 +1,41 @@
-Version 3.7
+Version 3.8
 
+2016-04-18 release(3.8.1427)
+
+* IMPROVEMENT: Removed Unused function KSI_RDR_verifyEnd.
+* IMPROVEMENT: PKI truststore initialization is performed on the need basis.
+* IMPROVEMENT: Added signature verification according to policies.
+* IMPROVEMENT: Created KSI_HmacHasher interface for incremental HMAC computation.
+* IMPROVEMENT: Certificate constraints can be set and verified per publications file.
+* IMPROVEMENT: Add preprocessor parseable version no.
+* IMPROVEMENT: KSI_receivePublicationsFile must not verify publications file automatically.
+* BUGFIX: Invalid and misleading exception message on response publication time check.
+* BUGFIX: Correcting memory leaks when using Windows Crypt32 library.
+* BUGFIX: Correcting usage of isForward and isNonCritical flags in KSI_TlvTemplate_serializeObject and KSI_TlvTemplate_writeBytes. Added tests to cover this bug.
+* IMPROVEMENT: KSI_LIST may contain NULL values.
+* BUGFIX: Certificate and publication records are not mandatory for publications file.
+* IMPROVEMENT: Integration tests configuration file error handling improved.
+* IMPROVEMENT: Handling for reading server responses from tlv files.
+* BUGFIX: Removed unused function.
+* BUGFIX: Fixed macro redefinition issue.
+* BUGFIX: Fixed KSI_Signature_getSigningTime() when signature does not containa calendar chain.
+* IMPROVEMENT: Created KSI_HmacHasher interface for incremental HMAC computation.
+* IMPROVEMENT: Added detailed coverage report in html format.
+* IMPROVEMENT: In case of no errors KSI_ERR_getBaseErrorMessag returns string indicating that there are no errors.
+* BUGFIX: KSI_ERR_getBaseErrorMessage error code returned by the output parameter fixed when error count is zero.
+* BUGFIX: KSI_DataHasher memory leak on immediate reset after open.
 * BUGFIX: Fixed HMAC for hash functions with other than 512 bit internal block size.
+* IMPROVEMENT: Removed build warnings on OSX.
+* IMPROVEMENT: Added mechanism to disable deprecation warnings.
+
+Version 3.7
 
 2016-01-26 release(3.7.1037)
 * BUGFIX: Fixed building from SRPM
   Thanks to Peter Portante
 * BUGFIX: Compilation issues under Fedora 21
   Thanks to Peter Portante
-* IMPROVEMENT: Versioning includes 
+* IMPROVEMENT: Versioning includes
 * BUGFIX: KSI_Signature_getDocumentHash fixed when applied to legacy signature.
 * BUGFIX: KSI_MultiSignature_get fixed when extracting legacy signature.
 * BUGFIX: KSI_MultiSignature_remove fixed when removing legacy signature.
@@ -16,6 +44,7 @@ Version 3.4
 
 2015-12-09 release(3.4.0.6)
 * Added mime-type to http requests.
+* Protection against demoting meta_hash and metadata to sibling_hash
 
 2015-09-14 release(3.4.0.1)
 * Removed all default endpoints.
@@ -33,7 +62,7 @@ Version 3.4
 * Local aggregation support.
 * Fixed calendar hash chain calculation.
 
-Version 3.2 
+Version 3.2
 
 2015-05-14 release (3.2.2.0)
 * Added functions for signing locally aggregated root hashes.

@@ -120,7 +120,7 @@ static void Test_OKExtendSignatureDefProvider(CuTest* tc) {
 	res = KSI_Signature_extend(sig, ctx, NULL, &ext);
 	CuAssert(tc, "Unable to extend signature", res == KSI_OK && ext != NULL);
 
-	res = KSI_Signature_verify(sig, ctx);
+	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Unable to verify signature", res == KSI_OK);
 
 	KSI_ERR_clearErrors(ctx);
@@ -216,7 +216,7 @@ static void Test_ExtendSignature_useProvider(CuTest* tc, const char *uri_host, u
 	CuAssert(tc, "Unable to create network client.", res == KSI_OK && client != NULL);
 
 	res = setExtender(client, uri_host, port, user, key);
-	CuAssert(tc, "Unable to set extender.", res == KSI_OK);
+	CuAssert(tc, "Unable to set extender specific service information.", res == KSI_OK);
 
 	res = setPubfail(client, pub_uri);
 	CuAssert(tc, "Unable to set publications file url.", res == KSI_OK);
@@ -247,7 +247,7 @@ static int uri_setExtWrapper(KSI_NetworkClient *client, const char *url_host, un
 	return KSI_UriClient_setExtender(client, url_host, user, pass);
 }
 
-static void Test_ExtendSignatureDifferentProviders(CuTest* tc) {
+static void Test_ExtendSignatureDifferentNetProviders(CuTest* tc) {
 	/* Http provider. */
 	Test_ExtendSignature_useProvider(tc,
 			conf.extender_url, 0, conf.extender_user, conf.extender_pass, conf.publications_file_url,
@@ -255,6 +255,16 @@ static void Test_ExtendSignatureDifferentProviders(CuTest* tc) {
 			KSI_HttpClient_setPublicationUrl,
 			http_setExtWrapper);
 
+	/* Uri provider. */
+	Test_ExtendSignature_useProvider(tc,
+			conf.extender_url, 0, conf.extender_user, conf.extender_pass, conf.publications_file_url,
+			KSI_UriClient_new,
+			KSI_UriClient_setPublicationUrl,
+			uri_setExtWrapper);
+	return;
+}
+
+static void Test_ExtendSignatureUserInfoFromUrl(CuTest* tc) {
 	/* Uri provider - all inf is extracted from uri. */
 	Test_ExtendSignature_useProvider(tc,
 			conf.extender_url, 0, NULL, NULL, conf.publications_file_url,
@@ -273,7 +283,8 @@ CuSuite* ExtIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_NOKExtendRequestToPast);
 	SUITE_ADD_TEST(suite, Test_OKExtendSignatureDefProvider);
 	SUITE_ADD_TEST(suite, Test_ExtendSignatureUsingAggregator);
-	SUITE_ADD_TEST(suite, Test_ExtendSignatureDifferentProviders);
+	SUITE_ADD_TEST(suite, Test_ExtendSignatureDifferentNetProviders);
+	SUITE_ADD_TEST(suite, Test_ExtendSignatureUserInfoFromUrl);
 
 	return suite;
 }

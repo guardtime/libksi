@@ -88,7 +88,7 @@ static void Test_NOKAggr_TreeTooLarge(CuTest* tc) {
 	return;
 }
 
-static void Test_CreateSignatureDefProvider(CuTest* tc) {
+static void Test_CreateSignatureDefaultProvider(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
@@ -110,7 +110,7 @@ static void Test_CreateSignatureDefProvider(CuTest* tc) {
 	return;
 }
 
-static void Test_TCPCreateSignatureDefProvider(CuTest* tc) {
+static void Test_TCPCreateSignatureDefaultProvider(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
@@ -205,7 +205,7 @@ static void Test_CreateSignature_useProvider(CuTest* tc, const char *uri_host, u
 	CuAssert(tc, "Unable to create network client.", res == KSI_OK && client != NULL);
 
 	res = setAggregator(client, uri_host, port, user, key);
-	CuAssert(tc, "Unable to set aggregator.", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator specific service information.", res == KSI_OK);
 
 	res = KSI_CTX_setNetworkProvider(ctx, client);
 	CuAssert(tc, "Unable to set new network client.", res == KSI_OK);
@@ -237,7 +237,7 @@ static int tcp_setAggrWrapper(KSI_NetworkClient *client, const char *url_host, u
 	return KSI_TcpClient_setAggregator(client, url_host, port, user, pass);
 }
 
-static void Test_CreateSignatureDifferentProviders(CuTest* tc) {
+static void Test_CreateSignatureDifferentNetProviders(CuTest* tc) {
 	/* Http provider. */
 	Test_CreateSignature_useProvider(tc,
 			conf.aggregator_url, 0, conf.aggregator_user, conf.aggregator_pass,
@@ -250,6 +250,21 @@ static void Test_CreateSignatureDifferentProviders(CuTest* tc) {
 			KSI_TcpClient_new,
 			tcp_setAggrWrapper);
 
+	/* Uri provider http. */
+	Test_CreateSignature_useProvider(tc,
+			conf.aggregator_url, 0, conf.aggregator_user, conf.aggregator_pass,
+			KSI_UriClient_new,
+			uri_setAggrWrapper);
+
+	/* Uri provider */
+	Test_CreateSignature_useProvider(tc,
+			conf.tcp_url, 0, conf.tcp_user, conf.tcp_pass,
+			KSI_UriClient_new,
+			uri_setAggrWrapper);
+	return;
+}
+
+static void Test_CreateSignatureUserInfoFromUrl(CuTest* tc) {
 	/* Uri provider - all info is extracted from uri. */
 	Test_CreateSignature_useProvider(tc,
 			conf.aggregator_url, 0, NULL, NULL,
@@ -266,12 +281,13 @@ static void Test_CreateSignatureDifferentProviders(CuTest* tc) {
 CuSuite* AggreIntegrationTests_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
-	SUITE_ADD_TEST(suite, Test_CreateSignatureDefProvider);
+	SUITE_ADD_TEST(suite, Test_CreateSignatureDefaultProvider);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureWrongHMAC);
 	SUITE_ADD_TEST(suite, Test_NOKAggr_TreeTooLarge);
-	SUITE_ADD_TEST(suite, Test_TCPCreateSignatureDefProvider);
+	SUITE_ADD_TEST(suite, Test_TCPCreateSignatureDefaultProvider);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureUsingExtender);
-	SUITE_ADD_TEST(suite, Test_CreateSignatureDifferentProviders);
+	SUITE_ADD_TEST(suite, Test_CreateSignatureDifferentNetProviders);
+	SUITE_ADD_TEST(suite, Test_CreateSignatureUserInfoFromUrl);
 
 	return suite;
 }

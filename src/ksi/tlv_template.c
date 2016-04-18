@@ -97,7 +97,7 @@ KSI_END_TLV_TEMPLATE
 KSI_DEFINE_TLV_TEMPLATE(KSI_HashChainLink)
 	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_HashChainLink_getLevelCorrection, KSI_HashChainLink_setLevelCorrection, "level_correction")
 	KSI_TLV_IMPRINT(0x02, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getImprint, KSI_HashChainLink_setImprint, "imprint")
-	KSI_TLV_META_IMPRINT(0x03, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getMetaHash, KSI_HashChainLink_setMetaHash, "meta_hash")
+	KSI_TLV_OBJECT(0x03, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getLegacyId, KSI_HashChainLink_setLegacyId, KSI_HashChainLink_LegacyId_fromTlv, KSI_HashChainLink_LegacyId_toTlv, KSI_OctetString_free, "legacy_id")
 	KSI_TLV_COMPOSITE_OBJECT(0x04, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getMetaData, KSI_HashChainLink_setMetaData, KSI_MetaData_fromTlv, KSI_MetaData_toTlv, KSI_MetaData_free, KSI_TLV_TEMPLATE(KSI_MetaData), "meta_data")
 KSI_END_TLV_TEMPLATE
 
@@ -448,7 +448,7 @@ static int extractObject(KSI_CTX *ctx, const KSI_TlvTemplate *tmpl, void *payloa
 
 	if (tmpl->fromTlv == NULL && tmpl->parser == NULL) {
 		KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR,
-		        "Invalid template: no method for converting from tlv to object.");
+				"Invalid template: no method for converting from tlv to object.");
 		goto cleanup;
 	}
 
@@ -929,7 +929,7 @@ int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag,
 	}
 
 	/* Create TLV for the PDU object. */
-	res = KSI_TLV_new(ctx, tag, isFwd, isNc, &tlv);
+	res = KSI_TLV_new(ctx, tag, isNc, isFwd, &tlv);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -976,7 +976,7 @@ int KSI_TlvTemplate_writeBytes(KSI_CTX *ctx, const void *obj, unsigned tag, int 
 	}
 
 	/* Create TLV for the PDU object. */
-	res = KSI_TLV_new(ctx, tag, isFwd, isNc, &tlv);
+	res = KSI_TLV_new(ctx, tag, isNc, isFwd, &tlv);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;

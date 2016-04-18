@@ -108,7 +108,7 @@ static int RunAllTests() {
 static char *string_getBetweenWhitespace(char *strn) {
 	char *beginning = strn;
 	char *end = NULL;
-	unsigned strn_len;
+	size_t strn_len;
 
 	if (strn == NULL) return NULL;
 	strn_len = strlen(strn);
@@ -223,8 +223,31 @@ static void conf_clear(CONF *conf) {
 		_res = 1; \
 	}
 
+static int isUserInfoInsideUrl(const char *url) {
+	char *start_user = NULL;
+	char *end_user = NULL;
+	char *colon = NULL;
+
+	if (url == NULL || *url == '\0') return 0;
+
+	/* Extract the margins of the user ino. */
+	start_user = strstr(url, "://");
+	end_user = strchr(url, '@');
+
+	if (start_user == NULL || end_user == NULL) {
+		return 0;
+	}
+
+	/* Extract thge colon that should be between the margins. */
+	colon = strchr(start_user + 3, ':');
+	if (colon == NULL || colon == start_user + 3 || colon >= end_user - 1) return 0;
+
+	return 1;
+}
+
 static int conf_control(CONF *conf) {
 	int res = 0;
+
 	CONF_CONTROL(conf, aggregator_url, res);
 	CONF_CONTROL(conf, aggregator_pass, res);
 	CONF_CONTROL(conf, aggregator_user, res);
@@ -236,6 +259,21 @@ static int conf_control(CONF *conf) {
 	CONF_CONTROL(conf, tcp_host, res);
 	CONF_CONTROL(conf, tcp_pass, res);
 	CONF_CONTROL(conf, tcp_user, res);
+
+	if (!isUserInfoInsideUrl(conf->aggregator_url)) {
+		fprintf(stderr, "Error: aggregator_url must contain user information fields.\n");
+		fprintf(stderr, "  Url: '%s'.\n", conf->aggregator_url);
+		fprintf(stderr, "  Fix url as described: <scheme>://<user>:<pass>@<host>\n");
+		res = 1;
+	}
+
+	if (!isUserInfoInsideUrl(conf->extender_url)) {
+		fprintf(stderr, "Error: extender_url must contain user information fields.\n");
+		fprintf(stderr, "  Url: '%s'.\n", conf->extender_url);
+		fprintf(stderr, "  Fix url as described: <scheme>://<user>:<pass>@<host>\n");
+		res = 1;
+	}
+
 
 	if(conf->tcp_port == 0) {
 		fprintf(stderr, "Error: parameter 'tcp_port' in conf file must have valeue (not 0).\n");

@@ -20,6 +20,9 @@
 #ifndef SIGNATURE_IMPL_H_
 #define SIGNATURE_IMPL_H_
 
+#include "verification.h"
+#include "verification_impl.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -58,20 +61,20 @@ extern "C" {
 	struct KSI_RFC3161_st {
 		KSI_CTX *ctx;
 		size_t ref;
-		
+
 		KSI_Integer *aggregationTime;
 		KSI_LIST(KSI_Integer) *chainIndex;
 		KSI_DataHash *inputHash;
-		
+
 		KSI_OctetString *tstInfoPrefix;
 		KSI_OctetString *tstInfoSuffix;
 		KSI_Integer *tstInfoAlgo;
-		
+
 		KSI_OctetString *sigAttrPrefix;
 		KSI_OctetString *sigAttrSuffix;
 		KSI_Integer *sigAttrAlgo;
 	};
-	
+
 	/**
 	 * KSI Signature object
 	 */
@@ -86,7 +89,7 @@ extern "C" {
 		KSI_LIST(KSI_AggregationHashChain) *aggregationChainList;
 
 		KSI_RFC3161 *rfc3161;
-		
+
 		KSI_CalendarAuthRec *calendarAuthRec;
 		KSI_AggregationAuthRec *aggregationAuthRec;
 		KSI_PublicationRecord *publication;

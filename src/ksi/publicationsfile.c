@@ -30,6 +30,7 @@
 #include "tlv.h"
 #include "tlv_template.h"
 #include "pkitruststore.h"
+#include "ctx_impl.h"
 
 #define PUB_FILE_HEADER_ID "KSIPUBLF"
 
@@ -44,8 +45,8 @@ KSI_IMPLEMENT_LIST(KSI_PublicationRecord, KSI_PublicationRecord_free);
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationsFile)
 	KSI_TLV_COMPOSITE(0x0701, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_FIXED_ORDER, KSI_PublicationsFile_getHeader, KSI_PublicationsFile_setHeader, KSI_PublicationsHeader, "pub_header")
-	KSI_TLV_COMPOSITE_LIST(0x0702, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_FIXED_ORDER, KSI_PublicationsFile_getCertificates, KSI_PublicationsFile_setCertificates, KSI_CertificateRecord, "cert_rec")
-	KSI_TLV_COMPOSITE_LIST(0x0703, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_FIXED_ORDER, KSI_PublicationsFile_getPublications, KSI_PublicationsFile_setPublications, KSI_PublicationRecord, "pub_rec")
+	KSI_TLV_COMPOSITE_LIST(0x0702, KSI_TLV_TMPL_FLG_NONE | KSI_TLV_TMPL_FLG_FIXED_ORDER, KSI_PublicationsFile_getCertificates, KSI_PublicationsFile_setCertificates, KSI_CertificateRecord, "cert_rec")
+	KSI_TLV_COMPOSITE_LIST(0x0703, KSI_TLV_TMPL_FLG_NONE | KSI_TLV_TMPL_FLG_FIXED_ORDER, KSI_PublicationsFile_getPublications, KSI_PublicationsFile_setPublications, KSI_PublicationRecord, "pub_rec")
 	KSI_TLV_OBJECT(0x0704, KSI_TLV_TMPL_FLG_MANDATORY | KSI_TLV_TMPL_FLG_FIXED_ORDER, KSI_PublicationsFile_getSignature, KSI_PublicationsFile_setSignature, KSI_PKISignature_fromTlv, KSI_PKISignature_toTlv, KSI_PKISignature_free, "pki_signature")
 KSI_END_TLV_TEMPLATE
 
@@ -139,6 +140,7 @@ int KSI_PublicationsFile_new(KSI_CTX *ctx, KSI_PublicationsFile **t) {
 	tmp->certificates = NULL;
 	tmp->publications = NULL;
 	tmp->signature = NULL;
+	tmp->certConstraints = NULL;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -191,7 +193,7 @@ int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, size_t raw_len, KS
 
 	tmp->signedDataLength = strlen(PUB_FILE_HEADER_ID);
 
-        /* Initialize generator. */
+	/* Initialize generator. */
 	gen.reader = reader;
 	gen.tlv = NULL;
 
@@ -268,9 +270,9 @@ int KSI_PublicationsFile_verify(KSI_PublicationsFile *pubFile, KSI_CTX *ctx) {
 		goto cleanup;
 	}
 
-	res = KSI_PKITruststore_verifySignature(pki, pubFile->raw, pubFile->signedDataLength, pubFile->signature);
+	res = KSI_PKITruststore_verifyPKISignature(pki, pubFile->raw, pubFile->signedDataLength, pubFile->signature, pubFile->certConstraints);
 	if (res != KSI_OK) {
-		KSI_pushError(useCtx, res, "Publications file not trusted.");
+		KSI_pushError(useCtx, res, "Signature not verified.");
 		goto cleanup;
 	}
 
@@ -431,7 +433,7 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 	/**
 	 * Create TLV 0x700 that contains nested list of publication file TLVs.
 	 * Calculate signed data length assuming that signature TLV is always the last.
-     */
+	 */
 	res = KSI_TLV_new(ctx, 0x700, 0, 0, &tlv);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -460,9 +462,9 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 	/**
 	 * Append raw value to publication file header. Copy raw publication file into
 	 * internal and external buffer.
-     */
+	 */
 	tmp_len = buf_len + sizeof(PUB_FILE_HEADER_ID) - 1;
-	tmp = (char *) KSI_malloc(tmp_len);
+	tmp = (unsigned char *) KSI_malloc(tmp_len);
 	if (tmp == NULL) {
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
@@ -481,14 +483,14 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 	pubFile->signedDataLength = tmp_len - sig_len;
 	tmp = NULL;
 
-	tmp = (char *) KSI_malloc(pubFile->raw_len);
+	tmp = (unsigned char *) KSI_malloc(pubFile->raw_len);
 	if (tmp == NULL) {
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
 	memcpy(tmp, pubFile->raw, pubFile->raw_len);
-	*raw = tmp;
+	*raw = (char *)tmp;
 	*raw_len = pubFile->raw_len;
 	tmp = NULL;
 
@@ -508,6 +510,9 @@ void KSI_PublicationsFile_free(KSI_PublicationsFile *t) {
 		KSI_PublicationRecordList_free(t->publications);
 		KSI_PKISignature_free(t->signature);
 		KSI_free(t->raw);
+		if(t->ctx->freeCertConstraintsArray != NULL) {
+			t->ctx->freeCertConstraintsArray(t->certConstraints);
+		}
 		KSI_free(t);
 	}
 }
@@ -517,6 +522,7 @@ KSI_IMPLEMENT_GETTER(KSI_PublicationsFile, KSI_LIST(KSI_CertificateRecord)*, cer
 KSI_IMPLEMENT_GETTER(KSI_PublicationsFile, KSI_LIST(KSI_PublicationRecord)*, publications, Publications);
 KSI_IMPLEMENT_GETTER(KSI_PublicationsFile, KSI_PKISignature *, signature, Signature);
 KSI_IMPLEMENT_GETTER(KSI_PublicationsFile, size_t, signedDataLength, SignedDataLength);
+KSI_IMPLEMENT_GETTER(KSI_PublicationsFile, KSI_CertConstraint*, certConstraints, CertConstraints);
 
 KSI_IMPLEMENT_SETTER(KSI_PublicationsFile, KSI_PublicationsHeader*, header, Header);
 KSI_IMPLEMENT_SETTER(KSI_PublicationsFile, KSI_LIST(KSI_CertificateRecord)*, certificates, Certificates);
@@ -902,6 +908,73 @@ cleanup:
 	return res;
 }
 
+int KSI_PublicationsFile_setCertConstraints(KSI_PublicationsFile *pubFile, const KSI_CertConstraint *arr) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CertConstraint *tmp = NULL;
+	KSI_CTX *ctx = NULL;
+	size_t count = 0;
+	size_t i;
+
+	if (pubFile == NULL || pubFile->ctx == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = pubFile->ctx;
+	KSI_ERR_clearErrors(ctx);
+
+	if (arr != NULL) {
+		/* Count the input. */
+		while(arr[count++].oid != NULL);
+
+		/* Allocate buffer with extra space for the trailing {NULL, NULL}. */
+		tmp = KSI_calloc(count, sizeof(KSI_CertConstraint));
+		if (tmp == NULL) {
+			KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+			goto cleanup;
+		}
+
+		/* Copy the values. */
+		for (i = 0; arr[i].oid != NULL; i++) {
+			res = KSI_strdup(arr[i].oid, &tmp[i].oid);
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
+
+			if (arr[i].val == NULL) {
+				KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Expected OID value may not be NULL");
+				goto cleanup;
+			}
+
+			res = KSI_strdup(arr[i].val, &tmp[i].val);
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
+		}
+
+		/* Add terminator for the array. */
+		tmp[i].oid = NULL;
+		tmp[i].val = NULL;
+	}
+	/* Free the existing constraints. */
+	if (pubFile->ctx->freeCertConstraintsArray != NULL) {
+		pubFile->ctx->freeCertConstraintsArray(pubFile->certConstraints);
+	}
+
+	pubFile->certConstraints = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	if (pubFile->ctx->freeCertConstraintsArray != NULL) {
+		pubFile->ctx->freeCertConstraintsArray(tmp);
+	}
+
+	return res;
+}
 
 int KSI_PublicationData_fromBase32(KSI_CTX *ctx, const char *publication, KSI_PublicationData **published_data) {
 	int res = KSI_UNKNOWN_ERROR;

@@ -26,11 +26,7 @@
 #include "support_tests.h"
 #include "all_integration_tests.h"
 
-#ifdef _WIN32
-#  define DIR_SEP '\\'
-#else
-#  define DIR_SEP '/'
-#endif
+#define DIR_SEP '/'
 
 int ctx_get_base_external_error(KSI_CTX *ctx) {
 	char buf[1024];
@@ -71,11 +67,17 @@ void printStats(CuSuite *suite, const char *heding) {
 
 
 static const char *projectRoot = NULL;
-static char pathBuffer[2048];
 
 const char *getFullResourcePath(const char* resource) {
-	KSI_snprintf(pathBuffer, sizeof(pathBuffer), "%s%c%s", projectRoot, DIR_SEP, resource);
-	return pathBuffer;
+	static char buf[2048];
+	KSI_snprintf(buf, sizeof(buf), "%s%c%s", projectRoot, DIR_SEP, resource);
+	return buf;
+}
+
+const char *getFullResourcePathUri(const char* resource) {
+	static char uriBuffer[2048];
+	KSI_snprintf(uriBuffer, sizeof(uriBuffer), "file://%s", getFullResourcePath(resource));
+	return uriBuffer;
 }
 
 void initFullResourcePath(const char* rootDir) {

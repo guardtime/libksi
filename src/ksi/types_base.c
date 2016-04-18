@@ -236,51 +236,89 @@ char* KSI_OctetString_toString(const KSI_OctetString *id, char separator, char *
 	return buf;
 }
 
+#define LEGACY_ID_STR_LEN_POS 2
+#define LEGACY_ID_STR_POS 3
+
+int KSI_OctetString_LegacyId_getUtf8String(KSI_OctetString *id, KSI_Utf8String **str) {
+	int res = KSI_UNKNOWN_ERROR;
+	const unsigned char *raw = NULL;
+	size_t raw_len;
+	KSI_Utf8String *tmp = NULL;
+
+	if (id == NULL || str == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(id->ctx);
+
+	res = KSI_OctetString_extract(id, &raw, &raw_len);
+	if (res != KSI_OK) {
+		KSI_pushError(id->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_Utf8String_new(id->ctx, &(raw[LEGACY_ID_STR_POS]), raw[LEGACY_ID_STR_LEN_POS] + 1, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(id->ctx, res, NULL);
+		goto cleanup;
+	}
+	*str = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+	KSI_Utf8String_free(tmp);
+
+	return res;
+}
+
 static int verifyUtf8(const unsigned char *str, size_t len) {
 	int res = KSI_UNKNOWN_ERROR;
-    size_t i = 0;
-    size_t charContinuationLen = 0;
+	size_t i = 0;
+	size_t charContinuationLen = 0;
 
-    while (i < len) {
-        if (i + 1 != len && str[i] == 0) {
-        	/* The string contains a '\0' byte where not allowed. */
-        	res = KSI_INVALID_FORMAT;
-        	goto cleanup;
-        } else if (str[i] <= 0x7f)
-            charContinuationLen = 0;
-        else if (str[i] >= 0xc0 /*11000000*/ && str[i] <= 0xdf /*11011111*/)
-            charContinuationLen = 1;
-        else if (str[i] >= 0xe0 /*11100000*/ && str[i] <= 0xef /*11101111*/)
-            charContinuationLen = 2;
-        else if (str[i] >= 0xf0 /*11110000*/ && str[i] <= 0xf4 /* Cause of RFC 3629 */)
-            charContinuationLen = 3;
-        else {
-        	res = KSI_INVALID_FORMAT;
-        	goto cleanup;
-        }
-        if (i + charContinuationLen >= len) {
-        	res = KSI_BUFFER_OVERFLOW;
-        	goto cleanup;
-        }
+	while (i < len) {
+		if (i + 1 != len && str[i] == 0) {
+			/* The string contains a '\0' byte where not allowed. */
+			res = KSI_INVALID_FORMAT;
+			goto cleanup;
+		} else if (str[i] <= 0x7f)
+			charContinuationLen = 0;
+		else if (str[i] >= 0xc0 /*11000000*/ && str[i] <= 0xdf /*11011111*/)
+			charContinuationLen = 1;
+		else if (str[i] >= 0xe0 /*11100000*/ && str[i] <= 0xef /*11101111*/)
+			charContinuationLen = 2;
+		else if (str[i] >= 0xf0 /*11110000*/ && str[i] <= 0xf4 /* Cause of RFC 3629 */)
+			charContinuationLen = 3;
+		else {
+			res = KSI_INVALID_FORMAT;
+			goto cleanup;
+		}
+		if (i + charContinuationLen >= len) {
+			res = KSI_BUFFER_OVERFLOW;
+			goto cleanup;
+		}
 
-        ++i;
+		++i;
 
-        while (i < len && charContinuationLen > 0
-               && str[i] >= 0x80 /*10000000*/ && str[i] <= 0xbf /*10111111*/) {
-            ++i;
-            --charContinuationLen;
-        }
-        if (charContinuationLen != 0) {
-        	res = KSI_INVALID_FORMAT;
-        	goto cleanup;
-        }
-    }
+		while (i < len && charContinuationLen > 0
+			   && str[i] >= 0x80 /*10000000*/ && str[i] <= 0xbf /*10111111*/) {
+			++i;
+			--charContinuationLen;
+		}
+		if (charContinuationLen != 0) {
+			res = KSI_INVALID_FORMAT;
+			goto cleanup;
+		}
+	}
 
-    res = KSI_OK;
+	res = KSI_OK;
 
 cleanup:
 
-    return res;
+	return res;
 }
 /**
  * Utf8String
@@ -311,7 +349,7 @@ int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, size_t len, KSI_Utf8String
 	tmp->ctx = ctx;
 	tmp->value = NULL;
 	tmp->ref = 1;
-	
+
 	/* Verify that it is a null-terminated string. */
 	if (len == 0 || str[len - 1] != '\0') {
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "String value is not null-terminated.");
@@ -633,7 +671,7 @@ int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_Integer **o) {
 		goto cleanup;
 	}
 
- 	*o = tmp;
+	*o = tmp;
 	tmp = NULL;
 
 	res = KSI_OK;

@@ -42,6 +42,7 @@ libksi_la_SOURCES = \
 	hash_impl.h \
 	hash_openssl.c \
 	hmac.h \
+	hmac_impl.h\
 	hmac.c \
 	http_parser.h \
 	http_parser.c \
@@ -66,12 +67,18 @@ libksi_la_SOURCES = \
 	net_tcp.c \
 	net_tcp.h \
 	net_tcp_impl.h \
+	net_file.c \
+	net_file.h \
+	net_file_impl.h \
 	net_uri.c \
 	net_uri.h \
 	net_uri_impl.h \
 	pkitruststore.c \
 	pkitruststore.h \
 	pkitruststore_openssl.c \
+	policy.c \
+	policy.h \
+	policy_impl.h \
 	publicationsfile.c \
 	publicationsfile.h \
 	publicationsfile_impl.h \
@@ -89,8 +96,13 @@ libksi_la_SOURCES = \
 	verification.c \
 	verification.h \
 	verification_impl.h \
+	verification_rule.c \
+	verification_rule.h \
 	compatibility.h \
-	compatibility.c
+	compatibility.c \
+	version.h \
+	verify_deprecated.c \
+	verify_deprecated.h
 
 otherincludedir = $(includedir)/ksi
 otherinclude_HEADERS = \
@@ -106,6 +118,7 @@ otherinclude_HEADERS = \
 	list.h \
 	log.h \
 	pkitruststore.h \
+	policy.h \
 	publicationsfile.h \
 	signature.h \
 	tlv.h \
@@ -116,10 +129,14 @@ otherinclude_HEADERS = \
 	net.h \
 	net_http.h \
 	net_tcp.h \
+	net_file.h \
 	net_uri.h \
 	ksi.h \
 	verification.h \
-	compatibility.h
+	verification_rule.h \
+	compatibility.h \
+	version.h \
+	verify_deprecated.h
 
 libksi_la_LDFLAGS=-version-info @LTVER@
 

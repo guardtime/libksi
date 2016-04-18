@@ -26,116 +26,352 @@
 
 extern KSI_CTX *ctx;
 
+#define KEY					"secret"
+#define MESSAGE				"correct horse battery staple"
+#define SHA1_MESSAGE_HMAC	"006cce352c6b788a3217b0439d231eb68180c529c1"
+#define SHA256_MESSAGE_HMAC "01f24bedb4e103c9bf78b312b570af224ceb090e0bcda18c2c106943269259cfed"
+#define SHA256_EMPTY_HMAC	"01f9e66e179b6747ae54108f82f8ade8b3c25d76fd30afde6c395822c530196169"
 
-struct testData {
-	KSI_HashAlgorithm algo_id;
-	
-	char *key;
-	
-	unsigned char *message;
-	unsigned int message_len;
-	
-	char *ref_result;
-};
+static int CompareHmac(KSI_DataHash *hmac, const char *expected) {
+	int res = KSI_HMAC_MISMATCH;
+	char buf[KSI_MAX_IMPRINT_LEN * 2 + 1];
 
-#define COUNT 2
+	KSI_DataHash_toString(hmac, buf, sizeof(buf));
 
-#define KEY_1 "secret"
-#define MSG_1 "message"
-#define RES_1_SHA1 "000caf649feee4953d87bf903ac1176c45e028df16"
-#define RES_1_SHA256 "018b5f48702995c1598c573db1e21866a9b825d4a794d169d7060a03605796360b"
-#define RES_1_SHA512 "051bba587c730eedba31f53abb0b6ca589e09de4e894ee455e6140807399759adaafa069eec7c01647bb173dcb17f55d22af49a18071b748c5c2edd7f7a829c632"
+	if (!strcmp(buf, expected)) {
+		res = KSI_OK;
+	}
 
-#define KEY_2 "s"
-#define MSG_2 "m"
-#define RES_2_SHA1 "00f0ed6a60f66e9dfc4b967ff5c9ea9feca17e0bed"
-#define RES_2_SHA256 "018e1e1cf905ed55f131230070478633764a859f8a53a59abd6be9721f5662c715"
-#define RES_2_SHA512 "057cb8cf7e21394b6791205a9c14cae518131a603b8cb1f3d7449d63b98cac80202ef4f2e1474eed6d1c1edbd0a360433493fb329336e73de293c8e4a00c165940"
+	return res;
+}
 
-#define KEY_3 "secretkeyislongerthan_64secretkeyislongerthan_64secretkeyislongerthan_64secretkeyislongerthan_64"
-#define MSG_3 "message"
-#define RES_3_SHA1 "00456e75f2ae29cfc90b18bcc0c77ebcc8cb7beb18"
-#define RES_3_SHA256 "01bf5e4d4ab708f50f5f54ba8b78941077e221dbcd28b202a07a38691d6b36e85a"
-#define RES_3_SHA512 "05187818ac44ff4554148c5488d424b80be8c3b736a83969ea4088ff5f10b9e52ea1f11e1a6e9951f849d8f0c41ae94ed86ee00ccccf9ae8fae00df557513cde96"
-
-#define STR_KEY_MSG(alg, key, msg, ref) {alg, key, (unsigned char *)msg, (sizeof(msg)-1),ref}
-
-
-
-static void dotest(CuTest* tc, struct testData *data, int count) {
+static void TestSHA256Create(CuTest* tc) {
 	int res;
 	KSI_DataHash *hmac = NULL;
-	char buf[1024];
-	int i = 0;
-	
-	for (;i<count;i++){
-		res = KSI_HMAC_create(ctx, data[i].algo_id, data[i].key, data[i].message, data[i].message_len, &hmac);
-		CuAssert(tc, "Failed crete HMAC", res == KSI_OK && hmac != NULL);
-		KSI_DataHash_toString(hmac,buf, sizeof(buf));
-		if (strcmp(data[i].ref_result, buf)) {
-			KSI_LOG_debug(ctx, "Expecting HMAC: %s", data[i].ref_result);
-			KSI_LOG_debug(ctx, "Actual HMAC:    %s", buf);
+	const unsigned char *data = (const unsigned char *)MESSAGE;
+	const char *key = KEY;
+	const char *expected = SHA256_MESSAGE_HMAC;
+	size_t data_len = strlen(MESSAGE);
 
-			/* Just being polite. */
-			KSI_DataHash_free(hmac);
-			hmac = NULL;
+	KSI_ERR_clearErrors(ctx);
 
-			/* Fail and exit test. */
-			CuFail(tc, "HMAC mismatch");
-		}
-		KSI_DataHash_free(hmac);
-		hmac = NULL;
-	}
-	
+	res = KSI_HMAC_create(ctx, KSI_HASHALG_SHA2_256, key, data, data_len, &hmac);
+	CuAssert(tc, "Failed to create HMAC", res == KSI_OK && hmac != NULL);
+
+	res = CompareHmac(hmac, expected);
+	CuAssert(tc, "HMAC mismatch", res == KSI_OK);
+
+
 	KSI_DataHash_free(hmac);
 }
 
+static void TestSHA256AddEmptyData(CuTest* tc) {
+	int res;
+	KSI_HmacHasher *hasher = NULL;
+	KSI_DataHash *hmac = NULL;
+	unsigned char empty[1];
+	const char *key = KEY;
+	const char *expected = SHA256_EMPTY_HMAC;
 
-static void TestSHA1(CuTest* tc) {
-	struct testData TEST_SHA1[] ={
-		STR_KEY_MSG(KSI_HASHALG_SHA1, KEY_1, MSG_1, RES_1_SHA1),
-		STR_KEY_MSG(KSI_HASHALG_SHA1, KEY_2, MSG_2, RES_2_SHA1),
-		STR_KEY_MSG(KSI_HASHALG_SHA1, KEY_3, MSG_3, RES_3_SHA1)
-	};
-	
-	int count = sizeof(TEST_SHA1)/sizeof(struct testData);
-	
-	dotest(tc, TEST_SHA1, count);
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_HmacHasher_open(ctx, KSI_HASHALG_SHA2_256, key, &hasher);
+	CuAssert(tc, "Failed to open HMAC hasher", res == KSI_OK && hasher != NULL);
+
+	res = KSI_HmacHasher_add(hasher, empty, 0);
+	CuAssert(tc, "Failed to add data of length 0.", res == KSI_OK);
+
+	res = KSI_HmacHasher_close(hasher, &hmac);
+	CuAssert(tc, "Failed to close HMAC hasher", res == KSI_OK && hmac != NULL);
+
+	res = CompareHmac(hmac, expected);
+	CuAssert(tc, "HMAC mismatch", res == KSI_OK);
+
+
+	KSI_HmacHasher_free(hasher);
+	KSI_DataHash_free(hmac);
 }
 
-static void TestSHA256(CuTest* tc) {
-	struct testData TEST_SHA256[] ={
-		STR_KEY_MSG(KSI_HASHALG_SHA2_256, KEY_1, MSG_1, RES_1_SHA256),
-		STR_KEY_MSG(KSI_HASHALG_SHA2_256, KEY_2, MSG_2, RES_2_SHA256),
-		STR_KEY_MSG(KSI_HASHALG_SHA2_256, KEY_3, MSG_3, RES_3_SHA256)
-	};
-	
-	int count = sizeof(TEST_SHA256)/sizeof(struct testData);
-	
-	dotest(tc, TEST_SHA256, count);
+static void TestSHA256AddMany(CuTest* tc) {
+	int res;
+	KSI_HmacHasher *hasher = NULL;
+	KSI_DataHash *hmac = NULL;
+	char *data = MESSAGE;
+	unsigned i = 0;
+	const char *key = KEY;
+	const char *expected = SHA256_MESSAGE_HMAC;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_HmacHasher_open(ctx, KSI_HASHALG_SHA2_256, key, &hasher);
+	CuAssert(tc, "Failed to open HMAC hasher", res == KSI_OK && hasher != NULL);
+
+	while (data[i]) {
+		res = KSI_HmacHasher_add(hasher, &data[i], 1);
+		CuAssert(tc, "Failed to add data", res == KSI_OK);
+		i++;
+	}
+	res = KSI_HmacHasher_close(hasher, &hmac);
+	CuAssert(tc, "Failed to close HMAC hasher", res == KSI_OK && hmac != NULL);
+
+	res = CompareHmac(hmac, expected);
+	CuAssert(tc, "HMAC mismatch", res == KSI_OK);
+
+
+	KSI_HmacHasher_free(hasher);
+	KSI_DataHash_free(hmac);
 }
 
-static void TestSHA512(CuTest* tc) {
-	struct testData TEST_SHA256[] ={
-		STR_KEY_MSG(KSI_HASHALG_SHA2_512, KEY_1, MSG_1, RES_1_SHA512),
-		STR_KEY_MSG(KSI_HASHALG_SHA2_512, KEY_2, MSG_2, RES_2_SHA512),
-		STR_KEY_MSG(KSI_HASHALG_SHA2_512, KEY_3, MSG_3, RES_3_SHA512),
-	};
+static void TestSHA256Reset(CuTest* tc) {
+	int res;
+	KSI_HmacHasher *hasher = NULL;
+	KSI_DataHash *hmac = NULL;
+	char *data = MESSAGE;
+	const char *key = KEY;
+	const char *expected = SHA256_MESSAGE_HMAC;
 
-	int count = sizeof(TEST_SHA256)/sizeof(struct testData);
+	KSI_ERR_clearErrors(ctx);
 
-	dotest(tc, TEST_SHA256, count);
+	res = KSI_HmacHasher_open(ctx, KSI_HASHALG_SHA2_256, key, &hasher);
+	CuAssert(tc, "Failed to open HMAC hasher", res == KSI_OK && hasher != NULL);
+
+	res = KSI_HmacHasher_add(hasher, "TEST", strlen("TEST"));
+	CuAssert(tc, "Failed to add data", res == KSI_OK);
+
+	res = KSI_HmacHasher_reset(hasher);
+	CuAssert(tc, "Failed to reset HMAC hasher", res == KSI_OK);
+
+	res = KSI_HmacHasher_add(hasher, (unsigned char *)data, strlen(data));
+	CuAssert(tc, "Failed to add data", res == KSI_OK);
+
+	res = KSI_HmacHasher_close(hasher, &hmac);
+	CuAssert(tc, "Failed to close HMAC hasher", res == KSI_OK && hmac != NULL);
+
+	res = CompareHmac(hmac, expected);
+	CuAssert(tc, "HMAC mismatch", res == KSI_OK);
+
+
+	KSI_HmacHasher_free(hasher);
+	KSI_DataHash_free(hmac);
 }
 
+static void TestSHA256NoData(CuTest* tc) {
+	int res;
+	KSI_HmacHasher *hasher = NULL;
+	KSI_DataHash *hmac = NULL;
+	const char *key = KEY;
+	const char *expected = SHA256_EMPTY_HMAC;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_HmacHasher_open(ctx, KSI_HASHALG_SHA2_256, key, &hasher);
+	CuAssert(tc, "Failed to open HMAC hasher", res == KSI_OK && hasher != NULL);
+
+	res = KSI_HmacHasher_close(hasher, &hmac);
+	CuAssert(tc, "Failed to close HMAC hasher", res == KSI_OK && hmac != NULL);
+
+	res = CompareHmac(hmac, expected);
+	CuAssert(tc, "HMAC mismatch", res == KSI_OK);
 
 
+	KSI_HmacHasher_free(hasher);
+	KSI_DataHash_free(hmac);
+}
+
+static void TestAllAlgorithms(CuTest* tc) {
+	int res;
+	KSI_DataHash *hmac = NULL;
+	const unsigned char *data = (const unsigned char *)MESSAGE;
+	const char *key = KEY;
+	const char *expected[KSI_NUMBER_OF_KNOWN_HASHALGS];
+	size_t data_len = strlen(MESSAGE);
+	KSI_HashAlgorithm algo_id;
+
+	expected[KSI_HASHALG_SHA1] = SHA1_MESSAGE_HMAC;
+	expected[KSI_HASHALG_SHA2_256] = SHA256_MESSAGE_HMAC;
+	expected[KSI_HASHALG_RIPEMD160] = "022f50d19982a69c801e709f8b2df1472d0de2d727";
+	expected[0x03] = NULL;
+	expected[KSI_HASHALG_SHA2_384] = "0417df9e5205924edf24677bd365535827d150ba5c88e6ea769a16f4910f4b62d65ed730b2f5511c79750b8a32cee6373c";
+	expected[KSI_HASHALG_SHA2_512] = "05fb7ed4edda2e2631c53103413823b1d7613d756e43b5182550f04decbde99bd3848ff38dbc5a4210f3439754b77de10c294acdb0704fbfcd2493d48f2e65ed98";
+	expected[0x06] = NULL; /* Deprecated hash function. */
+	expected[KSI_HASHALG_SHA3_244] = "TODO!";
+	expected[KSI_HASHALG_SHA3_256] = "TODO!";
+	expected[KSI_HASHALG_SHA3_384] = "TODO!";
+	expected[KSI_HASHALG_SHA3_512] = "TODO!";
+	expected[KSI_HASHALG_SM3] = "TODO!";
+
+	for (algo_id = 0; algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS; algo_id++) {
+		char errm[0x1ff];
+
+		/* Skip unsupported. */
+		if (!KSI_isHashAlgorithmSupported(algo_id)) continue;
+
+		KSI_ERR_clearErrors(ctx);
+
+		res = KSI_HMAC_create(ctx, algo_id, key, data, data_len, &hmac);
+		KSI_snprintf(errm, sizeof(errm), "Failed to create HMAC for algorithm %s", KSI_getHashAlgorithmName(algo_id));
+		CuAssert(tc, errm, res == KSI_OK && hmac != NULL);
+
+		res = CompareHmac(hmac, expected[algo_id]);
+		KSI_snprintf(errm, sizeof(errm), "HMAC mismatch for algorithm %s", KSI_getHashAlgorithmName(algo_id));
+		CuAssert(tc, errm, res == KSI_OK && hmac != NULL);
+
+		KSI_DataHash_free(hmac);
+		hmac = NULL;
+	}
+}
+
+static void TestSHA512LongKey(CuTest* tc) {
+	int res;
+	KSI_DataHash *hmac = NULL;
+	const unsigned char *data = (const unsigned char *)MESSAGE;
+	const char *key = "Secret key longer than 128 bytes. Secret key longer than 128 bytes. Secret key longer than 128 bytes. Secret key longer than 128 bytes.";
+	const char *expected = "05ff9707fad045722e7b1466933d6ee76f3f933447aaf0c79c4ed32ed643bb38231b45accc5a15cef894570b1e642bc2609c68918ce51ed712d94a9d8d9cad7bb1";
+	size_t data_len = strlen(MESSAGE);
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_HMAC_create(ctx, KSI_HASHALG_SHA2_512, key, data, data_len, &hmac);
+	CuAssert(tc, "Failed to create HMAC", res == KSI_OK && hmac != NULL);
+
+	res = CompareHmac(hmac, expected);
+	CuAssert(tc, "HMAC mismatch", res == KSI_OK);
+
+
+	KSI_DataHash_free(hmac);
+}
+
+static void TestParallelHashing(CuTest* tc) {
+	int res;
+	KSI_HmacHasher *hasher1 = NULL;
+	KSI_HmacHasher *hasher2 = NULL;
+	KSI_DataHash *hmac1 = NULL;
+	KSI_DataHash *hmac2 = NULL;
+	const char *data = MESSAGE;
+	unsigned i = 0;
+	const char *key = KEY;
+	const char *expected1 = SHA1_MESSAGE_HMAC;
+	const char *expected2 = SHA256_MESSAGE_HMAC;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_HmacHasher_open(ctx, KSI_HASHALG_SHA1, key, &hasher1);
+	CuAssert(tc, "Failed to open HMAC hasher", res == KSI_OK && hasher1 != NULL);
+
+	res = KSI_HmacHasher_open(ctx, KSI_HASHALG_SHA2_256, key, &hasher2);
+	CuAssert(tc, "Failed to open HMAC hasher", res == KSI_OK && hasher2 != NULL);
+
+	while (data[i]) {
+		res = KSI_HmacHasher_add(hasher1, &data[i], 1);
+		CuAssert(tc, "Failed to add data", res == KSI_OK);
+
+		res = KSI_HmacHasher_add(hasher2, &data[i], 1);
+		CuAssert(tc, "Failed to add data", res == KSI_OK);
+		i++;
+	}
+
+	res = KSI_HmacHasher_close(hasher1, &hmac1);
+	CuAssert(tc, "Failed to close HMAC hasher", res == KSI_OK && hmac1 != NULL);
+
+	res = CompareHmac(hmac1, expected1);
+	CuAssert(tc, "HMAC mismatch", res == KSI_OK);
+
+	res = KSI_HmacHasher_close(hasher2, &hmac2);
+	CuAssert(tc, "Failed to close HMAC hasher", res == KSI_OK && hmac2 != NULL);
+
+	res = CompareHmac(hmac2, expected2);
+	CuAssert(tc, "HMAC mismatch", res == KSI_OK);
+
+	KSI_HmacHasher_free(hasher1);
+	KSI_DataHash_free(hmac1);
+
+	KSI_HmacHasher_free(hasher2);
+	KSI_DataHash_free(hmac2);
+}
+
+static void TestInvalidParams(CuTest* tc) {
+	int res;
+	KSI_HmacHasher *hasher = NULL;
+	KSI_DataHash *hmac = NULL;
+	const unsigned char *data = (const unsigned char *)MESSAGE;
+	const char *key = KEY;
+	size_t data_len = strlen(MESSAGE);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_HMAC_create(NULL, KSI_HASHALG_SHA2_256, key, data, data_len, &hmac);
+	CuAssert(tc, "Context NULL accepted", res != KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_HmacHasher_open(NULL, KSI_HASHALG_SHA2_256, key, &hasher);
+	CuAssert(tc, "Context NULL accepted", res != KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_HMAC_create(ctx, KSI_NUMBER_OF_KNOWN_HASHALGS, key, data, data_len, &hmac);
+	CuAssert(tc, "Invalid algorithm accepted", res != KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_HmacHasher_open(ctx, KSI_NUMBER_OF_KNOWN_HASHALGS, key, &hasher);
+	CuAssert(tc, "Invalid algorithm accepted", res != KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_HMAC_create(ctx, KSI_HASHALG_SHA2_256, NULL, data, data_len, &hmac);
+	CuAssert(tc, "Key NULL accepted", res != KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_HmacHasher_open(ctx, KSI_HASHALG_SHA2_256, NULL, &hasher);
+	CuAssert(tc, "Key NULL accepted", res != KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_HMAC_create(ctx, KSI_HASHALG_SHA2_256, key, NULL, data_len, &hmac);
+	CuAssert(tc, "Data NULL accepted", res != KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_HMAC_create(ctx, KSI_HASHALG_SHA2_256, key, data, data_len, NULL);
+	CuAssert(tc, "HMAC NULL accepted", res != KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_HmacHasher_open(ctx, KSI_HASHALG_SHA2_256, key, NULL);
+	CuAssert(tc, "HMAC hasher NULL accepted", res != KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_HmacHasher_reset(NULL);
+	CuAssert(tc, "HMAC hasher NULL accepted", res != KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_HmacHasher_add(NULL, data, data_len);
+	CuAssert(tc, "HMAC hasher NULL accepted", res != KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_HmacHasher_close(NULL, &hmac);
+	CuAssert(tc, "HMAC hasher NULL accepted", res != KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_HmacHasher_open(ctx, KSI_HASHALG_SHA2_256, key, &hasher);
+	CuAssert(tc, "Failed to open HMAC hasher", res == KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_HmacHasher_add(hasher, NULL, data_len);
+	CuAssert(tc, "Data NULL accepted", res != KSI_OK);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_HmacHasher_close(hasher, NULL);
+	CuAssert(tc, "HMAC NULL accepted", res != KSI_OK);
+
+	KSI_HmacHasher_free(hasher);
+	KSI_DataHash_free(hmac);
+}
 
 CuSuite* KSITest_HMAC_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
-	SUITE_ADD_TEST(suite, TestSHA1);
-	SUITE_ADD_TEST(suite, TestSHA256);
-	SUITE_ADD_TEST(suite, TestSHA512);
-
+	SUITE_ADD_TEST(suite, TestSHA256Create);
+	SUITE_ADD_TEST(suite, TestSHA256AddEmptyData);
+	SUITE_ADD_TEST(suite, TestSHA256AddMany);
+	SUITE_ADD_TEST(suite, TestSHA256Reset);
+	SUITE_ADD_TEST(suite, TestSHA256NoData);
+	SUITE_ADD_TEST(suite, TestAllAlgorithms);
+	SUITE_ADD_TEST(suite, TestSHA512LongKey);
+	SUITE_ADD_TEST(suite, TestParallelHashing);
+	SUITE_ADD_TEST(suite, TestInvalidParams);
 	return suite;
 }

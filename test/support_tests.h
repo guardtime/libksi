@@ -14,6 +14,7 @@ void printStats(CuSuite *suite, const char *heding);
 
 void initFullResourcePath(const char* rootDir);
 const char *getFullResourcePath(const char* resource);
+const char *getFullResourcePathUri(const char* resource);
 
 void writeXmlReport(CuSuite *suite, const char *fname);
 

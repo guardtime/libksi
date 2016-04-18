@@ -2,6 +2,7 @@
 
 GNUMakefile.in
 config.h.in
+config.h.in~
 Makefile.in
 /m4
 
@@ -60,6 +61,7 @@ libtool
 *.hex
 
 # Debug files
+*.pdb
 *.dSYM/
 
 # Binaries and log files
@@ -83,6 +85,11 @@ test/resigner
 test/runner
 test/serialize-benchmark
 testsuite-xunit.xml
+coverage.info
+coverage/
 
 # Configuration files
 test/integrationtest.conf
+
+# Generated header files
+version.h

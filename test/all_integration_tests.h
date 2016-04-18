@@ -31,7 +31,7 @@ extern "C" {
 #endif
 
 #define CONF_FIELD_SIZE 1024
-#define CONF_MAX_CONSTRAINTS 32	
+#define CONF_MAX_CONSTRAINTS 32
 typedef struct CONF_st {
 	char extender_url[CONF_FIELD_SIZE];
 	char extender_pass[CONF_FIELD_SIZE];
@@ -49,17 +49,18 @@ typedef struct CONF_st {
 	unsigned tcp_port;
 	char tcp_user[CONF_FIELD_SIZE];
 	char tcp_pass[CONF_FIELD_SIZE];
-	
+
 	unsigned int constraints;
 	char oid[CONF_MAX_CONSTRAINTS][CONF_FIELD_SIZE];
 	char val[CONF_MAX_CONSTRAINTS][CONF_FIELD_SIZE];
 	KSI_CertConstraint testPubFileCertConstraints[CONF_MAX_CONSTRAINTS + 1];
-	
+
 } CONF;
-	
+
 extern CONF conf;
-	
+
 const char *getFullResourcePath(const char* resource);
+const char *getFullResourcePathUri(const char* resource);
 
 CuSuite* AggreIntegrationTests_getSuite(void);
 CuSuite* ExtIntegrationTests_getSuite(void);

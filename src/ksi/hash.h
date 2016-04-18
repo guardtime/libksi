@@ -21,6 +21,7 @@
 #define KSI_HASH_H_
 
 #include "types_base.h"
+#include "common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,8 +63,6 @@ extern "C" {
 		KSI_HASHALG_SHA2_256 = 0x01,
 		/** The RIPEMD-160 algorithm. */
 		KSI_HASHALG_RIPEMD160 = 0x02,
-		/** The SHA-224 algorithm. */
-		KSI_HASHALG_SHA2_224 = 0x03,
 		/** The SHA-384 algorithm. */
 		KSI_HASHALG_SHA2_384 = 0x04,
 		/** The SHA-512 algorithm. */
@@ -311,35 +310,11 @@ extern "C" {
 
 	/**
 	 * Accessor method for extracting the hash algorithm from the #KSI_DataHash.
-     * \param	hash		Data hash object.
-     * \param	algo_id		Pointer to the receiving pointer.
+	 * \param	hash		Data hash object.
+	 * \param	algo_id		Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-     */
+	 */
 	int KSI_DataHash_getHashAlg(const KSI_DataHash *hash, KSI_HashAlgorithm *algo_id);
-
-	/**
-	 * Parses the meta value if the hash value is formatted:
-	 * - 2 bytes of length (n).
-	 * - n bytes of metadata.
-	 * - digest length - n bytes of padding with zero values.
-	 * \param[in]	metaHash		Metahash value.
-	 * \param[out]	data			Pointer to the receiving pointer.
-	 * \param[out]	data_len		Pointer to the receiving length variable.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_DataHash_free, #KSI_DataHash_toTlv
-	 */
-	int KSI_DataHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned char **data, size_t *data_len);
-
-	/**
-	 * Works the same way as #KSI_DataHash_fromTlv, but performs an additional
-	 * format check on the digest value and makes sure the binary digest is a
-	 * null terminated sequence of bytes.
-	 * \param[in]	tlv			TLV object.
-	 * \param[out]	hsh			Pointer to the receiving data hash object pointer.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_DataHash_MetaHash_fromTlv(KSI_TLV *tlv, KSI_DataHash **hsh);
 
 	/**
 	 * Creates a string representation of the datahash.
