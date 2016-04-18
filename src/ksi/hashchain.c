@@ -796,7 +796,7 @@ int KSI_HashChainLink_LegacyId_fromTlv(KSI_TLV *tlv, KSI_OctetString **legacyId)
 cleanup:
 
 	KSI_nofree(raw);
-	KSI_Utf8String_free(tmp);
+	KSI_OctetString_free(tmp);
 
 	return res;
 }
