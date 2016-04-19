@@ -23,6 +23,9 @@
 
 extern KSI_CTX *ctx;
 
+#ifdef _WIN32
+_declspec( dllimport )
+#endif
 KSI_IMPORT_TLV_TEMPLATE(KSI_Signature)
 
 #define TEST_SIG_BUF_SIZE 			0x1ffff
