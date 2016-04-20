@@ -338,7 +338,7 @@ static void testAggrChain_LegacyId_ParserFail(CuTest *tc, char *testSignatureFil
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(testSignatureFile), &sig);
-	CuAssert(tc, "Signature parsing should fail.", res == KSI_INVALID_FORMAT && sig == NULL);
+	CuAssert(tc, "Signature parsing should fail.", res != KSI_OK && sig == NULL);
 }
 
 static void testAggrChain_LegacyId_siblingContainsLegacyId_verifyErrorResult(CuTest *tc) {
