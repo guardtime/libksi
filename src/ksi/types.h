@@ -167,17 +167,18 @@ extern "C" {
 void KSI_MetaData_free(KSI_MetaData *t);
 int KSI_MetaData_new(KSI_CTX *ctx, KSI_MetaData **t);
 int KSI_MetaData_getRaw(const KSI_MetaData *t, KSI_OctetString **raw);
-int KSI_MetaData_getClientId(const KSI_MetaData *t, KSI_Utf8String **clientId);
-int KSI_MetaData_getMachineId(const KSI_MetaData *t, KSI_Utf8String **machineId);
-int KSI_MetaData_getSequenceNr(const KSI_MetaData *t, KSI_Integer **sequenceNr);
-int KSI_MetaData_getRequestTimeInMicros(const KSI_MetaData *t, KSI_Integer **reqTime);
-int KSI_MetaData_setRaw(KSI_MetaData *t, KSI_OctetString *raw);
+int KSI_MetaData_getClientId(KSI_MetaData *t, KSI_Utf8String **clientId);
+int KSI_MetaData_getMachineId(KSI_MetaData *t, KSI_Utf8String **machineId);
+int KSI_MetaData_getSequenceNr(KSI_MetaData *t, KSI_Integer **sequenceNr);
+int KSI_MetaData_getRequestTimeInMicros(KSI_MetaData *t, KSI_Integer **reqTime);
 int KSI_MetaData_setClientId(KSI_MetaData *t, KSI_Utf8String *clientId);
 int KSI_MetaData_setMachineId(KSI_MetaData *t, KSI_Utf8String *machineId);
 int KSI_MetaData_setSequenceNr(KSI_MetaData *t, KSI_Integer *sequenceNr);
 int KSI_MetaData_setRequestTimeInMicros(KSI_MetaData *t, KSI_Integer *reqTime);
 int KSI_MetaData_toTlv(KSI_CTX *ctx, const KSI_MetaData *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 int KSI_MetaData_fromTlv(KSI_TLV *tlv, KSI_MetaData **metaData);
+
+KSI_DEFINE_REF(KSI_MetaData);
 /*
  * KSI_ExtendPdu
  */

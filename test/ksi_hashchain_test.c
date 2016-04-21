@@ -297,14 +297,14 @@ static void testAggrChainBuiltWithMetaData(CuTest *tc) {
 	[01] || [85035b9a620d4c06ca24b9df2f9e74768a0dc8a543d9c418a4bbf41cfdbdb000]
  */
 
-	/*Imput hash*/
+	/* Create the input hash. */
 	res = KSITest_decodeHexStr("0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", buf, sizeof(buf), &buf_len);
 	CuAssert(tc, "Unable to decode input hash", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, buf, buf_len, &in);
 	CuAssert(tc, "Unable to create input data hash", res == KSI_OK && in != NULL);
 
-	/*Hash chain*/
+	/* Create the hash chain. */
 	buildHashChain(tc, "019eaa47c788a21835616e504d2ed960afb9ec5e867643f50c223db15fff53d636", 1, 0, &chn);
 	buildMetaDataHashChain(tc, metaData, 1, 0, &chn);
 	buildHashChain(tc, "010000000000000000000000000000000000000000000000000000000000000000", 1, 0, &chn);
@@ -319,7 +319,6 @@ static void testAggrChainBuiltWithMetaData(CuTest *tc) {
 
 	res = KSI_DataHash_fromImprint(ctx, buf, buf_len, &exp);
 	CuAssert(tc, "Unable to create expected output data hash", res == KSI_OK && exp != NULL);
-
 	CuAssert(tc, "Data hash mismatch", KSI_DataHash_equals(out, exp));
 
 	KSI_MetaData_free(tmp_metaData);
