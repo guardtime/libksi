@@ -13,11 +13,15 @@ and verifying the signatures.
 ## Installation ##
 
 To build the libksi, you need to have the following SW components installed:
-1. A network provider, choose one:
+1. A network provider
+2. A cryptography provider
+
+The following network providers are supported, choose one:
 * Libcurl (recommended)
 * Windows native WinINet
 * Windows native WinHTTP
-2. A cryptography provider, choose one:
+
+The following cryptography providers are supported, choose one:
 * OpenSSL (recommended)
 * Windows native CryptoAPI
 
