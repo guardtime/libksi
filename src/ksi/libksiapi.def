@@ -258,6 +258,7 @@ EXPORTS
 
 ;pkitruststore.h
 EXPORTS
+	KSI_PKITruststore_registerGlobals
 	KSI_PKITruststore_new
 	KSI_PKITruststore_free
 	KSI_PKICertificate_new

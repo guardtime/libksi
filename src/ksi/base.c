@@ -210,6 +210,10 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->isCustomNetProvider = 0;
 	client = NULL;
 
+	/* Initialize truststore. */
+	res = KSI_PKITruststore_registerGlobals(ctx);
+	if (res != KSI_OK) goto cleanup;
+
 	/* Return the context. */
 	*context = ctx;
 	ctx = NULL;
