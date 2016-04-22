@@ -1326,7 +1326,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;

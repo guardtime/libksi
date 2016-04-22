@@ -970,7 +970,7 @@ static void testRule_SignatureDoesNotContainPublication_verifyErrorResult(CuTest
 #undef TEST_SIGNATURE_FILE
 }
 
-static void testRule_ExtendedSignatureAggregationChainRightLinksMatch(CuTest *tc) {
+static void testRule_ExtendedSignatureCalendarChainRightLinksMatch(CuTest *tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 #define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
 
@@ -989,7 +989,7 @@ static void testRule_ExtendedSignatureAggregationChainRightLinksMatch(CuTest *tc
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
-	res = KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch(verCtx, &verRes);
+	res = KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch(verCtx, &verRes);
 	CuAssert(tc, "Signature should not contain publication record.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
@@ -998,7 +998,7 @@ static void testRule_ExtendedSignatureAggregationChainRightLinksMatch(CuTest *tc
 #undef TEST_EXT_RESPONSE_FILE
 }
 
-static void testRule_ExtendedSignatureAggregationChainRightLinksMatch_linkCountMismatch_verifyErrorResult(CuTest *tc) {
+static void testRule_ExtendedSignatureCalendarChainRightLinksMatch_linkCountMismatch_verifyErrorResult(CuTest *tc) {
 #define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 
@@ -1017,7 +1017,7 @@ static void testRule_ExtendedSignatureAggregationChainRightLinksMatch_linkCountM
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &verCtx->tempData.extendedSig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->tempData.extendedSig != NULL);
 
-	res = KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch(verCtx, &verRes);
+	res = KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch(verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_CAL_4);
 
 	KSI_VerificationContext_free(verCtx);
@@ -1026,7 +1026,7 @@ static void testRule_ExtendedSignatureAggregationChainRightLinksMatch_linkCountM
 #undef TEST_EXT_SIGNATURE_FILE
 }
 
-static void testRule_ExtendedSignatureAggregationChainRightLinksMatch_rightLinksDiffer_verifyErrorResult(CuTest *tc) {
+static void testRule_ExtendedSignatureCalendarChainRightLinksMatch_rightLinksDiffer_verifyErrorResult(CuTest *tc) {
 #define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/signature-invalid-calendar-right-link-sig-2014-04-30.1-extended.ksig"
 
@@ -1045,7 +1045,7 @@ static void testRule_ExtendedSignatureAggregationChainRightLinksMatch_rightLinks
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &verCtx->tempData.extendedSig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->tempData.extendedSig != NULL);
 
-	res = KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch(verCtx, &verRes);
+	res = KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch(verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_CAL_4);
 
 	KSI_VerificationContext_free(verCtx);
@@ -2840,9 +2840,9 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_DocumentHashVerification_rfc3161_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_SignatureDoesNotContainPublication);
 	SUITE_ADD_TEST(suite, testRule_SignatureDoesNotContainPublication_verifyErrorResult);
-	SUITE_ADD_TEST(suite, testRule_ExtendedSignatureAggregationChainRightLinksMatch);
-	SUITE_ADD_TEST(suite, testRule_ExtendedSignatureAggregationChainRightLinksMatch_linkCountMismatch_verifyErrorResult);
-	SUITE_ADD_TEST(suite, testRule_ExtendedSignatureAggregationChainRightLinksMatch_rightLinksDiffer_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_ExtendedSignatureCalendarChainRightLinksMatch);
+	SUITE_ADD_TEST(suite, testRule_ExtendedSignatureCalendarChainRightLinksMatch_linkCountMismatch_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_ExtendedSignatureCalendarChainRightLinksMatch_rightLinksDiffer_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_SignaturePublicationRecordExistence);
 	SUITE_ADD_TEST(suite, testRule_SignaturePublicationRecordExistence_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_ExtendedSignatureCalendarChainRootHash);

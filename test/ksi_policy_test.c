@@ -1150,7 +1150,7 @@ static void TestCalendarBasedPolicy_NA_ExtenderErrors(CuTest* tc) {
 	KSI_RuleVerificationResult expected = {
 		VER_RES_NA,
 		VER_ERR_GEN_2,
-		"KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch"
+		"KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch"
 	};
 
 	struct extErrResp_st {
@@ -1336,7 +1336,7 @@ static void TestCalendarBasedPolicy_FAIL_WithoutPublicationRecord(CuTest* tc) {
 	KSI_RuleVerificationResult expected = {
 		VER_RES_FAIL,
 		VER_ERR_CAL_4,
-		"KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch"
+		"KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
@@ -2670,7 +2670,7 @@ static void TestGeneralPolicy_NA_ExtenderError(CuTest* tc) {
 	KSI_RuleVerificationResult expected = {
 		VER_RES_NA,
 		VER_ERR_GEN_2,
-		"KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch"
+		"KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch"
 	};
 
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-06-2.ksig"
