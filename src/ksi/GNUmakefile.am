@@ -89,6 +89,10 @@ libksi_la_SOURCES = \
 	tlv.h \
 	tlv_template.c \
 	tlv_template.h \
+	tlv_element.c \
+	tlv_element.h \
+	tree_builder.c \
+	tree_builder.h \
 	types_base.c \
 	types_base.h \
 	types.c \
@@ -123,6 +127,8 @@ otherinclude_HEADERS = \
 	signature.h \
 	tlv.h \
 	tlv_template.h \
+	tlv_element.h \
+	tree_builder.h \
 	types.h \
 	types_base.h \
 	multi_signature.h \
