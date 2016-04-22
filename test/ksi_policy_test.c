@@ -2704,7 +2704,7 @@ static void TestGeneralPolicy_NA_ExtenderError(CuTest* tc) {
 #undef TEST_EXT_RESPONSE_FILE
 }
 
-static void Test_InvalidSignatureType(CuTest* tc) {
+static void Test_InvalidPKISignatureType(CuTest* tc) {
 	int res;
 	const KSI_Policy *policy = NULL;
 	KSI_VerificationContext *context = NULL;
@@ -2719,7 +2719,74 @@ static void Test_InvalidSignatureType(CuTest* tc) {
 		VER_ERR_NONE,
 		"KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime"
 	};
-#define TEST_SIGNATURE_FILE "resource/tlv/invalid_sig_type-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE "resource/tlv/invalid_pki_sig_type-2014-04-30.1.ksig"
+#define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_Policy_getGeneral(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->userData.sig != NULL);
+
+	res = KSI_CTX_setPublicationsFile(ctx, NULL);
+	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context->userData.userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context->userData.userPublicationsFile != NULL);
+
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expectedFail, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE));
+
+	KSI_PolicyVerificationResult_free(result);
+
+	/* Verify the same signature again with calendar based policy. */
+	res = KSI_Policy_getCalendarBased(ctx, &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &context->tempData.extendedSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->tempData.extendedSig != NULL);
+
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expectedOk, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_VerificationContext_free(context);
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_SIGNATURE_FILE
+#undef TEST_PUBLICATIONS_FILE
+}
+
+static void Test_InvalidPKISignatureValue(CuTest* tc) {
+	int res;
+	const KSI_Policy *policy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expectedFail = {
+		VER_RES_FAIL,
+		VER_ERR_KEY_2,
+		"KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification"
+	};
+	KSI_RuleVerificationResult expectedOk = {
+		VER_RES_OK,
+		VER_ERR_NONE,
+		"KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime"
+	};
+#define TEST_SIGNATURE_FILE "resource/tlv/invalid_pki_sig_value-2014-04-30.1.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
@@ -2953,7 +3020,8 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestGeneralPolicy_FAIL_WithoutCalendarHashChain);
 	SUITE_ADD_TEST(suite, TestGeneralPolicy_OK_WithoutCalendarHashChain);
 	SUITE_ADD_TEST(suite, TestGeneralPolicy_NA_ExtenderError);
-	SUITE_ADD_TEST(suite, Test_InvalidSignatureType);
+	SUITE_ADD_TEST(suite, Test_InvalidPKISignatureType);
+	SUITE_ADD_TEST(suite, Test_InvalidPKISignatureValue);
 	SUITE_ADD_TEST(suite, TestPolicyCloning);
 	SUITE_ADD_TEST(suite, TestFallbackPolicy_CalendarBased_OK_KeyBased_NA);
 	SUITE_ADD_TEST(suite, TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA);
