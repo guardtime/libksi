@@ -998,6 +998,34 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatch(CuTest *tc) {
 #undef TEST_EXT_RESPONSE_FILE
 }
 
+static void testRule_ExtendedSignatureCalendarChainRightLinksMatchWithAdditionalLeftLinks(CuTest *tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.2-extended.ksig"
+
+	int res = KSI_OK;
+	KSI_VerificationContext *verCtx = NULL;
+	KSI_RuleVerificationResult verRes;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_create(ctx, &verCtx);
+	CuAssert(tc, "Unable to create verification context", res == KSI_OK && verCtx != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &verCtx->tempData.extendedSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->tempData.extendedSig != NULL);
+
+	res = KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch(verCtx, &verRes);
+	CuAssert(tc, "Calendar chain right link sequence should match with extended calendar chain right link sequence.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+
+	KSI_VerificationContext_free(verCtx);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_SIGNATURE_FILE
+}
+
 static void testRule_ExtendedSignatureCalendarChainRightLinksMatch_linkCountMismatch_verifyErrorResult(CuTest *tc) {
 #define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 #define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
@@ -2841,6 +2869,7 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_SignatureDoesNotContainPublication);
 	SUITE_ADD_TEST(suite, testRule_SignatureDoesNotContainPublication_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_ExtendedSignatureCalendarChainRightLinksMatch);
+	SUITE_ADD_TEST(suite, testRule_ExtendedSignatureCalendarChainRightLinksMatchWithAdditionalLeftLinks);
 	SUITE_ADD_TEST(suite, testRule_ExtendedSignatureCalendarChainRightLinksMatch_linkCountMismatch_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_ExtendedSignatureCalendarChainRightLinksMatch_rightLinksDiffer_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_SignaturePublicationRecordExistence);
