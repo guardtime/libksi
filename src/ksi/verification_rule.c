@@ -585,7 +585,7 @@ int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationCo
 
 	/* Aggregate all the aggregation chains. */
 	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
-		const KSI_AggregationHashChain* aggregationChain = NULL;
+		KSI_AggregationHashChain* aggregationChain = NULL;
 		KSI_Integer *chainIndexCurr = NULL;
 		KSI_uint64_t chainIndexCalc = 0;
 
@@ -600,7 +600,7 @@ int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationCo
 
 		/* Verify shape of the aggregation hash chain. */
 		if (KSI_IntegerList_length(aggregationChain->chainIndex) > 0) {
-			res = aggregationHashChain_calculateChainIndex(ctx, aggregationChain->chain, &chainIndexCalc);
+			res = KSI_AggregationHashChain_calculateShape(aggregationChain, &chainIndexCalc);
 			if (res != KSI_OK) {
 				VERIFICATION_RESULT(VER_RES_NA, VER_ERR_GEN_2);
 				KSI_pushError(ctx, res, NULL);
