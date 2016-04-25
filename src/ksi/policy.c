@@ -233,9 +233,9 @@ cleanup:
  * CALENDAR-BASED POLICY
  ************************/
 
-static const KSI_Rule AggregationChainRightLinksVerificationRule[] = {
+static const KSI_Rule CalendarChainRightLinksVerificationRule[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_SignatureDoesNotContainPublication},
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch},
 	{KSI_RULE_TYPE_BASIC, NULL}
 };
 
@@ -246,7 +246,7 @@ static const KSI_Rule CalendarChainRootHashVerificationRule[] = {
 };
 
 static const KSI_Rule publicationRecordRule_cal[] = {
-	{KSI_RULE_TYPE_COMPOSITE_OR, AggregationChainRightLinksVerificationRule},
+	{KSI_RULE_TYPE_COMPOSITE_OR, CalendarChainRightLinksVerificationRule},
 	{KSI_RULE_TYPE_COMPOSITE_OR, CalendarChainRootHashVerificationRule},
 	{KSI_RULE_TYPE_COMPOSITE_OR, NULL}
 };

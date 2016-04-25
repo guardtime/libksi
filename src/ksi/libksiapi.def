@@ -1002,8 +1002,10 @@ EXPORTS
     KSI_VerificationRule_SignaturePublicationRecordPublicationHash
     KSI_VerificationRule_SignaturePublicationRecordPublicationTime
     KSI_VerificationRule_DocumentHashVerification
+    KSI_VerificationRule_DocumentHashDoesNotExist
+    KSI_VerificationRule_DocumentHashExistence
     KSI_VerificationRule_SignatureDoesNotContainPublication
-    KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch
+    KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch
     KSI_VerificationRule_SignaturePublicationRecordExistence
     KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash
     KSI_VerificationRule_CalendarHashChainDoesNotExist
@@ -1026,8 +1028,6 @@ EXPORTS
     KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse
     KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse
     KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash
-    KSI_VerificationRule_DocumentHashDoesNotExist
-    KSI_VerificationRule_DocumentHashExistence 
 
 ;policy.h
 EXPORTS
