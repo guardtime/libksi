@@ -1332,7 +1332,7 @@ static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *s
 		goto cleanup;
 	}
 
-	if (result->finalResult.resultCode != VER_RES_OK) {
+	if (result->finalResult.resultCode != KSI_VER_RES_OK) {
 		res = KSI_VERIFICATION_FAILURE;
 		KSI_pushError(ctx, res, "Internal verification of signature failed.");
 		goto cleanup;
@@ -2332,7 +2332,7 @@ int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, si
 		goto cleanup;
 	}
 
-	if (result->finalResult.resultCode != VER_RES_OK) {
+	if (result->finalResult.resultCode != KSI_VER_RES_OK) {
 		res = KSI_VERIFICATION_FAILURE;
 		KSI_pushError(ctx, res, "Verification of signature failed.");
 		goto cleanup;
