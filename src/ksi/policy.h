@@ -30,68 +30,68 @@ extern "C" {
 	/**
 	 * Enumeration of all KSI policy (#KSI_Policy) verification result codes.
 	 */
-	typedef enum VerificationResultCode_en {
+	typedef enum KSI_VerificationResultCode_en {
 		/** Verification succeeded, which means there's a way to prove the correctness of the signature. */
-		VER_RES_OK,
+		KSI_VER_RES_OK,
 		/** Verification not possible, which means there is not enough data to prove or disprove the correctness of the signature. */
-		VER_RES_NA,
+		KSI_VER_RES_NA,
 		/** Verification failed, which means the signature is definitely invalid or the document does not match with the signature. */
-		VER_RES_FAIL
-	} VerificationResultCode;
+		KSI_VER_RES_FAIL
+	} KSI_VerificationResultCode;
 
 	/**
 	 * Enumeration of all KSI policy (#KSI_Policy) verification error codes.
 	 */
-	typedef enum VerificationErrorCode_en {
+	typedef enum KSI_VerificationErrorCode_en {
 		/** Wrong document. */
-		VER_ERR_GEN_1,
+		KSI_VER_ERR_GEN_1,
 		/** Verification inconclusive. */
-		VER_ERR_GEN_2,
+		KSI_VER_ERR_GEN_2,
 		/** Inconsistent aggregation hash chains. */
-		VER_ERR_INT_1,
+		KSI_VER_ERR_INT_1,
 		/** Inconsistent aggregation hash chain aggregation times. */
-		VER_ERR_INT_2,
+		KSI_VER_ERR_INT_2,
 		/** Calendar hash chain input hash mismatch. */
-		VER_ERR_INT_3,
+		KSI_VER_ERR_INT_3,
 		/** Calendar hash chain aggregation time mismatch. */
-		VER_ERR_INT_4,
+		KSI_VER_ERR_INT_4,
 		/** Calendar hash chain shape inconsistent with aggregation time. */
-		VER_ERR_INT_5,
+		KSI_VER_ERR_INT_5,
 		/** Calendar hash chain time inconsistent with calendar auth record time. */
-		VER_ERR_INT_6,
+		KSI_VER_ERR_INT_6,
 		/** Calendar hash chain time inconsistent with publication time. */
-		VER_ERR_INT_7,
+		KSI_VER_ERR_INT_7,
 		/** Calendar hash chain root has inconsistent with calendar auth record time. */
-		VER_ERR_INT_8,
+		KSI_VER_ERR_INT_8,
 		/** Calendar hash chain root has inconsistent with publication time. */
-		VER_ERR_INT_9,
+		KSI_VER_ERR_INT_9,
 		/** Aggregation hash chain chain index mismatch. */
-		VER_ERR_INT_10,
+		KSI_VER_ERR_INT_10,
 		/** Extender response calendar root hash mismatch. */
-		VER_ERR_PUB_1,
+		KSI_VER_ERR_PUB_1,
 		/** Extender response inconsistent. */
-		VER_ERR_PUB_2,
+		KSI_VER_ERR_PUB_2,
 		/** Extender response input hash mismatch. */
-		VER_ERR_PUB_3,
+		KSI_VER_ERR_PUB_3,
 		/** Certificate not found. */
-		VER_ERR_KEY_1,
+		KSI_VER_ERR_KEY_1,
 		/** PKI signature not verified with certificate. */
-		VER_ERR_KEY_2,
+		KSI_VER_ERR_KEY_2,
 		/** Calendar root hash mismatch. */
-		VER_ERR_CAL_1,
+		KSI_VER_ERR_CAL_1,
 		/** Aggregation hash chain root hash and calendar hash chain input hash mismatch. */
-		VER_ERR_CAL_2,
+		KSI_VER_ERR_CAL_2,
 		/** Aggregation time mismatch. */
-		VER_ERR_CAL_3,
+		KSI_VER_ERR_CAL_3,
 		/** Aggregation hash chain right links are inconsistent. */
-		VER_ERR_CAL_4,
+		KSI_VER_ERR_CAL_4,
 		/** No error. */
-		VER_ERR_NONE
-	} VerificationErrorCode;
+		KSI_VER_ERR_NONE
+	} KSI_VerificationErrorCode;
 
 	struct KSI_RuleVerificationResult_st {
-		VerificationResultCode resultCode;
-		VerificationErrorCode errorCode;
+		KSI_VerificationResultCode resultCode;
+		KSI_VerificationErrorCode errorCode;
 		const char *ruleName;
 		const char *policyName;
 		size_t stepsPerformed;
@@ -112,15 +112,15 @@ extern "C" {
 	typedef struct KSI_Policy_st KSI_Policy;
 
 	typedef enum RuleType_en {
-		RULE_TYPE_BASIC,
-		RULE_TYPE_COMPOSITE_AND,
-		RULE_TYPE_COMPOSITE_OR
-	} RuleType;
+		KSI_RULE_TYPE_BASIC,
+		KSI_RULE_TYPE_COMPOSITE_AND,
+		KSI_RULE_TYPE_COMPOSITE_OR
+	} KSI_RuleType;
 
-	typedef struct Rule_st {
-		RuleType type;
+	typedef struct KSI_Rule_st {
+		KSI_RuleType type;
 		const void *rule;
-	} Rule;
+	} KSI_Rule;
 
 	typedef struct KSI_VerificationContext_st KSI_VerificationContext;
 
@@ -197,7 +197,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_Policy_free, #KSI_SignatureVerifier_verify, #KSI_Policy_setFallback
 	 */
-	int KSI_Policy_create(KSI_CTX *ctx, const Rule *rules, const char *name, KSI_Policy **policy);
+	int KSI_Policy_create(KSI_CTX *ctx, const KSI_Rule *rules, const char *name, KSI_Policy **policy);
 
 	/**
 	 * Clones a predefined #KSI_Policy, allowing the user to change the default fallback policy later.

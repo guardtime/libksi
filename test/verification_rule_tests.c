@@ -57,7 +57,7 @@ static void testRule_AggregationChainInputHashVerification_validRfc3161(CuTest *
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_AggregationChainInputHashVerification(verCtx, &verRes);
-	CuAssert(tc, "Signature should contain valid RFC3161 record.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should contain valid RFC3161 record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -80,7 +80,7 @@ static void testRule_AggregationChainInputHashVerification_invalidRfc3161_verify
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_AggregationChainInputHashVerification(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_INT_1);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_1);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -103,7 +103,7 @@ static void testRule_AggregationChainInputHashVerification_missingRfc3161(CuTest
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_AggregationChainInputHashVerification(verCtx, &verRes);
-	CuAssert(tc, "Signature should not contain RFC3161 record.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should not contain RFC3161 record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -126,7 +126,7 @@ static void testRule_AggregationHashChainConsistency(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_AggregationHashChainConsistency(verCtx, &verRes);
-	CuAssert(tc, "Signature aggregation hash chain inconsistent.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature aggregation hash chain inconsistent.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -149,7 +149,7 @@ static void testRule_AggregationHashChainConsistency_verifyErrorResult(CuTest *t
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_AggregationHashChainConsistency(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_INT_1);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_1);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -172,7 +172,7 @@ static void testRule_AggregationHashChainTimeConsistency(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_AggregationHashChainTimeConsistency(verCtx, &verRes);
-	CuAssert(tc, "Signature aggregation hash chain time inconsistent.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature aggregation hash chain time inconsistent.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -195,7 +195,7 @@ static void testRule_AggregationHashChainTimeConsistency_verifyErrorResult(CuTes
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_AggregationHashChainTimeConsistency(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_INT_2);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_2);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -218,7 +218,7 @@ static void testRule_AggregationHashChainIndexConsistency(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_AggregationHashChainIndexConsistency(verCtx, &verRes);
-	CuAssert(tc, "Signature aggregation hash chain index inconsistent.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature aggregation hash chain index inconsistent.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -239,7 +239,7 @@ static void testRule_AggregationHashChainIndexConsistencyFail(CuTest *tc, const 
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_AggregationHashChainIndexConsistency(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_INT_10);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_10);
 
 	KSI_VerificationContext_free(verCtx);
 }
@@ -284,7 +284,7 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithCalHashChain(
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarHashChainInputHashVerification(verCtx, &verRes);
-	CuAssert(tc, "Signature should contain correct calendar hash chain.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should contain correct calendar hash chain.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -307,7 +307,7 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithoutCalHashCha
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarHashChainInputHashVerification(verCtx, &verRes);
-	CuAssert(tc, "Signature should not contain calendar hash chain", res != KSI_OK && verRes.resultCode == VER_RES_NA);
+	CuAssert(tc, "Signature should not contain calendar hash chain", res != KSI_OK && verRes.resultCode == KSI_VER_RES_NA);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -330,7 +330,7 @@ static void testRule_CalendarHashChainInputHashVerification_verifyErrorResult(Cu
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarHashChainInputHashVerification(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_INT_3);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_3);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -353,7 +353,7 @@ static void testRule_CalendarHashChainAggregationTime(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarHashChainAggregationTime(verCtx, &verRes);
-	CuAssert(tc, "Signature should contain correct calendar hash chain.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should contain correct calendar hash chain.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -376,7 +376,7 @@ static void testRule_CalendarHashChainAggregationTime_verifyErrorResult(CuTest *
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarHashChainAggregationTime(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_INT_4);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_4);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -399,7 +399,7 @@ static void testRule_CalendarHashChainRegistrationTime(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarHashChainRegistrationTime(verCtx, &verRes);
-	CuAssert(tc, "Signature should contain correct calendar hash chain.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should contain correct calendar hash chain.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -422,7 +422,7 @@ static void testRule_CalendarHashChainRegistrationTime_verifyErrorResult(CuTest 
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarHashChainRegistrationTime(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_INT_5);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_5);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -445,7 +445,7 @@ static void testRule_CalendarAuthenticationRecordAggregationHash(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash(verCtx, &verRes);
-	CuAssert(tc, "Signature should contain correct calendar authentication record.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should contain correct calendar authentication record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -468,7 +468,7 @@ static void testRule_CalendarAuthenticationRecordAggregationHash_missingAutRec(C
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash(verCtx, &verRes);
-	CuAssert(tc, "Signature should not contain contain authentication record.", res != KSI_OK && verRes.resultCode == VER_RES_NA);
+	CuAssert(tc, "Signature should not contain contain authentication record.", res != KSI_OK && verRes.resultCode == KSI_VER_RES_NA);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -491,7 +491,7 @@ static void testRule_CalendarAuthenticationRecordAggregationHash_verifyErrorResu
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_INT_8);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_8);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -514,7 +514,7 @@ static void testRule_CalendarAuthenticationRecordAggregationTime(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime(verCtx, &verRes);
-	CuAssert(tc, "Signature should contain correct calendar hash chain.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should contain correct calendar hash chain.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -537,7 +537,7 @@ static void testRule_CalendarAuthenticationRecordAggregationTime_missingAutRec(C
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime(verCtx, &verRes);
-	CuAssert(tc, "Signature should not contain contain authentication record.", res != KSI_OK && verRes.resultCode == VER_RES_NA);
+	CuAssert(tc, "Signature should not contain contain authentication record.", res != KSI_OK && verRes.resultCode == KSI_VER_RES_NA);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -560,7 +560,7 @@ static void testRule_CalendarAuthenticationRecordAggregationTime_verifyErrorResu
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_INT_6);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_6);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -583,7 +583,7 @@ static void testRule_SignaturePublicationRecordPublicationHash(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_SignaturePublicationRecordPublicationHash(verCtx, &verRes);
-	CuAssert(tc, "Signature should contain publication record.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should contain publication record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -606,7 +606,7 @@ static void testRule_SignaturePublicationRecordPublicationHash_missingPubRec(CuT
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_SignaturePublicationRecordPublicationHash(verCtx, &verRes);
-	CuAssert(tc, "Signature should not contain publication record.", res != KSI_OK && verRes.resultCode == VER_RES_NA);
+	CuAssert(tc, "Signature should not contain publication record.", res != KSI_OK && verRes.resultCode == KSI_VER_RES_NA);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -629,7 +629,7 @@ static void testRule_SignaturePublicationRecordPublicationHash_verifyErrorResult
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_SignaturePublicationRecordPublicationHash(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_INT_9);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_9);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -652,7 +652,7 @@ static void testRule_SignaturePublicationRecordPublicationTime(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_SignaturePublicationRecordPublicationTime(verCtx, &verRes);
-	CuAssert(tc, "Signature should contain publication record.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should contain publication record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -675,7 +675,7 @@ static void testRule_SignaturePublicationRecordPublicationTime_missingPubRec(CuT
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_SignaturePublicationRecordPublicationTime(verCtx, &verRes);
-	CuAssert(tc, "Signature should not contain publication record.", res != KSI_OK && verRes.resultCode == VER_RES_NA);
+	CuAssert(tc, "Signature should not contain publication record.", res != KSI_OK && verRes.resultCode == KSI_VER_RES_NA);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -698,7 +698,7 @@ static void testRule_SignaturePublicationRecordPublicationTime_verifyErrorResult
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_SignaturePublicationRecordPublicationTime(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_INT_7);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_7);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -716,7 +716,7 @@ static void testRule_DocumentHashDoesNotExist(CuTest *tc) {
 	CuAssert(tc, "Unable to create verification context", res == KSI_OK && verCtx != NULL);
 
 	res = KSI_VerificationRule_DocumentHashDoesNotExist(verCtx, &verRes);
-	CuAssert(tc, "Document hash should not be provided.", res == KSI_OK && verRes.resultCode == VER_RES_OK && verCtx->userData.documentHash == NULL);
+	CuAssert(tc, "Document hash should not be provided.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK && verCtx->userData.documentHash == NULL);
 
 	KSI_VerificationContext_free(verCtx);
 }
@@ -740,7 +740,7 @@ static void testRule_DocumentHashDoesNotExist_verifyErrorResult(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature document hash", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_DocumentHashDoesNotExist(verCtx, &verRes);
-	CuAssert(tc, "Document hash not found.", res == KSI_OK && verRes.resultCode == VER_RES_NA && verCtx->userData.documentHash != NULL);
+	CuAssert(tc, "Document hash not found.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verCtx->userData.documentHash != NULL);
 
 	KSI_nofree(verCtx->userData.documentHash);
 	KSI_VerificationContext_free(verCtx);
@@ -767,7 +767,7 @@ static void testRule_DocumentHashExistence(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature document hash", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_DocumentHashExistence(verCtx, &verRes);
-	CuAssert(tc, "Document hash not found.", res == KSI_OK && verRes.resultCode == VER_RES_OK && verCtx->userData.documentHash != NULL);
+	CuAssert(tc, "Document hash not found.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK && verCtx->userData.documentHash != NULL);
 
 	KSI_nofree(verCtx->userData.documentHash);
 	KSI_VerificationContext_free(verCtx);
@@ -786,7 +786,7 @@ static void testRule_DocumentHashExistence_verifyErrorResult(CuTest *tc) {
 	CuAssert(tc, "Unable to create verification context", res == KSI_OK && verCtx != NULL);
 
 	res = KSI_VerificationRule_DocumentHashExistence(verCtx, &verRes);
-	CuAssert(tc, "Document hash should not be provided.", res == KSI_OK && verRes.resultCode == VER_RES_NA && verCtx->userData.documentHash == NULL);
+	CuAssert(tc, "Document hash should not be provided.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verCtx->userData.documentHash == NULL);
 
 	KSI_VerificationContext_free(verCtx);
 }
@@ -810,7 +810,7 @@ static void testRule_DocumentHashVerification(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature document hash", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_DocumentHashVerification(verCtx, &verRes);
-	CuAssert(tc, "Signature document hash and provided hash should be equal", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature document hash and provided hash should be equal", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_nofree(verCtx->userData.documentHash);
 	KSI_VerificationContext_free(verCtx);
@@ -834,7 +834,7 @@ static void testRule_DocumentHashVerification_missingDocHash(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_DocumentHashVerification(verCtx, &verRes);
-	CuAssert(tc, "Document hash should not be provided.", res == KSI_OK && verRes.resultCode != VER_RES_OK && verCtx->userData.documentHash == NULL);
+	CuAssert(tc, "Document hash should not be provided.", res == KSI_OK && verRes.resultCode != KSI_VER_RES_OK && verCtx->userData.documentHash == NULL);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -861,7 +861,7 @@ static void testRule_DocumentHashVerification_verifyErrorResult(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_DocumentHashVerification(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_GEN_1);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_GEN_1);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -888,7 +888,7 @@ static void testRule_DocumentHashVerification_rfc3161(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature RFC3161 input hash", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_DocumentHashVerification(verCtx, &verRes);
-	CuAssert(tc, "Signature RFC3161 input hash should be ok.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature RFC3161 input hash should be ok.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_nofree(verCtx->userData.documentHash);
 	KSI_VerificationContext_free(verCtx);
@@ -916,7 +916,7 @@ static void testRule_DocumentHashVerification_rfc3161_verifyErrorResult(CuTest *
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_DocumentHashVerification(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_GEN_1);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_GEN_1);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -940,7 +940,7 @@ static void testRule_SignatureDoesNotContainPublication(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_SignatureDoesNotContainPublication(verCtx, &verRes);
-	CuAssert(tc, "Signature should not contain publication record.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should not contain publication record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -963,7 +963,7 @@ static void testRule_SignatureDoesNotContainPublication_verifyErrorResult(CuTest
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_SignatureDoesNotContainPublication(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_NA && verRes.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -990,7 +990,7 @@ static void testRule_ExtendedSignatureAggregationChainRightLinksMatch(CuTest *tc
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 	res = KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch(verCtx, &verRes);
-	CuAssert(tc, "Signature should not contain publication record.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should not contain publication record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1018,7 +1018,7 @@ static void testRule_ExtendedSignatureAggregationChainRightLinksMatch_linkCountM
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->tempData.extendedSig != NULL);
 
 	res = KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_CAL_4);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_CAL_4);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1046,7 +1046,7 @@ static void testRule_ExtendedSignatureAggregationChainRightLinksMatch_rightLinks
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->tempData.extendedSig != NULL);
 
 	res = KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_CAL_4);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_CAL_4);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1070,7 +1070,7 @@ static void testRule_SignaturePublicationRecordExistence(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_SignaturePublicationRecordExistence(verCtx, &verRes);
-	CuAssert(tc, "Signature should contain publication record.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should contain publication record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1093,7 +1093,7 @@ static void testRule_SignaturePublicationRecordExistence_verifyErrorResult(CuTes
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_SignaturePublicationRecordExistence(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_NA && verRes.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1120,7 +1120,7 @@ static void testRule_ExtendedSignatureCalendarChainRootHash(CuTest *tc) {
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 	res = KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash(verCtx, &verRes);
-	CuAssert(tc, "Signature should not contain calendar hash chain.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should not contain calendar hash chain.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1148,7 +1148,7 @@ static void testRule_ExtendedSignatureCalendarChainRootHash_verifyErrorResult(Cu
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->tempData.extendedSig != NULL);
 
 	res = KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_CAL_1);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_CAL_1);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1172,7 +1172,7 @@ static void testRule_CalendarHashChainDoesNotExist(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarHashChainDoesNotExist(verCtx, &verRes);
-	CuAssert(tc, "Signature should not contain calendar hash chain.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should not contain calendar hash chain.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1195,7 +1195,7 @@ static void testRule_CalendarHashChainDoesNotExist_verifyErrorResult(CuTest *tc)
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarHashChainDoesNotExist(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_NA && verRes.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1222,7 +1222,7 @@ static void testRule_ExtendedSignatureCalendarChainInputHash(CuTest *tc) {
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 	res = KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(verCtx, &verRes);
-	CuAssert(tc, "Signature should contain calendar hash chain.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should contain calendar hash chain.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1253,7 +1253,7 @@ static void testRule_ExtendedSignatureCalendarChainInputHash_nokAggrOutHash_veri
 	CuAssert(tc, "Unable to read signature document hash", res == KSI_OK && verCtx->tempData.aggregationOutputHash != NULL);
 
 	res = KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_CAL_2);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_CAL_2);
 
 	KSI_nofree(verCtx->tempData.aggregationOutputHash);
 	KSI_VerificationContext_free(verCtx);
@@ -1282,7 +1282,7 @@ static void testRule_ExtendedSignatureCalendarChainInputHash_verifyErrorResult(C
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->tempData.extendedSig != NULL);
 
 	res = KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_CAL_2);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_CAL_2);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1310,7 +1310,7 @@ static void testRule_ExtendedSignatureCalendarChainAggregationTime(CuTest *tc) {
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 	res = KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(verCtx, &verRes);
-	CuAssert(tc, "Signature should contain calendar hash chain.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should contain calendar hash chain.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1338,7 +1338,7 @@ static void testRule_ExtendedSignatureCalendarChainAggregationTime_verifyErrorRe
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->tempData.extendedSig != NULL);
 
 	res = KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_CAL_3);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_CAL_3);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1362,7 +1362,7 @@ static void testRule_CalendarHashChainExistence(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarHashChainExistence(verCtx, &verRes);
-	CuAssert(tc, "Signature should contain calendar hash chain.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should contain calendar hash chain.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1385,7 +1385,7 @@ static void testRule_CalendarHashChainExistence_verifyErrorResult(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarHashChainExistence(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned.",  res == KSI_OK && verRes.resultCode == VER_RES_NA && verRes.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Wrong error result returned.",  res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1408,7 +1408,7 @@ static void testRule_CalendarAuthenticationRecordExistence(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarAuthenticationRecordExistence(verCtx, &verRes);
-	CuAssert(tc, "Signature should contain calendar authentication record.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should contain calendar authentication record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1431,7 +1431,7 @@ static void testRule_CalendarAuthenticationRecordExistence_verifyErrorResult(CuT
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarAuthenticationRecordExistence(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_NA && verRes.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1454,7 +1454,7 @@ static void testRule_CalendarAuthenticationRecordDoesNotExist(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarAuthenticationRecordDoesNotExist(verCtx, &verRes);
-	CuAssert(tc, "Signature should not contain calendar authentication record.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature should not contain calendar authentication record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1477,7 +1477,7 @@ static void testRule_CalendarAuthenticationRecordDoesNotExist_verifyErrorResult(
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_CalendarAuthenticationRecordDoesNotExist(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_NA && verRes.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1530,7 +1530,7 @@ static void testRule_CertificateExistence(CuTest *tc) {
 	CuAssert(tc, "Unable to set new PKI truststrore for KSI context.", res == KSI_OK);
 
 	res = KSI_VerificationRule_CertificateExistence(verCtx, &verRes);
-	CuAssert(tc, "Signature autentication record certificate not found", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Signature autentication record certificate not found", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1583,7 +1583,7 @@ static void testRule_CertificateExistence_verifyErrorResult(CuTest *tc) {
 	CuAssert(tc, "Unable to set new PKI truststrore for KSI context.", res == KSI_OK);
 
 	res = KSI_VerificationRule_CertificateExistence(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_KEY_1);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_KEY_1);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1636,7 +1636,7 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification(CuTest *t
 	CuAssert(tc, "Unable to set new PKI truststrore for KSI context.", res == KSI_OK);
 
 	res = KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification(verCtx, &verRes);
-	CuAssert(tc, "Failed to verify calendar authentication record signature", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Failed to verify calendar authentication record signature", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1689,7 +1689,7 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification_verifyErr
 	CuAssert(tc, "Unable to set new PKI truststrore for KSI context.", res == KSI_OK);
 
 	res = KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_KEY_2);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_KEY_2);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1728,7 +1728,7 @@ static void testRule_PublicationsFileContainsSignaturePublication(CuTest *tc) {
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
 
 	res = KSI_VerificationRule_PublicationsFileContainsSignaturePublication(verCtx, &verRes);
-	CuAssert(tc, "Publications file should contain signature publication", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Publications file should contain signature publication", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1766,7 +1766,7 @@ static void testRule_PublicationsFileContainsSignaturePublication_verifyErrorRes
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
 
 	res = KSI_VerificationRule_PublicationsFileContainsSignaturePublication(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_NA && verRes.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1804,7 +1804,7 @@ static void testRule_PublicationsFileContainsPublication(CuTest *tc) {
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
 
 	res = KSI_VerificationRule_PublicationsFileContainsPublication(verCtx, &verRes);
-	CuAssert(tc, "Publications file should contain signature publication", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Publications file should contain signature publication", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1842,7 +1842,7 @@ static void testRule_PublicationsFileContainsPublication_verifyErrorResult(CuTes
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
 
 	res = KSI_VerificationRule_PublicationsFileContainsPublication(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_NA && verRes.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1866,7 +1866,7 @@ static void testRule_ExtendingPermittedVerification(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_ExtendingPermittedVerification(verCtx, &verRes);
-	CuAssert(tc, "Extending should be permitted", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Extending should be permitted", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1889,7 +1889,7 @@ static void testRule_ExtendingPermittedVerification_verifyErrorResult(CuTest *tc
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_ExtendingPermittedVerification(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_NA && verRes.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1929,7 +1929,7 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse(CuTe
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
 
 	res = KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(verCtx, &verRes);
-	CuAssert(tc, "Extender response hash should match publications file publication hash", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Extender response hash should match publications file publication hash", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -1983,7 +1983,7 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse_veri
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
 
 	res = KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_PUB_1);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_PUB_1);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -2025,7 +2025,7 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(CuTe
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
 
 	res = KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse(verCtx, &verRes);
-	CuAssert(tc, "Extender response time should match publications file publication time", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Extender response time should match publications file publication time", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -2079,7 +2079,7 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_veri
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
 
 	res = KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_PUB_2);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_PUB_2);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -2121,7 +2121,7 @@ static void testRule_PublicationsFileExtendedSignatureInputHash(CuTest *tc, char
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
 
 	res = KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash(verCtx, &verRes);
-	CuAssert(tc, "Extender response time should match publications file publication time", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Extender response time should match publications file publication time", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -2175,7 +2175,7 @@ static void testRule_PublicationsFileExtendedSignatureInputHash_verifyErrorResul
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
 
 	res = KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_PUB_3);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_PUB_3);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -2207,7 +2207,7 @@ static void testRule_UserProvidedPublicationExistence(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature publication data.", res == KSI_OK && verCtx->userData.userPublication != NULL);
 
 	res = KSI_VerificationRule_UserProvidedPublicationExistence(verCtx, &verRes);
-	CuAssert(tc, "User publication data should be provided", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "User publication data should be provided", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_nofree(verCtx->userData.userPublication);
 	KSI_VerificationContext_free(verCtx);
@@ -2231,7 +2231,7 @@ static void testRule_UserProvidedPublicationExistence_pubDataMissing_verifyError
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
 	res = KSI_VerificationRule_UserProvidedPublicationExistence(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_NA && verRes.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -2275,7 +2275,7 @@ static void testRule_UserProvidedPublicationExistence_pubHashMissing_verifyError
 	CuAssert(tc, "Unable to set publication time.", res == KSI_OK);
 
 	res = KSI_VerificationRule_UserProvidedPublicationExistence(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_NA && verRes.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -2319,7 +2319,7 @@ static void testRule_UserProvidedPublicationExistence_pubTimeMissing_verifyError
 	CuAssert(tc, "Unable to set publication hash.", res == KSI_OK);
 
 	res = KSI_VerificationRule_UserProvidedPublicationExistence(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_NA && verRes.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -2349,7 +2349,7 @@ static void testRule_UserProvidedPublicationVerification(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && verCtx->userData.userPublication != NULL);
 
 	res = KSI_VerificationRule_UserProvidedPublicationVerification(verCtx, &verRes);
-	CuAssert(tc, "Failed to verify signature publication data", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Failed to verify signature publication data", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_nofree(verCtx->userData.userPublication);
 	KSI_VerificationContext_free(verCtx);
@@ -2402,7 +2402,7 @@ static void testRule_UserProvidedPublicationVerification_timeMismatch_verifyErro
 	CuAssert(tc, "Unable to set publication hash.", res == KSI_OK);
 
 	res = KSI_VerificationRule_UserProvidedPublicationVerification(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_NA && verRes.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -2455,7 +2455,7 @@ static void testRule_UserProvidedPublicationVerification_hashMismatch_verifyErro
 	CuAssert(tc, "Unable to set publication mock hash.", res == KSI_OK);
 
 	res = KSI_VerificationRule_UserProvidedPublicationVerification(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_CRYPTO_FAILURE && verRes.resultCode == VER_RES_NA && verRes.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Wrong error result returned", res == KSI_CRYPTO_FAILURE && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -2486,7 +2486,7 @@ static void testRule_UserProvidedPublicationCreationTimeVerification(CuTest *tc)
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && verCtx->userData.userPublication != NULL);
 
 	res = KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(verCtx, &verRes);
-	CuAssert(tc, "Failed to verify creation time", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Failed to verify creation time", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_nofree(verCtx->userData.userPublication);
 	KSI_VerificationContext_free(verCtx);
@@ -2521,7 +2521,7 @@ static void testRule_UserProvidedPublicationCreationTimeVerification_verifyError
 	CuAssert(tc, "Unable to set publication time.", res == KSI_OK);
 
 	res = KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_NA && verRes.errorCode == VER_ERR_GEN_2);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -2556,7 +2556,7 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse(CuTest *
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && verCtx->userData.userPublication != NULL);
 
 	res = KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse(verCtx, &verRes);
-	CuAssert(tc, "Failed to verify extender response with user publication", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Failed to verify extender response with user publication", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_nofree(verCtx->userData.userPublication);
 	KSI_VerificationContext_free(verCtx);
@@ -2614,7 +2614,7 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_verifyEr
 	CuAssert(tc, "Unable to set publication mock hash.", res == KSI_OK);
 
 	res = KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_PUB_1);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_PUB_1);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -2650,7 +2650,7 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse(CuTest *
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && verCtx->userData.userPublication != NULL);
 
 	res = KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse(verCtx, &verRes);
-	CuAssert(tc, "Failed to verify extender response with user publication", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Failed to verify extender response with user publication", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_nofree(verCtx->userData.userPublication);
 	KSI_VerificationContext_free(verCtx);
@@ -2708,7 +2708,7 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse_verifyEr
 	CuAssert(tc, "Unable to set publication hash.", res == KSI_OK);
 
 	res = KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_PUB_2);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_PUB_2);
 
 	KSI_VerificationContext_free(verCtx);
 
@@ -2744,7 +2744,7 @@ static void testRule_UserProvidedPublicationExtendedSignatureInputHash(CuTest *t
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && verCtx->userData.userPublication != NULL);
 
 	res = KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash(verCtx, &verRes);
-	CuAssert(tc, "Failed to verify extended signature input hash", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+	CuAssert(tc, "Failed to verify extended signature input hash", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_nofree(verCtx->userData.userPublication);
 	KSI_VerificationContext_free(verCtx);
@@ -2784,7 +2784,7 @@ static void testRule_UserProvidedPublicationExtendedSignatureInputHash_verifyErr
 	CuAssert(tc, "Unable to create mock hash", res == KSI_OK && verCtx->tempData.aggregationOutputHash != NULL);
 
 	res = KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_PUB_3);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_PUB_3);
 
 	KSI_nofree(verCtx->userData.userPublication);
 	KSI_VerificationContext_free(verCtx);

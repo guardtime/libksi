@@ -143,7 +143,7 @@ a successful verification result (although it is a prerequisite), so we must ins
 	res = KSI_VerificationContext_setPublicationsFile(context, pubFile);
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	if (res == KSI_OK) {
-		if (result->finalResult.resultCode == VER_RES_OK)
+		if (result->finalResult.resultCode == KSI_VER_RES_OK)
 			printf("Signature verified successfully!\n");
 		} else {
 			/* Error handling. Verification failed or was inconclusive. */
@@ -181,7 +181,7 @@ We need to set up the publication string by calling #KSI_VerificationContext_set
 	res = KSI_VerificationContext_setUserPublication(context, userPub);
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	if (res == KSI_OK) {
-		if (result->finalResult.resultCode == VER_RES_OK)
+		if (result->finalResult.resultCode == KSI_VER_RES_OK)
 			printf("Signature verified successfully!\n");
 		} else {
 			/* Error handling. Verification failed or was inconclusive. */
@@ -242,7 +242,7 @@ we will choose the internal policy:
 	res = KSI_VerificationContext_setDocumentHash(context, hsh);
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	if (res == KSI_OK) {
-		if (result->finalResult.resultCode == VER_RES_OK)
+		if (result->finalResult.resultCode == KSI_VER_RES_OK)
 			printf("Signature verified successfully!\n");
 		} else {
 			/* Error handling. Verification failed or was inconclusive. */
@@ -269,14 +269,14 @@ Only then can we say if the verification was a success or failure.
 	if (res == KSI_OK) {
 		/* Verification process was completed without errors, inspect the result. */
 		switch (result->finalResult.resultCode) {
-			case VER_RES_OK:
+			case KSI_VER_RES_OK:
 				printf("Verification successful, signature is valid.\n");
 				break;
-			case VER_RES_FAIL:
+			case KSI_VER_RES_FAIL:
 				printf("Verification failed, signature is not valid.\n");
 				printf("Verification error code: %d\n", result->finalResult.errorCode);
 				break;
-			case VER_RES_NA:
+			case KSI_VER_RES_NA:
 				printf("Verification inconclusive, not enough data to prove or disprove signature correctness.\n");
 				break;
 		}
@@ -395,14 +395,14 @@ is now obsolete. A typical verification result inspection could look like this:
 	res = KSI_SignatureVerifier_verify(keyPolicy, context, &result);
 	if (res == KSI_OK) {
 		switch (result->finalResult.resultCode) {
-			case VER_RES_OK:
+			case KSI_VER_RES_OK:
 				printf("Verification successful, signature is valid.\n");
 				break;
-			case VER_RES_FAIL:
+			case KSI_VER_RES_FAIL:
 				printf("Verification failed, signature is not valid.\n");
 				printf("Verification error code: %d\n", result->finalResult.errorCode);
 				break;
-			case VER_RES_NA:
+			case KSI_VER_RES_NA:
 				printf("Verification inconclusive, not enough data to prove or disprove signature correctness.\n");
 				break;
 	} else {
@@ -424,11 +424,11 @@ the rules array \c customRules. Let's name our policy "CustomPolicy".
 ~~~~~~~~~~{.c}
 
 	KSI_Policy *policy = NULL;	/* Must be freed later. */
-	static const Rule customRules[] = {
-		{RULE_TYPE_BASIC, VerifyingFunction1},
-		{RULE_TYPE_BASIC, VerifyingFunction2},
-		{RULE_TYPE_BASIC, VerifyingFunction3},
-		{RULE_TYPE_BASIC, NULL}					/* Every rule array has to end with this empty rule. */
+	static const KSI_Rule customRules[] = {
+		{KSI_RULE_TYPE_BASIC, VerifyingFunction1},
+		{KSI_RULE_TYPE_BASIC, VerifyingFunction2},
+		{KSI_RULE_TYPE_BASIC, VerifyingFunction3},
+		{KSI_RULE_TYPE_BASIC, NULL}					/* Every rule array has to end with this empty rule. */
 	};
 
 	res = KSI_Policy_create(ksi, customRules, "CustomPolicy", &customPolicy);
@@ -436,12 +436,12 @@ the rules array \c customRules. Let's name our policy "CustomPolicy".
 ~~~~~~~~~~
 
 Each element in \c customRules array consists of two parts: rule type and a pointer. In our first example, we use the
-basic rule type #RULE_TYPE_BASIC, which means that the second part - pointer - is a pointer to a verifying function.
+basic rule type #KSI_RULE_TYPE_BASIC, which means that the second part - pointer - is a pointer to a verifying function.
 When a policy is verified by #KSI_SignatureVerifier_verify, it goes through this array and checks the rule type.
-If the rule type is #RULE_TYPE_BASIC, it calls the verifying function and examines the verification result of this
-function. If the function returns #KSI_OK and verification result is #VER_RES_OK, it continues with the next rule
+If the rule type is #KSI_RULE_TYPE_BASIC, it calls the verifying function and examines the verification result of this
+function. If the function returns #KSI_OK and verification result is #KSI_VER_RES_OK, it continues with the next rule
 in the array and does so until it encounters the final empty rule. In this case the verification is successful.
-If at some point any of the functions does not return #KSI_OK or the verification result is not #VER_RES_OK, the
+If at some point any of the functions does not return #KSI_OK or the verification result is not #KSI_VER_RES_OK, the
 verification fails and no more rules are processed. There is however one exception when the next rule is processed
 and we will see this in one of the following examples. For now, let's examine the typical verifying function:
 
@@ -451,9 +451,9 @@ and we will see this in one of the following examples. For now, let's examine th
 		int res = KSI_UNKNOWN_ERROR;
 
 		if (context == NULL || result == NULL) {
-			/* Unable to complete verification, set VER_RES_NA as result. */
-			result->resultCode = VER_RES_NA;
-			result->errorCode = VER_ERR_GEN_2;
+			/* Unable to complete verification, set KSI_VER_RES_NA as result. */
+			result->resultCode = KSI_VER_RES_NA;
+			result->errorCode = KSI_VER_ERR_GEN_2;
 			/* Return relevant error code. */
 			res = KSI_INVALID_ARGUMENT;
 			goto cleanup;
@@ -461,15 +461,15 @@ and we will see this in one of the following examples. For now, let's examine th
 
 		/* Perform some sort of verification of the signature. */
 		if (!success) {
-			/* Set VER_RES_FAIL as result and set appropriate error code. */
-			result->resultCode = VER_RES_FAIL;
-			result->errorCode = VER_ERR_CUST_1;
+			/* Set KSI_VER_RES_FAIL as result and set appropriate error code. */
+			result->resultCode = KSI_VER_RES_FAIL;
+			result->errorCode = KSI_VER_ERR_CUST_1;
 			/* Return KSI_OK because verification was completed. */
 			res = KSI_OK;
 		} else {
-			/* Set VER_RES_OK as result. */
-			result->resultCode = VER_RES_OK;
-			result->errorCode = VER_ERR_NONE;
+			/* Set KSI_VER_RES_OK as result. */
+			result->resultCode = KSI_VER_RES_OK;
+			result->errorCode = KSI_VER_ERR_NONE;
 			/* Return KSI_OK because verification was completed. */
 			res = KSI_OK;
 		}
@@ -497,45 +497,45 @@ deciding on the result of the policy. We can write it down like this:
 ~~~~~~~~~~{.c}
 
 	KSI_Policy *complexPolicy = NULL;	/* Must be freed later. */
-	static const Rule pathARules[] = {
-		{RULE_TYPE_BASIC, VerifyingFunction1},
-		{RULE_TYPE_BASIC, VerifyingFunction2},
-		{RULE_TYPE_BASIC, VerifyingFunction3},
-		{RULE_TYPE_BASIC, NULL}					/* Every rule array has to end with this empty rule. */
+	static const KSI_Rule pathARules[] = {
+		{KSI_RULE_TYPE_BASIC, VerifyingFunction1},
+		{KSI_RULE_TYPE_BASIC, VerifyingFunction2},
+		{KSI_RULE_TYPE_BASIC, VerifyingFunction3},
+		{KSI_RULE_TYPE_BASIC, NULL}					/* Every rule array has to end with this empty rule. */
 	};
 
-	static const Rule pathBRules[] = {
-		{RULE_TYPE_BASIC, VerifyingFunction4},
-		{RULE_TYPE_BASIC, VerifyingFunction5},
-		{RULE_TYPE_BASIC, VerifyingFunction6},
-		{RULE_TYPE_BASIC, VerifyingFunction7},
-		{RULE_TYPE_BASIC, NULL}					/* Every rule array has to end with this empty rule. */
+	static const KSI_Rule pathBRules[] = {
+		{KSI_RULE_TYPE_BASIC, VerifyingFunction4},
+		{KSI_RULE_TYPE_BASIC, VerifyingFunction5},
+		{KSI_RULE_TYPE_BASIC, VerifyingFunction6},
+		{KSI_RULE_TYPE_BASIC, VerifyingFunction7},
+		{KSI_RULE_TYPE_BASIC, NULL}					/* Every rule array has to end with this empty rule. */
 	};
 
-	static const Rule pathCRules[] = {
-		{RULE_TYPE_BASIC, VerifyingFunction8},
-		{RULE_TYPE_BASIC, VerifyingFunction9},
-		{RULE_TYPE_BASIC, NULL}					/* Every rule array has to end with this empty rule. */
+	static const KSI_Rule pathCRules[] = {
+		{KSI_RULE_TYPE_BASIC, VerifyingFunction8},
+		{KSI_RULE_TYPE_BASIC, VerifyingFunction9},
+		{KSI_RULE_TYPE_BASIC, NULL}					/* Every rule array has to end with this empty rule. */
 	};
 
-	static const Rule chooseABCRule[] = {
-		{RULE_TYPE_COMPOSITE_OR, pathARules},
-		{RULE_TYPE_COMPOSITE_OR, pathBRules},
-		{RULE_TYPE_COMPOSITE_OR, pathCRules},
-		{RULE_TYPE_BASIC, NULL}					/* Every rule array has to end with this empty rule. */
+	static const KSI_Rule chooseABCRule[] = {
+		{KSI_RULE_TYPE_COMPOSITE_OR, pathARules},
+		{KSI_RULE_TYPE_COMPOSITE_OR, pathBRules},
+		{KSI_RULE_TYPE_COMPOSITE_OR, pathCRules},
+		{KSI_RULE_TYPE_BASIC, NULL}					/* Every rule array has to end with this empty rule. */
 	};
 
-	static const Rule complexRules[] = {
-		{RULE_TYPE_COMPOSITE_AND, chooseABCRule},
-		{RULE_TYPE_BASIC, VerifyingFunction10},
-		{RULE_TYPE_BASIC, NULL}					/* Every rule array has to end with this empty rule. */
+	static const KSI_Rule complexRules[] = {
+		{KSI_RULE_TYPE_COMPOSITE_AND, chooseABCRule},
+		{KSI_RULE_TYPE_BASIC, VerifyingFunction10},
+		{KSI_RULE_TYPE_BASIC, NULL}					/* Every rule array has to end with this empty rule. */
 	};
 
 	res = KSI_Policy_create(ksi, complexRules, "ComplexPolicy", &complexPolicy);
 
 ~~~~~~~~~~
 
-We introduced two new rule types here: #RULE_TYPE_COMPOSITE_OR and #RULE_TYPE_COMPOSITE_AND. Both are composite rule types,
+We introduced two new rule types here: #KSI_RULE_TYPE_COMPOSITE_OR and #KSI_RULE_TYPE_COMPOSITE_AND. Both are composite rule types,
 which means that the second part of the rule - the pointer - is not a function pointer (as was the case with the basic rule type),
 but instead a pointer to another array of rules. The array of rules can contain both basic and composite rules, meaning that
 composite rules can be nested. As you would expect from any array of rules, the composite rule is also also verified in a linear
@@ -545,11 +545,11 @@ The result of the composite rule, whether success or failure, is interpreted acc
 is successfully verified, further rules in the rule array are skipped and the whole rule of which the OR-type rule is part of,
 is considered successfully verified. In our example, if \c pathARules verifies successfully, the subsequent rules \c pathBRules
 and \c pathCRules are skipped and the rule \c chooseABCRule is considered successful. The analogy to an OR-statement continues,
-but with a slightly different definition of failure - if an OR-type rule result is inconclusive (#VER_RES_NA), we are allowed to 
-verify the the next rule in the array. However, if an OR-type rule result fails with #VER_RES_FAIL, subsequent rules are not verified
-and the result of array of rules is a failure. So in our example, if \c pathARules results in #VER_RES_NA, the rule \c pathBRules
+but with a slightly different definition of failure - if an OR-type rule result is inconclusive (#KSI_VER_RES_NA), we are allowed to 
+verify the the next rule in the array. However, if an OR-type rule result fails with #KSI_VER_RES_FAIL, subsequent rules are not verified
+and the result of array of rules is a failure. So in our example, if \c pathARules results in #KSI_VER_RES_NA, the rule \c pathBRules
 is verified. If this rule result is also inconclusive, the rule \c pathCRules is verified. If however any of those rules fail
-with #VER_RES_FAIL, the rule \c chooseABCRule has also failed. 
+with #KSI_VER_RES_FAIL, the rule \c chooseABCRule has also failed. 
 
 In our example the rule \c chooseABCRule itself is a composite AND-type rule, which means that its result must be successful for
 the verification to continue. So for a successful result of our \c complexPolicy, both \c chooseABCRule and \c VerifyingFunction10
@@ -560,16 +560,16 @@ Let's summarize how rule results are interpreted:
 1. If the return code is not #KSI_OK, the rule has failed due to some internal error. No further rules are checked and the return code
 is propagated upwards to the top level rule, concluding with a failure of the policy.
 2. If the return code is #KSI_OK, the rule was verified and its result must be examined.
-3. A basic rule or a composite AND-type rule is considered successful if the result is #VER_RES_OK. In this case the verification
+3. A basic rule or a composite AND-type rule is considered successful if the result is #KSI_VER_RES_OK. In this case the verification
 continues with the next rule on the same level.
-4. A composite OR-type rule is considered successful if the result is #VER_RES_OK. Further rules on the same level are skipped and
+4. A composite OR-type rule is considered successful if the result is #KSI_VER_RES_OK. Further rules on the same level are skipped and
 verification continues one level higher.
-5. Any rule is considered a failure if the result is #VER_RES_FAIL. No further rules are checked and the result is propagated upwards
+5. Any rule is considered a failure if the result is #KSI_VER_RES_FAIL. No further rules are checked and the result is propagated upwards
 to the top level rule, concluding with a failure of the policy.
-6. A basic rule or a composite AND-type rule is considered inconclusive if the result is #VER_RES_NA. The result is propagated one
+6. A basic rule or a composite AND-type rule is considered inconclusive if the result is #KSI_VER_RES_NA. The result is propagated one
 level upwards, but further rules on the same level are skipped. Verification may stop or continue depending on rule types of the
 upper level rules.
-7. A composite OR-type rule is considered inconclusive if the result code is #VER_RES_NA. The result is ignored and the next rule
+7. A composite OR-type rule is considered inconclusive if the result code is #KSI_VER_RES_NA. The result is ignored and the next rule
 on the same level is checked. This is the only exception where verification is guaranteed to continue even if the result is not
 #KSI_RES_OK.
 8. The result of the last checked rule on any level is always propagated one level higher.

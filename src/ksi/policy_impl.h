@@ -31,7 +31,7 @@ extern "C" {
 typedef int (*Verifier)(KSI_VerificationContext *, KSI_RuleVerificationResult *);
 
 struct KSI_Policy_st {
-	const Rule *rules;
+	const KSI_Rule *rules;
 	const KSI_Policy *fallbackPolicy;
 	const char *policyName;
 };
