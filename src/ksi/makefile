@@ -92,7 +92,9 @@ LIB_OBJ = \
 	$(OBJ_DIR)\publicationsfile.obj \
 	$(OBJ_DIR)\signature.obj \
 	$(OBJ_DIR)\tlv.obj \
+	$(OBJ_DIR)\tlv_element.obj \
 	$(OBJ_DIR)\tlv_template.obj \
+	$(OBJ_DIR)\tree_builder.obj \
 	$(OBJ_DIR)\types.obj \
 	$(OBJ_DIR)\types_base.obj \
 	$(OBJ_DIR)\verification.obj \
@@ -132,6 +134,8 @@ INC_FILES = \
 	log.h \
 	publicationsfile.h \
 	tlv_template.h \
+	tlv_element.h \
+	tree_builder.h \
 	compatibility.h \
 	multi_signature.h \
 	policy.h \

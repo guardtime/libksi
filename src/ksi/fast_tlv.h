@@ -46,6 +46,13 @@ extern "C" {
 		int is_fwd;
 	};
 
+	enum KSI_Serialize_Opt_en {
+		/** Do not write the header while serializing. */
+		KSI_TLV_OPT_NO_HEADER = 0x01,
+		/** Keep the TLV serialized to the end of the buffer. */
+		KSI_TLV_OPT_NO_MOVE = 0x02,
+	};
+
 	/**
 	 * Read the TLV from a file.
 	 * \param[in]	f			File descriptor.

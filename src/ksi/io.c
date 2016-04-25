@@ -454,32 +454,4 @@ void KSI_RDR_close(KSI_RDR *rdr)  {
 	KSI_free(rdr);
 }
 
-int KSI_RDR_verifyEnd(KSI_RDR *rdr) {
-	int res = KSI_UNKNOWN_ERROR;
-	unsigned char *buf = NULL;
-	size_t buf_len = 0;
-
-	if (rdr == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	KSI_ERR_clearErrors(rdr->ctx);
-
-	res = KSI_RDR_read_ptr(rdr, &buf, 1, &buf_len);
-	if (res != KSI_OK || buf != NULL) {
-		KSI_pushError(rdr->ctx, res = KSI_INVALID_FORMAT, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_nofree(buf);
-
-	return res;
-
-}
-
 KSI_IMPLEMENT_GET_CTX(KSI_RDR);

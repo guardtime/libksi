@@ -355,23 +355,11 @@ extern "C" {
 	#define KSI_TLV_WRAP_IMPRINT(tg, flg, gttr, sttr, descr) KSI_TLV_WRAP_OBJECT(tg, flg, gttr, sttr, KSI_DataHash_parse, KSI_DataHash_toTlv, KSI_DataHash_free, descr)
 
 	/**
-	 * This template works as #KSI_TLV_IMPRINT, but performs additional digest format check and
-	 * makes sure the imprint is a null terminated sequence of bytes.
-	 *
-	 * \param[in]	tg				TLV tag value.
-	 * \param[in]	flg				Flags for the template.
-	 * \param[in]	gttr			Getter function.
-	 * \param[in]	sttr			Setter function.
-	 * \param[in]	descr			Short description.
-	 */
-	#define KSI_TLV_META_IMPRINT(tg, flg, gttr, sttr, descr) KSI_TLV_OBJECT(tg, flg, gttr, sttr, KSI_DataHash_MetaHash_fromTlv, KSI_DataHash_toTlv, KSI_DataHash_free, descr)
-
-	/**
 	 * TLV templates for time representation
 	 */
 	#define KSI_TLV_TIME_S KSI_TLV_INTEGER
 	#define KSI_TLV_TIME_US KSI_TLV_INTEGER
-	
+
 	/**
 	 * Generic object list template. The \c obj parameter may be only a type
 	 * for which there is a list type defined (see #KSI_DEFINE_LIST and #KSI_IMPLEMENT_LIST).
