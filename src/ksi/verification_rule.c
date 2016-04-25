@@ -1353,7 +1353,7 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch(KSI_Verif
 	sig = info->userData.sig;
 	KSI_ERR_clearErrors(ctx);
 
-	KSI_LOG_info(ctx, "Verify aggregation hash chain right link count and right link hashes.");
+	KSI_LOG_info(ctx, "Verify calendar hash chain right link count and right link hashes.");
 
 	res = KSI_CalendarHashChain_getHashChain(sig->calendarChain, &sigList);
 	if (res != KSI_OK) {
