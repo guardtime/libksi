@@ -1326,7 +1326,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
@@ -1353,7 +1353,7 @@ int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch(KSI_Ve
 	sig = info->userData.sig;
 	KSI_ERR_clearErrors(ctx);
 
-	KSI_LOG_info(ctx, "Verify aggregation hash chain right link count and right link hashes.");
+	KSI_LOG_info(ctx, "Verify calendar hash chain right link count and right link hashes.");
 
 	res = KSI_CalendarHashChain_getHashChain(sig->calendarChain, &sigList);
 	if (res != KSI_OK) {
