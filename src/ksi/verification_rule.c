@@ -523,41 +523,6 @@ cleanup:
 	return res;
 }
 
-static int aggregationHashChain_calculateChainIndex(KSI_CTX *ctx, KSI_HashChainLinkList *chain, KSI_uint64_t *index) {
-	int res = KSI_UNKNOWN_ERROR;
-	size_t i;
-	KSI_uint64_t tmp = 0;
-
-	for (i = 0; i < KSI_HashChainLinkList_length(chain); i++) {
-		KSI_HashChainLink *link = NULL;
-		int isLeft;
-
-		res = KSI_HashChainLinkList_elementAt(chain, i, &link);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
-
-		res = KSI_HashChainLink_getIsLeft(link, &isLeft);
-		if (res != KSI_OK) {
-		  KSI_pushError(ctx, res, NULL);
-		  goto cleanup;
-		}
-
-		if (isLeft) {
-			tmp |= ((KSI_uint64_t)1 << i);
-		}
-	}
-	tmp |= ((KSI_uint64_t)1 << i);
-
-	*index = tmp;
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
 int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	const KSI_AggregationHashChain *prevChain = NULL;
