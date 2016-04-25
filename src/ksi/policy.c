@@ -199,6 +199,7 @@ static const Rule internalRules[] = {
 	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainInputHashVerification},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainConsistency},
 	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainTimeConsistency},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainIndexConsistency},
 	{RULE_TYPE_COMPOSITE_AND, calendarHashChainRule_int},
 	{RULE_TYPE_COMPOSITE_AND, documentHashRule},
 	{RULE_TYPE_BASIC, NULL}
@@ -232,9 +233,9 @@ cleanup:
  * CALENDAR-BASED POLICY
  ************************/
 
-static const Rule AggregationChainRightLinksVerificationRule[] = {
+static const Rule CalendarChainRightLinksVerificationRule[] = {
 	{RULE_TYPE_BASIC, KSI_VerificationRule_SignatureDoesNotContainPublication},
-	{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch},
+	{RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch},
 	{RULE_TYPE_BASIC, NULL}
 };
 
@@ -245,7 +246,7 @@ static const Rule CalendarChainRootHashVerificationRule[] = {
 };
 
 static const Rule publicationRecordRule_cal[] = {
-	{RULE_TYPE_COMPOSITE_OR, AggregationChainRightLinksVerificationRule},
+	{RULE_TYPE_COMPOSITE_OR, CalendarChainRightLinksVerificationRule},
 	{RULE_TYPE_COMPOSITE_OR, CalendarChainRootHashVerificationRule},
 	{RULE_TYPE_COMPOSITE_OR, NULL}
 };

@@ -40,8 +40,7 @@ extern "C" {
 	int KSI_VerificationRule_AggregationChainInputHashVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
-	 * This rule verifies that all aggregation hash chains are consistent (e.g previous aggregation output hash equals to
-	 * current aggregation chain input hash).
+	 * This rule verifies that all aggregation hash chains are consistent (e.g, previous aggregation output hash equals to current aggregation chain input hash)
 	 *
 	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
@@ -60,6 +59,16 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_VerificationRule_AggregationHashChainTimeConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * This rule is used to check whether the shape of the aggregation hash chain does match with the chain index.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to verify that last aggregation hash chain output hash equals to calendar hash chain input hash.
@@ -183,15 +192,15 @@ extern "C" {
 
 	/**
 	 * This rule checks that:
-	 * - the extended signature contains the same count of right aggregation hash chain links
-	 * - the extended signature right aggregation hash chain links are equal to the not extended signature right links
+	 * - the extended signature contains the same count of right calendar hash chain links
+	 * - the extended signature right calendar hash chain links are equal to the not extended signature right links
 	 *
 	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to check if keyless signature contains publication record or not.

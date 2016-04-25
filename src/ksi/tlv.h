@@ -49,13 +49,6 @@ extern "C" {
 	 * @{
 	 */
 
-	enum KSI_Serialize_Opt_en {
-		/** Do not write the header while serializing. */
-		KSI_TLV_OPT_NO_HEADER = 0x01,
-		/** Keep the TLV serialized to the end of the buffer. */
-		KSI_TLV_OPT_NO_MOVE = 0x02,
-	};
-
 	KSI_DEFINE_GET_CTX(KSI_TLV);
 	/**
 	 * This function creates an new TLV.
@@ -264,7 +257,7 @@ extern "C" {
 	int KSI_TLV_appendNestedTlv(KSI_TLV *target, KSI_TLV *tlv);
 
 	int KSI_TLV_writeBytes(const KSI_TLV *tlv, unsigned char *buf, size_t buf_size, size_t *buf_len, int opt);
-	
+
 	/**
 	 * Removes the given TLV from the parent if the given TLV is a immediate child
 	 * of the parent.
@@ -353,7 +346,7 @@ extern "C" {
 	 * \return The absolute offset of the TLV object.
 	 */
 	size_t KSI_TLV_getRelativeOffset(const KSI_TLV *tlv);
-	
+
 	KSI_DEFINE_GET_CTX(KSI_TLV);
 
 	/**

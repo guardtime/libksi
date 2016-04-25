@@ -766,6 +766,41 @@ static void testSignatureGetPublicationInfo_verifyNullPointer(CuTest *tc) {
 #undef TEST_SIGNATURE_FILE
 }
 
+static void testCreateHasher(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_DataHasher *hsr = NULL;
+	KSI_DataHash *hsh = NULL;
+	const char data[] = "LAPTOP";
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_createDataHasher(sig, &hsr);
+	CuAssert(tc, "Unable to create data hasher from signature.", res == KSI_OK && hsr != NULL);
+
+	res = KSI_DataHasher_add(hsr, data, strlen(data));
+	CuAssert(tc, "Unable to add data to the hasher.", res == KSI_OK);
+
+	res = KSI_DataHasher_close(hsr, &hsh);
+	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "######", hsh);
+	CuAssert(tc, "Unable to close the data hasher", res == KSI_OK && hsh != NULL);
+
+	res = KSI_verifySignature(ctx, sig);
+	CuAssert(tc, "Data hash verification should not fail.", res == KSI_OK);
+
+	KSI_DataHasher_free(hsr);
+	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+
 CuSuite* KSITest_Signature_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -794,6 +829,7 @@ CuSuite* KSITest_Signature_getSuite(void) {
 	SUITE_ADD_TEST(suite, testCreateAggregationAuthRec);
 	SUITE_ADD_TEST(suite, testSignatureGetPublicationInfo);
 	SUITE_ADD_TEST(suite, testSignatureGetPublicationInfo_verifyNullPointer);
+	SUITE_ADD_TEST(suite, testCreateHasher);
 
 	return suite;
 }

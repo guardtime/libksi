@@ -26,7 +26,7 @@
 
 extern KSI_CTX *ctx;
 
-static int KSI_HashChain_appendLink(KSI_DataHash *siblingHash, KSI_DataHash *metaHash, KSI_MetaData *metaData, int isLeft, int levelCorrection, KSI_LIST(KSI_HashChainLink) **chain) {
+static int KSI_HashChain_appendLink(KSI_DataHash *siblingHash, KSI_OctetString *legacyId, KSI_MetaData *metaData, int isLeft, int levelCorrection, KSI_LIST(KSI_HashChainLink) **chain) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_HashChainLink *link = NULL;
 	KSI_LIST(KSI_HashChainLink) *tmp = NULL;
@@ -51,7 +51,7 @@ static int KSI_HashChain_appendLink(KSI_DataHash *siblingHash, KSI_DataHash *met
 
 
 	if (siblingHash != NULL) mode |= 0x01;
-	if (metaHash != NULL) mode |= 0x02;
+	if (legacyId != NULL) mode |= 0x02;
 	if (metaData != NULL) mode |= 0x04;
 
 	switch (mode) {
@@ -60,7 +60,7 @@ static int KSI_HashChain_appendLink(KSI_DataHash *siblingHash, KSI_DataHash *met
 			if (res != KSI_OK) goto cleanup;
 			break;
 		case 0x02:
-			res = KSI_HashChainLink_setMetaHash(link, metaHash);
+			res = KSI_HashChainLink_setLegacyId(link, legacyId);
 			if (res != KSI_OK) goto cleanup;
 			break;
 		case 0x04:
@@ -209,14 +209,12 @@ static void testAggrChainBuilt(CuTest *tc) {
 	buildHashChain(tc, "010000000000000000000000000000000000000000000000000000000000000000", 1, 0, &chn);
 	buildHashChain(tc, "010000000000000000000000000000000000000000000000000000000000000000", 1, 0, &chn);
 	buildHashChain(tc, "010000000000000000000000000000000000000000000000000000000000000000", 0, 0, &chn);
-	buildHashChain(tc, "0300057465737441000000000000000000000000000000000000000000", 1, 7, &chn);
 	buildHashChain(tc, "010000000000000000000000000000000000000000000000000000000000000000", 1, 7, &chn);
 	buildHashChain(tc, "010000000000000000000000000000000000000000000000000000000000000000", 1, 0, &chn);
 	buildHashChain(tc, "010000000000000000000000000000000000000000000000000000000000000000", 1, 0, &chn);
 	buildHashChain(tc, "010000000000000000000000000000000000000000000000000000000000000000", 1, 0, &chn);
 	buildHashChain(tc, "010000000000000000000000000000000000000000000000000000000000000000", 1, 0, &chn);
 	buildHashChain(tc, "0103ce8a99d60a808deb9872ec92846f5a56c816ad446824923f53c03691c88b8c", 1, 0, &chn);
-	buildHashChain(tc, "0300024754000000000000000000000000000000000000000000000000", 1, 7, &chn);
 	buildHashChain(tc, "011d6a55ab55eb586e6b4cf355825026deaa2b015c9dd271a6300f91044f2bcc78", 0, 7, &chn);
 	buildHashChain(tc, "010abe6ec096b46a9015c6644d3fadd55d4124b49260d1d86fb77eb495e0c9b9fc", 1, 0, &chn);
 	buildHashChain(tc, "010000000000000000000000000000000000000000000000000000000000000000", 1, 0, &chn);
@@ -255,7 +253,7 @@ static void testAggrChainBuiltWithMetaData(CuTest *tc) {
 	int res;
 	unsigned char buf[1024];
 	size_t buf_len;
-	
+
 	KSI_LIST(KSI_HashChainLink) *chn = NULL;
 	KSI_DataHash *in = NULL;
 	KSI_DataHash *out = NULL;
@@ -265,53 +263,53 @@ static void testAggrChainBuiltWithMetaData(CuTest *tc) {
 	KSI_Utf8String *clientId = NULL;
 	KSI_TLV *metaDataTLV = NULL;
 	KSI_MetaData *metaData = NULL;
-	
+
 
 	res = KSI_MetaData_new(ctx, &tmp_metaData);
 	CuAssert(tc, "Unable to create meta data object.", res == KSI_OK);
 
 	res = KSI_Utf8String_new(ctx, "test",5, &clientId);
 	CuAssert(tc, "Unable create client ID string.", res == KSI_OK && clientId != NULL);
-	
+
 	res = KSI_MetaData_setClientId(tmp_metaData, clientId);
 	CuAssert(tc, "Unable to set client ID", res == KSI_OK);
 	clientId = NULL;
-	
+
 	res = KSI_MetaData_toTlv(ctx, tmp_metaData, 0x04, 0, 0, &metaDataTLV);
 	CuAssert(tc, "Unable to TLV", res == KSI_OK);
-	
+
 	res = KSI_MetaData_fromTlv(metaDataTLV, &metaData);
 	CuAssert(tc, "Unable to from TLV", res == KSI_OK);
-	
+
 /*
 	metadata [01 05 74 65 73 74 00]
-	
+
 	[01] || H([0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d] || [019eaa47c788a21835616e504d2ed960afb9ec5e867643f50c223db15fff53d636] || [01])
 	[01] || [50e7605eba534abb0f515f1f3b3359d6d909499ec102d4eafa30941c7c75109f]
-	
-	[01] || H([0150e7605eba534abb0f515f1f3b3359d6d909499ec102d4eafa30941c7c75109f] || [01 05 74 65 73 74 00] || [02])		
+
+	[01] || H([0150e7605eba534abb0f515f1f3b3359d6d909499ec102d4eafa30941c7c75109f] || [01 05 74 65 73 74 00] || [02])
 	[01] || [9bfd782cbe11e1e6011196d21a9ea78a68121b972f9aecd2617d26598d5f6a95]
-				
+
 	[01] || H([019bfd782cbe11e1e6011196d21a9ea78a68121b972f9aecd2617d26598d5f6a95] || [010000000000000000000000000000000000000000000000000000000000000000] || [03])
 	[01] || [a98e94a755ab276818ccefcf0b866043d12f80f9df09c087777511a48e533108]
 
 	[01] || H([015e13631c36caa14a5a3b74da179db614a7ed778ce634c4c8a132007f9756cc1f] || [01a98e94a755ab276818ccefcf0b866043d12f80f9df09c087777511a48e533108] || [04])
 	[01] || [85035b9a620d4c06ca24b9df2f9e74768a0dc8a543d9c418a4bbf41cfdbdb000]
- */	
+ */
 
-	/*Imput hash*/
+	/* Create the input hash. */
 	res = KSITest_decodeHexStr("0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", buf, sizeof(buf), &buf_len);
 	CuAssert(tc, "Unable to decode input hash", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, buf, buf_len, &in);
 	CuAssert(tc, "Unable to create input data hash", res == KSI_OK && in != NULL);
 
-	/*Hash chain*/		
+	/* Create the hash chain. */
 	buildHashChain(tc, "019eaa47c788a21835616e504d2ed960afb9ec5e867643f50c223db15fff53d636", 1, 0, &chn);
 	buildMetaDataHashChain(tc, metaData, 1, 0, &chn);
 	buildHashChain(tc, "010000000000000000000000000000000000000000000000000000000000000000", 1, 0, &chn);
 	buildHashChain(tc, "015e13631c36caa14a5a3b74da179db614a7ed778ce634c4c8a132007f9756cc1f", 0, 0, &chn);
-	
+
 	res = KSI_HashChain_aggregate(ctx, chn, in, 0, KSI_HASHALG_SHA2_256, NULL, &out);
 	CuAssert(tc, "Unable to aggregate chain without meta data TLV.", res == KSI_OK && out != NULL);
 
@@ -321,9 +319,8 @@ static void testAggrChainBuiltWithMetaData(CuTest *tc) {
 
 	res = KSI_DataHash_fromImprint(ctx, buf, buf_len, &exp);
 	CuAssert(tc, "Unable to create expected output data hash", res == KSI_OK && exp != NULL);
-
 	CuAssert(tc, "Data hash mismatch", KSI_DataHash_equals(out, exp));
-	
+
 	KSI_MetaData_free(tmp_metaData);
 	KSI_Utf8String_free(clientId);
 	KSI_TLV_free(metaDataTLV);
@@ -333,12 +330,67 @@ static void testAggrChainBuiltWithMetaData(CuTest *tc) {
 	KSI_DataHash_free(exp);
 }
 
+static void testAggrChain_LegacyId_ParserFail(CuTest *tc, char *testSignatureFile) {
+	int res = KSI_OK;
+	KSI_Signature *sig = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(testSignatureFile), &sig);
+	CuAssert(tc, "Signature parsing should fail.", res != KSI_OK && sig == NULL);
+}
+
+static void testAggrChain_LegacyId_siblingContainsLegacyId_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-2014-04-30.1-legacyId-in-sibling.ksig"
+
+	testAggrChain_LegacyId_ParserFail(tc, TEST_SIGNATURE_FILE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testAggrChain_LegacyId_invalidHeader_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-2014-04-30.1-legacyId-invalid-header.ksig"
+
+	testAggrChain_LegacyId_ParserFail(tc, TEST_SIGNATURE_FILE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testAggrChain_LegacyId_invalidDataLenght_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-2014-04-30.1-legacyId-invalid-lenght.ksig"
+
+	testAggrChain_LegacyId_ParserFail(tc, TEST_SIGNATURE_FILE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testAggrChain_LegacyId_invalidPadding_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-2014-04-30.1-legacyId-invalid-padding.ksig"
+
+	testAggrChain_LegacyId_ParserFail(tc, TEST_SIGNATURE_FILE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testAggrChain_LegacyId_invalidStringLenght_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-2014-04-30.1-legacyId-invalid-string-lenght.ksig"
+
+	testAggrChain_LegacyId_ParserFail(tc, TEST_SIGNATURE_FILE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
 CuSuite* KSITest_HashChain_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
 	SUITE_ADD_TEST(suite, testCalChainBuild);
 	SUITE_ADD_TEST(suite, testAggrChainBuilt);
 	SUITE_ADD_TEST(suite, testAggrChainBuiltWithMetaData);
+	SUITE_ADD_TEST(suite, testAggrChain_LegacyId_siblingContainsLegacyId_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testAggrChain_LegacyId_invalidHeader_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testAggrChain_LegacyId_invalidDataLenght_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testAggrChain_LegacyId_invalidPadding_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testAggrChain_LegacyId_invalidStringLenght_verifyErrorResult);
 
 	return suite;
 }
