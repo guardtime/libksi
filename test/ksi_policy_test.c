@@ -40,10 +40,10 @@ static void preTest(void) {
 }
 
 typedef struct {
-	const Rule *rule;
+	const KSI_Rule *rule;
 	int res;
-	VerificationResultCode result;
-	VerificationErrorCode error;
+	KSI_VerificationResultCode result;
+	KSI_VerificationErrorCode error;
 } TestRule;
 
 static void TestInvalidParams(CuTest* tc) {
@@ -254,48 +254,70 @@ static int DUMMY_VERIFIER(resValue, resultValue, errorValue)(KSI_VerificationCon
 	return resValue;\
 }
 
-IMPLEMENT_DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1);
-IMPLEMENT_DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_2);
-IMPLEMENT_DUMMY_VERIFIER(KSI_OK, VER_RES_FAIL, VER_ERR_INT_1);
-IMPLEMENT_DUMMY_VERIFIER(KSI_OK, VER_RES_NA, VER_ERR_GEN_1);
-IMPLEMENT_DUMMY_VERIFIER(KSI_INVALID_ARGUMENT, VER_RES_OK, VER_ERR_CAL_1);
+IMPLEMENT_DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_OK, KSI_VER_ERR_PUB_1);
+IMPLEMENT_DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_OK, KSI_VER_ERR_PUB_2);
+IMPLEMENT_DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_FAIL, KSI_VER_ERR_INT_1);
+IMPLEMENT_DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_NA, KSI_VER_ERR_GEN_1);
+IMPLEMENT_DUMMY_VERIFIER(KSI_INVALID_ARGUMENT, KSI_VER_RES_OK, KSI_VER_ERR_CAL_1);
 
-static const Rule singleRules[5][2] = {
+static const KSI_Rule singleRules[5][2] = {
 	{
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
-		{RULE_TYPE_BASIC, NULL}
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_OK, KSI_VER_ERR_PUB_1)},
+		{KSI_RULE_TYPE_BASIC, NULL}
 	},
 	{
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_2)},
-		{RULE_TYPE_BASIC, NULL}
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_OK, KSI_VER_ERR_PUB_2)},
+		{KSI_RULE_TYPE_BASIC, NULL}
 	},
 	{
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_FAIL, VER_ERR_INT_1)},
-		{RULE_TYPE_BASIC, NULL}
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_FAIL, KSI_VER_ERR_INT_1)},
+		{KSI_RULE_TYPE_BASIC, NULL}
 	},
 	{
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_NA, VER_ERR_GEN_1)},
-		{RULE_TYPE_BASIC, NULL}
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_NA, KSI_VER_ERR_GEN_1)},
+		{KSI_RULE_TYPE_BASIC, NULL}
 	},
 	{
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_INVALID_ARGUMENT, VER_RES_OK, VER_ERR_CAL_1)},
-		{RULE_TYPE_BASIC, NULL}
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_INVALID_ARGUMENT, KSI_VER_RES_OK, KSI_VER_ERR_CAL_1)},
+		{KSI_RULE_TYPE_BASIC, NULL}
 	}
 };
+
+static void TestPolicyCreation(CuTest* tc) {
+	int res;
+	KSI_Policy *policy = NULL;
+
+	res = KSI_Policy_create(NULL, singleRules[0], "PolicyName", &policy);
+	CuAssert(tc, "Context NULL accepted", res == KSI_INVALID_ARGUMENT && policy == NULL);
+
+	res = KSI_Policy_create(ctx, NULL, "PolicyName", &policy);
+	CuAssert(tc, "Rule NULL accepted", res == KSI_INVALID_ARGUMENT && policy == NULL);
+
+	res = KSI_Policy_create(ctx, singleRules[0], NULL, &policy);
+	CuAssert(tc, "Name NULL accepted", res == KSI_INVALID_ARGUMENT && policy == NULL);
+
+	res = KSI_Policy_create(ctx, singleRules[0], "PolicyName", NULL);
+	CuAssert(tc, "Policy NULL accepted", res == KSI_INVALID_ARGUMENT && policy == NULL);
+
+	res = KSI_Policy_create(ctx, singleRules[0], "PolicyName", &policy);
+	CuAssert(tc, "Policy creation failed", res == KSI_OK && policy != NULL);
+
+	KSI_Policy_free(policy);
+}
 
 static void TestSingleRulePolicy(CuTest* tc) {
 	int res;
 	int i;
-	KSI_Policy policy;
+	KSI_Policy *policy = NULL;
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 
 	TestRule rules[] = {
-		{singleRules[0], KSI_OK,				VER_RES_OK,		VER_ERR_PUB_1},
-		{singleRules[1], KSI_OK,				VER_RES_OK,		VER_ERR_PUB_2},
-		{singleRules[2], KSI_OK,				VER_RES_FAIL,	VER_ERR_INT_1},
-		{singleRules[3], KSI_OK,				VER_RES_NA,		VER_ERR_GEN_1},
-		{singleRules[4], KSI_INVALID_ARGUMENT,	VER_RES_OK,		VER_ERR_CAL_1},
+		{singleRules[0], KSI_OK,				KSI_VER_RES_OK,		KSI_VER_ERR_PUB_1},
+		{singleRules[1], KSI_OK,				KSI_VER_RES_OK,		KSI_VER_ERR_PUB_2},
+		{singleRules[2], KSI_OK,				KSI_VER_RES_FAIL,	KSI_VER_ERR_INT_1},
+		{singleRules[3], KSI_OK,				KSI_VER_RES_NA,		KSI_VER_ERR_GEN_1},
+		{singleRules[4], KSI_INVALID_ARGUMENT,	KSI_VER_RES_OK,		KSI_VER_ERR_CAL_1},
 	};
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -304,16 +326,15 @@ static void TestSingleRulePolicy(CuTest* tc) {
 	res = KSI_VerificationContext_create(ctx, &context);
 	CuAssert(tc, "Create verification context failed", res == KSI_OK);
 
-	policy.fallbackPolicy = NULL;
-	policy.policyName = "Single rules policy";
-
 	for (i = 0; i < sizeof(rules) / sizeof(TestRule); i++) {
 		KSI_ERR_clearErrors(ctx);
-		policy.rules = rules[i].rule;
-		res = KSI_SignatureVerifier_verify(&policy, context, &result);
+		res = KSI_Policy_create(ctx, rules[i].rule, "Single rules policy", &policy);
+		CuAssert(tc, "Policy creation failed", res == KSI_OK);
+		res = KSI_SignatureVerifier_verify(policy, context, &result);
 		CuAssert(tc, "Policy verification failed", res == rules[i].res);
 		CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == rules[i].result && result->finalResult.errorCode == rules[i].error);
 		KSI_PolicyVerificationResult_free(result);
+		KSI_Policy_free(policy);
 	}
 
 	KSI_VerificationContext_free(context);
@@ -322,51 +343,51 @@ static void TestSingleRulePolicy(CuTest* tc) {
 static void TestBasicRulesPolicy(CuTest* tc) {
 	int res;
 	int i;
-	KSI_Policy policy;
+	KSI_Policy *policy = NULL;
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 
-	static const Rule basicRules1[] = {
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_2)},
-		{RULE_TYPE_BASIC, NULL}
+	static const KSI_Rule basicRules1[] = {
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_OK, KSI_VER_ERR_PUB_1)},
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_OK, KSI_VER_ERR_PUB_1)},
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_OK, KSI_VER_ERR_PUB_1)},
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_OK, KSI_VER_ERR_PUB_1)},
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_OK, KSI_VER_ERR_PUB_2)},
+		{KSI_RULE_TYPE_BASIC, NULL}
 	};
 
-	static const Rule basicRules2[] = {
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_FAIL, VER_ERR_INT_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_2)},
-		{RULE_TYPE_BASIC, NULL}
+	static const KSI_Rule basicRules2[] = {
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_OK, KSI_VER_ERR_PUB_1)},
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_OK, KSI_VER_ERR_PUB_1)},
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_FAIL, KSI_VER_ERR_INT_1)},
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_OK, KSI_VER_ERR_PUB_1)},
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_OK, KSI_VER_ERR_PUB_2)},
+		{KSI_RULE_TYPE_BASIC, NULL}
 	};
 
-	static const Rule basicRules3[] = {
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_NA, VER_ERR_GEN_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_2)},
-		{RULE_TYPE_BASIC, NULL}
+	static const KSI_Rule basicRules3[] = {
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_OK, KSI_VER_ERR_PUB_1)},
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_OK, KSI_VER_ERR_PUB_1)},
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_OK, KSI_VER_ERR_PUB_1)},
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_NA, KSI_VER_ERR_GEN_1)},
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_OK, KSI_VER_ERR_PUB_2)},
+		{KSI_RULE_TYPE_BASIC, NULL}
 	};
 
-	static const Rule basicRules4[] = {
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_INVALID_ARGUMENT, VER_RES_OK, VER_ERR_CAL_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
-		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_2)},
-		{RULE_TYPE_BASIC, NULL}
+	static const KSI_Rule basicRules4[] = {
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_OK, KSI_VER_ERR_PUB_1)},
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_OK, KSI_VER_ERR_PUB_1)},
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_INVALID_ARGUMENT, KSI_VER_RES_OK, KSI_VER_ERR_CAL_1)},
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_OK, KSI_VER_ERR_PUB_1)},
+		{KSI_RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, KSI_VER_RES_OK, KSI_VER_ERR_PUB_2)},
+		{KSI_RULE_TYPE_BASIC, NULL}
 	};
 
 	TestRule rules[] = {
-		{basicRules1, KSI_OK,				VER_RES_OK,		VER_ERR_PUB_2},
-		{basicRules2, KSI_OK,				VER_RES_FAIL,	VER_ERR_INT_1},
-		{basicRules3, KSI_OK,				VER_RES_NA,		VER_ERR_GEN_1},
-		{basicRules4, KSI_INVALID_ARGUMENT,	VER_RES_OK,		VER_ERR_CAL_1},
+		{basicRules1, KSI_OK,				KSI_VER_RES_OK,		KSI_VER_ERR_PUB_2},
+		{basicRules2, KSI_OK,				KSI_VER_RES_FAIL,	KSI_VER_ERR_INT_1},
+		{basicRules3, KSI_OK,				KSI_VER_RES_NA,		KSI_VER_ERR_GEN_1},
+		{basicRules4, KSI_INVALID_ARGUMENT,	KSI_VER_RES_OK,		KSI_VER_ERR_CAL_1},
 	};
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -375,16 +396,15 @@ static void TestBasicRulesPolicy(CuTest* tc) {
 	res = KSI_VerificationContext_create(ctx, &context);
 	CuAssert(tc, "Create verification context failed", res == KSI_OK);
 
-	policy.fallbackPolicy = NULL;
-	policy.policyName = "Basic rules policy";
-
 	for (i = 0; i < sizeof(rules) / sizeof(TestRule); i++) {
 		KSI_ERR_clearErrors(ctx);
-		policy.rules = rules[i].rule;
-		res = KSI_SignatureVerifier_verify(&policy, context, &result);
+		res = KSI_Policy_create(ctx, rules[i].rule, "Basic rules policy", &policy);
+		CuAssert(tc, "Policy creation failed", res == KSI_OK);
+		res = KSI_SignatureVerifier_verify(policy, context, &result);
 		CuAssert(tc, "Policy verification failed", res == rules[i].res);
 		CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == rules[i].result && result->finalResult.errorCode == rules[i].error);
 		KSI_PolicyVerificationResult_free(result);
+		KSI_Policy_free(policy);
 	}
 
 	KSI_VerificationContext_free(context);
@@ -393,95 +413,95 @@ static void TestBasicRulesPolicy(CuTest* tc) {
 static void TestCompositeRulesPolicy(CuTest* tc) {
 	int res;
 	int i;
-	KSI_Policy policy;
+	KSI_Policy *policy = NULL;
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 
-	static const Rule compositeRule1[] = {
-		{RULE_TYPE_COMPOSITE_AND, singleRules[0]},
-		{RULE_TYPE_COMPOSITE_AND, singleRules[1]},
-		{RULE_TYPE_COMPOSITE_AND, NULL}
+	static const KSI_Rule compositeRule1[] = {
+		{KSI_RULE_TYPE_COMPOSITE_AND, singleRules[0]},
+		{KSI_RULE_TYPE_COMPOSITE_AND, singleRules[1]},
+		{KSI_RULE_TYPE_COMPOSITE_AND, NULL}
 	};
 
-	static const Rule compositeRule2[] = {
-		{RULE_TYPE_COMPOSITE_AND, singleRules[1]},
-		{RULE_TYPE_COMPOSITE_AND, singleRules[0]},
-		{RULE_TYPE_COMPOSITE_AND, NULL}
+	static const KSI_Rule compositeRule2[] = {
+		{KSI_RULE_TYPE_COMPOSITE_AND, singleRules[1]},
+		{KSI_RULE_TYPE_COMPOSITE_AND, singleRules[0]},
+		{KSI_RULE_TYPE_COMPOSITE_AND, NULL}
 	};
 
-	static const Rule compositeRule3[] = {
-		{RULE_TYPE_COMPOSITE_OR, singleRules[1]},
-		{RULE_TYPE_COMPOSITE_OR, singleRules[0]},
-		{RULE_TYPE_COMPOSITE_OR, NULL}
+	static const KSI_Rule compositeRule3[] = {
+		{KSI_RULE_TYPE_COMPOSITE_OR, singleRules[1]},
+		{KSI_RULE_TYPE_COMPOSITE_OR, singleRules[0]},
+		{KSI_RULE_TYPE_COMPOSITE_OR, NULL}
 	};
 
-	static const Rule compositeRule4[] = {
-		{RULE_TYPE_COMPOSITE_OR, singleRules[0]},
-		{RULE_TYPE_COMPOSITE_OR, singleRules[1]},
-		{RULE_TYPE_COMPOSITE_OR, NULL}
+	static const KSI_Rule compositeRule4[] = {
+		{KSI_RULE_TYPE_COMPOSITE_OR, singleRules[0]},
+		{KSI_RULE_TYPE_COMPOSITE_OR, singleRules[1]},
+		{KSI_RULE_TYPE_COMPOSITE_OR, NULL}
 	};
 
-	static const Rule compositeRule5[] = {
-		{RULE_TYPE_COMPOSITE_AND, singleRules[0]},
-		{RULE_TYPE_COMPOSITE_AND, singleRules[2]},
-		{RULE_TYPE_COMPOSITE_AND, NULL}
+	static const KSI_Rule compositeRule5[] = {
+		{KSI_RULE_TYPE_COMPOSITE_AND, singleRules[0]},
+		{KSI_RULE_TYPE_COMPOSITE_AND, singleRules[2]},
+		{KSI_RULE_TYPE_COMPOSITE_AND, NULL}
 	};
 
-	static const Rule compositeRule6[] = {
-		{RULE_TYPE_COMPOSITE_AND, singleRules[3]},
-		{RULE_TYPE_COMPOSITE_AND, singleRules[0]},
-		{RULE_TYPE_COMPOSITE_AND, NULL}
+	static const KSI_Rule compositeRule6[] = {
+		{KSI_RULE_TYPE_COMPOSITE_AND, singleRules[3]},
+		{KSI_RULE_TYPE_COMPOSITE_AND, singleRules[0]},
+		{KSI_RULE_TYPE_COMPOSITE_AND, NULL}
 	};
 
-	static const Rule compositeRule7[] = {
-		{RULE_TYPE_COMPOSITE_OR, singleRules[0]},
-		{RULE_TYPE_COMPOSITE_OR, singleRules[3]},
-		{RULE_TYPE_COMPOSITE_OR, NULL}
+	static const KSI_Rule compositeRule7[] = {
+		{KSI_RULE_TYPE_COMPOSITE_OR, singleRules[0]},
+		{KSI_RULE_TYPE_COMPOSITE_OR, singleRules[3]},
+		{KSI_RULE_TYPE_COMPOSITE_OR, NULL}
 	};
 
-	static const Rule compositeRule8[] = {
-		{RULE_TYPE_COMPOSITE_OR, singleRules[2]},
-		{RULE_TYPE_COMPOSITE_OR, singleRules[0]},
-		{RULE_TYPE_COMPOSITE_OR, NULL}
+	static const KSI_Rule compositeRule8[] = {
+		{KSI_RULE_TYPE_COMPOSITE_OR, singleRules[2]},
+		{KSI_RULE_TYPE_COMPOSITE_OR, singleRules[0]},
+		{KSI_RULE_TYPE_COMPOSITE_OR, NULL}
 	};
 
-	static const Rule compositeRule9[] = {
-		{RULE_TYPE_COMPOSITE_AND, singleRules[0]},
-		{RULE_TYPE_COMPOSITE_AND, singleRules[4]},
-		{RULE_TYPE_COMPOSITE_AND, NULL}
+	static const KSI_Rule compositeRule9[] = {
+		{KSI_RULE_TYPE_COMPOSITE_AND, singleRules[0]},
+		{KSI_RULE_TYPE_COMPOSITE_AND, singleRules[4]},
+		{KSI_RULE_TYPE_COMPOSITE_AND, NULL}
 	};
 
-	static const Rule compositeRule10[] = {
-		{RULE_TYPE_COMPOSITE_AND, singleRules[4]},
-		{RULE_TYPE_COMPOSITE_AND, singleRules[0]},
-		{RULE_TYPE_COMPOSITE_AND, NULL}
+	static const KSI_Rule compositeRule10[] = {
+		{KSI_RULE_TYPE_COMPOSITE_AND, singleRules[4]},
+		{KSI_RULE_TYPE_COMPOSITE_AND, singleRules[0]},
+		{KSI_RULE_TYPE_COMPOSITE_AND, NULL}
 	};
 
-	static const Rule compositeRule11[] = {
-		{RULE_TYPE_COMPOSITE_OR, singleRules[0]},
-		{RULE_TYPE_COMPOSITE_OR, singleRules[4]},
-		{RULE_TYPE_COMPOSITE_OR, NULL}
+	static const KSI_Rule compositeRule11[] = {
+		{KSI_RULE_TYPE_COMPOSITE_OR, singleRules[0]},
+		{KSI_RULE_TYPE_COMPOSITE_OR, singleRules[4]},
+		{KSI_RULE_TYPE_COMPOSITE_OR, NULL}
 	};
 
-	static const Rule compositeRule12[] = {
-		{RULE_TYPE_COMPOSITE_OR, singleRules[4]},
-		{RULE_TYPE_COMPOSITE_OR, singleRules[0]},
-		{RULE_TYPE_COMPOSITE_OR, NULL}
+	static const KSI_Rule compositeRule12[] = {
+		{KSI_RULE_TYPE_COMPOSITE_OR, singleRules[4]},
+		{KSI_RULE_TYPE_COMPOSITE_OR, singleRules[0]},
+		{KSI_RULE_TYPE_COMPOSITE_OR, NULL}
 	};
 
 	TestRule rules[] = {
-		{compositeRule1,	KSI_OK,					VER_RES_OK,		VER_ERR_PUB_2},
-		{compositeRule2,	KSI_OK,					VER_RES_OK,		VER_ERR_PUB_1},
-		{compositeRule3,	KSI_OK,					VER_RES_OK,		VER_ERR_PUB_2},
-		{compositeRule4,	KSI_OK,					VER_RES_OK,		VER_ERR_PUB_1},
-		{compositeRule5,	KSI_OK,					VER_RES_FAIL,	VER_ERR_INT_1},
-		{compositeRule6,	KSI_OK,					VER_RES_NA,		VER_ERR_GEN_1},
-		{compositeRule7,	KSI_OK,					VER_RES_OK,		VER_ERR_PUB_1},
-		{compositeRule8,	KSI_OK,					VER_RES_FAIL,	VER_ERR_INT_1},
-		{compositeRule9,	KSI_INVALID_ARGUMENT,	VER_RES_OK,		VER_ERR_CAL_1},
-		{compositeRule10,	KSI_INVALID_ARGUMENT,	VER_RES_OK,		VER_ERR_CAL_1},
-		{compositeRule11,	KSI_OK,					VER_RES_OK,		VER_ERR_PUB_1},
-		{compositeRule12,	KSI_INVALID_ARGUMENT,	VER_RES_OK,		VER_ERR_CAL_1}
+		{compositeRule1,	KSI_OK,					KSI_VER_RES_OK,		KSI_VER_ERR_PUB_2},
+		{compositeRule2,	KSI_OK,					KSI_VER_RES_OK,		KSI_VER_ERR_PUB_1},
+		{compositeRule3,	KSI_OK,					KSI_VER_RES_OK,		KSI_VER_ERR_PUB_2},
+		{compositeRule4,	KSI_OK,					KSI_VER_RES_OK,		KSI_VER_ERR_PUB_1},
+		{compositeRule5,	KSI_OK,					KSI_VER_RES_FAIL,	KSI_VER_ERR_INT_1},
+		{compositeRule6,	KSI_OK,					KSI_VER_RES_NA,		KSI_VER_ERR_GEN_1},
+		{compositeRule7,	KSI_OK,					KSI_VER_RES_OK,		KSI_VER_ERR_PUB_1},
+		{compositeRule8,	KSI_OK,					KSI_VER_RES_FAIL,	KSI_VER_ERR_INT_1},
+		{compositeRule9,	KSI_INVALID_ARGUMENT,	KSI_VER_RES_OK,		KSI_VER_ERR_CAL_1},
+		{compositeRule10,	KSI_INVALID_ARGUMENT,	KSI_VER_RES_OK,		KSI_VER_ERR_CAL_1},
+		{compositeRule11,	KSI_OK,					KSI_VER_RES_OK,		KSI_VER_ERR_PUB_1},
+		{compositeRule12,	KSI_INVALID_ARGUMENT,	KSI_VER_RES_OK,		KSI_VER_ERR_CAL_1}
 	};
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -490,16 +510,15 @@ static void TestCompositeRulesPolicy(CuTest* tc) {
 	res = KSI_VerificationContext_create(ctx, &context);
 	CuAssert(tc, "Create verification context failed", res == KSI_OK);
 
-	policy.fallbackPolicy = NULL;
-	policy.policyName = "Composite rules policy";
-
 	for (i = 0; i < sizeof(rules) / sizeof(TestRule); i++) {
 		KSI_ERR_clearErrors(ctx);
-		policy.rules = rules[i].rule;
-		res = KSI_SignatureVerifier_verify(&policy, context, &result);
+		res = KSI_Policy_create(ctx, rules[i].rule, "Composite rules policy", &policy);
+		CuAssert(tc, "Policy creation failed", res == KSI_OK);
+		res = KSI_SignatureVerifier_verify(policy, context, &result);
 		CuAssert(tc, "Policy verification failed", res == rules[i].res);
 		CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == rules[i].result && result->finalResult.errorCode == rules[i].error);
 		KSI_PolicyVerificationResult_free(result);
+		KSI_Policy_free(policy);
 	}
 
 	KSI_VerificationContext_free(context);
@@ -563,10 +582,10 @@ static void TestVerificationResult(CuTest* tc) {
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult *temp = NULL;
 	KSI_RuleVerificationResult expected[4] = {
-		{VER_RES_NA,	VER_ERR_GEN_1,	"DummyRule_Return_KSI_OK_VER_RES_NA_VER_ERR_GEN_1"},
-		{VER_RES_FAIL,	VER_ERR_INT_1,	"DummyRule_Return_KSI_OK_VER_RES_FAIL_VER_ERR_INT_1"},
-		{VER_RES_OK,	VER_ERR_PUB_2,	"DummyRule_Return_KSI_OK_VER_RES_OK_VER_ERR_PUB_2"},
-		{VER_RES_OK,	VER_ERR_PUB_1,	"DummyRule_Return_KSI_OK_VER_RES_OK_VER_ERR_PUB_1"}
+		{KSI_VER_RES_NA,	KSI_VER_ERR_GEN_1,	"DummyRule_Return_KSI_OK_KSI_VER_RES_NA_KSI_VER_ERR_GEN_1"},
+		{KSI_VER_RES_FAIL,	KSI_VER_ERR_INT_1,	"DummyRule_Return_KSI_OK_KSI_VER_RES_FAIL_KSI_VER_ERR_INT_1"},
+		{KSI_VER_RES_OK,	KSI_VER_ERR_PUB_2,	"DummyRule_Return_KSI_OK_KSI_VER_RES_OK_KSI_VER_ERR_PUB_2"},
+		{KSI_VER_RES_OK,	KSI_VER_ERR_PUB_1,	"DummyRule_Return_KSI_OK_KSI_VER_RES_OK_KSI_VER_ERR_PUB_1"}
 	};
 
 	const char *names[4] = {
@@ -666,8 +685,8 @@ static void TestInternalPolicy_FAIL_WithInvalidRfc3161(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_INT_1,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_INT_1,
 		"KSI_VerificationRule_AggregationChainInputHashVerification"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-rfc3161-output-hash.ksig"
@@ -700,8 +719,8 @@ static void TestInternalPolicy_FAIL_WithInvalidAggregationChain(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_INT_1,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_INT_1,
 		"KSI_VerificationRule_AggregationHashChainConsistency"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/bad-aggregation-chain.ksig"
@@ -734,8 +753,8 @@ static void TestInternalPolicy_FAIL_WithInconsistentAggregationChainTime(CuTest*
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_INT_2,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_INT_2,
 		"KSI_VerificationRule_AggregationHashChainTimeConsistency"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-inconsistent-aggregation-chain-time.ksig"
@@ -768,8 +787,8 @@ static void TestInternalPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_OK,
-		VER_ERR_NONE,
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_DocumentHashDoesNotExist"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
@@ -801,8 +820,8 @@ static void TestInternalPolicy_FAIL_WithInvalidCalendarHashChain(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_INT_3,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_INT_3,
 		"KSI_VerificationRule_CalendarHashChainInputHashVerification"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-calendar-hash-chain.ksig"
@@ -836,8 +855,8 @@ static void TestInternalPolicy_FAIL_WithInvalidCalendarHashChainAggregationTime(
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_INT_4,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_INT_4,
 		"KSI_VerificationRule_CalendarHashChainAggregationTime"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-calendar-chain-aggregation-time.ksig"
@@ -871,8 +890,8 @@ static void TestInternalPolicy_OK_WithoutCalendarAuthenticationRecord(CuTest* tc
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_OK,
-		VER_ERR_NONE,
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_DocumentHashDoesNotExist"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
@@ -906,8 +925,8 @@ static void TestInternalPolicy_FAIL_WithInvalidCalendarAuthenticationRecordHash(
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_INT_8,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_INT_8,
 		"KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-calendar-authentication-record-hash.ksig"
@@ -942,8 +961,8 @@ static void TestInternalPolicy_FAIL_WithInvalidCalendarAuthenticationRecordTime(
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_INT_6,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_INT_6,
 		"KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-authentication-record-publication-time.ksig"
@@ -978,8 +997,8 @@ static void TestInternalPolicy_OK_WithoutPublicationRecord(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_OK,
-		VER_ERR_NONE,
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_DocumentHashDoesNotExist"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
@@ -1014,8 +1033,8 @@ static void TestInternalPolicy_FAIL_WithInvalidPublicationRecordHash(CuTest* tc)
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_INT_9,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_INT_9,
 		"KSI_VerificationRule_SignaturePublicationRecordPublicationHash"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-publication-record-publication-data-hash.ksig"
@@ -1050,8 +1069,8 @@ static void TestInternalPolicy_FAIL_WithInvalidPublicationRecordTime(CuTest* tc)
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_INT_7,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_INT_7,
 		"KSI_VerificationRule_SignaturePublicationRecordPublicationTime"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-publication-record-publication-data-time.ksig"
@@ -1086,8 +1105,8 @@ static void TestInternalPolicy_OK_WithPublicationRecord(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_OK,
-		VER_ERR_NONE,
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_DocumentHashDoesNotExist"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
@@ -1122,8 +1141,8 @@ static void TestInternalPolicy_OK_WithDocumentHash(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_OK,
-		VER_ERR_NONE,
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_DocumentHashVerification"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
@@ -1162,8 +1181,8 @@ static void TestInternalPolicy_FAIL_WithDocumentHash(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_GEN_1,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_GEN_1,
 		"KSI_VerificationRule_DocumentHashVerification"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
@@ -1204,8 +1223,8 @@ static void TestCalendarBasedPolicy_NA_ExtenderErrors(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_NA,
-		VER_ERR_GEN_2,
+		KSI_VER_RES_NA,
+		KSI_VER_ERR_GEN_2,
 		"KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch"
 	};
 
@@ -1267,8 +1286,8 @@ static void TestCalendarBasedPolicy_OK_WithPublicationRecord(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_OK,
-		VER_ERR_NONE,
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime"
 	};
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
@@ -1308,8 +1327,8 @@ static void TestCalendarBasedPolicy_FAIL_WithPublicationRecord(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_CAL_1,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_CAL_1,
 		"KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash"
 	};
 #define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
@@ -1349,8 +1368,8 @@ static void TestCalendarBasedPolicy_OK_WithoutPublicationRecord(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_OK,
-		VER_ERR_NONE,
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
@@ -1390,8 +1409,8 @@ static void TestCalendarBasedPolicy_FAIL_WithoutPublicationRecord(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_CAL_4,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_CAL_4,
 		"KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
@@ -1431,8 +1450,8 @@ static void TestCalendarBasedPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_OK,
-		VER_ERR_NONE,
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
@@ -1471,8 +1490,8 @@ static void TestCalendarBasedPolicy_OK_WithAdditionalLeftLinks(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_OK,
-		VER_ERR_NONE,
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
@@ -1511,8 +1530,8 @@ static void TestCalendarBasedPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_CAL_2,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_CAL_2,
 		"KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
@@ -1551,8 +1570,8 @@ static void TestKeyBasedPolicy_NA_WithoutCalendarHashChain(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_NA,
-		VER_ERR_GEN_2,
+		KSI_VER_RES_NA,
+		KSI_VER_ERR_GEN_2,
 		"KSI_VerificationRule_CalendarHashChainExistence"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
@@ -1585,8 +1604,8 @@ static void TestKeyBasedPolicy_NA_WithoutCalendarAuthenticationRecord(CuTest* tc
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_NA,
-		VER_ERR_GEN_2,
+		KSI_VER_RES_NA,
+		KSI_VER_ERR_GEN_2,
 		"KSI_VerificationRule_CalendarAuthenticationRecordExistence"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-calendar-authentication-record-missing.ksig"
@@ -1620,8 +1639,8 @@ static void TestKeyBasedPolicy_FAIL_WithCalendarAuthenticationRecord(CuTest* tc)
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_INT_8,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_INT_8,
 		"KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-invalid-calendar-authentication-record-hash.ksig"
@@ -1656,8 +1675,8 @@ static void TestKeyBasedPolicy_FAIL_WithoutCertificate(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_KEY_1,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_KEY_1,
 		"KSI_VerificationRule_CertificateExistence"
 	};
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1.ksig"
@@ -1700,8 +1719,8 @@ static void TestKeyBasedPolicy_FAIL_WithCertificate(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_KEY_2,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_KEY_2,
 		"KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification"
 	};
 #define TEST_SIGNATURE_FILE    "resource/tlv/signature-cal-auth-wrong-signing-value.ksig"
@@ -1744,8 +1763,8 @@ static void TestKeyBasedPolicy_OK(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_OK,
-		VER_ERR_NONE,
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification"
 	};
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1.ksig"
@@ -1788,8 +1807,8 @@ static void TestPublicationsFileBasedPolicy_OK_WithPublicationRecord(CuTest* tc)
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_OK,
-		VER_ERR_NONE,
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_PublicationsFileContainsSignaturePublication"
 	};
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
@@ -1832,8 +1851,8 @@ static void TestPublicationsFileBasedPolicy_NA_WithPublicationRecord(CuTest* tc)
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_NA,
-		VER_ERR_GEN_2,
+		KSI_VER_RES_NA,
+		KSI_VER_ERR_GEN_2,
 		"KSI_VerificationRule_SignatureDoesNotContainPublication"
 	};
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
@@ -1876,8 +1895,8 @@ static void TestPublicationsFileBasedPolicy_NA_WithoutSuitablePublication(CuTest
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_NA,
-		VER_ERR_GEN_2,
+		KSI_VER_RES_NA,
+		KSI_VER_ERR_GEN_2,
 		"KSI_VerificationRule_PublicationsFileContainsPublication"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
@@ -1920,8 +1939,8 @@ static void TestPublicationsFileBasedPolicy_NA_WithSuitablePublication(CuTest* t
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_NA,
-		VER_ERR_GEN_2,
+		KSI_VER_RES_NA,
+		KSI_VER_ERR_GEN_2,
 		"KSI_VerificationRule_ExtendingPermittedVerification"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
@@ -1964,8 +1983,8 @@ static void TestPublicationsFileBasedPolicy_OK_WithSuitablePublication(CuTest* t
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_OK,
-		VER_ERR_NONE,
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
@@ -2015,8 +2034,8 @@ static void TestPublicationsFileBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_PUB_1,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_PUB_1,
 		"KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
@@ -2067,8 +2086,8 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithPublicationRecord(CuTe
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_OK,
-		VER_ERR_NONE,
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_UserProvidedPublicationVerification"
 	};
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
@@ -2113,8 +2132,8 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureAfterPublicat
 	KSI_Integer *mockTime = NULL;
 	KSI_Signature *sig = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_NA,
-		VER_ERR_GEN_2,
+		KSI_VER_RES_NA,
+		KSI_VER_ERR_GEN_2,
 		"KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification"
 	};
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
@@ -2173,8 +2192,8 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureBeforePublica
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_Signature *sig = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_NA,
-		VER_ERR_GEN_2,
+		KSI_VER_RES_NA,
+		KSI_VER_ERR_GEN_2,
 		"KSI_VerificationRule_ExtendingPermittedVerification"
 	};
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
@@ -2224,8 +2243,8 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithoutPublicationRecord(C
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_Signature *sig = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_OK,
-		VER_ERR_NONE,
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash"
 	};
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
@@ -2277,8 +2296,8 @@ static void TestUserProvidedPublicationBasedPolicy_FAIL_AfterExtending(CuTest* t
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_Signature *sig = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_PUB_1,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_PUB_1,
 		"KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse"
 	};
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
@@ -2333,8 +2352,8 @@ static void TestGeneralPolicy_FAIL_WithInvalidAggregationChain(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_INT_1,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_INT_1,
 		"KSI_VerificationRule_AggregationHashChainConsistency"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/bad-aggregation-chain.ksig"
@@ -2367,8 +2386,8 @@ static void TestGeneralPolicy_FAIL_WithCertificate(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_KEY_2,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_KEY_2,
 		"KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification"
 	};
 #define TEST_SIGNATURE_FILE    "resource/tlv/signature-cal-auth-wrong-signing-value.ksig"
@@ -2411,8 +2430,8 @@ static void TestGeneralPolicy_OK_WithCertificate(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_OK,
-		VER_ERR_NONE,
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification"
 	};
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1.ksig"
@@ -2455,8 +2474,8 @@ static void TestGeneralPolicy_FAIL_AfterExtendingToPublication(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_PUB_1,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_PUB_1,
 		"KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
@@ -2506,8 +2525,8 @@ static void TestGeneralPolicy_OK_AfterExtendingToPublication(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_OK,
-		VER_ERR_NONE,
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
@@ -2559,8 +2578,8 @@ static void TestGeneralPolicy_FAIL_AfterExtendingToUserPublication(CuTest* tc) {
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_Signature *sig = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_PUB_1,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_PUB_1,
 		"KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse"
 	};
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
@@ -2625,8 +2644,8 @@ static void TestGeneralPolicy_OK_AfterExtendingToUserPublication(CuTest* tc) {
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_Signature *sig = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_OK,
-		VER_ERR_NONE,
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash"
 	};
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
@@ -2684,8 +2703,8 @@ static void TestGeneralPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_FAIL,
-		VER_ERR_CAL_2,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_CAL_2,
 		"KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
@@ -2724,8 +2743,8 @@ static void TestGeneralPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_OK,
-		VER_ERR_NONE,
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
@@ -2764,18 +2783,18 @@ static void TestGeneralPolicy_NA_ExtenderError(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_NA,
-		VER_ERR_GEN_2,
-		"KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch"
+		KSI_VER_RES_NA,
+		KSI_VER_ERR_GEN_2,
+		"KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash"
 	};
 
-#define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-06-2.ksig"
+#define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
 #define TEST_EXT_RESPONSE_FILE "resource/tlv/ok_extender_error_response_101.tlv"
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSI_ERR_clearErrors(ctx);
-	res = KSI_Policy_getCalendarBased(ctx, &policy);
+	res = KSI_Policy_getGeneral(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
 	res = KSI_VerificationContext_create(ctx, &context);
@@ -2790,9 +2809,8 @@ static void TestGeneralPolicy_NA_ExtenderError(CuTest* tc) {
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification must not succeed.", res == KSI_SERVICE_INVALID_REQUEST);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
-			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
-	CuAssert(tc, "Unexpected verification property", InconclusiveProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", InconclusiveProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE | KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_VerificationContext_free(context);
@@ -2828,8 +2846,8 @@ static void TestFallbackPolicy_CalendarBased_OK_KeyBased_NA(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_OK,
-		VER_ERR_NONE,
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
@@ -2879,8 +2897,8 @@ static void TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		VER_RES_NA,
-		VER_ERR_GEN_2,
+		KSI_VER_RES_NA,
+		KSI_VER_ERR_GEN_2,
 		"KSI_VerificationRule_CalendarHashChainExistence"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
@@ -2929,6 +2947,7 @@ CuSuite* KSITest_Policy_getSuite(void) {
 
 	SUITE_ADD_TEST(suite, TestInvalidParams);
 	SUITE_ADD_TEST(suite, TestVerificationContext);
+	SUITE_ADD_TEST(suite, TestPolicyCreation);
 	SUITE_ADD_TEST(suite, TestSingleRulePolicy);
 	SUITE_ADD_TEST(suite, TestBasicRulesPolicy);
 	SUITE_ADD_TEST(suite, TestCompositeRulesPolicy);
