@@ -69,8 +69,6 @@ EXPORTS
 	KSI_DataHash_fromTlv
 	KSI_DataHash_toTlv
 	KSI_DataHash_getHashAlg
-	KSI_DataHash_MetaHash_parseMeta
-	KSI_DataHash_MetaHash_fromTlv
 	KSI_DataHash_toString
 
 ;hashchain.h
@@ -81,12 +79,10 @@ EXPORTS
 	KSI_HashChainLink_new
 	KSI_HashChainLink_getIsLeft
 	KSI_HashChainLink_getLevelCorrection
-	KSI_HashChainLink_getMetaHash
 	KSI_HashChainLink_getMetaData
 	KSI_HashChainLink_getImprint
 	KSI_HashChainLink_setIsLeft
 	KSI_HashChainLink_setLevelCorrection
-	KSI_HashChainLink_setMetaHash
 	KSI_HashChainLink_setMetaData
 	KSI_HashChainLink_setImprint
 	KSI_HashChainLink_fromTlv
@@ -125,7 +121,6 @@ EXPORTS
 	KSI_RDR_read_ex
 	KSI_RDR_read_ptr
 	KSI_RDR_close
-	KSI_RDR_verifyEnd
 	KSI_IO_readSocket
 	KSI_IO_readFile
 ;ksi.h
@@ -332,8 +327,6 @@ EXPORTS
 	KSI_Signature_verify
 	KSI_Signature_verifyAggregated
 	KSI_Signature_verifyAggregatedHash
-	KSI_Signature_verifyInternally
-	KSI_Signature_verifyOffline
 	KSI_Signature_verifyOnline
 	KSI_Signature_verifyDocument
 	KSI_Signature_verifyWithPublication
@@ -1044,6 +1037,7 @@ EXPORTS
 	KSI_Policy_getPublicationsFileBased
 	KSI_Policy_getUserProvidedPublicationBased
 	KSI_Policy_getGeneral
+	KSI_Policy_create
 	KSI_Policy_clone
 	KSI_Policy_setFallback
 	KSI_SignatureVerifier_verify
@@ -1060,4 +1054,3 @@ EXPORTS
 	KSI_VerificationContext_setAggregationLevel
 	KSI_VerificationContext_free
 	KSI_VerificationContext_clean
-	KSI_VerificationContext_setSignature
