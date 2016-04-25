@@ -139,6 +139,12 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const unsig
 		goto cleanup;
 	}
 
+	/* Make sure the algorithm is supported. */
+	if (!KSI_isHashAlgorithmSupported(algo_id)) {
+		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, "Hash algorithm not supported.");
+		goto cleanup;
+	}
+
 	/* Verify the length of the digest with the algorithm. */
 	if (KSI_getHashLength(algo_id) != digest_length) {
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Digest length does not match with algorithm.");

@@ -86,6 +86,8 @@ const char *KSI_getErrorString(int statusCode) {
 			return "Invalid PKI signature.";
 		case KSI_PKI_CERTIFICATE_NOT_TRUSTED:
 			return "The PKI certificate is not trusted.";
+		case KSI_INVALID_STATE:
+			return "Invalid state.";
 		case KSI_OUT_OF_MEMORY:
 			return "Out of memory.";
 		case KSI_IO_ERROR:
@@ -507,7 +509,7 @@ static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ct
 		goto cleanup;
 	}
 
-	if (result->finalResult.resultCode != VER_RES_OK) {
+	if (result->finalResult.resultCode != KSI_VER_RES_OK) {
 		res = KSI_VERIFICATION_FAILURE;
 		KSI_pushError(ctx, res, "Verification of signature failed.");
 		goto cleanup;
@@ -556,7 +558,7 @@ int KSI_createSignature(KSI_CTX *ctx, KSI_DataHash *dataHash, KSI_Signature **si
 		goto cleanup;
 	}
 
-	res = KSI_Signature_create(ctx, dataHash, &tmp);
+	res = KSI_Signature_sign(ctx, dataHash, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx,res, NULL);
 		goto cleanup;
