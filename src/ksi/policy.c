@@ -25,6 +25,26 @@ static void RuleVerificationResult_free(KSI_RuleVerificationResult *result);
 
 KSI_IMPLEMENT_LIST(KSI_RuleVerificationResult, RuleVerificationResult_free);
 
+static int isDuplicateRuleResult(KSI_RuleVerificationResultList *resultList, KSI_RuleVerificationResult *result) {
+	int return_value = 0;
+	size_t i;
+
+	for (i = 0; i < KSI_RuleVerificationResultList_length(resultList); i++) {
+		int res;
+		KSI_RuleVerificationResult *tmp = NULL;
+		res = KSI_RuleVerificationResultList_elementAt(resultList, i, &tmp);
+		if (res != KSI_OK) goto cleanup;
+		/* Compare only unique rule name pointers instead of full rule names. */
+		if (tmp->ruleName == result->ruleName) {
+			return_value = 1;
+			break;
+		}
+	}
+
+cleanup:
+	return return_value;
+}
+
 static int PolicyVerificationResult_addLatestRuleResult(KSI_PolicyVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_RuleVerificationResult *tmp = NULL;
@@ -34,18 +54,18 @@ static int PolicyVerificationResult_addLatestRuleResult(KSI_PolicyVerificationRe
 		goto cleanup;
 	}
 
-	tmp = KSI_new(KSI_RuleVerificationResult);
-	if (tmp == NULL) {
-		res = KSI_OUT_OF_MEMORY;
-		goto cleanup;
+	if (isDuplicateRuleResult(result->ruleResults, &result->finalResult) == 0) {
+		tmp = KSI_new(KSI_RuleVerificationResult);
+		if (tmp == NULL) {
+			res = KSI_OUT_OF_MEMORY;
+			goto cleanup;
+		}
+
+		*tmp = result->finalResult;
+		res = KSI_RuleVerificationResultList_append(result->ruleResults, tmp);
+		if (res != KSI_OK) goto cleanup;
+		tmp = NULL;
 	}
-
-	*tmp = result->finalResult;
-
-	res = KSI_RuleVerificationResultList_append(result->ruleResults, tmp);
-	if (res != KSI_OK) goto cleanup;
-
-	tmp = NULL;
 
 cleanup:
 

@@ -604,6 +604,62 @@ static void TestVerificationResult(CuTest* tc) {
 	KSI_VerificationContext_free(context);
 }
 
+static void TestDuplicateResults(CuTest* tc) {
+	int res;
+	KSI_Policy policy;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+
+	static const Rule okNaRule1[] = {
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_NA, VER_ERR_GEN_1)},
+		{RULE_TYPE_BASIC, NULL}
+	};
+
+	static const Rule okNaRule2[] = {
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_NA, VER_ERR_GEN_1)},
+		{RULE_TYPE_BASIC, NULL}
+	};
+
+	static const Rule okNaRule3[] = {
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_2)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_NA, VER_ERR_GEN_1)},
+		{RULE_TYPE_BASIC, NULL}
+	};
+
+	static const Rule rules[] = {
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_2)},
+		{RULE_TYPE_COMPOSITE_OR, okNaRule1},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_2)},
+		{RULE_TYPE_COMPOSITE_OR, okNaRule2},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_2)},
+		{RULE_TYPE_COMPOSITE_OR, okNaRule3},
+		{RULE_TYPE_BASIC, DUMMY_VERIFIER(KSI_OK, VER_RES_OK, VER_ERR_PUB_1)},
+		{RULE_TYPE_BASIC, NULL}
+	};
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+	res = KSI_VerificationContext_create(ctx, &context);
+	CuAssert(tc, "Create verification context failed", res == KSI_OK);
+
+	policy.fallbackPolicy = NULL;
+	policy.policyName = "Duplicate rules policy";
+	policy.rules = rules;
+	res = KSI_SignatureVerifier_verify(&policy, context, &result);
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Too many results in result list.", KSI_RuleVerificationResultList_length(result->ruleResults) == 2);
+	CuAssert(tc, "Unexpected final result.", result->finalResult.errorCode == VER_ERR_PUB_1);
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_VerificationContext_free(context);
+}
+
 static void TestInternalPolicy_FAIL_WithInvalidRfc3161(CuTest* tc) {
 	int res;
 	const KSI_Policy *policy = NULL;
@@ -2837,6 +2893,7 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestBasicRulesPolicy);
 	SUITE_ADD_TEST(suite, TestCompositeRulesPolicy);
 	SUITE_ADD_TEST(suite, TestVerificationResult);
+	SUITE_ADD_TEST(suite, TestDuplicateResults);
 	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInvalidRfc3161);
 	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInvalidAggregationChain);
 	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInconsistentAggregationChainTime);
