@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	res = KSI_Signature_verify(sign, ksi);
+	res = KSI_verifySignature(ksi, sign);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Failed to verify signature.\n");
 		goto cleanup;

@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
 		res = KSI_Signature_verifyDataHash(sig, ksi, hsh);
 	} else {
 		printf("Verifiyng signature...");
-		res = KSI_Signature_verify(sig, ksi);
+		res = KSI_verifySignature(ksi, sig);
 	}
 
 	switch (res) {
