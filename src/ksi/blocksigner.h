@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2016 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -20,6 +20,9 @@
 #ifndef BLOCKSIGNER_H_
 #define BLOCKSIGNER_H_
 
+#include "ksi.h"
+#include "multi_signature.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -30,11 +33,13 @@ typedef struct KSI_BlocksignerHandle_st KSI_BlocksignerHandle;
 /**
  * Create a new instance of #KSI_Blocksigner.
  * \param[in]	ctx			KSI context.
- * \param[in]	algoId		Algorithm to be used for the internal hash values.
+ * \param[in]	algoId		Algorithm to be used for the internal hash node computation.
+ * \param[in]	prevLeaf	For linking two trees, the user may add the last leaf value (can be \c NULL)
+ * \param[in]	initVal		The initial value for masking.
  * \param[out]	signer		Pointer to the receiving pointer.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_Blocksigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_Blocksigner **signer);
+int KSI_Blocksigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *prevLeaf, KSI_OctetString *initVal, KSI_Blocksigner **signer);
 
 /**
  * Cleanup method for the #KSI_Blocksigner.
@@ -64,26 +69,37 @@ int KSI_Blocksigner_reset(KSI_Blocksigner *signer);
  * \param[in]	hsh			Hash value of the leaf.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_Blocksigner_add(KSI_Blocksigner *signer, KSI_DataHash *hsh);
+#define KSI_Blocksigner_add(signer, hsh) KSI_Blocksigner_addLeaf((signer), (hsh), 0, NULL, NULL)
 
 /**
  * Lowlevel function for adding leafs to the aggregation tree.
  * \param[in]	signer		Instance of the #KSI_Blocksigner.
  * \param[in]	hsh			Hash value of the leaf node.
  * \param[in]	level		Level of the leaf node.
+ * \param[in]	metaData	A meta-data object to associate the input hash with, can be \c NULL.
  * \param[out]	handle		Handle for the current leaf; may be NULL.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \note The function does not take ownership of \c hsh, \c metaData nor \c handle, it is
+ * the responsibility of the caller to free the objects.
+ * \see #KSI_DataHash_free, #KSI_MetaData_free, #KSI_BlocksignerHandle_free.
  */
-int KSI_Blocksigner_addLeaf(KSI_Blocksigner *signer, KSI_DataHash *hsh, int level, KSI_BlocksignerHandle **handle);
+int KSI_Blocksigner_addLeaf(KSI_Blocksigner *signer, KSI_DataHash *hsh, int level, KSI_MetaData *metaData, KSI_BlocksignerHandle **handle);
 
 /**
- * This function generates an aggregation hash chain object. This method will fail if the instance of #KSI_Blocksigner has not
- * been closed, it has been reset or it has been freed.
+ * This function creates a new instance of a KSI signature and stores it in the output
+ * parameter.
+ * \param[in]	handle		Handle for the block signature.
+ * \param[out]	sig			Pointer to the receiving pointer.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  * \see #KSI_Blocksigner_close, #KSI_Blocksigner_free, #KSI_Blocksigner_reset.
  */
-int KSI_BlocksignerHandle_getAggregationChain(KSI_BlocksignerHandle *handle, KSI_AggregationHashChain **chain);
+int KSI_BlocksignerHandle_getSignature(KSI_BlocksignerHandle *handle, KSI_Signature **sig);
 
+/**
+ * Cleanup method for the handle.
+ * \param[in]	handle		Instance of the #KSI_BlocksignerHandle
+ */
+void KSI_BlocksignerHandle_free(KSI_BlocksignerHandle *handle);
 
 #ifdef __cplusplus
 }
