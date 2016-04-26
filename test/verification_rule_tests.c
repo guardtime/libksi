@@ -202,6 +202,72 @@ static void testRule_AggregationHashChainTimeConsistency_verifyErrorResult(CuTes
 #undef TEST_SIGNATURE_FILE
 }
 
+static void testRule_AggregationHashChainIndexConsistency(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/chain-index-ok.ksig"
+
+	int res = KSI_OK;
+	KSI_VerificationContext *verCtx = NULL;
+	KSI_RuleVerificationResult verRes;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_create(ctx, &verCtx);
+	CuAssert(tc, "Unable to create verification context", res == KSI_OK && verCtx != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
+
+	res = KSI_VerificationRule_AggregationHashChainIndexConsistency(verCtx, &verRes);
+	CuAssert(tc, "Signature aggregation hash chain index inconsistent.", res == KSI_OK && verRes.resultCode == VER_RES_OK);
+
+	KSI_VerificationContext_free(verCtx);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationHashChainIndexConsistencyFail(CuTest *tc, const char *sigFile) {
+	int res = KSI_OK;
+	KSI_VerificationContext *verCtx = NULL;
+	KSI_RuleVerificationResult verRes;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_create(ctx, &verCtx);
+	CuAssert(tc, "Unable to create verification context", res == KSI_OK && verCtx != NULL);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(sigFile), &verCtx->userData.sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
+
+	res = KSI_VerificationRule_AggregationHashChainIndexConsistency(verCtx, &verRes);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == VER_RES_FAIL && verRes.errorCode == VER_ERR_INT_10);
+
+	KSI_VerificationContext_free(verCtx);
+}
+
+static void testRule_AggregationHashChainIndexConsistency_prefixChanged_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/chain-index-prefix.ksig"
+
+	testRule_AggregationHashChainIndexConsistencyFail(tc, TEST_SIGNATURE_FILE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationHashChainIndexConsistency_prefixesChanged_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/chain-index-prefixes.ksig"
+
+	testRule_AggregationHashChainIndexConsistencyFail(tc, TEST_SIGNATURE_FILE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationHashChainIndexConsistency_suffixChanged_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/chain-index-suffix.ksig"
+
+	testRule_AggregationHashChainIndexConsistencyFail(tc, TEST_SIGNATURE_FILE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
 static void testRule_CalendarHashChainInputHashVerification_sigWithCalHashChain(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
@@ -2740,6 +2806,10 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_AggregationHashChainConsistency_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_AggregationHashChainTimeConsistency);
 	SUITE_ADD_TEST(suite, testRule_AggregationHashChainTimeConsistency_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_AggregationHashChainIndexConsistency);
+	SUITE_ADD_TEST(suite, testRule_AggregationHashChainIndexConsistency_prefixChanged_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_AggregationHashChainIndexConsistency_prefixesChanged_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_AggregationHashChainIndexConsistency_suffixChanged_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainInputHashVerification_sigWithCalHashChain);
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainInputHashVerification_sigWithoutCalHashChain);
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainInputHashVerification_verifyErrorResult);
