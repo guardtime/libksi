@@ -67,28 +67,6 @@ static char *nok_sample[] = {
 
 extern KSI_CTX *ctx;
 
-static int tlvFromFile(const char *fileName, KSI_TLV **tlv) {
-	int res;
-	KSI_RDR *rdr = NULL;
-	FILE *f = NULL;
-
-	KSI_LOG_debug(ctx, "Open TLV file: '%s'", fileName);
-
-	f = fopen(fileName, "rb");
-	res = KSI_RDR_fromStream(ctx, f, &rdr);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_TLV_fromReader(rdr, tlv);
-	if (res != KSI_OK) goto cleanup;
-
-cleanup:
-
-	if (f != NULL) fclose(f);
-	KSI_RDR_close(rdr);
-
-	return res;
-}
-
 static int parseStructure(KSI_TLV *tlv, int indent) {
 	int res;
 	KSI_TLV *nested = NULL;
@@ -153,7 +131,7 @@ static void TestOkFiles(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	while (ok_sample[i] != NULL) {
-		CuAssert(tc, "Unable to read valid TLV", tlvFromFile(getFullResourcePath(ok_sample[i++]), &tlv) == KSI_OK);
+		CuAssert(tc, "Unable to read valid TLV", KSITest_tlvFromFile(getFullResourcePath(ok_sample[i++]), &tlv) == KSI_OK);
 
 		res = parseStructure(tlv, 0);
 
@@ -175,7 +153,7 @@ static void TestNokFiles(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	while (nok_sample[i] != NULL) {
-		res = tlvFromFile(getFullResourcePath(nok_sample[i++]), &tlv);
+		res = KSITest_tlvFromFile(getFullResourcePath(nok_sample[i++]), &tlv);
 
 		if (res == KSI_OK) {
 			res = parseStructure(tlv, 0);
@@ -342,18 +320,17 @@ static void testErrorMessage(CuTest* tc, const char *expected, const char *tlv_f
 		const KSI_TlvTemplate *tmplete) {
 	int res;
 	void *obj = NULL;
-	KSI_RDR *rdr = NULL;
 	char buf[1024];
 	size_t len;
 	FILE *f = NULL;
+	KSI_FTLV ftlv;
 
 	KSI_ERR_clearErrors(ctx);
 
-	f = fopen(getFullResourcePath(tlv_file), "r");
-	res = KSI_RDR_fromStream(ctx, f, &rdr);
-	CuAssert(tc, "Failed to open reader", res == KSI_OK);
+	f = fopen(getFullResourcePath(tlv_file), "rb");
+	CuAssert(tc, "Failed to open file", f != NULL);
 
-	res = KSI_RDR_read_ex(rdr, (unsigned char *)buf, sizeof(buf), &len);
+	res = KSI_FTLV_fileRead(f, (unsigned char *)buf, sizeof(buf), &len, &ftlv);
 	CuAssert(tc, "Failed read from file", res == KSI_OK);
 
 	res = obj_new(ctx, &obj);
@@ -370,7 +347,6 @@ static void testErrorMessage(CuTest* tc, const char *expected, const char *tlv_f
 
 	if (f != NULL) fclose(f);
 	obj_free(obj);
-	KSI_RDR_close(rdr);
 }
 #ifdef _WIN32
 _declspec( dllimport )
