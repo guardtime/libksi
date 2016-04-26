@@ -158,6 +158,10 @@ cleanup:
 	return res;
 }
 
+int KSI_PKITruststore_registerGlobals(KSI_CTX *ctx) {
+	return KSI_CTX_registerGlobals(ctx, cryptopapiGlobal_init, cryptopapiGlobal_cleanup);
+}
+
 int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **trust) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PKITruststore *tmp = NULL;
@@ -171,7 +175,7 @@ int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **tru
 	}
 
 
-	res = KSI_CTX_registerGlobals(ctx, cryptopapiGlobal_init, cryptopapiGlobal_cleanup);
+	res = KSI_PKITruststore_registerGlobals(ctx);
 	if (res != KSI_OK){
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;

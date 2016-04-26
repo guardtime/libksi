@@ -201,6 +201,10 @@ cleanup:
 	return res;
 }
 
+int KSI_PKITruststore_registerGlobals(KSI_CTX *ctx) {
+	return KSI_CTX_registerGlobals(ctx, openSslGlobal_init, openSslGlobal_cleanup);
+}
+
 int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **trust) {
 	KSI_PKITruststore *tmp = NULL;
 	int res;
@@ -212,7 +216,7 @@ int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **tru
 		goto cleanup;
 	}
 
-	res = KSI_CTX_registerGlobals(ctx, openSslGlobal_init, openSslGlobal_cleanup);
+	res = KSI_PKITruststore_registerGlobals(ctx);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
