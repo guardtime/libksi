@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2016 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -17,52 +17,14 @@
  * reserves and retains all trademark rights.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "cutest/CuTest.h"
 #include "all_tests.h"
-#include  <ksi/tlv.h>
-#include  <ksi/io.h>
-
-extern KSI_CTX *ctx;
-
-static const char TMP_FILE[] = "tmpfile.tmp";
-
-struct KSI_RDR_st {
-	/* Context for the reader. */
-	KSI_CTX *ctx;
-
-	/* Type of the reader (see #KSI_IO_Type) */
-	int ioType;
-
-	/* Union of inputs. */
-	union {
-		/* KSI_IO_FILE type input. */
-		FILE *file;
-
-		/* KSI_IO_MEM type input */
-		struct {
-			char *buffer;
-			size_t buffer_length;
-
-			/* Does the memory belong to this reader? */
-			int ownCopy;
-		} mem;
-	} data;
-
-	/* Offset of stream. */
-	size_t offset;
-
-	/* Indicates end of stream.
-	 * \note This will be set after reading the stream. */
-	int eof;
-};
 
 CuSuite* KSITest_RDR_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
+
+	/* No tests for the moment. */
 
 	return suite;
 }
