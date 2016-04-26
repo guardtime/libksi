@@ -20,18 +20,25 @@
 #include <stdio.h>
 #include <string.h>
 #include <ksi/ksi.h>
+#include "../ksi/policy.h"
 
 int main(int argc, char **argv) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ksi = NULL;
 	KSI_Signature *sig = NULL;
+	KSI_Policy *policy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
 	KSI_DataHash *hsh = NULL;
 	KSI_DataHasher *hsr = NULL;
 	FILE *in = NULL;
 	unsigned char buf[1024];
 	size_t buf_len;
-	const KSI_VerificationResult *info = NULL;
 	FILE *logFile = NULL;
+	size_t i;
+	size_t prefix;
+
+	char *resultName[] = {"OK", "NA", "FAIL"};
 
 	const KSI_CertConstraint pubFileCertConstr[] = {
 			{ KSI_CERT_EMAIL, "publications@guardtime.com"},
@@ -81,6 +88,18 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
+	res = KSI_Policy_getGeneral(ksi, &policy);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Failed to get policy.\n");
+		goto cleanup;
+	}
+
+	res = KSI_VerificationContext_create(ksi, &context);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Failed to create verification context.\n");
+		goto cleanup;
+	}
+
 	printf("Reading signature... ");
 	/* Read the signature. */
 	res = KSI_Signature_fromFile(ksi, argv[2], &sig);
@@ -89,6 +108,12 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 	printf("ok\n");
+
+	res = KSI_VerificationContext_setSignature(context, sig);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Failed to set signature in verification context.\n");
+		goto cleanup;
+	}
 
 	/* Create hasher. */
 	res = KSI_Signature_createDataHasher(sig, &hsr);
@@ -120,43 +145,56 @@ int main(int argc, char **argv) {
 			goto cleanup;
 		}
 
-		printf("Verifying document hash... ");
-		res = KSI_Signature_verifyDataHash(sig, ksi, hsh);
-	} else {
-		printf("Verifiyng signature...");
-		res = KSI_verifySignature(ksi, sig);
-	}
-
-	switch (res) {
-		case KSI_OK:
-			printf("ok\n");
-			break;
-		case KSI_VERIFICATION_FAILURE:
-			printf("failed\n");
-			break;
-		default:
-			printf("failed (%s)\n", KSI_getErrorString(res));
+		res = KSI_VerificationContext_setDocumentHash(context, hsh);
+		if (res != KSI_OK) {
+			fprintf(stderr, "Failed to set document hash in verification context.\n");
 			goto cleanup;
-	}
-	res = KSI_Signature_getVerificationResult(sig, &info);
-	if (res != KSI_OK) goto cleanup;
-
-	if (info != NULL) {
-		size_t i;
-		printf("Verification info:\n");
-		for (i = 0; i < KSI_VerificationResult_getStepResultCount(info); i++) {
-			const KSI_VerificationStepResult *result = NULL;
-			const char *desc = NULL;
-			res = KSI_VerificationResult_getStepResult(info, i, &result);
-			if (res != KSI_OK) goto cleanup;
-			printf("\t0x%02x:\t%s", KSI_VerificationStepResult_getStep(result), KSI_VerificationStepResult_isSuccess(result) ? "OK" : "FAIL");
-			desc = KSI_VerificationStepResult_getDescription(result);
-			if (desc && *desc) {
-				printf(" (%s)", desc);
-			}
-			printf("\n");
 		}
 	}
+
+	printf("Verifying signature...");
+	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	if (res != KSI_OK) {
+		printf("Failed to complete verification due to error 0x%x (%s)\n", res, KSI_getErrorString(res));
+		goto cleanup;
+	}
+	else {
+		switch (result->finalResult.resultCode) {
+			case KSI_VER_RES_OK:
+				printf("Verification successful.\n");
+				break;
+			case KSI_VER_RES_NA:
+				printf("Verification inconclusive with code %d.\n", result->finalResult.errorCode);
+				break;
+			case KSI_VER_RES_FAIL:
+				printf("Verification failed with code %d.\n", result->finalResult.errorCode);
+				break;
+			default:
+				printf("Unexpected verification result.\n");
+				goto cleanup;
+				break;
+		}
+	}
+
+	printf("Verification info:\n");
+	for (i = 0; i < KSI_RuleVerificationResultList_length(result->ruleResults); i++) {
+		KSI_RuleVerificationResult *tmp = NULL;
+		res = KSI_RuleVerificationResultList_elementAt(result->ruleResults, i, &tmp);
+		if (res != KSI_OK) goto cleanup;
+		if (!memcmp(tmp->ruleName, "KSI_VerificationRule_", strlen("KSI_VerificationRule_"))) {
+			prefix = strlen("KSI_VerificationRule_");
+		} else {
+			prefix = 0;
+		}
+		printf("%4s in rule %s\n", resultName[tmp->resultCode], tmp->ruleName + prefix);
+	}
+	printf("Final result:\n");
+	if (!memcmp(result->finalResult.ruleName, "KSI_VerificationRule_", strlen("KSI_VerificationRule_"))) {
+		prefix = strlen("KSI_VerificationRule_");
+	} else {
+		prefix = 0;
+	}
+	printf("%4s in rule %s\n", resultName[result->finalResult.resultCode], result->finalResult.ruleName + prefix);
 
 	res = KSI_OK;
 
@@ -169,7 +207,8 @@ cleanup:
 
 	if (in != NULL) fclose(in);
 
-	KSI_Signature_free(sig);
+	KSI_VerificationContext_free(context);
+	KSI_PolicyVerificationResult_free(result);
 	KSI_DataHasher_free(hsr);
 	KSI_DataHash_free(hsh);
 	KSI_CTX_free(ksi);
