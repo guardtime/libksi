@@ -46,7 +46,6 @@ EXPORTS
 
 ;hash.h
 EXPORTS
-<<<<<<< HEAD
     KSI_DataHasher_open
     KSI_DataHasher_reset
     KSI_DataHasher_add
