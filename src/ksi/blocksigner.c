@@ -269,6 +269,8 @@ int KSI_Blocksigner_close(KSI_Blocksigner *signer, KSI_MultiSignature **ms) {
 
 cleanup:
 
+	KSI_MultiSignature_free(tmp);
+
 	return res;
 }
 
@@ -384,7 +386,7 @@ int KSI_BlocksignerHandle_getSignature(KSI_BlocksignerHandle *handle, KSI_Signat
 	KSI_ERR_clearErrors(handle->ctx);
 
 	if (handle->signer->signature == NULL) {
-		KSI_pushError(handle->ctx, res = KSI_INVALID_STATE, NULL);
+		KSI_pushError(handle->ctx, res = KSI_INVALID_STATE, "The blocksigner is not closed.");
 		goto cleanup;
 	}
 

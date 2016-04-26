@@ -39,10 +39,10 @@ static void addInput(CuTest *tc, KSI_Blocksigner *bs) {
 
 	for (i = 0; input_data[i] != NULL; i++) {
 		res = KSI_DataHash_create(ctx, input_data[i], strlen(input_data[i]), KSI_HASHALG_SHA2_256, &hsh);
-		CuAssert(tc, "Unable to create datahash.", res == KSI_OK && hsh != NULL);
+		CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
 
 		res = KSI_Blocksigner_add(bs, hsh);
-		CuAssert(tc, "Unable to add datahash to the block signer.", res == KSI_OK);
+		CuAssert(tc, "Unable to add data hash to the block signer.", res == KSI_OK);
 
 		KSI_DataHash_free(hsh);
 		hsh = NULL;
@@ -76,7 +76,7 @@ static void testMultiSig(CuTest *tc) {
 	addInput(tc, bs);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_Blocksigner_close(bs, &ms);
 	CuAssert(tc, "Unable to close block signer and extract multi signature.", res == KSI_OK && ms != NULL);
@@ -84,7 +84,7 @@ static void testMultiSig(CuTest *tc) {
 	/* Lets loop over all the inputs and try to verify them. */
 	for (i = 0; input_data[i] != NULL; i++) {
 		res = KSI_DataHash_create(ctx, input_data[i], strlen(input_data[i]), KSI_HASHALG_SHA2_256, &hsh);
-		CuAssert(tc, "Unable to create datahash.", res == KSI_OK && hsh != NULL);
+		CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
 
 		res = KSI_MultiSignature_get(ms, hsh, &sig);
 		CuAssert(tc, "Unable to extract signature from the multi signature container.", res == KSI_OK && sig != NULL);
@@ -166,7 +166,7 @@ static void testMedaData(CuTest *tc) {
 	}
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_Blocksigner_close(bs, NULL);
 	CuAssert(tc, "Unable to close the blocksigner.", res == KSI_OK);
@@ -219,7 +219,7 @@ static void testSingle(CuTest *tc) {
 	size_t len = 0;
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
 	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
@@ -260,7 +260,7 @@ static void testReset(CuTest *tc) {
 	size_t len = 0;
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
 	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);

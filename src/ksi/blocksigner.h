@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2016 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -33,7 +33,7 @@ typedef struct KSI_BlocksignerHandle_st KSI_BlocksignerHandle;
 /**
  * Create a new instance of #KSI_Blocksigner.
  * \param[in]	ctx			KSI context.
- * \param[in]	algoId		Algorithm to be used for the internal hash values.
+ * \param[in]	algoId		Algorithm to be used for the internal hash node computation.
  * \param[in]	prevLeaf	For linking two trees, the user may add the last leaf value (can be \c NULL)
  * \param[in]	initVal		The initial value for masking.
  * \param[out]	signer		Pointer to the receiving pointer.

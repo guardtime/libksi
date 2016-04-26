@@ -153,7 +153,7 @@ int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHash
 
 		aggr->aggregationTime = KSI_Integer_ref(pAggrTm);
 
-		/* Update the aggregation chain. */
+		/* Update the aggregation hash chain. */
 		listLen = KSI_AggregationHashChainList_length(sig->aggregationChainList);
 		if (listLen == 0) {
 			KSI_pushError(sig->ctx, res = KSI_INVALID_STATE, "Signature does not contain any aggregation hash chains.");
@@ -169,7 +169,7 @@ int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHash
 			}
 		}
 
-		/* We assume the aggregation hash chain is ordered and the first aggregation chain is the one
+		/* We assume the aggregation hash chain is ordered and the first aggregation hash chain is the one
 		 * with the longest chain index.
 		 */
 		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &pCurrent);
@@ -179,7 +179,7 @@ int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHash
 		}
 
 		/* Traverse the chain index from back to forth, and add the values to the begining of the
-		 * aggregation chain.
+		 * aggregation hash chain.
 		 */
 		for (i = KSI_IntegerList_length(pCurrent->chainIndex); i > 0; i--) {
 			KSI_Integer *tmp = NULL;
@@ -197,7 +197,7 @@ int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHash
 			}
 		}
 
-		/* Prepend the aggregation chain to the signature. */
+		/* Prepend the aggregation hash chain to the signature. */
 		res = KSI_AggregationHashChainList_insertAt(sig->aggregationChainList, 0, KSI_AggregationHashChain_ref(aggr));
 		if (res != KSI_OK) {
 			KSI_pushError(sig->ctx, res, NULL);
@@ -686,7 +686,7 @@ static int extractSignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature **signatur
 		goto cleanup;
 	}
 
-	/* Make sure the aggregation chains are in correct order. */
+	/* Make sure the aggregation hash chains are in correct order. */
 	res = KSI_AggregationHashChainList_sort(sig->aggregationChainList, aggregationHashChainCmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -838,7 +838,7 @@ int KSI_AggregationHashChainList_aggregate(KSI_AggregationHashChainList *chainLi
 		goto cleanup;
 	}
 
-	/* Aggregate all the aggregation chains. */
+	/* Aggregate all the aggregation hash chains. */
 	for (i = 0; i < KSI_AggregationHashChainList_length(chainList); i++) {
 		const KSI_AggregationHashChain* aggrChain = NULL;
 		KSI_DataHash *tmp = NULL;
@@ -1967,7 +1967,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 		goto cleanup;
 	}
 
-	/* Extract all identities from all aggregation chains from top to bottom. */
+	/* Extract all identities from all aggregation hash chains from top to bottom. */
 	for (i = KSI_AggregationHashChainList_length(sig->aggregationChainList); i-- > 0;) {
 		KSI_AggregationHashChain *aggrRec = NULL;
 

@@ -27,6 +27,16 @@ EXPORTS
     KSI_base32Decode
     KSI_base32Encode
 
+;blocksigner.h
+EXPORTS
+	KSI_Blocksigner_new
+	KSI_Blocksigner_free
+	KSI_Blocksigner_close
+	KSI_Blocksigner_reset
+	KSI_Blocksigner_addLeaf
+	KSI_BlocksignerHandle_getSignature
+	KSI_BlocksignerHandle_free
+
 ;crc32.h
 EXPORTS
     KSI_crc32
@@ -46,7 +56,6 @@ EXPORTS
 
 ;hash.h
 EXPORTS
-<<<<<<< HEAD
     KSI_DataHasher_open
     KSI_DataHasher_reset
     KSI_DataHasher_add
