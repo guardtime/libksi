@@ -77,9 +77,11 @@ int KSI_BlockSigner_reset(KSI_BlockSigner *signer);
  * \param[in]	hsh			Hash value of the leaf node.
  * \param[in]	level		Level of the leaf node.
  * \param[in]	metaData	A meta-data object to associate the input hash with, can be \c NULL.
- * 							It is the responsibility of the caller to free the object.
  * \param[out]	handle		Handle for the current leaf; may be NULL.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \note The function does not take ownership of \c hsh, \c metaData nor \c handle, it is
+ * the responsibility of the caller to free the objects.
+ * \see #KSI_DataHash_free, #KSI_MetaData_free, #KSI_BlocksignerHandle_free.
  */
 int KSI_BlockSigner_addLeaf(KSI_BlockSigner *signer, KSI_DataHash *hsh, int level, KSI_MetaData *metaData, KSI_BlockSignerHandle **handle);
 
