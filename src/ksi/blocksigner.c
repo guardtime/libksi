@@ -29,15 +29,15 @@
 extern "C" {
 #endif
 
-KSI_DEFINE_LIST(KSI_BlocksignerHandle);
-KSI_IMPLEMENT_LIST(KSI_BlocksignerHandle, KSI_BlocksignerHandle_free);
+KSI_DEFINE_LIST(KSI_BlockSignerHandle);
+KSI_IMPLEMENT_LIST(KSI_BlockSignerHandle, KSI_BlockSignerHandle_free);
 
 
-struct KSI_Blocksigner_st {
+struct KSI_BlockSigner_st {
 	KSI_CTX *ctx;
 	size_t ref;
 	KSI_TreeBuilder *builder;
-	KSI_LIST(KSI_BlocksignerHandle) *leafList;
+	KSI_LIST(KSI_BlockSignerHandle) *leafList;
 	KSI_Signature *signature;
 	KSI_DataHash *prevLeaf;
 	KSI_OctetString *iv;
@@ -46,33 +46,33 @@ struct KSI_Blocksigner_st {
 	KSI_TreeBuilderLeafProcessor metaDataProcessor;
 };
 
-struct KSI_BlocksignerHandle_st {
+struct KSI_BlockSignerHandle_st {
 	KSI_CTX *ctx;
 	size_t ref;
 	KSI_TreeLeafHandle *leafHandle;
-	KSI_Blocksigner *signer;
+	KSI_BlockSigner *signer;
 };
 
-static KSI_DEFINE_REF(KSI_BlocksignerHandle);
-static KSI_IMPLEMENT_REF(KSI_BlocksignerHandle);
+static KSI_DEFINE_REF(KSI_BlockSignerHandle);
+static KSI_IMPLEMENT_REF(KSI_BlockSignerHandle);
 
-void KSI_BlocksignerHandle_free(KSI_BlocksignerHandle *handle) {
+void KSI_BlockSignerHandle_free(KSI_BlockSignerHandle *handle) {
 	if (handle != NULL && --handle->ref == 0) {
 		KSI_TreeLeafHandle_free(handle->leafHandle);
 		KSI_free(handle);
 	}
 }
 
-static int KSI_BlocksignerHandle_new(KSI_CTX *ctx, KSI_BlocksignerHandle **out) {
+static int KSI_BlockSignerHandle_new(KSI_CTX *ctx, KSI_BlockSignerHandle **out) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_BlocksignerHandle *tmp = NULL;
+	KSI_BlockSignerHandle *tmp = NULL;
 
 	if (out == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	tmp = KSI_new(KSI_BlocksignerHandle);
+	tmp = KSI_new(KSI_BlockSignerHandle);
 	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
@@ -90,7 +90,7 @@ static int KSI_BlocksignerHandle_new(KSI_CTX *ctx, KSI_BlocksignerHandle **out) 
 
 cleanup:
 
-	KSI_BlocksignerHandle_free(tmp);
+	KSI_BlockSignerHandle_free(tmp);
 
 	return res;
 
@@ -98,7 +98,7 @@ cleanup:
 
 static int metaDataProcessor(KSI_TreeNode *in, void *c, KSI_TreeNode **out) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_Blocksigner *signer = c;
+	KSI_BlockSigner *signer = c;
 	KSI_TreeNode *tmp = NULL;
 
 	if (in == NULL || c == NULL || out == NULL) {
@@ -125,9 +125,9 @@ cleanup:
 	return res;
 }
 
-int KSI_Blocksigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *prevLeaf, KSI_OctetString *initVal, KSI_Blocksigner **signer) {
+int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *prevLeaf, KSI_OctetString *initVal, KSI_BlockSigner **signer) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_Blocksigner *tmp = NULL;
+	KSI_BlockSigner *tmp = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -136,7 +136,7 @@ int KSI_Blocksigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *pr
 		goto cleanup;
 	}
 
-	tmp = KSI_new(KSI_Blocksigner);
+	tmp = KSI_new(KSI_BlockSigner);
 	if (tmp == NULL) {
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
@@ -157,7 +157,7 @@ int KSI_Blocksigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *pr
 	res = KSI_TreeBuilder_new(ctx, algoId, &tmp->builder);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_BlocksignerHandleList_new(&tmp->leafList);
+	res = KSI_BlockSignerHandleList_new(&tmp->leafList);
 	if (res != KSI_OK) goto cleanup;
 
 	tmp->prevLeaf = KSI_DataHash_ref(prevLeaf);
@@ -177,21 +177,21 @@ int KSI_Blocksigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *pr
 
 cleanup:
 
-	KSI_Blocksigner_free(tmp);
+	KSI_BlockSigner_free(tmp);
 
 	return res;
 }
 
-void KSI_Blocksigner_free(KSI_Blocksigner *signer) {
+void KSI_BlockSigner_free(KSI_BlockSigner *signer) {
 	if (signer != NULL && --signer->ref == 0) {
 		KSI_TreeBuilder_free(signer->builder);
-		KSI_BlocksignerHandleList_free(signer->leafList);
+		KSI_BlockSignerHandleList_free(signer->leafList);
 		KSI_Signature_free(signer->signature);
 		KSI_free(signer);
 	}
 }
 
-int KSI_Blocksigner_close(KSI_Blocksigner *signer, KSI_MultiSignature **ms) {
+int KSI_BlockSigner_close(KSI_BlockSigner *signer, KSI_MultiSignature **ms) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_MultiSignature *tmp = NULL;
 	KSI_Signature *sig = NULL;
@@ -232,18 +232,18 @@ int KSI_Blocksigner_close(KSI_Blocksigner *signer, KSI_MultiSignature **ms) {
 			goto cleanup;
 		}
 
-		for (i = 0; i < KSI_BlocksignerHandleList_length(signer->leafList); i++) {
-			KSI_BlocksignerHandle *hndl = NULL;
+		for (i = 0; i < KSI_BlockSignerHandleList_length(signer->leafList); i++) {
+			KSI_BlockSignerHandle *hndl = NULL;
 
 			/* Extract the element from the list. */
-			res = KSI_BlocksignerHandleList_elementAt(signer->leafList, i, &hndl);
+			res = KSI_BlockSignerHandleList_elementAt(signer->leafList, i, &hndl);
 			if (res != KSI_OK) {
 				KSI_pushError(signer->ctx, res, NULL);
 				goto cleanup;
 			}
 
 			/* Create a proper signature. */
-			res = KSI_BlocksignerHandle_getSignature(hndl, &sig);
+			res = KSI_BlockSignerHandle_getSignature(hndl, &sig);
 			if (res != KSI_OK) {
 				KSI_pushError(signer->ctx, res, NULL);
 				goto cleanup;
@@ -274,10 +274,10 @@ cleanup:
 	return res;
 }
 
-int KSI_Blocksigner_reset(KSI_Blocksigner *signer) {
+int KSI_BlockSigner_reset(KSI_BlockSigner *signer) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TreeBuilder *builder = NULL;
-	KSI_LIST(KSI_BlocksignerHandle) *leafList = NULL;
+	KSI_LIST(KSI_BlockSignerHandle) *leafList = NULL;
 
 	if (signer == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -292,7 +292,7 @@ int KSI_Blocksigner_reset(KSI_Blocksigner *signer) {
 		goto cleanup;
 	}
 
-	res = KSI_BlocksignerHandleList_new(&leafList);
+	res = KSI_BlockSignerHandleList_new(&leafList);
 	if (res != KSI_OK) {
 		KSI_pushError(signer->ctx, res, NULL);
 		goto cleanup;
@@ -305,7 +305,7 @@ int KSI_Blocksigner_reset(KSI_Blocksigner *signer) {
 	signer->builder = builder;
 	builder = NULL;
 
-	KSI_BlocksignerHandleList_free(signer->leafList);
+	KSI_BlockSignerHandleList_free(signer->leafList);
 	signer->leafList = leafList;
 	leafList = NULL;
 
@@ -314,15 +314,15 @@ int KSI_Blocksigner_reset(KSI_Blocksigner *signer) {
 cleanup:
 
 	KSI_TreeBuilder_free(builder);
-	KSI_BlocksignerHandleList_free(leafList);
+	KSI_BlockSignerHandleList_free(leafList);
 
 	return res;
 }
 
-int KSI_Blocksigner_addLeaf(KSI_Blocksigner *signer, KSI_DataHash *hsh, int level, KSI_MetaData *metaData, KSI_BlocksignerHandle **handle) {
+int KSI_BlockSigner_addLeaf(KSI_BlockSigner *signer, KSI_DataHash *hsh, int level, KSI_MetaData *metaData, KSI_BlockSignerHandle **handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TreeLeafHandle *leafHandle = NULL;
-	KSI_BlocksignerHandle *tmp = NULL;
+	KSI_BlockSignerHandle *tmp = NULL;
 
 	if (signer == NULL || hsh == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -340,7 +340,7 @@ int KSI_Blocksigner_addLeaf(KSI_Blocksigner *signer, KSI_DataHash *hsh, int leve
 		goto cleanup;
 	}
 
-	res = KSI_BlocksignerHandle_new(signer->ctx, &tmp);
+	res = KSI_BlockSignerHandle_new(signer->ctx, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(signer->ctx, res, NULL);
 		goto cleanup;
@@ -349,11 +349,11 @@ int KSI_Blocksigner_addLeaf(KSI_Blocksigner *signer, KSI_DataHash *hsh, int leve
 	tmp->leafHandle = leafHandle;
 	tmp->signer = signer;
 
-	res = KSI_BlocksignerHandleList_append(signer->leafList, tmp);
+	res = KSI_BlockSignerHandleList_append(signer->leafList, tmp);
 	if (res != KSI_OK) goto cleanup;
 
 	if (handle != NULL) {
-		*handle = KSI_BlocksignerHandle_ref(tmp);
+		*handle = KSI_BlockSignerHandle_ref(tmp);
 	}
 
 	tmp = NULL;
@@ -367,13 +367,13 @@ cleanup:
 	/* Cleanup the value, as this is only a pointer to a memory we do not control. */
 	signer->metaData = NULL;
 
-	KSI_BlocksignerHandle_free(tmp);
+	KSI_BlockSignerHandle_free(tmp);
 	KSI_TreeLeafHandle_free(leafHandle);
 
 	return res;
 }
 
-int KSI_BlocksignerHandle_getSignature(KSI_BlocksignerHandle *handle, KSI_Signature **sig) {
+int KSI_BlockSignerHandle_getSignature(KSI_BlockSignerHandle *handle, KSI_Signature **sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Signature *tmp = NULL;
 	KSI_AggregationHashChain *aggr = NULL;

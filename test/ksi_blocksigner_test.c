@@ -31,7 +31,7 @@ extern KSI_CTX *ctx;
 
 static const char *input_data[] = { "test1", "test2", "test3", "test4", "test5", "test6", "test7", NULL };
 
-static void addInput(CuTest *tc, KSI_Blocksigner *bs) {
+static void addInput(CuTest *tc, KSI_BlockSigner *bs) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i;
 	KSI_DataHash *hsh = NULL;
@@ -41,7 +41,7 @@ static void addInput(CuTest *tc, KSI_Blocksigner *bs) {
 		res = KSI_DataHash_create(ctx, input_data[i], strlen(input_data[i]), KSI_HASHALG_SHA2_256, &hsh);
 		CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
 
-		res = KSI_Blocksigner_add(bs, hsh);
+		res = KSI_BlockSigner_add(bs, hsh);
 		CuAssert(tc, "Unable to add data hash to the block signer.", res == KSI_OK);
 
 		KSI_DataHash_free(hsh);
@@ -51,26 +51,26 @@ static void addInput(CuTest *tc, KSI_Blocksigner *bs) {
 
 static void testFreeBeforeClose(CuTest *tc) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_Blocksigner *bs = NULL;
+	KSI_BlockSigner *bs = NULL;
 
-	res = KSI_Blocksigner_new(ctx, KSI_HASHALG_SHA1, NULL, NULL, &bs);
+	res = KSI_BlockSigner_new(ctx, KSI_HASHALG_SHA1, NULL, NULL, &bs);
 	CuAssert(tc, "Unable to create block signer instance.", res == KSI_OK && bs != NULL);
 
 	addInput(tc, bs);
 
-	KSI_Blocksigner_free(bs);
+	KSI_BlockSigner_free(bs);
 }
 
 static void testMultiSig(CuTest *tc) {
 #define TEST_AGGR_RESPONSE_FILE  "resource/tlv/ok-aggr-resp-1460631424.tlv"
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_Blocksigner *bs = NULL;
+	KSI_BlockSigner *bs = NULL;
 	KSI_MultiSignature *ms = NULL;
 	size_t i;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
 
-	res = KSI_Blocksigner_new(ctx, KSI_HASHALG_SHA1, NULL, NULL, &bs);
+	res = KSI_BlockSigner_new(ctx, KSI_HASHALG_SHA1, NULL, NULL, &bs);
 	CuAssert(tc, "Unable to create block signer instance.", res == KSI_OK && bs != NULL);
 
 	addInput(tc, bs);
@@ -78,7 +78,7 @@ static void testMultiSig(CuTest *tc) {
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
-	res = KSI_Blocksigner_close(bs, &ms);
+	res = KSI_BlockSigner_close(bs, &ms);
 	CuAssert(tc, "Unable to close block signer and extract multi signature.", res == KSI_OK && ms != NULL);
 
 	/* Lets loop over all the inputs and try to verify them. */
@@ -101,7 +101,7 @@ static void testMultiSig(CuTest *tc) {
 
 	KSI_DataHash_free(hsh);
 	KSI_MultiSignature_free(ms);
-	KSI_Blocksigner_free(bs);
+	KSI_BlockSigner_free(bs);
 #undef TEST_AGGR_RESPONSE_FILE
 }
 
@@ -137,27 +137,27 @@ cleanup:
 static void testMedaData(CuTest *tc) {
 #define TEST_AGGR_RESPONSE_FILE  "resource/tlv/ok-sig-2016-04-13-preaggr_response.tlv"
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_Blocksigner *bs = NULL;
+	KSI_BlockSigner *bs = NULL;
 	KSI_MetaData *md = NULL;
 	char data[] = "LAPTOP";
 	char *clientId[] = { "Alice", "Bob", "Claire", NULL };
 	size_t i;
 	KSI_DataHash *hsh = NULL;
-	KSI_BlocksignerHandle *hndl[] = {NULL, NULL, NULL};
+	KSI_BlockSignerHandle *hndl[] = {NULL, NULL, NULL};
 	KSI_Signature *sig = NULL;
 	char *id = NULL;
 
 	res = KSI_DataHash_create(ctx, data, strlen(data), KSI_HASHALG_SHA2_256, &hsh);
 	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
 
-	res = KSI_Blocksigner_new(ctx, KSI_HASHALG_SHA2_256, NULL, NULL, &bs);
+	res = KSI_BlockSigner_new(ctx, KSI_HASHALG_SHA2_256, NULL, NULL, &bs);
 	CuAssert(tc, "Unable to create block signer instance.", res == KSI_OK && bs != NULL);
 
 	for (i = 0; clientId[i] != NULL; i++) {
 		res = createMetaData(clientId[i], &md);
 		CuAssert(tc, "Unable to create meta-data.", res == KSI_OK && md != NULL);
 
-		res = KSI_Blocksigner_addLeaf(bs, hsh, 0, md, &hndl[i]);
+		res = KSI_BlockSigner_addLeaf(bs, hsh, 0, md, &hndl[i]);
 		CuAssert(tc, "Unable to add leaf to the block signer.", res == KSI_OK && hndl[i] != NULL);
 
 		KSI_MetaData_free(md);
@@ -168,7 +168,7 @@ static void testMedaData(CuTest *tc) {
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
-	res = KSI_Blocksigner_close(bs, NULL);
+	res = KSI_BlockSigner_close(bs, NULL);
 	CuAssert(tc, "Unable to close the blocksigner.", res == KSI_OK);
 
 	/* Loop over all the handles, and extract the signature. */
@@ -176,7 +176,7 @@ static void testMedaData(CuTest *tc) {
 		char expId[0xff];
 
 		/* Extract the signature. */
-		res = KSI_BlocksignerHandle_getSignature(hndl[i], &sig);
+		res = KSI_BlockSignerHandle_getSignature(hndl[i], &sig);
 		CuAssert(tc, "Unable to extract signature.", res == KSI_OK && sig != NULL);
 
 		/* Verify the signature. */
@@ -198,22 +198,22 @@ static void testMedaData(CuTest *tc) {
 		KSI_free(id);
 		id = NULL;
 
-		KSI_BlocksignerHandle_free(hndl[i]);
+		KSI_BlockSignerHandle_free(hndl[i]);
 	}
 
 
 	KSI_DataHash_free(hsh);
 	KSI_MetaData_free(md);
-	KSI_Blocksigner_free(bs);
+	KSI_BlockSigner_free(bs);
 #undef TEST_AGGR_RESPONSE_FILE
 }
 
 static void testSingle(CuTest *tc) {
 #define TEST_AGGR_RESPONSE_FILE  "resource/tlv/ok-sig-2014-07-01.1-aggr_response.tlv"
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_Blocksigner *bs = NULL;
+	KSI_BlockSigner *bs = NULL;
 	KSI_DataHash *hsh = NULL;
-	KSI_BlocksignerHandle *h = NULL;
+	KSI_BlockSignerHandle *h = NULL;
 	KSI_Signature *sig = NULL;
 	unsigned char *raw = NULL;
 	size_t len = 0;
@@ -224,16 +224,16 @@ static void testSingle(CuTest *tc) {
 	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
 	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
 
-	res = KSI_Blocksigner_new(ctx, KSI_HASHALG_SHA1, NULL, NULL, &bs);
+	res = KSI_BlockSigner_new(ctx, KSI_HASHALG_SHA1, NULL, NULL, &bs);
 	CuAssert(tc, "Unable to create block signer instance.", res == KSI_OK && bs != NULL);
 
-	res = KSI_Blocksigner_addLeaf(bs, hsh, 0, NULL, &h);
+	res = KSI_BlockSigner_addLeaf(bs, hsh, 0, NULL, &h);
 	CuAssert(tc, "Unable to add hash to the blocksigner.", res == KSI_OK && h != NULL);
 
-	res = KSI_Blocksigner_close(bs, NULL);
+	res = KSI_BlockSigner_close(bs, NULL);
 	CuAssert(tc, "Unable to close blocksigner.", res == KSI_OK);
 
-	res = KSI_BlocksignerHandle_getSignature(h, &sig);
+	res = KSI_BlockSignerHandle_getSignature(h, &sig);
 	CuAssert(tc, "Unable to extract signature from the blocksigner.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_serialize(sig, &raw, &len);
@@ -241,9 +241,9 @@ static void testSingle(CuTest *tc) {
 
 	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Serialized single signature from block signer.", raw, len);
 
-	KSI_BlocksignerHandle_free(h);
+	KSI_BlockSignerHandle_free(h);
 	KSI_Signature_free(sig);
-	KSI_Blocksigner_free(bs);
+	KSI_BlockSigner_free(bs);
 	KSI_DataHash_free(hsh);
 	KSI_free(raw);
 #undef TEST_AGGR_RESPONSE_FILE
@@ -252,9 +252,9 @@ static void testSingle(CuTest *tc) {
 static void testReset(CuTest *tc) {
 #define TEST_AGGR_RESPONSE_FILE  "resource/tlv/ok-sig-2014-07-01.1-aggr_response.tlv"
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_Blocksigner *bs = NULL;
+	KSI_BlockSigner *bs = NULL;
 	KSI_DataHash *hsh = NULL;
-	KSI_BlocksignerHandle *h = NULL;
+	KSI_BlockSignerHandle *h = NULL;
 	KSI_Signature *sig = NULL;
 	unsigned char *raw = NULL;
 	size_t len = 0;
@@ -265,30 +265,30 @@ static void testReset(CuTest *tc) {
 	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
 	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
 
-	res = KSI_Blocksigner_new(ctx, KSI_HASHALG_SHA1, NULL, NULL, &bs);
+	res = KSI_BlockSigner_new(ctx, KSI_HASHALG_SHA1, NULL, NULL, &bs);
 	CuAssert(tc, "Unable to create block signer instance.", res == KSI_OK && bs != NULL);
 
 	/* Add the temporary leafs. */
 
-	res = KSI_Blocksigner_addLeaf(bs, hsh, 0, NULL, NULL);
+	res = KSI_BlockSigner_addLeaf(bs, hsh, 0, NULL, NULL);
 	CuAssert(tc, "Unable to add 1st mock hash to the blocksigner.", res == KSI_OK);
 
-	res = KSI_Blocksigner_addLeaf(bs, hsh, 0, NULL, NULL);
+	res = KSI_BlockSigner_addLeaf(bs, hsh, 0, NULL, NULL);
 	CuAssert(tc, "Unable to add 2nd hash to the blocksigner.", res == KSI_OK);
 
-	res = KSI_Blocksigner_addLeaf(bs, hsh, 0, NULL, NULL);
+	res = KSI_BlockSigner_addLeaf(bs, hsh, 0, NULL, NULL);
 	CuAssert(tc, "Unable to add 3rd hash to the blocksigner.", res == KSI_OK);
 
-	res = KSI_Blocksigner_reset(bs);
+	res = KSI_BlockSigner_reset(bs);
 	CuAssert(tc, "Unable to reset the block signer", res == KSI_OK);
 
-	res = KSI_Blocksigner_addLeaf(bs, hsh, 0, NULL, &h);
+	res = KSI_BlockSigner_addLeaf(bs, hsh, 0, NULL, &h);
 	CuAssert(tc, "Unable to add actual hash to the blocksigner.", res == KSI_OK && h != NULL);
 
-	res = KSI_Blocksigner_close(bs, NULL);
+	res = KSI_BlockSigner_close(bs, NULL);
 	CuAssert(tc, "Unable to close blocksigner.", res == KSI_OK);
 
-	res = KSI_BlocksignerHandle_getSignature(h, &sig);
+	res = KSI_BlockSignerHandle_getSignature(h, &sig);
 	CuAssert(tc, "Unable to extract signature from the blocksigner.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_serialize(sig, &raw, &len);
@@ -296,9 +296,9 @@ static void testReset(CuTest *tc) {
 
 	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Serialized single signature from block signer.", raw, len);
 
-	KSI_BlocksignerHandle_free(h);
+	KSI_BlockSignerHandle_free(h);
 	KSI_Signature_free(sig);
-	KSI_Blocksigner_free(bs);
+	KSI_BlockSigner_free(bs);
 	KSI_DataHash_free(hsh);
 	KSI_free(raw);
 #undef TEST_AGGR_RESPONSE_FILE
@@ -306,12 +306,12 @@ static void testReset(CuTest *tc) {
 
 static void dummy(CuTest *tc) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_Blocksigner *bs = NULL;
+	KSI_BlockSigner *bs = NULL;
 
-	res = KSI_Blocksigner_new(ctx, KSI_HASHALG_SHA2_256, NULL, NULL, &bs);
+	res = KSI_BlockSigner_new(ctx, KSI_HASHALG_SHA2_256, NULL, NULL, &bs);
 	CuAssert(tc, "Unable to create block signer instance.", res == KSI_OK && bs != NULL);
 
-	KSI_Blocksigner_free(bs);
+	KSI_BlockSigner_free(bs);
 }
 
 

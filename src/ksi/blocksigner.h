@@ -27,8 +27,8 @@
 extern "C" {
 #endif
 
-typedef struct KSI_Blocksigner_st KSI_Blocksigner;
-typedef struct KSI_BlocksignerHandle_st KSI_BlocksignerHandle;
+typedef struct KSI_BlockSigner_st KSI_BlockSigner;
+typedef struct KSI_BlockSignerHandle_st KSI_BlockSignerHandle;
 
 /**
  * Create a new instance of #KSI_Blocksigner.
@@ -39,13 +39,13 @@ typedef struct KSI_BlocksignerHandle_st KSI_BlocksignerHandle;
  * \param[out]	signer		Pointer to the receiving pointer.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_Blocksigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *prevLeaf, KSI_OctetString *initVal, KSI_Blocksigner **signer);
+int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *prevLeaf, KSI_OctetString *initVal, KSI_BlockSigner **signer);
 
 /**
  * Cleanup method for the #KSI_Blocksigner.
  * \param[in]	signer		Instance of the #KSI_Blocksigner.
  */
-void KSI_Blocksigner_free(KSI_Blocksigner *signer);
+void KSI_BlockSigner_free(KSI_BlockSigner *signer);
 
 /**
  * This function finalizes the computation of the tree but does not free the resources.
@@ -53,7 +53,7 @@ void KSI_Blocksigner_free(KSI_Blocksigner *signer);
  * \param[out]	ms			Pointer to the receiving poitner.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_Blocksigner_close(KSI_Blocksigner *signer, KSI_MultiSignature **ms);
+int KSI_BlockSigner_close(KSI_BlockSigner *signer, KSI_MultiSignature **ms);
 
 /**
  * Resets the block signer to its initial state. This will invalidate all the
@@ -61,7 +61,7 @@ int KSI_Blocksigner_close(KSI_Blocksigner *signer, KSI_MultiSignature **ms);
  * \param[in]	signer		Instance of the #KSI_Blocksigner.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_Blocksigner_reset(KSI_Blocksigner *signer);
+int KSI_BlockSigner_reset(KSI_BlockSigner *signer);
 
 /**
  * Add a new leaf to the tree.
@@ -69,7 +69,7 @@ int KSI_Blocksigner_reset(KSI_Blocksigner *signer);
  * \param[in]	hsh			Hash value of the leaf.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-#define KSI_Blocksigner_add(signer, hsh) KSI_Blocksigner_addLeaf((signer), (hsh), 0, NULL, NULL)
+#define KSI_BlockSigner_add(signer, hsh) KSI_BlockSigner_addLeaf((signer), (hsh), 0, NULL, NULL)
 
 /**
  * Lowlevel function for adding leafs to the aggregation tree.
@@ -81,7 +81,7 @@ int KSI_Blocksigner_reset(KSI_Blocksigner *signer);
  * \param[out]	handle		Handle for the current leaf; may be NULL.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_Blocksigner_addLeaf(KSI_Blocksigner *signer, KSI_DataHash *hsh, int level, KSI_MetaData *metaData, KSI_BlocksignerHandle **handle);
+int KSI_BlockSigner_addLeaf(KSI_BlockSigner *signer, KSI_DataHash *hsh, int level, KSI_MetaData *metaData, KSI_BlockSignerHandle **handle);
 
 /**
  * This function creates a new instance of a KSI signature and stores it in the output
@@ -91,13 +91,13 @@ int KSI_Blocksigner_addLeaf(KSI_Blocksigner *signer, KSI_DataHash *hsh, int leve
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  * \see #KSI_Blocksigner_close, #KSI_Blocksigner_free, #KSI_Blocksigner_reset.
  */
-int KSI_BlocksignerHandle_getSignature(KSI_BlocksignerHandle *handle, KSI_Signature **sig);
+int KSI_BlockSignerHandle_getSignature(KSI_BlockSignerHandle *handle, KSI_Signature **sig);
 
 /**
  * Cleanup method for the handle.
  * \param[in]	handle		Instance of the #KSI_BlocksignerHandle
  */
-void KSI_BlocksignerHandle_free(KSI_BlocksignerHandle *handle);
+void KSI_BlockSignerHandle_free(KSI_BlockSignerHandle *handle);
 
 #ifdef __cplusplus
 }
