@@ -304,17 +304,6 @@ static void testReset(CuTest *tc) {
 #undef TEST_AGGR_RESPONSE_FILE
 }
 
-static void dummy(CuTest *tc) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_Blocksigner *bs = NULL;
-
-	res = KSI_Blocksigner_new(ctx, KSI_HASHALG_SHA2_256, NULL, NULL, &bs);
-	CuAssert(tc, "Unable to create block signer instance.", res == KSI_OK && bs != NULL);
-
-	KSI_Blocksigner_free(bs);
-}
-
-
 CuSuite* KSITest_Blocksigner_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
