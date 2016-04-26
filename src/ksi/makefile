@@ -110,6 +110,7 @@ LIB_OBJ = \
 
 INC_FILES = \
 	base32.h \
+	blocksigner.h \
 	common.h \
 	fast_tlv.h \
 	hmac.h \
