@@ -105,7 +105,8 @@ LIB_OBJ = \
 	$(OBJ_DIR)\pkitruststore.obj \
 	$(OBJ_DIR)\net_file.obj \
 	$(OBJ_DIR)\policy.obj \
-	$(OBJ_DIR)\verify_deprecated.obj
+	$(OBJ_DIR)\verify_deprecated.obj \
+	$(OBJ_DIR)\blocksigner.obj
 
 INC_FILES = \
 	base32.h \
@@ -140,6 +141,7 @@ INC_FILES = \
 	multi_signature.h \
 	policy.h \
 	verify_deprecated.h \
+	blocksigner.h \
 	$(VERSION_H)
 
 #Compiler and linker configuration
