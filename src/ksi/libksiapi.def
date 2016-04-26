@@ -79,12 +79,10 @@ EXPORTS
 	KSI_HashChainLink_new
 	KSI_HashChainLink_getIsLeft
 	KSI_HashChainLink_getLevelCorrection
-	KSI_HashChainLink_getLegacyId
 	KSI_HashChainLink_getMetaData
 	KSI_HashChainLink_getImprint
 	KSI_HashChainLink_setIsLeft
 	KSI_HashChainLink_setLevelCorrection
-	KSI_HashChainLink_setLegacyId
 	KSI_HashChainLink_setMetaData
 	KSI_HashChainLink_setImprint
 	KSI_HashChainLink_fromTlv
@@ -367,8 +365,23 @@ EXPORTS
 	KSI_AggregationHashChain_setAggrHashId
 	KSI_AggregationHashChain_setChain
 	KSI_AggregationHashChain_writeBytes
+	KSI_Signature_getPublicationInfo
 	KSI_AggregationHashChainList_aggregate
 	KSI_Signature_getPublicationInfo
+	KSI_Signature_signAggregated
+	KSI_Signature_signAggregationChain
+	KSI_AggregationHashChain_aggregate
+
+;tlv_element.h
+EXPORTS
+	KSI_TlvElement_new
+	KSI_TlvElement_free
+	KSI_TlvElement_serialize
+	KSI_TlvElement_getUtf8String
+	KSI_TlvElement_getOctetString
+	KSI_TlvElement_getInteger
+	KSI_TlvElement_setUtf8String
+	KSI_TlvElement_setInteger
 
 ;tlv.h
 EXPORTS
@@ -398,7 +411,17 @@ EXPORTS
 	KSI_TLV_parseBlob2
 	KSI_TLV_writeBytes
 
-;tlvtemplates.h
+;tree_builder.h
+EXPORTS
+	KSI_TreeLeafHandle_free
+	KSI_TreeLeafHandle_getAggregationChain
+	KSI_TreeBuilder_new
+	KSI_TreeBuilder_free
+	KSI_TreeBuilder_addDataHash
+	KSI_TreeBuilder_addMetaData
+	KSI_TreeBuilder_close
+
+;tlv_template.h
 EXPORTS
 	KSI_TlvTemplate_extract
 	KSI_TlvTemplate_parse
@@ -436,6 +459,15 @@ EXPORTS
 	KSI_ExtendPdu_template DATA
 	KSI_PublicationsFile_template DATA
 
+;tree_builder.h
+	KSI_TreeLeafHandle_free
+	KSI_TreeLeafHandle_getAggregationChain
+	KSI_TreeBuilder_new
+	KSI_TreeBuilder_free
+	KSI_TreeBuilder_addDataHash
+	KSI_TreeBuilder_addMetaData
+	KSI_TreeBuilder_close
+
 ;types.h
 EXPORTS
 	KSI_MetaData_free
@@ -445,7 +477,6 @@ EXPORTS
 	KSI_MetaData_getMachineId
 	KSI_MetaData_getSequenceNr
 	KSI_MetaData_getRequestTimeInMicros
-	KSI_MetaData_setRaw
 	KSI_MetaData_setClientId
 	KSI_MetaData_setMachineId
 	KSI_MetaData_setSequenceNr
@@ -964,6 +995,7 @@ EXPORTS
 	KSI_VerificationRule_AggregationChainInputHashVerification
 	KSI_VerificationRule_AggregationHashChainConsistency
 	KSI_VerificationRule_AggregationHashChainTimeConsistency
+	KSI_VerificationRule_AggregationHashChainIndexConsistency
 	KSI_VerificationRule_CalendarHashChainInputHashVerification
 	KSI_VerificationRule_CalendarHashChainAggregationTime
 	KSI_VerificationRule_CalendarHashChainRegistrationTime
@@ -975,7 +1007,7 @@ EXPORTS
 	KSI_VerificationRule_DocumentHashDoesNotExist
 	KSI_VerificationRule_DocumentHashExistence
 	KSI_VerificationRule_SignatureDoesNotContainPublication
-	KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch
+	KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch
 	KSI_VerificationRule_SignaturePublicationRecordExistence
 	KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash
 	KSI_VerificationRule_CalendarHashChainDoesNotExist
@@ -1007,6 +1039,7 @@ EXPORTS
 	KSI_Policy_getPublicationsFileBased
 	KSI_Policy_getUserProvidedPublicationBased
 	KSI_Policy_getGeneral
+	KSI_Policy_create
 	KSI_Policy_clone
 	KSI_Policy_setFallback
 	KSI_SignatureVerifier_verify

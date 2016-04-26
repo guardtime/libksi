@@ -32,7 +32,6 @@
 KSI_IMPORT_TLV_TEMPLATE(KSI_HashChainLink);
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarHashChain);
 
-
 KSI_IMPLEMENT_LIST(KSI_HashChainLink, KSI_HashChainLink_free);
 KSI_IMPLEMENT_LIST(KSI_CalendarHashChainLink, KSI_HashChainLink_free);
 KSI_IMPLEMENT_LIST(KSI_CalendarHashChain, KSI_CalendarHashChain_free);
@@ -82,6 +81,7 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 	KSI_OctetString *legacyId = NULL;
 	KSI_DataHash *hash = NULL;
 	KSI_OctetString *tmpOctStr = NULL;
+	unsigned char buf[0xffff + 4];
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || hsr == NULL || link == NULL) {
@@ -138,6 +138,9 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 				KSI_pushError(ctx, res, NULL);
 				goto cleanup;
 			}
+
+			KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Serialized metadata:", imprint, imprint_len);
+
 			break;
 		default:
 			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
@@ -158,7 +161,7 @@ cleanup:
 	KSI_nofree(legacyId);
 	KSI_nofree(metaData);
 	KSI_nofree(imprint);
-	KSI_nofree(tmpOctStr);
+	KSI_OctetString_free(tmpOctStr);
 
 	return res;
 }
@@ -274,13 +277,13 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 		}
 	}
 
+	sprintf(logMsg, "Finished %s hash chain aggregation with output hash.", isCalendar ? "calendar": "aggregation");
+	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, logMsg, hsh);
 
 	if (endLevel != NULL) *endLevel = level;
-	*outputHash = hsh;
+	if (outputHash != NULL) *outputHash = hsh;
 	hsh = NULL;
 
-	sprintf(logMsg, "Finished %s hash chain aggregation with output hash.", isCalendar ? "calendar": "aggregation");
-	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, logMsg, *outputHash);
 
 	res = KSI_OK;
 
