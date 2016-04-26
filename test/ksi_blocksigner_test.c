@@ -89,7 +89,7 @@ static void testMultiSig(CuTest *tc) {
 		res = KSI_MultiSignature_get(ms, hsh, &sig);
 		CuAssert(tc, "Unable to extract signature from the multi signature container.", res == KSI_OK && sig != NULL);
 
-		res = KSI_Signature_verifyDocument(sig, ctx, input_data[i], strlen(input_data[i]));
+		res = KSI_Signature_verifyDocument(sig, ctx, (void *)input_data[i], strlen(input_data[i]));
 		CuAssert(tc, "Unable to verify the input data.", res == KSI_OK);
 
 		KSI_Signature_free(sig);

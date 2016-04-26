@@ -1,5 +1,5 @@
 ;
-; Copyright 2013-2015 Guardtime, Inc.
+; Copyright 2013-2016 Guardtime, Inc.
 ;
 ; This file is part of the Guardtime client SDK.
 ;
@@ -380,6 +380,7 @@ EXPORTS
 	KSI_AggregationHashChainList_aggregate
 	KSI_Signature_getPublicationInfo
 	KSI_Signature_signAggregated
+	KSI_Signature_sign
 	KSI_Signature_signAggregationChain
 	KSI_AggregationHashChain_aggregate
 
