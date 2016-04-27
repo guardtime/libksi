@@ -22,23 +22,130 @@
 #include <ksi/ksi.h>
 #include "../ksi/policy.h"
 
-int main(int argc, char **argv) {
+static void openLogging(KSI_CTX *ksi, char *fileName, FILE **logFile) {
+	FILE *tmp = NULL;
+
+	tmp = fopen(fileName, "w");
+	if (tmp == NULL) {
+		fprintf(stderr, "Unable to open log file.\n");
+		goto cleanup;
+	}
+
+	KSI_CTX_setLoggerCallback(ksi, KSI_LOG_StreamLogger, tmp);
+	KSI_CTX_setLogLevel(ksi, KSI_LOG_DEBUG);
+
+	*logFile = tmp;
+
+cleanup:
+
+	return;
+}
+
+static int getDocumentHash(char *fileName, KSI_Signature *sig, KSI_DataHash **hsh) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_CTX *ksi = NULL;
-	KSI_Signature *sig = NULL;
-	KSI_Policy *policy = NULL;
-	KSI_VerificationContext *context = NULL;
-	KSI_PolicyVerificationResult *result = NULL;
-	KSI_DataHash *hsh = NULL;
+	KSI_DataHash *tmp = NULL;
 	KSI_DataHasher *hsr = NULL;
 	FILE *in = NULL;
 	unsigned char buf[1024];
 	size_t buf_len;
-	FILE *logFile = NULL;
+
+	if (fileName == NULL || sig == NULL || hsh == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	/* Create hasher. */
+	res = KSI_Signature_createDataHasher(sig, &hsr);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to create data hasher.\n");
+		goto cleanup;
+	}
+
+	/* Open the document for reading. */
+	in = fopen(fileName, "rb");
+	if (in == NULL) {
+		fprintf(stderr, "Unable to open data file '%s'.\n", fileName);
+		goto cleanup;
+	}
+
+	/* Calculate the hash of the document. */
+	while (!feof(in)) {
+		buf_len = fread(buf, 1, sizeof(buf), in);
+		res = KSI_DataHasher_add(hsr, buf, buf_len);
+		if (res != KSI_OK) {
+			fprintf(stderr, "Unable hash the document.\n");
+			goto cleanup;
+		}
+	}
+
+	/* Finalize the hash computation. */
+	res = KSI_DataHasher_close(hsr, &tmp);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Failed to close the hashing process.\n");
+		goto cleanup;
+	}
+
+	*hsh = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_DataHasher_free(hsr);
+	KSI_DataHash_free(tmp);
+	if (in != NULL) fclose(in);
+
+	return res;
+}
+
+static int printVerificationInfo(KSI_PolicyVerificationResult *result) {
+	int res;
 	size_t i;
 	size_t prefix;
-
 	char *resultName[] = {"OK", "NA", "FAIL"};
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	printf("Verification info:\n");
+	for (i = 0; i < KSI_RuleVerificationResultList_length(result->ruleResults); i++) {
+		KSI_RuleVerificationResult *tmp = NULL;
+
+		res = KSI_RuleVerificationResultList_elementAt(result->ruleResults, i, &tmp);
+		if (res != KSI_OK) goto cleanup;
+		/* Print the rule name without the prefix. */
+		if (!memcmp(tmp->ruleName, "KSI_VerificationRule_", strlen("KSI_VerificationRule_"))) {
+			prefix = strlen("KSI_VerificationRule_");
+		} else {
+			prefix = 0;
+		}
+		printf("%4s in rule %s\n", resultName[tmp->resultCode], tmp->ruleName + prefix);
+	}
+	printf("Final result:\n");
+	if (!memcmp(result->finalResult.ruleName, "KSI_VerificationRule_", strlen("KSI_VerificationRule_"))) {
+		prefix = strlen("KSI_VerificationRule_");
+	} else {
+		prefix = 0;
+	}
+	printf("%4s in rule %s\n", resultName[result->finalResult.resultCode], result->finalResult.ruleName + prefix);
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int main(int argc, char **argv) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ksi = NULL;
+	KSI_Signature *sig = NULL;
+	const KSI_Policy *policy = NULL;
+	KSI_VerificationContext *context = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_DataHash *hsh = NULL;
+	FILE *logFile = NULL;
 
 	const KSI_CertConstraint pubFileCertConstr[] = {
 			{ KSI_CERT_EMAIL, "publications@guardtime.com"},
@@ -52,19 +159,8 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	res = KSI_CTX_setDefaultPubFileCertConstraints(ksi, pubFileCertConstr);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to configure publications file cert constraints.\n");
-		goto cleanup;
-	}
-
-	logFile = fopen("ksi_verify.log", "w");
-	if (logFile == NULL) {
-		fprintf(stderr, "Unable to open log file.\n");
-	}
-
-	KSI_CTX_setLoggerCallback(ksi, KSI_LOG_StreamLogger, logFile);
-	KSI_CTX_setLogLevel(ksi, KSI_LOG_DEBUG);
+	/* Configure the logger. */
+	openLogging(ksi, "ksi_verify.log", &logFile);
 
 	KSI_LOG_info(ksi, "Using KSI version: '%s'", KSI_getVersion());
 
@@ -75,6 +171,7 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
+	/* Configure extender. */
 	res = KSI_CTX_setExtender(ksi, argv[3], "anon", "anon");
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to set extender parameters.\n");
@@ -88,12 +185,21 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
+	/* Set default certificate constraints for verifying the publications file. */
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ksi, pubFileCertConstr);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to configure publications file cert constraints.\n");
+		goto cleanup;
+	}
+
+	/* Get policy for verification. */
 	res = KSI_Policy_getGeneral(ksi, &policy);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Failed to get policy.\n");
 		goto cleanup;
 	}
 
+	/* Create context for verification. */
 	res = KSI_VerificationContext_create(ksi, &context);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Failed to create verification context.\n");
@@ -109,42 +215,22 @@ int main(int argc, char **argv) {
 	}
 	printf("ok\n");
 
+	/* Set signature in verification context. */
 	res = KSI_VerificationContext_setSignature(context, sig);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Failed to set signature in verification context.\n");
 		goto cleanup;
 	}
 
-	/* Create hasher. */
-	res = KSI_Signature_createDataHasher(sig, &hsr);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to create data hasher.\n");
-		goto cleanup;
-	}
-
 	if (strcmp(argv[1], "-")) {
-		in = fopen(argv[1], "rb");
-		if (in == NULL) {
-			fprintf(stderr, "Unable to open data file '%s'.\n", argv[1]);
-			goto cleanup;
-		}
-		/* Calculate the hash of the document. */
-		while (!feof(in)) {
-			buf_len = fread(buf, 1, sizeof(buf), in);
-			res = KSI_DataHasher_add(hsr, buf, buf_len);
-			if (res != KSI_OK) {
-				fprintf(stderr, "Unable hash the document.\n");
-				goto cleanup;
-			}
-		}
-
-		/* Finalize the hash computation. */
-		res = KSI_DataHasher_close(hsr, &hsh);
+		/* Calculate document hash. */
+		res = getDocumentHash(argv[1], sig, &hsh);
 		if (res != KSI_OK) {
-			fprintf(stderr, "Failed to close the hashing process.\n");
+			fprintf(stderr, "Unable to get document hash.\n");
 			goto cleanup;
 		}
 
+		/* Set document hash in verification context. */
 		res = KSI_VerificationContext_setDocumentHash(context, hsh);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Failed to set document hash in verification context.\n");
@@ -176,25 +262,12 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	printf("Verification info:\n");
-	for (i = 0; i < KSI_RuleVerificationResultList_length(result->ruleResults); i++) {
-		KSI_RuleVerificationResult *tmp = NULL;
-		res = KSI_RuleVerificationResultList_elementAt(result->ruleResults, i, &tmp);
-		if (res != KSI_OK) goto cleanup;
-		if (!memcmp(tmp->ruleName, "KSI_VerificationRule_", strlen("KSI_VerificationRule_"))) {
-			prefix = strlen("KSI_VerificationRule_");
-		} else {
-			prefix = 0;
-		}
-		printf("%4s in rule %s\n", resultName[tmp->resultCode], tmp->ruleName + prefix);
+	/* Print individual steps of verification. */
+	res = printVerificationInfo(result);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Failed to print verification info.\n");
+		goto cleanup;
 	}
-	printf("Final result:\n");
-	if (!memcmp(result->finalResult.ruleName, "KSI_VerificationRule_", strlen("KSI_VerificationRule_"))) {
-		prefix = strlen("KSI_VerificationRule_");
-	} else {
-		prefix = 0;
-	}
-	printf("%4s in rule %s\n", resultName[result->finalResult.resultCode], result->finalResult.ruleName + prefix);
 
 	res = KSI_OK;
 
@@ -205,11 +278,9 @@ cleanup:
 		KSI_ERR_statusDump(ksi, stderr);
 	}
 
-	if (in != NULL) fclose(in);
-
+	/* Free resources. */
 	KSI_VerificationContext_free(context);
 	KSI_PolicyVerificationResult_free(result);
-	KSI_DataHasher_free(hsr);
 	KSI_DataHash_free(hsh);
 	KSI_CTX_free(ksi);
 

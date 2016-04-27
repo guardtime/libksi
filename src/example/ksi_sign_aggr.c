@@ -132,12 +132,6 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	res = KSI_Signature_verifyAggregated(sign, ksi, 4);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Failed to verify signature.\n");
-		goto cleanup;
-	}
-
 	/* Output the signer id */
 	res = KSI_Signature_getSignerIdentity(sign, &signerIdentity);
 	if (res == KSI_OK) {
