@@ -44,6 +44,7 @@ struct KSI_BlockSigner_st {
 	KSI_MetaData *metaData;
 
 	KSI_TreeBuilderLeafProcessor metaDataProcessor;
+	KSI_TreeBuilderLeafProcessor maskingProcessor;
 };
 
 struct KSI_BlockSignerHandle_st {
@@ -125,13 +126,130 @@ cleanup:
 	return res;
 }
 
+static int maskingProcessor(KSI_TreeNode *in, void *c, KSI_TreeNode **out) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_BlockSigner *signer = c;
+	KSI_TreeNode *tmp = NULL;
+	KSI_DataHash *mask = NULL;
+	KSI_DataHasher *maskHsr = NULL;
+	KSI_DataHasher *leafHsr = NULL;
+	KSI_DataHash *leafHash = NULL;
+
+	if (in == NULL || c == NULL || out == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(signer->ctx);
+
+	if (signer->iv != NULL && signer->prevLeaf != NULL) {
+		/* For now only masking real hash values is supported. */
+		if (in->hash == NULL) {
+			KSI_pushError(signer->ctx, res = KSI_INVALID_STATE, "Only a tree node with a hash value may be used for masking.");
+			goto cleanup;
+		}
+
+		/* Calculate the mask value. */
+		res = KSI_DataHasher_open(signer->ctx, signer->builder->algo, &maskHsr);
+		if (res != KSI_OK) {
+			KSI_pushError(signer->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		/* Change here, if there is a need, to add previous values that are not nodes containing hash values. */
+		res = KSI_DataHasher_addImprint(maskHsr, signer->prevLeaf);
+		if (res != KSI_OK) {
+			KSI_pushError(signer->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_DataHasher_addOctetString(maskHsr, signer->iv);
+		if (res != KSI_OK) {
+			KSI_pushError(signer->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_DataHasher_close(maskHsr, &mask);
+		if (res != KSI_OK) {
+			KSI_pushError(signer->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		/* Add the mask as left link of the calculation. */
+		res = KSI_TreeNode_new(signer->ctx, mask, NULL, in->level, &tmp);
+		if (res != KSI_OK) {
+			KSI_pushError(signer->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		/* Calculate the actual leaf value. */
+		res = KSI_DataHasher_open(signer->ctx, signer->builder->algo, &leafHsr);
+		if (res != KSI_OK) {
+			KSI_pushError(signer->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_DataHasher_addImprint(leafHsr, mask);
+		if (res != KSI_OK) {
+			KSI_pushError(signer->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_DataHasher_addImprint(leafHsr, in->hash);
+		if (res != KSI_OK) {
+			KSI_pushError(signer->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		if (!KSI_IS_VALID_TREE_LEVEL(in->level + 1)) {
+			KSI_pushError(signer->ctx, res = KSI_INVALID_STATE, "The tree height is too large.");
+			goto cleanup;
+		}
+		unsigned char lvl = in->level + 1;
+
+		res = KSI_DataHasher_add(leafHsr, &lvl, 1);
+		if (res != KSI_OK) {
+			KSI_pushError(signer->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_DataHasher_close(leafHsr, &leafHash);
+		if (res != KSI_OK) {
+			KSI_pushError(signer->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		/* Swap the previous leaf hash value. */
+		KSI_DataHash_free(signer->prevLeaf);
+		signer->prevLeaf = KSI_DataHash_ref(leafHash);
+
+		*out = tmp;
+		tmp = NULL;
+	} else {
+		*out = NULL;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_DataHasher_free(leafHsr);
+	KSI_DataHasher_free(maskHsr);
+	KSI_DataHash_free(mask);
+	KSI_DataHash_free(leafHash);
+
+	KSI_TreeNode_free(tmp);
+
+	return res;
+}
+
 int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *prevLeaf, KSI_OctetString *initVal, KSI_BlockSigner **signer) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_BlockSigner *tmp = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
-	if (ctx == NULL || signer == NULL) {
+	if (ctx == NULL || signer == NULL || (prevLeaf == NULL && initVal != NULL) || (prevLeaf != NULL && initVal == NULL)) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
@@ -154,6 +272,9 @@ int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *pr
 	tmp->metaDataProcessor.c = tmp;
 	tmp->metaDataProcessor.fn = metaDataProcessor;
 
+	tmp->maskingProcessor.c = tmp;
+	tmp->maskingProcessor.fn = maskingProcessor;
+
 	res = KSI_TreeBuilder_new(ctx, algoId, &tmp->builder);
 	if (res != KSI_OK) goto cleanup;
 
@@ -162,6 +283,13 @@ int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *pr
 
 	tmp->prevLeaf = KSI_DataHash_ref(prevLeaf);
 	tmp->iv = KSI_OctetString_ref(initVal);
+
+	/* Add the masking handle. */
+	res = KSI_TreeBuilderLeafProcessorList_append(tmp->builder->cbList, &tmp->maskingProcessor);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	/* Add the client id handle. */
 	res = KSI_TreeBuilderLeafProcessorList_append(tmp->builder->cbList, &tmp->metaDataProcessor);
