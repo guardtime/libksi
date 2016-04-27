@@ -74,7 +74,8 @@ ALLTESTS_OBJ = \
 	$(OBJ_DIR)\verification_rule_tests.obj \
 	$(OBJ_DIR)\ksi_policy_test.obj \
 	$(OBJ_DIR)\ksi_sdk_version_test.obj \
-	$(OBJ_DIR)\ksi_flags_test.obj
+	$(OBJ_DIR)\ksi_flags_test.obj \
+	$(OBJ_DIR)\ksi_blocksigner_test.obj
 
 INTTESTS_OBJ = \
 	$(OBJ_DIR)\all_integration_tests.obj \
