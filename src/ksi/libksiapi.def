@@ -126,13 +126,6 @@ EXPORTS
 
 ;io.h
 EXPORTS
-	KSI_RDR_fromStream
-	KSI_RDR_fromSharedMem
-	KSI_RDR_isEOF
-	KSI_RDR_getOffset
-	KSI_RDR_read_ex
-	KSI_RDR_read_ptr
-	KSI_RDR_close
 	KSI_IO_readSocket
 	KSI_IO_readFile
 ;ksi.h
@@ -268,6 +261,7 @@ EXPORTS
 
 ;pkitruststore.h
 EXPORTS
+	KSI_PKITruststore_registerGlobals
 	KSI_PKITruststore_new
 	KSI_PKITruststore_free
 	KSI_PKICertificate_new
@@ -417,7 +411,6 @@ EXPORTS
 	KSI_TLV_clone
 	KSI_TLV_setUintValue
 	KSI_TLV_setRawValue
-	KSI_TLV_fromReader
 	KSI_TLV_getAbsoluteOffset
 	KSI_TLV_getRelativeOffset
 	KSI_TLV_parseBlob2

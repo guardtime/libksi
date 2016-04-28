@@ -134,11 +134,6 @@ int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned tag, int isNonCritical, int isFor
 	typedef struct KSI_ERR_st KSI_ERR;
 
 	/**
-	 * Reader object for parsing raw data into TLV's.
-	 */
-	typedef struct KSI_RDR_st KSI_RDR;
-
-	/**
 	 * Immutable object representing a 64-bit integer.
 	 * \see #KSI_Integer_new, #KSI_Integer_free.
 	 */

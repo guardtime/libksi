@@ -35,7 +35,24 @@ extern KSI_CTX *ctx;
 #define TEST_USER "anon"
 #define TEST_PASS "anon"
 
+static void replaceContext() {
+	KSI_LoggerCallback loggerCb;
+	void *loggerCtx;
+	int logLevel;
+
+	loggerCb = ctx->loggerCB;
+	loggerCtx = ctx->loggerCtx;
+	logLevel = ctx->logLevel;
+
+	KSI_CTX_free(ctx);
+	KSI_CTX_new(&ctx);
+	KSI_CTX_setLoggerCallback(ctx, loggerCb, loggerCtx);
+	KSI_CTX_setLogLevel(ctx, logLevel);
+}
+
 static void preTest(void) {
+	/* Start each policy test with a clean KSI context. */
+	replaceContext();
 	ctx->netProvider->requestCount = 0;
 }
 
@@ -2250,6 +2267,7 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithoutPublicationRecord(C
 	};
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_SIGNATURE_FILE_WITH_PUBLICATION  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
@@ -2274,6 +2292,9 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithoutPublicationRecord(C
 
 	context->userData.extendingAllowed = 1;
 
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
+
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
@@ -2287,6 +2308,8 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithoutPublicationRecord(C
 	KSI_VerificationContext_free(context);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_SIGNATURE_FILE_WITH_PUBLICATION
+#undef TEST_EXT_RESPONSE_FILE
+
 }
 
 static void TestUserProvidedPublicationBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
@@ -2652,6 +2675,7 @@ static void TestGeneralPolicy_OK_AfterExtendingToUserPublication(CuTest* tc) {
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_SIGNATURE_FILE_WITH_PUBLICATION  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.15042014.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
@@ -2682,6 +2706,9 @@ static void TestGeneralPolicy_OK_AfterExtendingToUserPublication(CuTest* tc) {
 
 	context->userData.extendingAllowed = 1;
 
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
+
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
@@ -2696,6 +2723,7 @@ static void TestGeneralPolicy_OK_AfterExtendingToUserPublication(CuTest* tc) {
 #undef TEST_SIGNATURE_FILE
 #undef TEST_SIGNATURE_FILE_WITH_PUBLICATION
 #undef TEST_PUBLICATIONS_FILE
+#undef TEST_EXT_RESPONSE_FILE
 }
 
 static void TestGeneralPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {

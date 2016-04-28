@@ -24,6 +24,7 @@
 #include "cutest/CuTest.h"
 #include <ksi/compatibility.h>
 #include <ksi/err.h>
+#include <ksi/fast_tlv.h>
 #include "support_tests.h"
 
 #ifdef __cplusplus
@@ -37,6 +38,7 @@ int KSITest_memcmp(void *ptr1, void *ptr2, size_t len);
 int KSITest_DataHash_fromStr(KSI_CTX *ctx, const char *hexstr, KSI_DataHash **hsh);
 int KSITest_decodeHexStr(const char *hexstr, unsigned char *buf, size_t buf_size, size_t *buf_length);
 int KSITest_setDefaultPubfileAndVerInfo(KSI_CTX *ctx);
+int KSITest_tlvFromFile(const char *fileName, KSI_TLV **tlv);
 
 CuSuite* KSITest_CTX_getSuite(void);
 CuSuite* KSITest_RDR_getSuite(void);

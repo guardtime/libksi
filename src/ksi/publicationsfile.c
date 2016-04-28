@@ -31,6 +31,7 @@
 #include "tlv_template.h"
 #include "pkitruststore.h"
 #include "ctx_impl.h"
+#include "fast_tlv.h"
 
 #define PUB_FILE_HEADER_ID "KSIPUBLF"
 
@@ -51,7 +52,9 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationsFile)
 KSI_END_TLV_TEMPLATE
 
 struct generator_st {
-	KSI_RDR *reader;
+	KSI_CTX *ctx;
+	const unsigned char *ptr;
+	size_t len;
 	KSI_TLV *tlv;
 	size_t offset;
 	size_t sig_offset;
@@ -60,8 +63,14 @@ struct generator_st {
 
 static int generateNextTlv(struct generator_st *gen, KSI_TLV **tlv) {
 	int res = KSI_UNKNOWN_ERROR;
-	unsigned char *buf;
-	size_t consumed;
+	unsigned char *buf = NULL;
+	size_t consumed = 0;
+	KSI_FTLV ftlv;
+
+	if (gen == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
 
 	if (gen->tlv != NULL) {
@@ -69,46 +78,58 @@ static int generateNextTlv(struct generator_st *gen, KSI_TLV **tlv) {
 		gen->tlv = NULL;
 	}
 
-	buf = KSI_malloc(0xffff + 4);
-	if (buf == NULL) {
-		KSI_pushError(KSI_RDR_getCtx(gen->reader), res = KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_TLV_readTlv(gen->reader, buf, 0xffff + 4, &consumed);
-	if (res != KSI_OK) {
-		KSI_pushError(KSI_RDR_getCtx(gen->reader), res, NULL);
-		goto cleanup;
-	}
-
-	if (consumed > UINT_MAX){
-		KSI_pushError(KSI_RDR_getCtx(gen->reader), res = KSI_INVALID_FORMAT, "Input too large.");
-		goto cleanup;
-	}
-
-	if (consumed > 0) {
-		if (gen->hasSignature) {
-			/* The signature must be the last element. */
-			KSI_pushError(KSI_RDR_getCtx(gen->reader), res = KSI_INVALID_FORMAT, "The signature must be the last element.");
-			goto cleanup;
-		}
-
-		res = KSI_TLV_parseBlob2(KSI_RDR_getCtx(gen->reader), buf, (unsigned)consumed, 1, &gen->tlv);
+	/* Try to parse only when there is something left to parse. */
+	if (gen->len > 0) {
+		memset(&ftlv, 0, sizeof(ftlv));
+		res = KSI_FTLV_memRead(gen->ptr, gen->len, &ftlv);
 		if (res != KSI_OK) {
-			KSI_pushError(KSI_RDR_getCtx(gen->reader), res, NULL);
+			KSI_pushError(gen->ctx, res, NULL);
 			goto cleanup;
 		}
 
-		buf = NULL;
+		consumed = ftlv.hdr_len + ftlv.dat_len;
 
-		if (KSI_TLV_getTag(gen->tlv) == 0x0704) {
-			gen->sig_offset = gen->offset;
-			gen->hasSignature = true;
+		buf = KSI_malloc(consumed);
+		if (buf == NULL) {
+			KSI_pushError(gen->ctx, res = KSI_OUT_OF_MEMORY, NULL);
+			goto cleanup;
 		}
+
+		memcpy(buf, gen->ptr, consumed);
+
+		gen->ptr += consumed;
+		gen->len -= consumed;
+
+		/* Make sure the buffer is not overflowing. */
+		if (consumed > UINT_MAX){
+			KSI_pushError(gen->ctx, res = KSI_INVALID_FORMAT, "Input too large.");
+			goto cleanup;
+		}
+
+		if (consumed > 0) {
+			if (gen->hasSignature) {
+				/* The signature must be the last element. */
+				KSI_pushError(gen->ctx, res = KSI_INVALID_FORMAT, "The signature must be the last element.");
+				goto cleanup;
+			}
+
+			res = KSI_TLV_parseBlob2(gen->ctx, buf, (unsigned)consumed, 1, &gen->tlv);
+			if (res != KSI_OK) {
+				KSI_pushError(gen->ctx, res, NULL);
+				goto cleanup;
+			}
+
+			buf = NULL;
+
+			if (KSI_TLV_getTag(gen->tlv) == 0x0704) {
+				gen->sig_offset = gen->offset;
+				gen->hasSignature = true;
+			}
+		}
+
 	}
 
 	gen->offset += consumed;
-
 	*tlv = gen->tlv;
 
 	res = KSI_OK;
@@ -151,12 +172,10 @@ cleanup:
 
 int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, size_t raw_len, KSI_PublicationsFile **pubFile) {
 	int res;
-	unsigned char hdr[8];
-	size_t hdr_len = 0;
 	KSI_PublicationsFile *tmp = NULL;
-	KSI_RDR *reader = NULL;
-	struct generator_st gen = {NULL, NULL, 0, 0, false};
+	struct generator_st gen = {ctx, raw, raw_len, NULL, 0, 0, false};
 	unsigned char *tmpRaw = NULL;
+	const size_t hdrLen = strlen(PUB_FILE_HEADER_ID);
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -165,21 +184,8 @@ int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, size_t raw_len, KS
 		goto cleanup;
 	}
 
-
-	res = KSI_RDR_fromSharedMem(ctx, (unsigned char *)raw, raw_len, &reader);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Read file header. */
-	res = KSI_RDR_read_ex(reader, hdr, sizeof(hdr), &hdr_len);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	if (hdr_len != sizeof(hdr) || memcmp(hdr, PUB_FILE_HEADER_ID, hdr_len)) {
+	/* Check the header. */
+	if (gen.len < hdrLen || memcmp(gen.ptr, PUB_FILE_HEADER_ID, hdrLen)) {
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Unrecognized header.");
 		goto cleanup;
 	}
@@ -191,11 +197,11 @@ int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, size_t raw_len, KS
 		goto cleanup;
 	}
 
-	tmp->signedDataLength = strlen(PUB_FILE_HEADER_ID);
+	tmp->signedDataLength = hdrLen;
 
 	/* Initialize generator. */
-	gen.reader = reader;
-	gen.tlv = NULL;
+	gen.ptr += hdrLen;
+	gen.len -= hdrLen;
 
 	/* Read the payload of the file, and make no assumptions with the ordering. */
 	res = KSI_TlvTemplate_extractGenerator(ctx, tmp, (void *)&gen, KSI_TLV_TEMPLATE(KSI_PublicationsFile), (int (*)(void *, KSI_TLV **))generateNextTlv);
@@ -229,7 +235,6 @@ cleanup:
 	KSI_free(tmpRaw);
 	KSI_TLV_free(gen.tlv);
 	KSI_PublicationsFile_free(tmp);
-	KSI_RDR_close(reader);
 
 	return res;
 }
@@ -288,7 +293,6 @@ cleanup:
 
 int KSI_PublicationsFile_fromFile(KSI_CTX *ctx, const char *fileName, KSI_PublicationsFile **pubFile) {
 	int res;
-	KSI_RDR *reader = NULL;
 	KSI_PublicationsFile *tmp = NULL;
 	unsigned char *raw = NULL;
 	size_t raw_len = 0;
@@ -359,7 +363,6 @@ cleanup:
 
 	if (f != NULL) fclose(f);
 	KSI_free(raw);
-	KSI_RDR_close(reader);
 	KSI_PublicationsFile_free(tmp);
 
 	return res;
