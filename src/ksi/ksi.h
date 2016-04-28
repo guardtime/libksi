@@ -586,7 +586,7 @@ int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *net);
  * \param[in]	email	Email address.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  * \note This method is deprecated and will be removed in later versions, use
- * #KSI_CTX_putPubFileCertConstraint with #KSI_CERT_EMAIL instead.
+ * #KSI_CTX_setDefaultPubFileCertConstraints with #KSI_CERT_EMAIL instead.
  */
 KSI_FN_DEPRECATED(int KSI_CTX_setPublicationCertEmail(KSI_CTX *ctx, const char *email));
 
