@@ -146,7 +146,7 @@ cleanup:
 	return res;
 }
 
-int KSI_TlvElement_detatch(KSI_TlvElement *el) {
+int KSI_TlvElement_detach(KSI_TlvElement *el) {
 	int res = KSI_UNKNOWN_ERROR;
 	unsigned char *buf = NULL;
 	size_t len;
@@ -648,7 +648,7 @@ int KSI_TlvElement_setUtf8String(KSI_TlvElement *parent, unsigned tag, KSI_Utf8S
 	el->ptr_own = 0;
 	el->ptr = (unsigned char *)KSI_Utf8String_cstr(s);
 
-	res = KSI_TlvElement_detatch(el);
+	res = KSI_TlvElement_detach(el);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_TlvElement_setElement(parent, el);
@@ -694,7 +694,7 @@ int KSI_TlvElement_setInteger(KSI_TlvElement *parent, unsigned tag, KSI_Integer 
 		goto cleanup;
 	}
 
-	res = KSI_TlvElement_detatch(el);
+	res = KSI_TlvElement_detach(el);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_TlvElement_setElement(parent, el);

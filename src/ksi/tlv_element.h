@@ -44,7 +44,7 @@ extern "C" {
 		KSI_FTLV ftlv;
 		/** Pointer to the underlying TLV. Payload begins at ptr + ftlv.hdr_len. */
 		unsigned char *ptr;
-		/** Does the element own the pointer (can and should it be freed by #KSI_TlvElement_free and #KSI_TlvElement_detatch). */
+		/** Does the element own the pointer (can and should it be freed by #KSI_TlvElement_free and #KSI_TlvElement_detach). */
 		int ptr_own;
 		/** List of sub elements. */
 		KSI_LIST(KSI_TlvElement) *subList;
@@ -65,7 +65,7 @@ extern "C" {
 	 * \param[in]	dat_len	Length of the serialized TLV.
 	 * \param[out]	out		Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_TlvElement_free, #KSI_TlvElement_detatch.
+	 * \see #KSI_TlvElement_free, #KSI_TlvElement_detach.
 	 */
 	int KSI_TlvElement_parse(unsigned char *dat, size_t dat_len, KSI_TlvElement **out);
 
@@ -76,7 +76,7 @@ extern "C" {
 	 * \param[in]	el		The #KSI_TlvElement.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_TlvElement_detatch(KSI_TlvElement *el);
+	int KSI_TlvElement_detach(KSI_TlvElement *el);
 
 	/**
 	 * Cleanup method for the #KSI_TlvElement.

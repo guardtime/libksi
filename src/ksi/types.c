@@ -458,7 +458,7 @@ int KSI_MetaData_fromTlv(KSI_TLV *tlv, KSI_MetaData **metaData) {
 	tmp->impl->ftlv.dat_len = len;
 
 	/* Detach the element. */
-	res = KSI_TlvElement_detatch(tmp->impl);
+	res = KSI_TlvElement_detach(tmp->impl);
 	if (res != KSI_OK) goto cleanup;
 
 	/* Make sure the required elements are present. */
