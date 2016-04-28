@@ -2853,13 +2853,13 @@ static void Test_InvalidPKISignatureType(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expectedFail = {
-		VER_RES_FAIL,
-		VER_ERR_KEY_2,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_KEY_2,
 		"KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification"
 	};
 	KSI_RuleVerificationResult expectedOk = {
-		VER_RES_OK,
-		VER_ERR_NONE,
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/invalid_pki_sig_type-2014-04-30.1.ksig"
@@ -2920,13 +2920,13 @@ static void Test_InvalidPKISignatureValue(CuTest* tc) {
 	KSI_VerificationContext *context = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expectedFail = {
-		VER_RES_FAIL,
-		VER_ERR_KEY_2,
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_KEY_2,
 		"KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification"
 	};
 	KSI_RuleVerificationResult expectedOk = {
-		VER_RES_OK,
-		VER_ERR_NONE,
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime"
 	};
 #define TEST_SIGNATURE_FILE "resource/tlv/invalid_pki_sig_value-2014-04-30.1.ksig"
