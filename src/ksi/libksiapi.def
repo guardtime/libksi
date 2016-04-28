@@ -147,6 +147,7 @@ EXPORTS
 	KSI_receivePublicationsFile
 	KSI_verifyPublicationsFile
 	KSI_verifySignature
+	KSI_verifyDataHash
 	KSI_createSignature
 	KSI_extendSignature
 	KSI_CTX_setLogLevel

@@ -476,7 +476,7 @@ cleanup:
 	return res;
 }
 
-static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ctx) {
+static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *hsh) {
 	int res;
 	const KSI_Policy *policy = NULL;
 	KSI_VerificationContext *context = NULL;
@@ -505,6 +505,14 @@ static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ct
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
+	}
+
+	if (hsh != NULL) {
+		res = KSI_VerificationContext_setDocumentHash(context, hsh);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
 	}
 
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
@@ -539,7 +547,29 @@ int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig) {
 		goto cleanup;
 	}
 
-	res = KSI_SignatureVerifier_verifySignature(sig, ctx);
+	res = KSI_SignatureVerifier_verifySignature(sig, ctx, NULL);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_verifyDataHash(KSI_CTX *ctx, KSI_Signature *sig, KSI_DataHash *hsh) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || sig == NULL || hsh == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_SignatureVerifier_verifySignature(sig, ctx, hsh);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx,res, NULL);
 		goto cleanup;

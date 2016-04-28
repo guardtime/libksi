@@ -1,5 +1,7 @@
 Version 3.8
 
+* IMPROVEMENT: Added KSI_verifyDataHash.
+
 2016-04-18 release(3.8.1428)
 
 * IMPROVEMENT: Removed SHA-224 support.

@@ -102,7 +102,7 @@ static void Test_CreateSignatureDefaultProvider(CuTest* tc) {
 	res = KSI_Signature_sign(ctx, hsh, &sig);
 	CuAssert(tc, "Unable to create signature.", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_verifyDataHash(sig, ctx, hsh);
+	res = KSI_verifyDataHash(ctx, sig, hsh);
 	CuAssert(tc, "Unable to verify signature.", res == KSI_OK);
 
 	KSI_DataHash_free(hsh);
@@ -128,7 +128,7 @@ static void Test_TCPCreateSignatureDefaultProvider(CuTest* tc) {
 	KSI_CTX_setAggregator(ctx, conf.aggregator_url, conf.aggregator_user, conf.aggregator_pass);
 	CuAssert(tc, "Unable to create signature.", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_verifyDataHash(sig, ctx, hsh);
+	res = KSI_verifyDataHash(ctx, sig, hsh);
 	CuAssert(tc, "Unable to verify signature.", res == KSI_OK);
 
 	KSI_DataHash_free(hsh);
