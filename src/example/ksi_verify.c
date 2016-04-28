@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2016 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -20,122 +20,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <ksi/ksi.h>
-#include "../ksi/policy.h"
-
-static void openLogging(KSI_CTX *ksi, char *fileName, FILE **logFile) {
-	FILE *tmp = NULL;
-
-	tmp = fopen(fileName, "w");
-	if (tmp == NULL) {
-		fprintf(stderr, "Unable to open log file.\n");
-		goto cleanup;
-	}
-
-	KSI_CTX_setLoggerCallback(ksi, KSI_LOG_StreamLogger, tmp);
-	KSI_CTX_setLogLevel(ksi, KSI_LOG_DEBUG);
-
-	*logFile = tmp;
-
-cleanup:
-
-	return;
-}
-
-static int getDocumentHash(char *fileName, KSI_Signature *sig, KSI_DataHash **hsh) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_DataHash *tmp = NULL;
-	KSI_DataHasher *hsr = NULL;
-	FILE *in = NULL;
-	unsigned char buf[1024];
-	size_t buf_len;
-
-	if (fileName == NULL || sig == NULL || hsh == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	/* Create hasher. */
-	res = KSI_Signature_createDataHasher(sig, &hsr);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to create data hasher.\n");
-		goto cleanup;
-	}
-
-	/* Open the document for reading. */
-	in = fopen(fileName, "rb");
-	if (in == NULL) {
-		fprintf(stderr, "Unable to open data file '%s'.\n", fileName);
-		goto cleanup;
-	}
-
-	/* Calculate the hash of the document. */
-	while (!feof(in)) {
-		buf_len = fread(buf, 1, sizeof(buf), in);
-		res = KSI_DataHasher_add(hsr, buf, buf_len);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Unable hash the document.\n");
-			goto cleanup;
-		}
-	}
-
-	/* Finalize the hash computation. */
-	res = KSI_DataHasher_close(hsr, &tmp);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Failed to close the hashing process.\n");
-		goto cleanup;
-	}
-
-	*hsh = tmp;
-	tmp = NULL;
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_DataHasher_free(hsr);
-	KSI_DataHash_free(tmp);
-	if (in != NULL) fclose(in);
-
-	return res;
-}
-
-static int printVerificationInfo(KSI_PolicyVerificationResult *result) {
-	int res;
-	size_t i;
-	size_t prefix;
-	char *resultName[] = {"OK", "NA", "FAIL"};
-
-	if (result == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	printf("Verification info:\n");
-	for (i = 0; i < KSI_RuleVerificationResultList_length(result->ruleResults); i++) {
-		KSI_RuleVerificationResult *tmp = NULL;
-
-		res = KSI_RuleVerificationResultList_elementAt(result->ruleResults, i, &tmp);
-		if (res != KSI_OK) goto cleanup;
-		/* Print the rule name without the prefix. */
-		if (!memcmp(tmp->ruleName, "KSI_VerificationRule_", strlen("KSI_VerificationRule_"))) {
-			prefix = strlen("KSI_VerificationRule_");
-		} else {
-			prefix = 0;
-		}
-		printf("%4s in rule %s\n", resultName[tmp->resultCode], tmp->ruleName + prefix);
-	}
-	printf("Final result:\n");
-	if (!memcmp(result->finalResult.ruleName, "KSI_VerificationRule_", strlen("KSI_VerificationRule_"))) {
-		prefix = strlen("KSI_VerificationRule_");
-	} else {
-		prefix = 0;
-	}
-	printf("%4s in rule %s\n", resultName[result->finalResult.resultCode], result->finalResult.ruleName + prefix);
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
+#include <ksi/policy.h>
+#include "ksi_common.h"
 
 int main(int argc, char **argv) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -160,7 +46,8 @@ int main(int argc, char **argv) {
 	}
 
 	/* Configure the logger. */
-	openLogging(ksi, "ksi_verify.log", &logFile);
+	res = OpenLogging(ksi, "ksi_verify.log", &logFile);
+	if (res != KSI_OK) goto cleanup;
 
 	KSI_LOG_info(ksi, "Using KSI version: '%s'", KSI_getVersion());
 
@@ -224,7 +111,7 @@ int main(int argc, char **argv) {
 
 	if (strcmp(argv[1], "-")) {
 		/* Calculate document hash. */
-		res = getDocumentHash(argv[1], sig, &hsh);
+		res = GetDocumentHash(argv[1], sig, &hsh);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable to get document hash.\n");
 			goto cleanup;
@@ -263,7 +150,7 @@ int main(int argc, char **argv) {
 	}
 
 	/* Print individual steps of verification. */
-	res = printVerificationInfo(result);
+	res = PrintVerificationInfo(result);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Failed to print verification info.\n");
 		goto cleanup;

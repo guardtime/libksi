@@ -22,6 +22,7 @@
 
 #include <ksi/ksi.h>
 #include <ksi/net_uri.h>
+#include "ksi_common.h"
 
 int main(int argc, char **argv) {
 	KSI_CTX *ksi = NULL;
@@ -79,15 +80,10 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	logFile = fopen("ksi_sign.log", "w");
-	if (logFile == NULL) {
-		fprintf(stderr, "Unable to open log file.\n");
-		res = KSI_IO_ERROR;
-		goto cleanup;
-	}
+	/* Configure the logger. */
+	res = OpenLogging(ksi, "ksi_sign.log", &logFile);
+	if (res != KSI_OK) goto cleanup;
 
-	KSI_CTX_setLoggerCallback(ksi, KSI_LOG_StreamLogger, logFile);
-	KSI_CTX_setLogLevel(ksi, KSI_LOG_DEBUG);
 
 	KSI_LOG_info(ksi, "Using KSI version: '%s'", KSI_getVersion());
 
