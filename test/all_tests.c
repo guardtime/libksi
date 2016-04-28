@@ -24,9 +24,9 @@
 
 #include "cutest/CuTest.h"
 #include "all_tests.h"
-#include "../src/ksi/pkitruststore.h"
-#include "../src/ksi/ksi.h"
-
+#include <ksi/pkitruststore.h>
+#include <ksi/ksi.h>
+#include <ksi/tlv.h>
 
 #ifndef _WIN32
 #  ifdef HAVE_CONFIG_H
@@ -111,7 +111,8 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSITest_VerificationRules_getSuite);
 	addSuite(suite, KSITest_Policy_getSuite);
 	addSuite(suite, KSITest_versionNumber_getSuite);
-    addSuite(suite, KSITest_Flags_getSuite);
+	addSuite(suite, KSITest_Blocksigner_getSuite);
+	addSuite(suite, KSITest_Flags_getSuite);
 
 	return suite;
 }
@@ -251,6 +252,37 @@ cleanup:
 
 	return res;
 }
+
+int KSITest_tlvFromFile(const char *fileName, KSI_TLV **tlv) {
+	int res;
+	FILE *f = NULL;
+	unsigned char buf[0xffff + 4];
+	size_t len;
+	KSI_FTLV ftlv;
+
+	KSI_LOG_debug(ctx, "Open TLV file: '%s'", fileName);
+
+	f = fopen(fileName, "rb");
+	if (f == NULL) {
+		res = KSI_IO_ERROR;
+		goto cleanup;
+	}
+
+	res = KSI_FTLV_fileRead(f, buf, sizeof(buf), &len, &ftlv);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_TLV_parseBlob(ctx, buf, len, tlv);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OK;
+
+cleanup:
+
+	if (f != NULL) fclose(f);
+
+	return res;
+}
+
 
 int main(int argc, char** argv) {
 	if (argc != 2) {

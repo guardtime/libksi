@@ -30,28 +30,6 @@
 extern KSI_CTX *ctx;
 char tmp_path[1024];
 
-static int tlvFromFile(const char *fileName, KSI_TLV **tlv) {
-	int res;
-	KSI_RDR *rdr = NULL;
-	FILE *f = NULL;
-
-	KSI_LOG_debug(ctx, "Open TLV file: '%s'", fileName);
-
-	f = fopen(fileName, "rb");
-	res = KSI_RDR_fromStream(ctx, f, &rdr);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_TLV_fromReader(rdr, tlv);
-	if (res != KSI_OK) goto cleanup;
-
-cleanup:
-
-	if (f != NULL) fclose(f);
-	KSI_RDR_close(rdr);
-
-	return res;
-}
-
 static int DER_CertFromFile(KSI_CTX *ctx, const char *fileName, KSI_PKICertificate **cert) {
 	int res;
 	FILE *f = NULL;
@@ -134,7 +112,7 @@ static void TestParseAndSeraializeCert(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = tlvFromFile(getFullResourcePath("resource/tlv/ok-crt.tlv"), &tlv);
+	res = KSITest_tlvFromFile(getFullResourcePath("resource/tlv/ok-crt.tlv"), &tlv);
 	CuAssert(tc, "Unable to read tlv from file.", res == KSI_OK && tlv != NULL);
 
 	res = KSI_PKICertificate_fromTlv(tlv, &cert);

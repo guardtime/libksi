@@ -22,7 +22,7 @@
 
 #include <ksi/ksi.h>
 #include <ksi/net_http.h>
-
+#include "ksi_common.h"
 
 int main(int argc, char **argv) {
 	KSI_CTX *ksi = NULL;
@@ -54,19 +54,16 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	logFile = fopen("ksi_extend.log", "w");
-	if (logFile == NULL) {
-		fprintf(stderr, "Unable to open log file.\n");
-	}
+	/* Configure the logger. */
+	res = OpenLogging(ksi, "ksi_extend.log", &logFile);
+	if (res != KSI_OK) goto cleanup;
+
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ksi, pubFileCertConstr);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to configure publications file cert constraints.\n");
 		goto cleanup;
 	}
-
-	KSI_CTX_setLoggerCallback(ksi, KSI_LOG_StreamLogger, logFile);
-	KSI_CTX_setLogLevel(ksi, KSI_LOG_DEBUG);
 
 	KSI_LOG_info(ksi, "Using KSI version: '%s'", KSI_getVersion());
 

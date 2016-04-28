@@ -28,23 +28,10 @@
 extern "C" {
 #endif
 
-typedef enum RuleType_en {
-	RULE_TYPE_BASIC,
-	RULE_TYPE_COMPOSITE_AND,
-	RULE_TYPE_COMPOSITE_OR
-} RuleType;
-
 typedef int (*Verifier)(KSI_VerificationContext *, KSI_RuleVerificationResult *);
 
-typedef struct Rule_st {
-	RuleType type;
-	const void *rule;
-} Rule;
-
-KSI_DEFINE_LIST(Rule);
-
 struct KSI_Policy_st {
-	const Rule *rules;
+	const KSI_Rule *rules;
 	const KSI_Policy *fallbackPolicy;
 	const char *policyName;
 };

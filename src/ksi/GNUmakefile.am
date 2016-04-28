@@ -25,6 +25,8 @@ lib_LTLIBRARIES = libksi.la
 libksi_la_SOURCES = \
 	base32.c \
 	base32.h \
+	blocksigner.c \
+	blocksigner.h \
 	common.h \
 	base.c \
 	config.h \
@@ -111,6 +113,7 @@ libksi_la_SOURCES = \
 otherincludedir = $(includedir)/ksi
 otherinclude_HEADERS = \
 	base32.h \
+	blocksigner.h \
 	common.h \
 	crc32.h \
 	err.h \

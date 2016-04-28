@@ -29,7 +29,7 @@ extern "C" {
 
 	/**
 	 * This rule verifies that if RFC3161 record is present then the calculated output hash (from RFC3161 record) equals to
-	 * aggregation chain input hash. If RFC3161 record is missing then the status {@link VerificationResultCode#OK} is
+	 * aggregation chain input hash. If RFC3161 record is missing then the status #KSI_VER_RES_OK is
 	 * returned.
 	 *
 	 * \param[in]	info		Verification context to be used for given rule
@@ -192,15 +192,15 @@ extern "C" {
 
 	/**
 	 * This rule checks that:
-	 * - the extended signature contains the same count of right aggregation hash chain links
-	 * - the extended signature right aggregation hash chain links are equal to the not extended signature right links
+	 * - the extended signature contains the same count of right calendar hash chain links
+	 * - the extended signature right calendar hash chain links are equal to the not extended signature right links
 	 *
 	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to check if keyless signature contains publication record or not.
@@ -429,8 +429,6 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
-
-
 
 #ifdef __cplusplus
 }

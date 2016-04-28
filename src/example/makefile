@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2015 Guardtime, Inc.
+# Copyright 2013-2016 Guardtime, Inc.
 #
 # This file is part of the Guardtime client SDK.
 #
@@ -62,6 +62,9 @@ EXAMPLE_OBJ = \
 	$(OBJ_DIR)\ksi_multisig_extend.ojb \
 	$(OBJ_DIR)\ksi_verify_pub.obj 
 
+COMMON_OBJ = \
+	$(OBJ_DIR)\ksi_common.obj
+
 #Output exe files. Must have the same base name as corresponding obj file. 
 EXAMPLE_BIN = \
 	$(BIN_DIR)\ksi_sign.exe \
@@ -118,8 +121,8 @@ LDFLAGS = $(LDFLAGS) $(LDEXTRA)
 default: $(EXAMPLE_BIN) 
 
 #Linking obj files to exe files
-$(EXAMPLE_BIN): $(OBJ_DIR)\$(@B).obj $(OBJ_DIR) $(BIN_DIR)
-	link $(LDFLAGS)  /OUT:$@ $(OBJ_DIR)\$(@B).obj  $(EXT_LIB)
+$(EXAMPLE_BIN): $(OBJ_DIR)\$(@B).obj $(COMMON_OBJ) $(OBJ_DIR) $(BIN_DIR)
+	link $(LDFLAGS)  /OUT:$@ $(OBJ_DIR)\$(@B).obj $(COMMON_OBJ) $(EXT_LIB)
 !IF "$(DLL)" == "dll"
 	copy "$(LIB_DIR)\libksiapi$(RTL).dll" "$(BIN_DIR)\" /Y /D
 !IF "$(NET_PROVIDER)" == "CURL"

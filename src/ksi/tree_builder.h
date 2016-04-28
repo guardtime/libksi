@@ -34,11 +34,96 @@ extern "C" {
  * @{
  */
 
+#define KSI_TREE_BUILDER_STACK_LEN 0x100
+
+/**
+ * A structure to represent the leaf and internal nodes of a hash tree.
+ */
+typedef struct KSI_TreeNode_st KSI_TreeNode;
+
+/**
+ * The leaf processor structure contains the function to pre processes the node specified as
+ * the input and a context for the preprocessor. The function may alter the input node and
+ * optionally generate a new one - usually meaning the input hash has been aggregated and the
+ * output node is the root value of the aggregation.
+ */
+typedef struct KSI_TreeBuilderLeafProcessor_st KSI_TreeBuilderLeafProcessor;
+
+struct KSI_TreeNode_st {
+	/** KSI context. */
+	KSI_CTX *ctx;
+	/** Hash value of the node, may not be not NULL when metaData is not NULL. */
+	KSI_DataHash *hash;
+	/** Metadata value of the node, may not be not NULL when hash is not NULL */
+	KSI_MetaData *metaData;
+	/** The aggregation level of this node, 0 for leafs and 0xff is the maximum value. */
+	unsigned level;
+	/** Pointer to the parent element. */
+	KSI_TreeNode *parent;
+	/** The left child node. */
+	KSI_TreeNode *leftChild;
+	/** The right child node. */
+	KSI_TreeNode *rightChild;
+};
+
+struct KSI_TreeBuilderLeafProcessor_st {
+	/** Processor function.
+	 * \param[in]	in		The input tree node.
+	 * \param[in]	c		The processor context.
+	 * \param[out]	out		Output value, if the function creates a new node - output may be NULL.
+	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+	 */
+	int (*fn)(KSI_TreeNode *in, void *c, KSI_TreeNode **out);
+	/** The processor context. */
+	void *c;
+};
+
+KSI_DEFINE_LIST(KSI_TreeBuilderLeafProcessor);
+
+struct KSI_TreeBuilder_st {
+	/** KSI context. */
+	KSI_CTX *ctx;
+	/** Reference counter for the object. */
+	size_t ref;
+	/** The root node of the computed tree. If set, the computation is finished. */
+	KSI_TreeNode *rootNode;
+	/** Hashing algorithm for the internal nodes. */
+	KSI_HashAlgorithm algo;
+	/** Stack of the root nodes of complete binary trees. */
+	KSI_TreeNode *stack[KSI_TREE_BUILDER_STACK_LEN];
+	/** Callback functions for the leaf node. They are executed as a sequence
+	 * where the last output tree node is the input node for the next call. The
+	 * final output node is added to the tree. */
+	KSI_LIST(KSI_TreeBuilderLeafProcessor) *cbList;
+};
+
 /**
  * The tree leaf handle is used to generate an aggregation hash chain for
  * a specific leaf added to the tree builder.
  */
 typedef struct KSI_TreeLeafHandle_st KSI_TreeLeafHandle;
+KSI_DEFINE_LIST(KSI_TreeLeafHandle);
+KSI_DEFINE_REF(KSI_TreeLeafHandle);
+
+/**
+ * This is the constructor method for the #KSI_TreeNode structure.
+ * \param[in]	ctx			KSI context.
+ * \param[in]	hash		Input hash.
+ * \param[in]	metaData	Metadata field.
+ * \param[in]	level		The level of the tree node.
+ * \param[out]	node		Pointer to the receiving ponter.
+ * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+ * \note Exactly one of \c hash or \c metaData must be a not NULL pointer.
+ * \note The function will not take ownership of the \c hash or \c metaData fields and thus
+ * the pointers must be freed by the caller.
+ */
+int KSI_TreeNode_new(KSI_CTX *ctx, KSI_DataHash *hash, KSI_MetaData *metaData, int level, KSI_TreeNode **node);
+
+/**
+ * Destructor method for #KSI_TreeNode.
+ * \param[in]	node		Pointer to the object.
+ */
+void KSI_TreeNode_free(KSI_TreeNode *node);
 
 /**
  * Free the tree leaf handle.
@@ -104,7 +189,7 @@ int KSI_TreeBuilder_addMetaData(KSI_TreeBuilder *builder, KSI_MetaData *metaData
 /**
  * This function finalizes the building of the tree. After calling this function no more leafs
  * may be added to the computation and doing so would result in an error.
- * \param[in]	buillder 	The builder.
+ * \param[in]	builder 	The builder.
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
  */
 int KSI_TreeBuilder_close(KSI_TreeBuilder *builder);
@@ -112,6 +197,7 @@ int KSI_TreeBuilder_close(KSI_TreeBuilder *builder);
 /**
  * @}
  */
+
 #ifdef __cplusplus
 }
 #endif
