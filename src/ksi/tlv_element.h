@@ -1,3 +1,22 @@
+/*
+ * Copyright 2013-2015 Guardtime, Inc.
+ *
+ * This file is part of the Guardtime client SDK.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES, CONDITIONS, OR OTHER LICENSES OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ * "Guardtime" and "KSI" are trademarks or registered trademarks of
+ * Guardtime, Inc., and no license to trademarks is granted; Guardtime
+ * reserves and retains all trademark rights.
+ */
+
 #ifndef TLV_ELEMENT_H_
 #define TLV_ELEMENT_H_
 
@@ -46,7 +65,7 @@ extern "C" {
 	 * \param[in]	dat_len	Length of the serialized TLV.
 	 * \param[out]	out		Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_TlvElement_free, #KSI_TlvElement_detatch.
+	 * \see #KSI_TlvElement_free, #KSI_TlvElement_detach.
 	 */
 	int KSI_TlvElement_parse(unsigned char *dat, size_t dat_len, KSI_TlvElement **out);
 
@@ -57,7 +76,7 @@ extern "C" {
 	 * \param[in]	el		The #KSI_TlvElement.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_TlvElement_detatch(KSI_TlvElement *el);
+	int KSI_TlvElement_detach(KSI_TlvElement *el);
 
 	/**
 	 * Cleanup method for the #KSI_TlvElement.

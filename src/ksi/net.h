@@ -247,7 +247,7 @@ extern "C" {
 	/**
 	 * Returns the status of the handle.
 	 * \param[in]		handle			Network handle.
-	 * \return status code of the last call or #KSI_NETWORL_PENDING if #KSI_RequestHandle_perform nor
+	 * \return status code of the last call or #KSI_NETWORK_PENDING if #KSI_RequestHandle_perform nor
 	 * #KSI_NetworkClient_performAll have been called on the handle.
 	 * \param[out]		err				Pointer to the status structure.
 	 * \note The function will return #KSI_INVALID_ARGUMENT if handle is \c NULL.
@@ -353,9 +353,11 @@ extern "C" {
 	int KSI_NetworkClient_setPublicationsFileEndpoint(KSI_NetworkClient *net, KSI_NetEndpoint *endp);
 
 	KSI_DEFINE_REF(KSI_RequestHandle);
+
 	/**
 	 * @}
 	 */
+
 #ifdef __cplusplus
 }
 #endif
