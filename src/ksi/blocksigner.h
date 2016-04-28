@@ -81,7 +81,7 @@ int KSI_BlockSigner_reset(KSI_BlockSigner *signer);
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  * \note The function does not take ownership of \c hsh, \c metaData nor \c handle, it is
  * the responsibility of the caller to free the objects.
- * \see #KSI_DataHash_free, #KSI_MetaData_free, #KSI_BlocksignerHandle_free.
+ * \see #KSI_DataHash_free, #KSI_MetaData_free, #KSI_BlockSignerHandle_free.
  */
 int KSI_BlockSigner_addLeaf(KSI_BlockSigner *signer, KSI_DataHash *hsh, int level, KSI_MetaData *metaData, KSI_BlockSignerHandle **handle);
 

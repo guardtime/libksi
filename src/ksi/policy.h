@@ -225,7 +225,7 @@ extern "C" {
 
 	/**
 	 * Verifies a KSI signature (provided in \c context) according to specified \c policy.
-	 * If the verification fails with #NA or #FAIL and a fallback policy has been set with
+	 * If the verification fails with #KSI_VER_RES_NA or #KSI_VER_RES_FAIL and a fallback policy has been set with
 	 * #KSI_Policy_setFallback, the verification continues according to the fallback policy.
 	 * A list of verification results is created into \c result, containing the result and error
 	 * codes for the primary policy and potential fallback policies. The user is responsible
@@ -252,7 +252,7 @@ extern "C" {
 	 * Frees the verification result object.
 	 * \param[in]	result		List of verification results to be freed.
 	 *
-	 * \see #KSI_Policy_verify
+	 * \see #KSI_SignatureVerifier_verify
 	 */
 	void KSI_PolicyVerificationResult_free(KSI_PolicyVerificationResult *result);
 

@@ -1,3 +1,22 @@
+/*
+ * Copyright 2013-2015 Guardtime, Inc.
+ *
+ * This file is part of the Guardtime client SDK.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License").
+ * You may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES, CONDITIONS, OR OTHER LICENSES OF ANY KIND, either
+ * express or implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ * "Guardtime" and "KSI" are trademarks or registered trademarks of
+ * Guardtime, Inc., and no license to trademarks is granted; Guardtime
+ * reserves and retains all trademark rights.
+ */
+
 #ifndef TLV_ELEMENT_H_
 #define TLV_ELEMENT_H_
 
@@ -25,7 +44,7 @@ extern "C" {
 		KSI_FTLV ftlv;
 		/** Pointer to the underlying TLV. Payload begins at ptr + ftlv.hdr_len. */
 		unsigned char *ptr;
-		/** Does the element own the pointer (can and should it be freed by #KSI_TlvElement_free and #KSI_TlvElement_detach). */
+		/** Does the element own the pointer (can and should it be freed by #KSI_TlvElement_free and #KSI_TlvElement_detatch). */
 		int ptr_own;
 		/** List of sub elements. */
 		KSI_LIST(KSI_TlvElement) *subList;
