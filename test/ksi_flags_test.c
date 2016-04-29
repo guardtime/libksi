@@ -23,8 +23,8 @@
 
 extern KSI_CTX *ctx;
 
-#ifdef _WIN32
-_declspec( dllimport )
+#ifdef BUILD_DLL
+__declspec( dllimport )
 #endif
 KSI_IMPORT_TLV_TEMPLATE(KSI_Signature)
 
