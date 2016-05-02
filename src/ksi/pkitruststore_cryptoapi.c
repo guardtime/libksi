@@ -138,15 +138,17 @@ int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) 
 	/*Open new store */
 	tmp_FileTrustStore = CertOpenStore(CERT_STORE_PROV_FILENAME_A, 0, 0, 0, path);
 	if (tmp_FileTrustStore == NULL) {
-		KSI_LOG_debug(trust->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
-		KSI_pushError(trust->ctx, res = KSI_INVALID_FORMAT, NULL);
+		const char *errmsg = getMSError(GetLastError(), buf, sizeof(buf));
+		KSI_LOG_debug(trust->ctx, errmsg);
+		KSI_pushError(trust->ctx, res = KSI_INVALID_FORMAT, errmsg);
 		goto cleanup;
 	}
 
 	/*Update with priority 0 store*/
 	if (!CertAddStoreToCollection(trust->collectionStore, tmp_FileTrustStore, 0, 0)) {
-		KSI_LOG_debug(trust->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
-		KSI_pushError(trust->ctx, res = KSI_INVALID_FORMAT, NULL);
+		const char *errmsg = getMSError(GetLastError(), buf, sizeof(buf));
+		KSI_LOG_debug(trust->ctx, errmsg);
+		KSI_pushError(trust->ctx, res = KSI_INVALID_FORMAT, errmsg);
 		goto cleanup;
 	}
 
@@ -930,10 +932,10 @@ static int pki_truststore_verifySignature(KSI_PKITruststore *pki, const unsigned
 
 	/* Verify signature and signed data. Certificate is extracted from signature. */
 	msgPara.cbSize = sizeof(CRYPT_VERIFY_MESSAGE_PARA);
-    msgPara.dwMsgAndCertEncodingType = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
-    msgPara.hCryptProv = 0;
-    msgPara.pfnGetSignerCertificate = NULL;
-    msgPara.pvGetArg = NULL;
+	msgPara.dwMsgAndCertEncodingType = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
+	msgPara.hCryptProv = 0;
+	msgPara.pfnGetSignerCertificate = NULL;
+	msgPara.pvGetArg = NULL;
 	dLen = (DWORD) data_len;
 
 	if (!CryptVerifyDetachedMessageSignature(&msgPara, 0, signature->pkcs7.pbData, signature->pkcs7.cbData, 1, &data, &dLen, &subjectCert)){
