@@ -139,7 +139,7 @@ int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) 
 	tmp_FileTrustStore = CertOpenStore(CERT_STORE_PROV_FILENAME_A, 0, 0, 0, path);
 	if (tmp_FileTrustStore == NULL) {
 		const char *errmsg = getMSError(GetLastError(), buf, sizeof(buf));
-		KSI_LOG_debug(trust->ctx, errmsg);
+		KSI_LOG_debug(trust->ctx, (char *)errmsg);
 		KSI_pushError(trust->ctx, res = KSI_INVALID_FORMAT, errmsg);
 		goto cleanup;
 	}
@@ -147,7 +147,7 @@ int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) 
 	/*Update with priority 0 store*/
 	if (!CertAddStoreToCollection(trust->collectionStore, tmp_FileTrustStore, 0, 0)) {
 		const char *errmsg = getMSError(GetLastError(), buf, sizeof(buf));
-		KSI_LOG_debug(trust->ctx, errmsg);
+		KSI_LOG_debug(trust->ctx, (char *)errmsg);
 		KSI_pushError(trust->ctx, res = KSI_INVALID_FORMAT, errmsg);
 		goto cleanup;
 	}
