@@ -56,6 +56,8 @@ static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_AggregationAuthRec*, aggregationA
 static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_PublicationRecord*, publication, PublicationRecord)
 static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_RFC3161*, rfc3161, RFC3161)
 
+static int replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain);
+
 static int checkSignatureInternals(KSI_Signature *sig) {
 	if (sig == NULL) return KSI_INVALID_ARGUMENT;
 	if (sig->aggregationChainList == NULL || KSI_AggregationHashChainList_length(sig->aggregationChainList) == 0) return KSI_INVALID_FORMAT;
@@ -612,6 +614,7 @@ static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
 	tmp->calendarAuthRec = NULL;
 	tmp->rfc3161 = NULL;
 	tmp->publication = NULL;
+	tmp->replaceCalendarChain = replaceCalendarChain;
 
 	res = KSI_VerificationResult_init(&tmp->verificationResult, ctx);
 	if (res != KSI_OK) {
@@ -876,10 +879,8 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain) {
+static int replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain) {
 	int res;
-	KSI_DataHash *newCalInputHash = NULL;
-	KSI_DataHash *oldCalInputHash = NULL;
 	KSI_DataHash *aggrOutputHash = NULL;
 	KSI_TLV *oldCalChainTlv = NULL;
 	KSI_TLV *newCalChainTlv = NULL;
@@ -891,33 +892,6 @@ int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain
 		goto cleanup;
 	}
 	KSI_ERR_clearErrors(sig->ctx);
-
-	res = KSI_CalendarHashChain_getInputHash(calendarHashChain, &newCalInputHash);
-	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	if (newCalInputHash == NULL) {
-		KSI_pushError(sig->ctx, res = KSI_INVALID_FORMAT, "Given calendar hash chain does not contain an input hash.");
-		goto cleanup;
-	}
-
-	res = (sig->calendarChain == NULL) ?
-			/* Calculate calendar input hash from signature aggregation hash chain list. */
-			KSI_AggregationHashChainList_aggregate(sig->aggregationChainList, sig->ctx, 0, &aggrOutputHash) :
-			/* Get calendar input hash from calendar hash chain. */
-			KSI_CalendarHashChain_getInputHash(sig->calendarChain, &oldCalInputHash);
-	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* The output hash and input hash have to be equal */
-	if (!KSI_DataHash_equals(newCalInputHash, (aggrOutputHash ? aggrOutputHash : oldCalInputHash))) {
-		KSI_pushError(sig->ctx, res = KSI_EXTEND_WRONG_CAL_CHAIN, NULL);
-		goto cleanup;
-	}
 
 	res = KSI_TLV_getNestedList(sig->baseTlv, &nestedList);
 	if (res != KSI_OK) {
@@ -978,8 +952,6 @@ int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain
 cleanup:
 
 	KSI_nofree(nestedList);
-	KSI_nofree(oldCalInputHash);
-	KSI_nofree(newCalInputHash);
 
 	KSI_DataHash_free(aggrOutputHash);
 	KSI_TLV_free(newCalChainTlv);
@@ -1281,7 +1253,7 @@ cleanup:
 static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *sig, KSI_uint64_t rootLevel, KSI_DataHash *docHsh) {
 	int res;
 	const KSI_Policy *policy = NULL;
-	KSI_VerificationContext *context = NULL;
+	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -1302,33 +1274,17 @@ static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *s
 		goto cleanup;
 	}
 
-	res = KSI_VerificationContext_create(ctx, &context);
+	res = KSI_VerificationContext_init(&context, ctx);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = KSI_VerificationContext_setSignature(context, sig);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
+	context.sig = sig;
+	context.docAggrLevel = rootLevel;
+	context.documentHash = docHsh;
 
-	res = KSI_VerificationContext_setAggregationLevel(context, rootLevel);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	if (docHsh != NULL) {
-		res = KSI_VerificationContext_setDocumentHash(context, KSI_DataHash_ref(docHsh));
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
-	}
-
-	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	res = KSI_SignatureVerifier_verify(policy, &context, &result);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, "Internal verification of signature not completed.");
 		goto cleanup;
@@ -1344,8 +1300,6 @@ static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *s
 
 cleanup:
 
-	KSI_VerificationContext_setSignature(context, NULL);
-	KSI_VerificationContext_free(context);
 	KSI_PolicyVerificationResult_free(result);
 
 	return res;
@@ -1550,7 +1504,7 @@ int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *
 	}
 
 	/* Add the hash chain to the signature. */
-	res = KSI_Signature_replaceCalendarChain(tmp, calHashChain);
+	res = tmp->replaceCalendarChain(tmp, calHashChain);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -2282,7 +2236,7 @@ int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, si
 	int res;
 	KSI_DataHash *hsh = NULL;
 	const KSI_Policy *policy = NULL;
-	KSI_VerificationContext *context = NULL;
+	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_HashAlgorithm algo_id = -1;
 
@@ -2310,25 +2264,16 @@ int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, si
 		goto cleanup;
 	}
 
-	res = KSI_VerificationContext_create(ctx, &context);
+	res = KSI_VerificationContext_init(&context, ctx);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = KSI_VerificationContext_setSignature(context, sig);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
+	context.sig = sig;
+	context.documentHash = hsh;
 
-	res = KSI_VerificationContext_setDocumentHash(context, hsh);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	res = KSI_SignatureVerifier_verify(policy, &context, &result);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, "Verification of signature not completed.");
 		goto cleanup;
@@ -2344,9 +2289,6 @@ int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, si
 
 cleanup:
 
-	KSI_VerificationContext_setSignature(context, NULL); /* Prevent the freeing of signature. */
-	KSI_VerificationContext_setDocumentHash(context, NULL); /* Prevent the freeing of document hash. */
-	KSI_VerificationContext_free(context);
 	KSI_PolicyVerificationResult_free(result);
 	KSI_DataHash_free(hsh);
 

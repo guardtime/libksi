@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2016 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -258,7 +258,7 @@ int KSI_OctetString_LegacyId_getUtf8String(KSI_OctetString *id, KSI_Utf8String *
 		goto cleanup;
 	}
 
-	res = KSI_Utf8String_new(id->ctx, &(raw[LEGACY_ID_STR_POS]), raw[LEGACY_ID_STR_LEN_POS] + 1, &tmp);
+	res = KSI_Utf8String_new(id->ctx, (char *)(raw + LEGACY_ID_STR_POS), raw[LEGACY_ID_STR_LEN_POS] + 1, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(id->ctx, res, NULL);
 		goto cleanup;

@@ -27,6 +27,30 @@
 extern "C" {
 #endif
 
+	struct KSI_VerificationContext_st {
+		KSI_CTX *ctx;
+
+		/** Signature to be verified */
+		KSI_Signature *sig;
+
+		/** Indicates whether signature extention is allowed */
+		int extendingAllowed;
+
+		/** Initial aggregation level. */
+		KSI_uint64_t docAggrLevel;
+
+		/** Document hash to be verified. */
+		KSI_DataHash *documentHash;
+
+		/** Publication string to be used. */
+		KSI_PublicationData *userPublication;
+
+		/** Publication file to be used. */
+		KSI_PublicationsFile *userPublicationsFile;
+
+		void *tempData;
+	};
+
 	/**
 	 * Enumeration of all KSI policy (#KSI_Policy) verification result codes.
 	 */
@@ -257,77 +281,6 @@ extern "C" {
 	void KSI_PolicyVerificationResult_free(KSI_PolicyVerificationResult *result);
 
 	/**
-	 * Creates a verification context.
-	 * \param[in]	ctx			KSI context.
-	 * \param[out]	context		Pointer to the receiving pointer.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_VerificationContext_create(KSI_CTX *ctx, KSI_VerificationContext **context);
-
-	/**
-	 * Sets signature for verification context.
-	 * \param[in]	context		Verification context to be configured.
-	 * \param[in]	sig			KSI signature to be verified.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_VerificationContext_setSignature(KSI_VerificationContext *context, KSI_Signature *sig);
-
-	/**
-	 * Sets document hash for verification context.
-	 * \param[in]	context		Verification context to be configured.
-	 * \param[in]	hash		Document hash to be used in verification.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_VerificationContext_setDocumentHash(KSI_VerificationContext *context, KSI_DataHash *hash);
-
-	/**
-	 * Sets user publication string for verification context.
-	 * \param[in]	context				Verification context to be configured.
-	 * \param[in]	userPublication		User publication string to be used in verification.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_VerificationContext_setUserPublication(KSI_VerificationContext *context, KSI_PublicationData *userPublication);
-
-	/**
-	 * Sets publications file for verification context.
-	 * \param[in]	context				Verification context to be configured.
-	 * \param[in]	publicationsFile	Publications file to be used in verification.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_VerificationContext_setPublicationsFile(KSI_VerificationContext *context, KSI_PublicationsFile *publicationsFile);
-
-	/**
-	 * Enables or disables extending in verification context.
-	 * \param[in]	context		Verification context to be configured.
-	 * \param[in]	allowed		Flag that allows extending in verification.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_VerificationContext_setExtendingAllowed(KSI_VerificationContext *context, int allowed);
-
-	/**
-	 * Sets initial aggregation level in verification context.
-	 * \param[in]	context		Verification context to be configured.
-	 * \param[in]	level		Initial aggregation level in verification.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_VerificationContext_setAggregationLevel(KSI_VerificationContext *context, KSI_uint64_t level);
-
-	/**
-	 * Frees the verification context object, including all internal objects.
-	 * \param[in]	context		Verification context to be freed.
-	 *
-	 * \see #KSI_VerificationContext_create, #KSI_VerificationContext_clean
-	 */
-	void KSI_VerificationContext_free(KSI_VerificationContext *context);
-
-	/**
 	 * Frees the temporary data in the context object.
 	 * \param[in]	context		Verification context to be cleaned.
 	 *
@@ -335,6 +288,15 @@ extern "C" {
 	 */
 	void KSI_VerificationContext_clean(KSI_VerificationContext *context);
 
+	/**
+	 *
+	 */
+	int KSI_VerificationContext_reset(KSI_VerificationContext *context);
+
+	/**
+	 *
+	 */
+	int KSI_VerificationContext_init(KSI_VerificationContext *context, KSI_CTX *);
 
 #ifdef	__cplusplus
 }

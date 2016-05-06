@@ -37,6 +37,8 @@ static void Test_DownloadPubfile(CuTest* tc) {
 	res = KSI_verifyPublicationsFile(ctx, pubfile);
 	CuAssert(tc, "Unable to verify publications file.", res == KSI_OK);
 
+	KSI_PublicationsFile_free(pubfile);
+
 	return;
 }
 
@@ -67,6 +69,7 @@ static void Test_DownloadPubfileInvalidConstraints(CuTest* tc) {
 	res = KSI_verifyPublicationsFile(ctx, pubfile);
 	CuAssert(tc, "Wrong error code. Must fail as the constraints do not match.", res == KSI_PKI_CERTIFICATE_NOT_TRUSTED);
 
+	KSI_PublicationsFile_free(pubfile);
 	KSI_CTX_free(ctx);
 	return;
 }

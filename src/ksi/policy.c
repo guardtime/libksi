@@ -21,7 +21,10 @@
 #include "policy_impl.h"
 #include "verification_rule.h"
 
+#include <string.h>
+
 static void RuleVerificationResult_free(KSI_RuleVerificationResult *result);
+static void VerificationTempData_clear(VerificationTempData *tmp);
 
 KSI_IMPLEMENT_LIST(KSI_RuleVerificationResult, RuleVerificationResult_free);
 
@@ -679,11 +682,20 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_PolicyVerificationResult *tmp = NULL;
+	VerificationTempData tempData;
+
+	memset(&tempData, 0, sizeof(tempData));
+	tempData.aggregationOutputHash = NULL;
+	tempData.extendedSig = NULL;
+	tempData.publicationsFile = NULL;
 
 	if (policy == NULL || context == NULL || context->ctx == NULL || result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+
+
+	context->tempData = &tempData;
 
 	ctx = context->ctx;
 	KSI_ERR_clearErrors(ctx);
@@ -721,7 +733,7 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 		if ((*result)->finalResult.resultCode != KSI_VER_RES_OK) {
 			currentPolicy = currentPolicy->fallbackPolicy;
 			if (currentPolicy != NULL) {
-				KSI_VerificationContext_clean(context);
+				KSI_VerificationContext_reset(context);
 				KSI_LOG_debug(ctx, "Verifying fallback policy");
 			}
 		} else {
@@ -730,6 +742,11 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 	}
 
 cleanup:
+
+	VerificationTempData_clear(&tempData);
+	if (context != NULL) {
+		context->tempData = NULL;
+	}
 
 	KSI_PolicyVerificationResult_free(tmp);
 	return res;
@@ -747,83 +764,71 @@ void KSI_PolicyVerificationResult_free(KSI_PolicyVerificationResult *result) {
 	}
 }
 
-int KSI_VerificationContext_create(KSI_CTX *ctx, KSI_VerificationContext **context) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_VerificationContext *tmp = NULL;
+static void VerificationTempData_clear(VerificationTempData *tmp) {
+	if (tmp != NULL) {
+		KSI_DataHash_free(tmp->aggregationOutputHash);
+		tmp->aggregationOutputHash = NULL;
 
-	if (ctx == NULL || context == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	KSI_ERR_clearErrors(ctx);
+		KSI_Signature_free(tmp->extendedSig);
+		tmp->extendedSig = NULL;
 
-	tmp = KSI_new(KSI_VerificationContext);
-	if (tmp == NULL) {
-		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	tmp->ctx = ctx;
-	tmp->userData.sig = NULL;
-	tmp->userData.extendingAllowed = 0;
-	tmp->userData.docAggrLevel = 0;
-	tmp->tempData.extendedSig = NULL;
-	tmp->userData.documentHash = NULL;
-	tmp->tempData.aggregationOutputHash = NULL;
-	tmp->tempData.publicationsFile = NULL;
-	tmp->userData.userPublication = NULL;
-	tmp->userData.userPublicationsFile = NULL;
-	*context = tmp;
-	tmp = NULL;
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_VerificationContext_free(tmp);
-	return res;
-}
-
-#define CONTEXT_DEFINE_SETTER(baseType, valueType, valueName, alias) int baseType##_set##alias(baseType *o, valueType valueName)
-
-#define CONTEXT_IMPLEMENT_SETTER(baseType, valueType, valueName, alias)			\
-CONTEXT_DEFINE_SETTER(baseType, valueType, valueName, alias) {					\
-	int res = KSI_UNKNOWN_ERROR;											\
-	if (o == NULL) {														\
-		res = KSI_INVALID_ARGUMENT;											\
-		goto cleanup;														\
-	}																		\
-	o->userData.valueName = valueName;												\
-	res = KSI_OK;															\
-cleanup:																	\
-	return res;																\
-}																			\
-
-CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, KSI_Signature *, sig, Signature);
-CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, KSI_DataHash *, documentHash, DocumentHash);
-CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, KSI_PublicationData *, userPublication, UserPublication);
-CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, KSI_PublicationsFile *, userPublicationsFile, PublicationsFile);
-CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, int, extendingAllowed, ExtendingAllowed);
-CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, KSI_uint64_t, docAggrLevel, AggregationLevel);
-
-void KSI_VerificationContext_free(KSI_VerificationContext *context) {
-	if (context != NULL) {
-		KSI_Signature_free(context->userData.sig);
-		KSI_Signature_free(context->tempData.extendedSig);
-		KSI_DataHash_free(context->userData.documentHash);
-		KSI_DataHash_free(context->tempData.aggregationOutputHash);
-		KSI_nofree(context->tempData.publicationsFile);
-		KSI_PublicationsFile_free(context->userData.userPublicationsFile);
-		KSI_PublicationData_free(context->userData.userPublication);
-		KSI_free(context);
+		KSI_PublicationsFile_free(tmp->publicationsFile);
+		tmp->publicationsFile = NULL;
 	}
 }
 
 void KSI_VerificationContext_clean(KSI_VerificationContext *context) {
 	if (context != NULL) {
-		KSI_Signature_free(context->tempData.extendedSig);
-		context->tempData.extendedSig = NULL;
-		KSI_DataHash_free(context->tempData.aggregationOutputHash);
-		context->tempData.aggregationOutputHash = NULL;
-		KSI_nofree(context->tempData.publicationsFile);
+		if (context->tempData != NULL) {
+			VerificationTempData_clear(context->tempData);
+		}
+		context->tempData = NULL;
+		KSI_nofree(context);
 	}
 }
+
+int KSI_VerificationContext_reset(KSI_VerificationContext *context) {
+	int res = KSI_UNKNOWN_ERROR;
+	if (context == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_DataHash_free(((VerificationTempData *)context->tempData)->aggregationOutputHash);
+	((VerificationTempData *)context->tempData)->aggregationOutputHash = NULL;
+
+	KSI_Signature_free(((VerificationTempData *)context->tempData)->extendedSig);
+	((VerificationTempData *)context->tempData)->extendedSig = NULL;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationContext_init(KSI_VerificationContext *context, KSI_CTX *ctx) {
+	int res = KSI_UNKNOWN_ERROR;
+	if (context == NULL || ctx == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	context->ctx = NULL;
+	context->sig = NULL;
+	context->extendingAllowed = 0;
+	context->docAggrLevel = 0;
+	context->documentHash = NULL;
+	context->userPublication = NULL;
+	context->userPublicationsFile = NULL;
+
+	context->tempData = NULL;
+
+	context->ctx = ctx;
+	context->sig = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+

@@ -61,6 +61,8 @@ struct generator_st {
 	bool hasSignature;
 };
 
+KSI_IMPLEMENT_REF(KSI_PublicationsFile);
+
 static int generateNextTlv(struct generator_st *gen, KSI_TLV **tlv) {
 	int res = KSI_UNKNOWN_ERROR;
 	unsigned char *buf = NULL;
@@ -155,6 +157,7 @@ int KSI_PublicationsFile_new(KSI_CTX *ctx, KSI_PublicationsFile **t) {
 	}
 
 	tmp->ctx = ctx;
+	tmp->ref = 1;
 	tmp->raw = NULL;
 	tmp->raw_len = 0;
 	tmp->header = NULL;
@@ -507,7 +510,7 @@ cleanup:
 }
 
 void KSI_PublicationsFile_free(KSI_PublicationsFile *t) {
-	if (t != NULL) {
+	if (t != NULL && --t->ref == 0) {
 		KSI_PublicationsHeader_free(t->header);
 		KSI_CertificateRecordList_free(t->certificates);
 		KSI_PublicationRecordList_free(t->publications);
@@ -791,7 +794,7 @@ int KSI_PublicationsFile_getNearestPublication(const KSI_PublicationsFile *trust
 		KSI_nofree(pd);
 	}
 
-	*pubRec = result;
+	*pubRec = KSI_PublicationRecord_ref(result);
 
 	res = KSI_OK;
 
@@ -897,7 +900,7 @@ int KSI_PublicationsFile_findPublication(const KSI_PublicationsFile *trust, KSI_
 		}
 
 		if (KSI_DataHash_equals(pr->publishedData->imprint, inRec->publishedData->imprint) && KSI_Integer_equals(pr->publishedData->time, inRec->publishedData->time) ) {
-			*outRec = pr;
+			*outRec = KSI_PublicationRecord_ref(pr);
 			break;
 		}
 
@@ -1195,7 +1198,7 @@ cleanup:
  * KSI_PublicationData
  */
 void KSI_PublicationData_free(KSI_PublicationData *t) {
-	if (t != NULL) {
+	if (t != NULL && --t->ref == 0) {
 		KSI_Integer_free(t->time);
 		KSI_DataHash_free(t->imprint);
 		KSI_TLV_free(t->baseTlv);
@@ -1218,6 +1221,7 @@ int KSI_PublicationData_new(KSI_CTX *ctx, KSI_PublicationData **t) {
 	}
 
 	tmp->ctx = ctx;
+	tmp->ref = 1;
 	tmp->time = NULL;
 	tmp->imprint = NULL;
 	tmp->baseTlv = NULL;

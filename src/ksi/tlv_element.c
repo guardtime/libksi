@@ -563,7 +563,7 @@ int KSI_TlvElement_getOctetString(KSI_TlvElement *parent, KSI_CTX *ctx, unsigned
 		res = KSI_TlvElement_serialize(el, buf, sizeof(buf), &len, KSI_TLV_OPT_NO_HEADER);
 		if (res != KSI_OK) goto cleanup;
 
-		res = KSI_OctetString_new(ctx, (char *)buf, len, &tmp);
+		res = KSI_OctetString_new(ctx, buf, len, &tmp);
 		if (res != KSI_OK) goto cleanup;
 	}
 

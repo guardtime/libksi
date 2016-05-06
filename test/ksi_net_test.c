@@ -471,7 +471,7 @@ static void testExtendInvalidSignature(CuTest* tc) {
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_Signature_extendTo(sig, ctx, NULL, &ext);
-	CuAssert(tc, "It should not be possible to extend this signature.", res == KSI_EXTEND_WRONG_CAL_CHAIN && ext == NULL);
+	CuAssert(tc, "It should not be possible to extend this signature.", res != KSI_OK && ext == NULL);
 
 	KSI_Signature_free(sig);
 	KSI_Signature_free(ext);
@@ -507,7 +507,6 @@ static void testExtAuthFailure(CuTest* tc) {
 
 	res = KSI_extendSignature(ctx, sig, &ext);
 	CuAssert(tc, "Extend should fail with service error.", res == KSI_SERVICE_AUTHENTICATION_FAILURE && ext == NULL);
-
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);

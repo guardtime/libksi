@@ -138,6 +138,8 @@ static void testReceivePublicationsFileInvalidConstraints(CuTest *tc) {
 
 	res = KSI_verifyPublicationsFile(ctx, pubFile);
 	CuAssert(tc, "Publications file should NOT verify as PKI constraint is wrong.", res != KSI_OK);
+
+	KSI_PublicationsFile_free(pubFile);
 }
 
 static void testReceivePublicationsFileInvalidPki(CuTest *tc) {
@@ -176,6 +178,8 @@ static void testReceivePublicationsFileInvalidPki(CuTest *tc) {
 
 	res = KSI_verifyPublicationsFile(ctx, pubFile);
 	CuAssert(tc, "Publications file should NOT verify as PKI signature is wrong.", res == KSI_INVALID_PKI_SIGNATURE);
+
+	KSI_PublicationsFile_free(pubFile);
 }
 
 static void testVerifyPublicationsFileWithOrganization(CuTest *tc) {
@@ -461,6 +465,7 @@ static void testFindPublicationByPubStr(CuTest *tc) {
 	CuAssert(tc, "Publication time mismatch", KSI_Integer_equalsUInt(pubTime, 1397520000));
 
 	KSI_DataHash_free(expHsh);
+	KSI_PublicationsFile_free(pubFile);
 
 }
 
@@ -516,6 +521,7 @@ static void testFindPublicationByTime(CuTest *tc) {
 	CuAssert(tc, "Unable to get publications ref list", res == KSI_OK && pubRefList != NULL);
 
 	KSI_DataHash_free(expHsh);
+	KSI_PublicationsFile_free(pubFile);
 }
 
 static void testFindPublicationRef(CuTest *tc) {
@@ -560,6 +566,7 @@ static void testFindPublicationRef(CuTest *tc) {
 	}
 
 	CuAssert(tc, "Financial times publication not found", isPubRefFound);
+	KSI_PublicationsFile_free(pubFile);
 }
 
 static void testSerializePublicationsFile(CuTest *tc) {
@@ -633,6 +640,7 @@ static void testGetNearestPublication(CuTest *tc) {
 
 	CuAssert(tc, "Unexpected publication time", KSI_Integer_equalsUInt(pubTm, 1292371200));
 
+	KSI_PublicationRecord_free(pubRec);
 	KSI_PublicationsFile_free(pubFile);
 	KSI_Integer_free(tm);
 }
@@ -664,6 +672,7 @@ static void testGetNearestPublicationOf0(CuTest *tc) {
 
 	CuAssert(tc, "Unexpected publication time", KSI_Integer_equalsUInt(pubTm, 1208217600));
 
+	KSI_PublicationRecord_free(pubRec);
 	KSI_PublicationsFile_free(pubFile);
 	KSI_Integer_free(tm);
 }
@@ -694,6 +703,7 @@ static void testGetNearestPublicationWithPubTime(CuTest *tc) {
 
 	CuAssert(tc, "Unexpected publication time", KSI_Integer_equalsUInt(pubTm, 1208217600));
 
+	KSI_PublicationRecord_free(pubRec);
 	KSI_PublicationsFile_free(pubFile);
 	KSI_Integer_free(tm);
 }
@@ -714,6 +724,7 @@ static void testGetNearestPublicationOfFuture(CuTest *tc) {
 	res = KSI_PublicationsFile_getNearestPublication(pubFile, tm, &pubRec);
 	CuAssert(tc, "There should not be a valid publication", res == KSI_OK && pubRec == NULL);
 
+	KSI_PublicationRecord_free(pubRec);
 	KSI_PublicationsFile_free(pubFile);
 	KSI_Integer_free(tm);
 }

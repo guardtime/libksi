@@ -265,15 +265,6 @@ extern "C" {
 	int KSI_createExtendRequest(KSI_CTX *ctx, KSI_Integer *start, KSI_Integer *end, KSI_ExtendReq **request);
 
 	/**
-	 * This function replaces the signatures calendar hash chain
-	 * \param [in]		sig					KSI signature.
-	 * \param [in]		calendarHashChain	Pointer to the calendar hash chain
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
-	 */
-	int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain);
-
-	/**
 	 * Replaces the existing publication record of the signature.
 	 * \param[in]	sig		KSI signature.
 	 * \param[in]	pubRec	Publication record.

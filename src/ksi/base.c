@@ -441,7 +441,7 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 		KSI_LOG_debug(ctx, "Publications file received.");
 	}
 
-	*pubFile = ctx->publicationsFile;
+	*pubFile = KSI_PublicationsFile_ref(ctx->publicationsFile);
 
 	res = KSI_OK;
 
@@ -479,7 +479,7 @@ cleanup:
 static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *hsh) {
 	int res;
 	const KSI_Policy *policy = NULL;
-	KSI_VerificationContext *context = NULL;
+	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -495,27 +495,16 @@ static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ct
 		goto cleanup;
 	}
 
-	res = KSI_VerificationContext_create(ctx, &context);
+	res = KSI_VerificationContext_init(&context, ctx);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = KSI_VerificationContext_setSignature(context, sig);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
+	context.sig = sig;
+	context.documentHash = hsh;
 
-	if (hsh != NULL) {
-		res = KSI_VerificationContext_setDocumentHash(context, hsh);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
-	}
-
-	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	res = KSI_SignatureVerifier_verify(policy, &context, &result);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, "Verification of signature not completed.");
 		goto cleanup;
@@ -531,8 +520,6 @@ static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ct
 
 cleanup:
 
-	KSI_VerificationContext_setSignature(context, NULL); /* Prevent the freeing of signature. */
-	KSI_VerificationContext_free(context);
 	KSI_PolicyVerificationResult_free(result);
 
 	return res;
@@ -670,6 +657,8 @@ int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extend
 
 cleanup:
 
+	KSI_PublicationRecord_free(pubRec);
+	KSI_PublicationsFile_free(pubFile);
 	KSI_Signature_free(extSig);
 	return res;
 }
@@ -939,6 +928,8 @@ cleanup:																					\
 
 CTX_VALUEP_SETTER(pkiTruststore, PKITruststore, KSI_PKITruststore, KSI_PKITruststore_free)
 CTX_GET_SET_VALUE(publicationsFile, PublicationsFile, KSI_PublicationsFile, KSI_PublicationsFile_free)
+
+
 
 int KSI_CTX_getPKITruststore(KSI_CTX *ctx, KSI_PKITruststore **pki) {
 	int res = KSI_UNKNOWN_ERROR;

@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
 	KSI_CTX *ksi = NULL;
 	KSI_Signature *sig = NULL;
 	const KSI_Policy *policy = NULL;
-	KSI_VerificationContext *context = NULL;
+	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_DataHash *hsh = NULL;
 	FILE *logFile = NULL;
@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
 	}
 
 	/* Create context for verification. */
-	res = KSI_VerificationContext_create(ksi, &context);
+	res = KSI_VerificationContext_init(&context, ksi);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Failed to create verification context.\n");
 		goto cleanup;
@@ -103,11 +103,7 @@ int main(int argc, char **argv) {
 	printf("ok\n");
 
 	/* Set signature in verification context. */
-	res = KSI_VerificationContext_setSignature(context, sig);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Failed to set signature in verification context.\n");
-		goto cleanup;
-	}
+	context.sig = sig;
 
 	if (strcmp(argv[1], "-")) {
 		/* Calculate document hash. */
@@ -117,16 +113,13 @@ int main(int argc, char **argv) {
 			goto cleanup;
 		}
 
+
 		/* Set document hash in verification context. */
-		res = KSI_VerificationContext_setDocumentHash(context, hsh);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Failed to set document hash in verification context.\n");
-			goto cleanup;
-		}
+		context.documentHash = hsh;
 	}
 
 	printf("Verifying signature...");
-	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	res = KSI_SignatureVerifier_verify(policy, &context, &result);
 	if (res != KSI_OK) {
 		printf("Failed to complete verification due to error 0x%x (%s)\n", res, KSI_getErrorString(res));
 		goto cleanup;
@@ -166,7 +159,6 @@ cleanup:
 	}
 
 	/* Free resources. */
-	KSI_VerificationContext_free(context);
 	KSI_PolicyVerificationResult_free(result);
 	KSI_DataHash_free(hsh);
 	KSI_CTX_free(ksi);

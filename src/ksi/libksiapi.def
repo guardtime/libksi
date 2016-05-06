@@ -286,6 +286,7 @@ EXPORTS
 ;publicationsfile.h
 EXPORTS
 	KSI_PublicationsFile_parse
+	KSI_PublicationsFile_ref
 	KSI_PublicationsFile_fromFile
 	KSI_PublicationsFile_serialize
 	KSI_PublicationsFile_verify
@@ -302,6 +303,7 @@ EXPORTS
 	KSI_PublicationsFile_findPublication
 	KSI_PublicationsFile_getSignedDataLength
 	KSI_PublicationData_fromBase32
+	KSI_PublicationData_ref
 	KSI_PublicationData_toBase32
 	KSI_PublicationData_free
 	KSI_PublicationData_new
