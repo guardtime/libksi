@@ -135,6 +135,13 @@ extern "C" {
 
 	typedef struct KSI_Policy_st KSI_Policy;
 
+	extern const KSI_Policy* KSI_VERIFICATION_POLICY_INTERNAL;
+	extern const KSI_Policy* KSI_VERIFICATION_POLICY_CALENDAR_BASED;
+	extern const KSI_Policy* KSI_VERIFICATION_POLICY_KEY_BASED;
+	extern const KSI_Policy* KSI_VERIFICATION_POLICY_PUBLICATIONS_FILE_BASED;
+	extern const KSI_Policy* KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED;
+	extern const KSI_Policy* KSI_VERIFICATION_POLICY_GENERAL;
+
 	typedef enum RuleType_en {
 		KSI_RULE_TYPE_BASIC,
 		KSI_RULE_TYPE_COMPOSITE_AND,
@@ -149,56 +156,6 @@ extern "C" {
 	typedef struct KSI_VerificationContext_st KSI_VerificationContext;
 
 	/**
-	 * Gets a pointer to a predefined #KSI_Policy object with rules for internal verification.
-	 * \param[in]	ctx			KSI context.
-	 * \param[out]	policy		Pointer to the receiving pointer.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_SignatureVerifier_verify
-	 */
-	int KSI_Policy_getInternal(KSI_CTX *ctx, const KSI_Policy **policy);
-
-	/**
-	 * Gets a pointer to a predefined #KSI_Policy object with rules for calendar based verification.
-	 * \param[in]	ctx			KSI context.
-	 * \param[out]	policy		Pointer to the receiving pointer.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_SignatureVerifier_verify
-	 */
-	int KSI_Policy_getCalendarBased(KSI_CTX *ctx, const KSI_Policy **policy);
-
-	/**
-	 * Gets a pointer to a predefined #KSI_Policy object with rules for key based verification.
-	 * \param[in]	ctx			KSI context.
-	 * \param[out]	policy		Pointer to the receiving pointer.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_SignatureVerifier_verify
-	 */
-	int KSI_Policy_getKeyBased(KSI_CTX *ctx, const KSI_Policy **policy);
-
-	/**
-	 * Gets a pointer to a predefined #KSI_Policy object with rules for publications file based verification.
-	 * \param[in]	ctx			KSI context.
-	 * \param[out]	policy		Pointer to the receiving pointer.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_SignatureVerifier_verify
-	 */
-	int KSI_Policy_getPublicationsFileBased(KSI_CTX *ctx, const KSI_Policy **policy);
-
-	/**
-	 * Gets a pointer to a predefined #KSI_Policy object with rules for user provided publication based verification.
-	 * \param[in]	ctx			KSI context.
-	 * \param[out]	policy		Pointer to the receiving pointer.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_SignatureVerifier_verify
-	 */
-	int KSI_Policy_getUserProvidedPublicationBased(KSI_CTX *ctx, const KSI_Policy **policy);
-
-	/**
 	 * Gets a pointer to a predefined #KSI_Policy object with rules for general verification.
 	 * \param[in]	ctx			KSI context.
 	 * \param[out]	policy		Pointer to the receiving pointer.
@@ -206,7 +163,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_SignatureVerifier_verify
 	 */
-	int KSI_Policy_getGeneral(KSI_CTX *ctx, const KSI_Policy **policy);
+	#define KSI_Policy_getGeneral(ctx, policy)  KSI_Policy_clone((ctx), KSI_VERIFICATION_POLICY_GENERAL, (policy));
 
 	/**
 	 * Creates a policy based on user defined rules. User gets ownership of the policy and

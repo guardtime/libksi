@@ -228,29 +228,14 @@ static const KSI_Rule internalRules[] = {
 	{KSI_RULE_TYPE_BASIC, NULL}
 };
 
-int KSI_Policy_getInternal(KSI_CTX *ctx, const KSI_Policy **policy) {
-	int res = KSI_UNKNOWN_ERROR;
+static const KSI_Policy PolicyInternal = {
+	internalRules,
+	NULL,
+	"InternalPolicy"
+};
 
-	static const KSI_Policy internalPolicy = {
-		internalRules,
-		NULL,
-		"InternalPolicy"
-	};
+const KSI_Policy* KSI_VERIFICATION_POLICY_INTERNAL = &PolicyInternal;
 
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || policy == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	*policy = &internalPolicy;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
 
 /************************
  * CALENDAR-BASED POLICY
@@ -301,29 +286,13 @@ static const KSI_Rule calendarBasedRules[] = {
 	{KSI_RULE_TYPE_COMPOSITE_AND, NULL}
 };
 
-int KSI_Policy_getCalendarBased(KSI_CTX *ctx, const KSI_Policy **policy) {
-	int res = KSI_UNKNOWN_ERROR;
+static const KSI_Policy PolicyCalendarBased = {
+	calendarBasedRules,
+	NULL,
+	"CalendarBasedPolicy"
+};
 
-	static const KSI_Policy calendarBasedPolicy = {
-		calendarBasedRules,
-		NULL,
-		"CalendarBasedPolicy"
-	};
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || policy == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	*policy = &calendarBasedPolicy;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
+const KSI_Policy* KSI_VERIFICATION_POLICY_CALENDAR_BASED = &PolicyCalendarBased;
 
 /*******************
  * KEY-BASED POLICY
@@ -338,29 +307,13 @@ static const KSI_Rule keyBasedRules[] = {
 	{KSI_RULE_TYPE_BASIC, NULL}
 };
 
-int KSI_Policy_getKeyBased(KSI_CTX *ctx, const KSI_Policy **policy) {
-	int res = KSI_UNKNOWN_ERROR;
+static const KSI_Policy PolicyKeyBased = {
+	keyBasedRules,
+	NULL,
+	"KeyBasedPolicy"
+};
 
-	static const KSI_Policy keyBasedPolicy = {
-		keyBasedRules,
-		NULL,
-		"KeyBasedPolicy"
-	};
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || policy == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	*policy = &keyBasedPolicy;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
+const KSI_Policy* KSI_VERIFICATION_POLICY_KEY_BASED = &PolicyKeyBased;
 
 /*********************************************
  * PUBLICATION-BASED POLICY: PUBLICATION FILE
@@ -393,29 +346,13 @@ static const KSI_Rule publicationsFileBasedRules[] = {
 	{KSI_RULE_TYPE_COMPOSITE_AND, NULL}
 };
 
-int KSI_Policy_getPublicationsFileBased(KSI_CTX *ctx, const KSI_Policy **policy) {
-	int res = KSI_UNKNOWN_ERROR;
+static const KSI_Policy PolicyPublicationsFileBased = {
+	publicationsFileBasedRules,
+	NULL,
+	"PublicationsFileBasedPolicy"
+};
 
-	static const KSI_Policy publicationsFileBasedPolicy = {
-		publicationsFileBasedRules,
-		NULL,
-		"PublicationsFileBasedPolicy"
-	};
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || policy == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	*policy = &publicationsFileBasedPolicy;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
+const KSI_Policy* KSI_VERIFICATION_POLICY_PUBLICATIONS_FILE_BASED = &PolicyPublicationsFileBased;
 
 /*********************************************
  * PUBLICATION-BASED POLICY: USER PUBLICATION
@@ -449,29 +386,13 @@ static const KSI_Rule userProvidedPublicationBasedRules[] = {
 	{KSI_RULE_TYPE_COMPOSITE_AND, NULL}
 };
 
-int KSI_Policy_getUserProvidedPublicationBased(KSI_CTX *ctx, const KSI_Policy **policy) {
-	int res = KSI_UNKNOWN_ERROR;
+static const KSI_Policy PolicyUserPublicationBased = {
+	userProvidedPublicationBasedRules,
+	NULL,
+	"UserProvidedPublicationBasedPolicy"
+};
 
-	static const KSI_Policy userProvidedPublicationBasedPolicy = {
-		userProvidedPublicationBasedRules,
-		NULL,
-		"UserProvidedPublicationBasedPolicy"
-	};
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || policy == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	*policy = &userProvidedPublicationBasedPolicy;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
+const KSI_Policy* KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED = &PolicyUserPublicationBased;
 
 /*****************
  * GENERAL POLICY
@@ -486,29 +407,13 @@ static const KSI_Rule generalRules[] = {
 	{KSI_RULE_TYPE_COMPOSITE_OR, NULL}
 };
 
-int KSI_Policy_getGeneral(KSI_CTX *ctx, const KSI_Policy **policy) {
-	int res = KSI_UNKNOWN_ERROR;
+static const KSI_Policy PolicyGeneral = {
+	generalRules,
+	NULL,
+	"GeneralPolicy"
+};
 
-	static const KSI_Policy generalPolicy = {
-		generalRules,
-		NULL,
-		"GeneralPolicy"
-	};
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || policy == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	*policy = &generalPolicy;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
+const KSI_Policy* KSI_VERIFICATION_POLICY_GENERAL = &PolicyGeneral;
 
 int KSI_Policy_create(KSI_CTX *ctx, const KSI_Rule *rules, const char *name, KSI_Policy **policy) {
 	int res = KSI_UNKNOWN_ERROR;

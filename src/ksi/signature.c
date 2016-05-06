@@ -1252,7 +1252,6 @@ cleanup:
 
 static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *sig, KSI_uint64_t rootLevel, KSI_DataHash *docHsh) {
 	int res;
-	const KSI_Policy *policy = NULL;
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
 
@@ -1268,12 +1267,6 @@ static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *s
 		goto cleanup;
 	}
 
-	res = KSI_Policy_getInternal(ctx, &policy);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
 	res = KSI_VerificationContext_init(&context, ctx);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -1284,7 +1277,7 @@ static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *s
 	context.docAggrLevel = rootLevel;
 	context.documentHash = docHsh;
 
-	res = KSI_SignatureVerifier_verify(policy, &context, &result);
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, "Internal verification of signature not completed.");
 		goto cleanup;
@@ -2235,7 +2228,6 @@ cleanup:
 int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, size_t doc_len) {
 	int res;
 	KSI_DataHash *hsh = NULL;
-	const KSI_Policy *policy = NULL;
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_HashAlgorithm algo_id = -1;
@@ -2258,12 +2250,6 @@ int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, si
 		goto cleanup;
 	}
 
-	res = KSI_Policy_getGeneral(ctx, &policy);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
 	res = KSI_VerificationContext_init(&context, ctx);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -2273,7 +2259,7 @@ int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, si
 	context.sig = sig;
 	context.documentHash = hsh;
 
-	res = KSI_SignatureVerifier_verify(policy, &context, &result);
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, "Verification of signature not completed.");
 		goto cleanup;

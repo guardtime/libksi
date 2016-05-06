@@ -478,7 +478,6 @@ cleanup:
 
 static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *hsh) {
 	int res;
-	const KSI_Policy *policy = NULL;
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
 
@@ -486,12 +485,6 @@ static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ct
 
 	if (ctx == NULL || sig == NULL) {
 		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	res = KSI_Policy_getGeneral(ctx, &policy);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
@@ -504,7 +497,7 @@ static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ct
 	context.sig = sig;
 	context.documentHash = hsh;
 
-	res = KSI_SignatureVerifier_verify(policy, &context, &result);
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, "Verification of signature not completed.");
 		goto cleanup;
