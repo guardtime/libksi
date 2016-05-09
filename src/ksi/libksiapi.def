@@ -698,7 +698,6 @@ EXPORTS
 	KSI_TLV_getCtx
 	KSI_NetworkClient_getCtx
 	KSI_RequestHandle_getCtx
-	KSI_RDR_getCtx
 
 ;List implementations
 EXPORTS
@@ -1062,3 +1061,8 @@ EXPORTS
 	KSI_VerificationContext_setAggregationLevel
 	KSI_VerificationContext_free
 	KSI_VerificationContext_clean
+
+;fast_tlv.h
+EXPORTS
+	KSI_FTLV_fileRead
+	KSI_FTLV_memRead
