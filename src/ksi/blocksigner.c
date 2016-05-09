@@ -134,6 +134,7 @@ static int maskingProcessor(KSI_TreeNode *in, void *c, KSI_TreeNode **out) {
 	KSI_DataHasher *maskHsr = NULL;
 	KSI_DataHasher *leafHsr = NULL;
 	KSI_DataHash *leafHash = NULL;
+	unsigned char tmpLvl;
 
 	if (in == NULL || c == NULL || out == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -205,9 +206,9 @@ static int maskingProcessor(KSI_TreeNode *in, void *c, KSI_TreeNode **out) {
 			KSI_pushError(signer->ctx, res = KSI_INVALID_STATE, "The tree height is too large.");
 			goto cleanup;
 		}
-		unsigned char lvl = in->level + 1;
+		tmpLvl = in->level + 1;
 
-		res = KSI_DataHasher_add(leafHsr, &lvl, 1);
+		res = KSI_DataHasher_add(leafHsr, &tmpLvl, 1);
 		if (res != KSI_OK) {
 			KSI_pushError(signer->ctx, res, NULL);
 			goto cleanup;
@@ -315,6 +316,8 @@ void KSI_BlockSigner_free(KSI_BlockSigner *signer) {
 		KSI_TreeBuilder_free(signer->builder);
 		KSI_BlockSignerHandleList_free(signer->leafList);
 		KSI_Signature_free(signer->signature);
+		KSI_OctetString_free(signer->iv);
+		KSI_DataHash_free(signer->prevLeaf);
 		KSI_free(signer);
 	}
 }
