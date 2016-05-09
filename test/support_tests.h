@@ -20,6 +20,8 @@ void writeXmlReport(CuSuite *suite, const char *fname);
 
 int ctx_get_base_external_error(KSI_CTX *ctx);
 
+void reinitNetProvider(KSI_CTX *ctx);
+
 #ifdef	__cplusplus
 }
 #endif
