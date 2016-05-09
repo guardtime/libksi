@@ -250,6 +250,16 @@ int KSI_TreeBuilder_new(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeBuilder **
 
 	KSI_ERR_clearErrors(ctx);
 
+	if (!KSI_isHashAlgorithmSupported(algo)) {
+		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
+		goto cleanup;
+	}
+
+	if (!KSI_isHashAlgorithmTrusted(algo)) {
+		KSI_pushError(ctx, res = KSI_UNTRUSTED_HASH_ALGORITHM, NULL);
+		goto cleanup;
+	}
+
 	tmp = KSI_new(KSI_TreeBuilder);
 	if (tmp == NULL) {
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);

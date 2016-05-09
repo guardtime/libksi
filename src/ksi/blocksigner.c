@@ -206,6 +206,7 @@ static int maskingProcessor(KSI_TreeNode *in, void *c, KSI_TreeNode **out) {
 			KSI_pushError(signer->ctx, res = KSI_INVALID_STATE, "The tree height is too large.");
 			goto cleanup;
 		}
+
 		tmpLvl = in->level + 1;
 
 		res = KSI_DataHasher_add(leafHsr, &tmpLvl, 1);

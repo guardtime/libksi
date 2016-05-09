@@ -441,6 +441,62 @@ static void testMaskingWithMetaDataMultiSig(CuTest *tc) {
 #undef TEST_AGGR_RESPONSE_FILE
 }
 
+static void testMaskingInput(CuTest *tc) {
+	static const unsigned char diceRolls[] = {0xd5, 0x58, 0xaf, 0xfa, 0x80, 0x67, 0xf4, 0x2c, 0xd9, 0x48, 0x36, 0x21, 0xd1, 0xab,
+			0xae, 0x23, 0xed, 0xd6, 0xca, 0x04, 0x72, 0x7e, 0xcf, 0xc7, 0xdb, 0xc7, 0x6b, 0xde, 0x34, 0x77, 0x1e, 0x53};
+	int res;
+	KSI_BlockSigner *bs = NULL;
+	KSI_OctetString *iv = NULL;
+	KSI_DataHash *zero = NULL;
+	size_t i;
+
+	struct {
+		KSI_CTX *ctx;
+		KSI_HashAlgorithm algo_id;
+		KSI_DataHash *prevHash;
+		KSI_OctetString *iv;
+		KSI_BlockSigner **bs;
+		int expectedRes;
+	} tests[] = {
+			{NULL, KSI_HASHALG_SHA3_512, NULL, NULL, NULL, KSI_INVALID_ARGUMENT},
+			{NULL, KSI_HASHALG_SHA3_512, NULL, NULL, &bs, KSI_INVALID_ARGUMENT},
+			{NULL, KSI_HASHALG_SHA3_512, NULL, iv, &bs, KSI_INVALID_ARGUMENT},
+			{NULL, KSI_HASHALG_SHA3_512, zero, NULL, &bs, KSI_INVALID_ARGUMENT},
+			{ctx, KSI_HASHALG_SHA3_512, NULL, NULL, &bs, KSI_UNAVAILABLE_HASH_ALGORITHM},
+			{NULL, KSI_HASHALG_SHA2_512, NULL, NULL, NULL, KSI_INVALID_ARGUMENT},
+			{NULL, KSI_HASHALG_SHA2_512, NULL, NULL, &bs, KSI_INVALID_ARGUMENT},
+			{NULL, KSI_HASHALG_SHA2_512, NULL, iv, &bs, KSI_INVALID_ARGUMENT},
+			{NULL, KSI_HASHALG_SHA2_512, zero, NULL, &bs, KSI_INVALID_ARGUMENT},
+			{ctx, KSI_HASHALG_SHA2_512, zero, NULL, &bs, KSI_OK},
+			{NULL, -1, NULL, NULL, NULL, -1}
+	};
+
+	/* Create zero hash. */
+	res = KSI_DataHash_createZero(ctx, KSI_HASHALG_SHA2_512, &zero);
+	CuAssert(tc, "Unable to create zero hash.", res == KSI_OK && zero != NULL);
+
+	/* Create random initial vector. */
+	res = KSI_OctetString_new(ctx, diceRolls, sizeof(diceRolls), &iv);
+	CuAssert(tc, "Unable to create initial vector.", res == KSI_OK && iv != NULL);
+
+	res = KSI_BlockSigner_new(ctx, KSI_HASHALG_SHA1, zero, iv, &bs);
+	CuAssert(tc, "Unable to create block signer instance with masking.", res == KSI_OK && bs != NULL);
+
+	for (i = 0; tests[i].expectedRes != -1; i++) {
+		res = KSI_BlockSigner_new(tests[i].ctx, tests[i].algo_id, tests[i].prevHash, tests[i].iv, tests[i].bs);
+		KSI_BlockSigner_free(bs);
+		bs = NULL;
+		if (res != tests[i].expectedRes) {
+			char buf[1000];
+			KSI_snprintf(buf, sizeof(buf), "Unexpected result @%i (expected = '%s', but was '%s')", i, KSI_getErrorString(tests[i].expectedRes), KSI_getErrorString(res));
+			CuFail(tc, buf);
+		}
+	}
+
+	KSI_OctetString_free(iv);
+	KSI_DataHash_free(zero);
+}
+
 CuSuite* KSITest_Blocksigner_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -451,6 +507,7 @@ CuSuite* KSITest_Blocksigner_getSuite(void) {
 	SUITE_ADD_TEST(suite, testReset);
 	SUITE_ADD_TEST(suite, testMaskingMultiSig);
 	SUITE_ADD_TEST(suite, testMaskingWithMetaDataMultiSig);
+	SUITE_ADD_TEST(suite, testMaskingInput);
 
 	return suite;
 }
