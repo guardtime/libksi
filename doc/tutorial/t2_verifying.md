@@ -293,7 +293,7 @@ Only then can we say if the verification was a success or failure.
 As the final step we need to free all the allocated resources. When using predefined policies, no resources are allocated
 and there is no need to free the policy. The verification context must be freed by calling #KSI_VerificationContext_free.
 This function frees all resources that have been configured for verification, so if we are not the owners of a particular
-resource, e.g. we need to keep using the signature after verification, it is important to set this parameter to #NULL in
+resource, e.g. we need to keep using the signature after verification, it is important to set this parameter to NULL in
 the verification context to prevent if from being freed. After we are done inspecting the verification result, we must
 free it with #KSI_PolicyVerificationResult_free.
 Note that the KSI context may be reused as much as needed (within a single thread) and must not be created every time.
@@ -325,7 +325,7 @@ are deprecated and will be removed from future SDK releases:
 - int KSI_Signature_getVerificationResult(KSI_Signature *sig, const KSI_VerificationResult **info)
 
 When replacing the usage of deprecated verification functionality, we need to choose a policy that matches that of the deprecated
-functionality and then set up the relevant data in the verification context. A straightforward replacement exists for #KSI_Signature_verify - 
+functionality and then set up the relevant data in the verification context. A straightforward replacement exists for KSI_Signature_verify - 
 just use #KSI_verifySignature as shown in chapter 3. We will show how to replace the remaining functionalities.
 Note: for brevity, all error handling has been removed in the following examples.
 
@@ -387,7 +387,7 @@ Depending on the chosen policy we need to set up relevant data in the verificati
 
 ~~~~~~~~~~
 
-The verification result is an output parameter of #KSI_SignatureVerifier_verify, so the #KSI_Signature_getVerificationResult interface
+The verification result is an output parameter of #KSI_SignatureVerifier_verify, so the KSI_Signature_getVerificationResult interface
 is now obsolete. A typical verification result inspection could look like this:
 
 ~~~~~~~~~~{.c}
@@ -571,7 +571,7 @@ level upwards, but further rules on the same level are skipped. Verification may
 upper level rules.
 7. A composite OR-type rule is considered inconclusive if the result code is #KSI_VER_RES_NA. The result is ignored and the next rule
 on the same level is checked. This is the only exception where verification is guaranteed to continue even if the result is not
-#KSI_RES_OK.
+#KSI_VER_RES_OK.
 8. The result of the last checked rule on any level is always propagated one level higher.
 
 For an additional level of customization we can chain policies to each other to allow automatic fallback to a different verification

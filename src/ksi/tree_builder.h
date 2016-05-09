@@ -116,7 +116,7 @@ KSI_DEFINE_REF(KSI_TreeLeafHandle);
  * This is the constructor method for the #KSI_TreeNode structure.
  * \param[in]	ctx			KSI context.
  * \param[in]	hash		Input hash.
- * \param[in]	mataData	Metadata field.
+ * \param[in]	metaData	Metadata field.
  * \param[in]	level		The level of the tree node.
  * \param[out]	node		Pointer to the receiving ponter.
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
@@ -128,7 +128,7 @@ int KSI_TreeNode_new(KSI_CTX *ctx, KSI_DataHash *hash, KSI_MetaData *metaData, i
 
 /**
  * Destructor method for #KSI_TreeNode.
- * \param[in]	nore		Pointer to the object.
+ * \param[in]	node		Pointer to the object.
  */
 void KSI_TreeNode_free(KSI_TreeNode *node);
 
@@ -196,7 +196,7 @@ int KSI_TreeBuilder_addMetaData(KSI_TreeBuilder *builder, KSI_MetaData *metaData
 /**
  * This function finalizes the building of the tree. After calling this function no more leafs
  * may be added to the computation and doing so would result in an error.
- * \param[in]	buillder 	The builder.
+ * \param[in]	builder 	The builder.
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
  */
 int KSI_TreeBuilder_close(KSI_TreeBuilder *builder);
@@ -204,6 +204,7 @@ int KSI_TreeBuilder_close(KSI_TreeBuilder *builder);
 /**
  * @}
  */
+
 #ifdef __cplusplus
 }
 #endif

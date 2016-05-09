@@ -347,11 +347,11 @@ static void testErrorMessage(CuTest* tc, const char *expected, const char *tlv_f
 	if (f != NULL) fclose(f);
 	obj_free(obj);
 }
-#ifdef _WIN32
-_declspec( dllimport )
+
+#ifdef BUILD_DLL
+__declspec( dllimport )
 #endif
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu);
-
 
 static void testUnknownCriticalTagError(CuTest* tc) {
 	testErrorMessage(tc, "Unknown critical tag: [0x200]->[0x203]aggr_error_pdu->[0x01]",

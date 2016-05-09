@@ -23,6 +23,7 @@
 #include <ksi/ksi.h>
 #include <ksi/net_http.h>
 #include <ksi/compatibility.h>
+#include "ksi_common.h"
 
 #define REQUESTS 10
 
@@ -69,15 +70,10 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	logFile = fopen("multi_curl.log", "w");
-	if (logFile == NULL) {
-		fprintf(stderr, "Unable to open log file.\n");
-		res = KSI_IO_ERROR;
-		goto cleanup;
-	}
+	/* Configure the logger. */
+	res = OpenLogging(ksi, "multi_curl.log", &logFile);
+	if (res != KSI_OK) goto cleanup;
 
-	KSI_CTX_setLoggerCallback(ksi, KSI_LOG_StreamLogger, logFile);
-	KSI_CTX_setLogLevel(ksi, KSI_LOG_DEBUG);
 
 	KSI_LOG_info(ksi, "Using KSI version: '%s'", KSI_getVersion());
 

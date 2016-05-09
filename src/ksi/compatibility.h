@@ -18,12 +18,12 @@
  */
 
 #ifndef COMPATIBILITY_H
-#define	COMPATIBILITY_H
+#define COMPATIBILITY_H
 #include <stddef.h>
 #include <stdarg.h>
 #include <time.h>
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -40,7 +40,7 @@ extern "C" {
  * \param[in]		...		Extra parameters for formatting.
  * \return The number of characters written, not including terminating NUL character. On error 0 is returned.
  */
-size_t KSI_snprintf(char *buf, size_t n, const char *format, ... );
+size_t KSI_snprintf(char *buf, size_t n, const char *format, ...);
 
 /**
  * Platform independent version of vsnprintf.
@@ -76,8 +76,8 @@ int KSI_strdup(const char *from, char **to);
  * Platform independent modified version of mktime that takes calendar time interpreted
  * as UTC time (local time zone is ignored) as input and converts the value to Unix time.
  * \param[in]	time	Pointer to struct tm containing calendar time broken into its components.
- * \return The number of seconds elapsed since 1970-01-01 00:00:00 UTC. If a 
- * calendar time cannot be represented or time is NULL, -1 is returned.  
+ * \return The number of seconds elapsed since 1970-01-01 00:00:00 UTC. If a
+ * calendar time cannot be represented or time is NULL, -1 is returned.
  */
 time_t KSI_CalendarTimeToUnixTime(struct tm *time);
 
@@ -88,13 +88,13 @@ time_t KSI_CalendarTimeToUnixTime(struct tm *time);
  * @return retruns 0 if both are equal. If one of the arguments is NULL, KSI_INVALID_ARGUMENT is returnd.
  */
 int KSI_strcasecmp(const char *s1, const char *s2);
-/*
+
+/**
  * @}
  */
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 }
 #endif
 
-#endif	/* COMPLEMENTARY_H */
-
+#endif /* COMPATIBILITY_H */
