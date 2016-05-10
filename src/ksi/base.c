@@ -66,6 +66,8 @@ const char *KSI_getErrorString(int statusCode) {
 			return "The context is not (properly) configured to retrieve the publications file.";
 		case KSI_PUBFILE_VERIFICATION_NOT_CONFIGURED:
 			return "The publications file can not be verified, as the constraints are not defined.";
+		case KSI_INVALID_VERIFICATION_INPUT:
+			return "The signature verification can not be completed due to invalid user data.";
 		case KSI_INVALID_ARGUMENT:
 			return "Invalid argument.";
 		case KSI_INVALID_FORMAT:

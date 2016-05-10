@@ -24,6 +24,9 @@
 #include <ksi/tlv.h>
 #include <ksi/io.h>
 
+#include "../src/ksi/signature_impl.h"
+#include "../src/ksi/tlv_template.h"
+
 extern KSI_CTX *ctx;
 
 static void testTlvInitOwnMem(CuTest* tc) {
@@ -406,6 +409,46 @@ static void testTlvSerializeNested(CuTest* tc) {
 
 }
 
+#ifdef _WIN32
+_declspec( dllimport )
+#endif
+KSI_IMPORT_TLV_TEMPLATE(KSI_Signature)
+
+static void testTlvSerializeMandatoryListObjectEmpty(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+
+	int res;
+	KSI_Signature *sig = NULL;
+	unsigned char *raw = NULL;
+	size_t raw_len = 0;
+	KSI_AggregationHashChain *aggr = NULL;
+	KSI_HashChainLinkList *chain = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &aggr);
+	CuAssert(tc, "Unable to aggregation hash chain at 0.", res == KSI_OK && aggr != NULL);
+
+	res = KSI_AggregationHashChain_getChain(aggr, &chain);
+	CuAssert(tc, "Unable to hash chain link list.", res == KSI_OK && chain != NULL);
+
+	while (KSI_HashChainLinkList_length(chain) != 0) {
+		KSI_HashChainLinkList_remove(chain, 0, NULL);
+	}
+	CuAssert(tc, "List contains elements", KSI_HashChainLinkList_length(chain) == 0);
+
+	res = KSI_TlvTemplate_serializeObject(ctx, sig, 0x0800, 0, 0, KSI_TLV_TEMPLATE(KSI_Signature), &raw, &raw_len);
+	CuAssert(tc, "Failed to serialize signature", res == KSI_INVALID_FORMAT && raw_len == 0);
+
+	KSI_free(raw);
+	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
+}
+
 static void testTlvParseBlobFailWithExtraData(CuTest* tc) {
 	int res;
 	KSI_TLV *tlv = NULL;
@@ -483,6 +526,7 @@ CuSuite* KSITest_TLV_getSuite(void)
 	SUITE_ADD_TEST(suite, testTlvSerializeString);
 	SUITE_ADD_TEST(suite, testTlvSerializeUint);
 	SUITE_ADD_TEST(suite, testTlvSerializeNested);
+	SUITE_ADD_TEST(suite, testTlvSerializeMandatoryListObjectEmpty);
 	SUITE_ADD_TEST(suite, testTlvLenientFlag);
 	SUITE_ADD_TEST(suite, testTlvForwardFlag);
 	SUITE_ADD_TEST(suite, testTlvParseBlobFailWithExtraData);

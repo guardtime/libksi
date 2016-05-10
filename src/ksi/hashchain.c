@@ -81,7 +81,6 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 	KSI_OctetString *legacyId = NULL;
 	KSI_DataHash *hash = NULL;
 	KSI_OctetString *tmpOctStr = NULL;
-	unsigned char buf[0xffff + 4];
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || hsr == NULL || link == NULL) {
@@ -440,7 +439,7 @@ int KSI_CalendarHashChain_calculateAggregationTime(KSI_CalendarHashChain *chain,
 
 	res = calculateCalendarAggregationTime(chain->hashChain, chain->publicationTime, aggrTime);
 	if (res != KSI_OK) {
-		KSI_pushError(chain->ctx, res, NULL);
+		KSI_pushError(chain->ctx, res, "Failed to calculate aggregation time");
 		goto cleanup;
 	}
 
@@ -708,6 +707,7 @@ static int legacyId_verify(KSI_CTX *ctx, const unsigned char *raw, size_t raw_le
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i;
 
+	KSI_ERR_clearErrors(ctx);
 	/* Verify the data. Legacy id structure:
 	 * +------+------+---------+------------------+------+
 	 * | 0x03 | 0x00 | str_len | ... UTF8_str ... | '\0' |
@@ -718,7 +718,7 @@ static int legacyId_verify(KSI_CTX *ctx, const unsigned char *raw, size_t raw_le
 	 * example are given in hexadecimal).
 	 */
 	if (raw == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
 	/* Legacy id data lenght is fixed to 29 octets. */
