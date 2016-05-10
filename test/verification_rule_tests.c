@@ -1005,6 +1005,7 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatchWithAdditional
 	int res = KSI_OK;
 	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
+	KSI_Signature *extendedSig = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1014,12 +1015,15 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatchWithAdditional
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &verCtx->tempData.extendedSig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->tempData.extendedSig != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extendedSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && extendedSig != NULL);
+
+	verCtx->tempData.calendarChain = KSI_CalendarHashChain_ref(extendedSig->calendarChain);
 
 	res = KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch(verCtx, &verRes);
 	CuAssert(tc, "Calendar chain right link sequence should match with extended calendar chain right link sequence.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
+	KSI_Signature_free(extendedSig);
 	KSI_VerificationContext_free(verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -1033,6 +1037,7 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatch_linkCountMism
 	int res = KSI_OK;
 	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
+	KSI_Signature *extendedSig = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1042,12 +1047,15 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatch_linkCountMism
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &verCtx->tempData.extendedSig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->tempData.extendedSig != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extendedSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && extendedSig != NULL);
+
+	verCtx->tempData.calendarChain = KSI_CalendarHashChain_ref(extendedSig->calendarChain);
 
 	res = KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch(verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_CAL_4);
 
+	KSI_Signature_free(extendedSig);
 	KSI_VerificationContext_free(verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -1061,6 +1069,7 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatch_rightLinksDif
 	int res = KSI_OK;
 	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
+	KSI_Signature *extendedSig = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1070,12 +1079,15 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatch_rightLinksDif
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &verCtx->tempData.extendedSig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->tempData.extendedSig != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extendedSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && extendedSig != NULL);
+
+	verCtx->tempData.calendarChain = KSI_CalendarHashChain_ref(extendedSig->calendarChain);
 
 	res = KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch(verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_CAL_4);
 
+	KSI_Signature_free(extendedSig);
 	KSI_VerificationContext_free(verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -1163,6 +1175,7 @@ static void testRule_ExtendedSignatureCalendarChainRootHash_verifyErrorResult(Cu
 	int res = KSI_OK;
 	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
+	KSI_Signature *extendedSig = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1172,12 +1185,15 @@ static void testRule_ExtendedSignatureCalendarChainRootHash_verifyErrorResult(Cu
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &verCtx->tempData.extendedSig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->tempData.extendedSig != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extendedSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && extendedSig != NULL);
+
+	verCtx->tempData.calendarChain = KSI_CalendarHashChain_ref(extendedSig->calendarChain);
 
 	res = KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash(verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_CAL_1);
 
+	KSI_Signature_free(extendedSig);
 	KSI_VerificationContext_free(verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -1297,6 +1313,7 @@ static void testRule_ExtendedSignatureCalendarChainInputHash_verifyErrorResult(C
 	int res = KSI_OK;
 	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
+	KSI_Signature *extendedSig = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1306,12 +1323,15 @@ static void testRule_ExtendedSignatureCalendarChainInputHash_verifyErrorResult(C
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &verCtx->tempData.extendedSig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->tempData.extendedSig != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extendedSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && extendedSig != NULL);
+
+	verCtx->tempData.calendarChain = KSI_CalendarHashChain_ref(extendedSig->calendarChain);
 
 	res = KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_CAL_2);
 
+	KSI_Signature_free(extendedSig);
 	KSI_VerificationContext_free(verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -1353,6 +1373,7 @@ static void testRule_ExtendedSignatureCalendarChainAggregationTime_verifyErrorRe
 	int res = KSI_OK;
 	KSI_VerificationContext *verCtx = NULL;
 	KSI_RuleVerificationResult verRes;
+	KSI_Signature *extendedSig = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1362,12 +1383,15 @@ static void testRule_ExtendedSignatureCalendarChainAggregationTime_verifyErrorRe
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &verCtx->tempData.extendedSig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->tempData.extendedSig != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extendedSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && extendedSig != NULL);
+
+	verCtx->tempData.calendarChain = KSI_CalendarHashChain_ref(extendedSig->calendarChain);
 
 	res = KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_CAL_3);
 
+	KSI_Signature_free(extendedSig);
 	KSI_VerificationContext_free(verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -1989,6 +2013,7 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse_veri
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
 		{NULL, NULL}
 	};
+	KSI_Signature *extendedSig = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1998,8 +2023,10 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse_veri
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &verCtx->tempData.extendedSig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->tempData.extendedSig != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extendedSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && extendedSig != NULL);
+
+	verCtx->tempData.calendarChain = KSI_CalendarHashChain_ref(extendedSig->calendarChain);
 
 	res = KSI_CTX_setPublicationsFile(ctx, NULL);
 	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
@@ -2013,53 +2040,11 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse_veri
 	res = KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_PUB_1);
 
+	KSI_Signature_free(extendedSig);
 	KSI_VerificationContext_free(verCtx);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_SIGNATURE_FILE
-#undef TEST_PUBLICATIONS_FILE
-}
-
-static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse_wrongCore_verifyErrorResult(CuTest *tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/all-wrong-hash-chains-in-signature.ksig"
-#define TEST_EXT_RESPONSE_FILE  "resource/tlv/all-wrong-hash-chains-in-signature-extend_response.tlv"
-#define TEST_PUBLICATIONS_FILE  "resource/tlv/ksi-publications.bin"
-
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_VerificationContext *verCtx = NULL;
-	KSI_RuleVerificationResult verRes;
-	const KSI_CertConstraint certCnst[] = {
-		{KSI_CERT_EMAIL, "publications@guardtime.com"},
-		{NULL, NULL}
-	};
-
-	KSI_ERR_clearErrors(ctx);
-
-	res = KSI_VerificationContext_create(ctx, &verCtx);
-	CuAssert(tc, "Unable to create verification context", res == KSI_OK && verCtx != NULL);
-
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
-
-	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
-
-	res = KSI_CTX_setPublicationsFile(ctx, NULL);
-	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
-
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx->userData.userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx->userData.userPublicationsFile != NULL);
-
-	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
-	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
-
-	res = KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_PUB_1);
-
-	KSI_VerificationContext_free(verCtx);
-
-#undef TEST_SIGNATURE_FILE
-#undef TEST_EXT_RESPONSE_FILE
 #undef TEST_PUBLICATIONS_FILE
 }
 
@@ -2128,6 +2113,7 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_veri
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
 		{NULL, NULL}
 	};
+	KSI_Signature *extendedSig = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2137,8 +2123,10 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_veri
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &verCtx->tempData.extendedSig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->tempData.extendedSig != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extendedSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && extendedSig != NULL);
+
+	verCtx->tempData.calendarChain = KSI_CalendarHashChain_ref(extendedSig->calendarChain);
 
 	res = KSI_CTX_setPublicationsFile(ctx, NULL);
 	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
@@ -2152,6 +2140,7 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_veri
 	res = KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse(verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_PUB_2);
 
+	KSI_Signature_free(extendedSig);
 	KSI_VerificationContext_free(verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -2224,6 +2213,7 @@ static void testRule_PublicationsFileExtendedSignatureInputHash_verifyErrorResul
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
 		{NULL, NULL}
 	};
+	KSI_Signature *extendedSig = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2233,8 +2223,10 @@ static void testRule_PublicationsFileExtendedSignatureInputHash_verifyErrorResul
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &verCtx->tempData.extendedSig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->tempData.extendedSig != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extendedSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && extendedSig != NULL);
+
+	verCtx->tempData.calendarChain = KSI_CalendarHashChain_ref(extendedSig->calendarChain);
 
 	res = KSI_CTX_setPublicationsFile(ctx, NULL);
 	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
@@ -2248,6 +2240,7 @@ static void testRule_PublicationsFileExtendedSignatureInputHash_verifyErrorResul
 	res = KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash(verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_PUB_3);
 
+	KSI_Signature_free(extendedSig);
 	KSI_VerificationContext_free(verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -2694,39 +2687,6 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_verifyEr
 #undef TEST_MOCK_IMPRINT
 }
 
-static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_wrongCore_verifyErrorResult(CuTest *tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/all-wrong-hash-chains-in-signature.ksig"
-#define TEST_EXT_RESPONSE_FILE  "resource/tlv/all-wrong-hash-chains-in-signature-extend_response.tlv"
-#define TEST_PUB_STRING         "AAAAAA-CT5VGY-AAPUCF-L3EKCC-NRSX56-AXIDFL-VZJQK4-WDCPOE-3KIWGB-XGPPM3-O5BIMW-REOVR4"
-
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_VerificationContext *verCtx = NULL;
-	KSI_RuleVerificationResult verRes;
-
-	KSI_ERR_clearErrors(ctx);
-
-	res = KSI_VerificationContext_create(ctx, &verCtx);
-	CuAssert(tc, "Unable to create verification context", res == KSI_OK && verCtx != NULL);
-
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
-
-	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
-
-	res = KSI_PublicationData_fromBase32(ctx, TEST_PUB_STRING, &verCtx->userData.userPublication);
-	CuAssert(tc, "Failed decoding publication string.", res == KSI_OK && verCtx->userData.userPublication != NULL);
-
-	res = KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse(verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_PUB_1);
-
-	KSI_VerificationContext_free(verCtx);
-
-#undef TEST_SIGNATURE_FILE
-#undef TEST_EXT_RESPONSE_FILE
-#undef TEST_PUB_STRING
-}
-
 static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse(CuTest *tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 #define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
@@ -2774,6 +2734,7 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse_verifyEr
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_PublicationData *tempPubData = NULL;
 	KSI_DataHash *pubHash = NULL;
+	KSI_Signature *extendedSig = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2783,8 +2744,11 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse_verifyEr
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->userData.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->userData.sig != NULL);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx->tempData.extendedSig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx->tempData.extendedSig != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &extendedSig);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && extendedSig != NULL);
+
+	verCtx->tempData.calendarChain = KSI_CalendarHashChain_ref(extendedSig->calendarChain);
+
 
 	res = KSI_Signature_getPublicationRecord(verCtx->userData.sig, &tempRec);
 	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && tempRec != NULL);
@@ -2813,6 +2777,7 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse_verifyEr
 	res = KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse(verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_PUB_2);
 
+	KSI_Signature_free(extendedSig);
 	KSI_VerificationContext_free(verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -2976,7 +2941,6 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationHashMatchesExtenderResponse_notExtended);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationHashMatchesExtenderResponse_extended);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationHashMatchesExtenderResponse_verifyErrorResult);
-	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationHashMatchesExtenderResponse_wrongCore_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_notExtended);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_extended);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_verifyErrorResult);
@@ -2994,7 +2958,6 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationCreationTimeVerification_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationHashMatchesExtendedResponse);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationHashMatchesExtendedResponse_verifyErrorResult);
-	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationHashMatchesExtendedResponse_wrongCore_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationTimeMatchesExtendedResponse);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationTimeMatchesExtendedResponse_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationExtendedSignatureInputHash);
