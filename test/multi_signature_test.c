@@ -511,7 +511,7 @@ static void testExtend(CuTest *tc) {
 	res = KSI_MultiSignature_fromFile(ctx, getFullResourcePath("resource/multi_sig/test2.mksi"), &ms);
 	CuAssert(tc, "Unable to read multi signature container from file.", res == KSI_OK && ms != NULL);
 
-	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri("resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"), "anon", "anon");
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri("resource/multi_sig/test2-extend_response-multiple.tlv"), "anon", "anon");
 	CuAssert(tc, "Unable to set extender response from file", res == KSI_OK);
 
 	res = KSI_MultiSignature_extend(ms);
@@ -533,8 +533,14 @@ static void testExtend(CuTest *tc) {
 	KSI_MultiSignature_free(ms);
 }
 
+static void preTest(void) {
+	reinitNetProvider(ctx);
+}
+
 CuSuite* KSITest_multiSignature_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
+
+	suite->preTest = preTest;
 
 	SUITE_ADD_TEST(suite, testAddingSingle);
 	SUITE_ADD_TEST(suite, testExtractingSingle);

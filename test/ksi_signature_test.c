@@ -34,7 +34,7 @@ extern KSI_CTX *ctx;
 
 
 static void preTest(void) {
-	ctx->netProvider->requestCount = 0;
+	reinitNetProvider(ctx);
 }
 
 static void testLoadSignatureFromFile(CuTest *tc) {

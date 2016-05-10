@@ -38,7 +38,7 @@ extern KSI_CTX *ctx;
 #define TEST_PASS "anon"
 
 static void preTest(void) {
-	ctx->netProvider->requestCount = 0;
+	reinitNetProvider(ctx);
 }
 
 static void testRule_AggregationChainInputHashVerification_validRfc3161(CuTest *tc) {

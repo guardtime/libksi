@@ -310,8 +310,14 @@ static void testReset(CuTest *tc) {
 #undef TEST_AGGR_RESPONSE_FILE
 }
 
+static void preTest(void) {
+	reinitNetProvider(ctx);
+}
+
 CuSuite* KSITest_Blocksigner_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
+
+	suite->preTest = preTest;
 
 	SUITE_ADD_TEST(suite, testFreeBeforeClose);
 	SUITE_ADD_TEST(suite, testMultiSig);

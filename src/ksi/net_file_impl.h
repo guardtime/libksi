@@ -28,14 +28,15 @@
 extern "C" {
 #endif
 
-    struct FsClient_Endpoint_st {
-        char *path;
-    };
+	struct FsClient_Endpoint_st {
+		char *path;
+		FILE *file;
+	};
 
-    struct KSI_FsClient_st {
-        int (*sendRequest)(KSI_NetworkClient *, KSI_RequestHandle *, char *path);
-        KSI_NetworkClient *http;
-    };
+	struct KSI_FsClient_st {
+		int (*sendRequest)(KSI_NetworkClient *, KSI_RequestHandle *, struct FsClient_Endpoint_st *endp);
+		KSI_NetworkClient *http;
+	};
 
 
 #ifdef __cplusplus
