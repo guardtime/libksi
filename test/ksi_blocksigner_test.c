@@ -78,7 +78,7 @@ static void addInput(CuTest *tc, KSI_BlockSigner *bs, int genMeta) {
 			CuAssert(tc, "Unable to create metadata.", res == KSI_OK && md != NULL);
 
 			res = KSI_BlockSigner_addLeaf(bs, hsh, 0, md, NULL);
-			CuAssert(tc, "Unable to add leaf with meta data", res == KSI_OK);
+			CuAssert(tc, "Unable to add leaf with meta data.", res == KSI_OK);
 
 			KSI_MetaData_free(md);
 			md = NULL;
@@ -299,7 +299,7 @@ static void testReset(CuTest *tc) {
 	CuAssert(tc, "Unable to add 3rd hash to the blocksigner.", res == KSI_OK);
 
 	res = KSI_BlockSigner_reset(bs);
-	CuAssert(tc, "Unable to reset the block signer", res == KSI_OK);
+	CuAssert(tc, "Unable to reset the block signer.", res == KSI_OK);
 
 	res = KSI_BlockSigner_addLeaf(bs, hsh, 0, NULL, &h);
 	CuAssert(tc, "Unable to add actual hash to the blocksigner.", res == KSI_OK && h != NULL);
@@ -488,7 +488,7 @@ static void testMaskingInput(CuTest *tc) {
 		bs = NULL;
 		if (res != tests[i].expectedRes) {
 			char buf[1000];
-			KSI_snprintf(buf, sizeof(buf), "Unexpected result @%i (expected = '%s', but was '%s')", i, KSI_getErrorString(tests[i].expectedRes), KSI_getErrorString(res));
+			KSI_snprintf(buf, sizeof(buf), "Unexpected result @%i (expected = '%s', but was '%s').", i, KSI_getErrorString(tests[i].expectedRes), KSI_getErrorString(res));
 			CuFail(tc, buf);
 		}
 	}
