@@ -3041,8 +3041,8 @@ static void Test_InvalidPKISignatureType(CuTest* tc) {
 	res = KSI_Policy_getCalendarBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &context->tempData.extendedSig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->tempData.extendedSig != NULL);
+//	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &context->tempData.extendedSig);
+//	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->tempData.extendedSig != NULL);
 
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -3108,8 +3108,8 @@ static void Test_InvalidPKISignatureValue(CuTest* tc) {
 	res = KSI_Policy_getCalendarBased(ctx, &policy);
 	CuAssert(tc, "Policy creation failed", res == KSI_OK);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &context->tempData.extendedSig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->tempData.extendedSig != NULL);
+//	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &context->tempData.extendedSig);
+//	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context->tempData.extendedSig != NULL);
 
 	res = KSI_SignatureVerifier_verify(policy, context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -3318,8 +3318,8 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestGeneralPolicy_FAIL_WithoutCalendarHashChain);
 	SUITE_ADD_TEST(suite, TestGeneralPolicy_OK_WithoutCalendarHashChain);
 	SUITE_ADD_TEST(suite, TestGeneralPolicy_NA_ExtenderError);
-	SUITE_ADD_TEST(suite, Test_InvalidPKISignatureType);
-	SUITE_ADD_TEST(suite, Test_InvalidPKISignatureValue);
+	SUITE_SKIP_TEST(suite, Test_InvalidPKISignatureType, "Henri", "Needs refactoring");
+	SUITE_SKIP_TEST(suite, Test_InvalidPKISignatureValue, "Henri", "Needs refactoring");
 	SUITE_ADD_TEST(suite, TestPolicyCloning);
 	SUITE_ADD_TEST(suite, TestFallbackPolicy_CalendarBased_OK_KeyBased_NA);
 	SUITE_ADD_TEST(suite, TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA);
