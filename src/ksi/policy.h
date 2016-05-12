@@ -31,7 +31,7 @@ extern "C" {
 		KSI_CTX *ctx;
 
 		/** Signature to be verified */
-		KSI_Signature *sig;
+		KSI_Signature *signature;
 
 		/** Indicates whether signature extention is allowed */
 		int extendingAllowed;
@@ -56,70 +56,77 @@ extern "C" {
 	 */
 	typedef enum KSI_VerificationResultCode_en {
 		/** Verification succeeded, which means there's a way to prove the correctness of the signature. */
-		KSI_VER_RES_OK,
+		KSI_VER_RES_OK = 0x00,
 		/** Verification not possible, which means there is not enough data to prove or disprove the correctness of the signature. */
-		KSI_VER_RES_NA,
+		KSI_VER_RES_NA = 0x01,
 		/** Verification failed, which means the signature is definitely invalid or the document does not match with the signature. */
-		KSI_VER_RES_FAIL
+		KSI_VER_RES_FAIL = 0x02,
 	} KSI_VerificationResultCode;
 
 	/**
 	 * Enumeration of all KSI policy (#KSI_Policy) verification error codes.
 	 */
 	typedef enum KSI_VerificationErrorCode_en {
-		/** Wrong document. */
-		KSI_VER_ERR_GEN_1,
-		/** Verification inconclusive. */
-		KSI_VER_ERR_GEN_2,
-		/** Inconsistent aggregation hash chains. */
-		KSI_VER_ERR_INT_1,
-		/** Inconsistent aggregation hash chain aggregation times. */
-		KSI_VER_ERR_INT_2,
-		/** Calendar hash chain input hash mismatch. */
-		KSI_VER_ERR_INT_3,
-		/** Calendar hash chain aggregation time mismatch. */
-		KSI_VER_ERR_INT_4,
-		/** Calendar hash chain shape inconsistent with aggregation time. */
-		KSI_VER_ERR_INT_5,
-		/** Calendar hash chain time inconsistent with calendar auth record time. */
-		KSI_VER_ERR_INT_6,
-		/** Calendar hash chain time inconsistent with publication time. */
-		KSI_VER_ERR_INT_7,
-		/** Calendar hash chain root has inconsistent with calendar auth record time. */
-		KSI_VER_ERR_INT_8,
-		/** Calendar hash chain root has inconsistent with publication time. */
-		KSI_VER_ERR_INT_9,
-		/** Aggregation hash chain chain index mismatch. */
-		KSI_VER_ERR_INT_10,
-		/** Extender response calendar root hash mismatch. */
-		KSI_VER_ERR_PUB_1,
-		/** Extender response inconsistent. */
-		KSI_VER_ERR_PUB_2,
-		/** Extender response input hash mismatch. */
-		KSI_VER_ERR_PUB_3,
-		/** Certificate not found. */
-		KSI_VER_ERR_KEY_1,
-		/** PKI signature not verified with certificate. */
-		KSI_VER_ERR_KEY_2,
-		/** Calendar root hash mismatch. */
-		KSI_VER_ERR_CAL_1,
-		/** Aggregation hash chain root hash and calendar hash chain input hash mismatch. */
-		KSI_VER_ERR_CAL_2,
-		/** Aggregation time mismatch. */
-		KSI_VER_ERR_CAL_3,
-		/** Aggregation hash chain right links are inconsistent. */
-		KSI_VER_ERR_CAL_4,
 		/** No error. */
-		KSI_VER_ERR_NONE
+		KSI_VER_ERR_NONE = 0x00,
+		/** Wrong document. */
+		KSI_VER_ERR_GEN_1 = 0x101,
+		/** Verification inconclusive. */
+		KSI_VER_ERR_GEN_2 = 0x102,
+		/** Inconsistent aggregation hash chains. */
+		KSI_VER_ERR_INT_1 = 0x103,
+		/** Inconsistent aggregation hash chain aggregation times. */
+		KSI_VER_ERR_INT_2 = 0x104,
+		/** Calendar hash chain input hash mismatch. */
+		KSI_VER_ERR_INT_3 = 0x105,
+		/** Calendar hash chain aggregation time mismatch. */
+		KSI_VER_ERR_INT_4 = 0x106,
+		/** Calendar hash chain shape inconsistent with aggregation time. */
+		KSI_VER_ERR_INT_5 = 0x107,
+		/** Calendar hash chain time inconsistent with calendar auth record time. */
+		KSI_VER_ERR_INT_6 = 0x108,
+		/** Calendar hash chain time inconsistent with publication time. */
+		KSI_VER_ERR_INT_7 = 0x109,
+		/** Calendar hash chain root has inconsistent with calendar auth record time. */
+		KSI_VER_ERR_INT_8 = 0x10a,
+		/** Calendar hash chain root has inconsistent with publication time. */
+		KSI_VER_ERR_INT_9 = 0x10b,
+		/** Aggregation hash chain chain index mismatch. */
+		KSI_VER_ERR_INT_10 = 0x10c,
+		/** Extender response calendar root hash mismatch. */
+		KSI_VER_ERR_PUB_1 = 0x201,
+		/** Extender response inconsistent. */
+		KSI_VER_ERR_PUB_2 = 0x202,
+		/** Extender response input hash mismatch. */
+		KSI_VER_ERR_PUB_3 = 0x203,
+		/** Certificate not found. */
+		KSI_VER_ERR_KEY_1 = 0x301,
+		/** PKI signature not verified with certificate. */
+		KSI_VER_ERR_KEY_2 = 0x302,
+		/** Calendar root hash mismatch. */
+		KSI_VER_ERR_CAL_1 = 0x401,
+		/** Aggregation hash chain root hash and calendar hash chain input hash mismatch. */
+		KSI_VER_ERR_CAL_2 = 0x402,
+		/** Aggregation time mismatch. */
+		KSI_VER_ERR_CAL_3 = 0x403,
+		/** Aggregation hash chain right links are inconsistent. */
+		KSI_VER_ERR_CAL_4 = 0x404,
 	} KSI_VerificationErrorCode;
 
 	struct KSI_RuleVerificationResult_st {
+		/** The result of the verification. */
 		KSI_VerificationResultCode resultCode;
+		/** Error code of the verification. */
 		KSI_VerificationErrorCode errorCode;
+		/** Last perfomed rule name. */
 		const char *ruleName;
+		/** Last performed policy name. */
 		const char *policyName;
+		/** Bitmap of verification steps perfomed. */
 		size_t stepsPerformed;
+		/** Bitmap of successful steps performed. */
 		size_t stepsSuccessful;
+		/** Bitmap of failes steps performed. */
 		size_t stepsFailed;
 	};
 
@@ -127,9 +134,17 @@ extern "C" {
 
 	KSI_DEFINE_LIST(KSI_RuleVerificationResult);
 
+	/**
+	 * Policy verification result structure.
+	 */
 	typedef struct KSI_PolicyVerificationResult_st {
+		/** Verification result. */
+		KSI_VerificationResultCode resultCode;
+		/** Detailed verification result. */
 		KSI_RuleVerificationResult finalResult;
+		/** Results for individual rules performed. */
 		KSI_LIST(KSI_RuleVerificationResult) *ruleResults;
+		/** Results for individual policies performed. */
 		KSI_LIST(KSI_RuleVerificationResult) *policyResults;
 	} KSI_PolicyVerificationResult;
 

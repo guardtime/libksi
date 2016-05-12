@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
 	printf("ok\n");
 
 	/* Set signature in verification context. */
-	context.sig = sig;
+	context.signature = sig;
 
 	/* Allow extending in verification context. */
 	context.extendingAllowed = 1;

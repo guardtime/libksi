@@ -494,7 +494,7 @@ static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ct
 		goto cleanup;
 	}
 
-	context.sig = sig;
+	context.signature = sig;
 	context.documentHash = hsh;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);

@@ -1273,7 +1273,7 @@ static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *s
 		goto cleanup;
 	}
 
-	context.sig = sig;
+	context.signature = sig;
 	context.docAggrLevel = rootLevel;
 	context.documentHash = docHsh;
 
@@ -2256,7 +2256,7 @@ int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, si
 		goto cleanup;
 	}
 
-	context.sig = sig;
+	context.signature = sig;
 	context.documentHash = hsh;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);

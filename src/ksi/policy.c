@@ -110,7 +110,10 @@ static int Rule_verify(const KSI_Rule *rule, KSI_VerificationContext *context, K
 				break;
 		}
 
-		if (currentRule->type == KSI_RULE_TYPE_BASIC && !(res == KSI_OK && policyResult->finalResult.resultCode == KSI_VER_RES_NA)) {
+		/* Duplicate the value for ease of use. */
+		policyResult->resultCode = policyResult->finalResult.resultCode;
+
+		if (currentRule->type == KSI_RULE_TYPE_BASIC && !(res == KSI_OK && policyResult->resultCode == KSI_VER_RES_NA)) {
 			/* For better readability, only add results of basic rules which do not confirm lack or existence of a component. */
 			PolicyVerificationResult_addLatestRuleResult(policyResult);
 		}
@@ -118,10 +121,10 @@ static int Rule_verify(const KSI_Rule *rule, KSI_VerificationContext *context, K
 		if (res != KSI_OK) {
 			/* If verification cannot be completed due to an internal error, no more rules should be processed. */
 			break;
-		} else if (policyResult->finalResult.resultCode == KSI_VER_RES_FAIL) {
+		} else if (policyResult->resultCode == KSI_VER_RES_FAIL) {
 			/* If a rule fails, no more rules in the policy should be processed. */
 			break;
-		} else if (policyResult->finalResult.resultCode == KSI_VER_RES_OK) {
+		} else if (policyResult->resultCode == KSI_VER_RES_OK) {
 			/* If a rule succeeds, the following OR-type rules should be skipped. */
 			if (currentRule->type == KSI_RULE_TYPE_COMPOSITE_OR) {
 				break;
@@ -400,9 +403,9 @@ const KSI_Policy* KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED = &PolicyUserPu
 
 static const KSI_Rule generalRules[] = {
 	{KSI_RULE_TYPE_COMPOSITE_AND, internalRules},
-	{KSI_RULE_TYPE_COMPOSITE_OR, keyBasedRules},
 	{KSI_RULE_TYPE_COMPOSITE_OR, publicationsFileBasedRules},
 	{KSI_RULE_TYPE_COMPOSITE_OR, userProvidedPublicationBasedRules},
+	{KSI_RULE_TYPE_COMPOSITE_OR, keyBasedRules},
 	{KSI_RULE_TYPE_COMPOSITE_OR, calendarBasedRules},
 	{KSI_RULE_TYPE_COMPOSITE_OR, NULL}
 };
@@ -611,31 +614,30 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 		goto cleanup;
 	}
 
+	tmp->resultCode = KSI_VER_RES_NA;
 	tmp->finalResult.resultCode = KSI_VER_RES_NA;
 	tmp->finalResult.errorCode = KSI_VER_ERR_GEN_2;
 	tmp->finalResult.stepsPerformed = 0;
 	tmp->finalResult.stepsFailed = 0;
 	tmp->finalResult.stepsSuccessful = 0;
-	*result = tmp;
-	tmp = NULL;
 
 	currentPolicy = policy;
 	while (currentPolicy != NULL) {
-		(*result)->finalResult.policyName = currentPolicy->policyName;
-		res = Policy_verifySignature(currentPolicy, context, *result);
+		tmp->finalResult.policyName = currentPolicy->policyName;
+		res = Policy_verifySignature(currentPolicy, context, tmp);
 		if (res != KSI_OK) {
 			/* Stop verifying the policy whenever there is an internal error (invalid arguments, out of memory, etc). */
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
 		}
 
-		res = PolicyVerificationResult_addLatestPolicyResult(*result);
+		res = PolicyVerificationResult_addLatestPolicyResult(tmp);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
 		}
 
-		if ((*result)->finalResult.resultCode != KSI_VER_RES_OK) {
+		if (tmp->finalResult.resultCode != KSI_VER_RES_OK) {
 			currentPolicy = currentPolicy->fallbackPolicy;
 			if (currentPolicy != NULL) {
 				KSI_VerificationContext_reset(context);
@@ -645,6 +647,11 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 			currentPolicy = NULL;
 		}
 	}
+
+	*result = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
 
 cleanup:
 
@@ -718,7 +725,7 @@ int KSI_VerificationContext_init(KSI_VerificationContext *context, KSI_CTX *ctx)
 	}
 
 	context->ctx = NULL;
-	context->sig = NULL;
+	context->signature = NULL;
 	context->extendingAllowed = 0;
 	context->docAggrLevel = 0;
 	context->documentHash = NULL;
@@ -728,7 +735,7 @@ int KSI_VerificationContext_init(KSI_VerificationContext *context, KSI_CTX *ctx)
 	context->tempData = NULL;
 
 	context->ctx = ctx;
-	context->sig = NULL;
+	context->signature = NULL;
 
 	res = KSI_OK;
 

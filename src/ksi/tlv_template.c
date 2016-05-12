@@ -418,7 +418,7 @@ int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, size_t raw_len
 		goto cleanup;
 	}
 
-	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Parsed TLV", tlv);
+//	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Parsed TLV", tlv);
 
 	res = KSI_OK;
 
@@ -942,7 +942,7 @@ int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag,
 		goto cleanup;
 	}
 
-	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Serializing object", tlv);
+//	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Serializing object", tlv);
 
 	/* Serialize the TLV. */
 	res = KSI_TLV_serialize(tlv, &tmp, &tmp_len);
@@ -989,7 +989,7 @@ int KSI_TlvTemplate_writeBytes(KSI_CTX *ctx, const void *obj, unsigned tag, int 
 		goto cleanup;
 	}
 
-	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Serializing object", tlv);
+//	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Serializing object", tlv);
 
 	/* Serialize the TLV. */
 	res = KSI_TLV_writeBytes(tlv, raw, raw_size, raw_len, opt);
