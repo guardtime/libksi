@@ -27,7 +27,6 @@ int main(int argc, char **argv) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ksi = NULL;
 	KSI_Signature *sig = NULL;
-	const KSI_Policy *policy = NULL;
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_DataHash *hsh = NULL;
@@ -79,13 +78,6 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	/* Get policy for verification. */
-	res = KSI_Policy_getGeneral(ksi, &policy);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Failed to get policy.\n");
-		goto cleanup;
-	}
-
 	/* Create context for verification. */
 	res = KSI_VerificationContext_init(&context, ksi);
 	if (res != KSI_OK) {
@@ -119,7 +111,7 @@ int main(int argc, char **argv) {
 	}
 
 	printf("Verifying signature...");
-	res = KSI_SignatureVerifier_verify(policy, &context, &result);
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
 	if (res != KSI_OK) {
 		printf("Failed to complete verification due to error 0x%x (%s)\n", res, KSI_getErrorString(res));
 		goto cleanup;

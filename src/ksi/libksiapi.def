@@ -1041,6 +1041,12 @@ EXPORTS
 
 ;policy.h
 EXPORTS
+	KSI_Policy_getInternal
+	KSI_Policy_getCalendarBased
+	KSI_Policy_getKeyBased
+	KSI_Policy_getPublicationsFileBased
+	KSI_Policy_getUserProvidedPublicationBased
+	KSI_Policy_getGeneral
 	KSI_Policy_create
 	KSI_Policy_clone
 	KSI_Policy_setFallback

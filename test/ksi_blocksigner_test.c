@@ -81,9 +81,6 @@ static void testMultiSig(CuTest *tc) {
 	res = KSI_BlockSigner_close(bs, &ms);
 	CuAssert(tc, "Unable to close block signer and extract multi signature.", res == KSI_OK && ms != NULL);
 
-	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
-	CuAssert(tc, "Unable to set default pubfile, default cert and default pki constraints.", res == KSI_OK);
-
 	/* Lets loop over all the inputs and try to verify them. */
 	for (i = 0; input_data[i] != NULL; i++) {
 		res = KSI_DataHash_create(ctx, input_data[i], strlen(input_data[i]), KSI_HASHALG_SHA2_256, &hsh);
@@ -174,9 +171,6 @@ static void testMedaData(CuTest *tc) {
 	res = KSI_BlockSigner_close(bs, NULL);
 	CuAssert(tc, "Unable to close the blocksigner.", res == KSI_OK);
 
-	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
-	CuAssert(tc, "Unable to set default pubfile, default cert and default pki constraints.", res == KSI_OK);
-
 	/* Loop over all the handles, and extract the signature. */
 	for (i = 0; clientId[i] != NULL; i++) {
 		char expId[0xff];
@@ -206,7 +200,6 @@ static void testMedaData(CuTest *tc) {
 
 		KSI_BlockSignerHandle_free(hndl[i]);
 	}
-
 
 	KSI_DataHash_free(hsh);
 	KSI_MetaData_free(md);

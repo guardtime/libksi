@@ -136,6 +136,12 @@ static int RunAllTests() {
 		exit(EXIT_FAILURE);
 	}
 
+	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to set default publications file.");
+		exit(EXIT_FAILURE);
+	}
+
 	logFile = fopen("test.log", "w");
 	if (logFile == NULL) {
 		fprintf(stderr, "Unable to open log file.\n");

@@ -623,8 +623,8 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 	while (currentPolicy != NULL) {
 		(*result)->finalResult.policyName = currentPolicy->policyName;
 		res = Policy_verifySignature(currentPolicy, context, *result);
-		/* Stop verifying the policy whenever there is an internal error (invalid arguments, out of memory, etc). */
 		if (res != KSI_OK) {
+			/* Stop verifying the policy whenever there is an internal error (invalid arguments, out of memory, etc). */
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
 		}
@@ -736,4 +736,3 @@ cleanup:
 
 	return res;
 }
-

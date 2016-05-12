@@ -156,16 +156,6 @@ extern "C" {
 	typedef struct KSI_VerificationContext_st KSI_VerificationContext;
 
 	/**
-	 * Gets a pointer to a predefined #KSI_Policy object with rules for general verification.
-	 * \param[in]	ctx			KSI context.
-	 * \param[out]	policy		Pointer to the receiving pointer.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_SignatureVerifier_verify
-	 */
-	#define KSI_Policy_getGeneral(ctx, policy)  KSI_Policy_clone((ctx), KSI_VERIFICATION_POLICY_GENERAL, (policy));
-
-	/**
 	 * Creates a policy based on user defined rules. User gets ownership of the policy and
 	 * is responsible for freeing the policy later with #KSI_Policy_free. As the policy owner,
 	 * the user is free to set a fallback policy with #KSI_Policy_setFallback.

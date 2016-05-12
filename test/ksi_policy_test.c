@@ -35,24 +35,7 @@ extern KSI_CTX *ctx;
 #define TEST_USER "anon"
 #define TEST_PASS "anon"
 
-static void replaceContext() {
-	KSI_LoggerCallback loggerCb;
-	void *loggerCtx;
-	int logLevel;
-
-	loggerCb = ctx->loggerCB;
-	loggerCtx = ctx->loggerCtx;
-	logLevel = ctx->logLevel;
-
-	KSI_CTX_free(ctx);
-	KSI_CTX_new(&ctx);
-	KSI_CTX_setLoggerCallback(ctx, loggerCb, loggerCtx);
-	KSI_CTX_setLogLevel(ctx, logLevel);
-}
-
 static void preTest(void) {
-	/* Start each policy test with a clean KSI context. */
-	replaceContext();
 	ctx->netProvider->requestCount = 0;
 }
 
@@ -1622,9 +1605,6 @@ static void TestKeyBasedPolicy_FAIL_WithoutCertificate(CuTest* tc) {
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context.sig != NULL);
 
-	res = KSI_CTX_setPublicationsFile(ctx, NULL);
-	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
-
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context.userPublicationsFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context.userPublicationsFile != NULL);
 
@@ -1655,19 +1635,20 @@ static void TestKeyBasedPolicy_FAIL_WithCertificate(CuTest* tc) {
 		KSI_VER_ERR_KEY_2,
 		"KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification"
 	};
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	KSI_CTX *ctx = NULL;
 
 	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context.sig != NULL);
-
-	res = KSI_CTX_setPublicationsFile(ctx, NULL);
-	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context.userPublicationsFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context.userPublicationsFile != NULL);
@@ -1683,6 +1664,7 @@ static void TestKeyBasedPolicy_FAIL_WithCertificate(CuTest* tc) {
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(context.sig);
 	KSI_VerificationContext_clean(&context);
+	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
@@ -1699,19 +1681,20 @@ static void TestKeyBasedPolicy_OK(CuTest* tc) {
 		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification"
 	};
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	KSI_CTX *ctx = NULL;
 
 	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context.sig != NULL);
-
-	res = KSI_CTX_setPublicationsFile(ctx, NULL);
-	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context.userPublicationsFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context.userPublicationsFile != NULL);
@@ -1727,6 +1710,7 @@ static void TestKeyBasedPolicy_OK(CuTest* tc) {
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(context.sig);
 	KSI_VerificationContext_clean(&context);
+	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
@@ -1743,19 +1727,20 @@ static void TestPublicationsFileBasedPolicy_OK_WithPublicationRecord(CuTest* tc)
 		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_PublicationsFileContainsSignaturePublication"
 	};
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	KSI_CTX *ctx = NULL;
 
 	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context.sig != NULL);
-
-	res = KSI_CTX_setPublicationsFile(ctx, NULL);
-	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context.userPublicationsFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context.userPublicationsFile != NULL);
@@ -1771,6 +1756,7 @@ static void TestPublicationsFileBasedPolicy_OK_WithPublicationRecord(CuTest* tc)
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(context.sig);
 	KSI_VerificationContext_clean(&context);
+	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
@@ -1787,19 +1773,20 @@ static void TestPublicationsFileBasedPolicy_NA_WithPublicationRecord(CuTest* tc)
 		KSI_VER_ERR_GEN_2,
 		"KSI_VerificationRule_SignatureDoesNotContainPublication"
 	};
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	KSI_CTX *ctx = NULL;
 
 	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context.sig != NULL);
-
-	res = KSI_CTX_setPublicationsFile(ctx, NULL);
-	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context.userPublicationsFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context.userPublicationsFile != NULL);
@@ -1815,6 +1802,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithPublicationRecord(CuTest* tc)
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(context.sig);
 	KSI_VerificationContext_clean(&context);
+	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
@@ -1831,19 +1819,20 @@ static void TestPublicationsFileBasedPolicy_NA_WithoutSuitablePublication(CuTest
 		KSI_VER_ERR_GEN_2,
 		"KSI_VerificationRule_PublicationsFileContainsPublication"
 	};
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	KSI_CTX *ctx = NULL;
 
 	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context.sig != NULL);
-
-	res = KSI_CTX_setPublicationsFile(ctx, NULL);
-	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context.userPublicationsFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context.userPublicationsFile != NULL);
@@ -1859,6 +1848,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithoutSuitablePublication(CuTest
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(context.sig);
 	KSI_VerificationContext_clean(&context);
+	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
@@ -1875,19 +1865,20 @@ static void TestPublicationsFileBasedPolicy_NA_WithSuitablePublication(CuTest* t
 		KSI_VER_ERR_GEN_2,
 		"KSI_VerificationRule_ExtendingPermittedVerification"
 	};
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	KSI_CTX *ctx = NULL;
 
 	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context.sig != NULL);
-
-	res = KSI_CTX_setPublicationsFile(ctx, NULL);
-	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context.userPublicationsFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context.userPublicationsFile != NULL);
@@ -1903,6 +1894,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithSuitablePublication(CuTest* t
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(context.sig);
 	KSI_VerificationContext_clean(&context);
+	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
@@ -1920,10 +1912,14 @@ static void TestPublicationsFileBasedPolicy_OK_WithSuitablePublication(CuTest* t
 		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash"
 	};
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	KSI_CTX *ctx = NULL;
 
 	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
@@ -1933,9 +1929,6 @@ static void TestPublicationsFileBasedPolicy_OK_WithSuitablePublication(CuTest* t
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
-
-	res = KSI_CTX_setPublicationsFile(ctx, NULL);
-	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context.userPublicationsFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context.userPublicationsFile != NULL);
@@ -1953,6 +1946,7 @@ static void TestPublicationsFileBasedPolicy_OK_WithSuitablePublication(CuTest* t
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(context.sig);
 	KSI_VerificationContext_clean(&context);
+	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
@@ -1971,9 +1965,14 @@ static void TestPublicationsFileBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
 		KSI_VER_ERR_PUB_1,
 		"KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse"
 	};
+	KSI_CTX *ctx = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
@@ -1984,9 +1983,6 @@ static void TestPublicationsFileBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
-
-	res = KSI_CTX_setPublicationsFile(ctx, NULL);
-	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context.userPublicationsFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context.userPublicationsFile != NULL);
@@ -2004,6 +2000,7 @@ static void TestPublicationsFileBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(context.sig);
 	KSI_VerificationContext_clean(&context);
+	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
@@ -2322,19 +2319,20 @@ static void TestGeneralPolicy_FAIL_WithCertificate(CuTest* tc) {
 		KSI_VER_ERR_KEY_2,
 		"KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification"
 	};
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	KSI_CTX *ctx = NULL;
 
 	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context.sig != NULL);
-
-	res = KSI_CTX_setPublicationsFile(ctx, NULL);
-	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context.userPublicationsFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context.userPublicationsFile != NULL);
@@ -2350,6 +2348,7 @@ static void TestGeneralPolicy_FAIL_WithCertificate(CuTest* tc) {
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(context.sig);
 	KSI_VerificationContext_clean(&context);
+	KSI_CTX_free(ctx);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
 }
@@ -2365,19 +2364,20 @@ static void TestGeneralPolicy_OK_WithCertificate(CuTest* tc) {
 		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification"
 	};
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	KSI_CTX *ctx = NULL;
 
 	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context.sig != NULL);
-
-	res = KSI_CTX_setPublicationsFile(ctx, NULL);
-	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context.userPublicationsFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context.userPublicationsFile != NULL);
@@ -2393,6 +2393,7 @@ static void TestGeneralPolicy_OK_WithCertificate(CuTest* tc) {
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(context.sig);
 	KSI_VerificationContext_clean(&context);
+	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
@@ -2410,10 +2411,14 @@ static void TestGeneralPolicy_FAIL_AfterExtendingToPublication(CuTest* tc) {
 		KSI_VER_ERR_PUB_1,
 		"KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse"
 	};
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	KSI_CTX *ctx = NULL;
 
 	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
@@ -2423,9 +2428,6 @@ static void TestGeneralPolicy_FAIL_AfterExtendingToPublication(CuTest* tc) {
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
-
-	res = KSI_CTX_setPublicationsFile(ctx, NULL);
-	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context.userPublicationsFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context.userPublicationsFile != NULL);
@@ -2443,6 +2445,7 @@ static void TestGeneralPolicy_FAIL_AfterExtendingToPublication(CuTest* tc) {
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(context.sig);
 	KSI_VerificationContext_clean(&context);
+	KSI_CTX_free(ctx);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
 #undef TEST_PUBLICATIONS_FILE
@@ -2460,10 +2463,14 @@ static void TestGeneralPolicy_OK_AfterExtendingToPublication(CuTest* tc) {
 		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash"
 	};
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	KSI_CTX *ctx = NULL;
 
 	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
@@ -2473,9 +2480,6 @@ static void TestGeneralPolicy_OK_AfterExtendingToPublication(CuTest* tc) {
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
-
-	res = KSI_CTX_setPublicationsFile(ctx, NULL);
-	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context.userPublicationsFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context.userPublicationsFile != NULL);
@@ -2492,6 +2496,7 @@ static void TestGeneralPolicy_OK_AfterExtendingToPublication(CuTest* tc) {
 	KSI_PublicationsFile_free(context.userPublicationsFile);
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(context.sig);
+	KSI_CTX_free(ctx);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
 #undef TEST_PUBLICATIONS_FILE
@@ -2512,10 +2517,14 @@ static void TestGeneralPolicy_FAIL_AfterExtendingToUserPublication(CuTest* tc) {
 		KSI_VER_ERR_PUB_1,
 		"KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse"
 	};
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	KSI_CTX *ctx = NULL;
 
 	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
@@ -2525,9 +2534,6 @@ static void TestGeneralPolicy_FAIL_AfterExtendingToUserPublication(CuTest* tc) {
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
-
-	res = KSI_CTX_setPublicationsFile(ctx, NULL);
-	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context.userPublicationsFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context.userPublicationsFile != NULL);
@@ -2556,6 +2562,7 @@ static void TestGeneralPolicy_FAIL_AfterExtendingToUserPublication(CuTest* tc) {
 	KSI_Signature_free(sig);
 	KSI_Signature_free(context.sig);
 	KSI_VerificationContext_clean(&context);
+	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
@@ -2578,19 +2585,20 @@ static void TestGeneralPolicy_OK_AfterExtendingToUserPublication(CuTest* tc) {
 		KSI_VER_ERR_NONE,
 		"KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash"
 	};
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	KSI_CTX *ctx = NULL;
 
 	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context.sig != NULL);
-
-	res = KSI_CTX_setPublicationsFile(ctx, NULL);
-	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &context.userPublicationsFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && context.userPublicationsFile != NULL);
@@ -2622,6 +2630,7 @@ static void TestGeneralPolicy_OK_AfterExtendingToUserPublication(CuTest* tc) {
 	KSI_Signature_free(sig);
 	KSI_Signature_free(context.sig);
 	KSI_VerificationContext_clean(&context);
+	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_SIGNATURE_FILE_WITH_PUBLICATION
@@ -2801,7 +2810,6 @@ static void TestFallbackPolicy_CalendarBased_OK_KeyBased_NA(CuTest* tc) {
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
-	KSI_CTX_setPublicationsFile(context.ctx, NULL);
 	KSI_Signature_free(context.sig);
 	KSI_VerificationContext_clean(&context);
 	KSI_Policy_free(policy);
@@ -2847,7 +2855,6 @@ static void TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA(CuTest* tc) {
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
-	KSI_CTX_setPublicationsFile(context.ctx, NULL);
 	KSI_Signature_free(context.sig);
 	KSI_VerificationContext_clean(&context);
 	KSI_Policy_free(policy);
@@ -2856,6 +2863,39 @@ static void TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA(CuTest* tc) {
 #undef TEST_EXT_RESPONSE_FILE
 }
 
+static void TestUserPublicationWithBadCalAuthRec(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-2015-09-13_21-34-00.ksig"
+#define TEST_EXT_RESPONSE_FILE "TODO"
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_VerificationContext ver;
+	KSI_PublicationData *pub = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+
+	res = KSI_VerificationContext_init(&ver, ctx);
+	CuAssert(tc, "Unable to initialise verification context.", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to read signature file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_PublicationData_fromBase32(ctx, "AAAAAA-CWEA7A-AANGA4-GYCQU4-LMHD4Z-H2SAWX-ZKIL6A-3UKFW5-FSX34D-6GZQJ5-TDA33K-T3FMOK", &pub);
+	CuAssert(tc, "Unable to get publication from base 32.", res == KSI_OK && pub != NULL);
+
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
+
+	ver.sig = sig;
+	ver.userPublication = pub;
+
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &ver, &result);
+	CuAssert(tc, "Unable to verify signature.", res == KSI_OK && result != NULL);
+
+	KSI_PublicationData_free(pub);
+	KSI_Signature_free(sig);
+	KSI_PolicyVerificationResult_free(result);
+#undef TEST_EXT_RESPNSE_FILE
+#undef TEST_SIGNATURE_FILE
+}
 
 CuSuite* KSITest_Policy_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
@@ -2922,6 +2962,7 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestPolicyCloning);
 	SUITE_ADD_TEST(suite, TestFallbackPolicy_CalendarBased_OK_KeyBased_NA);
 	SUITE_SKIP_TEST(suite, TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA, "Henri", "Calendar based verification should never return N/A");
+	SUITE_ADD_TEST(suite, TestUserPublicationWithBadCalAuthRec);
 
 	return suite;
 }

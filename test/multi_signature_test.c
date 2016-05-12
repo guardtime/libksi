@@ -60,9 +60,6 @@ static void testExtractingSingle(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
-	CuAssert(tc, "Unable to set default pubfil, default cert and default pki constraints.", res == KSI_OK);
-
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
