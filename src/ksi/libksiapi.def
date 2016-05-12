@@ -60,6 +60,8 @@ EXPORTS
 	KSI_DataHasher_reset
 	KSI_DataHasher_add
 	KSI_DataHasher_addImprint
+	KSI_DataHasher_addOctetString
+	KSI_DataHash_createZero
 	KSI_DataHasher_close
 	KSI_DataHasher_free
 	KSI_DataHash_free
