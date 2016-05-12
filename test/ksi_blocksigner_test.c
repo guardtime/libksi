@@ -497,8 +497,14 @@ static void testMaskingInput(CuTest *tc) {
 	KSI_DataHash_free(zero);
 }
 
+static void preTest(void) {
+	reinitNetProvider(ctx);
+}
+
 CuSuite* KSITest_Blocksigner_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
+
+	suite->preTest = preTest;
 
 	SUITE_ADD_TEST(suite, testFreeBeforeClose);
 	SUITE_ADD_TEST(suite, testMultiSig);

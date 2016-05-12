@@ -439,7 +439,6 @@ EXPORTS
 
 ;TLV templates
 EXPORTS
-	KSI_AggregationPdu_template DATA
 	KSI_Signature_template DATA
 	KSI_CalAuthRecPKISignedData_template DATA
 	KSI_AggrAuthRecPKISignedData_template DATA

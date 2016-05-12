@@ -663,7 +663,7 @@ static int extractSignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature **signatur
 	}
 
 	if (KSI_TLV_getTag(tlv) != 0x800) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Uni-Signature element is missing.");
 		goto cleanup;
 	}
 
@@ -682,7 +682,7 @@ static int extractSignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature **signatur
 
 	res = checkSignatureInternals(sig);
 	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
+		KSI_pushError(ctx, res, "Signature internal structures are invalid.");
 		goto cleanup;
 	}
 
@@ -1130,7 +1130,7 @@ static int parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp, KSI
 
 	/* Validate tag value */
 	if (KSI_TLV_getTag(respTlv) != 0x202) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Aggregation response element is missing.");
 		goto cleanup;
 	}
 

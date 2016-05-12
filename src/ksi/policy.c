@@ -20,6 +20,7 @@
 #include "policy.h"
 #include "policy_impl.h"
 #include "verification_rule.h"
+#include "hashchain.h"
 
 static void RuleVerificationResult_free(KSI_RuleVerificationResult *result);
 
@@ -767,7 +768,7 @@ int KSI_VerificationContext_create(KSI_CTX *ctx, KSI_VerificationContext **conte
 	tmp->userData.sig = NULL;
 	tmp->userData.extendingAllowed = 0;
 	tmp->userData.docAggrLevel = 0;
-	tmp->tempData.extendedSig = NULL;
+	tmp->tempData.calendarChain = NULL;
 	tmp->userData.documentHash = NULL;
 	tmp->tempData.aggregationOutputHash = NULL;
 	tmp->tempData.publicationsFile = NULL;
@@ -808,7 +809,7 @@ CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, KSI_uint64_t, docAggrLevel, Ag
 void KSI_VerificationContext_free(KSI_VerificationContext *context) {
 	if (context != NULL) {
 		KSI_Signature_free(context->userData.sig);
-		KSI_Signature_free(context->tempData.extendedSig);
+		KSI_CalendarHashChain_free(context->tempData.calendarChain);
 		KSI_DataHash_free(context->userData.documentHash);
 		KSI_DataHash_free(context->tempData.aggregationOutputHash);
 		KSI_nofree(context->tempData.publicationsFile);
@@ -820,8 +821,8 @@ void KSI_VerificationContext_free(KSI_VerificationContext *context) {
 
 void KSI_VerificationContext_clean(KSI_VerificationContext *context) {
 	if (context != NULL) {
-		KSI_Signature_free(context->tempData.extendedSig);
-		context->tempData.extendedSig = NULL;
+		KSI_CalendarHashChain_free(context->tempData.calendarChain);
+		context->tempData.calendarChain = NULL;
 		KSI_DataHash_free(context->tempData.aggregationOutputHash);
 		context->tempData.aggregationOutputHash = NULL;
 		KSI_nofree(context->tempData.publicationsFile);

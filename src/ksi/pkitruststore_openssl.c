@@ -156,7 +156,7 @@ int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) 
 
 
 	if (!X509_LOOKUP_load_file(lookup, path, X509_FILETYPE_PEM)) {
-		KSI_pushError(trust->ctx, res = KSI_INVALID_FORMAT, NULL);
+		KSI_pushError(trust->ctx, res = KSI_INVALID_FORMAT, "Unable to add PKI Truststore lookup file.");
 		goto cleanup;
 	}
 
@@ -190,7 +190,7 @@ int KSI_PKITruststore_addLookupDir(KSI_PKITruststore *trust, const char *path) {
 	}
 
 	if (!X509_LOOKUP_add_dir(lookup, path, X509_FILETYPE_PEM)) {
-		KSI_pushError(trust->ctx, res = KSI_INVALID_FORMAT, NULL);
+		KSI_pushError(trust->ctx, res = KSI_INVALID_FORMAT, "Unable to add PKI Truststore lookup directory.");
 		goto cleanup;
 	}
 
@@ -240,7 +240,7 @@ int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **tru
 	if (setDefaults) {
 		/* Set system default paths. */
 		if (!X509_STORE_set_default_paths(tmp->store)) {
-			KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, NULL);
+			KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, "Unable to set PKI Truststore default paths.");
 			goto cleanup;
 		}
 
@@ -493,38 +493,38 @@ cleanup:
 }
 
 static time_t ASN1_GetTimeT(ASN1_TIME* time){
-    struct tm t;
-    const char* str = (const char*) time->data;
-    size_t i = 0;
+	struct tm t;
+	const char* str = (const char*) time->data;
+	size_t i = 0;
 
 	if (time == NULL) return 0;
-    memset(&t, 0, sizeof(t));
+	memset(&t, 0, sizeof(t));
 
-    if (time->type == V_ASN1_UTCTIME) {/* two digit year */
-        t.tm_year = (str[i++] - '0') * 10;
-        t.tm_year += (str[i++] - '0');
-        if (t.tm_year < 70)
-            t.tm_year += 100;
-    } else if (time->type == V_ASN1_GENERALIZEDTIME) {/* four digit year */
-        t.tm_year = (str[i++] - '0') * 1000;
-        t.tm_year+= (str[i++] - '0') * 100;
-        t.tm_year+= (str[i++] - '0') * 10;
-        t.tm_year+= (str[i++] - '0');
-        t.tm_year -= 1900;
-    }
-    t.tm_mon  = (str[i++] - '0') * 10;
-    t.tm_mon += (str[i++] - '0') - 1; // -1 since January is 0 not 1.
-    t.tm_mday = (str[i++] - '0') * 10;
-    t.tm_mday+= (str[i++] - '0');
-    t.tm_hour = (str[i++] - '0') * 10;
-    t.tm_hour+= (str[i++] - '0');
-    t.tm_min  = (str[i++] - '0') * 10;
-    t.tm_min += (str[i++] - '0');
-    t.tm_sec  = (str[i++] - '0') * 10;
-    t.tm_sec += (str[i++] - '0');
+	if (time->type == V_ASN1_UTCTIME) {/* two digit year */
+		t.tm_year = (str[i++] - '0') * 10;
+		t.tm_year += (str[i++] - '0');
+		if (t.tm_year < 70)
+			t.tm_year += 100;
+	} else if (time->type == V_ASN1_GENERALIZEDTIME) {/* four digit year */
+		t.tm_year = (str[i++] - '0') * 1000;
+		t.tm_year+= (str[i++] - '0') * 100;
+		t.tm_year+= (str[i++] - '0') * 10;
+		t.tm_year+= (str[i++] - '0');
+		t.tm_year -= 1900;
+	}
+	t.tm_mon  = (str[i++] - '0') * 10;
+	t.tm_mon += (str[i++] - '0') - 1; // -1 since January is 0 not 1.
+	t.tm_mday = (str[i++] - '0') * 10;
+	t.tm_mday+= (str[i++] - '0');
+	t.tm_hour = (str[i++] - '0') * 10;
+	t.tm_hour+= (str[i++] - '0');
+	t.tm_min  = (str[i++] - '0') * 10;
+	t.tm_min += (str[i++] - '0');
+	t.tm_sec  = (str[i++] - '0') * 10;
+	t.tm_sec += (str[i++] - '0');
 
-    /* Note: we did not adjust the time based on time zone information */
-    return KSI_CalendarTimeToUnixTime(&t);
+	/* Note: we did not adjust the time based on time zone information */
+	return KSI_CalendarTimeToUnixTime(&t);
 }
 
 #define NOT_AFTER 0
