@@ -60,6 +60,8 @@ EXPORTS
 	KSI_DataHasher_reset
 	KSI_DataHasher_add
 	KSI_DataHasher_addImprint
+	KSI_DataHasher_addOctetString
+	KSI_DataHash_createZero
 	KSI_DataHasher_close
 	KSI_DataHasher_free
 	KSI_DataHash_free
@@ -114,6 +116,7 @@ EXPORTS
 	KSI_CalendarHashChain_setInputHash
 	KSI_CalendarHashChain_setHashChain
 	KSI_CalendarHashChain_writeBytes
+	KSI_CalendarHashChain_ref
 
 ;hmac.h
 EXPORTS
@@ -440,7 +443,6 @@ EXPORTS
 
 ;TLV templates
 EXPORTS
-	KSI_AggregationPdu_template DATA
 	KSI_Signature_template DATA
 	KSI_CalAuthRecPKISignedData_template DATA
 	KSI_AggrAuthRecPKISignedData_template DATA

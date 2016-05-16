@@ -329,7 +329,7 @@ int KSI_PublicationsFile_fromFile(KSI_CTX *ctx, const char *fileName, KSI_Public
 	}
 
 	if (raw_size > UINT_MAX) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Publications file exceeds max size.");
 		goto cleanup;
 	}
 
@@ -1022,7 +1022,7 @@ int KSI_PublicationData_fromBase32(KSI_CTX *ctx, const char *publication, KSI_Pu
 
 	if (KSI_crc32(binary_publication, binary_publication_length - 4, 0) !=
 			tmp_ulong) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "CRC mismatch.");
 		goto cleanup;
 	}
 
@@ -1061,7 +1061,7 @@ int KSI_PublicationData_fromBase32(KSI_CTX *ctx, const char *publication, KSI_Pu
 
 	hash_size = KSI_getHashLength(algo_id);
 	if (binary_publication_length != 8 + 1 + hash_size + 4) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Hash algorithm lenght mismatch.");
 		goto cleanup;
 	}
 

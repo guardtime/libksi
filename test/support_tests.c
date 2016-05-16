@@ -25,6 +25,11 @@
 
 #include "support_tests.h"
 #include "all_integration_tests.h"
+#include "ksi/ksi.h"
+#include "ksi/net_uri.h"
+#include "../src/ksi/ctx_impl.h"
+
+
 
 #define DIR_SEP '/'
 
@@ -163,3 +168,16 @@ void writeXmlReport(CuSuite *suite, const char *fname) {
 
 	CuStringDelete(xmlOutput);
 }
+
+void reinitNetProvider(KSI_CTX *ctx) {
+	int res;
+	KSI_NetworkClient *client = NULL;
+
+	res = KSI_UriClient_new(ctx, &client);
+	if (res != KSI_OK || client == NULL) return;
+
+	res = KSI_CTX_setNetworkProvider(ctx, client);
+	if (res != KSI_OK) return;
+	ctx->isCustomNetProvider = 0;
+}
+

@@ -20,6 +20,7 @@
 #include "policy.h"
 #include "policy_impl.h"
 #include "verification_rule.h"
+#include "hashchain.h"
 
 #include <string.h>
 
@@ -594,7 +595,7 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 
 	memset(&tempData, 0, sizeof(tempData));
 	tempData.aggregationOutputHash = NULL;
-	tempData.extendedSig = NULL;
+	tempData.calendarChain = NULL;
 	tempData.publicationsFile = NULL;
 
 	if (policy == NULL || context == NULL || context->ctx == NULL || result == NULL) {
@@ -681,8 +682,8 @@ static void VerificationTempData_clear(VerificationTempData *tmp) {
 		KSI_DataHash_free(tmp->aggregationOutputHash);
 		tmp->aggregationOutputHash = NULL;
 
-		KSI_Signature_free(tmp->extendedSig);
-		tmp->extendedSig = NULL;
+		KSI_CalendarHashChain_free(tmp->calendarChain);
+		tmp->calendarChain = NULL;
 
 		KSI_PublicationsFile_free(tmp->publicationsFile);
 		tmp->publicationsFile = NULL;
@@ -709,8 +710,8 @@ int KSI_VerificationContext_reset(KSI_VerificationContext *context) {
 	KSI_DataHash_free(((VerificationTempData *)context->tempData)->aggregationOutputHash);
 	((VerificationTempData *)context->tempData)->aggregationOutputHash = NULL;
 
-	KSI_Signature_free(((VerificationTempData *)context->tempData)->extendedSig);
-	((VerificationTempData *)context->tempData)->extendedSig = NULL;
+	KSI_CalendarHashChain_free(((VerificationTempData *)context->tempData)->calendarChain);
+	((VerificationTempData *)context->tempData)->calendarChain = NULL;
 
 cleanup:
 
@@ -742,4 +743,5 @@ int KSI_VerificationContext_init(KSI_VerificationContext *context, KSI_CTX *ctx)
 cleanup:
 
 	return res;
+
 }

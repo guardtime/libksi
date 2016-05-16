@@ -732,7 +732,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 
 
 	for (i = 0; i < template_len; i++) {
-		if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_NO_SERIALIZE) != 0) continue;
+		if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_NO_SERIALIZE)) continue;
 		payloadp = NULL;
 
 		res = tmpl[i].getValue(payload, &payloadp);
@@ -750,27 +750,46 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 
 			templateHit[i] = true;
 
-			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G0) != 0) groupHit[0] = true;
-			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G1) != 0) groupHit[1] = true;
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_LEAST_ONE_G0)) {
+				if (tmpl[i].listLength != NULL && tmpl[i].listLength(payloadp) == 0) {
+					KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Mandatory list object is empty within group 0.");
+					goto cleanup;
+				}
+				groupHit[0] = true;
+			}
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_LEAST_ONE_G1)) {
+				if (tmpl[i].listLength != NULL && tmpl[i].listLength(payloadp) == 0) {
+					KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Mandatory list object is empty within group 1.");
+					goto cleanup;
+				}
+				groupHit[1] = true;
+			}
+
 			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G0)) {
 				if (oneOf[0]) {
 					char errm[1000];
 					KSI_snprintf(errm, sizeof(errm), "Mutually exclusive elements present within group 0 (%s).", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));
 					KSI_pushError(ctx, res = KSI_INVALID_FORMAT, errm);
+					goto cleanup;
 				}
-				oneOf[0] = true;
+				if ((tmpl[i].listLength == NULL) || (tmpl[i].listLength != NULL && tmpl[i].listLength(payloadp) > 0)) {
+					oneOf[0] = true;
+				}
 			}
 			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G1)) {
 				if (oneOf[1]) {
 					char errm[1000];
 					KSI_snprintf(errm, sizeof(errm), "Mutually exclusive elements present within group 1 (%s).", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));
 					KSI_pushError(ctx, res = KSI_INVALID_FORMAT, errm);
+					goto cleanup;
 				}
-				oneOf[1] = true;
+				if ((tmpl[i].listLength == NULL) || (tmpl[i].listLength != NULL && tmpl[i].listLength(payloadp) > 0)) {
+					oneOf[1] = true;
+				}
 			}
 
-			isNonCritical = (tmpl[i].flags & KSI_TLV_TMPL_FLG_NONCRITICAL) != 0;
-			isForward = (tmpl[i].flags & KSI_TLV_TMPL_FLG_FORWARD) != 0;
+			isNonCritical = IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_NONCRITICAL);
+			isForward = IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_FORWARD);
 
 			switch (tmpl[i].type) {
 				case KSI_TLV_TEMPLATE_OBJECT:
@@ -885,14 +904,14 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 	/* Check that every mandatory component was present. */
 	for (i = 0; i < template_len; i++) {
 		char errm[1000];
-		if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY) != 0 && !templateHit[i]) {
+		if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MANDATORY) && !templateHit[i]) {
 			KSI_snprintf(errm, sizeof(errm), "Mandatory element missing: %s->[0x%02x]%s", track_str(tr, tr_len, tr_size, buf, sizeof(buf)), tmpl[i].tag, tmpl[i].descr == NULL ? "" : tmpl[i].descr);
 			KSI_LOG_debug(ctx, "%s", errm);
 			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, errm);
 			goto cleanup;
 		}
-		if (((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G0) != 0 && !groupHit[0]) ||
-				((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G1) != 0 && !groupHit[1])) {
+		if ((IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_LEAST_ONE_G0) && !groupHit[0]) ||
+				(IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_LEAST_ONE_G1) && !groupHit[1])) {
 			KSI_snprintf(errm, sizeof(errm), "Mandatory group missing: %s->[0x%02x]%s", track_str(tr, tr_len, tr_size, buf, sizeof(buf)), tmpl[i].tag, tmpl[i].descr == NULL ? "" : tmpl[i].descr);
 			KSI_LOG_debug(ctx, "%s", errm);
 			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, errm);

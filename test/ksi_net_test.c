@@ -43,7 +43,7 @@ static unsigned char mockImprint[] ={0x01,
 		 0x34, 0x2d, 0x1d, 0x7e, 0x87, 0xb8, 0x77, 0x2d};
 
 static void preTest(void) {
-	ctx->netProvider->requestCount = 0;
+	reinitNetProvider(ctx);
 }
 
 static void testSigning(CuTest* tc) {

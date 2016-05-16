@@ -38,8 +38,8 @@ struct KSI_Policy_st {
 
 typedef struct VerificationTempData_st {
 
-	/** Temporary extended signature */
-	KSI_Signature *extendedSig;
+	/** Temporary extended signature calendar hash chain. */
+	KSI_CalendarHashChain *calendarChain;
 
 	/** Publicationsfile to be used. The memory may not be freed! */
 	KSI_PublicationsFile *publicationsFile;

@@ -23,8 +23,6 @@
 #include "tree_builder.h"
 #include "hashchain.h"
 
-#define IS_VALID_LEVEL(level) (((level) >= 0) && ((level) <= 0xff))
-
 KSI_IMPLEMENT_LIST(KSI_TreeBuilderLeafProcessor, NULL);
 
 struct KSI_TreeLeafHandle_st {
@@ -56,7 +54,7 @@ int KSI_TreeNode_new(KSI_CTX *ctx, KSI_DataHash *hash, KSI_MetaData *metaData, i
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TreeNode *tmp = NULL;
 
-	if (ctx == NULL || (hash == NULL && metaData == NULL) || (hash != NULL && metaData != NULL) || !IS_VALID_LEVEL(level) || node == NULL) {
+	if (ctx == NULL || (hash == NULL && metaData == NULL) || (hash != NULL && metaData != NULL) || !KSI_IS_VALID_TREE_LEVEL(level) || node == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -129,7 +127,7 @@ static int joinHashes(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeNode *left, 
 	KSI_DataHash *tmp = NULL;
 	unsigned char l;
 
-	if (left == NULL || right == NULL || !IS_VALID_LEVEL(level) || root == NULL) {
+	if (left == NULL || right == NULL || !KSI_IS_VALID_TREE_LEVEL(level) || root == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -190,7 +188,7 @@ static int KSI_TreeNode_join(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeNode 
 		goto cleanup;
 	}
 
-	if (!IS_VALID_LEVEL(leftSibling->level) || !IS_VALID_LEVEL(rightSibling->level)) {
+	if (!KSI_IS_VALID_TREE_LEVEL(leftSibling->level) || !KSI_IS_VALID_TREE_LEVEL(rightSibling->level)) {
 		KSI_pushError(ctx, res = KSI_INVALID_STATE, "One of the subtrees has an invalid level.");
 		goto cleanup;
 	}
@@ -200,7 +198,7 @@ static int KSI_TreeNode_join(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeNode 
 	level = (leftSibling->level > rightSibling->level ? leftSibling->level : rightSibling->level) + 1;
 
 	/* Sanity check. */
-	if (!IS_VALID_LEVEL(level)) {
+	if (!KSI_IS_VALID_TREE_LEVEL(level)) {
 		KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Tree too large.");
 		goto cleanup;
 	}
@@ -251,6 +249,16 @@ int KSI_TreeBuilder_new(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeBuilder **
 	}
 
 	KSI_ERR_clearErrors(ctx);
+
+	if (!KSI_isHashAlgorithmSupported(algo)) {
+		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
+		goto cleanup;
+	}
+
+	if (!KSI_isHashAlgorithmTrusted(algo)) {
+		KSI_pushError(ctx, res = KSI_UNTRUSTED_HASH_ALGORITHM, NULL);
+		goto cleanup;
+	}
 
 	tmp = KSI_new(KSI_TreeBuilder);
 	if (tmp == NULL) {
@@ -309,7 +317,7 @@ static int insertNode(KSI_TreeBuilder *builder, KSI_TreeNode *node) {
 		goto cleanup;
 	}
 
-	if (!IS_VALID_LEVEL(node->level)) {
+	if (!KSI_IS_VALID_TREE_LEVEL(node->level)) {
 		res = KSI_INVALID_STATE;
 		goto cleanup;
 	}
@@ -397,7 +405,7 @@ static int addLeaf(KSI_TreeBuilder *builder, KSI_DataHash *hsh, KSI_MetaData *me
 	KSI_TreeNode *node = NULL;
 	KSI_TreeLeafHandle *tmp = NULL;
 
-	if (builder == NULL || (hsh == NULL && metaData == NULL) || (hsh != NULL && metaData != NULL) || !IS_VALID_LEVEL(level)) {
+	if (builder == NULL || (hsh == NULL && metaData == NULL) || (hsh != NULL && metaData != NULL) || !KSI_IS_VALID_TREE_LEVEL(level)) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}

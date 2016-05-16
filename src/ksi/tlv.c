@@ -228,7 +228,7 @@ static int encodeAsNestedTlvs(KSI_TLV *tlv) {
 		lastConsumedBytes = readFirstTlv(tlv->ctx, tlv->datap + allConsumedBytes, tlv->datap_len - allConsumedBytes, &tmp);
 
 		if (tmp == NULL) {
-			KSI_pushError(tlv->ctx, res = KSI_INVALID_FORMAT, NULL);
+			KSI_pushError(tlv->ctx, res = KSI_INVALID_FORMAT, "Failed to read nested TLV.");
 			goto cleanup;
 		}
 
@@ -248,7 +248,7 @@ static int encodeAsNestedTlvs(KSI_TLV *tlv) {
 	}
 
 	if (allConsumedBytes > tlv->datap_len) {
-		KSI_pushError(tlv->ctx, res = KSI_INVALID_FORMAT, NULL);
+		KSI_pushError(tlv->ctx, res = KSI_INVALID_FORMAT, "Data size mismatch.");
 		goto cleanup;
 	}
 
@@ -473,7 +473,7 @@ int KSI_TLV_parseBlob2(KSI_CTX *ctx, unsigned char *data, size_t data_length, in
 	}
 
 	if ((consumedBytes = readFirstTlv(ctx, data, data_length, &tmp)) != data_length) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Data size mismatch.");
 		goto cleanup;
 	}
 
