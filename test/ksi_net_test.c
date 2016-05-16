@@ -43,7 +43,7 @@ static unsigned char mockImprint[] ={0x01,
 		 0x34, 0x2d, 0x1d, 0x7e, 0x87, 0xb8, 0x77, 0x2d};
 
 static void preTest(void) {
-	reinitNetProvider(ctx);
+	ctx->netProvider->requestCount = 0;
 }
 
 static void testSigning(CuTest* tc) {
@@ -299,6 +299,7 @@ static void testExtending(CuTest* tc) {
 //	CuAssert(tc, "Unable to set default pubfile, default cert and default pki constraints.", res == KSI_OK);
 
 	res = KSI_extendSignature(ctx, sig, &ext);
+KSI_ERR_statusDump(ctx, stdout);
 	CuAssert(tc, "Unable to extend the signature", res == KSI_OK && ext != NULL);
 
 	res = KSI_Signature_serialize(ext, &serialized, &serialized_len);

@@ -109,7 +109,6 @@ static void TestVerificationContext(CuTest* tc) {
 	int res;
 	KSI_VerificationContext context;
 	KSI_Signature *sig = NULL;
-	KSI_Signature *extSig = NULL;
 	KSI_DataHash *hash = NULL;
 	KSI_DataHash *aggrHash = NULL;
 	KSI_PublicationData *userPublication = NULL;
@@ -137,9 +136,6 @@ static void TestVerificationContext(CuTest* tc) {
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_RESPONSE_FILE), &extSig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && extSig != NULL);
-
 	res = KSITest_DataHash_fromStr(ctx, TEST_MOCK_IMPRINT, &hash);
 	CuAssert(tc, "Unable to create mock hash from string", res == KSI_OK && hash != NULL);
 
@@ -162,7 +158,7 @@ static void TestVerificationContext(CuTest* tc) {
 	context.extendingAllowed = 1;
 	context.docAggrLevel = 10;
 
-	tempData.extendedSig = extSig;
+	tempData.calendarChain = NULL;
 	tempData.aggregationOutputHash = aggrHash;
 	tempData.publicationsFile = publicationsFile;
 

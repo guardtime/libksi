@@ -531,7 +531,6 @@ static void testExtend(CuTest *tc) {
 }
 
 static void preTest(void) {
-	reinitNetProvider(ctx);
 }
 
 CuSuite* KSITest_multiSignature_getSuite(void) {

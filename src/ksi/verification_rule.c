@@ -1608,13 +1608,6 @@ static int initExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Inte
 		goto cleanup;
 	}
 
-	/* Make a copy of the original signature */
-	res = KSI_Signature_clone(sig, &tmp);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
 	/* Extract start time. */
 	if (sig->calendarChain != NULL) {
 		res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &startTime);
@@ -1701,10 +1694,10 @@ static int initExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Inte
 		goto cleanup;
 	}
 
-	if (tempData.calendarChain != NULL) {
-		KSI_CalendarHashChain_free(tempData.calendarChain);
+	if (tempData->calendarChain != NULL) {
+		KSI_CalendarHashChain_free(tempData->calendarChain);
 	}
-	tempData.calendarChain = tmp;
+	tempData->calendarChain = tmp;
 	tmp = NULL;
 
 	res = KSI_OK;
@@ -1735,7 +1728,7 @@ static int getExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Integ
 	}
 
 	/* Check if signature has been already extended */
-	if (tempData.calendarChain == NULL) {
+	if (tempData->calendarChain == NULL) {
 		/* Extend the signature to the publication time as attached calendar chain, or to head if time is NULL */
 		res = initExtendedCalendarHashChain(info, pubTime);
 		if (res != KSI_OK) goto cleanup;

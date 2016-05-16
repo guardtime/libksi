@@ -491,7 +491,6 @@ static void testMaskingInput(CuTest *tc) {
 }
 
 static void preTest(void) {
-	reinitNetProvider(ctx);
 }
 
 CuSuite* KSITest_Blocksigner_getSuite(void) {
