@@ -93,3 +93,4 @@ test/integrationtest.conf
 
 # Generated header files
 version.h
+/Debug/

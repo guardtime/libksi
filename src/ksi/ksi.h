@@ -445,7 +445,7 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile);
 int KSI_verifyPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile *pubFile);
 
 /**
- * Use the context to verify the signature.
+ * Use the KSI context to verify the signature.
  * \param[in]		ctx			KSI context.
  * \param[in]		sig			KSI signature.
  *
@@ -453,6 +453,15 @@ int KSI_verifyPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile *pubFile);
  */
 int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig);
 
+/**
+ * Use the KSI context to verify the signature and the datahash.
+ * \param[in]		ctx			KSI context.
+ * \param[in]		sig			KSI signature.
+ * \param[in]		hsh			Document data hash.
+ *
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
+int KSI_verifyDataHash(KSI_CTX *ctx, KSI_Signature *sig, KSI_DataHash *hsh);
 /**
  * Create a KSI signature from a given data hash.
  * \param[in]		ctx			KSI context.

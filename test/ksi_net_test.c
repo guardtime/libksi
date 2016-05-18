@@ -43,7 +43,7 @@ static unsigned char mockImprint[] ={0x01,
 		 0x34, 0x2d, 0x1d, 0x7e, 0x87, 0xb8, 0x77, 0x2d};
 
 static void preTest(void) {
-	reinitNetProvider(ctx);
+	ctx->netProvider->requestCount = 0;
 }
 
 static void testSigning(CuTest* tc) {
@@ -295,9 +295,6 @@ static void testExtending(CuTest* tc) {
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
-	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
-	CuAssert(tc, "Unable to set default pubfile, default cert and default pki constraints.", res == KSI_OK);
-
 	res = KSI_extendSignature(ctx, sig, &ext);
 	CuAssert(tc, "Unable to extend the signature", res == KSI_OK && ext != NULL);
 
@@ -396,9 +393,6 @@ static void testExtendSigNoCalChain(CuTest* tc) {
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
-	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
-	CuAssert(tc, "Unable to set default pubfile, default cert and default pki constraints.", res == KSI_OK);
-
 	res = KSI_extendSignature(ctx, sig, &ext);
 	CuAssert(tc, "Unable to extend the signature", res == KSI_OK && ext != NULL);
 
@@ -471,7 +465,7 @@ static void testExtendInvalidSignature(CuTest* tc) {
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_Signature_extendTo(sig, ctx, NULL, &ext);
-	CuAssert(tc, "It should not be possible to extend this signature.", res == KSI_EXTEND_WRONG_CAL_CHAIN && ext == NULL);
+	CuAssert(tc, "It should not be possible to extend this signature.", res != KSI_OK && ext == NULL);
 
 	KSI_Signature_free(sig);
 	KSI_Signature_free(ext);
@@ -507,7 +501,6 @@ static void testExtAuthFailure(CuTest* tc) {
 
 	res = KSI_extendSignature(ctx, sig, &ext);
 	CuAssert(tc, "Extend should fail with service error.", res == KSI_SERVICE_AUTHENTICATION_FAILURE && ext == NULL);
-
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);

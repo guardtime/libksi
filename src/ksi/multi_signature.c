@@ -1254,6 +1254,8 @@ static int extendUnextended(TimeMapper *tm, void *fctx) {
 	KSI_ExtendResp *resp = NULL;
 	KSI_Integer *aggregationTime = NULL;
 	KSI_Integer *publicationTime = NULL;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
 
 	if (tm == NULL || helper == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1269,8 +1271,6 @@ static int extendUnextended(TimeMapper *tm, void *fctx) {
 
 		/* Extend only if there is no publication, or there is a publication given. */
 		if (proof->publication == NULL || helper->pubRec != NULL) {
-			KSI_PublicationsFile *pubFile = NULL;
-			KSI_PublicationRecord *pubRec = NULL;
 			bool verifyPubFile = (tm->calendarChain->ctx->publicationsFile == NULL);
 
 			/* As there is no publication attached, try to find suitable publication. */
@@ -1357,6 +1357,8 @@ static int extendUnextended(TimeMapper *tm, void *fctx) {
 
 cleanup:
 
+	KSI_PublicationRecord_free(pubRec);
+	KSI_PublicationsFile_free(pubFile);
 	KSI_RequestHandle_free(handle);
 	KSI_ExtendReq_free(req);
 	KSI_ExtendResp_free(resp);

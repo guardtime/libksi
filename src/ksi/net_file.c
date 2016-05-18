@@ -608,6 +608,11 @@ static int setService(KSI_NetworkClient *client, KSI_NetEndpoint *abs_endp, cons
 	res = client->setStringParam(&abs_endp->ksi_pass, (pass != NULL ? pass : ""));
 	if (res != KSI_OK) goto cleanup;
 
+	if (endp->file != NULL) {
+		fclose(endp->file);
+		endp->file = NULL;
+	}
+
 	res = KSI_OK;
 
 cleanup:

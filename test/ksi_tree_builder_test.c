@@ -52,10 +52,6 @@ static void testTreeBuilderAddLeafs(CuTest* tc) {
 		CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
 
 		res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, NULL);
-		if (res != KSI_OK) {
-			KSI_ERR_statusDump(ctx, stderr);
-			exit(1);
-		}
 		CuAssert(tc, "Unable to add data hash to the tree builder", res == KSI_OK);
 
 		KSI_DataHash_free(hsh);

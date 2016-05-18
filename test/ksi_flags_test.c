@@ -23,10 +23,7 @@
 
 extern KSI_CTX *ctx;
 
-#ifdef BUILD_DLL
-__declspec( dllimport )
-#endif
-KSI_IMPORT_TLV_TEMPLATE(KSI_Signature)
+KSI_IMPORT_TLV_TEMPLATE(KSI_Signature);
 
 #define TEST_SIG_BUF_SIZE 			0x1ffff
 #define IS_NON_CRITICAL_FLAG_MASK 	0x40

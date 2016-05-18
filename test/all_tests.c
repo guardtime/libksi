@@ -28,6 +28,8 @@
 #include <ksi/ksi.h>
 #include <ksi/tlv.h>
 
+#include "../src/ksi/ctx_impl.h"
+
 #ifndef _WIN32
 #  ifdef HAVE_CONFIG_H
 #    include "../src/ksi/config.h"
@@ -133,6 +135,12 @@ static int RunAllTests() {
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, testPubFileCertConstraints);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to set publications file verification constraints.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to set default publications file.");
 		exit(EXIT_FAILURE);
 	}
 
@@ -283,6 +291,34 @@ cleanup:
 	return res;
 }
 
+int KSITest_CTX_clone(KSI_CTX **out) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	KSI_CTX *tmp = NULL;
+
+	if (out == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_CTX_new(&tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	tmp->logLevel = ctx->logLevel;
+	tmp->loggerCB = ctx->loggerCB;
+	tmp->loggerCtx = ctx->loggerCtx;
+
+	*out = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_CTX_free(tmp);
+
+	return res;
+}
 
 int main(int argc, char** argv) {
 	if (argc != 2) {

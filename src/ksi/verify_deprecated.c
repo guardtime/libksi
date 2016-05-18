@@ -321,21 +321,27 @@ cleanup:
 
 static int initPublicationsFile(KSI_VerificationResult *info, KSI_CTX *ctx) {
 	int res = KSI_UNKNOWN_ERROR;
+	KSI_PublicationsFile *tmp = NULL;
 
 	if (info->publicationsFile == NULL) {
 		bool verifyPubFile = (ctx->publicationsFile == NULL);
 
-		res = KSI_receivePublicationsFile(ctx, &info->publicationsFile);
+		res = KSI_receivePublicationsFile(ctx, &tmp);
 		if (res != KSI_OK) goto cleanup;
 
 		if (verifyPubFile == true) {
-			res = KSI_verifyPublicationsFile(ctx, info->publicationsFile);
+			res = KSI_verifyPublicationsFile(ctx, tmp);
 			if (res != KSI_OK) goto cleanup;
 		}
+
+		info->publicationsFile = tmp;
+		tmp = NULL;
 	}
 
 	res = KSI_OK;
 cleanup:
+
+	KSI_PublicationsFile_free(tmp);
 
 	return res;
 }
@@ -699,9 +705,14 @@ static int verifyPublication(KSI_CTX *ctx, KSI_Signature *sig) {
 	}
 
 	res = KSI_VerificationResult_addSuccess(info, step, "Publication trusted.");
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OK;
 
 cleanup:
 
+	KSI_PublicationRecord_free(pubRec);
+	KSI_PublicationsFile_free(pubFile);
 	return res;
 }
 

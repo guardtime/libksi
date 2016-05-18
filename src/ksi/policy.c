@@ -22,7 +22,10 @@
 #include "verification_rule.h"
 #include "hashchain.h"
 
+#include <string.h>
+
 static void RuleVerificationResult_free(KSI_RuleVerificationResult *result);
+static void VerificationTempData_clear(VerificationTempData *tmp);
 
 KSI_IMPLEMENT_LIST(KSI_RuleVerificationResult, RuleVerificationResult_free);
 
@@ -90,7 +93,7 @@ static int Rule_verify(const KSI_Rule *rule, KSI_VerificationContext *context, K
 		switch (currentRule->type) {
 			case KSI_RULE_TYPE_BASIC:
 				res = ((Verifier)(currentRule->rule))(context, &policyResult->finalResult);
-				KSI_LOG_debug(context->ctx, "Rule result: %i %i %i %s %s",
+				KSI_LOG_debug(context->ctx, "Rule result: 0x%x 0x%x 0x%x %s %s",
 							  res,
 							  policyResult->finalResult.resultCode,
 							  policyResult->finalResult.errorCode,
@@ -108,7 +111,10 @@ static int Rule_verify(const KSI_Rule *rule, KSI_VerificationContext *context, K
 				break;
 		}
 
-		if (currentRule->type == KSI_RULE_TYPE_BASIC && !(res == KSI_OK && policyResult->finalResult.resultCode == KSI_VER_RES_NA)) {
+		/* Duplicate the value for ease of use. */
+		policyResult->resultCode = policyResult->finalResult.resultCode;
+
+		if (currentRule->type == KSI_RULE_TYPE_BASIC && !(res == KSI_OK && policyResult->resultCode == KSI_VER_RES_NA)) {
 			/* For better readability, only add results of basic rules which do not confirm lack or existence of a component. */
 			PolicyVerificationResult_addLatestRuleResult(policyResult);
 		}
@@ -116,10 +122,10 @@ static int Rule_verify(const KSI_Rule *rule, KSI_VerificationContext *context, K
 		if (res != KSI_OK) {
 			/* If verification cannot be completed due to an internal error, no more rules should be processed. */
 			break;
-		} else if (policyResult->finalResult.resultCode == KSI_VER_RES_FAIL) {
+		} else if (policyResult->resultCode == KSI_VER_RES_FAIL) {
 			/* If a rule fails, no more rules in the policy should be processed. */
 			break;
-		} else if (policyResult->finalResult.resultCode == KSI_VER_RES_OK) {
+		} else if (policyResult->resultCode == KSI_VER_RES_OK) {
 			/* If a rule succeeds, the following OR-type rules should be skipped. */
 			if (currentRule->type == KSI_RULE_TYPE_COMPOSITE_OR) {
 				break;
@@ -226,29 +232,14 @@ static const KSI_Rule internalRules[] = {
 	{KSI_RULE_TYPE_BASIC, NULL}
 };
 
-int KSI_Policy_getInternal(KSI_CTX *ctx, const KSI_Policy **policy) {
-	int res = KSI_UNKNOWN_ERROR;
+static const KSI_Policy PolicyInternal = {
+	internalRules,
+	NULL,
+	"InternalPolicy"
+};
 
-	static const KSI_Policy internalPolicy = {
-		internalRules,
-		NULL,
-		"InternalPolicy"
-	};
+const KSI_Policy* KSI_VERIFICATION_POLICY_INTERNAL = &PolicyInternal;
 
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || policy == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	*policy = &internalPolicy;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
 
 /************************
  * CALENDAR-BASED POLICY
@@ -299,29 +290,13 @@ static const KSI_Rule calendarBasedRules[] = {
 	{KSI_RULE_TYPE_COMPOSITE_AND, NULL}
 };
 
-int KSI_Policy_getCalendarBased(KSI_CTX *ctx, const KSI_Policy **policy) {
-	int res = KSI_UNKNOWN_ERROR;
+static const KSI_Policy PolicyCalendarBased = {
+	calendarBasedRules,
+	NULL,
+	"CalendarBasedPolicy"
+};
 
-	static const KSI_Policy calendarBasedPolicy = {
-		calendarBasedRules,
-		NULL,
-		"CalendarBasedPolicy"
-	};
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || policy == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	*policy = &calendarBasedPolicy;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
+const KSI_Policy* KSI_VERIFICATION_POLICY_CALENDAR_BASED = &PolicyCalendarBased;
 
 /*******************
  * KEY-BASED POLICY
@@ -336,29 +311,13 @@ static const KSI_Rule keyBasedRules[] = {
 	{KSI_RULE_TYPE_BASIC, NULL}
 };
 
-int KSI_Policy_getKeyBased(KSI_CTX *ctx, const KSI_Policy **policy) {
-	int res = KSI_UNKNOWN_ERROR;
+static const KSI_Policy PolicyKeyBased = {
+	keyBasedRules,
+	NULL,
+	"KeyBasedPolicy"
+};
 
-	static const KSI_Policy keyBasedPolicy = {
-		keyBasedRules,
-		NULL,
-		"KeyBasedPolicy"
-	};
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || policy == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	*policy = &keyBasedPolicy;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
+const KSI_Policy* KSI_VERIFICATION_POLICY_KEY_BASED = &PolicyKeyBased;
 
 /*********************************************
  * PUBLICATION-BASED POLICY: PUBLICATION FILE
@@ -391,29 +350,13 @@ static const KSI_Rule publicationsFileBasedRules[] = {
 	{KSI_RULE_TYPE_COMPOSITE_AND, NULL}
 };
 
-int KSI_Policy_getPublicationsFileBased(KSI_CTX *ctx, const KSI_Policy **policy) {
-	int res = KSI_UNKNOWN_ERROR;
+static const KSI_Policy PolicyPublicationsFileBased = {
+	publicationsFileBasedRules,
+	NULL,
+	"PublicationsFileBasedPolicy"
+};
 
-	static const KSI_Policy publicationsFileBasedPolicy = {
-		publicationsFileBasedRules,
-		NULL,
-		"PublicationsFileBasedPolicy"
-	};
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || policy == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	*policy = &publicationsFileBasedPolicy;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
+const KSI_Policy* KSI_VERIFICATION_POLICY_PUBLICATIONS_FILE_BASED = &PolicyPublicationsFileBased;
 
 /*********************************************
  * PUBLICATION-BASED POLICY: USER PUBLICATION
@@ -447,29 +390,13 @@ static const KSI_Rule userProvidedPublicationBasedRules[] = {
 	{KSI_RULE_TYPE_COMPOSITE_AND, NULL}
 };
 
-int KSI_Policy_getUserProvidedPublicationBased(KSI_CTX *ctx, const KSI_Policy **policy) {
-	int res = KSI_UNKNOWN_ERROR;
+static const KSI_Policy PolicyUserPublicationBased = {
+	userProvidedPublicationBasedRules,
+	NULL,
+	"UserProvidedPublicationBasedPolicy"
+};
 
-	static const KSI_Policy userProvidedPublicationBasedPolicy = {
-		userProvidedPublicationBasedRules,
-		NULL,
-		"UserProvidedPublicationBasedPolicy"
-	};
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || policy == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	*policy = &userProvidedPublicationBasedPolicy;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
+const KSI_Policy* KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED = &PolicyUserPublicationBased;
 
 /*****************
  * GENERAL POLICY
@@ -477,36 +404,20 @@ cleanup:
 
 static const KSI_Rule generalRules[] = {
 	{KSI_RULE_TYPE_COMPOSITE_AND, internalRules},
-	{KSI_RULE_TYPE_COMPOSITE_OR, keyBasedRules},
 	{KSI_RULE_TYPE_COMPOSITE_OR, publicationsFileBasedRules},
 	{KSI_RULE_TYPE_COMPOSITE_OR, userProvidedPublicationBasedRules},
+	{KSI_RULE_TYPE_COMPOSITE_OR, keyBasedRules},
 	{KSI_RULE_TYPE_COMPOSITE_OR, calendarBasedRules},
 	{KSI_RULE_TYPE_COMPOSITE_OR, NULL}
 };
 
-int KSI_Policy_getGeneral(KSI_CTX *ctx, const KSI_Policy **policy) {
-	int res = KSI_UNKNOWN_ERROR;
+static const KSI_Policy PolicyGeneral = {
+	generalRules,
+	NULL,
+	"GeneralPolicy"
+};
 
-	static const KSI_Policy generalPolicy = {
-		generalRules,
-		NULL,
-		"GeneralPolicy"
-	};
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || policy == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	*policy = &generalPolicy;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
+const KSI_Policy* KSI_VERIFICATION_POLICY_GENERAL = &PolicyGeneral;
 
 int KSI_Policy_create(KSI_CTX *ctx, const KSI_Rule *rules, const char *name, KSI_Policy **policy) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -645,7 +556,7 @@ static int Policy_verifySignature(const KSI_Policy *policy, KSI_VerificationCont
 	}
 
 	res = Rule_verify(policy->rules, context, policyResult);
-	KSI_LOG_debug(context->ctx, "Policy result: %i %i %i %s %s",
+	KSI_LOG_debug(context->ctx, "Policy result: 0x%x 0x%x 0x%x %s %s",
 				  res,
 				  policyResult->finalResult.resultCode,
 				  policyResult->finalResult.errorCode,
@@ -680,11 +591,20 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_PolicyVerificationResult *tmp = NULL;
+	VerificationTempData tempData;
+
+	memset(&tempData, 0, sizeof(tempData));
+	tempData.aggregationOutputHash = NULL;
+	tempData.calendarChain = NULL;
+	tempData.publicationsFile = NULL;
 
 	if (policy == NULL || context == NULL || context->ctx == NULL || result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+
+
+	context->tempData = &tempData;
 
 	ctx = context->ctx;
 	KSI_ERR_clearErrors(ctx);
@@ -695,42 +615,51 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 		goto cleanup;
 	}
 
+	tmp->resultCode = KSI_VER_RES_NA;
 	tmp->finalResult.resultCode = KSI_VER_RES_NA;
 	tmp->finalResult.errorCode = KSI_VER_ERR_GEN_2;
 	tmp->finalResult.stepsPerformed = 0;
 	tmp->finalResult.stepsFailed = 0;
 	tmp->finalResult.stepsSuccessful = 0;
-	*result = tmp;
-	tmp = NULL;
 
 	currentPolicy = policy;
 	while (currentPolicy != NULL) {
-		(*result)->finalResult.policyName = currentPolicy->policyName;
-		res = Policy_verifySignature(currentPolicy, context, *result);
-		/* Stop verifying the policy whenever there is an internal error (invalid arguments, out of memory, etc). */
+		tmp->finalResult.policyName = currentPolicy->policyName;
+		res = Policy_verifySignature(currentPolicy, context, tmp);
+		if (res != KSI_OK) {
+			/* Stop verifying the policy whenever there is an internal error (invalid arguments, out of memory, etc). */
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = PolicyVerificationResult_addLatestPolicyResult(tmp);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
 		}
 
-		res = PolicyVerificationResult_addLatestPolicyResult(*result);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
-
-		if ((*result)->finalResult.resultCode != KSI_VER_RES_OK) {
+		if (tmp->finalResult.resultCode != KSI_VER_RES_OK) {
 			currentPolicy = currentPolicy->fallbackPolicy;
 			if (currentPolicy != NULL) {
-				KSI_VerificationContext_clean(context);
-				KSI_LOG_debug(ctx, "Verifying fallback policy");
+				VerificationTempData_clear(context->tempData);
+				KSI_LOG_debug(ctx, "Verifying fallback policy.");
 			}
 		} else {
 			currentPolicy = NULL;
 		}
 	}
 
+	*result = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
 cleanup:
+
+	VerificationTempData_clear(&tempData);
+	if (context != NULL) {
+		context->tempData = NULL;
+	}
 
 	KSI_PolicyVerificationResult_free(tmp);
 	return res;
@@ -748,83 +677,53 @@ void KSI_PolicyVerificationResult_free(KSI_PolicyVerificationResult *result) {
 	}
 }
 
-int KSI_VerificationContext_create(KSI_CTX *ctx, KSI_VerificationContext **context) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_VerificationContext *tmp = NULL;
+static void VerificationTempData_clear(VerificationTempData *tmp) {
+	if (tmp != NULL) {
+		KSI_DataHash_free(tmp->aggregationOutputHash);
+		tmp->aggregationOutputHash = NULL;
 
-	if (ctx == NULL || context == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	KSI_ERR_clearErrors(ctx);
+		KSI_CalendarHashChain_free(tmp->calendarChain);
+		tmp->calendarChain = NULL;
 
-	tmp = KSI_new(KSI_VerificationContext);
-	if (tmp == NULL) {
-		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	tmp->ctx = ctx;
-	tmp->userData.sig = NULL;
-	tmp->userData.extendingAllowed = 0;
-	tmp->userData.docAggrLevel = 0;
-	tmp->tempData.calendarChain = NULL;
-	tmp->userData.documentHash = NULL;
-	tmp->tempData.aggregationOutputHash = NULL;
-	tmp->tempData.publicationsFile = NULL;
-	tmp->userData.userPublication = NULL;
-	tmp->userData.userPublicationsFile = NULL;
-	*context = tmp;
-	tmp = NULL;
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_VerificationContext_free(tmp);
-	return res;
-}
-
-#define CONTEXT_DEFINE_SETTER(baseType, valueType, valueName, alias) int baseType##_set##alias(baseType *o, valueType valueName)
-
-#define CONTEXT_IMPLEMENT_SETTER(baseType, valueType, valueName, alias)			\
-CONTEXT_DEFINE_SETTER(baseType, valueType, valueName, alias) {					\
-	int res = KSI_UNKNOWN_ERROR;											\
-	if (o == NULL) {														\
-		res = KSI_INVALID_ARGUMENT;											\
-		goto cleanup;														\
-	}																		\
-	o->userData.valueName = valueName;												\
-	res = KSI_OK;															\
-cleanup:																	\
-	return res;																\
-}																			\
-
-CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, KSI_Signature *, sig, Signature);
-CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, KSI_DataHash *, documentHash, DocumentHash);
-CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, KSI_PublicationData *, userPublication, UserPublication);
-CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, KSI_PublicationsFile *, userPublicationsFile, PublicationsFile);
-CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, int, extendingAllowed, ExtendingAllowed);
-CONTEXT_IMPLEMENT_SETTER(KSI_VerificationContext, KSI_uint64_t, docAggrLevel, AggregationLevel);
-
-void KSI_VerificationContext_free(KSI_VerificationContext *context) {
-	if (context != NULL) {
-		KSI_Signature_free(context->userData.sig);
-		KSI_CalendarHashChain_free(context->tempData.calendarChain);
-		KSI_DataHash_free(context->userData.documentHash);
-		KSI_DataHash_free(context->tempData.aggregationOutputHash);
-		KSI_nofree(context->tempData.publicationsFile);
-		KSI_PublicationsFile_free(context->userData.userPublicationsFile);
-		KSI_PublicationData_free(context->userData.userPublication);
-		KSI_free(context);
+		KSI_PublicationsFile_free(tmp->publicationsFile);
+		tmp->publicationsFile = NULL;
 	}
 }
 
 void KSI_VerificationContext_clean(KSI_VerificationContext *context) {
 	if (context != NULL) {
-		KSI_CalendarHashChain_free(context->tempData.calendarChain);
-		context->tempData.calendarChain = NULL;
-		KSI_DataHash_free(context->tempData.aggregationOutputHash);
-		context->tempData.aggregationOutputHash = NULL;
-		KSI_nofree(context->tempData.publicationsFile);
+		if (context->tempData != NULL) {
+			VerificationTempData_clear(context->tempData);
+		}
+		context->tempData = NULL;
+		KSI_nofree(context);
 	}
+}
+
+int KSI_VerificationContext_init(KSI_VerificationContext *context, KSI_CTX *ctx) {
+	int res = KSI_UNKNOWN_ERROR;
+	if (context == NULL || ctx == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	context->ctx = NULL;
+	context->signature = NULL;
+	context->extendingAllowed = 0;
+	context->docAggrLevel = 0;
+	context->documentHash = NULL;
+	context->userPublication = NULL;
+	context->userPublicationsFile = NULL;
+
+	context->tempData = NULL;
+
+	context->ctx = ctx;
+	context->signature = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+
 }

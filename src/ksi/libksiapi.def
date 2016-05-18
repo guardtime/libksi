@@ -150,6 +150,7 @@ EXPORTS
 	KSI_receivePublicationsFile
 	KSI_verifyPublicationsFile
 	KSI_verifySignature
+	KSI_verifyDataHash
 	KSI_createSignature
 	KSI_extendSignature
 	KSI_CTX_setLogLevel
@@ -288,6 +289,7 @@ EXPORTS
 ;publicationsfile.h
 EXPORTS
 	KSI_PublicationsFile_parse
+	KSI_PublicationsFile_ref
 	KSI_PublicationsFile_fromFile
 	KSI_PublicationsFile_serialize
 	KSI_PublicationsFile_verify
@@ -304,6 +306,7 @@ EXPORTS
 	KSI_PublicationsFile_findPublication
 	KSI_PublicationsFile_getSignedDataLength
 	KSI_PublicationData_fromBase32
+	KSI_PublicationData_ref
 	KSI_PublicationData_toBase32
 	KSI_PublicationData_free
 	KSI_PublicationData_new
@@ -355,7 +358,6 @@ EXPORTS
 	KSI_Signature_getPublicationRecord
 	KSI_Signature_verifyDataHash
 	KSI_Signature_getVerificationResult
-	KSI_Signature_replaceCalendarChain
 	KSI_Signature_replacePublicationRecord
 	KSI_Signature_getCalendarAuthRec
 	KSI_AggregationHashChain_free
@@ -1040,12 +1042,6 @@ EXPORTS
 
 ;policy.h
 EXPORTS
-	KSI_Policy_getInternal
-	KSI_Policy_getCalendarBased
-	KSI_Policy_getKeyBased
-	KSI_Policy_getPublicationsFileBased
-	KSI_Policy_getUserProvidedPublicationBased
-	KSI_Policy_getGeneral
 	KSI_Policy_create
 	KSI_Policy_clone
 	KSI_Policy_setFallback
@@ -1054,15 +1050,18 @@ EXPORTS
 	KSI_PolicyVerificationResult_free
 	KSI_RuleVerificationResultList_length
 	KSI_RuleVerificationResultList_elementAt
-	KSI_VerificationContext_create
-	KSI_VerificationContext_setSignature
-	KSI_VerificationContext_setDocumentHash
-	KSI_VerificationContext_setUserPublication
-	KSI_VerificationContext_setPublicationsFile
-	KSI_VerificationContext_setExtendingAllowed
-	KSI_VerificationContext_setAggregationLevel
-	KSI_VerificationContext_free
+	KSI_VerificationContext_init
 	KSI_VerificationContext_clean
+	KSI_PolicyVerificationResult_free
+	KSI_Policy_setFallback
+	KSI_Policy_clone
+	KSI_Policy_create
+	KSI_VERIFICATION_POLICY_INTERNAL DATA
+	KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED DATA
+	KSI_VERIFICATION_POLICY_CALENDAR_BASED DATA
+	KSI_VERIFICATION_POLICY_KEY_BASED DATA
+	KSI_VERIFICATION_POLICY_PUBLICATIONS_FILE_BASED DATA
+	KSI_VERIFICATION_POLICY_GENERAL DATA
 
 ;fast_tlv.h
 EXPORTS

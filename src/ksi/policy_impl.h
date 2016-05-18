@@ -36,26 +36,6 @@ struct KSI_Policy_st {
 	const char *policyName;
 };
 
-typedef struct VerificationUserData_st {
-	/** Signature to be verified */
-	KSI_Signature *sig;
-
-	/** Indicates whether signature extention is allowed */
-	int extendingAllowed;
-
-	/** Initial aggregation level. */
-	KSI_uint64_t docAggrLevel;
-
-	/** Document hash to be verified. */
-	KSI_DataHash *documentHash;
-
-	/** Publication string to be used. */
-	KSI_PublicationData *userPublication;
-
-	/** Publication file to be used. */
-	KSI_PublicationsFile *userPublicationsFile;
-} VerificationUserData;
-
 typedef struct VerificationTempData_st {
 
 	/** Temporary extended signature calendar hash chain. */
@@ -68,13 +48,6 @@ typedef struct VerificationTempData_st {
 	KSI_DataHash *aggregationOutputHash;
 } VerificationTempData;
 
-struct KSI_VerificationContext_st {
-	KSI_CTX *ctx;
-
-	VerificationUserData userData;
-
-	VerificationTempData tempData;
-};
 
 #ifdef	__cplusplus
 }

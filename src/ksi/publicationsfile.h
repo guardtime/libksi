@@ -55,6 +55,7 @@ extern "C" {
 	 */
 	int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, size_t raw_len, KSI_PublicationsFile **pubFile);
 
+	KSI_DEFINE_REF(KSI_PublicationsFile);
 	/**
 	 * A convenience function for loading a publications file from an actual file.
 	 * \param[in]		ctx			KSI context.
@@ -338,6 +339,7 @@ extern "C" {
 	char *KSI_PublicationData_toString(KSI_PublicationData *t, char *buffer, size_t buffer_len);
 	int KSI_PublicationData_fromTlv (KSI_TLV *tlv, KSI_PublicationData **data);
 	int KSI_PublicationData_toTlv (KSI_CTX *ctx, const KSI_PublicationData *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+	KSI_DEFINE_REF(KSI_PublicationData);
 
 	/**
 	 * KSI_PublicationRecord

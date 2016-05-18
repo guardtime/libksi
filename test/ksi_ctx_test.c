@@ -37,7 +37,7 @@ static void TestCtxInit(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	KSI_CTX *ctx = NULL;
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "KSI_CTX_init did not return KSI_OK", res == KSI_OK);
 	CuAssert(tc, "Context is NULL.", ctx != NULL);
 
@@ -48,7 +48,7 @@ static void TestRegisterGlobals(CuTest *tc) {
 	int res;
 	KSI_CTX *ctx = NULL;
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create KSI context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_CTX_registerGlobals(ctx, mock_init, mock_cleanup);
@@ -77,7 +77,7 @@ static void TestErrorsToString(CuTest *tc) {
 	char buf[250];
 
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create KSI context.", res == KSI_OK && ctx != NULL);
 
 	KSI_pushError(ctx, error, "Error: test1."); line1 = __LINE__;
@@ -119,7 +119,7 @@ static void TestGetBaseError(CuTest *tc) {
 	char buf[1024];
 
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create KSI context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf) ,&ksi_error, &ext_error);
