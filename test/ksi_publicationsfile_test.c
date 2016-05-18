@@ -153,7 +153,7 @@ static void testReceivePublicationsFileInvalidPki(CuTest *tc) {
 	};
 	KSI_CTX *ctx = NULL;
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	KSI_ERR_clearErrors(ctx);
@@ -437,7 +437,7 @@ static void testFindPublicationByPubStr(CuTest *tc) {
 	size_t len;
 	KSI_CTX *ctx = NULL;
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create KSI context.", res == KSI_OK && ctx != NULL);
 
 	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
@@ -492,7 +492,7 @@ static void testFindPublicationByTime(CuTest *tc) {
 	size_t len;
 	KSI_CTX *ctx = NULL;
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create KSI context.", res == KSI_OK && ctx != NULL);
 
 	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
@@ -552,7 +552,7 @@ static void testFindPublicationRef(CuTest *tc) {
 	int isPubRefFound = 0;
 	KSI_CTX *ctx = NULL;
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create KSI context.", res == KSI_OK && ctx != NULL);
 
 	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
