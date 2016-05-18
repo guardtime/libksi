@@ -397,7 +397,7 @@ int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext
 
 	/* The aggregation level might not be 0 in case of local aggregation. */
 	if (info->docAggrLevel > 0xff) {
-		/* Aggregation level can't be larger than 0xff */
+		/* Aggregation level can't be larger than 0xff. */
 		VERIFICATION_RESULT(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2);
 		KSI_pushError(ctx, res = KSI_INVALID_VERIFICATION_INPUT, "Aggregation level is larger than 0xff.");
 		goto cleanup;
@@ -2024,8 +2024,12 @@ static int initPublicationsFile(KSI_VerificationContext *info) {
 			if (res != KSI_OK) goto cleanup;
 
 			if (verifyPubFile == true) {
+				KSI_LOG_info(info->ctx, "Verifying implicitly publications file.");
+
 				res = KSI_verifyPublicationsFile(info->ctx, tmp);
 				if (res != KSI_OK) goto cleanup;
+
+
 			}
 		}
 

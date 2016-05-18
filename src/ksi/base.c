@@ -501,7 +501,7 @@ static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ct
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
 	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, "Verification of signature not completed.");
+		KSI_pushError(ctx, res, "Signature verification aborted due to an error.");
 		goto cleanup;
 	}
 

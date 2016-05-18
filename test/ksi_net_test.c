@@ -295,11 +295,7 @@ static void testExtending(CuTest* tc) {
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
-//	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
-//	CuAssert(tc, "Unable to set default pubfile, default cert and default pki constraints.", res == KSI_OK);
-
 	res = KSI_extendSignature(ctx, sig, &ext);
-KSI_ERR_statusDump(ctx, stdout);
 	CuAssert(tc, "Unable to extend the signature", res == KSI_OK && ext != NULL);
 
 	res = KSI_Signature_serialize(ext, &serialized, &serialized_len);

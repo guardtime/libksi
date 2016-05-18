@@ -1797,7 +1797,7 @@ static void testRule_CertificateExistence(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
@@ -1858,7 +1858,7 @@ static void testRule_CertificateExistence_verifyErrorResult(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
@@ -1918,7 +1918,7 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification(CuTest *t
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
@@ -1978,7 +1978,7 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification_verifyErr
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
@@ -2036,7 +2036,7 @@ static void testRule_PublicationsFileContainsSignaturePublication(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
@@ -2080,7 +2080,7 @@ static void testRule_PublicationsFileContainsSignaturePublication_verifyErrorRes
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
@@ -2125,7 +2125,7 @@ static void testRule_PublicationsFileContainsPublication(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
@@ -2170,7 +2170,7 @@ static void testRule_PublicationsFileContainsPublication_verifyErrorResult(CuTes
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
@@ -2269,7 +2269,7 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse(CuTe
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
@@ -2331,7 +2331,7 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse_veri
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
@@ -2385,7 +2385,7 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(CuTe
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
@@ -2447,7 +2447,7 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_veri
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
@@ -2499,7 +2499,7 @@ static void testRule_PublicationsFileExtendedSignatureInputHash(CuTest *tc, char
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
@@ -2560,7 +2560,7 @@ static void testRule_PublicationsFileExtendedSignatureInputHash_verifyErrorResul
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);

@@ -1558,10 +1558,10 @@ static void TestKeyBasedPolicy_FAIL_WithCertificate(CuTest* tc) {
 	};
 	KSI_CTX *ctx = NULL;
 
-	KSI_ERR_clearErrors(ctx);
-
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
+
+	KSI_ERR_clearErrors(ctx);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
@@ -1606,7 +1606,7 @@ static void TestKeyBasedPolicy_OK(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -1652,7 +1652,7 @@ static void TestPublicationsFileBasedPolicy_OK_WithPublicationRecord(CuTest* tc)
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -1698,7 +1698,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithPublicationRecord(CuTest* tc)
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -1744,7 +1744,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithoutSuitablePublication(CuTest
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -1790,7 +1790,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithSuitablePublication(CuTest* t
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -1837,7 +1837,7 @@ static void TestPublicationsFileBasedPolicy_OK_WithSuitablePublication(CuTest* t
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -1890,7 +1890,7 @@ static void TestPublicationsFileBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -2244,7 +2244,7 @@ static void TestGeneralPolicy_FAIL_WithCertificate(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -2289,7 +2289,7 @@ static void TestGeneralPolicy_OK_WithCertificate(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -2336,7 +2336,7 @@ static void TestGeneralPolicy_FAIL_AfterExtendingToPublication(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -2388,7 +2388,7 @@ static void TestGeneralPolicy_OK_AfterExtendingToPublication(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -2442,7 +2442,7 @@ static void TestGeneralPolicy_FAIL_AfterExtendingToUserPublication(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -2510,7 +2510,7 @@ static void TestGeneralPolicy_OK_AfterExtendingToUserPublication(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);

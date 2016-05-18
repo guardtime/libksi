@@ -30,10 +30,10 @@ extern "C" {
 	struct KSI_VerificationContext_st {
 		KSI_CTX *ctx;
 
-		/** Signature to be verified */
+		/** Signature being verified. */
 		KSI_Signature *signature;
 
-		/** Indicates whether signature extention is allowed */
+		/** Indicates whether signature extention is allowed (0 means no, and any non-zero is considered to be true). */
 		int extendingAllowed;
 
 		/** Initial aggregation level. */
@@ -74,43 +74,43 @@ extern "C" {
 		/** Verification inconclusive. */
 		KSI_VER_ERR_GEN_2 = 0x102,
 		/** Inconsistent aggregation hash chains. */
-		KSI_VER_ERR_INT_1 = 0x103,
+		KSI_VER_ERR_INT_1 = 0x201,
 		/** Inconsistent aggregation hash chain aggregation times. */
-		KSI_VER_ERR_INT_2 = 0x104,
+		KSI_VER_ERR_INT_2 = 0x202,
 		/** Calendar hash chain input hash mismatch. */
-		KSI_VER_ERR_INT_3 = 0x105,
+		KSI_VER_ERR_INT_3 = 0x203,
 		/** Calendar hash chain aggregation time mismatch. */
-		KSI_VER_ERR_INT_4 = 0x106,
+		KSI_VER_ERR_INT_4 = 0x204,
 		/** Calendar hash chain shape inconsistent with aggregation time. */
-		KSI_VER_ERR_INT_5 = 0x107,
+		KSI_VER_ERR_INT_5 = 0x205,
 		/** Calendar hash chain time inconsistent with calendar auth record time. */
-		KSI_VER_ERR_INT_6 = 0x108,
+		KSI_VER_ERR_INT_6 = 0x206,
 		/** Calendar hash chain time inconsistent with publication time. */
-		KSI_VER_ERR_INT_7 = 0x109,
+		KSI_VER_ERR_INT_7 = 0x207,
 		/** Calendar hash chain root has inconsistent with calendar auth record time. */
-		KSI_VER_ERR_INT_8 = 0x10a,
+		KSI_VER_ERR_INT_8 = 0x208,
 		/** Calendar hash chain root has inconsistent with publication time. */
-		KSI_VER_ERR_INT_9 = 0x10b,
+		KSI_VER_ERR_INT_9 = 0x209,
 		/** Aggregation hash chain chain index mismatch. */
-		KSI_VER_ERR_INT_10 = 0x10c,
+		KSI_VER_ERR_INT_10 = 0x20a,
 		/** Extender response calendar root hash mismatch. */
-		KSI_VER_ERR_PUB_1 = 0x201,
+		KSI_VER_ERR_PUB_1 = 0x301,
 		/** Extender response inconsistent. */
-		KSI_VER_ERR_PUB_2 = 0x202,
+		KSI_VER_ERR_PUB_2 = 0x302,
 		/** Extender response input hash mismatch. */
-		KSI_VER_ERR_PUB_3 = 0x203,
+		KSI_VER_ERR_PUB_3 = 0x303,
 		/** Certificate not found. */
-		KSI_VER_ERR_KEY_1 = 0x301,
+		KSI_VER_ERR_KEY_1 = 0x401,
 		/** PKI signature not verified with certificate. */
-		KSI_VER_ERR_KEY_2 = 0x302,
+		KSI_VER_ERR_KEY_2 = 0x502,
 		/** Calendar root hash mismatch. */
-		KSI_VER_ERR_CAL_1 = 0x401,
+		KSI_VER_ERR_CAL_1 = 0x501,
 		/** Aggregation hash chain root hash and calendar hash chain input hash mismatch. */
-		KSI_VER_ERR_CAL_2 = 0x402,
+		KSI_VER_ERR_CAL_2 = 0x502,
 		/** Aggregation time mismatch. */
-		KSI_VER_ERR_CAL_3 = 0x403,
+		KSI_VER_ERR_CAL_3 = 0x503,
 		/** Aggregation hash chain right links are inconsistent. */
-		KSI_VER_ERR_CAL_4 = 0x404,
+		KSI_VER_ERR_CAL_4 = 0x504,
 	} KSI_VerificationErrorCode;
 
 	struct KSI_RuleVerificationResult_st {
@@ -122,11 +122,11 @@ extern "C" {
 		const char *ruleName;
 		/** Last performed policy name. */
 		const char *policyName;
-		/** Bitmap of verification steps perfomed. */
+		/** Bitmap of the verification steps performed. */
 		size_t stepsPerformed;
-		/** Bitmap of successful steps performed. */
+		/** Bitmap of the successful steps performed. */
 		size_t stepsSuccessful;
-		/** Bitmap of failes steps performed. */
+		/** Bitmap of the failed steps performed. */
 		size_t stepsFailed;
 	};
 
@@ -219,9 +219,8 @@ extern "C" {
 	 * \param[in]	policy		Policy to be verified.
 	 * \param[in]	context		Context for verifying the policy.
 	 * \param[out]	result		List of verification results
-	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_Policy_getxxx, #KSI_Policy_setFallback, #KSI_PolicyVerificationResult_free
+	 * \see #KSI_Policy_setFallback, #KSI_PolicyVerificationResult_free
 	 */
 	int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationContext *context, KSI_PolicyVerificationResult **result);
 
@@ -229,7 +228,7 @@ extern "C" {
 	 * Frees a user created or cloned #KSI_Policy object. Predefined policies cannot be freed.
 	 * The function does not free any potential fallback policy objects which the user must free separately.
 	 * \param[in] policy
-	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_Policy_create, #KSI_Policy_clone
 	 */
 	void KSI_Policy_free(KSI_Policy *policy);
@@ -237,7 +236,7 @@ extern "C" {
 	/**
 	 * Frees the verification result object.
 	 * \param[in]	result		List of verification results to be freed.
-	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_SignatureVerifier_verify
 	 */
 	void KSI_PolicyVerificationResult_free(KSI_PolicyVerificationResult *result);
@@ -245,20 +244,18 @@ extern "C" {
 	/**
 	 * Frees the temporary data in the context object.
 	 * \param[in]	context		Verification context to be cleaned.
-	 *
-	 * \see #KSI_VerificationContext_create, #KSI_VerificationContext_free
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_VerificationContext_init
 	 */
 	void KSI_VerificationContext_clean(KSI_VerificationContext *context);
 
 	/**
-	 *
+	 * Initializes the context with default values.
+	 * \param[in]	context 	The verification context.
+	 * \param[in]	ctx			The KSI context.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationContext_reset(KSI_VerificationContext *context);
-
-	/**
-	 *
-	 */
-	int KSI_VerificationContext_init(KSI_VerificationContext *context, KSI_CTX *);
+	int KSI_VerificationContext_init(KSI_VerificationContext *context, KSI_CTX *ctx);
 
 #ifdef	__cplusplus
 }

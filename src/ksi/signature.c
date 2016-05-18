@@ -1279,7 +1279,7 @@ static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *s
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
 	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, "Internal verification of signature not completed.");
+		KSI_pushError(ctx, res, "Internal verification of signature aborted due to an error.");
 		goto cleanup;
 	}
 
