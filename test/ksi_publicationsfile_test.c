@@ -112,7 +112,7 @@ static void testReceivePublicationsFileInvalidConstraints(CuTest *tc) {
 	};
 	KSI_CTX *ctx = NULL;
 
-	res = KSI_CTX_new(&ctx);
+	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	KSI_ERR_clearErrors(ctx);

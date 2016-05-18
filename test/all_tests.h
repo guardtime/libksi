@@ -39,6 +39,7 @@ int KSITest_DataHash_fromStr(KSI_CTX *ctx, const char *hexstr, KSI_DataHash **hs
 int KSITest_decodeHexStr(const char *hexstr, unsigned char *buf, size_t buf_size, size_t *buf_length);
 int KSITest_setDefaultPubfileAndVerInfo(KSI_CTX *ctx);
 int KSITest_tlvFromFile(const char *fileName, KSI_TLV **tlv);
+int KSITest_CTX_clone(KSI_CTX **out);
 
 CuSuite* KSITest_CTX_getSuite(void);
 CuSuite* KSITest_RDR_getSuite(void);

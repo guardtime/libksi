@@ -641,8 +641,8 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 		if (tmp->finalResult.resultCode != KSI_VER_RES_OK) {
 			currentPolicy = currentPolicy->fallbackPolicy;
 			if (currentPolicy != NULL) {
-				KSI_VerificationContext_reset(context);
-				KSI_LOG_debug(ctx, "Verifying fallback policy");
+				VerificationTempData_clear(context->tempData);
+				KSI_LOG_debug(ctx, "Verifying fallback policy.");
 			}
 		} else {
 			currentPolicy = NULL;
@@ -698,24 +698,6 @@ void KSI_VerificationContext_clean(KSI_VerificationContext *context) {
 		context->tempData = NULL;
 		KSI_nofree(context);
 	}
-}
-
-int KSI_VerificationContext_reset(KSI_VerificationContext *context) {
-	int res = KSI_UNKNOWN_ERROR;
-	if (context == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	KSI_DataHash_free(((VerificationTempData *)context->tempData)->aggregationOutputHash);
-	((VerificationTempData *)context->tempData)->aggregationOutputHash = NULL;
-
-	KSI_CalendarHashChain_free(((VerificationTempData *)context->tempData)->calendarChain);
-	((VerificationTempData *)context->tempData)->calendarChain = NULL;
-
-cleanup:
-
-	return res;
 }
 
 int KSI_VerificationContext_init(KSI_VerificationContext *context, KSI_CTX *ctx) {
