@@ -35,9 +35,9 @@
 
 #define PUB_FILE_HEADER_ID "KSIPUBLF"
 
-KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationsHeader)
-KSI_IMPORT_TLV_TEMPLATE(KSI_CertificateRecord)
-KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationRecord)
+KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationsHeader);
+KSI_IMPORT_TLV_TEMPLATE(KSI_CertificateRecord);
+KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationRecord);
 
 KSI_IMPLEMENT_LIST(KSI_PublicationData, KSI_PublicationData_free);
 KSI_IMPLEMENT_LIST(KSI_PublicationRecord, KSI_PublicationRecord_free);

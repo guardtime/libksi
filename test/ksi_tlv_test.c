@@ -409,10 +409,7 @@ static void testTlvSerializeNested(CuTest* tc) {
 
 }
 
-#ifdef _WIN32
-_declspec( dllimport )
-#endif
-KSI_IMPORT_TLV_TEMPLATE(KSI_Signature)
+KSI_IMPORT_TLV_TEMPLATE(KSI_Signature);
 
 static void testTlvSerializeMandatoryListObjectEmpty(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"

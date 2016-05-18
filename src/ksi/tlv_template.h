@@ -172,7 +172,7 @@ extern "C" {
 	/**
 	 * This macro is used to import predefined templates.
 	 */
-	#define KSI_IMPORT_TLV_TEMPLATE(name) extern const KSI_TlvTemplate KSI_TLV_TEMPLATE(name)[];
+	#define KSI_IMPORT_TLV_TEMPLATE(name) KSI_DEFINE_EXTERN(const KSI_TlvTemplate KSI_TLV_TEMPLATE(name)[])
 
 	/**
 	 * Generic #KSI_TlvTemplate type.

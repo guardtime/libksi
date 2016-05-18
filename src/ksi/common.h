@@ -39,6 +39,12 @@ extern "C" {
 #  define KSI_FN_DEPRECATED(decl) decl;
 #endif
 
+#if defined(_WIN32) && defined(_DLL)
+#  define KSI_DEFINE_EXTERN(e) extern __declspec( dllimport ) e
+#else
+#  define KSI_DEFINE_EXTERN(e) extern e
+#endif
+
 #ifdef __cplusplus
 }
 #endif

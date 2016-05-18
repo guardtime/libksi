@@ -348,9 +348,6 @@ static void testErrorMessage(CuTest* tc, const char *expected, const char *tlv_f
 	obj_free(obj);
 }
 
-#ifdef BUILD_DLL
-__declspec( dllimport )
-#endif
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu);
 
 static void testUnknownCriticalTagError(CuTest* tc) {
