@@ -87,9 +87,9 @@ extern "C" {
 		KSI_VER_ERR_INT_6 = 0x206,
 		/** Calendar hash chain time inconsistent with publication time. */
 		KSI_VER_ERR_INT_7 = 0x207,
-		/** Calendar hash chain root has inconsistent with calendar auth record time. */
+		/** Calendar hash chain root hash is inconsistent with calendar auth record input hash. */
 		KSI_VER_ERR_INT_8 = 0x208,
-		/** Calendar hash chain root has inconsistent with publication time. */
+		/** Calendar hash chain root hash is inconsistent with published hash value. */
 		KSI_VER_ERR_INT_9 = 0x209,
 		/** Aggregation hash chain chain index mismatch. */
 		KSI_VER_ERR_INT_10 = 0x20a,
