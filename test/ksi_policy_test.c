@@ -103,7 +103,6 @@ static void TestInvalidParams(CuTest* tc) {
 
 static void TestVerificationContext(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
 #define TEST_MOCK_IMPRINT   "01db27c0db0aebb8d3963c3a720985cedb600f91854cdb1e45ad631611c39284dd"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 	int res;
@@ -172,7 +171,6 @@ static void TestVerificationContext(CuTest* tc) {
 	KSI_VerificationContext_clean(&context);
 
 #undef TEST_SIGNATURE_FILE
-#undef TEST_EXT_RESPONSE_FILE
 #undef TEST_MOCK_IMPRINT
 #undef TEST_PUBLICATIONS_FILE
 }
@@ -2819,7 +2817,7 @@ static void TestUserPublicationWithBadCalAuthRec(CuTest *tc) {
 	KSI_PublicationData_free(pub);
 	KSI_Signature_free(sig);
 	KSI_PolicyVerificationResult_free(result);
-#undef TEST_EXT_RESPNSE_FILE
+#undef TEST_EXT_RESPONSE_FILE
 #undef TEST_SIGNATURE_FILE
 }
 
