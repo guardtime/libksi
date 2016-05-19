@@ -102,7 +102,7 @@ extern "C" {
 		/** Certificate not found. */
 		KSI_VER_ERR_KEY_1 = 0x401,
 		/** PKI signature not verified with certificate. */
-		KSI_VER_ERR_KEY_2 = 0x502,
+		KSI_VER_ERR_KEY_2 = 0x402,
 		/** Calendar root hash mismatch. */
 		KSI_VER_ERR_CAL_1 = 0x501,
 		/** Aggregation hash chain root hash and calendar hash chain input hash mismatch. */
