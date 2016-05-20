@@ -26,7 +26,7 @@
 
 extern KSI_CTX *ctx;
 
-static int KSI_HashChain_appendLink(KSI_DataHash *siblingHash, KSI_OctetString *legacyId, KSI_MetaData *metaData, int isLeft, int levelCorrection, KSI_LIST(KSI_HashChainLink) **chain) {
+static int KSI_HashChain_appendLink(KSI_DataHash *siblingHash, KSI_OctetString *legacyId, KSI_MetaDataElement *metaData, int isLeft, int levelCorrection, KSI_LIST(KSI_HashChainLink) **chain) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_HashChainLink *link = NULL;
 	KSI_LIST(KSI_HashChainLink) *tmp = NULL;
@@ -120,7 +120,7 @@ static void buildHashChain(CuTest *tc, const char *hexImprint, int isLeft, int l
 
 }
 
-static void buildMetaDataHashChain(CuTest *tc, KSI_MetaData *metaData, int isLeft, int levelCorrection, KSI_LIST(KSI_HashChainLink) **chn) {
+static void buildMetaDataHashChain(CuTest *tc, KSI_MetaDataElement *metaData, int isLeft, int levelCorrection, KSI_LIST(KSI_HashChainLink) **chn) {
 	int res;
 
 	if (*chn == NULL) {
@@ -259,26 +259,26 @@ static void testAggrChainBuiltWithMetaData(CuTest *tc) {
 	KSI_DataHash *out = NULL;
 	KSI_DataHash *exp = NULL;
 
-	KSI_MetaData *tmp_metaData = NULL;
+	KSI_MetaDataElement *tmp_metaData = NULL;
 	KSI_Utf8String *clientId = NULL;
 	KSI_TLV *metaDataTLV = NULL;
-	KSI_MetaData *metaData = NULL;
+	KSI_MetaDataElement *metaData = NULL;
 
 
-	res = KSI_MetaData_new(ctx, &tmp_metaData);
+	res = KSI_MetaDataElement_new(ctx, &tmp_metaData);
 	CuAssert(tc, "Unable to create meta data object.", res == KSI_OK);
 
 	res = KSI_Utf8String_new(ctx, "test",5, &clientId);
 	CuAssert(tc, "Unable create client ID string.", res == KSI_OK && clientId != NULL);
 
-	res = KSI_MetaData_setClientId(tmp_metaData, clientId);
+	res = KSI_MetaDataElement_setClientId(tmp_metaData, clientId);
 	CuAssert(tc, "Unable to set client ID", res == KSI_OK);
 	clientId = NULL;
 
-	res = KSI_MetaData_toTlv(ctx, tmp_metaData, 0x04, 0, 0, &metaDataTLV);
+	res = KSI_MetaDataElement_toTlv(ctx, tmp_metaData, 0x04, 0, 0, &metaDataTLV);
 	CuAssert(tc, "Unable to TLV", res == KSI_OK);
 
-	res = KSI_MetaData_fromTlv(metaDataTLV, &metaData);
+	res = KSI_MetaDataElement_fromTlv(metaDataTLV, &metaData);
 	CuAssert(tc, "Unable to from TLV", res == KSI_OK);
 
 /*
@@ -321,7 +321,7 @@ static void testAggrChainBuiltWithMetaData(CuTest *tc) {
 	CuAssert(tc, "Unable to create expected output data hash", res == KSI_OK && exp != NULL);
 	CuAssert(tc, "Data hash mismatch", KSI_DataHash_equals(out, exp));
 
-	KSI_MetaData_free(tmp_metaData);
+	KSI_MetaDataElement_free(tmp_metaData);
 	KSI_Utf8String_free(clientId);
 	KSI_TLV_free(metaDataTLV);
 	KSI_HashChainLinkList_free(chn);

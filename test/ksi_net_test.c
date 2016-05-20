@@ -950,7 +950,7 @@ static void testUriSpiltAndCompose(CuTest* tc) {
 }
 
 static void testCreateAggregated(CuTest *tc) {
-#define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2016-03-08-aggr_response.tlv"
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/test_create_aggregated_response.tlv"
 	int res;
 	const char data[] = "Test";
 	const char clientStr[] = "Dummy";
@@ -969,7 +969,7 @@ static void testCreateAggregated(CuTest *tc) {
 
 	KSI_Signature *sig = NULL;
 
-	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	res = KSI_CTX_setAggregator(ctx, "http://ksigw.test.guardtime.com:3333/gt-signingservice", TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
 
 	/* Create the hash for the initial document. */
@@ -1009,7 +1009,6 @@ static void testCreateAggregated(CuTest *tc) {
 	res = KSI_Signature_signAggregationChain(ctx, 0, chn, &sig);
 	CuAssert(tc, "Unable to sign aggregation chain.", res == KSI_OK && sig != NULL);
 
-
 	/* Serialize the signature. */
 	res = KSI_Signature_serialize(sig, &raw, &raw_len);
 	CuAssert(tc, "Unable to serialize signature.", res == KSI_OK && raw != NULL && raw_len > 0);
@@ -1029,6 +1028,7 @@ static void testCreateAggregated(CuTest *tc) {
 	KSI_MetaData_free(metaData);
 	KSI_Signature_free(sig);
 	KSI_free(raw);
+	KSI_Utf8String_free(clientId);
 
 #undef TEST_AGGR_RESPONSE_FILE
 }

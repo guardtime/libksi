@@ -106,7 +106,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note The output object still belongs to \c t.
 	 */
-	int KSI_HashChainLink_getMetaData(const KSI_HashChainLink *t, KSI_MetaData **metaData);
+	int KSI_HashChainLink_getMetaData(const KSI_HashChainLink *t, KSI_MetaDataElement **metaData);
 
 	/**
 	 * Getter method for \c imprint.
@@ -150,7 +150,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note After calling the setter, the the object belongs to \c t and will be freed by #KSI_HashChainLink_free.
 	 */
-	int KSI_HashChainLink_setMetaData(KSI_HashChainLink *t, KSI_MetaData *metaData);
+	int KSI_HashChainLink_setMetaData(KSI_HashChainLink *t, KSI_MetaDataElement *metaData);
 
 	/**
 	 * Setter method for \c imprint.

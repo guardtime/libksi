@@ -25,6 +25,7 @@
 #include "tlv.h"
 #include "tlv_template.h"
 #include "hashchain_impl.h"
+#include "impl/meta_data_element_impl.h"
 
 /* For optimization reasons, we need need access to KSI_DataHasher->closeExisting() function. */
 #include "hash_impl.h"
@@ -77,10 +78,11 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 	int mode = 0;
 	const unsigned char *imprint = NULL;
 	size_t imprint_len;
-	KSI_MetaData *metaData = NULL;
+	KSI_MetaDataElement *metaData = NULL;
 	KSI_OctetString *legacyId = NULL;
 	KSI_DataHash *hash = NULL;
 	KSI_OctetString *tmpOctStr = NULL;
+	unsigned char buf[0xffff + 4];
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || hsr == NULL || link == NULL) {
@@ -126,17 +128,13 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 			}
 			break;
 		case 0x04:
-			res = KSI_MetaData_getRaw(metaData, &tmpOctStr);
+			res = KSI_TlvElement_serialize(metaData->impl, buf, sizeof(buf), &imprint_len, KSI_TLV_OPT_NO_HEADER);
 			if (res != KSI_OK) {
 				KSI_pushError(ctx, res, NULL);
 				goto cleanup;
 			}
 
-			res = KSI_OctetString_extract(tmpOctStr, &imprint, &imprint_len);
-			if (res != KSI_OK) {
-				KSI_pushError(ctx, res, NULL);
-				goto cleanup;
-			}
+			imprint = buf;
 
 			KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Serialized metadata:", imprint, imprint_len);
 
@@ -467,7 +465,7 @@ KSI_IMPLEMENT_SETTER(KSI_CalendarHashChain, KSI_LIST(KSI_HashChainLink)*, hashCh
 void KSI_HashChainLink_free(KSI_HashChainLink *t) {
 	if (t != NULL) {
 		KSI_OctetString_free(t->legacyId);
-		KSI_MetaData_free(t->metaData);
+		KSI_MetaDataElement_free(t->metaData);
 		KSI_DataHash_free(t->imprint);
 		KSI_Integer_free(t->levelCorrection);
 		KSI_free(t);
@@ -694,13 +692,13 @@ cleanup:
 KSI_IMPLEMENT_GETTER(KSI_HashChainLink, int, isLeft, IsLeft)
 KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_Integer*, levelCorrection, LevelCorrection)
 KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_OctetString*, legacyId, LegacyId)
-KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_MetaData*, metaData, MetaData)
+KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_MetaDataElement*, metaData, MetaData)
 KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_DataHash*, imprint, Imprint)
 
 KSI_IMPLEMENT_SETTER(KSI_HashChainLink, int, isLeft, IsLeft)
 KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_Integer*, levelCorrection, LevelCorrection)
 KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_OctetString*, legacyId, LegacyId)
-KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_MetaData*, metaData, MetaData)
+KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_MetaDataElement*, metaData, MetaData)
 KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_DataHash*, imprint, Imprint)
 
 static int legacyId_verify(KSI_CTX *ctx, const unsigned char *raw, size_t raw_len) {

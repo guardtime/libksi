@@ -449,7 +449,7 @@ EXPORTS
 	KSI_CertificateRecord_template DATA
 	KSI_PublicationData_template DATA
 	KSI_PublicationRecord_template DATA
-	KSI_MetaData_template DATA
+	KSI_MetaDataElement_template DATA
 	KSI_HashChainLink_template DATA
 	KSI_Header_template DATA
 	KSI_Config_template DATA
@@ -479,19 +479,25 @@ EXPORTS
 
 ;types.h
 EXPORTS
+	KSI_MetaDataElement_free
+	KSI_MetaDataElement_new
+	KSI_MetaDataElement_getClientId
+	KSI_MetaDataElement_getMachineId
+	KSI_MetaDataElement_getSequenceNr
+	KSI_MetaDataElement_getRequestTimeInMicros
+	KSI_MetaDataElement_setClientId
+	KSI_MetaDataElement_setMachineId
+	KSI_MetaDataElement_setSequenceNr
+	KSI_MetaDataElement_setRequestTimeInMicros
+	KSI_MetaDataElement_toTlv
+	KSI_MetaDataElement_fromTlv
+	KSI_MetaDataElement_ref
 	KSI_MetaData_free
 	KSI_MetaData_new
-	KSI_MetaData_getRaw
-	KSI_MetaData_getClientId
-	KSI_MetaData_getMachineId
-	KSI_MetaData_getSequenceNr
-	KSI_MetaData_getRequestTimeInMicros
 	KSI_MetaData_setClientId
 	KSI_MetaData_setMachineId
 	KSI_MetaData_setSequenceNr
 	KSI_MetaData_setRequestTimeInMicros
-	KSI_MetaData_fromTlv
-	KSI_MetaData_toTlv
 	KSI_ExtendPdu_free
 	KSI_ExtendPdu_new
 	KSI_ExtendPdu_calculateHmac
