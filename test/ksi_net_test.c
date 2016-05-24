@@ -969,7 +969,7 @@ static void testCreateAggregated(CuTest *tc) {
 
 	KSI_Signature *sig = NULL;
 
-	res = KSI_CTX_setAggregator(ctx, "http://ksigw.test.guardtime.com:3333/gt-signingservice", TEST_USER, TEST_PASS);
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
 
 	/* Create the hash for the initial document. */
