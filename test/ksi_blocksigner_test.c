@@ -400,7 +400,7 @@ static void testMaskingWithMetaDataMultiSig(CuTest *tc) {
 
 	addInput(tc, bs, 1);
 
-	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), "anon", "anon");
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_BlockSigner_close(bs, &ms);

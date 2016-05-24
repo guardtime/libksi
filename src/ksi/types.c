@@ -503,6 +503,8 @@ static int KSI_MetaData_serializePayload(KSI_MetaData *t, unsigned char *buf, si
 	if (res != KSI_OK) goto cleanup;
 
 	padding->ftlv.tag = 0x1e;
+	padding->ftlv.is_fwd = 1;
+	padding->ftlv.is_nc = 1;
 
 	/* Add the padding as the first element. */
 	res = KSI_TlvElement_appendElement(mdEl->impl, padding);

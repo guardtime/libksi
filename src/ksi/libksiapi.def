@@ -711,16 +711,16 @@ EXPORTS
 
 ;List implementations
 EXPORTS
-	KSI_MetaDataList_free
-	KSI_MetaDataList_new
-	KSI_MetaDataList_append
-	KSI_MetaDataList_indexOf
-	KSI_MetaDataList_insertAt
-	KSI_MetaDataList_replaceAt
-	KSI_MetaDataList_remove
-	KSI_MetaDataList_length
-	KSI_MetaDataList_elementAt
-	KSI_MetaDataList_sort
+	KSI_MetaDataElementList_free
+	KSI_MetaDataElementList_new
+	KSI_MetaDataElementList_append
+	KSI_MetaDataElementList_indexOf
+	KSI_MetaDataElementList_insertAt
+	KSI_MetaDataElementList_replaceAt
+	KSI_MetaDataElementList_remove
+	KSI_MetaDataElementList_length
+	KSI_MetaDataElementList_elementAt
+	KSI_MetaDataElementList_sort
 
 	KSI_HashChainLinkList_free
 	KSI_HashChainLinkList_new

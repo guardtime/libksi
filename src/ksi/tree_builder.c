@@ -89,7 +89,6 @@ cleanup:
 
 static int KSI_DataHasher_addTreeNode(KSI_DataHasher *hsr, KSI_TreeNode *node) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_OctetString *raw = NULL;
 
 	if (hsr == NULL || node == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -113,8 +112,6 @@ static int KSI_DataHasher_addTreeNode(KSI_DataHasher *hsr, KSI_TreeNode *node) {
 	res = KSI_OK;
 
 cleanup:
-
-	KSI_OctetString_free(raw);
 
 	return res;
 }
