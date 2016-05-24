@@ -166,7 +166,7 @@ extern "C" {
 	KSI_DEFINE_LIST(KSI_RequestHandle);
 
 /*
- * KSI_MetaData
+ * KSI_MetaDataElement.
  */
 void KSI_MetaDataElement_free(KSI_MetaDataElement *t);
 int KSI_MetaDataElement_new(KSI_CTX *ctx, KSI_MetaDataElement **t);
