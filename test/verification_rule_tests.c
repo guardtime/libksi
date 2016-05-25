@@ -120,6 +120,266 @@ static void testRule_AggregationChainInputHashVerification_missingRfc3161(CuTest
 #undef TEST_SIGNATURE_FILE
 }
 
+static void testRule_AggregationChainMetaDataVerification_validMetaData(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-metadata-with-padding.ksig"
+
+	int res = KSI_OK;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	VerificationTempData tempData;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+
+	res = KSI_VerificationRule_AggregationChainMetaDataVerification(&verCtx, &verRes);
+	CuAssert(tc, "Signature should contain valid metadata record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
+
+	KSI_Signature_free(verCtx.signature);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationChainMetaDataVerification_validMetaDataNoPadding(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-metadata-without-padding.ksig"
+
+	int res = KSI_OK;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	VerificationTempData tempData;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+
+	res = KSI_VerificationRule_AggregationChainMetaDataVerification(&verCtx, &verRes);
+	CuAssert(tc, "Signature should contain valid metadata record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
+
+	KSI_Signature_free(verCtx.signature);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPaddingNotFirst(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-metadata-padding-not-first.ksig"
+
+	int res = KSI_OK;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	VerificationTempData tempData;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+
+	res = KSI_VerificationRule_AggregationChainMetaDataVerification(&verCtx, &verRes);
+	CuAssert(tc, "Signature should contain an invalid metadata record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_11);
+
+	KSI_Signature_free(verCtx.signature);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPaddingNotTlv8(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-metadata-padding-not-tlv8.ksig"
+
+	int res = KSI_OK;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	VerificationTempData tempData;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+
+	res = KSI_VerificationRule_AggregationChainMetaDataVerification(&verCtx, &verRes);
+	CuAssert(tc, "Signature should contain an invalid metadata record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_11);
+
+	KSI_Signature_free(verCtx.signature);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPaddingFlagsNotSet(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-metadata-padding-flags-not-set.ksig"
+
+	int res = KSI_OK;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	VerificationTempData tempData;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+
+	res = KSI_VerificationRule_AggregationChainMetaDataVerification(&verCtx, &verRes);
+	CuAssert(tc, "Signature should contain an invalid metadata record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_11);
+
+	KSI_Signature_free(verCtx.signature);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPaddingValueNot01(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-metadata-padding-value-not-01.ksig"
+
+	int res = KSI_OK;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	VerificationTempData tempData;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+
+	res = KSI_VerificationRule_AggregationChainMetaDataVerification(&verCtx, &verRes);
+	CuAssert(tc, "Signature should contain an invalid metadata record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_11);
+
+	KSI_Signature_free(verCtx.signature);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPaddingValueNot0101(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-metadata-padding-value-not-0101.ksig"
+
+	int res = KSI_OK;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	VerificationTempData tempData;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+
+	res = KSI_VerificationRule_AggregationChainMetaDataVerification(&verCtx, &verRes);
+	CuAssert(tc, "Signature should contain an invalid metadata record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_11);
+
+	KSI_Signature_free(verCtx.signature);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationChainMetaDataVerification_invalidMetaDataLengthNotEven(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-metadata-length-not-even.ksig"
+
+	int res = KSI_OK;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	VerificationTempData tempData;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+
+	res = KSI_VerificationRule_AggregationChainMetaDataVerification(&verCtx, &verRes);
+	CuAssert(tc, "Signature should contain an invalid metadata record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_11);
+
+	KSI_Signature_free(verCtx.signature);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationChainMetaDataVerification_invalidMetaDataNoPadding(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-metadata-padding-missing.ksig"
+
+	int res = KSI_OK;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	VerificationTempData tempData;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+
+	res = KSI_VerificationRule_AggregationChainMetaDataVerification(&verCtx, &verRes);
+	CuAssert(tc, "Signature should contain an invalid metadata record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_11);
+
+	KSI_Signature_free(verCtx.signature);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationChainMetaDataVerification_missingMetaData(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+
+	int res = KSI_OK;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	VerificationTempData tempData;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+
+	res = KSI_VerificationRule_AggregationChainMetaDataVerification(&verCtx, &verRes);
+	CuAssert(tc, "Signature should not contain a metadata record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
+
+	KSI_Signature_free(verCtx.signature);
+
+#undef TEST_SIGNATURE_FILE
+}
+
 static void testRule_AggregationHashChainConsistency(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
 
@@ -3301,6 +3561,16 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_AggregationChainInputHashVerification_validRfc3161);
 	SUITE_ADD_TEST(suite, testRule_AggregationChainInputHashVerification_invalidRfc3161_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_AggregationChainInputHashVerification_missingRfc3161);
+	SUITE_ADD_TEST(suite, testRule_AggregationChainMetaDataVerification_validMetaData);
+	SUITE_ADD_TEST(suite, testRule_AggregationChainMetaDataVerification_validMetaDataNoPadding);
+	SUITE_ADD_TEST(suite, testRule_AggregationChainMetaDataVerification_invalidMetaDataPaddingNotFirst);
+	SUITE_ADD_TEST(suite, testRule_AggregationChainMetaDataVerification_invalidMetaDataPaddingNotTlv8);
+	SUITE_ADD_TEST(suite, testRule_AggregationChainMetaDataVerification_invalidMetaDataPaddingFlagsNotSet);
+	SUITE_ADD_TEST(suite, testRule_AggregationChainMetaDataVerification_invalidMetaDataPaddingValueNot01);
+	SUITE_ADD_TEST(suite, testRule_AggregationChainMetaDataVerification_invalidMetaDataPaddingValueNot0101);
+	SUITE_ADD_TEST(suite, testRule_AggregationChainMetaDataVerification_invalidMetaDataLengthNotEven);
+	SUITE_ADD_TEST(suite, testRule_AggregationChainMetaDataVerification_invalidMetaDataNoPadding);
+	SUITE_ADD_TEST(suite, testRule_AggregationChainMetaDataVerification_missingMetaData);
 	SUITE_ADD_TEST(suite, testRule_AggregationHashChainConsistency);
 	SUITE_ADD_TEST(suite, testRule_AggregationHashChainConsistency_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_AggregationHashChainTimeConsistency);

@@ -515,17 +515,23 @@ int KSI_VerificationRule_AggregationChainMetaDataVerification(KSI_VerificationCo
 					/* Check that the first element is a valid metadata padding. */
 					res = metaDataPadding_verify(ctx, tmp);
 					if (res != KSI_OK) {
-						result->stepsFailed |= KSI_VERIFY_AGGRCHAIN_INTERNALLY;
-						VERIFICATION_RESULT(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_11);
-						KSI_pushError(ctx, res, NULL);
-						goto cleanup;
+						if (res == KSI_INVALID_FORMAT) {
+							result->stepsFailed |= KSI_VERIFY_AGGRCHAIN_INTERNALLY;
+							VERIFICATION_RESULT(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_11);
+							res = KSI_OK;
+							goto cleanup;
+						} else {
+							VERIFICATION_RESULT(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2);
+							KSI_pushError(ctx, res, NULL);
+							goto cleanup;
+						}
 					}
 
 					/* Check that the total length of the metadata record is even. */
 					if (metaData->impl->ftlv.dat_len % 2) {
 						result->stepsFailed |= KSI_VERIFY_AGGRCHAIN_INTERNALLY;
 						VERIFICATION_RESULT(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_11);
-						KSI_pushError(ctx, res, NULL);
+						res = KSI_OK;
 						goto cleanup;
 					}
 					KSI_LOG_info(ctx, "Metadata padding successfully verified.");
@@ -533,9 +539,10 @@ int KSI_VerificationRule_AggregationChainMetaDataVerification(KSI_VerificationCo
 					unsigned int len = KSI_getHashLength(metaData->impl->ptr[metaData->impl->ftlv.hdr_len]);
 					/* Check that the metadata record cannot be interpreted as a valid imprint. */
 					if (len != 0 && len + 1 == metaData->impl->ftlv.dat_len) {
+						KSI_LOG_info(ctx, "Metadata could be interpreted as imprint.");
 						result->stepsFailed |= KSI_VERIFY_AGGRCHAIN_INTERNALLY;
 						VERIFICATION_RESULT(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_11);
-						KSI_pushError(ctx, res, NULL);
+						res = KSI_OK;
 						goto cleanup;
 					}
 				}

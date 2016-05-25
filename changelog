@@ -2,6 +2,7 @@ Version 3.8
 
 * IMPROVEMENT: Added KSI_verifyDataHash.
 * IMPROVEMENT: Custom meta-data sepparated from the low-level implementation. Adds padding automatically.
+* IMPROVEMENT: Metadata hardening verification.
 
 2016-04-18 release(3.8.1428)
 
