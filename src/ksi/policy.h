@@ -93,6 +93,8 @@ extern "C" {
 		KSI_VER_ERR_INT_9 = 0x209,
 		/** Aggregation hash chain chain index mismatch. */
 		KSI_VER_ERR_INT_10 = 0x20a,
+		/** The meta-data record in the aggregation hash chain may not be trusted. */
+		KSI_VER_ERR_INT_11 = 0x20b,
 		/** Extender response calendar root hash mismatch. */
 		KSI_VER_ERR_PUB_1 = 0x301,
 		/** Extender response inconsistent. */

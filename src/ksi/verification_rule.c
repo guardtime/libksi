@@ -29,6 +29,7 @@
 #include "net.h"
 #include "ctx_impl.h"
 #include "verification.h"
+#include "impl/meta_data_element_impl.h"
 
 #define VERIFICATION_RESULT(vrc, vec) \
 	result->resultCode = vrc;         \
@@ -357,6 +358,199 @@ int KSI_VerificationRule_AggregationChainInputHashVerification(KSI_VerificationC
 cleanup:
 	KSI_DataHash_free(rfc3161_outputHash);
 
+	return res;
+}
+
+static int metaDataPadding_verify(KSI_CTX *ctx, KSI_TlvElement *el) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (ctx == NULL || el == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(ctx);
+
+	/* Check that the tag value corresponds to metadata padding. */
+	if (el->ftlv.tag != 0x1E) {
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Metadata padding not the first element in the metadata record.");
+		goto cleanup;
+	}
+
+	/* Check that the metadata padding is encoded in TLV8. */
+	if (el->ptr[0] & KSI_TLV_MASK_TLV16) {
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Metadata padding not encoded as TLV8.");
+		goto cleanup;
+	}
+
+	/* Check that the metadata padding has N and F flags set. */
+	if (el->ftlv.is_nc == 0 || el->ftlv.is_fwd == 0) {
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Metadata padding does not have N and F flags set.");
+		goto cleanup;
+	}
+
+	/* Check that the metadata padding value is either 0x01 or 0x0101. */
+	switch (el->ftlv.dat_len) {
+		case 2:
+			if (el->ptr[el->ftlv.hdr_len + 1] != 0x01) {
+				KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Metadata padding has invalid value.");
+				goto cleanup;
+			}
+			/* no break */
+
+		case 1:
+			if (el->ptr[el->ftlv.hdr_len] != 0x01) {
+				KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Metadata padding has invalid value.");
+				goto cleanup;
+			}
+			break;
+
+		default:
+			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Metadata padding has invalid length.");
+			goto cleanup;
+			break;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_AggregationChainMetaDataVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	size_t i;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *sig = NULL;
+	VerificationTempData *tempData = NULL;
+	KSI_TlvElement *el = NULL;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	result->stepsPerformed |= KSI_VERIFY_AGGRCHAIN_INTERNALLY;
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	ctx = info->ctx;
+	sig = info->signature;
+	KSI_ERR_clearErrors(ctx);
+
+	tempData = info->tempData;
+	if (tempData == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_STATE, "Verification context not properly initialized.");
+		goto cleanup;
+	}
+
+	KSI_LOG_info(ctx, "Verify aggregation hash chain metadata.");
+
+	/* Loop through all the aggregation chains. */
+	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
+		const KSI_AggregationHashChain* aggregationChain = NULL;
+		KSI_HashChainLinkList *linkList = NULL;
+		size_t j;
+
+		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, (KSI_AggregationHashChain **)&aggregationChain);
+		if (res != KSI_OK) {
+			VERIFICATION_RESULT(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		if (aggregationChain == NULL) break;
+
+		res = KSI_AggregationHashChain_getChain(aggregationChain, &linkList);
+		if (res != KSI_OK) {
+			VERIFICATION_RESULT(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		/* Loop through all the links in the aggregation chain. */
+		for (j = 0; j < KSI_HashChainLinkList_length(linkList); j++) {
+			KSI_HashChainLink *link = NULL;
+			KSI_MetaDataElement *metaData = NULL;
+
+			res = KSI_HashChainLinkList_elementAt(linkList, j, &link);
+			if (res != KSI_OK) {
+				VERIFICATION_RESULT(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2);
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
+
+			res = KSI_HashChainLink_getMetaData(link, &metaData);
+			if (res != KSI_OK) {
+				VERIFICATION_RESULT(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2);
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
+
+			if (metaData != NULL) {
+				/* Check if the metadata padding exists by looking for tag 0x1E. */
+				res = KSI_TlvElement_getElement(metaData->impl, 0x1E, &el);
+				if (res != KSI_OK) {
+					VERIFICATION_RESULT(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2);
+					KSI_pushError(ctx, res, NULL);
+					goto cleanup;
+				}
+
+				if (el != NULL) {
+					KSI_TlvElement *tmp = NULL;
+
+					/* Metadata padding can only be the first element in the metadata record. */
+					res = KSI_TlvElementList_elementAt(metaData->impl->subList, 0, &tmp);
+					if (res != KSI_OK) {
+						VERIFICATION_RESULT(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2);
+						KSI_pushError(ctx, res, NULL);
+						goto cleanup;
+					}
+
+					/* Check that the first element is a valid metadata padding. */
+					res = metaDataPadding_verify(ctx, tmp);
+					if (res != KSI_OK) {
+						result->stepsFailed |= KSI_VERIFY_AGGRCHAIN_INTERNALLY;
+						VERIFICATION_RESULT(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_11);
+						KSI_pushError(ctx, res, NULL);
+						goto cleanup;
+					}
+
+					/* Check that the total length of the metadata record is even. */
+					if (metaData->impl->ftlv.dat_len % 2) {
+						result->stepsFailed |= KSI_VERIFY_AGGRCHAIN_INTERNALLY;
+						VERIFICATION_RESULT(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_11);
+						KSI_pushError(ctx, res, NULL);
+						goto cleanup;
+					}
+					KSI_LOG_info(ctx, "Metadata padding successfully verified.");
+				} else {
+					unsigned int len = KSI_getHashLength(metaData->impl->ptr[metaData->impl->ftlv.hdr_len]);
+					/* Check that the metadata record cannot be interpreted as a valid imprint. */
+					if (len != 0 && len + 1 == metaData->impl->ftlv.dat_len) {
+						result->stepsFailed |= KSI_VERIFY_AGGRCHAIN_INTERNALLY;
+						VERIFICATION_RESULT(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_11);
+						KSI_pushError(ctx, res, NULL);
+						goto cleanup;
+					}
+				}
+				KSI_TlvElement_free(el);
+				el = NULL;
+			}
+		}
+	}
+
+	VERIFICATION_RESULT(KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_TlvElement_free(el);
 	return res;
 }
 
