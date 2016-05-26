@@ -108,7 +108,9 @@ libksi_la_SOURCES = \
 	compatibility.c \
 	version.h \
 	verify_deprecated.c \
-	verify_deprecated.h
+	verify_deprecated.h \
+	impl/meta_data_impl.h \
+	impl/meta_data_element_impl.h
 
 otherincludedir = $(includedir)/ksi
 otherinclude_HEADERS = \
