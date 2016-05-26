@@ -45,7 +45,6 @@ static int createMetaData(const char *userId, KSI_MetaData **md) {
 
 	res = KSI_MetaData_setClientId(tmp, cId);
 	if (res != KSI_OK) goto cleanup;
-	cId = NULL;
 
 	*md = tmp;
 	tmp = NULL;
@@ -148,7 +147,7 @@ static void testMultiSig(CuTest *tc) {
 }
 
 static void testMedaData(CuTest *tc) {
-#define TEST_AGGR_RESPONSE_FILE  "resource/tlv/ok-sig-2016-04-13-preaggr_response.tlv"
+#define TEST_AGGR_RESPONSE_FILE  "resource/tlv/test_meta_data_response.tlv"
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_BlockSigner *bs = NULL;
 	KSI_MetaData *md = NULL;
@@ -376,7 +375,7 @@ static void testMaskingMultiSig(CuTest *tc) {
 }
 
 static void testMaskingWithMetaDataMultiSig(CuTest *tc) {
-#define TEST_AGGR_RESPONSE_FILE  "resource/tlv/ok-sig-2016-05-09.2-lvl5.ksig"
+#define TEST_AGGR_RESPONSE_FILE  "resource/tlv/test_meta_data_masking.tlv"
 	static const unsigned char diceRolls[] = {0xd5, 0x58, 0xaf, 0xfa, 0x80, 0x67, 0xf4, 0x2c, 0xd9, 0x48, 0x36, 0x21, 0xd1, 0xab,
 			0xae, 0x23, 0xed, 0xd6, 0xca, 0x04, 0x72, 0x7e, 0xcf, 0xc7, 0xdb, 0xc7, 0x6b, 0xde, 0x34, 0x77, 0x1e, 0x53};
 	int res = KSI_UNKNOWN_ERROR;
@@ -401,7 +400,7 @@ static void testMaskingWithMetaDataMultiSig(CuTest *tc) {
 
 	addInput(tc, bs, 1);
 
-	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), "anon", "anon");
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_BlockSigner_close(bs, &ms);

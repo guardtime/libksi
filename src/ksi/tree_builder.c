@@ -22,6 +22,7 @@
 #include "internal.h"
 #include "tree_builder.h"
 #include "hashchain.h"
+#include "impl/meta_data_impl.h"
 
 KSI_IMPLEMENT_LIST(KSI_TreeBuilderLeafProcessor, NULL);
 
@@ -88,7 +89,6 @@ cleanup:
 
 static int KSI_DataHasher_addTreeNode(KSI_DataHasher *hsr, KSI_TreeNode *node) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_OctetString *raw = NULL;
 
 	if (hsr == NULL || node == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -99,24 +99,19 @@ static int KSI_DataHasher_addTreeNode(KSI_DataHasher *hsr, KSI_TreeNode *node) {
 		res = KSI_DataHasher_addImprint(hsr, node->hash);
 		if (res != KSI_OK) goto cleanup;
 	} else if (node->metaData != NULL) {
-		const unsigned char *ptr;
+		unsigned char buf[0xffff + 4];
 		size_t len;
 
-		res = KSI_MetaData_getRaw(node->metaData, &raw);
+		res = node->metaData->serializePayload(node->metaData, buf, sizeof(buf), &len);
 		if (res != KSI_OK) goto cleanup;
 
-		res = KSI_OctetString_extract(raw, &ptr, &len);
-		if (res != KSI_OK) goto cleanup;
-
-		res = KSI_DataHasher_add(hsr, ptr, len);
+		res = KSI_DataHasher_add(hsr, buf, len);
 		if (res != KSI_OK) goto cleanup;
 	}
 
 	res = KSI_OK;
 
 cleanup:
-
-	KSI_OctetString_free(raw);
 
 	return res;
 }
@@ -530,6 +525,7 @@ static int getHashChainLinks(KSI_TreeNode *node, KSI_LIST(KSI_HashChainLink) *li
 	unsigned levelGap = 0;
 	KSI_Integer *levelCorrection = NULL;
 	KSI_TreeNode *pSibling = NULL;
+	KSI_MetaDataElement *mdEl = NULL;
 
 	if (node == NULL || links == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -580,8 +576,14 @@ static int getHashChainLinks(KSI_TreeNode *node, KSI_LIST(KSI_HashChainLink) *li
 		if (res != KSI_OK) goto cleanup;
 
 		/* Add the meta-data. */
-		res = KSI_HashChainLink_setMetaData(link, KSI_MetaData_ref(pSibling->metaData));
-		if (res != KSI_OK) goto cleanup;
+		if (pSibling->metaData != NULL) {
+			/* Convert the element to the internal representation. */
+			res = pSibling->metaData->toMetaDataElement(pSibling->metaData, &mdEl);
+			if (res != KSI_OK) goto cleanup;
+
+			res = KSI_HashChainLink_setMetaData(link, KSI_MetaDataElement_ref(mdEl));
+			if (res != KSI_OK) goto cleanup;
+		}
 
 		/* Sanity check. */
 		if (node->parent->level <= node->level) {
@@ -614,6 +616,7 @@ static int getHashChainLinks(KSI_TreeNode *node, KSI_LIST(KSI_HashChainLink) *li
 
 cleanup:
 
+	KSI_MetaDataElement_free(mdEl);
 	KSI_Integer_free(levelCorrection);
 
 	KSI_HashChainLink_free(link);

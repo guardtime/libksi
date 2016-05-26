@@ -1728,9 +1728,6 @@ int KSI_Signature_clone(const KSI_Signature *sig, KSI_Signature **clone) {
 		goto cleanup;
 	}
 
-	KSI_LOG_logTlv(sig->ctx, KSI_LOG_DEBUG, "Original TLV", sig->baseTlv);
-	KSI_LOG_logTlv(sig->ctx, KSI_LOG_DEBUG, "Cloned TLV", tlv);
-
 	res = extractSignature(sig->ctx, tlv, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
@@ -1926,7 +1923,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 
 		for (j = KSI_HashChainLinkList_length(aggrRec->chain); j-- > 0;) {
 			KSI_HashChainLink *link = NULL;
-			KSI_MetaData *metaData = NULL;
+			KSI_MetaDataElement *metaData = NULL;
 			KSI_OctetString *legacyId = NULL;
 
 			res = KSI_HashChainLinkList_elementAt(aggrRec->chain, j, &link);
@@ -1969,7 +1966,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 			} else if (metaData != NULL) {
 				KSI_Utf8String *clientId = NULL;
 
-				res = KSI_MetaData_getClientId(metaData, &clientId);
+				res = KSI_MetaDataElement_getClientId(metaData, &clientId);
 				if (res != KSI_OK) {
 					KSI_pushError(sig->ctx, res, NULL);
 					goto cleanup;

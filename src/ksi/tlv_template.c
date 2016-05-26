@@ -87,18 +87,18 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationRecord)
 	KSI_TLV_OBJECT_LIST(0x0a, KSI_TLV_TMPL_FLG_NONE, KSI_PublicationRecord_getRepositoryUriList, KSI_PublicationRecord_setRepositoryUriList, KSI_Utf8StringNZ, "uri")
 KSI_END_TLV_TEMPLATE
 
-KSI_DEFINE_TLV_TEMPLATE(KSI_MetaData)
-	KSI_TLV_UTF8_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_MetaData_getClientId, KSI_MetaData_setClientId, "client_id")
-	KSI_TLV_UTF8_STRING(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_MetaData_getMachineId, KSI_MetaData_setMachineId, "machine_id")
-	KSI_TLV_INTEGER(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_MetaData_getSequenceNr, KSI_MetaData_setSequenceNr, "seq_nr")
-	KSI_TLV_TIME_US(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_MetaData_getRequestTimeInMicros, KSI_MetaData_setRequestTimeInMicros, "req_time")
+KSI_DEFINE_TLV_TEMPLATE(KSI_MetaDataElement)
+	KSI_TLV_UTF8_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_MetaDataElement_getClientId, KSI_MetaDataElement_setClientId, "client_id")
+	KSI_TLV_UTF8_STRING(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_MetaDataElement_getMachineId, KSI_MetaDataElement_setMachineId, "machine_id")
+	KSI_TLV_INTEGER(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_MetaDataElement_getSequenceNr, KSI_MetaDataElement_setSequenceNr, "seq_nr")
+	KSI_TLV_TIME_US(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_MetaDataElement_getRequestTimeInMicros, KSI_MetaDataElement_setRequestTimeInMicros, "req_time")
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_HashChainLink)
 	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_HashChainLink_getLevelCorrection, KSI_HashChainLink_setLevelCorrection, "level_correction")
 	KSI_TLV_IMPRINT(0x02, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getImprint, KSI_HashChainLink_setImprint, "imprint")
 	KSI_TLV_OBJECT(0x03, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getLegacyId, KSI_HashChainLink_setLegacyId, KSI_HashChainLink_LegacyId_fromTlv, KSI_HashChainLink_LegacyId_toTlv, KSI_OctetString_free, "legacy_id")
-	KSI_TLV_COMPOSITE_OBJECT(0x04, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getMetaData, KSI_HashChainLink_setMetaData, KSI_MetaData_fromTlv, KSI_MetaData_toTlv, KSI_MetaData_free, KSI_TLV_TEMPLATE(KSI_MetaData), "meta_data")
+	KSI_TLV_COMPOSITE_OBJECT(0x04, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getMetaData, KSI_HashChainLink_setMetaData, KSI_MetaDataElement_fromTlv, KSI_MetaDataElement_toTlv, KSI_MetaDataElement_free, KSI_TLV_TEMPLATE(KSI_MetaDataElement), "meta_data")
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_Header)

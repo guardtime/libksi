@@ -17,34 +17,30 @@
  * reserves and retains all trademark rights.
  */
 
-#ifndef HASHCHAIN_IMPL_H_
-#define HASHCHAIN_IMPL_H_
+
+#ifndef META_DATA_ELEMENT_IMPL_H_
+#define META_DATA_ELEMENT_IMPL_H_
+
+#include "../tlv_element.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct KSI_HashChainLink_st {
-	KSI_CTX *ctx;
-	int isLeft;
-	KSI_Integer *levelCorrection;
-	KSI_OctetString *legacyId;
-	KSI_MetaDataElement *metaData;
-	KSI_DataHash *imprint;
-};
+	struct KSI_MetaDataElement_st {
+		KSI_CTX *ctx;
+		size_t ref;
 
-struct KSI_CalendarHashChain_st {
-	KSI_CTX *ctx;
-	size_t ref;
-	KSI_Integer *publicationTime;
-	KSI_Integer *aggregationTime;
-	KSI_DataHash *inputHash;
-	KSI_LIST(KSI_HashChainLink) *hashChain;
-};
+		KSI_Utf8String *DEPRECATED_clientId;
+		KSI_Utf8String *DEPRECATED_machineId;
+		KSI_Integer *DEPRECATED_sequenceNr;
+		KSI_Integer *DEPRECATED_reqTimeInMicros;
 
+		KSI_TlvElement *impl;
+	};
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* HASHCHAIN_IMPL_H_ */
+#endif /* META_DATA_ELEMENT_IMPL_H_ */
