@@ -1,3 +1,5 @@
+* IMPROVEMENT: Added example application for signing multiple files into multi-signature container.
+
 Version 3.8
 
 * IMPROVEMENT: Added KSI_verifyDataHash.

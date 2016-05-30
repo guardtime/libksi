@@ -67,17 +67,96 @@ cleanup:
 	return res;
 }
 
+static int signFile(KSI_CTX *ksi, char *inFile, KSI_Signature **sign) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	KSI_Signature *tmp = NULL;
+	char *signerIdentity = NULL;
+	unsigned char buf[1024];
+	size_t buf_len;
+	FILE *in = NULL;
+	KSI_DataHasher *hsr = NULL;
+	KSI_DataHash *hsh = NULL;
+
+	in = fopen(inFile, "rb");
+	if (in == NULL) {
+		fprintf(stderr, "Unable to open input file '%s'\n", inFile);
+		res = KSI_IO_ERROR;
+		goto cleanup;
+	}
+
+	printf("  Signing file: %s\n", inFile);
+
+	/* Create a data hasher using default algorithm. */
+	res = KSI_DataHasher_open(ksi, KSI_getHashAlgorithmByName("default"), &hsr);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to create hasher.\n");
+		goto cleanup;
+	}
+
+	/* Read the input file and calculate the hash of its contents. */
+	while (!feof(in)) {
+		buf_len = fread(buf, 1, sizeof(buf), in);
+
+		/* Add  next block to the calculation. */
+		res = KSI_DataHasher_add(hsr, buf, buf_len);
+		if (res != KSI_OK) {
+			fprintf(stderr, "Unable to add data to hasher.\n");
+			goto cleanup;
+		}
+	}
+
+	/* Close the data hasher and retreive the data hash. */
+	res = KSI_DataHasher_close(hsr, &hsh);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to create hash.\n");
+		goto cleanup;
+	}
+
+	/* Sign the data hash. */
+	res = KSI_createSignature(ksi, hsh, &tmp);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to sign %d.\n", res);
+		goto cleanup;
+	}
+
+	res = KSI_verifySignature(ksi, tmp);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Failed to verify signature.\n");
+		goto cleanup;
+	}
+
+	/* Output the signer id */
+	res = KSI_Signature_getSignerIdentity(tmp, &signerIdentity);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to extract signer identity.\n");
+	}
+	if (signerIdentity != NULL) {
+		printf("  Signer id: %s\n", signerIdentity);
+		KSI_free(signerIdentity);
+		signerIdentity = NULL;
+	}
+
+	*sign = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+	if (in != NULL) fclose(in);
+
+	KSI_DataHash_free(hsh);
+	KSI_DataHasher_free(hsr);
+
+	KSI_free(signerIdentity);
+	return res;
+}
+
 static int loadMultiSignature(KSI_CTX *ksi, char **inFiles, int nofInFiles, KSI_MultiSignature **ms) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	int i;
-	char *signerIdentity = NULL;
-	KSI_DataHasher *hsr = NULL;
-	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sign = NULL;
-	unsigned char buf[1024];
-	size_t buf_len;
-	FILE *in = NULL;
 
 	res = KSI_MultiSignature_new(ksi, ms);
 	if (res != KSI_OK) {
@@ -86,62 +165,12 @@ static int loadMultiSignature(KSI_CTX *ksi, char **inFiles, int nofInFiles, KSI_
 	}
 
 	for (i = 0; i < nofInFiles; i++) {
-		in = fopen(inFiles[i], "rb");
-		if (in == NULL) {
-			fprintf(stderr, "Unable to open input file '%s'\n", inFiles[i]);
-			res = KSI_IO_ERROR;
+
+		res = signFile(ksi, inFiles[i], &sign);
+		if (res != KSI_OK) {
+			fprintf(stderr, "Unable to create signature from %s.\n", inFiles[i]);
 			goto cleanup;
 		}
-
-		printf("  Signing file: %s\n", inFiles[i]);
-
-
-		/* Create a data hasher using default algorithm. */
-		res = KSI_DataHasher_open(ksi, KSI_getHashAlgorithmByName("default"), &hsr);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Unable to create hasher.\n");
-			goto cleanup;
-		}
-
-		/* Read the input file and calculate the hash of its contents. */
-		while (!feof(in)) {
-			buf_len = fread(buf, 1, sizeof(buf), in);
-
-			/* Add  next block to the calculation. */
-			res = KSI_DataHasher_add(hsr, buf, buf_len);
-			if (res != KSI_OK) {
-				fprintf(stderr, "Unable to add data to hasher.\n");
-				goto cleanup;
-			}
-		}
-
-		/* Close the data hasher and retreive the data hash. */
-		res = KSI_DataHasher_close(hsr, &hsh);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Unable to create hash.\n");
-			goto cleanup;
-		}
-
-		/* Sign the data hash. */
-		res = KSI_createSignature(ksi, hsh, &sign);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Unable to sign %d.\n", res);
-			goto cleanup;
-		}
-
-		res = KSI_verifySignature(ksi, sign);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Failed to verify signature.\n");
-			goto cleanup;
-		}
-
-		/* Output the signer id */
-		res = KSI_Signature_getSignerIdentity(sign, &signerIdentity);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Unable to extract signer identity.\n");
-		}
-
-		printf("  Signer id: %s\n", signerIdentity);
 
 		res = KSI_MultiSignature_add(*ms, sign);
 		if (res != KSI_OK) {
@@ -151,22 +180,13 @@ static int loadMultiSignature(KSI_CTX *ksi, char **inFiles, int nofInFiles, KSI_
 
 		printf("  Signature added to multi-signature container.\n");
 
-
 		KSI_Signature_free(sign);
 		sign = NULL;
-
-		fclose(in);
-		in = NULL;
 	}
 
 cleanup:
-	if (in != NULL) fclose(in);
-
-	KSI_free(signerIdentity);
 
 	KSI_Signature_free(sign);
-	KSI_DataHash_free(hsh);
-	KSI_DataHasher_free(hsr);
 
 	return res;
 }
@@ -204,7 +224,6 @@ static int saveMultiSignature(KSI_MultiSignature *ms, char *outFile) {
 	printf("  Multi-signature saved to %s.\n", outFile);
 
 cleanup:
-	if (out != NULL) fclose(out);
 
 	KSI_free(raw);
 
