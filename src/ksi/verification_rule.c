@@ -41,7 +41,6 @@ static int rfc3161_verify(KSI_CTX *ctx, const KSI_Signature *sig);
 static int getRfc3161OutputHash(const KSI_Signature *sig, KSI_DataHash **outputHash);
 static int getExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Integer *pubTime, KSI_CalendarHashChain **extCalHashChain);
 static int initPublicationsFile(KSI_VerificationContext *info);
-static int initExtendedSignature(KSI_VerificationContext *info, KSI_Integer *endTime);
 static int initAggregationOutputHash(KSI_VerificationContext *info);
 
 
