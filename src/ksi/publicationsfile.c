@@ -427,7 +427,7 @@ int KSI_PublicationsFile_serialize(KSI_CTX *ctx, KSI_PublicationsFile *pubFile, 
 	KSI_TLV *tlv = NULL;
 	unsigned char *tmp = NULL;
 	size_t tmp_len = 0;
-	size_t sig_len;
+	size_t sig_len = 0;
 
 	KSI_ERR_clearErrors(ctx);
 
