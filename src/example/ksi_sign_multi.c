@@ -30,7 +30,7 @@ static void printHelp(char *exec) {
 			"  %s <in-data-file> [<in-data-file> ...] <out-sign-file> <aggregator-uri> <user> <pass> <pub-file url> \n", exec);
 }
 
-static int initKsiCtx(KSI_CTX **ksi, char **data) {
+static int initKsiCtx(char **data, KSI_CTX **ksi) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	const KSI_CertConstraint pubFileCertConstr[] = {
@@ -45,12 +45,14 @@ static int initKsiCtx(KSI_CTX **ksi, char **data) {
 		goto cleanup;
 	}
 
+	/* Set publications file certificate contsraints. */
 	res = KSI_CTX_setDefaultPubFileCertConstraints(*ksi, pubFileCertConstr);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to configure publications file cert constraints.\n");
 		goto cleanup;
 	}
 
+	/* Set signing service. */
 	res = KSI_CTX_setAggregator(*ksi, data[0], data[1], data[2]);
 	if (res != KSI_OK) goto cleanup;
 
@@ -133,8 +135,6 @@ static int signFile(KSI_CTX *ksi, char *inFile, KSI_Signature **sign) {
 	}
 	if (signerIdentity != NULL) {
 		printf("  Signer id: %s\n", signerIdentity);
-		KSI_free(signerIdentity);
-		signerIdentity = NULL;
 	}
 
 	*sign = tmp;
@@ -149,6 +149,7 @@ cleanup:
 	KSI_DataHasher_free(hsr);
 
 	KSI_free(signerIdentity);
+
 	return res;
 }
 
@@ -165,13 +166,14 @@ static int loadMultiSignature(KSI_CTX *ksi, char **inFiles, int nofInFiles, KSI_
 	}
 
 	for (i = 0; i < nofInFiles; i++) {
-
+		/* Sign the input file. */
 		res = signFile(ksi, inFiles[i], &sign);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable to create signature from %s.\n", inFiles[i]);
 			goto cleanup;
 		}
 
+		/* Add the uni-signature to the multi signature container.  */
 		res = KSI_MultiSignature_add(*ms, sign);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable to add signature to multi-signature container.\n");
@@ -199,7 +201,7 @@ static int saveMultiSignature(KSI_MultiSignature *ms, char *outFile) {
 	unsigned char *raw = NULL;
 	size_t raw_len;
 
-	/* Output file */
+	/* Output file. */
 	out = fopen(outFile, "wb");
 	if (out == NULL) {
 		fprintf(stderr, "Unable to open output file '%s'\n", outFile);
@@ -207,14 +209,14 @@ static int saveMultiSignature(KSI_MultiSignature *ms, char *outFile) {
 		goto cleanup;
 	}
 
-	/* Serialize the signature. */
+	/* Serialize the multi-signature container. */
 	res = KSI_MultiSignature_serialize(ms, &raw, &raw_len);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to serialize multi-signature.");
 		goto cleanup;
 	}
 
-	/* Write the signature file. */
+	/* Write the multi-signature file. */
 	if (!fwrite(raw, 1, raw_len, out)) {
 		fprintf(stderr, "Unable to write output file.\n");
 		res = KSI_IO_ERROR;
@@ -247,7 +249,8 @@ int main(int argc, char **argv) {
 
 	nofInFiles = argc - 6;
 
-	res = initKsiCtx(&ksi, &(argv[nofInFiles + 2]));
+	/* Initialiaze KSI context. */
+	res = initKsiCtx(&(argv[nofInFiles + 2]), &ksi);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Failed to initialize KSI context.\n");
 		goto cleanup;
@@ -257,16 +260,16 @@ int main(int argc, char **argv) {
 	res = OpenLogging(ksi, "ksi_sign_multi.log", &logFile);
 	if (res != KSI_OK) goto cleanup;
 
-
 	KSI_LOG_info(ksi, "Using KSI version: '%s'", KSI_getVersion());
 
-
+	/* Sign the files and create multi-signature container. */
 	res = loadMultiSignature(ksi, &argv[1], nofInFiles, &msign);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Failed to initialize multi-signature.\n");
 		goto cleanup;
 	}
 
+	/* Write the multi-signature to file. */
 	res = saveMultiSignature(msign, argv[nofInFiles + 1]);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Failed to save multi-signature to file.\n");
