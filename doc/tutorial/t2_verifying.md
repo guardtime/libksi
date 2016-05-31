@@ -146,8 +146,8 @@ a successful verification result (although it is a prerequisite), so we must ins
 	KSI_PolicyVerificationResult *result = NULL; /* Must be freed. */
 
 	res = KSI_VerificationContext_init(&context, ksi);
-	res = KSI_Signature_fromFile(ksi, getFullResourcePath("~/some_signature.ksig"), &context.signature);
-	res = KSI_PublicationsFile_fromFile(ksi, getFullResourcePath("~/ksi-publications.bin"), &context.userPublicationsFile);
+	res = KSI_Signature_fromFile(ksi, getFullResourcePath("some_signature.ksig"), &context.signature);
+	res = KSI_PublicationsFile_fromFile(ksi, getFullResourcePath("ksi-publications.bin"), &context.userPublicationsFile);
 	/* Verify the signature according to general policy. */
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
 	if (res == KSI_OK) {
@@ -182,7 +182,7 @@ results we need to set up the publication string in the verification context:
 	const char pubString[] = "AAAAAA-CUCYWA-AAOBM6-PNYLRK-EPI3VG-2PJGCF-Y5QHV3-XURLI2-GRFBK4-VHBED2-Q37QIB-UE3ENA";
 
 	res = KSI_VerificationContext_init(&context, ksi);
-	res = KSI_Signature_fromFile(ksi, getFullResourcePath("~/some_signature.ksig"), &context.signature);
+	res = KSI_Signature_fromFile(ksi, getFullResourcePath("some_signature.ksig"), &context.signature);
 	res = KSI_PublicationData_fromBase32(ksi, pubString, &context.userPublication);
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED, &context, &result);
 	if (res == KSI_OK) {
@@ -234,7 +234,7 @@ as part of all predefined policies, but for the sake of a simple example we will
 ~~~~~~~~~~{.c}
 
 	res = KSI_VerificationContext_init(&context, ksi);
-	res = KSI_Signature_fromFile(ksi, getFullResourcePath("~/some_signature.ksig"), &context.signature);
+	res = KSI_Signature_fromFile(ksi, getFullResourcePath("some_signature.ksig"), &context.signature);
 	context.documentHash = expected_hash;
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
 	if (res == KSI_OK) {
