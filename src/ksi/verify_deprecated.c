@@ -159,7 +159,6 @@ static int rfc3161_verify(const KSI_Signature *sig) {
 	KSI_RFC3161 *rfc3161 = NULL;
 	KSI_AggregationHashChainList *aggreChain = NULL;
 	KSI_AggregationHashChain *firstChain = NULL;
-	KSI_Integer *aggreTime = NULL;
 	unsigned i;
 
 
