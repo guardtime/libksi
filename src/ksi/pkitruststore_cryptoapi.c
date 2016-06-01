@@ -670,9 +670,6 @@ int KSI_PKISignature_extractCertificate(const KSI_PKISignature *signature, KSI_P
 		goto cleanup;
 	}
 
-	/* The copy of the object is NOT created. Just its reference value is incremented. */
-	signing_cert = CertDuplicateCertificateContext(signing_cert);
-
 	tmp = KSI_new(KSI_PKICertificate);
 	tmp->ctx = signature->ctx;
 	tmp->x509 = signing_cert;
