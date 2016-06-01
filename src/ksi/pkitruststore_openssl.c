@@ -106,24 +106,6 @@ static int KSI_MD2hashAlg(EVP_MD *hash_alg) {
 	return -1;
 }
 
-static int isMallocFailure(void) {
-	/* Check if the earliest reason was malloc failure. */
-	if (ERR_GET_REASON(ERR_peek_error()) == ERR_R_MALLOC_FAILURE) {
-		return 1;
-	}
-
-	/* The following statement is not strictly necessary because main reason
-	 * is the earliest one and there are usually nested fake reasons like
-	 * ERR_R_NESTED_ASN1_ERROR added later (for traceback). However, it can
-	 * be useful if error stack was not properly cleared before failed
-	 * operation and there are no abovementioned fake reason codes present. */
-	if (ERR_GET_REASON(ERR_peek_last_error()) == ERR_R_MALLOC_FAILURE) {
-		return 1;
-	}
-
-	return 0;
-}
-
 void KSI_PKITruststore_free(KSI_PKITruststore *trust) {
 	if (trust != NULL) {
 		if (trust->store != NULL) X509_STORE_free(trust->store);

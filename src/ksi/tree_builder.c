@@ -32,8 +32,6 @@ struct KSI_TreeLeafHandle_st {
 	KSI_TreeNode *leafNode;
 };
 
-static KSI_DEFINE_REF(KSI_TreeBuilder);
-static KSI_IMPLEMENT_REF(KSI_TreeBuilder);
 KSI_IMPLEMENT_REF(KSI_TreeLeafHandle);
 
 KSI_IMPLEMENT_LIST(KSI_TreeLeafHandle, KSI_TreeLeafHandle_free);

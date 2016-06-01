@@ -24,12 +24,11 @@
 #include "ksi.h"
 #include "compatibility.h"
 
-
+#ifdef _WIN32
 size_t KSI_vsnprintf(char *buf, size_t n, const char *format, va_list va){
 	size_t ret = 0;
 	int tmp;
 	if (buf == NULL || n > INT_MAX || n == 0 || format == NULL) goto cleanup;
-#ifdef _WIN32
 	/* NOTE: If there is empty space in buf, it will be filled with 0x00 or 0xfe. */
 	tmp = vsnprintf_s(buf, n, _TRUNCATE, format, va);
 	if (tmp < 0) {
@@ -37,18 +36,26 @@ size_t KSI_vsnprintf(char *buf, size_t n, const char *format, va_list va){
 		goto cleanup;
 	}
 	ret = (size_t) tmp;
-#else
-	ret = vsnprintf(buf, n, format, va);
-	if (ret >= n) {
-		ret = n - 1;
-		goto cleanup;
-	}
-#endif
 
 cleanup:
 
 	return ret;
 }
+#else
+size_t KSI_vsnprintf(char *buf, size_t n, const char *format, va_list va){
+	size_t ret = 0;
+	if (buf == NULL || n > INT_MAX || n == 0 || format == NULL) goto cleanup;
+	ret = vsnprintf(buf, n, format, va);
+	if (ret >= n) {
+		ret = n - 1;
+		goto cleanup;
+	}
+
+cleanup:
+
+	return ret;
+}
+#endif
 
 size_t KSI_snprintf(char *buf, size_t n, const char *format, ... ){
 	size_t ret;

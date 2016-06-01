@@ -474,7 +474,6 @@ cleanup:
 int KSI_Utf8StringNZ_fromTlv(KSI_TLV *tlv, KSI_Utf8String **o) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	const unsigned char *cstr = NULL;
 	KSI_Utf8String *tmp = NULL;
 
 	ctx = KSI_TLV_getCtx(tlv);
@@ -503,7 +502,6 @@ int KSI_Utf8StringNZ_fromTlv(KSI_TLV *tlv, KSI_Utf8String **o) {
 cleanup:
 
 	KSI_nofree(ctx);
-	KSI_nofree(cstr);
 	KSI_Utf8String_free(tmp);
 
 	return res;
