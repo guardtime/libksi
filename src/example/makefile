@@ -61,7 +61,7 @@ EXAMPLE_OBJ = \
 	$(OBJ_DIR)\ksi_multisig_add.ojb \
 	$(OBJ_DIR)\ksi_multisig_extend.ojb \
 	$(OBJ_DIR)\ksi_verify_pub.obj \
-	$(OBJ_DIR)\ksi_sign_multi.obj 
+	$(OBJ_DIR)\ksi_sign_multi.obj
 
 COMMON_OBJ = \
 	$(OBJ_DIR)\ksi_common.obj
@@ -76,7 +76,7 @@ EXAMPLE_BIN = \
 	$(BIN_DIR)\ksi_multisig_add.exe \
 	$(BIN_DIR)\ksi_multisig_extend.exe \
 	$(BIN_DIR)\ksi_verify_pub.exe \
-	$(BIN_DIR)\ksi_sign_multi.exe 
+	$(BIN_DIR)\ksi_sign_multi.exe
 
 #external libraries used for linking.
 EXT_LIB = $(LIB_NAME)$(RTL).lib \
@@ -106,7 +106,7 @@ EXT_LIB = $(EXT_LIB) Crypt32.lib advapi32.lib
 
 !ENDIF
 
-CCFLAGS = $(CCFLAGS) /nologo /W3 /D_CRT_SECURE_NO_DEPRECATE /I$(INCLUDE_DIR) /I$(SRC_DIR)
+CCFLAGS = $(CCFLAGS) /nologo /D_CRT_SECURE_NO_DEPRECATE /I$(INCLUDE_DIR) /I$(SRC_DIR)
 LDFLAGS = $(LDFLAGS) /NOLOGO /LIBPATH:$(LIB_DIR)
 
 !IF "$(RTL)" == "MT" || "$(RTL)" == "MD"

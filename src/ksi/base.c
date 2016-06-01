@@ -762,7 +762,7 @@ static void* printer_buf_wrapper(void *toStream, size_t to_len, size_t *count, c
 }
 
 int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f) {
-	return ksi_err_toPrinter(ctx, stderr, 1, printer_stream_wrapper);
+	return ksi_err_toPrinter(ctx, f, 1, printer_stream_wrapper);
 }
 
 char *KSI_ERR_toString(KSI_CTX *ctx, char *buf, size_t buf_len) {

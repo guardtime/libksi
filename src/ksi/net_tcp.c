@@ -220,7 +220,7 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 	handle->readResponse = readResponse;
 	handle->client = client;
 
-    res = KSI_RequestHandle_setImplContext(handle, tc, (void (*)(void *))TcpClientCtx_free);
+	res = KSI_RequestHandle_setImplContext(handle, tc, (void (*)(void *))TcpClientCtx_free);
 	if (res != KSI_OK) {
 		KSI_pushError(handle->ctx, res, NULL);
 		goto cleanup;
@@ -361,7 +361,6 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 	KSI_AggregationPdu *pdu = NULL;
 	KSI_Integer *pReqId = NULL;
 	KSI_Integer *reqId = NULL;
-	KSI_TcpClient *tcp = NULL;
 	TcpClient_Endpoint *endp = NULL;
 
 	if (client == NULL || req == NULL || handle == NULL) {
@@ -369,9 +368,7 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 		goto cleanup;
 	}
 
-	tcp = client->impl;
 	endp = client->aggregator->implCtx;
-
 
 	if (endp->host == NULL || endp->port == 0) {
 		res = KSI_AGGREGATOR_NOT_CONFIGURED;
@@ -611,9 +608,9 @@ int KSI_TcpClient_setTransferTimeoutSeconds (KSI_NetworkClient *client, int tran
 
 	tcp = client->impl;
 
-    tcp->transferTimeoutSeconds = transferTimeoutSeconds ;
+	tcp->transferTimeoutSeconds = transferTimeoutSeconds ;
 
-    res = KSI_OK;
+	res = KSI_OK;
 
 cleanup:
 

@@ -559,7 +559,7 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 	}
 	memset(templateHit, 0, sizeof(templateHit));
 
-	while (1) {
+	for (;;) {
 		int matchCount = 0;
 		res = generator(generatorCtx, &tlv);
 		if (res != KSI_OK) {

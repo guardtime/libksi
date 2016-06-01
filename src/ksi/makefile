@@ -203,7 +203,7 @@ LIB_OBJ = $(LIB_OBJ) $(OBJ_DIR)\pkitruststore_cryptoapi.obj
 !ENDIF
 
 CCFLAGS = $(CCFLAGS) /DKSI_BUILD
-CCFLAGS = $(CCFLAGS) /nologo /W3 /D_CRT_SECURE_NO_DEPRECATE /I$(SRC_DIR)\\ksi /I$(SRC_DIR)\example /I$(SRC_DIR)
+CCFLAGS = $(CCFLAGS) /nologo /D_CRT_SECURE_NO_DEPRECATE /I$(SRC_DIR)\\ksi /I$(SRC_DIR)\example /I$(SRC_DIR)
 LDFLAGS = $(LDFLAGS) /NOLOGO /LIBPATH:$(LIB_DIR)
 
 !IF "$(RTL)" == "MT" || "$(RTL)" == "MD"

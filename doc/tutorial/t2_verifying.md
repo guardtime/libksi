@@ -62,7 +62,20 @@ In the above example we didn't verify the signature against the original documen
 
 ~~~~~~~~~~
 
-Both examples in this chapter used the general verification policy implicitly (see next chapter for details) and relied on a
+Alternatively, if we already have a document hash available in \c hsh, we can simply call #KSI_verifyDataHash:
+
+~~~~~~~~~~{.c}
+
+	res = KSI_verifyDataHash(ksi, sig, hsh);
+	if (res == KSI_OK) {
+		printf("Signature and document successfully verified!\n");
+	} else {
+		printf("Signature and document verification failed!\n");
+	}
+
+~~~~~~~~~~
+
+Abovemnetioned examples in this chapter used the general verification policy implicitly (see next chapter for details) and relied on a
 pre-configured publications file and extender in KSI context. If this is all we need and we are not interested in the
 details of the verification result (e.g. in case of a failure), then that's all we need to know about the verification!
 
@@ -86,9 +99,6 @@ The SDK provides the following predefined policies for verification:
 requiring any additional data from the user. The verified components are the aggregation chain, calendar chain (optional),
 calendar authentication record (optional) and publication record (optional). Additionally, if a document hash is provided,
 the signature is verified against it.
-- Key-based policy. This policy verifies the PKI signature and calendar chain data in the calendar authentication record of the signature.
-For conclusive results, a calendar hash chain and calendar authentication record must be present in the signature.
-A trusted publication file must be provided for performing lookup of a matching certificate.
 - Publications file based policy. This policy verifies the signature publication record against a publication
 in the publication file. If necessary (and permitted), the signature is extended to the publication. For conclusive results
 the signature must either contain a publication record with a suitable publication or signature extending must be allowed.
@@ -97,6 +107,9 @@ A publications file must be provided for lookup and an extender must be configur
 publication string. if necessary (and permitted), the signature is extended to the user publication. For conclusive results
 the signature must either contain a publication record with a suitable publication or signature extending must be allowed.
 A publication string must be provided and an extender must be configured.
+- Key-based policy. This policy verifies the PKI signature and calendar chain data in the calendar authentication record of the signature.
+For conclusive results, a calendar hash chain and calendar authentication record must be present in the signature.
+A trusted publication file must be provided for performing lookup of a matching certificate.
 - Calendar-based policy. This policy first extends the signature to either the head of the calendar or to the 
 same time as the calendar chain of the signature. The extended signature calendar chain is then verified against
 aggregation chain of the signature. For conclusive results the extender must be configured.
@@ -112,13 +125,11 @@ never result in a success if internal verification fails.
 5. Verifying a signature according to a policy
 ----------------------------------------------
 
-To perform verification according to a policy, we first need to get a pointer to it. To use any of the predefined
-policies, we can simply call one of the corresponding functions. Since the general policy is the recommended verification policy,
-we will base our first example on this. First, to get a pointer to the policy, we call #KSI_Policy_getGeneral.
-Second, we need to create a context for verification by calling #KSI_VerificationContext_create. As a bare minimum,
-we must set the signature in the verification context by calling #KSI_VerificationContext_setSignature. Let's assume that our
+To perform verification according to a policy, we first need to set up a verification context. To do this, we first call
+#KSI_VerificationContext_init to initialize our context variable with default values. Then, by using our favorite API method,
+we obtain the signature that we want to verify and assign it directly into the verification context. Let's assume that our
 signature contains a publication record and we have a recent enough publication file to possibly contain the same publication. 
-Therefore we must specify the publication file for verification by calling #KSI_VerificationContext_setPublicationsFile.
+We obtain the publications file by using our API method of choice and assign it directly into the verification context.
 For now we have set up all the required information to perform the verification, so we  we can verify the signature by
 calling #KSI_SignatureVerifier_verify. We get two kinds of information from this function. First, the functions returns a
 status code that indicates verification completeness. Under normal circumstances the return code should be #KSI_OK, meaning
@@ -131,17 +142,14 @@ a successful verification result (although it is a prerequisite), so we must ins
 ~~~~~~~~~~{.c}
 	
 	int res; /* The return value. */
-	const KSI_Policy *policy;
-	KSI_VerificationContext *context = NULL; /* Must be freed. */
+	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL; /* Must be freed. */
-	KSI_PublicationsFile *pubFile = NULL; /* Must be freed. */
 
-	res = KSI_Policy_getGeneral(ksi, &policy);
-	res = KSI_VerificationContext_create(ksi, &context);
-	res = KSI_VerificationContext_setSignature(context, sig);
-	res = KSI_PublicationsFile_fromFile(ksi, "~/publications.bin", &pubFile);
-	res = KSI_VerificationContext_setPublicationsFile(context, pubFile);
-	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	res = KSI_VerificationContext_init(&context, ksi);
+	res = KSI_Signature_fromFile(ksi, getFullResourcePath("some_signature.ksig"), &context.signature);
+	res = KSI_PublicationsFile_fromFile(ksi, getFullResourcePath("ksi-publications.bin"), &context.userPublicationsFile);
+	/* Verify the signature according to general policy. */
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
 	if (res == KSI_OK) {
 		if (result->finalResult.resultCode == KSI_VER_RES_OK)
 			printf("Signature verified successfully!\n");
@@ -166,20 +174,17 @@ against a document, the document hash can be stored in the verification context.
 for specifying the initial aggregation level and enabling/disabling extending for publication-based verification.
 
 Let's continue with another example where we want to verify the signature against a specific publication. We don't really need any
-of the other verification policies, so can use just the specific policy by calling #KSI_Policy_getUserProvidedPublicationBased.
-We need to set up the publication string by calling #KSI_VerificationContext_setUserPublication:
+of the other verification policies, so we can use the predefined policy #KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED. For conclusive
+results we need to set up the publication string in the verification context:
 
 ~~~~~~~~~~{.c}
 
 	const char pubString[] = "AAAAAA-CUCYWA-AAOBM6-PNYLRK-EPI3VG-2PJGCF-Y5QHV3-XURLI2-GRFBK4-VHBED2-Q37QIB-UE3ENA";
-	KSI_PublicationData *userPub = NULL;
 
-	res = KSI_Policy_getUserProvidedPublicationBased(ksi, &policy);
-	res = KSI_VerificationContext_create(ksi, &context);
-	res = KSI_VerificationContext_setSignature(context, sig);
-	res = KSI_PublicationData_fromBase32(ksi, pubString, &userPub);
-	res = KSI_VerificationContext_setUserPublication(context, userPub);
-	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	res = KSI_VerificationContext_init(&context, ksi);
+	res = KSI_Signature_fromFile(ksi, getFullResourcePath("some_signature.ksig"), &context.signature);
+	res = KSI_PublicationData_fromBase32(ksi, pubString, &context.userPublication);
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED, &context, &result);
 	if (res == KSI_OK) {
 		if (result->finalResult.resultCode == KSI_VER_RES_OK)
 			printf("Signature verified successfully!\n");
@@ -195,52 +200,43 @@ We need to set up the publication string by calling #KSI_VerificationContext_set
 
 If we want to rely on the key-based policy, we must set up the publications file as shown in the above examples. The only time we
 don't need a publication file or string is when we perform calendar-based verification. However we do need a valid extender for the
-online verification. The interfaces for the corresponding policies are:
+online verification. The corresponding verification calls:
 
 ~~~~~~~~~~{.c}
 
-	res = KSI_Policy_getKeyBased(ksi, &policy);
-	res = KSI_Policy_getCalendarBased(ksi, &policy);
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_KEY_BASED , &context, &result);
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_CALENDAR_BASED, &context, &result);
 
 ~~~~~~~~~~
 
-For allowing extending of a signature for publication based policies, we have to enable it in the verification context by
-calling #KSI_VerificationContext_setExtendingAllowed. By default the extending is not allowed, which in some situations is what we
-want, but in other situations can lead to inconclusive verification results if a suitable publication is not found.
+For allowing extending of a signature for publication based policies, we have to enable it in the verification context. By default the extending is not allowed, which in some situations is what we want, but in other situations can lead to inconclusive verification results if a suitable publication is not found.
 Note: if extending is allowed, a valid extender should also be configured (see [Basics Tutorial](tutorial/t0_basics.md)).
 
 ~~~~~~~~~~{.c}
 
 	/* Any non-zero value allows extending, zero disables extending. */
-	res = KSI_VerificationContext_setExtendingAllowed(context, 1);
+	context.extendingAllowed = 1;
 
 ~~~~~~~~~~
 
 If we need to verify a signature with an aggregation level other than the default 0, we can specify this in the
-verification context by calling #KSI_VerificationContext_setAggregationLevel. Initial aggregation level cannot
-be greater than 0xFF.
+verification context. Initial aggregation level cannot be greater than 0xFF:
 
 ~~~~~~~~~~{.c}
 
-	res = KSI_VerificationContext_setAggregationLevel(context, 4);
+	context.docAggrLevel = 10;
 
 ~~~~~~~~~~
 
-For verifying the document, we need to set up the document hash by calling #KSI_VerificationContext_setDocumentHash.
-The document hash, if set up, will be verified as part of all predefined policies, but for the sake of a simple example
-we will choose the internal policy:
+For verifying the document, we need to set up the document hash in the verification context. The document hash, if set up, will be verified
+as part of all predefined policies, but for the sake of a simple example we will choose the internal policy:
 
 ~~~~~~~~~~{.c}
 
-	KSI_DataHash *hsh = NULL; /* Must be freed. */
-	
-	res = KSI_Policy_getInternal(ksi, &policy);
-	res = KSI_VerificationContext_create(ksi, &context);
-	res = KSI_VerificationContext_setSignature(context, sig);
-	/* \c data contains the document to be verified. Length of the document is stored in \c data_len. */
-	res = KSI_DataHash_create(ksi, data, data_len, &hsh);
-	res = KSI_VerificationContext_setDocumentHash(context, hsh);
-	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	res = KSI_VerificationContext_init(&context, ksi);
+	res = KSI_Signature_fromFile(ksi, getFullResourcePath("some_signature.ksig"), &context.signature);
+	context.documentHash = expected_hash;
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
 	if (res == KSI_OK) {
 		if (result->finalResult.resultCode == KSI_VER_RES_OK)
 			printf("Signature verified successfully!\n");
@@ -265,7 +261,7 @@ Only then can we say if the verification was a success or failure.
 
 ~~~~~~~~~~{.c}
 
-	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
 	if (res == KSI_OK) {
 		/* Verification process was completed without errors, inspect the result. */
 		switch (result->finalResult.resultCode) {
@@ -290,21 +286,19 @@ Only then can we say if the verification was a success or failure.
 8. Cleanup
 ----------
 
-As the final step we need to free all the allocated resources. When using predefined policies, no resources are allocated
-and there is no need to free the policy. The verification context must be freed by calling #KSI_VerificationContext_free.
-This function frees all resources that have been configured for verification, so if we are not the owners of a particular
-resource, e.g. we need to keep using the signature after verification, it is important to set this parameter to NULL in
-the verification context to prevent if from being freed. After we are done inspecting the verification result, we must
+As the final step we need to free all the allocated resources. As an owner of all the resources that we set in the
+verification context (signature, document hash, publication file/string), we are responsible for freeing them. 
+The verification context contains temporary data that is allocated during verification and this must be freed by
+calling #KSI_VerificationContext_clean. After we are done inspecting the verification result, we must
 free it with #KSI_PolicyVerificationResult_free.
+
 Note that the KSI context may be reused as much as needed (within a single thread) and must not be created every time.
 It is also important to point out that the context, if freed, must be freed last.
 
 ~~~~~~~~~~{.c}
 
-	KSI_DataHash_free(hsh);
-	/* We need to use the signature after verification, so let's prevent if from being freed. */
-	KSI_VerificationContext_setSignature(context, NULL);
-	KSI_VerificationContext_free(context); /* Will keep the signature object. */
+	KSI_Signature_free(context.signature);
+	KSI_VerificationContext_clean(&context);
 	KSI_PolicyVerificationResult_free(result);
 	KSI_CTX_free(ksi); /* Must be freed last. */
 
@@ -335,15 +329,15 @@ Note: for brevity, all error handling has been removed in the following examples
 	/* KSI_Signature_verifyAggregated */
 	/* KSI_Signature_verifyDataHash */
 	/* KSI_Signature_verifyAggregatedHash */
-	KSI_Policy_getGeneral(ksi, &policy);
+	KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
 
 	/* Choose the calendar-based policy if you plan to replace: */
 	/* KSI_Signature_verifyOnline */
-	KSI_Policy_getCalendarBased(ksi, &policy);
+	KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_CALENDAR_BASED, &context, &result);
 
 	/* Choose the user provided publication based policy if you plan to replace: */
 	/* KSI_Signature_verifyWithPublication */
-	KSI_Policy_getUserProvidedPublicationBased(ksi, &policy);
+	KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED, &context, &result);
 
 ~~~~~~~~~~
 
@@ -353,18 +347,18 @@ Depending on the chosen policy we need to set up relevant data in the verificati
 
 	/* The signature is the only mandatory component in the verification context. */
 	/* Perform these steps for all chosen policies. */
-	KSI_VerificationContext_create(ksi, context);
-	KSI_VerificationContext_setSignature(ksi, sig);
+	KSI_VerificationContext_init(&context, ksi);
+	context.signature = sig;
 
 	/* Set the publications file if you plan to replace one of the following: */
 	/* KSI_Signature_verifyAggregated */
 	/* KSI_Signature_verifyDataHash */
 	/* KSI_Signature_verifyAggregatedHash */
-	KSI_VerificationContext_setPublicationsFile(context, pubFile);
+	context.userPublicationsFile = pubFile;
 
 	/* Set the publication string if you plan to replace: */
 	/* KSI_Signature_verifyWithPublication */
-	KSI_VerificationContext_setUserPublication(context, pubString);
+	context.userPublication = pubString;
 
 	/* By default extending is not allowed in a publication based policy. */
 	/* If needed, you can allow extending when replacing one of the following: */
@@ -372,18 +366,18 @@ Depending on the chosen policy we need to set up relevant data in the verificati
 	/* KSI_Signature_verifyDataHash */
 	/* KSI_Signature_verifyAggregatedHash */
 	/* KSI_Signature_verifyWithPublication */
-	KSI_VerificationContext_setExtendingAllowed(context, 1);
+	context.extendingAllowed = 1;
 
 	/* Set the document hash if you plan to replace one of the following: */
 	/* KSI_Signature_verifyDataHash */
 	/* KSI_Signature_verifyAggregatedHash */
-	KSI_VerificationContext_setDocumentHash(context, hsh);
+	context.documentHash = hsh;
 
 	/* By default the initial aggregation level is 0. */
 	/* If needed, set a different initial aggregation level if you plan to replace one of the following: */
 	/* KSI_Signature_verifyAggregated */
 	/* KSI_Signature_verifyAggregatedHash */
-	KSI_VerificationContext_setAggregationLevel(context, level);
+	context.docAggrLevel = level;
 
 ~~~~~~~~~~
 
@@ -392,7 +386,7 @@ is now obsolete. A typical verification result inspection could look like this:
 
 ~~~~~~~~~~{.c}
 
-	res = KSI_SignatureVerifier_verify(keyPolicy, context, &result);
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
 	if (res == KSI_OK) {
 		switch (result->finalResult.resultCode) {
 			case KSI_VER_RES_OK:
@@ -586,18 +580,16 @@ clone it by calling #KSI_Policy_clone. When we have created or cloned a policy, 
 	res = KSI_Policy_create(ksi, complexRules, "ComplexPolicy", &complexPolicy);
 	res = KSI_Policy_setFallback(ksi, customPolicy, complexPolicy);
 	/* Set up the verification context. */
-	res = KSI_SignatureVerifier_verify(customPolicy, context, &result);
+	res = KSI_SignatureVerifier_verify(customPolicy, &context, &result);
 	/* Error handling. */
 	KSI_Policy_free(customPolicy);
 	KSI_Policy_free(complexPolicy);
 
-	/* Chaining predefined policies: keyBased->publicationsFilebased */
-	res = KSI_Policy_getKeyBased(ksi, &orgPolicy);
-	res = KSI_Policy_getPublicationsFileBased(ksi, &fallbackPolicy);
-	res = KSI_Policy_clone(ksi, orgPolicy, &clonedPolicy);
-	res = KSI_Policy_setFallback(ksi, clonedPolicy, fallbackPolicy);
+	/* Chaining predefined policies: key based -> publications file based */
+	res = KSI_Policy_clone(ksi, KSI_VERIFICATION_POLICY_KEY_BASED, &clonedPolicy);
+	res = KSI_Policy_setFallback(ksi, clonedPolicy, KSI_VERIFICATION_POLICY_PUBLICATIONS_FILE_BASED);
 	/* Set up the verification context. */
-	res = KSI_SignatureVerifier_verify(clonedPolicy, context, &result);
+	res = KSI_SignatureVerifier_verify(clonedPolicy, &context, &result);
 	/* Error handling. */
 	KSI_Policy_free(clonedPolicy);
 
