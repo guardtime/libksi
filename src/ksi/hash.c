@@ -556,7 +556,6 @@ int KSI_DataHash_createZero(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHas
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *tmp = NULL;
 	unsigned char buf[KSI_MAX_IMPRINT_LEN];
-	size_t len;
 
 	if (ctx == NULL || hsh == NULL) {
 		res = KSI_INVALID_ARGUMENT;

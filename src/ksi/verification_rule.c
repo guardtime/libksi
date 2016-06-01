@@ -564,7 +564,7 @@ cleanup:
 int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
-	int successCount = 0;
+	size_t successCount = 0;
 	int level = 0;
 	size_t i;
 	KSI_CTX *ctx = NULL;

@@ -207,7 +207,7 @@ static int maskingProcessor(KSI_TreeNode *in, void *c, KSI_TreeNode **out) {
 			goto cleanup;
 		}
 
-		tmpLvl = in->level + 1;
+		tmpLvl = (unsigned char)(in->level + 1);
 
 		res = KSI_DataHasher_add(leafHsr, &tmpLvl, 1);
 		if (res != KSI_OK) {

@@ -596,7 +596,7 @@ static void testSignatureGetPublicationInfo(CuTest *tc) {
 	KSI_Utf8StringList *pubRepUrl = NULL;
 	KSI_DataHash *pubHsh = NULL;
 	KSI_Integer *pubDate = NULL;
-	int i;
+	size_t i;
 	KSI_Utf8StringList *infoPubRef = NULL;
 	KSI_Utf8StringList *infoPubRepUrl = NULL;
 	KSI_Utf8String *infoPubStr = NULL;
@@ -693,7 +693,7 @@ static void testSignatureGetPublicationInfo_verifyNullPointer(CuTest *tc) {
 	KSI_Utf8StringList *pubRepUrl = NULL;
 	KSI_DataHash *pubHsh = NULL;
 	KSI_Integer *pubDate = NULL;
-	int i;
+	size_t i;
 	KSI_Utf8StringList *infoPubRef = NULL;
 	KSI_Utf8StringList *infoPubRepUrl = NULL;
 	KSI_Utf8String *infoPubStr = NULL;

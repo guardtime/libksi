@@ -367,7 +367,7 @@ static void createMultiSignatureFromFile(CuTest *tc, const char *fn, KSI_MultiSi
 	size_t buf_len;
 	unsigned char buf[0x1ffff]; /* Hope this is enough for all the tests. */
 
-	f = fopen(getFullResourcePath("resource/multi_sig/test1.mksi"), "rb");
+	f = fopen(fn, "rb");
 	CuAssert(tc, "Unable to load test file.", f != NULL);
 
 	buf_len = fread(buf, 1, sizeof(buf), f);

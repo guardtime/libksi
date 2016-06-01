@@ -150,7 +150,7 @@ enum flags
 #define HTTP_ERRNO_MAP(XX)                                           \
   /* No error */                                                     \
   XX(OK, "success")                                                  \
-                                                                     \
+																	 \
   /* Callback-related errors */                                      \
   XX(CB_message_begin, "the on_message_begin callback failed")       \
   XX(CB_url, "the on_url callback failed")                           \
@@ -160,13 +160,13 @@ enum flags
   XX(CB_body, "the on_body callback failed")                         \
   XX(CB_message_complete, "the on_message_complete callback failed") \
   XX(CB_status, "the on_status callback failed")                     \
-                                                                     \
+																	 \
   /* Parsing-related errors */                                       \
   XX(INVALID_EOF_STATE, "stream ended at an unexpected time")        \
   XX(HEADER_OVERFLOW,                                                \
-     "too many header bytes seen; overflow detected")                \
+	 "too many header bytes seen; overflow detected")                \
   XX(CLOSED_CONNECTION,                                              \
-     "data received after completed connection: close message")      \
+	 "data received after completed connection: close message")      \
   XX(INVALID_VERSION, "invalid HTTP version")                        \
   XX(INVALID_STATUS, "invalid HTTP status code")                     \
   XX(INVALID_METHOD, "invalid HTTP method")                          \
@@ -179,9 +179,9 @@ enum flags
   XX(LF_EXPECTED, "LF character expected")                           \
   XX(INVALID_HEADER_TOKEN, "invalid character in header")            \
   XX(INVALID_CONTENT_LENGTH,                                         \
-     "invalid character in content-length header")                   \
+	 "invalid character in content-length header")                   \
   XX(INVALID_CHUNK_SIZE,                                             \
-     "invalid character in chunk size header")                       \
+	 "invalid character in chunk size header")                       \
   XX(INVALID_CONSTANT, "invalid constant string")                    \
   XX(INVALID_INTERNAL_STATE, "encountered unexpected internal state")\
   XX(STRICT, "strict mode assertion failed")                         \
@@ -209,7 +209,7 @@ struct http_parser {
   unsigned int header_state : 8; /* enum header_state from http_parser.c */
   unsigned int index : 8;        /* index into current matcher */
 
-  uint32_t nread;          /* # bytes read in various scenarios */
+  size_t nread;          /* # bytes read in various scenarios */
   uint64_t content_length; /* # bytes in body (0 if no Content-Length header) */
 
   /** READ-ONLY **/
@@ -267,8 +267,8 @@ struct http_parser_url {
   uint16_t port;                /* Converted UF_PORT string */
 
   struct {
-    uint16_t off;               /* Offset into buffer in which field starts */
-    uint16_t len;               /* Length of run in buffer */
+	size_t off;               /* Offset into buffer in which field starts */
+	uint16_t len;               /* Length of run in buffer */
   } field_data[UF_MAX];
 };
 
@@ -291,9 +291,9 @@ void http_parser_init(http_parser *parser, enum http_parser_type type);
 /* Executes the parser. Returns number of parsed bytes. Sets
  * `parser->http_errno` on error. */
 size_t http_parser_execute(http_parser *parser,
-                           const http_parser_settings *settings,
-                           const char *data,
-                           size_t len);
+						   const http_parser_settings *settings,
+						   const char *data,
+						   size_t len);
 
 
 /* If http_should_keep_alive() in the on_headers_complete or
@@ -315,8 +315,8 @@ const char *http_errno_description(enum http_errno err);
 
 /* Parse a URL; return nonzero on failure */
 int http_parser_parse_url(const char *buf, size_t buflen,
-                          int is_connect,
-                          struct http_parser_url *u);
+						  int is_connect,
+						  struct http_parser_url *u);
 
 /* Pause or un-pause the parser; a nonzero value pauses */
 void http_parser_pause(http_parser *parser, int paused);
