@@ -465,7 +465,7 @@ static void testReset(CuTest *tc) {
 static void test_free_without_close(CuTest *tc) {
 	int res;
 	KSI_DataHasher *hsr = NULL;
-	char data[3] = "aa\0";
+	char data[3] = "aa";
 
 	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA1, &hsr);
 	CuAssert(tc, "Unable to create data hasher.", res == KSI_OK && hsr != NULL);

@@ -33,7 +33,7 @@
 
 
 const char* getMSError(DWORD error, char *buf, size_t len){
-	LPVOID lpMsgBuf;
+	LPVOID lpMsgBuf = NULL;
 	char *tmp = NULL;
 	char *ret = NULL;
 

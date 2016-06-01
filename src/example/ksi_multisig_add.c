@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
 	KSI_MultiSignature *ms = NULL;
 	KSI_Signature *sig = NULL;
 	const char *mf = argv[1];
-	size_t i;
+	int i;
 
 	if (argc < 3) {
 		fprintf(stdout, "Usage:\n"
