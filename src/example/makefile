@@ -61,7 +61,6 @@ EXAMPLE_OBJ = \
 	$(OBJ_DIR)\ksi_multisig_add.ojb \
 	$(OBJ_DIR)\ksi_multisig_extend.ojb \
 	$(OBJ_DIR)\ksi_verify_pub.obj \
-	$(OBJ_DIR)\ksi_sign_multi.obj \
 	$(OBJ_DIR)\ksi_blocksign.obj
 
 COMMON_OBJ = \
@@ -77,7 +76,6 @@ EXAMPLE_BIN = \
 	$(BIN_DIR)\ksi_multisig_add.exe \
 	$(BIN_DIR)\ksi_multisig_extend.exe \
 	$(BIN_DIR)\ksi_verify_pub.exe \
-	$(BIN_DIR)\ksi_sign_multi.exe \
 	$(BIN_DIR)\ksi_blocksign.exe
 
 #external libraries used for linking.
