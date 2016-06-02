@@ -240,6 +240,7 @@ static int signFiles(KSI_CTX *ksi, char *signerId, char **inFiles, int nofInFile
 	BlockSignerHandlePair *tmp = NULL;
 	size_t i;
 	KSI_MetaData *md = NULL;
+	KSI_DataHash *hsh;
 
 	res = initMetaData(ksi, signerId, &md);
 	if (res != KSI_OK) {
@@ -249,16 +250,17 @@ static int signFiles(KSI_CTX *ksi, char *signerId, char **inFiles, int nofInFile
 
 	for (i = 0; i < nofInFiles; i++) {
 		BlockSignerHandlePair *pair = NULL;
-		KSI_DataHash *hsh;
 
 		printf("  Processing file: %s.\n", inFiles[i]);
 
+		/* Calculate hash value for the given file. */
 		res = getHash(ksi, inFiles[i], &hsh);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable to get hash for file: %s.\n", inFiles[i]);
 			goto cleanup;
 		}
 
+		/* Check whether the hash value is already added to the blocksigner. */
 		res = checkHashExist(hsh, handleMap, &pair);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable to check hash for existance.\n");
@@ -266,12 +268,13 @@ static int signFiles(KSI_CTX *ksi, char *signerId, char **inFiles, int nofInFile
 		}
 
 		if (pair == NULL) {
-
+			/* The hash value has not been added yet to the blocksigner */
 			res = BlockSignerHandlePair_new(hsh, &tmp);
 			if (res != KSI_OK) {
 				fprintf(stderr, "Unable to create to handle pair.\n");
 				goto cleanup;
 			}
+			hsh = NULL;
 
 			res = KSI_BlockSigner_addLeaf(bs, tmp->hsh, 0, md, &tmp->bsHandle);
 			if (res != KSI_OK) {
@@ -281,6 +284,7 @@ static int signFiles(KSI_CTX *ksi, char *signerId, char **inFiles, int nofInFile
 
 			printf("  ... File hash added to blocksigner.\n");
 
+			/* Keep the name for further signature storage. */
 			res = NameList_append(tmp->names, (Name*)&inFiles[i]);
 			if (res != KSI_OK) {
 				fprintf(stderr, "Unable to add file name.\n");
@@ -294,6 +298,10 @@ static int signFiles(KSI_CTX *ksi, char *signerId, char **inFiles, int nofInFile
 			}
 			tmp = NULL;
 		} else {
+
+			/* The hash value of the file is allready present in the blocksigner.
+			 * Check whether the file name is also present.
+			 */
 			if (!isNameInList(pair->names, inFiles[i])) {
 				res = NameList_append(pair->names, (Name*)&inFiles[i]);
 				if (res != KSI_OK) {
@@ -305,11 +313,21 @@ static int signFiles(KSI_CTX *ksi, char *signerId, char **inFiles, int nofInFile
 				printf("  ... File with same hash and name allready present... dropped!\n");
 			}
 		}
+
+		KSI_DataHash_free(hsh);
+	}
+
+	/* After all files have been processed finalize the signing procedure. */
+	res = KSI_BlockSigner_close(bs, NULL);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Failed to close the blocksigner.\n");
+		goto cleanup;
 	}
 
 	res = KSI_OK;
 
 cleanup:
+	KSI_DataHash_free(hsh);
 	KSI_MetaData_free(md);
 
 	BlockSignerHandlePair_free(tmp);
@@ -477,6 +495,7 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
+	/* Initialize a list for keeping hash-handle pairs. */
 	res = BlockSignerHandlePairList_new(&handleMap);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Failed to create new block-signer handle map list.\n");
@@ -486,12 +505,6 @@ int main(int argc, char **argv) {
 	res = signFiles(ksi, argv[1], &argv[2], nofInFiles, bs, handleMap);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Failed to sign files.\n");
-		goto cleanup;
-	}
-
-	res = KSI_BlockSigner_close(bs, NULL);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Failed to close the blocksigner.\n");
 		goto cleanup;
 	}
 
