@@ -20,9 +20,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <../ksi/ksi.h>
-#include <../ksi/net_uri.h>
-#include <../ksi/blocksigner.h>
+#include <ksi/ksi.h>
+#include <ksi/net_uri.h>
+#include <ksi/blocksigner.h>
 #include "ksi_common.h"
 
 typedef char* Name;
@@ -46,24 +46,20 @@ static void BlockSignerHandlePair_free(BlockSignerHandlePair *p) {
 	}
 }
 
-static int BlockSignerHandlePair_new(BlockSignerHandlePair **p) {
+static int BlockSignerHandlePair_new(KSI_DataHash *hsh, BlockSignerHandlePair **p) {
 	int res = KSI_UNKNOWN_ERROR;
 	BlockSignerHandlePair *tmp = NULL;
 
 	tmp = KSI_malloc(sizeof(BlockSignerHandlePair));
 	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
-		fprintf(stderr, "Unable to allocate memory new blocksigner handle pair.\n");
 		goto cleanup;
 	}
 
-	tmp->hsh = NULL;
+	tmp->hsh = hsh;
 	tmp->bsHandle = NULL;
 	res = NameList_new(&tmp->names);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to create new names list.\n");
-		goto cleanup;
-	}
+	if (res != KSI_OK) goto cleanup;
 
 	*p = tmp;
 	tmp = NULL;
@@ -253,28 +249,29 @@ static int signFiles(KSI_CTX *ksi, char *signerId, char **inFiles, int nofInFile
 
 	for (i = 0; i < nofInFiles; i++) {
 		BlockSignerHandlePair *pair = NULL;
+		KSI_DataHash *hsh;
 
 		printf("  Processing file: %s.\n", inFiles[i]);
 
-		res = BlockSignerHandlePair_new(&tmp);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Unable to create to handle pair.\n");
-			goto cleanup;
-		}
-
-		res = getHash(ksi, inFiles[i], &tmp->hsh);
+		res = getHash(ksi, inFiles[i], &hsh);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable to get hash for file: %s.\n", inFiles[i]);
 			goto cleanup;
 		}
 
-		res = checkHashExist(tmp->hsh, handleMap, &pair);
+		res = checkHashExist(hsh, handleMap, &pair);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable to check hash for existance.\n");
 			goto cleanup;
 		}
 
 		if (pair == NULL) {
+
+			res = BlockSignerHandlePair_new(hsh, &tmp);
+			if (res != KSI_OK) {
+				fprintf(stderr, "Unable to create to handle pair.\n");
+				goto cleanup;
+			}
 
 			res = KSI_BlockSigner_addLeaf(bs, tmp->hsh, 0, md, &tmp->bsHandle);
 			if (res != KSI_OK) {
@@ -368,13 +365,13 @@ static int saveSignatures(KSI_CTX *ksi, BlockSignerHandlePairList *handleMap) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i;
 	KSI_Signature *sig = NULL;
+	char *id = NULL;
 
 	printf("\n  Saving locally aggregated signatures...\n");
 
 	for (i = 0; i < BlockSignerHandlePairList_length(handleMap); i++) {
 		BlockSignerHandlePair *p = NULL;
 		size_t k;
-		char *id = NULL;
 
 		res = BlockSignerHandlePairList_elementAt(handleMap, i, &p);
 		if (res != KSI_OK) {
@@ -403,6 +400,8 @@ static int saveSignatures(KSI_CTX *ksi, BlockSignerHandlePairList *handleMap) {
 			goto cleanup;
 		}
 		printf("  Signer id: %s\n", id);
+		KSI_free(id);
+		id = NULL;
 
 		/* Save signature for every unique name. */
 		for (k = 0; k < NameList_length(p->names); k++) {
@@ -428,6 +427,8 @@ static int saveSignatures(KSI_CTX *ksi, BlockSignerHandlePairList *handleMap) {
 
 	res = KSI_OK;
 cleanup:
+	if (id != NULL) KSI_free(id);
+
 	KSI_Signature_free(sig);
 
 	return res;
