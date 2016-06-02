@@ -205,7 +205,9 @@ static int isNameInList(NameList *names, char *name) {
 			return 1;
 		}
 
-		return (!strcmp(name, (char*)(*tmp)));
+		if (strlen(name) == strlen((char*)(*tmp)) && !strcmp(name, (char*)(*tmp))) {
+			return 1;
+		}
 	}
 	return 0;
 }
@@ -301,9 +303,9 @@ static int signFiles(KSI_CTX *ksi, char *signerId, char **inFiles, int nofInFile
 					fprintf(stderr, "Unable to add file name.\n");
 					goto cleanup;
 				}
-				printf("  ... File with same hash but different name added to list.\n", inFiles[i]);
+				printf("  ... File with same hash but different name added to list.\n");
 			} else {
-				printf("  ... File with same hash and name allready present... dropped!\n", inFiles[i]);
+				printf("  ... File with same hash and name allready present... dropped!\n");
 			}
 		}
 	}
