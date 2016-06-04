@@ -208,7 +208,6 @@ LDFLAGS = $(LDFLAGS) /NOLOGO /LIBPATH:$(LIB_DIR)
 
 !IF "$(RTL)" == "MT" || "$(RTL)" == "MD"
 CCFLAGS = $(CCFLAGS) /DNDEBUG /O2
-LDFLAGS = $(LDFLAGS) /RELEASE
 !ELSE
 CCFLAGS = $(CCFLAGS) /D_DEBUG /Od /RTC1 /Zi
 !IF "$(DLL)" == "dll"
@@ -237,7 +236,7 @@ all: $(LIB_DIR)\$(LIB_NAME)$(RTL).$(DLL) include
 
 
 $(LIB_DIR)\$(LIB_NAME)$(RTL).lib: $(OBJ_DIR) $(LIB_DIR) $(LIB_OBJ)
-	link /LIB /OUT:$@ $(LDFLAGS) $(LIB_OBJ)
+	lib /OUT:$@ $(LDFLAGS) $(LIB_OBJ)
 
 $(LIB_DIR)\$(LIB_NAME)$(RTL).dll: $(OBJ_DIR) $(LIB_DIR) $(LIB_OBJ) $(LIB_DEF)
 	link /DLL /OUT:$@ /IMPLIB:$*.lib /DEF:$(LIB_DEF) $(LDFLAGS) $(LIB_OBJ) $(EXT_LIB)
