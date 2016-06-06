@@ -31,6 +31,15 @@ extern "C" {
 	typedef struct KSI_TlvElement_st KSI_TlvElement;
 
 	KSI_DEFINE_LIST(KSI_TlvElement);
+#define KSI_TlvElementList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->append((lst), (o)))
+#define KSI_TlvElementList_remove(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->removeElement((lst), (pos), (o)))
+#define KSI_TlvElementList_indexOf(lst, o, i) KSI_APPLY_TO_NOT_NULL((lst), (lst)->indexOf((lst), (o), (i)))
+#define KSI_TlvElementList_insertAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->insertAt((lst), (pos), (o)))
+#define KSI_TlvElementList_replaceAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->replaceAt((lst), (pos), (o)))
+#define KSI_TlvElementList_elementAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->elementAt((lst), (pos), (o)))
+#define KSI_TlvElementList_length(lst) (((lst) != NULL) ? (lst)->length((lst)) : 0)
+#define KSI_TlvElementList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), (lst)->sort((lst), (cmp)))
+#define KSI_TlvElementList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (lst)->foldl((lst), (foldCtx), (foldFn)) : KSI_OK)
 	KSI_DEFINE_REF(KSI_TlvElement);
 
 	/**

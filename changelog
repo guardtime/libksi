@@ -1,5 +1,6 @@
 Version 3.8
 
+* IMPROVEMENT: All functions except *List_new and *List_free are now type safe macros.
 * IMPROVEMENT: Added KSI_verifyDataHash.
 * IMPROVEMENT: Custom meta-data sepparated from the low-level implementation. Adds padding automatically.
 * IMPROVEMENT: Metadata hardening verification.

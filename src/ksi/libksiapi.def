@@ -713,267 +713,75 @@ EXPORTS
 EXPORTS
 	KSI_MetaDataElementList_free
 	KSI_MetaDataElementList_new
-	KSI_MetaDataElementList_append
-	KSI_MetaDataElementList_indexOf
-	KSI_MetaDataElementList_insertAt
-	KSI_MetaDataElementList_replaceAt
-	KSI_MetaDataElementList_remove
-	KSI_MetaDataElementList_length
-	KSI_MetaDataElementList_elementAt
-	KSI_MetaDataElementList_sort
 
 	KSI_HashChainLinkList_free
 	KSI_HashChainLinkList_new
-	KSI_HashChainLinkList_append
-	KSI_HashChainLinkList_indexOf
-	KSI_HashChainLinkList_insertAt
-	KSI_HashChainLinkList_replaceAt
-	KSI_HashChainLinkList_remove
-	KSI_HashChainLinkList_length
-	KSI_HashChainLinkList_elementAt
-	KSI_HashChainLinkList_sort
 
 	KSI_CalendarHashChainLinkList_free
 	KSI_CalendarHashChainLinkList_new
-	KSI_CalendarHashChainLinkList_append
-	KSI_CalendarHashChainLinkList_indexOf
-	KSI_CalendarHashChainLinkList_insertAt
-	KSI_CalendarHashChainLinkList_replaceAt
-	KSI_CalendarHashChainLinkList_remove
-	KSI_CalendarHashChainLinkList_length
-	KSI_CalendarHashChainLinkList_elementAt
-	KSI_CalendarHashChainLinkList_sort
 
 	KSI_CalendarHashChainList_free
 	KSI_CalendarHashChainList_new
-	KSI_CalendarHashChainList_append
-	KSI_CalendarHashChainList_indexOf
-	KSI_CalendarHashChainList_insertAt
-	KSI_CalendarHashChainList_replaceAt
-	KSI_CalendarHashChainList_remove
-	KSI_CalendarHashChainList_length
-	KSI_CalendarHashChainList_elementAt
-	KSI_CalendarHashChainList_sort
 
 	KSI_ExtendPduList_free
 	KSI_ExtendPduList_new
-	KSI_ExtendPduList_append
-	KSI_ExtendPduList_indexOf
-	KSI_ExtendPduList_insertAt
-	KSI_ExtendPduList_replaceAt
-	KSI_ExtendPduList_remove
-	KSI_ExtendPduList_length
-	KSI_ExtendPduList_elementAt
-	KSI_ExtendPduList_sort
 
 	KSI_AggregationPduList_free
 	KSI_AggregationPduList_new
-	KSI_AggregationPduList_append
-	KSI_AggregationPduList_indexOf
-	KSI_AggregationPduList_insertAt
-	KSI_AggregationPduList_replaceAt
-	KSI_AggregationPduList_remove
-	KSI_AggregationPduList_length
-	KSI_AggregationPduList_elementAt
-	KSI_AggregationPduList_sort
 
 	KSI_HeaderList_free
 	KSI_HeaderList_new
-	KSI_HeaderList_append
-	KSI_HeaderList_indexOf
-	KSI_HeaderList_insertAt
-	KSI_HeaderList_replaceAt
-	KSI_HeaderList_remove
-	KSI_HeaderList_length
-	KSI_HeaderList_elementAt
-	KSI_HeaderList_sort
 
 	KSI_ConfigList_free
 	KSI_ConfigList_new
-	KSI_ConfigList_append
-	KSI_ConfigList_indexOf
-	KSI_ConfigList_insertAt
-	KSI_ConfigList_replaceAt
-	KSI_ConfigList_remove
-	KSI_ConfigList_length
-	KSI_ConfigList_elementAt
-	KSI_ConfigList_sort
 
 	KSI_AggregationReqList_free
 	KSI_AggregationReqList_new
-	KSI_AggregationReqList_append
-	KSI_AggregationReqList_indexOf
-	KSI_AggregationReqList_insertAt
-	KSI_AggregationReqList_replaceAt
-	KSI_AggregationReqList_remove
-	KSI_AggregationReqList_length
-	KSI_AggregationReqList_elementAt
-	KSI_AggregationReqList_sort
 
 	KSI_RequestAckList_free
 	KSI_RequestAckList_new
-	KSI_RequestAckList_append
-	KSI_RequestAckList_indexOf
-	KSI_RequestAckList_insertAt
-	KSI_RequestAckList_replaceAt
-	KSI_RequestAckList_remove
-	KSI_RequestAckList_length
-	KSI_RequestAckList_elementAt
-	KSI_RequestAckList_sort
 
 	KSI_AggregationRespList_free
 	KSI_AggregationRespList_new
-	KSI_AggregationRespList_append
-	KSI_AggregationRespList_indexOf
-	KSI_AggregationRespList_insertAt
-	KSI_AggregationRespList_replaceAt
-	KSI_AggregationRespList_remove
-	KSI_AggregationRespList_length
-	KSI_AggregationRespList_elementAt
-	KSI_AggregationRespList_sort
 
 	KSI_ExtendReqList_free
 	KSI_ExtendReqList_new
-	KSI_ExtendReqList_append
-	KSI_ExtendReqList_indexOf
-	KSI_ExtendReqList_insertAt
-	KSI_ExtendReqList_replaceAt
-	KSI_ExtendReqList_remove
-	KSI_ExtendReqList_length
-	KSI_ExtendReqList_elementAt
-	KSI_ExtendReqList_sort
 
 	KSI_ExtendRespList_free
 	KSI_ExtendRespList_new
-	KSI_ExtendRespList_append
-	KSI_ExtendRespList_indexOf
-	KSI_ExtendRespList_insertAt
-	KSI_ExtendRespList_replaceAt
-	KSI_ExtendRespList_remove
-	KSI_ExtendRespList_length
-	KSI_ExtendRespList_elementAt
-	KSI_ExtendRespList_sort
 
 	KSI_PKISignedDataList_free
 	KSI_PKISignedDataList_new
-	KSI_PKISignedDataList_append
-	KSI_PKISignedDataList_indexOf
-	KSI_PKISignedDataList_insertAt
-	KSI_PKISignedDataList_replaceAt
-	KSI_PKISignedDataList_remove
-	KSI_PKISignedDataList_length
-	KSI_PKISignedDataList_elementAt
-	KSI_PKISignedDataList_sort
 
 	KSI_PublicationsHeaderList_free
 	KSI_PublicationsHeaderList_new
-	KSI_PublicationsHeaderList_append
-	KSI_PublicationsHeaderList_indexOf
-	KSI_PublicationsHeaderList_insertAt
-	KSI_PublicationsHeaderList_replaceAt
-	KSI_PublicationsHeaderList_remove
-	KSI_PublicationsHeaderList_length
-	KSI_PublicationsHeaderList_elementAt
-	KSI_PublicationsHeaderList_sort
 
 	KSI_CertificateRecordList_free
 	KSI_CertificateRecordList_new
-	KSI_CertificateRecordList_append
-	KSI_CertificateRecordList_indexOf
-	KSI_CertificateRecordList_insertAt
-	KSI_CertificateRecordList_replaceAt
-	KSI_CertificateRecordList_remove
-	KSI_CertificateRecordList_length
-	KSI_CertificateRecordList_elementAt
-	KSI_CertificateRecordList_sort
 
 	KSI_PublicationDataList_free
 	KSI_PublicationDataList_new
-	KSI_PublicationDataList_append
-	KSI_PublicationDataList_indexOf
-	KSI_PublicationDataList_insertAt
-	KSI_PublicationDataList_replaceAt
-	KSI_PublicationDataList_remove
-	KSI_PublicationDataList_length
-	KSI_PublicationDataList_elementAt
-	KSI_PublicationDataList_sort
 
 	KSI_PublicationRecordList_free
 	KSI_PublicationRecordList_new
-	KSI_PublicationRecordList_append
-	KSI_PublicationRecordList_indexOf
-	KSI_PublicationRecordList_insertAt
-	KSI_PublicationRecordList_replaceAt
-	KSI_PublicationRecordList_remove
-	KSI_PublicationRecordList_length
-	KSI_PublicationRecordList_elementAt
-	KSI_PublicationRecordList_sort
 
 	KSI_IntegerList_free
 	KSI_IntegerList_new
-	KSI_IntegerList_append
-	KSI_IntegerList_indexOf
-	KSI_IntegerList_insertAt
-	KSI_IntegerList_replaceAt
-	KSI_IntegerList_remove
-	KSI_IntegerList_length
-	KSI_IntegerList_elementAt
-	KSI_IntegerList_sort
 
 	KSI_OctetStringList_free
 	KSI_OctetStringList_new
-	KSI_OctetStringList_append
-	KSI_OctetStringList_indexOf
-	KSI_OctetStringList_insertAt
-	KSI_OctetStringList_replaceAt
-	KSI_OctetStringList_remove
-	KSI_OctetStringList_length
-	KSI_OctetStringList_elementAt
-	KSI_OctetStringList_sort
 
 	KSI_Utf8StringList_free
 	KSI_Utf8StringList_new
-	KSI_Utf8StringList_append
-	KSI_Utf8StringList_indexOf
-	KSI_Utf8StringList_insertAt
-	KSI_Utf8StringList_replaceAt
-	KSI_Utf8StringList_remove
-	KSI_Utf8StringList_length
-	KSI_Utf8StringList_elementAt
-	KSI_Utf8StringList_sort
 
 	KSI_AggregationHashChainList_free
 	KSI_AggregationHashChainList_new
-	KSI_AggregationHashChainList_append
-	KSI_AggregationHashChainList_indexOf
-	KSI_AggregationHashChainList_insertAt
-	KSI_AggregationHashChainList_replaceAt
-	KSI_AggregationHashChainList_remove
-	KSI_AggregationHashChainList_length
-	KSI_AggregationHashChainList_elementAt
-	KSI_AggregationHashChainList_sort
 
 	KSI_TLVList_free
 	KSI_TLVList_new
-	KSI_TLVList_append
-	KSI_TLVList_indexOf
-	KSI_TLVList_insertAt
-	KSI_TLVList_replaceAt
-	KSI_TLVList_remove
-	KSI_TLVList_length
-	KSI_TLVList_elementAt
-	KSI_TLVList_sort
 
 	KSI_PKICertificateList_free
 	KSI_PKICertificateList_new
-	KSI_PKICertificateList_append
-	KSI_PKICertificateList_indexOf
-	KSI_PKICertificateList_insertAt
-	KSI_PKICertificateList_replaceAt
-	KSI_PKICertificateList_remove
-	KSI_PKICertificateList_length
-	KSI_PKICertificateList_elementAt
-	KSI_PKICertificateList_sort
 
 ;verification.h
 EXPORTS
@@ -1055,8 +863,6 @@ EXPORTS
 	KSI_SignatureVerifier_verify
 	KSI_Policy_free
 	KSI_PolicyVerificationResult_free
-	KSI_RuleVerificationResultList_length
-	KSI_RuleVerificationResultList_elementAt
 	KSI_VerificationContext_init
 	KSI_VerificationContext_clean
 	KSI_PolicyVerificationResult_free

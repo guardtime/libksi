@@ -30,7 +30,26 @@ extern "C" {
 	typedef struct TimeMapper_st TimeMapper;
 
 	KSI_DEFINE_LIST(ChainIndexMapper);
+#define ChainIndexMapperList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->append((lst), (o)))
+#define ChainIndexMapperList_remove(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->removeElement((lst), (pos), (o)))
+#define ChainIndexMapperList_indexOf(lst, o, i) KSI_APPLY_TO_NOT_NULL((lst), (lst)->indexOf((lst), (o), (i)))
+#define ChainIndexMapperList_insertAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->insertAt((lst), (pos), (o)))
+#define ChainIndexMapperList_replaceAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->replaceAt((lst), (pos), (o)))
+#define ChainIndexMapperList_elementAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->elementAt((lst), (pos), (o)))
+#define ChainIndexMapperList_length(lst) (((lst) != NULL) ? (lst)->length((lst)) : 0)
+#define ChainIndexMapperList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), (lst)->sort((lst), (cmp)))
+#define ChainIndexMapperList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (lst)->foldl((lst), (foldCtx), (foldFn)) : KSI_OK)
+
 	KSI_DEFINE_LIST(TimeMapper);
+#define TimeMapperList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->append((lst), (o)))
+#define TimeMapperList_remove(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->removeElement((lst), (pos), (o)))
+#define TimeMapperList_indexOf(lst, o, i) KSI_APPLY_TO_NOT_NULL((lst), (lst)->indexOf((lst), (o), (i)))
+#define TimeMapperList_insertAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->insertAt((lst), (pos), (o)))
+#define TimeMapperList_replaceAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->replaceAt((lst), (pos), (o)))
+#define TimeMapperList_elementAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->elementAt((lst), (pos), (o)))
+#define TimeMapperList_length(lst) (((lst) != NULL) ? (lst)->length((lst)) : 0)
+#define TimeMapperList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), (lst)->sort((lst), (cmp)))
+#define TimeMapperList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (lst)->foldl((lst), (foldCtx), (foldFn)) : KSI_OK)
 
 	struct ChainIndexMapper_st {
 		/** Part of the chain index. */
