@@ -438,7 +438,7 @@ static void testTlvSerializeMandatoryListObjectEmpty(CuTest *tc) {
 	CuAssert(tc, "List contains elements", KSI_HashChainLinkList_length(chain) == 0);
 
 	res = KSI_TlvTemplate_serializeObject(ctx, sig, 0x0800, 0, 0, KSI_TLV_TEMPLATE(KSI_Signature), &raw, &raw_len);
-	CuAssert(tc, "Failed to serialize signature", res == KSI_INVALID_FORMAT && raw_len == 0);
+	CuAssert(tc, "Signature serialization should fail.", res == KSI_INVALID_FORMAT && raw_len == 0);
 
 	KSI_free(raw);
 	KSI_Signature_free(sig);
