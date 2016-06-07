@@ -99,14 +99,14 @@ The SDK provides the following predefined policies for verification:
 requiring any additional data from the user. The verified components are the aggregation chain, calendar chain (optional),
 calendar authentication record (optional) and publication record (optional). Additionally, if a document hash is provided,
 the signature is verified against it.
-- Publications file based policy. This policy verifies the signature publication record against a publication
-in the publication file. If necessary (and permitted), the signature is extended to the publication. For conclusive results
-the signature must either contain a publication record with a suitable publication or signature extending must be allowed.
-A publications file must be provided for lookup and an extender must be configured. 
 - User provided publication string based policy. This policy verifies the signature publication record against the
 publication string. if necessary (and permitted), the signature is extended to the user publication. For conclusive results
 the signature must either contain a publication record with a suitable publication or signature extending must be allowed.
 A publication string must be provided and an extender must be configured.
+- Publications file based policy. This policy verifies the signature publication record against a publication
+in the publication file. If necessary (and permitted), the signature is extended to the publication. For conclusive results
+the signature must either contain a publication record with a suitable publication or signature extending must be allowed.
+A publications file must be provided for lookup and an extender must be configured. 
 - Key-based policy. This policy verifies the PKI signature and calendar chain data in the calendar authentication record of the signature.
 For conclusive results, a calendar hash chain and calendar authentication record must be present in the signature.
 A trusted publication file must be provided for performing lookup of a matching certificate.
