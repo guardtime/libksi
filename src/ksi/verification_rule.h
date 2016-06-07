@@ -337,7 +337,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_PublicationsFileContainsPublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_PublicationsFileContainsSuitablePublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule can be used to check if signature extending is permitted or not.

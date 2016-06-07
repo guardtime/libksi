@@ -1857,7 +1857,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithPublicationRecord(CuTest* tc)
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_NA,
 		KSI_VER_ERR_GEN_2,
-		"KSI_VerificationRule_SignatureDoesNotContainPublication"
+		"KSI_VerificationRule_PublicationsFileContainsSuitablePublication"
 	};
 	KSI_CTX *ctx = NULL;
 
@@ -1903,7 +1903,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithoutSuitablePublication(CuTest
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_NA,
 		KSI_VER_ERR_GEN_2,
-		"KSI_VerificationRule_PublicationsFileContainsPublication"
+		"KSI_VerificationRule_PublicationsFileContainsSuitablePublication"
 	};
 	KSI_CTX *ctx = NULL;
 

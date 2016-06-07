@@ -329,9 +329,9 @@ static const KSI_Rule publicationPresentRule[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileContainsSignaturePublication},
 	{KSI_RULE_TYPE_BASIC, NULL}
 };
+
 static const KSI_Rule extendToPublicationRule[] = {
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_SignatureDoesNotContainPublication},
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileContainsPublication},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileContainsSuitablePublication},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_ExtendingPermittedVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse},
