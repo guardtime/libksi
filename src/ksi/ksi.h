@@ -30,6 +30,7 @@
 #include "log.h"
 #include "signature.h"
 #include "verification.h"
+#include "policy.h"
 
 #ifdef __cplusplus
 extern "C" {

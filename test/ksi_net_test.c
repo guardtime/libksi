@@ -787,6 +787,10 @@ static void testLocalAggregationSigning(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
+	KSI_VerificationContext verifier;
+	KSI_PolicyVerificationResult *result = NULL;
+
+	KSI_VerificationContext_init(&verifier, ctx);
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -802,11 +806,16 @@ static void testLocalAggregationSigning(CuTest* tc) {
 	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Signature should not be verifiable without local aggregation level.", res == KSI_VERIFICATION_FAILURE);
 
-	res = KSI_Signature_verifyAggregated(sig, NULL, 4);
-	CuAssert(tc, "Locally aggregated signature was not verifiable.", res == KSI_OK);
+	verifier.signature = sig;
+	verifier.docAggrLevel = 4;
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &verifier, &result);
+	CuAssert(tc, "Locally aggregated signature was not verifiable due to an error.", res == KSI_OK);
+	CuAssert(tc, "The can not be verified.", result->resultCode == KSI_VER_RES_OK);
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
+	KSI_VerificationContext_clean(&verifier);
+	KSI_PolicyVerificationResult_free(result);
 
 #undef TEST_AGGR_RESPONSE_FILE
 }
