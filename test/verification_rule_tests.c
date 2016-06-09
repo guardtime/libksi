@@ -3142,7 +3142,7 @@ static void testRule_UserProvidedPublicationVerification_hashMismatch_verifyErro
 	CuAssert(tc, "Unable to set publication mock hash.", res == KSI_OK);
 
 	res = KSI_VerificationRule_UserProvidedPublicationVerification(&verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_9);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_9);
 
 	KSI_PublicationData_free(verCtx.userPublication);
 	KSI_Signature_free(verCtx.signature);
