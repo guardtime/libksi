@@ -810,7 +810,7 @@ static void testLocalAggregationSigning(CuTest* tc) {
 	verifier.docAggrLevel = 4;
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &verifier, &result);
 	CuAssert(tc, "Locally aggregated signature was not verifiable due to an error.", res == KSI_OK);
-	CuAssert(tc, "The can not be verified.", result->resultCode == KSI_VER_RES_OK);
+	CuAssert(tc, "The signature can not be verified.", result->resultCode == KSI_VER_RES_OK);
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
