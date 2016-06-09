@@ -245,8 +245,12 @@ static void testVerifySignatureWithUserPublication(CuTest *tc) {
 	const char pubStr_bad[] = "AAAAAA-CT5VGY-AAPUCF-L3EKCC-NRSX56-AXIDFL-VZJQK4-WDCPOE-3KIWGB-XGPPM3-O5BIMW-REOVR4";
 	KSI_PublicationData *pubData = NULL;
 	KSI_PublicationData *pubData_bad = NULL;
+	KSI_VerificationContext verifier;
+	KSI_PolicyVerificationResult *result = NULL;
 
 	KSI_ERR_clearErrors(ctx);
+
+	KSI_VerificationContext_init(&verifier, ctx);
 
 	res = KSI_PublicationData_fromBase32(ctx, pubStr, &pubData);
 	CuAssert(tc, "Unable to parse publication string.", res == KSI_OK && pubData != NULL);
@@ -257,16 +261,28 @@ static void testVerifySignatureWithUserPublication(CuTest *tc) {
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_verifyWithPublication(sig, ctx, pubData);
-	CuAssert(tc, "Unable to verify signature with publication.", res == KSI_OK);
+	verifier.signature = sig;
 
-	res = KSI_Signature_verifyWithPublication(sig, ctx, pubData_bad);
-	CuAssert(tc, "Unable to verify signature with publication.", res != KSI_OK);
+	/* The positive case. */
+	verifier.userPublication = pubData;
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &verifier, &result);
+	CuAssert(tc, "Unable to verify signature with publication due to an error.", res == KSI_OK);
+	CuAssert(tc, "The verification should have been successful.", result->resultCode == KSI_VER_RES_OK);
+	KSI_PolicyVerificationResult_free(result);
+	result = NULL;
+
+	/* The negative case. */
+	verifier.userPublication = pubData_bad;
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &verifier, &result);
+	CuAssert(tc, "Unable to verify signature with publication due to an error.", res == KSI_OK);
+	CuAssert(tc, "The verification should not have been successful.", result->resultCode != KSI_VER_RES_OK);
 
 
 	KSI_PublicationData_free(pubData);
 	KSI_PublicationData_free(pubData_bad);
 	KSI_Signature_free(sig);
+	KSI_VerificationContext_clean(&verifier);
+	KSI_PolicyVerificationResult_free(result);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -276,8 +292,12 @@ static void testVerifySignatureExtendedToHead(CuTest *tc) {
 #define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-head-extend_response.tlv"
 	int res;
 	KSI_Signature *sig = NULL;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_VerificationContext verifier;
 
 	KSI_ERR_clearErrors(ctx);
+
+	KSI_VerificationContext_init(&verifier, ctx);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Signature should have either a calendar auth record or publication", res == KSI_OK && sig != NULL);
@@ -286,9 +306,14 @@ static void testVerifySignatureExtendedToHead(CuTest *tc) {
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
-	res = KSI_Signature_verifyOnline(sig, ctx);
-	CuAssert(tc, "Signature should verify", res == KSI_OK);
+	verifier.signature = sig;
 
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_CALENDAR_BASED, &verifier, &result);
+	CuAssert(tc, "Unable to verify signature due to an error.", res == KSI_OK);
+	CuAssert(tc, "Signature should verify.", result->resultCode == KSI_VER_RES_OK);
+
+	KSI_VerificationContext_clean(&verifier);
+	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(sig);
 
 #undef TEST_SIGNATURE_FILE
@@ -434,7 +459,12 @@ static void testVerifyDocumentHash(CuTest *tc) {
 	FILE *f = NULL;
 	KSI_Signature *sig = NULL;
 
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_VerificationContext verifier;
+
 	KSI_ERR_clearErrors(ctx);
+
+	KSI_VerificationContext_init(&verifier, ctx);
 
 	f = fopen(getFullResourcePath(TEST_SIGNATURE_FILE), "rb");
 	CuAssert(tc, "Unable to open signature file.", f != NULL);
@@ -451,9 +481,14 @@ static void testVerifyDocumentHash(CuTest *tc) {
 	res = KSI_DataHash_create(ctx, doc, strlen(doc), KSI_HASHALG_SHA2_256, &hsh);
 	CuAssert(tc, "Failed to create data hash", res == KSI_OK && hsh != NULL);
 
-	res = KSI_Signature_verifyDataHash(sig, ctx, hsh);
-	CuAssert(tc, "Failed to verify valid document", res == KSI_OK);
+	verifier.signature = sig;
+	verifier.documentHash = hsh;
 
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &verifier, &result);
+	CuAssert(tc, "Verification failed with an error.", res == KSI_OK);
+	CuAssert(tc, "Verification should have been successful.", result->resultCode == KSI_VER_RES_OK);
+
+	KSI_PolicyVerificationResult_free(result);
 	KSI_DataHash_free(hsh);
 	hsh = NULL;
 
@@ -461,21 +496,30 @@ static void testVerifyDocumentHash(CuTest *tc) {
 	res = KSI_DataHash_create(ctx, doc, sizeof(doc), KSI_HASHALG_SHA2_256, &hsh);
 	CuAssert(tc, "Failed to create data hash", res == KSI_OK && hsh != NULL);
 
-	res = KSI_Signature_verifyDataHash(sig, ctx, hsh);
-	CuAssert(tc, "Verification did not fail with expected error.", res == KSI_VERIFICATION_FAILURE);
+	verifier.documentHash = hsh;
+
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &verifier, &result);
+	CuAssert(tc, "Verification failed with an error.", res == KSI_OK);
+	CuAssert(tc, "Verification should not have been successful.", result->resultCode != KSI_VER_RES_OK);
 
 	KSI_DataHash_free(hsh);
+	KSI_PolicyVerificationResult_free(result);
+	result = NULL;
 	hsh = NULL;
 
 	/* Check correct document with wrong hash algorithm. */
 	res = KSI_DataHash_create(ctx, doc, strlen(doc), KSI_HASHALG_SHA2_512, &hsh);
 	CuAssert(tc, "Failed to create data hash", res == KSI_OK && hsh != NULL);
 
-	res = KSI_Signature_verifyDataHash(sig, ctx, hsh);
-	CuAssert(tc, "Verification did not fail with expected error.", res == KSI_VERIFICATION_FAILURE);
+	verifier.documentHash = hsh;
+
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &verifier, &result);
+	CuAssert(tc, "Verification failed with an error.", res == KSI_OK);
+	CuAssert(tc, "Verification should not have been successful.", result->resultCode != KSI_VER_RES_OK);
 
 	KSI_DataHash_free(hsh);
-
+	KSI_VerificationContext_clean(&verifier);
+	KSI_PolicyVerificationResult_free(result);
 
 	KSI_Signature_free(sig);
 
@@ -550,7 +594,12 @@ static void testVerifyCalendarChainAlgoChange(CuTest *tc) {
 	FILE *f = NULL;
 	KSI_Signature *sig = NULL;
 
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_VerificationContext verifier;
+
 	KSI_ERR_clearErrors(ctx);
+
+	KSI_VerificationContext_init(&verifier, ctx);
 
 	f = fopen(getFullResourcePath(TEST_SIGNATURE_FILE), "rb");
 	CuAssert(tc, "Unable to open signature file.", f != NULL);
@@ -561,14 +610,19 @@ static void testVerifyCalendarChainAlgoChange(CuTest *tc) {
 	fclose(f);
 
 	res = KSI_Signature_parse(ctx, in, in_len, &sig);
-	CuAssert(tc, "Failed to parse signature", res == KSI_OK && sig != NULL);
+	CuAssert(tc, "Failed to parse signature.", res == KSI_OK && sig != NULL);
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
-	res = KSI_Signature_verifyOnline(sig, ctx);
-	CuAssert(tc, "Failed to verify valid document", res == KSI_OK);
+	verifier.signature = sig;
 
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_CALENDAR_BASED, &verifier, &result);
+	CuAssert(tc, "Verification failed due to an error.", res == KSI_OK);
+	CuAssert(tc, "The signature should have been verified successfully.", result->resultCode == KSI_VER_RES_OK);
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_VerificationContext_clean(&verifier);
 	KSI_Signature_free(sig);
 
 #undef TEST_SIGNATURE_FILE

@@ -52,17 +52,6 @@ typedef unsigned __int64 uint64_t;
 # define HTTP_PARSER_STRICT 1
 #endif
 
-/* Maximum header size allowed. If the macro is not defined
- * before including this header then the default is used. To
- * change the maximum header size, define the macro in the build
- * environment (e.g. -DHTTP_MAX_HEADER_SIZE=<value>). To remove
- * the effective limit on the size of the header, define the macro
- * to a very large number (e.g. -DHTTP_MAX_HEADER_SIZE=0x7fffffff)
- */
-#ifndef HTTP_MAX_HEADER_SIZE
-# define HTTP_MAX_HEADER_SIZE (80*1024)
-#endif
-
 typedef struct http_parser http_parser;
 typedef struct http_parser_settings http_parser_settings;
 
@@ -272,57 +261,10 @@ struct http_parser_url {
   } field_data[UF_MAX];
 };
 
-
-/* Returns the library version. Bits 16-23 contain the major version number,
- * bits 8-15 the minor version number and bits 0-7 the patch level.
- * Usage example:
- *
- *   unsigned long version = http_parser_version();
- *   unsigned major = (version >> 16) & 255;
- *   unsigned minor = (version >> 8) & 255;
- *   unsigned patch = version & 255;
- *   printf("http_parser v%u.%u.%u\n", major, minor, patch);
- */
-unsigned long http_parser_version(void);
-
-void http_parser_init(http_parser *parser, enum http_parser_type type);
-
-
-/* Executes the parser. Returns number of parsed bytes. Sets
- * `parser->http_errno` on error. */
-size_t http_parser_execute(http_parser *parser,
-						   const http_parser_settings *settings,
-						   const char *data,
-						   size_t len);
-
-
-/* If http_should_keep_alive() in the on_headers_complete or
- * on_message_complete callback returns 0, then this should be
- * the last message on the connection.
- * If you are the server, respond with the "Connection: close" header.
- * If you are the client, close the connection.
- */
-int http_should_keep_alive(const http_parser *parser);
-
-/* Returns a string version of the HTTP method. */
-const char *http_method_str(enum http_method m);
-
-/* Return a string name of the given error */
-const char *http_errno_name(enum http_errno err);
-
-/* Return a string description of the given error */
-const char *http_errno_description(enum http_errno err);
-
 /* Parse a URL; return nonzero on failure */
 int http_parser_parse_url(const char *buf, size_t buflen,
 						  int is_connect,
 						  struct http_parser_url *u);
-
-/* Pause or un-pause the parser; a nonzero value pauses */
-void http_parser_pause(http_parser *parser, int paused);
-
-/* Checks if this is the final chunk of the body. */
-int http_body_is_final(const http_parser *parser);
 
 #ifdef __cplusplus
 }
