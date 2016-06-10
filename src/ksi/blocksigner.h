@@ -30,6 +30,8 @@ extern "C" {
 typedef struct KSI_BlockSigner_st KSI_BlockSigner;
 typedef struct KSI_BlockSignerHandle_st KSI_BlockSignerHandle;
 
+KSI_DEFINE_LIST(KSI_BlockSignerHandle);
+
 /**
  * Create a new instance of #KSI_BlockSigner.
  * \param[in]	ctx			KSI context.
