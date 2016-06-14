@@ -752,6 +752,7 @@ static void testUrlSplit(CuTest *tc) {
 			{KSI_OK, "ksi://guardtime.com:12345", "ksi", "guardtime.com", NULL, 12345},
 			{KSI_OK, "ksi+http://guardtime.com", "ksi+http", "guardtime.com", NULL, 0},
 			{KSI_OK, "http:///toto", "http", NULL, "/toto", 0 },
+			{KSI_OK, "file://test_file.doc", "file", "test_file.doc", NULL, 0 },
 			{KSI_INVALID_FORMAT, "guardtime.com:80",  NULL, "guardtime.com", NULL, 0 },
 			{KSI_INVALID_FORMAT, "guardtime.com", NULL, NULL, NULL, 0},
 			{-1, NULL, NULL, NULL, NULL, 0 }
