@@ -63,9 +63,9 @@ Configuring authentication is not supported by the netsh utility.
 
 In the Windows control panel:
 
-1) Under Windows 7 find the Internet Options in the Control panel. Select the Connections tab and then select LAN settings.  
-2) Under Windows 10 find the Network and Internet section in the Settings. Select the Proxy tab.  
-3) Enable the Use a proxy button/checkbox and enter your proxy server and port in the corresponding fields.  
+1) Under Windows 7 find the Internet Options in the Control panel. Select the 'Connections' tab and then select 'LAN settings'.  
+2) Under Windows 10 find the Network and Internet section in the Settings. Select the 'Proxy' tab.  
+3) Enable the 'Use a proxy' button/checkbox and enter your proxy server and port in the corresponding fields.  
 
 Alternatively in the Windows registry:
 
