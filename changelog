@@ -1,3 +1,5 @@
+* IMPROVEMENT: Added block signature sample application.
+
 Version 3.8
 
 * IMPROVEMENT: Removed dead code from http_parser.{c,h}
