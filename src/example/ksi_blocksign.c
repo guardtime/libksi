@@ -80,7 +80,7 @@ static int getHash(char *inFile, KSI_DataHash **hsh) {
 
 	in = fopen(inFile, "rb");
 	if (in == NULL) {
-		fprintf(stderr, "Unable to open input file '%s'\n", inFile);
+		fprintf(stderr, "%s: Unable to open file.\n", inFile);
 		res = KSI_IO_ERROR;
 		goto cleanup;
 	}
@@ -134,7 +134,7 @@ static int writeToFile(char *name, KSI_Signature *sig) {
 	/* Output file. */
 	out = fopen(name, "wb");
 	if (out == NULL) {
-		fprintf(stderr, "Unable to open output file '%s'\n", name);
+		fprintf(stderr, "%s: Unable to open output file.\n", name);
 		res = KSI_IO_ERROR;
 		goto cleanup;
 	}
@@ -195,7 +195,7 @@ int main(int argc, char **argv) {
 	res = OpenLogging(ksi, "ksi_blocksign.log", &logFile);
 	if (res != KSI_OK) goto cleanup;
 
-	KSI_LOG_info(ksi, "Using KSI version: '%s'", KSI_getVersion());
+	KSI_LOG_info(ksi, "Using KSI version: '%s'.", KSI_getVersion());
 
 	/* Create new block-signer instance. */
 	res = KSI_BlockSigner_new(ksi, KSI_getHashAlgorithmByName("default"), NULL, NULL, &bs);
@@ -223,7 +223,7 @@ int main(int argc, char **argv) {
 		/* Add the hash value to the block signer. */
 		res = KSI_BlockSigner_addLeaf(bs, hsh, 0, NULL, &hndl);
 		if (res != KSI_OK) {
-			fprintf(stderr, "%s: Unable to add data hash to the block signer\n", argv[i]);
+			fprintf(stderr, "%s: Unable to add data hash to the block signer.\n", argv[i]);
 			goto cleanup;
 		}
 
