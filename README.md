@@ -39,12 +39,15 @@ To use a proxy, you need to configure the proxy on your operating system accordi
 
 * Curl
 
-Set the environment variable http_proxy:  
+Set the system environment variable: http_proxy=user:pass@server:port  
 
-Windows command line:
-~~~
-    set http_proxy=user:pass@server:port
-~~~
+In the Windows control panel:  
+
+1) Find the 'System' page and select 'Advanced system settings'  
+2) Select 'Environment Variables...'  
+3) Select 'New...' to create a new system variable  
+4) Enter http_proxy in the name field and and proxy configuration (see above) in the value field.  
+
 Linux/Mac command line:  
 ~~~
     export http_proxy=user:pass@server:port
@@ -63,11 +66,11 @@ Configuring authentication is not supported by the netsh utility.
 
 In the Windows control panel:
 
-1) Under Windows 7 find the Internet Options in the Control panel. Select the 'Connections' tab and then select 'LAN settings'.  
-2) Under Windows 10 find the Network and Internet section in the Settings. Select the 'Proxy' tab.  
-3) Enable the 'Use a proxy' button/checkbox and enter your proxy server and port in the corresponding fields.  
+1) Find the 'Internet Options' page and select the 'Connections' tab.  
+2) Select 'LAN settings' and enable proxy configuration by ticking the 'Use a proxy ..' checkbox  
+3) Enter the address and port of your proxy server in the corresponding fields.  
 
-Alternatively in the Windows registry:
+Alternatively in the Windows registry, modify the 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings' key:
 
 1) Set ProxyEnable to 1  
 2) Set ProxyServer to server:port  
