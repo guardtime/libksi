@@ -48,7 +48,7 @@ In the Windows control panel:
 3) Select 'New...' to create a new system variable  
 4) Enter http_proxy in the name field and and proxy configuration (see above) in the value field.  
 
-Linux/Mac command line:  
+In Linux add the system variable to /etc/bashrc:  
 ~~~
     export http_proxy=user:pass@server:port
 ~~~
