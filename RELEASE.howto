@@ -1,7 +1,7 @@
 This file describes the steps to create a release of the sdk.
 
 
-1. Create branch release_[major].[minor]
+1. Merge changes from develop/release branch to master.
 2. Updete package version with ./mkversion.sh
 3. Update ABI version in ./configure.ac
 4. Update/sync ./changelog
