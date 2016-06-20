@@ -172,7 +172,7 @@ extern "C" {
 	/**
 	 * This macro is used to import predefined templates.
 	 */
-	#define KSI_IMPORT_TLV_TEMPLATE(name) extern const KSI_TlvTemplate KSI_TLV_TEMPLATE(name)[];
+	#define KSI_IMPORT_TLV_TEMPLATE(name) KSI_DEFINE_EXTERN(const KSI_TlvTemplate KSI_TLV_TEMPLATE(name)[])
 
 	/**
 	 * Generic #KSI_TlvTemplate type.
@@ -249,12 +249,12 @@ extern "C" {
 	/**
 	 * One and only one of the group 0 must be present.
 	 */
-	#define KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0 KSI_TLV_TMPL_FLG_LEAST_ONE_G0 | KSI_TLV_TMPL_FLG_MOST_ONE_G0
+	#define KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0 (KSI_TLV_TMPL_FLG_LEAST_ONE_G0 | KSI_TLV_TMPL_FLG_MOST_ONE_G0)
 
 	/**
 	 * One and only one of the group 1 must be present.
 	 */
-	#define KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G1 KSI_TLV_TMPL_FLG_LEAST_ONE_G1 | KSI_TLV_TMPL_FLG_MOST_ONE_G1
+	#define KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G1 (KSI_TLV_TMPL_FLG_LEAST_ONE_G1 | KSI_TLV_TMPL_FLG_MOST_ONE_G1)
 
 	/**
 	 * A helper macro for defining a single template with all parameters.

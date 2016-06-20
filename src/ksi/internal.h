@@ -81,7 +81,7 @@
 #  endif
 
 #  ifndef DWORD_MAX
-#    define DWORD_MAX ((((size_t) 1) << (sizeof(DWORD) << 3)) - 1)
+#    define DWORD_MAX ((((long long int) 1) << (sizeof(DWORD) << 3)) - 1)
 #  endif
 #endif
 

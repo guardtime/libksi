@@ -30,28 +30,6 @@
 extern KSI_CTX *ctx;
 char tmp_path[1024];
 
-static int tlvFromFile(const char *fileName, KSI_TLV **tlv) {
-	int res;
-	KSI_RDR *rdr = NULL;
-	FILE *f = NULL;
-
-	KSI_LOG_debug(ctx, "Open TLV file: '%s'", fileName);
-
-	f = fopen(fileName, "rb");
-	res = KSI_RDR_fromStream(ctx, f, &rdr);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_TLV_fromReader(rdr, tlv);
-	if (res != KSI_OK) goto cleanup;
-
-cleanup:
-
-	if (f != NULL) fclose(f);
-	KSI_RDR_close(rdr);
-
-	return res;
-}
-
 static int DER_CertFromFile(KSI_CTX *ctx, const char *fileName, KSI_PKICertificate **cert) {
 	int res;
 	FILE *f = NULL;
@@ -134,7 +112,7 @@ static void TestParseAndSeraializeCert(CuTest *tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = tlvFromFile(getFullResourcePath("resource/tlv/ok-crt.tlv"), &tlv);
+	res = KSITest_tlvFromFile(getFullResourcePath("resource/tlv/ok-crt.tlv"), &tlv);
 	CuAssert(tc, "Unable to read tlv from file.", res == KSI_OK && tlv != NULL);
 
 	res = KSI_PKICertificate_fromTlv(tlv, &cert);
@@ -162,10 +140,10 @@ static void TestExtractingOfPKICertificate(CuTest *tc) {
 	char buf[2048];
 	char *ret = NULL;
 
-	const char expectedValue[] =	"PKI Certificate (34:ec:3d:cc):\n"
+	const char expectedValue[] =	"PKI Certificate (b3:f2:0d:8a):\n"
 									"  * Issued to: E=publications@guardtime.com O=Guardtime AS C=EE\n"
 									"  * Issued by: E=publications@guardtime.com O=Guardtime AS C=EE\n"
-									"  * Valid from: 2015-05-08 11:29:18 UTC to 2016-05-07 11:29:18 UTC [valid]\n"
+									"  * Valid from: 2016-05-09 07:43:05 UTC to 2017-05-09 07:43:05 UTC [valid]\n"
 									"  * Serial Number: 00\n";
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath("resource/tlv/publications.tlv"), &pubfile);
@@ -179,7 +157,6 @@ static void TestExtractingOfPKICertificate(CuTest *tc) {
 
 	ret = KSI_PKICertificate_toString(cert, buf, sizeof(buf));
 	CuAssert(tc, "Wrong or invalid certificate extracted.", ret == buf && strcmp(buf, expectedValue) == 0);
-
 
 	KSI_PKICertificate_free(cert);
 	KSI_PublicationsFile_free(pubfile);

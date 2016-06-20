@@ -38,6 +38,18 @@ extern "C" {
  */
 
 	/**
+	 * This function is used to register the init and cleanup functions of the truststore.
+	 * The init function is called once per KSI context and the cleanup function is called once
+	 * when the KSI context is freed with #KSI_CTX_free.
+	 *
+	 * \param[in]	ctx			KSI context.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 */
+	int KSI_PKITruststore_registerGlobals(KSI_CTX *ctx);
+
+	/**
 	 * PKI Truststore constructor. If <tt>\c setDefaults == 1</tt>, the truststore is initiated
 	 * with default settings, otherwise a blank truststore is created.
 	 * \param[in]	ctx				KSI context.

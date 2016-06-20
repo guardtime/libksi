@@ -60,9 +60,6 @@ static void testExtractingSingle(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
-	CuAssert(tc, "Unable to set default pubfil, default cert and default pki constraints.", res == KSI_OK);
-
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
@@ -370,7 +367,7 @@ static void createMultiSignatureFromFile(CuTest *tc, const char *fn, KSI_MultiSi
 	size_t buf_len;
 	unsigned char buf[0x1ffff]; /* Hope this is enough for all the tests. */
 
-	f = fopen(getFullResourcePath("resource/multi_sig/test1.mksi"), "rb");
+	f = fopen(fn, "rb");
 	CuAssert(tc, "Unable to load test file.", f != NULL);
 
 	buf_len = fread(buf, 1, sizeof(buf), f);
@@ -511,7 +508,7 @@ static void testExtend(CuTest *tc) {
 	res = KSI_MultiSignature_fromFile(ctx, getFullResourcePath("resource/multi_sig/test2.mksi"), &ms);
 	CuAssert(tc, "Unable to read multi signature container from file.", res == KSI_OK && ms != NULL);
 
-	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri("resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"), "anon", "anon");
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri("resource/multi_sig/test2-extend_response-multiple.tlv"), "anon", "anon");
 	CuAssert(tc, "Unable to set extender response from file", res == KSI_OK);
 
 	res = KSI_MultiSignature_extend(ms);
@@ -533,8 +530,13 @@ static void testExtend(CuTest *tc) {
 	KSI_MultiSignature_free(ms);
 }
 
+static void preTest(void) {
+}
+
 CuSuite* KSITest_multiSignature_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
+
+	suite->preTest = preTest;
 
 	SUITE_ADD_TEST(suite, testAddingSingle);
 	SUITE_ADD_TEST(suite, testExtractingSingle);

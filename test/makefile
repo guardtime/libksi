@@ -64,6 +64,7 @@ ALLTESTS_OBJ = \
 	$(OBJ_DIR)\ksi_tlv_sample_test.obj \
 	$(OBJ_DIR)\ksi_tlv_test.obj \
 	$(OBJ_DIR)\ksi_truststore_test.obj \
+	$(OBJ_DIR)\ksi_tree_builder_test.obj \
 	$(OBJ_DIR)\ksi_hmac_test.obj \
 	$(OBJ_DIR)\CuTest.obj \
 	$(OBJ_DIR)\compatibility_test.obj \
@@ -73,7 +74,8 @@ ALLTESTS_OBJ = \
 	$(OBJ_DIR)\verification_rule_tests.obj \
 	$(OBJ_DIR)\ksi_policy_test.obj \
 	$(OBJ_DIR)\ksi_sdk_version_test.obj \
-	$(OBJ_DIR)\ksi_flags_test.obj
+	$(OBJ_DIR)\ksi_flags_test.obj \
+	$(OBJ_DIR)\ksi_blocksigner_test.obj
 
 INTTESTS_OBJ = \
 	$(OBJ_DIR)\all_integration_tests.obj \
@@ -116,10 +118,8 @@ EXT_LIB = $(EXT_LIB) Crypt32.lib advapi32.lib
 
 !ENDIF
 
-
-
 #/NODEFAULTLIB:libcmtd.lib
-CCFLAGS = $(CCFLAGS) /nologo /W3 /D_CRT_SECURE_NO_DEPRECATE /I$(SRC_DIR) /I$(INC_DIR) /I$(CUTEST_DIR)
+CCFLAGS = $(CCFLAGS) /nologo /D_CRT_SECURE_NO_DEPRECATE /I$(SRC_DIR) /I$(INC_DIR) /I$(CUTEST_DIR)
 LDFLAGS = $(LDFLAGS) /NOLOGO /LIBPATH:$(LIB_DIR)
 
 !IF "$(RTL)" == "MT" || "$(RTL)" == "MD"

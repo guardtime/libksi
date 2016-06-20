@@ -267,6 +267,7 @@ int main(int argc, char **argv) {
 
 cleanup:
 
+	KSI_PublicationsFile_free(publicationsFile);
 	KSI_CTX_free(ksi);
 
 	return 0;

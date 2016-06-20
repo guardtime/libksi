@@ -25,6 +25,8 @@ lib_LTLIBRARIES = libksi.la
 libksi_la_SOURCES = \
 	base32.c \
 	base32.h \
+	blocksigner.c \
+	blocksigner.h \
 	common.h \
 	base.c \
 	config.h \
@@ -89,6 +91,10 @@ libksi_la_SOURCES = \
 	tlv.h \
 	tlv_template.c \
 	tlv_template.h \
+	tlv_element.c \
+	tlv_element.h \
+	tree_builder.c \
+	tree_builder.h \
 	types_base.c \
 	types_base.h \
 	types.c \
@@ -102,11 +108,14 @@ libksi_la_SOURCES = \
 	compatibility.c \
 	version.h \
 	verify_deprecated.c \
-	verify_deprecated.h
+	verify_deprecated.h \
+	impl/meta_data_impl.h \
+	impl/meta_data_element_impl.h
 
 otherincludedir = $(includedir)/ksi
 otherinclude_HEADERS = \
 	base32.h \
+	blocksigner.h \
 	common.h \
 	crc32.h \
 	err.h \
@@ -123,6 +132,8 @@ otherinclude_HEADERS = \
 	signature.h \
 	tlv.h \
 	tlv_template.h \
+	tlv_element.h \
+	tree_builder.h \
 	types.h \
 	types_base.h \
 	multi_signature.h \

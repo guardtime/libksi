@@ -33,7 +33,7 @@
 
 
 const char* getMSError(DWORD error, char *buf, size_t len){
-	LPVOID lpMsgBuf;
+	LPVOID lpMsgBuf = NULL;
 	char *tmp = NULL;
 	char *ret = NULL;
 
@@ -138,15 +138,17 @@ int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) 
 	/*Open new store */
 	tmp_FileTrustStore = CertOpenStore(CERT_STORE_PROV_FILENAME_A, 0, 0, 0, path);
 	if (tmp_FileTrustStore == NULL) {
-		KSI_LOG_debug(trust->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
-		KSI_pushError(trust->ctx, res = KSI_INVALID_FORMAT, NULL);
+		const char *errmsg = getMSError(GetLastError(), buf, sizeof(buf));
+		KSI_LOG_debug(trust->ctx, (char *)errmsg);
+		KSI_pushError(trust->ctx, res = KSI_INVALID_FORMAT, errmsg);
 		goto cleanup;
 	}
 
 	/*Update with priority 0 store*/
 	if (!CertAddStoreToCollection(trust->collectionStore, tmp_FileTrustStore, 0, 0)) {
-		KSI_LOG_debug(trust->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
-		KSI_pushError(trust->ctx, res = KSI_INVALID_FORMAT, NULL);
+		const char *errmsg = getMSError(GetLastError(), buf, sizeof(buf));
+		KSI_LOG_debug(trust->ctx, (char *)errmsg);
+		KSI_pushError(trust->ctx, res = KSI_INVALID_FORMAT, errmsg);
 		goto cleanup;
 	}
 
@@ -156,6 +158,10 @@ cleanup:
 
 	if (tmp_FileTrustStore) CertCloseStore(tmp_FileTrustStore, CERT_CLOSE_STORE_CHECK_FLAG);
 	return res;
+}
+
+int KSI_PKITruststore_registerGlobals(KSI_CTX *ctx) {
+	return KSI_CTX_registerGlobals(ctx, cryptopapiGlobal_init, cryptopapiGlobal_cleanup);
 }
 
 int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **trust) {
@@ -171,7 +177,7 @@ int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **tru
 	}
 
 
-	res = KSI_CTX_registerGlobals(ctx, cryptopapiGlobal_init, cryptopapiGlobal_cleanup);
+	res = KSI_PKITruststore_registerGlobals(ctx);
 	if (res != KSI_OK){
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -561,7 +567,7 @@ int KSI_PKISignature_extractCertificate(const KSI_PKISignature *signature, KSI_P
 	BYTE *dataRecieved = NULL;
 	char buf[1024];
 	DWORD dataLen = 0;
-	KSI_PKICertificate *tmp;
+	KSI_PKICertificate *tmp = NULL;
 
 
 	if (signature == NULL || cert == NULL){
@@ -572,7 +578,7 @@ int KSI_PKISignature_extractCertificate(const KSI_PKISignature *signature, KSI_P
 	KSI_ERR_clearErrors(ctx);
 
 
-	/*Get Signature certificates as a certificate store*/
+	/* Get Signature certificates as a certificate store. */
 	certStore = CryptGetMessageCertificates(PKCS_7_ASN_ENCODING | X509_ASN_ENCODING, (HCRYPTPROV_LEGACY)NULL, 0, signature->pkcs7.pbData, signature->pkcs7.cbData);
 	if (certStore == NULL){
 		KSI_LOG_debug(signature->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
@@ -580,7 +586,7 @@ int KSI_PKISignature_extractCertificate(const KSI_PKISignature *signature, KSI_P
 		goto cleanup;
 	 }
 
-	/*Counting signing certificates*/
+	/* Counting signing certificates. */
 	signerCount = CryptGetMessageSignerCount(PKCS_7_ASN_ENCODING, signature->pkcs7.pbData, signature->pkcs7.cbData);
 	if (signerCount == -1){
 		KSI_LOG_debug(signature->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
@@ -588,13 +594,13 @@ int KSI_PKISignature_extractCertificate(const KSI_PKISignature *signature, KSI_P
 		goto cleanup;
 	}
 
-	/*Is there exactly 1 signing cert?*/
+	/* Is there exactly 1 signing cert? */
 	if (signerCount != 1){
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "PKI signature certificate count is not 1.");
 		goto cleanup;
 	}
 
-	/*Open signature for decoding*/
+	/* Open signature for decoding. */
 	signaturMSG = CryptMsgOpenToDecode(PKCS_7_ASN_ENCODING, 0, 0,0, NULL, NULL);
 	if (signaturMSG == NULL){
 		DWORD error = GetLastError();
@@ -628,7 +634,7 @@ int KSI_PKISignature_extractCertificate(const KSI_PKISignature *signature, KSI_P
 		goto cleanup;
 	}
 
-	/*Get signatures signing cert id*/
+	/* Get signatures signing cert id. */
 	if (!CryptMsgGetParam (signaturMSG, CMSG_SIGNER_CERT_INFO_PARAM, 0, NULL, &dataLen)){
 		DWORD error = GetLastError();
 		const char *errmsg = getMSError(GetLastError(), buf, sizeof(buf));
@@ -656,16 +662,13 @@ int KSI_PKISignature_extractCertificate(const KSI_PKISignature *signature, KSI_P
 
 	pSignerCertInfo = (PCERT_INFO)dataRecieved;
 
-	/*Get signing cert*/
+	/* Get signing cert. */
 	signing_cert = CertGetSubjectCertificateFromStore(certStore, X509_ASN_ENCODING, pSignerCertInfo);
 	if (signing_cert == NULL){
 		KSI_LOG_debug(signature->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
 		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, "Unable to get PKI signatures signer certificate.");
 		goto cleanup;
 	}
-
-	/*The copy of the object is NOT created. Just its reference value is incremented*/
-	signing_cert = CertDuplicateCertificateContext(signing_cert);
 
 	tmp = KSI_new(KSI_PKICertificate);
 	tmp->ctx = signature->ctx;
@@ -926,10 +929,10 @@ static int pki_truststore_verifySignature(KSI_PKITruststore *pki, const unsigned
 
 	/* Verify signature and signed data. Certificate is extracted from signature. */
 	msgPara.cbSize = sizeof(CRYPT_VERIFY_MESSAGE_PARA);
-    msgPara.dwMsgAndCertEncodingType = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
-    msgPara.hCryptProv = 0;
-    msgPara.pfnGetSignerCertificate = NULL;
-    msgPara.pvGetArg = NULL;
+	msgPara.dwMsgAndCertEncodingType = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
+	msgPara.hCryptProv = 0;
+	msgPara.pfnGetSignerCertificate = NULL;
+	msgPara.pvGetArg = NULL;
 	dLen = (DWORD) data_len;
 
 	if (!CryptVerifyDetachedMessageSignature(&msgPara, 0, signature->pkcs7.pbData, signature->pkcs7.cbData, 1, &data, &dLen, &subjectCert)){

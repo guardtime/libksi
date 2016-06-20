@@ -99,10 +99,10 @@ static void Test_CreateSignatureDefaultProvider(CuTest* tc) {
 	res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), (const unsigned char*)"c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
 	CuAssert(tc, "Unable to create hash.", res == KSI_OK && hsh != NULL);
 
-	res = KSI_Signature_create(ctx, hsh, &sig);
+	res = KSI_Signature_sign(ctx, hsh, &sig);
 	CuAssert(tc, "Unable to create signature.", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_verifyDataHash(sig, ctx, hsh);
+	res = KSI_verifyDataHash(ctx, sig, hsh);
 	CuAssert(tc, "Unable to verify signature.", res == KSI_OK);
 
 	KSI_DataHash_free(hsh);
@@ -124,11 +124,11 @@ static void Test_TCPCreateSignatureDefaultProvider(CuTest* tc) {
 	res = KSI_CTX_setAggregator(ctx, conf.tcp_url, conf.tcp_user, conf.tcp_pass);
 	CuAssert(tc, "Unable to spoil aggregator authentication data.", res == KSI_OK);
 
-	res = KSI_Signature_create(ctx, hsh, &sig);
+	res = KSI_Signature_sign(ctx, hsh, &sig);
 	KSI_CTX_setAggregator(ctx, conf.aggregator_url, conf.aggregator_user, conf.aggregator_pass);
 	CuAssert(tc, "Unable to create signature.", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_verifyDataHash(sig, ctx, hsh);
+	res = KSI_verifyDataHash(ctx, sig, hsh);
 	CuAssert(tc, "Unable to verify signature.", res == KSI_OK);
 
 	KSI_DataHash_free(hsh);
@@ -151,7 +151,7 @@ static void Test_CreateSignatureWrongHMAC(CuTest* tc) {
 	CuAssert(tc, "Unable to spoil aggregator authentication data.", res == KSI_OK);
 
 	/*Reset old aggregator password.*/
-	res = KSI_Signature_create(ctx, hsh, &sig);
+	res = KSI_Signature_sign(ctx, hsh, &sig);
 	KSI_CTX_setAggregator(ctx, conf.aggregator_url, conf.aggregator_user, conf.aggregator_pass);
 	CuAssert(tc, "Unable to create signature.", res == KSI_SERVICE_AUTHENTICATION_FAILURE && sig == NULL);
 
@@ -176,7 +176,7 @@ static void Test_CreateSignatureUsingExtender(CuTest* tc) {
 	res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), (const unsigned char*)"c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
 	CuAssert(tc, "Unable to create hash.", res == KSI_OK && hsh != NULL);
 
-	res = KSI_Signature_create(ctx, hsh, &sig);
+	res = KSI_Signature_sign(ctx, hsh, &sig);
 	CuAssert(tc, "The creation of signature must fail.", sig == NULL);
 	CuAssert(tc, "Invalid KSI status code for mixed up request.", res == KSI_HTTP_ERROR);
 	CuAssert(tc, "External error (HTTP) must be 400.", ctx_get_base_external_error(ctx) == 400);
@@ -214,7 +214,7 @@ static void Test_CreateSignature_useProvider(CuTest* tc, const char *uri_host, u
 	res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), (const unsigned char*)"c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
 	CuAssert(tc, "Unable to create hash.", res == KSI_OK && hsh != NULL);
 
-	res = KSI_Signature_create(ctx, hsh, &sig);
+	res = KSI_Signature_sign(ctx, hsh, &sig);
 	CuAssert(tc, "The creation of signature must not fail.", sig != NULL);
 
 

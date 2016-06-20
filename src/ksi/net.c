@@ -892,9 +892,11 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 		goto cleanup;
 	}
 
-	KSI_LOG_logBlob(handle->ctx, KSI_LOG_DEBUG, "Parsing aggregation response from", raw, len);
+	KSI_LOG_logBlob(handle->ctx, KSI_LOG_DEBUG, "Parsing aggregation response:", raw, len);
 
-	/*Get PDU object*/
+
+
+	/* Get PDU object. */
 	res = KSI_AggregationPdu_parse(handle->ctx, raw, len, &pdu);
 	if(res != KSI_OK){
 		int networkStatus = handle->err.code;

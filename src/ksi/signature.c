@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2016 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -35,10 +35,10 @@ typedef struct headerRec_st HeaderRec;
 
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarHashChain);
 KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationRecord);
-KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationHashChain)
-KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationAuthRec)
-KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarAuthRec)
-KSI_IMPORT_TLV_TEMPLATE(KSI_RFC3161)
+KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationHashChain);
+KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationAuthRec);
+KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarAuthRec);
+KSI_IMPORT_TLV_TEMPLATE(KSI_RFC3161);
 
 /**
  * KSI_Signature
@@ -55,6 +55,8 @@ static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_CalendarAuthRec*, calendarAuthRec
 static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_AggregationAuthRec*, aggregationAuthRec, AggregationAuthRecord)
 static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_PublicationRecord*, publication, PublicationRecord)
 static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_RFC3161*, rfc3161, RFC3161)
+
+static int replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain);
 
 static int checkSignatureInternals(KSI_Signature *sig) {
 	if (sig == NULL) return KSI_INVALID_ARGUMENT;
@@ -76,6 +78,236 @@ void KSI_AggregationHashChain_free(KSI_AggregationHashChain *aggr) {
 		KSI_HashChainLinkList_free(aggr->chain);
 		KSI_free(aggr);
 	}
+}
+
+static int addChainIndex(KSI_CTX *ctx, KSI_AggregationHashChain *chain) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_LIST(KSI_Integer) *chainIndex = NULL;
+	KSI_Integer *shape = NULL;
+	KSI_uint64_t tmp;
+
+	if (chain == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_AggregationHashChain_getChainIndex(chain, &chainIndex);
+	if (res != KSI_OK) {
+		chainIndex = NULL;
+		goto cleanup;
+	}
+
+	if (chainIndex != NULL) {
+		chainIndex = NULL;
+		res = KSI_INVALID_STATE;
+		goto cleanup;
+	}
+
+	res = KSI_IntegerList_new(&chainIndex);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_AggregationHashChain_calculateShape(chain, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_Integer_new(ctx, tmp, &shape);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_IntegerList_append(chainIndex, shape);
+	if (res != KSI_OK) goto cleanup;
+	shape = NULL;
+
+	res = KSI_AggregationHashChain_setChainIndex(chain, chainIndex);
+	if (res != KSI_OK) goto cleanup;
+	chainIndex = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_IntegerList_free(chainIndex);
+	KSI_Integer_free(shape);
+
+	return res;
+}
+
+int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHashChain *aggr) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Integer *pAggrTm = NULL;
+	KSI_AggregationHashChain *pCurrent = NULL;
+	size_t listLen;
+	size_t i;
+	KSI_TLV *tlv = NULL;
+
+	if (sig == NULL || aggr == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(sig->ctx);
+
+	if (KSI_HashChainLinkList_length(aggr->chain) > 0) {
+		/* Get and update the aggregation time. */
+		res = KSI_Signature_getSigningTime(sig, &pAggrTm);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		aggr->aggregationTime = KSI_Integer_ref(pAggrTm);
+
+		/* Update the aggregation hash chain. */
+		listLen = KSI_AggregationHashChainList_length(sig->aggregationChainList);
+		if (listLen == 0) {
+			KSI_pushError(sig->ctx, res = KSI_INVALID_STATE, "Signature does not contain any aggregation hash chains.");
+			goto cleanup;
+		}
+
+		/* Just make sure there is a chain index present. */
+		if (aggr->chainIndex == NULL) {
+			res = addChainIndex(sig->ctx, aggr);
+			if (res != KSI_OK) {
+				KSI_pushError(sig->ctx, res, NULL);
+				goto cleanup;
+			}
+		}
+
+		/* We assume the aggregation hash chain is ordered and the first aggregation hash chain is the one
+		 * with the longest chain index.
+		 */
+		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &pCurrent);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		/* Traverse the chain index from back to forth, and add the values to the begining of the
+		 * aggregation hash chain.
+		 */
+		for (i = KSI_IntegerList_length(pCurrent->chainIndex); i > 0; i--) {
+			KSI_Integer *tmp = NULL;
+
+			res = KSI_IntegerList_elementAt(pCurrent->chainIndex, i - 1, &tmp);
+			if (res != KSI_OK) {
+				KSI_pushError(sig->ctx, res, NULL);
+				goto cleanup;
+			}
+
+			res = KSI_IntegerList_insertAt(aggr->chainIndex, 0, KSI_Integer_ref(tmp));
+			if (res != KSI_OK) {
+				KSI_pushError(sig->ctx, res, NULL);
+				goto cleanup;
+			}
+		}
+
+		/* Prepend the aggregation hash chain to the signature. */
+		res = KSI_AggregationHashChainList_insertAt(sig->aggregationChainList, 0, KSI_AggregationHashChain_ref(aggr));
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_TLV_new(sig->ctx, 0x0801, 0, 0, &tlv);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+
+
+		/** Serialize and append the TLV structure to the signature. */
+		res = KSI_TlvTemplate_construct(sig->ctx, tlv, aggr, KSI_TLV_TEMPLATE(KSI_AggregationHashChain));
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_TLV_appendNestedTlv(sig->baseTlv, tlv);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+		tlv = NULL;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_TLV_free(tlv);
+
+	return res;
+}
+
+
+int KSI_AggregationHashChain_aggregate(const KSI_AggregationHashChain *aggr, int startLevel, int *endLevel, KSI_DataHash **root) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (aggr == NULL || startLevel < 0 || startLevel > 0xff) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(aggr->ctx);
+
+	if (aggr->aggrHashId == NULL || aggr->chain == NULL || aggr->inputHash == NULL) {
+		KSI_pushError(aggr->ctx, res = KSI_INVALID_STATE, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_HashChain_aggregate(aggr->ctx, aggr->chain, aggr->inputHash, startLevel, KSI_Integer_getUInt64(aggr->aggrHashId), endLevel, root);
+	if (res != KSI_OK) {
+		KSI_pushError(aggr->ctx, res = KSI_INVALID_STATE, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_AggregationHashChain_calculateShape(KSI_AggregationHashChain *chn, KSI_uint64_t *shape) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_uint64_t tmp;
+	size_t i;
+
+	if (chn == NULL || shape == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	/* Left pad the value with 1. */
+	tmp = 1;
+
+	i = KSI_HashChainLinkList_length(chn->chain);
+	if (i > (sizeof(KSI_uint64_t) << 3) + 1) {
+		res = KSI_INVALID_STATE;
+		goto cleanup;
+	}
+
+	for (; i > 0; i--) {
+		KSI_HashChainLink *p = NULL;
+		int isLeft;
+		res = KSI_HashChainLinkList_elementAt(chn->chain, i - 1, &p);
+		if (res != KSI_OK) goto cleanup;
+
+		tmp <<= 1;
+
+		res = KSI_HashChainLink_getIsLeft(p, &isLeft);
+		if (res != KSI_OK) goto cleanup;
+
+		if (isLeft) {
+			tmp |= 1;
+		}
+	}
+
+	*shape = tmp;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
 }
 
 int KSI_AggregationHashChain_new(KSI_CTX *ctx, KSI_AggregationHashChain **out) {
@@ -382,6 +614,7 @@ static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
 	tmp->calendarAuthRec = NULL;
 	tmp->rfc3161 = NULL;
 	tmp->publication = NULL;
+	tmp->replaceCalendarChain = replaceCalendarChain;
 
 	res = KSI_VerificationResult_init(&tmp->verificationResult, ctx);
 	if (res != KSI_OK) {
@@ -433,7 +666,7 @@ static int extractSignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature **signatur
 	}
 
 	if (KSI_TLV_getTag(tlv) != 0x800) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Uni-Signature element is missing.");
 		goto cleanup;
 	}
 
@@ -452,11 +685,11 @@ static int extractSignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature **signatur
 
 	res = checkSignatureInternals(sig);
 	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
+		KSI_pushError(ctx, res, "Signature internal structures are invalid.");
 		goto cleanup;
 	}
 
-	/* Make sure the aggregation chains are in correct order. */
+	/* Make sure the aggregation hash chains are in correct order. */
 	res = KSI_AggregationHashChainList_sort(sig->aggregationChainList, aggregationHashChainCmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -608,7 +841,7 @@ int KSI_AggregationHashChainList_aggregate(KSI_AggregationHashChainList *chainLi
 		goto cleanup;
 	}
 
-	/* Aggregate all the aggregation chains. */
+	/* Aggregate all the aggregation hash chains. */
 	for (i = 0; i < KSI_AggregationHashChainList_length(chainList); i++) {
 		const KSI_AggregationHashChain* aggrChain = NULL;
 		KSI_DataHash *tmp = NULL;
@@ -646,10 +879,8 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain) {
+static int replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain) {
 	int res;
-	KSI_DataHash *newCalInputHash = NULL;
-	KSI_DataHash *oldCalInputHash = NULL;
 	KSI_DataHash *aggrOutputHash = NULL;
 	KSI_TLV *oldCalChainTlv = NULL;
 	KSI_TLV *newCalChainTlv = NULL;
@@ -661,33 +892,6 @@ int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain
 		goto cleanup;
 	}
 	KSI_ERR_clearErrors(sig->ctx);
-
-	res = KSI_CalendarHashChain_getInputHash(calendarHashChain, &newCalInputHash);
-	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	if (newCalInputHash == NULL) {
-		KSI_pushError(sig->ctx, res = KSI_INVALID_FORMAT, "Given calendar hash chain does not contain an input hash.");
-		goto cleanup;
-	}
-
-	res = (sig->calendarChain == NULL) ?
-			/* Calculate calendar input hash from signature aggregation hash chain list. */
-			KSI_AggregationHashChainList_aggregate(sig->aggregationChainList, sig->ctx, 0, &aggrOutputHash) :
-			/* Get calendar input hash from calendar hash chain. */
-			KSI_CalendarHashChain_getInputHash(sig->calendarChain, &oldCalInputHash);
-	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* The output hash and input hash have to be equal */
-	if (!KSI_DataHash_equals(newCalInputHash, (aggrOutputHash ? aggrOutputHash : oldCalInputHash))) {
-		KSI_pushError(sig->ctx, res = KSI_EXTEND_WRONG_CAL_CHAIN, NULL);
-		goto cleanup;
-	}
 
 	res = KSI_TLV_getNestedList(sig->baseTlv, &nestedList);
 	if (res != KSI_OK) {
@@ -748,8 +952,6 @@ int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain
 cleanup:
 
 	KSI_nofree(nestedList);
-	KSI_nofree(oldCalInputHash);
-	KSI_nofree(newCalInputHash);
 
 	KSI_DataHash_free(aggrOutputHash);
 	KSI_TLV_free(newCalChainTlv);
@@ -900,7 +1102,7 @@ static int parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp, KSI
 
 	/* Validate tag value */
 	if (KSI_TLV_getTag(respTlv) != 0x202) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Aggregation response element is missing.");
 		goto cleanup;
 	}
 
@@ -1050,8 +1252,7 @@ cleanup:
 
 static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *sig, KSI_uint64_t rootLevel, KSI_DataHash *docHsh) {
 	int res;
-	const KSI_Policy *policy = NULL;
-	KSI_VerificationContext *context = NULL;
+	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -1066,45 +1267,23 @@ static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *s
 		goto cleanup;
 	}
 
-	res = KSI_Policy_getInternal(ctx, &policy);
+	res = KSI_VerificationContext_init(&context, ctx);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = KSI_VerificationContext_create(ctx, &context);
+	context.signature = sig;
+	context.docAggrLevel = rootLevel;
+	context.documentHash = docHsh;
+
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
 	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
+		KSI_pushError(ctx, res, "Internal verification of signature aborted due to an error.");
 		goto cleanup;
 	}
 
-	res = KSI_VerificationContext_setSignature(context, sig);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_VerificationContext_setAggregationLevel(context, rootLevel);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	if (docHsh != NULL) {
-		res = KSI_VerificationContext_setDocumentHash(context, KSI_DataHash_ref(docHsh));
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
-	}
-
-	res = KSI_SignatureVerifier_verify(policy, context, &result);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, "Internal verification of signature not completed.");
-		goto cleanup;
-	}
-
-	if (result->finalResult.resultCode != VER_RES_OK) {
+	if (result->finalResult.resultCode != KSI_VER_RES_OK) {
 		res = KSI_VERIFICATION_FAILURE;
 		KSI_pushError(ctx, res, "Internal verification of signature failed.");
 		goto cleanup;
@@ -1114,14 +1293,12 @@ static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *s
 
 cleanup:
 
-	KSI_VerificationContext_setSignature(context, NULL);
-	KSI_VerificationContext_free(context);
 	KSI_PolicyVerificationResult_free(result);
 
 	return res;
 }
 
-int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature) {
+int KSI_Signature_signAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature) {
 	int res;
 	KSI_RequestHandle *handle = NULL;
 	KSI_AggregationResp *response = NULL;
@@ -1190,8 +1367,62 @@ cleanup:
 	return res;
 }
 
+int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature) {
+	return KSI_Signature_signAggregated(ctx, rootHash, rootLevel, signature);
+}
+
+
+int KSI_Signature_sign(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature) {
+	return KSI_Signature_signAggregated(ctx, hsh, 0, signature);
+}
+
 int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature) {
-	return KSI_Signature_createAggregated(ctx, hsh, 0, signature);
+	return KSI_Signature_sign(ctx, hsh, signature);
+}
+
+int KSI_Signature_signAggregationChain(KSI_CTX *ctx, int level, KSI_AggregationHashChain *chn, KSI_Signature **signature) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Signature *tmp = NULL;
+	KSI_DataHash *root = NULL;
+	int root_level;
+
+	if (ctx == NULL || level > 0xff || level < 0 || chn == NULL || signature == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(ctx);
+
+	/* Aggregate the hash chain. */
+	res = KSI_AggregationHashChain_aggregate(chn, level, &root_level, &root);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_Signature_signAggregated(ctx, root, root_level, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_Signature_appendAggregationChain(tmp, chn);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	*signature = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_Signature_free(tmp);
+	KSI_DataHash_free(root);
+
+	return res;
 }
 
 int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *to, KSI_Signature **extended) {
@@ -1266,7 +1497,7 @@ int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *
 	}
 
 	/* Add the hash chain to the signature. */
-	res = KSI_Signature_replaceCalendarChain(tmp, calHashChain);
+	res = tmp->replaceCalendarChain(tmp, calHashChain);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1497,9 +1728,6 @@ int KSI_Signature_clone(const KSI_Signature *sig, KSI_Signature **clone) {
 		goto cleanup;
 	}
 
-	KSI_LOG_logTlv(sig->ctx, KSI_LOG_DEBUG, "Original TLV", sig->baseTlv);
-	KSI_LOG_logTlv(sig->ctx, KSI_LOG_DEBUG, "Cloned TLV", tlv);
-
 	res = extractSignature(sig->ctx, tlv, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
@@ -1683,7 +1911,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 		goto cleanup;
 	}
 
-	/* Extract all identities from all aggregation chains from top to bottom. */
+	/* Extract all identities from all aggregation hash chains from top to bottom. */
 	for (i = KSI_AggregationHashChainList_length(sig->aggregationChainList); i-- > 0;) {
 		KSI_AggregationHashChain *aggrRec = NULL;
 
@@ -1695,7 +1923,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 
 		for (j = KSI_HashChainLinkList_length(aggrRec->chain); j-- > 0;) {
 			KSI_HashChainLink *link = NULL;
-			KSI_MetaData *metaData = NULL;
+			KSI_MetaDataElement *metaData = NULL;
 			KSI_OctetString *legacyId = NULL;
 
 			res = KSI_HashChainLinkList_elementAt(aggrRec->chain, j, &link);
@@ -1738,7 +1966,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 			} else if (metaData != NULL) {
 				KSI_Utf8String *clientId = NULL;
 
-				res = KSI_MetaData_getClientId(metaData, &clientId);
+				res = KSI_MetaDataElement_getClientId(metaData, &clientId);
 				if (res != KSI_OK) {
 					KSI_pushError(sig->ctx, res, NULL);
 					goto cleanup;
@@ -1776,7 +2004,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 			goto cleanup;
 		}
 
-		signerId_len += (unsigned)KSI_snprintf(signerId + signerId_len, signerId_size - signerId_len, "%s%s", signerId_len > 0 ? " :: " : "", KSI_Utf8String_cstr(tmp));
+		signerId_len += KSI_snprintf(signerId + signerId_len, signerId_size - signerId_len, "%s%s", signerId_len > 0 ? " :: " : "", KSI_Utf8String_cstr(tmp));
 	}
 
 	*signerIdentity = signerId;
@@ -1997,8 +2225,7 @@ cleanup:
 int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, size_t doc_len) {
 	int res;
 	KSI_DataHash *hsh = NULL;
-	const KSI_Policy *policy = NULL;
-	KSI_VerificationContext *context = NULL;
+	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_HashAlgorithm algo_id = -1;
 
@@ -2020,37 +2247,22 @@ int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, si
 		goto cleanup;
 	}
 
-	res = KSI_Policy_getGeneral(ctx, &policy);
+	res = KSI_VerificationContext_init(&context, ctx);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = KSI_VerificationContext_create(ctx, &context);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
+	context.signature = sig;
+	context.documentHash = hsh;
 
-	res = KSI_VerificationContext_setSignature(context, sig);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_VerificationContext_setDocumentHash(context, hsh);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_SignatureVerifier_verify(policy, context, &result);
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, "Verification of signature not completed.");
 		goto cleanup;
 	}
 
-	if (result->finalResult.resultCode != VER_RES_OK) {
+	if (result->finalResult.resultCode != KSI_VER_RES_OK) {
 		res = KSI_VERIFICATION_FAILURE;
 		KSI_pushError(ctx, res, "Verification of signature failed.");
 		goto cleanup;
@@ -2060,9 +2272,6 @@ int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, si
 
 cleanup:
 
-	KSI_VerificationContext_setSignature(context, NULL); /* Prevent the freeing of signature. */
-	KSI_VerificationContext_setDocumentHash(context, NULL); /* Prevent the freeing of document hash. */
-	KSI_VerificationContext_free(context);
 	KSI_PolicyVerificationResult_free(result);
 	KSI_DataHash_free(hsh);
 

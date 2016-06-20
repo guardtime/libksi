@@ -87,18 +87,18 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationRecord)
 	KSI_TLV_OBJECT_LIST(0x0a, KSI_TLV_TMPL_FLG_NONE, KSI_PublicationRecord_getRepositoryUriList, KSI_PublicationRecord_setRepositoryUriList, KSI_Utf8StringNZ, "uri")
 KSI_END_TLV_TEMPLATE
 
-KSI_DEFINE_TLV_TEMPLATE(KSI_MetaData)
-	KSI_TLV_UTF8_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_MetaData_getClientId, KSI_MetaData_setClientId, "client_id")
-	KSI_TLV_UTF8_STRING(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_MetaData_getMachineId, KSI_MetaData_setMachineId, "machine_id")
-	KSI_TLV_INTEGER(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_MetaData_getSequenceNr, KSI_MetaData_setSequenceNr, "seq_nr")
-	KSI_TLV_TIME_US(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_MetaData_getRequestTimeInMicros, KSI_MetaData_setRequestTimeInMicros, "req_time")
+KSI_DEFINE_TLV_TEMPLATE(KSI_MetaDataElement)
+	KSI_TLV_UTF8_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_MetaDataElement_getClientId, KSI_MetaDataElement_setClientId, "client_id")
+	KSI_TLV_UTF8_STRING(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_MetaDataElement_getMachineId, KSI_MetaDataElement_setMachineId, "machine_id")
+	KSI_TLV_INTEGER(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_MetaDataElement_getSequenceNr, KSI_MetaDataElement_setSequenceNr, "seq_nr")
+	KSI_TLV_TIME_US(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_MetaDataElement_getRequestTimeInMicros, KSI_MetaDataElement_setRequestTimeInMicros, "req_time")
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_HashChainLink)
 	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_HashChainLink_getLevelCorrection, KSI_HashChainLink_setLevelCorrection, "level_correction")
 	KSI_TLV_IMPRINT(0x02, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getImprint, KSI_HashChainLink_setImprint, "imprint")
 	KSI_TLV_OBJECT(0x03, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getLegacyId, KSI_HashChainLink_setLegacyId, KSI_HashChainLink_LegacyId_fromTlv, KSI_HashChainLink_LegacyId_toTlv, KSI_OctetString_free, "legacy_id")
-	KSI_TLV_COMPOSITE_OBJECT(0x04, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getMetaData, KSI_HashChainLink_setMetaData, KSI_MetaData_fromTlv, KSI_MetaData_toTlv, KSI_MetaData_free, KSI_TLV_TEMPLATE(KSI_MetaData), "meta_data")
+	KSI_TLV_COMPOSITE_OBJECT(0x04, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_HashChainLink_getMetaData, KSI_HashChainLink_setMetaData, KSI_MetaDataElement_fromTlv, KSI_MetaDataElement_toTlv, KSI_MetaDataElement_free, KSI_TLV_TEMPLATE(KSI_MetaDataElement), "meta_data")
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_Header)
@@ -418,8 +418,6 @@ int KSI_TlvTemplate_parse(KSI_CTX *ctx, const unsigned char *raw, size_t raw_len
 		goto cleanup;
 	}
 
-	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Parsed TLV", tlv);
-
 	res = KSI_OK;
 
 cleanup:
@@ -561,7 +559,7 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 	}
 	memset(templateHit, 0, sizeof(templateHit));
 
-	while (1) {
+	for (;;) {
 		int matchCount = 0;
 		res = generator(generatorCtx, &tlv);
 		if (res != KSI_OK) {
@@ -732,7 +730,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 
 
 	for (i = 0; i < template_len; i++) {
-		if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_NO_SERIALIZE) != 0) continue;
+		if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_NO_SERIALIZE)) continue;
 		payloadp = NULL;
 
 		res = tmpl[i].getValue(payload, &payloadp);
@@ -750,27 +748,46 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 
 			templateHit[i] = true;
 
-			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G0) != 0) groupHit[0] = true;
-			if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G1) != 0) groupHit[1] = true;
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_LEAST_ONE_G0)) {
+				if (tmpl[i].listLength != NULL && tmpl[i].listLength(payloadp) == 0) {
+					KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Mandatory list object is empty within group 0.");
+					goto cleanup;
+				}
+				groupHit[0] = true;
+			}
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_LEAST_ONE_G1)) {
+				if (tmpl[i].listLength != NULL && tmpl[i].listLength(payloadp) == 0) {
+					KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Mandatory list object is empty within group 1.");
+					goto cleanup;
+				}
+				groupHit[1] = true;
+			}
+
 			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G0)) {
 				if (oneOf[0]) {
 					char errm[1000];
 					KSI_snprintf(errm, sizeof(errm), "Mutually exclusive elements present within group 0 (%s).", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));
 					KSI_pushError(ctx, res = KSI_INVALID_FORMAT, errm);
+					goto cleanup;
 				}
-				oneOf[0] = true;
+				if ((tmpl[i].listLength == NULL) || (tmpl[i].listLength != NULL && tmpl[i].listLength(payloadp) > 0)) {
+					oneOf[0] = true;
+				}
 			}
 			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G1)) {
 				if (oneOf[1]) {
 					char errm[1000];
 					KSI_snprintf(errm, sizeof(errm), "Mutually exclusive elements present within group 1 (%s).", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));
 					KSI_pushError(ctx, res = KSI_INVALID_FORMAT, errm);
+					goto cleanup;
 				}
-				oneOf[1] = true;
+				if ((tmpl[i].listLength == NULL) || (tmpl[i].listLength != NULL && tmpl[i].listLength(payloadp) > 0)) {
+					oneOf[1] = true;
+				}
 			}
 
-			isNonCritical = (tmpl[i].flags & KSI_TLV_TMPL_FLG_NONCRITICAL) != 0;
-			isForward = (tmpl[i].flags & KSI_TLV_TMPL_FLG_FORWARD) != 0;
+			isNonCritical = IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_NONCRITICAL);
+			isForward = IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_FORWARD);
 
 			switch (tmpl[i].type) {
 				case KSI_TLV_TEMPLATE_OBJECT:
@@ -885,14 +902,14 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 	/* Check that every mandatory component was present. */
 	for (i = 0; i < template_len; i++) {
 		char errm[1000];
-		if ((tmpl[i].flags & KSI_TLV_TMPL_FLG_MANDATORY) != 0 && !templateHit[i]) {
+		if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MANDATORY) && !templateHit[i]) {
 			KSI_snprintf(errm, sizeof(errm), "Mandatory element missing: %s->[0x%02x]%s", track_str(tr, tr_len, tr_size, buf, sizeof(buf)), tmpl[i].tag, tmpl[i].descr == NULL ? "" : tmpl[i].descr);
 			KSI_LOG_debug(ctx, "%s", errm);
 			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, errm);
 			goto cleanup;
 		}
-		if (((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G0) != 0 && !groupHit[0]) ||
-				((tmpl[i].flags & KSI_TLV_TMPL_FLG_LEAST_ONE_G1) != 0 && !groupHit[1])) {
+		if ((IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_LEAST_ONE_G0) && !groupHit[0]) ||
+				(IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_LEAST_ONE_G1) && !groupHit[1])) {
 			KSI_snprintf(errm, sizeof(errm), "Mandatory group missing: %s->[0x%02x]%s", track_str(tr, tr_len, tr_size, buf, sizeof(buf)), tmpl[i].tag, tmpl[i].descr == NULL ? "" : tmpl[i].descr);
 			KSI_LOG_debug(ctx, "%s", errm);
 			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, errm);
@@ -942,8 +959,6 @@ int KSI_TlvTemplate_serializeObject(KSI_CTX *ctx, const void *obj, unsigned tag,
 		goto cleanup;
 	}
 
-	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Serializing object", tlv);
-
 	/* Serialize the TLV. */
 	res = KSI_TLV_serialize(tlv, &tmp, &tmp_len);
 	if (res != KSI_OK) {
@@ -988,8 +1003,6 @@ int KSI_TlvTemplate_writeBytes(KSI_CTX *ctx, const void *obj, unsigned tag, int 
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-
-	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Serializing object", tlv);
 
 	/* Serialize the TLV. */
 	res = KSI_TLV_writeBytes(tlv, raw, raw_size, raw_len, opt);

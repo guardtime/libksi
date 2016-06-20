@@ -112,7 +112,13 @@ extern "C" {
 	 * recomended.
 	 * \see #KSI_createSignature, KSI_Signature_free
 	 */
-	int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature);
+	int KSI_Signature_sign(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature);
+
+	/**
+	 * \deprecated This function is deprecated and #KSI_Signature_sign should be used instead.
+	 * \see #KSI_Signature_sign
+	 */
+	KSI_FN_DEPRECATED(int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature));
 
 	/**
 	 * This function signs the given root hash value (\c rootHash) with the aggregation level (\c rootLevel)
@@ -126,7 +132,25 @@ extern "C" {
 	 * error code).
 	 * \see #KSI_createSignature, KSI_Signature_create, KSI_Signature_free.
 	 */
-	int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature);
+	int KSI_Signature_signAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature);
+
+	/**
+	 * \deprecated This function is deprecated and #KSI_Signature_signAggregated should be used instead.
+	 * \see #KSI_Signature_signAggregated
+	 */
+	KSI_FN_DEPRECATED(int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature));
+
+	/**
+	 * This function creates a new signature using the aggrehation hash chain as the input. The aggregation hash chain will
+	 * be included in the signature itself.
+	 * \param[in]		ctx			KSI context.
+	 * \param[in]		level		The level of the input hash of the aggregation hash chain.
+	 * \param[in]		chn			Aggregation hash chain.
+	 * \param[out]		signature	Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note The function does not consume the aggregation hash chain - the caller must free the resource.
+	 */
+	int KSI_Signature_signAggregationChain(KSI_CTX *ctx, int level, KSI_AggregationHashChain *chn, KSI_Signature **signature);
 
 	/**
 	 * This function extends the signature to the given publication \c pubRec. If \c pubRec is \c NULL the signature is
@@ -241,15 +265,6 @@ extern "C" {
 	int KSI_createExtendRequest(KSI_CTX *ctx, KSI_Integer *start, KSI_Integer *end, KSI_ExtendReq **request);
 
 	/**
-	 * This function replaces the signatures calendar hash chain
-	 * \param [in]		sig					KSI signature.
-	 * \param [in]		calendarHashChain	Pointer to the calendar hash chain
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
-	 */
-	int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain);
-
-	/**
 	 * Replaces the existing publication record of the signature.
 	 * \param[in]	sig		KSI signature.
 	 * \param[in]	pubRec	Publication record.
@@ -258,8 +273,49 @@ extern "C" {
 	 */
 	int KSI_Signature_replacePublicationRecord(KSI_Signature *sig, KSI_PublicationRecord *pubRec);
 
+	/**
+	 * Cleanup method for the aggregation hash chain.
+	 * \param[in]	aggr		Aggregation hash chain.
+	 */
 	void KSI_AggregationHashChain_free(KSI_AggregationHashChain *aggr);
+
+	/**
+	 * Aggregation hash chain constructor.
+	 * \param[in]	ctx			KSI context.
+	 * \param[out]	out			Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
 	int KSI_AggregationHashChain_new(KSI_CTX *ctx, KSI_AggregationHashChain **out);
+
+	/**
+	 * This function appends the aggregation chain to the signature. This function also updates
+	 * the aggregation time and chain index.
+	 * \param[in]	sig			KSI signature.
+	 * \param[in]	aggr		Aggregation chain.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHashChain *aggr);
+
+	/**
+	 * Aggregate the aggregation chain.
+	 * \param[in]	aggr		The aggregation chain.
+	 * \param[in]	startLevel	The level of the first chain link.
+	 * \param[out]	endLevel	The level of the root node. Can be NULL.
+	 * \param[out]	root		Pointer to the receiving pointer. Can be NULL.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_AggregationHashChain_aggregate(const KSI_AggregationHashChain *aggr, int startLevel, int *endLevel, KSI_DataHash **root);
+
+	/**
+	 * This function will represent the shape of the aggregation chain. The bits represent the path from the root
+	 * of the tree to the location of a hash value as a sequence of moves from a parent node in the tree to either
+	 * the left or right child (bit values 0 and 1, respectively). Each bit sequence starts with a 1-bit to make
+	 * sure no left most 0-bits are lost.
+	 * \param[in]	chn			The aggregation chain.
+	 * \param[out]	shape		Pointer to the receiving variable.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_AggregationHashChain_calculateShape(KSI_AggregationHashChain *chn, KSI_uint64_t *shape);
 
 	int KSI_AggregationHashChain_getAggregationTime(const KSI_AggregationHashChain *aggr, KSI_Integer **aggregationTime);
 	int KSI_AggregationHashChain_getChainIndex(const KSI_AggregationHashChain * aggr, KSI_LIST(KSI_Integer) **chainIndex);
