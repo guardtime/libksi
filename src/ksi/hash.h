@@ -123,12 +123,21 @@ extern "C" {
 	int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_length);
 
 	/**
-	 * Adds the imprint of the given datahash to the hasher.
+	 * Adds the imprint value to the hash computation.
 	 * \param[in]	hasher				Hasher object.
 	 * \param[in]	hsh					Datahash object.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_DataHasher_addImprint(KSI_DataHasher *hasher, const KSI_DataHash *hsh);
+
+	/**
+	 * Adds the value of the octet string to the hash computation.
+	 * \param[in]	hasher				Hasher object.
+	 * \param[in]	data				Octet string object.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_DataHasher_addOctetString(KSI_DataHasher *hasher, KSI_OctetString *data);
+
 	/**
 	 * Finalizes a hash computation.
 	 * \param[in]	hasher			Hasher object.
@@ -324,6 +333,15 @@ extern "C" {
 	 * \return Returns the pointer to the buffer or NULL on error.
 	 */
 	char *KSI_DataHash_toString(const KSI_DataHash *hsh, char *buf, size_t buf_len);
+
+	/**
+	 * Creates a hash value where all the bits in the digest are set to zero.
+	 * \param[in]		ctx			KSI context.
+	 * \param[in]		algo_id		The hash algorithm id.
+	 * \param[out]		hsh			Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_DataHash_createZero(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHash **hsh);
 
 	KSI_DEFINE_REF(KSI_DataHash);
 /**

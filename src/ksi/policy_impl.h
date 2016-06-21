@@ -28,51 +28,18 @@
 extern "C" {
 #endif
 
-typedef enum RuleType_en {
-	RULE_TYPE_BASIC,
-	RULE_TYPE_COMPOSITE_AND,
-	RULE_TYPE_COMPOSITE_OR
-} RuleType;
-
 typedef int (*Verifier)(KSI_VerificationContext *, KSI_RuleVerificationResult *);
 
-typedef struct Rule_st {
-	RuleType type;
-	const void *rule;
-} Rule;
-
-KSI_DEFINE_LIST(Rule);
-
 struct KSI_Policy_st {
-	const Rule *rules;
+	const KSI_Rule *rules;
 	const KSI_Policy *fallbackPolicy;
 	const char *policyName;
 };
 
-typedef struct VerificationUserData_st {
-	/** Signature to be verified */
-	KSI_Signature *sig;
-
-	/** Indicates whether signature extention is allowed */
-	int extendingAllowed;
-
-	/** Initial aggregation level. */
-	KSI_uint64_t docAggrLevel;
-
-	/** Document hash to be verified. */
-	KSI_DataHash *documentHash;
-
-	/** Publication string to be used. */
-	KSI_PublicationData *userPublication;
-
-	/** Publication file to be used. */
-	KSI_PublicationsFile *userPublicationsFile;
-} VerificationUserData;
-
 typedef struct VerificationTempData_st {
 
-	/** Temporary extended signature */
-	KSI_Signature *extendedSig;
+	/** Temporary extended signature calendar hash chain. */
+	KSI_CalendarHashChain *calendarChain;
 
 	/** Publicationsfile to be used. The memory may not be freed! */
 	KSI_PublicationsFile *publicationsFile;
@@ -81,13 +48,6 @@ typedef struct VerificationTempData_st {
 	KSI_DataHash *aggregationOutputHash;
 } VerificationTempData;
 
-struct KSI_VerificationContext_st {
-	KSI_CTX *ctx;
-
-	VerificationUserData userData;
-
-	VerificationTempData tempData;
-};
 
 #ifdef	__cplusplus
 }

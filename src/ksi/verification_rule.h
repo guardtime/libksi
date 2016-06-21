@@ -29,7 +29,7 @@ extern "C" {
 
 	/**
 	 * This rule verifies that if RFC3161 record is present then the calculated output hash (from RFC3161 record) equals to
-	 * aggregation chain input hash. If RFC3161 record is missing then the status {@link VerificationResultCode#OK} is
+	 * aggregation chain input hash. If RFC3161 record is missing then the status #KSI_VER_RES_OK is
 	 * returned.
 	 *
 	 * \param[in]	info		Verification context to be used for given rule
@@ -38,6 +38,16 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_VerificationRule_AggregationChainInputHashVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * This rule verifies that the metadata structures contain a valid padding and ensure that metadata cannot be interpreted as an imprint.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_AggregationChainMetaDataVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule verifies that all aggregation hash chains are consistent (e.g, previous aggregation output hash equals to current aggregation chain input hash)
@@ -59,6 +69,16 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_VerificationRule_AggregationHashChainTimeConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * This rule is used to check whether the shape of the aggregation hash chain does match with the chain index.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to verify that last aggregation hash chain output hash equals to calendar hash chain input hash.
@@ -182,15 +202,15 @@ extern "C" {
 
 	/**
 	 * This rule checks that:
-	 * - the extended signature contains the same count of right aggregation hash chain links
-	 * - the extended signature right aggregation hash chain links are equal to the not extended signature right links
+	 * - the extended signature contains the same count of right calendar hash chain links
+	 * - the extended signature right calendar hash chain links are equal to the not extended signature right links
 	 *
 	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to check if keyless signature contains publication record or not.
@@ -317,7 +337,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_PublicationsFileContainsPublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_PublicationsFileContainsSuitablePublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule can be used to check if signature extending is permitted or not.
@@ -363,12 +383,22 @@ extern "C" {
 	/**
 	 * This rule is used to verify if user has provided the publication
 	 *
-	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[in]	info		Verification context to be used for given rule.
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_VerificationRule_UserProvidedPublicationExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * This rule is used to verify that the user has NOT provided a publication.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule.
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_RequireNoUserProvidedPublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used verify that user provided publication equals to publication inside the signature.
@@ -419,8 +449,6 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
-
-
 
 #ifdef __cplusplus
 }

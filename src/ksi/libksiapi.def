@@ -1,5 +1,5 @@
 ;
-; Copyright 2013-2015 Guardtime, Inc.
+; Copyright 2013-2016 Guardtime, Inc.
 ;
 ; This file is part of the Guardtime client SDK.
 ;
@@ -27,6 +27,16 @@ EXPORTS
 	KSI_base32Decode
 	KSI_base32Encode
 
+;blocksigner.h
+EXPORTS
+	KSI_BlockSigner_new
+	KSI_BlockSigner_free
+	KSI_BlockSigner_close
+	KSI_BlockSigner_reset
+	KSI_BlockSigner_addLeaf
+	KSI_BlockSignerHandle_getSignature
+	KSI_BlockSignerHandle_free
+
 ;crc32.h
 EXPORTS
 	KSI_crc32
@@ -50,6 +60,8 @@ EXPORTS
 	KSI_DataHasher_reset
 	KSI_DataHasher_add
 	KSI_DataHasher_addImprint
+	KSI_DataHasher_addOctetString
+	KSI_DataHash_createZero
 	KSI_DataHasher_close
 	KSI_DataHasher_free
 	KSI_DataHash_free
@@ -104,6 +116,7 @@ EXPORTS
 	KSI_CalendarHashChain_setInputHash
 	KSI_CalendarHashChain_setHashChain
 	KSI_CalendarHashChain_writeBytes
+	KSI_CalendarHashChain_ref
 
 ;hmac.h
 EXPORTS
@@ -116,13 +129,6 @@ EXPORTS
 
 ;io.h
 EXPORTS
-	KSI_RDR_fromStream
-	KSI_RDR_fromSharedMem
-	KSI_RDR_isEOF
-	KSI_RDR_getOffset
-	KSI_RDR_read_ex
-	KSI_RDR_read_ptr
-	KSI_RDR_close
 	KSI_IO_readSocket
 	KSI_IO_readFile
 ;ksi.h
@@ -144,6 +150,7 @@ EXPORTS
 	KSI_receivePublicationsFile
 	KSI_verifyPublicationsFile
 	KSI_verifySignature
+	KSI_verifyDataHash
 	KSI_createSignature
 	KSI_extendSignature
 	KSI_CTX_setLogLevel
@@ -258,6 +265,7 @@ EXPORTS
 
 ;pkitruststore.h
 EXPORTS
+	KSI_PKITruststore_registerGlobals
 	KSI_PKITruststore_new
 	KSI_PKITruststore_free
 	KSI_PKICertificate_new
@@ -281,6 +289,7 @@ EXPORTS
 ;publicationsfile.h
 EXPORTS
 	KSI_PublicationsFile_parse
+	KSI_PublicationsFile_ref
 	KSI_PublicationsFile_fromFile
 	KSI_PublicationsFile_serialize
 	KSI_PublicationsFile_verify
@@ -297,6 +306,7 @@ EXPORTS
 	KSI_PublicationsFile_findPublication
 	KSI_PublicationsFile_getSignedDataLength
 	KSI_PublicationData_fromBase32
+	KSI_PublicationData_ref
 	KSI_PublicationData_toBase32
 	KSI_PublicationData_free
 	KSI_PublicationData_new
@@ -348,7 +358,6 @@ EXPORTS
 	KSI_Signature_getPublicationRecord
 	KSI_Signature_verifyDataHash
 	KSI_Signature_getVerificationResult
-	KSI_Signature_replaceCalendarChain
 	KSI_Signature_replacePublicationRecord
 	KSI_Signature_getCalendarAuthRec
 	KSI_AggregationHashChain_free
@@ -366,8 +375,24 @@ EXPORTS
 	KSI_AggregationHashChain_setAggrHashId
 	KSI_AggregationHashChain_setChain
 	KSI_AggregationHashChain_writeBytes
+	KSI_Signature_getPublicationInfo
 	KSI_AggregationHashChainList_aggregate
 	KSI_Signature_getPublicationInfo
+	KSI_Signature_signAggregated
+	KSI_Signature_sign
+	KSI_Signature_signAggregationChain
+	KSI_AggregationHashChain_aggregate
+
+;tlv_element.h
+EXPORTS
+	KSI_TlvElement_new
+	KSI_TlvElement_free
+	KSI_TlvElement_serialize
+	KSI_TlvElement_getUtf8String
+	KSI_TlvElement_getOctetString
+	KSI_TlvElement_getInteger
+	KSI_TlvElement_setUtf8String
+	KSI_TlvElement_setInteger
 
 ;tlv.h
 EXPORTS
@@ -391,13 +416,22 @@ EXPORTS
 	KSI_TLV_clone
 	KSI_TLV_setUintValue
 	KSI_TLV_setRawValue
-	KSI_TLV_fromReader
 	KSI_TLV_getAbsoluteOffset
 	KSI_TLV_getRelativeOffset
 	KSI_TLV_parseBlob2
 	KSI_TLV_writeBytes
 
-;tlvtemplates.h
+;tree_builder.h
+EXPORTS
+	KSI_TreeLeafHandle_free
+	KSI_TreeLeafHandle_getAggregationChain
+	KSI_TreeBuilder_new
+	KSI_TreeBuilder_free
+	KSI_TreeBuilder_addDataHash
+	KSI_TreeBuilder_addMetaData
+	KSI_TreeBuilder_close
+
+;tlv_template.h
 EXPORTS
 	KSI_TlvTemplate_extract
 	KSI_TlvTemplate_parse
@@ -408,7 +442,6 @@ EXPORTS
 
 ;TLV templates
 EXPORTS
-	KSI_AggregationPdu_template DATA
 	KSI_Signature_template DATA
 	KSI_CalAuthRecPKISignedData_template DATA
 	KSI_AggrAuthRecPKISignedData_template DATA
@@ -416,7 +449,7 @@ EXPORTS
 	KSI_CertificateRecord_template DATA
 	KSI_PublicationData_template DATA
 	KSI_PublicationRecord_template DATA
-	KSI_MetaData_template DATA
+	KSI_MetaDataElement_template DATA
 	KSI_HashChainLink_template DATA
 	KSI_Header_template DATA
 	KSI_Config_template DATA
@@ -435,22 +468,36 @@ EXPORTS
 	KSI_ExtendPdu_template DATA
 	KSI_PublicationsFile_template DATA
 
+;tree_builder.h
+	KSI_TreeLeafHandle_free
+	KSI_TreeLeafHandle_getAggregationChain
+	KSI_TreeBuilder_new
+	KSI_TreeBuilder_free
+	KSI_TreeBuilder_addDataHash
+	KSI_TreeBuilder_addMetaData
+	KSI_TreeBuilder_close
+
 ;types.h
 EXPORTS
+	KSI_MetaDataElement_free
+	KSI_MetaDataElement_new
+	KSI_MetaDataElement_getClientId
+	KSI_MetaDataElement_getMachineId
+	KSI_MetaDataElement_getSequenceNr
+	KSI_MetaDataElement_getRequestTimeInMicros
+	KSI_MetaDataElement_setClientId
+	KSI_MetaDataElement_setMachineId
+	KSI_MetaDataElement_setSequenceNr
+	KSI_MetaDataElement_setRequestTimeInMicros
+	KSI_MetaDataElement_toTlv
+	KSI_MetaDataElement_fromTlv
+	KSI_MetaDataElement_ref
 	KSI_MetaData_free
 	KSI_MetaData_new
-	KSI_MetaData_getRaw
-	KSI_MetaData_getClientId
-	KSI_MetaData_getMachineId
-	KSI_MetaData_getSequenceNr
-	KSI_MetaData_getRequestTimeInMicros
-	KSI_MetaData_setRaw
 	KSI_MetaData_setClientId
 	KSI_MetaData_setMachineId
 	KSI_MetaData_setSequenceNr
 	KSI_MetaData_setRequestTimeInMicros
-	KSI_MetaData_fromTlv
-	KSI_MetaData_toTlv
 	KSI_ExtendPdu_free
 	KSI_ExtendPdu_new
 	KSI_ExtendPdu_calculateHmac
@@ -632,6 +679,7 @@ EXPORTS
 	KSI_OctetString_toTlv
 	KSI_OctetString_toString
 	KSI_OctetString_ref
+	KSI_OctetString_LegacyId_getUtf8String
 	KSI_Utf8String_free
 	KSI_Utf8String_new
 	KSI_Utf8String_size
@@ -660,20 +708,19 @@ EXPORTS
 	KSI_TLV_getCtx
 	KSI_NetworkClient_getCtx
 	KSI_RequestHandle_getCtx
-	KSI_RDR_getCtx
 
 ;List implementations
 EXPORTS
-	KSI_MetaDataList_free
-	KSI_MetaDataList_new
-	KSI_MetaDataList_append
-	KSI_MetaDataList_indexOf
-	KSI_MetaDataList_insertAt
-	KSI_MetaDataList_replaceAt
-	KSI_MetaDataList_remove
-	KSI_MetaDataList_length
-	KSI_MetaDataList_elementAt
-	KSI_MetaDataList_sort
+	KSI_MetaDataElementList_free
+	KSI_MetaDataElementList_new
+	KSI_MetaDataElementList_append
+	KSI_MetaDataElementList_indexOf
+	KSI_MetaDataElementList_insertAt
+	KSI_MetaDataElementList_replaceAt
+	KSI_MetaDataElementList_remove
+	KSI_MetaDataElementList_length
+	KSI_MetaDataElementList_elementAt
+	KSI_MetaDataElementList_sort
 
 	KSI_HashChainLinkList_free
 	KSI_HashChainLinkList_new
@@ -961,8 +1008,10 @@ EXPORTS
 ;verification_rule.h
 EXPORTS
 	KSI_VerificationRule_AggregationChainInputHashVerification
+	KSI_VerificationRule_AggregationChainMetaDataVerification
 	KSI_VerificationRule_AggregationHashChainConsistency
 	KSI_VerificationRule_AggregationHashChainTimeConsistency
+	KSI_VerificationRule_AggregationHashChainIndexConsistency
 	KSI_VerificationRule_CalendarHashChainInputHashVerification
 	KSI_VerificationRule_CalendarHashChainAggregationTime
 	KSI_VerificationRule_CalendarHashChainRegistrationTime
@@ -974,7 +1023,7 @@ EXPORTS
 	KSI_VerificationRule_DocumentHashDoesNotExist
 	KSI_VerificationRule_DocumentHashExistence
 	KSI_VerificationRule_SignatureDoesNotContainPublication
-	KSI_VerificationRule_ExtendedSignatureAggregationChainRightLinksMatch
+	KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch
 	KSI_VerificationRule_SignaturePublicationRecordExistence
 	KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash
 	KSI_VerificationRule_CalendarHashChainDoesNotExist
@@ -986,12 +1035,13 @@ EXPORTS
 	KSI_VerificationRule_CertificateExistence
 	KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification
 	KSI_VerificationRule_PublicationsFileContainsSignaturePublication
-	KSI_VerificationRule_PublicationsFileContainsPublication
+	KSI_VerificationRule_PublicationsFileContainsSuitablePublication
 	KSI_VerificationRule_ExtendingPermittedVerification
 	KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse
 	KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse
 	KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash
 	KSI_VerificationRule_UserProvidedPublicationExistence
+	KSI_VerificationRule_RequireNoUserProvidedPublication
 	KSI_VerificationRule_UserProvidedPublicationVerification
 	KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification
 	KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse
@@ -1000,12 +1050,7 @@ EXPORTS
 
 ;policy.h
 EXPORTS
-	KSI_Policy_getInternal
-	KSI_Policy_getCalendarBased
-	KSI_Policy_getKeyBased
-	KSI_Policy_getPublicationsFileBased
-	KSI_Policy_getUserProvidedPublicationBased
-	KSI_Policy_getGeneral
+	KSI_Policy_create
 	KSI_Policy_clone
 	KSI_Policy_setFallback
 	KSI_SignatureVerifier_verify
@@ -1013,12 +1058,20 @@ EXPORTS
 	KSI_PolicyVerificationResult_free
 	KSI_RuleVerificationResultList_length
 	KSI_RuleVerificationResultList_elementAt
-	KSI_VerificationContext_create
-	KSI_VerificationContext_setSignature
-	KSI_VerificationContext_setDocumentHash
-	KSI_VerificationContext_setUserPublication
-	KSI_VerificationContext_setPublicationsFile
-	KSI_VerificationContext_setExtendingAllowed
-	KSI_VerificationContext_setAggregationLevel
-	KSI_VerificationContext_free
+	KSI_VerificationContext_init
 	KSI_VerificationContext_clean
+	KSI_PolicyVerificationResult_free
+	KSI_Policy_setFallback
+	KSI_Policy_clone
+	KSI_Policy_create
+	KSI_VERIFICATION_POLICY_INTERNAL DATA
+	KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED DATA
+	KSI_VERIFICATION_POLICY_CALENDAR_BASED DATA
+	KSI_VERIFICATION_POLICY_KEY_BASED DATA
+	KSI_VERIFICATION_POLICY_PUBLICATIONS_FILE_BASED DATA
+	KSI_VERIFICATION_POLICY_GENERAL DATA
+
+;fast_tlv.h
+EXPORTS
+	KSI_FTLV_fileRead
+	KSI_FTLV_memRead

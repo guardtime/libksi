@@ -27,6 +27,7 @@
 #include "../src/ksi/net_uri_impl.h"
 #include "../src/ksi/net_tcp_impl.h"
 #include "ksi/net_uri.h"
+#include "ksi/tree_builder.h"
 
 extern KSI_CTX *ctx;
 
@@ -294,9 +295,6 @@ static void testExtending(CuTest* tc) {
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
-	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
-	CuAssert(tc, "Unable to set default pubfile, default cert and default pki constraints.", res == KSI_OK);
-
 	res = KSI_extendSignature(ctx, sig, &ext);
 	CuAssert(tc, "Unable to extend the signature", res == KSI_OK && ext != NULL);
 
@@ -395,9 +393,6 @@ static void testExtendSigNoCalChain(CuTest* tc) {
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
-	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
-	CuAssert(tc, "Unable to set default pubfile, default cert and default pki constraints.", res == KSI_OK);
-
 	res = KSI_extendSignature(ctx, sig, &ext);
 	CuAssert(tc, "Unable to extend the signature", res == KSI_OK && ext != NULL);
 
@@ -470,7 +465,7 @@ static void testExtendInvalidSignature(CuTest* tc) {
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_Signature_extendTo(sig, ctx, NULL, &ext);
-	CuAssert(tc, "It should not be possible to extend this signature.", res == KSI_EXTEND_WRONG_CAL_CHAIN && ext == NULL);
+	CuAssert(tc, "It should not be possible to extend this signature.", res != KSI_OK && ext == NULL);
 
 	KSI_Signature_free(sig);
 	KSI_Signature_free(ext);
@@ -506,7 +501,6 @@ static void testExtAuthFailure(CuTest* tc) {
 
 	res = KSI_extendSignature(ctx, sig, &ext);
 	CuAssert(tc, "Extend should fail with service error.", res == KSI_SERVICE_AUTHENTICATION_FAILURE && ext == NULL);
-
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
@@ -793,6 +787,10 @@ static void testLocalAggregationSigning(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
+	KSI_VerificationContext verifier;
+	KSI_PolicyVerificationResult *result = NULL;
+
+	KSI_VerificationContext_init(&verifier, ctx);
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -802,17 +800,22 @@ static void testLocalAggregationSigning(CuTest* tc) {
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
 
-	res = KSI_Signature_createAggregated(ctx, hsh, 4, &sig);
+	res = KSI_Signature_signAggregated(ctx, hsh, 4, &sig);
 	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
 
 	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Signature should not be verifiable without local aggregation level.", res == KSI_VERIFICATION_FAILURE);
 
-	res = KSI_Signature_verifyAggregated(sig, NULL, 4);
-	CuAssert(tc, "Locally aggregated signature was not verifiable.", res == KSI_OK);
+	verifier.signature = sig;
+	verifier.docAggrLevel = 4;
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &verifier, &result);
+	CuAssert(tc, "Locally aggregated signature was not verifiable due to an error.", res == KSI_OK);
+	CuAssert(tc, "The signature can not be verified.", result->resultCode == KSI_VER_RES_OK);
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
+	KSI_VerificationContext_clean(&verifier);
+	KSI_PolicyVerificationResult_free(result);
 
 #undef TEST_AGGR_RESPONSE_FILE
 }
@@ -955,6 +958,90 @@ static void testUriSpiltAndCompose(CuTest* tc) {
 	KSI_NetworkClient_free(tmp);
 }
 
+static void testCreateAggregated(CuTest *tc) {
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/test_create_aggregated_response.tlv"
+	int res;
+	const char data[] = "Test";
+	const char clientStr[] = "Dummy";
+
+	KSI_DataHash *docHash = NULL;
+	KSI_MetaData *metaData = NULL;
+	KSI_Utf8String *clientId = NULL;
+
+	KSI_AggregationHashChain *chn = NULL;
+
+	KSI_TreeBuilder *tb = NULL;
+	KSI_TreeLeafHandle *leaf = NULL;
+
+	unsigned char *raw = NULL;
+	size_t raw_len = 0;
+
+	KSI_Signature *sig = NULL;
+
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+
+	/* Create the hash for the initial document. */
+	res = KSI_DataHash_create(ctx, data, sizeof(data), KSI_HASHALG_SHA2_256, &docHash);
+	CuAssert(tc, "Unable to create data hash", res == KSI_OK && docHash != NULL);
+
+	/* Create client id object. */
+	res = KSI_Utf8String_new(ctx, clientStr, sizeof(clientStr), &clientId);
+	CuAssert(tc, "Unable to create client id", res == KSI_OK && clientId != NULL);
+
+	/* Create the metadata object. */
+	res = KSI_MetaData_new(ctx, &metaData);
+	CuAssert(tc, "Unable to create metadata", res == KSI_OK && metaData != NULL);
+
+	res = KSI_MetaData_setClientId(metaData, clientId);
+	CuAssert(tc, "Unable to set meta data client id", res == KSI_OK);
+
+	/* Create a tree builder. */
+	res = KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &tb);
+	CuAssert(tc, "Unable to create tree builder.", res == KSI_OK && tb != NULL);
+
+	/* Add the document hash as the first leaf. */
+	res = KSI_TreeBuilder_addDataHash(tb, docHash, 0, &leaf);
+	CuAssert(tc, "Unable to add leaf to the tree builder.", res == KSI_OK && leaf != NULL);
+
+	res = KSI_TreeBuilder_addMetaData(tb, metaData, 0, NULL);
+	CuAssert(tc, "Unable to add meta data to the tree builder.", res == KSI_OK);
+
+	/* Finalize the tree. */
+	res = KSI_TreeBuilder_close(tb);
+	CuAssert(tc, "Unable to close the tree.", res == KSI_OK);
+
+	/* Extract the aggregation hash chain. */
+	res = KSI_TreeLeafHandle_getAggregationChain(leaf, &chn);
+	CuAssert(tc, "Unable to extract the aggregation hash chain.", res == KSI_OK && chn != NULL);
+
+	res = KSI_Signature_signAggregationChain(ctx, 0, chn, &sig);
+	CuAssert(tc, "Unable to sign aggregation chain.", res == KSI_OK && sig != NULL);
+
+	/* Serialize the signature. */
+	res = KSI_Signature_serialize(sig, &raw, &raw_len);
+	CuAssert(tc, "Unable to serialize signature.", res == KSI_OK && raw != NULL && raw_len > 0);
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Serialized:", raw, raw_len);
+
+	KSI_Signature_free(sig);
+	sig = NULL;
+
+	/* Parse the signature. */
+	res = KSI_Signature_parse(ctx, raw, raw_len, &sig);
+	CuAssert(tc, "Unable to parse the serialized signature.", res == KSI_OK && sig != NULL);
+
+	KSI_AggregationHashChain_free(chn);
+	KSI_TreeBuilder_free(tb);
+	KSI_TreeLeafHandle_free(leaf);
+	KSI_DataHash_free(docHash);
+	KSI_MetaData_free(metaData);
+	KSI_Signature_free(sig);
+	KSI_free(raw);
+	KSI_Utf8String_free(clientId);
+
+#undef TEST_AGGR_RESPONSE_FILE
+}
+
 
 CuSuite* KSITest_NET_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
@@ -980,6 +1067,7 @@ CuSuite* KSITest_NET_getSuite(void) {
 	SUITE_ADD_TEST(suite, testUriSpiltAndCompose);
 	SUITE_ADD_TEST(suite, testLocalAggregationSigning);
 	SUITE_ADD_TEST(suite, testExtendInvalidSignature);
+	SUITE_ADD_TEST(suite, testCreateAggregated);
 	SUITE_ADD_TEST(suite, testExtendExtended);
 
 	return suite;

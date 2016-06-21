@@ -34,7 +34,7 @@ AC_CANONICAL_TARGET
 #      increment age ('c:r:a' becomes 'c:r:a+1').
 #   4. If any interfaces have been removed or changed since the last public
 #      release, then set age to 0 ('c:r:a' becomes 'c:r:0'). 
-LTVER="4:0:0"
+LTVER="5:0:0"
 AC_SUBST(LTVER)
 
 AM_INIT_AUTOMAKE([subdir-objects foreign -Wall -Werror])
@@ -142,7 +142,9 @@ case "${target_os}" in
 esac
 
 # To ensure compatibility with Microsoft compiler.
-CFLAGS="$CFLAGS -Wdeclaration-after-statement"
+CFLAGS+= " -Wdeclaration-after-statement"
+# Add more warnings
+CFLAGS+=" -Wall"
 AC_ARG_WITH(unit-test-xml,
 [  --with-unit-test-xml=file		Specifies the target xml of unit tests.],
 :, with_unit_test_xml=testsuite-xunit.xml)

@@ -29,7 +29,7 @@ struct KSI_HashChainLink_st {
 	int isLeft;
 	KSI_Integer *levelCorrection;
 	KSI_OctetString *legacyId;
-	KSI_MetaData *metaData;
+	KSI_MetaDataElement *metaData;
 	KSI_DataHash *imprint;
 };
 

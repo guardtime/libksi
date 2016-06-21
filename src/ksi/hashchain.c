@@ -25,13 +25,13 @@
 #include "tlv.h"
 #include "tlv_template.h"
 #include "hashchain_impl.h"
+#include "impl/meta_data_element_impl.h"
 
 /* For optimization reasons, we need need access to KSI_DataHasher->closeExisting() function. */
 #include "hash_impl.h"
 
 KSI_IMPORT_TLV_TEMPLATE(KSI_HashChainLink);
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarHashChain);
-
 
 KSI_IMPLEMENT_LIST(KSI_HashChainLink, KSI_HashChainLink_free);
 KSI_IMPLEMENT_LIST(KSI_CalendarHashChainLink, KSI_HashChainLink_free);
@@ -51,7 +51,6 @@ static long long int highBit(long long int n) {
 static int addNvlImprint(KSI_DataHash *first, const KSI_DataHash *second, KSI_DataHasher *hsr) {
 	int res = KSI_UNKNOWN_ERROR;
 	const KSI_DataHash *hsh = first;
-	const unsigned char *imprint = NULL;
 
 	if (hsh == NULL) {
 		if (second == NULL) {
@@ -67,9 +66,6 @@ static int addNvlImprint(KSI_DataHash *first, const KSI_DataHash *second, KSI_Da
 	res = KSI_OK;
 
 cleanup:
-
-	KSI_nofree(imprint);
-
 	return res;
 }
 
@@ -78,10 +74,11 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 	int mode = 0;
 	const unsigned char *imprint = NULL;
 	size_t imprint_len;
-	KSI_MetaData *metaData = NULL;
+	KSI_MetaDataElement *metaData = NULL;
 	KSI_OctetString *legacyId = NULL;
 	KSI_DataHash *hash = NULL;
 	KSI_OctetString *tmpOctStr = NULL;
+	unsigned char buf[0xffff + 4];
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || hsr == NULL || link == NULL) {
@@ -127,17 +124,16 @@ static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink 
 			}
 			break;
 		case 0x04:
-			res = KSI_MetaData_getRaw(metaData, &tmpOctStr);
+			res = KSI_TlvElement_serialize(metaData->impl, buf, sizeof(buf), &imprint_len, KSI_TLV_OPT_NO_HEADER);
 			if (res != KSI_OK) {
 				KSI_pushError(ctx, res, NULL);
 				goto cleanup;
 			}
 
-			res = KSI_OctetString_extract(tmpOctStr, &imprint, &imprint_len);
-			if (res != KSI_OK) {
-				KSI_pushError(ctx, res, NULL);
-				goto cleanup;
-			}
+			imprint = buf;
+
+			KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Serialized metadata:", imprint, imprint_len);
+
 			break;
 		default:
 			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
@@ -158,7 +154,7 @@ cleanup:
 	KSI_nofree(legacyId);
 	KSI_nofree(metaData);
 	KSI_nofree(imprint);
-	KSI_nofree(tmpOctStr);
+	KSI_OctetString_free(tmpOctStr);
 
 	return res;
 }
@@ -209,10 +205,28 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 		} else {
 			/* Update the hash algo id when we encounter a left link. */
 			if (link->isLeft) {
-				res = KSI_DataHash_extract(link->imprint, &algo_id, NULL, NULL);
+				KSI_HashAlgorithm tmp;
+				res = KSI_DataHash_extract(link->imprint, &tmp, NULL, NULL);
 				if (res != KSI_OK) {
 					KSI_pushError(ctx, res, NULL);
 					goto cleanup;
+				}
+				/* Update hasher if algo id has changed. */
+				if (tmp != algo_id) {
+					algo_id = tmp;
+					if (hsh != NULL) {
+						res = hsr->closeExisting(hsr, hsh);
+						if (res != KSI_OK) {
+							KSI_pushError(ctx, res, NULL);
+							goto cleanup;
+						}
+						KSI_DataHasher_free(hsr);
+						res = KSI_DataHasher_open(ctx, algo_id, &hsr);
+						if (res != KSI_OK) {
+							KSI_pushError(ctx, res, NULL);
+							goto cleanup;
+						}
+					}
 				}
 			}
 		}
@@ -274,13 +288,13 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 		}
 	}
 
+	sprintf(logMsg, "Finished %s hash chain aggregation with output hash.", isCalendar ? "calendar": "aggregation");
+	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, logMsg, hsh);
 
 	if (endLevel != NULL) *endLevel = level;
-	*outputHash = hsh;
+	if (outputHash != NULL) *outputHash = hsh;
 	hsh = NULL;
 
-	sprintf(logMsg, "Finished %s hash chain aggregation with output hash.", isCalendar ? "calendar": "aggregation");
-	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, logMsg, *outputHash);
 
 	res = KSI_OK;
 
@@ -437,7 +451,7 @@ int KSI_CalendarHashChain_calculateAggregationTime(KSI_CalendarHashChain *chain,
 
 	res = calculateCalendarAggregationTime(chain->hashChain, chain->publicationTime, aggrTime);
 	if (res != KSI_OK) {
-		KSI_pushError(chain->ctx, res, NULL);
+		KSI_pushError(chain->ctx, res, "Failed to calculate aggregation time");
 		goto cleanup;
 	}
 
@@ -465,7 +479,7 @@ KSI_IMPLEMENT_SETTER(KSI_CalendarHashChain, KSI_LIST(KSI_HashChainLink)*, hashCh
 void KSI_HashChainLink_free(KSI_HashChainLink *t) {
 	if (t != NULL) {
 		KSI_OctetString_free(t->legacyId);
-		KSI_MetaData_free(t->metaData);
+		KSI_MetaDataElement_free(t->metaData);
 		KSI_DataHash_free(t->imprint);
 		KSI_Integer_free(t->levelCorrection);
 		KSI_free(t);
@@ -692,19 +706,20 @@ cleanup:
 KSI_IMPLEMENT_GETTER(KSI_HashChainLink, int, isLeft, IsLeft)
 KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_Integer*, levelCorrection, LevelCorrection)
 KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_OctetString*, legacyId, LegacyId)
-KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_MetaData*, metaData, MetaData)
+KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_MetaDataElement*, metaData, MetaData)
 KSI_IMPLEMENT_GETTER(KSI_HashChainLink, KSI_DataHash*, imprint, Imprint)
 
 KSI_IMPLEMENT_SETTER(KSI_HashChainLink, int, isLeft, IsLeft)
 KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_Integer*, levelCorrection, LevelCorrection)
 KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_OctetString*, legacyId, LegacyId)
-KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_MetaData*, metaData, MetaData)
+KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_MetaDataElement*, metaData, MetaData)
 KSI_IMPLEMENT_SETTER(KSI_HashChainLink, KSI_DataHash*, imprint, Imprint)
 
 static int legacyId_verify(KSI_CTX *ctx, const unsigned char *raw, size_t raw_len) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i;
 
+	KSI_ERR_clearErrors(ctx);
 	/* Verify the data. Legacy id structure:
 	 * +------+------+---------+------------------+------+
 	 * | 0x03 | 0x00 | str_len | ... UTF8_str ... | '\0' |
@@ -715,7 +730,7 @@ static int legacyId_verify(KSI_CTX *ctx, const unsigned char *raw, size_t raw_le
 	 * example are given in hexadecimal).
 	 */
 	if (raw == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
 	/* Legacy id data lenght is fixed to 29 octets. */

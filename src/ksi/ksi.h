@@ -30,6 +30,7 @@
 #include "log.h"
 #include "signature.h"
 #include "verification.h"
+#include "policy.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -63,6 +64,10 @@ enum KSI_StatusCode {
 	 * The publications file can not be verified, as the constraints are not configured.
 	 */
 	KSI_PUBFILE_VERIFICATION_NOT_CONFIGURED = 0x04,
+	/**
+	 * The signature verification can not be completed due to invalid user data.
+	 */
+	KSI_INVALID_VERIFICATION_INPUT = 0x05,
 
 /* SYNTAX ERRORS */
 	/**
@@ -108,6 +113,11 @@ enum KSI_StatusCode {
 	 * The PKI signature is not trusted by the API.
 	 */
 	KSI_PKI_CERTIFICATE_NOT_TRUSTED = 0x109,
+	/**
+	 * The objects used are in an invalid state.
+	 */
+	KSI_INVALID_STATE = 0x10a,
+
 /* SYSTEM ERRORS */
 	/**
 	 * Out of memory.
@@ -436,7 +446,7 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile);
 int KSI_verifyPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile *pubFile);
 
 /**
- * Use the context to verify the signature.
+ * Use the KSI context to verify the signature.
  * \param[in]		ctx			KSI context.
  * \param[in]		sig			KSI signature.
  *
@@ -444,6 +454,15 @@ int KSI_verifyPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile *pubFile);
  */
 int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig);
 
+/**
+ * Use the KSI context to verify the signature and the datahash.
+ * \param[in]		ctx			KSI context.
+ * \param[in]		sig			KSI signature.
+ * \param[in]		hsh			Document data hash.
+ *
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
+int KSI_verifyDataHash(KSI_CTX *ctx, KSI_Signature *sig, KSI_DataHash *hsh);
 /**
  * Create a KSI signature from a given data hash.
  * \param[in]		ctx			KSI context.
@@ -573,7 +592,7 @@ int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *net);
  * \param[in]	email	Email address.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  * \note This method is deprecated and will be removed in later versions, use
- * #KSI_CTX_putPubFileCertConstraint with #KSI_CERT_EMAIL instead.
+ * #KSI_CTX_setDefaultPubFileCertConstraints with #KSI_CERT_EMAIL instead.
  */
 KSI_FN_DEPRECATED(int KSI_CTX_setPublicationCertEmail(KSI_CTX *ctx, const char *email));
 

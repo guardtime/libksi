@@ -139,6 +139,12 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const unsig
 		goto cleanup;
 	}
 
+	/* Make sure the algorithm is supported. */
+	if (!KSI_isHashAlgorithmSupported(algo_id)) {
+		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, "Hash algorithm not supported.");
+		goto cleanup;
+	}
+
 	/* Verify the length of the digest with the algorithm. */
 	if (KSI_getHashLength(algo_id) != digest_length) {
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Digest length does not match with algorithm.");
@@ -516,5 +522,71 @@ cleanup:
 
 	return res;
 }
+
+int KSI_DataHasher_addOctetString(KSI_DataHasher *hasher, KSI_OctetString *data) {
+	int res = KSI_UNKNOWN_ERROR;
+	const unsigned char *ptr = NULL;
+	size_t len = 0;
+
+	if (hasher == NULL || data == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_OctetString_extract(data, &ptr, &len);
+	if (res != KSI_OK) {
+		KSI_pushError(hasher->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_DataHasher_add(hasher, ptr, len);
+	if (res != KSI_OK) {
+		KSI_pushError(hasher->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_DataHash_createZero(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHash **hsh) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *tmp = NULL;
+	unsigned char buf[KSI_MAX_IMPRINT_LEN];
+
+	if (ctx == NULL || hsh == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	memset(buf, 0, sizeof(buf));
+	buf[0] = algo_id;
+
+	if (!KSI_isHashAlgorithmSupported(algo_id)) {
+		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, "Hash algorithm not supported.");
+		goto cleanup;
+	}
+
+	res = KSI_DataHash_fromImprint(ctx, buf, (KSI_hashAlgorithmInfo[algo_id].outputBitCount >> 3) + 1, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	*hsh = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_DataHash_free(tmp);
+
+	return res;
+}
+
 
 KSI_IMPLEMENT_REF(KSI_DataHash);

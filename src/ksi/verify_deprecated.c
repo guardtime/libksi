@@ -159,7 +159,6 @@ static int rfc3161_verify(const KSI_Signature *sig) {
 	KSI_RFC3161 *rfc3161 = NULL;
 	KSI_AggregationHashChainList *aggreChain = NULL;
 	KSI_AggregationHashChain *firstChain = NULL;
-	KSI_Integer *aggreTime = NULL;
 	unsigned i;
 
 
@@ -321,21 +320,27 @@ cleanup:
 
 static int initPublicationsFile(KSI_VerificationResult *info, KSI_CTX *ctx) {
 	int res = KSI_UNKNOWN_ERROR;
+	KSI_PublicationsFile *tmp = NULL;
 
 	if (info->publicationsFile == NULL) {
 		bool verifyPubFile = (ctx->publicationsFile == NULL);
 
-		res = KSI_receivePublicationsFile(ctx, &info->publicationsFile);
+		res = KSI_receivePublicationsFile(ctx, &tmp);
 		if (res != KSI_OK) goto cleanup;
 
 		if (verifyPubFile == true) {
-			res = KSI_verifyPublicationsFile(ctx, info->publicationsFile);
+			res = KSI_verifyPublicationsFile(ctx, tmp);
 			if (res != KSI_OK) goto cleanup;
 		}
+
+		info->publicationsFile = tmp;
+		tmp = NULL;
 	}
 
 	res = KSI_OK;
 cleanup:
+
+	KSI_PublicationsFile_free(tmp);
 
 	return res;
 }
@@ -346,7 +351,7 @@ static int verifyInternallyAggregationChain(KSI_Signature *sig) {
 	KSI_DataHash *inputHash = NULL;
 	int level;
 	size_t i;
-	int successCount = 0;
+	size_t successCount = 0;
 	KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
 	KSI_VerificationResult *info = &sig->verificationResult;
 	const KSI_AggregationHashChain *prevChain = NULL;
@@ -699,9 +704,14 @@ static int verifyPublication(KSI_CTX *ctx, KSI_Signature *sig) {
 	}
 
 	res = KSI_VerificationResult_addSuccess(info, step, "Publication trusted.");
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OK;
 
 cleanup:
 
+	KSI_PublicationRecord_free(pubRec);
+	KSI_PublicationsFile_free(pubFile);
 	return res;
 }
 
@@ -721,7 +731,7 @@ static int verifyPublicationWithPubString(KSI_CTX *ctx, KSI_Signature *sig) {
 	}
 
 
-	KSI_LOG_info(sig->ctx, "Verifying publication with publication string");
+	KSI_LOG_info(ctx, "Verifying publication with publication string");
 
 	if (sig->verificationResult.userPublication == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -753,15 +763,15 @@ static int verifyPublicationWithPubString(KSI_CTX *ctx, KSI_Signature *sig) {
 	}
 
 	if (KSI_Integer_compare(time1, time2) != 0) {
-		KSI_LOG_debug(sig->ctx, "Publication time from publication record:", time2);
-		KSI_LOG_debug(sig->ctx, "Publication time from user publication  :", time1);
+		KSI_LOG_debug(ctx, "Publication time from publication record:", time2);
+		KSI_LOG_debug(ctx, "Publication time from user publication  :", time1);
 		res = KSI_VerificationResult_addFailure(info, step, "Publication not trusted.");
 		goto cleanup;
 	}
 
 	if (KSI_DataHash_equals(hsh1, hsh2) != 1) {
-		KSI_LOG_logDataHash(sig->ctx, KSI_LOG_DEBUG, "Root hash from publication record:", hsh2);
-		KSI_LOG_logDataHash(sig->ctx, KSI_LOG_DEBUG, "Root hash from user publication:", hsh1);
+		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Root hash from publication record:", hsh2);
+		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Root hash from user publication:", hsh1);
 		res = KSI_VerificationResult_addFailure(info, step, "Publication not trusted.");
 		goto cleanup;
 	}

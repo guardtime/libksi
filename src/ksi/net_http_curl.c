@@ -172,7 +172,6 @@ cleanup:
 static int curlReceive(KSI_RequestHandle *handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	CurlNetHandleCtx *implCtx = NULL;
-	KSI_HttpClient *http = NULL;
 	long httpCode;
 
 	if (handle == NULL || handle->client == NULL || handle->implCtx == NULL) {
@@ -181,14 +180,12 @@ static int curlReceive(KSI_RequestHandle *handle) {
 	}
 	KSI_ERR_clearErrors(handle->ctx);
 
-	http = handle->client->impl;
-
 	implCtx = handle->implCtx;
 
 	KSI_LOG_debug(handle->ctx, "Sending request.");
 
-    res = curl_easy_perform(implCtx->curl);
-    KSI_LOG_debug(handle->ctx, "Received %llu bytes.", (unsigned long long)implCtx->len);
+	res = curl_easy_perform(implCtx->curl);
+	KSI_LOG_debug(handle->ctx, "Received %llu bytes.", (unsigned long long)implCtx->len);
 
 	if (curl_easy_getinfo(implCtx->curl, CURLINFO_HTTP_CODE, &httpCode) == CURLE_OK) {
 		updateStatus(handle);
@@ -200,19 +197,19 @@ static int curlReceive(KSI_RequestHandle *handle) {
 		goto cleanup;
 	}
 
-    res = KSI_RequestHandle_setResponse(handle, implCtx->raw, implCtx->len);
-    if (res != KSI_OK) {
-    	KSI_pushError(handle->ctx, res, NULL);
-    	goto cleanup;
-    }
+	res = KSI_RequestHandle_setResponse(handle, implCtx->raw, implCtx->len);
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
-    /* Cleanup on success.*/
-    KSI_free(implCtx->raw);
-    implCtx->raw = NULL;
-    implCtx->len = 0;
-    handle->completed = true;
+	/* Cleanup on success.*/
+	KSI_free(implCtx->raw);
+	implCtx->raw = NULL;
+	implCtx->len = 0;
+	handle->completed = true;
 
-    res = KSI_OK;
+	res = KSI_OK;
 
 cleanup:
 
@@ -245,14 +242,14 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 		goto cleanup;
 	}
 
-    curl_easy_setopt(implCtx->curl, CURLOPT_VERBOSE, 0);
+	curl_easy_setopt(implCtx->curl, CURLOPT_VERBOSE, 0);
 	curl_easy_setopt(implCtx->curl, CURLOPT_WRITEFUNCTION, receiveDataFromLibCurl);
 	curl_easy_setopt(implCtx->curl, CURLOPT_NOPROGRESS, 1);
 
-    curl_easy_setopt(implCtx->curl, CURLOPT_ERRORBUFFER, implCtx->curlErr);
-    if (http->agentName != NULL) {
-    	curl_easy_setopt(implCtx->curl, CURLOPT_USERAGENT, http->agentName);
-    }
+	curl_easy_setopt(implCtx->curl, CURLOPT_ERRORBUFFER, implCtx->curlErr);
+	if (http->agentName != NULL) {
+		curl_easy_setopt(implCtx->curl, CURLOPT_USERAGENT, http->agentName);
+	}
 
 	if (http->mimeType != NULL) {
 		KSI_snprintf(mimeTypeHeader, sizeof(mimeTypeHeader) ,"Content-Type: %s", http->mimeType);
@@ -268,25 +265,25 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 		curl_easy_setopt(implCtx->curl, CURLOPT_POST, 0);
 	}
 
-    curl_easy_setopt(implCtx->curl, CURLOPT_WRITEDATA, implCtx);
+	curl_easy_setopt(implCtx->curl, CURLOPT_WRITEDATA, implCtx);
 
-    curl_easy_setopt(implCtx->curl, CURLOPT_CONNECTTIMEOUT, http->connectionTimeoutSeconds);
-    curl_easy_setopt(implCtx->curl, CURLOPT_TIMEOUT, http->readTimeoutSeconds);
+	curl_easy_setopt(implCtx->curl, CURLOPT_CONNECTTIMEOUT, http->connectionTimeoutSeconds);
+	curl_easy_setopt(implCtx->curl, CURLOPT_TIMEOUT, http->readTimeoutSeconds);
 
 	curl_easy_setopt(implCtx->curl, CURLOPT_URL, url);
 
 	handle->readResponse = curlReceive;
 	handle->client = client;
 
-    res = KSI_RequestHandle_setImplContext(handle, implCtx, (void (*)(void *))CurlNetHandleCtx_free);
-    if (res != KSI_OK) {
-    	KSI_pushError(handle->ctx, res, NULL);
-    	goto cleanup;
-    }
+	res = KSI_RequestHandle_setImplContext(handle, implCtx, (void (*)(void *))CurlNetHandleCtx_free);
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
-    implCtx = NULL;
+	implCtx = NULL;
 
-    res = KSI_OK;
+	res = KSI_OK;
 
 cleanup:
 

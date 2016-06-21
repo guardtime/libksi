@@ -38,6 +38,7 @@ static int FsClient_Endpoint_new(FsClient_Endpoint **fs) {
 	if (tmp == NULL) return KSI_OUT_OF_MEMORY;
 
 	tmp->path = NULL;
+	tmp->file = NULL;
 
 	*fs = tmp;
 	return KSI_OK;
@@ -46,6 +47,7 @@ static int FsClient_Endpoint_new(FsClient_Endpoint **fs) {
 static void FsClientCtx_free(FsClientCtx *fs) {
 	if (fs != NULL) {
 		KSI_free(fs->path);
+		if (fs->file != NULL) fclose(fs->file);
 		KSI_free(fs);
 	}
 }
@@ -58,7 +60,6 @@ static int readResponse(KSI_RequestHandle *handle) {
 	size_t count = 0;
 	unsigned char *buffer = NULL;
 	KSI_FTLV ftlv;
-	FILE *f = NULL;
 
 	if (handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -70,8 +71,12 @@ static int readResponse(KSI_RequestHandle *handle) {
 	fs = handle->implCtx;
 
 	KSI_LOG_debug(handle->ctx, "File: Read response from: %s", fs->path);
-	f = fopen(fs->path, "rb");
-	if (f == NULL) {
+	/* Open the file if accessing for the first time. */
+	if (fs->file == NULL) {
+		fs->file = fopen(fs->path, "rb");
+	}
+	/* Check if the file has been opened. */
+	if (fs->file == NULL) {
 		KSI_pushError(handle->ctx, res = KSI_IO_ERROR, "Unable to open file.");
 		res = KSI_IO_ERROR;
 		goto cleanup;
@@ -83,9 +88,9 @@ static int readResponse(KSI_RequestHandle *handle) {
 		goto cleanup;
 	}
 
-	res = KSI_FTLV_fileRead(f, buffer, TLV_BUFFER_SIZE,  &count, &ftlv);
+	res = KSI_FTLV_fileRead(fs->file, buffer, TLV_BUFFER_SIZE,  &count, &ftlv);
 	if (res != KSI_OK || count == 0) {
-		KSI_pushError(handle->ctx, res = KSI_INVALID_ARGUMENT, "Unable to read TLV from file.");
+		KSI_pushError(handle->ctx, res, "Unable to read TLV from file.");
 		goto cleanup;
 	}
 
@@ -104,15 +109,13 @@ static int readResponse(KSI_RequestHandle *handle) {
 
 cleanup:
 
-	if (f != NULL) fclose(f);
 	if (buffer != NULL) KSI_free(buffer);
 
 	return res;
 }
 
-static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, char *path) {
+static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, FsClient_Endpoint *endp) {
 	int res;
-	FsClientCtx *fs = NULL;
 
 	if (handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -121,39 +124,23 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 
 	KSI_ERR_clearErrors(handle->ctx);
 
-	if (client == NULL || path == NULL) {
+	if (client == NULL || endp == NULL) {
 		KSI_pushError(handle->ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	fs = KSI_new(FsClientCtx);
-	if (fs == NULL) {
-		KSI_pushError(handle->ctx, res = KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-	fs->path = NULL;
-
-	res = KSI_strdup(path, &fs->path);
-	if (res != KSI_OK) {
-		KSI_pushError(handle->ctx, res, NULL);
 		goto cleanup;
 	}
 
 	handle->readResponse = readResponse;
 	handle->client = client;
 
-	res = KSI_RequestHandle_setImplContext(handle, fs, (void (*)(void *))FsClientCtx_free);
+	res = KSI_RequestHandle_setImplContext(handle, endp, NULL);
 	if (res != KSI_OK) {
 		KSI_pushError(handle->ctx, res, NULL);
 		goto cleanup;
 	}
 
-	fs = NULL;
 	res = KSI_OK;
 
 cleanup:
-
-	FsClientCtx_free(fs);
 
 	return res;
 }
@@ -162,7 +149,7 @@ static int prepareRequest(KSI_NetworkClient *client,
 						  void *pdu,
 						  int (*serialize)(void *, unsigned char **, size_t *),
 						  KSI_RequestHandle **handle,
-						  char *path,
+						  FsClient_Endpoint *endp,
 						  const char *desc) {
 	int res;
 	KSI_FsClient *fsClient = client->impl;
@@ -198,7 +185,7 @@ static int prepareRequest(KSI_NetworkClient *client,
 		goto cleanup;
 	}
 
-	res = fsClient->sendRequest(client, tmp, path);
+	res = fsClient->sendRequest(client, tmp, endp);
 	if (res != KSI_OK) {
 		KSI_pushError(client->ctx, res, NULL);
 		goto cleanup;
@@ -257,7 +244,7 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 			  pdu,
 			  (int (*)(void *, unsigned char **, size_t *))KSI_ExtendPdu_serialize,
 			  handle,
-			  endp->path,
+			  endp,
 			  "Extend request");
 	if (res != KSI_OK) goto cleanup;
 	res = KSI_OK;
@@ -310,7 +297,7 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 			  pdu,
 			  (int (*)(void *, unsigned char **, size_t *))KSI_AggregationPdu_serialize,
 			  handle,
-			  endp->path,
+			  endp,
 			  "Aggregation request");
 	if (res != KSI_OK) goto cleanup;
 
@@ -419,12 +406,15 @@ static int sendPublicationRequest(KSI_NetworkClient *client, KSI_RequestHandle *
 		goto cleanup;
 	}
 
-	fs = KSI_new(FsClientCtx);
+	res = FsClient_Endpoint_new(&fs);
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 	if (fs == NULL) {
 		KSI_pushError(handle->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
-	fs->path = NULL;
 
 	res = KSI_strdup(path, &fs->path);
 	if (res != KSI_OK) {
@@ -617,6 +607,11 @@ static int setService(KSI_NetworkClient *client, KSI_NetEndpoint *abs_endp, cons
 	if (res != KSI_OK) goto cleanup;
 	res = client->setStringParam(&abs_endp->ksi_pass, (pass != NULL ? pass : ""));
 	if (res != KSI_OK) goto cleanup;
+
+	if (endp->file != NULL) {
+		fclose(endp->file);
+		endp->file = NULL;
+	}
 
 	res = KSI_OK;
 

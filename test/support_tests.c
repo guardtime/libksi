@@ -25,6 +25,11 @@
 
 #include "support_tests.h"
 #include "all_integration_tests.h"
+#include "ksi/ksi.h"
+#include "ksi/net_uri.h"
+#include "../src/ksi/ctx_impl.h"
+
+
 
 #define DIR_SEP '/'
 
@@ -85,12 +90,12 @@ void initFullResourcePath(const char* rootDir) {
 }
 
 static void escapeStr(const char *str, CuString *escaped) {
-	int p;
+	long long int p;
 	static const char *replIndex = "<>&\"'";
 	static const char *repl[] = { "lt", "gt", "amp", "quot", "#39"};
 	while (*str) {
 		/* Find the index of current char. */
-		p = (int)(strchr(replIndex, *str) - replIndex);
+		p = (long long int)(strchr(replIndex, *str) - replIndex);
 		/* If the character is found, use the replacement */
 		if (p >= 0) {
 			CuStringAppendFormat(escaped, "&%s", repl[p]);

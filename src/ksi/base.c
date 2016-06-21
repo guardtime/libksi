@@ -66,6 +66,8 @@ const char *KSI_getErrorString(int statusCode) {
 			return "The context is not (properly) configured to retrieve the publications file.";
 		case KSI_PUBFILE_VERIFICATION_NOT_CONFIGURED:
 			return "The publications file can not be verified, as the constraints are not defined.";
+		case KSI_INVALID_VERIFICATION_INPUT:
+			return "The signature verification can not be completed due to invalid user data.";
 		case KSI_INVALID_ARGUMENT:
 			return "Invalid argument.";
 		case KSI_INVALID_FORMAT:
@@ -86,6 +88,8 @@ const char *KSI_getErrorString(int statusCode) {
 			return "Invalid PKI signature.";
 		case KSI_PKI_CERTIFICATE_NOT_TRUSTED:
 			return "The PKI certificate is not trusted.";
+		case KSI_INVALID_STATE:
+			return "Invalid state.";
 		case KSI_OUT_OF_MEMORY:
 			return "Out of memory.";
 		case KSI_IO_ERROR:
@@ -209,6 +213,10 @@ int KSI_CTX_new(KSI_CTX **context) {
 	if (res != KSI_OK) goto cleanup;
 	ctx->isCustomNetProvider = 0;
 	client = NULL;
+
+	/* Initialize truststore. */
+	res = KSI_PKITruststore_registerGlobals(ctx);
+	if (res != KSI_OK) goto cleanup;
 
 	/* Return the context. */
 	*context = ctx;
@@ -435,7 +443,7 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 		KSI_LOG_debug(ctx, "Publications file received.");
 	}
 
-	*pubFile = ctx->publicationsFile;
+	*pubFile = KSI_PublicationsFile_ref(ctx->publicationsFile);
 
 	res = KSI_OK;
 
@@ -470,10 +478,9 @@ cleanup:
 	return res;
 }
 
-static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ctx) {
+static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *hsh) {
 	int res;
-	const KSI_Policy *policy = NULL;
-	KSI_VerificationContext *context = NULL;
+	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -483,31 +490,22 @@ static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ct
 		goto cleanup;
 	}
 
-	res = KSI_Policy_getGeneral(ctx, &policy);
+	res = KSI_VerificationContext_init(&context, ctx);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = KSI_VerificationContext_create(ctx, &context);
+	context.signature = sig;
+	context.documentHash = hsh;
+
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
 	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
+		KSI_pushError(ctx, res, "Signature verification aborted due to an error.");
 		goto cleanup;
 	}
 
-	res = KSI_VerificationContext_setSignature(context, sig);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_SignatureVerifier_verify(policy, context, &result);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, "Verification of signature not completed.");
-		goto cleanup;
-	}
-
-	if (result->finalResult.resultCode != VER_RES_OK) {
+	if (result->finalResult.resultCode != KSI_VER_RES_OK) {
 		res = KSI_VERIFICATION_FAILURE;
 		KSI_pushError(ctx, res, "Verification of signature failed.");
 		goto cleanup;
@@ -517,8 +515,6 @@ static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ct
 
 cleanup:
 
-	KSI_VerificationContext_setSignature(context, NULL); /* Prevent the freeing of signature. */
-	KSI_VerificationContext_free(context);
 	KSI_PolicyVerificationResult_free(result);
 
 	return res;
@@ -533,7 +529,29 @@ int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig) {
 		goto cleanup;
 	}
 
-	res = KSI_SignatureVerifier_verifySignature(sig, ctx);
+	res = KSI_SignatureVerifier_verifySignature(sig, ctx, NULL);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_verifyDataHash(KSI_CTX *ctx, KSI_Signature *sig, KSI_DataHash *hsh) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || sig == NULL || hsh == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_SignatureVerifier_verifySignature(sig, ctx, hsh);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx,res, NULL);
 		goto cleanup;
@@ -556,7 +574,7 @@ int KSI_createSignature(KSI_CTX *ctx, KSI_DataHash *dataHash, KSI_Signature **si
 		goto cleanup;
 	}
 
-	res = KSI_Signature_create(ctx, dataHash, &tmp);
+	res = KSI_Signature_sign(ctx, dataHash, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx,res, NULL);
 		goto cleanup;
@@ -634,6 +652,8 @@ int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extend
 
 cleanup:
 
+	KSI_PublicationRecord_free(pubRec);
+	KSI_PublicationsFile_free(pubFile);
 	KSI_Signature_free(extSig);
 	return res;
 }
@@ -742,7 +762,7 @@ static void* printer_buf_wrapper(void *toStream, size_t to_len, size_t *count, c
 }
 
 int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f) {
-	return ksi_err_toPrinter(ctx, stderr, 1, printer_stream_wrapper);
+	return ksi_err_toPrinter(ctx, f, 1, printer_stream_wrapper);
 }
 
 char *KSI_ERR_toString(KSI_CTX *ctx, char *buf, size_t buf_len) {
@@ -903,6 +923,8 @@ cleanup:																					\
 
 CTX_VALUEP_SETTER(pkiTruststore, PKITruststore, KSI_PKITruststore, KSI_PKITruststore_free)
 CTX_GET_SET_VALUE(publicationsFile, PublicationsFile, KSI_PublicationsFile, KSI_PublicationsFile_free)
+
+
 
 int KSI_CTX_getPKITruststore(KSI_CTX *ctx, KSI_PKITruststore **pki) {
 	int res = KSI_UNKNOWN_ERROR;

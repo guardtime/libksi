@@ -79,24 +79,27 @@ extern "C" {
 	 * KSI Signature object
 	 */
 	struct KSI_Signature_st {
+		/** KSI context. */
 		KSI_CTX *ctx;
-
-		/* Base TLV - when serialized, this value will be used. */
+		/** Base TLV - when serialized, this value will be used. */
 		KSI_TLV *baseTlv;
-
+		/** Calendar hash chain. */
 		KSI_CalendarHashChain *calendarChain;
-
+		/** List of aggregation hash chains. */
 		KSI_LIST(KSI_AggregationHashChain) *aggregationChainList;
-
+		/** Legacy RFC3161 signature first aggregation hash chain. */
 		KSI_RFC3161 *rfc3161;
-
+		/** Calendar auth record. */
 		KSI_CalendarAuthRec *calendarAuthRec;
+		/** Aggregation auth record. */
 		KSI_AggregationAuthRec *aggregationAuthRec;
+		/** Publication record. */
 		KSI_PublicationRecord *publication;
-
-		/* Verification info for the signature. */
+		/** Verification info for the signature. */
 		KSI_VerificationResult verificationResult;
-
+		/** This function replaces the calendar chain of the signature.
+		 * \note The function does not check the internal consistency! */
+		int (*replaceCalendarChain)(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain);
 	};
 
 

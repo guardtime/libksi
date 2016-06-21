@@ -73,6 +73,7 @@ make install DESTDIR=%{buildroot}
 %files devel
 %defattr(644,root,root,755)
 %{_includedir}/ksi/base32.h
+%{_includedir}/ksi/blocksigner.h
 %{_includedir}/ksi/crc32.h
 %{_includedir}/ksi/common.h
 %{_includedir}/ksi/err.h
@@ -95,6 +96,8 @@ make install DESTDIR=%{buildroot}
 %{_includedir}/ksi/signature.h
 %{_includedir}/ksi/tlv.h
 %{_includedir}/ksi/tlv_template.h
+%{_includedir}/ksi/tlv_element.h
+%{_includedir}/ksi/tree_builder.h
 %{_includedir}/ksi/types.h
 %{_includedir}/ksi/types_base.h
 %{_includedir}/ksi/verification.h

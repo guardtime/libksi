@@ -110,15 +110,15 @@ static void testReceivePublicationsFileInvalidConstraints(CuTest *tc) {
 			{KSI_CERT_EMAIL, "wrong@email.com"},
 			{NULL, NULL}
 	};
+	KSI_CTX *ctx = NULL;
+
+	res = KSITest_CTX_clone(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_CTX_setPublicationUrl(ctx, getFullResourcePathUri(TEST_PUBLICATIONS_FILE));
 	CuAssert(tc, "Unable to set pubfile URI.", res == KSI_OK);
-
-	/* Clear default publications file from CTX. */
-	res = KSI_CTX_setPublicationsFile(ctx, NULL);
-	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
 	/* Configure expected PIK cert and constraints for pub. file. */
 	res = KSI_PKITruststore_new(ctx, 0, &pki);
@@ -138,6 +138,9 @@ static void testReceivePublicationsFileInvalidConstraints(CuTest *tc) {
 
 	res = KSI_verifyPublicationsFile(ctx, pubFile);
 	CuAssert(tc, "Publications file should NOT verify as PKI constraint is wrong.", res != KSI_OK);
+
+	KSI_PublicationsFile_free(pubFile);
+	KSI_CTX_free(ctx);
 }
 
 static void testReceivePublicationsFileInvalidPki(CuTest *tc) {
@@ -148,15 +151,15 @@ static void testReceivePublicationsFileInvalidPki(CuTest *tc) {
 			{KSI_CERT_EMAIL, "publications@guardtime.com"},
 			{NULL, NULL}
 	};
+	KSI_CTX *ctx = NULL;
+
+	res = KSITest_CTX_clone(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_CTX_setPublicationUrl(ctx, getFullResourcePathUri(TEST_PUBLICATIONS_FILE_INVALID_PKI));
 	CuAssert(tc, "Unable to clear pubfile URI.", res == KSI_OK);
-
-	/* Clear default publications file from CTX. */
-	res = KSI_CTX_setPublicationsFile(ctx, NULL);
-	CuAssert(tc, "Unable to clear default pubfile.", res == KSI_OK);
 
 	/* Configure expected PIK cert and constraints for pub. file. */
 	res = KSI_PKITruststore_new(ctx, 0, &pki);
@@ -176,6 +179,9 @@ static void testReceivePublicationsFileInvalidPki(CuTest *tc) {
 
 	res = KSI_verifyPublicationsFile(ctx, pubFile);
 	CuAssert(tc, "Publications file should NOT verify as PKI signature is wrong.", res == KSI_INVALID_PKI_SIGNATURE);
+
+	KSI_PublicationsFile_free(pubFile);
+	KSI_CTX_free(ctx);
 }
 
 static void testVerifyPublicationsFileWithOrganization(CuTest *tc) {
@@ -429,6 +435,13 @@ static void testFindPublicationByPubStr(CuTest *tc) {
 	KSI_DataHash *expHsh = NULL;
 	unsigned char buf[0xff];
 	size_t len;
+	KSI_CTX *ctx = NULL;
+
+	res = KSITest_CTX_clone(&ctx);
+	CuAssert(tc, "Unable to create KSI context.", res == KSI_OK && ctx != NULL);
+
+	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
+	CuAssert(tc, "Unable to set default values to context.", res == KSI_OK);
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -461,6 +474,8 @@ static void testFindPublicationByPubStr(CuTest *tc) {
 	CuAssert(tc, "Publication time mismatch", KSI_Integer_equalsUInt(pubTime, 1397520000));
 
 	KSI_DataHash_free(expHsh);
+	KSI_PublicationsFile_free(pubFile);
+	KSI_CTX_free(ctx);
 
 }
 
@@ -475,6 +490,13 @@ static void testFindPublicationByTime(CuTest *tc) {
 	KSI_LIST(KSI_Utf8String) *pubRefList = NULL;
 	unsigned char buf[0xff];
 	size_t len;
+	KSI_CTX *ctx = NULL;
+
+	res = KSITest_CTX_clone(&ctx);
+	CuAssert(tc, "Unable to create KSI context.", res == KSI_OK && ctx != NULL);
+
+	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
+	CuAssert(tc, "Unable to set default values to context.", res == KSI_OK);
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -516,6 +538,8 @@ static void testFindPublicationByTime(CuTest *tc) {
 	CuAssert(tc, "Unable to get publications ref list", res == KSI_OK && pubRefList != NULL);
 
 	KSI_DataHash_free(expHsh);
+	KSI_PublicationsFile_free(pubFile);
+	KSI_CTX_free(ctx);
 }
 
 static void testFindPublicationRef(CuTest *tc) {
@@ -526,6 +550,13 @@ static void testFindPublicationRef(CuTest *tc) {
 	KSI_LIST(KSI_Utf8String) *pubRefList = NULL;
 	size_t i;
 	int isPubRefFound = 0;
+	KSI_CTX *ctx = NULL;
+
+	res = KSITest_CTX_clone(&ctx);
+	CuAssert(tc, "Unable to create KSI context.", res == KSI_OK && ctx != NULL);
+
+	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
+	CuAssert(tc, "Unable to set default values to context.", res == KSI_OK);
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -560,6 +591,8 @@ static void testFindPublicationRef(CuTest *tc) {
 	}
 
 	CuAssert(tc, "Financial times publication not found", isPubRefFound);
+	KSI_PublicationsFile_free(pubFile);
+	KSI_CTX_free(ctx);
 }
 
 static void testSerializePublicationsFile(CuTest *tc) {
@@ -633,6 +666,7 @@ static void testGetNearestPublication(CuTest *tc) {
 
 	CuAssert(tc, "Unexpected publication time", KSI_Integer_equalsUInt(pubTm, 1292371200));
 
+	KSI_PublicationRecord_free(pubRec);
 	KSI_PublicationsFile_free(pubFile);
 	KSI_Integer_free(tm);
 }
@@ -664,6 +698,7 @@ static void testGetNearestPublicationOf0(CuTest *tc) {
 
 	CuAssert(tc, "Unexpected publication time", KSI_Integer_equalsUInt(pubTm, 1208217600));
 
+	KSI_PublicationRecord_free(pubRec);
 	KSI_PublicationsFile_free(pubFile);
 	KSI_Integer_free(tm);
 }
@@ -694,6 +729,7 @@ static void testGetNearestPublicationWithPubTime(CuTest *tc) {
 
 	CuAssert(tc, "Unexpected publication time", KSI_Integer_equalsUInt(pubTm, 1208217600));
 
+	KSI_PublicationRecord_free(pubRec);
 	KSI_PublicationsFile_free(pubFile);
 	KSI_Integer_free(tm);
 }
@@ -714,6 +750,7 @@ static void testGetNearestPublicationOfFuture(CuTest *tc) {
 	res = KSI_PublicationsFile_getNearestPublication(pubFile, tm, &pubRec);
 	CuAssert(tc, "There should not be a valid publication", res == KSI_OK && pubRec == NULL);
 
+	KSI_PublicationRecord_free(pubRec);
 	KSI_PublicationsFile_free(pubFile);
 	KSI_Integer_free(tm);
 }

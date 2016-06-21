@@ -92,7 +92,9 @@ LIB_OBJ = \
 	$(OBJ_DIR)\publicationsfile.obj \
 	$(OBJ_DIR)\signature.obj \
 	$(OBJ_DIR)\tlv.obj \
+	$(OBJ_DIR)\tlv_element.obj \
 	$(OBJ_DIR)\tlv_template.obj \
+	$(OBJ_DIR)\tree_builder.obj \
 	$(OBJ_DIR)\types.obj \
 	$(OBJ_DIR)\types_base.obj \
 	$(OBJ_DIR)\verification.obj \
@@ -103,10 +105,12 @@ LIB_OBJ = \
 	$(OBJ_DIR)\pkitruststore.obj \
 	$(OBJ_DIR)\net_file.obj \
 	$(OBJ_DIR)\policy.obj \
-	$(OBJ_DIR)\verify_deprecated.obj
+	$(OBJ_DIR)\verify_deprecated.obj \
+	$(OBJ_DIR)\blocksigner.obj
 
 INC_FILES = \
 	base32.h \
+	blocksigner.h \
 	common.h \
 	fast_tlv.h \
 	hmac.h \
@@ -132,10 +136,13 @@ INC_FILES = \
 	log.h \
 	publicationsfile.h \
 	tlv_template.h \
+	tlv_element.h \
+	tree_builder.h \
 	compatibility.h \
 	multi_signature.h \
 	policy.h \
 	verify_deprecated.h \
+	blocksigner.h \
 	$(VERSION_H)
 
 #Compiler and linker configuration
@@ -195,13 +202,12 @@ CCFLAGS = $(CCFLAGS) /DKSI_PKI_TRUSTSTORE_IMPL=KSI_IMPL_CRYPTOAPI
 LIB_OBJ = $(LIB_OBJ) $(OBJ_DIR)\pkitruststore_cryptoapi.obj
 !ENDIF
 
-
-CCFLAGS = $(CCFLAGS) /nologo /W3 /D_CRT_SECURE_NO_DEPRECATE /I$(SRC_DIR)\\ksi /I$(SRC_DIR)\example /I$(SRC_DIR)
+CCFLAGS = $(CCFLAGS) /DKSI_BUILD
+CCFLAGS = $(CCFLAGS) /nologo /D_CRT_SECURE_NO_DEPRECATE /I$(SRC_DIR)\\ksi /I$(SRC_DIR)\example /I$(SRC_DIR)
 LDFLAGS = $(LDFLAGS) /NOLOGO /LIBPATH:$(LIB_DIR)
 
 !IF "$(RTL)" == "MT" || "$(RTL)" == "MD"
 CCFLAGS = $(CCFLAGS) /DNDEBUG /O2
-LDFLAGS = $(LDFLAGS) /RELEASE
 !ELSE
 CCFLAGS = $(CCFLAGS) /D_DEBUG /Od /RTC1 /Zi
 !IF "$(DLL)" == "dll"
@@ -230,7 +236,7 @@ all: $(LIB_DIR)\$(LIB_NAME)$(RTL).$(DLL) include
 
 
 $(LIB_DIR)\$(LIB_NAME)$(RTL).lib: $(OBJ_DIR) $(LIB_DIR) $(LIB_OBJ)
-	link /LIB /OUT:$@ $(LDFLAGS) $(LIB_OBJ)
+	lib /OUT:$@ $(LDFLAGS) $(LIB_OBJ)
 
 $(LIB_DIR)\$(LIB_NAME)$(RTL).dll: $(OBJ_DIR) $(LIB_DIR) $(LIB_OBJ) $(LIB_DEF)
 	link /DLL /OUT:$@ /IMPLIB:$*.lib /DEF:$(LIB_DEF) $(LDFLAGS) $(LIB_OBJ) $(EXT_LIB)

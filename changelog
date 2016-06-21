@@ -1,6 +1,15 @@
+Version 3.9
+
+2016-06-21 release(3.9.1696)
+* IMPROVEMENT: Added block signature sample application.
+* IMPROVEMENT: Removed dead code from http_parser.{c,h}
+* IMPROVEMENT: Added KSI_verifyDataHash.
+* IMPROVEMENT: Custom meta-data sepparated from the low-level implementation. Adds padding automatically.
+* IMPROVEMENT: Metadata hardening verification.
+
 Version 3.8
 
-2016-04-18 release(3.8.1432)
+2016-04-18 release(3.8.1428)
 
 * IMPROVEMENT: Removed SHA-224 support.
 * IMPROVEMENT: Removed Unused function KSI_RDR_verifyEnd.
@@ -12,6 +21,15 @@ Version 3.8
 * IMPROVEMENT: KSI_receivePublicationsFile must not verify publications file automatically.
 * BUGFIX: Invalid and misleading exception message on response publication time check.
 * BUGFIX: Correcting memory leaks when using Windows Crypt32 library.
+
+Version 3.8
+
+* IMPROVEMENT: Added support for local aggregation.
+* IMPROVEMENT: Functions KSI_Signature_create* are deprecated and KSI_Signature_sign will replace them.
+* IMPROVEMENT: Added function KSI_Signature_appendAggregationChain.
+* IMPROVEMENT: Added function KSI_AggregationHashChain_calculateShape.
+* IMPROVEMENT: KSI_HashChain_aggregate and KSI_HashChain_aggregateCalendar no longer require not NULL output parameters.
+* IMPROVEMENT: Added KSI_AggregationHashChain_aggregate function.
 * BUGFIX: Correcting usage of isForward and isNonCritical flags in KSI_TlvTemplate_serializeObject and KSI_TlvTemplate_writeBytes. Added tests to cover this bug.
 * IMPROVEMENT: KSI_LIST may contain NULL values.
 * BUGFIX: Certificate and publication records are not mandatory for publications file.
@@ -25,6 +43,7 @@ Version 3.8
 * IMPROVEMENT: In case of no errors KSI_ERR_getBaseErrorMessag returns string indicating that there are no errors.
 * BUGFIX: KSI_ERR_getBaseErrorMessage error code returned by the output parameter fixed when error count is zero.
 * BUGFIX: KSI_DataHasher memory leak on immediate reset after open.
+* IMPROVEMENT: Added detailed coverage report in html format.
 * BUGFIX: Fixed HMAC for hash functions with other than 512 bit internal block size.
 * IMPROVEMENT: Removed build warnings on OSX.
 * IMPROVEMENT: Added mechanism to disable deprecation warnings.
