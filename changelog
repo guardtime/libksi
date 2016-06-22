@@ -1,16 +1,11 @@
-Version 3.9
+Version 3.8
 
-2016-06-21 release(3.9.1696)
+2016-06-21 release(3.8.1696)
 * IMPROVEMENT: Added block signature sample application.
 * IMPROVEMENT: Removed dead code from http_parser.{c,h}
 * IMPROVEMENT: Added KSI_verifyDataHash.
 * IMPROVEMENT: Custom meta-data sepparated from the low-level implementation. Adds padding automatically.
 * IMPROVEMENT: Metadata hardening verification.
-
-Version 3.8
-
-2016-04-18 release(3.8.1428)
-
 * IMPROVEMENT: Removed SHA-224 support.
 * IMPROVEMENT: Removed Unused function KSI_RDR_verifyEnd.
 * IMPROVEMENT: PKI truststore initialization is performed on the need basis.
@@ -21,9 +16,6 @@ Version 3.8
 * IMPROVEMENT: KSI_receivePublicationsFile must not verify publications file automatically.
 * BUGFIX: Invalid and misleading exception message on response publication time check.
 * BUGFIX: Correcting memory leaks when using Windows Crypt32 library.
-
-Version 3.8
-
 * IMPROVEMENT: Added support for local aggregation.
 * IMPROVEMENT: Functions KSI_Signature_create* are deprecated and KSI_Signature_sign will replace them.
 * IMPROVEMENT: Added function KSI_Signature_appendAggregationChain.
