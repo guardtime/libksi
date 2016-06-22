@@ -1,4 +1,4 @@
-libksi (3.8.1696) RELEASED; urgency=low
+libksi (3.9.1701) RELEASED; urgency=low
 
   * IMPROVEMENT: Added block signature sample application.
   * IMPROVEMENT: Removed dead code from http_parser.{c,h}
