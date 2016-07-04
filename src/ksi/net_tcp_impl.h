@@ -29,21 +29,17 @@
 extern "C" {
 #endif
 
-	struct KSI_TcpClient_st {
-		KSI_NetworkClient parent;
-	
+	struct TcpClient_Endpoint_st {
+		char *host;
+		unsigned port;
+	};
 
+	struct KSI_TcpClient_st {
 		/* TODO: Is it required to be a signed int? */
 		int transferTimeoutSeconds;
-	
-		char *aggrHost;
-		unsigned aggrPort;
-
-		char *extHost;
-		unsigned extPort;
 
 		int (*sendRequest)(KSI_NetworkClient *, KSI_RequestHandle *, char *host, unsigned port);
-		KSI_HttpClient *http;
+		KSI_NetworkClient *http;
 	};
 
 

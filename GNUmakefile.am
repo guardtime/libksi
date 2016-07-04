@@ -17,7 +17,7 @@
 # reserves and retains all trademark rights.
 #
 
-.PHONY: doc test
+.PHONY: doc test int-test
 
 AUTOMAKE_OPTIONS = foreign
 SUBDIRS = src/ksi src/example test doc
@@ -39,6 +39,9 @@ ZIPDOC_DIR = ${PACKAGE}-${VERSION}-htmldoc
 test: check 
 	./test/runner ./test
 
+int-test: check
+	./test/integration-tests ./test
+
 # You'll need valgrind for this target.
 #
 # yum install valgrind	
@@ -56,13 +59,22 @@ doc-zip: doc
 #
 # yum install python-pip
 # pip install gcovr
-#
-coverage: clean
+
+coverage-base: clean
 	make check CFLAGS="-g -fprofile-arcs -ftest-coverage -fPIC -O0"
 	./test/runner ./test
+
+coverage-xml: coverage-base
 	cd ./src/ksi; gcovr -r . --xml-pretty > coverage.xml
 
+coverage-html: coverage-base
+	cd ./src/ksi; for f in *.c; do gcov $$f --object-directory .libs; done
+	lcov --capture --directory ./src/ksi --output-file coverage.info
+	genhtml coverage.info --output-directory coverage
+
+coverage: clean coverage-xml coverage-html
+
 clean-local:
-	rm -fr ${ZIPDOC_DIR} coverage.xml valgrind.xml test.log testsuite-xunit.xml
+	rm -fr ${ZIPDOC_DIR} converage coverage.xml coverage.info valgrind.xml test.log testsuite-xunit.xml
 	$(MAKE) -C doc clean
 	$(MAKE) -C test clean

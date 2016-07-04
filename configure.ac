@@ -34,7 +34,7 @@ AC_CANONICAL_TARGET
 #      increment age ('c:r:a' becomes 'c:r:a+1').
 #   4. If any interfaces have been removed or changed since the last public
 #      release, then set age to 0 ('c:r:a' becomes 'c:r:0'). 
-LTVER="1:0:0"
+LTVER="5:0:0"
 AC_SUBST(LTVER)
 
 AM_INIT_AUTOMAKE([subdir-objects foreign -Wall -Werror])
@@ -137,18 +137,30 @@ fi
 case "${target_os}" in
     darwin*)
         CFLAGS="$CFLAGS -mmacosx-version-min=10.5"
-        LDFLAGS="$LDFALGS -mmacosx-version-min=10.5"
+        LDFLAGS="$LDFLAGS -mmacosx-version-min=10.5"
         ;;
 esac
 
 # To ensure compatibility with Microsoft compiler.
-CFLAGS="$CFLAGS -Wdeclaration-after-statement"
-
+CFLAGS+= " -Wdeclaration-after-statement"
+# Add more warnings
+CFLAGS+=" -Wall"
 AC_ARG_WITH(unit-test-xml,
 [  --with-unit-test-xml=file		Specifies the target xml of unit tests.],
 :, with_unit_test_xml=testsuite-xunit.xml)
 
 AC_DEFINE_UNQUOTED(UNIT_TEST_OUTPUT_XML, "$with_unit_test_xml", [Location of the unit test xml results.])
 
-AC_CONFIG_FILES(GNUmakefile src/ksi/GNUmakefile test/GNUmakefile doc/GNUmakefile src/example/GNUmakefile)
+AC_MSG_NOTICE([Update version.h])
+rm -f src/ksi/version.h
+VER=($(echo $PACKAGE_VERSION | tr "." " "))
+VER_MAJOR=${VER[[0]]}
+VER_MINOR=${VER[[1]]}
+VER_BUILD=${VER[[2]]}
+AC_SUBST(VER_MAJOR)
+AC_SUBST(VER_MINOR)
+AC_SUBST(VER_BUILD)
+AC_CONFIG_FILES([src/ksi/version.h])
+
+AC_CONFIG_FILES([GNUmakefile src/ksi/GNUmakefile test/GNUmakefile doc/GNUmakefile src/example/GNUmakefile])
 AC_OUTPUT

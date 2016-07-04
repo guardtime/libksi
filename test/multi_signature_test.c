@@ -66,7 +66,7 @@ static void testExtractingSingle(CuTest* tc) {
 	res = KSI_Signature_getDocumentHash(sig, &hsh);
 	CuAssert(tc, "Unable to get signed hash value.", res == KSI_OK && hsh != NULL);
 
-	KSI_DataHash_clone(hsh, &hsh);
+	KSI_DataHash_ref(hsh);
 
 	res = KSI_MultiSignature_new(ctx, &ms);
 	CuAssert(tc, "Unable to create multi signature container.", res == KSI_OK && ms != NULL);
@@ -80,7 +80,7 @@ static void testExtractingSingle(CuTest* tc) {
 	res = KSI_MultiSignature_get(ms, hsh, &sig);
 	CuAssert(tc, "Unable to extract signature from multi signature container.", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_verify(sig, ctx);
+	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Unable to verify extracted signature.", res == KSI_OK);
 
 	KSI_DataHash_free(hsh);
@@ -103,7 +103,7 @@ static void testExtractingSingleLegacy(CuTest* tc) {
 	res = KSI_Signature_getDocumentHash(sig, &hsh);
 	CuAssert(tc, "Unable to get signed hash value.", res == KSI_OK && hsh != NULL);
 
-	KSI_DataHash_clone(hsh, &hsh);
+	KSI_DataHash_ref(hsh);
 
 	res = KSI_MultiSignature_new(ctx, &ms);
 	CuAssert(tc, "Unable to create multi signature container.", res == KSI_OK && ms != NULL);
@@ -117,7 +117,7 @@ static void testExtractingSingleLegacy(CuTest* tc) {
 	res = KSI_MultiSignature_get(ms, hsh, &sig);
 	CuAssert(tc, "Unable to extract signature from multi signature container.", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_verify(sig, ctx);
+	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Unable to verify extracted signature.", res == KSI_OK);
 
 	KSI_DataHash_free(hsh);
@@ -168,6 +168,7 @@ static void testOnlyStrongestProofReturned(CuTest* tc) {
 
 
 	KSI_ERR_clearErrors(ctx);
+
 	res = KSI_MultiSignature_new(ctx, &ms);
 	CuAssert(tc, "Unable to create multi signature container.", res == KSI_OK && ms != NULL);
 
@@ -190,7 +191,7 @@ static void testOnlyStrongestProofReturned(CuTest* tc) {
 	res = KSI_MultiSignature_get(ms, hsh, &sig3);
 	CuAssert(tc, "Unable to extract signature from multi signature container.", res == KSI_OK && sig3 != NULL);
 
-	res = KSI_Signature_verify(sig3, ctx);
+	res = KSI_verifySignature(ctx, sig3);
 	CuAssert(tc, "Unable to verify extracted signature.", res == KSI_OK);
 
 	/* Verify the signature has a publication attached to it. */
@@ -300,7 +301,7 @@ static void testgetUsedHashAlgorithmsFromSingleLegacy(CuTest *tc) {
 	KSI_free(arr);
 }
 
-static void testDeleteLast(CuTest *tc) {
+static void testDeleteSignatureAppendedFromFile(CuTest *tc, const char *fname) {
 	int res;
 	KSI_MultiSignature *ms = NULL;
 	KSI_Signature *sig = NULL;
@@ -310,13 +311,12 @@ static void testDeleteLast(CuTest *tc) {
 	res = KSI_MultiSignature_new(ctx, &ms);
 	CuAssert(tc, "Unable to create multi signature container.", res == KSI_OK && ms != NULL);
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	res = KSI_Signature_fromFile(ctx, fname, &sig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_getDocumentHash(sig, &hsh);
 	CuAssert(tc, "Unable to retrieve signed document hash from the signature.", res == KSI_OK && hsh != NULL);
-	KSI_DataHash_clone(hsh, &hsh);
-
+	KSI_DataHash_ref(hsh);
 
 	res = KSI_MultiSignature_add(ms, sig);
 	CuAssert(tc, "Unable to add signature to multi signature container.", res == KSI_OK);
@@ -337,6 +337,13 @@ static void testDeleteLast(CuTest *tc) {
 	KSI_free(arr);
 }
 
+static void testDeleteLast(CuTest *tc) {
+	testDeleteSignatureAppendedFromFile(tc, getFullResourcePath(TEST_SIGNATURE_FILE));
+}
+
+static void testDeleteLegacySignature(CuTest *tc) {
+	testDeleteSignatureAppendedFromFile(tc, getFullResourcePath("resource/tlv/ok-legacy-sig-2014-06.gtts.ksig"));
+}
 
 static void createMultiSignature(KSI_MultiSignature **ms) {
 	const char *signatures[] = {TEST_SIGNATURE_FILE, TEST_EX_SIGNATURE_FILE, NULL};
@@ -360,7 +367,7 @@ static void createMultiSignatureFromFile(CuTest *tc, const char *fn, KSI_MultiSi
 	size_t buf_len;
 	unsigned char buf[0x1ffff]; /* Hope this is enough for all the tests. */
 
-	f = fopen(getFullResourcePath("resource/multi_sig/test1.mksi"), "rb");
+	f = fopen(fn, "rb");
 	CuAssert(tc, "Unable to load test file.", f != NULL);
 
 	buf_len = fread(buf, 1, sizeof(buf), f);
@@ -407,6 +414,23 @@ static void testSerializeLength(CuTest *tc) {
 
 }
 
+static void testMultiSerializeSignature(CuTest *tc) {
+	int res;
+	KSI_MultiSignature *ms = NULL;
+	unsigned char *buf = NULL;
+	size_t buf_len;
+
+	createMultiSignature(&ms);
+
+	res = KSI_MultiSignature_serialize(ms, &buf, &buf_len);
+	CuAssert(tc, "Unable to serialize multi signature container.", res == KSI_OK && buf_len > 0);
+
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Multi signature", buf, buf_len);
+
+	KSI_MultiSignature_free(ms);
+	KSI_free(buf);
+}
+
 static void testParse(CuTest *tc) {
 	int res;
 	FILE *f = NULL;
@@ -440,7 +464,7 @@ static void testParseAndVerifySingle(CuTest *tc) {
 	res = KSI_MultiSignature_get(ms, hsh, &sig);
 	CuAssert(tc, "Unable to get signature from container.", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_verify(sig, ctx);
+	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Unable to verify signature extracted from container.", res == KSI_OK);
 
 	KSI_Signature_free(sig);
@@ -463,7 +487,7 @@ static void testGetOldest(CuTest *tc) {
 	res = KSI_MultiSignature_get(ms, hsh, &sig);
 	CuAssert(tc, "Unable to get signature from container.", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_verify(sig, ctx);
+	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Unable to verify signature extracted from container.", res == KSI_OK);
 
 	res = KSI_Signature_getSigningTime(sig, &tm);
@@ -484,7 +508,8 @@ static void testExtend(CuTest *tc) {
 	res = KSI_MultiSignature_fromFile(ctx, getFullResourcePath("resource/multi_sig/test2.mksi"), &ms);
 	CuAssert(tc, "Unable to read multi signature container from file.", res == KSI_OK && ms != NULL);
 
-	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"));
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri("resource/multi_sig/test2-extend_response-multiple.tlv"), "anon", "anon");
+	CuAssert(tc, "Unable to set extender response from file", res == KSI_OK);
 
 	res = KSI_MultiSignature_extend(ms);
 	CuAssert(tc, "Unable to perform multi signature container extension.", res == KSI_OK);
@@ -494,7 +519,7 @@ static void testExtend(CuTest *tc) {
 	res = KSI_MultiSignature_get(ms, hsh, &sig);
 	CuAssert(tc, "Unable to get signature from container.", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_verify(sig, ctx);
+	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Unable to verify signature extracted from container.", res == KSI_OK);
 
 	res = KSI_Signature_getPublicationRecord(sig, &pubRec);
@@ -505,8 +530,13 @@ static void testExtend(CuTest *tc) {
 	KSI_MultiSignature_free(ms);
 }
 
+static void preTest(void) {
+}
+
 CuSuite* KSITest_multiSignature_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
+
+	suite->preTest = preTest;
 
 	SUITE_ADD_TEST(suite, testAddingSingle);
 	SUITE_ADD_TEST(suite, testExtractingSingle);
@@ -519,9 +549,11 @@ CuSuite* KSITest_multiSignature_getSuite(void) {
 	SUITE_ADD_TEST(suite, testgetUsedHashAlgorithmsFromSingle);
 	SUITE_ADD_TEST(suite, testgetUsedHashAlgorithmsFromSingleLegacy);
 	SUITE_ADD_TEST(suite, testDeleteLast);
+	SUITE_ADD_TEST(suite, testDeleteLegacySignature);
 
 	SUITE_ADD_TEST(suite, testSerialize);
 	SUITE_ADD_TEST(suite, testSerializeLength);
+	SUITE_ADD_TEST(suite, testMultiSerializeSignature);
 
 	SUITE_ADD_TEST(suite, testParse);
 	SUITE_ADD_TEST(suite, testParseAndVerifySingle);

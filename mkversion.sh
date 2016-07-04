@@ -27,14 +27,28 @@ echo "Old version: $old_version"
 function inc {
 	VERSION[$1]=$((${VERSION[$1]} + 1))
 	i=$(($1 + 1))
-	while [ $i -lt 4 ]; do
+	while [ $i -lt 2 ]; do
 		VERSION[$i]=0
 		i=$((i + 1))
 	done;
+
+	BUILD=0
+	# Increase the patch number
+	if hash git 2>/dev/null; then
+		BUILD=$(git rev-list HEAD | wc -l)
+	fi
+
+	if [ $BUILD -eq 0 ]; then
+		BUILD=$((${VERSION[2]} + 1))
+		echo "Warning: Version build number may not match git state as it was only incremented by one." 1>&2
+	fi
+
+	VERSION[2]=$BUILD
+
 }
 
 if [ $# -ne 1 ]; then 
-	echo "Usage $0 [major | minor | patch | build] ..."
+	echo "Usage $0 [major | minor | build] ..."
 	exit
 fi
 
@@ -45,11 +59,8 @@ case "$1" in
 	"minor" )
 		inc 1
 		;;
-    "patch" )
-		inc 2
-		;;
 	"build" )
-		inc 3 
+		inc 2
 		;;
 	*)
 		echo "Unknown parameter"
@@ -59,10 +70,5 @@ esac
 
 new_version=$(echo ${VERSION[@]} | tr " " ".")
 echo "New version: $new_version"
-
-tag="v$new_version"
-echo "Tag: $tag"
-
-git tag -a "$tag" -m "Auto-generated version $new_version"
 
 echo $new_version  > VERSION

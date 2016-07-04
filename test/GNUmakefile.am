@@ -19,29 +19,46 @@
 
 AM_CFLAGS=-g -Wall -I$(top_builddir)/src/
 AM_LDFLAGS=-L$(top_builddir)/src/ksi -no-install -lksi
-check_PROGRAMS=runner parse-benchmark serialize-benchmark resigner
+check_PROGRAMS=runner parse-benchmark serialize-benchmark resigner integration-tests
 
 runner_SOURCES= \
-		./all_tests.c \
-		./all_tests.h \
-		./cutest/CuTest.c \
-		./cutest/CuTest.h \
-		./ksi_ctx_test.c \
-		./ksi_hashchain_test.c \
-		./ksi_hash_test.c \
-		./ksi_hmac_test.c \
-		./ksi_net_mock.c \
-		./ksi_net_mock.h \
-		./ksi_net_test.c \
-		./ksi_publicationsfile_test.c \
-		./ksi_rdr_test.c \
-		./ksi_signature_test.c \
-		./ksi_tlv_sample_test.c \
-		./ksi_tlv_test.c \
-		./ksi_truststore_test.c \
-		./compatibility_test.c \
-		./uri_client_test.c \
-		./multi_signature_test.c
+		all_tests.c \
+		all_tests.h \
+		cutest/CuTest.c \
+		cutest/CuTest.h \
+		ksi_ctx_test.c \
+		ksi_hashchain_test.c \
+		ksi_hash_test.c \
+		ksi_hmac_test.c \
+		ksi_net_test.c \
+		ksi_publicationsfile_test.c \
+		ksi_rdr_test.c \
+		ksi_signature_test.c \
+		ksi_tlv_sample_test.c \
+		ksi_tlv_test.c \
+		ksi_tree_builder_test.c \
+		ksi_truststore_test.c \
+		compatibility_test.c \
+		uri_client_test.c \
+		support_tests.c \
+		support_tests.h \
+		multi_signature_test.c \
+		verification_rule_tests.c \
+		ksi_policy_test.c \
+		ksi_blocksigner_test.c \
+		ksi_sdk_version_test.c \
+		ksi_flags_test.c
+
+integration_tests_SOURCES= \
+	all_integration_tests.c \
+	all_integration_tests.h \
+	cutest/CuTest.c \
+	cutest/CuTest.h \
+	aggre_integration_test.c \
+	ext_integration_tests.c \
+	pub_integration_tests.c \
+	support_tests.c \
+	support_tests.h
 
 parse_benchmark_SOURCES=parse_benchmark.c
 serialize_benchmark_SOURCES=serialize_benchmark.c

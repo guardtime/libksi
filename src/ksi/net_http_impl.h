@@ -28,23 +28,21 @@
 extern "C" {
 #endif
 
-	struct KSI_HttpClient_st {
-		KSI_NetworkClient parent;
+	struct HttpClient_Endpoint_st {
+		char *url;
+	};
 
+	struct KSI_HttpClient_st {
 		int connectionTimeoutSeconds;
 		int readTimeoutSeconds;
-		int httpStatus;
-		char *urlAggregator;
-		char *urlExtender;
-		char *urlPublication;
 		char *agentName;
-	
+		char *mimeType;
+		
 		int (*sendRequest)(KSI_NetworkClient *, KSI_RequestHandle *, char *);
 
 		void *implCtx;
 		void (*implCtx_free)(void *);
 	};
-
 
 #ifdef __cplusplus
 }

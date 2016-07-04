@@ -49,32 +49,12 @@ extern "C" {
 	 * @{
 	 */
 
-	/**
-	 * This enum contains all the legal values for a TLV payload type.
-	 */
-	enum KSI_TLV_PayloadType_en {
-		/* The payload of the TLV is encoded as a raw blob. */
-		KSI_TLV_PAYLOAD_RAW,
-		/* The payload is encoded as a 64 bit unsigned integer.
-		 * \note The value will be serialized as big-endian. */
-		KSI_TLV_PAYLOAD_INT,
-		/* The payload of this TLV is a list of TLV's. */
-		KSI_TLV_PAYLOAD_TLV
-	};
-
-	enum KSI_Serialize_Opt_en {
-		/** Do not write the header while serializing. */
-		KSI_TLV_OPT_NO_HEADER = 0x01,
-		/** Keep the TLV serialized to the end of the buffer. */
-		KSI_TLV_OPT_NO_MOVE = 0x02,
-	};
-
 	KSI_DEFINE_GET_CTX(KSI_TLV);
+
 	/**
 	 * This function creates an new TLV.
 	 *
 	 * \param[in]	ctx			KSI context.
-	 * \param[in]	payloadType	Payload type of the TLV.
 	 * \param[in]	tag			Numeric TLV tag.
 	 * \param[in]	isLenient	Value of the lenient-flag (1 or 0).
 	 * \param[in]	isForward	Value of the forward-flag (1 or 0).
@@ -82,11 +62,10 @@ extern "C" {
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_new(KSI_CTX *ctx, int payloadType, unsigned tag, int isLenient, int isForward, KSI_TLV **tlv);
+	int KSI_TLV_new(KSI_CTX *ctx, unsigned tag, int isLenient, int isForward, KSI_TLV **tlv);
 
 	/**
 	 * This function creates a new TLV and initializes its payload with the given \c uint value.
-	 * The payload type will be #KSI_TLV_PAYLOAD_INT.
 	 *
 	 * \param[in]	ctx			KSI context.
 	 * \param[in]	tag			Numeric TLV tag.
@@ -101,26 +80,18 @@ extern "C" {
 
 	/**
 	 * This function creates a new TLV and initializes its payload with the given string \c str.
-	 * The payload type will be #KSI_TLV_PAYLOAD_INT. The null value is included in the payload.
+	 * The \c NUL terminator is included in the payload.
 	 *
 	 * \param[in]	ctx			KSI context.
 	 * \param[in]	tag			Numeric TLV tag.
 	 * \param[in]	isLenient	Value of the lenient-flag (1 or 0).
 	 * \param[in]	isForward	Value of the forward-flag (1 or 0).
-	 * \param[in]	str			Null-terminated string value.
+	 * \param[in]	str			\c NUL terminated string value.
 	 * \param[out]	tlv			Pointer to the output variable.
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
 	int KSI_TLV_fromString(KSI_CTX *ctx, unsigned tag, int isLenient, int isForward, char *str, KSI_TLV **tlv);
-	/**
-	 * This function changes the internal representation of the TLV payload.
-	 * \param[in]	tlv			TLV which payload will be casted.
-	 * \param[in]	payloadType	Payload type (see #KSI_TLV_PayloadType_en).
-	 *
-	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
-	 */
-	int KSI_TLV_cast(KSI_TLV *tlv, int payloadType);
 
 	/**
 	 * Parses a memory area and creates a new TLV.
@@ -150,9 +121,6 @@ extern "C" {
 	/**
 	 * This function extracts the binary data from the TLV.
 	 *
-	 * \note This operation is available only if the TLV payloadType is #KSI_TLV_PAYLOAD_RAW. To
-	 * change the payload type use #KSI_TLV_cast function.
-	 *
 	 * \param[in]	tlv		TLV from where to extract the value.
 	 * \param[out]	buf		Pointer to output pointer.
 	 * \param[out]	len		Length of the raw value.
@@ -173,9 +141,6 @@ extern "C" {
 
 	/**
 	 * This function extracts the unsigned 64 bit integer value.
-	 *
-	 * \note This operation is available only if the TLV payloadType is #KSI_TLV_PAYLOAD_INT. To
-	 * change the payload type use #KSI_TLV_cast function.
 	 *
 	 * \param[in]	tlv		TLV from where to extract the value.
 	 * \param[out]	val		Pointer to output variable.
@@ -201,10 +166,6 @@ extern "C" {
 	 */
 	void KSI_TLV_free(KSI_TLV *tlv);
 
-	/**
-	 * TODO!
-	 */
-	void KSI_TLV_ref(KSI_TLV *tlv);
 	/**
 	 * This is an access method for the TLV lenient-flag.
 	 *
@@ -277,17 +238,14 @@ extern "C" {
 	int KSI_TLV_replaceNestedTlv(KSI_TLV *parentTlv, KSI_TLV *oldTlv, KSI_TLV *newTlv);
 
 	/**
-	 * This function appends a nested tlv to the target TLV. The target TLV is required to
-	 * have payload type #KSI_TLV_PAYLOAD_TLV. The added TLV will be added after the TLV
-	 * given as the second parameter. If the second parameter is NULL the new TLV is added
-	 * as the last element in the internal list.
+	 * This function appends a nested TLV to the target TLV as the last element in the internal list.
 	 *
 	 *	\param[in]	target		Target TLV where to add the new value as nested TLV.
-	 *	\param[in]	after		After which nested TLV the value should be added (single layer only).
-	 *							If the parameter is NULL, the TLV is added to the end.
 	 *	\param[in]	tlv			The TLV to be appended.
 	 */
 	int KSI_TLV_appendNestedTlv(KSI_TLV *target, KSI_TLV *tlv);
+
+	int KSI_TLV_writeBytes(const KSI_TLV *tlv, unsigned char *buf, size_t buf_size, size_t *buf_len, int opt);
 
 	/**
 	 * Removes the given TLV from the parent if the given TLV is a immediate child
@@ -328,7 +286,6 @@ extern "C" {
 	 * \param[in]	val			Unsigned 64-bit integer value.
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
-	 * \note This function checks the payload type of the TLV object and will fail if it is not equal to #KSI_TLV_PAYLOAD_INT.
 	 */
 	int KSI_TLV_setUintValue(KSI_TLV *tlv, KSI_uint64_t val);
 
@@ -339,25 +296,8 @@ extern "C" {
 	 * \param[in]	data_len	Length of the raw data.
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
-	 * \note This function checks the payload type of the TLV object an will fail if it is not equal to #KSI_TLV_PAYLOAD_RAW.
 	 */
 	int KSI_TLV_setRawValue(KSI_TLV *tlv, const void *data, size_t data_len);
-
-	/**
-	 * Read and create a new TLV object from reader (see #KSI_RDR).
-	 * \param[in]	rdr			Reader object.
-	 * \param[out]	tlv			Pointer to the receiving pointer.
-	 *
-	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
-	 */
-	int KSI_TLV_fromReader(KSI_RDR *rdr, KSI_TLV **tlv);
-
-	/**
-	 * Reads a raw TLV from the reader.
-	 *
-	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
-	 */
-	int KSI_TLV_readTlv(KSI_RDR *rdr, unsigned char *buffer, size_t buffer_len, size_t *readCount);
 
 	/**
 	 * Returns the absolute offset of the TLV object in the source raw data. If the TLV object is
@@ -377,12 +317,13 @@ extern "C" {
 	 * \return The absolute offset of the TLV object.
 	 */
 	size_t KSI_TLV_getRelativeOffset(const KSI_TLV *tlv);
-	
+
 	KSI_DEFINE_GET_CTX(KSI_TLV);
 
 	/**
 	 * @}
 	 */
+
 #ifdef __cplusplus
 }
 #endif

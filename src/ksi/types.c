@@ -27,24 +27,17 @@
 #include "ctx_impl.h"
 #include "pkitruststore.h"
 #include "net.h"
+#include "tlv_element.h"
+#include "impl/meta_data_impl.h"
+#include "impl/meta_data_element_impl.h"
 
 KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendPdu);
-KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu)
+KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu);
 KSI_IMPORT_TLV_TEMPLATE(KSI_Header);
 KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendReq);
 KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendResp);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationReq);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationResp);
-KSI_IMPORT_TLV_TEMPLATE(KSI_MetaData);
-
-struct KSI_MetaData_st {
-	KSI_CTX *ctx;
-	KSI_OctetString *raw;
-	KSI_Utf8String *clientId;
-	KSI_Utf8String *machineId;
-	KSI_Integer *sequenceNr;
-	KSI_Integer *req_time_micros;
-};
 
 struct KSI_ErrorPdu_st{
 	KSI_CTX *ctx;
@@ -156,7 +149,7 @@ struct KSI_CertificateRecord_st {
 	KSI_PKICertificate *cert;
 };
 
-KSI_IMPLEMENT_LIST(KSI_MetaData, KSI_MetaData_free);
+KSI_IMPLEMENT_LIST(KSI_MetaDataElement, KSI_MetaDataElement_free);
 KSI_IMPLEMENT_LIST(KSI_ExtendPdu, KSI_ExtendPdu_free);
 KSI_IMPLEMENT_LIST(KSI_AggregationPdu, KSI_AggregationPdu_free);
 KSI_IMPLEMENT_LIST(KSI_Header, KSI_Header_free);
@@ -169,18 +162,405 @@ KSI_IMPLEMENT_LIST(KSI_ExtendResp, KSI_ExtendResp_free);
 KSI_IMPLEMENT_LIST(KSI_PKISignedData, KSI_PKISignedData_free);
 KSI_IMPLEMENT_LIST(KSI_PublicationsHeader, KSI_PublicationsHeader_free);
 KSI_IMPLEMENT_LIST(KSI_CertificateRecord, KSI_CertificateRecord_free);
+KSI_IMPLEMENT_LIST(KSI_RequestHandle, KSI_RequestHandle_free);
 
-
+KSI_IMPLEMENT_REF(KSI_MetaDataElement);
+KSI_IMPLEMENT_REF(KSI_MetaData);
 /**
  * KSI_MetaData
  */
+void KSI_MetaDataElement_free(KSI_MetaDataElement *t) {
+	if (t != NULL && --t->ref == 0) {
+		KSI_TlvElement_free(t->impl);
+		KSI_Utf8String_free(t->DEPRECATED_clientId);
+		KSI_Utf8String_free(t->DEPRECATED_machineId);
+		KSI_Integer_free(t->DEPRECATED_reqTimeInMicros);
+		KSI_Integer_free(t->DEPRECATED_sequenceNr);
+		KSI_free(t);
+	}
+}
+
+int KSI_MetaDataElement_new(KSI_CTX *ctx, KSI_MetaDataElement **t) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_MetaDataElement *tmp = NULL;
+	tmp = KSI_new(KSI_MetaDataElement);
+	if (tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->ref = 1;
+	tmp->impl = NULL;
+
+	tmp->DEPRECATED_clientId = NULL;
+	tmp->DEPRECATED_machineId = NULL;
+	tmp->DEPRECATED_reqTimeInMicros = NULL;
+	tmp->DEPRECATED_sequenceNr = NULL;
+
+	res = KSI_TlvElement_new(&tmp->impl);
+	if (res != KSI_OK) goto cleanup;
+
+	tmp->impl->ftlv.tag = 0x04;
+
+	*t = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+cleanup:
+
+	KSI_MetaDataElement_free(tmp);
+	return res;
+}
+
+int KSI_MetaDataElement_getClientId(KSI_MetaDataElement *o, KSI_Utf8String** clientId) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (o == NULL || clientId == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (o->DEPRECATED_clientId == NULL) {
+		res = KSI_TlvElement_getUtf8String(o->impl, o->ctx, 0x01, &o->DEPRECATED_clientId);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	*clientId = o->DEPRECATED_clientId;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_MetaDataElement_getMachineId(KSI_MetaDataElement *o, KSI_Utf8String** machineId) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (o == NULL || machineId == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (o->DEPRECATED_machineId == NULL) {
+		res = KSI_TlvElement_getUtf8String(o->impl, o->ctx, 0x02, &o->DEPRECATED_machineId);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	*machineId = o->DEPRECATED_machineId;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_MetaDataElement_getSequenceNr(KSI_MetaDataElement *o, KSI_Integer** sequenceNr) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (o == NULL || sequenceNr == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (o->DEPRECATED_sequenceNr == NULL) {
+		res = KSI_TlvElement_getInteger(o->impl, o->ctx, 0x03, &o->DEPRECATED_sequenceNr);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	*sequenceNr = o->DEPRECATED_sequenceNr;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_MetaDataElement_getRequestTimeInMicros(KSI_MetaDataElement *o, KSI_Integer** reqTimeInMicros) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (o == NULL || reqTimeInMicros == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (o->DEPRECATED_reqTimeInMicros == NULL) {
+		res = KSI_TlvElement_getInteger(o->impl, o->ctx, 0x03, &o->DEPRECATED_reqTimeInMicros);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	*reqTimeInMicros = o->DEPRECATED_reqTimeInMicros;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_MetaDataElement_setClientId(KSI_MetaDataElement *o, KSI_Utf8String*  clientId) {
+	int res = KSI_UNKNOWN_ERROR;
+	res = KSI_TlvElement_setUtf8String(o->impl, 0x01, clientId);
+	if (res != KSI_OK) goto cleanup;
+
+	o->DEPRECATED_clientId = clientId;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_MetaDataElement_setMachineId(KSI_MetaDataElement *o, KSI_Utf8String*  machineId) {
+	int res = KSI_UNKNOWN_ERROR;
+	res =  KSI_TlvElement_setUtf8String(o->impl, 0x02, machineId);
+	if (res != KSI_OK) goto cleanup;
+
+	o->DEPRECATED_machineId = machineId;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_MetaDataElement_setSequenceNr(KSI_MetaDataElement *o, KSI_Integer*  sequenceNr) {
+	int res = KSI_UNKNOWN_ERROR;
+	res = KSI_TlvElement_setInteger(o->impl, 0x03, sequenceNr);
+	if (res != KSI_OK) goto cleanup;
+
+	o->DEPRECATED_sequenceNr = sequenceNr;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_MetaDataElement_setRequestTimeInMicros(KSI_MetaDataElement *o, KSI_Integer*  reqTimeInMicros) {
+	int res = KSI_UNKNOWN_ERROR;
+	res =  KSI_TlvElement_setInteger(o->impl, 0x04, reqTimeInMicros);
+	if (res != KSI_OK) goto cleanup;
+
+	o->DEPRECATED_reqTimeInMicros = reqTimeInMicros;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_MetaDataElement_toTlv(KSI_CTX *ctx, const KSI_MetaDataElement *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_TLV *tmp = NULL;
+	unsigned char buf[0xffff + 4];
+	size_t len;
+	KSI_TlvElement *el = NULL;
+
+	if (ctx == NULL || data == NULL || tlv == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	/* Make sure the required elements are present. */
+	res = KSI_TlvElement_getElement(data->impl, 0x01, &el);
+	if (res != KSI_OK || el == NULL) {
+		res = KSI_INVALID_FORMAT;
+		goto cleanup;
+	}
+
+	/* Serialize the tlv. */
+	res = KSI_TlvElement_serialize(data->impl, buf, sizeof(buf), &len, KSI_TLV_OPT_NO_HEADER);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_TLV_new(ctx, data->impl->ftlv.tag, data->impl->ftlv.is_nc, data->impl->ftlv.is_fwd, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_TLV_setRawValue(tmp, buf, len);
+	if (res != KSI_OK) goto cleanup;
+
+	*tlv = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_TlvElement_free(el);
+	KSI_TLV_free(tmp);
+
+	return res;
+}
+int KSI_MetaDataElement_fromTlv(KSI_TLV *tlv, KSI_MetaDataElement **metaData) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_MetaDataElement *tmp = NULL;
+	unsigned char *ptr = NULL;
+	size_t len;
+	KSI_TlvElement *el = NULL;
+
+	if (tlv == NULL || metaData == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_MetaDataElement_new(KSI_TLV_getCtx(tlv), &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	tmp->impl->ftlv.tag = KSI_TLV_getTag(tlv);
+	tmp->impl->ftlv.is_fwd = KSI_TLV_isForward(tlv);
+	tmp->impl->ftlv.is_nc = KSI_TLV_isNonCritical(tlv);
+
+	/* Cast is safe, as we are not about to change the value. */
+	res = KSI_TLV_getRawValue(tlv, (const unsigned char **)&ptr, &len);
+	if (res != KSI_OK) goto cleanup;
+
+	tmp->impl->ptr = ptr;
+	tmp->impl->ftlv.dat_len = len;
+
+	/* Detach the element. */
+	res = KSI_TlvElement_detach(tmp->impl);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Make sure the required elements are present. */
+	res = KSI_TlvElement_getElement(tmp->impl, 0x01, &el);
+	if (res != KSI_OK || el == NULL) {
+		res = KSI_INVALID_FORMAT;
+		goto cleanup;
+	}
+
+	*metaData = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_TlvElement_free(el);
+	KSI_MetaDataElement_free(tmp);
+
+	return res;
+}
+
+static int KSI_MetaData_toMetaDataElement(KSI_MetaData *in, KSI_MetaDataElement **out) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_MetaDataElement *tmp = NULL;
+	unsigned char buf[0xffff + 4];
+	size_t len;
+
+	if (in == NULL || out == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_MetaDataElement_new(in->ctx, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	res = in->serializePayload(in, buf, sizeof(buf), &len);
+	if (res != KSI_OK) goto cleanup;
+
+	tmp->impl->ptr = buf;
+	tmp->impl->ftlv.dat_len = len;
+
+	res = KSI_TlvElement_detach(tmp->impl);
+	if (res != KSI_OK) goto cleanup;
+
+	*out = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_MetaDataElement_free(tmp);
+
+	return res;
+}
+
+static int KSI_MetaData_serializePayload(KSI_MetaData *t, unsigned char *buf, size_t buf_size, size_t *buf_len) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_MetaDataElement *mdEl = NULL;
+	KSI_TlvElement *padding = NULL;
+	size_t len;
+	static unsigned char padEven[] = { 0x01, 0x01 };
+	static unsigned char padOdd[] = { 0x01 };
+
+	if (t == NULL || (buf == NULL && buf_size != 0)) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_MetaDataElement_new(t->ctx, &mdEl);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_TlvElement_new(&padding);
+	if (res != KSI_OK) goto cleanup;
+
+	padding->ftlv.tag = 0x1e;
+	padding->ftlv.is_fwd = 1;
+	padding->ftlv.is_nc = 1;
+
+	/* Add the padding as the first element. */
+	res = KSI_TlvElement_appendElement(mdEl->impl, padding);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Add the values to the meta-data element. */
+	if (t->clientId != NULL) {
+		res = KSI_MetaDataElement_setClientId(mdEl, KSI_Utf8String_ref(t->clientId));
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	if (t->machineId != NULL) {
+		res = KSI_MetaDataElement_setMachineId(mdEl, KSI_Utf8String_ref(t->machineId));
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	if (t->sequenceNr != NULL) {
+		res = KSI_MetaDataElement_setSequenceNr(mdEl, KSI_Integer_ref(t->sequenceNr));
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	if (t->reqTimeInMicros) {
+		res = KSI_MetaDataElement_setRequestTimeInMicros(mdEl, KSI_Integer_ref(t->reqTimeInMicros));
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	/* Calculate the length of the payload. */
+	res = KSI_TlvElement_serialize(mdEl->impl, NULL, 0, &len, KSI_TLV_OPT_NO_HEADER);
+	if (res != KSI_OK) goto cleanup;
+
+	if (len % 2 == 0) {
+		padding->ptr = padEven;
+		padding->ftlv.dat_len = sizeof(padEven);
+	} else {
+		padding->ptr = padOdd;
+		padding->ftlv.dat_len = sizeof(padOdd);
+	}
+
+	res = KSI_TlvElement_serialize(mdEl->impl, buf, buf_size, buf_len, KSI_TLV_OPT_NO_HEADER);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_MetaDataElement_free(mdEl);
+	KSI_TlvElement_free(padding);
+	return res;
+}
+
 void KSI_MetaData_free(KSI_MetaData *t) {
-	if (t != NULL) {
-		KSI_OctetString_free(t->raw);
+	if (t != NULL && --t->ref == 0) {
 		KSI_Utf8String_free(t->clientId);
 		KSI_Utf8String_free(t->machineId);
+		KSI_Integer_free(t->reqTimeInMicros);
 		KSI_Integer_free(t->sequenceNr);
-		KSI_Integer_free(t->req_time_micros);
 		KSI_free(t);
 	}
 }
@@ -188,41 +568,72 @@ void KSI_MetaData_free(KSI_MetaData *t) {
 int KSI_MetaData_new(KSI_CTX *ctx, KSI_MetaData **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_MetaData *tmp = NULL;
+
+	if (ctx == NULL || t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
 	tmp = KSI_new(KSI_MetaData);
 	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
 
-	tmp->ctx = ctx;
-	tmp->raw = NULL;
 	tmp->clientId = NULL;
+	tmp->ctx = ctx;
 	tmp->machineId = NULL;
+	tmp->ref = 1;
+	tmp->reqTimeInMicros = NULL;
 	tmp->sequenceNr = NULL;
-	tmp->req_time_micros = NULL;
+	tmp->toMetaDataElement = KSI_MetaData_toMetaDataElement;
+	tmp->serializePayload = KSI_MetaData_serializePayload;
+
 	*t = tmp;
 	tmp = NULL;
+
 	res = KSI_OK;
+
 cleanup:
+
 	KSI_MetaData_free(tmp);
+
 	return res;
 }
 
+static int voidSetter(void **p, void *val, void (*val_free)(void *), void *(*val_ref)(void *)) {
+	int res = KSI_UNKNOWN_ERROR;
 
-KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_OctetString*, raw, Raw);
-KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Utf8String*, clientId, ClientId);
-KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Utf8String*, machineId, MachineId);
-KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Integer*, sequenceNr, SequenceNr);
-KSI_IMPLEMENT_GETTER(KSI_MetaData, KSI_Integer*, req_time_micros, RequestTimeInMicros);
+	if (p == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
-KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_OctetString*, raw, Raw);
-KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Utf8String*, clientId, ClientId);
-KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Utf8String*, machineId, MachineId);
-KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Integer*, sequenceNr, SequenceNr);
-KSI_IMPLEMENT_SETTER(KSI_MetaData, KSI_Integer*, req_time_micros, RequestTimeInMicros);
+	val_free(*p);
+	*p = val_ref(val);
 
-KSI_IMPLEMENT_FROMTLV(KSI_MetaData, 0x04, FROMTLV_ADD_RAW(raw, 2););
-KSI_IMPLEMENT_TOTLV(KSI_MetaData);
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+#define VOID_SETTER(var, val, typ) voidSetter((void **)&var, val, (void (*)(void *))typ##_free, (void *(*)(void *))typ##_ref)
+
+int KSI_MetaData_setClientId(KSI_MetaData *t, KSI_Utf8String *clientId) {
+	return VOID_SETTER(t->clientId, clientId, KSI_Utf8String);
+}
+
+int KSI_MetaData_setMachineId(KSI_MetaData *t, KSI_Utf8String *machineId) {
+	return VOID_SETTER(t->machineId, machineId, KSI_Utf8String);
+}
+int KSI_MetaData_setSequenceNr(KSI_MetaData *t, KSI_Integer *sequenceNr) {
+	return VOID_SETTER(t->sequenceNr, sequenceNr, KSI_Integer);
+}
+int KSI_MetaData_setRequestTimeInMicros(KSI_MetaData *t, KSI_Integer *reqTime) {
+	return VOID_SETTER(t->reqTimeInMicros, reqTime, KSI_Integer);
+}
 
 void KSI_ErrorPdu_free(KSI_ErrorPdu *t) {
 	if (t != NULL) {
@@ -1112,7 +1523,7 @@ int KSI_ExtendResp_verifyWithRequest(KSI_ExtendResp *resp, KSI_ExtendReq *req) {
 	if (req->publicationTime != NULL) {
 
 		if (!KSI_Integer_equals(tm, req->publicationTime)) {
-			KSI_pushError(resp->ctx, res = KSI_INVALID_ARGUMENT, "Aggregation time mismatch.");
+			KSI_pushError(resp->ctx, res = KSI_INVALID_ARGUMENT, "Publication time mismatch.");
 			goto cleanup;
 		}
 

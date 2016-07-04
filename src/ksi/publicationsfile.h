@@ -55,6 +55,7 @@ extern "C" {
 	 */
 	int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, size_t raw_len, KSI_PublicationsFile **pubFile);
 
+	KSI_DEFINE_REF(KSI_PublicationsFile);
 	/**
 	 * A convenience function for loading a publications file from an actual file.
 	 * \param[in]		ctx			KSI context.
@@ -62,6 +63,10 @@ extern "C" {
 	 * \param[out]		pubFile		Pointer to the receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note It must be noted that access to metadata, supported by some file systems,
+	 * is limited by the use of function \c fopen. Alternate Data Streams (WIndows NTFS)
+	 * and Resource Forks (OS X HFS) may or may not be supported, depending on the
+	 * C standard library used in the application.
 	 */
 	int KSI_PublicationsFile_fromFile(KSI_CTX *ctx, const char *fileName, KSI_PublicationsFile **pubFile);
 
@@ -139,7 +144,19 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
      */
-	int KSI_PublicationsFile_getSignedDataLength (const KSI_PublicationsFile *pubFile, size_t *signedDataLength);
+	int KSI_PublicationsFile_getSignedDataLength(const KSI_PublicationsFile *pubFile, size_t *signedDataLength);
+
+	/**
+	 * Publicationsfile certificate constraints getter method.
+	 * \param[in]	pubFile			Publications file.
+	 * \param[out]	certConstraints	Pointer to receiving pointer.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 * \note The output object may not be freed by the user.
+	 */
+	int KSI_PublicationsFile_getCertConstraints(const KSI_PublicationsFile *pubFile, KSI_CertConstraint **certConstraints);
+
 	/**
 	 * PKI Certificate search function by certificate Id.
 	 * \param[in]	pubFile			Publications file.
@@ -251,7 +268,7 @@ extern "C" {
      * \param[in]	ctx		KSI context.
      * \param[out]	pubFile	Pointer to receiving pointer.
 	 * 
-	 * 	\return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
      */
 	int KSI_PublicationsFile_new(KSI_CTX *ctx, KSI_PublicationsFile **pubFile);
 	
@@ -262,6 +279,30 @@ extern "C" {
 	void KSI_PublicationsFile_free(KSI_PublicationsFile *pubFile);
 
 	int KSI_PublicationsFile_findPublication(const KSI_PublicationsFile *trust, KSI_PublicationRecord *inRec, KSI_PublicationRecord **outRec);
+
+	/**
+	 * Specifies file-specific constraints for verifying the publications file PKI certificate.
+	 * The file-specific constraints, if set, override the default constraints in the KSI context.
+	 * The input consists of an array of OID and expected value pairs terminated by a pair of two NULLs. Except
+	 * in the last terminating NULL pair, the expected value may not be NULL - this will make the function
+	 * return #KSI_INVALID_ARGUMENT.
+	 * File-specific constraints can be cleared with a NULL in place of \c arr.
+	 * \param[in]	pubFile		Publications file for which to set the constraints.
+	 * \param[in]	arr			Array of OID and value pairs, terminated by a pair of NULLs.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note The function does not take ownership of the input array and makes a copy of it, thus the
+	 * caller is responsible for freeing the memory which can be done right after a successful call
+	 * to this function.
+	 * \code{.c}
+	 * KSI_CertConstraint arr[] = {
+	 * 		{ KSI_CERT_EMAIL, "publications@guardtime.com"},
+	 * 		{ NULL, NULL }
+	 * };
+	 * res = KSI_PublicationsFile_setCertConstraints(ctx->publicationsFile, arr);
+	 * \endcode
+	 */
+	int KSI_PublicationsFile_setCertConstraints(KSI_PublicationsFile *pubFile, const KSI_CertConstraint *arr);
 
 	/**
 	 * Converts the base-32 encoded publicationstring into #KSI_PublicationData object.
@@ -298,6 +339,7 @@ extern "C" {
 	char *KSI_PublicationData_toString(KSI_PublicationData *t, char *buffer, size_t buffer_len);
 	int KSI_PublicationData_fromTlv (KSI_TLV *tlv, KSI_PublicationData **data);
 	int KSI_PublicationData_toTlv (KSI_CTX *ctx, const KSI_PublicationData *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+	KSI_DEFINE_REF(KSI_PublicationData);
 
 	/**
 	 * KSI_PublicationRecord

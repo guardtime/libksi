@@ -28,23 +28,22 @@
 KSI_IMPLEMENT_GET_CTX(KSI_NetworkClient);
 KSI_IMPLEMENT_GET_CTX(KSI_RequestHandle);
 
-static int setStringParam(char **param, const char *val) {
+static int newStringFromExisting(char **string, const char *val, int val_len) {
 	char *tmp = NULL;
 	int res = KSI_UNKNOWN_ERROR;
+	size_t new_len = (val_len < 0) ? (strlen(val) + 1) : (val_len);
 
-
-	tmp = KSI_calloc(strlen(val) + 1, 1);
+	tmp = KSI_malloc(strlen(val) + 1);
 	if (tmp == NULL) {
-		res = KSI_INVALID_ARGUMENT;
+		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
-	memcpy(tmp, val, strlen(val) + 1);
+	memcpy(tmp, val, new_len);
+	tmp[new_len - 1] = '\0';
 
-	if (*param != NULL) {
-		KSI_free(*param);
-	}
+	if (*string != NULL) KSI_free(*string);
 
-	*param = tmp;
+	*string = tmp;
 	tmp = NULL;
 
 	res = KSI_OK;
@@ -52,6 +51,250 @@ static int setStringParam(char **param, const char *val) {
 cleanup:
 
 	KSI_free(tmp);
+
+	return res;
+}
+
+static int setStringParam(char **param, const char *val) {
+	return newStringFromExisting(param, val, -1);
+}
+
+static int uriSplit(const char *uri, char **scheme, char **user, char **pass, char **host, unsigned *port, char **path, char **query, char **fragment) {
+	int res = KSI_UNKNOWN_ERROR;
+	struct http_parser_url parser;
+	char *tmpHost = NULL;
+	char *tmpSchema = NULL;
+	char *tmpPath = NULL;
+	char *tmpQuery = NULL;
+	char *tmpFragment = NULL;
+	char *tmpUserInfo = NULL;
+	char *tmpUser = NULL;
+	char *tmpPass = NULL;
+
+	if (uri == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	memset(&parser, 0, sizeof(struct http_parser_url));
+
+	res = http_parser_parse_url(uri, strlen(uri), 0, &parser);
+	if (res != 0) {
+		res = KSI_INVALID_FORMAT;
+		goto cleanup;
+	}
+
+	/* Extract host. */
+	if ((parser.field_set & (1 << UF_HOST)) && (host != NULL)) {
+		res = newStringFromExisting(&tmpHost, uri + parser.field_data[UF_HOST].off, parser.field_data[UF_HOST].len + 1);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	/* Extract user info. */
+	if ((parser.field_set & (1 << UF_USERINFO)) && (user != NULL || pass != NULL)) {
+		char *startOfPass = NULL;
+		res = newStringFromExisting(&tmpUserInfo, uri + parser.field_data[UF_USERINFO].off, parser.field_data[UF_USERINFO].len + 1);
+		if (res != KSI_OK) goto cleanup;
+
+		startOfPass = strchr(tmpUserInfo, ':');
+		if (startOfPass == NULL) {
+			res = KSI_INVALID_FORMAT;
+			goto cleanup;
+		}
+
+		*startOfPass++ = '\0';
+
+		if (user != NULL) {
+			res = newStringFromExisting(&tmpUser, tmpUserInfo, -1);
+			if (res != KSI_OK) goto cleanup;
+		}
+
+		if (pass != NULL) {
+			res = newStringFromExisting(&tmpPass, startOfPass, -1);
+			if (res != KSI_OK) goto cleanup;
+		}
+	}
+
+	/* Extract schema. */
+	if ((parser.field_set & (1 << UF_SCHEMA)) && (scheme != NULL)) {
+		res = newStringFromExisting(&tmpSchema, uri + parser.field_data[UF_SCHEMA].off, parser.field_data[UF_SCHEMA].len + 1);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	/* Extract path. */
+	if ((parser.field_set & (1 << UF_PATH)) && (path != NULL)) {
+		res = newStringFromExisting(&tmpPath, uri + parser.field_data[UF_PATH].off, parser.field_data[UF_PATH].len + 1);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	/* Extract query. */
+	if ((parser.field_set & (1 << UF_QUERY)) && (query != NULL)) {
+		res = newStringFromExisting(&tmpQuery, uri + parser.field_data[UF_QUERY].off, parser.field_data[UF_QUERY].len + 1);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	/* Extract fragment. */
+	if ((parser.field_set & (1 << UF_FRAGMENT)) && (fragment != NULL)) {
+		res = newStringFromExisting(&tmpFragment, uri + parser.field_data[UF_FRAGMENT].off, parser.field_data[UF_FRAGMENT].len + 1);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	if (host != NULL) {
+		*host = tmpHost;
+		tmpHost = NULL;
+	}
+
+	if (scheme != NULL) {
+		*scheme = tmpSchema;
+		tmpSchema = NULL;
+	}
+
+	if (path != NULL) {
+		*path = tmpPath;
+		tmpPath = NULL;
+	}
+
+	if (query != NULL) {
+		*query = tmpQuery;
+		tmpQuery = NULL;
+	}
+
+	if (fragment != NULL) {
+		*fragment = tmpFragment;
+		tmpFragment = NULL;
+	}
+
+	if (user != NULL) {
+		*user = tmpUser;
+		tmpUser = NULL;
+	}
+
+	if (pass != NULL) {
+		*pass = tmpPass;
+		tmpPass = NULL;
+	}
+
+	if (port != NULL) *port = parser.port;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_free(tmpHost);
+	KSI_free(tmpSchema);
+	KSI_free(tmpPath);
+	KSI_free(tmpUserInfo);
+	KSI_free(tmpQuery);
+	KSI_free(tmpFragment);
+	KSI_free(tmpUser);
+	KSI_free(tmpPass);
+
+	return res;
+}
+
+static int uriCompose(const char *scheme, const char *user, const char *pass, const char *host, unsigned port, const char *path, const char *query, const char *fragment, char *buf, size_t len) {
+	size_t count = 0;
+	//scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
+
+	if (host == NULL || (user != NULL && pass == NULL) || (pass != NULL && user == NULL)) {
+		return KSI_INVALID_ARGUMENT;
+	}
+
+	if (scheme != NULL) {
+		count += KSI_snprintf(buf + count, len - count, "%s://", scheme);
+	}
+
+	if (user != NULL && pass != NULL) {
+		count += KSI_snprintf(buf + count, len - count, "%s:%s@", user, pass);
+	}
+
+	count += KSI_snprintf(buf + count, len - count, "%s", host);
+
+	if (port != 0) {
+		count += KSI_snprintf(buf + count, len - count, ":%d", port);
+	}
+
+	if (path != NULL) {
+		count += KSI_snprintf(buf + count, len - count, "%s%s", (path[0] == '/') ? "" : "/", path);
+	}
+
+	if (query != NULL) {
+		count += KSI_snprintf(buf + count, len - count, "?%s", query);
+	}
+
+	if (fragment != NULL) {
+		count += KSI_snprintf(buf + count, len - count, "#%s", fragment);
+	}
+
+	return KSI_OK;
+}
+
+void KSI_NetEndpoint_free(KSI_NetEndpoint *endPoint) {
+	if (endPoint == NULL) return;
+
+	KSI_free(endPoint->ksi_pass);
+	KSI_free(endPoint->ksi_user);
+
+	if (endPoint->implCtx_free != NULL) {
+		endPoint->implCtx_free(endPoint->implCtx);
+	}
+
+	KSI_free(endPoint);
+}
+
+int KSI_AbstractNetEndpoint_new(KSI_CTX *ctx, KSI_NetEndpoint **endPoint) {
+	int res;
+	KSI_NetEndpoint *tmp = NULL;
+
+	if (ctx == NULL || endPoint == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	tmp = KSI_new(KSI_NetEndpoint);
+	if (tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->ksi_pass = NULL;
+	tmp->ksi_user = NULL;
+	tmp->implCtx = NULL;
+	tmp->implCtx_free = NULL;
+
+	*endPoint = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_NetEndpoint_free(tmp);
+
+	return res;
+}
+
+int KSI_NetEndpoint_setImplContext(KSI_NetEndpoint *endPoint, void *implCtx, void (*implCtx_free)(void *)) {
+	int res;
+
+	if (endPoint == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(endPoint->ctx);
+
+	if (endPoint->implCtx != implCtx && endPoint->implCtx != NULL && endPoint->implCtx_free != NULL) {
+		endPoint->implCtx_free(endPoint->implCtx);
+	}
+
+	endPoint->implCtx = implCtx;
+	endPoint->implCtx_free = implCtx_free;
+
+	res = KSI_OK;
+
+cleanup:
 
 	return res;
 }
@@ -77,6 +320,7 @@ int KSI_RequestHandle_new(KSI_CTX *ctx, const unsigned char *request, size_t req
 	}
 
 	tmp->ctx = ctx;
+	tmp->ref = 1;
 	tmp->implCtx = NULL;
 	tmp->implCtx_free = NULL;
 	tmp->request = NULL;
@@ -93,6 +337,11 @@ int KSI_RequestHandle_new(KSI_CTX *ctx, const unsigned char *request, size_t req
 
 	tmp->response = NULL;
 	tmp->response_length = 0;
+	tmp->completed = false;
+	tmp->err.code = 0;
+	memset(tmp->err.errm, 0, sizeof(tmp->err.errm));
+	tmp->err.res = KSI_UNKNOWN_ERROR;
+	tmp->status = NULL;
 
 	tmp->client = NULL;
 
@@ -136,7 +385,7 @@ cleanup:
  *
  */
 void KSI_RequestHandle_free(KSI_RequestHandle *handle) {
-	if (handle != NULL) {
+	if (handle != NULL && --handle->ref == 0) {
 		if (handle->implCtx_free != NULL) {
 			handle->implCtx_free(handle->implCtx);
 		}
@@ -148,6 +397,7 @@ void KSI_RequestHandle_free(KSI_RequestHandle *handle) {
 
 int KSI_NetworkClient_sendSignRequest(KSI_NetworkClient *provider, KSI_AggregationReq *request, KSI_RequestHandle **handle) {
 	int res = KSI_UNKNOWN_ERROR;
+	KSI_RequestHandle *tmp = NULL;
 
 	if (provider == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -165,21 +415,26 @@ int KSI_NetworkClient_sendSignRequest(KSI_NetworkClient *provider, KSI_Aggregati
 		goto cleanup;
 	}
 
-	res = provider->sendSignRequest(provider, request, handle);
+	res = provider->sendSignRequest(provider, request, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(provider->ctx, res, NULL);
 		goto cleanup;
 	}
 
+	*handle = tmp;
+	tmp = NULL;
 	res = KSI_OK;
 
 cleanup:
+
+	KSI_RequestHandle_free(tmp);
 
 	return res;
 }
 
 int KSI_NetworkClient_sendExtendRequest(KSI_NetworkClient *provider, KSI_ExtendReq *request, KSI_RequestHandle **handle) {
 	int res;
+	KSI_RequestHandle *tmp = NULL;
 
 	if (provider == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -199,21 +454,26 @@ int KSI_NetworkClient_sendExtendRequest(KSI_NetworkClient *provider, KSI_ExtendR
 		goto cleanup;
 	}
 
-	res = provider->sendExtendRequest(provider, request, handle);
+	res = provider->sendExtendRequest(provider, request, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(provider->ctx, res, NULL);
 		goto cleanup;
 	}
 
+	*handle = tmp;
+	tmp = NULL;
 	res = KSI_OK;
 
 cleanup:
+
+	KSI_RequestHandle_free(tmp);
 
 	return res;
 }
 
 int KSI_NetworkClient_sendPublicationsFileRequest(KSI_NetworkClient *provider, KSI_RequestHandle **handle) {
 	int res;
+	KSI_RequestHandle *tmp = NULL;
 
 	if (provider == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -233,30 +493,34 @@ int KSI_NetworkClient_sendPublicationsFileRequest(KSI_NetworkClient *provider, K
 		goto cleanup;
 	}
 
-	res = provider->sendPublicationRequest(provider, handle);
+	res = provider->sendPublicationRequest(provider, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(provider->ctx, res, NULL);
 		goto cleanup;
 	}
 
+	*handle = tmp;
+	tmp = NULL;
 	res = KSI_OK;
 
 cleanup:
+
+	KSI_RequestHandle_free(tmp);
 
 	return res;
 }
 
 void KSI_NetworkClient_free(KSI_NetworkClient *provider) {
 	if (provider != NULL) {
-		KSI_free(provider->aggrPass);
-		KSI_free(provider->aggrUser);
-		KSI_free(provider->extPass);
-		KSI_free(provider->extUser);
+		KSI_NetEndpoint_free(provider->aggregator);
+		KSI_NetEndpoint_free(provider->extender);
+		KSI_NetEndpoint_free(provider->publicationsFile);
+
 		if (provider->implFree != NULL) {
-			provider->implFree(provider);
-		} else {
-			KSI_free(provider);
+			provider->implFree(provider->impl);
 		}
+
+		KSI_free(provider);
 	}
 }
 
@@ -357,7 +621,7 @@ cleanup:
 	return res;
 }
 
-static int receiveResponse(KSI_RequestHandle *handle) {
+int KSI_RequestHandle_perform(KSI_RequestHandle *handle) {
 	int res;
 
 	if (handle == NULL) {
@@ -379,12 +643,31 @@ static int receiveResponse(KSI_RequestHandle *handle) {
 		goto cleanup;
 	}
 
+	handle->completed = true;
+
 	res = KSI_OK;
 
 cleanup:
 
 	return res;
 }
+
+int KSI_RequestHandle_getResponseStatus(KSI_RequestHandle *handle, const KSI_RequestHandleStatus **err) {
+	int res = KSI_UNKNOWN_ERROR;
+	if (handle == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	*err = &handle->err;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 
 int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, const unsigned char **response, size_t *response_len) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -399,16 +682,6 @@ int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, const unsigned char
 	if (response == NULL || response_len == NULL) {
 		KSI_pushError(handle->ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
-	}
-
-
-	if (handle->response == NULL) {
-		KSI_LOG_debug(handle->ctx, "Waiting for response.");
-		res = receiveResponse(handle);
-		if (res != KSI_OK) {
-			KSI_pushError(handle->ctx, res, NULL);
-			goto cleanup;
-		}
 	}
 
 	*response = handle->response;
@@ -486,7 +759,6 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 		goto cleanup;
 	}
 
-
 	res = KSI_RequestHandle_getResponse(handle, &raw, &len);
 	if (res != KSI_OK) {
 		KSI_pushError(handle->ctx, res, NULL);
@@ -497,8 +769,8 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 
 	/*Get response PDU*/
 	res = KSI_ExtendPdu_parse(handle->ctx, raw, len, &pdu);
-	if(res != KSI_OK){
-		int networkStatus = handle->client->getStausCode ? handle->client->getStausCode(handle->client) : 0;
+	if (res != KSI_OK) {
+		int networkStatus = handle->err.code;
 
 		if (networkStatus >= 400 && networkStatus < 600) {
 			KSI_ERR_push(handle->ctx, res = KSI_HTTP_ERROR, networkStatus, __FILE__, __LINE__, "HTTP returned error. Unable to parse extend pdu.");
@@ -564,7 +836,7 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 		goto cleanup;
 	}
 
-	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->extPass,
+	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->extender->ksi_pass,
 			(int (*)(void*, int, const char*, KSI_DataHash**))KSI_ExtendPdu_calculateHmac,
 			(void*)pdu);
 
@@ -609,11 +881,10 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 
 	KSI_ERR_clearErrors(handle->ctx);
 
-	if (handle->client == NULL || handle->client->aggrPass == NULL || resp == NULL) {
+	if (handle->client == NULL || handle->client->aggregator->ksi_pass == NULL || resp == NULL) {
 		KSI_pushError(handle->ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
-
 
 	res = KSI_RequestHandle_getResponse(handle, &raw, &len);
 	if (res != KSI_OK) {
@@ -621,12 +892,14 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 		goto cleanup;
 	}
 
-	KSI_LOG_logBlob(handle->ctx, KSI_LOG_DEBUG, "Parsing aggregation response from", raw, len);
+	KSI_LOG_logBlob(handle->ctx, KSI_LOG_DEBUG, "Parsing aggregation response:", raw, len);
 
-	/*Get PDU object*/
+
+
+	/* Get PDU object. */
 	res = KSI_AggregationPdu_parse(handle->ctx, raw, len, &pdu);
 	if(res != KSI_OK){
-		int networkStatus = handle->client->getStausCode ? handle->client->getStausCode(handle->client) : 0;
+		int networkStatus = handle->err.code;
 
 		if(networkStatus >= 400 && networkStatus < 600)
 			KSI_ERR_push(handle->ctx, res = KSI_HTTP_ERROR, networkStatus, __FILE__, __LINE__, "HTTP returned error. Unable to parse aggregation pdu.");
@@ -687,7 +960,7 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 		goto cleanup;
 	}
 
-	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->aggrPass,
+	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->aggregator->ksi_pass,
 			(int (*)(void*, int, const char*, KSI_DataHash**))KSI_AggregationPdu_calculateHmac,
 			(void*)pdu);
 
@@ -766,28 +1039,89 @@ cleanup:
 	return res;
 }
 
-int KSI_NetworkClient_init(KSI_CTX *ctx, KSI_NetworkClient *client) {
+static int simplePerformAll(KSI_NetworkClient *client, KSI_RequestHandle **arr, size_t arr_len) {
 	int res = KSI_UNKNOWN_ERROR;
+	size_t i;
+
+	if (client == NULL || (arr == NULL && arr_len != 0)) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	for (i = 0; i < arr_len; i++) {
+		arr[i]->err.res = KSI_RequestHandle_perform(arr[i]);
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+
+}
+
+int KSI_AbstractNetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_NetworkClient *tmp = NULL;
+	KSI_NetEndpoint *aggrEndpoint = NULL;
+	KSI_NetEndpoint *extEndpoint = NULL;
+	KSI_NetEndpoint *pubEndpoint = NULL;
 
 	if (ctx == NULL || client == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	client->ctx = ctx;
-	client->aggrPass = NULL;
-	client->aggrUser = NULL;
-	client->extPass = NULL;
-	client->extUser = NULL;
-	client->implFree = NULL;
-	client->sendExtendRequest = NULL;
-	client->sendPublicationRequest = NULL;
-	client->sendSignRequest = NULL;
-	client->getStausCode = NULL;
+	/* Create and initialize abstract network provider. */
+	tmp = KSI_new(KSI_NetworkClient);
+	if (tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->implFree = NULL;
+	tmp->sendExtendRequest = NULL;
+	tmp->sendPublicationRequest = NULL;
+	tmp->sendSignRequest = NULL;
+	tmp->requestCount = 0;
+	tmp->performAll = simplePerformAll;
+
+	/* Configure private helper functions. */
+	tmp->setStringParam = setStringParam;
+	tmp->uriSplit = uriSplit;
+	tmp->uriCompose = uriCompose;
+
+	/* Create Abstract endpoints. */
+	res = KSI_AbstractNetEndpoint_new(ctx, &aggrEndpoint);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_AbstractNetEndpoint_new(ctx, &extEndpoint);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_AbstractNetEndpoint_new(ctx, &pubEndpoint);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Set Abstract endpoints. */
+	tmp->aggregator = aggrEndpoint;
+	tmp->extender = extEndpoint;
+	tmp->publicationsFile = pubEndpoint;
+	aggrEndpoint = NULL;
+	extEndpoint = NULL;
+	pubEndpoint = NULL;
+
+
+	*client = tmp;
+	tmp = NULL;
 
 	res = KSI_OK;
 
 cleanup:
+
+	KSI_NetworkClient_free(tmp);
+	KSI_NetEndpoint_free(aggrEndpoint);
+	KSI_NetEndpoint_free(extEndpoint);
+	KSI_NetEndpoint_free(pubEndpoint);
 
 	return res;
 
@@ -832,90 +1166,39 @@ int KSI_convertExtenderStatusCode(KSI_Integer *statusCode) {
 }
 
 int KSI_UriSplitBasic(const char *uri, char **scheme, char **host, unsigned *port, char **path) {
-	int res = KSI_UNKNOWN_ERROR;
-	struct http_parser_url parser;
-	char *tmpHost = NULL;
-	char *tmpSchema = NULL;
-	char *tmpPath = NULL;
+	return uriSplit(uri, scheme, NULL, NULL, host, port, path, NULL, NULL);
+}
 
-	if (uri == NULL) {
+int KSI_NetworkClient_performAll(KSI_NetworkClient *client, KSI_RequestHandle **arr, size_t arr_len) {
+	int res = KSI_UNKNOWN_ERROR;
+	if (client == NULL || (arr == NULL && arr_len != 0)) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	memset(&parser, 0, sizeof(struct http_parser_url));
-
-	res = http_parser_parse_url(uri, strlen(uri), 0, &parser);
-	if (res != 0) {
-		res = KSI_INVALID_FORMAT;
+	if (client->performAll == NULL) {
+		KSI_pushError(client->ctx, res = KSI_UNKNOWN_ERROR, "Network client does not implement performAll() method.");
 		goto cleanup;
 	}
 
-	if ((parser.field_set & (1 << UF_HOST)) && (host != NULL)) {
-		/* Extract host. */
-		int len = parser.field_data[UF_HOST].len + 1;
-		tmpHost = KSI_malloc(len);
-		if (tmpHost == NULL) {
-			res = KSI_OUT_OF_MEMORY;
+	if (arr != NULL && arr_len != 0) {
+		res = client->performAll(client, arr, arr_len);
+		if (res != KSI_OK) {
+			KSI_pushError(client->ctx, res, NULL);
 			goto cleanup;
 		}
-		KSI_snprintf(tmpHost, len, "%s", uri + parser.field_data[UF_HOST].off);
-		tmpHost[len - 1] = '\0';
 	}
-
-	if ((parser.field_set & (1 << UF_SCHEMA)) && (scheme != NULL)) {
-		/* Extract schema. */
-		int len = parser.field_data[UF_SCHEMA].len + 1;
-		tmpSchema = KSI_malloc(len);
-		if (tmpSchema == NULL) {
-			res = KSI_OUT_OF_MEMORY;
-			goto cleanup;
-		}
-		KSI_snprintf(tmpSchema, len, "%s", uri + parser.field_data[UF_SCHEMA].off);
-		tmpSchema[len - 1] = '\0';
-	}
-
-	if ((parser.field_set & (1 << UF_PATH)) && (path != NULL)) {
-		/* Extract path. */
-		int len = parser.field_data[UF_PATH].len + 1;
-		tmpPath = KSI_malloc(len);
-		if (tmpPath == NULL) {
-			res = KSI_OUT_OF_MEMORY;
-			goto cleanup;
-		}
-		KSI_snprintf(tmpPath, len, "%s", uri + parser.field_data[UF_PATH].off);
-		tmpPath[len - 1] = '\0';
-	}
-
-	if (host != NULL) {
-		*host = tmpHost;
-		tmpHost = NULL;
-	}
-
-	if (scheme != NULL) {
-		*scheme = tmpSchema;
-		tmpSchema = NULL;
-	}
-
-	if (path != NULL) {
-		*path = tmpPath;
-		tmpPath = NULL;
-	}
-	if (port != NULL) *port = parser.port;
 
 	res = KSI_OK;
 
 cleanup:
 
-	KSI_free(tmpHost);
-	KSI_free(tmpSchema);
-	KSI_free(tmpPath);
-
 	return res;
+
 }
 
-#define KSI_NET_IMPLEMENT_SETTER(name, type, var, fn) 														\
-		int KSI_NetworkClient_set##name(KSI_NetworkClient *client, type val) {								\
+#define KSI_NET_OBJ_IMPLEMENT_SETTER(obj, name, type, var, fn) 														\
+		int obj##_set##name(obj *client, type val) {								\
 			int res = KSI_UNKNOWN_ERROR;																\
 			if (client == NULL) {																		\
 				res = KSI_INVALID_ARGUMENT;																\
@@ -927,12 +1210,46 @@ cleanup:
 			return res;																					\
 		}
 
-KSI_NET_IMPLEMENT_SETTER(ExtenderUser, const char *, extUser, setStringParam);
-KSI_NET_IMPLEMENT_SETTER(ExtenderPass, const char *, extPass, setStringParam);
-KSI_NET_IMPLEMENT_SETTER(AggregatorUser, const char *, aggrUser, setStringParam);
-KSI_NET_IMPLEMENT_SETTER(AggregatorPass, const char *, aggrPass, setStringParam);
+#define KSI_NET_IMPLEMENT_GETTER(baseType, valueType, valueName, alias)			\
+	KSI_DEFINE_GETTER(baseType, valueType, alias, alias) {					\
+	int res = KSI_UNKNOWN_ERROR;											\
+	if (o == NULL || alias == NULL) {									\
+		res = KSI_INVALID_ARGUMENT;											\
+		goto cleanup;														\
+	}																		\
+	*alias = o->valueName;												\
+	res = KSI_OK;															\
+cleanup:																	\
+	return res;																\
+}
 
-KSI_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, extUser, ExtenderUser);
-KSI_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, extPass, ExtenderPass);
-KSI_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, aggrUser, AggregatorUser);
-KSI_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, aggrPass, AggregatorPass);
+/* KSI_NetEndpoint */
+KSI_NET_OBJ_IMPLEMENT_SETTER(KSI_NetEndpoint, User, const char *, ksi_user, setStringParam);
+KSI_NET_OBJ_IMPLEMENT_SETTER(KSI_NetEndpoint, Pass, const char *, ksi_pass, setStringParam);
+
+KSI_IMPLEMENT_GETTER(KSI_NetEndpoint, const char *, ksi_user, User);
+KSI_IMPLEMENT_GETTER(KSI_NetEndpoint, const char *, ksi_pass, Pass);
+
+
+/* KSI_NetworkClient */
+KSI_NET_OBJ_IMPLEMENT_SETTER(KSI_NetworkClient, ExtenderUser, const char *, extender->ksi_user, setStringParam);
+KSI_NET_OBJ_IMPLEMENT_SETTER(KSI_NetworkClient, ExtenderPass, const char *, extender->ksi_pass, setStringParam);
+KSI_NET_OBJ_IMPLEMENT_SETTER(KSI_NetworkClient, AggregatorUser, const char *, aggregator->ksi_user, setStringParam);
+KSI_NET_OBJ_IMPLEMENT_SETTER(KSI_NetworkClient, AggregatorPass, const char *, aggregator->ksi_pass, setStringParam);
+
+KSI_IMPLEMENT_SETTER(KSI_NetworkClient, KSI_NetEndpoint *, aggregator, AggregatorEndpoint);
+KSI_IMPLEMENT_SETTER(KSI_NetworkClient, KSI_NetEndpoint *, extender, ExtenderEndpoint);
+KSI_IMPLEMENT_SETTER(KSI_NetworkClient, KSI_NetEndpoint *, publicationsFile, PublicationsFileEndpoint);
+
+KSI_NET_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, extender->ksi_user, ExtenderUser);
+KSI_NET_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, extender->ksi_pass, ExtenderPass);
+KSI_NET_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, aggregator->ksi_user, AggregatorUser);
+KSI_NET_IMPLEMENT_GETTER(KSI_NetworkClient, const char *, aggregator->ksi_pass, AggregatorPass);
+
+KSI_IMPLEMENT_GETTER(KSI_NetworkClient, KSI_NetEndpoint *, aggregator, AggregatorEndpoint);
+KSI_IMPLEMENT_GETTER(KSI_NetworkClient, KSI_NetEndpoint *, extender, ExtenderEndpoint);
+KSI_IMPLEMENT_GETTER(KSI_NetworkClient, KSI_NetEndpoint *, publicationsFile, PublicationsFileEndpoint);
+
+
+
+KSI_IMPLEMENT_REF(KSI_RequestHandle);

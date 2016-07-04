@@ -2,6 +2,7 @@
 
 GNUMakefile.in
 config.h.in
+config.h.in~
 Makefile.in
 /m4
 
@@ -16,6 +17,7 @@ Makefile.in
 /missing
 /stamp-h1
 /config
+>>>>>>> release_3.4
 config.status
 config.log
 
@@ -59,6 +61,7 @@ libtool
 *.hex
 
 # Debug files
+*.pdb
 *.dSYM/
 
 # Binaries and log files
@@ -82,3 +85,12 @@ test/resigner
 test/runner
 test/serialize-benchmark
 testsuite-xunit.xml
+coverage.info
+coverage/
+
+# Configuration files
+test/integrationtest.conf
+
+# Generated header files
+version.h
+/Debug/

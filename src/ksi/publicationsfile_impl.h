@@ -26,6 +26,7 @@ extern "C" {
 
 	struct KSI_PublicationsFile_st {
 		KSI_CTX *ctx;
+		size_t ref;
 		unsigned char *raw;
 		size_t raw_len;
 		KSI_PublicationsHeader *header;
@@ -33,10 +34,12 @@ extern "C" {
 		KSI_LIST(KSI_PublicationRecord) *publications;
 		size_t signedDataLength;
 		KSI_PKISignature *signature;
+		KSI_CertConstraint *certConstraints;
 	};
 
 	struct KSI_PublicationData_st {
 		KSI_CTX *ctx;
+		size_t ref;
 		KSI_Integer *time;
 		KSI_DataHash *imprint;
 		KSI_TLV *baseTlv;

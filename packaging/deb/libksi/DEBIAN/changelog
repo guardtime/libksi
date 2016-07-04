@@ -1,3 +1,91 @@
+libksi (3.9.1701) RELEASED; urgency=low
+
+  * IMPROVEMENT: Added block signature sample application.
+  * IMPROVEMENT: Removed dead code from http_parser.{c,h}
+  * IMPROVEMENT: Added KSI_verifyDataHash.
+  * IMPROVEMENT: Custom meta-data sepparated from the low-level implementation. Adds padding automatically.
+  * IMPROVEMENT: Metadata hardening verification.
+  * IMPROVEMENT: Removed SHA-224 support.
+  * IMPROVEMENT: Removed Unused function KSI_RDR_verifyEnd.
+  * IMPROVEMENT: PKI truststore initialization is performed on the need basis.
+  * IMPROVEMENT: Added signature verification according to policies.
+  * IMPROVEMENT: Created KSI_HmacHasher interface for incremental HMAC computation.
+  * IMPROVEMENT: Certificate constraints can be set and verified per publications file.
+  * IMPROVEMENT: Add preprocessor parseable version no.
+  * IMPROVEMENT: KSI_receivePublicationsFile must not verify publications file automatically.
+  * BUGFIX: Invalid and misleading exception message on response publication time check.
+  * BUGFIX: Correcting memory leaks when using Windows Crypt32 library.
+  * IMPROVEMENT: Added support for local aggregation.
+  * IMPROVEMENT: Functions KSI_Signature_create* are deprecated and KSI_Signature_sign will replace them.
+  * IMPROVEMENT: Added function KSI_Signature_appendAggregationChain.
+  * IMPROVEMENT: Added function KSI_AggregationHashChain_calculateShape.
+  * IMPROVEMENT: KSI_HashChain_aggregate and KSI_HashChain_aggregateCalendar no longer require not NULL output parameters.
+  * IMPROVEMENT: Added KSI_AggregationHashChain_aggregate function.
+  * BUGFIX: Correcting usage of isForward and isNonCritical flags in KSI_TlvTemplate_serializeObject and KSI_TlvTemplate_writeBytes. Added tests to cover this bug.
+  * IMPROVEMENT: KSI_LIST may contain NULL values.
+  * BUGFIX: Certificate and publication records are not mandatory for publications file.
+  * IMPROVEMENT: Integration tests configuration file error handling improved.
+  * IMPROVEMENT: Handling for reading server responses from tlv files.
+  * BUGFIX: Removed unused function.
+  * BUGFIX: Fixed macro redefinition issue.
+  * BUGFIX: Fixed KSI_Signature_getSigningTime() when signature does not containa calendar chain.
+  * IMPROVEMENT: Created KSI_HmacHasher interface for incremental HMAC computation.
+  * IMPROVEMENT: Added detailed coverage report in html format.
+  * IMPROVEMENT: In case of no errors KSI_ERR_getBaseErrorMessag returns string indicating that there are no errors.
+  * BUGFIX: KSI_ERR_getBaseErrorMessage error code returned by the output parameter fixed when error count is zero.
+  * BUGFIX: KSI_DataHasher memory leak on immediate reset after open.
+  * IMPROVEMENT: Added detailed coverage report in html format.
+  * BUGFIX: Fixed HMAC for hash functions with other than 512 bit internal block size.
+  * IMPROVEMENT: Removed build warnings on OSX.
+  * IMPROVEMENT: Added mechanism to disable deprecation warnings.
+
+ -- Guardtime AS <info@guardtime.com>  Mon, 18 Apr 2016 00:00:00 +0200
+
+
+libksi (3.7.1037) UNRELEASED; urgency=low
+
+  * BUGFIX: Fixed building from SRPM
+    Thanks to Peter Portante
+  * BUGFIX: Compilation issues under Fedora 21
+    Thanks to Peter Portante
+  * IMPROVEMENT: Versioning includes 
+  * BUGFIX: KSI_Signature_getDocumentHash fixed when applied to legacy signature.
+  * BUGFIX: KSI_MultiSignature_get fixed when extracting legacy signature.
+  * BUGFIX: KSI_MultiSignature_remove fixed when removing legacy signature.
+
+
+libksi (3.5.1) UNRELEASED; urgency=low
+
+    * Added integration tests.
+    * Refactored internal components. 
+
+ -- Guardtime AS <info@guardtime.com>  Thu, 14 May 2015 00:00:00 +0200
+
+libksi (3.4.0.6) RELEASED; urgency=low
+
+    * Added mime-type to http requests.
+
+ -- Guardtime AS <info@guardtime.com>  Thu, 14 May 2015 00:00:00 +0200
+
+ibksi (3.4.0.1) RELEASED; urgency=low
+
+    * Removed all default endpoints.
+    * Added multi signature container.
+    * Publications file parsing and verification are now more strict.
+    * Publications file verification customizable.
+    * Added fast tlv parser.
+    * Fixed getLatestPublication and getNearestPublication.
+    * Restructured logging (new log levels).
+    * All size variables changed to size_t.
+    * Hash algorithm id changed from int to KSI_HashAlgorithm.
+    * Debian packaging.
+    * Publications file creation and signing support.
+    * Hashing algorithm RIPEMD-256 removed.
+    * Local aggregation support.
+    * Fixed calendar hash chain calculation.
+
+ -- Guardtime AS <info@guardtime.com>  Thu, 14 May 2015 00:00:00 +0200
+
 libksi (3.2.2.1) UNRELEASED; urgency=low
 
     *TODO.

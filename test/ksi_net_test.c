@@ -27,26 +27,32 @@
 #include "../src/ksi/net_uri_impl.h"
 #include "../src/ksi/net_tcp_impl.h"
 #include "ksi/net_uri.h"
+#include "ksi/tree_builder.h"
 
 extern KSI_CTX *ctx;
 
-#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_USER "anon"
+#define TEST_PASS "anon"
 
 static int mockHeaderCounter = 0;
 
-static unsigned char mockImprint[] ={
-		0x01, 0x11, 0xa7, 0x00, 0xb0, 0xc8, 0x06, 0x6c, 0x47, 0xec, 0xba, 0x05, 0xed, 0x37, 0xbc, 0x14, 0xdc,
-		0xad, 0xb2, 0x38, 0x55, 0x2d, 0x86, 0xc6, 0x59, 0x34, 0x2d, 0x1d, 0x7e, 0x87, 0xb8, 0x77, 0x2d};
+static unsigned char mockImprint[] ={0x01,
+		 0x11, 0xa7, 0x00, 0xb0, 0xc8, 0x06, 0x6c, 0x47,
+		 0xec, 0xba, 0x05, 0xed, 0x37, 0xbc, 0x14, 0xdc,
+		 0xad, 0xb2, 0x38, 0x55, 0x2d, 0x86, 0xc6, 0x59,
+		 0x34, 0x2d, 0x1d, 0x7e, 0x87, 0xb8, 0x77, 0x2d};
 
 static void preTest(void) {
-	ctx->requestCounter = 0;
+	ctx->netProvider->requestCount = 0;
 }
 
 static void testSigning(CuTest* tc) {
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response.tlv"
+#define TEST_RES_SIGNATURE_FILE "resource/tlv/ok-sig-2014-07-01.1.ksig"
+
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_NetworkClient *pr = NULL;
 	unsigned char *raw = NULL;
 	size_t raw_len = 0;
 	unsigned char expected[0x1ffff];
@@ -55,16 +61,11 @@ static void testSigning(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_NET_MOCK_new(ctx, &pr);
-	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
-
-	res = KSI_CTX_setNetworkProvider(ctx, pr);
-	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
-
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
 	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
 
-	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok-sig-2014-07-01.1-aggr_response.tlv"));
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
@@ -72,7 +73,7 @@ static void testSigning(CuTest* tc) {
 	res = KSI_Signature_serialize(sig, &raw, &raw_len);
 	CuAssert(tc, "Unable to serialize signature.", res == KSI_OK && raw != NULL && raw_len > 0);
 
-	f = fopen(getFullResourcePath("resource/tlv/ok-sig-2014-07-01.1.ksig"), "rb");
+	f = fopen(getFullResourcePath(TEST_RES_SIGNATURE_FILE), "rb");
 	CuAssert(tc, "Unable to load sample signature.", f != NULL);
 
 	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
@@ -85,32 +86,60 @@ static void testSigning(CuTest* tc) {
 	KSI_free(raw);
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
+
+#undef TEST_AGGR_RESPONSE_FILE
+#undef TEST_RES_SIGNATURE_FILE
 }
 
-static void testAggreAuthFailure(CuTest* tc) {
+static void testSigningWrongResponse(CuTest* tc) {
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response.tlv"
+#define TEST_RES_SIGNATURE_FILE "resource/tlv/ok-sig-2014-07-01.1.ksig"
+
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_NetworkClient *pr = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_NET_MOCK_new(ctx, &pr);
-	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
+	res = KSITest_DataHash_fromStr(ctx, "010000000000000000000000000000000000000000000000000000000000000000", &hsh);
+	CuAssert(tc, "Unable to create data hash", res == KSI_OK && hsh != NULL);
 
-	res = KSI_CTX_setNetworkProvider(ctx, pr);
-	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+
+	res = KSI_createSignature(ctx, hsh, &sig);
+	CuAssert(tc, "Signing should not succeed.", res != KSI_OK && sig == NULL);
+
+	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
+
+#undef TEST_AGGR_RESPONSE_FILE
+#undef TEST_RES_SIGNATURE_FILE
+}
+
+
+static void testAggreAuthFailure(CuTest* tc) {
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/aggr_error_pdu.tlv"
+
+	int res;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+
+	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
 	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
 
-	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/aggr_error_pdu.tlv"));
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Aggregation should fail with service error.", res == KSI_SERVICE_AUTHENTICATION_FAILURE && sig == NULL);
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
+
+#undef TEST_AGGR_RESPONSE_FILE
 }
 
 static int mockHeaderCallback(KSI_Header *hdr) {
@@ -172,7 +201,6 @@ cleanup:
 static void testAggregationHeader(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
-	KSI_NetworkClient *pr = NULL;
 	KSI_AggregationReq *req = NULL;
 	KSI_AggregationPdu *pdu = NULL;
 	KSI_RequestHandle *handle = NULL;
@@ -189,11 +217,7 @@ static void testAggregationHeader(CuTest* tc) {
 	res = KSI_CTX_setRequestHeaderCallback(ctx, mockHeaderCallback);
 	CuAssert(tc, "Unable to set header callback.", res == KSI_OK);
 
-	res = KSI_NET_MOCK_new(ctx, &pr);
-	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
-
-	res = KSI_CTX_setNetworkProvider(ctx, pr);
-	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
+	res = KSI_CTX_setAggregator(ctx, "file://dummy", TEST_USER, TEST_PASS);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
 	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
@@ -212,7 +236,7 @@ static void testAggregationHeader(CuTest* tc) {
 	CuAssert(tc, "Unable to set request id.", res == KSI_OK);
 	reqId = NULL;
 
-	res = KSI_NetworkClient_sendSignRequest(pr, req, &handle);
+	res = KSI_sendSignRequest(ctx, req, &handle);
 	CuAssert(tc, "Unable to send request.", res == KSI_OK && handle != NULL);
 
 	KSI_AggregationReq_free(req);
@@ -248,7 +272,12 @@ static void testAggregationHeader(CuTest* tc) {
 	KSI_RequestHandle_free(handle);
 }
 
+
 static void testExtending(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_RES_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+
 	int res;
 	KSI_Signature *sig = NULL;
 	KSI_Signature *ext = NULL;
@@ -263,7 +292,8 @@ static void testExtending(CuTest* tc) {
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
 
-	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"));
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_extendSignature(ctx, sig, &ext);
 	CuAssert(tc, "Unable to extend the signature", res == KSI_OK && ext != NULL);
@@ -272,7 +302,7 @@ static void testExtending(CuTest* tc) {
 	CuAssert(tc, "Unable to serialize extended signature", res == KSI_OK && serialized != NULL && serialized_len > 0);
 
 	/* Read in the expected result */
-	f = fopen(getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-extended.ksig"), "rb");
+	f = fopen(getFullResourcePath(TEST_RES_SIGNATURE_FILE), "rb");
 	CuAssert(tc, "Unable to read expected result file", f != NULL);
 	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
 	fclose(f);
@@ -285,9 +315,16 @@ static void testExtending(CuTest* tc) {
 	KSI_Signature_free(sig);
 	KSI_Signature_free(ext);
 
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+#undef TEST_RES_SIGNATURE_FILE
 }
 
 static void testExtendTo(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_RES_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
+
 	int res;
 	KSI_Signature *sig = NULL;
 	KSI_Signature *ext = NULL;
@@ -303,7 +340,8 @@ static void testExtendTo(CuTest* tc) {
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
 
-	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"));
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	KSI_Integer_new(ctx, 1400112000, &to);
 
@@ -314,7 +352,7 @@ static void testExtendTo(CuTest* tc) {
 	CuAssert(tc, "Unable to serialize extended signature", res == KSI_OK && serialized != NULL && serialized_len > 0);
 
 	/* Read in the expected result */
-	f = fopen(getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"), "rb");
+	f = fopen(getFullResourcePath(TEST_RES_SIGNATURE_FILE), "rb");
 	CuAssert(tc, "Unable to read expected result file", f != NULL);
 	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
 	fclose(f);
@@ -328,9 +366,61 @@ static void testExtendTo(CuTest* tc) {
 	KSI_Signature_free(sig);
 	KSI_Signature_free(ext);
 
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+#undef TEST_RES_SIGNATURE_FILE
+}
+
+static void testExtendSigNoCalChain(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_RES_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_Signature *ext = NULL;
+	unsigned char *serialized = NULL;
+	size_t serialized_len = 0;
+	unsigned char expected[0x1ffff];
+	size_t expected_len = 0;
+	FILE *f = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
+
+	res = KSI_extendSignature(ctx, sig, &ext);
+	CuAssert(tc, "Unable to extend the signature", res == KSI_OK && ext != NULL);
+
+	res = KSI_Signature_serialize(ext, &serialized, &serialized_len);
+	CuAssert(tc, "Unable to serialize extended signature", res == KSI_OK && serialized != NULL && serialized_len > 0);
+
+	/* Read in the expected result */
+	f = fopen(getFullResourcePath(TEST_RES_SIGNATURE_FILE), "rb");
+	CuAssert(tc, "Unable to read expected result file", f != NULL);
+	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
+	fclose(f);
+
+	CuAssert(tc, "Expected result length mismatch", expected_len == serialized_len);
+
+	KSI_free(serialized);
+
+	KSI_Signature_free(sig);
+	KSI_Signature_free(ext);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+#undef TEST_RES_SIGNATURE_FILE
 }
 
 static void testExtenderWrongData(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+
 	int res;
 	KSI_Signature *sig = NULL;
 	KSI_Signature *ext = NULL;
@@ -341,7 +431,8 @@ static void testExtenderWrongData(CuTest* tc) {
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
 
-	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"));
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	/* Create a random date that is different from the response. */
 	KSI_Integer_new(ctx, 1400112222, &to);
@@ -353,14 +444,44 @@ static void testExtenderWrongData(CuTest* tc) {
 	KSI_Signature_free(sig);
 	KSI_Signature_free(ext);
 
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
 }
 
+static void testExtendInvalidSignature(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/nok-sig-wrong-aggre-time.tlv"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/nok-sig-wrong-aggre-time-extend_response.tlv"
+
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_Signature *ext = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
+
+	res = KSI_Signature_extendTo(sig, ctx, NULL, &ext);
+	CuAssert(tc, "It should not be possible to extend this signature.", res != KSI_OK && ext == NULL);
+
+	KSI_Signature_free(sig);
+	KSI_Signature_free(ext);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+}
 
 static void testExtAuthFailure(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ext_error_pdu.tlv"
+#define TEST_CRT_FILE           "resource/tlv/mock.crt"
+
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_NetworkClient *pr = NULL;
 	KSI_Signature *ext = NULL;
 	KSI_PKITruststore *pki = NULL;
 
@@ -369,35 +490,36 @@ static void testExtAuthFailure(CuTest* tc) {
 	res = KSI_CTX_getPKITruststore(ctx, &pki);
 	CuAssert(tc, "Unable to get PKI Truststore", res == KSI_OK && pki != NULL);
 
-	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
+	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath(TEST_CRT_FILE));
 	CuAssert(tc, "Unable to add test certificate to truststore.", res == KSI_OK);
-
-	res = KSI_NET_MOCK_new(ctx, &pr);
-	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
-
-	res = KSI_CTX_setNetworkProvider(ctx, pr);
-	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
 
-	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ext_error_pdu.tlv"));
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_extendSignature(ctx, sig, &ext);
 	CuAssert(tc, "Extend should fail with service error.", res == KSI_SERVICE_AUTHENTICATION_FAILURE && ext == NULL);
-
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
 	KSI_Signature_free(ext);
 
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+#undef TEST_CRT_FILE
 }
 
 static void testExtendingWithoutPublication(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_RES_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-head.ksig"
+#define TEST_CRT_FILE           "resource/tlv/mock.crt"
+
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_NetworkClient *pr = NULL;
 	KSI_Signature *ext = NULL;
 	unsigned char *serialized = NULL;
 	size_t serialized_len = 0;
@@ -411,19 +533,14 @@ static void testExtendingWithoutPublication(CuTest* tc) {
 	res = KSI_CTX_getPKITruststore(ctx, &pki);
 	CuAssert(tc, "Unable to get PKI Truststore", res == KSI_OK && pki != NULL);
 
-	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
+	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath(TEST_CRT_FILE));
 	CuAssert(tc, "Unable to add test certificate to truststore.", res == KSI_OK);
-
-	res = KSI_NET_MOCK_new(ctx, &pr);
-	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
-
-	res = KSI_CTX_setNetworkProvider(ctx, pr);
-	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
 
-	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"));
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_Signature_extend(sig, ctx, NULL, &ext);
 	CuAssert(tc, "Unable to extend the signature to the head", res == KSI_OK && ext != NULL);
@@ -433,11 +550,10 @@ static void testExtendingWithoutPublication(CuTest* tc) {
 	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Signature extended to head", serialized, serialized_len);
 
 	/* Read in the expected result */
-	f = fopen(getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-head.ksig"), "rb");
+	f = fopen(getFullResourcePath(TEST_RES_SIGNATURE_FILE), "rb");
 	CuAssert(tc, "Unable to read expected result file", f != NULL);
 	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
 	fclose(f);
-
 
 	CuAssert(tc, "Expected result length mismatch", expected_len == serialized_len);
 	CuAssert(tc, "Unexpected extended signature.", !memcmp(expected, serialized, expected_len));
@@ -448,13 +564,21 @@ static void testExtendingWithoutPublication(CuTest* tc) {
 	KSI_Signature_free(sig);
 	KSI_Signature_free(ext);
 
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+#undef TEST_RES_SIGNATURE_FILE
+#undef TEST_CRT_FILE
 }
 
 static void testExtendingToNULL(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_RES_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-head.ksig"
+#define TEST_CRT_FILE           "resource/tlv/mock.crt"
+
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_NetworkClient *pr = NULL;
 	KSI_Signature *ext = NULL;
 	unsigned char *serialized = NULL;
 	size_t serialized_len = 0;
@@ -468,19 +592,14 @@ static void testExtendingToNULL(CuTest* tc) {
 	res = KSI_CTX_getPKITruststore(ctx, &pki);
 	CuAssert(tc, "Unable to get PKI Truststore", res == KSI_OK && pki != NULL);
 
-	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
+	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath(TEST_CRT_FILE));
 	CuAssert(tc, "Unable to add test certificate to truststore.", res == KSI_OK);
-
-	res = KSI_NET_MOCK_new(ctx, &pr);
-	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
-
-	res = KSI_CTX_setNetworkProvider(ctx, pr);
-	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
 
-	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"));
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_Signature_extendTo(sig, ctx, NULL, &ext);
 	CuAssert(tc, "Unable to extend the signature to the head", res == KSI_OK && ext != NULL);
@@ -490,11 +609,10 @@ static void testExtendingToNULL(CuTest* tc) {
 	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Signature extended to head", serialized, serialized_len);
 
 	/* Read in the expected result */
-	f = fopen(getFullResourcePath("resource/tlv/ok-sig-2014-04-30.1-head.ksig"), "rb");
+	f = fopen(getFullResourcePath(TEST_RES_SIGNATURE_FILE), "rb");
 	CuAssert(tc, "Unable to read expected result file", f != NULL);
 	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
 	fclose(f);
-
 
 	CuAssert(tc, "Expected result length mismatch", expected_len == serialized_len);
 	CuAssert(tc, "Unexpected extended signature.", !memcmp(expected, serialized, expected_len));
@@ -505,63 +623,94 @@ static void testExtendingToNULL(CuTest* tc) {
 	KSI_Signature_free(sig);
 	KSI_Signature_free(ext);
 
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+#undef TEST_RES_SIGNATURE_FILE
+#undef TEST_CRT_FILE
 }
 
 static void testSigningInvalidResponse(CuTest* tc){
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/nok_aggr_response_missing_header.tlv"
+
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_NetworkClient *pr = NULL;
 
 	KSI_ERR_clearErrors(ctx);
-
-	res = KSI_NET_MOCK_new(ctx, &pr);
-	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
-
-	res = KSI_CTX_setNetworkProvider(ctx, pr);
-	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
 	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
 
-	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/nok_aggr_response_missing_header.tlv"));
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Signature should not be created with invalid aggregation response", res == KSI_INVALID_FORMAT && sig == NULL);
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
+
+#undef TEST_AGGR_RESPONSE_FILE
 }
 
-static void testSigningErrorResponse(CuTest *tc) {
+static void testSigningInvalidAggrChainReturned(CuTest* tc){
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/nok_aggr_response-invalid-aggr-chain.tlv"
+
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_NetworkClient *pr = NULL;
+	unsigned char imprint[] = {0x01, 0xc5, 0xf3, 0x30, 0x84, 0x32, 0x8a, 0x04, 0xa4, 0xee, 0x5c, 0x75, 0xa9, 0xeb, 0x8c, 0x9a, 0xe0, 0x0c, 0x22, 0x14, 0xdf, 0x70, 0x4c, 0x7c, 0xf6, 0x8b, 0xb3, 0x09, 0x5c, 0xec, 0xbc, 0x71, 0xca};
+
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_NET_MOCK_new(ctx, &pr);
-	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
+	res = KSI_DataHash_fromImprint(ctx, imprint, sizeof(imprint), &hsh);
+	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
 
-	res = KSI_CTX_setNetworkProvider(ctx, pr);
-	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+
+	res = KSI_createSignature(ctx, hsh, &sig);
+	CuAssert(tc, "Signature should not be created with invalid aggregation response", res != KSI_OK);
+
+	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
+
+#undef TEST_AGGR_RESPONSE_FILE
+}
+
+static void testSigningErrorResponse(CuTest *tc) {
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok_aggr_err_response-1.tlv"
+
+	int res;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+
+	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
 	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
 
-	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok_aggr_err_response-1.tlv"));
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Signature should not be created due to server error.", res == KSI_SERVICE_INVALID_PAYLOAD && sig == NULL);
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
+
+#undef TEST_AGGR_RESPONSE_FILE
 }
 
 static void testExtendingErrorResponse(CuTest *tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok_extend_err_response-1.tlv"
+#define TEST_CRT_FILE           "resource/tlv/mock.crt"
+
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_NetworkClient *pr = NULL;
 	KSI_Signature *ext = NULL;
 	KSI_PKITruststore *pki = NULL;
 
@@ -570,19 +719,14 @@ static void testExtendingErrorResponse(CuTest *tc) {
 	res = KSI_CTX_getPKITruststore(ctx, &pki);
 	CuAssert(tc, "Unable to get PKI Truststore", res == KSI_OK && pki != NULL);
 
-	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
+	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath(TEST_CRT_FILE));
 	CuAssert(tc, "Unable to add test certificate to truststore.", res == KSI_OK);
-
-	res = KSI_NET_MOCK_new(ctx, &pr);
-	CuAssert(tc, "Unable to create mock network provider.", res == KSI_OK);
-
-	res = KSI_CTX_setNetworkProvider(ctx, pr);
-	CuAssert(tc, "Unable to set network provider.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
 
-	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok_extend_err_response-1.tlv"));
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_Signature_extend(sig, ctx, NULL, &ext);
 	CuAssert(tc, "Extend should fail with server error", res == KSI_SERVICE_INVALID_PAYLOAD && ext == NULL);
@@ -590,6 +734,10 @@ static void testExtendingErrorResponse(CuTest *tc) {
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
 	KSI_Signature_free(ext);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+#undef TEST_CRT_FILE
 }
 
 static void testUrlSplit(CuTest *tc) {
@@ -633,136 +781,267 @@ static void testUrlSplit(CuTest *tc) {
 
 }
 
-void assert_isHttpClientSetCorrectly(CuTest *tc, KSI_UriClient *client,
-		const char *a_url, const char *a_host, int a_port, const char *a_user, const char *a_key,
-		const char *e_url, const char *e_host, int e_port, const char *e_user, const char *e_key){
-	KSI_HttpClient *http = (KSI_HttpClient*)client->httpClient;
-
-	CuAssert(tc, "Http client is not set.", http != NULL);
-	CuAssert(tc, "Http client is not set as aggregator and extender service.",
-			(void*)http == (void*)(client->pAggregationClient) &&
-			(void*)http == (void*)(client->pExtendClient));
-
-	CuAssert(tc, "Http aggregator url mismatch.", strcmp(http->urlAggregator, strstr(a_url, "ksi+") == a_url ? a_url+4 : a_url) == 0 ||
-			(strstr(a_url, "ksi://") == a_url && strstr(http->urlAggregator, "http://") == http->urlAggregator && strcmp(http->urlAggregator+7, a_url+6) == 0));
-	CuAssert(tc, "Http aggregator key mismatch.", strcmp(http->parent.aggrPass, a_key) == 0);
-	CuAssert(tc, "Http aggregator user mismatch.", strcmp(http->parent.aggrUser, a_user) == 0);
-	CuAssert(tc, "Http extender url mismatch.", strcmp(http->urlExtender, strstr(e_url, "ksi+") == e_url ? e_url+4 : e_url) == 0 ||
-			(strstr(e_url, "ksi://") == e_url && strstr(http->urlExtender, "http://") == http->urlExtender && strcmp(http->urlExtender+7, e_url+6) == 0));
-	CuAssert(tc, "Http extender key mismatch.", strcmp(http->parent.extPass, e_key) == 0);
-	CuAssert(tc, "Http extender user mismatch.", strcmp(http->parent.extUser, e_user) == 0);
-}
-
-void assert_isTcpClientSetCorrectly(CuTest *tc, KSI_UriClient *client,
-		const char *a_url, const char *a_host, int a_port, const char *a_user, const char *a_key,
-		const char *e_url, const char *e_host, int e_port, const char *e_user, const char *e_key){
-	KSI_TcpClient *tcp = client->tcpClient;
-
-	CuAssert(tc, "Tcp client is not set (NULL).", tcp != NULL);
-	CuAssert(tc, "Tcp client is not set as aggregator and extender service.",
-			(void*)tcp == (void*)(client->pAggregationClient) &&
-			(void*)tcp == (void*)(client->pExtendClient));
-
-	CuAssert(tc, "Tcp aggregator host mismatch.", strcmp(tcp->aggrHost, a_host) == 0);
-	CuAssert(tc, "Tcp aggregator port mismatch.", tcp->aggrPort == a_port);
-	CuAssert(tc, "Tcp aggregator key mismatch.", strcmp(tcp->parent.aggrPass, a_key) == 0);
-	CuAssert(tc, "Tcp aggregator user mismatch.", strcmp(tcp->parent.aggrUser, a_user) == 0);
-	CuAssert(tc, "Tcp extender url mismatch.", strcmp(tcp->extHost, e_host) == 0);
-	CuAssert(tc, "Tcp extender host mismatch.", tcp->extPort == e_port);
-	CuAssert(tc, "Tcp extender key mismatch.", strcmp(tcp->parent.extPass, e_key) == 0);
-	CuAssert(tc, "Tcp extender user mismatch.", strcmp(tcp->parent.extUser, e_user) == 0);
-
-}
-
-static void smartServiceSetterSchemeTest(CuTest *tc, KSI_CTX *ctx, const char *scheme,
-		void (*assertClient)(CuTest*, KSI_UriClient*, const char*, const char*, int, const char*, const char*, const char*, const char*, int, const char*, const char*)){
-	int res;
-	KSI_UriClient *client = NULL;
-
-	char *scheme_aggre_host = "aggre.com";
-	int scheme_aggre_port = 3331;
-	char *scheme_aggre_user = "tcp_aggre_user";
-	char *scheme_aggre_key = "tcp_aggre_key";
-	char *scheme_ext_host = "ext.com";
-	int scheme_ext_port = 8011;
-	char *scheme_ext_user = "tcp_ext_user";
-	char *scheme_ext_key = "tcp_ext_key";
-	char scheme_aggre_url[1024];
-	char scheme_ext_url[1024];
-	size_t len;
-
-	len = KSI_snprintf(scheme_aggre_url, sizeof(scheme_aggre_url), "%saggre.com:3331/", scheme);
-	CuAssert(tc, "Unable to generate aggregator url.", len != 0);
-	len = KSI_snprintf(scheme_ext_url, sizeof(scheme_ext_url), "%sext.com:8011/", scheme);
-	CuAssert(tc, "Unable to generate extender url.", len != 0);
-
-	client = (KSI_UriClient*)ctx->netProvider;
-	CuAssert(tc, "KSI_CTX has no network provider.", client != NULL);
-	CuAssert(tc, "KSI_CTX network provider is not initial.", ctx->isCustomNetProvider == 0);
-
-	/*Testing client*/
-
-	res = KSI_CTX_setAggregator(ctx, scheme_aggre_url, scheme_aggre_user, scheme_aggre_key);
-	CuAssert(tc, "Unable to set aggregator.", res == KSI_OK);
-
-	res = KSI_CTX_setExtender(ctx, scheme_ext_url, scheme_ext_user, scheme_ext_key);
-	CuAssert(tc, "Unable to set extender.", res == KSI_OK);
-
-	assertClient(tc, client,
-			scheme_aggre_url, scheme_aggre_host, scheme_aggre_port, scheme_aggre_user, scheme_aggre_key,
-			scheme_ext_url, scheme_ext_host, scheme_ext_port, scheme_ext_user, scheme_ext_key);
-
-	return;
-}
-
-
-static void testSmartServiceSetters(CuTest *tc) {
-
-	int res;
-	KSI_CTX *ctx = NULL;
-	KSI_UriClient *client = NULL;
-
-	res = KSI_CTX_new(&ctx);
-	CuAssert(tc, "KSI_CTX_init did not return KSI_OK.", res == KSI_OK);
-
-	client = (KSI_UriClient*)ctx->netProvider;
-	CuAssert(tc, "KSI_CTX has no network provider.", client != NULL);
-	CuAssert(tc, "KSI_CTX network provider is not initial.", ctx->isCustomNetProvider == 0);
-
-	smartServiceSetterSchemeTest(tc, ctx, "ksi://", assert_isHttpClientSetCorrectly);
-	smartServiceSetterSchemeTest(tc, ctx, "http://", assert_isHttpClientSetCorrectly);
-	smartServiceSetterSchemeTest(tc, ctx, "https://", assert_isHttpClientSetCorrectly);
-	smartServiceSetterSchemeTest(tc, ctx, "ksi+https://", assert_isHttpClientSetCorrectly);
-	smartServiceSetterSchemeTest(tc, ctx, "ksi+http://", assert_isHttpClientSetCorrectly);
-	smartServiceSetterSchemeTest(tc, ctx, "ksi+tcp://", assert_isTcpClientSetCorrectly);
-
-	KSI_CTX_free(ctx);
-}
-
 static void testLocalAggregationSigning(CuTest* tc) {
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-local_aggr_lvl4_resp.tlv"
+
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
+	KSI_VerificationContext verifier;
+	KSI_PolicyVerificationResult *result = NULL;
+
+	KSI_VerificationContext_init(&verifier, ctx);
 
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
 	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
 
-	KSITest_setFileMockResponse(tc, getFullResourcePath("resource/tlv/ok-local_aggr_lvl4_resp.tlv"));
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
 
-	res = KSI_Signature_createAggregated(ctx, hsh, 4, &sig);
+	res = KSI_Signature_signAggregated(ctx, hsh, 4, &sig);
 	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_verify(sig, NULL);
+	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Signature should not be verifiable without local aggregation level.", res == KSI_VERIFICATION_FAILURE);
 
-	res = KSI_Signature_verifyAggregated(sig, NULL, 4);
-	CuAssert(tc, "Locally aggregated signature was not verifiable.", res == KSI_OK);
+	verifier.signature = sig;
+	verifier.docAggrLevel = 4;
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &verifier, &result);
+	CuAssert(tc, "Locally aggregated signature was not verifiable due to an error.", res == KSI_OK);
+	CuAssert(tc, "The signature can not be verified.", result->resultCode == KSI_VER_RES_OK);
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
+	KSI_VerificationContext_clean(&verifier);
+	KSI_PolicyVerificationResult_free(result);
+
+#undef TEST_AGGR_RESPONSE_FILE
 }
+
+static void testExtendExtended(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.2-extended.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_RES_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_Signature *ext = NULL;
+	unsigned char *serialized = NULL;
+	size_t serialized_len = 0;
+	unsigned char expected[0x1ffff];
+	size_t expected_len = 0;
+	FILE *f = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
+
+	res = KSI_extendSignature(ctx, sig, &ext);
+	CuAssert(tc, "Unable to extend the signature", res == KSI_OK && ext != NULL);
+
+	res = KSI_Signature_serialize(ext, &serialized, &serialized_len);
+	CuAssert(tc, "Unable to serialize extended signature", res == KSI_OK && serialized != NULL && serialized_len > 0);
+
+	/* Read in the expected result */
+	f = fopen(getFullResourcePath(TEST_RES_SIGNATURE_FILE), "rb");
+	CuAssert(tc, "Unable to read expected result file", f != NULL);
+	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
+	fclose(f);
+
+	CuAssert(tc, "Expected result length mismatch", expected_len == serialized_len);
+	CuAssert(tc, "Unexpected extended signature.", !KSITest_memcmp(expected, serialized, expected_len));
+
+	KSI_free(serialized);
+	KSI_Signature_free(sig);
+	KSI_Signature_free(ext);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+#undef TEST_RES_SIGNATURE_FILE
+}
+
+static 	const char *validUri[] = {
+		"ksi://localhost",
+		"ksi://localhost/",
+		"ksi://localhost/a",
+		"ksi://localhost/a.txt",
+		"ksi://localhost/?key=value",
+		"ksi://localhost?key=value",
+		"ksi://localhost?key=value#fragment",
+		"ksi://localhost/#fragment",
+		"ksi+http://localhost",
+		"ksi://localhost:12345",
+		"ksi+http://localhost:1234/",
+		"http://u:p@127.0.0.1:80",
+		"http://u:p@127.0.0.1:80/",
+		"http://u:p@127.0.0.1:80/test",
+		"http://u:p@127.0.0.1:80/test/",
+		"http://u:p@127.0.0.1:80/test/a",
+		"http://u:p@127.0.0.1:80/test/b/",
+		"http://u:p@127.0.0.1:80/test/c//",
+		"http://u:p@127.0.0.1:80/test/c/test.file",
+		"http://u:p@127.0.0.1:80/test/c?a=test&b=test&c=test",
+		"http://u:p@127.0.0.1:80/test/c.txt?a=test&b=test&c=test",
+		"http://u:p@127.0.0.1:80/test/c.txt?a=test&b=test&c=test#fragment1",
+		"http://u:p@127.0.0.1:80/test/c.txt#fragment1",
+		"file://file.name",
+		"file://path/to/file",
+		NULL
+};
+
+static void testUriSpiltAndCompose(CuTest* tc) {
+	int res;
+	KSI_NetworkClient *tmp = NULL;
+	size_t i = 0;
+	const char *uri = NULL;
+
+	char error[0xffff];
+	char new_uri[0xffff];
+	char *scheme = NULL;
+	char *user = NULL;
+	char *pass = NULL;
+	char *host = NULL;
+	unsigned port = 0;
+	char *path = NULL;
+	char *query = NULL;
+	char *fragment = NULL;
+
+	res = KSI_AbstractNetworkClient_new(ctx, &tmp);
+	CuAssert(tc, "Unable to create abstract network provider.", res == KSI_OK && tmp != NULL);
+
+
+	while ((uri = validUri[i++]) != NULL) {
+		scheme = NULL;
+		user = NULL;
+		pass = NULL;
+		host = NULL;
+		port = 0;
+		path = NULL;
+		query = NULL;
+		fragment = NULL;
+		error[0] = '\0';
+		new_uri[0] = '\0';
+
+		res = tmp->uriSplit(uri, &scheme, &user, &pass, &host, &port, &path, &query, &fragment);
+		if (res != KSI_OK) {
+			KSI_snprintf(error, sizeof(error), "Unable to split uri '%s'.", uri);
+			CuAssert(tc, error, 0);
+		}
+
+		res = tmp->uriCompose(scheme, user, pass, host, port, path, query, fragment, new_uri, sizeof(new_uri));
+		if (res != KSI_OK) {
+			KSI_snprintf(error, sizeof(error), "Unable to compose uri '%s'.", uri);
+			CuAssert(tc, error, 0);
+		}
+
+		if (strcmp(uri, new_uri) != 0) {
+			KSI_snprintf(error, sizeof(error), "New uri is '%s', but expected '%s'.", new_uri, uri);
+			CuAssert(tc, error, 0);
+		}
+
+
+		KSI_free(scheme);
+		KSI_free(user);
+		KSI_free(pass);
+		KSI_free(path);
+		KSI_free(host);
+		KSI_free(query);
+		KSI_free(fragment);
+	}
+
+	KSI_NetworkClient_free(tmp);
+}
+
+static void testCreateAggregated(CuTest *tc) {
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/test_create_aggregated_response.tlv"
+	int res;
+	const char data[] = "Test";
+	const char clientStr[] = "Dummy";
+
+	KSI_DataHash *docHash = NULL;
+	KSI_MetaData *metaData = NULL;
+	KSI_Utf8String *clientId = NULL;
+
+	KSI_AggregationHashChain *chn = NULL;
+
+	KSI_TreeBuilder *tb = NULL;
+	KSI_TreeLeafHandle *leaf = NULL;
+
+	unsigned char *raw = NULL;
+	size_t raw_len = 0;
+
+	KSI_Signature *sig = NULL;
+
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+
+	/* Create the hash for the initial document. */
+	res = KSI_DataHash_create(ctx, data, sizeof(data), KSI_HASHALG_SHA2_256, &docHash);
+	CuAssert(tc, "Unable to create data hash", res == KSI_OK && docHash != NULL);
+
+	/* Create client id object. */
+	res = KSI_Utf8String_new(ctx, clientStr, sizeof(clientStr), &clientId);
+	CuAssert(tc, "Unable to create client id", res == KSI_OK && clientId != NULL);
+
+	/* Create the metadata object. */
+	res = KSI_MetaData_new(ctx, &metaData);
+	CuAssert(tc, "Unable to create metadata", res == KSI_OK && metaData != NULL);
+
+	res = KSI_MetaData_setClientId(metaData, clientId);
+	CuAssert(tc, "Unable to set meta data client id", res == KSI_OK);
+
+	/* Create a tree builder. */
+	res = KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &tb);
+	CuAssert(tc, "Unable to create tree builder.", res == KSI_OK && tb != NULL);
+
+	/* Add the document hash as the first leaf. */
+	res = KSI_TreeBuilder_addDataHash(tb, docHash, 0, &leaf);
+	CuAssert(tc, "Unable to add leaf to the tree builder.", res == KSI_OK && leaf != NULL);
+
+	res = KSI_TreeBuilder_addMetaData(tb, metaData, 0, NULL);
+	CuAssert(tc, "Unable to add meta data to the tree builder.", res == KSI_OK);
+
+	/* Finalize the tree. */
+	res = KSI_TreeBuilder_close(tb);
+	CuAssert(tc, "Unable to close the tree.", res == KSI_OK);
+
+	/* Extract the aggregation hash chain. */
+	res = KSI_TreeLeafHandle_getAggregationChain(leaf, &chn);
+	CuAssert(tc, "Unable to extract the aggregation hash chain.", res == KSI_OK && chn != NULL);
+
+	res = KSI_Signature_signAggregationChain(ctx, 0, chn, &sig);
+	CuAssert(tc, "Unable to sign aggregation chain.", res == KSI_OK && sig != NULL);
+
+	/* Serialize the signature. */
+	res = KSI_Signature_serialize(sig, &raw, &raw_len);
+	CuAssert(tc, "Unable to serialize signature.", res == KSI_OK && raw != NULL && raw_len > 0);
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Serialized:", raw, raw_len);
+
+	KSI_Signature_free(sig);
+	sig = NULL;
+
+	/* Parse the signature. */
+	res = KSI_Signature_parse(ctx, raw, raw_len, &sig);
+	CuAssert(tc, "Unable to parse the serialized signature.", res == KSI_OK && sig != NULL);
+
+	KSI_AggregationHashChain_free(chn);
+	KSI_TreeBuilder_free(tb);
+	KSI_TreeLeafHandle_free(leaf);
+	KSI_DataHash_free(docHash);
+	KSI_MetaData_free(metaData);
+	KSI_Signature_free(sig);
+	KSI_free(raw);
+	KSI_Utf8String_free(clientId);
+
+#undef TEST_AGGR_RESPONSE_FILE
+}
+
 
 CuSuite* KSITest_NET_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
@@ -770,20 +1049,26 @@ CuSuite* KSITest_NET_getSuite(void) {
 	suite->preTest = preTest;
 
 	SUITE_ADD_TEST(suite, testSigning);
+	SUITE_ADD_TEST(suite, testSigningWrongResponse);
 	SUITE_ADD_TEST(suite, testAggreAuthFailure);
 	SUITE_ADD_TEST(suite, testExtending);
 	SUITE_ADD_TEST(suite, testExtendTo);
+	SUITE_ADD_TEST(suite, testExtendSigNoCalChain);
 	SUITE_ADD_TEST(suite, testExtenderWrongData);
 	SUITE_ADD_TEST(suite, testExtAuthFailure);
 	SUITE_ADD_TEST(suite, testExtendingWithoutPublication);
 	SUITE_ADD_TEST(suite, testExtendingToNULL);
 	SUITE_ADD_TEST(suite, testSigningInvalidResponse);
+	SUITE_ADD_TEST(suite, testSigningInvalidAggrChainReturned);
 	SUITE_ADD_TEST(suite, testAggregationHeader);
 	SUITE_ADD_TEST(suite, testSigningErrorResponse);
 	SUITE_ADD_TEST(suite, testExtendingErrorResponse);
 	SUITE_ADD_TEST(suite, testUrlSplit);
-	SUITE_ADD_TEST(suite, testSmartServiceSetters);
+	SUITE_ADD_TEST(suite, testUriSpiltAndCompose);
 	SUITE_ADD_TEST(suite, testLocalAggregationSigning);
+	SUITE_ADD_TEST(suite, testExtendInvalidSignature);
+	SUITE_ADD_TEST(suite, testCreateAggregated);
+	SUITE_ADD_TEST(suite, testExtendExtended);
 
 	return suite;
 }

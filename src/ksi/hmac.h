@@ -31,6 +31,12 @@ extern "C" {
 	 */
 
 	/**
+	 * This structure is used for calculating the HMAC hash values.
+	 * \see #KSI_DataHash, #KSI_HmacHasher_open, #KSI_HmacHasher_reset, #KSI_HmacHasher_close, #KSI_HmacHasher_free
+	 */
+	typedef struct KSI_HmacHasher_st KSI_HmacHasher;
+
+	/**
 	 * Creates a #KSI_DataHash representing the HMAC value calculated by the key and data using \c alg as the hash algorithm.
 	 * \param[in]	ctx			KSI context.
 	 * \param[in]	algo_id		Hash algorithm ID see KSI_Hash
@@ -42,6 +48,60 @@ extern "C" {
 	 * \see #KSI_DataHash_free
 	 */
 	int KSI_HMAC_create(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, const unsigned char *data, size_t data_len, KSI_DataHash **hmac);
+
+	/**
+	 * Starts an HMAC computation.
+	 * \param[in]		ctx			KSI context.
+	 * \param[in]		algo_id 	Identifier of the hash algorithm.
+	 * See #KSI_HashAlgorithm_en for possible values.
+	 * \param[in]		key			Key value for the HMAC.
+	 * \param[out] hasher Pointer that will receive pointer to the
+	 * hasher object.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_HmacHasher_add, #KSI_HmacHasher_close
+	 */
+	int KSI_HmacHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, KSI_HmacHasher **hasher);
+
+	/**
+	 * Resets the state of the HMAC computation.
+	 * \param[in]	hasher			The hasher.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_HmacHasher_open, #KSI_HmacHasher_close
+	 */
+	int KSI_HmacHasher_reset(KSI_HmacHasher *hasher);
+
+	/**
+	 * Adds data to an open HMAC computation.
+	 *
+	 * \param[in]	hasher				Hasher object.
+	 * \param[in]	data				Pointer to the data to be hashed.
+	 * \param[in]	data_length			Length of the hashed data.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_HmacHasher_open, #KSI_HmacHasher_close
+	 */
+	int KSI_HmacHasher_add(KSI_HmacHasher *hasher, const void *data, size_t data_length);
+
+	/**
+	 * Finalizes an HMAC computation.
+	 * \param[in]	hasher			Hasher object.
+	 * \param[out]	hmac			Pointer that will receive pointer to the hash object.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_HmacHasher_open, #KSI_HmacHasher_add, #KSI_HmacHasher_free
+	 */
+	int KSI_HmacHasher_close(KSI_HmacHasher *hasher, KSI_DataHash **hmac);
+
+	/**
+	 * Frees the hasher object.
+	 * \param[in]		hasher			Hasher object.
+	 *
+	 * \see #KSI_HmacHasher_open
+	 */
+	void KSI_HmacHasher_free(KSI_HmacHasher *hasher);
+
 
 	/**
 	 * @}

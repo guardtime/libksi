@@ -24,17 +24,16 @@
 
 #include "cutest/CuTest.h"
 #include "all_tests.h"
+#include <ksi/pkitruststore.h>
+#include <ksi/ksi.h>
+#include <ksi/tlv.h>
+
+#include "../src/ksi/ctx_impl.h"
 
 #ifndef _WIN32
 #  ifdef HAVE_CONFIG_H
 #    include "../src/ksi/config.h"
 #  endif
-#endif
-
-#ifdef _WIN32
-#  define DIR_SEP '\\'
-#else
-#  define DIR_SEP '/'
 #endif
 
 #ifndef UNIT_TEST_OUTPUT_XML
@@ -43,8 +42,7 @@
 
 KSI_CTX *ctx = NULL;
 
-extern unsigned char *KSI_NET_MOCK_response;
-extern unsigned KSI_NET_MOCK_response_len;
+#define TEST_DEFAULT_PUB_FILE "resource/tlv/publications.tlv"
 
 const KSI_CertConstraint testPubFileCertConstraints[] = {
 		{ KSI_CERT_EMAIL, "publications@guardtime.com"},
@@ -52,90 +50,46 @@ const KSI_CertConstraint testPubFileCertConstraints[] = {
 };
 
 
-void KSITest_setFileMockResponse(CuTest *tc, const char *fileName) {
-	FILE *f = NULL;
+int KSITest_setDefaultPubfileAndVerInfo(KSI_CTX *ctx) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_PKITruststore *pki = NULL;
 
-	/* Read response from file. */
-	f = fopen(fileName, "rb");
-	CuAssert(tc, "Unable to open sample response file", f != NULL);
-
-	KSI_NET_MOCK_response_len = (unsigned)fread(KSI_NET_MOCK_response, 1, MOCK_BUFFER_SIZE, f);
-	fclose(f);
-}
-
-static void escapeStr(const char *str, CuString *escaped) {
-	int p;
-	static const char *replIndex = "<>&\"'";
-	static const char *repl[] = { "lt", "gt", "amp", "quot", "#39"};
-	while (*str) {
-		/* Find the index of current char. */
-		p = (int)(strchr(replIndex, *str) - replIndex);
-		/* If the character is found, use the replacement */
-		if (p >= 0) {
-			CuStringAppendFormat(escaped, "&%s", repl[p]);
-		} else {
-			CuStringAppendChar(escaped, *str);
-		}
-		str++;
-	}
-}
-
-static void createSuiteXMLSummary(CuSuite* testSuite, CuString* summary) {
-	int i;
-	CuString *tmpCuStr = NULL;
-
-	CuStringAppendFormat(summary, "<testsuite tests=\"%d\">\n", testSuite->count);
-
-	for (i = 0 ; i < testSuite->count ; ++i) {
-		CuTest* testCase = testSuite->list[i];
-
-		/* Escape the test case name. */
-		CuStringDelete(tmpCuStr);
-		tmpCuStr = CuStringNew();
-		escapeStr(testCase->name, tmpCuStr);
-
-		CuStringAppendFormat(summary, "\t<testcase classname=\"CuTest\" name=\"%s\"", tmpCuStr->buffer);
-		if (testCase->failed) {
-			/* Escape the fault message. */
-			CuStringDelete(tmpCuStr);
-			tmpCuStr = CuStringNew();
-			escapeStr(testCase->message, tmpCuStr);
-
-			CuStringAppend(summary, ">\n");
-			CuStringAppendFormat(summary, "\t\t<failure type=\"AssertionFailure\">%s</failure>\n", tmpCuStr->buffer);
-			CuStringAppend(summary, "\t</testcase>\n");
-		} else if(testCase->skip){
-			CuStringDelete(tmpCuStr);
-			tmpCuStr = CuStringNew();
-			escapeStr(testCase->skipMessage, tmpCuStr);
-			CuStringAppendFormat(tmpCuStr, " Skipped by %s.", testCase->skippedBy);
-
-			CuStringAppend(summary, ">\n");
-			CuStringAppendFormat(summary, "\t\t<skipped>%s</skipped>\n", tmpCuStr->buffer);
-			CuStringAppend(summary, "\t</testcase>\n");
-
-		}else {
-			CuStringAppend(summary, " />\n");
-		}
-	}
-	CuStringAppend(summary, "</testsuite>\n");
-
-	/* Cleanup */
-	CuStringDelete(tmpCuStr);
-
-}
-
-static void addSuite(CuSuite *suite, CuSuite* (*fn)(void)) {
-	int i;
-	CuSuite *tmp = fn();
-
-	for (i = 0 ; i < tmp->count ; ++i) {
-		CuTest* testCase = tmp->list[i];
-		CuSuiteAdd(suite, testCase);
-		tmp->list[i] = NULL;
+	if (ctx == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
 	}
 
-	CuSuiteDelete(tmp);
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_setPublicationsFile(ctx, NULL);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_CTX_setPublicationUrl(ctx, getFullResourcePathUri(TEST_DEFAULT_PUB_FILE));
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, testPubFileCertConstraints);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_CTX_setPKITruststore(ctx, NULL);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_PKITruststore_new(ctx, 0, &pki);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_CTX_setPKITruststore(ctx, pki);
+	if (res != KSI_OK) goto cleanup;
+
+	pki = NULL;
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_PKITruststore_free(pki);
+
+return res;
 }
 
 static CuSuite* initSuite(void) {
@@ -155,37 +109,14 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSITest_compatibility_getSuite);
 	addSuite(suite, KSITest_uriClient_getSuite);
 	addSuite(suite, KSITest_multiSignature_getSuite);
+	addSuite(suite, KSITest_TreeBuilder_getSuite);
+	addSuite(suite, KSITest_VerificationRules_getSuite);
+	addSuite(suite, KSITest_Policy_getSuite);
+	addSuite(suite, KSITest_versionNumber_getSuite);
+	addSuite(suite, KSITest_Blocksigner_getSuite);
+	addSuite(suite, KSITest_Flags_getSuite);
 
 	return suite;
-}
-
-static void printStats(CuSuite *suite) {
-	CuString *output = CuStringNew();
-	CuSuiteDetails(suite, output);
-
-	printf("\n\n==== TEST RESULTS ====\n\n");
-	printf("%s\n", output->buffer);
-
-	CuStringDelete(output);
-}
-
-static void writeXmlReport(CuSuite *suite) {
-	CuString *xmlOutput = CuStringNew();
-	FILE *f = NULL;
-
-	createSuiteXMLSummary(suite, xmlOutput);
-
-	f = fopen(UNIT_TEST_OUTPUT_XML, "w");
-	if (f == NULL) {
-		fprintf(stderr, "Unable to open '%s' for writing results.", UNIT_TEST_OUTPUT_XML);
-	} else {
-		fprintf(f, "%s\n", xmlOutput->buffer);
-	}
-
-	/* Cleanup. */
-	if (f) fclose(f);
-
-	CuStringDelete(xmlOutput);
 }
 
 static int RunAllTests() {
@@ -207,6 +138,12 @@ static int RunAllTests() {
 		exit(EXIT_FAILURE);
 	}
 
+	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to set default publications file.");
+		exit(EXIT_FAILURE);
+	}
+
 	logFile = fopen("test.log", "w");
 	if (logFile == NULL) {
 		fprintf(stderr, "Unable to open log file.\n");
@@ -218,9 +155,9 @@ static int RunAllTests() {
 
 	CuSuiteRun(suite);
 
-	printStats(suite);
+	printStats(suite, "==== TEST RESULTS ====");
 
-	writeXmlReport(suite);
+	writeXmlReport(suite, UNIT_TEST_OUTPUT_XML);
 
 	failCount = suite->failCount;
 
@@ -324,12 +261,63 @@ cleanup:
 	return res;
 }
 
-static const char *projectRoot = NULL;
-static char pathBuffer[2048];
+int KSITest_tlvFromFile(const char *fileName, KSI_TLV **tlv) {
+	int res;
+	FILE *f = NULL;
+	unsigned char buf[0xffff + 4];
+	size_t len;
+	KSI_FTLV ftlv;
 
-const char *getFullResourcePath(const char* resource){
-	KSI_snprintf(pathBuffer, sizeof(pathBuffer), "%s%c%s", projectRoot, DIR_SEP, resource);
-	return pathBuffer;
+	KSI_LOG_debug(ctx, "Open TLV file: '%s'", fileName);
+
+	f = fopen(fileName, "rb");
+	if (f == NULL) {
+		res = KSI_IO_ERROR;
+		goto cleanup;
+	}
+
+	res = KSI_FTLV_fileRead(f, buf, sizeof(buf), &len, &ftlv);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_TLV_parseBlob(ctx, buf, len, tlv);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OK;
+
+cleanup:
+
+	if (f != NULL) fclose(f);
+
+	return res;
+}
+
+int KSITest_CTX_clone(KSI_CTX **out) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	KSI_CTX *tmp = NULL;
+
+	if (out == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_CTX_new(&tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	tmp->logLevel = ctx->logLevel;
+	tmp->loggerCB = ctx->loggerCB;
+	tmp->loggerCtx = ctx->loggerCtx;
+
+	*out = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_CTX_free(tmp);
+
+	return res;
 }
 
 int main(int argc, char** argv) {
@@ -337,6 +325,8 @@ int main(int argc, char** argv) {
 		printf("Usage:\n %s <path to test root>\n", argv[0]);
 		exit(EXIT_FAILURE);
 	}
-	projectRoot = argv[1];
+
+	initFullResourcePath(argv[1]);
+
 	return RunAllTests();
 }

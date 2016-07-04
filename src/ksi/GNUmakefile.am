@@ -25,6 +25,8 @@ lib_LTLIBRARIES = libksi.la
 libksi_la_SOURCES = \
 	base32.c \
 	base32.h \
+	blocksigner.c \
+	blocksigner.h \
 	common.h \
 	base.c \
 	config.h \
@@ -42,6 +44,7 @@ libksi_la_SOURCES = \
 	hash_impl.h \
 	hash_openssl.c \
 	hmac.h \
+	hmac_impl.h\
 	hmac.c \
 	http_parser.h \
 	http_parser.c \
@@ -66,11 +69,18 @@ libksi_la_SOURCES = \
 	net_tcp.c \
 	net_tcp.h \
 	net_tcp_impl.h \
+	net_file.c \
+	net_file.h \
+	net_file_impl.h \
 	net_uri.c \
 	net_uri.h \
 	net_uri_impl.h \
+	pkitruststore.c \
 	pkitruststore.h \
 	pkitruststore_openssl.c \
+	policy.c \
+	policy.h \
+	policy_impl.h \
 	publicationsfile.c \
 	publicationsfile.h \
 	publicationsfile_impl.h \
@@ -81,6 +91,10 @@ libksi_la_SOURCES = \
 	tlv.h \
 	tlv_template.c \
 	tlv_template.h \
+	tlv_element.c \
+	tlv_element.h \
+	tree_builder.c \
+	tree_builder.h \
 	types_base.c \
 	types_base.h \
 	types.c \
@@ -88,12 +102,20 @@ libksi_la_SOURCES = \
 	verification.c \
 	verification.h \
 	verification_impl.h \
+	verification_rule.c \
+	verification_rule.h \
 	compatibility.h \
-	compatibility.c
+	compatibility.c \
+	version.h \
+	verify_deprecated.c \
+	verify_deprecated.h \
+	impl/meta_data_impl.h \
+	impl/meta_data_element_impl.h
 
 otherincludedir = $(includedir)/ksi
 otherinclude_HEADERS = \
 	base32.h \
+	blocksigner.h \
 	common.h \
 	crc32.h \
 	err.h \
@@ -105,20 +127,27 @@ otherinclude_HEADERS = \
 	list.h \
 	log.h \
 	pkitruststore.h \
+	policy.h \
 	publicationsfile.h \
 	signature.h \
 	tlv.h \
 	tlv_template.h \
+	tlv_element.h \
+	tree_builder.h \
 	types.h \
 	types_base.h \
 	multi_signature.h \
 	net.h \
 	net_http.h \
 	net_tcp.h \
+	net_file.h \
 	net_uri.h \
 	ksi.h \
 	verification.h \
-	compatibility.h
+	verification_rule.h \
+	compatibility.h \
+	version.h \
+	verify_deprecated.h
 
 libksi_la_LDFLAGS=-version-info @LTVER@
 

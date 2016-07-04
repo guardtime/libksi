@@ -35,6 +35,10 @@ extern "C" {
  * \addtogroup ksi_types KSI Types
  * @{
  */
+	typedef struct KSI_MetaDataElement_st KSI_MetaDataElement;
+	/**
+	 * This is a user defined custom meta-data structure.
+	 */
 	typedef struct KSI_MetaData_st KSI_MetaData;
 	typedef struct KSI_HashChainLink_st KSI_HashChainLink;
 	typedef KSI_HashChainLink KSI_CalendarHashChainLink;
@@ -86,6 +90,11 @@ extern "C" {
 	typedef struct KSI_PKITruststore_st KSI_PKITruststore;
 
 	/**
+	 * Network endpoint description that must have implementation according to the type of transport layer used.
+	 */
+	typedef struct KSI_NetEndpoint_st KSI_NetEndpoint;
+	
+	/**
 	 * Network resource handle returned from functions sending or preparing network requests.
 	 *
 	 *	\see #KSI_NetworkClient_sendExtendRequest, #KSI_NetworkClient_sendSignRequest, #KSI_NetworkClient_sendPublicationsFileRequest
@@ -126,7 +135,7 @@ extern "C" {
 		char *val;
 	};
 	
-	KSI_DEFINE_LIST(KSI_MetaData);
+	KSI_DEFINE_LIST(KSI_MetaDataElement);
 	KSI_DEFINE_LIST(KSI_HashChainLink);
 	KSI_DEFINE_LIST(KSI_CalendarHashChainLink);
 	KSI_DEFINE_LIST(KSI_CalendarHashChain);
@@ -154,24 +163,77 @@ extern "C" {
 	KSI_DEFINE_LIST(KSI_PKICertificate);
 	KSI_DEFINE_LIST(KSI_AggregationAuthRec);
 	KSI_DEFINE_LIST(KSI_RFC3161);
+	KSI_DEFINE_LIST(KSI_RequestHandle);
 
 /*
- * KSI_MetaData
+ * KSI_MetaDataElement.
+ */
+void KSI_MetaDataElement_free(KSI_MetaDataElement *t);
+int KSI_MetaDataElement_new(KSI_CTX *ctx, KSI_MetaDataElement **t);
+int KSI_MetaDataElement_getClientId(KSI_MetaDataElement *t, KSI_Utf8String **clientId);
+int KSI_MetaDataElement_getMachineId(KSI_MetaDataElement *t, KSI_Utf8String **machineId);
+int KSI_MetaDataElement_getSequenceNr(KSI_MetaDataElement *t, KSI_Integer **sequenceNr);
+int KSI_MetaDataElement_getRequestTimeInMicros(KSI_MetaDataElement *t, KSI_Integer **reqTime);
+int KSI_MetaDataElement_setClientId(KSI_MetaDataElement *t, KSI_Utf8String *clientId);
+int KSI_MetaDataElement_setMachineId(KSI_MetaDataElement *t, KSI_Utf8String *machineId);
+int KSI_MetaDataElement_setSequenceNr(KSI_MetaDataElement *t, KSI_Integer *sequenceNr);
+int KSI_MetaDataElement_setRequestTimeInMicros(KSI_MetaDataElement *t, KSI_Integer *reqTime);
+int KSI_MetaDataElement_toTlv(KSI_CTX *ctx, const KSI_MetaDataElement *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+int KSI_MetaDataElement_fromTlv(KSI_TLV *tlv, KSI_MetaDataElement **metaData);
+KSI_DEFINE_REF(KSI_MetaDataElement);
+
+/**
+ * Destructor for the object.
+ * \param[in]	t		Pointer to the custom meta-data.
  */
 void KSI_MetaData_free(KSI_MetaData *t);
+
+/**
+ * Constructor for the custom meta-data object.
+ * \param[in]	ctx		The KSI context.
+ * \param[out]	t		Pointer to the receiving pointer.
+ * \return Returns #KSI_OK on success or an error code otherwise.
+ */
 int KSI_MetaData_new(KSI_CTX *ctx, KSI_MetaData **t);
-int KSI_MetaData_getRaw(const KSI_MetaData *t, KSI_OctetString **raw);
-int KSI_MetaData_getClientId(const KSI_MetaData *t, KSI_Utf8String **clientId);
-int KSI_MetaData_getMachineId(const KSI_MetaData *t, KSI_Utf8String **machineId);
-int KSI_MetaData_getSequenceNr(const KSI_MetaData *t, KSI_Integer **sequenceNr);
-int KSI_MetaData_getRequestTimeInMicros(const KSI_MetaData *t, KSI_Integer **reqTime);
-int KSI_MetaData_setRaw(KSI_MetaData *t, KSI_OctetString *raw);
+
+/**
+ * Setter for the client Id.
+ * \param[in]	t			The custom meta-data object.
+ * \param[in]	clientId	The client id.
+ * \note The client id object won't change ownership, the caller must free the object.
+ * \return Returns #KSI_OK on success or an error code otherwise.
+ */
 int KSI_MetaData_setClientId(KSI_MetaData *t, KSI_Utf8String *clientId);
+
+/**
+ * Setter for the machine Id.
+ * \param[in]	t			The custom meta-data object.
+ * \param[in]	clientId	The machine id.
+ * \note The machine id object won't change ownership, the caller must free the object.
+ * \return Returns #KSI_OK on success or an error code otherwise.
+ */
 int KSI_MetaData_setMachineId(KSI_MetaData *t, KSI_Utf8String *machineId);
+
+/**
+ * Setter for the sequence number.
+ * \param[in]	t			The custom meta-data object.
+ * \param[in]	clientId	The sequence number.
+ * \note The sequence number object won't change ownership, the caller must free the object.
+ * \return Returns #KSI_OK on success or an error code otherwise.
+ */
 int KSI_MetaData_setSequenceNr(KSI_MetaData *t, KSI_Integer *sequenceNr);
+
+/**
+ * Setter for the request time in microseconds.
+ * \param[in]	t			The custom meta-data object.
+ * \param[in]	clientId	The request time in microseconds.
+ * \note The request time in microseconds object won't change ownership, the caller must free the object.
+ * \return Returns #KSI_OK on success or an error code otherwise.
+ */
 int KSI_MetaData_setRequestTimeInMicros(KSI_MetaData *t, KSI_Integer *reqTime);
-int KSI_MetaData_toTlv(KSI_CTX *ctx, const KSI_MetaData *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
-int KSI_MetaData_fromTlv(KSI_TLV *tlv, KSI_MetaData **metaData);
+
+KSI_DEFINE_REF(KSI_MetaData);
+
 /*
  * KSI_ExtendPdu
  */

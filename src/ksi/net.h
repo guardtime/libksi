@@ -36,11 +36,65 @@ extern "C" {
 	 * @{
 	 */
 
+	typedef struct KSI_RequestHandleStatus_st {
+		/** Error message. */
+		char errm[1024];
+
+		/** Implementation error code. */
+		long code;
+
+		/** Sdk specific error code. */
+		int res;
+	} KSI_RequestHandleStatus;
+
+	/**
+	 * Constructor for the abstract network client.
+	 * \param[in]		ctx		KSI context.
+	 * \param[out]		client	Abstract network client.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
+	 * error code).
+	 */
+	int KSI_AbstractNetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **client);
+
 	/**
 	 * Free network handle object.
 	 * \param[in]		handle			Network handle.
 	 */
 	void KSI_RequestHandle_free(KSI_RequestHandle *handle);
+
+	/**
+	 * Constructor for abstract network endpoint object. The implementations must
+	 * be configured (\see #KSI_NetEndpoint_setImplContext).
+	 * \param[in]		ctx				KSI context.
+	 * \param[out]		endp			Pointer to the receiving network endpoint pointer.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise and
+	 * error code).
+	 */
+	int KSI_AbstractNetEndpoint_new(KSI_CTX *ctx, KSI_NetEndpoint **endp);
+
+	/**
+	 * Free network endpoint object.
+	 * \param[in]		endp			Network endpoint.
+	 */
+	void KSI_NetEndpoint_free(KSI_NetEndpoint *endp);
+
+	/**
+	 * Setter for the implementation specific endpoint context.
+	 * \param[in]		endp			Endpoint.
+	 * \param[in]		implCtx			Implementation specific context.
+	 * \param[in]		implCtx_free	Pointer to the implementation specific network endpoint cleanup method.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise and
+	 * error code).
+	 */
+	int KSI_NetEndpoint_setImplContext(KSI_NetEndpoint *endp, void *implCtx, void (*implCtx_free)(void *));
+
+	int KSI_NetEndpoint_setPass(KSI_NetEndpoint *endp, const char *ksi_pass);
+	int KSI_NetEndpoint_setUser(KSI_NetEndpoint *endp, const char *ksi_user);
+
+	int KSI_NetEndpoint_getUser(const KSI_NetEndpoint *endp, const char **ksi_user);
+	int KSI_NetEndpoint_getPass(const KSI_NetEndpoint *endp, const char **ksi_pass);
 
 	/**
 	 * Free network provider object.
@@ -182,15 +236,25 @@ extern "C" {
 	int KSI_RequestHandle_setReadResponseFn(KSI_RequestHandle *handle, int (*fn)(KSI_RequestHandle *));
 
 	/**
-	 * Initialized for an existing abstract network provider.
-	 * \param[in]		ctx				KSI context.
-	 * \param[out]		client			Abstract network client.
-	 *
+	 * Performs the request. This can be called on a handle several times - this is useful
+	 * if the previous call was unsuccessful or the caller wishes to send the request
+	 * again.
+	 * \param[in]		handle			Network handle.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 *
-	 * \note Do not use, unless implementing a new network client.
 	 */
-	int KSI_NetworkClient_init(KSI_CTX *ctx, KSI_NetworkClient *client);
+	int KSI_RequestHandle_perform(KSI_RequestHandle *handle);
+
+	/**
+	 * Returns the status of the handle.
+	 * \param[in]		handle			Network handle.
+	 * \return status code of the last call or #KSI_NETWORK_PENDING if #KSI_RequestHandle_perform nor
+	 * #KSI_NetworkClient_performAll have been called on the handle.
+	 * \param[out]		err				Pointer to the status structure.
+	 * \note The function will return #KSI_INVALID_ARGUMENT if handle is \c NULL.
+	 * \note The pointer to the err structure is only valid as long as the
+	 * handle itself is valid.
+	 */
+	int KSI_RequestHandle_getResponseStatus(KSI_RequestHandle *handle, const KSI_RequestHandleStatus **err);
 
 	/**
 	 * Setter for the implementation specific networking context.
@@ -268,9 +332,32 @@ extern "C" {
 	 * \note All aquired pointers have to be freed by the caller using #KSI_free.
 	 */
 	int KSI_UriSplitBasic(const char *uri, char **scheme, char **host, unsigned *port, char **path);
+
+	/**
+	 * Perform all the requests in the array \c add of length \c arr_len;
+	 * \param[in]	arr			Array of request handles.
+	 * \param[in]	arr_len		Length of the array.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note The caller is responsible for not mixing request handles created from different
+	 * network clients. Mixing clients and handles may cause unpredictable behavior (inc
+	 * corrupted memory and data).
+	 */
+	int KSI_NetworkClient_performAll(KSI_NetworkClient *client, KSI_RequestHandle **arr, size_t arr_len);
+
+	int KSI_NetworkClient_getAggregatorEndpoint(const KSI_NetworkClient *net, KSI_NetEndpoint **endp);
+	int KSI_NetworkClient_getExtenderEndpoint(const KSI_NetworkClient *net, KSI_NetEndpoint **endp);
+	int KSI_NetworkClient_getPublicationsFileEndpoint (const KSI_NetworkClient *net, KSI_NetEndpoint **endp);
+
+	int KSI_NetworkClient_setAggregatorEndpoint(KSI_NetworkClient *net, KSI_NetEndpoint *endp);
+	int KSI_NetworkClient_setExtenderEndpoint(KSI_NetworkClient *net, KSI_NetEndpoint *endp);
+	int KSI_NetworkClient_setPublicationsFileEndpoint(KSI_NetworkClient *net, KSI_NetEndpoint *endp);
+
+	KSI_DEFINE_REF(KSI_RequestHandle);
+
 	/**
 	 * @}
 	 */
+
 #ifdef __cplusplus
 }
 #endif

@@ -17,7 +17,7 @@
 # reserves and retains all trademark rights.
 #
 
-#Selecting of C Run-Time library and output format. 
+#Selecting of C Run-Time library and output format.
 !IF "$(DLL)" != "lib" && "$(DLL)" != "dll"
 DLL = lib
 !ENDIF
@@ -48,7 +48,22 @@ TRUSTSTORE_MACROS = $(TRUSTSTORE_MACROS) /DOPENSSL_CA_FILE=\"$(OPENSSL_CA_FILE:\
 !ENDIF
 
 !IF "$(OPENSSL_CA_DIR)" != ""
-TRUSTSTORE_MACROS = $(TRUSTSTORE_MACROS) /DOPENSSL_CA_DIR=\"$(OPENSSL_CA_DIR:\=\\)\" 
+TRUSTSTORE_MACROS = $(TRUSTSTORE_MACROS) /DOPENSSL_CA_DIR=\"$(OPENSSL_CA_DIR:\=\\)\"
+!ENDIF
+
+#Generate version.h file
+VERSION_H = version.h
+VERSION_H_IN = $(VERSION_H).in
+VERSION_H_TEMP_SCRIPT=tmp.bat
+!MESSAGE Generating $(VERSION_H) file
+!IF [echo echo off ^& setlocal EnableDelayedExpansion ^& for /f "tokens=1,2,3 delims=." %%a in ("$(VER)") do (echo. 2^>$(VERSION_H) ^& for /f "delims=" %%x in ($(VERSION_H_IN)) do (set line=%%x ^& set line=!line:@VER_MAJOR@=%%a! ^& set line=!line:@VER_MINOR@=%%b! ^& set line=!line:@VER_BUILD@=%%c! ^& @echo !line!^>^>$(VERSION_H))) ^& endlocal > $(VERSION_H_TEMP_SCRIPT)]
+!MESSAGE Generate version.h temp script file
+!ENDIF
+!IF [.\$(VERSION_H_TEMP_SCRIPT)]
+!MESSAGE Generate version.h
+!ENDIF
+!IF [ERASE $(VERSION_H_TEMP_SCRIPT)]
+!MESSAGE Remove version.h temp script file
 !ENDIF
 
 SRC_DIR = .
@@ -77,16 +92,25 @@ LIB_OBJ = \
 	$(OBJ_DIR)\publicationsfile.obj \
 	$(OBJ_DIR)\signature.obj \
 	$(OBJ_DIR)\tlv.obj \
+	$(OBJ_DIR)\tlv_element.obj \
 	$(OBJ_DIR)\tlv_template.obj \
+	$(OBJ_DIR)\tree_builder.obj \
 	$(OBJ_DIR)\types.obj \
 	$(OBJ_DIR)\types_base.obj \
 	$(OBJ_DIR)\verification.obj \
+	$(OBJ_DIR)\verification_rule.obj \
 	$(OBJ_DIR)\hmac.obj \
 	$(OBJ_DIR)\net_tcp.obj \
-	$(OBJ_DIR)\compatibility.obj
+	$(OBJ_DIR)\compatibility.obj \
+	$(OBJ_DIR)\pkitruststore.obj \
+	$(OBJ_DIR)\net_file.obj \
+	$(OBJ_DIR)\policy.obj \
+	$(OBJ_DIR)\verify_deprecated.obj \
+	$(OBJ_DIR)\blocksigner.obj
 
 INC_FILES = \
 	base32.h \
+	blocksigner.h \
 	common.h \
 	fast_tlv.h \
 	hmac.h \
@@ -95,12 +119,14 @@ INC_FILES = \
 	crc32.h \
 	net_http.h \
 	net_tcp.h \
+	net_file.h \
 	net_uri.h \
 	signature.h \
 	types_base.h \
 	err.h \
 	io.h \
 	verification.h \
+	verification_rule.h \
 	hash.h \
 	ksi.h \
 	tlv.h \
@@ -110,17 +136,23 @@ INC_FILES = \
 	log.h \
 	publicationsfile.h \
 	tlv_template.h \
+	tlv_element.h \
+	tree_builder.h \
 	compatibility.h \
-	multi_signature.h
+	multi_signature.h \
+	policy.h \
+	verify_deprecated.h \
+	blocksigner.h \
+	$(VERSION_H)
 
 #Compiler and linker configuration
-EXT_LIB = wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib  
+EXT_LIB = wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib
 
 !IF "$(HASH_PROVIDER)" == "OPENSSL" || "$(TRUST_PROVIDER)" == "OPENSSL"
 CCFLAGS = $(CCFLAGS) /I"$(OPENSSL_DIR)\include"
 !IF "$(DLL)" == "dll"
 LDFLAGS = $(LDFLAGS) /LIBPATH:"$(OPENSSL_DIR)\$(DLL)"
-EXT_LIB = $(EXT_LIB) libeay32$(RTL).lib advapi32.lib  
+EXT_LIB = $(EXT_LIB) libeay32$(RTL).lib advapi32.lib
 !ENDIF
 !ENDIF
 
@@ -128,8 +160,8 @@ EXT_LIB = $(EXT_LIB) libeay32$(RTL).lib advapi32.lib
 EXT_LIB = $(EXT_LIB) Crypt32.lib advapi32.lib
 !ENDIF
 
-	
-#Configuration of net provider	
+
+#Configuration of net provider
 !IF "$(NET_PROVIDER)"=="CURL"
 CCFLAGS = $(CCFLAGS) /I"$(CURL_DIR)\include"
 CCFLAGS = $(CCFLAGS) /DKSI_NET_HTTP_IMPL=KSI_IMPL_CURL
@@ -146,10 +178,10 @@ CCFLAGS = $(CCFLAGS) /DKSI_NET_HTTP_IMPL=KSI_IMPL_WININET
 LIB_OBJ = $(LIB_OBJ) $(OBJ_DIR)\net_http_wininet.obj
 EXT_LIB = $(EXT_LIB) wininet.lib
 
-!ELSE IF "$(NET_PROVIDER)" == "WINHTTP" 
+!ELSE IF "$(NET_PROVIDER)" == "WINHTTP"
 CCFLAGS = $(CCFLAGS) /DKSI_NET_HTTP_IMPL=KSI_IMPL_WINHTTP
 LIB_OBJ = $(LIB_OBJ) $(OBJ_DIR)\net_http_winhttp.obj
-EXT_LIB = $(EXT_LIB) winhttp.lib 
+EXT_LIB = $(EXT_LIB) winhttp.lib
 !ENDIF
 
 #Selecting of hash provider
@@ -170,13 +202,12 @@ CCFLAGS = $(CCFLAGS) /DKSI_PKI_TRUSTSTORE_IMPL=KSI_IMPL_CRYPTOAPI
 LIB_OBJ = $(LIB_OBJ) $(OBJ_DIR)\pkitruststore_cryptoapi.obj
 !ENDIF
 
-
-CCFLAGS = $(CCFLAGS) /nologo /W3 /D_CRT_SECURE_NO_DEPRECATE /I$(SRC_DIR)\\ksi /I$(SRC_DIR)\example /I$(SRC_DIR)
-LDFLAGS = $(LDFLAGS) /NOLOGO /LIBPATH:$(LIB_DIR) 
+CCFLAGS = $(CCFLAGS) /DKSI_BUILD
+CCFLAGS = $(CCFLAGS) /nologo /D_CRT_SECURE_NO_DEPRECATE /I$(SRC_DIR)\\ksi /I$(SRC_DIR)\example /I$(SRC_DIR)
+LDFLAGS = $(LDFLAGS) /NOLOGO /LIBPATH:$(LIB_DIR)
 
 !IF "$(RTL)" == "MT" || "$(RTL)" == "MD"
 CCFLAGS = $(CCFLAGS) /DNDEBUG /O2
-LDFLAGS = $(LDFLAGS) /RELEASE
 !ELSE
 CCFLAGS = $(CCFLAGS) /D_DEBUG /Od /RTC1 /Zi
 !IF "$(DLL)" == "dll"
@@ -204,20 +235,20 @@ default: $(LIB_DIR)\$(LIB_NAME)$(RTL).$(DLL) include
 all: $(LIB_DIR)\$(LIB_NAME)$(RTL).$(DLL) include
 
 
-$(LIB_DIR)\$(LIB_NAME)$(RTL).lib: $(OBJ_DIR) $(LIB_DIR) $(LIB_OBJ)  
-	link /LIB /OUT:$@ $(LDFLAGS) $(LIB_OBJ)
+$(LIB_DIR)\$(LIB_NAME)$(RTL).lib: $(OBJ_DIR) $(LIB_DIR) $(LIB_OBJ)
+	lib /OUT:$@ $(LDFLAGS) $(LIB_OBJ)
 
 $(LIB_DIR)\$(LIB_NAME)$(RTL).dll: $(OBJ_DIR) $(LIB_DIR) $(LIB_OBJ) $(LIB_DEF)
 	link /DLL /OUT:$@ /IMPLIB:$*.lib /DEF:$(LIB_DEF) $(LDFLAGS) $(LIB_OBJ) $(EXT_LIB)
-	
+
 
 {$(SRC_DIR)}.c{$(OBJ_DIR)\}.obj:
 	cl /c /$(RTL) $(CCFLAGS) /Fo$@ $<
 
-	
+
 include: $(INCLUDE_DIR)
-	if not exist $(INCLUDE_DIR)\*.h for /R $(SRC_DIR) %%f in ($(INC_FILES)) do @xcopy "%%f" $(INCLUDE_DIR) /D > nul
-	
+	for %%f in ($(INC_FILES)) do @xcopy $(SRC_DIR)\%%f $(INCLUDE_DIR) /D /Y > nul
+
 $(OBJ_DIR) $(LIB_DIR) $(INCLUDE_DIR):
 	@if not exist $@ mkdir $@
-	
+

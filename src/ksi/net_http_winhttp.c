@@ -72,7 +72,7 @@ return res;
 }
 
 #define WINHTTP_ERROR(_ctx, _error, _ksier, _msg) \
-		KSI_LOG_error(_ctx, "WinHTTP returned error %i at line %i in file %s.", _error, __LINE__, __FILE__); \
+		KSI_LOG_debug(_ctx, "WinHTTP returned error %i in file %s at line %i.", _error, __FILE__, __LINE__); \
 		KSI_ERR_push(_ctx, res = _ksier, _error, __FILE__, __LINE__, _msg); \
 		goto cleanup;
 
@@ -114,6 +114,7 @@ static void LPWSTR_free(LPWSTR wstr){
 
 static int winHTTP_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **buf, DWORD *len){
 	KSI_HttpClient *http = NULL;
+	KSI_NetworkClient *client = NULL;
 	HINTERNET handle;
 	DWORD dwordLen;
 	DWORD http_payload_len = 0;
@@ -132,8 +133,8 @@ static int winHTTP_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **
 
 
 	handle = ((winhttpNetHandleCtx*)reqHandle->implCtx)->request_handle;
-	http = (KSI_HttpClient*)reqHandle->client;
-
+	client = reqHandle->client;
+	http = client->impl;
 
 	if (!WinHttpReceiveResponse(handle, NULL)){
 		WINHTTP_ERROR_1(ctx, ERROR_WINHTTP_TIMEOUT, KSI_NETWORK_RECIEVE_TIMEOUT, NULL)
@@ -148,7 +149,7 @@ static int winHTTP_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **
 		WINHTTP_ERROR_N(ctx, KSI_NETWORK_ERROR, "WinHTTP: Unable to get HTTP status.")
 	}
 
-	http->httpStatus = http_status;
+	reqHandle->err.code = http_status;
 
 	/*Get response length*/
 	dwordLen = sizeof(DWORD);
@@ -256,14 +257,15 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	int res;
 	KSI_CTX *ctx = NULL;
 	winhttpNetHandleCtx *implCtx = NULL;
-	KSI_HttpClient *http = (KSI_HttpClient *)client;
-	char msg[128];
+	KSI_HttpClient *http = NULL;
+	char msg[1024];
 	char *scheme = NULL;
 	char *hostName = NULL;
-	char *query = NULL;
+	char *path = NULL;
 	unsigned port = 0;
 	LPWSTR W_host = NULL;
-	LPWSTR W_query = NULL;
+	LPWSTR W_path = NULL;
+	LPWSTR W_mimeTypeHeader = NULL;
 	unsigned char *request = NULL;
 	size_t request_len = 0;
 
@@ -271,6 +273,8 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+
+	http = client->impl;
 	ctx = handle->ctx;
 	KSI_ERR_clearErrors(ctx);
 
@@ -291,20 +295,20 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	implCtx->ctx = ctx;
 	implCtx->session_handle = http->implCtx;
 
-	res = KSI_UriSplitBasic(url, &scheme, &hostName, &port, &query);
-	if(res != KSI_OK){
+	res = KSI_UriSplitBasic(url, &scheme, &hostName, &port, &path);
+	if (res != KSI_OK){
 		KSI_snprintf(msg, sizeof(msg), "WinHTTP: Unable to crack url '%s'.", url);
 		KSI_pushError(ctx, res, msg);
 		goto cleanup;
 	}
 
-	if(scheme == NULL || strcmp("http", scheme) != 0 && strcmp("https", scheme) != 0){
+	if (scheme == NULL || strcmp("http", scheme) != 0 && strcmp("https", scheme) != 0){
 		KSI_snprintf(msg, sizeof(msg), "WinHTTP: unknown Internet scheme '%s'.", scheme);
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, msg);
 		goto cleanup;
 	}
 
-	if(hostName == NULL || query == NULL){
+	if (hostName == NULL) {
 		KSI_snprintf(msg, sizeof(msg), "WinHTTP: Invalid url '%s'.", url);
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, msg);
 		goto cleanup;
@@ -321,10 +325,12 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-	res = LPWSTR_new(query, &W_query);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
+	if (path != NULL) {
+		res = LPWSTR_new(path, &W_path);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
 	}
 
 	/*Preparing request*/
@@ -352,11 +358,28 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 
 	implCtx->request_handle = WinHttpOpenRequest(implCtx->connection_handle,
 			(request == NULL ? L"GET" : L"POST"),
-			W_query,
+			W_path,
 			NULL, NULL, NULL,0);
 
 	if (implCtx->request_handle == NULL){
 		WINHTTP_ERROR(ctx, GetLastError(), KSI_NETWORK_ERROR, "WinHTTP: Unable to initialize request handle.");
+	}
+
+	/* Add MIME type header. */
+	if (http->mimeType != NULL) {
+		char tmp[1024];
+		KSI_snprintf(tmp, sizeof(tmp) ,"Content-Type: %s", http->mimeType);
+
+		res = LPWSTR_new(tmp, &W_mimeTypeHeader);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		if (!WinHttpAddRequestHeaders(implCtx->request_handle, W_mimeTypeHeader, -1L,
+				WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE)) {
+			WINHTTP_ERROR(ctx, GetLastError(), KSI_NETWORK_ERROR, "WinHTTP: Unable to set MIME type.");
+		}
 	}
 
 	if (!WinHttpSetTimeouts(implCtx->request_handle,0, http->connectionTimeoutSeconds*1000, 0, http->readTimeoutSeconds*1000)){
@@ -377,9 +400,10 @@ cleanup:
 	winhttpNetHandleCtx_free(implCtx);
 	KSI_free(scheme);
 	KSI_free(hostName);
-	KSI_free(query);
+	KSI_free(path);
 	LPWSTR_free(W_host);
-	LPWSTR_free(W_query);
+	LPWSTR_free(W_path);
+	LPWSTR_free(W_mimeTypeHeader);
 
 	return res;
 }
@@ -388,20 +412,25 @@ static void implCtx_free(void *hInternet){
 	WinHttpCloseHandle((HINTERNET)hInternet);
 }
 
-int KSI_HttpClientImpl_init(KSI_HttpClient *http) {
+int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	int res;
-	KSI_CTX *ctx = NULL;
+	KSI_NetworkClient *tmp = NULL;
+	KSI_HttpClient *http = NULL;
 	LPWSTR agent_name = NULL;
 	HINTERNET session_handle = NULL;
 	ULONG buf;
 
-	if (http == NULL || http->parent.ctx == NULL) {
+	if (ctx == NULL || client == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
-	ctx = http->parent.ctx;
+
 	KSI_ERR_clearErrors(ctx);
 
+	res = KSI_AbstractHttpClient_new(ctx, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	http = tmp->impl;
 
 	res = LPWSTR_new(http->agentName, &agent_name);
 	if (res != KSI_OK) {
@@ -409,7 +438,7 @@ int KSI_HttpClientImpl_init(KSI_HttpClient *http) {
 		goto cleanup;
 	}
 
-	//Initializes an application's use of the Win32 Internet functions.
+	/* Initializes an application's use of the Win32 Internet functions. */
 	session_handle = WinHttpOpen(agent_name, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
 	if (session_handle == NULL) {
 		WINHTTP_ERROR(ctx, GetLastError(), KSI_UNKNOWN_ERROR, "WinHTTP: Unable to init.");
@@ -431,11 +460,16 @@ int KSI_HttpClientImpl_init(KSI_HttpClient *http) {
 	session_handle = NULL;
 	http->sendRequest = winhttpSendRequest;
 
+	*client = tmp;
+	tmp = NULL;
+
 	res = KSI_OK;
 
 cleanup:
 
-	WinHttpCloseHandle(session_handle);
+	KSI_NetworkClient_free(tmp);
+
+	implCtx_free(session_handle);
 	LPWSTR_free(agent_name);
 
 	return res;

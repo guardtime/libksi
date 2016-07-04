@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2016 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -67,28 +67,6 @@ static char *nok_sample[] = {
 
 extern KSI_CTX *ctx;
 
-static int tlvFromFile(const char *fileName, KSI_TLV **tlv) {
-	int res;
-	KSI_RDR *rdr = NULL;
-	FILE *f = NULL;
-
-	KSI_LOG_debug(ctx, "Open TLV file: '%s'", fileName);
-
-	f = fopen(fileName, "rb");
-	res = KSI_RDR_fromStream(ctx, f, &rdr);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_TLV_fromReader(rdr, tlv);
-	if (res != KSI_OK) goto cleanup;
-
-cleanup:
-
-	if (f != NULL) fclose(f);
-	KSI_RDR_close(rdr);
-
-	return res;
-}
-
 static int parseStructure(KSI_TLV *tlv, int indent) {
 	int res;
 	KSI_TLV *nested = NULL;
@@ -112,10 +90,6 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 			break;
 		case 0x03:
 		case 0x1003:
-			/* Cast as nested TLV */
-			res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_TLV);
-			if (res != KSI_OK) goto cleanup;
-
 			res = KSI_TLV_getNestedList(tlv, &list);
 			if (res != KSI_OK) goto cleanup;
 
@@ -157,11 +131,11 @@ static void TestOkFiles(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	while (ok_sample[i] != NULL) {
-		CuAssert(tc, "Unable to read valid TLV", tlvFromFile(getFullResourcePath(ok_sample[i++]), &tlv) == KSI_OK);
+		CuAssert(tc, "Unable to read valid TLV.", KSITest_tlvFromFile(getFullResourcePath(ok_sample[i++]), &tlv) == KSI_OK);
 
 		res = parseStructure(tlv, 0);
 
-		CuAssert(tc, "Unable to parse valid TLV", res == KSI_OK);
+		CuAssert(tc, "Unable to parse valid TLV.", res == KSI_OK);
 
 		KSI_TLV_free(tlv);
 		tlv = NULL;
@@ -179,13 +153,13 @@ static void TestNokFiles(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	while (nok_sample[i] != NULL) {
-		res = tlvFromFile(getFullResourcePath(nok_sample[i++]), &tlv);
+		res = KSITest_tlvFromFile(getFullResourcePath(nok_sample[i++]), &tlv);
 
 		if (res == KSI_OK) {
 			res = parseStructure(tlv, 0);
 		}
 
-		CuAssert(tc, "Parser did not fail with invalid TLV", res != KSI_OK);
+		CuAssert(tc, "Parser did not fail with invalid TLV.", res != KSI_OK);
 
 		KSI_TLV_free(tlv);
 		tlv = NULL;
@@ -264,20 +238,20 @@ static void TestClone(CuTest *tc) {
 		f = NULL;
 
 		res = KSI_TLV_parseBlob2(ctx, in, in_len, 0, &tlv);
-		CuAssert(tc, "Unable to parse TLV", res == KSI_OK);
+		CuAssert(tc, "Unable to parse TLV.", res == KSI_OK);
 
 		res = parseStructure(tlv, 0);
-		CuAssert(tc, "Unable to parse TLV structure", res == KSI_OK);
+		CuAssert(tc, "Unable to parse TLV structure.", res == KSI_OK);
 
 		res = KSI_TLV_clone(tlv, &clone);
-		CuAssert(tc, "Unsable to clone TLV", res == KSI_OK && clone != NULL);
+		CuAssert(tc, "Unsable to clone TLV.", res == KSI_OK && clone != NULL);
 
 		/* Re assemble TLV */
 		res = KSI_TLV_serialize_ex(clone, out1, sizeof(out1), &out_len);
-		CuAssert(tc, "Unable to serialize TLV", res == KSI_OK);
+		CuAssert(tc, "Unable to serialize TLV.", res == KSI_OK);
 
-		CuAssert(tc, "Serialized TLV size mismatch", in_len == out_len);
-		sprintf(errstr, "Serialised TLV content does not match original: %s", ok_sample[i]);
+		CuAssert(tc, "Serialized TLV size mismatch.", in_len == out_len);
+		sprintf(errstr, "Serialised TLV content does not match original: '%s'.", ok_sample[i]);
 		CuAssert(tc, errstr, !memcmp(in, out1, in_len));
 
 		KSI_TLV_free(clone);
@@ -300,26 +274,26 @@ static void testObjectSerialization(CuTest *tc, const char *sample, int (*parse)
 	char errm[1024];
 
 	f = fopen(sample, "rb");
-	KSI_snprintf(errm, sizeof(errm), "Unable to open pdu file: %s", sample);
+	KSI_snprintf(errm, sizeof(errm), "Unable to open pdu file: '%s'.", sample);
 	CuAssert(tc, errm, f != NULL);
 
 	in_len = (unsigned)fread(in, 1, sizeof(in), f);
 	fclose(f);
-	KSI_snprintf(errm, sizeof(errm), "Unable to read pdu file: %s", sample);
+	KSI_snprintf(errm, sizeof(errm), "Unable to read pdu file: '%s'.", sample);
 	CuAssert(tc, errm, in_len > 0);
 
 	res = parse(ctx, in, in_len, &pdu);
-	KSI_snprintf(errm, sizeof(errm), "Unable to parse pdu: %s", sample);
+	KSI_snprintf(errm, sizeof(errm), "Unable to parse pdu: '%s'.", sample);
 	CuAssert(tc, errm, res == KSI_OK && pdu != NULL);
 
 	res = serialize(pdu, &out, &out_len);
-	KSI_snprintf(errm, sizeof(errm), "Unable to serialize pdu: %s", sample);
+	KSI_snprintf(errm, sizeof(errm), "Unable to serialize pdu: '%s'.", sample);
 	CuAssert(tc, errm, res == KSI_OK && out != NULL && out_len > 0);
 
-	KSI_snprintf(errm, sizeof(errm), "Serialized pdu length mismatch: %s", sample);
+	KSI_snprintf(errm, sizeof(errm), "Serialized pdu length mismatch: '%s'.", sample);
 	CuAssert(tc, errm, res == KSI_OK && out_len == in_len);
 
-	KSI_snprintf(errm, sizeof(errm), "Serialised pdu content mismatch: %s", sample);
+	KSI_snprintf(errm, sizeof(errm), "Serialised pdu content mismatch: '%s'.", sample);
 	CuAssert(tc, errm, !KSITest_memcmp(in, out, in_len));
 
 	KSI_free(out);
@@ -346,41 +320,35 @@ static void testErrorMessage(CuTest* tc, const char *expected, const char *tlv_f
 		const KSI_TlvTemplate *tmplete) {
 	int res;
 	void *obj = NULL;
-	KSI_RDR *rdr = NULL;
 	char buf[1024];
 	size_t len;
 	FILE *f = NULL;
+	KSI_FTLV ftlv;
 
 	KSI_ERR_clearErrors(ctx);
 
-	f = fopen(getFullResourcePath(tlv_file), "r");
-	res = KSI_RDR_fromStream(ctx, f, &rdr);
-	CuAssert(tc, "Failed to open reader", res == KSI_OK);
+	f = fopen(getFullResourcePath(tlv_file), "rb");
+	CuAssert(tc, "Failed to open file.", f != NULL);
 
-	res = KSI_RDR_read_ex(rdr, (unsigned char *)buf, sizeof(buf), &len);
-	CuAssert(tc, "Failed read from file", res == KSI_OK);
+	res = KSI_FTLV_fileRead(f, (unsigned char *)buf, sizeof(buf), &len, &ftlv);
+	CuAssert(tc, "Failed read from file.", res == KSI_OK);
 
 	res = obj_new(ctx, &obj);
-	CuAssert(tc, "Unable create new obj", res == KSI_OK);
+	CuAssert(tc, "Unable create new obj.", res == KSI_OK);
 
 	res = KSI_TlvTemplate_parse(ctx, (unsigned char *)buf, (unsigned)len, tmplete, obj);
-	CuAssert(tc, "Parsing invalid obj must fail", res != KSI_OK);
+	CuAssert(tc, "Parsing invalid obj must fail.", res != KSI_OK);
 
 	res = KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL, NULL);
 	CuAssert(tc, "Unable to get base error message.", res == KSI_OK);
 
-	if (strcmp(buf, expected) != 0) printf("buf = '%s', exp = '%s'\n", buf, expected);
 	CuAssert(tc, "Wrong error message.", strcmp(buf, expected) == 0);
 
 	if (f != NULL) fclose(f);
 	obj_free(obj);
-	KSI_RDR_close(rdr);
 }
-#ifdef _WIN32
-_declspec( dllimport )
-#endif
-KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu);
 
+KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu);
 
 static void testUnknownCriticalTagError(CuTest* tc) {
 	testErrorMessage(tc, "Unknown critical tag: [0x200]->[0x203]aggr_error_pdu->[0x01]",

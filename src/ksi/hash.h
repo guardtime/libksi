@@ -21,6 +21,7 @@
 #define KSI_HASH_H_
 
 #include "types_base.h"
+#include "common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,14 +54,15 @@ extern "C" {
 	 * instances of #KSI_DataHasher and #KSI_DataHash.
 	 */
 	typedef enum KSI_HashAlgorithm_en {
+		/** An invalid hash algorithm. This is returned from #KSI_getHashAlgorithmByName,  */
+		KSI_HASHALG_INVALID = -1,
+
 		/** The SHA-1 algorithm. */
 		KSI_HASHALG_SHA1 = 0x00,
 		/** The SHA-256 algorithm. */
 		KSI_HASHALG_SHA2_256 = 0x01,
 		/** The RIPEMD-160 algorithm. */
 		KSI_HASHALG_RIPEMD160 = 0x02,
-		/** The SHA-224 algorithm. */
-		KSI_HASHALG_SHA2_224 = 0x03,
 		/** The SHA-384 algorithm. */
 		KSI_HASHALG_SHA2_384 = 0x04,
 		/** The SHA-512 algorithm. */
@@ -121,6 +123,22 @@ extern "C" {
 	int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_length);
 
 	/**
+	 * Adds the imprint value to the hash computation.
+	 * \param[in]	hasher				Hasher object.
+	 * \param[in]	hsh					Datahash object.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_DataHasher_addImprint(KSI_DataHasher *hasher, const KSI_DataHash *hsh);
+
+	/**
+	 * Adds the value of the octet string to the hash computation.
+	 * \param[in]	hasher				Hasher object.
+	 * \param[in]	data				Octet string object.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_DataHasher_addOctetString(KSI_DataHasher *hasher, KSI_OctetString *data);
+
+	/**
 	 * Finalizes a hash computation.
 	 * \param[in]	hasher			Hasher object.
 	 * \param[out]	hash			Pointer that will receive pointer to the hash object.
@@ -169,7 +187,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_DataHash_clone(KSI_DataHash *from, KSI_DataHash **to);
+	KSI_FN_DEPRECATED(int KSI_DataHash_clone(KSI_DataHash *from, KSI_DataHash **to));
 
 	/**
 	 * Extracts the hashing algorithm, digest and its length from the #KSI_DataHash. If any
@@ -229,7 +247,9 @@ extern "C" {
 
 	/**
 	 * Returns the hash algorithm specified by the \c name parameter. If the algorithm
-	 * name is not recognized -1 is returned.
+	 * name is not recognized the value of KSI_HASHALG_INVALID, witch is not a
+	 * correct hashing algorithm, is returned. To verify the correctness of the returned
+	 * value #KSI_isHashAlgorithmSupported or #KSI_isHashAlgorithmTrusted function must be used.
 	 * \param[in]	name			Name of the hash function.
 	 *
 	 * \return The hash algorithm id or -1 if it was not found.
@@ -243,10 +263,17 @@ extern "C" {
 	 *
 	 * \param[in]	algo_id		Hash algorithm id
 	 *
-	 * \return Length of the hash value calculated by the given hash algorithm. Returns value -1 on error.
+	 * \return Length of the hash value calculated by the given hash algorithm. Returns value 0 on error.
 	 */
 	unsigned int KSI_getHashLength(KSI_HashAlgorithm algo_id);
 
+	/**
+	 * Returns the size of the data block the underlying hash algorithm
+	 *  operates upon in bytes.
+	 *  \param[in]	algo_id			Hash algorithm id.
+	 *  \return Returns the size of the data block the underlying hash algorithm or 0 on errir.
+	 */
+	unsigned int KSI_HashAlgorithm_getBlockSize(KSI_HashAlgorithm algo_id);
 	/**
 	 * This function is used to check if the given hash algorithm is trusted. If
 	 * the hash algorithm is trusted it returns 1, in all other cases 0.
@@ -292,44 +319,31 @@ extern "C" {
 
 	/**
 	 * Accessor method for extracting the hash algorithm from the #KSI_DataHash.
-     * \param	hash		Data hash object.
-     * \param	algo_id		Pointer to the receiving pointer.
+	 * \param	hash		Data hash object.
+	 * \param	algo_id		Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-     */
+	 */
 	int KSI_DataHash_getHashAlg(const KSI_DataHash *hash, KSI_HashAlgorithm *algo_id);
-
-	/**
-	 * Parses the meta value if the hash value is formatted:
-	 * - 2 bytes of length (n).
-	 * - n bytes of metadata.
-	 * - digest length - n bytes of padding with zero values.
-	 * \param[in]	metaHash		Metahash value.
-	 * \param[out]	data			Pointer to the receiving pointer.
-	 * \param[out]	data_len		Pointer to the receiving length variable.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_DataHash_free, #KSI_DataHash_toTlv
-	 */
-	int KSI_DataHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned char **data, size_t *data_len);
-
-	/**
-	 * Works the same way as #KSI_DataHash_fromTlv, but performs an additional
-	 * format check on the digest value and makes sure the binary digest is a
-	 * null terminated sequence of bytes.
-	 * \param[in]	tlv			TLV object.
-	 * \param[out]	hsh			Pointer to the receiving data hash object pointer.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_DataHash_MetaHash_fromTlv(KSI_TLV *tlv, KSI_DataHash **hsh);
 
 	/**
 	 * Creates a string representation of the datahash.
 	 * \param[in]		hsh		Input hash object.
 	 * \param[in,out]	buf		Pointer to the receiving buffer.
 	 * \param[in]		buf_len	Length of the receiving buffer.
+	 * \return Returns the pointer to the buffer or NULL on error.
 	 */
 	char *KSI_DataHash_toString(const KSI_DataHash *hsh, char *buf, size_t buf_len);
 
+	/**
+	 * Creates a hash value where all the bits in the digest are set to zero.
+	 * \param[in]		ctx			KSI context.
+	 * \param[in]		algo_id		The hash algorithm id.
+	 * \param[out]		hsh			Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_DataHash_createZero(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHash **hsh);
+
+	KSI_DEFINE_REF(KSI_DataHash);
 /**
  * @}
  */

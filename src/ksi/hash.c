@@ -25,13 +25,12 @@
 #include "hash_impl.h"
 #include "tlv.h"
 
-#define HASH_ALGO(id, name, bitcount, trusted) {(id), (name), (bitcount), (trusted), id##_aliases}
+#define HASH_ALGO(id, name, bitcount, blocksize, trusted) {(id), (name), (bitcount), (blocksize), (trusted), id##_aliases}
 
 /** Hash algorithm aliases. The last alias has to be an empty string */
 static char *KSI_HASHALG_SHA1_aliases[] = {"SHA-1", ""};
 static char *KSI_HASHALG_SHA2_256_aliases[] = {"DEFAULT", "SHA-2", "SHA2", "SHA256", "SHA-256", ""};
 static char *KSI_HASHALG_RIPEMD160_aliases[] = { "RIPEMD160", ""};
-static char *KSI_HASHALG_SHA2_224_aliases[] = { "SHA224", "SHA-224", ""};
 static char *KSI_HASHALG_SHA2_384_aliases[] = { "SHA384", "SHA-384", ""};
 static char *KSI_HASHALG_SHA2_512_aliases[] = { "SHA512", "SHA-512", ""};
 static char *KSI_HASHALG_SHA3_244_aliases[] = { ""};
@@ -45,25 +44,27 @@ static struct KSI_hashAlgorithmInfo_st {
 	KSI_HashAlgorithm algo_id;
 	/** Upper-case name. */
 	char *name;
-	/** Hash bit count. */
-	unsigned int bitCount;
+	/** Output digest bit count. */
+	unsigned int outputBitCount;
+	/** Internal bit count */
+	unsigned int blockSize;
 	/** Is the hash algorithm trusted? */
 	int trusted;
 	/** Accepted aliases for this hash algorithm. */
 	char **aliases;
 } KSI_hashAlgorithmInfo[] = {
-		HASH_ALGO(KSI_HASHALG_SHA1,			"SHA1", 		160, 1),
-		HASH_ALGO(KSI_HASHALG_SHA2_256,		"SHA2-256", 	256, 1),
-		HASH_ALGO(KSI_HASHALG_RIPEMD160,	"RIPEMD-160", 	160, 1),
-		HASH_ALGO(KSI_HASHALG_SHA2_224,		"SHA2-224", 	224, 1),
-		HASH_ALGO(KSI_HASHALG_SHA2_384,		"SHA2-384", 	384, 1),
-		HASH_ALGO(KSI_HASHALG_SHA2_512,		"SHA2-512", 	512, 1),
-		{0x06, NULL, 0, 0, NULL}, /* Deprecated algorithm - do not reuse. */
-		HASH_ALGO(KSI_HASHALG_SHA3_244,		"SHA3-224", 	224, 1),
-		HASH_ALGO(KSI_HASHALG_SHA3_256,		"SHA3-256", 	256, 1),
-		HASH_ALGO(KSI_HASHALG_SHA3_384,		"SHA3-384", 	384, 1),
-		HASH_ALGO(KSI_HASHALG_SHA3_512,		"SHA3-512", 	512, 1),
-		HASH_ALGO(KSI_HASHALG_SM3, 			"SM3", 			256, 1)
+		HASH_ALGO(KSI_HASHALG_SHA1,			"SHA1", 		160, 512, 1),
+		HASH_ALGO(KSI_HASHALG_SHA2_256,		"SHA2-256", 	256, 512, 1),
+		HASH_ALGO(KSI_HASHALG_RIPEMD160,	"RIPEMD-160", 	160, 512, 1),
+		{0x03, NULL, 0, 0, 0, NULL}, /* Deprecated algorithm - do not reuse. */
+		HASH_ALGO(KSI_HASHALG_SHA2_384,		"SHA2-384", 	384, 1024, 1),
+		HASH_ALGO(KSI_HASHALG_SHA2_512,		"SHA2-512", 	512, 1024, 1),
+		{0x06, NULL, 0, 0, 0, NULL}, /* Deprecated algorithm - do not reuse. */
+		HASH_ALGO(KSI_HASHALG_SHA3_244,		"SHA3-224", 	224, 1152, 1),
+		HASH_ALGO(KSI_HASHALG_SHA3_256,		"SHA3-256", 	256, 1088, 1),
+		HASH_ALGO(KSI_HASHALG_SHA3_384,		"SHA3-384", 	384, 832, 1),
+		HASH_ALGO(KSI_HASHALG_SHA3_512,		"SHA3-512", 	512, 576, 1),
+		HASH_ALGO(KSI_HASHALG_SM3, 			"SM3", 			256, 512, 1)
 };
 
 /**
@@ -71,7 +72,7 @@ static struct KSI_hashAlgorithmInfo_st {
  */
 
 void KSI_DataHash_free(KSI_DataHash *hash) {
-	if (hash != NULL && --hash->refCount == 0) {
+	if (hash != NULL && --hash->ref == 0) {
 		KSI_free(hash);
 	}
 }
@@ -88,7 +89,14 @@ int KSI_isHashAlgorithmTrusted(KSI_HashAlgorithm algo_id) {
 
 unsigned int KSI_getHashLength(KSI_HashAlgorithm algo_id) {
 	if (algo_id >= 0 && algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
-		return (KSI_hashAlgorithmInfo[algo_id].bitCount) >> 3;
+		return (KSI_hashAlgorithmInfo[algo_id].outputBitCount) >> 3;
+	}
+	return 0;
+}
+
+unsigned int KSI_HashAlgorithm_getBlockSize(KSI_HashAlgorithm algo_id) {
+	if (algo_id >= 0 && algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
+		return (KSI_hashAlgorithmInfo[algo_id].blockSize) >> 3;
 	}
 	return 0;
 }
@@ -131,6 +139,12 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const unsig
 		goto cleanup;
 	}
 
+	/* Make sure the algorithm is supported. */
+	if (!KSI_isHashAlgorithmSupported(algo_id)) {
+		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, "Hash algorithm not supported.");
+		goto cleanup;
+	}
+
 	/* Verify the length of the digest with the algorithm. */
 	if (KSI_getHashLength(algo_id) != digest_length) {
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Digest length does not match with algorithm.");
@@ -149,7 +163,7 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const unsig
 		goto cleanup;
 	}
 
-	tmp_hash->refCount = 1;
+	tmp_hash->ref = 1;
 	tmp_hash->ctx = ctx;
 
 	tmp_hash->imprint[0] = (unsigned char)algo_id;
@@ -206,12 +220,9 @@ const char *KSI_getHashAlgorithmName(KSI_HashAlgorithm algo_id) {
 	return NULL;
 }
 
-/**
- *
- */
 KSI_HashAlgorithm KSI_getHashAlgorithmByName(const char *name) {
 	size_t i;
-	KSI_HashAlgorithm algo_id = -1;
+	KSI_HashAlgorithm algo_id = KSI_HASHALG_INVALID;
 	int alias_id;
 
 	char *alias = NULL;
@@ -316,7 +327,7 @@ int KSI_DataHash_clone(KSI_DataHash *from, KSI_DataHash **to) {
 	}
 	KSI_ERR_clearErrors(from->ctx);
 
-	from->refCount++;
+	from->ref++;
 	*to = from;
 
 	res = KSI_OK;
@@ -342,12 +353,6 @@ int KSI_DataHash_fromTlv(KSI_TLV *tlv, KSI_DataHash **hsh) {
 	KSI_ERR_clearErrors(ctx);
 	if (tlv == NULL || hsh == NULL) {
 		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	res = KSI_TLV_cast(tlv, KSI_TLV_PAYLOAD_RAW);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
@@ -389,7 +394,7 @@ int KSI_DataHash_toTlv(KSI_CTX *ctx, KSI_DataHash *hsh, unsigned tag, int isNonC
 		goto cleanup;
 	}
 
-	res = KSI_TLV_new(ctx, KSI_TLV_PAYLOAD_RAW, tag, isNonCritical, isForward, &tmp);
+	res = KSI_TLV_new(ctx, tag, isNonCritical, isForward, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -423,99 +428,10 @@ cleanup:
 int KSI_DataHash_getHashAlg(const KSI_DataHash *hash, KSI_HashAlgorithm *algo_id){
 	if (hash == NULL) return KSI_INVALID_ARGUMENT;
 	if (algo_id == NULL) return KSI_INVALID_ARGUMENT;
-	if (hash->imprint == NULL) return KSI_INVALID_ARGUMENT;
-	
+
 	*algo_id = hash->imprint[0];
-	
+
 	return KSI_OK;
-}
-
-int KSI_DataHash_MetaHash_parseMeta(const KSI_DataHash *metaHash, const unsigned char **data, size_t *data_len) {
-	int res = KSI_UNKNOWN_ERROR;
-	size_t len;
-	size_t i;
-
-	if (metaHash == NULL || data == NULL || data_len == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	KSI_ERR_clearErrors(metaHash->ctx);
-
-	/* Just be paranoid, and check for the length (the length should be determined by the algorithm anyway) .*/
-	if (metaHash->imprint_length < 3) {
-		KSI_pushError(metaHash->ctx, res = KSI_INVALID_FORMAT, "Imprint too short for a metahash value.");
-		goto cleanup;
-	}
-
-	len = ((metaHash->imprint[1] << 8) & 0xff) | (metaHash->imprint[2] & 0xff);
-
-	if (len + 3 > metaHash->imprint_length) {
-		KSI_pushError(metaHash->ctx, res = KSI_INVALID_FORMAT, "Metadata length greater than imprint length");
-		goto cleanup;
-	}
-
-	/* Verify padding. */
-	for (i = len + 3; i < metaHash->imprint_length; i++) {
-		if (metaHash->imprint[i] != 0) {
-			KSI_pushError(metaHash->ctx, res = KSI_INVALID_FORMAT, "Metahash not padded with zeros.");
-			goto cleanup;
-		}
-	}
-
-	*data = metaHash->imprint + 3;
-	*data_len = len;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-
-}
-
-int KSI_DataHash_MetaHash_fromTlv(KSI_TLV *tlv, KSI_DataHash **hsh) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_CTX *ctx = NULL;
-	KSI_DataHash *tmp = NULL;
-	const unsigned char *data = NULL;
-	size_t data_len;
-
-	ctx = KSI_TLV_getCtx(tlv);
-	KSI_ERR_clearErrors(ctx);
-
-	if (tlv == NULL || hsh == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	/* Parse as an imprint */
-	res = KSI_DataHash_fromTlv(tlv, &tmp);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Try to extract the meta value to validate format. */
-	res = KSI_DataHash_MetaHash_parseMeta(tmp, &data, &data_len);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Make sure that the contents of this imprint is a null terminated sequence of bytes. */
-	tmp->imprint[KSI_MAX_IMPRINT_LEN] = 0; /* Write extra 0 */
-
-	*hsh = tmp;
-	tmp = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_nofree(ctx);
-	KSI_DataHash_free(tmp);
-
-	return res;
 }
 
 char *KSI_DataHash_toString(const KSI_DataHash *hsh, char *buf, size_t buf_len) {
@@ -540,7 +456,7 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
 
-	if (hasher == NULL || data_hash == NULL) {
+	if (hasher == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -551,7 +467,7 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 		KSI_pushError(hasher->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
-	hsh->refCount = 1;
+	hsh->ref = 1;
 	hsh->ctx = hasher->ctx;
 
 	res = hasher->closeExisting(hasher, hsh);
@@ -560,8 +476,11 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 		goto cleanup;
 	}
 
-	*data_hash = hsh;
-	hsh = NULL;
+
+	if (data_hash != NULL) {
+		*data_hash = hsh;
+		hsh = NULL;
+	}
 
 	res = KSI_OK;
 
@@ -572,3 +491,102 @@ cleanup:
 	return res;
 
 }
+
+int KSI_DataHasher_addImprint(KSI_DataHasher *hasher, const KSI_DataHash *hsh) {
+	int res = KSI_UNKNOWN_ERROR;
+	const unsigned char *imprint;
+	size_t imprint_len;
+
+	if (hasher == NULL || hsh == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(hasher->ctx);
+
+	res = KSI_DataHash_getImprint(hsh, &imprint, &imprint_len);
+	if (res != KSI_OK) {
+		KSI_pushError(hasher->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_DataHasher_add(hasher, imprint, imprint_len);
+	if (res != KSI_OK) {
+		KSI_pushError(hasher->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_DataHasher_addOctetString(KSI_DataHasher *hasher, KSI_OctetString *data) {
+	int res = KSI_UNKNOWN_ERROR;
+	const unsigned char *ptr = NULL;
+	size_t len = 0;
+
+	if (hasher == NULL || data == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_OctetString_extract(data, &ptr, &len);
+	if (res != KSI_OK) {
+		KSI_pushError(hasher->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_DataHasher_add(hasher, ptr, len);
+	if (res != KSI_OK) {
+		KSI_pushError(hasher->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_DataHash_createZero(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHash **hsh) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *tmp = NULL;
+	unsigned char buf[KSI_MAX_IMPRINT_LEN];
+
+	if (ctx == NULL || hsh == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	memset(buf, 0, sizeof(buf));
+	buf[0] = algo_id;
+
+	if (!KSI_isHashAlgorithmSupported(algo_id)) {
+		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, "Hash algorithm not supported.");
+		goto cleanup;
+	}
+
+	res = KSI_DataHash_fromImprint(ctx, buf, (KSI_hashAlgorithmInfo[algo_id].outputBitCount >> 3) + 1, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	*hsh = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_DataHash_free(tmp);
+
+	return res;
+}
+
+
+KSI_IMPLEMENT_REF(KSI_DataHash);

@@ -57,10 +57,10 @@ int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned tag, int isNonCritical, int isFor
 	/*!
 	 * Increases the inner reference count of that object.
 	 * \param[in]	o		Pointer to \ref typ
-	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
+	 * \return Returns the input pointer on success or \c NULL on error.
 	 * \see \ref typ##_free
 	 */ \
-	int typ##_ref(typ *o)
+	typ *typ##_ref(typ *o)
 
 #define KSI_DEFINE_OBJECT_PARSE(typ) \
 	/*!
@@ -132,11 +132,6 @@ int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned tag, int isNonCritical, int isFor
 	 * Type for easy error handling with stacktrace and error messages.
 	 */
 	typedef struct KSI_ERR_st KSI_ERR;
-
-	/**
-	 * Reader object for parsing raw data into TLV's.
-	 */
-	typedef struct KSI_RDR_st KSI_RDR;
 
 	/**
 	 * Immutable object representing a 64-bit integer.
@@ -258,6 +253,8 @@ int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned tag, int isNonCritical, int isFor
 	KSI_DEFINE_FN_FROM_TLV(KSI_OctetString);
 	KSI_DEFINE_FN_TO_TLV(KSI_OctetString);
 
+	char* KSI_OctetString_toString(const KSI_OctetString *id, char separator, char *buf, size_t buf_len);
+	
 	/*
 	 * KSI_Utf8String
 	 */
@@ -320,6 +317,21 @@ int typ##_toTlv(KSI_CTX *ctx, typ *o, unsigned tag, int isNonCritical, int isFor
 	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_Utf8StringNZ_toTlv(KSI_CTX *ctx, KSI_Utf8String *o, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+
+
+	/*
+	 * Helper functions
+	 */
+
+	/**
+	 * Creates a #KSI_Utf8String object initialized with signer id.
+	 * \param[in]		id			Legacy ID.
+	 * \param[out]		str			Pointer to the receiving pointer.
+	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
+	 * \see #KSI_Utf8String_free, #KSI_Utf8String_cstr
+	 */
+	int KSI_OctetString_LegacyId_getUtf8String(KSI_OctetString *id, KSI_Utf8String **str);
+
 
 /**
  * @}

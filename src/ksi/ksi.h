@@ -23,12 +23,14 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include "version.h"
 #include "types.h"
 #include "hash.h"
 #include "publicationsfile.h"
 #include "log.h"
 #include "signature.h"
 #include "verification.h"
+#include "policy.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,6 +64,10 @@ enum KSI_StatusCode {
 	 * The publications file can not be verified, as the constraints are not configured.
 	 */
 	KSI_PUBFILE_VERIFICATION_NOT_CONFIGURED = 0x04,
+	/**
+	 * The signature verification can not be completed due to invalid user data.
+	 */
+	KSI_INVALID_VERIFICATION_INPUT = 0x05,
 
 /* SYNTAX ERRORS */
 	/**
@@ -107,6 +113,11 @@ enum KSI_StatusCode {
 	 * The PKI signature is not trusted by the API.
 	 */
 	KSI_PKI_CERTIFICATE_NOT_TRUSTED = 0x109,
+	/**
+	 * The objects used are in an invalid state.
+	 */
+	KSI_INVALID_STATE = 0x10a,
+
 /* SYSTEM ERRORS */
 	/**
 	 * Out of memory.
@@ -167,6 +178,11 @@ enum KSI_StatusCode {
 	 * HMAC mismatch occurred
 	 */
 	KSI_HMAC_MISMATCH = 0x20e,
+
+	/**
+	 * The request is still pending.
+	 */
+	KSI_REQUEST_PENDING = 0x20f,
 
 	/* Generic service errors */
 
@@ -329,12 +345,24 @@ int KSI_CTX_registerGlobals(KSI_CTX *ctx, int (*initFn)(void), void (*cleanupFn)
 int KSI_ERR_statusDump(KSI_CTX *ctx, FILE *f);
 
 /**
- * Get base error message.
+ * Get error stack trace NUL terminated c string representation.
+ * \param[in]		ctx			KSI context object.
+ * \param[in]		buf			Pointer to receiving buffer.
+ * \param[in]		buf_len		Size of buf.
+ *
+ * \return buf if successful, NULL otherwise;
+ */
+char *KSI_ERR_toString(KSI_CTX *ctx, char *buf, size_t buf_len);
+
+/**
+ * Get base error message and optional internal and external error code. If there
+ * are no errors, \c buf will contain string returned by KSI_getErrorString(KSI_OK),
+ * \c error will be equal to \c KSI_OK and \c ext will be equal to 0.
  * \param[in]		ctx		KSI context object.
  * \param[out]		buf		Buffer for storing error message.
  * \param[in]		len		The length of the buffer.
- * \param[out]		error	Pointer to buffer for base error code. Can be NULL.		
- * \param[out]		ext		Pointer to buffer for external component error code. Can be NULL.		
+ * \param[out]		error	Pointer to buffer for base error code. Can be NULL.
+ * \param[out]		ext		Pointer to buffer for external component error code. Can be NULL.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an
  * error code).
  */
@@ -418,7 +446,7 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile);
 int KSI_verifyPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile *pubFile);
 
 /**
- * Use the context to verify the signature.
+ * Use the KSI context to verify the signature.
  * \param[in]		ctx			KSI context.
  * \param[in]		sig			KSI signature.
  *
@@ -426,6 +454,15 @@ int KSI_verifyPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile *pubFile);
  */
 int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig);
 
+/**
+ * Use the KSI context to verify the signature and the datahash.
+ * \param[in]		ctx			KSI context.
+ * \param[in]		sig			KSI signature.
+ * \param[in]		hsh			Document data hash.
+ *
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
+int KSI_verifyDataHash(KSI_CTX *ctx, KSI_Signature *sig, KSI_DataHash *hsh);
 /**
  * Create a KSI signature from a given data hash.
  * \param[in]		ctx			KSI context.
@@ -555,7 +592,7 @@ int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *net);
  * \param[in]	email	Email address.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  * \note This method is deprecated and will be removed in later versions, use
- * #KSI_CTX_putPubFileCertConstraint with #KSI_CERT_EMAIL instead.
+ * #KSI_CTX_setDefaultPubFileCertConstraints with #KSI_CERT_EMAIL instead.
  */
 KSI_FN_DEPRECATED(int KSI_CTX_setPublicationCertEmail(KSI_CTX *ctx, const char *email));
 

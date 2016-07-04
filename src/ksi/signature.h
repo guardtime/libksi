@@ -22,6 +22,7 @@
 
 #include "types.h"
 #include "verification.h"
+#include "verify_deprecated.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,59 +35,16 @@ extern "C" {
 	 * @{
 	 */
 
+#ifndef KSI_SIGNATURE_STRUCT
+	#define KSI_SIGNATURE_STRUCT
 	typedef struct KSI_Signature_st KSI_Signature;
+#endif
 
 	/**
 	 * Free the signature object.
 	 * \param[in]	signature		Signature object.
 	 */
 	void KSI_Signature_free(KSI_Signature *signature);
-
-	/**
-	 * This function verifies the signature using online resources. If the
-	 * signature has a publication attached to it, the publication is verified
-	 * using the publications file. Otherwise, the signature is verified by
-	 * an attempt to extend it.
-	 *
-	 * \param[in]	sig			KSI signature.
-	 * \param[in]	ctx			KSI context, if NULL the context of the signature is used.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_Signature_verifyAggregated, #KSI_Signature_verifyAggregatedHash, #KSI_Signature_verifyDataHash
-	 */
-	int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx);
-
-	/**
-	 * This function behaves like #KSI_Signature_verify except, it takes an extra parameter
-	 * \c level, which indicates the level of the local aggregation.
-	 *
-	 * \param[in]	sig			KSI signature.
-	 * \param[in]	ctx			KSI context, if NULL the context of the signature is used.
-	 * \param[in]	level		The local aggregation level.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_Signature_verify, #KSI_Signature_verifyAggregatedHash, #KSI_Signature_verifyDataHash
-	 */
-	int KSI_Signature_verifyAggregated(KSI_Signature *sig, KSI_CTX *ctx, KSI_uint64_t level);
-
-	/**
-	 * This function verifies the signature using online resources. The signature is
-	 * verified by an attempt to extend it. If the extending and verification are successful,
-	 * the signature itself is not modified.
-	 *
-	 * \param[in]	sig			KSI signature.
-	 * \param[in]	ctx			KSI context, if NULL the context of the signature is used.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-     */
-	int KSI_Signature_verifyOnline(KSI_Signature *sig, KSI_CTX *ctx);
-
-	/**
-	 * Verifies that the document matches the signature.
-	 * \param[in]	sig			KSI signature.
-	 * \param[in]	ctx			KSI context.
-	 * \param[in]	doc			Pointer to document.
-	 * \param[in]	doc_len		Document length.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, size_t doc_len);
 
 	/**
 	 * Creates a clone of the signature object.
@@ -119,6 +77,10 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
+	 * \note It must be noted that access to metadata, supported by some file systems,
+	 * is limited by the use of function \c fopen. Alternate Data Streams (WIndows NTFS)
+	 * and Resource Forks (OS X HFS) may or may not be supported, depending on the
+	 * C standard library used in the application.
 	 */
 	int KSI_Signature_fromFile(KSI_CTX *ctx, const char *fileName, KSI_Signature **sig);
 
@@ -150,7 +112,13 @@ extern "C" {
 	 * recomended.
 	 * \see #KSI_createSignature, KSI_Signature_free
 	 */
-	int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature);
+	int KSI_Signature_sign(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature);
+
+	/**
+	 * \deprecated This function is deprecated and #KSI_Signature_sign should be used instead.
+	 * \see #KSI_Signature_sign
+	 */
+	KSI_FN_DEPRECATED(int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature));
 
 	/**
 	 * This function signs the given root hash value (\c rootHash) with the aggregation level (\c rootLevel)
@@ -164,7 +132,25 @@ extern "C" {
 	 * error code).
 	 * \see #KSI_createSignature, KSI_Signature_create, KSI_Signature_free.
 	 */
-	int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature);
+	int KSI_Signature_signAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature);
+
+	/**
+	 * \deprecated This function is deprecated and #KSI_Signature_signAggregated should be used instead.
+	 * \see #KSI_Signature_signAggregated
+	 */
+	KSI_FN_DEPRECATED(int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature));
+
+	/**
+	 * This function creates a new signature using the aggrehation hash chain as the input. The aggregation hash chain will
+	 * be included in the signature itself.
+	 * \param[in]		ctx			KSI context.
+	 * \param[in]		level		The level of the input hash of the aggregation hash chain.
+	 * \param[in]		chn			Aggregation hash chain.
+	 * \param[out]		signature	Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note The function does not consume the aggregation hash chain - the caller must free the resource.
+	 */
+	int KSI_Signature_signAggregationChain(KSI_CTX *ctx, int level, KSI_AggregationHashChain *chn, KSI_Signature **signature);
 
 	/**
 	 * This function extends the signature to the given publication \c pubRec. If \c pubRec is \c NULL the signature is
@@ -256,7 +242,7 @@ extern "C" {
 
 	/**
 	 * Accessor method for the published data. If the signature does not have a publication
-	 * record the \c pubData will be set to \c NULL.
+	 * record the \c pubRec will be set to \c NULL.
 	 * \param[in]		sig			KSI signature.
 	 * \param[out]		pubRec		Pointer to receiving pointer.
 	 *
@@ -275,76 +261,8 @@ extern "C" {
 	 */
 	int KSI_Signature_getCalendarAuthRec (const KSI_Signature *sig, KSI_CalendarAuthRec **calendarAuthRec);
 
-	/**
-	 * This function verifies given hash value \c hsh using the signature \c sig. If
-	 * the hash value does not match the input hash value of the signature, a
-	 * #KSI_VERIFICATION_FAILURE error code is returned.
-	 *
-	 * This function does not allow the document hash to be NULL, if you only need to
-	 * verify the signature without having the original document (or document hash) use
-	 * #KSI_Signature_verify.
-	 *
-	 * \param[in]	sig			KSI signature.
-	 * \param[in]	ctx			KSI context - if NULL, the context of the signature is used.
-	 * \param[in]	docHash		The signed document hash. The hash may not be NULL.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
-	 */
-	int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_CTX *ctx, const KSI_DataHash *docHash);
-
-	/**
-	 * This function verifies signature using given publication.  
-	 * \param[in]	sig			KSI signature.
-	 * \param[in]	ctx			KSI context.
-	 * \param[in]	publication	Publication data used in verification process.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
-	 */
-	int KSI_Signature_verifyWithPublication(KSI_Signature *sig, KSI_CTX *ctx, const KSI_PublicationData *publication);
-	
-	/**
-	 * This function behaves similar to #KSI_Signature_verifyDataHash except it takes an extra parameter
-	 * \c rootLevel which indicates the local aggregation level.
-	 *
-	 * This function does not allow the document hash to be NULL, if you only need to
-	 * verify the signature without having the original document (or document hash) use
-	 * #KSI_Signature_verifyAggregated.
-	 *
-	 * \param[in]	sig			KSI signature.
-	 * \param[in]	ctx			KSI context - if NULL, the context of the signature is used.
-	 * \param[in]	rootHash	The signed aggregation root hash.
-	 * \param[in]	rootLevel	The level of the root hash.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_Signature_verifyAggregatedHash(KSI_Signature *sig, KSI_CTX *ctx, const KSI_DataHash *rootHash, KSI_uint64_t rootLevel);
-	
-	/**
-	 * This function verifies signature using given publication.  
-	 * \param[in]	sig			KSI signature.
-	 * \param[in]	ctx			KSI context.
-	 * \param[in]	publication	Publication data used in verification process.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
-	 */
-	int KSI_Signature_verifyWithPublication(KSI_Signature *sig, KSI_CTX *ctx, const KSI_PublicationData *publication);
-	
-	/**
-	 * Accessor method for verification results.
-	 * \param[in]	sig			KSI signature.
-	 * \param[out]	info		Pointer to the receiving pointer.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
-	 */
-	int KSI_Signature_getVerificationResult(KSI_Signature *sig, const KSI_VerificationResult **info);
-
-	/**
-	 * This function replaces the signatures calendar hash chain
-	 * \param [in]		sig					KSI signature.
-	 * \param [in]		calendarHashChain	Pointer to the calendar hash chain
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
-	 */
-	int KSI_Signature_replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain);
+	int KSI_createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, int lvl, KSI_AggregationReq **request);
+	int KSI_createExtendRequest(KSI_CTX *ctx, KSI_Integer *start, KSI_Integer *end, KSI_ExtendReq **request);
 
 	/**
 	 * Replaces the existing publication record of the signature.
@@ -355,8 +273,49 @@ extern "C" {
 	 */
 	int KSI_Signature_replacePublicationRecord(KSI_Signature *sig, KSI_PublicationRecord *pubRec);
 
+	/**
+	 * Cleanup method for the aggregation hash chain.
+	 * \param[in]	aggr		Aggregation hash chain.
+	 */
 	void KSI_AggregationHashChain_free(KSI_AggregationHashChain *aggr);
+
+	/**
+	 * Aggregation hash chain constructor.
+	 * \param[in]	ctx			KSI context.
+	 * \param[out]	out			Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
 	int KSI_AggregationHashChain_new(KSI_CTX *ctx, KSI_AggregationHashChain **out);
+
+	/**
+	 * This function appends the aggregation chain to the signature. This function also updates
+	 * the aggregation time and chain index.
+	 * \param[in]	sig			KSI signature.
+	 * \param[in]	aggr		Aggregation chain.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHashChain *aggr);
+
+	/**
+	 * Aggregate the aggregation chain.
+	 * \param[in]	aggr		The aggregation chain.
+	 * \param[in]	startLevel	The level of the first chain link.
+	 * \param[out]	endLevel	The level of the root node. Can be NULL.
+	 * \param[out]	root		Pointer to the receiving pointer. Can be NULL.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_AggregationHashChain_aggregate(const KSI_AggregationHashChain *aggr, int startLevel, int *endLevel, KSI_DataHash **root);
+
+	/**
+	 * This function will represent the shape of the aggregation chain. The bits represent the path from the root
+	 * of the tree to the location of a hash value as a sequence of moves from a parent node in the tree to either
+	 * the left or right child (bit values 0 and 1, respectively). Each bit sequence starts with a 1-bit to make
+	 * sure no left most 0-bits are lost.
+	 * \param[in]	chn			The aggregation chain.
+	 * \param[out]	shape		Pointer to the receiving variable.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_AggregationHashChain_calculateShape(KSI_AggregationHashChain *chn, KSI_uint64_t *shape);
 
 	int KSI_AggregationHashChain_getAggregationTime(const KSI_AggregationHashChain *aggr, KSI_Integer **aggregationTime);
 	int KSI_AggregationHashChain_getChainIndex(const KSI_AggregationHashChain * aggr, KSI_LIST(KSI_Integer) **chainIndex);
@@ -374,6 +333,43 @@ extern "C" {
 	KSI_DEFINE_REF(KSI_AggregationHashChain);
 	KSI_DEFINE_WRITE_BYTES(KSI_AggregationHashChain);
 
+	/**
+	 * This function aggregates the aggregation hash chain list and returns the result hash via \c outputHash parameter.
+	 * \param[in]	chainList		Hash chain list (list of hash chains)
+	 * \param[in]	ctx				KSI context
+	 * \param[in]	level			Aggregation level
+	 * \param[out]	outputHash		Pointer to the receiving pointer to data hash object.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \note The output memory buffer belongs to the caller and needs to be freed
+	 * by the caller using #KSI_free.
+	 */
+	int KSI_AggregationHashChainList_aggregate(KSI_AggregationHashChainList *chainList, KSI_CTX *ctx, int level, KSI_DataHash **outputHash);
+
+	/**
+	 * Function for getting publication information from an extended signature.
+	 * \param [in]		sig			Extended signature including publication record.
+	 * \param [out]		pubHsh		Publication hash.
+	 * \param [out]		pubStr		Publication data converted into a base-32 encoded string.
+	 * \param [out]		pubDate		Publicatoin date
+	 * \param [out]		pubRefs		Publication references.
+	 * \param [out]		repUrls		Publication URL repositories.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \note	The output memory has to be freed by the caller
+	 * \see		#KSI_DataHash_free, #KSI_Utf8String_free, #KSI_Utf8StringList_free
+	 */
+	int KSI_Signature_getPublicationInfo(KSI_Signature *sig, KSI_DataHash **pubHsh, KSI_Utf8String **pubStr, time_t *pubDate, KSI_LIST(KSI_Utf8String) **pubRefs, KSI_LIST(KSI_Utf8String) **repUrls);
+
+	/**
+	 * Verifies that the document matches the signature.
+	 * \param[in]	sig			KSI signature.
+	 * \param[in]	ctx			KSI context.
+	 * \param[in]	doc			Pointer to document.
+	 * \param[in]	doc_len		Document length.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, size_t doc_len);
 
 /**
  * @}

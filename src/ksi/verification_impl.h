@@ -22,6 +22,7 @@
 
 #include "ksi.h"
 #include "verification.h"
+#include "internal.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,7 +54,7 @@ extern "C" {
 		KSI_uint64_t docAggrLevel;
 
 		/** Document hash to be verified. */
-		const KSI_DataHash *documentHash;
+		KSI_DataHash *documentHash;
 
 		/** Indicates if the publication string should be used. */
 		bool useUserPublication;
