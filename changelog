@@ -1,9 +1,13 @@
-Version 3.8
+Version 3.9
 
+2016-06-21 release(3.9.1696)
+* IMPROVEMENT: Added block signature sample application.
 * IMPROVEMENT: Removed dead code from http_parser.{c,h}
 * IMPROVEMENT: Added KSI_verifyDataHash.
 * IMPROVEMENT: Custom meta-data sepparated from the low-level implementation. Adds padding automatically.
 * IMPROVEMENT: Metadata hardening verification.
+
+Version 3.8
 
 2016-04-18 release(3.8.1428)
 

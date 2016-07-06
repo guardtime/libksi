@@ -29,7 +29,6 @@
 extern "C" {
 #endif
 
-KSI_DEFINE_LIST(KSI_BlockSignerHandle);
 KSI_IMPLEMENT_LIST(KSI_BlockSignerHandle, KSI_BlockSignerHandle_free);
 
 

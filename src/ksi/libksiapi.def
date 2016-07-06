@@ -613,9 +613,11 @@ EXPORTS
 	KSI_PKISignedData_getSignatureValue
 	KSI_PKISignedData_getCertId
 	KSI_PKISignedData_getCertRepositoryUri
+	KSI_PKISignedData_getSigType
 	KSI_PKISignedData_setSignatureValue
 	KSI_PKISignedData_setCertId
 	KSI_PKISignedData_setCertRepositoryUri
+	KSI_PKISignedData_setSigType
 	KSI_PublicationsHeader_free
 	KSI_PublicationsHeader_new
 	KSI_PublicationsHeader_getVersion
