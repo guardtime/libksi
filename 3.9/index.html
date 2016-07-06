@@ -95,9 +95,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <p>The memory management obeys the following rules:</p><ul>
 <li>Every object you create, belongs to you.</li>
 <li>Every object you own, must be freed by you.</li>
-<li>Using setter methods you loose the ownership of the object.</li>
+<li>Using setter methods you lose the ownership of the object.</li>
 <li>Replacing an existing value with a setter method, you are responsible for freeing the old value.</li>
-<li>Adding elements to lists you loose the ownership of the object.</li>
+<li>Adding elements to lists you lose the ownership of the object.</li>
 <li>All pointers are returned using via pointer to pointer pointers.</li>
 <li>Using free function on <code>NULL</code> does nothing and won't crash.</li>
 <li>Constant input pointers will not change ownership.</li>
