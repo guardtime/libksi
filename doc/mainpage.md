@@ -31,9 +31,9 @@ Memory Management
 The memory management obeys the following rules:
 * Every object you create, belongs to you.
 * Every object you own, must be freed by you.
-* Using setter methods you loose the ownership of the object.
+* Using setter methods you lose the ownership of the object.
 * Replacing an existing value with a setter method, you are responsible for freeing the old value.
-* Adding elements to lists you loose the ownership of the object.
+* Adding elements to lists you lose the ownership of the object.
 * All pointers are returned using via pointer to pointer pointers.
 * Using free function on \c NULL does nothing and won't crash.
 * Constant input pointers will not change ownership.
