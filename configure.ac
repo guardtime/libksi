@@ -57,6 +57,9 @@ else
     AC_MSG_RESULT([no])
 fi
 
+# Disable strict HTTP parsing (e.g. allow underscores in host names)
+CFLAGS+=" -DHTTP_PARSER_STRICT=0"
+
 # Checks for libraries.
 
 AC_ARG_WITH(openssl,
