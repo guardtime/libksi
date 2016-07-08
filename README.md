@@ -33,6 +33,50 @@ If you do not want to build your own binaries, you can get the latest stable rel
 To set up the repository, save this repo file in your repositories directory (e.g. /etc/yum.repos.d/): 
 [http://download.guardtime.com/ksi/configuration/guardtime.el6.repo](http://download.guardtime.com/ksi/configuration/guardtime.el6.repo)
 
+## Proxy configuration ##
+
+To use a proxy, you need to configure the proxy on your operating system according to the chosen network client.
+
+* Curl
+
+Set the system environment variable: http_proxy=user:pass@server:port  
+
+In the Windows control panel:  
+
+1) Find the 'System' page and select 'Advanced system settings'  
+2) Select 'Environment Variables...'  
+3) Select 'New...' to create a new system variable  
+4) Enter http_proxy in the name field and and proxy configuration (see above) in the value field.  
+
+In Linux add the system variable to /etc/bashrc:  
+~~~
+    export http_proxy=user:pass@server:port
+~~~
+
+* WinHTTP
+
+Windows command line:
+~~~
+    netsh winhttp set proxy server:port
+~~~
+
+Configuring authentication is not supported by the netsh utility.
+
+* WinINet
+
+In the Windows control panel:
+
+1) Find the 'Internet Options' page and select the 'Connections' tab.  
+2) Select 'LAN settings' and enable proxy configuration by ticking the 'Use a proxy ..' checkbox  
+3) Enter the address and port of your proxy server in the corresponding fields.  
+
+Alternatively in the Windows registry, modify the 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings' key:
+
+1) Set ProxyEnable to 1  
+2) Set ProxyServer to server:port  
+
+Configuring authentication is not supported by the Windows control panel and registry.
+
 ## Usage ##
 
 In order to get trial access to the KSI platform, go to [https://guardtime.com/blockchain-developers](https://guardtime.com/blockchain-developers).
