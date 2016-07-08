@@ -1,6 +1,7 @@
+* IMPROVEMENT: All functions except *List_new and *List_free are now type safe macros.
+
 Version 3.9
 
-* IMPROVEMENT: All functions except *List_new and *List_free are now type safe macros.
 2016-06-21 release(3.9.1696)
 * IMPROVEMENT: Added block signature sample application.
 * IMPROVEMENT: Removed dead code from http_parser.{c,h}
