@@ -29,17 +29,6 @@
 extern "C" {
 #endif
 
-KSI_DEFINE_LIST(KSI_BlockSignerHandle);
-#define KSI_BlockSignerHandleList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->append((lst), (o)))
-#define KSI_BlockSignerHandleList_remove(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->removeElement((lst), (pos), (o)))
-#define KSI_BlockSignerHandleList_indexOf(lst, o, i) KSI_APPLY_TO_NOT_NULL((lst), (lst)->indexOf((lst), (o), (i)))
-#define KSI_BlockSignerHandleList_insertAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->insertAt((lst), (pos), (o)))
-#define KSI_BlockSignerHandleList_replaceAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->replaceAt((lst), (pos), (o)))
-#define KSI_BlockSignerHandleList_elementAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->elementAt((lst), (pos), (o)))
-#define KSI_BlockSignerHandleList_length(lst) (((lst) != NULL) ? (lst)->length((lst)) : 0)
-#define KSI_BlockSignerHandleList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), (lst)->sort((lst), (cmp)))
-#define KSI_BlockSignerHandleList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (lst)->foldl((lst), (foldCtx), (foldFn)) : KSI_OK)
-
 KSI_IMPLEMENT_LIST(KSI_BlockSignerHandle, KSI_BlockSignerHandle_free);
 
 
