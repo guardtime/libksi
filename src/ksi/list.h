@@ -146,7 +146,7 @@ typedef struct KSI_List_st KSI_List;
 #define KSI_DEFINE_LIST(type) 									\
 	typedef struct type##_list_st KSI_LIST(type);				\
 	struct type##_list_st {										\
-		KSI_DEFINE_LIST_STRUCT(KSI_LIST(type), type);			\
+		KSI_DEFINE_LIST_STRUCT(KSI_LIST(type), type)			\
 	}; 															\
 	int KSI_LIST_FN_NAME(type, new)(KSI_LIST(type) **list);		\
 	void KSI_LIST_FN_NAME(type, free)(KSI_LIST(type) *list);	\

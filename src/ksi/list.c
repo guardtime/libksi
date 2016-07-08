@@ -32,7 +32,7 @@ struct listImpl_st {
 };
 
 struct KSI_List_st {
-	KSI_DEFINE_LIST_STRUCT(KSI_List, void);
+	KSI_DEFINE_LIST_STRUCT(KSI_List, void)
 };
 
 struct KSI_RefList_st {
