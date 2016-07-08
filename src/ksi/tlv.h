@@ -76,7 +76,7 @@ extern "C" {
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_fromUint(KSI_CTX *ctx, unsigned tag, int isLenient, int isForward, KSI_uint64_t uint, KSI_TLV **tlv);
+	KSI_FN_DEPRECATED(int KSI_TLV_fromUint(KSI_CTX *ctx, unsigned tag, int isLenient, int isForward, KSI_uint64_t uint, KSI_TLV **tlv));
 
 	/**
 	 * This function creates a new TLV and initializes its payload with the given string \c str.
@@ -256,7 +256,7 @@ extern "C" {
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_removeNestedTlv(KSI_TLV *target, KSI_TLV *tlv);
+	KSI_FN_DEPRECATED(int KSI_TLV_removeNestedTlv(KSI_TLV *target, KSI_TLV *tlv));
 
 	/**
 	 * This function creates a human readable representation of the TLV object.
@@ -287,7 +287,7 @@ extern "C" {
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_setUintValue(KSI_TLV *tlv, KSI_uint64_t val);
+	KSI_FN_DEPRECATED(int KSI_TLV_setUintValue(KSI_TLV *tlv, KSI_uint64_t val));
 
 	/**
 	 * Set a raw value to the TLV object.
