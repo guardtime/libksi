@@ -461,7 +461,7 @@ cleanup:
 	return res;
 }
 
-int KSI_List_sort(KSI_List *list, int (*cmp)(const void *a, const void *b)) {
+int KSI_List_sort(KSI_List *list, int (*cmp)(const void **a, const void **b)) {
 	int res = KSI_UNKNOWN_ERROR;
 	struct listImpl_st *pImpl;
 
@@ -472,7 +472,7 @@ int KSI_List_sort(KSI_List *list, int (*cmp)(const void *a, const void *b)) {
 
 	pImpl = list->pImpl;
 
-	qsort(pImpl->arr, pImpl->arr_len, sizeof(void *), cmp);
+	qsort(pImpl->arr, pImpl->arr_len, sizeof(void *), (int(*)(const void *, const void *))cmp);
 
 	res = KSI_OK;
 

@@ -161,7 +161,7 @@ int KSI_List_insertAt(KSI_List *list, size_t pos, void *o);
 int KSI_List_replaceAt(KSI_List *list, size_t pos, void *o);
 int KSI_List_elementAt(KSI_List *list, size_t pos, void **o);
 size_t KSI_List_length(KSI_List *list);
-int KSI_List_sort(KSI_List *list, int (*)(const void *, const void *));
+int KSI_List_sort(KSI_List *list, int (*)(const void **, const void **));
 int KSI_List_foldl(KSI_List *list, void *foldCtx, int (*fn)(void *el, void *foldCtx));
 
 /**
