@@ -346,7 +346,7 @@ int KSI_PublicationsFile_fromFile(KSI_CTX *ctx, const char *fileName, KSI_Public
 	}
 
 	raw_len = fread(raw, 1, (unsigned)raw_size, f);
-	if (raw_len != raw_size) {
+	if (raw_len != (unsigned)raw_size) {
 		KSI_pushError(ctx, res = KSI_IO_ERROR, NULL);
 		goto cleanup;
 	}

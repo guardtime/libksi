@@ -1528,6 +1528,45 @@ static void TestCalendarBasedPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 #undef TEST_EXT_RESPONSE_FILE
 }
 
+static void TestCalendarBasedPolicy_OK_WithAlgoChange(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/cal_algo_switch.ksig"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/cal_algo_switch-extend_resposne.tlv"
+	int res;
+	KSI_VerificationContext context;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
+		"KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime"
+	};
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&context, ctx);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context.signature != NULL);
+
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), "anon", "anon");
+	CuAssert(tc, "Unable to set extender response.", res == KSI_OK);
+
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_CALENDAR_BASED, &context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_Signature_free(context.signature);
+	KSI_VerificationContext_clean(&context);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+}
+
 static void TestKeyBasedPolicy_NA_WithoutCalendarHashChain(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
 	int res;
@@ -1818,7 +1857,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithPublicationRecord(CuTest* tc)
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_NA,
 		KSI_VER_ERR_GEN_2,
-		"KSI_VerificationRule_SignatureDoesNotContainPublication"
+		"KSI_VerificationRule_PublicationsFileContainsSuitablePublication"
 	};
 	KSI_CTX *ctx = NULL;
 
@@ -1864,7 +1903,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithoutSuitablePublication(CuTest
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_NA,
 		KSI_VER_ERR_GEN_2,
-		"KSI_VerificationRule_PublicationsFileContainsPublication"
+		"KSI_VerificationRule_PublicationsFileContainsSuitablePublication"
 	};
 	KSI_CTX *ctx = NULL;
 
@@ -2986,6 +3025,7 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestCalendarBasedPolicy_OK_WithoutPublicationRecord);
 	SUITE_ADD_TEST(suite, TestCalendarBasedPolicy_OK_WithoutCalendarHashChain);
 	SUITE_ADD_TEST(suite, TestCalendarBasedPolicy_FAIL_WithoutCalendarHashChain);
+	SUITE_ADD_TEST(suite, TestCalendarBasedPolicy_OK_WithAlgoChange);
 	SUITE_ADD_TEST(suite, TestKeyBasedPolicy_NA_WithoutCalendarHashChain);
 	SUITE_ADD_TEST(suite, TestKeyBasedPolicy_NA_WithoutCalendarAuthenticationRecord);
 	SUITE_ADD_TEST(suite, TestKeyBasedPolicy_FAIL_WithCalendarAuthenticationRecord);

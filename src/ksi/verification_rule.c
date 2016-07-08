@@ -563,7 +563,7 @@ cleanup:
 int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
-	int successCount = 0;
+	size_t successCount = 0;
 	int level = 0;
 	size_t i;
 	KSI_CTX *ctx = NULL;
@@ -2526,7 +2526,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_PublicationsFileContainsPublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_PublicationsFileContainsSuitablePublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
@@ -3025,6 +3025,37 @@ cleanup:
 	return res;
 }
 
+int KSI_VerificationRule_RequireNoUserProvidedPublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_LOG_info(info->ctx, "Verifying user publication is not provided.");
+
+	if (info->userPublication != NULL) {
+		KSI_LOG_info(info->ctx, "User publication data provided.");
+		VERIFICATION_RESULT(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT(KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 int KSI_VerificationRule_UserProvidedPublicationVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
@@ -3101,9 +3132,8 @@ int KSI_VerificationRule_UserProvidedPublicationVerification(KSI_VerificationCon
 	if (!KSI_DataHash_equals(sigPubHash, usrPubHash)) {
 		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Root hash from signature publication:", sigPubHash);
 		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Root hash from user publication     :", usrPubHash);
-		VERIFICATION_RESULT(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2);
-		/* Publications with same time but different root hash must be reported as a crypto error! */
-		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, "Publications with same time but different root hash.");
+		VERIFICATION_RESULT(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_9);
+		res = KSI_OK;
 		goto cleanup;
 	}
 

@@ -29,7 +29,7 @@
 #include "net_file.h"
 #include "http_parser.h"
 
-static int getClientByUriScheme(const char *uri, const char *scheme, const char **replaceScheme);
+static int getClientByUriScheme(const char *scheme, const char **replaceScheme);
 
 static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, KSI_RequestHandle **handle) {
 	KSI_UriClient *uriClient = client->impl;
@@ -149,7 +149,7 @@ int KSI_UriClient_setPublicationUrl(KSI_NetworkClient *client, const char *val) 
 	uriClient = client->impl;
 
 	KSI_UriSplitBasic(val, &schm, &host, &port, &path);
-	c = getClientByUriScheme(val, schm, &replace);
+	c = getClientByUriScheme(schm, &replace);
 
 	switch (c) {
 		case URI_HTTP:
@@ -196,7 +196,7 @@ cleanup:
 	return res;
 }
 
-static int getClientByUriScheme(const char *uri, const char *scheme, const char **replaceScheme) {
+static int getClientByUriScheme(const char *scheme, const char **replaceScheme) {
 	int netClient = -1;
 
 	static const struct {
@@ -263,7 +263,7 @@ static int uriClient_setService(KSI_NetworkClient *client, const char *uri, cons
 	res = client->uriSplit(uri, &schm, &ksi_user, &ksi_pass, &host, &port, &path, &query, &fragment);
 	if (res != KSI_OK) unableToParse = 1;
 
-	c = getClientByUriScheme(uri, schm, &replace);
+	c = getClientByUriScheme(schm, &replace);
 	scheme = (replace != NULL) ? replace : schm;
 
 

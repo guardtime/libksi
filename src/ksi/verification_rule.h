@@ -337,7 +337,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_PublicationsFileContainsPublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_PublicationsFileContainsSuitablePublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule can be used to check if signature extending is permitted or not.
@@ -383,12 +383,22 @@ extern "C" {
 	/**
 	 * This rule is used to verify if user has provided the publication
 	 *
-	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[in]	info		Verification context to be used for given rule.
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_VerificationRule_UserProvidedPublicationExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * This rule is used to verify that the user has NOT provided a publication.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule.
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_RequireNoUserProvidedPublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used verify that user provided publication equals to publication inside the signature.

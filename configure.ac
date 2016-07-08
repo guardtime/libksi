@@ -34,7 +34,7 @@ AC_CANONICAL_TARGET
 #      increment age ('c:r:a' becomes 'c:r:a+1').
 #   4. If any interfaces have been removed or changed since the last public
 #      release, then set age to 0 ('c:r:a' becomes 'c:r:0'). 
-LTVER="3:1:0"
+LTVER="5:0:0"
 AC_SUBST(LTVER)
 
 AM_INIT_AUTOMAKE([subdir-objects foreign -Wall -Werror])
@@ -56,6 +56,9 @@ if test "$git_installed" = "yes" -a -x ".git"; then
 else
     AC_MSG_RESULT([no])
 fi
+
+# Disable strict HTTP parsing (e.g. allow underscores in host names)
+CFLAGS+=" -DHTTP_PARSER_STRICT=0"
 
 # Checks for libraries.
 

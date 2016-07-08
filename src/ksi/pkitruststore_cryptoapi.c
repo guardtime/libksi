@@ -33,7 +33,7 @@
 
 
 const char* getMSError(DWORD error, char *buf, size_t len){
-	LPVOID lpMsgBuf;
+	LPVOID lpMsgBuf = NULL;
 	char *tmp = NULL;
 	char *ret = NULL;
 
@@ -669,9 +669,6 @@ int KSI_PKISignature_extractCertificate(const KSI_PKISignature *signature, KSI_P
 		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, "Unable to get PKI signatures signer certificate.");
 		goto cleanup;
 	}
-
-	/* The copy of the object is NOT created. Just its reference value is incremented. */
-	signing_cert = CertDuplicateCertificateContext(signing_cert);
 
 	tmp = KSI_new(KSI_PKICertificate);
 	tmp->ctx = signature->ctx;

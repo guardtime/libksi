@@ -2402,7 +2402,7 @@ static void testRule_PublicationsFileContainsPublication(CuTest *tc) {
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
 
-	res = KSI_VerificationRule_PublicationsFileContainsPublication(&verCtx, &verRes);
+	res = KSI_VerificationRule_PublicationsFileContainsSuitablePublication(&verCtx, &verRes);
 	CuAssert(tc, "Publications file should contain signature publication", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_PublicationsFile_free(verCtx.userPublicationsFile);
@@ -2447,7 +2447,7 @@ static void testRule_PublicationsFileContainsPublication_verifyErrorResult(CuTes
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
 
-	res = KSI_VerificationRule_PublicationsFileContainsPublication(&verCtx, &verRes);
+	res = KSI_VerificationRule_PublicationsFileContainsSuitablePublication(&verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
 	KSI_PublicationsFile_free(verCtx.userPublicationsFile);
@@ -3142,7 +3142,7 @@ static void testRule_UserProvidedPublicationVerification_hashMismatch_verifyErro
 	CuAssert(tc, "Unable to set publication mock hash.", res == KSI_OK);
 
 	res = KSI_VerificationRule_UserProvidedPublicationVerification(&verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_CRYPTO_FAILURE && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_9);
 
 	KSI_PublicationData_free(verCtx.userPublication);
 	KSI_Signature_free(verCtx.signature);

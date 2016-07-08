@@ -23,6 +23,7 @@
 #include "all_tests.h"
 #include <ksi/tlv.h>
 #include <ksi/io.h>
+#include <ksi/tlv_element.h>
 
 #include "../src/ksi/signature_impl.h"
 #include "../src/ksi/tlv_template.h"
@@ -435,10 +436,10 @@ static void testTlvSerializeMandatoryListObjectEmpty(CuTest *tc) {
 	while (KSI_HashChainLinkList_length(chain) != 0) {
 		KSI_HashChainLinkList_remove(chain, 0, NULL);
 	}
-	CuAssert(tc, "List contains elements", KSI_HashChainLinkList_length(chain) == 0);
+	CuAssert(tc, "List contains elements.", KSI_HashChainLinkList_length(chain) == 0);
 
 	res = KSI_TlvTemplate_serializeObject(ctx, sig, 0x0800, 0, 0, KSI_TLV_TEMPLATE(KSI_Signature), &raw, &raw_len);
-	CuAssert(tc, "Failed to serialize signature", res == KSI_INVALID_FORMAT && raw_len == 0);
+	CuAssert(tc, "Signature serialization should fail.", res == KSI_INVALID_FORMAT && raw_len == 0);
 
 	KSI_free(raw);
 	KSI_Signature_free(sig);
@@ -505,7 +506,35 @@ static void testBadUtf8WithZeros(CuTest* tc) {
 	KSI_TLV_free(tlv);
 }
 
+static void testTlvElementIntegers(CuTest *tc) {
+	int res;
+	KSI_Integer *in = NULL;
+	KSI_Integer *out = NULL;
+	KSI_TlvElement *el = NULL;
 
+	/* Create the outer tlv element. */
+	res = KSI_TlvElement_new(&el);
+	CuAssert(tc, "Unable to create plain TlvElement.", res == KSI_OK && el != NULL);
+
+	/* Create the sample value. */
+	res = KSI_Integer_new(ctx, 0xcafebabe, &in);
+	CuAssert(tc, "Unable to create integer value.", res == KSI_OK && in != NULL);
+
+	/* Set the integer value as a sub element. */
+	res = KSI_TlvElement_setInteger(el, 0x1fff, in);
+	CuAssert(tc, "Unable to set an integer as a sub element.", res == KSI_OK);
+
+	/* Extract the integer value. */
+	res = KSI_TlvElement_getInteger(el, ctx, 0x1fff, &out);
+	CuAssert(tc, "Unable to extract an integer from sub elements.", res == KSI_OK);
+
+	CuAssert(tc, "Extracted value does not equal to the input value.", KSI_Integer_equals(in, out));
+	CuAssert(tc, "Extracted value does not equal to the expected value.", KSI_Integer_equalsUInt(out, 0xcafebabe));
+
+	KSI_Integer_free(in);
+	KSI_Integer_free(out);
+	KSI_TlvElement_free(el);
+}
 CuSuite* KSITest_TLV_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
@@ -529,6 +558,7 @@ CuSuite* KSITest_TLV_getSuite(void)
 	SUITE_ADD_TEST(suite, testTlvParseBlobFailWithExtraData);
 	SUITE_ADD_TEST(suite, testBadUtf8);
 	SUITE_ADD_TEST(suite, testBadUtf8WithZeros);
+	SUITE_ADD_TEST(suite, testTlvElementIntegers);
 
 	return suite;
 }

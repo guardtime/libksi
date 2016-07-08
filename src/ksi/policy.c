@@ -329,9 +329,9 @@ static const KSI_Rule publicationPresentRule[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileContainsSignaturePublication},
 	{KSI_RULE_TYPE_BASIC, NULL}
 };
+
 static const KSI_Rule extendToPublicationRule[] = {
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_SignatureDoesNotContainPublication},
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileContainsPublication},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileContainsSuitablePublication},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_ExtendingPermittedVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse},
@@ -405,8 +405,9 @@ const KSI_Policy* KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED = &PolicyUserPu
 
 static const KSI_Rule generalRules[] = {
 	{KSI_RULE_TYPE_COMPOSITE_AND, internalRules},
-	{KSI_RULE_TYPE_COMPOSITE_OR, publicationsFileBasedRules},
 	{KSI_RULE_TYPE_COMPOSITE_OR, userProvidedPublicationBasedRules},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_RequireNoUserProvidedPublication },
+	{KSI_RULE_TYPE_COMPOSITE_OR, publicationsFileBasedRules},
 	{KSI_RULE_TYPE_COMPOSITE_OR, keyBasedRules},
 	{KSI_RULE_TYPE_COMPOSITE_OR, calendarBasedRules},
 	{KSI_RULE_TYPE_COMPOSITE_OR, NULL}

@@ -606,14 +606,10 @@ int KSI_TlvElement_getInteger(KSI_TlvElement *parent, KSI_CTX *ctx, unsigned tag
 		res = KSI_TlvElement_serialize(el, buf, sizeof(buf), &len, KSI_TLV_OPT_NO_HEADER);
 		if (res != KSI_OK) goto cleanup;
 
-		if (el->ftlv.hdr_len > len) {
-			res = KSI_INVALID_STATE;
-			goto cleanup;
-		}
-
-		for (i = el->ftlv.hdr_len; i < len; i++) {
+		for (i = 0; i < len; i++) {
 			val = (val << 8) | buf[i];
 		}
+
 		res = KSI_Integer_new(ctx, val, &tmp);
 		if (res != KSI_OK) goto cleanup;
 	}
@@ -680,18 +676,22 @@ int KSI_TlvElement_setInteger(KSI_TlvElement *parent, unsigned tag, KSI_Integer 
 	el->ftlv.tag = tag;
 	el->ftlv.dat_len = 0;
 	el->ptr_own = 0;
-	el->ptr = buf;
+	el->ptr = NULL;
 
 	val = KSI_Integer_getUInt64(s);
 
 	while (val > 0 && el->ftlv.dat_len < sizeof(buf)) {
-		buf[el->ftlv.dat_len++] = val & 0xff;
+		buf[sizeof(buf) - ++el->ftlv.dat_len] = val & 0xff;
 		val >>= 8;
 	}
 
 	if (val != 0) {
 		res = KSI_INVALID_STATE;
 		goto cleanup;
+	}
+
+	if (el->ftlv.dat_len > 0) {
+		el->ptr = buf + sizeof(buf)  - el->ftlv.dat_len;
 	}
 
 	res = KSI_TlvElement_detach(el);

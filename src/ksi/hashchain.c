@@ -205,10 +205,28 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 		} else {
 			/* Update the hash algo id when we encounter a left link. */
 			if (link->isLeft) {
-				res = KSI_DataHash_extract(link->imprint, &algo_id, NULL, NULL);
+				KSI_HashAlgorithm tmp;
+				res = KSI_DataHash_extract(link->imprint, &tmp, NULL, NULL);
 				if (res != KSI_OK) {
 					KSI_pushError(ctx, res, NULL);
 					goto cleanup;
+				}
+				/* Update hasher if algo id has changed. */
+				if (tmp != algo_id) {
+					algo_id = tmp;
+					if (hsh != NULL) {
+						res = hsr->closeExisting(hsr, hsh);
+						if (res != KSI_OK) {
+							KSI_pushError(ctx, res, NULL);
+							goto cleanup;
+						}
+						KSI_DataHasher_free(hsr);
+						res = KSI_DataHasher_open(ctx, algo_id, &hsr);
+						if (res != KSI_OK) {
+							KSI_pushError(ctx, res, NULL);
+							goto cleanup;
+						}
+					}
 				}
 			}
 		}

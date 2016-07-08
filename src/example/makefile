@@ -51,7 +51,7 @@ BIN_DIR = ..\..\out\bin
 LIB_NAME = libksiapi
 
 
-#obj files for example exe files  
+#obj files for example exe files
 EXAMPLE_OBJ = \
 	$(OBJ_DIR)\ksi_sign.obj \
 	$(OBJ_DIR)\ksi_extend.obj \
@@ -60,12 +60,13 @@ EXAMPLE_OBJ = \
 	$(OBJ_DIR)\ksi_sign_aggr.obj \
 	$(OBJ_DIR)\ksi_multisig_add.ojb \
 	$(OBJ_DIR)\ksi_multisig_extend.ojb \
-	$(OBJ_DIR)\ksi_verify_pub.obj 
+	$(OBJ_DIR)\ksi_verify_pub.obj \
+	$(OBJ_DIR)\ksi_blocksign.obj
 
 COMMON_OBJ = \
 	$(OBJ_DIR)\ksi_common.obj
 
-#Output exe files. Must have the same base name as corresponding obj file. 
+#Output exe files. Must have the same base name as corresponding obj file.
 EXAMPLE_BIN = \
 	$(BIN_DIR)\ksi_sign.exe \
 	$(BIN_DIR)\ksi_extend.exe \
@@ -75,8 +76,9 @@ EXAMPLE_BIN = \
 	$(BIN_DIR)\ksi_multisig_add.exe \
 	$(BIN_DIR)\ksi_multisig_extend.exe \
 	$(BIN_DIR)\ksi_verify_pub.exe \
-	
-#external libraries used for linking. 
+	$(BIN_DIR)\ksi_blocksign.exe
+
+#external libraries used for linking.
 EXT_LIB = $(LIB_NAME)$(RTL).lib \
 	wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib
 
@@ -84,17 +86,17 @@ EXT_LIB = $(LIB_NAME)$(RTL).lib \
 
 !IF "$(NET_PROVIDER)" == "CURL"
 EXT_LIB = $(EXT_LIB) libcurl$(RTL).lib
-LDFLAGS = $(LDFLAGS) /LIBPATH:"$(CURL_DIR)\$(DLL)" 
+LDFLAGS = $(LDFLAGS) /LIBPATH:"$(CURL_DIR)\$(DLL)"
 
 !ELSE IF "$(NET_PROVIDER)" == "WININET"
 EXT_LIB = $(EXT_LIB) wininet.lib
- 
-!ELSE IF "$(NET_PROVIDER)" == "WINHTTP" 
-EXT_LIB = $(EXT_LIB) winhttp.lib 
+
+!ELSE IF "$(NET_PROVIDER)" == "WINHTTP"
+EXT_LIB = $(EXT_LIB) winhttp.lib
 !ENDIF
 
 !IF "$(HASH_PROVIDER)" == "OPENSSL" || "$(TRUST_PROVIDER)" == "OPENSSL"
-EXT_LIB = $(EXT_LIB) libeay32$(RTL).lib advapi32.lib  
+EXT_LIB = $(EXT_LIB) libeay32$(RTL).lib advapi32.lib
 LDFLAGS = $(LDFLAGS) /LIBPATH:"$(OPENSSL_DIR)\$(DLL)"
 !ENDIF
 
@@ -104,8 +106,8 @@ EXT_LIB = $(EXT_LIB) Crypt32.lib advapi32.lib
 
 !ENDIF
 
-CCFLAGS = $(CCFLAGS) /nologo /W3 /D_CRT_SECURE_NO_DEPRECATE /I$(INCLUDE_DIR) /I$(SRC_DIR)
-LDFLAGS = $(LDFLAGS) /NOLOGO /LIBPATH:$(LIB_DIR) 
+CCFLAGS = $(CCFLAGS) /nologo /D_CRT_SECURE_NO_DEPRECATE /I$(INCLUDE_DIR) /I$(SRC_DIR)
+LDFLAGS = $(LDFLAGS) /NOLOGO /LIBPATH:$(LIB_DIR)
 
 !IF "$(RTL)" == "MT" || "$(RTL)" == "MD"
 CCFLAGS = $(CCFLAGS) /DNDEBUG /O2
@@ -118,7 +120,7 @@ LDFLAGS = $(LDFLAGS) /DEBUG
 CCFLAGS = $(CCFLAGS) $(CCEXTRA)
 LDFLAGS = $(LDFLAGS) $(LDEXTRA)
 
-default: $(EXAMPLE_BIN) 
+default: $(EXAMPLE_BIN)
 
 #Linking obj files to exe files
 $(EXAMPLE_BIN): $(OBJ_DIR)\$(@B).obj $(COMMON_OBJ) $(OBJ_DIR) $(BIN_DIR)
@@ -128,7 +130,7 @@ $(EXAMPLE_BIN): $(OBJ_DIR)\$(@B).obj $(COMMON_OBJ) $(OBJ_DIR) $(BIN_DIR)
 !IF "$(NET_PROVIDER)" == "CURL"
 !IF "$(RTL)" == "MT" || "$(RTL)" == "MD"
 	copy "$(CURL_DIR)\$(DLL)\libcurl$(RTL).dll" "$(BIN_DIR)\libcurl.dll" /Y
-!ELSE	
+!ELSE
 	copy "$(CURL_DIR)\$(DLL)\libcurl$(RTL).dll" "$(BIN_DIR)\libcurl_debug.dll" /Y
 !ENDIF
 !ENDIF
@@ -136,7 +138,7 @@ $(EXAMPLE_BIN): $(OBJ_DIR)\$(@B).obj $(COMMON_OBJ) $(OBJ_DIR) $(BIN_DIR)
 	copy "$(OPENSSL_DIR)\$(DLL)\libeay32$(RTL).dll" "$(BIN_DIR)\libeay32.dll" /Y
 !ENDIF
 !ENDIF
-	
+
 #Compiling c files to obj files
 {$(SRC_DIR)}.c{$(OBJ_DIR)\}.obj:
 	cl /c /$(RTL) $(CCFLAGS) /Fo$@ $<

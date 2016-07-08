@@ -276,7 +276,7 @@ static void assert_isHttpEndpointSetCorrectly(CuTest *tc, KSI_NetEndpoint *endp,
 }
 
 static void assert_isTcpEndpointSetCorrectly(CuTest *tc, KSI_NetEndpoint *endp,
-		const char *host, int port, const char *user, const char *key){
+		const char *host, unsigned int port, const char *user, const char *key){
 	struct TcpClient_Endpoint_st *endp_impl = endp->implCtx;
 
 	CuAssert(tc, "Tcp url mismatch.", strcmp(endp_impl->host, host) == 0);
@@ -286,8 +286,8 @@ static void assert_isTcpEndpointSetCorrectly(CuTest *tc, KSI_NetEndpoint *endp,
 }
 
 static void assert_isHttpClientSetCorrectly(CuTest *tc, KSI_NetworkClient *uri_client,
-		const char *a_url, const char *a_host, int a_port, const char *a_user, const char *a_key,
-		const char *e_url, const char *e_host, int e_port, const char *e_user, const char *e_key){
+		const char *a_url, const char *a_user, const char *a_key,
+		const char *e_url, const char *e_user, const char *e_key){
 	KSI_UriClient *uri = uri_client->impl;
 	KSI_NetworkClient *http = uri->httpClient;
 	KSI_NetEndpoint *endp_aggr = http->aggregator;
@@ -303,8 +303,8 @@ static void assert_isHttpClientSetCorrectly(CuTest *tc, KSI_NetworkClient *uri_c
 }
 
 void assert_isTcpClientSetCorrectly(CuTest *tc, KSI_NetworkClient *uri_client,
-		const char *a_url, const char *a_host, int a_port, const char *a_user, const char *a_key,
-		const char *e_url, const char *e_host, int e_port, const char *e_user, const char *e_key){
+		const char *a_host, unsigned int a_port, const char *a_user, const char *a_key,
+		const char *e_host, unsigned int e_port, const char *e_user, const char *e_key){
 	KSI_UriClient *uri = uri_client->impl;
 	KSI_NetworkClient *tcp = uri->tcpClient;
 	KSI_NetEndpoint *endp_aggr = tcp->aggregator;
@@ -337,8 +337,8 @@ static void testKsiUserAndPassFromUri(CuTest* tc) {
 	res = KSI_UriClient_setExtender(uric, ext_uri, NULL, NULL);
 	CuAssert(tc, "Unable parse extender uri.", res == KSI_OK);
 
-	assert_isHttpClientSetCorrectly(tc, uric, aggr_uri, NULL, 0, "user_a", "pass_a",
-												ext_uri, NULL, 0, "user_x", "pass_x");
+	assert_isHttpClientSetCorrectly(tc, uric, aggr_uri, "user_a", "pass_a",
+												ext_uri, "user_x", "pass_x");
 
 	/* Http. Extract all data from uri but override user and pass. */
 	res = KSI_UriClient_setAggregator(uric, aggr_uri, "a1", "a2");
@@ -347,8 +347,8 @@ static void testKsiUserAndPassFromUri(CuTest* tc) {
 	res = KSI_UriClient_setExtender(uric, ext_uri, "x1", "x2");
 	CuAssert(tc, "Unable parse extender uri.", res == KSI_OK);
 
-	assert_isHttpClientSetCorrectly(tc, uric, aggr_uri, NULL, 0, "a1", "a2",
-												ext_uri, NULL, 0, "x1", "x2");
+	assert_isHttpClientSetCorrectly(tc, uric, aggr_uri, "a1", "a2",
+												ext_uri, "x1", "x2");
 
 
 	/* Http. Extract all data from uri but override user. */
@@ -358,8 +358,8 @@ static void testKsiUserAndPassFromUri(CuTest* tc) {
 	res = KSI_UriClient_setExtender(uric, ext_uri, "x1", NULL);
 	CuAssert(tc, "Unable parse extender uri.", res == KSI_OK);
 
-	assert_isHttpClientSetCorrectly(tc, uric, aggr_uri, NULL, 0, "a1", "pass_a",
-												ext_uri, NULL, 0, "x1", "pass_x");
+	assert_isHttpClientSetCorrectly(tc, uric, aggr_uri, "a1", "pass_a",
+												ext_uri, "x1", "pass_x");
 
 
 	/* Http. Extract all data from uri but override pass. */
@@ -369,8 +369,8 @@ static void testKsiUserAndPassFromUri(CuTest* tc) {
 	res = KSI_UriClient_setExtender(uric, ext_uri, NULL, "x2");
 	CuAssert(tc, "Unable parse extender uri.", res == KSI_OK);
 
-	assert_isHttpClientSetCorrectly(tc, uric, aggr_uri, NULL, 0, "user_a", "a2",
-												ext_uri, NULL, 0, "user_x", "x2");
+	assert_isHttpClientSetCorrectly(tc, uric, aggr_uri, "user_a", "a2",
+												ext_uri, "user_x", "x2");
 
 	/* Tcp. Extract all data from uri. */
 	res = KSI_UriClient_setAggregator(uric, aggr_uri_tcp, NULL, NULL);
@@ -379,8 +379,8 @@ static void testKsiUserAndPassFromUri(CuTest* tc) {
 	res = KSI_UriClient_setExtender(uric, ext_uri_tcp, NULL, NULL);
 	CuAssert(tc, "Unable parse extender uri.", res == KSI_OK);
 
-	assert_isTcpClientSetCorrectly(tc, uric, NULL, "ksigw.test.test.a.com", 3333, "user_ta", "pass_ta",
-											NULL, "ksigw.test.test.x.com", 4444, "user_tx", "pass_tx");
+	assert_isTcpClientSetCorrectly(tc, uric, "ksigw.test.test.a.com", 3333, "user_ta", "pass_ta",
+											 "ksigw.test.test.x.com", 4444, "user_tx", "pass_tx");
 
 
 	/* Tcp. Extract all data from uri but override user and pass. */
@@ -390,8 +390,8 @@ static void testKsiUserAndPassFromUri(CuTest* tc) {
 	res = KSI_UriClient_setExtender(uric, ext_uri_tcp, "x1", "x2");
 	CuAssert(tc, "Unable parse extender uri.", res == KSI_OK);
 
-	assert_isTcpClientSetCorrectly(tc, uric, NULL, "ksigw.test.test.a.com", 3333, "a1", "a2",
-											NULL, "ksigw.test.test.x.com", 4444, "x1", "x2");
+	assert_isTcpClientSetCorrectly(tc, uric, "ksigw.test.test.a.com", 3333, "a1", "a2",
+											 "ksigw.test.test.x.com", 4444, "x1", "x2");
 
 
 	/* Tcp. Extract all data from uri but override user. */
@@ -401,8 +401,8 @@ static void testKsiUserAndPassFromUri(CuTest* tc) {
 	res = KSI_UriClient_setExtender(uric, ext_uri_tcp, "x1", NULL);
 	CuAssert(tc, "Unable parse extender uri.", res == KSI_OK);
 
-	assert_isTcpClientSetCorrectly(tc, uric, NULL, "ksigw.test.test.a.com", 3333, "a1", "pass_ta",
-											NULL, "ksigw.test.test.x.com", 4444, "x1", "pass_tx");
+	assert_isTcpClientSetCorrectly(tc, uric, "ksigw.test.test.a.com", 3333, "a1", "pass_ta",
+											 "ksigw.test.test.x.com", 4444, "x1", "pass_tx");
 
 	/* Tcp. Extract all data from uri but override pass. */
 	res = KSI_UriClient_setAggregator(uric, aggr_uri_tcp, NULL, "a2");
@@ -411,8 +411,8 @@ static void testKsiUserAndPassFromUri(CuTest* tc) {
 	res = KSI_UriClient_setExtender(uric, ext_uri_tcp, NULL, "x2");
 	CuAssert(tc, "Unable parse extender uri.", res == KSI_OK);
 
-	assert_isTcpClientSetCorrectly(tc, uric, NULL, "ksigw.test.test.a.com", 3333, "user_ta", "a2",
-											NULL, "ksigw.test.test.x.com", 4444, "user_tx", "x2");
+	assert_isTcpClientSetCorrectly(tc, uric, "ksigw.test.test.a.com", 3333, "user_ta", "a2",
+											 "ksigw.test.test.x.com", 4444, "user_tx", "x2");
 
 
 	KSI_NetworkClient_free(uric);
