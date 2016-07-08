@@ -1,3 +1,4 @@
+* IMPROVEMENT: All functions except *List_new and *List_free are now type safe macros.
 * IMPROVEMENT: Deprecated functions KSI_TLV_setUintValue, KSI_TLV_fromUint and KSI_TLV_removeNestedTlv.
 
 Version 3.9

@@ -86,6 +86,15 @@ struct KSI_TreeBuilderLeafProcessor_st {
 };
 
 KSI_DEFINE_LIST(KSI_TreeBuilderLeafProcessor);
+#define KSI_TreeBuilderLeafProcessorList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->append((lst), (o)))
+#define KSI_TreeBuilderLeafProcessorList_remove(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->removeElement((lst), (pos), (o)))
+#define KSI_TreeBuilderLeafProcessorList_indexOf(lst, o, i) KSI_APPLY_TO_NOT_NULL((lst), (lst)->indexOf((lst), (o), (i)))
+#define KSI_TreeBuilderLeafProcessorList_insertAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->insertAt((lst), (pos), (o)))
+#define KSI_TreeBuilderLeafProcessorList_replaceAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->replaceAt((lst), (pos), (o)))
+#define KSI_TreeBuilderLeafProcessorList_elementAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->elementAt((lst), (pos), (o)))
+#define KSI_TreeBuilderLeafProcessorList_length(lst) (((lst) != NULL) ? (lst)->length((lst)) : 0)
+#define KSI_TreeBuilderLeafProcessorList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), (lst)->sort((lst), (cmp)))
+#define KSI_TreeBuilderLeafProcessorList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (lst)->foldl((lst), (foldCtx), (foldFn)) : KSI_OK)
 
 struct KSI_TreeBuilder_st {
 	/** KSI context. */
@@ -110,6 +119,16 @@ struct KSI_TreeBuilder_st {
  */
 typedef struct KSI_TreeLeafHandle_st KSI_TreeLeafHandle;
 KSI_DEFINE_LIST(KSI_TreeLeafHandle);
+#define KSI_TreeLeafHandleList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->append((lst), (o)))
+#define KSI_TreeLeafHandleList_remove(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->removeElement((lst), (pos), (o)))
+#define KSI_TreeLeafHandleList_indexOf(lst, o, i) KSI_APPLY_TO_NOT_NULL((lst), (lst)->indexOf((lst), (o), (i)))
+#define KSI_TreeLeafHandleList_insertAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->insertAt((lst), (pos), (o)))
+#define KSI_TreeLeafHandleList_replaceAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->replaceAt((lst), (pos), (o)))
+#define KSI_TreeLeafHandleList_elementAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), (lst)->elementAt((lst), (pos), (o)))
+#define KSI_TreeLeafHandleList_length(lst) (((lst) != NULL) ? (lst)->length((lst)) : 0)
+#define KSI_TreeLeafHandleList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), (lst)->sort((lst), (cmp)))
+#define KSI_TreeLeafHandleList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (lst)->foldl((lst), (foldCtx), (foldFn)) : KSI_OK)
+
 KSI_DEFINE_REF(KSI_TreeLeafHandle);
 
 /**
