@@ -91,6 +91,7 @@ LIB_OBJ = \
 	$(OBJ_DIR)\net_uri.obj \
 	$(OBJ_DIR)\publicationsfile.obj \
 	$(OBJ_DIR)\signature.obj \
+	$(OBJ_DIR)\signature_builder.obj \
 	$(OBJ_DIR)\tlv.obj \
 	$(OBJ_DIR)\tlv_element.obj \
 	$(OBJ_DIR)\tlv_template.obj \
@@ -122,6 +123,7 @@ INC_FILES = \
 	net_file.h \
 	net_uri.h \
 	signature.h \
+	signature_builder.h \
 	types_base.h \
 	err.h \
 	io.h \

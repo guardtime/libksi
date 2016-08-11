@@ -24,6 +24,13 @@
 extern "C" {
 #endif
 
+/**
+ * A macro for validating the correctness of any given hash tree level.
+ * \param[in]	level		The level to be checked.
+ * \return If the parameter is a valid hash tree level a non-zero value is returne,; zero otherwise.
+ */
+#define KSI_IS_VALID_TREE_LEVEL(level) (((level) >= 0) && ((level) <= 0xff))
+
 	/**
 	 * Marks a function as deprecated.
 	 */

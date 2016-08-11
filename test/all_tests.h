@@ -62,6 +62,7 @@ CuSuite* KSITest_Policy_getSuite(void);
 CuSuite* KSITest_versionNumber_getSuite(void);
 CuSuite* KSITest_Blocksigner_getSuite(void);
 CuSuite* KSITest_Flags_getSuite(void);
+CuSuite* KSITest_SignatureBuilder_getSuite(void);
 
 #ifdef __cplusplus
 }

@@ -47,7 +47,8 @@ runner_SOURCES= \
 		ksi_policy_test.c \
 		ksi_blocksigner_test.c \
 		ksi_sdk_version_test.c \
-		ksi_flags_test.c
+		ksi_flags_test.c \
+		ksi_signature_builder_test.c
 
 integration_tests_SOURCES= \
 	all_integration_tests.c \
