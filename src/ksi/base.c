@@ -802,7 +802,9 @@ void *KSI_calloc(size_t num, size_t size) {
 }
 
 void KSI_free(void *ptr) {
-	free(ptr);
+	if (ptr != NULL) {
+		free(ptr);
+	}
 }
 
 static int KSI_CTX_setUri(KSI_CTX *ctx,
