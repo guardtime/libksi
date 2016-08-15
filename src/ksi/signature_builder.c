@@ -311,7 +311,7 @@ int KSI_SignatureBuilder_close(KSI_SignatureBuilder *builder, KSI_uint64_t rootL
 		}
 
 		if (result->finalResult.resultCode != KSI_VER_RES_OK) {
-			KSI_pushError(builder->ctx, res = KSI_INVALID_STATE, "Internal verification of signature failed.");
+			KSI_pushError(builder->ctx, res = KSI_VERIFICATION_FAILURE, "Internal verification of signature failed.");
 			goto cleanup;
 		}
 	}
