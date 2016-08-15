@@ -30,40 +30,17 @@
 #include "net.h"
 #include "pkitruststore.h"
 #include "policy.h"
+#include "signature_builder.h"
+#include "signature_builder_impl.h"
 
 typedef struct headerRec_st HeaderRec;
 
-KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarHashChain);
+KSI_IMPORT_TLV_TEMPLATE(KSI_Signature);
 KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationRecord);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationHashChain);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationAuthRec);
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarAuthRec);
 KSI_IMPORT_TLV_TEMPLATE(KSI_RFC3161);
-
-/**
- * KSI_Signature
- */
-static KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_CalendarHashChain*, calendarChain, CalendarChain)
-static KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_LIST(KSI_AggregationHashChain)*, aggregationChainList, AggregationChainList)
-static KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_CalendarAuthRec*, calendarAuthRec, CalendarAuthRecord)
-static KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_AggregationAuthRec*, aggregationAuthRec, AggregationAuthRecord)
-static KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_RFC3161*, rfc3161, RFC3161)
-
-static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_CalendarHashChain*, calendarChain, CalendarChain)
-static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_LIST(KSI_AggregationHashChain)*, aggregationChainList, AggregationChainList)
-static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_CalendarAuthRec*, calendarAuthRec, CalendarAuthRecord)
-static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_AggregationAuthRec*, aggregationAuthRec, AggregationAuthRecord)
-static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_PublicationRecord*, publication, PublicationRecord)
-static KSI_IMPLEMENT_SETTER(KSI_Signature, KSI_RFC3161*, rfc3161, RFC3161)
-
-static int replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain);
-
-static int checkSignatureInternals(KSI_Signature *sig) {
-	if (sig == NULL) return KSI_INVALID_ARGUMENT;
-	if (sig->aggregationChainList == NULL || KSI_AggregationHashChainList_length(sig->aggregationChainList) == 0) return KSI_INVALID_FORMAT;
-	if (sig->calendarChain == NULL && (sig->calendarAuthRec != NULL || sig->publication != NULL)) return KSI_INVALID_FORMAT;
-	return KSI_OK;
-}
 
 /**
  * KSI_AggregationHashChain
@@ -487,15 +464,6 @@ KSI_IMPLEMENT_GETTER(KSI_CalendarAuthRec, KSI_PKISignedData*, signatureData, Sig
 
 KSI_IMPLEMENT_LIST(KSI_AggregationHashChain, KSI_AggregationHashChain_free);
 
-KSI_DEFINE_TLV_TEMPLATE(KSI_Signature)
-	KSI_TLV_COMPOSITE_LIST(0x0801, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Signature_getAggregationChainList, KSI_Signature_setAggregationChainList, KSI_AggregationHashChain, "aggr_chain")
-	KSI_TLV_COMPOSITE(0x0802, KSI_TLV_TMPL_FLG_NONE, KSI_Signature_getCalendarChain, KSI_Signature_setCalendarChain, KSI_CalendarHashChain, "cal_chain")
-	KSI_TLV_COMPOSITE(0x0803, KSI_TLV_TMPL_FLG_MOST_ONE_G0, KSI_Signature_getPublicationRecord, KSI_Signature_setPublicationRecord, KSI_PublicationRecord, "pub_rec")
-	KSI_TLV_COMPOSITE(0x0804, KSI_TLV_TMPL_FLG_NONE, KSI_Signature_getAggregationAuthRecord, KSI_Signature_setAggregationAuthRecord, KSI_AggregationAuthRec, "aggr_auth_rec")
-	KSI_TLV_COMPOSITE(0x0805, KSI_TLV_TMPL_FLG_MOST_ONE_G0, KSI_Signature_getCalendarAuthRecord, KSI_Signature_setCalendarAuthRecord, KSI_CalendarAuthRec, "cal_auth_rec")
-	KSI_TLV_COMPOSITE(0x0806, KSI_TLV_TMPL_FLG_NONE, KSI_Signature_getRFC3161, KSI_Signature_setRFC3161, KSI_RFC3161, "rfc3161_rec")
-KSI_END_TLV_TEMPLATE
-
 KSI_IMPLEMENT_LIST(KSI_CalendarAuthRec, KSI_CalendarAuthRec_free);
 
 /**
@@ -588,76 +556,9 @@ KSI_IMPLEMENT_SETTER(KSI_RFC3161, KSI_Integer*, sigAttrAlgo, SigAttrAlgo)
 
 KSI_IMPLEMENT_LIST(KSI_RFC3161, KSI_RFC3161_free);
 
-static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_Signature *tmp = NULL;
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || sig == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	tmp = KSI_new(KSI_Signature);
-	if (tmp == NULL) {
-		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	tmp->ctx = ctx;
-	tmp->calendarChain = NULL;
-	tmp->baseTlv = NULL;
-	tmp->publication = NULL;
-	tmp->aggregationChainList = NULL;
-	tmp->aggregationAuthRec = NULL;
-	tmp->aggregationChainList = NULL;
-	tmp->calendarAuthRec = NULL;
-	tmp->rfc3161 = NULL;
-	tmp->publication = NULL;
-	tmp->replaceCalendarChain = replaceCalendarChain;
-
-	res = KSI_VerificationResult_init(&tmp->verificationResult, ctx);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	*sig = tmp;
-	tmp = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_Signature_free(tmp);
-
-	return res;
-
-}
-
-static int intCmp(KSI_uint64_t a, KSI_uint64_t b){
-	if (a == b) return 0;
-	else if (a > b) return 1;
-	else return -1;
-}
-
-static int aggregationHashChainCmp(const KSI_AggregationHashChain **left, const KSI_AggregationHashChain **right) {
-	const KSI_AggregationHashChain *l = *left;
-	const KSI_AggregationHashChain *r = *right;
-	if (l == r || l == NULL || r == NULL || l->chainIndex == NULL || r->chainIndex == NULL) {
-		return intCmp((KSI_uint64_t)right, (KSI_uint64_t)left);
-	}
-	return intCmp(KSI_IntegerList_length(r->chainIndex), KSI_IntegerList_length(l->chainIndex));
-}
-
 static int extractSignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature **signature) {
 	int res = KSI_UNKNOWN_ERROR;
-
-	KSI_Signature *sig = NULL;
-	KSI_CalendarHashChain *cal = NULL;
-	KSI_Integer *aggregationTime = NULL;
-	KSI_Integer *publicationTime = NULL;
-	KSI_DataHash *inputHash = NULL;
+	KSI_SignatureBuilder *builder = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || tlv == NULL || signature == NULL) {
@@ -670,34 +571,27 @@ static int extractSignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature **signatur
 		goto cleanup;
 	}
 
-	res = KSI_Signature_new(ctx, &sig);
+	/* Create a new signature builder object. */
+	res = KSI_SignatureBuilder_open(ctx, &builder);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
 	/* Parse and extract the signature. */
-	res = KSI_TlvTemplate_extract(ctx, sig, tlv, KSI_TLV_TEMPLATE(KSI_Signature));
+	res = KSI_TlvTemplate_extract(ctx, builder->sig, tlv, KSI_TLV_TEMPLATE(KSI_Signature));
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = checkSignatureInternals(sig);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, "Signature internal structures are invalid.");
-		goto cleanup;
-	}
-
-	/* Make sure the aggregation hash chains are in correct order. */
-	res = KSI_AggregationHashChainList_sort(sig->aggregationChainList, aggregationHashChainCmp);
+	/* Turn off the verification. */
+	builder->noVerify = 1;
+	res = KSI_SignatureBuilder_close(builder, 0, signature);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-
-	*signature = sig;
-	sig = NULL;
 
 	KSI_LOG_debug(ctx, "Finished parsing successfully.");
 
@@ -705,12 +599,7 @@ static int extractSignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature **signatur
 
 cleanup:
 
-	KSI_Integer_free(aggregationTime);
-	KSI_Integer_free(publicationTime);
-	KSI_DataHash_free(inputHash);
-
-	KSI_CalendarHashChain_free(cal);
-	KSI_Signature_free(sig);
+	KSI_SignatureBuilder_free(builder);
 
 	return res;
 }
@@ -879,85 +768,6 @@ cleanup:
 	return res;
 }
 
-static int replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain) {
-	int res;
-	KSI_DataHash *aggrOutputHash = NULL;
-	KSI_TLV *oldCalChainTlv = NULL;
-	KSI_TLV *newCalChainTlv = NULL;
-	KSI_LIST(KSI_TLV) *nestedList = NULL;
-	size_t i;
-
-	if (sig == NULL || calendarHashChain == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	KSI_ERR_clearErrors(sig->ctx);
-
-	res = KSI_TLV_getNestedList(sig->baseTlv, &nestedList);
-	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	if (sig->calendarChain != NULL) {
-		for (i = 0; i < KSI_TLVList_length(nestedList); i++) {
-			res = KSI_TLVList_elementAt(nestedList,i, &oldCalChainTlv);
-			if (res != KSI_OK) {
-				KSI_pushError(sig->ctx, res, NULL);
-				goto cleanup;
-			}
-
-			if (oldCalChainTlv == NULL) {
-				KSI_pushError(sig->ctx, res = KSI_INVALID_SIGNATURE, "Signature TLV element missing.");
-				goto cleanup;
-			}
-
-			if (KSI_TLV_getTag(oldCalChainTlv) == 0x0802) break;
-		}
-	}
-
-	res = KSI_TLV_new(sig->ctx, 0x0802, 0, 0, &newCalChainTlv);
-	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_TlvTemplate_construct(sig->ctx, newCalChainTlv, calendarHashChain, KSI_TLV_TEMPLATE(KSI_CalendarHashChain));
-	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = (sig->calendarChain == NULL) ?
-			/* In case there is no calendar hash chain attached, append a new one. */
-			KSI_TLV_appendNestedTlv(sig->baseTlv, newCalChainTlv) :
-			/* Otherwise replace the calendar hash chain. */
-			KSI_TLV_replaceNestedTlv(sig->baseTlv, oldCalChainTlv, newCalChainTlv);
-	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	newCalChainTlv = NULL;
-
-	/* The memory was freed within KSI_TLV_replaceNestedTlv. */
-	oldCalChainTlv = NULL;
-
-	KSI_CalendarHashChain_free(sig->calendarChain);
-	sig->calendarChain = calendarHashChain;
-
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_nofree(nestedList);
-
-	KSI_DataHash_free(aggrOutputHash);
-	KSI_TLV_free(newCalChainTlv);
-
-	return res;
-}
 
 static int removeCalAuthAndPublication(KSI_Signature *sig) {
 	KSI_LIST(KSI_TLV) *nested = NULL;
@@ -1076,12 +886,12 @@ cleanup:
 	return res;
 }
 
-static int parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp, KSI_Signature **signature) {
+static int parseAggregationResponse(KSI_CTX *ctx, KSI_uint64_t rootLevel, KSI_AggregationResp *resp, KSI_Signature **signature) {
 	int res;
 	KSI_TLV *tmpTlv = NULL;
 	KSI_TLV *respTlv = NULL;
-	KSI_Signature *tmp = NULL;
 	KSI_LIST(KSI_TLV) *tlvList = NULL;
+	KSI_SignatureBuilder *builder = NULL;
 
 	/* PDU Specific objects */
 	KSI_Integer *status = NULL;
@@ -1125,13 +935,14 @@ static int parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp, KSI
 		goto cleanup;
 	}
 
-	res = KSI_Signature_new(ctx, &tmp);
+	/* Create a new signature builder object. */
+	res = KSI_SignatureBuilder_open(ctx, &builder);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = KSI_AggregationResp_getAggregationAuthRec(resp, &tmp->aggregationAuthRec);
+	res = KSI_AggregationResp_getAggregationAuthRec(resp, &builder->sig->aggregationAuthRec);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1143,7 +954,7 @@ static int parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp, KSI
 		goto cleanup;
 	}
 
-	res = KSI_AggregationResp_getAggregationChainList(resp, &tmp->aggregationChainList);
+	res = KSI_AggregationResp_getAggregationChainList(resp, &builder->sig->aggregationChainList);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1155,7 +966,7 @@ static int parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp, KSI
 		goto cleanup;
 	}
 
-	res = KSI_AggregationResp_getCalendarAuthRec(resp, &tmp->calendarAuthRec);
+	res = KSI_AggregationResp_getCalendarAuthRec(resp, &builder->sig->calendarAuthRec);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1167,7 +978,7 @@ static int parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp, KSI
 		goto cleanup;
 	}
 
-	res = KSI_AggregationResp_getCalendarChain(resp, &tmp->calendarChain);
+	res = KSI_AggregationResp_getCalendarChain(resp, &builder->sig->calendarChain);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1229,23 +1040,26 @@ static int parseAggregationResponse(KSI_CTX *ctx, KSI_AggregationResp *resp, KSI
 		}
 	}
 
-	res = KSI_TLV_clone(tmpTlv, &tmp->baseTlv);
+	res = KSI_TLV_clone(tmpTlv, &builder->sig->baseTlv);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Signature", tmp->baseTlv);
+	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Signature", builder->sig->baseTlv);
 
-	*signature = tmp;
-	tmp = NULL;
+	res = KSI_SignatureBuilder_close(builder, rootLevel, signature);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_OK;
 
 cleanup:
 
 	KSI_TLV_free(tmpTlv);
-	KSI_Signature_free(tmp);
+	KSI_SignatureBuilder_free(builder);
 
 	return res;
 }
@@ -1311,7 +1125,7 @@ int KSI_Signature_signAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint6
 		goto cleanup;
 	}
 
-	if (rootLevel > 0xff) {
+	if (!KSI_IS_VALID_TREE_LEVEL(rootLevel)) {
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Aggregation level can't be larger than 0xff.");
 		goto cleanup;
 	}
@@ -1340,7 +1154,7 @@ int KSI_Signature_signAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint6
 		goto cleanup;
 	}
 
-	res = parseAggregationResponse(ctx, response, &sign);
+	res = parseAggregationResponse(ctx, rootLevel, response, &sign);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
