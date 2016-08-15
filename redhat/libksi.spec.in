@@ -94,6 +94,7 @@ make install DESTDIR=%{buildroot}
 %{_includedir}/ksi/pkitruststore.h
 %{_includedir}/ksi/publicationsfile.h
 %{_includedir}/ksi/signature.h
+%{_includedir}/ksi/signature_builder.h
 %{_includedir}/ksi/tlv.h
 %{_includedir}/ksi/tlv_template.h
 %{_includedir}/ksi/tlv_element.h
