@@ -111,7 +111,7 @@ extern "C" {
 		KSI_VER_ERR_CAL_2 = 0x502,
 		/** Aggregation time mismatch. */
 		KSI_VER_ERR_CAL_3 = 0x503,
-		/** Aggregation hash chain right links are inconsistent. */
+		/** Calendar hash chain right links are inconsistent. */
 		KSI_VER_ERR_CAL_4 = 0x504,
 	} KSI_VerificationErrorCode;
 
@@ -180,6 +180,17 @@ extern "C" {
 	} KSI_Rule;
 
 	typedef struct KSI_VerificationContext_st KSI_VerificationContext;
+
+	/**
+	 * Function to convert a #KSI_VerificationErrorCode value to a human readable
+	 * string value.
+	 *
+	 * \param[in]		errorCode		#KSI_VerificationErrorCode value.
+	 *
+	 * \return A pointer to a statically allocated string value. This pointer may
+	 * not be freed by the caller.
+	 */
+	const char *KSI_Policy_getErrorString(int errorCode);
 
 	/**
 	 * Creates a policy based on user defined rules. User gets ownership of the policy and
