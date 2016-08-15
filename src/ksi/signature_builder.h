@@ -53,7 +53,6 @@ extern "C" {
 	 * \param[in] 	builder			Pointer to signature builder.
 	 * \param[in]	rootLevel		The level of the input hash (usually 0). This is used only for the verification.
 	 * \param[in]	sig				Pointer to the receiving pointer.
-	 * would result in an incomplete signature, otherwise an error code).
 	 * \note The caller must also call #KSI_SignatureBuilder_free on the builder object.
 	 * \note It is the responsibility of the caller to free the resulting signature object.
 	 * \see #KSI_SignatureBuilder_free, #KSI_Signature_free.
@@ -79,7 +78,7 @@ extern "C" {
 	int KSI_SignatureBuilder_setCalendarHashChain(KSI_SignatureBuilder *builder, KSI_CalendarHashChain *cal);
 
 	/**
-	 * This function adds an aggregatiion chain to the signature.
+	 * This function adds an aggregation chain to the signature.
 	 * \param[in]	builder		Pointer to the builder.
 	 * \param[in]	aggr		Aggregation chain.
 	 * \note It is the responsibility of the caller to free the input parameters after use.

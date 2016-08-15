@@ -116,7 +116,7 @@ static void testCorrectWithCalAuthRec(CuTest* tc) {
 
 	/* Add the calendar auth record to the builder. */
 	res = KSI_SignatureBuilder_setCalendarAuthRecord(bldr, sig->calendarAuthRec);
-	CuAssert(tc, "Unable to add publication to the builder", res == KSI_OK);
+	CuAssert(tc, "Unable to add calendar authentication record to the builder", res == KSI_OK);
 
 	/* Add the calendar hash chain to the builder. */
 	res = KSI_SignatureBuilder_setCalendarHashChain(bldr, sig->calendarChain);
@@ -162,7 +162,7 @@ static void testCorrectRFC3161(CuTest* tc) {
 
 	/* Add the calendar auth record to the builder. */
 	res = KSI_SignatureBuilder_setCalendarAuthRecord(bldr, sig->calendarAuthRec);
-	CuAssert(tc, "Unable to add publication to the builder", res == KSI_OK);
+	CuAssert(tc, "Unable to add calendar authentication record to the builder", res == KSI_OK);
 
 	/* Add the RFC3161 record. */
 	res = KSI_SignatureBuilder_setRFC3161(bldr, sig->rfc3161);
@@ -215,9 +215,9 @@ static void testRecoverAfterEarlyClose(CuTest* tc) {
 	CuAssert(tc, "Closing an empty signature builder should fail.", res != KSI_OK);
 	CuAssert(tc, "Signature should still be NULL", out == NULL);
 
-	/* Add the publication record to the builder. */
+	/* Add the calendar authentication record to the builder. */
 	res = KSI_SignatureBuilder_setCalendarAuthRecord(bldr, sig->calendarAuthRec);
-	CuAssert(tc, "Unable to add publication to the builder", res == KSI_OK);
+	CuAssert(tc, "Unable to add calendar authentication record to the builder", res == KSI_OK);
 
 	/* Try closing the builder before we add the calendar hash chain - should fail. */
 	res = KSI_SignatureBuilder_close(bldr, 0, &out);
@@ -274,9 +274,9 @@ static void testPreAggregated(CuTest* tc) {
 	res = KSI_SignatureBuilder_open(ctx, &bldr);
 	CuAssert(tc, "Failed to initialize builder.", res == KSI_OK && bldr != NULL);
 
-	/* Add the calendar auth record to the builder. */
+	/* Add the calendar authentication record to the builder. */
 	res = KSI_SignatureBuilder_setCalendarAuthRecord(bldr, sig->calendarAuthRec);
-	CuAssert(tc, "Unable to add publication to the builder", res == KSI_OK);
+	CuAssert(tc, "Unable to add calendar authentication record to the builder", res == KSI_OK);
 
 	/* Add the calendar hash chain to the builder. */
 	res = KSI_SignatureBuilder_setCalendarHashChain(bldr, sig->calendarChain);

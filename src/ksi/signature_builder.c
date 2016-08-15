@@ -415,9 +415,15 @@ int KSI_SignatureBuilder_setCalendarAuthRecord(KSI_SignatureBuilder *builder, KS
 		goto cleanup;
 	}
 
+	/* Make sure the builder is in a valid state. */
+	if (builder->sig == NULL) {
+		KSI_pushError(builder->ctx, res = KSI_INVALID_STATE, "The builder has not been correctly initialized.");
+		goto cleanup;
+	}
+
 	/* Do not allow overriding of the value, as it is likely an error. */
 	if (builder->sig->calendarAuthRec != NULL) {
-		KSI_pushError(builder->ctx, res = KSI_INVALID_STATE, "The auth record has already been set.");
+		KSI_pushError(builder->ctx, res = KSI_INVALID_STATE, "The authentication record has already been set.");
 		goto cleanup;
 	}
 
@@ -442,6 +448,12 @@ int KSI_SignatureBuilder_setPublication(KSI_SignatureBuilder *builder, KSI_Publi
 
 	if (builder == NULL || pub == NULL) {
 		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	/* Make sure the builder is in a valid state. */
+	if (builder->sig == NULL) {
+		KSI_pushError(builder->ctx, res = KSI_INVALID_STATE, "The builder has not been correctly initialized.");
 		goto cleanup;
 	}
 
@@ -477,9 +489,15 @@ int KSI_SignatureBuilder_setRFC3161(KSI_SignatureBuilder *builder, KSI_RFC3161 *
 		goto cleanup;
 	}
 
+	/* Make sure the builder is in a valid state. */
+	if (builder->sig == NULL) {
+		KSI_pushError(builder->ctx, res = KSI_INVALID_STATE, "The builder has not been correctly initialized.");
+		goto cleanup;
+	}
+
 	/* Do not allow overriding of the value, as it is likely an error. */
-	if (builder->sig->publication != NULL) {
-		KSI_pushError(builder->ctx, res = KSI_INVALID_STATE, "The publication has already been set.");
+	if (builder->sig->rfc3161 != NULL) {
+		KSI_pushError(builder->ctx, res = KSI_INVALID_STATE, "The RFC3161 record has already been set.");
 		goto cleanup;
 	}
 
