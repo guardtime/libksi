@@ -111,7 +111,7 @@ extern "C" {
 		KSI_VER_ERR_CAL_2 = 0x502,
 		/** Aggregation time mismatch. */
 		KSI_VER_ERR_CAL_3 = 0x503,
-		/** Aggregation hash chain right links are inconsistent. */
+		/** Calendar hash chain right links are inconsistent. */
 		KSI_VER_ERR_CAL_4 = 0x504,
 	} KSI_VerificationErrorCode;
 
