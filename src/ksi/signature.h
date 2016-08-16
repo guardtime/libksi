@@ -34,11 +34,7 @@ extern "C" {
 	 * linking the root hash value of the aggregation tree to the published trust anchor.
 	 * @{
 	 */
-
-#ifndef KSI_SIGNATURE_STRUCT
-	#define KSI_SIGNATURE_STRUCT
-	typedef struct KSI_Signature_st KSI_Signature;
-#endif
+#include "signature_helper.h"
 
 	/**
 	 * Free the signature object.
@@ -70,21 +66,6 @@ extern "C" {
 	int KSI_Signature_parse(KSI_CTX *ctx, unsigned char *raw, size_t raw_len, KSI_Signature **sig);
 
 	/**
-	 * A convenience function for reading a signature from a file.
-	 * \param[in]		ctx			KSI context.
-	 * \param[in]		fileName	Name of the signature file.
-	 * \param[out]		sig			Pointer to the receiving pointer.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
-	 * \note It must be noted that access to metadata, supported by some file systems,
-	 * is limited by the use of function \c fopen. Alternate Data Streams (WIndows NTFS)
-	 * and Resource Forks (OS X HFS) may or may not be supported, depending on the
-	 * C standard library used in the application.
-	 */
-	int KSI_Signature_fromFile(KSI_CTX *ctx, const char *fileName, KSI_Signature **sig);
-
-	/**
 	 * This function serializes the signature object into raw data. To deserialize it again
 	 * use #KSI_Signature_parse.
 	 * \param[in]		sig			Signature object.
@@ -100,27 +81,6 @@ extern "C" {
 	int KSI_Signature_serialize(KSI_Signature *sig, unsigned char **raw, size_t *raw_len);
 
 	/**
-	 * This function signs the given data hash \c hsh. This function requires a access to
-	 * a working aggregator and fails if it is not accessible.
-	 * \param[in]		ctx			KSI context.
-	 * \param[in]		hsh			Document hash.
-	 * \param[out]		signature	Pointer to the receiving pointer.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
-	 * \note For signing hash values, the use of #KSI_createSignature is strongly
-	 * recomended.
-	 * \see #KSI_createSignature, KSI_Signature_free
-	 */
-	int KSI_Signature_sign(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature);
-
-	/**
-	 * \deprecated This function is deprecated and #KSI_Signature_sign should be used instead.
-	 * \see #KSI_Signature_sign
-	 */
-	KSI_FN_DEPRECATED(int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature));
-
-	/**
 	 * This function signs the given root hash value (\c rootHash) with the aggregation level (\c rootLevel)
 	 * of a locally aggregated hash tree. This function requires access to a working aggregaton and fails if
 	 * it is not accessible.
@@ -133,12 +93,6 @@ extern "C" {
 	 * \see #KSI_createSignature, KSI_Signature_create, KSI_Signature_free.
 	 */
 	int KSI_Signature_signAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature);
-
-	/**
-	 * \deprecated This function is deprecated and #KSI_Signature_signAggregated should be used instead.
-	 * \see #KSI_Signature_signAggregated
-	 */
-	KSI_FN_DEPRECATED(int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature));
 
 	/**
 	 * This function creates a new signature using the aggrehation hash chain as the input. The aggregation hash chain will
@@ -195,27 +149,6 @@ extern "C" {
 	 */
 	int KSI_Signature_getDocumentHash(KSI_Signature *sig, KSI_DataHash ** hsh);
 
-	/**
-	 * Access method for the hash algorithm used to hash the signed document.
-	 * \param[in]		sig			KSI signature.
-	 * \param[out]		algo_id		Pointer to the receiving hash id variable.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_DataHasher_open, #KSI_DataHash_create, #KSI_DataHasher_close,
-	 * #KSI_Signature_createDataHasher.
-	 */
-	int KSI_Signature_getHashAlgorithm(KSI_Signature *sig, KSI_HashAlgorithm *algo_id);
-
-	/**
-	 * This method creates a data hasher object to be used on the signed data.
-	 * \param[in]		sig			KSI signature.
-	 * \param[out]		hsr			Data hasher.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_DataHasher_free, #KSI_DataHasher_close, #KSI_DataHasher_open,
-	 * #KSI_Signature_getHashAlgorithm.
-	 */
-	int KSI_Signature_createDataHasher(KSI_Signature *sig, KSI_DataHasher **hsr);
 	/**
 	 * Access method for the signing time. The \c signTime is expressed as
 	 * the number of seconds since 1970-01-01 00:00:00 UTC.
@@ -360,16 +293,6 @@ extern "C" {
 	 * \see		#KSI_DataHash_free, #KSI_Utf8String_free, #KSI_Utf8StringList_free
 	 */
 	int KSI_Signature_getPublicationInfo(KSI_Signature *sig, KSI_DataHash **pubHsh, KSI_Utf8String **pubStr, time_t *pubDate, KSI_LIST(KSI_Utf8String) **pubRefs, KSI_LIST(KSI_Utf8String) **repUrls);
-
-	/**
-	 * Verifies that the document matches the signature.
-	 * \param[in]	sig			KSI signature.
-	 * \param[in]	ctx			KSI context.
-	 * \param[in]	doc			Pointer to document.
-	 * \param[in]	doc_len		Document length.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, size_t doc_len);
 
 /**
  * @}
