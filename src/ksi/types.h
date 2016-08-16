@@ -62,6 +62,9 @@ extern "C" {
 	/* Typedef for the struct KSI_CertConstraint_st */
 	typedef struct KSI_CertConstraint_st KSI_CertConstraint;
 
+	/** Typedef for the signature object. */
+	typedef struct KSI_Signature_st KSI_Signature;
+
 	/**
 	 * Callback for request header.
 	 * \param[in]	hdr		Pointer to the header.
