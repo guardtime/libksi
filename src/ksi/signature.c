@@ -1226,7 +1226,7 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *to, KSI_Signature **extended) {
+static int KSI_signature_extendToWithoutVerification(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *to, KSI_Signature **extended) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ExtendReq *req = NULL;
 	KSI_Integer *signTime = NULL;
@@ -1318,6 +1318,38 @@ int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *
 		goto cleanup;
 	}
 
+	*extended = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_ExtendReq_free(req);
+	KSI_ExtendResp_free(resp);
+	KSI_RequestHandle_free(handle);
+	KSI_Signature_free(tmp);
+
+	return res;
+}
+
+int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *to, KSI_Signature **extended) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Signature *tmp = NULL;
+
+
+	KSI_ERR_clearErrors(ctx);
+	if (sig == NULL || ctx == NULL || extended == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_signature_extendToWithoutVerification(sig, ctx, to, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
 	/* Just to be sure, verify the internals. */
 	res = KSI_SignatureVerifier_verifyInternally(ctx, tmp, 0, NULL);
 	if (res != KSI_OK) {
@@ -1332,9 +1364,6 @@ int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *
 
 cleanup:
 
-	KSI_ExtendReq_free(req);
-	KSI_ExtendResp_free(resp);
-	KSI_RequestHandle_free(handle);
 	KSI_Signature_free(tmp);
 
 	return res;
@@ -1380,7 +1409,7 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 	}
 
 	/* Perform the actual extension. */
-	res = KSI_Signature_extendTo(signature, ctx, pubTime, &tmp);
+	res = KSI_signature_extendToWithoutVerification(signature, ctx, pubTime, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
