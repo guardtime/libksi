@@ -112,19 +112,19 @@ The API full reference is available here [http://guardtime.github.io/libksi/](ht
 See LICENSE file.
 
 ## Dependencies ##
-| Dependency        | Version         | License type | Source                         | Notes |
-| :---------------- | :-------------- | :----------- | :----------------------------- |:---   |
-| OpenSSL           | 0.9.8 or later  | BSD          | http://www.openssl.org/        | This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).  This product includes software written by Tim Hudson (tjh@cryptsoft.com). |
-| libCurl           | 7.21.4 or later | MIT/X        | https://github.com/bagder/curl |       |
-| Windows CryptoAPI |                 |              |                                | Can be used as alternative to OpenSSL. Build time option. |
-| Windows WinINet   |                 |              |                                | Can be used as alternative to libCurl. Build time option. |
-| Windows WinHTTP   |                 |              |                                | Can be used as alternative to libCurl. Build time option. |
-| CuTest            | 1.5             | Zlib         |                                | Required only for testing. |
-| Nginx             | n/a             | MIT          |                                | Modified version of code based on src/http/ngx_http_parse.c from NGINX embedded in KSI code base. |
+| Dependency        | Version                           | License type | Source                         | Notes |
+| :---              | :---                              | :---         | :---                           |:---   |
+| OpenSSL           | Latest stable for target platform | BSD          | http://www.openssl.org/        | This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).  This product includes software written by Tim Hudson (tjh@cryptsoft.com). |
+| libCurl           | Latest stable for target platform | MIT/X        | https://github.com/bagder/curl |       |
+| Windows CryptoAPI |                                   |              |                                | Can be used as alternative to OpenSSL. Build time option. |
+| Windows WinINet   |                                   |              |                                | Can be used as alternative to libCurl. Build time option. |
+| Windows WinHTTP   |                                   |              |                                | Can be used as alternative to libCurl. Build time option. |
+| CuTest            | 1.5                               | Zlib         |                                | Required only for testing. |
+| Nginx             | n/a                               | MIT          |                                | Modified version of code based on src/http/ngx_http_parse.c from NGINX embedded in KSI code base. |
 
 ## Compatibility ##
 | OS / Platform                              | Compatibility                                |
-| :----------------------------------------- | :--------------------------------------------| 
+| :---                                       | :---                                         | 
 | CentOS / RHEL 6 and 7, x86_64 architecture | Fully compatible and tested                  |
 | Debian, ...                                | Compatible but not tested on a regular basis |
 | OS X                                       | Compatible but not tested on a regular basis |
