@@ -25,6 +25,9 @@ DLL = lib
 RTL = MT
 !ENDIF
 
+!IF "$(DLL)" == "dll"
+CCFLAGS = $(CCFLAGS) /DDLL_BUILD
+!ENDIF
 #Selecting of different functionality providers
 !IF "$(NET_PROVIDER)" != "CURL" && "$(NET_PROVIDER)" != "WININET" && "$(NET_PROVIDER)" != "WINHTTP"
 NET_PROVIDER = CURL
