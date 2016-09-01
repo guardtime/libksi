@@ -33,6 +33,7 @@ extern "C" {
 		URI_HTTP,
 		URI_TCP,
 		URI_FILE,
+		URI_UNKNOWN,
 		URI_CLIENT_COUNT
 	};
 
