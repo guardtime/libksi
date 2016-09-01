@@ -49,11 +49,11 @@ For the most basic verification needs we can just call #KSI_verifySignature and 
 ~~~~~~~~~~
 
 In the above example we didn't verify the signature against the original document. However we can do so by calling
-#KSI_Signature_verifyDocument. The document is pointed to by \c doc and its length is given in \c len:
+#KSI_Signature_verifyDocument. The document is pointed to by \c doc and its length is given in \c doc_len:
 
 ~~~~~~~~~~{.c}
 
-	res = KSI_Signature_verifyDocument(sig, ksi, doc, len);
+	res = KSI_Signature_verifyDocument(sig, ksi, doc, doc_len);
 	if (res == KSI_OK) {
 		printf("Signature and document successfully verified!\n");
 	} else {
@@ -130,7 +130,7 @@ To perform verification according to a policy, we first need to set up a verific
 we obtain the signature that we want to verify and assign it directly into the verification context. Let's assume that our
 signature contains a publication record and we have a recent enough publication file to possibly contain the same publication. 
 We obtain the publications file by using our API method of choice and assign it directly into the verification context.
-For now we have set up all the required information to perform the verification, so we  we can verify the signature by
+For now we have set up all the required information to perform the verification, so we can verify the signature by
 calling #KSI_SignatureVerifier_verify. We get two kinds of information from this function. First, the functions returns a
 status code that indicates verification completeness. Under normal circumstances the return code should be #KSI_OK, meaning
 that the verification process was completed without any errors (e.g. invalid parameters, out of memory errors, extender errors, etc).
@@ -209,7 +209,9 @@ online verification. The corresponding verification calls:
 
 ~~~~~~~~~~
 
-For allowing extending of a signature for publication based policies, we have to enable it in the verification context. By default the extending is not allowed, which in some situations is what we want, but in other situations can lead to inconclusive verification results if a suitable publication is not found.
+For allowing extending of a signature for publication based policies, we have to enable it in the verification context. By default
+the extending is not allowed, which in some situations is what we want, but in other situations can lead to inconclusive verification
+results if a suitable publication is not found.
 Note: if extending is allowed, a valid extender should also be configured (see [Basics Tutorial](tutorial/t0_basics.md)).
 
 ~~~~~~~~~~{.c}
@@ -235,7 +237,7 @@ as part of all predefined policies, but for the sake of a simple example we will
 
 	res = KSI_VerificationContext_init(&context, ksi);
 	res = KSI_Signature_fromFile(ksi, getFullResourcePath("some_signature.ksig"), &context.signature);
-	context.documentHash = expected_hash;
+	context.documentHash = document_hash;
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
 	if (res == KSI_OK) {
 		if (result->finalResult.resultCode == KSI_VER_RES_OK)
