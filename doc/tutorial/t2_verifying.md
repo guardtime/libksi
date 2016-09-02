@@ -168,10 +168,11 @@ a successful verification result (although it is a prerequisite), so we must ins
 
 The key to conclusive verification is having sufficient information set up in the verification context without assuming too much
 from the signature itself. For most cases this means that we have to set up a publications file in the verification context and
-configure an extender (see [Basics Tutorial](tutorial/t0_basics.md)). If we want to verify the signature against a specific
-publication, we can do so by setting up the publication string in the verification context. If we want to verify the signature
-against a document, the document hash can be stored in the verification context. Additionally, the verification context can be used
-for specifying the initial aggregation level and enabling/disabling extending for publication-based verification.
+configure an extender (see [Basics Tutorial](tutorial/t0_basics.md)). In some cases (see example below) we need to allow extending
+as well. If we want to verify the signature against a specific publication, we can do so by setting up the publication string in the
+verification context. If we want to verify the signature against a document, the document hash can be stored in the verification
+context. Additionally, the verification context can be used for specifying the initial aggregation level and enabling/disabling
+extending for publication-based verification.
 
 Let's continue with another example where we want to verify the signature against a specific publication. We don't really need any
 of the other verification policies, so we can use the predefined policy #KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED. For conclusive
