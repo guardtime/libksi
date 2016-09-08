@@ -830,7 +830,14 @@ static int pki_truststore_verifyCertificateConstraints(const KSI_PKITruststore *
 
 		oid = OBJ_txt2obj(ptr->oid, 1);
 		if (oid == NULL) {
-			KSI_pushError(pki->ctx, res = KSI_OUT_OF_MEMORY, NULL);
+			if (ERR_GET_REASON(ERR_peek_last_error()) == ERR_R_MALLOC_FAILURE) {
+				KSI_pushError(pki->ctx, res = KSI_OUT_OF_MEMORY, NULL);
+			} else if (ERR_GET_REASON(ERR_peek_last_error()) > 99) {
+				/* ASN1 library error codes start from 100. */
+				KSI_pushError(pki->ctx, res = KSI_INVALID_ARGUMENT, "Unknown OID.");
+			} else {
+				KSI_pushError(pki->ctx, res = KSI_UNKNOWN_ERROR, NULL);
+			}
 			goto cleanup;
 		}
 
