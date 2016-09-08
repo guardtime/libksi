@@ -114,6 +114,21 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_Config)
 	KSI_TLV_UTF8_STRING_LIST(0x04, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Config_getParentUri, KSI_Config_setParentUri, "parent_uri")
 KSI_END_TLV_TEMPLATE
 
+KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationConf)
+	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_Config_getMaxLevel, KSI_Config_setMaxLevel, "max_level")
+	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_Config_getAggrAlgo, KSI_Config_setAggrAlgo, "aggr_algo")
+	KSI_TLV_INTEGER(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_Config_getAggrPeriod, KSI_Config_setAggrPeriod, "aggr_period")
+	KSI_TLV_INTEGER(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_Config_getMaxRequests, KSI_Config_setMaxRequests, "max_req")
+	KSI_TLV_UTF8_STRING_LIST(0x10, KSI_TLV_TMPL_FLG_NONE, KSI_Config_getParentUri, KSI_Config_setParentUri, "parent_uri")
+KSI_END_TLV_TEMPLATE
+
+KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendConf)
+	KSI_TLV_INTEGER(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_Config_getMaxRequests, KSI_Config_setMaxRequests, "max_req")
+	KSI_TLV_UTF8_STRING_LIST(0x10, KSI_TLV_TMPL_FLG_NONE, KSI_Config_getParentUri, KSI_Config_setParentUri, "parent_uri")
+	KSI_TLV_TIME_S(0x11, KSI_TLV_TMPL_FLG_NONE, KSI_Config_getCalendarFirstTime, KSI_Config_setCalendarFirstTime, "cal_first")
+	KSI_TLV_TIME_S(0x12, KSI_TLV_TMPL_FLG_NONE, KSI_Config_getCalendarLastTime, KSI_Config_setCalendarLastTime, "cal_last")
+KSI_END_TLV_TEMPLATE
+
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationHashChain)
 	KSI_TLV_TIME_S(0x02, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationHashChain_getAggregationTime, KSI_AggregationHashChain_setAggregationTime, "aggr_time")
 	KSI_TLV_INTEGER_LIST(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationHashChain_getChainIndex, KSI_AggregationHashChain_setChainIndex, "chain_index")
@@ -157,9 +172,28 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationReq)
 	KSI_TLV_COMPOSITE(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationReq_getConfig, KSI_AggregationReq_setConfig, KSI_Config, "config")
 KSI_END_TLV_TEMPLATE
 
+KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationReq_v2)
+	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationReq_getRequestId, KSI_AggregationReq_setRequestId, "req_id")
+	KSI_TLV_IMPRINT(0x02, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationReq_getRequestHash, KSI_AggregationReq_setRequestHash, "req_hash")
+	KSI_TLV_INTEGER(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationReq_getRequestLevel, KSI_AggregationReq_setRequestLevel, "req_level")
+KSI_END_TLV_TEMPLATE
+
 KSI_DEFINE_TLV_TEMPLATE(KSI_RequestAck)
 	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_RequestAck_getAggregationPeriod, KSI_RequestAck_setAggregationPeriod, "aggr_period")
 	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_MANDATORY, KSI_RequestAck_getAggregationDelay, KSI_RequestAck_setAggregationDelay, "aggr_delay")
+KSI_END_TLV_TEMPLATE
+
+KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationAckReq)
+	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_RequestAck_getRequestTime, KSI_RequestAck_setRequestTime, "req_time")
+KSI_END_TLV_TEMPLATE
+
+KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationAck)
+	KSI_TLV_TIME_US(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_RequestAck_getRequestTime, KSI_RequestAck_setRequestTime, "req_time")
+	KSI_TLV_TIME_US(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_RequestAck_getReceiptTime, KSI_RequestAck_setReceiptTime, "recv_time")
+	KSI_TLV_TIME_US(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_RequestAck_getAcknowledgeTime, KSI_RequestAck_setAcknowledgeTime, "ack_time")
+	KSI_TLV_INTEGER(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_RequestAck_getAggregationDelay, KSI_RequestAck_setAggregationDelay, "aggr_delay")
+	KSI_TLV_INTEGER(0x05, KSI_TLV_TMPL_FLG_NONE, KSI_RequestAck_getAggregationPeriod, KSI_RequestAck_setAggregationPeriod, "aggr_period")
+	KSI_TLV_INTEGER(0x06, KSI_TLV_TMPL_FLG_NONE, KSI_RequestAck_getAggregationDrift, KSI_RequestAck_setAggregationDrift, "aggr_drift")
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_CalendarHashChain)
@@ -185,7 +219,16 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationResp)
 	KSI_TLV_COMPOSITE(0x0802, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getCalendarChain, KSI_AggregationResp_setCalendarChain, KSI_CalendarHashChain, "cal_chain")
 	KSI_TLV_COMPOSITE(0x0804, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getAggregationAuthRec, KSI_AggregationResp_setAggregationAuthRec, KSI_AggregationAuthRec, "aggr_auth_rec") /* TODO! Future work. */
 	KSI_TLV_COMPOSITE(0x0805, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getCalendarAuthRec, KSI_AggregationResp_setCalendarAuthRec, KSI_CalendarAuthRec, "cal_auth_rec")
+KSI_END_TLV_TEMPLATE
 
+KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationResp_v2)
+	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationResp_getRequestId, KSI_AggregationResp_setRequestId, "req_id")
+	KSI_TLV_INTEGER(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getStatus, KSI_AggregationResp_setStatus, "status")
+	KSI_TLV_UTF8_STRING(0x05, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getErrorMsg, KSI_AggregationResp_setErrorMsg, "err_message")
+	KSI_TLV_COMPOSITE_LIST(0x0801, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getAggregationChainList, KSI_AggregationResp_setAggregationChainList, KSI_AggregationHashChain, "aggr_chain")
+	KSI_TLV_COMPOSITE(0x0802, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getCalendarChain, KSI_AggregationResp_setCalendarChain, KSI_CalendarHashChain, "cal_chain")
+	KSI_TLV_COMPOSITE(0x0804, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getAggregationAuthRec, KSI_AggregationResp_setAggregationAuthRec, KSI_AggregationAuthRec, "aggr_auth_rec") /* TODO! Future work. */
+	KSI_TLV_COMPOSITE(0x0805, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationResp_getCalendarAuthRec, KSI_AggregationResp_setCalendarAuthRec, KSI_CalendarAuthRec, "cal_auth_rec")
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationPdu)
@@ -193,6 +236,23 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationPdu)
 	KSI_TLV_OBJECT(0x201, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_AggregationPdu_getRequest, KSI_AggregationPdu_setRequest, KSI_AggregationReq_fromTlv, KSI_AggregationReq_toTlv, KSI_AggregationReq_free, "aggr_req")
 	KSI_TLV_OBJECT(0x202, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_AggregationPdu_getResponse, KSI_AggregationPdu_setResponse, KSI_AggregationResp_fromTlv, KSI_AggregationResp_toTlv, KSI_AggregationResp_free, "aggr_resp")
 	KSI_TLV_COMPOSITE(0x203, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_AggregationPdu_getError, KSI_AggregationPdu_setError, KSI_ErrorPdu, "aggr_error_pdu")
+	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationPdu_getHmac, KSI_AggregationPdu_setHmac, "hmac")
+KSI_END_TLV_TEMPLATE
+
+KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationReqPdu)
+	KSI_TLV_OBJECT(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationPdu_getHeader, KSI_AggregationPdu_setHeader, KSI_Header_fromTlv, KSI_Header_toTlv, KSI_Header_free, "header")
+	KSI_TLV_OBJECT(0x02, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_AggregationPdu_getRequest, KSI_AggregationPdu_setRequest, KSI_AggregationReq_fromTlv, KSI_AggregationReq_toTlv, KSI_AggregationReq_free, "aggr_req")
+	KSI_TLV_COMPOSITE(0x04, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_AggregationPdu_getConfRequest, KSI_AggregationPdu_setConfRequest, KSI_AggregationConf, "aggr_conf_req")
+	KSI_TLV_COMPOSITE(0x05, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_AggregationPdu_getAckRequest, KSI_AggregationPdu_setAckRequest, KSI_AggregationAckReq, "aggr_ack_req")
+	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationPdu_getHmac, KSI_AggregationPdu_setHmac, "hmac")
+KSI_END_TLV_TEMPLATE
+
+KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationRespPdu)
+	KSI_TLV_OBJECT(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationPdu_getHeader, KSI_AggregationPdu_setHeader, KSI_Header_fromTlv, KSI_Header_toTlv, KSI_Header_free, "header")
+	KSI_TLV_OBJECT(0x02, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_AggregationPdu_getResponse, KSI_AggregationPdu_setResponse, KSI_AggregationResp_fromTlv, KSI_AggregationResp_toTlv, KSI_AggregationResp_free, "aggr_resp")
+	KSI_TLV_COMPOSITE(0x03, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_AggregationPdu_getError, KSI_AggregationPdu_setError, KSI_ErrorPdu, "aggr_err")
+	KSI_TLV_COMPOSITE(0x04, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_AggregationPdu_getConfResponse, KSI_AggregationPdu_setConfResponse, KSI_AggregationConf, "aggr_conf")
+	KSI_TLV_COMPOSITE(0x05, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_AggregationPdu_getAckResponse, KSI_AggregationPdu_setAckResponse, KSI_AggregationAck, "aggr_ack")
 	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationPdu_getHmac, KSI_AggregationPdu_setHmac, "hmac")
 KSI_END_TLV_TEMPLATE
 
@@ -210,11 +270,34 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendResp)
 	KSI_TLV_COMPOSITE(0x802, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getCalendarHashChain, KSI_ExtendResp_setCalendarHashChain, KSI_CalendarHashChain, "cal_hash_chain")
 KSI_END_TLV_TEMPLATE
 
+KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendResp_v2)
+	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_ExtendResp_getRequestId, KSI_ExtendResp_setRequestId, "req_id")
+	KSI_TLV_INTEGER(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getStatus, KSI_ExtendResp_setStatus, "status")
+	KSI_TLV_UTF8_STRING(0x05, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getErrorMsg, KSI_ExtendResp_setErrorMsg, "err_message")
+	KSI_TLV_TIME_S(0x12, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getLastTime, KSI_ExtendResp_setLastTime, "cal_last")
+	KSI_TLV_COMPOSITE(0x802, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendResp_getCalendarHashChain, KSI_ExtendResp_setCalendarHashChain, KSI_CalendarHashChain, "cal_hash_chain")
+KSI_END_TLV_TEMPLATE
+
 KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendPdu)
 	KSI_TLV_COMPOSITE_OBJECT(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendPdu_getHeader, KSI_ExtendPdu_setHeader, KSI_Header_fromTlv, KSI_Header_toTlv, KSI_Header_free, KSI_TLV_TEMPLATE(KSI_Header), "header")
 	KSI_TLV_COMPOSITE_OBJECT(0x301, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_ExtendPdu_getRequest, KSI_ExtendPdu_setRequest, KSI_ExtendReq_fromTlv, KSI_ExtendReq_toTlv, KSI_ExtendReq_free, KSI_TLV_TEMPLATE(KSI_ExtendReq), "ext_req")
 	KSI_TLV_COMPOSITE_OBJECT(0x302, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_ExtendPdu_getResponse, KSI_ExtendPdu_setResponse, KSI_ExtendResp_fromTlv, KSI_ExtendResp_toTlv, KSI_ExtendResp_free, KSI_TLV_TEMPLATE(KSI_ExtendResp), "ext_resp")
 	KSI_TLV_COMPOSITE(0x303, KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0, KSI_ExtendPdu_getError, KSI_ExtendPdu_setError, KSI_ErrorPdu, "ext_error_resp")
+	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendPdu_getHmac, KSI_ExtendPdu_setHmac, "hmac")
+KSI_END_TLV_TEMPLATE
+
+KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendReqPdu)
+	KSI_TLV_COMPOSITE_OBJECT(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendPdu_getHeader, KSI_ExtendPdu_setHeader, KSI_Header_fromTlv, KSI_Header_toTlv, KSI_Header_free, KSI_TLV_TEMPLATE(KSI_Header), "header")
+	KSI_TLV_COMPOSITE_OBJECT(0x02, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_ExtendPdu_getRequest, KSI_ExtendPdu_setRequest, KSI_ExtendReq_fromTlv, KSI_ExtendReq_toTlv, KSI_ExtendReq_free, KSI_TLV_TEMPLATE(KSI_ExtendReq), "ext_req")
+	KSI_TLV_COMPOSITE(0x04, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_ExtendPdu_getConfRequest, KSI_ExtendPdu_setConfRequest, KSI_ExtendConf, "ext_conf_req")
+	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendPdu_getHmac, KSI_ExtendPdu_setHmac, "hmac")
+KSI_END_TLV_TEMPLATE
+
+KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendRespPdu)
+	KSI_TLV_COMPOSITE_OBJECT(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendPdu_getHeader, KSI_ExtendPdu_setHeader, KSI_Header_fromTlv, KSI_Header_toTlv, KSI_Header_free, KSI_TLV_TEMPLATE(KSI_Header), "header")
+	KSI_TLV_COMPOSITE_OBJECT(0x02, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_ExtendPdu_getResponse, KSI_ExtendPdu_setResponse, KSI_ExtendResp_fromTlv, KSI_ExtendResp_toTlv, KSI_ExtendResp_free, KSI_TLV_TEMPLATE(KSI_ExtendResp_v2), "ext_resp")
+	KSI_TLV_COMPOSITE(0x03, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_ExtendPdu_getError, KSI_ExtendPdu_setError, KSI_ErrorPdu, "ext_err")
+	KSI_TLV_COMPOSITE(0x04, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_ExtendPdu_getConfResponse, KSI_ExtendPdu_setConfResponse, KSI_ExtendConf, "ext_conf")
 	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendPdu_getHmac, KSI_ExtendPdu_setHmac, "hmac")
 KSI_END_TLV_TEMPLATE
 

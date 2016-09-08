@@ -539,11 +539,15 @@ int KSI_ExtendPdu_updateHmac(KSI_ExtendPdu *pdu, KSI_HashAlgorithm algo_id, cons
 int KSI_ExtendPdu_getHeader(const KSI_ExtendPdu *t, KSI_Header **header);
 int KSI_ExtendPdu_getRequest(const KSI_ExtendPdu *t, KSI_ExtendReq **request);
 int KSI_ExtendPdu_getResponse(const KSI_ExtendPdu *t, KSI_ExtendResp **response);
+int KSI_ExtendPdu_getConfRequest(const KSI_ExtendPdu *t, KSI_Config **confRequest);
+int KSI_ExtendPdu_getConfResponse(const KSI_ExtendPdu *t, KSI_Config **confResponse);
 int KSI_ExtendPdu_getHmac(const KSI_ExtendPdu *t, KSI_DataHash **hmac);
 int KSI_ExtendPdu_getError(const KSI_ExtendPdu *t, KSI_ErrorPdu **error);
 int KSI_ExtendPdu_setHeader(KSI_ExtendPdu *t, KSI_Header *header);
 int KSI_ExtendPdu_setRequest(KSI_ExtendPdu *t, KSI_ExtendReq *request);
 int KSI_ExtendPdu_setResponse(KSI_ExtendPdu *t, KSI_ExtendResp *response);
+int KSI_ExtendPdu_setConfRequest(KSI_ExtendPdu *t, KSI_Config *confRequest);
+int KSI_ExtendPdu_setConfResponse(KSI_ExtendPdu *t, KSI_Config *confResponse);
 int KSI_ExtendPdu_setHmac(KSI_ExtendPdu *t, KSI_DataHash *hamc);
 int KSI_ExtendPdu_setError( KSI_ExtendPdu *t, KSI_ErrorPdu *error);
 int KSI_ExtendReq_enclose(KSI_ExtendReq *req, char *loginId, char *key, KSI_ExtendPdu **pdu);
@@ -572,11 +576,19 @@ int KSI_AggregationPdu_updateHmac(KSI_AggregationPdu *pdu, KSI_HashAlgorithm alg
 int KSI_AggregationPdu_getHeader(const KSI_AggregationPdu *t, KSI_Header **header);
 int KSI_AggregationPdu_getRequest(const KSI_AggregationPdu *t, KSI_AggregationReq **request);
 int KSI_AggregationPdu_getResponse(const KSI_AggregationPdu *t, KSI_AggregationResp **response);
+int KSI_AggregationPdu_getConfRequest(const KSI_AggregationPdu *t, KSI_Config **confRequest);
+int KSI_AggregationPdu_getConfResponse(const KSI_AggregationPdu *t, KSI_Config **confResponse);
+int KSI_AggregationPdu_getAckRequest(const KSI_AggregationPdu *t, KSI_RequestAck **ackRequest);
+int KSI_AggregationPdu_getAckResponse(const KSI_AggregationPdu *t, KSI_RequestAck **ackResponse);
 int KSI_AggregationPdu_getHmac(const KSI_AggregationPdu *t, KSI_DataHash **hmac);
 int KSI_AggregationPdu_getError (const KSI_AggregationPdu *t, KSI_ErrorPdu **error);
 int KSI_AggregationPdu_setHeader(KSI_AggregationPdu *t, KSI_Header *header);
 int KSI_AggregationPdu_setRequest(KSI_AggregationPdu *t, KSI_AggregationReq *request);
 int KSI_AggregationPdu_setResponse(KSI_AggregationPdu *t, KSI_AggregationResp *response);
+int KSI_AggregationPdu_setConfRequest(KSI_AggregationPdu *t, KSI_Config *confRequest);
+int KSI_AggregationPdu_setConfResponse(KSI_AggregationPdu *t, KSI_Config *confResponse);
+int KSI_AggregationPdu_setAckRequest(KSI_AggregationPdu *t, KSI_RequestAck *ackRequest);
+int KSI_AggregationPdu_setAckResponse(KSI_AggregationPdu *t, KSI_RequestAck *ackResponse);
 int KSI_AggregationPdu_setHmac(KSI_AggregationPdu *t, KSI_DataHash *hmac);
 int KSI_AggregationPdu_setError ( KSI_AggregationPdu *t, KSI_ErrorPdu *error);
 int KSI_AggregationReq_enclose(KSI_AggregationReq *req, char *loginId, char *key, KSI_AggregationPdu **pdu);
@@ -605,11 +617,29 @@ int KSI_Config_new(KSI_CTX *ctx, KSI_Config **t);
 int KSI_Config_getMaxLevel(const KSI_Config *t, KSI_Integer **maxLevel);
 int KSI_Config_getAggrAlgo(const KSI_Config *t, KSI_Integer **aggrAlgo);
 int KSI_Config_getAggrPeriod(const KSI_Config *t, KSI_Integer **aggrPeriod);
+int KSI_Config_getMaxRequests(const KSI_Config *t, KSI_Integer **maxRequests);
 int KSI_Config_getParentUri(const KSI_Config *t, KSI_LIST(KSI_Utf8String) **parentUri);
+int KSI_Config_getCalendarFirstTime(const KSI_Config *t, KSI_Integer **calendarFirstTime);
+int KSI_Config_getCalendarLastTime(const KSI_Config *t, KSI_Integer **calendarLastTime);
 int KSI_Config_setMaxLevel(KSI_Config *t, KSI_Integer *maxLevel);
 int KSI_Config_setAggrAlgo(KSI_Config *t, KSI_Integer *aggrAlgo);
 int KSI_Config_setAggrPeriod(KSI_Config *t, KSI_Integer *aggrPeriod);
+int KSI_Config_setMaxRequests(KSI_Config *t, KSI_Integer *maxRequests);
 int KSI_Config_setParentUri(KSI_Config *t, KSI_LIST(KSI_Utf8String) *parentUri);
+int KSI_Config_setCalendarFirstTime(KSI_Config *t, KSI_Integer *calendarFirstTime);
+int KSI_Config_setCalendarLastTime(KSI_Config *t, KSI_Integer *calendarLastTime);
+
+/*
+ * KSI_AggregationConf
+ */
+#define KSI_AggregationConf_free KSI_Config_free
+#define KSI_AggregationConf_new KSI_Config_new
+
+/*
+ * KSI_ExtendConf
+ */
+#define KSI_ExtendConf_free KSI_Config_free
+#define KSI_ExtendConf_new KSI_Config_new
 
 /*
  * KSI_AggregationReq
@@ -628,7 +658,6 @@ int KSI_AggregationReq_fromTlv (KSI_TLV *tlv, KSI_AggregationReq **data);
 int KSI_AggregationReq_toTlv (KSI_CTX *ctx, const KSI_AggregationReq *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 
-
 KSI_DEFINE_OBJECT_PARSE(KSI_AggregationReq);
 KSI_DEFINE_OBJECT_SERIALIZE(KSI_AggregationReq);
 
@@ -638,10 +667,30 @@ KSI_DEFINE_OBJECT_SERIALIZE(KSI_AggregationReq);
 void KSI_RequestAck_free(KSI_RequestAck *t);
 int KSI_RequestAck_new(KSI_CTX *ctx, KSI_RequestAck **t);
 KSI_CTX *KSI_RequestAck_getCtx(KSI_RequestAck *t);
+int KSI_RequestAck_getRequestTime(const KSI_RequestAck *t, KSI_Integer **requestTime);
+int KSI_RequestAck_getReceiptTime(const KSI_RequestAck *t, KSI_Integer **receiptTime);
+int KSI_RequestAck_getAcknowledgeTime(const KSI_RequestAck *t, KSI_Integer **acknowledgeTime);
 int KSI_RequestAck_getAggregationPeriod(const KSI_RequestAck *t, KSI_Integer **aggregationPeriod);
 int KSI_RequestAck_getAggregationDelay(const KSI_RequestAck *t, KSI_Integer **aggregationDelay);
+int KSI_RequestAck_getAggregationDrift(const KSI_RequestAck *t, KSI_Integer **aggregationDrift);
+int KSI_RequestAck_setRequestTime(KSI_RequestAck *t, KSI_Integer *requestTime);
+int KSI_RequestAck_setReceiptTime(KSI_RequestAck *t, KSI_Integer *receiptTime);
+int KSI_RequestAck_setAcknowledgeTime(KSI_RequestAck *t, KSI_Integer *acknowledgeTime);
 int KSI_RequestAck_setAggregationPeriod(KSI_RequestAck *t, KSI_Integer *aggregationPeriod);
 int KSI_RequestAck_setAggregationDelay(KSI_RequestAck *t, KSI_Integer *aggregationDelay);
+int KSI_RequestAck_setAggregationDrift(KSI_RequestAck *t, KSI_Integer *aggregationDrift);
+
+/*
+ * KSI_AggregationAckReq
+ */
+#define KSI_AggregationAckReq_free KSI_RequestAck_free
+#define KSI_AggregationAckReq_new KSI_RequestAck_new
+
+/*
+ * KSI_AggregationAck
+ */
+#define KSI_AggregationAck_free KSI_RequestAck_free
+#define KSI_AggregationAck_new KSI_RequestAck_new
 
 /*
  * KSI_AggregationResp

@@ -82,6 +82,12 @@ extern "C" {
 		/** User defined function to be called on the request pdu header before sending it. */
 		KSI_RequestHeaderCallback requestHeaderCB;
 
+		/** PDU version to be used for aggregation and extending requests. */
+		unsigned requestPduVersion;
+
+		/** PDU version extracted from aggregation and extending responses. */
+		unsigned responsePduVersion;
+
 		/** Counter for the requests sent by this context. */
 		KSI_uint64_t requestCounter;
 

@@ -190,6 +190,8 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->publicationCertEmail_DEPRECATED = NULL;
 	ctx->loggerCB = NULL;
 	ctx->requestHeaderCB = NULL;
+	ctx->requestPduVersion = 1;
+	ctx->responsePduVersion = 1;
 	ctx->loggerCtx = NULL;
 	ctx->certConstraints = NULL;
 	ctx->freeCertConstraintsArray = freeCertConstraintsArray;

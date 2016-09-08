@@ -32,12 +32,19 @@
 #include "impl/meta_data_element_impl.h"
 
 KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendPdu);
+KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendReqPdu);
+KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendRespPdu);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu);
+KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationReqPdu);
+KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationRespPdu);
 KSI_IMPORT_TLV_TEMPLATE(KSI_Header);
 KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendReq);
 KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendResp);
+KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendResp_v2);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationReq);
+KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationReq_v2);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationResp);
+KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationResp_v2);
 
 struct KSI_ErrorPdu_st{
 	KSI_CTX *ctx;
@@ -50,6 +57,8 @@ struct KSI_ExtendPdu_st {
 	KSI_Header *header;
 	KSI_ExtendReq *request;
 	KSI_ExtendResp *response;
+	KSI_Config *confRequest;
+	KSI_Config *confResponse;
 	KSI_ErrorPdu *error;
 	KSI_DataHash *hmac;
 };
@@ -59,6 +68,10 @@ struct KSI_AggregationPdu_st {
 	KSI_Header *header;
 	KSI_AggregationReq *request;
 	KSI_AggregationResp *response;
+	KSI_Config *confRequest;
+	KSI_Config *confResponse;
+	KSI_RequestAck *ackRequest;
+	KSI_RequestAck *ackResponse;
 	KSI_ErrorPdu *error;
 	KSI_DataHash *hmac;
 };
@@ -76,6 +89,9 @@ struct KSI_Config_st {
 	KSI_Integer *maxLevel;
 	KSI_Integer *aggrAlgo;
 	KSI_Integer *aggrPeriod;
+	KSI_Integer *maxRequests;
+	KSI_Integer *calendarFirstTime;
+	KSI_Integer *calendarLastTime;
 	KSI_LIST(KSI_Utf8String) *parentUri;
 };
 
@@ -90,8 +106,12 @@ struct KSI_AggregationReq_st {
 
 struct KSI_RequestAck_st {
 	KSI_CTX *ctx;
+	KSI_Integer *requestTime;
+	KSI_Integer *receiptTime;
+	KSI_Integer *acknowledgeTime;
 	KSI_Integer *aggregationPeriod;
 	KSI_Integer *aggregationDelay;
+	KSI_Integer *aggregationDrift;
 };
 
 struct KSI_AggregationResp_st {
@@ -680,6 +700,8 @@ void KSI_ExtendPdu_free(KSI_ExtendPdu *t) {
 		KSI_Header_free(t->header);
 		KSI_ExtendReq_free(t->request);
 		KSI_ExtendResp_free(t->response);
+		KSI_ExtendConf_free(t->confRequest);
+		KSI_ExtendConf_free(t->confResponse);
 		KSI_ErrorPdu_free(t->error);
 		KSI_DataHash_free(t->hmac);
 		KSI_free(t);
@@ -699,6 +721,8 @@ int KSI_ExtendPdu_new(KSI_CTX *ctx, KSI_ExtendPdu **t) {
 	tmp->header = NULL;
 	tmp->request = NULL;
 	tmp->response = NULL;
+	tmp->confRequest = NULL;
+	tmp->confResponse = NULL;
 	tmp->error = NULL;
 	tmp->hmac = NULL;
 
@@ -851,18 +875,85 @@ cleanup:
 	return res;
 }
 
+static int pdu_calculateHmac_v2(KSI_CTX* ctx, void* pdu, int (*serialize)(const void*, unsigned char**, size_t *), KSI_HashAlgorithm algo_id, const char *key, KSI_DataHash **hmac) {
+	int res;
+	size_t len;
+	unsigned char *buf = NULL;
+	KSI_DataHash *tmp = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || pdu == NULL || key == NULL || hmac == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	if (serialize == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Function pointer not initialized.");
+		goto cleanup;
+	}
+
+	res = serialize(pdu, &buf, &len);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, "Failed to serialize PDU.");
+		goto cleanup;
+	}
+
+	res = KSI_HMAC_create(ctx, algo_id, key, buf, len - KSI_getHashLength(algo_id), &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, "Failed to calculate HMAC from serialized PDU.");
+		goto cleanup;
+	}
+
+	*hmac = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_free(buf);
+	KSI_DataHash_free(tmp);
+
+	return res;
+}
+
 int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, KSI_HashAlgorithm algo_id, const char *key, KSI_DataHash **hmac){
 	int res = KSI_OK;
-	if (t)
-		res = pdu_calculateHmac(t->ctx, (void*)t,
-				(int (*)(void*, KSI_Header**))KSI_ExtendPdu_getHeader,
-				(int (*)(void*, void**))KSI_ExtendPdu_getResponse,
-				(int (*)(void*, KSI_OctetString**))KSI_ExtendResp_getRaw,
-				(int (*)(void*, void**))KSI_ExtendPdu_getRequest,
-				(int (*)(void*, KSI_OctetString**))KSI_ExtendReq_getRaw,
-				0x301,0x302, KSI_TLV_TEMPLATE(KSI_ExtendReq),KSI_TLV_TEMPLATE(KSI_ExtendResp),
-				algo_id, key, hmac);
-	else return KSI_INVALID_ARGUMENT;
+	if (t == NULL || t->ctx == NULL)
+		return KSI_INVALID_ARGUMENT;
+
+	if (t->request != NULL || t->confRequest != NULL) {
+		if (t->ctx->requestPduVersion == 1) {
+			res = pdu_calculateHmac(t->ctx, (void*)t,
+									(int (*)(void*, KSI_Header**))KSI_ExtendPdu_getHeader,
+									(int (*)(void*, void**))KSI_ExtendPdu_getResponse,
+									(int (*)(void*, KSI_OctetString**))KSI_ExtendResp_getRaw,
+									(int (*)(void*, void**))KSI_ExtendPdu_getRequest,
+									(int (*)(void*, KSI_OctetString**))KSI_ExtendReq_getRaw,
+									0x301,0x302, KSI_TLV_TEMPLATE(KSI_ExtendReq),KSI_TLV_TEMPLATE(KSI_ExtendResp),
+									algo_id, key, hmac);
+		} else if (t->ctx->requestPduVersion == 2) {
+			res = pdu_calculateHmac_v2(t->ctx, (void*)t, (int(*)(const void *, unsigned char **, size_t *))KSI_ExtendPdu_serialize, algo_id, key, hmac);
+		} else {
+			res = KSI_INVALID_FORMAT;
+		}
+	} else if (t->response != NULL || t->confResponse != NULL) {
+		if (t->ctx->responsePduVersion == 1) {
+			res = pdu_calculateHmac(t->ctx, (void*)t,
+									(int (*)(void*, KSI_Header**))KSI_ExtendPdu_getHeader,
+									(int (*)(void*, void**))KSI_ExtendPdu_getResponse,
+									(int (*)(void*, KSI_OctetString**))KSI_ExtendResp_getRaw,
+									(int (*)(void*, void**))KSI_ExtendPdu_getRequest,
+									(int (*)(void*, KSI_OctetString**))KSI_ExtendReq_getRaw,
+									0x301,0x302, KSI_TLV_TEMPLATE(KSI_ExtendReq),KSI_TLV_TEMPLATE(KSI_ExtendResp),
+									algo_id, key, hmac);
+		} else if (t->ctx->responsePduVersion == 2) {
+			res = pdu_calculateHmac_v2(t->ctx, (void*)t, (int(*)(const void *, unsigned char **, size_t *))KSI_ExtendPdu_serialize, algo_id, key, hmac);
+		} else {
+			res = KSI_INVALID_FORMAT;
+		}
+	} else {
+		res = KSI_INVALID_FORMAT;
+	}
 
 	return res;
 }
@@ -904,6 +995,7 @@ int KSI_ExtendReq_enclose(KSI_ExtendReq *req, char *loginId, char *key, KSI_Exte
 	int res;
 	KSI_ExtendPdu *tmp = NULL;
 	KSI_Header *hdr = NULL;
+	KSI_DataHash *hash = NULL;
 	size_t loginLen;
 
 	if (req == NULL || loginId == NULL || key == NULL || pdu == NULL) {
@@ -939,6 +1031,13 @@ int KSI_ExtendReq_enclose(KSI_ExtendReq *req, char *loginId, char *key, KSI_Exte
 		if (res != KSI_OK) goto cleanup;
 	}
 
+	/* Create and append initial empty HMAC. */
+	res = KSI_DataHash_createZero(req->ctx, KSI_getHashAlgorithmByName("default"), &hash);
+	if (res != KSI_OK) goto cleanup;
+
+	tmp->hmac = hash;
+	hash = NULL;
+
 	/* Calculate the HMAC using the provided key and the default hash algorithm. */
 	res = KSI_ExtendPdu_updateHmac(tmp, KSI_getHashAlgorithmByName("default"), key);
 	if (res != KSI_OK) goto cleanup;
@@ -959,20 +1058,94 @@ cleanup:
 	return res;
 }
 
+int KSI_ExtendPdu_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len, KSI_ExtendPdu **t) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_TLV *tlv = NULL;
+	KSI_ExtendPdu *tmp = NULL;
+
+	if (ctx == NULL || t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_TLV_parseBlob2(ctx, (unsigned char *)raw, len, 0, &tlv);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_ExtendPdu_new(ctx, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	if (KSI_TLV_getTag(tlv) == 0x300) {
+		res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_ExtendPdu), tmp);
+		ctx->responsePduVersion = 1;
+	} else if (KSI_TLV_getTag(tlv) == 0x320) {
+		res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_ExtendReqPdu), tmp);
+		ctx->responsePduVersion = 2;
+	} else if (KSI_TLV_getTag(tlv) == 0x321) {
+		res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_ExtendRespPdu), tmp);
+		ctx->responsePduVersion = 2;
+	} else {
+		res = KSI_INVALID_FORMAT;
+	}
+
+	if (res != KSI_OK) goto cleanup;
+
+	*t = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_TLV_free(tlv);
+	KSI_ExtendPdu_free(tmp);
+
+	return res;
+}
+
+int KSI_ExtendPdu_serialize(const KSI_ExtendPdu *t, unsigned char **raw, size_t *len) {
+	int res = KSI_UNKNOWN_ERROR;
+	if (t == NULL || t->ctx == NULL || raw == NULL || len == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (t->ctx->requestPduVersion == 1) {
+		res = KSI_TlvTemplate_serializeObject(t->ctx, t, 0x300, 0, 0, KSI_TLV_TEMPLATE(KSI_ExtendPdu), raw, len);
+	} else if (t->ctx->requestPduVersion == 2) {
+		if (t->request != NULL || t->confRequest != NULL) {
+			res = KSI_TlvTemplate_serializeObject(t->ctx, t, 0x320, 0, 0, KSI_TLV_TEMPLATE(KSI_ExtendReqPdu), raw, len);
+		} else if (t->response != NULL || t->confResponse != NULL || t->error != NULL) {
+			res = KSI_TlvTemplate_serializeObject(t->ctx, t, 0x321, 0, 0, KSI_TLV_TEMPLATE(KSI_ExtendRespPdu), raw, len);
+		} else {
+			res = KSI_INVALID_FORMAT;
+		}
+	} else {
+		res = KSI_INVALID_FORMAT;
+	}
+
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_Header*, header, Header);
 KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_ExtendReq*, request, Request);
 KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_ExtendResp*, response, Response);
+KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_Config*, confRequest, ConfRequest);
+KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_Config*, confResponse, ConfResponse);
 KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_DataHash*, hmac, Hmac);
 KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_ErrorPdu*, error, Error);
 
 KSI_IMPLEMENT_SETTER(KSI_ExtendPdu, KSI_Header*, header, Header);
 KSI_IMPLEMENT_SETTER(KSI_ExtendPdu, KSI_ExtendReq*, request, Request);
 KSI_IMPLEMENT_SETTER(KSI_ExtendPdu, KSI_ExtendResp*, response, Response);
+KSI_IMPLEMENT_SETTER(KSI_ExtendPdu, KSI_Config*, confRequest, ConfRequest);
+KSI_IMPLEMENT_SETTER(KSI_ExtendPdu, KSI_Config*, confResponse, ConfResponse);
 KSI_IMPLEMENT_SETTER(KSI_ExtendPdu, KSI_DataHash*, hmac, Hmac);
 KSI_IMPLEMENT_SETTER(KSI_ExtendPdu, KSI_ErrorPdu*, error, Error);
-
-KSI_IMPLEMENT_OBJECT_PARSE(KSI_ExtendPdu, 0x300);
-KSI_IMPLEMENT_OBJECT_SERIALIZE(KSI_ExtendPdu, 0x300, 0, 0)
 
 /**
  * KSI_AggregationPdu
@@ -983,6 +1156,10 @@ void KSI_AggregationPdu_free(KSI_AggregationPdu *t) {
 		KSI_AggregationReq_free(t->request);
 		KSI_AggregationResp_free(t->response);
 		KSI_ErrorPdu_free(t->error);
+		KSI_AggregationConf_free(t->confRequest);
+		KSI_AggregationConf_free(t->confResponse);
+		KSI_AggregationAckReq_free(t->ackRequest);
+		KSI_AggregationAck_free(t->ackResponse);
 		KSI_DataHash_free(t->hmac);
 		KSI_free(t);
 	}
@@ -1002,6 +1179,10 @@ int KSI_AggregationPdu_new(KSI_CTX *ctx, KSI_AggregationPdu **t) {
 	tmp->request = NULL;
 	tmp->response = NULL;
 	tmp->error = NULL;
+	tmp->confRequest = NULL;
+	tmp->confResponse = NULL;
+	tmp->ackRequest = NULL;
+	tmp->ackResponse = NULL;
 	tmp->hmac = NULL;
 
 	*t = tmp;
@@ -1014,16 +1195,42 @@ cleanup:
 
 int KSI_AggregationPdu_calculateHmac(KSI_AggregationPdu *t, KSI_HashAlgorithm algo_id, const char *key, KSI_DataHash **hmac){
 	int res = KSI_OK;
-	if (t)
-		res = pdu_calculateHmac(t->ctx, (void*)t,
-				(int (*)(void*, KSI_Header**))KSI_AggregationPdu_getHeader,
-				(int (*)(void*, void**))KSI_AggregationPdu_getResponse,
-				(int (*)(void*, KSI_OctetString**))KSI_AggregationResp_getRaw,
-				(int (*)(void*, void**))KSI_AggregationPdu_getRequest,
-				(int (*)(void*, KSI_OctetString**))KSI_AggregationReq_getRaw,
-				0x201,0x202, KSI_TLV_TEMPLATE(KSI_AggregationReq),KSI_TLV_TEMPLATE(KSI_AggregationResp),
-				algo_id, key, hmac);
-	else return KSI_INVALID_ARGUMENT;
+	if (t == NULL || t->ctx == NULL)
+		return KSI_INVALID_ARGUMENT;
+
+	if (t->request != NULL || t->confRequest != NULL || t->ackRequest != NULL) {
+		if (t->ctx->requestPduVersion == 1) {
+			res = pdu_calculateHmac(t->ctx, (void*)t,
+					(int (*)(void*, KSI_Header**))KSI_AggregationPdu_getHeader,
+					(int (*)(void*, void**))KSI_AggregationPdu_getResponse,
+					(int (*)(void*, KSI_OctetString**))KSI_AggregationResp_getRaw,
+					(int (*)(void*, void**))KSI_AggregationPdu_getRequest,
+					(int (*)(void*, KSI_OctetString**))KSI_AggregationReq_getRaw,
+					0x201,0x202, KSI_TLV_TEMPLATE(KSI_AggregationReq),KSI_TLV_TEMPLATE(KSI_AggregationResp),
+					algo_id, key, hmac);
+		} else if (t->ctx->requestPduVersion == 2) {
+			res = pdu_calculateHmac_v2(t->ctx, (void*)t, (int(*)(const void *, unsigned char **, size_t *))KSI_AggregationPdu_serialize, algo_id, key, hmac);
+		} else {
+			res = KSI_INVALID_FORMAT;
+		}
+	} else if (t->response != NULL || t->confResponse != NULL || t->ackResponse != NULL) {
+		if (t->ctx->responsePduVersion == 1) {
+			res = pdu_calculateHmac(t->ctx, (void*)t,
+					(int (*)(void*, KSI_Header**))KSI_AggregationPdu_getHeader,
+					(int (*)(void*, void**))KSI_AggregationPdu_getResponse,
+					(int (*)(void*, KSI_OctetString**))KSI_AggregationResp_getRaw,
+					(int (*)(void*, void**))KSI_AggregationPdu_getRequest,
+					(int (*)(void*, KSI_OctetString**))KSI_AggregationReq_getRaw,
+					0x201,0x202, KSI_TLV_TEMPLATE(KSI_AggregationReq),KSI_TLV_TEMPLATE(KSI_AggregationResp),
+					algo_id, key, hmac);
+		} else if (t->ctx->responsePduVersion == 2) {
+			res = pdu_calculateHmac_v2(t->ctx, (void*)t, (int(*)(const void *, unsigned char **, size_t *))KSI_AggregationPdu_serialize, algo_id, key, hmac);
+		} else {
+			res = KSI_INVALID_FORMAT;
+		}
+	} else {
+		res = KSI_INVALID_FORMAT;
+	}
 
 	return res;
 }
@@ -1065,6 +1272,7 @@ int KSI_AggregationReq_enclose(KSI_AggregationReq *req, char *loginId, char *key
 	int res;
 	KSI_AggregationPdu *tmp = NULL;
 	KSI_Header *hdr = NULL;
+	KSI_DataHash *hash = NULL;
 	size_t loginLen;
 
 	if (req == NULL || loginId == NULL || key == NULL || pdu == NULL) {
@@ -1100,6 +1308,13 @@ int KSI_AggregationReq_enclose(KSI_AggregationReq *req, char *loginId, char *key
 		if (res != KSI_OK) goto cleanup;
 	}
 
+	/* Create and append initial empty HMAC. */
+	res = KSI_DataHash_createZero(req->ctx, KSI_getHashAlgorithmByName("default"), &hash);
+	if (res != KSI_OK) goto cleanup;
+
+	tmp->hmac = hash;
+	hash = NULL;
+
 	/* Calculate the HMAC using the provided key and the default hash algorithm. */
 	res = KSI_AggregationPdu_updateHmac(tmp, KSI_getHashAlgorithmByName("default"), key);
 	if (res != KSI_OK) goto cleanup;
@@ -1120,21 +1335,97 @@ cleanup:
 	return res;
 }
 
+int KSI_AggregationPdu_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len, KSI_AggregationPdu **t) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_TLV *tlv = NULL;
+	KSI_AggregationPdu *tmp = NULL;
+
+	if (ctx == NULL || t == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_TLV_parseBlob2(ctx, (unsigned char *)raw, len, 0, &tlv);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_AggregationPdu_new(ctx, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	if (KSI_TLV_getTag(tlv) == 0x200) {
+		res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_AggregationPdu), tmp);
+		ctx->responsePduVersion = 1;
+	} else if (KSI_TLV_getTag(tlv) == 0x220) {
+		res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_AggregationReqPdu), tmp);
+		ctx->responsePduVersion = 2;
+	} else if (KSI_TLV_getTag(tlv) == 0x221) {
+		res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_AggregationRespPdu), tmp);
+		ctx->responsePduVersion = 2;
+	} else {
+		res = KSI_INVALID_FORMAT;
+	}
+	if (res != KSI_OK) goto cleanup;
+
+	*t = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_TLV_free(tlv);
+	KSI_AggregationPdu_free(tmp);
+
+	return res;
+}
+
+int KSI_AggregationPdu_serialize(const KSI_AggregationPdu *t, unsigned char **raw, size_t *len) {
+	int res = KSI_UNKNOWN_ERROR;
+	if (t == NULL || t->ctx == NULL || raw == NULL || len == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (t->ctx->requestPduVersion == 1) {
+		res = KSI_TlvTemplate_serializeObject(t->ctx, t, 0x200, 0, 0, KSI_TLV_TEMPLATE(KSI_AggregationPdu), raw, len);
+	} else if (t->ctx->requestPduVersion == 2) {
+		if (t->request != NULL || t->confRequest != NULL || t->ackRequest != NULL) {
+			res = KSI_TlvTemplate_serializeObject(t->ctx, t, 0x220, 0, 0, KSI_TLV_TEMPLATE(KSI_AggregationReqPdu), raw, len);
+		} else if (t->response != NULL || t->confResponse != NULL || t->ackResponse != NULL) {
+			res = KSI_TlvTemplate_serializeObject(t->ctx, t, 0x221, 0, 0, KSI_TLV_TEMPLATE(KSI_AggregationRespPdu), raw, len);
+		} else {
+			res = KSI_INVALID_FORMAT;
+		}
+	} else {
+		res = KSI_INVALID_FORMAT;
+	}
+
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
 
 KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_Header*, header, Header);
 KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_AggregationReq*, request, Request);
 KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_AggregationResp*, response, Response);
 KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_DataHash*, hmac, Hmac);
 KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_ErrorPdu*, error, Error);
+KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_Config*, confRequest, ConfRequest);
+KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_Config*, confResponse, ConfResponse);
+KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_RequestAck*, ackRequest, AckRequest);
+KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_RequestAck*, ackResponse, AckResponse);
 
 KSI_IMPLEMENT_SETTER(KSI_AggregationPdu, KSI_Header*, header, Header);
 KSI_IMPLEMENT_SETTER(KSI_AggregationPdu, KSI_AggregationReq*, request, Request);
 KSI_IMPLEMENT_SETTER(KSI_AggregationPdu, KSI_AggregationResp*, response, Response);
 KSI_IMPLEMENT_SETTER(KSI_AggregationPdu, KSI_DataHash*, hmac, Hmac);
 KSI_IMPLEMENT_SETTER(KSI_AggregationPdu, KSI_ErrorPdu*, error, Error);
-
-KSI_IMPLEMENT_OBJECT_PARSE(KSI_AggregationPdu, 0x200);
-KSI_IMPLEMENT_OBJECT_SERIALIZE(KSI_AggregationPdu, 0x200, 0, 0)
+KSI_IMPLEMENT_SETTER(KSI_AggregationPdu, KSI_Config*, confRequest, ConfRequest);
+KSI_IMPLEMENT_SETTER(KSI_AggregationPdu, KSI_Config*, confResponse, ConfResponse);
+KSI_IMPLEMENT_SETTER(KSI_AggregationPdu, KSI_RequestAck*, ackRequest, AckRequest);
+KSI_IMPLEMENT_SETTER(KSI_AggregationPdu, KSI_RequestAck*, ackResponse, AckResponse);
 
 /**
  * KSI_Header
@@ -1190,6 +1481,9 @@ void KSI_Config_free(KSI_Config *t) {
 		KSI_Integer_free(t->maxLevel);
 		KSI_Integer_free(t->aggrAlgo);
 		KSI_Integer_free(t->aggrPeriod);
+		KSI_Integer_free(t->maxRequests);
+		KSI_Integer_free(t->calendarFirstTime);
+		KSI_Integer_free(t->calendarLastTime);
 		KSI_Utf8StringList_free(t->parentUri);
 		KSI_free(t);
 	}
@@ -1208,6 +1502,9 @@ int KSI_Config_new(KSI_CTX *ctx, KSI_Config **t) {
 	tmp->maxLevel = NULL;
 	tmp->aggrAlgo = NULL;
 	tmp->aggrPeriod = NULL;
+	tmp->maxRequests = NULL;
+	tmp->calendarFirstTime = NULL;
+	tmp->calendarLastTime = NULL;
 	tmp->parentUri = NULL;
 	*t = tmp;
 	tmp = NULL;
@@ -1220,12 +1517,18 @@ cleanup:
 KSI_IMPLEMENT_GETTER(KSI_Config, KSI_Integer*, maxLevel, MaxLevel);
 KSI_IMPLEMENT_GETTER(KSI_Config, KSI_Integer*, aggrAlgo, AggrAlgo);
 KSI_IMPLEMENT_GETTER(KSI_Config, KSI_Integer*, aggrPeriod, AggrPeriod);
+KSI_IMPLEMENT_GETTER(KSI_Config, KSI_Integer*, maxRequests, MaxRequests);
 KSI_IMPLEMENT_GETTER(KSI_Config, KSI_LIST(KSI_Utf8String)*, parentUri, ParentUri);
+KSI_IMPLEMENT_GETTER(KSI_Config, KSI_Integer*, calendarFirstTime, CalendarFirstTime);
+KSI_IMPLEMENT_GETTER(KSI_Config, KSI_Integer*, calendarLastTime, CalendarLastTime);
 
 KSI_IMPLEMENT_SETTER(KSI_Config, KSI_Integer*, maxLevel, MaxLevel);
 KSI_IMPLEMENT_SETTER(KSI_Config, KSI_Integer*, aggrAlgo, AggrAlgo);
 KSI_IMPLEMENT_SETTER(KSI_Config, KSI_Integer*, aggrPeriod, AggrPeriod);
+KSI_IMPLEMENT_SETTER(KSI_Config, KSI_Integer*, maxRequests, MaxRequests);
 KSI_IMPLEMENT_SETTER(KSI_Config, KSI_LIST(KSI_Utf8String)*, parentUri, ParentUri);
+KSI_IMPLEMENT_SETTER(KSI_Config, KSI_Integer*, calendarFirstTime, CalendarFirstTime);
+KSI_IMPLEMENT_SETTER(KSI_Config, KSI_Integer*, calendarLastTime, CalendarLastTime);
 
 
 /**
@@ -1286,8 +1589,12 @@ KSI_IMPLEMENT_TOTLV(KSI_AggregationReq);
  */
 void KSI_RequestAck_free(KSI_RequestAck *t) {
 	if (t != NULL) {
+		KSI_Integer_free(t->requestTime);
+		KSI_Integer_free(t->receiptTime);
+		KSI_Integer_free(t->acknowledgeTime);
 		KSI_Integer_free(t->aggregationPeriod);
 		KSI_Integer_free(t->aggregationDelay);
+		KSI_Integer_free(t->aggregationDrift);
 		KSI_free(t);
 	}
 }
@@ -1302,8 +1609,12 @@ int KSI_RequestAck_new(KSI_CTX *ctx, KSI_RequestAck **t) {
 	}
 
 	tmp->ctx = ctx;
+	tmp->requestTime = NULL;
+	tmp->receiptTime = NULL;
+	tmp->acknowledgeTime = NULL;
 	tmp->aggregationPeriod = NULL;
 	tmp->aggregationDelay = NULL;
+	tmp->aggregationDrift = NULL;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -1312,11 +1623,19 @@ cleanup:
 	return res;
 }
 
+KSI_IMPLEMENT_GETTER(KSI_RequestAck, KSI_Integer*, requestTime, RequestTime);
+KSI_IMPLEMENT_GETTER(KSI_RequestAck, KSI_Integer*, receiptTime, ReceiptTime);
+KSI_IMPLEMENT_GETTER(KSI_RequestAck, KSI_Integer*, acknowledgeTime, AcknowledgeTime);
 KSI_IMPLEMENT_GETTER(KSI_RequestAck, KSI_Integer*, aggregationPeriod, AggregationPeriod);
 KSI_IMPLEMENT_GETTER(KSI_RequestAck, KSI_Integer*, aggregationDelay, AggregationDelay);
+KSI_IMPLEMENT_GETTER(KSI_RequestAck, KSI_Integer*, aggregationDrift, AggregationDrift);
 
+KSI_IMPLEMENT_SETTER(KSI_RequestAck, KSI_Integer*, requestTime, RequestTime);
+KSI_IMPLEMENT_SETTER(KSI_RequestAck, KSI_Integer*, receiptTime, ReceiptTime);
+KSI_IMPLEMENT_SETTER(KSI_RequestAck, KSI_Integer*, acknowledgeTime, AcknowledgeTime);
 KSI_IMPLEMENT_SETTER(KSI_RequestAck, KSI_Integer*, aggregationPeriod, AggregationPeriod);
 KSI_IMPLEMENT_SETTER(KSI_RequestAck, KSI_Integer*, aggregationDelay, AggregationDelay);
+KSI_IMPLEMENT_SETTER(KSI_RequestAck, KSI_Integer*, aggregationDrift, AggregationDrift);
 
 
 /**
