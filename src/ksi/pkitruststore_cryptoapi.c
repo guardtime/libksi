@@ -879,7 +879,7 @@ static int pki_truststore_verifyCertificateConstraints(const KSI_PKITruststore *
 
 		if (CertGetNameString(subjectCert, CERT_NAME_ATTR_TYPE, 0, ptr->oid, tmp, sizeof(tmp)) == 1){
 			KSI_LOG_debug(pki->ctx, "Value for OID: '%s' does not exist.", ptr->oid);
-			KSI_pushError(pki->ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, NULL);
+			KSI_pushError(pki->ctx, res = KSI_INVALID_ARGUMENT, NULL);
 			goto cleanup;
 		}
 
