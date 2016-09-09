@@ -57,8 +57,16 @@ else
     AC_MSG_RESULT([no])
 fi
 
-# Disable strict HTTP parsing (e.g. allow underscores in host names)
-CFLAGS+=" -DHTTP_PARSER_STRICT=0"
+# Define configuration variables for the SDK
+
+AC_MSG_NOTICE([Disabling strict HTTP parsing])
+AC_DEFINE(HTTP_PARSER_STRICT, 0, [Disabling strict HTTP parsing to allow underscores in host names])
+
+AC_MSG_NOTICE([Setting aggregation PDU version])
+AC_DEFINE(KSI_AGGREGATION_PDU_VERSION, KSI_PDU_VERSION_1, [Setting aggregation PDU version to 1. Set this to 2 if your aggregator supports both versions.])
+
+AC_MSG_NOTICE([Setting extending PDU version])
+AC_DEFINE(KSI_EXTENDING_PDU_VERSION, KSI_PDU_VERSION_1, [Setting extending PDU version to 1. Set this to 2 if your extender supports both versions.])
 
 # Checks for libraries.
 

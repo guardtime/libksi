@@ -34,6 +34,20 @@
 #define KSI_TLV_MASK_TLV8_TYPE 0x1fu
 
 /**
+ * Default PDU versions for KSI aggregation and extending messages.
+ */
+#define KSI_PDU_VERSION_1		1
+#define KSI_PDU_VERSION_2		2
+
+#ifndef KSI_AGGREGATION_PDU_VERSION
+#define KSI_AGGREGATION_PDU_VERSION		KSI_PDU_VERSION_1
+#endif
+
+#ifndef KSI_EXTENDING_PDU_VERSION
+#define KSI_EXTENDING_PDU_VERSION		KSI_PDU_VERSION_1
+#endif
+
+/**
  * HTTP network client implementations.
  */
 #define KSI_IMPL_CURL			1

@@ -234,6 +234,15 @@ enum KSI_StatusCode {
 	 * Input hash value in the client request is longer than the server allows.
 	 */
 	KSI_SERVICE_AGGR_INPUT_TOO_LONG = 0x40a,
+	/**
+	 * Received PDU v2 response to PDU v1 request. Configure the SDK to use PDU v2 format for the given aggregator.
+	 */
+	KSI_SERVICE_AGGR_PDU_V2_RESPONSE_TO_PDU_V1_REQUEST = 0x40b,
+
+	/**
+	 * Received PDU v1 response to PDU v2 request. Configure the SDK to use PDU v1 format for the given aggregator.
+	 */
+	KSI_SERVICE_AGGR_PDU_V1_RESPONSE_TO_PDU_V2_REQUEST = 0x40c,
 
 	/* Extender status codes. */
 
@@ -264,6 +273,16 @@ enum KSI_StatusCode {
 	KSI_SERVICE_EXTENDER_REQUEST_TIME_IN_FUTURE = 0x506,
 
 	/**
+	 * Received PDU v2 response to PDU v1 request. Configure the SDK to use PDU v2 format for the given extender.
+	 */
+	KSI_SERVICE_EXTENDER_PDU_V2_RESPONSE_TO_PDU_V1_REQUEST = 0x507,
+
+	/**
+	 * Received PDU v1 response to PDU v2 request. Configure the SDK to use PDU v1 format for the given extender.
+	 */
+	KSI_SERVICE_EXTENDER_PDU_V1_RESPONSE_TO_PDU_V2_REQUEST = 0x508,
+
+	/**
 	 * The signature was not found in the multi signature container.
 	 */
 	KSI_MULTISIG_NOT_FOUND = 0x601,
@@ -276,6 +295,26 @@ enum KSI_StatusCode {
 	 * Unknown error occurred.
 	 */
 	KSI_UNKNOWN_ERROR = 0xffff
+};
+
+enum KSI_CtxFlag {
+	/**
+	 * Description:	PDU version for KSI aggregation messages.
+	 * Type:		char.
+	 * Range:		KSI_PDU_VERSION_1 .. KSI_PDU_VERSION_2
+	 */
+	KSI_CTX_FLAG_AGGR_PDU_VER	= 1,
+	/**
+	 * Description:	PDU version for KSI extending messages.
+	 * Type:		char.
+	 * Range:		KSI_PDU_VERSION_1 .. KSI_PDU_VERSION_2
+	 */
+	KSI_CTX_FLAG_EXT_PDU_VER	= 2,
+
+	/**
+	 * Placeholder for the last flag.
+	 */
+	KSI_CTX_FLAG_UNDEFINED,
 };
 
 /**
@@ -545,6 +584,17 @@ int KSI_CTX_setExtender(KSI_CTX *ctx, const char *uri, const char *loginId, cons
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
 int KSI_CTX_setAggregator(KSI_CTX *ctx, const char *uri, const char *loginId, const char *key);
+
+/**
+ * Configuration method for the KSI flags.
+ * \param[in]	ctx		KSI context.
+ * \param[in]	flag	KSI flag.
+ * \param[in]	param	Value for specified KSI flag.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \see #KSI_CtxFlag for possible KSI flags.
+ * \note Interpretation of \c param is dependent on the KSI flag.
+ */
+int KSI_CTX_setFlag(KSI_CTX *ctx, enum KSI_CtxFlag flag, void *param);
 
 /**
  * Setter for transfer timeout.

@@ -108,7 +108,7 @@ static void testSigningWrongResponse(CuTest* tc) {
 	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
-	CuAssert(tc, "Signing should not succeed.", res != KSI_OK && sig == NULL);
+	CuAssert(tc, "Signing should not succeed.", res == KSI_VERIFICATION_FAILURE && sig == NULL);
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
@@ -272,6 +272,79 @@ static void testAggregationHeader(CuTest* tc) {
 	KSI_RequestHandle_free(handle);
 }
 
+static void testExtendingHeader(CuTest* tc) {
+	int res;
+	KSI_ExtendReq *req = NULL;
+	KSI_ExtendPdu *pdu = NULL;
+	KSI_RequestHandle *handle = NULL;
+	KSI_Integer *tmp = NULL;
+	KSI_Header *hdr = NULL;
+	KSI_Integer *reqId = NULL;
+	KSI_Integer *start = NULL;
+	const unsigned char *raw = NULL;
+	size_t raw_len = 0;
+
+	KSI_ERR_clearErrors(ctx);
+
+	mockHeaderCounter = 0;
+
+	res = KSI_CTX_setRequestHeaderCallback(ctx, mockHeaderCallback);
+	CuAssert(tc, "Unable to set header callback.", res == KSI_OK);
+
+	res = KSI_CTX_setExtender(ctx, "file://dummy", TEST_USER, TEST_PASS);
+
+	res = KSI_ExtendReq_new(ctx, &req);
+	CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
+
+	res = KSI_Integer_new(ctx, 1435740789, &start);
+	CuAssert(tc, "Unable to create start time.", res == KSI_OK && start != NULL);
+
+	/* Set the aggregation time. */
+	res = KSI_ExtendReq_setAggregationTime(req, start);
+	start = NULL;
+
+	res = KSI_Integer_new(ctx, 17, &reqId);
+	CuAssert(tc, "Unable to create reqId", res == KSI_OK && reqId != NULL);
+
+	res = KSI_ExtendReq_setRequestId(req, reqId);
+	CuAssert(tc, "Unable to set request id.", res == KSI_OK);
+	reqId = NULL;
+
+	res = KSI_sendExtendRequest(ctx, req, &handle);
+	CuAssert(tc, "Unable to send request.", res == KSI_OK && handle != NULL);
+
+	KSI_ExtendReq_free(req);
+	req = NULL;
+
+	res = KSI_RequestHandle_getRequest(handle, &raw, &raw_len);
+	CuAssert(tc, "Unable to get request.", res == KSI_OK && raw != NULL);
+
+	res = KSI_ExtendPdu_parse(ctx, (unsigned char *)raw, raw_len, &pdu);
+	CuAssert(tc, "Unable to parse the request pdu.", res == KSI_OK && pdu != NULL);
+
+	res = KSI_ExtendPdu_getHeader(pdu, &hdr);
+	CuAssert(tc, "Unable to get header from pdu.", res == KSI_OK && hdr != NULL);
+
+	res = KSI_Header_getMessageId(hdr, &tmp);
+	CuAssert(tc, "Unable to get message id from header.", res == KSI_OK && tmp != NULL);
+	CuAssert(tc, "Wrong message id.", KSI_Integer_equalsUInt(tmp, 5));
+	tmp = NULL;
+
+	res = KSI_Header_getInstanceId(hdr, &tmp);
+	CuAssert(tc, "Unable to get instance id from header.", res == KSI_OK && tmp != NULL);
+	CuAssert(tc, "Wrong instance id.", KSI_Integer_equalsUInt(tmp, 1337));
+	tmp = NULL;
+
+	CuAssert(tc, "Mock header callback not called.", mockHeaderCounter == 1);
+
+	res = KSI_CTX_setRequestHeaderCallback(ctx, NULL);
+	CuAssert(tc, "Unable to set NULL as header callback.", res == KSI_OK);
+
+	KSI_Integer_free(reqId);
+	KSI_Integer_free(start);
+	KSI_ExtendPdu_free(pdu);
+	KSI_RequestHandle_free(handle);
+}
 
 static void testExtending(CuTest* tc) {
 #define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
@@ -438,7 +511,7 @@ static void testExtenderWrongData(CuTest* tc) {
 	KSI_Integer_new(ctx, 1400112222, &to);
 
 	res = KSI_Signature_extendTo(sig, ctx, to, &ext);
-	CuAssert(tc, "Wrong answer from extender should not be tolerated.", res != KSI_OK && ext == NULL);
+	CuAssert(tc, "Wrong answer from extender should not be tolerated.", res == KSI_INVALID_ARGUMENT && ext == NULL);
 
 	KSI_Integer_free(to);
 	KSI_Signature_free(sig);
@@ -465,7 +538,7 @@ static void testExtendInvalidSignature(CuTest* tc) {
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_Signature_extendTo(sig, ctx, NULL, &ext);
-	CuAssert(tc, "It should not be possible to extend this signature.", res != KSI_OK && ext == NULL);
+	CuAssert(tc, "It should not be possible to extend this signature.", res == KSI_VERIFICATION_FAILURE && ext == NULL);
 
 	KSI_Signature_free(sig);
 	KSI_Signature_free(ext);
@@ -671,7 +744,7 @@ static void testSigningInvalidAggrChainReturned(CuTest* tc){
 	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
-	CuAssert(tc, "Signature should not be created with invalid aggregation response", res != KSI_OK);
+	CuAssert(tc, "Signature should not be created with invalid aggregation response", res == KSI_VERIFICATION_FAILURE);
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
@@ -1062,6 +1135,7 @@ CuSuite* KSITest_NET_getSuite(void) {
 	SUITE_ADD_TEST(suite, testSigningInvalidResponse);
 	SUITE_ADD_TEST(suite, testSigningInvalidAggrChainReturned);
 	SUITE_ADD_TEST(suite, testAggregationHeader);
+	SUITE_ADD_TEST(suite, testExtendingHeader);
 	SUITE_ADD_TEST(suite, testSigningErrorResponse);
 	SUITE_ADD_TEST(suite, testExtendingErrorResponse);
 	SUITE_ADD_TEST(suite, testUrlSplit);

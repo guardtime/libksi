@@ -23,6 +23,8 @@
 #include <ksi/tlv.h>
 #include <ksi/tlv_template.h>
 #include <ksi/io.h>
+#include "../src/ksi/ctx_impl.h"
+#include "../src/ksi/internal.h"
 
 static char *ok_sample[] = {
 		"resource/tlv/ok_int-1.tlv",
@@ -301,17 +303,21 @@ static void testObjectSerialization(CuTest *tc, const char *sample, int (*parse)
 }
 
 static void aggregationPduTest(CuTest *tc) {
+	ctx->serializedAggregationPduVersion = KSI_PDU_VERSION_1;
 	testObjectSerialization(tc, getFullResourcePath("resource/tlv/aggr_response.tlv"),
 			(int (*)(KSI_CTX *, unsigned char *, size_t, void **))KSI_AggregationPdu_parse,
 			(int (*)(void *, unsigned char **, size_t *))KSI_AggregationPdu_serialize,
 			( void (*)(void *))KSI_AggregationPdu_free);
+	ctx->serializedAggregationPduVersion = KSI_AGGREGATION_PDU_VERSION;
 }
 
 static void extendPduTest(CuTest *tc) {
+	ctx->serializedExtendingPduVersion = KSI_PDU_VERSION_1;
 	testObjectSerialization(tc, getFullResourcePath("resource/tlv/extend_response.tlv"),
 			(int (*)(KSI_CTX *, unsigned char *, size_t, void **))KSI_ExtendPdu_parse,
 			(int (*)(void *, unsigned char **, size_t *))KSI_ExtendPdu_serialize,
 			( void (*)(void *))KSI_ExtendPdu_free);
+	ctx->serializedExtendingPduVersion = KSI_EXTENDING_PDU_VERSION;
 }
 
 static void testErrorMessage(CuTest* tc, const char *expected, const char *tlv_file,

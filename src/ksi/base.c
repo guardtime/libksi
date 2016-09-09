@@ -142,6 +142,10 @@ const char *KSI_getErrorString(int statusCode) {
 			return "Input hash value in the client request is longer than the server allows";
 		case KSI_SERVICE_AGGR_TOO_MANY_REQUESTS:
 			return "Too many requests from the client in the same round";
+		case KSI_SERVICE_AGGR_PDU_V2_RESPONSE_TO_PDU_V1_REQUEST:
+			return "Received PDU v2 response to PDU v1 request. Configure the SDK to use PDU v2 format for the given aggregator.";
+		case KSI_SERVICE_AGGR_PDU_V1_RESPONSE_TO_PDU_V2_REQUEST:
+			return "Received PDU v1 response to PDU v2 request. Configure the SDK to use PDU v1 format for the given aggregator.";
 		case KSI_SERVICE_EXTENDER_INVALID_TIME_RANGE:
 			return "The request asked for a hash chain going backwards in time.";
 		case KSI_SERVICE_EXTENDER_DATABASE_MISSING:
@@ -154,6 +158,10 @@ const char *KSI_getErrorString(int statusCode) {
 			return "The request asked for hash values newer than the newest round in the server's database.";
 		case KSI_SERVICE_EXTENDER_REQUEST_TIME_IN_FUTURE:
 			return "The request asked for hash values newer than the current real time";
+		case KSI_SERVICE_EXTENDER_PDU_V2_RESPONSE_TO_PDU_V1_REQUEST:
+			return "Received PDU v2 response to PDU v1 request. Configure the SDK to use PDU v2 format for the given extender.";
+		case KSI_SERVICE_EXTENDER_PDU_V1_RESPONSE_TO_PDU_V2_REQUEST:
+			return "Received PDU v1 response to PDU v2 request. Configure the SDK to use PDU v1 format for the given extender.";
 		case KSI_MULTISIG_NOT_FOUND:
 			return "The signature was not found in the given multi signature container.";
 		case KSI_MULTISIG_INVALID_STATE:
@@ -190,8 +198,10 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->publicationCertEmail_DEPRECATED = NULL;
 	ctx->loggerCB = NULL;
 	ctx->requestHeaderCB = NULL;
-	ctx->requestPduVersion = 1;
-	ctx->responsePduVersion = 1;
+	ctx->serializedAggregationPduVersion = KSI_AGGREGATION_PDU_VERSION;
+	ctx->parsedAggregationPduVersion = KSI_AGGREGATION_PDU_VERSION;
+	ctx->serializedExtendingPduVersion = KSI_EXTENDING_PDU_VERSION;
+	ctx->parsedExtendingPduVersion = KSI_EXTENDING_PDU_VERSION;
 	ctx->loggerCtx = NULL;
 	ctx->certConstraints = NULL;
 	ctx->freeCertConstraintsArray = freeCertConstraintsArray;
@@ -852,6 +862,79 @@ int KSI_CTX_setExtender(KSI_CTX *ctx, const char *uri, const char *loginId, cons
 
 int KSI_CTX_setPublicationUrl(KSI_CTX *ctx, const char *uri){
 	return KSI_CTX_setUri(ctx, uri, uri, uri, KSI_UriClient_setPublicationUrl_wrapper);
+}
+
+static int KSI_CTX_setAggrPduVersion(KSI_CTX *ctx, char ver) {
+	int res = KSI_INVALID_ARGUMENT;
+
+	if (ctx == NULL) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (ver >= KSI_PDU_VERSION_1 && ver <= KSI_PDU_VERSION_2) {
+		ctx->serializedAggregationPduVersion = ver;
+		ctx->parsedAggregationPduVersion = ver;
+		res = KSI_OK;
+	}
+
+cleanup:
+
+	return res;
+}
+
+static int KSI_CTX_setExtPduVersion(KSI_CTX *ctx, char ver) {
+	int res = KSI_INVALID_ARGUMENT;
+
+	if (ctx == NULL) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (ver >= KSI_PDU_VERSION_1 && ver <= KSI_PDU_VERSION_2) {
+		ctx->serializedExtendingPduVersion = ver;
+		ctx->parsedExtendingPduVersion = ver;
+		res = KSI_OK;
+	}
+
+cleanup:
+
+	return res;
+}
+
+int KSI_CTX_setFlag(KSI_CTX *ctx, enum KSI_CtxFlag flag, void *param)
+{
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (ctx == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	switch (flag) {
+		case KSI_CTX_FLAG_AGGR_PDU_VER:
+			res = KSI_CTX_setAggrPduVersion(ctx, (char)param);
+		break;
+
+		case KSI_CTX_FLAG_EXT_PDU_VER:
+			res = KSI_CTX_setExtPduVersion(ctx, (char)param);
+		break;
+
+		default:
+			res = KSI_INVALID_ARGUMENT;
+		break;
+	}
+
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
 }
 
 static int KSI_CTX_setTimeoutSeconds(KSI_CTX *ctx, int timeout, int (*setter)(KSI_NetworkClient*, int)){

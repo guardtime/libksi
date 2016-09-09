@@ -82,11 +82,17 @@ extern "C" {
 		/** User defined function to be called on the request pdu header before sending it. */
 		KSI_RequestHeaderCallback requestHeaderCB;
 
-		/** PDU version to be used for aggregation and extending requests. */
-		unsigned requestPduVersion;
+		/** PDU version to be used in serializing KSIAP messages. */
+		char serializedAggregationPduVersion;
 
-		/** PDU version extracted from aggregation and extending responses. */
-		unsigned responsePduVersion;
+		/** PDU version determined from parsing KSIAP messages. */
+		char parsedAggregationPduVersion;
+
+		/** PDU version to be used in serializing KSIEP messages. */
+		char serializedExtendingPduVersion;
+
+		/** PDU version determined from parsing KSIEP messages. */
+		char parsedExtendingPduVersion;
 
 		/** Counter for the requests sent by this context. */
 		KSI_uint64_t requestCounter;
