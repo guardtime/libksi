@@ -322,10 +322,12 @@ void assert_isTcpClientSetCorrectly(CuTest *tc, KSI_NetworkClient *uri_client,
 static void testKsiUserAndPassFromUri(CuTest* tc) {
 	int res;
 	KSI_NetworkClient *uric = NULL;
-	const char aggr_uri[] = "http://user_a:pass_a@ksigw.test.guardtime.com:1111/gt-signingservice";
-	const char ext_uri[] = "http://user_x:pass_x@ksigw.test.guardtime.com:2222/gt-extendingservice";
+	const char aggr_uri[] = "ksi+http://user_a:pass_a@ksigw.test.guardtime.com:1111/gt-signingservice";
+	const char ext_uri[] = "ksi+http://user_x:pass_x@ksigw.test.guardtime.com:2222/gt-extendingservice";
 	const char aggr_uri_tcp[] = "ksi+tcp://user_ta:pass_ta@ksigw.test.test.a.com:3333/gt-signingservice";
 	const char ext_uri_tcp[] = "ksi+tcp://user_tx:pass_tx@ksigw.test.test.x.com:4444/gt-extendingservice";
+	const char aggr_uri_http[] = "http://ba_user_a:ba_pass_a@ksigw.test.guardtime.com:1111/gt-signingservice";
+	const char ext_uri_http[] = "http://ba_user_x:ba_pass_x@ksigw.test.guardtime.com:2222/gt-extendingservice";
 
 	/* Http. Extract all data from uri. */
 	res = KSI_UriClient_new(ctx, &uric);
@@ -414,6 +416,20 @@ static void testKsiUserAndPassFromUri(CuTest* tc) {
 	assert_isTcpClientSetCorrectly(tc, uric, "ksigw.test.test.a.com", 3333, "user_ta", "a2",
 											 "ksigw.test.test.x.com", 4444, "user_tx", "x2");
 
+	res = KSI_UriClient_setAggregator(uric, aggr_uri_http, NULL, NULL);
+	CuAssert(tc, "Aggregator uri set without credentials.", res == KSI_INVALID_ARGUMENT);
+
+	res = KSI_UriClient_setExtender(uric, ext_uri_http, NULL, NULL);
+	CuAssert(tc, "Extender uri set without credentials.", res == KSI_INVALID_ARGUMENT);
+
+	res = KSI_UriClient_setAggregator(uric, aggr_uri_http, "user_ha", "pass_ha");
+	CuAssert(tc, "Unable to parse aggregator uri.", res == KSI_OK);
+
+	res = KSI_UriClient_setExtender(uric, ext_uri_http, "user_hx", "pass_hx");
+	CuAssert(tc, "Unable to parse extender uri.", res == KSI_OK);
+
+	assert_isHttpClientSetCorrectly(tc, uric, aggr_uri_http, "user_ha", "pass_ha",
+												ext_uri_http, "user_hx", "pass_hx");
 
 	KSI_NetworkClient_free(uric);
 }

@@ -36,6 +36,8 @@ EXPORTS
 	KSI_BlockSigner_addLeaf
 	KSI_BlockSignerHandle_getSignature
 	KSI_BlockSignerHandle_free
+	KSI_BlockSignerHandleList_free
+	KSI_BlockSignerHandleList_new
 
 ;crc32.h
 EXPORTS
