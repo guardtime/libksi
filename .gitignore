@@ -85,8 +85,12 @@ test/resigner
 test/runner
 test/serialize-benchmark
 testsuite-xunit.xml
+
+# Code coverage report files #
 coverage.info
 coverage/
+*.gcno
+*.gcda
 
 # Configuration files
 test/integrationtest.conf

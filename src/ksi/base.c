@@ -198,10 +198,8 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->publicationCertEmail_DEPRECATED = NULL;
 	ctx->loggerCB = NULL;
 	ctx->requestHeaderCB = NULL;
-	ctx->serializedAggregationPduVersion = KSI_AGGREGATION_PDU_VERSION;
-	ctx->parsedAggregationPduVersion = KSI_AGGREGATION_PDU_VERSION;
-	ctx->serializedExtendingPduVersion = KSI_EXTENDING_PDU_VERSION;
-	ctx->parsedExtendingPduVersion = KSI_EXTENDING_PDU_VERSION;
+	ctx->aggregationPduVersion = KSI_AGGREGATION_PDU_VERSION;
+	ctx->extendPduVersion = KSI_EXTENDING_PDU_VERSION;
 	ctx->loggerCtx = NULL;
 	ctx->certConstraints = NULL;
 	ctx->freeCertConstraintsArray = freeCertConstraintsArray;
@@ -864,7 +862,7 @@ int KSI_CTX_setPublicationUrl(KSI_CTX *ctx, const char *uri){
 	return KSI_CTX_setUri(ctx, uri, uri, uri, KSI_UriClient_setPublicationUrl_wrapper);
 }
 
-static int KSI_CTX_setAggrPduVersion(KSI_CTX *ctx, char ver) {
+static int KSI_CTX_setAggrPduVersion(KSI_CTX *ctx, size_t ver) {
 	int res = KSI_INVALID_ARGUMENT;
 
 	if (ctx == NULL) {
@@ -873,8 +871,7 @@ static int KSI_CTX_setAggrPduVersion(KSI_CTX *ctx, char ver) {
 	}
 
 	if (ver >= KSI_PDU_VERSION_1 && ver <= KSI_PDU_VERSION_2) {
-		ctx->serializedAggregationPduVersion = ver;
-		ctx->parsedAggregationPduVersion = ver;
+		ctx->aggregationPduVersion = ver;
 		res = KSI_OK;
 	}
 
@@ -883,7 +880,7 @@ cleanup:
 	return res;
 }
 
-static int KSI_CTX_setExtPduVersion(KSI_CTX *ctx, char ver) {
+static int KSI_CTX_setExtPduVersion(KSI_CTX *ctx, size_t ver) {
 	int res = KSI_INVALID_ARGUMENT;
 
 	if (ctx == NULL) {
@@ -892,8 +889,7 @@ static int KSI_CTX_setExtPduVersion(KSI_CTX *ctx, char ver) {
 	}
 
 	if (ver >= KSI_PDU_VERSION_1 && ver <= KSI_PDU_VERSION_2) {
-		ctx->serializedExtendingPduVersion = ver;
-		ctx->parsedExtendingPduVersion = ver;
+		ctx->extendPduVersion = ver;
 		res = KSI_OK;
 	}
 
@@ -913,11 +909,11 @@ int KSI_CTX_setFlag(KSI_CTX *ctx, enum KSI_CtxFlag flag, void *param)
 
 	switch (flag) {
 		case KSI_CTX_FLAG_AGGR_PDU_VER:
-			res = KSI_CTX_setAggrPduVersion(ctx, (char)param);
+			res = KSI_CTX_setAggrPduVersion(ctx, (size_t)param);
 		break;
 
 		case KSI_CTX_FLAG_EXT_PDU_VER:
-			res = KSI_CTX_setExtPduVersion(ctx, (char)param);
+			res = KSI_CTX_setExtPduVersion(ctx, (size_t)param);
 		break;
 
 		default:

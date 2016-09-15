@@ -781,17 +781,6 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 		goto cleanup;
 	}
 
-	if (handle->ctx->serializedExtendingPduVersion != handle->ctx->parsedExtendingPduVersion) {
-		/* The server response should be INVALID_REQUEST if there is a PDU version mismatch. */
-		if (handle->ctx->serializedExtendingPduVersion == KSI_PDU_VERSION_1) {
-			KSI_pushError(handle->ctx, res = KSI_SERVICE_EXTENDER_PDU_V2_RESPONSE_TO_PDU_V1_REQUEST, "PDU version mismatch.");
-			goto cleanup;
-		} else {
-			KSI_pushError(handle->ctx, res = KSI_SERVICE_EXTENDER_PDU_V1_RESPONSE_TO_PDU_V2_REQUEST, "PDU version mismatch.");
-			goto cleanup;
-		}
-	}
-
 	res = KSI_ExtendPdu_getError(pdu, &error);
 	if (res != KSI_OK) {
 		KSI_pushError(handle->ctx, res, NULL);
@@ -817,7 +806,6 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 		KSI_ERR_push(handle->ctx, res = KSI_convertExtenderStatusCode(status), (long)KSI_Integer_getUInt64(status), __FILE__, __LINE__, KSI_Utf8String_cstr(errorMsg));
 		goto cleanup;
 	}
-
 
 	res = KSI_ExtendPdu_getHeader(pdu, &header);
 	if (res != KSI_OK) {
@@ -919,17 +907,6 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 			KSI_ERR_push(handle->ctx, res, networkStatus, __FILE__, __LINE__, "Unable to parse aggregation pdu.");
 
 		goto cleanup;
-	}
-
-	if (handle->ctx->serializedAggregationPduVersion != handle->ctx->parsedAggregationPduVersion) {
-		/* The server response should be INVALID_REQUEST if there is a PDU version mismatch. */
-		if (handle->ctx->serializedAggregationPduVersion == KSI_PDU_VERSION_1) {
-			KSI_pushError(handle->ctx, res = KSI_SERVICE_AGGR_PDU_V2_RESPONSE_TO_PDU_V1_REQUEST, "PDU version mismatch.");
-			goto cleanup;
-		} else {
-			KSI_pushError(handle->ctx, res = KSI_SERVICE_AGGR_PDU_V1_RESPONSE_TO_PDU_V2_REQUEST, "PDU version mismatch.");
-			goto cleanup;
-		}
 	}
 
 	res = KSI_AggregationPdu_getError(pdu, &error);

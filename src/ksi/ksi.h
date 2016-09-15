@@ -300,13 +300,13 @@ enum KSI_StatusCode {
 enum KSI_CtxFlag {
 	/**
 	 * Description:	PDU version for KSI aggregation messages.
-	 * Type:		char.
+	 * Type:		size_t.
 	 * Range:		KSI_PDU_VERSION_1 .. KSI_PDU_VERSION_2
 	 */
 	KSI_CTX_FLAG_AGGR_PDU_VER	= 1,
 	/**
 	 * Description:	PDU version for KSI extending messages.
-	 * Type:		char.
+	 * Type:		size_t.
 	 * Range:		KSI_PDU_VERSION_1 .. KSI_PDU_VERSION_2
 	 */
 	KSI_CTX_FLAG_EXT_PDU_VER	= 2,

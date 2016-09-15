@@ -247,6 +247,16 @@ extern "C" {
 	#define KSI_TLV_TMPL_FLG_FIXED_ORDER 0x200
 
 	/**
+	 * Element with this flag enabled, if present, must be the first element.
+	 */
+	#define KSI_TLV_TMPL_FLG_FIRST 0x400
+
+	/**
+	 * Element with this flag enabled, if present, must be the last element.
+	 */
+	#define KSI_TLV_TMPL_FLG_LAST 0x800
+
+	/**
 	 * One and only one of the group 0 must be present.
 	 */
 	#define KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0 (KSI_TLV_TMPL_FLG_LEAST_ONE_G0 | KSI_TLV_TMPL_FLG_MOST_ONE_G0)

@@ -152,8 +152,8 @@ static void TestCtxFlags(CuTest *tc) {
 
 	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create KSI context.", res == KSI_OK && ctx != NULL);
-	CuAssert(tc, "Default aggregation PDU version not set correctly.", ctx->serializedAggregationPduVersion == KSI_AGGREGATION_PDU_VERSION);
-	CuAssert(tc, "Default extending PDU version not set correctly.", ctx->serializedExtendingPduVersion == KSI_EXTENDING_PDU_VERSION);
+	CuAssert(tc, "Default aggregation PDU version not set correctly.", ctx->aggregationPduVersion == KSI_AGGREGATION_PDU_VERSION);
+	CuAssert(tc, "Default extending PDU version not set correctly.", ctx->extendPduVersion == KSI_EXTENDING_PDU_VERSION);
 
 	res = KSI_CTX_setFlag(NULL, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_1);
 	CuAssert(tc, "Context NULL accepted.", res == KSI_INVALID_ARGUMENT);
@@ -162,17 +162,18 @@ static void TestCtxFlags(CuTest *tc) {
 	CuAssert(tc, "Context NULL accepted.", res == KSI_INVALID_ARGUMENT);
 
 	res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)(KSI_AGGREGATION_PDU_VERSION == KSI_PDU_VERSION_1 ? KSI_PDU_VERSION_2 : KSI_PDU_VERSION_1));
-	CuAssert(tc, "Unable to set aggregation PDU version.", res == KSI_OK && ctx->serializedAggregationPduVersion != KSI_AGGREGATION_PDU_VERSION);
+	CuAssert(tc, "Unable to set aggregation PDU version.", res == KSI_OK && ctx->aggregationPduVersion != KSI_AGGREGATION_PDU_VERSION);
 
 	res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)(KSI_EXTENDING_PDU_VERSION == KSI_PDU_VERSION_1 ? KSI_PDU_VERSION_2 : KSI_PDU_VERSION_1));
-	CuAssert(tc, "Unable to set extending PDU version.", res == KSI_OK && ctx->serializedExtendingPduVersion != KSI_EXTENDING_PDU_VERSION);
+	CuAssert(tc, "Unable to set extending PDU version.", res == KSI_OK && ctx->extendPduVersion != KSI_EXTENDING_PDU_VERSION);
 
 	res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
-	CuAssert(tc, "Unable to set aggregation PDU version.", res == KSI_OK && ctx->serializedAggregationPduVersion == KSI_AGGREGATION_PDU_VERSION);
+	CuAssert(tc, "Unable to set aggregation PDU version.", res == KSI_OK && ctx->aggregationPduVersion == KSI_AGGREGATION_PDU_VERSION);
 
 	res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
-	CuAssert(tc, "Unable to set extending PDU version.", res == KSI_OK && ctx->serializedExtendingPduVersion == KSI_EXTENDING_PDU_VERSION);
+	CuAssert(tc, "Unable to set extending PDU version.", res == KSI_OK && ctx->extendPduVersion == KSI_EXTENDING_PDU_VERSION);
 
+	KSI_CTX_free(ctx);
 }
 
 CuSuite* KSITest_CTX_getSuite(void)

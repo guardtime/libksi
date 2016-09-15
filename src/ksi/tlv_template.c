@@ -240,20 +240,20 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationPdu)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationReqPdu)
-	KSI_TLV_OBJECT(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationPdu_getHeader, KSI_AggregationPdu_setHeader, KSI_Header_fromTlv, KSI_Header_toTlv, KSI_Header_free, "header")
+	KSI_TLV_OBJECT(0x01, KSI_TLV_TMPL_FLG_FIRST, KSI_AggregationPdu_getHeader, KSI_AggregationPdu_setHeader, KSI_Header_fromTlv, KSI_Header_toTlv, KSI_Header_free, "header")
 	KSI_TLV_OBJECT(0x02, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_AggregationPdu_getRequest, KSI_AggregationPdu_setRequest, KSI_AggregationReq_fromTlv, KSI_AggregationReq_toTlv, KSI_AggregationReq_free, "aggr_req")
 	KSI_TLV_COMPOSITE(0x04, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_AggregationPdu_getConfRequest, KSI_AggregationPdu_setConfRequest, KSI_AggregationConf, "aggr_conf_req")
 	KSI_TLV_COMPOSITE(0x05, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_AggregationPdu_getAckRequest, KSI_AggregationPdu_setAckRequest, KSI_AggregationAckReq, "aggr_ack_req")
-	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationPdu_getHmac, KSI_AggregationPdu_setHmac, "hmac")
+	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_LAST, KSI_AggregationPdu_getHmac, KSI_AggregationPdu_setHmac, "hmac")
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationRespPdu)
-	KSI_TLV_OBJECT(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationPdu_getHeader, KSI_AggregationPdu_setHeader, KSI_Header_fromTlv, KSI_Header_toTlv, KSI_Header_free, "header")
+	KSI_TLV_OBJECT(0x01, KSI_TLV_TMPL_FLG_FIRST, KSI_AggregationPdu_getHeader, KSI_AggregationPdu_setHeader, KSI_Header_fromTlv, KSI_Header_toTlv, KSI_Header_free, "header")
 	KSI_TLV_OBJECT(0x02, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_AggregationPdu_getResponse, KSI_AggregationPdu_setResponse, KSI_AggregationResp_fromTlv, KSI_AggregationResp_toTlv, KSI_AggregationResp_free, "aggr_resp")
 	KSI_TLV_COMPOSITE(0x03, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_AggregationPdu_getError, KSI_AggregationPdu_setError, KSI_ErrorPdu, "aggr_err")
 	KSI_TLV_COMPOSITE(0x04, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_AggregationPdu_getConfResponse, KSI_AggregationPdu_setConfResponse, KSI_AggregationConf, "aggr_conf")
 	KSI_TLV_COMPOSITE(0x05, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_AggregationPdu_getAckResponse, KSI_AggregationPdu_setAckResponse, KSI_AggregationAck, "aggr_ack")
-	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationPdu_getHmac, KSI_AggregationPdu_setHmac, "hmac")
+	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_LAST, KSI_AggregationPdu_getHmac, KSI_AggregationPdu_setHmac, "hmac")
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendReq)
@@ -287,18 +287,18 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendPdu)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendReqPdu)
-	KSI_TLV_COMPOSITE_OBJECT(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendPdu_getHeader, KSI_ExtendPdu_setHeader, KSI_Header_fromTlv, KSI_Header_toTlv, KSI_Header_free, KSI_TLV_TEMPLATE(KSI_Header), "header")
+	KSI_TLV_COMPOSITE_OBJECT(0x01, KSI_TLV_TMPL_FLG_FIRST, KSI_ExtendPdu_getHeader, KSI_ExtendPdu_setHeader, KSI_Header_fromTlv, KSI_Header_toTlv, KSI_Header_free, KSI_TLV_TEMPLATE(KSI_Header), "header")
 	KSI_TLV_COMPOSITE_OBJECT(0x02, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_ExtendPdu_getRequest, KSI_ExtendPdu_setRequest, KSI_ExtendReq_fromTlv, KSI_ExtendReq_toTlv, KSI_ExtendReq_free, KSI_TLV_TEMPLATE(KSI_ExtendReq), "ext_req")
 	KSI_TLV_COMPOSITE(0x04, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_ExtendPdu_getConfRequest, KSI_ExtendPdu_setConfRequest, KSI_ExtendConf, "ext_conf_req")
-	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendPdu_getHmac, KSI_ExtendPdu_setHmac, "hmac")
+	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_LAST, KSI_ExtendPdu_getHmac, KSI_ExtendPdu_setHmac, "hmac")
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_ExtendRespPdu)
-	KSI_TLV_COMPOSITE_OBJECT(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendPdu_getHeader, KSI_ExtendPdu_setHeader, KSI_Header_fromTlv, KSI_Header_toTlv, KSI_Header_free, KSI_TLV_TEMPLATE(KSI_Header), "header")
+	KSI_TLV_COMPOSITE_OBJECT(0x01, KSI_TLV_TMPL_FLG_FIRST, KSI_ExtendPdu_getHeader, KSI_ExtendPdu_setHeader, KSI_Header_fromTlv, KSI_Header_toTlv, KSI_Header_free, KSI_TLV_TEMPLATE(KSI_Header), "header")
 	KSI_TLV_COMPOSITE_OBJECT(0x02, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_ExtendPdu_getResponse, KSI_ExtendPdu_setResponse, KSI_ExtendResp_fromTlv, KSI_ExtendResp_toTlv, KSI_ExtendResp_free, KSI_TLV_TEMPLATE(KSI_ExtendResp_v2), "ext_resp")
 	KSI_TLV_COMPOSITE(0x03, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_ExtendPdu_getError, KSI_ExtendPdu_setError, KSI_ErrorPdu, "ext_err")
 	KSI_TLV_COMPOSITE(0x04, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_ExtendPdu_getConfResponse, KSI_ExtendPdu_setConfResponse, KSI_ExtendConf, "ext_conf")
-	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_NONE, KSI_ExtendPdu_getHmac, KSI_ExtendPdu_setHmac, "hmac")
+	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_LAST, KSI_ExtendPdu_getHmac, KSI_ExtendPdu_setHmac, "hmac")
 KSI_END_TLV_TEMPLATE
 
 static char *track_str(struct tlv_track_s *tr, size_t tr_len, size_t tr_size, char *buf, size_t buf_len) {
@@ -620,6 +620,8 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 	size_t i;
 	size_t tmplStart = 0;
 	size_t maxOrder = 0;
+	bool firstHit = false;
+	bool lastHit = false;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || payload == NULL || generatorCtx == NULL || tmpl == NULL || generator == NULL || tr == NULL) {
@@ -673,6 +675,22 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 					goto cleanup;
 				}
 				maxOrder = i;
+			}
+
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_FIRST)) {
+				if (firstHit) {
+					KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Element not at first position.");
+					goto cleanup;
+				}
+			}
+			firstHit = true;
+
+			if (lastHit) {
+				KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Element not at last position.");
+				goto cleanup;
+			}
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_LAST)) {
+				lastHit = true;
 			}
 
 			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G0)) {
