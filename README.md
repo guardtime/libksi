@@ -61,7 +61,7 @@ A simple example how to sign a document and verify the signature:
 	res = KSI_verifySignature(ksi, sig);
 
 ```
-The API full reference is available here [http://guardtime.github.io/libksi/](http://guardtime.github.io/libksi/).
+The API full reference is available here [http://guardtime.github.io/libksi/3.9](http://guardtime.github.io/libksi/3.9).
 
 ## License ##
 
