@@ -1,3 +1,5 @@
+Version 3.4
+
 Version 3.9
 
 2016-06-21 release(3.9.1701)
@@ -74,6 +76,7 @@ Version 3.4
 * Local aggregation support.
 * Fixed calendar hash chain calculation.
 
+Version 3.2 
 Version 3.2
 
 2015-05-14 release (3.2.2.0)
