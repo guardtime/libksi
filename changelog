@@ -1,3 +1,4 @@
+* FEATURE: Added support for aggregation and extending PDU version 2.
 * BUGFIX: Error message for unknown OID properly reported.
 * BUGFIX: Userinfo in URLs with unknown schema, incl. http://, is retained for http basic authentication and is not used for KSI authentication.
 * IMPROVEMENT: Moved signature helper functions from signature.{h,c} into signature_helper.{h,c}
