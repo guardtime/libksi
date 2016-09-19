@@ -64,9 +64,7 @@ Prerequisites
 	
 	dll
 	   |libcurlMT.lib
-	   |libcurlMT.dll
 	   |libcurlMTd.lib
-	   |libcurlMTd.dll
 	   |libcurlMD.lib
 	   |libcurlMD.dll
 	   |libcurlMDd.lib
@@ -84,9 +82,7 @@ Prerequisites
 	
 	dll
 	   |libeay32MT.lib
-	   |libeay32MT.dll
 	   |libeay32MTd.lib
-	   |libeay32MTd.dll
 	   |libeay32MD.lib
 	   |libeay32MD.dll
 	   |libeay32MDd.lib
@@ -155,7 +151,7 @@ Configuring build scripts
 	
 		1) DLL				- select if dll or lib is to be built. Default is lib. 	
 		2) RTL				- select C run-time library (MT, MTd, MD, MDd).
-							Default is MT.
+							Default is MT. Note: MT and MTd can only be used with DLL=lib.
 		3) NET_PROVIDER		- select the network provider. Possible values are:
 							CURL, WININET and WINHTTP. When using CURL CURL_DIR
 							must be specified. Default is CURL
@@ -183,20 +179,18 @@ Configuring build scripts
 	
 		1) default		- build library using DLL and RTL option.
 		2) all 			- build all libraries, examples and tests. RTL and DLL
-						options are used when linking tests and examples. 
+						options are used when linking tests and examples.
 		3) libraries	- build all libraries using every possible RTL options.
 		4) libMT		- build static library linked against MT C RTL.
 		5) libMTd		- build static library linked against MTd C RTL.
 		6) libMD		- build static library linked against MD C RTL.
 		7) libMDd		- build static library linked against MDd C RTL.
-		4) dllMT		- build dynamic library linked against MT C RTL.
-		5) dllMTd		- build dynamic library linked against MTd C RTL.
-		6) dllMD		- build dynamic library linked against MD C RTL.
-		7) dllMDd		- build dynamic library linked against MDd C RTL.
-		8) example		- build examples. RTL and DLL options are used. 
-		9) tests		- build tests. RTL and DLL options are used.
-		10) test 		- build and run tests. RTL and DLL options are used.
-		11) clean		- clean the build. 
+		8) dllMD		- build dynamic library linked against MD C RTL.
+		9) dllMDd		- build dynamic library linked against MDd C RTL.
+		10) example		- build examples. RTL and DLL options are used.
+		11) tests		- build tests. RTL and DLL options are used.
+		12) test 		- build and run tests. RTL and DLL options are used.
+		13) clean		- clean the build.
 		
 		
 		
