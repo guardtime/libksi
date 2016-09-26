@@ -1365,14 +1365,18 @@ int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_Publicatio
 
 	for (i = 0; i < KSI_Utf8StringList_length(rec->publicationRef); i++){
 		KSI_Utf8String *str = NULL;
+		KSI_Utf8String *ref = NULL;
 		res = KSI_Utf8StringList_elementAt(rec->publicationRef, i, &str);
 		if (res != KSI_OK) {
 			KSI_pushError(rec->ctx, res, NULL);
 			goto cleanup;
 		}
 
-		res = KSI_Utf8StringList_append(tmp->publicationRef, KSI_Utf8String_ref(str));
+		res = KSI_Utf8StringList_append(tmp->publicationRef, ref = KSI_Utf8String_ref(str));
 		if (res != KSI_OK) {
+			/* Cleanup the reference. */
+			KSI_Utf8String_ref(ref);
+
 			KSI_pushError(rec->ctx, res, NULL);
 			goto cleanup;
 		}

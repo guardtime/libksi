@@ -512,23 +512,52 @@ static int KSI_MetaData_serializePayload(KSI_MetaData *t, unsigned char *buf, si
 
 	/* Add the values to the meta-data element. */
 	if (t->clientId != NULL) {
-		res = KSI_MetaDataElement_setClientId(mdEl, KSI_Utf8String_ref(t->clientId));
-		if (res != KSI_OK) goto cleanup;
+		KSI_Utf8String *ref = NULL;
+		res = KSI_MetaDataElement_setClientId(mdEl, ref = KSI_Utf8String_ref(t->clientId));
+		if (res != KSI_OK) {
+			/* Cleanup the reference. */
+			KSI_Utf8String_free(ref);
+
+			goto cleanup;
+		}
 	}
 
 	if (t->machineId != NULL) {
-		res = KSI_MetaDataElement_setMachineId(mdEl, KSI_Utf8String_ref(t->machineId));
-		if (res != KSI_OK) goto cleanup;
+		KSI_Utf8String *ref = NULL;
+
+		res = KSI_MetaDataElement_setMachineId(mdEl, ref = KSI_Utf8String_ref(t->machineId));
+
+		if (res != KSI_OK) {
+			/* Cleanup the reference. */
+			KSI_Utf8String_free(ref);
+
+			goto cleanup;
+		}
 	}
 
 	if (t->sequenceNr != NULL) {
-		res = KSI_MetaDataElement_setSequenceNr(mdEl, KSI_Integer_ref(t->sequenceNr));
-		if (res != KSI_OK) goto cleanup;
+		KSI_Integer *ref = NULL;
+
+		res = KSI_MetaDataElement_setSequenceNr(mdEl, ref = KSI_Integer_ref(t->sequenceNr));
+
+		if (res != KSI_OK) {
+			/* Cleanup the reference. */
+			KSI_Integer_free(ref);
+
+			goto cleanup;
+		}
 	}
 
 	if (t->reqTimeInMicros) {
-		res = KSI_MetaDataElement_setRequestTimeInMicros(mdEl, KSI_Integer_ref(t->reqTimeInMicros));
-		if (res != KSI_OK) goto cleanup;
+		KSI_Integer *ref = NULL;
+
+		res = KSI_MetaDataElement_setRequestTimeInMicros(mdEl, ref = KSI_Integer_ref(t->reqTimeInMicros));
+		if (res != KSI_OK) {
+			/* Cleanup the reference. */
+			KSI_Integer_free(ref);
+
+			goto cleanup;
+		}
 	}
 
 	/* Calculate the length of the payload. */
