@@ -1,3 +1,4 @@
+* BUGFIX: Fixed debian build.
 * IMPROVEMENT: List macros check for NULL pointers.
 * BUGFIX: Error message for unknown OID properly reported.
 * BUGFIX: Userinfo in URLs with unknown schema, incl. http://, is retained for http basic authentication and is not used for KSI authentication.
