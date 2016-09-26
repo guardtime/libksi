@@ -125,7 +125,7 @@ See LICENSE file.
 ## Compatibility ##
 | OS / Platform                              | Compatibility                                |
 | :---                                       | :---                                         | 
-| CentOS / RHEL 6 and 7, x86_64 architecture | Fully compatible and tested                  |
-| Debian, ...                                | Compatible but not tested on a regular basis |
-| OS X                                       | Compatible but not tested on a regular basis |
-| Windows 7, 8, 10                           | Compatible but not tested on a regular basis |
+| CentOS / RHEL 6 and 7, x86_64 architecture | Fully compatible and tested.                  |
+| Debian, ...                                | Compatible but not tested on a regular basis. |
+| OS X                                       | Compatible but not tested on a regular basis. |
+| Windows 7, 8, 10                           | Compatible but not tested on a regular basis. Build combination of DLL=dll and RTL=MT(d) not supported. |
