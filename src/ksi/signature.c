@@ -162,6 +162,7 @@ int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHash
 		 */
 		for (i = KSI_IntegerList_length(pCurrent->chainIndex); i > 0; i--) {
 			KSI_Integer *tmp = NULL;
+			KSI_Integer *ref = NULL;
 
 			res = KSI_IntegerList_elementAt(pCurrent->chainIndex, i - 1, &tmp);
 			if (res != KSI_OK) {
@@ -169,18 +170,28 @@ int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHash
 				goto cleanup;
 			}
 
-			res = KSI_IntegerList_insertAt(aggr->chainIndex, 0, KSI_Integer_ref(tmp));
+			res = KSI_IntegerList_insertAt(aggr->chainIndex, 0, ref = KSI_Integer_ref(tmp));
 			if (res != KSI_OK) {
+				/* Cleanup the reference. */
+				KSI_Integer_free(ref);
+
 				KSI_pushError(sig->ctx, res, NULL);
 				goto cleanup;
 			}
 		}
 
+
 		/* Prepend the aggregation hash chain to the signature. */
-		res = KSI_AggregationHashChainList_insertAt(sig->aggregationChainList, 0, KSI_AggregationHashChain_ref(aggr));
-		if (res != KSI_OK) {
-			KSI_pushError(sig->ctx, res, NULL);
-			goto cleanup;
+		{
+			KSI_AggregationHashChain *ref = NULL;
+			res = KSI_AggregationHashChainList_insertAt(sig->aggregationChainList, 0, ref = KSI_AggregationHashChain_ref(aggr));
+			if (res != KSI_OK) {
+				/* Cleanup the reference. */
+				KSI_AggregationHashChain_free(ref);
+
+				KSI_pushError(sig->ctx, res, NULL);
+				goto cleanup;
+			}
 		}
 
 		res = KSI_TLV_new(sig->ctx, 0x0801, 0, 0, &tlv);
@@ -631,11 +642,17 @@ int KSI_createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, int lvl, KSI_Aggregat
 		goto cleanup;
 	}
 
-	/* Add the hash to the request */
-	res = KSI_AggregationReq_setRequestHash(tmp, KSI_DataHash_ref(hsh));
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
+	{
+		KSI_DataHash *ref = NULL;
+		/* Add the hash to the request. */
+		res = KSI_AggregationReq_setRequestHash(tmp, ref = KSI_DataHash_ref(hsh));
+		if (res != KSI_OK) {
+			/* Cleanup the reference. */
+			KSI_DataHash_free(ref);
+
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
 	}
 
 	/* If the level is specified, add it to the request. */
@@ -697,15 +714,29 @@ int KSI_createExtendRequest(KSI_CTX *ctx, KSI_Integer *start, KSI_Integer *end, 
 		goto cleanup;
 	}
 
-	/* Make a virtual copy of the start object. */
-	KSI_Integer_ref(start);
+	{
+		KSI_Integer *ref = NULL;
+		/* Set the aggregation time. */
+		res = KSI_ExtendReq_setAggregationTime(tmp, ref = KSI_Integer_ref(start));
+		if (res != KSI_OK) {
+			/* Cleanup the reference. */
+			KSI_Integer_free(ref);
 
-	/* Set the aggregation time. */
-	KSI_ExtendReq_setAggregationTime(tmp, start);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
 
-	if (end != NULL) {
-		KSI_Integer_ref(end);
-		KSI_ExtendReq_setPublicationTime(tmp, end);
+		/* Use the end value, if set. */
+		if (end != NULL) {
+			res = KSI_ExtendReq_setPublicationTime(tmp, ref = KSI_Integer_ref(end));
+			if (res != KSI_OK) {
+				/* Cleanup the reference. */
+				KSI_Integer_free(ref);
+
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
+		}
 	}
 
 	*request = tmp;
@@ -1736,6 +1767,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 
 			} else if (metaData != NULL) {
 				KSI_Utf8String *clientId = NULL;
+				KSI_Utf8String *ref = NULL;
 
 				res = KSI_MetaDataElement_getClientId(metaData, &clientId);
 				if (res != KSI_OK) {
@@ -1745,8 +1777,11 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 
 				signerId_size += KSI_Utf8String_size(clientId) + 4;
 
-				res = KSI_Utf8StringList_append(idList, KSI_Utf8String_ref(clientId));
+				res = KSI_Utf8StringList_append(idList, ref = KSI_Utf8String_ref(clientId));
 				if (res != KSI_OK) {
+					/* Cleanup the reference. */
+					KSI_Utf8String_free(ref);
+
 					KSI_pushError(sig->ctx, res, NULL);
 					goto cleanup;
 				}
@@ -1796,7 +1831,22 @@ KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_CalendarAuthRec*, calendarAuthRec, Calen
 KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_PublicationRecord*, publication, PublicationRecord)
 
 static int copyUtf8StringElement(KSI_Utf8String *str, void *list) {
-	return KSI_Utf8StringList_append((KSI_LIST(KSI_Utf8String)*)list, KSI_Utf8String_ref(str));
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Utf8String *ref = NULL;
+
+	res = KSI_Utf8StringList_append((KSI_LIST(KSI_Utf8String)*)list, ref = KSI_Utf8String_ref(str));
+	if (res != KSI_OK) {
+		/* Cleanup the reference. */
+		KSI_Utf8String_free(ref);
+
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
 }
 
 int KSI_Signature_getPublicationInfo(KSI_Signature *sig,
