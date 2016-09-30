@@ -644,7 +644,7 @@ int KSI_createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, int lvl, KSI_Aggregat
 
 	{
 		KSI_DataHash *ref = NULL;
-		/* Add the hash to the request */
+		/* Add the hash to the request. */
 		res = KSI_AggregationReq_setRequestHash(tmp, ref = KSI_DataHash_ref(hsh));
 		if (res != KSI_OK) {
 			/* Cleanup the reference. */
