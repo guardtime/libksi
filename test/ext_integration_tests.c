@@ -248,13 +248,6 @@ static int uri_setExtWrapper(KSI_NetworkClient *client, const char *url_host, un
 }
 
 static void Test_ExtendSignatureDifferentNetProviders(CuTest* tc) {
-	/* Http provider. */
-	Test_ExtendSignature_useProvider(tc,
-			conf.extender_url, 0, conf.extender_user, conf.extender_pass, conf.publications_file_url,
-			KSI_HttpClient_new,
-			KSI_HttpClient_setPublicationUrl,
-			http_setExtWrapper);
-
 	/* Uri provider. */
 	Test_ExtendSignature_useProvider(tc,
 			conf.extender_url, 0, conf.extender_user, conf.extender_pass, conf.publications_file_url,
