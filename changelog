@@ -1,3 +1,4 @@
+* IMPROVEMENT: Implemented KSI_BlockSigner getter for the hash value of the last leaf in the tree.
 * BUGFIX: Reference counting issues fixed.
 * IMPROVEMENT: Removed support for Windows build combination DLL=dll and RTL=MT(d).
 * IMPROVEMENT: List macros check for NULL pointers.

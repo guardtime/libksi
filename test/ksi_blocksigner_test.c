@@ -327,6 +327,7 @@ static void testMaskingMultiSig(CuTest *tc) {
 	KSI_Signature *sig = NULL;
 	KSI_DataHash *zero = NULL;
 	KSI_OctetString *iv = NULL;
+	KSI_DataHash *prevLeaf = NULL;
 
 	/* Create zero hash. */
 	res = KSI_DataHash_createZero(ctx, KSI_HASHALG_SHA2_512, &zero);
@@ -338,6 +339,9 @@ static void testMaskingMultiSig(CuTest *tc) {
 
 	res = KSI_BlockSigner_new(ctx, KSI_HASHALG_SHA1, zero, iv, &bs);
 	CuAssert(tc, "Unable to create block signer instance with masking.", res == KSI_OK && bs != NULL);
+
+	res = KSI_BlockSigner_getPrevLeaf(bs, &prevLeaf);
+	CuAssert(tc, "Unable to retrieve previous leaf.", res == KSI_OK && KSI_DataHash_equals(prevLeaf, zero));
 
 	addInput(tc, bs, 0);
 

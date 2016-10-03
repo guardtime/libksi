@@ -34,6 +34,7 @@ EXPORTS
 	KSI_BlockSigner_close
 	KSI_BlockSigner_reset
 	KSI_BlockSigner_addLeaf
+	KSI_BlockSigner_getPrevLeaf
 	KSI_BlockSignerHandle_getSignature
 	KSI_BlockSignerHandle_free
 	KSI_BlockSignerHandleList_free

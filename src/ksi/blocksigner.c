@@ -504,6 +504,8 @@ cleanup:
 	return res;
 }
 
+KSI_IMPLEMENT_GETTER(KSI_BlockSigner, KSI_DataHash*, prevLeaf, PrevLeaf);
+
 int KSI_BlockSignerHandle_getSignature(KSI_BlockSignerHandle *handle, KSI_Signature **sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Signature *tmp = NULL;
