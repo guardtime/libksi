@@ -1,4 +1,5 @@
 * BUGFIX: Fixed debian build.
+* BUGFIX: Reference counting issues fixed.
 * IMPROVEMENT: Removed support for Windows build combination DLL=dll and RTL=MT(d).
 * IMPROVEMENT: List macros check for NULL pointers.
 * BUGFIX: Error message for unknown OID properly reported.
