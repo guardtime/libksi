@@ -50,9 +50,11 @@ libksi_doc="changelog \
 #File list for libksi-devel installion
 libksi_devel_includes="\
 	$include_dir/base32.h \
+	$include_dir/blocksigner.h \
 	$include_dir/crc32.h \
 	$include_dir/common.h \
 	$include_dir/err.h \
+	$include_dir/fast_tlv.h \
 	$include_dir/hash.h \
 	$include_dir/hashchain.h \
 	$include_dir/hmac.h \
@@ -60,6 +62,7 @@ libksi_devel_includes="\
 	$include_dir/ksi.h \
 	$include_dir/list.h \
 	$include_dir/log.h \
+	$include_dir/multi_signature.h \
 	$include_dir/net.h \
 	$include_dir/net_http.h \
 	$include_dir/net_tcp.h \
@@ -68,15 +71,20 @@ libksi_devel_includes="\
 	$include_dir/pkitruststore.h \
 	$include_dir/publicationsfile.h \
 	$include_dir/signature.h \
+	$include_dir/signature_builder.h \
+	$include_dir/signature_helper.h \
 	$include_dir/tlv.h \
 	$include_dir/tlv_template.h \
+	$include_dir/tlv_element.h \
+	$include_dir/tree_builder.h \
 	$include_dir/types.h \
 	$include_dir/types_base.h \
 	$include_dir/verification.h \
 	$include_dir/verification_rule.h \
 	$include_dir/policy.h \
 	$include_dir/compatibility.h \
-	$include_dir/version.h"
+	$include_dir/version.h \
+	$include_dir/verify_deprecated.h"
 
 
 libksi_devel_libs="\
