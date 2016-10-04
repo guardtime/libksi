@@ -504,7 +504,24 @@ cleanup:
 	return res;
 }
 
-KSI_IMPLEMENT_GETTER(KSI_BlockSigner, KSI_DataHash*, prevLeaf, PrevLeaf);
+int KSI_BlockSigner_getPrevLeaf(KSI_BlockSigner *signer, KSI_DataHash **prevLeaf) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (signer == NULL || signer->ctx == NULL || prevLeaf == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(signer->ctx);
+
+	*prevLeaf = KSI_DataHash_ref(signer->prevLeaf);
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
 
 int KSI_BlockSignerHandle_getSignature(KSI_BlockSignerHandle *handle, KSI_Signature **sig) {
 	int res = KSI_UNKNOWN_ERROR;

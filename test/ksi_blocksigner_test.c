@@ -372,6 +372,7 @@ static void testMaskingMultiSig(CuTest *tc) {
 
 	KSI_OctetString_free(iv);
 	KSI_DataHash_free(zero);
+	KSI_DataHash_free(prevLeaf);
 	KSI_DataHash_free(hsh);
 	KSI_MultiSignature_free(ms);
 	KSI_BlockSigner_free(bs);
