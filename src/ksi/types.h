@@ -65,6 +65,15 @@ extern "C" {
 	/** Typedef for the signature object. */
 	typedef struct KSI_Signature_st KSI_Signature;
 
+	/** Typedef for the verification policy. */
+	typedef struct KSI_Policy_st KSI_Policy;
+
+	/** Typedef for the verification context. */
+	typedef struct KSI_VerificationContext_st KSI_VerificationContext;
+
+	/** Typedef for the verification result. */
+	typedef struct KSI_PolicyVerificationResult_st KSI_PolicyVerificationResult;
+
 	/**
 	 * Callback for request header.
 	 * \param[in]	hdr		Pointer to the header.

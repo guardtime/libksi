@@ -97,6 +97,15 @@ int KSI_BlockSigner_reset(KSI_BlockSigner *signer);
 int KSI_BlockSigner_addLeaf(KSI_BlockSigner *signer, KSI_DataHash *hsh, int level, KSI_MetaData *metaData, KSI_BlockSignerHandle **handle);
 
 /**
+ * Getter method for \c prevLeaf.
+ * \param[in]	signer		Pointer to #KSI_BlockSigner.
+ * \param[out]	prevLeaf	Pointer to receiving pointer.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \note Ownership of \c prevLeaf is passed to the caller who is responsible for freeing the object.
+ */
+int KSI_BlockSigner_getPrevLeaf(KSI_BlockSigner *signer, KSI_DataHash **prevLeaf);
+
+/**
  * This function creates a new instance of a KSI signature and stores it in the output
  * parameter.
  * \param[in]	handle		Handle for the block signature.

@@ -97,6 +97,8 @@ extern "C" {
 		KSI_PublicationRecord *publication;
 		/** Verification info for the signature. */
 		KSI_VerificationResult verificationResult;
+		/** Result of the verification policy. */
+		KSI_PolicyVerificationResult *policyVerificationResult;
 		/** This function replaces the calendar chain of the signature.
 		 * \note The function does not check the internal consistency! */
 		int (*replaceCalendarChain)(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain);

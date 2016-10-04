@@ -465,7 +465,7 @@ static void testExtendInvalidSignature(CuTest* tc) {
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_Signature_extendTo(sig, ctx, NULL, &ext);
-	CuAssert(tc, "It should not be possible to extend this signature.", res != KSI_OK && ext == NULL);
+	CuAssert(tc, "It should not be possible to extend this signature.", res != KSI_OK);
 
 	KSI_Signature_free(sig);
 	KSI_Signature_free(ext);

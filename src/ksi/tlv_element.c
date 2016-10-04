@@ -365,8 +365,14 @@ static int filter_tags(KSI_TlvElement *el, void *filterCtx) {
 
 	for (i = 0; i < fc->filters_len; i++) {
 		if (el->ftlv.tag == tags[i]) {
-			res = KSI_TlvElementList_append(fc->result, KSI_TlvElement_ref(el));
-			if (res != KSI_OK) goto cleanup;
+			KSI_TlvElement *ref = NULL;
+			res = KSI_TlvElementList_append(fc->result, ref = KSI_TlvElement_ref(el));
+			if (res != KSI_OK) {
+				/* Cleanup the reference. */
+				KSI_TlvElement_free(ref);
+
+				goto cleanup;
+			}
 		}
 	}
 
@@ -379,6 +385,7 @@ cleanup:
 
 int KSI_TlvElement_appendElement(KSI_TlvElement *parent, KSI_TlvElement *child) {
 	int res = KSI_UNKNOWN_ERROR;
+	KSI_TlvElement *ref = NULL;
 
 	if (parent == NULL || child == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -388,8 +395,13 @@ int KSI_TlvElement_appendElement(KSI_TlvElement *parent, KSI_TlvElement *child) 
 	res = convertToNested(parent);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_TlvElementList_append(parent->subList, KSI_TlvElement_ref(child));
-	if (res != KSI_OK) goto cleanup;
+	res = KSI_TlvElementList_append(parent->subList, ref = KSI_TlvElement_ref(child));
+	if (res != KSI_OK) {
+		/* Cleanup the reference. */
+		KSI_TlvElement_free(ref);
+
+		goto cleanup;
+	}
 
 	res = KSI_OK;
 
@@ -440,8 +452,16 @@ int KSI_TlvElement_setElement(KSI_TlvElement *parent, KSI_TlvElement *child) {
 				goto cleanup;
 			}
 
-			res = KSI_TlvElementList_replaceAt(parent->subList, *pos, KSI_TlvElement_ref(child));
-			if (res != KSI_OK) goto cleanup;
+			{
+				KSI_TlvElement *ref = NULL;
+				res = KSI_TlvElementList_replaceAt(parent->subList, *pos, ref = KSI_TlvElement_ref(child));
+				if (res != KSI_OK) {
+					/* Cleanup the reference. */
+					KSI_TlvElement_free(ref);
+
+					goto cleanup;
+				}
+			}
 			break;
 		default:
 			/* More than one result, we have no idea what to do. */

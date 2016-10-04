@@ -238,12 +238,6 @@ static int tcp_setAggrWrapper(KSI_NetworkClient *client, const char *url_host, u
 }
 
 static void Test_CreateSignatureDifferentNetProviders(CuTest* tc) {
-	/* Http provider. */
-	Test_CreateSignature_useProvider(tc,
-			conf.aggregator_url, 0, conf.aggregator_user, conf.aggregator_pass,
-			KSI_HttpClient_new,
-			http_setAggrWrapper);
-
 	/* Tcp provider. */
 	Test_CreateSignature_useProvider(tc,
 			conf.tcp_host, conf.tcp_port, conf.tcp_user, conf.tcp_pass,

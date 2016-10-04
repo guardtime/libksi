@@ -592,7 +592,7 @@ cleanup:
 	return res;
 }
 
-int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extended) {
+int KSI_extendSignatureWithPolicy(KSI_CTX *ctx, KSI_Signature *sig, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **extended) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationsFile *pubFile = NULL;
 	KSI_Integer *signingTime = NULL;
@@ -638,17 +638,14 @@ int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extend
 		goto cleanup;
 	}
 
-	res = KSI_Signature_extend(sig, ctx, pubRec, &extSig);
-	if (res != KSI_OK) {
+	res = KSI_Signature_extendWithPolicy(sig, ctx, pubRec, policy, context, &extSig);
+	if (res != KSI_OK && res != KSI_VERIFICATION_FAILURE) {
 		KSI_pushError(ctx,res, NULL);
 		goto cleanup;
 	}
 
-
 	*extended = extSig;
 	extSig = NULL;
-
-	res = KSI_OK;
 
 cleanup:
 

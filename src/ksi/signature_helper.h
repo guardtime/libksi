@@ -61,8 +61,11 @@ extern "C" {
 
 	/**
 	 * A convenience function for reading a signature from a file.
+	 * The signature is verified with the provided policy and context.
 	 * \param[in]		ctx			KSI context.
 	 * \param[in]		fileName	Name of the signature file.
+	 * \param[in]		policy		Verification policy.
+	 * \param[in]		context		Verification context.
 	 * \param[out]		sig			Pointer to the receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
@@ -72,13 +75,18 @@ extern "C" {
 	 * and Resource Forks (OS X HFS) may or may not be supported, depending on the
 	 * C standard library used in the application.
 	 */
-	int KSI_Signature_fromFile(KSI_CTX *ctx, const char *fileName, KSI_Signature **sig);
+	int KSI_Signature_fromFileWithPolicy(KSI_CTX *ctx, const char *fileName, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **sig);
+
+#define KSI_Signature_fromFile(ctx, fileName, sig) KSI_Signature_fromFileWithPolicy(ctx, fileName, KSI_VERIFICATION_POLICY_INTERNAL, NULL, sig)
 
 	/**
 	 * This function signs the given data hash \c hsh. This function requires a access to
 	 * a working aggregator and fails if it is not accessible.
+	 * The signature is verified with the provided policy and context.
 	 * \param[in]		ctx			KSI context.
 	 * \param[in]		hsh			Document hash.
+	 * \param[in]		policy		Verification policy.
+	 * \param[in]		context		Verification context.
 	 * \param[out]		signature	Pointer to the receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
@@ -87,19 +95,25 @@ extern "C" {
 	 * recomended.
 	 * \see #KSI_createSignature, KSI_Signature_free
 	 */
-	int KSI_Signature_sign(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature);
+	int KSI_Signature_signWithPolicy(KSI_CTX *ctx, KSI_DataHash *hsh, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **signature);
+
+#define KSI_Signature_sign(ctx, hsh, signature) KSI_Signature_signWithPolicy(ctx, hsh, KSI_VERIFICATION_POLICY_INTERNAL, NULL, signature)
 
 	/**
-	 * \deprecated This function is deprecated and #KSI_Signature_sign should be used instead.
-	 * \see #KSI_Signature_sign
+	 * \deprecated This function is deprecated and #KSI_Signature_signWithPolicy should be used instead.
+	 * \see #KSI_Signature_signWithPolicy
 	 */
-	KSI_FN_DEPRECATED(int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature));
+	KSI_FN_DEPRECATED(int KSI_Signature_createWithPolicy(KSI_CTX *ctx, KSI_DataHash *hsh, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **signature));
+
+#define KSI_Signature_create(ctx, hsh, signature) KSI_Signature_createWithPolicy(ctx, hsh, KSI_VERIFICATION_POLICY_INTERNAL, NULL, signature)
 
 	/**
-	 * \deprecated This function is deprecated and #KSI_Signature_signAggregated should be used instead.
-	 * \see #KSI_Signature_signAggregated
+	 * \deprecated This function is deprecated and #KSI_Signature_signAggregatedWithPolicy should be used instead.
+	 * \see #KSI_Signature_signAggregatedWithPolicy
 	 */
-	KSI_FN_DEPRECATED(int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature));
+	KSI_FN_DEPRECATED(int KSI_Signature_createAggregatedWithPolicy(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **signature));
+
+#define KSI_Signature_createAggregated(ctx, rootHash, rootLevel, signature) KSI_Signature_createAggregatedWithPolicy(ctx, rootHash, rootLevel, KSI_VERIFICATION_POLICY_INTERNAL, NULL, signature)
 
 #ifdef __cplusplus
 }

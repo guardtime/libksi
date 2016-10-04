@@ -570,17 +570,33 @@ static int getHashChainLinks(KSI_TreeNode *node, KSI_LIST(KSI_HashChainLink) *li
 		}
 
 		/* Add the hash value. */
-		res = KSI_HashChainLink_setImprint(link, KSI_DataHash_ref(pSibling->hash));
-		if (res != KSI_OK) goto cleanup;
+		{
+			KSI_DataHash *ref = NULL;
+
+			res = KSI_HashChainLink_setImprint(link, ref = KSI_DataHash_ref(pSibling->hash));
+			if (res != KSI_OK) {
+				/* Cleanup the reference. */
+				KSI_DataHash_free(ref);
+
+				goto cleanup;
+			}
+		}
 
 		/* Add the meta-data. */
 		if (pSibling->metaData != NULL) {
+			KSI_MetaDataElement *ref = NULL;
+
 			/* Convert the element to the internal representation. */
 			res = pSibling->metaData->toMetaDataElement(pSibling->metaData, &mdEl);
 			if (res != KSI_OK) goto cleanup;
 
-			res = KSI_HashChainLink_setMetaData(link, KSI_MetaDataElement_ref(mdEl));
-			if (res != KSI_OK) goto cleanup;
+			res = KSI_HashChainLink_setMetaData(link, ref = KSI_MetaDataElement_ref(mdEl));
+			if (res != KSI_OK) {
+				/* Cleanup the reference. */
+				KSI_MetaDataElement_free(ref);
+
+				goto cleanup;
+			}
 		}
 
 		/* Sanity check. */
@@ -663,10 +679,17 @@ int KSI_TreeLeafHandle_getAggregationChain(KSI_TreeLeafHandle *handle, KSI_Aggre
 	}
 
 	/* Set the input hash. */
-	res = KSI_AggregationHashChain_setInputHash(tmp, KSI_DataHash_ref(handle->leafNode->hash));
-	if (res != KSI_OK) {
-		KSI_pushError(handle->pBuilder->ctx, res, NULL);
-		goto cleanup;
+	{
+		KSI_DataHash *ref = NULL;
+
+		res = KSI_AggregationHashChain_setInputHash(tmp, ref = KSI_DataHash_ref(handle->leafNode->hash));
+		if (res != KSI_OK) {
+			/* Cleanup the reference. */
+			KSI_DataHash_free(ref);
+
+			KSI_pushError(handle->pBuilder->ctx, res, NULL);
+			goto cleanup;
+		}
 	}
 
 	/* Set the aggregation algorithm. */
