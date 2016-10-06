@@ -238,11 +238,6 @@ static void Test_ExtendSignature_useProvider(CuTest* tc, const char *uri_host, u
 	return;
 }
 
-
-static int http_setExtWrapper(KSI_NetworkClient *client, const char *url_host, unsigned port, const char *user, const char *pass) {
-	return KSI_HttpClient_setExtender(client, url_host, user, pass);
-}
-
 static int uri_setExtWrapper(KSI_NetworkClient *client, const char *url_host, unsigned port, const char *user, const char *pass) {
 	return KSI_UriClient_setExtender(client, url_host, user, pass);
 }
