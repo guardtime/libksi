@@ -93,7 +93,7 @@ A simple example how to sign a document and verify the signature:
 	/* Set up extender and publications file for verification. */
 	KSI_PublicationsFile *pubFile = NULL;	/* Must be freed. */
 	KSI_CTX_setExtender(ksi, "http://signingservice.somehost:1234", "user", "key");
-	KSI_PublicationsFile_fromFile(ksi, "~/ksi-publications.bin", &pubFile);
+	KSI_PublicationsFile_fromFile(ksi, KSI_PUBLICATIONS_FILE, &pubFile);
 	KSI_CTX_setPublicationsFile(ksi, pubFile);
 
 	/* Calculate hash of document, sign the hash and verify the signature. */
