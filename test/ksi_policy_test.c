@@ -1959,7 +1959,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithSuitablePublication(CuTest* t
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_NA,
 		KSI_VER_ERR_GEN_2,
-		"KSI_VerificationRule_ExtendingPermittedVerification"
+		"KSI_VerificationRule_PublicationsFileExtendingPermittedVerification"
 	};
 	KSI_CTX *ctx = NULL;
 
@@ -2217,7 +2217,7 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureBeforePublica
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_NA,
 		KSI_VER_ERR_GEN_2,
-		"KSI_VerificationRule_ExtendingPermittedVerification"
+		"KSI_VerificationRule_UserProvidedPublicationExtendingPermittedVerification"
 	};
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);

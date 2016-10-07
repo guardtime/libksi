@@ -46,60 +46,61 @@ extern "C" {
 	 * Enumeration of all KSI signature (#KSI_Signature) available verification steps.
 	 */
 	typedef enum KSI_VerificationStep_en {
-	    /**
-	     * Check if signature input hash and document hash match.
-	     */
-	    KSI_VERIFY_DOCUMENT = 0x01,
-
-	    /**
-	     * Verify the aggregation chain internally.
-	     */
-	    KSI_VERIFY_AGGRCHAIN_INTERNALLY = 0x02,
-
-	    /**
-	     * Check if calendar chain matches aggregation chain
-	     */
-	    KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN = 0x04,
-
-	    /**
-	     * Verify calendar chain internally.
-	     */
-	    KSI_VERIFY_CALCHAIN_INTERNALLY = 0x08,
-
-	    /**
-	     * Verify calendar chain using calendar auth record.
-	     */
-	    KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC = 0x10,
-
-	    /**
-	     * Verify calendar chain with publication.
-	     */
-	    KSI_VERIFY_CALCHAIN_WITH_PUBLICATION = 0x20,
-
-	    /**
-	     * Verify signature against online calendar
-	     */
-	    KSI_VERIFY_CALCHAIN_ONLINE = 0x40,
-
-	    /**
-	     * OK!verify that calendar authentication record signature is correct
-	     */
-	    KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE = 0x80,
-
-	    /**
-	     * check publication file signature
-	     */
-	    KSI_VERIFY_PUBFILE_SIGNATURE = 0x100,
-
-	    /**
-	     * Check if publication record is stored in KSI Trust provider
-	     */
-	    KSI_VERIFY_PUBLICATION_WITH_PUBFILE = 0x200,
-	    
+		KSI_VERIFY_NONE = 0,
 		/**
-	     * Check if publication record equals to publication string
-	     */
-	    KSI_VERIFY_PUBLICATION_WITH_PUBSTRING = 0x400,
+		 * Check if signature input hash and document hash match.
+		 */
+		KSI_VERIFY_DOCUMENT = 0x01,
+
+		/**
+		 * Verify the aggregation chain internally.
+		 */
+		KSI_VERIFY_AGGRCHAIN_INTERNALLY = 0x02,
+
+		/**
+		 * Check if calendar chain matches aggregation chain
+		 */
+		KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN = 0x04,
+
+		/**
+		 * Verify calendar chain internally.
+		 */
+		KSI_VERIFY_CALCHAIN_INTERNALLY = 0x08,
+
+		/**
+		 * Verify calendar chain using calendar auth record.
+		 */
+		KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC = 0x10,
+
+		/**
+		 * Verify calendar chain with publication.
+		 */
+		KSI_VERIFY_CALCHAIN_WITH_PUBLICATION = 0x20,
+
+		/**
+		 * Verify signature against online calendar
+		 */
+		KSI_VERIFY_CALCHAIN_ONLINE = 0x40,
+
+		/**
+		 * OK!verify that calendar authentication record signature is correct
+		 */
+		KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE = 0x80,
+
+		/**
+		 * check publication file signature
+		 */
+		KSI_VERIFY_PUBFILE_SIGNATURE = 0x100,
+
+		/**
+		 * Check if publication record is stored in KSI Trust provider
+		 */
+		KSI_VERIFY_PUBLICATION_WITH_PUBFILE = 0x200,
+
+		/**
+		 * Check if publication record equals to publication string
+		 */
+		KSI_VERIFY_PUBLICATION_WITH_PUBSTRING = 0x400,
 
 	} KSI_VerificationStep;
 

@@ -1,3 +1,4 @@
+* IMPROVEMENT: Refactored signature verification step attribute handling.
 * IMPROVEMENT: Implemented KSI_BlockSigner getter for the hash value of the last leaf in the tree.
 * BUGFIX: Fixed debian build.
 * BUGFIX: Reference counting issues fixed.
