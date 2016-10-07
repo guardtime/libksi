@@ -155,7 +155,7 @@ EXPORTS
 	KSI_verifySignature
 	KSI_verifyDataHash
 	KSI_createSignature
-	KSI_extendSignature
+	KSI_extendSignatureWithPolicy
 	KSI_CTX_setLogLevel
 	KSI_CTX_getPKITruststore
 	KSI_CTX_setPublicationsFile
@@ -346,13 +346,13 @@ EXPORTS
 	KSI_Signature_verifyDocument
 	KSI_Signature_verifyWithPublication
 	KSI_Signature_clone
-	KSI_Signature_parse
-	KSI_Signature_fromFile
+	KSI_Signature_parseWithPolicy
+	KSI_Signature_fromFileWithPolicy
 	KSI_Signature_serialize
-	KSI_Signature_create
-	KSI_Signature_createAggregated
-	KSI_Signature_extend
-	KSI_Signature_extendTo
+	KSI_Signature_createWithPolicy
+	KSI_Signature_createAggregatedWithPolicy
+	KSI_Signature_extendWithPolicy
+	KSI_Signature_extendToWithPolicy
 	KSI_Signature_getDocumentHash
 	KSI_Signature_getHashAlgorithm
 	KSI_Signature_createDataHasher
@@ -381,8 +381,8 @@ EXPORTS
 	KSI_Signature_getPublicationInfo
 	KSI_AggregationHashChainList_aggregate
 	KSI_Signature_getPublicationInfo
-	KSI_Signature_signAggregated
-	KSI_Signature_sign
+	KSI_Signature_signAggregatedWithPolicy
+	KSI_Signature_signWithPolicy
 	KSI_Signature_signAggregationChain
 	KSI_AggregationHashChain_aggregate
 

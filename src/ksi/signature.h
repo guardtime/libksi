@@ -52,18 +52,23 @@ extern "C" {
 	int KSI_Signature_clone(const KSI_Signature *sig, KSI_Signature **clone);
 
 	/**
-	 * Parses a KSI signature from raw buffer. The raw buffer may be freed after
-	 * this function finishes. To reserialize the signature use #KSI_Signature_serialize.
+	 * Parses a KSI signature from raw buffer and verifies it with the provided policy and context.
+	 * The raw buffer may be freed after this function finishes.
+	 * To reserialize the signature use #KSI_Signature_serialize.
 	 *
 	 * \param[in]		ctx			KSI context.
 	 * \param[in]		raw			Pointer to the raw signature.
 	 * \param[in]		raw_len		Length of the raw signature.
+	 * \param[in]		policy		Verification policy.
+	 * \param[in]		context		Verification context.
 	 * \param[out]		sig			Pointer to the receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_Signature_parse(KSI_CTX *ctx, unsigned char *raw, size_t raw_len, KSI_Signature **sig);
+	int KSI_Signature_parseWithPolicy(KSI_CTX *ctx, unsigned char *raw, size_t raw_len, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **sig);
+
+#define KSI_Signature_parse(ctx, raw, raw_len, sig) KSI_Signature_parseWithPolicy(ctx, raw, raw_len, KSI_VERIFICATION_POLICY_INTERNAL, NULL, sig)
 
 	/**
 	 * This function serializes the signature object into raw data. To deserialize it again
@@ -83,16 +88,20 @@ extern "C" {
 	/**
 	 * This function signs the given root hash value (\c rootHash) with the aggregation level (\c rootLevel)
 	 * of a locally aggregated hash tree. This function requires access to a working aggregaton and fails if
-	 * it is not accessible.
+	 * it is not accessible. The signature is verified with the provided policy and context.
 	 * \param[in]		ctx			KSI context.
 	 * \param[in]		rootHash	Root value of the hash tree.
 	 * \param[in]		rootLevel	Level of the root node (0 =< x <= 0xff).
+	 * \param[in]		policy		Verification policy.
+	 * \param[in]		context		Verification context.
 	 * \param[out]		signature	Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 * \see #KSI_createSignature, KSI_Signature_create, KSI_Signature_free.
 	 */
-	int KSI_Signature_signAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature);
+	int KSI_Signature_signAggregatedWithPolicy(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **signature);
+
+#define KSI_Signature_signAggregated(ctx, rootHash, rootLevel, signature) KSI_Signature_signAggregatedWithPolicy(ctx, rootHash, rootLevel, KSI_VERIFICATION_POLICY_INTERNAL, NULL, signature)
 
 	/**
 	 * This function creates a new signature using the aggrehation hash chain as the input. The aggregation hash chain will
@@ -109,10 +118,12 @@ extern "C" {
 	/**
 	 * This function extends the signature to the given publication \c pubRec. If \c pubRec is \c NULL the signature is
 	 * extended to the head of the calendar database. This function requires access to a working KSI extender or it will
-	 * fail with an error.
+	 * fail with an error. The extended signature is verified with the provided policy and context.
 	 * \param[in]		signature	KSI signature to be extended.
 	 * \param[in]		ctx			KSI context.
 	 * \param[in]		pubRec		Publication record.
+	 * \param[in]		policy		Verification policy.
+	 * \param[in]		context		Verification context.
 	 * \param[out]		extended	Pointer to the receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
@@ -120,14 +131,18 @@ extern "C" {
 	 *
 	 * \note The output signature is independent of the input signature and needs to be freed using #KSI_Signature_free.
 	 */
-	int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI_PublicationRecord *pubRec, KSI_Signature **extended);
+	int KSI_Signature_extendWithPolicy(const KSI_Signature *signature, KSI_CTX *ctx, const KSI_PublicationRecord *pubRec, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **extended);
+
+#define KSI_Signature_extend(signature, ctx, pubRec, extended) KSI_Signature_extendWithPolicy(signature, ctx, pubRec, KSI_VERIFICATION_POLICY_INTERNAL, NULL, extended)
 
 	/**
 	 * Extends the signature to a given time \c to. If \c to is equal to \c NULL, the signature is extended to
-	 * the head of the extender.
+	 * the head of the extender. The extended signature is verified with the provided policy and context.
 	 * \param[in]		signature	KSI signature to be extended.
 	 * \param[in]		ctx			KSI context.
 	 * \param[in]		to			UTC time to extend to.
+	 * \param[in]		policy		Verification policy.
+	 * \param[in]		context		Verification context.
 	 * \param[out]		extended 	Pointer to the receiving pointer.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
@@ -135,7 +150,9 @@ extern "C" {
 	 *
 	 * \note Extending to a specific time will remove calendar auth record and publication record.
 	 */
-	int KSI_Signature_extendTo(const KSI_Signature *signature, KSI_CTX *ctx, KSI_Integer *to, KSI_Signature **extended);
+	int KSI_Signature_extendToWithPolicy(const KSI_Signature *signature, KSI_CTX *ctx, KSI_Integer *to, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **extended);
+
+#define KSI_Signature_extendTo(signature, ctx, to, extended) KSI_Signature_extendToWithPolicy(signature, ctx, to, KSI_VERIFICATION_POLICY_INTERNAL, NULL, extended)
 
 	/**
 	 * Access method for the signed document hash as a #KSI_DataHash object.
