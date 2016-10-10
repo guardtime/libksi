@@ -21,6 +21,7 @@
 #include "policy_impl.h"
 #include "verification_rule.h"
 #include "hashchain.h"
+#include "signature_impl.h"
 
 #include <string.h>
 
@@ -28,6 +29,7 @@ static void RuleVerificationResult_free(KSI_RuleVerificationResult *result);
 static void VerificationTempData_clear(VerificationTempData *tmp);
 
 KSI_IMPLEMENT_LIST(KSI_RuleVerificationResult, RuleVerificationResult_free);
+KSI_IMPLEMENT_REF(KSI_PolicyVerificationResult);
 
 static int isDuplicateRuleResult(KSI_RuleVerificationResultList *resultList, KSI_RuleVerificationResult *result) {
 	int return_value = 0;
@@ -332,7 +334,7 @@ static const KSI_Rule publicationPresentRule[] = {
 
 static const KSI_Rule extendToPublicationRule[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileContainsSuitablePublication},
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_ExtendingPermittedVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileExtendingPermittedVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash},
@@ -371,7 +373,7 @@ static const KSI_Rule userPublicationMatchRule[] = {
 
 static const KSI_Rule extendToUserPublicationRule[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification},
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_ExtendingPermittedVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationExtendingPermittedVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash},
@@ -565,6 +567,7 @@ static int PolicyVerificationResult_create(KSI_PolicyVerificationResult **result
 
 	tmp->finalResult.resultCode = KSI_VER_RES_NA;
 	tmp->finalResult.errorCode = KSI_VER_ERR_GEN_2;
+	tmp->ref = 1;
 	*result = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -673,9 +676,9 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 	tmp->resultCode = KSI_VER_RES_NA;
 	tmp->finalResult.resultCode = KSI_VER_RES_NA;
 	tmp->finalResult.errorCode = KSI_VER_ERR_GEN_2;
-	tmp->finalResult.stepsPerformed = 0;
-	tmp->finalResult.stepsFailed = 0;
-	tmp->finalResult.stepsSuccessful = 0;
+	tmp->finalResult.stepsPerformed = KSI_VERIFY_NONE;
+	tmp->finalResult.stepsFailed = KSI_VERIFY_NONE;
+	tmp->finalResult.stepsSuccessful = KSI_VERIFY_NONE;
 
 	currentPolicy = policy;
 	while (currentPolicy != NULL) {
@@ -705,6 +708,10 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 	}
 
 	*result = tmp;
+	if (context->signature != NULL) {
+		KSI_PolicyVerificationResult_free(context->signature->policyVerificationResult);
+		context->signature->policyVerificationResult = KSI_PolicyVerificationResult_ref(tmp);
+	}
 	tmp = NULL;
 
 	res = KSI_OK;
@@ -725,7 +732,7 @@ void KSI_Policy_free(KSI_Policy *policy) {
 }
 
 void KSI_PolicyVerificationResult_free(KSI_PolicyVerificationResult *result) {
-	if (result != NULL) {
+	if (result != NULL && --result->ref == 0) {
 		KSI_RuleVerificationResultList_free(result->ruleResults);
 		KSI_RuleVerificationResultList_free(result->policyResults);
 		KSI_free(result);

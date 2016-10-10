@@ -855,6 +855,7 @@ int KSI_MultiSignature_get(KSI_MultiSignature *ms, const KSI_DataHash *hsh, KSI_
 	tmp->publication = NULL;
 	tmp->rfc3161 = NULL;
 	memset(&tmp->verificationResult, 0, sizeof(tmp->verificationResult));
+	tmp->policyVerificationResult = NULL;
 
 	/* If the list is not ordered, order it, to find always the earliest signature possible. This
 	 * is an issue if there are more than one signatures for the same inputhash. */

@@ -1079,6 +1079,8 @@ static int parseAggregationResponse(KSI_CTX *ctx, KSI_uint64_t rootLevel, KSI_Ag
 
 	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Signature", builder->sig->baseTlv);
 
+	/* Turn off the verification. */
+	builder->noVerify = 1;
 	res = KSI_SignatureBuilder_close(builder, rootLevel, signature);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -1095,7 +1097,7 @@ cleanup:
 	return res;
 }
 
-static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *sig, KSI_uint64_t rootLevel, KSI_DataHash *docHsh) {
+static int KSI_SignatureVerifier_verifyWithPolicy(KSI_CTX *ctx, KSI_Signature *sig, KSI_uint64_t rootLevel, KSI_DataHash *docHsh, const KSI_Policy *policy, KSI_VerificationContext *verificationContext) {
 	int res;
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
@@ -1118,11 +1120,15 @@ static int KSI_SignatureVerifier_verifyInternally(KSI_CTX *ctx, KSI_Signature *s
 		goto cleanup;
 	}
 
+	if (verificationContext == NULL) {
+		context.docAggrLevel = rootLevel;
+		context.documentHash = docHsh;
+	} else {
+		context = *verificationContext;
+	}
 	context.signature = sig;
-	context.docAggrLevel = rootLevel;
-	context.documentHash = docHsh;
 
-	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
+	res = KSI_SignatureVerifier_verify(policy, &context, &result);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, "Internal verification of signature aborted due to an error.");
 		goto cleanup;
@@ -1143,7 +1149,9 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_signAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature) {
+#define KSI_SignatureVerifier_verifyInternally(ctx, sig, rootLevel, docHsh) KSI_SignatureVerifier_verifyWithPolicy(ctx, sig, rootLevel, docHsh, KSI_VERIFICATION_POLICY_INTERNAL, NULL)
+
+int KSI_Signature_signAggregatedWithPolicy(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **signature) {
 	int res;
 	KSI_RequestHandle *handle = NULL;
 	KSI_AggregationResp *response = NULL;
@@ -1191,16 +1199,14 @@ int KSI_Signature_signAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint6
 		goto cleanup;
 	}
 
-	res = KSI_SignatureVerifier_verifyInternally(ctx, sign, rootLevel, rootHash);
-	if (res != KSI_OK) {
+	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, sign, rootLevel, rootHash, policy, context);
+	if (res != KSI_OK && res != KSI_VERIFICATION_FAILURE) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
 	*signature = sign;
 	sign = NULL;
-
-	res = KSI_OK;
 
 cleanup:
 
@@ -1364,7 +1370,7 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *to, KSI_Signature **extended) {
+int KSI_Signature_extendToWithPolicy(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *to, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **extended) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Signature *tmp = NULL;
 
@@ -1382,16 +1388,14 @@ int KSI_Signature_extendTo(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *
 	}
 
 	/* Just to be sure, verify the internals. */
-	res = KSI_SignatureVerifier_verifyInternally(ctx, tmp, 0, NULL);
-	if (res != KSI_OK) {
+	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, tmp, 0, NULL, policy, context);
+	if (res != KSI_OK && res != KSI_VERIFICATION_FAILURE) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
 	*extended = tmp;
 	tmp = NULL;
-
-	res = KSI_OK;
 
 cleanup:
 
@@ -1400,7 +1404,7 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI_PublicationRecord *pubRec, KSI_Signature **extended) {
+int KSI_Signature_extendWithPolicy(const KSI_Signature *signature, KSI_CTX *ctx, const KSI_PublicationRecord *pubRec, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **extended) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Integer *pubTime = NULL;
 	KSI_PublicationRecord *pubRecClone = NULL;
@@ -1454,17 +1458,14 @@ int KSI_Signature_extend(const KSI_Signature *signature, KSI_CTX *ctx, const KSI
 	}
 	pubRecClone = NULL;
 
-	/* To be sure we won't return a bad signature, lets verify the internals. */
-	res = KSI_SignatureVerifier_verifyInternally(ctx, tmp, 0, NULL);
-	if (res != KSI_OK) {
+	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, tmp, 0, NULL, policy, context);
+	if (res != KSI_OK && res != KSI_VERIFICATION_FAILURE) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
 	*extended = tmp;
 	tmp = NULL;
-
-	res = KSI_OK;
 
 cleanup:
 
@@ -1484,6 +1485,7 @@ void KSI_Signature_free(KSI_Signature *sig) {
 		KSI_PublicationRecord_free(sig->publication);
 		KSI_RFC3161_free(sig->rfc3161);
 		KSI_VerificationResult_reset(&sig->verificationResult);
+		KSI_PolicyVerificationResult_free(sig->policyVerificationResult);
 
 		KSI_free(sig);
 	}
@@ -1611,7 +1613,7 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_parse(KSI_CTX *ctx, unsigned char *raw, size_t raw_len, KSI_Signature **sig) {
+int KSI_Signature_parseWithPolicy(KSI_CTX *ctx, unsigned char *raw, size_t raw_len, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **sig) {
 	KSI_TLV *tlv = NULL;
 	KSI_Signature *tmp = NULL;
 	int res;
@@ -1634,13 +1636,17 @@ int KSI_Signature_parse(KSI_CTX *ctx, unsigned char *raw, size_t raw_len, KSI_Si
 		goto cleanup;
 	}
 
+	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, tmp, 0, NULL, policy, context);
+	if (res != KSI_OK && res != KSI_VERIFICATION_FAILURE) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
 	tmp->baseTlv = tlv;
 	tlv = NULL;
 
 	*sig = tmp;
 	tmp = NULL;
-
-	res = KSI_OK;
 
 cleanup:
 

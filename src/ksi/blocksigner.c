@@ -39,6 +39,7 @@ struct KSI_BlockSigner_st {
 	KSI_LIST(KSI_BlockSignerHandle) *leafList;
 	KSI_Signature *signature;
 	KSI_DataHash *prevLeaf;
+	KSI_DataHash *origPrevLeaf;
 	KSI_OctetString *iv;
 	KSI_MetaData *metaData;
 
@@ -267,6 +268,7 @@ int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *pr
 	tmp->leafList = NULL;
 	tmp->signature = NULL;
 	tmp->prevLeaf = NULL;
+	tmp->origPrevLeaf = NULL;
 	tmp->iv = NULL;
 	tmp->metaData = NULL;
 
@@ -283,6 +285,7 @@ int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *pr
 	if (res != KSI_OK) goto cleanup;
 
 	tmp->prevLeaf = KSI_DataHash_ref(prevLeaf);
+	tmp->origPrevLeaf = KSI_DataHash_ref(prevLeaf);
 	tmp->iv = KSI_OctetString_ref(initVal);
 
 	/* Add the masking handle. */
@@ -318,6 +321,7 @@ void KSI_BlockSigner_free(KSI_BlockSigner *signer) {
 		KSI_Signature_free(signer->signature);
 		KSI_OctetString_free(signer->iv);
 		KSI_DataHash_free(signer->prevLeaf);
+		KSI_DataHash_free(signer->origPrevLeaf);
 		KSI_free(signer);
 	}
 }
@@ -440,6 +444,22 @@ int KSI_BlockSigner_reset(KSI_BlockSigner *signer) {
 	signer->leafList = leafList;
 	leafList = NULL;
 
+	/* Add the masking handle. */
+	res = KSI_TreeBuilderLeafProcessorList_append(signer->builder->cbList, &signer->maskingProcessor);
+	if (res != KSI_OK) {
+		KSI_pushError(signer->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Add the client id handle. */
+	res = KSI_TreeBuilderLeafProcessorList_append(signer->builder->cbList, &signer->metaDataProcessor);
+	if (res != KSI_OK) {
+		KSI_pushError(signer->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	KSI_DataHash_free(signer->prevLeaf);
+	signer->prevLeaf = KSI_DataHash_ref(signer->origPrevLeaf);
 	res = KSI_OK;
 
 cleanup:
