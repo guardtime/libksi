@@ -334,7 +334,7 @@ static const KSI_Rule publicationPresentRule[] = {
 
 static const KSI_Rule extendToPublicationRule[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileContainsSuitablePublication},
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_ExtendingPermittedVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileExtendingPermittedVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash},
@@ -373,7 +373,7 @@ static const KSI_Rule userPublicationMatchRule[] = {
 
 static const KSI_Rule extendToUserPublicationRule[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification},
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_ExtendingPermittedVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationExtendingPermittedVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash},
@@ -676,9 +676,9 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 	tmp->resultCode = KSI_VER_RES_NA;
 	tmp->finalResult.resultCode = KSI_VER_RES_NA;
 	tmp->finalResult.errorCode = KSI_VER_ERR_GEN_2;
-	tmp->finalResult.stepsPerformed = 0;
-	tmp->finalResult.stepsFailed = 0;
-	tmp->finalResult.stepsSuccessful = 0;
+	tmp->finalResult.stepsPerformed = KSI_VERIFY_NONE;
+	tmp->finalResult.stepsFailed = KSI_VERIFY_NONE;
+	tmp->finalResult.stepsSuccessful = KSI_VERIFY_NONE;
 
 	currentPolicy = policy;
 	while (currentPolicy != NULL) {
