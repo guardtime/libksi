@@ -225,10 +225,6 @@ static void Test_CreateSignature_useProvider(CuTest* tc, const char *uri_host, u
 	return;
 }
 
-static int http_setAggrWrapper(KSI_NetworkClient *client, const char *url_host, unsigned port, const char *user, const char *pass) {
-	return KSI_HttpClient_setAggregator(client, url_host, user, pass);
-}
-
 static int uri_setAggrWrapper(KSI_NetworkClient *client, const char *url_host, unsigned port, const char *user, const char *pass) {
 	return KSI_UriClient_setAggregator(client, url_host, user, pass);
 }

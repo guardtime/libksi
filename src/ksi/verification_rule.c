@@ -53,7 +53,8 @@
 	result->ruleName         = (rule)\
 
 static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, const KSI_DataHash *hsh, const KSI_OctetString *suffix, int hsh_id, KSI_DataHash **out);
-static int rfc3161_verify(KSI_CTX *ctx, const KSI_Signature *sig);
+static int rfc3161_verifyAggrTime(KSI_CTX *ctx, const KSI_Signature *sig);
+static int rfc3161_verifyChainIndex(KSI_CTX *ctx, const KSI_Signature *sig);
 static int getRfc3161OutputHash(const KSI_Signature *sig, KSI_DataHash **outputHash);
 static int getExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Integer *pubTime, KSI_CalendarHashChain **extCalHashChain);
 static int initPublicationsFile(KSI_VerificationContext *info);
@@ -144,11 +145,10 @@ cleanup:
 	return res;
 }
 
-static int rfc3161_verify(KSI_CTX *ctx, const KSI_Signature *sig) {
+static int rfc3161_verifyAggrTime(KSI_CTX *ctx, const KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_RFC3161 *rfc3161 = NULL;
 	KSI_AggregationHashChain *firstChain = NULL;
-	unsigned i;
 
 	if (ctx == NULL || sig == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
@@ -179,6 +179,41 @@ static int rfc3161_verify(KSI_CTX *ctx, const KSI_Signature *sig) {
 		KSI_LOG_debug(ctx, "Signatures aggregation time: %i.", KSI_Integer_getUInt64(firstChain->aggregationTime));
 		KSI_LOG_debug(ctx, "RFC 3161 aggregation time:   %i.", KSI_Integer_getUInt64(rfc3161->aggregationTime));
 		KSI_pushError(ctx, res = KSI_VERIFICATION_FAILURE, "Aggregation hash chain and RFC 3161 aggregation time mismatch.");
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+static int rfc3161_verifyChainIndex(KSI_CTX *ctx, const KSI_Signature *sig) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_RFC3161 *rfc3161 = NULL;
+	KSI_AggregationHashChain *firstChain = NULL;
+	unsigned i;
+
+	if (ctx == NULL || sig == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(ctx);
+
+	rfc3161 = sig->rfc3161;
+	if (rfc3161 == NULL) {
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	if (sig->aggregationChainList == NULL) {
+		KSI_LOG_info(ctx, "Aggregation hash chain is missing.");
+		KSI_pushError(ctx, res = KSI_INVALID_SIGNATURE, "Aggregation hash chain is missing.");
+		goto cleanup;
+	}
+
+	res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &firstChain);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
@@ -214,9 +249,7 @@ static int rfc3161_verify(KSI_CTX *ctx, const KSI_Signature *sig) {
 	}
 
 	res = KSI_OK;
-
 cleanup:
-
 	return res;
 }
 
@@ -325,14 +358,6 @@ int KSI_VerificationRule_AggregationChainInputHashVerification(KSI_VerificationC
 	KSI_LOG_info(ctx, "Verify aggregation hash chain input hash.");
 
 	if (sig->rfc3161 != NULL) {
-		/* Check of RFC 3161 does belong to this aggregation hash chain.*/
-		res = rfc3161_verify(ctx, sig);
-		if (res != KSI_OK) {
-			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
-
 		KSI_LOG_info(ctx, "Using input hash calculated from RFC 3161 for aggregation.");
 		res = getRfc3161OutputHash(sig, &rfc3161_outputHash);
 		if (res != KSI_OK) {
@@ -369,7 +394,7 @@ int KSI_VerificationRule_AggregationChainInputHashVerification(KSI_VerificationC
 		}
 	}
 
-	VERIFICATION_RESULT_OK(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
+	VERIFICATION_RESULT_OK(step);
 	res = KSI_OK;
 
 cleanup:
@@ -570,7 +595,7 @@ int KSI_VerificationRule_AggregationChainMetaDataVerification(KSI_VerificationCo
 		}
 	}
 
-	VERIFICATION_RESULT_OK(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
+	VERIFICATION_RESULT_OK(step);
 	res = KSI_OK;
 
 cleanup:
@@ -680,7 +705,7 @@ int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext
 	tempData->aggregationOutputHash = hsh;
 	hsh = NULL;
 
-	VERIFICATION_RESULT_OK(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
+	VERIFICATION_RESULT_OK(step);
 	res = KSI_OK;
 
 cleanup:
@@ -715,6 +740,21 @@ int KSI_VerificationRule_AggregationHashChainTimeConsistency(KSI_VerificationCon
 
 	KSI_LOG_info(ctx, "Verify aggregation hash chain internal time consistency.");
 
+	/* Verify RFC3161 aggregation time. */
+	if (sig->rfc3161 != NULL) {
+		res = rfc3161_verifyAggrTime(ctx, sig);
+		if (res != KSI_OK) {
+			if (res == KSI_VERIFICATION_FAILURE) {
+				VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_2, step);
+				res = KSI_OK;
+				goto cleanup;
+			} else {
+				VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+				goto cleanup;
+			}
+		}
+	}
+
 	/* Aggregate all the aggregation chains. */
 	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
 		const KSI_AggregationHashChain* aggregationChain = NULL;
@@ -742,7 +782,7 @@ int KSI_VerificationRule_AggregationHashChainTimeConsistency(KSI_VerificationCon
 		prevChain = aggregationChain;
 	}
 
-	VERIFICATION_RESULT_OK(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
+	VERIFICATION_RESULT_OK(step);
 	res = KSI_OK;
 
 cleanup:
@@ -775,6 +815,21 @@ int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationCo
 	KSI_ERR_clearErrors(ctx);
 
 	KSI_LOG_info(ctx, "Verify aggregation hash chain chain index consistency.");
+
+	/* Verify RFC3161 chain index. */
+	if (sig->rfc3161 != NULL) {
+		res = rfc3161_verifyChainIndex(ctx, sig);
+		if (res != KSI_OK) {
+			if (res == KSI_VERIFICATION_FAILURE) {
+				VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_10, step);
+				res = KSI_OK;
+				goto cleanup;
+			} else {
+				VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+				goto cleanup;
+			}
+		}
+	}
 
 	/* Aggregate all the aggregation chains. */
 	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
@@ -864,7 +919,7 @@ int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationCo
 		prevChain = aggregationChain;
 	}
 
-	VERIFICATION_RESULT_OK(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
+	VERIFICATION_RESULT_OK(step);
 	res = KSI_OK;
 
 cleanup:
