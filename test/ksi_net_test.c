@@ -28,6 +28,7 @@
 #include "../src/ksi/net_tcp_impl.h"
 #include "ksi/net_uri.h"
 #include "ksi/tree_builder.h"
+#include "../src/ksi/signature_impl.h"
 
 extern KSI_CTX *ctx;
 
@@ -465,7 +466,9 @@ static void testExtendInvalidSignature(CuTest* tc) {
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_Signature_extendTo(sig, ctx, NULL, &ext);
-	CuAssert(tc, "It should not be possible to extend this signature.", res != KSI_OK);
+	CuAssert(tc, "Extended signature should not verify.", res == KSI_VERIFICATION_FAILURE && ext != NULL);
+	CuAssert(tc, "Unexpected verification result.", ext->policyVerificationResult->finalResult.resultCode == KSI_VER_RES_FAIL);
+	CuAssert(tc, "Unexpected verification error code.", ext->policyVerificationResult->finalResult.errorCode == KSI_VER_ERR_INT_3);
 
 	KSI_Signature_free(sig);
 	KSI_Signature_free(ext);

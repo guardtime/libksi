@@ -1199,14 +1199,15 @@ int KSI_Signature_signAggregatedWithPolicy(KSI_CTX *ctx, KSI_DataHash *rootHash,
 		goto cleanup;
 	}
 
-	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, sign, rootLevel, rootHash, policy, context);
+	/* Return the signature even if subsequent verification fails. */
+	*signature = sign;
+	sign = NULL;
+
+	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, *signature, rootLevel, rootHash, policy, context);
 	if (res != KSI_OK && res != KSI_VERIFICATION_FAILURE) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-
-	*signature = sign;
-	sign = NULL;
 
 cleanup:
 
@@ -1387,15 +1388,15 @@ int KSI_Signature_extendToWithPolicy(const KSI_Signature *sig, KSI_CTX *ctx, KSI
 		goto cleanup;
 	}
 
-	/* Just to be sure, verify the internals. */
-	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, tmp, 0, NULL, policy, context);
+	/* Return the signature even if subsequent verification fails. */
+	*extended = tmp;
+	tmp = NULL;
+
+	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, *extended, 0, NULL, policy, context);
 	if (res != KSI_OK && res != KSI_VERIFICATION_FAILURE) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-
-	*extended = tmp;
-	tmp = NULL;
 
 cleanup:
 
@@ -1458,14 +1459,15 @@ int KSI_Signature_extendWithPolicy(const KSI_Signature *signature, KSI_CTX *ctx,
 	}
 	pubRecClone = NULL;
 
-	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, tmp, 0, NULL, policy, context);
+	/* Return the signature even if subsequent verification fails. */
+	*extended = tmp;
+	tmp = NULL;
+
+	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, *extended, 0, NULL, policy, context);
 	if (res != KSI_OK && res != KSI_VERIFICATION_FAILURE) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-
-	*extended = tmp;
-	tmp = NULL;
 
 cleanup:
 
@@ -1636,17 +1638,18 @@ int KSI_Signature_parseWithPolicy(KSI_CTX *ctx, unsigned char *raw, size_t raw_l
 		goto cleanup;
 	}
 
-	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, tmp, 0, NULL, policy, context);
+	tmp->baseTlv = tlv;
+	tlv = NULL;
+
+	/* Return the signature even if subsequent verification fails. */
+	*sig = tmp;
+	tmp = NULL;
+
+	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, *sig, 0, NULL, policy, context);
 	if (res != KSI_OK && res != KSI_VERIFICATION_FAILURE) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-
-	tmp->baseTlv = tlv;
-	tlv = NULL;
-
-	*sig = tmp;
-	tmp = NULL;
 
 cleanup:
 

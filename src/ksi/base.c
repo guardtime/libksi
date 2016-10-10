@@ -639,7 +639,7 @@ int KSI_extendSignatureWithPolicy(KSI_CTX *ctx, KSI_Signature *sig, const KSI_Po
 	}
 
 	res = KSI_Signature_extendWithPolicy(sig, ctx, pubRec, policy, context, &extSig);
-	if (res != KSI_OK && res != KSI_VERIFICATION_FAILURE) {
+	if (extSig == NULL) {
 		KSI_pushError(ctx,res, NULL);
 		goto cleanup;
 	}

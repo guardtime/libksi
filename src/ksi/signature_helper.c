@@ -188,7 +188,7 @@ int KSI_Signature_fromFileWithPolicy(KSI_CTX *ctx, const char *fileName, const K
 	}
 
 	res = KSI_Signature_parseWithPolicy(ctx, raw, (unsigned)raw_len, policy, context, &tmp);
-	if (res != KSI_OK && res != KSI_VERIFICATION_FAILURE) {
+	if (tmp == NULL) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
