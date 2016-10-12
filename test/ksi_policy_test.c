@@ -665,6 +665,78 @@ static void TestInternalPolicy_FAIL_WithInvalidRfc3161(CuTest* tc) {
 #undef TEST_SIGNATURE_FILE
 }
 
+static void TestInternalPolicy_FAIL_WithInvalidRfc3161AggrTime(CuTest* tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-with-rfc3161-record-ok-changed-aggregation-time.ksig"
+	int res;
+	KSI_VerificationContext context;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_INT_2,
+		"KSI_VerificationRule_AggregationHashChainTimeConsistency"
+	};
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&context, ctx);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &context.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && context.signature != NULL);
+
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_Signature_free(context.signature);
+	KSI_VerificationContext_clean(&context);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void TestInternalPolicy_FAIL_WithInvalidRfc3161ChainIndex(CuTest* tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-with-rfc3161-record-ok-changed-chain-index.ksig"
+	int res;
+	KSI_VerificationContext context;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_INT_10,
+		"KSI_VerificationRule_AggregationHashChainIndexConsistency"
+	};
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&context, ctx);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &context.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && context.signature != NULL);
+
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_Signature_free(context.signature);
+	KSI_VerificationContext_clean(&context);
+
+#undef TEST_SIGNATURE_FILE
+}
+
 static void TestInternalPolicy_OK_MetaDataWithPadding(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-metadata-with-padding.ksig"
 	int res;
@@ -1995,7 +2067,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithSuitablePublication(CuTest* t
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_NA,
 		KSI_VER_ERR_GEN_2,
-		"KSI_VerificationRule_ExtendingPermittedVerification"
+		"KSI_VerificationRule_PublicationsFileExtendingPermittedVerification"
 	};
 	KSI_CTX *ctx = NULL;
 
@@ -2253,7 +2325,7 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureBeforePublica
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_NA,
 		KSI_VER_ERR_GEN_2,
-		"KSI_VerificationRule_ExtendingPermittedVerification"
+		"KSI_VerificationRule_UserProvidedPublicationExtendingPermittedVerification"
 	};
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -3110,6 +3182,8 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestVerificationResult);
 	SUITE_ADD_TEST(suite, TestDuplicateResults);
 	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInvalidRfc3161);
+	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInvalidRfc3161AggrTime);
+	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInvalidRfc3161ChainIndex);
 	SUITE_ADD_TEST(suite, TestInternalPolicy_OK_MetaDataWithPadding);
 	SUITE_ADD_TEST(suite, TestInternalPolicy_OK_MetaDataWithoutPadding);
 	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInvalidMetaDataPadding);
