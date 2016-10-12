@@ -466,7 +466,11 @@ static void testExtendInvalidSignature(CuTest* tc) {
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_Signature_extendTo(sig, ctx, NULL, &ext);
-	CuAssert(tc, "Extended signature should not verify.", res == KSI_VERIFICATION_FAILURE && ext != NULL);
+	CuAssert(tc, "Extended signature should not verify.", res == KSI_VERIFICATION_FAILURE && ext == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &ext);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && ext != NULL);
+
 	CuAssert(tc, "Unexpected verification result.", ext->policyVerificationResult->finalResult.resultCode == KSI_VER_RES_FAIL);
 	CuAssert(tc, "Unexpected verification error code.", ext->policyVerificationResult->finalResult.errorCode == KSI_VER_ERR_INT_3);
 

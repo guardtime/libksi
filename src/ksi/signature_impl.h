@@ -81,6 +81,8 @@ extern "C" {
 	struct KSI_Signature_st {
 		/** KSI context. */
 		KSI_CTX *ctx;
+		/** Reference counter. */
+		size_t ref;
 		/** Base TLV - when serialized, this value will be used. */
 		KSI_TLV *baseTlv;
 		/** Calendar hash chain. */

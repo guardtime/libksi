@@ -42,6 +42,8 @@ KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationAuthRec);
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarAuthRec);
 KSI_IMPORT_TLV_TEMPLATE(KSI_RFC3161);
 
+KSI_IMPLEMENT_REF(KSI_Signature);
+
 /**
  * KSI_AggregationHashChain
  */
@@ -1199,15 +1201,16 @@ int KSI_Signature_signAggregatedWithPolicy(KSI_CTX *ctx, KSI_DataHash *rootHash,
 		goto cleanup;
 	}
 
-	/* Return the signature even if subsequent verification fails. */
-	*signature = sign;
-	sign = NULL;
-
-	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, *signature, rootLevel, rootHash, policy, context);
-	if (res != KSI_OK && res != KSI_VERIFICATION_FAILURE) {
+	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, sign, rootLevel, rootHash, policy, context);
+	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
+
+	*signature = sign;
+	sign = NULL;
+
+	res = KSI_OK;
 
 cleanup:
 
@@ -1388,15 +1391,16 @@ int KSI_Signature_extendToWithPolicy(const KSI_Signature *sig, KSI_CTX *ctx, KSI
 		goto cleanup;
 	}
 
-	/* Return the signature even if subsequent verification fails. */
-	*extended = tmp;
-	tmp = NULL;
-
-	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, *extended, 0, NULL, policy, context);
-	if (res != KSI_OK && res != KSI_VERIFICATION_FAILURE) {
+	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, tmp, 0, NULL, policy, context);
+	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
+
+	*extended = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
 
 cleanup:
 
@@ -1459,15 +1463,16 @@ int KSI_Signature_extendWithPolicy(const KSI_Signature *signature, KSI_CTX *ctx,
 	}
 	pubRecClone = NULL;
 
-	/* Return the signature even if subsequent verification fails. */
-	*extended = tmp;
-	tmp = NULL;
-
-	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, *extended, 0, NULL, policy, context);
-	if (res != KSI_OK && res != KSI_VERIFICATION_FAILURE) {
+	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, tmp, 0, NULL, policy, context);
+	if (res != KSI_OK && res) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
+
+	*extended = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
 
 cleanup:
 
@@ -1478,7 +1483,7 @@ cleanup:
 }
 
 void KSI_Signature_free(KSI_Signature *sig) {
-	if (sig != NULL) {
+	if (sig != NULL && --sig->ref == 0) {
 		KSI_TLV_free(sig->baseTlv);
 		KSI_CalendarHashChain_free(sig->calendarChain);
 		KSI_AggregationHashChainList_free(sig->aggregationChainList);
@@ -1638,18 +1643,19 @@ int KSI_Signature_parseWithPolicy(KSI_CTX *ctx, unsigned char *raw, size_t raw_l
 		goto cleanup;
 	}
 
-	tmp->baseTlv = tlv;
-	tlv = NULL;
-
-	/* Return the signature even if subsequent verification fails. */
-	*sig = tmp;
-	tmp = NULL;
-
-	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, *sig, 0, NULL, policy, context);
-	if (res != KSI_OK && res != KSI_VERIFICATION_FAILURE) {
+	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, tmp, 0, NULL, policy, context);
+	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
+
+	tmp->baseTlv = tlv;
+	tlv = NULL;
+
+	*sig = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
 
 cleanup:
 

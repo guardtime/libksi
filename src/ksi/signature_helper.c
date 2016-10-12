@@ -188,13 +188,15 @@ int KSI_Signature_fromFileWithPolicy(KSI_CTX *ctx, const char *fileName, const K
 	}
 
 	res = KSI_Signature_parseWithPolicy(ctx, raw, (unsigned)raw_len, policy, context, &tmp);
-	if (tmp == NULL) {
+	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
 	*sig = tmp;
 	tmp = NULL;
+
+	res = KSI_OK;
 
 cleanup:
 
@@ -205,8 +207,8 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_createAggregatedWithPolicy(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **signature) {
-	return KSI_Signature_signAggregatedWithPolicy(ctx, rootHash, rootLevel, policy, context, signature);
+int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature) {
+	return KSI_Signature_signAggregated(ctx, rootHash, rootLevel, signature);
 }
 
 
@@ -214,6 +216,6 @@ int KSI_Signature_signWithPolicy(KSI_CTX *ctx, KSI_DataHash *hsh, const KSI_Poli
 	return KSI_Signature_signAggregatedWithPolicy(ctx, hsh, 0, policy, context, signature);
 }
 
-int KSI_Signature_createWithPolicy(KSI_CTX *ctx, KSI_DataHash *hsh, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **signature) {
-	return KSI_Signature_signWithPolicy(ctx, hsh, policy, context, signature);
+int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature) {
+	return KSI_Signature_sign(ctx, hsh, signature);
 }

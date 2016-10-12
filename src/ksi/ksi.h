@@ -654,6 +654,15 @@ int KSI_CTX_getPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **var);
 int KSI_CTX_getPublicationCertEmail(KSI_CTX *ctx, const char **address);
 
 /**
+ * Getter method for \c lastFailedSignature.
+ * \param[in]	ctx						Pointer to #KSI_CTX.
+ * \param[out]	lastFailedSignature		Pointer to receiving pointer.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \note Ownership of \c lastFailedSignature is passed to the caller who is responsible for freeing the object.
+ */
+int KSI_CTX_getLastFailedSignature(KSI_CTX *ctx, KSI_Signature **lastFailedSignature);
+
+/**
  * @}
  */
 #ifdef __cplusplus

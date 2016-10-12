@@ -100,20 +100,16 @@ extern "C" {
 #define KSI_Signature_sign(ctx, hsh, signature) KSI_Signature_signWithPolicy(ctx, hsh, KSI_VERIFICATION_POLICY_INTERNAL, NULL, signature)
 
 	/**
-	 * \deprecated This function is deprecated and #KSI_Signature_signWithPolicy should be used instead.
-	 * \see #KSI_Signature_signWithPolicy
+	 * \deprecated This function is deprecated and #KSI_Signature_sign should be used instead.
+	 * \see #KSI_Signature_sign
 	 */
-	KSI_FN_DEPRECATED(int KSI_Signature_createWithPolicy(KSI_CTX *ctx, KSI_DataHash *hsh, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **signature));
-
-#define KSI_Signature_create(ctx, hsh, signature) KSI_Signature_createWithPolicy(ctx, hsh, KSI_VERIFICATION_POLICY_INTERNAL, NULL, signature)
+	KSI_FN_DEPRECATED(int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature));
 
 	/**
-	 * \deprecated This function is deprecated and #KSI_Signature_signAggregatedWithPolicy should be used instead.
-	 * \see #KSI_Signature_signAggregatedWithPolicy
+	 * \deprecated This function is deprecated and #KSI_Signature_signAggregated should be used instead.
+	 * \see #KSI_Signature_signAggregated
 	 */
-	KSI_FN_DEPRECATED(int KSI_Signature_createAggregatedWithPolicy(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **signature));
-
-#define KSI_Signature_createAggregated(ctx, rootHash, rootLevel, signature) KSI_Signature_createAggregatedWithPolicy(ctx, rootHash, rootLevel, KSI_VERIFICATION_POLICY_INTERNAL, NULL, signature)
+	KSI_FN_DEPRECATED(int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature));
 
 #ifdef __cplusplus
 }

@@ -151,6 +151,7 @@ static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
 	}
 
 	tmp->ctx = ctx;
+	tmp->ref = 1;
 	tmp->calendarChain = NULL;
 	tmp->baseTlv = NULL;
 	tmp->publication = NULL;
