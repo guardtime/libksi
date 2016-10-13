@@ -148,6 +148,31 @@ cleanup:
 }
 
 /******************
+ * EMPTY POLICY
+ ******************/
+
+static int KSI_VerificationRule_AlwaysOk(KSI_VerificationContext *context, KSI_RuleVerificationResult *result) {
+	result->resultCode = KSI_VER_RES_OK;
+	result->errorCode = KSI_VER_ERR_NONE;
+	result->ruleName = __FUNCTION__;
+	return KSI_OK;
+}
+
+static const KSI_Rule emptyRules[] = {
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AlwaysOk},
+	{KSI_RULE_TYPE_BASIC, NULL}
+};
+
+static const KSI_Policy PolicyEmpty = {
+	emptyRules,
+	NULL,
+	"EmptyPolicy"
+};
+
+const KSI_Policy* KSI_VERIFICATION_POLICY_EMPTY = &PolicyEmpty;
+
+
+/******************
  * INTERNAL POLICY
  ******************/
 
