@@ -306,7 +306,7 @@ static void testObjectSerialization(CuTest *tc, const char *sample,
 }
 
 static void aggregationPduTest(CuTest *tc) {
-	ctx->aggregationPduVersion = KSI_PDU_VERSION_1;
+	ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] = KSI_PDU_VERSION_1;
 	testObjectSerialization(tc, getFullResourcePath("resource/tlv/aggr_request.tlv"),
 			(int (*)(KSI_CTX *, unsigned char *, size_t, void **))KSI_AggregationPdu_parse,
 			(int (*)(void *, unsigned char **, size_t *))KSI_AggregationPdu_serialize,
@@ -315,11 +315,11 @@ static void aggregationPduTest(CuTest *tc) {
 			(int (*)(KSI_CTX *, unsigned char *, size_t, void **))KSI_AggregationPdu_parse,
 			(int (*)(void *, unsigned char **, size_t *))KSI_AggregationPdu_serialize,
 			( void (*)(void *))KSI_AggregationPdu_free);
-	ctx->aggregationPduVersion = KSI_AGGREGATION_PDU_VERSION;
+	ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] = KSI_AGGREGATION_PDU_VERSION;
 }
 
 static void aggregationPduVer2Test(CuTest *tc) {
-	ctx->aggregationPduVersion = KSI_PDU_VERSION_2;
+	ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] = KSI_PDU_VERSION_2;
 	testObjectSerialization(tc, getFullResourcePath("resource/tlv/aggr_request_v2.tlv"),
 			(int (*)(KSI_CTX *, unsigned char *, size_t, void **))KSI_AggregationPdu_parse,
 			(int (*)(void *, unsigned char **, size_t *))KSI_AggregationPdu_serialize,
@@ -328,11 +328,11 @@ static void aggregationPduVer2Test(CuTest *tc) {
 			(int (*)(KSI_CTX *, unsigned char *, size_t, void **))KSI_AggregationPdu_parse,
 			(int (*)(void *, unsigned char **, size_t *))KSI_AggregationPdu_serialize,
 			( void (*)(void *))KSI_AggregationPdu_free);
-	ctx->aggregationPduVersion = KSI_AGGREGATION_PDU_VERSION;
+	ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] = KSI_AGGREGATION_PDU_VERSION;
 }
 
 static void extendPduTest(CuTest *tc) {
-	ctx->extendPduVersion = KSI_PDU_VERSION_1;
+	ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER] = KSI_PDU_VERSION_1;
 	testObjectSerialization(tc, getFullResourcePath("resource/tlv/extend_request.tlv"),
 			(int (*)(KSI_CTX *, unsigned char *, size_t, void **))KSI_ExtendPdu_parse,
 			(int (*)(void *, unsigned char **, size_t *))KSI_ExtendPdu_serialize,
@@ -341,11 +341,11 @@ static void extendPduTest(CuTest *tc) {
 			(int (*)(KSI_CTX *, unsigned char *, size_t, void **))KSI_ExtendPdu_parse,
 			(int (*)(void *, unsigned char **, size_t *))KSI_ExtendPdu_serialize,
 			( void (*)(void *))KSI_ExtendPdu_free);
-	ctx->extendPduVersion = KSI_EXTENDING_PDU_VERSION;
+	ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER] = KSI_EXTENDING_PDU_VERSION;
 }
 
 static void extendPduVer2Test(CuTest *tc) {
-	ctx->extendPduVersion = KSI_PDU_VERSION_2;
+	ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER] = KSI_PDU_VERSION_2;
 	testObjectSerialization(tc, getFullResourcePath("resource/tlv/extend_request_v2.tlv"),
 			(int (*)(KSI_CTX *, unsigned char *, size_t, void **))KSI_ExtendPdu_parse,
 			(int (*)(void *, unsigned char **, size_t *))KSI_ExtendPdu_serialize,
@@ -354,7 +354,7 @@ static void extendPduVer2Test(CuTest *tc) {
 			(int (*)(KSI_CTX *, unsigned char *, size_t, void **))KSI_ExtendPdu_parse,
 			(int (*)(void *, unsigned char **, size_t *))KSI_ExtendPdu_serialize,
 			( void (*)(void *))KSI_ExtendPdu_free);
-	ctx->extendPduVersion = KSI_EXTENDING_PDU_VERSION;
+	ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER] = KSI_EXTENDING_PDU_VERSION;
 }
 
 static void testErrorMessage(CuTest* tc, const char *expected, const char *tlv_file,

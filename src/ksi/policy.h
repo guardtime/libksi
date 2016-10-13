@@ -148,7 +148,9 @@ extern "C" {
 	/**
 	 * Policy verification result structure.
 	 */
-	typedef struct KSI_PolicyVerificationResult_st {
+	struct KSI_PolicyVerificationResult_st {
+		/** Reference counter. */
+		size_t ref;
 		/** Verification result. */
 		KSI_VerificationResultCode resultCode;
 		/** Detailed verification result. */
@@ -157,9 +159,7 @@ extern "C" {
 		KSI_LIST(KSI_RuleVerificationResult) *ruleResults;
 		/** Results for individual policies performed. */
 		KSI_LIST(KSI_RuleVerificationResult) *policyResults;
-	} KSI_PolicyVerificationResult;
-
-	typedef struct KSI_Policy_st KSI_Policy;
+	};
 
 	KSI_DEFINE_EXTERN(const KSI_Policy* KSI_VERIFICATION_POLICY_INTERNAL);
 	KSI_DEFINE_EXTERN(const KSI_Policy* KSI_VERIFICATION_POLICY_CALENDAR_BASED);
@@ -178,8 +178,6 @@ extern "C" {
 		KSI_RuleType type;
 		const void *rule;
 	} KSI_Rule;
-
-	typedef struct KSI_VerificationContext_st KSI_VerificationContext;
 
 	/**
 	 * Function to convert a #KSI_VerificationErrorCode value to a human readable

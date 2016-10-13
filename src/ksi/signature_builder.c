@@ -168,6 +168,8 @@ static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
 		goto cleanup;
 	}
 
+	tmp->policyVerificationResult = NULL;
+
 	*sig = tmp;
 	tmp = NULL;
 

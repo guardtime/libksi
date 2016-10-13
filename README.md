@@ -118,7 +118,7 @@ A simple example how to sign a document and verify the signature:
 	/* Set up extender and publications file for verification. */
 	KSI_PublicationsFile *pubFile = NULL;	/* Must be freed. */
 	KSI_CTX_setExtender(ksi, "http://signingservice.somehost:1234", "user", "key");
-	KSI_PublicationsFile_fromFile(ksi, "~/ksi-publications.bin", &pubFile);
+	KSI_PublicationsFile_fromFile(ksi, KSI_PUBLICATIONS_FILE, &pubFile);
 	KSI_CTX_setPublicationsFile(ksi, pubFile);
 
 	/* Calculate hash of document, sign the hash and verify the signature. */
@@ -150,7 +150,7 @@ See LICENSE file.
 ## Compatibility ##
 | OS / Platform                              | Compatibility                                |
 | :---                                       | :---                                         | 
-| CentOS / RHEL 6 and 7, x86_64 architecture | Fully compatible and tested                  |
-| Debian, ...                                | Compatible but not tested on a regular basis |
-| OS X                                       | Compatible but not tested on a regular basis |
-| Windows 7, 8, 10                           | Compatible but not tested on a regular basis |
+| CentOS / RHEL 6 and 7, x86_64 architecture | Fully compatible and tested.                  |
+| Debian, ...                                | Compatible but not tested on a regular basis. |
+| OS X                                       | Compatible but not tested on a regular basis. |
+| Windows 7, 8, 10                           | Compatible but not tested on a regular basis. Build combination of DLL=dll and RTL=MT(d) not supported. |

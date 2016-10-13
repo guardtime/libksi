@@ -303,18 +303,15 @@ enum KSI_CtxFlag {
 	 * Type:		size_t.
 	 * Range:		KSI_PDU_VERSION_1 .. KSI_PDU_VERSION_2
 	 */
-	KSI_CTX_FLAG_AGGR_PDU_VER	= 1,
+	KSI_CTX_FLAG_AGGR_PDU_VER,
 	/**
 	 * Description:	PDU version for KSI extending messages.
 	 * Type:		size_t.
 	 * Range:		KSI_PDU_VERSION_1 .. KSI_PDU_VERSION_2
 	 */
-	KSI_CTX_FLAG_EXT_PDU_VER	= 2,
+	KSI_CTX_FLAG_EXT_PDU_VER,
 
-	/**
-	 * Placeholder for the last flag.
-	 */
-	KSI_CTX_FLAG_UNDEFINED,
+	KSI_CTX_NUM_OF_FLAGS,
 };
 
 /**
@@ -515,14 +512,19 @@ int KSI_createSignature(KSI_CTX *ctx, KSI_DataHash *dataHash, KSI_Signature **si
 
 /**
  * Extend the signature to the earliest available publication.
+ * Verify the extended signature with the provided policy and context.
  * \param[in]		ctx			KSI context.
  * \param[in]		sig			Signature to be extended.
+ * \param[in]		policy		Verification policy.
+ * \param[in]		context		Verification context.
  * \param[out]		extended	Pointer to the receiving pointer to the extended signature.
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  * \see #KSI_Signature_free, #KSI_createSignature
  */
-int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extended);
+int KSI_extendSignatureWithPolicy(KSI_CTX *ctx, KSI_Signature *sig, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **extended);
+
+#define KSI_extendSignature(ctx, sig, extended) KSI_extendSignatureWithPolicy(ctx, sig, KSI_VERIFICATION_POLICY_INTERNAL, NULL, extended)
 
 /**
  * Setter for the internal log level.

@@ -30,6 +30,12 @@ RTL = MT
 !ERROR RTL can only have one of the following values "MT", "MTd", "MD" or "MDd", but it is "$(RTL)". Default valu is "MT".
 !ENDIF
 
+!IF "$(DLL)" == "dll"
+!IF "$(RTL)" == "MT" || "$(RTL)" == "MTd"
+!ERROR If DLL is "dll", RTL can only be "MD" or "MDd".
+!ENDIF
+!ENDIF
+
 !IFNDEF NET_PROVIDER
 !MESSAGE NET_PROVIDER to default
 NET_PROVIDER = CURL
@@ -97,7 +103,7 @@ default:
 
 all: libraries example tests
 
-libraries: libMT libMTd libMD libMDd dllMT dllMTd dllMD dllMDd
+libraries: libMT libMTd libMD libMDd dllMD dllMDd
 
 
 libMT:
@@ -111,12 +117,6 @@ libMD:
 
 libMDd:
 	nmake DLL=lib RTL=MDd $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
-
-dllMT:
-	nmake DLL=dll RTL=MT $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
-
-dllMTd:
-	nmake DLL=dll RTL=MTd $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
 
 dllMD: 
 	nmake DLL=dll RTL=MD $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)

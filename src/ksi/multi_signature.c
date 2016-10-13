@@ -298,9 +298,12 @@ static int ChainIndexMapperList_selectCreate(KSI_LIST(ChainIndexMapper) **mapper
 	res = KSI_IntegerList_elementAt(index, lvl, &key);
 	if (res != KSI_OK) goto cleanup;
 
-	KSI_Integer_ref(key);
+	/* Assignment needed for the unlikely case that KSI_Integer_ref returns NULL
+	 * even if key is not NULL. */
+	key = KSI_Integer_ref(key);
 
 	listp = *mapper;
+
 	/* Create a new list, if empty. */
 	if (listp == NULL) {
 		res = ChainIndexMapperList_new(&list);
@@ -735,20 +738,33 @@ static int findAggregationHashChainList(KSI_LIST(ChainIndexMapper) *cimList, con
 		}
 
 		if (KSI_DataHash_equals(inputHash, hsh)) {
-			res = KSI_AggregationHashChainList_append(aggList, KSI_AggregationHashChain_ref(cim->aggrChain));
-			if (res != KSI_OK) goto cleanup;
+			KSI_AggregationHashChain *ref = NULL;
+			res = KSI_AggregationHashChainList_append(aggList, ref = KSI_AggregationHashChain_ref(cim->aggrChain));
+			if (res != KSI_OK) {
+				/* Cleanup the reference. */
+				KSI_AggregationHashChain_free(ref);
+
+				goto cleanup;
+			}
 
 			break;
 		}
 
 		/* Search for sub elements. */
 		if (ChainIndexMapperList_length(cim->children) > 0) {
+			KSI_AggregationHashChain *ref = NULL;
+
 			res = findAggregationHashChainList(cim->children, hsh, aggList);
 			if (res != KSI_OK) goto cleanup;
 
 			if (KSI_AggregationHashChainList_length(aggList) > 0) {
-				res = KSI_AggregationHashChainList_append(aggList, KSI_AggregationHashChain_ref(cim->aggrChain));
-				if (res != KSI_OK) goto cleanup;
+				res = KSI_AggregationHashChainList_append(aggList, ref = KSI_AggregationHashChain_ref(cim->aggrChain));
+				if (res != KSI_OK) {
+					/* Cleanup the reference. */
+					KSI_AggregationHashChain_free(ref);
+
+					goto cleanup;
+				}
 
 				break;
 			}
@@ -839,6 +855,7 @@ int KSI_MultiSignature_get(KSI_MultiSignature *ms, const KSI_DataHash *hsh, KSI_
 	tmp->publication = NULL;
 	tmp->rfc3161 = NULL;
 	memset(&tmp->verificationResult, 0, sizeof(tmp->verificationResult));
+	tmp->policyVerificationResult = NULL;
 
 	/* If the list is not ordered, order it, to find always the earliest signature possible. This
 	 * is an issue if there are more than one signatures for the same inputhash. */
@@ -868,12 +885,18 @@ int KSI_MultiSignature_get(KSI_MultiSignature *ms, const KSI_DataHash *hsh, KSI_
 
 	if (tmp->calendarChain != NULL) {
 		TimeMapper *proof = NULL;
+		KSI_CalendarHashChain *ref = NULL;
 
 		/* Make a reference. */
-		KSI_CalendarHashChain_ref(tmp->calendarChain);
+		ref = KSI_CalendarHashChain_ref(tmp->calendarChain);
 		/* Find proof. */
 		res = TimeMapperList_select(&ms->timeList, tmp->calendarChain->publicationTime, &proof, 0);
-		if (res != KSI_OK) goto cleanup;
+		if (res != KSI_OK) {
+			/* Cleanup the reference. */
+			KSI_CalendarHashChain_free(ref);
+
+			goto cleanup;
+		}
 
 		if (proof != NULL) {
 			KSI_CalendarAuthRec_free(tmp->calendarAuthRec);

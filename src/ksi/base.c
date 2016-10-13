@@ -198,8 +198,8 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->publicationCertEmail_DEPRECATED = NULL;
 	ctx->loggerCB = NULL;
 	ctx->requestHeaderCB = NULL;
-	ctx->aggregationPduVersion = KSI_AGGREGATION_PDU_VERSION;
-	ctx->extendPduVersion = KSI_EXTENDING_PDU_VERSION;
+	ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] = KSI_AGGREGATION_PDU_VERSION;
+	ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER] = KSI_EXTENDING_PDU_VERSION;
 	ctx->loggerCtx = NULL;
 	ctx->certConstraints = NULL;
 	ctx->freeCertConstraintsArray = freeCertConstraintsArray;
@@ -602,7 +602,7 @@ cleanup:
 	return res;
 }
 
-int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extended) {
+int KSI_extendSignatureWithPolicy(KSI_CTX *ctx, KSI_Signature *sig, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **extended) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationsFile *pubFile = NULL;
 	KSI_Integer *signingTime = NULL;
@@ -648,17 +648,14 @@ int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extend
 		goto cleanup;
 	}
 
-	res = KSI_Signature_extend(sig, ctx, pubRec, &extSig);
-	if (res != KSI_OK) {
+	res = KSI_Signature_extendWithPolicy(sig, ctx, pubRec, policy, context, &extSig);
+	if (res != KSI_OK && res != KSI_VERIFICATION_FAILURE) {
 		KSI_pushError(ctx,res, NULL);
 		goto cleanup;
 	}
 
-
 	*extended = extSig;
 	extSig = NULL;
-
-	res = KSI_OK;
 
 cleanup:
 
@@ -871,7 +868,7 @@ static int KSI_CTX_setAggrPduVersion(KSI_CTX *ctx, size_t ver) {
 	}
 
 	if (ver >= KSI_PDU_VERSION_1 && ver <= KSI_PDU_VERSION_2) {
-		ctx->aggregationPduVersion = ver;
+		ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] = ver;
 		res = KSI_OK;
 	}
 
@@ -889,7 +886,7 @@ static int KSI_CTX_setExtPduVersion(KSI_CTX *ctx, size_t ver) {
 	}
 
 	if (ver >= KSI_PDU_VERSION_1 && ver <= KSI_PDU_VERSION_2) {
-		ctx->extendPduVersion = ver;
+		ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER] = ver;
 		res = KSI_OK;
 	}
 
