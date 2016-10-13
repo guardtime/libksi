@@ -22,6 +22,7 @@
 #include "verification_rule.h"
 #include "hashchain.h"
 #include "signature_impl.h"
+#include "ctx_impl.h"
 
 #include <string.h>
 
@@ -145,6 +146,31 @@ cleanup:
 
 	return res;
 }
+
+/******************
+ * EMPTY POLICY
+ ******************/
+
+static int KSI_VerificationRule_AlwaysOk(KSI_VerificationContext *context, KSI_RuleVerificationResult *result) {
+	result->resultCode = KSI_VER_RES_OK;
+	result->errorCode = KSI_VER_ERR_NONE;
+	result->ruleName = __FUNCTION__;
+	return KSI_OK;
+}
+
+static const KSI_Rule emptyRules[] = {
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AlwaysOk},
+	{KSI_RULE_TYPE_BASIC, NULL}
+};
+
+static const KSI_Policy PolicyEmpty = {
+	emptyRules,
+	NULL,
+	"EmptyPolicy"
+};
+
+const KSI_Policy* KSI_VERIFICATION_POLICY_EMPTY = &PolicyEmpty;
+
 
 /******************
  * INTERNAL POLICY
@@ -667,6 +693,13 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 	ctx = context->ctx;
 	KSI_ERR_clearErrors(ctx);
 
+	KSI_Signature_free(ctx->lastFailedSignature);
+	ctx->lastFailedSignature = KSI_Signature_ref(context->signature);
+	if (ctx->lastFailedSignature != NULL) {
+		KSI_PolicyVerificationResult_free(ctx->lastFailedSignature->policyVerificationResult);
+		ctx->lastFailedSignature->policyVerificationResult = NULL;
+	}
+
 	res = PolicyVerificationResult_create(&tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -707,11 +740,16 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 		}
 	}
 
-	*result = tmp;
-	if (context->signature != NULL) {
-		KSI_PolicyVerificationResult_free(context->signature->policyVerificationResult);
-		context->signature->policyVerificationResult = KSI_PolicyVerificationResult_ref(tmp);
+	if (tmp->finalResult.resultCode != KSI_VER_RES_OK) {
+		if (ctx->lastFailedSignature != NULL) {
+			ctx->lastFailedSignature->policyVerificationResult = KSI_PolicyVerificationResult_ref(tmp);
+		}
+	} else {
+		KSI_Signature_free(ctx->lastFailedSignature);
+		ctx->lastFailedSignature = NULL;
 	}
+
+	*result = tmp;
 	tmp = NULL;
 
 	res = KSI_OK;

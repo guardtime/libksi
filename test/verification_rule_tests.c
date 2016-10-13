@@ -107,7 +107,10 @@ static void testRule_AggregationChainInputHashVerification_invalidRfc3161_verify
 	verCtx.tempData = &tempData;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -228,7 +231,10 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 	verCtx.tempData = &tempData;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -258,7 +264,10 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 	verCtx.tempData = &tempData;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -288,7 +297,10 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 	verCtx.tempData = &tempData;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -318,7 +330,10 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 	verCtx.tempData = &tempData;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -348,7 +363,10 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 	verCtx.tempData = &tempData;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -378,7 +396,10 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataLengthN
 	verCtx.tempData = &tempData;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -408,7 +429,10 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataNoPaddi
 	verCtx.tempData = &tempData;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -499,7 +523,10 @@ static void testRule_AggregationHashChainConsistency_verifyErrorResult(CuTest *t
 	verCtx.tempData = &tempData;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -571,7 +598,10 @@ static void testRule_AggregationHashChainTimeConsistencyFail(CuTest *tc, const c
 	verCtx.tempData = &tempData;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(sigFile), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -665,7 +695,10 @@ static void testRule_AggregationHashChainIndexConsistencyFail(CuTest *tc, const 
 	verCtx.tempData = &tempData;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(sigFile), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -796,7 +829,10 @@ static void testRule_CalendarHashChainInputHashVerification_verifyErrorResult(Cu
 	verCtx.tempData = &tempData;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -858,7 +894,10 @@ static void testRule_CalendarHashChainAggregationTime_verifyErrorResult(CuTest *
 	verCtx.tempData = &tempData;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -920,7 +959,10 @@ static void testRule_CalendarHashChainRegistrationTime_verifyErrorResult(CuTest 
 	verCtx.tempData = &tempData;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1013,7 +1055,10 @@ static void testRule_CalendarAuthenticationRecordAggregationHash_verifyErrorResu
 	verCtx.tempData = &tempData;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1106,7 +1151,10 @@ static void testRule_CalendarAuthenticationRecordAggregationTime_verifyErrorResu
 	verCtx.tempData = &tempData;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1199,7 +1247,10 @@ static void testRule_SignaturePublicationRecordPublicationHash_verifyErrorResult
 	verCtx.tempData = &tempData;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1292,7 +1343,10 @@ static void testRule_SignaturePublicationRecordPublicationTime_verifyErrorResult
 	verCtx.tempData = &tempData;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1777,7 +1831,10 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatch_rightLinksDif
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extendedSig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && extendedSig != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && extendedSig == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &extendedSig);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && extendedSig != NULL);
 
 	tempData.calendarChain = KSI_CalendarHashChain_ref(extendedSig->calendarChain);
 

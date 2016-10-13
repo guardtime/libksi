@@ -311,6 +311,8 @@ extern "C" {
 	 */
 	int KSI_Signature_getPublicationInfo(KSI_Signature *sig, KSI_DataHash **pubHsh, KSI_Utf8String **pubStr, time_t *pubDate, KSI_LIST(KSI_Utf8String) **pubRefs, KSI_LIST(KSI_Utf8String) **repUrls);
 
+	KSI_DEFINE_REF(KSI_Signature);
+
 /**
  * @}
  */
