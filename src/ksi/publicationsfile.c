@@ -894,8 +894,8 @@ int KSI_PublicationsFile_findPublication(const KSI_PublicationsFile *trust, KSI_
 		KSI_PublicationRecord *pr = NULL;
 
 		res = KSI_PublicationRecordList_elementAt(trust->publications, i, &pr);
-		if (res != KSI_OK) {
-			KSI_pushError(trust->ctx, res, NULL);
+		if (res != KSI_OK || pr == NULL) {
+			KSI_pushError(trust->ctx, res = KSI_INVALID_STATE, NULL);
 			goto cleanup;
 		}
 

@@ -169,8 +169,8 @@ static int rfc3161_verifyAggrTime(KSI_CTX *ctx, const KSI_Signature *sig) {
 	}
 
 	res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &firstChain);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
+	if (res != KSI_OK || firstChain == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_STATE, NULL);
 		goto cleanup;
 	}
 
@@ -212,8 +212,8 @@ static int rfc3161_verifyChainIndex(KSI_CTX *ctx, const KSI_Signature *sig) {
 	}
 
 	res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &firstChain);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
+	if (res != KSI_OK || firstChain == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_STATE, NULL);
 		goto cleanup;
 	}
 
@@ -375,9 +375,9 @@ int KSI_VerificationRule_AggregationChainInputHashVerification(KSI_VerificationC
 		}
 
 		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &firstChain);
-		if (res != KSI_OK) {
+		if (res != KSI_OK || firstChain == NULL) {
 			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-			KSI_pushError(ctx, res, NULL);
+			KSI_pushError(ctx, res = KSI_INVALID_STATE, NULL);
 			goto cleanup;
 		}
 
@@ -655,13 +655,11 @@ int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext
 		KSI_DataHash *tmpHash = NULL;
 
 		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, (KSI_AggregationHashChain **)&aggregationChain);
-		if (res != KSI_OK) {
+		if (res != KSI_OK || aggregationChain == NULL) {
 			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-			KSI_pushError(ctx, res, NULL);
+			KSI_pushError(ctx, res = KSI_INVALID_STATE, NULL);
 			goto cleanup;
 		}
-
-		if (aggregationChain == NULL) break;
 
 		if (hsh != NULL) {
 			/* Validate input hash */
@@ -838,13 +836,11 @@ int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationCo
 		KSI_uint64_t chainIndexCalc = 0;
 
 		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, (KSI_AggregationHashChain **)&aggregationChain);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
+		if (res != KSI_OK || aggregationChain == NULL) {
+			KSI_pushError(ctx, res = KSI_INVALID_STATE, NULL);
 			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 			goto cleanup;
 		}
-
-		if (aggregationChain == NULL) break;
 
 		/* Verify shape of the aggregation hash chain. */
 		if (KSI_IntegerList_length(aggregationChain->chainIndex) > 0) {
@@ -1054,9 +1050,9 @@ int KSI_VerificationRule_CalendarHashChainAggregationTime(KSI_VerificationContex
 
 	/* Take the first aggregation hash chain, as all of the chain should have the same value for "aggregation time". */
 	res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &aggregationChain);
-	if (res != KSI_OK) {
+	if (res != KSI_OK || aggregationChain == NULL) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res, NULL);
+		KSI_pushError(ctx, res = KSI_INVALID_STATE, NULL);
 		goto cleanup;
 	}
 
@@ -2167,9 +2163,9 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(KSI_Verif
 	}
 	/* Take the first aggregation hash chain, as all of the chain should have the same value for "aggregation time". */
 	res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &aggregationChain);
-	if (res != KSI_OK) {
+	if (res != KSI_OK || aggregationChain == NULL) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res, NULL);
+		KSI_pushError(ctx, res = KSI_INVALID_STATE, NULL);
 		goto cleanup;
 	}
 

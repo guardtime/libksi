@@ -235,7 +235,10 @@ static int TimeMapperList_select(KSI_LIST(TimeMapper) **mapper, KSI_Integer *tm,
 		TimeMapper *ptr = NULL;
 
 		res = TimeMapperList_elementAt(listp, i, &ptr);
-		if (res != KSI_OK) goto cleanup;
+		if (res != KSI_OK || ptr == NULL) {
+			res = KSI_INVALID_STATE;
+			goto cleanup;
+		}
 
 		if (KSI_Integer_equals(ptr->key_time, tm)) {
 			hitp = ptr;
@@ -316,7 +319,10 @@ static int ChainIndexMapperList_selectCreate(KSI_LIST(ChainIndexMapper) **mapper
 	for (i = 0; i < ChainIndexMapperList_length(listp); i++) {
 		ChainIndexMapper *ptr = NULL;
 		res = ChainIndexMapperList_elementAt(listp, i, &ptr);
-		if (res != KSI_OK) goto cleanup;
+		if (res != KSI_OK || ptr == NULL) {
+			res = KSI_INVALID_STATE;
+			goto cleanup;
+		}
 
 		if (KSI_Integer_equals(ptr->key_index, key)) {
 			hitp = ptr;
@@ -723,7 +729,10 @@ static int findAggregationHashChainList(KSI_LIST(ChainIndexMapper) *cimList, con
 
 	for (i = 0; i < ChainIndexMapperList_length(cimList); i++) {
 		res = ChainIndexMapperList_elementAt(cimList, i, &cim);
-		if (res != KSI_OK) goto cleanup;
+		if (res != KSI_OK || cim == NULL) {
+			res = KSI_INVALID_STATE;
+			goto cleanup;
+		}
 
 		if (cim->aggrChain == NULL) {
 			/* When there is no aggregation chain, there are no siblings containing a chain either. */
@@ -794,7 +803,10 @@ static int findAggregationHashChain(KSI_LIST(TimeMapper) *tmList, const KSI_Data
 
 	for (i = 0; i < TimeMapperList_length(tmList); i++) {
 		res = TimeMapperList_elementAt(tmList, i, &tm);
-		if (res != KSI_OK) goto cleanup;
+		if (res != KSI_OK || tm == NULL) {
+			res = KSI_INVALID_STATE;
+			goto cleanup;
+		}
 
 		res = findAggregationHashChainList(tm->chainIndexeList, hsh, agl);
 		if (res != KSI_OK) goto cleanup;
@@ -933,7 +945,10 @@ static int ChainIndexMapperList_vacuum(KSI_LIST(ChainIndexMapper) *cimList) {
 		ChainIndexMapper *cim = NULL;
 
 		res = ChainIndexMapperList_elementAt(cimList, i - 1, &cim);
-		if (res != KSI_OK) goto cleanup;
+		if (res != KSI_OK || cim == NULL) {
+			res = KSI_INVALID_STATE;
+			goto cleanup;
+		}
 
 		/* Check if the chain index mapper should be removed. */
 		if ((cim->aggrAuthRec == NULL && cim->aggrChain == NULL) || (cim->children != NULL && ChainIndexMapperList_length(cim->children) == 0)) {
@@ -1029,7 +1044,10 @@ static int TimeMapper_markUsedCalendarChains(TimeMapper *tm, void *foldCtx) {
 		ChainIndexMapper *cim = NULL;
 		TimeMapper *calTm = NULL;
 		res = ChainIndexMapperList_elementAt(tm->chainIndexeList, i, &cim);
-		if (res != KSI_OK) goto cleanup;
+		if (res != KSI_OK || cim == NULL) {
+			res = KSI_INVALID_STATE;
+			goto cleanup;
+		}
 
 		if (cim->aggrChain != NULL) {
 			res = TimeMapperList_select(&tmList, cim->aggrChain->aggregationTime, &calTm, 0);
@@ -1099,7 +1117,10 @@ static int TimeMapperList_vacuum(KSI_LIST(TimeMapper) *tmList) {
 	for (i = TimeMapperList_length(tmList); i > 0; i--) {
 		TimeMapper *tm = NULL;
 		res = TimeMapperList_elementAt(tmList, i - 1, &tm);
-		if (res != KSI_OK) goto cleanup;
+		if (res != KSI_OK || tm == NULL) {
+			res = KSI_INVALID_STATE;
+			goto cleanup;
+		}
 
 		if (!tm->paint && ChainIndexMapperList_length(tm->chainIndexeList) == 0) {
 			res = TimeMapperList_remove(tmList, i - 1, NULL);
@@ -1457,7 +1478,10 @@ static int ChainIndexMapper_writeBytes(KSI_LIST(ChainIndexMapper) *cimList, unsi
 	for (i = ChainIndexMapperList_length(cimList); i > 0; i--) {
 		ChainIndexMapper *cim = NULL;
 		res = ChainIndexMapperList_elementAt(cimList, i - 1, &cim);
-		if (res != KSI_OK) goto cleanup;
+		if (res != KSI_OK || cim == NULL) {
+			res = KSI_INVALID_STATE;
+			goto cleanup;
+		}
 
 		/* Write the children. */
 		res = ChainIndexMapper_writeBytes(cim->children, buf, (buf == NULL ? 0 : buf_size - len), &tmp_len);
@@ -1530,7 +1554,10 @@ int KSI_MultiSignature_writeBytes(KSI_MultiSignature *ms, unsigned char *buf, si
 		size_t tmp_len;
 
 		res = TimeMapperList_elementAt(ms->timeList, i, &tm);
-		if (res != KSI_OK) goto cleanup;
+		if (res != KSI_OK || tm == NULL) {
+			res = KSI_INVALID_STATE;
+			goto cleanup;
+		}
 
 		if (tm->calendarAuthRec != NULL) {
 
