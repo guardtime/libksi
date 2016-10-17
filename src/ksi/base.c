@@ -861,69 +861,16 @@ int KSI_CTX_setPublicationUrl(KSI_CTX *ctx, const char *uri){
 	return KSI_CTX_setUri(ctx, uri, uri, uri, KSI_UriClient_setPublicationUrl_wrapper);
 }
 
-static int KSI_CTX_setAggrPduVersion(KSI_CTX *ctx, size_t ver) {
-	int res = KSI_INVALID_ARGUMENT;
-
-	if (ctx == NULL) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	if (ver >= KSI_PDU_VERSION_1 && ver <= KSI_PDU_VERSION_2) {
-		ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] = ver;
-		res = KSI_OK;
-	}
-
-cleanup:
-
-	return res;
-}
-
-static int KSI_CTX_setExtPduVersion(KSI_CTX *ctx, size_t ver) {
-	int res = KSI_INVALID_ARGUMENT;
-
-	if (ctx == NULL) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	if (ver >= KSI_PDU_VERSION_1 && ver <= KSI_PDU_VERSION_2) {
-		ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER] = ver;
-		res = KSI_OK;
-	}
-
-cleanup:
-
-	return res;
-}
-
 int KSI_CTX_setFlag(KSI_CTX *ctx, enum KSI_CtxFlag flag, void *param)
 {
 	int res = KSI_UNKNOWN_ERROR;
 
-	if (ctx == NULL) {
+	if (ctx == NULL || flag >= KSI_CTX_NUM_OF_FLAGS) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
 
-	switch (flag) {
-		case KSI_CTX_FLAG_AGGR_PDU_VER:
-			res = KSI_CTX_setAggrPduVersion(ctx, (size_t)param);
-		break;
-
-		case KSI_CTX_FLAG_EXT_PDU_VER:
-			res = KSI_CTX_setExtPduVersion(ctx, (size_t)param);
-		break;
-
-		default:
-			res = KSI_INVALID_ARGUMENT;
-		break;
-	}
-
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
+	ctx->flags[flag] = (size_t)param;
 
 	res = KSI_OK;
 
