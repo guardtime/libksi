@@ -509,11 +509,15 @@ EXPORTS
 	KSI_ExtendPdu_getHeader
 	KSI_ExtendPdu_getRequest
 	KSI_ExtendPdu_getResponse
+	KSI_ExtendPdu_getConfRequest
+	KSI_ExtendPdu_getConfResponse
 	KSI_ExtendPdu_getHmac
 	KSI_ExtendPdu_getError
 	KSI_ExtendPdu_setHeader
 	KSI_ExtendPdu_setRequest
 	KSI_ExtendPdu_setResponse
+	KSI_ExtendPdu_setConfRequest
+	KSI_ExtendPdu_setConfResponse
 	KSI_ExtendPdu_setHmac
 	KSI_ExtendPdu_setError
 	KSI_ExtendPdu_parse
@@ -524,11 +528,19 @@ EXPORTS
 	KSI_AggregationPdu_getHeader
 	KSI_AggregationPdu_getRequest
 	KSI_AggregationPdu_getResponse
+	KSI_AggregationPdu_getConfRequest
+	KSI_AggregationPdu_getConfResponse
+	KSI_AggregationPdu_getAckRequest
+	KSI_AggregationPdu_getAckResponse
 	KSI_AggregationPdu_getHmac
 	KSI_AggregationPdu_getError
 	KSI_AggregationPdu_setHeader
 	KSI_AggregationPdu_setRequest
 	KSI_AggregationPdu_setResponse
+	KSI_AggregationPdu_setConfRequest
+	KSI_AggregationPdu_setConfResponse
+	KSI_AggregationPdu_setAckRequest
+	KSI_AggregationPdu_setAckResponse
 	KSI_AggregationPdu_setHmac
 	KSI_AggregationPdu_setError
 	KSI_AggregationPdu_parse
@@ -546,11 +558,17 @@ EXPORTS
 	KSI_Config_getMaxLevel
 	KSI_Config_getAggrAlgo
 	KSI_Config_getAggrPeriod
+	KSI_Config_getMaxRequests
 	KSI_Config_getParentUri
+	KSI_Config_getCalendarFirstTime
+	KSI_Config_getCalendarLastTime
 	KSI_Config_setMaxLevel
 	KSI_Config_setAggrAlgo
 	KSI_Config_setAggrPeriod
+	KSI_Config_setMaxRequests
 	KSI_Config_setParentUri
+	KSI_Config_setCalendarFirstTime
+	KSI_Config_setCalendarLastTime
 	KSI_AggregationReq_free
 	KSI_AggregationReq_new
 	KSI_AggregationReq_getRequestId
@@ -564,10 +582,18 @@ EXPORTS
 	KSI_AggregationReq_enclose
 	KSI_RequestAck_free
 	KSI_RequestAck_new
+	KSI_RequestAck_getRequestTime
+	KSI_RequestAck_getReceiptTime
+	KSI_RequestAck_getAcknowledgeTime
 	KSI_RequestAck_getAggregationPeriod
 	KSI_RequestAck_getAggregationDelay
+	KSI_RequestAck_getAggregationDrift
+	KSI_RequestAck_setRequestTime
+	KSI_RequestAck_setReceiptTime
+	KSI_RequestAck_setAcknowledgeTime
 	KSI_RequestAck_setAggregationPeriod
 	KSI_RequestAck_setAggregationDelay
+	KSI_RequestAck_setAggregationDrift
 	KSI_AggregationResp_free
 	KSI_AggregationResp_new
 	KSI_AggregationResp_getRequestId
