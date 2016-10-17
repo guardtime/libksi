@@ -1050,6 +1050,67 @@ static void testCreateAggregated(CuTest *tc) {
 #undef TEST_AGGR_RESPONSE_FILE
 }
 
+static void testExtendingBackgroundVerification(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/all-wrong-hash-chains-in-signature.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/all-wrong-hash-chains-in-signature-extend_response.tlv"
+
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_Signature *ext = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
+
+	res = KSI_Signature_extendTo(sig, ctx, NULL, &ext);
+	CuAssert(tc, "Wrong answer from extender should not be tolerated.", res == KSI_VERIFICATION_FAILURE && ext == NULL);
+	CuAssert(tc, "Unexpected verification error code.", ctx->lastFailedSignature->policyVerificationResult->finalResult.errorCode == KSI_VER_ERR_INT_3);
+
+	KSI_Signature_free(sig);
+	KSI_Signature_free(ext);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+}
+
+static void testSigningBackgroundVerification(CuTest* tc) {
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/aggr-response-no-cal-auth-and-invalid-cal.tlv"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/extender-response-no-cal-auth-and-invalid-cal.tlv"
+
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_DataHash *hsh = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
+	CuAssert(tc, "Unable to get hash from string.", res == KSI_OK && hsh != NULL);
+
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
+
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
+
+	res = KSI_Signature_signWithPolicy(ctx, hsh, KSI_VERIFICATION_POLICY_CALENDAR_BASED, NULL, &sig);
+	CuAssert(tc, "Unable to sign hash.", res == KSI_VERIFICATION_FAILURE && sig == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &sig);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && sig != NULL);
+	CuAssert(tc, "Unexpected verification result.", sig->policyVerificationResult->finalResult.resultCode == KSI_VER_RES_FAIL);
+	CuAssert(tc, "Unexpected verification error code.", sig->policyVerificationResult->finalResult.errorCode == KSI_VER_ERR_CAL_4);
+
+	KSI_Signature_free(sig);
+	KSI_DataHash_free(hsh);
+
+#undef TEST_AGGR_RESPONSE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+}
+
 
 CuSuite* KSITest_NET_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
@@ -1077,6 +1138,8 @@ CuSuite* KSITest_NET_getSuite(void) {
 	SUITE_ADD_TEST(suite, testExtendInvalidSignature);
 	SUITE_ADD_TEST(suite, testCreateAggregated);
 	SUITE_ADD_TEST(suite, testExtendExtended);
+	SUITE_ADD_TEST(suite, testExtendingBackgroundVerification);
+	SUITE_ADD_TEST(suite, testSigningBackgroundVerification);
 
 	return suite;
 }
