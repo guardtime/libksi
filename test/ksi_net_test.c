@@ -1096,9 +1096,7 @@ static void testSigningBackgroundVerification(CuTest* tc) {
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
-	KSI_LOG_debug(ctx, "MKV before");
 	res = KSI_Signature_signWithPolicy(ctx, hsh, KSI_VERIFICATION_POLICY_CALENDAR_BASED, NULL, &sig);
-	KSI_LOG_debug(ctx, "MKV after");
 	CuAssert(tc, "Unable to sign hash.", res == KSI_VERIFICATION_FAILURE && sig == NULL);
 
 	res = KSI_CTX_getLastFailedSignature(ctx, &sig);

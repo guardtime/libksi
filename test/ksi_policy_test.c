@@ -3109,7 +3109,7 @@ static void TestUserPublicationWithBadCalAuthRec(CuTest *tc) {
 #undef TEST_SIGNATURE_FILE
 }
 
-static void TestBackgroundVerification(CuTest* tc) {
+static void TestBackgroundVerificationWithUserPublicationBasedPolicy(CuTest* tc) {
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-nok-extend_response-1.tlv"
 #define TEST_SIGNATURE_FILE_WITH_PUBLICATION  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
@@ -3272,7 +3272,7 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestFallbackPolicy_CalendarBased_OK_KeyBased_NA);
 	SUITE_SKIP_TEST(suite, TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA, "Henri", "Calendar based verification should never return N/A");
 	SUITE_ADD_TEST(suite, TestUserPublicationWithBadCalAuthRec);
-	SUITE_ADD_TEST(suite, TestBackgroundVerification);
+	SUITE_ADD_TEST(suite, TestBackgroundVerificationWithUserPublicationBasedPolicy);
 	SUITE_ADD_TEST(suite, TestBackgroundVerificationWithKeyBasedPolicy);
 	return suite;
 }
