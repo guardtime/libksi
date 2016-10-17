@@ -648,7 +648,10 @@ static void TestInternalPolicy_FAIL_WithInvalidRfc3161(CuTest* tc) {
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &context.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && context.signature != NULL);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -681,7 +684,10 @@ static void TestInternalPolicy_FAIL_WithInvalidRfc3161AggrTime(CuTest* tc) {
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &context.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && context.signature != NULL);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -714,7 +720,10 @@ static void TestInternalPolicy_FAIL_WithInvalidRfc3161ChainIndex(CuTest* tc) {
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &context.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && context.signature != NULL);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -809,7 +818,10 @@ static void TestInternalPolicy_FAIL_WithInvalidMetaDataPadding(CuTest* tc) {
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &context.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && context.signature != NULL);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -842,7 +854,10 @@ static void TestInternalPolicy_FAIL_WithoutMetaDataPadding(CuTest* tc) {
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &context.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && context.signature != NULL);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -875,7 +890,10 @@ static void TestInternalPolicy_FAIL_WithInvalidAggregationChain(CuTest* tc) {
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &context.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && context.signature != NULL);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -906,7 +924,10 @@ static void TestInternalPolicy_FAIL_WithInconsistentAggregationChainTime(CuTest*
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &context.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && context.signature != NULL);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -970,7 +991,10 @@ static void TestInternalPolicy_FAIL_WithInvalidCalendarHashChain(CuTest* tc) {
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &context.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && context.signature != NULL);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -1004,7 +1028,10 @@ static void TestInternalPolicy_FAIL_WithInvalidCalendarHashChainAggregationTime(
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &context.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && context.signature != NULL);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -1072,7 +1099,10 @@ static void TestInternalPolicy_FAIL_WithInvalidCalendarAuthenticationRecordHash(
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &context.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && context.signature != NULL);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -1107,7 +1137,10 @@ static void TestInternalPolicy_FAIL_WithInvalidCalendarAuthenticationRecordTime(
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &context.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && context.signature != NULL);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -1177,7 +1210,10 @@ static void TestInternalPolicy_FAIL_WithInvalidPublicationRecordHash(CuTest* tc)
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &context.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && context.signature != NULL);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -1212,7 +1248,10 @@ static void TestInternalPolicy_FAIL_WithInvalidPublicationRecordTime(CuTest* tc)
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &context.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && context.signature != NULL);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -1729,7 +1768,10 @@ static void TestKeyBasedPolicy_FAIL_WithCalendarAuthenticationRecord(CuTest* tc)
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &context.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && context.signature != NULL);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_KEY_BASED, &context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -2456,7 +2498,10 @@ static void TestGeneralPolicy_FAIL_WithInvalidAggregationChain(CuTest* tc) {
 	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &context.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && context.signature != NULL);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
@@ -3064,7 +3109,7 @@ static void TestUserPublicationWithBadCalAuthRec(CuTest *tc) {
 #undef TEST_SIGNATURE_FILE
 }
 
-static void TestBackgroundVerification(CuTest* tc) {
+static void TestBackgroundVerificationWithUserPublicationBasedPolicy(CuTest* tc) {
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-nok-extend_response-1.tlv"
 #define TEST_SIGNATURE_FILE_WITH_PUBLICATION  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
@@ -3102,7 +3147,10 @@ static void TestBackgroundVerification(CuTest* tc) {
 	context.extendingAllowed = 1;
 
 	res = KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED, &context, &signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature != NULL);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
 
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &signature->policyVerificationResult->finalResult));
 	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&signature->policyVerificationResult->finalResult,
@@ -3118,6 +3166,38 @@ static void TestBackgroundVerification(CuTest* tc) {
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
 #undef TEST_SIGNATURE_FILE_WITH_PUBLICATION
+}
+
+static void TestBackgroundVerificationWithKeyBasedPolicy(CuTest* tc) {
+#define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+	int res;
+	KSI_VerificationContext context;
+	KSI_Signature *signature = NULL;
+	KSI_RuleVerificationResult expected = {
+		KSI_VER_RES_NA,
+		KSI_VER_ERR_GEN_2,
+		"KSI_VerificationRule_CalendarAuthenticationRecordExistence"
+	};
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&context, ctx);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), KSI_VERIFICATION_POLICY_KEY_BASED, &context, &signature);
+	CuAssert(tc, "Background verification should fail.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &signature->policyVerificationResult->finalResult));
+
+	KSI_Signature_free(signature);
+	KSI_VerificationContext_clean(&context);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 CuSuite* KSITest_Policy_getSuite(void) {
@@ -3192,7 +3272,7 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestFallbackPolicy_CalendarBased_OK_KeyBased_NA);
 	SUITE_SKIP_TEST(suite, TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA, "Henri", "Calendar based verification should never return N/A");
 	SUITE_ADD_TEST(suite, TestUserPublicationWithBadCalAuthRec);
-	SUITE_ADD_TEST(suite, TestBackgroundVerification);
-
+	SUITE_ADD_TEST(suite, TestBackgroundVerificationWithUserPublicationBasedPolicy);
+	SUITE_ADD_TEST(suite, TestBackgroundVerificationWithKeyBasedPolicy);
 	return suite;
 }

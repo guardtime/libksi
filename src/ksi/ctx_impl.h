@@ -94,6 +94,9 @@ extern "C" {
 		/** Pointer to function for freeing the certificate constraints array. */
 		void (*freeCertConstraintsArray)(KSI_CertConstraint *);
 
+		/** Pointer to the last signature that failed background verification. */
+		KSI_Signature *lastFailedSignature;
+
 	};
 
 #ifdef __cplusplus

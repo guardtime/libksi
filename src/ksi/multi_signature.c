@@ -847,6 +847,7 @@ int KSI_MultiSignature_get(KSI_MultiSignature *ms, const KSI_DataHash *hsh, KSI_
 		goto cleanup;
 	}
 	tmp->ctx = ms->ctx;
+	tmp->ref = 1;
 	tmp->aggregationAuthRec = NULL;
 	tmp->aggregationChainList = NULL;
 	tmp->baseTlv = NULL;

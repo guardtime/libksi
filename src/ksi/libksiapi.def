@@ -172,6 +172,7 @@ EXPORTS
 	KSI_CTX_setTransferTimeoutSeconds
 	KSI_CTX_setConnectionTimeoutSeconds
 	KSI_CTX_setDefaultPubFileCertConstraints
+	KSI_CTX_getLastFailedSignature
 
 ;list.h
 EXPORTS
@@ -350,8 +351,8 @@ EXPORTS
 	KSI_Signature_parseWithPolicy
 	KSI_Signature_fromFileWithPolicy
 	KSI_Signature_serialize
-	KSI_Signature_createWithPolicy
-	KSI_Signature_createAggregatedWithPolicy
+	KSI_Signature_create
+	KSI_Signature_createAggregated
 	KSI_Signature_extendWithPolicy
 	KSI_Signature_extendToWithPolicy
 	KSI_Signature_getDocumentHash
@@ -878,6 +879,7 @@ EXPORTS
 	KSI_Policy_setFallback
 	KSI_Policy_clone
 	KSI_Policy_create
+	KSI_VERIFICATION_POLICY_EMPTY DATA
 	KSI_VERIFICATION_POLICY_INTERNAL DATA
 	KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED DATA
 	KSI_VERIFICATION_POLICY_CALENDAR_BASED DATA
