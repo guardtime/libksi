@@ -1,4 +1,6 @@
-Version 3.4
+Version 3.10
+
+2016-10-18 release(3.10.1839)
 * IMPROVEMENT: Refactored signature verification step attribute handling.
 * IMPROVEMENT: Implemented KSI_BlockSigner getter for the hash value of the last leaf in the tree.
 * BUGFIX: Fixed debian build.
