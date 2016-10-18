@@ -107,6 +107,10 @@ A simple example how to sign a document and verify the signature:
 ```
 The API full reference is available here [http://guardtime.github.io/libksi/](http://guardtime.github.io/libksi/).
 
+## Contributing ##
+
+See CONTRIBUTING.md file.
+
 ## License ##
 
 See LICENSE file.
