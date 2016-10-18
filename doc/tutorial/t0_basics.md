@@ -105,7 +105,7 @@ takes a file name as an argument and parses the contents.
 	KSI_PublicationsFile *pubFile = NULL;
 	
 	KSI_CTX_new(&ksi);	
-	KSI_PublicationsFile_fromFile(ksi, "~/ksi-publications.bin", &pubFile);
+	KSI_PublicationsFile_fromFile(ksi, KSI_PUBLICATIONS_FILE, &pubFile);
 	KSI_CTX_setPublicationsFile(ksi, pubFile);
 	
 ~~~~~~~~~~

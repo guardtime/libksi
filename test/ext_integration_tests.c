@@ -238,23 +238,11 @@ static void Test_ExtendSignature_useProvider(CuTest* tc, const char *uri_host, u
 	return;
 }
 
-
-static int http_setExtWrapper(KSI_NetworkClient *client, const char *url_host, unsigned port, const char *user, const char *pass) {
-	return KSI_HttpClient_setExtender(client, url_host, user, pass);
-}
-
 static int uri_setExtWrapper(KSI_NetworkClient *client, const char *url_host, unsigned port, const char *user, const char *pass) {
 	return KSI_UriClient_setExtender(client, url_host, user, pass);
 }
 
 static void Test_ExtendSignatureDifferentNetProviders(CuTest* tc) {
-	/* Http provider. */
-	Test_ExtendSignature_useProvider(tc,
-			conf.extender_url, 0, conf.extender_user, conf.extender_pass, conf.publications_file_url,
-			KSI_HttpClient_new,
-			KSI_HttpClient_setPublicationUrl,
-			http_setExtWrapper);
-
 	/* Uri provider. */
 	Test_ExtendSignature_useProvider(tc,
 			conf.extender_url, 0, conf.extender_user, conf.extender_pass, conf.publications_file_url,

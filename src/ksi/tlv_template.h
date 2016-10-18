@@ -370,7 +370,7 @@ extern "C" {
 	 * \param[in]	obj				Type of object stored in the list.
 	 * \param[in]	descr			Short description.
 	 */
-	#define KSI_TLV_OBJECT_LIST(tg, flg, gttr, sttr, obj, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, flg, gttr, sttr, NULL, obj##_free, NULL, obj##List_append, 1, obj##List_new, obj##List_free, obj##List_length, obj##List_elementAt, obj##_fromTlv, obj##_toTlv, descr, NULL, 0, NULL)
+	#define KSI_TLV_OBJECT_LIST(tg, flg, gttr, sttr, obj, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, flg, gttr, sttr, NULL, obj##_free, NULL, KSI_List_append, 1, obj##List_new, obj##List_free, KSI_List_length, KSI_List_elementAt, obj##_fromTlv, obj##_toTlv, descr, NULL, 0, NULL)
 
 	/**
 	 * TLV template for list of #KSI_OctetString types.
@@ -422,7 +422,7 @@ extern "C" {
 	 * \param[in]	sub				Composite element template.
 	 * \param[in]	descr			Short description.
 	 */
-	#define KSI_TLV_COMPOSITE_LIST(tg, flg, gttr, sttr, sub, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_COMPOSITE, tg, flg, gttr, sttr, sub##_new, sub##_free, sub##_template, sub##List_append, 1, sub##List_new, sub##List_free, sub##List_length, sub##List_elementAt, NULL, NULL, descr, NULL, 0, NULL)
+	#define KSI_TLV_COMPOSITE_LIST(tg, flg, gttr, sttr, sub, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_COMPOSITE, tg, flg, gttr, sttr, sub##_new, sub##_free, sub##_template, KSI_List_append, 1, sub##List_new, sub##List_free, KSI_List_length, KSI_List_elementAt, NULL, NULL, descr, NULL, 0, NULL)
 
 	/**
 	 * This macro ends the #KSI_TlvTemplate definition started by #KSI_TLV_TEMPLATE.

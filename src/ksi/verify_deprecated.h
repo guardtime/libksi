@@ -20,13 +20,10 @@
 #ifndef KSI_VERIFY_DEPRECATED_H_
 #define KSI_VERIFY_DEPRECATED_H_
 
+#include "types.h"
+
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#ifndef KSI_SIGNATURE_STRUCT
-	#define KSI_SIGNATURE_STRUCT
-	typedef struct KSI_Signature_st KSI_Signature;
 #endif
 
 /**

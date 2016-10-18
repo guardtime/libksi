@@ -25,6 +25,9 @@ DLL = lib
 RTL = MT
 !ENDIF
 
+!IF "$(DLL)" == "dll"
+CCFLAGS = $(CCFLAGS) /DDLL_BUILD
+!ENDIF
 #Selecting of different functionality providers
 !IF "$(NET_PROVIDER)" != "CURL" && "$(NET_PROVIDER)" != "WININET" && "$(NET_PROVIDER)" != "WINHTTP"
 NET_PROVIDER = CURL
@@ -91,6 +94,8 @@ LIB_OBJ = \
 	$(OBJ_DIR)\net_uri.obj \
 	$(OBJ_DIR)\publicationsfile.obj \
 	$(OBJ_DIR)\signature.obj \
+	$(OBJ_DIR)\signature_helper.obj \
+	$(OBJ_DIR)\signature_builder.obj \
 	$(OBJ_DIR)\tlv.obj \
 	$(OBJ_DIR)\tlv_element.obj \
 	$(OBJ_DIR)\tlv_template.obj \
@@ -122,6 +127,8 @@ INC_FILES = \
 	net_file.h \
 	net_uri.h \
 	signature.h \
+	signature_helper.h \
+	signature_builder.h \
 	types_base.h \
 	err.h \
 	io.h \
@@ -222,6 +229,8 @@ CCFLAGS = $(CCFLAGS) /DCOMMIT_ID=\"$(COM_ID)\"
 !IF "$(VER)" != ""
 CCFLAGS = $(CCFLAGS) /DVERSION=\"$(VER)\"
 !ENDIF
+
+CCFLAGS = $(CCFLAGS) /DHTTP_PARSER_STRICT=0
 
 CCFLAGS = $(CCFLAGS) $(CCEXTRA) $(TRUSTSTORE_MACROS)
 LDFLAGS = $(LDFLAGS) $(LDEXTRA)

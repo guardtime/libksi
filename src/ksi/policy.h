@@ -111,7 +111,7 @@ extern "C" {
 		KSI_VER_ERR_CAL_2 = 0x502,
 		/** Aggregation time mismatch. */
 		KSI_VER_ERR_CAL_3 = 0x503,
-		/** Aggregation hash chain right links are inconsistent. */
+		/** Calendar hash chain right links are inconsistent. */
 		KSI_VER_ERR_CAL_4 = 0x504,
 	} KSI_VerificationErrorCode;
 
@@ -135,11 +135,22 @@ extern "C" {
 	typedef struct KSI_RuleVerificationResult_st KSI_RuleVerificationResult;
 
 	KSI_DEFINE_LIST(KSI_RuleVerificationResult);
+#define KSI_RuleVerificationResultList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
+#define KSI_RuleVerificationResultList_remove(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), removeElement, ((lst), (pos), (o)))
+#define KSI_RuleVerificationResultList_indexOf(lst, o, i) KSI_APPLY_TO_NOT_NULL((lst), indexOf, ((lst), (o), (i)))
+#define KSI_RuleVerificationResultList_insertAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), insertAt, ((lst), (pos), (o)))
+#define KSI_RuleVerificationResultList_replaceAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), replaceAt, ((lst), (pos), (o)))
+#define KSI_RuleVerificationResultList_elementAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), elementAt, ((lst), (pos), (o)))
+#define KSI_RuleVerificationResultList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
+#define KSI_TlvElementList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
+#define KSI_TlvElementList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
 
 	/**
 	 * Policy verification result structure.
 	 */
-	typedef struct KSI_PolicyVerificationResult_st {
+	struct KSI_PolicyVerificationResult_st {
+		/** Reference counter. */
+		size_t ref;
 		/** Verification result. */
 		KSI_VerificationResultCode resultCode;
 		/** Detailed verification result. */
@@ -148,10 +159,9 @@ extern "C" {
 		KSI_LIST(KSI_RuleVerificationResult) *ruleResults;
 		/** Results for individual policies performed. */
 		KSI_LIST(KSI_RuleVerificationResult) *policyResults;
-	} KSI_PolicyVerificationResult;
+	};
 
-	typedef struct KSI_Policy_st KSI_Policy;
-
+	KSI_DEFINE_EXTERN(const KSI_Policy* KSI_VERIFICATION_POLICY_EMPTY);
 	KSI_DEFINE_EXTERN(const KSI_Policy* KSI_VERIFICATION_POLICY_INTERNAL);
 	KSI_DEFINE_EXTERN(const KSI_Policy* KSI_VERIFICATION_POLICY_CALENDAR_BASED);
 	KSI_DEFINE_EXTERN(const KSI_Policy* KSI_VERIFICATION_POLICY_KEY_BASED);
@@ -170,7 +180,16 @@ extern "C" {
 		const void *rule;
 	} KSI_Rule;
 
-	typedef struct KSI_VerificationContext_st KSI_VerificationContext;
+	/**
+	 * Function to convert a #KSI_VerificationErrorCode value to a human readable
+	 * string value.
+	 *
+	 * \param[in]		errorCode		#KSI_VerificationErrorCode value.
+	 *
+	 * \return A pointer to a statically allocated string value. This pointer may
+	 * not be freed by the caller.
+	 */
+	const char *KSI_Policy_getErrorString(int errorCode);
 
 	/**
 	 * Creates a policy based on user defined rules. User gets ownership of the policy and

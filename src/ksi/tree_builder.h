@@ -37,13 +37,6 @@ extern "C" {
 #define KSI_TREE_BUILDER_STACK_LEN 0x100
 
 /**
- * A macro for validating the correctness of any given hash tree level.
- * \param[in]	level		The level to be checked.
- * \return If the parameter is a valid hash tree level a non-zero value is returne,; zero otherwise.
- */
-#define KSI_IS_VALID_TREE_LEVEL(level) (((level) >= 0) && ((level) <= 0xff))
-
-/**
  * A structure to represent the leaf and internal nodes of a hash tree.
  */
 typedef struct KSI_TreeNode_st KSI_TreeNode;
@@ -86,6 +79,15 @@ struct KSI_TreeBuilderLeafProcessor_st {
 };
 
 KSI_DEFINE_LIST(KSI_TreeBuilderLeafProcessor);
+#define KSI_TreeBuilderLeafProcessorList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
+#define KSI_TreeBuilderLeafProcessorList_remove(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), removeElement, ((lst), (pos), (o)))
+#define KSI_TreeBuilderLeafProcessorList_indexOf(lst, o, i) KSI_APPLY_TO_NOT_NULL((lst), indexOf, ((lst), (o), (i)))
+#define KSI_TreeBuilderLeafProcessorList_insertAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), insertAt, ((lst), (pos), (o)))
+#define KSI_TreeBuilderLeafProcessorList_replaceAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), replaceAt, ((lst), (pos), (o)))
+#define KSI_TreeBuilderLeafProcessorList_elementAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), elementAt, ((lst), (pos), (o)))
+#define KSI_TreeBuilderLeafProcessorList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
+#define KSI_TreeBuilderLeafProcessorList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
+#define KSI_TreeBuilderLeafProcessorList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? ( ((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn)))) : KSI_INVALID_STATE) : KSI_OK)
 
 struct KSI_TreeBuilder_st {
 	/** KSI context. */
@@ -110,6 +112,16 @@ struct KSI_TreeBuilder_st {
  */
 typedef struct KSI_TreeLeafHandle_st KSI_TreeLeafHandle;
 KSI_DEFINE_LIST(KSI_TreeLeafHandle);
+#define KSI_TreeLeafHandleList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
+#define KSI_TreeLeafHandleList_remove(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), removeElement, ((lst), (pos), (o)))
+#define KSI_TreeLeafHandleList_indexOf(lst, o, i) KSI_APPLY_TO_NOT_NULL((lst), indexOf, ((lst), (o), (i)))
+#define KSI_TreeLeafHandleList_insertAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), insertAt, ((lst), (pos), (o)))
+#define KSI_TreeLeafHandleList_replaceAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), replaceAt, ((lst), (pos), (o)))
+#define KSI_TreeLeafHandleList_elementAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), elementAt, ((lst), (pos), (o)))
+#define KSI_TreeLeafHandleList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
+#define KSI_TreeLeafHandleList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
+#define KSI_TreeLeafHandleList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? ( ((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn)))) : KSI_INVALID_STATE) : KSI_OK)
+
 KSI_DEFINE_REF(KSI_TreeLeafHandle);
 
 /**

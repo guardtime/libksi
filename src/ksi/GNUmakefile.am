@@ -86,7 +86,12 @@ libksi_la_SOURCES = \
 	publicationsfile_impl.h \
 	signature.c \
 	signature.h \
+	signature_helper.c \
+	signature_helper.h \
 	signature_impl.h \
+	signature_builder.c \
+	signature_builder.h \
+	signature_builder_impl.h \
 	tlv.c \
 	tlv.h \
 	tlv_template.c \
@@ -130,6 +135,8 @@ otherinclude_HEADERS = \
 	policy.h \
 	publicationsfile.h \
 	signature.h \
+	signature_helper.h \
+	signature_builder.h \
 	tlv.h \
 	tlv_template.h \
 	tlv_element.h \

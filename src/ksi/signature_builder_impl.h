@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2016 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -17,38 +17,25 @@
  * reserves and retains all trademark rights.
  */
 
-#ifndef NET_URI_IMPL_H_
-#define NET_URI_IMPL_H_
 
-#include "net_http.h"
-#include "net_tcp.h"
-#include "net_impl.h"
-#include "http_parser.h"
+#ifndef SIGNATURE_BUILDER_IMPL_H_
+#define SIGNATURE_BUILDER_IMPL_H_
+
+#include "ksi.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-	enum client_e {
-		URI_HTTP,
-		URI_TCP,
-		URI_FILE,
-		URI_UNKNOWN,
-		URI_CLIENT_COUNT
+	struct KSI_SignatureBuilder_st {
+		KSI_CTX *ctx;
+		int noVerify;
+		KSI_Signature *sig;
 	};
 
-	struct KSI_UriClient_st {
-		KSI_NetworkClient *httpClient;
-		KSI_NetworkClient *tcpClient;
-		KSI_NetworkClient *fsClient;
-
-		KSI_NetworkClient *pExtendClient;
-		KSI_NetworkClient *pAggregationClient;
-		KSI_NetworkClient *pPublicationClient;
-	};
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* NET_URI_IMPL_H_ */
+#endif /* SIGNATURE_BUILDER_IMPL_H_ */

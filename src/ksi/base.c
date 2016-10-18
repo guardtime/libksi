@@ -193,6 +193,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->loggerCtx = NULL;
 	ctx->certConstraints = NULL;
 	ctx->freeCertConstraintsArray = freeCertConstraintsArray;
+	ctx->lastFailedSignature = NULL;
 	KSI_ERR_clearErrors(ctx);
 
 	/* Create global cleanup list as the first thing. */
@@ -303,6 +304,7 @@ void KSI_CTX_free(KSI_CTX *ctx) {
 		KSI_free(ctx->publicationCertEmail_DEPRECATED);
 
 		freeCertConstraintsArray(ctx->certConstraints);
+		KSI_Signature_free(ctx->lastFailedSignature);
 
 		KSI_free(ctx);
 	}
@@ -592,7 +594,7 @@ cleanup:
 	return res;
 }
 
-int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extended) {
+int KSI_extendSignatureWithPolicy(KSI_CTX *ctx, KSI_Signature *sig, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **extended) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationsFile *pubFile = NULL;
 	KSI_Integer *signingTime = NULL;
@@ -638,17 +640,14 @@ int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extend
 		goto cleanup;
 	}
 
-	res = KSI_Signature_extend(sig, ctx, pubRec, &extSig);
+	res = KSI_Signature_extendWithPolicy(sig, ctx, pubRec, policy, context, &extSig);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx,res, NULL);
 		goto cleanup;
 	}
 
-
 	*extended = extSig;
 	extSig = NULL;
-
-	res = KSI_OK;
 
 cleanup:
 
@@ -802,7 +801,9 @@ void *KSI_calloc(size_t num, size_t size) {
 }
 
 void KSI_free(void *ptr) {
-	free(ptr);
+	if (ptr != NULL) {
+		free(ptr);
+	}
 }
 
 static int KSI_CTX_setUri(KSI_CTX *ctx,
@@ -924,7 +925,24 @@ cleanup:																					\
 CTX_VALUEP_SETTER(pkiTruststore, PKITruststore, KSI_PKITruststore, KSI_PKITruststore_free)
 CTX_GET_SET_VALUE(publicationsFile, PublicationsFile, KSI_PublicationsFile, KSI_PublicationsFile_free)
 
+int KSI_CTX_getLastFailedSignature(KSI_CTX *ctx, KSI_Signature **lastFailedSignature) {
+	int res = KSI_UNKNOWN_ERROR;
 
+	if (ctx == NULL || lastFailedSignature == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(ctx);
+
+	*lastFailedSignature = KSI_Signature_ref(ctx->lastFailedSignature);
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
 
 int KSI_CTX_getPKITruststore(KSI_CTX *ctx, KSI_PKITruststore **pki) {
 	int res = KSI_UNKNOWN_ERROR;

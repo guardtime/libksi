@@ -172,7 +172,7 @@ int main(int argc, char **argv) {
 	KSI_BlockSigner *bs = NULL;
 	KSI_LIST(KSI_BlockSignerHandle) *handleList = NULL;
 	FILE *logFile = NULL;
-	size_t i;
+	int i;
 	KSI_DataHash *hsh = NULL;
 	KSI_BlockSignerHandle *hndl = NULL;
 	KSI_Signature *sig = NULL;

@@ -225,10 +225,6 @@ static void Test_CreateSignature_useProvider(CuTest* tc, const char *uri_host, u
 	return;
 }
 
-static int http_setAggrWrapper(KSI_NetworkClient *client, const char *url_host, unsigned port, const char *user, const char *pass) {
-	return KSI_HttpClient_setAggregator(client, url_host, user, pass);
-}
-
 static int uri_setAggrWrapper(KSI_NetworkClient *client, const char *url_host, unsigned port, const char *user, const char *pass) {
 	return KSI_UriClient_setAggregator(client, url_host, user, pass);
 }
@@ -238,12 +234,6 @@ static int tcp_setAggrWrapper(KSI_NetworkClient *client, const char *url_host, u
 }
 
 static void Test_CreateSignatureDifferentNetProviders(CuTest* tc) {
-	/* Http provider. */
-	Test_CreateSignature_useProvider(tc,
-			conf.aggregator_url, 0, conf.aggregator_user, conf.aggregator_pass,
-			KSI_HttpClient_new,
-			http_setAggrWrapper);
-
 	/* Tcp provider. */
 	Test_CreateSignature_useProvider(tc,
 			conf.tcp_host, conf.tcp_port, conf.tcp_user, conf.tcp_pass,

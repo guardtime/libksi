@@ -61,7 +61,7 @@ doc-zip: doc
 # pip install gcovr
 
 coverage-base: clean
-	make check CFLAGS="-g -fprofile-arcs -ftest-coverage -fPIC -O0"
+	make check CFLAGS="-g -fprofile-arcs -ftest-coverage -fPIC -O0 -DHTTP_PARSER_STRICT=0"
 	./test/runner ./test
 
 coverage-xml: coverage-base

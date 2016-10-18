@@ -154,6 +154,7 @@ int KSI_UriClient_setPublicationUrl(KSI_NetworkClient *client, const char *val) 
 	switch (c) {
 		case URI_HTTP:
 		case URI_TCP:
+		case URI_UNKNOWN:
 			res = KSI_HttpClient_setPublicationUrl(uriClient->httpClient, val);
 			if (res != KSI_OK) goto cleanup;
 			break;
@@ -225,7 +226,7 @@ static int getClientByUriScheme(const char *scheme, const char **replaceScheme) 
 	}
 
 	if (netClient == -1) {
-		netClient = URI_HTTP;
+		netClient = URI_UNKNOWN;
 	}
 
 	return netClient;
@@ -285,6 +286,16 @@ static int uriClient_setService(KSI_NetworkClient *client, const char *uri, cons
 			*serviceClient = (KSI_NetworkClient *)uri_client->httpClient;
 
 			break;
+
+		case URI_UNKNOWN:
+			res = HttpClient_setService(uri_client->httpClient, uri, loginId, key);
+			if (res != KSI_OK) goto cleanup;
+
+			/* Set the client to be used in extending requests. */
+			*serviceClient = (KSI_NetworkClient *)uri_client->httpClient;
+
+			break;
+
 		case URI_TCP:
 
 			if (host == NULL || port == 0) {

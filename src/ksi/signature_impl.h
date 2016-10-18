@@ -81,6 +81,8 @@ extern "C" {
 	struct KSI_Signature_st {
 		/** KSI context. */
 		KSI_CTX *ctx;
+		/** Reference counter. */
+		size_t ref;
 		/** Base TLV - when serialized, this value will be used. */
 		KSI_TLV *baseTlv;
 		/** Calendar hash chain. */
@@ -97,6 +99,8 @@ extern "C" {
 		KSI_PublicationRecord *publication;
 		/** Verification info for the signature. */
 		KSI_VerificationResult verificationResult;
+		/** Result of the verification policy. */
+		KSI_PolicyVerificationResult *policyVerificationResult;
 		/** This function replaces the calendar chain of the signature.
 		 * \note The function does not check the internal consistency! */
 		int (*replaceCalendarChain)(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain);

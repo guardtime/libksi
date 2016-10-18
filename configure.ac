@@ -37,7 +37,7 @@ AC_CANONICAL_TARGET
 LTVER="5:0:0"
 AC_SUBST(LTVER)
 
-AM_INIT_AUTOMAKE([subdir-objects foreign -Wall -Werror])
+AM_INIT_AUTOMAKE([subdir-objects foreign -Wall -Werror tar-ustar])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 # Checks for programs.
 AC_PROG_CC
@@ -56,6 +56,9 @@ if test "$git_installed" = "yes" -a -x ".git"; then
 else
     AC_MSG_RESULT([no])
 fi
+
+# Disable strict HTTP parsing (e.g. allow underscores in host names)
+CFLAGS+=" -DHTTP_PARSER_STRICT=0"
 
 # Checks for libraries.
 

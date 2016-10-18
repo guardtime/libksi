@@ -31,6 +31,15 @@ typedef struct KSI_BlockSigner_st KSI_BlockSigner;
 typedef struct KSI_BlockSignerHandle_st KSI_BlockSignerHandle;
 
 KSI_DEFINE_LIST(KSI_BlockSignerHandle);
+#define KSI_BlockSignerHandleList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
+#define KSI_BlockSignerHandleList_remove(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), removeElement, ((lst), (pos), (o)))
+#define KSI_BlockSignerHandleList_indexOf(lst, o, i) KSI_APPLY_TO_NOT_NULL((lst), indexOf, ((lst), (o), (i)))
+#define KSI_BlockSignerHandleList_insertAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), insertAt, ((lst), (pos), (o)))
+#define KSI_BlockSignerHandleList_replaceAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), replaceAt, ((lst), (pos), (o)))
+#define KSI_BlockSignerHandleList_elementAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), elementAt, ((lst), (pos), (o)))
+#define KSI_BlockSignerHandleList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
+#define KSI_BlockSignerHandleList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
+#define KSI_BlockSignerHandleList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
 
 /**
  * Create a new instance of #KSI_BlockSigner.
@@ -86,6 +95,15 @@ int KSI_BlockSigner_reset(KSI_BlockSigner *signer);
  * \see #KSI_DataHash_free, #KSI_MetaData_free, #KSI_BlockSignerHandle_free.
  */
 int KSI_BlockSigner_addLeaf(KSI_BlockSigner *signer, KSI_DataHash *hsh, int level, KSI_MetaData *metaData, KSI_BlockSignerHandle **handle);
+
+/**
+ * Getter method for \c prevLeaf.
+ * \param[in]	signer		Pointer to #KSI_BlockSigner.
+ * \param[out]	prevLeaf	Pointer to receiving pointer.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \note Ownership of \c prevLeaf is passed to the caller who is responsible for freeing the object.
+ */
+int KSI_BlockSigner_getPrevLeaf(KSI_BlockSigner *signer, KSI_DataHash **prevLeaf);
 
 /**
  * This function creates a new instance of a KSI signature and stores it in the output

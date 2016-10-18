@@ -24,6 +24,10 @@ DLL = lib
 RTL = MT
 !ENDIF
 
+!IF "$(DLL)" == "dll"
+CCFLAGS = $(CCFLAGS) /DDLL_BUILD
+!ENDIF
+
 !IF "$(NET_PROVIDER)" != "CURL" && "$(NET_PROVIDER)" != "WININET" && "$(NET_PROVIDER)" != "WINHTTP"
 NET_PROVIDER = CURL
 !ENDIF
@@ -61,6 +65,7 @@ ALLTESTS_OBJ = \
 	$(OBJ_DIR)\ksi_net_test.obj \
 	$(OBJ_DIR)\ksi_rdr_test.obj \
 	$(OBJ_DIR)\ksi_signature_test.obj \
+	$(OBJ_DIR)\ksi_signature_builder_test.obj \
 	$(OBJ_DIR)\ksi_tlv_sample_test.obj \
 	$(OBJ_DIR)\ksi_tlv_test.obj \
 	$(OBJ_DIR)\ksi_truststore_test.obj \

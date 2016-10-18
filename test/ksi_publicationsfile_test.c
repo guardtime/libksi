@@ -349,6 +349,11 @@ static void testVerifyPublicationsFileWithFileSpecificConstraints(CuTest *tc) {
 			{NULL, NULL}
 	};
 
+	KSI_CertConstraint unknown[] = {
+			{"3.2.840.113549.1.9.1", "publications@guardtime.com"},
+			{NULL, NULL}
+	};
+
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, email);
 	CuAssert(tc, "Unable to set default certificate constraints", res == KSI_OK);
 
@@ -378,6 +383,12 @@ static void testVerifyPublicationsFileWithFileSpecificConstraints(CuTest *tc) {
 
 	res = KSI_verifyPublicationsFile(ctx, pubFile);
 	CuAssert(tc, "Publications file should not verify with wrong certificate constraints.", res != KSI_OK);
+
+	res = KSI_PublicationsFile_setCertConstraints(pubFile, unknown);
+	CuAssert(tc, "Unable to set publications file certificate constraints.", res == KSI_OK);
+
+	res = KSI_verifyPublicationsFile(ctx, pubFile);
+	CuAssert(tc, "Publications file should not verify with unknown certificate constraints.", res == KSI_INVALID_ARGUMENT);
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, wrong);
 	CuAssert(tc, "Unable to set default certificate constraints", res == KSI_OK);

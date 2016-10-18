@@ -17,6 +17,7 @@
  * reserves and retains all trademark rights.
  */
 
+#include "list.h"
 #include <stdlib.h>
 #include "pkitruststore.h"
 
@@ -24,19 +25,14 @@
 
 #define KSI_LIST_SIZE_INCREMENT 10
 
-struct KSI_List_st {
+struct listImpl_st {
 	void **arr;
 	size_t arr_size;
 	size_t arr_len;
-	int (*append)(KSI_List *, void *);
-	int (*removeElement)(KSI_List *, size_t, void **);
-	int (*indexOf)(KSI_List *, void *, size_t **);
-	int (*insertAt)(KSI_List *, size_t, void *);
-	int (*replaceAt)(KSI_List *, size_t, void *);
-	int (*elementAt)(KSI_List *, size_t pos, void **);
-	size_t (*length)(KSI_List *list);
+};
 
-	void (*obj_free)(void *);
+struct KSI_List_st {
+	KSI_DEFINE_LIST_STRUCT(KSI_List, void)
 };
 
 struct KSI_RefList_st {
@@ -47,33 +43,36 @@ struct KSI_RefList_st {
 static int appendElement(KSI_List *list, void* obj) {
 	int res = KSI_UNKNOWN_ERROR;
 	void **tmp_arr = NULL;
+	struct listImpl_st *pImpl;
 
 	if (list == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	if ((list->arr_len + 1) >= list->arr_size) {
+	pImpl = list->pImpl;
+
+	if ((pImpl->arr_len + 1) >= pImpl->arr_size) {
 		unsigned int i;
 
-		tmp_arr = KSI_calloc(list->arr_size + KSI_LIST_SIZE_INCREMENT,
+		tmp_arr = KSI_calloc(pImpl->arr_size + KSI_LIST_SIZE_INCREMENT,
 		        sizeof(void *));
 		if (tmp_arr == NULL) {
 			res = KSI_OUT_OF_MEMORY;
 			goto cleanup;
 		}
 
-		for (i = 0; i < list->arr_len; i++) {
-			tmp_arr[i] = list->arr[i];
+		for (i = 0; i < pImpl->arr_len; i++) {
+			tmp_arr[i] = pImpl->arr[i];
 		}
 
-		KSI_free(list->arr);
-		list->arr = tmp_arr;
+		KSI_free(pImpl->arr);
+		pImpl->arr = tmp_arr;
 		tmp_arr = NULL;
 
-		list->arr_size += KSI_LIST_SIZE_INCREMENT;
+		pImpl->arr_size += KSI_LIST_SIZE_INCREMENT;
 	}
-	list->arr[list->arr_len++] = obj;
+	pImpl->arr[pImpl->arr_len++] = obj;
 
 	res = KSI_OK;
 
@@ -84,22 +83,9 @@ cleanup:
 	return res;
 }
 
-static int appendRef(KSI_List *list, void* obj) {
-	int res;
-
-	res = ((struct KSI_RefList_st *) list)->refElement(obj);
-	if (res != KSI_OK) goto cleanup;
-
-	res = appendElement(list, obj);
-	if (res != KSI_OK) goto cleanup;
-
-cleanup:
-
-	return res;
-}
-
 static int indexOf(KSI_List *list, void *o, size_t **pos) {
 	int res = KSI_UNKNOWN_ERROR;
+	struct listImpl_st *pImpl;
 
 	size_t i;
 	size_t *tmp = NULL;
@@ -109,8 +95,10 @@ static int indexOf(KSI_List *list, void *o, size_t **pos) {
 		goto cleanup;
 	}
 
-	for (i = 0; i < list->arr_len; i++) {
-		if (o == list->arr[i]) {
+	pImpl = list->pImpl;
+
+	for (i = 0; i < pImpl->arr_len; i++) {
+		if (o == pImpl->arr[i]) {
 			tmp = KSI_calloc(sizeof(i), 1);
 			if (tmp == NULL) {
 				res = KSI_OUT_OF_MEMORY;
@@ -135,16 +123,24 @@ cleanup:
 
 static int replaceElementAt(KSI_List *list, size_t pos, void *o) {
 	int res = KSI_UNKNOWN_ERROR;
+	struct listImpl_st *pImpl;
 
-	if (list == NULL || pos > list->arr_len) {
+	if (list == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	pImpl = list->pImpl;
+
+	if (pImpl->arr_len < pos) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
 	if (list->obj_free != NULL) {
-		list->obj_free(list->arr[pos]);
+		list->obj_free(pImpl->arr[pos]);
 	}
-	list->arr[pos] = o;
+	pImpl->arr[pos] = o;
 
 	res = KSI_OK;
 
@@ -156,8 +152,16 @@ cleanup:
 static int insertElementAt(KSI_List *list, size_t pos, void *o) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i;
+	struct listImpl_st *pImpl;
 
-	if (list == NULL || pos > list->arr_len) {
+	if (list == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	pImpl = list->pImpl;
+
+	if (pos > pImpl->arr_len) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -167,10 +171,10 @@ static int insertElementAt(KSI_List *list, size_t pos, void *o) {
 	if (res != KSI_OK) goto cleanup;
 
 	/* Shift the elements */
-	for (i = list->arr_len - 1; i > pos; i--) {
-		list->arr[i] = list->arr[i - 1];
+	for (i = pImpl->arr_len - 1; i > pos; i--) {
+		pImpl->arr[i] = pImpl->arr[i - 1];
 	}
-	list->arr[pos] = o;
+	pImpl->arr[pos] = o;
 
 	res = KSI_OK;
 
@@ -179,32 +183,22 @@ cleanup:
 	return res;
 }
 
-static int insertRefAt(KSI_List *list, size_t pos, void *o) {
-	int res;
-
-	res = ((struct KSI_RefList_st *) list)->refElement(o);
-	if (res != KSI_OK) goto cleanup;
-
-	res = insertElementAt(list, pos, o);
-	if (res != KSI_OK) goto cleanup;
-
-cleanup:
-
-	return res;
-}
-
 static int elementAt(KSI_List *list, size_t pos, void **o) {
 	int res = KSI_UNKNOWN_ERROR;
+	struct listImpl_st *pImpl;
+
 	if (list == NULL || o == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	if (pos >= list->arr_len) {
+	pImpl = list->pImpl;
+
+	if (pos >= pImpl->arr_len) {
 		res = KSI_BUFFER_OVERFLOW;
 		goto cleanup;
 	}
-	*o = list->arr[pos];
+	*o = pImpl->arr[pos];
 
 	res = KSI_OK;
 
@@ -214,29 +208,37 @@ cleanup:
 }
 
 static size_t length(KSI_List *list) {
-	return list == NULL ? 0 : list->arr_len;
+	return list == NULL ? 0 : ((struct listImpl_st *) list->pImpl)->arr_len;
 }
 
 static int removeElement(KSI_List *list, size_t pos, void **o) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i;
+	struct listImpl_st *pImpl;
 
-	if (list == NULL || pos >= list->arr_len) {
+	if (list == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	pImpl = list->pImpl;
+
+	if (pos >= pImpl->arr_len) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
 	if (o != NULL) {
-		*o = list->arr[pos];
+		*o = pImpl->arr[pos];
 	} else {
-		list->obj_free(list->arr[pos]);
+		list->obj_free(pImpl->arr[pos]);
 	}
 	/* Shift the tail */
-	for (i = pos + 1; i < list->arr_len; i++) {
-		list->arr[i - 1] = list->arr[i];
+	for (i = pos + 1; i < pImpl->arr_len; i++) {
+		pImpl->arr[i - 1] = pImpl->arr[i];
 	}
 
-	list->arr_len--;
+	pImpl->arr_len--;
 
 	res = KSI_OK;
 
@@ -249,12 +251,14 @@ cleanup:
 void KSI_List_free(KSI_List *list) {
 	if (list != NULL) {
 		unsigned int i;
-		for (i = 0; i < list->arr_len; i++) {
+		struct listImpl_st *pImpl = list->pImpl;
+		for (i = 0; i < pImpl->arr_len; i++) {
 			if (list->obj_free != NULL) {
-				list->obj_free(list->arr[i]);
+				list->obj_free(pImpl->arr[i]);
 			}
 		}
-		KSI_free(list->arr);
+		KSI_free(pImpl->arr);
+		KSI_free(pImpl);
 		KSI_free(list);
 	}
 }
@@ -262,6 +266,7 @@ void KSI_List_free(KSI_List *list) {
 int KSI_List_new(void (*obj_free)(void *), KSI_List **list) {
 	int res;
 	KSI_List *tmp = NULL;
+	struct listImpl_st *impl = NULL;
 
 	tmp = KSI_new(struct KSI_List_st);
 	if (tmp == NULL) {
@@ -269,11 +274,20 @@ int KSI_List_new(void (*obj_free)(void *), KSI_List **list) {
 		goto cleanup;
 	}
 
-	tmp->arr = NULL;
-	tmp->obj_free = obj_free;
-	tmp->arr_len = 0;
-	tmp->arr_size = 0;
+	impl = KSI_new(struct listImpl_st);
+	if (impl == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
 
+	impl->arr = NULL;
+	impl->arr_len = 0;
+	impl->arr_size = 0;
+
+	tmp->pImpl = impl;
+	impl = NULL;
+
+	tmp->obj_free = obj_free;
 	tmp->append = appendElement;
 	tmp->indexOf = indexOf;
 	tmp->replaceAt = replaceElementAt;
@@ -281,6 +295,8 @@ int KSI_List_new(void (*obj_free)(void *), KSI_List **list) {
 	tmp->elementAt = elementAt;
 	tmp->length = length;
 	tmp->removeElement = removeElement;
+	tmp->sort = KSI_List_sort;
+	tmp->foldl = KSI_List_foldl;
 
 	*list = tmp;
 	tmp = NULL;
@@ -289,36 +305,8 @@ int KSI_List_new(void (*obj_free)(void *), KSI_List **list) {
 
 cleanup:
 
+	KSI_free(impl);
 	KSI_List_free(tmp);
-
-	return res;
-}
-
-int KSI_RefList_new(void (*obj_free)(void *), int (*ref)(void *), KSI_List **list) {
-	int res;
-	struct KSI_RefList_st *tmp = NULL;
-	KSI_List *tmpl = NULL;
-
-	res = KSI_List_new(obj_free, &tmpl);
-	if (res != KSI_OK) goto cleanup;
-
-	tmp = (struct KSI_RefList_st *)tmpl;
-
-	tmpl->obj_free = obj_free;
-
-	tmpl->append = appendRef;
-	tmpl->insertAt = insertRefAt;
-
-	tmp->refElement = ref;
-
-	*list = tmpl;
-	tmpl = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_List_free(tmpl);
 
 	return res;
 }
@@ -473,15 +461,18 @@ cleanup:
 	return res;
 }
 
-int KSI_List_sort(KSI_List *list, int (*cmp)(const void *a, const void *b)) {
+int KSI_List_sort(KSI_List *list, int (*cmp)(const void **a, const void **b)) {
 	int res = KSI_UNKNOWN_ERROR;
+	struct listImpl_st *pImpl;
 
 	if (list == NULL || cmp == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	qsort(list->arr, list->arr_len, sizeof(void *), cmp);
+	pImpl = list->pImpl;
+
+	qsort(pImpl->arr, pImpl->arr_len, sizeof(void *), (int(*)(const void *, const void *))cmp);
 
 	res = KSI_OK;
 

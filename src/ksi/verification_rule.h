@@ -347,7 +347,8 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_VerificationRule_ExtendingPermittedVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_PublicationsFileExtendingPermittedVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_UserProvidedPublicationExtendingPermittedVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to verify that publications file publication hash matches with extender response calendar root hash.

@@ -21,6 +21,8 @@
 #include "policy_impl.h"
 #include "verification_rule.h"
 #include "hashchain.h"
+#include "signature_impl.h"
+#include "ctx_impl.h"
 
 #include <string.h>
 
@@ -28,6 +30,7 @@ static void RuleVerificationResult_free(KSI_RuleVerificationResult *result);
 static void VerificationTempData_clear(VerificationTempData *tmp);
 
 KSI_IMPLEMENT_LIST(KSI_RuleVerificationResult, RuleVerificationResult_free);
+KSI_IMPLEMENT_REF(KSI_PolicyVerificationResult);
 
 static int isDuplicateRuleResult(KSI_RuleVerificationResultList *resultList, KSI_RuleVerificationResult *result) {
 	int return_value = 0;
@@ -143,6 +146,31 @@ cleanup:
 
 	return res;
 }
+
+/******************
+ * EMPTY POLICY
+ ******************/
+
+static int KSI_VerificationRule_AlwaysOk(KSI_VerificationContext *context, KSI_RuleVerificationResult *result) {
+	result->resultCode = KSI_VER_RES_OK;
+	result->errorCode = KSI_VER_ERR_NONE;
+	result->ruleName = __FUNCTION__;
+	return KSI_OK;
+}
+
+static const KSI_Rule emptyRules[] = {
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AlwaysOk},
+	{KSI_RULE_TYPE_BASIC, NULL}
+};
+
+static const KSI_Policy PolicyEmpty = {
+	emptyRules,
+	NULL,
+	"EmptyPolicy"
+};
+
+const KSI_Policy* KSI_VERIFICATION_POLICY_EMPTY = &PolicyEmpty;
+
 
 /******************
  * INTERNAL POLICY
@@ -332,7 +360,7 @@ static const KSI_Rule publicationPresentRule[] = {
 
 static const KSI_Rule extendToPublicationRule[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileContainsSuitablePublication},
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_ExtendingPermittedVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileExtendingPermittedVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash},
@@ -371,7 +399,7 @@ static const KSI_Rule userPublicationMatchRule[] = {
 
 static const KSI_Rule extendToUserPublicationRule[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification},
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_ExtendingPermittedVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationExtendingPermittedVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash},
@@ -420,6 +448,59 @@ static const KSI_Policy PolicyGeneral = {
 };
 
 const KSI_Policy* KSI_VERIFICATION_POLICY_GENERAL = &PolicyGeneral;
+
+const char *KSI_Policy_getErrorString(int errorCode) {
+	switch (errorCode) {
+		case KSI_VER_ERR_NONE:
+			return "No verification errors.";
+		case KSI_VER_ERR_GEN_1:
+			return "Wrong document.";
+		case KSI_VER_ERR_GEN_2:
+			return "Verification inconclusive.";
+		case KSI_VER_ERR_INT_1:
+			return "Inconsistent aggregation hash chains.";
+		case KSI_VER_ERR_INT_2:
+			return "Inconsistent aggregation hash chain aggregation times.";
+		case KSI_VER_ERR_INT_3:
+			return "Calendar hash chain input hash mismatch.";
+		case KSI_VER_ERR_INT_4:
+			return "Calendar hash chain aggregation time mismatch.";
+		case KSI_VER_ERR_INT_5:
+			return "Calendar hash chain shape inconsistent with aggregation time.";
+		case KSI_VER_ERR_INT_6:
+			return "Calendar hash chain time inconsistent with calendar authentication record time.";
+		case KSI_VER_ERR_INT_7:
+			return "Calendar hash chain time inconsistent with publication time.";
+		case KSI_VER_ERR_INT_8:
+			return "Calendar hash chain root hash is inconsistent with calendar authentication record input hash.";
+		case KSI_VER_ERR_INT_9:
+			return "Calendar hash chain root hash is inconsistent with published hash value.";
+		case KSI_VER_ERR_INT_10:
+			return "Aggregation hash chain chain index mismatch.";
+		case KSI_VER_ERR_INT_11:
+			return "The metadata record in the aggregation hash chain may not be trusted.";
+		case KSI_VER_ERR_PUB_1:
+			return "Extender response calendar root hash mismatch.";
+		case KSI_VER_ERR_PUB_2:
+			return "Extender response inconsistent.";
+		case KSI_VER_ERR_PUB_3:
+			return "Extender response input hash mismatch.";
+		case KSI_VER_ERR_KEY_1:
+			return "Certificate not found.";
+		case KSI_VER_ERR_KEY_2:
+			return "PKI signature not verified with certificate.";
+		case KSI_VER_ERR_CAL_1:
+			return "Calendar root hash mismatch.";
+		case KSI_VER_ERR_CAL_2:
+			return "Aggregation hash chain root hash and calendar hash chain input hash mismatch.";
+		case KSI_VER_ERR_CAL_3:
+			return "Aggregation time mismatch.";
+		case KSI_VER_ERR_CAL_4:
+			return "Calendar hash chain right links are inconsistent.";
+		default:
+			return "Unknown verification error code.";
+	}
+}
 
 int KSI_Policy_create(KSI_CTX *ctx, const KSI_Rule *rules, const char *name, KSI_Policy **policy) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -512,6 +593,7 @@ static int PolicyVerificationResult_create(KSI_PolicyVerificationResult **result
 
 	tmp->finalResult.resultCode = KSI_VER_RES_NA;
 	tmp->finalResult.errorCode = KSI_VER_ERR_GEN_2;
+	tmp->ref = 1;
 	*result = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -611,6 +693,13 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 	ctx = context->ctx;
 	KSI_ERR_clearErrors(ctx);
 
+	KSI_Signature_free(ctx->lastFailedSignature);
+	ctx->lastFailedSignature = KSI_Signature_ref(context->signature);
+	if (ctx->lastFailedSignature != NULL) {
+		KSI_PolicyVerificationResult_free(ctx->lastFailedSignature->policyVerificationResult);
+		ctx->lastFailedSignature->policyVerificationResult = NULL;
+	}
+
 	res = PolicyVerificationResult_create(&tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -620,9 +709,9 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 	tmp->resultCode = KSI_VER_RES_NA;
 	tmp->finalResult.resultCode = KSI_VER_RES_NA;
 	tmp->finalResult.errorCode = KSI_VER_ERR_GEN_2;
-	tmp->finalResult.stepsPerformed = 0;
-	tmp->finalResult.stepsFailed = 0;
-	tmp->finalResult.stepsSuccessful = 0;
+	tmp->finalResult.stepsPerformed = KSI_VERIFY_NONE;
+	tmp->finalResult.stepsFailed = KSI_VERIFY_NONE;
+	tmp->finalResult.stepsSuccessful = KSI_VERIFY_NONE;
 
 	currentPolicy = policy;
 	while (currentPolicy != NULL) {
@@ -651,6 +740,15 @@ int KSI_SignatureVerifier_verify(const KSI_Policy *policy, KSI_VerificationConte
 		}
 	}
 
+	if (tmp->finalResult.resultCode != KSI_VER_RES_OK) {
+		if (ctx->lastFailedSignature != NULL) {
+			ctx->lastFailedSignature->policyVerificationResult = KSI_PolicyVerificationResult_ref(tmp);
+		}
+	} else {
+		KSI_Signature_free(ctx->lastFailedSignature);
+		ctx->lastFailedSignature = NULL;
+	}
+
 	*result = tmp;
 	tmp = NULL;
 
@@ -672,7 +770,7 @@ void KSI_Policy_free(KSI_Policy *policy) {
 }
 
 void KSI_PolicyVerificationResult_free(KSI_PolicyVerificationResult *result) {
-	if (result != NULL) {
+	if (result != NULL && --result->ref == 0) {
 		KSI_RuleVerificationResultList_free(result->ruleResults);
 		KSI_RuleVerificationResultList_free(result->policyResults);
 		KSI_free(result);

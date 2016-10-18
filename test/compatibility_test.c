@@ -168,6 +168,10 @@ static void test_KSI_strcasecmp(CuTest *tc) {
 	CuAssert(tc, "strcasecmp failure with different strings.", ret != 0);
 }
 
+static void test_KSI_free_with_null_ptr(CuTest *tc) {
+	KSI_free(NULL);
+}
+
 CuSuite* KSITest_compatibility_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -176,6 +180,7 @@ CuSuite* KSITest_compatibility_getSuite(void) {
 	SUITE_ADD_TEST(suite, test_KSI_strdup);
 	SUITE_ADD_TEST(suite, test_CalendarTimeToUnixTime);
 	SUITE_ADD_TEST(suite, test_KSI_strcasecmp);
+	SUITE_ADD_TEST(suite, test_KSI_free_with_null_ptr);
 
 	return suite;
 }

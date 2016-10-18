@@ -476,14 +476,19 @@ int KSI_createSignature(KSI_CTX *ctx, KSI_DataHash *dataHash, KSI_Signature **si
 
 /**
  * Extend the signature to the earliest available publication.
+ * Verify the extended signature with the provided policy and context.
  * \param[in]		ctx			KSI context.
  * \param[in]		sig			Signature to be extended.
+ * \param[in]		policy		Verification policy.
+ * \param[in]		context		Verification context.
  * \param[out]		extended	Pointer to the receiving pointer to the extended signature.
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  * \see #KSI_Signature_free, #KSI_createSignature
  */
-int KSI_extendSignature(KSI_CTX *ctx, KSI_Signature *sig, KSI_Signature **extended);
+int KSI_extendSignatureWithPolicy(KSI_CTX *ctx, KSI_Signature *sig, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **extended);
+
+#define KSI_extendSignature(ctx, sig, extended) KSI_extendSignatureWithPolicy(ctx, sig, KSI_VERIFICATION_POLICY_INTERNAL, NULL, extended)
 
 /**
  * Setter for the internal log level.
@@ -647,6 +652,15 @@ int KSI_CTX_getPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **var);
  * \note The user may not free the output pointer, as it belongs to the context.
  */
 int KSI_CTX_getPublicationCertEmail(KSI_CTX *ctx, const char **address);
+
+/**
+ * Getter method for \c lastFailedSignature.
+ * \param[in]	ctx						Pointer to #KSI_CTX.
+ * \param[out]	lastFailedSignature		Pointer to receiving pointer.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \note Ownership of \c lastFailedSignature is passed to the caller who is responsible for freeing the object.
+ */
+int KSI_CTX_getLastFailedSignature(KSI_CTX *ctx, KSI_Signature **lastFailedSignature);
 
 /**
  * @}
