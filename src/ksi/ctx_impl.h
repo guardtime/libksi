@@ -82,6 +82,9 @@ extern "C" {
 		/** User defined function to be called on the request pdu header before sending it. */
 		KSI_RequestHeaderCallback requestHeaderCB;
 
+		/** Array of configuration flags. */
+		size_t flags[KSI_CTX_NUM_OF_FLAGS];
+
 		/** Counter for the requests sent by this context. */
 		KSI_uint64_t requestCounter;
 

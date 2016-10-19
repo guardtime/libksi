@@ -1,3 +1,4 @@
+* FEATURE: Added support for aggregation and extending PDU version 2.
 * IMPROVEMENT: Refactored signature verification step attribute handling.
 * IMPROVEMENT: Implemented KSI_BlockSigner getter for the hash value of the last leaf in the tree.
 * BUGFIX: Fixed debian build.

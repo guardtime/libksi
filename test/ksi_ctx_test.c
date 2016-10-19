@@ -21,6 +21,7 @@
 #include <string.h>
 #include "all_tests.h"
 #include "../src/ksi/internal.h"
+#include "../src/ksi/ctx_impl.h"
 
 static int mockInitCount = 0;
 
@@ -145,7 +146,35 @@ static void TestGetBaseError(CuTest *tc) {
 	KSI_CTX_free(ctx);
 }
 
+static void TestCtxFlags(CuTest *tc) {
+	int res;
+	KSI_CTX *ctx = NULL;
 
+	res = KSITest_CTX_clone(&ctx);
+	CuAssert(tc, "Unable to create KSI context.", res == KSI_OK && ctx != NULL);
+	CuAssert(tc, "Default aggregation PDU version not set correctly.", ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] == KSI_AGGREGATION_PDU_VERSION);
+	CuAssert(tc, "Default extending PDU version not set correctly.", ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER] == KSI_EXTENDING_PDU_VERSION);
+
+	res = KSI_CTX_setFlag(NULL, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_1);
+	CuAssert(tc, "Context NULL accepted.", res == KSI_INVALID_ARGUMENT);
+
+	res = KSI_CTX_setFlag(ctx, KSI_CTX_NUM_OF_FLAGS, (void*)KSI_PDU_VERSION_1);
+	CuAssert(tc, "Context NULL accepted.", res == KSI_INVALID_ARGUMENT);
+
+	res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)(KSI_AGGREGATION_PDU_VERSION == KSI_PDU_VERSION_1 ? KSI_PDU_VERSION_2 : KSI_PDU_VERSION_1));
+	CuAssert(tc, "Unable to set aggregation PDU version.", res == KSI_OK && ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] != KSI_AGGREGATION_PDU_VERSION);
+
+	res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)(KSI_EXTENDING_PDU_VERSION == KSI_PDU_VERSION_1 ? KSI_PDU_VERSION_2 : KSI_PDU_VERSION_1));
+	CuAssert(tc, "Unable to set extending PDU version.", res == KSI_OK && ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER] != KSI_EXTENDING_PDU_VERSION);
+
+	res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
+	CuAssert(tc, "Unable to set aggregation PDU version.", res == KSI_OK && ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] == KSI_AGGREGATION_PDU_VERSION);
+
+	res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
+	CuAssert(tc, "Unable to set extending PDU version.", res == KSI_OK && ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER] == KSI_EXTENDING_PDU_VERSION);
+
+	KSI_CTX_free(ctx);
+}
 
 CuSuite* KSITest_CTX_getSuite(void)
 {
@@ -155,6 +184,7 @@ CuSuite* KSITest_CTX_getSuite(void)
 	SUITE_ADD_TEST(suite, TestRegisterGlobals);
 	SUITE_ADD_TEST(suite, TestErrorsToString);
 	SUITE_ADD_TEST(suite, TestGetBaseError);
+	SUITE_ADD_TEST(suite, TestCtxFlags);
 
 	return suite;
 }

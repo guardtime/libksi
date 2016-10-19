@@ -944,7 +944,7 @@ static int parseAggregationResponse(KSI_CTX *ctx, KSI_uint64_t rootLevel, KSI_Ag
 	}
 
 	/* Validate tag value */
-	if (KSI_TLV_getTag(respTlv) != 0x202) {
+	if (KSI_TLV_getTag(respTlv) != 0x202 && KSI_TLV_getTag(respTlv) != 0x02) {
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Aggregation response element is missing.");
 		goto cleanup;
 	}
