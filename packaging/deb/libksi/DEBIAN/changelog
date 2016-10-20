@@ -1,16 +1,10 @@
-libksi (3.9.1696) RELEASED; urgency=low
+libksi (3.9.1701) RELEASED; urgency=low
 
   * IMPROVEMENT: Added block signature sample application.
   * IMPROVEMENT: Removed dead code from http_parser.{c,h}
   * IMPROVEMENT: Added KSI_verifyDataHash.
   * IMPROVEMENT: Custom meta-data sepparated from the low-level implementation. Adds padding automatically.
   * IMPROVEMENT: Metadata hardening verification.
-
- -- Guardtime AS <info@guardtime.com>  Tue, 21 Jun 2016 00:00:00 +0200
-
-
-libksi (3.8.1428) UNRELEASED; urgency=low
-
   * IMPROVEMENT: Removed SHA-224 support.
   * IMPROVEMENT: Removed Unused function KSI_RDR_verifyEnd.
   * IMPROVEMENT: PKI truststore initialization is performed on the need basis.
