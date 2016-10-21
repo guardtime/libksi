@@ -193,7 +193,7 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 	for (i = 0; i < KSI_HashChainLinkList_length(chain); i++) {
 		res = KSI_HashChainLinkList_elementAt(chain, i, &link);
 		if (res != KSI_OK || link == NULL) {
-			KSI_pushError(ctx, res = KSI_INVALID_STATE, NULL);
+			KSI_pushError(ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
 			goto cleanup;
 		}
 
@@ -557,7 +557,7 @@ int KSI_CalendarHashChainLink_fromTlv(KSI_TLV *tlv, KSI_CalendarHashChainLink **
 	/* Create a new link. */
 	res = KSI_HashChainLink_new(ctx, &tmp);
 	if (res != KSI_OK || tmp == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_STATE, NULL);
+		KSI_pushError(ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
 		goto cleanup;
 	}
 
@@ -645,7 +645,7 @@ int KSI_HashChainLink_fromTlv(KSI_TLV *tlv, KSI_HashChainLink **link) {
 
 	res = KSI_HashChainLink_new(ctx, &tmp);
 	if (res != KSI_OK || tmp == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_STATE, NULL);
+		KSI_pushError(ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
 		goto cleanup;
 	}
 

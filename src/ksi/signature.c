@@ -155,7 +155,7 @@ int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHash
 		 */
 		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &pCurrent);
 		if (res != KSI_OK || pCurrent == NULL) {
-			KSI_pushError(sig->ctx, res = KSI_INVALID_STATE, NULL);
+			KSI_pushError(sig->ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
 			goto cleanup;
 		}
 
@@ -239,13 +239,13 @@ int KSI_AggregationHashChain_aggregate(const KSI_AggregationHashChain *aggr, int
 	KSI_ERR_clearErrors(aggr->ctx);
 
 	if (aggr->aggrHashId == NULL || aggr->chain == NULL || aggr->inputHash == NULL) {
-		KSI_pushError(aggr->ctx, res = KSI_INVALID_STATE, NULL);
+		KSI_pushError(aggr->ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
 		goto cleanup;
 	}
 
 	res = KSI_HashChain_aggregate(aggr->ctx, aggr->chain, aggr->inputHash, startLevel, KSI_Integer_getUInt64(aggr->aggrHashId), endLevel, root);
 	if (res != KSI_OK) {
-		KSI_pushError(aggr->ctx, res = KSI_INVALID_STATE, NULL);
+		KSI_pushError(aggr->ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
 		goto cleanup;
 	}
 
@@ -770,7 +770,7 @@ int KSI_AggregationHashChainList_aggregate(KSI_AggregationHashChainList *chainLi
 
 		res = KSI_AggregationHashChainList_elementAt(chainList, i, (KSI_AggregationHashChain **)&aggrChain);
 		if (res != KSI_OK || aggrChain == NULL) {
-			KSI_pushError(ctx, res = KSI_INVALID_STATE, NULL);
+			KSI_pushError(ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
 			goto cleanup;
 		}
 
@@ -1511,7 +1511,7 @@ int KSI_Signature_getDocumentHash(KSI_Signature *sig, KSI_DataHash **hsh) {
 	if (sig->rfc3161 == NULL) {
 		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &aggr);
 		if (res != KSI_OK || aggr == NULL) {
-			KSI_pushError(sig->ctx, res = KSI_INVALID_STATE, NULL);
+			KSI_pushError(sig->ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
 			goto cleanup;
 		}
 
@@ -1732,7 +1732,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 
 		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, &aggrRec);
 		if (res != KSI_OK || aggrRec == NULL) {
-			KSI_pushError(sig->ctx, res = KSI_INVALID_STATE, NULL);
+			KSI_pushError(sig->ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
 			goto cleanup;
 		}
 

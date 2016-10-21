@@ -184,7 +184,7 @@ static int rfc3161_verify(const KSI_Signature *sig) {
 
 	res = KSI_AggregationHashChainList_elementAt(aggreChain, 0, &firstChain);
 	if (res != KSI_OK || firstChain == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_STATE, NULL);
+		KSI_pushError(ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
 		goto cleanup;
 	}
 
@@ -389,7 +389,7 @@ static int verifyInternallyAggregationChain(KSI_Signature *sig) {
 
 		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, (KSI_AggregationHashChain **)&aggregationChain);
 		if (res != KSI_OK || aggregationChain == NULL) {
-			res = KSI_INVALID_STATE;
+			if (res == KSI_OK) res = KSI_INVALID_STATE;
 			goto cleanup;
 		}
 
@@ -494,7 +494,7 @@ static int verifyAggregationRootWithCalendarChain(KSI_Signature *sig) {
 	 * the same value for "aggregation time". */
 	res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &aggregationChain);
 	if (res != KSI_OK || aggregationChain == NULL) {
-		res = KSI_INVALID_STATE;
+		if (res == KSI_OK) res = KSI_INVALID_STATE;
 		goto cleanup;
 	}
 

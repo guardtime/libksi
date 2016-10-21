@@ -236,7 +236,7 @@ static int TimeMapperList_select(KSI_LIST(TimeMapper) **mapper, KSI_Integer *tm,
 
 		res = TimeMapperList_elementAt(listp, i, &ptr);
 		if (res != KSI_OK || ptr == NULL) {
-			res = KSI_INVALID_STATE;
+			if (res == KSI_OK) res = KSI_INVALID_STATE;
 			goto cleanup;
 		}
 
@@ -320,7 +320,7 @@ static int ChainIndexMapperList_selectCreate(KSI_LIST(ChainIndexMapper) **mapper
 		ChainIndexMapper *ptr = NULL;
 		res = ChainIndexMapperList_elementAt(listp, i, &ptr);
 		if (res != KSI_OK || ptr == NULL) {
-			res = KSI_INVALID_STATE;
+			if (res == KSI_OK) res = KSI_INVALID_STATE;
 			goto cleanup;
 		}
 
@@ -730,7 +730,7 @@ static int findAggregationHashChainList(KSI_LIST(ChainIndexMapper) *cimList, con
 	for (i = 0; i < ChainIndexMapperList_length(cimList); i++) {
 		res = ChainIndexMapperList_elementAt(cimList, i, &cim);
 		if (res != KSI_OK || cim == NULL) {
-			res = KSI_INVALID_STATE;
+			if (res == KSI_OK) res = KSI_INVALID_STATE;
 			goto cleanup;
 		}
 
@@ -804,7 +804,7 @@ static int findAggregationHashChain(KSI_LIST(TimeMapper) *tmList, const KSI_Data
 	for (i = 0; i < TimeMapperList_length(tmList); i++) {
 		res = TimeMapperList_elementAt(tmList, i, &tm);
 		if (res != KSI_OK || tm == NULL) {
-			res = KSI_INVALID_STATE;
+			if (res == KSI_OK) res = KSI_INVALID_STATE;
 			goto cleanup;
 		}
 
@@ -946,7 +946,7 @@ static int ChainIndexMapperList_vacuum(KSI_LIST(ChainIndexMapper) *cimList) {
 
 		res = ChainIndexMapperList_elementAt(cimList, i - 1, &cim);
 		if (res != KSI_OK || cim == NULL) {
-			res = KSI_INVALID_STATE;
+			if (res == KSI_OK) res = KSI_INVALID_STATE;
 			goto cleanup;
 		}
 
@@ -1045,7 +1045,7 @@ static int TimeMapper_markUsedCalendarChains(TimeMapper *tm, void *foldCtx) {
 		TimeMapper *calTm = NULL;
 		res = ChainIndexMapperList_elementAt(tm->chainIndexeList, i, &cim);
 		if (res != KSI_OK || cim == NULL) {
-			res = KSI_INVALID_STATE;
+			if (res == KSI_OK) res = KSI_INVALID_STATE;
 			goto cleanup;
 		}
 
@@ -1118,7 +1118,7 @@ static int TimeMapperList_vacuum(KSI_LIST(TimeMapper) *tmList) {
 		TimeMapper *tm = NULL;
 		res = TimeMapperList_elementAt(tmList, i - 1, &tm);
 		if (res != KSI_OK || tm == NULL) {
-			res = KSI_INVALID_STATE;
+			if (res == KSI_OK) res = KSI_INVALID_STATE;
 			goto cleanup;
 		}
 
@@ -1479,7 +1479,7 @@ static int ChainIndexMapper_writeBytes(KSI_LIST(ChainIndexMapper) *cimList, unsi
 		ChainIndexMapper *cim = NULL;
 		res = ChainIndexMapperList_elementAt(cimList, i - 1, &cim);
 		if (res != KSI_OK || cim == NULL) {
-			res = KSI_INVALID_STATE;
+			if (res == KSI_OK) res = KSI_INVALID_STATE;
 			goto cleanup;
 		}
 
@@ -1555,7 +1555,7 @@ int KSI_MultiSignature_writeBytes(KSI_MultiSignature *ms, unsigned char *buf, si
 
 		res = TimeMapperList_elementAt(ms->timeList, i, &tm);
 		if (res != KSI_OK || tm == NULL) {
-			res = KSI_INVALID_STATE;
+			if (res == KSI_OK) res = KSI_INVALID_STATE;
 			goto cleanup;
 		}
 
