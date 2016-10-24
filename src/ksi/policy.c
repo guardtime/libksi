@@ -36,11 +36,12 @@ static int isDuplicateRuleResult(KSI_RuleVerificationResultList *resultList, KSI
 	int return_value = 0;
 	size_t i;
 
+	if (result == NULL) goto cleanup;
 	for (i = 0; i < KSI_RuleVerificationResultList_length(resultList); i++) {
 		int res;
 		KSI_RuleVerificationResult *tmp = NULL;
 		res = KSI_RuleVerificationResultList_elementAt(resultList, i, &tmp);
-		if (res != KSI_OK) goto cleanup;
+		if (res != KSI_OK || tmp == NULL) goto cleanup;
 		/* Compare only unique rule name pointers instead of full rule names. */
 		if (tmp->ruleName == result->ruleName) {
 			return_value = 1;

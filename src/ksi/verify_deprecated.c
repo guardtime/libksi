@@ -183,8 +183,8 @@ static int rfc3161_verify(const KSI_Signature *sig) {
 	}
 
 	res = KSI_AggregationHashChainList_elementAt(aggreChain, 0, &firstChain);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
+	if (res != KSI_OK || firstChain == NULL) {
+		KSI_pushError(ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
 		goto cleanup;
 	}
 
@@ -388,9 +388,10 @@ static int verifyInternallyAggregationChain(KSI_Signature *sig) {
 
 
 		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, (KSI_AggregationHashChain **)&aggregationChain);
-		if (res != KSI_OK) goto cleanup;
-
-		if (aggregationChain == NULL) break;
+		if (res != KSI_OK || aggregationChain == NULL) {
+			if (res == KSI_OK) res = KSI_INVALID_STATE;
+			goto cleanup;
+		}
 
 		if (prevChain != NULL) {
 			/* Verify aggregation time. */
@@ -492,7 +493,10 @@ static int verifyAggregationRootWithCalendarChain(KSI_Signature *sig) {
 	/* Take the first aggregation hash chain, as all of the chain should have
 	 * the same value for "aggregation time". */
 	res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &aggregationChain);
-	if (res != KSI_OK) goto cleanup;
+	if (res != KSI_OK || aggregationChain == NULL) {
+		if (res == KSI_OK) res = KSI_INVALID_STATE;
+		goto cleanup;
+	}
 
 	if (!KSI_DataHash_equals(sig->verificationResult.aggregationHash, inputHash)) {
 		res = KSI_VerificationResult_addFailure(info, step, "Aggregation root hash mismatch.");

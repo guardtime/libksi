@@ -367,7 +367,12 @@ static int processAndInsertNode(KSI_TreeBuilder *builder, KSI_TreeNode *node) {
 		tmp = NULL;
 
 		res = KSI_TreeBuilderLeafProcessorList_elementAt(builder->cbList, i, &cb);
-		if (res != KSI_OK || cb == NULL || cb->fn == NULL) {
+		if (res != KSI_OK || cb == NULL) {
+			if (res == KSI_OK) res = KSI_INVALID_STATE;
+			goto cleanup;
+		}
+
+		if (cb->fn == NULL) {
 			res = KSI_INVALID_STATE;
 			goto cleanup;
 		}

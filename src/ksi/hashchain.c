@@ -192,8 +192,8 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 	/* Loop over all the links in the chain. */
 	for (i = 0; i < KSI_HashChainLinkList_length(chain); i++) {
 		res = KSI_HashChainLinkList_elementAt(chain, i, &link);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
+		if (res != KSI_OK || link == NULL) {
+			KSI_pushError(ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
 			goto cleanup;
 		}
 
@@ -215,7 +215,11 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 				if (tmp != algo_id) {
 					algo_id = tmp;
 					if (hsh != NULL) {
-						res = hsr->closeExisting(hsr, hsh);
+						if (hsr == NULL) {
+							res = KSI_INVALID_STATE;
+						} else {
+							res = hsr->closeExisting(hsr, hsh);
+						}
 						if (res != KSI_OK) {
 							KSI_pushError(ctx, res, NULL);
 							goto cleanup;
@@ -278,7 +282,11 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 		KSI_DataHasher_add(hsr, &chr_level, 1);
 
 		if (hsh != NULL) {
-			res = hsr->closeExisting(hsr, hsh);
+			if (hsr == NULL) {
+				res = KSI_INVALID_STATE;
+			} else {
+				res = hsr->closeExisting(hsr, hsh);
+			}
 		} else {
 			res = KSI_DataHasher_close(hsr, &hsh);
 		}
@@ -548,8 +556,8 @@ int KSI_CalendarHashChainLink_fromTlv(KSI_TLV *tlv, KSI_CalendarHashChainLink **
 
 	/* Create a new link. */
 	res = KSI_HashChainLink_new(ctx, &tmp);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
+	if (res != KSI_OK || tmp == NULL) {
+		KSI_pushError(ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
 		goto cleanup;
 	}
 
@@ -636,8 +644,8 @@ int KSI_HashChainLink_fromTlv(KSI_TLV *tlv, KSI_HashChainLink **link) {
 	}
 
 	res = KSI_HashChainLink_new(ctx, &tmp);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
+	if (res != KSI_OK || tmp == NULL) {
+		KSI_pushError(ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
 		goto cleanup;
 	}
 
