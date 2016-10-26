@@ -1448,12 +1448,277 @@ static void testSigningBackgroundVerification(CuTest* tc) {
 }
 
 
+static void testNonCriticalPayloadElementInAggregationResponsePduV2(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-non-ciritcal-unknown-payload.tlv"
+    int res;
+    KSI_DataHash *hsh = NULL;
+    KSI_Signature *sig = NULL;
+
+    KSI_ERR_clearErrors(ctx);
+
+    res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
+    CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+
+    res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+    CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_2);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    res = KSI_createSignature(ctx, hsh, &sig);
+    CuAssert(tc, "Signing should have not failed.", res == KSI_OK && sig != NULL);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    KSI_DataHash_free(hsh);
+    KSI_Signature_free(sig);
+
+#undef TEST_AGGR_RESPONSE_FILE
+#undef TEST_SIGNATURE_FILE
+}
+
+
+static void testCriticalPayloadElementInAggregationResponsePduV2(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-ciritcal-unknown-payload.tlv"
+    int res;
+    KSI_DataHash *hsh = NULL;
+    KSI_Signature *sig = NULL;
+
+    KSI_ERR_clearErrors(ctx);
+
+    res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
+    CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+
+    res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+    CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_2);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    res = KSI_createSignature(ctx, hsh, &sig);
+    CuAssert(tc, "Signing should fail with invalid format due to ciritcal unknown element in PDU.", res == KSI_INVALID_FORMAT && sig == NULL);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    KSI_DataHash_free(hsh);
+    KSI_Signature_free(sig);
+
+#undef TEST_AGGR_RESPONSE_FILE
+#undef TEST_SIGNATURE_FILE
+}
+
+
+static void testFlagsInAggregationResponsePduV2(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-with-flags.tlv"
+    int res;
+    KSI_DataHash *hsh = NULL;
+    KSI_Signature *sig = NULL;
+
+    KSI_ERR_clearErrors(ctx);
+
+    res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
+    CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+
+    res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+    CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_2);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    res = KSI_createSignature(ctx, hsh, &sig);
+    CuAssert(tc, "Signing should have not failed.", res == KSI_OK && sig != NULL);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    KSI_DataHash_free(hsh);
+    KSI_Signature_free(sig);
+
+#undef TEST_AGGR_RESPONSE_FILE
+#undef TEST_SIGNATURE_FILE
+}
+
+
+static void testErrorStatusWithSignatureElementsInPduV2Response(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-with-status-301.tlv"
+    int res;
+    KSI_DataHash *hsh = NULL;
+    KSI_Signature *sig = NULL;
+
+    KSI_ERR_clearErrors(ctx);
+
+    res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
+    CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+
+    res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+    CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_2);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    res = KSI_createSignature(ctx, hsh, &sig);
+    CuAssert(tc, "Signing should have failed with .", res == KSI_SERVICE_UPSTREAM_TIMEOUT && sig == NULL);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    KSI_DataHash_free(hsh);
+    KSI_Signature_free(sig);
+
+#undef TEST_AGGR_RESPONSE_FILE
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testNonCriticalPayloadElementInExtenderResponsePduV2(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-non-ciritcal-payload-element.tlv"
+
+    int res;
+    KSI_Signature *sig = NULL;
+    KSI_Signature *ext = NULL;
+
+    KSI_ERR_clearErrors(ctx);
+
+    res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+    CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
+
+    res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+    CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    res = KSI_extendSignature(ctx, sig, &ext);
+    CuAssert(tc, "Signature extending should have not failed.", res == KSI_OK && ext != NULL);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    KSI_Signature_free(sig);
+    KSI_Signature_free(ext);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+}
+
+static void testCriticalPayloadElementInExtenderResponsePduV2(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-ciritcal-payload-element.tlv"
+
+    int res;
+    KSI_Signature *sig = NULL;
+    KSI_Signature *ext = NULL;
+
+    KSI_ERR_clearErrors(ctx);
+
+    res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+    CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
+
+    res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+    CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    res = KSI_extendSignature(ctx, sig, &ext);
+    CuAssert(tc, "Signature extending should fail invalid fromat.", res == KSI_INVALID_FORMAT && ext == NULL);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    KSI_Signature_free(sig);
+    KSI_Signature_free(ext);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+}
+
+static void testFlagsInExtenderResponsePduV2(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-with-flags.tlv"
+
+    int res;
+    KSI_Signature *sig = NULL;
+    KSI_Signature *ext = NULL;
+
+    KSI_ERR_clearErrors(ctx);
+
+    res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+    CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
+
+    res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+    CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    res = KSI_extendSignature(ctx, sig, &ext);
+    CuAssert(tc, "Signature extending should have not failed.", res == KSI_OK && ext != NULL);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    KSI_Signature_free(sig);
+    KSI_Signature_free(ext);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+}
+
+static void testErrorStatusWithCalendarHashChainInPduV2Response(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-with-status-301.tlv"
+
+    int res;
+    KSI_Signature *sig = NULL;
+    KSI_Signature *ext = NULL;
+
+    KSI_ERR_clearErrors(ctx);
+
+    res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+    CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
+
+    res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+    CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    res = KSI_extendSignature(ctx, sig, &ext);
+    CuAssert(tc, "Signature extending should fail invalid fromat.", res == KSI_SERVICE_UPSTREAM_TIMEOUT && ext == NULL);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    KSI_Signature_free(sig);
+    KSI_Signature_free(ext);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+}
+
+
 CuSuite* KSITest_NET_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
 	suite->preTest = preTest;
 
-	SUITE_ADD_TEST(suite, testSigning);
+    SUITE_ADD_TEST(suite, testSigning);
 	SUITE_ADD_TEST(suite, testSigningPduVer2);
 	SUITE_ADD_TEST(suite, testSigningPduVer2WrongOrder);
 	SUITE_ADD_TEST(suite, testSigningVersionMismatch);
@@ -1482,7 +1747,15 @@ CuSuite* KSITest_NET_getSuite(void) {
 	SUITE_ADD_TEST(suite, testCreateAggregated);
 	SUITE_ADD_TEST(suite, testExtendExtended);
 	SUITE_ADD_TEST(suite, testExtendingBackgroundVerification);
-	SUITE_ADD_TEST(suite, testSigningBackgroundVerification);
+    SUITE_ADD_TEST(suite, testSigningBackgroundVerification);
+    SUITE_ADD_TEST(suite, testNonCriticalPayloadElementInAggregationResponsePduV2);
+    SUITE_ADD_TEST(suite, testCriticalPayloadElementInAggregationResponsePduV2);
+    SUITE_ADD_TEST(suite, testFlagsInAggregationResponsePduV2);
+    SUITE_ADD_TEST(suite, testErrorStatusWithSignatureElementsInPduV2Response);
+    SUITE_ADD_TEST(suite, testNonCriticalPayloadElementInExtenderResponsePduV2);
+    SUITE_ADD_TEST(suite, testCriticalPayloadElementInExtenderResponsePduV2);
+    SUITE_ADD_TEST(suite, testFlagsInExtenderResponsePduV2);
+    SUITE_ADD_TEST(suite, testErrorStatusWithCalendarHashChainInPduV2Response);
 
 	return suite;
 }
