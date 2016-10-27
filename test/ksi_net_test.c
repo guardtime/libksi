@@ -1714,7 +1714,7 @@ static void testErrorStatusWithCalendarHashChainInPduV2Response(CuTest* tc) {
 
 static void testExtendingResponseWithConfInPduV2(CuTest* tc) {
 #define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
-#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response-with-conf.tlv"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-with-conf.tlv"
 
     int res;
     KSI_Signature *sig = NULL;
@@ -1746,7 +1746,7 @@ static void testExtendingResponseWithConfInPduV2(CuTest* tc) {
 
 static void testExtendingResponseWithConfAndAckInPduV2(CuTest* tc) {
 #define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
-#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response-with-conf-and-ack.tlv"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-with-conf-and-ack.tlv"
 
     int res;
     KSI_Signature *sig = NULL;
@@ -1779,7 +1779,7 @@ static void testExtendingResponseWithConfAndAckInPduV2(CuTest* tc) {
 
 static void testAggregationResponseWithConfAndAckInPduV2(CuTest* tc) {
 #define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
-#define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response-with-conf-and-ack.tlv"
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-with-conf-and-ack.tlv"
     int res;
     KSI_DataHash *hsh = NULL;
     KSI_Signature *sig = NULL;
