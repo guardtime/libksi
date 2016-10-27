@@ -86,7 +86,7 @@ If the configured aggregator or extender does not support the default PDU versio
 
 An example of defining the macro in WinBuild64.bat:
 ~~~
-	namke [macros...] KSI_AGGREGATION_PDU_VERSION=KSI_PDU_VERSION_2 [targets...]
+	nmake [macros...] KSI_AGGREGATION_PDU_VERSION=KSI_PDU_VERSION_2 [targets...]
 ~~~
 
 An example of defining the macro in configure.ac:

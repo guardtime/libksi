@@ -1759,67 +1759,6 @@ cleanup:
 	return res;
 }
 
-int KSI_AggregationReq_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len, KSI_AggregationReq **t) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_TLV *tlv = NULL;
-	KSI_AggregationReq *tmp = NULL;
-
-	if (ctx == NULL || t == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	res = KSI_TLV_parseBlob2(ctx, (unsigned char *)raw, len, 0, &tlv);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_AggregationReq_new(ctx, &tmp);
-	if (res != KSI_OK) goto cleanup;
-
-	if (KSI_TLV_getTag(tlv) == 0x201) {
-		res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_AggregationReq), tmp);
-	} else if (KSI_TLV_getTag(tlv) == 0x02) {
-		res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_AggregationReq_v2), tmp);
-	} else {
-		res = KSI_INVALID_FORMAT;
-	}
-
-	if (res != KSI_OK) goto cleanup;
-
-	*t = tmp;
-	tmp = NULL;
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_TLV_free(tlv);
-	KSI_AggregationReq_free(tmp);
-	return res;
-}
-
-int KSI_AggregationReq_serialize(const KSI_AggregationReq *t, unsigned char **raw, size_t *len) {
-	int res = KSI_UNKNOWN_ERROR;
-
-	if (t == NULL || t->ctx == NULL || raw == NULL || len == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	if (t->ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] == KSI_PDU_VERSION_1) {
-		res = KSI_TlvTemplate_serializeObject(t->ctx, t, 0x201, 0, 0, KSI_TLV_TEMPLATE(KSI_AggregationReq), raw, len);
-	} else if (t->ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] == KSI_PDU_VERSION_2) {
-		res = KSI_TlvTemplate_serializeObject(t->ctx, t, 0x02, 0, 0, KSI_TLV_TEMPLATE(KSI_AggregationReq_v2), raw, len);
-	} else {
-		res = KSI_INVALID_FORMAT;
-	}
-
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_OK;
-
-cleanup:
-	return res;
-}
-
 KSI_IMPLEMENT_GETTER(KSI_AggregationReq, KSI_Integer*, requestId, RequestId);
 KSI_IMPLEMENT_GETTER(KSI_AggregationReq, KSI_DataHash*, requestHash, RequestHash);
 KSI_IMPLEMENT_GETTER(KSI_AggregationReq, KSI_Integer*, requestLevel, RequestLevel);
@@ -1933,6 +1872,33 @@ cleanup:
 	return res;
 }
 
+int KSI_AggregationResp_verifyWithRequest(KSI_AggregationResp *resp, KSI_AggregationReq *req) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (resp == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(resp->ctx);
+
+	if (req == NULL) {
+		KSI_pushError(resp->ctx, res = KSI_INVALID_ARGUMENT, "A non-NULL response may not originate from a NULL request."); // TODO! Declare new error code
+		goto cleanup;
+	}
+
+	if (!KSI_Integer_equals(resp->requestId, req->requestId)) {
+		KSI_pushError(resp->ctx, res = KSI_INVALID_ARGUMENT, "Request id's mismatch.");
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 int KSI_AggregationResp_fromTlv(KSI_TLV *tlv, KSI_AggregationResp **data) {
 	int res;
 	KSI_AggregationResp *tmp = NULL;
@@ -2024,67 +1990,6 @@ cleanup:
 
 	KSI_TLV_free(tmp);
 
-	return res;
-}
-
-int KSI_AggregationResp_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len, KSI_AggregationResp **t) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_TLV *tlv = NULL;
-	KSI_AggregationResp *tmp = NULL;
-
-	if (ctx == NULL || t == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	res = KSI_TLV_parseBlob2(ctx, (unsigned char *)raw, len, 0, &tlv);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_AggregationResp_new(ctx, &tmp);
-	if (res != KSI_OK) goto cleanup;
-
-	if (KSI_TLV_getTag(tlv) == 0x202) {
-		res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_AggregationResp), tmp);
-	} else if (KSI_TLV_getTag(tlv) == 0x02) {
-		res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_AggregationResp_v2), tmp);
-	} else {
-		res = KSI_INVALID_FORMAT;
-	}
-
-	if (res != KSI_OK) goto cleanup;
-
-	*t = tmp;
-	tmp = NULL;
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_TLV_free(tlv);
-	KSI_AggregationResp_free(tmp);
-	return res;
-}
-
-int KSI_AggregationResp_serialize(const KSI_AggregationResp *t, unsigned char **raw, size_t *len) {
-	int res = KSI_UNKNOWN_ERROR;
-
-	if (t == NULL || t->ctx == NULL || raw == NULL || len == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	if (t->ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] == KSI_PDU_VERSION_1) {
-		res = KSI_TlvTemplate_serializeObject(t->ctx, t, 0x202, 0, 0, KSI_TLV_TEMPLATE(KSI_AggregationResp), raw, len);
-	} else if (t->ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] == KSI_PDU_VERSION_2) {
-		res = KSI_TlvTemplate_serializeObject(t->ctx, t, 0x02, 0, 0, KSI_TLV_TEMPLATE(KSI_AggregationResp_v2), raw, len);
-	} else {
-		res = KSI_INVALID_FORMAT;
-	}
-
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_OK;
-
-cleanup:
 	return res;
 }
 
@@ -2231,67 +2136,6 @@ cleanup:
 
 	KSI_TLV_free(tmp);
 
-	return res;
-}
-
-int KSI_ExtendReq_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len, KSI_ExtendReq **t) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_TLV *tlv = NULL;
-	KSI_ExtendReq *tmp = NULL;
-
-	if (ctx == NULL || t == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	res = KSI_TLV_parseBlob2(ctx, (unsigned char *)raw, len, 0, &tlv);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_ExtendReq_new(ctx, &tmp);
-	if (res != KSI_OK) goto cleanup;
-
-	if (KSI_TLV_getTag(tlv) == 0x301) {
-		res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_ExtendReq), tmp);
-	} else if (KSI_TLV_getTag(tlv) == 0x02) {
-		res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_ExtendReq), tmp);
-	} else {
-		res = KSI_INVALID_FORMAT;
-	}
-
-	if (res != KSI_OK) goto cleanup;
-
-	*t = tmp;
-	tmp = NULL;
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_TLV_free(tlv);
-	KSI_ExtendReq_free(tmp);
-	return res;
-}
-
-int KSI_ExtendReq_serialize(const KSI_ExtendReq *t, unsigned char **raw, size_t *len) {
-	int res = KSI_UNKNOWN_ERROR;
-
-	if (t == NULL || t->ctx == NULL || raw == NULL || len == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	if (t->ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER] == KSI_PDU_VERSION_1) {
-		res = KSI_TlvTemplate_serializeObject(t->ctx, t, 0x301, 0, 0, KSI_TLV_TEMPLATE(KSI_ExtendReq), raw, len);
-	} else if (t->ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER] == KSI_PDU_VERSION_2) {
-		res = KSI_TlvTemplate_serializeObject(t->ctx, t, 0x02, 0, 0, KSI_TLV_TEMPLATE(KSI_ExtendReq), raw, len);
-	} else {
-		res = KSI_INVALID_FORMAT;
-	}
-
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_OK;
-
-cleanup:
 	return res;
 }
 
@@ -2509,67 +2353,6 @@ cleanup:
 
 	KSI_TLV_free(tmp);
 
-	return res;
-}
-
-int KSI_ExtendResp_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len, KSI_ExtendResp **t) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_TLV *tlv = NULL;
-	KSI_ExtendResp *tmp = NULL;
-
-	if (ctx == NULL || t == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	res = KSI_TLV_parseBlob2(ctx, (unsigned char *)raw, len, 0, &tlv);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_ExtendResp_new(ctx, &tmp);
-	if (res != KSI_OK) goto cleanup;
-
-	if (KSI_TLV_getTag(tlv) == 0x302) {
-		res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_ExtendResp), tmp);
-	} else if (KSI_TLV_getTag(tlv) == 0x02) {
-		res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_ExtendResp_v2), tmp);
-	} else {
-		res = KSI_INVALID_FORMAT;
-	}
-
-	if (res != KSI_OK) goto cleanup;
-
-	*t = tmp;
-	tmp = NULL;
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_TLV_free(tlv);
-	KSI_ExtendResp_free(tmp);
-	return res;
-}
-
-int KSI_ExtendResp_serialize(const KSI_ExtendResp *t, unsigned char **raw, size_t *len) {
-	int res = KSI_UNKNOWN_ERROR;
-
-	if (t == NULL || t->ctx == NULL || raw == NULL || len == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	if (t->ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER] == KSI_PDU_VERSION_1) {
-		res = KSI_TlvTemplate_serializeObject(t->ctx, t, 0x302, 0, 0, KSI_TLV_TEMPLATE(KSI_ExtendResp), raw, len);
-	} else if (t->ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER] == KSI_PDU_VERSION_2) {
-		res = KSI_TlvTemplate_serializeObject(t->ctx, t, 0x02, 0, 0, KSI_TLV_TEMPLATE(KSI_ExtendResp_v2), raw, len);
-	} else {
-		res = KSI_INVALID_FORMAT;
-	}
-
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_OK;
-
-cleanup:
 	return res;
 }
 

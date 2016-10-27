@@ -1195,6 +1195,12 @@ int KSI_Signature_signAggregatedWithPolicy(KSI_CTX *ctx, KSI_DataHash *rootHash,
 		goto cleanup;
 	}
 
+	res = KSI_AggregationResp_verifyWithRequest(response, req);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
 	res = parseAggregationResponse(ctx, rootLevel, response, &sign);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
