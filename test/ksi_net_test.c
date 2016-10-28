@@ -1884,9 +1884,6 @@ static void testAggregationResponseWithConfAndAckInPduV2(CuTest* tc) {
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
     CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
 
-    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
-
     KSI_DataHash_free(hsh);
     KSI_Signature_free(sig);
 
