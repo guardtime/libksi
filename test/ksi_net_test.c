@@ -1859,7 +1859,6 @@ static void testExtendingResponseWithConfAndAckInPduV2(CuTest* tc) {
 #undef TEST_EXT_RESPONSE_FILE
 }
 
-
 static void testAggregationResponseWithConfAndAckInPduV2(CuTest* tc) {
 #define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-with-conf-and-ack.tlv"
@@ -1891,6 +1890,131 @@ static void testAggregationResponseWithConfAndAckInPduV2(CuTest* tc) {
 #undef TEST_SIGNATURE_FILE
 }
 
+static void testAggregationResponseWithInvalidIdPduV1(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response-wrong-id.tlv"
+    int res;
+    KSI_DataHash *hsh = NULL;
+    KSI_Signature *sig = NULL;
+
+    KSI_ERR_clearErrors(ctx);
+
+    res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
+    CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+
+    res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+    CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_1);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    res = KSI_createSignature(ctx, hsh, &sig);
+    CuAssert(tc, "Signing should have failed because of invalid request ID.", res != KSI_OK && sig == NULL); //TODO: change res expected status code to proper one when it's added.
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    KSI_DataHash_free(hsh);
+    KSI_Signature_free(sig);
+
+#undef TEST_AGGR_RESPONSE_FILE
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testAggregationResponseWithInvalidIdPduV2(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-wrong-id.tlv"
+    int res;
+    KSI_DataHash *hsh = NULL;
+    KSI_Signature *sig = NULL;
+
+    KSI_ERR_clearErrors(ctx);
+
+    res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
+    CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+
+    res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+    CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_2);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    res = KSI_createSignature(ctx, hsh, &sig);
+    CuAssert(tc, "Signing should have failed because of invalid request ID.", res != KSI_OK && sig == NULL); //TODO: change res expected status code to proper one when it's added.
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    KSI_DataHash_free(hsh);
+    KSI_Signature_free(sig);
+
+#undef TEST_AGGR_RESPONSE_FILE
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testExtendingResponseWithInvalidIdPduV1(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response-wrong-id.tlv"
+
+    int res;
+    KSI_Signature *sig = NULL;
+    KSI_Signature *ext = NULL;
+
+    KSI_ERR_clearErrors(ctx);
+
+    res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+    CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
+
+    res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+    CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_1);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    res = KSI_extendSignature(ctx, sig, &ext);
+    CuAssert(tc, "Signature extending should have failed because of invalid request ID.", res != KSI_OK && ext == NULL); //TODO: change res expected status code to proper one when it's added.
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    KSI_Signature_free(sig);
+    KSI_Signature_free(ext);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+}
+
+static void testExtendingResponseWithInvalidIdPduV2(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-wrong-id.tlv"
+
+    int res;
+    KSI_Signature *sig = NULL;
+    KSI_Signature *ext = NULL;
+
+    KSI_ERR_clearErrors(ctx);
+
+    res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+    CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
+
+    res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+    CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    res = KSI_extendSignature(ctx, sig, &ext);
+    CuAssert(tc, "Signature extending should have failed because of invalid request ID.", res != KSI_OK && ext == NULL); //TODO: change res expected status code to proper one when it's added.
+
+    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
+    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+    KSI_Signature_free(sig);
+    KSI_Signature_free(ext);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+}
 
 CuSuite* KSITest_NET_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
@@ -1942,6 +2066,10 @@ CuSuite* KSITest_NET_getSuite(void) {
     SUITE_ADD_TEST(suite, testExtendingResponseWithConfInPduV2);
     SUITE_ADD_TEST(suite, testExtendingResponseWithConfAndAckInPduV2);
     SUITE_ADD_TEST(suite, testAggregationResponseWithConfAndAckInPduV2);
+    SUITE_ADD_TEST(suite, testAggregationResponseWithInvalidIdPduV1);
+    SUITE_ADD_TEST(suite, testAggregationResponseWithInvalidIdPduV2);
+    SUITE_ADD_TEST(suite, testExtendingResponseWithInvalidIdPduV1);
+    SUITE_ADD_TEST(suite, testExtendingResponseWithInvalidIdPduV2);
 
 	return suite;
 }
