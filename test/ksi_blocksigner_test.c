@@ -23,6 +23,8 @@
 
 #include "cutest/CuTest.h"
 #include "all_tests.h"
+#include "../src/ksi/ctx_impl.h"
+#include "../src/ksi/net_http_impl.h"
 
 extern KSI_CTX *ctx;
 
@@ -495,6 +497,7 @@ static void testMaskingInput(CuTest *tc) {
 }
 
 static void preTest(void) {
+	ctx->netProvider->requestCount = 0;
 }
 
 CuSuite* KSITest_Blocksigner_getSuite(void) {
