@@ -667,9 +667,6 @@ int KSI_AggregationReq_fromTlv (KSI_TLV *tlv, KSI_AggregationReq **data);
 int KSI_AggregationReq_toTlv (KSI_CTX *ctx, const KSI_AggregationReq *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 
-KSI_DEFINE_OBJECT_PARSE(KSI_AggregationReq);
-KSI_DEFINE_OBJECT_SERIALIZE(KSI_AggregationReq);
-
 /*
  * KSI_RequestAck
  */
@@ -730,9 +727,13 @@ int KSI_AggregationResp_setBaseTlv (KSI_AggregationResp *o, KSI_TLV *baseTlv);
 int KSI_AggregationResp_fromTlv (KSI_TLV *tlv, KSI_AggregationResp **data);
 int KSI_AggregationResp_toTlv (KSI_CTX *ctx, const KSI_AggregationResp *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
+/**
+ * Verifies that the response is a correct response to the concrete request.
+ * \param[in]	resp	Response to be verified.
+ * \param[in]	req		Request to be used for verification.
+ */
+int KSI_AggregationResp_verifyWithRequest(KSI_AggregationResp *resp, KSI_AggregationReq *req);
 
-KSI_DEFINE_OBJECT_PARSE(KSI_AggregationResp);
-KSI_DEFINE_OBJECT_SERIALIZE(KSI_AggregationResp);
 
 /*
  * KSI_ExtendReq
@@ -748,9 +749,6 @@ int KSI_ExtendReq_setPublicationTime(KSI_ExtendReq *t, KSI_Integer *publicationT
 int KSI_ExtendReq_fromTlv (KSI_TLV *tlv, KSI_ExtendReq **data);
 int KSI_ExtendReq_toTlv (KSI_CTX *ctx, const KSI_ExtendReq *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
-
-KSI_DEFINE_OBJECT_PARSE(KSI_ExtendReq);
-KSI_DEFINE_OBJECT_SERIALIZE(KSI_ExtendReq);
 
 /*
  * KSI_ExtendResp
@@ -777,9 +775,6 @@ int KSI_ExtendResp_toTlv (KSI_CTX *ctx, const KSI_ExtendResp *data, unsigned tag
  */
 int KSI_ExtendResp_verifyWithRequest(KSI_ExtendResp *resp, KSI_ExtendReq *req);
 
-
-KSI_DEFINE_OBJECT_PARSE(KSI_ExtendResp);
-KSI_DEFINE_OBJECT_SERIALIZE(KSI_ExtendResp);
 
 /*
  * KSI_PKISignedData

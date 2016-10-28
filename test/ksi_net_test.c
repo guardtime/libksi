@@ -143,9 +143,8 @@ static void testSigningPduVer2(CuTest* tc) {
 #undef TEST_RES_SIGNATURE_FILE
 }
 
-static void testSigningPduVer2WrongOrder(CuTest* tc) {
-#define TEST_AGGR_RESPONSE_FILE_1 "resource/tlv/nok-aggr-response-header-not-first.tlv"
-#define TEST_AGGR_RESPONSE_FILE_2 "resource/tlv/nok-aggr-response-hmac-not-last.tlv"
+static void testSigningPduVer2HeaderNotFirst(CuTest* tc) {
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/nok-aggr-response-header-not-first.tlv"
 
 	int res;
 	KSI_DataHash *hsh = NULL;
@@ -156,17 +155,11 @@ static void testSigningPduVer2WrongOrder(CuTest* tc) {
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
 	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
 
-	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE_1), TEST_USER, TEST_PASS);
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
 
 	res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_2);
 	CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
-
-	res = KSI_createSignature(ctx, hsh, &sig);
-	CuAssert(tc, "Signing should fail with incorrectly ordered aggregation response.", res == KSI_INVALID_FORMAT && sig == NULL);
-
-	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE_2), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Signing should fail with incorrectly ordered aggregation response.", res == KSI_INVALID_FORMAT && sig == NULL);
@@ -177,13 +170,41 @@ static void testSigningPduVer2WrongOrder(CuTest* tc) {
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
 
-#undef TEST_AGGR_RESPONSE_FILE_1
-#undef TEST_AGGR_RESPONSE_FILE_2
+#undef TEST_AGGR_RESPONSE_FILE
 }
 
-static void testSigningVersionMismatch(CuTest* tc) {
+static void testSigningPduVer2HmacNotLast(CuTest* tc) {
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/nok-aggr-response-hmac-not-last.tlv"
+
+	int res;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
+	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+
+	res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_2);
+	CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+	res = KSI_createSignature(ctx, hsh, &sig);
+	CuAssert(tc, "Signing should fail with incorrectly ordered aggregation response.", res == KSI_INVALID_FORMAT && sig == NULL);
+
+	res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
+	CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
+
+#undef TEST_AGGR_RESPONSE_FILE
+}
+
+static void testSigningVer2ReqVer1Resp(CuTest* tc) {
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response.tlv"
-#define TEST_AGGR_RESPONSE_FILE_V2 "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2.tlv"
 
 	int res;
 	KSI_DataHash *hsh = NULL;
@@ -203,7 +224,28 @@ static void testSigningVersionMismatch(CuTest* tc) {
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Signing should fail with a different PDU version.", res == KSI_SERVICE_AGGR_PDU_V1_RESPONSE_TO_PDU_V2_REQUEST && sig == NULL);
 
-	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE_V2), TEST_USER, TEST_PASS);
+	res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
+	CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
+
+#undef TEST_AGGR_RESPONSE_FILE
+}
+
+static void testSigningVer1ReqVer2Resp(CuTest* tc) {
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2.tlv"
+
+	int res;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
+	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
 
 	res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_1);
@@ -219,7 +261,6 @@ static void testSigningVersionMismatch(CuTest* tc) {
 	KSI_Signature_free(sig);
 
 #undef TEST_AGGR_RESPONSE_FILE
-#undef TEST_AGGR_RESPONSE_FILE_V2
 }
 
 static void testSigningWrongResponse(CuTest* tc) {
@@ -425,7 +466,7 @@ static void testExtendingHeader(CuTest* tc) {
 	res = KSI_CTX_setExtender(ctx, "file://dummy", TEST_USER, TEST_PASS);
 
 	res = KSI_ExtendReq_new(ctx, &req);
-	CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
+	CuAssert(tc, "Unable to create extending request.", res == KSI_OK && req != NULL);
 
 	res = KSI_Integer_new(ctx, 1435740789, &start);
 	CuAssert(tc, "Unable to create start time.", res == KSI_OK && start != NULL);
@@ -577,10 +618,9 @@ static void testExtendingPduVer2(CuTest* tc) {
 #undef TEST_RES_SIGNATURE_FILE
 }
 
-static void testExtendingPduVer2WrongOrder(CuTest* tc) {
+static void testExtendingPduVer2HeaderNotFirst(CuTest* tc) {
 #define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
-#define TEST_EXT_RESPONSE_FILE_1  "resource/tlv/nok-extender-response-header-not-first.tlv"
-#define TEST_EXT_RESPONSE_FILE_2  "resource/tlv/nok-extender-response-hmac-not-last.tlv"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/nok-extender-response-header-not-first.tlv"
 
 	int res;
 	KSI_Signature *sig = NULL;
@@ -591,7 +631,7 @@ static void testExtendingPduVer2WrongOrder(CuTest* tc) {
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
 
-	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE_1), TEST_USER, TEST_PASS);
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
@@ -600,8 +640,31 @@ static void testExtendingPduVer2WrongOrder(CuTest* tc) {
 	res = KSI_extendSignature(ctx, sig, &ext);
 	CuAssert(tc, "Extending should fail with incorrectly ordered response PDU.", res == KSI_INVALID_FORMAT && ext == NULL);
 
-	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE_2), TEST_USER, TEST_PASS);
+	KSI_Signature_free(sig);
+	KSI_Signature_free(ext);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+}
+
+static void testExtendingPduVer2HmacNotLast(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/nok-extender-response-hmac-not-last.tlv"
+
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_Signature *ext = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
+
+	res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
+	CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
 
 	res = KSI_extendSignature(ctx, sig, &ext);
 	CuAssert(tc, "Extending should fail with incorrectly ordered response PDU.", res == KSI_INVALID_FORMAT && ext == NULL);
@@ -610,14 +673,12 @@ static void testExtendingPduVer2WrongOrder(CuTest* tc) {
 	KSI_Signature_free(ext);
 
 #undef TEST_SIGNATURE_FILE
-#undef TEST_EXT_RESPONSE_FILE_1
-#undef TEST_EXT_RESPONSE_FILE_2
+#undef TEST_EXT_RESPONSE_FILE
 }
 
-static void testExtendingVersionMismatch(CuTest* tc) {
+static void testExtendingVer2ReqVer1Resp(CuTest* tc) {
 #define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
-#define TEST_EXT_RESPONSE_FILE_V2  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2.tlv"
 
 	int res;
 	KSI_Signature *sig = NULL;
@@ -637,7 +698,30 @@ static void testExtendingVersionMismatch(CuTest* tc) {
 	res = KSI_extendSignature(ctx, sig, &ext);
 	CuAssert(tc, "Signature extending should fail with a different PDU version.", res == KSI_SERVICE_EXTENDER_PDU_V1_RESPONSE_TO_PDU_V2_REQUEST && ext == NULL);
 
-	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE_V2), TEST_USER, TEST_PASS);
+	res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
+	CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+
+	KSI_Signature_free(sig);
+	KSI_Signature_free(ext);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+}
+
+static void testExtendingVer1ReqVer2Resp(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2.tlv"
+
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_Signature *ext = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_1);
@@ -654,7 +738,6 @@ static void testExtendingVersionMismatch(CuTest* tc) {
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
-#undef TEST_EXT_RESPONSE_FILE_V2
 }
 
 static void testExtendTo(CuTest* tc) {
@@ -1455,14 +1538,18 @@ CuSuite* KSITest_NET_getSuite(void) {
 
 	SUITE_ADD_TEST(suite, testSigning);
 	SUITE_ADD_TEST(suite, testSigningPduVer2);
-	SUITE_ADD_TEST(suite, testSigningPduVer2WrongOrder);
-	SUITE_ADD_TEST(suite, testSigningVersionMismatch);
+	SUITE_ADD_TEST(suite, testSigningPduVer2HeaderNotFirst);
+	SUITE_ADD_TEST(suite, testSigningPduVer2HmacNotLast);
+	SUITE_ADD_TEST(suite, testSigningVer2ReqVer1Resp);
+	SUITE_ADD_TEST(suite, testSigningVer1ReqVer2Resp);
 	SUITE_ADD_TEST(suite, testSigningWrongResponse);
 	SUITE_ADD_TEST(suite, testAggreAuthFailure);
 	SUITE_ADD_TEST(suite, testExtending);
 	SUITE_ADD_TEST(suite, testExtendingPduVer2);
-	SUITE_ADD_TEST(suite, testExtendingPduVer2WrongOrder);
-	SUITE_ADD_TEST(suite, testExtendingVersionMismatch);
+	SUITE_ADD_TEST(suite, testExtendingPduVer2HeaderNotFirst);
+	SUITE_ADD_TEST(suite, testExtendingPduVer2HmacNotLast);
+	SUITE_ADD_TEST(suite, testExtendingVer2ReqVer1Resp);
+	SUITE_ADD_TEST(suite, testExtendingVer1ReqVer2Resp);
 	SUITE_ADD_TEST(suite, testExtendTo);
 	SUITE_ADD_TEST(suite, testExtendSigNoCalChain);
 	SUITE_ADD_TEST(suite, testExtenderWrongData);
