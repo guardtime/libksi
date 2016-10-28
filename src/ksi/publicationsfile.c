@@ -1061,7 +1061,7 @@ int KSI_PublicationData_fromBase32(KSI_CTX *ctx, const char *publication, KSI_Pu
 
 	hash_size = KSI_getHashLength(algo_id);
 	if (binary_publication_length != 8 + 1 + hash_size + 4) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Hash algorithm lenght mismatch.");
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Hash algorithm length mismatch.");
 		goto cleanup;
 	}
 

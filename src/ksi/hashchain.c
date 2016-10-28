@@ -741,10 +741,10 @@ static int legacyId_verify(KSI_CTX *ctx, const unsigned char *raw, size_t raw_le
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
-	/* Legacy id data lenght is fixed to 29 octets. */
+	/* Legacy id data length is fixed to 29 octets. */
 	if (raw_len != 29) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID data lenght mismatch.");
-		KSI_LOG_debug(ctx, "Legacy ID data lenght: %d.", raw_len);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID data length mismatch.");
+		KSI_LOG_debug(ctx, "Legacy ID data length: %d.", raw_len);
 		goto cleanup;
 	}
 	/* First two octets have fixed values. */
@@ -753,10 +753,10 @@ static int legacyId_verify(KSI_CTX *ctx, const unsigned char *raw, size_t raw_le
 		KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Legacy ID data: ", raw, raw_len);
 		goto cleanup;
 	}
-	/* Verify string lenght (at most 25). */
+	/* Verify string length (at most 25). */
 	if (raw[2] > 25) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID string lenght mismatch.");
-		KSI_LOG_debug(ctx, "Legacy ID string lenght mismatch: %d.", raw[2]);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID string length mismatch.");
+		KSI_LOG_debug(ctx, "Legacy ID string length mismatch: %d.", raw[2]);
 		goto cleanup;
 	}
 	/* Verify padding. */
