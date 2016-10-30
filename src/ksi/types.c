@@ -1888,7 +1888,7 @@ int KSI_AggregationResp_verifyWithRequest(KSI_AggregationResp *resp, KSI_Aggrega
 	}
 
 	if (!KSI_Integer_equals(resp->requestId, req->requestId)) {
-		KSI_pushError(resp->ctx, res = KSI_INVALID_ARGUMENT, "Request id's mismatch.");
+		KSI_pushError(resp->ctx, res = KSI_REQUEST_ID_MISMATCH, "Request id's mismatch.");
 		goto cleanup;
 	}
 
@@ -2212,7 +2212,7 @@ int KSI_ExtendResp_verifyWithRequest(KSI_ExtendResp *resp, KSI_ExtendReq *req) {
 	}
 
 	if (!KSI_Integer_equals(resp->requestId, req->requestId)) {
-		KSI_pushError(resp->ctx, res = KSI_INVALID_ARGUMENT, "Request id's mismatch.");
+		KSI_pushError(resp->ctx, res = KSI_REQUEST_ID_MISMATCH, "Request id's mismatch.");
 		goto cleanup;
 	}
 

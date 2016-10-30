@@ -184,6 +184,11 @@ enum KSI_StatusCode {
 	 */
 	KSI_REQUEST_PENDING = 0x20f,
 
+	/**
+	 * The request ID in response does not match with request ID in request.
+	 */
+	KSI_REQUEST_ID_MISMATCH = 0x210,
+
 	/* Generic service errors */
 
 	/**
