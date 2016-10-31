@@ -30,10 +30,10 @@ extern "C" {
 		/** Offset. */
 		size_t off;
 
-		/** Header lenght. */
+		/** Header length. */
 		size_t hdr_len;
 
-		/** Payload lenght. */
+		/** Payload length. */
 		size_t dat_len;
 
 		/** TLV tag */

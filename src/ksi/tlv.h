@@ -221,7 +221,7 @@ extern "C" {
 	 *
 	 * \param[in]		tlv		TLV.
 	 * \param[in]		buf		Pointer to buffer.
-	 * \param[in,out]  	len		Length of the buffer, after execution its value will be the lenght of the serialized TLV.
+	 * \param[in,out]  	len		Length of the buffer, after execution its value will be the length of the serialized TLV.
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
