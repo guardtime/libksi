@@ -1838,7 +1838,7 @@ static void testExtendingResponseWithConfAndAckInPduV2(CuTest* tc) {
     CuAssert(tc, "Unable to configure extender PDU version.", res == KSI_OK);
 
     res = KSI_extendSignature(ctx, sig, &ext);
-    CuAssert(tc, "Signature extending should have failed due to unknow ciritcal element [05] in PDU.", res == KSI_INVALID_FORMAT && ext == NULL);
+    CuAssert(tc, "Signature extending should have failed due to unknow critical element [05] in PDU.", res == KSI_INVALID_FORMAT && ext == NULL);
 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
     CuAssert(tc, "Unable to configure extender PDU version.", res == KSI_OK);
