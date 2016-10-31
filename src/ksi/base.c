@@ -742,7 +742,7 @@ static int ksi_err_toPrinter(KSI_CTX *ctx, void *to, size_t buf_len, void* (*pri
 
 	/* If there where more errors than buffers for the errors, indicate the fact */
 	if (ctx->errors_count > ctx->errors_size) {
-		nextWrite = printer(nextWrite, buf_len - count, &count, "  ... (more errors)\n");
+		printer(nextWrite, buf_len - count, &count, "  ... (more errors)\n");
 	}
 
 	res = KSI_OK;

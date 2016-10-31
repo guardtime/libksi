@@ -516,7 +516,9 @@ int KSI_BlockSigner_addLeaf(KSI_BlockSigner *signer, KSI_DataHash *hsh, int leve
 cleanup:
 
 	/* Cleanup the value, as this is only a pointer to a memory we do not control. */
-	signer->metaData = NULL;
+	if (signer != NULL) {
+		signer->metaData = NULL;
+	}
 
 	KSI_BlockSignerHandle_free(tmp);
 	KSI_TreeLeafHandle_free(leafHandle);

@@ -501,8 +501,8 @@ int KSI_FsClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	}
 
 	res = KSI_AbstractNetworkClient_new(ctx, &tmp);
-	if (tmp == NULL) {
-		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 

@@ -975,7 +975,7 @@ int KSI_PublicationsFile_setCertConstraints(KSI_PublicationsFile *pubFile, const
 
 cleanup:
 
-	if (pubFile->ctx->freeCertConstraintsArray != NULL) {
+	if (pubFile != NULL && pubFile->ctx != NULL && pubFile->ctx->freeCertConstraintsArray != NULL) {
 		pubFile->ctx->freeCertConstraintsArray(tmp);
 	}
 

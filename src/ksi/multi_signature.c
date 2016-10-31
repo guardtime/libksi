@@ -1087,6 +1087,7 @@ static int TimeMapper_markUsedProofs(TimeMapper *tm, void *foldCtx) {
 
 	if (tm == NULL || foldCtx == NULL) {
 		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
 	}
 
 	/* Exit if this element is not painted. */
@@ -1313,6 +1314,11 @@ static int extendUnextended(TimeMapper *tm, void *fctx) {
 
 		res = TimeMapperList_select(&helper->tmList, tm->calendarChain->publicationTime, &proof, 0);
 		if (res != KSI_OK) goto cleanup;
+
+		if (proof == NULL) {
+			res = KSI_INVALID_STATE;
+			goto cleanup;
+		}
 
 		/* Extend only if there is no publication, or there is a publication given. */
 		if (proof->publication == NULL || helper->pubRec != NULL) {

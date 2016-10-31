@@ -337,7 +337,9 @@ int KSI_TLV_setRawValue(KSI_TLV *tlv, const void *data, size_t data_len) {
 		tlv->nested = NULL;
 	}
 
-	memcpy(tlv->datap, data, data_len);
+	if (data_len > 0) {
+		memcpy(tlv->datap, data, data_len);
+	}
 
 	res = KSI_OK;
 

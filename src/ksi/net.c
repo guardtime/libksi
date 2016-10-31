@@ -223,7 +223,7 @@ static int uriCompose(const char *scheme, const char *user, const char *pass, co
 	}
 
 	if (fragment != NULL) {
-		count += KSI_snprintf(buf + count, len - count, "#%s", fragment);
+		KSI_snprintf(buf + count, len - count, "#%s", fragment);
 	}
 
 	return KSI_OK;
