@@ -1532,7 +1532,7 @@ static void testSigningBackgroundVerification(CuTest* tc) {
 
 
 static void testNonCriticalPayloadElementInAggregationResponsePduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-non-critical-unknown-payload.tlv"
 	int res;
 	KSI_DataHash *hsh = NULL;
@@ -1564,7 +1564,7 @@ static void testNonCriticalPayloadElementInAggregationResponsePduV2(CuTest* tc) 
 
 
 static void testCriticalPayloadElementInAggregationResponsePduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-critical-unknown-payload.tlv"
 	int res;
 	KSI_DataHash *hsh = NULL;
@@ -1596,7 +1596,7 @@ static void testCriticalPayloadElementInAggregationResponsePduV2(CuTest* tc) {
 
 
 static void testFlagsInAggregationResponsePduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-with-flags.tlv"
 	int res;
 	KSI_DataHash *hsh = NULL;
@@ -1628,7 +1628,7 @@ static void testFlagsInAggregationResponsePduV2(CuTest* tc) {
 
 
 static void testErrorStatusWithSignatureElementsInPduV2Response(CuTest* tc) {
-#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-with-status-301.tlv"
 	int res;
 	KSI_DataHash *hsh = NULL;
@@ -1659,7 +1659,7 @@ static void testErrorStatusWithSignatureElementsInPduV2Response(CuTest* tc) {
 }
 
 static void testNonCriticalPayloadElementInExtenderResponsePduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-non-critical-payload-element.tlv"
 
 	int res;
@@ -1691,7 +1691,7 @@ static void testNonCriticalPayloadElementInExtenderResponsePduV2(CuTest* tc) {
 }
 
 static void testCriticalPayloadElementInExtenderResponsePduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-critical-payload-element.tlv"
 
 	int res;
@@ -1723,7 +1723,7 @@ static void testCriticalPayloadElementInExtenderResponsePduV2(CuTest* tc) {
 }
 
 static void testFlagsInExtenderResponsePduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-with-flags.tlv"
 
 	int res;
@@ -1755,7 +1755,7 @@ static void testFlagsInExtenderResponsePduV2(CuTest* tc) {
 }
 
 static void testErrorStatusWithCalendarHashChainInPduV2Response(CuTest* tc) {
-#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-with-status-301.tlv"
 
 	int res;
@@ -1787,7 +1787,7 @@ static void testErrorStatusWithCalendarHashChainInPduV2Response(CuTest* tc) {
 }
 
 static void testExtendingResponseWithConfInPduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-with-conf.tlv"
 
 	int res;
@@ -1819,7 +1819,7 @@ static void testExtendingResponseWithConfInPduV2(CuTest* tc) {
 }
 
 static void testExtendingResponseWithConfAndAckInPduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-with-conf-and-ack.tlv"
 
 	int res;
@@ -1851,7 +1851,7 @@ static void testExtendingResponseWithConfAndAckInPduV2(CuTest* tc) {
 }
 
 static void testAggregationResponseWithConfAndAckInPduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-with-conf-and-ack.tlv"
 	int res;
 	KSI_DataHash *hsh = NULL;
@@ -1882,7 +1882,7 @@ static void testAggregationResponseWithConfAndAckInPduV2(CuTest* tc) {
 }
 
 static void testAggregationResponseWithInvalidIdPduV1(CuTest* tc) {
-#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response-wrong-id.tlv"
 	int res;
 	KSI_DataHash *hsh = NULL;
@@ -1913,7 +1913,7 @@ static void testAggregationResponseWithInvalidIdPduV1(CuTest* tc) {
 }
 
 static void testAggregationResponseWithInvalidIdPduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-wrong-id.tlv"
 	int res;
 	KSI_DataHash *hsh = NULL;
@@ -1944,7 +1944,7 @@ static void testAggregationResponseWithInvalidIdPduV2(CuTest* tc) {
 }
 
 static void testExtendingResponseWithInvalidIdPduV1(CuTest* tc) {
-#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response-wrong-id.tlv"
 
 	int res;
@@ -1976,7 +1976,7 @@ static void testExtendingResponseWithInvalidIdPduV1(CuTest* tc) {
 }
 
 static void testExtendingResponseWithInvalidIdPduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-wrong-id.tlv"
 
 	int res;
@@ -2008,7 +2008,7 @@ static void testExtendingResponseWithInvalidIdPduV2(CuTest* tc) {
 }
 
 static void testExtendingResponseMultiplePayloadInPduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-multi-payload.tlv"
 
 	int res;
@@ -2040,7 +2040,7 @@ static void testExtendingResponseMultiplePayloadInPduV2(CuTest* tc) {
 }
 
 static void testExtendingResponseWithResponseAndErrorPayloadInPduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-response-with-error-payload.tlv"
 
 	int res;
@@ -2072,7 +2072,7 @@ static void testExtendingResponseWithResponseAndErrorPayloadInPduV2(CuTest* tc) 
 }
 
 static void testAggregationResponseMultiplePayloadInPduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-multi-payload.tlv"
 	int res;
 	KSI_DataHash *hsh = NULL;
@@ -2103,7 +2103,7 @@ static void testAggregationResponseMultiplePayloadInPduV2(CuTest* tc) {
 }
 
 static void testAggregationResponseWithResponseAndErrorPayloadInPduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-response-with-error-payload.tlv"
 	int res;
 	KSI_DataHash *hsh = NULL;
