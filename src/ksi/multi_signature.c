@@ -1296,6 +1296,7 @@ static int extendUnextended(TimeMapper *tm, void *fctx) {
 
 		if (proof == NULL) {
 			res = KSI_INVALID_STATE;
+			goto cleanup;
 		}
 
 		/* Extend only if there is no publication, or there is a publication given. */
