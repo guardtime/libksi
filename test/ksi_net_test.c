@@ -1532,7 +1532,7 @@ static void testSigningBackgroundVerification(CuTest* tc) {
 
 
 static void testNonCriticalPayloadElementInAggregationResponsePduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-non-ciritcal-unknown-payload.tlv"
     int res;
     KSI_DataHash *hsh = NULL;
@@ -1555,9 +1555,6 @@ static void testNonCriticalPayloadElementInAggregationResponsePduV2(CuTest* tc) 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
     CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
 
-    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
-
     KSI_DataHash_free(hsh);
     KSI_Signature_free(sig);
 
@@ -1567,7 +1564,7 @@ static void testNonCriticalPayloadElementInAggregationResponsePduV2(CuTest* tc) 
 
 
 static void testCriticalPayloadElementInAggregationResponsePduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-ciritcal-unknown-payload.tlv"
     int res;
     KSI_DataHash *hsh = NULL;
@@ -1590,9 +1587,6 @@ static void testCriticalPayloadElementInAggregationResponsePduV2(CuTest* tc) {
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
     CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
 
-    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
-
     KSI_DataHash_free(hsh);
     KSI_Signature_free(sig);
 
@@ -1602,7 +1596,7 @@ static void testCriticalPayloadElementInAggregationResponsePduV2(CuTest* tc) {
 
 
 static void testFlagsInAggregationResponsePduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-with-flags.tlv"
     int res;
     KSI_DataHash *hsh = NULL;
@@ -1625,9 +1619,6 @@ static void testFlagsInAggregationResponsePduV2(CuTest* tc) {
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
     CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
 
-    res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
-
     KSI_DataHash_free(hsh);
     KSI_Signature_free(sig);
 
@@ -1637,7 +1628,7 @@ static void testFlagsInAggregationResponsePduV2(CuTest* tc) {
 
 
 static void testErrorStatusWithSignatureElementsInPduV2Response(CuTest* tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-with-status-301.tlv"
     int res;
     KSI_DataHash *hsh = NULL;
@@ -1655,7 +1646,7 @@ static void testErrorStatusWithSignatureElementsInPduV2Response(CuTest* tc) {
     CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
 
     res = KSI_createSignature(ctx, hsh, &sig);
-    CuAssert(tc, "Signing should have failed with .", res == KSI_SERVICE_UPSTREAM_TIMEOUT && sig == NULL);
+    CuAssert(tc, "Signing should have failed with service upstream timeout error.", res == KSI_SERVICE_UPSTREAM_TIMEOUT && sig == NULL);
 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
     CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
@@ -1668,7 +1659,7 @@ static void testErrorStatusWithSignatureElementsInPduV2Response(CuTest* tc) {
 }
 
 static void testNonCriticalPayloadElementInExtenderResponsePduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-non-ciritcal-payload-element.tlv"
 
     int res;
@@ -1684,13 +1675,13 @@ static void testNonCriticalPayloadElementInExtenderResponsePduV2(CuTest* tc) {
     CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+    CuAssert(tc, "Unable to configure extender PDU version.", res == KSI_OK);
 
     res = KSI_extendSignature(ctx, sig, &ext);
     CuAssert(tc, "Signature extending should have not failed.", res == KSI_OK && ext != NULL);
 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+    CuAssert(tc, "Unable to configure extender PDU version.", res == KSI_OK);
 
     KSI_Signature_free(sig);
     KSI_Signature_free(ext);
@@ -1700,7 +1691,7 @@ static void testNonCriticalPayloadElementInExtenderResponsePduV2(CuTest* tc) {
 }
 
 static void testCriticalPayloadElementInExtenderResponsePduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-ciritcal-payload-element.tlv"
 
     int res;
@@ -1716,13 +1707,13 @@ static void testCriticalPayloadElementInExtenderResponsePduV2(CuTest* tc) {
     CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+    CuAssert(tc, "Unable to configure extender PDU version.", res == KSI_OK);
 
     res = KSI_extendSignature(ctx, sig, &ext);
     CuAssert(tc, "Signature extending should fail invalid fromat.", res == KSI_INVALID_FORMAT && ext == NULL);
 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+    CuAssert(tc, "Unable to configure extender PDU version.", res == KSI_OK);
 
     KSI_Signature_free(sig);
     KSI_Signature_free(ext);
@@ -1732,7 +1723,7 @@ static void testCriticalPayloadElementInExtenderResponsePduV2(CuTest* tc) {
 }
 
 static void testFlagsInExtenderResponsePduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-with-flags.tlv"
 
     int res;
@@ -1748,13 +1739,13 @@ static void testFlagsInExtenderResponsePduV2(CuTest* tc) {
     CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+    CuAssert(tc, "Unable to configure extender PDU version.", res == KSI_OK);
 
     res = KSI_extendSignature(ctx, sig, &ext);
     CuAssert(tc, "Signature extending should have not failed.", res == KSI_OK && ext != NULL);
 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+    CuAssert(tc, "Unable to configure extender PDU version.", res == KSI_OK);
 
     KSI_Signature_free(sig);
     KSI_Signature_free(ext);
@@ -1764,7 +1755,7 @@ static void testFlagsInExtenderResponsePduV2(CuTest* tc) {
 }
 
 static void testErrorStatusWithCalendarHashChainInPduV2Response(CuTest* tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-with-status-301.tlv"
 
     int res;
@@ -1780,13 +1771,13 @@ static void testErrorStatusWithCalendarHashChainInPduV2Response(CuTest* tc) {
     CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+    CuAssert(tc, "Unable to configure extender PDU version.", res == KSI_OK);
 
     res = KSI_extendSignature(ctx, sig, &ext);
-    CuAssert(tc, "Signature extending should fail invalid fromat.", res == KSI_SERVICE_UPSTREAM_TIMEOUT && ext == NULL);
+    CuAssert(tc, "Signature extending should fail with service upstream timeout error.", res == KSI_SERVICE_UPSTREAM_TIMEOUT && ext == NULL);
 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+    CuAssert(tc, "Unable to configure extender PDU version.", res == KSI_OK);
 
     KSI_Signature_free(sig);
     KSI_Signature_free(ext);
@@ -1796,7 +1787,7 @@ static void testErrorStatusWithCalendarHashChainInPduV2Response(CuTest* tc) {
 }
 
 static void testExtendingResponseWithConfInPduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-with-conf.tlv"
 
     int res;
@@ -1812,13 +1803,13 @@ static void testExtendingResponseWithConfInPduV2(CuTest* tc) {
     CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+    CuAssert(tc, "Unable to configure extender PDU version.", res == KSI_OK);
 
     res = KSI_extendSignature(ctx, sig, &ext);
     CuAssert(tc, "Signature extending should have not failed.", res == KSI_OK && ext != NULL);
 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+    CuAssert(tc, "Unable to configure extender PDU version.", res == KSI_OK);
 
     KSI_Signature_free(sig);
     KSI_Signature_free(ext);
@@ -1828,7 +1819,7 @@ static void testExtendingResponseWithConfInPduV2(CuTest* tc) {
 }
 
 static void testExtendingResponseWithConfAndAckInPduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-with-conf-and-ack.tlv"
 
     int res;
@@ -1844,13 +1835,13 @@ static void testExtendingResponseWithConfAndAckInPduV2(CuTest* tc) {
     CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+    CuAssert(tc, "Unable to configure extender PDU version.", res == KSI_OK);
 
     res = KSI_extendSignature(ctx, sig, &ext);
     CuAssert(tc, "Signature extending should have failed due to unknow ciritcal element [05] in PDU.", res == KSI_INVALID_FORMAT && ext == NULL);
 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+    CuAssert(tc, "Unable to configure extender PDU version.", res == KSI_OK);
 
     KSI_Signature_free(sig);
     KSI_Signature_free(ext);
@@ -1860,7 +1851,7 @@ static void testExtendingResponseWithConfAndAckInPduV2(CuTest* tc) {
 }
 
 static void testAggregationResponseWithConfAndAckInPduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-with-conf-and-ack.tlv"
     int res;
     KSI_DataHash *hsh = NULL;
@@ -1891,7 +1882,7 @@ static void testAggregationResponseWithConfAndAckInPduV2(CuTest* tc) {
 }
 
 static void testAggregationResponseWithInvalidIdPduV1(CuTest* tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response-wrong-id.tlv"
     int res;
     KSI_DataHash *hsh = NULL;
@@ -1922,7 +1913,7 @@ static void testAggregationResponseWithInvalidIdPduV1(CuTest* tc) {
 }
 
 static void testAggregationResponseWithInvalidIdPduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-wrong-id.tlv"
     int res;
     KSI_DataHash *hsh = NULL;
@@ -1953,7 +1944,7 @@ static void testAggregationResponseWithInvalidIdPduV2(CuTest* tc) {
 }
 
 static void testExtendingResponseWithInvalidIdPduV1(CuTest* tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response-wrong-id.tlv"
 
     int res;
@@ -1969,13 +1960,13 @@ static void testExtendingResponseWithInvalidIdPduV1(CuTest* tc) {
     CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_1);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+    CuAssert(tc, "Unable to configure extender PDU version.", res == KSI_OK);
 
     res = KSI_extendSignature(ctx, sig, &ext);
     CuAssert(tc, "Signature extending should have failed because of invalid request ID.", res == KSI_REQUEST_ID_MISMATCH && ext == NULL);
 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+    CuAssert(tc, "Unable to configure extender PDU version.", res == KSI_OK);
 
     KSI_Signature_free(sig);
     KSI_Signature_free(ext);
@@ -1985,7 +1976,7 @@ static void testExtendingResponseWithInvalidIdPduV1(CuTest* tc) {
 }
 
 static void testExtendingResponseWithInvalidIdPduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-wrong-id.tlv"
 
     int res;
@@ -2001,13 +1992,13 @@ static void testExtendingResponseWithInvalidIdPduV2(CuTest* tc) {
     CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+    CuAssert(tc, "Unable to configure extender PDU version.", res == KSI_OK);
 
     res = KSI_extendSignature(ctx, sig, &ext);
     CuAssert(tc, "Signature extending should have failed because of invalid request ID.", res == KSI_REQUEST_ID_MISMATCH && ext == NULL);
 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+    CuAssert(tc, "Unable to configure extender PDU version.", res == KSI_OK);
 
     KSI_Signature_free(sig);
     KSI_Signature_free(ext);
@@ -2017,7 +2008,7 @@ static void testExtendingResponseWithInvalidIdPduV2(CuTest* tc) {
 }
 
 static void testExtendingResponseMultiplePayloadInPduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-multi-payload.tlv"
 
     int res;
@@ -2033,13 +2024,13 @@ static void testExtendingResponseMultiplePayloadInPduV2(CuTest* tc) {
     CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+    CuAssert(tc, "Unable to configure extender PDU version.", res == KSI_OK);
 
     res = KSI_extendSignature(ctx, sig, &ext);
     CuAssert(tc, "Signature extending should have failed with invalid format.", res == KSI_INVALID_FORMAT && ext == NULL);
 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+    CuAssert(tc, "Unable to configure extender PDU version.", res == KSI_OK);
 
     KSI_Signature_free(sig);
     KSI_Signature_free(ext);
@@ -2049,7 +2040,7 @@ static void testExtendingResponseMultiplePayloadInPduV2(CuTest* tc) {
 }
 
 static void testExtendingResponseWithResponseAndErrorPayloadInPduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response_v2-response-with-error-payload.tlv"
 
     int res;
@@ -2065,14 +2056,13 @@ static void testExtendingResponseWithResponseAndErrorPayloadInPduV2(CuTest* tc) 
     CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+    CuAssert(tc, "Unable to configure extender PDU version.", res == KSI_OK);
 
     res = KSI_extendSignature(ctx, sig, &ext);
-    printf("res is: %d", res);
     CuAssert(tc, "Signature extending should have failed with invalid request error.", res == KSI_SERVICE_INVALID_REQUEST && ext == NULL);
 
     res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
-    CuAssert(tc, "Unable to configure aggregation PDU version.", res == KSI_OK);
+    CuAssert(tc, "Unable to configure extender PDU version.", res == KSI_OK);
 
     KSI_Signature_free(sig);
     KSI_Signature_free(ext);
@@ -2082,7 +2072,7 @@ static void testExtendingResponseWithResponseAndErrorPayloadInPduV2(CuTest* tc) 
 }
 
 static void testAggregationResponseMultiplePayloadInPduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-multi-payload.tlv"
     int res;
     KSI_DataHash *hsh = NULL;
@@ -2113,7 +2103,7 @@ static void testAggregationResponseMultiplePayloadInPduV2(CuTest* tc) {
 }
 
 static void testAggregationResponseWithResponseAndErrorPayloadInPduV2(CuTest* tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_SIGNATURE_FILE	 "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response_v2-response-with-error-payload.tlv"
     int res;
     KSI_DataHash *hsh = NULL;
@@ -2146,41 +2136,41 @@ static void testAggregationResponseWithResponseAndErrorPayloadInPduV2(CuTest* tc
 CuSuite* KSITest_NET_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
-	suite->preTest = preTest;
+    suite->preTest = preTest;
 
     SUITE_ADD_TEST(suite, testSigning);
-	SUITE_ADD_TEST(suite, testSigningPduVer2);
-	SUITE_ADD_TEST(suite, testSigningPduVer2HeaderNotFirst);
-	SUITE_ADD_TEST(suite, testSigningPduVer2HmacNotLast);
-	SUITE_ADD_TEST(suite, testSigningVer2ReqVer1Resp);
-	SUITE_ADD_TEST(suite, testSigningVer1ReqVer2Resp);
-	SUITE_ADD_TEST(suite, testSigningWrongResponse);
-	SUITE_ADD_TEST(suite, testAggreAuthFailure);
-	SUITE_ADD_TEST(suite, testExtending);
-	SUITE_ADD_TEST(suite, testExtendingPduVer2);
-	SUITE_ADD_TEST(suite, testExtendingPduVer2HeaderNotFirst);
-	SUITE_ADD_TEST(suite, testExtendingPduVer2HmacNotLast);
-	SUITE_ADD_TEST(suite, testExtendingVer2ReqVer1Resp);
-	SUITE_ADD_TEST(suite, testExtendingVer1ReqVer2Resp);
-	SUITE_ADD_TEST(suite, testExtendTo);
-	SUITE_ADD_TEST(suite, testExtendSigNoCalChain);
-	SUITE_ADD_TEST(suite, testExtenderWrongData);
-	SUITE_ADD_TEST(suite, testExtAuthFailure);
-	SUITE_ADD_TEST(suite, testExtendingWithoutPublication);
-	SUITE_ADD_TEST(suite, testExtendingToNULL);
-	SUITE_ADD_TEST(suite, testSigningInvalidResponse);
-	SUITE_ADD_TEST(suite, testSigningInvalidAggrChainReturned);
-	SUITE_ADD_TEST(suite, testAggregationHeader);
-	SUITE_ADD_TEST(suite, testExtendingHeader);
-	SUITE_ADD_TEST(suite, testSigningErrorResponse);
-	SUITE_ADD_TEST(suite, testExtendingErrorResponse);
-	SUITE_ADD_TEST(suite, testUrlSplit);
-	SUITE_ADD_TEST(suite, testUriSpiltAndCompose);
-	SUITE_ADD_TEST(suite, testLocalAggregationSigning);
-	SUITE_ADD_TEST(suite, testExtendInvalidSignature);
-	SUITE_ADD_TEST(suite, testCreateAggregated);
-	SUITE_ADD_TEST(suite, testExtendExtended);
-	SUITE_ADD_TEST(suite, testExtendingBackgroundVerification);
+    SUITE_ADD_TEST(suite, testSigningPduVer2);
+    SUITE_ADD_TEST(suite, testSigningPduVer2HeaderNotFirst);
+    SUITE_ADD_TEST(suite, testSigningPduVer2HmacNotLast);
+    SUITE_ADD_TEST(suite, testSigningVer2ReqVer1Resp);
+    SUITE_ADD_TEST(suite, testSigningVer1ReqVer2Resp);
+    SUITE_ADD_TEST(suite, testSigningWrongResponse);
+    SUITE_ADD_TEST(suite, testAggreAuthFailure);
+    SUITE_ADD_TEST(suite, testExtending);
+    SUITE_ADD_TEST(suite, testExtendingPduVer2);
+    SUITE_ADD_TEST(suite, testExtendingPduVer2HeaderNotFirst);
+    SUITE_ADD_TEST(suite, testExtendingPduVer2HmacNotLast);
+    SUITE_ADD_TEST(suite, testExtendingVer2ReqVer1Resp);
+    SUITE_ADD_TEST(suite, testExtendingVer1ReqVer2Resp);
+    SUITE_ADD_TEST(suite, testExtendTo);
+    SUITE_ADD_TEST(suite, testExtendSigNoCalChain);
+    SUITE_ADD_TEST(suite, testExtenderWrongData);
+    SUITE_ADD_TEST(suite, testExtAuthFailure);
+    SUITE_ADD_TEST(suite, testExtendingWithoutPublication);
+    SUITE_ADD_TEST(suite, testExtendingToNULL);
+    SUITE_ADD_TEST(suite, testSigningInvalidResponse);
+    SUITE_ADD_TEST(suite, testSigningInvalidAggrChainReturned);
+    SUITE_ADD_TEST(suite, testAggregationHeader);
+    SUITE_ADD_TEST(suite, testExtendingHeader);
+    SUITE_ADD_TEST(suite, testSigningErrorResponse);
+    SUITE_ADD_TEST(suite, testExtendingErrorResponse);
+    SUITE_ADD_TEST(suite, testUrlSplit);
+    SUITE_ADD_TEST(suite, testUriSpiltAndCompose);
+    SUITE_ADD_TEST(suite, testLocalAggregationSigning);
+    SUITE_ADD_TEST(suite, testExtendInvalidSignature);
+    SUITE_ADD_TEST(suite, testCreateAggregated);
+    SUITE_ADD_TEST(suite, testExtendExtended);
+    SUITE_ADD_TEST(suite, testExtendingBackgroundVerification);
     SUITE_ADD_TEST(suite, testSigningBackgroundVerification);
     SUITE_ADD_TEST(suite, testNonCriticalPayloadElementInAggregationResponsePduV2);
     SUITE_ADD_TEST(suite, testCriticalPayloadElementInAggregationResponsePduV2);
