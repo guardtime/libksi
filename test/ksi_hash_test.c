@@ -82,7 +82,7 @@ static void TestSHA256OnEmptyData(CuTest* tc) {
 	res = KSI_DataHash_extract(hsh, NULL, &digest, &digest_length);
 	CuAssert(tc, "Failed to parse imprint.", res == KSI_OK);
 
-	CuAssert(tc, "Digest lenght mismatch", sizeof(expected) == digest_length);
+	CuAssert(tc, "Digest length mismatch", sizeof(expected) == digest_length);
 	CuAssert(tc, "Digest value mismatch", !memcmp(expected, digest, digest_length));
 
 
@@ -118,7 +118,7 @@ static void TestSHA256Parts(CuTest* tc) {
 	res = KSI_DataHash_extract(hsh, NULL, &digest, &digest_length);
 	CuAssert(tc, "Failed to parse imprint.", res == KSI_OK);
 
-	CuAssert(tc, "Digest lenght mismatch", sizeof(expected) == digest_length);
+	CuAssert(tc, "Digest length mismatch", sizeof(expected) == digest_length);
 	CuAssert(tc, "Digest value mismatch", !memcmp(expected, digest, digest_length));
 
 	KSI_DataHasher_free(hsr);
@@ -156,7 +156,7 @@ static void TestSHA256Reset(CuTest* tc) {
 	res = KSI_DataHash_extract(hsh, NULL, &digest, &digest_length);
 	CuAssert(tc, "Failed to parse imprint.", res == KSI_OK);
 
-	CuAssert(tc, "Digest lenght mismatch", sizeof(expected) == digest_length);
+	CuAssert(tc, "Digest length mismatch", sizeof(expected) == digest_length);
 	CuAssert(tc, "Digest value mismatch", !memcmp(expected, digest, digest_length));
 
 	KSI_DataHasher_free(hsr);
@@ -189,7 +189,7 @@ static void TestSHA256Empty(CuTest* tc) {
 	res = KSI_DataHash_extract(hsh, NULL, &digest, &digest_length);
 	CuAssert(tc, "Failed to parse imprint.", res == KSI_OK);
 
-	CuAssert(tc, "Digest lenght mismatch", sizeof(expected) == digest_length);
+	CuAssert(tc, "Digest length mismatch", sizeof(expected) == digest_length);
 	CuAssert(tc, "Digest value mismatch", !memcmp(expected, digest, digest_length));
 
 	KSI_DataHasher_free(hsr);
@@ -216,9 +216,9 @@ static void TestSHA256GetData(CuTest* tc) {
 	res = KSI_DataHash_extract(hsh, &algo_id, &digest, &digest_length);
 	CuAssert(tc, "Failed to get data from data hash object.", res == KSI_OK && digest != NULL);
 	CuAssertIntEquals_Msg(tc, "Algorithm", KSI_HASHALG_SHA2_256, algo_id);
-	CuAssert(tc, "Digest lenght mismatch", sizeof(expected) == digest_length);
+	CuAssert(tc, "Digest length mismatch", sizeof(expected) == digest_length);
 
-	CuAssert(tc, "Digest lenght mismatch", sizeof(expected) == digest_length);
+	CuAssert(tc, "Digest length mismatch", sizeof(expected) == digest_length);
 	CuAssert(tc, "Digest value mismatch", !memcmp(expected, digest, digest_length));
 
 	KSI_DataHasher_free(hsr);
@@ -244,9 +244,9 @@ static void TestSHA256GetImprint(CuTest* tc) {
 	res = KSI_DataHash_getImprint(hsh, &imprint, &imprint_length);
 	CuAssert(tc, "Failed to get imprint from data hash object.", res == KSI_OK && imprint != NULL);
 	CuAssertIntEquals_Msg(tc, "Algorithm", KSI_HASHALG_SHA2_256, *imprint);
-	CuAssert(tc, "Imprint lenght mismatch", sizeof(expected) == imprint_length);
+	CuAssert(tc, "Imprint length mismatch", sizeof(expected) == imprint_length);
 
-	CuAssert(tc, "Imprint lenght mismatch", sizeof(expected) == imprint_length);
+	CuAssert(tc, "Imprint length mismatch", sizeof(expected) == imprint_length);
 	CuAssert(tc, "Imprint value mismatch", !memcmp(expected, imprint, imprint_length));
 
 	KSI_DataHasher_free(hsr);
@@ -269,9 +269,9 @@ static void TestSHA256fromImprint(CuTest* tc) {
 	res = KSI_DataHash_getImprint(hsh, &imprint, &imprint_length);
 	CuAssert(tc, "Failed to get imprint from data hash object.", res == KSI_OK && imprint != NULL);
 	CuAssertIntEquals_Msg(tc, "Algorithm", KSI_HASHALG_SHA2_256, *imprint);
-	CuAssert(tc, "Imprint lenght mismatch", sizeof(expected) == imprint_length);
+	CuAssert(tc, "Imprint length mismatch", sizeof(expected) == imprint_length);
 
-	CuAssert(tc, "Imprint lenght mismatch", sizeof(expected) == imprint_length);
+	CuAssert(tc, "Imprint length mismatch", sizeof(expected) == imprint_length);
 	CuAssert(tc, "Imprint value mismatch", !memcmp(expected, imprint, imprint_length));
 
 	KSI_DataHash_free(hsh);

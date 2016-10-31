@@ -45,6 +45,8 @@ typedef unsigned __int64 uint64_t;
 #include <stdint.h>
 #endif
 
+#include "internal.h"
+
 /* Compile with -DHTTP_PARSER_STRICT=0 to make less checks, but run
  * faster
  */

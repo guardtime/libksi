@@ -894,8 +894,8 @@ int KSI_PublicationsFile_findPublication(const KSI_PublicationsFile *trust, KSI_
 		KSI_PublicationRecord *pr = NULL;
 
 		res = KSI_PublicationRecordList_elementAt(trust->publications, i, &pr);
-		if (res != KSI_OK) {
-			KSI_pushError(trust->ctx, res, NULL);
+		if (res != KSI_OK || pr == NULL) {
+			KSI_pushError(trust->ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
 			goto cleanup;
 		}
 
@@ -1061,7 +1061,7 @@ int KSI_PublicationData_fromBase32(KSI_CTX *ctx, const char *publication, KSI_Pu
 
 	hash_size = KSI_getHashLength(algo_id);
 	if (binary_publication_length != 8 + 1 + hash_size + 4) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Hash algorithm lenght mismatch.");
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Hash algorithm length mismatch.");
 		goto cleanup;
 	}
 

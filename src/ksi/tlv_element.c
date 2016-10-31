@@ -114,7 +114,10 @@ static int remap(KSI_TlvElement *el, unsigned char *buf, size_t buf_len) {
 			size_t consumed = 0;
 
 			res = KSI_TlvElementList_elementAt(el->subList, i, &pSub);
-			if (res != KSI_OK) goto cleanup;
+			if (res != KSI_OK || pSub == NULL) {
+				if (res == KSI_OK) res = KSI_INVALID_STATE;
+				goto cleanup;
+			}
 
 			res = remap(pSub, ptr, len);
 			if (res != KSI_OK) goto cleanup;

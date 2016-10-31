@@ -17,7 +17,6 @@ Makefile.in
 /missing
 /stamp-h1
 /config
->>>>>>> release_3.4
 config.status
 config.log
 
@@ -59,6 +58,7 @@ libtool
 *.i*86
 *.x86_64
 *.hex
+out/
 
 # Debug files
 *.pdb
@@ -85,8 +85,12 @@ test/resigner
 test/runner
 test/serialize-benchmark
 testsuite-xunit.xml
+
+# Code coverage report files #
 coverage.info
 coverage/
+*.gcno
+*.gcda
 
 # Configuration files
 test/integrationtest.conf

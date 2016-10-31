@@ -356,8 +356,8 @@ static void testAggrChain_LegacyId_invalidHeader_verifyErrorResult(CuTest *tc) {
 #undef TEST_SIGNATURE_FILE
 }
 
-static void testAggrChain_LegacyId_invalidDataLenght_verifyErrorResult(CuTest *tc) {
-#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-2014-04-30.1-legacyId-invalid-lenght.ksig"
+static void testAggrChain_LegacyId_invalidDataLength_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-2014-04-30.1-legacyId-invalid-length.ksig"
 
 	testAggrChain_LegacyId_ParserFail(tc, TEST_SIGNATURE_FILE);
 
@@ -372,8 +372,8 @@ static void testAggrChain_LegacyId_invalidPadding_verifyErrorResult(CuTest *tc) 
 #undef TEST_SIGNATURE_FILE
 }
 
-static void testAggrChain_LegacyId_invalidStringLenght_verifyErrorResult(CuTest *tc) {
-#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-2014-04-30.1-legacyId-invalid-string-lenght.ksig"
+static void testAggrChain_LegacyId_invalidStringLength_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-2014-04-30.1-legacyId-invalid-string-length.ksig"
 
 	testAggrChain_LegacyId_ParserFail(tc, TEST_SIGNATURE_FILE);
 
@@ -388,9 +388,9 @@ CuSuite* KSITest_HashChain_getSuite(void) {
 	SUITE_ADD_TEST(suite, testAggrChainBuiltWithMetaData);
 	SUITE_ADD_TEST(suite, testAggrChain_LegacyId_siblingContainsLegacyId_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testAggrChain_LegacyId_invalidHeader_verifyErrorResult);
-	SUITE_ADD_TEST(suite, testAggrChain_LegacyId_invalidDataLenght_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testAggrChain_LegacyId_invalidDataLength_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testAggrChain_LegacyId_invalidPadding_verifyErrorResult);
-	SUITE_ADD_TEST(suite, testAggrChain_LegacyId_invalidStringLenght_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testAggrChain_LegacyId_invalidStringLength_verifyErrorResult);
 
 	return suite;
 }

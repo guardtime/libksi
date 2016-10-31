@@ -192,8 +192,8 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 	/* Loop over all the links in the chain. */
 	for (i = 0; i < KSI_HashChainLinkList_length(chain); i++) {
 		res = KSI_HashChainLinkList_elementAt(chain, i, &link);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
+		if (res != KSI_OK || link == NULL) {
+			KSI_pushError(ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
 			goto cleanup;
 		}
 
@@ -215,7 +215,11 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 				if (tmp != algo_id) {
 					algo_id = tmp;
 					if (hsh != NULL) {
-						res = hsr->closeExisting(hsr, hsh);
+						if (hsr == NULL) {
+							res = KSI_INVALID_STATE;
+						} else {
+							res = hsr->closeExisting(hsr, hsh);
+						}
 						if (res != KSI_OK) {
 							KSI_pushError(ctx, res, NULL);
 							goto cleanup;
@@ -278,7 +282,11 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 		KSI_DataHasher_add(hsr, &chr_level, 1);
 
 		if (hsh != NULL) {
-			res = hsr->closeExisting(hsr, hsh);
+			if (hsr == NULL) {
+				res = KSI_INVALID_STATE;
+			} else {
+				res = hsr->closeExisting(hsr, hsh);
+			}
 		} else {
 			res = KSI_DataHasher_close(hsr, &hsh);
 		}
@@ -548,8 +556,8 @@ int KSI_CalendarHashChainLink_fromTlv(KSI_TLV *tlv, KSI_CalendarHashChainLink **
 
 	/* Create a new link. */
 	res = KSI_HashChainLink_new(ctx, &tmp);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
+	if (res != KSI_OK || tmp == NULL) {
+		KSI_pushError(ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
 		goto cleanup;
 	}
 
@@ -636,8 +644,8 @@ int KSI_HashChainLink_fromTlv(KSI_TLV *tlv, KSI_HashChainLink **link) {
 	}
 
 	res = KSI_HashChainLink_new(ctx, &tmp);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
+	if (res != KSI_OK || tmp == NULL) {
+		KSI_pushError(ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
 		goto cleanup;
 	}
 
@@ -733,10 +741,10 @@ static int legacyId_verify(KSI_CTX *ctx, const unsigned char *raw, size_t raw_le
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
-	/* Legacy id data lenght is fixed to 29 octets. */
+	/* Legacy id data length is fixed to 29 octets. */
 	if (raw_len != 29) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID data lenght mismatch.");
-		KSI_LOG_debug(ctx, "Legacy ID data lenght: %d.", raw_len);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID data length mismatch.");
+		KSI_LOG_debug(ctx, "Legacy ID data length: %d.", raw_len);
 		goto cleanup;
 	}
 	/* First two octets have fixed values. */
@@ -745,10 +753,10 @@ static int legacyId_verify(KSI_CTX *ctx, const unsigned char *raw, size_t raw_le
 		KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Legacy ID data: ", raw, raw_len);
 		goto cleanup;
 	}
-	/* Verify string lenght (at most 25). */
+	/* Verify string length (at most 25). */
 	if (raw[2] > 25) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID string lenght mismatch.");
-		KSI_LOG_debug(ctx, "Legacy ID string lenght mismatch: %d.", raw[2]);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID string length mismatch.");
+		KSI_LOG_debug(ctx, "Legacy ID string length mismatch: %d.", raw[2]);
 		goto cleanup;
 	}
 	/* Verify padding. */
