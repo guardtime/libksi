@@ -265,41 +265,6 @@ cleanup:
 	return res;
 }
 
-int KSI_TLV_setUintValue(KSI_TLV *tlv, KSI_uint64_t val) {
-	int res = KSI_UNKNOWN_ERROR;
-	size_t len;
-
-	if (tlv == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	KSI_ERR_clearErrors(tlv->ctx);
-
-	len = KSI_UINT64_MINSIZE(val);
-	if (tlv->buffer == NULL) {
-		res = createOwnBuffer(tlv, 0);
-		if (res != KSI_OK) {
-			KSI_pushError(tlv->ctx, res, NULL);
-			goto cleanup;
-		}
-	}
-
-	tlv->datap = tlv->buffer;
-	tlv->datap_len = len;
-
-	for (; len > 0; len--) {
-		tlv->datap[len - 1] = (unsigned char) (val & 0xff);
-		val >>= 8;
-	}
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
 int KSI_TLV_setRawValue(KSI_TLV *tlv, const void *data, size_t data_len) {
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -541,40 +506,6 @@ cleanup:
 	return res;
 }
 
-int KSI_TLV_fromUint(KSI_CTX *ctx, unsigned tag, int isLenient, int isForward, KSI_uint64_t uint, KSI_TLV **tlv) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_TLV *tmp = NULL;
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || tlv == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_TLV_new(ctx, tag, isLenient, isForward, &tmp);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_TLV_setUintValue(tmp, uint);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	*tlv = tmp;
-	tmp = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_TLV_free(tmp);
-
-	return res;
-}
-
 /**
  *
  */
@@ -594,48 +525,6 @@ int KSI_TLV_isForward(KSI_TLV *tlv) {
  */
 unsigned KSI_TLV_getTag(KSI_TLV *tlv) {
 	return tlv->tag;
-}
-
-int KSI_TLV_removeNestedTlv(KSI_TLV *target, KSI_TLV *tlv) {
-	int res = KSI_UNKNOWN_ERROR;
-	size_t *pos = NULL;
-
-	if (target == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	KSI_ERR_clearErrors(target->ctx);
-
-	if (tlv == NULL) {
-		KSI_pushError(target->ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_TLVList_indexOf(target->nested, tlv, &pos);
-	if (res != KSI_OK) {
-		KSI_pushError(target->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	if (pos == NULL) {
-		KSI_pushError(target->ctx, res = KSI_INVALID_ARGUMENT, "Nested TLV not found.");
-		goto cleanup;
-	}
-
-	res = KSI_TLVList_remove(target->nested, *pos, NULL);
-	if (res != KSI_OK) {
-		KSI_pushError(target->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_free(pos);
-
-	return res;
 }
 
 int KSI_TLV_replaceNestedTlv(KSI_TLV *parentTlv, KSI_TLV *oldTlv, KSI_TLV *newTlv) {
