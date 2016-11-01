@@ -65,20 +65,6 @@ extern "C" {
 	int KSI_TLV_new(KSI_CTX *ctx, unsigned tag, int isLenient, int isForward, KSI_TLV **tlv);
 
 	/**
-	 * This function creates a new TLV and initializes its payload with the given \c uint value.
-	 *
-	 * \param[in]	ctx			KSI context.
-	 * \param[in]	tag			Numeric TLV tag.
-	 * \param[in]	isLenient	Value of the lenient-flag (1 or 0).
-	 * \param[in]	isForward	Value of the forward-flag (1 or 0).
-	 * \param[in]	uint		64-bit unsigned value.
-	 * \param[out]	tlv			Pointer to the output variable.
-	 *
-	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
-	 */
-	KSI_FN_DEPRECATED(int KSI_TLV_fromUint(KSI_CTX *ctx, unsigned tag, int isLenient, int isForward, KSI_uint64_t uint, KSI_TLV **tlv));
-
-	/**
 	 * This function creates a new TLV and initializes its payload with the given string \c str.
 	 * The \c NUL terminator is included in the payload.
 	 *
@@ -248,17 +234,6 @@ extern "C" {
 	int KSI_TLV_writeBytes(const KSI_TLV *tlv, unsigned char *buf, size_t buf_size, size_t *buf_len, int opt);
 
 	/**
-	 * Removes the given TLV from the parent if the given TLV is a immediate child
-	 * of the parent.
-	 *
-	 * \param[in]		target			The parent TLV.
-	 * \param[in]		tlv				TLV value to be removed.
-	 *
-	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
-	 */
-	KSI_FN_DEPRECATED(int KSI_TLV_removeNestedTlv(KSI_TLV *target, KSI_TLV *tlv));
-
-	/**
 	 * This function creates a human readable representation of the TLV object.
 	 *
 	 * \param[in]	tlv			The TLV object.
@@ -279,15 +254,6 @@ extern "C" {
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
 	int KSI_TLV_clone(const KSI_TLV *tlv, KSI_TLV **clone);
-
-	/**
-	 * Set a unsigned 64-bit integer value to the TLV object.
-	 * \param[in]	tlv			The TLV object.
-	 * \param[in]	val			Unsigned 64-bit integer value.
-	 *
-	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
-	 */
-	KSI_FN_DEPRECATED(int KSI_TLV_setUintValue(KSI_TLV *tlv, KSI_uint64_t val));
 
 	/**
 	 * Set a raw value to the TLV object.

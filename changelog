@@ -1,4 +1,5 @@
 * BUGFIX: Disabled cURL from using signals.
+* IMPROVEMENT: Removed deprecated functions: KSI_TLV_setUintValue, KSI_TLV_fromUint, KSI_TLV_removeNestedTlv
 * FEATURE: Added support for aggregation and extending PDU version 2.
 Version 3.10
 
