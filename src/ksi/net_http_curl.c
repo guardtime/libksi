@@ -246,6 +246,9 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 	curl_easy_setopt(implCtx->curl, CURLOPT_WRITEFUNCTION, receiveDataFromLibCurl);
 	curl_easy_setopt(implCtx->curl, CURLOPT_NOPROGRESS, 1);
 
+	/* Make sure cURL won't use signals. */
+	curl_easy_setopt(implCtx->curl, CURLOPT_NOSIGNAL, 1);
+
 	curl_easy_setopt(implCtx->curl, CURLOPT_ERRORBUFFER, implCtx->curlErr);
 	if (http->agentName != NULL) {
 		curl_easy_setopt(implCtx->curl, CURLOPT_USERAGENT, http->agentName);
