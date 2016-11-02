@@ -899,6 +899,11 @@ int KSI_PublicationsFile_findPublication(const KSI_PublicationsFile *trust, KSI_
 			goto cleanup;
 		}
 
+		if (pr->publishedData == NULL || inRec->publishedData == NULL) {
+			KSI_pushError(trust->ctx, res = KSI_INVALID_STATE, NULL);
+			goto cleanup;
+		}
+
 		if (KSI_DataHash_equals(pr->publishedData->imprint, inRec->publishedData->imprint) && KSI_Integer_equals(pr->publishedData->time, inRec->publishedData->time) ) {
 			*outRec = KSI_PublicationRecord_ref(pr);
 			break;
