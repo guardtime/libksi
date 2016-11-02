@@ -1,5 +1,8 @@
 Version 3.4
 
+2016-11-02 release(3.4.0.7)
+* BUGFIX: Disabled cURL from using signals.
+
 2015-09-14 release(3.4.0.1)
 * Removed all default endpoints.
 * Added multi signature container.

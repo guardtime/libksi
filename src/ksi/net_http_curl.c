@@ -129,6 +129,10 @@ static int curlReceive(KSI_RequestHandle *handle) {
 		curl_easy_setopt(implCtx->curl, CURLOPT_POST, 0);
 	}
 
+	/* Make sure cURL won't use signals. */
+ 	curl_easy_setopt(implCtx->curl, CURLOPT_NOSIGNAL, 1);
+ 
+
     curl_easy_setopt(implCtx->curl, CURLOPT_WRITEDATA, implCtx);
 
     curl_easy_setopt(implCtx->curl, CURLOPT_CONNECTTIMEOUT, http->connectionTimeoutSeconds);
