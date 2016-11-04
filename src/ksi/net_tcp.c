@@ -122,7 +122,12 @@ static int readResponse(KSI_RequestHandle *handle) {
 	memset((char *) &serv_addr, 0, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
 
-	memmove((char *)&serv_addr.sin_addr.s_addr, (char *)server->h_addr, server->h_length);
+	if (server->h_length <= sizeof(serv_addr.sin_addr.s_addr)) {
+		memmove((char *)&serv_addr.sin_addr.s_addr, (char *)server->h_addr, server->h_length);
+	} else {
+		KSI_pushError(handle->ctx, res = KSI_BUFFER_OVERFLOW, "Host address too long.");
+		goto cleanup;
+	}
 
 	serv_addr.sin_port = htons(tcp->port);
 
