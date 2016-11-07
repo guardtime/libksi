@@ -36,7 +36,6 @@ struct KSI_BlockSigner_st {
 	KSI_CTX *ctx;
 	size_t ref;
 	KSI_TreeBuilder *builder;
-	KSI_LIST(KSI_BlockSignerHandle) *leafList;
 	KSI_Signature *signature;
 	KSI_DataHash *prevLeaf;
 	KSI_DataHash *origPrevLeaf;
@@ -265,7 +264,6 @@ int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *pr
 	tmp->ctx = ctx;
 	tmp->ref = 1;
 	tmp->builder = NULL;
-	tmp->leafList = NULL;
 	tmp->signature = NULL;
 	tmp->prevLeaf = NULL;
 	tmp->origPrevLeaf = NULL;
@@ -279,9 +277,6 @@ int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *pr
 	tmp->maskingProcessor.fn = maskingProcessor;
 
 	res = KSI_TreeBuilder_new(ctx, algoId, &tmp->builder);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_BlockSignerHandleList_new(&tmp->leafList);
 	if (res != KSI_OK) goto cleanup;
 
 	tmp->prevLeaf = KSI_DataHash_ref(prevLeaf);
@@ -317,7 +312,6 @@ cleanup:
 void KSI_BlockSigner_free(KSI_BlockSigner *signer) {
 	if (signer != NULL && --signer->ref == 0) {
 		KSI_TreeBuilder_free(signer->builder);
-		KSI_BlockSignerHandleList_free(signer->leafList);
 		KSI_Signature_free(signer->signature);
 		KSI_OctetString_free(signer->iv);
 		KSI_DataHash_free(signer->prevLeaf);
@@ -368,7 +362,6 @@ int KSI_BlockSigner_close(KSI_BlockSigner *signer, void *dummy) {
 int KSI_BlockSigner_reset(KSI_BlockSigner *signer) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TreeBuilder *builder = NULL;
-	KSI_LIST(KSI_BlockSignerHandle) *leafList = NULL;
 
 	if (signer == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -383,22 +376,12 @@ int KSI_BlockSigner_reset(KSI_BlockSigner *signer) {
 		goto cleanup;
 	}
 
-	res = KSI_BlockSignerHandleList_new(&leafList);
-	if (res != KSI_OK) {
-		KSI_pushError(signer->ctx, res, NULL);
-		goto cleanup;
-	}
-
 	KSI_Signature_free(signer->signature);
 	signer->signature = NULL;
 
 	KSI_TreeBuilder_free(signer->builder);
 	signer->builder = builder;
 	builder = NULL;
-
-	KSI_BlockSignerHandleList_free(signer->leafList);
-	signer->leafList = leafList;
-	leafList = NULL;
 
 	/* Add the masking handle. */
 	res = KSI_TreeBuilderLeafProcessorList_append(signer->builder->cbList, &signer->maskingProcessor);
@@ -421,7 +404,6 @@ int KSI_BlockSigner_reset(KSI_BlockSigner *signer) {
 cleanup:
 
 	KSI_TreeBuilder_free(builder);
-	KSI_BlockSignerHandleList_free(leafList);
 
 	return res;
 }
@@ -456,14 +438,9 @@ int KSI_BlockSigner_addLeaf(KSI_BlockSigner *signer, KSI_DataHash *hsh, int leve
 	tmp->leafHandle = leafHandle;
 	tmp->signer = signer;
 
-	res = KSI_BlockSignerHandleList_append(signer->leafList, tmp);
-	if (res != KSI_OK) goto cleanup;
-
 	if (handle != NULL) {
 		*handle = KSI_BlockSignerHandle_ref(tmp);
 	}
-
-	tmp = NULL;
 
 	leafHandle = NULL;
 
