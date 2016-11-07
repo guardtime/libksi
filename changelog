@@ -1,3 +1,7 @@
+Version 3.12
+
+* IMPROVEMENT: Removed experimental feature KSI_NetworkClient_performAll.
+
 Version 3.11
 
 2016-11-03 release(3.10.1893)
