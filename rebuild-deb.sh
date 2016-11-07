@@ -62,7 +62,6 @@ libksi_devel_includes="\
 	$include_dir/ksi.h \
 	$include_dir/list.h \
 	$include_dir/log.h \
-	$include_dir/multi_signature.h \
 	$include_dir/net.h \
 	$include_dir/net_http.h \
 	$include_dir/net_tcp.h \

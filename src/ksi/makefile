@@ -88,7 +88,6 @@ LIB_OBJ = \
 	$(OBJ_DIR)\io.obj \
 	$(OBJ_DIR)\list.obj \
 	$(OBJ_DIR)\log.obj \
-	$(OBJ_DIR)\multi_signature.obj \
 	$(OBJ_DIR)\net.obj \
 	$(OBJ_DIR)\net_http.obj \
 	$(OBJ_DIR)\net_uri.obj \
@@ -146,7 +145,6 @@ INC_FILES = \
 	tlv_element.h \
 	tree_builder.h \
 	compatibility.h \
-	multi_signature.h \
 	policy.h \
 	verify_deprecated.h \
 	blocksigner.h \

@@ -326,10 +326,8 @@ void KSI_BlockSigner_free(KSI_BlockSigner *signer) {
 	}
 }
 
-int KSI_BlockSigner_close(KSI_BlockSigner *signer, KSI_MultiSignature **ms) {
+int KSI_BlockSigner_closeAndSign(KSI_BlockSigner *signer) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_MultiSignature *tmp = NULL;
-	KSI_Signature *sig = NULL;
 
 	if (signer == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -355,58 +353,16 @@ int KSI_BlockSigner_close(KSI_BlockSigner *signer, KSI_MultiSignature **ms) {
 		goto cleanup;
 	}
 
-	/* If the output parameter is set, populate the multi signature container. */
-	if (ms != NULL) {
-		size_t i;
-
-		KSI_LOG_debug(signer->ctx, "Creating a multi signature output value for the block signer.");
-
-		res = KSI_MultiSignature_new(signer->ctx, &tmp);
-		if (res != KSI_OK) {
-			KSI_pushError(signer->ctx, res, NULL);
-			goto cleanup;
-		}
-
-		for (i = 0; i < KSI_BlockSignerHandleList_length(signer->leafList); i++) {
-			KSI_BlockSignerHandle *hndl = NULL;
-
-			/* Extract the element from the list. */
-			res = KSI_BlockSignerHandleList_elementAt(signer->leafList, i, &hndl);
-			if (res != KSI_OK) {
-				KSI_pushError(signer->ctx, res, NULL);
-				goto cleanup;
-			}
-
-			/* Create a proper signature. */
-			res = KSI_BlockSignerHandle_getSignature(hndl, &sig);
-			if (res != KSI_OK) {
-				KSI_pushError(signer->ctx, res, NULL);
-				goto cleanup;
-			}
-
-			/* Add the signature to the multi signature container. */
-			res = KSI_MultiSignature_add(tmp, sig);
-			if (res != KSI_OK) {
-				KSI_pushError(signer->ctx, res, NULL);
-				goto cleanup;
-			}
-
-			/* Free the signature, as it is no longer needed. */
-			KSI_Signature_free(sig);
-			sig = NULL;
-		}
-
-		*ms = tmp;
-		tmp = NULL;
-	}
 
 	res = KSI_OK;
 
 cleanup:
 
-	KSI_MultiSignature_free(tmp);
-
 	return res;
+}
+
+int KSI_BlockSigner_close(KSI_BlockSigner *signer, void *dummy) {
+	return KSI_BlockSigner_closeAndSign(signer);
 }
 
 int KSI_BlockSigner_reset(KSI_BlockSigner *signer) {

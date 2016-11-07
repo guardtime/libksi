@@ -21,7 +21,6 @@
 #define BLOCKSIGNER_H_
 
 #include "ksi.h"
-#include "multi_signature.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,11 +60,11 @@ void KSI_BlockSigner_free(KSI_BlockSigner *signer);
 /**
  * This function finalizes the computation of the tree but does not free the resources.
  * \param[in]	signer		Instance of the #KSI_BlockSigner.
- * \param[out]	ms			Pointer to the receiving poitner.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_BlockSigner_close(KSI_BlockSigner *signer, KSI_MultiSignature **ms);
+int KSI_BlockSigner_closeAndSign(KSI_BlockSigner *signer);
 
+KSI_FN_DEPRECATED(int KSI_BlockSigner_close(KSI_BlockSigner *signer, void *));
 /**
  * Resets the block signer to its initial state. This will invalidate all the
  * #KSI_BlockSignerHandle instances still remaining.

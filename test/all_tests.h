@@ -55,7 +55,6 @@ CuSuite* KSITest_Truststore_getSuite(void);
 CuSuite* KSITest_HMAC_getSuite(void);
 CuSuite* KSITest_compatibility_getSuite(void);
 CuSuite* KSITest_uriClient_getSuite(void);
-CuSuite* KSITest_multiSignature_getSuite(void);
 CuSuite* KSITest_TreeBuilder_getSuite(void);
 CuSuite* KSITest_VerificationRules_getSuite(void);
 CuSuite* KSITest_Policy_getSuite(void);
