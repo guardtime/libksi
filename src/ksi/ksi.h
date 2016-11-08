@@ -288,15 +288,6 @@ enum KSI_StatusCode {
 	KSI_SERVICE_EXTENDER_PDU_V1_RESPONSE_TO_PDU_V2_REQUEST = 0x508,
 
 	/**
-	 * The signature was not found in the multi signature container.
-	 */
-	KSI_MULTISIG_NOT_FOUND = 0x601,
-	/**
-	 * The multi signature container is in an invalid state.
-	 */
-	KSI_MULTISIG_INVALID_STATE = 0x602,
-
-	/**
 	 * Unknown error occurred.
 	 */
 	KSI_UNKNOWN_ERROR = 0xffff

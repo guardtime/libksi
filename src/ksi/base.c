@@ -162,10 +162,6 @@ const char *KSI_getErrorString(int statusCode) {
 			return "Received PDU v2 response to PDU v1 request. Configure the SDK to use PDU v2 format for the given extender.";
 		case KSI_SERVICE_EXTENDER_PDU_V1_RESPONSE_TO_PDU_V2_REQUEST:
 			return "Received PDU v1 response to PDU v2 request. Configure the SDK to use PDU v1 format for the given extender.";
-		case KSI_MULTISIG_NOT_FOUND:
-			return "The signature was not found in the given multi signature container.";
-		case KSI_MULTISIG_INVALID_STATE:
-			return "The multi signature container is in an invalid state.";
 		case KSI_UNKNOWN_ERROR:
 			return "Unknown internal error.";
 		default:

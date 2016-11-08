@@ -32,6 +32,7 @@ EXPORTS
 	KSI_BlockSigner_new
 	KSI_BlockSigner_free
 	KSI_BlockSigner_close
+	KSI_BlockSigner_closeAndSign
 	KSI_BlockSigner_reset
 	KSI_BlockSigner_addLeaf
 	KSI_BlockSigner_getPrevLeaf
@@ -827,21 +828,6 @@ EXPORTS
 	KSI_VerificationStepResult_isSuccess
 	KSI_VerificationStepResult_getDescription
 	KSI_VerificationResult_lastFailureMessage
-
-;mulsti_signature_h
-EXPORTS
-	KSI_MultiSignature_new
-	KSI_MultiSignature_free
-	KSI_MultiSignature_add
-	KSI_MultiSignature_get
-	KSI_MultiSignature_remove
-	KSI_MultiSignature_getUsedHashAlgorithms
-	KSI_MultiSignature_extend
-	KSI_MultiSignature_extendToPublication
-	KSI_MultiSignature_writeBytes
-	KSI_MultiSignature_parse
-	KSI_MultiSignature_fromFile
-	KSI_MultiSignature_serialize
 
 ;verification_rule.h
 EXPORTS

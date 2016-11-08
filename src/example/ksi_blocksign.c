@@ -240,7 +240,7 @@ int main(int argc, char **argv) {
 	}
 
 	/* Close the block signer and sign the root value. */
-	res = KSI_BlockSigner_close(bs, NULL);
+	res = KSI_BlockSigner_closeAndSign(bs);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to close and sign the block signer.\n");
 		goto cleanup;

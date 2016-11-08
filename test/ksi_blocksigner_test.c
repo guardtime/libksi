@@ -104,50 +104,6 @@ static void testFreeBeforeClose(CuTest *tc) {
 	KSI_BlockSigner_free(bs);
 }
 
-static void testMultiSig(CuTest *tc) {
-#define TEST_AGGR_RESPONSE_FILE  "resource/tlv/ok-aggr-resp-1460631424.tlv"
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_BlockSigner *bs = NULL;
-	KSI_MultiSignature *ms = NULL;
-	size_t i;
-	KSI_DataHash *hsh = NULL;
-	KSI_Signature *sig = NULL;
-
-	res = KSI_BlockSigner_new(ctx, KSI_HASHALG_SHA1, NULL, NULL, &bs);
-	CuAssert(tc, "Unable to create block signer instance.", res == KSI_OK && bs != NULL);
-
-	addInput(tc, bs, 0);
-
-	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
-
-	res = KSI_BlockSigner_close(bs, &ms);
-	CuAssert(tc, "Unable to close block signer and extract multi signature.", res == KSI_OK && ms != NULL);
-
-	/* Lets loop over all the inputs and try to verify them. */
-	for (i = 0; input_data[i] != NULL; i++) {
-		res = KSI_DataHash_create(ctx, input_data[i], strlen(input_data[i]), KSI_HASHALG_SHA2_256, &hsh);
-		CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
-
-		res = KSI_MultiSignature_get(ms, hsh, &sig);
-		CuAssert(tc, "Unable to extract signature from the multi signature container.", res == KSI_OK && sig != NULL);
-
-		res = KSI_Signature_verifyDocument(sig, ctx, (void *)input_data[i], strlen(input_data[i]));
-		CuAssert(tc, "Unable to verify the input data.", res == KSI_OK);
-
-		KSI_Signature_free(sig);
-		sig = NULL;
-
-		KSI_DataHash_free(hsh);
-		hsh = NULL;
-	}
-
-	KSI_DataHash_free(hsh);
-	KSI_MultiSignature_free(ms);
-	KSI_BlockSigner_free(bs);
-#undef TEST_AGGR_RESPONSE_FILE
-}
-
 static void testMedaData(CuTest *tc) {
 #define TEST_AGGR_RESPONSE_FILE  "resource/tlv/test_meta_data_response.tlv"
 	int res = KSI_UNKNOWN_ERROR;
@@ -182,7 +138,7 @@ static void testMedaData(CuTest *tc) {
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
-	res = KSI_BlockSigner_close(bs, NULL);
+	res = KSI_BlockSigner_closeAndSign(bs);
 	CuAssert(tc, "Unable to close the blocksigner.", res == KSI_OK);
 
 	/* Loop over all the handles, and extract the signature. */
@@ -243,7 +199,7 @@ static void testSingle(CuTest *tc) {
 	res = KSI_BlockSigner_addLeaf(bs, hsh, 0, NULL, &h);
 	CuAssert(tc, "Unable to add hash to the blocksigner.", res == KSI_OK && h != NULL);
 
-	res = KSI_BlockSigner_close(bs, NULL);
+	res = KSI_BlockSigner_closeAndSign(bs);
 	CuAssert(tc, "Unable to close blocksigner.", res == KSI_OK);
 
 	res = KSI_BlockSignerHandle_getSignature(h, &sig);
@@ -298,7 +254,7 @@ static void testReset(CuTest *tc) {
 	res = KSI_BlockSigner_addLeaf(bs, hsh, 0, NULL, &h);
 	CuAssert(tc, "Unable to add actual hash to the blocksigner.", res == KSI_OK && h != NULL);
 
-	res = KSI_BlockSigner_close(bs, NULL);
+	res = KSI_BlockSigner_closeAndSign(bs);
 	CuAssert(tc, "Unable to close blocksigner.", res == KSI_OK);
 
 	res = KSI_BlockSignerHandle_getSignature(h, &sig);
@@ -314,129 +270,6 @@ static void testReset(CuTest *tc) {
 	KSI_BlockSigner_free(bs);
 	KSI_DataHash_free(hsh);
 	KSI_free(raw);
-#undef TEST_AGGR_RESPONSE_FILE
-}
-
-static void testMaskingMultiSig(CuTest *tc) {
-#define TEST_AGGR_RESPONSE_FILE  "resource/tlv/ok-sig-2016-05-09.1-lvl4.ksig"
-	static const unsigned char diceRolls[] = {0xd5, 0x58, 0xaf, 0xfa, 0x80, 0x67, 0xf4, 0x2c, 0xd9, 0x48, 0x36, 0x21, 0xd1, 0xab,
-			0xae, 0x23, 0xed, 0xd6, 0xca, 0x04, 0x72, 0x7e, 0xcf, 0xc7, 0xdb, 0xc7, 0x6b, 0xde, 0x34, 0x77, 0x1e, 0x53};
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_BlockSigner *bs = NULL;
-	KSI_MultiSignature *ms = NULL;
-	size_t i;
-	KSI_DataHash *hsh = NULL;
-	KSI_Signature *sig = NULL;
-	KSI_DataHash *zero = NULL;
-	KSI_OctetString *iv = NULL;
-	KSI_DataHash *prevLeaf = NULL;
-
-	/* Create zero hash. */
-	res = KSI_DataHash_createZero(ctx, KSI_HASHALG_SHA2_512, &zero);
-	CuAssert(tc, "Unable to create zero hash.", res == KSI_OK && zero != NULL);
-
-	/* Create random initial vector. */
-	res = KSI_OctetString_new(ctx, diceRolls, sizeof(diceRolls), &iv);
-	CuAssert(tc, "Unable to create initial vector.", res == KSI_OK && iv != NULL);
-
-	res = KSI_BlockSigner_new(ctx, KSI_HASHALG_SHA1, zero, iv, &bs);
-	CuAssert(tc, "Unable to create block signer instance with masking.", res == KSI_OK && bs != NULL);
-
-	res = KSI_BlockSigner_getPrevLeaf(bs, &prevLeaf);
-	CuAssert(tc, "Unable to retrieve previous leaf.", res == KSI_OK && KSI_DataHash_equals(prevLeaf, zero));
-
-	addInput(tc, bs, 0);
-
-	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), "anon", "anon");
-	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
-
-	res = KSI_BlockSigner_close(bs, &ms);
-	CuAssert(tc, "Unable to close block signer and extract multi signature.", res == KSI_OK && ms != NULL);
-	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
-	CuAssert(tc, "Unable to set default pubfile, default cert and default pki constraints.", res == KSI_OK);
-
-	/* Lets loop over all the inputs and try to verify them. */
-	for (i = 0; input_data[i] != NULL; i++) {
-		res = KSI_DataHash_create(ctx, input_data[i], strlen(input_data[i]), KSI_HASHALG_SHA2_256, &hsh);
-		CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
-
-		res = KSI_MultiSignature_get(ms, hsh, &sig);
-		CuAssert(tc, "Unable to extract signature from the multi signature container.", res == KSI_OK && sig != NULL);
-
-		res = KSI_Signature_verifyDocument(sig, ctx, (void *)input_data[i], strlen(input_data[i]));
-		CuAssert(tc, "Unable to verify the input data.", res == KSI_OK);
-		KSI_Signature_free(sig);
-		sig = NULL;
-
-		KSI_DataHash_free(hsh);
-		hsh = NULL;
-	}
-
-	KSI_OctetString_free(iv);
-	KSI_DataHash_free(zero);
-	KSI_DataHash_free(prevLeaf);
-	KSI_DataHash_free(hsh);
-	KSI_MultiSignature_free(ms);
-	KSI_BlockSigner_free(bs);
-#undef TEST_AGGR_RESPONSE_FILE
-}
-
-static void testMaskingWithMetaDataMultiSig(CuTest *tc) {
-#define TEST_AGGR_RESPONSE_FILE  "resource/tlv/test_meta_data_masking.tlv"
-	static const unsigned char diceRolls[] = {0xd5, 0x58, 0xaf, 0xfa, 0x80, 0x67, 0xf4, 0x2c, 0xd9, 0x48, 0x36, 0x21, 0xd1, 0xab,
-			0xae, 0x23, 0xed, 0xd6, 0xca, 0x04, 0x72, 0x7e, 0xcf, 0xc7, 0xdb, 0xc7, 0x6b, 0xde, 0x34, 0x77, 0x1e, 0x53};
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_BlockSigner *bs = NULL;
-	KSI_MultiSignature *ms = NULL;
-	size_t i;
-	KSI_DataHash *hsh = NULL;
-	KSI_Signature *sig = NULL;
-	KSI_DataHash *zero = NULL;
-	KSI_OctetString *iv = NULL;
-
-	/* Create zero hash. */
-	res = KSI_DataHash_createZero(ctx, KSI_HASHALG_SHA2_512, &zero);
-	CuAssert(tc, "Unable to create zero hash.", res == KSI_OK && zero != NULL);
-
-	/* Create random initial vector. */
-	res = KSI_OctetString_new(ctx, diceRolls, sizeof(diceRolls), &iv);
-	CuAssert(tc, "Unable to create initial vector.", res == KSI_OK && iv != NULL);
-
-	res = KSI_BlockSigner_new(ctx, KSI_HASHALG_SHA1, zero, iv, &bs);
-	CuAssert(tc, "Unable to create block signer instance with masking.", res == KSI_OK && bs != NULL);
-
-	addInput(tc, bs, 1);
-
-	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
-
-	res = KSI_BlockSigner_close(bs, &ms);
-	CuAssert(tc, "Unable to close block signer and extract multi signature.", res == KSI_OK && ms != NULL);
-	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
-	CuAssert(tc, "Unable to set default pubfile, default cert and default pki constraints.", res == KSI_OK);
-
-	/* Lets loop over all the inputs and try to verify them. */
-	for (i = 0; input_data[i] != NULL; i++) {
-		res = KSI_DataHash_create(ctx, input_data[i], strlen(input_data[i]), KSI_HASHALG_SHA2_256, &hsh);
-		CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
-
-		res = KSI_MultiSignature_get(ms, hsh, &sig);
-		CuAssert(tc, "Unable to extract signature from the multi signature container.", res == KSI_OK && sig != NULL);
-
-		res = KSI_Signature_verifyDocument(sig, ctx, (void *)input_data[i], strlen(input_data[i]));
-		CuAssert(tc, "Unable to verify the input data.", res == KSI_OK);
-		KSI_Signature_free(sig);
-		sig = NULL;
-
-		KSI_DataHash_free(hsh);
-		hsh = NULL;
-	}
-
-	KSI_OctetString_free(iv);
-	KSI_DataHash_free(zero);
-	KSI_DataHash_free(hsh);
-	KSI_MultiSignature_free(ms);
-	KSI_BlockSigner_free(bs);
 #undef TEST_AGGR_RESPONSE_FILE
 }
 
@@ -506,12 +339,9 @@ CuSuite* KSITest_Blocksigner_getSuite(void) {
 	suite->preTest = preTest;
 
 	SUITE_ADD_TEST(suite, testFreeBeforeClose);
-	SUITE_ADD_TEST(suite, testMultiSig);
 	SUITE_ADD_TEST(suite, testMedaData);
 	SUITE_ADD_TEST(suite, testSingle);
 	SUITE_ADD_TEST(suite, testReset);
-	SUITE_ADD_TEST(suite, testMaskingMultiSig);
-	SUITE_ADD_TEST(suite, testMaskingWithMetaDataMultiSig);
 	SUITE_ADD_TEST(suite, testMaskingInput);
 
 	return suite;
