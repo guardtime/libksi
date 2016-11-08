@@ -32,6 +32,7 @@ EXPORTS
 	KSI_BlockSigner_new
 	KSI_BlockSigner_free
 	KSI_BlockSigner_close
+	KSI_BlockSigner_closeAndSign
 	KSI_BlockSigner_reset
 	KSI_BlockSigner_addLeaf
 	KSI_BlockSigner_getPrevLeaf
