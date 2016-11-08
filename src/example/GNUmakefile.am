@@ -44,18 +44,6 @@ ksi_verify_pub_SOURCES = \
 	ksi_verify_pub.c \
 	ksi_common.c
 
-<<<<<<< HEAD
-ksi_multisig_add_SOURCES = \
-	ksi_multisig_add.c
-
-ksi_multisig_extend_SOURCES = \
-	ksi_multisig_extend.c
-=======
-multi_sign_SOURCES = \
-	multi_sign.c \
-	ksi_common.c
->>>>>>> develop
-
 ksi_blocksign_SOURCES = \
 	ksi_blocksign.c \
 	ksi_common.c
