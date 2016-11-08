@@ -1,6 +1,7 @@
 Version 3.12
 
 * IMPROVEMENT: Removed experimental feature KSI_NetworkClient_performAll.
+* IMPROVEMENT: Removed multi-signature support from the SDK.
 
 Version 3.11
 
