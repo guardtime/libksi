@@ -247,8 +247,7 @@ extern "C" {
 	/**
 	 * Returns the status of the handle.
 	 * \param[in]		handle			Network handle.
-	 * \return status code of the last call or #KSI_NETWORK_PENDING if #KSI_RequestHandle_perform nor
-	 * #KSI_NetworkClient_performAll have been called on the handle.
+	 * \return status code of the last call or #KSI_NETWORK_PENDING if #KSI_RequestHandle_perform.
 	 * \param[out]		err				Pointer to the status structure.
 	 * \note The function will return #KSI_INVALID_ARGUMENT if handle is \c NULL.
 	 * \note The pointer to the err structure is only valid as long as the
@@ -332,17 +331,6 @@ extern "C" {
 	 * \note All aquired pointers have to be freed by the caller using #KSI_free.
 	 */
 	int KSI_UriSplitBasic(const char *uri, char **scheme, char **host, unsigned *port, char **path);
-
-	/**
-	 * Perform all the requests in the array \c add of length \c arr_len;
-	 * \param[in]	arr			Array of request handles.
-	 * \param[in]	arr_len		Length of the array.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \note The caller is responsible for not mixing request handles created from different
-	 * network clients. Mixing clients and handles may cause unpredictable behavior (inc
-	 * corrupted memory and data).
-	 */
-	int KSI_NetworkClient_performAll(KSI_NetworkClient *client, KSI_RequestHandle **arr, size_t arr_len);
 
 	int KSI_NetworkClient_getAggregatorEndpoint(const KSI_NetworkClient *net, KSI_NetEndpoint **endp);
 	int KSI_NetworkClient_getExtenderEndpoint(const KSI_NetworkClient *net, KSI_NetEndpoint **endp);

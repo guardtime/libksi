@@ -67,8 +67,6 @@ extern "C" {
 
 		size_t requestCount;
 
-		int (*performAll)(KSI_NetworkClient *client, KSI_RequestHandle **arr, size_t arr_len);
-
 		/** Private helper functions. */
 		int (*setStringParam)(char **param, const char *val);
 		int (*uriSplit)(const char *uri, char **scheme, char **user, char **pass, char **host, unsigned *port, char **path, char **query, char **fragment);
