@@ -56,9 +56,6 @@ libksi_la_SOURCES = \
 	list.h \
 	log.c \
 	log.h \
-	multi_signature_impl.h \
-	multi_signature.h \
-	multi_signature.c \
 	net.c \
 	net.h \
 	net_http.c \
@@ -143,7 +140,6 @@ otherinclude_HEADERS = \
 	tree_builder.h \
 	types.h \
 	types_base.h \
-	multi_signature.h \
 	net.h \
 	net_http.h \
 	net_tcp.h \

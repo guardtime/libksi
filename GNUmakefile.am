@@ -63,6 +63,9 @@ doc-zip: doc
 coverage-base: clean
 	make check CFLAGS="-g -fprofile-arcs -ftest-coverage -fPIC -O0"
 	./test/runner ./test
+	
+coverage-extended: coverage-base
+	./test/integration-tests ./test
 
 coverage-xml: coverage-base
 	cd ./src/ksi; gcovr -r . --xml-pretty > coverage.xml
@@ -73,6 +76,8 @@ coverage-html: coverage-base
 	genhtml coverage.info --output-directory coverage
 
 coverage: clean coverage-xml coverage-html
+
+coverage-full: clean coverage-extended coverage-xml coverage-html
 
 clean-local:
 	rm -fr ${ZIPDOC_DIR} converage coverage.xml coverage.info valgrind.xml test.log testsuite-xunit.xml

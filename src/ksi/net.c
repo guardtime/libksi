@@ -1039,27 +1039,6 @@ cleanup:
 	return res;
 }
 
-static int simplePerformAll(KSI_NetworkClient *client, KSI_RequestHandle **arr, size_t arr_len) {
-	int res = KSI_UNKNOWN_ERROR;
-	size_t i;
-
-	if (client == NULL || (arr == NULL && arr_len != 0)) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	for (i = 0; i < arr_len; i++) {
-		arr[i]->err.res = KSI_RequestHandle_perform(arr[i]);
-	}
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-
-}
-
 int KSI_AbstractNetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_NetworkClient *tmp = NULL;
@@ -1085,7 +1064,6 @@ int KSI_AbstractNetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	tmp->sendPublicationRequest = NULL;
 	tmp->sendSignRequest = NULL;
 	tmp->requestCount = 0;
-	tmp->performAll = simplePerformAll;
 
 	/* Configure private helper functions. */
 	tmp->setStringParam = setStringParam;
@@ -1167,34 +1145,6 @@ int KSI_convertExtenderStatusCode(KSI_Integer *statusCode) {
 
 int KSI_UriSplitBasic(const char *uri, char **scheme, char **host, unsigned *port, char **path) {
 	return uriSplit(uri, scheme, NULL, NULL, host, port, path, NULL, NULL);
-}
-
-int KSI_NetworkClient_performAll(KSI_NetworkClient *client, KSI_RequestHandle **arr, size_t arr_len) {
-	int res = KSI_UNKNOWN_ERROR;
-	if (client == NULL || (arr == NULL && arr_len != 0)) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	if (client->performAll == NULL) {
-		KSI_pushError(client->ctx, res = KSI_UNKNOWN_ERROR, "Network client does not implement performAll() method.");
-		goto cleanup;
-	}
-
-	if (arr != NULL && arr_len != 0) {
-		res = client->performAll(client, arr, arr_len);
-		if (res != KSI_OK) {
-			KSI_pushError(client->ctx, res, NULL);
-			goto cleanup;
-		}
-	}
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-
 }
 
 #define KSI_NET_OBJ_IMPLEMENT_SETTER(obj, name, type, var, fn) 														\

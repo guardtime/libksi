@@ -848,7 +848,7 @@ static int pki_truststore_verifyCertificateConstraints(const KSI_PKITruststore *
 			goto cleanup;
 		}
 
-		if (strcmp(tmp, ptr->val)) {
+		if (strncmp(tmp, ptr->val, sizeof(tmp))) {
 			KSI_LOG_debug(pki->ctx, "Unexpected value: '%s' for OID: '%s'.", tmp, ptr->oid);
 			KSI_pushError(pki->ctx, res = KSI_PKI_CERTIFICATE_NOT_TRUSTED, "Unexpected OID value for PKI Certificate constraint.");
 			goto cleanup;
