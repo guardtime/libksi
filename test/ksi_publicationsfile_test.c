@@ -102,6 +102,49 @@ static void testVerifyPublicationsFile(CuTest *tc) {
 	KSI_PublicationsFile_free(pubFile);
 }
 
+static void testVerifyPublicationsFileContainsIntermediateCerts(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_PKITruststore *pki = NULL;
+	KSI_CTX *ctx = NULL;
+	KSI_CertConstraint cnstr[2];
+
+	cnstr[0].oid = KSI_CERT_EMAIL;
+	cnstr[0].val = "pub-test@test.com";
+	cnstr[1].oid = NULL;
+	cnstr[1].val = NULL;
+
+
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create KSI ctx.", res == KSI_OK && ctx != NULL);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath("resource/tlv/ok-cert-3.pem-pubfile.bin"), &pubFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_PKITruststore_new(ctx, 0, &pki);
+	CuAssert(tc, "Unable to get PKI truststore from context.", res == KSI_OK && pki != NULL);
+
+	res = KSI_CTX_setPKITruststore(ctx, pki);
+	CuAssert(tc, "Unable to set new pki truststrore for ksi context.", res == KSI_OK);
+
+	/* Verification should fail. */
+	res = KSI_PublicationsFile_verify(pubFile, ctx);
+	CuAssert(tc, "Publications file shouldn't verify without root (ok-cert-ca-1.pem) certificate.", res != KSI_OK);
+
+	/* Verification should succeed. */
+	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/ok-cert-ca-1.pem"));
+	CuAssert(tc, "Unable to read certificate", res == KSI_OK);
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, cnstr);
+	CuAssert(tc, "Unable to set verification certificate constraints.", res == KSI_OK);
+
+	res = KSI_PublicationsFile_verify(pubFile, ctx);
+	CuAssert(tc, "Publications file should verify with specified root certificate.", res == KSI_OK);
+
+	KSI_PublicationsFile_free(pubFile);
+	KSI_CTX_free(ctx);
+}
+
 static void testReceivePublicationsFileInvalidConstraints(CuTest *tc) {
 	int res;
 	KSI_PublicationsFile *pubFile = NULL;
@@ -850,6 +893,7 @@ CuSuite* KSITest_Publicationsfile_getSuite(void) {
 	SUITE_ADD_TEST(suite, testLoadPublicationsFile);
 	SUITE_ADD_TEST(suite, testLoadPublicationsFileWithNoCerts);
 	SUITE_ADD_TEST(suite, testVerifyPublicationsFile);
+	SUITE_ADD_TEST(suite, testVerifyPublicationsFileContainsIntermediateCerts);
 	SUITE_ADD_TEST(suite, testPublicationStringEncodingAndDecoding);
 	SUITE_ADD_TEST(suite, testFindPublicationByPubStr);
 	SUITE_ADD_TEST(suite, testFindPublicationByTime);
