@@ -102,6 +102,53 @@ static void testVerifyPublicationsFile(CuTest *tc) {
 	KSI_PublicationsFile_free(pubFile);
 }
 
+/**
+ * To generate new certificate chain one must, generate N x new key pairs, create
+ * certificate requests (Containing e.g. email, organization, name ...) for every
+ * key pair and ultimately sign all the requests to create the certificates. After
+ * keys and certificates are generated ksi-publication can be used to resign or
+ * generate new publications file for testing.
+ *
+ * To generate new keys call:
+ *    openssl genrsa -out ok-key-N.pem 2048
+ *
+ * To generate self signed root certificate thats purpose is CA:
+ *    openssl req -x509 -new -extensions v3_ca -key ok-key-1.pem.pkey -days 3650 -out ok-cert-ca-1.pem
+ *
+ * To generate new certificate requests (user is asked for cert. field values):
+ *    openssl req -new -key ok-key-N.pem.pkey -out crt-req-N
+ *
+ * To make the root CA work, OpenSSL configuration file must be configured. Read
+ * about ca and default ca configuration for OpenSSL. Lets assume we have file
+ * openssl.cfg (contains info about ok-key-1.pem.pkey, ok-cert-ca-1.pem and
+ * more).
+ *
+ * To generate intermediate CA:
+ *    openssl ca -in crt-req-2 -out ok-cert-ca-2.pem -policy policy_anything -extensions v3_ca -days 3650 -config openssl.cnf
+ *
+ * To create the certificate for the key that is used to sign the publications file:
+ *    openssl x509 -req -days 3650 -in crt-req-3 -CA ok-cert-ca-2.pem -CAkey ok-key-2.pem.pkey -set_serial 02 -out ok-cert-3.pem
+ *
+ * At this point there is
+ *    ok-key-1.pem.pkey and ok-cert-ca-1.pem
+ *    ok-key-2.pem.pkey and ok-cert-ca-2.pem
+ *    ok-key-3.pem.pkey and ok-cert-3.pem
+ *
+ * To generate new publications file, use ksi-publication tool.
+ *
+ * 1) Create a configuration file pub.cfg for ksi publication.
+ *   [signer]
+ *      key_id = "ok-key-3.pem.pkey"
+ *      signing_cert = "ok-cert-3.pem"
+ *      intermediate_cert.1 = "ok-cert-ca-2.pem"
+ *      intermediate_cert.2 = "ok-cert-ca-1.pem"
+ *
+ *   [constraints]
+ *      1.2.840.113549.1.9.1=pub-test@test.com
+ *
+ * 2) Resign the publications file (or read -h and man page to generate new):
+ *    ksi-publication -i ok-cert-3.pem-pubfile.bin -c pub.cfg -o resigned-pubfile.bin -xdsv
+ */
 static void testVerifyPublicationsFileContainsIntermediateCerts(CuTest *tc) {
 	int res;
 	KSI_PublicationsFile *pubFile = NULL;
