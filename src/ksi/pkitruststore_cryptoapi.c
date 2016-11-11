@@ -750,7 +750,7 @@ static int isUntrustedRootCertInStore(const KSI_PKITruststore *pki, const PCCERT
 	return false;
 }
 
-static int ksi_pki_truststore_verify_X509_certificate(const KSI_PKITruststore *pki, HCERTSTORE additional_store, const PCCERT_CONTEXT cert){
+static int verify_X509_certificate(const KSI_PKITruststore *pki, HCERTSTORE additional_store, const PCCERT_CONTEXT cert){
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	CERT_ENHKEY_USAGE enhkeyUsage;
@@ -918,7 +918,7 @@ static int certificate_is_self_signed(PCCERT_CONTEXT crt) {
 	return 0;
 }
 
-static int ksi_pki_signature_get_signature_internal_non_selfsigned_certs(const KSI_PKISignature *signature, HCERTSTORE *store){
+static int get_signature_internal_non_selfsigned_certs(const KSI_PKISignature *signature, HCERTSTORE *store){
 	int res;
 	HCERTSTORE signature_internal_cert_store = NULL;
 	HCERTSTORE tmp = NULL;
@@ -941,10 +941,8 @@ static int ksi_pki_signature_get_signature_internal_non_selfsigned_certs(const K
 		goto cleanup;
 	}
 
-	/**
-	 * Get from raw PKCS7 encoded signature all certificates related to the
-	 * signature. Self signed certificates are ignored as intermediate certificates.
-	 */
+	/* Get from raw PKCS7 encoded signature all certificates related to the
+	   signature. Self signed certificates are ignored as intermediate certificates. */
 	KSI_LOG_debug(ctx, "CryptoAPI: Load all certificates embedded into the PKCS7 signature.");
 
 	signature_internal_cert_store = CryptGetMessageCertificates(PKCS_7_ASN_ENCODING, 0, 0, signature->pkcs7.pbData, signature->pkcs7.cbData);
@@ -968,8 +966,7 @@ static int ksi_pki_signature_get_signature_internal_non_selfsigned_certs(const K
 
 			count++;
 		}
-	}
-	while (certFound != NULL);
+	} while (certFound != NULL);
 
 	if (count == 0) {
 		*store = NULL;
@@ -1014,7 +1011,7 @@ static int pki_truststore_verifySignature(KSI_PKITruststore *pki, const unsigned
 		goto cleanup;
 	}
 
-	res = ksi_pki_signature_get_signature_internal_non_selfsigned_certs(signature, &intermediate_cert_store);
+	res = get_signature_internal_non_selfsigned_certs(signature, &intermediate_cert_store);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, "CryptoAPI: Unable to extract intermediate certificates.");
 		goto cleanup;
@@ -1070,7 +1067,7 @@ static int pki_truststore_verifySignature(KSI_PKITruststore *pki, const unsigned
 		goto cleanup;
 	}
 
-	res = ksi_pki_truststore_verify_X509_certificate(pki, additional_store, subjectCert);
+	res = verify_X509_certificate(pki, additional_store, subjectCert);
 	if (res != KSI_OK){
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
