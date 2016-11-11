@@ -1,3 +1,4 @@
+* BUGFIX: CryptoAPI uses PKCS7 signatures embedded intermediate certificates in verification process.
 Version 3.12
 
 * IMPROVEMENT: Removed experimental feature KSI_NetworkClient_performAll.

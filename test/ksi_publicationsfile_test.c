@@ -102,6 +102,96 @@ static void testVerifyPublicationsFile(CuTest *tc) {
 	KSI_PublicationsFile_free(pubFile);
 }
 
+/**
+ * To generate new certificate chain one must, generate N x new key pairs, create
+ * certificate requests (Containing e.g. email, organization, name ...) for every
+ * key pair and ultimately sign all the requests to create the certificates. After
+ * keys and certificates are generated ksi-publication can be used to resign or
+ * generate new publications file for testing.
+ *
+ * To generate new keys call:
+ *    openssl genrsa -out ok-key-N.pem 2048
+ *
+ * To generate self signed root certificate thats purpose is CA:
+ *    openssl req -x509 -new -extensions v3_ca -key ok-key-1.pem.pkey -days 3650 -out ok-cert-ca-1.pem
+ *
+ * To generate new certificate requests (user is asked for cert. field values):
+ *    openssl req -new -key ok-key-N.pem.pkey -out crt-req-N
+ *
+ * To make the root CA work, OpenSSL configuration file must be configured. Read
+ * about ca and default ca configuration for OpenSSL. Lets assume we have file
+ * openssl.cfg (contains info about ok-key-1.pem.pkey, ok-cert-ca-1.pem and
+ * more).
+ *
+ * To generate intermediate CA:
+ *    openssl ca -in crt-req-2 -out ok-cert-ca-2.pem -policy policy_anything -extensions v3_ca -days 3650 -config openssl.cnf
+ *
+ * To create the certificate for the key that is used to sign the publications file:
+ *    openssl x509 -req -days 3650 -in crt-req-3 -CA ok-cert-ca-2.pem -CAkey ok-key-2.pem.pkey -set_serial 02 -out ok-cert-3.pem
+ *
+ * At this point there is
+ *    ok-key-1.pem.pkey and ok-cert-ca-1.pem
+ *    ok-key-2.pem.pkey and ok-cert-ca-2.pem
+ *    ok-key-3.pem.pkey and ok-cert-3.pem
+ *
+ * To generate new publications file, use ksi-publication tool.
+ *
+ * 1) Create a configuration file pub.cfg for ksi publication.
+ *   [signer]
+ *      key_id = "ok-key-3.pem.pkey"
+ *      signing_cert = "ok-cert-3.pem"
+ *      intermediate_cert.1 = "ok-cert-ca-2.pem"
+ *      intermediate_cert.2 = "ok-cert-ca-1.pem"
+ *
+ *   [constraints]
+ *      1.2.840.113549.1.9.1=pub-test@test.com
+ *
+ * 2) Resign the publications file (or read -h and man page to generate new):
+ *    ksi-publication -i ok-cert-3.pem-pubfile.bin -c pub.cfg -o resigned-pubfile.bin -xdsv
+ */
+static void testVerifyPublicationsFileContainsIntermediateCerts(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+	KSI_PKITruststore *pki = NULL;
+	KSI_CTX *ctx = NULL;
+	KSI_CertConstraint cnstr[2];
+
+	cnstr[0].oid = KSI_CERT_EMAIL;
+	cnstr[0].val = "pub-test@test.com";
+	cnstr[1].oid = NULL;
+	cnstr[1].val = NULL;
+
+
+	res = KSI_CTX_new(&ctx);
+	CuAssert(tc, "Unable to create KSI ctx.", res == KSI_OK && ctx != NULL);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath("resource/tlv/ok-cert-3.pem-pubfile.bin"), &pubFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
+
+	res = KSI_PKITruststore_new(ctx, 0, &pki);
+	CuAssert(tc, "Unable to get PKI truststore from context.", res == KSI_OK && pki != NULL);
+
+	res = KSI_CTX_setPKITruststore(ctx, pki);
+	CuAssert(tc, "Unable to set new pki truststrore for ksi context.", res == KSI_OK);
+
+	/* Verification should fail. */
+	res = KSI_PublicationsFile_verify(pubFile, ctx);
+	CuAssert(tc, "Publications file shouldn't verify without root (ok-cert-ca-1.pem) certificate.", res != KSI_OK);
+
+	/* Verification should succeed. */
+	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/ok-cert-ca-1.pem"));
+	CuAssert(tc, "Unable to read certificate", res == KSI_OK);
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, cnstr);
+	CuAssert(tc, "Unable to set verification certificate constraints.", res == KSI_OK);
+
+	res = KSI_PublicationsFile_verify(pubFile, ctx);
+	CuAssert(tc, "Publications file should verify with specified root certificate.", res == KSI_OK);
+
+	KSI_PublicationsFile_free(pubFile);
+	KSI_CTX_free(ctx);
+}
+
 static void testReceivePublicationsFileInvalidConstraints(CuTest *tc) {
 	int res;
 	KSI_PublicationsFile *pubFile = NULL;
@@ -850,6 +940,7 @@ CuSuite* KSITest_Publicationsfile_getSuite(void) {
 	SUITE_ADD_TEST(suite, testLoadPublicationsFile);
 	SUITE_ADD_TEST(suite, testLoadPublicationsFileWithNoCerts);
 	SUITE_ADD_TEST(suite, testVerifyPublicationsFile);
+	SUITE_ADD_TEST(suite, testVerifyPublicationsFileContainsIntermediateCerts);
 	SUITE_ADD_TEST(suite, testPublicationStringEncodingAndDecoding);
 	SUITE_ADD_TEST(suite, testFindPublicationByPubStr);
 	SUITE_ADD_TEST(suite, testFindPublicationByTime);
