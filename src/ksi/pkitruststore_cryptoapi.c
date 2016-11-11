@@ -961,7 +961,7 @@ static int ksi_pki_signature_get_signature_internal_non_selfsigned_certs(const K
 			if (certificate_is_self_signed(certFound)) continue;
 
 			/* The certificate is not duplicated but is cloned. */
-			if (!CertAddCertificateContextToStore(tmp, certFound, CERT_STORE_ADD_NEW, NULL)) {
+			if (!CertAddCertificateContextToStore(tmp, certFound, CERT_STORE_ADD_ALWAYS, NULL)) {
 				KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, NULL);
 				goto cleanup;
 			}
@@ -1085,7 +1085,7 @@ cleanup:
 
 	if (subjectCert) CertFreeCertificateContext(subjectCert);
 	if (intermediate_cert_store != NULL) CertCloseStore(intermediate_cert_store, 0);
-	if (combination_store != NULL) CertCloseStore(intermediate_cert_store, 0);
+	if (combination_store != NULL) CertCloseStore(combination_store, 0);
 
 	return res;
 }
