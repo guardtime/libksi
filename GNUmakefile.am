@@ -28,8 +28,8 @@ dist_doc_DATA = changelog license.txt
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libksi.pc
 
-EXTRA_DIST = VERSION changelog build*.txt makefile lic*.txt \
-             */makefile doc/doxy* test/* redhat/libksi.spec
+EXTRA_DIST = VERSION changelog build*.txt lic*.txt \
+             doc/doxy* test/* redhat/libksi.spec
 
 redhat/libksi.spec: redhat/libksi.spec.in
 	sed 's/@VERSION\@/${VERSION}/g' $< > $@
