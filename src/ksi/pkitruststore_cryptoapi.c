@@ -75,6 +75,7 @@ struct KSI_PKICertificate_st {
 struct KSI_PKISignature_st {
 	KSI_CTX *ctx;
 	CRYPT_INTEGER_BLOB pkcs7;
+	DWORD signer_count;
 };
 
 static int cryptopapiGlobal_init(void) {
@@ -263,6 +264,7 @@ cleanup:
 int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, size_t raw_len, KSI_PKISignature **signature) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PKISignature *tmp = NULL;
+	DWORD signer_count = 0;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || raw == NULL || raw_len == 0 || signature == NULL){
@@ -283,6 +285,7 @@ int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, size_t raw_len, KSI_PKIS
 	tmp->ctx = ctx;
 	tmp->pkcs7.pbData = NULL;
 	tmp->pkcs7.cbData = 0;
+	tmp->signer_count = 0;
 
 
 	tmp->pkcs7.pbData = KSI_malloc(raw_len);
@@ -294,6 +297,16 @@ int KSI_PKISignature_new(KSI_CTX *ctx, const void *raw, size_t raw_len, KSI_PKIS
 	tmp->pkcs7.cbData = (DWORD) raw_len;
 	memcpy(tmp->pkcs7.pbData, raw, raw_len);
 
+	/* Try to extract the signer count from PKCS7 signature. */
+	signer_count = CryptGetMessageSignerCount(PKCS_7_ASN_ENCODING, tmp->pkcs7.pbData, tmp->pkcs7.cbData);
+	if (signer_count == -1){
+		char buf[1024];
+		KSI_LOG_debug(ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
+		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, "CryptoAPI: Unable to decode PKCS7 signature.");
+		goto cleanup;
+	}
+
+	tmp->signer_count = signer_count;
 	*signature = tmp;
 	tmp = NULL;
 
@@ -560,7 +573,6 @@ int KSI_PKISignature_extractCertificate(const KSI_PKISignature *signature, KSI_P
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	HCERTSTORE certStore = NULL;
-	DWORD signerCount = 0;
 	PCERT_INFO pSignerCertInfo = NULL;
 	HCRYPTMSG signaturMSG = NULL;
 	PCCERT_CONTEXT signing_cert = NULL;
@@ -586,16 +598,8 @@ int KSI_PKISignature_extractCertificate(const KSI_PKISignature *signature, KSI_P
 		goto cleanup;
 	 }
 
-	/* Counting signing certificates. */
-	signerCount = CryptGetMessageSignerCount(PKCS_7_ASN_ENCODING, signature->pkcs7.pbData, signature->pkcs7.cbData);
-	if (signerCount == -1){
-		KSI_LOG_debug(signature->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Unable to count PKI signatures certificates.");
-		goto cleanup;
-	}
-
 	/* Is there exactly 1 signing cert? */
-	if (signerCount != 1){
+	if (signature->signer_count != 1){
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "PKI signature certificate count is not 1.");
 		goto cleanup;
 	}

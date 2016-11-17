@@ -69,6 +69,18 @@ static void testLoadPublicationsFileWithNoCerts(CuTest *tc) {
 	KSI_PublicationsFile_free(pubFile);
 }
 
+static void testLoadPublicationsFileContainsInvalidSignatureAndUnknownElement(CuTest *tc) {
+	int res;
+	KSI_PublicationsFile *pubFile = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath("resource/publications/publications-contains-not-critical-unknown-element.bin"), &pubFile);
+	CuAssert(tc, "Invalid publications file must fail.", res != KSI_OK && pubFile == NULL);
+
+	KSI_PublicationsFile_free(pubFile);
+}
+
 
 static void testVerifyPublicationsFile(CuTest *tc) {
 	int res;
@@ -939,6 +951,7 @@ CuSuite* KSITest_Publicationsfile_getSuite(void) {
 
 	SUITE_ADD_TEST(suite, testLoadPublicationsFile);
 	SUITE_ADD_TEST(suite, testLoadPublicationsFileWithNoCerts);
+	SUITE_ADD_TEST(suite, testLoadPublicationsFileContainsInvalidSignatureAndUnknownElement);
 	SUITE_ADD_TEST(suite, testVerifyPublicationsFile);
 	SUITE_ADD_TEST(suite, testVerifyPublicationsFileContainsIntermediateCerts);
 	SUITE_ADD_TEST(suite, testPublicationStringEncodingAndDecoding);
