@@ -42,6 +42,17 @@ struct KSI_CalendarHashChain_st {
 	KSI_LIST(KSI_HashChainLink) *hashChain;
 };
 
+struct KSI_AggregationHashChain_st {
+	KSI_CTX *ctx;
+	size_t ref;
+
+	KSI_Integer *aggregationTime;
+	KSI_LIST(KSI_Integer) *chainIndex;
+	KSI_OctetString *inputData;
+	KSI_DataHash *inputHash;
+	KSI_Integer *aggrHashId;
+	KSI_LIST(KSI_HashChainLink) *chain;
+};
 
 #ifdef __cplusplus
 }
