@@ -52,6 +52,10 @@ struct KSI_AggregationHashChain_st {
 	KSI_DataHash *inputHash;
 	KSI_Integer *aggrHashId;
 	KSI_LIST(KSI_HashChainLink) *chain;
+
+	KSI_DataHash *outputHash;
+	int outputLevel;
+	int inputLevel;
 };
 
 #ifdef __cplusplus
