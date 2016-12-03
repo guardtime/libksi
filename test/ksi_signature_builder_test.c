@@ -24,6 +24,7 @@
 #include "all_tests.h"
 #include <ksi/ksi.h>
 #include <ksi/signature_builder.h>
+#include <ksi/hashchain.h>
 #include "../src/ksi/signature_impl.h"
 
 extern KSI_CTX *ctx;

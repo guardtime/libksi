@@ -24,6 +24,7 @@
 #include <ksi/tlv.h>
 #include <ksi/io.h>
 #include <ksi/tlv_element.h>
+#include <ksi/hashchain.h>
 
 #include "../src/ksi/signature_impl.h"
 #include "../src/ksi/tlv_template.h"

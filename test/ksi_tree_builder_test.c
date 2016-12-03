@@ -23,7 +23,8 @@
 
 #include "all_tests.h"
 
-#include  <ksi/tree_builder.h>
+#include <ksi/tree_builder.h>
+#include <ksi/hashchain.h>
 
 extern KSI_CTX *ctx;
 
