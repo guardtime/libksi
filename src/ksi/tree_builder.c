@@ -36,7 +36,7 @@ KSI_IMPLEMENT_REF(KSI_TreeLeafHandle);
 
 KSI_IMPLEMENT_LIST(KSI_TreeLeafHandle, KSI_TreeLeafHandle_free);
 
-static int KSI_TreeNode_join(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeNode *leftSibling, KSI_TreeNode *rightSibling, KSI_TreeNode **root);
+static int KSI_TreeNode_join(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_TreeNode *leftSibling, KSI_TreeNode *rightSibling, KSI_TreeNode **root);
 
 void KSI_TreeNode_free(KSI_TreeNode *node) {
 	if (node != NULL ) {
@@ -114,9 +114,8 @@ cleanup:
 	return res;
 }
 
-static int joinHashes(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeNode *left, KSI_TreeNode *right, int level, KSI_DataHash **root) {
+static int joinHashes(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_TreeNode *left, KSI_TreeNode *right, int level, KSI_DataHash **root) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *tmp = NULL;
 	unsigned char l;
 
@@ -127,7 +126,7 @@ static int joinHashes(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeNode *left, 
 
 	l = (unsigned char) level;
 
-	res = KSI_DataHasher_open(ctx, algo, &hsr);
+	res = KSI_DataHasher_reset(hsr);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -164,13 +163,12 @@ static int joinHashes(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeNode *left, 
 
 cleanup:
 
-	KSI_DataHasher_free(hsr);
 	KSI_DataHash_free(tmp);
 
 	return res;
 }
 
-static int KSI_TreeNode_join(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeNode *leftSibling, KSI_TreeNode *rightSibling, KSI_TreeNode **root) {
+static int KSI_TreeNode_join(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_TreeNode *leftSibling, KSI_TreeNode *rightSibling, KSI_TreeNode **root) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TreeNode *tmp = NULL;
 	int level;
@@ -197,7 +195,7 @@ static int KSI_TreeNode_join(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeNode 
 	}
 
 	/* Create the root hash value. */
-	res = joinHashes(ctx, algo, leftSibling, rightSibling, level, &hsh);
+	res = joinHashes(ctx, hsr, leftSibling, rightSibling, level, &hsh);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -264,7 +262,14 @@ int KSI_TreeBuilder_new(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeBuilder **
 	tmp->rootNode = NULL;
 	tmp->algo = algo;
 	tmp->cbList = NULL;
+	tmp->hsr = NULL;
 	memset(tmp->stack, 0, sizeof(tmp->stack));
+
+	res = KSI_DataHasher_open(ctx, algo, &tmp->hsr);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_TreeBuilderLeafProcessorList_new(&tmp->cbList);
 	if (res != KSI_OK) {
@@ -294,6 +299,7 @@ void KSI_TreeBuilder_free(KSI_TreeBuilder *builder) {
 			KSI_TreeNode_free(builder->stack[i]);
 		}
 
+		KSI_DataHasher_free(builder->hsr);
 		KSI_TreeBuilderLeafProcessorList_free(builder->cbList);
 
 		KSI_free(builder);
@@ -323,7 +329,7 @@ static int insertNode(KSI_TreeBuilder *builder, KSI_TreeNode *node) {
 		builder->stack[node->level] = node;
 	} else {
 		/* The slot is taken - create a new node from the existing ones. */
-		res = KSI_TreeNode_join(builder->ctx, builder->algo, pSlot, node, &root);
+		res = KSI_TreeNode_join(builder->ctx, builder->hsr, pSlot, node, &root);
 		if (res != KSI_OK) {
 			KSI_pushError(builder->ctx, res, NULL);
 			goto cleanup;
@@ -381,7 +387,7 @@ static int processAndInsertNode(KSI_TreeBuilder *builder, KSI_TreeNode *node) {
 		if (res != KSI_OK) goto cleanup;
 
 		if (tmp != NULL) {
-			res = KSI_TreeNode_join(builder->ctx, builder->algo, localRoot == NULL ? node : localRoot, tmp, &localRoot);
+			res = KSI_TreeNode_join(builder->ctx, builder->hsr, localRoot == NULL ? node : localRoot, tmp, &localRoot);
 			if (res != KSI_OK) goto cleanup;
 		}
 	}
@@ -489,7 +495,7 @@ int KSI_TreeBuilder_close(KSI_TreeBuilder *builder) {
 			if (root == NULL) {
 				root = node;
 			} else {
-				res = KSI_TreeNode_join(builder->ctx, builder->algo, node, root, &tmp);
+				res = KSI_TreeNode_join(builder->ctx, builder->hsr, node, root, &tmp);
 				if (res != KSI_OK) goto cleanup;
 
 				root = tmp;
