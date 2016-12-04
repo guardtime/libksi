@@ -398,6 +398,7 @@ void KSI_CalendarHashChain_free(KSI_CalendarHashChain *t) {
 		KSI_Integer_free(t->aggregationTime);
 		KSI_DataHash_free(t->inputHash);
 		KSI_HashChainLinkList_free(t->hashChain);
+		KSI_DataHash_free(t->outputHash);
 		KSI_free(t);
 	}
 }
@@ -417,6 +418,7 @@ int KSI_CalendarHashChain_new(KSI_CTX *ctx, KSI_CalendarHashChain **t) {
 	tmp->aggregationTime = NULL;
 	tmp->inputHash = NULL;
 	tmp->hashChain = NULL;
+	tmp->outputHash = NULL;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -430,6 +432,7 @@ KSI_IMPLEMENT_WRITE_BYTES(KSI_CalendarHashChain, 0x0802, 0, 0);
 
 int KSI_CalendarHashChain_aggregate(KSI_CalendarHashChain *chain, KSI_DataHash **hsh) {
 	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *tmp = NULL;
 
 	if (chain == NULL || hsh == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -437,15 +440,24 @@ int KSI_CalendarHashChain_aggregate(KSI_CalendarHashChain *chain, KSI_DataHash *
 	}
 	KSI_ERR_clearErrors(chain->ctx);
 
-	res = KSI_HashChain_aggregateCalendar(chain->ctx, chain->hashChain, chain->inputHash, hsh);
-	if (res != KSI_OK) {
-		KSI_pushError(chain->ctx, res, NULL);
-		goto cleanup;
+	if (chain->outputHash == NULL) {
+		res = KSI_HashChain_aggregateCalendar(chain->ctx, chain->hashChain, chain->inputHash, &tmp);
+		if (res != KSI_OK) {
+			KSI_pushError(chain->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		chain->outputHash = tmp;
+		tmp = NULL;
 	}
+
+	*hsh = KSI_DataHash_ref(chain->outputHash);
 
 	res = KSI_OK;
 
 cleanup:
+
+	KSI_DataHash_free(tmp);
 
 	return res;
 }
