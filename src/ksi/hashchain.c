@@ -960,7 +960,7 @@ int KSI_AggregationHashChainList_aggregate(KSI_AggregationHashChainList *chainLi
 	KSI_DataHash *hsh = NULL;
 	size_t i;
 
-	if (chainList == NULL || ctx == NULL || outputHash == NULL) {
+	if (chainList == NULL || ctx == NULL || !KSI_IS_VALID_TREE_LEVEL(level) || outputHash == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
