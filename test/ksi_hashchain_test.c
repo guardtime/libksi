@@ -252,14 +252,14 @@ static void testAggrChainBuilt(CuTest *tc) {
 	CuAssert(tc, "Unable to set hash algorithm.", res == KSI_OK);
 
 	res = KSI_AggregationHashChain_aggregate(ac, 0, NULL, &out);
-	CuAssert(tc, "Unable to aggregate chain", res == KSI_OK && out != NULL);
+	CuAssert(tc, "Unable to aggregate chain.", res == KSI_OK && out != NULL);
 
 	/* Expected out hash. */
 	res = KSITest_decodeHexStr("01559c8ba6dfd2c048ad117a0dea339db9477513af2065fedd23a4da1c69120bc8", buf, sizeof(buf), &buf_len);
-	CuAssert(tc, "Unable to decode expected output hash", res == KSI_OK);
+	CuAssert(tc, "Unable to decode expected output hash.", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, buf, buf_len, &exp);
-	CuAssert(tc, "Unable to create expected output data hash", res == KSI_OK && exp != NULL);
+	CuAssert(tc, "Unable to create expected output data hash.", res == KSI_OK && exp != NULL);
 
 	KSI_DataHash_free(exp);
 	KSI_DataHash_free(in);
