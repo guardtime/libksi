@@ -201,6 +201,8 @@ static void testAggrChainBuilt(CuTest *tc) {
 	KSI_DataHash *in = NULL;
 	KSI_DataHash *out = NULL;
 	KSI_DataHash *exp = NULL;
+	KSI_AggregationHashChain *ac = NULL;
+	KSI_Integer *algo = NULL;
 
 	buildHashChain(tc, "010101010101010101010101010101010101010101010101010101010101010101", 1, 0, &chn);
 	buildHashChain(tc, "010101010101010101010101010101010101010101010101010101010101010101", 1, 13, &chn);
@@ -233,20 +235,37 @@ static void testAggrChainBuilt(CuTest *tc) {
 	res = KSI_DataHash_fromImprint(ctx, buf, buf_len, &in);
 	CuAssert(tc, "Unable to create input data hash", res == KSI_OK && in != NULL);
 
-	res = KSI_HashChain_aggregate(ctx, chn, in, 0, KSI_HASHALG_SHA2_256, NULL, &out);
-	CuAssert(tc, "Unable to aggregate chain", res == KSI_OK && out != NULL);
+	res = KSI_AggregationHashChain_new(ctx, &ac);
+	CuAssert(tc, "Unable to create aggregation hash chain object.", res == KSI_OK && ac != NULL);
+
+	res = KSI_AggregationHashChain_setChain(ac, chn);
+	CuAssert(tc, "Unable to add chain list to object.", res == KSI_OK);
+	chn = NULL;
+
+	res = KSI_AggregationHashChain_setInputHash(ac, KSI_DataHash_ref(in));
+	CuAssert(tc, "Unable to set input hash.", res == KSI_OK);
+
+	res = KSI_Integer_new(ctx, KSI_HASHALG_SHA2_256, &algo);
+	CuAssert(tc, "Unable to create hash algo.", res == KSI_OK);
+
+	res = KSI_AggregationHashChain_setAggrHashId(ac, algo);
+	CuAssert(tc, "Unable to set hash algorithm.", res == KSI_OK);
+
+	res = KSI_AggregationHashChain_aggregate(ac, 0, NULL, &out);
+	CuAssert(tc, "Unable to aggregate chain.", res == KSI_OK && out != NULL);
 
 	/* Expected out hash. */
 	res = KSITest_decodeHexStr("01559c8ba6dfd2c048ad117a0dea339db9477513af2065fedd23a4da1c69120bc8", buf, sizeof(buf), &buf_len);
-	CuAssert(tc, "Unable to decode expected output hash", res == KSI_OK);
+	CuAssert(tc, "Unable to decode expected output hash.", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, buf, buf_len, &exp);
-	CuAssert(tc, "Unable to create expected output data hash", res == KSI_OK && exp != NULL);
+	CuAssert(tc, "Unable to create expected output data hash.", res == KSI_OK && exp != NULL);
 
 	KSI_DataHash_free(exp);
 	KSI_DataHash_free(in);
 	KSI_DataHash_free(out);
 	KSI_HashChainLinkList_free(chn);
+	KSI_AggregationHashChain_free(ac);
 }
 
 static void testAggrChainBuiltWithMetaData(CuTest *tc) {
@@ -263,6 +282,8 @@ static void testAggrChainBuiltWithMetaData(CuTest *tc) {
 	KSI_Utf8String *clientId = NULL;
 	KSI_TLV *metaDataTLV = NULL;
 	KSI_MetaDataElement *metaData = NULL;
+	KSI_AggregationHashChain *ac = NULL;
+	KSI_Integer *algo = NULL;
 
 
 	res = KSI_MetaDataElement_new(ctx, &tmp_metaData);
@@ -310,7 +331,23 @@ static void testAggrChainBuiltWithMetaData(CuTest *tc) {
 	buildHashChain(tc, "010000000000000000000000000000000000000000000000000000000000000000", 1, 0, &chn);
 	buildHashChain(tc, "015e13631c36caa14a5a3b74da179db614a7ed778ce634c4c8a132007f9756cc1f", 0, 0, &chn);
 
-	res = KSI_HashChain_aggregate(ctx, chn, in, 0, KSI_HASHALG_SHA2_256, NULL, &out);
+	res = KSI_AggregationHashChain_new(ctx, &ac);
+	CuAssert(tc, "Unable to create aggregation hash chain object.", res == KSI_OK && ac != NULL);
+
+	res = KSI_AggregationHashChain_setChain(ac, chn);
+	CuAssert(tc, "Unable to add chain list to object.", res == KSI_OK);
+	chn = NULL;
+
+	res = KSI_AggregationHashChain_setInputHash(ac, KSI_DataHash_ref(in));
+	CuAssert(tc, "Unable to set input hash.", res == KSI_OK);
+
+	res = KSI_Integer_new(ctx, KSI_HASHALG_SHA2_256, &algo);
+	CuAssert(tc, "Unable to create hash algo.", res == KSI_OK);
+
+	res = KSI_AggregationHashChain_setAggrHashId(ac, algo);
+	CuAssert(tc, "Unable to set hash algorithm.", res == KSI_OK);
+
+	res = KSI_AggregationHashChain_aggregate(ac, 0, NULL, &out);
 	CuAssert(tc, "Unable to aggregate chain without meta data TLV.", res == KSI_OK && out != NULL);
 
 	/* Expected out hash. */
@@ -328,6 +365,7 @@ static void testAggrChainBuiltWithMetaData(CuTest *tc) {
 	KSI_DataHash_free(in);
 	KSI_DataHash_free(out);
 	KSI_DataHash_free(exp);
+	KSI_AggregationHashChain_free(ac);
 }
 
 static void testAggrChain_LegacyId_ParserFail(CuTest *tc, char *testSignatureFile) {

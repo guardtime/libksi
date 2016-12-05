@@ -30,6 +30,8 @@
 /* For optimization reasons, we need need access to KSI_DataHasher->closeExisting() function. */
 #include "hash_impl.h"
 
+KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationHashChain);
+
 KSI_IMPORT_TLV_TEMPLATE(KSI_HashChainLink);
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarHashChain);
 
@@ -827,3 +829,186 @@ cleanup:
 int KSI_HashChainLink_LegacyId_toTlv(KSI_CTX *ctx, KSI_OctetString *legacyId, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	return KSI_OctetString_toTlv(ctx, legacyId, tag, isNonCritical, isForward, tlv);
 }
+
+int KSI_AggregationHashChain_aggregate(const KSI_AggregationHashChain *aggr, int startLevel, int *endLevel, KSI_DataHash **root) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (aggr == NULL || startLevel < 0 || startLevel > 0xff) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(aggr->ctx);
+
+	if (aggr->aggrHashId == NULL || aggr->chain == NULL || aggr->inputHash == NULL) {
+		KSI_pushError(aggr->ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
+		goto cleanup;
+	}
+
+	res = KSI_HashChain_aggregate(aggr->ctx, aggr->chain, aggr->inputHash, startLevel, KSI_Integer_getUInt64(aggr->aggrHashId), endLevel, root);
+	if (res != KSI_OK) {
+		KSI_pushError(aggr->ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_AggregationHashChain_calculateShape(KSI_AggregationHashChain *chn, KSI_uint64_t *shape) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_uint64_t tmp;
+	size_t i;
+
+	if (chn == NULL || shape == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	/* Left pad the value with 1. */
+	tmp = 1;
+
+	i = KSI_HashChainLinkList_length(chn->chain);
+	if (i > (sizeof(KSI_uint64_t) << 3) + 1) {
+		res = KSI_INVALID_STATE;
+		goto cleanup;
+	}
+
+	for (; i > 0; i--) {
+		KSI_HashChainLink *p = NULL;
+		int isLeft;
+		res = KSI_HashChainLinkList_elementAt(chn->chain, i - 1, &p);
+		if (res != KSI_OK) goto cleanup;
+
+		tmp <<= 1;
+
+		res = KSI_HashChainLink_getIsLeft(p, &isLeft);
+		if (res != KSI_OK) goto cleanup;
+
+		if (isLeft) {
+			tmp |= 1;
+		}
+	}
+
+	*shape = tmp;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_AggregationHashChain_new(KSI_CTX *ctx, KSI_AggregationHashChain **out) {
+	KSI_AggregationHashChain *tmp = NULL;
+	int res;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || out == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	tmp = KSI_new(KSI_AggregationHashChain);
+	if (tmp == NULL) {
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->ref = 1;
+	tmp->aggregationTime = NULL;
+	tmp->chain = NULL;
+	tmp->chainIndex = NULL;
+	tmp->inputData = NULL;
+	tmp->inputHash = NULL;
+	tmp->aggrHashId = NULL;
+
+	*out = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_AggregationHashChain_free(tmp);
+
+	return res;
+}
+
+KSI_IMPLEMENT_REF(KSI_AggregationHashChain);
+KSI_IMPLEMENT_WRITE_BYTES(KSI_AggregationHashChain, 0x0801, 0, 0);
+KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_Integer*, aggregationTime, AggregationTime);
+KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_LIST(KSI_Integer)*, chainIndex, ChainIndex);
+KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_OctetString*, inputData, InputData);
+KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_DataHash*, inputHash, InputHash);
+KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_Integer*, aggrHashId, AggrHashId);
+KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_LIST(KSI_HashChainLink) *, chain, Chain);
+
+KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_Integer*, aggregationTime, AggregationTime);
+KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_LIST(KSI_Integer)*, chainIndex, ChainIndex);
+KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_OctetString*, inputData, InputData);
+KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_DataHash*, inputHash, InputHash);
+KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_Integer*, aggrHashId, AggrHashId);
+KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_LIST(KSI_HashChainLink) *, chain, Chain);
+
+int KSI_AggregationHashChainList_aggregate(KSI_AggregationHashChainList *chainList, KSI_CTX *ctx, int level, KSI_DataHash **outputHash) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *hsh = NULL;
+	size_t i;
+
+	if (chainList == NULL || ctx == NULL || !KSI_IS_VALID_TREE_LEVEL(level) || outputHash == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	/* Aggregate all the aggregation hash chains. */
+	for (i = 0; i < KSI_AggregationHashChainList_length(chainList); i++) {
+		const KSI_AggregationHashChain* aggrChain = NULL;
+		KSI_DataHash *tmp = NULL;
+
+		res = KSI_AggregationHashChainList_elementAt(chainList, i, (KSI_AggregationHashChain **)&aggrChain);
+		if (res != KSI_OK || aggrChain == NULL) {
+			KSI_pushError(ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
+			goto cleanup;
+		}
+
+		res = KSI_AggregationHashChain_aggregate(aggrChain, level, &level, &tmp);
+		if (res != KSI_OK){
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		if (hsh != NULL) {
+			KSI_DataHash_free(hsh);
+		}
+		hsh = tmp;
+	}
+
+	*outputHash = hsh;
+	hsh = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_DataHash_free(hsh);
+
+	return res;
+}
+
+void KSI_AggregationHashChain_free(KSI_AggregationHashChain *aggr) {
+	if (aggr != NULL && --aggr->ref == 0) {
+		KSI_Integer_free(aggr->aggrHashId);
+		KSI_Integer_free(aggr->aggregationTime);
+		KSI_IntegerList_free(aggr->chainIndex);
+		KSI_OctetString_free(aggr->inputData);
+		KSI_DataHash_free(aggr->inputHash);
+		KSI_HashChainLinkList_free(aggr->chain);
+		KSI_free(aggr);
+	}
+}
+

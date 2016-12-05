@@ -30,6 +30,7 @@
 #include "ctx_impl.h"
 #include "verification.h"
 #include "impl/meta_data_element_impl.h"
+#include "hashchain_impl.h"
 
 #define VERIFICATION_RULE_NAME __FUNCTION__
 
@@ -673,8 +674,7 @@ int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext
 			}
 		}
 
-		res = KSI_HashChain_aggregate(aggregationChain->ctx, aggregationChain->chain, aggregationChain->inputHash,
-									  level, (int)KSI_Integer_getUInt64(aggregationChain->aggrHashId), &level, &tmpHash);
+		res = KSI_AggregationHashChain_aggregate(aggregationChain, level, &level, &tmpHash);
 		if (res != KSI_OK) {
 			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 			KSI_pushError(ctx, res, NULL);

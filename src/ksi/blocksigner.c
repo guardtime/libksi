@@ -24,6 +24,7 @@
 #include "internal.h"
 #include "blocksigner.h"
 #include "tree_builder.h"
+#include "hashchain.h"
 
 #ifdef __cplusplus
 extern "C" {
