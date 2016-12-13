@@ -29,7 +29,7 @@ For building under Windows you need the Windows SDK.
 
 To use libksi in your C/C++ project, link it against the libksi binary and your chosen network and cryptography providers. 
 
-If you do not want to build your own binaries, you can get the latest stable release from the Gaurdtime repository.
+If you do not want to build your own binaries, you can get the latest stable release from the Guardtime repository.
 To set up the repository, save this repo file in your repositories directory (e.g. /etc/yum.repos.d/): 
 [http://download.guardtime.com/ksi/configuration/guardtime.el6.repo](http://download.guardtime.com/ksi/configuration/guardtime.el6.repo)
 
