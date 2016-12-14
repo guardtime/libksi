@@ -104,6 +104,8 @@ struct KSI_TreeBuilder_st {
 	 * where the last output tree node is the input node for the next call. The
 	 * final output node is added to the tree. */
 	KSI_LIST(KSI_TreeBuilderLeafProcessor) *cbList;
+	/** Common hashing object. */
+	KSI_DataHasher *hsr;
 };
 
 /**

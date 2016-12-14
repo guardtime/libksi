@@ -384,7 +384,7 @@ static int verifyInternallyAggregationChain(KSI_Signature *sig) {
 
 	/* Aggregate all the aggregation chains. */
 	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
-		const KSI_AggregationHashChain* aggregationChain = NULL;
+		KSI_AggregationHashChain* aggregationChain = NULL;
 		KSI_DataHash *tmpHash = NULL;
 
 

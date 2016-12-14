@@ -39,6 +39,7 @@ struct KSI_CalendarHashChain_st {
 	KSI_Integer *publicationTime;
 	KSI_Integer *aggregationTime;
 	KSI_DataHash *inputHash;
+	KSI_DataHash *outputHash;
 	KSI_LIST(KSI_HashChainLink) *hashChain;
 };
 
@@ -52,6 +53,10 @@ struct KSI_AggregationHashChain_st {
 	KSI_DataHash *inputHash;
 	KSI_Integer *aggrHashId;
 	KSI_LIST(KSI_HashChainLink) *chain;
+
+	KSI_DataHash *outputHash;
+	int outputLevel;
+	int inputLevel;
 };
 
 #ifdef __cplusplus
