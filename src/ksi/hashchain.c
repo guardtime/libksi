@@ -857,7 +857,7 @@ int KSI_AggregationHashChain_aggregate(KSI_AggregationHashChain *aggr, int start
 		KSI_DataHash_free(aggr->outputHash);
 
 		if (aggr->aggrHashId == NULL || aggr->chain == NULL || aggr->inputHash == NULL) {
-			KSI_pushError(aggr->ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
+			KSI_pushError(aggr->ctx, res = KSI_INVALID_STATE, NULL);
 			goto cleanup;
 		}
 
