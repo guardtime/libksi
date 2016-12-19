@@ -2,6 +2,7 @@
 * BUGFIX: CryptoAPI uses PKCS7 signatures embedded intermediate certificates in verification process.
 Version 3.12
 
+* IMPROVEMENT: Increased the size of the statically allocated KSI_Integer pool up to the value of 0xff.
 * IMPROVEMENT: Removed experimental feature KSI_NetworkClient_performAll.
 * IMPROVEMENT: Removed multi-signature support from the SDK.
 
