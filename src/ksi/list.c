@@ -57,7 +57,7 @@ static int appendElement(KSI_List *list, void* obj) {
 		goto cleanup;
 	}
 
-	if ((pImpl->arr_len + 1) >= pImpl->arr_size) {
+	if ((pImpl->arr_len + 1) > pImpl->arr_size) {
 		unsigned int i;
 
 		tmp_arr = KSI_calloc(pImpl->arr_size + KSI_LIST_SIZE_INCREMENT,
@@ -77,6 +77,12 @@ static int appendElement(KSI_List *list, void* obj) {
 
 		pImpl->arr_size += KSI_LIST_SIZE_INCREMENT;
 	}
+
+	if (pImpl->arr == NULL) {
+		res = KSI_INVALID_STATE;
+		goto cleanup;
+	}
+
 	pImpl->arr[pImpl->arr_len++] = obj;
 
 	res = KSI_OK;
@@ -104,6 +110,12 @@ static int indexOf(KSI_List *list, void *o, size_t **pos) {
 
 	if (pImpl == NULL) {
 		res = KSI_INVALID_STATE;
+		goto cleanup;
+	}
+
+	if (pImpl->arr == NULL) {
+		*pos = NULL;
+		res = KSI_OK;
 		goto cleanup;
 	}
 
@@ -142,13 +154,13 @@ static int replaceElementAt(KSI_List *list, size_t pos, void *o) {
 
 	pImpl = list->pImpl;
 
-	if (pImpl == NULL) {
+	if (pImpl == NULL || pImpl->arr == NULL) {
 		res = KSI_INVALID_STATE;
 		goto cleanup;
 	}
 
-	if (pImpl->arr_len < pos) {
-		res = KSI_INVALID_ARGUMENT;
+	if (pos >= pImpl->arr_len) {
+		res = KSI_OUT_OF_BOUNDS;
 		goto cleanup;
 	}
 
@@ -176,13 +188,13 @@ static int insertElementAt(KSI_List *list, size_t pos, void *o) {
 
 	pImpl = list->pImpl;
 
-	if (pImpl == NULL) {
+	if (pImpl == NULL || pImpl->arr == NULL) {
 		res = KSI_INVALID_STATE;
 		goto cleanup;
 	}
 
-	if (pos > pImpl->arr_len) {
-		res = KSI_INVALID_ARGUMENT;
+	if (pos >= pImpl->arr_len) {
+		res = KSI_OUT_OF_BOUNDS;
 		goto cleanup;
 	}
 
@@ -214,13 +226,13 @@ static int elementAt(KSI_List *list, size_t pos, void **o) {
 
 	pImpl = list->pImpl;
 
-	if (pImpl == NULL) {
+	if (pImpl == NULL || pImpl->arr == NULL) {
 		res = KSI_INVALID_STATE;
 		goto cleanup;
 	}
 
 	if (pos >= pImpl->arr_len) {
-		res = KSI_BUFFER_OVERFLOW;
+		res = KSI_OUT_OF_BOUNDS;
 		goto cleanup;
 	}
 	*o = pImpl->arr[pos];
@@ -248,7 +260,7 @@ static int removeElement(KSI_List *list, size_t pos, void **o) {
 
 	pImpl = list->pImpl;
 
-	if (pImpl == NULL) {
+	if (pImpl == NULL || pImpl->arr == NULL) {
 		res = KSI_INVALID_STATE;
 		goto cleanup;
 	}
@@ -505,7 +517,7 @@ int KSI_List_sort(KSI_List *list, int (*cmp)(const void **a, const void **b)) {
 
 	pImpl = list->pImpl;
 
-	if (pImpl == NULL) {
+	if (pImpl == NULL || pImpl->arr == NULL) {
 		res = KSI_INVALID_STATE;
 		goto cleanup;
 	}
@@ -524,7 +536,7 @@ int KSI_List_foldl(KSI_List *list, void *foldCtx, int (*fn)(void *, void *)) {
 	void *el;
 	size_t i;
 
-	if (fn == NULL) {
+	if (list == NULL || fn == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}

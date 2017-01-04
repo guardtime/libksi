@@ -90,6 +90,8 @@ const char *KSI_getErrorString(int statusCode) {
 			return "The PKI certificate is not trusted.";
 		case KSI_INVALID_STATE:
 			return "Invalid state.";
+		case KSI_OUT_OF_BOUNDS:
+			return "Out of bounds.";
 		case KSI_OUT_OF_MEMORY:
 			return "Out of memory.";
 		case KSI_IO_ERROR:
