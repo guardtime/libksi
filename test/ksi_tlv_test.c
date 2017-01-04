@@ -283,7 +283,7 @@ static void testTlvGetNextNested(CuTest* tc) {
 	CuAssert(tc, "Unexpected uint value from nested TLV.", 0xcafffffffffe == KSI_Integer_getUInt64(integer));
 
 	res = KSI_TLVList_elementAt(list, i++, &nested);
-	CuAssert(tc, "Reading nested TLV did not fail after reading last TLV.", res == KSI_OUT_OF_BOUNDS);
+	CuAssert(tc, "Reading nested TLV did not fail after reading last TLV.", res == KSI_BUFFER_OVERFLOW);
 
 	KSI_Integer_free(integer);
 	KSI_Utf8String_free(utf);
@@ -316,7 +316,7 @@ static void testTlvGetNextNestedSharedMemory(CuTest* tc) {
 	CuAssert(tc, "Unable to read nested TLV.", res == KSI_OK && nested != NULL);
 
 	res = KSI_TLVList_elementAt(list, i++, &nested);
-	CuAssert(tc, "Reading nested TLV did not fail after reading last TLV.", res == KSI_OUT_OF_BOUNDS);
+	CuAssert(tc, "Reading nested TLV did not fail after reading last TLV.", res == KSI_BUFFER_OVERFLOW);
 
 
 	KSI_free(str);

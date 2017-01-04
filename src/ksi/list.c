@@ -160,7 +160,7 @@ static int replaceElementAt(KSI_List *list, size_t pos, void *o) {
 	}
 
 	if (pos >= pImpl->arr_len) {
-		res = KSI_OUT_OF_BOUNDS;
+		res = KSI_BUFFER_OVERFLOW;
 		goto cleanup;
 	}
 
@@ -194,7 +194,7 @@ static int insertElementAt(KSI_List *list, size_t pos, void *o) {
 	}
 
 	if (pos >= pImpl->arr_len) {
-		res = KSI_OUT_OF_BOUNDS;
+		res = KSI_BUFFER_OVERFLOW;
 		goto cleanup;
 	}
 
@@ -232,7 +232,7 @@ static int elementAt(KSI_List *list, size_t pos, void **o) {
 	}
 
 	if (pos >= pImpl->arr_len) {
-		res = KSI_OUT_OF_BOUNDS;
+		res = KSI_BUFFER_OVERFLOW;
 		goto cleanup;
 	}
 	*o = pImpl->arr[pos];

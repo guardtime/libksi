@@ -117,10 +117,6 @@ enum KSI_StatusCode {
 	 * The objects used are in an invalid state.
 	 */
 	KSI_INVALID_STATE = 0x10a,
-	/**
-	 * The position is outside list limit.
-	 */
-	KSI_OUT_OF_BOUNDS = 0x10b,
 
 /* SYSTEM ERRORS */
 	/**
