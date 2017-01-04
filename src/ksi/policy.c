@@ -394,7 +394,8 @@ const KSI_Policy* KSI_VERIFICATION_POLICY_PUBLICATIONS_FILE_BASED = &PolicyPubli
 
 static const KSI_Rule userPublicationMatchRule[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordExistence},
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationTimeVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationHashVerification},
 	{KSI_RULE_TYPE_BASIC, NULL}
 };
 
@@ -475,23 +476,29 @@ const char *KSI_Policy_getErrorString(int errorCode) {
 		case KSI_VER_ERR_INT_8:
 			return "Calendar hash chain root hash is inconsistent with calendar authentication record input hash.";
 		case KSI_VER_ERR_INT_9:
-			return "Calendar hash chain root hash is inconsistent with published hash value.";
+			return "Calendar hash chain root hash is inconsistent with publication record hash.";
 		case KSI_VER_ERR_INT_10:
 			return "Aggregation hash chain chain index mismatch.";
 		case KSI_VER_ERR_INT_11:
 			return "The metadata record in the aggregation hash chain may not be trusted.";
+		case KSI_VER_ERR_INT_12:
+			return "Inconsistent chain indexes.";
 		case KSI_VER_ERR_PUB_1:
 			return "Extender response calendar root hash mismatch.";
 		case KSI_VER_ERR_PUB_2:
 			return "Extender response inconsistent.";
 		case KSI_VER_ERR_PUB_3:
 			return "Extender response input hash mismatch.";
+		case KSI_VER_ERR_PUB_4:
+			return "Publication record hash and user provided publication hash mismatch.";
+		case KSI_VER_ERR_PUB_5:
+			return "Publication record hash and publications file publication hash mismatch.";
 		case KSI_VER_ERR_KEY_1:
 			return "Certificate not found.";
 		case KSI_VER_ERR_KEY_2:
 			return "PKI signature not verified with certificate.";
 		case KSI_VER_ERR_CAL_1:
-			return "Calendar root hash mismatch.";
+			return "Calendar root hash mismatch between signature and Extender chains.";
 		case KSI_VER_ERR_CAL_2:
 			return "Aggregation hash chain root hash and calendar hash chain input hash mismatch.";
 		case KSI_VER_ERR_CAL_3:

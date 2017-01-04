@@ -873,7 +873,8 @@ cleanup:
 	return res;
 }
 
-int KSI_PublicationsFile_findPublication(const KSI_PublicationsFile *trust, KSI_PublicationRecord *inRec, KSI_PublicationRecord **outRec) {
+static int findPublication(const KSI_PublicationsFile *trust, void *inData,
+		int (*equals)(KSI_PublicationData*, void*), KSI_PublicationRecord **outRec) {
 	int res;
 	size_t i;
 
@@ -884,11 +885,10 @@ int KSI_PublicationsFile_findPublication(const KSI_PublicationsFile *trust, KSI_
 
 	KSI_ERR_clearErrors(trust->ctx);
 
-	if (inRec == NULL || outRec == NULL) {
+	if (inData == NULL || outRec == NULL) {
 		KSI_pushError(trust->ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
-
 
 	for (i = 0; i < KSI_PublicationRecordList_length(trust->publications); i++) {
 		KSI_PublicationRecord *pr = NULL;
@@ -899,12 +899,12 @@ int KSI_PublicationsFile_findPublication(const KSI_PublicationsFile *trust, KSI_
 			goto cleanup;
 		}
 
-		if (pr->publishedData == NULL || inRec->publishedData == NULL) {
+		if (pr->publishedData == NULL) {
 			KSI_pushError(trust->ctx, res = KSI_INVALID_STATE, NULL);
 			goto cleanup;
 		}
 
-		if (KSI_DataHash_equals(pr->publishedData->imprint, inRec->publishedData->imprint) && KSI_Integer_equals(pr->publishedData->time, inRec->publishedData->time) ) {
+		if (equals(pr->publishedData, inData)) {
 			*outRec = KSI_PublicationRecord_ref(pr);
 			break;
 		}
@@ -917,6 +917,35 @@ int KSI_PublicationsFile_findPublication(const KSI_PublicationsFile *trust, KSI_
 cleanup:
 
 	return res;
+}
+
+static int publicationTimeEquals(KSI_PublicationData* pubData, void* time) {
+	if (pubData == NULL || time == NULL) return 0;
+	return (KSI_Integer_equals(pubData->time, (KSI_Integer*)time));
+}
+
+static int publicationHashEquals(KSI_PublicationData* pubData, void* hash) {
+	if (pubData == NULL || hash == NULL) return 0;
+	return !!(KSI_DataHash_equals(pubData->imprint, (KSI_DataHash*)hash));
+}
+
+static int publicationDataEquals(KSI_PublicationData* pubData, void* data) {
+	if (pubData == NULL || data == NULL) return 0;
+	return !!(KSI_DataHash_equals(pubData->imprint, ((KSI_PublicationData *)data)->imprint) &&
+			KSI_Integer_equals(pubData->time, ((KSI_PublicationData *)data)->time));
+}
+
+int KSI_PublicationsFile_findPublicationByTime(const KSI_PublicationsFile *trust, KSI_Integer *time, KSI_PublicationRecord **outRec) {
+	return findPublication(trust, (void*)time, publicationTimeEquals, outRec);
+}
+
+int KSI_PublicationsFile_findPublicationByHash(const KSI_PublicationsFile *trust, KSI_DataHash *imprint, KSI_PublicationRecord **outRec) {
+	return findPublication(trust, (void*)imprint, publicationHashEquals, outRec);
+}
+
+int KSI_PublicationsFile_findPublication(const KSI_PublicationsFile *trust, KSI_PublicationRecord *inRec, KSI_PublicationRecord **outRec) {
+	if (inRec != NULL && inRec->publishedData == NULL) return KSI_INVALID_STATE;
+	return findPublication(trust, (void*)inRec->publishedData, publicationDataEquals, outRec);
 }
 
 int KSI_PublicationsFile_setCertConstraints(KSI_PublicationsFile *pubFile, const KSI_CertConstraint *arr) {

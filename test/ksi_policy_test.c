@@ -708,7 +708,7 @@ static void TestInternalPolicy_FAIL_WithInvalidRfc3161ChainIndex(CuTest* tc) {
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_FAIL,
-		KSI_VER_ERR_INT_10,
+		KSI_VER_ERR_INT_12,
 		"KSI_VerificationRule_AggregationHashChainIndexConsistency"
 	};
 
@@ -2220,7 +2220,7 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithPublicationRecord(CuTe
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_OK,
 		KSI_VER_ERR_NONE,
-		"KSI_VerificationRule_UserProvidedPublicationVerification"
+		"KSI_VerificationRule_UserProvidedPublicationHashVerification"
 	};
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);

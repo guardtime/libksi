@@ -89,23 +89,29 @@ extern "C" {
 		KSI_VER_ERR_INT_7 = 0x207,
 		/** Calendar hash chain root hash is inconsistent with calendar auth record input hash. */
 		KSI_VER_ERR_INT_8 = 0x208,
-		/** Calendar hash chain root hash is inconsistent with published hash value. */
+		/** Calendar hash chain root hash is inconsistent with publication record hash. */
 		KSI_VER_ERR_INT_9 = 0x209,
 		/** Aggregation hash chain chain index mismatch. */
 		KSI_VER_ERR_INT_10 = 0x20a,
 		/** The meta-data record in the aggregation hash chain may not be trusted. */
 		KSI_VER_ERR_INT_11 = 0x20b,
+		/** Inconsistent chain indexes. */
+		KSI_VER_ERR_INT_12 = 0x20c,
 		/** Extender response calendar root hash mismatch. */
 		KSI_VER_ERR_PUB_1 = 0x301,
 		/** Extender response inconsistent. */
 		KSI_VER_ERR_PUB_2 = 0x302,
 		/** Extender response input hash mismatch. */
 		KSI_VER_ERR_PUB_3 = 0x303,
+		/** Publication record hash and user provided publication hash mismatch. */
+		KSI_VER_ERR_PUB_4 = 0x304,
+		/** Publication record hash and publications file publication hash mismatch. */
+		KSI_VER_ERR_PUB_5 = 0x305,
 		/** Certificate not found. */
 		KSI_VER_ERR_KEY_1 = 0x401,
 		/** PKI signature not verified with certificate. */
 		KSI_VER_ERR_KEY_2 = 0x402,
-		/** Calendar root hash mismatch. */
+		/** Calendar root hash mismatch between signature and Extender chains. */
 		KSI_VER_ERR_CAL_1 = 0x501,
 		/** Aggregation hash chain root hash and calendar hash chain input hash mismatch. */
 		KSI_VER_ERR_CAL_2 = 0x502,
