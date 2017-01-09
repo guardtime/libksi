@@ -59,6 +59,17 @@ struct KSI_AggregationHashChain_st {
 	int inputLevel;
 };
 
+struct KSI_HashChainLinkIdentity_st {
+	KSI_CTX *ctx;
+	size_t ref;
+
+	int type;
+	KSI_Utf8String *clientId;
+	KSI_Utf8String *machineId;
+	KSI_Integer *sequenceNr;
+	KSI_Integer *requestTime;
+};
+
 #ifdef __cplusplus
 }
 #endif

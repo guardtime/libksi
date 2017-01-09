@@ -40,6 +40,7 @@ extern "C" {
 	 * This is a user defined custom meta-data structure.
 	 */
 	typedef struct KSI_MetaData_st KSI_MetaData;
+	typedef struct KSI_HashChainLinkIdentity_st KSI_HashChainLinkIdentity;
 	typedef struct KSI_HashChainLink_st KSI_HashChainLink;
 	typedef KSI_HashChainLink KSI_CalendarHashChainLink;
 	typedef struct KSI_CalendarHashChain_st KSI_CalendarHashChain;
@@ -105,7 +106,7 @@ extern "C" {
 	 * Network endpoint description that must have implementation according to the type of transport layer used.
 	 */
 	typedef struct KSI_NetEndpoint_st KSI_NetEndpoint;
-	
+
 	/**
 	 * Network resource handle returned from functions sending or preparing network requests.
 	 *
@@ -133,7 +134,7 @@ extern "C" {
 	 * Representation of the aggregation authentication record.
 	 */
 	typedef struct KSI_AggregationAuthRec_st KSI_AggregationAuthRec;
-	
+
 	/**
 	 * Helper data structure for encoding parts of the RFC 3161 envelope.
 	 */
@@ -146,7 +147,7 @@ extern "C" {
 		/** Expected value. */
 		char *val;
 	};
-	
+
 #define KSI_APPLY_TO_NOT_NULL(val, fn, args) (((val) != NULL) ? ( val->fn != NULL ? (val->fn args) : KSI_INVALID_STATE) : KSI_INVALID_ARGUMENT)
 
 
@@ -160,6 +161,17 @@ extern "C" {
 #define KSI_MataDataElementList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_MetaDataElementList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_MetaDataElementList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+
+	KSI_DEFINE_LIST(KSI_HashChainLinkIdentity);
+#define KSI_HashChainLinkIdentityList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
+#define KSI_HashChainLinkIdentityList_remove(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), removeElement, ((lst), (pos), (o)))
+#define KSI_HashChainLinkIdentityList_indexOf(lst, o, i) KSI_APPLY_TO_NOT_NULL((lst), indexOf, ((lst), (o), (i)))
+#define KSI_HashChainLinkIdentityList_insertAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), insertAt, ((lst), (pos), (o)))
+#define KSI_HashChainLinkIdentityList_replaceAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), replaceAt, ((lst), (pos), (o)))
+#define KSI_HashChainLinkIdentityList_elementAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), elementAt, ((lst), (pos), (o)))
+#define KSI_HashChainLinkIdentityList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
+#define KSI_HashChainLinkIdentityList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
+#define KSI_HashChainLinkIdentityList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
 
 	KSI_DEFINE_LIST(KSI_HashChainLink);
 #define KSI_HashChainLinkList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -848,7 +860,7 @@ int KSI_CalendarAuthRec_setSignatureData(KSI_CalendarAuthRec *rec, KSI_PKISigned
 KSI_DEFINE_REF(KSI_CalendarAuthRec);
 KSI_DEFINE_WRITE_BYTES(KSI_CalendarAuthRec);
 /**
- *	KSI_RFC3161 
+ *	KSI_RFC3161
  */
 
 void KSI_RFC3161_free(KSI_RFC3161 *rfc);
