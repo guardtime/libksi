@@ -398,6 +398,7 @@ EXPORTS
 	KSI_TlvElement_getOctetString
 	KSI_TlvElement_getInteger
 	KSI_TlvElement_setUtf8String
+	KSI_TlvElement_setOctetString
 	KSI_TlvElement_setInteger
 
 ;tlv.h
