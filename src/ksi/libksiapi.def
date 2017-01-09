@@ -112,7 +112,6 @@ EXPORTS
 	KSI_HashChainLink_setImprint
 	KSI_HashChainLink_fromTlv
 	KSI_HashChainLink_toTlv
-	KSI_HashChainLink_getIdentity
 	KSI_CalendarHashChainLink_fromTlv
 	KSI_CalendarHashChainLink_toTlv
 	KSI_CalendarHashChain_free

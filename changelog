@@ -1,4 +1,5 @@
 * IMPROVEMENT: Provide identity information as a list.
+* IMPROVEMENT: Function KSI_Signature_getSignerIdentity is deprecated. See KSI_Signature_getAggregationHashChainIdentity for replacement.
 * BUGFIX: Corrected medadata request time parsing.
 * BUGFIX: Validate list impl pointer before use.
 * BUGFIX: Cryptoapi KSI_PKISignature_new fails if the input blob can not be parsed.

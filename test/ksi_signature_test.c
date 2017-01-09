@@ -583,7 +583,7 @@ static void testAggregationHashChainIdentity(CuTest *tc) {
 		KSI_Utf8String *machineId = NULL;
 		KSI_Integer *sequenceNr = NULL;
 		KSI_Integer *requestTime = NULL;
-		int type;
+		KSI_HashChainLinkIdentityType type;
 
 		res = KSI_HashChainLinkIdentityList_elementAt(identityList, i, &identity);
 		CuAssert(tc, "Unable to get identity from identity list.", res == KSI_OK && identity != NULL);
@@ -643,7 +643,7 @@ static void testAggregationHashChainIdentityWithMetaData(CuTest *tc) {
 	CuAssert(tc, "Identity list size mismatch.", KSI_HashChainLinkIdentityList_length(identityList) == (sizeof(expected) / sizeof(expected[0])));
 
 	for (i = 0; i < KSI_HashChainLinkIdentityList_length(identityList); i++) {
-		int type;
+		KSI_HashChainLinkIdentityType type;
 		KSI_Utf8String *clientId = NULL;
 
 		res = KSI_HashChainLinkIdentityList_elementAt(identityList, i, &identity);

@@ -40,7 +40,7 @@ extern "C" {
 	/**
 	 * Hash chain link identity type.
 	 */
-	typedef enum KSI_HashChainLinkIdentityType_st {
+	typedef enum KSI_HashChainLinkIdentityType_en {
 		/**
 		 * Legacy client identifier.
 		 * A client identifier converted from a legacy signature.
@@ -208,20 +208,12 @@ extern "C" {
 	KSI_DEFINE_WRITE_BYTES(KSI_CalendarHashChain);
 
 	void KSI_HashChainLinkIdentity_free(KSI_HashChainLinkIdentity *identity);
-	int KSI_HashChainLinkIdentity_getType(const KSI_HashChainLinkIdentity *o, int *v);
+	int KSI_HashChainLinkIdentity_getType(const KSI_HashChainLinkIdentity *o, KSI_HashChainLinkIdentityType *v);
 	int KSI_HashChainLinkIdentity_getClientId(const KSI_HashChainLinkIdentity *o, KSI_Utf8String **v);
 	int KSI_HashChainLinkIdentity_getMachineId(const KSI_HashChainLinkIdentity *o, KSI_Utf8String **v);
 	int KSI_HashChainLinkIdentity_getSequenceNr(const KSI_HashChainLinkIdentity *o, KSI_Integer **v);
 	int KSI_HashChainLinkIdentity_getRequestTime(const KSI_HashChainLinkIdentity *o, KSI_Integer **v);
 	KSI_DEFINE_REF(KSI_HashChainLinkIdentity);
-
-	/**
-	 * Get aggregation hash chain link identity.
-	 * \param[in]	link		Pointer to #KSI_HashChainLink.
-	 * \param[in]	identity	Pointer to the receiving pointer.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_HashChainLink_getIdentity(KSI_HashChainLink *link, KSI_HashChainLinkIdentity **identity);
 
 	/**
 	 * Get aggregation hash chain identity. The returned list consists of individual hash chain link identities.

@@ -63,7 +63,7 @@ struct KSI_HashChainLinkIdentity_st {
 	KSI_CTX *ctx;
 	size_t ref;
 
-	int type;
+	KSI_HashChainLinkIdentityType type;
 	KSI_Utf8String *clientId;
 	KSI_Utf8String *machineId;
 	KSI_Integer *sequenceNr;

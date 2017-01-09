@@ -853,7 +853,7 @@ void KSI_HashChainLinkIdentity_free(KSI_HashChainLinkIdentity *identity) {
 	}
 }
 
-int KSI_HashChainLink_getIdentity(KSI_HashChainLink *link, KSI_HashChainLinkIdentity **identity) {
+static int hashChainLink_getIdentity(KSI_HashChainLink *link, KSI_HashChainLinkIdentity **identity) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_MetaDataElement *metaData = NULL;
 	KSI_OctetString *legacyId = NULL;
@@ -956,7 +956,7 @@ cleanup:
 	return res;
 }
 
-KSI_IMPLEMENT_GETTER(KSI_HashChainLinkIdentity, int, type, Type);
+KSI_IMPLEMENT_GETTER(KSI_HashChainLinkIdentity, KSI_HashChainLinkIdentityType, type, Type);
 KSI_IMPLEMENT_GETTER(KSI_HashChainLinkIdentity, KSI_Utf8String *, clientId, ClientId);
 KSI_IMPLEMENT_GETTER(KSI_HashChainLinkIdentity, KSI_Utf8String *, machineId, MachineId);
 KSI_IMPLEMENT_GETTER(KSI_HashChainLinkIdentity, KSI_Integer *, sequenceNr, SequenceNr);
@@ -997,7 +997,7 @@ int KSI_AggregationHashChain_getIdentity(KSI_AggregationHashChain *aggr, KSI_LIS
 			goto cleanup;
 		}
 
-		res = KSI_HashChainLink_getIdentity(link, &id);
+		res = hashChainLink_getIdentity(link, &id);
 		if (res != KSI_OK) {
 			KSI_pushError(aggr->ctx, res, NULL);
 			goto cleanup;
