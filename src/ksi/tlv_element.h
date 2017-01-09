@@ -184,6 +184,17 @@ extern "C" {
 	int KSI_TlvElement_setUtf8String(KSI_TlvElement *parent, unsigned tag, KSI_Utf8String *value);
 
 	/**
+	 * A setter method for a nested #KSI_OctetString value. If the element already exists as
+	 * a sub-element of \c parent, the sub-element is replaced with the new value.
+	 * \param[in]	parent		Pointer to the parent element.
+	 * \param[in]	tag			Tag of the requested element.
+	 * \param[out]	value		Pointer to the receiving pointer.
+	 * \note The input value object must be free by the caller.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_TlvElement_setOctetString(KSI_TlvElement *parent, unsigned tag, KSI_OctetString *value);
+
+	/**
 	 * A setter method for a nested #KSI_Integer value. If the element already exists as
 	 * a sub-element of \c parent, the sub-element is replaced with the new value.
 	 * \param[in]	parent		Pointer to the parent element.
