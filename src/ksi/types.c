@@ -310,7 +310,7 @@ int KSI_MetaDataElement_getRequestTimeInMicros(KSI_MetaDataElement *o, KSI_Integ
 	}
 
 	if (o->DEPRECATED_reqTimeInMicros == NULL) {
-		res = KSI_TlvElement_getInteger(o->impl, o->ctx, 0x03, &o->DEPRECATED_reqTimeInMicros);
+		res = KSI_TlvElement_getInteger(o->impl, o->ctx, 0x04, &o->DEPRECATED_reqTimeInMicros);
 		if (res != KSI_OK) goto cleanup;
 	}
 

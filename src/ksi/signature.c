@@ -1715,6 +1715,75 @@ cleanup:
 	return res;
 }
 
+int KSI_Signature_getAggregationHashChainIdentity(KSI_Signature *sig, KSI_HashChainLinkIdentityList **identity) {
+	int res = KSI_UNKNOWN_ERROR;
+	size_t i;
+	KSI_HashChainLinkIdentityList *tmp = NULL;
+	KSI_HashChainLinkIdentityList *aggrId = NULL;
+	KSI_HashChainLinkIdentity *linkId = NULL;
+
+	if (sig == NULL || identity == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(sig->ctx);
+
+	res = KSI_HashChainLinkIdentityList_new(&tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(sig->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Extract all identities from all aggregation hash chains from top to bottom. */
+	for (i = KSI_AggregationHashChainList_length(sig->aggregationChainList); i-- > 0;) {
+		size_t k;
+		KSI_AggregationHashChain *aggr = NULL;
+
+		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, &aggr);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_AggregationHashChain_getIdentity(aggr, &aggrId);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		for (k = 0; k < KSI_HashChainLinkIdentityList_length(aggrId); k++) {
+			KSI_HashChainLinkIdentity *tmpId = NULL;
+
+			res = KSI_HashChainLinkIdentityList_elementAt(aggrId, k, &tmpId);
+			if (res != KSI_OK) {
+				KSI_pushError(sig->ctx, res, NULL);
+				goto cleanup;
+			}
+
+			res = KSI_HashChainLinkIdentityList_append(tmp, linkId = KSI_HashChainLinkIdentity_ref(tmpId));
+			if (res != KSI_OK) {
+				KSI_pushError(sig->ctx, res, NULL);
+				goto cleanup;
+			}
+			linkId = NULL;
+		}
+		KSI_HashChainLinkIdentityList_free(aggrId);
+		aggrId = NULL;
+	}
+
+	*identity = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+	KSI_HashChainLinkIdentityList_free(aggrId);
+	KSI_HashChainLinkIdentityList_free(tmp);
+	KSI_HashChainLinkIdentity_free(linkId);
+
+	return res;
+}
+
 KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_CalendarAuthRec*, calendarAuthRec, CalendarAuthRec)
 
 KSI_IMPLEMENT_GETTER(KSI_Signature, KSI_PublicationRecord*, publication, PublicationRecord)

@@ -842,6 +842,188 @@ int KSI_HashChainLink_LegacyId_toTlv(KSI_CTX *ctx, KSI_OctetString *legacyId, un
 	return KSI_OctetString_toTlv(ctx, legacyId, tag, isNonCritical, isForward, tlv);
 }
 
+void KSI_HashChainLinkIdentity_free(KSI_HashChainLinkIdentity *identity) {
+	if (identity != NULL && --identity->ref == 0) {
+		KSI_Utf8String_free(identity->clientId);
+		KSI_Utf8String_free(identity->machineId);
+		KSI_Integer_free(identity->sequenceNr);
+		KSI_Integer_free(identity->requestTime);
+
+		KSI_free(identity);
+	}
+}
+
+static int hashChainLink_getIdentity(KSI_HashChainLink *link, KSI_HashChainLinkIdentity **identity) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_MetaDataElement *metaData = NULL;
+	KSI_OctetString *legacyId = NULL;
+	KSI_HashChainLinkIdentity *tmp = NULL;
+
+	if (link == NULL || identity == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(link->ctx);
+
+	/* Extract legacyId */
+	res = KSI_HashChainLink_getLegacyId(link, &legacyId);
+	if (res != KSI_OK) {
+		KSI_pushError(link->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Extract MetaData */
+	res = KSI_HashChainLink_getMetaData(link, &metaData);
+	if (res != KSI_OK) {
+		KSI_pushError(link->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (legacyId != NULL || metaData != NULL) {
+		tmp = KSI_new(KSI_HashChainLinkIdentity);
+		if (tmp == NULL) {
+			KSI_pushError(link->ctx, res = KSI_OUT_OF_MEMORY, "Can not create hash chain link identity object.");
+			goto cleanup;
+		}
+
+		tmp->ctx = link->ctx;
+		tmp->ref = 1;
+		tmp->type = KSI_IDENTITY_TYPE_UNKNOWN;
+		tmp->clientId = NULL;
+		tmp->machineId = NULL;
+		tmp->sequenceNr = NULL;
+		tmp->requestTime = NULL;
+
+
+		if (legacyId != NULL) {
+			KSI_Utf8String *clientId = NULL;
+
+			res = KSI_OctetString_LegacyId_getUtf8String(legacyId, &clientId);
+			if (res != KSI_OK) {
+				KSI_pushError(link->ctx, res, NULL);
+				goto cleanup;
+			}
+
+			tmp->type = KSI_IDENTITY_TYPE_LEGACY_ID;
+			tmp->clientId = clientId;
+		} else if (metaData != NULL) {
+			KSI_Utf8String *clientId = NULL;
+			KSI_Utf8String *machineId = NULL;
+			KSI_Integer *sequenceNr = NULL;
+			KSI_Integer *requestTime = NULL;
+
+			res = KSI_MetaDataElement_getClientId(metaData, &clientId);
+			if (res != KSI_OK) {
+				KSI_pushError(link->ctx, res, NULL);
+				goto cleanup;
+			}
+
+			res = KSI_MetaDataElement_getMachineId(metaData, &machineId);
+			if (res != KSI_OK) {
+				KSI_pushError(link->ctx, res, NULL);
+				goto cleanup;
+			}
+
+			res = KSI_MetaDataElement_getSequenceNr(metaData, &sequenceNr);
+			if (res != KSI_OK) {
+				KSI_pushError(link->ctx, res, NULL);
+				goto cleanup;
+			}
+
+			res = KSI_MetaDataElement_getRequestTimeInMicros(metaData, &requestTime);
+			if (res != KSI_OK) {
+				KSI_pushError(link->ctx, res, NULL);
+				goto cleanup;
+			}
+
+			tmp->type = KSI_IDENTITY_TYPE_METADATA;
+			tmp->clientId = KSI_Utf8String_ref(clientId);
+			tmp->machineId = KSI_Utf8String_ref(machineId);
+			tmp->sequenceNr = KSI_Integer_ref(sequenceNr);
+			tmp->requestTime = KSI_Integer_ref(requestTime);
+		}
+	}
+
+	*identity = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+	KSI_HashChainLinkIdentity_free(tmp);
+
+	return res;
+}
+
+KSI_IMPLEMENT_GETTER(KSI_HashChainLinkIdentity, KSI_HashChainLinkIdentityType, type, Type);
+KSI_IMPLEMENT_GETTER(KSI_HashChainLinkIdentity, KSI_Utf8String *, clientId, ClientId);
+KSI_IMPLEMENT_GETTER(KSI_HashChainLinkIdentity, KSI_Utf8String *, machineId, MachineId);
+KSI_IMPLEMENT_GETTER(KSI_HashChainLinkIdentity, KSI_Integer *, sequenceNr, SequenceNr);
+KSI_IMPLEMENT_GETTER(KSI_HashChainLinkIdentity, KSI_Integer *, requestTime, RequestTime);
+KSI_IMPLEMENT_REF(KSI_HashChainLinkIdentity);
+KSI_IMPLEMENT_LIST(KSI_HashChainLinkIdentity, KSI_HashChainLinkIdentity_free);
+
+int KSI_AggregationHashChain_getIdentity(KSI_AggregationHashChain *aggr, KSI_LIST(KSI_HashChainLinkIdentity) **identity) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_LIST(KSI_HashChainLink) *chain = NULL;
+	KSI_LIST(KSI_HashChainLinkIdentity) *tmp = NULL;
+	KSI_HashChainLinkIdentity *id = NULL;
+	size_t i;
+
+	if (aggr == NULL || identity == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_HashChainLinkIdentityList_new(&tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(aggr->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_AggregationHashChain_getChain(aggr, &chain);
+	if (res != KSI_OK) {
+		KSI_pushError(aggr->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	for (i = KSI_HashChainLinkList_length(chain); i-- > 0;) {
+		KSI_HashChainLink *link = NULL;
+
+		res = KSI_HashChainLinkList_elementAt(chain, i, &link);
+		if (res != KSI_OK) {
+			KSI_pushError(aggr->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = hashChainLink_getIdentity(link, &id);
+		if (res != KSI_OK) {
+			KSI_pushError(aggr->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		if (id != NULL) {
+			res = KSI_HashChainLinkIdentityList_append(tmp, id);
+			if (res != KSI_OK) {
+				KSI_pushError(aggr->ctx, res, NULL);
+				goto cleanup;
+			}
+			id = NULL;
+		}
+	}
+
+	*identity = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+cleanup:
+	KSI_HashChainLinkIdentity_free(id);
+	KSI_HashChainLinkIdentityList_free(tmp);
+
+	return res;
+}
+
 int KSI_AggregationHashChain_aggregate(KSI_AggregationHashChain *aggr, int startLevel, int *endLevel, KSI_DataHash **root) {
 	int res = KSI_UNKNOWN_ERROR;
 	int outputLevel;
