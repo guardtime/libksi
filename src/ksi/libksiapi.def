@@ -368,6 +368,7 @@ EXPORTS
 	KSI_Signature_createDataHasher
 	KSI_Signature_getSigningTime
 	KSI_Signature_getSignerIdentity
+	KSI_Signature_getAggregationHashChainIdentity
 	KSI_Signature_getPublicationRecord
 	KSI_Signature_verifyDataHash
 	KSI_Signature_getVerificationResult
