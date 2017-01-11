@@ -921,17 +921,17 @@ cleanup:
 
 static int publicationTimeEquals(KSI_PublicationData* pubData, void* time) {
 	if (pubData == NULL || time == NULL) return 0;
-	return (KSI_Integer_equals(pubData->time, (KSI_Integer*)time));
+	return KSI_Integer_equals(pubData->time, (KSI_Integer*)time);
 }
 
 static int publicationHashEquals(KSI_PublicationData* pubData, void* hash) {
 	if (pubData == NULL || hash == NULL) return 0;
-	return !!(KSI_DataHash_equals(pubData->imprint, (KSI_DataHash*)hash));
+	return KSI_DataHash_equals(pubData->imprint, (KSI_DataHash*)hash);
 }
 
 static int publicationDataEquals(KSI_PublicationData* pubData, void* data) {
 	if (pubData == NULL || data == NULL) return 0;
-	return !!(KSI_DataHash_equals(pubData->imprint, ((KSI_PublicationData *)data)->imprint) &&
+	return (KSI_DataHash_equals(pubData->imprint, ((KSI_PublicationData *)data)->imprint) &&
 			KSI_Integer_equals(pubData->time, ((KSI_PublicationData *)data)->time));
 }
 
