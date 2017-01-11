@@ -38,6 +38,25 @@ extern "C" {
  */
 
 	/**
+	 * Hash chain link identity type.
+	 */
+	typedef enum KSI_HashChainLinkIdentityType_en {
+		/**
+		 * Legacy client identifier.
+		 * A client identifier converted from a legacy signature.
+		 */
+		KSI_IDENTITY_TYPE_LEGACY_ID,
+		/**
+		 * Metadata.
+		 * A structure that provides the ability to incorporate client identity and
+		 * other information about the request into the hash chain.
+		 */
+		KSI_IDENTITY_TYPE_METADATA,
+
+		KSI_IDENTITY_TYPE_UNKNOWN
+	} KSI_HashChainLinkIdentityType;
+
+	/**
 	 * This function aggregates the hashchain and returns the result hash via \c outputHash parameter.
 	 * \param[in]	chain			Hash chain (list of hash chain links)
 	 * \param[in]	inputHash		Input hash value.
@@ -187,6 +206,23 @@ extern "C" {
 	int KSI_CalendarHashChain_setHashChain(KSI_CalendarHashChain *t, KSI_LIST(KSI_HashChainLink) *hashChain);
 	KSI_DEFINE_REF(KSI_CalendarHashChain);
 	KSI_DEFINE_WRITE_BYTES(KSI_CalendarHashChain);
+
+	void KSI_HashChainLinkIdentity_free(KSI_HashChainLinkIdentity *identity);
+	int KSI_HashChainLinkIdentity_getType(const KSI_HashChainLinkIdentity *o, KSI_HashChainLinkIdentityType *v);
+	int KSI_HashChainLinkIdentity_getClientId(const KSI_HashChainLinkIdentity *o, KSI_Utf8String **v);
+	int KSI_HashChainLinkIdentity_getMachineId(const KSI_HashChainLinkIdentity *o, KSI_Utf8String **v);
+	int KSI_HashChainLinkIdentity_getSequenceNr(const KSI_HashChainLinkIdentity *o, KSI_Integer **v);
+	int KSI_HashChainLinkIdentity_getRequestTime(const KSI_HashChainLinkIdentity *o, KSI_Integer **v);
+	KSI_DEFINE_REF(KSI_HashChainLinkIdentity);
+
+	/**
+	 * Get aggregation hash chain identity. The returned list consists of individual hash chain link identities.
+	 * The identities in the list are ordered - the higher-link identity is before lower-link identity.
+	 * \param[in]	aggr		Aggregation hash chain.
+	 * \param[in]	identity	Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_AggregationHashChain_getIdentity(KSI_AggregationHashChain *aggr, KSI_HashChainLinkIdentityList **identity);
 
 	/**
 	 * Cleanup method for the aggregation hash chain.

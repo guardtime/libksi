@@ -560,6 +560,128 @@ static void testSignerIdentityMetaData(CuTest *tc) {
 #undef TEST_SIGNATURE_FILE
 }
 
+static void testAggregationHashChainIdentity(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-08-01.1.ksig"
+
+	int res;
+	const char *expected[] = {"GT","testA","36-test"};
+	KSI_Signature *sig = NULL;
+	KSI_HashChainLinkIdentity *identity = NULL;
+	KSI_HashChainLinkIdentityList *identityList = NULL;
+	size_t i;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to load signature.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_getAggregationHashChainIdentity(sig, &identityList);
+	CuAssert(tc, "Unable to get identity list from signature.", res == KSI_OK && identityList != NULL);
+
+	CuAssert(tc, "Identity list size mismatch.", KSI_HashChainLinkIdentityList_length(identityList) == (sizeof(expected) / sizeof(char*)));
+
+	for (i = 0; i < KSI_HashChainLinkIdentityList_length(identityList); i++) {
+		KSI_Utf8String *clientId = NULL;
+		KSI_Utf8String *machineId = NULL;
+		KSI_Integer *sequenceNr = NULL;
+		KSI_Integer *requestTime = NULL;
+		KSI_HashChainLinkIdentityType type;
+
+		res = KSI_HashChainLinkIdentityList_elementAt(identityList, i, &identity);
+		CuAssert(tc, "Unable to get identity from identity list.", res == KSI_OK && identity != NULL);
+
+		res = KSI_HashChainLinkIdentity_getType(identity, &type);
+		CuAssert(tc, "Unable to get client id from identity list.", res == KSI_OK);
+		CuAssert(tc, "Identity type mismatch.", type == KSI_IDENTITY_TYPE_LEGACY_ID);
+
+		res = KSI_HashChainLinkIdentity_getClientId(identity, &clientId);
+		CuAssert(tc, "Unable to get client id from identity list.", res == KSI_OK && clientId != NULL);
+
+		CuAssert(tc, "Unexpected client id.", !strncmp(expected[i], KSI_Utf8String_cstr(clientId), strlen(expected[i])));
+
+		res = KSI_HashChainLinkIdentity_getMachineId(identity, &machineId);
+		CuAssert(tc, "Machine id is not present.", res == KSI_OK && machineId == NULL);
+
+		res = KSI_HashChainLinkIdentity_getSequenceNr(identity, &sequenceNr);
+		CuAssert(tc, "Sequence number is not present.", res == KSI_OK && sequenceNr == NULL);
+
+		res = KSI_HashChainLinkIdentity_getRequestTime(identity, &requestTime);
+		CuAssert(tc, "Request time is not present.", res == KSI_OK && requestTime == NULL);
+	}
+
+	KSI_Signature_free(sig);
+	KSI_HashChainLinkIdentityList_free(identityList);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testAggregationHashChainIdentityWithMetaData(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2015-09-13_21-34-00.ksig"
+
+	int res;
+	struct {
+		int type;
+		char *clientId;
+		char *machineId;
+		uint64_t sequenceNr;
+		uint64_t requestTime;
+	} expected[] = {
+		{KSI_IDENTITY_TYPE_LEGACY_ID,	"GT",				NULL, 0, 0},
+		{KSI_IDENTITY_TYPE_LEGACY_ID,	"GT",				NULL, 0, 0},
+		{KSI_IDENTITY_TYPE_LEGACY_ID,	"release test",		NULL, 0, 0},
+		{KSI_IDENTITY_TYPE_METADATA,	"anon http",		NULL, 0, 0x051fa5314579d7}
+	};
+	KSI_Signature *sig = NULL;
+	KSI_HashChainLinkIdentity *identity = NULL;
+	KSI_HashChainLinkIdentityList *identityList = NULL;
+	size_t i;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to load signature.", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_getAggregationHashChainIdentity(sig, &identityList);
+	CuAssert(tc, "Unable to get identity list from signature.", res == KSI_OK && identityList != NULL);
+
+	CuAssert(tc, "Identity list size mismatch.", KSI_HashChainLinkIdentityList_length(identityList) == (sizeof(expected) / sizeof(expected[0])));
+
+	for (i = 0; i < KSI_HashChainLinkIdentityList_length(identityList); i++) {
+		KSI_HashChainLinkIdentityType type;
+		KSI_Utf8String *clientId = NULL;
+
+		res = KSI_HashChainLinkIdentityList_elementAt(identityList, i, &identity);
+		CuAssert(tc, "Unable to get identity from identity list.", res == KSI_OK && identity != NULL);
+
+
+		res = KSI_HashChainLinkIdentity_getClientId(identity, &clientId);
+		CuAssert(tc, "Unable to get client id from identity list.", res == KSI_OK && clientId != NULL);
+		CuAssert(tc, "Unexpected client id.", !strncmp(expected[i].clientId, KSI_Utf8String_cstr(clientId), strlen(expected[i].clientId)));
+
+		res = KSI_HashChainLinkIdentity_getType(identity, &type);
+		CuAssert(tc, "Unable to get type from identity list.", res == KSI_OK);
+		CuAssert(tc, "Identity type mismatch.", type == expected[i].type);
+
+		if (type == KSI_IDENTITY_TYPE_METADATA) {
+			KSI_Utf8String *machineId = NULL;
+			KSI_Integer *sequenceNr = NULL;
+			KSI_Integer *requestTime = NULL;
+
+			res = KSI_HashChainLinkIdentity_getMachineId(identity, &machineId);
+			CuAssert(tc, "Unexpected machine id.", res == KSI_OK && machineId == NULL);
+
+			res = KSI_HashChainLinkIdentity_getSequenceNr(identity, &sequenceNr);
+			CuAssert(tc, "Unable to get sequence number from identity list.", res == KSI_OK && sequenceNr != NULL);
+			CuAssert(tc, "Unexpected sequence number.", KSI_Integer_getUInt64(sequenceNr) == expected[i].sequenceNr);
+
+			res = KSI_HashChainLinkIdentity_getRequestTime(identity, &requestTime);
+			CuAssert(tc, "Unable to get request time from identity list.", res == KSI_OK && requestTime != NULL);
+			CuAssert(tc, "Unexpected request time.", KSI_Integer_getUInt64(requestTime) == expected[i].requestTime);
+		}
+	}
+
+	KSI_Signature_free(sig);
+	KSI_HashChainLinkIdentityList_free(identityList);
+
+#undef TEST_SIGNATURE_FILE
+}
+
 static void testSignatureWith2Anchors(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-two-anchors.tlv"
 
@@ -868,6 +990,8 @@ CuSuite* KSITest_Signature_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRFC3161WrongInputHash);
 	SUITE_ADD_TEST(suite, testSignerIdentity);
 	SUITE_ADD_TEST(suite, testSignerIdentityMetaData);
+	SUITE_ADD_TEST(suite, testAggregationHashChainIdentity);
+	SUITE_ADD_TEST(suite, testAggregationHashChainIdentityWithMetaData);
 	SUITE_ADD_TEST(suite, testSignatureWith2Anchors);
 	SUITE_ADD_TEST(suite, testVerifyCalendarChainAlgoChange);
 	SUITE_ADD_TEST(suite, testExtractInputHashLegacySignature);

@@ -1,4 +1,7 @@
 * IMPROVEMENT: Updated signature verification procedure. Added new error codes.
+* IMPROVEMENT: Provide identity information as a list.
+* IMPROVEMENT: Function KSI_Signature_getSignerIdentity is deprecated. See KSI_Signature_getAggregationHashChainIdentity for replacement.
+* BUGFIX: Corrected medadata request time parsing.
 * BUGFIX: Validate list impl pointer before use.
 * BUGFIX: Cryptoapi KSI_PKISignature_new fails if the input blob can not be parsed.
 * BUGFIX: CryptoAPI uses PKCS7 signatures embedded intermediate certificates in verification process.
@@ -107,7 +110,7 @@ Version 3.4
 * Local aggregation support.
 * Fixed calendar hash chain calculation.
 
-Version 3.2 
+Version 3.2
 Version 3.2
 
 2015-05-14 release (3.2.2.0)

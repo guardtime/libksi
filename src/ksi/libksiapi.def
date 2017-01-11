@@ -89,6 +89,13 @@ EXPORTS
 
 ;hashchain.h
 EXPORTS
+	KSI_HashChainLinkIdentity_free
+	KSI_HashChainLinkIdentity_getType
+	KSI_HashChainLinkIdentity_getClientId
+	KSI_HashChainLinkIdentity_getMachineId
+	KSI_HashChainLinkIdentity_getSequenceNr
+	KSI_HashChainLinkIdentity_getRequestTime
+	KSI_HashChainLinkIdentity_ref
 	KSI_HashChain_aggregate
 	KSI_HashChain_aggregateCalendar
 	KSI_HashChainLink_free
@@ -363,6 +370,7 @@ EXPORTS
 	KSI_Signature_createDataHasher
 	KSI_Signature_getSigningTime
 	KSI_Signature_getSignerIdentity
+	KSI_Signature_getAggregationHashChainIdentity
 	KSI_Signature_getPublicationRecord
 	KSI_Signature_verifyDataHash
 	KSI_Signature_getVerificationResult
@@ -390,6 +398,7 @@ EXPORTS
 	KSI_Signature_signWithPolicy
 	KSI_Signature_signAggregationChain
 	KSI_AggregationHashChain_aggregate
+	KSI_AggregationHashChain_getIdentity
 
 ;tlv_element.h
 EXPORTS
@@ -400,6 +409,7 @@ EXPORTS
 	KSI_TlvElement_getOctetString
 	KSI_TlvElement_getInteger
 	KSI_TlvElement_setUtf8String
+	KSI_TlvElement_setOctetString
 	KSI_TlvElement_setInteger
 
 ;tlv.h
@@ -746,6 +756,9 @@ EXPORTS
 EXPORTS
 	KSI_MetaDataElementList_free
 	KSI_MetaDataElementList_new
+
+	KSI_HashChainLinkIdentityList_free
+	KSI_HashChainLinkIdentityList_new
 
 	KSI_HashChainLinkList_free
 	KSI_HashChainLinkList_new

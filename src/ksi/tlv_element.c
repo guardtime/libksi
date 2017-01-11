@@ -442,6 +442,7 @@ int KSI_TlvElement_setElement(KSI_TlvElement *parent, KSI_TlvElement *child) {
 		case 0: /* Add a new value. */
 			res = KSI_TlvElement_appendElement(parent, child);
 			if (res != KSI_OK) goto cleanup;
+			parent->ftlv.dat_len += child->ftlv.hdr_len + child->ftlv.dat_len;
 			break;
 		case 1: /* Replace the existing value. */
 			res = KSI_TlvElementList_elementAt(fc.result, 0, &ptr);
@@ -464,6 +465,7 @@ int KSI_TlvElement_setElement(KSI_TlvElement *parent, KSI_TlvElement *child) {
 
 					goto cleanup;
 				}
+				parent->ftlv.dat_len += child->ftlv.hdr_len + child->ftlv.dat_len - ptr->ftlv.hdr_len - ptr->ftlv.dat_len;
 			}
 			break;
 		default:
@@ -666,6 +668,37 @@ int KSI_TlvElement_setUtf8String(KSI_TlvElement *parent, unsigned tag, KSI_Utf8S
 	el->ftlv.dat_len = KSI_Utf8String_size(s);
 	el->ptr_own = 0;
 	el->ptr = (unsigned char *)KSI_Utf8String_cstr(s);
+
+	res = KSI_TlvElement_detach(el);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_TlvElement_setElement(parent, el);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_TlvElement_free(el);
+
+	return res;
+}
+
+int KSI_TlvElement_setOctetString(KSI_TlvElement *parent, unsigned tag, KSI_OctetString *s) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_TlvElement *el = NULL;
+
+	if (parent == NULL || s == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_TlvElement_new(&el);
+	if (res != KSI_OK) goto cleanup;
+
+	el->ftlv.tag = tag;
+	el->ptr_own = 0;
+	KSI_OctetString_extract(s, (const unsigned char **)&el->ptr, &el->ftlv.dat_len);
 
 	res = KSI_TlvElement_detach(el);
 	if (res != KSI_OK) goto cleanup;
