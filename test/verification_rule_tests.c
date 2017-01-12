@@ -735,10 +735,40 @@ static void testRule_AggregationHashChainIndexConsistency_suffixChanged_verifyEr
 #undef TEST_SIGNATURE_FILE
 }
 
+static void testRule_AggregationHashChainAndRfc3161IndexConsistencyFail(CuTest *tc, const char *sigFile) {
+	int res = KSI_OK;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	VerificationTempData tempData;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(sigFile), &verCtx.signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
+
+	TEST_VERIFICATION_STEP_INIT;
+
+	res = KSI_VerificationRule_AggregationHashChainIndexConsistency(&verCtx, &verRes);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_12);
+
+	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
+
+	KSI_VerificationContext_clean(&verCtx);
+	KSI_Signature_free(verCtx.signature);
+}
+
 static void testRule_AggregationHashChainIndexConsistency_rfc3161ChainIndexChanged_verifyErrorResult(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-rfc3161-record-ok-changed-chain-index.ksig"
 
-	testRule_AggregationHashChainIndexConsistencyFail(tc, TEST_SIGNATURE_FILE);
+	testRule_AggregationHashChainAndRfc3161IndexConsistencyFail(tc, TEST_SIGNATURE_FILE);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -746,7 +776,7 @@ static void testRule_AggregationHashChainIndexConsistency_rfc3161ChainIndexChang
 static void testRule_AggregationHashChainIndexConsistency_rfc3161ChainIndexAndAggrTimeChanged_verifyErrorResult(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-rfc3161-record-ok-changed-chain-index-and-aggr-time.ksig"
 
-	testRule_AggregationHashChainIndexConsistencyFail(tc, TEST_SIGNATURE_FILE);
+	testRule_AggregationHashChainAndRfc3161IndexConsistencyFail(tc, TEST_SIGNATURE_FILE);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -3417,7 +3447,7 @@ static void testRule_UserProvidedPublicationExistence_pubTimeMissing_verifyError
 #undef TEST_SIGNATURE_FILE
 }
 
-static void testRule_UserProvidedPublicationVerification(CuTest *tc) {
+static void testRule_UserProvidedPublicationTimeVerification(CuTest *tc) {
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 
 	int res = KSI_UNKNOWN_ERROR;
@@ -3444,7 +3474,45 @@ static void testRule_UserProvidedPublicationVerification(CuTest *tc) {
 
 	TEST_VERIFICATION_STEP_INIT;
 
-	res = KSI_VerificationRule_UserProvidedPublicationVerification(&verCtx, &verRes);
+	res = KSI_VerificationRule_UserProvidedPublicationTimeVerification(&verCtx, &verRes);
+	CuAssert(tc, "Failed to verify signature publication data", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
+
+	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_PUBLICATION_WITH_PUBSTRING);
+
+	KSI_nofree(verCtx.userPublication);
+	KSI_Signature_free(verCtx.signature);
+	KSI_VerificationContext_clean(&verCtx);
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_UserProvidedPublicationHashVerification(CuTest *tc) {
+#define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	KSI_PublicationRecord *tempRec = NULL;
+	VerificationTempData tempData;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+
+	res = KSI_Signature_getPublicationRecord(verCtx.signature, &tempRec);
+	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && tempRec != NULL);
+
+	res = KSI_PublicationRecord_getPublishedData(tempRec, &verCtx.userPublication);
+	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && verCtx.userPublication != NULL);
+
+	TEST_VERIFICATION_STEP_INIT;
+
+	res = KSI_VerificationRule_UserProvidedPublicationHashVerification(&verCtx, &verRes);
 	CuAssert(tc, "Failed to verify signature publication data", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_PUBLICATION_WITH_PUBSTRING);
@@ -3504,7 +3572,7 @@ static void testRule_UserProvidedPublicationVerification_timeMismatch_verifyErro
 
 	TEST_VERIFICATION_STEP_INIT;
 
-	res = KSI_VerificationRule_UserProvidedPublicationVerification(&verCtx, &verRes);
+	res = KSI_VerificationRule_UserProvidedPublicationTimeVerification(&verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
 	TEST_ASSERT_VERIFICATION_STEP_NA(KSI_VERIFY_PUBLICATION_WITH_PUBSTRING);
@@ -3562,8 +3630,8 @@ static void testRule_UserProvidedPublicationVerification_hashMismatch_verifyErro
 
 	TEST_VERIFICATION_STEP_INIT;
 
-	res = KSI_VerificationRule_UserProvidedPublicationVerification(&verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_9);
+	res = KSI_VerificationRule_UserProvidedPublicationHashVerification(&verCtx, &verRes);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_PUB_4);
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_PUBLICATION_WITH_PUBSTRING);
 
@@ -4118,7 +4186,8 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationExistence_pubDataMissing_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationExistence_pubHashMissing_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationExistence_pubTimeMissing_verifyErrorResult);
-	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationVerification);
+	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationTimeVerification);
+	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationHashVerification);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationVerification_timeMismatch_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationVerification_hashMismatch_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationCreationTimeVerification);

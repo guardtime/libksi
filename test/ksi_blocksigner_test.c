@@ -177,6 +177,92 @@ static void testMedaData(CuTest *tc) {
 #undef TEST_AGGR_RESPONSE_FILE
 }
 
+static void testIdentityMedaData(CuTest *tc) {
+#define TEST_AGGR_RESPONSE_FILE  "resource/tlv/test_meta_data_response.tlv"
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_BlockSigner *bs = NULL;
+	KSI_MetaData *md = NULL;
+	char data[] = "LAPTOP";
+	const char *chainId[] = { "GT", "GT", "release test", "anon http" };
+	char *userId[] = { "Alice", "Bob", "Claire", NULL };
+	size_t i;
+	KSI_DataHash *hsh = NULL;
+	KSI_BlockSignerHandle *hndl[] = {NULL, NULL, NULL};
+	KSI_Signature *sig = NULL;
+	KSI_HashChainLinkIdentityList *identityList = NULL;
+
+	res = KSI_DataHash_create(ctx, data, strlen(data), KSI_HASHALG_SHA2_256, &hsh);
+	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
+
+	res = KSI_BlockSigner_new(ctx, KSI_HASHALG_SHA2_256, NULL, NULL, &bs);
+	CuAssert(tc, "Unable to create block signer instance.", res == KSI_OK && bs != NULL);
+
+	for (i = 0; userId[i] != NULL; i++) {
+		res = createMetaData(userId[i], &md);
+		CuAssert(tc, "Unable to create meta-data.", res == KSI_OK && md != NULL);
+
+		res = KSI_BlockSigner_addLeaf(bs, hsh, 0, md, &hndl[i]);
+		CuAssert(tc, "Unable to add leaf to the block signer.", res == KSI_OK && hndl[i] != NULL);
+
+		KSI_MetaData_free(md);
+		md = NULL;
+
+	}
+
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
+
+	res = KSI_BlockSigner_closeAndSign(bs);
+	CuAssert(tc, "Unable to close the blocksigner.", res == KSI_OK);
+
+	/* Loop over all the handles, and extract the signature. */
+	for (i = 0; userId[i] != NULL; i++) {
+		size_t k;
+
+		/* Extract the signature. */
+		res = KSI_BlockSignerHandle_getSignature(hndl[i], &sig);
+		CuAssert(tc, "Unable to extract signature.", res == KSI_OK && sig != NULL);
+
+		/* Verify the signature. */
+		res = KSI_verifySignature(ctx, sig);
+		CuAssert(tc, "Unable to verify the extracted signature.", res == KSI_OK);
+
+		res = KSI_Signature_getAggregationHashChainIdentity(sig, &identityList);
+		CuAssert(tc, "Unable to get identity list from signature.", res == KSI_OK && identityList != NULL);
+
+		for (k = 0; k < KSI_HashChainLinkIdentityList_length(identityList); k++) {
+			KSI_HashChainLinkIdentity *identity = NULL;
+			KSI_Utf8String *clientId = NULL;
+
+			res = KSI_HashChainLinkIdentityList_elementAt(identityList, k, &identity);
+			CuAssert(tc, "Unable to get identity from identity list.", res == KSI_OK && identity != NULL);
+
+			res = KSI_HashChainLinkIdentity_getClientId(identity, &clientId);
+			CuAssert(tc, "Unable to get client id from identity list.", res == KSI_OK && clientId != NULL);
+
+			if (k < KSI_HashChainLinkIdentityList_length(identityList) - 1) {
+				CuAssert(tc, "Unexpected client id.", !strncmp(chainId[k], KSI_Utf8String_cstr(clientId), strlen(chainId[k])));
+			} else {
+				CuAssert(tc, "Unexpected client id.", !strncmp(userId[i], KSI_Utf8String_cstr(clientId), strlen(userId[i])));
+			}
+		}
+
+		/* Cleanup. */
+		KSI_Signature_free(sig);
+		sig = NULL;
+
+		KSI_HashChainLinkIdentityList_free(identityList);
+		identityList = NULL;
+
+		KSI_BlockSignerHandle_free(hndl[i]);
+	}
+
+	KSI_DataHash_free(hsh);
+	KSI_MetaData_free(md);
+	KSI_BlockSigner_free(bs);
+#undef TEST_AGGR_RESPONSE_FILE
+}
+
 static void testSingle(CuTest *tc) {
 #define TEST_AGGR_RESPONSE_FILE  "resource/tlv/ok-sig-2014-07-01.1-aggr_response.tlv"
 	int res = KSI_UNKNOWN_ERROR;
@@ -340,6 +426,7 @@ CuSuite* KSITest_Blocksigner_getSuite(void) {
 
 	SUITE_ADD_TEST(suite, testFreeBeforeClose);
 	SUITE_ADD_TEST(suite, testMedaData);
+	SUITE_ADD_TEST(suite, testIdentityMedaData);
 	SUITE_ADD_TEST(suite, testSingle);
 	SUITE_ADD_TEST(suite, testReset);
 	SUITE_ADD_TEST(suite, testMaskingInput);
