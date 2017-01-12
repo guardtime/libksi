@@ -318,7 +318,6 @@ EXPORTS
 	KSI_PublicationsFile_free
 	KSI_PublicationsFile_findPublication
 	KSI_PublicationsFile_findPublicationByTime
-	KSI_PublicationsFile_findPublicationByHash
 	KSI_PublicationsFile_getSignedDataLength
 	KSI_PublicationData_fromBase32
 	KSI_PublicationData_ref

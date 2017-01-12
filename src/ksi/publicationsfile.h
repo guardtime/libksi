@@ -280,8 +280,6 @@ extern "C" {
 
 	int KSI_PublicationsFile_findPublicationByTime(const KSI_PublicationsFile *trust, KSI_Integer *time, KSI_PublicationRecord **outRec);
 
-	int KSI_PublicationsFile_findPublicationByHash(const KSI_PublicationsFile *trust, KSI_DataHash *imprint, KSI_PublicationRecord **outRec);
-
 	int KSI_PublicationsFile_findPublication(const KSI_PublicationsFile *trust, KSI_PublicationRecord *inRec, KSI_PublicationRecord **outRec);
 
 	/**
