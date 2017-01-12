@@ -1,3 +1,4 @@
+* BUGFIX: Fixed KSI_TlvElement nested structure serialization issue.
 * IMPROVEMENT: Provide identity information as a list.
 * IMPROVEMENT: Function KSI_Signature_getSignerIdentity is deprecated. See KSI_Signature_getAggregationHashChainIdentity for replacement.
 * BUGFIX: Corrected medadata request time parsing.
