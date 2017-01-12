@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
 	unsigned char buf[1024];
 	size_t buf_len;
 
-	char *signerIdentity = NULL;
+	KSI_HashChainLinkIdentityList *identityList = NULL;
 
 	FILE *logFile = NULL;
 
@@ -131,14 +131,40 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	/* Output the signer id */
-	res = KSI_Signature_getSignerIdentity(sign, &signerIdentity);
-	if (res == KSI_OK) {
-		printf("Signer id: %s\n", signerIdentity);
-	} else {
+	/* Output the identity metadata. */
+	res = KSI_Signature_getAggregationHashChainIdentity(sign, &identityList);
+	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to extract signer identity.\n");
 	}
-    
+
+	if (identityList != NULL) {
+		size_t k;
+
+		printf("Signer id: ");
+
+		for (k = 0; k < KSI_HashChainLinkIdentityList_length(identityList); k++) {
+			KSI_HashChainLinkIdentity *identity = NULL;
+			KSI_Utf8String *clientId = NULL;
+
+			res = KSI_HashChainLinkIdentityList_elementAt(identityList, k, &identity);
+			if (res != KSI_OK || identity == NULL) {
+				fprintf(stderr, "Unable to get link identity.");
+				goto cleanup;
+			}
+
+			res = KSI_HashChainLinkIdentity_getClientId(identity, &clientId);
+			if (res != KSI_OK || clientId == NULL) {
+				fprintf(stderr, "Unable to get client id.");
+				goto cleanup;
+			}
+
+			printf("%s%s", (k > 0 ? " :: " : ""), KSI_Utf8String_cstr(clientId));
+		}
+
+		printf("\n");
+	}
+
+
 	/* Serialize the signature. */
 	res = KSI_Signature_serialize(sign, &raw, &raw_len);
 	if (res != KSI_OK) {
@@ -179,7 +205,7 @@ cleanup:
 	if (in != NULL) fclose(in);
 	if (out != NULL) fclose(out);
 
-	KSI_free(signerIdentity);
+	KSI_HashChainLinkIdentityList_free(identityList);
 
 	KSI_Signature_free(sign);
 	KSI_DataHash_free(hsh);
