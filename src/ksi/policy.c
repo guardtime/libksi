@@ -451,62 +451,23 @@ static const KSI_Policy PolicyGeneral = {
 
 const KSI_Policy* KSI_VERIFICATION_POLICY_GENERAL = &PolicyGeneral;
 
+const char *KSI_VerificationErrorCode_toString(int errorCode) {
+	switch (errorCode) {
+		case KSI_VER_ERR_NONE:	return "";
+#define _(type, code, offset, desc) case KSI_VER_ERR_##type##_##code: return #type"-"#code;
+		KSI_VERIFICATION_ERROR_CODE_LIST
+#undef _
+		default:				return "Unknown";
+	}
+}
+
 const char *KSI_Policy_getErrorString(int errorCode) {
 	switch (errorCode) {
-		case KSI_VER_ERR_NONE:
-			return "No verification errors.";
-		case KSI_VER_ERR_GEN_1:
-			return "Wrong document.";
-		case KSI_VER_ERR_GEN_2:
-			return "Verification inconclusive.";
-		case KSI_VER_ERR_INT_1:
-			return "Inconsistent aggregation hash chains.";
-		case KSI_VER_ERR_INT_2:
-			return "Inconsistent aggregation hash chain aggregation times.";
-		case KSI_VER_ERR_INT_3:
-			return "Calendar hash chain input hash mismatch.";
-		case KSI_VER_ERR_INT_4:
-			return "Calendar hash chain aggregation time mismatch.";
-		case KSI_VER_ERR_INT_5:
-			return "Calendar hash chain shape inconsistent with aggregation time.";
-		case KSI_VER_ERR_INT_6:
-			return "Calendar hash chain time inconsistent with calendar authentication record time.";
-		case KSI_VER_ERR_INT_7:
-			return "Calendar hash chain time inconsistent with publication time.";
-		case KSI_VER_ERR_INT_8:
-			return "Calendar hash chain root hash is inconsistent with calendar authentication record input hash.";
-		case KSI_VER_ERR_INT_9:
-			return "Calendar hash chain root hash is inconsistent with publication record hash.";
-		case KSI_VER_ERR_INT_10:
-			return "Aggregation hash chain chain index mismatch.";
-		case KSI_VER_ERR_INT_11:
-			return "The metadata record in the aggregation hash chain may not be trusted.";
-		case KSI_VER_ERR_INT_12:
-			return "Inconsistent chain indexes.";
-		case KSI_VER_ERR_PUB_1:
-			return "Extender response calendar root hash mismatch.";
-		case KSI_VER_ERR_PUB_2:
-			return "Extender response inconsistent.";
-		case KSI_VER_ERR_PUB_3:
-			return "Extender response input hash mismatch.";
-		case KSI_VER_ERR_PUB_4:
-			return "Publication record hash and user provided publication hash mismatch.";
-		case KSI_VER_ERR_PUB_5:
-			return "Publication record hash and publications file publication hash mismatch.";
-		case KSI_VER_ERR_KEY_1:
-			return "Certificate not found.";
-		case KSI_VER_ERR_KEY_2:
-			return "PKI signature not verified with certificate.";
-		case KSI_VER_ERR_CAL_1:
-			return "Calendar root hash mismatch between signature and Extender chains.";
-		case KSI_VER_ERR_CAL_2:
-			return "Aggregation hash chain root hash and calendar hash chain input hash mismatch.";
-		case KSI_VER_ERR_CAL_3:
-			return "Aggregation time mismatch.";
-		case KSI_VER_ERR_CAL_4:
-			return "Calendar hash chain right links are inconsistent.";
-		default:
-			return "Unknown verification error code.";
+		case KSI_VER_ERR_NONE:	return "No verification errors";
+#define _(type, code, offset, desc) case KSI_VER_ERR_##type##_##code: return desc;
+		KSI_VERIFICATION_ERROR_CODE_LIST
+#undef _
+		default:				return "Unknown verification error code";
 	}
 }
 

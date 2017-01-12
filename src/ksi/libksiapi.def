@@ -891,6 +891,7 @@ EXPORTS
 ;policy.h
 EXPORTS
 	KSI_Policy_getErrorString
+	KSI_VerificationErrorCode_toString
 	KSI_Policy_create
 	KSI_Policy_clone
 	KSI_Policy_setFallback
