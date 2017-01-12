@@ -819,7 +819,7 @@ int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationCo
 		res = rfc3161_verifyChainIndex(ctx, sig);
 		if (res != KSI_OK) {
 			if (res == KSI_VERIFICATION_FAILURE) {
-				VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_10, step);
+				VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_12, step);
 				res = KSI_OK;
 				goto cleanup;
 			} else {
@@ -2546,7 +2546,10 @@ int KSI_VerificationRule_PublicationsFileContainsSignaturePublication(KSI_Verifi
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
+	KSI_Integer *sigPubTime = NULL;
+	KSI_DataHash *sigPubHash = NULL;
 	KSI_PublicationRecord *pubRec = NULL;
+	KSI_DataHash *pubHash = NULL;
 	VerificationTempData *tempData = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBFILE;
 
@@ -2589,7 +2592,20 @@ int KSI_VerificationRule_PublicationsFileContainsSignaturePublication(KSI_Verifi
 		goto cleanup;
 	}
 
-	res = KSI_PublicationsFile_findPublication(tempData->publicationsFile, sig->publication, &pubRec);
+	res = KSI_PublicationData_getTime(sig->publication->publishedData, &sigPubTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (sigPubTime == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Missing publication time in signature publication data.");
+		goto cleanup;
+	}
+
+	res = KSI_PublicationsFile_findPublicationByTime(tempData->publicationsFile, sigPubTime, &pubRec);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -2602,6 +2618,37 @@ int KSI_VerificationRule_PublicationsFileContainsSignaturePublication(KSI_Verifi
 		goto cleanup;
 	}
 
+	res = KSI_PublicationData_getImprint(pubRec->publishedData, &pubHash);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+	if (pubHash == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res = KSI_INVALID_VERIFICATION_INPUT, "Missing publication hash in publication data.");
+		goto cleanup;
+	}
+
+	res = KSI_PublicationData_getImprint(sig->publication->publishedData, &sigPubHash);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+	if (sigPubHash == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Missing publication hash in signature publication data.");
+		goto cleanup;
+	}
+
+	if (!KSI_DataHash_equals(pubHash, sigPubHash)) {
+		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Publications file publication hash:", pubHash);
+		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Signature publication record hash :", sigPubHash);
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_PUB_5, step);
+		res = KSI_OK;
+		goto cleanup;
+	}
 
 	VERIFICATION_RESULT_OK(step);
 	res = KSI_OK;
@@ -3156,13 +3203,79 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_UserProvidedPublicationVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_UserProvidedPublicationTimeVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *sig = NULL;
 	KSI_Integer *sigPubTime = NULL;
-	KSI_DataHash *sigPubHash = NULL;
 	KSI_Integer *usrPubTime = NULL;
+	const KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBSTRING;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL || info->userPublication == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->signature;
+	KSI_ERR_clearErrors(ctx);
+
+	KSI_LOG_info(ctx, "Verify user publication time.");
+
+	res = KSI_PublicationData_getTime(sig->publication->publishedData, &sigPubTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (sigPubTime == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Missing publication time in signature publication data.");
+		goto cleanup;
+	}
+
+	res = KSI_PublicationData_getTime(info->userPublication, &usrPubTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (usrPubTime == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res = KSI_INVALID_VERIFICATION_INPUT, "Missing publication timein user publication data.");
+		goto cleanup;
+	}
+
+	if (KSI_Integer_compare(sigPubTime, usrPubTime) != 0) {
+		KSI_LOG_debug(ctx, "Publication time from signature publication: %i", KSI_Integer_getUInt64(sigPubTime));
+		KSI_LOG_debug(ctx, "Publication time from user publication     : %i", KSI_Integer_getUInt64(usrPubTime));
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_UserProvidedPublicationHashVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *sig = NULL;
+	KSI_DataHash *sigPubHash = NULL;
 	KSI_DataHash *usrPubHash = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBSTRING;
 
@@ -3182,14 +3295,8 @@ int KSI_VerificationRule_UserProvidedPublicationVerification(KSI_VerificationCon
 	sig = info->signature;
 	KSI_ERR_clearErrors(ctx);
 
-	KSI_LOG_info(ctx, "Verify user publication.");
+	KSI_LOG_info(ctx, "Verify user publication hash.");
 
-	res = KSI_PublicationData_getTime(sig->publication->publishedData, &sigPubTime);
-	if (res != KSI_OK) {
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
 	res = KSI_PublicationData_getImprint(sig->publication->publishedData, &sigPubHash);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
@@ -3197,18 +3304,12 @@ int KSI_VerificationRule_UserProvidedPublicationVerification(KSI_VerificationCon
 		goto cleanup;
 	}
 
-	if (sigPubTime == NULL || sigPubHash == NULL) {
+	if (sigPubHash == NULL) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Missing publication time or hash in signature publication data.");
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Missing publication hash in signature publication data.");
 		goto cleanup;
 	}
 
-	res = KSI_PublicationData_getTime(info->userPublication, &usrPubTime);
-	if (res != KSI_OK) {
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
 	res = KSI_PublicationData_getImprint(info->userPublication, &usrPubHash);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
@@ -3216,28 +3317,19 @@ int KSI_VerificationRule_UserProvidedPublicationVerification(KSI_VerificationCon
 		goto cleanup;
 	}
 
-	if (usrPubTime == NULL || usrPubHash == NULL) {
+	if (usrPubHash == NULL) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res = KSI_INVALID_VERIFICATION_INPUT, "Missing publication time or hash in user publication data.");
-		goto cleanup;
-	}
-
-	if (KSI_Integer_compare(sigPubTime, usrPubTime) != 0) {
-		KSI_LOG_debug(ctx, "Publication time from signature publication: %i", KSI_Integer_getUInt64(sigPubTime));
-		KSI_LOG_debug(ctx, "Publication time from user publication     : %i", KSI_Integer_getUInt64(usrPubTime));
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		res = KSI_OK;
 		goto cleanup;
 	}
 
 	if (!KSI_DataHash_equals(sigPubHash, usrPubHash)) {
 		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Root hash from signature publication:", sigPubHash);
 		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Root hash from user publication     :", usrPubHash);
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_9, step);
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_PUB_4, step);
 		res = KSI_OK;
 		goto cleanup;
 	}
-
 
 	VERIFICATION_RESULT_OK(step);
 	res = KSI_OK;
@@ -3246,7 +3338,6 @@ cleanup:
 
 	return res;
 }
-
 
 int KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
