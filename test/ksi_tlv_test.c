@@ -536,6 +536,94 @@ static void testTlvElementIntegers(CuTest *tc) {
 	KSI_Integer_free(out);
 	KSI_TlvElement_free(el);
 }
+
+void testTlvElementNested(CuTest *tc) {
+	int res;
+	unsigned char buf[0xffff + 4];
+	size_t len;
+	/* # Expected result of this test.
+		TLV[1f00]:
+			TLV[08]:
+				TLV[01]: abcd
+				TLV[02]: 1234
+			TLV[1600]:
+				TLV[03]: 1a2b
+				TLV[04]: 11aa
+	 */
+	unsigned char exp[] = {0x9f, 0x00, 0x00, 0x16, 0x08, 0x08, 0x01, 0x02, 0xab, 0xcd, 0x02, 0x02, 0x12, 0x34, 0x96, 0x00, 0x00, 0x08, 0x03, 0x02, 0x1a, 0x2b, 0x04, 0x02, 0x11, 0xaa};
+
+
+	KSI_TlvElement *outer = NULL;
+	KSI_TlvElement *inner8 = NULL;
+	KSI_TlvElement *inner16 = NULL;
+	KSI_Integer *sub1 = NULL;
+	KSI_Integer *sub2 = NULL;
+	KSI_Integer *sub3 = NULL;
+	KSI_Integer *sub4 = NULL;
+
+
+	/* Create the outer (PDU) element. */
+	res = KSI_TlvElement_new(&outer);
+	CuAssert(tc, "Unable to create TlvElement.", res == KSI_OK && outer != NULL);
+	outer->ftlv.tag = 0x1f00;
+
+	/* Create the first nested element. */
+	res = KSI_TlvElement_new(&inner8);
+	CuAssert(tc, "Unable to create TlvElement.", res == KSI_OK && inner8 != NULL);
+	inner8->ftlv.tag = 0x08;
+
+	/* Create the second nested element. */
+	res = KSI_TlvElement_new(&inner16);
+	CuAssert(tc, "Unable to create TlvElement.", res == KSI_OK && inner16 != NULL);
+	inner16->ftlv.tag = 0x1600;
+
+	/* Create randomish elements. */
+	res = KSI_Integer_new(ctx, 0xabcd, &sub1);
+	CuAssert(tc, "Unable to create KSI_Integer.", res == KSI_OK && sub1 != NULL);
+
+	res = KSI_Integer_new(ctx, 0x1234, &sub2);
+	CuAssert(tc, "Unable to create KSI_Integer.", res == KSI_OK && sub2 != NULL);
+
+	res = KSI_Integer_new(ctx, 0x1a2b, &sub3);
+	CuAssert(tc, "Unable to create KSI_Integer.", res == KSI_OK && sub3 != NULL);
+
+	res = KSI_Integer_new(ctx, 0x11aa, &sub4);
+	CuAssert(tc, "Unable to create KSI_Integer.", res == KSI_OK && sub4 != NULL);
+
+	/* Add the nested elements to the outer element. */
+	res = KSI_TlvElement_appendElement(outer, inner8);
+	CuAssert(tc, "Unable to append nested element.", res == KSI_OK);
+	res = KSI_TlvElement_appendElement(outer, inner16);
+	CuAssert(tc, "Unable to append nested element.", res == KSI_OK);
+
+	/* Add nested integer values to the first nested element. */
+	res = KSI_TlvElement_setInteger(inner8, 0x01, sub1);
+	CuAssert(tc, "Unable to set nested integer.", res == KSI_OK);
+	res = KSI_TlvElement_setInteger(inner8, 0x02, sub2);
+	CuAssert(tc, "Unable to set nested integer.", res == KSI_OK);
+
+	/* Add nested integer values to the second nested element. */
+	res = KSI_TlvElement_setInteger(inner16, 0x03, sub3);
+	CuAssert(tc, "Unable to set nested integer.", res == KSI_OK);
+	res = KSI_TlvElement_setInteger(inner16, 0x04, sub4);
+	CuAssert(tc, "Unable to set nested integer.", res == KSI_OK);
+
+	/* Serialize the structure. */
+	res = KSI_TlvElement_serialize(outer, buf, sizeof(buf), &len, 0);
+
+	CuAssert(tc, "Unexpected serialized length.", len == sizeof(exp));
+	CuAssert(tc, "Unexpected serialized value", !KSITest_memcmp(buf, exp, sizeof(exp)));
+
+
+	KSI_TlvElement_free(outer);
+	KSI_TlvElement_free(inner8);
+	KSI_TlvElement_free(inner16);
+	KSI_Integer_free(sub1);
+	KSI_Integer_free(sub2);
+	KSI_Integer_free(sub3);
+	KSI_Integer_free(sub4);
+}
+
 CuSuite* KSITest_TLV_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
@@ -560,6 +648,7 @@ CuSuite* KSITest_TLV_getSuite(void)
 	SUITE_ADD_TEST(suite, testBadUtf8);
 	SUITE_ADD_TEST(suite, testBadUtf8WithZeros);
 	SUITE_ADD_TEST(suite, testTlvElementIntegers);
+	SUITE_ADD_TEST(suite, testTlvElementNested);
 
 	return suite;
 }

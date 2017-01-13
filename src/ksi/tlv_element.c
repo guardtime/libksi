@@ -202,8 +202,9 @@ void KSI_TlvElement_free(KSI_TlvElement *t) {
 int KSI_TlvElement_serialize(KSI_TlvElement *element, unsigned char *buf, size_t buf_size, size_t *len, int opt) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i;
-	size_t dat_len = 0;
-	size_t hdr_len = 0;
+	size_t dat_len;
+	size_t hdr_len;
+	size_t buf_len;
 
 	if (element == NULL || (buf == NULL && buf_size != 0)) {
 		res = KSI_INVALID_ARGUMENT;
@@ -214,7 +215,7 @@ int KSI_TlvElement_serialize(KSI_TlvElement *element, unsigned char *buf, size_t
 		dat_len = element->ftlv.dat_len;
 
 		if (buf != NULL) {
-			if (buf_size <= element->ftlv.dat_len) {
+			if (buf_size <= dat_len) {
 				res = KSI_BUFFER_OVERFLOW;
 				goto cleanup;
 			}
@@ -226,6 +227,9 @@ int KSI_TlvElement_serialize(KSI_TlvElement *element, unsigned char *buf, size_t
 		}
 	} else {
 		size_t tmpLen = 0;
+
+		dat_len = 0;
+
 		for (i = KSI_TlvElementList_length(element->subList); i > 0; i--) {
 			KSI_TlvElement *tmp = NULL;
 
@@ -245,15 +249,22 @@ int KSI_TlvElement_serialize(KSI_TlvElement *element, unsigned char *buf, size_t
 		}
 	}
 
-	/* Calculate the header length only if the header is required. */
+
+	/* Calculate the header length. */
+	hdr_len = HDR_LEN(element->ftlv.tag, dat_len);
+
+	/* Calculate the length of the output buffer. */
+	buf_len = dat_len;
+
+	/* Add the header length, if requested. */
 	if ((opt & KSI_TLV_OPT_NO_HEADER) == 0) {
-		hdr_len = HDR_LEN(element->ftlv.tag, dat_len);
+		buf_len += hdr_len;
 	}
 
 	if (buf != NULL) {
 		size_t startIdx;
 
-		if (hdr_len + dat_len > buf_size) {
+		if (buf_len > buf_size) {
 			res = KSI_BUFFER_OVERFLOW;
 			goto cleanup;
 		}
@@ -263,13 +274,13 @@ int KSI_TlvElement_serialize(KSI_TlvElement *element, unsigned char *buf, size_t
 		if ((opt & KSI_TLV_OPT_NO_HEADER) == 0) {
 			startIdx--;
 			if (hdr_len == 4) {
-				buf[startIdx--] = element->ftlv.dat_len & 0xff;
-				buf[startIdx--] = (element->ftlv.dat_len >> 8) & 0xff;
+				buf[startIdx--] = dat_len & 0xff;
+				buf[startIdx--] = (dat_len >> 8) & 0xff;
 				buf[startIdx--] = element->ftlv.tag & 0xff;
 				buf[startIdx] = (element->ftlv.tag >> 8) & KSI_TLV_MASK_TLV8_TYPE;
 				buf[startIdx] |= KSI_TLV_MASK_TLV16;
 			} else {
-				buf[startIdx--] = element->ftlv.dat_len & 0xff;
+				buf[startIdx--] = dat_len & 0xff;
 				buf[startIdx] = element->ftlv.tag & KSI_TLV_MASK_TLV8_TYPE;
 			}
 
@@ -278,11 +289,11 @@ int KSI_TlvElement_serialize(KSI_TlvElement *element, unsigned char *buf, size_t
 		}
 
 		if ((opt & KSI_TLV_OPT_NO_MOVE) == 0) {
-			memmove(buf, buf + startIdx, hdr_len + dat_len);
+			memmove(buf, buf + startIdx, buf_len);
 		}
 	}
 
-	if (len != NULL) *len = hdr_len + dat_len;
+	if (len != NULL) *len = buf_len;
 
 	res = KSI_OK;
 
