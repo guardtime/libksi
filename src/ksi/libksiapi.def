@@ -404,6 +404,9 @@ EXPORTS
 	KSI_TlvElement_new
 	KSI_TlvElement_free
 	KSI_TlvElement_serialize
+	KSI_TlvElement_appendElement
+	KSI_TlvElement_setElement
+	KSI_TlvElement_getElement
 	KSI_TlvElement_getUtf8String
 	KSI_TlvElement_getOctetString
 	KSI_TlvElement_getInteger
