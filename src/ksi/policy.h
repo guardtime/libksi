@@ -76,12 +76,12 @@ extern "C" {
 		_(INT,  3,    0x200,  "Calendar hash chain input hash mismatch") \
 		_(INT,  4,    0x200,  "Calendar hash chain aggregation time mismatch") \
 		_(INT,  5,    0x200,  "Calendar hash chain shape inconsistent with aggregation time") \
-		_(INT,  6,    0x200,  "Calendar hash chain time inconsistent with calendar auth record time") \
+		_(INT,  6,    0x200,  "Calendar hash chain time inconsistent with calendar authentication record time") \
 		_(INT,  7,    0x200,  "Calendar hash chain time inconsistent with publication time") \
-		_(INT,  8,    0x200,  "Calendar hash chain root hash is inconsistent with calendar auth record input hash") \
-		_(INT,  9,    0x200,  "Calendar hash chain root hash is inconsistent with publication record hash") \
+		_(INT,  8,    0x200,  "Calendar hash chain root hash is inconsistent with calendar authentication record input hash") \
+		_(INT,  9,    0x200,  "Calendar hash chain root hash is inconsistent with published hash value") \
 		_(INT,  10,   0x200,  "Aggregation hash chain chain index mismatch") \
-		_(INT,  11,   0x200,  "The meta-data record in the aggregation hash chain may not be trusted") \
+		_(INT,  11,   0x200,  "The metadata record in the aggregation hash chain may not be trusted") \
 		_(INT,  12,   0x200,  "Inconsistent chain indexes") \
 		\
 		_(PUB,  1,    0x300,  "Extender response calendar root hash mismatch") \
@@ -93,8 +93,8 @@ extern "C" {
 		_(KEY,  1,    0x400,  "Certificate not found") \
 		_(KEY,  2,    0x400,  "PKI signature not verified with certificate") \
 		\
-		_(CAL,  1,    0x500,  "Calendar root hash mismatch between signature and Extender chains") \
-		_(CAL,  2,    0x500,  "Aggregation hash chain root hash and calendar hash chain input hash mismatch") \
+		_(CAL,  1,    0x500,  "Calendar root hash mismatch between signature and calendar database chain") \
+		_(CAL,  2,    0x500,  "Aggregation hash chain root hash and calendar database hash chain input hash mismatch") \
 		_(CAL,  3,    0x500,  "Aggregation time mismatch") \
 		_(CAL,  4,    0x500,  "Calendar hash chain right links are inconsistent")
 
