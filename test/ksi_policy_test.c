@@ -106,9 +106,19 @@ static void TestErrorStrings(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	/* Verify that the first, last and undefined error codes return expected error strings. */
-	CuAssert(tc, "Unexpected verification error string.", strcmp(KSI_Policy_getErrorString(KSI_VER_ERR_NONE), "No verification errors.") == 0);
-	CuAssert(tc, "Unexpected verification error string.", strcmp(KSI_Policy_getErrorString(KSI_VER_ERR_CAL_4), "Calendar hash chain right links are inconsistent.") == 0);
-	CuAssert(tc, "Unexpected verification error string.", strcmp(KSI_Policy_getErrorString(KSI_VER_ERR_CAL_4 + 1), "Unknown verification error code.") == 0);
+	CuAssert(tc, "Unexpected verification error string.", strcmp(KSI_VerificationErrorCode_toString(KSI_VER_ERR_NONE), "") == 0);
+	CuAssert(tc, "Unexpected verification error string.", strcmp(KSI_VerificationErrorCode_toString(KSI_VER_ERR_CAL_4), "CAL-4") == 0);
+	CuAssert(tc, "Unexpected verification error string.", strcmp(KSI_VerificationErrorCode_toString(KSI_VER_ERR_CAL_4 + 1), "Unknown") == 0);
+}
+
+static void TestErrorDescription(CuTest* tc) {
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	KSI_ERR_clearErrors(ctx);
+
+	/* Verify that the first, last and undefined error codes return expected error strings. */
+	CuAssert(tc, "Unexpected verification error description.", strcmp(KSI_Policy_getErrorString(KSI_VER_ERR_NONE), "No verification errors") == 0);
+	CuAssert(tc, "Unexpected verification error description.", strcmp(KSI_Policy_getErrorString(KSI_VER_ERR_CAL_4), "Calendar hash chain right links are inconsistent") == 0);
+	CuAssert(tc, "Unexpected verification error description.", strcmp(KSI_Policy_getErrorString(KSI_VER_ERR_CAL_4 + 1), "Unknown verification error code") == 0);
 }
 
 static void TestVerificationContext(CuTest* tc) {
@@ -708,7 +718,7 @@ static void TestInternalPolicy_FAIL_WithInvalidRfc3161ChainIndex(CuTest* tc) {
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_FAIL,
-		KSI_VER_ERR_INT_10,
+		KSI_VER_ERR_INT_12,
 		"KSI_VerificationRule_AggregationHashChainIndexConsistency"
 	};
 
@@ -2220,7 +2230,7 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithPublicationRecord(CuTe
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_OK,
 		KSI_VER_ERR_NONE,
-		"KSI_VerificationRule_UserProvidedPublicationVerification"
+		"KSI_VerificationRule_UserProvidedPublicationHashVerification"
 	};
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -3206,6 +3216,7 @@ CuSuite* KSITest_Policy_getSuite(void) {
 
 	SUITE_ADD_TEST(suite, TestInvalidParams);
 	SUITE_ADD_TEST(suite, TestErrorStrings);
+	SUITE_ADD_TEST(suite, TestErrorDescription);
 	SUITE_ADD_TEST(suite, TestVerificationContext);
 	SUITE_ADD_TEST(suite, TestPolicyCreation);
 	SUITE_ADD_TEST(suite, TestSingleRulePolicy);

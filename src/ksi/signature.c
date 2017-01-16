@@ -37,27 +37,16 @@ typedef struct headerRec_st HeaderRec;
 
 KSI_IMPORT_TLV_TEMPLATE(KSI_Signature);
 KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationRecord);
-KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationHashChain);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationAuthRec);
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarAuthRec);
 KSI_IMPORT_TLV_TEMPLATE(KSI_RFC3161);
+KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationHashChain);
 
 KSI_IMPLEMENT_REF(KSI_Signature);
 
 /**
  * KSI_AggregationHashChain
  */
-void KSI_AggregationHashChain_free(KSI_AggregationHashChain *aggr) {
-	if (aggr != NULL && --aggr->ref == 0) {
-		KSI_Integer_free(aggr->aggrHashId);
-		KSI_Integer_free(aggr->aggregationTime);
-		KSI_IntegerList_free(aggr->chainIndex);
-		KSI_OctetString_free(aggr->inputData);
-		KSI_DataHash_free(aggr->inputHash);
-		KSI_HashChainLinkList_free(aggr->chain);
-		KSI_free(aggr);
-	}
-}
 
 static int addChainIndex(KSI_CTX *ctx, KSI_AggregationHashChain *chain) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -116,6 +105,9 @@ int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHash
 	size_t listLen;
 	size_t i;
 	KSI_TLV *tlv = NULL;
+	KSI_LIST(KSI_HashChainLink) *pList = NULL;
+	KSI_LIST(KSI_Integer) *pIndex = NULL;
+	KSI_LIST(KSI_Integer) *pCurrentIndex = NULL;
 
 	if (sig == NULL || aggr == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -124,7 +116,13 @@ int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHash
 
 	KSI_ERR_clearErrors(sig->ctx);
 
-	if (KSI_HashChainLinkList_length(aggr->chain) > 0) {
+	res = KSI_AggregationHashChain_getChain(aggr, &pList);
+	if (res != KSI_OK) {
+		KSI_pushError(sig->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (KSI_HashChainLinkList_length(pList) > 0) {
 		/* Get and update the aggregation time. */
 		res = KSI_Signature_getSigningTime(sig, &pAggrTm);
 		if (res != KSI_OK) {
@@ -132,7 +130,15 @@ int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHash
 			goto cleanup;
 		}
 
-		aggr->aggregationTime = KSI_Integer_ref(pAggrTm);
+		{
+			KSI_Integer *ref = NULL;
+			res = KSI_AggregationHashChain_setAggregationTime(aggr, ref = KSI_Integer_ref(pAggrTm));
+			if (res != KSI_OK) {
+				KSI_Integer_free(ref);
+				KSI_pushError(sig->ctx, res, NULL);
+				goto cleanup;
+			}
+		}
 
 		/* Update the aggregation hash chain. */
 		listLen = KSI_AggregationHashChainList_length(sig->aggregationChainList);
@@ -142,10 +148,27 @@ int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHash
 		}
 
 		/* Just make sure there is a chain index present. */
-		if (aggr->chainIndex == NULL) {
+		res = KSI_AggregationHashChain_getChainIndex(aggr, &pIndex);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		if (pIndex == NULL) {
 			res = addChainIndex(sig->ctx, aggr);
 			if (res != KSI_OK) {
 				KSI_pushError(sig->ctx, res, NULL);
+				goto cleanup;
+			}
+
+			res = KSI_AggregationHashChain_getChainIndex(aggr, &pIndex);
+			if (res != KSI_OK) {
+				KSI_pushError(sig->ctx, res, NULL);
+				goto cleanup;
+			}
+
+			if (pIndex == NULL) {
+				KSI_pushError(sig->ctx, res = KSI_INVALID_STATE, NULL);
 				goto cleanup;
 			}
 		}
@@ -162,17 +185,19 @@ int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHash
 		/* Traverse the chain index from back to forth, and add the values to the begining of the
 		 * aggregation hash chain.
 		 */
-		for (i = KSI_IntegerList_length(pCurrent->chainIndex); i > 0; i--) {
+
+		res = KSI_AggregationHashChain_getChainIndex(pCurrent, &pCurrentIndex);
+		for (i = KSI_IntegerList_length(pCurrentIndex); i > 0; i--) {
 			KSI_Integer *tmp = NULL;
 			KSI_Integer *ref = NULL;
 
-			res = KSI_IntegerList_elementAt(pCurrent->chainIndex, i - 1, &tmp);
+			res = KSI_IntegerList_elementAt(pCurrentIndex, i - 1, &tmp);
 			if (res != KSI_OK) {
 				KSI_pushError(sig->ctx, res, NULL);
 				goto cleanup;
 			}
 
-			res = KSI_IntegerList_insertAt(aggr->chainIndex, 0, ref = KSI_Integer_ref(tmp));
+			res = KSI_IntegerList_insertAt(pIndex, 0, ref = KSI_Integer_ref(tmp));
 			if (res != KSI_OK) {
 				/* Cleanup the reference. */
 				KSI_Integer_free(ref);
@@ -227,131 +252,6 @@ cleanup:
 	return res;
 }
 
-
-int KSI_AggregationHashChain_aggregate(const KSI_AggregationHashChain *aggr, int startLevel, int *endLevel, KSI_DataHash **root) {
-	int res = KSI_UNKNOWN_ERROR;
-
-	if (aggr == NULL || startLevel < 0 || startLevel > 0xff) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	KSI_ERR_clearErrors(aggr->ctx);
-
-	if (aggr->aggrHashId == NULL || aggr->chain == NULL || aggr->inputHash == NULL) {
-		KSI_pushError(aggr->ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
-		goto cleanup;
-	}
-
-	res = KSI_HashChain_aggregate(aggr->ctx, aggr->chain, aggr->inputHash, startLevel, KSI_Integer_getUInt64(aggr->aggrHashId), endLevel, root);
-	if (res != KSI_OK) {
-		KSI_pushError(aggr->ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
-		goto cleanup;
-	}
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
-int KSI_AggregationHashChain_calculateShape(KSI_AggregationHashChain *chn, KSI_uint64_t *shape) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_uint64_t tmp;
-	size_t i;
-
-	if (chn == NULL || shape == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	/* Left pad the value with 1. */
-	tmp = 1;
-
-	i = KSI_HashChainLinkList_length(chn->chain);
-	if (i > (sizeof(KSI_uint64_t) << 3) + 1) {
-		res = KSI_INVALID_STATE;
-		goto cleanup;
-	}
-
-	for (; i > 0; i--) {
-		KSI_HashChainLink *p = NULL;
-		int isLeft;
-		res = KSI_HashChainLinkList_elementAt(chn->chain, i - 1, &p);
-		if (res != KSI_OK) goto cleanup;
-
-		tmp <<= 1;
-
-		res = KSI_HashChainLink_getIsLeft(p, &isLeft);
-		if (res != KSI_OK) goto cleanup;
-
-		if (isLeft) {
-			tmp |= 1;
-		}
-	}
-
-	*shape = tmp;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
-int KSI_AggregationHashChain_new(KSI_CTX *ctx, KSI_AggregationHashChain **out) {
-	KSI_AggregationHashChain *tmp = NULL;
-	int res;
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || out == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	tmp = KSI_new(KSI_AggregationHashChain);
-	if (tmp == NULL) {
-		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	tmp->ctx = ctx;
-	tmp->ref = 1;
-	tmp->aggregationTime = NULL;
-	tmp->chain = NULL;
-	tmp->chainIndex = NULL;
-	tmp->inputData = NULL;
-	tmp->inputHash = NULL;
-	tmp->aggrHashId = NULL;
-
-	*out = tmp;
-	tmp = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_AggregationHashChain_free(tmp);
-
-	return res;
-}
-
-KSI_IMPLEMENT_REF(KSI_AggregationHashChain);
-KSI_IMPLEMENT_WRITE_BYTES(KSI_AggregationHashChain, 0x0801, 0, 0);
-KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_Integer*, aggregationTime, AggregationTime);
-KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_LIST(KSI_Integer)*, chainIndex, ChainIndex);
-KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_OctetString*, inputData, InputData);
-KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_DataHash*, inputHash, InputHash);
-KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_Integer*, aggrHashId, AggrHashId);
-KSI_IMPLEMENT_GETTER(KSI_AggregationHashChain, KSI_LIST(KSI_HashChainLink) *, chain, Chain);
-
-KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_Integer*, aggregationTime, AggregationTime);
-KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_LIST(KSI_Integer)*, chainIndex, ChainIndex);
-KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_OctetString*, inputData, InputData);
-KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_DataHash*, inputHash, InputHash);
-KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_Integer*, aggrHashId, AggrHashId);
-KSI_IMPLEMENT_SETTER(KSI_AggregationHashChain, KSI_LIST(KSI_HashChainLink) *, chain, Chain);
 
 /**
  * KSI_AggregationAuthRec
@@ -753,51 +653,6 @@ cleanup:
 	return res;
 }
 
-int KSI_AggregationHashChainList_aggregate(KSI_AggregationHashChainList *chainList, KSI_CTX *ctx, int level, KSI_DataHash **outputHash) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_DataHash *hsh = NULL;
-	size_t i;
-
-	if (chainList == NULL || ctx == NULL || outputHash == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	/* Aggregate all the aggregation hash chains. */
-	for (i = 0; i < KSI_AggregationHashChainList_length(chainList); i++) {
-		const KSI_AggregationHashChain* aggrChain = NULL;
-		KSI_DataHash *tmp = NULL;
-
-		res = KSI_AggregationHashChainList_elementAt(chainList, i, (KSI_AggregationHashChain **)&aggrChain);
-		if (res != KSI_OK || aggrChain == NULL) {
-			KSI_pushError(ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
-			goto cleanup;
-		}
-
-		res = KSI_HashChain_aggregate(ctx, aggrChain->chain, aggrChain->inputHash,
-				level, (int)KSI_Integer_getUInt64(aggrChain->aggrHashId), &level, &tmp);
-		if (res != KSI_OK){
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
-
-		if (hsh != NULL) {
-			KSI_DataHash_free(hsh);
-		}
-		hsh = tmp;
-	}
-
-	*outputHash = hsh;
-	hsh = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_DataHash_free(hsh);
-
-	return res;
-}
 
 
 static int removeCalAuthAndPublication(KSI_Signature *sig) {
@@ -1521,9 +1376,17 @@ int KSI_Signature_getDocumentHash(KSI_Signature *sig, KSI_DataHash **hsh) {
 			goto cleanup;
 		}
 
-		inputHash = aggr->inputHash;
+		res = KSI_AggregationHashChain_getInputHash(aggr, &inputHash);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
 	} else {
-		inputHash = sig->rfc3161->inputHash;
+		res = KSI_RFC3161_getInputHash(sig->rfc3161, &inputHash);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
 	}
 
 	*hsh = inputHash;
@@ -1718,6 +1581,7 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 	char *signerId = NULL;
 	size_t signerId_size = 1; // At least 1 for trailing zero.
 	size_t signerId_len = 0;
+	KSI_LIST(KSI_HashChainLink) *pLinks = NULL;
 
 	if (sig == NULL || signerIdentity == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1742,12 +1606,18 @@ int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
 			goto cleanup;
 		}
 
-		for (j = KSI_HashChainLinkList_length(aggrRec->chain); j-- > 0;) {
+		res = KSI_AggregationHashChain_getChain(aggrRec, &pLinks);
+		if (res != KSI_OK || pLinks == NULL) {
+			KSI_pushError(sig->ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
+			goto cleanup;
+		}
+
+		for (j = KSI_HashChainLinkList_length(pLinks); j-- > 0;) {
 			KSI_HashChainLink *link = NULL;
 			KSI_MetaDataElement *metaData = NULL;
 			KSI_OctetString *legacyId = NULL;
 
-			res = KSI_HashChainLinkList_elementAt(aggrRec->chain, j, &link);
+			res = KSI_HashChainLinkList_elementAt(pLinks, j, &link);
 			if (res != KSI_OK) {
 				KSI_pushError(sig->ctx, res, NULL);
 				goto cleanup;
@@ -1841,6 +1711,75 @@ cleanup:
 
 	KSI_free(signerId);
 	KSI_Utf8StringList_free(idList);
+
+	return res;
+}
+
+int KSI_Signature_getAggregationHashChainIdentity(KSI_Signature *sig, KSI_HashChainLinkIdentityList **identity) {
+	int res = KSI_UNKNOWN_ERROR;
+	size_t i;
+	KSI_HashChainLinkIdentityList *tmp = NULL;
+	KSI_HashChainLinkIdentityList *aggrId = NULL;
+	KSI_HashChainLinkIdentity *linkId = NULL;
+
+	if (sig == NULL || identity == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(sig->ctx);
+
+	res = KSI_HashChainLinkIdentityList_new(&tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(sig->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Extract all identities from all aggregation hash chains from top to bottom. */
+	for (i = KSI_AggregationHashChainList_length(sig->aggregationChainList); i-- > 0;) {
+		size_t k;
+		KSI_AggregationHashChain *aggr = NULL;
+
+		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, &aggr);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_AggregationHashChain_getIdentity(aggr, &aggrId);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		for (k = 0; k < KSI_HashChainLinkIdentityList_length(aggrId); k++) {
+			KSI_HashChainLinkIdentity *tmpId = NULL;
+
+			res = KSI_HashChainLinkIdentityList_elementAt(aggrId, k, &tmpId);
+			if (res != KSI_OK) {
+				KSI_pushError(sig->ctx, res, NULL);
+				goto cleanup;
+			}
+
+			res = KSI_HashChainLinkIdentityList_append(tmp, linkId = KSI_HashChainLinkIdentity_ref(tmpId));
+			if (res != KSI_OK) {
+				KSI_pushError(sig->ctx, res, NULL);
+				goto cleanup;
+			}
+			linkId = NULL;
+		}
+		KSI_HashChainLinkIdentityList_free(aggrId);
+		aggrId = NULL;
+	}
+
+	*identity = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+	KSI_HashChainLinkIdentityList_free(aggrId);
+	KSI_HashChainLinkIdentityList_free(tmp);
+	KSI_HashChainLinkIdentity_free(linkId);
 
 	return res;
 }

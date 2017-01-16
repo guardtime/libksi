@@ -39,9 +39,36 @@ struct KSI_CalendarHashChain_st {
 	KSI_Integer *publicationTime;
 	KSI_Integer *aggregationTime;
 	KSI_DataHash *inputHash;
+	KSI_DataHash *outputHash;
 	KSI_LIST(KSI_HashChainLink) *hashChain;
 };
 
+struct KSI_AggregationHashChain_st {
+	KSI_CTX *ctx;
+	size_t ref;
+
+	KSI_Integer *aggregationTime;
+	KSI_LIST(KSI_Integer) *chainIndex;
+	KSI_OctetString *inputData;
+	KSI_DataHash *inputHash;
+	KSI_Integer *aggrHashId;
+	KSI_LIST(KSI_HashChainLink) *chain;
+
+	KSI_DataHash *outputHash;
+	int outputLevel;
+	int inputLevel;
+};
+
+struct KSI_HashChainLinkIdentity_st {
+	KSI_CTX *ctx;
+	size_t ref;
+
+	KSI_HashChainLinkIdentityType type;
+	KSI_Utf8String *clientId;
+	KSI_Utf8String *machineId;
+	KSI_Integer *sequenceNr;
+	KSI_Integer *requestTime;
+};
 
 #ifdef __cplusplus
 }

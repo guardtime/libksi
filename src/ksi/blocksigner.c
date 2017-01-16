@@ -24,6 +24,7 @@
 #include "internal.h"
 #include "blocksigner.h"
 #include "tree_builder.h"
+#include "hashchain.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,6 +42,9 @@ struct KSI_BlockSigner_st {
 	KSI_DataHash *origPrevLeaf;
 	KSI_OctetString *iv;
 	KSI_MetaData *metaData;
+
+	/** Common hasher object. */
+	KSI_DataHasher *hsr;
 
 	KSI_TreeBuilderLeafProcessor metaDataProcessor;
 	KSI_TreeBuilderLeafProcessor maskingProcessor;
@@ -130,8 +134,6 @@ static int maskingProcessor(KSI_TreeNode *in, void *c, KSI_TreeNode **out) {
 	KSI_BlockSigner *signer = c;
 	KSI_TreeNode *tmp = NULL;
 	KSI_DataHash *mask = NULL;
-	KSI_DataHasher *maskHsr = NULL;
-	KSI_DataHasher *leafHsr = NULL;
 	KSI_DataHash *leafHash = NULL;
 	unsigned char tmpLvl;
 
@@ -150,26 +152,26 @@ static int maskingProcessor(KSI_TreeNode *in, void *c, KSI_TreeNode **out) {
 		}
 
 		/* Calculate the mask value. */
-		res = KSI_DataHasher_open(signer->ctx, signer->builder->algo, &maskHsr);
+		res = KSI_DataHasher_reset(signer->builder->hsr);
 		if (res != KSI_OK) {
 			KSI_pushError(signer->ctx, res, NULL);
 			goto cleanup;
 		}
 
 		/* Change here, if there is a need, to add previous values that are not nodes containing hash values. */
-		res = KSI_DataHasher_addImprint(maskHsr, signer->prevLeaf);
+		res = KSI_DataHasher_addImprint(signer->builder->hsr, signer->prevLeaf);
 		if (res != KSI_OK) {
 			KSI_pushError(signer->ctx, res, NULL);
 			goto cleanup;
 		}
 
-		res = KSI_DataHasher_addOctetString(maskHsr, signer->iv);
+		res = KSI_DataHasher_addOctetString(signer->builder->hsr, signer->iv);
 		if (res != KSI_OK) {
 			KSI_pushError(signer->ctx, res, NULL);
 			goto cleanup;
 		}
 
-		res = KSI_DataHasher_close(maskHsr, &mask);
+		res = KSI_DataHasher_close(signer->builder->hsr, &mask);
 		if (res != KSI_OK) {
 			KSI_pushError(signer->ctx, res, NULL);
 			goto cleanup;
@@ -183,19 +185,19 @@ static int maskingProcessor(KSI_TreeNode *in, void *c, KSI_TreeNode **out) {
 		}
 
 		/* Calculate the actual leaf value. */
-		res = KSI_DataHasher_open(signer->ctx, signer->builder->algo, &leafHsr);
+		res = KSI_DataHasher_reset(signer->builder->hsr);
 		if (res != KSI_OK) {
 			KSI_pushError(signer->ctx, res, NULL);
 			goto cleanup;
 		}
 
-		res = KSI_DataHasher_addImprint(leafHsr, mask);
+		res = KSI_DataHasher_addImprint(signer->builder->hsr, mask);
 		if (res != KSI_OK) {
 			KSI_pushError(signer->ctx, res, NULL);
 			goto cleanup;
 		}
 
-		res = KSI_DataHasher_addImprint(leafHsr, in->hash);
+		res = KSI_DataHasher_addImprint(signer->builder->hsr, in->hash);
 		if (res != KSI_OK) {
 			KSI_pushError(signer->ctx, res, NULL);
 			goto cleanup;
@@ -208,13 +210,13 @@ static int maskingProcessor(KSI_TreeNode *in, void *c, KSI_TreeNode **out) {
 
 		tmpLvl = (unsigned char)(in->level + 1);
 
-		res = KSI_DataHasher_add(leafHsr, &tmpLvl, 1);
+		res = KSI_DataHasher_add(signer->builder->hsr, &tmpLvl, 1);
 		if (res != KSI_OK) {
 			KSI_pushError(signer->ctx, res, NULL);
 			goto cleanup;
 		}
 
-		res = KSI_DataHasher_close(leafHsr, &leafHash);
+		res = KSI_DataHasher_close(signer->builder->hsr, &leafHash);
 		if (res != KSI_OK) {
 			KSI_pushError(signer->ctx, res, NULL);
 			goto cleanup;
@@ -234,8 +236,6 @@ static int maskingProcessor(KSI_TreeNode *in, void *c, KSI_TreeNode **out) {
 
 cleanup:
 
-	KSI_DataHasher_free(leafHsr);
-	KSI_DataHasher_free(maskHsr);
 	KSI_DataHash_free(mask);
 	KSI_DataHash_free(leafHash);
 
@@ -269,12 +269,16 @@ int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *pr
 	tmp->origPrevLeaf = NULL;
 	tmp->iv = NULL;
 	tmp->metaData = NULL;
+	tmp->hsr = NULL;
 
 	tmp->metaDataProcessor.c = tmp;
 	tmp->metaDataProcessor.fn = metaDataProcessor;
 
 	tmp->maskingProcessor.c = tmp;
 	tmp->maskingProcessor.fn = maskingProcessor;
+
+	res = KSI_DataHasher_open(ctx, algoId, &tmp->hsr);
+	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_TreeBuilder_new(ctx, algoId, &tmp->builder);
 	if (res != KSI_OK) goto cleanup;
@@ -316,6 +320,7 @@ void KSI_BlockSigner_free(KSI_BlockSigner *signer) {
 		KSI_OctetString_free(signer->iv);
 		KSI_DataHash_free(signer->prevLeaf);
 		KSI_DataHash_free(signer->origPrevLeaf);
+		KSI_DataHasher_free(signer->hsr);
 		KSI_free(signer);
 	}
 }

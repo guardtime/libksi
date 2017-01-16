@@ -28,6 +28,7 @@
 #include "net.h"
 #include "pkitruststore.h"
 #include "ctx_impl.h"
+#include "hashchain_impl.h"
 
 #define KSI_DEFINE_VERIFICATION_POLICY(name) unsigned name[] = {
 #define KSI_END_VERIFICATION_POLICY , 0};
@@ -383,7 +384,7 @@ static int verifyInternallyAggregationChain(KSI_Signature *sig) {
 
 	/* Aggregate all the aggregation chains. */
 	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
-		const KSI_AggregationHashChain* aggregationChain = NULL;
+		KSI_AggregationHashChain* aggregationChain = NULL;
 		KSI_DataHash *tmpHash = NULL;
 
 
@@ -442,7 +443,7 @@ static int verifyInternallyAggregationChain(KSI_Signature *sig) {
 			}
 		}
 
-		res = KSI_HashChain_aggregate(aggregationChain->ctx, aggregationChain->chain, aggregationChain->inputHash, level, (int)KSI_Integer_getUInt64(aggregationChain->aggrHashId), &level, &tmpHash);
+		res = KSI_AggregationHashChain_aggregate(aggregationChain, level, &level, &tmpHash);
 		if (res != KSI_OK) goto cleanup;
 
 		/* TODO! Instead of freeing the object - reuse it */

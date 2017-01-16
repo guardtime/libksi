@@ -38,6 +38,25 @@ extern "C" {
  */
 
 	/**
+	 * Hash chain link identity type.
+	 */
+	typedef enum KSI_HashChainLinkIdentityType_en {
+		/**
+		 * Legacy client identifier.
+		 * A client identifier converted from a legacy signature.
+		 */
+		KSI_IDENTITY_TYPE_LEGACY_ID,
+		/**
+		 * Metadata.
+		 * A structure that provides the ability to incorporate client identity and
+		 * other information about the request into the hash chain.
+		 */
+		KSI_IDENTITY_TYPE_METADATA,
+
+		KSI_IDENTITY_TYPE_UNKNOWN
+	} KSI_HashChainLinkIdentityType;
+
+	/**
 	 * This function aggregates the hashchain and returns the result hash via \c outputHash parameter.
 	 * \param[in]	chain			Hash chain (list of hash chain links)
 	 * \param[in]	inputHash		Input hash value.
@@ -187,6 +206,97 @@ extern "C" {
 	int KSI_CalendarHashChain_setHashChain(KSI_CalendarHashChain *t, KSI_LIST(KSI_HashChainLink) *hashChain);
 	KSI_DEFINE_REF(KSI_CalendarHashChain);
 	KSI_DEFINE_WRITE_BYTES(KSI_CalendarHashChain);
+
+	void KSI_HashChainLinkIdentity_free(KSI_HashChainLinkIdentity *identity);
+	int KSI_HashChainLinkIdentity_getType(const KSI_HashChainLinkIdentity *o, KSI_HashChainLinkIdentityType *v);
+	int KSI_HashChainLinkIdentity_getClientId(const KSI_HashChainLinkIdentity *o, KSI_Utf8String **v);
+	int KSI_HashChainLinkIdentity_getMachineId(const KSI_HashChainLinkIdentity *o, KSI_Utf8String **v);
+	int KSI_HashChainLinkIdentity_getSequenceNr(const KSI_HashChainLinkIdentity *o, KSI_Integer **v);
+	int KSI_HashChainLinkIdentity_getRequestTime(const KSI_HashChainLinkIdentity *o, KSI_Integer **v);
+	KSI_DEFINE_REF(KSI_HashChainLinkIdentity);
+
+	/**
+	 * Get aggregation hash chain identity. The returned list consists of individual hash chain link identities.
+	 * The identities in the list are ordered - the higher-link identity is before lower-link identity.
+	 * \param[in]	aggr		Aggregation hash chain.
+	 * \param[in]	identity	Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_AggregationHashChain_getIdentity(KSI_AggregationHashChain *aggr, KSI_HashChainLinkIdentityList **identity);
+
+	/**
+	 * Cleanup method for the aggregation hash chain.
+	 * \param[in]	aggr		Aggregation hash chain.
+	 */
+	void KSI_AggregationHashChain_free(KSI_AggregationHashChain *aggr);
+
+	/**
+	 * Aggregation hash chain constructor.
+	 * \param[in]	ctx			KSI context.
+	 * \param[out]	out			Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_AggregationHashChain_new(KSI_CTX *ctx, KSI_AggregationHashChain **out);
+
+	/**
+	 * This function appends the aggregation chain to the signature. This function also updates
+	 * the aggregation time and chain index.
+	 * \param[in]	sig			KSI signature.
+	 * \param[in]	aggr		Aggregation chain.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHashChain *aggr);
+
+	/**
+	 * Aggregate the aggregation chain.
+	 * \param[in]	aggr		The aggregation chain.
+	 * \param[in]	startLevel	The level of the first chain link.
+	 * \param[out]	endLevel	The level of the root node. Can be NULL.
+	 * \param[out]	root		Pointer to the receiving pointer. Can be NULL.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_AggregationHashChain_aggregate(KSI_AggregationHashChain *aggr, int startLevel, int *endLevel, KSI_DataHash **root);
+
+	/**
+	 * This function will represent the shape of the aggregation chain. The bits represent the path from the root
+	 * of the tree to the location of a hash value as a sequence of moves from a parent node in the tree to either
+	 * the left or right child (bit values 0 and 1, respectively). Each bit sequence starts with a 1-bit to make
+	 * sure no left most 0-bits are lost.
+	 * \param[in]	chn			The aggregation chain.
+	 * \param[out]	shape		Pointer to the receiving variable.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_AggregationHashChain_calculateShape(KSI_AggregationHashChain *chn, KSI_uint64_t *shape);
+
+	int KSI_AggregationHashChain_getAggregationTime(const KSI_AggregationHashChain *aggr, KSI_Integer **aggregationTime);
+	int KSI_AggregationHashChain_getChainIndex(const KSI_AggregationHashChain * aggr, KSI_LIST(KSI_Integer) **chainIndex);
+	int KSI_AggregationHashChain_getInputData(const KSI_AggregationHashChain * aggr, KSI_OctetString **inputData);
+	int KSI_AggregationHashChain_getInputHash(const KSI_AggregationHashChain * aggr, KSI_DataHash **inputHash);
+	int KSI_AggregationHashChain_getAggrHashId(const KSI_AggregationHashChain * aggr, KSI_Integer **aggrHashId);
+	int KSI_AggregationHashChain_getChain(const KSI_AggregationHashChain * aggr, KSI_LIST(KSI_HashChainLink) **chain);
+
+	int KSI_AggregationHashChain_setAggregationTime(KSI_AggregationHashChain *aggr, KSI_Integer *aggregationTime);
+	int KSI_AggregationHashChain_setChainIndex(KSI_AggregationHashChain * aggr, KSI_LIST(KSI_Integer) *chainIndex);
+	int KSI_AggregationHashChain_setInputData(KSI_AggregationHashChain * aggr, KSI_OctetString *inputData);
+	int KSI_AggregationHashChain_setInputHash(KSI_AggregationHashChain * aggr, KSI_DataHash *inputHash);
+	int KSI_AggregationHashChain_setAggrHashId(KSI_AggregationHashChain * aggr, KSI_Integer *aggrHashId);
+	int KSI_AggregationHashChain_setChain(KSI_AggregationHashChain * aggr, KSI_LIST(KSI_HashChainLink) *chain);
+	KSI_DEFINE_REF(KSI_AggregationHashChain);
+	KSI_DEFINE_WRITE_BYTES(KSI_AggregationHashChain);
+
+	/**
+	 * This function aggregates the aggregation hash chain list and returns the result hash via \c outputHash parameter.
+	 * \param[in]	chainList		Hash chain list (list of hash chains).
+	 * \param[in]	ctx				KSI context.
+	 * \param[in]	level			Aggregation level.
+	 * \param[out]	outputHash		Pointer to the receiving pointer to data hash object.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \note The output memory buffer belongs to the caller and needs to be freed
+	 * by the caller using #KSI_free.
+	 */
+	int KSI_AggregationHashChainList_aggregate(KSI_AggregationHashChainList *chainList, KSI_CTX *ctx, int level, KSI_DataHash **outputHash);
+
 
 /**
  * @}

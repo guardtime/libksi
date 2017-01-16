@@ -20,6 +20,7 @@
 #include <string.h>
 #include <ksi/net.h>
 #include <ksi/pkitruststore.h>
+#include <ksi/hashchain.h>
 
 #include "all_tests.h"
 #include "../src/ksi/ctx_impl.h"
@@ -29,6 +30,7 @@
 #include "ksi/net_uri.h"
 #include "ksi/tree_builder.h"
 #include "../src/ksi/signature_impl.h"
+
 
 extern KSI_CTX *ctx;
 

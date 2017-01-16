@@ -233,10 +233,16 @@ static int intCmp(KSI_uint64_t a, KSI_uint64_t b){
 static int aggregationHashChainCmp(const KSI_AggregationHashChain **left, const KSI_AggregationHashChain **right) {
 	const KSI_AggregationHashChain *l = *left;
 	const KSI_AggregationHashChain *r = *right;
-	if (l == r || l == NULL || r == NULL || l->chainIndex == NULL || r->chainIndex == NULL) {
+	KSI_LIST(KSI_Integer) *leftChainIndex = NULL;
+	KSI_LIST(KSI_Integer) *rightChainIndex = NULL;
+
+	KSI_AggregationHashChain_getChainIndex(l, &leftChainIndex);
+	KSI_AggregationHashChain_getChainIndex(r, &rightChainIndex);
+	if (l == r || l == NULL || r == NULL || leftChainIndex == NULL || rightChainIndex == NULL) {
 		return intCmp((KSI_uint64_t)right, (KSI_uint64_t)left);
 	}
-	return intCmp(KSI_IntegerList_length(r->chainIndex), KSI_IntegerList_length(l->chainIndex));
+
+	return intCmp(KSI_IntegerList_length(rightChainIndex), KSI_IntegerList_length(leftChainIndex));
 }
 
 static int checkSignatureInternals(KSI_CTX *ctx, KSI_Signature *sig) {

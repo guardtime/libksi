@@ -46,18 +46,6 @@ extern "C" {
 		KSI_PKISignedData *signatureData;
 	};
 
-	struct KSI_AggregationHashChain_st {
-		KSI_CTX *ctx;
-		size_t ref;
-
-		KSI_Integer *aggregationTime;
-		KSI_LIST(KSI_Integer) *chainIndex;
-		KSI_OctetString *inputData;
-		KSI_DataHash *inputHash;
-		KSI_Integer *aggrHashId;
-		KSI_LIST(KSI_HashChainLink) *chain;
-	};
-
 	struct KSI_RFC3161_st {
 		KSI_CTX *ctx;
 		size_t ref;
