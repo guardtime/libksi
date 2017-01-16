@@ -176,8 +176,6 @@ static int curlReceive(KSI_RequestHandle *handle) {
 	KSI_HttpClient *http = NULL;
 	int still_running;
 	bool end_wait = false;
-	struct timeval tv_start;
-	struct timeval tv_end;
 
 	if (handle == NULL || handle->client == NULL || handle->implCtx == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -190,7 +188,6 @@ static int curlReceive(KSI_RequestHandle *handle) {
 	implCtx = handle->implCtx;
 
 	KSI_LOG_debug(handle->ctx, "Waiting for response.");
-	gettimeofday(&tv_start, NULL);
 
 	while (!end_wait) {
 		struct CURLMsg *cm = NULL;
@@ -206,8 +203,7 @@ static int curlReceive(KSI_RequestHandle *handle) {
 		}
 	}
 
-	gettimeofday(&tv_end, NULL);
-	KSI_LOG_debug(handle->ctx, "Response received in %lldms.", (tv_end.tv_sec - tv_start.tv_sec) * 1000 + (tv_end.tv_usec - tv_start.tv_usec) / 1000);
+	KSI_LOG_debug(handle->ctx, "Response received.");
 
 	curl_multi_remove_handle((CURLM *) http->implCtx, implCtx->curl);
 
