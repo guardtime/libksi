@@ -55,7 +55,7 @@ static void testLoadSignatureFromFile(CuTest *tc) {
 
 static void testVerifySignatureNew(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/"TEST_RESOURCE_EXT_VER"/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 
 	int res;
 	KSI_Signature *sig = NULL;
@@ -280,7 +280,7 @@ static void testVerifySignatureWithUserPublication(CuTest *tc) {
 
 static void testVerifySignatureExtendedToHead(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-head.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/"TEST_RESOURCE_EXT_VER"/ok-sig-2014-04-30.1-head-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-head-extend_response.tlv"
 	int res;
 	KSI_Signature *sig = NULL;
 	KSI_PolicyVerificationResult *result = NULL;
@@ -698,7 +698,7 @@ static void testSignatureWith2Anchors(CuTest *tc) {
 
 static void testVerifyCalendarChainAlgoChange(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/cal_algo_switch.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/"TEST_RESOURCE_EXT_VER"/cal_algo_switch-extend_resposne.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/cal_algo_switch-extend_resposne.tlv"
 
 	int res;
 	unsigned char in[0x1ffff];

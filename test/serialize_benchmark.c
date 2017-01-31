@@ -47,7 +47,7 @@ int main() {
 		goto cleanup;
 	}
 
-	f = fopen("test/resource/tlv/"TEST_RESOURCE_AGGR_VER"/ok-sig-2014-07-01.1-aggr_response.tlv", "rb");
+	f = fopen("test/resource/tlv/" TEST_RESOURCE_AGGR_VER "/ok-sig-2014-07-01.1-aggr_response.tlv", "rb");
 	if (f == NULL) {
 		fprintf(stderr, "Unable to open input.\n");
 		goto cleanup;

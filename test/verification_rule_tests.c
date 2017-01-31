@@ -1726,7 +1726,7 @@ static void testRule_SignatureDoesNotContainPublication_verifyErrorResult(CuTest
 
 static void testRule_ExtendedSignatureCalendarChainRightLinksMatch(CuTest *tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/"TEST_RESOURCE_EXT_VER"/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 
 	int res = KSI_OK;
 	KSI_VerificationContext verCtx;
@@ -1939,7 +1939,7 @@ static void testRule_SignaturePublicationRecordExistence_verifyErrorResult(CuTes
 
 static void testRule_ExtendedSignatureCalendarChainRootHash(CuTest *tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/"TEST_RESOURCE_EXT_VER"/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 
 	int res = KSI_OK;
 	KSI_VerificationContext verCtx;
@@ -2069,7 +2069,7 @@ static void testRule_CalendarHashChainDoesNotExist_verifyErrorResult(CuTest *tc)
 
 static void testRule_ExtendedSignatureCalendarChainInputHash(CuTest *tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/"TEST_RESOURCE_EXT_VER"/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 
 	int res;
 	KSI_VerificationContext verCtx;
@@ -2105,7 +2105,7 @@ static void testRule_ExtendedSignatureCalendarChainInputHash(CuTest *tc) {
 
 static void testRule_ExtendedSignatureCalendarChainInputHash_nokAggrOutHash_verifyErrorResult(CuTest *tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/"TEST_RESOURCE_EXT_VER"/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 
 	int res;
 	KSI_VerificationContext verCtx;
@@ -2186,7 +2186,7 @@ static void testRule_ExtendedSignatureCalendarChainInputHash_verifyErrorResult(C
 
 static void testRule_ExtendedSignatureCalendarChainAggregationTime(CuTest *tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/"TEST_RESOURCE_EXT_VER"/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 
 	int res;
 	KSI_VerificationContext verCtx;
@@ -2931,7 +2931,7 @@ static void testRule_ExtendingPermittedVerification_verifyErrorResult(CuTest *tc
 }
 
 static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse(CuTest *tc, char *testSignatureFile) {
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/"TEST_RESOURCE_EXT_VER"/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
 	int res = KSI_UNKNOWN_ERROR;
@@ -3055,7 +3055,7 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse_veri
 }
 
 static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(CuTest *tc, char *testSignatureFile) {
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/"TEST_RESOURCE_EXT_VER"/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
 	int res = KSI_UNKNOWN_ERROR;
@@ -3177,7 +3177,7 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_veri
 }
 
 static void testRule_PublicationsFileExtendedSignatureInputHash(CuTest *tc, char *testSignatureFile) {
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/"TEST_RESOURCE_EXT_VER"/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 
 	int res = KSI_UNKNOWN_ERROR;
@@ -3725,7 +3725,7 @@ static void testRule_UserProvidedPublicationCreationTimeVerification_verifyError
 
 static void testRule_UserProvidedPublicationHashMatchesExtendedResponse(CuTest *tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/"TEST_RESOURCE_EXT_VER"/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_VerificationContext verCtx;
@@ -3769,7 +3769,7 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse(CuTest *
 
 static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_verifyErrorResult(CuTest *tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/"TEST_RESOURCE_EXT_VER"/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 #define TEST_MOCK_IMPRINT      "01db27c0db0aebb8d3963c3a720985cedb600f91854cdb1e45ad631611c39284dd"
 
 	int res = KSI_UNKNOWN_ERROR;
@@ -3834,7 +3834,7 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_verifyEr
 
 static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_wrongCore_verifyErrorResult(CuTest *tc) {
 #define TEST_SIGNATURE_FILE     "resource/tlv/all-wrong-hash-chains-in-signature.ksig"
-#define TEST_EXT_RESPONSE_FILE  "resource/tlv/"TEST_RESOURCE_EXT_VER"/all-wrong-hash-chains-in-signature-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/" TEST_RESOURCE_EXT_VER "/all-wrong-hash-chains-in-signature-extend_response.tlv"
 #define TEST_PUB_STRING_FROM_DIFFERENT_CORE "AAAAAA-CT5VGY-AAJXGM-OSRUAE-MOQ6RW-BMQ2ZJ-CNIE5V-6HCC5D-UUXKB5-I5EKSS-MVD7PJ-MA2QLD"
 
 	int res = KSI_UNKNOWN_ERROR;
@@ -3876,7 +3876,7 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_wrongCor
 
 static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse(CuTest *tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/"TEST_RESOURCE_EXT_VER"/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_VerificationContext verCtx;
@@ -3989,7 +3989,7 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse_verifyEr
 
 static void testRule_UserProvidedPublicationExtendedSignatureInputHash(CuTest *tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/"TEST_RESOURCE_EXT_VER"/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_VerificationContext verCtx;
@@ -4033,7 +4033,7 @@ static void testRule_UserProvidedPublicationExtendedSignatureInputHash(CuTest *t
 
 static void testRule_UserProvidedPublicationExtendedSignatureInputHash_verifyErrorResult(CuTest *tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/"TEST_RESOURCE_EXT_VER"/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 #define TEST_MOCK_IMPRINT      "01db27c0db0aebb8d3963c3a720985cedb600f91854cdb1e45ad631611c39284dd"
 
 	int res = KSI_UNKNOWN_ERROR;
