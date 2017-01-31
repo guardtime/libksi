@@ -3835,7 +3835,7 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_verifyEr
 static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_wrongCore_verifyErrorResult(CuTest *tc) {
 #define TEST_SIGNATURE_FILE     "resource/tlv/all-wrong-hash-chains-in-signature.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/"TEST_RESOURCE_EXT_VER"/all-wrong-hash-chains-in-signature-extend_response.tlv"
-#define TEST_PUB_STRING         "AAAAAA-CT5VGY-AAPUCF-L3EKCC-NRSX56-AXIDFL-VZJQK4-WDCPOE-3KIWGB-XGPPM3-O5BIMW-REOVR4"
+#define TEST_PUB_STRING_FROM_DIFFERENT_CORE "AAAAAA-CT5VGY-AAJXGM-OSRUAE-MOQ6RW-BMQ2ZJ-CNIE5V-6HCC5D-UUXKB5-I5EKSS-MVD7PJ-MA2QLD"
 
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_VerificationContext verCtx;
@@ -3855,7 +3855,7 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_wrongCor
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
-	res = KSI_PublicationData_fromBase32(ctx, TEST_PUB_STRING, &verCtx.userPublication);
+	res = KSI_PublicationData_fromBase32(ctx, TEST_PUB_STRING_FROM_DIFFERENT_CORE, &verCtx.userPublication);
 	CuAssert(tc, "Failed decoding publication string.", res == KSI_OK && verCtx.userPublication != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
@@ -3871,7 +3871,7 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_wrongCor
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
-#undef TEST_PUB_STRING
+#undef TEST_PUB_STRING_FROM_DIFFERENT_CORE
 }
 
 static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse(CuTest *tc) {
@@ -4194,7 +4194,7 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationCreationTimeVerification_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationHashMatchesExtendedResponse);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationHashMatchesExtendedResponse_verifyErrorResult);
-	SUITE_SKIP_TEST(suite, testRule_UserProvidedPublicationHashMatchesExtendedResponse_wrongCore_verifyErrorResult, "Henri", "Not sure why the verification should fail.");
+	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationHashMatchesExtendedResponse_wrongCore_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationTimeMatchesExtendedResponse);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationTimeMatchesExtendedResponse_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationExtendedSignatureInputHash);

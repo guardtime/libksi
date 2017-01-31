@@ -3027,7 +3027,7 @@ static void TestFallbackPolicy_CalendarBased_OK_KeyBased_NA(CuTest* tc) {
 
 static void TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-06-2-extended.ksig"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response-input_hash_null.tlv"
 	int res;
 	KSI_Policy *policy = NULL;
 	KSI_VerificationContext context;
@@ -3280,7 +3280,7 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestGeneralPolicy_NA_ExtenderError);
 	SUITE_ADD_TEST(suite, TestPolicyCloning);
 	SUITE_ADD_TEST(suite, TestFallbackPolicy_CalendarBased_OK_KeyBased_NA);
-	SUITE_SKIP_TEST(suite, TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA, "Henri", "Calendar based verification should never return N/A");
+	SUITE_ADD_TEST(suite, TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA);
 	SUITE_ADD_TEST(suite, TestUserPublicationWithBadCalAuthRec);
 	SUITE_ADD_TEST(suite, TestBackgroundVerificationWithUserPublicationBasedPolicy);
 	SUITE_ADD_TEST(suite, TestBackgroundVerificationWithKeyBasedPolicy);
