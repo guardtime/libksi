@@ -51,7 +51,6 @@ AGGR_RESPONSE=(
 		test_meta_data_response.tlv
 		tlv_missing_tag.tlv
 		tlv_unknown_tag.tlv
-		test_meta_data_response.tlv
 	)
 for i in ${AGGR_RESPONSE[@]}; do
 	convert_aggr_resp_pdu $PATH_V1/$i $PATH_V2/$i
@@ -85,11 +84,11 @@ EXT_RESPONSE=(
 		ok_extender_error_response_300.tlv
 		ok_extender_error_response_301.tlv
 		ok-sig-2014-04-30.1-extend_response.tlv
+		ok-sig-2014-04-30.1-extend_response-input_hash_null.tlv
 		ok-sig-2014-04-30.1-extend_response-wrong-id.tlv
 		ok-sig-2014-04-30.1-head-extend_response.tlv
 		ok-sig-2014-04-30.1-nok-extend_response-1.tlv
 		ok-sig-2014-04-30.1-nok-extend_response-3.tlv
-		test_meta_data_response.tlv
 	)
 for i in ${EXT_RESPONSE[@]}; do
 	convert_ext_resp_pdu $PATH_V1/$i $PATH_V2/$i
