@@ -94,7 +94,7 @@ static void TestAddValidLookupFile(CuTest *tc) {
 	res = KSI_CTX_getPKITruststore(ctx, &pki);
 	CuAssert(tc, "Unable to get PKI trustsore.", res == KSI_OK && pki != NULL);
 
-	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
+	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/crt/mock.crt"));
 	CuAssert(tc, "Adding correct lookup file did fail.", res == KSI_OK);
 
 }
@@ -203,19 +203,19 @@ static void TestPKICertificateToString(CuTest *tc) {
 									"  * Valid from: 2025-10-21 10:47:26 UTC to 2026-10-21 10:47:26 UTC [invalid]\n"
 									"  * Serial Number: 92:85:e4:9d:01:71:a2:d5\n";
 
-	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/CA_root.crt.der"), &cert_1);
+	res = DER_CertFromFile(ctx, getFullResourcePath("resource/crt/CA_root.crt.der"), &cert_1);
 	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert_1 != NULL);
 
-	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/CA_2.crt.der"), &cert_2);
+	res = DER_CertFromFile(ctx, getFullResourcePath("resource/crt/CA_2.crt.der"), &cert_2);
 	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert_2 != NULL);
 
-	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/CA_3.crt.der"), &cert_3);
+	res = DER_CertFromFile(ctx, getFullResourcePath("resource/crt/CA_3.crt.der"), &cert_3);
 	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert_3 != NULL);
 
-	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/expired.crt.der"), &cert_4);
+	res = DER_CertFromFile(ctx, getFullResourcePath("resource/crt/expired.crt.der"), &cert_4);
 	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert_4 != NULL);
 
-	res = DER_CertFromFile(ctx, getFullResourcePath("resource/tlv/future.crt.der"), &cert_5);
+	res = DER_CertFromFile(ctx, getFullResourcePath("resource/crt/future.crt.der"), &cert_5);
 	CuAssert(tc, "Unable to get cert encoded as der.", res == KSI_OK && cert_5 != NULL);
 
 

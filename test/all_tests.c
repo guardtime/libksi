@@ -76,7 +76,7 @@ int KSITest_setDefaultPubfileAndVerInfo(KSI_CTX *ctx) {
 	res = KSI_PKITruststore_new(ctx, 0, &pki);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
+	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/crt/mock.crt"));
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_CTX_setPKITruststore(ctx, pki);
@@ -101,7 +101,9 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSITest_TLV_Sample_getSuite);
 	addSuite(suite, KSITest_Hash_getSuite);
 	addSuite(suite, KSITest_HMAC_getSuite);
-	addSuite(suite, KSITest_NET_getSuite);
+	addSuite(suite, KSITest_NetCommon_getSuite);
+	addSuite(suite, KSITest_NetPduV1_getSuite);
+	addSuite(suite, KSITest_NetPduV2_getSuite);
 	addSuite(suite, KSITest_HashChain_getSuite);
 	addSuite(suite, KSITest_Signature_getSuite);
 	addSuite(suite, KSITest_Publicationsfile_getSuite);

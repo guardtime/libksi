@@ -49,9 +49,9 @@ CuString* CuStringNew(void)
 
 void CuStringDelete(CuString *str)
 {
-        if (!str) return;
-        free(str->buffer);
-        free(str);
+		if (!str) return;
+		free(str->buffer);
+		free(str);
 }
 
 void CuStringResize(CuString* str, int newSize)
@@ -121,6 +121,7 @@ void CuTestInit(CuTest* t, const char* name, TestFunction function)
 	t->skipMessage = NULL;
 	t->skippedBy = NULL;
 	t->preTest = NULL;
+	t->postTest = NULL;
 }
 
 CuTest* CuTestNew(const char* name, TestFunction function)
@@ -132,9 +133,9 @@ CuTest* CuTestNew(const char* name, TestFunction function)
 
 void CuTestDelete(CuTest *t)
 {
-        if (!t) return;
-        free(t->name);
-        free(t);
+		if (!t) return;
+		free(t->name);
+		free(t);
 }
 
 void CuTestRun(CuTest* tc)
@@ -188,8 +189,8 @@ void CuAssertStrEquals_LineMsg(CuTest* tc, const char* file, int line, const cha
 {
 	CuString string;
 	if ((expected == NULL && actual == NULL) ||
-	    (expected != NULL && actual != NULL &&
-	     strcmp(expected, actual) == 0))
+		(expected != NULL && actual != NULL &&
+		 strcmp(expected, actual) == 0))
 	{
 		return;
 	}
@@ -246,8 +247,9 @@ void CuSuiteInit(CuSuite* testSuite)
 	testSuite->count = 0;
 	testSuite->skipCount = 0;
 	testSuite->failCount = 0;
-        memset(testSuite->list, 0, sizeof(testSuite->list));
-    testSuite->preTest = NULL;
+		memset(testSuite->list, 0, sizeof(testSuite->list));
+	testSuite->preTest = NULL;
+	testSuite->postTest = NULL;
 }
 
 CuSuite* CuSuiteNew(void)
@@ -259,21 +261,22 @@ CuSuite* CuSuiteNew(void)
 
 void CuSuiteDelete(CuSuite *testSuite)
 {
-        unsigned int n;
-        for (n=0; n < MAX_TEST_CASES; n++)
-        {
-                if (testSuite->list[n])
-                {
-                        CuTestDelete(testSuite->list[n]);
-                }
-        }
-        free(testSuite);
+		unsigned int n;
+		for (n=0; n < MAX_TEST_CASES; n++)
+		{
+				if (testSuite->list[n])
+				{
+						CuTestDelete(testSuite->list[n]);
+				}
+		}
+		free(testSuite);
 
 }
 
 void CuSuiteAdd(CuSuite* testSuite, CuTest *testCase)
 {
 	if (testSuite->preTest != NULL) testCase->preTest = testSuite->preTest;
+	if (testSuite->postTest != NULL) testCase->postTest = testSuite->postTest;
 
 	assert(testSuite->count < MAX_TEST_CASES);
 	testSuite->list[testSuite->count] = testCase;
@@ -311,6 +314,8 @@ void CuSuiteRun(CuSuite* testSuite)
 
 		CuTestRun(testCase);
 		if (testCase->failed) { testSuite->failCount += 1; }
+
+		if (testCase->postTest != NULL) testCase->postTest();
 	}
 }
 

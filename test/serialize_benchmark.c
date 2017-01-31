@@ -20,6 +20,12 @@
 #include <stdio.h>
 #include <ksi/ksi.h>
 
+#if KSI_AGGREGATION_PDU_VERSION == 2
+#	define	TEST_RESOURCE_AGGR_VER "v2"
+#else
+#	define	TEST_RESOURCE_AGGR_VER "v1"
+#endif
+
 static size_t parseCount = 1000000;
 
 int main() {
@@ -41,7 +47,7 @@ int main() {
 		goto cleanup;
 	}
 
-	f = fopen("test/resource/tlv/ok-sig-2014-07-01.1-aggr_response.tlv", "rb");
+	f = fopen("test/resource/tlv/"TEST_RESOURCE_AGGR_VER"/ok-sig-2014-07-01.1-aggr_response.tlv", "rb");
 	if (f == NULL) {
 		fprintf(stderr, "Unable to open input.\n");
 		goto cleanup;
