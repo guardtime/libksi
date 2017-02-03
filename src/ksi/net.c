@@ -357,7 +357,7 @@ cleanup:
 	return res;
 }
 
-int KSI_RequestHandle_getNetContext(KSI_RequestHandle *handle, void **c) {
+int KSI_RequestHandle_getNetContext(const KSI_RequestHandle *handle, void **c) {
 	int res;
 
 	if (handle == NULL || c == NULL) {
@@ -601,7 +601,7 @@ cleanup:
 	return res;
 }
 
-int KSI_RequestHandle_getRequest(KSI_RequestHandle *handle, const unsigned char **request, size_t *request_len) {
+int KSI_RequestHandle_getRequest(const KSI_RequestHandle *handle, const unsigned char **request, size_t *request_len) {
 	int res;
 
 	if (handle == NULL) {
@@ -652,7 +652,7 @@ cleanup:
 	return res;
 }
 
-int KSI_RequestHandle_getResponseStatus(KSI_RequestHandle *handle, const KSI_RequestHandleStatus **err) {
+int KSI_RequestHandle_getResponseStatus(const KSI_RequestHandle *handle, const KSI_RequestHandleStatus **err) {
 	int res = KSI_UNKNOWN_ERROR;
 	if (handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -669,7 +669,7 @@ cleanup:
 }
 
 
-int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, const unsigned char **response, size_t *response_len) {
+int KSI_RequestHandle_getResponse(const KSI_RequestHandle *handle, const unsigned char **response, size_t *response_len) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (handle == NULL) {
@@ -694,7 +694,7 @@ cleanup:
 	return res;
 }
 
-int pdu_verify_hmac(KSI_CTX *ctx, KSI_DataHash *hmac,const char *key, int (*calculateHmac)(void*, int, const char*, KSI_DataHash**) ,void *PDU){
+int pdu_verify_hmac(KSI_CTX *ctx, const KSI_DataHash *hmac, const char *key, int (*calculateHmac)(const void*, int, const char*, KSI_DataHash**) ,void *PDU){
 	int res;
 	KSI_DataHash *actualHmac = NULL;
 	KSI_HashAlgorithm algo_id;
@@ -737,7 +737,7 @@ cleanup:
 	return res;
 }
 
-int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendResp **resp) {
+int KSI_RequestHandle_getExtendResponse(const KSI_RequestHandle *handle, KSI_ExtendResp **resp) {
 	int res;
 	KSI_ExtendPdu *pdu = NULL;
 	KSI_ErrorPdu *error = NULL;
@@ -837,7 +837,7 @@ int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendRes
 	}
 
 	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->extender->ksi_pass,
-			(int (*)(void*, int, const char*, KSI_DataHash**))KSI_ExtendPdu_calculateHmac,
+			(int (*)(const void*, int, const char*, KSI_DataHash**))KSI_ExtendPdu_calculateHmac,
 			(void*)pdu);
 
 	if (res != KSI_OK) {
@@ -863,7 +863,7 @@ cleanup:
 	return res;
 }
 
-int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_AggregationResp **resp) {
+int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KSI_AggregationResp **resp) {
 	int res;
 	KSI_AggregationPdu *pdu = NULL;
 	KSI_ErrorPdu *error = NULL;
@@ -961,7 +961,7 @@ int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_Aggr
 	}
 
 	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->aggregator->ksi_pass,
-			(int (*)(void*, int, const char*, KSI_DataHash**))KSI_AggregationPdu_calculateHmac,
+			(int (*)(const void*, int, const char*, KSI_DataHash**))KSI_AggregationPdu_calculateHmac,
 			(void*)pdu);
 
 	if (res != KSI_OK) {
@@ -1105,7 +1105,7 @@ cleanup:
 
 }
 
-int KSI_convertAggregatorStatusCode(KSI_Integer *statusCode) {
+int KSI_convertAggregatorStatusCode(const KSI_Integer *statusCode) {
 	if (statusCode == NULL) return KSI_OK;
 	switch (KSI_Integer_getUInt64(statusCode)) {
 		case 0x00: return KSI_OK;
@@ -1123,7 +1123,7 @@ int KSI_convertAggregatorStatusCode(KSI_Integer *statusCode) {
 	}
 }
 
-int KSI_convertExtenderStatusCode(KSI_Integer *statusCode) {
+int KSI_convertExtenderStatusCode(const KSI_Integer *statusCode) {
 	if (statusCode == NULL) return KSI_OK;
 	switch (KSI_Integer_getUInt64(statusCode)) {
 		case 0x00: return KSI_OK;

@@ -509,21 +509,21 @@ cleanup:
 /**
  *
  */
-int KSI_TLV_isNonCritical(KSI_TLV *tlv) {
+int KSI_TLV_isNonCritical(const KSI_TLV *tlv) {
 	return tlv->isNonCritical;
 }
 
 /**
  *
  */
-int KSI_TLV_isForward(KSI_TLV *tlv) {
+int KSI_TLV_isForward(const KSI_TLV *tlv) {
 	return tlv->isForwardable;
 }
 
 /**
  *
  */
-unsigned KSI_TLV_getTag(KSI_TLV *tlv) {
+unsigned KSI_TLV_getTag(const KSI_TLV *tlv) {
 	return tlv->tag;
 }
 
@@ -859,7 +859,7 @@ cleanup:
 /**
  *
  */
-int KSI_TLV_serializePayload(KSI_TLV *tlv, unsigned char *buf, size_t *len) {
+int KSI_TLV_serializePayload(const KSI_TLV *tlv, unsigned char *buf, size_t *len) {
 	return KSI_TLV_writeBytes(tlv, buf, *len, len, KSI_TLV_OPT_NO_HEADER);
 }
 

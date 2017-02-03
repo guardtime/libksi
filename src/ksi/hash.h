@@ -136,7 +136,7 @@ extern "C" {
 	 * \param[in]	data				Octet string object.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_DataHasher_addOctetString(KSI_DataHasher *hasher, KSI_OctetString *data);
+	int KSI_DataHasher_addOctetString(KSI_DataHasher *hasher, const KSI_OctetString *data);
 
 	/**
 	 * Finalizes a hash computation.

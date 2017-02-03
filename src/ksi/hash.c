@@ -382,7 +382,7 @@ cleanup:
 	return res;
 }
 
-int KSI_DataHash_toTlv(KSI_CTX *ctx, KSI_DataHash *hsh, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_DataHash_toTlv(KSI_CTX *ctx, const KSI_DataHash *hsh, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tmp = NULL;
 	const unsigned char *raw = NULL;
@@ -523,7 +523,7 @@ cleanup:
 	return res;
 }
 
-int KSI_DataHasher_addOctetString(KSI_DataHasher *hasher, KSI_OctetString *data) {
+int KSI_DataHasher_addOctetString(KSI_DataHasher *hasher, const KSI_OctetString *data) {
 	int res = KSI_UNKNOWN_ERROR;
 	const unsigned char *ptr = NULL;
 	size_t len = 0;

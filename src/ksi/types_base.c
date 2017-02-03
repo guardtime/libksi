@@ -203,7 +203,7 @@ cleanup:
 	return res;
 }
 
-int KSI_OctetString_toTlv(KSI_CTX *ctx, KSI_OctetString *o, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_OctetString_toTlv(KSI_CTX *ctx, const KSI_OctetString *o, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tmp = NULL;
 
@@ -267,7 +267,7 @@ char* KSI_OctetString_toString(const KSI_OctetString *id, char separator, char *
 #define LEGACY_ID_STR_LEN_POS 2
 #define LEGACY_ID_STR_POS 3
 
-int KSI_OctetString_LegacyId_getUtf8String(KSI_OctetString *id, KSI_Utf8String **str) {
+int KSI_OctetString_LegacyId_getUtf8String(const KSI_OctetString *id, KSI_Utf8String **str) {
 	int res = KSI_UNKNOWN_ERROR;
 	const unsigned char *raw = NULL;
 	size_t raw_len;
@@ -460,7 +460,7 @@ cleanup:
 	return res;
 }
 
-int KSI_Utf8String_toTlv(KSI_CTX *ctx, KSI_Utf8String *o, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_Utf8String_toTlv(KSI_CTX *ctx, const KSI_Utf8String *o, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tmp = NULL;
 
@@ -535,7 +535,7 @@ cleanup:
 	return res;
 }
 
-int KSI_Utf8StringNZ_toTlv(KSI_CTX *ctx, KSI_Utf8String *o, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_Utf8StringNZ_toTlv(KSI_CTX *ctx, const KSI_Utf8String *o, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tmp = NULL;
 
@@ -710,7 +710,7 @@ cleanup:
 	return res;
 }
 
-int KSI_Integer_toTlv(KSI_CTX *ctx, KSI_Integer *o, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_Integer_toTlv(KSI_CTX *ctx, const KSI_Integer *o, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tmp = NULL;
 	unsigned char raw[8];

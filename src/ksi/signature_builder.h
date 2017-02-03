@@ -75,7 +75,7 @@ extern "C" {
 	 * \note It is the responsibility of the caller to free the input parameters after use.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_SignatureBuilder_setCalendarHashChain(KSI_SignatureBuilder *builder, KSI_CalendarHashChain *cal);
+	int KSI_SignatureBuilder_setCalendarHashChain(KSI_SignatureBuilder *builder, const KSI_CalendarHashChain *cal);
 
 	/**
 	 * This function adds an aggregation chain to the signature.
@@ -84,7 +84,7 @@ extern "C" {
 	 * \note It is the responsibility of the caller to free the input parameters after use.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_SignatureBuilder_addAggregationChain(KSI_SignatureBuilder *builder, KSI_AggregationHashChain *aggr);
+	int KSI_SignatureBuilder_addAggregationChain(KSI_SignatureBuilder *builder, const KSI_AggregationHashChain *aggr);
 
 	/**
 	 * This function sets the calendar authentication record of the signature.
@@ -94,7 +94,7 @@ extern "C" {
 	 * \note Calling this function more than once on a signature builder results in an error.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_SignatureBuilder_setCalendarAuthRecord(KSI_SignatureBuilder *builder, KSI_CalendarAuthRec *calAuth);
+	int KSI_SignatureBuilder_setCalendarAuthRecord(KSI_SignatureBuilder *builder, const KSI_CalendarAuthRec *calAuth);
 
 	/**
 	 * This function sets the publication record of the signature.
@@ -104,7 +104,7 @@ extern "C" {
 	 * \note It is the responsibility of the caller to free the input parameters after use.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_SignatureBuilder_setPublication(KSI_SignatureBuilder *builder, KSI_PublicationRecord *pub);
+	int KSI_SignatureBuilder_setPublication(KSI_SignatureBuilder *builder, const KSI_PublicationRecord *pub);
 
 	/**
 	 * This function sets the RFC3161 record of the signature.
@@ -114,7 +114,7 @@ extern "C" {
 	 * \note It is the responsibility of the caller to free the input parameters after use.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_SignatureBuilder_setRFC3161(KSI_SignatureBuilder *builder, KSI_RFC3161 *rfc3161);
+	int KSI_SignatureBuilder_setRFC3161(KSI_SignatureBuilder *builder, const KSI_RFC3161 *rfc3161);
 
 /**
  * @}

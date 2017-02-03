@@ -104,7 +104,7 @@ extern "C" {
 	 * \param[in]	opt			Options for serialization. (see #KSI_Serialize_Opt_en).
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_TlvElement_serialize(KSI_TlvElement *element, unsigned char *buf, size_t buf_size, size_t *len, int opt);
+	int KSI_TlvElement_serialize(const KSI_TlvElement *element, unsigned char *buf, size_t buf_size, size_t *len, int opt);
 
 	/**
 	 * Append an element as the last child. The caller is responsible of freeing the sub element.

@@ -199,7 +199,7 @@ void KSI_TlvElement_free(KSI_TlvElement *t) {
 	}
 }
 
-int KSI_TlvElement_serialize(KSI_TlvElement *element, unsigned char *buf, size_t buf_size, size_t *len, int opt) {
+int KSI_TlvElement_serialize(const KSI_TlvElement *element, unsigned char *buf, size_t buf_size, size_t *len, int opt) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i;
 	size_t dat_len;

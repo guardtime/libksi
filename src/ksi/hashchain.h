@@ -184,7 +184,7 @@ extern "C" {
 	KSI_DEFINE_FN_TO_TLV(KSI_HashChainLink);
 
 	int KSI_HashChainLink_LegacyId_fromTlv(KSI_TLV *tlv, KSI_OctetString **legacyId);
-	int KSI_HashChainLink_LegacyId_toTlv(KSI_CTX *ctx, KSI_OctetString *legacyId, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+	int KSI_HashChainLink_LegacyId_toTlv(KSI_CTX *ctx, const KSI_OctetString *legacyId, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
 	KSI_DEFINE_FN_FROM_TLV(KSI_CalendarHashChainLink);
 	KSI_DEFINE_FN_TO_TLV(KSI_CalendarHashChainLink);
@@ -194,8 +194,8 @@ extern "C" {
 	 */
 	void KSI_CalendarHashChain_free(KSI_CalendarHashChain *t);
 	int KSI_CalendarHashChain_new(KSI_CTX *ctx, KSI_CalendarHashChain **t);
-	int KSI_CalendarHashChain_aggregate(KSI_CalendarHashChain *chain, KSI_DataHash **hsh);
-	int KSI_CalendarHashChain_calculateAggregationTime(KSI_CalendarHashChain *chain, time_t *aggrTime);
+	int KSI_CalendarHashChain_aggregate(const KSI_CalendarHashChain *chain, KSI_DataHash **hsh);
+	int KSI_CalendarHashChain_calculateAggregationTime(const KSI_CalendarHashChain *chain, time_t *aggrTime);
 	int KSI_CalendarHashChain_getPublicationTime(const KSI_CalendarHashChain *t, KSI_Integer **publicationTime);
 	int KSI_CalendarHashChain_getAggregationTime(const KSI_CalendarHashChain *t, KSI_Integer **aggregationTime);
 	int KSI_CalendarHashChain_getInputHash(const KSI_CalendarHashChain *t, KSI_DataHash **inputHash);
@@ -222,7 +222,7 @@ extern "C" {
 	 * \param[in]	identity	Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_AggregationHashChain_getIdentity(KSI_AggregationHashChain *aggr, KSI_HashChainLinkIdentityList **identity);
+	int KSI_AggregationHashChain_getIdentity(const KSI_AggregationHashChain *aggr, KSI_HashChainLinkIdentityList **identity);
 
 	/**
 	 * Cleanup method for the aggregation hash chain.
@@ -255,7 +255,7 @@ extern "C" {
 	 * \param[out]	root		Pointer to the receiving pointer. Can be NULL.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_AggregationHashChain_aggregate(KSI_AggregationHashChain *aggr, int startLevel, int *endLevel, KSI_DataHash **root);
+	int KSI_AggregationHashChain_aggregate(const KSI_AggregationHashChain *aggr, int startLevel, int *endLevel, KSI_DataHash **root);
 
 	/**
 	 * This function will represent the shape of the aggregation chain. The bits represent the path from the root
@@ -266,7 +266,7 @@ extern "C" {
 	 * \param[out]	shape		Pointer to the receiving variable.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_AggregationHashChain_calculateShape(KSI_AggregationHashChain *chn, KSI_uint64_t *shape);
+	int KSI_AggregationHashChain_calculateShape(const KSI_AggregationHashChain *chn, KSI_uint64_t *shape);
 
 	int KSI_AggregationHashChain_getAggregationTime(const KSI_AggregationHashChain *aggr, KSI_Integer **aggregationTime);
 	int KSI_AggregationHashChain_getChainIndex(const KSI_AggregationHashChain * aggr, KSI_LIST(KSI_Integer) **chainIndex);

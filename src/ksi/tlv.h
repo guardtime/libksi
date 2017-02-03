@@ -159,7 +159,7 @@ extern "C" {
 	 *
 	 * \return 1 if the lenient-flag is set, 0 otherwise.
 	 */
-	int KSI_TLV_isNonCritical(KSI_TLV *tlv);
+	int KSI_TLV_isNonCritical(const KSI_TLV *tlv);
 
 	/**
 	 * This is an access method for the TLV forward-flag.
@@ -168,7 +168,7 @@ extern "C" {
 	 *
 	 * \return 1 if the forward-flag is set, 0 otherwise.
 	 */
-	int KSI_TLV_isForward(KSI_TLV *tlv);
+	int KSI_TLV_isForward(const KSI_TLV *tlv);
 
 	/**
 	 * This is an access method for the TLV numeric type.
@@ -177,7 +177,7 @@ extern "C" {
 	 *
 	 * \return Numeric value of the TLV type.
 	 */
-	unsigned KSI_TLV_getTag(KSI_TLV *tlv);
+	unsigned KSI_TLV_getTag(const KSI_TLV *tlv);
 
 	/**
 	 * This function serialises the tlv into a given buffer with \c len bytes of free
@@ -211,7 +211,7 @@ extern "C" {
 	 *
 	 * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
 	 */
-	int KSI_TLV_serializePayload(KSI_TLV *tlv, unsigned char *buf, size_t *len);
+	int KSI_TLV_serializePayload(const KSI_TLV *tlv, unsigned char *buf, size_t *len);
 
 	/**
 	 * Replaces a nested TLV.

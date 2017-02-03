@@ -68,6 +68,7 @@ static void testRule_AggregationChainInputHashVerification_validRfc3161(CuTest *
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -76,8 +77,9 @@ static void testRule_AggregationChainInputHashVerification_validRfc3161(CuTest *
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -86,7 +88,7 @@ static void testRule_AggregationChainInputHashVerification_validRfc3161(CuTest *
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -98,6 +100,7 @@ static void testRule_AggregationChainInputHashVerification_invalidRfc3161_verify
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -106,11 +109,12 @@ static void testRule_AggregationChainInputHashVerification_invalidRfc3161_verify
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
-	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
-	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -119,7 +123,7 @@ static void testRule_AggregationChainInputHashVerification_invalidRfc3161_verify
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -131,6 +135,7 @@ static void testRule_AggregationChainInputHashVerification_missingRfc3161(CuTest
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -139,8 +144,9 @@ static void testRule_AggregationChainInputHashVerification_missingRfc3161(CuTest
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -150,7 +156,7 @@ static void testRule_AggregationChainInputHashVerification_missingRfc3161(CuTest
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -162,6 +168,7 @@ static void testRule_AggregationChainMetaDataVerification_validMetaData(CuTest *
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -170,8 +177,9 @@ static void testRule_AggregationChainMetaDataVerification_validMetaData(CuTest *
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -180,7 +188,7 @@ static void testRule_AggregationChainMetaDataVerification_validMetaData(CuTest *
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -192,6 +200,7 @@ static void testRule_AggregationChainMetaDataVerification_validMetaDataNoPadding
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -200,8 +209,9 @@ static void testRule_AggregationChainMetaDataVerification_validMetaDataNoPadding
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -210,7 +220,7 @@ static void testRule_AggregationChainMetaDataVerification_validMetaDataNoPadding
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -222,6 +232,7 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -230,11 +241,12 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
-	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
-	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -243,7 +255,7 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -255,6 +267,7 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -263,11 +276,12 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
-	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
-	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -276,7 +290,7 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -288,6 +302,7 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -296,11 +311,12 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
-	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
-	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -309,7 +325,7 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -321,6 +337,7 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -329,11 +346,12 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
-	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
-	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -342,7 +360,7 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -354,6 +372,7 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -362,11 +381,12 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
-	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
-	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -375,7 +395,7 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -387,6 +407,7 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataLengthN
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -395,11 +416,12 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataLengthN
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
-	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
-	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -408,7 +430,7 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataLengthN
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -420,6 +442,7 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataNoPaddi
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -428,11 +451,12 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataNoPaddi
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
-	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
-	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -441,7 +465,7 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataNoPaddi
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -453,6 +477,7 @@ static void testRule_AggregationChainMetaDataVerification_missingMetaData(CuTest
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -461,8 +486,9 @@ static void testRule_AggregationChainMetaDataVerification_missingMetaData(CuTest
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -471,7 +497,7 @@ static void testRule_AggregationChainMetaDataVerification_missingMetaData(CuTest
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -483,6 +509,7 @@ static void testRule_AggregationHashChainConsistency(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -491,8 +518,9 @@ static void testRule_AggregationHashChainConsistency(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -502,7 +530,7 @@ static void testRule_AggregationHashChainConsistency(CuTest *tc) {
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -514,6 +542,7 @@ static void testRule_AggregationHashChainConsistency_verifyErrorResult(CuTest *t
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -522,11 +551,12 @@ static void testRule_AggregationHashChainConsistency_verifyErrorResult(CuTest *t
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
-	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
-	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -536,7 +566,7 @@ static void testRule_AggregationHashChainConsistency_verifyErrorResult(CuTest *t
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -546,6 +576,7 @@ static void testRule_AggregationHashChainTimeConsistencyOk(CuTest *tc, const cha
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -554,8 +585,9 @@ static void testRule_AggregationHashChainTimeConsistencyOk(CuTest *tc, const cha
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(sigFile), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(sigFile), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -565,7 +597,7 @@ static void testRule_AggregationHashChainTimeConsistencyOk(CuTest *tc, const cha
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 }
 
 static void testRule_AggregationHashChainTimeConsistency(CuTest *tc) {
@@ -589,6 +621,7 @@ static void testRule_AggregationHashChainTimeConsistencyFail(CuTest *tc, const c
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -597,11 +630,12 @@ static void testRule_AggregationHashChainTimeConsistencyFail(CuTest *tc, const c
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(sigFile), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(sigFile), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
-	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
-	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -611,7 +645,7 @@ static void testRule_AggregationHashChainTimeConsistencyFail(CuTest *tc, const c
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 }
 
 static void testRule_AggregationHashChainTimeConsistency_inconsistentAggrTime_verifyErrorResult(CuTest *tc) {
@@ -643,6 +677,7 @@ static void testRule_AggregationHashChainIndexConsistencyOk(CuTest *tc, const ch
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -651,8 +686,9 @@ static void testRule_AggregationHashChainIndexConsistencyOk(CuTest *tc, const ch
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(sigFile), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(sigFile), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -662,7 +698,7 @@ static void testRule_AggregationHashChainIndexConsistencyOk(CuTest *tc, const ch
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 }
 
 static void testRule_AggregationHashChainIndexConsistency(CuTest *tc) {
@@ -686,6 +722,7 @@ static void testRule_AggregationHashChainIndexConsistencyFail(CuTest *tc, const 
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -694,11 +731,12 @@ static void testRule_AggregationHashChainIndexConsistencyFail(CuTest *tc, const 
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(sigFile), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(sigFile), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
-	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
-	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -708,7 +746,7 @@ static void testRule_AggregationHashChainIndexConsistencyFail(CuTest *tc, const 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 }
 
 static void testRule_AggregationHashChainIndexConsistency_prefixChanged_verifyErrorResult(CuTest *tc) {
@@ -740,6 +778,7 @@ static void testRule_AggregationHashChainAndRfc3161IndexConsistencyFail(CuTest *
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -748,11 +787,12 @@ static void testRule_AggregationHashChainAndRfc3161IndexConsistencyFail(CuTest *
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(sigFile), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(sigFile), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
-	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
-	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -762,7 +802,7 @@ static void testRule_AggregationHashChainAndRfc3161IndexConsistencyFail(CuTest *
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 }
 
 static void testRule_AggregationHashChainIndexConsistency_rfc3161ChainIndexChanged_verifyErrorResult(CuTest *tc) {
@@ -788,6 +828,7 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithCalHashChain(
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -796,8 +837,9 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithCalHashChain(
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -807,7 +849,7 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithCalHashChain(
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -819,6 +861,7 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithoutCalHashCha
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -827,8 +870,9 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithoutCalHashCha
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -838,7 +882,7 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithoutCalHashCha
 	TEST_ASSERT_VERIFICATION_STEP_NA(KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -850,6 +894,7 @@ static void testRule_CalendarHashChainInputHashVerification_verifyErrorResult(Cu
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -858,11 +903,12 @@ static void testRule_CalendarHashChainInputHashVerification_verifyErrorResult(Cu
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
-	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
-	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -872,7 +918,7 @@ static void testRule_CalendarHashChainInputHashVerification_verifyErrorResult(Cu
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -884,6 +930,7 @@ static void testRule_CalendarHashChainAggregationTime(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -892,8 +939,9 @@ static void testRule_CalendarHashChainAggregationTime(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -903,7 +951,7 @@ static void testRule_CalendarHashChainAggregationTime(CuTest *tc) {
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -915,6 +963,7 @@ static void testRule_CalendarHashChainAggregationTime_verifyErrorResult(CuTest *
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -923,11 +972,12 @@ static void testRule_CalendarHashChainAggregationTime_verifyErrorResult(CuTest *
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
-	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
-	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -937,7 +987,7 @@ static void testRule_CalendarHashChainAggregationTime_verifyErrorResult(CuTest *
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -949,6 +999,7 @@ static void testRule_CalendarHashChainRegistrationTime(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -957,8 +1008,9 @@ static void testRule_CalendarHashChainRegistrationTime(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -968,7 +1020,7 @@ static void testRule_CalendarHashChainRegistrationTime(CuTest *tc) {
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_CALCHAIN_INTERNALLY);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -980,6 +1032,7 @@ static void testRule_CalendarHashChainRegistrationTime_verifyErrorResult(CuTest 
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -988,11 +1041,12 @@ static void testRule_CalendarHashChainRegistrationTime_verifyErrorResult(CuTest 
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
-	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
-	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1002,7 +1056,7 @@ static void testRule_CalendarHashChainRegistrationTime_verifyErrorResult(CuTest 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALCHAIN_INTERNALLY);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1014,6 +1068,7 @@ static void testRule_CalendarAuthenticationRecordAggregationHash(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1022,8 +1077,9 @@ static void testRule_CalendarAuthenticationRecordAggregationHash(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1033,7 +1089,7 @@ static void testRule_CalendarAuthenticationRecordAggregationHash(CuTest *tc) {
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1045,6 +1101,7 @@ static void testRule_CalendarAuthenticationRecordAggregationHash_missingAutRec(C
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1053,8 +1110,9 @@ static void testRule_CalendarAuthenticationRecordAggregationHash_missingAutRec(C
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1064,7 +1122,7 @@ static void testRule_CalendarAuthenticationRecordAggregationHash_missingAutRec(C
 	TEST_ASSERT_VERIFICATION_STEP_NA(KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1076,6 +1134,7 @@ static void testRule_CalendarAuthenticationRecordAggregationHash_verifyErrorResu
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1084,11 +1143,12 @@ static void testRule_CalendarAuthenticationRecordAggregationHash_verifyErrorResu
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
-	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
-	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1098,7 +1158,7 @@ static void testRule_CalendarAuthenticationRecordAggregationHash_verifyErrorResu
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1110,6 +1170,7 @@ static void testRule_CalendarAuthenticationRecordAggregationTime(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1118,8 +1179,9 @@ static void testRule_CalendarAuthenticationRecordAggregationTime(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1129,7 +1191,7 @@ static void testRule_CalendarAuthenticationRecordAggregationTime(CuTest *tc) {
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1141,6 +1203,7 @@ static void testRule_CalendarAuthenticationRecordAggregationTime_missingAutRec(C
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1149,8 +1212,9 @@ static void testRule_CalendarAuthenticationRecordAggregationTime_missingAutRec(C
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1160,7 +1224,7 @@ static void testRule_CalendarAuthenticationRecordAggregationTime_missingAutRec(C
 	TEST_ASSERT_VERIFICATION_STEP_NA(KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1172,6 +1236,7 @@ static void testRule_CalendarAuthenticationRecordAggregationTime_verifyErrorResu
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1180,11 +1245,12 @@ static void testRule_CalendarAuthenticationRecordAggregationTime_verifyErrorResu
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
-	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
-	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1194,7 +1260,7 @@ static void testRule_CalendarAuthenticationRecordAggregationTime_verifyErrorResu
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1206,6 +1272,7 @@ static void testRule_SignaturePublicationRecordPublicationHash(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1214,8 +1281,9 @@ static void testRule_SignaturePublicationRecordPublicationHash(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1225,7 +1293,7 @@ static void testRule_SignaturePublicationRecordPublicationHash(CuTest *tc) {
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_CALCHAIN_WITH_PUBLICATION);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1237,6 +1305,7 @@ static void testRule_SignaturePublicationRecordPublicationHash_missingPubRec(CuT
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1245,8 +1314,9 @@ static void testRule_SignaturePublicationRecordPublicationHash_missingPubRec(CuT
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1256,7 +1326,7 @@ static void testRule_SignaturePublicationRecordPublicationHash_missingPubRec(CuT
 	TEST_ASSERT_VERIFICATION_STEP_NA(KSI_VERIFY_CALCHAIN_WITH_PUBLICATION);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1268,6 +1338,7 @@ static void testRule_SignaturePublicationRecordPublicationHash_verifyErrorResult
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1276,11 +1347,12 @@ static void testRule_SignaturePublicationRecordPublicationHash_verifyErrorResult
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
-	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
-	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1290,7 +1362,7 @@ static void testRule_SignaturePublicationRecordPublicationHash_verifyErrorResult
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALCHAIN_WITH_PUBLICATION);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1302,6 +1374,7 @@ static void testRule_SignaturePublicationRecordPublicationTime(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1310,8 +1383,9 @@ static void testRule_SignaturePublicationRecordPublicationTime(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1321,7 +1395,7 @@ static void testRule_SignaturePublicationRecordPublicationTime(CuTest *tc) {
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_CALCHAIN_WITH_PUBLICATION);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1333,6 +1407,7 @@ static void testRule_SignaturePublicationRecordPublicationTime_missingPubRec(CuT
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1341,8 +1416,9 @@ static void testRule_SignaturePublicationRecordPublicationTime_missingPubRec(CuT
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1352,7 +1428,7 @@ static void testRule_SignaturePublicationRecordPublicationTime_missingPubRec(CuT
 	TEST_ASSERT_VERIFICATION_STEP_NA(KSI_VERIFY_CALCHAIN_WITH_PUBLICATION);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1364,6 +1440,7 @@ static void testRule_SignaturePublicationRecordPublicationTime_verifyErrorResult
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1372,11 +1449,12 @@ static void testRule_SignaturePublicationRecordPublicationTime_verifyErrorResult
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && verCtx.signature == NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
-	res = KSI_CTX_getLastFailedSignature(ctx, &verCtx.signature);
-	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1386,7 +1464,7 @@ static void testRule_SignaturePublicationRecordPublicationTime_verifyErrorResult
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALCHAIN_WITH_PUBLICATION);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1396,6 +1474,7 @@ static void testRule_DocumentHashDoesNotExist(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1408,7 +1487,7 @@ static void testRule_DocumentHashDoesNotExist(CuTest *tc) {
 	CuAssert(tc, "Document hash should not be provided.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK && verCtx.documentHash == NULL);
 
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 }
 
 static void testRule_DocumentHashDoesNotExist_verifyErrorResult(CuTest *tc) {
@@ -1418,6 +1497,7 @@ static void testRule_DocumentHashDoesNotExist_verifyErrorResult(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1426,17 +1506,17 @@ static void testRule_DocumentHashDoesNotExist_verifyErrorResult(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
-	res = KSI_Signature_getDocumentHash(verCtx.signature, &verCtx.documentHash);
-	CuAssert(tc, "Unable to read signature document hash", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_getDocumentHash(verCtx.signature, (KSI_DataHash **)&verCtx.documentHash);
+	CuAssert(tc, "Unable to read signature document hash", res == KSI_OK && verCtx.documentHash != NULL);
 
 	res = KSI_VerificationRule_DocumentHashDoesNotExist(&verCtx, &verRes);
 	CuAssert(tc, "Document hash not found.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verCtx.documentHash != NULL);
 
-	KSI_nofree(verCtx.documentHash);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -1449,6 +1529,7 @@ static void testRule_DocumentHashExistence(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1457,17 +1538,17 @@ static void testRule_DocumentHashExistence(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
-	res = KSI_Signature_getDocumentHash(verCtx.signature, &verCtx.documentHash);
-	CuAssert(tc, "Unable to read signature document hash", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_getDocumentHash(verCtx.signature, (KSI_DataHash **)&verCtx.documentHash);
+	CuAssert(tc, "Unable to read signature document hash", res == KSI_OK && verCtx.documentHash != NULL);
 
 	res = KSI_VerificationRule_DocumentHashExistence(&verCtx, &verRes);
 	CuAssert(tc, "Document hash not found.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK && verCtx.documentHash != NULL);
 
-	KSI_nofree(verCtx.documentHash);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -1489,8 +1570,6 @@ static void testRule_DocumentHashExistence_verifyErrorResult(CuTest *tc) {
 	res = KSI_VerificationRule_DocumentHashExistence(&verCtx, &verRes);
 	CuAssert(tc, "Document hash should not be provided.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verCtx.documentHash == NULL);
 
-	KSI_DataHash_free(verCtx.documentHash);
-	KSI_Signature_free(verCtx.signature);
 	KSI_VerificationContext_clean(&verCtx);
 }
 
@@ -1501,6 +1580,7 @@ static void testRule_DocumentHashVerification(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1509,11 +1589,12 @@ static void testRule_DocumentHashVerification(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
-	res = KSI_Signature_getDocumentHash(verCtx.signature, &verCtx.documentHash);
-	CuAssert(tc, "Unable to read signature document hash", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_getDocumentHash(verCtx.signature, (KSI_DataHash **)&verCtx.documentHash);
+	CuAssert(tc, "Unable to read signature document hash", res == KSI_OK && verCtx.documentHash != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1522,8 +1603,7 @@ static void testRule_DocumentHashVerification(CuTest *tc) {
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_DOCUMENT);
 
-	KSI_nofree(verCtx.documentHash);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -1536,6 +1616,7 @@ static void testRule_DocumentHashVerification_missingDocHash(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1544,8 +1625,9 @@ static void testRule_DocumentHashVerification_missingDocHash(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1554,9 +1636,8 @@ static void testRule_DocumentHashVerification_missingDocHash(CuTest *tc) {
 
 	TEST_ASSERT_VERIFICATION_STEP_NA(KSI_VERIFY_DOCUMENT);
 
-	KSI_DataHash_free(verCtx.documentHash);
 	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1569,6 +1650,8 @@ static void testRule_DocumentHashVerification_verifyErrorResult(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_DataHash *documentHash = NULL;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1577,11 +1660,13 @@ static void testRule_DocumentHashVerification_verifyErrorResult(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSITest_DataHash_fromStr(ctx, TEST_MOCK_IMPRINT, &verCtx.documentHash);
-	CuAssert(tc, "Unable to create mock hash from string", res == KSI_OK && verCtx.documentHash != NULL);
+	res = KSITest_DataHash_fromStr(ctx, TEST_MOCK_IMPRINT, &documentHash);
+	CuAssert(tc, "Unable to create mock hash from string", res == KSI_OK && documentHash != NULL);
+	verCtx.documentHash = documentHash;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1590,8 +1675,8 @@ static void testRule_DocumentHashVerification_verifyErrorResult(CuTest *tc) {
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_DOCUMENT);
 
-	KSI_DataHash_free(verCtx.documentHash);
-	KSI_Signature_free(verCtx.signature);
+	KSI_DataHash_free(documentHash);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -1605,6 +1690,7 @@ static void testRule_DocumentHashVerification_rfc3161(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1613,11 +1699,12 @@ static void testRule_DocumentHashVerification_rfc3161(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
-	res = KSI_RFC3161_getInputHash(verCtx.signature->rfc3161, &verCtx.documentHash);
-	CuAssert(tc, "Unable to read signature RFC3161 input hash", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_RFC3161_getInputHash(verCtx.signature->rfc3161, (KSI_DataHash **)&verCtx.documentHash);
+	CuAssert(tc, "Unable to read signature RFC3161 input hash", res == KSI_OK && verCtx.documentHash != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1626,8 +1713,7 @@ static void testRule_DocumentHashVerification_rfc3161(CuTest *tc) {
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_DOCUMENT);
 
-	KSI_nofree(verCtx.documentHash);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -1641,6 +1727,8 @@ static void testRule_DocumentHashVerification_rfc3161_verifyErrorResult(CuTest *
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_DataHash *documentHash = NULL;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1649,11 +1737,13 @@ static void testRule_DocumentHashVerification_rfc3161_verifyErrorResult(CuTest *
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSITest_DataHash_fromStr(ctx, TEST_MOCK_IMPRINT, &verCtx.documentHash);
-	CuAssert(tc, "Unable to create mock hash from string", res == KSI_OK && verCtx.documentHash != NULL);
+	res = KSITest_DataHash_fromStr(ctx, TEST_MOCK_IMPRINT, &documentHash);
+	CuAssert(tc, "Unable to create mock hash from string", res == KSI_OK && documentHash != NULL);
+	verCtx.documentHash = documentHash;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -1662,8 +1752,8 @@ static void testRule_DocumentHashVerification_rfc3161_verifyErrorResult(CuTest *
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_DOCUMENT);
 
-	KSI_DataHash_free(verCtx.documentHash);
-	KSI_Signature_free(verCtx.signature);
+	KSI_DataHash_free(documentHash);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -1677,6 +1767,7 @@ static void testRule_SignatureDoesNotContainPublication(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1685,13 +1776,14 @@ static void testRule_SignatureDoesNotContainPublication(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_VerificationRule_SignatureDoesNotContainPublication(&verCtx, &verRes);
 	CuAssert(tc, "Signature should not contain publication record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -1704,6 +1796,7 @@ static void testRule_SignatureDoesNotContainPublication_verifyErrorResult(CuTest
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1712,13 +1805,14 @@ static void testRule_SignatureDoesNotContainPublication_verifyErrorResult(CuTest
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_VerificationRule_SignatureDoesNotContainPublication(&verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -1732,6 +1826,7 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatch(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1740,8 +1835,9 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatch(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
@@ -1753,7 +1849,7 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatch(CuTest *tc) {
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_CALCHAIN_ONLINE);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -1769,6 +1865,7 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatchWithAdditional
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
 	KSI_Signature *extendedSig = NULL;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1777,8 +1874,9 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatchWithAdditional
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extendedSig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && extendedSig != NULL);
@@ -1792,7 +1890,7 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatchWithAdditional
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_CALCHAIN_ONLINE);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_Signature_free(extendedSig);
 
@@ -1809,6 +1907,7 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatch_linkCountMism
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
 	KSI_Signature *extendedSig = NULL;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1817,8 +1916,9 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatch_linkCountMism
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extendedSig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && extendedSig != NULL);
@@ -1832,7 +1932,7 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatch_linkCountMism
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALCHAIN_ONLINE);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_Signature_free(extendedSig);
 
@@ -1849,6 +1949,7 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatch_rightLinksDif
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
 	KSI_Signature *extendedSig = NULL;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1857,8 +1958,9 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatch_rightLinksDif
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extendedSig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && extendedSig == NULL);
@@ -1875,7 +1977,7 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatch_rightLinksDif
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALCHAIN_ONLINE);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_Signature_free(extendedSig);
 
@@ -1890,6 +1992,7 @@ static void testRule_SignaturePublicationRecordExistence(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1898,13 +2001,14 @@ static void testRule_SignaturePublicationRecordExistence(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_VerificationRule_SignaturePublicationRecordExistence(&verCtx, &verRes);
 	CuAssert(tc, "Signature should contain publication record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -1917,6 +2021,7 @@ static void testRule_SignaturePublicationRecordExistence_verifyErrorResult(CuTes
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1925,13 +2030,14 @@ static void testRule_SignaturePublicationRecordExistence_verifyErrorResult(CuTes
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_VerificationRule_SignaturePublicationRecordExistence(&verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -1945,6 +2051,7 @@ static void testRule_ExtendedSignatureCalendarChainRootHash(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1953,8 +2060,9 @@ static void testRule_ExtendedSignatureCalendarChainRootHash(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
@@ -1966,7 +2074,7 @@ static void testRule_ExtendedSignatureCalendarChainRootHash(CuTest *tc) {
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_CALCHAIN_ONLINE);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -1982,6 +2090,7 @@ static void testRule_ExtendedSignatureCalendarChainRootHash_verifyErrorResult(Cu
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
 	KSI_Signature *extendedSig = NULL;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -1990,8 +2099,9 @@ static void testRule_ExtendedSignatureCalendarChainRootHash_verifyErrorResult(Cu
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extendedSig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && extendedSig != NULL);
@@ -2005,7 +2115,7 @@ static void testRule_ExtendedSignatureCalendarChainRootHash_verifyErrorResult(Cu
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALCHAIN_ONLINE);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_Signature_free(extendedSig);
 
@@ -2020,6 +2130,7 @@ static void testRule_CalendarHashChainDoesNotExist(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2028,13 +2139,14 @@ static void testRule_CalendarHashChainDoesNotExist(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_VerificationRule_CalendarHashChainDoesNotExist(&verCtx, &verRes);
 	CuAssert(tc, "Signature should not contain calendar hash chain.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -2047,6 +2159,7 @@ static void testRule_CalendarHashChainDoesNotExist_verifyErrorResult(CuTest *tc)
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2055,13 +2168,14 @@ static void testRule_CalendarHashChainDoesNotExist_verifyErrorResult(CuTest *tc)
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_VerificationRule_CalendarHashChainDoesNotExist(&verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -2075,6 +2189,7 @@ static void testRule_ExtendedSignatureCalendarChainInputHash(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2083,8 +2198,9 @@ static void testRule_ExtendedSignatureCalendarChainInputHash(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
@@ -2096,7 +2212,7 @@ static void testRule_ExtendedSignatureCalendarChainInputHash(CuTest *tc) {
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_CALCHAIN_ONLINE);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -2111,6 +2227,7 @@ static void testRule_ExtendedSignatureCalendarChainInputHash_nokAggrOutHash_veri
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2120,8 +2237,9 @@ static void testRule_ExtendedSignatureCalendarChainInputHash_nokAggrOutHash_veri
 	verCtx.tempData = &tempData;
 
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
@@ -2137,7 +2255,7 @@ static void testRule_ExtendedSignatureCalendarChainInputHash_nokAggrOutHash_veri
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALCHAIN_ONLINE);
 
 	KSI_nofree(tempData.aggregationOutputHash);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -2153,6 +2271,7 @@ static void testRule_ExtendedSignatureCalendarChainInputHash_verifyErrorResult(C
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
 	KSI_Signature *extendedSig = NULL;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2161,8 +2280,9 @@ static void testRule_ExtendedSignatureCalendarChainInputHash_verifyErrorResult(C
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extendedSig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && extendedSig != NULL);
@@ -2176,7 +2296,7 @@ static void testRule_ExtendedSignatureCalendarChainInputHash_verifyErrorResult(C
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALCHAIN_ONLINE);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_Signature_free(extendedSig);
 
@@ -2192,6 +2312,7 @@ static void testRule_ExtendedSignatureCalendarChainAggregationTime(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2200,8 +2321,9 @@ static void testRule_ExtendedSignatureCalendarChainAggregationTime(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
@@ -2213,7 +2335,7 @@ static void testRule_ExtendedSignatureCalendarChainAggregationTime(CuTest *tc) {
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_CALCHAIN_ONLINE);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -2229,6 +2351,7 @@ static void testRule_ExtendedSignatureCalendarChainAggregationTime_verifyErrorRe
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
 	KSI_Signature *extendedSig = NULL;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2237,8 +2360,9 @@ static void testRule_ExtendedSignatureCalendarChainAggregationTime_verifyErrorRe
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extendedSig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && extendedSig != NULL);
@@ -2252,7 +2376,7 @@ static void testRule_ExtendedSignatureCalendarChainAggregationTime_verifyErrorRe
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALCHAIN_ONLINE);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_Signature_free(extendedSig);
 
@@ -2267,6 +2391,7 @@ static void testRule_CalendarHashChainExistence(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2275,13 +2400,14 @@ static void testRule_CalendarHashChainExistence(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_VerificationRule_CalendarHashChainExistence(&verCtx, &verRes);
 	CuAssert(tc, "Signature should contain calendar hash chain.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -2294,6 +2420,7 @@ static void testRule_CalendarHashChainExistence_verifyErrorResult(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2302,13 +2429,14 @@ static void testRule_CalendarHashChainExistence_verifyErrorResult(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_VerificationRule_CalendarHashChainExistence(&verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned.",  res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -2321,6 +2449,7 @@ static void testRule_CalendarAuthenticationRecordExistence(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2329,13 +2458,14 @@ static void testRule_CalendarAuthenticationRecordExistence(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_VerificationRule_CalendarAuthenticationRecordExistence(&verCtx, &verRes);
 	CuAssert(tc, "Signature should contain calendar authentication record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -2348,6 +2478,7 @@ static void testRule_CalendarAuthenticationRecordExistence_verifyErrorResult(CuT
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2356,13 +2487,14 @@ static void testRule_CalendarAuthenticationRecordExistence_verifyErrorResult(CuT
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_VerificationRule_CalendarAuthenticationRecordExistence(&verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -2375,6 +2507,7 @@ static void testRule_CalendarAuthenticationRecordDoesNotExist(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2383,13 +2516,14 @@ static void testRule_CalendarAuthenticationRecordDoesNotExist(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_VerificationRule_CalendarAuthenticationRecordDoesNotExist(&verCtx, &verRes);
 	CuAssert(tc, "Signature should not contain calendar authentication record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -2402,6 +2536,7 @@ static void testRule_CalendarAuthenticationRecordDoesNotExist_verifyErrorResult(
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2410,13 +2545,14 @@ static void testRule_CalendarAuthenticationRecordDoesNotExist_verifyErrorResult(
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_VerificationRule_CalendarAuthenticationRecordDoesNotExist(&verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -2437,6 +2573,8 @@ static void testRule_CertificateExistence(CuTest *tc) {
 	};
 	VerificationTempData tempData;
 	KSI_CTX *ctx = NULL;
+	KSI_Signature *signature = NULL;
+	KSI_PublicationsFile *userPublicationsFile = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2448,11 +2586,13 @@ static void testRule_CertificateExistence(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userPublicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	verCtx.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -2477,8 +2617,8 @@ static void testRule_CertificateExistence(CuTest *tc) {
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE);
 
-	KSI_PublicationsFile_free(verCtx.userPublicationsFile);
-	KSI_Signature_free(verCtx.signature);
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_CTX_free(ctx);
 
@@ -2502,6 +2642,8 @@ static void testRule_CertificateExistence_verifyErrorResult(CuTest *tc) {
 	};
 	VerificationTempData tempData;
 	KSI_CTX *ctx = NULL;
+	KSI_Signature *signature = NULL;
+	KSI_PublicationsFile *userPublicationsFile = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2513,11 +2655,13 @@ static void testRule_CertificateExistence_verifyErrorResult(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userPublicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	verCtx.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints for email", res == KSI_OK);
@@ -2541,8 +2685,8 @@ static void testRule_CertificateExistence_verifyErrorResult(CuTest *tc) {
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE);
 
-	KSI_PublicationsFile_free(verCtx.userPublicationsFile);
-	KSI_Signature_free(verCtx.signature);
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_CTX_free(ctx);
 
@@ -2566,6 +2710,8 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification(CuTest *t
 	};
 	VerificationTempData tempData;
 	KSI_CTX *ctx = NULL;
+	KSI_Signature *signature = NULL;
+	KSI_PublicationsFile *userPublicationsFile = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2577,11 +2723,13 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification(CuTest *t
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userPublicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	verCtx.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -2605,8 +2753,8 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification(CuTest *t
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE);
 
-	KSI_PublicationsFile_free(verCtx.userPublicationsFile);
-	KSI_Signature_free(verCtx.signature);
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_CTX_free(ctx);
 
@@ -2630,6 +2778,8 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification_verifyErr
 	};
 	VerificationTempData tempData;
 	KSI_CTX *ctx = NULL;
+	KSI_Signature *signature = NULL;
+	KSI_PublicationsFile *userPublicationsFile = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2641,11 +2791,13 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification_verifyErr
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userPublicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	verCtx.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -2669,8 +2821,8 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification_verifyErr
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE);
 
-	KSI_PublicationsFile_free(verCtx.userPublicationsFile);
-	KSI_Signature_free(verCtx.signature);
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_CTX_free(ctx);
 
@@ -2692,6 +2844,8 @@ static void testRule_PublicationsFileContainsSignaturePublication(CuTest *tc) {
 	};
 	VerificationTempData tempData;
 	KSI_CTX *ctx = NULL;
+	KSI_Signature *signature = NULL;
+	KSI_PublicationsFile *userPublicationsFile = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2702,11 +2856,13 @@ static void testRule_PublicationsFileContainsSignaturePublication(CuTest *tc) {
 	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userPublicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	verCtx.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -2718,8 +2874,8 @@ static void testRule_PublicationsFileContainsSignaturePublication(CuTest *tc) {
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_PUBLICATION_WITH_PUBFILE);
 
-	KSI_PublicationsFile_free(verCtx.userPublicationsFile);
-	KSI_Signature_free(verCtx.signature);
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_CTX_free(ctx);
 
@@ -2740,6 +2896,8 @@ static void testRule_PublicationsFileContainsSignaturePublication_verifyErrorRes
 	};
 	VerificationTempData tempData;
 	KSI_CTX *ctx = NULL;
+	KSI_Signature *signature = NULL;
+	KSI_PublicationsFile *userPublicationsFile = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2751,11 +2909,13 @@ static void testRule_PublicationsFileContainsSignaturePublication_verifyErrorRes
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userPublicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	verCtx.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -2767,8 +2927,8 @@ static void testRule_PublicationsFileContainsSignaturePublication_verifyErrorRes
 
 	TEST_ASSERT_VERIFICATION_STEP_NA(KSI_VERIFY_PUBLICATION_WITH_PUBFILE);
 
-	KSI_PublicationsFile_free(verCtx.userPublicationsFile);
-	KSI_Signature_free(verCtx.signature);
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_CTX_free(ctx);
 
@@ -2789,6 +2949,8 @@ static void testRule_PublicationsFileContainsPublication(CuTest *tc) {
 	};
 	VerificationTempData tempData;
 	KSI_CTX *ctx = NULL;
+	KSI_Signature *signature = NULL;
+	KSI_PublicationsFile *userPublicationsFile = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2800,11 +2962,13 @@ static void testRule_PublicationsFileContainsPublication(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userPublicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	verCtx.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -2816,8 +2980,8 @@ static void testRule_PublicationsFileContainsPublication(CuTest *tc) {
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_PUBLICATION_WITH_PUBFILE);
 
-	KSI_PublicationsFile_free(verCtx.userPublicationsFile);
-	KSI_Signature_free(verCtx.signature);
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_CTX_free(ctx);
 
@@ -2838,6 +3002,8 @@ static void testRule_PublicationsFileContainsPublication_verifyErrorResult(CuTes
 	};
 	VerificationTempData tempData;
 	KSI_CTX *ctx = NULL;
+	KSI_Signature *signature = NULL;
+	KSI_PublicationsFile *userPublicationsFile = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2849,11 +3015,13 @@ static void testRule_PublicationsFileContainsPublication_verifyErrorResult(CuTes
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userPublicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	verCtx.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -2865,8 +3033,8 @@ static void testRule_PublicationsFileContainsPublication_verifyErrorResult(CuTes
 
 	TEST_ASSERT_VERIFICATION_STEP_NA(KSI_VERIFY_PUBLICATION_WITH_PUBFILE);
 
-	KSI_PublicationsFile_free(verCtx.userPublicationsFile);
-	KSI_Signature_free(verCtx.signature);
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_CTX_free(ctx);
 
@@ -2881,6 +3049,7 @@ static void testRule_ExtendingPermittedVerification(CuTest *tc) {
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
 	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
@@ -2889,13 +3058,14 @@ static void testRule_ExtendingPermittedVerification(CuTest *tc) {
 
 	verCtx.extendingAllowed = 1;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_VerificationRule_PublicationsFileExtendingPermittedVerification(&verCtx, &verRes);
 	CuAssert(tc, "Extending should be permitted", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -2908,6 +3078,7 @@ static void testRule_ExtendingPermittedVerification_verifyErrorResult(CuTest *tc
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
 	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
@@ -2916,15 +3087,16 @@ static void testRule_ExtendingPermittedVerification_verifyErrorResult(CuTest *tc
 
 	verCtx.extendingAllowed = 0;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
 
 	res = KSI_VerificationRule_PublicationsFileExtendingPermittedVerification(&verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -2943,6 +3115,8 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse(CuTe
 	};
 	VerificationTempData tempData;
 	KSI_CTX *ctx = NULL;
+	KSI_Signature *signature = NULL;
+	KSI_PublicationsFile *userPublicationsFile = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -2954,14 +3128,16 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse(CuTe
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(testSignatureFile), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(testSignatureFile), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userPublicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	verCtx.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -2973,8 +3149,8 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse(CuTe
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_PUBLICATION_WITH_PUBFILE);
 
-	KSI_PublicationsFile_free(verCtx.userPublicationsFile);
-	KSI_Signature_free(verCtx.signature);
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_CTX_free(ctx);
 
@@ -3005,10 +3181,11 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse_veri
 		{KSI_CERT_EMAIL, "publications@guardtime.com"},
 		{NULL, NULL}
 	};
-	KSI_Signature *sig = NULL;
 	VerificationTempData tempData;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *extendedSig = NULL;
+	KSI_Signature *signature = NULL;
+	KSI_PublicationsFile *userPublicationsFile = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -3020,21 +3197,22 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse_veri
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extendedSig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && extendedSig != NULL);
 
 	tempData.calendarChain = KSI_CalendarHashChain_ref(extendedSig->calendarChain);
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userPublicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	verCtx.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
 
-	verCtx.signature = sig;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -3043,8 +3221,8 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse_veri
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_PUBLICATION_WITH_PUBFILE);
 
-	KSI_PublicationsFile_free(verCtx.userPublicationsFile);
-	KSI_Signature_free(verCtx.signature);
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_Signature_free(extendedSig);
 	KSI_CTX_free(ctx);
@@ -3067,6 +3245,8 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(CuTe
 	};
 	VerificationTempData tempData;
 	KSI_CTX *ctx = NULL;
+	KSI_Signature *signature = NULL;
+	KSI_PublicationsFile *userPublicationsFile = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -3078,14 +3258,16 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(CuTe
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(testSignatureFile), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(testSignatureFile), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userPublicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	verCtx.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -3097,8 +3279,8 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(CuTe
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_PUBLICATION_WITH_PUBFILE);
 
-	KSI_PublicationsFile_free(verCtx.userPublicationsFile);
-	KSI_Signature_free(verCtx.signature);
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_CTX_free(ctx);
 
@@ -3133,6 +3315,8 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_veri
 	VerificationTempData tempData;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *extendedSig = NULL;
+	KSI_Signature *signature = NULL;
+	KSI_PublicationsFile *userPublicationsFile = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -3144,16 +3328,18 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_veri
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extendedSig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && extendedSig != NULL);
 
 	tempData.calendarChain = KSI_CalendarHashChain_ref(extendedSig->calendarChain);
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userPublicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	verCtx.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -3165,8 +3351,8 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_veri
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_PUBLICATION_WITH_PUBFILE);
 
-	KSI_PublicationsFile_free(verCtx.userPublicationsFile);
-	KSI_Signature_free(verCtx.signature);
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_Signature_free(extendedSig);
 	KSI_CTX_free(ctx);
@@ -3189,6 +3375,8 @@ static void testRule_PublicationsFileExtendedSignatureInputHash(CuTest *tc, char
 	};
 	VerificationTempData tempData;
 	KSI_CTX *ctx = NULL;
+	KSI_Signature *signature = NULL;
+	KSI_PublicationsFile *userPublicationsFile = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -3200,14 +3388,16 @@ static void testRule_PublicationsFileExtendedSignatureInputHash(CuTest *tc, char
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(testSignatureFile), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(testSignatureFile), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userPublicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	verCtx.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -3219,8 +3409,8 @@ static void testRule_PublicationsFileExtendedSignatureInputHash(CuTest *tc, char
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_PUBLICATION_WITH_PUBFILE);
 
-	KSI_PublicationsFile_free(verCtx.userPublicationsFile);
-	KSI_Signature_free(verCtx.signature);
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_CTX_free(ctx);
 #undef TEST_EXT_RESPONSE_FILE
@@ -3254,6 +3444,8 @@ static void testRule_PublicationsFileExtendedSignatureInputHash_verifyErrorResul
 	VerificationTempData tempData;
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *extendedSig = NULL;
+	KSI_Signature *signature = NULL;
+	KSI_PublicationsFile *userPublicationsFile = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -3265,16 +3457,18 @@ static void testRule_PublicationsFileExtendedSignatureInputHash_verifyErrorResul
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_EXT_SIGNATURE_FILE), &extendedSig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && extendedSig != NULL);
 
 	tempData.calendarChain = KSI_CalendarHashChain_ref(extendedSig->calendarChain);
 
-	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &verCtx.userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && verCtx.userPublicationsFile != NULL);
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	verCtx.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
 	CuAssert(tc, "Unable to set cert constraints", res == KSI_OK);
@@ -3286,8 +3480,8 @@ static void testRule_PublicationsFileExtendedSignatureInputHash_verifyErrorResul
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_PUBLICATION_WITH_PUBFILE);
 
-	KSI_PublicationsFile_free(verCtx.userPublicationsFile);
-	KSI_Signature_free(verCtx.signature);
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_Signature_free(extendedSig);
 	KSI_CTX_free(ctx);
@@ -3305,6 +3499,7 @@ static void testRule_UserProvidedPublicationExistence(CuTest *tc) {
 	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -3313,20 +3508,21 @@ static void testRule_UserProvidedPublicationExistence(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	context.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &context.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && context.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	context.signature = signature;
 
 	res = KSI_Signature_getPublicationRecord(context.signature, &tempRec);
 	CuAssert(tc, "Unable to read signature publication record.", res == KSI_OK && tempRec != NULL);
 
-	res = KSI_PublicationRecord_getPublishedData(tempRec, &context.userPublication);
+	res = KSI_PublicationRecord_getPublishedData(tempRec, (KSI_PublicationData **)&context.userPublication);
 	CuAssert(tc, "Unable to read signature publication data.", res == KSI_OK && context.userPublication != NULL);
 
 	res = KSI_VerificationRule_UserProvidedPublicationExistence(&context, &verRes);
 	CuAssert(tc, "User publication data should be provided", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_nofree(context.userPublication);
-	KSI_Signature_free(context.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&context);
 #undef TEST_SIGNATURE_FILE
 }
@@ -3338,6 +3534,7 @@ static void testRule_UserProvidedPublicationExistence_pubDataMissing_verifyError
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -3346,13 +3543,14 @@ static void testRule_UserProvidedPublicationExistence_pubDataMissing_verifyError
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_VerificationRule_UserProvidedPublicationExistence(&verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 #undef TEST_SIGNATURE_FILE
 }
@@ -3367,6 +3565,8 @@ static void testRule_UserProvidedPublicationExistence_pubHashMissing_verifyError
 	KSI_PublicationData *tempPubData = NULL;
 	KSI_Integer *pubTime = NULL;
 	VerificationTempData tempData;
+	KSI_PublicationData *userPublication = NULL;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -3375,11 +3575,13 @@ static void testRule_UserProvidedPublicationExistence_pubHashMissing_verifyError
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
-	res = KSI_PublicationData_new(ctx, &verCtx.userPublication);
-	CuAssert(tc, "Unable to create publication data.", res == KSI_OK && verCtx.userPublication != NULL);
+	res = KSI_PublicationData_new(ctx, &userPublication);
+	CuAssert(tc, "Unable to create publication data.", res == KSI_OK && userPublication != NULL);
+	verCtx.userPublication = userPublication;
 
 	res = KSI_Signature_getPublicationRecord(verCtx.signature, &tempRec);
 	CuAssert(tc, "Unable to read signature publication record.", res == KSI_OK && tempRec != NULL);
@@ -3390,14 +3592,14 @@ static void testRule_UserProvidedPublicationExistence_pubHashMissing_verifyError
 	res = KSI_PublicationData_getTime(tempPubData, &pubTime);
 	CuAssert(tc, "Unable to read signature publication time", res == KSI_OK && pubTime != NULL);
 
-	res = KSI_PublicationData_setTime(verCtx.userPublication, KSI_Integer_ref(pubTime));
+	res = KSI_PublicationData_setTime(userPublication, KSI_Integer_ref(pubTime));
 	CuAssert(tc, "Unable to set publication time.", res == KSI_OK);
 
 	res = KSI_VerificationRule_UserProvidedPublicationExistence(&verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
-	KSI_PublicationData_free(verCtx.userPublication);
-	KSI_Signature_free(verCtx.signature);
+	KSI_PublicationData_free(userPublication);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 #undef TEST_SIGNATURE_FILE
 }
@@ -3412,6 +3614,8 @@ static void testRule_UserProvidedPublicationExistence_pubTimeMissing_verifyError
 	KSI_PublicationData *tempPubData = NULL;
 	KSI_DataHash *pubHash = NULL;
 	VerificationTempData tempData;
+	KSI_PublicationData *userPublication = NULL;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -3420,11 +3624,13 @@ static void testRule_UserProvidedPublicationExistence_pubTimeMissing_verifyError
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
-	res = KSI_PublicationData_new(ctx, &verCtx.userPublication);
-	CuAssert(tc, "Unable to create publication data.", res == KSI_OK && verCtx.userPublication != NULL);
+	res = KSI_PublicationData_new(ctx, &userPublication);
+	CuAssert(tc, "Unable to create publication data.", res == KSI_OK && userPublication != NULL);
+	verCtx.userPublication = userPublication;
 
 	res = KSI_Signature_getPublicationRecord(verCtx.signature, &tempRec);
 	CuAssert(tc, "Unable to read signature publication record.", res == KSI_OK && tempRec != NULL);
@@ -3435,14 +3641,14 @@ static void testRule_UserProvidedPublicationExistence_pubTimeMissing_verifyError
 	res = KSI_PublicationData_getImprint(tempPubData, &pubHash);
 	CuAssert(tc, "Unable to read signature publication hash", res == KSI_OK && pubHash != NULL);
 
-	res = KSI_PublicationData_setImprint(verCtx.userPublication, KSI_DataHash_ref(pubHash));
+	res = KSI_PublicationData_setImprint(userPublication, KSI_DataHash_ref(pubHash));
 	CuAssert(tc, "Unable to set publication hash.", res == KSI_OK);
 
 	res = KSI_VerificationRule_UserProvidedPublicationExistence(&verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
-	KSI_PublicationData_free(verCtx.userPublication);
-	KSI_Signature_free(verCtx.signature);
+	KSI_PublicationData_free(userPublication);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 #undef TEST_SIGNATURE_FILE
 }
@@ -3455,6 +3661,7 @@ static void testRule_UserProvidedPublicationTimeVerification(CuTest *tc) {
 	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -3463,13 +3670,14 @@ static void testRule_UserProvidedPublicationTimeVerification(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_Signature_getPublicationRecord(verCtx.signature, &tempRec);
 	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && tempRec != NULL);
 
-	res = KSI_PublicationRecord_getPublishedData(tempRec, &verCtx.userPublication);
+	res = KSI_PublicationRecord_getPublishedData(tempRec, (KSI_PublicationData **)&verCtx.userPublication);
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && verCtx.userPublication != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
@@ -3479,8 +3687,7 @@ static void testRule_UserProvidedPublicationTimeVerification(CuTest *tc) {
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_PUBLICATION_WITH_PUBSTRING);
 
-	KSI_nofree(verCtx.userPublication);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 #undef TEST_SIGNATURE_FILE
 }
@@ -3493,6 +3700,7 @@ static void testRule_UserProvidedPublicationHashVerification(CuTest *tc) {
 	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -3501,13 +3709,14 @@ static void testRule_UserProvidedPublicationHashVerification(CuTest *tc) {
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_Signature_getPublicationRecord(verCtx.signature, &tempRec);
 	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && tempRec != NULL);
 
-	res = KSI_PublicationRecord_getPublishedData(tempRec, &verCtx.userPublication);
+	res = KSI_PublicationRecord_getPublishedData(tempRec, (KSI_PublicationData **)&verCtx.userPublication);
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && verCtx.userPublication != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
@@ -3518,7 +3727,7 @@ static void testRule_UserProvidedPublicationHashVerification(CuTest *tc) {
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_PUBLICATION_WITH_PUBSTRING);
 
 	KSI_nofree(verCtx.userPublication);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 #undef TEST_SIGNATURE_FILE
 }
@@ -3535,6 +3744,8 @@ static void testRule_UserProvidedPublicationVerification_timeMismatch_verifyErro
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_PublicationData *tempPubData = NULL;
 	VerificationTempData tempData;
+	KSI_PublicationData *userPublication = NULL;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -3543,8 +3754,9 @@ static void testRule_UserProvidedPublicationVerification_timeMismatch_verifyErro
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_Signature_getPublicationRecord(verCtx.signature, &tempRec);
 	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && tempRec != NULL);
@@ -3552,13 +3764,14 @@ static void testRule_UserProvidedPublicationVerification_timeMismatch_verifyErro
 	res = KSI_PublicationRecord_getPublishedData(tempRec, &tempPubData);
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && tempPubData != NULL);
 
-	res = KSI_PublicationData_new(ctx, &verCtx.userPublication);
-	CuAssert(tc, "Unable to create publication data", res == KSI_OK && verCtx.userPublication != NULL);
+	res = KSI_PublicationData_new(ctx, &userPublication);
+	CuAssert(tc, "Unable to create publication data", res == KSI_OK && userPublication != NULL);
+	verCtx.userPublication = userPublication;
 
 	res = KSI_Integer_new(ctx, TEST_TIMESTAMP, &pubTime);
 	CuAssert(tc, "Unable to create publication time", res == KSI_OK && pubTime != NULL);
 
-	res = KSI_PublicationData_setTime(verCtx.userPublication, pubTime);
+	res = KSI_PublicationData_setTime(userPublication, pubTime);
 	CuAssert(tc, "Unable to set publication time.", res == KSI_OK);
 
 	res = KSI_PublicationData_getImprint(tempPubData, &pubHash);
@@ -3567,7 +3780,7 @@ static void testRule_UserProvidedPublicationVerification_timeMismatch_verifyErro
 	/* Make a virtual copy of the hash object. */
 	KSI_DataHash_ref(pubHash);
 
-	res = KSI_PublicationData_setImprint(verCtx.userPublication, pubHash);
+	res = KSI_PublicationData_setImprint(userPublication, pubHash);
 	CuAssert(tc, "Unable to set publication hash.", res == KSI_OK);
 
 	TEST_VERIFICATION_STEP_INIT;
@@ -3577,8 +3790,8 @@ static void testRule_UserProvidedPublicationVerification_timeMismatch_verifyErro
 
 	TEST_ASSERT_VERIFICATION_STEP_NA(KSI_VERIFY_PUBLICATION_WITH_PUBSTRING);
 
-	KSI_PublicationData_free(verCtx.userPublication);
-	KSI_Signature_free(verCtx.signature);
+	KSI_PublicationData_free(userPublication);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_TIMESTAMP
@@ -3596,6 +3809,8 @@ static void testRule_UserProvidedPublicationVerification_hashMismatch_verifyErro
 	KSI_PublicationData *sigPubData = NULL;
 	KSI_DataHash *mockPubHash = NULL;
 	VerificationTempData tempData;
+	KSI_PublicationData *userPublication = NULL;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -3604,8 +3819,9 @@ static void testRule_UserProvidedPublicationVerification_hashMismatch_verifyErro
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_Signature_getPublicationRecord(verCtx.signature, &sigPubRec);
 	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && sigPubRec != NULL);
@@ -3613,19 +3829,20 @@ static void testRule_UserProvidedPublicationVerification_hashMismatch_verifyErro
 	res = KSI_PublicationRecord_getPublishedData(sigPubRec, &sigPubData);
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && sigPubData != NULL);
 
-	res = KSI_PublicationData_new(ctx, &verCtx.userPublication);
-	CuAssert(tc, "Unable to create publication data", res == KSI_OK && verCtx.userPublication != NULL);
+	res = KSI_PublicationData_new(ctx, &userPublication);
+	CuAssert(tc, "Unable to create publication data", res == KSI_OK && userPublication != NULL);
+	verCtx.userPublication = userPublication;
 
 	res = KSI_PublicationData_getTime(sigPubData, &pubTime);
 	CuAssert(tc, "Unable to read signature publication time", res == KSI_OK && pubTime != NULL);
 
-	res = KSI_PublicationData_setTime(verCtx.userPublication, KSI_Integer_ref(pubTime));
+	res = KSI_PublicationData_setTime(userPublication, KSI_Integer_ref(pubTime));
 	CuAssert(tc, "Unable to set publication time.", res == KSI_OK);
 
 	res = KSITest_DataHash_fromStr(ctx, TEST_MOCK_IMPRINT, &mockPubHash);
 	CuAssert(tc, "Unable to create mock hash from string", res == KSI_OK && mockPubHash != NULL);
 
-	res = KSI_PublicationData_setImprint(verCtx.userPublication, mockPubHash);
+	res = KSI_PublicationData_setImprint(userPublication, mockPubHash);
 	CuAssert(tc, "Unable to set publication mock hash.", res == KSI_OK);
 
 	TEST_VERIFICATION_STEP_INIT;
@@ -3635,8 +3852,8 @@ static void testRule_UserProvidedPublicationVerification_hashMismatch_verifyErro
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_PUBLICATION_WITH_PUBSTRING);
 
-	KSI_PublicationData_free(verCtx.userPublication);
-	KSI_Signature_free(verCtx.signature);
+	KSI_PublicationData_free(userPublication);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_MOCK_IMPRINT
@@ -3650,6 +3867,7 @@ static void testRule_UserProvidedPublicationCreationTimeVerification(CuTest *tc)
 	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -3658,13 +3876,14 @@ static void testRule_UserProvidedPublicationCreationTimeVerification(CuTest *tc)
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_Signature_getPublicationRecord(verCtx.signature, &tempRec);
 	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && tempRec != NULL);
 
-	res = KSI_PublicationRecord_getPublishedData(tempRec, &verCtx.userPublication);
+	res = KSI_PublicationRecord_getPublishedData(tempRec, (KSI_PublicationData **)&verCtx.userPublication);
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && verCtx.userPublication != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
@@ -3675,7 +3894,7 @@ static void testRule_UserProvidedPublicationCreationTimeVerification(CuTest *tc)
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_PUBLICATION_WITH_PUBSTRING);
 
 	KSI_nofree(verCtx.userPublication);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 #undef TEST_SIGNATURE_FILE
 }
@@ -3689,6 +3908,8 @@ static void testRule_UserProvidedPublicationCreationTimeVerification_verifyError
 	KSI_RuleVerificationResult verRes;
 	KSI_Integer *mockTime = NULL;
 	VerificationTempData tempData;
+	KSI_PublicationData *userPublication = NULL;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -3697,16 +3918,18 @@ static void testRule_UserProvidedPublicationCreationTimeVerification_verifyError
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
-	res = KSI_PublicationData_new(ctx, &verCtx.userPublication);
-	CuAssert(tc, "Unable to create publication data", res == KSI_OK && verCtx.userPublication != NULL);
+	res = KSI_PublicationData_new(ctx, &userPublication);
+	CuAssert(tc, "Unable to create publication data", res == KSI_OK && userPublication != NULL);
+	verCtx.userPublication = userPublication;
 
 	res = KSI_Integer_new(ctx, TEST_TIMESTAMP, &mockTime);
 	CuAssert(tc, "Unable to create publication time", res == KSI_OK && mockTime != NULL);
 
-	res = KSI_PublicationData_setTime(verCtx.userPublication, mockTime);
+	res = KSI_PublicationData_setTime(userPublication, mockTime);
 	CuAssert(tc, "Unable to set publication time.", res == KSI_OK);
 
 	TEST_VERIFICATION_STEP_INIT;
@@ -3716,8 +3939,8 @@ static void testRule_UserProvidedPublicationCreationTimeVerification_verifyError
 
 	TEST_ASSERT_VERIFICATION_STEP_NA(KSI_VERIFY_PUBLICATION_WITH_PUBSTRING);
 
-	KSI_PublicationData_free(verCtx.userPublication);
-	KSI_Signature_free(verCtx.signature);
+	KSI_PublicationData_free(userPublication);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 #undef TEST_SIGNATURE_FILE
 #undef TEST_TIMESTAMP
@@ -3732,6 +3955,7 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse(CuTest *
 	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -3740,8 +3964,9 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse(CuTest *
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
@@ -3749,7 +3974,7 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse(CuTest *
 	res = KSI_Signature_getPublicationRecord(verCtx.signature, &tempRec);
 	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && tempRec != NULL);
 
-	res = KSI_PublicationRecord_getPublishedData(tempRec, &verCtx.userPublication);
+	res = KSI_PublicationRecord_getPublishedData(tempRec, (KSI_PublicationData **)&verCtx.userPublication);
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && verCtx.userPublication != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
@@ -3760,7 +3985,7 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse(CuTest *
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_PUBLICATION_WITH_PUBSTRING);
 
 	KSI_nofree(verCtx.userPublication);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -3780,6 +4005,8 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_verifyEr
 	KSI_PublicationRecord *tempRec = NULL;
 	KSI_PublicationData *tempPubData = NULL;
 	VerificationTempData tempData;
+	KSI_PublicationData *userPublication = NULL;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -3788,8 +4015,9 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_verifyEr
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
@@ -3800,19 +4028,20 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_verifyEr
 	res = KSI_PublicationRecord_getPublishedData(tempRec, &tempPubData);
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && tempPubData != NULL);
 
-	res = KSI_PublicationData_new(ctx, &verCtx.userPublication);
-	CuAssert(tc, "Unable to create publication data", res == KSI_OK && verCtx.userPublication != NULL);
+	res = KSI_PublicationData_new(ctx, &userPublication);
+	CuAssert(tc, "Unable to create publication data", res == KSI_OK && userPublication != NULL);
+	verCtx.userPublication = userPublication;
 
 	res = KSI_PublicationData_getTime(tempPubData, &pubTime);
 	CuAssert(tc, "Unable to read signature publication time", res == KSI_OK && pubTime != NULL);
 
-	res = KSI_PublicationData_setTime(verCtx.userPublication, KSI_Integer_ref(pubTime));
+	res = KSI_PublicationData_setTime(userPublication, KSI_Integer_ref(pubTime));
 	CuAssert(tc, "Unable to set publication time.", res == KSI_OK);
 
 	res = KSITest_DataHash_fromStr(ctx, TEST_MOCK_IMPRINT, &mockPubHash);
 	CuAssert(tc, "Unable to create mock hash from string", res == KSI_OK && mockPubHash != NULL);
 
-	res = KSI_PublicationData_setImprint(verCtx.userPublication, KSI_DataHash_ref(mockPubHash));
+	res = KSI_PublicationData_setImprint(userPublication, KSI_DataHash_ref(mockPubHash));
 	CuAssert(tc, "Unable to set publication mock hash.", res == KSI_OK);
 
 	TEST_VERIFICATION_STEP_INIT;
@@ -3823,8 +4052,8 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_verifyEr
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_PUBLICATION_WITH_PUBSTRING);
 
 	KSI_DataHash_free(mockPubHash);
-	KSI_PublicationData_free(verCtx.userPublication);
-	KSI_Signature_free(verCtx.signature);
+	KSI_PublicationData_free(userPublication);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -3841,6 +4070,8 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_wrongCor
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
+	KSI_PublicationData *userPublication = NULL;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -3849,14 +4080,16 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_wrongCor
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
-	res = KSI_PublicationData_fromBase32(ctx, TEST_PUB_STRING_FROM_DIFFERENT_CORE, &verCtx.userPublication);
-	CuAssert(tc, "Failed decoding publication string.", res == KSI_OK && verCtx.userPublication != NULL);
+	res = KSI_PublicationData_fromBase32(ctx, TEST_PUB_STRING_FROM_DIFFERENT_CORE, &userPublication);
+	CuAssert(tc, "Failed decoding publication string.", res == KSI_OK && userPublication != NULL);
+	verCtx.userPublication = userPublication;
 
 	TEST_VERIFICATION_STEP_INIT;
 
@@ -3865,8 +4098,8 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_wrongCor
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_PUBLICATION_WITH_PUBSTRING);
 
-	KSI_PublicationData_free(verCtx.userPublication);
-	KSI_Signature_free(verCtx.signature);
+	KSI_PublicationData_free(userPublication);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -3883,6 +4116,7 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse(CuTest *
 	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -3891,8 +4125,9 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse(CuTest *
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
@@ -3900,7 +4135,7 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse(CuTest *
 	res = KSI_Signature_getPublicationRecord(verCtx.signature, &tempRec);
 	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && tempRec != NULL);
 
-	res = KSI_PublicationRecord_getPublishedData(tempRec, &verCtx.userPublication);
+	res = KSI_PublicationRecord_getPublishedData(tempRec, (KSI_PublicationData **)&verCtx.userPublication);
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && verCtx.userPublication != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
@@ -3911,7 +4146,7 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse(CuTest *
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_PUBLICATION_WITH_PUBSTRING);
 
 	KSI_nofree(verCtx.userPublication);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -3931,6 +4166,8 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse_verifyEr
 	KSI_DataHash *pubHash = NULL;
 	VerificationTempData tempData;
 	KSI_Signature *extendedSig = NULL;
+	KSI_PublicationData *userPublication = NULL;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -3939,8 +4176,9 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse_verifyEr
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &extendedSig);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && extendedSig != NULL);
@@ -3953,13 +4191,14 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse_verifyEr
 	res = KSI_PublicationRecord_getPublishedData(tempRec, &tempPubData);
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && tempPubData != NULL);
 
-	res = KSI_PublicationData_new(ctx, &verCtx.userPublication);
-	CuAssert(tc, "Unable to create publication data", res == KSI_OK && verCtx.userPublication != NULL);
+	res = KSI_PublicationData_new(ctx, &userPublication);
+	CuAssert(tc, "Unable to create publication data", res == KSI_OK && userPublication != NULL);
+	verCtx.userPublication = userPublication;
 
 	res = KSI_Integer_new(ctx, TEST_TIMESTAMP, &mockPubTime);
 	CuAssert(tc, "Unable to create mock time", res == KSI_OK && mockPubTime != NULL);
 
-	res = KSI_PublicationData_setTime(verCtx.userPublication, mockPubTime);
+	res = KSI_PublicationData_setTime(userPublication, mockPubTime);
 	CuAssert(tc, "Unable to set publication mock time.", res == KSI_OK);
 
 	res = KSI_PublicationData_getImprint(tempPubData, &pubHash);
@@ -3968,7 +4207,7 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse_verifyEr
 	/* Make a virtual copy of the hash object. */
 	KSI_DataHash_ref(pubHash);
 
-	res = KSI_PublicationData_setImprint(verCtx.userPublication, pubHash);
+	res = KSI_PublicationData_setImprint(userPublication, pubHash);
 	CuAssert(tc, "Unable to set publication hash.", res == KSI_OK);
 
 	TEST_VERIFICATION_STEP_INIT;
@@ -3978,8 +4217,8 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse_verifyEr
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_PUBLICATION_WITH_PUBSTRING);
 
-	KSI_PublicationData_free(verCtx.userPublication);
-	KSI_Signature_free(verCtx.signature);
+	KSI_PublicationData_free(userPublication);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_Signature_free(extendedSig);
 
@@ -3996,6 +4235,7 @@ static void testRule_UserProvidedPublicationExtendedSignatureInputHash(CuTest *t
 	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -4004,8 +4244,9 @@ static void testRule_UserProvidedPublicationExtendedSignatureInputHash(CuTest *t
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
@@ -4013,7 +4254,7 @@ static void testRule_UserProvidedPublicationExtendedSignatureInputHash(CuTest *t
 	res = KSI_Signature_getPublicationRecord(verCtx.signature, &tempRec);
 	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && tempRec != NULL);
 
-	res = KSI_PublicationRecord_getPublishedData(tempRec, &verCtx.userPublication);
+	res = KSI_PublicationRecord_getPublishedData(tempRec, (KSI_PublicationData **)&verCtx.userPublication);
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && verCtx.userPublication != NULL);
 
 	TEST_VERIFICATION_STEP_INIT;
@@ -4024,7 +4265,7 @@ static void testRule_UserProvidedPublicationExtendedSignatureInputHash(CuTest *t
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_PUBLICATION_WITH_PUBSTRING);
 
 	KSI_nofree(verCtx.userPublication);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -4041,6 +4282,7 @@ static void testRule_UserProvidedPublicationExtendedSignatureInputHash_verifyErr
 	KSI_RuleVerificationResult verRes;
 	KSI_PublicationRecord *tempRec = NULL;
 	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -4049,8 +4291,9 @@ static void testRule_UserProvidedPublicationExtendedSignatureInputHash_verifyErr
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &verCtx.signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && verCtx.signature != NULL);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
@@ -4058,7 +4301,7 @@ static void testRule_UserProvidedPublicationExtendedSignatureInputHash_verifyErr
 	res = KSI_Signature_getPublicationRecord(verCtx.signature, &tempRec);
 	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && tempRec != NULL);
 
-	res = KSI_PublicationRecord_getPublishedData(tempRec, &verCtx.userPublication);
+	res = KSI_PublicationRecord_getPublishedData(tempRec, (KSI_PublicationData **)&verCtx.userPublication);
 	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && verCtx.userPublication != NULL);
 
 	res = KSITest_DataHash_fromStr(ctx, TEST_MOCK_IMPRINT, &((VerificationTempData *)verCtx.tempData)->aggregationOutputHash);
@@ -4072,7 +4315,7 @@ static void testRule_UserProvidedPublicationExtendedSignatureInputHash_verifyErr
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_PUBLICATION_WITH_PUBSTRING);
 
 	KSI_nofree(verCtx.userPublication);
-	KSI_Signature_free(verCtx.signature);
+	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE

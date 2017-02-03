@@ -475,7 +475,7 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile);
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_verifyPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile *pubFile);
+int KSI_verifyPublicationsFile(KSI_CTX *ctx, const KSI_PublicationsFile *pubFile);
 
 /**
  * Use the KSI context to verify the signature.
@@ -484,7 +484,7 @@ int KSI_verifyPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile *pubFile);
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig);
+int KSI_verifySignature(KSI_CTX *ctx, const KSI_Signature *sig);
 
 /**
  * Use the KSI context to verify the signature and the datahash.
@@ -494,7 +494,7 @@ int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig);
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_verifyDataHash(KSI_CTX *ctx, KSI_Signature *sig, KSI_DataHash *hsh);
+int KSI_verifyDataHash(KSI_CTX *ctx, const KSI_Signature *sig, const KSI_DataHash *hsh);
 /**
  * Create a KSI signature from a given data hash.
  * \param[in]		ctx			KSI context.
@@ -504,7 +504,7 @@ int KSI_verifyDataHash(KSI_CTX *ctx, KSI_Signature *sig, KSI_DataHash *hsh);
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  * \see #KSI_Signature_free, #KSI_extendSignature
  */
-int KSI_createSignature(KSI_CTX *ctx, KSI_DataHash *dataHash, KSI_Signature **sig);
+int KSI_createSignature(KSI_CTX *ctx, const KSI_DataHash *dataHash, KSI_Signature **sig);
 
 /**
  * Extend the signature to the earliest available publication.
@@ -518,7 +518,7 @@ int KSI_createSignature(KSI_CTX *ctx, KSI_DataHash *dataHash, KSI_Signature **si
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  * \see #KSI_Signature_free, #KSI_createSignature
  */
-int KSI_extendSignatureWithPolicy(KSI_CTX *ctx, KSI_Signature *sig, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **extended);
+int KSI_extendSignatureWithPolicy(KSI_CTX *ctx, const KSI_Signature *sig, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **extended);
 
 #define KSI_extendSignature(ctx, sig, extended) KSI_extendSignatureWithPolicy(ctx, sig, KSI_VERIFICATION_POLICY_INTERNAL, NULL, extended)
 
