@@ -62,7 +62,9 @@ ALLTESTS_OBJ = \
 	$(OBJ_DIR)\ksi_hash_test.obj \
 	$(OBJ_DIR)\ksi_hashchain_test.obj \
 	$(OBJ_DIR)\ksi_publicationsfile_test.obj \
-	$(OBJ_DIR)\ksi_net_test.obj \
+	$(OBJ_DIR)\ksi_net_pduv1_test.obj \
+	$(OBJ_DIR)\ksi_net_pduv2_test.obj \
+	$(OBJ_DIR)\ksi_net_common_test.obj \
 	$(OBJ_DIR)\ksi_rdr_test.obj \
 	$(OBJ_DIR)\ksi_signature_test.obj \
 	$(OBJ_DIR)\ksi_signature_builder_test.obj \

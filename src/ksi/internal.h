@@ -27,17 +27,19 @@
 #include "err.h"
 #include "compatibility.h"
 
+#ifndef _WIN32
+#  include <stdbool.h>
+#  ifdef HAVE_CONFIG_H
+#    include "config.h"
+#  endif
+#endif
+
+
 #define KSI_TLV_MASK_TLV16 0x80u
 #define KSI_TLV_MASK_LENIENT 0x40u
 #define KSI_TLV_MASK_FORWARD 0x20u
 
 #define KSI_TLV_MASK_TLV8_TYPE 0x1fu
-
-/**
- * Default PDU versions for KSI aggregation and extending messages.
- */
-#define KSI_PDU_VERSION_1		1
-#define KSI_PDU_VERSION_2		2
 
 #ifndef KSI_AGGREGATION_PDU_VERSION
 #define KSI_AGGREGATION_PDU_VERSION		KSI_PDU_VERSION_1
@@ -78,13 +80,6 @@
  */
 #ifndef KSI_PKI_TRUSTSTORE_IMPL
 #define KSI_PKI_TRUSTSTORE_IMPL KSI_IMPL_OPENSSL
-#endif
-
-#ifndef _WIN32
-#  include <stdbool.h>
-#  ifdef HAVE_CONFIG_H
-#    include "config.h"
-#  endif
 #endif
 
 #ifdef _WIN32

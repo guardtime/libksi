@@ -33,7 +33,7 @@ AC_CANONICAL_TARGET
 #   3. If any interfaces have been added since the last public release, then
 #      increment age ('c:r:a' becomes 'c:r:a+1').
 #   4. If any interfaces have been removed or changed since the last public
-#      release, then set age to 0 ('c:r:a' becomes 'c:r:0'). 
+#      release, then set age to 0 ('c:r:a' becomes 'c:r:0').
 LTVER="5:0:0"
 AC_SUBST(LTVER)
 
@@ -50,11 +50,11 @@ AC_CHECK_PROG(git_installed,git,"yes", "no")
 AC_MSG_CHECKING([for commit id])
 commit_id=""
 if test "$git_installed" = "yes" -a -x ".git"; then
-    commit_id=$(git log -n 1 --format="%H")
-    AC_MSG_RESULT([$commit_id])
-    AC_DEFINE_UNQUOTED(COMMIT_ID, "$commit_id", [Commit id])
+	commit_id=$(git log -n 1 --format="%H")
+	AC_MSG_RESULT([$commit_id])
+	AC_DEFINE_UNQUOTED(COMMIT_ID, "$commit_id", [Commit id])
 else
-    AC_MSG_RESULT([no])
+	AC_MSG_RESULT([no])
 fi
 
 # Define configuration variables for the SDK
@@ -74,8 +74,8 @@ AC_ARG_WITH(openssl,
 [  --with-openssl=path       build with OpenSSL installed at specified location],
 :, with_openssl=)
 if test ! -z "$with_openssl" ; then
-    CFLAGS="-I$with_openssl/include $CFLAGS"
-    LDFLAGS="-L$with_openssl/lib $LDFLAGS"
+	CFLAGS="-I$with_openssl/include $CFLAGS"
+	LDFLAGS="-L$with_openssl/lib $LDFLAGS"
 fi
 
 AC_CHECK_LIB([crypto], [SHA256_Init], [], [AC_MSG_FAILURE([Could not find OpenSSL 0.9.8+ libraries.])])
@@ -85,71 +85,71 @@ AC_ARG_WITH(cafile,
 [  --with-cafile=file        build with trusted CA certificate bundle file at specified location],
 :, with_cafile=)
 if test -z "$with_cafile" ; then
-    for cafile in \
-            /etc/ssl/certs/ca-certificates.crt \
-            /etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt \
-            /etc/pki/tls/certs/ca-bundle.trust.crt \
-            /usr/share/ssl/certs/ca-bundle.trust.crt \
-            /usr/local/share/certs/ca-root.trust.crt \
-            /usr/local/etc/openssl/cert.pem \
-            /etc/ssl/cert.pem ; do
-        if test -f "$cafile" ; then
-            with_cafile="$cafile"
-            break
-        fi
-    done
+	for cafile in \
+			/etc/ssl/certs/ca-certificates.crt \
+			/etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt \
+			/etc/pki/tls/certs/ca-bundle.trust.crt \
+			/usr/share/ssl/certs/ca-bundle.trust.crt \
+			/usr/local/share/certs/ca-root.trust.crt \
+			/usr/local/etc/openssl/cert.pem \
+			/etc/ssl/cert.pem ; do
+		if test -f "$cafile" ; then
+			with_cafile="$cafile"
+			break
+		fi
+	done
 fi
 
 AC_MSG_CHECKING([for location of trusted CA certificate bundle file])
 if test ! -z "$with_cafile" ; then
-    AC_MSG_RESULT([$with_cafile])
-    AC_DEFINE_UNQUOTED(OPENSSL_CA_FILE, "$with_cafile", [Location of the trusted CA certificate bundle file])
+	AC_MSG_RESULT([$with_cafile])
+	AC_DEFINE_UNQUOTED(OPENSSL_CA_FILE, "$with_cafile", [Location of the trusted CA certificate bundle file])
 else
-    AC_MSG_RESULT([no])
+	AC_MSG_RESULT([no])
 fi
 
 AC_ARG_WITH(cadir,
 [  --with-cadir=dir          build with trusted CA certificate directory at specified path],
 :, with_cadir=)
 if test -z "$with_cadir" ; then
-    for cadir in \
-            /etc/ssl/certs/ \
-            /opt/local/etc/openssl/certs/ ; do
-        if test -d "$cadir" && ls "$cadir"/[[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]].0 >/dev/null 2>/dev/null ; then
-            with_cadir="$cadir"
-            break
-        fi
-    done
+	for cadir in \
+			/etc/ssl/certs/ \
+			/opt/local/etc/openssl/certs/ ; do
+		if test -d "$cadir" && ls "$cadir"/[[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]].0 >/dev/null 2>/dev/null ; then
+			with_cadir="$cadir"
+			break
+		fi
+	done
 fi
 
 AC_MSG_CHECKING([for path to trusted CA certificate directory])
 if test ! -z "$with_cadir" ; then
-    AC_MSG_RESULT([$with_cadir])
-    AC_DEFINE_UNQUOTED(OPENSSL_CA_DIR, "$with_cadir", [Path to the trusted CA certificate directory])
+	AC_MSG_RESULT([$with_cadir])
+	AC_DEFINE_UNQUOTED(OPENSSL_CA_DIR, "$with_cadir", [Path to the trusted CA certificate directory])
 else
-    AC_MSG_RESULT([no])
+	AC_MSG_RESULT([no])
 fi
 
 # Check for CA file
 if test -z "$with_cafile" -a -z "$with_cadir"; then
-    # Check for OSX Trust Evaluation Engine.
-    AC_CHECK_LIB([crypto], [X509_TEA_is_enabled], [], [AC_MSG_FAILURE([*** CA certificate bundle file or directory must be specified.])])
-    AC_MSG_CHECKING([if trust evaluation engine is enabled])
-    # Fall back to TEA if not disabled.
-    if test -z "$OPENSSL_X509_TEA_DISABLE" -o "$OPENSSL_X509_TEA_DISABLE" == "0" ; then
-        AC_MSG_RESULT([yes])
-    else
-        AC_MSG_RESULT([no])
-        AC_MSG_ERROR([*** Neither CA certificate bundle file nor directory is specified and also Trust Evaluation Engine is disabled.]);
-    fi
+	# Check for OSX Trust Evaluation Engine.
+	AC_CHECK_LIB([crypto], [X509_TEA_is_enabled], [], [AC_MSG_FAILURE([*** CA certificate bundle file or directory must be specified.])])
+	AC_MSG_CHECKING([if trust evaluation engine is enabled])
+	# Fall back to TEA if not disabled.
+	if test -z "$OPENSSL_X509_TEA_DISABLE" -o "$OPENSSL_X509_TEA_DISABLE" == "0" ; then
+		AC_MSG_RESULT([yes])
+	else
+		AC_MSG_RESULT([no])
+		AC_MSG_ERROR([*** Neither CA certificate bundle file nor directory is specified and also Trust Evaluation Engine is disabled.]);
+	fi
 fi
 
 # Reduce warnings generated by OpenSSL under OSX
 case "${target_os}" in
-    darwin*)
-        CFLAGS="$CFLAGS -mmacosx-version-min=10.5"
-        LDFLAGS="$LDFLAGS -mmacosx-version-min=10.5"
-        ;;
+	darwin*)
+		CFLAGS="$CFLAGS -mmacosx-version-min=10.5"
+		LDFLAGS="$LDFLAGS -mmacosx-version-min=10.5"
+		;;
 esac
 
 # To ensure compatibility with Microsoft compiler.

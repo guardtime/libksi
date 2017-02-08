@@ -293,6 +293,12 @@ enum KSI_StatusCode {
 	KSI_UNKNOWN_ERROR = 0xffff
 };
 
+/**
+ * Default PDU versions for KSI aggregation and extending messages.
+ */
+#define KSI_PDU_VERSION_1		1
+#define KSI_PDU_VERSION_2		2
+
 enum KSI_CtxFlag {
 	/**
 	 * Description:	PDU version for KSI aggregation messages.
