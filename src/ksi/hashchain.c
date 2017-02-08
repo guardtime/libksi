@@ -430,7 +430,7 @@ cleanup:
 KSI_IMPLEMENT_REF(KSI_CalendarHashChain);
 KSI_IMPLEMENT_WRITE_BYTES(KSI_CalendarHashChain, 0x0802, 0, 0);
 
-int KSI_CalendarHashChain_aggregate(const KSI_CalendarHashChain *chain, KSI_DataHash **hsh) {
+int KSI_CalendarHashChain_aggregate(KSI_CalendarHashChain *chain, KSI_DataHash **hsh) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *tmp = NULL;
 

@@ -194,7 +194,7 @@ extern "C" {
 	 */
 	void KSI_CalendarHashChain_free(KSI_CalendarHashChain *t);
 	int KSI_CalendarHashChain_new(KSI_CTX *ctx, KSI_CalendarHashChain **t);
-	int KSI_CalendarHashChain_aggregate(const KSI_CalendarHashChain *chain, KSI_DataHash **hsh);
+	int KSI_CalendarHashChain_aggregate(KSI_CalendarHashChain *chain, KSI_DataHash **hsh);
 	int KSI_CalendarHashChain_calculateAggregationTime(const KSI_CalendarHashChain *chain, time_t *aggrTime);
 	int KSI_CalendarHashChain_getPublicationTime(const KSI_CalendarHashChain *t, KSI_Integer **publicationTime);
 	int KSI_CalendarHashChain_getAggregationTime(const KSI_CalendarHashChain *t, KSI_Integer **aggregationTime);
