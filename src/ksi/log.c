@@ -98,7 +98,7 @@ int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned 
 		goto cleanup;
 	}
 
-	if (level < ctx->logLevel) goto cleanup;
+	if (level > ctx->logLevel) goto cleanup;
 
 	logStr_size = data_len * 2 + 1;
 
@@ -134,7 +134,7 @@ int KSI_LOG_logTlv(KSI_CTX *ctx, int level, const char *prefix, const KSI_TLV *t
 	int res = KSI_UNKNOWN_ERROR;
 	char serialized[0x1ffff];
 
-	if (level < ctx->logLevel) {
+	if (level > ctx->logLevel) {
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -160,7 +160,7 @@ int KSI_LOG_logDataHash(KSI_CTX *ctx, int level, const char *prefix, const KSI_D
 	const unsigned char *imprint = NULL;
 	size_t imprint_len = 0;
 
-	if (level < ctx->logLevel) {
+	if (level > ctx->logLevel) {
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -192,7 +192,7 @@ int KSI_LOG_logCtxError(KSI_CTX *ctx, int level) {
 
 	if(ctx == NULL) goto cleanup;
 
-	if (level < ctx->logLevel) {
+	if (level > ctx->logLevel) {
 		res = KSI_OK;
 		goto cleanup;
 	}
