@@ -62,11 +62,29 @@ fi
 AC_MSG_NOTICE([Disabling strict HTTP parsing])
 AC_DEFINE(HTTP_PARSER_STRICT, 0, [Disabling strict HTTP parsing to allow underscores in host names.])
 
-AC_MSG_NOTICE([Setting aggregation PDU version])
-AC_DEFINE(KSI_AGGREGATION_PDU_VERSION, KSI_PDU_VERSION_1, [Setting aggregation PDU version to 1.])
+AC_ARG_WITH(default_pdu_version,
+[  --with-default-pdu-version=version Use the given PDU version by default.],
+[], [with_default_pdu_version=])
 
-AC_MSG_NOTICE([Setting extending PDU version])
-AC_DEFINE(KSI_EXTENDING_PDU_VERSION, KSI_PDU_VERSION_1, [Setting extending PDU version to 1.])
+if test -z "$with_default_pdu_version"; then
+	echo "Was empty"
+	pdu_version=KSI_PDU_VERSION_1
+else
+	case "$with_default_pdu_version" in
+		1)	pdu_version=KSI_PDU_VERSION_1
+			;;
+		2)	pdu_version=KSI_PDU_VERSION_2
+			;;
+		*) AC_MSG_ERROR([*** Invalid aggregation PDU version.]);
+		;;
+	esac;
+fi
+
+AC_MSG_NOTICE([Setting aggregation PDU version to $pdu_version.])
+AC_DEFINE_UNQUOTED(KSI_AGGREGATION_PDU_VERSION, $pdu_version, [Default aggregation PDU version.])
+
+AC_MSG_NOTICE([Setting extending PDU version to $pdu_version.])
+AC_DEFINE_UNQUOTED(KSI_EXTENDING_PDU_VERSION, $pdu_version, [Default extending PDU version.])
 
 # Checks for libraries.
 

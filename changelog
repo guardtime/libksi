@@ -1,3 +1,4 @@
+* IMPROVEMENT: Added flag --with-default-pdu-version=version to configure script.
 * IMPROVEMENT: Improve test support for different PDU version.
 * BUGFIX: Fixed KSI_TlvElement nested structure serialization issue.
 * IMPROVEMENT: Updated signature verification procedure. Added new error codes.
