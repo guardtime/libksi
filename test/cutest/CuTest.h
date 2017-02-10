@@ -52,6 +52,7 @@ struct CuTest
 	const char* skippedBy;
 	jmp_buf *jumpBuf;
 	void (*preTest)(void);
+	void (*postTest)(void);
 };
 
 void CuTestInit(CuTest* t, const char* name, TestFunction function);
@@ -108,6 +109,7 @@ typedef struct
 	int skipCount;
 	int failCount;
 	void (*preTest)(void);
+	void (*postTest)(void);
 } CuSuite;
 
 

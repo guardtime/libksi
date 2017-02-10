@@ -17,11 +17,13 @@
  * reserves and retains all trademark rights.
  */
 
+#include <string.h>
 #include "cutest/CuTest.h"
 #include "all_integration_tests.h"
 #include <ksi/net_uri.h>
 #include <ksi/net_http.h>
 #include <ksi/net.h>
+#include "../src/ksi/ctx_impl.h"
 
 extern KSI_CTX *ctx;
 
@@ -38,8 +40,6 @@ static void Test_NOKAggr_TreeTooLarge(CuTest* tc) {
 	KSI_Integer *resp_status = NULL;
 
 	KSI_ERR_clearErrors(ctx);
-
-
 
 	res = KSI_AggregationReq_new(ctx, &request);
 	CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && request != NULL);
@@ -268,6 +268,89 @@ static void Test_CreateSignatureUserInfoFromUrl(CuTest* tc) {
 	return;
 }
 
+static void Test_Pipelining(CuTest* tc) {
+	int res;
+	KSI_NetworkClient *http = NULL;
+	KSI_DataHash *hsh = NULL;
+	KSI_RequestHandle *handle[10];
+	KSI_AggregationReq *req[10];
+	KSI_Integer *reqId = NULL;
+	int i;
+
+	memset(handle, 0, sizeof(handle));
+	memset(req, 0, sizeof(handle));
+
+	KSI_LOG_debug(ctx, "Test_Pipelining: START.");
+
+	res = KSI_CTX_setAggregator(ctx, conf.aggregator_url, conf.aggregator_user, conf.aggregator_pass);
+	CuAssert(tc, "Unable to set aggregator to the http client.", res == KSI_OK);
+
+	http = ctx->netProvider;
+
+	res = KSI_DataHash_create(ctx, "foobar", 6, KSI_HASHALG_SHA2_256, &hsh);
+	CuAssert(tc, "Unable to create data hash from string.", res == KSI_OK && hsh != NULL);
+
+	KSI_LOG_debug(ctx, "Test_Pipelining: SEND.");
+
+	/* Prepare and send the requests. */
+	for (i = 0; i < 10; i++) {
+		KSI_LOG_debug(ctx, "Test_Pipelining: Creating request %d.", i);
+
+		res = KSI_AggregationReq_new(ctx, &req[i]);
+		CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
+
+		res = KSI_AggregationReq_setRequestHash(req[i], KSI_DataHash_ref(hsh));
+		CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
+
+		res = KSI_Integer_new(ctx, i, &reqId);
+		CuAssert(tc, "Unable to create reqId.", res == KSI_OK && reqId != NULL);
+
+		res = KSI_AggregationReq_setRequestId(req[i], reqId);
+		CuAssert(tc, "Unable to set request id.", res == KSI_OK);
+
+		reqId = NULL;
+
+		res = KSI_NetworkClient_sendSignRequest(http, req[i], &handle[i]);
+		CuAssert(tc, "Unable to send first request.", res == KSI_OK && handle[i] != NULL);
+	}
+
+	KSI_LOG_debug(ctx, "Test_Pipelining: RECEIVE.");
+
+	/* Loop over the responses and verify the signatures. */
+	for (i = 0; i < 10; i++) {
+		KSI_AggregationResp *resp = NULL;
+		KSI_Integer *reqId = NULL;
+
+		KSI_LOG_debug(ctx, "Test_Pipelining: Reading reponse %d.", i);
+
+		res = KSI_RequestHandle_perform(handle[i]);
+		CuAssert(tc, "Unable to perform request.", res == KSI_OK);
+
+		res = KSI_RequestHandle_getAggregationResponse(handle[i], &resp);
+		CuAssert(tc, "Unable to get agggregation response.", res == KSI_OK && resp != NULL);
+
+		res = KSI_AggregationResp_getRequestId(resp, &reqId);
+		CuAssert(tc, "Unable to get request id from response.", res == KSI_OK && reqId != NULL);
+
+		CuAssert(tc, "Request id mismatch.", KSI_Integer_equalsUInt(reqId, i));
+
+		KSI_AggregationResp_free(resp);
+		resp = NULL;
+	}
+
+	KSI_LOG_debug(ctx, "Test_Pipelining: CLEANUP.");
+
+	/* Cleanup. */
+	KSI_DataHash_free(hsh);
+	for (i = 0; i < 10; i++) {
+		KSI_AggregationReq_free(req[i]);
+		KSI_RequestHandle_free(handle[i]);
+	}
+
+	KSI_LOG_debug(ctx, "Test_Pipelining: FINISH.");
+
+}
+
 CuSuite* AggreIntegrationTests_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -278,6 +361,7 @@ CuSuite* AggreIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_CreateSignatureUsingExtender);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureDifferentNetProviders);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureUserInfoFromUrl);
+	SUITE_ADD_TEST(suite, Test_Pipelining);
 
 	return suite;
 }

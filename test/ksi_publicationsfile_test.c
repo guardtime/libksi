@@ -104,7 +104,7 @@ static void testVerifyPublicationsFile(CuTest *tc) {
 
 	/* Verification should succeed. */
 
-	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
+	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/crt/mock.crt"));
 	CuAssert(tc, "Unable to read certificate", res == KSI_OK);
 
 	res = KSI_PublicationsFile_verify(pubFile, ctx);
@@ -229,7 +229,7 @@ static void testReceivePublicationsFileInvalidConstraints(CuTest *tc) {
 	res = KSI_CTX_setPKITruststore(ctx, pki);
 	CuAssert(tc, "Unable to set new pki truststrore for ksi context.", res == KSI_OK);
 
-	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
+	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/crt/mock.crt"));
 	CuAssert(tc, "Unable to read certificate", res == KSI_OK);
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, arr);
@@ -270,7 +270,7 @@ static void testReceivePublicationsFileInvalidPki(CuTest *tc) {
 	res = KSI_CTX_setPKITruststore(ctx, pki);
 	CuAssert(tc, "Unable to set new pki truststrore for ksi context.", res == KSI_OK);
 
-	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/tlv/mock.crt"));
+	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath("resource/crt/mock.crt"));
 	CuAssert(tc, "Unable to read certificate", res == KSI_OK);
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, arr);

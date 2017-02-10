@@ -105,7 +105,7 @@ static void testFreeBeforeClose(CuTest *tc) {
 }
 
 static void testMedaData(CuTest *tc) {
-#define TEST_AGGR_RESPONSE_FILE  "resource/tlv/test_meta_data_response.tlv"
+#define TEST_AGGR_RESPONSE_FILE  "resource/tlv/" TEST_RESOURCE_AGGR_VER "/test_meta_data_response.tlv"
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_BlockSigner *bs = NULL;
 	KSI_MetaData *md = NULL;
@@ -178,7 +178,7 @@ static void testMedaData(CuTest *tc) {
 }
 
 static void testIdentityMedaData(CuTest *tc) {
-#define TEST_AGGR_RESPONSE_FILE  "resource/tlv/test_meta_data_response.tlv"
+#define TEST_AGGR_RESPONSE_FILE  "resource/tlv/" TEST_RESOURCE_AGGR_VER "/test_meta_data_response.tlv"
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_BlockSigner *bs = NULL;
 	KSI_MetaData *md = NULL;
@@ -264,7 +264,7 @@ static void testIdentityMedaData(CuTest *tc) {
 }
 
 static void testSingle(CuTest *tc) {
-#define TEST_AGGR_RESPONSE_FILE  "resource/tlv/ok-sig-2014-07-01.1-aggr_response.tlv"
+#define TEST_AGGR_RESPONSE_FILE  "resource/tlv/" TEST_RESOURCE_AGGR_VER "/ok-sig-2014-07-01.1-aggr_response.tlv"
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_BlockSigner *bs = NULL;
 	KSI_DataHash *hsh = NULL;
@@ -305,7 +305,7 @@ static void testSingle(CuTest *tc) {
 }
 
 static void testReset(CuTest *tc) {
-#define TEST_AGGR_RESPONSE_FILE  "resource/tlv/ok-sig-2014-07-01.1-aggr_response.tlv"
+#define TEST_AGGR_RESPONSE_FILE  "resource/tlv/" TEST_RESOURCE_AGGR_VER "/ok-sig-2014-07-01.1-aggr_response.tlv"
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_BlockSigner *bs = NULL;
 	KSI_DataHash *hsh = NULL;

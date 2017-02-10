@@ -159,7 +159,7 @@ static void TestCtxFlags(CuTest *tc) {
 	CuAssert(tc, "Context NULL accepted.", res == KSI_INVALID_ARGUMENT);
 
 	res = KSI_CTX_setFlag(ctx, KSI_CTX_NUM_OF_FLAGS, (void*)KSI_PDU_VERSION_1);
-	CuAssert(tc, "Context NULL accepted.", res == KSI_INVALID_ARGUMENT);
+	CuAssert(tc, "Flag value outside boundary accepted.", res == KSI_INVALID_ARGUMENT);
 
 	res = KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)(KSI_AGGREGATION_PDU_VERSION == KSI_PDU_VERSION_1 ? KSI_PDU_VERSION_2 : KSI_PDU_VERSION_1));
 	CuAssert(tc, "Unable to set aggregation PDU version.", res == KSI_OK && ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] != KSI_AGGREGATION_PDU_VERSION);
