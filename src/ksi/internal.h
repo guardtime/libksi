@@ -150,8 +150,8 @@ cleanup:																	\
 
 #define KSI_IMPLEMENT_REF(baseType)											\
 KSI_DEFINE_REF(baseType) {													\
-	if (o != NULL) ((baseType*)o)->ref++;									\
-	return (baseType*)o;													\
+	if (o != NULL) o->ref++;												\
+	return o;																\
 }																			\
 
 #define KSI_IMPLEMENT_TOTLV(type) \

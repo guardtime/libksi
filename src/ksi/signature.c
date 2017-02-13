@@ -520,7 +520,7 @@ cleanup:
 /***************
  * SIGN REQUEST
  ***************/
-int KSI_createSignRequest(KSI_CTX *ctx, const KSI_DataHash *hsh, int lvl, KSI_AggregationReq **request) {
+int KSI_createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, int lvl, KSI_AggregationReq **request) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationReq *tmp = NULL;
 	KSI_Integer *level = NULL;
@@ -592,7 +592,7 @@ cleanup:
 /*****************
  * EXTEND REQUEST
  *****************/
-int KSI_createExtendRequest(KSI_CTX *ctx, const KSI_Integer *start, const KSI_Integer *end, KSI_ExtendReq **request) {
+int KSI_createExtendRequest(KSI_CTX *ctx, KSI_Integer *start, KSI_Integer *end, KSI_ExtendReq **request) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ExtendReq *tmp = NULL;
 
@@ -952,7 +952,7 @@ cleanup:
 	return res;
 }
 
-static int KSI_SignatureVerifier_verifyWithPolicy(KSI_CTX *ctx, const KSI_Signature *sig, KSI_uint64_t rootLevel, const KSI_DataHash *docHsh, const KSI_Policy *policy, KSI_VerificationContext *verificationContext) {
+static int KSI_SignatureVerifier_verifyWithPolicy(KSI_CTX *ctx, KSI_Signature *sig, KSI_uint64_t rootLevel, const KSI_DataHash *docHsh, const KSI_Policy *policy, KSI_VerificationContext *verificationContext) {
 	int res;
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
@@ -1004,9 +1004,11 @@ cleanup:
 	return res;
 }
 
-#define KSI_SignatureVerifier_verifyInternally(ctx, sig, rootLevel, docHsh) KSI_SignatureVerifier_verifyWithPolicy(ctx, sig, rootLevel, docHsh, KSI_VERIFICATION_POLICY_INTERNAL, NULL)
+#define KSI_SignatureVerifier_verifyInternally(ctx, sig, rootLevel, docHsh)\
+	KSI_SignatureVerifier_verifyWithPolicy(ctx, sig, rootLevel, docHsh, KSI_VERIFICATION_POLICY_INTERNAL, NULL)
 
-int KSI_Signature_signAggregatedWithPolicy(KSI_CTX *ctx, const KSI_DataHash *rootHash, KSI_uint64_t rootLevel, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **signature) {
+int KSI_Signature_signAggregatedWithPolicy(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel,
+		const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **signature) {
 	int res;
 	KSI_RequestHandle *handle = NULL;
 	KSI_AggregationResp *response = NULL;
@@ -1126,7 +1128,7 @@ cleanup:
 	return res;
 }
 
-static int KSI_signature_extendToWithoutVerification(const KSI_Signature *sig, KSI_CTX *ctx, const KSI_Integer *to, KSI_Signature **extended) {
+static int KSI_signature_extendToWithoutVerification(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *to, KSI_Signature **extended) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ExtendReq *req = NULL;
 	KSI_Integer *signTime = NULL;
@@ -1233,7 +1235,8 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_extendToWithPolicy(const KSI_Signature *sig, KSI_CTX *ctx, const KSI_Integer *to, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **extended) {
+int KSI_Signature_extendToWithPolicy(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *to,
+		const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **extended) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Signature *tmp = NULL;
 

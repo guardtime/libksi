@@ -255,7 +255,7 @@ extern "C" {
 	 * \param[out]	root		Pointer to the receiving pointer. Can be NULL.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_AggregationHashChain_aggregate(const KSI_AggregationHashChain *aggr, int startLevel, int *endLevel, KSI_DataHash **root);
+	int KSI_AggregationHashChain_aggregate(KSI_AggregationHashChain *aggr, int startLevel, int *endLevel, KSI_DataHash **root);
 
 	/**
 	 * This function will represent the shape of the aggregation chain. The bits represent the path from the root

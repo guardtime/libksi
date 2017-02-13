@@ -138,7 +138,7 @@ KSI_DEFINE_REF(KSI_TreeLeafHandle);
  * \note The function will not take ownership of the \c hash or \c metaData fields and thus
  * the pointers must be freed by the caller.
  */
-int KSI_TreeNode_new(KSI_CTX *ctx, const KSI_DataHash *hash, const KSI_MetaData *metaData, int level, KSI_TreeNode **node);
+int KSI_TreeNode_new(KSI_CTX *ctx, KSI_DataHash *hash, KSI_MetaData *metaData, int level, KSI_TreeNode **node);
 
 /**
  * Destructor method for #KSI_TreeNode.
@@ -194,7 +194,7 @@ void KSI_TreeBuilder_free(KSI_TreeBuilder *builder);
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
  * \see #KSI_TreeLeafHandle_free
  */
-int KSI_TreeBuilder_addDataHash(KSI_TreeBuilder *builder, const KSI_DataHash *hsh, int level, KSI_TreeLeafHandle **leaf);
+int KSI_TreeBuilder_addDataHash(KSI_TreeBuilder *builder, KSI_DataHash *hsh, int level, KSI_TreeLeafHandle **leaf);
 
 /**
  * Adds a new leaf to the tree containing a meta-data value instead of the data hash as in #KSI_TreeBuilder_addDataHash.
@@ -205,7 +205,7 @@ int KSI_TreeBuilder_addDataHash(KSI_TreeBuilder *builder, const KSI_DataHash *hs
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
  * \see #KSI_TreeLeafHandle_free
  */
-int KSI_TreeBuilder_addMetaData(KSI_TreeBuilder *builder, const KSI_MetaData *metaData, int level, KSI_TreeLeafHandle **leaf);
+int KSI_TreeBuilder_addMetaData(KSI_TreeBuilder *builder, KSI_MetaData *metaData, int level, KSI_TreeLeafHandle **leaf);
 
 /**
  * This function finalizes the building of the tree. After calling this function no more leafs

@@ -31,7 +31,7 @@ extern "C" {
 		KSI_CTX *ctx;
 
 		/** Signature being verified. */
-		const KSI_Signature *signature;
+		KSI_Signature *signature;
 
 		/** Indicates whether signature extention is allowed (0 means no, and any non-zero is considered to be true). */
 		int extendingAllowed;
@@ -46,7 +46,7 @@ extern "C" {
 		const KSI_PublicationData *userPublication;
 
 		/** Publication file to be used. */
-		const KSI_PublicationsFile *userPublicationsFile;
+		KSI_PublicationsFile *userPublicationsFile;
 
 		void *tempData;
 	};

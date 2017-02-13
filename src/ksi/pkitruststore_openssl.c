@@ -1107,12 +1107,12 @@ cleanup:
  * [OID][short name][long name][alias 1][..][alias N][NULL]
  * where OID, short and long name are mandatory. Array must end with NULL.
  */
-static const char *OID_EMAIL[] = {KSI_CERT_EMAIL, "E", "email", "e-mail", "e_mail", "emailAddress", NULL};
-static const char *OID_COMMON_NAME[] = {KSI_CERT_COMMON_NAME, "CN", "common name", "common_name", NULL};
-static const char *OID_COUNTRY[] = {KSI_CERT_COUNTRY, "C", "country", NULL};
-static const char *OID_ORGANIZATION[] = {KSI_CERT_ORGANIZATION, "O", "org", "organization", NULL};
+static char const * const OID_EMAIL[] = {KSI_CERT_EMAIL, "E", "email", "e-mail", "e_mail", "emailAddress", NULL};
+static char const * const OID_COMMON_NAME[] = {KSI_CERT_COMMON_NAME, "CN", "common name", "common_name", NULL};
+static char const * const OID_COUNTRY[] = {KSI_CERT_COUNTRY, "C", "country", NULL};
+static char const * const OID_ORGANIZATION[] = {KSI_CERT_ORGANIZATION, "O", "org", "organization", NULL};
 
-static const char **OID_INFO[] = {OID_EMAIL, OID_COMMON_NAME, OID_COUNTRY, OID_ORGANIZATION, NULL};
+static char const * const *OID_INFO[] = {OID_EMAIL, OID_COMMON_NAME, OID_COUNTRY, OID_ORGANIZATION, NULL};
 
 static const char *ksi_getShortDescriptionStringByOID(const char *OID) {
 	unsigned i = 0;

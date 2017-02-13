@@ -60,7 +60,7 @@ int typ##_toTlv(KSI_CTX *ctx, const typ *o, unsigned tag, int isNonCritical, int
 	 * \return Returns the input pointer on success or \c NULL on error.
 	 * \see \ref typ##_free
 	 */ \
-	typ *typ##_ref(const typ *o)
+	typ *typ##_ref(typ *o)
 
 #define KSI_DEFINE_OBJECT_PARSE(typ) \
 	/*!

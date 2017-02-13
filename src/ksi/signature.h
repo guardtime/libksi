@@ -100,7 +100,7 @@ extern "C" {
 	 * error code).
 	 * \see #KSI_createSignature, KSI_Signature_create, KSI_Signature_free.
 	 */
-	int KSI_Signature_signAggregatedWithPolicy(KSI_CTX *ctx, const KSI_DataHash *rootHash, KSI_uint64_t rootLevel, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **signature);
+	int KSI_Signature_signAggregatedWithPolicy(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **signature);
 
 #define KSI_Signature_signAggregated(ctx, rootHash, rootLevel, signature) KSI_Signature_signAggregatedWithPolicy(ctx, rootHash, rootLevel, KSI_VERIFICATION_POLICY_INTERNAL, NULL, signature)
 
@@ -151,7 +151,7 @@ extern "C" {
 	 *
 	 * \note Extending to a specific time will remove calendar auth record and publication record.
 	 */
-	int KSI_Signature_extendToWithPolicy(const KSI_Signature *signature, KSI_CTX *ctx, const KSI_Integer *to, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **extended);
+	int KSI_Signature_extendToWithPolicy(const KSI_Signature *signature, KSI_CTX *ctx, KSI_Integer *to, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **extended);
 
 #define KSI_Signature_extendTo(signature, ctx, to, extended) KSI_Signature_extendToWithPolicy(signature, ctx, to, KSI_VERIFICATION_POLICY_INTERNAL, NULL, extended)
 
@@ -226,8 +226,8 @@ extern "C" {
 	 */
 	int KSI_Signature_getCalendarAuthRec (const KSI_Signature *sig, KSI_CalendarAuthRec **calendarAuthRec);
 
-	int KSI_createSignRequest(KSI_CTX *ctx, const KSI_DataHash *hsh, int lvl, KSI_AggregationReq **request);
-	int KSI_createExtendRequest(KSI_CTX *ctx, const KSI_Integer *start, const KSI_Integer *end, KSI_ExtendReq **request);
+	int KSI_createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, int lvl, KSI_AggregationReq **request);
+	int KSI_createExtendRequest(KSI_CTX *ctx, KSI_Integer *start, KSI_Integer *end, KSI_ExtendReq **request);
 
 	/**
 	 * Replaces the existing publication record of the signature.

@@ -57,7 +57,7 @@ extern "C" {
 	 * \param[in]	doc_len		Document length.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_Signature_verifyDocument(const KSI_Signature *sig, KSI_CTX *ctx, const void *doc, size_t doc_len);
+	int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, const void *doc, size_t doc_len);
 
 	/**
 	 * A convenience function for reading a signature from a file.
@@ -95,7 +95,7 @@ extern "C" {
 	 * recomended.
 	 * \see #KSI_createSignature, KSI_Signature_free
 	 */
-	int KSI_Signature_signWithPolicy(KSI_CTX *ctx, const KSI_DataHash *hsh, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **signature);
+	int KSI_Signature_signWithPolicy(KSI_CTX *ctx, KSI_DataHash *hsh, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **signature);
 
 #define KSI_Signature_sign(ctx, hsh, signature) KSI_Signature_signWithPolicy(ctx, hsh, KSI_VERIFICATION_POLICY_INTERNAL, NULL, signature)
 

@@ -49,7 +49,7 @@ void KSI_TreeNode_free(KSI_TreeNode *node) {
 }
 
 
-int KSI_TreeNode_new(KSI_CTX *ctx, const KSI_DataHash *hash, const KSI_MetaData *metaData, int level, KSI_TreeNode **node) {
+int KSI_TreeNode_new(KSI_CTX *ctx, KSI_DataHash *hash, KSI_MetaData *metaData, int level, KSI_TreeNode **node) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TreeNode *tmp = NULL;
 
@@ -404,7 +404,7 @@ cleanup:
 	return res;
 }
 
-static int addLeaf(KSI_TreeBuilder *builder, const KSI_DataHash *hsh, const KSI_MetaData *metaData, int level, KSI_TreeLeafHandle **leaf) {
+static int addLeaf(KSI_TreeBuilder *builder, KSI_DataHash *hsh, KSI_MetaData *metaData, int level, KSI_TreeLeafHandle **leaf) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TreeNode *node = NULL;
 	KSI_TreeLeafHandle *tmp = NULL;
@@ -462,11 +462,11 @@ cleanup:
 	return res;
 }
 
-int KSI_TreeBuilder_addDataHash(KSI_TreeBuilder *builder, const KSI_DataHash *hsh, int level, KSI_TreeLeafHandle **leaf) {
+int KSI_TreeBuilder_addDataHash(KSI_TreeBuilder *builder, KSI_DataHash *hsh, int level, KSI_TreeLeafHandle **leaf) {
 	return addLeaf(builder, hsh,  NULL, level, leaf);
 }
 
-int KSI_TreeBuilder_addMetaData(KSI_TreeBuilder *builder, const KSI_MetaData *metaData, int level, KSI_TreeLeafHandle **leaf) {
+int KSI_TreeBuilder_addMetaData(KSI_TreeBuilder *builder, KSI_MetaData *metaData, int level, KSI_TreeLeafHandle **leaf) {
 	return addLeaf(builder, NULL, metaData, level, leaf);
 }
 

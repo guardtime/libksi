@@ -91,7 +91,7 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_verifyDocument(const KSI_Signature *sig, KSI_CTX *ctx, const void *doc, size_t doc_len) {
+int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, const void *doc, size_t doc_len) {
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_VerificationContext context;
@@ -212,7 +212,7 @@ int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uin
 }
 
 
-int KSI_Signature_signWithPolicy(KSI_CTX *ctx, const KSI_DataHash *hsh, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **signature) {
+int KSI_Signature_signWithPolicy(KSI_CTX *ctx, KSI_DataHash *hsh, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **signature) {
 	return KSI_Signature_signAggregatedWithPolicy(ctx, hsh, 0, policy, context, signature);
 }
 

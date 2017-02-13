@@ -41,7 +41,7 @@ struct KSI_BlockSigner_st {
 	KSI_DataHash *prevLeaf;
 	KSI_DataHash *origPrevLeaf;
 	KSI_OctetString *iv;
-	const KSI_MetaData *metaData;
+	KSI_MetaData *metaData;
 
 	/** Common hasher object. */
 	KSI_DataHasher *hsr;
@@ -57,7 +57,6 @@ struct KSI_BlockSignerHandle_st {
 	KSI_BlockSigner *signer;
 };
 
-static KSI_DEFINE_REF(KSI_BlockSignerHandle);
 static KSI_IMPLEMENT_REF(KSI_BlockSignerHandle);
 
 void KSI_BlockSignerHandle_free(KSI_BlockSignerHandle *handle) {
@@ -244,7 +243,7 @@ cleanup:
 	return res;
 }
 
-int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, const KSI_DataHash *prevLeaf, const KSI_OctetString *initVal, KSI_BlockSigner **signer) {
+int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *prevLeaf, KSI_OctetString *initVal, KSI_BlockSigner **signer) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_BlockSigner *tmp = NULL;
 
@@ -413,7 +412,7 @@ cleanup:
 	return res;
 }
 
-int KSI_BlockSigner_addLeaf(KSI_BlockSigner *signer, const KSI_DataHash *hsh, int level, const KSI_MetaData *metaData, KSI_BlockSignerHandle **handle) {
+int KSI_BlockSigner_addLeaf(KSI_BlockSigner *signer, KSI_DataHash *hsh, int level, KSI_MetaData *metaData, KSI_BlockSignerHandle **handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TreeLeafHandle *leafHandle = NULL;
 	KSI_BlockSignerHandle *tmp = NULL;

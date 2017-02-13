@@ -49,7 +49,7 @@ KSI_DEFINE_LIST(KSI_BlockSignerHandle);
  * \param[out]	signer		Pointer to the receiving pointer.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, const KSI_DataHash *prevLeaf, const KSI_OctetString *initVal, KSI_BlockSigner **signer);
+int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *prevLeaf, KSI_OctetString *initVal, KSI_BlockSigner **signer);
 
 /**
  * Cleanup method for the #KSI_BlockSigner.
@@ -93,7 +93,7 @@ int KSI_BlockSigner_reset(KSI_BlockSigner *signer);
  * the responsibility of the caller to free the objects.
  * \see #KSI_DataHash_free, #KSI_MetaData_free, #KSI_BlockSignerHandle_free.
  */
-int KSI_BlockSigner_addLeaf(KSI_BlockSigner *signer, const KSI_DataHash *hsh, int level, const KSI_MetaData *metaData, KSI_BlockSignerHandle **handle);
+int KSI_BlockSigner_addLeaf(KSI_BlockSigner *signer, KSI_DataHash *hsh, int level, KSI_MetaData *metaData, KSI_BlockSignerHandle **handle);
 
 /**
  * Getter method for \c prevLeaf.

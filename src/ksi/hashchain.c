@@ -447,7 +447,7 @@ int KSI_CalendarHashChain_aggregate(KSI_CalendarHashChain *chain, KSI_DataHash *
 			goto cleanup;
 		}
 
-		((KSI_CalendarHashChain*)chain)->outputHash = tmp;
+		chain->outputHash = tmp;
 		tmp = NULL;
 	}
 
@@ -1024,7 +1024,7 @@ cleanup:
 	return res;
 }
 
-int KSI_AggregationHashChain_aggregate(const KSI_AggregationHashChain *aggr, int startLevel, int *endLevel, KSI_DataHash **root) {
+int KSI_AggregationHashChain_aggregate(KSI_AggregationHashChain *aggr, int startLevel, int *endLevel, KSI_DataHash **root) {
 	int res = KSI_UNKNOWN_ERROR;
 	int outputLevel;
 	KSI_DataHash *outputHash = NULL;
@@ -1049,9 +1049,9 @@ int KSI_AggregationHashChain_aggregate(const KSI_AggregationHashChain *aggr, int
 			goto cleanup;
 		}
 
-		((KSI_AggregationHashChain*)aggr)->outputHash = outputHash;
-		((KSI_AggregationHashChain*)aggr)->outputLevel = outputLevel;
-		((KSI_AggregationHashChain*)aggr)->inputLevel = startLevel;
+		aggr->outputHash = outputHash;
+		aggr->outputLevel = outputLevel;
+		aggr->inputLevel = startLevel;
 		outputHash = NULL;
 	}
 

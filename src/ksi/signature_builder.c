@@ -344,7 +344,7 @@ void KSI_SignatureBuilder_free(KSI_SignatureBuilder *builder) {
 	}
 }
 
-int KSI_SignatureBuilder_setCalendarHashChain(KSI_SignatureBuilder *builder, const KSI_CalendarHashChain *cal) {
+int KSI_SignatureBuilder_setCalendarHashChain(KSI_SignatureBuilder *builder, KSI_CalendarHashChain *cal) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CalendarHashChain *tmp = NULL;
 
@@ -375,7 +375,7 @@ cleanup:
 	return res;
 }
 
-int KSI_SignatureBuilder_addAggregationChain(KSI_SignatureBuilder *builder, const KSI_AggregationHashChain *aggr) {
+int KSI_SignatureBuilder_addAggregationChain(KSI_SignatureBuilder *builder, KSI_AggregationHashChain *aggr) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationHashChain *tmp = NULL;
 
@@ -415,7 +415,7 @@ cleanup:
 	return res;
 }
 
-int KSI_SignatureBuilder_setCalendarAuthRecord(KSI_SignatureBuilder *builder, const KSI_CalendarAuthRec *calAuth) {
+int KSI_SignatureBuilder_setCalendarAuthRecord(KSI_SignatureBuilder *builder, KSI_CalendarAuthRec *calAuth) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CalendarAuthRec *tmp = NULL;
 
@@ -451,7 +451,7 @@ cleanup:
 
 	return res;
 }
-int KSI_SignatureBuilder_setPublication(KSI_SignatureBuilder *builder, const KSI_PublicationRecord *pub) {
+int KSI_SignatureBuilder_setPublication(KSI_SignatureBuilder *builder, KSI_PublicationRecord *pub) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationRecord *tmp = NULL;
 
@@ -489,7 +489,7 @@ cleanup:
 
 }
 
-int KSI_SignatureBuilder_setRFC3161(KSI_SignatureBuilder *builder, const KSI_RFC3161 *rfc3161) {
+int KSI_SignatureBuilder_setRFC3161(KSI_SignatureBuilder *builder, KSI_RFC3161 *rfc3161) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_RFC3161 *tmp = NULL;
 
