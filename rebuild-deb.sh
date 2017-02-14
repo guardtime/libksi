@@ -102,9 +102,9 @@ make dist
 #Check if doxygen with supported version (>=1.8.0) is installed.
 if (doxygen -v | grep -q -P -e '((^1\.([8-9]|[1-9][0-9]+))|(^[2-9]\.[0-9]+)|(^[0-9]{2,}\.[0-9]+))\.[0-9]+$') > /dev/null 2>&1 ; then 
 	make doc
-	libksi_doc="$libksi_doc doc/html/"
+	libksi_doc+=" doc/html/"
 else
-	echo "Doxygen documentation not included into rpm package!"
+	echo "Doxygen documentation not included into package!"
 fi
 
 
