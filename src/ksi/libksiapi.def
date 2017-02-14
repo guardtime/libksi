@@ -480,6 +480,7 @@ EXPORTS
 	KSI_ErrorPdu_template DATA
 	KSI_AggregationResp_template DATA
 	KSI_AggregationPdu_template DATA
+	KSI_AggregationRespPdu_template DATA
 	KSI_ExtendReq_template DATA
 	KSI_ExtendResp_template DATA
 	KSI_ExtendPdu_template DATA
