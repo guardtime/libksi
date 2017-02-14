@@ -29,14 +29,14 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libksi.pc
 
 EXTRA_DIST = VERSION changelog build*.txt lic*.txt \
-             doc/doxy* test/* redhat/libksi.spec
+			 doc/doxy* test/* redhat/libksi.spec 
 
 redhat/libksi.spec: redhat/libksi.spec.in
 	sed 's/@VERSION\@/${VERSION}/g' $< > $@
 
 ZIPDOC_DIR = ${PACKAGE}-${VERSION}-htmldoc
 
-test: check 
+test: check
 	./test/runner ./test
 
 int-test: check
@@ -44,16 +44,16 @@ int-test: check
 
 # You'll need valgrind for this target.
 #
-# yum install valgrind	
-memtest: check 
-	valgrind --xml=yes --xml-file=valgrind.xml ./test/runner ./test 
+# yum install valgrind
+memtest: check
+	valgrind --xml=yes --xml-file=valgrind.xml ./test/runner ./test
 
 doc: doc/doxyfile
 	$(MAKE) -C doc htmldoc
 
 doc-zip: doc
 	cp -r doc/html ${ZIPDOC_DIR}
-	zip -r ${ZIPDOC_DIR}.zip ${ZIPDOC_DIR} 
+	zip -r ${ZIPDOC_DIR}.zip ${ZIPDOC_DIR}
 
 # You'll need gcovr for this target:
 #
@@ -63,7 +63,7 @@ doc-zip: doc
 coverage-base: clean
 	make check CFLAGS="-g -fprofile-arcs -ftest-coverage -fPIC -O0"
 	./test/runner ./test
-	
+
 coverage-extended: coverage-base
 	./test/integration-tests ./test
 
