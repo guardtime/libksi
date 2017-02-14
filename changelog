@@ -1,4 +1,4 @@
-* IMPROVEMENT: Support for adding doxygen generated html files into rpm package.
+* IMPROVEMENT: Support for adding doxygen generated html files into rpm and debian package.
 * IMPROVEMENT: Added flag --with-default-pdu-version=version to configure script.
 * IMPROVEMENT: Improve test support for different PDU version.
 * BUGFIX: Fixed KSI_TlvElement nested structure serialization issue.
