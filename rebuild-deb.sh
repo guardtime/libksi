@@ -28,11 +28,13 @@ tmp_dir_lib=$deb_dir/tmp_lib
 tmp_dir_devel=$deb_dir/tmp_devel
 tmp_dir_src=$deb_dir/tmp_src
 
+
 #Destination dirs used for installion.
 lib_install_dir=usr/local/lib
 inc_install_dir=usr/local/include/ksi
 doc_install_dir=usr/share/doc/ksi
 src_install_dir=usr/local/src
+
 
 #Source directories for files.
 include_dir=src/ksi
@@ -85,18 +87,25 @@ libksi_devel_includes="\
 	$include_dir/version.h \
 	$include_dir/verify_deprecated.h"
 
-
 libksi_devel_libs="\
 	$lib_dir/libksi.a \
 	$lib_dir/libksi.la \
 	libksi.pc"
 
 
-
 #Rebuild API
 ./rebuild.sh
 make dist
 
+
+#Rebuild doxygen documentation
+#Check if doxygen with supported version (>=1.8.0) is installed.
+if (doxygen -v | grep -q -P -e '((^1\.([8-9]|[1-9][0-9]+))|(^[2-9]\.[0-9]+)|(^[0-9]{2,}\.[0-9]+))\.[0-9]+$') > /dev/null 2>&1 ; then 
+	make doc
+	libksi_doc="$libksi_doc doc/html/"
+else
+	echo "Doxygen documentation not included into rpm package!"
+fi
 
 
 #Create directory structure
@@ -116,6 +125,7 @@ mkdir -p $tmp_dir_lib/libksi/DEBIAN
 mkdir -p $tmp_dir_devel/libksi-devel/DEBIAN
 mkdir -p $tmp_dir_src/libksi/debian
 
+
 #Get version number
 VER=$(tr -d [:space:] < VERSION)
 ARCH=$(dpkg --print-architecture)
@@ -127,7 +137,6 @@ cp  $deb_dir/libksi/DEBIAN/control-devel $tmp_dir_devel/libksi-devel/DEBIAN/cont
 cp  $deb_dir/libksi/DEBIAN/control-source $tmp_dir_src/libksi/debian/control
 cp  $deb_dir/libksi/DEBIAN/changelog $tmp_dir_src/libksi/debian/
 
-
 sed -i s/@VER@/$VER/g "$tmp_dir_lib/libksi/DEBIAN/control"
 sed -i s/@ARCH@/$ARCH/g "$tmp_dir_lib/libksi/DEBIAN/control"
 
@@ -137,10 +146,10 @@ sed -i s/@ARCH@/$ARCH/g $tmp_dir_devel/libksi-devel/DEBIAN/control
 sed -i s/@ARCH@/$ARCH/g "$tmp_dir_src/libksi/debian/control"
 sed -i s/@VER@/$VER/g "$tmp_dir_src/libksi/debian/control"
 
-#copy data
 
+#Copy data
 cp -f $libksi_libs $tmp_dir_lib/libksi/$lib_install_dir/
-cp -f $libksi_doc $tmp_dir_lib/libksi/$doc_install_dir/
+cp -f -r $libksi_doc $tmp_dir_lib/libksi/$doc_install_dir/
 
 cp -f $libksi_devel_includes $tmp_dir_devel/libksi-devel/$inc_install_dir/
 cp -f $libksi_devel_libs $tmp_dir_devel/libksi-devel/$lib_install_dir/
