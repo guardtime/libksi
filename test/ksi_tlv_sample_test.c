@@ -307,11 +307,11 @@ static void testObjectSerialization(CuTest *tc, const char *sample,
 
 static void aggregationPduTest(CuTest *tc) {
 	ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] = KSI_PDU_VERSION_1;
-	testObjectSerialization(tc, getFullResourcePath("resource/tlv/aggr_request.tlv"),
+	testObjectSerialization(tc, getFullResourcePath("resource/tlv/v1/aggr_request.tlv"),
 			(int (*)(KSI_CTX *, unsigned char *, size_t, void **))KSI_AggregationPdu_parse,
 			(int (*)(void *, unsigned char **, size_t *))KSI_AggregationPdu_serialize,
 			( void (*)(void *))KSI_AggregationPdu_free);
-	testObjectSerialization(tc, getFullResourcePath("resource/tlv/aggr_response.tlv"),
+	testObjectSerialization(tc, getFullResourcePath("resource/tlv/v1/aggr_response.tlv"),
 			(int (*)(KSI_CTX *, unsigned char *, size_t, void **))KSI_AggregationPdu_parse,
 			(int (*)(void *, unsigned char **, size_t *))KSI_AggregationPdu_serialize,
 			( void (*)(void *))KSI_AggregationPdu_free);
@@ -320,11 +320,11 @@ static void aggregationPduTest(CuTest *tc) {
 
 static void aggregationPduVer2Test(CuTest *tc) {
 	ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] = KSI_PDU_VERSION_2;
-	testObjectSerialization(tc, getFullResourcePath("resource/tlv/aggr_request_v2.tlv"),
+	testObjectSerialization(tc, getFullResourcePath("resource/tlv/v2/aggr_request.tlv"),
 			(int (*)(KSI_CTX *, unsigned char *, size_t, void **))KSI_AggregationPdu_parse,
 			(int (*)(void *, unsigned char **, size_t *))KSI_AggregationPdu_serialize,
 			( void (*)(void *))KSI_AggregationPdu_free);
-	testObjectSerialization(tc, getFullResourcePath("resource/tlv/aggr_response_v2.tlv"),
+	testObjectSerialization(tc, getFullResourcePath("resource/tlv/v2/aggr_response.tlv"),
 			(int (*)(KSI_CTX *, unsigned char *, size_t, void **))KSI_AggregationPdu_parse,
 			(int (*)(void *, unsigned char **, size_t *))KSI_AggregationPdu_serialize,
 			( void (*)(void *))KSI_AggregationPdu_free);
@@ -333,11 +333,11 @@ static void aggregationPduVer2Test(CuTest *tc) {
 
 static void extendPduTest(CuTest *tc) {
 	ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER] = KSI_PDU_VERSION_1;
-	testObjectSerialization(tc, getFullResourcePath("resource/tlv/extend_request.tlv"),
+	testObjectSerialization(tc, getFullResourcePath("resource/tlv/v1/extend_request.tlv"),
 			(int (*)(KSI_CTX *, unsigned char *, size_t, void **))KSI_ExtendPdu_parse,
 			(int (*)(void *, unsigned char **, size_t *))KSI_ExtendPdu_serialize,
 			( void (*)(void *))KSI_ExtendPdu_free);
-	testObjectSerialization(tc, getFullResourcePath("resource/tlv/extend_response.tlv"),
+	testObjectSerialization(tc, getFullResourcePath("resource/tlv/v1/extend_response.tlv"),
 			(int (*)(KSI_CTX *, unsigned char *, size_t, void **))KSI_ExtendPdu_parse,
 			(int (*)(void *, unsigned char **, size_t *))KSI_ExtendPdu_serialize,
 			( void (*)(void *))KSI_ExtendPdu_free);
@@ -346,11 +346,11 @@ static void extendPduTest(CuTest *tc) {
 
 static void extendPduVer2Test(CuTest *tc) {
 	ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER] = KSI_PDU_VERSION_2;
-	testObjectSerialization(tc, getFullResourcePath("resource/tlv/extend_request_v2.tlv"),
+	testObjectSerialization(tc, getFullResourcePath("resource/tlv/v2/extend_request.tlv"),
 			(int (*)(KSI_CTX *, unsigned char *, size_t, void **))KSI_ExtendPdu_parse,
 			(int (*)(void *, unsigned char **, size_t *))KSI_ExtendPdu_serialize,
 			( void (*)(void *))KSI_ExtendPdu_free);
-	testObjectSerialization(tc, getFullResourcePath("resource/tlv/extend_response_v2.tlv"),
+	testObjectSerialization(tc, getFullResourcePath("resource/tlv/v2/extend_response.tlv"),
 			(int (*)(KSI_CTX *, unsigned char *, size_t, void **))KSI_ExtendPdu_parse,
 			(int (*)(void *, unsigned char **, size_t *))KSI_ExtendPdu_serialize,
 			( void (*)(void *))KSI_ExtendPdu_free);
@@ -384,7 +384,6 @@ static void testErrorMessage(CuTest* tc, const char *expected, const char *tlv_f
 
 	res = KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL, NULL);
 	CuAssert(tc, "Unable to get base error message.", res == KSI_OK);
-
 	CuAssert(tc, "Wrong error message.", strcmp(buf, expected) == 0);
 
 	if (f != NULL) fclose(f);
@@ -395,7 +394,7 @@ KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationPdu);
 
 static void testUnknownCriticalTagError(CuTest* tc) {
 	testErrorMessage(tc, "Unknown critical tag: [0x200]->[0x203]aggr_error_pdu->[0x01]",
-			"resource/tlv/tlv_unknown_tag.tlv",
+			"resource/tlv/v1/tlv_unknown_tag.tlv",
 			(int (*)(KSI_CTX *ctx, void **))KSI_AggregationPdu_new,
 			(void (*)(void*))KSI_AggregationPdu_free,
 			KSI_TLV_TEMPLATE(KSI_AggregationPdu)
@@ -403,14 +402,33 @@ static void testUnknownCriticalTagError(CuTest* tc) {
 }
 
 static void testMissingMandatoryTagError(CuTest* tc) {
-		testErrorMessage(tc, "Mandatory element missing: [0x200]->[0x203]aggr_error_pdu->[0x4]status",
-			"resource/tlv/tlv_missing_tag.tlv",
+	testErrorMessage(tc, "Mandatory element missing: [0x200]->[0x203]aggr_error_pdu->[0x4]status",
+			"resource/tlv/v1/tlv_missing_tag.tlv",
 			(int (*)(KSI_CTX *ctx, void **))KSI_AggregationPdu_new,
 			(void (*)(void*))KSI_AggregationPdu_free,
 			KSI_TLV_TEMPLATE(KSI_AggregationPdu)
 			);
 }
 
+KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationRespPdu);
+
+static void testUnknownCriticalTagErrorPduVer2(CuTest* tc) {
+	testErrorMessage(tc, "Unknown critical tag: [0x221]->[0x03]aggr_err->[0x01]",
+			"resource/tlv/v2/tlv_unknown_tag.tlv",
+			(int (*)(KSI_CTX *ctx, void **))KSI_AggregationPdu_new,
+			(void (*)(void*))KSI_AggregationPdu_free,
+			KSI_TLV_TEMPLATE(KSI_AggregationRespPdu)
+			);
+}
+
+static void testMissingMandatoryTagErrorPduVer2(CuTest* tc) {
+	testErrorMessage(tc, "Mandatory element missing: [0x221]->[0x03]aggr_err->[0x4]status",
+			"resource/tlv/v2/tlv_missing_tag.tlv",
+			(int (*)(KSI_CTX *ctx, void **))KSI_AggregationPdu_new,
+			(void (*)(void*))KSI_AggregationPdu_free,
+			KSI_TLV_TEMPLATE(KSI_AggregationRespPdu)
+			);
+}
 
 CuSuite* KSITest_TLV_Sample_getSuite(void)
 {
@@ -426,6 +444,8 @@ CuSuite* KSITest_TLV_Sample_getSuite(void)
 	SUITE_ADD_TEST(suite, extendPduVer2Test);
 	SUITE_ADD_TEST(suite, testUnknownCriticalTagError);
 	SUITE_ADD_TEST(suite, testMissingMandatoryTagError);
+	SUITE_ADD_TEST(suite, testUnknownCriticalTagErrorPduVer2);
+	SUITE_ADD_TEST(suite, testMissingMandatoryTagErrorPduVer2);
 
 	return suite;
 }

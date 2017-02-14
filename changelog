@@ -1,4 +1,6 @@
 * IMPROVEMENT: Support for adding doxygen generated html files into rpm package.
+* IMPROVEMENT: Added flag --with-default-pdu-version=version to configure script.
+* IMPROVEMENT: Improve test support for different PDU version.
 * BUGFIX: Fixed KSI_TlvElement nested structure serialization issue.
 * IMPROVEMENT: Updated signature verification procedure. Added new error codes.
 * IMPROVEMENT: Provide identity information as a list.
@@ -9,6 +11,7 @@
 * BUGFIX: CryptoAPI uses PKCS7 signatures embedded intermediate certificates in verification process.
 Version 3.12
 
+* IMPROVEMENT: Internally HTTP connections are reused and pipelined.
 * IMPROVEMENT: Increased the size of the statically allocated KSI_Integer pool up to the value of 0xff.
 * IMPROVEMENT: Removed experimental feature KSI_NetworkClient_performAll.
 * IMPROVEMENT: Removed multi-signature support from the SDK.

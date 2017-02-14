@@ -27,8 +27,26 @@
 #include <ksi/fast_tlv.h>
 #include "support_tests.h"
 
+#ifndef _WIN32
+#  ifdef HAVE_CONFIG_H
+#    include "../src/ksi/config.h"
+#  endif
+#endif
+
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#if KSI_AGGREGATION_PDU_VERSION == 2
+#	define	TEST_RESOURCE_AGGR_VER "v2"
+#else
+#	define	TEST_RESOURCE_AGGR_VER "v1"
+#endif
+
+#if KSI_EXTENDING_PDU_VERSION == 2
+#	define	TEST_RESOURCE_EXT_VER "v2"
+#else
+#	define	TEST_RESOURCE_EXT_VER "v1"
 #endif
 
 #define lprintf //printf("%s:%d - ", __FILE__, __LINE__); printf
@@ -46,7 +64,9 @@ CuSuite* KSITest_RDR_getSuite(void);
 CuSuite* KSITest_TLV_getSuite(void);
 CuSuite* KSITest_TLV_Sample_getSuite(void);
 CuSuite* KSITest_Hash_getSuite(void);
-CuSuite* KSITest_NET_getSuite(void);
+CuSuite* KSITest_NetCommon_getSuite(void);
+CuSuite* KSITest_NetPduV1_getSuite(void);
+CuSuite* KSITest_NetPduV2_getSuite(void);
 CuSuite* KSITest_HashChain_getSuite(void);
 CuSuite* KSI_UTIL_GetSuite(void);
 CuSuite* KSITest_Signature_getSuite(void);

@@ -1409,20 +1409,19 @@ static void TestCalendarBasedPolicy_NA_ExtenderErrors(CuTest* tc) {
 		int res;
 	};
 	struct extErrResp_st testArray[] = {
-		{"resource/tlv/ok_extender_error_response_101.tlv", KSI_SERVICE_INVALID_REQUEST},
-		{"resource/tlv/ok_extender_error_response_102.tlv", KSI_SERVICE_AUTHENTICATION_FAILURE},
-		{"resource/tlv/ok_extender_error_response_103.tlv", KSI_SERVICE_INVALID_PAYLOAD},
-		{"resource/tlv/ok_extender_error_response_104.tlv", KSI_SERVICE_EXTENDER_INVALID_TIME_RANGE},
-		{"resource/tlv/ok_extender_error_response_105.tlv", KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_OLD},
-		{"resource/tlv/ok_extender_error_response_106.tlv", KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_NEW},
-		{"resource/tlv/ok_extender_error_response_107.tlv", KSI_SERVICE_EXTENDER_REQUEST_TIME_IN_FUTURE},
-		{"resource/tlv/ok_extender_error_response_200.tlv", KSI_SERVICE_INTERNAL_ERROR},
-		{"resource/tlv/ok_extender_error_response_201.tlv", KSI_SERVICE_EXTENDER_DATABASE_MISSING},
-		{"resource/tlv/ok_extender_error_response_202.tlv", KSI_SERVICE_EXTENDER_DATABASE_CORRUPT},
-		{"resource/tlv/ok_extender_error_response_300.tlv", KSI_SERVICE_UPSTREAM_ERROR},
-		{"resource/tlv/ok_extender_error_response_301.tlv", KSI_SERVICE_UPSTREAM_TIMEOUT}
+		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_101.tlv", KSI_SERVICE_INVALID_REQUEST},
+		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_102.tlv", KSI_SERVICE_AUTHENTICATION_FAILURE},
+		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_103.tlv", KSI_SERVICE_INVALID_PAYLOAD},
+		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_104.tlv", KSI_SERVICE_EXTENDER_INVALID_TIME_RANGE},
+		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_105.tlv", KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_OLD},
+		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_106.tlv", KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_NEW},
+		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_107.tlv", KSI_SERVICE_EXTENDER_REQUEST_TIME_IN_FUTURE},
+		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_200.tlv", KSI_SERVICE_INTERNAL_ERROR},
+		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_201.tlv", KSI_SERVICE_EXTENDER_DATABASE_MISSING},
+		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_202.tlv", KSI_SERVICE_EXTENDER_DATABASE_CORRUPT},
+		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_300.tlv", KSI_SERVICE_UPSTREAM_ERROR},
+		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_301.tlv", KSI_SERVICE_UPSTREAM_TIMEOUT}
 	};
-
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
@@ -1458,7 +1457,7 @@ static void TestCalendarBasedPolicy_NA_ExtenderErrors(CuTest* tc) {
 
 static void TestCalendarBasedPolicy_OK_WithPublicationRecord(CuTest* tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 	int res;
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
@@ -1497,8 +1496,8 @@ static void TestCalendarBasedPolicy_OK_WithPublicationRecord(CuTest* tc) {
 }
 
 static void TestCalendarBasedPolicy_FAIL_WithPublicationRecord(CuTest* tc) {
-	#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
-	#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-nok-extend_response-1.tlv"
+	#define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+	#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-nok-extend_response-1.tlv"
 	int res;
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
@@ -1538,7 +1537,7 @@ static void TestCalendarBasedPolicy_FAIL_WithPublicationRecord(CuTest* tc) {
 
 static void TestCalendarBasedPolicy_OK_WithoutPublicationRecord(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 	int res;
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
@@ -1577,7 +1576,7 @@ static void TestCalendarBasedPolicy_OK_WithoutPublicationRecord(CuTest* tc) {
 
 static void TestCalendarBasedPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 	#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
-	#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+	#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 	int res;
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
@@ -1616,7 +1615,7 @@ static void TestCalendarBasedPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 
 static void TestCalendarBasedPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-nok-extend_response-3.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-nok-extend_response-3.tlv"
 	int res;
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
@@ -1655,7 +1654,7 @@ static void TestCalendarBasedPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 
 static void TestCalendarBasedPolicy_OK_WithAlgoChange(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/cal_algo_switch.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/cal_algo_switch-extend_resposne.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/cal_algo_switch-extend_resposne.tlv"
 	int res;
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
@@ -2116,7 +2115,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithSuitablePublication(CuTest* t
 
 static void TestPublicationsFileBasedPolicy_OK_WithSuitablePublication(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 	int res;
 	KSI_VerificationContext context;
@@ -2169,7 +2168,7 @@ static void TestPublicationsFileBasedPolicy_OK_WithSuitablePublication(CuTest* t
 
 static void TestPublicationsFileBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-nok-extend_response-1.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-nok-extend_response-1.tlv"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 	int res;
 	KSI_VerificationContext context;
@@ -2377,7 +2376,7 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureBeforePublica
 static void TestUserProvidedPublicationBasedPolicy_OK_WithoutPublicationRecord(CuTest* tc) {
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_SIGNATURE_FILE_WITH_PUBLICATION  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 	int res;
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
@@ -2434,7 +2433,7 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithoutPublicationRecord(C
 
 static void TestUserProvidedPublicationBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-nok-extend_response-1.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-nok-extend_response-1.tlv"
 #define TEST_SIGNATURE_FILE_WITH_PUBLICATION  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 	int res;
 	KSI_VerificationContext context;
@@ -2618,7 +2617,7 @@ static void TestGeneralPolicy_OK_WithCertificate(CuTest* tc) {
 
 static void TestGeneralPolicy_FAIL_AfterExtendingToPublication(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-nok-extend_response-1.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-nok-extend_response-1.tlv"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 	int res;
 	KSI_VerificationContext context;
@@ -2670,7 +2669,7 @@ static void TestGeneralPolicy_FAIL_AfterExtendingToPublication(CuTest* tc) {
 
 static void TestGeneralPolicy_OK_AfterExtendingToPublication(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
 	int res;
 	KSI_VerificationContext context;
@@ -2721,7 +2720,7 @@ static void TestGeneralPolicy_OK_AfterExtendingToPublication(CuTest* tc) {
 
 static void TestGeneralPolicy_FAIL_AfterExtendingToUserPublication(CuTest* tc) {
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-nok-extend_response-1.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-nok-extend_response-1.tlv"
 #define TEST_SIGNATURE_FILE_WITH_PUBLICATION  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.15042014.tlv"
 	int res;
@@ -2791,7 +2790,7 @@ static void TestGeneralPolicy_OK_AfterExtendingToUserPublication(CuTest* tc) {
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
 #define TEST_SIGNATURE_FILE_WITH_PUBLICATION  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.15042014.tlv"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 	int res;
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
@@ -2857,7 +2856,7 @@ static void TestGeneralPolicy_OK_AfterExtendingToUserPublication(CuTest* tc) {
 
 static void TestGeneralPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-nok-extend_response-3.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-nok-extend_response-3.tlv"
 	int res;
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
@@ -2896,7 +2895,7 @@ static void TestGeneralPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 
 static void TestGeneralPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 	int res;
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
@@ -2935,7 +2934,7 @@ static void TestGeneralPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 
 static void TestGeneralPolicy_NA_ExtenderError(CuTest* tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok_extender_error_response_101.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_101.tlv"
 	int res;
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
@@ -2983,7 +2982,7 @@ static void TestPolicyCloning(CuTest* tc) {
 
 static void TestFallbackPolicy_CalendarBased_OK_KeyBased_NA(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
 	int res;
 	KSI_Policy *policy = NULL;
 	KSI_VerificationContext context;
@@ -3028,7 +3027,7 @@ static void TestFallbackPolicy_CalendarBased_OK_KeyBased_NA(CuTest* tc) {
 
 static void TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-extend_response-input_hash_null.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response-input_hash_null.tlv"
 	int res;
 	KSI_Policy *policy = NULL;
 	KSI_VerificationContext context;
@@ -3073,7 +3072,7 @@ static void TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA(CuTest* tc) {
 
 static void TestUserPublicationWithBadCalAuthRec(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-2015-09-13_21-34-00.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/nok-sig-2015-09-13_21-34-00-extend_responce.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/nok-sig-2015-09-13_21-34-00-extend_responce.tlv"
 	int res;
 	KSI_Signature *sig = NULL;
 	KSI_VerificationContext ver;
@@ -3121,7 +3120,7 @@ static void TestUserPublicationWithBadCalAuthRec(CuTest *tc) {
 
 static void TestBackgroundVerificationWithUserPublicationBasedPolicy(CuTest* tc) {
 #define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/ok-sig-2014-04-30.1-nok-extend_response-1.tlv"
+#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-nok-extend_response-1.tlv"
 #define TEST_SIGNATURE_FILE_WITH_PUBLICATION  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 	int res;
 	KSI_VerificationContext context;
