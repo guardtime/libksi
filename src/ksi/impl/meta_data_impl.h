@@ -34,8 +34,8 @@ extern "C" {
 		KSI_Integer *sequenceNr;
 		KSI_Integer *reqTimeInMicros;
 
-		int (*toMetaDataElement)(KSI_MetaData *in, KSI_MetaDataElement **out);
-		int (*serializePayload)(KSI_MetaData *t, unsigned char *buf, size_t buf_size, size_t *buf_len);
+		int (*toMetaDataElement)(const KSI_MetaData *in, KSI_MetaDataElement **out);
+		int (*serializePayload)(const KSI_MetaData *t, unsigned char *buf, size_t buf_size, size_t *buf_len);
 	};
 
 #ifdef __cplusplus

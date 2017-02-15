@@ -71,7 +71,7 @@ cleanup:
 	return res;
 }
 
-int KSI_PKISignature_toTlv(KSI_CTX *ctx, KSI_PKISignature *sig, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_PKISignature_toTlv(KSI_CTX *ctx, const KSI_PKISignature *sig, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	int res;
 	KSI_TLV *tmp = NULL;
 	unsigned char *raw = NULL;
@@ -165,7 +165,7 @@ cleanup:
 	return res;
 }
 
-int KSI_PKICertificate_toTlv(KSI_CTX *ctx, KSI_PKICertificate *cert, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_PKICertificate_toTlv(KSI_CTX *ctx, const KSI_PKICertificate *cert, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	int res;
 	KSI_TLV *tmp = NULL;
 	unsigned char *raw = NULL;

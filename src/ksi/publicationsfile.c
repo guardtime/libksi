@@ -242,7 +242,7 @@ cleanup:
 	return res;
 }
 
-int KSI_PublicationsFile_verify(KSI_PublicationsFile *pubFile, KSI_CTX *ctx) {
+int KSI_PublicationsFile_verify(const KSI_PublicationsFile *pubFile, KSI_CTX *ctx) {
 	int res;
 	KSI_CTX *useCtx = ctx;
 	KSI_PKITruststore *pki = NULL;
@@ -873,8 +873,7 @@ cleanup:
 	return res;
 }
 
-static int findPublication(const KSI_PublicationsFile *trust, void *inData,
-		int (*equals)(KSI_PublicationData*, void*), KSI_PublicationRecord **outRec) {
+static int findPublication(const KSI_PublicationsFile *trust, const KSI_Integer *time, const KSI_DataHash *imprint, KSI_PublicationRecord **outRec) {
 	int res;
 	size_t i;
 
@@ -885,7 +884,7 @@ static int findPublication(const KSI_PublicationsFile *trust, void *inData,
 
 	KSI_ERR_clearErrors(trust->ctx);
 
-	if (inData == NULL || outRec == NULL) {
+	if (time == NULL || outRec == NULL) {
 		KSI_pushError(trust->ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
@@ -904,12 +903,13 @@ static int findPublication(const KSI_PublicationsFile *trust, void *inData,
 			goto cleanup;
 		}
 
-		if (equals(pr->publishedData, inData)) {
+		if (KSI_Integer_equals(pr->publishedData->time, time)) {
+			if (imprint != NULL && !KSI_DataHash_equals(pr->publishedData->imprint, imprint)) {
+				continue;
+			}
 			*outRec = KSI_PublicationRecord_ref(pr);
 			break;
 		}
-
-		KSI_nofree(pr);
 	}
 
 	res = KSI_OK;
@@ -919,24 +919,16 @@ cleanup:
 	return res;
 }
 
-static int publicationTimeEquals(KSI_PublicationData* pubData, void* time) {
-	if (pubData == NULL || time == NULL) return 0;
-	return KSI_Integer_equals(pubData->time, (KSI_Integer*)time);
+int KSI_PublicationsFile_findPublicationByTime(const KSI_PublicationsFile *trust, const KSI_Integer *time, KSI_PublicationRecord **outRec) {
+	return findPublication(trust, time, NULL, outRec);
 }
 
-static int publicationDataEquals(KSI_PublicationData* pubData, void* data) {
-	if (pubData == NULL || data == NULL) return 0;
-	return (KSI_DataHash_equals(pubData->imprint, ((KSI_PublicationData *)data)->imprint) &&
-			KSI_Integer_equals(pubData->time, ((KSI_PublicationData *)data)->time));
-}
-
-int KSI_PublicationsFile_findPublicationByTime(const KSI_PublicationsFile *trust, KSI_Integer *time, KSI_PublicationRecord **outRec) {
-	return findPublication(trust, (void*)time, publicationTimeEquals, outRec);
-}
-
-int KSI_PublicationsFile_findPublication(const KSI_PublicationsFile *trust, KSI_PublicationRecord *inRec, KSI_PublicationRecord **outRec) {
-	if (inRec != NULL && inRec->publishedData == NULL) return KSI_INVALID_STATE;
-	return findPublication(trust, (void*)inRec->publishedData, publicationDataEquals, outRec);
+int KSI_PublicationsFile_findPublication(const KSI_PublicationsFile *trust, const KSI_PublicationRecord *inRec, KSI_PublicationRecord **outRec) {
+	if ((inRec != NULL && inRec->publishedData == NULL) ||
+			(inRec->publishedData->time == NULL || inRec->publishedData->imprint == NULL)) {
+		return KSI_INVALID_STATE;
+	}
+	return findPublication(trust, inRec->publishedData->time, inRec->publishedData->imprint, outRec);
 }
 
 int KSI_PublicationsFile_setCertConstraints(KSI_PublicationsFile *pubFile, const KSI_CertConstraint *arr) {
@@ -1190,7 +1182,7 @@ cleanup:
 	return res;
 }
 
-int KSI_PublicationRecord_toBase32(KSI_PublicationRecord *pubRec, char **pubStr) {
+int KSI_PublicationRecord_toBase32(const KSI_PublicationRecord *pubRec, char **pubStr) {
 	int res;
 
 	if (pubRec == NULL) {
@@ -1258,7 +1250,7 @@ cleanup:
 	return res;
 }
 
-char *KSI_PublicationData_toString(KSI_PublicationData *t, char *buffer, size_t buffer_len) {
+char *KSI_PublicationData_toString(const KSI_PublicationData *t, char *buffer, size_t buffer_len) {
 	int res = KSI_UNKNOWN_ERROR;
 	char *ret = NULL;
 	size_t len = 0;
@@ -1283,7 +1275,7 @@ cleanup:
 	return ret;
 }
 
-char *KSI_PublicationRecord_toString(KSI_PublicationRecord *t, char *buffer, size_t buffer_len) {
+char *KSI_PublicationRecord_toString(const KSI_PublicationRecord *t, char *buffer, size_t buffer_len) {
 	int res = KSI_UNKNOWN_ERROR;
 	char *ret = NULL;
 	char tmp[256];

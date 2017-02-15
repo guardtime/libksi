@@ -161,7 +161,7 @@ void KSI_TreeLeafHandle_free(KSI_TreeLeafHandle *handle);
  * \return On success returns KSI_OK, otherwise a status code is returned (see #KSI_StatusCode).
  * \see #KSI_AggregationHashChain_free.
  */
-int KSI_TreeLeafHandle_getAggregationChain(KSI_TreeLeafHandle *handle, KSI_AggregationHashChain **chain);
+int KSI_TreeLeafHandle_getAggregationChain(const KSI_TreeLeafHandle *handle, KSI_AggregationHashChain **chain);
 
 /**
  * An object for building an aggregation tree on the fly.

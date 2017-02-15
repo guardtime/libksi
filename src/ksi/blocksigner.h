@@ -102,7 +102,7 @@ int KSI_BlockSigner_addLeaf(KSI_BlockSigner *signer, KSI_DataHash *hsh, int leve
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  * \note Ownership of \c prevLeaf is passed to the caller who is responsible for freeing the object.
  */
-int KSI_BlockSigner_getPrevLeaf(KSI_BlockSigner *signer, KSI_DataHash **prevLeaf);
+int KSI_BlockSigner_getPrevLeaf(const KSI_BlockSigner *signer, KSI_DataHash **prevLeaf);
 
 /**
  * This function creates a new instance of a KSI signature and stores it in the output
@@ -112,7 +112,7 @@ int KSI_BlockSigner_getPrevLeaf(KSI_BlockSigner *signer, KSI_DataHash **prevLeaf
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  * \see #KSI_BlockSigner_close, #KSI_BlockSigner_free, #KSI_BlockSigner_reset.
  */
-int KSI_BlockSignerHandle_getSignature(KSI_BlockSignerHandle *handle, KSI_Signature **sig);
+int KSI_BlockSignerHandle_getSignature(const KSI_BlockSignerHandle *handle, KSI_Signature **sig);
 
 /**
  * Cleanup method for the handle.

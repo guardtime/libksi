@@ -40,10 +40,10 @@ extern "C" {
 		KSI_uint64_t docAggrLevel;
 
 		/** Document hash to be verified. */
-		KSI_DataHash *documentHash;
+		const KSI_DataHash *documentHash;
 
 		/** Publication string to be used. */
-		KSI_PublicationData *userPublication;
+		const KSI_PublicationData *userPublication;
 
 		/** Publication file to be used. */
 		KSI_PublicationsFile *userPublicationsFile;

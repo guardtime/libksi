@@ -420,6 +420,7 @@ cleanup:
 
 	return res;
 }
+
 int KSI_MetaDataElement_fromTlv(KSI_TLV *tlv, KSI_MetaDataElement **metaData) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_MetaDataElement *tmp = NULL;
@@ -470,7 +471,7 @@ cleanup:
 	return res;
 }
 
-static int KSI_MetaData_toMetaDataElement(KSI_MetaData *in, KSI_MetaDataElement **out) {
+static int KSI_MetaData_toMetaDataElement(const KSI_MetaData *in, KSI_MetaDataElement **out) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_MetaDataElement *tmp = NULL;
 	unsigned char buf[0xffff + 4];
@@ -505,7 +506,7 @@ cleanup:
 	return res;
 }
 
-static int KSI_MetaData_serializePayload(KSI_MetaData *t, unsigned char *buf, size_t buf_size, size_t *buf_len) {
+static int KSI_MetaData_serializePayload(const KSI_MetaData *t, unsigned char *buf, size_t buf_size, size_t *buf_len) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_MetaDataElement *mdEl = NULL;
 	KSI_TlvElement *padding = NULL;
@@ -775,7 +776,7 @@ static KSI_IMPLEMENT_GETTER(KSI_Header, KSI_OctetString*, raw, Raw);
 static KSI_IMPLEMENT_GETTER(KSI_AggregationPdu, KSI_OctetString*, raw, Raw);
 static KSI_IMPLEMENT_GETTER(KSI_ExtendPdu, KSI_OctetString*, raw, Raw);
 
-static int getObjectsRawValue(KSI_CTX* ctx, void* obj, int (*getRaw)(void*, KSI_OctetString**), const KSI_TlvTemplate *template, int tag, const unsigned char **data, size_t *len, bool* mustBeFreed){
+static int getObjectsRawValue(KSI_CTX* ctx, const void* obj, int (*getRaw)(const void*, KSI_OctetString**), const KSI_TlvTemplate *template, int tag, const unsigned char **data, size_t *len, bool* mustBeFreed){
 	int res = KSI_OK;
 	KSI_OctetString *raw = NULL;
 	*mustBeFreed = false;
@@ -799,12 +800,12 @@ cleanup:
 	return res;
 }
 
-static int pdu_calculateHmac(KSI_CTX* ctx, void* pdu,
-		int (*getHeader)(void*, KSI_Header**),
-		int (*getResponse)(void*, void**),
-		int (*getResponse_raw)(void*, KSI_OctetString**),
-		int (*getRequest)(void*, void**),
-		int (*getRequest_raw)(void*, KSI_OctetString**),
+static int pdu_calculateHmac(KSI_CTX* ctx, const void* pdu,
+		int (*getHeader)(const void*, KSI_Header**),
+		int (*getResponse)(const void*, void**),
+		int (*getResponse_raw)(const void*, KSI_OctetString**),
+		int (*getRequest)(const void*, void**),
+		int (*getRequest_raw)(const void*, KSI_OctetString**),
 		int reqTag,	int respTag,
 		const KSI_TlvTemplate *reqTemplate, const KSI_TlvTemplate *respTemplate,
 		KSI_HashAlgorithm algo_id, const char *key, KSI_DataHash **hmac) {
@@ -845,7 +846,7 @@ static int pdu_calculateHmac(KSI_CTX* ctx, void* pdu,
 		goto cleanup;
 	}
 
-	res = getObjectsRawValue(ctx, header, (int (*)(void*, KSI_OctetString**))KSI_Header_getRaw, KSI_TLV_TEMPLATE(KSI_Header), 0x01, &raw_header, &header_len, &freeRawHeader);
+	res = getObjectsRawValue(ctx, header, (int (*)(const void*, KSI_OctetString**))KSI_Header_getRaw, KSI_TLV_TEMPLATE(KSI_Header), 0x01, &raw_header, &header_len, &freeRawHeader);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -910,12 +911,12 @@ cleanup:
 	return res;
 }
 
-static int pdu_calculateHmac_v2(KSI_CTX* ctx, void* pdu,
-		int (*getHeader)(void*, KSI_Header**),
-		int (*getResponse)(void*, void**),
-		int (*getResponse_raw)(void*, KSI_OctetString**),
-		int (*getRequest)(void*, void**),
-		int (*getRequest_raw)(void*, KSI_OctetString**),
+static int pdu_calculateHmac_v2(KSI_CTX* ctx, const void* pdu,
+		int (*getHeader)(const void*, KSI_Header**),
+		int (*getResponse)(const void*, void**),
+		int (*getResponse_raw)(const void*, KSI_OctetString**),
+		int (*getRequest)(const void*, void**),
+		int (*getRequest_raw)(const void*, KSI_OctetString**),
 		int reqTag,	int respTag,
 		const KSI_TlvTemplate *reqTemplate, const KSI_TlvTemplate *respTemplate,
 		KSI_HashAlgorithm algo_id, const char *key, KSI_DataHash **hmac) {
@@ -998,29 +999,29 @@ cleanup:
 	return res;
 }
 
-int KSI_ExtendPdu_calculateHmac(KSI_ExtendPdu *t, KSI_HashAlgorithm algo_id, const char *key, KSI_DataHash **hmac){
+int KSI_ExtendPdu_calculateHmac(const KSI_ExtendPdu *t, KSI_HashAlgorithm algo_id, const char *key, KSI_DataHash **hmac){
 	int res = KSI_OK;
 	if (t == NULL || t->ctx == NULL)
 		return KSI_INVALID_ARGUMENT;
 
 	if (t->ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER] == KSI_PDU_VERSION_1) {
-		res = pdu_calculateHmac(t->ctx, (void*)t,
-								(int (*)(void*, KSI_Header**))KSI_ExtendPdu_getHeader,
-								(int (*)(void*, void**))KSI_ExtendPdu_getResponse,
-								(int (*)(void*, KSI_OctetString**))KSI_ExtendResp_getRaw,
-								(int (*)(void*, void**))KSI_ExtendPdu_getRequest,
-								(int (*)(void*, KSI_OctetString**))KSI_ExtendReq_getRaw,
-								0x301,0x302, KSI_TLV_TEMPLATE(KSI_ExtendReq),KSI_TLV_TEMPLATE(KSI_ExtendResp),
-								algo_id, key, hmac);
+		res = pdu_calculateHmac(t->ctx, (const void*)t,
+				(int (*)(const void*, KSI_Header**))KSI_ExtendPdu_getHeader,
+				(int (*)(const void*, void**))KSI_ExtendPdu_getResponse,
+				(int (*)(const void*, KSI_OctetString**))KSI_ExtendResp_getRaw,
+				(int (*)(const void*, void**))KSI_ExtendPdu_getRequest,
+				(int (*)(const void*, KSI_OctetString**))KSI_ExtendReq_getRaw,
+				0x301,0x302, KSI_TLV_TEMPLATE(KSI_ExtendReq),KSI_TLV_TEMPLATE(KSI_ExtendResp),
+				algo_id, key, hmac);
 	} else if (t->ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER] == KSI_PDU_VERSION_2) {
-		res = pdu_calculateHmac_v2(t->ctx, (void*)t,
-								(int (*)(void*, KSI_Header**))KSI_ExtendPdu_getHeader,
-								(int (*)(void*, void**))KSI_ExtendPdu_getResponse,
-								(int (*)(void*, KSI_OctetString**))KSI_ExtendPdu_getRaw,
-								(int (*)(void*, void**))KSI_ExtendPdu_getRequest,
-								(int (*)(void*, KSI_OctetString**))KSI_ExtendPdu_getRaw,
-								0x320,0x321, KSI_TLV_TEMPLATE(KSI_ExtendReqPdu),KSI_TLV_TEMPLATE(KSI_ExtendRespPdu),
-								algo_id, key, hmac);
+		res = pdu_calculateHmac_v2(t->ctx, (const void*)t,
+				(int (*)(const void*, KSI_Header**))KSI_ExtendPdu_getHeader,
+				(int (*)(const void*, void**))KSI_ExtendPdu_getResponse,
+				(int (*)(const void*, KSI_OctetString**))KSI_ExtendPdu_getRaw,
+				(int (*)(const void*, void**))KSI_ExtendPdu_getRequest,
+				(int (*)(const void*, KSI_OctetString**))KSI_ExtendPdu_getRaw,
+				0x320,0x321, KSI_TLV_TEMPLATE(KSI_ExtendReqPdu),KSI_TLV_TEMPLATE(KSI_ExtendRespPdu),
+				algo_id, key, hmac);
 	} else {
 		res = KSI_INVALID_FORMAT;
 	}
@@ -1061,7 +1062,7 @@ cleanup:
 	return res;
 }
 
-int KSI_ExtendReq_enclose(KSI_ExtendReq *req, char *loginId, char *key, KSI_ExtendPdu **pdu) {
+int KSI_ExtendReq_enclose(KSI_ExtendReq *req, const char *loginId, const char *key, KSI_ExtendPdu **pdu) {
 	int res;
 	KSI_ExtendPdu *tmp = NULL;
 	KSI_Header *hdr = NULL;
@@ -1284,27 +1285,27 @@ cleanup:
 	return res;
 }
 
-int KSI_AggregationPdu_calculateHmac(KSI_AggregationPdu *t, KSI_HashAlgorithm algo_id, const char *key, KSI_DataHash **hmac){
+int KSI_AggregationPdu_calculateHmac(const KSI_AggregationPdu *t, KSI_HashAlgorithm algo_id, const char *key, KSI_DataHash **hmac){
 	int res = KSI_OK;
 	if (t == NULL || t->ctx == NULL)
 		return KSI_INVALID_ARGUMENT;
 
 	if (t->ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] == KSI_PDU_VERSION_1) {
-		res = pdu_calculateHmac(t->ctx, (void*)t,
-				(int (*)(void*, KSI_Header**))KSI_AggregationPdu_getHeader,
-				(int (*)(void*, void**))KSI_AggregationPdu_getResponse,
-				(int (*)(void*, KSI_OctetString**))KSI_AggregationResp_getRaw,
-				(int (*)(void*, void**))KSI_AggregationPdu_getRequest,
-				(int (*)(void*, KSI_OctetString**))KSI_AggregationReq_getRaw,
+		res = pdu_calculateHmac(t->ctx, (const void*)t,
+				(int (*)(const void*, KSI_Header**))KSI_AggregationPdu_getHeader,
+				(int (*)(const void*, void**))KSI_AggregationPdu_getResponse,
+				(int (*)(const void*, KSI_OctetString**))KSI_AggregationResp_getRaw,
+				(int (*)(const void*, void**))KSI_AggregationPdu_getRequest,
+				(int (*)(const void*, KSI_OctetString**))KSI_AggregationReq_getRaw,
 				0x201,0x202, KSI_TLV_TEMPLATE(KSI_AggregationReq),KSI_TLV_TEMPLATE(KSI_AggregationResp),
 				algo_id, key, hmac);
 	} else if (t->ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] == KSI_PDU_VERSION_2) {
-		res = pdu_calculateHmac_v2(t->ctx, (void*)t,
-				(int (*)(void*, KSI_Header**))KSI_AggregationPdu_getHeader,
-				(int (*)(void*, void**))KSI_AggregationPdu_getResponse,
-				(int (*)(void*, KSI_OctetString**))KSI_AggregationPdu_getRaw,
-				(int (*)(void*, void**))KSI_AggregationPdu_getRequest,
-				(int (*)(void*, KSI_OctetString**))KSI_AggregationPdu_getRaw,
+		res = pdu_calculateHmac_v2(t->ctx, (const void*)t,
+				(int (*)(const void*, KSI_Header**))KSI_AggregationPdu_getHeader,
+				(int (*)(const void*, void**))KSI_AggregationPdu_getResponse,
+				(int (*)(const void*, KSI_OctetString**))KSI_AggregationPdu_getRaw,
+				(int (*)(const void*, void**))KSI_AggregationPdu_getRequest,
+				(int (*)(const void*, KSI_OctetString**))KSI_AggregationPdu_getRaw,
 				0x220,0x221, KSI_TLV_TEMPLATE(KSI_AggregationReqPdu),KSI_TLV_TEMPLATE(KSI_AggregationRespPdu),
 				algo_id, key, hmac);
 	} else {
@@ -1347,7 +1348,7 @@ cleanup:
 	return res;
 }
 
-int KSI_AggregationReq_enclose(KSI_AggregationReq *req, char *loginId, char *key, KSI_AggregationPdu **pdu) {
+int KSI_AggregationReq_enclose(KSI_AggregationReq *req, const char *loginId, const char *key, KSI_AggregationPdu **pdu) {
 	int res;
 	KSI_AggregationPdu *tmp = NULL;
 	KSI_Header *hdr = NULL;
@@ -1872,7 +1873,7 @@ cleanup:
 	return res;
 }
 
-int KSI_AggregationResp_verifyWithRequest(KSI_AggregationResp *resp, KSI_AggregationReq *req) {
+int KSI_AggregationResp_verifyWithRequest(const KSI_AggregationResp *resp, const KSI_AggregationReq *req) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (resp == NULL) {
@@ -2189,7 +2190,7 @@ cleanup:
 	return res;
 }
 
-int KSI_ExtendResp_verifyWithRequest(KSI_ExtendResp *resp, KSI_ExtendReq *req) {
+int KSI_ExtendResp_verifyWithRequest(const KSI_ExtendResp *resp, const KSI_ExtendReq *req) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Integer *tm = NULL;
 	time_t aggrTm = 0;

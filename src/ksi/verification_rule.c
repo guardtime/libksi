@@ -337,7 +337,7 @@ int KSI_VerificationRule_AggregationChainInputHashVerification(KSI_VerificationC
 	KSI_DataHash *rfc3161_outputHash = NULL;
 	KSI_AggregationHashChain* firstChain = NULL;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
 
 	if (result == NULL) {
@@ -465,7 +465,7 @@ int KSI_VerificationRule_AggregationChainMetaDataVerification(KSI_VerificationCo
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	VerificationTempData *tempData = NULL;
 	KSI_TlvElement *el = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
@@ -612,7 +612,7 @@ int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext
 	int level = 0;
 	size_t i;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	VerificationTempData *tempData = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
 
@@ -717,7 +717,7 @@ int KSI_VerificationRule_AggregationHashChainTimeConsistency(KSI_VerificationCon
 	const KSI_AggregationHashChain *prevChain = NULL;
 	size_t i;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
 
 	if (result == NULL) {
@@ -793,7 +793,7 @@ int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationCo
 	const KSI_AggregationHashChain *prevChain = NULL;
 	size_t i;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
 
 	if (result == NULL) {
@@ -954,7 +954,7 @@ int KSI_VerificationRule_CalendarHashChainInputHashVerification(KSI_Verification
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *calInputHash = NULL;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	VerificationTempData *tempData = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN;
 
@@ -1027,7 +1027,7 @@ int KSI_VerificationRule_CalendarHashChainAggregationTime(KSI_VerificationContex
 	KSI_AggregationHashChain *aggregationChain = NULL;
 	KSI_Integer *calAggrTime = NULL;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN;
 
 	if (result == NULL) {
@@ -1085,7 +1085,7 @@ int KSI_VerificationRule_CalendarHashChainRegistrationTime(KSI_VerificationConte
 	time_t calculatedAggrTime;
 	KSI_Integer *calendarAggrTime = NULL;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_CALCHAIN_INTERNALLY;
 
 	if (result == NULL) {
@@ -1142,7 +1142,7 @@ int KSI_VerificationRule_CalendarAuthenticationRecordAggregationHash(KSI_Verific
 	KSI_DataHash *pubHash = NULL;
 	KSI_DataHash *rootHash = NULL;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC;
 
 	if (result == NULL) {
@@ -1208,7 +1208,7 @@ int KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime(KSI_Verific
 	KSI_Integer *pubTime = NULL;
 	KSI_Integer *calPubTime = NULL;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC;
 
 	if (result == NULL) {
@@ -1274,7 +1274,7 @@ int KSI_VerificationRule_SignaturePublicationRecordPublicationHash(KSI_Verificat
 	KSI_DataHash *publishedHash = NULL;
 	KSI_DataHash *rootHash = NULL;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_CALCHAIN_WITH_PUBLICATION;
 
 	if (result == NULL) {
@@ -1342,7 +1342,7 @@ int KSI_VerificationRule_SignaturePublicationRecordPublicationTime(KSI_Verificat
 	KSI_Integer *calPubTime = NULL;
 	KSI_Integer *sigPubTime = NULL;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_CALCHAIN_WITH_PUBLICATION;
 
 	if (result == NULL) {
@@ -1470,7 +1470,7 @@ int KSI_VerificationRule_DocumentHashVerification(KSI_VerificationContext *info,
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_DOCUMENT;
 
 	if (result == NULL) {
@@ -1596,7 +1596,7 @@ cleanup:
 int KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	KSI_Integer *pubTime = NULL;
 	KSI_CalendarHashChain *extCalHashChain = NULL;
 	KSI_HashChainLinkList *sigList = NULL;
@@ -1754,7 +1754,7 @@ cleanup:
 int KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	KSI_Integer *pubTime = NULL;
 	KSI_CalendarHashChain *extCalHashChain = NULL;
 	KSI_DataHash *rootHash = NULL;
@@ -1861,7 +1861,7 @@ cleanup:
 static int initExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Integer *endTime) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	KSI_Integer *startTime = NULL;
 	KSI_ExtendReq *req = NULL;
 	KSI_RequestHandle *handle = NULL;
@@ -2027,7 +2027,7 @@ cleanup:
 int KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	KSI_Integer *pubTime = NULL;
 	KSI_CalendarHashChain *extCalHashChain = NULL;
 	KSI_DataHash *calInputHash = NULL;
@@ -2112,7 +2112,7 @@ cleanup:
 int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	KSI_CalendarHashChain *extCalHashChain = NULL;
 	time_t calculatedAggrTime;
 	KSI_AggregationHashChain *aggregationChain = NULL;
@@ -2332,7 +2332,7 @@ cleanup:
 int KSI_VerificationRule_CertificateExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	KSI_OctetString *certId = NULL;
 	KSI_PKICertificate *cert = NULL;
 	VerificationTempData *tempData = NULL;
@@ -2417,7 +2417,7 @@ cleanup:
 int KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	KSI_OctetString *certId = NULL;
 	KSI_PKICertificate *cert = NULL;
 	KSI_OctetString *signatureValue = NULL;
@@ -2545,7 +2545,7 @@ cleanup:
 int KSI_VerificationRule_PublicationsFileContainsSignaturePublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	KSI_Integer *sigPubTime = NULL;
 	KSI_DataHash *sigPubHash = NULL;
 	KSI_PublicationRecord *pubRec = NULL;
@@ -2662,7 +2662,7 @@ cleanup:
 int KSI_VerificationRule_PublicationsFileContainsSuitablePublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	time_t aggrTime;
 	KSI_Integer *tempTime = NULL;
 	KSI_PublicationRecord *pubRec = NULL;
@@ -2788,7 +2788,7 @@ int KSI_VerificationRule_UserProvidedPublicationExtendingPermittedVerification(K
 int KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	time_t aggrTime;
 	KSI_Integer *sigPubTime = NULL;
 	KSI_Integer *pubDataPubTime = NULL;
@@ -2909,7 +2909,7 @@ cleanup:
 int KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	time_t aggrTime;
 	KSI_Integer *sigPubTime = NULL;
 	KSI_Integer *pubDataPubTime = NULL;
@@ -3023,7 +3023,7 @@ cleanup:
 int KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	time_t aggrTime;
 	KSI_DataHash *calInputHash = NULL;
 	KSI_Integer *pubDataPubTime = NULL;
@@ -3206,7 +3206,7 @@ cleanup:
 int KSI_VerificationRule_UserProvidedPublicationTimeVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	KSI_Integer *sigPubTime = NULL;
 	KSI_Integer *usrPubTime = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBSTRING;
@@ -3274,7 +3274,7 @@ cleanup:
 int KSI_VerificationRule_UserProvidedPublicationHashVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	KSI_DataHash *sigPubHash = NULL;
 	KSI_DataHash *usrPubHash = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBSTRING;
@@ -3342,7 +3342,7 @@ cleanup:
 int KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	KSI_Integer *sigPubTime = NULL;
 	KSI_Integer *usrPubDataTime = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBSTRING;
@@ -3482,7 +3482,7 @@ cleanup:
 int KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	KSI_Integer *usrPubTime = NULL;
 	KSI_CalendarHashChain *extCalHashChain = NULL;
 	KSI_Integer *extPubTime = NULL;

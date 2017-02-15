@@ -26,7 +26,7 @@
 #include "../src/ksi/ctx_impl.h"
 #include "../src/ksi/internal.h"
 
-static char *ok_sample[] = {
+static char const * const ok_sample[] = {
 		"resource/tlv/ok_int-1.tlv",
 		"resource/tlv/ok_int-2.tlv",
 		"resource/tlv/ok_int-3.tlv",
@@ -58,7 +58,7 @@ static char *ok_sample[] = {
 		NULL
 };
 
-static char *nok_sample[] = {
+static char const * const nok_sample[] = {
 		"resource/tlv/nok_int-1.tlv",
 		"resource/tlv/nok_int-2.tlv",
 		"resource/tlv/nok_int-3.tlv",

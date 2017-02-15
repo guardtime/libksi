@@ -85,7 +85,7 @@ cleanup:
 	return res;
 }
 
-static int KSI_DataHasher_addTreeNode(KSI_DataHasher *hsr, KSI_TreeNode *node) {
+static int KSI_DataHasher_addTreeNode(KSI_DataHasher *hsr, const KSI_TreeNode *node) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (hsr == NULL || node == NULL) {
@@ -114,7 +114,7 @@ cleanup:
 	return res;
 }
 
-static int joinHashes(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_TreeNode *left, KSI_TreeNode *right, int level, KSI_DataHash **root) {
+static int joinHashes(KSI_CTX *ctx, KSI_DataHasher *hsr, const KSI_TreeNode *left, const KSI_TreeNode *right, int level, KSI_DataHash **root) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *tmp = NULL;
 	unsigned char l;
@@ -527,7 +527,7 @@ void KSI_TreeLeafHandle_free(KSI_TreeLeafHandle *handle) {
 	}
 }
 
-static int getHashChainLinks(KSI_TreeNode *node, KSI_LIST(KSI_HashChainLink) *links) {
+static int getHashChainLinks(const KSI_TreeNode *node, KSI_LIST(KSI_HashChainLink) *links) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_HashChainLink *link = NULL;
 	bool isLeft;
@@ -650,7 +650,7 @@ cleanup:
 }
 
 
-int KSI_TreeLeafHandle_getAggregationChain(KSI_TreeLeafHandle *handle, KSI_AggregationHashChain **chain) {
+int KSI_TreeLeafHandle_getAggregationChain(const KSI_TreeLeafHandle *handle, KSI_AggregationHashChain **chain) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationHashChain *tmp = NULL;
 	KSI_LIST(KSI_HashChainLink) *links = NULL;

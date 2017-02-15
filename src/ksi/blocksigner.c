@@ -57,7 +57,6 @@ struct KSI_BlockSignerHandle_st {
 	KSI_BlockSigner *signer;
 };
 
-static KSI_DEFINE_REF(KSI_BlockSignerHandle);
 static KSI_IMPLEMENT_REF(KSI_BlockSignerHandle);
 
 void KSI_BlockSignerHandle_free(KSI_BlockSignerHandle *handle) {
@@ -464,7 +463,7 @@ cleanup:
 	return res;
 }
 
-int KSI_BlockSigner_getPrevLeaf(KSI_BlockSigner *signer, KSI_DataHash **prevLeaf) {
+int KSI_BlockSigner_getPrevLeaf(const KSI_BlockSigner *signer, KSI_DataHash **prevLeaf) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (signer == NULL || signer->ctx == NULL || prevLeaf == NULL) {
@@ -483,7 +482,7 @@ cleanup:
 	return res;
 }
 
-int KSI_BlockSignerHandle_getSignature(KSI_BlockSignerHandle *handle, KSI_Signature **sig) {
+int KSI_BlockSignerHandle_getSignature(const KSI_BlockSignerHandle *handle, KSI_Signature **sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Signature *tmp = NULL;
 	KSI_AggregationHashChain *aggr = NULL;

@@ -464,7 +464,7 @@ cleanup:
 
 }
 
-int KSI_verifyPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile *pubFile) {
+int KSI_verifyPublicationsFile(KSI_CTX *ctx, const KSI_PublicationsFile *pubFile) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	KSI_ERR_clearErrors(ctx);
@@ -486,7 +486,7 @@ cleanup:
 	return res;
 }
 
-static int KSI_SignatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *hsh) {
+static int signatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ctx, const KSI_DataHash *hsh) {
 	int res;
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
@@ -537,7 +537,7 @@ int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig) {
 		goto cleanup;
 	}
 
-	res = KSI_SignatureVerifier_verifySignature(sig, ctx, NULL);
+	res = signatureVerifier_verifySignature(sig, ctx, NULL);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx,res, NULL);
 		goto cleanup;
@@ -550,7 +550,7 @@ cleanup:
 	return res;
 }
 
-int KSI_verifyDataHash(KSI_CTX *ctx, KSI_Signature *sig, KSI_DataHash *hsh) {
+int KSI_verifyDataHash(KSI_CTX *ctx, KSI_Signature *sig, const KSI_DataHash *hsh) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	KSI_ERR_clearErrors(ctx);
@@ -559,7 +559,7 @@ int KSI_verifyDataHash(KSI_CTX *ctx, KSI_Signature *sig, KSI_DataHash *hsh) {
 		goto cleanup;
 	}
 
-	res = KSI_SignatureVerifier_verifySignature(sig, ctx, hsh);
+	res = signatureVerifier_verifySignature(sig, ctx, hsh);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx,res, NULL);
 		goto cleanup;
@@ -600,7 +600,7 @@ cleanup:
 	return res;
 }
 
-int KSI_extendSignatureWithPolicy(KSI_CTX *ctx, KSI_Signature *sig, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **extended) {
+int KSI_extendSignatureWithPolicy(KSI_CTX *ctx, const KSI_Signature *sig, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **extended) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationsFile *pubFile = NULL;
 	KSI_Integer *signingTime = NULL;

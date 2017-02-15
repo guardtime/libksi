@@ -94,7 +94,7 @@ extern "C" {
 	 * \param[out]	raw			Pointer to the receiving pointer.
 	 * \param[out]	raw_len		Serialized length.
 	 */
-	int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, size_t *raw_len);
+	int KSI_PKICertificate_serialize(const KSI_PKICertificate *cert, unsigned char **raw, size_t *raw_len);
 
 	/**
 	 * Constructor for PKI Signature object.
@@ -121,7 +121,7 @@ extern "C" {
 	 */
 	int KSI_PKISignature_extractCertificate(const KSI_PKISignature *signature, KSI_PKICertificate **cert);
 
-	
+
 	/**
 	 * Serializes the #KSI_PKISignature object.
 	 * \param[in]	sig			Pointer to the PKI signature.
@@ -130,7 +130,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_PKISignature_serialize(KSI_PKISignature *sig, unsigned char **raw, size_t *raw_len);
+	int KSI_PKISignature_serialize(const KSI_PKISignature *sig, unsigned char **raw, size_t *raw_len);
 
 	KSI_DEFINE_FN_FROM_TLV(KSI_PKISignature);
 	KSI_DEFINE_FN_TO_TLV(KSI_PKISignature);
@@ -175,7 +175,7 @@ extern "C" {
 	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_PKITruststore_verifyPKISignature(KSI_PKITruststore *pki, const unsigned char *data, size_t data_len, const KSI_PKISignature *signature, KSI_CertConstraint *certConstraints);
+	int KSI_PKITruststore_verifyPKISignature(const KSI_PKITruststore *pki, const unsigned char *data, size_t data_len, const KSI_PKISignature *signature, KSI_CertConstraint *certConstraints);
 
 	/**
 	 * Add trusted certificate lookup file.
@@ -185,7 +185,7 @@ extern "C" {
 	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *store, const char *path);
+	int KSI_PKITruststore_addLookupFile(const KSI_PKITruststore *store, const char *path);
 
 	/**
 	 * Add trusted certificate lookup directory.
@@ -195,8 +195,8 @@ extern "C" {
 	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_PKITruststore_addLookupDir(KSI_PKITruststore *store, const char *path);
-	 
+	int KSI_PKITruststore_addLookupDir(const KSI_PKITruststore *store, const char *path);
+
 	/**
 	 * Creates a string representation of a PKI Certificate.
 	 *
@@ -205,7 +205,7 @@ extern "C" {
 	 * \param[in]	buf_len		length of the receiving buffer.
 	 * \return buf if successful, NULL otherwise;
 	 */
-	char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, size_t buf_len);
+	char* KSI_PKICertificate_toString(const KSI_PKICertificate *cert, char *buf, size_t buf_len);
 
 /**
  * @}

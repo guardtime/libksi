@@ -67,7 +67,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_Signature_parseWithPolicy(KSI_CTX *ctx, unsigned char *raw, size_t raw_len, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **sig);
+	int KSI_Signature_parseWithPolicy(KSI_CTX *ctx, const unsigned char *raw, size_t raw_len, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **sig);
 
 #define KSI_Signature_parse(ctx, raw, raw_len, sig) KSI_Signature_parseWithPolicy(ctx, raw, raw_len, KSI_VERIFICATION_POLICY_INTERNAL, NULL, sig)
 
@@ -84,7 +84,7 @@ extern "C" {
 	 * \note The output memory buffer belongs to the caller and needs to be freed
 	 * by the caller using #KSI_free.
 	 */
-	int KSI_Signature_serialize(KSI_Signature *sig, unsigned char **raw, size_t *raw_len);
+	int KSI_Signature_serialize(const KSI_Signature *sig, unsigned char **raw, size_t *raw_len);
 
 	/**
 	 * This function signs the given root hash value (\c rootHash) with the aggregation level (\c rootLevel)
@@ -165,7 +165,7 @@ extern "C" {
 	 *
 	 * \note The output hash \c hsh may not be freed by the caller.
 	 */
-	int KSI_Signature_getDocumentHash(KSI_Signature *sig, KSI_DataHash ** hsh);
+	int KSI_Signature_getDocumentHash(const KSI_Signature *sig, KSI_DataHash ** hsh);
 
 	/**
 	 * Access method for the signing time. The \c signTime is expressed as
@@ -203,7 +203,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_Signature_getAggregationHashChainIdentity(KSI_Signature *sig, KSI_HashChainLinkIdentityList **identity);
+	int KSI_Signature_getAggregationHashChainIdentity(const KSI_Signature *sig, KSI_HashChainLinkIdentityList **identity);
 
 	/**
 	 * Accessor method for the published data. If the signature does not have a publication
@@ -251,7 +251,7 @@ extern "C" {
 	 * \note	The output memory has to be freed by the caller
 	 * \see		#KSI_DataHash_free, #KSI_Utf8String_free, #KSI_Utf8StringList_free
 	 */
-	int KSI_Signature_getPublicationInfo(KSI_Signature *sig, KSI_DataHash **pubHsh, KSI_Utf8String **pubStr, time_t *pubDate, KSI_LIST(KSI_Utf8String) **pubRefs, KSI_LIST(KSI_Utf8String) **repUrls);
+	int KSI_Signature_getPublicationInfo(const KSI_Signature *sig, KSI_DataHash **pubHsh, KSI_Utf8String **pubStr, time_t *pubDate, KSI_LIST(KSI_Utf8String) **pubRefs, KSI_LIST(KSI_Utf8String) **repUrls);
 
 	KSI_DEFINE_REF(KSI_Signature);
 

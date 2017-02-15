@@ -50,7 +50,7 @@ static long long int highBit(long long int n) {
 }
 
 
-static int addNvlImprint(KSI_DataHash *first, const KSI_DataHash *second, KSI_DataHasher *hsr) {
+static int addNvlImprint(const KSI_DataHash *first, const KSI_DataHash *second, KSI_DataHasher *hsr) {
 	int res = KSI_UNKNOWN_ERROR;
 	const KSI_DataHash *hsh = first;
 
@@ -71,7 +71,7 @@ cleanup:
 	return res;
 }
 
-static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_HashChainLink *link) {
+static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, const KSI_HashChainLink *link) {
 	int res = KSI_UNKNOWN_ERROR;
 	int mode = 0;
 	const unsigned char *imprint = NULL;
@@ -462,7 +462,7 @@ cleanup:
 	return res;
 }
 
-int KSI_CalendarHashChain_calculateAggregationTime(KSI_CalendarHashChain *chain, time_t *aggrTime) {
+int KSI_CalendarHashChain_calculateAggregationTime(const KSI_CalendarHashChain *chain, time_t *aggrTime) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (chain == NULL || aggrTime == NULL) {
@@ -601,7 +601,7 @@ cleanup:
 }
 
 
-int KSI_CalendarHashChainLink_toTlv(KSI_CTX *ctx, KSI_CalendarHashChainLink *link, unsigned tag, int isNonCritica, int isForward, KSI_TLV **tlv) {
+int KSI_CalendarHashChainLink_toTlv(KSI_CTX *ctx, const KSI_CalendarHashChainLink *link, unsigned tag, int isNonCritica, int isForward, KSI_TLV **tlv) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tmp = NULL;
 	unsigned tagOverride = 0;
@@ -684,7 +684,7 @@ cleanup:
 }
 
 
-int KSI_HashChainLink_toTlv(KSI_CTX *ctx, KSI_HashChainLink *link, unsigned tag, int isNonCritica, int isForward, KSI_TLV **tlv) {
+int KSI_HashChainLink_toTlv(KSI_CTX *ctx, const KSI_HashChainLink *link, unsigned tag, int isNonCritica, int isForward, KSI_TLV **tlv) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tmp = NULL;
 	unsigned tagOverride = 0;
@@ -838,7 +838,7 @@ cleanup:
 	return res;
 }
 
-int KSI_HashChainLink_LegacyId_toTlv(KSI_CTX *ctx, KSI_OctetString *legacyId, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_HashChainLink_LegacyId_toTlv(KSI_CTX *ctx, const KSI_OctetString *legacyId, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	return KSI_OctetString_toTlv(ctx, legacyId, tag, isNonCritical, isForward, tlv);
 }
 
@@ -853,7 +853,7 @@ void KSI_HashChainLinkIdentity_free(KSI_HashChainLinkIdentity *identity) {
 	}
 }
 
-static int hashChainLink_getIdentity(KSI_HashChainLink *link, KSI_HashChainLinkIdentity **identity) {
+static int hashChainLink_getIdentity(const KSI_HashChainLink *link, KSI_HashChainLinkIdentity **identity) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_MetaDataElement *metaData = NULL;
 	KSI_OctetString *legacyId = NULL;
@@ -964,7 +964,7 @@ KSI_IMPLEMENT_GETTER(KSI_HashChainLinkIdentity, KSI_Integer *, requestTime, Requ
 KSI_IMPLEMENT_REF(KSI_HashChainLinkIdentity);
 KSI_IMPLEMENT_LIST(KSI_HashChainLinkIdentity, KSI_HashChainLinkIdentity_free);
 
-int KSI_AggregationHashChain_getIdentity(KSI_AggregationHashChain *aggr, KSI_LIST(KSI_HashChainLinkIdentity) **identity) {
+int KSI_AggregationHashChain_getIdentity(const KSI_AggregationHashChain *aggr, KSI_LIST(KSI_HashChainLinkIdentity) **identity) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_LIST(KSI_HashChainLink) *chain = NULL;
 	KSI_LIST(KSI_HashChainLinkIdentity) *tmp = NULL;
@@ -1067,7 +1067,7 @@ cleanup:
 	return res;
 }
 
-int KSI_AggregationHashChain_calculateShape(KSI_AggregationHashChain *chn, KSI_uint64_t *shape) {
+int KSI_AggregationHashChain_calculateShape(const KSI_AggregationHashChain *chn, KSI_uint64_t *shape) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_uint64_t tmp;
 	size_t i;

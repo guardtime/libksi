@@ -952,7 +952,7 @@ cleanup:
 	return res;
 }
 
-static int KSI_SignatureVerifier_verifyWithPolicy(KSI_CTX *ctx, KSI_Signature *sig, KSI_uint64_t rootLevel, KSI_DataHash *docHsh, const KSI_Policy *policy, KSI_VerificationContext *verificationContext) {
+static int KSI_SignatureVerifier_verifyWithPolicy(KSI_CTX *ctx, KSI_Signature *sig, KSI_uint64_t rootLevel, const KSI_DataHash *docHsh, const KSI_Policy *policy, KSI_VerificationContext *verificationContext) {
 	int res;
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
@@ -1004,9 +1004,11 @@ cleanup:
 	return res;
 }
 
-#define KSI_SignatureVerifier_verifyInternally(ctx, sig, rootLevel, docHsh) KSI_SignatureVerifier_verifyWithPolicy(ctx, sig, rootLevel, docHsh, KSI_VERIFICATION_POLICY_INTERNAL, NULL)
+#define KSI_SignatureVerifier_verifyInternally(ctx, sig, rootLevel, docHsh)\
+	KSI_SignatureVerifier_verifyWithPolicy(ctx, sig, rootLevel, docHsh, KSI_VERIFICATION_POLICY_INTERNAL, NULL)
 
-int KSI_Signature_signAggregatedWithPolicy(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **signature) {
+int KSI_Signature_signAggregatedWithPolicy(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel,
+		const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **signature) {
 	int res;
 	KSI_RequestHandle *handle = NULL;
 	KSI_AggregationResp *response = NULL;
@@ -1233,7 +1235,8 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_extendToWithPolicy(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *to, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **extended) {
+int KSI_Signature_extendToWithPolicy(const KSI_Signature *sig, KSI_CTX *ctx, KSI_Integer *to,
+		const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **extended) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Signature *tmp = NULL;
 
@@ -1358,7 +1361,7 @@ void KSI_Signature_free(KSI_Signature *sig) {
 }
 
 
-int KSI_Signature_getDocumentHash(KSI_Signature *sig, KSI_DataHash **hsh) {
+int KSI_Signature_getDocumentHash(const KSI_Signature *sig, KSI_DataHash **hsh) {
 	KSI_AggregationHashChain *aggr = NULL;
 	KSI_DataHash *inputHash = NULL;
 	int res;
@@ -1487,7 +1490,7 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_parseWithPolicy(KSI_CTX *ctx, unsigned char *raw, size_t raw_len, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **sig) {
+int KSI_Signature_parseWithPolicy(KSI_CTX *ctx, const unsigned char *raw, size_t raw_len, const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **sig) {
 	KSI_TLV *tlv = NULL;
 	KSI_Signature *tmp = NULL;
 	int res;
@@ -1533,7 +1536,7 @@ cleanup:
 }
 
 
-int KSI_Signature_serialize(KSI_Signature *sig, unsigned char **raw, size_t *raw_len) {
+int KSI_Signature_serialize(const KSI_Signature *sig, unsigned char **raw, size_t *raw_len) {
 	int res;
 	unsigned char *tmp = NULL;
 	size_t tmp_len;
@@ -1715,7 +1718,7 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_getAggregationHashChainIdentity(KSI_Signature *sig, KSI_HashChainLinkIdentityList **identity) {
+int KSI_Signature_getAggregationHashChainIdentity(const KSI_Signature *sig, KSI_HashChainLinkIdentityList **identity) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i;
 	KSI_HashChainLinkIdentityList *tmp = NULL;
@@ -1807,7 +1810,7 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_getPublicationInfo(KSI_Signature *sig,
+int KSI_Signature_getPublicationInfo(const KSI_Signature *sig,
 		KSI_DataHash **pubHsh, KSI_Utf8String **pubStr, time_t *pubDate,
 		KSI_LIST(KSI_Utf8String) **pubRefs, KSI_LIST(KSI_Utf8String) **repUrls) {
 	int res;

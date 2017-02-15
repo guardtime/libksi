@@ -28,22 +28,22 @@
 #define HASH_ALGO(id, name, bitcount, blocksize, trusted) {(id), (name), (bitcount), (blocksize), (trusted), id##_aliases}
 
 /** Hash algorithm aliases. The last alias has to be an empty string */
-static char *KSI_HASHALG_SHA1_aliases[] = {"SHA-1", ""};
-static char *KSI_HASHALG_SHA2_256_aliases[] = {"DEFAULT", "SHA-2", "SHA2", "SHA256", "SHA-256", ""};
-static char *KSI_HASHALG_RIPEMD160_aliases[] = { "RIPEMD160", ""};
-static char *KSI_HASHALG_SHA2_384_aliases[] = { "SHA384", "SHA-384", ""};
-static char *KSI_HASHALG_SHA2_512_aliases[] = { "SHA512", "SHA-512", ""};
-static char *KSI_HASHALG_SHA3_244_aliases[] = { ""};
-static char *KSI_HASHALG_SHA3_256_aliases[] = { ""};
-static char *KSI_HASHALG_SHA3_384_aliases[] = { ""};
-static char *KSI_HASHALG_SHA3_512_aliases[] = { ""};
-static char *KSI_HASHALG_SM3_aliases[] = { "SM-3", ""};
+static const char * const KSI_HASHALG_SHA1_aliases[] = {"SHA-1", ""};
+static const char * const KSI_HASHALG_SHA2_256_aliases[] = {"DEFAULT", "SHA-2", "SHA2", "SHA256", "SHA-256", ""};
+static const char * const KSI_HASHALG_RIPEMD160_aliases[] = { "RIPEMD160", ""};
+static const char * const KSI_HASHALG_SHA2_384_aliases[] = { "SHA384", "SHA-384", ""};
+static const char * const KSI_HASHALG_SHA2_512_aliases[] = { "SHA512", "SHA-512", ""};
+static const char * const KSI_HASHALG_SHA3_244_aliases[] = { ""};
+static const char * const KSI_HASHALG_SHA3_256_aliases[] = { ""};
+static const char * const KSI_HASHALG_SHA3_384_aliases[] = { ""};
+static const char * const KSI_HASHALG_SHA3_512_aliases[] = { ""};
+static const char * const KSI_HASHALG_SM3_aliases[] = { "SM-3", ""};
 
-static struct KSI_hashAlgorithmInfo_st {
+static const struct KSI_hashAlgorithmInfo_st {
 	/* Hash algorithm id (should mirror the array index in #KSI_hashAlgorithmInfo) */
 	KSI_HashAlgorithm algo_id;
 	/** Upper-case name. */
-	char *name;
+	const char *name;
 	/** Output digest bit count. */
 	unsigned int outputBitCount;
 	/** Internal bit count */
@@ -51,7 +51,7 @@ static struct KSI_hashAlgorithmInfo_st {
 	/** Is the hash algorithm trusted? */
 	int trusted;
 	/** Accepted aliases for this hash algorithm. */
-	char **aliases;
+	char const * const *aliases;
 } KSI_hashAlgorithmInfo[] = {
 		HASH_ALGO(KSI_HASHALG_SHA1,			"SHA1", 		160, 512, 1),
 		HASH_ALGO(KSI_HASHALG_SHA2_256,		"SHA2-256", 	256, 512, 1),
@@ -225,7 +225,7 @@ KSI_HashAlgorithm KSI_getHashAlgorithmByName(const char *name) {
 	KSI_HashAlgorithm algo_id = KSI_HASHALG_INVALID;
 	int alias_id;
 
-	char *alias = NULL;
+	const char *alias = NULL;
 	char *upperName = NULL;
 
 	if (name == NULL || !*name || strchr(name, ',') != NULL) goto cleanup;
@@ -382,7 +382,7 @@ cleanup:
 	return res;
 }
 
-int KSI_DataHash_toTlv(KSI_CTX *ctx, KSI_DataHash *hsh, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_DataHash_toTlv(KSI_CTX *ctx, const KSI_DataHash *hsh, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tmp = NULL;
 	const unsigned char *raw = NULL;
@@ -523,7 +523,7 @@ cleanup:
 	return res;
 }
 
-int KSI_DataHasher_addOctetString(KSI_DataHasher *hasher, KSI_OctetString *data) {
+int KSI_DataHasher_addOctetString(KSI_DataHasher *hasher, const KSI_OctetString *data) {
 	int res = KSI_UNKNOWN_ERROR;
 	const unsigned char *ptr = NULL;
 	size_t len = 0;

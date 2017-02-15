@@ -29,7 +29,7 @@ extern "C" {
 
 	struct KSI_NetEndpoint_st {
 		KSI_CTX *ctx;
-		
+
 		/** KSI service password. */
 		char *ksi_pass;
 
@@ -38,28 +38,28 @@ extern "C" {
 
 		/** Implementation for transport layer specific endpoint. */
 		void *implCtx;
-		
+
 		/** Cleanup for implementation. */
 		void (*implCtx_free)(void *);
 	};
-	
-	
+
+
 	struct KSI_NetworkClient_st {
 		KSI_CTX *ctx;
 
 		int (*sendSignRequest)(KSI_NetworkClient *, KSI_AggregationReq *, KSI_RequestHandle **);
 		int (*sendExtendRequest)(KSI_NetworkClient *, KSI_ExtendReq *, KSI_RequestHandle **);
 		int (*sendPublicationRequest)(KSI_NetworkClient *, KSI_RequestHandle **);
-	
+
 		/** Abstract endpoint for aggregator. */
 		KSI_NetEndpoint *aggregator;
-		
+
 		/** Abstract endpoint for extender. */
 		KSI_NetEndpoint *extender;
-		
+
 		/** Abstract endpoint for publications file. */
 		KSI_NetEndpoint *publicationsFile;
-		
+
 		/** Implementation context. */
 		void *impl;
 		/** Cleanup for the provider, gets the #providerCtx as parameter. */

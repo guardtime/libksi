@@ -154,7 +154,7 @@ extern "C" {
 	 * error code).
 	 * \note The caller may not free the output object.
 	 */
-	int KSI_RequestHandle_getNetContext(KSI_RequestHandle *handle, void **c);
+	int KSI_RequestHandle_getNetContext(const KSI_RequestHandle *handle, void **c);
 
 	/**
 	 * Getter for the request. The request can be set only while creating the network handle object
@@ -167,7 +167,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note The output memory may not be freed by the caller.
 	 */
-	int KSI_RequestHandle_getRequest(KSI_RequestHandle *handle, const unsigned char **request, size_t *request_len);
+	int KSI_RequestHandle_getRequest(const KSI_RequestHandle *handle, const unsigned char **request, size_t *request_len);
 
 	/**
 	 * Response value setter. Should be called only by the actual network provider implementation.
@@ -193,17 +193,17 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
 	 * error code).
 	 */
-	int KSI_RequestHandle_getResponse(KSI_RequestHandle *handle, const unsigned char **response, size_t *response_len);
+	int KSI_RequestHandle_getResponse(const KSI_RequestHandle *handle, const unsigned char **response, size_t *response_len);
 
 	/**
 	 * TODO!
 	 */
-	int KSI_RequestHandle_getExtendResponse(KSI_RequestHandle *handle, KSI_ExtendResp **resp);
+	int KSI_RequestHandle_getExtendResponse(const KSI_RequestHandle *handle, KSI_ExtendResp **resp);
 
 	/**
 	 * TODO!
 	 */
-	int KSI_RequestHandle_getAggregationResponse(KSI_RequestHandle *handle, KSI_AggregationResp **resp);
+	int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KSI_AggregationResp **resp);
 
 	/**
 	 * TODO!
@@ -253,7 +253,7 @@ extern "C" {
 	 * \note The pointer to the err structure is only valid as long as the
 	 * handle itself is valid.
 	 */
-	int KSI_RequestHandle_getResponseStatus(KSI_RequestHandle *handle, const KSI_RequestHandleStatus **err);
+	int KSI_RequestHandle_getResponseStatus(const KSI_RequestHandle *handle, const KSI_RequestHandleStatus **err);
 
 	/**
 	 * Setter for the implementation specific networking context.
@@ -309,13 +309,13 @@ extern "C" {
 	 * This function converts the aggregator response status code into a KSI status code.
 	 * \see #KSI_StatusCode
 	 */
-	int KSI_convertAggregatorStatusCode(KSI_Integer *statusCode);
+	int KSI_convertAggregatorStatusCode(const KSI_Integer *statusCode);
 
 	/**
 	 * This function converts the extender response status code into a KSI status code.
 	 * \see #KSI_StatusCode
 	 */
-	int KSI_convertExtenderStatusCode(KSI_Integer *statusCode);
+	int KSI_convertExtenderStatusCode(const KSI_Integer *statusCode);
 
 	/**
 	 * Function to split the given uri into three parts: schema, host and port. If the

@@ -87,7 +87,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_PublicationsFile_verify(KSI_PublicationsFile *pubFile, KSI_CTX *ctx);
+	int KSI_PublicationsFile_verify(const KSI_PublicationsFile *pubFile, KSI_CTX *ctx);
 
 	/**
 	 * Publicationsfile header getter method.
@@ -278,9 +278,9 @@ extern "C" {
 	 */
 	void KSI_PublicationsFile_free(KSI_PublicationsFile *pubFile);
 
-	int KSI_PublicationsFile_findPublicationByTime(const KSI_PublicationsFile *trust, KSI_Integer *time, KSI_PublicationRecord **outRec);
+	int KSI_PublicationsFile_findPublicationByTime(const KSI_PublicationsFile *trust, const KSI_Integer *time, KSI_PublicationRecord **outRec);
 
-	int KSI_PublicationsFile_findPublication(const KSI_PublicationsFile *trust, KSI_PublicationRecord *inRec, KSI_PublicationRecord **outRec);
+	int KSI_PublicationsFile_findPublication(const KSI_PublicationsFile *trust, const KSI_PublicationRecord *inRec, KSI_PublicationRecord **outRec);
 
 	/**
 	 * Specifies file-specific constraints for verifying the publications file PKI certificate.
@@ -332,14 +332,14 @@ extern "C" {
 	 */
 	void KSI_PublicationData_free(KSI_PublicationData *t);
 	int KSI_PublicationData_new(KSI_CTX *ctx, KSI_PublicationData **t);
-	int KSI_PublicationData_getBaseTlv (const KSI_PublicationData *o, KSI_TLV** baseTlv);
+	int KSI_PublicationData_getBaseTlv(const KSI_PublicationData *o, KSI_TLV** baseTlv);
 	int KSI_PublicationData_getTime(const KSI_PublicationData *t, KSI_Integer **time);
 	int KSI_PublicationData_getImprint(const KSI_PublicationData *t, KSI_DataHash **imprint);
-	int KSI_PublicationData_setBaseTlv ( KSI_PublicationData *o, KSI_TLV* baseTlv);
+	int KSI_PublicationData_setBaseTlv(KSI_PublicationData *o, KSI_TLV* baseTlv);
 	int KSI_PublicationData_setTime(KSI_PublicationData *t, KSI_Integer *time);
 	int KSI_PublicationData_setImprint(KSI_PublicationData *t, KSI_DataHash *imprint);
-	char *KSI_PublicationData_toString(KSI_PublicationData *t, char *buffer, size_t buffer_len);
-	int KSI_PublicationData_fromTlv (KSI_TLV *tlv, KSI_PublicationData **data);
+	char *KSI_PublicationData_toString(const KSI_PublicationData *t, char *buffer, size_t buffer_len);
+	int KSI_PublicationData_fromTlv(KSI_TLV *tlv, KSI_PublicationData **data);
 	int KSI_PublicationData_toTlv (KSI_CTX *ctx, const KSI_PublicationData *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 	KSI_DEFINE_REF(KSI_PublicationData);
 
@@ -354,7 +354,7 @@ extern "C" {
 	int KSI_PublicationRecord_setPublishedData(KSI_PublicationRecord *t, KSI_PublicationData *publishedData);
 	int KSI_PublicationRecord_setPublicationRefList(KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) *publicationRef);
 	int KSI_PublicationRecord_setRepositoryUriList(KSI_PublicationRecord *t, KSI_LIST(KSI_Utf8String) *repUriList);
-	char *KSI_PublicationRecord_toString(KSI_PublicationRecord *t, char *buffer, size_t buffer_len);
+	char *KSI_PublicationRecord_toString(const KSI_PublicationRecord *t, char *buffer, size_t buffer_len);
 	int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_PublicationRecord **clone);
 	KSI_DEFINE_REF(KSI_PublicationRecord);
 	KSI_DEFINE_WRITE_BYTES(KSI_PublicationRecord);

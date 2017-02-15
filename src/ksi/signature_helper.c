@@ -21,7 +21,7 @@
 #include "internal.h"
 #include "signature_impl.h"
 
-int KSI_Signature_getHashAlgorithm(KSI_Signature *sig, KSI_HashAlgorithm *algo_id) {
+int KSI_Signature_getHashAlgorithm(const KSI_Signature *sig, KSI_HashAlgorithm *algo_id) {
 	KSI_DataHash *hsh = NULL;
 	int res;
 	KSI_HashAlgorithm tmp = -1;
@@ -56,7 +56,7 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_createDataHasher(KSI_Signature *sig, KSI_DataHasher **hsr) {
+int KSI_Signature_createDataHasher(const KSI_Signature *sig, KSI_DataHasher **hsr) {
 	int res;
 	KSI_DataHasher *tmp = NULL;
 	KSI_HashAlgorithm algo_id = -1;
@@ -91,7 +91,7 @@ cleanup:
 	return res;
 }
 
-int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, void *doc, size_t doc_len) {
+int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, const void *doc, size_t doc_len) {
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_VerificationContext context;

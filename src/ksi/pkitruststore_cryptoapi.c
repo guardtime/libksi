@@ -119,13 +119,13 @@ void KSI_PKITruststore_free(KSI_PKITruststore *trust) {
 }
 
 /*TODO: Not supported*/
-int KSI_PKITruststore_addLookupDir(KSI_PKITruststore *trust, const char *path) {
+int KSI_PKITruststore_addLookupDir(const KSI_PKITruststore *trust, const char *path) {
 	KSI_LOG_debug(trust->ctx, "CryptoAPI: Not implemented.");
 	return KSI_OK;
 }
 
 /*TODO: Not supported*/
-int KSI_PKITruststore_addLookupFile(KSI_PKITruststore *trust, const char *path) {
+int KSI_PKITruststore_addLookupFile(const KSI_PKITruststore *trust, const char *path) {
 	int res = KSI_UNKNOWN_ERROR;
 	HCERTSTORE tmp_FileTrustStore = NULL;
 	char buf[1024];
@@ -228,7 +228,7 @@ void KSI_PKISignature_free(KSI_PKISignature *sig) {
 	}
 }
 
-int KSI_PKISignature_serialize(KSI_PKISignature *sig, unsigned char **raw, size_t *raw_len) {
+int KSI_PKISignature_serialize(const KSI_PKISignature *sig, unsigned char **raw, size_t *raw_len) {
 	int res = KSI_UNKNOWN_ERROR;
 	unsigned char *tmp = NULL;
 
@@ -376,7 +376,7 @@ cleanup:
 	return res;
 }
 
-int KSI_PKICertificate_serialize(KSI_PKICertificate *cert, unsigned char **raw, size_t *raw_len) {
+int KSI_PKICertificate_serialize(const KSI_PKICertificate *cert, unsigned char **raw, size_t *raw_len) {
 	int res = KSI_UNKNOWN_ERROR;
 	unsigned char *tmp_serialized = NULL;
 	DWORD len = 0;
@@ -498,7 +498,7 @@ cleanup:
 	return res;
 }
 
-char* ksi_pki_certificate_getString_by_oid(KSI_PKICertificate *cert, int type, char *OID, char *buf, size_t buf_len) {
+char* ksi_pki_certificate_getString_by_oid(const KSI_PKICertificate *cert, int type, const char *OID, char *buf, size_t buf_len) {
 	char *ret = NULL;
 
 	if (cert == NULL || cert->x509 == NULL || buf == NULL || buf_len == 0 || buf_len > INT_MAX) {
@@ -506,9 +506,9 @@ char* ksi_pki_certificate_getString_by_oid(KSI_PKICertificate *cert, int type, c
 	}
 
 	if (type == ISSUER) {
-		CertGetNameString(cert->x509, CERT_NAME_ATTR_TYPE, CERT_NAME_ISSUER_FLAG, OID, buf, (DWORD)buf_len);
+		CertGetNameString(cert->x509, CERT_NAME_ATTR_TYPE, CERT_NAME_ISSUER_FLAG, (void*)OID, buf, (DWORD)buf_len);
 	} else {
-		CertGetNameString(cert->x509, CERT_NAME_ATTR_TYPE, 0, OID, buf, (DWORD)buf_len);
+		CertGetNameString(cert->x509, CERT_NAME_ATTR_TYPE, 0, (void*)OID, buf, (DWORD)buf_len);
 	}
 
 	if (buf[0] == '\0')
@@ -521,12 +521,12 @@ cleanup:
 	return ret;
 }
 
-static char* pki_certificate_issuerOIDToString(KSI_PKICertificate *cert, char *OID, char *buf, size_t buf_len) {
-	return ksi_pki_certificate_getString_by_oid(cert, ISSUER, OID ,buf, buf_len);
+static char* pki_certificate_issuerOIDToString(const KSI_PKICertificate *cert, const char *OID, char *buf, size_t buf_len) {
+	return ksi_pki_certificate_getString_by_oid(cert, ISSUER, OID, buf, buf_len);
 }
 
-static char* pki_certificate_subjectOIDToString(KSI_PKICertificate *cert, char *OID, char *buf, size_t buf_len) {
-	return ksi_pki_certificate_getString_by_oid(cert, SUBJECT, OID ,buf, buf_len);
+static char* pki_certificate_subjectOIDToString(const KSI_PKICertificate *cert, const char *OID, char *buf, size_t buf_len) {
+	return ksi_pki_certificate_getString_by_oid(cert, SUBJECT, OID, buf, buf_len);
 }
 
 static int pki_certificate_getSerialNumber(const KSI_PKICertificate *cert, KSI_OctetString **serial_number) {
@@ -696,7 +696,7 @@ cleanup:
 	return res;
 }
 
-static const char* getCertificateChainErrorStr(PCCERT_CHAIN_CONTEXT pChainContext){
+static const char* getCertificateChainErrorStr(const PCCERT_CHAIN_CONTEXT pChainContext){
 	if (pChainContext == NULL)
 		return "Certificate chain is nullptr";
 
@@ -903,7 +903,7 @@ cleanup:
 	return res;
 }
 
-static int certificate_is_self_signed(PCCERT_CONTEXT crt) {
+static int certificate_is_self_signed(const PCCERT_CONTEXT crt) {
 	DWORD issuer_len = 0;
 	BYTE* issuer = NULL;
 	DWORD subject_len = 0;
@@ -989,7 +989,7 @@ cleanup:
 	return res;
 }
 
-static int pki_truststore_verifySignature(KSI_PKITruststore *pki, const unsigned char *data, size_t data_len, const KSI_PKISignature *signature) {
+static int pki_truststore_verifySignature(const KSI_PKITruststore *pki, const unsigned char *data, size_t data_len, const KSI_PKISignature *signature) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	PCCERT_CONTEXT subjectCert = NULL;
@@ -1091,7 +1091,7 @@ cleanup:
 	return res;
 }
 
-int KSI_PKITruststore_verifyPKISignature(KSI_PKITruststore *pki, const unsigned char *data, size_t data_len, const KSI_PKISignature *signature, KSI_CertConstraint *certConstraints) {
+int KSI_PKITruststore_verifyPKISignature(const KSI_PKITruststore *pki, const unsigned char *data, size_t data_len, const KSI_PKISignature *signature, KSI_CertConstraint *certConstraints) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (pki == NULL || pki->ctx == NULL) {
@@ -1235,12 +1235,12 @@ cleanup:
  * [OID][short name][long name][alias 1][..][alias N][NULL]
  * where OID, short and long name are mandatory. Array must end with NULL.
  */
-static char *OID_EMAIL[] = {KSI_CERT_EMAIL, "E", "email", "e-mail", "e_mail", "emailAddress", NULL};
-static char *OID_COMMON_NAME[] = {KSI_CERT_COMMON_NAME, "CN", "common name", "common_name", NULL};
-static char *OID_COUNTRY[] = {KSI_CERT_COUNTRY, "C", "country", NULL};
-static char *OID_ORGANIZATION[] = {KSI_CERT_ORGANIZATION, "O", "org", "organization", NULL};
+static char const * const OID_EMAIL[] = {KSI_CERT_EMAIL, "E", "email", "e-mail", "e_mail", "emailAddress", NULL};
+static char const * const OID_COMMON_NAME[] = {KSI_CERT_COMMON_NAME, "CN", "common name", "common_name", NULL};
+static char const * const OID_COUNTRY[] = {KSI_CERT_COUNTRY, "C", "country", NULL};
+static char const * const OID_ORGANIZATION[] = {KSI_CERT_ORGANIZATION, "O", "org", "organization", NULL};
 
-static char **OID_INFO[] = {OID_EMAIL, OID_COMMON_NAME, OID_COUNTRY, OID_ORGANIZATION, NULL};
+static char const * const *OID_INFO[] = {OID_EMAIL, OID_COMMON_NAME, OID_COUNTRY, OID_ORGANIZATION, NULL};
 
 static const char *ksi_getShortDescriptionStringByOID(const char *OID) {
 	unsigned i = 0;
@@ -1255,7 +1255,7 @@ static const char *ksi_getShortDescriptionStringByOID(const char *OID) {
 	return NULL;
 }
 
-static char* pki_certificate_nameToString(KSI_PKICertificate *cert, int type, char *buf, size_t buf_len) {
+static char* pki_certificate_nameToString(const KSI_PKICertificate *cert, int type, char *buf, size_t buf_len) {
 	char *ret = NULL;
 	char *OID[] = {KSI_CERT_EMAIL, KSI_CERT_COMMON_NAME, KSI_CERT_ORGANIZATION, KSI_CERT_COUNTRY, NULL};
 	unsigned i = 0;
@@ -1294,15 +1294,15 @@ cleanup:
 	return ret;
 }
 
-static char* pki_certificate_issuerToString(KSI_PKICertificate *cert, char *buf, size_t buf_len) {
+static char* pki_certificate_issuerToString(const KSI_PKICertificate *cert, char *buf, size_t buf_len) {
 	return pki_certificate_nameToString(cert, ISSUER, buf, buf_len);
 }
 
-static char* pki_certificate_subjectToString(KSI_PKICertificate *cert, char *buf, size_t buf_len) {
+static char* pki_certificate_subjectToString(const KSI_PKICertificate *cert, char *buf, size_t buf_len) {
 	return pki_certificate_nameToString(cert, SUBJECT, buf, buf_len);
 }
 
-static int pki_certificate_calculateCRC32(KSI_PKICertificate *cert, KSI_OctetString **crc) {
+static int pki_certificate_calculateCRC32(const KSI_PKICertificate *cert, KSI_OctetString **crc) {
 	int res;
 	KSI_OctetString *tmp = NULL;
 	unsigned long ID;
@@ -1353,7 +1353,7 @@ cleanup:
 	return res;
 }
 
-char* KSI_PKICertificate_toString(KSI_PKICertificate *cert, char *buf, size_t buf_len){
+char* KSI_PKICertificate_toString(const KSI_PKICertificate *cert, char *buf, size_t buf_len){
 	int res;
 	char *ret = NULL;
 	char subjectName[1024];
