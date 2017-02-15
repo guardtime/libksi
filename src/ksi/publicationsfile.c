@@ -873,8 +873,7 @@ cleanup:
 	return res;
 }
 
-static int findPublication(const KSI_PublicationsFile *trust, const void *inData,
-		int (*equals)(KSI_PublicationData*, const void*), KSI_PublicationRecord **outRec) {
+static int findPublication(const KSI_PublicationsFile *trust, const KSI_Integer *time, const KSI_DataHash *imprint, KSI_PublicationRecord **outRec) {
 	int res;
 	size_t i;
 
@@ -885,7 +884,7 @@ static int findPublication(const KSI_PublicationsFile *trust, const void *inData
 
 	KSI_ERR_clearErrors(trust->ctx);
 
-	if (inData == NULL || outRec == NULL) {
+	if (time == NULL || outRec == NULL) {
 		KSI_pushError(trust->ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
@@ -904,12 +903,13 @@ static int findPublication(const KSI_PublicationsFile *trust, const void *inData
 			goto cleanup;
 		}
 
-		if (equals(pr->publishedData, inData)) {
+		if (KSI_Integer_equals(pr->publishedData->time, time)) {
+			if (imprint != NULL && !KSI_DataHash_equals(pr->publishedData->imprint, imprint)) {
+				continue;
+			}
 			*outRec = KSI_PublicationRecord_ref(pr);
 			break;
 		}
-
-		KSI_nofree(pr);
 	}
 
 	res = KSI_OK;
@@ -919,24 +919,16 @@ cleanup:
 	return res;
 }
 
-static int publicationTimeEquals(KSI_PublicationData* pubData, const void* time) {
-	if (pubData == NULL || time == NULL) return 0;
-	return KSI_Integer_equals(pubData->time, (KSI_Integer*)time);
-}
-
-static int publicationDataEquals(KSI_PublicationData* pubData, const void* data) {
-	if (pubData == NULL || data == NULL) return 0;
-	return (KSI_DataHash_equals(pubData->imprint, ((const KSI_PublicationData *)data)->imprint) &&
-			KSI_Integer_equals(pubData->time, ((const KSI_PublicationData *)data)->time));
-}
-
 int KSI_PublicationsFile_findPublicationByTime(const KSI_PublicationsFile *trust, const KSI_Integer *time, KSI_PublicationRecord **outRec) {
-	return findPublication(trust, (const void*)time, publicationTimeEquals, outRec);
+	return findPublication(trust, time, NULL, outRec);
 }
 
 int KSI_PublicationsFile_findPublication(const KSI_PublicationsFile *trust, const KSI_PublicationRecord *inRec, KSI_PublicationRecord **outRec) {
-	if (inRec != NULL && inRec->publishedData == NULL) return KSI_INVALID_STATE;
-	return findPublication(trust, (const void*)inRec->publishedData, publicationDataEquals, outRec);
+	if ((inRec != NULL && inRec->publishedData == NULL) ||
+			(inRec->publishedData->time == NULL || inRec->publishedData->imprint == NULL)) {
+		return KSI_INVALID_STATE;
+	}
+	return findPublication(trust, inRec->publishedData->time, inRec->publishedData->imprint, outRec);
 }
 
 int KSI_PublicationsFile_setCertConstraints(KSI_PublicationsFile *pubFile, const KSI_CertConstraint *arr) {
