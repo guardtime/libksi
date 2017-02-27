@@ -1,3 +1,42 @@
+libksi (3.12.2000) RELEASED; urgency=low
+
+  * IMPROVEMENT: Support for adding doxygen generated html files into rpm and debian package.
+  * IMPROVEMENT: Added flag --with-default-pdu-version=version to configure script.
+  * IMPROVEMENT: Improve test support for different PDU version.
+  * BUGFIX: Fixed KSI_TlvElement nested structure serialization issue.
+  * IMPROVEMENT: Updated signature verification procedure. Added new error codes.
+  * IMPROVEMENT: Provide identity information as a list.
+  * IMPROVEMENT: Function KSI_Signature_getSignerIdentity is deprecated. See KSI_Signature_getAggregationHashChainIdentity for replacement.
+  * BUGFIX: Corrected medadata request time parsing.
+  * BUGFIX: Validate list impl pointer before use.
+  * BUGFIX: Cryptoapi KSI_PKISignature_new fails if the input blob can not be parsed.
+  * BUGFIX: CryptoAPI uses PKCS7 signatures embedded intermediate certificates in verification process.
+  * IMPROVEMENT: Internally HTTP connections are reused and pipelined.
+  * IMPROVEMENT: Increased the size of the statically allocated KSI_Integer pool up to the value of 0xff.
+  * IMPROVEMENT: Removed experimental feature KSI_NetworkClient_performAll.
+  * IMPROVEMENT: Removed multi-signature support from the SDK.
+
+libksi (3.10.1893) RELEASED; urgency=low
+
+  * BUGFIX: Disabled cURL from using signals.
+  * IMPROVEMENT: Removed deprecated functions: KSI_TLV_setUintValue, KSI_TLV_fromUint, KSI_TLV_removeNestedTlv
+  * FEATURE: Added support for aggregation and extending PDU version 2.
+
+libksi (3.10.1839) RELEASED; urgency=low
+
+  * IMPROVEMENT: Refactored signature verification step attribute handling.
+  * IMPROVEMENT: Implemented KSI_BlockSigner getter for the hash value of the last leaf in the tree.
+  * BUGFIX: Fixed debian build.
+  * BUGFIX: Reference counting issues fixed.
+  * IMPROVEMENT: Removed support for Windows build combination DLL=dll and RTL=MT(d).
+  * IMPROVEMENT: List macros check for NULL pointers.
+  * BUGFIX: Error message for unknown OID properly reported.
+  * BUGFIX: Userinfo in URLs with unknown schema, incl. http://, is retained for http basic authentication and is not used for KSI authentication.
+  * IMPROVEMENT: Moved signature helper functions from signature.{h,c} into signature_helper.{h,c}
+  * FEATURE: Added signature builder.
+  * IMPROVEMENT: All functions except *List_new and *List_free are now type safe macros.
+  * IMPROVEMENT: Deprecated functions KSI_TLV_setUintValue, KSI_TLV_fromUint and KSI_TLV_removeNestedTlv.
+
 libksi (3.9.1701) RELEASED; urgency=low
 
   * IMPROVEMENT: Added block signature sample application.

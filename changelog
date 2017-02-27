@@ -1,3 +1,6 @@
+Version 3.12
+
+2017-02-27 release(3.12.2000)
 * IMPROVEMENT: Support for adding doxygen generated html files into rpm and debian package.
 * IMPROVEMENT: Added flag --with-default-pdu-version=version to configure script.
 * IMPROVEMENT: Improve test support for different PDU version.
@@ -9,8 +12,6 @@
 * BUGFIX: Validate list impl pointer before use.
 * BUGFIX: Cryptoapi KSI_PKISignature_new fails if the input blob can not be parsed.
 * BUGFIX: CryptoAPI uses PKCS7 signatures embedded intermediate certificates in verification process.
-Version 3.12
-
 * IMPROVEMENT: Internally HTTP connections are reused and pipelined.
 * IMPROVEMENT: Increased the size of the statically allocated KSI_Integer pool up to the value of 0xff.
 * IMPROVEMENT: Removed experimental feature KSI_NetworkClient_performAll.
@@ -18,7 +19,7 @@ Version 3.12
 
 Version 3.11
 
-2016-11-03 release(3.10.1893)
+2016-11-03 release(3.11.1893)
 * BUGFIX: Disabled cURL from using signals.
 * IMPROVEMENT: Removed deprecated functions: KSI_TLV_setUintValue, KSI_TLV_fromUint, KSI_TLV_removeNestedTlv
 * FEATURE: Added support for aggregation and extending PDU version 2.
