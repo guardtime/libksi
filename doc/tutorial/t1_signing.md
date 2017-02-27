@@ -28,7 +28,7 @@ memory buffer and we can use the #KSI_DataHash_create function. We will use the
 ~~~~~~~~~~{.c}
 
     KSI_DataHash *hsh = NULL; /* Must be freed. */
-    KSI_DataHash_create(ksi, data, data_len, &hsh);
+    KSI_DataHash_create(ksi, data, data_len, KSI_HASHALG_SHA2_256, &hsh);
 
 ~~~~~~~~~~
 

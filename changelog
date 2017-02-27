@@ -1,3 +1,7 @@
+Version 3.13
+
+* BUGFIX: The example of KSI_DataHash_create in tutorial/t1_signing.md was missing an argument.
+
 Version 3.12
 
 2017-02-27 release(3.12.2000)
