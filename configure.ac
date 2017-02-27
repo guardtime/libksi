@@ -67,7 +67,6 @@ AC_ARG_WITH(default_pdu_version,
 [], [with_default_pdu_version=])
 
 if test -z "$with_default_pdu_version"; then
-	echo "Was empty"
 	pdu_version=KSI_PDU_VERSION_1
 else
 	case "$with_default_pdu_version" in
