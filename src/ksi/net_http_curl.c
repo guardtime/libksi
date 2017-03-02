@@ -173,9 +173,6 @@ static int curlReceive(KSI_RequestHandle *handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	CurlNetHandleCtx *implCtx = NULL;
 	long httpCode;
-	KSI_HttpClient *http = NULL;
-	int still_running;
-	bool end_wait = false;
 
 	if (handle == NULL || handle->client == NULL || handle->implCtx == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -183,33 +180,16 @@ static int curlReceive(KSI_RequestHandle *handle) {
 	}
 	KSI_ERR_clearErrors(handle->ctx);
 
-	http = handle->client->impl;
-
 	implCtx = handle->implCtx;
 
-	KSI_LOG_debug(handle->ctx, "Waiting for response.");
+	KSI_LOG_debug(handle->ctx, "Sending request.");
 
-	while (!end_wait) {
-		struct CURLMsg *cm = NULL;
-		curl_multi_perform((CURLM *) http->implCtx, &still_running);
+	res = curl_easy_perform(implCtx->curl);
+	KSI_LOG_debug(handle->ctx, "Received %llu bytes.", (unsigned long long)implCtx->len);
 
-		if (still_running == 0) break;
-
-		while ((cm = curl_multi_info_read((CURLM *) http->implCtx, &still_running)) != NULL && still_running > 0) {
-			if (cm->easy_handle == implCtx->curl && cm->msg == CURLMSG_DONE) {
-				end_wait = true;
-				break;
-			}
-		}
-	}
-
-	KSI_LOG_debug(handle->ctx, "Response received.");
-
-	curl_multi_remove_handle((CURLM *) http->implCtx, implCtx->curl);
-
-	if ((res = curl_easy_getinfo(implCtx->curl, CURLINFO_HTTP_CODE, &httpCode)) == CURLE_OK) {
+	if (curl_easy_getinfo(implCtx->curl, CURLINFO_HTTP_CODE, &httpCode) == CURLE_OK) {
 		updateStatus(handle);
-		KSI_LOG_debug(handle->ctx, "Received HTTP error code %d. Curl error '%s': '%s'.", httpCode, implCtx->curlErr, curl_easy_strerror(res));
+		KSI_LOG_debug(handle->ctx, "Received HTTP error code %d. Curl error '%s'.", httpCode, implCtx->curlErr);
 	}
 
 	if (res != CURLE_OK) {
@@ -304,12 +284,6 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 		goto cleanup;
 	}
 
-	curl_multi_add_handle(http->implCtx, implCtx->curl);
-	{
-		int dummy;
-		curl_multi_perform((CURLM *) http->implCtx, &dummy);
-	}
-
 	implCtx = NULL;
 
 	res = KSI_OK;
@@ -337,8 +311,6 @@ int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	http = tmp->impl;
 
 	http->sendRequest = sendRequest;
-	http->implCtx = curl_multi_init();
-	http->implCtx_free = (void (*)(void *))curl_multi_cleanup;
 
 	res = KSI_CTX_registerGlobals(ctx, curlGlobal_init, curlGlobal_cleanup);
 	if (res != KSI_OK) {

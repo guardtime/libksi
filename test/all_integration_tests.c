@@ -80,6 +80,8 @@ static int RunAllTests() {
 
 	KSI_CTX_setAggregator(ctx, conf.aggregator_url, conf.aggregator_user, conf.aggregator_pass);
 	KSI_CTX_setExtender(ctx, conf.extender_url, conf.extender_user, conf.extender_pass);
+	KSI_CTX_setConnectionTimeoutSeconds(ctx, 30);
+	KSI_CTX_setTransferTimeoutSeconds(ctx, 30);
 
 	CuSuiteRun(suite);
 
