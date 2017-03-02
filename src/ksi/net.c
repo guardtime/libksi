@@ -260,6 +260,7 @@ int KSI_AbstractNetEndpoint_new(KSI_CTX *ctx, KSI_NetEndpoint **endPoint) {
 	tmp->ctx = ctx;
 	tmp->ksi_pass = NULL;
 	tmp->ksi_user = NULL;
+	tmp->hmac_algorithm = KSI_getHashAlgorithmByName("default");
 	tmp->implCtx = NULL;
 	tmp->implCtx_free = NULL;
 
@@ -299,9 +300,18 @@ cleanup:
 	return res;
 }
 
-/**
- *
- */
+int KSI_NetEndpoint_setHmacAlgorithm(KSI_NetEndpoint *endPoint, KSI_HashAlgorithm alg_id) {
+	if (endPoint == NULL) return KSI_INVALID_ARGUMENT;
+	endPoint->hmac_algorithm = alg_id;
+	return KSI_OK;
+}
+
+int KSI_NetEndpoint_getHmacAlgorithm(KSI_NetEndpoint *endPoint, KSI_HashAlgorithm *alg_id) {
+	if (endPoint == NULL || alg_id == NULL) return KSI_INVALID_ARGUMENT;
+	*alg_id = endPoint->hmac_algorithm;
+	return KSI_OK;
+}
+
 int KSI_RequestHandle_new(KSI_CTX *ctx, const unsigned char *request, size_t request_length, KSI_RequestHandle **handle) {
 	int res;
 	KSI_RequestHandle *tmp = NULL;
@@ -694,7 +704,7 @@ cleanup:
 	return res;
 }
 
-int pdu_verify_hmac(KSI_CTX *ctx, const KSI_DataHash *hmac, const char *key, int (*calculateHmac)(const void*, int, const char*, KSI_DataHash**) ,void *PDU){
+static int pdu_verify_hmac(KSI_CTX *ctx, const KSI_DataHash *hmac, const char *key, KSI_HashAlgorithm conf_alg, int (*calculateHmac)(const void*, int, const char*, KSI_DataHash**) ,void *PDU){
 	int res;
 	KSI_DataHash *actualHmac = NULL;
 	KSI_HashAlgorithm algo_id;
@@ -706,11 +716,16 @@ int pdu_verify_hmac(KSI_CTX *ctx, const KSI_DataHash *hmac, const char *key, int
 		goto cleanup;
 	}
 
-
-	/* Check HMAC. */
 	res = KSI_DataHash_getHashAlg(hmac, &algo_id);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* If configured, check if HMAC algorithm matches. */
+	if (conf_alg != KSI_HASHALG_INVALID && algo_id != conf_alg)	{
+		KSI_LOG_debug(ctx, "HMAC algorithm mismatch. Expected %d, received %d", conf_alg, algo_id);
+		KSI_pushError(ctx, res = KSI_HMAC_ALGORITHM_MISMATCH, "HMAC algorithm mismatch.");
 		goto cleanup;
 	}
 
@@ -720,6 +735,7 @@ int pdu_verify_hmac(KSI_CTX *ctx, const KSI_DataHash *hmac, const char *key, int
 		goto cleanup;
 	}
 
+	/* Check HMAC. */
 	if (!KSI_DataHash_equals(hmac, actualHmac)){
 		KSI_LOG_debug(ctx, "Verifying HMAC failed.");
 		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Calculated HMAC", actualHmac);
@@ -836,7 +852,7 @@ int KSI_RequestHandle_getExtendResponse(const KSI_RequestHandle *handle, KSI_Ext
 		goto cleanup;
 	}
 
-	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->extender->ksi_pass,
+	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->extender->ksi_pass, handle->client->extender->hmac_algorithm,
 			(int (*)(const void*, int, const char*, KSI_DataHash**))KSI_ExtendPdu_calculateHmac,
 			(void*)pdu);
 
@@ -960,7 +976,7 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 		goto cleanup;
 	}
 
-	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->aggregator->ksi_pass,
+	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->aggregator->ksi_pass, handle->client->aggregator->hmac_algorithm,
 			(int (*)(const void*, int, const char*, KSI_DataHash**))KSI_AggregationPdu_calculateHmac,
 			(void*)pdu);
 

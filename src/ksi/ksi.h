@@ -189,6 +189,11 @@ enum KSI_StatusCode {
 	 */
 	KSI_REQUEST_ID_MISMATCH = 0x210,
 
+	/**
+	 * HMAC algorithm mismatch occurred
+	 */
+	KSI_HMAC_ALGORITHM_MISMATCH = 0x211,
+
 	/* Generic service errors */
 
 	/**

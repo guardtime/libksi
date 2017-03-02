@@ -104,6 +104,7 @@ struct KSI_AggregationReq_st {
 	KSI_Integer *requestLevel;
 	KSI_Config *config;
 	KSI_OctetString *raw;
+	KSI_HashAlgorithm hmacAlgorithm;
 };
 
 struct KSI_RequestAck_st {
@@ -137,6 +138,7 @@ struct KSI_ExtendReq_st {
 	KSI_Integer *aggregationTime;
 	KSI_Integer *publicationTime;
 	KSI_OctetString *raw;
+	KSI_HashAlgorithm hmacAlgorithm;
 };
 
 struct KSI_ExtendResp_st {
@@ -1103,16 +1105,15 @@ int KSI_ExtendReq_enclose(KSI_ExtendReq *req, const char *loginId, const char *k
 	}
 
 	/* Create and append initial empty HMAC. */
-	res = KSI_DataHash_createZero(req->ctx, KSI_getHashAlgorithmByName("default"), &hash);
+	res = KSI_DataHash_createZero(req->ctx, req->hmacAlgorithm, &hash);
 	if (res != KSI_OK) goto cleanup;
 
 	tmp->hmac = hash;
 	hash = NULL;
 
 	/* Calculate the HMAC using the provided key and the default hash algorithm. */
-	res = KSI_ExtendPdu_updateHmac(tmp, KSI_getHashAlgorithmByName("default"), key);
+	res = KSI_ExtendPdu_updateHmac(tmp, req->hmacAlgorithm, key);
 	if (res != KSI_OK) goto cleanup;
-
 
 	*pdu = tmp;
 	tmp = NULL;
@@ -1389,14 +1390,14 @@ int KSI_AggregationReq_enclose(KSI_AggregationReq *req, const char *loginId, con
 	}
 
 	/* Create and append initial empty HMAC. */
-	res = KSI_DataHash_createZero(req->ctx, KSI_getHashAlgorithmByName("default"), &hash);
+	res = KSI_DataHash_createZero(req->ctx, req->hmacAlgorithm, &hash);
 	if (res != KSI_OK) goto cleanup;
 
 	tmp->hmac = hash;
 	hash = NULL;
 
 	/* Calculate the HMAC using the provided key and the default hash algorithm. */
-	res = KSI_AggregationPdu_updateHmac(tmp, KSI_getHashAlgorithmByName("default"), key);
+	res = KSI_AggregationPdu_updateHmac(tmp, req->hmacAlgorithm, key);
 	if (res != KSI_OK) goto cleanup;
 
 	*pdu = tmp;
@@ -1659,6 +1660,7 @@ int KSI_AggregationReq_new(KSI_CTX *ctx, KSI_AggregationReq **t) {
 	tmp->requestLevel = NULL;
 	tmp->config = NULL;
 	tmp->raw = NULL;
+	tmp->hmacAlgorithm = KSI_HASHALG_INVALID;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -1764,11 +1766,13 @@ KSI_IMPLEMENT_GETTER(KSI_AggregationReq, KSI_Integer*, requestId, RequestId);
 KSI_IMPLEMENT_GETTER(KSI_AggregationReq, KSI_DataHash*, requestHash, RequestHash);
 KSI_IMPLEMENT_GETTER(KSI_AggregationReq, KSI_Integer*, requestLevel, RequestLevel);
 KSI_IMPLEMENT_GETTER(KSI_AggregationReq, KSI_Config*, config, Config);
+KSI_IMPLEMENT_GETTER(KSI_AggregationReq, KSI_HashAlgorithm, hmacAlgorithm, HmacAlgorithm);
 
 KSI_IMPLEMENT_SETTER(KSI_AggregationReq, KSI_Integer*, requestId, RequestId);
 KSI_IMPLEMENT_SETTER(KSI_AggregationReq, KSI_DataHash*, requestHash, RequestHash);
 KSI_IMPLEMENT_SETTER(KSI_AggregationReq, KSI_Integer*, requestLevel, RequestLevel);
 KSI_IMPLEMENT_SETTER(KSI_AggregationReq, KSI_Config*, config, Config);
+KSI_IMPLEMENT_SETTER(KSI_AggregationReq, KSI_HashAlgorithm, hmacAlgorithm, HmacAlgorithm);
 
 /**
  * KSI_RequestAck
@@ -2043,6 +2047,7 @@ int KSI_ExtendReq_new(KSI_CTX *ctx, KSI_ExtendReq **t) {
 	tmp->aggregationTime = NULL;
 	tmp->publicationTime = NULL;
 	tmp->raw = NULL;
+	tmp->hmacAlgorithm = KSI_HASHALG_INVALID;
 	*t = tmp;
 	tmp = NULL;
 	res = KSI_OK;
@@ -2143,11 +2148,12 @@ cleanup:
 KSI_IMPLEMENT_GETTER(KSI_ExtendReq, KSI_Integer*, requestId, RequestId);
 KSI_IMPLEMENT_GETTER(KSI_ExtendReq, KSI_Integer*, aggregationTime, AggregationTime);
 KSI_IMPLEMENT_GETTER(KSI_ExtendReq, KSI_Integer*, publicationTime, PublicationTime);
+KSI_IMPLEMENT_GETTER(KSI_ExtendReq, KSI_HashAlgorithm, hmacAlgorithm, HmacAlgorithm);
 
 KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, requestId, RequestId);
 KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, aggregationTime, AggregationTime);
 KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, publicationTime, PublicationTime);
-
+KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_HashAlgorithm, hmacAlgorithm, HmacAlgorithm);
 
 /**
  * KSI_ExtendResp

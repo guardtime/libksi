@@ -122,6 +122,8 @@ const char *KSI_getErrorString(int statusCode) {
 			return "The request is sill pending.";
 		case KSI_HMAC_MISMATCH:
 			return "HMAC mismatch.";
+		case KSI_HMAC_ALGORITHM_MISMATCH:
+			return "HMAC algorithm mismatch.";
 		case KSI_SERVICE_INVALID_REQUEST:
 			return "The request had invalid format.";
 		case KSI_SERVICE_AUTHENTICATION_FAILURE:
@@ -855,6 +857,37 @@ int KSI_CTX_setExtender(KSI_CTX *ctx, const char *uri, const char *loginId, cons
 
 int KSI_CTX_setPublicationUrl(KSI_CTX *ctx, const char *uri){
 	return KSI_CTX_setUri(ctx, uri, uri, uri, KSI_UriClient_setPublicationUrl_wrapper);
+}
+
+static int endpoint_setHmacAlgorithm(KSI_NetworkClient *netClient, KSI_HashAlgorithm alg_id,
+		int (*getNetEndpoint)(const KSI_NetworkClient *, KSI_NetEndpoint **)) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_NetEndpoint *endp = NULL;
+
+	if (netClient == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = getNetEndpoint(netClient, &endp);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_NetEndpoint_setHmacAlgorithm(endp, alg_id);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+int KSI_CTX_setAggregatorHmacAlgorithm(KSI_CTX *ctx, KSI_HashAlgorithm alg_id) {
+	if (ctx == NULL || ctx->netProvider == NULL) return KSI_INVALID_ARGUMENT;
+	return endpoint_setHmacAlgorithm(ctx->netProvider, alg_id, KSI_NetworkClient_getAggregatorEndpoint);
+}
+
+int KSI_CTX_setExtenderHmacAlgorithm(KSI_CTX *ctx, KSI_HashAlgorithm alg_id) {
+	if (ctx == NULL || ctx->netProvider == NULL) return KSI_INVALID_ARGUMENT;
+	return endpoint_setHmacAlgorithm(ctx->netProvider, alg_id, KSI_NetworkClient_getExtenderEndpoint);
 }
 
 int KSI_CTX_setFlag(KSI_CTX *ctx, enum KSI_CtxFlag flag, void *param)

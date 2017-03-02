@@ -671,10 +671,12 @@ int KSI_AggregationReq_getRequestId(const KSI_AggregationReq *t, KSI_Integer **r
 int KSI_AggregationReq_getRequestHash(const KSI_AggregationReq *t, KSI_DataHash **requestHash);
 int KSI_AggregationReq_getRequestLevel(const KSI_AggregationReq *t, KSI_Integer **requestLevel);
 int KSI_AggregationReq_getConfig(const KSI_AggregationReq *t, KSI_Config **config);
+int KSI_AggregationReq_getHmacAlgorithm(const KSI_AggregationReq *t, KSI_HashAlgorithm *hmacAlgorithm);
 int KSI_AggregationReq_setRequestId(KSI_AggregationReq *t, KSI_Integer *requestId);
 int KSI_AggregationReq_setRequestHash(KSI_AggregationReq *t, KSI_DataHash *requestHash);
 int KSI_AggregationReq_setRequestLevel(KSI_AggregationReq *t, KSI_Integer *requestLevel);
 int KSI_AggregationReq_setConfig(KSI_AggregationReq *t, KSI_Config *config);
+int KSI_AggregationReq_setHmacAlgorithm(KSI_AggregationReq *t, KSI_HashAlgorithm hmacAlgorithm);
 int KSI_AggregationReq_fromTlv (KSI_TLV *tlv, KSI_AggregationReq **data);
 int KSI_AggregationReq_toTlv (KSI_CTX *ctx, const KSI_AggregationReq *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
@@ -755,9 +757,11 @@ int KSI_ExtendReq_new(KSI_CTX *ctx, KSI_ExtendReq **t);
 int KSI_ExtendReq_getRequestId(const KSI_ExtendReq *t, KSI_Integer **requestId);
 int KSI_ExtendReq_getAggregationTime(const KSI_ExtendReq *t, KSI_Integer **aggregationTime);
 int KSI_ExtendReq_getPublicationTime(const KSI_ExtendReq *t, KSI_Integer **publicationTime);
+int KSI_ExtendReq_getHmacAlgorithm(const KSI_ExtendReq *t, KSI_HashAlgorithm *hmacAlgorithm);
 int KSI_ExtendReq_setRequestId(KSI_ExtendReq *t, KSI_Integer *requestId);
 int KSI_ExtendReq_setAggregationTime(KSI_ExtendReq *t, KSI_Integer *aggregationTime);
 int KSI_ExtendReq_setPublicationTime(KSI_ExtendReq *t, KSI_Integer *publicationTime);
+int KSI_ExtendReq_setHmacAlgorithm(KSI_ExtendReq *t, KSI_HashAlgorithm hmacAlgorithm);
 int KSI_ExtendReq_fromTlv (KSI_TLV *tlv, KSI_ExtendReq **data);
 int KSI_ExtendReq_toTlv (KSI_CTX *ctx, const KSI_ExtendReq *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
