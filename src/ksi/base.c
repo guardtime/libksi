@@ -196,13 +196,18 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->publicationCertEmail_DEPRECATED = NULL;
 	ctx->loggerCB = NULL;
 	ctx->requestHeaderCB = NULL;
-	ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] = KSI_AGGREGATION_PDU_VERSION;
-	ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER] = KSI_EXTENDING_PDU_VERSION;
 	ctx->loggerCtx = NULL;
 	ctx->certConstraints = NULL;
 	ctx->freeCertConstraintsArray = freeCertConstraintsArray;
 	ctx->lastFailedSignature = NULL;
 	KSI_ERR_clearErrors(ctx);
+
+	/* Init options. */
+	memset(ctx->options, 0, sizeof(ctx->options));
+	ctx->options[KSI_OPT_AGGR_PDU_VER] = KSI_AGGREGATION_PDU_VERSION;
+	ctx->options[KSI_OPT_EXT_PDU_VER] = KSI_EXTENDING_PDU_VERSION;
+	ctx->options[KSI_OPT_AGGR_HMAC_ALGORITHM] = (size_t)KSI_getHashAlgorithmByName("default");
+	ctx->options[KSI_OPT_EXT_HMAC_ALGORITHM] = (size_t)KSI_getHashAlgorithmByName("default");
 
 	/* Create global cleanup list as the first thing. */
 	res = KSI_List_new(NULL, &ctx->cleanupFnList);
@@ -859,37 +864,6 @@ int KSI_CTX_setPublicationUrl(KSI_CTX *ctx, const char *uri){
 	return KSI_CTX_setUri(ctx, uri, uri, uri, KSI_UriClient_setPublicationUrl_wrapper);
 }
 
-static int endpoint_setHmacAlgorithm(KSI_NetworkClient *netClient, KSI_HashAlgorithm alg_id,
-		int (*getNetEndpoint)(const KSI_NetworkClient *, KSI_NetEndpoint **)) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_NetEndpoint *endp = NULL;
-
-	if (netClient == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	res = getNetEndpoint(netClient, &endp);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_NetEndpoint_setHmacAlgorithm(endp, alg_id);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_OK;
-cleanup:
-	return res;
-}
-
-int KSI_CTX_setAggregatorHmacAlgorithm(KSI_CTX *ctx, KSI_HashAlgorithm alg_id) {
-	if (ctx == NULL || ctx->netProvider == NULL) return KSI_INVALID_ARGUMENT;
-	return endpoint_setHmacAlgorithm(ctx->netProvider, alg_id, KSI_NetworkClient_getAggregatorEndpoint);
-}
-
-int KSI_CTX_setExtenderHmacAlgorithm(KSI_CTX *ctx, KSI_HashAlgorithm alg_id) {
-	if (ctx == NULL || ctx->netProvider == NULL) return KSI_INVALID_ARGUMENT;
-	return endpoint_setHmacAlgorithm(ctx->netProvider, alg_id, KSI_NetworkClient_getExtenderEndpoint);
-}
-
 int KSI_CTX_setFlag(KSI_CTX *ctx, enum KSI_CtxFlag flag, void *param)
 {
 	int res = KSI_UNKNOWN_ERROR;
@@ -899,13 +873,19 @@ int KSI_CTX_setFlag(KSI_CTX *ctx, enum KSI_CtxFlag flag, void *param)
 		goto cleanup;
 	}
 
-	ctx->flags[flag] = (size_t)param;
+	ctx->options[flag] = (size_t)param;
 
 	res = KSI_OK;
 
 cleanup:
 
 	return res;
+}
+
+int KSI_CTX_setOption(KSI_CTX *ctx, KSI_Option opt, void *param) {
+	if (ctx == NULL || opt >= KSI_NOF_OPTIONS) return KSI_INVALID_ARGUMENT;
+	ctx->options[opt] = (size_t)param;
+	return KSI_OK;
 }
 
 static int KSI_CTX_setTimeoutSeconds(KSI_CTX *ctx, int timeout, int (*setter)(KSI_NetworkClient*, int)){

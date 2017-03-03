@@ -47,14 +47,14 @@ static void preTest(void) {
 	ctx->netProvider->requestCount = 0;
 
 	/* Set PDU v2. */
-	ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] = KSI_PDU_VERSION_2;
-	ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER]  = KSI_PDU_VERSION_2;
+	ctx->options[KSI_OPT_AGGR_PDU_VER] = KSI_PDU_VERSION_2;
+	ctx->options[KSI_OPT_EXT_PDU_VER]  = KSI_PDU_VERSION_2;
 }
 
 static void postTest(void) {
 	/* Restore default PDU version. */
-	ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] = KSI_AGGREGATION_PDU_VERSION;
-	ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER]  = KSI_EXTENDING_PDU_VERSION;
+	ctx->options[KSI_OPT_AGGR_PDU_VER] = KSI_AGGREGATION_PDU_VERSION;
+	ctx->options[KSI_OPT_EXT_PDU_VER]  = KSI_EXTENDING_PDU_VERSION;
 }
 
 static void testSigning(CuTest* tc) {

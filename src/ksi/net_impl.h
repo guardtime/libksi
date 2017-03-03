@@ -36,9 +36,6 @@ extern "C" {
 		/** KSI service user name. */
 		char *ksi_user;
 
-		/** KSI service HMAC algorithm id. */
-		KSI_HashAlgorithm hmac_algorithm;
-
 		/** Implementation for transport layer specific endpoint. */
 		void *implCtx;
 

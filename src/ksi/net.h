@@ -92,11 +92,9 @@ extern "C" {
 
 	int KSI_NetEndpoint_setPass(KSI_NetEndpoint *endp, const char *ksi_pass);
 	int KSI_NetEndpoint_setUser(KSI_NetEndpoint *endp, const char *ksi_user);
-	int KSI_NetEndpoint_setHmacAlgorithm(KSI_NetEndpoint *endPoint, KSI_HashAlgorithm alg_id);
 
 	int KSI_NetEndpoint_getUser(const KSI_NetEndpoint *endp, const char **ksi_user);
 	int KSI_NetEndpoint_getPass(const KSI_NetEndpoint *endp, const char **ksi_pass);
-	int KSI_NetEndpoint_getHmacAlgorithm(KSI_NetEndpoint *endPoint, KSI_HashAlgorithm *alg_id);
 
 	/**
 	 * Free network provider object.

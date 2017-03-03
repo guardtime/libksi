@@ -144,9 +144,6 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 		reqId = NULL;
 	}
 
-	res = KSI_ExtendReq_setHmacAlgorithm(req, ext->hmac_algorithm);
-	if (res != KSI_OK) goto cleanup;
-
 	res = KSI_ExtendReq_enclose(req, ext->ksi_user, ext->ksi_pass, &pdu);
 	if (res != KSI_OK) goto cleanup;
 
@@ -207,9 +204,6 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 
 		reqId = NULL;
 	}
-
-	res = KSI_AggregationReq_setHmacAlgorithm(req, aggr->hmac_algorithm);
-	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_AggregationReq_enclose(req, aggr->ksi_user, aggr->ksi_pass, &pdu);
 	if (res != KSI_OK) goto cleanup;

@@ -177,6 +177,7 @@ EXPORTS
 	KSI_CTX_setExtender
 	KSI_CTX_setAggregator
 	KSI_CTX_setFlag
+	KSI_CTX_setOption
 	KSI_CTX_setTransferTimeoutSeconds
 	KSI_CTX_setConnectionTimeoutSeconds
 	KSI_CTX_setDefaultPubFileCertConstraints
