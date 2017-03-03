@@ -339,13 +339,13 @@ typedef enum KSI_Option_en {
 	KSI_OPT_EXT_PDU_VER = KSI_CTX_FLAG_EXT_PDU_VER,
 
 	/**
-	 * Description:
+	 * Description: Aggregator HMAC algorithm.
 	 * Type:		KSI_HashAlgorithm.
 	 * Range:		See #KSI_HashAlgorithm.
 	 */
 	KSI_OPT_AGGR_HMAC_ALGORITHM,
 	/**
-	 * Description:
+	 * Description: Extender HMAC algorithm.
 	 * Type:		KSI_HashAlgorithm.
 	 * Range:		See #KSI_HashAlgorithm.
 	 */
