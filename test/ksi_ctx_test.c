@@ -146,7 +146,7 @@ static void TestGetBaseError(CuTest *tc) {
 	KSI_CTX_free(ctx);
 }
 
-static void TestCtxOptions(CuTest *tc) {
+static void TestCtxOptions_pduVersion(CuTest *tc) {
 	int res;
 	KSI_CTX *ctx = NULL;
 
@@ -158,7 +158,7 @@ static void TestCtxOptions(CuTest *tc) {
 	res = KSI_CTX_setOption(NULL, KSI_OPT_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_1);
 	CuAssert(tc, "Context NULL accepted.", res == KSI_INVALID_ARGUMENT);
 
-	res = KSI_CTX_setOption(ctx, KSI_NOF_OPTIONS, (void*)KSI_PDU_VERSION_1);
+	res = KSI_CTX_setOption(ctx, __KSI_NUMBER_OF_OPTIONS , (void*)KSI_PDU_VERSION_1);
 	CuAssert(tc, "Flag value outside boundary accepted.", res == KSI_INVALID_ARGUMENT);
 
 	res = KSI_CTX_setOption(ctx, KSI_OPT_AGGR_PDU_VER, (void*)(KSI_AGGREGATION_PDU_VERSION == KSI_PDU_VERSION_1 ? KSI_PDU_VERSION_2 : KSI_PDU_VERSION_1));
@@ -176,6 +176,31 @@ static void TestCtxOptions(CuTest *tc) {
 	KSI_CTX_free(ctx);
 }
 
+static void TestCtxOptions_hmacAlgorithm(CuTest *tc) {
+	int res;
+	KSI_CTX *ctx = NULL;
+
+	res = KSITest_CTX_clone(&ctx);
+	CuAssert(tc, "Unable to create KSI context.", res == KSI_OK && ctx != NULL);
+
+	CuAssert(tc, "Default aggregator HMAC algorithm.", (KSI_HashAlgorithm)ctx->options[KSI_OPT_AGGR_HMAC_ALGORITHM] == KSI_getHashAlgorithmByName("default"));
+	CuAssert(tc, "Default extender HMAC algorithm.", (KSI_HashAlgorithm)ctx->options[KSI_OPT_EXT_HMAC_ALGORITHM] == KSI_getHashAlgorithmByName("default"));
+
+	res = KSI_CTX_setOption(ctx, KSI_OPT_AGGR_HMAC_ALGORITHM, (void*)KSI_HASHALG_SHA2_384);
+	CuAssert(tc, "Unable to set aggregation HMAC algorithm.", res == KSI_OK && (KSI_HashAlgorithm)ctx->options[KSI_OPT_AGGR_HMAC_ALGORITHM] == KSI_HASHALG_SHA2_384);
+
+	res = KSI_CTX_setOption(ctx, KSI_OPT_EXT_HMAC_ALGORITHM, (void*)KSI_HASHALG_SHA2_512);
+	CuAssert(tc, "Unable to set extending HMAC algorithm.", res == KSI_OK && (KSI_HashAlgorithm)ctx->options[KSI_OPT_EXT_HMAC_ALGORITHM] == KSI_HASHALG_SHA2_512);
+
+	res = KSI_CTX_setAggregatorHmacAlgorithm(ctx, KSI_HASHALG_SHA2_512);
+	CuAssert(tc, "Unable to set aggregation HMAC algorithm.", res == KSI_OK && (KSI_HashAlgorithm)ctx->options[KSI_OPT_AGGR_HMAC_ALGORITHM] == KSI_HASHALG_SHA2_512);
+
+	res = KSI_CTX_setExtenderHmacAlgorithm(ctx, KSI_HASHALG_SHA2_384);
+	CuAssert(tc, "Unable to set extending HMAC algorithm.", res == KSI_OK && (KSI_HashAlgorithm)ctx->options[KSI_OPT_EXT_HMAC_ALGORITHM] == KSI_HASHALG_SHA2_384);
+
+	KSI_CTX_free(ctx);
+}
+
 CuSuite* KSITest_CTX_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
@@ -184,7 +209,8 @@ CuSuite* KSITest_CTX_getSuite(void)
 	SUITE_ADD_TEST(suite, TestRegisterGlobals);
 	SUITE_ADD_TEST(suite, TestErrorsToString);
 	SUITE_ADD_TEST(suite, TestGetBaseError);
-	SUITE_ADD_TEST(suite, TestCtxOptions);
+	SUITE_ADD_TEST(suite, TestCtxOptions_pduVersion);
+	SUITE_ADD_TEST(suite, TestCtxOptions_hmacAlgorithm);
 
 	return suite;
 }

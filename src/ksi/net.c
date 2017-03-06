@@ -712,7 +712,8 @@ static int pdu_verify_hmac(KSI_CTX *ctx, const KSI_DataHash *hmac, const char *k
 
 	/* If configured, check if HMAC algorithm matches. */
 	if (conf_alg != KSI_HASHALG_INVALID && algo_id != conf_alg)	{
-		KSI_LOG_debug(ctx, "HMAC algorithm mismatch. Expected %d, received %d", conf_alg, algo_id);
+		KSI_LOG_debug(ctx, "HMAC algorithm mismatch. Expected %s, received %s",
+				KSI_getHashAlgorithmName(conf_alg), KSI_getHashAlgorithmName(algo_id));
 		KSI_pushError(ctx, res = KSI_HMAC_ALGORITHM_MISMATCH, "HMAC algorithm mismatch.");
 		goto cleanup;
 	}

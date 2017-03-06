@@ -83,7 +83,7 @@ extern "C" {
 		KSI_RequestHeaderCallback requestHeaderCB;
 
 		/** Array of configuration options. */
-		size_t options[KSI_NOF_OPTIONS];
+		size_t options[__KSI_NUMBER_OF_OPTIONS];
 
 		/** Counter for the requests sent by this context. */
 		KSI_uint64_t requestCounter;

@@ -304,38 +304,20 @@ enum KSI_StatusCode {
 #define KSI_PDU_VERSION_1		1
 #define KSI_PDU_VERSION_2		2
 
-/**
- * \note Deprecated. Use #KSI_Option.
- */
-enum KSI_CtxFlag {
-	/**
-	 * Description:	PDU version for KSI aggregation messages.
-	 * Type:		size_t.
-	 * Range:		KSI_PDU_VERSION_1 .. KSI_PDU_VERSION_2
-	 */
-	KSI_CTX_FLAG_AGGR_PDU_VER,
-	/**
-	 * Description:	PDU version for KSI extending messages.
-	 * Type:		size_t.
-	 * Range:		KSI_PDU_VERSION_1 .. KSI_PDU_VERSION_2
-	 */
-	KSI_CTX_FLAG_EXT_PDU_VER,
-
-	KSI_CTX_NUM_OF_FLAGS,
-};
-
 typedef enum KSI_Option_en {
 	/**
 	 * Description:	PDU version for KSI aggregation messages.
 	 * Type:		size_t.
 	 * Range:		KSI_PDU_VERSION_1 .. KSI_PDU_VERSION_2
 	 */
+	KSI_CTX_FLAG_AGGR_PDU_VER,
 	KSI_OPT_AGGR_PDU_VER = KSI_CTX_FLAG_AGGR_PDU_VER,
 	/**
 	 * Description:	PDU version for KSI extending messages.
 	 * Type:		size_t.
 	 * Range:		KSI_PDU_VERSION_1 .. KSI_PDU_VERSION_2
 	 */
+	KSI_CTX_FLAG_EXT_PDU_VER,
 	KSI_OPT_EXT_PDU_VER = KSI_CTX_FLAG_EXT_PDU_VER,
 
 	/**
@@ -351,8 +333,10 @@ typedef enum KSI_Option_en {
 	 */
 	KSI_OPT_EXT_HMAC_ALGORITHM,
 
-	KSI_NOF_OPTIONS,
+	__KSI_NUMBER_OF_OPTIONS,
 } KSI_Option;
+
+#define KSI_CtxFlag KSI_Option_en
 
 /**
  * This function returns a pointer to a constant string describing the
@@ -628,18 +612,6 @@ int KSI_CTX_setExtender(KSI_CTX *ctx, const char *uri, const char *loginId, cons
 int KSI_CTX_setAggregator(KSI_CTX *ctx, const char *uri, const char *loginId, const char *key);
 
 /**
- * Configuration method for the KSI flags.
- * \param[in]	ctx		KSI context.
- * \param[in]	flag	KSI flag.
- * \param[in]	param	Value for specified KSI flag.
- * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- * \see #KSI_CtxFlag for possible KSI flags.
- * \note Interpretation of \c param is dependent on the KSI flag.
- * \note This method is deprecated and will be removed in later versions, use #KSI_CTX_setOption.
- */
-KSI_FN_DEPRECATED(int KSI_CTX_setFlag(KSI_CTX *ctx, enum KSI_CtxFlag flag, void *param));
-
-/**
  * Configuration method for the KSI option.
  * \param[in]	ctx		KSI context.
  * \param[in]	flag	KSI option.
@@ -649,6 +621,8 @@ KSI_FN_DEPRECATED(int KSI_CTX_setFlag(KSI_CTX *ctx, enum KSI_CtxFlag flag, void 
  * \note Interpretation of \c param is dependent on the KSI option.
  */
 int KSI_CTX_setOption(KSI_CTX *ctx, KSI_Option opt, void *param);
+
+#define KSI_CTX_setFlag(ctx, flag, param) KSI_CTX_setOption((ctx), (flag), (param))
 
 #define KSI_CTX_setAggregatorHmacAlgorithm(ctx, alg_id) KSI_CTX_setOption(ctx, KSI_OPT_AGGR_HMAC_ALGORITHM, (void*)(alg_id))
 #define KSI_CTX_setExtenderHmacAlgorithm(ctx, alg_id) KSI_CTX_setOption(ctx, KSI_OPT_EXT_HMAC_ALGORITHM, (void*)(alg_id))

@@ -864,26 +864,8 @@ int KSI_CTX_setPublicationUrl(KSI_CTX *ctx, const char *uri){
 	return KSI_CTX_setUri(ctx, uri, uri, uri, KSI_UriClient_setPublicationUrl_wrapper);
 }
 
-int KSI_CTX_setFlag(KSI_CTX *ctx, enum KSI_CtxFlag flag, void *param)
-{
-	int res = KSI_UNKNOWN_ERROR;
-
-	if (ctx == NULL || flag >= KSI_CTX_NUM_OF_FLAGS) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	ctx->options[flag] = (size_t)param;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
 int KSI_CTX_setOption(KSI_CTX *ctx, KSI_Option opt, void *param) {
-	if (ctx == NULL || opt >= KSI_NOF_OPTIONS) return KSI_INVALID_ARGUMENT;
+	if (ctx == NULL || opt >= __KSI_NUMBER_OF_OPTIONS) return KSI_INVALID_ARGUMENT;
 	ctx->options[opt] = (size_t)param;
 	return KSI_OK;
 }
