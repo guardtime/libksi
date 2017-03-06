@@ -190,11 +190,6 @@ extern "C" {
 	#define KSI_TLV_TEMPLATE_LIST					3
 
 	/**
-	 * TLV object without paylaod.
-	 */
-	#define KSI_TLV_TEMPLATE_EMPTY_OBJECT			4
-
-	/**
 	 * Empty placeholder for a template with no flags set.
 	 */
 	#define KSI_TLV_TMPL_FLG_NONE			0x00
