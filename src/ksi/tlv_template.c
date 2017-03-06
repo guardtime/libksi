@@ -169,7 +169,7 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationReq)
 	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationReq_getRequestId, KSI_AggregationReq_setRequestId, "req_id")
 	KSI_TLV_IMPRINT(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationReq_getRequestHash, KSI_AggregationReq_setRequestHash, "req_hash")
 	KSI_TLV_INTEGER(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationReq_getRequestLevel, KSI_AggregationReq_setRequestLevel, "req_level")
-	KSI_TLV_COMPOSITE(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationReq_getConfig, KSI_AggregationReq_setConfig, KSI_Config, "config")
+	KSI_TLV_EMPTY_OBJECT(0x10, KSI_TLV_TMPL_FLG_NONE, "config")
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationReq_v2)
@@ -832,37 +832,13 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 
 	for (i = 0; i < template_len; i++) {
 		if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_NO_SERIALIZE)) continue;
-		payloadp = NULL;
 
-		res = tmpl[i].getValue(payload, &payloadp);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
-
-		if (payloadp != NULL) {
-			/* Register for tracking. */
-			if (tr_len < tr_size) {
-				tr[tr_len].tag = tmpl[i].tag;
-				tr[tr_len].desc = tmpl[i].descr;
-			}
+		if (tmpl[i].type == KSI_TLV_TEMPLATE_EMPTY_OBJECT) {
 
 			templateHit[i] = true;
 
-			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_LEAST_ONE_G0)) {
-				if (tmpl[i].listLength != NULL && tmpl[i].listLength(payloadp) == 0) {
-					KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Mandatory list object is empty within group 0.");
-					goto cleanup;
-				}
-				groupHit[0] = true;
-			}
-			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_LEAST_ONE_G1)) {
-				if (tmpl[i].listLength != NULL && tmpl[i].listLength(payloadp) == 0) {
-					KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Mandatory list object is empty within group 1.");
-					goto cleanup;
-				}
-				groupHit[1] = true;
-			}
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_LEAST_ONE_G0)) groupHit[0] = true;
+			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_LEAST_ONE_G1)) groupHit[1] = true;
 
 			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G0)) {
 				if (oneOf[0]) {
@@ -871,9 +847,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 					KSI_pushError(ctx, res = KSI_INVALID_FORMAT, errm);
 					goto cleanup;
 				}
-				if ((tmpl[i].listLength == NULL) || (tmpl[i].listLength != NULL && tmpl[i].listLength(payloadp) > 0)) {
-					oneOf[0] = true;
-				}
+				oneOf[0] = true;
 			}
 			if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G1)) {
 				if (oneOf[1]) {
@@ -882,32 +856,118 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 					KSI_pushError(ctx, res = KSI_INVALID_FORMAT, errm);
 					goto cleanup;
 				}
-				if ((tmpl[i].listLength == NULL) || (tmpl[i].listLength != NULL && tmpl[i].listLength(payloadp) > 0)) {
-					oneOf[1] = true;
-				}
+				oneOf[1] = true;
 			}
 
 			isNonCritical = IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_NONCRITICAL);
 			isForward = IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_FORWARD);
 
-			switch (tmpl[i].type) {
-				case KSI_TLV_TEMPLATE_OBJECT:
-					if (tmpl[i].toTlv == NULL) {
-						KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Invalid template: toTlv not set.");
+			res = KSI_TLV_new(ctx, tmpl[i].tag, isNonCritical, isForward, &tmp);
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
+
+			res = KSI_TLV_appendNestedTlv(tlv, tmp);
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
+			tmp = NULL;
+		} else {
+			payloadp = NULL;
+
+			res = tmpl[i].getValue(payload, &payloadp);
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
+
+			if (payloadp != NULL) {
+				/* Register for tracking. */
+				if (tr_len < tr_size) {
+					tr[tr_len].tag = tmpl[i].tag;
+					tr[tr_len].desc = tmpl[i].descr;
+				}
+
+				templateHit[i] = true;
+
+				if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_LEAST_ONE_G0)) {
+					if (tmpl[i].listLength != NULL && tmpl[i].listLength(payloadp) == 0) {
+						KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Mandatory list object is empty within group 0.");
 						goto cleanup;
 					}
+					groupHit[0] = true;
+				}
+				if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_LEAST_ONE_G1)) {
+					if (tmpl[i].listLength != NULL && tmpl[i].listLength(payloadp) == 0) {
+						KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Mandatory list object is empty within group 1.");
+						goto cleanup;
+					}
+					groupHit[1] = true;
+				}
 
-					if (tmpl[i].listLength != NULL) {
-						int j;
-						for (j = 0; j < tmpl[i].listLength(payloadp); j++) {
-							void *listElement = NULL;
-							res = tmpl[i].listElementAt(payloadp, j, &listElement);
-							if (res != KSI_OK) {
-								KSI_pushError(ctx, res, NULL);
-								goto cleanup;
+				if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G0)) {
+					if (oneOf[0]) {
+						char errm[1000];
+						KSI_snprintf(errm, sizeof(errm), "Mutually exclusive elements present within group 0 (%s).", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));
+						KSI_pushError(ctx, res = KSI_INVALID_FORMAT, errm);
+						goto cleanup;
+					}
+					if ((tmpl[i].listLength == NULL) || (tmpl[i].listLength != NULL && tmpl[i].listLength(payloadp) > 0)) {
+						oneOf[0] = true;
+					}
+				}
+				if (IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_MOST_ONE_G1)) {
+					if (oneOf[1]) {
+						char errm[1000];
+						KSI_snprintf(errm, sizeof(errm), "Mutually exclusive elements present within group 1 (%s).", track_str(tr, tr_len, tr_size, buf, sizeof(buf)));
+						KSI_pushError(ctx, res = KSI_INVALID_FORMAT, errm);
+						goto cleanup;
+					}
+					if ((tmpl[i].listLength == NULL) || (tmpl[i].listLength != NULL && tmpl[i].listLength(payloadp) > 0)) {
+						oneOf[1] = true;
+					}
+				}
+
+				isNonCritical = IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_NONCRITICAL);
+				isForward = IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_FORWARD);
+
+				switch (tmpl[i].type) {
+					case KSI_TLV_TEMPLATE_OBJECT:
+						if (tmpl[i].toTlv == NULL) {
+							KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Invalid template: toTlv not set.");
+							goto cleanup;
+						}
+
+						if (tmpl[i].listLength != NULL) {
+							int j;
+							for (j = 0; j < tmpl[i].listLength(payloadp); j++) {
+								void *listElement = NULL;
+								res = tmpl[i].listElementAt(payloadp, j, &listElement);
+								if (res != KSI_OK) {
+									KSI_pushError(ctx, res, NULL);
+									goto cleanup;
+								}
+
+								res = tmpl[i].toTlv(ctx, listElement, tmpl[i].tag, isNonCritical, isForward != 0, &tmp);
+								if (res != KSI_OK) {
+									KSI_pushError(ctx, res, NULL);
+									goto cleanup;
+								}
+
+								res = KSI_TLV_appendNestedTlv(tlv, tmp);
+								if (res != KSI_OK) {
+									KSI_pushError(ctx, res, NULL);
+									goto cleanup;
+								}
+
+								tmp = NULL;
 							}
 
-							res = tmpl[i].toTlv(ctx, listElement, tmpl[i].tag, isNonCritical, isForward != 0, &tmp);
+
+						} else {
+							res = tmpl[i].toTlv(ctx, payloadp, tmpl[i].tag, isNonCritical, isForward, &tmp);
 							if (res != KSI_OK) {
 								KSI_pushError(ctx, res, NULL);
 								goto cleanup;
@@ -918,47 +978,50 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 								KSI_pushError(ctx, res, NULL);
 								goto cleanup;
 							}
-
 							tmp = NULL;
 						}
 
+						break;
+					case KSI_TLV_TEMPLATE_COMPOSITE:
+						if (tmpl[i].listLength != NULL) {
+							int j;
 
-					} else {
-						res = tmpl[i].toTlv(ctx, payloadp, tmpl[i].tag, isNonCritical, isForward, &tmp);
-						if (res != KSI_OK) {
-							KSI_pushError(ctx, res, NULL);
-							goto cleanup;
-						}
+							for (j = 0; j < tmpl[i].listLength(payloadp); j++) {
+								void *listElement = NULL;
 
-						res = KSI_TLV_appendNestedTlv(tlv, tmp);
-						if (res != KSI_OK) {
-							KSI_pushError(ctx, res, NULL);
-							goto cleanup;
-						}
-						tmp = NULL;
-					}
+								res = KSI_TLV_new(ctx, tmpl[i].tag, isNonCritical, isForward, &tmp);
+								if (res != KSI_OK) {
+									KSI_pushError(ctx, res, NULL);
+									goto cleanup;
+								}
 
-					break;
-				case KSI_TLV_TEMPLATE_COMPOSITE:
-					if (tmpl[i].listLength != NULL) {
-						int j;
+								res = tmpl[i].listElementAt(payloadp, j, &listElement);
+								if (res != KSI_OK) {
+									KSI_pushError(ctx, res, NULL);
+									goto cleanup;
+								}
 
-						for (j = 0; j < tmpl[i].listLength(payloadp); j++) {
-							void *listElement = NULL;
+								res = construct(ctx, tmp, listElement, tmpl[i].subTemplate, tr, tr_len + 1, tr_size);
+								if (res != KSI_OK) {
+									KSI_pushError(ctx, res, NULL);
+									goto cleanup;
+								}
 
+								res = KSI_TLV_appendNestedTlv(tlv, tmp);
+								if (res != KSI_OK) {
+									KSI_pushError(ctx, res, NULL);
+									goto cleanup;
+								}
+								tmp = NULL;
+							}
+						} else {
 							res = KSI_TLV_new(ctx, tmpl[i].tag, isNonCritical, isForward, &tmp);
 							if (res != KSI_OK) {
 								KSI_pushError(ctx, res, NULL);
 								goto cleanup;
 							}
 
-							res = tmpl[i].listElementAt(payloadp, j, &listElement);
-							if (res != KSI_OK) {
-								KSI_pushError(ctx, res, NULL);
-								goto cleanup;
-							}
-
-							res = construct(ctx, tmp, listElement, tmpl[i].subTemplate, tr, tr_len + 1, tr_size);
+							res = construct(ctx, tmp, payloadp, tmpl[i].subTemplate, tr, tr_len + 1, tr_size);
 							if (res != KSI_OK) {
 								KSI_pushError(ctx, res, NULL);
 								goto cleanup;
@@ -971,33 +1034,15 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 							}
 							tmp = NULL;
 						}
-					} else {
-						res = KSI_TLV_new(ctx, tmpl[i].tag, isNonCritical, isForward, &tmp);
-						if (res != KSI_OK) {
-							KSI_pushError(ctx, res, NULL);
-							goto cleanup;
-						}
-
-						res = construct(ctx, tmp, payloadp, tmpl[i].subTemplate, tr, tr_len + 1, tr_size);
-						if (res != KSI_OK) {
-							KSI_pushError(ctx, res, NULL);
-							goto cleanup;
-						}
-
-						res = KSI_TLV_appendNestedTlv(tlv, tmp);
-						if (res != KSI_OK) {
-							KSI_pushError(ctx, res, NULL);
-							goto cleanup;
-						}
-						tmp = NULL;
-					}
-					break;
-				default:
-					KSI_LOG_error(ctx, "Unimplemented template type: %d - possible MEMORY CURRUPTION.", tmpl[i].type);
-					KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Unimplemented template type.");
-					goto cleanup;
+						break;
+					default:
+						KSI_LOG_error(ctx, "Unimplemented template type: %d - possible MEMORY CURRUPTION.", tmpl[i].type);
+						KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Unimplemented template type.");
+						goto cleanup;
+				}
 			}
 		}
+
 	}
 
 	/* Check that every mandatory component was present. */

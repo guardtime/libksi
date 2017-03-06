@@ -351,6 +351,19 @@ static void Test_Pipelining(CuTest* tc) {
 
 }
 
+static void Test_RequestAggregatorConfig(CuTest* tc) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Config *config = NULL;
+
+KSI_LOG_debug(ctx, ">>>>>>>>>>>> Test_RequestAggregatorConfig. START");
+	res = KSI_receiveAggregatorConfig(ctx, &config);
+KSI_LOG_logCtxError(ctx, KSI_LOG_DEBUG);
+KSI_LOG_debug(ctx, ">>>>>>>>>>>> Test_RequestAggregatorConfig. END");
+	CuAssert(tc, "Unable to receive aggregator config.", res == KSI_OK && config != NULL);
+
+	KSI_Config_free(config);
+}
+
 CuSuite* AggreIntegrationTests_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -362,6 +375,7 @@ CuSuite* AggreIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_CreateSignatureDifferentNetProviders);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureUserInfoFromUrl);
 	SUITE_ADD_TEST(suite, Test_Pipelining);
+	SUITE_ADD_TEST(suite, Test_RequestAggregatorConfig);
 
 	return suite;
 }

@@ -486,6 +486,103 @@ cleanup:
 	return res;
 }
 
+int KSI_createAggregationConfigRequest(KSI_CTX *ctx, KSI_AggregationReq **request) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_AggregationReq *tmp = NULL;
+	KSI_Config *cfg = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || request == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_AggregationReq_new(ctx, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_Config_new(ctx, &cfg);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_AggregationReq_setConfig(tmp, cfg);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+	cfg = NULL;
+
+	*request = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_AggregationReq_free(tmp);
+
+	return res;
+}
+
+int KSI_receiveAggregatorConfig(KSI_CTX *ctx, KSI_Config **config) {
+	int res;
+	KSI_RequestHandle *handle = NULL;
+	KSI_AggregationResp *resp = NULL;
+	KSI_AggregationReq *req = NULL;
+	KSI_Config *tmp = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || config == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_createAggregationConfigRequest(ctx, &req);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_sendAggregatorConfigRequest(ctx, req, &handle);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_RequestHandle_perform(handle);
+	if (res != KSI_OK) {
+	  KSI_pushError(ctx,res, NULL);
+	  goto cleanup;
+	}
+
+	res = KSI_RequestHandle_getAggregationResponse(handle, &resp);
+	if (res != KSI_OK) {
+	  KSI_pushError(ctx, res, NULL);
+	  goto cleanup;
+	}
+
+	res = KSI_AggregationResp_getConfig(resp, &tmp);
+
+	*config = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+	KSI_Config_free(tmp);
+	KSI_AggregationReq_free(req);
+	KSI_AggregationResp_free(resp);
+	KSI_RequestHandle_free(handle);
+
+	return res;
+}
+
+
+
 static int signatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ctx, const KSI_DataHash *hsh) {
 	int res;
 	KSI_VerificationContext context;

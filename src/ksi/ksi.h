@@ -483,6 +483,14 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile);
  */
 int KSI_verifyPublicationsFile(KSI_CTX *ctx, const KSI_PublicationsFile *pubFile);
 
+#define KSI_sendAggregatorConfigRequest(ctx, request, handle) KSI_sendSignRequest((ctx), (request), (handle))
+int KSI_createAggregationConfigRequest(KSI_CTX *ctx, KSI_AggregationReq **request);
+int KSI_receiveAggregatorConfig(KSI_CTX *ctx, KSI_Config **config);
+
+#define KSI_sendExtenderConfigRequest(ctx, request, handle) KSI_sendExtendRequest((ctx), (request), (handle))
+//int KSI_createExtenderConfigRequest(KSI_CTX *ctx, KSI_ExtendReq **request);
+//int KSI_receiveExtenderConfig(KSI_CTX *ctx, KSI_Config **conf);
+
 /**
  * Use the KSI context to verify the signature.
  * \param[in]		ctx			KSI context.

@@ -190,6 +190,11 @@ extern "C" {
 	#define KSI_TLV_TEMPLATE_LIST					3
 
 	/**
+	 * TLV object without paylaod.
+	 */
+	#define KSI_TLV_TEMPLATE_EMPTY_OBJECT			4
+
+	/**
 	 * Empty placeholder for a template with no flags set.
 	 */
 	#define KSI_TLV_TMPL_FLG_NONE			0x00
@@ -322,6 +327,8 @@ extern "C" {
 	#define KSI_TLV_OBJECT(tg, flg, gttr, sttr, fromTlv, toTlv, destr, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, flg, gttr, sttr, NULL, destr, NULL, NULL, 0, NULL, NULL, NULL, NULL, fromTlv, toTlv, descr, NULL, 0, NULL)
 	#define KSI_TLV_WRAP_OBJECT(tg, flg, gttr, sttr, parser, toTlv, destr, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, flg, gttr, sttr, NULL, destr, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, toTlv, descr, (parser), 0, NULL)
 	#define KSI_TLV_COMPOSITE_OBJECT(tg, flg, gttr, sttr, fromTlv, toTlv, destr, tmpl, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, flg, gttr, sttr, NULL, destr, (tmpl), NULL, 0, NULL, NULL, NULL, NULL, fromTlv, toTlv, descr, NULL, 0, NULL)
+
+	#define KSI_TLV_EMPTY_OBJECT(tg, flg, descr) KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_EMPTY_OBJECT, tg, flg, NULL, NULL, descr)
 
 	/**
 	 * TLV template for #KSI_Utf8String type.
