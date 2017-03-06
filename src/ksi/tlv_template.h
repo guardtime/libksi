@@ -261,6 +261,8 @@ extern "C" {
 	 */
 	#define KSI_TLV_TMPL_FLG_LAST 0x800
 
+	#define KSI_TLV_TMPL_FLG_NO_PAYLOAD 0x1000
+
 	/**
 	 * One and only one of the group 0 must be present.
 	 */
@@ -328,7 +330,6 @@ extern "C" {
 	#define KSI_TLV_WRAP_OBJECT(tg, flg, gttr, sttr, parser, toTlv, destr, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, flg, gttr, sttr, NULL, destr, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, toTlv, descr, (parser), 0, NULL)
 	#define KSI_TLV_COMPOSITE_OBJECT(tg, flg, gttr, sttr, fromTlv, toTlv, destr, tmpl, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, flg, gttr, sttr, NULL, destr, (tmpl), NULL, 0, NULL, NULL, NULL, NULL, fromTlv, toTlv, descr, NULL, 0, NULL)
 
-	#define KSI_TLV_EMPTY_OBJECT(tg, flg, descr) KSI_TLV_PRIMITIVE_TEMPLATE_DEF(KSI_TLV_TEMPLATE_EMPTY_OBJECT, tg, flg, NULL, NULL, descr)
 
 	/**
 	 * TLV template for #KSI_Utf8String type.
