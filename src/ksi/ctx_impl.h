@@ -21,6 +21,7 @@
 #define CTX_IMPL_H_
 
 #include "types.h"
+#include "hash.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -96,6 +97,9 @@ extern "C" {
 
 		/** Pointer to the last signature that failed background verification. */
 		KSI_Signature *lastFailedSignature;
+
+		size_t dataHashRecycle_maxSize;
+		KSI_LIST(KSI_DataHash) *dataHashRecycle;
 
 	};
 

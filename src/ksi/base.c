@@ -225,6 +225,10 @@ int KSI_CTX_new(KSI_CTX **context) {
 	res = KSI_PKITruststore_registerGlobals(ctx);
 	if (res != KSI_OK) goto cleanup;
 
+	ctx->dataHashRecycle_maxSize = 1024;
+	res = KSI_DataHashList_new(&ctx->dataHashRecycle);
+	if (res != KSI_OK) goto cleanup;
+
 	/* Return the context. */
 	*context = ctx;
 	ctx = NULL;
@@ -311,6 +315,8 @@ void KSI_CTX_free(KSI_CTX *ctx) {
 
 		freeCertConstraintsArray(ctx->certConstraints);
 		KSI_Signature_free(ctx->lastFailedSignature);
+
+		KSI_DataHashList_free(ctx->dataHashRecycle);
 
 		KSI_free(ctx);
 	}

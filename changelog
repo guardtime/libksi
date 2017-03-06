@@ -1,3 +1,7 @@
+Version 3.13
+
+* IMPROVEMENT: Added KSI_DataHash memory reuse.
+
 Version 3.12
 
 2017-03-02 release(3.12.2010)

@@ -24,8 +24,11 @@
 #include "internal.h"
 #include "hash_impl.h"
 #include "tlv.h"
+#include "ctx_impl.h"
 
 #define HASH_ALGO(id, name, bitcount, blocksize, trusted) {(id), (name), (bitcount), (blocksize), (trusted), id##_aliases}
+
+
 
 /** Hash algorithm aliases. The last alias has to be an empty string */
 static const char * const KSI_HASHALG_SHA1_aliases[] = {"SHA-1", ""};
@@ -38,6 +41,7 @@ static const char * const KSI_HASHALG_SHA3_256_aliases[] = { ""};
 static const char * const KSI_HASHALG_SHA3_384_aliases[] = { ""};
 static const char * const KSI_HASHALG_SHA3_512_aliases[] = { ""};
 static const char * const KSI_HASHALG_SM3_aliases[] = { "SM-3", ""};
+
 
 static const struct KSI_hashAlgorithmInfo_st {
 	/* Hash algorithm id (should mirror the array index in #KSI_hashAlgorithmInfo) */
@@ -70,10 +74,21 @@ static const struct KSI_hashAlgorithmInfo_st {
 /**
  *
  */
+void KSI_DataHash_free(KSI_DataHash *hsh) {
+	int res;
+	if (hsh == NULL) return;
+	if (hsh->ref == 0) {
+		KSI_free(hsh);
+	} else if (hsh != NULL && --hsh->ref == 0) {
+		if (KSI_DataHashList_length(hsh->ctx->dataHashRecycle) < hsh->ctx->dataHashRecycle_maxSize) {
+			res = KSI_DataHashList_append(hsh->ctx->dataHashRecycle, hsh);
 
-void KSI_DataHash_free(KSI_DataHash *hash) {
-	if (hash != NULL && --hash->ref == 0) {
-		KSI_free(hash);
+			/* Return if all went well. */
+			if (res == KSI_OK) return;
+		}
+
+		/* Free the element if the recycle bin was full, or something happend. */
+		KSI_free(hsh);
 	}
 }
 
@@ -126,6 +141,35 @@ cleanup:
 	return res;
 }
 
+static int alloc_dataHash(KSI_CTX *ctx, KSI_DataHash **out) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *tmp = NULL;
+	size_t len;
+
+	if (ctx == NULL || out == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if ((len = KSI_DataHashList_length(ctx->dataHashRecycle)) > 0) {
+		res = KSI_DataHashList_remove(ctx->dataHashRecycle, len - 1, &tmp);
+		if (res != KSI_OK) goto cleanup;
+	} else {
+		tmp = KSI_new(KSI_DataHash);
+		if (tmp == NULL) {
+			res = KSI_OUT_OF_MEMORY;
+			goto cleanup;
+		}
+	}
+
+	*out = tmp;
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 /**
  *
  */
@@ -157,9 +201,9 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const unsig
 		goto cleanup;
 	}
 
-	tmp_hash = KSI_new(KSI_DataHash);
-	if (tmp_hash == NULL) {
-		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+	res = alloc_dataHash(ctx, &tmp_hash);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
@@ -462,11 +506,14 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 	}
 	KSI_ERR_clearErrors(hasher->ctx);
 
-	hsh = KSI_new(KSI_DataHash);
-	if (hsh == NULL) {
-		KSI_pushError(hasher->ctx, res = KSI_OUT_OF_MEMORY, NULL);
+
+
+	res = alloc_dataHash(hasher->ctx, &hsh);
+	if (res != KSI_OK) {
+		KSI_pushError(hasher->ctx, res, NULL);
 		goto cleanup;
 	}
+
 	hsh->ref = 1;
 	hsh->ctx = hasher->ctx;
 
@@ -590,3 +637,4 @@ cleanup:
 
 
 KSI_IMPLEMENT_REF(KSI_DataHash);
+KSI_IMPLEMENT_LIST(KSI_DataHash, KSI_DataHash_free);
