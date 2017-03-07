@@ -356,10 +356,7 @@ static void Test_RequestAggregatorConfig(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Config *config = NULL;
 
-KSI_LOG_debug(ctx, ">>>>>>>>>>>> Test_RequestAggregatorConfig. START");
 	res = KSI_receiveAggregatorConfig(ctx, &config);
-KSI_LOG_logCtxError(ctx, KSI_LOG_DEBUG);
-KSI_LOG_debug(ctx, ">>>>>>>>>>>> Test_RequestAggregatorConfig. END");
 	CuAssert(tc, "Unable to receive aggregator config.", res == KSI_OK && config != NULL);
 
 	KSI_Config_free(config);
@@ -371,10 +368,7 @@ static void Test_RequestAggregatorConfig_pduV2(CuTest* tc) {
 
 	KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_2);
 
-KSI_LOG_debug(ctx, ">>>>>>>>>>>> Test_RequestAggregatorConfig_pduV2. START");
 	res = KSI_receiveAggregatorConfig(ctx, &config);
-KSI_LOG_logCtxError(ctx, KSI_LOG_DEBUG);
-KSI_LOG_debug(ctx, ">>>>>>>>>>>> Test_RequestAggregatorConfig_pduV2. END");
 	CuAssert(tc, "Unable to receive aggregator config.", res == KSI_OK && config != NULL);
 
 	KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);

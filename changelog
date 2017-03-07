@@ -1,3 +1,5 @@
+* IMPROVEMENT: Functionality to request configurations from extender / aggregator.
+
 Version 3.12
 * BUGFIX: Removed internal http pipeline feature.
 * BUGFIX: The example of KSI_DataHash_create in tutorial/t1_signing.md was missing an argument.
