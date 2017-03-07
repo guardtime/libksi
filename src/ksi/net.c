@@ -743,6 +743,7 @@ int KSI_RequestHandle_getExtendResponse(const KSI_RequestHandle *handle, KSI_Ext
 	KSI_ErrorPdu *error = NULL;
 	KSI_DataHash *respHmac = NULL;
 	KSI_Header *header = NULL;
+	KSI_Config *config = NULL;
 	KSI_ExtendResp *tmp = NULL;
 	const unsigned char *raw = NULL;
 	size_t len = 0;
@@ -829,17 +830,16 @@ int KSI_RequestHandle_getExtendResponse(const KSI_RequestHandle *handle, KSI_Ext
 		goto cleanup;
 	}
 
-	/*Get response object*/
-	res = KSI_ExtendPdu_getResponse(pdu, &tmp);
+	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->extender->ksi_pass,
+			(int (*)(const void*, int, const char*, KSI_DataHash**))KSI_ExtendPdu_calculateHmac,
+			(void*)pdu);
 	if (res != KSI_OK) {
 		KSI_pushError(handle->ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->extender->ksi_pass,
-			(int (*)(const void*, int, const char*, KSI_DataHash**))KSI_ExtendPdu_calculateHmac,
-			(void*)pdu);
-
+	/*Get response object*/
+	res = KSI_ExtendPdu_getResponse(pdu, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(handle->ctx, res, NULL);
 		goto cleanup;
@@ -849,6 +849,33 @@ int KSI_RequestHandle_getExtendResponse(const KSI_RequestHandle *handle, KSI_Ext
 	if (res != KSI_OK) {
 		KSI_pushError(handle->ctx, res, NULL);
 		goto cleanup;
+	}
+
+	if (tmp == NULL) {
+		res = KSI_ExtendPdu_getConfResponse(pdu, &config);
+		if (res != KSI_OK) {
+			KSI_pushError(handle->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_ExtendPdu_setConfResponse(pdu, NULL);
+		if (res != KSI_OK) {
+			KSI_pushError(handle->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_AggregationResp_new(handle->ctx, &tmp);
+		if (res != KSI_OK) {
+			KSI_pushError(handle->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_AggregationResp_setConfig(tmp, config);
+		if (res != KSI_OK) {
+			KSI_pushError(handle->ctx, res, NULL);
+			goto cleanup;
+		}
+		config = NULL;
 	}
 
 	*resp = tmp;
@@ -868,6 +895,7 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 	KSI_AggregationPdu *pdu = NULL;
 	KSI_ErrorPdu *error = NULL;
 	KSI_Header *header = NULL;
+	KSI_Config *config = NULL;
 	KSI_DataHash *respHmac = NULL;
 	KSI_DataHash *actualHmac = NULL;
 	KSI_AggregationResp *tmp = NULL;
@@ -893,8 +921,6 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 	}
 
 	KSI_LOG_logBlob(handle->ctx, KSI_LOG_DEBUG, "Parsing aggregation response:", raw, len);
-
-
 
 	/* Get PDU object. */
 	res = KSI_AggregationPdu_parse(handle->ctx, raw, len, &pdu);
@@ -941,13 +967,15 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 		goto cleanup;
 	}
 
+	/* Check HMAC. */
 	if (respHmac == NULL){
 		KSI_pushError(handle->ctx, res = KSI_INVALID_FORMAT, "A successful aggregation response must have a HMAC.");
 		goto cleanup;
 	}
 
-	/* Check HMAC. */
-	res = KSI_AggregationPdu_getHmac(pdu, &respHmac);
+	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->aggregator->ksi_pass,
+			(int (*)(const void*, int, const char*, KSI_DataHash**))KSI_AggregationPdu_calculateHmac,
+			(void*)pdu);
 	if (res != KSI_OK) {
 		KSI_pushError(handle->ctx, res, NULL);
 		goto cleanup;
@@ -960,19 +988,37 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 		goto cleanup;
 	}
 
-	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->aggregator->ksi_pass,
-			(int (*)(const void*, int, const char*, KSI_DataHash**))KSI_AggregationPdu_calculateHmac,
-			(void*)pdu);
-
+	res = KSI_AggregationPdu_setResponse(pdu, NULL);
 	if (res != KSI_OK) {
 		KSI_pushError(handle->ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = KSI_AggregationPdu_setResponse(pdu, NULL);
-	if (res != KSI_OK) {
-		KSI_pushError(handle->ctx, res, NULL);
-		goto cleanup;
+	if (tmp == NULL) {
+		res = KSI_AggregationPdu_getConfResponse(pdu, &config);
+		if (res != KSI_OK) {
+			KSI_pushError(handle->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_AggregationPdu_setConfResponse(pdu, NULL);
+		if (res != KSI_OK) {
+			KSI_pushError(handle->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_AggregationResp_new(handle->ctx, &tmp);
+		if (res != KSI_OK) {
+			KSI_pushError(handle->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_AggregationResp_setConfig(tmp, config);
+		if (res != KSI_OK) {
+			KSI_pushError(handle->ctx, res, NULL);
+			goto cleanup;
+		}
+		config = NULL;
 	}
 
 	*resp = tmp;
@@ -982,6 +1028,8 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 
 cleanup:
 
+	KSI_AggregationResp_free(tmp);
+	KSI_Config_free(config);
 	KSI_DataHash_free(actualHmac);
 	KSI_AggregationPdu_free(pdu);
 

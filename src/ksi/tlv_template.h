@@ -256,7 +256,10 @@ extern "C" {
 	 */
 	#define KSI_TLV_TMPL_FLG_LAST 0x800
 
-	#define KSI_TLV_TMPL_FLG_NO_PAYLOAD 0x1000
+	/**
+	 * Element with this flag enabled does not have any payload.
+	 */
+	#define KSI_TLV_TMPL_FLG_NO_VALUE 0x1000
 
 	/**
 	 * One and only one of the group 0 must be present.

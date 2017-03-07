@@ -22,6 +22,7 @@
 #include <ksi/net_http.h>
 #include <ksi/net_uri.h>
 #include <ksi/net.h>
+#include "../src/ksi/internal.h"
 
 extern KSI_CTX *ctx;
 
@@ -262,6 +263,28 @@ static void Test_ExtendSignatureUserInfoFromUrl(CuTest* tc) {
 	return;
 }
 
+static void Test_RequestExtenderConfig(CuTest* tc) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Config *config = NULL;
+
+	res = KSI_receiveExtenderConfig(ctx, &config);
+	CuAssert(tc, "Unable to receive extender config.", res == KSI_INVALID_STATE && config == NULL);
+}
+
+static void Test_RequestExtenderConfig_pduV2(CuTest* tc) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Config *config = NULL;
+
+	KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
+
+	res = KSI_receiveExtenderConfig(ctx, &config);
+	CuAssert(tc, "Unable to receive extender config.", res == KSI_OK && config != NULL);
+
+	KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
+
+	KSI_Config_free(config);
+}
+
 
 CuSuite* ExtIntegrationTests_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
@@ -273,6 +296,8 @@ CuSuite* ExtIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_ExtendSignatureUsingAggregator);
 	SUITE_ADD_TEST(suite, Test_ExtendSignatureDifferentNetProviders);
 	SUITE_ADD_TEST(suite, Test_ExtendSignatureUserInfoFromUrl);
+	SUITE_ADD_TEST(suite, Test_RequestExtenderConfig);
+	SUITE_ADD_TEST(suite, Test_RequestExtenderConfig_pduV2);
 
 	return suite;
 }

@@ -108,10 +108,10 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_Header)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_Config)
-	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Config_getMaxLevel, KSI_Config_setMaxLevel, "max_level")
-	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Config_getAggrAlgo, KSI_Config_setAggrAlgo, "aggr_algo")
-	KSI_TLV_INTEGER(0x03, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Config_getAggrPeriod, KSI_Config_setAggrPeriod, "aggr_period")
-	KSI_TLV_UTF8_STRING_LIST(0x04, KSI_TLV_TMPL_FLG_MANDATORY, KSI_Config_getParentUri, KSI_Config_setParentUri, "parent_uri")
+	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_NONE, KSI_Config_getMaxLevel, KSI_Config_setMaxLevel, "max_level")
+	KSI_TLV_INTEGER(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_Config_getAggrAlgo, KSI_Config_setAggrAlgo, "aggr_algo")
+	KSI_TLV_INTEGER(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_Config_getAggrPeriod, KSI_Config_setAggrPeriod, "aggr_period")
+	KSI_TLV_UTF8_STRING_LIST(0x04, KSI_TLV_TMPL_FLG_NONE, KSI_Config_getParentUri, KSI_Config_setParentUri, "parent_uri")
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationConf)
@@ -169,13 +169,17 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationReq)
 	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationReq_getRequestId, KSI_AggregationReq_setRequestId, "req_id")
 	KSI_TLV_IMPRINT(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationReq_getRequestHash, KSI_AggregationReq_setRequestHash, "req_hash")
 	KSI_TLV_INTEGER(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationReq_getRequestLevel, KSI_AggregationReq_setRequestLevel, "req_level")
-	KSI_TLV_COMPOSITE(0x10, KSI_TLV_TMPL_FLG_NONE | KSI_TLV_TMPL_FLG_NO_PAYLOAD, KSI_AggregationReq_getConfig, KSI_AggregationReq_setConfig, KSI_Config, "config")
+	KSI_TLV_COMPOSITE(0x10, KSI_TLV_TMPL_FLG_NONE | KSI_TLV_TMPL_FLG_NO_VALUE, KSI_AggregationReq_getConfig, KSI_AggregationReq_setConfig, KSI_Config, "config")
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationReq_v2)
 	KSI_TLV_INTEGER(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationReq_getRequestId, KSI_AggregationReq_setRequestId, "req_id")
 	KSI_TLV_IMPRINT(0x02, KSI_TLV_TMPL_FLG_MANDATORY, KSI_AggregationReq_getRequestHash, KSI_AggregationReq_setRequestHash, "req_hash")
 	KSI_TLV_INTEGER(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_AggregationReq_getRequestLevel, KSI_AggregationReq_setRequestLevel, "req_level")
+KSI_END_TLV_TEMPLATE
+
+KSI_DEFINE_TLV_TEMPLATE(KSI_ConfigReq)
+	KSI_TLV_COMPOSITE(0x04, KSI_TLV_TMPL_FLG_NONE | KSI_TLV_TMPL_FLG_NO_VALUE, KSI_AggregationReq_getConfig, KSI_AggregationReq_setConfig, KSI_Config, "config")
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_RequestAck)
@@ -242,7 +246,7 @@ KSI_END_TLV_TEMPLATE
 KSI_DEFINE_TLV_TEMPLATE(KSI_AggregationReqPdu)
 	KSI_TLV_OBJECT(0x01, KSI_TLV_TMPL_FLG_FIRST, KSI_AggregationPdu_getHeader, KSI_AggregationPdu_setHeader, KSI_Header_fromTlv, KSI_Header_toTlv, KSI_Header_free, "header")
 	KSI_TLV_OBJECT(0x02, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_AggregationPdu_getRequest, KSI_AggregationPdu_setRequest, KSI_AggregationReq_fromTlv, KSI_AggregationReq_toTlv, KSI_AggregationReq_free, "aggr_req")
-	KSI_TLV_COMPOSITE(0x04, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_AggregationPdu_getConfRequest, KSI_AggregationPdu_setConfRequest, KSI_AggregationConf, "aggr_conf_req")
+	KSI_TLV_COMPOSITE(0x04, KSI_TLV_TMPL_FLG_LEAST_ONE_G0 | KSI_TLV_TMPL_FLG_NO_VALUE, KSI_AggregationPdu_getConfRequest, KSI_AggregationPdu_setConfRequest, KSI_AggregationConf, "aggr_conf_req")
 	KSI_TLV_COMPOSITE(0x05, KSI_TLV_TMPL_FLG_LEAST_ONE_G0, KSI_AggregationPdu_getAckRequest, KSI_AggregationPdu_setAckRequest, KSI_AggregationAckReq, "aggr_ack_req")
 	KSI_TLV_IMPRINT(0x1F, KSI_TLV_TMPL_FLG_LAST, KSI_AggregationPdu_getHmac, KSI_AggregationPdu_setHmac, "hmac")
 KSI_END_TLV_TEMPLATE
@@ -979,7 +983,7 @@ static int construct(KSI_CTX *ctx, KSI_TLV *tlv, const void *payload, const KSI_
 							goto cleanup;
 						}
 
-						if (!IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_NO_PAYLOAD)) {
+						if (!IS_FLAG_SET(tmpl[i], KSI_TLV_TMPL_FLG_NO_VALUE)) {
 							res = construct(ctx, tmp, payloadp, tmpl[i].subTemplate, tr, tr_len + 1, tr_size);
 							if (res != KSI_OK) {
 								KSI_pushError(ctx, res, NULL);
