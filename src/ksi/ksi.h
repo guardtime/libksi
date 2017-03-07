@@ -310,15 +310,13 @@ typedef enum KSI_Option_en {
 	 * Type:		size_t.
 	 * Range:		KSI_PDU_VERSION_1 .. KSI_PDU_VERSION_2
 	 */
-	KSI_CTX_FLAG_AGGR_PDU_VER,
-	KSI_OPT_AGGR_PDU_VER = KSI_CTX_FLAG_AGGR_PDU_VER,
+	KSI_OPT_AGGR_PDU_VER,
 	/**
 	 * Description:	PDU version for KSI extending messages.
 	 * Type:		size_t.
 	 * Range:		KSI_PDU_VERSION_1 .. KSI_PDU_VERSION_2
 	 */
-	KSI_CTX_FLAG_EXT_PDU_VER,
-	KSI_OPT_EXT_PDU_VER = KSI_CTX_FLAG_EXT_PDU_VER,
+	KSI_OPT_EXT_PDU_VER,
 
 	/**
 	 * Description: Aggregator HMAC algorithm.
@@ -335,8 +333,6 @@ typedef enum KSI_Option_en {
 
 	__KSI_NUMBER_OF_OPTIONS,
 } KSI_Option;
-
-#define KSI_CtxFlag KSI_Option_en
 
 /**
  * This function returns a pointer to a constant string describing the
@@ -622,10 +618,17 @@ int KSI_CTX_setAggregator(KSI_CTX *ctx, const char *uri, const char *loginId, co
  */
 int KSI_CTX_setOption(KSI_CTX *ctx, KSI_Option opt, void *param);
 
-#define KSI_CTX_setFlag(ctx, flag, param) KSI_CTX_setOption((ctx), (flag), (param))
-
 #define KSI_CTX_setAggregatorHmacAlgorithm(ctx, alg_id) KSI_CTX_setOption(ctx, KSI_OPT_AGGR_HMAC_ALGORITHM, (void*)(alg_id))
 #define KSI_CTX_setExtenderHmacAlgorithm(ctx, alg_id) KSI_CTX_setOption(ctx, KSI_OPT_EXT_HMAC_ALGORITHM, (void*)(alg_id))
+
+/**
+ * Deprecated. Defined for backwards compatibility.
+ * See #KSI_Option and #KSI_CTX_setOption for replacement.
+ */
+#define KSI_CTX_FLAG_AGGR_PDU_VER KSI_OPT_AGGR_PDU_VER
+#define KSI_CTX_FLAG_EXT_PDU_VER KSI_OPT_EXT_PDU_VER
+#define KSI_CtxFlag KSI_Option_en
+#define KSI_CTX_setFlag(ctx, flag, param) KSI_CTX_setOption((ctx), (flag), (param))
 
 /**
  * Setter for transfer timeout.

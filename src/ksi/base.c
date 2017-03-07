@@ -171,6 +171,13 @@ const char *KSI_getErrorString(int statusCode) {
 	}
 }
 
+static void initOptions(KSI_CTX *ctx) {
+	KSI_CTX_setOption(ctx, KSI_OPT_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
+	KSI_CTX_setOption(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
+	KSI_CTX_setOption(ctx, KSI_OPT_AGGR_HMAC_ALGORITHM, (void*)KSI_getHashAlgorithmByName("default"));
+	KSI_CTX_setOption(ctx, KSI_OPT_EXT_HMAC_ALGORITHM, (void*)KSI_getHashAlgorithmByName("default"));
+}
+
 int KSI_CTX_new(KSI_CTX **context) {
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -204,10 +211,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 
 	/* Init options. */
 	memset(ctx->options, 0, sizeof(ctx->options));
-	ctx->options[KSI_OPT_AGGR_PDU_VER] = KSI_AGGREGATION_PDU_VERSION;
-	ctx->options[KSI_OPT_EXT_PDU_VER] = KSI_EXTENDING_PDU_VERSION;
-	ctx->options[KSI_OPT_AGGR_HMAC_ALGORITHM] = (size_t)KSI_getHashAlgorithmByName("default");
-	ctx->options[KSI_OPT_EXT_HMAC_ALGORITHM] = (size_t)KSI_getHashAlgorithmByName("default");
+	initOptions(ctx);
 
 	/* Create global cleanup list as the first thing. */
 	res = KSI_List_new(NULL, &ctx->cleanupFnList);
