@@ -65,7 +65,7 @@ out/
 *.dSYM/
 
 # Binaries and log files
-ksi_verify.log
+*.log
 src/example/.libs/
 src/example/ksi_extend
 src/example/ksi_multisig_add
@@ -76,15 +76,18 @@ src/example/ksi_sign_aggr
 src/example/ksi_verify
 src/example/ksi_verify_pub
 src/ksi/.libs/
-test.log
 test/.dirstamp
 test/.libs/
 test/cutest/.dirstamp
 test/parse-benchmark
 test/resigner
 test/runner
+test/integration-tests
 test/serialize-benchmark
 testsuite-xunit.xml
+
+# Temporary and backup files
+*.bak
 
 # Code coverage report files #
 coverage.info

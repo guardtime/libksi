@@ -1,3 +1,8 @@
+libksi (3.12.2010) RELEASED; urgency=low
+
+  * BUGFIX: Removed internal http pipeline feature.
+  * BUGFIX: The example of KSI_DataHash_create in tutorial/t1_signing.md was missing an argument.
+
 libksi (3.12.2000) RELEASED; urgency=low
 
   * IMPROVEMENT: Support for adding doxygen generated html files into rpm and debian package.

@@ -366,12 +366,12 @@ static void Test_RequestAggregatorConfig_pduV2(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Config *config = NULL;
 
-	KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_2);
+	KSI_CTX_setFlag(ctx, KSI_OPT_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_2);
 
 	res = KSI_receiveAggregatorConfig(ctx, &config);
 	CuAssert(tc, "Unable to receive aggregator config.", res == KSI_OK && config != NULL);
 
-	KSI_CTX_setFlag(ctx, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
+	KSI_CTX_setFlag(ctx, KSI_OPT_AGGR_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
 
 	KSI_Config_free(config);
 }
