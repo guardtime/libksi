@@ -2211,6 +2211,7 @@ void KSI_ExtendResp_free(KSI_ExtendResp *t) {
 		KSI_Integer_free(t->requestId);
 		KSI_Integer_free(t->status);
 		KSI_Utf8String_free(t->errorMsg);
+		KSI_Config_free(t->config);
 		KSI_Integer_free(t->lastTime);
 		KSI_CalendarHashChain_free(t->calendarHashChain);
 		KSI_TLV_free(t->baseTlv);
@@ -2232,6 +2233,7 @@ int KSI_ExtendResp_new(KSI_CTX *ctx, KSI_ExtendResp **t) {
 	tmp->requestId = NULL;
 	tmp->status = NULL;
 	tmp->errorMsg = NULL;
+	tmp->config = NULL;
 	tmp->lastTime = NULL;
 	tmp->calendarHashChain = NULL;
 	tmp->baseTlv = NULL;
