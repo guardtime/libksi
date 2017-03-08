@@ -49,6 +49,9 @@ extern "C" {
 #	define	TEST_RESOURCE_EXT_VER "v1"
 #endif
 
+#define TEST_DEFAULT_AGGR_HMAC_ALGORITHM KSI_HASHALG_SHA2_256
+#define TEST_DEFAULT_EXT_HMAC_ALGORITHM  KSI_HASHALG_SHA2_256
+
 #define lprintf //printf("%s:%d - ", __FILE__, __LINE__); printf
 
 int KSITest_memcmp(void *ptr1, void *ptr2, size_t len);
