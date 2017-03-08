@@ -864,13 +864,13 @@ int KSI_RequestHandle_getExtendResponse(const KSI_RequestHandle *handle, KSI_Ext
 			goto cleanup;
 		}
 
-		res = KSI_AggregationResp_new(handle->ctx, &tmp);
+		res = KSI_ExtendResp_new(handle->ctx, &tmp);
 		if (res != KSI_OK) {
 			KSI_pushError(handle->ctx, res, NULL);
 			goto cleanup;
 		}
 
-		res = KSI_AggregationResp_setConfig(tmp, config);
+		res = KSI_ExtendResp_setConfig(tmp, config);
 		if (res != KSI_OK) {
 			KSI_pushError(handle->ctx, res, NULL);
 			goto cleanup;
@@ -884,6 +884,9 @@ int KSI_RequestHandle_getExtendResponse(const KSI_RequestHandle *handle, KSI_Ext
 	res = KSI_OK;
 
 cleanup:
+
+	KSI_ExtendResp_free(tmp);
+	KSI_Config_free(config);
 
 	KSI_ExtendPdu_free(pdu);
 

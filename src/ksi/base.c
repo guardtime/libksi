@@ -551,7 +551,9 @@ static int receiveConfig(KSI_CTX *ctx, KSI_Config **config,
 		int (*createRequest)(KSI_CTX *, void **),
 		int (*sendRequest)(KSI_CTX *, void *, KSI_RequestHandle **),
 		int (*getResponse)(const KSI_RequestHandle *, void **),
-		int (*getConfig)(const void *t, KSI_Config **)) {
+		int (*getConfig)(const void *t, KSI_Config **),
+		void (*requestFree)(void *),
+		void (*responseFree)(void*)) {
 	int res;
 	KSI_RequestHandle *handle = NULL;
 	void *resp = NULL;
@@ -601,8 +603,8 @@ static int receiveConfig(KSI_CTX *ctx, KSI_Config **config,
 
 cleanup:
 	KSI_nofree(tmp);
-	KSI_AggregationReq_free(req);
-	KSI_AggregationResp_free(resp);
+	requestFree(req);
+	responseFree(resp);
 	KSI_RequestHandle_free(handle);
 
 	return res;
@@ -617,7 +619,9 @@ int KSI_receiveAggregatorConfig(KSI_CTX *ctx, KSI_Config **config) {
 			(int (*)(KSI_CTX *, void **))KSI_createAggregationConfigRequest,
 			(int (*)(KSI_CTX *, void *, KSI_RequestHandle **))KSI_sendAggregatorConfigRequest,
 			(int (*)(const KSI_RequestHandle *, void **))KSI_RequestHandle_getAggregationResponse,
-			(int (*)(const void *t, KSI_Config **))KSI_AggregationResp_getConfig);
+			(int (*)(const void *t, KSI_Config **))KSI_AggregationResp_getConfig,
+			(void (*)(void *))KSI_AggregationReq_free,
+			(void (*)(void *))KSI_AggregationResp_free);
 }
 
 int KSI_sendExtenderConfigRequest(KSI_CTX *ctx, KSI_ExtendReq *request, KSI_RequestHandle **handle) {
@@ -631,7 +635,9 @@ int KSI_receiveExtenderConfig(KSI_CTX *ctx, KSI_Config **config) {
 			(int (*)(KSI_CTX *, void **))KSI_createExtenderConfigRequest,
 			(int (*)(KSI_CTX *, void *, KSI_RequestHandle **))KSI_sendExtenderConfigRequest,
 			(int (*)(const KSI_RequestHandle *, void **))KSI_RequestHandle_getExtendResponse,
-			(int (*)(const void *t, KSI_Config **))KSI_ExtendResp_getConfig);
+			(int (*)(const void *t, KSI_Config **))KSI_ExtendResp_getConfig,
+			(void (*)(void *))KSI_ExtendReq_free,
+			(void (*)(void *))KSI_ExtendResp_free);
 }
 
 static int signatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ctx, const KSI_DataHash *hsh) {

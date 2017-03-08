@@ -159,6 +159,12 @@ EXPORTS
 	KSI_sendExtendRequest
 	KSI_sendPublicationRequest
 	KSI_receivePublicationsFile
+	KSI_createAggregationConfigRequest
+	KSI_createExtenderConfigRequest
+	KSI_sendAggregatorConfigRequest
+	KSI_sendExtenderConfigRequest
+	KSI_receiveAggregatorConfig
+	KSI_receiveExtenderConfig
 	KSI_verifyPublicationsFile
 	KSI_verifySignature
 	KSI_verifyDataHash
