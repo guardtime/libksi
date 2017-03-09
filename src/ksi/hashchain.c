@@ -27,9 +27,6 @@
 #include "hashchain_impl.h"
 #include "impl/meta_data_element_impl.h"
 
-/* For optimization reasons, we need need access to KSI_DataHasher->closeExisting() function. */
-#include "hash_impl.h"
-
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationHashChain);
 
 KSI_IMPORT_TLV_TEMPLATE(KSI_HashChainLink);
@@ -217,21 +214,20 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 				if (tmp != algo_id) {
 					algo_id = tmp;
 					if (hsh != NULL) {
-						if (hsr == NULL) {
-							res = KSI_INVALID_STATE;
-						} else {
-							res = hsr->closeExisting(hsr, hsh);
-						}
-						if (res != KSI_OK) {
-							KSI_pushError(ctx, res, NULL);
-							goto cleanup;
-						}
-						KSI_DataHasher_free(hsr);
-						res = KSI_DataHasher_open(ctx, algo_id, &hsr);
-						if (res != KSI_OK) {
-							KSI_pushError(ctx, res, NULL);
-							goto cleanup;
-						}
+						KSI_DataHash_free(hsh);
+					}
+
+					res = KSI_DataHasher_close(hsr, &hsh);
+					if (res != KSI_OK) {
+						KSI_pushError(ctx, res, NULL);
+						goto cleanup;
+					}
+
+					KSI_DataHasher_free(hsr);
+					res = KSI_DataHasher_open(ctx, algo_id, &hsr);
+					if (res != KSI_OK) {
+						KSI_pushError(ctx, res, NULL);
+						goto cleanup;
 					}
 				}
 			}
@@ -284,14 +280,11 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 		KSI_DataHasher_add(hsr, &chr_level, 1);
 
 		if (hsh != NULL) {
-			if (hsr == NULL) {
-				res = KSI_INVALID_STATE;
-			} else {
-				res = hsr->closeExisting(hsr, hsh);
-			}
-		} else {
-			res = KSI_DataHasher_close(hsr, &hsh);
+			KSI_DataHash_free(hsh);
+			hsh = NULL;
 		}
+
+		res = KSI_DataHasher_close(hsr, &hsh);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
