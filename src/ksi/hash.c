@@ -461,9 +461,9 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 	}
 	KSI_ERR_clearErrors(hasher->ctx);
 
-	hsh = KSI_new(KSI_DataHash);
-	if (hsh == NULL) {
-		KSI_pushError(hasher->ctx, res = KSI_OUT_OF_MEMORY, NULL);
+	res = alloc_dataHash(hasher->ctx, &hsh);
+	if (res != KSI_OK) {
+		KSI_pushError(hasher->ctx, res, NULL);
 		goto cleanup;
 	}
 	hsh->ref = 1;
@@ -474,7 +474,6 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 		KSI_pushError(hasher->ctx, res, NULL);
 		goto cleanup;
 	}
-
 
 	if (data_hash != NULL) {
 		*data_hash = hsh;
