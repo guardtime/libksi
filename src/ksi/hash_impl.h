@@ -35,6 +35,7 @@ extern "C" {
 
 		/** Imprint: 1 byte for algorithm and #KSI_MAX_IMPRINT_LEN bytes for the actual digest. */
 		unsigned char imprint[KSI_MAX_IMPRINT_LEN + 1]; /* For an extra '0' for meta hash. */
+
 		/** Length of the imprint actual value. */
 		size_t imprint_length;
 	};

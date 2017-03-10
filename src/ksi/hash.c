@@ -70,7 +70,6 @@ static const struct KSI_hashAlgorithmInfo_st {
 /**
  *
  */
-
 void KSI_DataHash_free(KSI_DataHash *hash) {
 	if (hash != NULL && --hash->ref == 0) {
 		KSI_free(hash);
