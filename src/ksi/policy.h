@@ -36,9 +36,6 @@ extern "C" {
 		/** Indicates whether signature extention is allowed (0 means no, and any non-zero is considered to be true). */
 		int extendingAllowed;
 
-		/** Initial aggregation level. */
-		KSI_uint64_t docAggrLevel;
-
 		/** Document hash to be verified. */
 		const KSI_DataHash *documentHash;
 

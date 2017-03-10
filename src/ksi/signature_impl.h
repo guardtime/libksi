@@ -92,6 +92,9 @@ extern "C" {
 		/** This function replaces the calendar chain of the signature.
 		 * \note The function does not check the internal consistency! */
 		int (*replaceCalendarChain)(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain);
+
+		int (*addRootLevel)(KSI_CTX *ctx, KSI_Signature *sig, KSI_uint64_t rootLevel);
+		int (*subRootLevel)(KSI_CTX *ctx, KSI_Signature *sig, KSI_uint64_t rootLevel);
 	};
 
 

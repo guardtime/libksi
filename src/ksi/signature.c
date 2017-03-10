@@ -108,6 +108,7 @@ int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHash
 	KSI_LIST(KSI_HashChainLink) *pList = NULL;
 	KSI_LIST(KSI_Integer) *pIndex = NULL;
 	KSI_LIST(KSI_Integer) *pCurrentIndex = NULL;
+	int rootLevel = 0;
 
 	if (sig == NULL || aggr == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -115,6 +116,21 @@ int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHash
 	}
 
 	KSI_ERR_clearErrors(sig->ctx);
+
+	/* Aggregate the hash chain. */
+	res = KSI_AggregationHashChain_aggregate(aggr, 0, &rootLevel, NULL);
+	if (res != KSI_OK) {
+		KSI_pushError(sig->ctx, res, NULL);
+		goto cleanup;
+	}
+	/* Remove applied level correction from signature */
+	if (rootLevel != 0) {
+		res = sig->subRootLevel(sig->ctx, sig, rootLevel);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+	}
 
 	res = KSI_AggregationHashChain_getChain(aggr, &pList);
 	if (res != KSI_OK) {
@@ -932,8 +948,6 @@ static int parseAggregationResponse(KSI_CTX *ctx, KSI_uint64_t rootLevel, KSI_Ag
 		goto cleanup;
 	}
 
-	KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Signature", builder->sig->baseTlv);
-
 	/* Turn off the verification. */
 	builder->noVerify = 1;
 	res = KSI_SignatureBuilder_close(builder, rootLevel, signature);
@@ -976,7 +990,6 @@ static int KSI_SignatureVerifier_verifyWithPolicy(KSI_CTX *ctx, KSI_Signature *s
 	}
 
 	if (verificationContext == NULL) {
-		context.docAggrLevel = rootLevel;
 		context.documentHash = docHsh;
 	} else {
 		context = *verificationContext;
@@ -1062,7 +1075,7 @@ int KSI_Signature_signAggregatedWithPolicy(KSI_CTX *ctx, KSI_DataHash *rootHash,
 		goto cleanup;
 	}
 
-	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, sign, rootLevel, rootHash, policy, context);
+	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, sign, 0, rootHash, policy, context);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
