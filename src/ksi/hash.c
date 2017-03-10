@@ -70,9 +70,25 @@ static const struct KSI_hashAlgorithmInfo_st {
 /**
  *
  */
-void KSI_DataHash_free(KSI_DataHash *hash) {
-	if (hash != NULL && --hash->ref == 0) {
-		KSI_free(hash);
+void KSI_DataHash_free(KSI_DataHash *hsh) {
+	int res;
+	/* Do nothing if the object is NULL. */
+	if (hsh == NULL) return;
+
+	/* If the reference count is already 0, it means the object is actually located
+	 * in the object cache. In case of a user double free, this might become an issue. */
+	if (hsh->ref == 0) {
+		KSI_free(hsh);
+	} else if (--hsh->ref == 0) {
+		if (KSI_DataHashList_length(hsh->ctx->dataHashRecycle) < hsh->ctx->dataHashRecycle_maxSize) {
+			res = KSI_DataHashList_append(hsh->ctx->dataHashRecycle, hsh);
+
+			/* Return if all went well. */
+			if (res == KSI_OK) return;
+		}
+
+		/* Free the element if the recycle bin was full, or something happened. */
+		KSI_free(hsh);
 	}
 }
 
