@@ -80,7 +80,7 @@ void KSI_DataHash_free(KSI_DataHash *hsh) {
 	if (hsh->ref == 0) {
 		KSI_free(hsh);
 	} else if (--hsh->ref == 0) {
-		if (KSI_DataHashList_length(hsh->ctx->dataHashRecycle) < hsh->ctx->dataHashRecycle_maxSize) {
+		if (KSI_DataHashList_length(hsh->ctx->dataHashRecycle) < (size_t)hsh->ctx->options[KSI_OPT_DATAHASH_CACHE_SIZE]) {
 			res = KSI_DataHashList_append(hsh->ctx->dataHashRecycle, hsh);
 
 			/* Return if all went well. */
