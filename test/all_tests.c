@@ -134,6 +134,18 @@ static int RunAllTests() {
 		exit(EXIT_FAILURE);
 	}
 
+	res = KSI_CTX_setAggregatorHmacAlgorithm(ctx, TEST_DEFAULT_AGGR_HMAC_ALGORITHM);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to set aggregator HMAC algorithm.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	res = KSI_CTX_setExtenderHmacAlgorithm(ctx, TEST_DEFAULT_EXT_HMAC_ALGORITHM);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to set extender HMAC algorithm.\n");
+		exit(EXIT_FAILURE);
+	}
+
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, testPubFileCertConstraints);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to set publications file verification constraints.\n");

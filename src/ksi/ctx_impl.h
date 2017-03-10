@@ -61,10 +61,10 @@ extern "C" {
 		/************
 		 * TRANSPORT.
 		 ************/
-	
+
 		/** Flag indicating if the user has provided a custom network provider. */
 		int isCustomNetProvider;
-	
+
 		/** Network provider. */
 		KSI_NetworkClient *netProvider;
 
@@ -83,8 +83,8 @@ extern "C" {
 		/** User defined function to be called on the request pdu header before sending it. */
 		KSI_RequestHeaderCallback requestHeaderCB;
 
-		/** Array of configuration flags. */
-		size_t flags[KSI_CTX_NUM_OF_FLAGS];
+		/** Array of configuration options. */
+		size_t options[__KSI_NUMBER_OF_OPTIONS];
 
 		/** Counter for the requests sent by this context. */
 		KSI_uint64_t requestCounter;

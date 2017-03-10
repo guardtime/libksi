@@ -9,6 +9,7 @@ Version 3.12
 * BUGFIX: The example of KSI_DataHash_create in tutorial/t1_signing.md was missing an argument.
 
 2017-02-27 release(3.12.2000)
+* IMPROVEMENT: HMAC algorithm configuration support for outgoing and incomming messages.
 * IMPROVEMENT: Support for adding doxygen generated html files into rpm and debian package.
 * IMPROVEMENT: Added flag --with-default-pdu-version=version to configure script.
 * IMPROVEMENT: Improve test support for different PDU version.

@@ -38,23 +38,26 @@ extern KSI_CTX *ctx;
 #define TEST_PASS "anon"
 
 static unsigned char mockImprint[] ={0x01,
-									 0x11, 0xa7, 0x00, 0xb0, 0xc8, 0x06, 0x6c, 0x47,
-									 0xec, 0xba, 0x05, 0xed, 0x37, 0xbc, 0x14, 0xdc,
-									 0xad, 0xb2, 0x38, 0x55, 0x2d, 0x86, 0xc6, 0x59,
-									 0x34, 0x2d, 0x1d, 0x7e, 0x87, 0xb8, 0x77, 0x2d};
+		 0x11, 0xa7, 0x00, 0xb0, 0xc8, 0x06, 0x6c, 0x47,
+		 0xec, 0xba, 0x05, 0xed, 0x37, 0xbc, 0x14, 0xdc,
+		 0xad, 0xb2, 0x38, 0x55, 0x2d, 0x86, 0xc6, 0x59,
+		 0x34, 0x2d, 0x1d, 0x7e, 0x87, 0xb8, 0x77, 0x2d};
 
 static void preTest(void) {
 	ctx->netProvider->requestCount = 0;
 
 	/* Set PDU v2. */
-	ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] = KSI_PDU_VERSION_2;
-	ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER]  = KSI_PDU_VERSION_2;
+	ctx->options[KSI_OPT_AGGR_PDU_VER] = KSI_PDU_VERSION_2;
+	ctx->options[KSI_OPT_EXT_PDU_VER]  = KSI_PDU_VERSION_2;
 }
 
 static void postTest(void) {
 	/* Restore default PDU version. */
-	ctx->flags[KSI_CTX_FLAG_AGGR_PDU_VER] = KSI_AGGREGATION_PDU_VERSION;
-	ctx->flags[KSI_CTX_FLAG_EXT_PDU_VER]  = KSI_EXTENDING_PDU_VERSION;
+	ctx->options[KSI_OPT_AGGR_PDU_VER] = KSI_AGGREGATION_PDU_VERSION;
+	ctx->options[KSI_OPT_EXT_PDU_VER]  = KSI_EXTENDING_PDU_VERSION;
+	/* Restore default HMAC algorithm. */
+	ctx->options[KSI_OPT_AGGR_HMAC_ALGORITHM] = TEST_DEFAULT_AGGR_HMAC_ALGORITHM;
+	ctx->options[KSI_OPT_EXT_HMAC_ALGORITHM] = TEST_DEFAULT_EXT_HMAC_ALGORITHM;
 }
 
 static void testSigning(CuTest* tc) {
@@ -97,6 +100,83 @@ static void testSigning(CuTest* tc) {
 	KSI_free(raw);
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
+
+#undef TEST_AGGR_RESPONSE_FILE
+#undef TEST_RES_SIGNATURE_FILE
+}
+
+static void testSigning_hmacAlgorithmSha512(CuTest* tc) {
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/v2/ok-sig-2014-07-01.1-aggr_response-hmac_sha512.tlv"
+#define TEST_RES_SIGNATURE_FILE "resource/tlv/ok-sig-2014-07-01.1.ksig"
+
+	int res;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+	unsigned char *raw = NULL;
+	size_t raw_len = 0;
+	unsigned char expected[0x1ffff];
+	size_t expected_len = 0;
+	FILE *f = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
+	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+
+	res = KSI_CTX_setAggregatorHmacAlgorithm(ctx, KSI_HASHALG_SHA2_512);
+	CuAssert(tc, "Unable to set aggregator HMAC algorithm", res == KSI_OK);
+
+	res = KSI_createSignature(ctx, hsh, &sig);
+	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
+
+	res = KSI_Signature_serialize(sig, &raw, &raw_len);
+	CuAssert(tc, "Unable to serialize signature.", res == KSI_OK && raw != NULL && raw_len > 0);
+
+	f = fopen(getFullResourcePath(TEST_RES_SIGNATURE_FILE), "rb");
+	CuAssert(tc, "Unable to load sample signature.", f != NULL);
+
+	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
+	CuAssert(tc, "Failed to read sample", expected_len > 0);
+
+	CuAssert(tc, "Serialized signature length mismatch", expected_len == raw_len);
+	CuAssert(tc, "Serialized signature content mismatch.", !memcmp(expected, raw, raw_len));
+
+	if (f != NULL) fclose(f);
+	KSI_free(raw);
+	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
+
+#undef TEST_AGGR_RESPONSE_FILE
+#undef TEST_RES_SIGNATURE_FILE
+
+}
+
+static void testSigning_hmacAlgorithmMismatch(CuTest* tc) {
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/v2/ok-sig-2014-07-01.1-aggr_response.tlv"
+#define TEST_RES_SIGNATURE_FILE "resource/tlv/ok-sig-2014-07-01.1.ksig"
+
+	int res;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
+	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+
+	res = KSI_CTX_setAggregatorHmacAlgorithm(ctx, KSI_HASHALG_SHA2_512);
+	CuAssert(tc, "Unable to set aggregator HMAC algorithm", res == KSI_OK);
+
+	res = KSI_createSignature(ctx, hsh, &sig);
+	CuAssert(tc, "Unable to sign the hash", res == KSI_HMAC_ALGORITHM_MISMATCH && sig == NULL);
+
+	KSI_DataHash_free(hsh);
 
 #undef TEST_AGGR_RESPONSE_FILE
 #undef TEST_RES_SIGNATURE_FILE
@@ -271,6 +351,84 @@ static void testExtending(CuTest* tc) {
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
 #undef TEST_RES_SIGNATURE_FILE
+}
+
+static void testExtending_hmacAlgorithmSha512(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/v2/ok-sig-2014-04-30.1-extend_response-hmac_sha512.tlv"
+#define TEST_EXT_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_Signature *ext = NULL;
+	unsigned char *serialized = NULL;
+	size_t serialized_len = 0;
+	unsigned char expected[0x1ffff];
+	size_t expected_len = 0;
+	FILE *f = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
+
+	res = KSI_CTX_setExtenderHmacAlgorithm(ctx, KSI_HASHALG_SHA2_512);
+	CuAssert(tc, "Unable to set aggregator HMAC algorithm", res == KSI_OK);
+
+	res = KSI_extendSignature(ctx, sig, &ext);
+	CuAssert(tc, "Unable to extend the signature", res == KSI_OK && ext != NULL);
+
+	res = KSI_Signature_serialize(ext, &serialized, &serialized_len);
+	CuAssert(tc, "Unable to serialize extended signature", res == KSI_OK && serialized != NULL && serialized_len > 0);
+
+	/* Read in the expected result */
+	f = fopen(getFullResourcePath(TEST_EXT_SIGNATURE_FILE), "rb");
+	CuAssert(tc, "Unable to read expected result file", f != NULL);
+	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
+	fclose(f);
+
+	CuAssert(tc, "Expected result length mismatch", expected_len == serialized_len);
+	CuAssert(tc, "Unexpected extended signature.", !KSITest_memcmp(expected, serialized, expected_len));
+
+	KSI_free(serialized);
+
+	KSI_Signature_free(sig);
+	KSI_Signature_free(ext);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+#undef TEST_EXT_SIGNATURE_FILE
+}
+
+static void testExtending_hmacAlgorithmMismatch(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/v2/ok-sig-2014-04-30.1-extend_response.tlv"
+
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_Signature *ext = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
+
+	res = KSI_CTX_setExtenderHmacAlgorithm(ctx, KSI_HASHALG_SHA2_512);
+	CuAssert(tc, "Unable to set extender HMAC algorithm", res == KSI_OK);
+
+	res = KSI_extendSignature(ctx, sig, &ext);
+	CuAssert(tc, "Unable to extend the signature", res == KSI_HMAC_ALGORITHM_MISMATCH && ext == NULL);
+
+	KSI_Signature_free(sig);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
 }
 
 static void testExtendingHeaderNotFirst(CuTest* tc) {
@@ -1455,12 +1613,16 @@ CuSuite* KSITest_NetPduV2_getSuite(void) {
 	suite->postTest = postTest;
 
 	SUITE_ADD_TEST(suite, testSigning);
+	SUITE_ADD_TEST(suite, testSigning_hmacAlgorithmSha512);
+	SUITE_ADD_TEST(suite, testSigning_hmacAlgorithmMismatch);
 	SUITE_ADD_TEST(suite, testSigningHeaderNotFirst);
 	SUITE_ADD_TEST(suite, testSigningHmacNotLast);
 	SUITE_ADD_TEST(suite, testSigningResponsePduV1);
 	SUITE_ADD_TEST(suite, testSigningWrongResponse);
 	SUITE_ADD_TEST(suite, testAggreAuthFailure);
 	SUITE_ADD_TEST(suite, testExtending);
+	SUITE_ADD_TEST(suite, testExtending_hmacAlgorithmSha512);
+	SUITE_ADD_TEST(suite, testExtending_hmacAlgorithmMismatch);
 	SUITE_ADD_TEST(suite, testExtendingHeaderNotFirst);
 	SUITE_ADD_TEST(suite, testExtendingHmacNotLast);
 	SUITE_ADD_TEST(suite, testExtendingResponsePduV1);
