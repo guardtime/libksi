@@ -176,6 +176,8 @@ static void initOptions(KSI_CTX *ctx) {
 	KSI_CTX_setOption(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
 	KSI_CTX_setOption(ctx, KSI_OPT_AGGR_HMAC_ALGORITHM, (void*)KSI_getHashAlgorithmByName("default"));
 	KSI_CTX_setOption(ctx, KSI_OPT_EXT_HMAC_ALGORITHM, (void*)KSI_getHashAlgorithmByName("default"));
+	/* The magic value of 1024 appears to be optimal based on the libksi test suite runs with different values. */
+	KSI_CTX_setOption(ctx, KSI_OPT_DATAHASH_CACHE_SIZE, (void*)1024);
 }
 
 int KSI_CTX_new(KSI_CTX **context) {
@@ -236,7 +238,6 @@ int KSI_CTX_new(KSI_CTX **context) {
 	res = KSI_PKITruststore_registerGlobals(ctx);
 	if (res != KSI_OK) goto cleanup;
 
-	ctx->dataHashRecycle_maxSize = 1024;
 	res = KSI_DataHashList_new(&ctx->dataHashRecycle);
 	if (res != KSI_OK) goto cleanup;
 

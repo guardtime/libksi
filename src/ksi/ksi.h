@@ -331,6 +331,11 @@ typedef enum KSI_Option_en {
 	 */
 	KSI_OPT_EXT_HMAC_ALGORITHM,
 
+	/**
+	 * The size of the dynamic recycle pool for #KSI_DataHash objects.
+	 */
+	KSI_OPT_DATAHASH_CACHE_SIZE,
+
 	__KSI_NUMBER_OF_OPTIONS,
 } KSI_Option;
 
