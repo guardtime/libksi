@@ -1,3 +1,6 @@
+* IMPROVEMENT: Set level correction when input hash level is greater than 0.
+* IMPROVEMENT: Updated ksi_sign_aggr example.
+
 Version 3.12
 
 2017-03-02 release(3.12.2010)
