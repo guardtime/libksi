@@ -807,7 +807,7 @@ cleanup:
 	return res;
 }
 
-static int KSI_SignatureVerifier_verifyWithPolicy(KSI_CTX *ctx, KSI_Signature *sig, KSI_uint64_t rootLevel, const KSI_DataHash *docHsh, const KSI_Policy *policy, KSI_VerificationContext *verificationContext) {
+static int signatureVerifyWithPolicy(KSI_CTX *ctx, KSI_Signature *sig, const KSI_DataHash *docHsh, const KSI_Policy *policy, KSI_VerificationContext *verificationContext) {
 	int res;
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
@@ -816,11 +816,6 @@ static int KSI_SignatureVerifier_verifyWithPolicy(KSI_CTX *ctx, KSI_Signature *s
 
 	if (ctx == NULL || sig == NULL) {
 		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	if (rootLevel > 0xff) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Aggregation level can't be larger than 0xff.");
 		goto cleanup;
 	}
 
@@ -857,9 +852,6 @@ cleanup:
 
 	return res;
 }
-
-#define KSI_SignatureVerifier_verifyInternally(ctx, sig, rootLevel, docHsh)\
-	KSI_SignatureVerifier_verifyWithPolicy(ctx, sig, rootLevel, docHsh, KSI_VERIFICATION_POLICY_INTERNAL, NULL)
 
 int KSI_Signature_signAggregatedWithPolicy(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel,
 		const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **signature) {
@@ -916,7 +908,7 @@ int KSI_Signature_signAggregatedWithPolicy(KSI_CTX *ctx, KSI_DataHash *rootHash,
 		goto cleanup;
 	}
 
-	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, sign, 0, rootHash, policy, context);
+	res = signatureVerifyWithPolicy(ctx, sign, rootHash, policy, context);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1116,7 +1108,7 @@ int KSI_Signature_extendToWithPolicy(const KSI_Signature *sig, KSI_CTX *ctx, KSI
 		goto cleanup;
 	}
 
-	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, tmp, 0, NULL, policy, context);
+	res = signatureVerifyWithPolicy(ctx, tmp, NULL, policy, context);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1188,7 +1180,7 @@ int KSI_Signature_extendWithPolicy(const KSI_Signature *signature, KSI_CTX *ctx,
 	}
 	pubRecClone = NULL;
 
-	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, tmp, 0, NULL, policy, context);
+	res = signatureVerifyWithPolicy(ctx, tmp, NULL, policy, context);
 	if (res != KSI_OK && res) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1363,7 +1355,7 @@ int KSI_Signature_parseWithPolicy(KSI_CTX *ctx, const unsigned char *raw, size_t
 		goto cleanup;
 	}
 
-	res = KSI_SignatureVerifier_verifyWithPolicy(ctx, tmp, 0, NULL, policy, context);
+	res = signatureVerifyWithPolicy(ctx, tmp, NULL, policy, context);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
