@@ -377,6 +377,7 @@ EXPORTS
 	KSI_Signature_getVerificationResult
 	KSI_Signature_replacePublicationRecord
 	KSI_Signature_getCalendarAuthRec
+	KSI_Signature_appendAggregationHashChain
 	KSI_AggregationHashChain_free
 	KSI_AggregationHashChain_new
 	KSI_AggregationHashChain_getAggregationTime
