@@ -92,9 +92,13 @@ extern "C" {
 		/** This function replaces the calendar chain of the signature.
 		 * \note The function does not check the internal consistency! */
 		int (*replaceCalendarChain)(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain);
-
-		int (*addRootLevel)(KSI_CTX *ctx, KSI_Signature *sig, KSI_uint64_t rootLevel);
-		int (*subRootLevel)(KSI_CTX *ctx, KSI_Signature *sig, KSI_uint64_t rootLevel);
+		/** This function appends the aggregation chain to the signature.
+		 * It also updates the aggregation time and chain index. */
+		int (*appendAggregationChain)(KSI_Signature *sig, KSI_AggregationHashChain *aggr);
+		/** Add root level to the level correction. */
+		int (*addRootLevel)(KSI_Signature *sig, KSI_uint64_t rootLevel);
+		/** Substract root level from level correction. */
+		int (*subRootLevel)(KSI_Signature *sig, KSI_uint64_t rootLevel);
 	};
 
 

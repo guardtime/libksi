@@ -499,13 +499,6 @@ int KSI_BlockSignerHandle_getSignature(const KSI_BlockSignerHandle *handle, KSI_
 		goto cleanup;
 	}
 
-	/* Create a hard copy of the signature. */
-	res = KSI_Signature_clone(handle->signer->signature, &tmp);
-	if (res != KSI_OK) {
-		KSI_pushError(handle->ctx, res, NULL);
-		goto cleanup;
-	}
-
 	/* Extract the calculated aggregation hash chain. */
 	res = KSI_TreeLeafHandle_getAggregationChain(handle->leafHandle, &aggr);
 	if (res != KSI_OK) {
@@ -513,8 +506,8 @@ int KSI_BlockSignerHandle_getSignature(const KSI_BlockSignerHandle *handle, KSI_
 		goto cleanup;
 	}
 
-	/* Append the aggregation hash chain to the signature. */
-	res = KSI_Signature_appendAggregationChain(tmp, aggr);
+	/* Get a copy of the signature with appended aggregation hash chain. */
+	res = KSI_Signature_appendAggregationHashChain(handle->signer->signature, aggr, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(handle->ctx, res, NULL);
 		goto cleanup;

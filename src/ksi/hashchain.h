@@ -239,13 +239,24 @@ extern "C" {
 	int KSI_AggregationHashChain_new(KSI_CTX *ctx, KSI_AggregationHashChain **out);
 
 	/**
+	 * This function creates a copy of the original signature with the appended aggregation hash chain. It also updates
+	 * the aggregation time, chain index and level correction.
+	 * \param[in]	sig			KSI signature.
+	 * \param[in]	aggr		Aggregation chain.
+	 * \param[out]  signature	Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_Signature_appendAggregationHashChain(const KSI_Signature *sig, KSI_AggregationHashChain *aggr, KSI_Signature **signature);
+
+	/**
 	 * This function appends the aggregation chain to the signature. This function also updates
 	 * the aggregation time and chain index.
 	 * \param[in]	sig			KSI signature.
 	 * \param[in]	aggr		Aggregation chain.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note Use #KSI_Signature_appendAggregationHashChain
 	 */
-	int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHashChain *aggr);
+	KSI_FN_DEPRECATED(int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHashChain *aggr));
 
 	/**
 	 * Aggregate the aggregation chain.

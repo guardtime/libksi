@@ -48,223 +48,58 @@ KSI_IMPLEMENT_REF(KSI_Signature);
  * KSI_AggregationHashChain
  */
 
-static int addChainIndex(KSI_CTX *ctx, KSI_AggregationHashChain *chain) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_LIST(KSI_Integer) *chainIndex = NULL;
-	KSI_Integer *shape = NULL;
-	KSI_uint64_t tmp;
-
-	if (chain == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	res = KSI_AggregationHashChain_getChainIndex(chain, &chainIndex);
-	if (res != KSI_OK) {
-		chainIndex = NULL;
-		goto cleanup;
-	}
-
-	if (chainIndex != NULL) {
-		chainIndex = NULL;
-		res = KSI_INVALID_STATE;
-		goto cleanup;
-	}
-
-	res = KSI_IntegerList_new(&chainIndex);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_AggregationHashChain_calculateShape(chain, &tmp);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_Integer_new(ctx, tmp, &shape);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_IntegerList_append(chainIndex, shape);
-	if (res != KSI_OK) goto cleanup;
-	shape = NULL;
-
-	res = KSI_AggregationHashChain_setChainIndex(chain, chainIndex);
-	if (res != KSI_OK) goto cleanup;
-	chainIndex = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_IntegerList_free(chainIndex);
-	KSI_Integer_free(shape);
-
-	return res;
-}
 
 int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHashChain *aggr) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_Integer *pAggrTm = NULL;
-	KSI_AggregationHashChain *pCurrent = NULL;
-	size_t listLen;
-	size_t i;
-	KSI_TLV *tlv = NULL;
-	KSI_LIST(KSI_HashChainLink) *pList = NULL;
-	KSI_LIST(KSI_Integer) *pIndex = NULL;
-	KSI_LIST(KSI_Integer) *pCurrentIndex = NULL;
-	int rootLevel = 0;
+	return sig->appendAggregationChain(sig, aggr);
+}
 
-	if (sig == NULL || aggr == NULL) {
+int KSI_Signature_appendAggregationHashChain(const KSI_Signature *sig, KSI_AggregationHashChain *aggr, KSI_Signature **signature) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Signature *tmp = NULL;
+	int rootLevel = 0;
+	KSI_CTX *ctx = NULL;
+
+	if (sig == NULL || aggr == NULL || signature == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+	ctx = sig->ctx;
+	KSI_ERR_clearErrors(ctx);
 
-	KSI_ERR_clearErrors(sig->ctx);
+	res = KSI_Signature_clone(sig, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
-	/* Aggregate the hash chain. */
+	/* Get signature root level by aggregating the hash chain. */
 	res = KSI_AggregationHashChain_aggregate(aggr, 0, &rootLevel, NULL);
 	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
+		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-	/* Remove applied level correction from signature */
+
+	/* Remove applied level correction in signature. */
 	if (rootLevel != 0) {
-		res = sig->subRootLevel(sig->ctx, sig, rootLevel);
+		res = tmp->subRootLevel(tmp, rootLevel);
 		if (res != KSI_OK) {
-			KSI_pushError(sig->ctx, res, NULL);
+			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
 		}
 	}
 
-	res = KSI_AggregationHashChain_getChain(aggr, &pList);
+	res = tmp->appendAggregationChain(tmp, aggr);
 	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
+		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	if (KSI_HashChainLinkList_length(pList) > 0) {
-		/* Get and update the aggregation time. */
-		res = KSI_Signature_getSigningTime(sig, &pAggrTm);
-		if (res != KSI_OK) {
-			KSI_pushError(sig->ctx, res, NULL);
-			goto cleanup;
-		}
-
-		{
-			KSI_Integer *ref = NULL;
-			res = KSI_AggregationHashChain_setAggregationTime(aggr, ref = KSI_Integer_ref(pAggrTm));
-			if (res != KSI_OK) {
-				KSI_Integer_free(ref);
-				KSI_pushError(sig->ctx, res, NULL);
-				goto cleanup;
-			}
-		}
-
-		/* Update the aggregation hash chain. */
-		listLen = KSI_AggregationHashChainList_length(sig->aggregationChainList);
-		if (listLen == 0) {
-			KSI_pushError(sig->ctx, res = KSI_INVALID_STATE, "Signature does not contain any aggregation hash chains.");
-			goto cleanup;
-		}
-
-		/* Just make sure there is a chain index present. */
-		res = KSI_AggregationHashChain_getChainIndex(aggr, &pIndex);
-		if (res != KSI_OK) {
-			KSI_pushError(sig->ctx, res, NULL);
-			goto cleanup;
-		}
-
-		if (pIndex == NULL) {
-			res = addChainIndex(sig->ctx, aggr);
-			if (res != KSI_OK) {
-				KSI_pushError(sig->ctx, res, NULL);
-				goto cleanup;
-			}
-
-			res = KSI_AggregationHashChain_getChainIndex(aggr, &pIndex);
-			if (res != KSI_OK) {
-				KSI_pushError(sig->ctx, res, NULL);
-				goto cleanup;
-			}
-
-			if (pIndex == NULL) {
-				KSI_pushError(sig->ctx, res = KSI_INVALID_STATE, NULL);
-				goto cleanup;
-			}
-		}
-
-		/* We assume the aggregation hash chain is ordered and the first aggregation hash chain is the one
-		 * with the longest chain index.
-		 */
-		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &pCurrent);
-		if (res != KSI_OK || pCurrent == NULL) {
-			KSI_pushError(sig->ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
-			goto cleanup;
-		}
-
-		/* Traverse the chain index from back to forth, and add the values to the begining of the
-		 * aggregation hash chain.
-		 */
-
-		res = KSI_AggregationHashChain_getChainIndex(pCurrent, &pCurrentIndex);
-		for (i = KSI_IntegerList_length(pCurrentIndex); i > 0; i--) {
-			KSI_Integer *tmp = NULL;
-			KSI_Integer *ref = NULL;
-
-			res = KSI_IntegerList_elementAt(pCurrentIndex, i - 1, &tmp);
-			if (res != KSI_OK) {
-				KSI_pushError(sig->ctx, res, NULL);
-				goto cleanup;
-			}
-
-			res = KSI_IntegerList_insertAt(pIndex, 0, ref = KSI_Integer_ref(tmp));
-			if (res != KSI_OK) {
-				/* Cleanup the reference. */
-				KSI_Integer_free(ref);
-
-				KSI_pushError(sig->ctx, res, NULL);
-				goto cleanup;
-			}
-		}
-
-
-		/* Prepend the aggregation hash chain to the signature. */
-		{
-			KSI_AggregationHashChain *ref = NULL;
-			res = KSI_AggregationHashChainList_insertAt(sig->aggregationChainList, 0, ref = KSI_AggregationHashChain_ref(aggr));
-			if (res != KSI_OK) {
-				/* Cleanup the reference. */
-				KSI_AggregationHashChain_free(ref);
-
-				KSI_pushError(sig->ctx, res, NULL);
-				goto cleanup;
-			}
-		}
-
-		res = KSI_TLV_new(sig->ctx, 0x0801, 0, 0, &tlv);
-		if (res != KSI_OK) {
-			KSI_pushError(sig->ctx, res, NULL);
-			goto cleanup;
-		}
-
-
-		/** Serialize and append the TLV structure to the signature. */
-		res = KSI_TlvTemplate_construct(sig->ctx, tlv, aggr, KSI_TLV_TEMPLATE(KSI_AggregationHashChain));
-		if (res != KSI_OK) {
-			KSI_pushError(sig->ctx, res, NULL);
-			goto cleanup;
-		}
-
-		res = KSI_TLV_appendNestedTlv(sig->baseTlv, tlv);
-		if (res != KSI_OK) {
-			KSI_pushError(sig->ctx, res, NULL);
-			goto cleanup;
-		}
-		tlv = NULL;
-	}
+	*signature = tmp;
+	tmp = NULL;
 
 	res = KSI_OK;
-
 cleanup:
-
-	KSI_TLV_free(tlv);
-
+	KSI_Signature_free(tmp);
 	return res;
 }
 
@@ -509,6 +344,12 @@ static int extractSignature(KSI_CTX *ctx, KSI_TLV *tlv, KSI_Signature **signatur
 
 	/* Parse and extract the signature. */
 	res = KSI_TlvTemplate_extract(ctx, builder->sig, tlv, KSI_TLV_TEMPLATE(KSI_Signature));
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_TLV_clone(tlv, &builder->sig->baseTlv);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1122,7 +963,16 @@ int KSI_Signature_signAggregationChain(KSI_CTX *ctx, int level, KSI_AggregationH
 		goto cleanup;
 	}
 
-	res = KSI_Signature_appendAggregationChain(tmp, chn);
+	/* Remove applied level correction in signature. */
+	if (root_level != 0) {
+		res = tmp->subRootLevel(tmp, root_level);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+
+	res = tmp->appendAggregationChain(tmp, chn);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1464,7 +1314,6 @@ cleanup:
 }
 
 int KSI_Signature_clone(const KSI_Signature *sig, KSI_Signature **clone) {
-	KSI_TLV *tlv = NULL;
 	KSI_Signature *tmp = NULL;
 	int res;
 
@@ -1474,21 +1323,11 @@ int KSI_Signature_clone(const KSI_Signature *sig, KSI_Signature **clone) {
 	}
 	KSI_ERR_clearErrors(sig->ctx);
 
-
-	res = KSI_TLV_clone(sig->baseTlv, &tlv);
+	res = extractSignature(sig->ctx, sig->baseTlv, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
 		goto cleanup;
 	}
-
-	res = extractSignature(sig->ctx, tlv, &tmp);
-	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	tmp->baseTlv = tlv;
-	tlv = NULL;
 
 	*clone = tmp;
 	tmp = NULL;
@@ -1496,8 +1335,6 @@ int KSI_Signature_clone(const KSI_Signature *sig, KSI_Signature **clone) {
 	res = KSI_OK;
 
 cleanup:
-
-	KSI_TLV_free(tlv);
 	KSI_Signature_free(tmp);
 
 	return res;
@@ -1531,9 +1368,6 @@ int KSI_Signature_parseWithPolicy(KSI_CTX *ctx, const unsigned char *raw, size_t
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-
-	tmp->baseTlv = tlv;
-	tlv = NULL;
 
 	*sig = tmp;
 	tmp = NULL;
