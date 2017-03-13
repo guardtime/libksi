@@ -81,16 +81,16 @@ static KSI_uint64_t getLatestPubTime(CuTest* tc, KSI_PublicationsFile *pubFile) 
 	KSI_Integer *time = NULL;
 
 	res = KSI_PublicationsFile_getPublications(pubFile, &pubs);
-	CuAssert(tc, "Unable to .", res == KSI_OK && pubs != NULL);
+	CuAssert(tc, "Unable to get publication records.", res == KSI_OK && pubs != NULL);
 
 	res = KSI_PublicationRecordList_elementAt(pubs, KSI_PublicationRecordList_length(pubs) - 1, &pub);
-	CuAssert(tc, "Unable to .", res == KSI_OK && pub != NULL);
+	CuAssert(tc, "Unable to get latest publication record.", res == KSI_OK && pub != NULL);
 
 	res = KSI_PublicationRecord_getPublishedData(pub, &pubData);
-	CuAssert(tc, "Unable to .", res == KSI_OK && pubData != NULL);
+	CuAssert(tc, "Unable to get publication data.", res == KSI_OK && pubData != NULL);
 
 	res = KSI_PublicationData_getTime(pubData, &time);
-	CuAssert(tc, "Unable to .", res == KSI_OK && time != NULL);
+	CuAssert(tc, "Unable to get publication time.", res == KSI_OK && time != NULL);
 
 	return KSI_Integer_getUInt64(time);
 }
