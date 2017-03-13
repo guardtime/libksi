@@ -148,7 +148,7 @@ static int sub(KSI_uint64_t r, KSI_uint64_t l, KSI_uint64_t *res) {
 }
 
 static int updateLevelCorrection(KSI_Signature *sig, KSI_uint64_t rootLevel,
-		int (*calc)(KSI_uint64_t, KSI_uint64_t, KSI_uint64_t*)) {
+		int (*calcLevelCorrection)(KSI_uint64_t, KSI_uint64_t, KSI_uint64_t*)) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationHashChain *aggr = NULL;
 	KSI_LIST(KSI_HashChainLink) *chain = NULL;
@@ -162,7 +162,7 @@ static int updateLevelCorrection(KSI_Signature *sig, KSI_uint64_t rootLevel,
 	size_t i;
 	KSI_AggregationHashChain *aggrFromTlv = NULL;
 
-	if (sig == NULL || calc == NULL) {
+	if (sig == NULL || calcLevelCorrection == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -204,9 +204,14 @@ static int updateLevelCorrection(KSI_Signature *sig, KSI_uint64_t rootLevel,
 		goto cleanup;
 	}
 
-	res = calc(KSI_Integer_getUInt64(oldLvl), rootLevel, &lvlVal);
+	res = calcLevelCorrection(KSI_Integer_getUInt64(oldLvl), rootLevel, &lvlVal);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (!KSI_IS_VALID_TREE_LEVEL(lvlVal)) {
+		KSI_pushError(sig->ctx, res = KSI_INVALID_FORMAT, "Calculated level correction is not valid.");
 		goto cleanup;
 	}
 
