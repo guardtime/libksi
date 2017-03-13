@@ -1,4 +1,5 @@
 * IMPROVEMENT: Functionality to request configurations from extender / aggregator.
+* BUGFIX: Update publications file client pointer when changinh client.
 
 Version 3.12
 
