@@ -844,7 +844,7 @@ int KSI_RequestHandle_getExtendResponse(const KSI_RequestHandle *handle, KSI_Ext
 		goto cleanup;
 	}
 
-	/*Get response object*/
+	/* Get response object. */
 	res = KSI_ExtendPdu_getResponse(pdu, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(handle->ctx, res, NULL);

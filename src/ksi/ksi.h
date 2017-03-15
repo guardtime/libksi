@@ -502,7 +502,7 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile);
 int KSI_verifyPublicationsFile(KSI_CTX *ctx, const KSI_PublicationsFile *pubFile);
 
 /**
- * Constructor for the aggregator config request.
+ * Constructor for the aggregator configuration request.
  * \param[in]		ctx			KSI context object.
  * \param[out]		request		Pointer to the receiving pointer.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -510,7 +510,7 @@ int KSI_verifyPublicationsFile(KSI_CTX *ctx, const KSI_PublicationsFile *pubFile
 int KSI_createAggregationConfigRequest(KSI_CTX *ctx, KSI_AggregationReq **request);
 
 /**
- * Constructor for the extender config request.
+ * Constructor for the extender configuration request.
  * \param[in]		ctx			KSI context object.
  * \param[out]		request		Pointer to the receiving pointer.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).

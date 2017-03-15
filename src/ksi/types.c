@@ -1111,7 +1111,7 @@ int KSI_ExtendReq_enclose(KSI_ExtendReq *req, const char *loginId, const char *k
 
 	tmp->header = hdr;
 	hdr = NULL;
-	/* Add request */
+	/* Add request. */
 	if (req->config != NULL && req->ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_2) {
 		tmp->confRequest = KSI_Config_ref(req->config);
 	} else {
@@ -1415,7 +1415,7 @@ int KSI_AggregationReq_enclose(KSI_AggregationReq *req, const char *loginId, con
 
 	tmp->header = hdr;
 	hdr = NULL;
-	/* Add request */
+	/* Add request. */
 	if (req->config != NULL && req->ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_2) {
 		tmp->confRequest = KSI_Config_ref(req->config);
 	} else {
