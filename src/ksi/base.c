@@ -594,20 +594,20 @@ static int receiveConfig(KSI_CTX *ctx, KSI_Config **config,
 
 	res = KSI_RequestHandle_perform(handle);
 	if (res != KSI_OK) {
-	  KSI_pushError(ctx,res, NULL);
-	  goto cleanup;
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
 	}
 
 	res = getResponse(handle, &resp);
 	if (res != KSI_OK) {
-	  KSI_pushError(ctx, res, NULL);
-	  goto cleanup;
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
 	}
 
 	res = getConfig(resp, &tmp);
 	if (res != KSI_OK) {
-	  KSI_pushError(ctx, res, NULL);
-	  goto cleanup;
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
 	}
 
 	*config = KSI_Config_ref(tmp);

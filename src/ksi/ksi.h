@@ -511,7 +511,6 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile);
 int KSI_verifyPublicationsFile(KSI_CTX *ctx, const KSI_PublicationsFile *pubFile);
 
 /**
-* Get aggregator service configuration.
  * \param[in]		ctx			KSI context.
  * \param[out]		config		Pointer to the receiving pointer.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
