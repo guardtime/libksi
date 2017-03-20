@@ -26,7 +26,7 @@
 #include "../src/ksi/ctx_impl.h"
 
 extern KSI_CTX *ctx;
-
+extern KSITest_Conf conf;
 
 static void Test_NOKAggr_TreeTooLarge(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;

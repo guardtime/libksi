@@ -89,7 +89,8 @@ INTTESTS_OBJ = \
 	$(OBJ_DIR)\ext_integration_tests.obj \
 	$(OBJ_DIR)\pub_integration_tests.obj \
 	$(OBJ_DIR)\support_tests.obj \
-	$(OBJ_DIR)\CuTest.obj
+	$(OBJ_DIR)\CuTest.obj \
+	$(OBJ_DIR)\test_conf.obj 
 
 RESIGNER_OBJ = \
 	$(OBJ_DIR)\resigner.obj

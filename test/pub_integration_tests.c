@@ -23,7 +23,7 @@
 #include <../src/ksi/ksi.h>
 
 extern KSI_CTX *ctx;
-
+extern KSITest_Conf conf;
 
 static void Test_DownloadPubfile(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;

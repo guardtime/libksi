@@ -24,7 +24,7 @@
 #include <ksi/net.h>
 
 extern KSI_CTX *ctx;
-
+extern KSITest_Conf conf;
 
 static void getExtResponse(CuTest* tc, KSI_uint64_t id, KSI_uint64_t aggrTime, KSI_uint64_t pubTime, KSI_ExtendResp **response) {
 	int res;
