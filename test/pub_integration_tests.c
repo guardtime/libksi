@@ -24,7 +24,6 @@
 
 extern KSI_CTX *ctx;
 
-
 static void Test_DownloadPubfile(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationsFile *pubfile = NULL;
@@ -74,12 +73,74 @@ static void Test_DownloadPubfileInvalidConstraints(CuTest* tc) {
 	return;
 }
 
+static KSI_uint64_t getLatestPubTime(CuTest* tc, KSI_PublicationsFile *pubFile) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_LIST(KSI_PublicationRecord) *pubs = NULL;
+	KSI_PublicationRecord *pub = NULL;
+	KSI_PublicationData *pubData = NULL;
+	KSI_Integer *time = NULL;
+
+	res = KSI_PublicationsFile_getPublications(pubFile, &pubs);
+	CuAssert(tc, "Unable to get publication records.", res == KSI_OK && pubs != NULL);
+
+	res = KSI_PublicationRecordList_elementAt(pubs, KSI_PublicationRecordList_length(pubs) - 1, &pub);
+	CuAssert(tc, "Unable to get latest publication record.", res == KSI_OK && pub != NULL);
+
+	res = KSI_PublicationRecord_getPublishedData(pub, &pubData);
+	CuAssert(tc, "Unable to get publication data.", res == KSI_OK && pubData != NULL);
+
+	res = KSI_PublicationData_getTime(pubData, &time);
+	CuAssert(tc, "Unable to get publication time.", res == KSI_OK && time != NULL);
+
+	return KSI_Integer_getUInt64(time);
+}
+
+static void Test_DownloadPubfile_ChangeClient(CuTest* tc) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_PublicationsFile *pubfile = NULL;
+	KSI_uint64_t prevtime;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_receivePublicationsFile(ctx, &pubfile);
+	CuAssert(tc, "Unable to receive publications file.", res == KSI_OK && pubfile != NULL);
+	prevtime = getLatestPubTime(tc, pubfile);
+	KSI_PublicationsFile_free(pubfile);
+	KSI_CTX_setPublicationsFile(ctx, NULL);
+
+	res = KSI_CTX_setPublicationUrl(ctx, getFullResourcePathUri("resource/tlv/publications.tlv"));
+	CuAssert(tc, "Unable to set pubfile URI.", res == KSI_OK);
+	res = KSI_receivePublicationsFile(ctx, &pubfile);
+	CuAssert(tc, "Unable to receive publications file.", res == KSI_OK && pubfile != NULL);
+	CuAssert(tc, "Publications file last publication should be different.", prevtime != getLatestPubTime(tc, pubfile));
+	prevtime = getLatestPubTime(tc, pubfile);
+	KSI_PublicationsFile_free(pubfile);
+	KSI_CTX_setPublicationsFile(ctx, NULL);
+
+	res = KSI_CTX_setPublicationUrl(ctx, conf.publications_file_url);
+	CuAssert(tc, "Unable to set publications file url.", res == KSI_OK);
+	res = KSI_receivePublicationsFile(ctx, &pubfile);
+	CuAssert(tc, "Unable to receive publications file.", res == KSI_OK && pubfile != NULL);
+	CuAssert(tc, "Publications file last publication should be different.", prevtime != getLatestPubTime(tc, pubfile));
+	prevtime = getLatestPubTime(tc, pubfile);
+	KSI_PublicationsFile_free(pubfile);
+	KSI_CTX_setPublicationsFile(ctx, NULL);
+
+	res = KSI_CTX_setPublicationUrl(ctx, getFullResourcePathUri("resource/tlv/publications.tlv"));
+	CuAssert(tc, "Unable to set pubfile URI.", res == KSI_OK);
+	res = KSI_receivePublicationsFile(ctx, &pubfile);
+	CuAssert(tc, "Unable to receive publications file.", res == KSI_OK && pubfile != NULL);
+	CuAssert(tc, "Publications file last publication should be different.", prevtime != getLatestPubTime(tc, pubfile));
+	KSI_PublicationsFile_free(pubfile);
+	KSI_CTX_setPublicationsFile(ctx, NULL);
+}
 
 CuSuite* PubIntegrationTests_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
 	SUITE_ADD_TEST(suite, Test_DownloadPubfile);
 	SUITE_ADD_TEST(suite, Test_DownloadPubfileInvalidConstraints);
+	SUITE_ADD_TEST(suite, Test_DownloadPubfile_ChangeClient);
 
 	return suite;
 }
