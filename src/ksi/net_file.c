@@ -207,6 +207,7 @@ cleanup:
 static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, KSI_RequestHandle **handle) {
 	int res;
 	FsClient_Endpoint *endp = NULL;
+	KSI_NetEndpoint *ext = NULL;
 	KSI_Integer *pReqId = NULL;
 	KSI_Integer *reqId = NULL;
 	KSI_ExtendPdu *pdu = NULL;
@@ -216,10 +217,14 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 		goto cleanup;
 	}
 
-	endp = client->extender->implCtx;
-
-	if (endp->path == NULL) {
-		res = KSI_EXTENDER_NOT_CONFIGURED;
+	ext = client->extender;
+	if (ext == NULL) {
+		res = KSI_AGGREGATOR_NOT_CONFIGURED;
+		goto cleanup;
+	}
+	endp = ext->implCtx;
+	if (endp == NULL || endp->path == NULL) {
+		res = KSI_AGGREGATOR_NOT_CONFIGURED;
 		goto cleanup;
 	}
 
@@ -236,7 +241,7 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 		reqId = NULL;
 	}
 
-	res = KSI_ExtendReq_enclose(req, client->extender->ksi_user, client->extender->ksi_pass, &pdu);
+	res = KSI_ExtendReq_enclose(req, ext->ksi_user, ext->ksi_pass, &pdu);
 	if (res != KSI_OK) goto cleanup;
 
 	res = prepareRequest(
@@ -260,6 +265,7 @@ cleanup:
 static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationReq *req, KSI_RequestHandle **handle) {
 	int res;
 	FsClient_Endpoint *endp = NULL;
+	KSI_NetEndpoint *aggr = NULL;
 	KSI_Integer *pReqId = NULL;
 	KSI_Integer *reqId = NULL;
 	KSI_AggregationPdu *pdu = NULL;
@@ -269,9 +275,13 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 		goto cleanup;
 	}
 
-	endp = client->aggregator->implCtx;
-
-	if (endp->path == NULL) {
+	aggr = client->aggregator;
+	if (aggr == NULL) {
+		res = KSI_AGGREGATOR_NOT_CONFIGURED;
+		goto cleanup;
+	}
+	endp = aggr->implCtx;
+	if (endp == NULL || endp->path == NULL) {
 		res = KSI_AGGREGATOR_NOT_CONFIGURED;
 		goto cleanup;
 	}
@@ -289,7 +299,7 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 		reqId = NULL;
 	}
 
-	res = KSI_AggregationReq_enclose(req, client->aggregator->ksi_user, client->aggregator->ksi_pass, &pdu);
+	res = KSI_AggregationReq_enclose(req, aggr->ksi_user, aggr->ksi_pass, &pdu);
 	if (res != KSI_OK) goto cleanup;
 
 	res = prepareRequest(

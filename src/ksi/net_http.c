@@ -112,6 +112,7 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 	KSI_ExtendPdu *pdu = NULL;
 	KSI_Integer *pReqId = NULL;
 	KSI_Integer *reqId = NULL;
+	KSI_NetEndpoint *ext = NULL;
 	HttpClient_Endpoint *endp = NULL;
 
 	if (client == NULL || req == NULL || handle == NULL) {
@@ -119,10 +120,14 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 		goto cleanup;
 	}
 
-	endp = client->extender->implCtx;
-
-	if (endp->url == NULL) {
-		res = KSI_EXTENDER_NOT_CONFIGURED;
+	ext = client->extender;
+	if (ext == NULL) {
+		res = KSI_AGGREGATOR_NOT_CONFIGURED;
+		goto cleanup;
+	}
+	endp = ext->implCtx;
+	if (endp == NULL || endp->url == NULL) {
+		res = KSI_AGGREGATOR_NOT_CONFIGURED;
 		goto cleanup;
 	}
 
@@ -139,7 +144,7 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 		reqId = NULL;
 	}
 
-	res = KSI_ExtendReq_enclose(req, client->extender->ksi_user, client->extender->ksi_pass, &pdu);
+	res = KSI_ExtendReq_enclose(req, ext->ksi_user, ext->ksi_pass, &pdu);
 	if (res != KSI_OK) goto cleanup;
 
 	res = prepareRequest(
@@ -168,6 +173,7 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 	KSI_AggregationPdu *pdu = NULL;
 	KSI_Integer *pReqId = NULL;
 	KSI_Integer *reqId = NULL;
+	KSI_NetEndpoint *aggr = NULL;
 	HttpClient_Endpoint *endp = NULL;
 
 	if (client == NULL || req == NULL || handle == NULL) {
@@ -175,9 +181,13 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 		goto cleanup;
 	}
 
-	endp = client->aggregator->implCtx;
-
-	if (endp->url == NULL) {
+	aggr = client->aggregator;
+	if (aggr == NULL) {
+		res = KSI_AGGREGATOR_NOT_CONFIGURED;
+		goto cleanup;
+	}
+	endp = aggr->implCtx;
+	if (endp == NULL || endp->url == NULL) {
 		res = KSI_AGGREGATOR_NOT_CONFIGURED;
 		goto cleanup;
 	}
@@ -195,7 +205,7 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 		reqId = NULL;
 	}
 
-	res = KSI_AggregationReq_enclose(req, client->aggregator->ksi_user, client->aggregator->ksi_pass, &pdu);
+	res = KSI_AggregationReq_enclose(req, aggr->ksi_user, aggr->ksi_pass, &pdu);
 	if (res != KSI_OK) goto cleanup;
 
 	res = prepareRequest(
@@ -392,7 +402,7 @@ cleanup:
 		int KSI_HttpClient_set##name(KSI_NetworkClient *client, type val) {								\
 			int res = KSI_UNKNOWN_ERROR;																\
 			KSI_HttpClient *http = NULL;																\
-			if (client == NULL) {																		\
+			if (client == NULL || client->impl == NULL) {												\
 				res = KSI_INVALID_ARGUMENT;																\
 				goto cleanup;																			\
 			}																							\

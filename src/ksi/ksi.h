@@ -189,6 +189,11 @@ enum KSI_StatusCode {
 	 */
 	KSI_REQUEST_ID_MISMATCH = 0x210,
 
+	/**
+	 * HMAC algorithm mismatch occurred
+	 */
+	KSI_HMAC_ALGORITHM_MISMATCH = 0x211,
+
 	/* Generic service errors */
 
 	/**
@@ -299,22 +304,35 @@ enum KSI_StatusCode {
 #define KSI_PDU_VERSION_1		1
 #define KSI_PDU_VERSION_2		2
 
-enum KSI_CtxFlag {
+typedef enum KSI_Option_en {
 	/**
 	 * Description:	PDU version for KSI aggregation messages.
 	 * Type:		size_t.
 	 * Range:		KSI_PDU_VERSION_1 .. KSI_PDU_VERSION_2
 	 */
-	KSI_CTX_FLAG_AGGR_PDU_VER,
+	KSI_OPT_AGGR_PDU_VER,
 	/**
 	 * Description:	PDU version for KSI extending messages.
 	 * Type:		size_t.
 	 * Range:		KSI_PDU_VERSION_1 .. KSI_PDU_VERSION_2
 	 */
-	KSI_CTX_FLAG_EXT_PDU_VER,
+	KSI_OPT_EXT_PDU_VER,
 
-	KSI_CTX_NUM_OF_FLAGS,
-};
+	/**
+	 * Description: Aggregator HMAC algorithm.
+	 * Type:		KSI_HashAlgorithm.
+	 * Range:		See #KSI_HashAlgorithm.
+	 */
+	KSI_OPT_AGGR_HMAC_ALGORITHM,
+	/**
+	 * Description: Extender HMAC algorithm.
+	 * Type:		KSI_HashAlgorithm.
+	 * Range:		See #KSI_HashAlgorithm.
+	 */
+	KSI_OPT_EXT_HMAC_ALGORITHM,
+
+	__KSI_NUMBER_OF_OPTIONS,
+} KSI_Option;
 
 /**
  * This function returns a pointer to a constant string describing the
@@ -590,15 +608,27 @@ int KSI_CTX_setExtender(KSI_CTX *ctx, const char *uri, const char *loginId, cons
 int KSI_CTX_setAggregator(KSI_CTX *ctx, const char *uri, const char *loginId, const char *key);
 
 /**
- * Configuration method for the KSI flags.
+ * Configuration method for the KSI option.
  * \param[in]	ctx		KSI context.
- * \param[in]	flag	KSI flag.
- * \param[in]	param	Value for specified KSI flag.
+ * \param[in]	flag	KSI option.
+ * \param[in]	param	Value for specified KSI option.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- * \see #KSI_CtxFlag for possible KSI flags.
- * \note Interpretation of \c param is dependent on the KSI flag.
+ * \see #KSI_CtxOption for individual option descriptions.
+ * \note Interpretation of \c param is dependent on the KSI option.
  */
-int KSI_CTX_setFlag(KSI_CTX *ctx, enum KSI_CtxFlag flag, void *param);
+int KSI_CTX_setOption(KSI_CTX *ctx, KSI_Option opt, void *param);
+
+#define KSI_CTX_setAggregatorHmacAlgorithm(ctx, alg_id) KSI_CTX_setOption(ctx, KSI_OPT_AGGR_HMAC_ALGORITHM, (void*)(alg_id))
+#define KSI_CTX_setExtenderHmacAlgorithm(ctx, alg_id) KSI_CTX_setOption(ctx, KSI_OPT_EXT_HMAC_ALGORITHM, (void*)(alg_id))
+
+/**
+ * Deprecated. Defined for backwards compatibility.
+ * See #KSI_Option and #KSI_CTX_setOption for replacement.
+ */
+#define KSI_CTX_FLAG_AGGR_PDU_VER KSI_OPT_AGGR_PDU_VER
+#define KSI_CTX_FLAG_EXT_PDU_VER KSI_OPT_EXT_PDU_VER
+#define KSI_CtxFlag KSI_Option_en
+#define KSI_CTX_setFlag(ctx, flag, param) KSI_CTX_setOption((ctx), (flag), (param))
 
 /**
  * Setter for transfer timeout.
