@@ -510,6 +510,45 @@ cleanup:
 	return res;
 }
 
+int KSI_SignatureBuilder_appendAggregationChain(KSI_SignatureBuilder *builder, KSI_AggregationHashChain *aggr) {
+	int res = KSI_UNKNOWN_ERROR;
+	int rootLevel = 0;
+	KSI_CTX *ctx = NULL;
+
+	if (builder == NULL || aggr == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = builder->ctx;
+	KSI_ERR_clearErrors(ctx);
+
+	/* Get signature root level by aggregating the hash chain. */
+	res = KSI_AggregationHashChain_aggregate(aggr, 0, &rootLevel, NULL);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Remove applied level correction in signature. */
+	if (rootLevel != 0) {
+		res = subRootLevel(builder->sig, rootLevel);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+
+	res = appendAggregationChain(builder->sig, aggr);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
 static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Signature *tmp = NULL;
@@ -539,8 +578,6 @@ static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
 	tmp->publication = NULL;
 	tmp->replaceCalendarChain = replaceCalendarChain;
 	tmp->appendAggregationChain = appendAggregationChain;
-	tmp->addRootLevel = addRootLevel;
-	tmp->subRootLevel = subRootLevel;
 
 	res = KSI_VerificationResult_init(&tmp->verificationResult, ctx);
 	if (res != KSI_OK) {
@@ -560,9 +597,7 @@ cleanup:
 	KSI_Signature_free(tmp);
 
 	return res;
-
 }
-
 
 int KSI_SignatureBuilder_open(KSI_CTX *ctx, KSI_SignatureBuilder **builder) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -588,6 +623,45 @@ int KSI_SignatureBuilder_open(KSI_CTX *ctx, KSI_SignatureBuilder **builder) {
 	res = KSI_Signature_new(ctx, &tmp->sig);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	*builder = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_SignatureBuilder_free(tmp);
+
+	return res;
+}
+
+int KSI_SignatureBuilder_openFromSignature(const KSI_Signature *sig, KSI_SignatureBuilder **builder) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_SignatureBuilder *tmp = NULL;
+
+	if (sig == NULL || builder == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(sig->ctx);
+
+	tmp = KSI_new(KSI_SignatureBuilder);
+	if (tmp == NULL) {
+		KSI_pushError(sig->ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	tmp->ctx = sig->ctx;
+	tmp->noVerify = 0;
+	tmp->sig = NULL;
+
+	res = KSI_Signature_clone(sig, &tmp->sig);
+	if (res != KSI_OK) {
+		KSI_pushError(sig->ctx, res, NULL);
 		goto cleanup;
 	}
 

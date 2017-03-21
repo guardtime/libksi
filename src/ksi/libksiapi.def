@@ -381,7 +381,6 @@ EXPORTS
 	KSI_Signature_getVerificationResult
 	KSI_Signature_replacePublicationRecord
 	KSI_Signature_getCalendarAuthRec
-	KSI_Signature_appendAggregationHashChain
 	KSI_AggregationHashChain_free
 	KSI_AggregationHashChain_new
 	KSI_AggregationHashChain_getAggregationTime
@@ -930,10 +929,12 @@ EXPORTS
 
 ;signature_builder.h
 	KSI_SignatureBuilder_open
+	KSI_SignatureBuilder_openFromSignature
 	KSI_SignatureBuilder_close
 	KSI_SignatureBuilder_free
 	KSI_SignatureBuilder_setCalendarHashChain
 	KSI_SignatureBuilder_addAggregationChain
+	KSI_SignatureBuilder_appendAggregationChain
 	KSI_SignatureBuilder_setCalendarAuthRecord
 	KSI_SignatureBuilder_setPublication
 	KSI_SignatureBuilder_setRFC3161

@@ -53,57 +53,6 @@ int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHash
 	return sig->appendAggregationChain(sig, aggr);
 }
 
-int KSI_Signature_appendAggregationHashChain(const KSI_Signature *sig, KSI_AggregationHashChain *aggr, KSI_Signature **signature) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_Signature *tmp = NULL;
-	int rootLevel = 0;
-	KSI_CTX *ctx = NULL;
-
-	if (sig == NULL || aggr == NULL || signature == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	ctx = sig->ctx;
-	KSI_ERR_clearErrors(ctx);
-
-	res = KSI_Signature_clone(sig, &tmp);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Get signature root level by aggregating the hash chain. */
-	res = KSI_AggregationHashChain_aggregate(aggr, 0, &rootLevel, NULL);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Remove applied level correction in signature. */
-	if (rootLevel != 0) {
-		res = tmp->subRootLevel(tmp, rootLevel);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
-	}
-
-	res = tmp->appendAggregationChain(tmp, aggr);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	*signature = tmp;
-	tmp = NULL;
-
-	res = KSI_OK;
-cleanup:
-	KSI_Signature_free(tmp);
-	return res;
-}
-
-
 /**
  * KSI_AggregationAuthRec
  */
@@ -931,6 +880,8 @@ cleanup:
 
 int KSI_Signature_signAggregationChain(KSI_CTX *ctx, int level, KSI_AggregationHashChain *chn, KSI_Signature **signature) {
 	int res = KSI_UNKNOWN_ERROR;
+	KSI_SignatureBuilder *builder = NULL;
+	KSI_Signature *signAggr = NULL;
 	KSI_Signature *tmp = NULL;
 	KSI_DataHash *root = NULL;
 	int root_level;
@@ -949,22 +900,25 @@ int KSI_Signature_signAggregationChain(KSI_CTX *ctx, int level, KSI_AggregationH
 		goto cleanup;
 	}
 
-	res = KSI_Signature_signAggregated(ctx, root, root_level, &tmp);
+	res = KSI_Signature_signAggregated(ctx, root, root_level, &signAggr);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	/* Remove applied level correction in signature. */
-	if (root_level != 0) {
-		res = tmp->subRootLevel(tmp, root_level);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
+	res = KSI_SignatureBuilder_openFromSignature(signAggr, &builder);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
 	}
 
-	res = tmp->appendAggregationChain(tmp, chn);
+	res = KSI_SignatureBuilder_appendAggregationChain(builder, chn);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_SignatureBuilder_close(builder, 0, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -976,7 +930,8 @@ int KSI_Signature_signAggregationChain(KSI_CTX *ctx, int level, KSI_AggregationH
 	res = KSI_OK;
 
 cleanup:
-
+	KSI_Signature_free(signAggr);
+	KSI_SignatureBuilder_free(builder);
 	KSI_Signature_free(tmp);
 	KSI_DataHash_free(root);
 
