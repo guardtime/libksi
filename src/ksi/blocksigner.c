@@ -25,6 +25,7 @@
 #include "blocksigner.h"
 #include "tree_builder.h"
 #include "hashchain.h"
+#include "signature_builder.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -486,6 +487,7 @@ int KSI_BlockSignerHandle_getSignature(const KSI_BlockSignerHandle *handle, KSI_
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Signature *tmp = NULL;
 	KSI_AggregationHashChain *aggr = NULL;
+	KSI_SignatureBuilder *builder = NULL;
 
 	if (handle == NULL || sig == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -506,8 +508,20 @@ int KSI_BlockSignerHandle_getSignature(const KSI_BlockSignerHandle *handle, KSI_
 		goto cleanup;
 	}
 
-	/* Get a copy of the signature with appended aggregation hash chain. */
-	res = KSI_Signature_appendAggregationHashChain(handle->signer->signature, aggr, &tmp);
+	/* Build a new signature with the appended aggregation hash chain. */
+	res = KSI_SignatureBuilder_openFromSignature(handle->signer->signature, &builder);
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_SignatureBuilder_appendAggregationChain(builder, aggr);
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_SignatureBuilder_close(builder, 0, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(handle->ctx, res, NULL);
 		goto cleanup;
@@ -520,6 +534,7 @@ int KSI_BlockSignerHandle_getSignature(const KSI_BlockSignerHandle *handle, KSI_
 
 cleanup:
 
+	KSI_SignatureBuilder_free(builder);
 	KSI_AggregationHashChain_free(aggr);
 	KSI_Signature_free(tmp);
 
