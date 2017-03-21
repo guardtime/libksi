@@ -26,6 +26,10 @@
 
 extern KSI_CTX *ctx;
 
+static void postTest(void) {
+	/* Restore default PDU version. */
+	KSI_CTX_setFlag(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
+}
 
 static void getExtResponse(CuTest* tc, KSI_uint64_t id, KSI_uint64_t aggrTime, KSI_uint64_t pubTime, KSI_ExtendResp **response) {
 	int res;
@@ -267,6 +271,8 @@ static void Test_RequestExtenderConfig(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Config *config = NULL;
 
+	KSI_CTX_setFlag(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_PDU_VERSION_1);
+
 	res = KSI_receiveExtenderConfig(ctx, &config);
 	CuAssert(tc, "Unable to receive extender config.", res == KSI_INVALID_STATE && config == NULL);
 }
@@ -280,14 +286,14 @@ static void Test_RequestExtenderConfig_pduV2(CuTest* tc) {
 	res = KSI_receiveExtenderConfig(ctx, &config);
 	CuAssert(tc, "Unable to receive extender config.", res == KSI_OK && config != NULL);
 
-	KSI_CTX_setFlag(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
-
 	KSI_Config_free(config);
 }
 
 
 CuSuite* ExtIntegrationTests_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
+
+	suite->postTest = postTest;
 
 	SUITE_ADD_TEST(suite, Test_SendOKExtendRequestDefProvider);
 	SUITE_ADD_TEST(suite, Test_NOKExtendRequestToTheFuture);

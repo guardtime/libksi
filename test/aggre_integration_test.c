@@ -28,6 +28,10 @@
 
 extern KSI_CTX *ctx;
 
+static void postTest(void) {
+	/* Restore default PDU version. */
+	KSI_CTX_setFlag(ctx, KSI_OPT_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
+}
 
 static void Test_NOKAggr_TreeTooLarge(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -356,6 +360,8 @@ static void Test_RequestAggregatorConfig(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Config *config = NULL;
 
+	KSI_CTX_setFlag(ctx, KSI_OPT_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_1);
+
 	res = KSI_receiveAggregatorConfig(ctx, &config);
 	CuAssert(tc, "Unable to receive aggregator config.", res == KSI_OK && config != NULL);
 
@@ -371,14 +377,14 @@ static void Test_RequestAggregatorConfig_pduV2(CuTest* tc) {
 	res = KSI_receiveAggregatorConfig(ctx, &config);
 	CuAssert(tc, "Unable to receive aggregator config.", res == KSI_OK && config != NULL);
 
-	KSI_CTX_setFlag(ctx, KSI_OPT_AGGR_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
-
 	KSI_Config_free(config);
 }
 
 
 CuSuite* AggreIntegrationTests_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
+
+	suite->postTest = postTest;
 
 	SUITE_ADD_TEST(suite, Test_CreateSignatureDefaultProvider);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureWrongHMAC);
