@@ -265,7 +265,7 @@ static void testPreAggregated(CuTest* tc) {
 	KSI_Signature *sig = NULL;
 	KSI_SignatureBuilder *bldr = NULL;
 	KSI_Signature *out = NULL;
-	size_t firstLevel = 0;
+	int firstLevel = 0;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -292,12 +292,8 @@ static void testPreAggregated(CuTest* tc) {
 			CuAssert(tc, "Unable to get aggregation chain from the sample signature.", res == KSI_OK && ptr != NULL);
 
 			if (i == 0) {
-				KSI_LIST(KSI_HashChainLink) *linksp = NULL;
-				res = KSI_AggregationHashChain_getChain(ptr, &linksp);
-
-				CuAssert(tc, "Unable to extract the links of the first aggregation hash chain.", res == KSI_OK && linksp != NULL);
-
-				firstLevel = KSI_HashChainLinkList_length(linksp);
+				res = KSI_AggregationHashChain_aggregate(ptr, 0, &firstLevel, NULL);
+				CuAssert(tc, "Unable to aggregate first aggregation hash chain.", res == KSI_OK && firstLevel != 0);
 			} else {
 				res = KSI_SignatureBuilder_addAggregationChain(bldr, ptr);
 				CuAssert(tc, "Unable to add aggregation chain to the signature builder.", res == KSI_OK);
