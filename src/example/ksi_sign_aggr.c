@@ -19,10 +19,25 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <errno.h>
 
 #include <ksi/ksi.h>
 #include <ksi/net_uri.h>
 #include "ksi_common.h"
+
+enum {
+	ARGV_COMMAND = 0,
+	ARGV_IN_DATA_FILE,
+	ARGV_ROOT_LEVEL,
+	ARGV_OUT_SIGN_FILE,
+	ARGV_AGGR_URI,
+	ARGV_USER,
+	ARGV_PASS,
+	ARGV_PUB_FILE_URL,
+
+	NOF_ARGS
+};
 
 int main(int argc, char **argv) {
 	KSI_CTX *ksi = NULL;
@@ -30,6 +45,9 @@ int main(int argc, char **argv) {
 
 	FILE *in = NULL;
 	FILE *out = NULL;
+
+	long int level = 0;
+	char *endp = NULL;
 
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
@@ -51,17 +69,17 @@ int main(int argc, char **argv) {
 	};
 
 	/* Handle command line parameters */
-	if (argc != 7) {
+	if (argc != NOF_ARGS) {
 		fprintf(stderr, "Usage:\n"
-				"  %s <in-data-file> <out-sign-file> <aggregator-uri> <user> <pass> <pub-file url> \n", argv[0]);
+				"  %s <in-data-file> <root-level> <out-sign-file> <aggregator-uri> <user> <pass> <pub-file url> \n", argv[ARGV_COMMAND]);
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
 	/* Input file */
-	in = fopen(argv[1], "rb");
+	in = fopen(argv[ARGV_IN_DATA_FILE], "rb");
 	if (in == NULL) {
-		fprintf(stderr, "Unable to open input file '%s'\n", argv[1]);
+		fprintf(stderr, "Unable to open input file '%s'\n", argv[ARGV_IN_DATA_FILE]);
 		res = KSI_IO_ERROR;
 		goto cleanup;
 	}
@@ -87,11 +105,11 @@ int main(int argc, char **argv) {
 
 	KSI_LOG_info(ksi, "Using KSI version: '%s'", KSI_getVersion());
 
-	res = KSI_CTX_setAggregator(ksi, argv[3], argv[4], argv[5]);
+	res = KSI_CTX_setAggregator(ksi, argv[ARGV_AGGR_URI], argv[ARGV_USER], argv[ARGV_PASS]);
 	if (res != KSI_OK) goto cleanup;
 
 	/* Check publications file url. */
-	res = KSI_CTX_setPublicationUrl(ksi, argv[6]);
+	res = KSI_CTX_setPublicationUrl(ksi, argv[ARGV_PUB_FILE_URL]);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to set publications file url.\n");
 		goto cleanup;
@@ -123,9 +141,18 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
+	/* Parse root level value. */
+	level = strtol(argv[ARGV_ROOT_LEVEL], &endp, 0);
+	if (argv[ARGV_ROOT_LEVEL] == endp || errno == ERANGE || level < 0 || level > 0xff) {
+		fprintf(stderr, "Unable to handle root level value: '%s'\n", argv[ARGV_ROOT_LEVEL]);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	} else {
+		printf("Signing with root level: %ld\n", level);
+	}
+
 	/* Sign the data hash. */
-	res = KSI_Signature_signAggregated(ksi, hsh, 4, &sign);
-//	res = KSI_createSignature(ksi, hsh, &sign);
+	res = KSI_Signature_signAggregated(ksi, hsh, (KSI_uint64_t)level, &sign);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to sign %d.\n", res);
 		goto cleanup;
@@ -173,9 +200,9 @@ int main(int argc, char **argv) {
 	}
 
 	/* Output file */
-	out = fopen(argv[2], "wb");
+	out = fopen(argv[ARGV_OUT_SIGN_FILE], "wb");
 	if (out == NULL) {
-		fprintf(stderr, "Unable to open input file '%s'\n", argv[2]);
+		fprintf(stderr, "Unable to open input file '%s'\n", argv[ARGV_OUT_SIGN_FILE]);
 		res = KSI_IO_ERROR;
 		goto cleanup;
 	}
