@@ -244,8 +244,9 @@ extern "C" {
 	 * \param[in]	sig			KSI signature.
 	 * \param[in]	aggr		Aggregation chain.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note Use #KSI_SignatureBuilder_appendAggregationChain
 	 */
-	int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHashChain *aggr);
+	KSI_FN_DEPRECATED(int KSI_Signature_appendAggregationChain(KSI_Signature *sig, KSI_AggregationHashChain *aggr));
 
 	/**
 	 * Aggregate the aggregation chain.
@@ -267,6 +268,8 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_AggregationHashChain_calculateShape(const KSI_AggregationHashChain *chn, KSI_uint64_t *shape);
+
+	int KSI_AggregationHashChain_compare(const KSI_AggregationHashChain **left, const KSI_AggregationHashChain **right);
 
 	int KSI_AggregationHashChain_getAggregationTime(const KSI_AggregationHashChain *aggr, KSI_Integer **aggregationTime);
 	int KSI_AggregationHashChain_getChainIndex(const KSI_AggregationHashChain * aggr, KSI_LIST(KSI_Integer) **chainIndex);

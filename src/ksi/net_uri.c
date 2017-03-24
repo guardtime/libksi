@@ -141,6 +141,7 @@ int KSI_UriClient_setPublicationUrl(KSI_NetworkClient *client, const char *val) 
 	unsigned port = 0;
 	char *path = NULL;
 	const char *replace = NULL;
+	KSI_NetworkClient *pubClient = NULL;
 
 	if (client == NULL || val == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -155,7 +156,8 @@ int KSI_UriClient_setPublicationUrl(KSI_NetworkClient *client, const char *val) 
 		case URI_HTTP:
 		case URI_TCP:
 		case URI_UNKNOWN:
-			res = KSI_HttpClient_setPublicationUrl(uriClient->httpClient, val);
+			pubClient = uriClient->httpClient;
+			res = KSI_HttpClient_setPublicationUrl(pubClient, val);
 			if (res != KSI_OK) goto cleanup;
 			break;
 		case URI_FILE:
@@ -175,10 +177,9 @@ int KSI_UriClient_setPublicationUrl(KSI_NetworkClient *client, const char *val) 
 				res = KSI_FsClient_new(client->ctx, &uriClient->fsClient);
 				if (res != KSI_OK) goto cleanup;
 			}
-			/* Set the client to be used in extending requests. */
-			uriClient->pPublicationClient = uriClient->fsClient;
+			pubClient = uriClient->fsClient;
 
-			res = KSI_FsClient_setPublicationUrl(uriClient->pPublicationClient, path);
+			res = KSI_FsClient_setPublicationUrl(pubClient, path);
 			if (res != KSI_OK) goto cleanup;
 			break;
 		default:
@@ -186,6 +187,7 @@ int KSI_UriClient_setPublicationUrl(KSI_NetworkClient *client, const char *val) 
 			goto cleanup;
 			break;
 	}
+	uriClient->pPublicationClient = pubClient;
 
 	res = KSI_OK;
 

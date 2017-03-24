@@ -641,15 +641,6 @@ int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext
 
 	KSI_LOG_info(ctx, "Verify aggregation hash chain consistency.");
 
-	/* The aggregation level might not be 0 in case of local aggregation. */
-	if (info->docAggrLevel > 0xff) {
-		/* Aggregation level can't be larger than 0xff. */
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res = KSI_INVALID_VERIFICATION_INPUT, "Aggregation level is larger than 0xff.");
-		goto cleanup;
-	}
-	level = (int)info->docAggrLevel;
-
 	/* Aggregate all the aggregation chains. */
 	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
 		KSI_AggregationHashChain* aggregationChain = NULL;
@@ -941,7 +932,7 @@ static int initAggregationOutputHash(KSI_VerificationContext *info) {
 
 	if (tempData->aggregationOutputHash == NULL) {
 		KSI_AggregationHashChainList_aggregate(info->signature->aggregationChainList, info->ctx,
-											   (int)info->docAggrLevel, &tempData->aggregationOutputHash);
+				0, &tempData->aggregationOutputHash);
 	}
 
 	res = KSI_OK;
