@@ -243,7 +243,11 @@ static void runTests(CuTest* tc, const char *testCsv, const char *root) {
 			}
 		} else {
 			/* Verify if the signature should have been failed during the verification state. */
-			CuAssert(tc, "Signature should have failed verification.", !(verState == TEST_VS_NOT_IMPL_FAILURE || verState == TEST_VS_PARSER_FAILURE));
+			if (verState == TEST_VS_POLICY) {
+				CuAssert(tc, "Signature should have failed during policy verification state.",  errCode == KSI_VER_ERR_NONE);
+			} else if (verState == TEST_VS_NOT_IMPL_FAILURE || verState == TEST_VS_PARSER_FAILURE) {
+				CuFail(tc, "Signature should have failed during parsing state.");
+			}
 		}
 
 		/* Verify expected results. */
