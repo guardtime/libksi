@@ -19,8 +19,6 @@
 
 #include "cutest/CuTest.h"
 #include "all_integration_tests.h"
-#include <../src/ksi/ksi.h>
-#include <../src/ksi/ksi.h>
 
 extern KSI_CTX *ctx;
 extern KSITest_Conf conf;
