@@ -26,6 +26,7 @@
 #include "../src/ksi/signature_impl.h"
 
 extern KSI_CTX *ctx;
+extern KSITest_Conf conf;
 
 #define TEST_USER "anon"
 #define TEST_PASS "anon"
@@ -107,7 +108,6 @@ static int getTime(const char *ts, KSI_uint64_t *time) {
 	if (tmp < 0 || ts == endp || errno == ERANGE) return -1;
 
 	*time = (KSI_uint64_t)tmp;
-	*time /= 1000;
 
 	return 1;
 }
@@ -180,6 +180,7 @@ static void runTests(CuTest* tc, const char *testCsv, const char *root) {
 			}
 		}
 
+#if POLICY_TESTS_SUPPORTED
 		if (csvData[TEST_CF_EXTEND_PERM]) {
 			context.extendingAllowed = (strcmp(csvData[TEST_CF_EXTEND_PERM], "true") == 0) ? 1 : 0;
 		}
@@ -190,6 +191,9 @@ static void runTests(CuTest* tc, const char *testCsv, const char *root) {
 
 			res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(path), TEST_USER, TEST_PASS);
 			CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
+		} else {
+			res = KSI_CTX_setExtender(ctx, conf.extender_url, conf.extender_user, conf.extender_pass);
+			CuAssert(tc, "Unable to set extender url.", res == KSI_OK);
 		}
 
 		if (csvData[TEST_CF_PUBS_FILE]) {
@@ -198,7 +202,11 @@ static void runTests(CuTest* tc, const char *testCsv, const char *root) {
 
 			res = KSI_CTX_setPublicationUrl(ctx, getFullResourcePathUri(path));
 			CuAssert(tc, "Unable to set publications file url.", res == KSI_OK);
+		} else {
+			res = KSI_CTX_setPublicationUrl(ctx, conf.publications_file_url);
+			CuAssert(tc, "Unable to set publications file url.", res == KSI_OK);
 		}
+#endif
 
 		res = KSI_snprintf(path, sizeof(path), "%s/%s", root, csvData[TEST_CF_SIGNATURE_URI]);
 		CuAssert(tc, "Unable to compose path.", res != 0);
@@ -218,7 +226,8 @@ static void runTests(CuTest* tc, const char *testCsv, const char *root) {
 					CuAssert(tc, "Verification error code mismatch.", errCode == lastFailed->policyVerificationResult->finalResult.errorCode);
 
 					if (csvData[TEST_CF_ERROR_MESSAGE]) {
-						CuAssert(tc, "Verification error message mismatch.", strcmp(KSI_Policy_getErrorString(errCode), csvData[TEST_CF_ERROR_MESSAGE]) == 0);
+						CuAssert(tc, "Verification error message mismatch.",
+								strcmp(KSI_Policy_getErrorString(errCode), csvData[TEST_CF_ERROR_MESSAGE]) == 0);
 					}
 
 					KSI_Signature_free(lastFailed);
@@ -275,6 +284,7 @@ static void runTests(CuTest* tc, const char *testCsv, const char *root) {
 			KSI_uint64_t time = 0;
 
 			CuAssert(tc, "Unable to parse registration time.", getTime(csvData[TEST_CF_REG_TIME], &time));
+			time /= 1000;
 
 			res = KSI_CalendarHashChain_calculateAggregationTime(sig->calendarChain, &calcTime);
 			CuAssert(tc, "Unable to calculate signature aggregation time.", res == KSI_OK && calcTime != 0);
@@ -287,6 +297,7 @@ static void runTests(CuTest* tc, const char *testCsv, const char *root) {
 			KSI_uint64_t time = 0;
 
 			CuAssert(tc, "Unable to parse aggregation time.", getTime(csvData[TEST_CF_AGGR_TIME], &time));
+			time /= 1000;
 
 			res = KSI_Signature_getSigningTime(sig, &sigAggrTime);
 			CuAssert(tc, "Unable to get signature aggregation time.", res == KSI_OK && sigAggrTime != NULL);
@@ -299,6 +310,7 @@ static void runTests(CuTest* tc, const char *testCsv, const char *root) {
 			KSI_uint64_t time = 0;
 
 			CuAssert(tc, "Unable to parse publication time.", getTime(csvData[TEST_CF_PUB_TIME], &time));
+			time /= 1000;
 
 			KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &sigPubTime);
 			CuAssert(tc, "Unable to get signature publication time.", res == KSI_OK && sigPubTime != NULL);
