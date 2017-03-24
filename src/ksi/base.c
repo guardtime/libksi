@@ -327,7 +327,7 @@ void KSI_CTX_free(KSI_CTX *ctx) {
 	}
 }
 
-int KSI_sendSignRequest(KSI_CTX *ctx, KSI_AggregationReq *request, KSI_RequestHandle **handle) {
+int KSI_sendAggregatorRequest(KSI_CTX *ctx, KSI_AggregationReq *request, KSI_RequestHandle **handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_RequestHandle *tmp = NULL;
 	KSI_NetworkClient *netProvider = NULL;
@@ -358,7 +358,7 @@ cleanup:
 	return res;
 }
 
-int KSI_sendExtendRequest(KSI_CTX *ctx, KSI_ExtendReq *request, KSI_RequestHandle **handle) {
+int KSI_sendExtenderRequest(KSI_CTX *ctx, KSI_ExtendReq *request, KSI_RequestHandle **handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_RequestHandle *tmp = NULL;
 	KSI_NetworkClient *netProvider = NULL;
@@ -542,7 +542,6 @@ cleanup:
 	return res;
 }
 
-
 int KSI_createAggregationConfigRequest(KSI_CTX *ctx, KSI_AggregationReq **request) {
 	return createConfigRequest(ctx, (void**)request,
 			(int (*)(KSI_CTX *,void **))KSI_AggregationReq_new,
@@ -551,7 +550,6 @@ int KSI_createAggregationConfigRequest(KSI_CTX *ctx, KSI_AggregationReq **reques
 }
 
 int KSI_createExtenderConfigRequest(KSI_CTX *ctx, KSI_ExtendReq **request) {
-	if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1) return KSI_INVALID_STATE;
 	return createConfigRequest(ctx, (void**)request,
 			(int (*)(KSI_CTX *,void **))KSI_ExtendReq_new,
 			(int (*)(void *, KSI_Config *))KSI_ExtendReq_setConfig,
@@ -621,30 +619,21 @@ cleanup:
 	return res;
 }
 
-int KSI_sendAggregatorConfigRequest(KSI_CTX *ctx, KSI_AggregationReq *request, KSI_RequestHandle **handle) {
-	return KSI_sendSignRequest(ctx, request, handle);
-}
-
 int KSI_receiveAggregatorConfig(KSI_CTX *ctx, KSI_Config **config) {
 	return receiveConfig(ctx, config,
 			(int (*)(KSI_CTX *, void **))KSI_createAggregationConfigRequest,
-			(int (*)(KSI_CTX *, void *, KSI_RequestHandle **))KSI_sendAggregatorConfigRequest,
+			(int (*)(KSI_CTX *, void *, KSI_RequestHandle **))KSI_sendAggregatorRequest,
 			(int (*)(const KSI_RequestHandle *, void **))KSI_RequestHandle_getAggregationResponse,
 			(int (*)(const void *t, KSI_Config **))KSI_AggregationResp_getConfig,
 			(void (*)(void *))KSI_AggregationReq_free,
 			(void (*)(void *))KSI_AggregationResp_free);
 }
 
-int KSI_sendExtenderConfigRequest(KSI_CTX *ctx, KSI_ExtendReq *request, KSI_RequestHandle **handle) {
-	if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1) return KSI_INVALID_STATE;
-	return KSI_sendExtendRequest(ctx, request, handle);
-}
-
 int KSI_receiveExtenderConfig(KSI_CTX *ctx, KSI_Config **config) {
 	if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1) return KSI_INVALID_STATE;
 	return receiveConfig(ctx, config,
 			(int (*)(KSI_CTX *, void **))KSI_createExtenderConfigRequest,
-			(int (*)(KSI_CTX *, void *, KSI_RequestHandle **))KSI_sendExtenderConfigRequest,
+			(int (*)(KSI_CTX *, void *, KSI_RequestHandle **))KSI_sendExtenderRequest,
 			(int (*)(const KSI_RequestHandle *, void **))KSI_RequestHandle_getExtendResponse,
 			(int (*)(const void *t, KSI_Config **))KSI_ExtendResp_getConfig,
 			(void (*)(void *))KSI_ExtendReq_free,
