@@ -88,6 +88,28 @@ static void Test_NOKAggr_TreeTooLarge(CuTest* tc) {
 	return;
 }
 
+static void Test_OKAggrWithLevel(CuTest* tc) {
+    int res = KSI_UNKNOWN_ERROR;
+    KSI_DataHash *hsh = NULL;
+    KSI_Signature *sig = NULL;
+
+
+    KSI_ERR_clearErrors(ctx);
+
+    res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), (const unsigned char*)"c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
+    CuAssert(tc, "Unable to create hash.", res == KSI_OK && hsh != NULL);
+
+    res = KSI_Signature_signAggregated(ctx, hsh, 3, &sig);
+    CuAssert(tc, "Unable to create signature with level.", res == KSI_OK && sig != NULL);
+
+    res = KSI_verifyDataHash(ctx, sig, hsh);
+    CuAssert(tc, "Unable to verify signature that was created with level.", res == KSI_OK);
+
+    KSI_DataHash_free(hsh);
+    KSI_Signature_free(sig);
+    return;
+}
+
 static void Test_CreateSignatureDefaultProvider(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
@@ -357,6 +379,7 @@ CuSuite* AggreIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_CreateSignatureDefaultProvider);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureWrongHMAC);
 	SUITE_ADD_TEST(suite, Test_NOKAggr_TreeTooLarge);
+    SUITE_ADD_TEST(suite, Test_OKAggrWithLevel);
 	SUITE_ADD_TEST(suite, Test_TCPCreateSignatureDefaultProvider);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureUsingExtender);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureDifferentNetProviders);
