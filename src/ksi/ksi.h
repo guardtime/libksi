@@ -506,40 +506,6 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile);
 int KSI_verifyPublicationsFile(KSI_CTX *ctx, const KSI_PublicationsFile *pubFile);
 
 /**
- * Constructor for the aggregator configuration request.
- * \param[in]		ctx			KSI context object.
- * \param[out]		request		Pointer to the receiving pointer.
- * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- */
-int KSI_createAggregationConfigRequest(KSI_CTX *ctx, KSI_AggregationReq **request);
-
-/**
- * Constructor for the extender configuration request.
- * \param[in]		ctx			KSI context object.
- * \param[out]		request		Pointer to the receiving pointer.
- * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- */
-int KSI_createExtenderConfigRequest(KSI_CTX *ctx, KSI_ExtendReq **request);
-
-/**
- * Send a binary aggregator configuration request to the configured service.
- * \param[in]		ctx					KSI context object.
- * \param[in]		request				Request object.
- * \param[out]		handle				Pointer to the receiving pointer of the network handle.
- * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- */
-int KSI_sendAggregatorConfigRequest(KSI_CTX *ctx, KSI_AggregationReq *request, KSI_RequestHandle **handle);
-
-/**
- * Send a binary extender configuration request to the configured service.
- * \param[in]		ctx					KSI context object.
- * \param[in]		request				Request object.
- * \param[out]		handle				Pointer to the receiving pointer of the network handle.
- * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- */
-int KSI_sendExtenderConfigRequest(KSI_CTX *ctx, KSI_ExtendReq *request, KSI_RequestHandle **handle);
-
-/**
  * Get aggregator service configuration.
  * \param[in]		ctx			KSI context.
  * \param[out]		config		Pointer to the receiving pointer.
