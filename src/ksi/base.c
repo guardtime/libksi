@@ -542,14 +542,14 @@ cleanup:
 	return res;
 }
 
-int KSI_createAggregationConfigRequest(KSI_CTX *ctx, KSI_AggregationReq **request) {
+static int createAggregationConfigRequest(KSI_CTX *ctx, KSI_AggregationReq **request) {
 	return createConfigRequest(ctx, (void**)request,
 			(int (*)(KSI_CTX *,void **))KSI_AggregationReq_new,
 			(int (*)(void *, KSI_Config *))KSI_AggregationReq_setConfig,
 			(void (*)(void *))KSI_AggregationReq_free);
 }
 
-int KSI_createExtenderConfigRequest(KSI_CTX *ctx, KSI_ExtendReq **request) {
+static int createExtenderConfigRequest(KSI_CTX *ctx, KSI_ExtendReq **request) {
 	return createConfigRequest(ctx, (void**)request,
 			(int (*)(KSI_CTX *,void **))KSI_ExtendReq_new,
 			(int (*)(void *, KSI_Config *))KSI_ExtendReq_setConfig,
@@ -621,7 +621,7 @@ cleanup:
 
 int KSI_receiveAggregatorConfig(KSI_CTX *ctx, KSI_Config **config) {
 	return receiveConfig(ctx, config,
-			(int (*)(KSI_CTX *, void **))KSI_createAggregationConfigRequest,
+			(int (*)(KSI_CTX *, void **))createAggregationConfigRequest,
 			(int (*)(KSI_CTX *, void *, KSI_RequestHandle **))KSI_sendAggregatorRequest,
 			(int (*)(const KSI_RequestHandle *, void **))KSI_RequestHandle_getAggregationResponse,
 			(int (*)(const void *t, KSI_Config **))KSI_AggregationResp_getConfig,
@@ -632,7 +632,7 @@ int KSI_receiveAggregatorConfig(KSI_CTX *ctx, KSI_Config **config) {
 int KSI_receiveExtenderConfig(KSI_CTX *ctx, KSI_Config **config) {
 	if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1) return KSI_INVALID_STATE;
 	return receiveConfig(ctx, config,
-			(int (*)(KSI_CTX *, void **))KSI_createExtenderConfigRequest,
+			(int (*)(KSI_CTX *, void **))createExtenderConfigRequest,
 			(int (*)(KSI_CTX *, void *, KSI_RequestHandle **))KSI_sendExtenderRequest,
 			(int (*)(const KSI_RequestHandle *, void **))KSI_RequestHandle_getExtendResponse,
 			(int (*)(const void *t, KSI_Config **))KSI_ExtendResp_getConfig,
