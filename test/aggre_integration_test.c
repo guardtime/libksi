@@ -356,7 +356,7 @@ CuSuite* AggreIntegrationTests_getSuite(void) {
 
 	SUITE_ADD_TEST(suite, Test_CreateSignatureDefaultProvider);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureWrongHMAC);
-    SUITE_ADD_TEST(suite, Test_NOKAggr_TreeTooLarge);
+	SUITE_ADD_TEST(suite, Test_NOKAggr_TreeTooLarge);
 	SUITE_ADD_TEST(suite, Test_TCPCreateSignatureDefaultProvider);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureUsingExtender);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureDifferentNetProviders);
