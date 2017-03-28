@@ -106,20 +106,20 @@ A publication string must be provided and an extender must be configured.
 - Publications file based policy. This policy verifies the signature publication record against a publication
 in the publication file. If necessary (and permitted), the signature is extended to the publication. For conclusive results
 the signature must either contain a publication record with a suitable publication or signature extending must be allowed.
-A publications file must be provided for lookup and an extender must be configured. 
+A publications file must be provided for lookup and an extender must be configured.
 - Key-based policy. This policy verifies the PKI signature and calendar chain data in the calendar authentication record of the signature.
 For conclusive results, a calendar hash chain and calendar authentication record must be present in the signature.
 A trusted publication file must be provided for performing lookup of a matching certificate.
-- Calendar-based policy. This policy first extends the signature to either the head of the calendar or to the 
+- Calendar-based policy. This policy first extends the signature to either the head of the calendar or to the
 same time as the calendar chain of the signature. The extended signature calendar chain is then verified against
 aggregation chain of the signature. For conclusive results the extender must be configured.
 - General policy. This policy uses all the previously mentioned policies in the specified order. Verification starts off
 with internal verification and if successful, continues with key-based, publication-based and/or calendar-based verification,
 depending on the availability of calendar chain, calendar authentication record or publication record in the signature.
 The general policy tries all available verification policies until a signature correctness is proved or disproved and is thus
-the recommended policy for verification unless some restriction dictates the use of a specific verification policy. 
+the recommended policy for verification unless some restriction dictates the use of a specific verification policy.
 
-Note: all of the policies perform internal verification as a prerequisite to the specific verification and a policy will 
+Note: all of the policies perform internal verification as a prerequisite to the specific verification and a policy will
 never result in a success if internal verification fails.
 
 5. Verifying a signature according to a policy
@@ -128,7 +128,7 @@ never result in a success if internal verification fails.
 To perform verification according to a policy, we first need to set up a verification context. To do this, we first call
 #KSI_VerificationContext_init to initialize our context variable with default values. Then, by using our favorite API method,
 we obtain the signature that we want to verify and assign it directly into the verification context. Let's assume that our
-signature contains a publication record and we have a recent enough publication file to possibly contain the same publication. 
+signature contains a publication record and we have a recent enough publication file to possibly contain the same publication.
 We obtain the publications file by using our API method of choice and assign it directly into the verification context.
 For now we have set up all the required information to perform the verification, so we can verify the signature by
 calling #KSI_SignatureVerifier_verify. We get two kinds of information from this function. First, the functions returns a
@@ -140,7 +140,7 @@ there was not enough data (e.g. no publication file configured) Note: #KSI_OK al
 a successful verification result (although it is a prerequisite), so we must inspect the verification result for details:
 
 ~~~~~~~~~~{.c}
-	
+
 	int res; /* The return value. */
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL; /* Must be freed. */
@@ -162,7 +162,7 @@ a successful verification result (although it is a prerequisite), so we must ins
 	}
 
 ~~~~~~~~~~
- 
+
 6. Verification context
 -----------------------
 
@@ -171,8 +171,7 @@ from the signature itself. For most cases this means that we have to set up a pu
 configure an extender (see [Basics Tutorial](tutorial/t0_basics.md)). In some cases (see example below) we need to allow extending
 as well. If we want to verify the signature against a specific publication, we can do so by setting up the publication string in the
 verification context. If we want to verify the signature against a document, the document hash can be stored in the verification
-context. Additionally, the verification context can be used for specifying the initial aggregation level and enabling/disabling
-extending for publication-based verification.
+context. Additionally, the verification context can be used for enabling/disabling extending for publication-based verification.
 
 Let's continue with another example where we want to verify the signature against a specific publication. We don't really need any
 of the other verification policies, so we can use the predefined policy #KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED. For conclusive
@@ -222,15 +221,6 @@ Note: if extending is allowed, a valid extender should also be configured (see [
 
 ~~~~~~~~~~
 
-If we need to verify a signature with an aggregation level other than the default 0, we can specify this in the
-verification context. Initial aggregation level cannot be greater than 0xFF:
-
-~~~~~~~~~~{.c}
-
-	context.docAggrLevel = 10;
-
-~~~~~~~~~~
-
 For verifying the document, we need to set up the document hash in the verification context. The document hash, if set up, will be verified
 as part of all predefined policies, but for the sake of a simple example we will choose the internal policy:
 
@@ -250,7 +240,7 @@ as part of all predefined policies, but for the sake of a simple example we will
 	} else {
 		/* Error handling. Verification not completed due to internal error. */
 	}
- 
+
 ~~~~~~~~~~
 
 7. Inspecting the result of verification
@@ -290,7 +280,7 @@ Only then can we say if the verification was a success or failure.
 ----------
 
 As the final step we need to free all the allocated resources. As an owner of all the resources that we set in the
-verification context (signature, document hash, publication file/string), we are responsible for freeing them. 
+verification context (signature, document hash, publication file/string), we are responsible for freeing them.
 The verification context contains temporary data that is allocated during verification and this must be freed by
 calling #KSI_VerificationContext_clean. After we are done inspecting the verification result, we must
 free it with #KSI_PolicyVerificationResult_free.
@@ -322,7 +312,7 @@ are deprecated and will be removed from future SDK releases:
 - int KSI_Signature_getVerificationResult(KSI_Signature *sig, const KSI_VerificationResult **info)
 
 When replacing the usage of deprecated verification functionality, we need to choose a policy that matches that of the deprecated
-functionality and then set up the relevant data in the verification context. A straightforward replacement exists for KSI_Signature_verify - 
+functionality and then set up the relevant data in the verification context. A straightforward replacement exists for KSI_Signature_verify -
 just use #KSI_verifySignature as shown in chapter 3. We will show how to replace the remaining functionalities.
 Note: for brevity, all error handling has been removed in the following examples.
 
@@ -375,12 +365,6 @@ Depending on the chosen policy we need to set up relevant data in the verificati
 	/* KSI_Signature_verifyDataHash */
 	/* KSI_Signature_verifyAggregatedHash */
 	context.documentHash = hsh;
-
-	/* By default the initial aggregation level is 0. */
-	/* If needed, set a different initial aggregation level if you plan to replace one of the following: */
-	/* KSI_Signature_verifyAggregated */
-	/* KSI_Signature_verifyAggregatedHash */
-	context.docAggrLevel = level;
 
 ~~~~~~~~~~
 
@@ -488,7 +472,7 @@ should then be returned to indicate the reason why verification was not complete
 
 Time to move on to some more complex rules. Let's say we want to provide alternative, equally conclusive paths to a verification result.
 Path A means that we would have to go through a set of three rules, path B requires verification of a different set of four rules and path C
-consists of yet another set of two rules. Finally, after succeeding at either path A, B, or C, we still want to run some final rule before 
+consists of yet another set of two rules. Finally, after succeeding at either path A, B, or C, we still want to run some final rule before
 deciding on the result of the policy. We can write it down like this:
 
 ~~~~~~~~~~{.c}
@@ -542,16 +526,16 @@ The result of the composite rule, whether success or failure, is interpreted acc
 is successfully verified, further rules in the rule array are skipped and the whole rule of which the OR-type rule is part of,
 is considered successfully verified. In our example, if \c pathARules verifies successfully, the subsequent rules \c pathBRules
 and \c pathCRules are skipped and the rule \c chooseABCRule is considered successful. The analogy to an OR-statement continues,
-but with a slightly different definition of failure - if an OR-type rule result is inconclusive (#KSI_VER_RES_NA), we are allowed to 
+but with a slightly different definition of failure - if an OR-type rule result is inconclusive (#KSI_VER_RES_NA), we are allowed to
 verify the the next rule in the array. However, if an OR-type rule result fails with #KSI_VER_RES_FAIL, subsequent rules are not verified
 and the result of array of rules is a failure. So in our example, if \c pathARules results in #KSI_VER_RES_NA, the rule \c pathBRules
 is verified. If this rule result is also inconclusive, the rule \c pathCRules is verified. If however any of those rules fail
-with #KSI_VER_RES_FAIL, the rule \c chooseABCRule has also failed. 
+with #KSI_VER_RES_FAIL, the rule \c chooseABCRule has also failed.
 
 In our example the rule \c chooseABCRule itself is a composite AND-type rule, which means that its result must be successful for
 the verification to continue. So for a successful result of our \c complexPolicy, both \c chooseABCRule and \c VerifyingFunction10
 must verify successfully. If an AND-type rule fails, the whole rule array of which it is part of, fails as well (no further rules
-are verified). 
+are verified).
 
 Let's summarize how rule results are interpreted:
 1. If the return code is not #KSI_OK, the rule has failed due to some internal error. No further rules are checked and the return code
