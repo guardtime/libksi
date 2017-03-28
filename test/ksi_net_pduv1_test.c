@@ -1124,7 +1124,6 @@ static void testSigningWithLevel(CuTest* tc) {
         KSI_LIST(KSI_HashChainLink) *chain = NULL;
         KSI_HashChainLink *link = NULL;
         KSI_Integer *oldLvl = NULL;
-        KSI_Integer *newLvl = NULL;
 
         KSI_ERR_clearErrors(ctx);
 
@@ -1149,11 +1148,7 @@ static void testSigningWithLevel(CuTest* tc) {
         res = KSI_HashChainLink_getLevelCorrection(link, &oldLvl);
         CuAssert(tc, "Unable to get level corrector value", res == KSI_OK);
 
-        res = KSI_Integer_new(sig->ctx, level, &newLvl);
-        CuAssert(tc, "Unable to create level corrector value", res == KSI_OK);
-
-        res = KSI_Integer_compare(newLvl, oldLvl);
-        CuAssert(tc, "Signature first link level does not match with signing level", res == KSI_OK);
+        CuAssert(tc, "Signature first link level does not match with signing level", level == KSI_Integer_getUInt64(oldLvl));
 
         res = KSI_VerificationContext_init(&context, ctx);
         CuAssert(tc, "Unable to init verification context", res == KSI_OK);
