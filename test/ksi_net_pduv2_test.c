@@ -1612,7 +1612,7 @@ static void testSigningWithLevel(CuTest* tc) {
         KSI_AggregationHashChain *aggr = NULL;
         KSI_LIST(KSI_HashChainLink) *chain = NULL;
         KSI_HashChainLink *link = NULL;
-        KSI_Integer *oldLvl = NULL;
+        KSI_Integer *sigLvl = NULL;
 
         KSI_ERR_clearErrors(ctx);
 
@@ -1626,18 +1626,18 @@ static void testSigningWithLevel(CuTest* tc) {
         CuAssert(tc, "Unable to sign the hash with level.", res == KSI_OK && sig != NULL);
 
         res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &aggr);
-        CuAssert(tc, "Unable to get aggregation hash chain", res == KSI_OK);
+        CuAssert(tc, "Unable to get aggregation hash chain", res == KSI_OK && aggr != NULL);
 
         res = KSI_AggregationHashChain_getChain(aggr, &chain);
-        CuAssert(tc, "Unable to get aggregation hash chain links", res == KSI_OK);
+        CuAssert(tc, "Unable to get aggregation hash chain links", res == KSI_OK && chain != NULL);
 
         res = KSI_HashChainLinkList_elementAt(chain, 0, &link);
-        CuAssert(tc, "Unable to get first chain link", res == KSI_OK);
+        CuAssert(tc, "Unable to get first chain link", res == KSI_OK && link != NULL);
 
-        res = KSI_HashChainLink_getLevelCorrection(link, &oldLvl);
-        CuAssert(tc, "Unable to get level corrector value", res == KSI_OK);
+        res = KSI_HashChainLink_getLevelCorrection(link, &sigLvl);
+        CuAssert(tc, "Unable to get level corrector value", res == KSI_OK && sigLvl != NULL);
 
-        CuAssert(tc, "Signature first link level does not match with signing level", level == KSI_Integer_getUInt64(oldLvl));
+        CuAssert(tc, "Signature first link level does not match with signing level", level == KSI_Integer_getUInt64(sigLvl));
 
         res = KSI_VerificationContext_init(&context, ctx);
         CuAssert(tc, "Unable to init verification context", res == KSI_OK);
