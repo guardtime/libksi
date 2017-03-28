@@ -22,6 +22,7 @@
 
 #include "types.h"
 #include "ksi.h"
+#include "common.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -40,13 +41,7 @@ extern "C" {
 		 * Deprecated: initial aggregation level is adjusted into aggregation hash chain level correction value
 		 * during signature creation. \c docAggrLevel is not used during verification procedure.
 		 */
-#ifndef __KSI_NO_DEPRECATE__
-#  if defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1)))
-	 __attribute__((deprecated))
-#  elif defined(_WIN32)
-#    pragma deprecated(docAggrLevel)
-#  endif
-#endif
+		KSI_VAR_DEPRECATED(docAggrLevel)
 		KSI_uint64_t docAggrLevel;
 
 		/** Document hash to be verified. */
