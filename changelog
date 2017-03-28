@@ -1,3 +1,4 @@
+* IMPROVEMENT: Verification context initial aggregation level member is deprecated.
 * IMPROVEMENT: Set level correction when input hash level is greater than 0.
 * IMPROVEMENT: Updated ksi_sign_aggr example.
 * BUGFIX: Update publications file client pointer when changinh client.
