@@ -1156,7 +1156,8 @@ static void testSigningWithLevel(CuTest* tc) {
         context.signature = sig;
 
         res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-        CuAssert(tc, "Unable to verify created signature.", res == KSI_OK && result->finalResult.resultCode == KSI_VER_RES_OK);
+        CuAssert(tc, "Unable to verify created signature.", res == KSI_OK && result != NULL);
+        CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == KSI_VER_RES_OK);
 
         KSI_DataHash_free(hsh);
         KSI_Signature_free(sig);
