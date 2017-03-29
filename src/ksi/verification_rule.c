@@ -1018,6 +1018,7 @@ int KSI_VerificationRule_CalendarHashChainAggregationTime(KSI_VerificationContex
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationHashChain *aggregationChain = NULL;
 	KSI_Integer *calAggrTime = NULL;
+	KSI_Integer *calPubTime = NULL;
 	KSI_CTX *ctx = NULL;
 	const KSI_Signature *sig = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN;
@@ -1055,14 +1056,39 @@ int KSI_VerificationRule_CalendarHashChainAggregationTime(KSI_VerificationContex
 		goto cleanup;
 	}
 
-	if (!KSI_Integer_equals(calAggrTime, aggregationChain->aggregationTime)) {
-		KSI_LOG_info(ctx, "Aggregation time in calendar hash chain and aggregation hash chain differ.");
+	if (calAggrTime != NULL) {
+		if (!KSI_Integer_equals(calAggrTime, aggregationChain->aggregationTime)) {
+			KSI_LOG_info(ctx, "Aggregation time in calendar hash chain and aggregation hash chain differ.");
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_4, step);
+			res = KSI_OK;
+			goto cleanup;
+		}
+		VERIFICATION_RESULT_OK(step);
+		res = KSI_OK;
+		goto cleanup;
+	}
+	KSI_LOG_debug(ctx, "Aggregation time missing in calendar hash chain, default to publication time.");
 
+	res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &calPubTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (calPubTime == NULL) {
+		KSI_LOG_info(ctx, "Publication time in calendar hash chain is missing.");
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_4, step);
 		res = KSI_OK;
 		goto cleanup;
 	}
 
+	if (!KSI_Integer_equals(calPubTime, aggregationChain->aggregationTime)) {
+		KSI_LOG_info(ctx, "Publication time in calendar hash chain and aggregation time in aggregation hash chain differ.");
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_4, step);
+		res = KSI_OK;
+		goto cleanup;
+	}
 
 	VERIFICATION_RESULT_OK(step);
 	res = KSI_OK;
@@ -1076,6 +1102,7 @@ int KSI_VerificationRule_CalendarHashChainRegistrationTime(KSI_VerificationConte
 	int res = KSI_UNKNOWN_ERROR;
 	time_t calculatedAggrTime;
 	KSI_Integer *calendarAggrTime = NULL;
+	KSI_Integer *calPubTime = NULL;
 	KSI_CTX *ctx = NULL;
 	const KSI_Signature *sig = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_CALCHAIN_INTERNALLY;
@@ -1111,14 +1138,39 @@ int KSI_VerificationRule_CalendarHashChainRegistrationTime(KSI_VerificationConte
 		goto cleanup;
 	}
 
-	if (!KSI_Integer_equalsUInt(calendarAggrTime, (KSI_uint64_t) calculatedAggrTime)) {
-		KSI_LOG_info(ctx, "Calendar hash chain internally inconsistent.");
+	if (calendarAggrTime != NULL) {
+		if (!KSI_Integer_equalsUInt(calendarAggrTime, (KSI_uint64_t) calculatedAggrTime)) {
+			KSI_LOG_info(ctx, "Calendar hash chain internally inconsistent.");
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_5, step);
+			res = KSI_OK;
+			goto cleanup;
+		}
+		VERIFICATION_RESULT_OK(step);
+		res = KSI_OK;
+		goto cleanup;
+	}
+	KSI_LOG_debug(ctx, "Aggregation time missing in calendar hash chain, default to publication time.");
 
+	res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &calPubTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (calPubTime == NULL) {
+		KSI_LOG_info(ctx, "Publication time in calendar hash chain is missing.");
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_5, step);
 		res = KSI_OK;
 		goto cleanup;
 	}
 
+	if (!KSI_Integer_equalsUInt(calPubTime, (KSI_uint64_t) calculatedAggrTime)) {
+		KSI_LOG_info(ctx, "Publication time does not match calculated aggregation time.");
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_5, step);
+		res = KSI_OK;
+		goto cleanup;
+	}
 
 	VERIFICATION_RESULT_OK(step);
 	res = KSI_OK;
