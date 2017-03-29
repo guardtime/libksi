@@ -39,7 +39,7 @@ extern "C" {
 	typedef struct KSI_SignatureBuilder_st KSI_SignatureBuilder;
 
 	/**
-	 * Creates a new instance of the signature builder. The builder is initialized with the input signature \c sig.
+	 * Creates a new instance of the signature builder. The builder is initialized with a copy of the input signature \c sig.
 	 * \param[in]	sig		KSI signature instance.
 	 * \param[out]	builder	Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -97,7 +97,7 @@ extern "C" {
 
 	/**
 	 * This function appends the aggregation chain to the signature. The difference between
-	 * #KSI_SignatureBuilder_addAggregationChain is that chain is appended to the beggining of the chain list and 
+	 * #KSI_SignatureBuilder_addAggregationChain is that chain is appended to the beggining of the chain list and
 	 * aggregation time and chain index are updated.
 	 * \param[in]	builder		Pointer to the builder.
 	 * \param[in]	aggr		Aggregation hash chain.
