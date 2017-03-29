@@ -24,6 +24,7 @@
 #include "cutest/CuTest.h"
 #include "all_integration_tests.h"
 #include "../src/ksi/signature_impl.h"
+#include "../src/ksi/policy_impl.h"
 
 extern KSI_CTX *ctx;
 extern KSITest_Conf conf;
@@ -33,6 +34,8 @@ extern KSITest_Conf conf;
 
 #define CSV_LINE_COMMENT '#'
 #define CSV_FIELD_SEP ";"
+
+#define POLICY_TESTS_SUPPORTED 0
 
 enum CsvField_en {
 	TEST_CF_SIGNATURE_URI,
@@ -186,12 +189,20 @@ static void runTests(CuTest* tc, const char *testCsv, const char *root) {
 		}
 
 		if (csvData[TEST_CF_EXTEND_RESPONSE]) {
+			/* Responses are in PDU v2. */
+			res = KSI_CTX_setOption(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
+			CuAssert(tc, "Unable to set PDU version.", res != KSI_OK);
+
 			res = KSI_snprintf(path, sizeof(path), "%s/%s", root, csvData[TEST_CF_EXTEND_RESPONSE]);
 			CuAssert(tc, "Unable to compose path.", res != 0);
 
 			res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(path), TEST_USER, TEST_PASS);
 			CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 		} else {
+			/* Restore default PDU version. */
+			res = KSI_CTX_setOption(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
+			CuAssert(tc, "Unable to set PDU version.", res != KSI_OK);
+
 			res = KSI_CTX_setExtender(ctx, conf.extender_url, conf.extender_user, conf.extender_pass);
 			CuAssert(tc, "Unable to set extender url.", res == KSI_OK);
 		}
@@ -350,8 +361,19 @@ static void TestPack_PolicyVerification(CuTest* tc) {
 			getFullResourcePath("resource/test_pack/policy-verification-signatures"));
 }
 
+static void postTest(void) {
+	/* Restore default PDU version. */
+	KSI_CTX_setOption(ctx, KSI_OPT_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
+	KSI_CTX_setOption(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
+	/* Restore default HMAC algorithm. */
+	KSI_CTX_setOption(ctx, KSI_OPT_AGGR_HMAC_ALGORITHM, (void*)TEST_DEFAULT_AGGR_HMAC_ALGORITHM);
+	KSI_CTX_setOption(ctx, KSI_OPT_EXT_HMAC_ALGORITHM, (void*)TEST_DEFAULT_EXT_HMAC_ALGORITHM);
+}
+
 CuSuite* IntegrationTestPack_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
+
+	suite->postTest = postTest;
 
 	SUITE_ADD_TEST(suite, TestPack_ValidSignatures);
 	SUITE_ADD_TEST(suite, TestPack_InvalidSignatures);
