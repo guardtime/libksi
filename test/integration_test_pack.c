@@ -47,7 +47,7 @@ enum CsvField_en {
 	TEST_CF_PUB_TIME,
 	TEST_CF_PUB_STRING,
 	TEST_CF_EXTEND_PERM,
-	TEST_CF_RESOURCE_FILE,
+	TEST_CF_EXTEND_RESPONSE,
 	TEST_CF_PUBS_FILE,
 
 	TEST_NOF_CSV_FIELDS
@@ -185,8 +185,8 @@ static void runTests(CuTest* tc, const char *testCsv, const char *root) {
 			context.extendingAllowed = (strcmp(csvData[TEST_CF_EXTEND_PERM], "true") == 0) ? 1 : 0;
 		}
 
-		if (csvData[TEST_CF_RESOURCE_FILE]) {
-			res = KSI_snprintf(path, sizeof(path), "%s/%s", root, csvData[TEST_CF_RESOURCE_FILE]);
+		if (csvData[TEST_CF_EXTEND_RESPONSE]) {
+			res = KSI_snprintf(path, sizeof(path), "%s/%s", root, csvData[TEST_CF_EXTEND_RESPONSE]);
 			CuAssert(tc, "Unable to compose path.", res != 0);
 
 			res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(path), TEST_USER, TEST_PASS);
@@ -355,7 +355,11 @@ CuSuite* IntegrationTestPack_getSuite(void) {
 
 	SUITE_ADD_TEST(suite, TestPack_ValidSignatures);
 	SUITE_ADD_TEST(suite, TestPack_InvalidSignatures);
-	SUITE_SKIP_TEST(suite, TestPack_PolicyVerification, "Max", "Not fully supported.");
+#if POLICY_TESTS_SUPPORTED
+	SUITE_ADD_TEST(suite, TestPack_PolicyVerification);
+#else
+	SUITE_SKIP_TEST(suite, TestPack_PolicyVerification, "Max", "Extending payloads are not supported.");
+#endif
 
 	return suite;
 }
