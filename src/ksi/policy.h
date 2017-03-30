@@ -41,8 +41,7 @@ extern "C" {
 		 * Deprecated: initial aggregation level is adjusted into aggregation hash chain level correction value
 		 * during signature creation. \c docAggrLevel is not used during verification procedure.
 		 */
-		KSI_VAR_DEPRECATED(docAggrLevel)
-		KSI_uint64_t docAggrLevel;
+		KSI_VAR_DEPRECATED(KSI_uint64_t docAggrLevel);
 
 		/** Document hash to be verified. */
 		const KSI_DataHash *documentHash;
