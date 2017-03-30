@@ -25,6 +25,9 @@
 #include "all_integration_tests.h"
 #include "../src/ksi/signature_impl.h"
 #include "../src/ksi/policy_impl.h"
+#include "../src/ksi/ctx_impl.h"
+#include "../src/ksi/net_impl.h"
+
 
 extern KSI_CTX *ctx;
 extern KSITest_Conf conf;
@@ -34,8 +37,6 @@ extern KSITest_Conf conf;
 
 #define CSV_LINE_COMMENT '#'
 #define CSV_FIELD_SEP ";"
-
-#define POLICY_TESTS_SUPPORTED 0
 
 enum CsvField_en {
 	TEST_CF_SIGNATURE_URI,
@@ -115,16 +116,24 @@ static int getTime(const char *ts, KSI_uint64_t *time) {
 	return 1;
 }
 
-static void runTests(CuTest* tc, const char *testCsv, const char *root) {
+static const char *getPath(const char *root, const char* resource) {
+	static char buf[2048];
+	KSI_snprintf(buf, sizeof(buf), "%s/%s", root, resource);
+	return buf;
+}
+
+static const char *getPathUri(const char *root, const char* resource) {
+	static char uriBuffer[2048];
+	KSI_snprintf(uriBuffer, sizeof(uriBuffer), "file://%s", getPath(root, resource));
+	return uriBuffer;
+}
+
+static void runTests(CuTest* tc, const char *testCsv, const char *rootPath) {
 	int res = KSI_UNKNOWN_ERROR;
-	char path[1024];
 	FILE *csvFile = NULL;
 	unsigned int lineCount = 0;
 
-	res = KSI_snprintf(path, sizeof(path), "%s/%s", root, testCsv);
-	CuAssert(tc, "Unable to compose path.", res != 0);
-
-	csvFile = fopen(path, "r");
+	csvFile = fopen(getPath(rootPath, testCsv), "r");
 	CuAssert(tc, "Unable to open CSV file.", csvFile != NULL);
 
 	while (!feof(csvFile)) {
@@ -183,7 +192,6 @@ static void runTests(CuTest* tc, const char *testCsv, const char *root) {
 			}
 		}
 
-#if POLICY_TESTS_SUPPORTED
 		if (csvData[TEST_CF_EXTEND_PERM]) {
 			context.extendingAllowed = (strcmp(csvData[TEST_CF_EXTEND_PERM], "true") == 0) ? 1 : 0;
 		}
@@ -191,38 +199,31 @@ static void runTests(CuTest* tc, const char *testCsv, const char *root) {
 		if (csvData[TEST_CF_EXTEND_RESPONSE]) {
 			/* Responses are in PDU v2. */
 			res = KSI_CTX_setOption(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
-			CuAssert(tc, "Unable to set PDU version.", res != KSI_OK);
+			CuAssert(tc, "Unable to set PDU version.", res == KSI_OK);
 
-			res = KSI_snprintf(path, sizeof(path), "%s/%s", root, csvData[TEST_CF_EXTEND_RESPONSE]);
-			CuAssert(tc, "Unable to compose path.", res != 0);
+			/* Restart request counter. */
+			ctx->netProvider->requestCount = 0;
 
-			res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(path), TEST_USER, TEST_PASS);
+			res = KSI_CTX_setExtender(ctx, getPathUri(rootPath, csvData[TEST_CF_EXTEND_RESPONSE]), TEST_USER, TEST_PASS);
 			CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 		} else {
 			/* Restore default PDU version. */
 			res = KSI_CTX_setOption(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
-			CuAssert(tc, "Unable to set PDU version.", res != KSI_OK);
+			CuAssert(tc, "Unable to set PDU version.", res == KSI_OK);
 
 			res = KSI_CTX_setExtender(ctx, conf.extender_url, conf.extender_user, conf.extender_pass);
 			CuAssert(tc, "Unable to set extender url.", res == KSI_OK);
 		}
 
 		if (csvData[TEST_CF_PUBS_FILE]) {
-			res = KSI_snprintf(path, sizeof(path), "%s/%s", root, csvData[TEST_CF_PUBS_FILE]);
-			CuAssert(tc, "Unable to compose path.", res != 0);
-
-			res = KSI_CTX_setPublicationUrl(ctx, getFullResourcePathUri(path));
+			res = KSI_CTX_setPublicationUrl(ctx, getPathUri(rootPath, csvData[TEST_CF_PUBS_FILE]));
 			CuAssert(tc, "Unable to set publications file url.", res == KSI_OK);
 		} else {
 			res = KSI_CTX_setPublicationUrl(ctx, conf.publications_file_url);
 			CuAssert(tc, "Unable to set publications file url.", res == KSI_OK);
 		}
-#endif
 
-		res = KSI_snprintf(path, sizeof(path), "%s/%s", root, csvData[TEST_CF_SIGNATURE_URI]);
-		CuAssert(tc, "Unable to compose path.", res != 0);
-
-		res = KSI_Signature_fromFileWithPolicy(ctx, path, (policy != NULL ? policy : KSI_VERIFICATION_POLICY_GENERAL), &context, &sig);
+		res = KSI_Signature_fromFileWithPolicy(ctx, getPath(rootPath, csvData[TEST_CF_SIGNATURE_URI]), (policy != NULL ? policy : KSI_VERIFICATION_POLICY_GENERAL), &context, &sig);
 		if (res != KSI_OK) {
 			if (verState == TEST_VS_POLICY) {
 				/* Check if the failure is expected. */
@@ -365,9 +366,6 @@ static void postTest(void) {
 	/* Restore default PDU version. */
 	KSI_CTX_setOption(ctx, KSI_OPT_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
 	KSI_CTX_setOption(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
-	/* Restore default HMAC algorithm. */
-	KSI_CTX_setOption(ctx, KSI_OPT_AGGR_HMAC_ALGORITHM, (void*)TEST_DEFAULT_AGGR_HMAC_ALGORITHM);
-	KSI_CTX_setOption(ctx, KSI_OPT_EXT_HMAC_ALGORITHM, (void*)TEST_DEFAULT_EXT_HMAC_ALGORITHM);
 }
 
 CuSuite* IntegrationTestPack_getSuite(void) {
@@ -377,11 +375,7 @@ CuSuite* IntegrationTestPack_getSuite(void) {
 
 	SUITE_ADD_TEST(suite, TestPack_ValidSignatures);
 	SUITE_ADD_TEST(suite, TestPack_InvalidSignatures);
-#if POLICY_TESTS_SUPPORTED
 	SUITE_ADD_TEST(suite, TestPack_PolicyVerification);
-#else
-	SUITE_SKIP_TEST(suite, TestPack_PolicyVerification, "Max", "Extending payloads are not supported.");
-#endif
 
 	return suite;
 }
