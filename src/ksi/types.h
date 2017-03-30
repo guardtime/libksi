@@ -649,6 +649,7 @@ int KSI_Config_setMaxRequests(KSI_Config *t, KSI_Integer *maxRequests);
 int KSI_Config_setParentUri(KSI_Config *t, KSI_LIST(KSI_Utf8String) *parentUri);
 int KSI_Config_setCalendarFirstTime(KSI_Config *t, KSI_Integer *calendarFirstTime);
 int KSI_Config_setCalendarLastTime(KSI_Config *t, KSI_Integer *calendarLastTime);
+KSI_DEFINE_REF(KSI_Config);
 
 /*
  * KSI_AggregationConf
@@ -755,9 +756,11 @@ int KSI_ExtendReq_new(KSI_CTX *ctx, KSI_ExtendReq **t);
 int KSI_ExtendReq_getRequestId(const KSI_ExtendReq *t, KSI_Integer **requestId);
 int KSI_ExtendReq_getAggregationTime(const KSI_ExtendReq *t, KSI_Integer **aggregationTime);
 int KSI_ExtendReq_getPublicationTime(const KSI_ExtendReq *t, KSI_Integer **publicationTime);
+int KSI_ExtendReq_getConfig(const KSI_ExtendReq *t, KSI_Config **config);
 int KSI_ExtendReq_setRequestId(KSI_ExtendReq *t, KSI_Integer *requestId);
 int KSI_ExtendReq_setAggregationTime(KSI_ExtendReq *t, KSI_Integer *aggregationTime);
 int KSI_ExtendReq_setPublicationTime(KSI_ExtendReq *t, KSI_Integer *publicationTime);
+int KSI_ExtendReq_setConfig(KSI_ExtendReq *t, KSI_Config *config);
 int KSI_ExtendReq_fromTlv (KSI_TLV *tlv, KSI_ExtendReq **data);
 int KSI_ExtendReq_toTlv (KSI_CTX *ctx, const KSI_ExtendReq *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
@@ -771,11 +774,13 @@ int KSI_ExtendResp_getRequestId(const KSI_ExtendResp *t, KSI_Integer **requestId
 int KSI_ExtendResp_getStatus(const KSI_ExtendResp *t, KSI_Integer **status);
 int KSI_ExtendResp_getErrorMsg(const KSI_ExtendResp *t, KSI_Utf8String **errorMsg);
 int KSI_ExtendResp_getLastTime(const KSI_ExtendResp *t, KSI_Integer **lastTime);
+int KSI_ExtendResp_getConfig(const KSI_ExtendResp *t, KSI_Config **config);
 int KSI_ExtendResp_getCalendarHashChain(const KSI_ExtendResp *t, KSI_CalendarHashChain **calendarHashChain);
 int KSI_ExtendResp_setRequestId(KSI_ExtendResp *t, KSI_Integer *requestId);
 int KSI_ExtendResp_setStatus(KSI_ExtendResp *t, KSI_Integer *status);
 int KSI_ExtendResp_setErrorMsg(KSI_ExtendResp *t, KSI_Utf8String *errorMsg);
 int KSI_ExtendResp_setLastTime(KSI_ExtendResp *t, KSI_Integer *lastTime);
+int KSI_ExtendResp_setConfig(KSI_ExtendResp *t, KSI_Config *config);
 int KSI_ExtendResp_setCalendarHashChain(KSI_ExtendResp *t, KSI_CalendarHashChain *calendarHashChain);
 int KSI_ExtendResp_fromTlv (KSI_TLV *tlv, KSI_ExtendResp **data);
 int KSI_ExtendResp_toTlv (KSI_CTX *ctx, const KSI_ExtendResp *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);

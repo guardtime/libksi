@@ -1,3 +1,4 @@
+* IMPROVEMENT: Functionality to request configurations from extender / aggregator.
 * IMPROVEMENT: Updated verification tutorial.
 * IMPROVEMENT: Verification context initial aggregation level member is deprecated (warning not shown under Windows). The initial aggregation level is adjusted into aggregation hash chain level correction value during signature creation.
 * IMPROVEMENT: Set level correction when input hash level is greater than 0.
