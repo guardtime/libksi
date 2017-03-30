@@ -323,6 +323,11 @@ static int initPublicationsFile(KSI_VerificationResult *info, KSI_CTX *ctx) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_PublicationsFile *tmp = NULL;
 
+	if (info == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
 	if (info->publicationsFile == NULL) {
 		bool verifyPubFile = (ctx->publicationsFile == NULL);
 
@@ -354,8 +359,14 @@ static int verifyInternallyAggregationChain(KSI_Signature *sig) {
 	size_t i;
 	size_t successCount = 0;
 	KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
-	KSI_VerificationResult *info = &sig->verificationResult;
+	KSI_VerificationResult *info = NULL;
 	const KSI_AggregationHashChain *prevChain = NULL;
+
+	if (sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	info = &sig->verificationResult;
 
 	/* Aggregate aggregation chains. */
 	hsh = NULL;
@@ -482,9 +493,15 @@ static int verifyAggregationRootWithCalendarChain(KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *inputHash = NULL;
 	KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN;
-	KSI_VerificationResult *info = &sig->verificationResult;
+	KSI_VerificationResult *info = NULL;
 	KSI_AggregationHashChain *aggregationChain = NULL;
 	KSI_Integer *calAggrTime = NULL;
+
+	if (sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	info = &sig->verificationResult;
 
 	KSI_LOG_info(sig->ctx, "Verifying aggregation hash chain root.");
 
@@ -531,7 +548,13 @@ static int verifyCalendarChain(KSI_Signature *sig) {
 	KSI_DataHash *pubHash = NULL;
 	KSI_Integer *pubTime = NULL;
 	KSI_VerificationStep step = KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC;
-	KSI_VerificationResult *info = &sig->verificationResult;
+	KSI_VerificationResult *info = NULL;
+
+	if (sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	info = &sig->verificationResult;
 
 	if (sig->calendarAuthRec == NULL) {
 		res = KSI_OK;
@@ -582,7 +605,13 @@ static int verifyInternallyCalendarChain(KSI_Signature *sig) {
 	time_t calculatedAggrTm;
 	KSI_Integer *calendarAggrTm = NULL;
 	KSI_VerificationStep step = KSI_VERIFY_CALCHAIN_INTERNALLY;
-	KSI_VerificationResult *info = &sig->verificationResult;
+	KSI_VerificationResult *info = NULL;
+
+	if (sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	info = &sig->verificationResult;
 
 	KSI_LOG_info(sig->ctx, "Verifying calendar hash chain internally.");
 
@@ -614,8 +643,13 @@ static int verifyCalAuthRec(KSI_CTX *ctx, KSI_Signature *sig) {
 	unsigned char *rawData = NULL;
 	size_t rawData_len;
 	KSI_VerificationStep step = KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE;
-	KSI_VerificationResult *info = &sig->verificationResult;
+	KSI_VerificationResult *info = NULL;
 
+	if (ctx == NULL || sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	info = &sig->verificationResult;
 
 	if (sig->calendarAuthRec == NULL) {
 		res = KSI_OK;
@@ -677,8 +711,15 @@ static int verifyPublication(KSI_CTX *ctx, KSI_Signature *sig) {
 	KSI_PublicationsFile *pubFile = NULL;
 	KSI_PublicationRecord *pubRec = NULL;
 	KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBFILE;
-	KSI_VerificationResult *info = &sig->verificationResult;
-	bool verifyPubFile = (ctx->publicationsFile == NULL);
+	KSI_VerificationResult *info = NULL;
+	bool verifyPubFile = false;
+
+	if (ctx == NULL || sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	info = &sig->verificationResult;
+	verifyPubFile = (ctx->publicationsFile == NULL);
 
 	if (sig->publication == NULL) {
 		res = KSI_OK;
@@ -723,12 +764,17 @@ cleanup:
 static int verifyPublicationWithPubString(KSI_CTX *ctx, KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBSTRING;
-	KSI_VerificationResult *info = &sig->verificationResult;
+	KSI_VerificationResult *info = NULL;
 	KSI_Integer *time1 = NULL;
 	KSI_Integer *time2 = NULL;
 	KSI_DataHash *hsh1 = NULL;
 	KSI_DataHash *hsh2 = NULL;
 
+	if (ctx == NULL || sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	info = &sig->verificationResult;
 
 	if (sig->publication == NULL || sig->verificationResult.useUserPublication == false) {
 		res = KSI_OK;
@@ -793,7 +839,13 @@ static int verifyDocument(KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
 	KSI_VerificationStep step = KSI_VERIFY_DOCUMENT;
-	KSI_VerificationResult *info = &sig->verificationResult;
+	KSI_VerificationResult *info = NULL;
+
+	if (sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	info = &sig->verificationResult;
 
 	if (!sig->verificationResult.verifyDocumentHash) {
 		res = KSI_OK;
@@ -834,7 +886,13 @@ cleanup:
 static int verifyPublicationsFile(KSI_CTX *ctx, KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_VerificationStep step = KSI_VERIFY_PUBFILE_SIGNATURE;
-	KSI_VerificationResult *info = &sig->verificationResult;
+	KSI_VerificationResult *info = NULL;
+
+	if (ctx == NULL || sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	info = &sig->verificationResult;
 
 	KSI_LOG_debug(sig->ctx, "Verifying publications file.");
 
@@ -868,7 +926,13 @@ static int verifyOnline(KSI_CTX *ctx, KSI_Signature *sig) {
 	KSI_DataHash *rootHash = NULL;
 	KSI_DataHash *pubHash = NULL;
 	KSI_VerificationStep step = KSI_VERIFY_CALCHAIN_ONLINE;
-	KSI_VerificationResult *info = &sig->verificationResult;
+	KSI_VerificationResult *info = NULL;
+
+	if (ctx == NULL || sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	info = &sig->verificationResult;
 
 	KSI_LOG_info(sig->ctx, "Verifying signature online.");
 
@@ -969,7 +1033,13 @@ static int verifyCalendarChainWithPublication(KSI_Signature *sig){
 	KSI_DataHash *publishedHash = NULL;
 	KSI_Integer *publishedTime = NULL;
 	KSI_VerificationStep step = KSI_VERIFY_CALCHAIN_WITH_PUBLICATION;
-	KSI_VerificationResult *info = &sig->verificationResult;
+	KSI_VerificationResult *info = NULL;
+
+	if (sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	info = &sig->verificationResult;
 
 	if (sig->publication == NULL) {
 		res = KSI_OK;
@@ -1020,7 +1090,7 @@ cleanup:
 }
 
 static int performVerification(unsigned policy, KSI_Signature *sig, enum KSI_VerificationStep_en step) {
-	return (policy & step) && !(sig->verificationResult.stepsPerformed & step) && !(sig->verificationResult.stepsFailed);
+	return (policy & step) && sig && !(sig->verificationResult.stepsPerformed & step) && !(sig->verificationResult.stepsFailed);
 }
 
 static int KSI_Signature_verifyPolicy(KSI_Signature *sig, unsigned *policy, KSI_CTX *ctx) {
@@ -1150,7 +1220,7 @@ int KSI_Signature_verifyAggregated(KSI_Signature *sig, KSI_CTX *ctx, KSI_uint64_
 	int res;
 	KSI_CTX *useCtx = ctx;
 
-	if (sig == NULL) {
+	if (sig == NULL || ctx == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -1185,7 +1255,7 @@ int KSI_Signature_verifyOnline(KSI_Signature *sig, KSI_CTX *ctx){
 	int res;
 	KSI_CTX *useCtx = ctx;
 
-	if (sig == NULL) {
+	if (sig == NULL || ctx == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -1308,6 +1378,7 @@ cleanup:
 static int addVerificationStepResult(KSI_VerificationResult *info, KSI_VerificationStep step, const char *desc, bool succeeded) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_VerificationStepResult *result = NULL;
+
 	if (info == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
@@ -1333,11 +1404,13 @@ cleanup:
 }
 
 int KSI_VerificationResult_addFailure(KSI_VerificationResult *info, KSI_VerificationStep step, const char *desc) {
+	if (info == NULL || desc == NULL) return KSI_INVALID_ARGUMENT;
 	KSI_LOG_debug(info->ctx, "Verification step 0x%02x failed with message: %s", (int)step, desc);
 	return addVerificationStepResult(info, step, desc, 0);
 }
 
 int KSI_VerificationResult_addSuccess(KSI_VerificationResult *info, KSI_VerificationStep step, const char *desc) {
+	if (info == NULL || desc == NULL) return KSI_INVALID_ARGUMENT;
 	return addVerificationStepResult(info, step, desc, 1);
 }
 

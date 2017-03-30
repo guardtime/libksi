@@ -1,3 +1,5 @@
+* IMPROVEMENT: Updated verification tutorial.
+* IMPROVEMENT: Verification context initial aggregation level member is deprecated (warning not shown under Windows). The initial aggregation level is adjusted into aggregation hash chain level correction value during signature creation.
 * IMPROVEMENT: Set level correction when input hash level is greater than 0.
 * IMPROVEMENT: Updated ksi_sign_aggr example.
 * BUGFIX: Update publications file client pointer when changinh client.
