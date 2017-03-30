@@ -50,11 +50,7 @@ extern "C" {
 #  if defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1)))
 #    define KSI_VAR_DEPRECATED(decl) __attribute__((deprecated))
 #  elif defined(_WIN32)
-#    if defined(__KSI_ENABLE_WIN_VAR_DEP__)
-#      define KSI_VAR_DEPRECATED(decl) __pragma(deprecated(decl))
-#    else
-#      define KSI_VAR_DEPRECATED(decl)
-#    endif
+	 /* No reasonable way to shown the warning with VS. */
 #  endif
 #endif
 
