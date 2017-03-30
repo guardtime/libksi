@@ -48,7 +48,7 @@ extern "C" {
 
 #ifndef __KSI_NO_DEPRECATE__
 #  if defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1)))
-#    define KSI_VAR_DEPRECATED(decl) __attribute__((deprecated))
+#    define KSI_VAR_DEPRECATED(decl) decl __attribute__((deprecated))
 #  elif defined(_WIN32)
 	 /* No reasonable way to shown the warning with VS. */
 #  endif
@@ -56,7 +56,7 @@ extern "C" {
 
 
 #ifndef KSI_VAR_DEPRECATED
-#  define KSI_VAR_DEPRECATED(decl)
+#  define KSI_VAR_DEPRECATED(decl) decl
 #endif
 
 #if defined(_WIN32) && defined(DLL_BUILD) && !(KSI_BUILD)
