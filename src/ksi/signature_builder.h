@@ -39,9 +39,18 @@ extern "C" {
 	typedef struct KSI_SignatureBuilder_st KSI_SignatureBuilder;
 
 	/**
+	 * Creates a new instance of the signature builder. The builder is initialized with a copy of the input signature \c sig.
+	 * \param[in]	sig		KSI signature instance.
+	 * \param[out]	builder	Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note It is the responsibility of the caller to free the input parameters after use.
+	 */
+	int KSI_SignatureBuilder_openFromSignature(const KSI_Signature *sig, KSI_SignatureBuilder **builder);
+
+	/**
 	 * Creates a new instance of the signature builder.
 	 * \param[in]	ctx		The KSI context.
-	 * \param[in]	builder	Pointer to the receiving pointer.
+	 * \param[out]	builder	Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_SignatureBuilder_close, #KSI_SignatureBuilder_free
 	 */
@@ -85,6 +94,17 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_SignatureBuilder_addAggregationChain(KSI_SignatureBuilder *builder, KSI_AggregationHashChain *aggr);
+
+	/**
+	 * This function appends the aggregation chain to the signature. The difference between
+	 * #KSI_SignatureBuilder_addAggregationChain is that chain is appended to the beggining of the chain list and
+	 * aggregation time and chain index are updated.
+	 * \param[in]	builder		Pointer to the builder.
+	 * \param[in]	aggr		Aggregation hash chain.
+	 * \note It is the responsibility of the caller to free the input parameters after use.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_SignatureBuilder_appendAggregationChain(KSI_SignatureBuilder *builder, KSI_AggregationHashChain *aggr);
 
 	/**
 	 * This function sets the calendar authentication record of the signature.

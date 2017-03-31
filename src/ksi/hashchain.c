@@ -28,7 +28,6 @@
 #include "impl/meta_data_element_impl.h"
 
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationHashChain);
-
 KSI_IMPORT_TLV_TEMPLATE(KSI_HashChainLink);
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarHashChain);
 
@@ -1142,6 +1141,27 @@ cleanup:
 	KSI_AggregationHashChain_free(tmp);
 
 	return res;
+}
+
+static int intCmp(KSI_uint64_t a, KSI_uint64_t b){
+	if (a == b) return 0;
+	else if (a > b) return 1;
+	else return -1;
+}
+
+int KSI_AggregationHashChain_compare(const KSI_AggregationHashChain **left, const KSI_AggregationHashChain **right) {
+	const KSI_AggregationHashChain *l = *left;
+	const KSI_AggregationHashChain *r = *right;
+	KSI_LIST(KSI_Integer) *leftChainIndex = NULL;
+	KSI_LIST(KSI_Integer) *rightChainIndex = NULL;
+
+	KSI_AggregationHashChain_getChainIndex(l, &leftChainIndex);
+	KSI_AggregationHashChain_getChainIndex(r, &rightChainIndex);
+	if (l == r || l == NULL || r == NULL || leftChainIndex == NULL || rightChainIndex == NULL) {
+		return intCmp((KSI_uint64_t)right, (KSI_uint64_t)left);
+	}
+
+	return intCmp(KSI_IntegerList_length(rightChainIndex), KSI_IntegerList_length(leftChainIndex));
 }
 
 KSI_IMPLEMENT_REF(KSI_AggregationHashChain);

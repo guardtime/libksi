@@ -334,7 +334,7 @@ void KSI_CTX_free(KSI_CTX *ctx) {
 	}
 }
 
-int KSI_sendSignRequest(KSI_CTX *ctx, KSI_AggregationReq *request, KSI_RequestHandle **handle) {
+int KSI_sendAggregatorRequest(KSI_CTX *ctx, KSI_AggregationReq *request, KSI_RequestHandle **handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_RequestHandle *tmp = NULL;
 	KSI_NetworkClient *netProvider = NULL;
@@ -365,7 +365,7 @@ cleanup:
 	return res;
 }
 
-int KSI_sendExtendRequest(KSI_CTX *ctx, KSI_ExtendReq *request, KSI_RequestHandle **handle) {
+int KSI_sendExtenderRequest(KSI_CTX *ctx, KSI_ExtendReq *request, KSI_RequestHandle **handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_RequestHandle *tmp = NULL;
 	KSI_NetworkClient *netProvider = NULL;
@@ -502,6 +502,149 @@ int KSI_verifyPublicationsFile(KSI_CTX *ctx, const KSI_PublicationsFile *pubFile
 cleanup:
 
 	return res;
+}
+
+static int createConfigRequest(KSI_CTX *ctx, void **request,
+		int (*requestNew)(KSI_CTX *,void **),
+		int (*requestSetConfig)(void *, KSI_Config *),
+		void (*requestFree)(void *)) {
+	int res = KSI_UNKNOWN_ERROR;
+	void *tmp = NULL;
+	KSI_Config *cfg = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || request == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	res = requestNew(ctx, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_Config_new(ctx, &cfg);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = requestSetConfig(tmp, cfg);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+	cfg = NULL;
+
+	*request = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	requestFree(tmp);
+
+	return res;
+}
+
+static int createAggregationConfigRequest(KSI_CTX *ctx, KSI_AggregationReq **request) {
+	return createConfigRequest(ctx, (void**)request,
+			(int (*)(KSI_CTX *,void **))KSI_AggregationReq_new,
+			(int (*)(void *, KSI_Config *))KSI_AggregationReq_setConfig,
+			(void (*)(void *))KSI_AggregationReq_free);
+}
+
+static int createExtenderConfigRequest(KSI_CTX *ctx, KSI_ExtendReq **request) {
+	return createConfigRequest(ctx, (void**)request,
+			(int (*)(KSI_CTX *,void **))KSI_ExtendReq_new,
+			(int (*)(void *, KSI_Config *))KSI_ExtendReq_setConfig,
+			(void (*)(void *))KSI_ExtendReq_free);
+}
+
+static int receiveConfig(KSI_CTX *ctx, KSI_Config **config,
+		int (*createRequest)(KSI_CTX *, void **),
+		int (*sendRequest)(KSI_CTX *, void *, KSI_RequestHandle **),
+		int (*getResponse)(const KSI_RequestHandle *, void **),
+		int (*getConfig)(const void *t, KSI_Config **),
+		void (*requestFree)(void *),
+		void (*responseFree)(void*)) {
+	int res;
+	KSI_RequestHandle *handle = NULL;
+	void *resp = NULL;
+	void *req = NULL;
+	KSI_Config *tmp = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || config == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	res = createRequest(ctx, &req);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
+
+	res = sendRequest(ctx, req, &handle);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_RequestHandle_perform(handle);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
+
+	res = getResponse(handle, &resp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = getConfig(resp, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	*config = KSI_Config_ref(tmp);
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+	KSI_nofree(tmp);
+	requestFree(req);
+	responseFree(resp);
+	KSI_RequestHandle_free(handle);
+
+	return res;
+}
+
+int KSI_receiveAggregatorConfig(KSI_CTX *ctx, KSI_Config **config) {
+	return receiveConfig(ctx, config,
+			(int (*)(KSI_CTX *, void **))createAggregationConfigRequest,
+			(int (*)(KSI_CTX *, void *, KSI_RequestHandle **))KSI_sendAggregatorRequest,
+			(int (*)(const KSI_RequestHandle *, void **))KSI_RequestHandle_getAggregationResponse,
+			(int (*)(const void *t, KSI_Config **))KSI_AggregationResp_getConfig,
+			(void (*)(void *))KSI_AggregationReq_free,
+			(void (*)(void *))KSI_AggregationResp_free);
+}
+
+int KSI_receiveExtenderConfig(KSI_CTX *ctx, KSI_Config **config) {
+	if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1) return KSI_INVALID_STATE;
+	return receiveConfig(ctx, config,
+			(int (*)(KSI_CTX *, void **))createExtenderConfigRequest,
+			(int (*)(KSI_CTX *, void *, KSI_RequestHandle **))KSI_sendExtenderRequest,
+			(int (*)(const KSI_RequestHandle *, void **))KSI_RequestHandle_getExtendResponse,
+			(int (*)(const void *t, KSI_Config **))KSI_ExtendResp_getConfig,
+			(void (*)(void *))KSI_ExtendReq_free,
+			(void (*)(void *))KSI_ExtendResp_free);
 }
 
 static int signatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ctx, const KSI_DataHash *hsh) {
