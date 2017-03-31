@@ -40,7 +40,7 @@ extern KSITest_Conf conf;
 
 enum CsvField_en {
 	TEST_CF_SIGNATURE_URI,
-	TEST_CF_VER_STATE,
+	TEST_CF_VERIF_STATE,
 	TEST_CF_ERROR_CODE,
 	TEST_CF_ERROR_MESSAGE,
 	TEST_CF_AGGR_INPUT_HASH,
@@ -60,7 +60,7 @@ enum CsvField_en {
 enum VerificationState_en {
 	TEST_VS_UNKNOWN,
 	TEST_VS_PARSER_FAILURE,
-	TEST_VS_NOT_IMPL_FAILURE,
+	TEST_VS_NOT_IMPL,
 	TEST_VS_POLICY,
 
 	TEST_NOF_VER_STATES
@@ -161,6 +161,22 @@ static void runTests(CuTest* tc, const char *testCsv, const char *rootPath) {
 
 		CuAssert(tc, "Signature is not specified.", csvData[TEST_CF_SIGNATURE_URI] != NULL);
 
+		if (csvData[TEST_CF_VERIF_STATE]) {
+			if (strcmp(csvData[TEST_CF_VERIF_STATE], "not-implemented") == 0) verState = TEST_VS_NOT_IMPL;
+			else if (strcmp(csvData[TEST_CF_VERIF_STATE], "parsing") == 0) verState = TEST_VS_PARSER_FAILURE;
+			else {
+				verState = ((policy = getPolicy(csvData[TEST_CF_VERIF_STATE])) != NULL) ? TEST_VS_POLICY : TEST_VS_UNKNOWN;
+			}
+			CuAssert(tc, "Unknown verification state.", verState != TEST_VS_UNKNOWN);
+
+			if (policy) {
+				if (csvData[TEST_CF_ERROR_CODE]) {
+					errCode = KSI_VerificationErrorCode_fromString(csvData[TEST_CF_ERROR_CODE]);
+				}
+			}
+		}
+		/* Skip test if it is not supported. */
+		if (verState == TEST_VS_NOT_IMPL) continue;
 
 		res = KSI_VerificationContext_init(&context, ctx);
 		CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
@@ -177,20 +193,6 @@ static void runTests(CuTest* tc, const char *testCsv, const char *rootPath) {
 			context.userPublication = userPublication;
 		}
 
-		if (csvData[TEST_CF_VER_STATE]) {
-			if (strcmp(csvData[TEST_CF_VER_STATE], "not-implemented") == 0) verState = TEST_VS_NOT_IMPL_FAILURE;
-			else if (strcmp(csvData[TEST_CF_VER_STATE], "parsing") == 0) verState = TEST_VS_PARSER_FAILURE;
-			else {
-				verState = ((policy = getPolicy(csvData[TEST_CF_VER_STATE])) != NULL) ? TEST_VS_POLICY : TEST_VS_UNKNOWN;
-			}
-			CuAssert(tc, "Unknown verification state.", verState != TEST_VS_UNKNOWN);
-
-			if (policy) {
-				if (csvData[TEST_CF_ERROR_CODE]) {
-					errCode = KSI_VerificationErrorCode_fromString(csvData[TEST_CF_ERROR_CODE]);
-				}
-			}
-		}
 
 		if (csvData[TEST_CF_EXTEND_PERM]) {
 			context.extendingAllowed = (strcmp(csvData[TEST_CF_EXTEND_PERM], "true") == 0) ? 1 : 0;
@@ -247,7 +249,7 @@ static void runTests(CuTest* tc, const char *testCsv, const char *rootPath) {
 				} else {
 					CuFail(tc, "Unexpected error during signature verification.");
 				}
-			} else if (verState == TEST_VS_NOT_IMPL_FAILURE || verState == TEST_VS_PARSER_FAILURE) {
+			} else if (verState == TEST_VS_PARSER_FAILURE) {
 				/* Signature is expected to fail. */
 				continue;
 			} else {
@@ -257,7 +259,7 @@ static void runTests(CuTest* tc, const char *testCsv, const char *rootPath) {
 			/* Verify if the signature should have been failed during the verification state. */
 			if (verState == TEST_VS_POLICY) {
 				CuAssert(tc, "Signature should have failed during policy verification state.",  errCode == KSI_VER_ERR_NONE);
-			} else if (verState == TEST_VS_NOT_IMPL_FAILURE || verState == TEST_VS_PARSER_FAILURE) {
+			} else if (verState == TEST_VS_PARSER_FAILURE) {
 				CuFail(tc, "Signature should have failed during parsing state.");
 			}
 		}
@@ -300,12 +302,11 @@ static void runTests(CuTest* tc, const char *testCsv, const char *rootPath) {
 			KSI_uint64_t time = 0;
 
 			CuAssert(tc, "Unable to parse registration time.", getTime(csvData[TEST_CF_REG_TIME], &time));
-			time /= 1000;
 
 			res = KSI_CalendarHashChain_calculateAggregationTime(sig->calendarChain, &calcTime);
 			CuAssert(tc, "Unable to calculate signature aggregation time.", res == KSI_OK && calcTime != 0);
 
-			CuAssert(tc, "Aggregation time mismatch.", calcTime == time);
+			CuAssert(tc, "Registration time mismatch.", calcTime == time);
 		}
 
 		if (csvData[TEST_CF_AGGR_TIME]) {
@@ -313,7 +314,6 @@ static void runTests(CuTest* tc, const char *testCsv, const char *rootPath) {
 			KSI_uint64_t time = 0;
 
 			CuAssert(tc, "Unable to parse aggregation time.", getTime(csvData[TEST_CF_AGGR_TIME], &time));
-			time /= 1000;
 
 			res = KSI_Signature_getSigningTime(sig, &sigAggrTime);
 			CuAssert(tc, "Unable to get signature aggregation time.", res == KSI_OK && sigAggrTime != NULL);
@@ -326,7 +326,6 @@ static void runTests(CuTest* tc, const char *testCsv, const char *rootPath) {
 			KSI_uint64_t time = 0;
 
 			CuAssert(tc, "Unable to parse publication time.", getTime(csvData[TEST_CF_PUB_TIME], &time));
-			time /= 1000;
 
 			KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &sigPubTime);
 			CuAssert(tc, "Unable to get signature publication time.", res == KSI_OK && sigPubTime != NULL);
