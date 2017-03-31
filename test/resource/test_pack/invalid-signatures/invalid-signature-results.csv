@@ -1,4 +1,4 @@
-#signature_url;not_implemented/parsing/policy_name;error_code(no_code=OK);err_code_msg(no_msg=OK);signature_input_hash(aggr/rfc);chcInput(also_aggr_output);chcOutput(also_input_for_auth/pub);RegTime;AggrTime;PubTime;pubString;extending_permitted(true/false);resource_file;publications_file(null=live);
+#signature_url;not_implemented/parsing/policy_name;error_code(no_code=OK);err_code_msg(no_msg=OK);signature_input_hash(aggr/rfc);chcInput(also_aggr_output);chcOutput(also_input_for_auth/pub);RegTime;AggrTime;PubTime;pubString;extending_permitted(true/false);response_file(format_PduV2/requestId=1);publications_file(null=live);
 aggregation-chain/invalid-signature-aggr-chain-aggr-time-int-value-wrong.tlv;internal;INT-04;Calendar hash chain aggregation time mismatch;;;;;;;;false;;;
 aggregation-chain/invalid-signature-aggr-chain-aggr-time-future-value.tlv;internal;INT-04;Calendar hash chain aggregation time mismatch;;;;;;;;false;;;
 aggregation-chain/invalid-signature-aggr-chain-aggr-time-text-value.tlv;parsing;;;;;;;;;;false;;;
@@ -95,7 +95,6 @@ aggregation-chain/invalid-signature-aggr-chain-right-link-metadata-req-time-text
 aggregation-chain/invalid-signature-aggr-chain-left-link-metadata-req-time-text-value.tlv;parsing;;;;;;;;;;false;;;
 aggregation-chain/invalid-signature-aggr-chain-multiple-chains-input-hash-wrong.tlv;internal;INT-01;Inconsistent aggregation hash chains;;;;;;;;false;;;
 aggregation-chain/invalid-signature-aggr-chain-multiple-chains-aggr-time-wrong.tlv;internal;INT-02;Inconsistent aggregation hash chain aggregation times;;;;;;;;false;;;
-aggregation-chain/invalid-signature-aggr-chain-multiple-chains-chain-index-wrong.tlv;internal;INT-12;Inconsistent chain indexes;;;;;;;;false;;;
 calendar-hash-chain/invalid-signature-calendar-chain-pub-time-int-value-wrong.tlv;internal;INT-05;Calendar hash chain shape inconsistent with aggregation time;;;;;;;;false;;;
 calendar-hash-chain/invalid-signature-calendar-chain-pub-time-future-value.tlv;internal;INT-05;Calendar hash chain shape inconsistent with aggregation time;;;;;;;;false;;;
 calendar-hash-chain/invalid-signature-calendar-chain-pub-time-text-value.tlv;parsing;;;;;;;;;;false;;;
