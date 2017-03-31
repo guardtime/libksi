@@ -24,9 +24,15 @@
 #include <ksi/net_http.h>
 #include <ksi/net.h>
 #include "../src/ksi/ctx_impl.h"
+#include "../src/ksi/internal.h"
 
 extern KSI_CTX *ctx;
 extern KSITest_Conf conf;
+
+static void postTest(void) {
+	/* Restore default PDU version. */
+	KSI_CTX_setFlag(ctx, KSI_OPT_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
+}
 
 static void Test_NOKAggr_TreeTooLarge(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -351,8 +357,35 @@ static void Test_Pipelining(CuTest* tc) {
 
 }
 
+static void Test_RequestAggregatorConfig(CuTest* tc) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Config *config = NULL;
+
+	KSI_CTX_setFlag(ctx, KSI_OPT_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_1);
+
+	res = KSI_receiveAggregatorConfig(ctx, &config);
+	CuAssert(tc, "Unable to receive aggregator config.", res == KSI_OK && config != NULL);
+
+	KSI_Config_free(config);
+}
+
+static void Test_RequestAggregatorConfig_pduV2(CuTest* tc) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Config *config = NULL;
+
+	KSI_CTX_setFlag(ctx, KSI_OPT_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_2);
+
+	res = KSI_receiveAggregatorConfig(ctx, &config);
+	CuAssert(tc, "Unable to receive aggregator config.", res == KSI_OK && config != NULL);
+
+	KSI_Config_free(config);
+}
+
+
 CuSuite* AggreIntegrationTests_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
+
+	suite->postTest = postTest;
 
 	SUITE_ADD_TEST(suite, Test_CreateSignatureDefaultProvider);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureWrongHMAC);
@@ -362,6 +395,8 @@ CuSuite* AggreIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_CreateSignatureDifferentNetProviders);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureUserInfoFromUrl);
 	SUITE_ADD_TEST(suite, Test_Pipelining);
+	SUITE_ADD_TEST(suite, Test_RequestAggregatorConfig);
+	SUITE_ADD_TEST(suite, Test_RequestAggregatorConfig_pduV2);
 
 	return suite;
 }

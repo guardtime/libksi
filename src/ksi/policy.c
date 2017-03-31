@@ -798,6 +798,7 @@ int KSI_VerificationContext_init(KSI_VerificationContext *context, KSI_CTX *ctx)
 	context->ctx = NULL;
 	context->signature = NULL;
 	context->extendingAllowed = 0;
+	context->docAggrLevel = 0;
 	context->documentHash = NULL;
 	context->userPublication = NULL;
 	context->userPublicationsFile = NULL;

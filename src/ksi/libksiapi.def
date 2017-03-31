@@ -155,10 +155,12 @@ EXPORTS
 	KSI_malloc
 	KSI_calloc
 	KSI_free
-	KSI_sendSignRequest
-	KSI_sendExtendRequest
+	KSI_sendAggregatorRequest
+	KSI_sendExtenderRequest
 	KSI_sendPublicationRequest
 	KSI_receivePublicationsFile
+	KSI_receiveAggregatorConfig
+	KSI_receiveExtenderConfig
 	KSI_verifyPublicationsFile
 	KSI_verifySignature
 	KSI_verifyDataHash

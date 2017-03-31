@@ -257,6 +257,11 @@ extern "C" {
 	#define KSI_TLV_TMPL_FLG_LAST 0x800
 
 	/**
+	 * Element with this flag enabled does not have any payload.
+	 */
+	#define KSI_TLV_TMPL_FLG_NO_VALUE 0x1000
+
+	/**
 	 * One and only one of the group 0 must be present.
 	 */
 	#define KSI_TLV_TMPL_FLG_MANTATORY_MOST_ONE_G0 (KSI_TLV_TMPL_FLG_LEAST_ONE_G0 | KSI_TLV_TMPL_FLG_MOST_ONE_G0)
@@ -322,6 +327,7 @@ extern "C" {
 	#define KSI_TLV_OBJECT(tg, flg, gttr, sttr, fromTlv, toTlv, destr, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, flg, gttr, sttr, NULL, destr, NULL, NULL, 0, NULL, NULL, NULL, NULL, fromTlv, toTlv, descr, NULL, 0, NULL)
 	#define KSI_TLV_WRAP_OBJECT(tg, flg, gttr, sttr, parser, toTlv, destr, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, flg, gttr, sttr, NULL, destr, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, toTlv, descr, (parser), 0, NULL)
 	#define KSI_TLV_COMPOSITE_OBJECT(tg, flg, gttr, sttr, fromTlv, toTlv, destr, tmpl, descr) KSI_TLV_FULL_TEMPLATE_DEF(KSI_TLV_TEMPLATE_OBJECT, tg, flg, gttr, sttr, NULL, destr, (tmpl), NULL, 0, NULL, NULL, NULL, NULL, fromTlv, toTlv, descr, NULL, 0, NULL)
+
 
 	/**
 	 * TLV template for #KSI_Utf8String type.
