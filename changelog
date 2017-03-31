@@ -1,6 +1,10 @@
-Version 3.13
+Version 3.14
 
 2017-04-17 release(3.13.2043)
+* IMPROVEMENT: Added KSI_DataHash memory reuse.
+
+Version 3.13
+
 * IMPROVEMENT: Functionality to request configurations from extender / aggregator.
 * BUGFIX: Update publications file client pointer when changinh client.
 * IMPROVEMENT: Set level correction when input hash level is greater than 0.
