@@ -1,4 +1,10 @@
 * IMPROVEMENT: Support for integration tests test package.
+Version 3.14
+
+* IMPROVEMENT: Added KSI_DataHash memory reuse.
+
+Version 3.13
+
 * IMPROVEMENT: Functionality to request configurations from extender / aggregator.
 * IMPROVEMENT: Updated verification tutorial.
 * IMPROVEMENT: Verification context initial aggregation level member is deprecated (warning not shown under Windows). The initial aggregation level is adjusted into aggregation hash chain level correction value during signature creation.
