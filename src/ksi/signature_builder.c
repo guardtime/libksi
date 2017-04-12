@@ -578,6 +578,8 @@ static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
 	tmp->publication = NULL;
 	tmp->replaceCalendarChain = replaceCalendarChain;
 	tmp->appendAggregationChain = appendAggregationChain;
+	tmp->addRootLevel = addRootLevel;
+	tmp->subRootLevel = subRootLevel;
 
 	res = KSI_VerificationResult_init(&tmp->verificationResult, ctx);
 	if (res != KSI_OK) {

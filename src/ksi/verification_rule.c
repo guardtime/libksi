@@ -612,7 +612,7 @@ int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext
 	int level = 0;
 	size_t i;
 	KSI_CTX *ctx = NULL;
-	const KSI_Signature *sig = NULL;
+	KSI_Signature *sig = NULL;
 	VerificationTempData *tempData = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
 
@@ -630,8 +630,14 @@ int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext
 	}
 
 	ctx = info->ctx;
-	sig = info->signature;
 	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_clone(info->signature, &sig);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	tempData = info->tempData;
 	if (tempData == NULL) {
@@ -640,6 +646,25 @@ int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext
 	}
 
 	KSI_LOG_info(ctx, "Verify aggregation hash chain consistency.");
+
+	/* The aggregation level might not be 0 in case of local aggregation. */
+	if (!KSI_IS_VALID_TREE_LEVEL(info->docAggrLevel)) {
+		/* Aggregation level can't be larger than 0xff. */
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res = KSI_INVALID_VERIFICATION_INPUT, "Aggregation level is larger than 0xff.");
+		goto cleanup;
+	}
+	level = (int)info->docAggrLevel;
+
+	/* Remove root level from level correction. */
+	if (level > 0) {
+		res = sig->subRootLevel(sig, level);
+		if (res != KSI_OK) {
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_13, step);
+			res = KSI_OK;
+			goto cleanup;
+		}
+	}
 
 	/* Aggregate all the aggregation chains. */
 	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
@@ -699,6 +724,7 @@ int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext
 
 cleanup:
 	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
 
 	return res;
 }
@@ -931,7 +957,7 @@ static int initAggregationOutputHash(KSI_VerificationContext *info) {
 
 	if (tempData->aggregationOutputHash == NULL) {
 		KSI_AggregationHashChainList_aggregate(info->signature->aggregationChainList, info->ctx,
-				0, &tempData->aggregationOutputHash);
+				(int)info->docAggrLevel, &tempData->aggregationOutputHash);
 	}
 
 	res = KSI_OK;

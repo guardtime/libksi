@@ -146,6 +146,7 @@ static void TestVerificationContext(CuTest* tc) {
 			 context.userPublication == NULL &&
 			 context.userPublicationsFile == NULL &&
 			 context.extendingAllowed == 0 &&
+			 context.docAggrLevel == 0 &&
 			 context.tempData == NULL);
 
 	context.tempData = &tempData;
@@ -173,6 +174,7 @@ static void TestVerificationContext(CuTest* tc) {
 	context.userPublication = userPublication;
 	context.userPublicationsFile = userPublicationsFile;
 	context.extendingAllowed = 1;
+	context.docAggrLevel = 10;
 
 	tempData.calendarChain = NULL;
 	tempData.aggregationOutputHash = aggrHash;

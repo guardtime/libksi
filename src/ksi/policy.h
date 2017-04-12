@@ -37,11 +37,8 @@ extern "C" {
 		/** Indicates whether signature extention is allowed (0 means no, and any non-zero is considered to be true). */
 		int extendingAllowed;
 
-		/** Initial aggregation level.
-		 * Deprecated: initial aggregation level is adjusted into aggregation hash chain level correction value
-		 * during signature creation. \c docAggrLevel is not used during verification procedure.
-		 */
-		KSI_VAR_DEPRECATED(KSI_uint64_t docAggrLevel);
+		/** Initial aggregation level. */
+		KSI_uint64_t docAggrLevel;
 
 		/** Document hash to be verified. */
 		const KSI_DataHash *documentHash;
@@ -87,6 +84,7 @@ extern "C" {
 		_(INT,  10,   0x200,  "Aggregation hash chain chain index mismatch") \
 		_(INT,  11,   0x200,  "The metadata record in the aggregation hash chain may not be trusted") \
 		_(INT,  12,   0x200,  "Inconsistent chain indexes") \
+		_(INT,  13,   0x200,  "Inconsistent aggregation level") \
 		\
 		_(PUB,  1,    0x300,  "Extender response calendar root hash mismatch") \
 		_(PUB,  2,    0x300,  "Extender response inconsistent") \
