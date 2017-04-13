@@ -1,3 +1,5 @@
+* BUGFIX: Added interface for KSI_Header KSI context getter.
+
 Version 3.14
 
 * IMPROVEMENT: Added KSI_DataHash memory reuse.
