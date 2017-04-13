@@ -81,10 +81,10 @@ static int mockHeaderCallback(KSI_Header *hdr) {
 		goto cleanup;
 	}
 
-	res = KSI_Integer_new(ctx, 1337, &instId);
+	res = KSI_Integer_new(KSI_Header_getCtx(hdr), 1337, &instId);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_Integer_new(ctx, 5, &msgId);
+	res = KSI_Integer_new(KSI_Header_getCtx(hdr), 5, &msgId);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_Header_setMessageId(hdr, msgId);
