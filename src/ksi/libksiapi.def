@@ -569,6 +569,7 @@ EXPORTS
 	KSI_Header_setInstanceId
 	KSI_Header_setMessageId
 	KSI_Header_setLoginId
+	KSI_Header_getCtx
 	KSI_Config_free
 	KSI_Config_new
 	KSI_Config_getMaxLevel

@@ -1614,6 +1614,7 @@ KSI_IMPLEMENT_SETTER(KSI_Header, KSI_Integer*, instanceId, InstanceId);
 KSI_IMPLEMENT_SETTER(KSI_Header, KSI_Integer*, messageId, MessageId);
 KSI_IMPLEMENT_SETTER(KSI_Header, KSI_Utf8String*, loginId, LoginId);
 
+KSI_IMPLEMENT_GET_CTX(KSI_Header);
 
 /**
  * KSI_Config
