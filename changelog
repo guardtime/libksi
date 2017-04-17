@@ -1,5 +1,6 @@
 Version 3.13
 
+2017-04-17 release(3.13.2043)
 * IMPROVEMENT: Functionality to request configurations from extender / aggregator.
 * BUGFIX: Update publications file client pointer when changinh client.
 * IMPROVEMENT: Set level correction when input hash level is greater than 0.
