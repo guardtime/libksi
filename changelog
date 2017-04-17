@@ -1,12 +1,10 @@
-* BUGFIX: Added interface for KSI_Header KSI context getter.
-
 Version 3.14
-
-2017-04-17 release(3.13.2043)
+* BUGFIX: Added interface for KSI_Header KSI context getter.
 * IMPROVEMENT: Added KSI_DataHash memory reuse.
 
 Version 3.13
 
+2017-04-17 release(3.13.2043)
 * IMPROVEMENT: Functionality to request configurations from extender / aggregator.
 * BUGFIX: Update publications file client pointer when changinh client.
 * IMPROVEMENT: Set level correction when input hash level is greater than 0.
