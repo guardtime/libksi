@@ -1,5 +1,9 @@
 Version 3.14
 * BUGFIX: Added interface for KSI_Header KSI context getter.
+* BUGFIX: Added interface for KSI_Header KSI context getter.
+
+Version 3.14
+
 * IMPROVEMENT: Added KSI_DataHash memory reuse.
 
 Version 3.13
@@ -10,6 +14,7 @@ Version 3.13
 * IMPROVEMENT: Set level correction when input hash level is greater than 0.
 * IMPROVEMENT: Updated ksi_sign_aggr example.
 * IMPROVEMENT: HMAC algorithm configuration support for outgoing and incomming messages.
+* IMPROVEMENT: Functionality to request configurations from extender / aggregator.
 * IMPROVEMENT: Updated verification tutorial.
 * IMPROVEMENT: Verification context initial aggregation level member is deprecated (warning not shown under Windows). The initial aggregation level is adjusted into aggregation hash chain level correction value during signature creation.
 * IMPROVEMENT: Set level correction when input hash level is greater than 0.

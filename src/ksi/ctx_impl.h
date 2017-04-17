@@ -21,6 +21,7 @@
 #define CTX_IMPL_H_
 
 #include "types.h"
+#include "hash.h"
 
 #ifdef __cplusplus
 extern "C" {

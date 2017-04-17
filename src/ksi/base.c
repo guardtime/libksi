@@ -328,6 +328,8 @@ void KSI_CTX_free(KSI_CTX *ctx) {
 		freeCertConstraintsArray(ctx->certConstraints);
 		KSI_Signature_free(ctx->lastFailedSignature);
 
+		KSI_DataHashList_free(ctx->dataHashRecycle);
+
 		KSI_free(ctx);
 	}
 }

@@ -24,8 +24,11 @@
 #include "internal.h"
 #include "hash_impl.h"
 #include "tlv.h"
+#include "ctx_impl.h"
 
 #define HASH_ALGO(id, name, bitcount, blocksize, trusted) {(id), (name), (bitcount), (blocksize), (trusted), id##_aliases}
+
+
 
 /** Hash algorithm aliases. The last alias has to be an empty string */
 static const char * const KSI_HASHALG_SHA1_aliases[] = {"SHA-1", ""};
@@ -38,6 +41,7 @@ static const char * const KSI_HASHALG_SHA3_256_aliases[] = { ""};
 static const char * const KSI_HASHALG_SHA3_384_aliases[] = { ""};
 static const char * const KSI_HASHALG_SHA3_512_aliases[] = { ""};
 static const char * const KSI_HASHALG_SM3_aliases[] = { "SM-3", ""};
+
 
 static const struct KSI_hashAlgorithmInfo_st {
 	/* Hash algorithm id (should mirror the array index in #KSI_hashAlgorithmInfo) */
@@ -141,6 +145,35 @@ cleanup:
 	return res;
 }
 
+static int alloc_dataHash(KSI_CTX *ctx, KSI_DataHash **out) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *tmp = NULL;
+	size_t len;
+
+	if (ctx == NULL || out == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if ((len = KSI_DataHashList_length(ctx->dataHashRecycle)) > 0) {
+		res = KSI_DataHashList_remove(ctx->dataHashRecycle, len - 1, &tmp);
+		if (res != KSI_OK) goto cleanup;
+	} else {
+		tmp = KSI_new(KSI_DataHash);
+		if (tmp == NULL) {
+			res = KSI_OUT_OF_MEMORY;
+			goto cleanup;
+		}
+	}
+
+	*out = tmp;
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 /**
  *
  */
@@ -172,9 +205,9 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const unsig
 		goto cleanup;
 	}
 
-	tmp_hash = KSI_new(KSI_DataHash);
-	if (tmp_hash == NULL) {
-		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+	res = alloc_dataHash(ctx, &tmp_hash);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
@@ -482,6 +515,7 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 		KSI_pushError(hasher->ctx, res, NULL);
 		goto cleanup;
 	}
+
 	hsh->ref = 1;
 	hsh->ctx = hasher->ctx;
 
@@ -604,3 +638,4 @@ cleanup:
 
 
 KSI_IMPLEMENT_REF(KSI_DataHash);
+KSI_IMPLEMENT_LIST(KSI_DataHash, KSI_DataHash_free);
