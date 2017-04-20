@@ -1,3 +1,5 @@
+* BUGFIX: Correct extender HMAC setting.
+
 Version 3.14
 * BUGFIX: Added interface for KSI_Header KSI context getter.
 * BUGFIX: Added interface for KSI_Header KSI context getter.
