@@ -49,6 +49,12 @@ static void preTest(void) {
 	ctx->netProvider->requestCount = 0;
 }
 
+static void postTest(void) {
+	/* Restore default HMAC algorithm. */
+	ctx->options[KSI_OPT_AGGR_HMAC_ALGORITHM] = TEST_DEFAULT_AGGR_HMAC_ALGORITHM;
+	ctx->options[KSI_OPT_EXT_HMAC_ALGORITHM] = TEST_DEFAULT_EXT_HMAC_ALGORITHM;
+}
+
 static int mockHeaderCallback(KSI_Header *hdr) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Integer *msgId = NULL;
@@ -253,6 +259,107 @@ static void testExtendingHeader(CuTest* tc) {
 	KSI_RequestHandle_free(handle);
 }
 
+static void aggrReqPduHmacVerify(CuTest* tc, KSI_HashAlgorithm hmacAlg) {
+	int res;
+	KSI_AggregationReq *req = NULL;
+	KSI_AggregationPdu *pdu = NULL;
+	KSI_DataHash *hash = NULL;
+	KSI_DataHash *hmac = NULL;
+	KSI_HashAlgorithm algo = KSI_HASHALG_INVALID;
+	KSI_Integer *intVal = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_setAggregatorHmacAlgorithm(ctx, (void*)hmacAlg);
+	CuAssert(tc, "Unable to set hmac algorithm.", res == KSI_OK);
+
+
+	res = KSI_AggregationReq_new(ctx, &req);
+	CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
+
+	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hash);
+	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hash != NULL);
+	res = KSI_AggregationReq_setRequestHash(req, hash);
+	CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
+	hash = NULL;
+
+	res = KSI_Integer_new(ctx, 17, &intVal);
+	CuAssert(tc, "Unable to create reqId", res == KSI_OK && intVal != NULL);
+
+	res = KSI_AggregationReq_setRequestId(req, intVal);
+	CuAssert(tc, "Unable to set request id.", res == KSI_OK);
+	intVal = NULL;
+
+	res = KSI_AggregationReq_enclose(req, TEST_USER, TEST_PASS, &pdu);
+	CuAssert(tc, "Unable to get aggregation pdu.", res == KSI_OK && pdu != NULL);
+
+	res = KSI_AggregationPdu_getHmac(pdu, &hmac);
+	CuAssert(tc, "Unable to get hmac from pdu.", res == KSI_OK && hmac != NULL);
+
+	res = KSI_DataHash_extract(hmac, &algo, NULL, NULL);
+	CuAssert(tc, "Failed to parse imprint.", res == KSI_OK);
+	CuAssert(tc, "HMAC algorithm mismatch.", algo == hmacAlg);
+
+	KSI_AggregationPdu_free(pdu);
+}
+
+static void testAggregatorHmac(CuTest *tc) {
+	size_t algo_id;
+	for (algo_id = 0; algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS; algo_id++) {
+		if (KSI_isHashAlgorithmSupported(algo_id)) aggrReqPduHmacVerify(tc, algo_id);
+	}
+}
+
+static void extReqPduHmacVerify(CuTest* tc, KSI_HashAlgorithm hmacAlg) {
+	int res;
+	KSI_ExtendReq *req = NULL;
+	KSI_ExtendPdu *pdu = NULL;
+	KSI_DataHash *hmac = NULL;
+	KSI_Integer *intVal = NULL;
+	KSI_HashAlgorithm algo = KSI_HASHALG_INVALID;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_setExtenderHmacAlgorithm(ctx, (void*)hmacAlg);
+	CuAssert(tc, "Unable to set hmac algorithm.", res == KSI_OK);
+
+	res = KSI_ExtendReq_new(ctx, &req);
+	CuAssert(tc, "Unable to create extending request.", res == KSI_OK && req != NULL);
+
+	res = KSI_Integer_new(ctx, 1435740789, &intVal);
+	CuAssert(tc, "Unable to create start time.", res == KSI_OK && intVal != NULL);
+
+	res = KSI_ExtendReq_setAggregationTime(req, intVal);
+	CuAssert(tc, "Unable to create start time.", res == KSI_OK && intVal != NULL);
+	intVal = NULL;
+
+	res = KSI_Integer_new(ctx, 17, &intVal);
+	CuAssert(tc, "Unable to create reqId", res == KSI_OK && intVal != NULL);
+
+	res = KSI_ExtendReq_setRequestId(req, intVal);
+	CuAssert(tc, "Unable to set request id.", res == KSI_OK);
+	intVal = NULL;
+
+	res = KSI_ExtendReq_enclose(req, TEST_USER, TEST_PASS, &pdu);
+	CuAssert(tc, "Unable to get extend pdu.", res == KSI_OK && pdu != NULL);
+
+	res = KSI_ExtendPdu_getHmac(pdu, &hmac);
+	CuAssert(tc, "Unable to get hmac from pdu.", res == KSI_OK && hmac != NULL);
+
+	res = KSI_DataHash_extract(hmac, &algo, NULL, NULL);
+	CuAssert(tc, "Failed to parse imprint.", res == KSI_OK);
+	CuAssert(tc, "HMAC algorithm mismatch.", algo == hmacAlg);
+
+	KSI_ExtendPdu_free(pdu);
+}
+
+static void testExtenderHmac(CuTest *tc) {
+	size_t algo_id;
+	for (algo_id = 0; algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS; algo_id++) {
+		if (KSI_isHashAlgorithmSupported(algo_id)) extReqPduHmacVerify(tc, algo_id);
+	}
+}
+
 static void testUrlSplit(CuTest *tc) {
 	struct {
 		int res;
@@ -391,9 +498,12 @@ CuSuite* KSITest_NetCommon_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
 	suite->preTest = preTest;
+	suite->postTest = postTest;
 
 	SUITE_ADD_TEST(suite, testAggregationHeader);
 	SUITE_ADD_TEST(suite, testExtendingHeader);
+	SUITE_ADD_TEST(suite, testAggregatorHmac);
+	SUITE_ADD_TEST(suite, testExtenderHmac);
 	SUITE_ADD_TEST(suite, testUrlSplit);
 	SUITE_ADD_TEST(suite, testUriSpiltAndCompose);
 
