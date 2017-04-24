@@ -935,6 +935,25 @@ static void testExtendingErrorResponse(CuTest *tc) {
 #undef TEST_CRT_FILE
 }
 
+static void verifySignatureWithLevel(CuTest* tc, KSI_Signature *sig, int lvl,
+		KSI_VerificationResultCode rCode, KSI_VerificationErrorCode eCode) {
+	int res;
+	KSI_VerificationContext verifier;
+	KSI_PolicyVerificationResult *result = NULL;
+
+	KSI_VerificationContext_init(&verifier, ctx);
+
+	verifier.signature = sig;
+	verifier.docAggrLevel = lvl;
+
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &verifier, &result);
+	CuAssert(tc, "Locally aggregated signature was not verifiable due to an error.", res == KSI_OK);
+	CuAssert(tc, "Signature verification result mismatch.", result->resultCode == rCode && result->finalResult.errorCode == eCode);
+
+	KSI_VerificationContext_clean(&verifier);
+	KSI_PolicyVerificationResult_free(result);
+}
+
 static void testLocalAggregationSigning(CuTest* tc) {
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/v2/ok-local_aggr_lvl4_resp.tlv"
 #define TEST_AGGR_LEVEL 4
@@ -942,10 +961,6 @@ static void testLocalAggregationSigning(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
-	KSI_VerificationContext verifier;
-	KSI_PolicyVerificationResult *result = NULL;
-
-	KSI_VerificationContext_init(&verifier, ctx);
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -961,26 +976,12 @@ static void testLocalAggregationSigning(CuTest* tc) {
 	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Locally aggregated signature was not verifiable due to an error.", res == KSI_OK);
 
-	verifier.signature = sig;
-	verifier.docAggrLevel = TEST_AGGR_LEVEL;
-	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &verifier, &result);
-	CuAssert(tc, "Locally aggregated signature was not verifiable due to an error.", res == KSI_OK);
-	CuAssert(tc, "The signature can not be verified.", result->resultCode == KSI_VER_RES_OK);
-
-	verifier.docAggrLevel = TEST_AGGR_LEVEL + 1;
-	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &verifier, &result);
-	CuAssert(tc, "Locally aggregated signature was not verifiable due to an error.", res == KSI_OK);
-	CuAssert(tc, "The signature can not be verified.", result->resultCode == KSI_VER_RES_FAIL && result->finalResult.errorCode == KSI_VER_ERR_GEN_3);
-
-	verifier.docAggrLevel = TEST_AGGR_LEVEL - 1;
-	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &verifier, &result);
-	CuAssert(tc, "Locally aggregated signature was not verifiable due to an error.", res == KSI_OK);
-	CuAssert(tc, "The signature can not be verified.", result->resultCode == KSI_VER_RES_OK);
+	verifySignatureWithLevel(tc, sig, TEST_AGGR_LEVEL,     KSI_VER_RES_OK,   KSI_VER_ERR_NONE);
+	verifySignatureWithLevel(tc, sig, TEST_AGGR_LEVEL - 1, KSI_VER_RES_OK,   KSI_VER_ERR_NONE);
+	verifySignatureWithLevel(tc, sig, TEST_AGGR_LEVEL + 1, KSI_VER_RES_FAIL, KSI_VER_ERR_GEN_3);
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
-	KSI_VerificationContext_clean(&verifier);
-	KSI_PolicyVerificationResult_free(result);
 
 #undef TEST_AGGR_RESPONSE_FILE
 #undef TEST_AGGR_LEVEL
