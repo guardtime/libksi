@@ -708,7 +708,7 @@ int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext
 	int level = 0;
 	size_t i;
 	KSI_CTX *ctx = NULL;
-	KSI_Signature *sig = NULL;
+	const KSI_Signature *sig = NULL;
 	VerificationTempData *tempData = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
 
