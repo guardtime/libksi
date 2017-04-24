@@ -4323,6 +4323,106 @@ static void testRule_UserProvidedPublicationExtendedSignatureInputHash_verifyErr
 #undef TEST_MOCK_IMPRINT
 }
 
+static void testRule_AggregationChainInputLevelVerification_sigWithRfc3161(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-with-rfc3161-record-ok.ksig"
+
+	int res = KSI_OK;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
+
+	TEST_VERIFICATION_STEP_INIT;
+	verCtx.docAggrLevel = 0;
+	res = KSI_VerificationRule_AggregationChainInputLevelVerification(&verCtx, &verRes);
+	CuAssert(tc, "Input level is valid.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
+	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
+
+	TEST_VERIFICATION_STEP_INIT;
+	verCtx.docAggrLevel = 1;
+	res = KSI_VerificationRule_AggregationChainInputLevelVerification(&verCtx, &verRes);
+	CuAssert(tc, "Input level is invalid.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_GEN_3);
+	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
+
+	TEST_VERIFICATION_STEP_INIT;
+	verCtx.docAggrLevel = 0xff;
+	res = KSI_VerificationRule_AggregationChainInputLevelVerification(&verCtx, &verRes);
+	CuAssert(tc, "Input level is invalid.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_GEN_3);
+	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
+
+	TEST_VERIFICATION_STEP_INIT;
+	verCtx.docAggrLevel = ULLONG_MAX;
+	res = KSI_VerificationRule_AggregationChainInputLevelVerification(&verCtx, &verRes);
+	CuAssert(tc, "Input level is invalid.", res != KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
+	TEST_ASSERT_VERIFICATION_STEP_NA(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
+
+	KSI_Signature_free(signature);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationChainInputLevelVerification_sigWithLevel(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2017-04-21.1-input-hash-level-5.ksig"
+#define TEST_AGGR_LEVEL 5
+
+	int res = KSI_OK;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
+
+	TEST_VERIFICATION_STEP_INIT;
+	verCtx.docAggrLevel = TEST_AGGR_LEVEL;
+	res = KSI_VerificationRule_AggregationChainInputLevelVerification(&verCtx, &verRes);
+	CuAssert(tc, "Input level is valid.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
+	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
+
+	TEST_VERIFICATION_STEP_INIT;
+	verCtx.docAggrLevel = 0;
+	res = KSI_VerificationRule_AggregationChainInputLevelVerification(&verCtx, &verRes);
+	CuAssert(tc, "Input level is valid.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
+	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
+
+	TEST_VERIFICATION_STEP_INIT;
+	verCtx.docAggrLevel = TEST_AGGR_LEVEL - 1;
+	res = KSI_VerificationRule_AggregationChainInputLevelVerification(&verCtx, &verRes);
+	CuAssert(tc, "Input level is valid.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
+	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
+
+	TEST_VERIFICATION_STEP_INIT;
+	verCtx.docAggrLevel = TEST_AGGR_LEVEL + 1;
+	res = KSI_VerificationRule_AggregationChainInputLevelVerification(&verCtx, &verRes);
+	CuAssert(tc, "Input level is invalid.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_GEN_3);
+	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
+
+	KSI_Signature_free(signature);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_AGGR_LEVEL
+}
+
 CuSuite* KSITest_VerificationRules_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -4442,6 +4542,8 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationTimeMatchesExtendedResponse_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationExtendedSignatureInputHash);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationExtendedSignatureInputHash_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_AggregationChainInputLevelVerification_sigWithRfc3161);
+	SUITE_ADD_TEST(suite, testRule_AggregationChainInputLevelVerification_sigWithLevel);
 
 	return suite;
 }

@@ -851,6 +851,7 @@ EXPORTS
 
 ;verification_rule.h
 EXPORTS
+	KSI_VerificationRule_AggregationChainInputLevelVerification
 	KSI_VerificationRule_AggregationChainInputHashVerification
 	KSI_VerificationRule_AggregationChainMetaDataVerification
 	KSI_VerificationRule_AggregationHashChainConsistency

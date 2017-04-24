@@ -755,7 +755,7 @@ static void TestInternalPolicy_OK_MetaDataWithPadding(CuTest* tc) {
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_OK,
 		KSI_VER_ERR_NONE,
-		"KSI_VerificationRule_DocumentHashDoesNotExist"
+		"KSI_VerificationRule_CalendarHashChainDoesNotExist"
 	};
 	KSI_Signature *signature = NULL;
 
@@ -789,7 +789,7 @@ static void TestInternalPolicy_OK_MetaDataWithoutPadding(CuTest* tc) {
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_OK,
 		KSI_VER_ERR_NONE,
-		"KSI_VerificationRule_DocumentHashDoesNotExist"
+		"KSI_VerificationRule_CalendarHashChainDoesNotExist"
 	};
 	KSI_Signature *signature = NULL;
 
@@ -973,7 +973,7 @@ static void TestInternalPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_OK,
 		KSI_VER_ERR_NONE,
-		"KSI_VerificationRule_DocumentHashDoesNotExist"
+		"KSI_VerificationRule_CalendarHashChainDoesNotExist"
 	};
 	KSI_Signature *signature = NULL;
 
@@ -1085,7 +1085,7 @@ static void TestInternalPolicy_OK_WithoutCalendarAuthenticationRecord(CuTest* tc
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_OK,
 		KSI_VER_ERR_NONE,
-		"KSI_VerificationRule_DocumentHashDoesNotExist"
+		"KSI_VerificationRule_CalendarAuthenticationRecordDoesNotExist"
 	};
 	KSI_Signature *signature = NULL;
 
@@ -1201,7 +1201,7 @@ static void TestInternalPolicy_OK_WithoutPublicationRecord(CuTest* tc) {
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_OK,
 		KSI_VER_ERR_NONE,
-		"KSI_VerificationRule_DocumentHashDoesNotExist"
+		"KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime"
 	};
 	KSI_Signature *signature = NULL;
 
@@ -1318,7 +1318,7 @@ static void TestInternalPolicy_OK_WithPublicationRecord(CuTest* tc) {
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_OK,
 		KSI_VER_ERR_NONE,
-		"KSI_VerificationRule_DocumentHashDoesNotExist"
+		"KSI_VerificationRule_SignaturePublicationRecordPublicationTime"
 	};
 	KSI_Signature *signature = NULL;
 
@@ -1355,7 +1355,7 @@ static void TestInternalPolicy_OK_WithDocumentHash(CuTest* tc) {
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_OK,
 		KSI_VER_ERR_NONE,
-		"KSI_VerificationRule_DocumentHashVerification"
+		"KSI_VerificationRule_SignaturePublicationRecordPublicationTime"
 	};
 	KSI_Signature *signature = NULL;
 
@@ -1420,8 +1420,7 @@ static void TestInternalPolicy_FAIL_WithDocumentHash(CuTest* tc) {
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
-			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_NONE));
 	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_DOCUMENT));
 
 	KSI_DataHash_free(documentHash);
@@ -1431,6 +1430,89 @@ static void TestInternalPolicy_FAIL_WithDocumentHash(CuTest* tc) {
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_MOCK_IMPRINT
+}
+
+static void TestInternalPolicy_OK_WithInputLevel(CuTest* tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2017-04-21.1-input-hash-level-5.ksig"
+#define TEST_AGGR_LEVEL 5
+
+	int res;
+	KSI_VerificationContext context;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
+		"KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime"
+	};
+	KSI_Signature *signature = NULL;
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&context, ctx);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	context.signature = signature;
+
+	context.docAggrLevel = TEST_AGGR_LEVEL;
+
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
+			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_Signature_free(signature);
+	KSI_VerificationContext_clean(&context);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_AGGR_LEVEL
+}
+
+static void TestInternalPolicy_FAIL_WithInputLevelToLarge(CuTest* tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2017-04-21.1-input-hash-level-5.ksig"
+#define TEST_AGGR_LEVEL 5
+
+	int res;
+	KSI_VerificationContext context;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_GEN_3,
+		"KSI_VerificationRule_AggregationChainInputLevelVerification"
+	};
+	KSI_Signature *signature = NULL;
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&context, ctx);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	context.signature = signature;
+
+	context.docAggrLevel = TEST_AGGR_LEVEL + 1;
+
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
+	CuAssert(tc, "Policy verification must not succeed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_NONE));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_Signature_free(signature);
+	KSI_VerificationContext_clean(&context);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_AGGR_LEVEL
 }
 
 static void TestCalendarBasedPolicy_NA_ExtenderErrors(CuTest* tc) {
@@ -3388,6 +3470,8 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestInternalPolicy_OK_WithPublicationRecord);
 	SUITE_ADD_TEST(suite, TestInternalPolicy_OK_WithDocumentHash);
 	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithDocumentHash);
+	SUITE_ADD_TEST(suite, TestInternalPolicy_OK_WithInputLevel);
+	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInputLevelToLarge);
 	SUITE_ADD_TEST(suite, TestCalendarBasedPolicy_NA_ExtenderErrors);
 	SUITE_ADD_TEST(suite, TestCalendarBasedPolicy_OK_WithPublicationRecord);
 	SUITE_ADD_TEST(suite, TestCalendarBasedPolicy_FAIL_WithPublicationRecord);

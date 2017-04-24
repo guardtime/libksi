@@ -1,3 +1,6 @@
+* IMPROVEMENT: Verification of user-provided input hash level.
+* IMPROVEMENT: Updated signature verification sequence.
+
 Version 3.14
 
 * IMPROVEMENT: Added KSI_DataHash memory reuse.

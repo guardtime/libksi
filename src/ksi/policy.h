@@ -71,6 +71,7 @@ extern "C" {
 		/*Type  Code  Offset  Description*/\
 		_(GEN,  1,    0x100,  "Wrong document")\
 		_(GEN,  2,    0x100,  "Verification inconclusive") \
+		_(GEN,  3,    0x100,  "Input hash level too large") \
 		\
 		_(INT,  1,    0x200,  "Inconsistent aggregation hash chains") \
 		_(INT,  2,    0x200,  "Inconsistent aggregation hash chain aggregation times") \
@@ -84,7 +85,6 @@ extern "C" {
 		_(INT,  10,   0x200,  "Aggregation hash chain chain index mismatch") \
 		_(INT,  11,   0x200,  "The metadata record in the aggregation hash chain may not be trusted") \
 		_(INT,  12,   0x200,  "Inconsistent chain indexes") \
-		_(INT,  13,   0x200,  "Inconsistent aggregation level") \
 		\
 		_(PUB,  1,    0x300,  "Extender response calendar root hash mismatch") \
 		_(PUB,  2,    0x300,  "Extender response inconsistent") \

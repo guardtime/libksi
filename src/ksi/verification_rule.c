@@ -63,6 +63,102 @@ static int initAggregationOutputHash(KSI_VerificationContext *info);
 static int extendingPermittedVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result, const KSI_VerificationStep step, const char *rule);
 
 
+int KSI_VerificationRule_AggregationChainInputLevelVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_AggregationHashChain *firstChain = NULL;
+	KSI_HashChainLinkList *chain = NULL;
+	KSI_HashChainLink *link = NULL;
+	KSI_Integer *lvlCorr = NULL;
+	KSI_CTX *ctx = NULL;
+	const KSI_Signature *sig = NULL;
+	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info->docAggrLevel == 0) {
+		VERIFICATION_RESULT_OK(step);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	ctx = info->ctx;
+	sig = info->signature;
+	KSI_ERR_clearErrors(ctx);
+
+	KSI_LOG_info(ctx, "Verify aggregation hash chain input level.");
+
+	/* Verify aggregation input level. */
+	if (!KSI_IS_VALID_TREE_LEVEL(info->docAggrLevel)) {
+		/* Aggregation level can't be larger than 0xff. */
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res = KSI_INVALID_VERIFICATION_INPUT, "Aggregation level is larger than 0xff.");
+		goto cleanup;
+	}
+
+	/* Document input level is always 0 for RFC-3161 record. */
+	if (info->docAggrLevel > 0 && sig->rfc3161 != NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_GEN_3, step);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	/* Get first aggregation hash chain first link. */
+	res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &firstChain);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_AggregationHashChain_getChain(firstChain, &chain);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_HashChainLinkList_elementAt(chain, 0, &link);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Verify level correction value. */
+	res = KSI_HashChainLink_getLevelCorrection(link, &lvlCorr);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (!KSI_IS_VALID_TREE_LEVEL(KSI_Integer_getUInt64(lvlCorr) - info->docAggrLevel)) {
+		KSI_LOG_info(ctx, "Aggregation hash chain input level is to large.");
+		KSI_LOG_debug(ctx, "Signatures initial level correction: %llu.", KSI_Integer_getUInt64(lvlCorr));
+		KSI_LOG_debug(ctx, "Document input level               : %llu.", info->docAggrLevel);
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_GEN_3, step);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+cleanup:
+
+	return res;
+}
+
 static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, const KSI_DataHash *hsh, const KSI_OctetString *suffix, int hsh_id, KSI_DataHash **out) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHasher *hsr = NULL;
@@ -630,14 +726,8 @@ int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext
 	}
 
 	ctx = info->ctx;
+	sig = info->signature;
 	KSI_ERR_clearErrors(ctx);
-
-	res = KSI_Signature_clone(info->signature, &sig);
-	if (res != KSI_OK) {
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
 
 	tempData = info->tempData;
 	if (tempData == NULL) {
@@ -646,25 +736,6 @@ int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext
 	}
 
 	KSI_LOG_info(ctx, "Verify aggregation hash chain consistency.");
-
-	/* The aggregation level might not be 0 in case of local aggregation. */
-	if (!KSI_IS_VALID_TREE_LEVEL(info->docAggrLevel)) {
-		/* Aggregation level can't be larger than 0xff. */
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res = KSI_INVALID_VERIFICATION_INPUT, "Aggregation level is larger than 0xff.");
-		goto cleanup;
-	}
-	level = (int)info->docAggrLevel;
-
-	/* Remove root level from level correction. */
-	if (level > 0) {
-		res = sig->subRootLevel(sig, level);
-		if (res != KSI_OK) {
-			VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_13, step);
-			res = KSI_OK;
-			goto cleanup;
-		}
-	}
 
 	/* Aggregate all the aggregation chains. */
 	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
@@ -724,7 +795,6 @@ int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext
 
 cleanup:
 	KSI_DataHash_free(hsh);
-	KSI_Signature_free(sig);
 
 	return res;
 }
