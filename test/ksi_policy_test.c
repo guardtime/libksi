@@ -1474,7 +1474,7 @@ static void TestInternalPolicy_OK_WithInputLevel(CuTest* tc) {
 #undef TEST_AGGR_LEVEL
 }
 
-static void TestInternalPolicy_FAIL_WithInputLevelToLarge(CuTest* tc) {
+static void TestInternalPolicy_FAIL_WithInputLevelTooLarge(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2017-04-21.1-input-hash-level-5.ksig"
 #define TEST_AGGR_LEVEL 5
 
@@ -3471,7 +3471,7 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestInternalPolicy_OK_WithDocumentHash);
 	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithDocumentHash);
 	SUITE_ADD_TEST(suite, TestInternalPolicy_OK_WithInputLevel);
-	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInputLevelToLarge);
+	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInputLevelTooLarge);
 	SUITE_ADD_TEST(suite, TestCalendarBasedPolicy_NA_ExtenderErrors);
 	SUITE_ADD_TEST(suite, TestCalendarBasedPolicy_OK_WithPublicationRecord);
 	SUITE_ADD_TEST(suite, TestCalendarBasedPolicy_FAIL_WithPublicationRecord);

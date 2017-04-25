@@ -1139,54 +1139,54 @@ static void testExtendingResponseWithInvalidId(CuTest* tc) {
 static void testSigningWithLevel(CuTest* tc) {
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/v1/signing-request-with-level-response.tlv"
 
-		int res;
-		KSI_DataHash *hsh = NULL;
-		KSI_Signature *sig = NULL;
-		KSI_VerificationContext context;
-		KSI_PolicyVerificationResult *result = NULL;
-		int level = 3;
-		KSI_AggregationHashChain *aggr = NULL;
-		KSI_LIST(KSI_HashChainLink) *chain = NULL;
-		KSI_HashChainLink *link = NULL;
-		KSI_Integer *sigLvl = NULL;
+	int res;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+	KSI_VerificationContext context;
+	KSI_PolicyVerificationResult *result = NULL;
+	int level = 3;
+	KSI_AggregationHashChain *aggr = NULL;
+	KSI_LIST(KSI_HashChainLink) *chain = NULL;
+	KSI_HashChainLink *link = NULL;
+	KSI_Integer *sigLvl = NULL;
 
-		KSI_ERR_clearErrors(ctx);
+	KSI_ERR_clearErrors(ctx);
 
-		res = KSITest_DataHash_fromStr(ctx, "016338656636643537616332386431623465393561353133393539663566636464", &hsh);
-		CuAssert(tc, "Unable to create data hash object", res == KSI_OK && hsh != NULL);
+	res = KSITest_DataHash_fromStr(ctx, "016338656636643537616332386431623465393561353133393539663566636464", &hsh);
+	CuAssert(tc, "Unable to create data hash object", res == KSI_OK && hsh != NULL);
 
-		res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-		CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
 
-		res = KSI_Signature_signAggregated(ctx, hsh, level, &sig);
-		CuAssert(tc, "Unable to sign the hash with level.", res == KSI_OK && sig != NULL);
+	res = KSI_Signature_signAggregated(ctx, hsh, level, &sig);
+	CuAssert(tc, "Unable to sign the hash with level.", res == KSI_OK && sig != NULL);
 
-		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &aggr);
-		CuAssert(tc, "Unable to get aggregation hash chain", res == KSI_OK && aggr != NULL);
+	res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &aggr);
+	CuAssert(tc, "Unable to get aggregation hash chain", res == KSI_OK && aggr != NULL);
 
-		res = KSI_AggregationHashChain_getChain(aggr, &chain);
-		CuAssert(tc, "Unable to get aggregation hash chain links", res == KSI_OK && chain != NULL);
+	res = KSI_AggregationHashChain_getChain(aggr, &chain);
+	CuAssert(tc, "Unable to get aggregation hash chain links", res == KSI_OK && chain != NULL);
 
-		res = KSI_HashChainLinkList_elementAt(chain, 0, &link);
-		CuAssert(tc, "Unable to get first chain link", res == KSI_OK && link != NULL);
+	res = KSI_HashChainLinkList_elementAt(chain, 0, &link);
+	CuAssert(tc, "Unable to get first chain link", res == KSI_OK && link != NULL);
 
-		res = KSI_HashChainLink_getLevelCorrection(link, &sigLvl);
-		CuAssert(tc, "Unable to get level corrector value", res == KSI_OK && sigLvl != NULL);
+	res = KSI_HashChainLink_getLevelCorrection(link, &sigLvl);
+	CuAssert(tc, "Unable to get level corrector value", res == KSI_OK && sigLvl != NULL);
 
-		CuAssert(tc, "Signature first link level does not match with signing level", level == KSI_Integer_getUInt64(sigLvl));
+	CuAssert(tc, "Signature first link level does not match with signing level", level == KSI_Integer_getUInt64(sigLvl));
 
-		res = KSI_VerificationContext_init(&context, ctx);
-		CuAssert(tc, "Unable to init verification context", res == KSI_OK);
+	res = KSI_VerificationContext_init(&context, ctx);
+	CuAssert(tc, "Unable to init verification context", res == KSI_OK);
 
-		context.signature = sig;
+	context.signature = sig;
 
-		res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-		CuAssert(tc, "Unable to verify created signature.", res == KSI_OK && result != NULL);
-		CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == KSI_VER_RES_OK);
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
+	CuAssert(tc, "Unable to verify created signature.", res == KSI_OK && result != NULL);
+	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == KSI_VER_RES_OK);
 
-		KSI_DataHash_free(hsh);
-		KSI_Signature_free(sig);
-		KSI_PolicyVerificationResult_free(result);
+	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
+	KSI_PolicyVerificationResult_free(result);
 
 #undef TEST_AGGR_RESPONSE_FILE
 }
