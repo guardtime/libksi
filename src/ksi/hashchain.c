@@ -26,6 +26,7 @@
 #include "tlv_template.h"
 #include "hashchain_impl.h"
 #include "impl/meta_data_element_impl.h"
+#include "compatibility.h"
 
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationHashChain);
 KSI_IMPORT_TLV_TEMPLATE(KSI_HashChainLink);
@@ -46,7 +47,7 @@ static long long int highBit(long long int n) {
 }
 
 
-static int addNvlImprint(const KSI_DataHash *first, const KSI_DataHash *second, KSI_DataHasher *hsr) {
+static int dataHasher_addNvlImprint(KSI_DataHasher *hsr, const KSI_DataHash *first, const KSI_DataHash *second) {
 	int res = KSI_UNKNOWN_ERROR;
 	const KSI_DataHash *hsh = first;
 
@@ -67,7 +68,7 @@ cleanup:
 	return res;
 }
 
-static int addChainImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, const KSI_HashChainLink *link) {
+static int dataHasher_addLinkImprint(KSI_CTX *ctx, KSI_DataHasher *hsr, const KSI_HashChainLink *link) {
 	int res = KSI_UNKNOWN_ERROR;
 	int mode = 0;
 	const unsigned char *imprint = NULL;
@@ -184,7 +185,7 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 		}
 	}
 
-	sprintf(logMsg, "Starting %s hash chain aggregation with input hash.", isCalendar ? "calendar": "aggregation");
+	KSI_snprintf(logMsg, sizeof(logMsg), "Starting %s hash chain aggregation with input hash.", isCalendar ? "calendar": "aggregation");
 	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, logMsg, inputHash);
 
 	/* Loop over all the links in the chain. */
@@ -244,25 +245,25 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 		}
 
 		if (link->isLeft) {
-			res = addNvlImprint(hsh, inputHash, hsr);
+			res = dataHasher_addNvlImprint(hsr, hsh, inputHash);
 			if (res != KSI_OK) {
 				KSI_pushError(ctx, res, NULL);
 				goto cleanup;
 			}
 
-			res = addChainImprint(ctx, hsr, link);
+			res = dataHasher_addLinkImprint(ctx, hsr, link);
 			if (res != KSI_OK) {
 				KSI_pushError(ctx, res, NULL);
 				goto cleanup;
 			}
 		} else {
-			res = addChainImprint(ctx, hsr, link);
+			res = dataHasher_addLinkImprint(ctx, hsr, link);
 			if (res != KSI_OK) {
 				KSI_pushError(ctx, res, NULL);
 				goto cleanup;
 			}
 
-			res = addNvlImprint(hsh, inputHash, hsr);
+			res = dataHasher_addNvlImprint(hsr, hsh, inputHash);
 			if (res != KSI_OK) {
 				KSI_pushError(ctx, res, NULL);
 				goto cleanup;
@@ -290,7 +291,7 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 		}
 	}
 
-	sprintf(logMsg, "Finished %s hash chain aggregation with output hash.", isCalendar ? "calendar": "aggregation");
+	KSI_snprintf(logMsg, sizeof(logMsg), "Finished %s hash chain aggregation with output hash.", isCalendar ? "calendar": "aggregation");
 	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, logMsg, hsh);
 
 	if (endLevel != NULL) *endLevel = level;
