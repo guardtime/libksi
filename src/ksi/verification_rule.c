@@ -143,7 +143,7 @@ int KSI_VerificationRule_AggregationChainInputLevelVerification(KSI_Verification
 		goto cleanup;
 	}
 
-	if (!KSI_IS_VALID_TREE_LEVEL(KSI_Integer_getUInt64(lvlCorr) - info->docAggrLevel)) {
+	if (KSI_Integer_getUInt64(lvlCorr) < info->docAggrLevel) {
 		KSI_LOG_info(ctx, "Aggregation hash chain input level is to large.");
 		KSI_LOG_debug(ctx, "Signatures initial level correction: %llu.", KSI_Integer_getUInt64(lvlCorr));
 		KSI_LOG_debug(ctx, "Document input level               : %llu.", info->docAggrLevel);
