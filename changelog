@@ -1,3 +1,4 @@
+* IMPROVEMENT: Refactored aggregation hash chain chain index continuation verification.
 * IMPROVEMENT: Verification of user-provided input hash level.
 * IMPROVEMENT: Updated signature internal verification sequence.
 * BUGFIX: Correct extender HMAC setting.
