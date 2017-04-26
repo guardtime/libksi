@@ -230,7 +230,6 @@ enum KSI_StatusCode {
 	 */
 	KSI_SERVICE_UNKNOWN_ERROR = 0x406,
 
-
 	/* Aggregator errors */
 
 	/**
