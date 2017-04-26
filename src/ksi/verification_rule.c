@@ -315,9 +315,9 @@ static int rfc3161_verifyChainIndex(KSI_CTX *ctx, const KSI_Signature *sig) {
 	}
 
 	if (KSI_IntegerList_length(firstChain->chainIndex) != KSI_IntegerList_length(rfc3161->chainIndex)) {
-		KSI_LOG_info(ctx, "Aggregation hash chain and RFC 3161 chain index mismatch.", KSI_IntegerList_length(firstChain->chainIndex));
-		KSI_LOG_debug(ctx, "Signatures chain index length: %i.", KSI_IntegerList_length(firstChain->chainIndex));
-		KSI_LOG_debug(ctx, "RFC 3161 chain index length:   %i.", KSI_IntegerList_length(rfc3161->chainIndex));
+		KSI_LOG_info(ctx, "Aggregation hash chain and RFC 3161 chain index mismatch.");
+		KSI_LOG_debug(ctx, "First aggr chain index length: %i.", KSI_IntegerList_length(firstChain->chainIndex));
+		KSI_LOG_debug(ctx, "RFC 3161 chain index length  : %i.", KSI_IntegerList_length(rfc3161->chainIndex));
 		KSI_pushError(ctx, res = KSI_VERIFICATION_FAILURE, "Aggregation hash chain and RFC 3161 aggregation index mismatch.");
 		goto cleanup;
 	}
@@ -875,7 +875,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_AggregationHashChainIndexContinuation(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	const KSI_AggregationHashChain *prevChain = NULL;
 	size_t i;
@@ -899,7 +899,7 @@ int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationCo
 	sig = info->signature;
 	KSI_ERR_clearErrors(ctx);
 
-	KSI_LOG_info(ctx, "Verify aggregation hash chain chain index consistency.");
+	KSI_LOG_info(ctx, "Verify aggregation hash chain chain index continuation.");
 
 	/* Verify RFC3161 chain index. */
 	if (sig->rfc3161 != NULL) {
@@ -915,6 +915,87 @@ int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationCo
 			}
 		}
 	}
+
+	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
+		KSI_AggregationHashChain* aggregationChain = NULL;
+
+		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, (KSI_AggregationHashChain **)&aggregationChain);
+		if (res != KSI_OK || aggregationChain == NULL) {
+			KSI_pushError(ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			goto cleanup;
+		}
+
+		/* Verify chain indeces */
+		if (prevChain != NULL) {
+			/* Verify chain index length. */
+			if (KSI_IntegerList_length(prevChain->chainIndex) != KSI_IntegerList_length(aggregationChain->chainIndex) + 1) {
+				KSI_LOG_debug(ctx, "Unexpected chain index length in aggregation hash chain.");
+				VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_12, step);
+				res = KSI_OK;
+				goto cleanup;
+			} else {
+				size_t j;
+				for (j = 0; j < KSI_IntegerList_length(aggregationChain->chainIndex); j++) {
+					KSI_Integer *chainIndex1 = NULL;
+					KSI_Integer *chainIndex2 = NULL;
+
+					res = KSI_IntegerList_elementAt(prevChain->chainIndex, j, &chainIndex1);
+					if (res != KSI_OK) {
+						VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+						KSI_pushError(ctx, res, NULL);
+						goto cleanup;
+					}
+
+					res = KSI_IntegerList_elementAt(aggregationChain->chainIndex, j, &chainIndex2);
+					if (res != KSI_OK) {
+						VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+						KSI_pushError(ctx, res, NULL);
+						goto cleanup;
+					}
+
+					if (!KSI_Integer_equals(chainIndex1, chainIndex2)) {
+						KSI_LOG_debug(ctx, "Aggregation hash chain index is not continuation of previous chain index.");
+						VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_12, step);
+						res = KSI_OK;
+						goto cleanup;
+					}
+				}
+			}
+		}
+		prevChain = aggregationChain;
+	}
+
+	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	size_t i;
+	KSI_CTX *ctx = NULL;
+	const KSI_Signature *sig = NULL;
+	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->signature;
+	KSI_ERR_clearErrors(ctx);
+
+	KSI_LOG_info(ctx, "Verify aggregation hash chain chain index consistency.");
 
 	/* Aggregate all the aggregation chains. */
 	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
@@ -954,52 +1035,10 @@ int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationCo
 			if (KSI_Integer_getUInt64(chainIndexCurr) != chainIndexCalc) {
 				KSI_LOG_debug(ctx, "Aggregation hash chain index does not match with aggregation hash chain shape.");
 				VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_10, step);
-
 				res = KSI_OK;
 				goto cleanup;
 			}
 		}
-
-		/* Verify chain indeces */
-		if (prevChain != NULL) {
-			/* Verify chain index length. */
-			if (KSI_IntegerList_length(prevChain->chainIndex) != KSI_IntegerList_length(aggregationChain->chainIndex) + 1) {
-				KSI_LOG_debug(ctx, "Unexpected chain index length in aggregation hash chain.");
-				VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_10, step);
-
-				res = KSI_OK;
-				goto cleanup;
-			} else {
-				size_t j;
-				for (j = 0; j < KSI_IntegerList_length(aggregationChain->chainIndex); j++) {
-					KSI_Integer *chainIndex1 = NULL;
-					KSI_Integer *chainIndex2 = NULL;
-
-					res = KSI_IntegerList_elementAt(prevChain->chainIndex, j, &chainIndex1);
-					if (res != KSI_OK) {
-						VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-						KSI_pushError(ctx, res, NULL);
-						goto cleanup;
-					}
-
-					res = KSI_IntegerList_elementAt(aggregationChain->chainIndex, j, &chainIndex2);
-					if (res != KSI_OK) {
-						VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-						KSI_pushError(ctx, res, NULL);
-						goto cleanup;
-					}
-
-					if (!KSI_Integer_equals(chainIndex1, chainIndex2)) {
-						KSI_LOG_debug(ctx, "Aggregation hash chain index is not continuation of previous chain index.");
-						VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_10, step);
-
-						res = KSI_OK;
-						goto cleanup;
-					}
-				}
-			}
-		}
-		prevChain = aggregationChain;
 	}
 
 	VERIFICATION_RESULT_OK(step);
