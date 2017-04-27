@@ -124,6 +124,8 @@ const char *KSI_getErrorString(int statusCode) {
 			return "HMAC mismatch.";
 		case KSI_HMAC_ALGORITHM_MISMATCH:
 			return "HMAC algorithm mismatch.";
+		case KSI_UNSUPPORTED_PDU_VERSION:
+			return "Unsupported PDU version.";
 		case KSI_SERVICE_INVALID_REQUEST:
 			return "The request had invalid format.";
 		case KSI_SERVICE_AUTHENTICATION_FAILURE:
@@ -637,7 +639,7 @@ int KSI_receiveAggregatorConfig(KSI_CTX *ctx, KSI_Config **config) {
 }
 
 int KSI_receiveExtenderConfig(KSI_CTX *ctx, KSI_Config **config) {
-	if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1) return KSI_INVALID_STATE;
+	if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1) return KSI_UNSUPPORTED_PDU_VERSION;
 	return receiveConfig(ctx, config,
 			(int (*)(KSI_CTX *, void **))createExtenderConfigRequest,
 			(int (*)(KSI_CTX *, void *, KSI_RequestHandle **))KSI_sendExtenderRequest,
