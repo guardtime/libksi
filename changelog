@@ -1,3 +1,4 @@
+* IMPROVEMENT: Returning KSI_UNSUPPORTED_PDU_VERSION in case configured PDU version is not supported for given request.
 * IMPROVEMENT: Verification of user-provided input hash level.
 * IMPROVEMENT: Updated signature internal verification sequence.
 * BUGFIX: Correct extender HMAC setting.
