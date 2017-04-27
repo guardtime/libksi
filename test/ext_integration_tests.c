@@ -274,7 +274,7 @@ static void Test_RequestExtenderConfig(CuTest* tc) {
 	KSI_CTX_setFlag(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_PDU_VERSION_1);
 
 	res = KSI_receiveExtenderConfig(ctx, &config);
-	CuAssert(tc, "Unable to receive extender config.", res == KSI_INVALID_STATE && config == NULL);
+	CuAssert(tc, "Unable to receive extender config.", res == KSI_UNSUPPORTED_PDU_VERSION && config == NULL);
 }
 
 static void Test_RequestExtenderConfig_pduV2(CuTest* tc) {
