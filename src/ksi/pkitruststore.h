@@ -150,17 +150,7 @@ extern "C" {
 	 */
 	int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, size_t data_len, const char *algoOid, const unsigned char *signature, size_t signature_len, const KSI_PKICertificate *cert);
 
-	/**
-	 * Function for verifying the data with PKI Signature.
-	 * \param[in]	pki			PKI Truststore.
-	 * \param[in]	data		Pointer to signed data.
-	 * \param[in]	data_len	Length of the signed data.
-	 * \param[in]	signature	PKI signature object.
-	 *
-	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an
-	 * error code).
-	 */
-	KSI_FN_DEPRECATED(int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned char *data, size_t data_len, const KSI_PKISignature *signature));
+	KSI_FN_DEPRECATED(int KSI_PKITruststore_verifySignature(KSI_PKITruststore *pki, const unsigned char *data, size_t data_len, const KSI_PKISignature *signature), Use #KSI_PKITruststore_verifyPKISignature instead.);
 
 	/**
 	 * Function for verifying the data with PKI Signature. Explicitly verifies against publications file constraints

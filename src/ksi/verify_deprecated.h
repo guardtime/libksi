@@ -37,7 +37,7 @@ extern "C" {
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  * \see #KSI_Signature_verifyAggregated, #KSI_Signature_verifyAggregatedHash, #KSI_Signature_verifyDataHash
  */
-KSI_FN_DEPRECATED(int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx));
+KSI_FN_DEPRECATED(int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx), New verification approach is described in [Verification Tutorial](tutorial/t2_verifying.md));
 
 /**
  * This function behaves like #KSI_Signature_verify except, it takes an extra parameter
@@ -49,7 +49,7 @@ KSI_FN_DEPRECATED(int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx));
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  * \see #KSI_Signature_verify, #KSI_Signature_verifyAggregatedHash, #KSI_Signature_verifyDataHash
  */
-KSI_FN_DEPRECATED(int KSI_Signature_verifyAggregated(KSI_Signature *sig, KSI_CTX *ctx, KSI_uint64_t level));
+KSI_FN_DEPRECATED(int KSI_Signature_verifyAggregated(KSI_Signature *sig, KSI_CTX *ctx, KSI_uint64_t level), New verification approach is described in [Verification Tutorial](tutorial/t2_verifying.md));
 
 /**
  * This function verifies the signature using online resources. The signature is
@@ -60,7 +60,7 @@ KSI_FN_DEPRECATED(int KSI_Signature_verifyAggregated(KSI_Signature *sig, KSI_CTX
  * \param[in]	ctx			KSI context, if NULL the context of the signature is used.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-KSI_FN_DEPRECATED(int KSI_Signature_verifyOnline(KSI_Signature *sig, KSI_CTX *ctx));
+KSI_FN_DEPRECATED(int KSI_Signature_verifyOnline(KSI_Signature *sig, KSI_CTX *ctx), New verification approach is described in [Verification Tutorial](tutorial/t2_verifying.md));
 
 /**
  * This function verifies given hash value \c hsh using the signature \c sig. If
@@ -77,7 +77,7 @@ KSI_FN_DEPRECATED(int KSI_Signature_verifyOnline(KSI_Signature *sig, KSI_CTX *ct
  * \return status code (#KSI_OK, when operation succeeded, otherwise an
  * error code).
  */
-KSI_FN_DEPRECATED(int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *docHash));
+KSI_FN_DEPRECATED(int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *docHash), New verification approach is described in [Verification Tutorial](tutorial/t2_verifying.md));
 
 /**
  * This function verifies signature using given publication.
@@ -87,7 +87,7 @@ KSI_FN_DEPRECATED(int KSI_Signature_verifyDataHash(KSI_Signature *sig, KSI_CTX *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an
  * error code).
  */
-KSI_FN_DEPRECATED(int KSI_Signature_verifyWithPublication(KSI_Signature *sig, KSI_CTX *ctx, const KSI_PublicationData *publication));
+KSI_FN_DEPRECATED(int KSI_Signature_verifyWithPublication(KSI_Signature *sig, KSI_CTX *ctx, const KSI_PublicationData *publication), New verification approach is described in [Verification Tutorial](tutorial/t2_verifying.md));
 
 /**
  * This function behaves similar to #KSI_Signature_verifyDataHash except it takes an extra parameter
@@ -103,7 +103,7 @@ KSI_FN_DEPRECATED(int KSI_Signature_verifyWithPublication(KSI_Signature *sig, KS
  * \param[in]	rootLevel	The level of the root hash.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-KSI_FN_DEPRECATED(int KSI_Signature_verifyAggregatedHash(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel));
+KSI_FN_DEPRECATED(int KSI_Signature_verifyAggregatedHash(KSI_Signature *sig, KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel), New verification approach is described in [Verification Tutorial](tutorial/t2_verifying.md));
 
 /**
  * Accessor method for verification results.
@@ -112,7 +112,7 @@ KSI_FN_DEPRECATED(int KSI_Signature_verifyAggregatedHash(KSI_Signature *sig, KSI
  * \return status code (#KSI_OK, when operation succeeded, otherwise an
  * error code).
  */
-KSI_FN_DEPRECATED(int KSI_Signature_getVerificationResult(KSI_Signature *sig, const KSI_VerificationResult **info));
+KSI_FN_DEPRECATED(int KSI_Signature_getVerificationResult(KSI_Signature *sig, const KSI_VerificationResult **info), New verification approach is described in [Verification Tutorial](tutorial/t2_verifying.md));
 
 /**
  * Mark the verification step as failure.
@@ -121,7 +121,7 @@ KSI_FN_DEPRECATED(int KSI_Signature_getVerificationResult(KSI_Signature *sig, co
  * \param[in]	desc		Verification failure message.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-KSI_FN_DEPRECATED(int KSI_VerificationResult_addFailure(KSI_VerificationResult *info, KSI_VerificationStep step, const char *desc));
+KSI_FN_DEPRECATED(int KSI_VerificationResult_addFailure(KSI_VerificationResult *info, KSI_VerificationStep step, const char *desc), New verification approach is described in [Verification Tutorial](tutorial/t2_verifying.md));
 
 /**
  * Mark the verification step as success.
@@ -130,14 +130,14 @@ KSI_FN_DEPRECATED(int KSI_VerificationResult_addFailure(KSI_VerificationResult *
  * \param[in]	desc		Verification success message.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-KSI_FN_DEPRECATED(int KSI_VerificationResult_addSuccess(KSI_VerificationResult *info, KSI_VerificationStep step, const char *desc));
+KSI_FN_DEPRECATED(int KSI_VerificationResult_addSuccess(KSI_VerificationResult *info, KSI_VerificationStep step, const char *desc), New verification approach is described in [Verification Tutorial](tutorial/t2_verifying.md));
 
 /**
  * Returns the performed step count.
  * \param[in]	info		Verification result.
  * \return count of elements in the verification info.
  */
-KSI_FN_DEPRECATED(size_t KSI_VerificationResult_getStepResultCount(const KSI_VerificationResult *info));
+KSI_FN_DEPRECATED(size_t KSI_VerificationResult_getStepResultCount(const KSI_VerificationResult *info), New verification approach is described in [Verification Tutorial](tutorial/t2_verifying.md));
 
 /**
  * Get the a verification step with the given index.
@@ -147,7 +147,7 @@ KSI_FN_DEPRECATED(size_t KSI_VerificationResult_getStepResultCount(const KSI_Ver
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
-KSI_FN_DEPRECATED(int KSI_VerificationResult_getStepResult(const KSI_VerificationResult *info, size_t index, const KSI_VerificationStepResult **result));
+KSI_FN_DEPRECATED(int KSI_VerificationResult_getStepResult(const KSI_VerificationResult *info, size_t index, const KSI_VerificationStepResult **result), New verification approach is described in [Verification Tutorial](tutorial/t2_verifying.md));
 
 /**
  * Returns 0 if the given verification step is not performed.
@@ -155,7 +155,7 @@ KSI_FN_DEPRECATED(int KSI_VerificationResult_getStepResult(const KSI_Verificatio
  * \param[in]	step		Verification step.
  * \return 0 is the given verification step is not performed.
  */
-KSI_FN_DEPRECATED(int KSI_VerificationResult_isStepPerformed(const KSI_VerificationResult *info, enum KSI_VerificationStep_en step));
+KSI_FN_DEPRECATED(int KSI_VerificationResult_isStepPerformed(const KSI_VerificationResult *info, enum KSI_VerificationStep_en step), New verification approach is described in [Verification Tutorial](tutorial/t2_verifying.md));
 
 /**
  * Returns 0 if the given verification step is not performed or the performed step was
@@ -164,7 +164,7 @@ KSI_FN_DEPRECATED(int KSI_VerificationResult_isStepPerformed(const KSI_Verificat
  * \param[in]	step		Verification step.
  * \returns 0 if the given verification step was unsuccessful or not performed.
  */
-KSI_FN_DEPRECATED(int KSI_VerificationResult_isStepSuccess(const KSI_VerificationResult *info, enum KSI_VerificationStep_en step));
+KSI_FN_DEPRECATED(int KSI_VerificationResult_isStepSuccess(const KSI_VerificationResult *info, enum KSI_VerificationStep_en step), New verification approach is described in [Verification Tutorial](tutorial/t2_verifying.md));
 
 /**
  * Returns a pointer to the last failure message. If there are no failure messages or
@@ -172,27 +172,27 @@ KSI_FN_DEPRECATED(int KSI_VerificationResult_isStepSuccess(const KSI_Verificatio
  * \param[in]	info		Verification result.
  * \returns Pointer to the last failure message or \c NULL.
  */
-KSI_FN_DEPRECATED(const char *KSI_VerificationResult_lastFailureMessage(const KSI_VerificationResult *info));
+KSI_FN_DEPRECATED(const char *KSI_VerificationResult_lastFailureMessage(const KSI_VerificationResult *info), New verification approach is described in [Verification Tutorial](tutorial/t2_verifying.md));
 
 /**
  * Returns the #KSI_VerificationStep value or 0 on an error.
  * \param[in]	result 		Verification step result.
  * \returns 0 if the given verification step was unsuccessful or not performed.
  */
-KSI_FN_DEPRECATED(int KSI_VerificationStepResult_getStep(const KSI_VerificationStepResult *result));
+KSI_FN_DEPRECATED(int KSI_VerificationStepResult_getStep(const KSI_VerificationStepResult *result), New verification approach is described in [Verification Tutorial](tutorial/t2_verifying.md));
 
 /**
  * Returns if the verification step result was successful.
  * \param[in]	result		Verification step result.
  * \return If the step was not successful 0 is returned, otherwise !0.
  */
-KSI_FN_DEPRECATED(int KSI_VerificationStepResult_isSuccess(const KSI_VerificationStepResult *result));
+KSI_FN_DEPRECATED(int KSI_VerificationStepResult_isSuccess(const KSI_VerificationStepResult *result), New verification approach is described in [Verification Tutorial](tutorial/t2_verifying.md));
 
 /**
  * Returns a pointer to the description of this step result.
  * \param[in]	result		Verification step result.
  */
-KSI_FN_DEPRECATED(const char *KSI_VerificationStepResult_getDescription(const KSI_VerificationStepResult *result));
+KSI_FN_DEPRECATED(const char *KSI_VerificationStepResult_getDescription(const KSI_VerificationStepResult *result), New verification approach is described in [Verification Tutorial](tutorial/t2_verifying.md));
 
 #ifdef __cplusplus
 }
