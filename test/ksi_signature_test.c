@@ -967,7 +967,6 @@ static void testCreateHasher(CuTest *tc) {
 #undef TEST_SIGNATURE_FILE
 }
 
-
 CuSuite* KSITest_Signature_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 

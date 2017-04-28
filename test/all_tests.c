@@ -117,6 +117,7 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSITest_Blocksigner_getSuite);
 	addSuite(suite, KSITest_Flags_getSuite);
 	addSuite(suite, KSITest_SignatureBuilder_getSuite);
+	addSuite(suite, KSITest_List_getSuite);
 
 	return suite;
 }
