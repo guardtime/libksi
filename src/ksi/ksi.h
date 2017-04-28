@@ -190,9 +190,14 @@ enum KSI_StatusCode {
 	KSI_REQUEST_ID_MISMATCH = 0x210,
 
 	/**
-	 * HMAC algorithm mismatch occurred
+	 * HMAC algorithm mismatch occurred.
 	 */
 	KSI_HMAC_ALGORITHM_MISMATCH = 0x211,
+
+	/**
+	 * Unsupporder PDU version.
+	 */
+	KSI_UNSUPPORTED_PDU_VERSION = 0x212,
 
 	/* Generic service errors */
 
