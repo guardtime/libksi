@@ -1225,7 +1225,7 @@ CuSuite* KSITest_NetPduV1_getSuite(void) {
 	SUITE_ADD_TEST(suite, testSigningBackgroundVerification);
 	SUITE_ADD_TEST(suite, testAggregationResponseWithInvalidId);
 	SUITE_ADD_TEST(suite, testExtendingResponseWithInvalidId);
-		SUITE_ADD_TEST(suite, testSigningWithLevel);
+	SUITE_ADD_TEST(suite, testSigningWithLevel);
 
 	return suite;
 }

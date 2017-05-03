@@ -176,10 +176,15 @@ const char *KSI_getErrorString(int statusCode) {
 static void initOptions(KSI_CTX *ctx) {
 	KSI_CTX_setOption(ctx, KSI_OPT_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
 	KSI_CTX_setOption(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
+
 	KSI_CTX_setOption(ctx, KSI_OPT_AGGR_HMAC_ALGORITHM, (void*)KSI_getHashAlgorithmByName("default"));
 	KSI_CTX_setOption(ctx, KSI_OPT_EXT_HMAC_ALGORITHM, (void*)KSI_getHashAlgorithmByName("default"));
+
 	/* The magic value of 1024 appears to be optimal based on the libksi test suite runs with different values. */
 	KSI_CTX_setOption(ctx, KSI_OPT_DATAHASH_CACHE_SIZE, (void*)1024);
+
+	KSI_CTX_setOption(ctx, KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK, NULL);
+	KSI_CTX_setOption(ctx, KSI_OPT_EXT_CONF_RECEIVED_CALLBACK, NULL);
 }
 
 int KSI_CTX_new(KSI_CTX **context) {

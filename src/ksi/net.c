@@ -342,6 +342,9 @@ int KSI_RequestHandle_new(KSI_CTX *ctx, const unsigned char *request, size_t req
 
 	tmp->client = NULL;
 
+	tmp->reqCtx = NULL;
+	tmp->reqCtx_free = NULL;
+
 	*handle = tmp;
 	tmp = NULL;
 
@@ -355,27 +358,9 @@ cleanup:
 }
 
 int KSI_RequestHandle_getNetContext(const KSI_RequestHandle *handle, void **c) {
-	int res;
-
-	if (handle == NULL || c == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	KSI_ERR_clearErrors(handle->ctx);
-
-	if (c == NULL) {
-		KSI_pushError(handle->ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
+	if (handle == NULL || c == NULL) return KSI_INVALID_ARGUMENT;
 	*c = handle->implCtx;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
+	return KSI_OK;
 }
 
 /**
@@ -385,6 +370,9 @@ void KSI_RequestHandle_free(KSI_RequestHandle *handle) {
 	if (handle != NULL && --handle->ref == 0) {
 		if (handle->implCtx_free != NULL) {
 			handle->implCtx_free(handle->implCtx);
+		}
+		if (handle->reqCtx_free != NULL) {
+			handle->reqCtx_free(handle->reqCtx);
 		}
 		KSI_free(handle->request);
 		KSI_free(handle->response);
@@ -748,10 +736,13 @@ int KSI_RequestHandle_getExtendResponse(const KSI_RequestHandle *handle, KSI_Ext
 	KSI_ErrorPdu *error = NULL;
 	KSI_DataHash *respHmac = NULL;
 	KSI_Header *header = NULL;
-	KSI_Config *config = NULL;
+	KSI_Config *tmpConf = NULL;
 	KSI_ExtendResp *tmp = NULL;
 	const unsigned char *raw = NULL;
 	size_t len = 0;
+	KSI_ExtendReq *req = NULL;
+	KSI_Integer *reqAggrTime = NULL;
+	KSI_Config *reqConf = NULL;
 
 	if (handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -844,6 +835,12 @@ int KSI_RequestHandle_getExtendResponse(const KSI_RequestHandle *handle, KSI_Ext
 		goto cleanup;
 	}
 
+	req = (KSI_ExtendReq*)handle->reqCtx;
+	if (req == NULL) {
+		KSI_pushError(handle->ctx, res = KSI_INVALID_STATE, "Request context is not initialized.");
+		goto cleanup;
+	}
+
 	/* Get response object. */
 	res = KSI_ExtendPdu_getResponse(pdu, &tmp);
 	if (res != KSI_OK) {
@@ -857,31 +854,67 @@ int KSI_RequestHandle_getExtendResponse(const KSI_RequestHandle *handle, KSI_Ext
 		goto cleanup;
 	}
 
-	if (tmp == NULL) {
-		res = KSI_ExtendPdu_getConfResponse(pdu, &config);
-		if (res != KSI_OK) {
-			KSI_pushError(handle->ctx, res, NULL);
-			goto cleanup;
-		}
+	res = KSI_ExtendPdu_getConfResponse(pdu, &tmpConf);
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
-		res = KSI_ExtendPdu_setConfResponse(pdu, NULL);
-		if (res != KSI_OK) {
-			KSI_pushError(handle->ctx, res, NULL);
-			goto cleanup;
-		}
+	res = KSI_ExtendPdu_setConfResponse(pdu, NULL);
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
-		res = KSI_ExtendResp_new(handle->ctx, &tmp);
-		if (res != KSI_OK) {
-			KSI_pushError(handle->ctx, res, NULL);
-			goto cleanup;
-		}
+	res = KSI_ExtendReq_getAggregationTime(req, &reqAggrTime);
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
-		res = KSI_ExtendResp_setConfig(tmp, config);
-		if (res != KSI_OK) {
-			KSI_pushError(handle->ctx, res, NULL);
-			goto cleanup;
+	res = KSI_ExtendReq_getConfig(req, &reqConf);
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (reqAggrTime != NULL && tmp == NULL) {
+		KSI_LOG_warn(handle->ctx, "Signature extend request response was not received.");
+	}
+	if (reqConf != NULL && tmpConf == NULL) {
+		KSI_LOG_warn(handle->ctx, "Extender configuration request response was not received.");
+	}
+	if (reqConf != NULL && tmp != NULL) {
+		KSI_LOG_warn(handle->ctx, "Unexpected extend response received.");
+	}
+
+	if (tmpConf != NULL) {
+		/* Check if conf has been requested. */
+		if (reqConf == NULL) {
+			KSI_Config_Callback confCallback = (KSI_Config_Callback)handle->ctx->options[KSI_OPT_EXT_CONF_RECEIVED_CALLBACK];
+			/* It is push conf which was not explicitly requested. Invoke the user conf receive callback. */
+			if (confCallback != NULL) {
+				res = confCallback(handle->ctx, tmpConf);
+				if (res != KSI_OK) {
+					KSI_pushError(handle->ctx, res, NULL);
+					goto cleanup;
+				}
+			}
+		} else {
+			if (tmp == NULL) {
+				res = KSI_ExtendResp_new(handle->ctx, &tmp);
+				if (res != KSI_OK) {
+					KSI_pushError(handle->ctx, res, NULL);
+					goto cleanup;
+				}
+			}
+			res = KSI_ExtendResp_setConfig(tmp, tmpConf);
+			if (res != KSI_OK) {
+				KSI_pushError(handle->ctx, res, NULL);
+				goto cleanup;
+			}
+			tmpConf = NULL;
 		}
-		config = NULL;
 	}
 
 	*resp = tmp;
@@ -892,7 +925,7 @@ int KSI_RequestHandle_getExtendResponse(const KSI_RequestHandle *handle, KSI_Ext
 cleanup:
 
 	KSI_ExtendResp_free(tmp);
-	KSI_Config_free(config);
+	KSI_Config_free(tmpConf);
 
 	KSI_ExtendPdu_free(pdu);
 
@@ -904,12 +937,15 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 	KSI_AggregationPdu *pdu = NULL;
 	KSI_ErrorPdu *error = NULL;
 	KSI_Header *header = NULL;
-	KSI_Config *config = NULL;
+	KSI_Config *tmpConf = NULL;
 	KSI_DataHash *respHmac = NULL;
 	KSI_DataHash *actualHmac = NULL;
 	KSI_AggregationResp *tmp = NULL;
 	const unsigned char *raw = NULL;
 	size_t len;
+	KSI_AggregationReq *req = NULL;
+	KSI_DataHash *reqHash = NULL;
+	KSI_Config *reqConf = NULL;
 
 	if (handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -991,6 +1027,12 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 		goto cleanup;
 	}
 
+	req = (KSI_AggregationReq*)handle->reqCtx;
+	if (req == NULL) {
+		KSI_pushError(handle->ctx, res = KSI_INVALID_STATE, "Request context is not initialized.");
+		goto cleanup;
+	}
+
 	/*Get response object*/
 	res = KSI_AggregationPdu_getResponse(pdu, &tmp);
 	if (res != KSI_OK) {
@@ -1004,31 +1046,67 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 		goto cleanup;
 	}
 
-	if (tmp == NULL) {
-		res = KSI_AggregationPdu_getConfResponse(pdu, &config);
-		if (res != KSI_OK) {
-			KSI_pushError(handle->ctx, res, NULL);
-			goto cleanup;
-		}
+	res = KSI_AggregationPdu_getConfResponse(pdu, &tmpConf);
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
-		res = KSI_AggregationPdu_setConfResponse(pdu, NULL);
-		if (res != KSI_OK) {
-			KSI_pushError(handle->ctx, res, NULL);
-			goto cleanup;
-		}
+	res = KSI_AggregationPdu_setConfResponse(pdu, NULL);
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
-		res = KSI_AggregationResp_new(handle->ctx, &tmp);
-		if (res != KSI_OK) {
-			KSI_pushError(handle->ctx, res, NULL);
-			goto cleanup;
-		}
+	res = KSI_AggregationReq_getRequestHash(req, &reqHash);
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
 
-		res = KSI_AggregationResp_setConfig(tmp, config);
-		if (res != KSI_OK) {
-			KSI_pushError(handle->ctx, res, NULL);
-			goto cleanup;
+	res = KSI_AggregationReq_getConfig(req, &reqConf);
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (reqHash != NULL && tmp == NULL) {
+		KSI_LOG_warn(handle->ctx, "Aggregation request response was not received.");
+	}
+	if (reqConf != NULL && tmpConf == NULL) {
+		KSI_LOG_warn(handle->ctx, "Aggregator configuration request response was not received.");
+	}
+	if (reqConf != NULL && tmp != NULL) {
+		KSI_LOG_warn(handle->ctx, "Unexpected aggregator response received.");
+	}
+
+	if (tmpConf != NULL) {
+		KSI_Config_Callback confCallback = (KSI_Config_Callback)(handle->ctx->options[KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK]);
+		/* Check if conf has been requested. */
+		if (reqConf == NULL) {
+			/* It is push conf which was not explicitly requested. Invoke the user conf receive callback. */
+			if (confCallback != NULL) {
+				res = confCallback(handle->ctx, tmpConf);
+				if (res != KSI_OK) {
+					KSI_pushError(handle->ctx, res, NULL);
+					goto cleanup;
+				}
+			}
+		} else {
+			if (tmp == NULL) {
+				res = KSI_AggregationResp_new(handle->ctx, &tmp);
+				if (res != KSI_OK) {
+					KSI_pushError(handle->ctx, res, NULL);
+					goto cleanup;
+				}
+			}
+			res = KSI_AggregationResp_setConfig(tmp, tmpConf);
+			if (res != KSI_OK) {
+				KSI_pushError(handle->ctx, res, NULL);
+				goto cleanup;
+			}
+			tmpConf = NULL;
 		}
-		config = NULL;
 	}
 
 	*resp = tmp;
@@ -1039,7 +1117,7 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 cleanup:
 
 	KSI_AggregationResp_free(tmp);
-	KSI_Config_free(config);
+	KSI_Config_free(tmpConf);
 	KSI_DataHash_free(actualHmac);
 	KSI_AggregationPdu_free(pdu);
 

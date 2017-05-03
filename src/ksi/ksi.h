@@ -309,6 +309,8 @@ enum KSI_StatusCode {
 #define KSI_PDU_VERSION_1		1
 #define KSI_PDU_VERSION_2		2
 
+typedef int (*KSI_Config_Callback)(KSI_CTX *, KSI_Config *);
+
 typedef enum KSI_Option_en {
 	/**
 	 * Description:	PDU version for KSI aggregation messages.
@@ -340,6 +342,21 @@ typedef enum KSI_Option_en {
 	 * The size of the dynamic recycle pool for #KSI_DataHash objects.
 	 */
 	KSI_OPT_DATAHASH_CACHE_SIZE,
+
+	/**
+	 * Description: Aggregator configuration received callback.
+	 * Type:		KSI_Config_Callback.
+	 * Note:        The ownership of the #KSI_Config object is not transfered to the callback.
+	 *              However, the user can call #KSI_Config_ref in order to keep a reference of the object.
+	 */
+	KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK,
+	/**
+	 * Description: Extender configuration received callback.
+	 * Type:		KSI_Config_Callback.
+	 * Note:        The ownership of the #KSI_Config object is not transfered to the callback.
+	 *              However, the user can call #KSI_Config_ref in order to keep a reference of the object.
+	 */
+	KSI_OPT_EXT_CONF_RECEIVED_CALLBACK,
 
 	__KSI_NUMBER_OF_OPTIONS,
 } KSI_Option;

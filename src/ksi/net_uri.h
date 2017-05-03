@@ -21,9 +21,6 @@
 #define KSI_NET_URI_H_
 
 #include "net.h"
-#include "net_http.h"
-#include "net_tcp.h"
-#include "common.h"
 
 #ifdef __cplusplus
 extern "C" {

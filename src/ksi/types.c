@@ -102,6 +102,7 @@ struct KSI_Config_st {
 };
 
 struct KSI_AggregationReq_st {
+	size_t ref;
 	KSI_CTX *ctx;
 	KSI_Integer *requestId;
 	KSI_DataHash *requestHash;
@@ -136,6 +137,7 @@ struct KSI_AggregationResp_st {
 };
 
 struct KSI_ExtendReq_st {
+	size_t ref;
 	KSI_CTX *ctx;
 	KSI_Integer *requestId;
 	KSI_Integer *aggregationTime;
@@ -1681,7 +1683,7 @@ KSI_IMPLEMENT_SETTER(KSI_Config, KSI_Integer*, calendarLastTime, CalendarLastTim
  * KSI_AggregationReq
  */
 void KSI_AggregationReq_free(KSI_AggregationReq *t) {
-	if (t != NULL) {
+	if (t != NULL && --t->ref == 0) {
 		KSI_Integer_free(t->requestId);
 		KSI_DataHash_free(t->requestHash);
 		KSI_Integer_free(t->requestLevel);
@@ -1701,6 +1703,7 @@ int KSI_AggregationReq_new(KSI_CTX *ctx, KSI_AggregationReq **t) {
 	}
 
 	tmp->ctx = ctx;
+	tmp->ref = 1;
 	tmp->requestId = NULL;
 	tmp->requestHash = NULL;
 	tmp->requestLevel = NULL;
@@ -1817,6 +1820,8 @@ KSI_IMPLEMENT_SETTER(KSI_AggregationReq, KSI_Integer*, requestId, RequestId);
 KSI_IMPLEMENT_SETTER(KSI_AggregationReq, KSI_DataHash*, requestHash, RequestHash);
 KSI_IMPLEMENT_SETTER(KSI_AggregationReq, KSI_Integer*, requestLevel, RequestLevel);
 KSI_IMPLEMENT_SETTER(KSI_AggregationReq, KSI_Config*, config, Config);
+
+KSI_IMPLEMENT_REF(KSI_AggregationReq)
 
 /**
  * KSI_RequestAck
@@ -2069,7 +2074,7 @@ KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_TLV*, baseTlv, BaseTlv);
  * KSI_ExtendReq
  */
 void KSI_ExtendReq_free(KSI_ExtendReq *t) {
-	if (t != NULL) {
+	if (t != NULL && --t->ref == 0) {
 		KSI_Integer_free(t->requestId);
 		KSI_Integer_free(t->aggregationTime);
 		KSI_Integer_free(t->publicationTime);
@@ -2089,6 +2094,7 @@ int KSI_ExtendReq_new(KSI_CTX *ctx, KSI_ExtendReq **t) {
 	}
 
 	tmp->ctx = ctx;
+	tmp->ref = 1;
 	tmp->requestId = NULL;
 	tmp->aggregationTime = NULL;
 	tmp->publicationTime = NULL;
@@ -2203,6 +2209,8 @@ KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, requestId, RequestId);
 KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, aggregationTime, AggregationTime);
 KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, publicationTime, PublicationTime);
 KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Config*, config, Config);
+
+KSI_IMPLEMENT_REF(KSI_ExtendReq)
 
 /**
  * KSI_ExtendResp

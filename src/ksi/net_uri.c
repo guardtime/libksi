@@ -21,7 +21,7 @@
 
 #include "internal.h"
 
-#include "net.h"
+#include "net_impl.h"
 #include "net_uri.h"
 #include "net_uri_impl.h"
 #include "net_tcp.h"
@@ -32,18 +32,56 @@
 static int getClientByUriScheme(const char *scheme, const char **replaceScheme);
 
 static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, KSI_RequestHandle **handle) {
-	KSI_UriClient *uriClient = client->impl;
-	return KSI_NetworkClient_sendExtendRequest(uriClient->pExtendClient, req, handle);
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_UriClient *uriClient = NULL;
+
+	if (client == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	uriClient = client->impl;
+
+	res = KSI_NetworkClient_sendExtendRequest(uriClient->pExtendClient, req, handle);
+	if (res != KSI_OK) goto cleanup;
+
+	(*handle)->reqCtx = (void*)KSI_ExtendReq_ref(req);
+	(*handle)->reqCtx_free = (void (*)(void *))KSI_ExtendReq_free;
+
+	res = KSI_OK;
+cleanup:
+	return res;
 }
 
 static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationReq *req, KSI_RequestHandle **handle) {
-	KSI_UriClient *uriClient = client->impl;
-	return KSI_NetworkClient_sendSignRequest(uriClient->pAggregationClient, req, handle);
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_UriClient *uriClient = NULL;
+
+	if (client == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	uriClient = client->impl;
+
+	res = KSI_NetworkClient_sendSignRequest(uriClient->pAggregationClient, req, handle);
+	if (res != KSI_OK) goto cleanup;
+
+	(*handle)->reqCtx = (void*)KSI_AggregationReq_ref(req);
+	(*handle)->reqCtx_free = (void (*)(void *))KSI_AggregationReq_free;
+
+	res = KSI_OK;
+cleanup:
+	return res;
 }
 
 static int sendPublicationRequest(KSI_NetworkClient *client, KSI_RequestHandle **handle) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_UriClient *uriClient = client->impl;
+	KSI_UriClient *uriClient = NULL;
+
+	if (client == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	uriClient = client->impl;
 
 	res = KSI_NetworkClient_sendPublicationsFileRequest(uriClient->pPublicationClient, handle);
 	if (res != KSI_OK) goto cleanup;
