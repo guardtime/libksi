@@ -680,6 +680,7 @@ int KSI_AggregationReq_setConfig(KSI_AggregationReq *t, KSI_Config *config);
 int KSI_AggregationReq_fromTlv (KSI_TLV *tlv, KSI_AggregationReq **data);
 int KSI_AggregationReq_toTlv (KSI_CTX *ctx, const KSI_AggregationReq *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
+KSI_DEFINE_REF(KSI_AggregationReq);
 
 /*
  * KSI_RequestAck
@@ -765,6 +766,7 @@ int KSI_ExtendReq_setConfig(KSI_ExtendReq *t, KSI_Config *config);
 int KSI_ExtendReq_fromTlv (KSI_TLV *tlv, KSI_ExtendReq **data);
 int KSI_ExtendReq_toTlv (KSI_CTX *ctx, const KSI_ExtendReq *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
+KSI_DEFINE_REF(KSI_ExtendReq);
 
 /*
  * KSI_ExtendResp

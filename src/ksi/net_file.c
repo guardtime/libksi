@@ -252,6 +252,7 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 			  endp,
 			  "Extend request");
 	if (res != KSI_OK) goto cleanup;
+
 	res = KSI_OK;
 
 cleanup:

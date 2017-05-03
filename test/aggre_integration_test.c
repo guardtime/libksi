@@ -22,6 +22,7 @@
 #include "all_integration_tests.h"
 #include <ksi/net_uri.h>
 #include <ksi/net_http.h>
+#include <ksi/net_tcp.h>
 #include <ksi/net.h>
 #include "../src/ksi/ctx_impl.h"
 #include "../src/ksi/internal.h"
