@@ -26,13 +26,24 @@
 #define KSI_LIST_SIZE_INCREMENT 10
 
 struct listEl_st {
-	size_t p;
-	void *o;
+	/* Initial position. */
+	size_t initialIdx;
+
+	/* Pointer to the object. */
+	void *ptr;
+
+	/* Comparisson function. */
+	int (*cmp)(const void **, const void **);
 };
 
 struct listImpl_st {
+	/* Array of the elements. */
 	struct listEl_st *arr;
+
+	/* Current allocated length of the array. */
 	size_t arr_size;
+
+	/* The length of the used part of the array. */
 	KSI_uint64_t arr_len;
 };
 
@@ -88,7 +99,7 @@ static int appendElement(KSI_List *list, void* obj) {
 		goto cleanup;
 	}
 
-	pImpl->arr[pImpl->arr_len++].o = obj;
+	pImpl->arr[pImpl->arr_len++].ptr = obj;
 
 	res = KSI_OK;
 
@@ -125,7 +136,7 @@ static int indexOf(KSI_List *list, void *o, size_t **pos) {
 	}
 
 	for (i = 0; i < pImpl->arr_len; i++) {
-		if (o == pImpl->arr[i].o) {
+		if (o == pImpl->arr[i].ptr) {
 			tmp = KSI_calloc(sizeof(i), 1);
 			if (tmp == NULL) {
 				res = KSI_OUT_OF_MEMORY;
@@ -170,9 +181,9 @@ static int replaceElementAt(KSI_List *list, size_t pos, void *o) {
 	}
 
 	if (list->obj_free != NULL) {
-		list->obj_free(pImpl->arr[pos].o);
+		list->obj_free(pImpl->arr[pos].ptr);
 	}
-	pImpl->arr[pos].o = o;
+	pImpl->arr[pos].ptr = o;
 
 	res = KSI_OK;
 
@@ -211,7 +222,7 @@ static int insertElementAt(KSI_List *list, size_t pos, void *o) {
 	for (i = pImpl->arr_len - 1; i > pos; i--) {
 		pImpl->arr[i] = pImpl->arr[i - 1];
 	}
-	pImpl->arr[pos].o = o;
+	pImpl->arr[pos].ptr = o;
 
 	res = KSI_OK;
 
@@ -240,7 +251,7 @@ static int elementAt(KSI_List *list, size_t pos, void **o) {
 		res = KSI_BUFFER_OVERFLOW;
 		goto cleanup;
 	}
-	*o = pImpl->arr[pos].o;
+	*o = pImpl->arr[pos].ptr;
 
 	res = KSI_OK;
 
@@ -276,9 +287,9 @@ static int removeElement(KSI_List *list, size_t pos, void **o) {
 	}
 
 	if (o != NULL) {
-		*o = pImpl->arr[pos].o;
+		*o = pImpl->arr[pos].ptr;
 	} else {
-		list->obj_free(pImpl->arr[pos].o);
+		list->obj_free(pImpl->arr[pos].ptr);
 	}
 	/* Shift the tail */
 	for (i = pos + 1; i < pImpl->arr_len; i++) {
@@ -302,7 +313,7 @@ void KSI_List_free(KSI_List *list) {
 		if (pImpl != NULL) {
 			for (i = 0; i < pImpl->arr_len; i++) {
 				if (list->obj_free != NULL) {
-					list->obj_free(pImpl->arr[i].o);
+					list->obj_free(pImpl->arr[i].ptr);
 				}
 			}
 			KSI_free(pImpl->arr);
@@ -511,17 +522,22 @@ cleanup:
 	return res;
 }
 
-static int (*cmpCallback)(const void **, const void **) = NULL;
 static int sortCmp(const struct listEl_st *l, const struct listEl_st *r) {
-	int res = (cmpCallback != NULL ? cmpCallback((const void**)&l->o, (const void**)&r->o) : 0);
-	if(res == 0) {
-		if (l->p > r->p) res = 1;
-		else res = -1;
+	int c = 0;
+
+	if (l->cmp != NULL) {
+		c = l->cmp((const void **) &l->ptr, (const void **) &r->ptr);
 	}
-	return res;
+
+	if (c == 0) {
+		if (l->initialIdx > r->initialIdx) c = 1;
+		else c = -1;
+	}
+
+	return c;
 }
 
-static int updateListElPos(KSI_List *list) {
+static int prepareSort(KSI_List *list, int (*cmp)(const void **, const void **)) {
 	int res = KSI_UNKNOWN_ERROR;
 	struct listImpl_st *pImpl;
 	size_t i;
@@ -544,7 +560,8 @@ static int updateListElPos(KSI_List *list) {
 	}
 
 	for (i = 0; i < pImpl->arr_len; i++) {
-		pImpl->arr[i].p = i;
+		pImpl->arr[i].initialIdx = i;
+		pImpl->arr[i].cmp = cmp;
 	}
 	res = KSI_OK;
 cleanup:
@@ -567,12 +584,10 @@ int KSI_List_sort(KSI_List *list, int (*cmp)(const void **a, const void **b)) {
 		goto cleanup;
 	}
 
-	res = updateListElPos(list);
+	res = prepareSort(list, cmp);
 	if (res != KSI_OK) goto cleanup;
 
-	cmpCallback = cmp;
 	qsort(pImpl->arr, pImpl->arr_len, sizeof(struct listEl_st), (int(*)(const void *, const void *))sortCmp);
-	cmpCallback = NULL;
 
 	res = KSI_OK;
 
