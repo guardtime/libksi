@@ -99,17 +99,9 @@ extern "C" {
 
 #define KSI_Signature_sign(ctx, hsh, signature) KSI_Signature_signWithPolicy(ctx, hsh, KSI_VERIFICATION_POLICY_INTERNAL, NULL, signature)
 
-	/**
-	 * \deprecated This function is deprecated and #KSI_Signature_sign should be used instead.
-	 * \see #KSI_Signature_sign
-	 */
-	KSI_FN_DEPRECATED(int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature));
+	KSI_FN_DEPRECATED(int KSI_Signature_create(KSI_CTX *ctx, KSI_DataHash *hsh, KSI_Signature **signature), Use #KSI_Signature_sign instead.);
 
-	/**
-	 * \deprecated This function is deprecated and #KSI_Signature_signAggregated should be used instead.
-	 * \see #KSI_Signature_signAggregated
-	 */
-	KSI_FN_DEPRECATED(int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature));
+	KSI_FN_DEPRECATED(int KSI_Signature_createAggregated(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_Signature **signature), Use #KSI_Signature_signAggregated instead.);
 
 #ifdef __cplusplus
 }

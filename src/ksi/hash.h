@@ -187,7 +187,7 @@ extern "C" {
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	KSI_FN_DEPRECATED(int KSI_DataHash_clone(KSI_DataHash *from, KSI_DataHash **to));
+	KSI_FN_DEPRECATED(int KSI_DataHash_clone(KSI_DataHash *from, KSI_DataHash **to), Use #KSI_DataHash_ref instead.);
 
 	/**
 	 * Extracts the hashing algorithm, digest and its length from the #KSI_DataHash. If any

@@ -64,7 +64,8 @@ void KSI_BlockSigner_free(KSI_BlockSigner *signer);
  */
 int KSI_BlockSigner_closeAndSign(KSI_BlockSigner *signer);
 
-KSI_FN_DEPRECATED(int KSI_BlockSigner_close(KSI_BlockSigner *signer, void *));
+KSI_FN_DEPRECATED(int KSI_BlockSigner_close(KSI_BlockSigner *signer, void *), Use #KSI_BlockSigner_closeAndSign instead.);
+
 /**
  * Resets the block signer to its initial state. This will invalidate all the
  * #KSI_BlockSignerHandle instances still remaining.
