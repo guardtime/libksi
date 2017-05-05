@@ -36,14 +36,14 @@ extern "C" {
 	 */
 #ifndef __KSI_NO_DEPRECATE__
 #  if defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1)))
-#    define KSI_FN_DEPRECATED(decl) decl __attribute__((deprecated))
+#    define KSI_FN_DEPRECATED(decl, comment) /*! \deprecated comment */ decl __attribute__((deprecated))
 #  elif defined(_WIN32)
-#    define KSI_FN_DEPRECATED(decl) __declspec(deprecated) decl
+#    define KSI_FN_DEPRECATED(decl, comment) /*! \deprecated comment */ __declspec(deprecated) decl
+#  else
+#    define KSI_FN_DEPRECATED(decl, comment) /*! \deprecated comment */ decl
 #  endif
-#endif
-
-#ifndef KSI_FN_DEPRECATED
-#  define KSI_FN_DEPRECATED(decl) decl;
+#else
+#  define KSI_FN_DEPRECATED(decl, comment) decl;
 #endif
 
 #ifndef __KSI_NO_DEPRECATE__
