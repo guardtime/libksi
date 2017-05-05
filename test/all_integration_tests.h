@@ -21,50 +21,20 @@
 #define	ALL_INTEGRATION_TESTS_H
 
 #include <ksi/ksi.h>
-#include "cutest/CuTest.h"
 #include <ksi/compatibility.h>
 #include <ksi/err.h>
+#include "cutest/CuTest.h"
 #include "support_tests.h"
+#include "test_conf.h"
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-#define CONF_FIELD_SIZE 1024
-#define CONF_MAX_CONSTRAINTS 32
-typedef struct CONF_st {
-	char extender_url[CONF_FIELD_SIZE];
-	char extender_pass[CONF_FIELD_SIZE];
-	char extender_user[CONF_FIELD_SIZE];
-
-	char aggregator_url[CONF_FIELD_SIZE];
-	char aggregator_pass[CONF_FIELD_SIZE];
-	char aggregator_user[CONF_FIELD_SIZE];
-
-	char publications_file_url[CONF_FIELD_SIZE];
-	char publications_file_cnstr[CONF_FIELD_SIZE];
-
-	char tcp_url[CONF_FIELD_SIZE];
-	char tcp_host[CONF_FIELD_SIZE];
-	unsigned tcp_port;
-	char tcp_user[CONF_FIELD_SIZE];
-	char tcp_pass[CONF_FIELD_SIZE];
-
-	unsigned int constraints;
-	char oid[CONF_MAX_CONSTRAINTS][CONF_FIELD_SIZE];
-	char val[CONF_MAX_CONSTRAINTS][CONF_FIELD_SIZE];
-	KSI_CertConstraint testPubFileCertConstraints[CONF_MAX_CONSTRAINTS + 1];
-
-} CONF;
-
-extern CONF conf;
-
-const char *getFullResourcePath(const char* resource);
-const char *getFullResourcePathUri(const char* resource);
-
 CuSuite* AggreIntegrationTests_getSuite(void);
 CuSuite* ExtIntegrationTests_getSuite(void);
 CuSuite* PubIntegrationTests_getSuite(void);
+CuSuite* IntegrationTestPack_getSuite(void);
 
 #ifdef	__cplusplus
 }

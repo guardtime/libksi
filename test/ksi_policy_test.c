@@ -106,8 +106,9 @@ static void TestErrorStrings(CuTest* tc) {
 
 	/* Verify that the first, last and undefined error codes return expected error strings. */
 	CuAssert(tc, "Unexpected verification error string.", strcmp(KSI_VerificationErrorCode_toString(KSI_VER_ERR_NONE), "") == 0);
-	CuAssert(tc, "Unexpected verification error string.", strcmp(KSI_VerificationErrorCode_toString(KSI_VER_ERR_CAL_4), "CAL-4") == 0);
-	CuAssert(tc, "Unexpected verification error string.", strcmp(KSI_VerificationErrorCode_toString(KSI_VER_ERR_CAL_4 + 1), "Unknown") == 0);
+	CuAssert(tc, "Unexpected verification error string.", strcmp(KSI_VerificationErrorCode_toString(KSI_VER_ERR_CAL_4), "CAL-04") == 0);
+	CuAssert(tc, "Unexpected verification error string.", strcmp(KSI_VerificationErrorCode_toString(KSI_VER_ERR_INT_12), "INT-12") == 0);
+	CuAssert(tc, "Unexpected verification error string.", strcmp(KSI_VerificationErrorCode_toString(__NOF_VER_ERRORS), "Unknown") == 0);
 }
 
 static void TestErrorDescription(CuTest* tc) {
@@ -117,7 +118,7 @@ static void TestErrorDescription(CuTest* tc) {
 	/* Verify that the first, last and undefined error codes return expected error strings. */
 	CuAssert(tc, "Unexpected verification error description.", strcmp(KSI_Policy_getErrorString(KSI_VER_ERR_NONE), "No verification errors") == 0);
 	CuAssert(tc, "Unexpected verification error description.", strcmp(KSI_Policy_getErrorString(KSI_VER_ERR_CAL_4), "Calendar hash chain right links are inconsistent") == 0);
-	CuAssert(tc, "Unexpected verification error description.", strcmp(KSI_Policy_getErrorString(KSI_VER_ERR_CAL_4 + 1), "Unknown verification error code") == 0);
+	CuAssert(tc, "Unexpected verification error description.", strcmp(KSI_Policy_getErrorString(__NOF_VER_ERRORS), "Unknown verification error code") == 0);
 }
 
 static void TestVerificationContext(CuTest* tc) {

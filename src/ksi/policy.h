@@ -68,37 +68,37 @@ extern "C" {
 	 * Helper macro containing a list of KSI signature verification error codes.
 	 */
 	#define KSI_VERIFICATION_ERROR_CODE_LIST\
-		/*Type  Code  Offset  Description*/\
-		_(GEN,  1,    0x100,  "Wrong document")\
-		_(GEN,  2,    0x100,  "Verification inconclusive") \
-		_(GEN,  3,    0x100,  "Input hash level too large") \
+		/*Type  Code  Offset  StrCor  Description*/\
+		_(GEN,  1,    0x100,  "0",     "Wrong document")\
+		_(GEN,  2,    0x100,  "0",     "Verification inconclusive") \
+		_(GEN,  3,    0x100,  "0",     "Input hash level too large") \
 		\
-		_(INT,  1,    0x200,  "Inconsistent aggregation hash chains") \
-		_(INT,  2,    0x200,  "Inconsistent aggregation hash chain aggregation times") \
-		_(INT,  3,    0x200,  "Calendar hash chain input hash mismatch") \
-		_(INT,  4,    0x200,  "Calendar hash chain aggregation time mismatch") \
-		_(INT,  5,    0x200,  "Calendar hash chain shape inconsistent with aggregation time") \
-		_(INT,  6,    0x200,  "Calendar hash chain time inconsistent with calendar authentication record time") \
-		_(INT,  7,    0x200,  "Calendar hash chain time inconsistent with publication time") \
-		_(INT,  8,    0x200,  "Calendar hash chain root hash is inconsistent with calendar authentication record input hash") \
-		_(INT,  9,    0x200,  "Calendar hash chain root hash is inconsistent with published hash value") \
-		_(INT,  10,   0x200,  "Aggregation hash chain chain index mismatch") \
-		_(INT,  11,   0x200,  "The metadata record in the aggregation hash chain may not be trusted") \
-		_(INT,  12,   0x200,  "Inconsistent chain indexes") \
+		_(INT,  1,    0x200,  "0",    "Inconsistent aggregation hash chains") \
+		_(INT,  2,    0x200,  "0",    "Inconsistent aggregation hash chain aggregation times") \
+		_(INT,  3,    0x200,  "0",    "Calendar hash chain input hash mismatch") \
+		_(INT,  4,    0x200,  "0",    "Calendar hash chain aggregation time mismatch") \
+		_(INT,  5,    0x200,  "0",    "Calendar hash chain shape inconsistent with aggregation time") \
+		_(INT,  6,    0x200,  "0",    "Calendar hash chain time inconsistent with calendar authentication record time") \
+		_(INT,  7,    0x200,  "0",    "Calendar hash chain time inconsistent with publication time") \
+		_(INT,  8,    0x200,  "0",    "Calendar hash chain root hash is inconsistent with calendar authentication record input hash") \
+		_(INT,  9,    0x200,  "0",    "Calendar hash chain root hash is inconsistent with published hash value") \
+		_(INT,  10,   0x200,  "",     "Aggregation hash chain chain index mismatch") \
+		_(INT,  11,   0x200,  "",     "The metadata record in the aggregation hash chain may not be trusted") \
+		_(INT,  12,   0x200,  "",     "Inconsistent chain indexes") \
 		\
-		_(PUB,  1,    0x300,  "Extender response calendar root hash mismatch") \
-		_(PUB,  2,    0x300,  "Extender response inconsistent") \
-		_(PUB,  3,    0x300,  "Extender response input hash mismatch") \
-		_(PUB,  4,    0x300,  "Publication record hash and user provided publication hash mismatch") \
-		_(PUB,  5,    0x300,  "Publication record hash and publications file publication hash mismatch") \
+		_(PUB,  1,    0x300,  "0",    "Extender response calendar root hash mismatch") \
+		_(PUB,  2,    0x300,  "0",    "Extender response inconsistent") \
+		_(PUB,  3,    0x300,  "0",    "Extender response input hash mismatch") \
+		_(PUB,  4,    0x300,  "0",    "Publication record hash and user provided publication hash mismatch") \
+		_(PUB,  5,    0x300,  "0",    "Publication record hash and publications file publication hash mismatch") \
 		\
-		_(KEY,  1,    0x400,  "Certificate not found") \
-		_(KEY,  2,    0x400,  "PKI signature not verified with certificate") \
+		_(KEY,  1,    0x400,  "0",    "Certificate not found") \
+		_(KEY,  2,    0x400,  "0",    "PKI signature not verified with certificate") \
 		\
-		_(CAL,  1,    0x500,  "Calendar root hash mismatch between signature and calendar database chain") \
-		_(CAL,  2,    0x500,  "Aggregation hash chain root hash and calendar database hash chain input hash mismatch") \
-		_(CAL,  3,    0x500,  "Aggregation time mismatch") \
-		_(CAL,  4,    0x500,  "Calendar hash chain right links are inconsistent")
+		_(CAL,  1,    0x500,  "0",    "Calendar root hash mismatch between signature and calendar database chain") \
+		_(CAL,  2,    0x500,  "0",    "Aggregation hash chain root hash and calendar database hash chain input hash mismatch") \
+		_(CAL,  3,    0x500,  "0",    "Aggregation time mismatch") \
+		_(CAL,  4,    0x500,  "0",    "Calendar hash chain right links are inconsistent")
 
 	/**
 	 * Enumeration of all KSI policy (#KSI_Policy) verification error codes.
@@ -106,9 +106,10 @@ extern "C" {
 	typedef enum KSI_VerificationErrorCode_en {
 		/** No error. */
 		KSI_VER_ERR_NONE = 0x00,
-#define _(type, code, offset, desc) KSI_VER_ERR_##type##_##code = (offset + code),
+#define _(type, code, offset, cor, desc) KSI_VER_ERR_##type##_##code = (offset + code),
 		KSI_VERIFICATION_ERROR_CODE_LIST
 #undef _
+		__NOF_VER_ERRORS
 	} KSI_VerificationErrorCode;
 
 	struct KSI_RuleVerificationResult_st {
@@ -185,6 +186,13 @@ extern "C" {
 	 * not be freed by the caller.
 	 */
 	const char *KSI_VerificationErrorCode_toString(int errorCode);
+
+	/**
+	 * Get #KSI_VerificationErrorCode from its string representation.
+	 * \param[in]		errCodeStr		C string.
+	 * \return #KSI_VerificationErrorCode value. If not found #KSI_VER_ERR_NONE is returned.
+	 */
+	int KSI_VerificationErrorCode_fromString(const char *errCodeStr);
 
 	/**
 	 * Function to convert a #KSI_VerificationErrorCode value to a human readable

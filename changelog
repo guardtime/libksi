@@ -1,3 +1,4 @@
+* IMPROVEMENT: Support for integration tests test package.
 * IMPROVEMENT: Refactored aggregation hash chain chain index continuation verification.
 Version 3.14
 * IMPROVEMENT: Added mandatory comments to deprecation macro.

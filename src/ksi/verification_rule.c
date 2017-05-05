@@ -562,7 +562,6 @@ int KSI_VerificationRule_AggregationChainMetaDataVerification(KSI_VerificationCo
 	size_t i;
 	KSI_CTX *ctx = NULL;
 	const KSI_Signature *sig = NULL;
-	VerificationTempData *tempData = NULL;
 	KSI_TlvElement *el = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
 
@@ -582,12 +581,6 @@ int KSI_VerificationRule_AggregationChainMetaDataVerification(KSI_VerificationCo
 	ctx = info->ctx;
 	sig = info->signature;
 	KSI_ERR_clearErrors(ctx);
-
-	tempData = info->tempData;
-	if (tempData == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_STATE, "Verification context not properly initialized.");
-		goto cleanup;
-	}
 
 	KSI_LOG_info(ctx, "Verify aggregation hash chain metadata.");
 
@@ -636,8 +629,13 @@ int KSI_VerificationRule_AggregationChainMetaDataVerification(KSI_VerificationCo
 				/* Check if the metadata padding exists by looking for tag 0x1E. */
 				res = KSI_TlvElement_getElement(metaData->impl, 0x1E, &el);
 				if (res != KSI_OK) {
-					VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-					KSI_pushError(ctx, res, NULL);
+					if (res == KSI_INVALID_STATE) {
+						VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_11, step);
+						res = KSI_OK;
+					} else {
+						VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+						KSI_pushError(ctx, res, NULL);
+					}
 					goto cleanup;
 				}
 
@@ -656,7 +654,6 @@ int KSI_VerificationRule_AggregationChainMetaDataVerification(KSI_VerificationCo
 					res = metaDataPadding_verify(ctx, tmp);
 					if (res != KSI_OK) {
 						if (res == KSI_INVALID_FORMAT) {
-
 							VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_11, step);
 							res = KSI_OK;
 							goto cleanup;
@@ -963,6 +960,7 @@ int KSI_VerificationRule_AggregationHashChainIndexContinuation(KSI_VerificationC
 				}
 			}
 		}
+
 		prevChain = aggregationChain;
 	}
 
@@ -1152,6 +1150,7 @@ int KSI_VerificationRule_CalendarHashChainAggregationTime(KSI_VerificationContex
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationHashChain *aggregationChain = NULL;
 	KSI_Integer *calAggrTime = NULL;
+	KSI_Integer *calPubTime = NULL;
 	KSI_CTX *ctx = NULL;
 	const KSI_Signature *sig = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN;
@@ -1189,14 +1188,39 @@ int KSI_VerificationRule_CalendarHashChainAggregationTime(KSI_VerificationContex
 		goto cleanup;
 	}
 
-	if (!KSI_Integer_equals(calAggrTime, aggregationChain->aggregationTime)) {
-		KSI_LOG_info(ctx, "Aggregation time in calendar hash chain and aggregation hash chain differ.");
+	if (calAggrTime != NULL) {
+		if (!KSI_Integer_equals(calAggrTime, aggregationChain->aggregationTime)) {
+			KSI_LOG_info(ctx, "Aggregation time in calendar hash chain and aggregation hash chain differ.");
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_4, step);
+			res = KSI_OK;
+			goto cleanup;
+		}
+		VERIFICATION_RESULT_OK(step);
+		res = KSI_OK;
+		goto cleanup;
+	}
+	KSI_LOG_debug(ctx, "Aggregation time missing in calendar hash chain, default to publication time.");
 
+	res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &calPubTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (calPubTime == NULL) {
+		KSI_LOG_info(ctx, "Publication time in calendar hash chain is missing.");
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_4, step);
 		res = KSI_OK;
 		goto cleanup;
 	}
 
+	if (!KSI_Integer_equals(calPubTime, aggregationChain->aggregationTime)) {
+		KSI_LOG_info(ctx, "Publication time in calendar hash chain and aggregation time in aggregation hash chain differ.");
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_4, step);
+		res = KSI_OK;
+		goto cleanup;
+	}
 
 	VERIFICATION_RESULT_OK(step);
 	res = KSI_OK;
@@ -1210,6 +1234,7 @@ int KSI_VerificationRule_CalendarHashChainRegistrationTime(KSI_VerificationConte
 	int res = KSI_UNKNOWN_ERROR;
 	time_t calculatedAggrTime;
 	KSI_Integer *calendarAggrTime = NULL;
+	KSI_Integer *calPubTime = NULL;
 	KSI_CTX *ctx = NULL;
 	const KSI_Signature *sig = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_CALCHAIN_INTERNALLY;
@@ -1234,8 +1259,8 @@ int KSI_VerificationRule_CalendarHashChainRegistrationTime(KSI_VerificationConte
 
 	res = KSI_CalendarHashChain_calculateAggregationTime(sig->calendarChain, &calculatedAggrTime);
 	if (res != KSI_OK) {
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res, NULL);
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_INT_5, KSI_VERIFY_NONE);
+		res = KSI_OK;
 		goto cleanup;
 	}
 	res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &calendarAggrTime);
@@ -1245,14 +1270,39 @@ int KSI_VerificationRule_CalendarHashChainRegistrationTime(KSI_VerificationConte
 		goto cleanup;
 	}
 
-	if (!KSI_Integer_equalsUInt(calendarAggrTime, (KSI_uint64_t) calculatedAggrTime)) {
-		KSI_LOG_info(ctx, "Calendar hash chain internally inconsistent.");
+	if (calendarAggrTime != NULL) {
+		if (!KSI_Integer_equalsUInt(calendarAggrTime, (KSI_uint64_t) calculatedAggrTime)) {
+			KSI_LOG_info(ctx, "Calendar hash chain internally inconsistent.");
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_5, step);
+			res = KSI_OK;
+			goto cleanup;
+		}
+		VERIFICATION_RESULT_OK(step);
+		res = KSI_OK;
+		goto cleanup;
+	}
+	KSI_LOG_debug(ctx, "Aggregation time missing in calendar hash chain, default to publication time.");
 
+	res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &calPubTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (calPubTime == NULL) {
+		KSI_LOG_info(ctx, "Publication time in calendar hash chain is missing.");
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_5, step);
 		res = KSI_OK;
 		goto cleanup;
 	}
 
+	if (!KSI_Integer_equalsUInt(calPubTime, (KSI_uint64_t) calculatedAggrTime)) {
+		KSI_LOG_info(ctx, "Publication time does not match calculated aggregation time.");
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_5, step);
+		res = KSI_OK;
+		goto cleanup;
+	}
 
 	VERIFICATION_RESULT_OK(step);
 	res = KSI_OK;
@@ -2240,9 +2290,9 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(KSI_Verif
 	KSI_CTX *ctx = NULL;
 	const KSI_Signature *sig = NULL;
 	KSI_CalendarHashChain *extCalHashChain = NULL;
-	time_t calculatedAggrTime;
 	KSI_AggregationHashChain *aggregationChain = NULL;
 	KSI_Integer *pubTime = NULL;
+	KSI_Integer *extCalTime = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_CALCHAIN_ONLINE;
 
 	if (result == NULL) {
@@ -2281,12 +2331,6 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(KSI_Verif
 		goto cleanup;
 	}
 
-	res = KSI_CalendarHashChain_calculateAggregationTime(extCalHashChain, &calculatedAggrTime);
-	if (res != KSI_OK) {
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
 	/* Take the first aggregation hash chain, as all of the chain should have the same value for "aggregation time". */
 	res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &aggregationChain);
 	if (res != KSI_OK || aggregationChain == NULL) {
@@ -2295,16 +2339,41 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(KSI_Verif
 		goto cleanup;
 	}
 
-	if (!KSI_Integer_equalsUInt(aggregationChain->aggregationTime, (KSI_uint64_t) calculatedAggrTime)) {
-		KSI_LOG_info(ctx, "Invalid extended signature calendar calendar chain aggregation time.");
-		KSI_LOG_debug(ctx, "Calendar hash chain aggregation time: %i.", calculatedAggrTime);
-		KSI_LOG_debug(ctx, "Signature aggregation time:           %i.", KSI_Integer_getUInt64(aggregationChain->aggregationTime));
-
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_CAL_3, step);
-		res = KSI_OK;
+	res = KSI_CalendarHashChain_getAggregationTime(extCalHashChain, &extCalTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
+	if (extCalTime != NULL) {
+		if (!KSI_Integer_compare(aggregationChain->aggregationTime, extCalTime) == 0) {
+			KSI_LOG_info(ctx, "Invalid extended signature calendar calendar chain aggregation time.");
+			KSI_LOG_debug(ctx, "Calendar hash chain aggregation time: %i.", KSI_Integer_getUInt64(extCalTime));
+			KSI_LOG_debug(ctx, "Signature aggregation time:           %i.", KSI_Integer_getUInt64(aggregationChain->aggregationTime));
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_CAL_3, step);
+			res = KSI_OK;
+			goto cleanup;
+		}
+	} else {
+		KSI_LOG_debug(ctx, "Aggregation time missing in extended calendar hash chain, default to publication time.");
+
+		res = KSI_CalendarHashChain_getPublicationTime(extCalHashChain, &extCalTime);
+		if (res != KSI_OK) {
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		if (!KSI_Integer_compare(aggregationChain->aggregationTime, extCalTime) == 0) {
+			KSI_LOG_info(ctx, "Invalid extended signature calendar calendar chain publication time.");
+			KSI_LOG_debug(ctx, "Calendar hash chain publication time: %i.", KSI_Integer_getUInt64(extCalTime));
+			KSI_LOG_debug(ctx, "Signature aggregation time:           %i.", KSI_Integer_getUInt64(aggregationChain->aggregationTime));
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_CAL_3, step);
+			res = KSI_OK;
+			goto cleanup;
+		}
+	}
 
 	VERIFICATION_RESULT_OK(step);
 	res = KSI_OK;
