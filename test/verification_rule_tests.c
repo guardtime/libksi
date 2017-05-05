@@ -773,7 +773,52 @@ static void testRule_AggregationHashChainIndexConsistency_suffixChanged_verifyEr
 #undef TEST_SIGNATURE_FILE
 }
 
-static void testRule_AggregationHashChainAndRfc3161IndexConsistencyFail(CuTest *tc, const char *sigFile) {
+static void testRule_AggregationHashChainIndexContinuationOk(CuTest *tc, const char *sigFile) {
+	int res = KSI_OK;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(sigFile), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
+
+	TEST_VERIFICATION_STEP_INIT;
+
+	res = KSI_VerificationRule_AggregationHashChainIndexContinuation(&verCtx, &verRes);
+	CuAssert(tc, "Signature aggregation hash chain index inconsistent.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
+
+	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
+
+	KSI_VerificationContext_clean(&verCtx);
+	KSI_Signature_free(signature);
+}
+
+static void testRule_AggregationHashChainIndexContinuation(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-08-01.1.ksig"
+
+	testRule_AggregationHashChainIndexContinuationOk(tc, TEST_SIGNATURE_FILE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationHashChainIndexContinuation_validRfc3161(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-with-rfc3161-record-ok.ksig"
+
+	testRule_AggregationHashChainIndexContinuationOk(tc, TEST_SIGNATURE_FILE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationHashChainIndexContinuationFail(CuTest *tc, const char *sigFile) {
 	int res = KSI_OK;
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
@@ -796,7 +841,7 @@ static void testRule_AggregationHashChainAndRfc3161IndexConsistencyFail(CuTest *
 
 	TEST_VERIFICATION_STEP_INIT;
 
-	res = KSI_VerificationRule_AggregationHashChainIndexConsistency(&verCtx, &verRes);
+	res = KSI_VerificationRule_AggregationHashChainIndexContinuation(&verCtx, &verRes);
 	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_12);
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
@@ -805,18 +850,42 @@ static void testRule_AggregationHashChainAndRfc3161IndexConsistencyFail(CuTest *
 	KSI_Signature_free(signature);
 }
 
-static void testRule_AggregationHashChainIndexConsistency_rfc3161ChainIndexChanged_verifyErrorResult(CuTest *tc) {
+static void testRule_AggregationHashChainIndexContinuation_rfc3161ChainIndexChanged_verifyErrorResult(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-rfc3161-record-ok-changed-chain-index.ksig"
 
-	testRule_AggregationHashChainAndRfc3161IndexConsistencyFail(tc, TEST_SIGNATURE_FILE);
+	testRule_AggregationHashChainIndexContinuationFail(tc, TEST_SIGNATURE_FILE);
 
 #undef TEST_SIGNATURE_FILE
 }
 
-static void testRule_AggregationHashChainIndexConsistency_rfc3161ChainIndexAndAggrTimeChanged_verifyErrorResult(CuTest *tc) {
+static void testRule_AggregationHashChainIndexContinuation_rfc3161ChainIndexAndAggrTimeChanged_verifyErrorResult(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-rfc3161-record-ok-changed-chain-index-and-aggr-time.ksig"
 
-	testRule_AggregationHashChainAndRfc3161IndexConsistencyFail(tc, TEST_SIGNATURE_FILE);
+	testRule_AggregationHashChainIndexContinuationFail(tc, TEST_SIGNATURE_FILE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationHashChainIndexContinuation_doubleAggrChain_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-2014-08-01.1.double-aggr-chain.ksig"
+
+	testRule_AggregationHashChainIndexContinuationFail(tc, TEST_SIGNATURE_FILE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationHashChainIndexContinuation_sameChainIndex_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-2014-08-01.1.same-chain-index.ksig"
+
+	testRule_AggregationHashChainIndexContinuationFail(tc, TEST_SIGNATURE_FILE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationHashChainIndexContinuation_wrongChainIndex_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-2014-08-01.1.wrong-chain-index.ksig"
+
+	testRule_AggregationHashChainIndexContinuationFail(tc, TEST_SIGNATURE_FILE);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -4453,8 +4522,13 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_AggregationHashChainIndexConsistency_prefixChanged_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_AggregationHashChainIndexConsistency_prefixesChanged_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_AggregationHashChainIndexConsistency_suffixChanged_verifyErrorResult);
-	SUITE_ADD_TEST(suite, testRule_AggregationHashChainIndexConsistency_rfc3161ChainIndexChanged_verifyErrorResult);
-	SUITE_ADD_TEST(suite, testRule_AggregationHashChainIndexConsistency_rfc3161ChainIndexAndAggrTimeChanged_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_AggregationHashChainIndexContinuation);
+	SUITE_ADD_TEST(suite, testRule_AggregationHashChainIndexContinuation_validRfc3161);
+	SUITE_ADD_TEST(suite, testRule_AggregationHashChainIndexContinuation_rfc3161ChainIndexChanged_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_AggregationHashChainIndexContinuation_rfc3161ChainIndexAndAggrTimeChanged_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_AggregationHashChainIndexContinuation_doubleAggrChain_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_AggregationHashChainIndexContinuation_sameChainIndex_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_AggregationHashChainIndexContinuation_wrongChainIndex_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainInputHashVerification_sigWithCalHashChain);
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainInputHashVerification_sigWithoutCalHashChain);
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainInputHashVerification_verifyErrorResult);

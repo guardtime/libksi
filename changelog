@@ -1,3 +1,4 @@
+* IMPROVEMENT: Refactored aggregation hash chain chain index continuation verification.
 Version 3.14
 * IMPROVEMENT: Added mandatory comments to deprecation macro.
 * IMPROVEMENT: Returning KSI_UNSUPPORTED_PDU_VERSION in case configured PDU version is not supported for given request.

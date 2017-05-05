@@ -717,7 +717,45 @@ static void TestInternalPolicy_FAIL_WithInvalidRfc3161ChainIndex(CuTest* tc) {
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_FAIL,
 		KSI_VER_ERR_INT_12,
-		"KSI_VerificationRule_AggregationHashChainIndexConsistency"
+		"KSI_VerificationRule_AggregationHashChainIndexContinuation"
+	};
+	KSI_Signature *signature = NULL;
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&context, ctx);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	context.signature = signature;
+
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_Signature_free(signature);
+	KSI_VerificationContext_clean(&context);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void TestInternalPolicy_FAIL_WithInvalidAggrChainIndex(CuTest* tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-2014-08-01.1.same-chain-index.ksig"
+	int res;
+	KSI_VerificationContext context;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_INT_12,
+		"KSI_VerificationRule_AggregationHashChainIndexContinuation"
 	};
 	KSI_Signature *signature = NULL;
 
@@ -1513,6 +1551,84 @@ static void TestInternalPolicy_FAIL_WithInputLevelTooLarge(CuTest* tc) {
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_AGGR_LEVEL
+}
+
+static void TestInternalPolicy_FAIL_SignatureAggreChainSameIndex(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-aggr-chain-multiple-chains-changed-order-chain-index-are-same.1.tlv"
+
+	int res;
+	KSI_VerificationContext context;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_INT_12,
+		"KSI_VerificationRule_AggregationHashChainIndexContinuation"
+	};
+	KSI_Signature *signature = NULL;
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&context, ctx);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	context.signature = signature;
+
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_Signature_free(signature);
+	KSI_VerificationContext_clean(&context);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void TestInternalPolicy_FAIL_SignatureAggreChainSameIndexChangedChainOrder(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-aggr-chain-multiple-chains-changed-order-chain-index-are-same.2.tlv"
+
+	int res;
+	KSI_VerificationContext context;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_INT_12,
+		"KSI_VerificationRule_AggregationHashChainIndexContinuation"
+	};
+	KSI_Signature *signature = NULL;
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&context, ctx);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	context.signature = signature;
+
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_Signature_free(signature);
+	KSI_VerificationContext_clean(&context);
+
+#undef TEST_SIGNATURE_FILE
 }
 
 static void TestCalendarBasedPolicy_NA_ExtenderErrors(CuTest* tc) {
@@ -3452,6 +3568,7 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInvalidRfc3161);
 	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInvalidRfc3161AggrTime);
 	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInvalidRfc3161ChainIndex);
+	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInvalidAggrChainIndex);
 	SUITE_ADD_TEST(suite, TestInternalPolicy_OK_MetaDataWithPadding);
 	SUITE_ADD_TEST(suite, TestInternalPolicy_OK_MetaDataWithoutPadding);
 	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInvalidMetaDataPadding);
@@ -3472,6 +3589,8 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithDocumentHash);
 	SUITE_ADD_TEST(suite, TestInternalPolicy_OK_WithInputLevel);
 	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_WithInputLevelTooLarge);
+	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_SignatureAggreChainSameIndex);
+	SUITE_ADD_TEST(suite, TestInternalPolicy_FAIL_SignatureAggreChainSameIndexChangedChainOrder);
 	SUITE_ADD_TEST(suite, TestCalendarBasedPolicy_NA_ExtenderErrors);
 	SUITE_ADD_TEST(suite, TestCalendarBasedPolicy_OK_WithPublicationRecord);
 	SUITE_ADD_TEST(suite, TestCalendarBasedPolicy_FAIL_WithPublicationRecord);
