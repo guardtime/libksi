@@ -22,6 +22,7 @@
 #include <ksi/pkitruststore.h>
 #include "all_tests.h"
 #include "../src/ksi/publicationsfile_impl.h"
+#include "../src/ksi/internal.h"
 
 extern KSI_CTX *ctx;
 
@@ -945,6 +946,65 @@ static void testGetLatestPublicationOfFuture(CuTest *tc) {
 	KSI_Integer_free(tm);
 }
 
+static void publicationStringForHash(CuTest *tc, KSI_DataHash *hash) {
+	int res;
+	KSI_PublicationData *pubIn = NULL;
+	KSI_PublicationData *pubOut = NULL;
+	char *base32 = NULL;
+	KSI_Integer *time = NULL;
+
+	res = KSI_PublicationData_new(ctx, &pubIn);
+	CuAssert(tc, "Failed to create publication data object.", res == KSI_OK && pubIn != NULL);
+
+	res = KSI_Integer_new(ctx, 1491977646, &time);
+	CuAssert(tc, "Unable to create time.", res == KSI_OK && time != NULL);
+
+	pubIn->imprint = hash;
+	pubIn->time = time;
+
+	res = KSI_PublicationData_toBase32(pubIn, &base32);
+	CuAssert(tc, "Failed encoding the published data object.", res == KSI_OK && base32 != NULL);
+
+	res = KSI_PublicationData_fromBase32(ctx, base32, &pubOut);
+	CuAssert(tc, "Failed decoding publication string.", res == KSI_OK && pubOut != NULL);
+
+	CuAssert(tc, "Data hash mismatch.", KSI_DataHash_equals(pubIn->imprint, pubOut->imprint));
+	CuAssert(tc, "Time mismatch.", KSI_Integer_equals(pubIn->time, pubOut->time));
+
+	KSI_PublicationData_free(pubIn);
+	KSI_PublicationData_free(pubOut);
+	KSI_free(base32);
+}
+
+static void testPublicationStringWithSupportedHashAlgs(CuTest *tc) {
+	int res;
+	size_t i = 0;
+
+	while (i < KSI_NUMBER_OF_KNOWN_HASHALGS) {
+		KSI_HashAlgorithm alg = i;
+
+		if (KSI_isHashAlgorithmSupported(alg)) {
+			static const char *testData = "correct horse battery staple";
+			KSI_DataHasher *hsr = NULL;
+			KSI_DataHash *hash = NULL;
+
+			res = KSI_DataHasher_open(ctx, alg, &hsr);
+			CuAssert(tc, "Failed to open DataHasher.", res == KSI_OK && hsr != NULL);
+
+			res = KSI_DataHasher_add(hsr, (unsigned char *)testData, strlen(testData));
+			CuAssert(tc, "Failed to add data.", res == KSI_OK);
+
+			res = KSI_DataHasher_close(hsr, &hash);
+			CuAssert(tc, "Failed to close hasher.", res == KSI_OK && hash != NULL);
+
+			publicationStringForHash(tc, hash);
+
+			KSI_DataHasher_free(hsr);
+			KSI_nofree(hash);
+		}
+		i++;
+	}
+}
 
 CuSuite* KSITest_Publicationsfile_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
@@ -974,6 +1034,7 @@ CuSuite* KSITest_Publicationsfile_getSuite(void) {
 	SUITE_ADD_TEST(suite, testGetLatestPublicationOfFuture);
 	SUITE_ADD_TEST(suite, testReceivePublicationsFileInvalidConstraints);
 	SUITE_ADD_TEST(suite, testReceivePublicationsFileInvalidPki);
+	SUITE_ADD_TEST(suite, testPublicationStringWithSupportedHashAlgs);
 
 	return suite;
 }

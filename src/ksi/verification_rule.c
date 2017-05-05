@@ -63,6 +63,102 @@ static int initAggregationOutputHash(KSI_VerificationContext *info);
 static int extendingPermittedVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result, const KSI_VerificationStep step, const char *rule);
 
 
+int KSI_VerificationRule_AggregationChainInputLevelVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_AggregationHashChain *firstChain = NULL;
+	KSI_HashChainLinkList *chain = NULL;
+	KSI_HashChainLink *link = NULL;
+	KSI_Integer *lvlCorr = NULL;
+	KSI_CTX *ctx = NULL;
+	const KSI_Signature *sig = NULL;
+	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info->docAggrLevel == 0) {
+		VERIFICATION_RESULT_OK(step);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	ctx = info->ctx;
+	sig = info->signature;
+	KSI_ERR_clearErrors(ctx);
+
+	KSI_LOG_info(ctx, "Verify aggregation hash chain input level.");
+
+	/* Verify aggregation input level. */
+	if (!KSI_IS_VALID_TREE_LEVEL(info->docAggrLevel)) {
+		/* Aggregation level can't be larger than 0xff. */
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res = KSI_INVALID_VERIFICATION_INPUT, "Aggregation level is larger than 0xff.");
+		goto cleanup;
+	}
+
+	/* Document input level is always 0 for RFC-3161 record. */
+	if (info->docAggrLevel > 0 && sig->rfc3161 != NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_GEN_3, step);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	/* Get first aggregation hash chain first link. */
+	res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &firstChain);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_AggregationHashChain_getChain(firstChain, &chain);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_HashChainLinkList_elementAt(chain, 0, &link);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Verify level correction value. */
+	res = KSI_HashChainLink_getLevelCorrection(link, &lvlCorr);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (KSI_Integer_getUInt64(lvlCorr) < info->docAggrLevel) {
+		KSI_LOG_info(ctx, "Aggregation hash chain input level is to large.");
+		KSI_LOG_debug(ctx, "Signatures initial level correction: %llu.", KSI_Integer_getUInt64(lvlCorr));
+		KSI_LOG_debug(ctx, "Document input level               : %llu.", info->docAggrLevel);
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_GEN_3, step);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+cleanup:
+
+	return res;
+}
+
 static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, const KSI_DataHash *hsh, const KSI_OctetString *suffix, int hsh_id, KSI_DataHash **out) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHasher *hsr = NULL;
@@ -219,9 +315,9 @@ static int rfc3161_verifyChainIndex(KSI_CTX *ctx, const KSI_Signature *sig) {
 	}
 
 	if (KSI_IntegerList_length(firstChain->chainIndex) != KSI_IntegerList_length(rfc3161->chainIndex)) {
-		KSI_LOG_info(ctx, "Aggregation hash chain and RFC 3161 chain index mismatch.", KSI_IntegerList_length(firstChain->chainIndex));
-		KSI_LOG_debug(ctx, "Signatures chain index length: %i.", KSI_IntegerList_length(firstChain->chainIndex));
-		KSI_LOG_debug(ctx, "RFC 3161 chain index length:   %i.", KSI_IntegerList_length(rfc3161->chainIndex));
+		KSI_LOG_info(ctx, "Aggregation hash chain and RFC 3161 chain index mismatch.");
+		KSI_LOG_debug(ctx, "First aggr chain index length: %i.", KSI_IntegerList_length(firstChain->chainIndex));
+		KSI_LOG_debug(ctx, "RFC 3161 chain index length  : %i.", KSI_IntegerList_length(rfc3161->chainIndex));
 		KSI_pushError(ctx, res = KSI_VERIFICATION_FAILURE, "Aggregation hash chain and RFC 3161 aggregation index mismatch.");
 		goto cleanup;
 	}
@@ -466,7 +562,6 @@ int KSI_VerificationRule_AggregationChainMetaDataVerification(KSI_VerificationCo
 	size_t i;
 	KSI_CTX *ctx = NULL;
 	const KSI_Signature *sig = NULL;
-	VerificationTempData *tempData = NULL;
 	KSI_TlvElement *el = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
 
@@ -486,12 +581,6 @@ int KSI_VerificationRule_AggregationChainMetaDataVerification(KSI_VerificationCo
 	ctx = info->ctx;
 	sig = info->signature;
 	KSI_ERR_clearErrors(ctx);
-
-	tempData = info->tempData;
-	if (tempData == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_STATE, "Verification context not properly initialized.");
-		goto cleanup;
-	}
 
 	KSI_LOG_info(ctx, "Verify aggregation hash chain metadata.");
 
@@ -540,8 +629,13 @@ int KSI_VerificationRule_AggregationChainMetaDataVerification(KSI_VerificationCo
 				/* Check if the metadata padding exists by looking for tag 0x1E. */
 				res = KSI_TlvElement_getElement(metaData->impl, 0x1E, &el);
 				if (res != KSI_OK) {
-					VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-					KSI_pushError(ctx, res, NULL);
+					if (res == KSI_INVALID_STATE) {
+						VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_11, step);
+						res = KSI_OK;
+					} else {
+						VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+						KSI_pushError(ctx, res, NULL);
+					}
 					goto cleanup;
 				}
 
@@ -560,7 +654,6 @@ int KSI_VerificationRule_AggregationChainMetaDataVerification(KSI_VerificationCo
 					res = metaDataPadding_verify(ctx, tmp);
 					if (res != KSI_OK) {
 						if (res == KSI_INVALID_FORMAT) {
-
 							VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_11, step);
 							res = KSI_OK;
 							goto cleanup;
@@ -779,7 +872,7 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+int KSI_VerificationRule_AggregationHashChainIndexContinuation(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	const KSI_AggregationHashChain *prevChain = NULL;
 	size_t i;
@@ -803,7 +896,7 @@ int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationCo
 	sig = info->signature;
 	KSI_ERR_clearErrors(ctx);
 
-	KSI_LOG_info(ctx, "Verify aggregation hash chain chain index consistency.");
+	KSI_LOG_info(ctx, "Verify aggregation hash chain chain index continuation.");
 
 	/* Verify RFC3161 chain index. */
 	if (sig->rfc3161 != NULL) {
@@ -820,11 +913,8 @@ int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationCo
 		}
 	}
 
-	/* Aggregate all the aggregation chains. */
 	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
 		KSI_AggregationHashChain* aggregationChain = NULL;
-		KSI_Integer *chainIndexCurr = NULL;
-		KSI_uint64_t chainIndexCalc = 0;
 
 		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, (KSI_AggregationHashChain **)&aggregationChain);
 		if (res != KSI_OK || aggregationChain == NULL) {
@@ -839,7 +929,6 @@ int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationCo
 			if (KSI_IntegerList_length(prevChain->chainIndex) != KSI_IntegerList_length(aggregationChain->chainIndex) + 1) {
 				KSI_LOG_debug(ctx, "Unexpected chain index length in aggregation hash chain.");
 				VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_12, step);
-
 				res = KSI_OK;
 				goto cleanup;
 			} else {
@@ -865,12 +954,58 @@ int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationCo
 					if (!KSI_Integer_equals(chainIndex1, chainIndex2)) {
 						KSI_LOG_debug(ctx, "Aggregation hash chain index is not continuation of previous chain index.");
 						VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_12, step);
-
 						res = KSI_OK;
 						goto cleanup;
 					}
 				}
 			}
+		}
+
+		prevChain = aggregationChain;
+	}
+
+	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	size_t i;
+	KSI_CTX *ctx = NULL;
+	const KSI_Signature *sig = NULL;
+	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->signature;
+	KSI_ERR_clearErrors(ctx);
+
+	KSI_LOG_info(ctx, "Verify aggregation hash chain chain index consistency.");
+
+	/* Aggregate all the aggregation chains. */
+	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
+		KSI_AggregationHashChain* aggregationChain = NULL;
+		KSI_Integer *chainIndexCurr = NULL;
+		KSI_uint64_t chainIndexCalc = 0;
+
+		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, (KSI_AggregationHashChain **)&aggregationChain);
+		if (res != KSI_OK || aggregationChain == NULL) {
+			KSI_pushError(ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			goto cleanup;
 		}
 
 		/* Verify shape of the aggregation hash chain. */
@@ -898,13 +1033,10 @@ int KSI_VerificationRule_AggregationHashChainIndexConsistency(KSI_VerificationCo
 			if (KSI_Integer_getUInt64(chainIndexCurr) != chainIndexCalc) {
 				KSI_LOG_debug(ctx, "Aggregation hash chain index does not match with aggregation hash chain shape.");
 				VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_10, step);
-
 				res = KSI_OK;
 				goto cleanup;
 			}
 		}
-
-		prevChain = aggregationChain;
 	}
 
 	VERIFICATION_RESULT_OK(step);
@@ -932,7 +1064,7 @@ static int initAggregationOutputHash(KSI_VerificationContext *info) {
 
 	if (tempData->aggregationOutputHash == NULL) {
 		KSI_AggregationHashChainList_aggregate(info->signature->aggregationChainList, info->ctx,
-				0, &tempData->aggregationOutputHash);
+				(int)info->docAggrLevel, &tempData->aggregationOutputHash);
 	}
 
 	res = KSI_OK;

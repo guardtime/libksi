@@ -627,6 +627,7 @@ int KSI_Header_getLoginId(const KSI_Header *t, KSI_Utf8String **loginId);
 int KSI_Header_setInstanceId(KSI_Header *t, KSI_Integer *instanceId);
 int KSI_Header_setMessageId(KSI_Header *t, KSI_Integer *messageId);
 int KSI_Header_setLoginId(KSI_Header *t, KSI_Utf8String *loginId);
+KSI_DEFINE_GET_CTX(KSI_Header);
 
 int KSI_Header_fromTlv(KSI_TLV *tlv, KSI_Header **data);
 int KSI_Header_toTlv (KSI_CTX *ctx, const KSI_Header *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);

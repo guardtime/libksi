@@ -1,10 +1,22 @@
 * IMPROVEMENT: Support for integration tests test package.
+* IMPROVEMENT: Refactored aggregation hash chain chain index continuation verification.
 Version 3.14
-
+* IMPROVEMENT: Added mandatory comments to deprecation macro.
+* IMPROVEMENT: Returning KSI_UNSUPPORTED_PDU_VERSION in case configured PDU version is not supported for given request.
+* IMPROVEMENT: Verification of user-provided input hash level.
+* IMPROVEMENT: Updated signature internal verification sequence.
+* BUGFIX: Correct extender HMAC setting.
+* BUGFIX: Added interface for KSI_Header KSI context getter.
 * IMPROVEMENT: Added KSI_DataHash memory reuse.
 
 Version 3.13
 
+2017-04-17 release(3.13.2043)
+* IMPROVEMENT: Functionality to request configurations from extender / aggregator.
+* BUGFIX: Update publications file client pointer when changinh client.
+* IMPROVEMENT: Set level correction when input hash level is greater than 0.
+* IMPROVEMENT: Updated ksi_sign_aggr example.
+* IMPROVEMENT: HMAC algorithm configuration support for outgoing and incomming messages.
 * IMPROVEMENT: Functionality to request configurations from extender / aggregator.
 * IMPROVEMENT: Updated verification tutorial.
 * IMPROVEMENT: Verification context initial aggregation level member is deprecated (warning not shown under Windows). The initial aggregation level is adjusted into aggregation hash chain level correction value during signature creation.
@@ -19,7 +31,6 @@ Version 3.12
 * BUGFIX: The example of KSI_DataHash_create in tutorial/t1_signing.md was missing an argument.
 
 2017-02-27 release(3.12.2000)
-* IMPROVEMENT: HMAC algorithm configuration support for outgoing and incomming messages.
 * IMPROVEMENT: Support for adding doxygen generated html files into rpm and debian package.
 * IMPROVEMENT: Added flag --with-default-pdu-version=version to configure script.
 * IMPROVEMENT: Improve test support for different PDU version.

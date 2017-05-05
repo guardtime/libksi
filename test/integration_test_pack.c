@@ -43,6 +43,7 @@ enum CsvField_en {
 	TEST_CF_VERIF_STATE,
 	TEST_CF_ERROR_CODE,
 	TEST_CF_ERROR_MESSAGE,
+	TEST_CF_INPUT_HASH_LEVEL,
 	TEST_CF_AGGR_INPUT_HASH,
 	TEST_CF_CAL_INPUT_HASH,
 	TEST_CF_CAL_OUTPUT_HASH,
@@ -102,14 +103,14 @@ static const KSI_Policy *getPolicy(const char *policyName) {
 	else return NULL;
 }
 
-static int getTime(const char *ts, KSI_uint64_t *time) {
+static int getUint64(const char *s, KSI_uint64_t *time) {
 	long int tmp = 0;
 	char *endp = NULL;
 
-	if (ts == NULL || time == NULL) return -1;
+	if (s == NULL || time == NULL) return -1;
 
-	tmp = strtol(ts, &endp, 0);
-	if (tmp < 0 || ts == endp || errno == ERANGE) return -1;
+	tmp = strtol(s, &endp, 0);
+	if (tmp < 0 || s == endp || errno == ERANGE) return -1;
 
 	*time = (KSI_uint64_t)tmp;
 
@@ -172,6 +173,7 @@ static void runTests(CuTest* tc, const char *testCsv, const char *rootPath) {
 			if (policy) {
 				if (csvData[TEST_CF_ERROR_CODE]) {
 					errCode = KSI_VerificationErrorCode_fromString(csvData[TEST_CF_ERROR_CODE]);
+					CuAssert(tc, "Unknown error code.", errCode != KSI_VER_ERR_NONE);
 				}
 			}
 		}
@@ -180,6 +182,10 @@ static void runTests(CuTest* tc, const char *testCsv, const char *rootPath) {
 
 		res = KSI_VerificationContext_init(&context, ctx);
 		CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
+
+		if (csvData[TEST_CF_INPUT_HASH_LEVEL]) {
+			CuAssert(tc, "Unable to parse input level value.", getUint64(csvData[TEST_CF_INPUT_HASH_LEVEL], &context.docAggrLevel));
+		}
 
 		if (csvData[TEST_CF_AGGR_INPUT_HASH]) {
 			res = KSITest_DataHash_fromStr(ctx, csvData[TEST_CF_AGGR_INPUT_HASH], &documentHash);
@@ -301,7 +307,7 @@ static void runTests(CuTest* tc, const char *testCsv, const char *rootPath) {
 			time_t calcTime = 0;
 			KSI_uint64_t time = 0;
 
-			CuAssert(tc, "Unable to parse registration time.", getTime(csvData[TEST_CF_REG_TIME], &time));
+			CuAssert(tc, "Unable to parse registration time.", getUint64(csvData[TEST_CF_REG_TIME], &time));
 
 			res = KSI_CalendarHashChain_calculateAggregationTime(sig->calendarChain, &calcTime);
 			CuAssert(tc, "Unable to calculate signature aggregation time.", res == KSI_OK && calcTime != 0);
@@ -313,7 +319,7 @@ static void runTests(CuTest* tc, const char *testCsv, const char *rootPath) {
 			KSI_Integer *sigAggrTime = NULL;
 			KSI_uint64_t time = 0;
 
-			CuAssert(tc, "Unable to parse aggregation time.", getTime(csvData[TEST_CF_AGGR_TIME], &time));
+			CuAssert(tc, "Unable to parse aggregation time.", getUint64(csvData[TEST_CF_AGGR_TIME], &time));
 
 			res = KSI_Signature_getSigningTime(sig, &sigAggrTime);
 			CuAssert(tc, "Unable to get signature aggregation time.", res == KSI_OK && sigAggrTime != NULL);
@@ -325,7 +331,7 @@ static void runTests(CuTest* tc, const char *testCsv, const char *rootPath) {
 			KSI_Integer *sigPubTime = NULL;
 			KSI_uint64_t time = 0;
 
-			CuAssert(tc, "Unable to parse publication time.", getTime(csvData[TEST_CF_PUB_TIME], &time));
+			CuAssert(tc, "Unable to parse publication time.", getUint64(csvData[TEST_CF_PUB_TIME], &time));
 
 			KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &sigPubTime);
 			CuAssert(tc, "Unable to get signature publication time.", res == KSI_OK && sigPubTime != NULL);

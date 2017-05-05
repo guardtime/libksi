@@ -1125,7 +1125,7 @@ int KSI_ExtendReq_enclose(KSI_ExtendReq *req, const char *loginId, const char *k
 	}
 
 	/* Get HMAC algorithm ID. */
-	alg_id = (KSI_HashAlgorithm)req->ctx->options[KSI_OPT_AGGR_HMAC_ALGORITHM];
+	alg_id = (KSI_HashAlgorithm)req->ctx->options[KSI_OPT_EXT_HMAC_ALGORITHM];
 
 	/* Create and append initial empty HMAC. */
 	res = KSI_DataHash_createZero(req->ctx, alg_id, &hash);
@@ -1614,6 +1614,7 @@ KSI_IMPLEMENT_SETTER(KSI_Header, KSI_Integer*, instanceId, InstanceId);
 KSI_IMPLEMENT_SETTER(KSI_Header, KSI_Integer*, messageId, MessageId);
 KSI_IMPLEMENT_SETTER(KSI_Header, KSI_Utf8String*, loginId, LoginId);
 
+KSI_IMPLEMENT_GET_CTX(KSI_Header);
 
 /**
  * KSI_Config

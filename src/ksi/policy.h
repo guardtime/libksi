@@ -37,11 +37,8 @@ extern "C" {
 		/** Indicates whether signature extention is allowed (0 means no, and any non-zero is considered to be true). */
 		int extendingAllowed;
 
-		/** Initial aggregation level.
-		 * Deprecated: initial aggregation level is adjusted into aggregation hash chain level correction value
-		 * during signature creation. \c docAggrLevel is not used during verification procedure.
-		 */
-		KSI_VAR_DEPRECATED(KSI_uint64_t docAggrLevel);
+		/** Initial aggregation level. */
+		KSI_uint64_t docAggrLevel;
 
 		/** Document hash to be verified. */
 		const KSI_DataHash *documentHash;
@@ -72,8 +69,9 @@ extern "C" {
 	 */
 	#define KSI_VERIFICATION_ERROR_CODE_LIST\
 		/*Type  Code  Offset  StrCor  Description*/\
-		_(GEN,  1,    0x100,  "",     "Wrong document")\
-		_(GEN,  2,    0x100,  "",     "Verification inconclusive") \
+		_(GEN,  1,    0x100,  "0",     "Wrong document")\
+		_(GEN,  2,    0x100,  "0",     "Verification inconclusive") \
+		_(GEN,  3,    0x100,  "0",     "Input hash level too large") \
 		\
 		_(INT,  1,    0x200,  "0",    "Inconsistent aggregation hash chains") \
 		_(INT,  2,    0x200,  "0",    "Inconsistent aggregation hash chain aggregation times") \

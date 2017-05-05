@@ -252,13 +252,15 @@ static const KSI_Rule documentHashRule[] = {
 };
 
 static const KSI_Rule internalRules[] = {
+	{KSI_RULE_TYPE_COMPOSITE_AND, documentHashRule},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainInputLevelVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainInputHashVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainMetaDataVerification},
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainConsistency},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainIndexContinuation},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainTimeConsistency},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainConsistency},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainIndexConsistency},
 	{KSI_RULE_TYPE_COMPOSITE_AND, calendarHashChainRule_int},
-	{KSI_RULE_TYPE_COMPOSITE_AND, documentHashRule},
 	{KSI_RULE_TYPE_BASIC, NULL}
 };
 
@@ -463,7 +465,7 @@ const char *KSI_VerificationErrorCode_toString(int errorCode) {
 
 int KSI_VerificationErrorCode_fromString(const char *errCodeStr) {
 	size_t i = 0;
-	struct {
+	const struct {
 		char *name;
 		int code;
 	} errCodes[] = {

@@ -28,6 +28,17 @@ extern "C" {
 #endif
 
 	/**
+	 * This rule verifies that the document input level (default 0) is greater than the initial level correction
+	 * (always 0 for RFC-3161 record) of the first hash chain.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_AggregationChainInputLevelVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
 	 * This rule verifies that if RFC3161 record is present then the calculated output hash (from RFC3161 record) equals to
 	 * aggregation chain input hash. If RFC3161 record is missing then the status #KSI_VER_RES_OK is
 	 * returned.
@@ -69,6 +80,16 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_VerificationRule_AggregationHashChainTimeConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * This rule is used to check whether the aggregation hash chain chain index continuation is consistent.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_AggregationHashChainIndexContinuation(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to check whether the shape of the aggregation hash chain does match with the chain index.

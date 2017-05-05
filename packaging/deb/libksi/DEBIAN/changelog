@@ -1,3 +1,13 @@
+libksi (3.13.2043) RELEASED; urgency=low
+
+  * IMPROVEMENT: Functionality to request configurations from extender /
+  aggregator.
+  * BUGFIX: Update publications file client pointer when changinh client.
+  * IMPROVEMENT: Set level correction when input hash level is greater than 0.
+  * IMPROVEMENT: Updated ksi_sign_aggr example.
+  * IMPROVEMENT: HMAC algorithm configuration support for outgoing and incomming
+  messages.
+
 libksi (3.12.2010) RELEASED; urgency=low
 
   * BUGFIX: Removed internal http pipeline feature.
