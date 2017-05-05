@@ -150,9 +150,12 @@ static void runTests(CuTest* tc, const char *testCsv, const char *rootPath) {
 
 		lineCount++;
 
+		res = KSI_VerificationContext_init(&context, ctx);
+		CuAssert(tc, "Verification context initialization failed.", res == KSI_OK);
+
 		if (fgets(line, sizeof(line), csvFile) == NULL) break;
 		/* Chech if the line is commented out. */
-		if (line[0] == CSV_LINE_COMMENT) continue;
+		if (line[0] == CSV_LINE_COMMENT) goto test_cleanup;
 
 		KSI_LOG_debug(ctx, "Test CSV (%s::%u): %s", testCsv, lineCount, line);
 
@@ -178,10 +181,7 @@ static void runTests(CuTest* tc, const char *testCsv, const char *rootPath) {
 			}
 		}
 		/* Skip test if it is not supported. */
-		if (verState == TEST_VS_NOT_IMPL) continue;
-
-		res = KSI_VerificationContext_init(&context, ctx);
-		CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
+		if (verState == TEST_VS_NOT_IMPL) goto test_cleanup;
 
 		if (csvData[TEST_CF_INPUT_HASH_LEVEL]) {
 			CuAssert(tc, "Unable to parse input level value.", getUint64(csvData[TEST_CF_INPUT_HASH_LEVEL], &context.docAggrLevel));
@@ -251,13 +251,13 @@ static void runTests(CuTest* tc, const char *testCsv, const char *rootPath) {
 					}
 
 					KSI_Signature_free(lastFailed);
-					continue;
+					goto test_cleanup;
 				} else {
 					CuFail(tc, "Unexpected error during signature verification.");
 				}
 			} else if (verState == TEST_VS_PARSER_FAILURE) {
 				/* Signature is expected to fail. */
-				continue;
+				goto test_cleanup;
 			} else {
 				CuFail(tc, "Failed because of an unexpected error.");
 			}
@@ -339,6 +339,7 @@ static void runTests(CuTest* tc, const char *testCsv, const char *rootPath) {
 			CuAssert(tc, "Publication time mismatch.", KSI_Integer_getUInt64(sigPubTime) == time);
 		}
 
+test_cleanup:
 		KSI_VerificationContext_clean(&context);
 		KSI_Signature_free(sig);
 		KSI_DataHash_free(documentHash);
