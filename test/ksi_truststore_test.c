@@ -140,11 +140,11 @@ static void TestExtractingOfPKICertificate(CuTest *tc) {
 	char buf[2048];
 	char *ret = NULL;
 
-	const char expectedValue[] =	"PKI Certificate (b3:f2:0d:8a):\n"
+	const char expectedValue[] =	"PKI Certificate (e0:cd:f9:bf):\n"
 									"  * Issued to: E=publications@guardtime.com O=Guardtime AS C=EE\n"
 									"  * Issued by: E=publications@guardtime.com O=Guardtime AS C=EE\n"
-									"  * Valid from: 2016-05-09 07:43:05 UTC to 2017-05-09 07:43:05 UTC [valid]\n"
-									"  * Serial Number: 00\n";
+									"  * Valid from: 2017-05-09 11:57:50 UTC to 2027-05-07 11:57:50 UTC [valid]\n"
+									"  * Serial Number: fa:50:fc:83:33:58:1d:e4\n";
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath("resource/tlv/publications.tlv"), &pubfile);
 	CuAssert(tc, "Unable to load publications file from file.", res == KSI_OK && pubfile != NULL);
