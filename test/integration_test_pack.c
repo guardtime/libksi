@@ -238,7 +238,7 @@ static void runTests(CuTest* tc, const char *testCsv, const char *rootPath) {
 				if (errCode != KSI_VER_ERR_NONE) {
 					KSI_Signature *lastFailed = NULL;
 
-					CuAssert(tc, "Signature failed not with policy verification failure.", policy != NULL && res == KSI_VERIFICATION_FAILURE);
+					CuAssert(tc, "Signature did not fail with policy based verification.", policy != NULL && res == KSI_VERIFICATION_FAILURE);
 
 					res = KSI_CTX_getLastFailedSignature(ctx, &lastFailed);
 					CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && lastFailed != NULL);
