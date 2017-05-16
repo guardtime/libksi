@@ -456,7 +456,7 @@ const KSI_Policy* KSI_VERIFICATION_POLICY_GENERAL = &PolicyGeneral;
 const char *KSI_VerificationErrorCode_toString(int errorCode) {
 	switch (errorCode) {
 		case KSI_VER_ERR_NONE:	return "";
-#define _(type, code, offset, cor, desc) case KSI_VER_ERR_##type##_##code: return #type"-"cor#code;
+#define _(type, code, offset, strCode, desc) case KSI_VER_ERR_##type##_##code: return strCode;
 		KSI_VERIFICATION_ERROR_CODE_LIST
 #undef _
 		default:				return "Unknown";
@@ -469,7 +469,7 @@ int KSI_VerificationErrorCode_fromString(const char *errCodeStr) {
 		char *name;
 		int code;
 	} errCodes[] = {
-#define _(type, code, offset, cor, desc) { #type"-"cor#code, KSI_VER_ERR_##type##_##code },
+#define _(type, code, offset, strCode, desc) { strCode, KSI_VER_ERR_##type##_##code },
 		KSI_VERIFICATION_ERROR_CODE_LIST
 #undef _
 		{ NULL, KSI_VER_ERR_NONE }
