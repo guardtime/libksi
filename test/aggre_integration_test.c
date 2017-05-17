@@ -28,6 +28,7 @@
 #include "../src/ksi/internal.h"
 
 extern KSI_CTX *ctx;
+extern KSITest_Conf conf;
 
 static void postTest(void) {
 	/* Restore default PDU version. */

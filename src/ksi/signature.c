@@ -1242,6 +1242,14 @@ int KSI_Signature_getSigningTime(const KSI_Signature *sig, KSI_Integer **signTim
 			KSI_pushError(sig->ctx, res, NULL);
 			goto cleanup;
 		}
+		/* Aggregation time is optional, default to publication time. */
+		if (tmp == NULL) {
+			res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &tmp);
+			if (res != KSI_OK) {
+				KSI_pushError(sig->ctx, res, NULL);
+				goto cleanup;
+			}
+		}
 	} else {
 		KSI_AggregationHashChain *ptr = NULL;
 

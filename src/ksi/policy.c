@@ -256,8 +256,9 @@ static const KSI_Rule internalRules[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainInputLevelVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainInputHashVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainMetaDataVerification},
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainConsistency},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainIndexContinuation},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainTimeConsistency},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainConsistency},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainIndexConsistency},
 	{KSI_RULE_TYPE_COMPOSITE_AND, calendarHashChainRule_int},
 	{KSI_RULE_TYPE_BASIC, NULL}
@@ -455,17 +456,36 @@ const KSI_Policy* KSI_VERIFICATION_POLICY_GENERAL = &PolicyGeneral;
 const char *KSI_VerificationErrorCode_toString(int errorCode) {
 	switch (errorCode) {
 		case KSI_VER_ERR_NONE:	return "";
-#define _(type, code, offset, desc) case KSI_VER_ERR_##type##_##code: return #type"-"#code;
+#define _(type, code, offset, strCode, desc) case KSI_VER_ERR_##type##_##code: return strCode;
 		KSI_VERIFICATION_ERROR_CODE_LIST
 #undef _
 		default:				return "Unknown";
 	}
 }
 
+int KSI_VerificationErrorCode_fromString(const char *errCodeStr) {
+	size_t i = 0;
+	const struct {
+		char *name;
+		int code;
+	} errCodes[] = {
+#define _(type, code, offset, strCode, desc) { strCode, KSI_VER_ERR_##type##_##code },
+		KSI_VERIFICATION_ERROR_CODE_LIST
+#undef _
+		{ NULL, KSI_VER_ERR_NONE }
+	};
+
+	while (errCodes[i].name != NULL) {
+		if (strcmp(errCodes[i].name, errCodeStr) == 0) return errCodes[i].code;
+		i++;
+	}
+	return KSI_VER_ERR_NONE;
+}
+
 const char *KSI_Policy_getErrorString(int errorCode) {
 	switch (errorCode) {
 		case KSI_VER_ERR_NONE:	return "No verification errors";
-#define _(type, code, offset, desc) case KSI_VER_ERR_##type##_##code: return desc;
+#define _(type, code, offset, cor, desc) case KSI_VER_ERR_##type##_##code: return desc;
 		KSI_VERIFICATION_ERROR_CODE_LIST
 #undef _
 		default:				return "Unknown verification error code";

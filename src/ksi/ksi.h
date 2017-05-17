@@ -717,15 +717,7 @@ int KSI_CTX_setPKITruststore(KSI_CTX *ctx, KSI_PKITruststore *pki);
  */
 int KSI_CTX_setNetworkProvider(KSI_CTX *ctx, KSI_NetworkClient *net);
 
-/**
- * Setter for the e-mail address used to verify the PKI signature in the publications file.
- * \param[in]	ctx		KSI context.
- * \param[in]	email	Email address.
- * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- * \note This method is deprecated and will be removed in later versions, use
- * #KSI_CTX_setDefaultPubFileCertConstraints with #KSI_CERT_EMAIL instead.
- */
-KSI_FN_DEPRECATED(int KSI_CTX_setPublicationCertEmail(KSI_CTX *ctx, const char *email));
+KSI_FN_DEPRECATED(int KSI_CTX_setPublicationCertEmail(KSI_CTX *ctx, const char *email), Use #KSI_CTX_setDefaultPubFileCertConstraints with #KSI_CERT_EMAIL instead.);
 
 #define KSI_CERT_EMAIL "1.2.840.113549.1.9.1"
 #define KSI_CERT_COMMON_NAME "2.5.4.3"

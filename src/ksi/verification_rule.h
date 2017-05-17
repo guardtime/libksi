@@ -82,6 +82,16 @@ extern "C" {
 	int KSI_VerificationRule_AggregationHashChainTimeConsistency(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
+	 * This rule is used to check whether the aggregation hash chain chain index continuation is consistent.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_AggregationHashChainIndexContinuation(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
 	 * This rule is used to check whether the shape of the aggregation hash chain does match with the chain index.
 	 *
 	 * \param[in]	info		Verification context to be used for given rule

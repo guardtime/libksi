@@ -81,15 +81,18 @@ ALLTESTS_OBJ = \
 	$(OBJ_DIR)\ksi_policy_test.obj \
 	$(OBJ_DIR)\ksi_sdk_version_test.obj \
 	$(OBJ_DIR)\ksi_flags_test.obj \
-	$(OBJ_DIR)\ksi_blocksigner_test.obj
+	$(OBJ_DIR)\ksi_blocksigner_test.obj \
+	$(OBJ_DIR)\ksi_list_test.obj
 
 INTTESTS_OBJ = \
 	$(OBJ_DIR)\all_integration_tests.obj \
 	$(OBJ_DIR)\aggre_integration_test.obj \
 	$(OBJ_DIR)\ext_integration_tests.obj \
 	$(OBJ_DIR)\pub_integration_tests.obj \
+	$(OBJ_DIR)\integration_test_pack.obj \
 	$(OBJ_DIR)\support_tests.obj \
-	$(OBJ_DIR)\CuTest.obj
+	$(OBJ_DIR)\CuTest.obj \
+	$(OBJ_DIR)\test_conf.obj 
 
 RESIGNER_OBJ = \
 	$(OBJ_DIR)\resigner.obj

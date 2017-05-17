@@ -19,10 +19,14 @@
 
 #include "cutest/CuTest.h"
 #include "all_integration_tests.h"
-#include <../src/ksi/ksi.h>
-#include <../src/ksi/ksi.h>
 
 extern KSI_CTX *ctx;
+extern KSITest_Conf conf;
+
+static void postTest(void) {
+	KSI_CTX_setPublicationUrl(ctx, conf.publications_file_url);
+}
+
 
 static void Test_DownloadPubfile(CuTest* tc) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -137,6 +141,8 @@ static void Test_DownloadPubfile_ChangeClient(CuTest* tc) {
 
 CuSuite* PubIntegrationTests_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
+
+	suite->postTest = postTest;
 
 	SUITE_ADD_TEST(suite, Test_DownloadPubfile);
 	SUITE_ADD_TEST(suite, Test_DownloadPubfileInvalidConstraints);

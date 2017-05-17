@@ -54,10 +54,6 @@ extern "C" {
 
 #define lprintf //printf("%s:%d - ", __FILE__, __LINE__); printf
 
-int KSITest_memcmp(void *ptr1, void *ptr2, size_t len);
-
-int KSITest_DataHash_fromStr(KSI_CTX *ctx, const char *hexstr, KSI_DataHash **hsh);
-int KSITest_decodeHexStr(const char *hexstr, unsigned char *buf, size_t buf_size, size_t *buf_length);
 int KSITest_setDefaultPubfileAndVerInfo(KSI_CTX *ctx);
 int KSITest_tlvFromFile(const char *fileName, KSI_TLV **tlv);
 int KSITest_CTX_clone(KSI_CTX **out);
@@ -85,6 +81,8 @@ CuSuite* KSITest_versionNumber_getSuite(void);
 CuSuite* KSITest_Blocksigner_getSuite(void);
 CuSuite* KSITest_Flags_getSuite(void);
 CuSuite* KSITest_SignatureBuilder_getSuite(void);
+CuSuite* KSITest_List_getSuite(void);
+
 
 #ifdef __cplusplus
 }

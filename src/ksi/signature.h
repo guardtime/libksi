@@ -178,20 +178,7 @@ extern "C" {
 	 */
 	int KSI_Signature_getSigningTime(const KSI_Signature *sig, KSI_Integer **signTime);
 
-	/**
-	 * Function to get signer identity.
-	 * \param[in]		sig			KSI signature.
-	 * \param[out]		identity	Pointer to receiving pointer.
-	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
-	 *
-	 * \note The output memory buffer belongs to the caller and needs to be freed
-	 * by the caller using #KSI_free.
-	 * \note This method is deprecated and will be removed in later versions, use
-	 * #KSI_Signature_getAggregationHashChainIdentity
-	 */
-	KSI_FN_DEPRECATED(int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **identity));
+	KSI_FN_DEPRECATED(int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **identity), Use #KSI_Signature_getAggregationHashChainIdentity instead.);
 
 	/**
 	 * Function for getting a list of the identities present in all aggregation hash chains.
