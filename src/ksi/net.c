@@ -879,13 +879,13 @@ int KSI_RequestHandle_getExtendResponse(const KSI_RequestHandle *handle, KSI_Ext
 	}
 
 	if (reqAggrTime != NULL && tmp == NULL) {
-		KSI_LOG_warn(handle->ctx, "Signature extend request response was not received.");
+		KSI_LOG_logBlob(handle->ctx, KSI_LOG_WARN, "Expected signature extend response. Response PDU is missing extend response:", raw, len);
 	}
 	if (reqConf != NULL && tmpConf == NULL) {
-		KSI_LOG_warn(handle->ctx, "Extender configuration request response was not received.");
+		KSI_LOG_logBlob(handle->ctx, KSI_LOG_WARN, "Expected extender configuration. Response PDU is missing extender configuration:", raw, len);
 	}
 	if (reqConf != NULL && tmp != NULL) {
-		KSI_LOG_warn(handle->ctx, "Unexpected extend response received.");
+		KSI_LOG_logBlob(handle->ctx, KSI_LOG_WARN, "Expected extender configuration. Response PDU includes unexpected signature extend response:", raw, len);
 	}
 
 	if (tmpConf != NULL) {
@@ -1071,13 +1071,13 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 	}
 
 	if (reqHash != NULL && tmp == NULL) {
-		KSI_LOG_warn(handle->ctx, "Aggregation request response was not received.");
+		KSI_LOG_logBlob(handle->ctx, KSI_LOG_WARN, "Expected aggregation response. Response PDU is missing aggregation response:", raw, len);
 	}
 	if (reqConf != NULL && tmpConf == NULL) {
-		KSI_LOG_warn(handle->ctx, "Aggregator configuration request response was not received.");
+		KSI_LOG_logBlob(handle->ctx, KSI_LOG_WARN, "Expected aggregator configuration. Response PDU is missing aggregator configuration:", raw, len);
 	}
 	if (reqConf != NULL && tmp != NULL) {
-		KSI_LOG_warn(handle->ctx, "Unexpected aggregator response received.");
+		KSI_LOG_logBlob(handle->ctx, KSI_LOG_WARN, "Expected aggregator configuration. Response PDU includes unexpected aggregation response:", raw, len);
 	}
 
 	if (tmpConf != NULL) {
