@@ -431,6 +431,9 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 			"Aggregation request");
 	if (res != KSI_OK) goto cleanup;
 
+	(*handle)->reqCtx = (void*)KSI_AggregationReq_ref(req);
+	(*handle)->reqCtx_free = (void (*)(void *))KSI_AggregationReq_free;
+
 	res = KSI_OK;
 
 cleanup:
