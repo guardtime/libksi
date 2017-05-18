@@ -1157,7 +1157,7 @@ cleanup:
 
 int KSI_ExtendPdu_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len, KSI_ExtendPdu **t) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_TLV *tlv = NULL;
+	KSI_FTLV tlv;
 	KSI_ExtendPdu *tmp = NULL;
 	KSI_OctetString *tmpRaw = NULL;
 
@@ -1166,25 +1166,30 @@ int KSI_ExtendPdu_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len, KSI_
 		goto cleanup;
 	}
 
-	res = KSI_TLV_parseBlob2(ctx, (unsigned char *)raw, len, 0, &tlv);
+	res = KSI_FTLV_memRead(raw, len, &tlv);
 	if (res != KSI_OK) goto cleanup;
+
+	if (tlv.hdr_len + tlv.dat_len != len) {
+		res = KSI_INVALID_FORMAT;
+		goto cleanup;
+	}
 
 	res = KSI_ExtendPdu_new(ctx, &tmp);
 	if (res != KSI_OK) goto cleanup;
 
-	if (KSI_TLV_getTag(tlv) == 0x300) {
+	if (tlv.tag == 0x300) {
 		if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_2) {
 			res = KSI_SERVICE_EXTENDER_PDU_V1_RESPONSE_TO_PDU_V2_REQUEST;
 		} else {
 			res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_ExtendPdu), tmp);
 		}
-	} else if (KSI_TLV_getTag(tlv) == 0x320) {
+	} else if (tlv.tag == 0x320) {
 		if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1) {
 			res = KSI_SERVICE_EXTENDER_PDU_V2_RESPONSE_TO_PDU_V1_REQUEST;
 		} else {
 			res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_ExtendReqPdu), tmp);
 		}
-	} else if (KSI_TLV_getTag(tlv) == 0x321) {
+	} else if (tlv.tag == 0x321) {
 		if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1) {
 			res = KSI_SERVICE_EXTENDER_PDU_V2_RESPONSE_TO_PDU_V1_REQUEST;
 		} else {
@@ -1210,7 +1215,6 @@ int KSI_ExtendPdu_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len, KSI_
 
 cleanup:
 
-	KSI_TLV_free(tlv);
 	KSI_OctetString_free(tmpRaw);
 	KSI_ExtendPdu_free(tmp);
 
@@ -1462,7 +1466,7 @@ cleanup:
 
 int KSI_AggregationPdu_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len, KSI_AggregationPdu **t) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_TLV *tlv = NULL;
+	KSI_FTLV tlv;
 	KSI_AggregationPdu *tmp = NULL;
 	KSI_OctetString *tmpRaw = NULL;
 
@@ -1471,25 +1475,30 @@ int KSI_AggregationPdu_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len,
 		goto cleanup;
 	}
 
-	res = KSI_TLV_parseBlob2(ctx, (unsigned char *)raw, len, 0, &tlv);
+	res = KSI_FTLV_memRead(raw, len, &tlv);
 	if (res != KSI_OK) goto cleanup;
+
+	if (tlv.hdr_len + tlv.dat_len != len) {
+		res = KSI_INVALID_FORMAT;
+		goto cleanup;
+	}
 
 	res = KSI_AggregationPdu_new(ctx, &tmp);
 	if (res != KSI_OK) goto cleanup;
 
-	if (KSI_TLV_getTag(tlv) == 0x200) {
+	if (tlv.tag == 0x200) {
 		if (ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_2) {
 			res = KSI_SERVICE_AGGR_PDU_V1_RESPONSE_TO_PDU_V2_REQUEST;
 		} else {
 			res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_AggregationPdu), tmp);
 		}
-	} else if (KSI_TLV_getTag(tlv) == 0x220) {
+	} else if (tlv.tag == 0x220) {
 		if (ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1) {
 			res = KSI_SERVICE_AGGR_PDU_V2_RESPONSE_TO_PDU_V1_REQUEST;
 		} else {
 			res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_AggregationReqPdu), tmp);
 		}
-	} else if (KSI_TLV_getTag(tlv) == 0x221) {
+	} else if (tlv.tag == 0x221) {
 		if (ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1) {
 			res = KSI_SERVICE_AGGR_PDU_V2_RESPONSE_TO_PDU_V1_REQUEST;
 		} else {
@@ -1514,7 +1523,6 @@ int KSI_AggregationPdu_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len,
 
 cleanup:
 
-	KSI_TLV_free(tlv);
 	KSI_OctetString_free(tmpRaw);
 	KSI_AggregationPdu_free(tmp);
 
