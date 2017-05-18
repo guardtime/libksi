@@ -43,6 +43,7 @@
 #else
 #  include <winsock2.h>
 #  include <ws2tcpip.h>
+#  pragma comment (lib, "Ws2_32.lib") /* Link with Ws2_32.lib. */
 #  define close(soc) closesocket(soc)
 #endif
 
@@ -76,8 +77,9 @@ static int readResponse(KSI_RequestHandle *handle) {
 	TcpClientCtx *tcp = NULL;
 	KSI_TcpClient *client = NULL;
 	int sockfd = -1;
-	struct sockaddr_in serv_addr;
-	struct hostent *server = NULL;
+	struct addrinfo hints;
+	struct addrinfo *result = NULL;
+	struct addrinfo *pr = NULL;
 	size_t count;
 	unsigned char buffer[0xffff + 4];
 	KSI_FTLV ftlv;
@@ -86,6 +88,7 @@ static int readResponse(KSI_RequestHandle *handle) {
 #else
 	struct timeval  transferTimeout;
 #endif
+	char portStr[6];
 
 	if (handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -97,43 +100,49 @@ static int readResponse(KSI_RequestHandle *handle) {
 	tcp = handle->implCtx;
 	client = handle->client->impl;
 
-	sockfd = (int)socket(AF_INET, SOCK_STREAM, 0);
-	if (sockfd < 0) {
-		KSI_pushError(handle->ctx, res = KSI_NETWORK_ERROR, "Unable to open socket.");
+	memset(&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = 0;
+	hints.ai_protocol = IPPROTO_TCP;
+
+	KSI_snprintf(portStr, sizeof(portStr), "%u", tcp->port);
+	if ((res = getaddrinfo(tcp->host, portStr, &hints, &result)) != 0) {
+		KSI_ERR_push(handle->ctx, KSI_NETWORK_ERROR, res, __FILE__, __LINE__, gai_strerror(res));
+		res = KSI_NETWORK_ERROR;
 		goto cleanup;
 	}
+
+	for (pr = result; pr != NULL; pr = pr->ai_next) {
+		if (pr->ai_protocol != IPPROTO_TCP) continue;
+
+		sockfd = (int)socket(pr->ai_family, pr->ai_socktype, pr->ai_protocol);
+		if (sockfd < 0) {
+			KSI_pushError(handle->ctx, res = KSI_NETWORK_ERROR, "Unable to open socket.");
+			goto cleanup;
+		}
+
 #ifdef _WIN32
-	transferTimeout = client->transferTimeoutSeconds * 1000;
+		transferTimeout = client->transferTimeoutSeconds * 1000;
 #else
-	transferTimeout.tv_sec = client->transferTimeoutSeconds;
-	transferTimeout.tv_usec = 0;
+		transferTimeout.tv_sec = client->transferTimeoutSeconds;
+		transferTimeout.tv_usec = 0;
 #endif
 
-	/*Set socket options*/
-	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (void*)&transferTimeout, sizeof(transferTimeout));
-	setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (void*)&transferTimeout, sizeof(transferTimeout));
+		/*Set socket options*/
+		setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (void*)&transferTimeout, sizeof(transferTimeout));
+		setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (void*)&transferTimeout, sizeof(transferTimeout));
 
-	server = gethostbyname(tcp->host);
-	if (server == NULL) {
-		KSI_pushError(handle->ctx, res = KSI_NETWORK_ERROR, "Unable to open host.");
-		goto cleanup;
+		if ((res = connect(sockfd, pr->ai_addr, pr->ai_addrlen)) < 0) {
+			KSI_ERR_push(handle->ctx, KSI_NETWORK_ERROR, res, __FILE__, __LINE__, "Unable to connect.");
+			res = KSI_NETWORK_ERROR;
+			goto cleanup;
+		}
+		/* Succeedded to connect. */
+		break;
 	}
-
-	memset((char *) &serv_addr, 0, sizeof(serv_addr));
-	serv_addr.sin_family = AF_INET;
-
-	if (server->h_length <= sizeof(serv_addr.sin_addr.s_addr)) {
-		memmove((char *)&serv_addr.sin_addr.s_addr, (char *)server->h_addr, server->h_length);
-	} else {
-		KSI_pushError(handle->ctx, res = KSI_BUFFER_OVERFLOW, "Host address too long.");
-		goto cleanup;
-	}
-
-	serv_addr.sin_port = htons(tcp->port);
-
-	if ((res = connect(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr))) < 0) {
-		KSI_ERR_push(handle->ctx, KSI_NETWORK_ERROR, res, __FILE__, __LINE__, "Unable to connect.");
-		res = KSI_NETWORK_ERROR;
+	if (pr == NULL) {
+		KSI_pushError(handle->ctx, res = KSI_NETWORK_ERROR, "Unable to connect, no address succeeded.");
 		goto cleanup;
 	}
 
@@ -182,7 +191,7 @@ static int readResponse(KSI_RequestHandle *handle) {
 	res = KSI_OK;
 
 cleanup:
-
+	if (result) freeaddrinfo(result);
 	if (sockfd >= 0) close(sockfd);
 
 	return res;
