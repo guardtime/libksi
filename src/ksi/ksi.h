@@ -309,7 +309,14 @@ enum KSI_StatusCode {
 #define KSI_PDU_VERSION_1		1
 #define KSI_PDU_VERSION_2		2
 
-typedef int (*KSI_Config_Callback)(KSI_CTX *, KSI_Config *);
+
+/**
+ * Service configuration receive callback.
+ * \param[in]	ctx		KSI context object.
+ * \param[in]	conf	Pointer to the configuration.
+ * \return Implementation must return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
+typedef int (*KSI_Config_Callback)(KSI_CTX *ctx, KSI_Config *conf);
 
 typedef enum KSI_Option_en {
 	/**
