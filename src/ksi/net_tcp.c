@@ -133,7 +133,12 @@ static int readResponse(KSI_RequestHandle *handle) {
 		setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (void*)&transferTimeout, sizeof(transferTimeout));
 		setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (void*)&transferTimeout, sizeof(transferTimeout));
 
-		if ((res = connect(sockfd, pr->ai_addr, pr->ai_addrlen)) < 0) {
+#ifdef _WIN32
+		res = connect(sockfd, pr->ai_addr, (int)pr->ai_addrlen);
+#else
+		res = connect(sockfd, pr->ai_addr, pr->ai_addrlen);
+#endif
+		if (res < 0) {
 			KSI_ERR_push(handle->ctx, KSI_NETWORK_ERROR, res, __FILE__, __LINE__, "Unable to connect.");
 			res = KSI_NETWORK_ERROR;
 			goto cleanup;
