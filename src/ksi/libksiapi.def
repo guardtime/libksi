@@ -585,6 +585,7 @@ EXPORTS
 	KSI_Config_setParentUri
 	KSI_Config_setCalendarFirstTime
 	KSI_Config_setCalendarLastTime
+	KSI_Config_ref
 	KSI_AggregationReq_free
 	KSI_AggregationReq_new
 	KSI_AggregationReq_getRequestId
