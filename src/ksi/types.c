@@ -102,6 +102,7 @@ struct KSI_Config_st {
 };
 
 struct KSI_AggregationReq_st {
+	size_t ref;
 	KSI_CTX *ctx;
 	KSI_Integer *requestId;
 	KSI_DataHash *requestHash;
@@ -136,6 +137,7 @@ struct KSI_AggregationResp_st {
 };
 
 struct KSI_ExtendReq_st {
+	size_t ref;
 	KSI_CTX *ctx;
 	KSI_Integer *requestId;
 	KSI_Integer *aggregationTime;
@@ -1155,7 +1157,7 @@ cleanup:
 
 int KSI_ExtendPdu_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len, KSI_ExtendPdu **t) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_TLV *tlv = NULL;
+	KSI_FTLV tlv;
 	KSI_ExtendPdu *tmp = NULL;
 	KSI_OctetString *tmpRaw = NULL;
 
@@ -1164,25 +1166,30 @@ int KSI_ExtendPdu_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len, KSI_
 		goto cleanup;
 	}
 
-	res = KSI_TLV_parseBlob2(ctx, (unsigned char *)raw, len, 0, &tlv);
+	res = KSI_FTLV_memRead(raw, len, &tlv);
 	if (res != KSI_OK) goto cleanup;
+
+	if (tlv.hdr_len + tlv.dat_len != len) {
+		res = KSI_INVALID_FORMAT;
+		goto cleanup;
+	}
 
 	res = KSI_ExtendPdu_new(ctx, &tmp);
 	if (res != KSI_OK) goto cleanup;
 
-	if (KSI_TLV_getTag(tlv) == 0x300) {
+	if (tlv.tag == 0x300) {
 		if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_2) {
 			res = KSI_SERVICE_EXTENDER_PDU_V1_RESPONSE_TO_PDU_V2_REQUEST;
 		} else {
 			res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_ExtendPdu), tmp);
 		}
-	} else if (KSI_TLV_getTag(tlv) == 0x320) {
+	} else if (tlv.tag == 0x320) {
 		if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1) {
 			res = KSI_SERVICE_EXTENDER_PDU_V2_RESPONSE_TO_PDU_V1_REQUEST;
 		} else {
 			res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_ExtendReqPdu), tmp);
 		}
-	} else if (KSI_TLV_getTag(tlv) == 0x321) {
+	} else if (tlv.tag == 0x321) {
 		if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1) {
 			res = KSI_SERVICE_EXTENDER_PDU_V2_RESPONSE_TO_PDU_V1_REQUEST;
 		} else {
@@ -1208,7 +1215,6 @@ int KSI_ExtendPdu_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len, KSI_
 
 cleanup:
 
-	KSI_TLV_free(tlv);
 	KSI_OctetString_free(tmpRaw);
 	KSI_ExtendPdu_free(tmp);
 
@@ -1460,7 +1466,7 @@ cleanup:
 
 int KSI_AggregationPdu_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len, KSI_AggregationPdu **t) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_TLV *tlv = NULL;
+	KSI_FTLV tlv;
 	KSI_AggregationPdu *tmp = NULL;
 	KSI_OctetString *tmpRaw = NULL;
 
@@ -1469,25 +1475,30 @@ int KSI_AggregationPdu_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len,
 		goto cleanup;
 	}
 
-	res = KSI_TLV_parseBlob2(ctx, (unsigned char *)raw, len, 0, &tlv);
+	res = KSI_FTLV_memRead(raw, len, &tlv);
 	if (res != KSI_OK) goto cleanup;
+
+	if (tlv.hdr_len + tlv.dat_len != len) {
+		res = KSI_INVALID_FORMAT;
+		goto cleanup;
+	}
 
 	res = KSI_AggregationPdu_new(ctx, &tmp);
 	if (res != KSI_OK) goto cleanup;
 
-	if (KSI_TLV_getTag(tlv) == 0x200) {
+	if (tlv.tag == 0x200) {
 		if (ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_2) {
 			res = KSI_SERVICE_AGGR_PDU_V1_RESPONSE_TO_PDU_V2_REQUEST;
 		} else {
 			res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_AggregationPdu), tmp);
 		}
-	} else if (KSI_TLV_getTag(tlv) == 0x220) {
+	} else if (tlv.tag == 0x220) {
 		if (ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1) {
 			res = KSI_SERVICE_AGGR_PDU_V2_RESPONSE_TO_PDU_V1_REQUEST;
 		} else {
 			res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_AggregationReqPdu), tmp);
 		}
-	} else if (KSI_TLV_getTag(tlv) == 0x221) {
+	} else if (tlv.tag == 0x221) {
 		if (ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1) {
 			res = KSI_SERVICE_AGGR_PDU_V2_RESPONSE_TO_PDU_V1_REQUEST;
 		} else {
@@ -1512,7 +1523,6 @@ int KSI_AggregationPdu_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len,
 
 cleanup:
 
-	KSI_TLV_free(tlv);
 	KSI_OctetString_free(tmpRaw);
 	KSI_AggregationPdu_free(tmp);
 
@@ -1681,7 +1691,7 @@ KSI_IMPLEMENT_SETTER(KSI_Config, KSI_Integer*, calendarLastTime, CalendarLastTim
  * KSI_AggregationReq
  */
 void KSI_AggregationReq_free(KSI_AggregationReq *t) {
-	if (t != NULL) {
+	if (t != NULL && --t->ref == 0) {
 		KSI_Integer_free(t->requestId);
 		KSI_DataHash_free(t->requestHash);
 		KSI_Integer_free(t->requestLevel);
@@ -1701,6 +1711,7 @@ int KSI_AggregationReq_new(KSI_CTX *ctx, KSI_AggregationReq **t) {
 	}
 
 	tmp->ctx = ctx;
+	tmp->ref = 1;
 	tmp->requestId = NULL;
 	tmp->requestHash = NULL;
 	tmp->requestLevel = NULL;
@@ -1817,6 +1828,8 @@ KSI_IMPLEMENT_SETTER(KSI_AggregationReq, KSI_Integer*, requestId, RequestId);
 KSI_IMPLEMENT_SETTER(KSI_AggregationReq, KSI_DataHash*, requestHash, RequestHash);
 KSI_IMPLEMENT_SETTER(KSI_AggregationReq, KSI_Integer*, requestLevel, RequestLevel);
 KSI_IMPLEMENT_SETTER(KSI_AggregationReq, KSI_Config*, config, Config);
+
+KSI_IMPLEMENT_REF(KSI_AggregationReq)
 
 /**
  * KSI_RequestAck
@@ -2069,7 +2082,7 @@ KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_TLV*, baseTlv, BaseTlv);
  * KSI_ExtendReq
  */
 void KSI_ExtendReq_free(KSI_ExtendReq *t) {
-	if (t != NULL) {
+	if (t != NULL && --t->ref == 0) {
 		KSI_Integer_free(t->requestId);
 		KSI_Integer_free(t->aggregationTime);
 		KSI_Integer_free(t->publicationTime);
@@ -2089,6 +2102,7 @@ int KSI_ExtendReq_new(KSI_CTX *ctx, KSI_ExtendReq **t) {
 	}
 
 	tmp->ctx = ctx;
+	tmp->ref = 1;
 	tmp->requestId = NULL;
 	tmp->aggregationTime = NULL;
 	tmp->publicationTime = NULL;
@@ -2203,6 +2217,8 @@ KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, requestId, RequestId);
 KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, aggregationTime, AggregationTime);
 KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Integer*, publicationTime, PublicationTime);
 KSI_IMPLEMENT_SETTER(KSI_ExtendReq, KSI_Config*, config, Config);
+
+KSI_IMPLEMENT_REF(KSI_ExtendReq)
 
 /**
  * KSI_ExtendResp

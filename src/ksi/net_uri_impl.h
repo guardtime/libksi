@@ -20,10 +20,7 @@
 #ifndef NET_URI_IMPL_H_
 #define NET_URI_IMPL_H_
 
-#include "net_http.h"
-#include "net_tcp.h"
-#include "net_impl.h"
-#include "http_parser.h"
+#include "types.h"
 
 #ifdef __cplusplus
 extern "C" {

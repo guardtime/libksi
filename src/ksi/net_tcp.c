@@ -356,6 +356,7 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 			endp->port,
 			"Extend request");
 	if (res != KSI_OK) goto cleanup;
+
 	res = KSI_OK;
 
 cleanup:
@@ -415,6 +416,9 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 			endp->port,
 			"Aggregation request");
 	if (res != KSI_OK) goto cleanup;
+
+	(*handle)->reqCtx = (void*)KSI_AggregationReq_ref(req);
+	(*handle)->reqCtx_free = (void (*)(void *))KSI_AggregationReq_free;
 
 	res = KSI_OK;
 

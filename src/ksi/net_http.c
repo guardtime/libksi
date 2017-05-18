@@ -154,8 +154,10 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 			handle,
 			endp->url,
 			"Extend request");
-
 	if (res != KSI_OK) goto cleanup;
+
+	(*handle)->reqCtx = (void*)KSI_ExtendReq_ref(req);
+	(*handle)->reqCtx_free = (void (*)(void *))KSI_ExtendReq_free;
 
 	res = KSI_OK;
 
@@ -215,6 +217,13 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 			handle,
 			endp->url,
 			"Aggregation request");
+	if (res != KSI_OK) goto cleanup;
+
+	(*handle)->reqCtx = (void*)KSI_AggregationReq_ref(req);
+	(*handle)->reqCtx_free = (void (*)(void *))KSI_AggregationReq_free;
+
+	res = KSI_OK;
+
 cleanup:
 
 	KSI_Integer_free(reqId);

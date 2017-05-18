@@ -43,21 +43,45 @@ static unsigned char mockImprint[] ={0x01,
 		 0xad, 0xb2, 0x38, 0x55, 0x2d, 0x86, 0xc6, 0x59,
 		 0x34, 0x2d, 0x1d, 0x7e, 0x87, 0xb8, 0x77, 0x2d};
 
+static KSI_Config *callbackConf = NULL;
+static size_t callbackCalls = 0;
+
+static int Test_ConfigCallback(KSI_CTX *ctx, KSI_Config *conf) {
+	callbackCalls++;
+	if (ctx == NULL || conf == NULL) return KSI_INVALID_ARGUMENT;
+	callbackConf = KSI_Config_ref(conf);
+	return KSI_OK;
+}
+
+static void Test_ConfCallback_reset(void) {
+	callbackConf = NULL;
+	callbackCalls = 0;
+}
+
 static void preTest(void) {
 	ctx->netProvider->requestCount = 0;
 
 	/* Set PDU v2. */
-	ctx->options[KSI_OPT_AGGR_PDU_VER] = KSI_PDU_VERSION_2;
-	ctx->options[KSI_OPT_EXT_PDU_VER]  = KSI_PDU_VERSION_2;
+	KSI_CTX_setOption(ctx, KSI_OPT_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_2);
+	KSI_CTX_setOption(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
+
+	/* Reset conf callback. */
+	Test_ConfCallback_reset();
+	KSI_CTX_setOption(ctx, KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK, NULL);
+	KSI_CTX_setOption(ctx, KSI_OPT_EXT_CONF_RECEIVED_CALLBACK, NULL);
 }
 
 static void postTest(void) {
 	/* Restore default PDU version. */
-	ctx->options[KSI_OPT_AGGR_PDU_VER] = KSI_AGGREGATION_PDU_VERSION;
-	ctx->options[KSI_OPT_EXT_PDU_VER]  = KSI_EXTENDING_PDU_VERSION;
+	KSI_CTX_setOption(ctx, KSI_OPT_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
+	KSI_CTX_setOption(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
 	/* Restore default HMAC algorithm. */
-	ctx->options[KSI_OPT_AGGR_HMAC_ALGORITHM] = TEST_DEFAULT_AGGR_HMAC_ALGORITHM;
-	ctx->options[KSI_OPT_EXT_HMAC_ALGORITHM] = TEST_DEFAULT_EXT_HMAC_ALGORITHM;
+	KSI_CTX_setOption(ctx, KSI_OPT_AGGR_HMAC_ALGORITHM, (void*)TEST_DEFAULT_AGGR_HMAC_ALGORITHM);
+	KSI_CTX_setOption(ctx, KSI_OPT_EXT_HMAC_ALGORITHM, (void*)TEST_DEFAULT_EXT_HMAC_ALGORITHM);
+
+	/* Reset conf callback. */
+	KSI_CTX_setOption(ctx, KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK, NULL);
+	KSI_CTX_setOption(ctx, KSI_OPT_EXT_CONF_RECEIVED_CALLBACK, NULL);
 }
 
 static void testSigning(CuTest* tc) {
@@ -1411,6 +1435,50 @@ static void testExtendingResponseWithConf(CuTest* tc) {
 #undef TEST_EXT_RESPONSE_FILE
 }
 
+static void testExtendingResponseWithConfCallback(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/v2/ok-sig-2014-04-30.1-extend_response-with-conf.tlv"
+
+	int res;
+	KSI_Signature *sig = NULL;
+	KSI_Signature *ext = NULL;
+	KSI_Config *conf = NULL;
+	KSI_Integer *intVal = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
+	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
+
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
+
+	res = KSI_CTX_setOption(ctx, KSI_OPT_EXT_CONF_RECEIVED_CALLBACK, Test_ConfigCallback);
+	CuAssert(tc, "Unable to set extender conf callback.", res == KSI_OK);
+
+	res = KSI_extendSignature(ctx, sig, &ext);
+	CuAssert(tc, "Signature extending should have not failed.", res == KSI_OK && ext != NULL);
+
+	CuAssert(tc, "Conf callback has not been invoked.", callbackCalls > 0);
+
+	conf = callbackConf;
+	CuAssert(tc, "Push conf is not set.", conf != NULL);
+
+	res = KSI_Config_getMaxRequests(conf, &intVal);
+	CuAssert(tc, "Conf max requests value mismatch.", res == KSI_OK && KSI_Integer_getUInt64(intVal) == 4);
+	intVal = NULL;
+
+	res = KSI_Config_getCalendarFirstTime(conf, &intVal);
+	CuAssert(tc, "Conf calendar time value mismatch.", res == KSI_OK && KSI_Integer_getUInt64(intVal) == 1398866256);
+
+	KSI_Signature_free(sig);
+	KSI_Signature_free(ext);
+	KSI_Config_free(conf);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+}
+
 static void testExtendingResponseWithConfAndAck(CuTest* tc) {
 #define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/v2/ok-sig-2014-04-30.1-extend_response-with-conf-and-ack.tlv"
@@ -1434,6 +1502,35 @@ static void testExtendingResponseWithConfAndAck(CuTest* tc) {
 	KSI_Signature_free(ext);
 
 #undef TEST_SIGNATURE_FILE
+#undef TEST_EXT_RESPONSE_FILE
+}
+
+static void testExtenderConfRequestConfWithExtResponse(CuTest* tc) {
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/v2/ok-sig-2014-04-30.1-extend_response-with-conf.tlv"
+
+	int res;
+	KSI_Config *conf = NULL;
+	KSI_Integer *intVal = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
+
+	res = KSI_receiveExtenderConfig(ctx, &conf);
+	CuAssert(tc, "Conf request should have not failed.", res == KSI_OK && conf != NULL);
+
+	CuAssert(tc, "Conf callback should have not been called.", callbackCalls == 0 && callbackConf == NULL);
+
+	res = KSI_Config_getMaxRequests(conf, &intVal);
+	CuAssert(tc, "Conf max requests value mismatch.", res == KSI_OK && KSI_Integer_getUInt64(intVal) == 4);
+	intVal = NULL;
+
+	res = KSI_Config_getCalendarFirstTime(conf, &intVal);
+	CuAssert(tc, "Conf calendar time value mismatch.", res == KSI_OK && KSI_Integer_getUInt64(intVal) == 1398866256);
+
+	KSI_Config_free(conf);
+
 #undef TEST_EXT_RESPONSE_FILE
 }
 
@@ -1462,6 +1559,76 @@ static void testAggregationResponseWithConfAndAck(CuTest* tc) {
 #undef TEST_SIGNATURE_FILE
 }
 
+static void testAggregationResponseWithConfCallback(CuTest* tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/v2/ok-sig-2014-07-01.1-aggr_response-with-conf-and-ack.tlv"
+	int res;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+	KSI_Config *conf = NULL;
+	KSI_Integer *intVal = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
+	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+
+	res = KSI_CTX_setOption(ctx, KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK, Test_ConfigCallback);
+	CuAssert(tc, "Unable to set extender conf callback.", res == KSI_OK);
+
+	res = KSI_createSignature(ctx, hsh, &sig);
+	CuAssert(tc, "Signing should have not failed.", res == KSI_OK && sig != NULL);
+
+	CuAssert(tc, "Conf callback has not been invoked.", callbackCalls > 0);
+
+	conf = callbackConf;
+	CuAssert(tc, "Push conf is not set.", conf != NULL);
+
+	res = KSI_Config_getMaxRequests(conf, &intVal);
+	CuAssert(tc, "Conf max requests value mismatch.", res == KSI_OK && KSI_Integer_getUInt64(intVal) == 4);
+	intVal = NULL;
+
+	res = KSI_Config_getAggrPeriod(conf, &intVal);
+	CuAssert(tc, "Conf aggregation period value mismatch.", res == KSI_OK && KSI_Integer_getUInt64(intVal) == 3);
+
+	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
+	KSI_Config_free(conf);
+
+#undef TEST_AGGR_RESPONSE_FILE
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testAggreConfRequestConfWithSig(CuTest* tc) {
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/v2/ok-sig-2014-07-01.1-aggr_response-with-conf-and-ack.tlv"
+	int res;
+	KSI_Config *conf = NULL;
+	KSI_Integer *intVal = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+
+	res = KSI_receiveAggregatorConfig(ctx, &conf);
+	CuAssert(tc, "Conf request should have not failed.", res == KSI_OK && conf != NULL);
+
+	CuAssert(tc, "Conf callback should have not been called.", callbackCalls == 0 && callbackConf == NULL);
+
+	res = KSI_Config_getMaxRequests(conf, &intVal);
+	CuAssert(tc, "Conf max requests value mismatch.", res == KSI_OK && KSI_Integer_getUInt64(intVal) == 4);
+	intVal = NULL;
+
+	res = KSI_Config_getAggrPeriod(conf, &intVal);
+	CuAssert(tc, "Conf aggregation period value mismatch.", res == KSI_OK && KSI_Integer_getUInt64(intVal) == 3);
+
+	KSI_Config_free(conf);
+
+#undef TEST_AGGR_RESPONSE_FILE
+}
 
 static void testAggregationResponseWithInvalidId(CuTest* tc) {
 #define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
@@ -1720,15 +1887,19 @@ CuSuite* KSITest_NetPduV2_getSuite(void) {
 	SUITE_ADD_TEST(suite, testFlagsInExtenderResponse);
 	SUITE_ADD_TEST(suite, testErrorStatusWithCalendarHashChainInResponse);
 	SUITE_ADD_TEST(suite, testExtendingResponseWithConf);
+	SUITE_ADD_TEST(suite, testExtendingResponseWithConfCallback);
 	SUITE_ADD_TEST(suite, testExtendingResponseWithConfAndAck);
+	SUITE_ADD_TEST(suite, testExtenderConfRequestConfWithExtResponse);
 	SUITE_ADD_TEST(suite, testAggregationResponseWithConfAndAck);
+	SUITE_ADD_TEST(suite, testAggregationResponseWithConfCallback);
+	SUITE_ADD_TEST(suite, testAggreConfRequestConfWithSig);
 	SUITE_ADD_TEST(suite, testAggregationResponseWithInvalidId);
 	SUITE_ADD_TEST(suite, testExtendingResponseWithInvalidId);
 	SUITE_ADD_TEST(suite, testExtendingResponseMultiplePayload);
 	SUITE_ADD_TEST(suite, testExtendingResponseWithResponseAndErrorPayload);
 	SUITE_ADD_TEST(suite, testAggregationResponseMultiplePayload);
 	SUITE_ADD_TEST(suite, testAggregationResponseWithResponseAndErrorPayload);
-		SUITE_ADD_TEST(suite, testSigningWithLevel);
+	SUITE_ADD_TEST(suite, testSigningWithLevel);
 
 	return suite;
 }

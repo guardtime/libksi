@@ -756,12 +756,17 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 		}
 
 		/* Check if a match was found, an raise an error if the TLV is marked as critical. */
-		if (matchCount == 0 && !KSI_TLV_isNonCritical(tlv)) {
-			char errm[1024];
-			KSI_snprintf(errm, sizeof(errm), "Unknown critical tag: %s", track_str(tr, tr_len + 1, tr_size, buf, sizeof(buf)));
-			KSI_LOG_debug(ctx, errm);
-			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, errm);
-			goto cleanup;
+		if (matchCount == 0) {
+			char msg[1024];
+			if (KSI_TLV_isNonCritical(tlv)) {
+				KSI_snprintf(msg, sizeof(msg), "Ignoring unknown non-critical tag: %s", track_str(tr, tr_len + 1, tr_size, buf, sizeof(buf)));
+				KSI_LOG_warn(ctx, msg);
+			} else {
+				KSI_snprintf(msg, sizeof(msg), "Unknown critical tag: %s", track_str(tr, tr_len + 1, tr_size, buf, sizeof(buf)));
+				KSI_LOG_debug(ctx, msg);
+				KSI_pushError(ctx, res = KSI_INVALID_FORMAT, msg);
+				goto cleanup;
+			}
 		}
 	}
 
