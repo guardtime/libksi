@@ -1,3 +1,4 @@
+* IMPROVEMENT: Refactored TCP client host information lookup by using getaddrinfo instead of gethostbyname.
 * IMPROVEMENT: Support for integration tests test package.
 * IMPROVEMENT: Refactored aggregation hash chain chain index continuation verification.
 Version 3.14
