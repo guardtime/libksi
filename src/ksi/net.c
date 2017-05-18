@@ -743,6 +743,7 @@ int KSI_RequestHandle_getExtendResponse(const KSI_RequestHandle *handle, KSI_Ext
 	KSI_ExtendReq *req = NULL;
 	KSI_Integer *reqAggrTime = NULL;
 	KSI_Config *reqConf = NULL;
+	bool logWarn = false;
 
 	if (handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -878,14 +879,28 @@ int KSI_RequestHandle_getExtendResponse(const KSI_RequestHandle *handle, KSI_Ext
 		goto cleanup;
 	}
 
+	/* Handle warning logging in case of unexpected response. */
 	if (reqAggrTime != NULL && tmp == NULL) {
-		KSI_LOG_logBlob(handle->ctx, KSI_LOG_WARN, "Expected signature extend response. Response PDU is missing extend response:", raw, len);
+		logWarn = true;
+		KSI_LOG_warn(handle->ctx, "Expected signature extend response. Response PDU is missing extend response.");
 	}
 	if (reqConf != NULL && tmpConf == NULL) {
-		KSI_LOG_logBlob(handle->ctx, KSI_LOG_WARN, "Expected extender configuration. Response PDU is missing extender configuration:", raw, len);
+		logWarn = true;
+		KSI_LOG_warn(handle->ctx, "Expected extender configuration. Response PDU is missing extender configuration.");
 	}
 	if (reqConf != NULL && tmp != NULL) {
-		KSI_LOG_logBlob(handle->ctx, KSI_LOG_WARN, "Expected extender configuration. Response PDU includes unexpected signature extend response:", raw, len);
+		logWarn = true;
+		KSI_LOG_warn(handle->ctx, "Expected extender configuration. Response PDU includes unexpected signature extend response.");
+	}
+	if (logWarn) {
+		KSI_LOG_logBlob(handle->ctx, KSI_LOG_WARN, "Response:", raw, len);
+
+		res = KSI_RequestHandle_getRequest(handle, &raw, &len);
+		if (res != KSI_OK) {
+			KSI_pushError(handle->ctx, res, NULL);
+			goto cleanup;
+		}
+		KSI_LOG_logBlob(handle->ctx, KSI_LOG_WARN, "Request :", raw, len);
 	}
 
 	if (tmpConf != NULL) {
@@ -946,6 +961,7 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 	KSI_AggregationReq *req = NULL;
 	KSI_DataHash *reqHash = NULL;
 	KSI_Config *reqConf = NULL;
+	bool logWarn = false;
 
 	if (handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1070,14 +1086,28 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 		goto cleanup;
 	}
 
+	/* Handle warning logging in case of unexpected response. */
 	if (reqHash != NULL && tmp == NULL) {
-		KSI_LOG_logBlob(handle->ctx, KSI_LOG_WARN, "Expected aggregation response. Response PDU is missing aggregation response:", raw, len);
+		logWarn = true;
+		KSI_LOG_warn(handle->ctx, "Expected aggregation response. Response PDU is missing aggregation response.");
 	}
 	if (reqConf != NULL && tmpConf == NULL) {
-		KSI_LOG_logBlob(handle->ctx, KSI_LOG_WARN, "Expected aggregator configuration. Response PDU is missing aggregator configuration:", raw, len);
+		logWarn = true;
+		KSI_LOG_warn(handle->ctx, "Expected aggregator configuration. Response PDU is missing aggregator configuration.");
 	}
 	if (reqConf != NULL && tmp != NULL) {
-		KSI_LOG_logBlob(handle->ctx, KSI_LOG_WARN, "Expected aggregator configuration. Response PDU includes unexpected aggregation response:", raw, len);
+		logWarn = true;
+		KSI_LOG_warn(handle->ctx, "Expected aggregator configuration. Response PDU includes unexpected aggregation response.");
+	}
+	if (logWarn) {
+		KSI_LOG_logBlob(handle->ctx, KSI_LOG_WARN, "Response:", raw, len);
+
+		res = KSI_RequestHandle_getRequest(handle, &raw, &len);
+		if (res != KSI_OK) {
+			KSI_pushError(handle->ctx, res, NULL);
+			goto cleanup;
+		}
+		KSI_LOG_logBlob(handle->ctx, KSI_LOG_WARN, "Request :", raw, len);
 	}
 
 	if (tmpConf != NULL) {
