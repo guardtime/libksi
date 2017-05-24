@@ -44,7 +44,7 @@ struct listImpl_st {
 	size_t arr_size;
 
 	/* The length of the used part of the array. */
-	KSI_uint64_t arr_len;
+	size_t arr_len;
 };
 
 struct KSI_List_st {
