@@ -203,7 +203,7 @@ extern "C" {
 	 * \param[in]	time		Validity time not before.
 	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_PKICertificate_getValidityNotBefore(const KSI_PKICertificate *cert, KSI_Integer **time);
+	int KSI_PKICertificate_getValidityNotBefore(const KSI_PKICertificate *cert, KSI_uint64_t *time);
 
 	/**
 	 * Get PKI Certicate validity date not after.
@@ -211,7 +211,7 @@ extern "C" {
 	 * \param[in]	time		Validity time not after.
 	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_PKICertificate_getValidityNotAfter(const KSI_PKICertificate *cert, KSI_Integer **time);
+	int KSI_PKICertificate_getValidityNotAfter(const KSI_PKICertificate *cert, KSI_uint64_t *time);
 
 /**
  * @}

@@ -539,62 +539,12 @@ cleanup:
 	return res;
 }
 
-static int pki_certificate_getValidityNotBefore(const KSI_PKICertificate *cert, KSI_uint64_t *time) {
+int KSI_PKICertificate_getValidityNotBefore(const KSI_PKICertificate *cert, KSI_uint64_t *time) {
 	return pki_certificate_getValidityTime(cert, NOT_BEFORE, time);
 }
 
-static int pki_certificate_getValidityNotAfter(const KSI_PKICertificate *cert, KSI_uint64_t *time) {
+int KSI_PKICertificate_getValidityNotAfter(const KSI_PKICertificate *cert, KSI_uint64_t *time) {
 	return pki_certificate_getValidityTime(cert, NOT_AFTER, time);
-}
-
-int KSI_PKICertificate_getValidityNotBefore(const KSI_PKICertificate *cert, KSI_Integer **time) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_Integer *tmp = NULL;
-	KSI_uint64_t val = 0;
-
-	if (cert == NULL || time == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	res = pki_certificate_getValidityNotBefore(cert, &val);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_Integer_new(cert->ctx, val, &tmp);
-	if (res != KSI_OK) goto cleanup;
-
-	*time = tmp;
-	tmp = NULL;
-
-	res = KSI_OK;
-cleanup:
-	KSI_Integer_free(tmp);
-	return res;
-}
-
-int KSI_PKICertificate_getValidityNotAfter(const KSI_PKICertificate *cert, KSI_Integer **time) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_Integer *tmp = NULL;
-	KSI_uint64_t val = 0;
-
-	if (cert == NULL || time == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	res = pki_certificate_getValidityNotAfter(cert, &val);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_Integer_new(cert->ctx, val, &tmp);
-	if (res != KSI_OK) goto cleanup;
-
-	*time = tmp;
-	tmp = NULL;
-
-	res = KSI_OK;
-cleanup:
-	KSI_Integer_free(tmp);
-	return res;
 }
 
 static int pki_certificate_getValidityState(const KSI_PKICertificate *cert, int *isExpired) {
@@ -619,10 +569,10 @@ static int pki_certificate_getValidityState(const KSI_PKICertificate *cert, int 
 	current_time = timer;
 
 
-	res = pki_certificate_getValidityNotBefore(cert, &cert_time_notBefore);
+	res = KSI_PKICertificate_getValidityNotBefore(cert, &cert_time_notBefore);
 	if (res != KSI_OK) goto cleanup;
 
-	res = pki_certificate_getValidityNotAfter(cert, &cert_time_notAfter);
+	res = KSI_PKICertificate_getValidityNotAfter(cert, &cert_time_notAfter);
 	if (res != KSI_OK) goto cleanup;
 
 	if (current_time < cert_time_notBefore) {
@@ -1284,6 +1234,8 @@ char* KSI_PKICertificate_toString(const KSI_PKICertificate *cert, char *buf, siz
 	char serial[1024];
 	char date_before[64];
 	char date_after[64];
+	KSI_uint64_t int_notBefore;
+	KSI_uint64_t int_notAfter;
 	KSI_Integer *notBefore = NULL;
 	KSI_Integer *notAfter = NULL;
 	KSI_CTX *ctx = NULL;
@@ -1309,10 +1261,16 @@ char* KSI_PKICertificate_toString(const KSI_PKICertificate *cert, char *buf, siz
 		goto cleanup;
 	}
 
-	res = KSI_PKICertificate_getValidityNotBefore(cert, &notBefore);
+	res = KSI_PKICertificate_getValidityNotBefore(cert, &int_notBefore);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_PKICertificate_getValidityNotAfter(cert, &notAfter);
+	res = KSI_PKICertificate_getValidityNotAfter(cert, &int_notAfter);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_Integer_new(ctx, int_notBefore, &notBefore);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_Integer_new(ctx, int_notAfter, &notAfter);
 	if (res != KSI_OK) goto cleanup;
 
 	if (KSI_Integer_toDateString(notBefore, date_before, sizeof(date_before)) == NULL) goto cleanup;

@@ -2617,8 +2617,8 @@ int KSI_VerificationRule_CertificateValidity(KSI_VerificationContext *info, KSI_
 	KSI_PKICertificate *cert = NULL;
 	VerificationTempData *tempData = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE;
-	KSI_Integer *notBefore = NULL;
-	KSI_Integer *notAfter = NULL;
+	KSI_uint64_t notBefore = NULL;
+	KSI_uint64_t notAfter = NULL;
 	KSI_Integer *calTime = NULL;
 
 	if (result == NULL) {
@@ -2719,11 +2719,11 @@ int KSI_VerificationRule_CertificateValidity(KSI_VerificationContext *info, KSI_
 		}
 	}
 
-	if (!(KSI_Integer_compare(calTime, notBefore) > 0 && KSI_Integer_compare(calTime, notAfter) < 0)) {
+	if (KSI_Integer_getUInt64(calTime) < notBefore || notAfter < KSI_Integer_getUInt64(calTime)) {
 		KSI_LOG_info(ctx, "Aggregation/Publication time is out of PKI Certificate validity timespan.");
 		KSI_LOG_debug(ctx, "Aggregation/Publication time:             %i.", KSI_Integer_getUInt64(calTime));
-		KSI_LOG_debug(ctx, "PKI Certificate validity not before time: %i.", KSI_Integer_getUInt64(notBefore));
-		KSI_LOG_debug(ctx, "PKI Certificate validity not after time:  %i.", KSI_Integer_getUInt64(notAfter));
+		KSI_LOG_debug(ctx, "PKI Certificate validity not before time: %i.", notBefore);
+		KSI_LOG_debug(ctx, "PKI Certificate validity not after time:  %i.", notAfter);
 
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_KEY_3, step);
 		res = KSI_OK;
@@ -2734,8 +2734,6 @@ int KSI_VerificationRule_CertificateValidity(KSI_VerificationContext *info, KSI_
 	res = KSI_OK;
 
 cleanup:
-	KSI_Integer_free(notBefore);
-	KSI_Integer_free(notAfter);
 
 	return res;
 }
