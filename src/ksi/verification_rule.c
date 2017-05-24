@@ -2617,8 +2617,8 @@ int KSI_VerificationRule_CertificateValidity(KSI_VerificationContext *info, KSI_
 	KSI_PKICertificate *cert = NULL;
 	VerificationTempData *tempData = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE;
-	KSI_uint64_t notBefore = NULL;
-	KSI_uint64_t notAfter = NULL;
+	KSI_uint64_t notBefore;
+	KSI_uint64_t notAfter;
 	KSI_Integer *calTime = NULL;
 
 	if (result == NULL) {

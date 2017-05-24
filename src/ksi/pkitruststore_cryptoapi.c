@@ -1389,10 +1389,10 @@ char* KSI_PKICertificate_toString(const KSI_PKICertificate *cert, char *buf, siz
 		goto cleanup;
 	}
 
-	res = KSI_PKICertificate_getValidityNotBefore(cert, &notBefore);
+	res = KSI_PKICertificate_getValidityNotBefore(cert, &int_notBefore);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_PKICertificate_getValidityNotAfter(cert, &notAfter);
+	res = KSI_PKICertificate_getValidityNotAfter(cert, &int_notAfter);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_Integer_new(ctx, int_notBefore, &notBefore);
