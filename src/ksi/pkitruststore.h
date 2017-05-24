@@ -197,6 +197,22 @@ extern "C" {
 	 */
 	char* KSI_PKICertificate_toString(const KSI_PKICertificate *cert, char *buf, size_t buf_len);
 
+	/**
+	 * Get PKI Certicate validity date not before.
+	 * \param[in]	cert		PKI Certificate object.
+	 * \param[in]	time		Validity time not before.
+	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_PKICertificate_getValidityNotBefore(const KSI_PKICertificate *cert, KSI_Integer **time);
+
+	/**
+	 * Get PKI Certicate validity date not after.
+	 * \param[in]	cert		PKI Certificate object.
+	 * \param[in]	time		Validity time not after.
+	 * \return status code (\c #KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_PKICertificate_getValidityNotAfter(const KSI_PKICertificate *cert, KSI_Integer **time);
+
 /**
  * @}
  */

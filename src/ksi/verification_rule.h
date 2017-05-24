@@ -329,6 +329,16 @@ extern "C" {
 	int KSI_VerificationRule_CertificateExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
+	 * This rule is used to validate calendar authentication record signature lifespan during KSI signature acquisition.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_CertificateValidity(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
 	 * This rule is used to validate calendar authentication record signature. At first X.509 certificate is searched from
 	 * publications file and when the certificate is found then the PKI signature is validated.
 	 *

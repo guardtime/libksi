@@ -2151,6 +2151,51 @@ static void TestKeyBasedPolicy_FAIL_WithCertificate(CuTest* tc) {
 #undef TEST_PUBLICATIONS_FILE
 }
 
+static void TestKeyBasedPolicy_FAIL_CertificateValidity(CuTest* tc) {
+#define TEST_SIGNATURE_FILE    "resource/tlv/nok-sig-2017-08-23.1.invalid-cert-timespan.ksig"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/ksi-publications.invalid-cert.validity.bin"
+	int res;
+	KSI_VerificationContext context;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		KSI_VER_RES_FAIL,
+		KSI_VER_ERR_KEY_3,
+		"KSI_VerificationRule_CertificateValidity"
+	};
+	KSI_Signature *signature = NULL;
+	KSI_PublicationsFile *userPublicationsFile = NULL;
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&context, ctx);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	context.signature = signature;
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	context.userPublicationsFile = userPublicationsFile;
+
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_KEY_BASED, &context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE));
+
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_PolicyVerificationResult_free(result);
+	KSI_Signature_free(signature);
+	KSI_VerificationContext_clean(&context);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_PUBLICATIONS_FILE
+}
+
 static void TestKeyBasedPolicy_OK(CuTest* tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
@@ -3604,6 +3649,7 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestKeyBasedPolicy_FAIL_WithCalendarAuthenticationRecord);
 	SUITE_ADD_TEST(suite, TestKeyBasedPolicy_FAIL_WithoutCertificate);
 	SUITE_ADD_TEST(suite, TestKeyBasedPolicy_FAIL_WithCertificate);
+	SUITE_ADD_TEST(suite, TestKeyBasedPolicy_FAIL_CertificateValidity);
 	SUITE_ADD_TEST(suite, TestKeyBasedPolicy_OK);
 	SUITE_ADD_TEST(suite, TestPublicationsFileBasedPolicy_OK_WithPublicationRecord);
 	SUITE_ADD_TEST(suite, TestPublicationsFileBasedPolicy_NA_WithPublicationRecord);
