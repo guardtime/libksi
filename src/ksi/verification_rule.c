@@ -2594,9 +2594,138 @@ int KSI_VerificationRule_CertificateExistence(KSI_VerificationContext *info, KSI
 	}
 
 	if (cert == NULL) {
-		KSI_LOG_info(ctx, "Certificate not found.");
+		KSI_LOG_info(ctx, "Suitable PKI certificate not found in publications file.");
 
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_KEY_1, step);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_CertificateValidity(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	const KSI_Signature *sig = NULL;
+	KSI_OctetString *certId = NULL;
+	KSI_PKICertificate *cert = NULL;
+	VerificationTempData *tempData = NULL;
+	const KSI_VerificationStep step = KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE;
+	KSI_uint64_t notBefore;
+	KSI_uint64_t notAfter;
+	KSI_Integer *calTime = NULL;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		goto cleanup;
+	}
+
+	ctx = info->ctx;
+	sig = info->signature;
+	KSI_ERR_clearErrors(ctx);
+
+	tempData = info->tempData;
+	if (tempData == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_STATE, "Verification context not properly initialized.");
+		goto cleanup;
+	}
+
+	KSI_LOG_info(ctx, "Verify calendar hash chain authentication record certificate.");
+
+	if (sig->calendarAuthRec == NULL) {
+		const char *msg = "Calendar hash chain authentication record does not exist.";
+		KSI_LOG_info(info->ctx, (char *)msg);
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, msg);
+		goto cleanup;
+	}
+
+	res = KSI_PKISignedData_getCertId(sig->calendarAuthRec->signatureData, &certId);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (certId == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Missing PKI sertificate ID in calendar authentication record.");
+		goto cleanup;
+	}
+
+	res = initPublicationsFile(info);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_PublicationsFile_getPKICertificateById(tempData->publicationsFile, certId, &cert);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (cert == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Suitable PKI certificate not found in publications file.");
+		goto cleanup;
+	}
+
+	res = KSI_PKICertificate_getValidityNotBefore(cert, &notBefore);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_PKICertificate_getValidityNotAfter(cert, &notAfter);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &calTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (calTime == NULL) {
+		KSI_LOG_debug(ctx, "Aggregation time missing in calendar hash chain, default to publication time.");
+
+		res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &calTime);
+		if (res != KSI_OK) {
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+
+	if (KSI_Integer_getUInt64(calTime) < notBefore || notAfter < KSI_Integer_getUInt64(calTime)) {
+		KSI_LOG_info(ctx, "Aggregation/Publication time is out of PKI Certificate validity timespan.");
+		KSI_LOG_debug(ctx, "Aggregation/Publication time:             %i.", KSI_Integer_getUInt64(calTime));
+		KSI_LOG_debug(ctx, "PKI Certificate validity not before time: %i.", notBefore);
+		KSI_LOG_debug(ctx, "PKI Certificate validity not after time:  %i.", notAfter);
+
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_KEY_3, step);
 		res = KSI_OK;
 		goto cleanup;
 	}

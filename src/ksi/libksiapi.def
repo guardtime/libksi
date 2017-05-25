@@ -300,6 +300,8 @@ EXPORTS
 	KSI_PKITruststore_addLookupDir
 	KSI_PKISignature_extractCertificate
 	KSI_PKICertificate_toString
+	KSI_PKICertificate_getValidityNotBefore
+	KSI_PKICertificate_getValidityNotAfter
 
 ;publicationsfile.h
 EXPORTS
@@ -881,6 +883,7 @@ EXPORTS
 	KSI_VerificationRule_CalendarAuthenticationRecordExistence
 	KSI_VerificationRule_CalendarAuthenticationRecordDoesNotExist
 	KSI_VerificationRule_CertificateExistence
+	KSI_VerificationRule_CertificateValidity
 	KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification
 	KSI_VerificationRule_PublicationsFileContainsSignaturePublication
 	KSI_VerificationRule_PublicationsFileContainsSuitablePublication

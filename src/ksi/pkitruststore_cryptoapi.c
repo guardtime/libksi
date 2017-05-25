@@ -446,11 +446,11 @@ cleanup:
 	return res;
 }
 
-static int pki_certificate_getValidityNotBefore(const KSI_PKICertificate *cert, KSI_uint64_t *time) {
+int KSI_PKICertificate_getValidityNotBefore(const KSI_PKICertificate *cert, KSI_uint64_t *time) {
 	return pki_certificate_getValidityTime(cert, NOT_BEFORE, time);
 }
 
-static int pki_certificate_getValidityNotAfter(const KSI_PKICertificate *cert, KSI_uint64_t *time) {
+int KSI_PKICertificate_getValidityNotAfter(const KSI_PKICertificate *cert, KSI_uint64_t *time) {
 	return pki_certificate_getValidityTime(cert, NOT_AFTER, time);
 }
 
@@ -476,10 +476,10 @@ static int pki_certificate_getValidityState(const KSI_PKICertificate *cert, int 
 	current_time = timer;
 
 
-	res = pki_certificate_getValidityNotBefore(cert, &cert_time_notBefore);
+	res = KSI_PKICertificate_getValidityNotBefore(cert, &cert_time_notBefore);
 	if (res != KSI_OK) goto cleanup;
 
-	res = pki_certificate_getValidityNotAfter(cert, &cert_time_notAfter);
+	res = KSI_PKICertificate_getValidityNotAfter(cert, &cert_time_notAfter);
 	if (res != KSI_OK) goto cleanup;
 
 	if (current_time < cert_time_notBefore) {
@@ -1389,10 +1389,10 @@ char* KSI_PKICertificate_toString(const KSI_PKICertificate *cert, char *buf, siz
 		goto cleanup;
 	}
 
-	res = pki_certificate_getValidityNotBefore(cert, &int_notBefore);
+	res = KSI_PKICertificate_getValidityNotBefore(cert, &int_notBefore);
 	if (res != KSI_OK) goto cleanup;
 
-	res = pki_certificate_getValidityNotAfter(cert, &int_notAfter);
+	res = KSI_PKICertificate_getValidityNotAfter(cert, &int_notAfter);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_Integer_new(ctx, int_notBefore, &notBefore);
