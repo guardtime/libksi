@@ -68,6 +68,9 @@ extern "C" {
 		/** Network provider. */
 		KSI_NetworkClient *netProvider;
 
+		/** Network provider. */
+		KSI_NetworkClient *asyncNetProvider;
+
 		/** PKI trust provider. */
 		KSI_PKITruststore *pkiTruststore;
 
@@ -101,7 +104,6 @@ extern "C" {
 		size_t dataHashRecycle_maxSize;
 		/* This list is used to recycle #KSI_DataHash objects to reduce the number of allocs. */
 		KSI_LIST(KSI_DataHash) *dataHashRecycle;
-
 	};
 
 #ifdef __cplusplus

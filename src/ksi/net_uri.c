@@ -379,7 +379,7 @@ static int uriClient_setService(KSI_NetworkClient *client, const char *uri, cons
 
 			break;
 		default:
-			res = KSI_UNKNOWN_ERROR;
+			res = KSI_INVALID_FORMAT;
 			goto cleanup;
 	}
 
@@ -464,4 +464,72 @@ int KSI_UriClient_setTransferTimeoutSeconds(KSI_NetworkClient *client, int timeo
 cleanup:
 
 	return res;
+}
+
+static int uri_setAsyncService(KSI_AsyncService *s, const char *uri, const char *loginId, const char *key) {
+	int res = KSI_UNKNOWN_ERROR;
+	char *schm = NULL;
+	char *ksi_user = NULL;
+	char *ksi_pass = NULL;
+	char *host = NULL;
+	unsigned port = 0;
+	char *path = NULL;
+	char *query = NULL;
+	char *fragment = NULL;
+	const char *replace = NULL;
+	int c;
+
+	if (s == NULL || uri == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	s->uriSplit(uri, &schm, &ksi_user, &ksi_pass, &host, &port, &path, &query, &fragment);
+	c = getClientByUriScheme(schm, &replace);
+
+	switch (c) {
+		case URI_TCP:
+			if (host == NULL || port == 0) {
+				res = KSI_INVALID_ARGUMENT;
+				goto cleanup;
+			}
+
+			if (s->impl == NULL) {
+				s->impl_free = (void (*)(void*))KSI_AsyncClient_free;
+				res = KSI_TcpAsyncClient_new(s->ctx, (KSI_AsyncClient **)&s->impl);
+				if (res != KSI_OK) goto cleanup;
+			}
+
+			res = KSI_TcpAsyncClient_setService(s->impl, host, port,
+					loginId != NULL ? loginId : ksi_user,
+					key != NULL ? key : ksi_pass);
+			if (res != KSI_OK) goto cleanup;
+			break;
+
+		case URI_HTTP:
+		case URI_FILE:
+		case URI_UNKNOWN:
+		default:
+			res = KSI_INVALID_FORMAT;
+			goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_free(schm);
+	KSI_free(ksi_user);
+	KSI_free(ksi_pass);
+	KSI_free(host);
+	KSI_free(path);
+	KSI_free(query);
+	KSI_free(fragment);
+
+	return res;
+}
+
+int KSI_AsyncService_setAggregator(KSI_AsyncService *s, const char *uri, const char *loginId, const char *key) {
+	if (s == NULL || uri == NULL) return KSI_INVALID_ARGUMENT;
+	return uri_setAsyncService(s, uri, loginId, key);
 }

@@ -18,6 +18,14 @@
  */
 
 #include <string.h>
+#ifdef _WIN32
+#  include <windows.h>
+#  define sleep_ms(x) Sleep((x))
+#else
+#  include <unistd.h>
+#  define sleep_ms(x) usleep((x)*1000)
+#endif
+
 #include "cutest/CuTest.h"
 #include "all_integration_tests.h"
 #include <ksi/net_uri.h>
@@ -382,6 +390,136 @@ static void Test_RequestAggregatorConfig_pduV2(CuTest* tc) {
 	KSI_Config_free(config);
 }
 
+static void Test_AsyncTcp(CuTest* tc) {
+#define TEST_NOF_REQUESTS 10 /* Max count is limited by KSI_uint64_t bit count. */
+#define BIT_SET(field, n) field |= (1 << (n))
+#define BIT_CLR(field, n) field &= ~(1 << (n))
+#define TEST_TIMEOUT 1.0
+#define TEST_SLEEP_MS 1000
+
+	int res;
+	KSI_AsyncService *as = NULL;
+	KSI_DataHash *hsh = NULL;
+	KSI_AsyncHandle handle[TEST_NOF_REQUESTS] = {0};
+	KSI_Integer *reqId = NULL;
+	int i;
+	KSI_uint64_t requests = 0;
+	time_t t_timeout;
+	time_t t_finished;
+
+	KSI_LOG_debug(ctx, "%s: START.", __FUNCTION__);
+	t_finished = time(NULL);
+
+	res = KSI_AsyncService_new(ctx, &as);
+	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK);
+
+	res = KSI_AsyncService_setAggregator(as, conf.tcp_url, conf.tcp_user, conf.tcp_pass);
+	CuAssert(tc, "Unable to set aggregator to the async service client.", res == KSI_OK);
+
+	res = KSI_DataHash_create(ctx, "foobar", 6, KSI_HASHALG_SHA2_256, &hsh);
+	CuAssert(tc, "Unable to create data hash from string.", res == KSI_OK && hsh != NULL);
+
+	KSI_LOG_debug(ctx, "%s: COLLECT.", __FUNCTION__);
+
+	/* Prepare and send the requests. */
+	for (i = 0; i < TEST_NOF_REQUESTS; i++) {
+		KSI_AggregationReq *req = NULL;
+
+		KSI_LOG_debug(ctx, "%s: Creating request.", __FUNCTION__);
+
+		res = KSI_AggregationReq_new(ctx, &req);
+		CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
+
+		res = KSI_AggregationReq_setRequestHash(req, KSI_DataHash_ref(hsh));
+		CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
+
+		res = KSI_Integer_new(ctx, (i + 1), &reqId);
+		CuAssert(tc, "Unable to create reqId.", res == KSI_OK && reqId != NULL);
+
+		res = KSI_AggregationReq_setRequestId(req, reqId);
+		CuAssert(tc, "Unable to set request id.", res == KSI_OK);
+		reqId = NULL;
+
+		res = KSI_AsyncService_addAggregationReq(as, req, &handle[i]);
+		CuAssert(tc, "Unable to add request.", res == KSI_OK && handle[i] != 0);
+
+		BIT_SET(requests, handle[i]);
+		KSI_LOG_debug(ctx, "%s: ... request handle: %d.", __FUNCTION__, handle[i]);
+
+		KSI_AggregationReq_free(req);
+	}
+
+	/* Check output queue size. */
+	for (i = 0; i < TEST_NOF_REQUESTS; i++) {
+		res = KSI_AsyncService_isSent(as, handle[i]);
+		CuAssert(tc, "All requests should be in queue.", res == KSI_ASYNC_NOT_FINISHED);
+	}
+
+	KSI_LOG_debug(ctx, "%s: SEND.", __FUNCTION__);
+	res = KSI_AsyncService_run(as);
+	CuAssert(tc, "Unable to run async client.", res == KSI_OK);
+
+	KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
+	sleep_ms(TEST_SLEEP_MS);
+
+	/* Check if all requests have been dispatched. */
+	for (i = 0; i < TEST_NOF_REQUESTS; i++) {
+		res = KSI_AsyncService_isSent(as, handle[i]);
+		CuAssert(tc, "All requests should have been sent by now.", res == KSI_ASYNC_COMPLETED);
+	}
+
+	t_timeout = time(NULL);
+	while (requests) {
+		KSI_AggregationResp *resp = NULL;
+
+		/* Poll for response. */
+		KSI_LOG_debug(ctx, "%s: POLL.", __FUNCTION__);
+
+		res = KSI_AsyncService_run(as);
+		CuAssert(tc, "Unable to run async client.", res == KSI_OK);
+
+		res = KSI_AsyncService_getAggregationResp(as, &resp);
+		CuAssert(tc, "Unable to get agggregation response.", res == KSI_OK);
+
+		if (resp != NULL) {
+			size_t h;
+
+			res = KSI_AggregationResp_getRequestId(resp, &reqId);
+			CuAssert(tc, "Unable to get request id from response.", res == KSI_OK && reqId != NULL);
+
+			for (h = 0; h < TEST_NOF_REQUESTS; h++) {
+				if (KSI_AsyncHandle_matchAggregationResp(handle[h], resp)) {
+					KSI_LOG_debug(ctx, "%s: Response for handle recived: %d.", __FUNCTION__, handle[h]);
+					BIT_CLR(requests, handle[h]);
+					break;
+				}
+			}
+			CuAssert(tc, "Unexpected response recived.", h != TEST_NOF_REQUESTS);
+			KSI_AggregationResp_free(resp);
+		}
+
+		/* Break if the it takes to much time. */
+		if (difftime(time(NULL), t_timeout) > TEST_TIMEOUT) {
+			KSI_LOG_debug(ctx, "%s: TIMEOUT (%fs).", __FUNCTION__, TEST_TIMEOUT);
+			CuFail(tc, "Failed due to timeout.");
+		}
+	}
+
+	KSI_LOG_debug(ctx, "%s: CLEANUP.", __FUNCTION__);
+
+	/* Cleanup. */
+	KSI_DataHash_free(hsh);
+	KSI_AsyncService_free(as);
+
+	KSI_LOG_debug(ctx, "%s: FINISH in %fs.", __FUNCTION__, difftime(time(NULL), t_finished));
+
+#undef TEST_NOF_REQUESTS
+#undef BIT_SET
+#undef BIT_CLR
+#undef TEST_TIMEOUT
+#undef TEST_SLEEP_MS
+}
+
 
 CuSuite* AggreIntegrationTests_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
@@ -398,6 +536,7 @@ CuSuite* AggreIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_Pipelining);
 	SUITE_ADD_TEST(suite, Test_RequestAggregatorConfig);
 	SUITE_ADD_TEST(suite, Test_RequestAggregatorConfig_pduV2);
+	SUITE_ADD_TEST(suite, Test_AsyncTcp);
 
 	return suite;
 }

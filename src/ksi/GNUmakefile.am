@@ -63,6 +63,7 @@ libksi_la_SOURCES = \
 	net_http.h \
 	net_http_impl.h \
 	net_impl.h \
+	net_tcp_async.c \
 	net_tcp.c \
 	net_tcp.h \
 	net_tcp_impl.h \

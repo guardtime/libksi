@@ -193,6 +193,7 @@ KSI_IMPLEMENT_LIST(KSI_PKISignedData, KSI_PKISignedData_free);
 KSI_IMPLEMENT_LIST(KSI_PublicationsHeader, KSI_PublicationsHeader_free);
 KSI_IMPLEMENT_LIST(KSI_CertificateRecord, KSI_CertificateRecord_free);
 KSI_IMPLEMENT_LIST(KSI_RequestHandle, KSI_RequestHandle_free);
+KSI_IMPLEMENT_LIST(KSI_AsyncPayload, KSI_AsyncPayload_free);
 
 KSI_IMPLEMENT_REF(KSI_MetaDataElement);
 KSI_IMPLEMENT_REF(KSI_MetaData);
@@ -1986,7 +1987,7 @@ int KSI_AggregationResp_fromTlv(KSI_TLV *tlv, KSI_AggregationResp **data) {
 		goto cleanup;
 	}
 
-KSI_LOG_debug(ctx, "AggregationResp_fromTlv: %d", KSI_TLV_getTag(tlv));
+	KSI_LOG_debug(ctx, "AggregationResp_fromTlv: %d", KSI_TLV_getTag(tlv));
 	if (KSI_TLV_getTag(tlv) == 0x202) {
 		res = KSI_TlvTemplate_extract(KSI_TLV_getCtx(tlv), tmp, tlv, KSI_TLV_TEMPLATE(KSI_AggregationResp));
 	} else if (KSI_TLV_getTag(tlv) == 0x02) {

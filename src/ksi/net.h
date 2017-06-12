@@ -346,6 +346,32 @@ extern "C" {
 	 * @}
 	 */
 
+
+	/**
+	 * \addtogroup network Async Network Interface
+	 * @{
+	 */
+
+	int KSI_AsyncHandle_matchAggregationResp(const KSI_AsyncHandle handle, const KSI_AggregationResp *resp);
+
+	void KSI_AsyncPayload_free(KSI_AsyncPayload *o);
+	int KSI_AsyncPayload_new(KSI_CTX *ctx, const unsigned char *payload, const size_t payload_len, KSI_AsyncPayload **o);
+	int KSI_AsyncPayload_setPayloadId(KSI_AsyncPayload *o, KSI_uint64_t id);
+	int KSI_AsyncPayload_setPayloadCtx(KSI_AsyncPayload *o, void *pldCtx, void (*pldCtx_free)(void*));
+
+	void KSI_AsyncClient_free(KSI_AsyncClient *c);
+
+	void KSI_AsyncService_free(KSI_AsyncService *s);
+	int KSI_AsyncService_new(KSI_CTX *ctx, KSI_AsyncService **s);
+	int KSI_AsyncService_addAggregationReq(KSI_AsyncService *s, KSI_AggregationReq *req, KSI_AsyncHandle *handle);
+	int KSI_AsyncService_getAggregationResp(KSI_AsyncService *s, KSI_AggregationResp **resp);
+	int KSI_AsyncService_run(KSI_AsyncService *s);
+	int KSI_AsyncService_isSent(KSI_AsyncService *s, KSI_AsyncHandle h);
+
+	/**
+	 * @}
+	 */
+
 #ifdef __cplusplus
 }
 #endif

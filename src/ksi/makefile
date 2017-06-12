@@ -105,6 +105,7 @@ LIB_OBJ = \
 	$(OBJ_DIR)\verification_rule.obj \
 	$(OBJ_DIR)\hmac.obj \
 	$(OBJ_DIR)\net_tcp.obj \
+	$(OBJ_DIR)\net_tcp_async.obj \
 	$(OBJ_DIR)\compatibility.obj \
 	$(OBJ_DIR)\pkitruststore.obj \
 	$(OBJ_DIR)\net_file.obj \

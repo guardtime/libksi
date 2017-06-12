@@ -940,7 +940,6 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 	KSI_Header *header = NULL;
 	KSI_Config *tmpConf = NULL;
 	KSI_DataHash *respHmac = NULL;
-	KSI_DataHash *actualHmac = NULL;
 	KSI_AggregationResp *tmp = NULL;
 	const unsigned char *raw = NULL;
 	size_t len;
@@ -1131,10 +1130,8 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 	res = KSI_OK;
 
 cleanup:
-
 	KSI_AggregationResp_free(tmp);
 	KSI_Config_free(tmpConf);
-	KSI_DataHash_free(actualHmac);
 	KSI_AggregationPdu_free(pdu);
 
 	return res;
@@ -1355,3 +1352,517 @@ KSI_IMPLEMENT_GETTER(KSI_NetworkClient, KSI_NetEndpoint *, publicationsFile, Pub
 
 
 KSI_IMPLEMENT_REF(KSI_RequestHandle);
+
+int KSI_AsyncHandle_matchAggregationResp(const KSI_AsyncHandle handle, const KSI_AggregationResp *resp) {
+	KSI_Integer *id = NULL;
+	return (resp != NULL && KSI_AggregationResp_getRequestId(resp, &id) == KSI_OK &&
+			id != NULL && KSI_Integer_getUInt64(id) == handle);
+}
+
+void KSI_AsyncPayload_free(KSI_AsyncPayload *o) {
+	if (o != NULL && --o->ref == 0) {
+		if (o->pldCtx_free) o->pldCtx_free(o->pldCtx);
+		KSI_free(o->raw);
+		KSI_free(o);
+	}
+}
+
+int KSI_AsyncPayload_new(KSI_CTX *ctx, const unsigned char *payload, const size_t payload_len, KSI_AsyncPayload **o) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_AsyncPayload *tmp = NULL;
+
+	if (ctx == NULL || o == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	tmp = KSI_malloc(sizeof(KSI_AsyncPayload));
+	if (tmp == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->ref = 1;
+
+	tmp->id = 0;
+	tmp->raw = NULL;
+	tmp->len = 0;
+	tmp->pldCtx = NULL;
+	tmp->pldCtx_free = NULL;
+
+	if (payload_len > 0) {
+		tmp->raw = KSI_malloc(payload_len);
+		if (tmp->raw == NULL) {
+			KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+			goto cleanup;
+		}
+
+		memcpy(tmp->raw, payload, payload_len);
+		tmp->len = payload_len;
+	}
+
+	*o = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+cleanup:
+	KSI_AsyncPayload_free(tmp);
+	return res;
+}
+
+int KSI_AsyncPayload_setPayloadId(KSI_AsyncPayload *o, KSI_uint64_t id) {
+	if (o == NULL) return KSI_INVALID_ARGUMENT;
+	o->id = id;
+	return KSI_OK;
+}
+
+int KSI_AsyncPayload_setPayloadCtx(KSI_AsyncPayload *o, void *pldCtx, void (*pldCtx_free)(void*)) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (o == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (o->pldCtx_free) o->pldCtx_free(o->pldCtx);
+
+	o->pldCtx = pldCtx;
+	o->pldCtx_free = pldCtx_free;
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+static int asyncClient_addAggregationRequest(KSI_AsyncClient *c, KSI_AggregationReq *req, KSI_AsyncHandle *handle) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_AggregationReq *ref = NULL;
+	KSI_AggregationPdu *pdu = NULL;
+	unsigned char *raw = NULL;
+	size_t len;
+	KSI_AsyncPayload *tmp = NULL;
+	KSI_Integer *reqId = NULL;
+	const char *user = NULL;
+	const char *pass = NULL;
+	KSI_uint64_t id = 0;
+	void *impl = NULL;
+
+	if (c == NULL || req == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (c->clientImpl == NULL || c->addRequest == NULL || c->getCredentials == NULL) {
+		res = KSI_INVALID_STATE;
+		goto cleanup;
+	}
+	impl = c->clientImpl;
+
+	res = KSI_AggregationReq_getRequestId(req, &reqId);
+	if (res != KSI_OK) goto cleanup;
+
+	if (reqId == NULL) {
+		res = KSI_Integer_new(c->ctx, ++c->requestCount, &reqId);
+		if (res != KSI_OK) goto cleanup;
+
+		res = KSI_AggregationReq_setRequestId(req, reqId);
+		if (res != KSI_OK) goto cleanup;
+	}
+	id = KSI_Integer_getUInt64(reqId);
+	reqId = NULL;
+
+	res = c->getCredentials(impl, &user, &pass);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_AggregationReq_enclose((ref = KSI_AggregationReq_ref(req)), user, pass, &pdu);
+	if (res != KSI_OK) {
+		KSI_AggregationReq_free(ref);
+		goto cleanup;
+	}
+
+	res = KSI_AggregationPdu_serialize(pdu, &raw, &len);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_AsyncPayload_new(c->ctx, raw, len, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_AsyncPayload_setPayloadId(tmp, id);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_AsyncPayload_setPayloadCtx(tmp, (void*)KSI_AggregationReq_ref(req), (void (*)(void*))KSI_AggregationReq_free);
+	if (res != KSI_OK) goto cleanup;
+
+	res = c->addRequest(impl, tmp);
+	if (res != KSI_OK) goto cleanup;
+	tmp = NULL;
+
+	*handle = id;
+
+	res = KSI_OK;
+cleanup:
+	KSI_free(raw);
+	KSI_Integer_free(reqId);
+	KSI_AggregationPdu_free(pdu);
+	KSI_AsyncPayload_free(tmp);
+
+	return res;
+}
+
+static int asyncClient_getAggregationResponse(KSI_AsyncClient *c, KSI_AggregationResp **response) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_AggregationResp *tmp = NULL;
+	KSI_ErrorPdu *error = NULL;
+	KSI_Header *header = NULL;
+	KSI_DataHash *respHmac = NULL;
+	const char *user = NULL;
+	const char *pass = NULL;
+	KSI_OctetString *resp = NULL;
+	const unsigned char *raw = NULL;
+	size_t len = 0;
+	KSI_AggregationPdu *pdu = NULL;
+	KSI_Config *tmpConf = NULL;
+	void *impl = NULL;
+
+	if (c == NULL || response == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(c->ctx);
+
+	if (c->clientImpl == NULL || c->getResponse == NULL || c->getCredentials == NULL) {
+		KSI_pushError(c->ctx, res = KSI_INVALID_STATE, "Async client is not properly initialized.");
+		goto cleanup;
+	}
+	impl = c->clientImpl;
+
+	res = c->getResponse(impl, &resp);
+	if (res == KSI_ASYNC_QUEUE_EMPTY) {
+		KSI_LOG_debug(c->ctx, "Async reaponse queue is empty.");
+		res = KSI_OK;
+		goto cleanup;
+	} else if (res != KSI_OK) {
+		KSI_pushError(c->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OctetString_extract(resp, &raw, &len);
+	if (res != KSI_OK) {
+		KSI_pushError(c->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	KSI_LOG_logBlob(c->ctx, KSI_LOG_DEBUG, "Parsing aggregation response:", raw, len);
+
+	/* Get PDU object. */
+	res = KSI_AggregationPdu_parse(c->ctx, raw, len, &pdu);
+	if(res != KSI_OK){
+		KSI_pushError(c->ctx, res, "Unable to parse aggregation pdu.");
+		goto cleanup;
+	}
+
+	res = KSI_AggregationPdu_getError(pdu, &error);
+	if (res != KSI_OK) {
+		KSI_pushError(c->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (error != NULL) {
+		KSI_Utf8String *errorMsg = NULL;
+		KSI_Integer *status = NULL;
+		KSI_ErrorPdu_getErrorMessage(error, &errorMsg);
+		KSI_ErrorPdu_getStatus(error, &status);
+		KSI_ERR_push(c->ctx, res = KSI_convertAggregatorStatusCode(status), (long)KSI_Integer_getUInt64(status), __FILE__, __LINE__, KSI_Utf8String_cstr(errorMsg));
+		goto cleanup;
+	}
+
+	res = KSI_AggregationPdu_getHeader(pdu, &header);
+	if (res != KSI_OK) {
+		KSI_pushError(c->ctx, res, NULL);
+		goto cleanup;
+	}
+	if (header == NULL){
+		KSI_pushError(c->ctx, res = KSI_INVALID_FORMAT, "A successful aggregation response must have a Header.");
+		goto cleanup;
+	}
+
+	res = KSI_AggregationPdu_getHmac(pdu, &respHmac);
+	if (res != KSI_OK) {
+		KSI_pushError(c->ctx, res, NULL);
+		goto cleanup;
+	}
+	if (respHmac == NULL){
+		KSI_pushError(c->ctx, res = KSI_INVALID_FORMAT, "A successful aggregation response must have a HMAC.");
+		goto cleanup;
+	}
+
+	res = c->getCredentials(impl, &user, &pass);
+	if (res != KSI_OK) goto cleanup;
+
+	res = pdu_verify_hmac(c->ctx, respHmac, pass,
+			(KSI_HashAlgorithm)c->ctx->options[KSI_OPT_AGGR_HMAC_ALGORITHM],
+			(int (*)(const void*, int, const char*, KSI_DataHash**))KSI_AggregationPdu_calculateHmac,
+			(void*)pdu);
+	if (res != KSI_OK) {
+		KSI_pushError(c->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/*Get response object*/
+	res = KSI_AggregationPdu_getResponse(pdu, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(c->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_AggregationPdu_setResponse(pdu, NULL);
+	if (res != KSI_OK) {
+		KSI_pushError(c->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_AggregationPdu_getConfResponse(pdu, &tmpConf);
+	if (res != KSI_OK) {
+		KSI_pushError(c->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_AggregationPdu_setConfResponse(pdu, NULL);
+	if (res != KSI_OK) {
+		KSI_pushError(c->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (tmp == NULL) {
+		res = KSI_AggregationResp_new(c->ctx, &tmp);
+		if (res != KSI_OK) {
+			KSI_pushError(c->ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+	res = KSI_AggregationResp_setConfig(tmp, tmpConf);
+	if (res != KSI_OK) {
+		KSI_pushError(c->ctx, res, NULL);
+		goto cleanup;
+	}
+	tmpConf = NULL;
+
+	*response = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+	KSI_OctetString_free(resp);
+	KSI_AggregationResp_free(tmp);
+	KSI_Config_free(tmpConf);
+	KSI_AggregationPdu_free(pdu);
+
+	return res;
+}
+
+int asyncClient_run(KSI_AsyncClient *c) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (c == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(c->ctx);
+
+	if (c->clientImpl == NULL || c->dispatch == NULL) {
+		KSI_pushError(c->ctx, res = KSI_INVALID_STATE, "Async client is not properly initialized.");
+		goto cleanup;
+	}
+
+	res = c->dispatch(c->clientImpl);
+	if (res != KSI_OK) {
+		KSI_pushError(c->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+int asyncClient_isSent(KSI_AsyncClient *c, KSI_AsyncHandle h) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (c == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(c->ctx);
+
+	if (c->clientImpl == NULL || c->isCompleted == NULL) {
+		KSI_pushError(c->ctx, res = KSI_INVALID_STATE, "Async client is not properly initialized.");
+		goto cleanup;
+	}
+
+	res = c->isCompleted(c->clientImpl, h);
+	if (res != KSI_OK) {
+		KSI_pushError(c->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+void KSI_AsyncClient_free(KSI_AsyncClient *c) {
+	if (c != NULL) {
+		if (c->clientImpl_free) c->clientImpl_free(c->clientImpl);
+		KSI_free(c);
+	}
+}
+
+int KSI_AsyncService_addAggregationReq(KSI_AsyncService *s, KSI_AggregationReq *req, KSI_AsyncHandle *handle) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (s == NULL || req == NULL || handle == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(s->ctx);
+
+	if (s->impl == NULL || s->addAggrRequest == NULL) {
+		KSI_pushError(s->ctx, res = KSI_INVALID_STATE, "Async service client is not properly initialized.");
+		goto cleanup;
+	}
+
+	res = s->addAggrRequest(s->impl, req, handle);
+	if (res != KSI_OK) {
+		KSI_pushError(s->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+int KSI_AsyncService_getAggregationResp(KSI_AsyncService *s, KSI_AggregationResp **resp) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (s == NULL || resp == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(s->ctx);
+
+	if (s->impl == NULL || s->getAggrResponse == NULL) {
+		KSI_pushError(s->ctx, res = KSI_INVALID_STATE, "Async service client is not properly initialized.");
+		goto cleanup;
+	}
+
+	res = s->getAggrResponse(s->impl, resp);
+	if (res != KSI_OK) {
+		KSI_pushError(s->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+int KSI_AsyncService_run(KSI_AsyncService *s) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (s == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(s->ctx);
+
+	if (s->impl == NULL || s->run == NULL) {
+		KSI_pushError(s->ctx, res = KSI_INVALID_STATE, "Async service client is not properly initialized.");
+		goto cleanup;
+	}
+
+	res = s->run(s->impl);
+	if (res != KSI_OK) {
+		KSI_pushError(s->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+int KSI_AsyncService_isSent(KSI_AsyncService *s, KSI_AsyncHandle h) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (s == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(s->ctx);
+
+	if (s->impl == NULL || s->isSent == NULL) {
+		KSI_pushError(s->ctx, res = KSI_INVALID_STATE, "Async service client is not properly initialized.");
+		goto cleanup;
+	}
+
+	res = s->isSent(s->impl, h);
+	if (res != KSI_OK) {
+		KSI_pushError(s->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+void KSI_AsyncService_free(KSI_AsyncService *s) {
+	if (s != NULL) {
+		if (s->impl_free) s->impl_free(s->impl);
+		KSI_free(s);
+	}
+}
+
+int KSI_AsyncService_new(KSI_CTX *ctx, KSI_AsyncService **s) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_AsyncService *tmp = NULL;
+
+	if (ctx == NULL || s == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(ctx);
+
+	tmp = KSI_malloc(sizeof(KSI_AsyncService));
+	if (tmp == NULL) {
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->impl = NULL;
+	tmp->impl_free = NULL;
+
+	tmp->addAggrRequest = (int (*)(void *, KSI_AggregationReq *, KSI_AsyncHandle *))asyncClient_addAggregationRequest;
+	tmp->getAggrResponse = (int (*)(void *, KSI_AggregationResp **))asyncClient_getAggregationResponse;
+
+	tmp->run = (int (*)(void *))asyncClient_run;
+	tmp->isSent = (int (*)(void *, KSI_AsyncHandle))asyncClient_isSent;
+
+	tmp->uriSplit = uriSplit;
+
+	*s = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+cleanup:
+	KSI_AsyncService_free(tmp);
+	return res;
+}
+

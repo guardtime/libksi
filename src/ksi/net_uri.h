@@ -27,6 +27,7 @@ extern "C" {
 #endif
 
 	typedef struct KSI_UriClient_st KSI_UriClient;
+	typedef struct KSI_AsyncUriClient_st KSI_AsyncUriClient;
 
 	/**
 	 * Creates a new URI client.
@@ -50,6 +51,8 @@ extern "C" {
 
 	int KSI_UriClient_setTransferTimeoutSeconds(KSI_NetworkClient *client, int timeout);
 	int KSI_UriClient_setConnectionTimeoutSeconds(KSI_NetworkClient *client, int timeout);
+
+	int KSI_AsyncService_setAggregator(KSI_AsyncService *s, const char *uri, const char *loginId, const char *key);
 
 #ifdef __cplusplus
 }

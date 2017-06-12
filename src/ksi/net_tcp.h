@@ -77,6 +77,9 @@ extern "C" {
 	 */
 	int KSI_TcpClient_setTransferTimeoutSeconds(KSI_NetworkClient *client, int val);
 
+	int KSI_TcpAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c);
+	int KSI_TcpAsyncClient_setService(KSI_AsyncClient *c, const char *host, unsigned port, const char *user, const char *pass);
+
 #ifdef __cplusplus
 }
 #endif

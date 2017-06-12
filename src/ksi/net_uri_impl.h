@@ -31,7 +31,7 @@ extern "C" {
 		URI_TCP,
 		URI_FILE,
 		URI_UNKNOWN,
-		URI_CLIENT_COUNT
+		__URI_CLIENT_COUNT
 	};
 
 	struct KSI_UriClient_st {

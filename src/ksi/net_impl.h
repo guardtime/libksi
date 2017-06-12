@@ -111,6 +111,60 @@ extern "C" {
 		int (*status)(KSI_RequestHandle *);
 	};
 
+
+
+
+
+
+	struct KSI_AsyncPayload_st {
+		KSI_CTX *ctx;
+		size_t ref;
+
+		/* Payload id. */
+		KSI_AsyncHandle id;
+
+		/* Payload context. */
+		void *pldCtx;
+		void (*pldCtx_free)(void*);
+
+		/* Payload. */
+		unsigned char *raw;
+		size_t len;
+	};
+
+	struct KSI_AsyncClient_st {
+		KSI_CTX *ctx;
+
+		void *clientImpl;
+		void (*clientImpl_free)(void*);
+
+		int (*addRequest)(void *, KSI_AsyncPayload *);
+		int (*getResponse)(void *, KSI_OctetString **);
+		int (*getQueueStatus)(void *, size_t *, size_t *);
+		int (*getCredentials)(void *, const char **, const char **);
+		int (*dispatch)(void *);
+		int (*reset)(void *);
+		int (*isCompleted)(void *, KSI_AsyncHandle);
+		void (*closeConnection)(void*);
+
+		size_t requestCount;
+	};
+
+	struct KSI_AsyncService_st {
+		KSI_CTX *ctx;
+
+		void *impl;
+		void (*impl_free)(void*);
+
+		int (*addAggrRequest)(void *, KSI_AggregationReq *, KSI_AsyncHandle *);
+		int (*getAggrResponse)(void *, KSI_AggregationResp **);
+
+		int (*run)(void *);
+		int (*isSent)(void *, KSI_AsyncHandle);
+
+		int (*uriSplit)(const char *uri, char **scheme, char **user, char **pass, char **host, unsigned *port, char **path, char **query, char **fragment);
+	};
+
 #ifdef __cplusplus
 }
 #endif

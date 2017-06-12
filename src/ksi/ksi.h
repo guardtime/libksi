@@ -97,10 +97,10 @@ enum KSI_StatusCode {
 	 * TLV payload has wrong type for operation.
 	 */
 	KSI_TLV_PAYLOAD_TYPE_MISMATCH = 0x105,
-	/**
-	 * The async operation has not finished.
-	 */
-	KSI_ASYNC_NOT_FINISHED = 0x106,
+//	/**
+//	 * The async operation has not finished.
+//	 */
+//	KSI_ASYNC_NOT_FINISHED = 0x106,
 	/**
 	 * Invalid KSI signature.
 	 */
@@ -296,6 +296,17 @@ enum KSI_StatusCode {
 	 * Received PDU v1 response to PDU v2 request. Configure the SDK to use PDU v1 format for the given extender.
 	 */
 	KSI_SERVICE_EXTENDER_PDU_V1_RESPONSE_TO_PDU_V2_REQUEST = 0x508,
+
+	/* Async status codes. */
+	KSI_ASYNC_NOT_FINISHED = 0x601,
+	KSI_ASYNC_NOT_READY,
+	KSI_ASYNC_CONNECTION_CLOSED,
+	KSI_ASYNC_COMPLETED,
+	KSI_ASYNC_QUEUE_EMPTY,
+	KSI_ASYNC_OUTPUT_BUFFER_FULL,
+
+
+
 
 	/**
 	 * Unknown error occurred.
