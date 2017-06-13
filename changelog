@@ -1,8 +1,10 @@
+Version 3.14
+
+2017-06-13 release(3.14.2207)
 * IMPROVEMENT: Unified verifivation error codes. All error code values with single digit are padded with '0' (general error codes have been changed from GEN-* to GEN-0*).
 * IMPROVEMENT: Refactored TCP client host information lookup by using getaddrinfo instead of gethostbyname.
 * IMPROVEMENT: Support for integration tests test package.
 * IMPROVEMENT: Refactored aggregation hash chain chain index continuation verification.
-Version 3.14
 * IMPROVEMENT: Added mandatory comments to deprecation macro.
 * IMPROVEMENT: Returning KSI_UNSUPPORTED_PDU_VERSION in case configured PDU version is not supported for given request.
 * IMPROVEMENT: Verification of user-provided input hash level.
