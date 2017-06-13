@@ -111,11 +111,6 @@ extern "C" {
 		int (*status)(KSI_RequestHandle *);
 	};
 
-
-
-
-
-
 	struct KSI_AsyncPayload_st {
 		KSI_CTX *ctx;
 		size_t ref;

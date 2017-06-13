@@ -68,9 +68,6 @@ extern "C" {
 		/** Network provider. */
 		KSI_NetworkClient *netProvider;
 
-		/** Network provider. */
-		KSI_NetworkClient *asyncNetProvider;
-
 		/** PKI trust provider. */
 		KSI_PKITruststore *pkiTruststore;
 

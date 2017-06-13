@@ -19,7 +19,6 @@
 
 #include <string.h>
 #include <sys/types.h>
-//#include <fcntl.h>
 
 #ifdef _WIN32
 #  include <winsock2.h>
@@ -79,20 +78,12 @@ static int openSocket(TcpAsyncCtx *tcpCtx, int *sockfd) {
 	struct addrinfo hints;
 	struct addrinfo *result = NULL;
 	struct addrinfo *pr = NULL;
-#if 0
-#ifdef _WIN32
-	DWORD transferTimeout = 0;
-#else
-	struct timeval  transferTimeout;
-#endif
-#endif
 	char portStr[6];
 
 	if (tcpCtx == NULL || sockfd == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
-
 	KSI_ERR_clearErrors(tcpCtx->ctx);
 
 	memset(&hints, 0, sizeof(struct addrinfo));
@@ -102,7 +93,8 @@ static int openSocket(TcpAsyncCtx *tcpCtx, int *sockfd) {
 	hints.ai_protocol = IPPROTO_TCP;
 
 	KSI_snprintf(portStr, sizeof(portStr), "%u", tcpCtx->port);
-	if ((res = getaddrinfo(tcpCtx->host, portStr, &hints, &result)) != 0) {
+	res = getaddrinfo(tcpCtx->host, portStr, &hints, &result);
+	if (res != 0) {
 		KSI_ERR_push(tcpCtx->ctx, KSI_NETWORK_ERROR, res, __FILE__, __LINE__, gai_strerror(res));
 		res = KSI_NETWORK_ERROR;
 		goto cleanup;
@@ -116,19 +108,6 @@ static int openSocket(TcpAsyncCtx *tcpCtx, int *sockfd) {
 			KSI_pushError(tcpCtx->ctx, res = KSI_NETWORK_ERROR, "Unable to open socket.");
 			goto cleanup;
 		}
-
-#if 0
-#ifdef _WIN32
-		transferTimeout = tcpCtx->transferTimeoutSeconds * 1000;
-#else
-		transferTimeout.tv_sec = tcpCtx->transferTimeoutSeconds;
-		transferTimeout.tv_usec = 0;
-#endif
-
-		/*Set socket options*/
-		setsockopt(tmpfd, SOL_SOCKET, SO_RCVTIMEO, (void*)&transferTimeout, sizeof(transferTimeout));
-		setsockopt(tmpfd, SOL_SOCKET, SO_SNDTIMEO, (void*)&transferTimeout, sizeof(transferTimeout));
-#endif
 
 #ifdef _WIN32
 		res = connect(tmpfd, pr->ai_addr, (int)pr->ai_addrlen);
@@ -168,10 +147,14 @@ static int checkConnection(TcpAsyncCtx *tcpCtx) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+	KSI_ERR_clearErrors(tcpCtx->ctx);
 
 	if (tcpCtx->sockfd < 0) {
 		res = openSocket(tcpCtx, &tcpCtx->sockfd);
-		if (res != KSI_OK) goto cleanup;
+		if (res != KSI_OK) {
+			KSI_pushError(tcpCtx->ctx, res, NULL);
+			goto cleanup;
+		}
 	} else {
 		struct pollfd pfd;
 
@@ -181,7 +164,7 @@ static int checkConnection(TcpAsyncCtx *tcpCtx) {
 
 		res = poll(&pfd, 1, 0);
 		if (res < 0) {
-			res = KSI_IO_ERROR;
+			KSI_pushError(tcpCtx->ctx, res = KSI_IO_ERROR, "Failed to test socket.");
 			goto cleanup;
 		}
 
@@ -189,7 +172,7 @@ static int checkConnection(TcpAsyncCtx *tcpCtx) {
 			unsigned char buffer[0xffff + 4];
 			res = recv(tcpCtx->sockfd, buffer, sizeof(buffer), MSG_PEEK);
 			if (res == 0) {
-				res = KSI_ASYNC_CONNECTION_CLOSED;
+				KSI_pushError(tcpCtx->ctx, res = KSI_ASYNC_CONNECTION_CLOSED, "Server closed TCP connection.");
 				goto cleanup;
 			}
 		}
@@ -227,14 +210,14 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 		res = KSI_ASYNC_NOT_READY;
 		goto cleanup;
 	} else if (res < 0) {
-		KSI_pushError(tcpCtx->ctx, res = KSI_IO_ERROR, NULL);
+		KSI_pushError(tcpCtx->ctx, res = KSI_IO_ERROR, "Failed to test socket.");
 		goto cleanup;
 	}
 
 	/* Set socket into non-blocking mode. */
 	{
 		unsigned mode = 1;
-//		res = fcntl(tcpCtx->sockfd, F_SETFL, O_NONBLOCK);
+
 		res = ioctl(tcpCtx->sockfd, FIONBIO, &mode);
 		if (res < 0) {
 			KSI_pushError(tcpCtx->ctx, res = KSI_IO_ERROR, NULL);
