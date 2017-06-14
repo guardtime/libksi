@@ -216,6 +216,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->certConstraints = NULL;
 	ctx->freeCertConstraintsArray = freeCertConstraintsArray;
 	ctx->lastFailedSignature = NULL;
+	ctx->dataHashRecycle = NULL;
 	KSI_ERR_clearErrors(ctx);
 
 	/* Init options. */

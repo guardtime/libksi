@@ -233,12 +233,12 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 	}
 
 	res = winHTTP_ReadFromHandle(handle, &resp, &resp_len);
-   	if (res != KSI_OK) {
+	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-    res = KSI_RequestHandle_setResponse(handle, resp, resp_len);
+	res = KSI_RequestHandle_setResponse(handle, resp, resp_len);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -248,7 +248,7 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 
 cleanup:
 
-    KSI_free(resp);
+	KSI_free(resp);
 
 	return res;
 }
@@ -268,6 +268,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	LPWSTR W_mimeTypeHeader = NULL;
 	unsigned char *request = NULL;
 	size_t request_len = 0;
+	bool isHttps = 0;
 
 	if (client == NULL || handle == NULL || url == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -302,7 +303,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		goto cleanup;
 	}
 
-	if (scheme == NULL || strcmp("http", scheme) != 0 && strcmp("https", scheme) != 0){
+	if (scheme == NULL || strcmp("http", scheme) != 0 && !(isHttps = (strcmp("https", scheme) == 0))){
 		KSI_snprintf(msg, sizeof(msg), "WinHTTP: unknown Internet scheme '%s'.", scheme);
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, msg);
 		goto cleanup;
@@ -314,7 +315,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		goto cleanup;
 	}
 
-	if(port > 0xffff){
+	if (port > 0xffff){
 		KSI_snprintf(msg, sizeof(msg), "WinHTTP: Internet port %i too large.", port);
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, msg);
 		goto cleanup;
@@ -333,7 +334,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		}
 	}
 
-	/*Preparing request*/
+	/* Preparing request. */
 	KSI_LOG_debug(ctx, "WinHTTP: Sending request to: %s.", url);
 
 	res = KSI_RequestHandle_getRequest(handle, &request, &request_len);
@@ -349,17 +350,19 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	handle->readResponse = winhttpReceive;
 	handle->client = client;
 
-	/*Preparing session handle. Opens an HTTP session for a given site*/
+	/* Preparing session handle. Opens an HTTP session for a given site. */
 	implCtx->connection_handle = WinHttpConnect(implCtx->session_handle, W_host, (INTERNET_PORT)port, 0);
 	if (implCtx->connection_handle == NULL) {
 		WINHTTP_ERROR_1(ctx, ERROR_WINHTTP_INVALID_URL, KSI_NETWORK_ERROR, "WinHTTP: Could not resolve host.")
 		WINHTTP_ERROR_N(ctx, KSI_NETWORK_ERROR, "WinHTTP: Unable to initialize connection handle.")
 	}
 
+
 	implCtx->request_handle = WinHttpOpenRequest(implCtx->connection_handle,
 			(request == NULL ? L"GET" : L"POST"),
 			W_path,
-			NULL, NULL, NULL,0);
+			NULL, NULL, NULL,
+			isHttps ? WINHTTP_FLAG_SECURE : 0);
 
 	if (implCtx->request_handle == NULL){
 		WINHTTP_ERROR(ctx, GetLastError(), KSI_NETWORK_ERROR, "WinHTTP: Unable to initialize request handle.");
@@ -386,13 +389,13 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		WINHTTP_ERROR(ctx, GetLastError(), KSI_NETWORK_ERROR, "WinHTTP: Unable to set timeouts.");
 	}
 
-    res = KSI_RequestHandle_setImplContext(handle, implCtx, (void (*)(void *))winhttpNetHandleCtx_free);
-    if (res != KSI_OK) {
+	res = KSI_RequestHandle_setImplContext(handle, implCtx, (void (*)(void *))winhttpNetHandleCtx_free);
+	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-    implCtx = NULL;
+	implCtx = NULL;
 	res = KSI_OK;
 
 cleanup:
