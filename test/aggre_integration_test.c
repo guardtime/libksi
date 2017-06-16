@@ -395,7 +395,7 @@ static void Test_AsyncTcp(CuTest* tc) {
 #define BIT_SET(field, n) field |= (1 << (n))
 #define BIT_CLR(field, n) field &= ~(1 << (n))
 #define TEST_TIMEOUT 1.0
-#define TEST_SLEEP_MS 1000
+#define TEST_SLEEP_MS 500
 
 	int res;
 	KSI_AsyncService *as = NULL;
@@ -456,13 +456,25 @@ static void Test_AsyncTcp(CuTest* tc) {
 	}
 
 	KSI_LOG_debug(ctx, "%s: SEND.", __FUNCTION__);
+	t_timeout = 1;
 	do {
 		res = KSI_AsyncService_run(as);
+		/* The first time run() is invoked it will init non-blocking socket connection and most probably return KSI_ASYNC_NOT_READY. */
+		if (res == KSI_ASYNC_NOT_READY) {
+			if (t_timeout == 0) {
+				KSI_LOG_debug(ctx, "%s: TIMEOUT.", __FUNCTION__);
+				CuFail(tc, "Failed due to timeout.");
+			}
+			t_timeout--;
+			/* Give is some to get ready/connect. Otherwise the log will full of 'not ready' and 'poll' entries. */
+			KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
+			sleep_ms(TEST_SLEEP_MS);
+		}
 	} while (res == KSI_ASYNC_NOT_READY);
 	CuAssert(tc, "Unable to run async client.", res == KSI_OK);
 
 	KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
-	sleep_ms(TEST_SLEEP_MS);
+	sleep_ms(2 * TEST_SLEEP_MS);
 
 	/* Check if all requests have been dispatched. */
 	for (i = 0; i < TEST_NOF_REQUESTS; i++) {
