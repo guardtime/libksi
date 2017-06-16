@@ -28,13 +28,17 @@
 #  define poll WSAPoll
 #  define ioctl ioctlsocket
 #  define socket_error WSAGetLastError()
-#  define socketTimedOut WSAETIMEDOUT
+#  define KSI_SOC_ETIMEDOUT   WSAETIMEDOUT
+#  define KSI_SOC_EWOULDBLOCK WSAEWOULDBLOCK
+#  define KSI_SOC_EINPROGRESS WSAEINPROGRESS
 #else
 #  include <unistd.h>
 #  include <sys/socket.h>
 #  include <sys/ioctl.h>
 #  include <netinet/in.h>
+#  include <netinet/tcp.h>
 #  include <poll.h>
+# include <errno.h>
 #  ifndef __USE_MISC
 #    define __USE_MISC
 #    include <netdb.h>
@@ -43,8 +47,10 @@
 #    include <netdb.h>
 #  endif
 #  include <sys/time.h>
-#  define socketTimedOut EWOULDBLOCK
 #  define socket_error errno
+#  define KSI_SOC_ETIMEDOUT   ETIMEDOUT
+#  define KSI_SOC_EWOULDBLOCK EWOULDBLOCK
+#  define KSI_SOC_EINPROGRESS EINPROGRESS
 #endif
 
 #include "internal.h"
@@ -58,6 +64,9 @@
 #include "types.h"
 
 #define TCP_INVALID_SOCKET_FD (-1)
+
+static const int optSet = 1;
+static const int optClr = 0;
 
 typedef struct TcpClientCtx_st {
 	KSI_CTX *ctx;
@@ -101,6 +110,8 @@ static int openSocket(TcpAsyncCtx *tcpCtx, int *sockfd) {
 	}
 
 	for (pr = result; pr != NULL; pr = pr->ai_next) {
+		unsigned nbMode = 1;
+
 		if (pr->ai_protocol != IPPROTO_TCP) continue;
 
 		tmpfd = (int)socket(pr->ai_family, pr->ai_socktype, pr->ai_protocol);
@@ -109,15 +120,24 @@ static int openSocket(TcpAsyncCtx *tcpCtx, int *sockfd) {
 			goto cleanup;
 		}
 
+		/* Set socket into non-blocking mode. */
+		res = ioctl(tmpfd, FIONBIO, &nbMode);
+		if (res < 0) {
+			KSI_pushError(tcpCtx->ctx, res = KSI_IO_ERROR, NULL);
+			goto cleanup;
+		}
+
 #ifdef _WIN32
-		res = connect(tmpfd, pr->ai_addr, (int)pr->ai_addrlen);
+		res = connect(tmpfd, pr->ai_addr, (int) pr->ai_addrlen);
 #else
 		res = connect(tmpfd, pr->ai_addr, pr->ai_addrlen);
 #endif
 		if (res < 0) {
-			KSI_ERR_push(tcpCtx->ctx, KSI_NETWORK_ERROR, res, __FILE__, __LINE__, "Unable to connect.");
-			res = KSI_NETWORK_ERROR;
-			goto cleanup;
+			if (!(socket_error == KSI_SOC_EINPROGRESS || socket_error == KSI_SOC_EWOULDBLOCK)) {
+				KSI_ERR_push(tcpCtx->ctx, KSI_NETWORK_ERROR, socket_error, __FILE__, __LINE__, "Unable to connect.");
+				res = KSI_NETWORK_ERROR;
+				goto cleanup;
+			}
 		}
 
 		/* Succeedded to connect. */
@@ -172,6 +192,7 @@ static int checkConnection(TcpAsyncCtx *tcpCtx) {
 			unsigned char buffer[0xffff + 4];
 			res = recv(tcpCtx->sockfd, buffer, sizeof(buffer), MSG_PEEK);
 			if (res == 0) {
+				tcpCtx->sockfd = TCP_INVALID_SOCKET_FD;
 				KSI_pushError(tcpCtx->ctx, res = KSI_ASYNC_CONNECTION_CLOSED, "Server closed TCP connection.");
 				goto cleanup;
 			}
@@ -214,20 +235,36 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 		goto cleanup;
 	}
 
-	/* Set socket into non-blocking mode. */
-	{
-		unsigned mode = 1;
-
-		res = ioctl(tcpCtx->sockfd, FIONBIO, &mode);
-		if (res < 0) {
-			KSI_pushError(tcpCtx->ctx, res = KSI_IO_ERROR, NULL);
-			goto cleanup;
-		}
-	}
 
 	/* Handle output. */
 	if (KSI_AsyncPayloadList_length(tcpCtx->reqQueue) > 0) {
 		if (pfd.revents & POLLOUT) {
+			int sockOpt = 0;
+			size_t len = sizeof(sockOpt);
+			char dummy;
+
+			/* Check whether the socket is ready. */
+#ifdef _WIN32
+			res = getsockopt(tcpCtx->sockfd, SOL_SOCKET, SO_ERROR, (char *) &sockOpt, (int *) &len);
+#else
+			res = getsockopt(tcpCtx->sockfd, SOL_SOCKET, SO_ERROR, &sockOpt, (socklen_t *) &len);
+#endif
+			if (res < 0) {
+				KSI_pushError(tcpCtx->ctx, res = KSI_IO_ERROR, NULL);
+				goto cleanup;
+			}
+			if (sockOpt == KSI_SOC_EINPROGRESS || sockOpt == KSI_SOC_EWOULDBLOCK) {
+				res = KSI_ASYNC_NOT_READY;
+				goto cleanup;
+			}
+
+			/* Clear TCP_NODELAY flag in order to accumulate outgoing request. */
+#ifdef _WIN32
+			setsockopt(tcpCtx->sockfd, IPPROTO_TCP, TCP_NODELAY, (const char *) &optClr, (int) sizeof(optClr));
+#else
+			setsockopt(tcpCtx->sockfd, IPPROTO_TCP, TCP_NODELAY, &optClr, sizeof(optClr));
+#endif
+
 			do {
 				KSI_AsyncPayload *req = NULL;
 
@@ -248,9 +285,9 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 						KSI_pushError(tcpCtx->ctx, res = KSI_BUFFER_OVERFLOW, "Unable to send more than MAX_INT bytes.");
 						goto cleanup;
 					}
-					c = send(tcpCtx->sockfd, (char *) req->raw, (int) req->len, 0);
+					c = send(tcpCtx->sockfd, (char *) req->raw + count, (int) (req->len - count), 0);
 #else
-					c = send(tcpCtx->sockfd, (char *) req->raw, req->len, 0);
+					c = send(tcpCtx->sockfd, (char *) req->raw + count, req->len - count, 0);
 #endif
 					if (c < 0) {
 						KSI_LOG_debug(tcpCtx->ctx, "Unable to write to socket.");
@@ -268,6 +305,15 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 					}
 				}
 			} while (KSI_AsyncPayloadList_length(tcpCtx->reqQueue));
+
+			/* Set TCP_NODELAY flag to send the accumulated requests. */
+#ifdef _WIN32
+			setsockopt(tcpCtx->sockfd, IPPROTO_TCP, TCP_NODELAY, (const char *) &optSet, (int) sizeof(optSet));
+#else
+			setsockopt(tcpCtx->sockfd, IPPROTO_TCP, TCP_NODELAY, &optSet, sizeof(optSet));
+#endif
+			/* Trigger send (required on some systems). */
+			send(tcpCtx->sockfd, &dummy, 0, 0);
 		} else {
 			res = KSI_ASYNC_OUTPUT_BUFFER_FULL;
 			goto cleanup;

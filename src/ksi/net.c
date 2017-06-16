@@ -1678,7 +1678,10 @@ int asyncClient_run(KSI_AsyncClient *c) {
 	}
 
 	res = c->dispatch(c->clientImpl);
-	if (res != KSI_OK) {
+	if (res == KSI_ASYNC_NOT_READY) {
+		KSI_LOG_debug(c->ctx, "Async connection is not ready.");
+		goto cleanup;
+	} else if (res != KSI_OK) {
 		KSI_pushError(c->ctx, res, NULL);
 		goto cleanup;
 	}

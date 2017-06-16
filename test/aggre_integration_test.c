@@ -456,7 +456,9 @@ static void Test_AsyncTcp(CuTest* tc) {
 	}
 
 	KSI_LOG_debug(ctx, "%s: SEND.", __FUNCTION__);
-	res = KSI_AsyncService_run(as);
+	do {
+		res = KSI_AsyncService_run(as);
+	} while (res == KSI_ASYNC_NOT_READY);
 	CuAssert(tc, "Unable to run async client.", res == KSI_OK);
 
 	KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
