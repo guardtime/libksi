@@ -27,7 +27,7 @@
 #  define close(soc) closesocket(soc)
 #  define poll WSAPoll
 #  define ioctl ioctlsocket
-#  define socket_error WSAGetLastError()
+#  define KSI_SOC_error WSAGetLastError()
 #  define KSI_SOC_ETIMEDOUT   WSAETIMEDOUT
 #  define KSI_SOC_EWOULDBLOCK WSAEWOULDBLOCK
 #  define KSI_SOC_EINPROGRESS WSAEINPROGRESS
@@ -47,7 +47,7 @@
 #    include <netdb.h>
 #  endif
 #  include <sys/time.h>
-#  define socket_error errno
+#  define KSI_SOC_error errno
 #  define KSI_SOC_ETIMEDOUT   ETIMEDOUT
 #  define KSI_SOC_EWOULDBLOCK EWOULDBLOCK
 #  define KSI_SOC_EINPROGRESS EINPROGRESS
@@ -64,16 +64,24 @@
 #include "types.h"
 
 #define TCP_INVALID_SOCKET_FD (-1)
+#define KSI_TLV_MAX_SIZE (0xffff + 4)
 
 static const int optSet = 1;
 static const int optClr = 0;
 
 typedef struct TcpClientCtx_st {
 	KSI_CTX *ctx;
+	/* Socket descriptor. */
 	int sockfd;
+	/* Output queue. */
 	KSI_AsyncPayloadList *reqQueue;
+	/* Input queue. */
 	KSI_OctetStringList *respQueue;
+	/* Input read buffer. */
+	unsigned char inBuf[KSI_TLV_MAX_SIZE * 2];
+	size_t inLen;
 
+	/* Endpoint data. */
 	char *ksi_user;
 	char *ksi_pass;
 	char *host;
@@ -133,8 +141,8 @@ static int openSocket(TcpAsyncCtx *tcpCtx, int *sockfd) {
 		res = connect(tmpfd, pr->ai_addr, pr->ai_addrlen);
 #endif
 		if (res < 0) {
-			if (!(socket_error == KSI_SOC_EINPROGRESS || socket_error == KSI_SOC_EWOULDBLOCK)) {
-				KSI_ERR_push(tcpCtx->ctx, KSI_NETWORK_ERROR, socket_error, __FILE__, __LINE__, "Unable to connect.");
+			if (!(KSI_SOC_error == KSI_SOC_EINPROGRESS || KSI_SOC_error == KSI_SOC_EWOULDBLOCK)) {
+				KSI_ERR_push(tcpCtx->ctx, KSI_NETWORK_ERROR, KSI_SOC_error, __FILE__, __LINE__, "Unable to connect.");
 				res = KSI_NETWORK_ERROR;
 				goto cleanup;
 			}
@@ -175,28 +183,6 @@ static int checkConnection(TcpAsyncCtx *tcpCtx) {
 			KSI_pushError(tcpCtx->ctx, res, NULL);
 			goto cleanup;
 		}
-	} else {
-		struct pollfd pfd;
-
-		pfd.fd = tcpCtx->sockfd;
-		pfd.events = POLLIN;
-		pfd.revents = 0;
-
-		res = poll(&pfd, 1, 0);
-		if (res < 0) {
-			KSI_pushError(tcpCtx->ctx, res = KSI_IO_ERROR, "Failed to test socket.");
-			goto cleanup;
-		}
-
-		if (pfd.revents & POLLIN) {
-			unsigned char buffer[0xffff + 4];
-			res = recv(tcpCtx->sockfd, buffer, sizeof(buffer), MSG_PEEK);
-			if (res == 0) {
-				tcpCtx->sockfd = TCP_INVALID_SOCKET_FD;
-				KSI_pushError(tcpCtx->ctx, res = KSI_ASYNC_CONNECTION_CLOSED, "Server closed TCP connection.");
-				goto cleanup;
-			}
-		}
 	}
 
 	res = KSI_OK;
@@ -206,7 +192,6 @@ cleanup:
 
 static int dispatch(TcpAsyncCtx *tcpCtx) {
 	int res = KSI_UNKNOWN_ERROR;
-	size_t count;
 	struct pollfd pfd;
 	KSI_OctetString *resp = NULL;
 
@@ -235,6 +220,64 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 		goto cleanup;
 	}
 
+	/* Handle intput. */
+	if (pfd.revents & POLLIN) {
+		int c = 0;
+
+		c = recv(tcpCtx->sockfd, (tcpCtx->inBuf + tcpCtx->inLen), KSI_TLV_MAX_SIZE, 0);
+		if (c == 0) {
+			/* Connection has been closed unexpectedly. */
+			tcpCtx->sockfd = TCP_INVALID_SOCKET_FD;
+			KSI_pushError(tcpCtx->ctx, res = KSI_ASYNC_CONNECTION_CLOSED, "Server closed TCP connection.");
+			goto cleanup;
+		} else if ((c < 0) && !(KSI_SOC_error == KSI_SOC_EINPROGRESS || KSI_SOC_error == KSI_SOC_EWOULDBLOCK)) {
+			/* Non-recoverable error has occurred. */
+			KSI_ERR_push(tcpCtx->ctx, KSI_NETWORK_ERROR, KSI_SOC_error, __FILE__, __LINE__, "Unable to receive data.");
+			res = KSI_NETWORK_ERROR;
+			goto cleanup;
+		} else {
+			tcpCtx->inLen += c;
+			if (tcpCtx->inLen > sizeof(tcpCtx->inBuf)) {
+				KSI_pushError(tcpCtx->ctx, res = KSI_BUFFER_OVERFLOW, "Too much data read from socket.");
+				goto cleanup;
+			}
+		}
+	}
+	/* Handle read buffer. */
+	while (tcpCtx->inLen > 0) {
+		KSI_FTLV ftlv;
+		size_t count = 0;
+
+		res = KSI_FTLV_memRead(tcpCtx->inBuf, tcpCtx->inLen, &ftlv);
+		count = ftlv.hdr_len + ftlv.dat_len;
+		if (res != KSI_OK && (tcpCtx->inLen >= count)) {
+			KSI_pushError(tcpCtx->ctx, res = KSI_INVALID_ARGUMENT, "Unable to read TLV.");
+			goto cleanup;
+		}
+
+		/* Check whether there is enougth data on the input side. */
+		if (count > tcpCtx->inLen) break;
+
+		if (count > UINT_MAX){
+			KSI_pushError(tcpCtx->ctx, res = KSI_BUFFER_OVERFLOW, "Too much data read from socket.");
+			goto cleanup;
+		}
+
+		res = KSI_OctetString_new(tcpCtx->ctx, tcpCtx->inBuf, count, &resp);
+		if (res != KSI_OK) {
+			KSI_pushError(tcpCtx->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_OctetStringList_append(tcpCtx->respQueue, resp);
+		if (res != KSI_OK) {
+			KSI_pushError(tcpCtx->ctx, res, NULL);
+			goto cleanup;
+		}
+		resp = NULL;
+		tcpCtx->inLen -= count;
+		memmove(tcpCtx->inBuf, tcpCtx->inBuf + count, tcpCtx->inLen);
+	}
 
 	/* Handle output. */
 	if (KSI_AsyncPayloadList_length(tcpCtx->reqQueue) > 0) {
@@ -267,6 +310,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 
 			do {
 				KSI_AsyncPayload *req = NULL;
+				size_t count  = 0;
 
 				res = KSI_AsyncPayloadList_elementAt(tcpCtx->reqQueue, 0, &req);
 				if (res != KSI_OK) {
@@ -276,7 +320,6 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 
 				KSI_LOG_logBlob(tcpCtx->ctx, KSI_LOG_DEBUG, "Sending request", req->raw, req->len);
 
-				count = 0;
 				while (count < req->len) {
 					int c;
 
@@ -318,36 +361,6 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 			res = KSI_ASYNC_OUTPUT_BUFFER_FULL;
 			goto cleanup;
 		}
-	}
-
-	/* Handle intput. */
-	if (pfd.revents & POLLIN) {
-		unsigned char buffer[0xffff + 4];
-		KSI_FTLV ftlv;
-
-		res = KSI_FTLV_socketRead(tcpCtx->sockfd, buffer, sizeof(buffer), &count, &ftlv);
-		if (res != KSI_OK || count == 0) {
-			KSI_pushError(tcpCtx->ctx, res = KSI_INVALID_ARGUMENT, "Unable to read TLV from socket.");
-			goto cleanup;
-		}
-
-		if(count > UINT_MAX){
-			KSI_pushError(tcpCtx->ctx, res = KSI_BUFFER_OVERFLOW, "Too much data read from socket.");
-			goto cleanup;
-		}
-
-		res = KSI_OctetString_new(tcpCtx->ctx, buffer, count, &resp);
-		if (res != KSI_OK) {
-			KSI_pushError(tcpCtx->ctx, res, NULL);
-			goto cleanup;
-		}
-
-		res = KSI_OctetStringList_append(tcpCtx->respQueue, resp);
-		if (res != KSI_OK) {
-			KSI_pushError(tcpCtx->ctx, res, NULL);
-			goto cleanup;
-		}
-		resp = NULL;
 	}
 
 	res = KSI_OK;
@@ -530,6 +543,7 @@ static int TcpAsyncCtx_new(KSI_CTX *ctx, TcpAsyncCtx **tcpCtx) {
 	tmp->ksi_pass = NULL;
 	tmp->host = NULL;
 	tmp->port = 0;
+	tmp->inLen = 0;
 
 	res = KSI_AsyncPayloadList_new(&tmp->reqQueue);
 	if (res != KSI_OK) goto cleanup;
