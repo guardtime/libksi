@@ -1411,11 +1411,7 @@ cleanup:
 	return res;
 }
 
-int KSI_AsyncPayload_setPayloadId(KSI_AsyncPayload *o, KSI_uint64_t id) {
-	if (o == NULL) return KSI_INVALID_ARGUMENT;
-	o->id = id;
-	return KSI_OK;
-}
+KSI_IMPLEMENT_SETTER(KSI_AsyncPayload, KSI_AsyncHandle, id, PayloadId);
 
 int KSI_AsyncPayload_setPayloadCtx(KSI_AsyncPayload *o, void *pldCtx, void (*pldCtx_free)(void*)) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -1540,6 +1536,7 @@ static int asyncClient_getAggregationResponse(KSI_AsyncClient *c, KSI_Aggregatio
 	res = c->getResponse(impl, &resp);
 	if (res == KSI_ASYNC_QUEUE_EMPTY) {
 		KSI_LOG_debug(c->ctx, "Async reaponse queue is empty.");
+		*response = NULL;
 		res = KSI_OK;
 		goto cleanup;
 	} else if (res != KSI_OK) {

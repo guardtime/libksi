@@ -77,7 +77,23 @@ extern "C" {
 	 */
 	int KSI_TcpClient_setTransferTimeoutSeconds(KSI_NetworkClient *client, int val);
 
+	/**
+	 * Creates a new TCP async client.
+	 * \param[in]	ctx			KSI context.
+	 * \param[out]	c			Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
 	int KSI_TcpAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c);
+
+	/**
+	 * Setter for the tcp service endpoint parameters.
+	 * \param[in]	c			Pointer to tcp async client.
+	 * \param[in]	host		Host name.
+	 * \param[in]	port		Port number.
+	 * \param[in]	user		User name.
+	 * \param[in]	pass		HMAC shared secret.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
 	int KSI_TcpAsyncClient_setService(KSI_AsyncClient *c, const char *host, unsigned port, const char *user, const char *pass);
 
 #ifdef __cplusplus

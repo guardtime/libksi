@@ -296,16 +296,36 @@ enum KSI_StatusCode {
 	KSI_SERVICE_EXTENDER_PDU_V1_RESPONSE_TO_PDU_V2_REQUEST = 0x508,
 
 	/* Async status codes. */
+
 	/**
 	 * The async operation has not finished.
 	 */
 	KSI_ASYNC_NOT_FINISHED = 0x601,
-	KSI_ASYNC_NOT_READY,
-	KSI_ASYNC_CONNECTION_CLOSED,
-	KSI_ASYNC_COMPLETED,
-	KSI_ASYNC_QUEUE_EMPTY,
-	KSI_ASYNC_OUTPUT_BUFFER_FULL,
 
+	/**
+	 * The async operation has finished.
+	 */
+	KSI_ASYNC_COMPLETED = 0x602,
+
+	/**
+	 * The async connection is not ready.
+	 */
+	KSI_ASYNC_NOT_READY = 0x603,
+
+	/**
+	 * The async connection was closed.
+	 */
+	KSI_ASYNC_CONNECTION_CLOSED = 0x604,
+
+	/**
+	 * The async queue is empty.
+	 */
+	KSI_ASYNC_QUEUE_EMPTY = 0x605,
+
+	/**
+	 * The async send buffer is full.
+	 */
+	KSI_ASYNC_OUTPUT_BUFFER_FULL = 0x606,
 
 
 

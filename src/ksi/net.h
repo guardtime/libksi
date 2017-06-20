@@ -352,20 +352,115 @@ extern "C" {
 	 * @{
 	 */
 
+	/**
+	 * Function for matching async handle to a aggregation response.
+	 * \param[in]		handle		Async handle.
+	 * \param[in]		resp		Pointer to the aggregation response.
+	 * \return Returns a value greated than 0 in case of a match, otherwise 0.
+	 */
 	int KSI_AsyncHandle_matchAggregationResp(const KSI_AsyncHandle handle, const KSI_AggregationResp *resp);
 
+	/**
+	 * Free async paiload object.
+	 * \param[in]		handle			Async payload.
+	 */
 	void KSI_AsyncPayload_free(KSI_AsyncPayload *o);
+
+	/**
+	 * Constructor for the async payload object.
+	 * \param[in]		ctx				KSI context.
+	 * \param[in]		payload			Pointer to raw data.
+	 * \param[in]		payload_len		Length of the raw payload.
+	 * \param[out]		o				Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note The \c payload value may be freed after a successful call to this function as
+	 * its contents is copied internally.
+	 */
 	int KSI_AsyncPayload_new(KSI_CTX *ctx, const unsigned char *payload, const size_t payload_len, KSI_AsyncPayload **o);
-	int KSI_AsyncPayload_setPayloadId(KSI_AsyncPayload *o, KSI_uint64_t id);
+
+	int KSI_AsyncPayload_setPayloadId(KSI_AsyncPayload *o, KSI_AsyncHandle id);
+
+	/**
+	 * Setter for the payload specific context.
+	 * \param[in]		o				Async payload object.
+	 * \param[in]		pldCtx			Payload context.
+	 * \param[in]		pldCtx_free		Pointer to the context cleanup method.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
 	int KSI_AsyncPayload_setPayloadCtx(KSI_AsyncPayload *o, void *pldCtx, void (*pldCtx_free)(void*));
 
+	/**
+	 * Free async client object.
+	 * \param[in]		handle			Async client.
+	 */
 	void KSI_AsyncClient_free(KSI_AsyncClient *c);
 
+	/**
+	 * Free async service object.
+	 * \param[in]		handle			Async client.
+	 */
 	void KSI_AsyncService_free(KSI_AsyncService *s);
+
+	/**
+	 * Constructor for the async payload object.
+	 * \param[in]		ctx				KSI context.
+	 * \param[out]		s				Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_AsyncService_free
+	 */
 	int KSI_AsyncService_new(KSI_CTX *ctx, KSI_AsyncService **s);
+
+	/**
+	 * Non-blocking setter for aggregation request. Add new aggregation request to the output queue.
+	 * The request are cached till #KSI_AsyncService_run is called.
+	 * \param[in]		s				Async serice object.
+	 * \param[in]		req				Aggregation request.
+	 * \param[out]		handle			Async handle associated with the request.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note The \c req may be freed after a successful call to this function.
+	 * \see #KSI_AsyncService_new #KSI_AsyncService_run #KSI_AsyncService_isSent
+	 */
 	int KSI_AsyncService_addAggregationReq(KSI_AsyncService *s, KSI_AggregationReq *req, KSI_AsyncHandle *handle);
+
+	/**
+	 * Non-blocking getter for an aggregation response. Get next response from the input queue.
+	 * The response queue is filled during #KSI_AsyncService_run call. In case there are not responses on the input
+	 * side, status code KSI_OK and \c resp set the NULL is returned.
+	 * Use #KSI_AsyncHandle_matchAggregationResp for matching request handle to the response.
+	 * \param[in]		s				Async serice object.
+	 * \param[out]		resp			Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note The caller is responseble for cleaning up the returned resource.
+	 * \see #KSI_AsyncService_new #KSI_AsyncService_run #KSI_AsyncHandle_matchAggregationResp #KSI_AggregationResp_free
+	 */
 	int KSI_AsyncService_getAggregationResp(KSI_AsyncService *s, KSI_AggregationResp **resp);
+
+	/**
+	 * Non-blocking send/receive worker. The method will open a connection the remote service, dispatch the cached
+	 * requests and cache the received responses. The method has to be called multiple times in order to get
+	 * the job done.
+	 * \param[in]		s				Async serice object.
+	 * \return status code:
+	 * #KSI_OK when operation succeeded;
+	 * #KSI_ASYNC_NOT_READY when async connection has been initiated, but is not completed yet;
+	 * #KSI_ASYNC_CONNECTION_CLOSED when connection has been closed by the service provider;
+	 * #KSI_ASYNC_OUTPUT_BUFFER_FULL when OS send buffer is full;
+	 * otherwise an error code.
+	 * \see #KSI_AsyncService_addAggregationReq #KSI_AsyncService_getAggregationResp
+	 */
 	int KSI_AsyncService_run(KSI_AsyncService *s);
+
+	/**
+	 * Chech whether the queued request has been dispached.
+	 * \param[in]		s				Async serice object.
+	 * \param[in]		h				Async handle.
+	 * \return status code:
+	 * #KSI_OK when operation succeeded;
+	 * #KSI_ASYNC_NOT_FINISHED when the request is still in output queue.
+	 * #KSI_ASYNC_COMPLETED when the request has been sent.
+	 * otherwise an error code.
+	 * \see #KSI_AsyncService_addAggregationReq
+	 */
 	int KSI_AsyncService_isSent(KSI_AsyncService *s, KSI_AsyncHandle h);
 
 	/**

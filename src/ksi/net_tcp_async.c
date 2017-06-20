@@ -168,28 +168,6 @@ cleanup:
 	return res;
 }
 
-static int checkConnection(TcpAsyncCtx *tcpCtx) {
-	int res = KSI_UNKNOWN_ERROR;
-
-	if (tcpCtx == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	KSI_ERR_clearErrors(tcpCtx->ctx);
-
-	if (tcpCtx->sockfd < 0) {
-		res = openSocket(tcpCtx, &tcpCtx->sockfd);
-		if (res != KSI_OK) {
-			KSI_pushError(tcpCtx->ctx, res, NULL);
-			goto cleanup;
-		}
-	}
-
-	res = KSI_OK;
-cleanup:
-	return res;
-}
-
 static int dispatch(TcpAsyncCtx *tcpCtx) {
 	int res = KSI_UNKNOWN_ERROR;
 	struct pollfd pfd;
@@ -201,10 +179,13 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 	}
 	KSI_ERR_clearErrors(tcpCtx->ctx);
 
-	res = checkConnection(tcpCtx);
-	if (res != KSI_OK) {
-		KSI_pushError(tcpCtx->ctx, res, NULL);
-		goto cleanup;
+	/* Check connection. */
+	if (tcpCtx->sockfd < 0) {
+		res = openSocket(tcpCtx, &tcpCtx->sockfd);
+		if (res != KSI_OK) {
+			KSI_pushError(tcpCtx->ctx, res, NULL);
+			goto cleanup;
+		}
 	}
 
 	pfd.fd = tcpCtx->sockfd;
@@ -248,6 +229,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 		KSI_FTLV ftlv;
 		size_t count = 0;
 
+		/* Read next response data from input cache. */
 		res = KSI_FTLV_memRead(tcpCtx->inBuf, tcpCtx->inLen, &ftlv);
 		count = ftlv.hdr_len + ftlv.dat_len;
 		if (res != KSI_OK && (tcpCtx->inLen >= count)) {
@@ -263,6 +245,9 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 			goto cleanup;
 		}
 
+		KSI_LOG_logBlob(tcpCtx->ctx, KSI_LOG_DEBUG, "TCP async received response", tcpCtx->inBuf, count);
+
+		/* A complete PDU is in cache. Move it into the receive queue. */
 		res = KSI_OctetString_new(tcpCtx->ctx, tcpCtx->inBuf, count, &resp);
 		if (res != KSI_OK) {
 			KSI_pushError(tcpCtx->ctx, res, NULL);
@@ -275,6 +260,8 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 			goto cleanup;
 		}
 		resp = NULL;
+
+		/* The response has been successfully moved to the input queue. Remove the data from the input cache. */
 		tcpCtx->inLen -= count;
 		memmove(tcpCtx->inBuf, tcpCtx->inBuf + count, tcpCtx->inLen);
 	}
@@ -312,6 +299,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 				KSI_AsyncPayload *req = NULL;
 				size_t count  = 0;
 
+				/* Send the requests in the same order as they have been cached. */
 				res = KSI_AsyncPayloadList_elementAt(tcpCtx->reqQueue, 0, &req);
 				if (res != KSI_OK) {
 					KSI_pushError(tcpCtx->ctx, res, NULL);
@@ -428,6 +416,7 @@ static int getResponse(TcpAsyncCtx *tcpCtx, KSI_OctetString **response) {
 		goto cleanup;
 	}
 
+	/* Get last from queue to avoid list element shift. */
 	res = KSI_OctetStringList_remove(tcpCtx->respQueue, (len - 1), &tmp);
 	if (res != KSI_OK) goto cleanup;
 
@@ -538,13 +527,15 @@ static int TcpAsyncCtx_new(KSI_CTX *ctx, TcpAsyncCtx **tcpCtx) {
 	/* Queue */
 	tmp->reqQueue = NULL;
 	tmp->respQueue = NULL;
+	/* Input cache. */
+	tmp->inLen = 0;
 	/* Endpoint. */
 	tmp->ksi_user = NULL;
 	tmp->ksi_pass = NULL;
 	tmp->host = NULL;
 	tmp->port = 0;
-	tmp->inLen = 0;
 
+	/* Initialize io queues. */
 	res = KSI_AsyncPayloadList_new(&tmp->reqQueue);
 	if (res != KSI_OK) goto cleanup;
 	res = KSI_OctetStringList_new(&tmp->respQueue);
