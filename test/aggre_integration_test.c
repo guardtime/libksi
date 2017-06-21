@@ -485,6 +485,7 @@ static void Test_AsyncTcp(CuTest* tc) {
 	t_timeout = time(NULL);
 	while (requests) {
 		KSI_AggregationResp *resp = NULL;
+		size_t h;
 
 		/* Poll for response. */
 		KSI_LOG_debug(ctx, "%s: POLL.", __FUNCTION__);
@@ -495,22 +496,24 @@ static void Test_AsyncTcp(CuTest* tc) {
 		res = KSI_AsyncService_getAggregationResp(as, &resp);
 		CuAssert(tc, "Unable to get agggregation response.", res == KSI_OK);
 
-		if (resp != NULL) {
-			size_t h;
-
-			res = KSI_AggregationResp_getRequestId(resp, &reqId);
-			CuAssert(tc, "Unable to get request id from response.", res == KSI_OK && reqId != NULL);
-
-			for (h = 0; h < TEST_NOF_REQUESTS; h++) {
-				if (KSI_AsyncHandle_matchAggregationResp(handle[h], resp)) {
-					KSI_LOG_debug(ctx, "%s: Response for handle recived: %d.", __FUNCTION__, handle[h]);
-					BIT_CLR(requests, handle[h]);
-					break;
-				}
-			}
-			CuAssert(tc, "Unexpected response recived.", h != TEST_NOF_REQUESTS);
-			KSI_AggregationResp_free(resp);
+		if (resp == NULL) {
+			KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
+			sleep_ms(TEST_SLEEP_MS);
+			continue;
 		}
+
+		res = KSI_AggregationResp_getRequestId(resp, &reqId);
+		CuAssert(tc, "Unable to get request id from response.", res == KSI_OK && reqId != NULL);
+
+		for (h = 0; h < TEST_NOF_REQUESTS; h++) {
+			if (KSI_AsyncHandle_matchAggregationResp(handle[h], resp)) {
+				KSI_LOG_debug(ctx, "%s: Response for handle recived: %d.", __FUNCTION__, handle[h]);
+				BIT_CLR(requests, handle[h]);
+				break;
+			}
+		}
+		CuAssert(tc, "Unexpected response recived.", h != TEST_NOF_REQUESTS);
+		KSI_AggregationResp_free(resp);
 
 		/* Break if the it takes to much time. */
 		if (difftime(time(NULL), t_timeout) > TEST_TIMEOUT) {
