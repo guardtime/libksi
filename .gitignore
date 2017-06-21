@@ -75,6 +75,8 @@ src/example/ksi_sign
 src/example/ksi_sign_aggr
 src/example/ksi_verify
 src/example/ksi_verify_pub
+src/example/ksi_blocksign
+src/example/ksi_sign_async_tcp
 src/ksi/.libs/
 test/.dirstamp
 test/.libs/

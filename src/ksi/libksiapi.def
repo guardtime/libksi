@@ -931,6 +931,7 @@ EXPORTS
 ;signature_builder.h
 	KSI_SignatureBuilder_open
 	KSI_SignatureBuilder_openFromSignature
+	KSI_SignatureBuilder_openFromAggregationResp
 	KSI_SignatureBuilder_close
 	KSI_SignatureBuilder_free
 	KSI_SignatureBuilder_setCalendarHashChain

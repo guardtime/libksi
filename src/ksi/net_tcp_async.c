@@ -580,6 +580,8 @@ int KSI_TcpAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c) {
 	res = TcpAsyncCtx_new(ctx, (TcpAsyncCtx **)&tmp->clientImpl);
 	if (res != KSI_OK) goto cleanup;
 
+	tmp->requestCount = 0;
+
 	*c = tmp;
 	tmp = NULL;
 

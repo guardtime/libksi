@@ -939,7 +939,6 @@ int KSI_SignatureBuilder_close(KSI_SignatureBuilder *builder, KSI_uint64_t rootL
 		goto cleanup;
 	}
 
-KSI_LOG_logTlv(builder->ctx, KSI_LOG_DEBUG, ">>> KSI_SignatureBuilder_close::builder->sig->baseTlv", builder->sig->baseTlv);
 	if (builder->sig->baseTlv == NULL) {
 		/* Construct TLV object. */
 
@@ -977,7 +976,6 @@ KSI_LOG_logTlv(builder->ctx, KSI_LOG_DEBUG, ">>> KSI_SignatureBuilder_close::bui
 		}
 		context.signature = clone;
 
-KSI_LOG_logTlv(builder->ctx, KSI_LOG_DEBUG, ">>> KSI_SignatureBuilder_close::clone->baseTlv", clone->baseTlv);
 		res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
 		if (res != KSI_OK) {
 			KSI_pushError(builder->ctx, res, NULL);
@@ -989,7 +987,6 @@ KSI_LOG_logTlv(builder->ctx, KSI_LOG_DEBUG, ">>> KSI_SignatureBuilder_close::clo
 			goto cleanup;
 		}
 	}
-KSI_LOG_logTlv(builder->ctx, KSI_LOG_DEBUG, ">>> KSI_SignatureBuilder_close::*sig = builder->sig::builder->sig->baseTlv", builder->sig->baseTlv);
 
 	*sig = builder->sig;
 	builder->sig = NULL;
