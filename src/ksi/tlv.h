@@ -49,8 +49,6 @@ extern "C" {
 	 * @{
 	 */
 
-	KSI_DEFINE_GET_CTX(KSI_TLV);
-
 	/**
 	 * This function creates an new TLV.
 	 *

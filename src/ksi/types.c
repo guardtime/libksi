@@ -2079,6 +2079,8 @@ KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_CalendarAuthRec*, calendarAuthRec,
 KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_AggregationAuthRec*, aggregationAuthRec, AggregationAuthRec);
 KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_TLV*, baseTlv, BaseTlv);
 
+KSI_IMPLEMENT_GET_CTX(KSI_AggregationResp);
+
 /**
  * KSI_ExtendReq
  */

@@ -759,6 +759,8 @@ int KSI_AggregationResp_setBaseTlv (KSI_AggregationResp *o, KSI_TLV *baseTlv);
 int KSI_AggregationResp_fromTlv (KSI_TLV *tlv, KSI_AggregationResp **data);
 int KSI_AggregationResp_toTlv (KSI_CTX *ctx, const KSI_AggregationResp *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
 
+KSI_DEFINE_GET_CTX(KSI_AggregationResp);
+
 /**
  * Verifies that the response is a correct response to the concrete request.
  * \param[in]	resp	Response to be verified.

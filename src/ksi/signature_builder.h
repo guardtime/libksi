@@ -48,6 +48,15 @@ extern "C" {
 	int KSI_SignatureBuilder_openFromSignature(const KSI_Signature *sig, KSI_SignatureBuilder **builder);
 
 	/**
+	 * Creates a new instance of the signature builder. The builder is initialized with the aggregation response \c resp.
+	 * \param[in]	resp	Aggregation response.
+	 * \param[out]	builder	Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note It is the responsibility of the caller to free the input parameters after use.
+	 */
+	int KSI_SignatureBuilder_openFromAggregationResp(const KSI_AggregationResp *resp, KSI_SignatureBuilder **builder);
+
+	/**
 	 * Creates a new instance of the signature builder.
 	 * \param[in]	ctx		The KSI context.
 	 * \param[out]	builder	Pointer to the receiving pointer.

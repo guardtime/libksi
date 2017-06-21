@@ -580,159 +580,16 @@ cleanup:
 
 static int parseAggregationResponse(KSI_CTX *ctx, KSI_uint64_t rootLevel, KSI_AggregationResp *resp, KSI_Signature **signature) {
 	int res;
-	KSI_TLV *tmpTlv = NULL;
-	KSI_TLV *respTlv = NULL;
-	KSI_LIST(KSI_TLV) *tlvList = NULL;
 	KSI_SignatureBuilder *builder = NULL;
-
-	/* PDU Specific objects */
-	KSI_Integer *status = NULL;
-	size_t i;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || resp == NULL || signature == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
+	KSI_ERR_clearErrors(ctx);
 
-	/* Parse the pdu */
-	res = KSI_AggregationResp_getBaseTlv(resp, &respTlv);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Validate tag value */
-	if (KSI_TLV_getTag(respTlv) != 0x202 && KSI_TLV_getTag(respTlv) != 0x02) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Aggregation response element is missing.");
-		goto cleanup;
-	}
-
-	res = KSI_AggregationResp_getStatus(resp, &status);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_convertAggregatorStatusCode(status);
-	/* Check for the status of the response. */
-	if (res != KSI_OK) {
-		KSI_Utf8String *errorMessage = NULL;
-		char msg[1024];
-
-		KSI_AggregationResp_getErrorMsg(resp, &errorMessage);
-
-		KSI_snprintf(msg, sizeof(msg), "Aggregation failed: %s", KSI_Utf8String_cstr(errorMessage));
-		KSI_ERR_push(ctx, res, (long)KSI_Integer_getUInt64(status), __FILE__, __LINE__, KSI_Utf8String_cstr(errorMessage));
-		goto cleanup;
-	}
-
-	/* Create a new signature builder object. */
-	res = KSI_SignatureBuilder_open(ctx, &builder);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_AggregationResp_getAggregationAuthRec(resp, &builder->sig->aggregationAuthRec);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_AggregationResp_setAggregationAuthRec(resp, NULL);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_AggregationResp_getAggregationChainList(resp, &builder->sig->aggregationChainList);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_AggregationResp_setAggregationChainList(resp, NULL);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_AggregationResp_getCalendarAuthRec(resp, &builder->sig->calendarAuthRec);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_AggregationResp_setCalendarAuthRec(resp, NULL);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_AggregationResp_getCalendarChain(resp, &builder->sig->calendarChain);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_AggregationResp_setCalendarChain(resp, NULL);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-
-	/* Create signature TLV */
-	res = KSI_TLV_new(ctx, 0x0800, 0, 0, &tmpTlv);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_TLV_getNestedList(respTlv, &tlvList);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	i = 0;
-	while (i < KSI_TLVList_length(tlvList)) {
-		KSI_TLV *t = NULL;
-		res = KSI_TLVList_elementAt(tlvList, i, &t);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
-
-		switch (KSI_TLV_getTag(t)) {
-			case 0x01:
-			case 0x04:
-			case 0x05:
-			case 0x10:
-			case 0x11:
-				/* Ignore these tags. */
-				i++;
-				break;
-			default:
-				/* Remove it from the original list. */
-				res = KSI_TLVList_remove(tlvList, i, &t);
-				if (res != KSI_OK) {
-					KSI_pushError(ctx, res, NULL);
-					goto cleanup;
-				}
-
-				/* Copy this tag to the signature. */
-				res = KSI_TLV_appendNestedTlv(tmpTlv, t);
-				if (res != KSI_OK) {
-					KSI_pushError(ctx, res, NULL);
-					goto cleanup;
-				}
-
-		}
-	}
-
-	res = KSI_TLV_clone(tmpTlv, &builder->sig->baseTlv);
+	res = KSI_SignatureBuilder_openFromAggregationResp(resp, &builder);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -745,14 +602,9 @@ static int parseAggregationResponse(KSI_CTX *ctx, KSI_uint64_t rootLevel, KSI_Ag
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-
 	res = KSI_OK;
-
 cleanup:
-
-	KSI_TLV_free(tmpTlv);
 	KSI_SignatureBuilder_free(builder);
-
 	return res;
 }
 
