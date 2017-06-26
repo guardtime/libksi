@@ -2729,11 +2729,11 @@ static void testRule_CertificateExistence_verifyErrorResult(CuTest *tc) {
 	verCtx.signature = signature;
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	CuAssert(tc, "Unable to read publications file.", res == KSI_OK && userPublicationsFile != NULL);
 	verCtx.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
-	CuAssert(tc, "Unable to set cert constraints for email", res == KSI_OK);
+	CuAssert(tc, "Unable to set cert constraints for email.", res == KSI_OK);
 
 	res = KSI_CTX_setPKITruststore(ctx, NULL);
 	CuAssert(tc, "Unable to set clear PKI truststrore for KSI context.", res == KSI_OK);
@@ -2742,7 +2742,7 @@ static void testRule_CertificateExistence_verifyErrorResult(CuTest *tc) {
 	CuAssert(tc, "Unable to get PKI truststore from context.", res == KSI_OK && pki != NULL);
 
 	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath(TEST_CERT_FILE));
-	CuAssert(tc, "Unable to read certificate", res == KSI_OK);
+	CuAssert(tc, "Unable to read certificat.e", res == KSI_OK);
 
 	res = KSI_CTX_setPKITruststore(ctx, pki);
 	CuAssert(tc, "Unable to set new PKI truststrore for KSI context.", res == KSI_OK);
@@ -2750,7 +2750,146 @@ static void testRule_CertificateExistence_verifyErrorResult(CuTest *tc) {
 	TEST_VERIFICATION_STEP_INIT;
 
 	res = KSI_VerificationRule_CertificateExistence(&verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_KEY_1);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_KEY_1);
+
+	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE);
+
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_Signature_free(signature);
+	KSI_VerificationContext_clean(&verCtx);
+	KSI_CTX_free(ctx);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_PUBLICATIONS_FILE
+#undef TEST_CERT_FILE
+}
+
+static void testRule_CertificateValidity(CuTest *tc) {
+#define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1.ksig"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
+#define TEST_CERT_FILE         "resource/crt/mock.crt"
+
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	KSI_PKITruststore *pki = NULL;
+	const KSI_CertConstraint certCnst[] = {
+		{KSI_CERT_EMAIL, "publications@guardtime.com"},
+		{NULL, NULL}
+	};
+	VerificationTempData tempData;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *signature = NULL;
+	KSI_PublicationsFile *userPublicationsFile = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSITest_CTX_clone(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file.", res == KSI_OK && userPublicationsFile != NULL);
+	verCtx.userPublicationsFile = userPublicationsFile;
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
+	CuAssert(tc, "Unable to set cert constraints.", res == KSI_OK);
+
+	res = KSI_CTX_setPKITruststore(ctx, NULL);
+	CuAssert(tc, "Unable to set clear PKI truststrore for KSI context.", res == KSI_OK);
+
+	/* Configure expected PKI cert and constraints for pub. file. */
+	res = KSI_PKITruststore_new(ctx, 0, &pki);
+	CuAssert(tc, "Unable to get PKI truststore from context.", res == KSI_OK && pki != NULL);
+
+	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath(TEST_CERT_FILE));
+	CuAssert(tc, "Unable to read certificate.", res == KSI_OK);
+
+	res = KSI_CTX_setPKITruststore(ctx, pki);
+	CuAssert(tc, "Unable to set new PKI truststrore for KSI context.", res == KSI_OK);
+
+	TEST_VERIFICATION_STEP_INIT;
+
+	res = KSI_VerificationRule_CertificateValidity(&verCtx, &verRes);
+	CuAssert(tc, "Signature autentication record certificate is ok.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
+
+	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE);
+
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_Signature_free(signature);
+	KSI_VerificationContext_clean(&verCtx);
+	KSI_CTX_free(ctx);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_PUBLICATIONS_FILE
+#undef TEST_CERT_FILE
+}
+
+static void testRule_CertificateValidity_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE    "resource/tlv/nok-sig-2017-08-23.1.invalid-cert-timespan.ksig"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/ksi-publications.invalid-cert.validity.bin"
+#define TEST_CERT_FILE         "resource/crt/short-timespan.pem"
+
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	KSI_PKITruststore *pki = NULL;
+	const KSI_CertConstraint certCnst[] = {
+		{KSI_CERT_EMAIL, "publications@guardtime.com"},
+		{NULL, NULL}
+	};
+	VerificationTempData tempData;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *signature = NULL;
+	KSI_PublicationsFile *userPublicationsFile = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSITest_CTX_clone(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file.", res == KSI_OK && userPublicationsFile != NULL);
+	verCtx.userPublicationsFile = userPublicationsFile;
+
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, certCnst);
+	CuAssert(tc, "Unable to set cert constraints.", res == KSI_OK);
+
+	res = KSI_CTX_setPKITruststore(ctx, NULL);
+	CuAssert(tc, "Unable to set clear PKI truststrore for KSI context.", res == KSI_OK);
+
+	/* Configure expected PKI cert and constraints for pub. file. */
+	res = KSI_PKITruststore_new(ctx, 0, &pki);
+	CuAssert(tc, "Unable to get PKI truststore from context.", res == KSI_OK && pki != NULL);
+
+	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath(TEST_CERT_FILE));
+	CuAssert(tc, "Unable to read certificate.", res == KSI_OK);
+
+	res = KSI_CTX_setPKITruststore(ctx, pki);
+	CuAssert(tc, "Unable to set new PKI truststrore for KSI context.", res == KSI_OK);
+
+	TEST_VERIFICATION_STEP_INIT;
+
+	res = KSI_VerificationRule_CertificateValidity(&verCtx, &verRes);
+	CuAssert(tc, "Wrong error result returned.",
+			res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_KEY_3);
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE);
 
@@ -4582,6 +4721,8 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordDoesNotExist_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_CertificateExistence);
 	SUITE_ADD_TEST(suite, testRule_CertificateExistence_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_CertificateValidity);
+	SUITE_ADD_TEST(suite, testRule_CertificateValidity_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordSignatureVerification);
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordSignatureVerification_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFileContainsSignaturePublication);
