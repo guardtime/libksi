@@ -664,10 +664,10 @@ int KSI_CTX_setAggregator(KSI_CTX *ctx, const char *uri, const char *loginId, co
 /**
  * Configuration method for the KSI option.
  * \param[in]	ctx		KSI context.
- * \param[in]	flag	KSI option.
+ * \param[in]	opt		KSI option.
  * \param[in]	param	Value for specified KSI option.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- * \see #KSI_CtxOption for individual option descriptions.
+ * \see #KSI_Option for individual option descriptions.
  * \note Interpretation of \c param is dependent on the KSI option.
  */
 int KSI_CTX_setOption(KSI_CTX *ctx, KSI_Option opt, void *param);
