@@ -82,6 +82,8 @@ extern "C" {
 	 * \param[in]	ctx			KSI context.
 	 * \param[out]	c			Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_AsyncClient_free
+	 * \see #KSI_TcpAsyncClient_setService
 	 */
 	int KSI_TcpAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c);
 
@@ -93,6 +95,7 @@ extern "C" {
 	 * \param[in]	user		User name.
 	 * \param[in]	pass		HMAC shared secret.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_TcpAsyncClient_new
 	 */
 	int KSI_TcpAsyncClient_setService(KSI_AsyncClient *c, const char *host, unsigned port, const char *user, const char *pass);
 
