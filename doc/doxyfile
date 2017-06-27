@@ -753,8 +753,8 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 INPUT                  = mainpage.md \
-                         tutorial \
-                         ../src/ksi
+						 tutorial \
+						 ../src/ksi
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
@@ -775,7 +775,7 @@ INPUT_ENCODING         = UTF-8
 # *.qsf, *.as and *.js.
 
 FILE_PATTERNS          = *.h \
-                         *.md
+						 *.md
 
 # The RECURSIVE tag can be used to specify whether or not subdirectories should
 # be searched for input files as well.
@@ -807,8 +807,8 @@ EXCLUDE_SYMLINKS       = NO
 # exclude all test directories for example use the pattern */test/*
 
 EXCLUDE_PATTERNS       = http_parser.h \
-                         internal.h \
-                         *_impl.h
+						 internal.h \
+						 *_impl.h
 
 # The EXCLUDE_SYMBOLS tag can be used to specify one or more symbol names
 # (namespaces, classes, functions, etc.) that should be excluded from the
@@ -1959,11 +1959,12 @@ PREDEFINED             =
 # This tag requires that the tag ENABLE_PREPROCESSING is set to YES.
 
 EXPAND_AS_DEFINED      = KSI_DEFINE_FN_FROM_TLV \
-                         KSI_DEFINE_FN_TO_TLV \
-                         KSI_DEFINE_LIST \
-                         KSI_DEFINE_REF \
-                         KSI_DEFINE_WRITE_BYTES \
-                         KSI_FN_DEPRECATED
+						 KSI_DEFINE_FN_TO_TLV \
+						 KSI_DEFINE_LIST \
+						 KSI_DEFINE_REF \
+						 KSI_DEFINE_WRITE_BYTES \
+						 KSI_FN_DEPRECATED \
+						 KSI_DEFINE_EXTERN
 
 # If the SKIP_FUNCTION_MACROS tag is set to YES then doxygen's preprocessor will
 # remove all refrences to function-like macros that are alone on a line, have an
