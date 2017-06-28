@@ -290,6 +290,9 @@ extern "C" {
 	 * \param[in]	fromTlv			Create object from TLV function.
 	 * \param[in]	toTlv			Create TLV from object function.
 	 * \param[in]	descr			Short description.
+	 * \param[in]	parser			Create object from raw data.
+	 * \param[in]	p_opt			Parser option.
+	 * \param[in]	setRaw			Not used.
 	 */
 	#define KSI_TLV_FULL_TEMPLATE_DEF(typ, tg, flg, gttr, sttr, constr, destr, subTmpl, list_append, mul, list_new, list_free, list_len, list_elAt, fromTlv, toTlv, descr, parser, p_opt, setRaw) \
 				{ typ, tg, flg , (getter_t)gttr, (setter_t)sttr, (int (*)(KSI_CTX *, void **)) constr, (void (*)(void *)) destr, subTmpl, 																			\
