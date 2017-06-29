@@ -255,6 +255,7 @@ int main(int argc, char **argv) {
 	do {
 		size_t r;
 
+		/* Check if there are still files to be signed. */
 		if (i < nof_requests) {
 			char *p_name = argv[ARGV_IN_DATA_FILE_START + i];
 
@@ -306,30 +307,30 @@ int main(int argc, char **argv) {
 			goto cleanup;
 		}
 
-		if (resp == NULL) {
-			KSI_LOG_info(ksi, "There have been no responses arrived yet.");
-			continue;
-		}
+		if (resp != NULL) {
+			/* Map the response to a request. */
+			for (r = 0; r < nof_requests; r++) {
+				if (KSI_AsyncHandle_matchAggregationResp(handles[r], resp)) {
+					char *p_name = argv[ARGV_IN_DATA_FILE_START + r];
+					char buf[0xffff];
 
-		/* Map the response to a request. */
-		for (r = 0; r < nof_requests; r++) {
-			if (KSI_AsyncHandle_matchAggregationResp(handles[r], resp)) {
-				char *p_name = argv[ARGV_IN_DATA_FILE_START + r];
-				char buf[0xffff];
+					/* Create a filename for the signature. */
+					KSI_snprintf(buf, sizeof(buf), "%s.ksig", p_name);
 
-				/* Create a filename for the signature. */
-				KSI_snprintf(buf, sizeof(buf), "%s.ksig", p_name);
+					res = saveSignature(buf, resp);
+					if (res != KSI_OK) {
+						fprintf(stderr, "Failed to save signature for: %s\n", p_name);
+						goto cleanup;
+					}
 
-				res = saveSignature(buf, resp);
-				if (res != KSI_OK) {
-					fprintf(stderr, "Failed to save signature for: %s\n", p_name);
-					goto cleanup;
+					/* Reduce the pending counter. */
+					pending--;
+					break;
 				}
-
-				/* Reduce the pending counter. */
-				pending--;
-				break;
 			}
+		} else if (i >= nof_requests) {
+			/* Avoid busy loop. */
+			sleep_ms(10);
 		}
 
 		KSI_AggregationResp_free(resp);
