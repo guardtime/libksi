@@ -1,4 +1,5 @@
 * IMPROVEMENT: Implemented verification of PKI certificate validity during aggregation time.
+* IMPROVEMENT: Set default PDU version to 2.
 * IMPROVEMENT: Unified verifivation error codes. All error code values with single digit are padded with '0' (general error codes have been changed from GEN-* to GEN-0*).
 * IMPROVEMENT: Refactored TCP client host information lookup by using getaddrinfo instead of gethostbyname.
 * IMPROVEMENT: Support for integration tests test package.
