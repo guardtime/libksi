@@ -22,7 +22,7 @@ AM_LDFLAGS=-L$(top_builddir)/src/ksi -no-install -lksi
 check_PROGRAMS=\
 	ksi_sign \
 	ksi_sign_aggr \
-	ksi_sign_async_tcp \
+	ksi_sign_async \
 	ksi_blocksign \
 	ksi_extend ksi_verify \
 	ksi_verify_pub \
@@ -36,8 +36,8 @@ ksi_sign_aggr_SOURCES = \
 	ksi_sign_aggr.c \
 	ksi_common.c
 
-ksi_sign_async_tcp_SOURCES = \
-	ksi_sign_async_tcp.c \
+ksi_sign_async_SOURCES = \
+	ksi_sign_async.c \
 	ksi_common.c
 
 ksi_blocksign_SOURCES = \

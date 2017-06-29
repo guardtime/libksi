@@ -59,7 +59,7 @@ LIB_NAME = libksiapi
 EXAMPLE_OBJ = \
 	$(OBJ_DIR)\ksi_sign.obj \
 	$(OBJ_DIR)\ksi_sign_aggr.obj \
-	$(OBJ_DIR)\ksi_sign_async_tcp.obj \
+	$(OBJ_DIR)\ksi_sign_async.obj \
 	$(OBJ_DIR)\ksi_blocksign.obj \
 	$(OBJ_DIR)\ksi_extend.obj \
 	$(OBJ_DIR)\ksi_pubfiledump.obj \
@@ -73,7 +73,7 @@ COMMON_OBJ = \
 EXAMPLE_BIN = \
 	$(BIN_DIR)\ksi_sign.exe \
 	$(BIN_DIR)\ksi_sign_aggr.exe \
-	$(BIN_DIR)\ksi_sign_async_tcp.exe \
+	$(BIN_DIR)\ksi_sign_async.exe \
 	$(BIN_DIR)\ksi_blocksign.exe \
 	$(BIN_DIR)\ksi_extend.exe \
 	$(BIN_DIR)\ksi_pubfiledump.exe \
