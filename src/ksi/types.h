@@ -533,35 +533,35 @@ int KSI_MetaData_new(KSI_CTX *ctx, KSI_MetaData **t);
  * Setter for the client Id.
  * \param[in]	t			The custom meta-data object.
  * \param[in]	clientId	The client id.
- * \note The client id object won't change ownership, the caller must free the object.
  * \return Returns #KSI_OK on success or an error code otherwise.
+ * \note The client id object won't change ownership, the caller must free the object.
  */
 int KSI_MetaData_setClientId(KSI_MetaData *t, KSI_Utf8String *clientId);
 
 /**
  * Setter for the machine Id.
  * \param[in]	t			The custom meta-data object.
- * \param[in]	clientId	The machine id.
- * \note The machine id object won't change ownership, the caller must free the object.
+ * \param[in]	machineId	The machine id.
  * \return Returns #KSI_OK on success or an error code otherwise.
+ * \note The machine id object won't change ownership, the caller must free the object.
  */
 int KSI_MetaData_setMachineId(KSI_MetaData *t, KSI_Utf8String *machineId);
 
 /**
  * Setter for the sequence number.
  * \param[in]	t			The custom meta-data object.
- * \param[in]	clientId	The sequence number.
- * \note The sequence number object won't change ownership, the caller must free the object.
+ * \param[in]	sequenceNr	The sequence number.
  * \return Returns #KSI_OK on success or an error code otherwise.
+ * \note The sequence number object won't change ownership, the caller must free the object.
  */
 int KSI_MetaData_setSequenceNr(KSI_MetaData *t, KSI_Integer *sequenceNr);
 
 /**
  * Setter for the request time in microseconds.
  * \param[in]	t			The custom meta-data object.
- * \param[in]	clientId	The request time in microseconds.
- * \note The request time in microseconds object won't change ownership, the caller must free the object.
+ * \param[in]	reqTime		The request time in microseconds.
  * \return Returns #KSI_OK on success or an error code otherwise.
+ * \note The request time in microseconds object won't change ownership, the caller must free the object.
  */
 int KSI_MetaData_setRequestTimeInMicros(KSI_MetaData *t, KSI_Integer *reqTime);
 

@@ -67,14 +67,14 @@ AC_ARG_WITH(default_pdu_version,
 [], [with_default_pdu_version=])
 
 if test -z "$with_default_pdu_version"; then
-	pdu_version=KSI_PDU_VERSION_1
+	pdu_version=KSI_PDU_VERSION_2
 else
 	case "$with_default_pdu_version" in
 		1)	pdu_version=KSI_PDU_VERSION_1
 			;;
 		2)	pdu_version=KSI_PDU_VERSION_2
 			;;
-		*) AC_MSG_ERROR([*** Invalid aggregation PDU version.]);
+		*) AC_MSG_ERROR([*** Invalid PDU version.]);
 		;;
 	esac;
 fi

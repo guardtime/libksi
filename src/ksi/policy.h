@@ -68,10 +68,10 @@ extern "C" {
 	 * Helper macro containing a list of KSI signature verification error codes.
 	 */
 	#define KSI_VERIFICATION_ERROR_CODE_LIST\
-		/*Type  Code  Offset  StrCode  Description*/\
-		_(GEN,  1,    0x100,  "GEN-01",     "Wrong document")\
-		_(GEN,  2,    0x100,  "GEN-02",     "Verification inconclusive") \
-		_(GEN,  3,    0x100,  "GEN-03",     "Input hash level too large") \
+		/*Type  Code  Offset  StrCode      Description*/\
+		_(GEN,  1,    0x100,  "GEN-01",    "Wrong document")\
+		_(GEN,  2,    0x100,  "GEN-02",    "Verification inconclusive") \
+		_(GEN,  3,    0x100,  "GEN-03",    "Input hash level too large") \
 		\
 		_(INT,  1,    0x200,  "INT-01",    "Inconsistent aggregation hash chains") \
 		_(INT,  2,    0x200,  "INT-02",    "Inconsistent aggregation hash chain aggregation times") \
@@ -82,9 +82,9 @@ extern "C" {
 		_(INT,  7,    0x200,  "INT-07",    "Calendar hash chain time inconsistent with publication time") \
 		_(INT,  8,    0x200,  "INT-08",    "Calendar hash chain root hash is inconsistent with calendar authentication record input hash") \
 		_(INT,  9,    0x200,  "INT-09",    "Calendar hash chain root hash is inconsistent with published hash value") \
-		_(INT,  10,   0x200,  "INT-10",     "Aggregation hash chain chain index mismatch") \
-		_(INT,  11,   0x200,  "INT-11",     "The metadata record in the aggregation hash chain may not be trusted") \
-		_(INT,  12,   0x200,  "INT-12",     "Inconsistent chain indexes") \
+		_(INT,  10,   0x200,  "INT-10",    "Aggregation hash chain chain index mismatch") \
+		_(INT,  11,   0x200,  "INT-11",    "The metadata record in the aggregation hash chain may not be trusted") \
+		_(INT,  12,   0x200,  "INT-12",    "Inconsistent chain indexes") \
 		\
 		_(PUB,  1,    0x300,  "PUB-01",    "Extender response calendar root hash mismatch") \
 		_(PUB,  2,    0x300,  "PUB-02",    "Extender response inconsistent") \
@@ -94,6 +94,7 @@ extern "C" {
 		\
 		_(KEY,  1,    0x400,  "KEY-01",    "Certificate not found") \
 		_(KEY,  2,    0x400,  "KEY-02",    "PKI signature not verified with certificate") \
+		_(KEY,  3,    0x400,  "KEY-03",    "Signing certificate not valid at aggregation time") \
 		\
 		_(CAL,  1,    0x500,  "CAL-01",    "Calendar root hash mismatch between signature and calendar database chain") \
 		_(CAL,  2,    0x500,  "CAL-02",    "Aggregation hash chain root hash and calendar database hash chain input hash mismatch") \

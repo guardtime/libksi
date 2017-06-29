@@ -247,11 +247,9 @@ extern "C" {
 	/**
 	 * Returns the status of the handle.
 	 * \param[in]		handle			Network handle.
-	 * \return status code of the last call or #KSI_NETWORK_PENDING if #KSI_RequestHandle_perform.
 	 * \param[out]		err				Pointer to the status structure.
-	 * \note The function will return #KSI_INVALID_ARGUMENT if handle is \c NULL.
-	 * \note The pointer to the err structure is only valid as long as the
-	 * handle itself is valid.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note The pointer to the err structure is only valid as long as the handle itself is valid.
 	 */
 	int KSI_RequestHandle_getResponseStatus(const KSI_RequestHandle *handle, const KSI_RequestHandleStatus **err);
 
