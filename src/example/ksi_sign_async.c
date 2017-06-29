@@ -183,9 +183,9 @@ int main(int argc, char **argv) {
 			{ NULL, NULL }
 	};
 
-	size_t nof_files = 0;
-	size_t nof_handles = 0;
-	size_t i;
+	size_t nof_requests = 0;
+	size_t pending = 0;
+	size_t i = 0;
 
 	/* Handle command line parameters */
 	if (argc <= NOF_STATIC_ARGS || strcmp("--", argv[ARGV_DELIM])) {
@@ -194,7 +194,7 @@ int main(int argc, char **argv) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
-	nof_files = argc - NOF_STATIC_ARGS;
+	nof_requests = argc - NOF_STATIC_ARGS;
 
 	/* Create new KSI context for this thread. */
 	res = KSI_CTX_new(&ksi);
@@ -204,7 +204,7 @@ int main(int argc, char **argv) {
 	}
 
 	/* Configure the logger. */
-	res = OpenLogging(ksi, "ksi_sign_async_tcp.log", &logFile);
+	res = OpenLogging(ksi, "ksi_sign_async.log", &logFile);
 	if (res != KSI_OK) goto cleanup;
 
 	KSI_LOG_info(ksi, "Using KSI version: '%s'", KSI_getVersion());
@@ -229,7 +229,7 @@ int main(int argc, char **argv) {
 	/* Initialize non-blocking connection. */
 	res = KSI_AsyncService_run(as);
 	if (res != KSI_OK && res != KSI_ASYNC_NOT_READY) {
-		fprintf(stderr, "Unable to create hasher.\n");
+		fprintf(stderr, "Unable to initialize non-blocking connection.\n");
 		goto cleanup;
 	}
 
@@ -246,80 +246,59 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	nof_handles = nof_files;
-	handles	= KSI_malloc(sizeof(KSI_AsyncHandle) * nof_files);
+	handles	= KSI_malloc(sizeof(KSI_AsyncHandle) * nof_requests);
 	if (handles == NULL) {
 		fprintf(stderr, "Out of memory.\n");
 		goto cleanup;
 	}
 
-	/* Input file */
-	for (i = 0; i < nof_files; i++) {
-		char *p_name = argv[ARGV_IN_DATA_FILE_START + i];
-
-		KSI_LOG_info(ksi, "Create request for file:  %s", p_name);
-
-		/* Get the hash value of the input file. */
-		res = getHash(ksi, p_name, &hsh);
-		if (res != KSI_OK || hsh == NULL) {
-			fprintf(stderr, "Failed to calculate the hash.\n");
-			goto cleanup;
-		}
-
-		res = KSI_AggregationReq_new(ksi, &req);
-		if (res == KSI_OK && req == NULL) {
-			fprintf(stderr, "Unable to create aggregation request.\n");
-			goto cleanup;
-		}
-
-		res = KSI_AggregationReq_setRequestHash(req, hsh);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Unable to set request data hash.\n");
-			goto cleanup;
-		}
-		hsh = NULL;
-
-		res = KSI_AsyncService_addAggregationReq(as, req, &handles[i]);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Unable to add request.\n");
-			goto cleanup;
-		}
-		KSI_AggregationReq_free(req);
-		req = NULL;
-	}
-
-	KSI_LOG_info(ksi, "Send request.");
-
-	i = 2;
 	do {
-		res = KSI_AsyncService_run(as);
-		if (res == KSI_ASYNC_NOT_READY) {
-			if (i == 0) {
-				fprintf(stderr, "Connection did not get ready.\n");
+		size_t r;
+
+		if (i < nof_requests) {
+			char *p_name = argv[ARGV_IN_DATA_FILE_START + i];
+
+			KSI_LOG_info(ksi, "Create request for file:  %s", p_name);
+
+			/* Get the hash value of the input file. */
+			res = getHash(ksi, p_name, &hsh);
+			if (res != KSI_OK || hsh == NULL) {
+				fprintf(stderr, "Failed to calculate the hash.\n");
 				goto cleanup;
 			}
-			i--;
-			KSI_LOG_info(ksi, "Connection is not ready yet. Sleep for a while.");
-			sleep_ms(1000);
+
+			res = KSI_AggregationReq_new(ksi, &req);
+			if (res == KSI_OK && req == NULL) {
+				fprintf(stderr, "Unable to create aggregation request.\n");
+				goto cleanup;
+			}
+
+			res = KSI_AggregationReq_setRequestHash(req, hsh);
+			if (res != KSI_OK) {
+				fprintf(stderr, "Unable to set request data hash.\n");
+				goto cleanup;
+			}
+			hsh = NULL;
+
+			res = KSI_AsyncService_addAggregationReq(as, req, &handles[i]);
+			if (res != KSI_OK) {
+				fprintf(stderr, "Unable to add request.\n");
+				goto cleanup;
+			}
+			KSI_AggregationReq_free(req);
+			req = NULL;
+
+			pending++;
+			i++;
 		}
-	} while (res == KSI_ASYNC_NOT_READY);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Failed send request.\n");
-		goto cleanup;
-	}
-
-	/* Let the requests to be sent out. */
-	sleep_ms(1000);
-
-	while (nof_files) {
-
-		KSI_LOG_info(ksi, "Poll for response.");
 
 		res = KSI_AsyncService_run(as);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Failed to poll for response.\n");
+		if (res != KSI_OK && res != KSI_ASYNC_NOT_READY) {
+			fprintf(stderr, "Failed to run async service.\n");
 			goto cleanup;
 		}
+
+		KSI_LOG_info(ksi, "Poll for response.");
 
 		res = KSI_AsyncService_getAggregationResp(as, &resp);
 		if (res != KSI_OK) {
@@ -328,15 +307,14 @@ int main(int argc, char **argv) {
 		}
 
 		if (resp == NULL) {
-			KSI_LOG_info(ksi, "There have been no responses arrived yet. Sleep for a while.");
-			sleep_ms(1000);
+			KSI_LOG_info(ksi, "There have been no responses arrived yet.");
 			continue;
 		}
 
 		/* Map the response to a request. */
-		for (i = 0; i < nof_handles; i++) {
-			if (KSI_AsyncHandle_matchAggregationResp(handles[i], resp)) {
-				char *p_name = argv[ARGV_IN_DATA_FILE_START + i];
+		for (r = 0; r < nof_requests; r++) {
+			if (KSI_AsyncHandle_matchAggregationResp(handles[r], resp)) {
+				char *p_name = argv[ARGV_IN_DATA_FILE_START + r];
 				char buf[0xffff];
 
 				/* Create a filename for the signature. */
@@ -348,15 +326,15 @@ int main(int argc, char **argv) {
 					goto cleanup;
 				}
 
-				/* Reduce the pending file counter. */
-				nof_files--;
+				/* Reduce the pending counter. */
+				pending--;
 				break;
 			}
 		}
 
 		KSI_AggregationResp_free(resp);
 		resp = NULL;
-	}
+	} while (pending);
 
 	res = KSI_OK;
 
