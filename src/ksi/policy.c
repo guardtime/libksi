@@ -241,6 +241,7 @@ static const KSI_Rule noDocumentHashRule[] = {
 
 static const KSI_Rule documentHashVerificationRule[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_DocumentHashExistence},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_InputHashAlgorithmVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_DocumentHashVerification},
 	{KSI_RULE_TYPE_BASIC, NULL}
 };
