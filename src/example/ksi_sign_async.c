@@ -38,10 +38,6 @@
 
 #include "ksi_common.h"
 
-
-#include <sys/time.h>
-
-
 enum {
 	ARGV_COMMAND = 0,
 	ARGV_AGGR_URI,
