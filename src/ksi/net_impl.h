@@ -125,6 +125,8 @@ extern "C" {
 		/* Payload. */
 		unsigned char *raw;
 		size_t len;
+
+		int state;
 	};
 
 	struct KSI_AsyncClient_st {
@@ -139,10 +141,11 @@ extern "C" {
 		int (*getCredentials)(void *, const char **, const char **);
 		int (*dispatch)(void *);
 		int (*reset)(void *);
-		int (*isCompleted)(void *, KSI_AsyncHandle);
 		void (*closeConnection)(void*);
 
 		size_t requestCount;
+		size_t maxParallelRequests;
+		KSI_AsyncPayload **reqCache;
 	};
 
 	struct KSI_AsyncService_st {
@@ -151,11 +154,12 @@ extern "C" {
 		void *impl;
 		void (*impl_free)(void*);
 
-		int (*addAggrRequest)(void *, KSI_AggregationReq *, KSI_AsyncHandle *);
-		int (*getAggrResponse)(void *, KSI_AggregationResp **);
-
+		int (*addRequest)(void *, void *, KSI_AsyncHandle *);
+		int (*getResponse)(void *, KSI_AsyncHandle, void **);
 		int (*run)(void *);
-		int (*isSent)(void *, KSI_AsyncHandle);
+
+		int (*recover)(void *, KSI_AsyncHandle, int);
+		int (*getState)(void *, KSI_AsyncHandle, int *);
 
 		int (*uriSplit)(const char *uri, char **scheme, char **user, char **pass, char **host, unsigned *port, char **path, char **query, char **fragment);
 	};

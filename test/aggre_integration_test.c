@@ -391,6 +391,7 @@ static void Test_RequestAggregatorConfig_pduV2(CuTest* tc) {
 }
 
 static void Test_AsyncTcp(CuTest* tc) {
+#if 0
 #define TEST_NOF_REQUESTS 10 /* Max count is limited by KSI_uint64_t bit count. */
 #define BIT_SET(field, n) field |= (1 << (n))
 #define BIT_CLR(field, n) field &= ~(1 << (n))
@@ -535,6 +536,7 @@ static void Test_AsyncTcp(CuTest* tc) {
 #undef BIT_CLR
 #undef TEST_TIMEOUT
 #undef TEST_SLEEP_MS
+#endif
 }
 
 
@@ -553,7 +555,7 @@ CuSuite* AggreIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_Pipelining);
 	SUITE_ADD_TEST(suite, Test_RequestAggregatorConfig);
 	SUITE_ADD_TEST(suite, Test_RequestAggregatorConfig_pduV2);
-	SUITE_ADD_TEST(suite, Test_AsyncTcp);
+	SUITE_SKIP_TEST(suite, Test_AsyncTcp, "Max", "Waiting for review.");
 
 	return suite;
 }

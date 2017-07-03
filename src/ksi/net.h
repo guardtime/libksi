@@ -353,14 +353,6 @@ extern "C" {
 	 */
 
 	/**
-	 * Function for matching async handle to a aggregation response.
-	 * \param[in]		handle		Async handle.
-	 * \param[in]		resp		Pointer to the aggregation response.
-	 * \return Returns a value greated than 0 in case of a match, otherwise 0.
-	 */
-	int KSI_AsyncHandle_matchAggregationResp(const KSI_AsyncHandle handle, const KSI_AggregationResp *resp);
-
-	/**
 	 * Free async paiload object.
 	 * \param[in]		handle			Async payload.
 	 */
@@ -432,6 +424,7 @@ extern "C" {
 	 * side, status code KSI_OK and \c resp set the NULL is returned.
 	 * Use #KSI_AsyncHandle_matchAggregationResp for matching request handle to the response.
 	 * \param[in]		s				Async serice instance.
+	 * \param[in]		handle
 	 * \param[out]		resp			Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note The caller is responseble for cleaning up the returned resource.
@@ -440,7 +433,7 @@ extern "C" {
 	 * \see #KSI_AsyncHandle_matchAggregationResp
 	 * \see #KSI_AggregationResp_free
 	 */
-	int KSI_AsyncService_getAggregationResp(KSI_AsyncService *s, KSI_AggregationResp **resp);
+	int KSI_AsyncService_getAggregationResp(KSI_AsyncService *s, KSI_AsyncHandle handle, KSI_AggregationResp **resp);
 
 	/**
 	 * Non-blocking send/receive worker. The method will open a connection the remote service, dispatch the cached
@@ -454,19 +447,70 @@ extern "C" {
 	 * \return otherwise an error code.
 	 * \see #KSI_AsyncService_addAggregationReq
 	 * \see #KSI_AsyncService_getAggregationResp
+	 * \see #KSI_AsyncService_recover
 	 */
 	int KSI_AsyncService_run(KSI_AsyncService *s);
 
 	/**
-	 * Chech whether the queued request has been dispached.
+	 * Enum defining async payload state.
+	 */
+	enum KSI_AsyncPayloadState_en {
+		KSI_ASYNC_PLD_UNDEFINED = 0,
+		KSI_ASYNC_PLD_WAITING_FOR_DISPATCH,
+		KSI_ASYNC_PLD_WAITING_FOR_RESPONSE,
+		KSI_ASYNC_PLD_RESPONSE_RECEIVED,
+	};
+
+	/**
+	 * Get the state of the sent request.
 	 * \param[in]		s				Async serice instance.
 	 * \param[in]		h				Async handle.
-	 * \return status code #KSI_ASYNC_NOT_FINISHED, when the request is still in output queue;
-	 * \return #KSI_ASYNC_COMPLETED, when the request has been sent;
-	 * \return otherwise an error code.
-	 * \see #KSI_AsyncService_addAggregationReq
+	 * \param[out]		state			Payload state #KSI_AsyncPayloadState_en
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_AsyncService_isSent(KSI_AsyncService *s, KSI_AsyncHandle h);
+	int KSI_AsyncService_getRequestState(KSI_AsyncService *s, KSI_AsyncHandle h, int *state);
+
+
+	/**
+	 * Initialize the async service \c s to use aggregator interface. This is a helper interface, which is called when
+	 * aggregator service is initialized.
+	 * \param[in]		service			Async serice instance.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_AsyncService_setAggregator
+	 */
+	int KSI_AsyncService_aggrInit(KSI_AsyncService *service);
+
+#define KSI_ASYNC_DEFAULT_PARALLEL_REQUESTS (1 << 10)
+
+
+	/**
+	 * Set maximum parallel request count. The \c count may not be less than the previously set value.
+	 * Default value is #KSI_ASYNC_DEFAULT_PARALLEL_REQUESTS
+	 * \param[in]		service			Async serice instance.
+	 * \param[in]		count			Value to be applied.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_AsyncService_setMaxParallelRequests(KSI_AsyncService *service, size_t count);
+
+	/**
+	 * Enum defining async payload recovery policy.
+	 */
+	enum KSI_AsyncPayloadRecoveryPolicy_en {
+		KSI_ASYNC_PLD_REMOVE,
+		KSI_ASYNC_PLD_RESEND
+	};
+
+	/**
+	 * In case of connection loss, the recovery procedure needs to be run in requests which are in
+	 * state #KSI_ASYNC_PLD_WAITING_FOR_RESPONSE
+	 * \param[in]		service			Async serice instance.
+	 * \param[in]		handle			Async handle.
+	 * \param[in]		policy			Recovery policy.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_AsyncPayloadRecoveryPolicy_en for recovery options.
+	 */
+	int KSI_AsyncService_recover(KSI_AsyncService *service, KSI_AsyncHandle handle, int policy);
+
 
 	/**
 	 * @}

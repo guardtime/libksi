@@ -209,12 +209,13 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 		if (c == 0) {
 			/* Connection has been closed unexpectedly. */
 			tcpCtx->sockfd = TCP_INVALID_SOCKET_FD;
-			KSI_pushError(tcpCtx->ctx, res = KSI_ASYNC_CONNECTION_CLOSED, "Server closed TCP connection.");
+			/* Clear input buffer. */
+			tcpCtx->inLen = 0;
+			res = KSI_ASYNC_CONNECTION_CLOSED;
 			goto cleanup;
 		} else if ((c < 0) && !(KSI_SOC_error == KSI_SOC_EINPROGRESS || KSI_SOC_error == KSI_SOC_EWOULDBLOCK)) {
 			/* Non-recoverable error has occurred. */
-			KSI_ERR_push(tcpCtx->ctx, KSI_NETWORK_ERROR, KSI_SOC_error, __FILE__, __LINE__, "Unable to receive data.");
-			res = KSI_NETWORK_ERROR;
+			KSI_ERR_push(tcpCtx->ctx, res = KSI_NETWORK_ERROR, KSI_SOC_error, __FILE__, __LINE__, "Unable to receive data.");
 			goto cleanup;
 		} else {
 			tcpCtx->inLen += c;
@@ -296,11 +297,12 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 #endif
 
 			do {
+				const size_t at = 0;
 				KSI_AsyncPayload *req = NULL;
 				size_t count  = 0;
 
 				/* Send the requests in the same order as they have been cached. */
-				res = KSI_AsyncPayloadList_elementAt(tcpCtx->reqQueue, 0, &req);
+				res = KSI_AsyncPayloadList_elementAt(tcpCtx->reqQueue, at, &req);
 				if (res != KSI_OK) {
 					KSI_pushError(tcpCtx->ctx, res, NULL);
 					goto cleanup;
@@ -328,8 +330,9 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 				}
 
 				if (count == req->len) {
-					/* The request has been successfully dispatched. Remove it from the output queue. */
-					res = KSI_AsyncPayloadList_remove(tcpCtx->reqQueue, 0, NULL);
+					req->state = KSI_ASYNC_PLD_WAITING_FOR_RESPONSE;
+					/* The request has been successfully dispatched. Remove it from the request queue. */
+					res = KSI_AsyncPayloadList_remove(tcpCtx->reqQueue, at, NULL);
 					if (res != KSI_OK) {
 						KSI_pushError(tcpCtx->ctx, res, NULL);
 						goto cleanup;
@@ -378,26 +381,6 @@ static int getQueueStatus(TcpAsyncCtx *tcpCtx, size_t *reqQueueLen, size_t *resp
 	if (reqQueueLen != NULL) *reqQueueLen = KSI_AsyncPayloadList_length(tcpCtx->reqQueue);
 	if (respQueueLen != NULL) *respQueueLen = KSI_OctetStringList_length(tcpCtx->respQueue);
 	return KSI_OK;
-}
-
-static int isCompleted(TcpAsyncCtx *tcpCtx, KSI_AsyncHandle handle) {
-	int res = KSI_UNKNOWN_ERROR;
-	size_t i;
-
-	for (i = 0; i < KSI_AsyncPayloadList_length(tcpCtx->reqQueue); i++) {
-		KSI_AsyncPayload *req = NULL;
-
-		res = KSI_AsyncPayloadList_elementAt(tcpCtx->reqQueue, i, &req);
-		if (res != KSI_OK) goto cleanup;
-
-		if (req->id == handle) {
-			res = KSI_ASYNC_NOT_FINISHED;
-			goto cleanup;
-		}
-	}
-	res = KSI_ASYNC_COMPLETED;
-cleanup:
-	return res;
 }
 
 static int getResponse(TcpAsyncCtx *tcpCtx, KSI_OctetString **response) {
@@ -524,7 +507,7 @@ static int TcpAsyncCtx_new(KSI_CTX *ctx, TcpAsyncCtx **tcpCtx) {
 	}
 	tmp->ctx = ctx;
 	tmp->sockfd = TCP_INVALID_SOCKET_FD;
-	/* Queue */
+	/* Queues */
 	tmp->reqQueue = NULL;
 	tmp->respQueue = NULL;
 	/* Input cache. */
@@ -567,20 +550,27 @@ int KSI_TcpAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c) {
 	tmp->ctx = ctx;
 	tmp->clientImpl = NULL;
 
+	tmp->requestCount = 0;
+	tmp->maxParallelRequests = KSI_ASYNC_DEFAULT_PARALLEL_REQUESTS;
+	tmp->reqCache = NULL;
+
 	tmp->addRequest = (int (*)(void *, KSI_AsyncPayload *))addToSendQueue;
 	tmp->getResponse = (int (*)(void *, KSI_OctetString **))getResponse;
 	tmp->dispatch = (int (*)(void *))dispatch;
 	tmp->closeConnection = (void (*)(void*))closeSocket;
 	tmp->getQueueStatus = (int (*)(void *, size_t *, size_t *))getQueueStatus;
-	tmp->isCompleted = (int (*)(void *, KSI_AsyncHandle))isCompleted;
 	tmp->reset = (int (*)(void *))reset;
 	tmp->getCredentials = (int (*)(void *, const char **, const char **))getCredentials;
+
+	tmp->reqCache = KSI_calloc(tmp->maxParallelRequests, sizeof(KSI_AsyncPayload *));
+	if (tmp->reqCache == NULL) {
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
 
 	tmp->clientImpl_free = (void (*)(void*))TcpAsyncCtx_free;
 	res = TcpAsyncCtx_new(ctx, (TcpAsyncCtx **)&tmp->clientImpl);
 	if (res != KSI_OK) goto cleanup;
-
-	tmp->requestCount = 0;
 
 	*c = tmp;
 	tmp = NULL;

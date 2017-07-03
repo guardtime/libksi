@@ -31,11 +31,16 @@
 #endif
 
 #include <ksi/ksi.h>
+#include <ksi/net.h>
 #include <ksi/net_uri.h>
 #include <ksi/signature_builder.h>
 #include <ksi/compatibility.h>
 
 #include "ksi_common.h"
+
+
+#include <sys/time.h>
+
 
 enum {
 	ARGV_COMMAND = 0,
@@ -105,7 +110,7 @@ cleanup:
 	return res;
 }
 
-static int saveSignature(const char *outFile, const KSI_AggregationResp *resp) {
+static int saveSignature(const char *fileName, const KSI_AggregationResp *resp) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	KSI_SignatureBuilder *builder = NULL;
@@ -114,6 +119,9 @@ static int saveSignature(const char *outFile, const KSI_AggregationResp *resp) {
 	FILE *out = NULL;
 	unsigned char *raw = NULL;
 	size_t raw_len;
+
+	char sigFileName[0xff];
+
 
 	/* Generate KSI signature from aggregation response. */
 	res = KSI_SignatureBuilder_openFromAggregationResp(resp, &builder);
@@ -128,10 +136,13 @@ static int saveSignature(const char *outFile, const KSI_AggregationResp *resp) {
 		goto cleanup;
 	}
 
+	/* Create a filename for the signature. */
+	KSI_snprintf(sigFileName, sizeof(sigFileName), "%s.ksig", fileName);
+
 	/* Open output file. */
-	out = fopen(outFile, "wb");
+	out = fopen(sigFileName, "wb");
 	if (out == NULL) {
-		fprintf(stderr, "%s: Unable to open output file.\n", outFile);
+		fprintf(stderr, "%s: Unable to open output file.\n", sigFileName);
 		res = KSI_IO_ERROR;
 		goto cleanup;
 	}
@@ -150,7 +161,7 @@ static int saveSignature(const char *outFile, const KSI_AggregationResp *resp) {
 		goto cleanup;
 	}
 
-	printf("Signature successfully saved: %s.\n", outFile);
+	printf("Signature successfully saved: %s.\n", sigFileName);
 
 	res = KSI_OK;
 cleanup:
@@ -162,8 +173,6 @@ cleanup:
 
 	return res;
 }
-
-
 
 int main(int argc, char **argv) {
 	KSI_CTX *ksi = NULL;
@@ -185,7 +194,7 @@ int main(int argc, char **argv) {
 
 	size_t nof_requests = 0;
 	size_t pending = 0;
-	size_t i = 0;
+	size_t req_no = 0;
 
 	/* Handle command line parameters */
 	if (argc <= NOF_STATIC_ARGS || strcmp("--", argv[ARGV_DELIM])) {
@@ -246,7 +255,7 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	handles	= KSI_malloc(sizeof(KSI_AsyncHandle) * nof_requests);
+	handles	= KSI_calloc(nof_requests, sizeof(KSI_AsyncHandle));
 	if (handles == NULL) {
 		fprintf(stderr, "Out of memory.\n");
 		goto cleanup;
@@ -255,8 +264,8 @@ int main(int argc, char **argv) {
 	do {
 		size_t r;
 
-		if (i < nof_requests) {
-			char *p_name = argv[ARGV_IN_DATA_FILE_START + i];
+		if (req_no < nof_requests) {
+			char *p_name = argv[ARGV_IN_DATA_FILE_START + req_no];
 
 			KSI_LOG_info(ksi, "Create request for file:  %s", p_name);
 
@@ -280,7 +289,7 @@ int main(int argc, char **argv) {
 			}
 			hsh = NULL;
 
-			res = KSI_AsyncService_addAggregationReq(as, req, &handles[i]);
+			res = KSI_AsyncService_addAggregationReq(as, req, &handles[req_no]);
 			if (res != KSI_OK) {
 				fprintf(stderr, "Unable to add request.\n");
 				goto cleanup;
@@ -289,51 +298,75 @@ int main(int argc, char **argv) {
 			req = NULL;
 
 			pending++;
-			i++;
+			req_no++;
 		}
 
 		res = KSI_AsyncService_run(as);
-		if (res != KSI_OK && res != KSI_ASYNC_NOT_READY) {
+		if (res == KSI_ASYNC_CONNECTION_CLOSED) {
+			KSI_LOG_info(ksi, "KSI_ASYNC_CONNECTION_CLOSED");
+			for (r = 0; r < req_no; r++) {
+				int state;
+
+				res = KSI_AsyncService_getRequestState(as, handles[r], &state);
+				if (res != KSI_OK) {
+					fprintf(stderr, "Failed to get request state.\n");
+					goto cleanup;
+				}
+
+				if (state == KSI_ASYNC_PLD_WAITING_FOR_RESPONSE) {
+					res = KSI_AsyncService_recover(as, handles[r], KSI_ASYNC_PLD_REMOVE);
+					if (res != KSI_OK) {
+						fprintf(stderr, "Unable to recover.\n");
+						goto cleanup;
+					}
+
+					pending--;
+				}
+			}
+		} else if (res != KSI_OK && res != KSI_ASYNC_NOT_READY) {
 			fprintf(stderr, "Failed to run async service.\n");
 			goto cleanup;
 		}
 
 		KSI_LOG_info(ksi, "Poll for response.");
 
-		res = KSI_AsyncService_getAggregationResp(as, &resp);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Failed to get agggregation response.\n");
-			goto cleanup;
-		}
+		for (r = 0; r < req_no; r++) {
+			char *p_name = NULL;
+			int state;
 
-		if (resp == NULL) {
-			KSI_LOG_info(ksi, "There have been no responses arrived yet.");
-			continue;
-		}
+			res = KSI_AsyncService_getRequestState(as, handles[r], &state);
+			if (res != KSI_OK) {
+				fprintf(stderr, "Failed to get request state.\n");
+				goto cleanup;
+			}
 
-		/* Map the response to a request. */
-		for (r = 0; r < nof_requests; r++) {
-			if (KSI_AsyncHandle_matchAggregationResp(handles[r], resp)) {
-				char *p_name = argv[ARGV_IN_DATA_FILE_START + r];
-				char buf[0xffff];
+			/* Check if handle state. */
+			if (state != KSI_ASYNC_PLD_RESPONSE_RECEIVED) continue;
 
-				/* Create a filename for the signature. */
-				KSI_snprintf(buf, sizeof(buf), "%s.ksig", p_name);
+			res = KSI_AsyncService_getAggregationResp(as, handles[r], &resp);
+			if (res != KSI_OK) {
+				fprintf(stderr, "Failed to get aggregation response.\n");
+				goto cleanup;
+			}
 
-				res = saveSignature(buf, resp);
+			if (resp != NULL) {
+				p_name = argv[ARGV_IN_DATA_FILE_START + r];
+
+				res = saveSignature(p_name, resp);
 				if (res != KSI_OK) {
 					fprintf(stderr, "Failed to save signature for: %s\n", p_name);
 					goto cleanup;
 				}
+				KSI_AggregationResp_free(resp);
+				resp = NULL;
 
+				/* Invalidate handle. */
+				handles[r] = 0;
 				/* Reduce the pending counter. */
 				pending--;
 				break;
 			}
 		}
-
-		KSI_AggregationResp_free(resp);
-		resp = NULL;
 	} while (pending);
 
 	res = KSI_OK;
