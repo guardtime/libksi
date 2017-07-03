@@ -61,7 +61,7 @@ extern "C" {
 	 * closes the signature builder and returns via output parameter the resulting signature.
 	 * \param[in] 	builder			Pointer to signature builder.
 	 * \param[in]	rootLevel		The level of the input hash (usually 0). This is used only for the verification.
-	 * \param[in]	sig				Pointer to the receiving pointer.
+	 * \param[out]	sig				Pointer to the receiving pointer.
 	 * \note The caller must also call #KSI_SignatureBuilder_free on the builder object.
 	 * \note It is the responsibility of the caller to free the resulting signature object.
 	 * \see #KSI_SignatureBuilder_free, #KSI_Signature_free.
@@ -105,6 +105,19 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_SignatureBuilder_appendAggregationChain(KSI_SignatureBuilder *builder, KSI_AggregationHashChain *aggr);
+
+	/**
+	 * This function appends the aggregation chain to the signature and returns the appended signature. To use this
+	 * interface, first open a signature builder from a signature (#KSI_SignatureBuilder_openFromSignature), then
+	 * get as many appended signatures as needed and finally free the signature builder (#KSI_SignatureBuilder_free).
+	 * \param[in]	builder		Pointer to the builder.
+	 * \param[in]	aggr		Aggregation hash chain.
+	 * \param[out]	sig			Pointer to the receiving pointer.
+	 * \note It is the responsibility of the caller to free the input parameters after use.
+	 * \note There is no need to close the signature builder after use.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_SignatureBuilder_getAppendedSignature(KSI_SignatureBuilder *builder, KSI_AggregationHashChain *aggr, KSI_Signature **sig);
 
 	/**
 	 * This function sets the calendar authentication record of the signature.

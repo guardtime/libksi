@@ -939,6 +939,7 @@ EXPORTS
 	KSI_SignatureBuilder_setCalendarHashChain
 	KSI_SignatureBuilder_addAggregationChain
 	KSI_SignatureBuilder_appendAggregationChain
+	KSI_SignatureBuilder_getAppendedSignature
 	KSI_SignatureBuilder_setCalendarAuthRecord
 	KSI_SignatureBuilder_setPublication
 	KSI_SignatureBuilder_setRFC3161
