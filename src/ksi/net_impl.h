@@ -146,6 +146,9 @@ extern "C" {
 		size_t requestCount;
 		size_t maxParallelRequests;
 		KSI_AsyncPayload **reqCache;
+		size_t pending;
+		size_t received;
+		int recoveryOption;
 	};
 
 	struct KSI_AsyncService_st {

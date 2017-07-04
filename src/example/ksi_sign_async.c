@@ -188,8 +188,9 @@ int main(int argc, char **argv) {
 			{ NULL, NULL }
 	};
 
+	int stillRunning = 1;
+	int queueEmpty = 1;
 	size_t nof_requests = 0;
-	size_t pending = 0;
 	size_t req_no = 0;
 
 	/* Handle command line parameters */
@@ -293,56 +294,58 @@ int main(int argc, char **argv) {
 			KSI_AggregationReq_free(req);
 			req = NULL;
 
-			pending++;
 			req_no++;
 		}
 
 		res = KSI_AsyncService_run(as);
-		if (res == KSI_ASYNC_CONNECTION_CLOSED) {
-			KSI_LOG_info(ksi, "KSI_ASYNC_CONNECTION_CLOSED");
-			for (r = 0; r < req_no; r++) {
-				int state;
+		switch (res) {
+			case KSI_ASYNC_CONNECTION_CLOSED:
+				KSI_LOG_info(ksi, "KSI_ASYNC_CONNECTION_CLOSED");
 
-				res = KSI_AsyncService_getRequestState(as, handles[r], &state);
-				if (res != KSI_OK) {
-					fprintf(stderr, "Failed to get request state.\n");
-					goto cleanup;
-				}
+				for (r = 0; r < req_no; r++) {
+					int state;
 
-				if (state == KSI_ASYNC_PLD_WAITING_FOR_RESPONSE) {
-					res = KSI_AsyncService_recover(as, handles[r], KSI_ASYNC_PLD_REMOVE);
+					res = KSI_AsyncService_getRequestState(as, handles[r], &state);
 					if (res != KSI_OK) {
-						fprintf(stderr, "Unable to recover.\n");
+						fprintf(stderr, "Failed to get request state.\n");
 						goto cleanup;
 					}
 
-					pending--;
+					if (state == KSI_ASYNC_PLD_WAITING_FOR_RESPONSE) {
+						res = KSI_AsyncService_recover(as, handles[r], KSI_ASYNC_REC_REMOVE);
+						if (res != KSI_OK) {
+							fprintf(stderr, "Unable to recover.\n");
+							goto cleanup;
+						}
+					}
 				}
-			}
-		} else if (res != KSI_OK && res != KSI_ASYNC_NOT_READY) {
-			fprintf(stderr, "Failed to run async service.\n");
-			goto cleanup;
+				/* stillRunning = 1; */
+				break;
+			case KSI_ASYNC_OUTPUT_BUFFER_FULL:
+			case KSI_ASYNC_NOT_READY:
+			case KSI_ASYNC_NOT_FINISHED:
+				/* stillRunning = 1; */
+				break;
+			case KSI_ASYNC_COMPLETED:
+				stillRunning = 0;
+				break;
+			default:
+				fprintf(stderr, "Failed to run async service.\n");
+				goto cleanup;
 		}
 
 		KSI_LOG_info(ksi, "Poll for response.");
 
 		for (r = 0; r < req_no; r++) {
 			char *p_name = NULL;
-			int state;
-
-			res = KSI_AsyncService_getRequestState(as, handles[r], &state);
-			if (res != KSI_OK) {
-				fprintf(stderr, "Failed to get request state.\n");
-				goto cleanup;
-			}
-
-			/* Check if handle state. */
-			if (state != KSI_ASYNC_PLD_RESPONSE_RECEIVED) continue;
 
 			res = KSI_AsyncService_getAggregationResp(as, handles[r], &resp);
-			if (res != KSI_OK) {
-				fprintf(stderr, "Failed to get aggregation response.\n");
-				goto cleanup;
+			switch (res) {
+				case KSI_ASYNC_QUEUE_EMPTY:  queueEmpty = 1; break;
+				case KSI_ASYNC_NOT_FINISHED: queueEmpty = 0; break;
+				default:
+					fprintf(stderr, "Failed to get aggregation response.\n");
+					goto cleanup;
 			}
 
 			if (resp != NULL) {
@@ -358,12 +361,10 @@ int main(int argc, char **argv) {
 
 				/* Invalidate handle. */
 				handles[r] = 0;
-				/* Reduce the pending counter. */
-				pending--;
 				break;
 			}
 		}
-	} while (pending);
+	} while (stillRunning || !queueEmpty);
 
 	res = KSI_OK;
 

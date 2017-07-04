@@ -553,6 +553,8 @@ int KSI_TcpAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c) {
 	tmp->requestCount = 0;
 	tmp->maxParallelRequests = KSI_ASYNC_DEFAULT_PARALLEL_REQUESTS;
 	tmp->reqCache = NULL;
+	tmp->pending = 0;
+	tmp->received = 0;
 
 	tmp->addRequest = (int (*)(void *, KSI_AsyncPayload *))addToSendQueue;
 	tmp->getResponse = (int (*)(void *, KSI_OctetString **))getResponse;

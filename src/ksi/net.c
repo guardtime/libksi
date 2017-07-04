@@ -1535,6 +1535,7 @@ static int asyncClient_addAggregationRequest(KSI_AsyncClient *c, KSI_Aggregation
 	}
 	c->reqCache[id] = tmp;
 	tmp = NULL;
+	c->pending++;
 
 	*handle = id;
 
@@ -1704,6 +1705,8 @@ static int asyncClient_handleAggregationResponse(KSI_AsyncClient *c) {
 				}
 				pld->state = KSI_ASYNC_PLD_RESPONSE_RECEIVED;
 				tmp = NULL;
+				c->pending--;
+				c->received++;
 			}
 		}
 		KSI_OctetString_free(resp);
@@ -1735,23 +1738,37 @@ static int asyncClient_getResponse(KSI_AsyncClient *c, KSI_AsyncHandle handle, v
 		c->reqCache[handle]->pldCtx_free = NULL;
 		KSI_AsyncPayload_free(c->reqCache[handle]);
 		c->reqCache[handle] = NULL;
+		c->received--;
 	} else {
 		*response = NULL;
 	}
-
-	res = KSI_OK;
-
+	res = c->received ? KSI_ASYNC_NOT_FINISHED : KSI_ASYNC_QUEUE_EMPTY;
 cleanup:
-
 	return res;
 }
 
 static int asyncClient_getAggregationResponse(KSI_AsyncClient *c, KSI_AsyncHandle handle, KSI_AggregationResp **response) {
-	return asyncClient_getResponse(c, handle, (void**)response);
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (c == NULL || response == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = asyncClient_getResponse(c, handle, (void**)response);
+	if (res != KSI_OK) {
+		KSI_pushError(c->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
 }
 
 int asyncClient_runAggr(KSI_AsyncClient *c) {
 	int res = KSI_UNKNOWN_ERROR;
+	int sta = KSI_UNKNOWN_ERROR;
 
 	if (c == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1765,22 +1782,28 @@ int asyncClient_runAggr(KSI_AsyncClient *c) {
 		goto cleanup;
 	}
 
-	res = c->dispatch(c->clientImpl);
-	if (res != KSI_OK) {
-		KSI_pushError(c->ctx, res, NULL);
-		goto cleanup;
+	sta = c->dispatch(c->clientImpl);
+	switch (sta) {
+		case KSI_OK:
+		case KSI_ASYNC_NOT_READY:
+		case KSI_ASYNC_OUTPUT_BUFFER_FULL:
+		case KSI_ASYNC_CONNECTION_CLOSED:
+			/* Handle responses. */
+			do {
+				res = asyncClient_handleAggregationResponse(c);
+			} while (res != KSI_ASYNC_QUEUE_EMPTY);
+			if (res != KSI_OK && res != KSI_ASYNC_QUEUE_EMPTY) {
+				KSI_pushError(c->ctx, res, NULL);
+				goto cleanup;
+			}
+			break;
+		default:
+			/* An unrecoverable error. */
+			KSI_pushError(c->ctx, res = sta, NULL);
+			goto cleanup;
 	}
-
-	/* Handle responses. */
-	do {
-		res = asyncClient_handleAggregationResponse(c);
-	} while (res != KSI_ASYNC_QUEUE_EMPTY);
-	if (res != KSI_OK && res != KSI_ASYNC_QUEUE_EMPTY) {
-		KSI_pushError(c->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_OK;
+	res = (sta != KSI_OK) ? sta :
+			c->pending ? KSI_ASYNC_NOT_FINISHED : KSI_ASYNC_COMPLETED;
 cleanup:
 	return res;
 }
@@ -1833,12 +1856,13 @@ static int asyncClient_recover(KSI_AsyncClient *c, KSI_AsyncHandle h, int policy
 	}
 
 	switch (policy) {
-		case KSI_ASYNC_PLD_REMOVE:
+		case KSI_ASYNC_REC_REMOVE:
 			KSI_AsyncPayload_free(c->reqCache[h]);
 			c->reqCache[h] = NULL;
+			c->pending--;
 			break;
 
-		case KSI_ASYNC_PLD_RESEND:
+		case KSI_ASYNC_REC_RESEND:
 			c->reqCache[h]->state = KSI_ASYNC_PLD_WAITING_FOR_DISPATCH;
 			res = c->addRequest(c->clientImpl, c->reqCache[h]);
 			if (res != KSI_OK) {

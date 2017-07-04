@@ -494,8 +494,8 @@ extern "C" {
 	 * Enum defining async payload recovery policy.
 	 */
 	enum KSI_AsyncPayloadRecoveryPolicy_en {
-		KSI_ASYNC_PLD_REMOVE,
-		KSI_ASYNC_PLD_RESEND
+		KSI_ASYNC_REC_REMOVE,
+		KSI_ASYNC_REC_RESEND
 	};
 
 	/**
