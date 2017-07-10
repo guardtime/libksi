@@ -177,6 +177,8 @@ const char *KSI_getErrorString(int statusCode) {
 			return "Asynchronous queue is empty.";
 		case KSI_ASYNC_OUTPUT_BUFFER_FULL:
 			return "Asynchronous send buffer is full.";
+		case KSI_ASYNC_MAX_PARALLEL_COUNT_REACHED:
+			return "Asynchronous maximum parallel jobs reached.";
 
 		case KSI_UNKNOWN_ERROR:
 			return "Unknown internal error.";

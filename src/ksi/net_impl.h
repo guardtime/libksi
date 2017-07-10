@@ -127,6 +127,7 @@ extern "C" {
 		size_t len;
 
 		int state;
+		time_t sendTime;
 	};
 
 	struct KSI_AsyncClient_st {
@@ -142,13 +143,16 @@ extern "C" {
 		int (*dispatch)(void *);
 		int (*reset)(void *);
 		void (*closeConnection)(void*);
+		int (*setConnectTimeout)(void *, size_t timeout);
 
 		size_t requestCount;
+		size_t tail;
 		size_t maxParallelRequests;
 		KSI_AsyncPayload **reqCache;
 		size_t pending;
 		size_t received;
 		int recoveryOption;
+		size_t rTimeout;
 	};
 
 	struct KSI_AsyncService_st {
@@ -159,7 +163,7 @@ extern "C" {
 
 		int (*addRequest)(void *, void *, KSI_AsyncHandle *);
 		int (*getResponse)(void *, KSI_AsyncHandle, void **);
-		int (*run)(void *);
+		int (*run)(void *, KSI_AsyncHandle *, size_t *);
 
 		int (*recover)(void *, KSI_AsyncHandle, int);
 		int (*getState)(void *, KSI_AsyncHandle, int *);

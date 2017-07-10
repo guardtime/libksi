@@ -433,21 +433,28 @@ extern "C" {
 	 */
 	int KSI_AsyncService_getAggregationResp(KSI_AsyncService *s, KSI_AsyncHandle handle, KSI_AggregationResp **resp);
 
+#define KSI_ASYNC_HANDLE_INVALID 0
+
 	/**
-	 * Non-blocking send/receive worker. The method will open a connection the remote service, dispatch the cached
-	 * requests and cache the received responses. The method has to be called multiple times in order to get
-	 * the job done.
+	 * Non-blocking send/receive worker. The method will open a connection to remote service, dispatch cached
+	 * requests and map the received responses. The method has to be called multiple times as long as
+	 * #KSI_ASYNC_COMPLETED is not returned.
 	 * \param[in]		s				Async serice instance.
+	 * \param[out]		handle			Async handle associated with a request.
+	 * \param[out]		waiting			Total number of received responses.
 	 * \return status code #KSI_OK, when operation succeeded;
 	 * \return #KSI_ASYNC_NOT_READY, when async connection has been initiated, but is not completed yet;
 	 * \return #KSI_ASYNC_CONNECTION_CLOSED, when connection has been closed by the service provider;
 	 * \return #KSI_ASYNC_OUTPUT_BUFFER_FULL, when OS send buffer is full;
+	 * \return #KSI_NETWORK_CONNECTION_TIMEOUT in case of network connection timeout.
+	 * \return #KSI_NETWORK_RECIEVE_TIMEOUT in case a request, associated with \c handle, has not received a response
+	 * in set timeout.
 	 * \return otherwise an error code.
 	 * \see #KSI_AsyncService_addAggregationReq
 	 * \see #KSI_AsyncService_getAggregationResp
 	 * \see #KSI_AsyncService_recover
 	 */
-	int KSI_AsyncService_run(KSI_AsyncService *s);
+	int KSI_AsyncService_run(KSI_AsyncService *s, KSI_AsyncHandle *handle, size_t *waiting);
 
 	/**
 	 * Enum defining async payload state.
@@ -479,7 +486,6 @@ extern "C" {
 	int KSI_AsyncService_aggrInit(KSI_AsyncService *service);
 
 #define KSI_ASYNC_DEFAULT_PARALLEL_REQUESTS (1 << 10)
-
 
 	/**
 	 * Set maximum parallel request count. The \c count may not be less than the previously set value.

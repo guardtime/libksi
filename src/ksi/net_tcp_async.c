@@ -65,6 +65,7 @@
 
 #define TCP_INVALID_SOCKET_FD (-1)
 #define KSI_TLV_MAX_SIZE (0xffff + 4)
+#define TCP_DEFAULT_TIMEOUT 10
 
 static const int optSet = 1;
 static const int optClr = 0;
@@ -86,6 +87,10 @@ typedef struct TcpClientCtx_st {
 	char *ksi_pass;
 	char *host;
 	unsigned port;
+
+	/* Timeouts. */
+	size_t cTimeout;
+	time_t conOpenAt;
 } TcpAsyncCtx;
 
 
@@ -147,6 +152,7 @@ static int openSocket(TcpAsyncCtx *tcpCtx, int *sockfd) {
 				goto cleanup;
 			}
 		}
+		time(&tcpCtx->conOpenAt);
 
 		/* Succeedded to connect. */
 		break;
@@ -194,7 +200,8 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 
 	res = poll(&pfd, 1, 0);
 	if (res == 0) {
-		res = KSI_ASYNC_NOT_READY;
+		res = (difftime(time(NULL), tcpCtx->conOpenAt) > tcpCtx->cTimeout) ?
+				KSI_NETWORK_CONNECTION_TIMEOUT : KSI_ASYNC_NOT_READY;
 		goto cleanup;
 	} else if (res < 0) {
 		KSI_pushError(tcpCtx->ctx, res = KSI_IO_ERROR, "Failed to test socket.");
@@ -285,7 +292,8 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 				goto cleanup;
 			}
 			if (sockOpt == KSI_SOC_EINPROGRESS || sockOpt == KSI_SOC_EWOULDBLOCK) {
-				res = KSI_ASYNC_NOT_READY;
+				res = (difftime(time(NULL), tcpCtx->conOpenAt) > tcpCtx->cTimeout) ?
+						KSI_NETWORK_CONNECTION_TIMEOUT : KSI_ASYNC_NOT_READY;
 				goto cleanup;
 			}
 
@@ -331,6 +339,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 
 				if (count == req->len) {
 					req->state = KSI_ASYNC_PLD_WAITING_FOR_RESPONSE;
+					time(&req->sendTime);
 					/* The request has been successfully dispatched. Remove it from the request queue. */
 					res = KSI_AsyncPayloadList_remove(tcpCtx->reqQueue, at, NULL);
 					if (res != KSI_OK) {
@@ -477,6 +486,12 @@ static int getCredentials(TcpAsyncCtx *tcpCtx, const char **user, const char **p
 	return KSI_OK;
 }
 
+static int setConnectTimeout(TcpAsyncCtx *tcpCtx, size_t timeout) {
+	if (tcpCtx == NULL) return KSI_INVALID_ARGUMENT;
+	tcpCtx->cTimeout = timeout;
+	return KSI_OK;
+}
+
 static void TcpAsyncCtx_free(TcpAsyncCtx *t) {
 	if (t != NULL) {
 		KSI_AsyncPayloadList_free(t->reqQueue);
@@ -517,6 +532,9 @@ static int TcpAsyncCtx_new(KSI_CTX *ctx, TcpAsyncCtx **tcpCtx) {
 	tmp->ksi_pass = NULL;
 	tmp->host = NULL;
 	tmp->port = 0;
+	/* Timeout. */
+	tmp->cTimeout = TCP_DEFAULT_TIMEOUT;
+	tmp->conOpenAt = 0;
 
 	/* Initialize io queues. */
 	res = KSI_AsyncPayloadList_new(&tmp->reqQueue);
@@ -551,10 +569,12 @@ int KSI_TcpAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c) {
 	tmp->clientImpl = NULL;
 
 	tmp->requestCount = 0;
+	tmp->tail = 1;
 	tmp->maxParallelRequests = KSI_ASYNC_DEFAULT_PARALLEL_REQUESTS;
 	tmp->reqCache = NULL;
 	tmp->pending = 0;
 	tmp->received = 0;
+	tmp->rTimeout = TCP_DEFAULT_TIMEOUT;
 
 	tmp->addRequest = (int (*)(void *, KSI_AsyncPayload *))addToSendQueue;
 	tmp->getResponse = (int (*)(void *, KSI_OctetString **))getResponse;
@@ -563,6 +583,7 @@ int KSI_TcpAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c) {
 	tmp->getQueueStatus = (int (*)(void *, size_t *, size_t *))getQueueStatus;
 	tmp->reset = (int (*)(void *))reset;
 	tmp->getCredentials = (int (*)(void *, const char **, const char **))getCredentials;
+	tmp->setConnectTimeout = (int (*)(void *, size_t))setConnectTimeout;
 
 	tmp->reqCache = KSI_calloc(tmp->maxParallelRequests, sizeof(KSI_AsyncPayload *));
 	if (tmp->reqCache == NULL) {

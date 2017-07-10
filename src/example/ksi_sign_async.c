@@ -189,7 +189,6 @@ int main(int argc, char **argv) {
 	};
 
 	int stillRunning = 1;
-	int queueEmpty = 1;
 	size_t nof_requests = 0;
 	size_t req_no = 0;
 
@@ -233,7 +232,7 @@ int main(int argc, char **argv) {
 	KSI_LOG_info(ksi, "  pass: %s", argv[ARGV_PASS]);
 
 	/* Initialize non-blocking connection. */
-	res = KSI_AsyncService_run(as);
+	res = KSI_AsyncService_run(as, NULL, NULL);
 	if (res != KSI_OK && res != KSI_ASYNC_NOT_READY) {
 		fprintf(stderr, "Unable to initialize non-blocking connection.\n");
 		goto cleanup;
@@ -259,7 +258,7 @@ int main(int argc, char **argv) {
 	}
 
 	do {
-		size_t r;
+		KSI_AsyncHandle handle = KSI_ASYNC_HANDLE_INVALID;
 
 		if (req_no < nof_requests) {
 			char *p_name = argv[ARGV_IN_DATA_FILE_START + req_no];
@@ -297,29 +296,41 @@ int main(int argc, char **argv) {
 			req_no++;
 		}
 
-		res = KSI_AsyncService_run(as);
+		res = KSI_AsyncService_run(as, &handle, NULL);
 		switch (res) {
-			case KSI_ASYNC_CONNECTION_CLOSED:
-				KSI_LOG_info(ksi, "KSI_ASYNC_CONNECTION_CLOSED");
+			case KSI_ASYNC_CONNECTION_CLOSED: {
+					size_t i;
 
-				for (r = 0; r < req_no; r++) {
-					int state;
+					KSI_LOG_info(ksi, "KSI_ASYNC_CONNECTION_CLOSED");
 
-					res = KSI_AsyncService_getRequestState(as, handles[r], &state);
-					if (res != KSI_OK) {
-						fprintf(stderr, "Failed to get request state.\n");
-						goto cleanup;
-					}
+					for (i = 0; i < req_no; i++) {
+						int state;
 
-					if (state == KSI_ASYNC_PLD_WAITING_FOR_RESPONSE) {
-						res = KSI_AsyncService_recover(as, handles[r], KSI_ASYNC_REC_REMOVE);
+						res = KSI_AsyncService_getRequestState(as, handles[i], &state);
 						if (res != KSI_OK) {
-							fprintf(stderr, "Unable to recover.\n");
+							fprintf(stderr, "Failed to get request state.\n");
 							goto cleanup;
 						}
+
+						if (state == KSI_ASYNC_PLD_WAITING_FOR_RESPONSE) {
+							res = KSI_AsyncService_recover(as, handles[i], KSI_ASYNC_REC_REMOVE);
+							if (res != KSI_OK) {
+								fprintf(stderr, "Unable to recover.\n");
+								goto cleanup;
+							}
+						}
+						handles[i] = KSI_ASYNC_HANDLE_INVALID;
 					}
 				}
 				/* stillRunning = 1; */
+				break;
+			case KSI_NETWORK_RECIEVE_TIMEOUT:
+				res = KSI_AsyncService_recover(as, handle, KSI_ASYNC_REC_REMOVE);
+				if (res != KSI_OK) {
+					fprintf(stderr, "Unable to recover.\n");
+					goto cleanup;
+				}
+				handle = KSI_ASYNC_HANDLE_INVALID;
 				break;
 			case KSI_ASYNC_OUTPUT_BUFFER_FULL:
 			case KSI_ASYNC_NOT_READY:
@@ -329,27 +340,31 @@ int main(int argc, char **argv) {
 			case KSI_ASYNC_COMPLETED:
 				stillRunning = 0;
 				break;
+			case KSI_NETWORK_CONNECTION_TIMEOUT:
+				fprintf(stderr, "Failed to establishe connection to remote service.\n");
+				goto cleanup;
 			default:
-				fprintf(stderr, "Failed to run async service.\n");
+				fprintf(stderr, "Failed to run async service. Error: %s\n", KSI_getErrorString(res));
 				goto cleanup;
 		}
 
-		KSI_LOG_info(ksi, "Poll for response.");
-
-		for (r = 0; r < req_no; r++) {
+		if (handle != KSI_ASYNC_HANDLE_INVALID) {
+			size_t i;
 			char *p_name = NULL;
 
-			res = KSI_AsyncService_getAggregationResp(as, handles[r], &resp);
-			switch (res) {
-				case KSI_ASYNC_QUEUE_EMPTY:  queueEmpty = 1; break;
-				case KSI_ASYNC_NOT_FINISHED: queueEmpty = 0; break;
-				default:
-					fprintf(stderr, "Failed to get aggregation response.\n");
-					goto cleanup;
+			KSI_LOG_info(ksi, "Read response.");
+
+			/* Associate with request. */
+			for (i = 0; i < req_no; i++) if (handles[i] == handle) break;
+
+			res = KSI_AsyncService_getAggregationResp(as, handle, &resp);
+			if (res != KSI_OK) {
+				fprintf(stderr, "Failed to get aggregation response.\n");
+				goto cleanup;
 			}
 
 			if (resp != NULL) {
-				p_name = argv[ARGV_IN_DATA_FILE_START + r];
+				p_name = argv[ARGV_IN_DATA_FILE_START + i];
 
 				res = saveSignature(p_name, resp);
 				if (res != KSI_OK) {
@@ -360,11 +375,10 @@ int main(int argc, char **argv) {
 				resp = NULL;
 
 				/* Invalidate handle. */
-				handles[r] = 0;
-				break;
+				handles[i] = KSI_ASYNC_HANDLE_INVALID;
 			}
 		}
-	} while (stillRunning || !queueEmpty);
+	} while (stillRunning);
 
 	res = KSI_OK;
 
