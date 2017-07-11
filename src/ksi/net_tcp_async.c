@@ -496,16 +496,22 @@ cleanup:
 	return res;
 }
 
+static int setConnectTimeout(TcpAsyncCtx *tcpCtx, size_t timeout) {
+	if (tcpCtx == NULL) return KSI_INVALID_ARGUMENT;
+	tcpCtx->cTimeout = timeout;
+	return KSI_OK;
+}
+
+static int setMaxRequestCount(TcpAsyncCtx *tcpCtx, size_t count) {
+	if (tcpCtx == NULL) return KSI_INVALID_ARGUMENT;
+	tcpCtx->roundMaxCount = count;
+	return KSI_OK;
+}
+
 static int getCredentials(TcpAsyncCtx *tcpCtx, const char **user, const char **pass) {
 	if (tcpCtx == NULL || user == NULL || pass == NULL) return KSI_INVALID_ARGUMENT;
 	*user = tcpCtx->ksi_user;
 	*pass = tcpCtx->ksi_pass;
-	return KSI_OK;
-}
-
-static int setConnectTimeout(TcpAsyncCtx *tcpCtx, size_t timeout) {
-	if (tcpCtx == NULL) return KSI_INVALID_ARGUMENT;
-	tcpCtx->cTimeout = timeout;
 	return KSI_OK;
 }
 
@@ -605,6 +611,7 @@ int KSI_TcpAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c) {
 	tmp->reset = (int (*)(void *))reset;
 	tmp->getCredentials = (int (*)(void *, const char **, const char **))getCredentials;
 	tmp->setConnectTimeout = (int (*)(void *, size_t))setConnectTimeout;
+	tmp->setMaxRequestCount = (int (*)(void *, size_t))setMaxRequestCount;
 
 	tmp->reqCache = KSI_calloc(tmp->maxParallelRequests, sizeof(KSI_AsyncPayload *));
 	if (tmp->reqCache == NULL) {

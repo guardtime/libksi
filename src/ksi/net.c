@@ -1830,6 +1830,7 @@ int asyncClient_runAggr(KSI_AsyncClient *c, KSI_AsyncHandle *handle, size_t *wai
 		case KSI_ASYNC_NOT_READY:
 		case KSI_ASYNC_OUTPUT_BUFFER_FULL:
 		case KSI_ASYNC_CONNECTION_CLOSED:
+		case KSI_ASYNC_ROUND_MAX_REQ_COUNT_FULL:
 			/* Handle responses. */
 			do {
 				res = asyncClient_handleAggregationResponse(c);
@@ -1941,6 +1942,11 @@ static int asyncClient_setReceiveTimeout(KSI_AsyncClient *c, size_t timeout) {
 	if (c == NULL) return KSI_INVALID_ARGUMENT;
 	c->rTimeout = timeout;
 	return KSI_OK;
+}
+
+static int asyncClient_setMaxRequestCount(KSI_AsyncClient *c, size_t count) {
+	if (c == NULL || c->clientImpl == NULL || c->setMaxRequestCount == NULL) return KSI_INVALID_ARGUMENT;
+	return c->setMaxRequestCount(c->clientImpl, count);
 }
 
 void KSI_AsyncClient_free(KSI_AsyncClient *c) {
@@ -2071,6 +2077,8 @@ int KSI_AsyncService_recover(KSI_AsyncService *service, KSI_AsyncHandle handle, 
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+	KSI_ERR_clearErrors(service->ctx);
+
 	if (service->impl == NULL || service->recover == NULL) {
 		KSI_pushError(service->ctx, res = KSI_INVALID_STATE, "Async service client is not properly initialized.");
 		goto cleanup;
@@ -2087,18 +2095,18 @@ cleanup:
 	return res;
 }
 
-void KSI_AsyncService_free(KSI_AsyncService *s) {
-	if (s != NULL) {
-		if (s->impl_free) s->impl_free(s->impl);
-		KSI_free(s);
+void KSI_AsyncService_free(KSI_AsyncService *service) {
+	if (service != NULL) {
+		if (service->impl_free) service->impl_free(service->impl);
+		KSI_free(service);
 	}
 }
 
-int KSI_AsyncService_new(KSI_CTX *ctx, KSI_AsyncService **s) {
+int KSI_AsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AsyncService *tmp = NULL;
 
-	if (ctx == NULL || s == NULL) {
+	if (ctx == NULL || service == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -2120,11 +2128,14 @@ int KSI_AsyncService_new(KSI_CTX *ctx, KSI_AsyncService **s) {
 	tmp->run = NULL;
 
 	tmp->recover = (int (*)(void *, KSI_AsyncHandle, int))asyncClient_recover;
-
 	tmp->getState = (int (*)(void *, KSI_AsyncHandle, int *))asyncClient_getState;
+	tmp->setConnectTimeout = (int (*)(void *, size_t))asyncClient_setConnectTimeout;
+	tmp->setReceiveTimeout = (int (*)(void *, size_t))asyncClient_setReceiveTimeout;
+	tmp->setMaxRequestCount = (int (*)(void *, size_t))asyncClient_setMaxRequestCount;
+
 	tmp->uriSplit = uriSplit;
 
-	*s = tmp;
+	*service = tmp;
 	tmp = NULL;
 
 	res = KSI_OK;
@@ -2173,3 +2184,18 @@ cleanup:
 	return res;
 }
 
+#define KSI_ASYNC_SERVICE_OBJ_IMPLEMENT_SETTER(obj, name, type)	\
+int obj##_set##name(obj *s, type val) {							\
+	int res = KSI_UNKNOWN_ERROR;								\
+	if (s == NULL || s->impl == NULL || s->set##name == NULL) {	\
+		res = KSI_INVALID_ARGUMENT;								\
+		goto cleanup;											\
+	}															\
+	res = s->set##name(s->impl, val);						\
+cleanup:														\
+	return res;													\
+}
+
+KSI_ASYNC_SERVICE_OBJ_IMPLEMENT_SETTER(KSI_AsyncService, ConnectTimeout, const size_t)
+KSI_ASYNC_SERVICE_OBJ_IMPLEMENT_SETTER(KSI_AsyncService, ReceiveTimeout, const size_t)
+KSI_ASYNC_SERVICE_OBJ_IMPLEMENT_SETTER(KSI_AsyncService, MaxRequestCount, const size_t)

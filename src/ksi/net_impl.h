@@ -143,7 +143,8 @@ extern "C" {
 		int (*dispatch)(void *);
 		int (*reset)(void *);
 		void (*closeConnection)(void*);
-		int (*setConnectTimeout)(void *, size_t timeout);
+		int (*setConnectTimeout)(void *, size_t);
+		int (*setMaxRequestCount)(void *, size_t);
 
 		size_t requestCount;
 		size_t tail;
@@ -167,6 +168,9 @@ extern "C" {
 
 		int (*recover)(void *, KSI_AsyncHandle, int);
 		int (*getState)(void *, KSI_AsyncHandle, int *);
+		int (*setConnectTimeout)(void *, size_t);
+		int (*setReceiveTimeout)(void *, size_t);
+		int (*setMaxRequestCount)(void *, size_t);
 
 		int (*uriSplit)(const char *uri, char **scheme, char **user, char **pass, char **host, unsigned *port, char **path, char **query, char **fragment);
 	};

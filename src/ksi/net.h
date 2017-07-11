@@ -390,7 +390,7 @@ extern "C" {
 	 * Free async service object.
 	 * \param[in]		handle			Async client.
 	 */
-	void KSI_AsyncService_free(KSI_AsyncService *s);
+	void KSI_AsyncService_free(KSI_AsyncService *service);
 
 	/**
 	 * Constructor for the async payload object.
@@ -399,7 +399,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncService_free
 	 */
-	int KSI_AsyncService_new(KSI_CTX *ctx, KSI_AsyncService **s);
+	int KSI_AsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service);
 
 	/**
 	 * Non-blocking setter for aggregation request. Add new aggregation request to the output queue.
@@ -485,18 +485,22 @@ extern "C" {
 	 */
 	int KSI_AsyncService_aggrInit(KSI_AsyncService *service);
 
-#define KSI_ASYNC_DEFAULT_ROUND_MAX_COUNT   (1 << 8)
+#define KSI_ASYNC_DEFAULT_ROUND_MAX_COUNT   (1 << 3)
 #define KSI_ASYNC_DEFAULT_PARALLEL_REQUESTS (1 << 10)
 #define KSI_ASYNC_ROUND_DURATION_SEC 1
 
 	/**
-	 * Set maximum parallel request count. The \c count may not be less than the previously set value.
+	 * Set maximum parallel running request count. The \c count may not be less than the previously set value.
 	 * Default value is #KSI_ASYNC_DEFAULT_PARALLEL_REQUESTS
 	 * \param[in]		service			Async serice instance.
 	 * \param[in]		count			Value to be applied.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_AsyncService_setMaxParallelRequests(KSI_AsyncService *service, size_t count);
+
+	int KSI_AsyncService_setConnectTimeout(KSI_AsyncService *service, const size_t value);
+	int KSI_AsyncService_setReceiveTimeout(KSI_AsyncService *service, const size_t value);
+	int KSI_AsyncService_setMaxRequestCount(KSI_AsyncService *service, const size_t value);
 
 	/**
 	 * Enum defining async payload recovery policy.

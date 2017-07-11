@@ -193,6 +193,8 @@ int main(int argc, char **argv) {
 	size_t nof_requests = 0;
 	size_t req_no = 0;
 
+	size_t succeeded = 0;
+
 	/* Handle command line parameters */
 	if (argc <= NOF_STATIC_ARGS || strcmp("--", argv[ARGV_DELIM])) {
 		fprintf(stderr, "Usage:\n"
@@ -258,6 +260,12 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
+	res = KSI_AsyncService_setMaxRequestCount(as, (1<<8));
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to set maximum request count.\n");
+		goto cleanup;
+	}
+
 	do {
 		KSI_AsyncHandle handle = KSI_ASYNC_HANDLE_INVALID;
 
@@ -287,14 +295,19 @@ int main(int argc, char **argv) {
 			hsh = NULL;
 
 			res = KSI_AsyncService_addAggregationReq(as, req, &handles[req_no]);
-			if (res != KSI_OK && res != KSI_ASYNC_MAX_PARALLEL_COUNT_REACHED) {
-				fprintf(stderr, "Unable to add request.\n");
-				goto cleanup;
+			switch (res) {
+				case KSI_OK:
+					req_no++;
+					break;
+				case KSI_ASYNC_MAX_PARALLEL_COUNT_REACHED:
+					/* The request could not be added to the cache. */
+					break;
+				default:
+					fprintf(stderr, "Unable to add request.\n");
+					goto cleanup;
 			}
 			KSI_AggregationReq_free(req);
 			req = NULL;
-
-			req_no++;
 		}
 
 		res = KSI_AsyncService_run(as, &handle, &stillWaiting);
@@ -319,8 +332,8 @@ int main(int argc, char **argv) {
 								fprintf(stderr, "Unable to recover.\n");
 								goto cleanup;
 							}
+							handles[i] = KSI_ASYNC_HANDLE_INVALID;
 						}
-						handles[i] = KSI_ASYNC_HANDLE_INVALID;
 					}
 				}
 				/* stillRunning = 1; */
@@ -377,23 +390,28 @@ int main(int argc, char **argv) {
 			if (resp != NULL) {
 				p_name = argv[ARGV_IN_DATA_FILE_START + i];
 
+
 				res = saveSignature(p_name, resp);
 				if (res != KSI_OK) {
 					fprintf(stderr, "Failed to save signature for: %s\n", p_name);
 					goto cleanup;
 				}
+				succeeded++;
 				KSI_AggregationResp_free(resp);
 				resp = NULL;
 
 				/* Invalidate handle. */
 				handles[i] = KSI_ASYNC_HANDLE_INVALID;
+
 			}
 		}
 	} while (stillRunning);
 
 	res = KSI_OK;
-
 cleanup:
+	printf("Succeeded request: %i.\n", succeeded);
+	printf("Failed request   : %i.\n", nof_requests - succeeded);
+
 
 	if (res != KSI_OK && ksi != NULL) {
 		KSI_ERR_statusDump(ksi, stderr);

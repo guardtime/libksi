@@ -534,12 +534,13 @@ int KSI_AsyncService_setAggregator(KSI_AsyncService *s, const char *uri, const c
 
 	if (s == NULL || uri == NULL) {
 		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
 	}
 
-	res = KSI_AsyncService_aggrInit(s);
+	res = uri_setAsyncService(s, uri, loginId, key);
 	if (res != KSI_OK) goto cleanup;
 
-	res = uri_setAsyncService(s, uri, loginId, key);
+	res = KSI_AsyncService_aggrInit(s);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_OK;
