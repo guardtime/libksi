@@ -1,4 +1,4 @@
-* IMPROVEMENT: Removed calendar based verification from the default verification policy.
+* IMPROVEMENT: Removed calendarbased verification from the default verification policy.
 * IMPROVEMENT: Implemented verification of PKI certificate validity during aggregation time.
 * IMPROVEMENT: Set default PDU version to 2.
 Version 3.14
