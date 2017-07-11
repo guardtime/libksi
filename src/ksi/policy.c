@@ -442,7 +442,6 @@ static const KSI_Rule generalRules[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_RequireNoUserProvidedPublication },
 	{KSI_RULE_TYPE_COMPOSITE_OR, publicationsFileBasedRules},
 	{KSI_RULE_TYPE_COMPOSITE_OR, keyBasedRules},
-	{KSI_RULE_TYPE_COMPOSITE_OR, calendarBasedRules},
 	{KSI_RULE_TYPE_COMPOSITE_OR, NULL}
 };
 
