@@ -179,6 +179,8 @@ const char *KSI_getErrorString(int statusCode) {
 			return "Asynchronous send buffer is full.";
 		case KSI_ASYNC_MAX_PARALLEL_COUNT_REACHED:
 			return "Asynchronous maximum parallel jobs reached.";
+		case KSI_ASYNC_ROUND_MAX_REQ_COUNT_FULL:
+			return "Asynchronous maximum number of requests for a round has exceeded.";
 
 		case KSI_UNKNOWN_ERROR:
 			return "Unknown internal error.";

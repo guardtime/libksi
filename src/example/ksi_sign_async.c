@@ -189,6 +189,7 @@ int main(int argc, char **argv) {
 	};
 
 	int stillRunning = 1;
+	size_t stillWaiting = 0;
 	size_t nof_requests = 0;
 	size_t req_no = 0;
 
@@ -286,7 +287,7 @@ int main(int argc, char **argv) {
 			hsh = NULL;
 
 			res = KSI_AsyncService_addAggregationReq(as, req, &handles[req_no]);
-			if (res != KSI_OK) {
+			if (res != KSI_OK && res != KSI_ASYNC_MAX_PARALLEL_COUNT_REACHED) {
 				fprintf(stderr, "Unable to add request.\n");
 				goto cleanup;
 			}
@@ -296,7 +297,7 @@ int main(int argc, char **argv) {
 			req_no++;
 		}
 
-		res = KSI_AsyncService_run(as, &handle, NULL);
+		res = KSI_AsyncService_run(as, &handle, &stillWaiting);
 		switch (res) {
 			case KSI_ASYNC_CONNECTION_CLOSED: {
 					size_t i;
@@ -324,14 +325,24 @@ int main(int argc, char **argv) {
 				}
 				/* stillRunning = 1; */
 				break;
-			case KSI_NETWORK_RECIEVE_TIMEOUT:
-				res = KSI_AsyncService_recover(as, handle, KSI_ASYNC_REC_REMOVE);
-				if (res != KSI_OK) {
-					fprintf(stderr, "Unable to recover.\n");
-					goto cleanup;
+			case KSI_NETWORK_RECIEVE_TIMEOUT: {
+					size_t i;
+
+					res = KSI_AsyncService_recover(as, handle, KSI_ASYNC_REC_REMOVE);
+					if (res != KSI_OK) {
+						fprintf(stderr, "Unable to recover.\n");
+						goto cleanup;
+					}
+
+					for (i = 0; i < req_no; i++) if (handles[i] == handle) break;
+					fprintf(stderr, "Failed to get signature for: %s.\n", argv[ARGV_IN_DATA_FILE_START + i]);
+
+					handles[i] = KSI_ASYNC_HANDLE_INVALID;
+					handle = KSI_ASYNC_HANDLE_INVALID;
 				}
-				handle = KSI_ASYNC_HANDLE_INVALID;
+				/* stillRunning = 1; */
 				break;
+			case KSI_ASYNC_ROUND_MAX_REQ_COUNT_FULL:
 			case KSI_ASYNC_OUTPUT_BUFFER_FULL:
 			case KSI_ASYNC_NOT_READY:
 			case KSI_ASYNC_NOT_FINISHED:

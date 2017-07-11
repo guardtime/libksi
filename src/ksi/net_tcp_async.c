@@ -82,6 +82,11 @@ typedef struct TcpClientCtx_st {
 	unsigned char inBuf[KSI_TLV_MAX_SIZE * 2];
 	size_t inLen;
 
+	/* Round throttling. */
+	time_t roundStartAt;
+	size_t roundCount;
+	size_t roundMaxCount;
+
 	/* Endpoint data. */
 	char *ksi_user;
 	char *ksi_pass;
@@ -309,6 +314,16 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 				KSI_AsyncPayload *req = NULL;
 				size_t count  = 0;
 
+				/* Check if more requests can be sent within the given timeframe. */
+				if (difftime(time(NULL), tcpCtx->roundStartAt) >= KSI_ASYNC_ROUND_DURATION_SEC) {
+					tcpCtx->roundCount = 0;
+					time(&tcpCtx->roundStartAt);
+				}
+				if (tcpCtx->roundCount >= tcpCtx->roundMaxCount) {
+					res = KSI_ASYNC_ROUND_MAX_REQ_COUNT_FULL;
+					goto cleanup;
+				}
+
 				/* Send the requests in the same order as they have been cached. */
 				res = KSI_AsyncPayloadList_elementAt(tcpCtx->reqQueue, at, &req);
 				if (res != KSI_OK) {
@@ -338,6 +353,8 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 				}
 
 				if (count == req->len) {
+					tcpCtx->roundCount++;
+
 					req->state = KSI_ASYNC_PLD_WAITING_FOR_RESPONSE;
 					time(&req->sendTime);
 					/* The request has been successfully dispatched. Remove it from the request queue. */
@@ -535,6 +552,10 @@ static int TcpAsyncCtx_new(KSI_CTX *ctx, TcpAsyncCtx **tcpCtx) {
 	/* Timeout. */
 	tmp->cTimeout = TCP_DEFAULT_TIMEOUT;
 	tmp->conOpenAt = 0;
+
+	tmp->roundStartAt = 0;
+	tmp->roundCount = 0;
+	tmp->roundMaxCount = KSI_ASYNC_DEFAULT_ROUND_MAX_COUNT;
 
 	/* Initialize io queues. */
 	res = KSI_AsyncPayloadList_new(&tmp->reqQueue);

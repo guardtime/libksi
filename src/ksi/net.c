@@ -1446,14 +1446,13 @@ static int calculateRequestId(KSI_AsyncClient *c, KSI_uint64_t *id) {
 
 	last = c->requestCount;
 
-	while (c->reqCache[++c->requestCount] != NULL) {
-		if ((c->requestCount % c->maxParallelRequests) == 0) c->requestCount = 1;
-
+	do {
+		if ((++c->requestCount % c->maxParallelRequests) == 0) c->requestCount = 1;
 		if (c->requestCount == last) {
 			res = KSI_ASYNC_MAX_PARALLEL_COUNT_REACHED;
 			goto cleanup;
 		}
-	}
+	} while (c->reqCache[c->requestCount] != NULL);
 
 	*id = c->requestCount;
 	res = KSI_OK;
@@ -1868,7 +1867,7 @@ static int asyncClient_getState(KSI_AsyncClient *c, KSI_AsyncHandle h, int *stat
 		goto cleanup;
 	}
 
-	if (h > c->maxParallelRequests || c->reqCache == NULL)  {
+	if (h >= c->maxParallelRequests || c->reqCache == NULL)  {
 		res = KSI_INVALID_STATE;
 		goto cleanup;
 	}

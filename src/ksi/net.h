@@ -485,7 +485,9 @@ extern "C" {
 	 */
 	int KSI_AsyncService_aggrInit(KSI_AsyncService *service);
 
+#define KSI_ASYNC_DEFAULT_ROUND_MAX_COUNT   (1 << 8)
 #define KSI_ASYNC_DEFAULT_PARALLEL_REQUESTS (1 << 10)
+#define KSI_ASYNC_ROUND_DURATION_SEC 1
 
 	/**
 	 * Set maximum parallel request count. The \c count may not be less than the previously set value.
