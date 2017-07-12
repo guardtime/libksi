@@ -165,22 +165,10 @@ const char *KSI_getErrorString(int statusCode) {
 		case KSI_SERVICE_EXTENDER_PDU_V1_RESPONSE_TO_PDU_V2_REQUEST:
 			return "Received PDU v1 response to PDU v2 request. Configure the SDK to use PDU v1 format for the given extender.";
 
-		case KSI_ASYNC_NOT_FINISHED:
-			return "Asynchronous operation has not finished.";
-		case KSI_ASYNC_COMPLETED:
-			return "Asynchronous operation has finished.";
-		case KSI_ASYNC_NOT_READY:
-			return "Asynchronous connection is not ready.";
 		case KSI_ASYNC_CONNECTION_CLOSED:
 			return "Asynchronous connection was closed.";
-		case KSI_ASYNC_QUEUE_EMPTY:
-			return "Asynchronous queue is empty.";
-		case KSI_ASYNC_OUTPUT_BUFFER_FULL:
-			return "Asynchronous send buffer is full.";
 		case KSI_ASYNC_MAX_PARALLEL_COUNT_REACHED:
 			return "Asynchronous maximum parallel jobs reached.";
-		case KSI_ASYNC_ROUND_MAX_REQ_COUNT_FULL:
-			return "Asynchronous maximum number of requests for a round has exceeded.";
 
 		case KSI_UNKNOWN_ERROR:
 			return "Unknown internal error.";

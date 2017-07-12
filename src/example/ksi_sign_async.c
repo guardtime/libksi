@@ -177,7 +177,6 @@ int main(int argc, char **argv) {
 	KSI_AsyncService *as = NULL;
 	KSI_AggregationReq *req = NULL;
 	KSI_AggregationResp *resp = NULL;
-	KSI_AsyncHandle *handles = NULL;
 
 	KSI_DataHash *hsh = NULL;
 
@@ -188,8 +187,7 @@ int main(int argc, char **argv) {
 			{ NULL, NULL }
 	};
 
-	int stillRunning = 1;
-	size_t stillWaiting = 0;
+	size_t pending = 0;
 	size_t nof_requests = 0;
 	size_t req_no = 0;
 
@@ -236,7 +234,7 @@ int main(int argc, char **argv) {
 
 	/* Initialize non-blocking connection. */
 	res = KSI_AsyncService_run(as, NULL, NULL);
-	if (res != KSI_OK && res != KSI_ASYNC_NOT_READY) {
+	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to initialize non-blocking connection.\n");
 		goto cleanup;
 	}
@@ -251,12 +249,6 @@ int main(int argc, char **argv) {
 	res = KSI_CTX_setPublicationUrl(ksi, argv[ARGV_PUB_FILE_URL]);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to set publications file url.\n");
-		goto cleanup;
-	}
-
-	handles	= KSI_calloc(nof_requests, sizeof(KSI_AsyncHandle));
-	if (handles == NULL) {
-		fprintf(stderr, "Out of memory.\n");
 		goto cleanup;
 	}
 
@@ -294,10 +286,15 @@ int main(int argc, char **argv) {
 			}
 			hsh = NULL;
 
-			res = KSI_AsyncService_addAggregationReq(as, req, &handles[req_no]);
+			res = KSI_AsyncService_addAggregationReq(as, req, &handle);
 			switch (res) {
 				case KSI_OK:
 					req_no++;
+					res = KSI_AsyncService_setRequestContext(as, handle, (void*)p_name, NULL);
+					if (res != KSI_OK) {
+						fprintf(stderr, "Unable to set request context.\n");
+						goto cleanup;
+					}
 					break;
 				case KSI_ASYNC_MAX_PARALLEL_COUNT_REACHED:
 					/* The request could not be added to the cache. */
@@ -310,116 +307,77 @@ int main(int argc, char **argv) {
 			req = NULL;
 		}
 
-		res = KSI_AsyncService_run(as, &handle, &stillWaiting);
-		switch (res) {
-			case KSI_ASYNC_CONNECTION_CLOSED: {
-					size_t i;
-
-					KSI_LOG_info(ksi, "KSI_ASYNC_CONNECTION_CLOSED");
-
-					for (i = 0; i < req_no; i++) {
-						int state;
-
-						res = KSI_AsyncService_getRequestState(as, handles[i], &state);
-						if (res != KSI_OK) {
-							fprintf(stderr, "Failed to get request state.\n");
-							goto cleanup;
-						}
-
-						if (state == KSI_ASYNC_PLD_WAITING_FOR_RESPONSE) {
-							res = KSI_AsyncService_recover(as, handles[i], KSI_ASYNC_REC_REMOVE);
-							if (res != KSI_OK) {
-								fprintf(stderr, "Unable to recover.\n");
-								goto cleanup;
-							}
-							handles[i] = KSI_ASYNC_HANDLE_INVALID;
-						}
-					}
-				}
-				/* stillRunning = 1; */
-				break;
-			case KSI_NETWORK_RECIEVE_TIMEOUT: {
-					size_t i;
-
-					res = KSI_AsyncService_recover(as, handle, KSI_ASYNC_REC_REMOVE);
-					if (res != KSI_OK) {
-						fprintf(stderr, "Unable to recover.\n");
-						goto cleanup;
-					}
-
-					for (i = 0; i < req_no; i++) if (handles[i] == handle) break;
-					fprintf(stderr, "Failed to get signature for: %s.\n", argv[ARGV_IN_DATA_FILE_START + i]);
-
-					handles[i] = KSI_ASYNC_HANDLE_INVALID;
-					handle = KSI_ASYNC_HANDLE_INVALID;
-				}
-				/* stillRunning = 1; */
-				break;
-			case KSI_ASYNC_ROUND_MAX_REQ_COUNT_FULL:
-			case KSI_ASYNC_OUTPUT_BUFFER_FULL:
-			case KSI_ASYNC_NOT_READY:
-			case KSI_ASYNC_NOT_FINISHED:
-				/* stillRunning = 1; */
-				break;
-			case KSI_ASYNC_COMPLETED:
-				stillRunning = 0;
-				break;
-			case KSI_NETWORK_CONNECTION_TIMEOUT:
-				fprintf(stderr, "Failed to establishe connection to remote service.\n");
-				goto cleanup;
-			default:
-				fprintf(stderr, "Failed to run async service. Error: %s\n", KSI_getErrorString(res));
-				goto cleanup;
+		handle = KSI_ASYNC_HANDLE_INVALID;
+		res = KSI_AsyncService_run(as, &handle, &pending);
+		if (res != KSI_OK) {
+			fprintf(stderr, "Failed to run async service.\n");
+			goto cleanup;
 		}
 
 		if (handle != KSI_ASYNC_HANDLE_INVALID) {
-			size_t i;
 			char *p_name = NULL;
+			int state = KSI_ASYNC_PLD_UNDEFINED;
 
 			KSI_LOG_info(ksi, "Read response.");
 
-			/* Associate with request. */
-			for (i = 0; i < req_no; i++) if (handles[i] == handle) break;
-
-			res = KSI_AsyncService_getAggregationResp(as, handle, &resp);
+			KSI_AsyncService_getRequestState(as, handle, &state);
 			if (res != KSI_OK) {
-				fprintf(stderr, "Failed to get aggregation response.\n");
+				fprintf(stderr, "Unable to get request state.\n");
 				goto cleanup;
 			}
 
-			if (resp != NULL) {
-				p_name = argv[ARGV_IN_DATA_FILE_START + i];
+			switch (state) {
+				case KSI_ASYNC_PLD_RESPONSE_RECEIVED:
+					res = KSI_AsyncService_getRequestContext(as, handle, (void**)&p_name);
+					if (res != KSI_OK) {
+						fprintf(stderr, "Unable to get request context.\n");
+						goto cleanup;
+					}
 
+					res = KSI_AsyncService_getAggregationResp(as, handle, &resp);
+					if (res != KSI_OK) {
+						fprintf(stderr, "Failed to get aggregation response.\n");
+						goto cleanup;
+					}
 
-				res = saveSignature(p_name, resp);
-				if (res != KSI_OK) {
-					fprintf(stderr, "Failed to save signature for: %s\n", p_name);
-					goto cleanup;
-				}
-				succeeded++;
-				KSI_AggregationResp_free(resp);
-				resp = NULL;
+					if (resp != NULL) {
+						res = saveSignature(p_name, resp);
+						if (res != KSI_OK) {
+							fprintf(stderr, "Failed to save signature for: %s\n", p_name);
+							goto cleanup;
+						}
+						succeeded++;
+						KSI_AggregationResp_free(resp);
+						resp = NULL;
+					}
+					break;
 
-				/* Invalidate handle. */
-				handles[i] = KSI_ASYNC_HANDLE_INVALID;
+				case KSI_ASYNC_PLD_CONNECTION_CLOSED:
+				case KSI_ASYNC_PLD_RECEIVE_TIMEOUT:
+					res = KSI_AsyncService_recover(as, handle, KSI_ASYNC_REC_REMOVE);
+					if (res != KSI_OK) {
+						fprintf(stderr, "Failed to appply recover policy on request.\n");
+						goto cleanup;
+					}
+					break;
 
+				default:
+					/* Do nothing! */
+					break;
 			}
 		}
-	} while (stillRunning);
+	} while (pending);
 
 	res = KSI_OK;
 cleanup:
-	printf("Succeeded request: %i.\n", succeeded);
-	printf("Failed request   : %i.\n", nof_requests - succeeded);
-
+	printf("Succeeded request: %lu.\n", succeeded);
+	printf("Failed request   : %lu.\n", nof_requests - succeeded);
 
 	if (res != KSI_OK && ksi != NULL) {
 		KSI_ERR_statusDump(ksi, stderr);
 	}
 
 	if (logFile != NULL) fclose(logFile);
-
-	KSI_free(handles);
 
 	KSI_AsyncService_free(as);
 	KSI_AggregationReq_free(req);

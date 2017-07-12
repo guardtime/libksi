@@ -93,7 +93,7 @@ typedef struct TcpClientCtx_st {
 	char *host;
 	unsigned port;
 
-	/* Timeouts. */
+	/* Connect timeout. */
 	size_t cTimeout;
 	time_t conOpenAt;
 } TcpAsyncCtx;
@@ -205,8 +205,13 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 
 	res = poll(&pfd, 1, 0);
 	if (res == 0) {
-		res = (difftime(time(NULL), tcpCtx->conOpenAt) > tcpCtx->cTimeout) ?
-				KSI_NETWORK_CONNECTION_TIMEOUT : KSI_ASYNC_NOT_READY;
+		if (difftime(time(NULL), tcpCtx->conOpenAt) > tcpCtx->cTimeout) {
+			KSI_LOG_debug(tcpCtx->ctx, "Async TCP connection timeout.");
+			res = KSI_NETWORK_CONNECTION_TIMEOUT;
+		} else {
+			KSI_LOG_debug(tcpCtx->ctx, "Async TCP connection not ready.");
+			res = KSI_OK;
+		}
 		goto cleanup;
 	} else if (res < 0) {
 		KSI_pushError(tcpCtx->ctx, res = KSI_IO_ERROR, "Failed to test socket.");
@@ -223,6 +228,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 			tcpCtx->sockfd = TCP_INVALID_SOCKET_FD;
 			/* Clear input buffer. */
 			tcpCtx->inLen = 0;
+			KSI_LOG_debug(tcpCtx->ctx, "Async TCP connection closed.");
 			res = KSI_ASYNC_CONNECTION_CLOSED;
 			goto cleanup;
 		} else if ((c < 0) && !(KSI_SOC_error == KSI_SOC_EINPROGRESS || KSI_SOC_error == KSI_SOC_EWOULDBLOCK)) {
@@ -297,8 +303,13 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 				goto cleanup;
 			}
 			if (sockOpt == KSI_SOC_EINPROGRESS || sockOpt == KSI_SOC_EWOULDBLOCK) {
-				res = (difftime(time(NULL), tcpCtx->conOpenAt) > tcpCtx->cTimeout) ?
-						KSI_NETWORK_CONNECTION_TIMEOUT : KSI_ASYNC_NOT_READY;
+				if (difftime(time(NULL), tcpCtx->conOpenAt) > tcpCtx->cTimeout) {
+					KSI_LOG_debug(tcpCtx->ctx, "Async TCP connection timeout.");
+					res = KSI_NETWORK_CONNECTION_TIMEOUT;
+				} else {
+					KSI_LOG_debug(tcpCtx->ctx, "Async TCP connection not ready.");
+					res = KSI_OK;
+				}
 				goto cleanup;
 			}
 
@@ -320,8 +331,8 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 					time(&tcpCtx->roundStartAt);
 				}
 				if (tcpCtx->roundCount >= tcpCtx->roundMaxCount) {
-					res = KSI_ASYNC_ROUND_MAX_REQ_COUNT_FULL;
-					goto cleanup;
+					KSI_LOG_debug(tcpCtx->ctx, "Async TCP round max request count reached.");
+					break;
 				}
 
 				/* Send the requests in the same order as they have been cached. */
@@ -375,8 +386,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 			/* Trigger send (required on some systems). */
 			send(tcpCtx->sockfd, &dummy, 0, 0);
 		} else {
-			res = KSI_ASYNC_OUTPUT_BUFFER_FULL;
-			goto cleanup;
+			KSI_LOG_debug(tcpCtx->ctx, "Async TCP output buffer not ready.");
 		}
 	}
 
@@ -409,28 +419,25 @@ static int getQueueStatus(TcpAsyncCtx *tcpCtx, size_t *reqQueueLen, size_t *resp
 	return KSI_OK;
 }
 
-static int getResponse(TcpAsyncCtx *tcpCtx, KSI_OctetString **response) {
+static int getResponse(TcpAsyncCtx *tcpCtx, KSI_OctetString **response, size_t *left) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t len = 0;
 	KSI_OctetString *tmp = NULL;
 
-	if (tcpCtx == NULL || tcpCtx->respQueue == NULL || response == NULL) {
+	if (tcpCtx == NULL || tcpCtx->respQueue == NULL || response == NULL || left == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
 	len = KSI_OctetStringList_length(tcpCtx->respQueue);
-	if (len == 0) {
-		res = KSI_ASYNC_QUEUE_EMPTY;
-		goto cleanup;
+	if (len != 0) {
+		/* Get last from queue to avoid list element shift. */
+		res = KSI_OctetStringList_remove(tcpCtx->respQueue, (len - 1), &tmp);
+		if (res != KSI_OK) goto cleanup;
 	}
-
-	/* Get last from queue to avoid list element shift. */
-	res = KSI_OctetStringList_remove(tcpCtx->respQueue, (len - 1), &tmp);
-	if (res != KSI_OK) goto cleanup;
-
 	*response = tmp;
 	tmp = NULL;
+	*left = KSI_OctetStringList_length(tcpCtx->respQueue);
 
 	res = KSI_OK;
 cleanup:
@@ -604,7 +611,7 @@ int KSI_TcpAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c) {
 	tmp->rTimeout = TCP_DEFAULT_TIMEOUT;
 
 	tmp->addRequest = (int (*)(void *, KSI_AsyncPayload *))addToSendQueue;
-	tmp->getResponse = (int (*)(void *, KSI_OctetString **))getResponse;
+	tmp->getResponse = (int (*)(void *, KSI_OctetString **, size_t *))getResponse;
 	tmp->dispatch = (int (*)(void *))dispatch;
 	tmp->closeConnection = (void (*)(void*))closeSocket;
 	tmp->getQueueStatus = (int (*)(void *, size_t *, size_t *))getQueueStatus;

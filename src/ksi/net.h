@@ -379,6 +379,9 @@ extern "C" {
 	 */
 	int KSI_AsyncPayload_setPayloadCtx(KSI_AsyncPayload *o, void *pldCtx, void (*pldCtx_free)(void*));
 
+	int KSI_AsyncPayload_setRequestCtx(KSI_AsyncPayload *o, void *reqCtx, void (*reqCtx_free)(void*));
+	int KSI_AsyncPayload_getRequestCtx(KSI_AsyncPayload *o, void **reqCtx);
+
 	/**
 	 * Free async client object.
 	 * \param[in]		handle			Async client.
@@ -445,7 +448,6 @@ extern "C" {
 	 * \return status code #KSI_OK, when operation succeeded;
 	 * \return #KSI_ASYNC_NOT_READY, when async connection has been initiated, but is not completed yet;
 	 * \return #KSI_ASYNC_CONNECTION_CLOSED, when connection has been closed by the service provider;
-	 * \return #KSI_ASYNC_OUTPUT_BUFFER_FULL, when OS send buffer is full;
 	 * \return #KSI_NETWORK_CONNECTION_TIMEOUT in case of network connection timeout.
 	 * \return #KSI_NETWORK_RECIEVE_TIMEOUT in case a request, associated with \c handle, has not received a response
 	 * in set timeout.
@@ -463,6 +465,8 @@ extern "C" {
 		KSI_ASYNC_PLD_UNDEFINED = 0,
 		KSI_ASYNC_PLD_WAITING_FOR_DISPATCH,
 		KSI_ASYNC_PLD_WAITING_FOR_RESPONSE,
+		KSI_ASYNC_PLD_CONNECTION_CLOSED,
+		KSI_ASYNC_PLD_RECEIVE_TIMEOUT,
 		KSI_ASYNC_PLD_RESPONSE_RECEIVED,
 	};
 
@@ -501,6 +505,8 @@ extern "C" {
 	int KSI_AsyncService_setConnectTimeout(KSI_AsyncService *service, const size_t value);
 	int KSI_AsyncService_setReceiveTimeout(KSI_AsyncService *service, const size_t value);
 	int KSI_AsyncService_setMaxRequestCount(KSI_AsyncService *service, const size_t value);
+	int KSI_AsyncService_setRequestContext(KSI_AsyncService *service, KSI_AsyncHandle h, void *reqCtx, void (*reqCtx_free)(void*));
+	int KSI_AsyncService_getRequestContext(KSI_AsyncService *service, KSI_AsyncHandle h, void **reqCtx);
 
 	/**
 	 * Enum defining async payload recovery policy.
@@ -520,6 +526,7 @@ extern "C" {
 	 * \see #KSI_AsyncPayloadRecoveryPolicy_en for recovery options.
 	 */
 	int KSI_AsyncService_recover(KSI_AsyncService *service, KSI_AsyncHandle handle, int policy);
+
 
 
 	/**

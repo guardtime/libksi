@@ -126,6 +126,10 @@ extern "C" {
 		unsigned char *raw;
 		size_t len;
 
+		/* Request context. */
+		void *reqCtx;
+		void (*reqCtx_free)(void*);
+
 		int state;
 		time_t sendTime;
 	};
@@ -137,7 +141,7 @@ extern "C" {
 		void (*clientImpl_free)(void*);
 
 		int (*addRequest)(void *, KSI_AsyncPayload *);
-		int (*getResponse)(void *, KSI_OctetString **);
+		int (*getResponse)(void *, KSI_OctetString **, size_t *);
 		int (*getQueueStatus)(void *, size_t *, size_t *);
 		int (*getCredentials)(void *, const char **, const char **);
 		int (*dispatch)(void *);
@@ -167,10 +171,12 @@ extern "C" {
 		int (*run)(void *, KSI_AsyncHandle *, size_t *);
 
 		int (*recover)(void *, KSI_AsyncHandle, int);
-		int (*getState)(void *, KSI_AsyncHandle, int *);
+		int (*getRequestState)(void *, KSI_AsyncHandle, int *);
 		int (*setConnectTimeout)(void *, size_t);
 		int (*setReceiveTimeout)(void *, size_t);
 		int (*setMaxRequestCount)(void *, size_t);
+		int (*setRequestContext)(void *, KSI_AsyncHandle, void *, void (*)(void*));
+		int (*getRequestContext)(void *, KSI_AsyncHandle, void **);
 
 		int (*uriSplit)(const char *uri, char **scheme, char **user, char **pass, char **host, unsigned *port, char **path, char **query, char **fragment);
 	};
