@@ -30,11 +30,11 @@
 #  define sleep_ms(x) usleep((x)*1000)
 #endif
 
-#include <ksi/ksi.h>
-#include <ksi/net.h>
-#include <ksi/net_uri.h>
-#include <ksi/signature_builder.h>
-#include <ksi/compatibility.h>
+#include <../ksi/ksi.h>
+#include <../ksi/net.h>
+#include <../ksi/net_uri.h>
+#include <../ksi/signature_builder.h>
+#include <../ksi/compatibility.h>
 
 #include "ksi_common.h"
 
@@ -259,32 +259,34 @@ int main(int argc, char **argv) {
 	}
 
 	do {
-		KSI_AsyncHandle handle = KSI_ASYNC_HANDLE_INVALID;
+		KSI_AsyncHandle handle = KSI_ASYNC_HANDLE_NULL;
 
 		if (req_no < nof_requests) {
 			char *p_name = argv[ARGV_IN_DATA_FILE_START + req_no];
 
-			KSI_LOG_info(ksi, "Create request for file:  %s", p_name);
+			if (req == NULL) {
+				KSI_LOG_info(ksi, "Create request for file:  %s", p_name);
 
-			/* Get the hash value of the input file. */
-			res = getHash(ksi, p_name, &hsh);
-			if (res != KSI_OK || hsh == NULL) {
-				fprintf(stderr, "Failed to calculate the hash.\n");
-				goto cleanup;
-			}
+				/* Get the hash value of the input file. */
+				res = getHash(ksi, p_name, &hsh);
+				if (res != KSI_OK || hsh == NULL) {
+					fprintf(stderr, "Failed to calculate the hash.\n");
+					goto cleanup;
+				}
 
-			res = KSI_AggregationReq_new(ksi, &req);
-			if (res == KSI_OK && req == NULL) {
-				fprintf(stderr, "Unable to create aggregation request.\n");
-				goto cleanup;
-			}
+				res = KSI_AggregationReq_new(ksi, &req);
+				if (res == KSI_OK && req == NULL) {
+					fprintf(stderr, "Unable to create aggregation request.\n");
+					goto cleanup;
+				}
 
-			res = KSI_AggregationReq_setRequestHash(req, hsh);
-			if (res != KSI_OK) {
-				fprintf(stderr, "Unable to set request data hash.\n");
-				goto cleanup;
+				res = KSI_AggregationReq_setRequestHash(req, hsh);
+				if (res != KSI_OK) {
+					fprintf(stderr, "Unable to set request data hash.\n");
+					goto cleanup;
+				}
+				hsh = NULL;
 			}
-			hsh = NULL;
 
 			res = KSI_AsyncService_addAggregationReq(as, req, &handle);
 			switch (res) {
@@ -295,26 +297,28 @@ int main(int argc, char **argv) {
 						fprintf(stderr, "Unable to set request context.\n");
 						goto cleanup;
 					}
+					KSI_AggregationReq_free(req);
+					req = NULL;
 					break;
 				case KSI_ASYNC_MAX_PARALLEL_COUNT_REACHED:
-					/* The request could not be added to the cache. */
+					/* The request could not be added to the cache because of unresponsed requests. */
+					/* Wait for a while to avoid busy loop. */
+					sleep_ms(10);
 					break;
 				default:
 					fprintf(stderr, "Unable to add request.\n");
 					goto cleanup;
 			}
-			KSI_AggregationReq_free(req);
-			req = NULL;
 		}
 
-		handle = KSI_ASYNC_HANDLE_INVALID;
+		handle = KSI_ASYNC_HANDLE_NULL;
 		res = KSI_AsyncService_run(as, &handle, &pending);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Failed to run async service.\n");
 			goto cleanup;
 		}
 
-		if (handle != KSI_ASYNC_HANDLE_INVALID) {
+		if (handle != KSI_ASYNC_HANDLE_NULL) {
 			char *p_name = NULL;
 			int state = KSI_ASYNC_PLD_UNDEFINED;
 

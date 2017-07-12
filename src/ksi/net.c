@@ -1814,7 +1814,7 @@ int asyncClient_findNextResponse(KSI_AsyncClient *c, KSI_AsyncHandle *handle) {
 		goto cleanup;
 	}
 	if ((c->pending + c->received) == 0) {
-		*handle = KSI_ASYNC_HANDLE_INVALID;
+		*handle = KSI_ASYNC_HANDLE_NULL;
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -1846,7 +1846,7 @@ int asyncClient_findNextResponse(KSI_AsyncClient *c, KSI_AsyncHandle *handle) {
 		if ((++c->tail % c->maxParallelRequests) == 0) c->tail = 1;
 		if (c->tail == last) break;
 	}
-	*handle = KSI_ASYNC_HANDLE_INVALID;
+	*handle = KSI_ASYNC_HANDLE_NULL;
 	res = KSI_OK;
 cleanup:
 	return res;
@@ -2260,40 +2260,3 @@ cleanup:														\
 KSI_ASYNC_SERVICE_OBJ_HANDLE_IMPLEMENT_GETTER(KSI_AsyncService, RequestContext, void**)
 KSI_ASYNC_SERVICE_OBJ_HANDLE_IMPLEMENT_GETTER(KSI_AsyncService, RequestState, int*)
 
-#if 0
-int KSI_AsyncService_getRequestContext(KSI_AsyncService *service, KSI_AsyncHandle h, void **reqCtx) {
-	int res = KSI_UNKNOWN_ERROR;
-	if (service == NULL || service->impl == NULL || service->getReqContext == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	res = service->getReqContext(s->impl, h, reqCtx);
-cleanup:
-	return res;
-}
-
-int KSI_AsyncService_getRequestState(KSI_AsyncService *s, KSI_AsyncHandle h, int *state) {
-	int res = KSI_UNKNOWN_ERROR;
-
-	if (s == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	KSI_ERR_clearErrors(s->ctx);
-
-	if (s->impl == NULL || s->getState == NULL) {
-		KSI_pushError(s->ctx, res = KSI_INVALID_STATE, "Async service client is not properly initialized.");
-		goto cleanup;
-	}
-
-	res = s->getState(s->impl, h, state);
-	if (res != KSI_OK) {
-		KSI_pushError(s->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_OK;
-cleanup:
-	return res;
-}
-#endif

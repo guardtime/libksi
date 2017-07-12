@@ -436,7 +436,7 @@ extern "C" {
 	 */
 	int KSI_AsyncService_getAggregationResp(KSI_AsyncService *s, KSI_AsyncHandle handle, KSI_AggregationResp **resp);
 
-#define KSI_ASYNC_HANDLE_INVALID 0
+#define KSI_ASYNC_HANDLE_NULL 0
 
 	/**
 	 * Non-blocking send/receive worker. The method will open a connection to remote service, dispatch cached
@@ -526,7 +526,6 @@ extern "C" {
 	 * \see #KSI_AsyncPayloadRecoveryPolicy_en for recovery options.
 	 */
 	int KSI_AsyncService_recover(KSI_AsyncService *service, KSI_AsyncHandle handle, int policy);
-
 
 
 	/**
