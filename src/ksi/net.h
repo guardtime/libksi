@@ -422,7 +422,7 @@ extern "C" {
 	 * \param[out]		service			Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncService_free
-	 * \see #KSI_AsyncService_newAggregator
+	 * \see #KSI_SigningAsyncService_new
 	 */
 	int KSI_AsyncService_construct(KSI_CTX *ctx, KSI_AsyncService **service);
 
@@ -433,7 +433,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncService_free
 	 */
-	int KSI_AsyncService_newAggregator(KSI_CTX *ctx, KSI_AsyncService **service);
+	int KSI_SigningAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service);
 
 	/**
 	 * Non-blocking request setter. All request are put into output queue untill. The request are sent during
@@ -443,7 +443,7 @@ extern "C" {
 	 * \param[out]		handle			Async handle associated with the request.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note The \c req may be freed after a successful call to this function.
-	 * \see #KSI_AsyncService_newAggregator
+	 * \see #KSI_SigningAsyncService_new
 	 * \see #KSI_AsyncService_run
 	 * \see #KSI_AggregationReq_free
 	 * \see #KSI_AsyncService_setMaxParallelRequests for increasing the internal cache.
@@ -466,7 +466,7 @@ extern "C" {
 	 * \param[out]		resp			Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note The caller is responseble for cleaning up the returned resource.
-	 * \see #KSI_AsyncService_newAggregator
+	 * \see #KSI_SigningAsyncService_new
 	 * \see #KSI_AsyncService_run
 	 * \see #KSI_AsyncService_getRequestState for getting the state of the request.
 	 * \see #KSI_AggregationResp_free

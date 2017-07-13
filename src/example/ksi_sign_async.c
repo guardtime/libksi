@@ -216,7 +216,7 @@ int main(int argc, char **argv) {
 	KSI_LOG_info(ksi, "Using KSI version: '%s'", KSI_getVersion());
 
 	/* Create new async service provider. */
-	res = KSI_AsyncService_newAggregator(ksi, &as);
+	res = KSI_SigningAsyncService_new(ksi, &as);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to create new async service object.\n");
 		goto cleanup;

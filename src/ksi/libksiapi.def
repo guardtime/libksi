@@ -261,7 +261,7 @@ EXPORTS
 	KSI_AsyncService_run
 	KSI_AsyncService_setEndpoint
 	KSI_AsyncService_construct
-	KSI_AsyncService_newAggregator
+	KSI_SigningAsyncService_new
 
 ;net_http.h
 EXPORTS
@@ -280,7 +280,6 @@ EXPORTS
 	KSI_TcpClient_setExtender
 	KSI_TcpClient_setAggregator
 	KSI_TcpClient_setTransferTimeoutSeconds
-
 	KSI_TcpAsyncClient_new
 	KSI_TcpAsyncClient_setService
 

@@ -2169,7 +2169,7 @@ cleanup:
 	return res;
 }
 
-int KSI_AsyncService_newAggregator(KSI_CTX *ctx, KSI_AsyncService **service) {
+int KSI_SigningAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AsyncService *tmp = NULL;
 

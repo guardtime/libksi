@@ -411,7 +411,7 @@ static void Test_AsyncTcp(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s: START.", __FUNCTION__);
 	t_finished = time(NULL);
 
-	res = KSI_AsyncService_new(ctx, &as);
+	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK);
 
 	res = KSI_AsyncService_setAggregator(as, conf.tcp_url, conf.tcp_user, conf.tcp_pass);
