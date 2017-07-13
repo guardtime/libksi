@@ -340,19 +340,10 @@ extern "C" {
 
 	KSI_DEFINE_REF(KSI_RequestHandle);
 
-	/**
-	 * @}
-	 */
-
-
-	/**
-	 * \addtogroup network Async Network Interface
-	 * @{
-	 */
 
 	/**
 	 * Free async paiload object.
-	 * \param[in]		handle			Async payload.
+	 * \param[in]		o				Async payload.
 	 */
 	void KSI_AsyncPayload_free(KSI_AsyncPayload *o);
 
@@ -404,7 +395,7 @@ extern "C" {
 
 	/**
 	 * Free async client object.
-	 * \param[in]		handle			Async client object.
+	 * \param[in]		c				Async client object.
 	 * \see #KSI_TcpAsyncClient_new
 	 * \note This will also handle termination of open network connection.
 	 */
@@ -436,8 +427,8 @@ extern "C" {
 	int KSI_SigningAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service);
 
 	/**
-	 * Non-blocking request setter. All request are put into output queue untill. The request are sent during
-	 * #KSI_AsyncService_run call.
+	 * Non-blocking aggregation request setter. All request are put into output queue untill.
+	 * The request are sent during #KSI_AsyncService_run call.
 	 * \param[in]		s				Async serice instance.
 	 * \param[in]		req				Aggregation request.
 	 * \param[out]		handle			Async handle associated with the request.
@@ -450,17 +441,13 @@ extern "C" {
 	 * \note If the internal cache is full #KSI_ASYNC_MAX_PARALLEL_COUNT_REACHED is returned. In this case the
 	 * user should process the received responses.
 	 */
-	int KSI_AsyncService_addRequest(KSI_AsyncService *s, void *req, KSI_AsyncHandle *handle);
-
-	/** Wrapper macro for aggregation request. */
-#define KSI_AsyncService_addAggregationReq(s, r, h) KSI_AsyncService_addRequest(s, (void *)r, h)
+	int KSI_AsyncService_addAggregationReq(KSI_AsyncService *s, KSI_AggregationReq *req, KSI_AsyncHandle *handle);
 
 	/**
-	 * Non-blocking response getter. Returnes next response from the cache. The responses are handled
+	 * Non-blocking aggregation response getter. Returnes next response from the cache. The responses are handled
 	 * during #KSI_AsyncService_run call. Only if the request state is #KSI_ASYNC_REQ_RESPONSE_RECEIVED
 	 * a valid response is returned. In case a response for the \c handle request has not been received
 	 * the \c resp is set the NULL.
-	 * Use #KSI_AsyncHandle_matchAggregationResp for matching request handle to the response.
 	 * \param[in]		s				Async serice instance.
 	 * \param[out]		handle			Async handle associated with a request.
 	 * \param[out]		resp			Pointer to the receiving pointer.
@@ -471,10 +458,8 @@ extern "C" {
 	 * \see #KSI_AsyncService_getRequestState for getting the state of the request.
 	 * \see #KSI_AggregationResp_free
 	 */
-	int KSI_AsyncService_getResponse(KSI_AsyncService *s, KSI_AsyncHandle handle, void **resp);
+	int KSI_AsyncService_getAggregationResp(KSI_AsyncService *s, KSI_AsyncHandle handle, KSI_AggregationResp **resp);
 
-	/** Wrapper macro for aggregation response. */
-#define KSI_AsyncService_getAggregationResp(s, h, r) KSI_AsyncService_getResponse(s, h, (void **)r);
 
 #define KSI_ASYNC_HANDLE_NULL 0
 
@@ -486,8 +471,8 @@ extern "C" {
 	 * \param[out]		handle			Async handle associated with a request.
 	 * \param[out]		waiting			Total number of requests in process.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_AsyncService_addRequest
-	 * \see #KSI_AsyncService_getResponse
+	 * \see #KSI_AsyncService_addAggregationReq
+	 * \see #KSI_AsyncService_getAggregationResp
 	 * \see #KSI_AsyncService_getRequestState for getting the state of the request.
 	 * \see #KSI_AsyncService_recover
 	 */
@@ -515,7 +500,7 @@ extern "C" {
 	 * Get the state of the request.
 	 * \param[in]		s				Async serice instance.
 	 * \param[in]		h				Async handle.
-	 * \param[out]		state			Payload state #KSI_AsyncPayloadState_en
+	 * \param[out]		state			Payload state #KSI_AsyncRequestState_en
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_AsyncService_getRequestState(KSI_AsyncService *s, KSI_AsyncHandle h, int *state);
@@ -560,7 +545,7 @@ extern "C" {
 	 * \param[in]		value			Maximum request count.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_ASYNC_ROUND_DURATION_SEC defines the round time interval.
-	 * \see #KSI_AsyncService_addRequest
+	 * \see #KSI_AsyncService_addAggregationReq
 	 * \note In case the maximum number of request is allready sent out during a round interval,
 	 * additional request will be buffered in intenal cache.
 	 */

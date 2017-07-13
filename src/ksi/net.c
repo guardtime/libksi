@@ -2019,7 +2019,7 @@ void KSI_AsyncClient_free(KSI_AsyncClient *c) {
 	}
 }
 
-int KSI_AsyncService_addRequest(KSI_AsyncService *s, void *req, KSI_AsyncHandle *handle) {
+static int KSI_AsyncService_addRequest(KSI_AsyncService *s, void *req, KSI_AsyncHandle *handle) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (s == NULL || req == NULL || handle == NULL) {
@@ -2044,7 +2044,11 @@ cleanup:
 	return res;
 }
 
-int KSI_AsyncService_getResponse(KSI_AsyncService *s, KSI_AsyncHandle handle, void **resp) {
+int KSI_AsyncService_addAggregationReq(KSI_AsyncService *s, KSI_AggregationReq *req, KSI_AsyncHandle *handle) {
+	return KSI_AsyncService_addRequest(s, (void *)req, handle);
+}
+
+static int KSI_AsyncService_getResponse(KSI_AsyncService *s, KSI_AsyncHandle handle, void **resp) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (s == NULL || resp == NULL) {
@@ -2067,6 +2071,10 @@ int KSI_AsyncService_getResponse(KSI_AsyncService *s, KSI_AsyncHandle handle, vo
 	res = KSI_OK;
 cleanup:
 	return res;
+}
+
+int KSI_AsyncService_getAggregationResp(KSI_AsyncService *s, KSI_AsyncHandle handle, KSI_AggregationResp **resp) {
+	return KSI_AsyncService_getResponse(s, handle, (void **)resp);
 }
 
 int KSI_AsyncService_run(KSI_AsyncService *service, KSI_AsyncHandle *handle, size_t *waiting) {
