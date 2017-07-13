@@ -243,6 +243,25 @@ EXPORTS
 	KSI_AbstractNetworkClient_new
 	KSI_RequestHandle_perform
 	KSI_RequestHandle_getResponseStatus
+	KSI_AsyncClient_free
+	KSI_AsyncPayload_free
+	KSI_AsyncPayload_new
+	KSI_AsyncPayload_setPayloadId
+	KSI_AsyncPayload_setPayloadCtx
+	KSI_AsyncPayload_setRequestCtx
+	KSI_AsyncPayload_getRequestCtx
+	KSI_AsyncService_free
+	KSI_AsyncService_recover
+	KSI_AsyncService_getResponse
+	KSI_AsyncService_getRequestContext
+	KSI_AsyncService_getRequestState
+	KSI_AsyncService_setRequestContext
+	KSI_AsyncService_addRequest
+	KSI_AsyncService_setMaxRequestCount
+	KSI_AsyncService_run
+	KSI_AsyncService_setEndpoint
+	KSI_AsyncService_construct
+	KSI_AsyncService_newAggregator
 
 ;net_http.h
 EXPORTS
@@ -262,6 +281,9 @@ EXPORTS
 	KSI_TcpClient_setAggregator
 	KSI_TcpClient_setTransferTimeoutSeconds
 
+	KSI_TcpAsyncClient_new
+	KSI_TcpAsyncClient_setService
+
 ;net_file.h
 
 	KSI_FsClient_new
@@ -277,6 +299,8 @@ EXPORTS
 	KSI_UriClient_setAggregator
 	KSI_UriClient_setTransferTimeoutSeconds
 	KSI_UriClient_setConnectionTimeoutSeconds
+
+	KSI_AsyncService_setEndpoint
 
 ;pkitruststore.h
 EXPORTS
