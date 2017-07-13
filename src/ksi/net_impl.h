@@ -168,7 +168,9 @@ extern "C" {
 
 		int (*addRequest)(void *, void *, KSI_AsyncHandle *);
 		int (*getResponse)(void *, KSI_AsyncHandle, void **);
-		int (*run)(void *, KSI_AsyncHandle *, size_t *);
+		int (*responseHandler)(void *);
+
+		int (*run)(void *, int (*)(void *), KSI_AsyncHandle *, size_t *);
 
 		int (*recover)(void *, KSI_AsyncHandle, int);
 		int (*getRequestState)(void *, KSI_AsyncHandle, int *);

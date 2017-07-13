@@ -366,7 +366,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 				if (count == req->len) {
 					tcpCtx->roundCount++;
 
-					req->state = KSI_ASYNC_PLD_WAITING_FOR_RESPONSE;
+					req->state = KSI_ASYNC_REQ_WAITING_FOR_RESPONSE;
 					time(&req->sendTime);
 					/* The request has been successfully dispatched. Remove it from the request queue. */
 					res = KSI_AsyncPayloadList_remove(tcpCtx->reqQueue, at, NULL);

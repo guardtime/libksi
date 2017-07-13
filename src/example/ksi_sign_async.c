@@ -216,13 +216,13 @@ int main(int argc, char **argv) {
 	KSI_LOG_info(ksi, "Using KSI version: '%s'", KSI_getVersion());
 
 	/* Create new async service provider. */
-	res = KSI_AsyncService_new(ksi, &as);
+	res = KSI_AsyncService_newAggregator(ksi, &as);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to create new async service object.\n");
 		goto cleanup;
 	}
 
-	res = KSI_AsyncService_setAggregator(as, argv[ARGV_AGGR_URI], argv[ARGV_USER], argv[ARGV_PASS]);
+	res = KSI_AsyncService_setEndpoint(as, argv[ARGV_AGGR_URI], argv[ARGV_USER], argv[ARGV_PASS]);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to set aggregator to the async service client.\n");
 		goto cleanup;
@@ -320,7 +320,7 @@ int main(int argc, char **argv) {
 
 		if (handle != KSI_ASYNC_HANDLE_NULL) {
 			char *p_name = NULL;
-			int state = KSI_ASYNC_PLD_UNDEFINED;
+			int state = KSI_ASYNC_REQ_UNDEFINED;
 
 			KSI_LOG_info(ksi, "Read response.");
 
@@ -331,7 +331,7 @@ int main(int argc, char **argv) {
 			}
 
 			switch (state) {
-				case KSI_ASYNC_PLD_RESPONSE_RECEIVED:
+				case KSI_ASYNC_REQ_RESPONSE_RECEIVED:
 					res = KSI_AsyncService_getRequestContext(as, handle, (void**)&p_name);
 					if (res != KSI_OK) {
 						fprintf(stderr, "Unable to get request context.\n");
@@ -356,9 +356,9 @@ int main(int argc, char **argv) {
 					}
 					break;
 
-				case KSI_ASYNC_PLD_CONNECTION_CLOSED:
-				case KSI_ASYNC_PLD_RECEIVE_TIMEOUT:
-					res = KSI_AsyncService_recover(as, handle, KSI_ASYNC_REC_REMOVE);
+				case KSI_ASYNC_REQ_CONNECTION_CLOSED:
+				case KSI_ASYNC_REQ_RECEIVE_TIMEOUT:
+					res = KSI_AsyncService_recover(as, handle, KSI_ASYNC_REC_DROP);
 					if (res != KSI_OK) {
 						fprintf(stderr, "Failed to appply recover policy on request.\n");
 						goto cleanup;
