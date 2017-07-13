@@ -252,11 +252,11 @@ EXPORTS
 	KSI_AsyncPayload_getRequestCtx
 	KSI_AsyncService_free
 	KSI_AsyncService_recover
-	KSI_AsyncService_getResponse
+	KSI_AsyncService_addAggregationReq
+	KSI_AsyncService_getAggregationResp
 	KSI_AsyncService_getRequestContext
-	KSI_AsyncService_getRequestState
 	KSI_AsyncService_setRequestContext
-	KSI_AsyncService_addRequest
+	KSI_AsyncService_getRequestState
 	KSI_AsyncService_setMaxRequestCount
 	KSI_AsyncService_run
 	KSI_AsyncService_setEndpoint
