@@ -441,7 +441,7 @@ extern "C" {
 	 * \note If the internal cache is full #KSI_ASYNC_MAX_PARALLEL_COUNT_REACHED is returned. In this case the
 	 * user should process the received responses.
 	 */
-	int KSI_AsyncService_addAggregationReq(KSI_AsyncService *s, KSI_AggregationReq *req, KSI_AsyncHandle *handle);
+	int KSI_AsyncService_addRequest(KSI_AsyncService *s, KSI_AsyncRequest *req, KSI_AsyncHandle *handle);
 
 	/**
 	 * Non-blocking aggregation response getter. Returnes next response from the cache. The responses are handled
@@ -458,7 +458,7 @@ extern "C" {
 	 * \see #KSI_AsyncService_getRequestState for getting the state of the request.
 	 * \see #KSI_AggregationResp_free
 	 */
-	int KSI_AsyncService_getAggregationResp(KSI_AsyncService *s, KSI_AsyncHandle handle, KSI_AggregationResp **resp);
+	int KSI_AsyncService_getResponse(KSI_AsyncService *s, KSI_AsyncHandle handle, KSI_AsyncResponse **resp);
 
 
 #define KSI_ASYNC_HANDLE_NULL 0
@@ -552,25 +552,6 @@ extern "C" {
 	int KSI_AsyncService_setMaxRequestCount(KSI_AsyncService *service, const size_t value);
 
 	/**
-	 * Setter for the request specific context.
-	 * \param[in]		service			Async serice instance.
-	 * \param[in]		h				Async handle.
-	 * \param[in]		reqCtx			Request context.
-	 * \param[in]		reqCtx_free		Pointer to the context cleanup method.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_AsyncService_setRequestContext(KSI_AsyncService *service, KSI_AsyncHandle h, void *reqCtx, void (*reqCtx_free)(void*));
-
-	/**
-	 * Setter for the request specific context.
-	 * \param[in]		service			Async serice instance.
-	 * \param[in]		h				Async handle.
-	 * \param[out]		reqCtx			Pointer to the receiving pointer.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_AsyncService_getRequestContext(KSI_AsyncService *service, KSI_AsyncHandle h, void **reqCtx);
-
-	/**
 	 * Enum defining async payload recovery policy.
 	 */
 	enum KSI_AsyncRequestRecoveryPolicy_en {
@@ -590,6 +571,24 @@ extern "C" {
 	 * \see #KSI_AsyncService_getRequestState for getting the state of the request.
 	 */
 	int KSI_AsyncService_recover(KSI_AsyncService *service, KSI_AsyncHandle handle, int policy);
+
+
+	void KSI_AsyncRequest_free(KSI_AsyncRequest *ar);
+	int KSI_AsyncRequest_new(KSI_CTX *ctx, KSI_AsyncRequest **ar);
+
+	int KSI_AsyncRequest_setAggregationReq(KSI_AsyncRequest *ar, KSI_AggregationReq *aggregationReq);
+	int KSI_AsyncRequest_setExtendReq(KSI_AsyncRequest *ar, KSI_ExtendReq *extendReq);
+	int KSI_AsyncRequest_setRequestContext(KSI_AsyncRequest *ar, void *reqCtx, void (*reqCtx_free)(void*));
+
+	void KSI_AsyncResponse_free(KSI_AsyncResponse *ar);
+	int KSI_AsyncResponse_new(KSI_CTX *ctx, KSI_AsyncResponse **ar);
+
+	int KSI_AsyncResponse_setAggregationResp(KSI_AsyncResponse *ar, KSI_AggregationResp *aggregationResp);
+	int KSI_AsyncResponse_setExtendResp(KSI_AsyncResponse *ar, KSI_ExtendResp *extendResp);
+	int KSI_AsyncResponse_setRequestContext(KSI_AsyncResponse *ar, void *reqCtx, void (*reqCtx_free)(void*));
+	int KSI_AsyncResponse_getAggregationResp(const KSI_AsyncResponse *ar, KSI_AggregationResp **aggregationResp);
+	int KSI_AsyncResponse_getExtendResp(const KSI_AsyncResponse *ar, KSI_ExtendResp **extendResp);
+	int KSI_AsyncResponse_getRequestContext(const KSI_AsyncResponse *ar, void **reqCtx);
 
 
 	/**

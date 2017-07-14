@@ -175,6 +175,8 @@ int main(int argc, char **argv) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	KSI_AsyncService *as = NULL;
+	KSI_AsyncRequest *asReq = NULL;
+	KSI_AsyncResponse *asResp = NULL;
 	KSI_AggregationReq *req = NULL;
 	KSI_AggregationResp *resp = NULL;
 
@@ -264,7 +266,7 @@ int main(int argc, char **argv) {
 		if (req_no < nof_requests) {
 			char *p_name = argv[ARGV_IN_DATA_FILE_START + req_no];
 
-			if (req == NULL) {
+			if (asReq == NULL) {
 				KSI_LOG_info(ksi, "Create request for file:  %s", p_name);
 
 				/* Get the hash value of the input file. */
@@ -286,19 +288,33 @@ int main(int argc, char **argv) {
 					goto cleanup;
 				}
 				hsh = NULL;
+
+				res = KSI_AsyncRequest_new(ksi, &asReq);
+				if (res == KSI_OK && req == NULL) {
+					fprintf(stderr, "Unable to create async request.\n");
+					goto cleanup;
+				}
+
+				res = KSI_AsyncRequest_setAggregationReq(asReq, req);
+				if (res != KSI_OK) {
+					fprintf(stderr, "Unable to set aggregation request.\n");
+					goto cleanup;
+				}
+				req = NULL;
+
+				res = KSI_AsyncRequest_setRequestContext(asReq, (void*)p_name, NULL);
+				if (res != KSI_OK) {
+					fprintf(stderr, "Unable to set request context.\n");
+					goto cleanup;
+				}
 			}
 
-			res = KSI_AsyncService_addAggregationReq(as, req, &handle);
+			res = KSI_AsyncService_addRequest(as, asReq, &handle);
 			switch (res) {
 				case KSI_OK:
 					req_no++;
-					res = KSI_AsyncService_setRequestContext(as, handle, (void*)p_name, NULL);
-					if (res != KSI_OK) {
-						fprintf(stderr, "Unable to set request context.\n");
-						goto cleanup;
-					}
-					KSI_AggregationReq_free(req);
-					req = NULL;
+					KSI_AsyncRequest_free(asReq);
+					asReq = NULL;
 					break;
 				case KSI_ASYNC_MAX_PARALLEL_COUNT_REACHED:
 					/* The request could not be added to the cache because of unresponsed requests. */
@@ -332,27 +348,33 @@ int main(int argc, char **argv) {
 
 			switch (state) {
 				case KSI_ASYNC_REQ_RESPONSE_RECEIVED:
-					res = KSI_AsyncService_getRequestContext(as, handle, (void**)&p_name);
+					res = KSI_AsyncService_getResponse(as, handle, &asResp);
 					if (res != KSI_OK) {
-						fprintf(stderr, "Unable to get request context.\n");
+						fprintf(stderr, "Failed to get async response.\n");
 						goto cleanup;
 					}
 
-					res = KSI_AsyncService_getAggregationResp(as, handle, &resp);
-					if (res != KSI_OK) {
-						fprintf(stderr, "Failed to get aggregation response.\n");
-						goto cleanup;
-					}
+					if (asResp != NULL) {
+						res = KSI_AsyncResponse_getAggregationResp(asResp, &resp);
+						if (res != KSI_OK) {
+							fprintf(stderr, "Failed to get aggregation response.\n");
+							goto cleanup;
+						}
 
-					if (resp != NULL) {
+						res = KSI_AsyncResponse_getRequestContext(asResp, (void**)&p_name);
+						if (res != KSI_OK) {
+						  fprintf(stderr, "Unable to get request context.\n");
+						  goto cleanup;
+						}
+
 						res = saveSignature(p_name, resp);
 						if (res != KSI_OK) {
 							fprintf(stderr, "Failed to save signature for: %s\n", p_name);
 							goto cleanup;
 						}
 						succeeded++;
-						KSI_AggregationResp_free(resp);
-						resp = NULL;
+						KSI_AsyncResponse_free(asResp);
+						asResp = NULL;
 					}
 					break;
 
@@ -384,8 +406,10 @@ cleanup:
 	if (logFile != NULL) fclose(logFile);
 
 	KSI_AsyncService_free(as);
+	KSI_AsyncRequest_free(asReq);
+	KSI_AsyncResponse_free(asResp);
+
 	KSI_AggregationReq_free(req);
-	KSI_AggregationResp_free(resp);
 
 	KSI_DataHash_free(hsh);
 

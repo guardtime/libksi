@@ -134,6 +134,28 @@ extern "C" {
 		time_t sendTime;
 	};
 
+	struct KSI_AsyncRequest_st {
+		KSI_CTX *ctx;
+
+		KSI_AggregationReq *aggregationReq;
+		KSI_ExtendReq *extendReq;
+
+		/* Request context. */
+		void *reqCtx;
+		void (*reqCtx_free)(void*);
+	};
+
+	struct KSI_AsyncResponse_st {
+		KSI_CTX *ctx;
+
+		KSI_AggregationResp *aggregationResp;
+		KSI_ExtendResp *extendResp;
+
+		/* Request context. */
+		void *reqCtx;
+		void (*reqCtx_free)(void*);
+	};
+
 	struct KSI_AsyncClient_st {
 		KSI_CTX *ctx;
 
@@ -166,8 +188,8 @@ extern "C" {
 		void *impl;
 		void (*impl_free)(void*);
 
-		int (*addRequest)(void *, void *, KSI_AsyncHandle *);
-		int (*getResponse)(void *, KSI_AsyncHandle, void **);
+		int (*addRequest)(void *, KSI_AsyncRequest *, KSI_AsyncHandle *);
+		int (*getResponse)(void *, KSI_AsyncHandle, KSI_AsyncResponse **);
 		int (*responseHandler)(void *);
 
 		int (*run)(void *, int (*)(void *), KSI_AsyncHandle *, size_t *);
@@ -177,8 +199,6 @@ extern "C" {
 		int (*setConnectTimeout)(void *, size_t);
 		int (*setReceiveTimeout)(void *, size_t);
 		int (*setMaxRequestCount)(void *, size_t);
-		int (*setRequestContext)(void *, KSI_AsyncHandle, void *, void (*)(void*));
-		int (*getRequestContext)(void *, KSI_AsyncHandle, void **);
 
 		int (*uriSplit)(const char *uri, char **scheme, char **user, char **pass, char **host, unsigned *port, char **path, char **query, char **fragment);
 	};
