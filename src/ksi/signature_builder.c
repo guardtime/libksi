@@ -549,6 +549,50 @@ cleanup:
 	return res;
 }
 
+int KSI_SignatureBuilder_createSignatureWithAggregationChain(KSI_SignatureBuilder *builder, KSI_AggregationHashChain *aggr, KSI_Signature **sig)
+{
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	KSI_SignatureBuilder *tmpBuilder = NULL;
+	KSI_Signature *tmp = NULL;
+
+	if (builder == NULL || aggr == NULL || sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = builder->ctx;
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_SignatureBuilder_openFromSignature(builder->sig, &tmpBuilder);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_SignatureBuilder_appendAggregationChain(tmpBuilder, aggr);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_SignatureBuilder_close(tmpBuilder, 0, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	*sig = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_SignatureBuilder_free(tmpBuilder);
+	KSI_Signature_free(tmp);
+	return res;
+}
+
 static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Signature *tmp = NULL;
