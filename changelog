@@ -1,3 +1,4 @@
+* IMPROVEMENT: Added KSI_SignatureBuilder_createSignatureWithAggregationChain function.
 * IMPROVEMENT: Removed calendar-based verification from the default verification policy.
 * IMPROVEMENT: New verification rule for verifing document hash algorithm.
 * IMPROVEMENT: Implemented verification of PKI certificate validity during aggregation time.

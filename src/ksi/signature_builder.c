@@ -549,7 +549,7 @@ cleanup:
 	return res;
 }
 
-int KSI_SignatureBuilder_getAppendedSignature(KSI_SignatureBuilder *builder, KSI_AggregationHashChain *aggr, KSI_Signature **sig)
+int KSI_SignatureBuilder_createSignatureWithAggregationChain(KSI_SignatureBuilder *builder, KSI_AggregationHashChain *aggr, KSI_Signature **sig)
 {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;

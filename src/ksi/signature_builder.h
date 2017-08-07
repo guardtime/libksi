@@ -117,7 +117,7 @@ extern "C" {
 	 * \note There is no need to close the signature builder after use.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_SignatureBuilder_getAppendedSignature(KSI_SignatureBuilder *builder, KSI_AggregationHashChain *aggr, KSI_Signature **sig);
+	int KSI_SignatureBuilder_createSignatureWithAggregationChain(KSI_SignatureBuilder *builder, KSI_AggregationHashChain *aggr, KSI_Signature **sig);
 
 	/**
 	 * This function sets the calendar authentication record of the signature.
