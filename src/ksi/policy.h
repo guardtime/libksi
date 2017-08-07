@@ -72,6 +72,7 @@ extern "C" {
 		_(GEN,  1,    0x100,  "GEN-01",    "Wrong document")\
 		_(GEN,  2,    0x100,  "GEN-02",    "Verification inconclusive") \
 		_(GEN,  3,    0x100,  "GEN-03",    "Input hash level too large") \
+		_(GEN,  4,    0x100,  "GEN-04",    "Wrong input hash algorithm") \
 		\
 		_(INT,  1,    0x200,  "INT-01",    "Inconsistent aggregation hash chains") \
 		_(INT,  2,    0x200,  "INT-02",    "Inconsistent aggregation hash chain aggregation times") \

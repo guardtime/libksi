@@ -200,9 +200,20 @@ extern "C" {
 	int KSI_VerificationRule_DocumentHashExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
+	 * This rule is used to verify input hash algorithm. If document hash is provided, it's hash algorithm must
+	 * match with the hash algorithm of the input hash of the first aggragation chain or RFC-3161 record if
+	 * present.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_InputHashAlgorithmVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
 	 * This rule is used to verify document hash. If RFC3161 record is present then the document hash must equal to RFC3161
 	 * input hash. If RFC3161 record isn't present then document hash must equal to first aggregation hash chain input hash.
-	 * If document hash isn't provided the status code #KSI_OK will be returned.
 	 *
 	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
