@@ -441,7 +441,7 @@ extern "C" {
 	 * \note If the internal cache is full #KSI_ASYNC_MAX_PARALLEL_COUNT_REACHED is returned. In this case the
 	 * user should process the received responses.
 	 */
-	int KSI_AsyncService_addAggregationReq(KSI_AsyncService *s, KSI_AggregationReq *req, KSI_AsyncHandle *handle);
+	int KSI_AsyncService_addRequest(KSI_AsyncService *s, KSI_AsyncRequest *req, KSI_AsyncHandle *handle);
 
 	/**
 	 * Non-blocking aggregation response getter. Returnes next response from the cache. The responses are handled
@@ -458,7 +458,7 @@ extern "C" {
 	 * \see #KSI_AsyncService_getRequestState for getting the state of the request.
 	 * \see #KSI_AggregationResp_free
 	 */
-	int KSI_AsyncService_getAggregationResp(KSI_AsyncService *s, KSI_AsyncHandle handle, KSI_AggregationResp **resp);
+	int KSI_AsyncService_getResponse(KSI_AsyncService *s, KSI_AsyncHandle handle, KSI_AsyncResponse **resp);
 
 
 #define KSI_ASYNC_HANDLE_NULL 0
@@ -488,12 +488,17 @@ extern "C" {
 		KSI_ASYNC_REQ_WAITING_FOR_DISPATCH,
 		/** The request has been dispathed */
 		KSI_ASYNC_REQ_WAITING_FOR_RESPONSE,
-		/** Asynchronous connection has been closed while the request was awaiting response. */
-		KSI_ASYNC_REQ_CONNECTION_CLOSED,
-		/** A response has not been received during the set time interval. */
-		KSI_ASYNC_REQ_RECEIVE_TIMEOUT,
-		/** A response has been received and ready to be read. */
+		/**
+		 * A response has been received and ready to be read. This is final state of a request.
+		 * \see #KSI_AsyncService_getResponse for response retrieval.
+		 */
 		KSI_ASYNC_REQ_RESPONSE_RECEIVED,
+		/**
+		 * An error has occured while the request was in process. This is final state of a request.
+		 * \see #KSI_AsyncService_getRequestError for reading the error.
+		 * \see #KSI_AsyncService_recover for recovery options.
+		 */
+		KSI_ASYNC_REQ_ERROR
 	};
 
 	/**
@@ -504,6 +509,15 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_AsyncService_getRequestState(KSI_AsyncService *s, KSI_AsyncHandle h, int *state);
+
+	/**
+	 * Get the state of the request.
+	 * \param[in]		s				Async serice instance.
+	 * \param[in]		h				Async handle.
+	 * \param[out]		error			Payload error #KSI_StatusCode
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_AsyncService_getRequestError(KSI_AsyncService *s, KSI_AsyncHandle h, int *error);
 
 #define KSI_ASYNC_DEFAULT_ROUND_MAX_COUNT   (1 << 3)
 #define KSI_ASYNC_DEFAULT_PARALLEL_REQUESTS (1 << 10)
@@ -524,8 +538,9 @@ extern "C" {
 	 * \param[in]		value			Timeout in seconds.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncService_getRequestState for the request state.
+	 * \see #KSI_AsyncService_getRequestError for the request error.
 	 * \note In case of timeout and there are any request that have not been responded yet, the request state
-	 * will be set to #KSI_ASYNC_REQ_CONNECTION_CLOSED
+	 * will be set to #KSI_ASYNC_REQ_ERROR and error #KSI_NETWORK_CONNECTION_TIMEOUT
 	 */
 	int KSI_AsyncService_setConnectTimeout(KSI_AsyncService *service, const size_t value);
 
@@ -535,7 +550,8 @@ extern "C" {
 	 * \param[in]		value			Timeout in seconds.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncService_getRequestState for the request state.
-	 * \note In case of timeout the request state will be set to #KSI_ASYNC_REQ_RECEIVE_TIMEOUT
+	 * \see #KSI_AsyncService_getRequestError for the request error.
+	 * \note In case of timeout the request state will be set to #KSI_ASYNC_REQ_ERROR and error to #KSI_NETWORK_RECIEVE_TIMEOUT
 	 */
 	int KSI_AsyncService_setReceiveTimeout(KSI_AsyncService *service, const size_t value);
 
@@ -550,25 +566,6 @@ extern "C" {
 	 * additional request will be buffered in intenal cache.
 	 */
 	int KSI_AsyncService_setMaxRequestCount(KSI_AsyncService *service, const size_t value);
-
-	/**
-	 * Setter for the request specific context.
-	 * \param[in]		service			Async serice instance.
-	 * \param[in]		h				Async handle.
-	 * \param[in]		reqCtx			Request context.
-	 * \param[in]		reqCtx_free		Pointer to the context cleanup method.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_AsyncService_setRequestContext(KSI_AsyncService *service, KSI_AsyncHandle h, void *reqCtx, void (*reqCtx_free)(void*));
-
-	/**
-	 * Setter for the request specific context.
-	 * \param[in]		service			Async serice instance.
-	 * \param[in]		h				Async handle.
-	 * \param[out]		reqCtx			Pointer to the receiving pointer.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	int KSI_AsyncService_getRequestContext(KSI_AsyncService *service, KSI_AsyncHandle h, void **reqCtx);
 
 	/**
 	 * Enum defining async payload recovery policy.
@@ -590,6 +587,24 @@ extern "C" {
 	 * \see #KSI_AsyncService_getRequestState for getting the state of the request.
 	 */
 	int KSI_AsyncService_recover(KSI_AsyncService *service, KSI_AsyncHandle handle, int policy);
+
+
+	void KSI_AsyncRequest_free(KSI_AsyncRequest *ar);
+	int KSI_AsyncRequest_new(KSI_CTX *ctx, KSI_AsyncRequest **ar);
+
+	int KSI_AsyncRequest_setAggregationReq(KSI_AsyncRequest *ar, KSI_AggregationReq *aggregationReq);
+	int KSI_AsyncRequest_setExtendReq(KSI_AsyncRequest *ar, KSI_ExtendReq *extendReq);
+	int KSI_AsyncRequest_setRequestContext(KSI_AsyncRequest *ar, void *reqCtx, void (*reqCtx_free)(void*));
+
+	void KSI_AsyncResponse_free(KSI_AsyncResponse *ar);
+	int KSI_AsyncResponse_new(KSI_CTX *ctx, KSI_AsyncResponse **ar);
+
+	int KSI_AsyncResponse_setAggregationResp(KSI_AsyncResponse *ar, KSI_AggregationResp *aggregationResp);
+	int KSI_AsyncResponse_setExtendResp(KSI_AsyncResponse *ar, KSI_ExtendResp *extendResp);
+	int KSI_AsyncResponse_setRequestContext(KSI_AsyncResponse *ar, void *reqCtx, void (*reqCtx_free)(void*));
+	int KSI_AsyncResponse_getAggregationResp(const KSI_AsyncResponse *ar, KSI_AggregationResp **aggregationResp);
+	int KSI_AsyncResponse_getExtendResp(const KSI_AsyncResponse *ar, KSI_ExtendResp **extendResp);
+	int KSI_AsyncResponse_getRequestContext(const KSI_AsyncResponse *ar, void **reqCtx);
 
 
 	/**

@@ -179,6 +179,25 @@ cleanup:
 	return res;
 }
 
+static int updatePayloadError(KSI_AsyncPayloadList *list, int err) {
+	int res;
+	KSI_AsyncPayload *req = NULL;
+
+	while (KSI_AsyncPayloadList_length(list) > 0) {
+		/* Get element from request queue. */
+		res = KSI_AsyncPayloadList_remove(list, KSI_AsyncPayloadList_length(list) - 1, &req);
+		if (res != KSI_OK) goto cleanup;
+		/* Update request state. */
+		req->state = KSI_ASYNC_REQ_ERROR;
+		req->error = err;
+		/* Decrease payload ref count. */
+		KSI_AsyncPayload_free(req);
+	}
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
 static int dispatch(TcpAsyncCtx *tcpCtx) {
 	int res = KSI_UNKNOWN_ERROR;
 	struct pollfd pfd;
@@ -194,6 +213,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 	if (tcpCtx->sockfd < 0) {
 		res = openSocket(tcpCtx, &tcpCtx->sockfd);
 		if (res != KSI_OK) {
+			updatePayloadError(tcpCtx->reqQueue, res);
 			KSI_pushError(tcpCtx->ctx, res, NULL);
 			goto cleanup;
 		}
@@ -208,6 +228,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 		if (difftime(time(NULL), tcpCtx->conOpenAt) > tcpCtx->cTimeout) {
 			KSI_LOG_debug(tcpCtx->ctx, "Async TCP connection timeout.");
 			res = KSI_NETWORK_CONNECTION_TIMEOUT;
+			updatePayloadError(tcpCtx->reqQueue, res);
 		} else {
 			KSI_LOG_debug(tcpCtx->ctx, "Async TCP connection not ready.");
 			res = KSI_OK;
@@ -215,6 +236,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 		goto cleanup;
 	} else if (res < 0) {
 		KSI_pushError(tcpCtx->ctx, res = KSI_IO_ERROR, "Failed to test socket.");
+		updatePayloadError(tcpCtx->reqQueue, res);
 		goto cleanup;
 	}
 
@@ -230,10 +252,12 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 			tcpCtx->inLen = 0;
 			KSI_LOG_debug(tcpCtx->ctx, "Async TCP connection closed.");
 			res = KSI_ASYNC_CONNECTION_CLOSED;
+			updatePayloadError(tcpCtx->reqQueue, res);
 			goto cleanup;
 		} else if ((c < 0) && !(KSI_SOC_error == KSI_SOC_EINPROGRESS || KSI_SOC_error == KSI_SOC_EWOULDBLOCK)) {
 			/* Non-recoverable error has occurred. */
 			KSI_ERR_push(tcpCtx->ctx, res = KSI_NETWORK_ERROR, KSI_SOC_error, __FILE__, __LINE__, "Unable to receive data.");
+			updatePayloadError(tcpCtx->reqQueue, res);
 			goto cleanup;
 		} else {
 			tcpCtx->inLen += c;
@@ -306,6 +330,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 				if (difftime(time(NULL), tcpCtx->conOpenAt) > tcpCtx->cTimeout) {
 					KSI_LOG_debug(tcpCtx->ctx, "Async TCP connection timeout.");
 					res = KSI_NETWORK_CONNECTION_TIMEOUT;
+					updatePayloadError(tcpCtx->reqQueue, res);
 				} else {
 					KSI_LOG_debug(tcpCtx->ctx, "Async TCP connection not ready.");
 					res = KSI_OK;
@@ -367,7 +392,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 					tcpCtx->roundCount++;
 
 					req->state = KSI_ASYNC_REQ_WAITING_FOR_RESPONSE;
-					time(&req->sendTime);
+					time(&req->sndTime);
 					/* The request has been successfully dispatched. Remove it from the request queue. */
 					res = KSI_AsyncPayloadList_remove(tcpCtx->reqQueue, at, NULL);
 					if (res != KSI_OK) {
