@@ -26,6 +26,11 @@
 extern "C" {
 #endif
 
+#ifndef __GNUC__
+#  define __attribute__(dummy)
+#endif
+
+
 	/**
 	 * \addtogroup log Logging
 	 * This group contains primitive functions for logging. There are 6 predefined log levels and one level
@@ -62,7 +67,7 @@ extern "C" {
 	 * \param[in]	...			Arguments.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_LOG_debug(KSI_CTX *ctx, char *format, ...);
+	int KSI_LOG_debug(KSI_CTX *ctx, char *format, ...)  __attribute__((format(printf, 2, 3)));
 
 	/**
 	 * Logging for info level. Events that have no effect on service, but can aid in performance, status and statistics monitoring.
@@ -71,7 +76,7 @@ extern "C" {
 	 * \param[in]	...			Arguments.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_LOG_info(KSI_CTX *ctx, char *format, ...);
+	int KSI_LOG_info(KSI_CTX *ctx, char *format, ...) __attribute__((format(printf, 2, 3)));
 
 	/**
 	 * Logging for info level. Changes in state that do not necessarily cause service degradation.
@@ -80,7 +85,7 @@ extern "C" {
 	 * \param[in]	...			Arguments.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_LOG_notice(KSI_CTX *ctx, char *format, ...);
+	int KSI_LOG_notice(KSI_CTX *ctx, char *format, ...) __attribute__((format(printf, 2, 3)));
 
 	/**
 	 * Logging for warning level. Changes in state that affects the service degradation.
@@ -89,7 +94,7 @@ extern "C" {
 	 * \param[in]	...			Arguments.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_LOG_warn(KSI_CTX *ctx, char *format, ...);
+	int KSI_LOG_warn(KSI_CTX *ctx, char *format, ...) __attribute__((format(printf, 2, 3)));
 
 	/**
 	 * Logging for error level. Unrecoverable fatal errors only - gasp of death - code cannot continue and will terinate.
@@ -98,7 +103,7 @@ extern "C" {
 	 * \param[in]	...			Arguments.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_LOG_error(KSI_CTX *ctx, char *format, ...);
+	int KSI_LOG_error(KSI_CTX *ctx, char *format, ...) __attribute__((format(printf, 2, 3)));
 
 	/**
 	 * A helper function for logging raw data. The log message will be prefixed with \c prefix and
@@ -161,6 +166,10 @@ extern "C" {
  */
 #ifdef __cplusplus
 }
+#endif
+
+#ifndef __GNUC__
+#  undef __attribute__
 #endif
 
 #endif /* KSI_LOG_H_ */

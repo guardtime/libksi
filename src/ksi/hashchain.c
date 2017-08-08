@@ -751,7 +751,7 @@ static int legacyId_verify(KSI_CTX *ctx, const unsigned char *raw, size_t raw_le
 	/* Legacy id data length is fixed to 29 octets. */
 	if (raw_len != 29) {
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID data length mismatch.");
-		KSI_LOG_debug(ctx, "Legacy ID data length: %d.", raw_len);
+		KSI_LOG_debug(ctx, "Legacy ID data length: %llu.", (unsigned long long )raw_len);
 		goto cleanup;
 	}
 	/* First two octets have fixed values. */

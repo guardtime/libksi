@@ -127,7 +127,7 @@ static size_t receiveDataFromLibCurl(void *ptr, size_t size, size_t nmemb, void 
 	nc->len = bytesCount;
 	tmp_buffer = NULL;
 
-	KSI_LOG_debug(nc->ctx, "0x%x: Received %llu bytes (%llu so far)", nc, (unsigned long long) bytesCount, nc->len);
+	KSI_LOG_debug(nc->ctx, "0x%llx: Received %llu bytes (%llu so far)", (unsigned long long)nc, (unsigned long long)bytesCount, (unsigned long long)nc->len);
 
 	bytesCount = size * nmemb;
 
@@ -189,7 +189,7 @@ static int curlReceive(KSI_RequestHandle *handle) {
 
 	if (curl_easy_getinfo(implCtx->curl, CURLINFO_HTTP_CODE, &httpCode) == CURLE_OK) {
 		updateStatus(handle);
-		KSI_LOG_debug(handle->ctx, "Received HTTP error code %d. Curl error '%s'.", httpCode, implCtx->curlErr);
+		KSI_LOG_debug(handle->ctx, "Received HTTP error code %ld. Curl error '%s'.", httpCode, implCtx->curlErr);
 	}
 
 	if (res != CURLE_OK) {

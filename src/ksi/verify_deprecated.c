@@ -190,16 +190,16 @@ static int rfc3161_verify(const KSI_Signature *sig) {
 	}
 
 	if (KSI_Integer_compare(firstChain->aggregationTime, rfc3161->aggregationTime) != 0) {
-		KSI_LOG_debug(ctx, "Signatures aggregation time: %i.", KSI_Integer_getUInt64(firstChain->aggregationTime));
-		KSI_LOG_debug(ctx, "RFC 3161 aggregation time:   %i.", KSI_Integer_getUInt64(rfc3161->aggregationTime));
+		KSI_LOG_debug(ctx, "Signatures aggregation time: %llu.", (unsigned long long)KSI_Integer_getUInt64(firstChain->aggregationTime));
+		KSI_LOG_debug(ctx, "RFC 3161 aggregation time:   %llu.", (unsigned long long)KSI_Integer_getUInt64(rfc3161->aggregationTime));
 		KSI_pushError(ctx, res = KSI_VERIFICATION_FAILURE, "Aggregation chain and RFC 3161 aggregation time mismatch.");
 		goto cleanup;
 	}
 
 	if (KSI_IntegerList_length(firstChain->chainIndex) != KSI_IntegerList_length(rfc3161->chainIndex)) {
-		KSI_LOG_debug(ctx, "Aggregation chain and RFC 3161 chain index mismatch.", KSI_IntegerList_length(firstChain->chainIndex));
-		KSI_LOG_debug(ctx, "Signatures chain index length: %i.", KSI_IntegerList_length(firstChain->chainIndex));
-		KSI_LOG_debug(ctx, "RFC 3161 chain index length:   %i.", KSI_IntegerList_length(rfc3161->chainIndex));
+		KSI_LOG_debug(ctx, "Aggregation chain and RFC 3161 chain index mismatch.");
+		KSI_LOG_debug(ctx, "Signatures chain index length: %llu.", (unsigned long long)KSI_IntegerList_length(firstChain->chainIndex));
+		KSI_LOG_debug(ctx, "RFC 3161 chain index length:   %llu.", (unsigned long long)KSI_IntegerList_length(rfc3161->chainIndex));
 	}else {
 		for (i = 0; i < KSI_IntegerList_length(firstChain->chainIndex); i++){
 			KSI_Integer *ch1 = NULL;
@@ -218,7 +218,7 @@ static int rfc3161_verify(const KSI_Signature *sig) {
 			}
 
 			if (KSI_Integer_compare(ch1, ch2) != 0) {
-				KSI_LOG_debug(ctx, "Aggregation chain and RFC 3161 chain index mismatch.", KSI_IntegerList_length(firstChain->chainIndex));
+				KSI_LOG_debug(ctx, "Aggregation chain and RFC 3161 chain index mismatch.");
 				break;
 			}
 		}
@@ -814,8 +814,8 @@ static int verifyPublicationWithPubString(KSI_CTX *ctx, KSI_Signature *sig) {
 	}
 
 	if (KSI_Integer_compare(time1, time2) != 0) {
-		KSI_LOG_debug(ctx, "Publication time from publication record:", time2);
-		KSI_LOG_debug(ctx, "Publication time from user publication  :", time1);
+		KSI_LOG_debug(ctx, "Publication time from publication record: %llu", (unsigned long long)KSI_Integer_getUInt64(time2));
+		KSI_LOG_debug(ctx, "Publication time from user publication  : %llu", (unsigned long long)KSI_Integer_getUInt64(time1));
 		res = KSI_VerificationResult_addFailure(info, step, "Publication not trusted.");
 		goto cleanup;
 	}
@@ -1074,8 +1074,8 @@ static int verifyCalendarChainWithPublication(KSI_Signature *sig){
 	}
 
 	if (!KSI_Integer_equals(pubTime, publishedTime)){
-		KSI_LOG_debug(sig->ctx, "Calendar hash chain publication time: %i.", KSI_Integer_getUInt64(pubTime));
-		KSI_LOG_debug(sig->ctx, "Published publication time: %i.", KSI_Integer_getUInt64(publishedTime));
+		KSI_LOG_debug(sig->ctx, "Calendar hash chain publication time: %llu.", (unsigned long long)KSI_Integer_getUInt64(pubTime));
+		KSI_LOG_debug(sig->ctx, "Published publication time: %llu.", (unsigned long long)KSI_Integer_getUInt64(publishedTime));
 		res = KSI_VerificationResult_addFailure(info, step, "Calendar hash chain publication time mismatch.");
 		goto cleanup;
 	}
@@ -1196,13 +1196,13 @@ static int KSI_Signature_verifyPolicy(KSI_Signature *sig, unsigned *policy, KSI_
 		}
 
 		if (sig->verificationResult.stepsFailed & pol) {
-			KSI_LOG_debug(sig->ctx, "Verification failed with steps: 0x%02x", sig->verificationResult.stepsFailed);
+			KSI_LOG_debug(sig->ctx, "Verification failed with steps: 0x%02llx", (unsigned long long)sig->verificationResult.stepsFailed);
 			KSI_pushError(sig->ctx, res = KSI_VERIFICATION_FAILURE, KSI_VerificationResult_lastFailureMessage(&sig->verificationResult));
 			goto cleanup;
 		}
 
 		if ((pol & sig->verificationResult.stepsPerformed) == pol) {
-			KSI_LOG_debug(sig->ctx, "Verification successful with policy 0x%02x (steps performed 0x%02x)", pol, sig->verificationResult.stepsPerformed);
+			KSI_LOG_debug(sig->ctx, "Verification successful with policy 0x%02llx (steps performed 0x%02llx)", (unsigned long long)pol, (unsigned long long)sig->verificationResult.stepsPerformed);
 			res = KSI_OK;
 			goto cleanup;
 		}
