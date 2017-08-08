@@ -488,12 +488,17 @@ extern "C" {
 		KSI_ASYNC_REQ_WAITING_FOR_DISPATCH,
 		/** The request has been dispathed */
 		KSI_ASYNC_REQ_WAITING_FOR_RESPONSE,
-		/** Asynchronous connection has been closed while the request was awaiting response. */
-		KSI_ASYNC_REQ_CONNECTION_CLOSED,
-		/** A response has not been received during the set time interval. */
-		KSI_ASYNC_REQ_RECEIVE_TIMEOUT,
-		/** A response has been received and ready to be read. */
+		/**
+		 * A response has been received and ready to be read. This is final state of a request.
+		 * \see #KSI_AsyncService_getResponse for response retrieval.
+		 */
 		KSI_ASYNC_REQ_RESPONSE_RECEIVED,
+		/**
+		 * An error has occured while the request was in process. This is final state of a request.
+		 * \see #KSI_AsyncService_getRequestError for reading the error.
+		 * \see #KSI_AsyncService_recover for recovery options.
+		 */
+		KSI_ASYNC_REQ_ERROR
 	};
 
 	/**
@@ -504,6 +509,15 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_AsyncService_getRequestState(KSI_AsyncService *s, KSI_AsyncHandle h, int *state);
+
+	/**
+	 * Get the state of the request.
+	 * \param[in]		s				Async serice instance.
+	 * \param[in]		h				Async handle.
+	 * \param[out]		error			Payload error #KSI_StatusCode
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_AsyncService_getRequestError(KSI_AsyncService *s, KSI_AsyncHandle h, int *error);
 
 #define KSI_ASYNC_DEFAULT_ROUND_MAX_COUNT   (1 << 3)
 #define KSI_ASYNC_DEFAULT_PARALLEL_REQUESTS (1 << 10)
@@ -524,8 +538,9 @@ extern "C" {
 	 * \param[in]		value			Timeout in seconds.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncService_getRequestState for the request state.
+	 * \see #KSI_AsyncService_getRequestError for the request error.
 	 * \note In case of timeout and there are any request that have not been responded yet, the request state
-	 * will be set to #KSI_ASYNC_REQ_CONNECTION_CLOSED
+	 * will be set to #KSI_ASYNC_REQ_ERROR and error #KSI_NETWORK_CONNECTION_TIMEOUT
 	 */
 	int KSI_AsyncService_setConnectTimeout(KSI_AsyncService *service, const size_t value);
 
@@ -535,7 +550,8 @@ extern "C" {
 	 * \param[in]		value			Timeout in seconds.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncService_getRequestState for the request state.
-	 * \note In case of timeout the request state will be set to #KSI_ASYNC_REQ_RECEIVE_TIMEOUT
+	 * \see #KSI_AsyncService_getRequestError for the request error.
+	 * \note In case of timeout the request state will be set to #KSI_ASYNC_REQ_ERROR and error to #KSI_NETWORK_RECIEVE_TIMEOUT
 	 */
 	int KSI_AsyncService_setReceiveTimeout(KSI_AsyncService *service, const size_t value);
 

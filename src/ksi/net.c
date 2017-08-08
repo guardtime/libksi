@@ -1391,12 +1391,14 @@ int KSI_AsyncPayload_new(KSI_CTX *ctx, const unsigned char *payload, const size_
 	tmp->len = 0;
 	tmp->pldCtx = NULL;
 	tmp->pldCtx_free = NULL;
-	tmp->sendTime = 0;
+	tmp->reqTime = 0;
+	tmp->sndTime = 0;
 
 	tmp->reqCtx = NULL;
 	tmp->reqCtx_free = NULL;
 
 	tmp->state = KSI_ASYNC_REQ_WAITING_FOR_DISPATCH;
+	tmp->error = KSI_OK;
 
 	if (payload_len > 0) {
 		tmp->raw = KSI_malloc(payload_len);
@@ -1816,7 +1818,7 @@ static int asyncClient_getResponse(KSI_AsyncClient *c, KSI_AsyncHandle handle, K
 		case KSI_ASYNC_REQ_WAITING_FOR_RESPONSE:
 			tmp = NULL;
 			/* Check if the response is overdue. */
-			if (difftime(time(NULL), c->reqCache[handle]->sendTime) > c->rTimeout) {
+			if (difftime(time(NULL), c->reqCache[handle]->sndTime) > c->rTimeout) {
 				res = KSI_NETWORK_RECIEVE_TIMEOUT;
 				goto cleanup;
 			}
@@ -1852,16 +1854,16 @@ int asyncClient_findNextResponse(KSI_AsyncClient *c, KSI_AsyncHandle *handle) {
 		if (c->reqCache[c->tail] != NULL) {
 			switch (c->reqCache[c->tail]->state) {
 				case KSI_ASYNC_REQ_WAITING_FOR_RESPONSE:
-					if (difftime(time(NULL), c->reqCache[c->tail]->sendTime) > c->rTimeout) {
+					if (difftime(time(NULL), c->reqCache[c->tail]->sndTime) > c->rTimeout) {
 						*handle = c->reqCache[c->tail]->id;
-						c->reqCache[c->tail]->state = KSI_ASYNC_REQ_RECEIVE_TIMEOUT;
+						c->reqCache[c->tail]->state = KSI_ASYNC_REQ_ERROR;
+						c->reqCache[c->tail]->error = KSI_NETWORK_RECIEVE_TIMEOUT;
 						res = KSI_OK;
 						goto cleanup;
 					}
 					break;
 
-				case KSI_ASYNC_REQ_CONNECTION_CLOSED:
-				case KSI_ASYNC_REQ_RECEIVE_TIMEOUT:
+				case KSI_ASYNC_REQ_ERROR:
 				case KSI_ASYNC_REQ_RESPONSE_RECEIVED:
 					*handle = c->reqCache[c->tail]->id;
 					res = KSI_OK;
@@ -1916,7 +1918,8 @@ int asyncClient_run(KSI_AsyncClient *c, int (*handleResp)(KSI_AsyncClient *), KS
 		size_t i;
 		for (i = 1; i < c->maxParallelRequests; i++) {
 			if (c->reqCache[i] != NULL && c->reqCache[i]->state == KSI_ASYNC_REQ_WAITING_FOR_RESPONSE) {
-				c->reqCache[c->tail]->state = KSI_ASYNC_REQ_CONNECTION_CLOSED;
+				c->reqCache[c->tail]->state = KSI_ASYNC_REQ_ERROR;
+				c->reqCache[c->tail]->error = KSI_ASYNC_CONNECTION_CLOSED;
 			}
 		}
 	}
@@ -1955,6 +1958,26 @@ cleanup:
 	return res;
 }
 
+static int asyncClient_getError(KSI_AsyncClient *c, KSI_AsyncHandle h, int *error) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (c == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (h >= c->maxParallelRequests || c->reqCache == NULL)  {
+		res = KSI_INVALID_STATE;
+		goto cleanup;
+	}
+
+	*error = (c->reqCache[h] == NULL) ? KSI_UNKNOWN_ERROR : c->reqCache[h]->error;
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
 static int asyncClient_recover(KSI_AsyncClient *c, KSI_AsyncHandle h, int policy) {
 	int res = KSI_UNKNOWN_ERROR;
 	int state;
@@ -1977,7 +2000,7 @@ static int asyncClient_recover(KSI_AsyncClient *c, KSI_AsyncHandle h, int policy
 		goto cleanup;
 	}
 
-	if (state != KSI_ASYNC_REQ_CONNECTION_CLOSED && state != KSI_ASYNC_REQ_RECEIVE_TIMEOUT) {
+	if (state != KSI_ASYNC_REQ_ERROR) {
 		KSI_pushError(c->ctx, res = KSI_INVALID_STATE, "Payload can not be recovered.");
 		goto cleanup;
 	}
@@ -2208,6 +2231,7 @@ int KSI_SigningAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service) {
 	tmp->run = (int (*)(void *, int (*)(void *), KSI_AsyncHandle *, size_t *))asyncClient_run;
 	tmp->recover = (int (*)(void *, KSI_AsyncHandle, int))asyncClient_recover;
 	tmp->getRequestState = (int (*)(void *, KSI_AsyncHandle, int *))asyncClient_getState;
+	tmp->getRequestError = (int (*)(void *, KSI_AsyncHandle, int *))asyncClient_getError;
 	tmp->setConnectTimeout = (int (*)(void *, size_t))asyncClient_setConnectTimeout;
 	tmp->setReceiveTimeout = (int (*)(void *, size_t))asyncClient_setReceiveTimeout;
 	tmp->setMaxRequestCount = (int (*)(void *, size_t))asyncClient_setMaxRequestCount;
@@ -2281,6 +2305,7 @@ cleanup:														\
 }
 
 KSI_ASYNC_SERVICE_OBJ_HANDLE_IMPLEMENT_GETTER(KSI_AsyncService, RequestState, int*)
+KSI_ASYNC_SERVICE_OBJ_HANDLE_IMPLEMENT_GETTER(KSI_AsyncService, RequestError, int*)
 
 void KSI_AsyncRequest_free(KSI_AsyncRequest *ar) {
 	if (ar != NULL) {

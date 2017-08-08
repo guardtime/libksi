@@ -378,11 +378,10 @@ int main(int argc, char **argv) {
 					}
 					break;
 
-				case KSI_ASYNC_REQ_CONNECTION_CLOSED:
-				case KSI_ASYNC_REQ_RECEIVE_TIMEOUT:
+				case KSI_ASYNC_REQ_ERROR:
 					res = KSI_AsyncService_recover(as, handle, KSI_ASYNC_REC_DROP);
 					if (res != KSI_OK) {
-						fprintf(stderr, "Failed to appply recover policy on request.\n");
+						fprintf(stderr, "Failed to apply recover policy on request.\n");
 						goto cleanup;
 					}
 					break;
