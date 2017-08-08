@@ -2193,6 +2193,7 @@ int KSI_AsyncService_construct(KSI_CTX *ctx, KSI_AsyncService **service) {
 	tmp->run = NULL;
 	tmp->recover = NULL;
 	tmp->getRequestState = NULL;
+	tmp->getRequestError = NULL;
 	tmp->setConnectTimeout = NULL;
 	tmp->setReceiveTimeout = NULL;
 	tmp->setMaxRequestCount = NULL;
