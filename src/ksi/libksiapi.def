@@ -252,16 +252,28 @@ EXPORTS
 	KSI_AsyncPayload_getRequestCtx
 	KSI_AsyncService_free
 	KSI_AsyncService_recover
-	KSI_AsyncService_addAggregationReq
-	KSI_AsyncService_getAggregationResp
-	KSI_AsyncService_getRequestContext
-	KSI_AsyncService_setRequestContext
 	KSI_AsyncService_getRequestState
+	KSI_AsyncService_getRequestError
 	KSI_AsyncService_setMaxRequestCount
 	KSI_AsyncService_run
 	KSI_AsyncService_setEndpoint
 	KSI_AsyncService_construct
+	KSI_AsyncService_getResponse
+	KSI_AsyncService_addRequest
 	KSI_SigningAsyncService_new
+	KSI_AsyncRequest_free
+	KSI_AsyncRequest_new
+	KSI_AsyncRequest_setAggregationReq
+	KSI_AsyncRequest_setExtendReq
+	KSI_AsyncRequest_setRequestContext
+	KSI_AsyncResponse_free
+	KSI_AsyncResponse_new
+	KSI_AsyncResponse_setAggregationResp
+	KSI_AsyncResponse_setExtendResp
+	KSI_AsyncResponse_setRequestContext
+	KSI_AsyncResponse_getAggregationResp
+	KSI_AsyncResponse_getExtendResp
+	KSI_AsyncResponse_getRequestContext
 
 ;net_http.h
 EXPORTS
