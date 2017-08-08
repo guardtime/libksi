@@ -512,28 +512,38 @@ static void testTlvElementIntegers(CuTest *tc) {
 	KSI_Integer *in = NULL;
 	KSI_Integer *out = NULL;
 	KSI_TlvElement *el = NULL;
+	struct {
+		int tag;
+		size_t val;
+	} inputs[] = {{0x1fff, 0xcafebabe}, {0x1, 0}, {0x20, 0xffffffffffffffffl}, {0x0, 0x0} };
+	size_t i  = 0;
 
 	/* Create the outer tlv element. */
 	res = KSI_TlvElement_new(&el);
 	CuAssert(tc, "Unable to create plain TlvElement.", res == KSI_OK && el != NULL);
 
-	/* Create the sample value. */
-	res = KSI_Integer_new(ctx, 0xcafebabe, &in);
-	CuAssert(tc, "Unable to create integer value.", res == KSI_OK && in != NULL);
+	while (inputs[i].tag != 0x0 && inputs[i].val != 0x0) {
+		/* Create the sample value. */
+		res = KSI_Integer_new(ctx, inputs[i].val, &in);
+		CuAssert(tc, "Unable to create integer value.", res == KSI_OK && in != NULL);
 
-	/* Set the integer value as a sub element. */
-	res = KSI_TlvElement_setInteger(el, 0x1fff, in);
-	CuAssert(tc, "Unable to set an integer as a sub element.", res == KSI_OK);
+		/* Set the integer value as a sub element. */
+		res = KSI_TlvElement_setInteger(el, inputs[i].tag, in);
+		CuAssert(tc, "Unable to set an integer as a sub element.", res == KSI_OK);
 
-	/* Extract the integer value. */
-	res = KSI_TlvElement_getInteger(el, ctx, 0x1fff, &out);
-	CuAssert(tc, "Unable to extract an integer from sub elements.", res == KSI_OK);
+		/* Extract the integer value. */
+		res = KSI_TlvElement_getInteger(el, ctx, inputs[i].tag, &out);
+		CuAssert(tc, "Unable to extract an integer from sub elements.", res == KSI_OK);
 
-	CuAssert(tc, "Extracted value does not equal to the input value.", KSI_Integer_equals(in, out));
-	CuAssert(tc, "Extracted value does not equal to the expected value.", KSI_Integer_equalsUInt(out, 0xcafebabe));
+		CuAssert(tc, "Extracted value does not equal to the input value.", KSI_Integer_equals(in, out));
+		CuAssert(tc, "Extracted value does not equal to the expected value.", KSI_Integer_equalsUInt(out, inputs[i].val));
 
-	KSI_Integer_free(in);
-	KSI_Integer_free(out);
+		KSI_Integer_free(in);
+		KSI_Integer_free(out);
+
+		i++;
+	}
+
 	KSI_TlvElement_free(el);
 }
 

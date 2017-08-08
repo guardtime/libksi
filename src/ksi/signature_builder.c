@@ -445,6 +445,11 @@ static int appendAggregationChain(KSI_Signature *sig, KSI_AggregationHashChain *
 		 */
 
 		res = KSI_AggregationHashChain_getChainIndex(pCurrent, &pCurrentIndex);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+
 		for (i = KSI_IntegerList_length(pCurrentIndex); i > 0; i--) {
 			KSI_Integer *tmp = NULL;
 			KSI_Integer *ref = NULL;
