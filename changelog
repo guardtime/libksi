@@ -3,6 +3,8 @@
 * IMPROVEMENT: New verification rule for verifing document hash algorithm.
 * IMPROVEMENT: Implemented verification of PKI certificate validity during aggregation time.
 * IMPROVEMENT: Set default PDU version to 2.
+* IMPROVEMENT: Removed deprecated verification functionality.
+
 Version 3.14
 
 2017-06-13 release(3.14.2207)
