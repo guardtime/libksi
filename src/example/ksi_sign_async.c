@@ -234,13 +234,6 @@ int main(int argc, char **argv) {
 	KSI_LOG_info(ksi, "  user: %s", argv[ARGV_USER]);
 	KSI_LOG_info(ksi, "  pass: %s", argv[ARGV_PASS]);
 
-	/* Initialize non-blocking connection. */
-	res = KSI_AsyncService_run(as, NULL, NULL);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to initialize non-blocking connection.\n");
-		goto cleanup;
-	}
-
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ksi, pubFileCertConstr);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to configure publications file cert constraints.\n");
@@ -378,11 +371,22 @@ int main(int argc, char **argv) {
 					}
 					break;
 
-				case KSI_ASYNC_REQ_ERROR:
-					res = KSI_AsyncService_recover(as, handle, KSI_ASYNC_REC_DROP);
-					if (res != KSI_OK) {
-						fprintf(stderr, "Failed to apply recover policy on request.\n");
-						goto cleanup;
+				case KSI_ASYNC_REQ_ERROR: {
+						int err = KSI_UNKNOWN_ERROR;
+
+						res = KSI_AsyncService_getRequestError(as, handle, &err);
+						if (res != KSI_OK) {
+							fprintf(stderr, "Unable to get request state.\n");
+							goto cleanup;
+						}
+
+						fprintf(stderr, "Request failed with error: %s\n", KSI_getErrorString(err));
+
+						res = KSI_AsyncService_recover(as, handle, KSI_ASYNC_REC_DROP);
+						if (res != KSI_OK) {
+							fprintf(stderr, "Failed to apply recover policy on request.\n");
+							goto cleanup;
+						}
 					}
 					break;
 

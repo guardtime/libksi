@@ -243,6 +243,7 @@ EXPORTS
 	KSI_AbstractNetworkClient_new
 	KSI_RequestHandle_perform
 	KSI_RequestHandle_getResponseStatus
+
 	KSI_AsyncClient_free
 	KSI_AsyncPayload_free
 	KSI_AsyncPayload_new

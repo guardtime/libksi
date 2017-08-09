@@ -166,13 +166,11 @@ extern "C" {
 
 		int (*addRequest)(void *, KSI_AsyncPayload *);
 		int (*getResponse)(void *, KSI_OctetString **, size_t *);
-		int (*getQueueStatus)(void *, size_t *, size_t *);
 		int (*getCredentials)(void *, const char **, const char **);
 		int (*dispatch)(void *);
-		int (*reset)(void *);
-		void (*closeConnection)(void*);
-		int (*setConnectTimeout)(void *, size_t);
-		int (*setMaxRequestCount)(void *, size_t);
+		int (*setConnectTimeout)(void *, const size_t);
+		int (*setSendTimeout)(void *, const size_t);
+		int (*setMaxRequestCount)(void *, const size_t);
 
 		size_t requestCount;
 		size_t tail;
@@ -200,6 +198,7 @@ extern "C" {
 		int (*getRequestState)(void *, KSI_AsyncHandle, int *);
 		int (*getRequestError)(void *, KSI_AsyncHandle, int *);
 		int (*setConnectTimeout)(void *, size_t);
+		int (*setSendTimeout)(void *, size_t);
 		int (*setReceiveTimeout)(void *, size_t);
 		int (*setMaxRequestCount)(void *, size_t);
 

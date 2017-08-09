@@ -471,10 +471,10 @@ extern "C" {
 	 * \param[out]		handle			Async handle associated with a request.
 	 * \param[out]		waiting			Total number of requests in process.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_AsyncService_addAggregationReq
-	 * \see #KSI_AsyncService_getAggregationResp
+	 * \see #KSI_AsyncService_addRequest for adding asynchronous request to the output queue.
+	 * \see #KSI_AsyncService_getResponse for reading received responses.
 	 * \see #KSI_AsyncService_getRequestState for getting the state of the request.
-	 * \see #KSI_AsyncService_recover
+	 * \see #KSI_AsyncService_recover for request recovery options.
 	 */
 	int KSI_AsyncService_run(KSI_AsyncService *service, KSI_AsyncHandle *handle, size_t *waiting);
 
@@ -554,6 +554,17 @@ extern "C" {
 	 * \note In case of timeout the request state will be set to #KSI_ASYNC_REQ_ERROR and error to #KSI_NETWORK_RECIEVE_TIMEOUT
 	 */
 	int KSI_AsyncService_setReceiveTimeout(KSI_AsyncService *service, const size_t value);
+
+	/**
+	 * Setter for the async request send timeout.
+	 * \param[in]		service			Async serice instance.
+	 * \param[in]		value			Timeout in seconds.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_AsyncService_getRequestState for the request state.
+	 * \see #KSI_AsyncService_getRequestError for the request error.
+	 * \note In case of timeout the request state will be set to #KSI_ASYNC_REQ_ERROR and error to #KSI_NETWORK_SEND_TIMEOUT
+	 */
+	int KSI_AsyncService_setSendTimeout(KSI_AsyncService *service, const size_t value);
 
 	/**
 	 * Setter for the maximum number of request permitted per round.

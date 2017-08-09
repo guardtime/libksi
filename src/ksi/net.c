@@ -1397,7 +1397,7 @@ int KSI_AsyncPayload_new(KSI_CTX *ctx, const unsigned char *payload, const size_
 	tmp->reqCtx = NULL;
 	tmp->reqCtx_free = NULL;
 
-	tmp->state = KSI_ASYNC_REQ_WAITING_FOR_DISPATCH;
+	tmp->state = KSI_ASYNC_REQ_UNDEFINED;
 	tmp->error = KSI_OK;
 
 	if (payload_len > 0) {
@@ -2036,6 +2036,11 @@ static int asyncClient_setConnectTimeout(KSI_AsyncClient *c, size_t timeout) {
 	return c->setConnectTimeout(c->clientImpl, timeout);
 }
 
+static int asyncClient_setSendTimeout(KSI_AsyncClient *c, size_t timeout) {
+	if (c == NULL || c->clientImpl == NULL || c->setSendTimeout == NULL) return KSI_INVALID_ARGUMENT;
+	return c->setSendTimeout(c->clientImpl, timeout);
+}
+
 static int asyncClient_setReceiveTimeout(KSI_AsyncClient *c, size_t timeout) {
 	if (c == NULL) return KSI_INVALID_ARGUMENT;
 	c->rTimeout = timeout;
@@ -2195,6 +2200,7 @@ int KSI_AsyncService_construct(KSI_CTX *ctx, KSI_AsyncService **service) {
 	tmp->getRequestState = NULL;
 	tmp->getRequestError = NULL;
 	tmp->setConnectTimeout = NULL;
+	tmp->setSendTimeout = NULL;
 	tmp->setReceiveTimeout = NULL;
 	tmp->setMaxRequestCount = NULL;
 
@@ -2234,6 +2240,7 @@ int KSI_SigningAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service) {
 	tmp->getRequestState = (int (*)(void *, KSI_AsyncHandle, int *))asyncClient_getState;
 	tmp->getRequestError = (int (*)(void *, KSI_AsyncHandle, int *))asyncClient_getError;
 	tmp->setConnectTimeout = (int (*)(void *, size_t))asyncClient_setConnectTimeout;
+	tmp->setSendTimeout = (int (*)(void *, size_t))asyncClient_setSendTimeout;
 	tmp->setReceiveTimeout = (int (*)(void *, size_t))asyncClient_setReceiveTimeout;
 	tmp->setMaxRequestCount = (int (*)(void *, size_t))asyncClient_setMaxRequestCount;
 
@@ -2290,6 +2297,7 @@ cleanup:														\
 
 KSI_ASYNC_SERVICE_OBJ_IMPLEMENT_SETTER(KSI_AsyncService, ConnectTimeout, const size_t)
 KSI_ASYNC_SERVICE_OBJ_IMPLEMENT_SETTER(KSI_AsyncService, ReceiveTimeout, const size_t)
+KSI_ASYNC_SERVICE_OBJ_IMPLEMENT_SETTER(KSI_AsyncService, SendTimeout, const size_t)
 KSI_ASYNC_SERVICE_OBJ_IMPLEMENT_SETTER(KSI_AsyncService, MaxRequestCount, const size_t)
 
 
