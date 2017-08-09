@@ -924,11 +924,22 @@ int KSI_PublicationsFile_findPublicationByTime(const KSI_PublicationsFile *trust
 }
 
 int KSI_PublicationsFile_findPublication(const KSI_PublicationsFile *trust, const KSI_PublicationRecord *inRec, KSI_PublicationRecord **outRec) {
-	if ((inRec != NULL && inRec->publishedData == NULL) ||
-			(inRec->publishedData->time == NULL || inRec->publishedData->imprint == NULL)) {
-		return KSI_INVALID_STATE;
+	int res = KSI_UNKNOWN_ERROR;
+	if (inRec == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
 	}
-	return findPublication(trust, inRec->publishedData->time, inRec->publishedData->imprint, outRec);
+
+	if (inRec->publishedData == NULL ||	inRec->publishedData->time == NULL || inRec->publishedData->imprint == NULL) {
+		res = KSI_INVALID_STATE;
+		goto cleanup;
+	}
+
+	res = findPublication(trust, inRec->publishedData->time, inRec->publishedData->imprint, outRec);
+
+cleanup:
+
+	return res;
 }
 
 int KSI_PublicationsFile_setCertConstraints(KSI_PublicationsFile *pubFile, const KSI_CertConstraint *arr) {
