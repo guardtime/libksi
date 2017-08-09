@@ -6,18 +6,18 @@ integrity of any digital asset without the need to trust any system. There are m
 example is signing of any type of logs - system logs, financial transactions, call records, etc. For more,
 see [https://guardtime.com](https://guardtime.com).
 
-The libksi is a software development kit for developers who want to integrate KSI with their C/C++ based applications
+The `libksi` is a software development kit for developers who want to integrate KSI with their C/C++ based applications
 and systems. It provides an API for all KSI functionality, including the core functions - signing of data, extending
 and verifying the signatures.
 
 ## Installation ##
 
-To build the libksi, you need to have the following SW components installed:
+To build the `libksi`, you need to have the following SW components installed:
 1. A network provider
 2. A cryptography provider
 
 The following network providers are supported, choose one:
-* Libcurl (recommended)
+* `libcurl` (recommended)
 * Windows native WinINet
 * Windows native WinHTTP
 
@@ -27,10 +27,10 @@ The following cryptography providers are supported, choose one:
 
 For building under Windows you need the Windows SDK.
 
-To use libksi in your C/C++ project, link it against the libksi binary and your chosen network and cryptography providers.
+To use `libksi` in your C/C++ project, link it against the `libksi` binary and your chosen network and cryptography providers.
 
 If you do not want to build your own binaries, you can get the latest stable release from the Guardtime repository.
-To set up the repository, save this repo file in your repositories directory (e.g. /etc/yum.repos.d/):
+To set up the repository, save this repo file in your repositories directory (e.g. `/etc/yum.repos.d/`):
 [http://download.guardtime.com/ksi/configuration/guardtime.el6.repo](http://download.guardtime.com/ksi/configuration/guardtime.el6.repo)
 
 ## Proxy Configuration ##
@@ -39,16 +39,16 @@ To use a proxy, you need to configure the proxy on your operating system accordi
 
 * Curl
 
-Set the system environment variable: http_proxy=user:pass@server:port
+Set the system environment variable: `http_proxy=user:pass@server:port`
 
 In the Windows control panel:
 
 1) Find the 'System' page and select 'Advanced system settings'
 2) Select 'Environment Variables...'
 3) Select 'New...' to create a new system variable
-4) Enter http_proxy in the name field and and proxy configuration (see above) in the value field.
+4) Enter `http_proxy` in the name field and and proxy configuration (see above) in the value field.
 
-In Linux add the system variable to /etc/bashrc:
+In Linux add the system variable to `/etc/bashrc`:
 ~~~
     export http_proxy=user:pass@server:port
 ~~~
@@ -60,7 +60,7 @@ Windows command line:
     netsh winhttp set proxy server:port
 ~~~
 
-Configuring authentication is not supported by the netsh utility.
+Configuring authentication is not supported by the `netsh` utility.
 
 * WinINet
 
@@ -73,29 +73,29 @@ In the Windows control panel:
 Alternatively in the Windows registry, modify the 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Internet Settings' key:
 
 1) Set ProxyEnable to 1
-2) Set ProxyServer to server:port
+2) Set ProxyServer to `server:port`
 
 Configuring authentication is not supported by the Windows control panel and registry.
 
 ## PDU Version ##
 
-Libksi supports two different PDU versions for aggregation and extending messages. By default, PDU version 1 is used both for aggregation and extending.
+`libksi` supports two different PDU versions for aggregation and extending messages. By default, PDU version 1 is used both for aggregation and extending.
 If the configured aggregator or extender does not support the default PDU version, the PDU version can be changed in one of the following ways:
 
-1) Define a macro that will be used when building the libksi. The macro name must be KSI_AGGREGATION_PDU_VERSION or KSI_EXTENDING_PDU_VERSION. Possible values are KSI_PDU_VERSION_1 or KSI_PDU_VERSION_2.
+1) Define a macro that will be used when building the `libksi`. The macro name must be `KSI_AGGREGATION_PDU_VERSION` or `KSI_EXTENDING_PDU_VERSION`. Possible values are `KSI_PDU_VERSION_1` or `KSI_PDU_VERSION_2`.
 
-An example of defining the macro in WinBuild64.bat:
+An example of defining the macro in `WinBuild64.bat`:
 ~~~
 	nmake [macros...] KSI_AGGREGATION_PDU_VERSION=KSI_PDU_VERSION_2 [targets...]
 ~~~
 
-An example of defining the macro in configure.ac:
+An example of defining the macro in `configure.ac`:
 ~~~
 	AC_MSG_NOTICE([Setting extending PDU version])
 	AC_DEFINE(KSI_EXTENDING_PDU_VERSION, KSI_PDU_VERSION_2, [Setting extending PDU version to 2.])
 ~~~
 
-2) Configure the PDU versions in your application by using the KSI_CTX_setFlag() interface:
+2) Configure the PDU versions in your application by using the `KSI_CTX_setFlag()` interface:
 ~~~
 	KSI_CTX_setFlag(ksi, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_2);
 	KSI_CTX_setFlag(ksi, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
@@ -134,7 +134,7 @@ The API full reference is available here [http://guardtime.github.io/libksi/](ht
 
 ## Contributing ##
 
-See CONTRIBUTING.md file.
+See `CONTRIBUTING.md` file.
 
 ## License ##
 
@@ -144,10 +144,10 @@ See `license.txt` file.
 | Dependency        | Version                           | License type | Source                         | Notes |
 | :---              | :---                              | :---         | :---                           |:---   |
 | OpenSSL           | Latest stable for target platform | BSD          | http://www.openssl.org/        | This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).  This product includes software written by Tim Hudson (tjh@cryptsoft.com). |
-| libCurl           | Latest stable for target platform | MIT/X        | https://github.com/bagder/curl |       |
+| libcurl           | Latest stable for target platform | MIT/X        | https://github.com/bagder/curl |       |
 | Windows CryptoAPI |                                   |              |                                | Can be used as alternative to OpenSSL. Build time option. |
-| Windows WinINet   |                                   |              |                                | Can be used as alternative to libCurl. Build time option. |
-| Windows WinHTTP   |                                   |              |                                | Can be used as alternative to libCurl. Build time option. |
+| Windows WinINet   |                                   |              |                                | Can be used as alternative to libcurl. Build time option. |
+| Windows WinHTTP   |                                   |              |                                | Can be used as alternative to libcurl. Build time option. |
 | CuTest            | 1.5                               | Zlib         |                                | Required only for testing. |
 | Nginx             | n/a                               | MIT          |                                | Modified version of code based on src/http/ngx_http_parse.c from NGINX embedded in KSI code base. |
 
