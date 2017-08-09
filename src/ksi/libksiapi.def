@@ -79,6 +79,7 @@ EXPORTS
 	KSI_getHashAlgorithmByName
 	KSI_getHashLength
 	KSI_isHashAlgorithmTrusted
+	KSI_checkHashAlgorithmAt
 	KSI_isHashAlgorithmSupported
 	KSI_getHashAlgorithmName
 	KSI_DataHash_equals

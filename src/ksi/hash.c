@@ -26,7 +26,7 @@
 #include "tlv.h"
 #include "ctx_impl.h"
 
-#define HASH_ALGO(id, name, bitcount, blocksize, trusted) {(id), (name), (bitcount), (blocksize), (trusted), id##_aliases}
+#define HASH_ALGO(id, name, bitcount, blocksize, deprecatedFrom, obsoleteFrom) {(id), (name), (bitcount), (blocksize), id##_aliases, (deprecatedFrom), (obsoleteFrom)}
 
 
 
@@ -53,22 +53,25 @@ static const struct KSI_hashAlgorithmInfo_st {
 	/** Internal bit count */
 	unsigned int blockSize;
 	/** Is the hash algorithm trusted? */
-	int trusted;
-	/** Accepted aliases for this hash algorithm. */
 	char const * const *aliases;
+	/* The time the function has been marked as deprecated. */
+	time_t deprecatedFrom;
+	/* The time the function has been marked as obsolete. */
+	time_t obsoleteFrom;
 } KSI_hashAlgorithmInfo[] = {
-		HASH_ALGO(KSI_HASHALG_SHA1,			"SHA1", 		160, 512, 1),
-		HASH_ALGO(KSI_HASHALG_SHA2_256,		"SHA2-256", 	256, 512, 1),
-		HASH_ALGO(KSI_HASHALG_RIPEMD160,	"RIPEMD-160", 	160, 512, 1),
-		{0x03, NULL, 0, 0, 0, NULL}, /* Deprecated algorithm - do not reuse. */
-		HASH_ALGO(KSI_HASHALG_SHA2_384,		"SHA2-384", 	384, 1024, 1),
-		HASH_ALGO(KSI_HASHALG_SHA2_512,		"SHA2-512", 	512, 1024, 1),
-		{0x06, NULL, 0, 0, 0, NULL}, /* Deprecated algorithm - do not reuse. */
-		HASH_ALGO(KSI_HASHALG_SHA3_244,		"SHA3-224", 	224, 1152, 1),
-		HASH_ALGO(KSI_HASHALG_SHA3_256,		"SHA3-256", 	256, 1088, 1),
-		HASH_ALGO(KSI_HASHALG_SHA3_384,		"SHA3-384", 	384, 832, 1),
-		HASH_ALGO(KSI_HASHALG_SHA3_512,		"SHA3-512", 	512, 576, 1),
-		HASH_ALGO(KSI_HASHALG_SM3, 			"SM3", 			256, 512, 1)
+		/* SHA1 is deprecated as of  01.07.2016T00:00 UTC .*/
+		HASH_ALGO(KSI_HASHALG_SHA1,			"SHA1", 		160, 512, 1467331200, 0),
+		HASH_ALGO(KSI_HASHALG_SHA2_256,		"SHA2-256", 	256, 512, 0, 0),
+		HASH_ALGO(KSI_HASHALG_RIPEMD160,	"RIPEMD-160", 	160, 512, 0, 0),
+		{0x03, NULL, 0, 0, NULL, 1, 1}, /* Deprecated algorithm - do not reuse. */
+		HASH_ALGO(KSI_HASHALG_SHA2_384,		"SHA2-384", 	384, 1024, 0, 0),
+		HASH_ALGO(KSI_HASHALG_SHA2_512,		"SHA2-512", 	512, 1024, 0, 0),
+		{0x06, NULL, 0, 0, NULL, 1, 1}, /* Deprecated algorithm - do not reuse. */
+		HASH_ALGO(KSI_HASHALG_SHA3_244,		"SHA3-224", 	224, 1152, 0, 0),
+		HASH_ALGO(KSI_HASHALG_SHA3_256,		"SHA3-256", 	256, 1088, 0, 0),
+		HASH_ALGO(KSI_HASHALG_SHA3_384,		"SHA3-384", 	384, 832, 0, 0),
+		HASH_ALGO(KSI_HASHALG_SHA3_512,		"SHA3-512", 	512, 576, 0, 0),
+		HASH_ALGO(KSI_HASHALG_SM3, 			"SM3", 			256, 512, 0, 0)
 };
 
 /**
@@ -101,10 +104,35 @@ void KSI_DataHash_free(KSI_DataHash *hsh) {
  */
 int KSI_isHashAlgorithmTrusted(KSI_HashAlgorithm algo_id) {
 	if (algo_id >= 0 && algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
-		return KSI_hashAlgorithmInfo[algo_id].trusted;
+		return KSI_hashAlgorithmInfo[algo_id].obsoleteFrom == 0 && KSI_hashAlgorithmInfo[algo_id].deprecatedFrom == 0;
 	}
 	return 0;
 }
+
+/**
+ * This function will check the status of the hash algorithm at a given time.
+ * \return KSI_UNKNOWN_HASH_ALGORITHM_ID if the hash algorithm ID is invalid, or
+ *         KSI_HASH_ALGORITHM_DEPRECATED if the hash algorithm was deprecated at \c usageTime, or
+ *         KSI_HASH_ALGORITHM_OBSOLETE if the hash algorithm was obsolete at \c usageTime, and
+ *         KSI_OK otherwise.
+ */
+int KSI_checkHashAlgorithmAt(KSI_HashAlgorithm algo_id, time_t usageTime) {
+	if (algo_id > KSI_NUMBER_OF_KNOWN_HASHALGS) {
+		return KSI_UNKNOWN_HASH_ALGORITHM_ID;
+	}
+
+	if (KSI_hashAlgorithmInfo[algo_id].obsoleteFrom != 0 && KSI_hashAlgorithmInfo[algo_id].obsoleteFrom <= usageTime) {
+		return KSI_HASH_ALGORITHM_OBSOLETE;
+	}
+
+	if (KSI_hashAlgorithmInfo[algo_id].deprecatedFrom != 0 && KSI_hashAlgorithmInfo[algo_id].deprecatedFrom <= usageTime) {
+		return KSI_HASH_ALGORITHM_DEPRECATED;
+	}
+
+	return KSI_OK;
+}
+
+
 
 unsigned int KSI_getHashLength(KSI_HashAlgorithm algo_id) {
 	if (algo_id >= 0 && algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS) {

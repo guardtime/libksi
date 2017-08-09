@@ -20,6 +20,8 @@
 #ifndef KSI_HASH_H_
 #define KSI_HASH_H_
 
+#include <time.h>
+
 #include "types_base.h"
 #include "common.h"
 
@@ -282,7 +284,16 @@ extern "C" {
 	 * \return Returns 1 if algorithm is trusted, otherwise return 0.
 	 * \see #KSI_isHashAlgorithmSupported
 	 */
-	int KSI_isHashAlgorithmTrusted(KSI_HashAlgorithm algo_id);
+	KSI_FN_DEPRECATED(int KSI_isHashAlgorithmTrusted(KSI_HashAlgorithm algo_id), "Use KSI_checkHashAlgorithmAt instead.");
+
+	/**
+	 * This function will check the status of the hash algorithm at a given time.
+	 * \return KSI_UNKNOWN_HASH_ALGORITHM_ID if the hash algorithm ID is invalid, or
+	 *         KSI_HASH_ALGORITHM_DEPRECATED if the hash algorithm was deprecated at \c usageTime, or
+	 *         KSI_HASH_ALGORITHM_OBSOLETE if the hash algorithm was obsolete at \c usageTime, and
+	 *         KSI_OK otherwise.
+	 */
+	int KSI_checkHashAlgorithmAt(KSI_HashAlgorithm algo_id, time_t usageTime);
 
 	/**
 	 * Is the given hash algorithm \c hash_id supported by the API.

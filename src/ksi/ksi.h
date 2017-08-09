@@ -117,7 +117,18 @@ enum KSI_StatusCode {
 	 * The objects used are in an invalid state.
 	 */
 	KSI_INVALID_STATE = 0x10a,
-
+	/**
+	 * The hash algorithm ID is invalid or unknown to the implementation.
+	 */
+	KSI_UNKNOWN_HASH_ALGORITHM_ID = 0x10b,
+	/*
+	 * The hash algorithm has been marked as deprecated at given time.
+	 */
+	KSI_HASH_ALGORITHM_DEPRECATED = 0x10c,
+	/*
+	 * The hash algorithm has been marked as obsolete at given time.
+	 */
+	KSI_HASH_ALGORITHM_OBSOLETE = 0x10d,
 /* SYSTEM ERRORS */
 	/**
 	 * Out of memory.
