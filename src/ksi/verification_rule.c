@@ -35,23 +35,31 @@
 #define VERIFICATION_RULE_NAME __FUNCTION__
 
 #define VERIFICATION_START(step) \
+{\
 	result->stepsPerformed  |= (step); \
-	result->stepsSuccessful &= ~(step)\
+	result->stepsSuccessful &= ~(step); \
+}\
 
 #define VERIFICATION_RESULT_OK(step) \
+{\
 	result->resultCode       = KSI_VER_RES_OK; \
-	result->errorCode        = KSI_VER_ERR_NONE;\
+	result->errorCode        = KSI_VER_ERR_NONE; \
 	result->stepsSuccessful |= (step);\
-	result->ruleName         = VERIFICATION_RULE_NAME\
+	result->ruleName         = VERIFICATION_RULE_NAME; \
+}\
 
 #define VERIFICATION_RESULT_ERR(vrc, vec, step) \
-	result->resultCode       = (vrc);\
-	result->errorCode        = (vec);\
-	result->stepsFailed     |= (step);\
-	result->ruleName         = VERIFICATION_RULE_NAME\
+{\
+	result->resultCode       = (vrc); \
+	result->errorCode        = (vec); \
+	result->stepsFailed     |= (step); \
+	result->ruleName         = VERIFICATION_RULE_NAME; \
+}\
 
 #define VERIFICATION_RESULT_RULE(rule) \
-	result->ruleName         = (rule)\
+{\
+	result->ruleName         = (rule); \
+}\
 
 static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, const KSI_DataHash *hsh, const KSI_OctetString *suffix, int hsh_id, KSI_DataHash **out);
 static int rfc3161_verifyAggrTime(KSI_CTX *ctx, const KSI_Signature *sig);
@@ -3132,7 +3140,8 @@ static int extendingPermittedVerification(KSI_VerificationContext *info, KSI_Rul
 	res = KSI_OK;
 
 cleanup:
-	VERIFICATION_RESULT_RULE(rule);
+
+	if (result != NULL) VERIFICATION_RESULT_RULE(rule);
 	return res;
 }
 
