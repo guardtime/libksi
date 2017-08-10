@@ -27,6 +27,7 @@
 #include "ctx_impl.h"
 #include "pkitruststore.h"
 #include "net.h"
+#include "net_async.h"
 #include "tlv_element.h"
 #include "impl/meta_data_impl.h"
 #include "impl/meta_data_element_impl.h"
@@ -809,6 +810,57 @@ cleanup:
 	return res;
 }
 
+int pdu_verifyHmac(KSI_CTX *ctx, const KSI_DataHash *hmac, const char *key, KSI_HashAlgorithm conf_alg,
+		int (*calculateHmac)(const void*, int, const char*, KSI_DataHash**), void *pdu){
+	int res;
+	KSI_DataHash *actualHmac = NULL;
+	KSI_HashAlgorithm algo_id;
+
+	KSI_ERR_clearErrors(ctx);
+
+	if (ctx == NULL || hmac == NULL || key == NULL || calculateHmac == NULL || pdu == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_DataHash_getHashAlg(hmac, &algo_id);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* If configured, check if HMAC algorithm matches. */
+	if (conf_alg != KSI_HASHALG_INVALID && algo_id != conf_alg)	{
+		KSI_LOG_debug(ctx, "HMAC algorithm mismatch. Expected %s, received %s",
+				KSI_getHashAlgorithmName(conf_alg), KSI_getHashAlgorithmName(algo_id));
+		KSI_pushError(ctx, res = KSI_HMAC_ALGORITHM_MISMATCH, "HMAC algorithm mismatch.");
+		goto cleanup;
+	}
+
+	res = calculateHmac(pdu, algo_id, key, &actualHmac);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Check HMAC. */
+	if (!KSI_DataHash_equals(hmac, actualHmac)){
+		KSI_LOG_debug(ctx, "Verifying HMAC failed.");
+		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Calculated HMAC", actualHmac);
+		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "HMAC from response", hmac);
+		KSI_pushError(ctx, res = KSI_HMAC_MISMATCH, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_DataHash_free(actualHmac);
+
+	return res;
+}
+
 static int pdu_calculateHmac(KSI_CTX* ctx, const void* pdu,
 		int (*getHeader)(const void*, KSI_Header**),
 		int (*getResponse)(const void*, void**),
@@ -1005,6 +1057,30 @@ cleanup:
 	if (freeRawPayload) KSI_free((void *)raw_payload);
 	KSI_DataHash_free(tmp);
 
+	return res;
+}
+
+int KSI_ExtendPdu_verifyHmac(const KSI_ExtendPdu *pdu, const char *pass) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *respHmac = NULL;
+
+	res = KSI_ExtendPdu_getHmac(pdu, &respHmac);
+	if (res != KSI_OK) {
+		KSI_pushError(pdu->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = pdu_verifyHmac(pdu->ctx, respHmac, pass,
+			(KSI_HashAlgorithm)pdu->ctx->options[KSI_OPT_EXT_HMAC_ALGORITHM],
+			(int (*)(const void*, int, const char*, KSI_DataHash**))KSI_ExtendPdu_calculateHmac,
+			(void*)pdu);
+	if (res != KSI_OK) {
+		KSI_pushError(pdu->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
 	return res;
 }
 
@@ -1313,6 +1389,30 @@ int KSI_AggregationPdu_new(KSI_CTX *ctx, KSI_AggregationPdu **t) {
 	res = KSI_OK;
 cleanup:
 	KSI_AggregationPdu_free(tmp);
+	return res;
+}
+
+int KSI_AggregationPdu_verifyHmac(const KSI_AggregationPdu *pdu, const char *pass) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *respHmac = NULL;
+
+	res = KSI_AggregationPdu_getHmac(pdu, &respHmac);
+	if (res != KSI_OK) {
+		KSI_pushError(pdu->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = pdu_verifyHmac(pdu->ctx, respHmac, pass,
+			(KSI_HashAlgorithm)pdu->ctx->options[KSI_OPT_AGGR_HMAC_ALGORITHM],
+			(int (*)(const void*, int, const char*, KSI_DataHash**))KSI_AggregationPdu_calculateHmac,
+			(void*)pdu);
+	if (res != KSI_OK) {
+		KSI_pushError(pdu->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
 	return res;
 }
 

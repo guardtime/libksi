@@ -89,6 +89,7 @@ LIB_OBJ = \
 	$(OBJ_DIR)\list.obj \
 	$(OBJ_DIR)\log.obj \
 	$(OBJ_DIR)\net.obj \
+	$(OBJ_DIR)\net_async.obj \
 	$(OBJ_DIR)\net_http.obj \
 	$(OBJ_DIR)\net_uri.obj \
 	$(OBJ_DIR)\publicationsfile.obj \
@@ -120,6 +121,7 @@ INC_FILES = \
 	fast_tlv.h \
 	hmac.h \
 	net.h \
+	net_async.h \
 	types.h \
 	crc32.h \
 	net_http.h \

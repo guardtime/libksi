@@ -558,6 +558,7 @@ EXPORTS
 	KSI_MetaData_setRequestTimeInMicros
 	KSI_ExtendPdu_free
 	KSI_ExtendPdu_new
+	KSI_ExtendPdu_verifyHmac
 	KSI_ExtendPdu_calculateHmac
 	KSI_ExtendPdu_getHeader
 	KSI_ExtendPdu_getRequest
@@ -577,6 +578,7 @@ EXPORTS
 	KSI_ExtendPdu_serialize
 	KSI_AggregationPdu_free
 	KSI_AggregationPdu_new
+	KSI_AggregationPdu_verifyHmac
 	KSI_AggregationPdu_calculateHmac
 	KSI_AggregationPdu_getHeader
 	KSI_AggregationPdu_getRequest

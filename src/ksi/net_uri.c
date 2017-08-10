@@ -28,6 +28,7 @@
 #include "net_http.h"
 #include "net_file.h"
 #include "http_parser.h"
+#include "net_async.h"
 
 static int getClientByUriScheme(const char *scheme, const char **replaceScheme);
 

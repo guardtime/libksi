@@ -62,6 +62,7 @@
 #include "tlv.h"
 #include "fast_tlv.h"
 #include "types.h"
+#include "net_async.h"
 
 #define TCP_INVALID_SOCKET_FD (-1)
 #define KSI_TLV_MAX_SIZE (0xffff + 4)
@@ -549,9 +550,9 @@ static int setMaxRequestCount(TcpAsyncCtx *tcpCtx, const size_t count) {
 }
 
 static int getCredentials(TcpAsyncCtx *tcpCtx, const char **user, const char **pass) {
-	if (tcpCtx == NULL || user == NULL || pass == NULL) return KSI_INVALID_ARGUMENT;
-	*user = tcpCtx->ksi_user;
-	*pass = tcpCtx->ksi_pass;
+	if (tcpCtx == NULL) return KSI_INVALID_ARGUMENT;
+	if (user != NULL) *user = tcpCtx->ksi_user;
+	if (pass != NULL) *pass = tcpCtx->ksi_pass;
 	return KSI_OK;
 }
 
