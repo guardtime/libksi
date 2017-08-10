@@ -65,6 +65,7 @@ libksi_devel_includes="\
 	$include_dir/list.h \
 	$include_dir/log.h \
 	$include_dir/net.h \
+	$include_dir/net_async.h \
 	$include_dir/net_http.h \
 	$include_dir/net_tcp.h \
 	$include_dir/net_file.h \
@@ -100,7 +101,7 @@ make dist
 
 #Rebuild doxygen documentation
 #Check if doxygen with supported version (>=1.8.0) is installed.
-if (doxygen -v | grep -q -P -e '((^1\.([8-9]|[1-9][0-9]+))|(^[2-9]\.[0-9]+)|(^[0-9]{2,}\.[0-9]+))\.[0-9]+$') > /dev/null 2>&1 ; then 
+if (doxygen -v | grep -q -P -e '((^1\.([8-9]|[1-9][0-9]+))|(^[2-9]\.[0-9]+)|(^[0-9]{2,}\.[0-9]+))\.[0-9]+$') > /dev/null 2>&1 ; then
 	make doc
 	libksi_doc+=" doc/html/"
 else

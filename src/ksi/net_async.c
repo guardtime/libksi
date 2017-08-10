@@ -21,10 +21,8 @@
 
 #include <string.h>
 
-//#include "http_parser.h"
 #include "internal.h"
 #include "net_impl.h"
-//#include "tlv.h"
 #include "ctx_impl.h"
 
 
