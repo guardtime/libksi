@@ -381,7 +381,13 @@ int main(int argc, char **argv) {
 							goto cleanup;
 						}
 
-						fprintf(stderr, "Request failed with error: %s\n", KSI_getErrorString(err));
+						res = KSI_AsyncService_getRequestContext(as, handle, (void**)&p_name);
+						if (res != KSI_OK) {
+							fprintf(stderr, "Unable to get request state.\n");
+							goto cleanup;
+						}
+
+						fprintf(stderr, "Request for '%s' failed with error: [0x%x] %s\n", p_name, err, KSI_getErrorString(err));
 
 						res = KSI_AsyncService_recover(as, handle, KSI_ASYNC_REC_DROP);
 						if (res != KSI_OK) {

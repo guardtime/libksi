@@ -197,6 +197,7 @@ extern "C" {
 		int (*recover)(void *, KSI_AsyncHandle, int);
 		int (*getRequestState)(void *, KSI_AsyncHandle, int *);
 		int (*getRequestError)(void *, KSI_AsyncHandle, int *);
+		int (*getRequestContext)(void *, KSI_AsyncHandle, void **);
 		int (*setConnectTimeout)(void *, size_t);
 		int (*setSendTimeout)(void *, size_t);
 		int (*setReceiveTimeout)(void *, size_t);

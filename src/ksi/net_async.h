@@ -201,6 +201,15 @@ extern "C" {
 	 */
 	int KSI_AsyncService_getRequestError(KSI_AsyncService *s, KSI_AsyncHandle h, int *error);
 
+	/**
+	 * Get the request context.
+	 * \param[in]		s				Async serice instance.
+	 * \param[in]		h				Async handle.
+	 * \param[out]		ctx				Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_AsyncService_getRequestContext(KSI_AsyncService *s, KSI_AsyncHandle h, void **ctx);
+
 #define KSI_ASYNC_DEFAULT_ROUND_MAX_COUNT   (1 << 3)
 #define KSI_ASYNC_DEFAULT_PARALLEL_REQUESTS (1 << 10)
 #define KSI_ASYNC_ROUND_DURATION_SEC 1

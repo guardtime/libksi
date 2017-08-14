@@ -484,7 +484,10 @@ static int asyncClient_getResponse(KSI_AsyncClient *c, KSI_AsyncHandle handle, K
 			tmp = NULL;
 			/* Check if the response is overdue. */
 			if (difftime(time(NULL), c->reqCache[handle]->sndTime) > c->rTimeout) {
-				res = KSI_NETWORK_RECIEVE_TIMEOUT;
+				/* Just update the error state. */
+				c->reqCache[c->tail]->state = KSI_ASYNC_REQ_ERROR;
+				c->reqCache[c->tail]->error = KSI_NETWORK_RECIEVE_TIMEOUT;
+				res = KSI_OK;
 				goto cleanup;
 			}
 			break;
@@ -606,17 +609,17 @@ cleanup:
 static int asyncClient_getState(KSI_AsyncClient *c, KSI_AsyncHandle h, int *state) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	if (c == NULL) {
+	if (c == NULL || state == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	if (h >= c->maxParallelRequests || c->reqCache == NULL)  {
+	if (h >= c->maxParallelRequests || c->reqCache == NULL || c->reqCache[h] == NULL)  {
 		res = KSI_INVALID_STATE;
 		goto cleanup;
 	}
 
-	*state = (c->reqCache[h] == NULL) ? KSI_ASYNC_REQ_UNDEFINED : c->reqCache[h]->state;
+	*state = c->reqCache[h]->state;
 
 	res = KSI_OK;
 cleanup:
@@ -626,17 +629,37 @@ cleanup:
 static int asyncClient_getError(KSI_AsyncClient *c, KSI_AsyncHandle h, int *error) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	if (c == NULL) {
+	if (c == NULL || error == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	if (h >= c->maxParallelRequests || c->reqCache == NULL)  {
+	if (h >= c->maxParallelRequests || c->reqCache == NULL || c->reqCache[h] == NULL)  {
 		res = KSI_INVALID_STATE;
 		goto cleanup;
 	}
 
-	*error = (c->reqCache[h] == NULL) ? KSI_UNKNOWN_ERROR : c->reqCache[h]->error;
+	*error = c->reqCache[h]->error;
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+static int asyncClient_getReqCtx(KSI_AsyncClient *c, KSI_AsyncHandle h, void **reqCtx) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (c == NULL || reqCtx == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (h >= c->maxParallelRequests || c->reqCache == NULL || c->reqCache[h] == NULL)  {
+		res = KSI_INVALID_STATE;
+		goto cleanup;
+	}
+
+	*reqCtx = c->reqCache[h]->reqCtx;
 
 	res = KSI_OK;
 cleanup:
@@ -861,6 +884,7 @@ int KSI_SigningAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service) {
 	tmp->recover = (int (*)(void *, KSI_AsyncHandle, int))asyncClient_recover;
 	tmp->getRequestState = (int (*)(void *, KSI_AsyncHandle, int *))asyncClient_getState;
 	tmp->getRequestError = (int (*)(void *, KSI_AsyncHandle, int *))asyncClient_getError;
+	tmp->getRequestContext = (int (*)(void *, KSI_AsyncHandle, void **))asyncClient_getReqCtx;
 	tmp->setConnectTimeout = (int (*)(void *, size_t))asyncClient_setConnectTimeout;
 	tmp->setSendTimeout = (int (*)(void *, size_t))asyncClient_setSendTimeout;
 	tmp->setReceiveTimeout = (int (*)(void *, size_t))asyncClient_setReceiveTimeout;
@@ -937,6 +961,7 @@ cleanup:														\
 
 KSI_ASYNC_SERVICE_OBJ_HANDLE_IMPLEMENT_GETTER(KSI_AsyncService, RequestState, int*)
 KSI_ASYNC_SERVICE_OBJ_HANDLE_IMPLEMENT_GETTER(KSI_AsyncService, RequestError, int*)
+KSI_ASYNC_SERVICE_OBJ_HANDLE_IMPLEMENT_GETTER(KSI_AsyncService, RequestContext, void**)
 
 void KSI_AsyncRequest_free(KSI_AsyncRequest *ar) {
 	if (ar != NULL) {
