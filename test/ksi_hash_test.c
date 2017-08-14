@@ -362,13 +362,13 @@ static void TestHashGetAlgByName(CuTest* tc) {
 	CuAssert(tc, "Algorithm must be trusted", KSI_checkHashAlgorithmAt(algo, t0) == KSI_OK && KSI_checkHashAlgorithmAt(algo, t1) == KSI_OK);
 
 	CuAssertIntEquals_Msg(tc, "Sha3 algorithm", KSI_HASHALG_INVALID, algo = KSI_getHashAlgorithmByName("SHA3"));
-	CuAssert(tc, "Algorithm must be trusted", KSI_checkHashAlgorithmAt(algo, t0) == KSI_OK && KSI_checkHashAlgorithmAt(algo, t1) == KSI_OK);
+	CuAssert(tc, "Algorithm must be trusted", KSI_checkHashAlgorithmAt(algo, t0) == KSI_UNKNOWN_HASH_ALGORITHM_ID && KSI_checkHashAlgorithmAt(algo, t1) == KSI_UNKNOWN_HASH_ALGORITHM_ID);
 
 	CuAssertIntEquals_Msg(tc, "Sha3_384 algorithm", KSI_HASHALG_SHA3_384, algo = KSI_getHashAlgorithmByName("Sha3_384"));
 	CuAssert(tc, "Algorithm must be trusted", KSI_checkHashAlgorithmAt(algo, t0) == KSI_OK && KSI_checkHashAlgorithmAt(algo, t1) == KSI_OK);
 
 	CuAssertIntEquals_Msg(tc, "SHA2,SHA-2 algorithm", KSI_HASHALG_INVALID, algo = KSI_getHashAlgorithmByName("SHA2,SHA-2"));
-	CuAssert(tc, "Algorithm must be trusted", KSI_checkHashAlgorithmAt(algo, t0) == KSI_OK && KSI_checkHashAlgorithmAt(algo, t1) == KSI_OK);
+	CuAssert(tc, "Algorithm must be trusted", KSI_checkHashAlgorithmAt(algo, t0) == KSI_UNKNOWN_HASH_ALGORITHM_ID && KSI_checkHashAlgorithmAt(algo, t1) == KSI_UNKNOWN_HASH_ALGORITHM_ID);
 
 }
 

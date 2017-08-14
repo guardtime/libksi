@@ -75,7 +75,7 @@ const char *KSI_getErrorString(int statusCode) {
 		case KSI_HASH_ALGORITHM_DEPRECATED:
 			return "The hash algorithm was already deprecated at the time of use.";
 		case KSI_HASH_ALGORITHM_OBSOLETE:
-			return "The hash algorithm was already deprecated at the time of use.";
+			return "The hash algorithm was already obsolete at the time of use.";
 		case KSI_INVALID_FORMAT:
 			return "Invalid format.";
 		case KSI_UNTRUSTED_HASH_ALGORITHM:

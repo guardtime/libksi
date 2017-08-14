@@ -288,12 +288,15 @@ extern "C" {
 
 	/**
 	 * This function will check the status of the hash algorithm at a given time.
-	 * \return KSI_UNKNOWN_HASH_ALGORITHM_ID if the hash algorithm ID is invalid, or
-	 *         KSI_HASH_ALGORITHM_DEPRECATED if the hash algorithm was deprecated at \c usageTime, or
-	 *         KSI_HASH_ALGORITHM_OBSOLETE if the hash algorithm was obsolete at \c usageTime, and
-	 *         KSI_OK otherwise.
+	 * \param[in]	algo_id			Hash algorithm id.
+	 * \param[in]	used_at			UTC time when the algorithm was/is used.
+	 *
+	 * \return #KSI_UNKNOWN_HASH_ALGORITHM_ID if the hash algorithm ID is invalid, or
+	 * \return #KSI_HASH_ALGORITHM_DEPRECATED if the hash algorithm was deprecated at \c used_at, or
+	 * \return #KSI_HASH_ALGORITHM_OBSOLETE if the hash algorithm was obsolete at \c used_at, and
+	 * \return #KSI_OK otherwise.
 	 */
-	int KSI_checkHashAlgorithmAt(KSI_HashAlgorithm algo_id, time_t usageTime);
+	int KSI_checkHashAlgorithmAt(KSI_HashAlgorithm algo_id, time_t used_at);
 
 	/**
 	 * Is the given hash algorithm \c hash_id supported by the API.

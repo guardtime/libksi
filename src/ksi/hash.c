@@ -109,23 +109,16 @@ int KSI_isHashAlgorithmTrusted(KSI_HashAlgorithm algo_id) {
 	return 0;
 }
 
-/**
- * This function will check the status of the hash algorithm at a given time.
- * \return KSI_UNKNOWN_HASH_ALGORITHM_ID if the hash algorithm ID is invalid, or
- *         KSI_HASH_ALGORITHM_DEPRECATED if the hash algorithm was deprecated at \c usageTime, or
- *         KSI_HASH_ALGORITHM_OBSOLETE if the hash algorithm was obsolete at \c usageTime, and
- *         KSI_OK otherwise.
- */
-int KSI_checkHashAlgorithmAt(KSI_HashAlgorithm algo_id, time_t usageTime) {
-	if (algo_id > KSI_NUMBER_OF_KNOWN_HASHALGS) {
+int KSI_checkHashAlgorithmAt(KSI_HashAlgorithm algo_id, time_t used_at) {
+	if (algo_id >= KSI_NUMBER_OF_KNOWN_HASHALGS || algo_id == KSI_HASHALG_INVALID) {
 		return KSI_UNKNOWN_HASH_ALGORITHM_ID;
 	}
 
-	if (KSI_hashAlgorithmInfo[algo_id].obsoleteFrom != 0 && KSI_hashAlgorithmInfo[algo_id].obsoleteFrom <= usageTime) {
+	if (KSI_hashAlgorithmInfo[algo_id].obsoleteFrom != 0 && KSI_hashAlgorithmInfo[algo_id].obsoleteFrom <= used_at) {
 		return KSI_HASH_ALGORITHM_OBSOLETE;
 	}
 
-	if (KSI_hashAlgorithmInfo[algo_id].deprecatedFrom != 0 && KSI_hashAlgorithmInfo[algo_id].deprecatedFrom <= usageTime) {
+	if (KSI_hashAlgorithmInfo[algo_id].deprecatedFrom != 0 && KSI_hashAlgorithmInfo[algo_id].deprecatedFrom <= used_at) {
 		return KSI_HASH_ALGORITHM_DEPRECATED;
 	}
 
