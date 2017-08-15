@@ -25,6 +25,7 @@ int KSITest_decodeHexStr(const char *hexstr, unsigned char *buf, size_t buf_size
 int KSITest_DataHash_fromStr(KSI_CTX *ctx, const char *hexstr, KSI_DataHash **hsh);
 int KSITest_memcmp(void *ptr1, void *ptr2, size_t len);
 
+const char *KSITest_composeUri(const char *sheme, const char *host, const unsigned port, const char *user, const char *pass);
 
 #ifdef	__cplusplus
 }

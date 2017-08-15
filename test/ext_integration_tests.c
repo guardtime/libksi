@@ -22,6 +22,7 @@
 #include <ksi/net_http.h>
 #include <ksi/net_uri.h>
 #include <ksi/net.h>
+#include <ksi/net_tcp.h>
 #include "../src/ksi/internal.h"
 
 extern KSI_CTX *ctx;
@@ -30,6 +31,10 @@ extern KSITest_Conf conf;
 static void postTest(void) {
 	/* Restore default PDU version. */
 	KSI_CTX_setFlag(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
+
+	KSI_CTX_setExtender(ctx,
+			KSITest_composeUri("ksi+http", conf.extender_host, conf.extender_port, conf.extender_user, conf.extender_pass),
+			conf.extender_user, conf.extender_pass);
 }
 
 static void getExtResponse(CuTest* tc, KSI_uint64_t id, KSI_uint64_t aggrTime, KSI_uint64_t pubTime, KSI_ExtendResp **response) {
@@ -186,7 +191,9 @@ static void Test_ExtendSignatureUsingAggregator(CuTest* tc) {
 	res = KSI_CTX_setPublicationUrl(ctx, conf.publications_file_url);
 	CuAssert(tc, "Unable to set publications file url.", res == KSI_OK);
 
-	res = KSI_CTX_setExtender(ctx, conf.aggregator_url, conf.aggregator_user, conf.aggregator_pass);
+	res = KSI_CTX_setExtender(ctx,
+			KSITest_composeUri("ksi+http", conf.aggregator_host, conf.aggregator_port, conf.aggregator_user, conf.aggregator_pass),
+			conf.aggregator_user, conf.aggregator_pass);
 	CuAssert(tc, "Unable to set configure aggregator as extender.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-sig-2014-07-01.1.ksig"), &sig);
@@ -244,27 +251,61 @@ static void Test_ExtendSignature_useProvider(CuTest* tc, const char *uri_host, u
 	return;
 }
 
-static int uri_setExtWrapper(KSI_NetworkClient *client, const char *url_host, unsigned port, const char *user, const char *pass) {
-	return KSI_UriClient_setExtender(client, url_host, user, pass);
+static int uriHttp_setExtWrapper(KSI_NetworkClient *client, const char *host, unsigned port, const char *user, const char *pass) {
+	return KSI_UriClient_setExtender(client, KSITest_composeUri("ksi+http", host, port, user, pass), user, pass);
 }
 
+static int uriHttp_setExtWrapper_noCred(KSI_NetworkClient *client, const char *host, unsigned port, const char *user, const char *pass) {
+	return KSI_UriClient_setExtender(client, KSITest_composeUri("ksi+http", host, port, user, pass), NULL, NULL);
+}
+
+static int uriTcp_setExtWrapper_noCred(KSI_NetworkClient *client, const char *host, unsigned port, const char *user, const char *pass) {
+	return KSI_UriClient_setExtender(client, KSITest_composeUri("ksi+tcp", host, port, user, pass), NULL, NULL);
+}
+
+static int tcp_setExtWrapper(KSI_NetworkClient *client, const char *host, unsigned port, const char *user, const char *pass) {
+	return KSI_TcpClient_setExtender(client, host, port, user, pass);
+}
+
+
 static void Test_ExtendSignatureDifferentNetProviders(CuTest* tc) {
-	/* Uri provider. */
+	/* Uri provider HTTP. */
 	Test_ExtendSignature_useProvider(tc,
-			conf.extender_url, 0, conf.extender_user, conf.extender_pass, conf.publications_file_url,
+			conf.extender_host, conf.extender_port, conf.extender_user, conf.extender_pass, conf.publications_file_url,
 			KSI_UriClient_new,
 			KSI_UriClient_setPublicationUrl,
-			uri_setExtWrapper);
+			uriHttp_setExtWrapper);
+	return;
+}
+
+static void Test_ExtendSignatureDifferentNetProviders_Tcp(CuTest* tc) {
+
+	/* Uri provider TCP. */
+	Test_ExtendSignature_useProvider(tc,
+			conf.extender_host, conf.extender_port, conf.extender_user, conf.extender_pass, conf.publications_file_url,
+			KSI_TcpClient_new,
+			KSI_TcpClient_setPublicationUrl,
+			tcp_setExtWrapper);
 	return;
 }
 
 static void Test_ExtendSignatureUserInfoFromUrl(CuTest* tc) {
-	/* Uri provider - all inf is extracted from uri. */
+	/* Uri provider - all info is extracted from uri. */
 	Test_ExtendSignature_useProvider(tc,
-			conf.extender_url, 0, NULL, NULL, conf.publications_file_url,
+			conf.extender_host, conf.extender_port, conf.extender_user, conf.extender_pass, conf.publications_file_url,
 			KSI_UriClient_new,
 			KSI_UriClient_setPublicationUrl,
-			uri_setExtWrapper);
+			uriHttp_setExtWrapper_noCred);
+	return;
+}
+
+static void Test_ExtendSignatureUserInfoFromUrl_Tcp(CuTest* tc) {
+	/* Uri provider - all info is extracted from uri. */
+	Test_ExtendSignature_useProvider(tc,
+			conf.extender_host, conf.extender_port, conf.extender_user, conf.extender_pass, conf.publications_file_url,
+			KSI_UriClient_new,
+			KSI_UriClient_setPublicationUrl,
+			uriTcp_setExtWrapper_noCred);
 	return;
 }
 
@@ -302,7 +343,9 @@ CuSuite* ExtIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_OKExtendSignatureDefProvider);
 	SUITE_ADD_TEST(suite, Test_ExtendSignatureUsingAggregator);
 	SUITE_ADD_TEST(suite, Test_ExtendSignatureDifferentNetProviders);
+	SUITE_ADD_TEST(suite, Test_ExtendSignatureDifferentNetProviders_Tcp);
 	SUITE_ADD_TEST(suite, Test_ExtendSignatureUserInfoFromUrl);
+	SUITE_ADD_TEST(suite, Test_ExtendSignatureUserInfoFromUrl_Tcp);
 	SUITE_ADD_TEST(suite, Test_RequestExtenderConfig);
 	SUITE_ADD_TEST(suite, Test_RequestExtenderConfig_pduV2);
 

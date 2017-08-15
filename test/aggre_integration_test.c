@@ -33,6 +33,10 @@ extern KSITest_Conf conf;
 static void postTest(void) {
 	/* Restore default PDU version. */
 	KSI_CTX_setFlag(ctx, KSI_OPT_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
+
+	KSI_CTX_setAggregator(ctx,
+			KSITest_composeUri("ksi+http", conf.aggregator_host, conf.aggregator_port, conf.aggregator_user, conf.aggregator_pass),
+			conf.aggregator_user, conf.aggregator_pass);
 }
 
 static void Test_NOKAggr_TreeTooLarge(CuTest* tc) {
@@ -128,11 +132,12 @@ static void Test_TCPCreateSignatureDefaultProvider(CuTest* tc) {
 	res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), (const unsigned char*)"c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
 	CuAssert(tc, "Unable to create hash.", res == KSI_OK && hsh != NULL);
 
-	res = KSI_CTX_setAggregator(ctx, conf.tcp_url, conf.tcp_user, conf.tcp_pass);
+	res = KSI_CTX_setAggregator(ctx,
+			KSITest_composeUri("ksi+tcp", conf.aggregator_host, conf.aggregator_port, conf.aggregator_user, conf.aggregator_pass),
+			conf.aggregator_user, conf.aggregator_pass);
 	CuAssert(tc, "Unable to spoil aggregator authentication data.", res == KSI_OK);
 
 	res = KSI_Signature_sign(ctx, hsh, &sig);
-	KSI_CTX_setAggregator(ctx, conf.aggregator_url, conf.aggregator_user, conf.aggregator_pass);
 	CuAssert(tc, "Unable to create signature.", res == KSI_OK && sig != NULL);
 
 	res = KSI_verifyDataHash(ctx, sig, hsh);
@@ -154,12 +159,13 @@ static void Test_CreateSignatureWrongHMAC(CuTest* tc) {
 	res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), (const unsigned char*)"c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
 	CuAssert(tc, "Unable to create hash.", res == KSI_OK && hsh != NULL);
 
-	res = KSI_CTX_setAggregator(ctx, conf.aggregator_url, "test-test", "tset-tset");
+	res = KSI_CTX_setAggregator(ctx,
+			KSITest_composeUri("ksi+http", conf.aggregator_host, conf.aggregator_port, conf.aggregator_user, conf.aggregator_pass),
+			"test-test", "tset-tset");
 	CuAssert(tc, "Unable to spoil aggregator authentication data.", res == KSI_OK);
 
 	/*Reset old aggregator password.*/
 	res = KSI_Signature_sign(ctx, hsh, &sig);
-	KSI_CTX_setAggregator(ctx, conf.aggregator_url, conf.aggregator_user, conf.aggregator_pass);
 	CuAssert(tc, "Unable to create signature.", res == KSI_SERVICE_AUTHENTICATION_FAILURE && sig == NULL);
 
 	KSI_DataHash_free(hsh);
@@ -177,7 +183,9 @@ static void Test_CreateSignatureUsingExtender(CuTest* tc) {
 	res = KSI_CTX_new(&ctx);
 	CuAssert(tc, "Unable to create ctx.", res == KSI_OK && ctx != NULL);
 
-	res = KSI_CTX_setAggregator(ctx, conf.extender_url, conf.extender_user, conf.extender_pass);
+	res = KSI_CTX_setAggregator(ctx,
+			KSITest_composeUri("ksi+http", conf.extender_host, conf.extender_port, conf.extender_user, conf.extender_pass),
+			conf.extender_user, conf.extender_pass);
 	CuAssert(tc, "Unable to set configure extender as aggregator.", res == KSI_OK);
 
 	res = KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), (const unsigned char*)"c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, &hsh);
@@ -232,8 +240,21 @@ static void Test_CreateSignature_useProvider(CuTest* tc, const char *uri_host, u
 	return;
 }
 
-static int uri_setAggrWrapper(KSI_NetworkClient *client, const char *url_host, unsigned port, const char *user, const char *pass) {
-	return KSI_UriClient_setAggregator(client, url_host, user, pass);
+static int uriHttp_setAggrWrapper(KSI_NetworkClient *client, const char *host, unsigned port, const char *user, const char *pass) {
+	return KSI_UriClient_setAggregator(client, KSITest_composeUri("ksi+http", host, port, user, pass), user, pass);
+}
+
+
+static int uriHttp_setAggrWrapper_noCred(KSI_NetworkClient *client, const char *host, unsigned port, const char *user, const char *pass) {
+	return KSI_UriClient_setAggregator(client, KSITest_composeUri("ksi+http", host, port, user, pass), NULL, NULL);
+}
+
+static int uriTcp_setAggrWrapper(KSI_NetworkClient *client, const char *url_host, unsigned port, const char *user, const char *pass) {
+	return KSI_UriClient_setAggregator(client, KSITest_composeUri("ksi+http", url_host, port, user, pass), user, pass);
+}
+
+static int uriTcp_setAggrWrapper_noCred(KSI_NetworkClient *client, const char *url_host, unsigned port, const char *user, const char *pass) {
+	return KSI_UriClient_setAggregator(client, KSITest_composeUri("ksi+tcp", url_host, port, user, pass), NULL, NULL);
 }
 
 static int tcp_setAggrWrapper(KSI_NetworkClient *client, const char *url_host, unsigned port, const char *user, const char *pass) {
@@ -243,35 +264,35 @@ static int tcp_setAggrWrapper(KSI_NetworkClient *client, const char *url_host, u
 static void Test_CreateSignatureDifferentNetProviders(CuTest* tc) {
 	/* Tcp provider. */
 	Test_CreateSignature_useProvider(tc,
-			conf.tcp_host, conf.tcp_port, conf.tcp_user, conf.tcp_pass,
+			conf.aggregator_host, conf.aggregator_port, conf.aggregator_user, conf.aggregator_pass,
 			KSI_TcpClient_new,
 			tcp_setAggrWrapper);
 
 	/* Uri provider http. */
 	Test_CreateSignature_useProvider(tc,
-			conf.aggregator_url, 0, conf.aggregator_user, conf.aggregator_pass,
+			conf.aggregator_host, conf.aggregator_port, conf.aggregator_user, conf.aggregator_pass,
 			KSI_UriClient_new,
-			uri_setAggrWrapper);
+			uriHttp_setAggrWrapper);
 
 	/* Uri provider */
 	Test_CreateSignature_useProvider(tc,
-			conf.tcp_url, 0, conf.tcp_user, conf.tcp_pass,
+			conf.aggregator_host, conf.aggregator_port, conf.aggregator_user, conf.aggregator_pass,
 			KSI_UriClient_new,
-			uri_setAggrWrapper);
+			uriTcp_setAggrWrapper);
 	return;
 }
 
 static void Test_CreateSignatureUserInfoFromUrl(CuTest* tc) {
 	/* Uri provider - all info is extracted from uri. */
 	Test_CreateSignature_useProvider(tc,
-			conf.aggregator_url, 0, NULL, NULL,
+			conf.aggregator_host, conf.aggregator_port, conf.aggregator_user, conf.aggregator_pass,
 			KSI_UriClient_new,
-			uri_setAggrWrapper);
+			uriHttp_setAggrWrapper_noCred);
 
 	Test_CreateSignature_useProvider(tc,
-			conf.tcp_url, 0, NULL, NULL,
+			conf.aggregator_host, conf.aggregator_port, conf.aggregator_user, conf.aggregator_pass,
 			KSI_UriClient_new,
-			uri_setAggrWrapper);
+			uriTcp_setAggrWrapper_noCred);
 	return;
 }
 
@@ -289,7 +310,9 @@ static void Test_Pipelining(CuTest* tc) {
 
 	KSI_LOG_debug(ctx, "Test_Pipelining: START.");
 
-	res = KSI_CTX_setAggregator(ctx, conf.aggregator_url, conf.aggregator_user, conf.aggregator_pass);
+	res = KSI_CTX_setAggregator(ctx,
+			KSITest_composeUri("ksi+http", conf.aggregator_host, conf.aggregator_port, conf.aggregator_user, conf.aggregator_pass),
+			conf.aggregator_user, conf.aggregator_pass);
 	CuAssert(tc, "Unable to set aggregator to the http client.", res == KSI_OK);
 
 	http = ctx->netProvider;
@@ -381,7 +404,6 @@ static void Test_RequestAggregatorConfig_pduV2(CuTest* tc) {
 
 	KSI_Config_free(config);
 }
-
 
 CuSuite* AggreIntegrationTests_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();

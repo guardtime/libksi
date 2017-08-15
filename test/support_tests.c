@@ -258,3 +258,22 @@ cleanup:
 	return res;
 }
 
+const char *KSITest_composeUri(const char *sheme, const char *host, const unsigned port, const char *user, const char *pass) {
+	static char buf[2048] = {0};
+
+	int len = 0;
+
+	/* Set sheme. */
+	len = KSI_snprintf(buf, sizeof(buf), "%s://", sheme);
+	if (len == 0) return NULL;
+	/* Set credentials. */
+	if (user != NULL && pass != NULL) {
+		len += KSI_snprintf(buf + len, sizeof(buf) - len, "%s:%s@", user, pass);
+	}
+	/* Set host. */
+	len += KSI_snprintf(buf + len, sizeof(buf) - len, "%s", host);
+	/* Set port. */
+	len += KSI_snprintf(buf + len, sizeof(buf) - len, ":%u", port);
+
+	return buf;
+}

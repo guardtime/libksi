@@ -219,7 +219,9 @@ static void runTests(CuTest* tc, const char *testCsv, const char *rootPath) {
 			res = KSI_CTX_setOption(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
 			CuAssert(tc, "Unable to set PDU version.", res == KSI_OK);
 
-			res = KSI_CTX_setExtender(ctx, conf.extender_url, conf.extender_user, conf.extender_pass);
+			res = KSI_CTX_setExtender(ctx,
+					KSITest_composeUri("ksi+http", conf.extender_host, conf.extender_port, conf.extender_user, conf.extender_pass),
+					conf.extender_user, conf.extender_pass);
 			CuAssert(tc, "Unable to set extender url.", res == KSI_OK);
 		}
 
