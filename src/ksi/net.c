@@ -196,7 +196,7 @@ static int uriCompose(const char *scheme, const char *user, const char *pass, co
 	size_t count = 0;
 	//scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
 
-	if (host == NULL || (user != NULL && pass == NULL) || (pass != NULL && user == NULL)) {
+	if ((user != NULL && pass == NULL) || (pass != NULL && user == NULL)) {
 		return KSI_INVALID_ARGUMENT;
 	}
 
@@ -208,7 +208,9 @@ static int uriCompose(const char *scheme, const char *user, const char *pass, co
 		count += KSI_snprintf(buf + count, len - count, "%s:%s@", user, pass);
 	}
 
-	count += KSI_snprintf(buf + count, len - count, "%s", host);
+	if (host != NULL) {
+		count += KSI_snprintf(buf + count, len - count, "%s", host);
+	}
 
 	if (port != 0) {
 		count += KSI_snprintf(buf + count, len - count, ":%d", port);
@@ -695,6 +697,11 @@ static int pdu_verify_hmac(KSI_CTX *ctx, const KSI_DataHash *hmac, const char *k
 	res = KSI_DataHash_getHashAlg(hmac, &algo_id);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (!KSI_isHashAlgorithmTrusted(algo_id)) {
+		KSI_pushError(ctx, res = KSI_UNTRUSTED_HASH_ALGORITHM, "HMAC not trusted.");
 		goto cleanup;
 	}
 

@@ -276,15 +276,22 @@ extern "C" {
 	 *  \return Returns the size of the data block the underlying hash algorithm or 0 on errir.
 	 */
 	unsigned int KSI_HashAlgorithm_getBlockSize(KSI_HashAlgorithm algo_id);
+
 	/**
 	 * This function is used to check if the given hash algorithm is trusted. If
-	 * the hash algorithm is trusted it returns 1, in all other cases 0.
+	 * the algorithm has been marked as deprecated or obsolete, it will return 0
+	 * or otherwise 1 is returned.
+	 * \note It is not checked if the deprecated and/or obsolete dates have passed
+	 *       but operation is impossible as soon as one of the dates is set. The intention
+	 *       is to make the change apparent right after upgrading the library rather than
+	 *       wait and possibly break normal operations in an apparently arbitrary momend.
+	 *
 	 * \param[in]	algo_id			Hash algorithm id.
 	 *
 	 * \return Returns 1 if algorithm is trusted, otherwise return 0.
 	 * \see #KSI_isHashAlgorithmSupported
 	 */
-	KSI_FN_DEPRECATED(int KSI_isHashAlgorithmTrusted(KSI_HashAlgorithm algo_id), "Use KSI_checkHashAlgorithmAt instead.");
+	int KSI_isHashAlgorithmTrusted(KSI_HashAlgorithm algo_id);
 
 	/**
 	 * This function will check the status of the hash algorithm at a given time.

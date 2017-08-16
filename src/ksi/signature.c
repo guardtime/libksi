@@ -330,6 +330,7 @@ int KSI_createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, int lvl, KSI_Aggregat
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationReq *tmp = NULL;
 	KSI_Integer *level = NULL;
+	KSI_HashAlgorithm algo_id;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || hsh == NULL || request == NULL) {
@@ -340,6 +341,18 @@ int KSI_createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, int lvl, KSI_Aggregat
 	/* For now, the level may be just a single byte. */
 	if (lvl < 0 || lvl > 0xff) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Aggregation level may be only between 0x00 and 0xff");
+		goto cleanup;
+	}
+
+	/* Make sure the hash algorithm used is trusted. */
+	res = KSI_DataHash_extract(hsh, &algo_id, NULL, NULL);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (!KSI_isHashAlgorithmTrusted(algo_id)) {
+		KSI_pushError(ctx, res = KSI_UNTRUSTED_HASH_ALGORITHM, "The document hash algorithm is not trusted.");
 		goto cleanup;
 	}
 

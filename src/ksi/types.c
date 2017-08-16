@@ -1128,6 +1128,15 @@ int KSI_ExtendReq_enclose(KSI_ExtendReq *req, const char *loginId, const char *k
 
 	/* Get HMAC algorithm ID. */
 	alg_id = (KSI_HashAlgorithm)req->ctx->options[KSI_OPT_EXT_HMAC_ALGORITHM];
+	if (alg_id == KSI_HASHALG_INVALID) {
+		KSI_pushError(req->ctx, res = KSI_INVALID_STATE, "Extender HMAC algorithm not configured.");
+		goto cleanup;
+	}
+
+	if (!KSI_isHashAlgorithmTrusted(alg_id)) {
+		KSI_pushError(req->ctx, res = KSI_UNTRUSTED_HASH_ALGORITHM, "Extender HMAC algorithm not trusted.");
+		goto cleanup;
+	}
 
 	/* Create and append initial empty HMAC. */
 	res = KSI_DataHash_createZero(req->ctx, alg_id, &hash);
@@ -1436,6 +1445,15 @@ int KSI_AggregationReq_enclose(KSI_AggregationReq *req, const char *loginId, con
 
 	/* Get HMAC algorithm ID. */
 	alg_id = (KSI_HashAlgorithm)req->ctx->options[KSI_OPT_AGGR_HMAC_ALGORITHM];
+	if (alg_id == KSI_HASHALG_INVALID) {
+		KSI_pushError(req->ctx, res = KSI_INVALID_STATE, "Aggregation HMAC algorithm not configured.");
+		goto cleanup;
+	}
+
+	if (!KSI_isHashAlgorithmTrusted(alg_id)) {
+		KSI_pushError(req->ctx, res = KSI_UNTRUSTED_HASH_ALGORITHM, "Aggregation HMAC algorithm not trusted.");
+		goto cleanup;
+	}
 
 	/* Create and append initial empty HMAC. */
 	res = KSI_DataHash_createZero(req->ctx, alg_id, &hash);
