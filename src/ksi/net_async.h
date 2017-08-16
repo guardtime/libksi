@@ -153,10 +153,13 @@ extern "C" {
 	 * \param[out]		handle			Async handle associated with a request.
 	 * \param[out]		waiting			Total number of requests in process.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note The \c waiting count can be ignored by setting it to NULL.
 	 * \see #KSI_AsyncService_addRequest for adding asynchronous request to the output queue.
 	 * \see #KSI_AsyncService_getResponse for reading received responses.
 	 * \see #KSI_AsyncService_getRequestState for getting the state of the request.
 	 * \see #KSI_AsyncService_recover for request recovery options.
+	 * \see #KSI_AsyncService_getPendingCount for requests in process.
+	 * \see #KSI_AsyncService_getReceivedCount for received responses.
 	 */
 	int KSI_AsyncService_run(KSI_AsyncService *service, KSI_AsyncHandle *handle, size_t *waiting);
 
@@ -209,6 +212,24 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_AsyncService_getRequestContext(KSI_AsyncService *s, KSI_AsyncHandle h, void **ctx);
+
+	/**
+	 * Get the number of request that have been sent, or still in send queue.
+	 * \param[in]		s				Async serice instance.
+	 * \param[in]		h				Async handle.
+	 * \param[out]		count
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_AsyncService_getPendingCount(KSI_AsyncService *s, size_t *count);
+
+	/**
+	 * Get the number of request that have received a response.
+	 * \param[in]		s				Async serice instance.
+	 * \param[in]		h				Async handle.
+	 * \param[out]		count
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_AsyncService_getReceivedCount(KSI_AsyncService *s, size_t *count);
 
 #define KSI_ASYNC_DEFAULT_ROUND_MAX_COUNT   (1 << 3)
 #define KSI_ASYNC_DEFAULT_PARALLEL_REQUESTS (1 << 10)

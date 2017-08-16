@@ -193,11 +193,14 @@ extern "C" {
 		int (*responseHandler)(void *);
 
 		int (*run)(void *, int (*)(void *), KSI_AsyncHandle *, size_t *);
-
 		int (*recover)(void *, KSI_AsyncHandle, int);
+
 		int (*getRequestState)(void *, KSI_AsyncHandle, int *);
 		int (*getRequestError)(void *, KSI_AsyncHandle, int *);
 		int (*getRequestContext)(void *, KSI_AsyncHandle, void **);
+		int (*getPendingCount)(void *, size_t *);
+		int (*getReceivedCount)(void *, size_t *);
+
 		int (*setConnectTimeout)(void *, size_t);
 		int (*setSendTimeout)(void *, size_t);
 		int (*setReceiveTimeout)(void *, size_t);

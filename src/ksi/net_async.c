@@ -666,6 +666,36 @@ cleanup:
 	return res;
 }
 
+int asyncClient_getPendingCount(KSI_AsyncClient *c, size_t *count) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (c == NULL || count == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	*count = c->pending;
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+int asyncClient_getReceivedCount(KSI_AsyncClient *c, size_t *count) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (c == NULL || count == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	*count = c->received;
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
 static int asyncClient_recover(KSI_AsyncClient *c, KSI_AsyncHandle h, int policy) {
 	int res = KSI_UNKNOWN_ERROR;
 	int state;
@@ -882,9 +912,13 @@ int KSI_SigningAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service) {
 
 	tmp->run = (int (*)(void *, int (*)(void *), KSI_AsyncHandle *, size_t *))asyncClient_run;
 	tmp->recover = (int (*)(void *, KSI_AsyncHandle, int))asyncClient_recover;
+
 	tmp->getRequestState = (int (*)(void *, KSI_AsyncHandle, int *))asyncClient_getState;
 	tmp->getRequestError = (int (*)(void *, KSI_AsyncHandle, int *))asyncClient_getError;
 	tmp->getRequestContext = (int (*)(void *, KSI_AsyncHandle, void **))asyncClient_getReqCtx;
+	tmp->getPendingCount = (int (*)(void *, size_t *))asyncClient_getPendingCount;
+	tmp->getReceivedCount = (int (*)(void *, size_t *))asyncClient_getReceivedCount;
+
 	tmp->setConnectTimeout = (int (*)(void *, size_t))asyncClient_setConnectTimeout;
 	tmp->setSendTimeout = (int (*)(void *, size_t))asyncClient_setSendTimeout;
 	tmp->setReceiveTimeout = (int (*)(void *, size_t))asyncClient_setReceiveTimeout;
@@ -962,6 +996,21 @@ cleanup:														\
 KSI_ASYNC_SERVICE_OBJ_HANDLE_IMPLEMENT_GETTER(KSI_AsyncService, RequestState, int*)
 KSI_ASYNC_SERVICE_OBJ_HANDLE_IMPLEMENT_GETTER(KSI_AsyncService, RequestError, int*)
 KSI_ASYNC_SERVICE_OBJ_HANDLE_IMPLEMENT_GETTER(KSI_AsyncService, RequestContext, void**)
+
+#define KSI_ASYNC_SERVICE_OBJ_IMPLEMENT_GETTER(obj, name, type)	\
+int obj##_get##name(obj *s, type val) {							\
+	int res = KSI_UNKNOWN_ERROR;								\
+	if (s == NULL || s->impl == NULL || s->get##name == NULL) {	\
+		res = KSI_INVALID_ARGUMENT;								\
+		goto cleanup;											\
+	}															\
+	res = s->get##name(s->impl, val);							\
+cleanup:														\
+	return res;													\
+}
+
+KSI_ASYNC_SERVICE_OBJ_IMPLEMENT_GETTER(KSI_AsyncService, PendingCount, size_t*)
+KSI_ASYNC_SERVICE_OBJ_IMPLEMENT_GETTER(KSI_AsyncService, ReceivedCount, size_t*)
 
 void KSI_AsyncRequest_free(KSI_AsyncRequest *ar) {
 	if (ar != NULL) {

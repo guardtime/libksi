@@ -1321,11 +1321,16 @@ int KSI_AsyncService_construct(KSI_CTX *ctx, KSI_AsyncService **service) {
 	tmp->addRequest = NULL;
 	tmp->getResponse = NULL;
 	tmp->responseHandler = NULL;
+
 	tmp->run = NULL;
 	tmp->recover = NULL;
+
 	tmp->getRequestState = NULL;
 	tmp->getRequestError = NULL;
 	tmp->getRequestContext = NULL;
+	tmp->getPendingCount = NULL;
+	tmp->getReceivedCount = NULL;
+
 	tmp->setConnectTimeout = NULL;
 	tmp->setSendTimeout = NULL;
 	tmp->setReceiveTimeout = NULL;
