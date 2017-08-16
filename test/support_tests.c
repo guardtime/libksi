@@ -17,16 +17,17 @@
  * reserves and retains all trademark rights.
  */
 
-#include<stdio.h>
-#include<string.h>
-#include<ctype.h>
-#include<stdlib.h>
-
-
 #include "support_tests.h"
-#include "ksi/ksi.h"
-#include "ksi/net_uri.h"
-#include "ksi/compatibility.h"
+
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include <stdlib.h>
+
+#include <ksi/ksi.h>
+#include <ksi/net_uri.h>
+#include <ksi/compatibility.h>
+
 #include "../src/ksi/ctx_impl.h"
 
 
@@ -258,22 +259,26 @@ cleanup:
 	return res;
 }
 
-const char *KSITest_composeUri(const char *sheme, const char *host, const unsigned port, const char *user, const char *pass) {
+const char *KSITest_composeUri(const char *scheme, const KSITest_ServiceConf *service) {
 	static char buf[2048] = {0};
 
-	int len = 0;
+	size_t len = 0;
+	size_t c = 0;
 
-	/* Set sheme. */
-	len = KSI_snprintf(buf, sizeof(buf), "%s://", sheme);
-	if (len == 0) return NULL;
+	/* Set scheme. */
+	c = KSI_snprintf(buf, sizeof(buf), "%s://", scheme);
+	if (c == 0) return NULL; else len += c;
 	/* Set credentials. */
-	if (user != NULL && pass != NULL) {
-		len += KSI_snprintf(buf + len, sizeof(buf) - len, "%s:%s@", user, pass);
+	if (service->user != NULL && service->pass != NULL) {
+		c = KSI_snprintf(buf + len, sizeof(buf) - len, "%s:%s@", service->user, service->pass);
+		if (c == 0) return NULL; else len += c;
 	}
 	/* Set host. */
-	len += KSI_snprintf(buf + len, sizeof(buf) - len, "%s", host);
+	c = KSI_snprintf(buf + len, sizeof(buf) - len, "%s", service->host);
+	if (c == 0) return NULL; else len += c;
 	/* Set port. */
-	len += KSI_snprintf(buf + len, sizeof(buf) - len, ":%u", port);
+	c = KSI_snprintf(buf + len, sizeof(buf) - len, ":%u", service->port);
+	if (c == 0) return NULL; else len += c;
 
 	return buf;
 }

@@ -83,12 +83,8 @@ static int RunAllTests() {
 	KSI_CTX_setLoggerCallback(ctx, KSI_LOG_StreamLogger, logFile);
 	KSI_CTX_setLogLevel(ctx, KSI_LOG_DEBUG);
 
-	KSI_CTX_setAggregator(ctx,
-			KSITest_composeUri("ksi+http", conf.aggregator_host, conf.aggregator_port, conf.aggregator_user, conf.aggregator_pass),
-			conf.aggregator_user, conf.aggregator_pass);
-	KSI_CTX_setExtender(ctx,
-			KSITest_composeUri("ksi+http", conf.extender_host, conf.extender_port, conf.extender_user, conf.extender_pass),
-			conf.extender_user, conf.extender_pass);
+	KSI_CTX_setAggregator(ctx, KSITest_composeUri("ksi+http", &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
+	KSI_CTX_setExtender(ctx, KSITest_composeUri("ksi+http", &conf.extender), conf.extender.user, conf.extender.pass);
 	KSI_CTX_setConnectionTimeoutSeconds(ctx, 30);
 	KSI_CTX_setTransferTimeoutSeconds(ctx, 30);
 

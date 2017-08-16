@@ -64,17 +64,17 @@ static void conf_append(KSITest_Conf *conf, const char *param, const char *value
 	char *oid_value = NULL;
 
 
-	CONF_str_cpy(extender_host, param, value);
-	CONF_str_cpy(extender_pass, param, value);
-	CONF_str_cpy(extender_user, param, value);
+	CONF_str_cpy(extender.host, param, value);
+	CONF_str_cpy(extender.pass, param, value);
+	CONF_str_cpy(extender.user, param, value);
 
-	CONF_int_set(extender_port, param, value);
+	CONF_int_set(extender.port, param, value);
 
-	CONF_str_cpy(aggregator_host, param, value);
-	CONF_str_cpy(aggregator_pass, param, value);
-	CONF_str_cpy(aggregator_user, param, value);
+	CONF_str_cpy(aggregator.host, param, value);
+	CONF_str_cpy(aggregator.pass, param, value);
+	CONF_str_cpy(aggregator.user, param, value);
 
-	CONF_int_set(aggregator_port, param, value);
+	CONF_int_set(aggregator.port, param, value);
 
 	CONF_str_cpy(publications_file_url, param, value);
 
@@ -119,15 +119,15 @@ static void conf_append(KSITest_Conf *conf, const char *param, const char *value
 static void conf_clear(KSITest_Conf *conf) {
 	unsigned int i;
 
-	conf->aggregator_host[0] = '\0';
-	conf->aggregator_port = 0;
-	conf->aggregator_pass[0] = '\0';
-	conf->aggregator_user[0] = '\0';
+	conf->aggregator.host[0] = '\0';
+	conf->aggregator.port = 0;
+	conf->aggregator.pass[0] = '\0';
+	conf->aggregator.user[0] = '\0';
 
-	conf->extender_host[0] = '\0';
-	conf->extender_port = 0;
-	conf->extender_pass[0] = '\0';
-	conf->extender_user[0] = '\0';
+	conf->extender.host[0] = '\0';
+	conf->extender.port = 0;
+	conf->extender.pass[0] = '\0';
+	conf->extender.user[0] = '\0';
 
 	conf->publications_file_url[0] = '\0';
 	conf->publications_file_cnstr[0] = '\0';
@@ -180,15 +180,15 @@ static int isUserInfoInsideUrl(const char *url) {
 static int conf_control(KSITest_Conf *conf) {
 	int res = 0;
 
-	CONF_CONTROL_STR(conf, aggregator_host, res);
-	CONF_CONTROL_STR(conf, aggregator_pass, res);
-	CONF_CONTROL_STR(conf, aggregator_user, res);
-	CONF_CONTROL_INT(conf, aggregator_port, res);
+	CONF_CONTROL_STR(conf, aggregator.host, res);
+	CONF_CONTROL_STR(conf, aggregator.pass, res);
+	CONF_CONTROL_STR(conf, aggregator.user, res);
+	CONF_CONTROL_INT(conf, aggregator.port, res);
 
-	CONF_CONTROL_STR(conf, extender_host, res);
-	CONF_CONTROL_STR(conf, extender_pass, res);
-	CONF_CONTROL_STR(conf, extender_user, res);
-	CONF_CONTROL_INT(conf, extender_port, res);
+	CONF_CONTROL_STR(conf, extender.host, res);
+	CONF_CONTROL_STR(conf, extender.pass, res);
+	CONF_CONTROL_STR(conf, extender.user, res);
+	CONF_CONTROL_INT(conf, extender.port, res);
 
 	CONF_CONTROL_STR(conf, publications_file_url, res);
 
