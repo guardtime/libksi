@@ -2,8 +2,10 @@
 #define	SUPPORT_TESTS_H
 
 #include "cutest/CuTest.h"
-#include "ksi/types_base.h"
-#include "ksi/hash.h"
+#include "test_conf.h"
+
+#include <ksi/types_base.h>
+#include <ksi/hash.h>
 
 #ifdef	__cplusplus
 extern "C" {
@@ -25,6 +27,7 @@ int KSITest_decodeHexStr(const char *hexstr, unsigned char *buf, size_t buf_size
 int KSITest_DataHash_fromStr(KSI_CTX *ctx, const char *hexstr, KSI_DataHash **hsh);
 int KSITest_memcmp(void *ptr1, void *ptr2, size_t len);
 
+const char *KSITest_composeUri(const char *scheme, const KSITest_ServiceConf *service);
 
 #ifdef	__cplusplus
 }

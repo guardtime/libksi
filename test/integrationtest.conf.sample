@@ -1,20 +1,15 @@
 #Extender info
-extender_url=<url>
-extender_user=<user>
-extender_pass=<pass>
+extender.host=<host>
+extender.port=<port>
+extender.user=<user>
+extender.pass=<pass>
 
 #Aggregator info
-aggregator_url=<scheme>://<user>:<pass>@<host>
-aggregator_user=<user>
-aggregator_pass=<pass>
+aggregator.host=<host>
+aggregator.port=<port>
+aggregator.user=<user>
+aggregator.pass=<pass>
 
 #Pubfile info
 publications_file_url=<scheme>://<user>:<pass>@<host>
 publications_file_cnstr=1.2.840.113549.1.9.1=publications@guardtime.com
-
-#TCP info
-tcp_url=ksi+tcp://<user>:<pass>@<host>:<port>
-tcp_host=<host>
-tcp_port=<port>
-tcp_user=<user>
-tcp_pass=<pass>
