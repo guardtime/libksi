@@ -17,6 +17,7 @@
  * reserves and retains all trademark rights.
  */
 
+#include <string.h>
 #include "cutest/CuTest.h"
 #include "all_integration_tests.h"
 #include <ksi/net_http.h>
@@ -31,8 +32,6 @@ extern KSITest_Conf conf;
 static void postTest(void) {
 	/* Restore default PDU version. */
 	KSI_CTX_setFlag(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
-
-	KSI_CTX_setExtender(ctx, KSITest_composeUri("ksi+http", &conf.extender), conf.extender.user, conf.extender.pass);
 }
 
 static void getExtResponse(CuTest* tc, KSI_uint64_t id, KSI_uint64_t aggrTime, KSI_uint64_t pubTime, KSI_ExtendResp **response) {
@@ -98,12 +97,16 @@ static void getExtResponse(CuTest* tc, KSI_uint64_t id, KSI_uint64_t aggrTime, K
 	KSI_RequestHandle_free(handle);
 }
 
-static void Test_SendOKExtendRequestDefProvider(CuTest* tc) {
+static void sendOKExtendRequestDefProvider(CuTest* tc, const char *scheme) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ExtendResp *response = NULL;
 	KSI_Integer *resp_status = NULL;
 
+	KSI_LOG_debug(ctx, "%s: %s", __FUNCTION__, scheme);
 	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_setExtender(ctx, KSITest_composeUri(scheme, &conf.extender), conf.extender.user, conf.extender.pass);
+	CuAssert(tc, "Unable to set configure aggregator as extender.", res == KSI_OK);
 
 	getExtResponse(tc, 0x01, 1435740789, 1435827189, &response);
 	CuAssert(tc, "Unable to send (prepare) sign request.", response != NULL);
@@ -118,10 +121,24 @@ static void Test_SendOKExtendRequestDefProvider(CuTest* tc) {
 	return;
 }
 
-static void Test_OKExtendSignatureDefProvider(CuTest* tc) {
+static void Test_SendOKExtendRequestDefProvider_http(CuTest* tc) {
+	sendOKExtendRequestDefProvider(tc, TEST_SCHEME_HTTP);
+}
+
+static void Test_SendOKExtendRequestDefProvider_tcp(CuTest* tc) {
+	sendOKExtendRequestDefProvider(tc, TEST_SCHEME_TCP);
+}
+
+static void okExtendSignatureDefProvider(CuTest* tc, const char *scheme) {
 	int res;
 	KSI_Signature *sig = NULL;
 	KSI_Signature *ext = NULL;
+
+	KSI_LOG_debug(ctx, "%s: %s", __FUNCTION__, scheme);
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_setExtender(ctx, KSITest_composeUri(scheme, &conf.extender), conf.extender.user, conf.extender.pass);
+	CuAssert(tc, "Unable to set configure aggregator as extender.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-sig-2014-07-01.1.ksig"), &sig);
 	CuAssert(tc, "Unable to read signature frome file.", res == KSI_OK && sig != NULL);
@@ -138,12 +155,25 @@ static void Test_OKExtendSignatureDefProvider(CuTest* tc) {
 	KSI_Signature_free(ext);
 }
 
-static void Test_NOKExtendRequestToTheFuture(CuTest* tc) {
+static void Test_OKExtendSignatureDefProvider_http(CuTest* tc) {
+	okExtendSignatureDefProvider(tc, TEST_SCHEME_HTTP);
+}
+
+static void Test_OKExtendSignatureDefProvider_tcp(CuTest* tc) {
+	okExtendSignatureDefProvider(tc, TEST_SCHEME_TCP);
+}
+
+static void nokExtendRequestToTheFuture(CuTest* tc, const char *scheme) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ExtendResp *response = NULL;
 	KSI_Integer *resp_status = NULL;
 
+	KSI_LOG_debug(ctx, "%s: %s", __FUNCTION__, scheme);
 	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_setExtender(ctx, KSITest_composeUri(scheme, &conf.extender), conf.extender.user, conf.extender.pass);
+	CuAssert(tc, "Unable to set configure aggregator as extender.", res == KSI_OK);
+
 	getExtResponse(tc, 0x01, 1435740789, 2435827189, &response);
 	CuAssert(tc, "Unable to send (prepare) sign request.", response != NULL);
 
@@ -151,18 +181,30 @@ static void Test_NOKExtendRequestToTheFuture(CuTest* tc) {
 	CuAssert(tc, "Unable to get response status.", res == KSI_OK && resp_status != NULL);
 	CuAssert(tc, "Wrong error.", KSI_Integer_equalsUInt(resp_status, 0x107));
 
-
 	KSI_ExtendResp_free(response);
 
 	return;
 }
 
-static void Test_NOKExtendRequestToPast(CuTest* tc) {
+static void Test_NOKExtendRequestToTheFuture_http(CuTest* tc) {
+	nokExtendRequestToTheFuture(tc, TEST_SCHEME_HTTP);
+}
+
+static void Test_NOKExtendRequestToTheFuture_tcp(CuTest* tc) {
+	nokExtendRequestToTheFuture(tc, TEST_SCHEME_TCP);
+}
+
+static void nokExtendRequestToPast(CuTest* tc, const char *scheme) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_ExtendResp *response = NULL;
 	KSI_Integer *resp_status = NULL;
 
+	KSI_LOG_debug(ctx, "%s: %s", __FUNCTION__, scheme);
 	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_setExtender(ctx, KSITest_composeUri(scheme, &conf.extender), conf.extender.user, conf.extender.pass);
+	CuAssert(tc, "Unable to set configure aggregator as extender.", res == KSI_OK);
+
 	getExtResponse(tc, 0x01, 2435827189, 1435740789, &response);
 	CuAssert(tc, "Unable to send (prepare) sign request.", response != NULL);
 
@@ -176,20 +218,23 @@ static void Test_NOKExtendRequestToPast(CuTest* tc) {
 	return;
 }
 
-static void Test_ExtendSignatureUsingAggregator(CuTest* tc) {
+static void Test_NOKExtendRequestToPast_http(CuTest* tc) {
+	nokExtendRequestToPast(tc, TEST_SCHEME_HTTP);
+}
+
+static void Test_NOKExtendRequestToPast_tcp(CuTest* tc) {
+	nokExtendRequestToPast(tc, TEST_SCHEME_TCP);
+}
+
+static void extendSignatureUsingAggregator(CuTest* tc, const char *scheme) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Signature *sig = NULL;
 	KSI_Signature *ext = NULL;
-	KSI_CTX *ctx = NULL;
-
-	/* Create the context. */
-	res = KSI_CTX_new(&ctx);
-	CuAssert(tc, "Unable to create ctx.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_CTX_setPublicationUrl(ctx, conf.publications_file_url);
 	CuAssert(tc, "Unable to set publications file url.", res == KSI_OK);
 
-	res = KSI_CTX_setExtender(ctx, KSITest_composeUri("ksi+http", &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
+	res = KSI_CTX_setExtender(ctx, KSITest_composeUri(scheme, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
 	CuAssert(tc, "Unable to set configure aggregator as extender.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath("resource/tlv/ok-sig-2014-07-01.1.ksig"), &sig);
@@ -197,14 +242,26 @@ static void Test_ExtendSignatureUsingAggregator(CuTest* tc) {
 
 	res = KSI_Signature_extend(sig, ctx, NULL, &ext);
 	CuAssert(tc, "The extending of signature must fail.", ext == NULL);
-	CuAssert(tc, "Invalid KSI status code for mixed up request.", res == KSI_HTTP_ERROR);
-	CuAssert(tc, "External error (HTTP) must be 400.", ctx_get_base_external_error(ctx) == 400);
-
+	if (strcmp(scheme, TEST_SCHEME_HTTP) == 0) {
+		CuAssert(tc, "Invalid KSI status code for mixed up request.", res == KSI_HTTP_ERROR);
+		CuAssert(tc, "External error (HTTP) must be 400.", ctx_get_base_external_error(ctx) == 400);
+	} else if (strcmp(scheme, TEST_SCHEME_TCP) == 0) {
+		CuAssert(tc, "Invalid KSI status code for mixed up request.", res == KSI_INVALID_FORMAT);
+	} else {
+		CuFail(tc, "Unknown transport protocol.");
+	}
 
 	KSI_Signature_free(sig);
 	KSI_Signature_free(ext);
-	KSI_CTX_free(ctx);
 	return;
+}
+
+static void Test_ExtendSignatureUsingAggregator_http(CuTest* tc) {
+	extendSignatureUsingAggregator(tc, TEST_SCHEME_HTTP);
+}
+
+static void Test_ExtendSignatureUsingAggregator_tcp(CuTest* tc) {
+	extendSignatureUsingAggregator(tc, TEST_SCHEME_TCP);
 }
 
 static void Test_ExtendSignature_useProvider(CuTest* tc, const KSITest_ServiceConf *service, const char *pub_uri,
@@ -248,15 +305,15 @@ static void Test_ExtendSignature_useProvider(CuTest* tc, const KSITest_ServiceCo
 }
 
 static int uriHttp_setExtWrapper(KSI_NetworkClient *client, const KSITest_ServiceConf *service) {
-	return KSI_UriClient_setExtender(client, KSITest_composeUri("ksi+http", service), service->user, service->pass);
+	return KSI_UriClient_setExtender(client, KSITest_composeUri(TEST_SCHEME_HTTP, service), service->user, service->pass);
 }
 
 static int uriHttp_setExtWrapper_noCred(KSI_NetworkClient *client, const KSITest_ServiceConf *service) {
-	return KSI_UriClient_setExtender(client, KSITest_composeUri("ksi+http", service), NULL, NULL);
+	return KSI_UriClient_setExtender(client, KSITest_composeUri(TEST_SCHEME_HTTP, service), NULL, NULL);
 }
 
 static int uriTcp_setExtWrapper_noCred(KSI_NetworkClient *client, const KSITest_ServiceConf *service) {
-	return KSI_UriClient_setExtender(client, KSITest_composeUri("ksi+tcp", service), NULL, NULL);
+	return KSI_UriClient_setExtender(client, KSITest_composeUri(TEST_SCHEME_TCP, service), NULL, NULL);
 }
 
 static int tcp_setExtWrapper(KSI_NetworkClient *client, const KSITest_ServiceConf *service) {
@@ -264,7 +321,7 @@ static int tcp_setExtWrapper(KSI_NetworkClient *client, const KSITest_ServiceCon
 }
 
 
-static void Test_ExtendSignatureDifferentNetProviders(CuTest* tc) {
+static void Test_ExtendSignatureDifferentNetProviders_http(CuTest* tc) {
 	/* Uri provider HTTP. */
 	Test_ExtendSignature_useProvider(tc, &conf.extender, conf.publications_file_url,
 			KSI_UriClient_new,
@@ -273,8 +330,7 @@ static void Test_ExtendSignatureDifferentNetProviders(CuTest* tc) {
 	return;
 }
 
-static void Test_ExtendSignatureDifferentNetProviders_Tcp(CuTest* tc) {
-
+static void Test_ExtendSignatureDifferentNetProviders_tcp(CuTest* tc) {
 	/* Uri provider TCP. */
 	Test_ExtendSignature_useProvider(tc, &conf.extender, conf.publications_file_url,
 			KSI_TcpClient_new,
@@ -283,7 +339,7 @@ static void Test_ExtendSignatureDifferentNetProviders_Tcp(CuTest* tc) {
 	return;
 }
 
-static void Test_ExtendSignatureUserInfoFromUrl(CuTest* tc) {
+static void Test_ExtendSignatureUserInfoFromUrl_http(CuTest* tc) {
 	/* Uri provider - all info is extracted from uri. */
 	Test_ExtendSignature_useProvider(tc, &conf.extender, conf.publications_file_url,
 			KSI_UriClient_new,
@@ -292,7 +348,7 @@ static void Test_ExtendSignatureUserInfoFromUrl(CuTest* tc) {
 	return;
 }
 
-static void Test_ExtendSignatureUserInfoFromUrl_Tcp(CuTest* tc) {
+static void Test_ExtendSignatureUserInfoFromUrl_tcp(CuTest* tc) {
 	/* Uri provider - all info is extracted from uri. */
 	Test_ExtendSignature_useProvider(tc, &conf.extender, conf.publications_file_url,
 			KSI_UriClient_new,
@@ -301,9 +357,15 @@ static void Test_ExtendSignatureUserInfoFromUrl_Tcp(CuTest* tc) {
 	return;
 }
 
-static void Test_RequestExtenderConfig(CuTest* tc) {
+static void requestExtenderConfig(CuTest* tc, const char *scheme) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Config *config = NULL;
+
+	KSI_LOG_debug(ctx, "%s: %s", __FUNCTION__, scheme);
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_setExtender(ctx, KSITest_composeUri(scheme, &conf.extender), conf.extender.user, conf.extender.pass);
+	CuAssert(tc, "Unable to set configure aggregator as extender.", res == KSI_OK);
 
 	KSI_CTX_setFlag(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_PDU_VERSION_1);
 
@@ -311,9 +373,23 @@ static void Test_RequestExtenderConfig(CuTest* tc) {
 	CuAssert(tc, "Unable to receive extender config.", res == KSI_UNSUPPORTED_PDU_VERSION && config == NULL);
 }
 
-static void Test_RequestExtenderConfig_pduV2(CuTest* tc) {
+static void Test_RequestExtenderConfig_http(CuTest* tc) {
+	requestExtenderConfig(tc, TEST_SCHEME_HTTP);
+}
+
+static void Test_RequestExtenderConfig_tcp(CuTest* tc) {
+	requestExtenderConfig(tc, TEST_SCHEME_TCP);
+}
+
+static void requestExtenderConfig_pduV2(CuTest* tc, const char *scheme) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Config *config = NULL;
+
+	KSI_LOG_debug(ctx, "%s: %s", __FUNCTION__, scheme);
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_setExtender(ctx, KSITest_composeUri(scheme, &conf.extender), conf.extender.user, conf.extender.pass);
+	CuAssert(tc, "Unable to set configure aggregator as extender.", res == KSI_OK);
 
 	KSI_CTX_setFlag(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
 
@@ -323,25 +399,38 @@ static void Test_RequestExtenderConfig_pduV2(CuTest* tc) {
 	KSI_Config_free(config);
 }
 
+static void Test_RequestExtenderConfig_pduV2_http(CuTest* tc) {
+	requestExtenderConfig_pduV2(tc, TEST_SCHEME_HTTP);
+}
+
+static void Test_RequestExtenderConfig_pduV2_tcp(CuTest* tc) {
+	requestExtenderConfig_pduV2(tc, TEST_SCHEME_TCP);
+}
 
 CuSuite* ExtIntegrationTests_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
 	suite->postTest = postTest;
 
-	SUITE_ADD_TEST(suite, Test_SendOKExtendRequestDefProvider);
-	SUITE_ADD_TEST(suite, Test_NOKExtendRequestToTheFuture);
-	SUITE_ADD_TEST(suite, Test_NOKExtendRequestToPast);
-	SUITE_ADD_TEST(suite, Test_OKExtendSignatureDefProvider);
-	SUITE_ADD_TEST(suite, Test_ExtendSignatureUsingAggregator);
-	SUITE_ADD_TEST(suite, Test_ExtendSignatureDifferentNetProviders);
-	SUITE_SKIP_TEST(suite, Test_ExtendSignatureDifferentNetProviders_Tcp, "Max", "Waiting for gateway release.");
-	SUITE_ADD_TEST(suite, Test_ExtendSignatureUserInfoFromUrl);
-	SUITE_SKIP_TEST(suite, Test_ExtendSignatureUserInfoFromUrl_Tcp, "Max", "Waiting for gateway release.");
-	SUITE_ADD_TEST(suite, Test_RequestExtenderConfig);
-	SUITE_ADD_TEST(suite, Test_RequestExtenderConfig_pduV2);
+	SUITE_ADD_TEST(suite, Test_SendOKExtendRequestDefProvider_http);
+	SUITE_SKIP_TEST(suite, Test_SendOKExtendRequestDefProvider_tcp, "Max", "Waiting for gateway release.");
+	SUITE_ADD_TEST(suite, Test_NOKExtendRequestToTheFuture_http);
+	SUITE_SKIP_TEST(suite, Test_NOKExtendRequestToTheFuture_tcp, "Max", "Waiting for gateway release.");
+	SUITE_ADD_TEST(suite, Test_NOKExtendRequestToPast_http);
+	SUITE_SKIP_TEST(suite, Test_NOKExtendRequestToPast_tcp, "Max", "Waiting for gateway release.");
+	SUITE_ADD_TEST(suite, Test_OKExtendSignatureDefProvider_http);
+	SUITE_SKIP_TEST(suite, Test_OKExtendSignatureDefProvider_tcp, "Max", "Waiting for gateway release.");
+	SUITE_ADD_TEST(suite, Test_ExtendSignatureUsingAggregator_http);
+	SUITE_SKIP_TEST(suite, Test_ExtendSignatureUsingAggregator_tcp, "Max", "Waiting for gateway release.");
+	SUITE_ADD_TEST(suite, Test_ExtendSignatureDifferentNetProviders_http);
+	SUITE_SKIP_TEST(suite, Test_ExtendSignatureDifferentNetProviders_tcp, "Max", "Waiting for gateway release.");
+	SUITE_ADD_TEST(suite, Test_ExtendSignatureUserInfoFromUrl_http);
+	SUITE_SKIP_TEST(suite, Test_ExtendSignatureUserInfoFromUrl_tcp, "Max", "Waiting for gateway release.");
+	SUITE_ADD_TEST(suite, Test_RequestExtenderConfig_http);
+	SUITE_SKIP_TEST(suite, Test_RequestExtenderConfig_tcp, "Max", "Waiting for gateway release.");
+	SUITE_ADD_TEST(suite, Test_RequestExtenderConfig_pduV2_http);
+	SUITE_SKIP_TEST(suite, Test_RequestExtenderConfig_pduV2_tcp, "Max", "Waiting for gateway release.");
 
 	return suite;
 }
-
 
