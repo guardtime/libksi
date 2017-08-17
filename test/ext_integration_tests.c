@@ -421,7 +421,7 @@ CuSuite* ExtIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_OKExtendSignatureDefProvider_http);
 	SUITE_SKIP_TEST(suite, Test_OKExtendSignatureDefProvider_tcp, "Max", "Waiting for gateway release.");
 	SUITE_ADD_TEST(suite, Test_ExtendSignatureUsingAggregator_http);
-	SUITE_SKIP_TEST(suite, Test_ExtendSignatureUsingAggregator_tcp, "Max", "Waiting for gateway release.");
+	SUITE_ADD_TEST(suite, Test_ExtendSignatureUsingAggregator_tcp);
 	SUITE_ADD_TEST(suite, Test_ExtendSignatureDifferentNetProviders_http);
 	SUITE_SKIP_TEST(suite, Test_ExtendSignatureDifferentNetProviders_tcp, "Max", "Waiting for gateway release.");
 	SUITE_ADD_TEST(suite, Test_ExtendSignatureUserInfoFromUrl_http);
