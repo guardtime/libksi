@@ -22,6 +22,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 
+#include <ksi/hash.h>
+
 #include "cutest/CuTest.h"
 #include "all_integration_tests.h"
 #include "support_tests.h"
@@ -54,6 +56,7 @@ static int RunAllTests() {
 	int res;
 	CuSuite* suite = initSuite();
 	FILE *logFile = NULL;
+	KSI_HashAlgorithm alg_id = KSI_HASHALG_INVALID;
 
 	/* Create the context. */
 	res = KSI_CTX_new(&ctx);
@@ -61,6 +64,9 @@ static int RunAllTests() {
 		fprintf(stderr, "Error: Unable to init KSI context (%s)!\n", KSI_getErrorString(res));
 		exit(EXIT_FAILURE);
 	}
+
+	if ((alg_id = KSI_getHashAlgorithmByName(conf.aggregator.hmac)) != KSI_HASHALG_INVALID) KSI_CTX_setAggregatorHmacAlgorithm(ctx, alg_id);
+	if ((alg_id = KSI_getHashAlgorithmByName(conf.extender.hmac))   != KSI_HASHALG_INVALID) KSI_CTX_setExtenderHmacAlgorithm(ctx, alg_id);
 
 	res = KSI_CTX_setPublicationUrl(ctx, conf.publications_file_url);
 	if (res != KSI_OK) {

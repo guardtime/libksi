@@ -1,14 +1,18 @@
-#Extender info
+###Extender info
 extender.host=<host>
 extender.port=<port>
 extender.user=<user>
 extender.pass=<pass>
+#Optional
+extender.hmac=<algorithm>
 
-#Aggregator info
+###Aggregator info
 aggregator.host=<host>
 aggregator.port=<port>
 aggregator.user=<user>
 aggregator.pass=<pass>
+#Optional
+aggregator.hmac=<algorithm>
 
 #Pubfile info
 publications_file_url=<scheme>://<user>:<pass>@<host>

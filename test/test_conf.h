@@ -34,6 +34,7 @@ typedef struct KSITest_ServiceConf_st {
 	unsigned port;
 	char pass[CONF_FIELD_SIZE];
 	char user[CONF_FIELD_SIZE];
+	char hmac[CONF_FIELD_SIZE];
 } KSITest_ServiceConf;
 
 typedef struct KSITest_Conf_st {
