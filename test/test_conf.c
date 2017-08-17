@@ -156,28 +156,6 @@ static void conf_clear(KSITest_Conf *conf) {
 		_res = 1; \
 	}
 
-static int isUserInfoInsideUrl(const char *url) {
-	char *start_user = NULL;
-	char *end_user = NULL;
-	char *colon = NULL;
-
-	if (url == NULL || *url == '\0') return 0;
-
-	/* Extract the margins of the user ino. */
-	start_user = strstr(url, "://");
-	end_user = strchr(url, '@');
-
-	if (start_user == NULL || end_user == NULL) {
-		return 0;
-	}
-
-	/* Extract thge colon that should be between the margins. */
-	colon = strchr(start_user + 3, ':');
-	if (colon == NULL || colon == start_user + 3 || colon >= end_user - 1) return 0;
-
-	return 1;
-}
-
 static int conf_control(KSITest_Conf *conf) {
 	int res = 0;
 
