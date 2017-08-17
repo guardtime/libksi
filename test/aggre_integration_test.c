@@ -198,6 +198,9 @@ static void createSignatureUsingExtender(CuTest* tc, const char *scheme) {
 
 static void Test_CreateSignatureUsingExtender(CuTest* tc) {
 	createSignatureUsingExtender(tc, TEST_SCHEME_HTTP);
+}
+
+static void Test_CreateSignatureUsingExtender_tcp(CuTest* tc) {
 	createSignatureUsingExtender(tc, TEST_SCHEME_TCP);
 }
 
@@ -327,6 +330,7 @@ CuSuite* AggreIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_CreateSignatureDefaultProvider);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureWrongHMAC);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureUsingExtender);
+	SUITE_SKIP_TEST(suite, Test_CreateSignatureUsingExtender_tcp, "Max", "Waiting for gateway release.");
 	SUITE_ADD_TEST(suite, Test_CreateSignatureDifferentNetProviders);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureUserInfoFromUrl);
 	SUITE_ADD_TEST(suite, Test_RequestAggregatorConfig);

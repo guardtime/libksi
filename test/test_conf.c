@@ -63,18 +63,17 @@ static void conf_append(KSITest_Conf *conf, const char *param, const char *value
 	char *OID = NULL;
 	char *oid_value = NULL;
 
-
 	CONF_str_cpy(extender.host, param, value);
+	CONF_int_set(extender.port, param, value);
 	CONF_str_cpy(extender.pass, param, value);
 	CONF_str_cpy(extender.user, param, value);
-
-	CONF_int_set(extender.port, param, value);
+	CONF_str_cpy(extender.hmac, param, value);
 
 	CONF_str_cpy(aggregator.host, param, value);
+	CONF_int_set(aggregator.port, param, value);
 	CONF_str_cpy(aggregator.pass, param, value);
 	CONF_str_cpy(aggregator.user, param, value);
-
-	CONF_int_set(aggregator.port, param, value);
+	CONF_str_cpy(aggregator.hmac, param, value);
 
 	CONF_str_cpy(publications_file_url, param, value);
 
@@ -123,11 +122,13 @@ static void conf_clear(KSITest_Conf *conf) {
 	conf->aggregator.port = 0;
 	conf->aggregator.pass[0] = '\0';
 	conf->aggregator.user[0] = '\0';
+	conf->aggregator.hmac[0] = '\0';
 
 	conf->extender.host[0] = '\0';
 	conf->extender.port = 0;
 	conf->extender.pass[0] = '\0';
 	conf->extender.user[0] = '\0';
+	conf->extender.hmac[0] = '\0';
 
 	conf->publications_file_url[0] = '\0';
 	conf->publications_file_cnstr[0] = '\0';
@@ -149,9 +150,9 @@ static void conf_clear(KSITest_Conf *conf) {
 		_res = 1; \
 	}
 
-#define CONF_CONTROL_INT(_conf, _param, _res) \
-	if(_conf -> _param == 0) {\
-		fprintf(stderr, "Error: parameter '%s' in conf file must have value (not 0).\n", #_param);\
+#define CONF_CONTROL_INT(_conf, _param, _res, _ctrl_val) \
+	if(_conf -> _param == (_ctrl_val)) {\
+		fprintf(stderr, "Error: parameter '%s' in conf file must have value (not %d).\n", #_param, (_ctrl_val));\
 		_res = 1; \
 	}
 
@@ -161,12 +162,16 @@ static int conf_control(KSITest_Conf *conf) {
 	CONF_CONTROL_STR(conf, aggregator.host, res);
 	CONF_CONTROL_STR(conf, aggregator.pass, res);
 	CONF_CONTROL_STR(conf, aggregator.user, res);
-	CONF_CONTROL_INT(conf, aggregator.port, res);
+	CONF_CONTROL_INT(conf, aggregator.port, res, 0);
+	/* Optional values: */
+	/*CONF_CONTROL_STR(conf, aggregator.hmac, res);*/
 
 	CONF_CONTROL_STR(conf, extender.host, res);
 	CONF_CONTROL_STR(conf, extender.pass, res);
 	CONF_CONTROL_STR(conf, extender.user, res);
-	CONF_CONTROL_INT(conf, extender.port, res);
+	CONF_CONTROL_INT(conf, extender.port, res, 0);
+	/* Optional values: */
+	/*CONF_CONTROL_STR(conf, extender.hmac, res);*/
 
 	CONF_CONTROL_STR(conf, publications_file_url, res);
 
