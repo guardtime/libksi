@@ -65,8 +65,21 @@ static int RunAllTests() {
 		exit(EXIT_FAILURE);
 	}
 
-	if ((alg_id = KSI_getHashAlgorithmByName(conf.aggregator.hmac)) != KSI_HASHALG_INVALID) KSI_CTX_setAggregatorHmacAlgorithm(ctx, alg_id);
-	if ((alg_id = KSI_getHashAlgorithmByName(conf.extender.hmac))   != KSI_HASHALG_INVALID) KSI_CTX_setExtenderHmacAlgorithm(ctx, alg_id);
+	if (*conf.aggregator.hmac) {
+		if ((alg_id = KSI_getHashAlgorithmByName(conf.aggregator.hmac)) == KSI_HASHALG_INVALID) {
+			fprintf(stderr, "Invalid hash algorithm for aggregator HMAC: '%s'\n", conf.aggregator.hmac);
+			exit(EXIT_FAILURE);
+		}
+		KSI_CTX_setAggregatorHmacAlgorithm(ctx, alg_id);
+	}
+
+	if (*conf.extender.hmac) {
+		if ((alg_id = KSI_getHashAlgorithmByName(conf.extender.hmac)) == KSI_HASHALG_INVALID) {
+			fprintf(stderr, "Invalid hash algorithm for extender HMAC: '%s'\n", conf.extender.hmac);
+			exit(EXIT_FAILURE);
+		}
+		KSI_CTX_setExtenderHmacAlgorithm(ctx, alg_id);
+	}
 
 	res = KSI_CTX_setPublicationUrl(ctx, conf.publications_file_url);
 	if (res != KSI_OK) {
