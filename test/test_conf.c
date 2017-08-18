@@ -27,10 +27,15 @@
 #include <ksi/compatibility.h>
 
 
-#define CONF_cpy(name, param, value) \
+#define CONF_str_cpy(name, param, value) \
 	if (conf->name[0] == '\0' && strcmp(param, #name) == 0) {\
 		KSI_strncpy(conf->name, value, CONF_FIELD_SIZE);\
-	}\
+	}
+
+#define CONF_int_set(name, param, value) \
+	if (conf->name == 0 && strcmp(param, #name) == 0) {\
+		conf->name = atoi(value); \
+	}
 
 static char *string_getBetweenWhitespace(char *strn) {
 	char *beginning = strn;
@@ -58,25 +63,19 @@ static void conf_append(KSITest_Conf *conf, const char *param, const char *value
 	char *OID = NULL;
 	char *oid_value = NULL;
 
+	CONF_str_cpy(extender.host, param, value);
+	CONF_int_set(extender.port, param, value);
+	CONF_str_cpy(extender.pass, param, value);
+	CONF_str_cpy(extender.user, param, value);
+	CONF_str_cpy(extender.hmac, param, value);
 
-	CONF_cpy(extender_url, param, value);
-	CONF_cpy(extender_pass, param, value);
-	CONF_cpy(extender_user, param, value);
+	CONF_str_cpy(aggregator.host, param, value);
+	CONF_int_set(aggregator.port, param, value);
+	CONF_str_cpy(aggregator.pass, param, value);
+	CONF_str_cpy(aggregator.user, param, value);
+	CONF_str_cpy(aggregator.hmac, param, value);
 
-	CONF_cpy(aggregator_url, param, value);
-	CONF_cpy(aggregator_pass, param, value);
-	CONF_cpy(aggregator_user, param, value);
-
-	CONF_cpy(publications_file_url, param, value);
-
-	CONF_cpy(tcp_url, param, value);
-	CONF_cpy(tcp_host, param, value);
-	CONF_cpy(tcp_user, param, value);
-	CONF_cpy(tcp_pass, param, value);
-
-	if (conf->tcp_port == 0 && strcmp(param, "tcp_port") == 0) {
-		conf->tcp_port = atoi(value);
-	}
+	CONF_str_cpy(publications_file_url, param, value);
 
 	if (strcmp(param, "publications_file_cnstr") == 0) {
 		if (conf->constraints >= CONF_MAX_CONSTRAINTS) {
@@ -119,19 +118,20 @@ static void conf_append(KSITest_Conf *conf, const char *param, const char *value
 static void conf_clear(KSITest_Conf *conf) {
 	unsigned int i;
 
-	conf->aggregator_url[0] = '\0';
-	conf->aggregator_pass[0] = '\0';
-	conf->aggregator_user[0] = '\0';
-	conf->extender_url[0] = '\0';
-	conf->extender_pass[0] = '\0';
-	conf->extender_user[0] = '\0';
+	conf->aggregator.host[0] = '\0';
+	conf->aggregator.port = 0;
+	conf->aggregator.pass[0] = '\0';
+	conf->aggregator.user[0] = '\0';
+	conf->aggregator.hmac[0] = '\0';
+
+	conf->extender.host[0] = '\0';
+	conf->extender.port = 0;
+	conf->extender.pass[0] = '\0';
+	conf->extender.user[0] = '\0';
+	conf->extender.hmac[0] = '\0';
+
 	conf->publications_file_url[0] = '\0';
 	conf->publications_file_cnstr[0] = '\0';
-	conf->tcp_url[0] = '\0';
-	conf->tcp_host[0] = '\0';
-	conf->tcp_port = 0;
-	conf->tcp_pass[0] = '\0';
-	conf->tcp_user[0] = '\0';
 
 	conf->constraints = 0;
 	for (i = 0; i < CONF_MAX_CONSTRAINTS + 1; i++) {
@@ -144,68 +144,36 @@ static void conf_clear(KSITest_Conf *conf) {
 	}
 }
 
-#define CONF_CONTROL(_conf, _param, _res) \
+#define CONF_CONTROL_STR(_conf, _param, _res) \
 	if(_conf -> _param [0] == '\0') {\
-		fprintf(stderr, "Error: parameter '%s' in conf file must have valeue.\n", #_param);\
+		fprintf(stderr, "Error: parameter '%s' in conf file must have value.\n", #_param);\
 		_res = 1; \
 	}
 
-static int isUserInfoInsideUrl(const char *url) {
-	char *start_user = NULL;
-	char *end_user = NULL;
-	char *colon = NULL;
-
-	if (url == NULL || *url == '\0') return 0;
-
-	/* Extract the margins of the user ino. */
-	start_user = strstr(url, "://");
-	end_user = strchr(url, '@');
-
-	if (start_user == NULL || end_user == NULL) {
-		return 0;
+#define CONF_CONTROL_INT(_conf, _param, _res, _ctrl_val) \
+	if(_conf -> _param == (_ctrl_val)) {\
+		fprintf(stderr, "Error: parameter '%s' in conf file must have value (not %d).\n", #_param, (_ctrl_val));\
+		_res = 1; \
 	}
-
-	/* Extract thge colon that should be between the margins. */
-	colon = strchr(start_user + 3, ':');
-	if (colon == NULL || colon == start_user + 3 || colon >= end_user - 1) return 0;
-
-	return 1;
-}
 
 static int conf_control(KSITest_Conf *conf) {
 	int res = 0;
 
-	CONF_CONTROL(conf, aggregator_url, res);
-	CONF_CONTROL(conf, aggregator_pass, res);
-	CONF_CONTROL(conf, aggregator_user, res);
-	CONF_CONTROL(conf, extender_url, res);
-	CONF_CONTROL(conf, extender_pass, res);
-	CONF_CONTROL(conf, extender_user, res);
-	CONF_CONTROL(conf, publications_file_url, res);
-	CONF_CONTROL(conf, tcp_url, res);
-	CONF_CONTROL(conf, tcp_host, res);
-	CONF_CONTROL(conf, tcp_pass, res);
-	CONF_CONTROL(conf, tcp_user, res);
+	CONF_CONTROL_STR(conf, aggregator.host, res);
+	CONF_CONTROL_STR(conf, aggregator.pass, res);
+	CONF_CONTROL_STR(conf, aggregator.user, res);
+	CONF_CONTROL_INT(conf, aggregator.port, res, 0);
+	/* Optional values: */
+	/*CONF_CONTROL_STR(conf, aggregator.hmac, res);*/
 
-	if (!isUserInfoInsideUrl(conf->aggregator_url)) {
-		fprintf(stderr, "Error: aggregator_url must contain user information fields.\n");
-		fprintf(stderr, "  Url: '%s'.\n", conf->aggregator_url);
-		fprintf(stderr, "  Fix url as described: <scheme>://<user>:<pass>@<host>\n");
-		res = 1;
-	}
+	CONF_CONTROL_STR(conf, extender.host, res);
+	CONF_CONTROL_STR(conf, extender.pass, res);
+	CONF_CONTROL_STR(conf, extender.user, res);
+	CONF_CONTROL_INT(conf, extender.port, res, 0);
+	/* Optional values: */
+	/*CONF_CONTROL_STR(conf, extender.hmac, res);*/
 
-	if (!isUserInfoInsideUrl(conf->extender_url)) {
-		fprintf(stderr, "Error: extender_url must contain user information fields.\n");
-		fprintf(stderr, "  Url: '%s'.\n", conf->extender_url);
-		fprintf(stderr, "  Fix url as described: <scheme>://<user>:<pass>@<host>\n");
-		res = 1;
-	}
-
-
-	if(conf->tcp_port == 0) {
-		fprintf(stderr, "Error: parameter 'tcp_port' in conf file must have valeue (not 0).\n");
-		res = 1;
-	}
+	CONF_CONTROL_STR(conf, publications_file_url, res);
 
 	if (conf->constraints == 0) {
 		fprintf(stderr, "Error: At least 1 publications file certificate constraint must be defined in conf file.\n");

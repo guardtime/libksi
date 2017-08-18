@@ -501,31 +501,19 @@ bool ResultsMatch(KSI_RuleVerificationResult *expected, KSI_RuleVerificationResu
 bool SuccessfulProperty(KSI_RuleVerificationResult *result, size_t property) {
 	size_t mask;
 	mask = result->stepsPerformed & result->stepsSuccessful & ~result->stepsFailed;
-	if ((mask & property) == property) {
-		return true;
-	} else {
-		return false;
-	}
+	return (mask & property) == property;
 }
 
 bool FailedProperty(KSI_RuleVerificationResult *result, size_t property) {
 	size_t mask;
 	mask = result->stepsPerformed & result->stepsFailed & ~result->stepsSuccessful;
-	if ((mask & property) == property) {
-		return true;
-	} else {
-		return false;
-	}
+	return (mask & property) == property;
 }
 
 bool InconclusiveProperty(KSI_RuleVerificationResult *result, size_t property) {
 	size_t mask;
 	mask = result->stepsPerformed & ~result->stepsFailed & ~result->stepsSuccessful;
-	if ((mask & property) == property) {
-		return true;
-	} else {
-		return false;
-	}
+	return (mask & property) == property;
 }
 
 static void TestVerificationResult(CuTest* tc) {
@@ -3239,9 +3227,9 @@ static void TestGeneralPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		KSI_VER_RES_FAIL,
-		KSI_VER_ERR_CAL_2,
-		"KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash"
+		KSI_VER_RES_NA,
+		KSI_VER_ERR_GEN_2,
+		"KSI_VerificationRule_CalendarHashChainExistence"
 	};
 	KSI_Signature *signature = NULL;
 
@@ -3263,7 +3251,6 @@ static void TestGeneralPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -3280,9 +3267,9 @@ static void TestGeneralPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		KSI_VER_RES_OK,
-		KSI_VER_ERR_NONE,
-		"KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime"
+		KSI_VER_RES_NA,
+		KSI_VER_ERR_GEN_2,
+		"KSI_VerificationRule_CalendarHashChainExistence"
 	};
 	KSI_Signature *signature = NULL;
 
@@ -3304,40 +3291,6 @@ static void TestGeneralPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 	CuAssert(tc, "Policy verification failed", res == KSI_OK);
 	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
 	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
-
-	KSI_PolicyVerificationResult_free(result);
-	KSI_Signature_free(signature);
-	KSI_VerificationContext_clean(&context);
-
-#undef TEST_SIGNATURE_FILE
-#undef TEST_EXT_RESPONSE_FILE
-}
-
-static void TestGeneralPolicy_NA_ExtenderError(CuTest* tc) {
-#define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-no-cal-hashchain.ksig"
-#define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_101.tlv"
-	int res;
-	KSI_VerificationContext context;
-	KSI_PolicyVerificationResult *result = NULL;
-	KSI_Signature *signature = NULL;
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-
-	KSI_ERR_clearErrors(ctx);
-
-	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
-
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
-	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
-	context.signature = signature;
-
-	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
-
-	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
-	CuAssert(tc, "Policy verification must not succeed.", res == KSI_SERVICE_INVALID_REQUEST);
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -3671,7 +3624,6 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestGeneralPolicy_OK_AfterExtendingToUserPublication);
 	SUITE_ADD_TEST(suite, TestGeneralPolicy_FAIL_WithoutCalendarHashChain);
 	SUITE_ADD_TEST(suite, TestGeneralPolicy_OK_WithoutCalendarHashChain);
-	SUITE_ADD_TEST(suite, TestGeneralPolicy_NA_ExtenderError);
 	SUITE_ADD_TEST(suite, TestPolicyCloning);
 	SUITE_ADD_TEST(suite, TestFallbackPolicy_CalendarBased_OK_KeyBased_NA);
 	SUITE_ADD_TEST(suite, TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA);

@@ -29,23 +29,20 @@ extern "C" {
 #define CONF_FIELD_SIZE 1024
 #define CONF_MAX_CONSTRAINTS 32
 
-typedef struct KSITest_Conf_st {
-	char extender_url[CONF_FIELD_SIZE];
-	char extender_pass[CONF_FIELD_SIZE];
-	char extender_user[CONF_FIELD_SIZE];
+typedef struct KSITest_ServiceConf_st {
+	char host[CONF_FIELD_SIZE];
+	unsigned port;
+	char pass[CONF_FIELD_SIZE];
+	char user[CONF_FIELD_SIZE];
+	char hmac[CONF_FIELD_SIZE];
+} KSITest_ServiceConf;
 
-	char aggregator_url[CONF_FIELD_SIZE];
-	char aggregator_pass[CONF_FIELD_SIZE];
-	char aggregator_user[CONF_FIELD_SIZE];
+typedef struct KSITest_Conf_st {
+	KSITest_ServiceConf extender;
+	KSITest_ServiceConf aggregator;
 
 	char publications_file_url[CONF_FIELD_SIZE];
 	char publications_file_cnstr[CONF_FIELD_SIZE];
-
-	char tcp_url[CONF_FIELD_SIZE];
-	char tcp_host[CONF_FIELD_SIZE];
-	unsigned tcp_port;
-	char tcp_user[CONF_FIELD_SIZE];
-	char tcp_pass[CONF_FIELD_SIZE];
 
 	unsigned int constraints;
 	char oid[CONF_MAX_CONSTRAINTS][CONF_FIELD_SIZE];

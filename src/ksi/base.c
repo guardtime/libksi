@@ -898,7 +898,7 @@ static int ksi_err_toPrinter(KSI_CTX *ctx, void *to, size_t buf_len, void* (*pri
 
 	nextWrite = printer(nextWrite, buf_len - count, &count, "KSI error trace:\n");
 	if (ctx->errors_count == 0) {
-		nextWrite = printer(nextWrite, buf_len - count, &count, "No errors.\n");
+		printer(nextWrite, buf_len - count, &count, "No errors.\n");
 		res = KSI_OK;
 		goto cleanup;
 	}

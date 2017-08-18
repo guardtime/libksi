@@ -35,23 +35,31 @@
 #define VERIFICATION_RULE_NAME __FUNCTION__
 
 #define VERIFICATION_START(step) \
+{\
 	result->stepsPerformed  |= (step); \
-	result->stepsSuccessful &= ~(step)\
+	result->stepsSuccessful &= ~(step); \
+}\
 
 #define VERIFICATION_RESULT_OK(step) \
+{\
 	result->resultCode       = KSI_VER_RES_OK; \
-	result->errorCode        = KSI_VER_ERR_NONE;\
+	result->errorCode        = KSI_VER_ERR_NONE; \
 	result->stepsSuccessful |= (step);\
-	result->ruleName         = VERIFICATION_RULE_NAME\
+	result->ruleName         = VERIFICATION_RULE_NAME; \
+}\
 
 #define VERIFICATION_RESULT_ERR(vrc, vec, step) \
-	result->resultCode       = (vrc);\
-	result->errorCode        = (vec);\
-	result->stepsFailed     |= (step);\
-	result->ruleName         = VERIFICATION_RULE_NAME\
+{\
+	result->resultCode       = (vrc); \
+	result->errorCode        = (vec); \
+	result->stepsFailed     |= (step); \
+	result->ruleName         = VERIFICATION_RULE_NAME; \
+}\
 
 #define VERIFICATION_RESULT_RULE(rule) \
-	result->ruleName         = (rule)\
+{\
+	result->ruleName         = (rule); \
+}\
 
 static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, const KSI_DataHash *hsh, const KSI_OctetString *suffix, int hsh_id, KSI_DataHash **out);
 static int rfc3161_verifyAggrTime(KSI_CTX *ctx, const KSI_Signature *sig);
@@ -1608,6 +1616,84 @@ cleanup:
 	return res;
 }
 
+int KSI_VerificationRule_InputHashAlgorithmVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *hsh = NULL;
+	KSI_CTX *ctx = NULL;
+	KSI_HashAlgorithm docHshAlg = KSI_HASHALG_INVALID;
+	KSI_HashAlgorithm infHshAlg = KSI_HASHALG_INVALID;
+	const KSI_Signature *sig = NULL;
+	const KSI_VerificationStep step = KSI_VERIFY_DOCUMENT;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL || info->documentHash == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->signature;
+	KSI_ERR_clearErrors(ctx);
+
+	KSI_LOG_info(ctx, "Verify document hash.");
+	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Document hash: ", info->documentHash);
+
+	if (sig->rfc3161 != NULL) {
+		KSI_LOG_info(ctx, "Document hash is compared with RFC 3161 input hash.");
+		res = KSI_RFC3161_getInputHash(sig->rfc3161, &hsh);
+		if (res != KSI_OK) {
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+	} else {
+		res = KSI_Signature_getDocumentHash(sig, &hsh);
+		if (res != KSI_OK) {
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+
+	res = KSI_DataHash_getHashAlg(hsh, &docHshAlg);
+	if (res != KSI_OK ) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_DataHash_getHashAlg(info->documentHash, &infHshAlg);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (docHshAlg != infHshAlg) {
+		KSI_LOG_info(ctx, "Wrong hash algorithm.");
+		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Document hash :", info->documentHash);
+		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Signed hash   :", hsh);
+
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_GEN_4, step);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+
+cleanup:
+	KSI_nofree(hsh);
+
+	return res;
+}
+
 int KSI_VerificationRule_DocumentHashVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
@@ -3054,7 +3140,8 @@ static int extendingPermittedVerification(KSI_VerificationContext *info, KSI_Rul
 	res = KSI_OK;
 
 cleanup:
-	VERIFICATION_RESULT_RULE(rule);
+
+	if (result != NULL) VERIFICATION_RESULT_RULE(rule);
 	return res;
 }
 
