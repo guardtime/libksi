@@ -26,14 +26,24 @@
 
 #include <ksi/compatibility.h>
 
+#define isParam(name, param) (strcmp(param, name) == 0)
 
 #define CONF_str_cpy(name, param, value) \
-	if (conf->name[0] == '\0' && strcmp(param, #name) == 0) {\
+	if (conf->name[0] == '\0' && isParam(param, #name)) {\
 		KSI_strncpy(conf->name, value, CONF_FIELD_SIZE);\
 	}
 
+#define CONF_arr_str_cpy(name, pos, max, param, value) \
+	if (pos >= max) {\
+		fprintf(stderr, "Error: Parameter '%s' count too large. Max is %i\n", #name, max); \
+		exit(EXIT_FAILURE);\
+	}\
+	if (conf->name[pos][0] == '\0' && isParam(param, #name)) {\
+		KSI_strncpy(conf->name[pos], value, CONF_FIELD_SIZE);\
+	}
+
 #define CONF_int_set(name, param, value) \
-	if (conf->name == 0 && strcmp(param, #name) == 0) {\
+	if (conf->name == 0 && isParam(param, #name)) {\
 		conf->name = atoi(value); \
 	}
 
@@ -57,12 +67,40 @@ static char *string_getBetweenWhitespace(char *strn) {
 	return beginning;
 }
 
-static void conf_append(KSITest_Conf *conf, const char *param, const char *value) {
-	char tmp[CONF_FIELD_SIZE];
+static void parseConstraint(KSITest_PubfileConf *conf, unsigned at, const char *value) {
 	char *equal = NULL;
-	char *OID = NULL;
-	char *oid_value = NULL;
 
+	/* Entry in conf file must contain '='. */
+	equal = strchr(conf->cnstr[at], '=');
+	if(equal == NULL) {
+		fprintf(stderr, "Error: Publications file constraint must have format <oid>=<value>, but is '%s'!\n", value);
+		exit(EXIT_FAILURE);
+	} else {
+		char *oid = NULL;
+		char *val = NULL;
+
+		*equal = '\0';
+		oid = string_getBetweenWhitespace(conf->cnstr[at]);
+		val = string_getBetweenWhitespace(equal + 1);
+
+		if (strlen(oid) == 0) {
+			fprintf(stderr, "Error: Publications file constraint OID must not be empty string!\n");
+			fprintf(stderr, "Error: Invalid entry '%s'\n", value);
+			exit(EXIT_FAILURE);
+		}
+
+		if (strlen(val) == 0) {
+			fprintf(stderr, "Error: Publications file constraint value must not be empty string!\n");
+			fprintf(stderr, "Error: Invalid entry '%s'\n", value);
+			exit(EXIT_FAILURE);
+		}
+
+		conf->certConstraints[at].oid = oid;
+		conf->certConstraints[at].val = val;
+	}
+}
+
+static void conf_append(KSITest_Conf *conf, const char *param, const char *value) {
 	CONF_str_cpy(extender.host, param, value);
 	CONF_int_set(extender.port, param, value);
 	CONF_str_cpy(extender.pass, param, value);
@@ -75,73 +113,17 @@ static void conf_append(KSITest_Conf *conf, const char *param, const char *value
 	CONF_str_cpy(aggregator.user, param, value);
 	CONF_str_cpy(aggregator.hmac, param, value);
 
-	CONF_str_cpy(publications_file_url, param, value);
+	CONF_str_cpy(pubfile.url, param, value);
+	CONF_arr_str_cpy(pubfile.cnstr, conf->pubfile.cnstrCount, CONF_MAX_CONSTRAINTS, param, value);
 
-	if (strcmp(param, "publications_file_cnstr") == 0) {
-		if (conf->constraints >= CONF_MAX_CONSTRAINTS) {
-			fprintf(stderr, "Error: Publications file constraint count too large. Max is %i\n", CONF_MAX_CONSTRAINTS);
-			exit(EXIT_FAILURE);
-		}
-		KSI_strncpy(tmp, value, sizeof(tmp));
-		/*Entry in conf file must contain '='*/
-		equal = strchr(tmp, '=');
-		if(equal == NULL) {
-			fprintf(stderr, "Error: Publications file constraint must have format <oid>=<value>, but is '%s'!\n", value);
-			exit(EXIT_FAILURE);
-		} else {
-			*equal = '\0';
-			OID = string_getBetweenWhitespace(tmp);
-			oid_value = string_getBetweenWhitespace(equal + 1);
-
-			if(strlen(OID) == 0) {
-				fprintf(stderr, "Error: Publications file constraint OID must not be empty string!\n");
-				fprintf(stderr, "Error: Invalid entry '%s'\n", value);
-				exit(EXIT_FAILURE);
-			}
-
-			if(strlen(oid_value) == 0) {
-				fprintf(stderr, "Error: Publications file constraint value must not be empty string!\n");
-				fprintf(stderr, "Error: Invalid entry '%s'\n", value);
-				exit(EXIT_FAILURE);
-			}
-			KSI_strncpy(conf->oid[conf->constraints], OID, CONF_FIELD_SIZE);
-			KSI_strncpy(conf->val[conf->constraints], oid_value, CONF_FIELD_SIZE);
-
-			conf->testPubFileCertConstraints[conf->constraints].oid = conf->oid[conf->constraints];
-			conf->testPubFileCertConstraints[conf->constraints].val = conf->val[conf->constraints];
-			conf->constraints++;
-		}
-
+	if (isParam(param, "pubfile.cnstr") && conf->pubfile.cnstr[conf->pubfile.cnstrCount] != NULL) {
+		parseConstraint(&conf->pubfile, conf->pubfile.cnstrCount, value);
+		conf->pubfile.cnstrCount++;
 	}
 }
 
 static void conf_clear(KSITest_Conf *conf) {
-	unsigned int i;
-
-	conf->aggregator.host[0] = '\0';
-	conf->aggregator.port = 0;
-	conf->aggregator.pass[0] = '\0';
-	conf->aggregator.user[0] = '\0';
-	conf->aggregator.hmac[0] = '\0';
-
-	conf->extender.host[0] = '\0';
-	conf->extender.port = 0;
-	conf->extender.pass[0] = '\0';
-	conf->extender.user[0] = '\0';
-	conf->extender.hmac[0] = '\0';
-
-	conf->publications_file_url[0] = '\0';
-	conf->publications_file_cnstr[0] = '\0';
-
-	conf->constraints = 0;
-	for (i = 0; i < CONF_MAX_CONSTRAINTS + 1; i++) {
-		conf->testPubFileCertConstraints[i].oid = NULL;
-		conf->testPubFileCertConstraints[i].val = NULL;
-		if (i < CONF_MAX_CONSTRAINTS) {
-			conf->oid[i][0] = '\0';
-			conf->val[i][0] = '\0';
-		}
-	}
+	memset(conf, 0, sizeof(KSITest_Conf));
 }
 
 #define CONF_CONTROL_STR(_conf, _param, _res) \
@@ -153,6 +135,12 @@ static void conf_clear(KSITest_Conf *conf) {
 #define CONF_CONTROL_INT(_conf, _param, _res, _ctrl_val) \
 	if(_conf -> _param == (_ctrl_val)) {\
 		fprintf(stderr, "Error: parameter '%s' in conf file must have value (not %d).\n", #_param, (_ctrl_val));\
+		_res = 1; \
+	}
+
+#define CONF_CONTROL_CNT(_conf, _param, _res, _ctrl_cnt, msg) \
+	if(_conf -> _param == (_ctrl_cnt)) {\
+		fprintf(stderr, msg);\
 		_res = 1; \
 	}
 
@@ -173,13 +161,10 @@ static int conf_control(KSITest_Conf *conf) {
 	/* Optional values: */
 	/*CONF_CONTROL_STR(conf, extender.hmac, res);*/
 
-	CONF_CONTROL_STR(conf, publications_file_url, res);
+	CONF_CONTROL_STR(conf, pubfile.url, res);
 
-	if (conf->constraints == 0) {
-		fprintf(stderr, "Error: At least 1 publications file certificate constraint must be defined in conf file.\n");
-		res = 1;
-	}
-	/*Return 1 if conf contains errors*/
+	CONF_CONTROL_CNT(conf, pubfile.cnstrCount, res, 0, "Error: At least 1 publications file certificate constraint must be defined in conf file.\n");
+
 	return res;
 }
 

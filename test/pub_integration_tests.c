@@ -24,7 +24,7 @@ extern KSI_CTX *ctx;
 extern KSITest_Conf conf;
 
 static void postTest(void) {
-	KSI_CTX_setPublicationUrl(ctx, conf.publications_file_url);
+	KSI_CTX_setPublicationUrl(ctx, conf.pubfile.url);
 }
 
 
@@ -60,7 +60,7 @@ static void Test_DownloadPubfileInvalidConstraints(CuTest* tc) {
 	res = KSI_CTX_new(&ctx);
 	CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK);
 
-	res = KSI_CTX_setPublicationUrl(ctx, conf.publications_file_url);
+	res = KSI_CTX_setPublicationUrl(ctx, conf.pubfile.url);
 	CuAssert(tc, "Unable to set publications file url.", res == KSI_OK);
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, badConstraints);
@@ -121,7 +121,7 @@ static void Test_DownloadPubfile_ChangeClient(CuTest* tc) {
 	KSI_PublicationsFile_free(pubfile);
 	KSI_CTX_setPublicationsFile(ctx, NULL);
 
-	res = KSI_CTX_setPublicationUrl(ctx, conf.publications_file_url);
+	res = KSI_CTX_setPublicationUrl(ctx, conf.pubfile.url);
 	CuAssert(tc, "Unable to set publications file url.", res == KSI_OK);
 	res = KSI_receivePublicationsFile(ctx, &pubfile);
 	CuAssert(tc, "Unable to receive publications file.", res == KSI_OK && pubfile != NULL);

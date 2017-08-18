@@ -37,17 +37,20 @@ typedef struct KSITest_ServiceConf_st {
 	char hmac[CONF_FIELD_SIZE];
 } KSITest_ServiceConf;
 
+typedef struct KSITest_PubfileConf_st {
+	char url[CONF_FIELD_SIZE];
+	char cnstr[CONF_MAX_CONSTRAINTS][CONF_FIELD_SIZE];
+
+	/* Helper members. */
+	unsigned int cnstrCount;
+	KSI_CertConstraint certConstraints[CONF_MAX_CONSTRAINTS + 1];
+} KSITest_PubfileConf;
+
 typedef struct KSITest_Conf_st {
 	KSITest_ServiceConf extender;
 	KSITest_ServiceConf aggregator;
 
-	char publications_file_url[CONF_FIELD_SIZE];
-	char publications_file_cnstr[CONF_FIELD_SIZE];
-
-	unsigned int constraints;
-	char oid[CONF_MAX_CONSTRAINTS][CONF_FIELD_SIZE];
-	char val[CONF_MAX_CONSTRAINTS][CONF_FIELD_SIZE];
-	KSI_CertConstraint testPubFileCertConstraints[CONF_MAX_CONSTRAINTS + 1];
+	KSITest_PubfileConf pubfile;
 } KSITest_Conf;
 
 
