@@ -81,13 +81,13 @@ static int RunAllTests() {
 		KSI_CTX_setExtenderHmacAlgorithm(ctx, alg_id);
 	}
 
-	res = KSI_CTX_setPublicationUrl(ctx, conf.publications_file_url);
+	res = KSI_CTX_setPublicationUrl(ctx, conf.pubfile.url);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to set publications file URL.\n");
 		exit(EXIT_FAILURE);
 	}
 
-	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, conf.testPubFileCertConstraints);
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, conf.pubfile.certConstraints);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to set publications file verification constraints.\n");
 		exit(EXIT_FAILURE);
