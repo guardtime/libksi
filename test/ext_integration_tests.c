@@ -231,7 +231,7 @@ static void extendSignatureUsingAggregator(CuTest* tc, const char *scheme) {
 	KSI_Signature *sig = NULL;
 	KSI_Signature *ext = NULL;
 
-	res = KSI_CTX_setPublicationUrl(ctx, conf.publications_file_url);
+	res = KSI_CTX_setPublicationUrl(ctx, conf.pubfile.url);
 	CuAssert(tc, "Unable to set publications file url.", res == KSI_OK);
 
 	res = KSI_CTX_setExtender(ctx, KSITest_composeUri(scheme, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
@@ -323,7 +323,7 @@ static int tcp_setExtWrapper(KSI_NetworkClient *client, const KSITest_ServiceCon
 
 static void Test_ExtendSignatureDifferentNetProviders_http(CuTest* tc) {
 	/* Uri provider HTTP. */
-	Test_ExtendSignature_useProvider(tc, &conf.extender, conf.publications_file_url,
+	Test_ExtendSignature_useProvider(tc, &conf.extender, conf.pubfile.url,
 			KSI_UriClient_new,
 			KSI_UriClient_setPublicationUrl,
 			uriHttp_setExtWrapper);
@@ -332,7 +332,7 @@ static void Test_ExtendSignatureDifferentNetProviders_http(CuTest* tc) {
 
 static void Test_ExtendSignatureDifferentNetProviders_tcp(CuTest* tc) {
 	/* Uri provider TCP. */
-	Test_ExtendSignature_useProvider(tc, &conf.extender, conf.publications_file_url,
+	Test_ExtendSignature_useProvider(tc, &conf.extender, conf.pubfile.url,
 			KSI_TcpClient_new,
 			KSI_TcpClient_setPublicationUrl,
 			tcp_setExtWrapper);
@@ -341,7 +341,7 @@ static void Test_ExtendSignatureDifferentNetProviders_tcp(CuTest* tc) {
 
 static void Test_ExtendSignatureUserInfoFromUrl_http(CuTest* tc) {
 	/* Uri provider - all info is extracted from uri. */
-	Test_ExtendSignature_useProvider(tc, &conf.extender, conf.publications_file_url,
+	Test_ExtendSignature_useProvider(tc, &conf.extender, conf.pubfile.url,
 			KSI_UriClient_new,
 			KSI_UriClient_setPublicationUrl,
 			uriHttp_setExtWrapper_noCred);
@@ -350,7 +350,7 @@ static void Test_ExtendSignatureUserInfoFromUrl_http(CuTest* tc) {
 
 static void Test_ExtendSignatureUserInfoFromUrl_tcp(CuTest* tc) {
 	/* Uri provider - all info is extracted from uri. */
-	Test_ExtendSignature_useProvider(tc, &conf.extender, conf.publications_file_url,
+	Test_ExtendSignature_useProvider(tc, &conf.extender, conf.pubfile.url,
 			KSI_UriClient_new,
 			KSI_UriClient_setPublicationUrl,
 			uriTcp_setExtWrapper_noCred);
