@@ -284,12 +284,12 @@ extern "C" {
 	 * \note It is not checked if the deprecated and/or obsolete dates have passed
 	 *       but operation is impossible as soon as one of the dates is set. The intention
 	 *       is to make the change apparent right after upgrading the library rather than
-	 *       wait and possibly break normal operations in an apparently arbitrary momend.
+	 *       wait and possibly break normal operations in an apparently arbitrary moment.
 	 *
 	 * \param[in]	algo_id			Hash algorithm id.
 	 *
 	 * \return Returns 1 if algorithm is trusted, otherwise return 0.
-	 * \see #KSI_isHashAlgorithmSupported
+	 * \see #KSI_isHashAlgorithmSupported, #KSI_checkHashAlgorithmAt
 	 */
 	int KSI_isHashAlgorithmTrusted(KSI_HashAlgorithm algo_id);
 
@@ -310,7 +310,7 @@ extern "C" {
 	 * \param[in]	algo_id			Hash algorithm id.
 	 *
 	 * \return Returns 0 if algorithm is not supported, otherwise non-zero.
-	 * \see #KSI_isHashAlgorithmTrusted
+	 * \see #KSI_isHashAlgorithmTrusted, #KSI_checkHashAlgorithmAt
 	 */
 	int KSI_isHashAlgorithmSupported(KSI_HashAlgorithm algo_id);
 

@@ -1842,9 +1842,6 @@ static void testSigningWithLevel(CuTest* tc) {
 }
 
 static void testSigning_hmacAlgorithmDeprecated(CuTest* tc) {
-#define TEST_AGGR_RESPONSE_FILE "resource/tlv/v1/ok-sig-2014-07-01.1-aggr_response-hmac_sha512.tlv"
-#define TEST_RES_SIGNATURE_FILE "resource/tlv/ok-sig-2014-07-01.1.ksig"
-
 	int res;
 	KSI_DataHash *hsh = NULL;
 	KSI_Signature *sig = NULL;
@@ -1854,8 +1851,6 @@ static void testSigning_hmacAlgorithmDeprecated(CuTest* tc) {
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
 	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
 
-	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
 
 	res = KSI_CTX_setAggregatorHmacAlgorithm(ctx, KSI_HASHALG_SHA1);
 	CuAssert(tc, "Unable to set aggregator HMAC algorithm", res == KSI_OK);
@@ -1865,10 +1860,6 @@ static void testSigning_hmacAlgorithmDeprecated(CuTest* tc) {
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
-
-#undef TEST_AGGR_RESPONSE_FILE
-#undef TEST_RES_SIGNATURE_FILE
-
 }
 
 
