@@ -256,6 +256,7 @@ EXPORTS
 	KSI_AsyncService_getRequestState
 	KSI_AsyncService_getRequestError
 	KSI_AsyncService_getRequestContext
+	KSI_AsyncService_setRequestContext
 	KSI_AsyncService_getPendingCount
 	KSI_AsyncService_getReceivedCount
 	KSI_AsyncService_setMaxRequestCount

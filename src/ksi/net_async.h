@@ -214,6 +214,16 @@ extern "C" {
 	int KSI_AsyncService_getRequestContext(KSI_AsyncService *s, KSI_AsyncHandle h, void **ctx);
 
 	/**
+	 * Get the request context.
+	 * \param[in]		s				Async serice instance.
+	 * \param[in]		h				Async handle.
+	 * \param[in]		ctx				Request context.
+	 * \param[in]		ctx_free		Pointer to the context cleanup method.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_AsyncService_setRequestContext(KSI_AsyncService *s, KSI_AsyncHandle h, void *ctx, void (*ctx_free)(void*));
+
+	/**
 	 * Get the number of request that have been sent, or still in send queue.
 	 * \param[in]		s				Async serice instance.
 	 * \param[in]		h				Async handle.

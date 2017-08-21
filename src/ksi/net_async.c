@@ -459,13 +459,14 @@ static int asyncClient_getResponse(KSI_AsyncClient *c, KSI_AsyncHandle handle, K
 	}
 
 
-	if (c->reqCache[handle] == NULL) {
+	if (h >= c->maxParallelRequests || c->reqCache == NULL || c->reqCache[handle] == NULL) {
 		res = KSI_INVALID_STATE;
 		goto cleanup;
 	}
 
 	switch (c->reqCache[handle]->state) {
 		case KSI_ASYNC_REQ_RESPONSE_RECEIVED:
+			/* Update async response. */
 			tmp = c->reqCache[handle]->pldCtx;
 			c->reqCache[handle]->pldCtx = NULL;
 			c->reqCache[handle]->pldCtx_free = NULL;
@@ -659,9 +660,25 @@ static int asyncClient_getReqCtx(KSI_AsyncClient *c, KSI_AsyncHandle h, void **r
 		goto cleanup;
 	}
 
-	*reqCtx = c->reqCache[h]->reqCtx;
+	res = KSI_AsyncPayload_getRequestCtx(c->reqCache[h], reqCtx);
+cleanup:
+	return res;
+}
 
-	res = KSI_OK;
+static int asyncClient_setReqCtx(KSI_AsyncClient *c, KSI_AsyncHandle h, void *reqCtx, void (*reqCtx_free)(void*)) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (c == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (h >= c->maxParallelRequests || c->reqCache == NULL || c->reqCache[h] == NULL)  {
+		res = KSI_INVALID_STATE;
+		goto cleanup;
+	}
+
+	res = KSI_AsyncPayload_setRequestCtx(c->reqCache[h], reqCtx, reqCtx_free);
 cleanup:
 	return res;
 }
@@ -923,6 +940,7 @@ int KSI_SigningAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service) {
 	tmp->setSendTimeout = (int (*)(void *, size_t))asyncClient_setSendTimeout;
 	tmp->setReceiveTimeout = (int (*)(void *, size_t))asyncClient_setReceiveTimeout;
 	tmp->setMaxRequestCount = (int (*)(void *, size_t))asyncClient_setMaxRequestCount;
+	tmp->setRequestContext = (int (*)(void *, KSI_AsyncHandle, void *, void (*)(void*)))asyncClient_setReqCtx;
 
 	*service = tmp;
 	tmp = NULL;
@@ -963,6 +981,17 @@ cleanup:
 	return res;
 }
 
+int KSI_AsyncService_setRequestContext(KSI_AsyncService *s, KSI_AsyncHandle h, void *ctx, void (*ctx_free)(void*)) {
+	int res = KSI_UNKNOWN_ERROR;
+	if (s == NULL || s->impl == NULL || s->setRequestContext == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	res = s->setRequestContext(s->impl, h, ctx, ctx_free);
+cleanup:
+	return res;
+}
+
 #define KSI_ASYNC_SERVICE_OBJ_IMPLEMENT_SETTER(obj, name, type)	\
 int obj##_set##name(obj *s, type val) {							\
 	int res = KSI_UNKNOWN_ERROR;								\
@@ -970,7 +999,7 @@ int obj##_set##name(obj *s, type val) {							\
 		res = KSI_INVALID_ARGUMENT;								\
 		goto cleanup;											\
 	}															\
-	res = s->set##name(s->impl, val);						\
+	res = s->set##name(s->impl, val);							\
 cleanup:														\
 	return res;													\
 }
@@ -982,7 +1011,7 @@ KSI_ASYNC_SERVICE_OBJ_IMPLEMENT_SETTER(KSI_AsyncService, MaxRequestCount, const 
 
 
 #define KSI_ASYNC_SERVICE_OBJ_HANDLE_IMPLEMENT_GETTER(obj, name, type)	\
-int obj##_get##name(obj *s, KSI_AsyncHandle h, type val) {							\
+int obj##_get##name(obj *s, KSI_AsyncHandle h, type val) {		\
 	int res = KSI_UNKNOWN_ERROR;								\
 	if (s == NULL || s->impl == NULL || s->get##name == NULL) {	\
 		res = KSI_INVALID_ARGUMENT;								\
@@ -1011,6 +1040,7 @@ cleanup:														\
 
 KSI_ASYNC_SERVICE_OBJ_IMPLEMENT_GETTER(KSI_AsyncService, PendingCount, size_t*)
 KSI_ASYNC_SERVICE_OBJ_IMPLEMENT_GETTER(KSI_AsyncService, ReceivedCount, size_t*)
+
 
 void KSI_AsyncRequest_free(KSI_AsyncRequest *ar) {
 	if (ar != NULL) {

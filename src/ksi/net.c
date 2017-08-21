@@ -1337,6 +1337,7 @@ int KSI_AsyncService_construct(KSI_CTX *ctx, KSI_AsyncService **service) {
 	tmp->setSendTimeout = NULL;
 	tmp->setReceiveTimeout = NULL;
 	tmp->setMaxRequestCount = NULL;
+	tmp->setRequestContext = NULL;
 
 	tmp->uriSplit = uriSplit;
 

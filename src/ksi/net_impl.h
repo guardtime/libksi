@@ -205,6 +205,7 @@ extern "C" {
 		int (*setSendTimeout)(void *, size_t);
 		int (*setReceiveTimeout)(void *, size_t);
 		int (*setMaxRequestCount)(void *, size_t);
+		int (*setRequestContext)(void *, KSI_AsyncHandle, void *, void (*)(void*));
 
 		int (*uriSplit)(const char *uri, char **scheme, char **user, char **pass, char **host, unsigned *port, char **path, char **query, char **fragment);
 	};
