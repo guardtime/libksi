@@ -458,8 +458,7 @@ static int asyncClient_getResponse(KSI_AsyncClient *c, KSI_AsyncHandle handle, K
 		goto cleanup;
 	}
 
-
-	if (h >= c->maxParallelRequests || c->reqCache == NULL || c->reqCache[handle] == NULL) {
+	if (handle >= c->maxParallelRequests || c->reqCache == NULL || c->reqCache[handle] == NULL) {
 		res = KSI_INVALID_STATE;
 		goto cleanup;
 	}
