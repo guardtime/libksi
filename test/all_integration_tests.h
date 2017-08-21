@@ -35,6 +35,7 @@ CuSuite* AggreIntegrationTests_getSuite(void);
 CuSuite* ExtIntegrationTests_getSuite(void);
 CuSuite* PubIntegrationTests_getSuite(void);
 CuSuite* IntegrationTestPack_getSuite(void);
+CuSuite* AsyncIntegrationTests_getSuite(void);
 
 #ifdef	__cplusplus
 }
