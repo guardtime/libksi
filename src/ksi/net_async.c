@@ -230,21 +230,24 @@ static int asyncClient_addAggregationRequest(KSI_AsyncClient *c, KSI_AsyncReques
 	res = KSI_AsyncPayload_setPayloadId(tmp, id);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_AsyncPayload_setPayloadCtx(tmp, (void*)(reqRef = KSI_AggregationReq_ref(req->aggregationReq)), (void (*)(void*))KSI_AggregationReq_free);
-	if (res != KSI_OK) {
-		KSI_AggregationReq_free(reqRef);
-		goto cleanup;
-	}
 
-	res = KSI_AsyncPayload_setRequestCtx(tmp, req->reqCtx, req->reqCtx_free);
-	if (res != KSI_OK) goto cleanup;
-
-	/* Add request to the impl output queue. */
+	/* Add request to the impl output queue. The query might fail if the queue is full. */
 	res = c->addRequest(impl, (pldRef = KSI_AsyncPayload_ref(tmp)));
 	if (res != KSI_OK) {
 		KSI_AsyncPayload_free(pldRef);
 		goto cleanup;
 	}
+
+	/* Set payload related contexts. */
+	KSI_AsyncPayload_setPayloadCtx(tmp, req->aggregationReq, (void (*)(void*))KSI_AggregationReq_free);
+	req->aggregationReq = NULL;
+	KSI_AsyncPayload_setRequestCtx(tmp, req->reqCtx, req->reqCtx_free);
+	req->reqCtx = NULL;
+	req->reqCtx_free = NULL;
+
+	/* Release the request object. */
+	KSI_AsyncRequest_free(req);
+
 	/* Set into local cache. */
 	c->reqCache[id] = tmp;
 	tmp = NULL;
