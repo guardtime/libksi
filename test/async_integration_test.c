@@ -103,7 +103,6 @@ static void asyncSigning(CuTest* tc, const char *url, const char *user, const ch
 			switch (res) {
 				case KSI_OK:
 					p_req++;
-					KSI_AsyncRequest_free(asReq);
 					asReq = NULL;
 					CuAssert(tc, "Invalid handle returned.", handle != KSI_ASYNC_HANDLE_NULL);
 					break;

@@ -293,6 +293,12 @@ static int asyncClient_handleAggregationResponse(KSI_AsyncClient *c) {
 	impl = c->clientImpl;
 
 	do {
+		/* Leftovers from previous cycle. */
+		KSI_OctetString_free(resp);
+		resp = NULL;
+		KSI_AggregationPdu_free(pdu);
+		pdu = NULL;
+
 		res = c->getResponse(impl, &resp, &left);
 		if (res != KSI_OK) {
 			KSI_pushError(c->ctx, res, NULL);
@@ -393,20 +399,15 @@ static int asyncClient_handleAggregationResponse(KSI_AsyncClient *c) {
 
 			if (aggrResp == NULL) continue;
 
-
 			res = KSI_AggregationResp_getRequestId(aggrResp, &reqId);
 			if (res != KSI_OK) {
 				KSI_pushError(c->ctx, res , NULL);
 				goto cleanup;
 			}
 
-//			if (reqId == NULL) {
-//				KSI_pushError(c->ctx, res = KSI_INVALID_FORMAT, "Aggregation response is missing request id.");
-//				goto cleanup;
-//			}
-
-			if (c->maxParallelRequests < KSI_Integer_getUInt64(reqId) || c->reqCache[KSI_Integer_getUInt64(reqId)] == NULL) {
-				KSI_LOG_warn(c->ctx, "Unexpected response received.");
+			if (c->maxParallelRequests <= KSI_Integer_getUInt64(reqId) || c->reqCache[KSI_Integer_getUInt64(reqId)] == NULL) {
+				KSI_LOG_warn(c->ctx, "Unexpected async aggregator response received.");
+				continue;
 			}
 			pld = c->reqCache[KSI_Integer_getUInt64(reqId)];
 
@@ -439,11 +440,6 @@ static int asyncClient_handleAggregationResponse(KSI_AsyncClient *c) {
 				c->pending--;
 				c->received++;
 			}
-
-			KSI_OctetString_free(resp);
-			resp = NULL;
-			KSI_AggregationPdu_free(pdu);
-			pdu = NULL;
 		}
 	} while (left != 0);
 
@@ -472,15 +468,22 @@ static int asyncClient_getResponse(KSI_AsyncClient *c, KSI_AsyncHandle handle, K
 
 	switch (c->reqCache[handle]->state) {
 		case KSI_ASYNC_REQ_RESPONSE_RECEIVED:
-			/* Update async response. */
+			/* Get async response from the cache payload context. The context is set in response handler. */
 			tmp = c->reqCache[handle]->pldCtx;
 			c->reqCache[handle]->pldCtx = NULL;
 			c->reqCache[handle]->pldCtx_free = NULL;
 
+			if (tmp == NULL) {
+				res = KSI_INVALID_STATE;
+				goto cleanup;
+			}
+
+			/* Update async response request context. */
 			KSI_AsyncResponse_setRequestContext(tmp, c->reqCache[handle]->reqCtx, c->reqCache[handle]->reqCtx_free);
 			c->reqCache[handle]->reqCtx = NULL;
 			c->reqCache[handle]->reqCtx_free = NULL;
 
+			/* Remove the payload object from the cache. */
 			KSI_AsyncPayload_free(c->reqCache[handle]);
 			c->reqCache[handle] = NULL;
 
