@@ -307,7 +307,6 @@ int main(int argc, char **argv) {
 			switch (res) {
 				case KSI_OK:
 					req_no++;
-					KSI_AsyncRequest_free(asReq);
 					asReq = NULL;
 					break;
 				case KSI_ASYNC_MAX_PARALLEL_COUNT_REACHED:

@@ -111,17 +111,21 @@ extern "C" {
 	/**
 	 * Non-blocking aggregation request setter. All request are put into output queue untill.
 	 * The request are sent during #KSI_AsyncService_run call.
-	 * \param[in]		s				Async serice instance.
+	 * \param[in]		s				Async service instance.
 	 * \param[in]		req				Aggregation request.
 	 * \param[out]		handle			Async handle associated with the request.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \note The \c req may be freed after a successful call to this function.
-	 * \see #KSI_SigningAsyncService_new
-	 * \see #KSI_AsyncService_run
-	 * \see #KSI_AggregationReq_free
+	 * \return #KSI_OK, when operation succeeded;
+	 * \return #KSI_ASYNC_MAX_PARALLEL_COUNT_REACHED, if the internal cache is full. In this case the
+	 *         caller should wait for responses, or process received responses;
+	 * \return otherwise an error code.
+	 * \note The async service \c s takes ownership of \c req request on a successful call to this function, thus
+	 *       the caller may not clear the memory.
+	 * \see #KSI_SigningAsyncService_new for creating a new signing async service instance.
+	 * \see #KSI_AsyncRequest_new for creating a new async request instance.
+	 * \see #KSI_AsyncRequest_free for cleaning up resources in case of a failure.
+	 * \see #KSI_AsyncService_run for handling communication towards service endpoint.
+	 * \see #KSI_AsyncService_getResponse for extracting received responses.
 	 * \see #KSI_AsyncService_setMaxParallelRequests for increasing the internal cache.
-	 * \note If the internal cache is full #KSI_ASYNC_MAX_PARALLEL_COUNT_REACHED is returned. In this case the
-	 * user should process the received responses.
 	 */
 	int KSI_AsyncService_addRequest(KSI_AsyncService *s, KSI_AsyncRequest *req, KSI_AsyncHandle *handle);
 
@@ -135,10 +139,10 @@ extern "C" {
 	 * \param[out]		resp			Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note The caller is responseble for cleaning up the returned resource.
-	 * \see #KSI_SigningAsyncService_new
-	 * \see #KSI_AsyncService_run
+	 * \see #KSI_SigningAsyncService_new for creating a new signing async service instance.
+	 * \see #KSI_AsyncService_run for handling communication towards service endpoint.
 	 * \see #KSI_AsyncService_getRequestState for getting the state of the request.
-	 * \see #KSI_AggregationResp_free
+	 * \see #KSI_AsyncResponse_free for cleaning up returned resource.
 	 */
 	int KSI_AsyncService_getResponse(KSI_AsyncService *s, KSI_AsyncHandle handle, KSI_AsyncResponse **resp);
 
@@ -214,6 +218,16 @@ extern "C" {
 	int KSI_AsyncService_getRequestContext(KSI_AsyncService *s, KSI_AsyncHandle h, void **ctx);
 
 	/**
+	 * Get the request context.
+	 * \param[in]		s				Async serice instance.
+	 * \param[in]		h				Async handle.
+	 * \param[in]		ctx				Request context.
+	 * \param[in]		ctx_free		Pointer to the context cleanup method.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_AsyncService_setRequestContext(KSI_AsyncService *s, KSI_AsyncHandle h, void *ctx, void (*ctx_free)(void*));
+
+	/**
 	 * Get the number of request that have been sent, or still in send queue.
 	 * \param[in]		s				Async serice instance.
 	 * \param[in]		h				Async handle.
@@ -252,7 +266,7 @@ extern "C" {
 	 * \see #KSI_AsyncService_getRequestState for the request state.
 	 * \see #KSI_AsyncService_getRequestError for the request error.
 	 * \note In case of timeout and there are any request that have not been responded yet, the request state
-	 * will be set to #KSI_ASYNC_REQ_ERROR and error #KSI_NETWORK_CONNECTION_TIMEOUT
+	 * will be set to #KSI_ASYNC_REQ_ERROR and error #KSI_NETWORK_CONNECTION_TIMEOUT.
 	 */
 	int KSI_AsyncService_setConnectTimeout(KSI_AsyncService *service, const size_t value);
 
