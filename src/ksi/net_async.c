@@ -230,7 +230,6 @@ static int asyncClient_addAggregationRequest(KSI_AsyncClient *c, KSI_AsyncReques
 	res = KSI_AsyncPayload_setPayloadId(tmp, id);
 	if (res != KSI_OK) goto cleanup;
 
-
 	/* Add request to the impl output queue. The query might fail if the queue is full. */
 	res = c->addRequest(impl, (pldRef = KSI_AsyncPayload_ref(tmp)));
 	if (res != KSI_OK) {
@@ -397,9 +396,14 @@ static int asyncClient_handleAggregationResponse(KSI_AsyncClient *c) {
 
 			res = KSI_AggregationResp_getRequestId(aggrResp, &reqId);
 			if (res != KSI_OK) {
-				KSI_pushError(c->ctx, res, NULL);
+				KSI_pushError(c->ctx, res , NULL);
 				goto cleanup;
 			}
+
+//			if (reqId == NULL) {
+//				KSI_pushError(c->ctx, res = KSI_INVALID_FORMAT, "Aggregation response is missing request id.");
+//				goto cleanup;
+//			}
 
 			if (c->maxParallelRequests < KSI_Integer_getUInt64(reqId) || c->reqCache[KSI_Integer_getUInt64(reqId)] == NULL) {
 				KSI_LOG_warn(c->ctx, "Unexpected response received.");

@@ -28,152 +28,159 @@
 
 #include "cutest/CuTest.h"
 #include "all_integration_tests.h"
-#include <../ksi/net_uri.h>
-#include <../ksi/net_http.h>
-#include <../ksi/net_tcp.h>
-#include <../ksi/net.h>
+
+#include <ksi/net_uri.h>
+#include <ksi/net_http.h>
+#include <ksi/net_tcp.h>
+#include <ksi/net_async.h>
+#include <ksi/net.h>
+#include <ksi/hash.h>
+
 #include "../src/ksi/ctx_impl.h"
 #include "../src/ksi/internal.h"
 
 extern KSI_CTX *ctx;
 extern KSITest_Conf conf;
 
-static void asyncSigning(CuTest* tc, const KSITest_ServiceConf *service, const char *scheme) {
-#if 0
+static void asyncSigning(CuTest* tc, const char *url, const char *user, const char *pass) {
 	int res;
 	KSI_AsyncService *as = NULL;
-	time_t t_finished;
+	KSI_AsyncRequest *asReq = NULL;
+	time_t startTime;
+	const char *requests[] = {
+		"Guardtime", "Keyless", "Signature", "Infrastructure", "(KSI)",
+		"is an", "industrial", "scale", "blockchain", "platform",
+		"that", "cryptographically", "ensures", "data", "integrity",
+		"and", "proves", "time", "of", "existence",
+		NULL
+	};
+	const char **p_req = NULL;
+	size_t onHold = 0;
 
-	KSI_LOG_debug(ctx, "%s START: %s", __FUNCTION__, scheme);
+	KSI_LOG_debug(ctx, "%s: START (%s)", __FUNCTION__, url);
 	KSI_ERR_clearErrors(ctx);
-	t_finished = time(NULL);
+	startTime = time(NULL);
 
-	res = KSI_SigningAsyncService_new(ksi, &as);
-	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK);
+	res = KSI_SigningAsyncService_new(ctx, &as);
+	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = KSI_AsyncService_setEndpoint(as, KSITest_composeUri(scheme, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
+	res = KSI_AsyncService_setEndpoint(as, url, user, pass);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
+	p_req = requests;
 	do {
 		KSI_AsyncHandle handle = KSI_ASYNC_HANDLE_NULL;
 
-		if (req_no < nof_requests) {
-			char *p_name = argv[ARGV_IN_DATA_FILE_START + req_no];
+		if (*p_req != NULL) {
+			size_t pendingCount = 0;
+
+			KSI_LOG_debug(ctx, "%s: REQUEST (\"%s\").", __FUNCTION__, *p_req);
 
 			if (asReq == NULL) {
-				KSI_LOG_info(ksi, "Create request for file:  %s", p_name);
+				KSI_DataHash *hsh = NULL;
+				KSI_AggregationReq *req = NULL;
 
-				/* Get the hash value of the input file. */
-				res = getHash(ksi, p_name, &hsh);
-				if (res != KSI_OK || hsh == NULL) {
-					fprintf(stderr, "Failed to calculate the hash.\n");
-					goto cleanup;
-				}
+				res = KSI_DataHash_create(ctx, *p_req, strlen(*p_req), KSI_HASHALG_SHA2_256, &hsh);
+				CuAssert(tc, "Unable to create data hash from string.", res == KSI_OK && hsh != NULL);
 
-				res = KSI_AggregationReq_new(ksi, &req);
-				if (res == KSI_OK && req == NULL) {
-					fprintf(stderr, "Unable to create aggregation request.\n");
-					goto cleanup;
-				}
+				res = KSI_AggregationReq_new(ctx, &req);
+				CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
 
 				res = KSI_AggregationReq_setRequestHash(req, hsh);
-				if (res != KSI_OK) {
-					fprintf(stderr, "Unable to set request data hash.\n");
-					goto cleanup;
-				}
-				hsh = NULL;
+				CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
 
-				res = KSI_AsyncRequest_new(ksi, &asReq);
-				if (res == KSI_OK && req == NULL) {
-					fprintf(stderr, "Unable to create async request.\n");
-					goto cleanup;
-				}
+				res = KSI_AsyncRequest_new(ctx, &asReq);
+				CuAssert(tc, "Unable to create async request.", res == KSI_OK && asReq != NULL);
 
 				res = KSI_AsyncRequest_setAggregationReq(asReq, req);
-				if (res != KSI_OK) {
-					fprintf(stderr, "Unable to set aggregation request.\n");
-					goto cleanup;
-				}
-				req = NULL;
+				CuAssert(tc, "Unable to set aggregation request.", res == KSI_OK);
 
-				res = KSI_AsyncRequest_setRequestContext(asReq, (void*)p_name, NULL);
-				if (res != KSI_OK) {
-					fprintf(stderr, "Unable to set request context.\n");
-					goto cleanup;
-				}
+				res = KSI_AsyncRequest_setRequestContext(asReq, (void*)KSI_DataHash_ref(hsh), (void (*)(void*))KSI_DataHash_free);
+				CuAssert(tc, "Unable to set request context.", res == KSI_OK);
 			}
 
 			res = KSI_AsyncService_addRequest(as, asReq, &handle);
 			switch (res) {
 				case KSI_OK:
-					req_no++;
+					p_req++;
 					KSI_AsyncRequest_free(asReq);
 					asReq = NULL;
+					CuAssert(tc, "Invalid handle returned.", handle != KSI_ASYNC_HANDLE_NULL);
 					break;
 				case KSI_ASYNC_MAX_PARALLEL_COUNT_REACHED:
 					/* The request could not be added to the cache because of unresponsed requests. */
 					/* Wait for a while to avoid busy loop. */
+					KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
 					sleep_ms(10);
 					break;
 				default:
-					fprintf(stderr, "Unable to add request.\n");
-					goto cleanup;
+					CuAssert(tc, "Unable to add request", res == KSI_OK);
 			}
+
+			res = KSI_AsyncService_getPendingCount(as, &pendingCount);
+			CuAssert(tc, "Unable to get pending count.", res == KSI_OK);
+			CuAssert(tc, "Pending count must be >0.", pendingCount > 0);
 		}
+
+
+		KSI_LOG_debug(ctx, "%s: RUN.", __FUNCTION__);
 
 		handle = KSI_ASYNC_HANDLE_NULL;
-		res = KSI_AsyncService_run(as, &handle, &pending);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Failed to run async service.\n");
-			goto cleanup;
-		}
+		res = KSI_AsyncService_run(as, &handle, &onHold);
+		CuAssert(tc, "Failed to run async service.", res == KSI_OK);
 
 		if (handle != KSI_ASYNC_HANDLE_NULL) {
-			char *p_name = NULL;
 			int state = KSI_ASYNC_REQ_UNDEFINED;
 
-			KSI_LOG_info(ksi, "Read response.");
-
-			KSI_AsyncService_getRequestState(as, handle, &state);
-			if (res != KSI_OK) {
-				fprintf(stderr, "Unable to get request state.\n");
-				goto cleanup;
-			}
+			res = KSI_AsyncService_getRequestState(as, handle, &state);
+			CuAssert(tc, "Unable to get request state.", res == KSI_OK && state != KSI_ASYNC_REQ_ERROR);
 
 			switch (state) {
-				case KSI_ASYNC_REQ_RESPONSE_RECEIVED:
-					res = KSI_AsyncService_getResponse(as, handle, &asResp);
-					if (res != KSI_OK) {
-						fprintf(stderr, "Failed to get async response.\n");
-						goto cleanup;
-					}
+				case KSI_ASYNC_REQ_RESPONSE_RECEIVED: {
+						KSI_DataHash *reqHsh = NULL;
+						KSI_DataHash *inpHsh = NULL;
+						size_t receivedCount = 0;
+						KSI_AsyncResponse *asResp = NULL;
+						KSI_AggregationResp *resp = NULL;
+						KSI_AggregationHashChainList *aggrChainList = NULL;
+						KSI_AggregationHashChain *chain = NULL;
 
-					if (asResp != NULL) {
+						KSI_LOG_debug(ctx, "%s: RESPONSE.", __FUNCTION__);
+
+						res = KSI_AsyncService_getReceivedCount(as, &receivedCount);
+						CuAssert(tc, "Unable to get received count.", res == KSI_OK);
+						CuAssert(tc, "Received count must be >0.", receivedCount > 0);
+
+						res = KSI_AsyncService_getResponse(as, handle, &asResp);
+						CuAssert(tc, "Failed to get async response.", res == KSI_OK && asResp != NULL);
+
 						res = KSI_AsyncResponse_getAggregationResp(asResp, &resp);
-						if (res != KSI_OK) {
-							fprintf(stderr, "Failed to get aggregation response.\n");
-							goto cleanup;
-						}
+						CuAssert(tc, "Failed to get aggregation response.", res == KSI_OK && resp != NULL);
 
-						res = KSI_AsyncResponse_getRequestContext(asResp, (void**)&p_name);
-						if (res != KSI_OK) {
-						  fprintf(stderr, "Unable to get request context.\n");
-						  goto cleanup;
-						}
+						res = KSI_AsyncResponse_getRequestContext(asResp, (void**)&reqHsh);
+						CuAssert(tc, "Unable to get request context.", res == KSI_OK);
 
-						res = saveSignature(p_name, resp);
-						if (res != KSI_OK) {
-							fprintf(stderr, "Failed to save signature for: %s\n", p_name);
-							goto cleanup;
-						}
-						succeeded++;
+						res = KSI_AggregationResp_getAggregationChainList(resp, &aggrChainList);
+						CuAssert(tc, "Unable to get aggregation chain list.", res == KSI_OK && aggrChainList != NULL);
+						CuAssert(tc, "Unable to get aggregation chain list is emty.", KSI_AggregationHashChainList_length(aggrChainList) > 0);
+
+						res = KSI_AggregationHashChainList_elementAt(aggrChainList, 0, &chain);
+						CuAssert(tc, "Unable to get aggregation chain.", res == KSI_OK && chain != NULL);
+
+						res = KSI_AggregationHashChain_getInputHash(chain, &inpHsh);
+						CuAssert(tc, "Unable to chain input hash.", res == KSI_OK && inpHsh != NULL);
+
+						CuAssert(tc, "Data hash mismatch.", KSI_DataHash_equals(reqHsh, inpHsh));
+
 						KSI_AsyncResponse_free(asResp);
-						asResp = NULL;
 					}
 					break;
 
+#if 0
 				case KSI_ASYNC_REQ_ERROR: {
 						int err = KSI_UNKNOWN_ERROR;
+
+						KSI_LOG_debug(ctx, "%s: ERROR.", __FUNCTION__);
 
 						res = KSI_AsyncService_getRequestError(as, handle, &err);
 						if (res != KSI_OK) {
@@ -196,24 +203,24 @@ static void asyncSigning(CuTest* tc, const KSITest_ServiceConf *service, const c
 						}
 					}
 					break;
+#endif
 
 				default:
 					/* Do nothing! */
 					break;
 			}
 		}
-	} while (pending);
+	} while (onHold);
 
 	KSI_LOG_debug(ctx, "%s: CLEANUP.", __FUNCTION__);
 
 	KSI_AsyncService_free(as);
 
-	KSI_LOG_debug(ctx, "%s: FINISH in %fs.", __FUNCTION__, difftime(time(NULL), t_finished));
-#endif
+	KSI_LOG_debug(ctx, "%s: FINISH in %fs.", __FUNCTION__, difftime(time(NULL), startTime));
 }
 
 void Test_AsyncSignTcp(CuTest* tc) {
-	asyncSigning(tc, &conf.aggregator, TEST_SCHEME_TCP);
+	asyncSigning(tc, KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
 }
 
 CuSuite* AsyncIntegrationTests_getSuite(void) {
