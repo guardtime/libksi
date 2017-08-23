@@ -184,7 +184,8 @@ static int asyncClient_addAggregationRequest(KSI_AsyncClient *c, KSI_AsyncReques
 		goto cleanup;
 	}
 
-	if (c->clientImpl == NULL || req->aggregationReq == NULL || c->addRequest == NULL || c->getCredentials == NULL) {
+	if (req->aggregationReq == NULL || req->extendReq != NULL ||
+			c->clientImpl == NULL || c->addRequest == NULL || c->getCredentials == NULL) {
 		res = KSI_INVALID_STATE;
 		goto cleanup;
 	}
@@ -493,7 +494,7 @@ static int asyncClient_getResponse(KSI_AsyncClient *c, KSI_AsyncHandle handle, K
 		case KSI_ASYNC_REQ_WAITING_FOR_RESPONSE:
 			tmp = NULL;
 			/* Check if the response is overdue. */
-			if (difftime(time(NULL), c->reqCache[handle]->sndTime) > c->rTimeout) {
+			if (c->rTimeout == 0 || difftime(time(NULL), c->reqCache[handle]->sndTime) > c->rTimeout) {
 				/* Just update the error state. */
 				c->reqCache[c->tail]->state = KSI_ASYNC_REQ_ERROR;
 				c->reqCache[c->tail]->error = KSI_NETWORK_RECIEVE_TIMEOUT;
@@ -532,7 +533,7 @@ int asyncClient_findNextResponse(KSI_AsyncClient *c, KSI_AsyncHandle *handle) {
 		if (c->reqCache[c->tail] != NULL) {
 			switch (c->reqCache[c->tail]->state) {
 				case KSI_ASYNC_REQ_WAITING_FOR_RESPONSE:
-					if (difftime(time(NULL), c->reqCache[c->tail]->sndTime) > c->rTimeout) {
+					if (c->rTimeout == 0 || difftime(time(NULL), c->reqCache[c->tail]->sndTime) > c->rTimeout) {
 						*handle = c->reqCache[c->tail]->id;
 						c->reqCache[c->tail]->state = KSI_ASYNC_REQ_ERROR;
 						c->reqCache[c->tail]->error = KSI_NETWORK_RECIEVE_TIMEOUT;

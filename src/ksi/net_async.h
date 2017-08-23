@@ -158,6 +158,7 @@ extern "C" {
 	 * \param[out]		waiting			Total number of requests in process.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note The \c waiting count can be ignored by setting it to NULL.
+	 * \note The returned \c handle will be set to #KSI_ASYNC_HANDLE_NULL if there is no response in queue.
 	 * \see #KSI_AsyncService_addRequest for adding asynchronous request to the output queue.
 	 * \see #KSI_AsyncService_getResponse for reading received responses.
 	 * \see #KSI_AsyncService_getRequestState for getting the state of the request.

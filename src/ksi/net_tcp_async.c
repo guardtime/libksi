@@ -238,10 +238,10 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 
 	res = poll(&pfd, 1, 0);
 	if (res == 0) {
-		if (difftime(time(NULL), tcpCtx->conOpenAt) > tcpCtx->cTimeout) {
+		if (tcpCtx->cTimeout == 0 || difftime(time(NULL), tcpCtx->conOpenAt) > tcpCtx->cTimeout) {
 			KSI_LOG_debug(tcpCtx->ctx, "Async TCP connection timeout.");
-			res = KSI_NETWORK_CONNECTION_TIMEOUT;
-			clearReqQueueWithError(tcpCtx->reqQueue, res);
+			clearReqQueueWithError(tcpCtx->reqQueue, KSI_NETWORK_CONNECTION_TIMEOUT);
+			res = KSI_OK;
 		} else {
 			KSI_LOG_debug(tcpCtx->ctx, "Async TCP connection not ready.");
 			res = KSI_OK;
@@ -340,10 +340,10 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 				goto cleanup;
 			}
 			if (sockOpt == KSI_SOC_EINPROGRESS || sockOpt == KSI_SOC_EWOULDBLOCK) {
-				if (difftime(time(NULL), tcpCtx->conOpenAt) > tcpCtx->cTimeout) {
+				if (tcpCtx->cTimeout == 0 || difftime(time(NULL), tcpCtx->conOpenAt) > tcpCtx->cTimeout) {
 					KSI_LOG_debug(tcpCtx->ctx, "Async TCP connection timeout.");
-					res = KSI_NETWORK_CONNECTION_TIMEOUT;
-					clearReqQueueWithError(tcpCtx->reqQueue, res);
+					clearReqQueueWithError(tcpCtx->reqQueue, KSI_NETWORK_CONNECTION_TIMEOUT);
+					res = KSI_OK;
 				} else {
 					KSI_LOG_debug(tcpCtx->ctx, "Async TCP connection not ready.");
 					res = KSI_OK;
@@ -382,7 +382,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 
 				if (req->state == KSI_ASYNC_REQ_WAITING_FOR_DISPATCH) {
 					/* Verify that the send timeout has not elapsed. */
-					if (difftime(time(NULL), req->reqTime) >= tcpCtx->sTimeout) {
+					if (tcpCtx->sTimeout == 0 || difftime(time(NULL), req->reqTime) >= tcpCtx->sTimeout) {
 						/* Set error. */
 						req->state = KSI_ASYNC_REQ_ERROR;
 						req->error = KSI_NETWORK_SEND_TIMEOUT;
