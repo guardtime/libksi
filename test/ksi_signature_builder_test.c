@@ -543,7 +543,7 @@ CuSuite* KSITest_SignatureBuilder_getSuite(void) {
     SUITE_ADD_TEST(suite, testPreAggregated);
     SUITE_ADD_TEST(suite, testOpenWithSignature);
     SUITE_ADD_TEST(suite, testAppendChain);
-    SUITE_ADD_TEST(suite, testCreateManySignatures);
+    SUITE_ADD_TEST(suite, testCreateSignaturesWithAggregationChains);
 
 	return suite;
 }
