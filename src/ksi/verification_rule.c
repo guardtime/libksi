@@ -1641,7 +1641,7 @@ int KSI_VerificationRule_InputHashAlgorithmVerification(KSI_VerificationContext 
 	sig = info->signature;
 	KSI_ERR_clearErrors(ctx);
 
-	KSI_LOG_info(ctx, "Verify document hash.");
+	KSI_LOG_info(ctx, "Verify document hash algorithm.");
 	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Document hash: ", info->documentHash);
 
 	if (sig->rfc3161 != NULL) {
