@@ -279,6 +279,9 @@ EXPORTS
 	KSI_AsyncResponse_getAggregationResp
 	KSI_AsyncResponse_getExtendResp
 	KSI_AsyncResponse_getRequestContext
+	KSI_AsyncService_setConnectTimeout
+	KSI_AsyncService_setReceiveTimeout
+	KSI_AsyncService_setSendTimeout
 
 ;net_http.h
 EXPORTS
