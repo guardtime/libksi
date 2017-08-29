@@ -724,7 +724,7 @@ CuSuite* AsyncIntegrationTests_getSuite(void) {
 
 	SUITE_ADD_TEST(suite, Test_AsyncSign_loop_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_collect_tcp);
-	SUITE_ADD_TEST(suite, Test_AsyncSign_useExtender_tcp);
+	SUITE_SKIP_TEST(suite, Test_AsyncSign_useExtender_tcp, "Max", "Waiting for gateway release.");
 	SUITE_ADD_TEST(suite, Test_AsyncSign_fillupCache_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_addEmptyRequest_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_addExtendRequest_tcp);

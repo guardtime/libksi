@@ -182,6 +182,16 @@ cleanup:
 	return res;
 }
 
+static void closeSocket(TcpAsyncCtx *tcpCtx) {
+	if (tcpCtx != NULL) {
+		/* Close socket */
+		if (tcpCtx->sockfd != TCP_INVALID_SOCKET_FD) close(tcpCtx->sockfd);
+		tcpCtx->sockfd = TCP_INVALID_SOCKET_FD;
+		/* Clear input buffer. */
+		tcpCtx->inLen = 0;
+	}
+}
+
 static int clearReqQueueWithError(KSI_AsyncPayloadList *list, int err) {
 	int res;
 
@@ -239,6 +249,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 	res = poll(&pfd, 1, 0);
 	if (res == 0) {
 		if (tcpCtx->cTimeout == 0 || difftime(time(NULL), tcpCtx->conOpenAt) > tcpCtx->cTimeout) {
+			closeSocket(tcpCtx);
 			KSI_LOG_debug(tcpCtx->ctx, "Async TCP connection timeout.");
 			clearReqQueueWithError(tcpCtx->reqQueue, KSI_NETWORK_CONNECTION_TIMEOUT);
 			res = KSI_OK;
@@ -248,7 +259,8 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 		}
 		goto cleanup;
 	} else if (res < 0) {
-		KSI_pushError(tcpCtx->ctx, res = KSI_IO_ERROR, "Failed to test socket.");
+		closeSocket(tcpCtx);
+		KSI_ERR_push(tcpCtx->ctx, res = KSI_IO_ERROR, KSI_SOC_error, __FILE__, __LINE__, "Failed to test socket.");
 		clearReqQueueWithError(tcpCtx->reqQueue, res);
 		goto cleanup;
 	}
@@ -260,15 +272,14 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 		c = recv(tcpCtx->sockfd, (tcpCtx->inBuf + tcpCtx->inLen), KSI_TLV_MAX_SIZE, 0);
 		if (c == 0) {
 			/* Connection has been closed unexpectedly. */
-			tcpCtx->sockfd = TCP_INVALID_SOCKET_FD;
-			/* Clear input buffer. */
-			tcpCtx->inLen = 0;
+			closeSocket(tcpCtx);
 			KSI_LOG_debug(tcpCtx->ctx, "Async TCP connection closed.");
 			res = KSI_ASYNC_CONNECTION_CLOSED;
 			clearReqQueueWithError(tcpCtx->reqQueue, res);
 			goto cleanup;
 		} else if ((c < 0) && !(KSI_SOC_error == KSI_SOC_EINPROGRESS || KSI_SOC_error == KSI_SOC_EWOULDBLOCK)) {
 			/* Non-recoverable error has occurred. */
+			closeSocket(tcpCtx);
 			KSI_ERR_push(tcpCtx->ctx, res = KSI_NETWORK_ERROR, KSI_SOC_error, __FILE__, __LINE__, "Unable to receive data.");
 			clearReqQueueWithError(tcpCtx->reqQueue, res);
 			goto cleanup;
@@ -336,11 +347,13 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 			res = getsockopt(tcpCtx->sockfd, SOL_SOCKET, SO_ERROR, &sockOpt, (socklen_t *) &len);
 #endif
 			if (res < 0) {
-				KSI_pushError(tcpCtx->ctx, res = KSI_IO_ERROR, NULL);
+				closeSocket(tcpCtx);
+				KSI_ERR_push(tcpCtx->ctx, res = KSI_IO_ERROR, KSI_SOC_error, __FILE__, __LINE__, "Unable to check socket.");
 				goto cleanup;
 			}
 			if (sockOpt == KSI_SOC_EINPROGRESS || sockOpt == KSI_SOC_EWOULDBLOCK) {
 				if (tcpCtx->cTimeout == 0 || difftime(time(NULL), tcpCtx->conOpenAt) > tcpCtx->cTimeout) {
+					closeSocket(tcpCtx);
 					KSI_LOG_debug(tcpCtx->ctx, "Async TCP connection timeout.");
 					clearReqQueueWithError(tcpCtx->reqQueue, KSI_NETWORK_CONNECTION_TIMEOUT);
 					res = KSI_OK;
@@ -580,7 +593,7 @@ static int TcpAsyncCtx_new(KSI_CTX *ctx, TcpAsyncCtx **tcpCtx) {
 	}
 
 	tmp = KSI_malloc(sizeof(TcpAsyncCtx));
-	if (tcpCtx == NULL) {
+	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
