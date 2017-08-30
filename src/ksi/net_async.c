@@ -597,8 +597,8 @@ int asyncClient_run(KSI_AsyncClient *c, int (*handleResp)(KSI_AsyncClient *), KS
 		size_t i;
 		for (i = 1; i < c->maxParallelRequests; i++) {
 			if (c->reqCache[i] != NULL && c->reqCache[i]->state == KSI_ASYNC_REQ_WAITING_FOR_RESPONSE) {
-				c->reqCache[c->tail]->state = KSI_ASYNC_REQ_ERROR;
-				c->reqCache[c->tail]->error = KSI_ASYNC_CONNECTION_CLOSED;
+				c->reqCache[i]->state = KSI_ASYNC_REQ_ERROR;
+				c->reqCache[i]->error = KSI_ASYNC_CONNECTION_CLOSED;
 			}
 		}
 	}

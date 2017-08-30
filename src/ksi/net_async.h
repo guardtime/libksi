@@ -27,7 +27,7 @@ extern "C" {
 #endif
 
 	/**
-	 * \addtogroup async service
+	 * \addtogroup asyncNetwork Network interface (asynchronous).
 	 * @{
 	 */
 
@@ -50,6 +50,8 @@ extern "C" {
 	 * its contents is copied internally.
 	 */
 	int KSI_AsyncPayload_new(KSI_CTX *ctx, const unsigned char *payload, const size_t payload_len, KSI_AsyncPayload **o);
+
+	KSI_DEFINE_REF(KSI_AsyncPayload);
 
 	/**
 	 * Setter for the paiload id.
@@ -80,7 +82,7 @@ extern "C" {
 	/**
 	 * Getter for the request specific context.
 	 * \param[in]		o				Async payload object.
-	 * \param[in]		reqCtx			Pointer to the receiving pointer.
+	 * \param[out]		reqCtx			Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_AsyncPayload_getRequestCtx(KSI_AsyncPayload *o, void **reqCtx);
@@ -135,7 +137,7 @@ extern "C" {
 	 * a valid response is returned. In case a response for the \c handle request has not been received
 	 * the \c resp is set the NULL.
 	 * \param[in]		s				Async serice instance.
-	 * \param[out]		handle			Async handle associated with a request.
+	 * \param[in]		handle			Async handle associated with a request.
 	 * \param[out]		resp			Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note The caller is responseble for cleaning up the returned resource.
@@ -197,15 +199,18 @@ extern "C" {
 	 * \param[in]		h				Async handle.
 	 * \param[out]		state			Payload state #KSI_AsyncRequestState_en
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_AsyncService_getResponse for extracting received responses.
+	 * \see #KSI_AsyncService_getRequestError for reading error code.
 	 */
 	int KSI_AsyncService_getRequestState(KSI_AsyncService *s, KSI_AsyncHandle h, int *state);
 
 	/**
-	 * Get the state of the request.
+	 * Get the error code for the request which state is #KSI_ASYNC_REQ_ERROR.
 	 * \param[in]		s				Async serice instance.
 	 * \param[in]		h				Async handle.
 	 * \param[out]		error			Payload error #KSI_StatusCode
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_AsyncService_getRequestState for getting the state of the request.
 	 */
 	int KSI_AsyncService_getRequestError(KSI_AsyncService *s, KSI_AsyncHandle h, int *error);
 
@@ -231,8 +236,7 @@ extern "C" {
 	/**
 	 * Get the number of request that have been sent, or still in send queue.
 	 * \param[in]		s				Async serice instance.
-	 * \param[in]		h				Async handle.
-	 * \param[out]		count
+	 * \param[out]		count			Pointer to the value.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_AsyncService_getPendingCount(KSI_AsyncService *s, size_t *count);
@@ -240,8 +244,7 @@ extern "C" {
 	/**
 	 * Get the number of request that have received a response.
 	 * \param[in]		s				Async serice instance.
-	 * \param[in]		h				Async handle.
-	 * \param[out]		count
+	 * \param[out]		count			Pointer to the value.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_AsyncService_getReceivedCount(KSI_AsyncService *s, size_t *count);
@@ -299,7 +302,7 @@ extern "C" {
 	 * \param[in]		value			Maximum request count.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_ASYNC_ROUND_DURATION_SEC defines the round time interval.
-	 * \see #KSI_AsyncService_addAggregationReq
+	 * \see #KSI_AsyncService_addRequest for adding asynchronous request to the output queue.
 	 * \note In case the maximum number of request is allready sent out during a round interval,
 	 * additional request will be buffered in intenal cache.
 	 */
