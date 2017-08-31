@@ -174,6 +174,7 @@ esac
 CFLAGS+= " -Wdeclaration-after-statement"
 # Add more warnings
 CFLAGS+=" -Wall"
+
 AC_ARG_WITH(unit-test-xml,
 [  --with-unit-test-xml=file		Specifies the target xml of unit tests.],
 :, with_unit_test_xml=testsuite-xunit.xml)

@@ -835,6 +835,7 @@ int KSI_RequestHandle_getExtendResponse(const KSI_RequestHandle *handle, KSI_Ext
 		goto cleanup;
 	}
 
+	/* Check if the the request context is initialized. This is needed for verifing and logging response inconsistencies. */
 	req = (KSI_ExtendReq*)handle->reqCtx;
 	if (req == NULL) {
 		KSI_pushError(handle->ctx, res = KSI_INVALID_STATE, "Request context is not initialized.");
@@ -1029,6 +1030,7 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 		goto cleanup;
 	}
 
+	/* Check if the the request context is initialized. This is needed for verifing and logging response inconsistencies. */
 	req = (KSI_AggregationReq*)handle->reqCtx;
 	if (req == NULL) {
 		KSI_pushError(handle->ctx, res = KSI_INVALID_STATE, "Request context is not initialized.");

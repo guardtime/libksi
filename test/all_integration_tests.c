@@ -22,6 +22,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 
+#include <ksi/hash.h>
+
 #include "cutest/CuTest.h"
 #include "all_integration_tests.h"
 #include "support_tests.h"
@@ -54,6 +56,7 @@ static int RunAllTests() {
 	int res;
 	CuSuite* suite = initSuite();
 	FILE *logFile = NULL;
+	KSI_HashAlgorithm alg_id = KSI_HASHALG_INVALID;
 
 	/* Create the context. */
 	res = KSI_CTX_new(&ctx);
@@ -62,13 +65,29 @@ static int RunAllTests() {
 		exit(EXIT_FAILURE);
 	}
 
-	res = KSI_CTX_setPublicationUrl(ctx, conf.publications_file_url);
+	if (*conf.aggregator.hmac) {
+		if ((alg_id = KSI_getHashAlgorithmByName(conf.aggregator.hmac)) == KSI_HASHALG_INVALID) {
+			fprintf(stderr, "Invalid hash algorithm for aggregator HMAC: '%s'\n", conf.aggregator.hmac);
+			exit(EXIT_FAILURE);
+		}
+		KSI_CTX_setAggregatorHmacAlgorithm(ctx, alg_id);
+	}
+
+	if (*conf.extender.hmac) {
+		if ((alg_id = KSI_getHashAlgorithmByName(conf.extender.hmac)) == KSI_HASHALG_INVALID) {
+			fprintf(stderr, "Invalid hash algorithm for extender HMAC: '%s'\n", conf.extender.hmac);
+			exit(EXIT_FAILURE);
+		}
+		KSI_CTX_setExtenderHmacAlgorithm(ctx, alg_id);
+	}
+
+	res = KSI_CTX_setPublicationUrl(ctx, conf.pubfile.url);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to set publications file URL.\n");
 		exit(EXIT_FAILURE);
 	}
 
-	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, conf.testPubFileCertConstraints);
+	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, conf.pubfile.certConstraints);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to set publications file verification constraints.\n");
 		exit(EXIT_FAILURE);
@@ -83,8 +102,8 @@ static int RunAllTests() {
 	KSI_CTX_setLoggerCallback(ctx, KSI_LOG_StreamLogger, logFile);
 	KSI_CTX_setLogLevel(ctx, KSI_LOG_DEBUG);
 
-	KSI_CTX_setAggregator(ctx, conf.aggregator_url, conf.aggregator_user, conf.aggregator_pass);
-	KSI_CTX_setExtender(ctx, conf.extender_url, conf.extender_user, conf.extender_pass);
+	KSI_CTX_setAggregator(ctx, KSITest_composeUri("ksi+http", &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
+	KSI_CTX_setExtender(ctx, KSITest_composeUri("ksi+http", &conf.extender), conf.extender.user, conf.extender.pass);
 	KSI_CTX_setConnectionTimeoutSeconds(ctx, 30);
 	KSI_CTX_setTransferTimeoutSeconds(ctx, 30);
 

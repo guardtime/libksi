@@ -26,11 +26,26 @@
 
 #include <ksi/compatibility.h>
 
+#define isParam(name, param) (strcmp(param, name) == 0)
 
-#define CONF_cpy(name, param, value) \
-	if (conf->name[0] == '\0' && strcmp(param, #name) == 0) {\
+#define CONF_str_cpy(name, param, value) \
+	if (conf->name[0] == '\0' && isParam(param, #name)) {\
 		KSI_strncpy(conf->name, value, CONF_FIELD_SIZE);\
+	}
+
+#define CONF_arr_str_cpy(name, pos, max, param, value) \
+	if (pos >= max) {\
+		fprintf(stderr, "Error: Parameter '%s' count too large. Max is %i\n", #name, max); \
+		exit(EXIT_FAILURE);\
 	}\
+	if (conf->name[pos][0] == '\0' && isParam(param, #name)) {\
+		KSI_strncpy(conf->name[pos], value, CONF_FIELD_SIZE);\
+	}
+
+#define CONF_int_set(name, param, value) \
+	if (conf->name == 0 && isParam(param, #name)) {\
+		conf->name = atoi(value); \
+	}
 
 static char *string_getBetweenWhitespace(char *strn) {
 	char *beginning = strn;
@@ -52,166 +67,104 @@ static char *string_getBetweenWhitespace(char *strn) {
 	return beginning;
 }
 
-static void conf_append(KSITest_Conf *conf, const char *param, const char *value) {
-	char tmp[CONF_FIELD_SIZE];
+static void parseConstraint(KSITest_PubfileConf *conf, unsigned at, const char *value) {
 	char *equal = NULL;
-	char *OID = NULL;
-	char *oid_value = NULL;
 
+	/* Entry in conf file must contain '='. */
+	equal = strchr(conf->cnstr[at], '=');
+	if(equal == NULL) {
+		fprintf(stderr, "Error: Publications file constraint must have format <oid>=<value>, but is '%s'!\n", value);
+		exit(EXIT_FAILURE);
+	} else {
+		char *oid = NULL;
+		char *val = NULL;
 
-	CONF_cpy(extender_url, param, value);
-	CONF_cpy(extender_pass, param, value);
-	CONF_cpy(extender_user, param, value);
+		*equal = '\0';
+		oid = string_getBetweenWhitespace(conf->cnstr[at]);
+		val = string_getBetweenWhitespace(equal + 1);
 
-	CONF_cpy(aggregator_url, param, value);
-	CONF_cpy(aggregator_pass, param, value);
-	CONF_cpy(aggregator_user, param, value);
+		if (strlen(oid) == 0) {
+			fprintf(stderr, "Error: Publications file constraint OID must not be empty string!\n");
+			fprintf(stderr, "Error: Invalid entry '%s'\n", value);
+			exit(EXIT_FAILURE);
+		}
 
-	CONF_cpy(publications_file_url, param, value);
+		if (strlen(val) == 0) {
+			fprintf(stderr, "Error: Publications file constraint value must not be empty string!\n");
+			fprintf(stderr, "Error: Invalid entry '%s'\n", value);
+			exit(EXIT_FAILURE);
+		}
 
-	CONF_cpy(tcp_url, param, value);
-	CONF_cpy(tcp_host, param, value);
-	CONF_cpy(tcp_user, param, value);
-	CONF_cpy(tcp_pass, param, value);
-
-	if (conf->tcp_port == 0 && strcmp(param, "tcp_port") == 0) {
-		conf->tcp_port = atoi(value);
+		conf->certConstraints[at].oid = oid;
+		conf->certConstraints[at].val = val;
 	}
+}
 
-	if (strcmp(param, "publications_file_cnstr") == 0) {
-		if (conf->constraints >= CONF_MAX_CONSTRAINTS) {
-			fprintf(stderr, "Error: Publications file constraint count too large. Max is %i\n", CONF_MAX_CONSTRAINTS);
-			exit(EXIT_FAILURE);
-		}
-		KSI_strncpy(tmp, value, sizeof(tmp));
-		/*Entry in conf file must contain '='*/
-		equal = strchr(tmp, '=');
-		if(equal == NULL) {
-			fprintf(stderr, "Error: Publications file constraint must have format <oid>=<value>, but is '%s'!\n", value);
-			exit(EXIT_FAILURE);
-		} else {
-			*equal = '\0';
-			OID = string_getBetweenWhitespace(tmp);
-			oid_value = string_getBetweenWhitespace(equal + 1);
+static void conf_append(KSITest_Conf *conf, const char *param, const char *value) {
+	CONF_str_cpy(extender.host, param, value);
+	CONF_int_set(extender.port, param, value);
+	CONF_str_cpy(extender.pass, param, value);
+	CONF_str_cpy(extender.user, param, value);
+	CONF_str_cpy(extender.hmac, param, value);
 
-			if(strlen(OID) == 0) {
-				fprintf(stderr, "Error: Publications file constraint OID must not be empty string!\n");
-				fprintf(stderr, "Error: Invalid entry '%s'\n", value);
-				exit(EXIT_FAILURE);
-			}
+	CONF_str_cpy(aggregator.host, param, value);
+	CONF_int_set(aggregator.port, param, value);
+	CONF_str_cpy(aggregator.pass, param, value);
+	CONF_str_cpy(aggregator.user, param, value);
+	CONF_str_cpy(aggregator.hmac, param, value);
 
-			if(strlen(oid_value) == 0) {
-				fprintf(stderr, "Error: Publications file constraint value must not be empty string!\n");
-				fprintf(stderr, "Error: Invalid entry '%s'\n", value);
-				exit(EXIT_FAILURE);
-			}
-			KSI_strncpy(conf->oid[conf->constraints], OID, CONF_FIELD_SIZE);
-			KSI_strncpy(conf->val[conf->constraints], oid_value, CONF_FIELD_SIZE);
+	CONF_str_cpy(pubfile.url, param, value);
+	CONF_arr_str_cpy(pubfile.cnstr, conf->pubfile.cnstrCount, CONF_MAX_CONSTRAINTS, param, value);
 
-			conf->testPubFileCertConstraints[conf->constraints].oid = conf->oid[conf->constraints];
-			conf->testPubFileCertConstraints[conf->constraints].val = conf->val[conf->constraints];
-			conf->constraints++;
-		}
-
+	if (isParam(param, "pubfile.cnstr") && conf->pubfile.cnstr[conf->pubfile.cnstrCount] != NULL) {
+		parseConstraint(&conf->pubfile, conf->pubfile.cnstrCount, value);
+		conf->pubfile.cnstrCount++;
 	}
 }
 
 static void conf_clear(KSITest_Conf *conf) {
-	unsigned int i;
-
-	conf->aggregator_url[0] = '\0';
-	conf->aggregator_pass[0] = '\0';
-	conf->aggregator_user[0] = '\0';
-	conf->extender_url[0] = '\0';
-	conf->extender_pass[0] = '\0';
-	conf->extender_user[0] = '\0';
-	conf->publications_file_url[0] = '\0';
-	conf->publications_file_cnstr[0] = '\0';
-	conf->tcp_url[0] = '\0';
-	conf->tcp_host[0] = '\0';
-	conf->tcp_port = 0;
-	conf->tcp_pass[0] = '\0';
-	conf->tcp_user[0] = '\0';
-
-	conf->constraints = 0;
-	for (i = 0; i < CONF_MAX_CONSTRAINTS + 1; i++) {
-		conf->testPubFileCertConstraints[i].oid = NULL;
-		conf->testPubFileCertConstraints[i].val = NULL;
-		if (i < CONF_MAX_CONSTRAINTS) {
-			conf->oid[i][0] = '\0';
-			conf->val[i][0] = '\0';
-		}
-	}
+	memset(conf, 0, sizeof(KSITest_Conf));
 }
 
-#define CONF_CONTROL(_conf, _param, _res) \
+#define CONF_CONTROL_STR(_conf, _param, _res) \
 	if(_conf -> _param [0] == '\0') {\
-		fprintf(stderr, "Error: parameter '%s' in conf file must have valeue.\n", #_param);\
+		fprintf(stderr, "Error: parameter '%s' in conf file must have value.\n", #_param);\
 		_res = 1; \
 	}
 
-static int isUserInfoInsideUrl(const char *url) {
-	char *start_user = NULL;
-	char *end_user = NULL;
-	char *colon = NULL;
-
-	if (url == NULL || *url == '\0') return 0;
-
-	/* Extract the margins of the user ino. */
-	start_user = strstr(url, "://");
-	end_user = strchr(url, '@');
-
-	if (start_user == NULL || end_user == NULL) {
-		return 0;
+#define CONF_CONTROL_INT(_conf, _param, _res, _ctrl_val) \
+	if(_conf -> _param == (_ctrl_val)) {\
+		fprintf(stderr, "Error: parameter '%s' in conf file must have value (not %d).\n", #_param, (_ctrl_val));\
+		_res = 1; \
 	}
 
-	/* Extract thge colon that should be between the margins. */
-	colon = strchr(start_user + 3, ':');
-	if (colon == NULL || colon == start_user + 3 || colon >= end_user - 1) return 0;
-
-	return 1;
-}
+#define CONF_CONTROL_CNT(_conf, _param, _res, _ctrl_cnt, msg) \
+	if(_conf -> _param == (_ctrl_cnt)) {\
+		fprintf(stderr, msg);\
+		_res = 1; \
+	}
 
 static int conf_control(KSITest_Conf *conf) {
 	int res = 0;
 
-	CONF_CONTROL(conf, aggregator_url, res);
-	CONF_CONTROL(conf, aggregator_pass, res);
-	CONF_CONTROL(conf, aggregator_user, res);
-	CONF_CONTROL(conf, extender_url, res);
-	CONF_CONTROL(conf, extender_pass, res);
-	CONF_CONTROL(conf, extender_user, res);
-	CONF_CONTROL(conf, publications_file_url, res);
-	CONF_CONTROL(conf, tcp_url, res);
-	CONF_CONTROL(conf, tcp_host, res);
-	CONF_CONTROL(conf, tcp_pass, res);
-	CONF_CONTROL(conf, tcp_user, res);
+	CONF_CONTROL_STR(conf, aggregator.host, res);
+	CONF_CONTROL_STR(conf, aggregator.pass, res);
+	CONF_CONTROL_STR(conf, aggregator.user, res);
+	CONF_CONTROL_INT(conf, aggregator.port, res, 0);
+	/* Optional values: */
+	/*CONF_CONTROL_STR(conf, aggregator.hmac, res);*/
 
-	if (!isUserInfoInsideUrl(conf->aggregator_url)) {
-		fprintf(stderr, "Error: aggregator_url must contain user information fields.\n");
-		fprintf(stderr, "  Url: '%s'.\n", conf->aggregator_url);
-		fprintf(stderr, "  Fix url as described: <scheme>://<user>:<pass>@<host>\n");
-		res = 1;
-	}
+	CONF_CONTROL_STR(conf, extender.host, res);
+	CONF_CONTROL_STR(conf, extender.pass, res);
+	CONF_CONTROL_STR(conf, extender.user, res);
+	CONF_CONTROL_INT(conf, extender.port, res, 0);
+	/* Optional values: */
+	/*CONF_CONTROL_STR(conf, extender.hmac, res);*/
 
-	if (!isUserInfoInsideUrl(conf->extender_url)) {
-		fprintf(stderr, "Error: extender_url must contain user information fields.\n");
-		fprintf(stderr, "  Url: '%s'.\n", conf->extender_url);
-		fprintf(stderr, "  Fix url as described: <scheme>://<user>:<pass>@<host>\n");
-		res = 1;
-	}
+	CONF_CONTROL_STR(conf, pubfile.url, res);
 
+	CONF_CONTROL_CNT(conf, pubfile.cnstrCount, res, 0, "Error: At least 1 publications file certificate constraint must be defined in conf file.\n");
 
-	if(conf->tcp_port == 0) {
-		fprintf(stderr, "Error: parameter 'tcp_port' in conf file must have valeue (not 0).\n");
-		res = 1;
-	}
-
-	if (conf->constraints == 0) {
-		fprintf(stderr, "Error: At least 1 publications file certificate constraint must be defined in conf file.\n");
-		res = 1;
-	}
-	/*Return 1 if conf contains errors*/
 	return res;
 }
 
