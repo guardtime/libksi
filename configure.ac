@@ -35,7 +35,7 @@ AC_CANONICAL_TARGET
 #      increment age ('c:r:a' becomes 'c:r:a+1').
 #   4. If any interfaces have been removed or changed since the last public
 #      release, then set age to 0 ('c:r:a' becomes 'c:r:0').
-LTVER="7:1:0"
+LTVER=m4_esyscmd([head -n 1 ABI_VERSION | tr -d [:space:]])
 AC_SUBST(LTVER)
 
 AM_INIT_AUTOMAKE([subdir-objects foreign -Wall -Werror tar-ustar])

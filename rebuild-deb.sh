@@ -140,7 +140,7 @@ chmod -Rf 755 $tmp_dir_src
 cp  $deb_dir/libksi/DEBIAN/control $tmp_dir_lib/libksi/DEBIAN/control
 cp  $deb_dir/libksi/DEBIAN/control-dev $tmp_dir_dev/libksi-dev/DEBIAN/control
 cp  $deb_dir/libksi/DEBIAN/control-source $tmp_dir_src/libksi/debian/control
-cp  $deb_dir/libksi/DEBIAN/changelog $tmp_dir_src/libksi/debian/
+
 
 # As the target architecture do not match with the one provided by autotools,
 # replace the variable by the one provided by dpkg.

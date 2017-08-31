@@ -1,5 +1,6 @@
 * BUGFIX: Fixed clang static analyze findings.
 * IMPROVEMENT: Debian packaging refactored and fixed.
+* IMPROVEMENT: ABI version moved from configure.ac to ABI_VERSION file.
 * IMPROVEMENT: Added KSI_SignatureBuilder_createSignatureWithAggregationChain function.
 * IMPROVEMENT: Removed calendar-based verification from the default verification policy.
 * IMPROVEMENT: New verification rule for verifing document hash algorithm.
