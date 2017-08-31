@@ -24,6 +24,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([src/ksi/config.h])
 AC_CANONICAL_TARGET
 
+
 # Before making a release, the LTVER string should be modified. The
 # string is of the form c:r:a. Follow these instructions sequentially:
 #   1. If the library source code has changed at all since the last update, then
@@ -190,5 +191,5 @@ AC_SUBST(VER_MINOR)
 AC_SUBST(VER_BUILD)
 AC_CONFIG_FILES([src/ksi/version.h])
 
-AC_CONFIG_FILES([GNUmakefile src/ksi/GNUmakefile test/GNUmakefile doc/GNUmakefile src/example/GNUmakefile])
+AC_CONFIG_FILES([GNUmakefile src/ksi/GNUmakefile test/GNUmakefile doc/GNUmakefile src/example/GNUmakefile packaging/deb/libksi/DEBIAN/control packaging/deb/libksi/DEBIAN/control-source packaging/deb/libksi/DEBIAN/control-dev])
 AC_OUTPUT

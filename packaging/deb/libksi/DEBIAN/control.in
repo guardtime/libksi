@@ -1,8 +1,8 @@
-Package: libksi
-Version: @VER@
+Package: @PACKAGE@
+Version: @VERSION@
 Section: devel
 Priority: optional
-Architecture: @ARCH@
+Architecture: @DPKG_VERSION_REPLACED_WITH_SED@
 Depends: libcurl3, libssl0.9.8 | libssl1.0.0
 Maintainer: Guardtime <support@guardtime.com>
 Description: KSI C API.
