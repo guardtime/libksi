@@ -22,7 +22,7 @@
 set -e
 
 
-#Get version number
+# Get version number.
 VER=$(tr -d [:space:] < VERSION)
 ARCH=$(dpkg --print-architecture)
 PKG_VERSION=1
@@ -172,7 +172,7 @@ tar -xvzf libksi-${VER}.tar.gz -C $tmp_dir_src/
 cp -r $tmp_dir_src/libksi/debian $tmp_dir_src/libksi-${VER}
 
 
-#Build packages
+# Build packages.
 dpkg-deb --build $tmp_dir_lib/libksi
 mv $tmp_dir_lib/libksi.deb libksi_${VER}-${PKG_VERSION}_${ARCH}.deb
 
@@ -182,7 +182,7 @@ mv $tmp_dir_dev/libksi-dev.deb libksi-dev_${VER}-${PKG_VERSION}_${ARCH}.deb
 dpkg-source -b -sn $tmp_dir_src/libksi-${VER} ""
 
 
-#Cleanup
+# Cleanup.
 
 rm -rf $tmp_dir_lib
 rm -rf $tmp_dir_dev
