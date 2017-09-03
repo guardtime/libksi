@@ -122,10 +122,11 @@ extern "C" {
 
 	typedef struct KSI_AsyncService_st KSI_AsyncService;
 	typedef struct KSI_AsyncClient_st KSI_AsyncClient;
-	typedef struct KSI_AsyncPayload_st KSI_AsyncPayload;
-	typedef KSI_uint64_t KSI_AsyncHandle;
-	typedef struct KSI_AsyncRequest_st KSI_AsyncRequest;
-	typedef struct KSI_AsyncResponse_st KSI_AsyncResponse;
+	typedef struct KSI_AsyncHandle_st KSI_AsyncHandle;
+
+//	typedef KSI_uint64_t KSI_Async___Handle___old;
+//	typedef struct KSI_AsyncRequest_st KSI_AsyncRequest;
+//	typedef struct KSI_AsyncResponse_st KSI_AsyncResponse;
 
 	/**
 	 * Representation of the aggregation hash chain.
@@ -488,16 +489,16 @@ KSI_DEFINE_LIST(KSI_RequestHandle);
 #define KSI_RequestHandleList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_RequestHandleList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
 
-KSI_DEFINE_LIST(KSI_AsyncPayload);
-#define KSI_AsyncPayloadList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
-#define KSI_AsyncPayloadList_remove(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), removeElement, ((lst), (pos), (o)))
-#define KSI_AsyncPayloadList_indexOf(lst, o, i) KSI_APPLY_TO_NOT_NULL((lst), indexOf, ((lst), (o), (i)))
-#define KSI_AsyncPayloadList_insertAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), insertAt, ((lst), (pos), (o)))
-#define KSI_AsyncPayloadList_replaceAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), replaceAt, ((lst), (pos), (o)))
-#define KSI_AsyncPayloadList_elementAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), elementAt, ((lst), (pos), (o)))
-#define KSI_AsyncPayloadList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
-#define KSI_AsyncPayloadList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
-#define KSI_AsyncPayloadList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+KSI_DEFINE_LIST(KSI_AsyncHandle);
+#define KSI_AsyncHandleList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
+#define KSI_AsyncHandleList_remove(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), removeElement, ((lst), (pos), (o)))
+#define KSI_AsyncHandleList_indexOf(lst, o, i) KSI_APPLY_TO_NOT_NULL((lst), indexOf, ((lst), (o), (i)))
+#define KSI_AsyncHandleList_insertAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), insertAt, ((lst), (pos), (o)))
+#define KSI_AsyncHandleList_replaceAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), replaceAt, ((lst), (pos), (o)))
+#define KSI_AsyncHandleList_elementAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), elementAt, ((lst), (pos), (o)))
+#define KSI_AsyncHandleList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
+#define KSI_AsyncHandleList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
+#define KSI_AsyncHandleList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
 
 
 /*

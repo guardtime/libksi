@@ -119,7 +119,6 @@ static int saveSignature(const char *fileName, const KSI_AggregationResp *resp) 
 
 	char sigFileName[0xff];
 
-
 	/* Generate KSI signature from aggregation response. */
 	res = KSI_SignatureBuilder_openFromAggregationResp(resp, &builder);
 	if (res != KSI_OK) {
@@ -176,8 +175,10 @@ int main(int argc, char **argv) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	KSI_AsyncService *as = NULL;
-	KSI_AsyncRequest *asReq = NULL;
-	KSI_AsyncResponse *asResp = NULL;
+
+	KSI_AsyncHandle *reqHandle = NULL;
+	KSI_AsyncHandle *respHandle = NULL;
+
 	KSI_AggregationReq *req = NULL;
 	KSI_AggregationResp *resp = NULL;
 
@@ -255,12 +256,10 @@ int main(int argc, char **argv) {
 	}
 
 	do {
-		KSI_AsyncHandle handle = KSI_ASYNC_HANDLE_NULL;
-
 		if (req_no < nof_requests) {
 			char *p_name = argv[ARGV_IN_DATA_FILE_START + req_no];
 
-			if (asReq == NULL) {
+			if (reqHandle == NULL) {
 				KSI_LOG_info(ksi, "Create request for file:  %s", p_name);
 
 				/* Get the hash value of the input file. */
@@ -283,31 +282,25 @@ int main(int argc, char **argv) {
 				}
 				hsh = NULL;
 
-				res = KSI_AsyncRequest_new(ksi, &asReq);
-				if (res == KSI_OK && req == NULL) {
-					fprintf(stderr, "Unable to create async request.\n");
-					goto cleanup;
-				}
-
-				res = KSI_AsyncRequest_setAggregationReq(asReq, req);
+				res = KSI_AsyncAggregationHandle_new(ksi, req, &reqHandle);
 				if (res != KSI_OK) {
-					fprintf(stderr, "Unable to set aggregation request.\n");
+					fprintf(stderr, "Unable to create async request.\n");
 					goto cleanup;
 				}
 				req = NULL;
 
-				res = KSI_AsyncRequest_setRequestContext(asReq, (void*)p_name, NULL);
+				res = KSI_AsyncHandle_setRequestCtx(reqHandle, (void*)p_name, NULL);
 				if (res != KSI_OK) {
 					fprintf(stderr, "Unable to set request context.\n");
 					goto cleanup;
 				}
 			}
 
-			res = KSI_AsyncService_addRequest(as, asReq, &handle);
+			res = KSI_AsyncService_addRequest(as, reqHandle);
 			switch (res) {
 				case KSI_OK:
 					req_no++;
-					asReq = NULL;
+					reqHandle = NULL;
 					break;
 				case KSI_ASYNC_MAX_PARALLEL_COUNT_REACHED:
 					/* The request could not be added to the cache because of unresponsed requests. */
@@ -320,41 +313,34 @@ int main(int argc, char **argv) {
 			}
 		}
 
-		handle = KSI_ASYNC_HANDLE_NULL;
-		res = KSI_AsyncService_run(as, &handle, &pending);
+		respHandle = NULL;
+		res = KSI_AsyncService_run(as, &respHandle, &pending);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Failed to run async service.\n");
 			goto cleanup;
 		}
 
-		if (handle != KSI_ASYNC_HANDLE_NULL) {
+		if (respHandle != NULL) {
 			char *p_name = NULL;
-			int state = KSI_ASYNC_REQ_UNDEFINED;
+			int state = KSI_ASYNC_STATE_UNDEFINED;
 
 			KSI_LOG_info(ksi, "Read response.");
 
-			KSI_AsyncService_getRequestState(as, handle, &state);
+			KSI_AsyncHandle_getState(respHandle, &state);
 			if (res != KSI_OK) {
 				fprintf(stderr, "Unable to get request state.\n");
 				goto cleanup;
 			}
 
 			switch (state) {
-				case KSI_ASYNC_REQ_RESPONSE_RECEIVED:
-					res = KSI_AsyncService_getResponse(as, handle, &asResp);
-					if (res != KSI_OK) {
-						fprintf(stderr, "Failed to get async response.\n");
-						goto cleanup;
-					}
-
-					if (asResp != NULL) {
-						res = KSI_AsyncResponse_getAggregationResp(asResp, &resp);
+				case KSI_ASYNC_STATE_RESPONSE_RECEIVED: {
+						res = KSI_AsyncHandle_getAggregationResp(respHandle, &resp);
 						if (res != KSI_OK) {
 							fprintf(stderr, "Failed to get aggregation response.\n");
 							goto cleanup;
 						}
 
-						res = KSI_AsyncResponse_getRequestContext(asResp, (void**)&p_name);
+						res = KSI_AsyncHandle_getRequestCtx(respHandle, (const void**)&p_name);
 						if (res != KSI_OK) {
 						  fprintf(stderr, "Unable to get request context.\n");
 						  goto cleanup;
@@ -365,22 +351,24 @@ int main(int argc, char **argv) {
 							fprintf(stderr, "Failed to save signature for: %s\n", p_name);
 							goto cleanup;
 						}
+
 						succeeded++;
-						KSI_AsyncResponse_free(asResp);
-						asResp = NULL;
+
+						KSI_AsyncHandle_free(respHandle);
+						respHandle = NULL;
 					}
 					break;
 
-				case KSI_ASYNC_REQ_ERROR: {
+				case KSI_ASYNC_STATE_ERROR: {
 						int err = KSI_UNKNOWN_ERROR;
 
-						res = KSI_AsyncService_getRequestError(as, handle, &err);
+						res = KSI_AsyncHandle_getError(respHandle, &err);
 						if (res != KSI_OK) {
 							fprintf(stderr, "Unable to get request state.\n");
 							goto cleanup;
 						}
 
-						res = KSI_AsyncService_getRequestContext(as, handle, (void**)&p_name);
+						res = KSI_AsyncHandle_getRequestCtx(respHandle, (const void**)&p_name);
 						if (res != KSI_OK) {
 							fprintf(stderr, "Unable to get request state.\n");
 							goto cleanup;
@@ -388,11 +376,8 @@ int main(int argc, char **argv) {
 
 						fprintf(stderr, "Request for '%s' failed with error: [0x%x] %s\n", p_name, err, KSI_getErrorString(err));
 
-						res = KSI_AsyncService_recover(as, handle, KSI_ASYNC_REC_DROP);
-						if (res != KSI_OK) {
-							fprintf(stderr, "Failed to apply recover policy on request.\n");
-							goto cleanup;
-						}
+						KSI_AsyncHandle_free(respHandle);
+						respHandle = NULL;
 					}
 					break;
 
@@ -415,8 +400,9 @@ cleanup:
 	if (logFile != NULL) fclose(logFile);
 
 	KSI_AsyncService_free(as);
-	KSI_AsyncRequest_free(asReq);
-	KSI_AsyncResponse_free(asResp);
+
+	KSI_AsyncHandle_free(reqHandle);
+	KSI_AsyncHandle_free(respHandle);
 
 	KSI_AggregationReq_free(req);
 

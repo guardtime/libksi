@@ -267,9 +267,7 @@ EXPORTS
 	KSI_AsyncService_addRequest
 	KSI_SigningAsyncService_new
 	KSI_AsyncRequest_free
-	KSI_AsyncRequest_new
-	KSI_AsyncRequest_setAggregationReq
-	KSI_AsyncRequest_setExtendReq
+	KSI_AsyncAggregationRequest_new
 	KSI_AsyncRequest_setRequestContext
 	KSI_AsyncResponse_free
 	KSI_AsyncResponse_new
