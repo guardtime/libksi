@@ -5,6 +5,7 @@
 * IMPROVEMENT: Removed calendar-based verification from the default verification policy.
 * IMPROVEMENT: New verification rule for verifing document hash algorithm.
 * IMPROVEMENT: Implemented verification of PKI certificate validity during aggregation time.
+* IMPROVEMENT: Rpm packaging spec file moved from "redhat" to "packaging/redhat".
 * IMPROVEMENT: Set default PDU version to 2.
 Version 3.14
 

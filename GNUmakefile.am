@@ -29,10 +29,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libksi.pc
 
 EXTRA_DIST = VERSION changelog build*.txt lic*.txt \
-			 doc/doxy* test/* redhat/libksi.spec 
-
-redhat/libksi.spec: redhat/libksi.spec.in
-	sed 's/@VERSION\@/${VERSION}/g' $< > $@
+		doc/doxy* test/* packaging/redhat/libksi.spec
 
 ZIPDOC_DIR = ${PACKAGE}-${VERSION}-htmldoc
 
