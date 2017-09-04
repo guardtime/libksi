@@ -111,29 +111,42 @@ extern "C" {
 		int (*status)(KSI_RequestHandle *);
 	};
 
-	struct KSI_AsyncPayload_st {
+	struct KSI_AsyncHandle_st {
 		KSI_CTX *ctx;
 		size_t ref;
 
 		/* Payload id. */
-		KSI_AsyncHandle id;
+		KSI_uint64_t id;
 
-		/* Payload context. */
-		void *pldCtx;
-		void (*pldCtx_free)(void*);
-
-		/* Payload. */
-		unsigned char *raw;
-		size_t len;
-
-		/* Request context. */
+		/* Application layer request context. */
 		void *reqCtx;
 		void (*reqCtx_free)(void*);
 
+		/* Application layer response context. */
+		void *respCtx;
+		void (*respCtx_free)(void*);
+
+		/* Serialized payload. */
+		unsigned char *raw;
+		size_t len;
+
+		/* Private user poiter. */
+		void *userCtx;
+		void (*userCtx_free)(void*);
+
+		/* Handle state. */
 		int state;
-		int error;
+
+		/* Handle error. */
+		int err;
+		KSI_Utf8String *errMsg;
+
+		/* Time when the query has been added to the request queue. */
 		time_t reqTime;
+		/* Time when the query has been sent out. */
 		time_t sndTime;
+		/* Time when the response has been reeived. */
+		time_t rcvTime;
 	};
 
 	struct KSI_AsyncRequest_st {
@@ -164,7 +177,7 @@ extern "C" {
 		void *clientImpl;
 		void (*clientImpl_free)(void*);
 
-		int (*addRequest)(void *, KSI_AsyncPayload *);
+		int (*addRequest)(void *, KSI_AsyncHandle *);
 		int (*getResponse)(void *, KSI_OctetString **, size_t *);
 		int (*getCredentials)(void *, const char **, const char **);
 		int (*dispatch)(void *);
@@ -175,8 +188,10 @@ extern "C" {
 		size_t requestCount;
 		size_t tail;
 		size_t maxParallelRequests;
-		KSI_AsyncPayload **reqCache;
+		KSI_AsyncHandle **reqCache;
+		/* Nof pending requests (including.in error state). */
 		size_t pending;
+		/* Nof received valid responses. */
 		size_t received;
 		int recoveryOption;
 		size_t rTimeout;
@@ -188,16 +203,16 @@ extern "C" {
 		void *impl;
 		void (*impl_free)(void*);
 
-		int (*addRequest)(void *, KSI_AsyncRequest *, KSI_AsyncHandle *);
-		int (*getResponse)(void *, KSI_AsyncHandle, KSI_AsyncResponse **);
+		int (*addRequest)(void *, KSI_AsyncHandle *);
+//		int (*getResponse)(void *, KSI_Async___Handle___old, KSI_AsyncResponse **);
 		int (*responseHandler)(void *);
 
-		int (*run)(void *, int (*)(void *), KSI_AsyncHandle *, size_t *);
-		int (*recover)(void *, KSI_AsyncHandle, int);
+		int (*run)(void *, int (*)(void *), KSI_AsyncHandle **, size_t *);
+//		int (*recover)(void *, KSI_Async___Handle___old, int);
 
-		int (*getRequestState)(void *, KSI_AsyncHandle, int *);
-		int (*getRequestError)(void *, KSI_AsyncHandle, int *);
-		int (*getRequestContext)(void *, KSI_AsyncHandle, void **);
+//		int (*getRequestState)(void *, KSI_Async___Handle___old, int *);
+//		int (*getRequestError)(void *, KSI_Async___Handle___old, int *);
+//		int (*getRequestContext)(void *, KSI_Async___Handle___old, void **);
 		int (*getPendingCount)(void *, size_t *);
 		int (*getReceivedCount)(void *, size_t *);
 
@@ -205,7 +220,7 @@ extern "C" {
 		int (*setSendTimeout)(void *, size_t);
 		int (*setReceiveTimeout)(void *, size_t);
 		int (*setMaxRequestCount)(void *, size_t);
-		int (*setRequestContext)(void *, KSI_AsyncHandle, void *, void (*)(void*));
+//		int (*setRequestContext)(void *, KSI_Async___Handle___old, void *, void (*)(void*));
 
 		int (*uriSplit)(const char *uri, char **scheme, char **user, char **pass, char **host, unsigned *port, char **path, char **query, char **fragment);
 	};

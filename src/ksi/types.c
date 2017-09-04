@@ -194,7 +194,7 @@ KSI_IMPLEMENT_LIST(KSI_PKISignedData, KSI_PKISignedData_free);
 KSI_IMPLEMENT_LIST(KSI_PublicationsHeader, KSI_PublicationsHeader_free);
 KSI_IMPLEMENT_LIST(KSI_CertificateRecord, KSI_CertificateRecord_free);
 KSI_IMPLEMENT_LIST(KSI_RequestHandle, KSI_RequestHandle_free);
-KSI_IMPLEMENT_LIST(KSI_AsyncPayload, KSI_AsyncPayload_free);
+KSI_IMPLEMENT_LIST(KSI_AsyncHandle, KSI_AsyncHandle_free);
 
 KSI_IMPLEMENT_REF(KSI_MetaDataElement);
 KSI_IMPLEMENT_REF(KSI_MetaData);
