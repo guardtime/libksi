@@ -163,7 +163,7 @@ static void asyncSigning_loop_getResponse(CuTest* tc, const char *url, const cha
 
 		KSI_AsyncHandle_free(respHandle);
 	} while (onHold);
-	CuAssert(tc, "Response count mismatch.", (sizeof(TEST_REQUESTS) / sizeof(TEST_REQUESTS[0])) == received);
+	CuAssert(tc, "Response count mismatch.", ((sizeof(TEST_REQUESTS) / sizeof(TEST_REQUESTS[0])) - 1) == received);
 
 	KSI_LOG_debug(ctx, "%s: CLEANUP.", __FUNCTION__);
 
