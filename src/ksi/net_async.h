@@ -72,7 +72,7 @@ extern "C" {
 	/**
 	 * Get the state of the request handle.
 	 * \param[in]		h				Async handle.
-	 * \param[out]		state			Payload state #KSI_AsyncHandleState_en
+	 * \param[out]		state			Payload state #KSI_AsyncHandleState
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncHandle_getError for reading error code.
 	 */
@@ -102,6 +102,15 @@ extern "C" {
 	 * \note This will also handle termination of open network connection.
 	 */
 	void KSI_AsyncClient_free(KSI_AsyncClient *c);
+
+	/**
+	 * Construct an abstract async client object.
+	 * \param[in]		ctx				KSI context.
+	 * \param[out]		c				Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_AsyncClient_construct(KSI_CTX *ctx, KSI_AsyncClient **c);
+
 
 	/**
 	 * Free async service object.
@@ -134,7 +143,7 @@ extern "C" {
 	 * \see #KSI_AsyncAggregationHandle_new for creating a new async request instance.
 	 * \see #KSI_AsyncRequest_free for cleaning up resources in case of a failure.
 	 * \see #KSI_AsyncService_run for handling communication towards service endpoint.
-	 * \see #KSI_AsyncService_setMaxParallelRequests for increasing the internal cache.
+	 * \see #KSI_ASYNC_OPT_REQUEST_CACHE_SIZE for increasing the cache size.
 	 */
 	int KSI_AsyncService_addRequest(KSI_AsyncService *s, KSI_AsyncHandle *handle);
 
@@ -158,7 +167,7 @@ extern "C" {
 	/**
 	 * Enum defining async handle state.
 	 */
-	enum KSI_AsyncHandleState_en {
+	typedef enum KSI_AsyncHandleState_en {
 		/** The state of the request is undefined. */
 		KSI_ASYNC_STATE_UNDEFINED = 0,
 		/** The request is cached in the output queue. */
@@ -178,7 +187,7 @@ extern "C" {
 		 * \see #KSI_AsyncService_addRequest for readding the request back into the request queue.
 		 */
 		KSI_ASYNC_STATE_ERROR
-	};
+	} KSI_AsyncHandleState;
 
 	/**
 	 * Get the number of request that have been sent, or still in send queue.
@@ -198,64 +207,82 @@ extern "C" {
 
 #define KSI_ASYNC_DEFAULT_ROUND_MAX_COUNT   (1 << 3)
 #define KSI_ASYNC_DEFAULT_PARALLEL_REQUESTS (1 << 10)
-#define KSI_ASYNC_ROUND_DURATION_SEC 1
+#define KSI_ASYNC_ROUND_DURATION_SEC        (1)
+#define KSI_ASYNC_DEFAULT_TIMEOUT_SEC       (10)
 
 	/**
-	 * Set maximum parallel running request count. The \c count may not be less than the previously set value.
-	 * Default value is #KSI_ASYNC_DEFAULT_PARALLEL_REQUESTS
-	 * \param[in]		service			Async serice instance.
-	 * \param[in]		count			Value to be applied.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * Enum defining async service options.
+	 * \see #KSI_AsyncService_setOption for setting an option.
+	 * \see #KSI_AsyncService_getOption for getting an option.
 	 */
-	int KSI_AsyncService_setMaxParallelRequests(KSI_AsyncService *service, size_t count);
+	typedef enum KSI_AsyncOption_en {
+
+		/**
+		 * Async connection timeout. Time interval between when network connection has been initiated and
+		 * the point it has been established.
+		 * \param[in]		timeout			Timeout in seconds. Paramer of type size_t.
+		 * \see #KSI_AsyncHandle_getState for the request state.
+		 * \see #KSI_AsyncHandle_getError for the request error.
+		 * \note In case of timeout and there are any request that have not been responded yet, the request state
+		 * will be set to #KSI_ASYNC_STATE_ERROR and error #KSI_NETWORK_CONNECTION_TIMEOUT.
+		 */
+		KSI_ASYNC_OPT_CON_TIMEOUT = 0,
+
+		/**
+		 * Async request response receive timeout. Represents the time interval between when the request
+		 * was sent out and a response has been received.
+		 * \param[in]		timeout			Timeout in seconds. Paramer of type size_t.
+		 * \see #KSI_AsyncHandle_getState for the request state.
+		 * \see #KSI_AsyncHandle_getError for the request error.
+		 * \note In case of timeout the request state will be set to #KSI_ASYNC_STATE_ERROR
+		 * and error to #KSI_NETWORK_RECIEVE_TIMEOUT
+		 */
+		KSI_ASYNC_OPT_RCV_TIMEOUT,
+
+		/**
+		 * Async request send timeout. Represent the time interval between when the request has been added
+		 * to the request queue and it has been sent out.
+		 * \param[in]		timeout			Timeout in seconds. Paramer of type size_t.
+		 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+		 * \see #KSI_AsyncHandle_getState for the request state.
+		 * \see #KSI_AsyncHandle_getError for the request error.
+		 * \note In case of timeout the request state will be set to #KSI_ASYNC_STATE_ERROR
+		 * and error to #KSI_NETWORK_SEND_TIMEOUT
+		 */
+		KSI_ASYNC_OPT_SND_TIMEOUT,
+
+		/**
+		 * Maximum parallel running request count. New value may not be less than the allready set value.
+		 * \param[in]		count			Paramer of type #size_t.
+		 * \see #KSI_ASYNC_DEFAULT_PARALLEL_REQUESTS default count.
+		 */
+		KSI_ASYNC_OPT_REQUEST_CACHE_SIZE,
+
+		/**
+		 * Maximum number of request permitted per round.
+		 * \param[in]		count			Paramer of type #size_t.
+		 * \see #KSI_ASYNC_DEFAULT_ROUND_MAX_COUNT default value.
+		 * \see #KSI_ASYNC_ROUND_DURATION_SEC defines the round time interval.
+		 * \see #KSI_AsyncService_addRequest for adding asynchronous request to the output queue.
+		 * \note In case the maximum number of request is allready sent out during a round interval,
+		 * additional request will be buffered in intenal cache.
+		 */
+		KSI_ASYNC_OPT_MAX_REQUEST_COUNT,
+
+		__NOF_KSI_ASYNC_OPT
+	} KSI_AsyncOption;
+
 
 	/**
-	 * Setter for the async connection timeout.
+	 * Async service option setter.
 	 * \param[in]		service			Async serice instance.
-	 * \param[in]		value			Timeout in seconds.
+	 * \param[in]		option			Option to be updated from #KSI_AsyncOption.
+	 * \param[in]		value			Option value as specified in #KSI_AsyncOption.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_AsyncHandle_getState for the request state.
-	 * \see #KSI_AsyncHandle_getError for the request error.
-	 * \note In case of timeout and there are any request that have not been responded yet, the request state
-	 * will be set to #KSI_ASYNC_STATE_ERROR and error #KSI_NETWORK_CONNECTION_TIMEOUT.
+	 * \see #KSI_AsyncOption defines supported options and parameter types.
+	 * \see #KSI_AsyncService_getOption opotion getter.
 	 */
-	int KSI_AsyncService_setConnectTimeout(KSI_AsyncService *service, const size_t value);
-
-	/**
-	 * Setter for the async request response receive timeout.
-	 * \param[in]		service			Async serice instance.
-	 * \param[in]		value			Timeout in seconds.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_AsyncHandle_getState for the request state.
-	 * \see #KSI_AsyncHandle_getError for the request error.
-	 * \note In case of timeout the request state will be set to #KSI_ASYNC_STATE_ERROR
-	 * and error to #KSI_NETWORK_RECIEVE_TIMEOUT
-	 */
-	int KSI_AsyncService_setReceiveTimeout(KSI_AsyncService *service, const size_t value);
-
-	/**
-	 * Setter for the async request send timeout.
-	 * \param[in]		service			Async serice instance.
-	 * \param[in]		value			Timeout in seconds.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_AsyncHandle_getState for the request state.
-	 * \see #KSI_AsyncHandle_getError for the request error.
-	 * \note In case of timeout the request state will be set to #KSI_ASYNC_STATE_ERROR
-	 * and error to #KSI_NETWORK_SEND_TIMEOUT
-	 */
-	int KSI_AsyncService_setSendTimeout(KSI_AsyncService *service, const size_t value);
-
-	/**
-	 * Setter for the maximum number of request permitted per round.
-	 * \param[in]		service			Async serice instance.
-	 * \param[in]		value			Maximum request count.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_ASYNC_ROUND_DURATION_SEC defines the round time interval.
-	 * \see #KSI_AsyncService_addRequest for adding asynchronous request to the output queue.
-	 * \note In case the maximum number of request is allready sent out during a round interval,
-	 * additional request will be buffered in intenal cache.
-	 */
-	int KSI_AsyncService_setMaxRequestCount(KSI_AsyncService *service, const size_t value);
+	int KSI_AsyncService_setOption(KSI_AsyncService *service, const KSI_AsyncOption option, void *value);
 
 
 	/**

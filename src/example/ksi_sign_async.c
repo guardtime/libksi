@@ -249,11 +249,13 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	res = KSI_AsyncService_setMaxRequestCount(as, (1<<8));
+#if 0
+	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_MAX_REQUEST_COUNT, (void *)(1<<8));
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to set maximum request count.\n");
 		goto cleanup;
 	}
+#endif
 
 	do {
 		if (req_no < nof_requests) {
@@ -374,9 +376,15 @@ int main(int argc, char **argv) {
 							goto cleanup;
 						}
 
-						fprintf(stderr, "Request for '%s' failed with error: [0x%x] %s\n", p_name, err, KSI_getErrorString(err));
+						fprintf(stderr, "Request for '%s' failed. Error: [0x%x] %s", p_name, err, KSI_getErrorString(err));
 
-						KSI_AsyncHandle_free(respHandle);
+						res = KSI_AsyncService_addRequest(as, respHandle);
+						if (res == KSI_OK) {
+							fprintf(stderr, "   ...resending.\n");
+						} else {
+							fprintf(stderr, "   ...clearing.\n");
+							KSI_AsyncHandle_free(respHandle);
+						}
 						respHandle = NULL;
 					}
 					break;

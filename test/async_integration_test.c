@@ -582,6 +582,7 @@ static void Test_AsyncSign_noEndpoint_addRequest(CuTest* tc) {
 	KSI_AsyncService_free(as);
 }
 
+#if 0
 static void asyncSigning_timeout(CuTest* tc, const char *url, const char *user, const char *pass,
 			int (*setTimeout)(KSI_AsyncService *, const size_t), const size_t timeout,
 			const int resultErr) {
@@ -652,6 +653,7 @@ void Test_AsyncSign_connectTimeout_tcp(CuTest* tc) {
 			KSI_AsyncService_setConnectTimeout, 0,
 			KSI_NETWORK_CONNECTION_TIMEOUT);
 }
+#endif
 
 static void asyncSigning_runEmpty(CuTest* tc, const char *url, const char *user, const char *pass) {
 	int res;
@@ -693,9 +695,9 @@ CuSuite* AsyncIntegrationTests_getSuite(void) {
 //	SUITE_ADD_TEST(suite, Test_AsyncSign_addExtendRequest_tcp);
 //	SUITE_ADD_TEST(suite, Test_AsyncSign_addAggrExtReqs_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_noEndpoint_addRequest);
-	SUITE_ADD_TEST(suite, Test_AsyncSign_sendTimeout_tcp);
-	SUITE_ADD_TEST(suite, Test_AsyncSign_receiveTimeout_tcp);
-	SUITE_ADD_TEST(suite, Test_AsyncSign_connectTimeout_tcp);
+//	SUITE_ADD_TEST(suite, Test_AsyncSign_sendTimeout_tcp);
+//	SUITE_ADD_TEST(suite, Test_AsyncSign_receiveTimeout_tcp);
+//	SUITE_ADD_TEST(suite, Test_AsyncSign_connectTimeout_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_runEmpty_tcp);
 
 	return suite;

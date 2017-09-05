@@ -21,6 +21,7 @@
 #define NET_IMPL_H_
 
 #include "net.h"
+#include "net_async.h"
 #include "internal.h"
 
 #ifdef __cplusplus
@@ -181,20 +182,15 @@ extern "C" {
 		int (*getResponse)(void *, KSI_OctetString **, size_t *);
 		int (*getCredentials)(void *, const char **, const char **);
 		int (*dispatch)(void *);
-		int (*setConnectTimeout)(void *, const size_t);
-		int (*setSendTimeout)(void *, const size_t);
-		int (*setMaxRequestCount)(void *, const size_t);
 
 		size_t requestCount;
 		size_t tail;
-		size_t maxParallelRequests;
 		KSI_AsyncHandle **reqCache;
-		/* Nof pending requests (including.in error state). */
-		size_t pending;
-		/* Nof received valid responses. */
-		size_t received;
-		int recoveryOption;
-		size_t rTimeout;
+
+		size_t pending; /**< Nof pending requests (including.in error state). */
+		size_t received; /**< Nof received valid responses. */
+
+		size_t options[__NOF_KSI_ASYNC_OPT];
 	};
 
 	struct KSI_AsyncService_st {
@@ -204,23 +200,13 @@ extern "C" {
 		void (*impl_free)(void*);
 
 		int (*addRequest)(void *, KSI_AsyncHandle *);
-//		int (*getResponse)(void *, KSI_Async___Handle___old, KSI_AsyncResponse **);
 		int (*responseHandler)(void *);
 
 		int (*run)(void *, int (*)(void *), KSI_AsyncHandle **, size_t *);
-//		int (*recover)(void *, KSI_Async___Handle___old, int);
-
-//		int (*getRequestState)(void *, KSI_Async___Handle___old, int *);
-//		int (*getRequestError)(void *, KSI_Async___Handle___old, int *);
-//		int (*getRequestContext)(void *, KSI_Async___Handle___old, void **);
 		int (*getPendingCount)(void *, size_t *);
 		int (*getReceivedCount)(void *, size_t *);
 
-		int (*setConnectTimeout)(void *, size_t);
-		int (*setSendTimeout)(void *, size_t);
-		int (*setReceiveTimeout)(void *, size_t);
-		int (*setMaxRequestCount)(void *, size_t);
-//		int (*setRequestContext)(void *, KSI_Async___Handle___old, void *, void (*)(void*));
+		int (*setOption)(void *, KSI_AsyncOption, void *);
 
 		int (*uriSplit)(const char *uri, char **scheme, char **user, char **pass, char **host, unsigned *port, char **path, char **query, char **fragment);
 	};
