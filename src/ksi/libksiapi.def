@@ -245,41 +245,24 @@ EXPORTS
 	KSI_RequestHandle_getResponseStatus
 
 	KSI_AsyncClient_free
-	KSI_AsyncPayload_free
-	KSI_AsyncPayload_new
-	KSI_AsyncPayload_setPayloadId
-	KSI_AsyncPayload_setPayloadCtx
-	KSI_AsyncPayload_setRequestCtx
-	KSI_AsyncPayload_getRequestCtx
+	KSI_TcpAsyncClient_new
+	KSI_TcpAsyncClient_setService
+	KSI_AsyncHandle_free
+	KSI_AsyncAggregationHandle_new
+	KSI_AsyncHandle_setRequestCtx
+	KSI_AsyncHandle_getRequestCtx
+	KSI_AsyncHandle_getState
+	KSI_AsyncHandle_getError
+	KSI_AsyncHandle_getAggregationResp
 	KSI_AsyncService_free
-	KSI_AsyncService_recover
-	KSI_AsyncService_getRequestState
-	KSI_AsyncService_getRequestError
-	KSI_AsyncService_getRequestContext
-	KSI_AsyncService_setRequestContext
+	KSI_SigningAsyncService_new
 	KSI_AsyncService_getPendingCount
 	KSI_AsyncService_getReceivedCount
-	KSI_AsyncService_setMaxRequestCount
+	KSI_AsyncService_setOption
 	KSI_AsyncService_run
 	KSI_AsyncService_setEndpoint
 	KSI_AsyncService_construct
-	KSI_AsyncService_getResponse
 	KSI_AsyncService_addRequest
-	KSI_SigningAsyncService_new
-	KSI_AsyncRequest_free
-	KSI_AsyncAggregationRequest_new
-	KSI_AsyncRequest_setRequestContext
-	KSI_AsyncResponse_free
-	KSI_AsyncResponse_new
-	KSI_AsyncResponse_setAggregationResp
-	KSI_AsyncResponse_setExtendResp
-	KSI_AsyncResponse_setRequestContext
-	KSI_AsyncResponse_getAggregationResp
-	KSI_AsyncResponse_getExtendResp
-	KSI_AsyncResponse_getRequestContext
-	KSI_AsyncService_setConnectTimeout
-	KSI_AsyncService_setReceiveTimeout
-	KSI_AsyncService_setSendTimeout
 
 ;net_http.h
 EXPORTS

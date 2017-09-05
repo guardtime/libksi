@@ -88,6 +88,16 @@ extern "C" {
 	int KSI_AsyncHandle_getError(const KSI_AsyncHandle *h, int *error);
 
 	/**
+	 * Get the request id.
+	 * \param[in]		h				Async handle.
+	 * \param[out]		id				Request ID.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note The value is only valid after a successful call to #KSI_AsyncService_addRequest.
+	 * \see #KSI_AsyncService_addRequest for adding asynchronous request to the output queue.
+	 */
+	int KSI_AsyncHandle_getRequestId(const KSI_AsyncHandle *h, KSI_uint64_t *id);
+
+	/**
 	 * Getter for the aggregation response
 	 * \param[in]		h				Async handle.
 	 * \param[out]		resp			Pointer to the receiving pointer.
