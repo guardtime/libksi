@@ -462,6 +462,42 @@ static void testReset(CuTest *tc) {
 	KSI_DataHasher_free(hsr);
 }
 
+static void testUnimplemented(CuTest *tc) {
+	int res;
+	KSI_DataHash *h1 = NULL;
+	KSI_DataHash *h2 = NULL;
+	KSI_DataHash *h3 = NULL;
+	const unsigned char *ptr = NULL;
+	size_t ptr_len;
+
+	KSI_HashAlgorithm algo = KSI_HASHALG_SHA3_512;
+
+	CuAssert(tc, "The algorithm used for this test must not be implemented.", !KSI_isHashAlgorithmSupported(algo));
+
+	res = KSI_DataHash_createZero(ctx, algo, &h1);
+	CuAssert(tc, "Unable to create zero hash value", res == KSI_OK && h1 != NULL);
+
+	res = KSI_DataHash_getImprint(h1, &ptr, &ptr_len);
+	CuAssert(tc, "Unable to extract imprint.", res == KSI_OK && ptr != NULL && ptr_len > 0);
+
+	res = KSI_DataHash_fromImprint(ctx, ptr, ptr_len, &h2);
+	CuAssert(tc, "Unable to create data hash from imprint", res == KSI_OK && h2 != NULL);
+	CuAssert(tc, "The new hash value should match with the original", KSI_DataHash_equals(h1, h2));
+
+	ptr = NULL;
+	ptr_len = 0;
+	res = KSI_DataHash_extract(h1, NULL, &ptr, &ptr_len);
+	CuAssert(tc, "Unable to extract digest and length", res == KSI_OK && ptr != NULL && ptr_len > 0);
+
+	res = KSI_DataHash_fromDigest(ctx, algo, ptr, ptr_len, &h3);
+	CuAssert(tc, "Unable to create data hash from digest.", res == KSI_OK && h3 != NULL);
+	CuAssert(tc, "The new hash value should match with the original", KSI_DataHash_equals(h1, h3));
+
+	KSI_DataHash_free(h1);
+	KSI_DataHash_free(h2);
+	KSI_DataHash_free(h3);
+}
+
 static void test_free_without_close(CuTest *tc) {
 	int res;
 	KSI_DataHasher *hsr = NULL;
@@ -493,6 +529,7 @@ CuSuite* KSITest_Hash_getSuite(void) {
 	SUITE_ADD_TEST(suite, testAllHashing);
 	SUITE_ADD_TEST(suite, testReset);
 	SUITE_ADD_TEST(suite, test_free_without_close);
+	SUITE_ADD_TEST(suite, testUnimplemented);
 
 	return suite;
 }

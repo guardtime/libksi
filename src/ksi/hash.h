@@ -285,7 +285,8 @@ extern "C" {
 	int KSI_isHashAlgorithmTrusted(KSI_HashAlgorithm algo_id);
 
 	/**
-	 * Is the given hash algorithm \c hash_id supported by the API.
+	 * Is the given hash algorithm \c hash_id supported, meaning the
+	 * hash value can be calculated using the API.
 	 * \param[in]	algo_id			Hash algorithm id.
 	 *
 	 * \return Returns 0 if algorithm is not supported, otherwise non-zero.
