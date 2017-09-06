@@ -253,6 +253,8 @@ EXPORTS
 	KSI_AsyncHandle_getRequestCtx
 	KSI_AsyncHandle_getState
 	KSI_AsyncHandle_getError
+	KSI_AsyncHandle_getExtError
+	KSI_AsyncHandle_getErrorMessage
 	KSI_AsyncHandle_getAggregationResp
 	KSI_AsyncService_free
 	KSI_SigningAsyncService_new

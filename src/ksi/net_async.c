@@ -111,7 +111,8 @@ KSI_IMPLEMENT_REF(KSI_AsyncHandle)
 
 KSI_IMPLEMENT_GETTER(KSI_AsyncHandle, int, state, State)
 KSI_IMPLEMENT_GETTER(KSI_AsyncHandle, int, err, Error)
-KSI_IMPLEMENT_GETTER(KSI_AsyncHandle, KSI_Utf8String *, errMsg, ErrorMsg)
+KSI_IMPLEMENT_GETTER(KSI_AsyncHandle, long, errExt, ExtError)
+KSI_IMPLEMENT_GETTER(KSI_AsyncHandle, KSI_Utf8String *, errMsg, ErrorMessage)
 KSI_IMPLEMENT_GETTER(KSI_AsyncHandle, const void *, userCtx, RequestCtx)
 KSI_IMPLEMENT_GETTER(KSI_AsyncHandle, KSI_uint64_t, id, RequestId)
 
@@ -569,26 +570,29 @@ static int asyncClient_run(KSI_AsyncClient *c, int (*handleResp)(KSI_AsyncClient
 	}
 
 	KSI_ERR_clearErrors(c->ctx);
-
 	if (c->clientImpl == NULL || c->dispatch == NULL) {
 		KSI_pushError(c->ctx, res = KSI_INVALID_STATE, "Async client is not properly initialized.");
 		goto cleanup;
 	}
 
+	KSI_ERR_clearErrors(c->ctx);
 	res = c->dispatch(c->clientImpl);
 	if (res == KSI_ASYNC_CONNECTION_CLOSED) {
 		connClosed = true;
 	} else if (res != KSI_OK) {
 		KSI_pushError(c->ctx, res, "Async client impl returned error.");
 		KSI_LOG_logCtxError(c->ctx, KSI_LOG_ERROR);
+		asyncClient_setResponseError(c, KSI_ASYNC_STATE_WAITING_FOR_RESPONSE, res, 0L, NULL);
 		res = KSI_OK;
 	}
 
 	/* Handle responses. */
+	KSI_ERR_clearErrors(c->ctx);
 	res = handleResp(c);
 	if (res != KSI_OK) {
 		KSI_pushError(c->ctx, res, "Async client failed to process responses.");
 		KSI_LOG_logCtxError(c->ctx, KSI_LOG_ERROR);
+		asyncClient_setResponseError(c, KSI_ASYNC_STATE_WAITING_FOR_RESPONSE, res, 0L, NULL);
 		res = KSI_OK;
 	}
 
@@ -600,6 +604,7 @@ static int asyncClient_run(KSI_AsyncClient *c, int (*handleResp)(KSI_AsyncClient
 	}
 
 	if (handle != NULL) {
+		KSI_ERR_clearErrors(c->ctx);
 		res = asyncClient_findNextResponse(c, handle);
 		if (res != KSI_OK)  {
 			KSI_pushError(c->ctx, res, "Async client failed to find next response.");

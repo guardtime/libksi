@@ -388,7 +388,6 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 			do {
 				const size_t at = 0;
 				KSI_AsyncHandle *req = NULL;
-				size_t count  = 0;
 
 				/* Check if more requests can be sent within the given timeframe. */
 				if (difftime(time(NULL), tcpCtx->roundStartAt) >= KSI_ASYNC_ROUND_DURATION_SEC) {
@@ -423,11 +422,12 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 							goto cleanup;
 						}
 					} else {
+						size_t count  = 0;
+
 						KSI_LOG_logBlob(tcpCtx->ctx, KSI_LOG_DEBUG, "Sending request", req->raw, req->len);
 
 						while (count < req->len) {
 							int c;
-
 #ifdef _WIN32
 							if (req->len - count > INT_MAX) {
 								c = send(tcpCtx->sockfd, (char *) req->raw + count, (int) (INT_MAX), 0);
@@ -438,8 +438,10 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 							c = send(tcpCtx->sockfd, (char *) req->raw + count, req->len - count, 0);
 #endif
 							if (c < 0) {
-								KSI_LOG_debug(tcpCtx->ctx, "Unable to write to socket.");
-								break;
+								closeSocket(tcpCtx);
+								KSI_LOG_error(tcpCtx->ctx, "Async TCP closing connection. Unable to write to socket. Error: %x.", KSI_SOC_error);
+								res = KSI_ASYNC_CONNECTION_CLOSED;
+								goto cleanup;
 							}
 							count += c;
 						}
@@ -463,7 +465,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 					/* The state could have been changed in application layer. Just remove the request from the request queue. */
 					res = KSI_AsyncHandleList_remove(tcpCtx->reqQueue, at, NULL);
 					if (res != KSI_OK) {
-						KSI_LOG_error(tcpCtx->ctx, "Async TCP request state is not waiting for dispatch. Unable to remove async handle from request queue. Error: %x.", res);
+						KSI_LOG_error(tcpCtx->ctx, "Async TCP unable to remove async handle from request queue. Error: %x.", res);
 						res = KSI_OK;
 						goto cleanup;
 					}

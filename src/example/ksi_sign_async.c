@@ -249,7 +249,7 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-#if 0
+#ifdef INCREASE_MAX_REQUEST_COUNT
 	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_MAX_REQUEST_COUNT, (void *)(1<<8));
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to set maximum request count.\n");
@@ -363,8 +363,22 @@ int main(int argc, char **argv) {
 
 				case KSI_ASYNC_STATE_ERROR: {
 						int err = KSI_UNKNOWN_ERROR;
+						long extErr = 0L;
+						KSI_Utf8String *errMsg = NULL;
 
 						res = KSI_AsyncHandle_getError(respHandle, &err);
+						if (res != KSI_OK) {
+							fprintf(stderr, "Unable to get request state.\n");
+							goto cleanup;
+						}
+
+						res = KSI_AsyncHandle_getErrorMessage(respHandle, &errMsg);
+						if (res != KSI_OK) {
+							fprintf(stderr, "Unable to get request state.\n");
+							goto cleanup;
+						}
+
+						res = KSI_AsyncHandle_getExtError(respHandle, &extErr);
 						if (res != KSI_OK) {
 							fprintf(stderr, "Unable to get request state.\n");
 							goto cleanup;
@@ -376,13 +390,15 @@ int main(int argc, char **argv) {
 							goto cleanup;
 						}
 
-						fprintf(stderr, "Request for '%s' failed. Error: [0x%x] %s", p_name, err, KSI_getErrorString(err));
+						fprintf(stderr, "Request for '%s' failed. ", p_name);
+						fprintf(stderr, "Error: [0x%x:%ld] %s ", err, extErr, KSI_getErrorString(err));
+						if (errMsg != NULL) fprintf(stderr, "(%s) ", KSI_Utf8String_cstr(errMsg));
 
 						res = KSI_AsyncService_addRequest(as, respHandle);
 						if (res == KSI_OK) {
-							fprintf(stderr, "   ...resending.\n");
+							fprintf(stderr, " ...resending.\n");
 						} else {
-							fprintf(stderr, "   ...clearing.\n");
+							fprintf(stderr, " ...clearing.\n");
 							KSI_AsyncHandle_free(respHandle);
 						}
 						respHandle = NULL;

@@ -79,13 +79,32 @@ extern "C" {
 	int KSI_AsyncHandle_getState(const KSI_AsyncHandle *h, int *state);
 
 	/**
-	 * Get the error code for the request which state is #KSI_ASYNC_STATE_ERROR.
+	 * Get the  error code for the request which state is #KSI_ASYNC_STATE_ERROR.
 	 * \param[in]		h				Async handle.
-	 * \param[out]		error			Payload error #KSI_StatusCode
+	 * \param[out]		error			Handle error #KSI_StatusCode
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncHandle_getState for getting the state of the request.
 	 */
 	int KSI_AsyncHandle_getError(const KSI_AsyncHandle *h, int *error);
+
+	/**
+	 * Get the external error code for the request which state is #KSI_ASYNC_STATE_ERROR.
+	 * \param[in]		h				Async handle.
+	 * \param[out]		ext				Handle error message.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_AsyncHandle_getState for getting the state of the request.
+	 */
+	int KSI_AsyncHandle_getExtError(const KSI_AsyncHandle *h, long *ext);
+
+	/**
+	 * Get the error message for the request which state is #KSI_ASYNC_STATE_ERROR.
+	 * \param[in]		h				Async handle.
+	 * \param[out]		ext				Handle external error code.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_AsyncHandle_getState for getting the state of the request.
+	 * \see #KSI_Utf8String_cstr for message stringification.
+	 */
+	int KSI_AsyncHandle_getErrorMessage(const KSI_AsyncHandle *h, KSI_Utf8String **msg);
 
 	/**
 	 * Get the request id.
