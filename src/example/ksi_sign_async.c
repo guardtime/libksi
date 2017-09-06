@@ -304,7 +304,7 @@ int main(int argc, char **argv) {
 					req_no++;
 					reqHandle = NULL;
 					break;
-				case KSI_ASYNC_MAX_PARALLEL_COUNT_REACHED:
+				case KSI_ASYNC_REQUEST_CACHE_FULL:
 					/* The request could not be added to the cache because of unresponsed requests. */
 					/* Wait for a while to avoid busy loop. */
 					sleep_ms(10);

@@ -140,6 +140,7 @@ extern "C" {
 
 		/* Handle error. */
 		int err;
+		long errExt;
 		KSI_Utf8String *errMsg;
 
 		/* Time when the query has been added to the request queue. */

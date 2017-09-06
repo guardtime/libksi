@@ -167,8 +167,8 @@ const char *KSI_getErrorString(int statusCode) {
 
 		case KSI_ASYNC_CONNECTION_CLOSED:
 			return "Asynchronous connection was closed.";
-		case KSI_ASYNC_MAX_PARALLEL_COUNT_REACHED:
-			return "Asynchronous maximum parallel jobs reached.";
+		case KSI_ASYNC_REQUEST_CACHE_FULL:
+			return "Asynchronous maximum parallel jobs cache is full.";
 
 		case KSI_UNKNOWN_ERROR:
 			return "Unknown internal error.";

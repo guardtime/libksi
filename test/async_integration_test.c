@@ -440,7 +440,7 @@ static void asyncSigning_fillupCache(CuTest* tc, const char *url, const char *us
 	CuAssert(tc, "Unable to create dummy request", res == KSI_OK && hndl != NULL);
 
 	res = KSI_AsyncService_addRequest(as, hndl);
-	CuAssert(tc, "Unable to add request", res == KSI_ASYNC_MAX_PARALLEL_COUNT_REACHED);
+	CuAssert(tc, "Unable to add request", res == KSI_ASYNC_REQUEST_CACHE_FULL);
 
 	KSI_AsyncHandle_free(hndl);
 	KSI_AsyncService_free(as);

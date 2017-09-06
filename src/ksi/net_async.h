@@ -144,7 +144,7 @@ extern "C" {
 	 * \param[in]		req				Aggregation request.
 	 * \param[out]		handle			Async handle associated with the request.
 	 * \return #KSI_OK, when operation succeeded;
-	 * \return #KSI_ASYNC_MAX_PARALLEL_COUNT_REACHED, if the internal cache is full. In this case the
+	 * \return #KSI_ASYNC_REQUEST_CACHE_FULL, if the internal cache is full. In this case the
 	 *         caller should wait for responses, or process received responses;
 	 * \return otherwise an error code.
 	 * \note The async service \c s takes ownership of \c req request on a successful call to this function, thus
