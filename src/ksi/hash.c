@@ -193,7 +193,7 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const unsig
 
 	/* Make sure the algorithm is valid. */
 	if (!ksi_isHashAlgorithmIdValid(algo_id)) {
-		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, "Hash algorithm not supported.");
+		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, "Hash algorithm ID is not valid.");
 		goto cleanup;
 	}
 
@@ -619,7 +619,7 @@ int KSI_DataHash_createZero(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHas
 
 	/* Make sure the hash algorithm id is valid. */
 	if (!ksi_isHashAlgorithmIdValid(algo_id)) {
-		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, "Hash algorithm not supported.");
+		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, "Hash algorithm ID is not valid.");
 		goto cleanup;
 	}
 
