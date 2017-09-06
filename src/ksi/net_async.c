@@ -446,15 +446,15 @@ static int asyncClient_processAggregationResponse(KSI_AsyncClient *c) {
 
 				res = KSI_convertAggregatorStatusCode(status);
 				if (res != KSI_OK) {
-					KSI_Utf8String *errorMessage = NULL;
+					KSI_Utf8String *errorMsg = NULL;
 
-					KSI_AggregationResp_getErrorMsg(aggrResp, &errorMessage);
-					KSI_LOG_error(c->ctx, "Async aggregation failed: [%x] %s", KSI_Integer_getUInt64(status), KSI_Utf8String_cstr(errorMessage));
+					KSI_AggregationResp_getErrorMsg(aggrResp, &errorMsg);
+					KSI_LOG_error(c->ctx, "Async aggregation failed: [%x] %s", KSI_Integer_getUInt64(status), KSI_Utf8String_cstr(errorMsg));
 
 					handle->state = KSI_ASYNC_STATE_ERROR;
 					handle->err = res;
 					handle->errExt = (long)KSI_Integer_getUInt64(status);
-					handle->errMsg = KSI_Utf8String_ref(errorMessage);
+					handle->errMsg = KSI_Utf8String_ref(errorMsg);
 
 					continue;
 				}
@@ -478,11 +478,11 @@ static int asyncClient_processAggregationResponse(KSI_AsyncClient *c) {
 		KSI_Utf8String *errorMsg = NULL;
 		KSI_Integer *status = NULL;
 
-		KSI_ErrorPdu_getErrorMessage(error, &errorMsg);
-		KSI_ErrorPdu_getStatus(error, &status);
+		KSI_ErrorPdu_getErrorMessage(errPdu, &errorMsg);
+		KSI_ErrorPdu_getStatus(errPdu, &status);
 
 		KSI_LOG_error(c->ctx, "Async received error PDU: [%x:%x] %s",
-				KSI_convertAggregatorStatusCode(status), (long)KSI_Integer_getUInt64(status), KSI_Utf8String_cstr(errorMessage));
+				KSI_convertAggregatorStatusCode(status), (long)KSI_Integer_getUInt64(status), KSI_Utf8String_cstr(errorMsg));
 
 		/* Set all handles that are still in response wait state into error state. */
 		asyncClient_setResponseError(c, KSI_ASYNC_STATE_WAITING_FOR_RESPONSE,
