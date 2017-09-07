@@ -27,7 +27,7 @@ extern KSI_CTX *ctx;
 
 #define KSITest_assertCreateCall(tc, errm, res, obj) if ((res) != KSI_OK) KSI_ERR_statusDump(ctx, stdout); CuAssert(tc, errm ": error returned", (res) == KSI_OK); CuAssert(tc, errm ": object is NULL", (obj) != NULL);
 
-static void TestSHA256(CuTest* tc) {
+static void testSHA256(CuTest* tc) {
 	int res;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
@@ -58,7 +58,7 @@ static void TestSHA256(CuTest* tc) {
 	KSI_DataHash_free(hsh);
 }
 
-static void TestSHA256OnEmptyData(CuTest* tc) {
+static void testSHA256OnEmptyData(CuTest* tc) {
 	int res;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
@@ -91,7 +91,7 @@ static void TestSHA256OnEmptyData(CuTest* tc) {
 }
 
 
-static void TestSHA256Parts(CuTest* tc) {
+static void testSHA256Parts(CuTest* tc) {
 	int res;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
@@ -125,7 +125,7 @@ static void TestSHA256Parts(CuTest* tc) {
 	KSI_DataHash_free(hsh);
 }
 
-static void TestSHA256Reset(CuTest* tc) {
+static void testSHA256Reset(CuTest* tc) {
 	int res;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
@@ -163,7 +163,7 @@ static void TestSHA256Reset(CuTest* tc) {
 	KSI_DataHash_free(hsh);
 }
 
-static void TestSHA256Empty(CuTest* tc) {
+static void testSHA256Empty(CuTest* tc) {
 	int res;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
@@ -196,7 +196,7 @@ static void TestSHA256Empty(CuTest* tc) {
 	KSI_DataHash_free(hsh);
 }
 
-static void TestSHA256GetData(CuTest* tc) {
+static void testSHA256GetData(CuTest* tc) {
 	int res;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
@@ -225,7 +225,7 @@ static void TestSHA256GetData(CuTest* tc) {
 	KSI_DataHash_free(hsh);
 }
 
-static void TestSHA256GetImprint(CuTest* tc) {
+static void testSHA256GetImprint(CuTest* tc) {
 	int res;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *hsh = NULL;
@@ -253,7 +253,7 @@ static void TestSHA256GetImprint(CuTest* tc) {
 	KSI_DataHash_free(hsh);
 }
 
-static void TestSHA256fromImprint(CuTest* tc) {
+static void testSHA256fromImprint(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
 	unsigned char expected[] = {KSI_HASHALG_SHA2_256, 0xc4, 0xbb, 0xcb, 0x1f, 0xbe, 0xc9, 0x9d, 0x65, 0xbf, 0x59, 0xd8, 0x5c, 0x8c, 0xb6, 0x2e, 0xe2, 0xdb, 0x96, 0x3f, 0x0f, 0xe1, 0x06, 0xf4, 0x83, 0xd9, 0xaf, 0xa7, 0x3b, 0xd4, 0xe3, 0x9a, 0x8a};
@@ -277,7 +277,7 @@ static void TestSHA256fromImprint(CuTest* tc) {
 	KSI_DataHash_free(hsh);
 }
 
-static void TestParallelHashing(CuTest* tc) {
+static void testParallelHashing(CuTest* tc) {
 	int res;
 	char data[] = "I'll be Bach";
 	char *ptr = data;
@@ -340,7 +340,7 @@ static void TestParallelHashing(CuTest* tc) {
 	KSI_DataHasher_free(hsr2);
 }
 
-static void TestHashGetAlgByName(CuTest* tc) {
+static void testHashGetAlgByName(CuTest* tc) {
 	KSI_HashAlgorithm algo;
 	CuAssertIntEquals_Msg(tc, "Default algorithm", KSI_HASHALG_SHA2_256, algo = KSI_getHashAlgorithmByName("default"));
 	CuAssert(tc, "Algorithm must be trusted.", KSI_isHashAlgorithmTrusted(algo));
@@ -365,7 +365,7 @@ static void TestHashGetAlgByName(CuTest* tc) {
 
 }
 
-static void TestIncorrectHashLen(CuTest* tc) {
+static void testIncorrectHashLen(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
 	static unsigned char badImprit1[] = {0x01, 0x02, 0x03};
@@ -498,7 +498,7 @@ static void testUnimplemented(CuTest *tc) {
 	KSI_DataHash_free(h3);
 }
 
-static void test_free_without_close(CuTest *tc) {
+static void testFreeWithoutClose(CuTest *tc) {
 	int res;
 	KSI_DataHasher *hsr = NULL;
 	char data[3] = "aa";
@@ -512,23 +512,25 @@ static void test_free_without_close(CuTest *tc) {
 	KSI_DataHasher_free(hsr);
 }
 
+
+
 CuSuite* KSITest_Hash_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
-	SUITE_ADD_TEST(suite, TestSHA256);
-	SUITE_ADD_TEST(suite, TestSHA256OnEmptyData);
-	SUITE_ADD_TEST(suite, TestSHA256Parts);
-	SUITE_ADD_TEST(suite, TestSHA256Reset);
-	SUITE_ADD_TEST(suite, TestSHA256Empty);
-	SUITE_ADD_TEST(suite, TestSHA256GetData);
-	SUITE_ADD_TEST(suite, TestSHA256GetImprint);
-	SUITE_ADD_TEST(suite, TestSHA256fromImprint);
-	SUITE_ADD_TEST(suite, TestParallelHashing);
-	SUITE_ADD_TEST(suite, TestHashGetAlgByName);
-	SUITE_ADD_TEST(suite, TestIncorrectHashLen);
+	SUITE_ADD_TEST(suite, testSHA256);
+	SUITE_ADD_TEST(suite, testSHA256OnEmptyData);
+	SUITE_ADD_TEST(suite, testSHA256Parts);
+	SUITE_ADD_TEST(suite, testSHA256Reset);
+	SUITE_ADD_TEST(suite, testSHA256Empty);
+	SUITE_ADD_TEST(suite, testSHA256GetData);
+	SUITE_ADD_TEST(suite, testSHA256GetImprint);
+	SUITE_ADD_TEST(suite, testSHA256fromImprint);
+	SUITE_ADD_TEST(suite, testParallelHashing);
+	SUITE_ADD_TEST(suite, testHashGetAlgByName);
+	SUITE_ADD_TEST(suite, testIncorrectHashLen);
 	SUITE_ADD_TEST(suite, testAllHashing);
 	SUITE_ADD_TEST(suite, testReset);
-	SUITE_ADD_TEST(suite, test_free_without_close);
+	SUITE_ADD_TEST(suite, testFreeWithoutClose);
 	SUITE_ADD_TEST(suite, testUnimplemented);
 
 	return suite;
