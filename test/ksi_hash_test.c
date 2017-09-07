@@ -512,7 +512,49 @@ static void testFreeWithoutClose(CuTest *tc) {
 	KSI_DataHasher_free(hsr);
 }
 
+static void testUnavailableFunctionsZero(CuTest *tc) {
+	int res;
+	KSI_DataHash *h = NULL;
 
+	/* Hash algorithms with ID 0x03 and 0x06 should never be available again. */
+	res = KSI_DataHash_createZero(ctx, 0x03, &h);
+	CuAssert(tc, "Hash algorithm 0x03 should not be available.", res == KSI_UNAVAILABLE_HASH_ALGORITHM && h == NULL);
+
+	res = KSI_DataHash_createZero(ctx, 0x06, &h);
+	CuAssert(tc, "Hash algorithm 0x06 should not be available.", res == KSI_UNAVAILABLE_HASH_ALGORITHM && h == NULL);
+}
+
+static void testUnavailableFunctionsFromImprint(CuTest *tc) {
+	int res;
+	KSI_DataHash *h = NULL;
+	unsigned char buf[1];
+
+	buf[0] = 0x03;
+	/* Note: the array is actually shorter than the given length - the function should not read any further after it detects
+	 * the hash function is not available. */
+	res = KSI_DataHash_fromImprint(ctx, buf, 29, &h);
+	CuAssert(tc, "Hash algorithm 0x03 should not be available.", res == KSI_UNAVAILABLE_HASH_ALGORITHM && h == NULL);
+
+	/* An other magic hash algorithm value we should test. */
+	buf[0] = 0x1f;
+	res = KSI_DataHash_fromImprint(ctx, buf, 255, &h);
+	CuAssert(tc, "Hash algorithm 0x1f should not be available.", res == KSI_UNAVAILABLE_HASH_ALGORITHM && h == NULL);
+}
+
+static void testUnavailableFunctionsFromDigest(CuTest *tc) {
+	int res;
+	KSI_DataHash *h = NULL;
+	unsigned char buf[1];
+
+	/* Note: the array is actually shorter than the given length - the function should not read any further after it detects
+	 * the hash function is not available. */
+	res = KSI_DataHash_fromDigest(ctx, 0x03, buf, 29, &h);
+	CuAssert(tc, "Hash algorithm 0x03 should not be available.", res == KSI_UNAVAILABLE_HASH_ALGORITHM && h == NULL);
+
+	/* An other magic hash algorithm value we should test. */
+	res = KSI_DataHash_fromDigest(ctx, 0x1f, buf, 255, &h);
+	CuAssert(tc, "Hash algorithm 0x1f should not be available.", res == KSI_UNAVAILABLE_HASH_ALGORITHM && h == NULL);
+}
 
 CuSuite* KSITest_Hash_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
@@ -532,6 +574,9 @@ CuSuite* KSITest_Hash_getSuite(void) {
 	SUITE_ADD_TEST(suite, testReset);
 	SUITE_ADD_TEST(suite, testFreeWithoutClose);
 	SUITE_ADD_TEST(suite, testUnimplemented);
+	SUITE_ADD_TEST(suite, testUnavailableFunctionsZero);
+	SUITE_ADD_TEST(suite, testUnavailableFunctionsFromImprint);
+	SUITE_ADD_TEST(suite, testUnavailableFunctionsFromDigest);
 
 	return suite;
 }
