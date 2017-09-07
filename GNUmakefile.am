@@ -25,11 +25,32 @@ SUBDIRS = src/ksi src/example test doc
 docdir = ${datadir}/doc/${PACKAGE}
 dist_doc_DATA = changelog license.txt
 
-pkgconfigdir = $(libdir)/pkgconfig
+pkgconfigdir = ${libdir}/pkgconfig
 pkgconfig_DATA = libksi.pc
 
+	
+dist_test = \
+	test/convert*.sh \
+	test/integrationtest.conf.sample \
+	test/cutest \
+	test/resource
+
+dist_api_doc = \
+	doc/doxyfile \
+	doc/mainpage.md \
+	doc/doxyfile \
+	doc/tutorial
+
+dist_packaging = \
+	packaging/redhat/libksi.spec.in \
+	packaging/deb/libksi/DEBIAN/changelog \
+	packaging/deb/libksi/DEBIAN/control*.in \
+	rebuild.sh \
+	rebuild-rpm.sh \
+	rebuild-deb.sh
+
 EXTRA_DIST = VERSION ABI_VERSION changelog build*.txt lic*.txt \
-		doc/doxy* test/* packaging/redhat/libksi.spec
+		${dist_test} ${dist_api_doc} ${dist_packaging}
 
 ZIPDOC_DIR = ${PACKAGE}-${VERSION}-htmldoc
 
