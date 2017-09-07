@@ -161,7 +161,7 @@ cp -f $libksi_pckg_config $tmp_dir_dev/libksi-dev/$pconf_install_dir/
 # Check if doxygen with supported version (>=1.8.0) is installed.
 if (doxygen -v | grep -q -P -e '((^1\.([8-9]|[1-9][0-9]+))|(^[2-9]\.[0-9]+)|(^[0-9]{2,}\.[0-9]+))\.[0-9]+$') > /dev/null 2>&1 ; then
 	make doc
-	cp -f $libksi_dev_doc $tmp_dir_dev/libksi-dev/$dev_doc_install_dir/
+	cp -fr $libksi_dev_doc $tmp_dir_dev/libksi-dev/$dev_doc_install_dir/
 else
 	echo "Doxygen documentation not included into package!"
 fi
