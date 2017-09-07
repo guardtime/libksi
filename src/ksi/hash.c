@@ -205,7 +205,7 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const unsig
 
 	/* Make sure it fits. */
 	if (digest_length > KSI_MAX_IMPRINT_LEN) {
-		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, "Internal buffer too short to hold imprint");
+		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, "Internal buffer too short to hold imprint.");
 		goto cleanup;
 	}
 
