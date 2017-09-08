@@ -124,10 +124,6 @@ extern "C" {
 	typedef struct KSI_AsyncClient_st KSI_AsyncClient;
 	typedef struct KSI_AsyncHandle_st KSI_AsyncHandle;
 
-//	typedef KSI_uint64_t KSI_Async___Handle___old;
-//	typedef struct KSI_AsyncRequest_st KSI_AsyncRequest;
-//	typedef struct KSI_AsyncResponse_st KSI_AsyncResponse;
-
 	/**
 	 * Representation of the aggregation hash chain.
 	 */

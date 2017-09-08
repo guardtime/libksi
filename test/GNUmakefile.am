@@ -19,7 +19,7 @@
 
 AM_CFLAGS=-g -Wall -I$(top_builddir)/src/
 AM_LDFLAGS=-L$(top_builddir)/src/ksi -no-install -lksi
-check_PROGRAMS=runner parse-benchmark serialize-benchmark resigner integration-tests
+check_PROGRAMS=runner parse-benchmark serialize-benchmark resigner integration-tests async-signer
 
 runner_SOURCES= \
 	all_tests.c \
@@ -71,6 +71,14 @@ parse_benchmark_SOURCES=parse_benchmark.c
 serialize_benchmark_SOURCES=serialize_benchmark.c
 resigner_SOURCES=resigner.c
 
+async_signer_SOURCES= \
+	test_sign_async.c \
+	cutest/CuTest.c \
+	cutest/CuTest.h \
+	support_tests.c \
+	support_tests.h \
+	test_conf.c \
+	test_conf.h
 
 clean-local:
 	rm -fr *.gcda *.gcno

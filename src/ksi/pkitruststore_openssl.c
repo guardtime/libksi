@@ -495,7 +495,7 @@ static time_t ASN1_GetTimeT(ASN1_TIME* time){
 		t.tm_year -= 1900;
 	}
 	t.tm_mon  = (str[i++] - '0') * 10;
-	t.tm_mon += (str[i++] - '0') - 1; // -1 since January is 0 not 1.
+	t.tm_mon += (str[i++] - '0') - 1; /* -1 since January is 0 not 1. */
 	t.tm_mday = (str[i++] - '0') * 10;
 	t.tm_mday+= (str[i++] - '0');
 	t.tm_hour = (str[i++] - '0') * 10;

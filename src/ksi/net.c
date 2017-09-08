@@ -195,7 +195,7 @@ cleanup:
 
 static int uriCompose(const char *scheme, const char *user, const char *pass, const char *host, unsigned port, const char *path, const char *query, const char *fragment, char *buf, size_t len) {
 	size_t count = 0;
-	//scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
+	/* scheme:[//[user:password@]host[:port]][/]path[?query][#fragment] */
 
 	if (host == NULL || (user != NULL && pass == NULL) || (pass != NULL && user == NULL)) {
 		return KSI_INVALID_ARGUMENT;

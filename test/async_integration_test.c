@@ -691,14 +691,15 @@ CuSuite* AsyncIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_AsyncSign_collect_tcp);
 	SUITE_SKIP_TEST(suite, Test_AsyncSign_useExtender_tcp, "Max", "Waiting for gateway release.");
 	SUITE_ADD_TEST(suite, Test_AsyncSign_fillupCache_tcp);
-//	SUITE_ADD_TEST(suite, Test_AsyncSign_addEmptyRequest_tcp);
-//	SUITE_ADD_TEST(suite, Test_AsyncSign_addExtendRequest_tcp);
-//	SUITE_ADD_TEST(suite, Test_AsyncSign_addAggrExtReqs_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_noEndpoint_addRequest);
-//	SUITE_ADD_TEST(suite, Test_AsyncSign_sendTimeout_tcp);
-//	SUITE_ADD_TEST(suite, Test_AsyncSign_receiveTimeout_tcp);
-//	SUITE_ADD_TEST(suite, Test_AsyncSign_connectTimeout_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_runEmpty_tcp);
-
+#if 0
+	SUITE_ADD_TEST(suite, Test_AsyncSign_addEmptyRequest_tcp);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_addExtendRequest_tcp);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_addAggrExtReqs_tcp);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_sendTimeout_tcp);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_receiveTimeout_tcp);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_connectTimeout_tcp);
+#endif
 	return suite;
 }

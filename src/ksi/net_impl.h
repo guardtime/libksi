@@ -131,7 +131,7 @@ extern "C" {
 		unsigned char *raw;
 		size_t len;
 
-		/* Private user poiter. */
+		/* Private user pointer. */
 		void *userCtx;
 		void (*userCtx_free)(void*);
 
@@ -183,6 +183,9 @@ extern "C" {
 		int (*getResponse)(void *, KSI_OctetString **, size_t *);
 		int (*getCredentials)(void *, const char **, const char **);
 		int (*dispatch)(void *);
+
+		KSI_uint64_t instanceId;
+		KSI_uint64_t messageId;
 
 		size_t requestCount;
 		size_t tail;

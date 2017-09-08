@@ -86,6 +86,7 @@ test/resigner
 test/runner
 test/integration-tests
 test/serialize-benchmark
+test/async-signer
 testsuite-xunit.xml
 
 # Temporary and backup files
