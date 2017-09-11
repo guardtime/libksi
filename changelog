@@ -1,12 +1,18 @@
 * FEATURE: Support for non-blocking TCP connection.
 * IMPROVEMENT: Added an example for non-bloking signing.
+* BUGFIX: Fixed creating HmacHasher failure with unimplemented hash algorithm.
+* BUGFIX: Unable to create KSI_DataHash from digest if algorithm is not implemented.
 * IMPROVEMENT: Simplified integration test configuration (see integrationtest.conf.sample)
 * BUGFIX: Fixed KSIEP over TCP failing.
 * BUGFIX: Fixed clang static analyze findings.
+* BUGFIX: GNU makefile target 'dist' does not include any unnecessary files to the resulting tarball.
+* IMPROVEMENT: Debian packaging refactored and fixed.
+* IMPROVEMENT: ABI version moved from configure.ac to ABI_VERSION file.
 * IMPROVEMENT: Added KSI_SignatureBuilder_createSignatureWithAggregationChain function.
 * IMPROVEMENT: Removed calendar-based verification from the default verification policy.
 * IMPROVEMENT: New verification rule for verifing document hash algorithm.
 * IMPROVEMENT: Implemented verification of PKI certificate validity during aggregation time.
+* IMPROVEMENT: Rpm packaging spec file moved from "redhat" to "packaging/redhat".
 * IMPROVEMENT: Set default PDU version to 2.
 Version 3.14
 

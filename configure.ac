@@ -24,6 +24,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([src/ksi/config.h])
 AC_CANONICAL_TARGET
 
+
 # Before making a release, the LTVER string should be modified. The
 # string is of the form c:r:a. Follow these instructions sequentially:
 #   1. If the library source code has changed at all since the last update, then
@@ -34,7 +35,7 @@ AC_CANONICAL_TARGET
 #      increment age ('c:r:a' becomes 'c:r:a+1').
 #   4. If any interfaces have been removed or changed since the last public
 #      release, then set age to 0 ('c:r:a' becomes 'c:r:0').
-LTVER="7:1:0"
+LTVER=m4_esyscmd([head -n 1 ABI_VERSION | tr -d [:space:]])
 AC_SUBST(LTVER)
 
 AM_INIT_AUTOMAKE([subdir-objects foreign -Wall -Werror tar-ustar])
@@ -193,5 +194,5 @@ AC_SUBST(VER_MINOR)
 AC_SUBST(VER_BUILD)
 AC_CONFIG_FILES([src/ksi/version.h])
 
-AC_CONFIG_FILES([GNUmakefile src/ksi/GNUmakefile test/GNUmakefile doc/GNUmakefile src/example/GNUmakefile])
+AC_CONFIG_FILES([GNUmakefile src/ksi/GNUmakefile test/GNUmakefile doc/GNUmakefile src/example/GNUmakefile packaging/deb/libksi/DEBIAN/control packaging/deb/libksi/DEBIAN/control-source packaging/deb/libksi/DEBIAN/control-dev packaging/redhat/libksi.spec])
 AC_OUTPUT

@@ -17,45 +17,52 @@
 # reserves and retains all trademark rights.
 #
 
-AM_CFLAGS=-g -Wall -I$(top_builddir)/src
+AM_CFLAGS=-g -Wall -I$(top_builddir)/src/
 AM_LDFLAGS=-L$(top_builddir)/src/ksi -no-install -lksi
 check_PROGRAMS=\
 	ksi_sign \
 	ksi_sign_aggr \
 	ksi_sign_async \
 	ksi_blocksign \
-	ksi_extend ksi_verify \
+	ksi_extend \
+	ksi_verify \
 	ksi_verify_pub \
 	ksi_pubfiledump
 
 ksi_sign_SOURCES = \
 	ksi_sign.c \
-	ksi_common.c
+	ksi_common.c \
+	ksi_common.h
 
 ksi_sign_aggr_SOURCES = \
 	ksi_sign_aggr.c \
-	ksi_common.c
+	ksi_common.c \
+	ksi_common.h
 
 ksi_sign_async_SOURCES = \
 	ksi_sign_async.c \
-	ksi_common.c
-
-ksi_blocksign_SOURCES = \
-	ksi_blocksign.c \
-	ksi_common.c
+	ksi_common.c \
+	ksi_common.h
 
 ksi_extend_SOURCES = \
 	ksi_extend.c \
-	ksi_common.c
+	ksi_common.c \
+	ksi_common.h
+
+ksi_verify_SOURCES = \
+	ksi_verify.c \
+	ksi_common.c \
+	ksi_common.h
 
 ksi_pubfiledump_SOURCES = \
 	ksi_pubfiledump.c
 
-ksi_verify_SOURCES = \
-	ksi_verify.c \
-	ksi_common.c
-
 ksi_verify_pub_SOURCES = \
 	ksi_verify_pub.c \
-	ksi_common.c
+	ksi_common.c \
+	ksi_common.h
 
+ksi_blocksign_SOURCES = \
+	ksi_blocksign.c \
+	ksi_common.c \
+	ksi_common.h

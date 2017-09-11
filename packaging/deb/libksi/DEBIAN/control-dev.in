@@ -1,0 +1,10 @@
+Package: @PACKAGE@-dev
+Version: @VERSION@
+Section: devel
+Priority: optional
+Provides: @PACKAGE@-dev
+Conflicts: @PACKAGE@-dev
+Architecture: @DPKG_VERSION_REPLACED_WITH_SED@
+Depends: @PACKAGE@(=@VERSION@), libcurl3, libssl0.9.8 | libssl1.0.0
+Maintainer: Guardtime <support@guardtime.com>
+Description: KSI C API development library.
