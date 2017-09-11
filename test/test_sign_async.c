@@ -49,10 +49,15 @@ enum {
 	NOF_ARGS,
 };
 
-static int createHash(KSI_CTX *ksi, size_t num, KSI_DataHash **hsh) {
+static int createHash(KSI_CTX *ksi, const size_t num, KSI_DataHash **hsh) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHasher *hsr = NULL;
 	KSI_DataHash *tmp = NULL;
+
+	if (ksi == NULL || hsh == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
 	/* Create a data hasher using default algorithm. */
 	res = KSI_DataHasher_open(ksi, KSI_getHashAlgorithmByName("default"), &hsr);
@@ -77,7 +82,6 @@ static int createHash(KSI_CTX *ksi, size_t num, KSI_DataHash **hsh) {
 	tmp = NULL;
 
 	res = KSI_OK;
-
 cleanup:
 	KSI_DataHash_free(tmp);
 	KSI_DataHasher_free(hsr);

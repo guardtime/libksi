@@ -127,9 +127,10 @@ extern "C" {
 		void *respCtx;
 		void (*respCtx_free)(void*);
 
-		/* Serialized payload. */
+		/* Serialized request payload. */
 		unsigned char *raw;
 		size_t len;
+		size_t sentCount;
 
 		/* Private user pointer. */
 		void *userCtx;

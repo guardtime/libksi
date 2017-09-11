@@ -24,13 +24,16 @@
 #  include <winsock2.h>
 #  include <ws2tcpip.h>
 #  pragma comment (lib, "Ws2_32.lib") /* Link with Ws2_32.lib. */
-#  define close(soc) closesocket(soc)
+#  define close(sock) closesocket(sock)
 #  define poll WSAPoll
 #  define ioctl ioctlsocket
-#  define KSI_SOC_error WSAGetLastError()
-#  define KSI_SOC_ETIMEDOUT   WSAETIMEDOUT
-#  define KSI_SOC_EWOULDBLOCK WSAEWOULDBLOCK
-#  define KSI_SOC_EINPROGRESS WSAEINPROGRESS
+#  define KSI_SCK_SOCKET_ERROR SOCKET_ERROR
+#  define KSI_SCK_errno       WSAGetLastError()
+#  define KSI_SCK_strerror(no) "n/a"
+#  define KSI_SCK_ETIMEDOUT   WSAETIMEDOUT
+#  define KSI_SCK_EAGAIN      WSAEWOULDBLOCK
+#  define KSI_SCK_EWOULDBLOCK WSAEWOULDBLOCK
+#  define KSI_SCK_EINPROGRESS WSAEINPROGRESS
 #else
 #  include <unistd.h>
 #  include <sys/socket.h>
@@ -47,10 +50,13 @@
 #    include <netdb.h>
 #  endif
 #  include <sys/time.h>
-#  define KSI_SOC_error errno
-#  define KSI_SOC_ETIMEDOUT   ETIMEDOUT
-#  define KSI_SOC_EWOULDBLOCK EWOULDBLOCK
-#  define KSI_SOC_EINPROGRESS EINPROGRESS
+#  define KSI_SCK_SOCKET_ERROR (-1)
+#  define KSI_SCK_errno       (errno)
+#  define KSI_SCK_strerror(no) strerror(no)
+#  define KSI_SCK_ETIMEDOUT   ETIMEDOUT
+#  define KSI_SCK_EAGAIN      EAGAIN
+#  define KSI_SCK_EWOULDBLOCK EWOULDBLOCK
+#  define KSI_SCK_EINPROGRESS EINPROGRESS
 #endif
 
 #include "internal.h"
@@ -136,14 +142,14 @@ static int openSocket(TcpAsyncCtx *tcpCtx, int *sockfd) {
 
 		tmpfd = (int)socket(pr->ai_family, pr->ai_socktype, pr->ai_protocol);
 		if (tmpfd < 0) {
-			KSI_pushError(tcpCtx->ctx, res = KSI_NETWORK_ERROR, "Unable to open socket.");
+			KSI_pushError(tcpCtx->ctx, res = KSI_NETWORK_ERROR, "Async TCP unable to open socket.");
 			goto cleanup;
 		}
 
 		/* Set socket into non-blocking mode. */
 		res = ioctl(tmpfd, FIONBIO, &nbMode);
-		if (res < 0) {
-			KSI_pushError(tcpCtx->ctx, res = KSI_IO_ERROR, NULL);
+		if (res == KSI_SCK_SOCKET_ERROR) {
+			KSI_ERR_push(tcpCtx->ctx, res = KSI_IO_ERROR, KSI_SCK_errno, __FILE__, __LINE__, "Async TCP unable to set non-blocking mode.");
 			goto cleanup;
 		}
 
@@ -152,10 +158,9 @@ static int openSocket(TcpAsyncCtx *tcpCtx, int *sockfd) {
 #else
 		res = connect(tmpfd, pr->ai_addr, pr->ai_addrlen);
 #endif
-		if (res < 0) {
-			if (!(KSI_SOC_error == KSI_SOC_EINPROGRESS || KSI_SOC_error == KSI_SOC_EWOULDBLOCK)) {
-				KSI_ERR_push(tcpCtx->ctx, KSI_NETWORK_ERROR, KSI_SOC_error, __FILE__, __LINE__, "Unable to connect.");
-				res = KSI_NETWORK_ERROR;
+		if (res == KSI_SCK_SOCKET_ERROR) {
+			if (!(KSI_SCK_errno == KSI_SCK_EINPROGRESS || KSI_SCK_errno == KSI_SCK_EWOULDBLOCK)) {
+				KSI_ERR_push(tcpCtx->ctx, res = KSI_NETWORK_ERROR, KSI_SCK_errno, __FILE__, __LINE__, "Async TCP unable to connect.");
 				goto cleanup;
 			}
 		}
@@ -225,7 +230,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 	KSI_ERR_clearErrors(tcpCtx->ctx);
 
 	/* Check connection. */
-	if (tcpCtx->sockfd < 0) {
+	if (tcpCtx->sockfd == TCP_INVALID_SOCKET_FD) {
 		/* Only open connection if there is anything in request queue. */
 		if (KSI_AsyncHandleList_length(tcpCtx->reqQueue) == 0) {
 			KSI_LOG_debug(tcpCtx->ctx, "Async TCP connection not ready.");
@@ -259,9 +264,9 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 			res = KSI_OK;
 		}
 		goto cleanup;
-	} else if (res < 0) {
+	} else if (res == KSI_SCK_SOCKET_ERROR) {
 		closeSocket(tcpCtx);
-		KSI_LOG_error(tcpCtx->ctx, "Async TCP failed to test socket. Error: %x.", KSI_SOC_error);
+		KSI_LOG_error(tcpCtx->ctx, "Async TCP failed to test socket. Error: %d (%s).", KSI_SCK_errno, KSI_SCK_strerror(KSI_SCK_errno));
 		res = KSI_ASYNC_CONNECTION_CLOSED;
 		goto cleanup;
 	}
@@ -271,6 +276,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 		int c = 0;
 
 		if ((tcpCtx->inLen + KSI_TLV_MAX_SIZE) <= sizeof(tcpCtx->inBuf)) {
+			/* Read data from socket. */
 			c = recv(tcpCtx->sockfd, (tcpCtx->inBuf + tcpCtx->inLen), KSI_TLV_MAX_SIZE, 0);
 			if (c == 0) {
 				/* Connection has been closed unexpectedly. */
@@ -278,9 +284,10 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 				closeSocket(tcpCtx);
 				res = KSI_ASYNC_CONNECTION_CLOSED;
 				goto cleanup;
-			} else if ((c < 0) && !(KSI_SOC_error == KSI_SOC_EINPROGRESS || KSI_SOC_error == KSI_SOC_EWOULDBLOCK)) {
+			} else if ((c == KSI_SCK_SOCKET_ERROR) &&
+					!(KSI_SCK_errno == KSI_SCK_EWOULDBLOCK || KSI_SCK_errno == KSI_SCK_EAGAIN)) {
 				/* Non-recoverable error has occurred. */
-				KSI_LOG_error(tcpCtx->ctx, "Async TCP closing connection. Unrecoverable error has occured: %d", KSI_SOC_error);
+				KSI_LOG_error(tcpCtx->ctx, "Async TCP closing connection. Unrecoverable error has occured: %d (%s).", KSI_SCK_errno, KSI_SCK_strerror(KSI_SCK_errno));
 				closeSocket(tcpCtx);
 				/*KSI_ERR_push(tcpCtx->ctx, res = KSI_NETWORK_ERROR, KSI_SOC_error, __FILE__, __LINE__, "Unable to receive data.");*/
 				res = KSI_ASYNC_CONNECTION_CLOSED;
@@ -327,14 +334,14 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 		/* A complete PDU is in cache. Move it into the receive queue. */
 		res = KSI_OctetString_new(tcpCtx->ctx, tcpCtx->inBuf, count, &resp);
 		if (res != KSI_OK) {
-			KSI_LOG_error(tcpCtx->ctx, "Async TCP unable to create new KSI_OctetString object. Error: %x.", res);
+			KSI_LOG_error(tcpCtx->ctx, "Async TCP unable to create new KSI_OctetString object. Error: 0x%x.", res);
 			res = KSI_OK;
 			goto cleanup;
 		}
 
 		res = KSI_OctetStringList_append(tcpCtx->respQueue, resp);
 		if (res != KSI_OK) {
-			KSI_LOG_error(tcpCtx->ctx, "Async TCP unable to add new response to queue. Error: %x.", res);
+			KSI_LOG_error(tcpCtx->ctx, "Async TCP unable to add new response to queue. Error: 0x%x.", res);
 			res = KSI_OK;
 			goto cleanup;
 		}
@@ -350,7 +357,6 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 		if (pfd.revents & POLLOUT) {
 			int sockOpt = 0;
 			size_t len = sizeof(sockOpt);
-			char dummy;
 
 			/* Check whether the socket is ready. */
 #ifdef _WIN32
@@ -358,13 +364,13 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 #else
 			res = getsockopt(tcpCtx->sockfd, SOL_SOCKET, SO_ERROR, &sockOpt, (socklen_t *) &len);
 #endif
-			if (res < 0) {
+			if (res == KSI_SCK_SOCKET_ERROR) {
 				closeSocket(tcpCtx);
-				KSI_LOG_error(tcpCtx->ctx, "Async TCP unable to check socket. Error: %x.", KSI_SOC_error);
+				KSI_LOG_error(tcpCtx->ctx, "Async TCP unable to check socket. Error: %d (%s).", KSI_SCK_errno, KSI_SCK_strerror(KSI_SCK_errno));
 				res = KSI_ASYNC_CONNECTION_CLOSED;
 				goto cleanup;
 			}
-			if (sockOpt == KSI_SOC_EINPROGRESS || sockOpt == KSI_SOC_EWOULDBLOCK) {
+			if (sockOpt == KSI_SCK_EINPROGRESS || sockOpt == KSI_SCK_EWOULDBLOCK) {
 				if (tcpCtx->options[KSI_ASYNC_OPT_CON_TIMEOUT] == 0 ||
 						(difftime(time(NULL), tcpCtx->conOpenAt) > tcpCtx->options[KSI_ASYNC_OPT_CON_TIMEOUT])) {
 					closeSocket(tcpCtx);
@@ -378,23 +384,29 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 				goto cleanup;
 			}
 
+/*#define  TCP_DESABLE_NAGLES_ALGORITHM*/
+#ifdef TCP_DESABLE_NAGLES_ALGORITHM
 			/* Clear TCP_NODELAY flag in order to accumulate outgoing request. */
-#ifdef _WIN32
+  #ifdef _WIN32
 			setsockopt(tcpCtx->sockfd, IPPROTO_TCP, TCP_NODELAY, (const char *) &optClr, (int) sizeof(optClr));
-#else
+  #else
 			setsockopt(tcpCtx->sockfd, IPPROTO_TCP, TCP_NODELAY, &optClr, sizeof(optClr));
+  #endif
 #endif
 
 			do {
 				const size_t at = 0;
 				KSI_AsyncHandle *req = NULL;
+				time_t curTime = 0;
 
-				/* Check if more requests can be sent within the given timeframe. */
-				if (difftime(time(NULL), tcpCtx->roundStartAt) >= KSI_ASYNC_ROUND_DURATION_SEC) {
+				/* Check if the request count can be restarted. */
+				if (difftime(time(&curTime), tcpCtx->roundStartAt) >= KSI_ASYNC_ROUND_DURATION_SEC) {
+					KSI_LOG_info(tcpCtx->ctx, "Async TCP round request count: %u", tcpCtx->roundCount);
 					tcpCtx->roundCount = 0;
-					time(&tcpCtx->roundStartAt);
+					tcpCtx->roundStartAt = curTime;
 				}
-				if (tcpCtx->roundCount >= tcpCtx->options[KSI_ASYNC_OPT_MAX_REQUEST_COUNT]) {
+				/* Check if more requests can be sent within the given timeframe. */
+				if (!(tcpCtx->roundCount < tcpCtx->options[KSI_ASYNC_OPT_MAX_REQUEST_COUNT])) {
 					KSI_LOG_debug(tcpCtx->ctx, "Async TCP round max request count reached.");
 					break;
 				}
@@ -402,7 +414,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 				/* Send the requests in the same order as they have been cached. */
 				res = KSI_AsyncHandleList_elementAt(tcpCtx->reqQueue, at, &req);
 				if (res != KSI_OK) {
-					KSI_LOG_error(tcpCtx->ctx, "Async TCP unable to extract async handle from request queue. Error: %x.", res);
+					KSI_LOG_error(tcpCtx->ctx, "Async TCP unable to extract async handle from request queue. Error: 0x%x.", res);
 					res = KSI_OK;
 					goto cleanup;
 				}
@@ -410,52 +422,55 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 				if (req->state == KSI_ASYNC_STATE_WAITING_FOR_DISPATCH) {
 					/* Verify that the send timeout has not elapsed. */
 					if (tcpCtx->options[KSI_ASYNC_OPT_SND_TIMEOUT] == 0 ||
-							(difftime(time(NULL), req->reqTime) > tcpCtx->options[KSI_ASYNC_OPT_SND_TIMEOUT])) {
+							(difftime(curTime, req->reqTime) > tcpCtx->options[KSI_ASYNC_OPT_SND_TIMEOUT])) {
 						/* Set error. */
 						req->state = KSI_ASYNC_STATE_ERROR;
 						req->err = KSI_NETWORK_SEND_TIMEOUT;
 						/* Just remove the request from the request queue. */
 						res = KSI_AsyncHandleList_remove(tcpCtx->reqQueue, at, NULL);
 						if (res != KSI_OK) {
-							KSI_LOG_error(tcpCtx->ctx, "Async TCP send timeout. Unable to remove async handle from request queue. Error: %x.", res);
+							KSI_LOG_error(tcpCtx->ctx, "Async TCP send timeout. Unable to remove async handle from request queue. Error: 0x%x.", res);
 							res = KSI_OK;
 							goto cleanup;
 						}
 					} else {
-						size_t count  = 0;
-
 						KSI_LOG_logBlob(tcpCtx->ctx, KSI_LOG_DEBUG, "Sending request", req->raw, req->len);
 
-						while (count < req->len) {
+						while (req->sentCount < req->len) {
 							int c;
 #ifdef _WIN32
-							if (req->len - count > INT_MAX) {
-								c = send(tcpCtx->sockfd, (char *) req->raw + count, (int) (INT_MAX), 0);
+							if (req->len - req->sentCount > INT_MAX) {
+								c = send(tcpCtx->sockfd, (char *) req->raw + req->sentCount, (int) (INT_MAX), 0);
 							} else {
-								c = send(tcpCtx->sockfd, (char *) req->raw + count, (int) (req->len - count), 0);
+								c = send(tcpCtx->sockfd, (char *) req->raw + req->sentCount, (int) (req->len - req->sentCount), 0);
 							}
 #else
-							c = send(tcpCtx->sockfd, (char *) req->raw + count, req->len - count, 0);
+							c = send(tcpCtx->sockfd, (char *) req->raw + req->sentCount, req->len - req->sentCount, 0);
 #endif
-							if (c < 0) {
-								closeSocket(tcpCtx);
-								KSI_LOG_error(tcpCtx->ctx, "Async TCP closing connection. Unable to write to socket. Error: %x.", KSI_SOC_error);
-								res = KSI_ASYNC_CONNECTION_CLOSED;
-								goto cleanup;
+							if (c == KSI_SCK_SOCKET_ERROR) {
+								if (KSI_SCK_errno == KSI_SCK_EWOULDBLOCK || KSI_SCK_errno == KSI_SCK_EAGAIN) {
+									KSI_LOG_error(tcpCtx->ctx, "Async TCP send would block. Bytes sent so far %d/%d. Error: %d (%s).", req->sentCount, req->raw, KSI_SCK_errno, KSI_SCK_strerror(KSI_SCK_errno));
+									break;
+								} else {
+									closeSocket(tcpCtx);
+									KSI_LOG_error(tcpCtx->ctx, "Async TCP closing connection. Unable to write to socket. Error: %d (%s).", KSI_SCK_errno, KSI_SCK_strerror(KSI_SCK_errno));
+									res = KSI_ASYNC_CONNECTION_CLOSED;
+									goto cleanup;
+								}
 							}
-							count += c;
+							req->sentCount += c;
 						}
 
-						if (count == req->len) {
+						if (req->sentCount == req->len) {
 							tcpCtx->roundCount++;
 
 							req->state = KSI_ASYNC_STATE_WAITING_FOR_RESPONSE;
 							/* Start receive timeout. */
-							time(&req->sndTime);
+							req->sndTime = curTime;
 							/* The request has been successfully dispatched. Remove it from the request queue. */
 							res = KSI_AsyncHandleList_remove(tcpCtx->reqQueue, at, NULL);
 							if (res != KSI_OK) {
-								KSI_LOG_error(tcpCtx->ctx, "Async TCP request sent. Unable to remove async handle from request queue. Error: %x.", res);
+								KSI_LOG_error(tcpCtx->ctx, "Async TCP request sent. Unable to remove async handle from request queue. Error: 0x%x.", res);
 								res = KSI_OK;
 								goto cleanup;
 							}
@@ -465,7 +480,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 					/* The state could have been changed in application layer. Just remove the request from the request queue. */
 					res = KSI_AsyncHandleList_remove(tcpCtx->reqQueue, at, NULL);
 					if (res != KSI_OK) {
-						KSI_LOG_error(tcpCtx->ctx, "Async TCP unable to remove async handle from request queue. Error: %x.", res);
+						KSI_LOG_error(tcpCtx->ctx, "Async TCP unable to remove async handle from request queue. Error: 0x%x.", res);
 						res = KSI_OK;
 						goto cleanup;
 					}
@@ -473,14 +488,19 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 
 			} while (KSI_AsyncHandleList_length(tcpCtx->reqQueue));
 
+#ifdef TCP_DESABLE_NAGLES_ALGORITHM
 			/* Set TCP_NODELAY flag to send the accumulated requests. */
-#ifdef _WIN32
+  #ifdef _WIN32
 			setsockopt(tcpCtx->sockfd, IPPROTO_TCP, TCP_NODELAY, (const char *) &optSet, (int) sizeof(optSet));
-#else
+  #else
 			setsockopt(tcpCtx->sockfd, IPPROTO_TCP, TCP_NODELAY, &optSet, sizeof(optSet));
-#endif
+  #endif
 			/* Trigger send (required on some systems). */
-			send(tcpCtx->sockfd, &dummy, 0, 0);
+			{
+				char dummy;
+				send(tcpCtx->sockfd, &dummy, 0, 0);
+			}
+#endif
 		} else {
 			KSI_LOG_debug(tcpCtx->ctx, "Async TCP output buffer not ready.");
 		}
@@ -576,7 +596,7 @@ static void TcpAsyncCtx_free(TcpAsyncCtx *t) {
 	if (t != NULL) {
 		KSI_AsyncHandleList_free(t->reqQueue);
 		KSI_OctetStringList_free(t->respQueue);
-		if (t->sockfd >= 0) close(t->sockfd);
+		if (t->sockfd != TCP_INVALID_SOCKET_FD) close(t->sockfd);
 
 		KSI_free(t->host);
 		KSI_free(t->ksi_user);

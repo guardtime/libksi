@@ -60,6 +60,7 @@ static int KSI_AsyncHandle_construct(KSI_CTX *ctx, KSI_AsyncHandle **o) {
 
 	tmp->raw = NULL;
 	tmp->len = 0;
+	tmp->sentCount = 0;
 
 	tmp->reqCtx = NULL;
 	tmp->reqCtx_free = NULL;
