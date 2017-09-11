@@ -138,6 +138,37 @@ static void Test_CreateSignatureDefaultProvider(CuTest* tc) {
 	createSignatureDefaultProvider(tc, TEST_SCHEME_TCP);
 }
 
+static void createSignatureUsingHashImprintWithNotImplementedHashFunction(CuTest* tc, const char *scheme) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+
+	KSI_LOG_debug(ctx, "%s: %s", __FUNCTION__, scheme);
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_setAggregator(ctx, KSITest_composeUri(scheme, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
+	CuAssert(tc, "Unable to configure aggregator.", res == KSI_OK);
+
+	/*Hash imprint that is using not implemented hash algorithm, must be accepted as input hash.*/
+	res = KSITest_DataHash_fromStr(ctx, "080000000000000000000000000000000000000000000000000000000000000000", &hsh);
+	CuAssert(tc, "Unable to create hash.", res == KSI_OK && hsh != NULL);
+
+	res = KSI_Signature_sign(ctx, hsh, &sig);
+	CuAssert(tc, "Unable to create signature.", res == KSI_OK && sig != NULL);
+
+	res = KSI_verifyDataHash(ctx, sig, hsh);
+	CuAssert(tc, "Unable to verify signature.", res == KSI_OK);
+
+	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
+	return;
+}
+
+static void Test_createSignatureUsingHashImprintWithNotImplementedHashFunction(CuTest* tc) {
+	createSignatureUsingHashImprintWithNotImplementedHashFunction(tc, TEST_SCHEME_HTTP);
+	createSignatureUsingHashImprintWithNotImplementedHashFunction(tc, TEST_SCHEME_TCP);
+}
+
 static void createSignatureWrongHMAC(CuTest* tc, const char *scheme) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
@@ -328,6 +359,7 @@ CuSuite* AggreIntegrationTests_getSuite(void) {
 
 	SUITE_ADD_TEST(suite, Test_NOKAggr_TreeTooLarge);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureDefaultProvider);
+	SUITE_ADD_TEST(suite, Test_createSignatureUsingHashImprintWithNotImplementedHashFunction);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureWrongHMAC);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureUsingExtender);
 	SUITE_SKIP_TEST(suite, Test_CreateSignatureUsingExtender_tcp, "Max", "Waiting for gateway release.");
