@@ -512,14 +512,20 @@ static void testFreeWithoutClose(CuTest *tc) {
 	KSI_DataHasher_free(hsr);
 }
 
-static void testUnavailableFunctionsZero(CuTest *tc) {
+static void testUnavailableFunction0x03(CuTest *tc) {
 	int res;
 	KSI_DataHash *h = NULL;
 
-	/* Hash algorithms with ID 0x03 and 0x06 should never be available again. */
+	/* Hash algorithms with ID 0x03 should not be available. */
 	res = KSI_DataHash_createZero(ctx, 0x03, &h);
 	CuAssert(tc, "Hash algorithm 0x03 should not be available.", res == KSI_UNAVAILABLE_HASH_ALGORITHM && h == NULL);
+}
 
+static void testUnavailableFunction0x06(CuTest *tc) {
+	int res;
+	KSI_DataHash *h = NULL;
+
+	/* Hash algorithms with ID 0x06 should not be available. */
 	res = KSI_DataHash_createZero(ctx, 0x06, &h);
 	CuAssert(tc, "Hash algorithm 0x06 should not be available.", res == KSI_UNAVAILABLE_HASH_ALGORITHM && h == NULL);
 }
@@ -574,7 +580,8 @@ CuSuite* KSITest_Hash_getSuite(void) {
 	SUITE_ADD_TEST(suite, testReset);
 	SUITE_ADD_TEST(suite, testFreeWithoutClose);
 	SUITE_ADD_TEST(suite, testUnimplemented);
-	SUITE_ADD_TEST(suite, testUnavailableFunctionsZero);
+	SUITE_ADD_TEST(suite, testUnavailableFunction0x03);
+	SUITE_ADD_TEST(suite, testUnavailableFunction0x06);
 	SUITE_ADD_TEST(suite, testUnavailableFunctionsFromImprint);
 	SUITE_ADD_TEST(suite, testUnavailableFunctionsFromDigest);
 
