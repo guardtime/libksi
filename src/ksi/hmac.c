@@ -106,6 +106,11 @@ int KSI_HmacHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key
 		goto cleanup;
 	}
 
+	memset(tmp_hasher, 0, sizeof(KSI_HmacHasher));
+	tmp_hasher->blockSize = 0;
+	tmp_hasher->ctx = ctx;
+	tmp_hasher->dataHasher = NULL;
+
 	/* Open the data hasher. */
 	res = KSI_DataHasher_open(ctx, algo_id, &tmp_hasher->dataHasher);
 	if (res != KSI_OK) {
