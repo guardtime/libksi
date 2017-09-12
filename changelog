@@ -1,4 +1,4 @@
-* IMPROVEMENT: Debian package name contains debian version. Debian packaging fixed.
+* IMPROVEMENT: Debian package name contains debian version.
 * BUGFIX: Fixed creating HmacHasher failure with unimplemented hash algorithm.
 * BUGFIX: Unable to create KSI_DataHash from digest if algorithm is not implemented.
 * IMPROVEMENT: Simplified integration test configuration (see integrationtest.conf.sample)
