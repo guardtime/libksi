@@ -25,7 +25,7 @@ set -e
 # Get version number.
 VER=$(tr -d [:space:] < VERSION)
 ARCH=$(dpkg --print-architecture)
-RELEASE_VERSION="$(lsb_release -is)$(lsb_release -rs | grep -Po [0-9] | head -1)"
+RELEASE_VERSION="$(lsb_release -is)$(lsb_release -rs | grep -Po [0-9]{1,3} | head -1)"
 PKG_VERSION=1
 
 
