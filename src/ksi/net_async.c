@@ -174,6 +174,50 @@ cleanup:
 	return res;
 }
 
+static int asyncClient_composeRequestHeader(KSI_AsyncClient *c, KSI_Header **hdr) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Header *tmp = NULL;
+	const char *user = NULL;
+	KSI_Utf8String *loginId = NULL;
+	KSI_Integer *instanceId = NULL;
+
+	if (c == NULL || hdr == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_Header_new(c->ctx, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	res = c->getCredentials(c->clientImpl, &user, NULL);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_Utf8String_new(c->ctx, user, strlen(user) + 1, &loginId);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_Header_setLoginId(tmp, loginId);
+	if (res != KSI_OK) goto cleanup;
+	loginId = NULL;
+
+	res = KSI_Integer_new(c->ctx, c->instanceId, &instanceId);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_Header_setInstanceId(tmp, instanceId);
+	if (res != KSI_OK) goto cleanup;
+	instanceId = NULL;
+
+	*hdr = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+cleanup:
+	KSI_Header_free(tmp);
+	KSI_Utf8String_free(loginId);
+	KSI_Integer_free(instanceId);
+
+	return res;
+}
+
 static int asyncClient_addAggregationRequest(KSI_AsyncClient *c, KSI_AsyncHandle *handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationReq *reqRef = NULL;
@@ -182,11 +226,11 @@ static int asyncClient_addAggregationRequest(KSI_AsyncClient *c, KSI_AsyncHandle
 	size_t len;
 	KSI_AsyncHandle *hndlRef = NULL;
 	KSI_Integer *reqId = NULL;
-	const char *user = NULL;
 	const char *pass = NULL;
 	KSI_uint64_t id = 0;
 	void *impl = NULL;
 	KSI_AggregationReq *aggrReq = NULL;
+	KSI_Header *hdr = NULL;
 
 	if (c == NULL || handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -231,14 +275,18 @@ static int asyncClient_addAggregationRequest(KSI_AsyncClient *c, KSI_AsyncHandle
 	if (res != KSI_OK) goto cleanup;
 	reqId = NULL;
 
-	res = c->getCredentials(impl, &user, &pass);
+	res = c->getCredentials(impl, NULL, &pass);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_AggregationReq_enclose((reqRef = KSI_AggregationReq_ref(aggrReq)), user, pass, &pdu);
+	res = asyncClient_composeRequestHeader(c, &hdr);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_AggregationReq_encloseWithHeader((reqRef = KSI_AggregationReq_ref(aggrReq)), hdr, pass, &pdu);
 	if (res != KSI_OK) {
 		KSI_AggregationReq_free(reqRef);
 		goto cleanup;
 	}
+	hdr = NULL;
 
 	res = KSI_AggregationPdu_serialize(pdu, &raw, &len);
 	if (res != KSI_OK) goto cleanup;
@@ -262,6 +310,7 @@ static int asyncClient_addAggregationRequest(KSI_AsyncClient *c, KSI_AsyncHandle
 
 	res = KSI_OK;
 cleanup:
+	KSI_Header_free(hdr);
 	KSI_free(raw);
 	KSI_Integer_free(reqId);
 	KSI_AggregationPdu_free(pdu);
@@ -765,6 +814,9 @@ int KSI_AsyncClient_construct(KSI_CTX *ctx, KSI_AsyncClient **c) {
 	tmp->getResponse = NULL;
 	tmp->dispatch = NULL;
 	tmp->getCredentials = NULL;
+
+	tmp->instanceId = time(NULL);
+	tmp->messageId = 0;
 
 	res = asyncClient_setDefaultOptions(tmp);
 	if (res != KSI_OK) goto cleanup;

@@ -1190,17 +1190,17 @@ int KSI_ExtendReq_enclose(KSI_ExtendReq *req, const char *loginId, const char *k
 
 	tmp->header = hdr;
 	hdr = NULL;
+	/* Every request must have a header, and at this point, this is guaranteed. */
+	if (req->ctx->requestHeaderCB != NULL) {
+		res = req->ctx->requestHeaderCB(tmp->header);
+		if (res != KSI_OK) goto cleanup;
+	}
+
 	/* Add request. */
 	if (req->config != NULL && req->ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_2) {
 		tmp->confRequest = KSI_Config_ref(req->config);
 	} else {
 		tmp->request = req;
-	}
-
-	/* Every request must have a header, and at this point, this is guaranteed. */
-	if (req->ctx->requestHeaderCB != NULL) {
-		res = req->ctx->requestHeaderCB(tmp->header);
-		if (res != KSI_OK) goto cleanup;
 	}
 
 	/* Get HMAC algorithm ID. */
@@ -1490,21 +1490,13 @@ cleanup:
 	return res;
 }
 
-int KSI_AggregationReq_enclose(KSI_AggregationReq *req, const char *loginId, const char *key, KSI_AggregationPdu **pdu) {
+int KSI_AggregationReq_encloseWithHeader(KSI_AggregationReq *req, KSI_Header *hdr, const char *key, KSI_AggregationPdu **pdu) {
 	int res;
 	KSI_AggregationPdu *tmp = NULL;
-	KSI_Header *hdr = NULL;
 	KSI_DataHash *hash = NULL;
-	size_t loginLen;
 	KSI_HashAlgorithm alg_id;
 
-	if (req == NULL || loginId == NULL || key == NULL || pdu == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	loginLen = strlen(loginId);
-	if (loginLen > UINT_MAX){
+	if (req == NULL || hdr == NULL || key == NULL || pdu == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -1513,26 +1505,15 @@ int KSI_AggregationReq_enclose(KSI_AggregationReq *req, const char *loginId, con
 	res = KSI_AggregationPdu_new(req->ctx, &tmp);
 	if (res != KSI_OK) goto cleanup;
 
-	/* Create header and initialize it with the loginId provided. */
-	res = KSI_Header_new(req->ctx, &hdr);
+	/* Set header*/
+	res = KSI_AggregationPdu_setHeader(tmp, hdr);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_Utf8String_new(req->ctx, loginId, (unsigned)loginLen + 1, &hdr->loginId);
-	if (res != KSI_OK) goto cleanup;
-
-	tmp->header = hdr;
-	hdr = NULL;
 	/* Add request. */
 	if (req->config != NULL && req->ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_2) {
 		tmp->confRequest = KSI_Config_ref(req->config);
 	} else {
 		tmp->request = req;
-	}
-
-	/* Every request must have a header, and at this point, this is guaranteed. */
-	if (req->ctx->requestHeaderCB != NULL) {
-		res = req->ctx->requestHeaderCB(tmp->header);
-		if (res != KSI_OK) goto cleanup;
 	}
 
 	/* Get HMAC algorithm ID. */
@@ -1556,11 +1537,53 @@ int KSI_AggregationReq_enclose(KSI_AggregationReq *req, const char *loginId, con
 
 cleanup:
 
-	/* Make sure we won't free the request. */
-	KSI_AggregationPdu_setRequest(tmp, NULL);
+	/* Make sure we won't free input parameters on failure. */
+	if (tmp != NULL) {
+		KSI_AggregationPdu_setHeader(tmp, NULL);
+		KSI_AggregationPdu_setRequest(tmp, NULL);
+	}
 	KSI_AggregationPdu_free(tmp);
 
-	KSI_Header_free(hdr);
+	return res;
+}
+
+int KSI_AggregationReq_enclose(KSI_AggregationReq *req, const char *loginId, const char *key, KSI_AggregationPdu **pdu) {
+	int res;
+	KSI_Header *tmp = NULL;
+	size_t loginLen;
+
+	if (req == NULL || loginId == NULL || key == NULL || pdu == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	loginLen = strlen(loginId);
+	if (loginLen > UINT_MAX){
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	/* Create header and initialize it with the loginId provided. */
+	res = KSI_Header_new(req->ctx, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_Utf8String_new(req->ctx, loginId, (unsigned)loginLen + 1, &tmp->loginId);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Every request must have a header, and at this point, this is guaranteed. */
+	if (req->ctx->requestHeaderCB != NULL) {
+		res = req->ctx->requestHeaderCB(tmp);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	res = KSI_AggregationReq_encloseWithHeader(req, tmp, key, pdu);
+	if (res != KSI_OK) goto cleanup;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+	KSI_Header_free(tmp);
 
 	return res;
 }

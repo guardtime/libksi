@@ -116,62 +116,40 @@ extern "C" {
 		KSI_CTX *ctx;
 		size_t ref;
 
-		/* Payload id. */
+		/** Payload id. */
 		KSI_uint64_t id;
 
-		/* Application layer request context. */
+		/** Application layer request context. */
 		void *reqCtx;
 		void (*reqCtx_free)(void*);
 
-		/* Application layer response context. */
+		/** Application layer response context. */
 		void *respCtx;
 		void (*respCtx_free)(void*);
 
-		/* Serialized request payload. */
+		/** Serialized request payload. */
 		unsigned char *raw;
 		size_t len;
 		size_t sentCount;
 
-		/* Private user pointer. */
+		/** Private user pointer. */
 		void *userCtx;
 		void (*userCtx_free)(void*);
 
-		/* Handle state. */
+		/** Handle state. */
 		int state;
 
-		/* Handle error. */
+		/** Handle error. */
 		int err;
 		long errExt;
 		KSI_Utf8String *errMsg;
 
-		/* Time when the query has been added to the request queue. */
+		/** Time when the query has been added to the request queue. */
 		time_t reqTime;
-		/* Time when the query has been sent out. */
+		/** Time when the query has been sent out. */
 		time_t sndTime;
-		/* Time when the response has been reeived. */
+		/** Time when the response has been reeived. */
 		time_t rcvTime;
-	};
-
-	struct KSI_AsyncRequest_st {
-		KSI_CTX *ctx;
-
-		KSI_AggregationReq *aggregationReq;
-		KSI_ExtendReq *extendReq;
-
-		/* Request context. */
-		void *reqCtx;
-		void (*reqCtx_free)(void*);
-	};
-
-	struct KSI_AsyncResponse_st {
-		KSI_CTX *ctx;
-
-		KSI_AggregationResp *aggregationResp;
-		KSI_ExtendResp *extendResp;
-
-		/* Request context. */
-		void *reqCtx;
-		void (*reqCtx_free)(void*);
 	};
 
 	struct KSI_AsyncClient_st {

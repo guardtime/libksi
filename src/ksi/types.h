@@ -630,6 +630,7 @@ int KSI_AggregationPdu_setAckRequest(KSI_AggregationPdu *t, KSI_RequestAck *ackR
 int KSI_AggregationPdu_setAckResponse(KSI_AggregationPdu *t, KSI_RequestAck *ackResponse);
 int KSI_AggregationPdu_setHmac(KSI_AggregationPdu *t, KSI_DataHash *hmac);
 int KSI_AggregationPdu_setError ( KSI_AggregationPdu *t, KSI_ErrorPdu *error);
+int KSI_AggregationReq_encloseWithHeader(KSI_AggregationReq *req, KSI_Header *hdr, const char *key, KSI_AggregationPdu **pdu);
 int KSI_AggregationReq_enclose(KSI_AggregationReq *req, const char *loginId, const char *key, KSI_AggregationPdu **pdu);
 KSI_DEFINE_OBJECT_PARSE(KSI_AggregationPdu);
 KSI_DEFINE_OBJECT_SERIALIZE(KSI_AggregationPdu);

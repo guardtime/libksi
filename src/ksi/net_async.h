@@ -170,7 +170,7 @@ extern "C" {
 	 *       the caller may not clear the memory.
 	 * \see #KSI_SigningAsyncService_new for creating a new signing async service instance.
 	 * \see #KSI_AsyncAggregationHandle_new for creating a new async request instance.
-	 * \see #KSI_AsyncRequest_free for cleaning up resources in case of a failure.
+	 * \see #KSI_AsyncHandle_free for cleaning up resources in case of a failure.
 	 * \see #KSI_AsyncService_run for handling communication towards service endpoint.
 	 * \see #KSI_ASYNC_OPT_REQUEST_CACHE_SIZE for increasing the cache size.
 	 */
