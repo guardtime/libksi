@@ -247,6 +247,7 @@ static int asyncClient_addAggregationRequest(KSI_AsyncClient *c, KSI_AsyncHandle
 	handle->raw = raw;
 	raw = NULL;
 	handle->len = len;
+	handle->sentCount = 0;
 
 	/* Add request to the impl output queue. The query might fail if the queue is full. */
 	res = c->addRequest(impl, (hndlRef = KSI_AsyncHandle_ref(handle)));
