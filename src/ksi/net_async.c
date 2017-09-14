@@ -25,6 +25,10 @@
 #include "net_impl.h"
 #include "ctx_impl.h"
 
+#define KSI_ASYNC_REQUEST_ID_OFFSET 32
+#define KSI_ASYNC_REQUEST_ID_OFFSET_MAX 0xff
+#define KSI_ASYNC_REQUEST_ID_OFFSET_MASK 0xffffffff00000000ULL
+#define KSI_ASYNC_REQUEST_ID_MASK        0x00000000ffffffffULL
 
 void KSI_AsyncHandle_free(KSI_AsyncHandle *o) {
 	if (o != NULL && --o->ref == 0) {
@@ -152,26 +156,28 @@ cleanup:
 }
 
 
-static int asyncClient_calculateRequestId(KSI_AsyncClient *c, KSI_uint64_t *id) {
+static int asyncClient_calculateRequestId(KSI_AsyncClient *c, KSI_uint64_t *id, KSI_uint64_t *offset) {
 	int res = KSI_UNKNOWN_ERROR;
-	size_t last = 0;
 
-	if (c == NULL || c->reqCache == NULL) {
+	if (c == NULL || c->reqCache == NULL || id == NULL || offset == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	last = c->requestCount;
-
 	do {
-		if ((++c->requestCount % c->options[KSI_ASYNC_OPT_REQUEST_CACHE_SIZE]) == 0) c->requestCount = 1;
-		if (c->requestCount == last) {
+		/* Check if the cache is full. */
+		if ((c->options[KSI_ASYNC_OPT_REQUEST_CACHE_SIZE]) == (c->pending + c->received + 1)) {
 			res = KSI_ASYNC_REQUEST_CACHE_FULL;
 			goto cleanup;
+		}
+		if (++c->requestCount == c->options[KSI_ASYNC_OPT_REQUEST_CACHE_SIZE]) {
+			c->requestCountOffset =  (c->requestCountOffset + 1) % KSI_ASYNC_REQUEST_ID_OFFSET_MAX;
+			c->requestCount = 1;
 		}
 	} while (c->reqCache[c->requestCount] != NULL);
 
 	*id = c->requestCount;
+	*offset = c->requestCountOffset;
 	res = KSI_OK;
 cleanup:
 	return res;
@@ -231,6 +237,8 @@ static int asyncClient_addAggregationRequest(KSI_AsyncClient *c, KSI_AsyncHandle
 	KSI_Integer *reqId = NULL;
 	const char *pass = NULL;
 	KSI_uint64_t id = 0;
+	KSI_uint64_t idOffset = 0;
+	KSI_uint64_t requestId = 0;
 	void *impl = NULL;
 	KSI_AggregationReq *aggrReq = NULL;
 	KSI_Header *hdr = NULL;
@@ -268,10 +276,11 @@ static int asyncClient_addAggregationRequest(KSI_AsyncClient *c, KSI_AsyncHandle
 	}
 
 	/* Verify if there is spare place in the request cache and get the request id. */
-	res = asyncClient_calculateRequestId(c, &id);
+	res = asyncClient_calculateRequestId(c, &id, &idOffset);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_Integer_new(c->ctx, id, &reqId);
+	requestId = (idOffset << KSI_ASYNC_REQUEST_ID_OFFSET) | id;
+	res = KSI_Integer_new(c->ctx, requestId, &reqId);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_AggregationReq_setRequestId(aggrReq, reqId);
@@ -294,7 +303,7 @@ static int asyncClient_addAggregationRequest(KSI_AsyncClient *c, KSI_AsyncHandle
 	res = KSI_AggregationPdu_serialize(pdu, &raw, &len);
 	if (res != KSI_OK) goto cleanup;
 
-	handle->id = id;
+	handle->id = requestId;
 	handle->raw = raw;
 	raw = NULL;
 	handle->len = len;
@@ -382,6 +391,7 @@ static int asyncClient_processAggregationResponse(KSI_AsyncClient *c) {
 			KSI_Integer *reqId = NULL;
 			KSI_AsyncHandle *handle = NULL;
 			KSI_AggregationResp *aggrResp = NULL;
+			KSI_uint64_t id = 0;
 
 			res = KSI_OctetString_extract(resp, &raw, &len);
 			if (res != KSI_OK) {
@@ -483,11 +493,14 @@ static int asyncClient_processAggregationResponse(KSI_AsyncClient *c) {
 				goto cleanup;
 			}
 
-			if (c->options[KSI_ASYNC_OPT_REQUEST_CACHE_SIZE] <= KSI_Integer_getUInt64(reqId) || c->reqCache[KSI_Integer_getUInt64(reqId)] == NULL) {
+			id = KSI_Integer_getUInt64(reqId) & KSI_ASYNC_REQUEST_ID_MASK;
+			if (c->options[KSI_ASYNC_OPT_REQUEST_CACHE_SIZE] <= id ||
+					(handle = c->reqCache[id]) == NULL ||
+					handle->id != KSI_Integer_getUInt64(reqId)) {
 				KSI_LOG_warn(c->ctx, "Unexpected async aggregation response received.");
 				continue;
 			}
-			handle = c->reqCache[KSI_Integer_getUInt64(reqId)];
+			handle = c->reqCache[id];
 
 			if (handle->state == KSI_ASYNC_STATE_WAITING_FOR_RESPONSE) {
 				KSI_Integer *status = NULL;
@@ -579,7 +592,8 @@ static int asyncClient_findNextResponse(KSI_AsyncClient *c, KSI_AsyncHandle **ha
 		if (c->reqCache[c->tail] != NULL) {
 			switch (c->reqCache[c->tail]->state) {
 				case KSI_ASYNC_STATE_WAITING_FOR_RESPONSE:
-					if (c->options[KSI_ASYNC_OPT_RCV_TIMEOUT] == 0 || difftime(time(NULL), c->reqCache[c->tail]->sndTime) > c->options[KSI_ASYNC_OPT_RCV_TIMEOUT]) {
+					if (c->options[KSI_ASYNC_OPT_RCV_TIMEOUT] == 0 ||
+							difftime(time(NULL), c->reqCache[c->tail]->sndTime) > c->options[KSI_ASYNC_OPT_RCV_TIMEOUT]) {
 						c->reqCache[c->tail]->state = KSI_ASYNC_STATE_ERROR;
 						c->reqCache[c->tail]->err = KSI_NETWORK_RECIEVE_TIMEOUT;
 						*handle = c->reqCache[c->tail];
@@ -606,7 +620,7 @@ static int asyncClient_findNextResponse(KSI_AsyncClient *c, KSI_AsyncHandle **ha
 					break;
 			}
 		}
-		if ((++c->tail % c->options[KSI_ASYNC_OPT_REQUEST_CACHE_SIZE]) == 0) c->tail = 1;
+		if (++c->tail == c->options[KSI_ASYNC_OPT_REQUEST_CACHE_SIZE]) c->tail = 1;
 		if (c->tail == last) break;
 	}
 	*handle = NULL;
@@ -807,6 +821,7 @@ int KSI_AsyncClient_construct(KSI_CTX *ctx, KSI_AsyncClient **c) {
 	tmp->clientImpl = NULL;
 	tmp->clientImpl_free = NULL;
 
+	tmp->requestCountOffset = 0;
 	tmp->requestCount = 0;
 	tmp->tail = 1;
 

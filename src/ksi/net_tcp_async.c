@@ -459,7 +459,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 
 				/* Check if the request count can be restarted. */
 				if (difftime(time(&curTime), tcpCtx->roundStartAt) >= KSI_ASYNC_ROUND_DURATION_SEC) {
-					KSI_LOG_error(tcpCtx->ctx, "Async TCP round request count: %u", tcpCtx->roundCount);
+					KSI_LOG_debug(tcpCtx->ctx, "Async TCP round request count: %u", tcpCtx->roundCount);
 					tcpCtx->roundCount = 0;
 					tcpCtx->roundStartAt = curTime;
 				}

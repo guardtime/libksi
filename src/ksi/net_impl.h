@@ -169,6 +169,7 @@ extern "C" {
 		KSI_uint64_t instanceId;
 		KSI_uint64_t messageId;
 
+		size_t requestCountOffset;
 		size_t requestCount;
 		size_t tail;
 		KSI_AsyncHandle **reqCache;
