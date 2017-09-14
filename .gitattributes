@@ -1,1 +1,21 @@
 changelog merge=union
+
+*.txt         text
+*.md          text
+*.pem         text
+*.html        text
+*.css         text
+*.conf.sample text
+
+*.bat         text eol=crlf
+*.def         text eol=crlf
+*.sh          text eol=lf
+*.ac          text eol=lf
+*.am          text eol=lf
+*.in          text eol=lf
+
+*.ksig        -text
+*.gtts        -text
+*.tlv         -text
+*.bin         -text
+*.der         -text
