@@ -33,6 +33,7 @@ void KSI_AsyncHandle_free(KSI_AsyncHandle *o) {
 		if (o->userCtx_free) o->userCtx_free(o->userCtx);
 		KSI_free(o->raw);
 		KSI_Utf8String_free(o->errMsg);
+		KSI_nofree(o->next);
 
 		KSI_free(o);
 	}
@@ -80,6 +81,8 @@ static int KSI_AsyncHandle_construct(KSI_CTX *ctx, KSI_AsyncHandle **o) {
 	tmp->err = KSI_OK;
 	tmp->errExt = 0L;
 	tmp->errMsg = NULL;
+
+	tmp->next = NULL;
 
 	*o = tmp;
 	tmp = NULL;
@@ -526,6 +529,7 @@ static int asyncClient_processAggregationResponse(KSI_AsyncClient *c) {
 		}
 	} while (left != 0);
 
+	/* Handle error PDU. */
 	if (errPdu != NULL) {
 		KSI_Utf8String *errorMsg = NULL;
 		KSI_Integer *status = NULL;

@@ -342,9 +342,9 @@ int main(int argc, char **argv) {
 							KSI_LOG_error(ksi, "Request context data mismatch.");
 							KSI_LOG_logDataHash(ksi, KSI_LOG_ERROR, "...Context hash ", reqCtxHash);
 							KSI_LOG_logDataHash(ksi, KSI_LOG_ERROR, "...Document hash", sigDocHash);
+						} else {
+							succeeded++;
 						}
-
-						succeeded++;
 
 						KSI_Signature_free(signature);    signature = NULL;
 						KSI_AsyncHandle_free(respHandle); respHandle = NULL;
