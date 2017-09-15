@@ -1,1 +1,17 @@
 changelog merge=union
+
+# Files that are text files. Line endings are normalized when pushed to
+# repository. Line endings in working tree are as specified.
+*.sh          text eol=lf
+*.ac          text eol=lf
+*.am          text eol=lf
+*.in          text eol=lf
+VERSION       text eol=lf
+ABI_VERSION   text eol=lf
+
+# Files that are not text files. Normalized is never performed.
+*.ksig        -text
+*.gtts        -text
+*.tlv         -text
+*.bin         -text
+*.der         -text
