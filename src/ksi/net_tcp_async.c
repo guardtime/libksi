@@ -275,6 +275,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 	int res = KSI_UNKNOWN_ERROR;
 	struct pollfd pfd;
 	KSI_OctetString *resp = NULL;
+	bool inputProcessed = true;
 
 	if (tcpCtx == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -324,90 +325,99 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 		goto cleanup;
 	}
 
-	/* Handle intput. */
-	if (pfd.revents & POLLIN) {
-		int c = 0;
-
-		if ((tcpCtx->inLen + KSI_TLV_MAX_SIZE) <= sizeof(tcpCtx->inBuf)) {
-			/* Read data from socket. */
-			c = recv(tcpCtx->sockfd, (tcpCtx->inBuf + tcpCtx->inLen), KSI_TLV_MAX_SIZE, 0);
-			if (c == 0) {
-				/* Connection has been closed unexpectedly. */
-				KSI_LOG_debug(tcpCtx->ctx, "Async TCP connection closed.");
-				closeSocket(tcpCtx);
-				res = KSI_ASYNC_CONNECTION_CLOSED;
-				goto cleanup;
-			} else if ((c == KSI_SCK_SOCKET_ERROR) &&
-						!(KSI_SCK_errno == KSI_SCK_EWOULDBLOCK || KSI_SCK_errno == KSI_SCK_EAGAIN)) {
-				/* Non-recoverable error has occurred. */
-				KSI_LOG_error(tcpCtx->ctx,
-						"Async TCP closing connection. Unrecoverable error has occured: %d (%s).",
-						KSI_SCK_errno, KSI_SCK_strerror(KSI_SCK_errno));
-				closeSocket(tcpCtx);
-				res = KSI_ASYNC_CONNECTION_CLOSED;
-				goto cleanup;
+	/* Handle input. */
+	do {
+		if (pfd.revents & POLLIN) {
+			inputProcessed = false;
+			if ((tcpCtx->inLen + KSI_TLV_MAX_SIZE) <= sizeof(tcpCtx->inBuf)) {
+				int c = 0;
+				/* Read data from socket. */
+				c = recv(tcpCtx->sockfd, (tcpCtx->inBuf + tcpCtx->inLen), KSI_TLV_MAX_SIZE, 0);
+				if (c == 0) {
+					/* Connection has been closed unexpectedly. */
+					KSI_LOG_debug(tcpCtx->ctx, "Async TCP connection closed.");
+					closeSocket(tcpCtx);
+					res = KSI_ASYNC_CONNECTION_CLOSED;
+					goto cleanup;
+				} else if (c == KSI_SCK_SOCKET_ERROR) {
+					if (KSI_SCK_errno == KSI_SCK_EWOULDBLOCK || KSI_SCK_errno == KSI_SCK_EAGAIN) {
+						/* All data has been read out from socket. */
+						inputProcessed = true;
+						break;
+					} else {
+						/* Non-recoverable error has occurred. */
+						KSI_LOG_error(tcpCtx->ctx,
+									  "Async TCP closing connection. Unrecoverable error has occured: %d (%s).",
+									  KSI_SCK_errno, KSI_SCK_strerror(KSI_SCK_errno));
+						closeSocket(tcpCtx);
+						res = KSI_ASYNC_CONNECTION_CLOSED;
+						goto cleanup;
+					}
+				} else {
+					tcpCtx->inLen += c;
+					if (tcpCtx->inLen > sizeof(tcpCtx->inBuf)) {
+						KSI_pushError(tcpCtx->ctx, res = KSI_BUFFER_OVERFLOW, "Too much data read from socket.");
+						goto cleanup;
+					}
+				}
 			} else {
-				tcpCtx->inLen += c;
-				if (tcpCtx->inLen > sizeof(tcpCtx->inBuf)) {
-					KSI_pushError(tcpCtx->ctx, res = KSI_BUFFER_OVERFLOW, "Too much data read from socket.");
+				inputProcessed = true;
+				KSI_LOG_debug(tcpCtx->ctx, "Async TCP input stream would not fit into buffer.");
+			}
+		}
+
+		/* Handle read buffer. */
+		while (tcpCtx->inLen > 0) {
+			KSI_FTLV ftlv;
+			size_t count = 0;
+
+			/* Traverse through the input stream and verify that a complete TLV is present. */
+			memset(&ftlv, 0, sizeof(KSI_FTLV));
+			res = KSI_FTLV_memRead(tcpCtx->inBuf, tcpCtx->inLen, &ftlv);
+			count = ftlv.hdr_len + ftlv.dat_len;
+			/* Verify if the input byte stream is long enought for extacting a PDU. */
+			if (count != 0 && tcpCtx->inLen >= count) {
+				if (res != KSI_OK) {
+					KSI_LOG_logBlob(tcpCtx->ctx, KSI_LOG_ERROR,
+									"Async TCP closing connection. Unable to extract TLV from input stream",
+									tcpCtx->inBuf, tcpCtx->inLen);
+					closeSocket(tcpCtx);
+					res = KSI_ASYNC_CONNECTION_CLOSED;
 					goto cleanup;
 				}
+			} else {
+				/* Do nothing. Not enought data received yet. */
+				break;
 			}
-		} else {
-			KSI_LOG_debug(tcpCtx->ctx, "Async TCP input stream would not fit into buffer.");
-		}
-	}
-	/* Handle read buffer. */
-	while (tcpCtx->inLen > 0) {
-		KSI_FTLV ftlv;
-		size_t count = 0;
 
-		/* Traverse through the input stream and verify that a complete TLV is present. */
-		memset(&ftlv, 0, sizeof(KSI_FTLV));
-		res = KSI_FTLV_memRead(tcpCtx->inBuf, tcpCtx->inLen, &ftlv);
-		count = ftlv.hdr_len + ftlv.dat_len;
-		/* Verify if the input byte stream is long enought for extacting a PDU. */
-		if (count != 0 && tcpCtx->inLen >= count) {
-			if (res != KSI_OK) {
-				KSI_LOG_logBlob(tcpCtx->ctx, KSI_LOG_ERROR,
-						"Async TCP closing connection. Unable to extract TLV from input stream",
-						tcpCtx->inBuf, tcpCtx->inLen);
-				closeSocket(tcpCtx);
-				res = KSI_ASYNC_CONNECTION_CLOSED;
+			if (count > UINT_MAX){
+				KSI_pushError(tcpCtx->ctx, res = KSI_BUFFER_OVERFLOW, "Too much data read from socket.");
 				goto cleanup;
 			}
-		} else {
-			/* Do nothing. Not enought data received yet. */
-			break;
+
+			KSI_LOG_logBlob(tcpCtx->ctx, KSI_LOG_DEBUG, "Async TCP received response", tcpCtx->inBuf, count);
+
+			/* A complete PDU is in cache. Move it into the receive queue. */
+			res = KSI_OctetString_new(tcpCtx->ctx, tcpCtx->inBuf, count, &resp);
+			if (res != KSI_OK) {
+				KSI_LOG_error(tcpCtx->ctx, "Async TCP unable to create new KSI_OctetString object. Error: 0x%x.", res);
+				res = KSI_OK;
+				goto cleanup;
+			}
+
+			res = KSI_OctetStringList_append(tcpCtx->respQueue, resp);
+			if (res != KSI_OK) {
+				KSI_LOG_error(tcpCtx->ctx, "Async TCP unable to add new response to queue. Error: 0x%x.", res);
+				res = KSI_OK;
+				goto cleanup;
+			}
+			resp = NULL;
+
+			/* The response has been successfully moved to the input queue. Remove the data from the input stream. */
+			tcpCtx->inLen -= count;
+			memmove(tcpCtx->inBuf, tcpCtx->inBuf + count, tcpCtx->inLen);
 		}
-
-		if (count > UINT_MAX){
-			KSI_pushError(tcpCtx->ctx, res = KSI_BUFFER_OVERFLOW, "Too much data read from socket.");
-			goto cleanup;
-		}
-
-		KSI_LOG_logBlob(tcpCtx->ctx, KSI_LOG_DEBUG, "Async TCP received response", tcpCtx->inBuf, count);
-
-		/* A complete PDU is in cache. Move it into the receive queue. */
-		res = KSI_OctetString_new(tcpCtx->ctx, tcpCtx->inBuf, count, &resp);
-		if (res != KSI_OK) {
-			KSI_LOG_error(tcpCtx->ctx, "Async TCP unable to create new KSI_OctetString object. Error: 0x%x.", res);
-			res = KSI_OK;
-			goto cleanup;
-		}
-
-		res = KSI_OctetStringList_append(tcpCtx->respQueue, resp);
-		if (res != KSI_OK) {
-			KSI_LOG_error(tcpCtx->ctx, "Async TCP unable to add new response to queue. Error: 0x%x.", res);
-			res = KSI_OK;
-			goto cleanup;
-		}
-		resp = NULL;
-
-		/* The response has been successfully moved to the input queue. Remove the data from the input stream. */
-		tcpCtx->inLen -= count;
-		memmove(tcpCtx->inBuf, tcpCtx->inBuf + count, tcpCtx->inLen);
-	}
+	} while (!inputProcessed);
 
 	/* Handle output. */
 	if (tcpCtx->reqQueueFront != NULL) {
