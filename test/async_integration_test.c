@@ -451,12 +451,11 @@ void Test_AsyncSign_fillupCache_tcp(CuTest* tc) {
 	asyncSigning_fillupCache(tc, KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
 }
 
-#if 0
 static void asyncSigning_addEmptyReq(CuTest* tc, const char *url, const char *user, const char *pass) {
 	int res;
 	KSI_AsyncService *as = NULL;
-	KSI_AsyncRequest *ar = NULL;
-	KSI_AsyncHandle hndl = KSI_ASYNC_HANDLE_NULL;
+	KSI_AsyncHandle *handle = NULL;
+	KSI_AggregationReq *req = NULL;
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	KSI_ERR_clearErrors(ctx);
@@ -467,14 +466,16 @@ static void asyncSigning_addEmptyReq(CuTest* tc, const char *url, const char *us
 	res = KSI_AsyncService_setEndpoint(as, url, user, pass);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSI_AsyncRequest_new(ctx, &ar);
-	CuAssert(tc, "Unable to create async request.", res == KSI_OK && ar != NULL);
+	res = KSI_AggregationReq_new(ctx, &req);
+	CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
 
-	res = KSI_AsyncService_addRequest(as, ar, &hndl);
-	CuAssert(tc, "Unable to add request", res == KSI_INVALID_STATE);
-	CuAssert(tc, "Invalid handle returned.", hndl == KSI_ASYNC_HANDLE_NULL);
+	res = KSI_AsyncAggregationHandle_new(ctx, req, &handle);
+	CuAssert(tc, "Unable to create async request.", res == KSI_OK && handle != NULL);
 
-	KSI_AsyncRequest_free(ar);
+	res = KSI_AsyncService_addRequest(as, handle);
+	CuAssert(tc, "Unable to add request", res == KSI_INVALID_FORMAT);
+
+	KSI_AsyncHandle_free(handle);
 	KSI_AsyncService_free(as);
 }
 
@@ -482,84 +483,6 @@ void Test_AsyncSign_addEmptyRequest_tcp(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	asyncSigning_addEmptyReq(tc, KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
 }
-#endif
-
-#if 0
-static void asyncSigning_addExtendRequest(CuTest* tc, const char *url, const char *user, const char *pass) {
-	int res;
-	KSI_AsyncService *as = NULL;
-	KSI_AsyncRequest *ar = NULL;
-	KSI_ExtendReq *req = NULL;
-	KSI_AsyncHandle hndl = KSI_ASYNC_HANDLE_NULL;
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	KSI_ERR_clearErrors(ctx);
-
-	res = KSI_SigningAsyncService_new(ctx, &as);
-	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
-
-	res = KSI_AsyncService_setEndpoint(as, url, user, pass);
-	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
-
-	res = KSI_ExtendReq_new(ctx, &req);
-	CuAssert(tc, "Unable to create extend request.", res == KSI_OK && req != NULL);
-
-	res = KSI_AsyncExtendRequest_new(ctx, req, &ar);
-	CuAssert(tc, "Unable to create async request.", res == KSI_OK && ar != NULL);
-
-	res = KSI_AsyncService_addRequest(as, ar, &hndl);
-	CuAssert(tc, "Unable to add request", res == KSI_INVALID_STATE);
-	CuAssert(tc, "Invalid handle returned.", hndl == KSI_ASYNC_HANDLE_NULL);
-
-	KSI_AsyncRequest_free(ar);
-	KSI_AsyncService_free(as);
-}
-
-void Test_AsyncSign_addExtendRequest_tcp(CuTest* tc) {
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_addExtendRequest(tc, KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
-}
-#endif
-
-#if 0
-static void asyncSigning_addAggrExtReqs(CuTest* tc, const char *url, const char *user, const char *pass) {
-	int res;
-	KSI_AsyncService *as = NULL;
-	KSI_AsyncRequest *ar = NULL;
-	KSI_ExtendReq *req = NULL;
-	KSI_Async___Handle___old hndl = KSI_ASYNC_HANDLE_NULL;
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	KSI_ERR_clearErrors(ctx);
-
-	res = KSI_SigningAsyncService_new(ctx, &as);
-	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
-
-	res = KSI_AsyncService_setEndpoint(as, url, user, pass);
-	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
-
-	res = createDummyAggrAsyncRequest(&ar);
-	CuAssert(tc, "Unable to create dummy request", res == KSI_OK && ar != NULL);
-
-	res = KSI_ExtendReq_new(ctx, &req);
-	CuAssert(tc, "Unable to create extend request.", res == KSI_OK && req != NULL);
-
-	res = KSI_AsyncRequest_setExtendReq(ar, req);
-	CuAssert(tc, "Unable to set aggregation request.", res == KSI_OK);
-
-	res = KSI_AsyncService_addRequest(as, ar, &hndl);
-	CuAssert(tc, "Unable to add request", res == KSI_INVALID_STATE);
-	CuAssert(tc, "Invalid handle returned.", hndl == KSI_ASYNC_HANDLE_NULL);
-
-	KSI_AsyncRequest_free(ar);
-	KSI_AsyncService_free(as);
-}
-
-void Test_AsyncSign_addAggrExtReqs_tcp(CuTest* tc) {
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_addAggrExtReqs(tc, KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
-}
-#endif
 
 static void Test_AsyncSign_noEndpoint_addRequest(CuTest* tc) {
 	int res;
@@ -581,79 +504,6 @@ static void Test_AsyncSign_noEndpoint_addRequest(CuTest* tc) {
 	KSI_AsyncHandle_free(hndl);
 	KSI_AsyncService_free(as);
 }
-
-#if 0
-static void asyncSigning_timeout(CuTest* tc, const char *url, const char *user, const char *pass,
-			int (*setTimeout)(KSI_AsyncService *, const size_t), const size_t timeout,
-			const int resultErr) {
-	int res;
-	KSI_AsyncService *as = NULL;
-	KSI_AsyncHandle *hndl = NULL;
-	int state = KSI_ASYNC_STATE_UNDEFINED;
-	int err = KSI_UNKNOWN_ERROR;
-	size_t onHold = 0;
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	KSI_ERR_clearErrors(ctx);
-
-	res = KSI_SigningAsyncService_new(ctx, &as);
-	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
-
-	res = KSI_AsyncService_setEndpoint(as, url, user, pass);
-	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
-
-	res = setTimeout(as, timeout);
-	CuAssert(tc, "Unable to set timeout", res == KSI_OK);
-
-	res = createDummyAggrAsyncRequest(&hndl);
-	CuAssert(tc, "Unable to create dummy request", res == KSI_OK && hndl != NULL);
-
-	res = KSI_AsyncService_addRequest(as, hndl);
-	CuAssert(tc, "Unable to add request", res == KSI_OK);
-
-	hndl = NULL;
-	do {
-		res = KSI_AsyncService_run(as, &hndl, &onHold);
-		CuAssert(tc, "Failed to run async service.", res == KSI_OK);
-		CuAssert(tc, "Waiting count mismatch.", onHold == 1);
-	} while (hndl == NULL);
-
-	res = KSI_AsyncHandle_getState(hndl, &state);
-	CuAssert(tc, "Unable to get request state.", res == KSI_OK && state != KSI_ASYNC_STATE_UNDEFINED);
-	CuAssert(tc, "Requests must fail.", state == KSI_ASYNC_STATE_ERROR);
-
-	res = KSI_AsyncHandle_getError(hndl, &err);
-	CuAssert(tc, "Unable to get request error.", res == KSI_OK);
-	CuAssert(tc, "Wrong error.", err == resultErr);
-
-	KSI_AsyncHandle_free(hndl);
-	KSI_AsyncService_free(as);
-}
-
-void Test_AsyncSign_sendTimeout_tcp(CuTest* tc) {
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_timeout(tc,
-			KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass,
-			KSI_AsyncService_setSendTimeout, 0,
-			KSI_NETWORK_SEND_TIMEOUT);
-}
-
-void Test_AsyncSign_receiveTimeout_tcp(CuTest* tc) {
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_timeout(tc,
-			KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass,
-			KSI_AsyncService_setReceiveTimeout, 0,
-			KSI_NETWORK_RECIEVE_TIMEOUT);
-}
-
-void Test_AsyncSign_connectTimeout_tcp(CuTest* tc) {
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_timeout(tc,
-			KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass,
-			KSI_AsyncService_setConnectTimeout, 0,
-			KSI_NETWORK_CONNECTION_TIMEOUT);
-}
-#endif
 
 static void asyncSigning_runEmpty(CuTest* tc, const char *url, const char *user, const char *pass) {
 	int res;
@@ -693,13 +543,7 @@ CuSuite* AsyncIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_AsyncSign_fillupCache_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_noEndpoint_addRequest);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_runEmpty_tcp);
-#if 0
 	SUITE_ADD_TEST(suite, Test_AsyncSign_addEmptyRequest_tcp);
-	SUITE_ADD_TEST(suite, Test_AsyncSign_addExtendRequest_tcp);
-	SUITE_ADD_TEST(suite, Test_AsyncSign_addAggrExtReqs_tcp);
-	SUITE_ADD_TEST(suite, Test_AsyncSign_sendTimeout_tcp);
-	SUITE_ADD_TEST(suite, Test_AsyncSign_receiveTimeout_tcp);
-	SUITE_ADD_TEST(suite, Test_AsyncSign_connectTimeout_tcp);
-#endif
+
 	return suite;
 }

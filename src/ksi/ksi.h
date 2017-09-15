@@ -297,14 +297,14 @@ enum KSI_StatusCode {
 
 	/* Async status codes. */
 
-
-
 	/**
 	 * The async connection was closed.
 	 */
 	KSI_ASYNC_CONNECTION_CLOSED = 0x604,
 
-
+	/**
+	 * The async request cache is full. Meaning that no more requests can be added temporarely.
+	 */
 	KSI_ASYNC_REQUEST_CACHE_FULL = 0x607,
 
 

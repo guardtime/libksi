@@ -190,18 +190,6 @@ int main(int argc, char **argv) {
 	KSI_LOG_info(ksi, "  user: %s", conf.aggregator.user);
 	KSI_LOG_info(ksi, "  pass: %s", conf.aggregator.pass);
 
-	res = KSI_CTX_setDefaultPubFileCertConstraints(ksi, conf.pubfile.certConstraints);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to configure publications file cert constraints.\n");
-		goto cleanup;
-	}
-
-	res = KSI_CTX_setPublicationUrl(ksi, conf.pubfile.url);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to set publications file url.\n");
-		goto cleanup;
-	}
-
 	{
 		size_t count = atoi(argv[ARGV_MAX_REQUEST_COUNT]);
 		KSI_LOG_info(ksi, "Setting max request count to: %lu", count);

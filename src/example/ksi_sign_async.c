@@ -30,12 +30,12 @@
 #  define sleep_ms(x) usleep((x)*1000)
 #endif
 
-#include <../ksi/ksi.h>
-#include <../ksi/net.h>
-#include <../ksi/net_async.h>
-#include <../ksi/net_uri.h>
-#include <../ksi/signature_builder.h>
-#include <../ksi/compatibility.h>
+#include <ksi/ksi.h>
+#include <ksi/net.h>
+#include <ksi/net_async.h>
+#include <ksi/net_uri.h>
+#include <ksi/signature_builder.h>
+#include <ksi/compatibility.h>
 
 #include "ksi_common.h"
 
@@ -186,11 +186,6 @@ int main(int argc, char **argv) {
 
 	FILE *logFile = NULL;
 
-	const KSI_CertConstraint pubFileCertConstr[] = {
-			{ KSI_CERT_EMAIL, "publications@guardtime.com"},
-			{ NULL, NULL }
-	};
-
 	size_t pending = 0;
 	size_t nof_requests = 0;
 	size_t req_no = 0;
@@ -235,19 +230,6 @@ int main(int argc, char **argv) {
 	KSI_LOG_info(ksi, "  URI:  %s", argv[ARGV_AGGR_URI]);
 	KSI_LOG_info(ksi, "  user: %s", argv[ARGV_USER]);
 	KSI_LOG_info(ksi, "  pass: %s", argv[ARGV_PASS]);
-
-	res = KSI_CTX_setDefaultPubFileCertConstraints(ksi, pubFileCertConstr);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to configure publications file cert constraints.\n");
-		goto cleanup;
-	}
-
-	/* Check publications file url. */
-	res = KSI_CTX_setPublicationUrl(ksi, argv[ARGV_PUB_FILE_URL]);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to set publications file url.\n");
-		goto cleanup;
-	}
 
 #ifdef INCREASE_MAX_REQUEST_COUNT
 	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_MAX_REQUEST_COUNT, (void *)(1<<8));
@@ -368,25 +350,25 @@ int main(int argc, char **argv) {
 
 						res = KSI_AsyncHandle_getError(respHandle, &err);
 						if (res != KSI_OK) {
-							fprintf(stderr, "Unable to get request state.\n");
+							fprintf(stderr, "Unable to get request error.\n");
 							goto cleanup;
 						}
 
 						res = KSI_AsyncHandle_getErrorMessage(respHandle, &errMsg);
 						if (res != KSI_OK) {
-							fprintf(stderr, "Unable to get request state.\n");
+							fprintf(stderr, "Unable to get error message.\n");
 							goto cleanup;
 						}
 
 						res = KSI_AsyncHandle_getExtError(respHandle, &extErr);
 						if (res != KSI_OK) {
-							fprintf(stderr, "Unable to get request state.\n");
+							fprintf(stderr, "Unable to get external error.\n");
 							goto cleanup;
 						}
 
 						res = KSI_AsyncHandle_getRequestCtx(respHandle, (const void**)&p_name);
 						if (res != KSI_OK) {
-							fprintf(stderr, "Unable to get request state.\n");
+							fprintf(stderr, "Unable to get request context.\n");
 							goto cleanup;
 						}
 
