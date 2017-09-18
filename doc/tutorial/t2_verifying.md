@@ -300,8 +300,8 @@ It is also important to point out that the context, if freed, must be freed last
 9. Migrating to the new verification functionality
 ---------------------------------------------------
 
-The above described new policy-based verification replaces the old verification functionality. In particular, the following interfaces
-are deprecated and will be removed from future SDK releases:
+The above described new policy-based verification replaces the old verification functionality. In particular, the following
+outdated interfaces have been removed from SDK:
 
 - int KSI_Signature_verify(KSI_Signature *sig, KSI_CTX *ctx)
 - int KSI_Signature_verifyAggregated(KSI_Signature *sig, KSI_CTX *ctx, KSI_uint64_t level)
