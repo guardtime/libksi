@@ -49,6 +49,9 @@ extern "C" {
 	 */
 	int KSI_Signature_createDataHasher(const KSI_Signature *sig, KSI_DataHasher **hsr);
 
+	int KSI_Signature_verifyWithPolicy(KSI_Signature *sig, const KSI_DataHash *docHsh, KSI_uint64_t rootLevel,
+			const KSI_Policy *policy, KSI_VerificationContext *verificationContext);
+
 	/**
 	 * Verifies that the document matches the signature.
 	 * \param[in]	sig			KSI signature.

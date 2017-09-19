@@ -24,6 +24,8 @@
 #include "internal.h"
 #include "net_impl.h"
 #include "ctx_impl.h"
+#include "signature_builder.h"
+#include "signature_builder_impl.h"
 
 #define KSI_ASYNC_REQUEST_ID_OFFSET 32
 #define KSI_ASYNC_REQUEST_ID_OFFSET_MAX 0xff
@@ -32,7 +34,7 @@
 
 void KSI_AsyncHandle_free(KSI_AsyncHandle *o) {
 	if (o != NULL && --o->ref == 0) {
-		if (o->reqCtx_free) o->reqCtx_free(o->reqCtx);
+		KSI_AggregationReq_free(o->aggrReq);
 		if (o->respCtx_free) o->respCtx_free(o->respCtx);
 		if (o->userCtx_free) o->userCtx_free(o->userCtx);
 		KSI_free(o->raw);
@@ -67,8 +69,8 @@ static int KSI_AsyncHandle_construct(KSI_CTX *ctx, KSI_AsyncHandle **o) {
 	tmp->len = 0;
 	tmp->sentCount = 0;
 
-	tmp->reqCtx = NULL;
-	tmp->reqCtx_free = NULL;
+	tmp->aggrReq = NULL;
+	tmp->extReq = NULL;
 
 	tmp->respCtx = NULL;
 	tmp->respCtx_free = NULL;
@@ -108,8 +110,7 @@ int KSI_AsyncAggregationHandle_new(KSI_CTX *ctx, KSI_AggregationReq *req, KSI_As
 	res = KSI_AsyncHandle_construct(ctx, o);
 	if (res != KSI_OK) goto cleanup;
 
-	(*o)->reqCtx = (void *)req;
-	(*o)->reqCtx_free = (void (*)(void*))KSI_AggregationReq_free;
+	(*o)->aggrReq = req;
 	res = KSI_OK;
 cleanup:
 	return res;
@@ -131,7 +132,97 @@ int KSI_AsyncHandle_getAggregationResp(const KSI_AsyncHandle *h, KSI_Aggregation
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+	if (h->aggrReq == NULL) {
+		res = KSI_INVALID_STATE;
+		goto cleanup;
+	}
 	*resp = (KSI_AggregationResp*)h->respCtx;
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+static int createSignature(const KSI_AsyncHandle *h, KSI_Signature **sig) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Signature *tmp = NULL;
+	KSI_DataHash *rootHash = NULL;
+	KSI_Integer *rootLevel = NULL;
+	KSI_AggregationResp *resp = NULL;
+	KSI_SignatureBuilder *builder = NULL;
+
+	if (h == NULL || sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(h->ctx);
+
+	if (h->aggrReq == NULL || h->respCtx == NULL) {
+		res = KSI_INVALID_STATE;
+		goto cleanup;
+	}
+	resp = (KSI_AggregationResp *)h->respCtx;
+
+	res = KSI_SignatureBuilder_openFromAggregationResp(resp, &builder);
+	if (res != KSI_OK) {
+		KSI_pushError(h->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_AggregationReq_getRequestLevel(h->aggrReq, &rootLevel);
+	if (res != KSI_OK) {
+		KSI_pushError(h->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Turn off the verification. */
+	builder->noVerify = 1;
+	res = KSI_SignatureBuilder_close(builder, KSI_Integer_getUInt64(rootLevel), &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(h->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_AggregationReq_getRequestHash(h->aggrReq, &rootHash);
+	if (res != KSI_OK) {
+		KSI_pushError(h->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_Signature_verifyWithPolicy(tmp, rootHash, 0, KSI_VERIFICATION_POLICY_INTERNAL, NULL);
+	if (res != KSI_OK) {
+		KSI_pushError(h->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	*sig = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+cleanup:
+	KSI_SignatureBuilder_free(builder);
+	KSI_Signature_free(tmp);
+	return res;
+}
+
+int KSI_AsyncHandle_getSignature(const KSI_AsyncHandle *h, KSI_Signature **signature) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (h == NULL || signature == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(h->ctx);
+
+	if (h->aggrReq != NULL) {
+		res = createSignature(h, signature);
+		if (res != KSI_OK) {
+			KSI_pushError(h->ctx, res, NULL);
+			goto cleanup;
+		}
+	} else {
+		KSI_pushError(h->ctx, res = KSI_INVALID_STATE, "Request is missing.");
+		goto cleanup;
+	}
 	res = KSI_OK;
 cleanup:
 	return res;
@@ -248,13 +339,13 @@ static int asyncClient_addAggregationRequest(KSI_AsyncClient *c, KSI_AsyncHandle
 		goto cleanup;
 	}
 
-	if (handle->reqCtx == NULL ||
+	if (handle->aggrReq == NULL ||
 			c->clientImpl == NULL || c->addRequest == NULL || c->getCredentials == NULL) {
 		res = KSI_INVALID_STATE;
 		goto cleanup;
 	}
 	impl = c->clientImpl;
-	aggrReq = (KSI_AggregationReq*)handle->reqCtx;
+	aggrReq = handle->aggrReq;
 
 	/* Cleanup the handle in case it has been added repeteadly. */
 	KSI_free(handle->raw);
@@ -495,12 +586,11 @@ static int asyncClient_processAggregationResponse(KSI_AsyncClient *c) {
 
 			id = KSI_Integer_getUInt64(reqId) & KSI_ASYNC_REQUEST_ID_MASK;
 			if (c->options[KSI_ASYNC_OPT_REQUEST_CACHE_SIZE] <= id ||
-					(handle = c->reqCache[id]) == NULL ||
-					handle->id != KSI_Integer_getUInt64(reqId)) {
+					(handle = c->reqCache[id]) == NULL || handle->id != KSI_Integer_getUInt64(reqId)) {
 				KSI_LOG_warn(c->ctx, "Unexpected async aggregation response received.");
+				/* Handle next response in queue. */
 				continue;
 			}
-			handle = c->reqCache[id];
 
 			if (handle->state == KSI_ASYNC_STATE_WAITING_FOR_RESPONSE) {
 				KSI_Integer *status = NULL;

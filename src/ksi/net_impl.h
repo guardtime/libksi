@@ -120,8 +120,8 @@ extern "C" {
 		KSI_uint64_t id;
 
 		/** Application layer request context. */
-		void *reqCtx;
-		void (*reqCtx_free)(void*);
+		KSI_AggregationReq *aggrReq;
+		KSI_ExtendReq *extReq;
 
 		/** Application layer response context. */
 		void *respCtx;

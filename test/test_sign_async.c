@@ -89,6 +89,7 @@ cleanup:
 	return res;
 }
 
+#ifdef CREATE_FROM_RESPONSE
 static int createSignature(const KSI_AggregationResp *resp, KSI_Signature **sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_SignatureBuilder *builder = NULL;
@@ -117,6 +118,7 @@ cleanup:
 
 	return res;
 }
+#endif
 
 int main(int argc, char **argv) {
 	KSI_CTX *ksi = NULL;
@@ -125,7 +127,6 @@ int main(int argc, char **argv) {
 	KSI_AsyncHandle *reqHandle = NULL;
 	KSI_AsyncHandle *respHandle = NULL;
 	KSI_AggregationReq *req = NULL;
-	KSI_AggregationResp *resp = NULL;
 	KSI_DataHash *hsh = NULL;
 	FILE *logFile = NULL;
 	size_t pending = 0;
@@ -134,6 +135,9 @@ int main(int argc, char **argv) {
 	size_t succeeded = 0;
 	KSITest_Conf conf;
 	KSI_Signature *signature = NULL;
+	time_t start;
+
+	time(&start);
 
 	/* Handle command line parameters */
 	if (argc < NOF_ARGS) {
@@ -218,6 +222,8 @@ int main(int argc, char **argv) {
 	nof_requests = atoi(argv[AGRV_NOF_TEST_REQUESTS]);
 	KSI_LOG_info(ksi, "Nof test requests: %lu", nof_requests);
 	do {
+		KSI_uint64_t received = 0;
+
 		if (req_no < nof_requests) {
 			if (reqHandle == NULL) {
 				KSI_DataHash *hshRef = NULL;
@@ -277,118 +283,138 @@ int main(int argc, char **argv) {
 			}
 		}
 
-		respHandle = NULL;
-		res = KSI_AsyncService_run(as, &respHandle, &pending);
-		if (res != KSI_OK) {
-			fprintf(stderr, "Failed to run async service.\n");
-			goto cleanup;
-		}
+		do {
+			respHandle = NULL;
+			res = KSI_AsyncService_run(as, &respHandle, &pending);
+			if (res != KSI_OK) {
+				fprintf(stderr, "Failed to run async service.\n");
+				goto cleanup;
+			}
 
-		if (respHandle != NULL) {
-			int state = KSI_ASYNC_STATE_UNDEFINED;
+			if (respHandle != NULL) {
+				int state = KSI_ASYNC_STATE_UNDEFINED;
 
-			KSI_LOG_info(ksi, "Read response.");
+				KSI_LOG_info(ksi, "Read response.");
 
-			KSI_AsyncHandle_getState(respHandle, &state);
+				KSI_AsyncHandle_getState(respHandle, &state);
+				if (res != KSI_OK) {
+					fprintf(stderr, "Unable to get request state.\n");
+					goto cleanup;
+				}
+
+				switch (state) {
+					case KSI_ASYNC_STATE_RESPONSE_RECEIVED: {
+							KSI_DataHash *reqCtxHash = NULL;
+							KSI_DataHash *sigDocHash = NULL;
+
+							KSI_LOG_info(ksi, "Handle response.");
+
+#ifdef CREATE_FROM_RESPONSE
+							KSI_AggregationResp *resp = NULL;
+
+							res = KSI_AsyncHandle_getAggregationResp(respHandle, &resp);
+							if (res != KSI_OK) {
+								fprintf(stderr, "Failed to get aggregation response.\n");
+								goto cleanup;
+							}
+
+							res = createSignature(resp, &signature);
+							if (res != KSI_OK) {
+								fprintf(stderr, "Failed to create signature.\n");
+								goto cleanup;
+							}
+#else
+							res = KSI_AsyncHandle_getSignature(respHandle, &signature);
+							if (res != KSI_OK) {
+								fprintf(stderr, "Failed to get signature.\n");
+								goto cleanup;
+							}
+#endif
+
+							res = KSI_AsyncHandle_getRequestCtx(respHandle, (const void**)&reqCtxHash);
+							if (res != KSI_OK && reqCtxHash != NULL) {
+							  fprintf(stderr, "Unable to get request context.\n");
+							  goto cleanup;
+							}
+
+
+							res = KSI_Signature_getDocumentHash(signature, &sigDocHash);
+							if (res != KSI_OK && sigDocHash != NULL) {
+							  fprintf(stderr, "Unable to get signature document hash.\n");
+							  goto cleanup;
+							}
+
+							if (!KSI_DataHash_equals(reqCtxHash, sigDocHash)) {
+								KSI_LOG_error(ksi, "Request context data mismatch.");
+								KSI_LOG_logDataHash(ksi, KSI_LOG_ERROR, "...Context hash ", reqCtxHash);
+								KSI_LOG_logDataHash(ksi, KSI_LOG_ERROR, "...Document hash", sigDocHash);
+							} else {
+								succeeded++;
+							}
+
+							KSI_Signature_free(signature);    signature = NULL;
+							KSI_AsyncHandle_free(respHandle); respHandle = NULL;
+						}
+						break;
+
+					case KSI_ASYNC_STATE_ERROR: {
+							KSI_DataHash *reqCtxHash = NULL;
+							int err = KSI_UNKNOWN_ERROR;
+							long extErr = 0L;
+							KSI_Utf8String *errMsg = NULL;
+
+							KSI_LOG_info(ksi, "Handle error.");
+
+							res = KSI_AsyncHandle_getError(respHandle, &err);
+							if (res != KSI_OK) {
+								fprintf(stderr, "Unable to get request state.\n");
+								goto cleanup;
+							}
+
+							res = KSI_AsyncHandle_getErrorMessage(respHandle, &errMsg);
+							if (res != KSI_OK) {
+								fprintf(stderr, "Unable to get request state.\n");
+								goto cleanup;
+							}
+
+							res = KSI_AsyncHandle_getExtError(respHandle, &extErr);
+							if (res != KSI_OK) {
+								fprintf(stderr, "Unable to get request state.\n");
+								goto cleanup;
+							}
+
+							res = KSI_AsyncHandle_getRequestCtx(respHandle, (const void**)&reqCtxHash);
+							if (res != KSI_OK && reqCtxHash != NULL) {
+							  fprintf(stderr, "Unable to get request context.\n");
+							  goto cleanup;
+							}
+
+							KSI_LOG_error(ksi, "Error: [0x%x:%ld] %s (%s)", err, extErr, KSI_getErrorString(err), KSI_Utf8String_cstr(errMsg));
+							KSI_LOG_logDataHash(ksi, KSI_LOG_ERROR, "...Context hash", reqCtxHash);
+
+							KSI_AsyncHandle_free(respHandle);  respHandle = NULL;
+						}
+						break;
+
+					default:
+						/* Do nothing! */
+						break;
+				}
+			}
+
+			res = KSI_AsyncService_getReceivedCount(as, &received);
 			if (res != KSI_OK) {
 				fprintf(stderr, "Unable to get request state.\n");
 				goto cleanup;
 			}
-
-			switch (state) {
-				case KSI_ASYNC_STATE_RESPONSE_RECEIVED: {
-						KSI_DataHash *reqCtxHash = NULL;
-						KSI_DataHash *sigDocHash = NULL;
-
-						KSI_LOG_info(ksi, "Handle response.");
-
-						res = KSI_AsyncHandle_getAggregationResp(respHandle, &resp);
-						if (res != KSI_OK) {
-							fprintf(stderr, "Failed to get aggregation response.\n");
-							goto cleanup;
-						}
-
-						res = KSI_AsyncHandle_getRequestCtx(respHandle, (const void**)&reqCtxHash);
-						if (res != KSI_OK && reqCtxHash != NULL) {
-						  fprintf(stderr, "Unable to get request context.\n");
-						  goto cleanup;
-						}
-
-						res = createSignature(resp, &signature);
-						if (res != KSI_OK) {
-							fprintf(stderr, "Failed to create signature.\n");
-							goto cleanup;
-						}
-
-						res = KSI_Signature_getDocumentHash(signature, &sigDocHash);
-						if (res != KSI_OK && sigDocHash != NULL) {
-						  fprintf(stderr, "Unable to get signature document hash.\n");
-						  goto cleanup;
-						}
-
-						if (!KSI_DataHash_equals(reqCtxHash, sigDocHash)) {
-							KSI_LOG_error(ksi, "Request context data mismatch.");
-							KSI_LOG_logDataHash(ksi, KSI_LOG_ERROR, "...Context hash ", reqCtxHash);
-							KSI_LOG_logDataHash(ksi, KSI_LOG_ERROR, "...Document hash", sigDocHash);
-						} else {
-							succeeded++;
-						}
-
-						KSI_Signature_free(signature);    signature = NULL;
-						KSI_AsyncHandle_free(respHandle); respHandle = NULL;
-					}
-					break;
-
-				case KSI_ASYNC_STATE_ERROR: {
-						KSI_DataHash *reqCtxHash = NULL;
-						int err = KSI_UNKNOWN_ERROR;
-						long extErr = 0L;
-						KSI_Utf8String *errMsg = NULL;
-
-						KSI_LOG_info(ksi, "Handle error.");
-
-						res = KSI_AsyncHandle_getError(respHandle, &err);
-						if (res != KSI_OK) {
-							fprintf(stderr, "Unable to get request state.\n");
-							goto cleanup;
-						}
-
-						res = KSI_AsyncHandle_getErrorMessage(respHandle, &errMsg);
-						if (res != KSI_OK) {
-							fprintf(stderr, "Unable to get request state.\n");
-							goto cleanup;
-						}
-
-						res = KSI_AsyncHandle_getExtError(respHandle, &extErr);
-						if (res != KSI_OK) {
-							fprintf(stderr, "Unable to get request state.\n");
-							goto cleanup;
-						}
-
-						res = KSI_AsyncHandle_getRequestCtx(respHandle, (const void**)&reqCtxHash);
-						if (res != KSI_OK && reqCtxHash != NULL) {
-						  fprintf(stderr, "Unable to get request context.\n");
-						  goto cleanup;
-						}
-
-						KSI_LOG_error(ksi, "Error: [0x%x:%ld] %s (%s)", err, extErr, KSI_getErrorString(err), KSI_Utf8String_cstr(errMsg));
-						KSI_LOG_logDataHash(ksi, KSI_LOG_ERROR, "...Context hash", reqCtxHash);
-
-						KSI_AsyncHandle_free(respHandle);  respHandle = NULL;
-					}
-					break;
-
-				default:
-					/* Do nothing! */
-					break;
-			}
-		}
-	} while (pending);
+		} while (received % 100); /* Give it a chance to send new request out. */
+	} while (pending || (req_no < nof_requests));
 
 	res = KSI_OK;
 cleanup:
 	printf("Succeeded request: %lu.\n", succeeded);
 	printf("Failed request   : %lu.\n", nof_requests - succeeded);
+	printf("Spent time (sec) : %.0f.\n", difftime(time(NULL), start));
 
 	if (res != KSI_OK && ksi != NULL) {
 		KSI_LOG_logCtxError(ksi, KSI_LOG_ERROR);

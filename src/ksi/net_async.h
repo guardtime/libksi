@@ -75,6 +75,7 @@ extern "C" {
 	 * \param[out]		state			Payload state #KSI_AsyncHandleState
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncHandle_getError for reading error code.
+	 * \see #KSI_AsyncHandle_getSignature for getting KSI signature.
 	 */
 	int KSI_AsyncHandle_getState(const KSI_AsyncHandle *h, int *state);
 
@@ -99,7 +100,7 @@ extern "C" {
 	/**
 	 * Get the error message for the request which state is #KSI_ASYNC_STATE_ERROR.
 	 * \param[in]		h				Async handle.
-	 * \param[out]		ext				Handle external error code.
+	 * \param[out]		msg				Handle external error code.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncHandle_getState for getting the state of the request.
 	 * \see #KSI_Utf8String_cstr for message stringification.
@@ -117,12 +118,32 @@ extern "C" {
 	int KSI_AsyncHandle_getRequestId(const KSI_AsyncHandle *h, KSI_uint64_t *id);
 
 	/**
-	 * Getter for the aggregation response
+	 * Getter for the aggregation request.
+	 * \param[in]		h				Async handle.
+	 * \param[out]		req				Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_AsyncHandle_getAggregationReq(const KSI_AsyncHandle *h, KSI_AggregationReq **req);
+
+	/**
+	 * Getter for the aggregation response.
 	 * \param[in]		h				Async handle.
 	 * \param[out]		resp			Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_SignatureBuilder_openFromAggregationResp for building a signature from aggregation response.
+	 * \see #KSI_AsyncHandle_getSignature for getting a verified signature.
 	 */
 	int KSI_AsyncHandle_getAggregationResp(const KSI_AsyncHandle *h, KSI_AggregationResp **resp);
+
+	/**
+	 * KSI signature getter. The returned signature is verified internally and is guaranteed to be valid.
+	 * \param[in]		h				Async handle.
+	 * \param[out]		signature		Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note The signature will only be returned if the handle state is #KSI_ASYNC_STATE_RESPONSE_RECEIVED.
+	 * \see #KSI_AsyncHandle_getState for getting the state of the request.
+	 */
+	int KSI_AsyncHandle_getSignature(const KSI_AsyncHandle *h, KSI_Signature **signature);
 
 	/**
 	 * Free async client object.
@@ -160,7 +181,6 @@ extern "C" {
 	 * Non-blocking aggregation request setter. All request are put into output queue untill.
 	 * The request are sent during #KSI_AsyncService_run call.
 	 * \param[in]		s				Async service instance.
-	 * \param[in]		req				Aggregation request.
 	 * \param[out]		handle			Async handle associated with the request.
 	 * \return #KSI_OK, when operation succeeded;
 	 * \return #KSI_ASYNC_REQUEST_CACHE_FULL, if the internal cache is full. In this case the
@@ -185,7 +205,7 @@ extern "C" {
 	 * \param[out]		waiting			Total number of requests in process.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note The \c waiting count can be ignored by setting it to NULL.
-	 * \note The returned \c handle will be set to #KSI_ASYNC_HANDLE_NULL if there is no response in queue.
+	 * \note The returned \c handle will be set to NULL if there is no response in queue.
 	 * \see #KSI_AsyncService_addRequest for adding asynchronous request to the output queue.
 	 * \see #KSI_AsyncHandle_getState for getting the state of the request.
 	 * \see #KSI_AsyncService_getPendingCount for requests in process.
@@ -235,14 +255,13 @@ extern "C" {
 	int KSI_AsyncService_getReceivedCount(KSI_AsyncService *s, size_t *count);
 
 #define KSI_ASYNC_DEFAULT_ROUND_MAX_COUNT   (1 << 3)
-#define KSI_ASYNC_DEFAULT_PARALLEL_REQUESTS (1 << 10)
+#define KSI_ASYNC_DEFAULT_PARALLEL_REQUESTS (1 << 5)
 #define KSI_ASYNC_ROUND_DURATION_SEC        (1)
 #define KSI_ASYNC_DEFAULT_TIMEOUT_SEC       (10)
 
 	/**
 	 * Enum defining async service options.
 	 * \see #KSI_AsyncService_setOption for setting an option.
-	 * \see #KSI_AsyncService_getOption for getting an option.
 	 */
 	typedef enum KSI_AsyncOption_en {
 
@@ -282,14 +301,14 @@ extern "C" {
 
 		/**
 		 * Maximum parallel running request count. New value may not be less than the allready set value.
-		 * \param[in]		count			Paramer of type #size_t.
+		 * \param[in]		count			Paramer of type size_t.
 		 * \see #KSI_ASYNC_DEFAULT_PARALLEL_REQUESTS default count.
 		 */
 		KSI_ASYNC_OPT_REQUEST_CACHE_SIZE,
 
 		/**
 		 * Maximum number of request permitted per round.
-		 * \param[in]		count			Paramer of type #size_t.
+		 * \param[in]		count			Paramer of type size_t.
 		 * \see #KSI_ASYNC_DEFAULT_ROUND_MAX_COUNT default value.
 		 * \see #KSI_ASYNC_ROUND_DURATION_SEC defines the round time interval.
 		 * \see #KSI_AsyncService_addRequest for adding asynchronous request to the output queue.
@@ -309,7 +328,6 @@ extern "C" {
 	 * \param[in]		value			Option value as specified in #KSI_AsyncOption.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncOption defines supported options and parameter types.
-	 * \see #KSI_AsyncService_getOption opotion getter.
 	 */
 	int KSI_AsyncService_setOption(KSI_AsyncService *service, const KSI_AsyncOption option, void *value);
 

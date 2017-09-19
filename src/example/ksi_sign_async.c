@@ -230,10 +230,16 @@ int main(int argc, char **argv) {
 	KSI_LOG_info(ksi, "  user: %s", argv[ARGV_USER]);
 	KSI_LOG_info(ksi, "  pass: %s", argv[ARGV_PASS]);
 
-#ifdef INCREASE_MAX_REQUEST_COUNT
-	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_MAX_REQUEST_COUNT, (void *)(1<<8));
+#ifdef UNDATE_CONF_OPTIONS
+	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_MAX_REQUEST_COUNT, (void *)(1 << 8));
 	if (res != KSI_OK) {
 		fprintf(stderr, "Unable to set maximum request count.\n");
+		goto cleanup;
+	}
+
+	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void*)(1 << 10));
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to set request cache size.\n");
 		goto cleanup;
 	}
 #endif

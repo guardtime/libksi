@@ -52,7 +52,9 @@ extern "C" {
 	 * \param[in]	resp	Aggregation response.
 	 * \param[out]	builder	Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note It is users responsibility to verify the resulting singature.
 	 * \note It is the responsibility of the caller to free the input parameters after use.
+	 * \see #KSI_Signature_verifyWithPolicy
 	 */
 	int KSI_SignatureBuilder_openFromAggregationResp(const KSI_AggregationResp *resp, KSI_SignatureBuilder **builder);
 

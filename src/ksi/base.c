@@ -659,48 +659,6 @@ int KSI_receiveExtenderConfig(KSI_CTX *ctx, KSI_Config **config) {
 			(void (*)(void *))KSI_ExtendResp_free);
 }
 
-static int signatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ctx, const KSI_DataHash *hsh) {
-	int res;
-	KSI_VerificationContext context;
-	KSI_PolicyVerificationResult *result = NULL;
-
-	KSI_ERR_clearErrors(ctx);
-
-	if (ctx == NULL || sig == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	res = KSI_VerificationContext_init(&context, ctx);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	context.signature = sig;
-	context.documentHash = hsh;
-
-	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, "Signature verification aborted due to an error.");
-		goto cleanup;
-	}
-
-	if (result->finalResult.resultCode != KSI_VER_RES_OK) {
-		res = KSI_VERIFICATION_FAILURE;
-		KSI_pushError(ctx, res, "Verification of signature failed.");
-		goto cleanup;
-	}
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_PolicyVerificationResult_free(result);
-
-	return res;
-}
-
 int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -710,7 +668,7 @@ int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig) {
 		goto cleanup;
 	}
 
-	res = signatureVerifier_verifySignature(sig, ctx, NULL);
+	res = KSI_Signature_verifyWithPolicy(sig, NULL, 0, KSI_VERIFICATION_POLICY_GENERAL, NULL);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx,res, NULL);
 		goto cleanup;
@@ -732,7 +690,7 @@ int KSI_verifyDataHash(KSI_CTX *ctx, KSI_Signature *sig, const KSI_DataHash *hsh
 		goto cleanup;
 	}
 
-	res = signatureVerifier_verifySignature(sig, ctx, hsh);
+	res = KSI_Signature_verifyWithPolicy(sig, hsh, 0, KSI_VERIFICATION_POLICY_GENERAL, NULL);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx,res, NULL);
 		goto cleanup;
