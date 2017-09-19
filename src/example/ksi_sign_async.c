@@ -44,7 +44,6 @@ enum {
 	ARGV_AGGR_URI,
 	ARGV_USER,
 	ARGV_PASS,
-	ARGV_PUB_FILE_URL,
 	ARGV_DELIM,
 	NOF_STATIC_ARGS,
 
@@ -195,7 +194,7 @@ int main(int argc, char **argv) {
 	/* Handle command line parameters */
 	if (argc <= NOF_STATIC_ARGS || strcmp("--", argv[ARGV_DELIM])) {
 		fprintf(stderr, "Usage:\n"
-				"  %s <aggregator-uri> <user> <pass> <pub-file url> -- <in-data-file>...<in-data-file>\n", argv[ARGV_COMMAND]);
+				"  %s <aggregator-uri> <user> <pass> -- <in-data-file>...<in-data-file>\n", argv[ARGV_COMMAND]);
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
