@@ -125,7 +125,6 @@ fi
 %{_includedir}/ksi/policy.h
 %{_includedir}/ksi/compatibility.h
 %{_includedir}/ksi/version.h
-%{_includedir}/ksi/verify_deprecated.h
 %{_libdir}/libksi.a
 %{_libdir}/libksi.la
 %{_libdir}/pkgconfig/libksi.pc

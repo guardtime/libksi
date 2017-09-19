@@ -25,6 +25,7 @@ set -e
 # Get version number.
 VER=$(tr -d [:space:] < VERSION)
 ARCH=$(dpkg --print-architecture)
+RELEASE_VERSION="$(lsb_release -is)$(lsb_release -rs | grep -Po "[0-9]{1,3}" | head -1)"
 PKG_VERSION=1
 
 
@@ -110,8 +111,7 @@ libksi_dev_includes="\
 	$include_dir/verification_rule.h \
 	$include_dir/policy.h \
 	$include_dir/compatibility.h \
-	$include_dir/version.h \
-	$include_dir/verify_deprecated.h"
+	$include_dir/version.h"
 
 
 # Rebuild API.
@@ -175,10 +175,10 @@ cp -r $tmp_dir_src/libksi/debian $tmp_dir_src/libksi-${VER}
 
 # Build packages.
 dpkg-deb --build $tmp_dir_lib/libksi
-mv $tmp_dir_lib/libksi.deb libksi_${VER}-${PKG_VERSION}_${ARCH}.deb
+mv $tmp_dir_lib/libksi.deb libksi_${VER}-${PKG_VERSION}.${RELEASE_VERSION}_${ARCH}.deb
 
 dpkg-deb --build $tmp_dir_dev/libksi-dev
-mv $tmp_dir_dev/libksi-dev.deb libksi-dev_${VER}-${PKG_VERSION}_${ARCH}.deb
+mv $tmp_dir_dev/libksi-dev.deb libksi-dev_${VER}-${PKG_VERSION}.${RELEASE_VERSION}_${ARCH}.deb
 
 dpkg-source -b -sn $tmp_dir_src/libksi-${VER} ""
 

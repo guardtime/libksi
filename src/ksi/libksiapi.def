@@ -380,12 +380,7 @@ EXPORTS
 ;signature.h
 EXPORTS
 	KSI_Signature_free
-	KSI_Signature_verify
-	KSI_Signature_verifyAggregated
-	KSI_Signature_verifyAggregatedHash
-	KSI_Signature_verifyOnline
 	KSI_Signature_verifyDocument
-	KSI_Signature_verifyWithPublication
 	KSI_Signature_clone
 	KSI_Signature_parseWithPolicy
 	KSI_Signature_fromFileWithPolicy
@@ -401,8 +396,6 @@ EXPORTS
 	KSI_Signature_getSignerIdentity
 	KSI_Signature_getAggregationHashChainIdentity
 	KSI_Signature_getPublicationRecord
-	KSI_Signature_verifyDataHash
-	KSI_Signature_getVerificationResult
 	KSI_Signature_replacePublicationRecord
 	KSI_Signature_getCalendarAuthRec
 	KSI_AggregationHashChain_free
@@ -865,21 +858,6 @@ EXPORTS
 
 	KSI_PKICertificateList_free
 	KSI_PKICertificateList_new
-
-;verification.h
-EXPORTS
-	KSI_VerificationResult_init
-	KSI_VerificationResult_reset
-	KSI_VerificationResult_addFailure
-	KSI_VerificationResult_addSuccess
-	KSI_VerificationResult_getStepResultCount
-	KSI_VerificationResult_getStepResult
-	KSI_VerificationResult_isStepPerformed
-	KSI_VerificationResult_isStepSuccess
-	KSI_VerificationStepResult_getStep
-	KSI_VerificationStepResult_isSuccess
-	KSI_VerificationStepResult_getDescription
-	KSI_VerificationResult_lastFailureMessage
 
 ;verification_rule.h
 EXPORTS

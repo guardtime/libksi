@@ -22,7 +22,6 @@
 
 #include "types.h"
 #include "verification.h"
-#include "verify_deprecated.h"
 #include "hashchain.h"
 
 #ifdef __cplusplus

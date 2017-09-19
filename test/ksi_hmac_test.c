@@ -364,7 +364,7 @@ static void TestInvalidParams(CuTest* tc) {
 static void testUnimplementedHashAlgorithm(CuTest *tc) {
 	KSI_DataHash *hsh = NULL;
 
-	int res = KSI_HMAC_create(ctx, KSI_HASHALG_SM3, "key", "data", 4, &hsh);
+	int res = KSI_HMAC_create(ctx, KSI_HASHALG_SM3, "key", (unsigned char *)"data", 4, &hsh);
 	CuAssert(tc, "Unimplemented hash algorithm may not be used for HMAC computation.", res = KSI_UNAVAILABLE_HASH_ALGORITHM && hsh == NULL);
 
 	KSI_DataHash_free(hsh);

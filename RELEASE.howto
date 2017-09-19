@@ -4,12 +4,13 @@ This file describes the steps to create a release of the sdk.
 1. Merge changes from develop/release branch to master.
 2. Run tests and check for memory leaks.
 3. Updete package version with ./mkversion.sh
-4. Update ABI version in ./configure.ac according to the given algorithm in comments.
+4. Update ABI version in ABI_VERSION according to the given algorithm in comments.
 5. Update/sync ./changelog
 6. Update/sync ./packaging/deb/libksi/DEBIAN/changelog
 7. Commit VERSION and other changed files
-8. git push origin master
-9. Generate the documentation.
-10. Copy the doc/html folder to MAJOR_VER.MINOR_VER/ directory.
-11. Update index.md and generate index.html from it.
+8. Create tag for release
+9. Push changes (master and tag).
+10. Generate the documentation.
+11. Copy the doc/html folder to MAJOR_VER.MINOR_VER/ directory.
+12. Update index.md and generate index.html from it.
 
