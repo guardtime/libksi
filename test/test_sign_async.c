@@ -148,7 +148,8 @@ int main(int argc, char **argv) {
 	/* Handle command line parameters */
 	if (argc < NOF_ARGS) {
 		fprintf(stderr, "Usage:\n"
-				"  %s <test-root> <log-level> <nof-requests> <request-cache-size> <max-request-count>\n", argv[ARGV_COMMAND]);
+				"  %s <test-root> <log-level> <nof-requests> <request-cache-size> <requests-per-round>\n",
+				argv[ARGV_COMMAND]);
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -390,19 +391,19 @@ int main(int argc, char **argv) {
 
 							res = KSI_AsyncHandle_getError(respHandle, &err);
 							if (res != KSI_OK) {
-								fprintf(stderr, "Unable to get request state.\n");
+								fprintf(stderr, "Unable to get request error.\n");
 								goto cleanup;
 							}
 
 							res = KSI_AsyncHandle_getErrorMessage(respHandle, &errMsg);
 							if (res != KSI_OK) {
-								fprintf(stderr, "Unable to get request state.\n");
+								fprintf(stderr, "Unable to get request error message.\n");
 								goto cleanup;
 							}
 
 							res = KSI_AsyncHandle_getExtError(respHandle, &extErr);
 							if (res != KSI_OK) {
-								fprintf(stderr, "Unable to get request state.\n");
+								fprintf(stderr, "Unable to get request external error.\n");
 								goto cleanup;
 							}
 
@@ -427,7 +428,7 @@ int main(int argc, char **argv) {
 
 			res = KSI_AsyncService_getReceivedCount(as, &received);
 			if (res != KSI_OK) {
-				fprintf(stderr, "Unable to get request state.\n");
+				fprintf(stderr, "Unable to get received count.\n");
 				goto cleanup;
 			}
 		} while (received % 100); /* Give it a chance to send new request out. */
