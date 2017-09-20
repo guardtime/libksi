@@ -39,7 +39,7 @@
 
 #include "support_tests.h"
 
-#define REQ_ADD_LEVEL
+/*#define REQ_ADD_LEVEL*/
 /*#define SIG_CREATE_FROM_RESPONSE*/
 
 enum {
@@ -263,7 +263,6 @@ int main(int argc, char **argv) {
 					fprintf(stderr, "Unable to create request level.\n");
 					goto cleanup;
 				}
-printf(">>> lvl=%llu\n", KSI_Integer_getUInt64(reqLvl));
 
 				res = KSI_AggregationReq_setRequestLevel(req, reqLvl);
 				if (res != KSI_OK) {
