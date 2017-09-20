@@ -169,7 +169,6 @@ int main(int argc, char **argv) {
 	KSI_AsyncHandle *respHandle = NULL;
 
 	KSI_AggregationReq *req = NULL;
-	KSI_AggregationResp *resp = NULL;
 
 	KSI_DataHash *hsh = NULL;
 
