@@ -124,6 +124,7 @@ KSI_IMPLEMENT_GETTER(KSI_AsyncHandle, long, errExt, ExtError)
 KSI_IMPLEMENT_GETTER(KSI_AsyncHandle, KSI_Utf8String *, errMsg, ErrorMessage)
 KSI_IMPLEMENT_GETTER(KSI_AsyncHandle, const void *, userCtx, RequestCtx)
 KSI_IMPLEMENT_GETTER(KSI_AsyncHandle, KSI_uint64_t, id, RequestId)
+KSI_IMPLEMENT_GETTER(KSI_AsyncHandle, KSI_AggregationReq *, aggrReq, AggregationReq)
 
 int KSI_AsyncHandle_getAggregationResp(const KSI_AsyncHandle *h, KSI_AggregationResp **resp) {
 	int res = KSI_UNKNOWN_ERROR;

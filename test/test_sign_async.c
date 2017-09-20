@@ -39,6 +39,9 @@
 
 #include "support_tests.h"
 
+#define REQ_ADD_LEVEL
+/*#define SIG_CREATE_FROM_RESPONSE*/
+
 enum {
 	ARGV_COMMAND = 0,
 	ARGV_TEST_ROOT,
@@ -89,7 +92,7 @@ cleanup:
 	return res;
 }
 
-#ifdef CREATE_FROM_RESPONSE
+#ifdef SIG_CREATE_FROM_RESPONSE
 static int createSignature(const KSI_AggregationResp *resp, KSI_Signature **sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_SignatureBuilder *builder = NULL;
@@ -127,7 +130,10 @@ int main(int argc, char **argv) {
 	KSI_AsyncHandle *reqHandle = NULL;
 	KSI_AsyncHandle *respHandle = NULL;
 	KSI_AggregationReq *req = NULL;
-	KSI_DataHash *hsh = NULL;
+	KSI_DataHash *reqHsh = NULL;
+#ifdef REQ_ADD_LEVEL
+	KSI_Integer *reqLvl = NULL;
+#endif
 	FILE *logFile = NULL;
 	size_t pending = 0;
 	size_t nof_requests = 0;
@@ -231,25 +237,41 @@ int main(int argc, char **argv) {
 				KSI_LOG_info(ksi, "Request #: %lu", req_no);
 
 				/* Get the hash value of the input file. */
-				res = createHash(ksi, req_no, &hsh);
-				if (res != KSI_OK || hsh == NULL) {
+				res = createHash(ksi, req_no, &reqHsh);
+				if (res != KSI_OK || reqHsh == NULL) {
 					fprintf(stderr, "Failed to calculate the hash.\n");
 					goto cleanup;
 				}
-				KSI_LOG_logDataHash(ksi, KSI_LOG_DEBUG, "Request hash", hsh);
+				KSI_LOG_logDataHash(ksi, KSI_LOG_DEBUG, "Request hash", reqHsh);
 
 				res = KSI_AggregationReq_new(ksi, &req);
-				if (res == KSI_OK && req == NULL) {
+				if (res != KSI_OK || req == NULL) {
 					fprintf(stderr, "Unable to create aggregation request.\n");
 					goto cleanup;
 				}
 
-				res = KSI_AggregationReq_setRequestHash(req, (hshRef = KSI_DataHash_ref(hsh)));
+				res = KSI_AggregationReq_setRequestHash(req, (hshRef = KSI_DataHash_ref(reqHsh)));
 				if (res != KSI_OK) {
 					KSI_DataHash_free(hshRef);
 					fprintf(stderr, "Unable to set request data hash.\n");
 					goto cleanup;
 				}
+
+#ifdef REQ_ADD_LEVEL
+				res = KSI_Integer_new(ksi, (req_no % 5), &reqLvl);
+				if (res != KSI_OK || reqLvl == NULL) {
+					fprintf(stderr, "Unable to create request level.\n");
+					goto cleanup;
+				}
+printf(">>> lvl=%llu\n", KSI_Integer_getUInt64(reqLvl));
+
+				res = KSI_AggregationReq_setRequestLevel(req, reqLvl);
+				if (res != KSI_OK) {
+					fprintf(stderr, "Unable to set request level.\n");
+					goto cleanup;
+				}
+				reqLvl = NULL;
+#endif
 
 				res = KSI_AsyncAggregationHandle_new(ksi, req, &reqHandle);
 				if (res != KSI_OK) {
@@ -258,12 +280,12 @@ int main(int argc, char **argv) {
 				}
 				req = NULL;
 
-				res = KSI_AsyncHandle_setRequestCtx(reqHandle, (void*)hsh, (void (*)(void*))KSI_DataHash_free);
+				res = KSI_AsyncHandle_setRequestCtx(reqHandle, (void*)reqHsh, (void (*)(void*))KSI_DataHash_free);
 				if (res != KSI_OK) {
 					fprintf(stderr, "Unable to set request context.\n");
 					goto cleanup;
 				}
-				hsh = NULL;
+				reqHsh = NULL;
 			}
 
 			res = KSI_AsyncService_addRequest(as, reqHandle);
@@ -306,11 +328,13 @@ int main(int argc, char **argv) {
 					case KSI_ASYNC_STATE_RESPONSE_RECEIVED: {
 							KSI_DataHash *reqCtxHash = NULL;
 							KSI_DataHash *sigDocHash = NULL;
+#ifdef SIG_CREATE_FROM_RESPONSE
+							KSI_AggregationResp *resp = NULL;
+#endif
 
 							KSI_LOG_info(ksi, "Handle response.");
 
-#ifdef CREATE_FROM_RESPONSE
-							KSI_AggregationResp *resp = NULL;
+#ifdef SIG_CREATE_FROM_RESPONSE
 
 							res = KSI_AsyncHandle_getAggregationResp(respHandle, &resp);
 							if (res != KSI_OK) {
@@ -430,7 +454,10 @@ cleanup:
 
 	KSI_AggregationReq_free(req);
 
-	KSI_DataHash_free(hsh);
+	KSI_DataHash_free(reqHsh);
+#ifdef REQ_ADD_LEVEL
+	KSI_Integer_free(reqLvl);
+#endif
 
 	KSI_CTX_free(ksi);
 

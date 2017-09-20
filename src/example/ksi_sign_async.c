@@ -106,10 +106,8 @@ cleanup:
 	return res;
 }
 
-static int saveSignature(const char *fileName, const KSI_AggregationResp *resp) {
+static int saveSignature(const char *fileName, const KSI_AsyncHandle *handle) {
 	int res = KSI_UNKNOWN_ERROR;
-
-	KSI_SignatureBuilder *builder = NULL;
 	KSI_Signature *sig = NULL;
 
 	FILE *out = NULL;
@@ -118,16 +116,9 @@ static int saveSignature(const char *fileName, const KSI_AggregationResp *resp) 
 
 	char sigFileName[0xff];
 
-	/* Generate KSI signature from aggregation response. */
-	res = KSI_SignatureBuilder_openFromAggregationResp(resp, &builder);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to create signature builder from aggregation response.\n");
-		goto cleanup;
-	}
-
-	res = KSI_SignatureBuilder_close(builder, 0, &sig);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Failed to close signature builder.\n");
+	res = KSI_AsyncHandle_getSignature(handle, &sig);
+	if (res != KSI_OK || sig == NULL) {
+		fprintf(stderr, "Unable to get signature from handle.\n");
 		goto cleanup;
 	}
 
@@ -160,7 +151,6 @@ static int saveSignature(const char *fileName, const KSI_AggregationResp *resp) 
 
 	res = KSI_OK;
 cleanup:
-	KSI_SignatureBuilder_free(builder);
 	KSI_Signature_free(sig);
 
 	if (out != NULL) fclose(out);
@@ -323,19 +313,13 @@ int main(int argc, char **argv) {
 
 			switch (state) {
 				case KSI_ASYNC_STATE_RESPONSE_RECEIVED: {
-						res = KSI_AsyncHandle_getAggregationResp(respHandle, &resp);
-						if (res != KSI_OK) {
-							fprintf(stderr, "Failed to get aggregation response.\n");
-							goto cleanup;
-						}
-
 						res = KSI_AsyncHandle_getRequestCtx(respHandle, (const void**)&p_name);
 						if (res != KSI_OK) {
 						  fprintf(stderr, "Unable to get request context.\n");
 						  goto cleanup;
 						}
 
-						res = saveSignature(p_name, resp);
+						res = saveSignature(p_name, respHandle);
 						if (res != KSI_OK) {
 							fprintf(stderr, "Failed to save signature for: %s\n", p_name);
 							goto cleanup;

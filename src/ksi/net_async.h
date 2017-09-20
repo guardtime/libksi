@@ -140,8 +140,10 @@ extern "C" {
 	 * \param[in]		h				Async handle.
 	 * \param[out]		signature		Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note The returned resources must be freed by the caller.
 	 * \note The signature will only be returned if the handle state is #KSI_ASYNC_STATE_RESPONSE_RECEIVED.
 	 * \see #KSI_AsyncHandle_getState for getting the state of the request.
+	 * \see #KSI_Signature_free for cleaning up returned resources.
 	 */
 	int KSI_AsyncHandle_getSignature(const KSI_AsyncHandle *h, KSI_Signature **signature);
 
