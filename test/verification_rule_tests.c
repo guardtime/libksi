@@ -1130,6 +1130,75 @@ static void testRule_CalendarHashChainRegistrationTime_verifyErrorResult(CuTest 
 #undef TEST_SIGNATURE_FILE
 }
 
+static void testRule_CalendarHashChainHashAlgorithm(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+
+	int res = KSI_OK;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
+
+	TEST_VERIFICATION_STEP_INIT;
+
+	res = KSI_VerificationRule_CalendarHashChainHashAlgorithm(&verCtx, &verRes);
+	CuAssert(tc, "Signature should contain correct calendar hash chain.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
+
+	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_CALCHAIN_INTERNALLY);
+
+	KSI_VerificationContext_clean(&verCtx);
+	KSI_Signature_free(signature);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_CalendarHashChainHashAlgorithm_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-calendar-chain-has-sha1-in-right-link.ksig"
+
+	int res = KSI_OK;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
+
+	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
+
+	TEST_VERIFICATION_STEP_INIT;
+
+	res = KSI_VerificationRule_CalendarHashChainHashAlgorithm(&verCtx, &verRes);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_INT_16);
+
+	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALCHAIN_INTERNALLY);
+
+	KSI_VerificationContext_clean(&verCtx);
+	KSI_Signature_free(signature);
+
+#undef TEST_SIGNATURE_FILE
+}
+
 static void testRule_CalendarAuthenticationRecordAggregationHash(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
@@ -4752,6 +4821,8 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainAggregationTime_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainRegistrationTime);
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainRegistrationTime_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_CalendarHashChainHashAlgorithm);
+	SUITE_SKIP_TEST(suite, testRule_CalendarHashChainHashAlgorithm_verifyErrorResult, "Max", "No obsolite algothms present.");
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordAggregationHash);
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordAggregationHash_missingAutRec);
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordAggregationHash_verifyErrorResult);

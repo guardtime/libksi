@@ -224,6 +224,7 @@ static const KSI_Rule calendarHashChainVerificationRule[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainInputHashVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainAggregationTime},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainRegistrationTime},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainHashAlgorithm},
 	{KSI_RULE_TYPE_COMPOSITE_AND, publicationOrCalendarAuthenticationRecordRule},
 	{KSI_RULE_TYPE_BASIC, NULL}
 };

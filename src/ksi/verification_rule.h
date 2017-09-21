@@ -136,6 +136,19 @@ extern "C" {
 	int KSI_VerificationRule_CalendarHashChainRegistrationTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
+	 * Rule is used to verify if any of the calendar hash chain aggregation (derived from the right link) hash
+	 * algorithms were obsolete at the publication time.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \note In case of an invalid signature the error code in verification result is set to #KSI_VER_ERR_INT_16
+	 */
+	int KSI_VerificationRule_CalendarHashChainHashAlgorithm(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
 	 * This rule is used to verify that calendar authentication record publication hash equals to calendar hash chain
 	 * publication hash. If calendar authentication record is missing then status code #KSI_OK is returned.
 	 *
