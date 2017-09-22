@@ -167,6 +167,81 @@ cleanup:
 	return res;
 }
 
+int KSI_VerificationRule_AggregationChainInputHashAlgorithmVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	const KSI_Signature *sig = NULL;
+	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
+	KSI_DataHash *inputHash = NULL;
+	KSI_Integer *signTime = NULL;
+	KSI_HashAlgorithm algId = KSI_HASHALG_INVALID;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->signature;
+	KSI_ERR_clearErrors(ctx);
+
+	KSI_LOG_info(ctx, "Verify aggregation hash chain input hash algorithm.");
+
+	res = KSI_Signature_getDocumentHash(sig, &inputHash);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_DataHash_getHashAlg(inputHash, &algId);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_Signature_getSigningTime(sig, &signTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_checkHashAlgorithmAt(algId, (time_t)KSI_Integer_getUInt64(signTime));
+	switch (res) {
+		case KSI_OK:
+		case KSI_UNKNOWN_HASH_ALGORITHM_ID:
+			/* do nothing. */
+			break;
+
+		case KSI_HASH_ALGORITHM_DEPRECATED:
+		case KSI_HASH_ALGORITHM_OBSOLETE:
+			KSI_LOG_info(ctx, "Signature input hash algorithm was deprecated at aggregation time.");
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_13, step);
+			res = KSI_OK;
+			goto cleanup;
+
+		default:
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+cleanup:
+
+	return res;
+}
+
 static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, const KSI_DataHash *hsh, const KSI_OctetString *suffix, int hsh_id, KSI_DataHash **out) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHasher *hsr = NULL;
@@ -1347,7 +1422,7 @@ int KSI_VerificationRule_CalendarHashChainHashAlgorithm(KSI_VerificationContext 
 			goto cleanup;
 		}
 
-		res = KSI_DataHash_extract(imprint, &algId, NULL, NULL);
+		res = KSI_DataHash_getHashAlg(imprint, &algId);
 		if (res != KSI_OK) {
 			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 			KSI_pushError(ctx, res, NULL);

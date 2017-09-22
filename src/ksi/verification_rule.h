@@ -39,6 +39,18 @@ extern "C" {
 	int KSI_VerificationRule_AggregationChainInputLevelVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
+	 * Rule is used to verify if the hash algorithm of the input hash of the signature (input hash of the first
+	 * aggregation hash chain, or if present, the input hash of the RFC-3161 record) was deprecated at the
+	 * aggregation time (i.e aggregation time in the current record).
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_AggregationChainInputHashAlgorithmVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
 	 * This rule verifies that if RFC3161 record is present then the calculated output hash (from RFC3161 record) equals to
 	 * aggregation chain input hash. If RFC3161 record is missing then the status #KSI_VER_RES_OK is
 	 * returned.

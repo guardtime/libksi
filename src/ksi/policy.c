@@ -256,6 +256,7 @@ static const KSI_Rule documentHashRule[] = {
 static const KSI_Rule internalRules[] = {
 	{KSI_RULE_TYPE_COMPOSITE_AND, documentHashRule},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainInputLevelVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainInputHashAlgorithmVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainInputHashVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainMetaDataVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainIndexContinuation},
