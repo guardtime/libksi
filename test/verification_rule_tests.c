@@ -1130,25 +1130,24 @@ static void testRule_CalendarHashChainRegistrationTime_verifyErrorResult(CuTest 
 #undef TEST_SIGNATURE_FILE
 }
 
-static void testRule_CalendarHashChainHashAlgorithm_base(CuTest *tc, const char *TEST_SIGNATURE_FILE, int rCode, int eCode) {
+static void testRule(CuTest *tc, int (*verificationRule)(KSI_VerificationContext *, KSI_RuleVerificationResult *),
+			const int step, const char *testSigFile, const int rCode, const int eCode) {
 	int res = KSI_OK;
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
 	VerificationTempData tempData;
 	KSI_Signature *signature = NULL;
 
-	KSI_ERR_clearErrors(ctx);
-
 	res = KSI_VerificationContext_init(&verCtx, ctx);
 	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(testSigFile), &signature);
 	if (rCode == KSI_VER_RES_OK) {
 		CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	} else {
-		CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
+		CuAssert(tc, "Should fail during signature verification.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
 		res = KSI_CTX_getLastFailedSignature(ctx, &signature);
 		CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
@@ -1157,14 +1156,14 @@ static void testRule_CalendarHashChainHashAlgorithm_base(CuTest *tc, const char 
 
 	TEST_VERIFICATION_STEP_INIT;
 
-	res = KSI_VerificationRule_CalendarHashChainHashAlgorithm(&verCtx, &verRes);
+	res = verificationRule(&verCtx, &verRes);
 	CuAssert(tc, "Failed to verify.", res == KSI_OK);
 	CuAssert(tc, "Verification result mismatch.", verRes.resultCode == rCode && verRes.errorCode == eCode);
 
 	if (rCode == KSI_VER_RES_OK) {
-		TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_CALCHAIN_INTERNALLY);
+		TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(step);
 	} else {
-		TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALCHAIN_INTERNALLY);
+		TEST_ASSERT_VERIFICATION_STEP_FAILED(step);
 	}
 
 	KSI_VerificationContext_clean(&verCtx);
@@ -1174,7 +1173,8 @@ static void testRule_CalendarHashChainHashAlgorithm_base(CuTest *tc, const char 
 static void testRule_CalendarHashChainHashAlgorithm(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
-	testRule_CalendarHashChainHashAlgorithm_base(tc, TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+	testRule(tc, KSI_VerificationRule_CalendarHashChainHashAlgorithm, KSI_VERIFY_CALCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1182,56 +1182,17 @@ static void testRule_CalendarHashChainHashAlgorithm(CuTest *tc) {
 static void testRule_CalendarHashChainHashAlgorithm_verifyErrorResult(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-calendar-chain-has-sha1-in-right-link.ksig"
 
-	testRule_CalendarHashChainHashAlgorithm_base(tc, TEST_SIGNATURE_FILE, KSI_VER_RES_FAIL, KSI_VER_ERR_INT_16);
+	testRule(tc, KSI_VerificationRule_CalendarHashChainHashAlgorithm, KSI_VERIFY_CALCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_FAIL, KSI_VER_ERR_INT_16);
 
 #undef TEST_SIGNATURE_FILE
-}
-
-static void testRule_AggregationChainInputHashAlgorithmVerification_base(CuTest *tc, const char *TEST_SIGNATURE_FILE, int rCode, int eCode) {
-	int res = KSI_OK;
-	KSI_VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes;
-	VerificationTempData tempData;
-	KSI_Signature *signature = NULL;
-
-	KSI_ERR_clearErrors(ctx);
-
-	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
-	memset(&tempData, 0, sizeof(tempData));
-	verCtx.tempData = &tempData;
-
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
-	if (rCode == KSI_VER_RES_OK) {
-		CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
-	} else {
-		CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
-
-		res = KSI_CTX_getLastFailedSignature(ctx, &signature);
-		CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
-	}
-	verCtx.signature = signature;
-
-	TEST_VERIFICATION_STEP_INIT;
-
-	res = KSI_VerificationRule_AggregationChainInputHashAlgorithmVerification(&verCtx, &verRes);
-	CuAssert(tc, "Failed to verify.", res == KSI_OK);
-	CuAssert(tc, "Verification result mismatch.", verRes.resultCode == rCode && verRes.errorCode == eCode);
-
-	if (rCode == KSI_VER_RES_OK) {
-		TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
-	} else {
-		TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
-	}
-
-	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(signature);
 }
 
 static void testRule_AggregationChainInputHashAlgorithmVerification(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
-	testRule_AggregationChainInputHashAlgorithmVerification_base(tc, TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+	testRule(tc, KSI_VerificationRule_AggregationChainInputHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1239,7 +1200,8 @@ static void testRule_AggregationChainInputHashAlgorithmVerification(CuTest *tc) 
 static void testRule_AggregationChainInputHashAlgorithmVerification_withRfc3161Record(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-rfc3161-record-ok.ksig"
 
-	testRule_AggregationChainInputHashAlgorithmVerification_base(tc, TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+	testRule(tc, KSI_VerificationRule_AggregationChainInputHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1247,7 +1209,8 @@ static void testRule_AggregationChainInputHashAlgorithmVerification_withRfc3161R
 static void testRule_AggregationChainInputHashAlgorithmVerification_verifyErrorResult(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-doc-hsh-sha1.ksig"
 
-	testRule_AggregationChainInputHashAlgorithmVerification_base(tc, TEST_SIGNATURE_FILE, KSI_VER_RES_FAIL, KSI_VER_ERR_INT_13);
+	testRule(tc, KSI_VerificationRule_AggregationChainInputHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_FAIL, KSI_VER_ERR_INT_13);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1255,56 +1218,17 @@ static void testRule_AggregationChainInputHashAlgorithmVerification_verifyErrorR
 static void testRule_AggregationChainInputHashAlgorithmVerification_withRfc3161Record_verifyErrorResult(CuTest *tc) {
 #define TEST_SIGNATURE_FILE ""
 
-	testRule_AggregationChainInputHashAlgorithmVerification_base(tc, TEST_SIGNATURE_FILE, KSI_VER_RES_FAIL, KSI_VER_ERR_INT_13);
+	testRule(tc, KSI_VerificationRule_AggregationChainInputHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_FAIL, KSI_VER_ERR_INT_13);
 
 #undef TEST_SIGNATURE_FILE
-}
-
-static void testRule_Rfc3161RecordHashAlgorithmVerification_base(CuTest *tc, const char *TEST_SIGNATURE_FILE, int rCode, int eCode) {
-	int res = KSI_OK;
-	KSI_VerificationContext verCtx;
-	KSI_RuleVerificationResult verRes;
-	VerificationTempData tempData;
-	KSI_Signature *signature = NULL;
-
-	KSI_ERR_clearErrors(ctx);
-
-	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
-	memset(&tempData, 0, sizeof(tempData));
-	verCtx.tempData = &tempData;
-
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
-	if (rCode == KSI_VER_RES_OK) {
-		CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
-	} else {
-		CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
-
-		res = KSI_CTX_getLastFailedSignature(ctx, &signature);
-		CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
-	}
-	verCtx.signature = signature;
-
-	TEST_VERIFICATION_STEP_INIT;
-
-	res = KSI_VerificationRule_Rfc3161RecordHashAlgorithmVerification(&verCtx, &verRes);
-	CuAssert(tc, "Failed to verify.", res == KSI_OK);
-	CuAssert(tc, "Verification result mismatch.", verRes.resultCode == rCode && verRes.errorCode == eCode);
-
-	if (rCode == KSI_VER_RES_OK) {
-		TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
-	} else {
-		TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
-	}
-
-	KSI_VerificationContext_clean(&verCtx);
-	KSI_Signature_free(signature);
 }
 
 static void testRule_Rfc3161RecordHashAlgorithmVerification(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/signature-with-rfc3161-record-ok.ksig"
 
-	testRule_Rfc3161RecordHashAlgorithmVerification_base(tc, TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+	testRule(tc, KSI_VerificationRule_Rfc3161RecordHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1312,7 +1236,8 @@ static void testRule_Rfc3161RecordHashAlgorithmVerification(CuTest *tc) {
 static void testRule_Rfc3161RecordHashAlgorithmVerification_recordMissing(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
-	testRule_Rfc3161RecordHashAlgorithmVerification_base(tc, TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+	testRule(tc, KSI_VerificationRule_Rfc3161RecordHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1320,7 +1245,26 @@ static void testRule_Rfc3161RecordHashAlgorithmVerification_recordMissing(CuTest
 static void testRule_Rfc3161RecordHashAlgorithmVerification_verifyErrorResult(CuTest *tc) {
 #define TEST_SIGNATURE_FILE ""
 
-	testRule_Rfc3161RecordHashAlgorithmVerification_base(tc, TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+	testRule(tc, KSI_VerificationRule_Rfc3161RecordHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_FAIL, KSI_VER_ERR_INT_14);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationChainHashAlgorithmVerification(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+
+	testRule(tc, KSI_VerificationRule_AggregationChainHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationChainHashAlgorithmVerification_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE ""
+
+	testRule(tc, KSI_VerificationRule_AggregationChainHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_INT_15);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -4952,10 +4896,12 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_AggregationChainInputHashAlgorithmVerification);
 	SUITE_ADD_TEST(suite, testRule_AggregationChainInputHashAlgorithmVerification_withRfc3161Record);
 	SUITE_ADD_TEST(suite, testRule_AggregationChainInputHashAlgorithmVerification_verifyErrorResult);
-	SUITE_SKIP_TEST(suite, testRule_AggregationChainInputHashAlgorithmVerification_withRfc3161Record_verifyErrorResult, "Max", "Need suiteble signature.");
+	SUITE_SKIP_TEST(suite, testRule_AggregationChainInputHashAlgorithmVerification_withRfc3161Record_verifyErrorResult, "Max", "Need suitable signature.");
 	SUITE_ADD_TEST(suite, testRule_Rfc3161RecordHashAlgorithmVerification);
 	SUITE_ADD_TEST(suite, testRule_Rfc3161RecordHashAlgorithmVerification_recordMissing);
-	SUITE_SKIP_TEST(suite, testRule_Rfc3161RecordHashAlgorithmVerification_verifyErrorResult, "Max", "Need suiteble signature.");
+	SUITE_SKIP_TEST(suite, testRule_Rfc3161RecordHashAlgorithmVerification_verifyErrorResult, "Max", "Need suitable signature.");
+	SUITE_ADD_TEST(suite, testRule_AggregationChainHashAlgorithmVerification);
+	SUITE_SKIP_TEST(suite, testRule_AggregationChainHashAlgorithmVerification_verifyErrorResult, "Max", "Need suitable signature.");
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordAggregationHash);
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordAggregationHash_missingAutRec);
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordAggregationHash_verifyErrorResult);

@@ -85,6 +85,17 @@ extern "C" {
 	int KSI_VerificationRule_AggregationChainMetaDataVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
+	 * Rule is used to verify if the aggregation hash chain uses a hash algorithm that was deprecated at the
+	 * aggregation time to aggregate the sibling hashes.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_AggregationChainHashAlgorithmVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
 	 * This rule verifies that all aggregation hash chains are consistent (e.g, previous aggregation output hash
 	 * equals to current aggregation chain input hash)
 	 *
