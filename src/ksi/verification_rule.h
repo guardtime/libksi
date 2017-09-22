@@ -51,8 +51,19 @@ extern "C" {
 	int KSI_VerificationRule_AggregationChainInputHashAlgorithmVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
-	 * This rule verifies that if RFC3161 record is present then the calculated output hash (from RFC3161 record) equals to
-	 * aggregation chain input hash. If RFC3161 record is missing then the status #KSI_VER_RES_OK is
+	 * Rule is used to verify if the RFC-3161 record uses internally a hash function that was deprecated at the
+	 * aggregation time fail.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_Rfc3161RecordHashAlgorithmVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * This rule verifies that if RFC3161 record is present then the calculated output hash (from RFC3161 record)
+	 * equals to aggregation chain input hash. If RFC3161 record is missing then the status #KSI_VER_RES_OK is
 	 * returned.
 	 *
 	 * \param[in]	info		Verification context to be used for given rule
@@ -63,7 +74,8 @@ extern "C" {
 	int KSI_VerificationRule_AggregationChainInputHashVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
-	 * This rule verifies that the metadata structures contain a valid padding and ensure that metadata cannot be interpreted as an imprint.
+	 * This rule verifies that the metadata structures contain a valid padding and ensure that metadata cannot be
+	 * interpreted as an imprint.
 	 *
 	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
@@ -73,7 +85,8 @@ extern "C" {
 	int KSI_VerificationRule_AggregationChainMetaDataVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
-	 * This rule verifies that all aggregation hash chains are consistent (e.g, previous aggregation output hash equals to current aggregation chain input hash)
+	 * This rule verifies that all aggregation hash chains are consistent (e.g, previous aggregation output hash
+	 * equals to current aggregation chain input hash)
 	 *
 	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
