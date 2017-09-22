@@ -445,6 +445,92 @@ static void testAppendChain(CuTest* tc) {
 #undef TEST_SIGNATURE_FILE
 }
 
+static void testCreateSignaturesWithAggregationChains(CuTest* tc) {
+#define TEST_SIGNATURE_FILE	"resource/tlv/ok-sig_local-aggr.ksig"
+
+	int res;
+	KSI_TreeBuilder *builder = NULL;
+	char *data[] = { "test1", "test2", "test3", "test4", "test5", "test6", "test7", "test8", "test9", "test10", NULL};
+	KSI_TreeLeafHandle *handles[] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+	size_t i;
+	KSI_Signature *rootSig = NULL;
+	KSI_DataHash *hsh = NULL;
+	KSI_AggregationHashChain *chn = NULL;
+	KSI_DataHash *rootHsh = NULL;
+	unsigned char *rawRoot = NULL;
+	size_t rawRoot_len = 0;
+	KSI_SignatureBuilder *bldr = NULL;
+
+	res = KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
+	CuAssert(tc, "Unable to create tree builder.", res == KSI_OK && builder != NULL);
+
+	for (i = 0; data[i] != NULL; i++) {
+		res = KSI_DataHash_create(ctx, data[i], strlen(data[i]), KSI_HASHALG_SHA1, &hsh);
+		CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
+
+		res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, &handles[i]);
+		CuAssert(tc, "Unable to add data hash to the tree builder", res == KSI_OK);
+
+		KSI_DataHash_free(hsh);
+		hsh = NULL;
+	}
+
+	/* Finalize the tree. */
+	res = KSI_TreeBuilder_close(builder);
+	CuAssert(tc, "Unable to close a valid builder.", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &rootSig);
+	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && rootSig != NULL);
+
+	res = KSI_Signature_getDocumentHash(rootSig, &rootHsh);
+	CuAssert(tc, "Unable to get signature input hash.", res == KSI_OK && rootHsh != NULL);
+
+	res = KSI_Signature_serialize(rootSig, &rawRoot, &rawRoot_len);
+	CuAssert(tc, "Unable to serialize signature.", res == KSI_OK && rawRoot != NULL && rawRoot_len > 0);
+
+	res = KSI_SignatureBuilder_openFromSignature(rootSig, &bldr);
+	CuAssert(tc, "Failed to initialize builder.", res == KSI_OK && bldr != NULL);
+
+	/* Calculate the root hash for every aggr chain. */
+	for (i = 0; data[i] != NULL; i++) {
+		KSI_Signature *leafSig = NULL;
+		unsigned char *rawLeaf = NULL;
+		size_t rawLeaf_len = 0;
+		int rootLevel = 0;
+		KSI_DataHash *aggrHsh = NULL;
+
+		res = KSI_TreeLeafHandle_getAggregationChain(handles[i], &chn);
+		CuAssert(tc, "Unable to extract aggregation chain,", res == KSI_OK && chn != NULL);
+
+		res = KSI_AggregationHashChain_aggregate(chn, 0, &rootLevel, &aggrHsh);
+		CuAssert(tc, "Unable to aggregate the aggregation hash chain.", res == KSI_OK && aggrHsh != NULL);
+
+		CuAssert(tc, "Root hashes mismatch.", KSI_DataHash_equals(rootHsh, aggrHsh));
+
+		res = KSI_SignatureBuilder_createSignatureWithAggregationChain(bldr, chn, &leafSig);
+		CuAssert(tc, "Failed to create a signature from aggregation hash chain using createSignatureWithAggregationChain.", res == KSI_OK && leafSig != NULL);
+
+		res = KSI_Signature_serialize(leafSig, &rawLeaf, &rawLeaf_len);
+		CuAssert(tc, "Unable to serialize signature.", res == KSI_OK && rawLeaf != NULL && rawLeaf_len > 0);
+
+		CuAssert(tc, "Leaf signature size should exceed the size of root signature.", rawRoot_len < rawLeaf_len);
+
+		KSI_DataHash_free(aggrHsh);
+		KSI_AggregationHashChain_free(chn);
+		KSI_TreeLeafHandle_free(handles[i]);
+		KSI_Signature_free(leafSig);
+		KSI_free(rawLeaf);
+	}
+
+	KSI_SignatureBuilder_free(bldr);
+
+	KSI_TreeBuilder_free(builder);
+	KSI_Signature_free(rootSig);
+	KSI_free(rawRoot);
+
+#undef TEST_SIGNATURE_FILE
+}
+
 CuSuite* KSITest_SignatureBuilder_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -457,6 +543,7 @@ CuSuite* KSITest_SignatureBuilder_getSuite(void) {
 	SUITE_ADD_TEST(suite, testPreAggregated);
 	SUITE_ADD_TEST(suite, testOpenWithSignature);
 	SUITE_ADD_TEST(suite, testAppendChain);
+	SUITE_ADD_TEST(suite, testCreateSignaturesWithAggregationChains);
 
 	return suite;
 }

@@ -63,7 +63,7 @@ TRUST_PROVIDER = OPENSSL
 !ERROR TRUST_PROVIDER can only have values "OPENSSL" or "CRYPTOAPI" but it is "$(TRUST_PROVIDER)". Default value is OPENSSL.
 !ENDIF
 
-# Set default compiler warning level. 
+# Set default compiler warning level.
 CCEXTRA=/W3
 
 MODEL = DLL="$(DLL)" RTL="$(RTL)" NET_PROVIDER="$(NET_PROVIDER)" CRYPTO_PROVIDER="$(CRYPTO_PROVIDER)" TRUST_PROVIDER="$(TRUST_PROVIDER)" HASH_PROVIDER="$(HASH_PROVIDER)"
@@ -118,7 +118,7 @@ libMD:
 libMDd:
 	nmake DLL=lib RTL=MDd $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
 
-dllMD: 
+dllMD:
 	nmake DLL=dll RTL=MD $(EXTRA) VER=$(VER) COM_ID=$(COM_ID)
 
 dllMDd:

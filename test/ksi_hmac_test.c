@@ -361,6 +361,15 @@ static void TestInvalidParams(CuTest* tc) {
 	KSI_DataHash_free(hmac);
 }
 
+static void testUnimplementedHashAlgorithm(CuTest *tc) {
+	KSI_DataHash *hsh = NULL;
+
+	int res = KSI_HMAC_create(ctx, KSI_HASHALG_SM3, "key", (unsigned char *)"data", 4, &hsh);
+	CuAssert(tc, "Unimplemented hash algorithm may not be used for HMAC computation.", res = KSI_UNAVAILABLE_HASH_ALGORITHM && hsh == NULL);
+
+	KSI_DataHash_free(hsh);
+}
+
 CuSuite* KSITest_HMAC_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -373,5 +382,7 @@ CuSuite* KSITest_HMAC_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestSHA512LongKey);
 	SUITE_ADD_TEST(suite, TestParallelHashing);
 	SUITE_ADD_TEST(suite, TestInvalidParams);
+	SUITE_ADD_TEST(suite, testUnimplementedHashAlgorithm);
+
 	return suite;
 }

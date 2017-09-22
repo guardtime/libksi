@@ -21,36 +21,62 @@
 
 set -e
 
+
+# Get version number.
+VER=$(tr -d [:space:] < VERSION)
+ARCH=$(dpkg --print-architecture)
+RELEASE_VERSION="$(lsb_release -is)$(lsb_release -rs | grep -Po "[0-9]{1,3}" | head -1)"
+PKG_VERSION=1
+
+
+# Source directories.
+include_dir=src/ksi
+lib_dir=src/ksi/.libs
 deb_dir=packaging/deb
 
-#Temporary directories for deb package build.
+
+# Destination directories where the runtime library is installed.
+lib_install_dir=usr/lib
+lib_doc_install_dir=usr/share/doc/libksi-$VER
+dev_inc_install_dir=usr/include/ksi
+dev_doc_install_dir=usr/share/doc/libksi-$VER
+pconf_install_dir=usr/lib/pkgconfig
+
+
+# Temporary directories for deb package build.
 tmp_dir_lib=$deb_dir/tmp_lib
-tmp_dir_devel=$deb_dir/tmp_devel
+tmp_dir_dev=$deb_dir/tmp_dev
 tmp_dir_src=$deb_dir/tmp_src
 
 
-#Destination dirs used for installion.
-lib_install_dir=usr/local/lib
-inc_install_dir=usr/local/include/ksi
-doc_install_dir=usr/share/doc/ksi
-src_install_dir=usr/local/src
+# File list for libksi installion:
+#   libksi_libs - shared library for runtime, installed with libksi package.
+#   libksi_changelog_license - changelog and license, installed with libksi (dependency for libksi-dev) package.
+#   libksi_dev_libs - static libraries, installed with libksi-dev package.
+#   libksi_dev_doc - doxygen documentation, installed with libksi-dev package.
+#   libksi_pckg_config - package configuration file, installed with libksi-dev package.
+#   libksi_dev_includes - include files, installed with libksi-dev package.
 
 
-#Source directories for files.
-include_dir=src/ksi
-lib_dir=src/ksi/.libs
-
-
-#File list for libksi installion
-libksi_libs="$lib_dir/libksi.so \
+libksi_libs="\
+	$lib_dir/libksi.so \
 	$lib_dir/libksi.so.*"
 
-libksi_doc="changelog \
+libksi_changelog_license="\
+	changelog \
 	license.txt"
 
+libksi_dev_libs="\
+	$lib_dir/libksi.a \
+	$lib_dir/../libksi.la"
 
-#File list for libksi-devel installion
-libksi_devel_includes="\
+libksi_dev_doc="\
+	doc/html/"
+
+libksi_pckg_config="\
+	libksi.pc"
+
+libksi_dev_includes="\
 	$include_dir/base32.h \
 	$include_dir/blocksigner.h \
 	$include_dir/crc32.h \
@@ -84,95 +110,81 @@ libksi_devel_includes="\
 	$include_dir/verification_rule.h \
 	$include_dir/policy.h \
 	$include_dir/compatibility.h \
-	$include_dir/version.h \
-	$include_dir/verify_deprecated.h"
-
-libksi_devel_libs="\
-	$lib_dir/libksi.a \
-	$lib_dir/libksi.la \
-	libksi.pc"
+	$include_dir/version.h"
 
 
-#Rebuild API
+# Rebuild API.
 ./rebuild.sh
 make dist
 
 
-#Rebuild doxygen documentation
-#Check if doxygen with supported version (>=1.8.0) is installed.
-if (doxygen -v | grep -q -P -e '((^1\.([8-9]|[1-9][0-9]+))|(^[2-9]\.[0-9]+)|(^[0-9]{2,}\.[0-9]+))\.[0-9]+$') > /dev/null 2>&1 ; then 
+# Create temporary directory structure.
+mkdir -p $tmp_dir_lib/libksi/$lib_install_dir
+mkdir -p $tmp_dir_lib/libksi/$lib_doc_install_dir
+
+mkdir -p $tmp_dir_dev/libksi-dev/$lib_install_dir
+mkdir -p $tmp_dir_dev/libksi-dev/$pconf_install_dir
+mkdir -p $tmp_dir_dev/libksi-dev/$dev_inc_install_dir
+mkdir -p $tmp_dir_dev/libksi-dev/$dev_doc_install_dir
+
+mkdir -p $tmp_dir_lib/libksi/DEBIAN
+mkdir -p $tmp_dir_dev/libksi-dev/DEBIAN
+mkdir -p $tmp_dir_src/libksi/debian
+
+chmod -Rf 755 $tmp_dir_lib
+chmod -Rf 755 $tmp_dir_dev
+chmod -Rf 755 $tmp_dir_src
+
+
+# Copy control files and changelog.
+cp  $deb_dir/libksi/DEBIAN/control $tmp_dir_lib/libksi/DEBIAN/control
+cp  $deb_dir/libksi/DEBIAN/control-dev $tmp_dir_dev/libksi-dev/DEBIAN/control
+cp  $deb_dir/libksi/DEBIAN/control-source $tmp_dir_src/libksi/debian/control
+
+
+# As the target architecture do not match with the one provided by autotools,
+# replace the variable by the one provided by dpkg.
+sed -i s/@DPKG_VERSION_REPLACED_WITH_SED@/$ARCH/g "$tmp_dir_lib/libksi/DEBIAN/control"
+sed -i s/@DPKG_VERSION_REPLACED_WITH_SED@/$ARCH/g "$tmp_dir_dev/libksi-dev/DEBIAN/control"
+
+# Copy libksi shared library with its changelog to target directories.
+cp -fP $libksi_libs $tmp_dir_lib/libksi/$lib_install_dir/
+cp -f $libksi_changelog_license $tmp_dir_lib/libksi/$lib_doc_install_dir/
+
+# Copy libksi static libraries, include files, (docygen documentation if is
+# built) and package configuration file.
+cp -fP $libksi_dev_libs $tmp_dir_dev/libksi-dev/$lib_install_dir/
+cp -f $libksi_dev_includes $tmp_dir_dev/libksi-dev/$dev_inc_install_dir/
+cp -f $libksi_pckg_config $tmp_dir_dev/libksi-dev/$pconf_install_dir/
+
+# Rebuild doxygen documentation and copy files.
+# Check if doxygen with supported version (>=1.8.0) is installed.
+if (doxygen -v | grep -q -P -e '((^1\.([8-9]|[1-9][0-9]+))|(^[2-9]\.[0-9]+)|(^[0-9]{2,}\.[0-9]+))\.[0-9]+$') > /dev/null 2>&1 ; then
 	make doc
-	libksi_doc+=" doc/html/"
+	cp -fr $libksi_dev_doc $tmp_dir_dev/libksi-dev/$dev_doc_install_dir/
 else
 	echo "Doxygen documentation not included into package!"
 fi
 
-
-#Create directory structure
-mkdir -p $tmp_dir_lib
-mkdir -p $tmp_dir_lib/libksi/$lib_install_dir/pkgconfig
-mkdir -p $tmp_dir_lib/libksi/$inc_install_dir
-mkdir -p $tmp_dir_lib/libksi/$doc_install_dir
-
-mkdir -p $tmp_dir_devel
-mkdir -p $tmp_dir_devel/libksi-devel/$lib_install_dir/pkgconfig
-mkdir -p $tmp_dir_devel/libksi-devel/$inc_install_dir
-mkdir -p $tmp_dir_devel/libksi-devel/$doc_install_dir
-
-mkdir -p $tmp_dir_src
-
-mkdir -p $tmp_dir_lib/libksi/DEBIAN
-mkdir -p $tmp_dir_devel/libksi-devel/DEBIAN
-mkdir -p $tmp_dir_src/libksi/debian
-
-
-#Get version number
-VER=$(tr -d [:space:] < VERSION)
-ARCH=$(dpkg --print-architecture)
-
-
-#Copy files
-cp  $deb_dir/libksi/DEBIAN/control $tmp_dir_lib/libksi/DEBIAN/control
-cp  $deb_dir/libksi/DEBIAN/control-devel $tmp_dir_devel/libksi-devel/DEBIAN/control
-cp  $deb_dir/libksi/DEBIAN/control-source $tmp_dir_src/libksi/debian/control
+cp -f libksi-${VER}.tar.gz $tmp_dir_src/libksi_${VER}.orig.tar.gz
 cp  $deb_dir/libksi/DEBIAN/changelog $tmp_dir_src/libksi/debian/
-
-sed -i s/@VER@/$VER/g "$tmp_dir_lib/libksi/DEBIAN/control"
-sed -i s/@ARCH@/$ARCH/g "$tmp_dir_lib/libksi/DEBIAN/control"
-
-sed -i s/@VER@/$VER/g $tmp_dir_devel/libksi-devel/DEBIAN/control
-sed -i s/@ARCH@/$ARCH/g $tmp_dir_devel/libksi-devel/DEBIAN/control
-
-sed -i s/@ARCH@/$ARCH/g "$tmp_dir_src/libksi/debian/control"
-sed -i s/@VER@/$VER/g "$tmp_dir_src/libksi/debian/control"
-
-
-#Copy data
-cp -f $libksi_libs $tmp_dir_lib/libksi/$lib_install_dir/
-cp -f -r $libksi_doc $tmp_dir_lib/libksi/$doc_install_dir/
-
-cp -f $libksi_devel_includes $tmp_dir_devel/libksi-devel/$inc_install_dir/
-cp -f $libksi_devel_libs $tmp_dir_devel/libksi-devel/$lib_install_dir/
-
-#cp -f libksi-${VER}.tar.gz $tmp_dir_src/libksi_${VER}.orig.tar.gz
 tar -xvzf libksi-${VER}.tar.gz -C $tmp_dir_src/
 cp -r $tmp_dir_src/libksi/debian $tmp_dir_src/libksi-${VER}
 
 
-#Build packages
+# Build packages.
 dpkg-deb --build $tmp_dir_lib/libksi
-mv $tmp_dir_lib/libksi.deb libksi_${VER}_${ARCH}.deb
+mv $tmp_dir_lib/libksi.deb libksi_${VER}-${PKG_VERSION}.${RELEASE_VERSION}_${ARCH}.deb
 
-dpkg-deb --build $tmp_dir_devel/libksi-devel
-mv $tmp_dir_devel/libksi-devel.deb libksi-devel_${VER}_${ARCH}.deb
+dpkg-deb --build $tmp_dir_dev/libksi-dev
+mv $tmp_dir_dev/libksi-dev.deb libksi-dev_${VER}-${PKG_VERSION}.${RELEASE_VERSION}_${ARCH}.deb
 
 dpkg-source -b -sn $tmp_dir_src/libksi-${VER} ""
 
 
-#Cleanup
-rm -rf $deb_dir/libksi/usr
+# Cleanup.
 
 rm -rf $tmp_dir_lib
-rm -rf $tmp_dir_devel
+rm -rf $tmp_dir_dev
 rm -rf $tmp_dir_src
 rm libksi-${VER}.tar.gz
