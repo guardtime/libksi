@@ -27,7 +27,7 @@ autoreconf -if && \
 make clean && \
 make dist && \
 mkdir -p $BUILD_DIR/{BUILD,RPMS,SOURCES,SPECS,SRPMS,tmp} && \
-cp redhat/libksi.spec $BUILD_DIR/SPECS/ && \
+cp packaging/redhat/libksi.spec $BUILD_DIR/SPECS/ && \
 cp libksi-*.tar.gz $BUILD_DIR/SOURCES/ && \
 rpmbuild -ba $BUILD_DIR/SPECS/libksi.spec && \
 cp $BUILD_DIR/RPMS/*/libksi-*$version*.rpm . && \

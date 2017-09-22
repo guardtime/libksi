@@ -294,6 +294,7 @@ extern "C" {
 	int KSI_isHashAlgorithmTrusted(KSI_HashAlgorithm algo_id);
 
 	/**
+<<<<<<< HEAD
 	 * This function will check the status of the hash algorithm at a given time.
 	 * \param[in]	algo_id			Hash algorithm id.
 	 * \param[in]	used_at			UTC time when the algorithm was/is used.
@@ -306,7 +307,8 @@ extern "C" {
 	int KSI_checkHashAlgorithmAt(KSI_HashAlgorithm algo_id, time_t used_at);
 
 	/**
-	 * Is the given hash algorithm \c hash_id supported by the API.
+	 * Is the given hash algorithm \c hash_id supported, meaning the
+	 * hash value can be calculated using the API.
 	 * \param[in]	algo_id			Hash algorithm id.
 	 *
 	 * \return Returns 0 if algorithm is not supported, otherwise non-zero.

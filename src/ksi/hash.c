@@ -74,6 +74,10 @@ static const struct KSI_hashAlgorithmInfo_st {
 		HASH_ALGO(KSI_HASHALG_SM3, 			"SM3", 			256, 512, 0, 0)
 };
 
+static int ksi_isHashAlgorithmIdValid(int algo_id) {
+	return algo_id >= 0 && algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS && KSI_hashAlgorithmInfo[algo_id].name != NULL;
+}
+
 /**
  *
  */
@@ -103,7 +107,7 @@ void KSI_DataHash_free(KSI_DataHash *hsh) {
  *
  */
 int KSI_isHashAlgorithmTrusted(KSI_HashAlgorithm algo_id) {
-	if (algo_id >= 0 && algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
+	if (ksi_isHashAlgorithmIdValid(algo_id)) {
 		return KSI_hashAlgorithmInfo[algo_id].obsoleteFrom == 0 && KSI_hashAlgorithmInfo[algo_id].deprecatedFrom == 0;
 	}
 	return 0;
@@ -128,14 +132,14 @@ int KSI_checkHashAlgorithmAt(KSI_HashAlgorithm algo_id, time_t used_at) {
 
 
 unsigned int KSI_getHashLength(KSI_HashAlgorithm algo_id) {
-	if (algo_id >= 0 && algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
+	if (ksi_isHashAlgorithmIdValid(algo_id)) {
 		return (KSI_hashAlgorithmInfo[algo_id].outputBitCount) >> 3;
 	}
 	return 0;
 }
 
 unsigned int KSI_HashAlgorithm_getBlockSize(KSI_HashAlgorithm algo_id) {
-	if (algo_id >= 0 && algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
+	if (ksi_isHashAlgorithmIdValid(algo_id)) {
 		return (KSI_hashAlgorithmInfo[algo_id].blockSize) >> 3;
 	}
 	return 0;
@@ -208,9 +212,9 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const unsig
 		goto cleanup;
 	}
 
-	/* Make sure the algorithm is supported. */
-	if (!KSI_isHashAlgorithmSupported(algo_id)) {
-		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, "Hash algorithm not supported.");
+	/* Make sure the algorithm is valid. */
+	if (!ksi_isHashAlgorithmIdValid(algo_id)) {
+		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, "Hash algorithm ID is not valid.");
 		goto cleanup;
 	}
 
@@ -222,7 +226,7 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const unsig
 
 	/* Make sure it fits. */
 	if (digest_length > KSI_MAX_IMPRINT_LEN) {
-		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, "Internal buffer too short to hold imprint");
+		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, "Internal buffer too short to hold imprint.");
 		goto cleanup;
 	}
 
@@ -283,7 +287,7 @@ int KSI_DataHash_fromImprint(KSI_CTX *ctx, const unsigned char *imprint, size_t 
  *
  */
 const char *KSI_getHashAlgorithmName(KSI_HashAlgorithm algo_id) {
-	if (algo_id >= 0 && algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS) {
+	if (ksi_isHashAlgorithmIdValid(algo_id)) {
 		return KSI_hashAlgorithmInfo[algo_id].name;
 	}
 	return NULL;
@@ -634,8 +638,9 @@ int KSI_DataHash_createZero(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHas
 	memset(buf, 0, sizeof(buf));
 	buf[0] = algo_id;
 
-	if (!KSI_isHashAlgorithmSupported(algo_id)) {
-		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, "Hash algorithm not supported.");
+	/* Make sure the hash algorithm id is valid. */
+	if (!ksi_isHashAlgorithmIdValid(algo_id)) {
+		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, "Hash algorithm ID is not valid.");
 		goto cleanup;
 	}
 

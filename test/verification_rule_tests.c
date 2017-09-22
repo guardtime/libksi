@@ -1680,6 +1680,47 @@ static void testRule_InputHashAlgorithmVerification(CuTest *tc) {
 
 static void testRule_InputHashAlgorithmVerification_verifyErrorResult(CuTest *tc) {
 	#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+	#define TEST_MOCK_IMPRINT   "0811a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d"
+
+		int res = KSI_OK;
+		KSI_VerificationContext verCtx;
+		KSI_RuleVerificationResult verRes;
+		VerificationTempData tempData;
+		KSI_DataHash *documentHash = NULL;
+		KSI_Signature *signature = NULL;
+
+		KSI_ERR_clearErrors(ctx);
+
+		res = KSI_VerificationContext_init(&verCtx, ctx);
+		CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+		memset(&tempData, 0, sizeof(tempData));
+		verCtx.tempData = &tempData;
+
+		res = KSITest_DataHash_fromStr(ctx, TEST_MOCK_IMPRINT, &documentHash);
+		CuAssert(tc, "Unable to create mock hash from string", res == KSI_OK && documentHash != NULL);
+		verCtx.documentHash = documentHash;
+
+		res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+		CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+		verCtx.signature = signature;
+
+		TEST_VERIFICATION_STEP_INIT;
+
+		res = KSI_VerificationRule_InputHashAlgorithmVerification(&verCtx, &verRes);
+		CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_GEN_4);
+
+		TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_DOCUMENT);
+
+		KSI_DataHash_free(documentHash);
+		KSI_Signature_free(signature);
+		KSI_VerificationContext_clean(&verCtx);
+
+	#undef TEST_SIGNATURE_FILE
+	#undef TEST_MOCK_IMPRINT
+}
+
+static void testRule_InputHashAlgorithmVerificationWithDifferentHashLength_verifyErrorResult(CuTest *tc) {
+	#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 	#define TEST_MOCK_IMPRINT   "05fb7ed4edda2e2631c53103413823b1d7613d756e43b5182550f04decbde99bd3848ff38dbc5a4210f3439754b77de10c294acdb0704fbfcd2493d48f2e65ed98"
 
 		int res = KSI_OK;
@@ -4770,6 +4811,7 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_DocumentHashExistence_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_InputHashAlgorithmVerification);
 	SUITE_ADD_TEST(suite, testRule_InputHashAlgorithmVerification_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_InputHashAlgorithmVerificationWithDifferentHashLength_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_DocumentHashVerification);
 	SUITE_ADD_TEST(suite, testRule_DocumentHashVerification_missingDocHash);
 	SUITE_ADD_TEST(suite, testRule_DocumentHashVerification_verifyErrorResult);
