@@ -1131,8 +1131,6 @@ static void testRule_CalendarHashChainRegistrationTime_verifyErrorResult(CuTest 
 }
 
 static void testRule_CalendarHashChainHashAlgorithm_base(CuTest *tc, const char *TEST_SIGNATURE_FILE, int rCode, int eCode) {
-#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
-
 	int res = KSI_OK;
 	KSI_VerificationContext verCtx;
 	KSI_RuleVerificationResult verRes;
@@ -1171,8 +1169,6 @@ static void testRule_CalendarHashChainHashAlgorithm_base(CuTest *tc, const char 
 
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_Signature_free(signature);
-
-#undef TEST_SIGNATURE_FILE
 }
 
 static void testRule_CalendarHashChainHashAlgorithm(CuTest *tc) {
