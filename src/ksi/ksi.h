@@ -97,8 +97,10 @@ enum KSI_StatusCode {
 	 * TLV payload has wrong type for operation.
 	 */
 	KSI_TLV_PAYLOAD_TYPE_MISMATCH = 0x105,
-
-
+	/**
+	 * The async operation has not finished.
+	 */
+	KSI_ASYNC_NOT_FINISHED = 0x106,
 	/**
 	 * Invalid KSI signature.
 	 */

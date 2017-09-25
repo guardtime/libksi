@@ -136,7 +136,7 @@ extern "C" {
 	int KSI_AsyncHandle_getAggregationResp(const KSI_AsyncHandle *h, KSI_AggregationResp **resp);
 
 	/**
-	 * KSI signature getter. The returned signature is verified internally and is guaranteed to be valid.
+	 * KSI signature getter. The returned signature is verified internally.
 	 * \param[in]		h				Async handle.
 	 * \param[out]		signature		Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -180,8 +180,8 @@ extern "C" {
 	int KSI_SigningAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service);
 
 	/**
-	 * Non-blocking aggregation request setter. All request are put into output queue untill.
-	 * The request are sent during #KSI_AsyncService_run call.
+	 * Non-blocking aggregation request setter. All request are put into output queue untill, they are sent
+	 * during #KSI_AsyncService_run call.
 	 * \param[in]		s				Async service instance.
 	 * \param[out]		handle			Async handle associated with the request.
 	 * \return #KSI_OK, when operation succeeded;

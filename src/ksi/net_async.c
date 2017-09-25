@@ -608,7 +608,7 @@ static int asyncClient_processAggregationResponse(KSI_AsyncClient *c) {
 					KSI_Utf8String *errorMsg = NULL;
 
 					KSI_AggregationResp_getErrorMsg(aggrResp, &errorMsg);
-					KSI_LOG_error(c->ctx, "Async aggregation failed: [%x] %s", KSI_Integer_getUInt64(status), KSI_Utf8String_cstr(errorMsg));
+					KSI_LOG_error(c->ctx, "Async aggregation request failed: [%x] %s", KSI_Integer_getUInt64(status), KSI_Utf8String_cstr(errorMsg));
 
 					handle->state = KSI_ASYNC_STATE_ERROR;
 					handle->err = res;

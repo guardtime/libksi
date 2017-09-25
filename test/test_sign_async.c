@@ -409,8 +409,8 @@ int main(int argc, char **argv) {
 
 							res = KSI_AsyncHandle_getRequestCtx(respHandle, (const void**)&reqCtxHash);
 							if (res != KSI_OK && reqCtxHash != NULL) {
-							  fprintf(stderr, "Unable to get request context.\n");
-							  goto cleanup;
+								fprintf(stderr, "Unable to get request context.\n");
+								goto cleanup;
 							}
 
 							KSI_LOG_error(ksi, "Error: [0x%x:%ld] %s (%s)", err, extErr, KSI_getErrorString(err), KSI_Utf8String_cstr(errMsg));

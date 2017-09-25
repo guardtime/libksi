@@ -80,6 +80,8 @@ const char *KSI_getErrorString(int statusCode) {
 			return "Buffer overflow.";
 		case KSI_TLV_PAYLOAD_TYPE_MISMATCH:
 			return "TLV payload type mismatch.";
+		case KSI_ASYNC_NOT_FINISHED:
+			return "The async operation has not finished.";
 		case KSI_INVALID_SIGNATURE:
 			return "Invalid KSI signature.";
 		case KSI_INVALID_PKI_SIGNATURE:
