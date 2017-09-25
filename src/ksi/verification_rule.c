@@ -541,9 +541,11 @@ static int rfc3161_getOutputHash(const KSI_Signature *sig, KSI_DataHash **output
 	KSI_RFC3161 *rfc3161 = NULL;
 	const unsigned char *imprint = NULL;
 	size_t imprint_len = 0;
-	KSI_HashAlgorithm algo_id = -1;
+//	KSI_HashAlgorithm algo_id = -1;
 	KSI_HashAlgorithm tstInfoAlgoId;
 	KSI_HashAlgorithm sigAttrAlgoId;
+	KSI_AggregationHashChain *firstChain = NULL;
+	KSI_Integer *algorithm = NULL;
 
 	if (sig == NULL || outputHash == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -584,13 +586,24 @@ static int rfc3161_getOutputHash(const KSI_Signature *sig, KSI_DataHash **output
 		goto cleanup;
 	}
 
-	res = KSI_Signature_getHashAlgorithm((KSI_Signature *)sig, &algo_id);
+	//	res = KSI_Signature_getHashAlgorithm((KSI_Signature *)sig, &algo_id);
+	//	if (res != KSI_OK) {
+	//		KSI_pushError(ctx, res, NULL);
+	//		goto cleanup;
+	//	}
+	res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &firstChain);
+	if (res != KSI_OK || firstChain == NULL) {
+		KSI_pushError(ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
+		goto cleanup;
+	}
+
+	res = KSI_AggregationHashChain_getAggrHashId(firstChain, &algorithm);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = KSI_DataHash_create(ctx, imprint, imprint_len, algo_id, &tmp);
+	res = KSI_DataHash_create(ctx, imprint, imprint_len, (KSI_HashAlgorithm)KSI_Integer_getUInt64(algorithm), &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
