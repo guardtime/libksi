@@ -376,7 +376,7 @@ static void testAppendChain(CuTest* tc) {
 	CuAssert(tc, "Unable to create tree builder.", res == KSI_OK && builder != NULL);
 
 	for (i = 0; data[i] != NULL; i++) {
-		res = KSI_DataHash_create(ctx, data[i], strlen(data[i]), KSI_HASHALG_SHA1, &hsh);
+		res = KSI_DataHash_create(ctx, data[i], strlen(data[i]), KSI_HASHALG_SHA2_512, &hsh);
 		CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
 
 		res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, &handles[i]);
@@ -465,7 +465,7 @@ static void testCreateSignaturesWithAggregationChains(CuTest* tc) {
 	CuAssert(tc, "Unable to create tree builder.", res == KSI_OK && builder != NULL);
 
 	for (i = 0; data[i] != NULL; i++) {
-		res = KSI_DataHash_create(ctx, data[i], strlen(data[i]), KSI_HASHALG_SHA1, &hsh);
+		res = KSI_DataHash_create(ctx, data[i], strlen(data[i]), KSI_HASHALG_SHA2_512, &hsh);
 		CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
 
 		res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, &handles[i]);

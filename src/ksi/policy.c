@@ -224,6 +224,7 @@ static const KSI_Rule calendarHashChainVerificationRule[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainInputHashVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainAggregationTime},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainRegistrationTime},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainHashAlgorithm},
 	{KSI_RULE_TYPE_COMPOSITE_AND, publicationOrCalendarAuthenticationRecordRule},
 	{KSI_RULE_TYPE_BASIC, NULL}
 };
@@ -255,8 +256,11 @@ static const KSI_Rule documentHashRule[] = {
 static const KSI_Rule internalRules[] = {
 	{KSI_RULE_TYPE_COMPOSITE_AND, documentHashRule},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainInputLevelVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainInputHashAlgorithmVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_Rfc3161RecordHashAlgorithmVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainInputHashVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainMetaDataVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainHashAlgorithmVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainIndexContinuation},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainTimeConsistency},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainConsistency},
