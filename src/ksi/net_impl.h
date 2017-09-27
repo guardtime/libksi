@@ -155,6 +155,19 @@ extern "C" {
 		KSI_AsyncHandle *next;
 	};
 
+	enum KSI_AsyncPrivateOption_en {
+		__KSI_ASYNC_PRIVOPT_OFFSET = __KSI_ASYNC_OPT_COUNT,
+
+		/**
+		 * Async round duration in sec.
+		 * \param[in]		count			Paramer of type size_t.
+		 * \see #KSI_ASYNC_ROUND_DURATION_SEC default count.
+		 */
+		KSI_ASYNC_PRIVOPT_ROUND_DURATION,
+
+		__NOF_KSI_ASYNC_OPT
+	};
+
 	struct KSI_AsyncClient_st {
 		KSI_CTX *ctx;
 
@@ -169,12 +182,12 @@ extern "C" {
 		KSI_uint64_t instanceId;
 		KSI_uint64_t messageId;
 
-		size_t requestCountOffset;
-		size_t requestCount;
-		size_t tail;
+		size_t requestCountOffset; /**< A circular counter for increasing the request id entropy. */
+		size_t requestCount; /**< Request cache position of the last allocated handle. */
+		size_t tail; /**< Request cache position of the last handle that was returned to the used. */
 		KSI_AsyncHandle **reqCache;
 
-		size_t pending; /**< Nof pending requests (including.in error state). */
+		size_t pending; /**< Nof pending requests (including in error state). */
 		size_t received; /**< Nof received valid responses. */
 
 		size_t options[__NOF_KSI_ASYNC_OPT];
@@ -193,7 +206,8 @@ extern "C" {
 		int (*getPendingCount)(void *, size_t *);
 		int (*getReceivedCount)(void *, size_t *);
 
-		int (*setOption)(void *, KSI_AsyncOption, void *);
+		int (*setOption)(void *, int, void *);
+		int (*getOption)(void *, int, void *);
 
 		int (*uriSplit)(const char *uri, char **scheme, char **user, char **pass, char **host, unsigned *port, char **path, char **query, char **fragment);
 	};

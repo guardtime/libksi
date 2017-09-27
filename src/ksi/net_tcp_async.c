@@ -432,7 +432,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 				time_t curTime = 0;
 
 				/* Check if the request count can be restarted. */
-				if (difftime(time(&curTime), tcpCtx->roundStartAt) >= KSI_ASYNC_ROUND_DURATION_SEC) {
+				if (difftime(time(&curTime), tcpCtx->roundStartAt) >= tcpCtx->options[KSI_ASYNC_PRIVOPT_ROUND_DURATION]) {
 					KSI_LOG_info(tcpCtx->ctx, "Async TCP round request count: %u", tcpCtx->roundCount);
 					tcpCtx->roundCount = 0;
 					tcpCtx->roundStartAt = curTime;
@@ -679,7 +679,7 @@ int KSI_TcpAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c) {
 		goto cleanup;
 	}
 
-	res = KSI_AsyncClient_construct(ctx, &tmp);
+	res = KSI_AbstractAsyncClient_new(ctx, &tmp);
 	if (res != KSI_OK) goto cleanup;
 
 	tmp->addRequest = (int (*)(void *, KSI_AsyncHandle *))addToSendQueue;

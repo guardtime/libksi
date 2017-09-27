@@ -1300,7 +1300,7 @@ KSI_IMPLEMENT_GETTER(KSI_NetworkClient, KSI_NetEndpoint *, publicationsFile, Pub
 KSI_IMPLEMENT_REF(KSI_RequestHandle);
 
 
-int KSI_AsyncService_construct(KSI_CTX *ctx, KSI_AsyncService **service) {
+int KSI_AbstractAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AsyncService *tmp = NULL;
 

@@ -261,6 +261,7 @@ EXPORTS
 	KSI_AsyncService_getPendingCount
 	KSI_AsyncService_getReceivedCount
 	KSI_AsyncService_setOption
+	KSI_AsyncService_getOption
 	KSI_AsyncService_run
 	KSI_AsyncService_setEndpoint
 	KSI_AsyncService_construct

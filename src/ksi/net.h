@@ -348,7 +348,7 @@ extern "C" {
 	 * \see #KSI_AsyncService_free
 	 * \see #KSI_SigningAsyncService_new
 	 */
-	int KSI_AsyncService_construct(KSI_CTX *ctx, KSI_AsyncService **service);
+	int KSI_AbstractAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service);
 
 	/**
 	 * @}

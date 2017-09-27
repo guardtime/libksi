@@ -161,7 +161,7 @@ extern "C" {
 	 * \param[out]		c				Pointer to the receiving pointer.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_AsyncClient_construct(KSI_CTX *ctx, KSI_AsyncClient **c);
+	int KSI_AbstractAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c);
 
 
 	/**
@@ -256,11 +256,6 @@ extern "C" {
 	 */
 	int KSI_AsyncService_getReceivedCount(KSI_AsyncService *s, size_t *count);
 
-#define KSI_ASYNC_DEFAULT_ROUND_MAX_COUNT   (1 << 3)
-#define KSI_ASYNC_DEFAULT_PARALLEL_REQUESTS (1 << 5)
-#define KSI_ASYNC_ROUND_DURATION_SEC        (1)
-#define KSI_ASYNC_DEFAULT_TIMEOUT_SEC       (10)
-
 	/**
 	 * Enum defining async service options.
 	 * \see #KSI_AsyncService_setOption for setting an option.
@@ -319,7 +314,7 @@ extern "C" {
 		 */
 		KSI_ASYNC_OPT_MAX_REQUEST_COUNT,
 
-		__NOF_KSI_ASYNC_OPT
+		__KSI_ASYNC_OPT_COUNT
 	} KSI_AsyncOption;
 
 
@@ -330,9 +325,20 @@ extern "C" {
 	 * \param[in]		value			Option value as specified in #KSI_AsyncOption.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncOption defines supported options and parameter types.
+	 * \see #KSI_AsyncService_getOption for extracting option values.
 	 */
-	int KSI_AsyncService_setOption(KSI_AsyncService *service, const KSI_AsyncOption option, void *value);
+	int KSI_AsyncService_setOption(KSI_AsyncService *s, const KSI_AsyncOption option, void *value);
 
+	/**
+	 * Async service option getter.
+	 * \param[in]		service			Async serice instance.
+	 * \param[in]		option			Option to be updated from #KSI_AsyncOption.
+	 * \param[out]		value			Option value as specified in #KSI_AsyncOption.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_AsyncOption defines supported options and parameter types.
+	 * \see #KSI_AsyncService_setOption for applying option values.
+	 */
+	int KSI_AsyncService_getOption(const KSI_AsyncService *s, const KSI_AsyncOption option, void *value);
 
 	/**
 	 * @}
