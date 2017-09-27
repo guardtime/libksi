@@ -1392,6 +1392,48 @@ cleanup:
 	return res;
 }
 
+int KSI_AggregationPdu_verify(const KSI_AggregationPdu *pdu, const char *pass) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Header *header = NULL;
+	KSI_DataHash *respHmac = NULL;
+
+	if (pdu == NULL || pass == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(pdu->ctx);
+
+	res = KSI_AggregationPdu_getHeader(pdu, &header);
+	if (res != KSI_OK) {
+		KSI_pushError(pdu->ctx, res, NULL);
+		goto cleanup;
+	}
+	if (header == NULL){
+		KSI_pushError(pdu->ctx, res = KSI_INVALID_FORMAT, "A successful aggregation response must have a Header.");
+		goto cleanup;
+	}
+
+	res = KSI_AggregationPdu_getHmac(pdu, &respHmac);
+	if (res != KSI_OK) {
+		KSI_pushError(pdu->ctx, res, NULL);
+		goto cleanup;
+	}
+	if (respHmac == NULL){
+		KSI_pushError(pdu->ctx, res = KSI_INVALID_FORMAT, "A successful aggregation response must have a HMAC.");
+		goto cleanup;
+	}
+
+	res = KSI_AggregationPdu_verifyHmac(pdu, pass);
+	if (res != KSI_OK) {
+		KSI_pushError(pdu->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
 int KSI_AggregationPdu_verifyHmac(const KSI_AggregationPdu *pdu, const char *pass) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *respHmac = NULL;

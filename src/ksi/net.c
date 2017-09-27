@@ -885,9 +885,7 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 	int res;
 	KSI_AggregationPdu *pdu = NULL;
 	KSI_ErrorPdu *error = NULL;
-	KSI_Header *header = NULL;
 	KSI_Config *tmpConf = NULL;
-	KSI_DataHash *respHmac = NULL;
 	KSI_AggregationResp *tmp = NULL;
 	const unsigned char *raw = NULL;
 	size_t len;
@@ -944,30 +942,7 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 		goto cleanup;
 	}
 
-	res = KSI_AggregationPdu_getHeader(pdu, &header);
-	if (res != KSI_OK) {
-		KSI_pushError(handle->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_AggregationPdu_getHmac(pdu, &respHmac);
-	if (res != KSI_OK) {
-		KSI_pushError(handle->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	if (header == NULL){
-		KSI_pushError(handle->ctx, res = KSI_INVALID_FORMAT, "A successful aggregation response must have a Header.");
-		goto cleanup;
-	}
-
-	/* Check HMAC. */
-	if (respHmac == NULL){
-		KSI_pushError(handle->ctx, res = KSI_INVALID_FORMAT, "A successful aggregation response must have a HMAC.");
-		goto cleanup;
-	}
-
-	res = KSI_AggregationPdu_verifyHmac(pdu, handle->client->aggregator->ksi_pass);
+	res = KSI_AggregationPdu_verify(pdu, handle->client->aggregator->ksi_pass);
 	if (res != KSI_OK) {
 		KSI_pushError(handle->ctx, res, NULL);
 		goto cleanup;

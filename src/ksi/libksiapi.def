@@ -565,6 +565,7 @@ EXPORTS
 	KSI_ExtendPdu_serialize
 	KSI_AggregationPdu_free
 	KSI_AggregationPdu_new
+	KSI_AggregationPdu_verify
 	KSI_AggregationPdu_verifyHmac
 	KSI_AggregationPdu_calculateHmac
 	KSI_AggregationPdu_getHeader
