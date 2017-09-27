@@ -251,12 +251,16 @@ EXPORTS
 	KSI_AsyncAggregationHandle_new
 	KSI_AsyncHandle_setRequestCtx
 	KSI_AsyncHandle_getRequestCtx
+	KSI_AsyncHandle_getRequestId
 	KSI_AsyncHandle_getState
 	KSI_AsyncHandle_getError
 	KSI_AsyncHandle_getExtError
 	KSI_AsyncHandle_getErrorMessage
+	KSI_AsyncHandle_getAggregationReq
 	KSI_AsyncHandle_getAggregationResp
+	KSI_AsyncHandle_getSignature
 	KSI_AsyncService_free
+	KSI_AbstractAsyncService_new
 	KSI_SigningAsyncService_new
 	KSI_AsyncService_getPendingCount
 	KSI_AsyncService_getReceivedCount
@@ -264,7 +268,6 @@ EXPORTS
 	KSI_AsyncService_getOption
 	KSI_AsyncService_run
 	KSI_AsyncService_setEndpoint
-	KSI_AsyncService_construct
 	KSI_AsyncService_addRequest
 
 ;net_http.h

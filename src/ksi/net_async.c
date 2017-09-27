@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2017 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -52,7 +52,7 @@ void KSI_AsyncHandle_free(KSI_AsyncHandle *o) {
 	}
 }
 
-static int KSI_AsyncHandle_construct(KSI_CTX *ctx, KSI_AsyncHandle **o) {
+static int KSI_AbstractAsyncHandle_new(KSI_CTX *ctx, KSI_AsyncHandle **o) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AsyncHandle *tmp = NULL;
 
@@ -114,7 +114,7 @@ int KSI_AsyncAggregationHandle_new(KSI_CTX *ctx, KSI_AggregationReq *req, KSI_As
 		goto cleanup;
 	}
 
-	res = KSI_AsyncHandle_construct(ctx, o);
+	res = KSI_AbstractAsyncHandle_new(ctx, o);
 	if (res != KSI_OK) goto cleanup;
 
 	(*o)->aggrReq = req;

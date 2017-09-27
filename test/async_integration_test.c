@@ -29,12 +29,12 @@
 #include "cutest/CuTest.h"
 #include "all_integration_tests.h"
 
-#include <../ksi/net_uri.h>
-#include <../ksi/net_http.h>
-#include <../ksi/net_tcp.h>
-#include <../ksi/net_async.h>
-#include <../ksi/net.h>
-#include <../ksi/hash.h>
+#include <ksi/net_uri.h>
+#include <ksi/net_http.h>
+#include <ksi/net_tcp.h>
+#include <ksi/net_async.h>
+#include <ksi/net.h>
+#include <ksi/hash.h>
 
 #include "../src/ksi/ctx_impl.h"
 #include "../src/ksi/internal.h"
@@ -262,6 +262,8 @@ static void asyncSigning_loop_getResponse(CuTest* tc, const char *url, const cha
 					CuAssert(tc, "There should be no error message.", res == KSI_OK && msg == NULL);
 
 					received++;
+
+					KSI_Signature_free(signature);
 				}
 				break;
 
