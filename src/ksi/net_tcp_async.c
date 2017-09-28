@@ -72,7 +72,6 @@
 
 #define TCP_INVALID_SOCKET_FD (-1)
 #define KSI_TLV_MAX_SIZE (0xffff + 4)
-#define TCP_DEFAULT_TIMEOUT (KSI_ASYNC_DEFAULT_TIMEOUT_SEC)
 
 static const int optSet = 1;
 static const int optClr = 0;

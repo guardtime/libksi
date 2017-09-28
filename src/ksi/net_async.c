@@ -294,18 +294,25 @@ static int asyncClient_composeRequestHeader(KSI_AsyncClient *c, KSI_Header **hdr
 		goto cleanup;
 	}
 
+	if (c->clientImpl == NULL || c->getCredentials == NULL) {
+		res = KSI_INVALID_STATE;
+		goto cleanup;
+	}
+
 	res = KSI_Header_new(c->ctx, &tmp);
 	if (res != KSI_OK) goto cleanup;
 
 	res = c->getCredentials(c->clientImpl, &user, NULL);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_Utf8String_new(c->ctx, user, strlen(user) + 1, &loginId);
-	if (res != KSI_OK) goto cleanup;
+	if (user != NULL) {
+		res = KSI_Utf8String_new(c->ctx, user, strlen(user) + 1, &loginId);
+		if (res != KSI_OK) goto cleanup;
 
-	res = KSI_Header_setLoginId(tmp, loginId);
-	if (res != KSI_OK) goto cleanup;
-	loginId = NULL;
+		res = KSI_Header_setLoginId(tmp, loginId);
+		if (res != KSI_OK) goto cleanup;
+		loginId = NULL;
+	}
 
 	res = KSI_Integer_new(c->ctx, c->instanceId, &instanceId);
 	if (res != KSI_OK) goto cleanup;

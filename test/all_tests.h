@@ -66,6 +66,7 @@ CuSuite* KSITest_Hash_getSuite(void);
 CuSuite* KSITest_NetCommon_getSuite(void);
 CuSuite* KSITest_NetPduV1_getSuite(void);
 CuSuite* KSITest_NetPduV2_getSuite(void);
+CuSuite* KSITest_NetAsync_getSuite(void);
 CuSuite* KSITest_HashChain_getSuite(void);
 CuSuite* KSI_UTIL_GetSuite(void);
 CuSuite* KSITest_Signature_getSuite(void);
