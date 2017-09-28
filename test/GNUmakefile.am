@@ -28,6 +28,7 @@ runner_SOURCES= \
 	cutest/CuTest.h \
 	support_tests.c \
 	support_tests.h \
+	test_mock_async.c \
 	ksi_ctx_test.c \
 	ksi_hashchain_test.c \
 	ksi_hash_test.c \
@@ -35,6 +36,7 @@ runner_SOURCES= \
 	ksi_net_common_test.c \
 	ksi_net_pduv1_test.c \
 	ksi_net_pduv2_test.c \
+	ksi_net_async_test.c \
 	ksi_publicationsfile_test.c \
 	ksi_rdr_test.c \
 	ksi_signature_test.c \
@@ -50,9 +52,7 @@ runner_SOURCES= \
 	ksi_sdk_version_test.c \
 	ksi_flags_test.c \
 	ksi_signature_builder_test.c \
-	ksi_list_test.c \
-	test_mock_async.c \
-	test_async.c
+	ksi_list_test.c
 
 integration_tests_SOURCES= \
 	all_integration_tests.c \

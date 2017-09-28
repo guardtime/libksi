@@ -1125,6 +1125,102 @@ static void Test_AsyncSign_multipleRequests_collect(CuTest* tc) {
 	KSI_AsyncService_free(as);
 }
 
+static void Test_AsyncSign_multipleRequests_collect_aggrResp301(CuTest* tc) {
+	static const char *TEST_REQ_DATA[] = {
+		"Guardtime", "Keyless", "Signature", "Infrastructure", "(KSI)",
+		"is an", "industrial", "scale", "blockchain", "platform",
+		"that", "cryptographically", "ensures", "data", "integrity",
+		"and", "proves", "time", "of", "existence",
+		NULL
+	};
+	static const size_t TEST_REQ_DATA_COUNT = (sizeof(TEST_REQ_DATA) / sizeof(TEST_REQ_DATA[0])) - 1;
+
+	static const char *TEST_REQ_AGGR_RESPONSE_FILES[] = {
+		"resource/tlv/" TEST_RESOURCE_AGGR_VER "/ok_aggr_error_response_301.tlv"
+	};
+
+	int res;
+	KSI_AsyncService *as = NULL;
+	const char **p_req = NULL;
+	size_t added = 0;
+	size_t i;
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_SigningAsyncService_new(ctx, &as);
+	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
+
+	res = TestMock_AsyncService_setEndpoint(as, TEST_REQ_AGGR_RESPONSE_FILES, TEST_REQ_DATA_COUNT, "anon", "anon");
+	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
+
+	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void*)(TEST_REQ_DATA_COUNT));
+	CuAssert(tc, "Unable to set request cache size.", res == KSI_OK);
+
+	p_req = TEST_REQ_DATA;
+	while (*p_req != NULL) {
+		size_t pendingCount = 0;
+		KSI_AsyncHandle *reqHandle = NULL;
+		KSI_DataHash *hsh = NULL;
+		KSI_AggregationReq *req = NULL;
+
+		res = KSI_DataHash_create(ctx, *p_req, strlen(*p_req), KSI_HASHALG_SHA2_256, &hsh);
+		CuAssert(tc, "Unable to create data hash from string.", res == KSI_OK && hsh != NULL);
+
+		res = KSI_AggregationReq_new(ctx, &req);
+		CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
+
+		res = KSI_AggregationReq_setRequestHash(req, hsh);
+		CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
+
+		res = KSI_AsyncAggregationHandle_new(ctx, req, &reqHandle);
+		CuAssert(tc, "Unable to create async request.", res == KSI_OK && reqHandle != NULL);
+
+		res = KSI_AsyncService_addRequest(as, reqHandle);
+		CuAssert(tc, "Unable to add request", res == KSI_OK);
+		p_req++;
+
+		res = KSI_AsyncService_getPendingCount(as, &pendingCount);
+		CuAssert(tc, "Unable to get pending count.", res == KSI_OK);
+		CuAssert(tc, "Pending count mitmatch.", pendingCount == ++added);
+	}
+
+	for (i = 0; i < added; i++) {
+		int state = KSI_ASYNC_STATE_UNDEFINED;
+		KSI_AsyncHandle *handle = NULL;
+		KSI_Signature *signature = NULL;
+		int error = 0;
+		long errorExt = 0;
+		KSI_Utf8String *msg = NULL;
+
+		res = KSI_AsyncService_run(as, &handle, NULL);
+		CuAssert(tc, "Failed to run async service.", res == KSI_OK);
+
+		res = KSI_AsyncHandle_getState(handle, &state);
+		CuAssert(tc, "Unable to get request state.", res == KSI_OK);
+		CuAssert(tc, "State should be ERROR.", state == KSI_ASYNC_STATE_ERROR);
+
+		res = KSI_AsyncHandle_getError(handle, &error);
+KSI_LOG_debug(ctx, ">>> %x\n", error);
+		CuAssert(tc, "Signing should fail with error.", res == KSI_OK && error == KSI_SERVICE_UPSTREAM_TIMEOUT);
+
+		res = KSI_AsyncHandle_getExtError(handle, &errorExt);
+		CuAssert(tc, "There should be external error.", res == KSI_OK && errorExt == 0x301);
+
+		res = KSI_AsyncHandle_getErrorMessage(handle, &msg);
+		CuAssert(tc, "There should be error message.", res == KSI_OK && msg != NULL);
+		CuAssert(tc, "Error message mismatch.", strcmp("No response from upstream servers", KSI_Utf8String_cstr(msg)) == 0);
+
+		res = KSI_AsyncHandle_getSignature(handle, &signature);
+		CuAssert(tc, "No signature in error state.", res == KSI_INVALID_STATE && signature == NULL);
+
+		KSI_Signature_free(signature);
+		KSI_AsyncHandle_free(handle);
+	}
+
+	KSI_AsyncService_free(as);
+}
+
 CuSuite* KSITest_NetAsync_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -1148,6 +1244,7 @@ CuSuite* KSITest_NetAsync_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_AsyncSign_multipleRequests_loop);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_multipleRequests_loop_cacheSize5);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_multipleRequests_collect);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_multipleRequests_collect_aggrResp301);
 
 	return suite;
 }
