@@ -668,6 +668,7 @@ static int asyncClient_processAggregationResponseQueue(KSI_AsyncClient *c) {
 
 	res = KSI_OK;
 cleanup:
+	KSI_ErrorPdu_free(errPdu);
 	KSI_OctetString_free(resp);
 	KSI_AggregationPdu_free(pdu);
 
