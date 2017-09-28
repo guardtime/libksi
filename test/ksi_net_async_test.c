@@ -1151,7 +1151,7 @@ static void Test_AsyncSign_multipleRequests_collect_aggrResp301(CuTest* tc) {
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, TEST_REQ_AGGR_RESPONSE_FILES, TEST_REQ_DATA_COUNT, "anon", "anon");
+	res = TestMock_AsyncService_setEndpoint(as, TEST_REQ_AGGR_RESPONSE_FILES, 1, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void*)(TEST_REQ_DATA_COUNT));
@@ -1201,7 +1201,6 @@ static void Test_AsyncSign_multipleRequests_collect_aggrResp301(CuTest* tc) {
 		CuAssert(tc, "State should be ERROR.", state == KSI_ASYNC_STATE_ERROR);
 
 		res = KSI_AsyncHandle_getError(handle, &error);
-KSI_LOG_debug(ctx, ">>> %x\n", error);
 		CuAssert(tc, "Signing should fail with error.", res == KSI_OK && error == KSI_SERVICE_UPSTREAM_TIMEOUT);
 
 		res = KSI_AsyncHandle_getExtError(handle, &errorExt);
