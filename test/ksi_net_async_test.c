@@ -31,7 +31,85 @@
 
 extern KSI_CTX *ctx;
 
+static KSI_Config *callbackConf = NULL;
+static size_t callbackCalls = 0;
 
+static int KSITest_ConfigCallback(KSI_CTX *ctx, KSI_Config *conf) {
+	callbackCalls++;
+	if (ctx == NULL || conf == NULL) return KSI_INVALID_ARGUMENT;
+	callbackConf = KSI_Config_ref(conf);
+	return KSI_OK;
+}
+
+static int KSITest_createAggrAsyncHandle(KSI_CTX *ctx,
+		int isHshStr, const unsigned char *data, size_t len, int alg,
+		KSI_DataHash *requestHsh, size_t requestLvl, KSI_uint64_t requestId,
+		KSI_AsyncHandle **handle) {
+	int res;
+	KSI_AsyncHandle *tmp = NULL;
+	KSI_DataHash *hsh = NULL;
+	KSI_AggregationReq *req = NULL;
+	KSI_Integer *lvl = NULL;
+	KSI_Integer *rId = NULL;
+
+	if (ctx == NULL || handle == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_AggregationReq_new(ctx, &req);
+	if (res != KSI_OK) goto cleanup;
+
+	if (requestHsh == NULL) {
+		res = (isHshStr ? KSITest_DataHash_fromStr(ctx, (char *)data, &hsh) :
+						  (data ? KSI_DataHash_create(ctx, data, len, alg, &hsh) :
+								  KSI_DataHash_createZero(ctx, alg, &hsh)));
+		if (res != KSI_OK) goto cleanup;
+	} else {
+		hsh = requestHsh;
+	}
+
+	res = KSI_AggregationReq_setRequestHash(req, hsh);
+	if (res != KSI_OK) goto cleanup;
+	hsh = NULL;
+
+	if (requestLvl) {
+		res = KSI_Integer_new(ctx, requestLvl, &lvl);
+		if (res != KSI_OK) {
+			goto cleanup;
+		}
+
+		res = KSI_AggregationReq_setRequestLevel(req, lvl);
+		if (res != KSI_OK) goto cleanup;
+		lvl = NULL;
+	}
+
+	if (requestId) {
+		res = KSI_Integer_new(ctx, requestId, &rId);
+		if (res != KSI_OK) {
+			goto cleanup;
+		}
+
+		res = KSI_AggregationReq_setRequestId(req, rId);
+		if (res != KSI_OK) goto cleanup;
+		rId = NULL;
+	}
+
+	res = KSI_AsyncAggregationHandle_new(ctx, req, &tmp);
+	if (res != KSI_OK) goto cleanup;
+	req = NULL;
+
+	*handle = tmp;
+	tmp = NULL;
+	res = KSI_OK;
+cleanup:
+	KSI_Integer_free(lvl);
+	KSI_Integer_free(rId);
+	KSI_DataHash_free(hsh);
+	KSI_AggregationReq_free(req);
+	KSI_AsyncHandle_free(tmp);
+	return res;
+}
 
 static void verifyOption(CuTest* tc, KSI_AsyncService *s, int opt, size_t defVal, size_t newVal) {
 	int res;
@@ -128,9 +206,7 @@ static void Test_AsyncSingningService_addEmptyReq(CuTest* tc) {
 static void Test_AsyncSingningService_addRequest_noEndpoint(CuTest* tc) {
 	int res;
 	KSI_AsyncService *as = NULL;
-	KSI_AsyncHandle *hndl = NULL;
-	KSI_AggregationReq *req = NULL;
-	KSI_DataHash *hsh = NULL;
+	KSI_AsyncHandle *handle = NULL;
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	KSI_ERR_clearErrors(ctx);
@@ -138,22 +214,13 @@ static void Test_AsyncSingningService_addRequest_noEndpoint(CuTest* tc) {
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = KSI_AggregationReq_new(ctx, &req);
-	CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
+	res = KSITest_createAggrAsyncHandle(ctx, 0, NULL, 0, KSI_HASHALG_SHA2_256, NULL, 0, 0, &handle);
+	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && handle != NULL);
 
-	res = KSI_DataHash_createZero(ctx, KSI_HASHALG_SHA2_256, &hsh);
-	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
-
-	res = KSI_AggregationReq_setRequestHash(req, hsh);
-	CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
-
-	res = KSI_AsyncAggregationHandle_new(ctx, req, &hndl);
-	CuAssert(tc, "Unable to create async request.", res == KSI_OK && hndl != NULL);
-
-	res = KSI_AsyncService_addRequest(as, hndl);
+	res = KSI_AsyncService_addRequest(as, handle);
 	CuAssert(tc, "Unable to add request", res == KSI_INVALID_STATE);
 
-	KSI_AsyncHandle_free(hndl);
+	KSI_AsyncHandle_free(handle);
 	KSI_AsyncService_free(as);
 }
 
@@ -180,6 +247,90 @@ static void Test_AsyncSingningService_runEmpty(CuTest* tc) {
 	KSI_AsyncService_free(as);
 }
 
+static void Test_AsyncSingningService_verifyReqId(CuTest* tc) {
+	int res;
+	KSI_AsyncService *as = NULL;
+	KSI_AsyncHandle *handle = NULL;
+	KSI_AggregationReq *req = NULL;
+	KSI_Integer *rReqId = NULL;
+	KSI_uint64_t hReqId = 0;
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	res = KSI_SigningAsyncService_new(ctx, &as);
+	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
+
+	res = TestMock_AsyncService_setEndpoint(as, NULL, 0, "anon", "anon");
+	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
+
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0x1234, &handle);
+	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && handle != NULL);
+
+	res = KSI_AsyncService_addRequest(as, handle);
+	CuAssert(tc, "Unable to add request", res == KSI_OK);
+
+	req = NULL;
+	res = KSI_AsyncHandle_getAggregationReq(handle, &req);
+	CuAssert(tc, "Unable to get aggregation request.", res == KSI_OK && req != NULL);
+
+	rReqId = NULL;
+	res = KSI_AggregationReq_getRequestId(req, &rReqId);
+	CuAssert(tc, "Unable to get request id.", res == KSI_OK && rReqId != NULL);
+	CuAssert(tc, "Wrong request id.", KSI_Integer_getUInt64(rReqId) == 1);
+
+	res = KSI_AsyncHandle_getRequestId(handle, &hReqId);
+	CuAssert(tc, "Unable to get handle request id.", res == KSI_OK && hReqId != 0);
+	CuAssert(tc, "Wrong handle request id.", KSI_Integer_getUInt64(rReqId) == hReqId);
+
+	KSI_AsyncService_free(as);
+}
+
+static void Test_AsyncSingningService_verifyRequestCacheFull(CuTest* tc) {
+	KSI_AsyncHandle *handle = NULL;
+	int res;
+	KSI_AsyncService *as = NULL;
+	size_t cacheSize = 0;
+	size_t i;
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	res = KSI_SigningAsyncService_new(ctx, &as);
+	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
+
+	res = TestMock_AsyncService_setEndpoint(as, NULL, 0, "anon", "anon");
+	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
+
+	res = KSI_AsyncService_getOption(as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void *)&cacheSize);
+	CuAssert(tc, "Unable to extract service option.", res == KSI_OK && cacheSize != 0);
+
+	for (i = 0; i < cacheSize; i++) {
+		handle = NULL;
+
+		res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &handle);
+		CuAssert(tc, "Unable to create async handle.", res == KSI_OK && handle != NULL);
+
+		res = KSI_AsyncService_addRequest(as, handle);
+		CuAssert(tc, "Unable to add request.", res == KSI_OK);
+	}
+
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &handle);
+	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && handle != NULL);
+
+	res = KSI_AsyncService_addRequest(as, handle);
+	CuAssert(tc, "Unable to add request.", res == KSI_ASYNC_REQUEST_CACHE_FULL);
+
+	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void *)++cacheSize);
+	CuAssert(tc, "Unable to add request.", res == KSI_OK);
+
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &handle);
+	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && handle != NULL);
+
+	res = KSI_AsyncService_addRequest(as, handle);
+	CuAssert(tc, "Unable to add request.", res == KSI_OK);
+
+	KSI_AsyncService_free(as);
+}
+
 static void Test_AsyncSign_oneRequest_verifyReqCtx(CuTest* tc) {
 	static const char *TEST_AGGR_RESPONSE_FILES[] = {
 		"resource/tlv/" TEST_RESOURCE_AGGR_VER "/ok-sig-2014-07-01.1-aggr_response.tlv",
@@ -194,12 +345,13 @@ static void Test_AsyncSign_oneRequest_verifyReqCtx(CuTest* tc) {
 	KSI_DataHash *reqCtx = NULL;
 	KSI_DataHash *inpHsh = NULL;
 	KSI_AggregationResp *resp = NULL;
-	KSI_AggregationReq *req = NULL;
 	KSI_AggregationHashChainList *aggrChainList = NULL;
 	KSI_AggregationHashChain *chain = NULL;
 	size_t pendingCount = 0;
 	size_t onHold = 0;
 	int state = KSI_ASYNC_STATE_UNDEFINED;
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
@@ -210,17 +362,10 @@ static void Test_AsyncSign_oneRequest_verifyReqCtx(CuTest* tc) {
 	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
 	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
 
-	res = KSI_AggregationReq_new(ctx, &req);
-	CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
+	res = KSITest_createAggrAsyncHandle(ctx, 0, NULL, 0, KSI_HASHALG_INVALID, KSI_DataHash_ref(hsh), 0, 0, &reqHandle);
+	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
-	res = KSI_AggregationReq_setRequestHash(req, hsh);
-	CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
-
-	res = KSI_AsyncAggregationHandle_new(ctx, req, &reqHandle);
-	CuAssert(tc, "Unable to create async request.", res == KSI_OK && reqHandle != NULL);
-	req = NULL;
-
-	res = KSI_AsyncHandle_setRequestCtx(reqHandle, (void*)KSI_DataHash_ref(hsh), (void (*)(void*))KSI_DataHash_free);
+	res = KSI_AsyncHandle_setRequestCtx(reqHandle, (void*)hsh, (void (*)(void*))KSI_DataHash_free);
 	CuAssert(tc, "Unable to set request context.", res == KSI_OK);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
@@ -270,8 +415,6 @@ static void Test_AsyncSign_oneRequest_verifySignature(CuTest* tc) {
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *reqHandle = NULL;
 	KSI_AsyncHandle *respHandle = NULL;
-	KSI_DataHash *hsh = NULL;
-	KSI_AggregationReq *req = NULL;
 	KSI_Signature *signature = NULL;
 	int state = KSI_ASYNC_STATE_UNDEFINED;
 	unsigned char *raw = NULL;
@@ -288,17 +431,8 @@ static void Test_AsyncSign_oneRequest_verifySignature(CuTest* tc) {
 	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
-	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
-
-	res = KSI_AggregationReq_new(ctx, &req);
-	CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
-
-	res = KSI_AggregationReq_setRequestHash(req, hsh);
-	CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
-
-	res = KSI_AsyncAggregationHandle_new(ctx, req, &reqHandle);
-	CuAssert(tc, "Unable to create async request.", res == KSI_OK && reqHandle != NULL);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
 	CuAssert(tc, "Unable to add request", res == KSI_OK);
@@ -345,8 +479,6 @@ static void Test_AsyncSign_oneRequest_verifyNoError(CuTest* tc) {
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *reqHandle = NULL;
 	KSI_AsyncHandle *respHandle = NULL;
-	KSI_DataHash *hsh = NULL;
-	KSI_AggregationReq *req = NULL;
 	int error = 0;
 	long errorExt = 0;
 	KSI_Utf8String *msg = NULL;
@@ -360,17 +492,8 @@ static void Test_AsyncSign_oneRequest_verifyNoError(CuTest* tc) {
 	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
-	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
-
-	res = KSI_AggregationReq_new(ctx, &req);
-	CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
-
-	res = KSI_AggregationReq_setRequestHash(req, hsh);
-	CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
-
-	res = KSI_AsyncAggregationHandle_new(ctx, req, &reqHandle);
-	CuAssert(tc, "Unable to create async request.", res == KSI_OK && reqHandle != NULL);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
 	CuAssert(tc, "Unable to add request", res == KSI_OK);
@@ -395,16 +518,6 @@ static void Test_AsyncSign_oneRequest_verifyNoError(CuTest* tc) {
 	KSI_AsyncService_free(as);
 }
 
-static KSI_Config *callbackConf = NULL;
-static size_t callbackCalls = 0;
-
-static int Test_ConfigCallback(KSI_CTX *ctx, KSI_Config *conf) {
-	callbackCalls++;
-	if (ctx == NULL || conf == NULL) return KSI_INVALID_ARGUMENT;
-	callbackConf = KSI_Config_ref(conf);
-	return KSI_OK;
-}
-
 static void Test_AsyncSign_oneRequest_responseWithPushConf(CuTest* tc) {
 	static const char *TEST_AGGR_RESPONSE_FILES[] = {
 		"resource/tlv/" TEST_RESOURCE_AGGR_VER "/ok-sig-2014-07-01.1-aggr_response-with-conf-and-ack.tlv",
@@ -414,13 +527,11 @@ static void Test_AsyncSign_oneRequest_responseWithPushConf(CuTest* tc) {
 	int res;
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *reqHandle = NULL;
-	KSI_DataHash *hsh = NULL;
-	KSI_AggregationReq *req = NULL;
 	KSI_Integer *intVal = NULL;
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
-	res = KSI_CTX_setOption(ctx, KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK, Test_ConfigCallback);
+	res = KSI_CTX_setOption(ctx, KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK, KSITest_ConfigCallback);
 	CuAssert(tc, "Unable to set extender conf callback.", res == KSI_OK);
 
 	res = KSI_SigningAsyncService_new(ctx, &as);
@@ -429,17 +540,8 @@ static void Test_AsyncSign_oneRequest_responseWithPushConf(CuTest* tc) {
 	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
-	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
-
-	res = KSI_AggregationReq_new(ctx, &req);
-	CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
-
-	res = KSI_AggregationReq_setRequestHash(req, hsh);
-	CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
-
-	res = KSI_AsyncAggregationHandle_new(ctx, req, &reqHandle);
-	CuAssert(tc, "Unable to create async request.", res == KSI_OK && reqHandle != NULL);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
 	CuAssert(tc, "Unable to add request", res == KSI_OK);
@@ -473,8 +575,6 @@ static void Test_AsyncSign_oneRequest_wrongResponse_getSignatureFail(CuTest* tc)
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *reqHandle = NULL;
 	KSI_AsyncHandle *respHandle = NULL;
-	KSI_DataHash *hsh = NULL;
-	KSI_AggregationReq *req = NULL;
 	KSI_Signature *signature = NULL;
 	int state = KSI_ASYNC_STATE_UNDEFINED;
 
@@ -486,18 +586,8 @@ static void Test_AsyncSign_oneRequest_wrongResponse_getSignatureFail(CuTest* tc)
 	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
-	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
-
-	res = KSI_AggregationReq_new(ctx, &req);
-	CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
-
-	res = KSI_AggregationReq_setRequestHash(req, hsh);
-	CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
-
-	res = KSI_AsyncAggregationHandle_new(ctx, req, &reqHandle);
-	CuAssert(tc, "Unable to create async request.", res == KSI_OK && reqHandle != NULL);
-	req = NULL;
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
 	CuAssert(tc, "Unable to add request", res == KSI_OK);
@@ -526,8 +616,6 @@ static void Test_AsyncSign_oneRequest_wrongResponseReqId(CuTest* tc) {
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *reqHandle = NULL;
 	KSI_AsyncHandle *respHandle = NULL;
-	KSI_DataHash *hsh = NULL;
-	KSI_AggregationReq *req = NULL;
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
@@ -537,18 +625,8 @@ static void Test_AsyncSign_oneRequest_wrongResponseReqId(CuTest* tc) {
 	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
-	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
-
-	res = KSI_AggregationReq_new(ctx, &req);
-	CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
-
-	res = KSI_AggregationReq_setRequestHash(req, hsh);
-	CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
-
-	res = KSI_AsyncAggregationHandle_new(ctx, req, &reqHandle);
-	CuAssert(tc, "Unable to create async request.", res == KSI_OK && reqHandle != NULL);
-	req = NULL;
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
 	CuAssert(tc, "Unable to add request", res == KSI_OK);
@@ -571,8 +649,6 @@ static void Test_AsyncSign_oneRequest_wrongResponseReqId_rcvTimeout0(CuTest* tc)
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *reqHandle = NULL;
 	KSI_AsyncHandle *respHandle = NULL;
-	KSI_DataHash *hsh = NULL;
-	KSI_AggregationReq *req = NULL;
 	KSI_Signature *signature = NULL;
 	int state = KSI_ASYNC_STATE_UNDEFINED;
 	int error = 0;
@@ -587,18 +663,8 @@ static void Test_AsyncSign_oneRequest_wrongResponseReqId_rcvTimeout0(CuTest* tc)
 	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
-	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
-
-	res = KSI_AggregationReq_new(ctx, &req);
-	CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
-
-	res = KSI_AggregationReq_setRequestHash(req, hsh);
-	CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
-
-	res = KSI_AsyncAggregationHandle_new(ctx, req, &reqHandle);
-	CuAssert(tc, "Unable to create async request.", res == KSI_OK && reqHandle != NULL);
-	req = NULL;
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
 	CuAssert(tc, "Unable to add request", res == KSI_OK);
@@ -640,7 +706,6 @@ static void Test_AsyncSign_oneRequest_responseVerifyWithRequest(CuTest* tc) {
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *reqHandle = NULL;
 	KSI_AsyncHandle *respHandle = NULL;
-	KSI_DataHash *hsh = NULL;
 	KSI_DataHash *inpHsh = NULL;
 	KSI_DataHash *reqHsh = NULL;
 	KSI_AggregationResp *resp = NULL;
@@ -657,18 +722,8 @@ static void Test_AsyncSign_oneRequest_responseVerifyWithRequest(CuTest* tc) {
 	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
-	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
-
-	res = KSI_AggregationReq_new(ctx, &req);
-	CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
-
-	res = KSI_AggregationReq_setRequestHash(req, hsh);
-	CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
-
-	res = KSI_AsyncAggregationHandle_new(ctx, req, &reqHandle);
-	CuAssert(tc, "Unable to create async request.", res == KSI_OK && reqHandle != NULL);
-	req = NULL;
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
 	CuAssert(tc, "Unable to add request", res == KSI_OK);
@@ -715,8 +770,6 @@ static void Test_AsyncSign_oneRequest_ErrorStatusWithSignatureElementsInResponse
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *reqHandle = NULL;
 	KSI_AsyncHandle *respHandle = NULL;
-	KSI_DataHash *hsh = NULL;
-	KSI_AggregationReq *req = NULL;
 	int error = 0;
 	long errorExt = 0;
 	KSI_Utf8String *msg = NULL;
@@ -730,17 +783,8 @@ static void Test_AsyncSign_oneRequest_ErrorStatusWithSignatureElementsInResponse
 	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
-	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
-
-	res = KSI_AggregationReq_new(ctx, &req);
-	CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
-
-	res = KSI_AggregationReq_setRequestHash(req, hsh);
-	CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
-
-	res = KSI_AsyncAggregationHandle_new(ctx, req, &reqHandle);
-	CuAssert(tc, "Unable to create async request.", res == KSI_OK && reqHandle != NULL);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
 	CuAssert(tc, "Unable to add request", res == KSI_OK);
@@ -775,8 +819,6 @@ static void Test_AsyncSign_oneRequest_responseMissingHeader(CuTest* tc) {
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *reqHandle = NULL;
 	KSI_AsyncHandle *respHandle = NULL;
-	KSI_DataHash *hsh = NULL;
-	KSI_AggregationReq *req = NULL;
 	int error = 0;
 	int state = KSI_ASYNC_STATE_UNDEFINED;
 
@@ -788,17 +830,8 @@ static void Test_AsyncSign_oneRequest_responseMissingHeader(CuTest* tc) {
 	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
-	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
-
-	res = KSI_AggregationReq_new(ctx, &req);
-	CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
-
-	res = KSI_AggregationReq_setRequestHash(req, hsh);
-	CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
-
-	res = KSI_AsyncAggregationHandle_new(ctx, req, &reqHandle);
-	CuAssert(tc, "Unable to create async request.", res == KSI_OK && reqHandle != NULL);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
 	CuAssert(tc, "Unable to add request", res == KSI_OK);
@@ -875,21 +908,10 @@ static void Test_AsyncSign_multipleRequests_loop(CuTest* tc) {
 		KSI_Signature *signature = NULL;
 
 		if (*p_req) {
-			KSI_DataHash *hsh = NULL;
-			KSI_AggregationReq *req = NULL;
 			KSI_AsyncHandle *reqHandle = NULL;
 
-			res = KSI_DataHash_create(ctx, *p_req, strlen(*p_req), KSI_HASHALG_SHA2_256, &hsh);
-			CuAssert(tc, "Unable to create data hash from string.", res == KSI_OK && hsh != NULL);
-
-			res = KSI_AggregationReq_new(ctx, &req);
-			CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
-
-			res = KSI_AggregationReq_setRequestHash(req, hsh);
-			CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
-
-			res = KSI_AsyncAggregationHandle_new(ctx, req, &reqHandle);
-			CuAssert(tc, "Unable to create async request.", res == KSI_OK && reqHandle != NULL);
+			res = KSITest_createAggrAsyncHandle(ctx, 0, (unsigned char *)*p_req, strlen(*p_req), KSI_HASHALG_SHA2_256, NULL, 0, 0, &reqHandle);
+			CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 			res = KSI_AsyncService_addRequest(as, reqHandle);
 			CuAssert(tc, "Unable to add request", res == KSI_OK);
@@ -971,21 +993,10 @@ static void Test_AsyncSign_multipleRequests_loop_cacheSize5(CuTest* tc) {
 		KSI_Signature *signature = NULL;
 
 		if (*p_req) {
-			KSI_DataHash *hsh = NULL;
-			KSI_AggregationReq *req = NULL;
 			KSI_AsyncHandle *reqHandle = NULL;
 
-			res = KSI_DataHash_create(ctx, *p_req, strlen(*p_req), KSI_HASHALG_SHA2_256, &hsh);
-			CuAssert(tc, "Unable to create data hash from string.", res == KSI_OK && hsh != NULL);
-
-			res = KSI_AggregationReq_new(ctx, &req);
-			CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
-
-			res = KSI_AggregationReq_setRequestHash(req, hsh);
-			CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
-
-			res = KSI_AsyncAggregationHandle_new(ctx, req, &reqHandle);
-			CuAssert(tc, "Unable to create async request.", res == KSI_OK && reqHandle != NULL);
+			res = KSITest_createAggrAsyncHandle(ctx, 0, (unsigned char *)*p_req, strlen(*p_req), KSI_HASHALG_SHA2_256, NULL, 0, 0, &reqHandle);
+			CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 			res = KSI_AsyncService_addRequest(as, reqHandle);
 			CuAssert(tc, "Unable to add request", res == KSI_OK);
@@ -1069,20 +1080,9 @@ static void Test_AsyncSign_multipleRequests_collect(CuTest* tc) {
 	while (*p_req != NULL) {
 		size_t pendingCount = 0;
 		KSI_AsyncHandle *reqHandle = NULL;
-		KSI_DataHash *hsh = NULL;
-		KSI_AggregationReq *req = NULL;
 
-		res = KSI_DataHash_create(ctx, *p_req, strlen(*p_req), KSI_HASHALG_SHA2_256, &hsh);
-		CuAssert(tc, "Unable to create data hash from string.", res == KSI_OK && hsh != NULL);
-
-		res = KSI_AggregationReq_new(ctx, &req);
-		CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
-
-		res = KSI_AggregationReq_setRequestHash(req, hsh);
-		CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
-
-		res = KSI_AsyncAggregationHandle_new(ctx, req, &reqHandle);
-		CuAssert(tc, "Unable to create async request.", res == KSI_OK && reqHandle != NULL);
+		res = KSITest_createAggrAsyncHandle(ctx, 0, (unsigned char *)*p_req, strlen(*p_req), KSI_HASHALG_SHA2_256, NULL, 0, 0, &reqHandle);
+		CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 		res = KSI_AsyncService_addRequest(as, reqHandle);
 		CuAssert(tc, "Unable to add request", res == KSI_OK);
@@ -1161,20 +1161,9 @@ static void Test_AsyncSign_multipleRequests_collect_aggrResp301(CuTest* tc) {
 	while (*p_req != NULL) {
 		size_t pendingCount = 0;
 		KSI_AsyncHandle *reqHandle = NULL;
-		KSI_DataHash *hsh = NULL;
-		KSI_AggregationReq *req = NULL;
 
-		res = KSI_DataHash_create(ctx, *p_req, strlen(*p_req), KSI_HASHALG_SHA2_256, &hsh);
-		CuAssert(tc, "Unable to create data hash from string.", res == KSI_OK && hsh != NULL);
-
-		res = KSI_AggregationReq_new(ctx, &req);
-		CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
-
-		res = KSI_AggregationReq_setRequestHash(req, hsh);
-		CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
-
-		res = KSI_AsyncAggregationHandle_new(ctx, req, &reqHandle);
-		CuAssert(tc, "Unable to create async request.", res == KSI_OK && reqHandle != NULL);
+		res = KSITest_createAggrAsyncHandle(ctx, 0, (unsigned char *)*p_req, strlen(*p_req), KSI_HASHALG_SHA2_256, NULL, 0, 0, &reqHandle);
+		CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 		res = KSI_AsyncService_addRequest(as, reqHandle);
 		CuAssert(tc, "Unable to add request", res == KSI_OK);
@@ -1228,6 +1217,8 @@ CuSuite* KSITest_NetAsync_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_AsyncSingningService_addEmptyReq);
 	SUITE_ADD_TEST(suite, Test_AsyncSingningService_addRequest_noEndpoint);
 	SUITE_ADD_TEST(suite, Test_AsyncSingningService_runEmpty);
+	SUITE_ADD_TEST(suite, Test_AsyncSingningService_verifyReqId);
+	SUITE_ADD_TEST(suite, Test_AsyncSingningService_verifyRequestCacheFull);
 
 	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_verifyReqCtx);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_verifySignature);
