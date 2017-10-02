@@ -600,7 +600,7 @@ static void Test_AsyncSign_oneRequest_wrongResponse_getSignatureFail(CuTest* tc)
 	CuAssert(tc, "Unable to get request state.", res == KSI_OK && state == KSI_ASYNC_STATE_RESPONSE_RECEIVED);
 
 	res = KSI_AsyncHandle_getSignature(respHandle, &signature);
-	CuAssert(tc, "Unable to extract signature.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
+	CuAssert(tc, "Signature should not be returned.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
 	KSI_AsyncHandle_free(respHandle);
 	KSI_AsyncService_free(as);
@@ -680,7 +680,7 @@ static void Test_AsyncSign_oneRequest_wrongResponseReqId_rcvTimeout0(CuTest* tc)
 	CuAssert(tc, "Unable to get request state.", res == KSI_OK && state == KSI_ASYNC_STATE_ERROR);
 
 	res = KSI_AsyncHandle_getSignature(respHandle, &signature);
-	CuAssert(tc, "Unable to extract signature.", res == KSI_INVALID_STATE && signature == NULL);
+	CuAssert(tc, "Signature should not be returned.", res == KSI_INVALID_STATE && signature == NULL);
 
 	res = KSI_AsyncHandle_getError(respHandle, &error);
 	CuAssert(tc, "Signing should fail error.", res == KSI_OK && error == KSI_NETWORK_RECIEVE_TIMEOUT);

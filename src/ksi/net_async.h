@@ -258,13 +258,15 @@ extern "C" {
 
 	/**
 	 * Enum defining async service options.
-	 * \see #KSI_AsyncService_setOption for setting an option.
+	 * \see #KSI_AsyncService_setOption for applying option values.
+	 * \see #KSI_AsyncService_getOption for extracting option values.
 	 */
 	typedef enum KSI_AsyncOption_en {
 
 		/**
 		 * Async connection timeout. Time interval between when network connection has been initiated and
 		 * the point it has been established.
+		 * Default setting is 10sec.
 		 * \param[in]		timeout			Timeout in seconds. Paramer of type size_t.
 		 * \see #KSI_AsyncHandle_getState for the request state.
 		 * \see #KSI_AsyncHandle_getError for the request error.
@@ -276,6 +278,7 @@ extern "C" {
 		/**
 		 * Async request response receive timeout. Represents the time interval between when the request
 		 * was sent out and a response has been received.
+		 * Default setting is 10sec.
 		 * \param[in]		timeout			Timeout in seconds. Paramer of type size_t.
 		 * \see #KSI_AsyncHandle_getState for the request state.
 		 * \see #KSI_AsyncHandle_getError for the request error.
@@ -287,6 +290,7 @@ extern "C" {
 		/**
 		 * Async request send timeout. Represent the time interval between when the request has been added
 		 * to the request queue and it has been sent out.
+		 * Default setting is 10sec.
 		 * \param[in]		timeout			Timeout in seconds. Paramer of type size_t.
 		 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 		 * \see #KSI_AsyncHandle_getState for the request state.
@@ -298,17 +302,16 @@ extern "C" {
 
 		/**
 		 * Maximum parallel running request count. New value may not be less than the allready set value.
+		 * Default setting is 1.
 		 * \param[in]		count			Paramer of type size_t.
-		 * \see #KSI_ASYNC_DEFAULT_PARALLEL_REQUESTS default count.
+		 * \see #KSI_AsyncService_addRequest for adding asynchronous request to the output queue.
 		 */
 		KSI_ASYNC_OPT_REQUEST_CACHE_SIZE,
 
 		/**
 		 * Maximum number of request permitted per round.
+		 * Default setting is 1.
 		 * \param[in]		count			Paramer of type size_t.
-		 * \see #KSI_ASYNC_DEFAULT_ROUND_MAX_COUNT default value.
-		 * \see #KSI_ASYNC_ROUND_DURATION_SEC defines the round time interval.
-		 * \see #KSI_AsyncService_addRequest for adding asynchronous request to the output queue.
 		 * \note In case the maximum number of request is allready sent out during a round interval,
 		 * additional request will be buffered in intenal cache.
 		 */
@@ -320,7 +323,7 @@ extern "C" {
 
 	/**
 	 * Async service option setter.
-	 * \param[in]		service			Async serice instance.
+	 * \param[in]		s				Async service instance.
 	 * \param[in]		option			Option to be updated from #KSI_AsyncOption.
 	 * \param[in]		value			Option value as specified in #KSI_AsyncOption.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -331,7 +334,7 @@ extern "C" {
 
 	/**
 	 * Async service option getter.
-	 * \param[in]		service			Async serice instance.
+	 * \param[in]		s				Async service instance.
 	 * \param[in]		option			Option to be updated from #KSI_AsyncOption.
 	 * \param[out]		value			Option value as specified in #KSI_AsyncOption.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
