@@ -22,7 +22,8 @@ Additionally, asynchronous signing service provider needs to be initialized.
 
 ~~~~~~~~~~
 
-Next step would be to set up the \c service. As with basic signing one needs to
+Next step would be to set up the \c service. As with basic signing 
+(see [Signing Tutorial](tutorial/t1_signing.md)) one needs to
 configure service location to send the signing request to. Let's assume the 
 signing service address is \c tcp://signservice.somehost:1234 and it is 
 authenticated by \c user:key (currently only TCP connection is supported). 
@@ -33,7 +34,7 @@ authenticated by \c user:key (currently only TCP connection is supported).
 
 ~~~~~~~~~~
 
-Unlike the basic signing (see [Signing Tutorial](tutorial/t1_signing.md)), 
+Unlike the basic signing, 
 the asynchronous signing is non blocking (except DNS resolution). This enable 
 the user to do several simultaneous transfers in parallel where each single 
 transfer is wrapped into #KSI_AsyncHandle.
@@ -98,7 +99,7 @@ The round interval can not be changed by the user and is set internally to 1 sec
 
 	size_t count = (1 << 8);
 
-	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_MAX_REQUEST_COUNT, (void *)count);
+	KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_MAX_REQUEST_COUNT, (void *)count);
 
 ~~~~~~~~~~
 
@@ -118,8 +119,8 @@ request via the input paranemeter \c waiting. In order to process all
 requests, the run method should be invoked as long as there are pending 
 request left.
 
-The type of the information contained in the returned handle can be 
-determined via #KSI_AsyncHandle_getState. The returned \c state can be:
+The type of data contained in the returned handle can be determined 
+via #KSI_AsyncHandle_getState. The returned \c state can be:
 - #KSI_ASYNC_STATE_RESPONSE_RECEIVED for an aggregation response, or
 - #KSI_ASYNC_STATE_ERROR for an error status. 
 

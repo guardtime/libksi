@@ -258,7 +258,8 @@ extern "C" {
 
 	/**
 	 * Enum defining async service options.
-	 * \see #KSI_AsyncService_setOption for setting an option.
+	 * \see #KSI_AsyncService_setOption for applying option values.
+	 * \see #KSI_AsyncService_getOption for extracting option values.
 	 */
 	typedef enum KSI_AsyncOption_en {
 
@@ -322,7 +323,7 @@ extern "C" {
 
 	/**
 	 * Async service option setter.
-	 * \param[in]		service			Async serice instance.
+	 * \param[in]		s				Async service instance.
 	 * \param[in]		option			Option to be updated from #KSI_AsyncOption.
 	 * \param[in]		value			Option value as specified in #KSI_AsyncOption.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
@@ -333,7 +334,7 @@ extern "C" {
 
 	/**
 	 * Async service option getter.
-	 * \param[in]		service			Async serice instance.
+	 * \param[in]		s				Async service instance.
 	 * \param[in]		option			Option to be updated from #KSI_AsyncOption.
 	 * \param[out]		value			Option value as specified in #KSI_AsyncOption.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
