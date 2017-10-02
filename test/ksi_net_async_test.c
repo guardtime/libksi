@@ -930,7 +930,7 @@ static void Test_AsyncSign_oneRequest_invalidResponse(CuTest* tc) {
 	KSI_AsyncService_free(as);
 }
 
-static void Test_AsyncSign_oneRequest_duplicateResponse_ok(CuTest* tc) {
+static void Test_AsyncSign_oneRequest_twoResponsesWithSameId_validResponseFirst(CuTest* tc) {
 	static const char *TEST_AGGR_RESPONSE_FILES[] = {
 		"resource/tlv/" TEST_RESOURCE_AGGR_VER "/ok-sig-2014-07-01.1-aggr_response-duplicate-response-ok.tlv",
 	};
@@ -973,7 +973,7 @@ static void Test_AsyncSign_oneRequest_duplicateResponse_ok(CuTest* tc) {
 	KSI_AsyncService_free(as);
 }
 
-static void Test_AsyncSign_oneRequest_duplicateResponse_nok(CuTest* tc) {
+static void Test_AsyncSign_oneRequest_twoResponsesWithSameId_invalidResponseFirst(CuTest* tc) {
 	static const char *TEST_AGGR_RESPONSE_FILES[] = {
 		"resource/tlv/" TEST_RESOURCE_AGGR_VER "/ok-sig-2014-07-01.1-aggr_response-duplicate-response-nok.tlv",
 	};
@@ -1439,8 +1439,8 @@ CuSuite* KSITest_NetAsync_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_responseMissingHeader);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_ErrorStatusWithSignatureElementsInResponse);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_invalidResponse);
-	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_duplicateResponse_ok);
-	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_duplicateResponse_nok);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_twoResponsesWithSameId_validResponseFirst);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_twoResponsesWithSameId_invalidResponseFirst);
 
 	SUITE_ADD_TEST(suite, Test_AsyncSign_multipleRequests_loop);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_multipleRequests_loop_cacheSize5);
