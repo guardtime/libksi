@@ -211,7 +211,7 @@ static int dispatch(FileAsyncCtx *clientCtx) {
 			unsigned char buf[KSI_TLV_MAX_SIZE];
 
 			res = KSI_FTLV_fileRead(clientCtx->file, buf, KSI_TLV_MAX_SIZE,  &count, &ftlv);
-			if (res != KSI_OK) {
+			if (res != KSI_OK && count != 0) {
 				reqQueue_clearWithError(clientCtx, res);
 				KSI_LOG_error(clientCtx->ctx, "Unable to read TLV from file. Error: 0x%x.", res);
 				res = KSI_OK;
@@ -244,14 +244,17 @@ static int dispatch(FileAsyncCtx *clientCtx) {
 				}
 				resp = NULL;
 			}
-		} while (feof(clientCtx->file));
+		} while (!feof(clientCtx->file));
+	}
+
+	res = KSI_OK;
+cleanup:
+	if (clientCtx->file != NULL) {
 		fclose(clientCtx->file);
 		clientCtx->file = NULL;
 		clientCtx->pathCount++;
 	}
 
-	res = KSI_OK;
-cleanup:
 	KSI_OctetString_free(resp);
 	return res;
 }
