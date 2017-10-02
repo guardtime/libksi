@@ -593,6 +593,9 @@ static void Test_AsyncSign_oneRequest_responseWithPushConf(CuTest* tc) {
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *reqHandle = NULL;
 	KSI_Integer *intVal = NULL;
+	KSI_AsyncHandle *respHandle = NULL;
+	KSI_Signature *signature = NULL;
+	int state = KSI_ASYNC_STATE_UNDEFINED;
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
@@ -613,8 +616,9 @@ static void Test_AsyncSign_oneRequest_responseWithPushConf(CuTest* tc) {
 
 	callbackCalls = 0;
 	callbackConf = NULL;
-	res = KSI_AsyncService_run(as, NULL, NULL);
+	res = KSI_AsyncService_run(as, &respHandle, NULL);
 	CuAssert(tc, "Failed to run async service.", res == KSI_OK);
+	CuAssert(tc, "Handle mismatch.",  respHandle == reqHandle);
 
 	CuAssert(tc, "Conf callback has not been invoked.", callbackCalls > 0);
 	CuAssert(tc, "Push conf is not set.", callbackConf != NULL);
@@ -626,7 +630,15 @@ static void Test_AsyncSign_oneRequest_responseWithPushConf(CuTest* tc) {
 	res = KSI_Config_getAggrPeriod(callbackConf, &intVal);
 	CuAssert(tc, "Conf aggregation period value mismatch.", res == KSI_OK && KSI_Integer_getUInt64(intVal) == 3);
 
+	res = KSI_AsyncHandle_getState(respHandle, &state);
+	CuAssert(tc, "Unable to get request state.", res == KSI_OK && state == KSI_ASYNC_STATE_RESPONSE_RECEIVED);
+
+	res = KSI_AsyncHandle_getSignature(respHandle, &signature);
+	CuAssert(tc, "Signature should be returned.", res == KSI_OK && signature != NULL);
+
+	KSI_Signature_free(signature);
 	KSI_Config_free(callbackConf);
+	KSI_AsyncHandle_free(respHandle);
 	KSI_AsyncService_free(as);
 }
 
@@ -870,6 +882,92 @@ static void Test_AsyncSign_oneRequest_ErrorStatusWithSignatureElementsInResponse
 	res = KSI_AsyncHandle_getErrorMessage(respHandle, &msg);
 	CuAssert(tc, "There should be no error message.", res == KSI_OK && msg == NULL);
 
+	KSI_AsyncHandle_free(respHandle);
+	KSI_AsyncService_free(as);
+}
+
+static void Test_AsyncSign_invalidResponse(CuTest* tc) {
+	static const char *TEST_AGGR_RESPONSE_FILES[] = {
+		"resource/tlv/" TEST_RESOURCE_AGGR_VER "/extend_response.tlv",
+	};
+	static const size_t TEST_AGGR_RESP_COUNT = sizeof(TEST_AGGR_RESPONSE_FILES) / sizeof(TEST_AGGR_RESPONSE_FILES[0]);
+
+	int res;
+	KSI_AsyncService *as = NULL;
+	KSI_AsyncHandle *reqHandle = NULL;
+	KSI_AsyncHandle *respHandle = NULL;
+	KSI_DataHash *hsh = NULL;
+	int state = KSI_ASYNC_STATE_UNDEFINED;
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	res = KSI_SigningAsyncService_new(ctx, &as);
+	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
+
+	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
+	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
+
+	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
+	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
+
+	res = KSITest_createAggrAsyncHandle(ctx, 0, NULL, 0, KSI_HASHALG_INVALID, KSI_DataHash_ref(hsh), 0, 0, &reqHandle);
+	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
+
+	res = KSI_AsyncHandle_setRequestCtx(reqHandle, (void*)hsh, (void (*)(void*))KSI_DataHash_free);
+	CuAssert(tc, "Unable to set request context.", res == KSI_OK);
+
+	res = KSI_AsyncService_addRequest(as, reqHandle);
+	CuAssert(tc, "Unable to add request", res == KSI_OK);
+
+	res = KSI_AsyncService_run(as, &respHandle, NULL);
+	CuAssert(tc, "Failed to run async service.", res == KSI_OK && respHandle != NULL);
+	CuAssert(tc, "Handle mismatch.",  respHandle == reqHandle);
+
+	res = KSI_AsyncHandle_getState(respHandle, &state);
+	CuAssert(tc, "Unable to get request state.", res == KSI_OK && state == KSI_ASYNC_STATE_ERROR);
+
+	KSI_AsyncHandle_free(respHandle);
+	KSI_AsyncService_free(as);
+}
+
+static void Test_AsyncSign_duplicateResponse(CuTest* tc) {
+	static const char *TEST_AGGR_RESPONSE_FILES[] = {
+		"resource/tlv/" TEST_RESOURCE_AGGR_VER "/ok-sig-2014-07-01.1-aggr_response-duplicate-response.tlv",
+	};
+	static const size_t TEST_AGGR_RESP_COUNT = sizeof(TEST_AGGR_RESPONSE_FILES) / sizeof(TEST_AGGR_RESPONSE_FILES[0]);
+
+	int res;
+	KSI_AsyncService *as = NULL;
+	KSI_AsyncHandle *reqHandle = NULL;
+	KSI_AsyncHandle *respHandle = NULL;
+	KSI_Signature *signature = NULL;
+	int state = KSI_ASYNC_STATE_UNDEFINED;
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	res = KSI_SigningAsyncService_new(ctx, &as);
+	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
+
+	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
+	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
+
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
+
+	res = KSI_AsyncService_addRequest(as, reqHandle);
+	CuAssert(tc, "Unable to add request", res == KSI_OK);
+
+	res = KSI_AsyncService_run(as, &respHandle, NULL);
+	CuAssert(tc, "Failed to run async service.", res == KSI_OK && respHandle != NULL);
+	CuAssert(tc, "Handle mismatch.",  respHandle == reqHandle);
+
+	res = KSI_AsyncHandle_getState(respHandle, &state);
+	CuAssert(tc, "Unable to get request state.", res == KSI_OK && state == KSI_ASYNC_STATE_RESPONSE_RECEIVED);
+
+	res = KSI_AsyncHandle_getSignature(respHandle, &signature);
+	CuAssert(tc, "Unable to extract signature.", res == KSI_OK && signature != NULL);
+
+	KSI_Signature_free(signature);
 	KSI_AsyncHandle_free(respHandle);
 	KSI_AsyncService_free(as);
 }
@@ -1274,131 +1372,6 @@ static void Test_AsyncSign_multipleRequests_collect_aggrResp301(CuTest* tc) {
 	KSI_AsyncService_free(as);
 }
 
-static void Test_AsyncSign_invalidResponse(CuTest* tc) {
-	static const char *TEST_AGGR_RESPONSE_FILES[] = {
-		"resource/tlv/" TEST_RESOURCE_AGGR_VER "/extend_response.tlv",
-	};
-	static const size_t TEST_AGGR_RESP_COUNT = sizeof(TEST_AGGR_RESPONSE_FILES) / sizeof(TEST_AGGR_RESPONSE_FILES[0]);
-
-	int res;
-	KSI_AsyncService *as = NULL;
-	KSI_AsyncHandle *reqHandle = NULL;
-	KSI_AsyncHandle *respHandle = NULL;
-	KSI_DataHash *hsh = NULL;
-	int state = KSI_ASYNC_STATE_UNDEFINED;
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-
-	res = KSI_SigningAsyncService_new(ctx, &as);
-	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
-
-	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
-	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
-
-	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
-	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
-
-	res = KSITest_createAggrAsyncHandle(ctx, 0, NULL, 0, KSI_HASHALG_INVALID, KSI_DataHash_ref(hsh), 0, 0, &reqHandle);
-	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
-
-	res = KSI_AsyncHandle_setRequestCtx(reqHandle, (void*)hsh, (void (*)(void*))KSI_DataHash_free);
-	CuAssert(tc, "Unable to set request context.", res == KSI_OK);
-
-	res = KSI_AsyncService_addRequest(as, reqHandle);
-	CuAssert(tc, "Unable to add request", res == KSI_OK);
-
-	res = KSI_AsyncService_run(as, &respHandle, NULL);
-	CuAssert(tc, "Failed to run async service.", res == KSI_OK && respHandle != NULL);
-	CuAssert(tc, "Handle mismatch.",  respHandle == reqHandle);
-
-	res = KSI_AsyncHandle_getState(respHandle, &state);
-	CuAssert(tc, "Unable to get request state.", res == KSI_OK && state == KSI_ASYNC_STATE_ERROR);
-
-	KSI_AsyncHandle_free(respHandle);
-	KSI_AsyncService_free(as);
-}
-
-static void Test_AsyncSign_additionalDuplicateResponse(CuTest* tc) {
-	static const char *TEST_AGGR_RESPONSE_FILES[] = {
-		"resource/tlv/" TEST_RESOURCE_AGGR_VER "/ok-sig-2014-07-01.1-aggr_response-duplicate-response.tlv",
-	};
-	static const size_t TEST_AGGR_RESP_COUNT = sizeof(TEST_AGGR_RESPONSE_FILES) / sizeof(TEST_AGGR_RESPONSE_FILES[0]);
-
-	int res;
-	KSI_AsyncService *as = NULL;
-	KSI_AsyncHandle *reqHandle = NULL;
-	KSI_AsyncHandle *respHandle = NULL;
-	KSI_Signature *signature = NULL;
-	int state = KSI_ASYNC_STATE_UNDEFINED;
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-
-	res = KSI_SigningAsyncService_new(ctx, &as);
-	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
-
-	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
-	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
-
-	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
-	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
-
-	res = KSI_AsyncService_addRequest(as, reqHandle);
-	CuAssert(tc, "Unable to add request", res == KSI_OK);
-
-	res = KSI_AsyncService_run(as, &respHandle, NULL);
-	CuAssert(tc, "Failed to run async service.", res == KSI_OK && respHandle != NULL);
-	CuAssert(tc, "Handle mismatch.",  respHandle == reqHandle);
-
-	res = KSI_AsyncHandle_getState(respHandle, &state);
-	CuAssert(tc, "Unable to get request state.", res == KSI_OK && state == KSI_ASYNC_STATE_RESPONSE_RECEIVED);
-
-	res = KSI_AsyncHandle_getSignature(respHandle, &signature);
-	CuAssert(tc, "Unable to extract signature.", res == KSI_OK && signature != NULL);
-
-	KSI_Signature_free(signature);
-	KSI_AsyncHandle_free(respHandle);
-	KSI_AsyncService_free(as);
-}
-
-static void Test_AsyncSign_additionalRandomResponses(CuTest* tc) {
-	static const char *TEST_AGGR_RESPONSE_FILES[] = {
-		"resource/tlv/" TEST_RESOURCE_AGGR_VER "/ok-sig-2014-07-01.1-aggr-response-multiple-responses.tlv",
-	};
-	static const size_t TEST_AGGR_RESP_COUNT = sizeof(TEST_AGGR_RESPONSE_FILES) / sizeof(TEST_AGGR_RESPONSE_FILES[0]);
-
-	int res;
-	KSI_AsyncService *as = NULL;
-	KSI_AsyncHandle *reqHandle = NULL;
-	KSI_AsyncHandle *respHandle = NULL;
-	KSI_Signature *signature = NULL;
-	int state = KSI_ASYNC_STATE_UNDEFINED;
-
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-
-	res = KSI_SigningAsyncService_new(ctx, &as);
-	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
-
-	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
-	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
-
-	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
-	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
-
-	res = KSI_AsyncService_run(as, &respHandle, NULL);
-	CuAssert(tc, "Failed to run async service.", res == KSI_OK && respHandle != NULL);
-	CuAssert(tc, "Handle mismatch.",  respHandle == reqHandle);
-
-	res = KSI_AsyncHandle_getState(respHandle, &state);
-	CuAssert(tc, "Unable to get request state.", res == KSI_OK && state == KSI_ASYNC_STATE_RESPONSE_RECEIVED);
-
-	res = KSI_AsyncHandle_getSignature(respHandle, &signature);
-	CuAssert(tc, "Unable to extract signature.", res == KSI_OK && signature != NULL);
-
-	KSI_Signature_free(signature);
-	KSI_AsyncHandle_free(respHandle);
-	KSI_AsyncService_free(as);
-}
-
 CuSuite* KSITest_NetAsync_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -1421,14 +1394,13 @@ CuSuite* KSITest_NetAsync_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_responseVerifyWithRequest);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_responseMissingHeader);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_ErrorStatusWithSignatureElementsInResponse);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_invalidResponse);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_duplicateResponse);
 
 	SUITE_ADD_TEST(suite, Test_AsyncSign_multipleRequests_loop);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_multipleRequests_loop_cacheSize5);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_multipleRequests_collect);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_multipleRequests_collect_aggrResp301);
-	SUITE_ADD_TEST(suite, Test_AsyncSign_invalidResponse);
-	SUITE_ADD_TEST(suite, Test_AsyncSign_additionalDuplicateResponse);
-	SUITE_ADD_TEST(suite, Test_AsyncSign_additionalRandomResponses);
 
 	return suite;
 }
