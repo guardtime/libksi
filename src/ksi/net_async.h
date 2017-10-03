@@ -228,6 +228,7 @@ extern "C" {
 		/**
 		 * A response has been received and ready to be read. This is final state of a request.
 		 * \see #KSI_AsyncHandle_getAggregationResp for extracting aggregation response.
+		 * \see #KSI_AsyncHandle_getSignature for extracting KSI signature.
 		 * \see #KSI_AsyncHandle_free for cleaning up resources.
 		 */
 		KSI_ASYNC_STATE_RESPONSE_RECEIVED,
@@ -235,29 +236,30 @@ extern "C" {
 		 * An error has occured while the request was in process. This is final state of a request.
 		 * \see #KSI_AsyncHandle_getError for reading the error code.
 		 * \see #KSI_AsyncHandle_free for cleaning up resources.
-		 * \see #KSI_AsyncService_addRequest for readding the request back into the request queue.
+		 * \see #KSI_AsyncService_addRequest for re-adding the request back into the request queue.
 		 */
 		KSI_ASYNC_STATE_ERROR
 	} KSI_AsyncHandleState;
 
 	/**
 	 * Get the number of request that have been sent, or still in send queue.
-	 * \param[in]		s				Async serice instance.
+	 * \param[in]		s				Async service instance.
 	 * \param[out]		count			Pointer to the value.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_AsyncService_getPendingCount(KSI_AsyncService *s, size_t *count);
 
 	/**
-	 * Get the number of request that have received a response.
-	 * \param[in]		s				Async serice instance.
+	 * Get the number of request that have received a response and are ready to be extracted from async service \c s.
+	 * \param[in]		s				Async service instance.
 	 * \param[out]		count			Pointer to the value.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_AsyncService_run for extracting received responses.
 	 */
 	int KSI_AsyncService_getReceivedCount(KSI_AsyncService *s, size_t *count);
 
 	/**
-	 * Enum defining async service options.
+	 * Enum defining async service options. Pay attention to the used parameter type.
 	 * \see #KSI_AsyncService_setOption for applying option values.
 	 * \see #KSI_AsyncService_getOption for extracting option values.
 	 */
@@ -267,7 +269,7 @@ extern "C" {
 		 * Async connection timeout. Time interval between when network connection has been initiated and
 		 * the point it has been established.
 		 * Default setting is 10sec.
-		 * \param[in]		timeout			Timeout in seconds. Paramer of type size_t.
+		 * \param		timeout			Timeout in seconds. Paramer of type size_t.
 		 * \see #KSI_AsyncHandle_getState for the request state.
 		 * \see #KSI_AsyncHandle_getError for the request error.
 		 * \note In case of timeout and there are any request that have not been responded yet, the request state
@@ -279,7 +281,7 @@ extern "C" {
 		 * Async request response receive timeout. Represents the time interval between when the request
 		 * was sent out and a response has been received.
 		 * Default setting is 10sec.
-		 * \param[in]		timeout			Timeout in seconds. Paramer of type size_t.
+		 * \param		timeout			Timeout in seconds. Paramer of type size_t.
 		 * \see #KSI_AsyncHandle_getState for the request state.
 		 * \see #KSI_AsyncHandle_getError for the request error.
 		 * \note In case of timeout the request state will be set to #KSI_ASYNC_STATE_ERROR
@@ -291,7 +293,7 @@ extern "C" {
 		 * Async request send timeout. Represent the time interval between when the request has been added
 		 * to the request queue and it has been sent out.
 		 * Default setting is 10sec.
-		 * \param[in]		timeout			Timeout in seconds. Paramer of type size_t.
+		 * \param		timeout			Timeout in seconds. Paramer of type size_t.
 		 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 		 * \see #KSI_AsyncHandle_getState for the request state.
 		 * \see #KSI_AsyncHandle_getError for the request error.
@@ -303,7 +305,7 @@ extern "C" {
 		/**
 		 * Maximum parallel running request count. New value may not be less than the allready set value.
 		 * Default setting is 1.
-		 * \param[in]		count			Paramer of type size_t.
+		 * \param		count			Paramer of type size_t.
 		 * \see #KSI_AsyncService_addRequest for adding asynchronous request to the output queue.
 		 */
 		KSI_ASYNC_OPT_REQUEST_CACHE_SIZE,
@@ -311,7 +313,7 @@ extern "C" {
 		/**
 		 * Maximum number of request permitted per round.
 		 * Default setting is 1.
-		 * \param[in]		count			Paramer of type size_t.
+		 * \param		count			Paramer of type size_t.
 		 * \note In case the maximum number of request is allready sent out during a round interval,
 		 * additional request will be buffered in intenal cache.
 		 */
