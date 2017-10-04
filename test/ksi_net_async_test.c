@@ -905,7 +905,7 @@ static void Test_AsyncSign_oneRequest_invalidResponse(CuTest* tc) {
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
+	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
@@ -950,7 +950,7 @@ static void Test_AsyncSign_oneRequest_twoResponsesWithSameId_validResponseFirst(
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
+	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
@@ -993,7 +993,7 @@ static void Test_AsyncSign_oneRequest_twoResponsesWithSameId_invalidResponseFirs
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
+	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
