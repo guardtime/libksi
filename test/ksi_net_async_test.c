@@ -893,6 +893,7 @@ static void Test_AsyncSign_oneRequest_invalidResponse(CuTest* tc) {
 	static const size_t TEST_AGGR_RESP_COUNT = sizeof(TEST_AGGR_RESPONSE_FILES) / sizeof(TEST_AGGR_RESPONSE_FILES[0]);
 
 	int res;
+	int error;
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *reqHandle = NULL;
 	KSI_AsyncHandle *respHandle = NULL;
@@ -925,7 +926,7 @@ static void Test_AsyncSign_oneRequest_invalidResponse(CuTest* tc) {
 
 	res = KSI_AsyncHandle_getError(respHandle, &error);
 	CuAssert(tc, "Unable to get error.", res == KSI_OK);
-	CuAssert(tc, "Error mismatch", error == KSI_NETWORK_RECIEVE_TIMEOUT);
+	CuAssert(tc, "Error mismatch", error == KSI_INVALID_FORMAT);
 
 	KSI_AsyncHandle_free(respHandle);
 	KSI_AsyncService_free(as);
@@ -1010,7 +1011,7 @@ static void Test_AsyncSign_oneRequest_twoResponsesWithSameId_invalidResponseFirs
 	CuAssert(tc, "Unable to get request state.", res == KSI_OK && state == KSI_ASYNC_STATE_RESPONSE_RECEIVED);
 
 	res = KSI_AsyncHandle_getSignature(respHandle, &signature);
-	CuAssert(tc, "Unable to extract signature.", res == KSI_OK && signature != NULL);
+	CuAssert(tc, "Signature extraction should have failed.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
 	KSI_Signature_free(signature);
 	KSI_AsyncHandle_free(respHandle);
