@@ -1012,7 +1012,6 @@ static void Test_AsyncSign_oneRequest_twoResponsesWithSameId_invalidResponseFirs
 	res = KSI_AsyncHandle_getAggregationResp(respHandle, &resp);
 	CuAssert(tc, "Unable to extract response.", res == KSI_OK && resp != NULL);
 
-	KSI_AggregationResp_free(resp);
 	KSI_Signature_free(signature);
 	KSI_AsyncHandle_free(respHandle);
 	KSI_AsyncService_free(as);
