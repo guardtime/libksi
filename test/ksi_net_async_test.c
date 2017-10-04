@@ -313,6 +313,7 @@ static void Test_AsyncSingningService_verifyRequestCacheFull(CuTest* tc) {
 		CuAssert(tc, "Unable to add request.", res == KSI_OK);
 	}
 
+	handle = NULL;
 	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &handle);
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && handle != NULL);
 
@@ -321,9 +322,6 @@ static void Test_AsyncSingningService_verifyRequestCacheFull(CuTest* tc) {
 
 	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void *)++cacheSize);
 	CuAssert(tc, "Unable to add request.", res == KSI_OK);
-
-	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &handle);
-	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && handle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, handle);
 	CuAssert(tc, "Unable to add request.", res == KSI_OK);
