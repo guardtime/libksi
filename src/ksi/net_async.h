@@ -27,7 +27,7 @@ extern "C" {
 #endif
 
 	/**
-	 * \addtogroup asyncNetwork Network interface (asynchronous).
+	 * \addtogroup asyncNetwork Network Interface (Asynchronous)
 	 * @{
 	 */
 
@@ -44,7 +44,7 @@ extern "C" {
 	 * \param[in]		ctx				KSI context.
 	 * \param[in]		req				Aggregation request.
 	 * \param[out]		o				Pointer to the receiving pointer.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note The handle takes ownership of the \c req resource, thus it may not be freed after a successful
 	 * call to this function.
 	 */
@@ -57,7 +57,7 @@ extern "C" {
 	 * \param[in]		o				Async handle object.
 	 * \param[in]		reqCtx			Request context.
 	 * \param[in]		reqCtx_free		Pointer to the context cleanup method.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_AsyncHandle_setRequestCtx(KSI_AsyncHandle *o, void *reqCtx, void (*reqCtx_free)(void*));
 
@@ -65,7 +65,7 @@ extern "C" {
 	 * Getter for the request specific context.
 	 * \param[in]		o				Async handle object.
 	 * \param[out]		reqCtx			Pointer to the receiving pointer.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_AsyncHandle_getRequestCtx(const KSI_AsyncHandle *o, const void **reqCtx);
 
@@ -73,7 +73,7 @@ extern "C" {
 	 * Get the state of the request handle.
 	 * \param[in]		h				Async handle.
 	 * \param[out]		state			Payload state #KSI_AsyncHandleState
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncHandle_getError for reading error code.
 	 * \see #KSI_AsyncHandle_getSignature for getting KSI signature.
 	 */
@@ -83,7 +83,7 @@ extern "C" {
 	 * Get the  error code for the request which state is #KSI_ASYNC_STATE_ERROR.
 	 * \param[in]		h				Async handle.
 	 * \param[out]		error			Handle error #KSI_StatusCode
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncHandle_getState for getting the state of the request.
 	 */
 	int KSI_AsyncHandle_getError(const KSI_AsyncHandle *h, int *error);
@@ -92,7 +92,7 @@ extern "C" {
 	 * Get the external error code for the request which state is #KSI_ASYNC_STATE_ERROR.
 	 * \param[in]		h				Async handle.
 	 * \param[out]		ext				Handle error message.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncHandle_getState for getting the state of the request.
 	 */
 	int KSI_AsyncHandle_getExtError(const KSI_AsyncHandle *h, long *ext);
@@ -101,17 +101,17 @@ extern "C" {
 	 * Get the error message for the request which state is #KSI_ASYNC_STATE_ERROR.
 	 * \param[in]		h				Async handle.
 	 * \param[out]		msg				Handle external error code.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncHandle_getState for getting the state of the request.
 	 * \see #KSI_Utf8String_cstr for message stringification.
 	 */
 	int KSI_AsyncHandle_getErrorMessage(const KSI_AsyncHandle *h, KSI_Utf8String **msg);
 
 	/**
-	 * Get the request id.
+	 * Get the request ID.
 	 * \param[in]		h				Async handle.
 	 * \param[out]		id				Request ID.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note The value is only valid after a successful call to #KSI_AsyncService_addRequest.
 	 * \see #KSI_AsyncService_addRequest for adding asynchronous request to the output queue.
 	 */
@@ -121,7 +121,7 @@ extern "C" {
 	 * Getter for the aggregation request.
 	 * \param[in]		h				Async handle.
 	 * \param[out]		req				Pointer to the receiving pointer.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_AsyncHandle_getAggregationReq(const KSI_AsyncHandle *h, KSI_AggregationReq **req);
 
@@ -129,7 +129,7 @@ extern "C" {
 	 * Getter for the aggregation response.
 	 * \param[in]		h				Async handle.
 	 * \param[out]		resp			Pointer to the receiving pointer.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_SignatureBuilder_openFromAggregationResp for building a signature from aggregation response.
 	 * \see #KSI_AsyncHandle_getSignature for getting a verified signature.
 	 */
@@ -139,7 +139,7 @@ extern "C" {
 	 * KSI signature getter. The returned signature is verified internally.
 	 * \param[in]		h				Async handle.
 	 * \param[out]		signature		Pointer to the receiving pointer.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note The returned resources must be freed by the caller.
 	 * \note The signature will only be returned if the handle state is #KSI_ASYNC_STATE_RESPONSE_RECEIVED.
 	 * \see #KSI_AsyncHandle_getState for getting the state of the request.
@@ -159,7 +159,7 @@ extern "C" {
 	 * Construct an abstract async client object.
 	 * \param[in]		ctx				KSI context.
 	 * \param[out]		c				Pointer to the receiving pointer.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_AbstractAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c);
 
@@ -174,7 +174,7 @@ extern "C" {
 	 * Creates and initalizes a concrete async service object to be used to interract with aggregator endpoint.
 	 * \param[in]		ctx				KSI context.
 	 * \param[out]		service			Pointer to the receiving pointer.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncService_free
 	 */
 	int KSI_SigningAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service);
@@ -205,7 +205,7 @@ extern "C" {
 	 * \param[in]		service			Async service instance.
 	 * \param[out]		handle			Async handle associated with a request.
 	 * \param[out]		waiting			Total number of requests in process.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note The \c waiting count can be ignored by setting it to NULL.
 	 * \note The returned \c handle will be set to NULL if there is no response in queue.
 	 * \see #KSI_AsyncService_addRequest for adding asynchronous request to the output queue.
@@ -223,17 +223,17 @@ extern "C" {
 		KSI_ASYNC_STATE_UNDEFINED = 0,
 		/** The request is cached in the output queue. */
 		KSI_ASYNC_STATE_WAITING_FOR_DISPATCH,
-		/** The request has been dispathed */
+		/** The request has been dispathed. */
 		KSI_ASYNC_STATE_WAITING_FOR_RESPONSE,
 		/**
-		 * A response has been received and ready to be read. This is final state of a request.
+		 * The response has been received and is ready to be read. This is the final state of a request.
 		 * \see #KSI_AsyncHandle_getAggregationResp for extracting aggregation response.
 		 * \see #KSI_AsyncHandle_getSignature for extracting KSI signature.
 		 * \see #KSI_AsyncHandle_free for cleaning up resources.
 		 */
 		KSI_ASYNC_STATE_RESPONSE_RECEIVED,
 		/**
-		 * An error has occured while the request was in process. This is final state of a request.
+		 * An error has occured while the request was in process. This is the final state of a request.
 		 * \see #KSI_AsyncHandle_getError for reading the error code.
 		 * \see #KSI_AsyncHandle_free for cleaning up resources.
 		 * \see #KSI_AsyncService_addRequest for re-adding the request back into the request queue.
@@ -242,10 +242,10 @@ extern "C" {
 	} KSI_AsyncHandleState;
 
 	/**
-	 * Get the number of request that have been sent, or still in send queue.
+	 * Get the number of requests that have been sent or are still in send queue.
 	 * \param[in]		s				Async service instance.
 	 * \param[out]		count			Pointer to the value.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_AsyncService_getPendingCount(KSI_AsyncService *s, size_t *count);
 
@@ -253,7 +253,7 @@ extern "C" {
 	 * Get the number of request that have received a response and are ready to be extracted from async service \c s.
 	 * \param[in]		s				Async service instance.
 	 * \param[out]		count			Pointer to the value.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncService_run for extracting received responses.
 	 */
 	int KSI_AsyncService_getReceivedCount(KSI_AsyncService *s, size_t *count);
@@ -268,11 +268,11 @@ extern "C" {
 		/**
 		 * Async connection timeout. Time interval between when network connection has been initiated and
 		 * the point it has been established.
-		 * Default setting is 10sec.
+		 * Default setting is 10 sec.
 		 * \param		timeout			Timeout in seconds. Paramer of type size_t.
 		 * \see #KSI_AsyncHandle_getState for the request state.
 		 * \see #KSI_AsyncHandle_getError for the request error.
-		 * \note In case of timeout and there are any request that have not been responded yet, the request state
+		 * \note In case of timeout, if there are any request that have not been responded yet, the request state
 		 * will be set to #KSI_ASYNC_STATE_ERROR and error #KSI_NETWORK_CONNECTION_TIMEOUT.
 		 */
 		KSI_ASYNC_OPT_CON_TIMEOUT = 0,
@@ -280,25 +280,25 @@ extern "C" {
 		/**
 		 * Async request response receive timeout. Represents the time interval between when the request
 		 * was sent out and a response has been received.
-		 * Default setting is 10sec.
+		 * Default setting is 10 sec.
 		 * \param		timeout			Timeout in seconds. Paramer of type size_t.
 		 * \see #KSI_AsyncHandle_getState for the request state.
 		 * \see #KSI_AsyncHandle_getError for the request error.
 		 * \note In case of timeout the request state will be set to #KSI_ASYNC_STATE_ERROR
-		 * and error to #KSI_NETWORK_RECIEVE_TIMEOUT
+		 * and error to #KSI_NETWORK_RECIEVE_TIMEOUT.
 		 */
 		KSI_ASYNC_OPT_RCV_TIMEOUT,
 
 		/**
 		 * Async request send timeout. Represent the time interval between when the request has been added
 		 * to the request queue and it has been sent out.
-		 * Default setting is 10sec.
+		 * Default setting is 10 sec.
 		 * \param		timeout			Timeout in seconds. Paramer of type size_t.
-		 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+		 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 		 * \see #KSI_AsyncHandle_getState for the request state.
 		 * \see #KSI_AsyncHandle_getError for the request error.
 		 * \note In case of timeout the request state will be set to #KSI_ASYNC_STATE_ERROR
-		 * and error to #KSI_NETWORK_SEND_TIMEOUT
+		 * and error to #KSI_NETWORK_SEND_TIMEOUT.
 		 */
 		KSI_ASYNC_OPT_SND_TIMEOUT,
 
@@ -328,7 +328,7 @@ extern "C" {
 	 * \param[in]		s				Async service instance.
 	 * \param[in]		option			Option to be updated from #KSI_AsyncOption.
 	 * \param[in]		value			Option value as specified in #KSI_AsyncOption.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncOption defines supported options and parameter types.
 	 * \see #KSI_AsyncService_getOption for extracting option values.
 	 */
@@ -339,7 +339,7 @@ extern "C" {
 	 * \param[in]		s				Async service instance.
 	 * \param[in]		option			Option to be updated from #KSI_AsyncOption.
 	 * \param[out]		value			Option value as specified in #KSI_AsyncOption.
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncOption defines supported options and parameter types.
 	 * \see #KSI_AsyncService_setOption for applying option values.
 	 */

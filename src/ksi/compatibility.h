@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 /**
- * \addtogroup comp Cross-platform compatibility functions.
+ * \addtogroup comp Cross-platform Compatibility Functions
  * @{
  */
 

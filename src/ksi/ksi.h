@@ -37,7 +37,7 @@ extern "C" {
 #endif
 
 /**
- * \addtogroup base KSI base functionality
+ * \addtogroup base KSI Base Functionality
  * @{
  */
 

@@ -30,7 +30,7 @@ extern "C" {
 #endif
 
 /**
- * \addtogroup hashchain Hashchain computation.
+ * \addtogroup hashchain Hashchain Computation
  * This module contains hash chain computation methods.
  * General hash chains are represented as a list of #KSI_HashChainLink objects, where the first
  * element is also the first sibling.
