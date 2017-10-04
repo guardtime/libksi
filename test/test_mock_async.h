@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2017 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -17,38 +17,21 @@
  * reserves and retains all trademark rights.
  */
 
-#ifndef KSI_ERR_H_
-#define KSI_ERR_H_
+#ifndef TEST_MOCK_ASYNC_H_
+#define TEST_MOCK_ASYNC_H_
 
-#include "types.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
+#include <ksi/ksi.h>
 
 /**
- * \addtogroup errorhandling Errorhandling Functions
- * @{
+ * Mock for async service endpoint setter. The input array \c paths files should be in binary tlv format.
+ * Only one file is read per #KSI_AsyncService_run invocation. Each file can contain multiple PDU's.
+ * \param[in]		service		Async service instance.
+ * \param[in]		paths		Array on test resource file paths.
+ * \param[in]		nofPaths	Number of paths in the array \c paths.
+ * \param[in]		loginId		User name.
+ * \param[in]		key			HMAC shared secret.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
+int KSITest_MockAsyncService_setEndpoint(KSI_AsyncService *service, const char **paths, size_t nofPaths, const char *loginId, const char *key);
 
-/**
- * Clear all errors from context.
- * \param[in]		ctx			KSI context.
- */
-void KSI_ERR_clearErrors(KSI_CTX *ctx);
-
-/**
- * Push an error message to the error stack of the context.
- */
-void KSI_ERR_push(KSI_CTX *ctx, int statusCode, long extErrorCode, const char *fileName, unsigned int lineNr, const char *message);
-
-/**
- * @}
- */
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* KSI_ERR_H_ */
+#endif /* TEST_MOCK_ASYNC_H_ */

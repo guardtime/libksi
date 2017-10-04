@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2017 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -49,6 +49,79 @@ static const char *TEST_REQUESTS[] = {
 	"and", "proves", "time", "of", "existence",
 	NULL
 };
+static const size_t NOF_TEST_REQUESTS = (sizeof(TEST_REQUESTS) / sizeof(TEST_REQUESTS[0])) - 1;
+
+static void verifyOption(CuTest* tc, KSI_AsyncService *s, int opt, size_t defVal, size_t newVal) {
+	int res;
+	size_t optVal = 0;
+
+	res = KSI_AsyncService_getOption(s, opt, (void *)&optVal);
+	CuAssert(tc, "Async service option value mismatch.", res == KSI_OK && optVal == defVal);
+
+	res = KSI_AsyncService_setOption(s, opt, (void *)newVal);
+	CuAssert(tc, "Unable to set async service option.", res == KSI_OK);
+
+	res = KSI_AsyncService_getOption(s, opt, (void *)&optVal);
+	CuAssert(tc, "Async service option value mismatch.", res == KSI_OK && optVal == newVal);
+}
+
+static void asyncSigning_verifyOptions(CuTest* tc, const char *url, const char *user, const char *pass) {
+	int res;
+	KSI_AsyncService *as = NULL;
+
+	res = KSI_SigningAsyncService_new(ctx, &as);
+	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
+
+	res = KSI_AsyncService_setEndpoint(as, url, user, pass);
+	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
+
+	verifyOption(tc, as, KSI_ASYNC_OPT_CON_TIMEOUT, 10, 15);
+	verifyOption(tc, as, KSI_ASYNC_OPT_RCV_TIMEOUT, 10, 15);
+	verifyOption(tc, as, KSI_ASYNC_OPT_SND_TIMEOUT, 10, 15);
+	verifyOption(tc, as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, 1, 15);
+	verifyOption(tc, as, KSI_ASYNC_OPT_MAX_REQUEST_COUNT, 1, 15);
+
+	KSI_AsyncService_free(as);
+}
+
+void Test_AsyncSingningService_verifyOptions_tcp(CuTest* tc) {
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	asyncSigning_verifyOptions(tc, KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
+}
+
+static void asyncSigning_verifyCacheSizeOption(CuTest* tc, const char *url, const char *user, const char *pass) {
+	int res;
+	KSI_AsyncService *as = NULL;
+	size_t optVal = 0;
+
+	res = KSI_SigningAsyncService_new(ctx, &as);
+	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
+
+	res = KSI_AsyncService_setEndpoint(as, url, user, pass);
+	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
+
+	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void *)10);
+	CuAssert(tc, "Unable to set async service option.", res == KSI_OK);
+
+	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void *)10);
+	CuAssert(tc, "Unable to set async service option.", res == KSI_OK);
+
+	res = KSI_AsyncService_getOption(as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void *)&optVal);
+	CuAssert(tc, "Async service option value mismatch.", res == KSI_OK && optVal == 10);
+
+	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void *)(optVal - 1));
+	CuAssert(tc, "Unable to set async service option.", res == KSI_INVALID_ARGUMENT);
+
+	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void *)(optVal + 1));
+	CuAssert(tc, "Unable to set async service option.", res == KSI_OK);
+
+	KSI_AsyncService_free(as);
+}
+
+void Test_AsyncSingningService_verifyCacheSizeOption_tcp(CuTest* tc) {
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	asyncSigning_verifyCacheSizeOption(tc, KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
+}
 
 static void asyncSigning_loop_getResponse(CuTest* tc, const char *url, const char *user, const char *pass) {
 	int res;
@@ -67,6 +140,12 @@ static void asyncSigning_loop_getResponse(CuTest* tc, const char *url, const cha
 
 	res = KSI_AsyncService_setEndpoint(as, url, user, pass);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
+
+	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_MAX_REQUEST_COUNT, (void *)(1 << 3));
+	CuAssert(tc, "Unable to set maximum request count.", res == KSI_OK);
+
+	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void*)(NOF_TEST_REQUESTS));
+	CuAssert(tc, "Unable to set request cache size.", res == KSI_OK);
 
 	p_req = TEST_REQUESTS;
 	do {
@@ -122,15 +201,21 @@ static void asyncSigning_loop_getResponse(CuTest* tc, const char *url, const cha
 
 		res = KSI_AsyncHandle_getState(respHandle, &state);
 		CuAssert(tc, "Unable to get request state.", res == KSI_OK && state != KSI_ASYNC_STATE_UNDEFINED);
-		CuAssert(tc, "Requests must succeed.", state != KSI_ASYNC_STATE_ERROR);
 
 		switch (state) {
 			case KSI_ASYNC_STATE_RESPONSE_RECEIVED: {
 					KSI_DataHash *reqCtx = NULL;
 					KSI_DataHash *inpHsh = NULL;
+					KSI_DataHash *docHsh = NULL;
+					KSI_DataHash *reqHsh = NULL;
 					KSI_AggregationResp *resp = NULL;
+					KSI_AggregationReq *req = NULL;
 					KSI_AggregationHashChainList *aggrChainList = NULL;
 					KSI_AggregationHashChain *chain = NULL;
+					KSI_Signature *signature = NULL;
+					int error = 0;
+					long errorExt = 0;
+					KSI_Utf8String *msg = NULL;
 
 					KSI_LOG_debug(ctx, "%s: RESPONSE.", __FUNCTION__);
 
@@ -152,18 +237,48 @@ static void asyncSigning_loop_getResponse(CuTest* tc, const char *url, const cha
 
 					CuAssert(tc, "Request context data mismatch.", KSI_DataHash_equals(reqCtx, inpHsh));
 
+					res = KSI_AsyncHandle_getSignature(respHandle, &signature);
+					CuAssert(tc, "Unable to extract signature.", res == KSI_OK && signature != NULL);
+
+					res = KSI_Signature_getDocumentHash(signature, &docHsh);
+					CuAssert(tc, "Unable to get document hash.", res == KSI_OK && docHsh != NULL);
+
+					res = KSI_AsyncHandle_getAggregationReq(respHandle, &req);
+					CuAssert(tc, "Unable to get aggregation request.", res == KSI_OK && req != NULL);
+
+					res = KSI_AggregationReq_getRequestHash(req, &reqHsh);
+					CuAssert(tc, "Unable to get request hash.", res == KSI_OK && reqHsh != NULL);
+
+					CuAssert(tc, "Request hash mismatch.", KSI_DataHash_equals(reqHsh, inpHsh));
+					CuAssert(tc, "Document hash mismatch.", KSI_DataHash_equals(docHsh, inpHsh));
+
+					res = KSI_AsyncHandle_getError(respHandle, &error);
+					CuAssert(tc, "There should be no error.", res == KSI_OK && error == KSI_OK);
+
+					res = KSI_AsyncHandle_getExtError(respHandle, &errorExt);
+					CuAssert(tc, "There should be no external error.", res == KSI_OK && errorExt == 0);
+
+					res = KSI_AsyncHandle_getErrorMessage(respHandle, &msg);
+					CuAssert(tc, "There should be no error message.", res == KSI_OK && msg == NULL);
+
 					received++;
+
+					KSI_Signature_free(signature);
 				}
 				break;
 
+			case KSI_ASYNC_STATE_ERROR:
+				CuFail(tc, "Requests must succeed.");
+				break;
+
 			default:
-				/* Do nothing! */
+				CuFail(tc, "Unknown state for finalized request.");
 				break;
 		}
 
 		KSI_AsyncHandle_free(respHandle);
 	} while (onHold);
-	CuAssert(tc, "Response count mismatch.", ((sizeof(TEST_REQUESTS) / sizeof(TEST_REQUESTS[0])) - 1) == received);
+	CuAssert(tc, "Response count mismatch.", NOF_TEST_REQUESTS == received);
 
 	KSI_LOG_debug(ctx, "%s: CLEANUP.", __FUNCTION__);
 
@@ -197,8 +312,14 @@ static void asyncSigning_collect_getResponse(CuTest* tc, const char *url, const 
 	res = KSI_AsyncService_setEndpoint(as, url, user, pass);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	hndls = KSI_calloc(sizeof(TEST_REQUESTS)/sizeof(TEST_REQUESTS[0]), sizeof(KSI_AsyncHandle*));
-	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
+	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_MAX_REQUEST_COUNT, (void *)(1 << 3));
+	CuAssert(tc, "Unable to set maximum request count.", res == KSI_OK);
+
+	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void*)(NOF_TEST_REQUESTS));
+	CuAssert(tc, "Unable to set request cache size.", res == KSI_OK);
+
+	hndls = KSI_calloc(NOF_TEST_REQUESTS, sizeof(KSI_AsyncHandle*));
+	CuAssert(tc, "Out of memory.", hndls != NULL);
 
 	p_req = TEST_REQUESTS;
 	while (*p_req != NULL) {
@@ -347,7 +468,7 @@ static void asyncSigning_getError(CuTest* tc, const char *url, const char *user,
 		CuAssert(tc, "Failed to run async service.", res == KSI_OK);
 
 		if (handle == NULL) {
-			/* There is nothong to be sent. */
+			/* There is nothing has been received. */
 			/* Wait for a while to avoid busy loop. */
 			KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
 			sleep_ms(50);
@@ -424,8 +545,11 @@ static void asyncSigning_fillupCache(CuTest* tc, const char *url, const char *us
 	res = KSI_AsyncService_setEndpoint(as, url, user, pass);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
+	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void*)(NOF_TEST_REQUESTS));
+	CuAssert(tc, "Unable to set request cache size.", res == KSI_OK);
+
 	/* Fill up internal cache. */
-	for (i = 1; i < KSI_ASYNC_DEFAULT_PARALLEL_REQUESTS; i++) {
+	for (i = 0; i < NOF_TEST_REQUESTS; i++) {
 		hndl = NULL;
 		res = createDummyAggrAsyncRequest(&hndl);
 		CuAssert(tc, "Unable to create dummy request", res == KSI_OK && hndl != NULL);
@@ -537,6 +661,8 @@ void Test_AsyncSign_runEmpty_tcp(CuTest* tc) {
 CuSuite* AsyncIntegrationTests_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
+	SUITE_ADD_TEST(suite, Test_AsyncSingningService_verifyOptions_tcp);
+	SUITE_ADD_TEST(suite, Test_AsyncSingningService_verifyCacheSizeOption_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_loop_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_collect_tcp);
 	SUITE_SKIP_TEST(suite, Test_AsyncSign_useExtender_tcp, "Max", "Waiting for gateway release.");

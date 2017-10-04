@@ -229,7 +229,7 @@ int main(int argc, char **argv) {
 	nof_requests = atoi(argv[AGRV_NOF_TEST_REQUESTS]);
 	KSI_LOG_info(ksi, "Nof test requests: %lu", nof_requests);
 	do {
-		KSI_uint64_t received = 0;
+		size_t received = 0;
 
 		if (req_no < nof_requests) {
 			if (reqHandle == NULL) {

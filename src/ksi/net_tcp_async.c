@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2017 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -72,7 +72,6 @@
 
 #define TCP_INVALID_SOCKET_FD (-1)
 #define KSI_TLV_MAX_SIZE (0xffff + 4)
-#define TCP_DEFAULT_TIMEOUT (KSI_ASYNC_DEFAULT_TIMEOUT_SEC)
 
 static const int optSet = 1;
 static const int optClr = 0;
@@ -432,7 +431,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 				time_t curTime = 0;
 
 				/* Check if the request count can be restarted. */
-				if (difftime(time(&curTime), tcpCtx->roundStartAt) >= KSI_ASYNC_ROUND_DURATION_SEC) {
+				if (difftime(time(&curTime), tcpCtx->roundStartAt) >= tcpCtx->options[KSI_ASYNC_PRIVOPT_ROUND_DURATION]) {
 					KSI_LOG_info(tcpCtx->ctx, "Async TCP round request count: %u", tcpCtx->roundCount);
 					tcpCtx->roundCount = 0;
 					tcpCtx->roundStartAt = curTime;
@@ -557,13 +556,14 @@ static int getResponse(TcpAsyncCtx *tcpCtx, KSI_OctetString **response, size_t *
 
 	len = KSI_OctetStringList_length(tcpCtx->respQueue);
 	if (len != 0) {
-		/* Get last from queue to avoid list element shift. */
-		res = KSI_OctetStringList_remove(tcpCtx->respQueue, (len - 1), &tmp);
+		/* Responses should be processed in the same order as received. */
+		res = KSI_OctetStringList_remove(tcpCtx->respQueue, 0, &tmp);
 		if (res != KSI_OK) goto cleanup;
 	}
+
 	*response = tmp;
 	tmp = NULL;
-	*left = KSI_OctetStringList_length(tcpCtx->respQueue);
+	*left = (len ? len - 1 : 0);
 
 	res = KSI_OK;
 cleanup:
@@ -679,7 +679,7 @@ int KSI_TcpAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c) {
 		goto cleanup;
 	}
 
-	res = KSI_AsyncClient_construct(ctx, &tmp);
+	res = KSI_AbstractAsyncClient_new(ctx, &tmp);
 	if (res != KSI_OK) goto cleanup;
 
 	tmp->addRequest = (int (*)(void *, KSI_AsyncHandle *))addToSendQueue;

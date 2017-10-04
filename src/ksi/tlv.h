@@ -27,7 +27,7 @@ extern "C" {
 #endif
 
 	/**
-	 * \addtogroup tlv TLV manipulation
+	 * \addtogroup tlv TLV Manipulation
 	 * Most KSI objects use a type-length-value (TLV) encoding scheme. The TLV scheme is used
 	 * to encode both the KSI data structures and also protocol data units (PDUs) for transferring
 	 * them between the entities during the signature generation process. The values are octet

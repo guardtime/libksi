@@ -65,6 +65,7 @@ ALLTESTS_OBJ = \
 	$(OBJ_DIR)\ksi_net_pduv1_test.obj \
 	$(OBJ_DIR)\ksi_net_pduv2_test.obj \
 	$(OBJ_DIR)\ksi_net_common_test.obj \
+	$(OBJ_DIR)\ksi_net_async_test.obj \
 	$(OBJ_DIR)\ksi_rdr_test.obj \
 	$(OBJ_DIR)\ksi_signature_test.obj \
 	$(OBJ_DIR)\ksi_signature_builder_test.obj \
@@ -82,7 +83,8 @@ ALLTESTS_OBJ = \
 	$(OBJ_DIR)\ksi_sdk_version_test.obj \
 	$(OBJ_DIR)\ksi_flags_test.obj \
 	$(OBJ_DIR)\ksi_blocksigner_test.obj \
-	$(OBJ_DIR)\ksi_list_test.obj
+	$(OBJ_DIR)\ksi_list_test.obj \
+	$(OBJ_DIR)\test_mock_async.obj
 
 INTTESTS_OBJ = \
 	$(OBJ_DIR)\all_integration_tests.obj \

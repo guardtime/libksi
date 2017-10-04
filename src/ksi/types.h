@@ -609,6 +609,7 @@ int KSI_ErrorPdu_setErrorMessage(KSI_ErrorPdu *pdu, KSI_Utf8String *errorMsg);
 
 void KSI_AggregationPdu_free(KSI_AggregationPdu *t);
 int KSI_AggregationPdu_new(KSI_CTX *ctx, KSI_AggregationPdu **t);
+int KSI_AggregationPdu_verify(const KSI_AggregationPdu *pdu, const char *pass);
 int KSI_AggregationPdu_verifyHmac(const KSI_AggregationPdu *pdu, const char *pass);
 int KSI_AggregationPdu_calculateHmac(const KSI_AggregationPdu *t, KSI_HashAlgorithm algo_id, const char *key, KSI_DataHash **hmac);
 int KSI_AggregationPdu_updateHmac(KSI_AggregationPdu *pdu, KSI_HashAlgorithm algo_id, const char *key);

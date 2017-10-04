@@ -380,7 +380,7 @@ int main(int argc, char **argv) {
 					break;
 			}
 		}
-	} while (pending);
+	} while (pending || (req_no < nof_requests));
 
 	res = KSI_OK;
 cleanup:

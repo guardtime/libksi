@@ -1392,6 +1392,48 @@ cleanup:
 	return res;
 }
 
+int KSI_AggregationPdu_verify(const KSI_AggregationPdu *pdu, const char *pass) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Header *header = NULL;
+	KSI_DataHash *respHmac = NULL;
+
+	if (pdu == NULL || pass == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(pdu->ctx);
+
+	res = KSI_AggregationPdu_getHeader(pdu, &header);
+	if (res != KSI_OK) {
+		KSI_pushError(pdu->ctx, res, NULL);
+		goto cleanup;
+	}
+	if (header == NULL){
+		KSI_pushError(pdu->ctx, res = KSI_INVALID_FORMAT, "A successful aggregation response must have a Header.");
+		goto cleanup;
+	}
+
+	res = KSI_AggregationPdu_getHmac(pdu, &respHmac);
+	if (res != KSI_OK) {
+		KSI_pushError(pdu->ctx, res, NULL);
+		goto cleanup;
+	}
+	if (respHmac == NULL){
+		KSI_pushError(pdu->ctx, res = KSI_INVALID_FORMAT, "A successful aggregation response must have a HMAC.");
+		goto cleanup;
+	}
+
+	res = KSI_AggregationPdu_verifyHmac(pdu, pass);
+	if (res != KSI_OK) {
+		KSI_pushError(pdu->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
 int KSI_AggregationPdu_verifyHmac(const KSI_AggregationPdu *pdu, const char *pass) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *respHmac = NULL;
@@ -1858,7 +1900,7 @@ int KSI_AggregationReq_fromTlv(KSI_TLV *tlv, KSI_AggregationReq **data) {
 
 	if (tlv == NULL) {
 		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;\
+		goto cleanup;
 	}
 
 	KSI_ERR_clearErrors(ctx);
@@ -2094,7 +2136,7 @@ int KSI_AggregationResp_fromTlv(KSI_TLV *tlv, KSI_AggregationResp **data) {
 
 	if (tlv == NULL) {
 		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;\
+		goto cleanup;
 	}
 
 	KSI_ERR_clearErrors(ctx);
@@ -2110,7 +2152,7 @@ int KSI_AggregationResp_fromTlv(KSI_TLV *tlv, KSI_AggregationResp **data) {
 		goto cleanup;
 	}
 
-	KSI_LOG_debug(ctx, "AggregationResp_fromTlv: %d", KSI_TLV_getTag(tlv));
+	KSI_LOG_debug(ctx, "AggregationResp_fromTlv: %x", KSI_TLV_getTag(tlv));
 	if (KSI_TLV_getTag(tlv) == 0x202) {
 		res = KSI_TlvTemplate_extract(KSI_TLV_getCtx(tlv), tmp, tlv, KSI_TLV_TEMPLATE(KSI_AggregationResp));
 	} else if (KSI_TLV_getTag(tlv) == 0x02) {
@@ -2118,11 +2160,11 @@ int KSI_AggregationResp_fromTlv(KSI_TLV *tlv, KSI_AggregationResp **data) {
 	} else {
 		res = KSI_INVALID_FORMAT;
 	}
-
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
+
 	FROMTLV_ADD_RAW(raw, 0);
 	FROMTLV_ADD_BASETLV(baseTlv);
 	*data = tmp;
@@ -2251,7 +2293,7 @@ int KSI_ExtendReq_fromTlv(KSI_TLV *tlv, KSI_ExtendReq **data) {
 
 	if (tlv == NULL) {
 		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;\
+		goto cleanup;
 	}
 
 	KSI_ERR_clearErrors(ctx);
@@ -2472,7 +2514,7 @@ int KSI_ExtendResp_fromTlv(KSI_TLV *tlv, KSI_ExtendResp **data) {
 
 	if (tlv == NULL) {
 		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;\
+		goto cleanup;
 	}
 
 	KSI_ERR_clearErrors(ctx);

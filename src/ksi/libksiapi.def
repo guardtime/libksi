@@ -245,25 +245,30 @@ EXPORTS
 	KSI_RequestHandle_getResponseStatus
 
 	KSI_AsyncClient_free
+	KSI_AbstractAsyncClient_new
 	KSI_TcpAsyncClient_new
 	KSI_TcpAsyncClient_setService
 	KSI_AsyncHandle_free
 	KSI_AsyncAggregationHandle_new
 	KSI_AsyncHandle_setRequestCtx
 	KSI_AsyncHandle_getRequestCtx
+	KSI_AsyncHandle_getRequestId
 	KSI_AsyncHandle_getState
 	KSI_AsyncHandle_getError
 	KSI_AsyncHandle_getExtError
 	KSI_AsyncHandle_getErrorMessage
+	KSI_AsyncHandle_getAggregationReq
 	KSI_AsyncHandle_getAggregationResp
+	KSI_AsyncHandle_getSignature
 	KSI_AsyncService_free
+	KSI_AbstractAsyncService_new
 	KSI_SigningAsyncService_new
 	KSI_AsyncService_getPendingCount
 	KSI_AsyncService_getReceivedCount
 	KSI_AsyncService_setOption
+	KSI_AsyncService_getOption
 	KSI_AsyncService_run
 	KSI_AsyncService_setEndpoint
-	KSI_AsyncService_construct
 	KSI_AsyncService_addRequest
 
 ;net_http.h
@@ -561,6 +566,7 @@ EXPORTS
 	KSI_ExtendPdu_serialize
 	KSI_AggregationPdu_free
 	KSI_AggregationPdu_new
+	KSI_AggregationPdu_verify
 	KSI_AggregationPdu_verifyHmac
 	KSI_AggregationPdu_calculateHmac
 	KSI_AggregationPdu_getHeader
