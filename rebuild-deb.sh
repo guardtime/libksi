@@ -48,6 +48,15 @@ tmp_dir_lib=$deb_dir/tmp_lib
 tmp_dir_dev=$deb_dir/tmp_dev
 tmp_dir_src=$deb_dir/tmp_src
 
+# Rebuild debian changelog.
+if command  -v dch > /dev/null; then
+  echo "Generating debian changelog..."
+  packaging/deb/libksi/rebuild_changelog.sh changelog packaging/deb/libksi/DEBIAN/control packaging/deb/libksi/DEBIAN/changelog "3.2.1.0:UNRELEASED  3.15.2306:unstable"
+else
+  >&2 echo "Warning: Debian changelog file is not regenerated as dch is not installed."
+  >&2 echo "Install devscripts 'apt-get install devscripts'"
+fi
+
 
 # File list for libksi installion:
 #   libksi_libs - shared library for runtime, installed with libksi package.
