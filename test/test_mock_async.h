@@ -22,6 +22,16 @@
 
 #include <ksi/ksi.h>
 
-int TestMock_AsyncService_setEndpoint(KSI_AsyncService *s, const char **paths, size_t nofPaths, const char *loginId, const char *key);
+/**
+ * Mock for async service endpoint setter. The input array \c paths files should be in binary tlv format.
+ * Only one file is read per #KSI_AsyncService_run invocation. Each file can contain multiple PDU's.
+ * \param[in]		service		Async service instance.
+ * \param[in]		paths		Array on test resource file paths.
+ * \param[in]		nofPaths	Number of paths in the array \c paths.
+ * \param[in]		loginId		User name.
+ * \param[in]		key			HMAC shared secret.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
+int KSITest_MockAsyncService_setEndpoint(KSI_AsyncService *service, const char **paths, size_t nofPaths, const char *loginId, const char *key);
 
 #endif /* TEST_MOCK_ASYNC_H_ */

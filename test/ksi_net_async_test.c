@@ -134,7 +134,7 @@ void Test_AsyncSingningService_verifyOptions(CuTest* tc) {
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, NULL, 0, NULL, NULL);
+	res = KSITest_MockAsyncService_setEndpoint(as, NULL, 0, NULL, NULL);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	verifyOption(tc, as, KSI_ASYNC_OPT_CON_TIMEOUT, 10, 15);
@@ -154,7 +154,7 @@ static void Test_AsyncSingningService_verifyCacheSizeOption(CuTest* tc) {
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, NULL, 0, NULL, NULL);
+	res = KSITest_MockAsyncService_setEndpoint(as, NULL, 0, NULL, NULL);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void *)10);
@@ -187,7 +187,7 @@ static void Test_AsyncSingningService_addEmptyReq(CuTest* tc) {
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, NULL, 0, "anon", "anon");
+	res = KSITest_MockAsyncService_setEndpoint(as, NULL, 0, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSI_AggregationReq_new(ctx, &req);
@@ -236,7 +236,7 @@ static void Test_AsyncSingningService_runEmpty(CuTest* tc) {
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, NULL, 0, NULL, NULL);
+	res = KSITest_MockAsyncService_setEndpoint(as, NULL, 0, NULL, NULL);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSI_AsyncService_run(as, &hndl, &onHold);
@@ -260,7 +260,7 @@ static void Test_AsyncSingningService_verifyReqId(CuTest* tc) {
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, NULL, 0, "anon", "anon");
+	res = KSITest_MockAsyncService_setEndpoint(as, NULL, 0, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0x1234, &handle);
@@ -297,7 +297,7 @@ static void Test_AsyncSingningService_verifyRequestCacheFull(CuTest* tc) {
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, NULL, 0, "anon", "anon");
+	res = KSITest_MockAsyncService_setEndpoint(as, NULL, 0, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSI_AsyncService_getOption(as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void *)&cacheSize);
@@ -356,7 +356,7 @@ static void Test_AsyncSign_oneRequest_verifyReqCtx(CuTest* tc) {
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
+	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
@@ -428,7 +428,7 @@ static void Test_AsyncSign_oneRequest_verifySignature(CuTest* tc) {
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
+	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
@@ -493,7 +493,7 @@ static void Test_AsyncSign_oneRequest_multipleResponses_verifySignature(CuTest* 
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
+	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
@@ -554,7 +554,7 @@ static void Test_AsyncSign_oneRequest_verifyNoError(CuTest* tc) {
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
+	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
@@ -602,7 +602,7 @@ static void Test_AsyncSign_oneRequest_responseWithPushConf(CuTest* tc) {
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
+	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
@@ -648,7 +648,7 @@ static void Test_AsyncSign_oneRequest_wrongResponse_getSignatureFail(CuTest* tc)
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
+	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
@@ -687,7 +687,7 @@ static void Test_AsyncSign_oneRequest_wrongResponseReqId(CuTest* tc) {
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
+	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
@@ -725,7 +725,7 @@ static void Test_AsyncSign_oneRequest_wrongResponseReqId_rcvTimeout0(CuTest* tc)
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
+	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
@@ -784,7 +784,7 @@ static void Test_AsyncSign_oneRequest_responseVerifyWithRequest(CuTest* tc) {
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
+	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
@@ -845,7 +845,7 @@ static void Test_AsyncSign_oneRequest_ErrorStatusWithSignatureElementsInResponse
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
+	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
@@ -892,7 +892,7 @@ static void Test_AsyncSign_oneRequest_responseMissingHeader(CuTest* tc) {
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
+	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
@@ -960,7 +960,7 @@ static void Test_AsyncSign_multipleRequests_loop(CuTest* tc) {
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, TEST_REQ_AGGR_RESPONSE_FILES, TEST_REQ_DATA_COUNT, "anon", "anon");
+	res = KSITest_MockAsyncService_setEndpoint(as, TEST_REQ_AGGR_RESPONSE_FILES, TEST_REQ_DATA_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void*)(TEST_REQ_DATA_COUNT));
@@ -1045,7 +1045,7 @@ static void Test_AsyncSign_multipleRequests_loop_cacheSize5(CuTest* tc) {
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, TEST_REQ_AGGR_RESPONSE_FILES, TEST_REQ_DATA_COUNT, "anon", "anon");
+	res = KSITest_MockAsyncService_setEndpoint(as, TEST_REQ_AGGR_RESPONSE_FILES, TEST_REQ_DATA_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void*)5);
@@ -1135,7 +1135,7 @@ static void Test_AsyncSign_multipleRequests_collect(CuTest* tc) {
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, TEST_REQ_AGGR_RESPONSE_FILES, TEST_REQ_DATA_COUNT, "anon", "anon");
+	res = KSITest_MockAsyncService_setEndpoint(as, TEST_REQ_AGGR_RESPONSE_FILES, TEST_REQ_DATA_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void*)(TEST_REQ_DATA_COUNT));
@@ -1216,7 +1216,7 @@ static void Test_AsyncSign_multipleRequests_collect_aggrResp301(CuTest* tc) {
 	res = KSI_SigningAsyncService_new(ctx, &as);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
-	res = TestMock_AsyncService_setEndpoint(as, TEST_REQ_AGGR_RESPONSE_FILES, 1, "anon", "anon");
+	res = KSITest_MockAsyncService_setEndpoint(as, TEST_REQ_AGGR_RESPONSE_FILES, 1, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void*)(TEST_REQ_DATA_COUNT));
