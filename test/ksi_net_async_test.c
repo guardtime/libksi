@@ -957,7 +957,7 @@ static void Test_AsyncSign_oneRequest_twoResponsesWithSameId_validResponseFirst(
 	res = KSI_AsyncService_addRequest(as, reqHandle);
 	CuAssert(tc, "Unable to add request", res == KSI_OK);
 
-	//Response contains two responses (PDUs) with same request IDs. First one is valid, second one is internally invalid. First one should be used and second one discarded.
+	//Response contains two responses (PDUs) with same request IDs. First one is internally valid, second one is internally invalid. First one should be used and second one discarded.
 	res = KSI_AsyncService_run(as, &respHandle, NULL);
 	CuAssert(tc, "Failed to run async service.", res == KSI_OK && respHandle != NULL);
 	CuAssert(tc, "Handle mismatch.",  respHandle == reqHandle);
@@ -1000,7 +1000,7 @@ static void Test_AsyncSign_oneRequest_twoResponsesWithSameId_invalidResponseFirs
 	res = KSI_AsyncService_addRequest(as, reqHandle);
 	CuAssert(tc, "Unable to add request", res == KSI_OK);
 
-	//Response contains two responses (PDUs) with same request IDs. First one is valid, second one is internally invalid. First one should be used and second one discarded.
+	//Response contains two responses (PDUs) with same request IDs. First one is internally invalid, second one is internally valid. First one should be used and second one discarded.
 	res = KSI_AsyncService_run(as, &respHandle, NULL);
 	CuAssert(tc, "Failed to run async service.", res == KSI_OK && respHandle != NULL);
 	CuAssert(tc, "Handle mismatch.",  respHandle == reqHandle);
