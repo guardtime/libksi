@@ -1,4 +1,5 @@
 * IMPROVEMENT: Debian package name contains debian version.
+* IMPROVEMENT: Debian changelog is generated from the main changelog.
 * IMPROVEMENT: Libksi Debian/Ubuntu dependencies changed to make it work on both Debian 9 and Ubuntu 16.
 
 Version 3.15
