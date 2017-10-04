@@ -591,6 +591,9 @@ static void Test_AsyncSign_oneRequest_responseWithPushConf(CuTest* tc) {
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *reqHandle = NULL;
 	KSI_Integer *intVal = NULL;
+	KSI_AsyncHandle *respHandle = NULL;
+	KSI_Signature *signature = NULL;
+	int state = KSI_ASYNC_STATE_UNDEFINED;
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
@@ -611,8 +614,9 @@ static void Test_AsyncSign_oneRequest_responseWithPushConf(CuTest* tc) {
 
 	callbackCalls = 0;
 	callbackConf = NULL;
-	res = KSI_AsyncService_run(as, NULL, NULL);
+	res = KSI_AsyncService_run(as, &respHandle, NULL);
 	CuAssert(tc, "Failed to run async service.", res == KSI_OK);
+	CuAssert(tc, "Handle mismatch.",  respHandle == reqHandle);
 
 	CuAssert(tc, "Conf callback has not been invoked.", callbackCalls > 0);
 	CuAssert(tc, "Push conf is not set.", callbackConf != NULL);
@@ -624,7 +628,15 @@ static void Test_AsyncSign_oneRequest_responseWithPushConf(CuTest* tc) {
 	res = KSI_Config_getAggrPeriod(callbackConf, &intVal);
 	CuAssert(tc, "Conf aggregation period value mismatch.", res == KSI_OK && KSI_Integer_getUInt64(intVal) == 3);
 
+	res = KSI_AsyncHandle_getState(respHandle, &state);
+	CuAssert(tc, "Unable to get request state.", res == KSI_OK && state == KSI_ASYNC_STATE_RESPONSE_RECEIVED);
+
+	res = KSI_AsyncHandle_getSignature(respHandle, &signature);
+	CuAssert(tc, "Signature should be returned.", res == KSI_OK && signature != NULL);
+
+	KSI_Signature_free(signature);
 	KSI_Config_free(callbackConf);
+	KSI_AsyncHandle_free(respHandle);
 	KSI_AsyncService_free(as);
 }
 
@@ -868,6 +880,139 @@ static void Test_AsyncSign_oneRequest_ErrorStatusWithSignatureElementsInResponse
 	res = KSI_AsyncHandle_getErrorMessage(respHandle, &msg);
 	CuAssert(tc, "There should be no error message.", res == KSI_OK && msg == NULL);
 
+	KSI_AsyncHandle_free(respHandle);
+	KSI_AsyncService_free(as);
+}
+
+static void Test_AsyncSign_oneRequest_invalidResponse(CuTest* tc) {
+	static const char *TEST_AGGR_RESPONSE_FILES[] = {
+		"resource/tlv/" TEST_RESOURCE_AGGR_VER "/extend_response.tlv",
+	};
+	static const size_t TEST_AGGR_RESP_COUNT = sizeof(TEST_AGGR_RESPONSE_FILES) / sizeof(TEST_AGGR_RESPONSE_FILES[0]);
+
+	int res;
+	int error;
+	KSI_AsyncService *as = NULL;
+	KSI_AsyncHandle *reqHandle = NULL;
+	KSI_AsyncHandle *respHandle = NULL;
+	KSI_DataHash *hsh = NULL;
+	int state = KSI_ASYNC_STATE_UNDEFINED;
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	res = KSI_SigningAsyncService_new(ctx, &as);
+	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
+
+	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
+	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
+
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
+
+	res = KSI_AsyncService_addRequest(as, reqHandle);
+	CuAssert(tc, "Unable to add request", res == KSI_OK);
+
+	res = KSI_AsyncService_run(as, &respHandle, NULL);
+	CuAssert(tc, "Failed to run async service.", res == KSI_OK && respHandle != NULL);
+	CuAssert(tc, "Handle mismatch.",  respHandle == reqHandle);
+
+	res = KSI_AsyncHandle_getState(respHandle, &state);
+	CuAssert(tc, "Unable to get request state.", res == KSI_OK && state == KSI_ASYNC_STATE_ERROR);
+
+	res = KSI_AsyncHandle_getError(respHandle, &error);
+	CuAssert(tc, "Unable to get error.", res == KSI_OK);
+	CuAssert(tc, "Error mismatch", error == KSI_INVALID_FORMAT);
+
+	KSI_AsyncHandle_free(respHandle);
+	KSI_AsyncService_free(as);
+}
+
+static void Test_AsyncSign_oneRequest_twoResponsesWithSameId_validResponseFirst(CuTest* tc) {
+	static const char *TEST_AGGR_RESPONSE_FILES[] = {
+		"resource/tlv/" TEST_RESOURCE_AGGR_VER "/ok-sig-2014-07-01.1-aggr_response-duplicate-response-ok.tlv",
+	};
+	static const size_t TEST_AGGR_RESP_COUNT = sizeof(TEST_AGGR_RESPONSE_FILES) / sizeof(TEST_AGGR_RESPONSE_FILES[0]);
+
+	int res;
+	KSI_AsyncService *as = NULL;
+	KSI_AsyncHandle *reqHandle = NULL;
+	KSI_AsyncHandle *respHandle = NULL;
+	KSI_Signature *signature = NULL;
+	int state = KSI_ASYNC_STATE_UNDEFINED;
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	res = KSI_SigningAsyncService_new(ctx, &as);
+	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
+
+	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
+	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
+
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
+
+	res = KSI_AsyncService_addRequest(as, reqHandle);
+	CuAssert(tc, "Unable to add request", res == KSI_OK);
+
+	/* Response contains two responses (PDUs) with same request IDs. First one is internally valid, second one is internally invalid. First one should be used and second one discarded. */
+	res = KSI_AsyncService_run(as, &respHandle, NULL);
+	CuAssert(tc, "Failed to run async service.", res == KSI_OK && respHandle != NULL);
+	CuAssert(tc, "Handle mismatch.",  respHandle == reqHandle);
+
+	res = KSI_AsyncHandle_getState(respHandle, &state);
+	CuAssert(tc, "Unable to get request state.", res == KSI_OK && state == KSI_ASYNC_STATE_RESPONSE_RECEIVED);
+
+	res = KSI_AsyncHandle_getSignature(respHandle, &signature);
+	CuAssert(tc, "Unable to extract signature.", res == KSI_OK && signature != NULL);
+
+	KSI_Signature_free(signature);
+	KSI_AsyncHandle_free(respHandle);
+	KSI_AsyncService_free(as);
+}
+
+static void Test_AsyncSign_oneRequest_twoResponsesWithSameId_invalidResponseFirst(CuTest* tc) {
+	static const char *TEST_AGGR_RESPONSE_FILES[] = {
+		"resource/tlv/" TEST_RESOURCE_AGGR_VER "/ok-sig-2014-07-01.1-aggr_response-duplicate-response-nok.tlv",
+	};
+	static const size_t TEST_AGGR_RESP_COUNT = sizeof(TEST_AGGR_RESPONSE_FILES) / sizeof(TEST_AGGR_RESPONSE_FILES[0]);
+
+	int res;
+	KSI_AsyncService *as = NULL;
+	KSI_AsyncHandle *reqHandle = NULL;
+	KSI_AsyncHandle *respHandle = NULL;
+	KSI_Signature *signature = NULL;
+	int state = KSI_ASYNC_STATE_UNDEFINED;
+	KSI_AggregationResp *resp = NULL;
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	res = KSI_SigningAsyncService_new(ctx, &as);
+	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
+
+	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
+	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
+
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
+
+	res = KSI_AsyncService_addRequest(as, reqHandle);
+	CuAssert(tc, "Unable to add request", res == KSI_OK);
+
+	/* Response contains two responses (PDUs) with same request IDs. First one is internally invalid, second one is internally valid. First one should be used and second one discarded. */
+	res = KSI_AsyncService_run(as, &respHandle, NULL);
+	CuAssert(tc, "Failed to run async service.", res == KSI_OK && respHandle != NULL);
+	CuAssert(tc, "Handle mismatch.",  respHandle == reqHandle);
+
+	res = KSI_AsyncHandle_getState(respHandle, &state);
+	CuAssert(tc, "Unable to get request state.", res == KSI_OK && state == KSI_ASYNC_STATE_RESPONSE_RECEIVED);
+
+	res = KSI_AsyncHandle_getSignature(respHandle, &signature);
+	CuAssert(tc, "Signature extraction should have failed.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
+
+	res = KSI_AsyncHandle_getAggregationResp(respHandle, &resp);
+	CuAssert(tc, "Unable to extract response.", res == KSI_OK && resp != NULL);
+
+	KSI_Signature_free(signature);
 	KSI_AsyncHandle_free(respHandle);
 	KSI_AsyncService_free(as);
 }
@@ -1294,6 +1439,9 @@ CuSuite* KSITest_NetAsync_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_responseVerifyWithRequest);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_responseMissingHeader);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_ErrorStatusWithSignatureElementsInResponse);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_invalidResponse);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_twoResponsesWithSameId_validResponseFirst);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_twoResponsesWithSameId_invalidResponseFirst);
 
 	SUITE_ADD_TEST(suite, Test_AsyncSign_multipleRequests_loop);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_multipleRequests_loop_cacheSize5);
