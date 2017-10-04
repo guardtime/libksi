@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 	/**
-	 * \addtogroup publications Publications.
+	 * \addtogroup publications Publications
 	 * Publication file is a trust anchor for verifying keyless signatures. It contains a list
 	 * of public-key certificates for verifying authentication records and publications for verifying
 	 * calendar hash chains. Publication file has the following components that must appear in the

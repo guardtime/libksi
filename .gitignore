@@ -104,3 +104,7 @@ test/integrationtest.conf
 # Generated header files
 version.h
 /Debug/
+
+# doxygen generated html and (la)tex files
+/doc/html/
+/doc/latex/
