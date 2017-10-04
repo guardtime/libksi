@@ -556,13 +556,14 @@ static int getResponse(TcpAsyncCtx *tcpCtx, KSI_OctetString **response, size_t *
 
 	len = KSI_OctetStringList_length(tcpCtx->respQueue);
 	if (len != 0) {
-		/* Get last from queue to avoid list element shift. */
-		res = KSI_OctetStringList_remove(tcpCtx->respQueue, (len - 1), &tmp);
+		/* Responses should be processed in the same order as received. */
+		res = KSI_OctetStringList_remove(tcpCtx->respQueue, 0, &tmp);
 		if (res != KSI_OK) goto cleanup;
 	}
+
 	*response = tmp;
 	tmp = NULL;
-	*left = KSI_OctetStringList_length(tcpCtx->respQueue);
+	*left = (len ? len - 1 : 0);
 
 	res = KSI_OK;
 cleanup:

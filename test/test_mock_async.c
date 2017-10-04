@@ -291,13 +291,14 @@ static int getResponse(FileAsyncCtx *clientCtx, KSI_OctetString **response, size
 
 	len = KSI_OctetStringList_length(clientCtx->respQueue);
 	if (len != 0) {
-		/* Get last from queue to avoid list element shift. */
-		res = KSI_OctetStringList_remove(clientCtx->respQueue, (len - 1), &tmp);
+		/* Responses should be processed in the same order as received. */
+		res = KSI_OctetStringList_remove(clientCtx->respQueue, 0, &tmp);
 		if (res != KSI_OK) goto cleanup;
 	}
+
 	*response = tmp;
 	tmp = NULL;
-	*left = KSI_OctetStringList_length(clientCtx->respQueue);
+	*left = (len ? len - 1 : 0);
 
 	res = KSI_OK;
 cleanup:
@@ -434,21 +435,21 @@ cleanup:
 	return res;
 }
 
-int TestMock_AsyncService_setEndpoint(KSI_AsyncService *s, const char **paths, size_t nofPaths, const char *loginId, const char *key) {
+int KSITest_MockAsyncService_setEndpoint(KSI_AsyncService *service, const char **paths, size_t nofPaths, const char *loginId, const char *key) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	if (s == NULL) {
+	if (service == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	if (s->impl == NULL) {
-		s->impl_free = (void (*)(void*))KSI_AsyncClient_free;
-		res = FileAsyncClient_new(s->ctx, (KSI_AsyncClient **)&s->impl);
+	if (service->impl == NULL) {
+		service->impl_free = (void (*)(void*))KSI_AsyncClient_free;
+		res = FileAsyncClient_new(service->ctx, (KSI_AsyncClient **)&service->impl);
 		if (res != KSI_OK) goto cleanup;
 	}
 
-	res = FileAsyncClient_setService(s->impl, paths, nofPaths, loginId, key);
+	res = FileAsyncClient_setService(service->impl, paths, nofPaths, loginId, key);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_OK;
