@@ -28,6 +28,15 @@ extern "C" {
 
 	/**
 	 * \addtogroup asyncNetwork Network Interface (Asynchronous)
+	 * The asynchronous API provides the ability to send KSI service request in a non-blocking manner.
+	 * As a drawback, it is not guaranteed that received responses are returned in the same order as the
+	 * requests have been queued. However, you can associate each request with a private pointer.
+	 * The interface incorporates two major parts:
+	 * - #KSI_AsyncService takes care of network transport. Added request does not launch the transfer
+	 * automatically. To initiate processing of added requests you have to call #KSI_AsyncService_run.
+	 * - #KSI_AsyncHandle is a request wrapper. There can be added multiple handles to the #KSI_AsyncService
+	 * at any time. A completed request (whether with a response, or an error status) can be accessed via
+	 * #KSI_AsyncService_run input parameter \c handle.
 	 * @{
 	 */
 
