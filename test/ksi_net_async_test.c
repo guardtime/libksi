@@ -906,10 +906,7 @@ static void Test_AsyncSign_oneRequest_invalidResponse(CuTest* tc) {
 	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
-	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
-
-	res = KSITest_createAggrAsyncHandle(ctx, 0, NULL, 0, KSI_HASHALG_INVALID, KSI_DataHash_ref(hsh), 0, 0, &reqHandle);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
@@ -985,6 +982,7 @@ static void Test_AsyncSign_oneRequest_twoResponsesWithSameId_invalidResponseFirs
 	KSI_AsyncHandle *respHandle = NULL;
 	KSI_Signature *signature = NULL;
 	int state = KSI_ASYNC_STATE_UNDEFINED;
+	KSI_AggregationResp *resp = NULL;
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
@@ -1011,6 +1009,10 @@ static void Test_AsyncSign_oneRequest_twoResponsesWithSameId_invalidResponseFirs
 	res = KSI_AsyncHandle_getSignature(respHandle, &signature);
 	CuAssert(tc, "Signature extraction should have failed.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
 
+	res = KSI_AsyncHandle_getAggregationResp(respHandle, &resp);
+	CuAssert(tc, "Unable to extract response.", res == KSI_OK && resp != NULL);
+
+	KSI_AggregationResp_free(resp);
 	KSI_Signature_free(signature);
 	KSI_AsyncHandle_free(respHandle);
 	KSI_AsyncService_free(as);
