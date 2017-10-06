@@ -58,11 +58,14 @@ libksi_la_SOURCES = \
 	log.h \
 	net.c \
 	net.h \
+	net_async.c \
+	net_async.h \
 	net_http.c \
 	net_http_curl.c \
 	net_http.h \
 	net_http_impl.h \
 	net_impl.h \
+	net_tcp_async.c \
 	net_tcp.c \
 	net_tcp.h \
 	net_tcp_impl.h \
@@ -139,6 +142,7 @@ otherinclude_HEADERS = \
 	types.h \
 	types_base.h \
 	net.h \
+	net_async.h \
 	net_http.h \
 	net_tcp.h \
 	net_file.h \

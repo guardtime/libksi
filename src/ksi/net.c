@@ -24,6 +24,7 @@
 #include "net_impl.h"
 #include "tlv.h"
 #include "ctx_impl.h"
+#include "net_async.h"
 
 KSI_IMPLEMENT_GET_CTX(KSI_NetworkClient);
 KSI_IMPLEMENT_GET_CTX(KSI_RequestHandle);
@@ -194,7 +195,7 @@ cleanup:
 
 static int uriCompose(const char *scheme, const char *user, const char *pass, const char *host, unsigned port, const char *path, const char *query, const char *fragment, char *buf, size_t len) {
 	size_t count = 0;
-	//scheme:[//[user:password@]host[:port]][/]path[?query][#fragment]
+	/* scheme:[//[user:password@]host[:port]][/]path[?query][#fragment] */
 
 	if (host == NULL || (user != NULL && pass == NULL) || (pass != NULL && user == NULL)) {
 		return KSI_INVALID_ARGUMENT;
@@ -679,57 +680,6 @@ cleanup:
 	return res;
 }
 
-static int pdu_verify_hmac(KSI_CTX *ctx, const KSI_DataHash *hmac, const char *key, KSI_HashAlgorithm conf_alg,
-		int (*calculateHmac)(const void*, int, const char*, KSI_DataHash**) ,void *PDU){
-	int res;
-	KSI_DataHash *actualHmac = NULL;
-	KSI_HashAlgorithm algo_id;
-
-	KSI_ERR_clearErrors(ctx);
-
-	if (ctx == NULL || hmac == NULL || key == NULL || calculateHmac == NULL || PDU == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_DataHash_getHashAlg(hmac, &algo_id);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* If configured, check if HMAC algorithm matches. */
-	if (conf_alg != KSI_HASHALG_INVALID && algo_id != conf_alg)	{
-		KSI_LOG_debug(ctx, "HMAC algorithm mismatch. Expected %s, received %s",
-				KSI_getHashAlgorithmName(conf_alg), KSI_getHashAlgorithmName(algo_id));
-		KSI_pushError(ctx, res = KSI_HMAC_ALGORITHM_MISMATCH, "HMAC algorithm mismatch.");
-		goto cleanup;
-	}
-
-	res = calculateHmac(PDU, algo_id, key, &actualHmac);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Check HMAC. */
-	if (!KSI_DataHash_equals(hmac, actualHmac)){
-		KSI_LOG_debug(ctx, "Verifying HMAC failed.");
-		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Calculated HMAC", actualHmac);
-		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "HMAC from response", hmac);
-		KSI_pushError(ctx, res = KSI_HMAC_MISMATCH, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_DataHash_free(actualHmac);
-
-	return res;
-}
-
 int KSI_RequestHandle_getExtendResponse(const KSI_RequestHandle *handle, KSI_ExtendResp **resp) {
 	int res;
 	KSI_ExtendPdu *pdu = NULL;
@@ -826,10 +776,7 @@ int KSI_RequestHandle_getExtendResponse(const KSI_RequestHandle *handle, KSI_Ext
 		goto cleanup;
 	}
 
-	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->extender->ksi_pass,
-			(KSI_HashAlgorithm)handle->ctx->options[KSI_OPT_EXT_HMAC_ALGORITHM],
-			(int (*)(const void*, int, const char*, KSI_DataHash**))KSI_ExtendPdu_calculateHmac,
-			(void*)pdu);
+	res = KSI_ExtendPdu_verifyHmac(pdu, handle->client->extender->ksi_pass);
 	if (res != KSI_OK) {
 		KSI_pushError(handle->ctx, res, NULL);
 		goto cleanup;
@@ -938,10 +885,7 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 	int res;
 	KSI_AggregationPdu *pdu = NULL;
 	KSI_ErrorPdu *error = NULL;
-	KSI_Header *header = NULL;
 	KSI_Config *tmpConf = NULL;
-	KSI_DataHash *respHmac = NULL;
-	KSI_DataHash *actualHmac = NULL;
 	KSI_AggregationResp *tmp = NULL;
 	const unsigned char *raw = NULL;
 	size_t len;
@@ -998,33 +942,7 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 		goto cleanup;
 	}
 
-	res = KSI_AggregationPdu_getHeader(pdu, &header);
-	if (res != KSI_OK) {
-		KSI_pushError(handle->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_AggregationPdu_getHmac(pdu, &respHmac);
-	if (res != KSI_OK) {
-		KSI_pushError(handle->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	if (header == NULL){
-		KSI_pushError(handle->ctx, res = KSI_INVALID_FORMAT, "A successful aggregation response must have a Header.");
-		goto cleanup;
-	}
-
-	/* Check HMAC. */
-	if (respHmac == NULL){
-		KSI_pushError(handle->ctx, res = KSI_INVALID_FORMAT, "A successful aggregation response must have a HMAC.");
-		goto cleanup;
-	}
-
-	res = pdu_verify_hmac(handle->ctx, respHmac, handle->client->aggregator->ksi_pass,
-			(KSI_HashAlgorithm)handle->ctx->options[KSI_OPT_AGGR_HMAC_ALGORITHM],
-			(int (*)(const void*, int, const char*, KSI_DataHash**))KSI_AggregationPdu_calculateHmac,
-			(void*)pdu);
+	res = KSI_AggregationPdu_verify(pdu, handle->client->aggregator->ksi_pass);
 	if (res != KSI_OK) {
 		KSI_pushError(handle->ctx, res, NULL);
 		goto cleanup;
@@ -1133,10 +1051,8 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 	res = KSI_OK;
 
 cleanup:
-
 	KSI_AggregationResp_free(tmp);
 	KSI_Config_free(tmpConf);
-	KSI_DataHash_free(actualHmac);
 	KSI_AggregationPdu_free(pdu);
 
 	return res;
@@ -1357,3 +1273,42 @@ KSI_IMPLEMENT_GETTER(KSI_NetworkClient, KSI_NetEndpoint *, publicationsFile, Pub
 
 
 KSI_IMPLEMENT_REF(KSI_RequestHandle);
+
+
+int KSI_AbstractAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_AsyncService *tmp = NULL;
+
+	if (ctx == NULL || service == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(ctx);
+
+	tmp = KSI_malloc(sizeof(KSI_AsyncService));
+	if (tmp == NULL) {
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	tmp->ctx = ctx;
+	tmp->impl = NULL;
+	tmp->impl_free = NULL;
+
+	tmp->addRequest = NULL;
+	tmp->responseHandler = NULL;
+	tmp->run = NULL;
+	tmp->getPendingCount = NULL;
+	tmp->getReceivedCount = NULL;
+	tmp->setOption = NULL;
+
+	tmp->uriSplit = uriSplit;
+
+	*service = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+cleanup:
+	KSI_AsyncService_free(tmp);
+	return res;
+}

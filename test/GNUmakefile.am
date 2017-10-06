@@ -19,7 +19,7 @@
 
 AM_CFLAGS=-g -Wall -I$(top_builddir)/src/
 AM_LDFLAGS=-L$(top_builddir)/src/ksi -no-install -lksi
-check_PROGRAMS=runner parse-benchmark serialize-benchmark resigner integration-tests
+check_PROGRAMS=runner parse-benchmark serialize-benchmark resigner integration-tests async-signer
 
 runner_SOURCES= \
 	all_tests.c \
@@ -28,6 +28,7 @@ runner_SOURCES= \
 	cutest/CuTest.h \
 	support_tests.c \
 	support_tests.h \
+	test_mock_async.c \
 	ksi_ctx_test.c \
 	ksi_hashchain_test.c \
 	ksi_hash_test.c \
@@ -35,6 +36,7 @@ runner_SOURCES= \
 	ksi_net_common_test.c \
 	ksi_net_pduv1_test.c \
 	ksi_net_pduv2_test.c \
+	ksi_net_async_test.c \
 	ksi_publicationsfile_test.c \
 	ksi_rdr_test.c \
 	ksi_signature_test.c \
@@ -62,6 +64,7 @@ integration_tests_SOURCES= \
 	test_conf.c \
 	test_conf.h \
 	aggre_integration_test.c \
+	async_integration_test.c \
 	ext_integration_tests.c \
 	pub_integration_tests.c \
 	integration_test_pack.c
@@ -70,6 +73,14 @@ parse_benchmark_SOURCES=parse_benchmark.c
 serialize_benchmark_SOURCES=serialize_benchmark.c
 resigner_SOURCES=resigner.c
 
+async_signer_SOURCES= \
+	test_sign_async.c \
+	cutest/CuTest.c \
+	cutest/CuTest.h \
+	support_tests.c \
+	support_tests.h \
+	test_conf.c \
+	test_conf.h
 
 clean-local:
 	rm -fr *.gcda *.gcno

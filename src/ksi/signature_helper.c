@@ -91,12 +91,62 @@ cleanup:
 	return res;
 }
 
+int KSI_Signature_verifyWithPolicy(KSI_Signature *sig, const KSI_DataHash *docHsh, KSI_uint64_t rootLevel,
+		const KSI_Policy *policy, KSI_VerificationContext *verificationContext) {
+	int res;
+	KSI_VerificationContext context;
+	KSI_PolicyVerificationResult *result = NULL;
+
+	if (sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(sig->ctx);
+
+	if (!KSI_IS_VALID_TREE_LEVEL(rootLevel)) {
+		KSI_pushError(sig->ctx, res = KSI_INVALID_FORMAT, "Aggregation level can't be larger than 0xff.");
+		goto cleanup;
+	}
+
+	res = KSI_VerificationContext_init(&context, sig->ctx);
+	if (res != KSI_OK) {
+		KSI_pushError(sig->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (verificationContext == NULL) {
+		context.documentHash = docHsh;
+		context.docAggrLevel = rootLevel;
+	} else {
+		context = *verificationContext;
+	}
+	context.signature = sig;
+
+	res = KSI_SignatureVerifier_verify(policy, &context, &result);
+	if (res != KSI_OK) {
+		KSI_pushError(sig->ctx, res, "Verification of signature aborted due to an error.");
+		goto cleanup;
+	}
+
+	if (result->finalResult.resultCode != KSI_VER_RES_OK) {
+		res = KSI_VERIFICATION_FAILURE;
+		KSI_pushError(sig->ctx, res, "Verification of signature failed.");
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_PolicyVerificationResult_free(result);
+
+	return res;
+}
+
 int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, const void *doc, size_t doc_len) {
 	int res;
 	KSI_DataHash *hsh = NULL;
-	KSI_VerificationContext context;
-	KSI_PolicyVerificationResult *result = NULL;
-	KSI_HashAlgorithm algo_id = -1;
+	KSI_HashAlgorithm algo_id = KSI_HASHALG_INVALID;
 
 	KSI_ERR_clearErrors(ctx);
 	if (sig == NULL || ctx == NULL || doc == NULL) {
@@ -116,32 +166,15 @@ int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, const void *d
 		goto cleanup;
 	}
 
-	res = KSI_VerificationContext_init(&context, ctx);
+	res = KSI_Signature_verifyWithPolicy(sig, hsh, 0, KSI_VERIFICATION_POLICY_GENERAL, NULL);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	context.signature = sig;
-	context.documentHash = hsh;
-
-	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, "Verification of signature not completed.");
-		goto cleanup;
-	}
-
-	if (result->finalResult.resultCode != KSI_VER_RES_OK) {
-		res = KSI_VERIFICATION_FAILURE;
-		KSI_pushError(ctx, res, "Verification of signature failed.");
 		goto cleanup;
 	}
 
 	res = KSI_OK;
 
 cleanup:
-
-	KSI_PolicyVerificationResult_free(result);
 	KSI_DataHash_free(hsh);
 
 	return res;

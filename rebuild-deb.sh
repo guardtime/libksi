@@ -100,6 +100,7 @@ libksi_dev_includes="\
 	$include_dir/list.h \
 	$include_dir/log.h \
 	$include_dir/net.h \
+	$include_dir/net_async.h \
 	$include_dir/net_http.h \
 	$include_dir/net_tcp.h \
 	$include_dir/net_file.h \

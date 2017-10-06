@@ -104,6 +104,7 @@ fi
 %{_includedir}/ksi/list.h
 %{_includedir}/ksi/log.h
 %{_includedir}/ksi/net.h
+%{_includedir}/ksi/net_async.h
 %{_includedir}/ksi/net_http.h
 %{_includedir}/ksi/net_tcp.h
 %{_includedir}/ksi/net_file.h

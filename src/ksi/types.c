@@ -27,6 +27,7 @@
 #include "ctx_impl.h"
 #include "pkitruststore.h"
 #include "net.h"
+#include "net_async.h"
 #include "tlv_element.h"
 #include "impl/meta_data_impl.h"
 #include "impl/meta_data_element_impl.h"
@@ -193,6 +194,7 @@ KSI_IMPLEMENT_LIST(KSI_PKISignedData, KSI_PKISignedData_free);
 KSI_IMPLEMENT_LIST(KSI_PublicationsHeader, KSI_PublicationsHeader_free);
 KSI_IMPLEMENT_LIST(KSI_CertificateRecord, KSI_CertificateRecord_free);
 KSI_IMPLEMENT_LIST(KSI_RequestHandle, KSI_RequestHandle_free);
+KSI_IMPLEMENT_LIST(KSI_AsyncHandle, KSI_AsyncHandle_free);
 
 KSI_IMPLEMENT_REF(KSI_MetaDataElement);
 KSI_IMPLEMENT_REF(KSI_MetaData);
@@ -808,6 +810,57 @@ cleanup:
 	return res;
 }
 
+int pdu_verifyHmac(KSI_CTX *ctx, const KSI_DataHash *hmac, const char *key, KSI_HashAlgorithm conf_alg,
+		int (*calculateHmac)(const void*, int, const char*, KSI_DataHash**), void *pdu){
+	int res;
+	KSI_DataHash *actualHmac = NULL;
+	KSI_HashAlgorithm algo_id;
+
+	KSI_ERR_clearErrors(ctx);
+
+	if (ctx == NULL || hmac == NULL || key == NULL || calculateHmac == NULL || pdu == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_DataHash_getHashAlg(hmac, &algo_id);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* If configured, check if HMAC algorithm matches. */
+	if (conf_alg != KSI_HASHALG_INVALID && algo_id != conf_alg)	{
+		KSI_LOG_debug(ctx, "HMAC algorithm mismatch. Expected %s, received %s",
+				KSI_getHashAlgorithmName(conf_alg), KSI_getHashAlgorithmName(algo_id));
+		KSI_pushError(ctx, res = KSI_HMAC_ALGORITHM_MISMATCH, "HMAC algorithm mismatch.");
+		goto cleanup;
+	}
+
+	res = calculateHmac(pdu, algo_id, key, &actualHmac);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Check HMAC. */
+	if (!KSI_DataHash_equals(hmac, actualHmac)){
+		KSI_LOG_debug(ctx, "Verifying HMAC failed.");
+		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Calculated HMAC", actualHmac);
+		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "HMAC from response", hmac);
+		KSI_pushError(ctx, res = KSI_HMAC_MISMATCH, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_DataHash_free(actualHmac);
+
+	return res;
+}
+
 static int pdu_calculateHmac(KSI_CTX* ctx, const void* pdu,
 		int (*getHeader)(const void*, KSI_Header**),
 		int (*getResponse)(const void*, void**),
@@ -1007,6 +1060,30 @@ cleanup:
 	return res;
 }
 
+int KSI_ExtendPdu_verifyHmac(const KSI_ExtendPdu *pdu, const char *pass) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *respHmac = NULL;
+
+	res = KSI_ExtendPdu_getHmac(pdu, &respHmac);
+	if (res != KSI_OK) {
+		KSI_pushError(pdu->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = pdu_verifyHmac(pdu->ctx, respHmac, pass,
+			(KSI_HashAlgorithm)pdu->ctx->options[KSI_OPT_EXT_HMAC_ALGORITHM],
+			(int (*)(const void*, int, const char*, KSI_DataHash**))KSI_ExtendPdu_calculateHmac,
+			(void*)pdu);
+	if (res != KSI_OK) {
+		KSI_pushError(pdu->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
 int KSI_ExtendPdu_calculateHmac(const KSI_ExtendPdu *t, KSI_HashAlgorithm algo_id, const char *key, KSI_DataHash **hmac){
 	int res = KSI_OK;
 	if (t == NULL || t->ctx == NULL)
@@ -1113,17 +1190,17 @@ int KSI_ExtendReq_enclose(KSI_ExtendReq *req, const char *loginId, const char *k
 
 	tmp->header = hdr;
 	hdr = NULL;
+	/* Every request must have a header, and at this point, this is guaranteed. */
+	if (req->ctx->requestHeaderCB != NULL) {
+		res = req->ctx->requestHeaderCB(tmp->header);
+		if (res != KSI_OK) goto cleanup;
+	}
+
 	/* Add request. */
 	if (req->config != NULL && req->ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_2) {
 		tmp->confRequest = KSI_Config_ref(req->config);
 	} else {
 		tmp->request = req;
-	}
-
-	/* Every request must have a header, and at this point, this is guaranteed. */
-	if (req->ctx->requestHeaderCB != NULL) {
-		res = req->ctx->requestHeaderCB(tmp->header);
-		if (res != KSI_OK) goto cleanup;
 	}
 
 	/* Get HMAC algorithm ID. */
@@ -1315,6 +1392,72 @@ cleanup:
 	return res;
 }
 
+int KSI_AggregationPdu_verify(const KSI_AggregationPdu *pdu, const char *pass) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Header *header = NULL;
+	KSI_DataHash *respHmac = NULL;
+
+	if (pdu == NULL || pass == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(pdu->ctx);
+
+	res = KSI_AggregationPdu_getHeader(pdu, &header);
+	if (res != KSI_OK) {
+		KSI_pushError(pdu->ctx, res, NULL);
+		goto cleanup;
+	}
+	if (header == NULL){
+		KSI_pushError(pdu->ctx, res = KSI_INVALID_FORMAT, "A successful aggregation response must have a Header.");
+		goto cleanup;
+	}
+
+	res = KSI_AggregationPdu_getHmac(pdu, &respHmac);
+	if (res != KSI_OK) {
+		KSI_pushError(pdu->ctx, res, NULL);
+		goto cleanup;
+	}
+	if (respHmac == NULL){
+		KSI_pushError(pdu->ctx, res = KSI_INVALID_FORMAT, "A successful aggregation response must have a HMAC.");
+		goto cleanup;
+	}
+
+	res = KSI_AggregationPdu_verifyHmac(pdu, pass);
+	if (res != KSI_OK) {
+		KSI_pushError(pdu->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+int KSI_AggregationPdu_verifyHmac(const KSI_AggregationPdu *pdu, const char *pass) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *respHmac = NULL;
+
+	res = KSI_AggregationPdu_getHmac(pdu, &respHmac);
+	if (res != KSI_OK) {
+		KSI_pushError(pdu->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = pdu_verifyHmac(pdu->ctx, respHmac, pass,
+			(KSI_HashAlgorithm)pdu->ctx->options[KSI_OPT_AGGR_HMAC_ALGORITHM],
+			(int (*)(const void*, int, const char*, KSI_DataHash**))KSI_AggregationPdu_calculateHmac,
+			(void*)pdu);
+	if (res != KSI_OK) {
+		KSI_pushError(pdu->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
 int KSI_AggregationPdu_calculateHmac(const KSI_AggregationPdu *t, KSI_HashAlgorithm algo_id, const char *key, KSI_DataHash **hmac){
 	int res = KSI_OK;
 	if (t == NULL || t->ctx == NULL)
@@ -1389,21 +1532,13 @@ cleanup:
 	return res;
 }
 
-int KSI_AggregationReq_enclose(KSI_AggregationReq *req, const char *loginId, const char *key, KSI_AggregationPdu **pdu) {
+int KSI_AggregationReq_encloseWithHeader(KSI_AggregationReq *req, KSI_Header *hdr, const char *key, KSI_AggregationPdu **pdu) {
 	int res;
 	KSI_AggregationPdu *tmp = NULL;
-	KSI_Header *hdr = NULL;
 	KSI_DataHash *hash = NULL;
-	size_t loginLen;
 	KSI_HashAlgorithm alg_id;
 
-	if (req == NULL || loginId == NULL || key == NULL || pdu == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	loginLen = strlen(loginId);
-	if (loginLen > UINT_MAX){
+	if (req == NULL || hdr == NULL || key == NULL || pdu == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -1412,26 +1547,15 @@ int KSI_AggregationReq_enclose(KSI_AggregationReq *req, const char *loginId, con
 	res = KSI_AggregationPdu_new(req->ctx, &tmp);
 	if (res != KSI_OK) goto cleanup;
 
-	/* Create header and initialize it with the loginId provided. */
-	res = KSI_Header_new(req->ctx, &hdr);
+	/* Set header*/
+	res = KSI_AggregationPdu_setHeader(tmp, hdr);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_Utf8String_new(req->ctx, loginId, (unsigned)loginLen + 1, &hdr->loginId);
-	if (res != KSI_OK) goto cleanup;
-
-	tmp->header = hdr;
-	hdr = NULL;
 	/* Add request. */
 	if (req->config != NULL && req->ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_2) {
 		tmp->confRequest = KSI_Config_ref(req->config);
 	} else {
 		tmp->request = req;
-	}
-
-	/* Every request must have a header, and at this point, this is guaranteed. */
-	if (req->ctx->requestHeaderCB != NULL) {
-		res = req->ctx->requestHeaderCB(tmp->header);
-		if (res != KSI_OK) goto cleanup;
 	}
 
 	/* Get HMAC algorithm ID. */
@@ -1455,11 +1579,53 @@ int KSI_AggregationReq_enclose(KSI_AggregationReq *req, const char *loginId, con
 
 cleanup:
 
-	/* Make sure we won't free the request. */
-	KSI_AggregationPdu_setRequest(tmp, NULL);
+	/* Make sure we won't free input parameters on failure. */
+	if (tmp != NULL) {
+		KSI_AggregationPdu_setHeader(tmp, NULL);
+		KSI_AggregationPdu_setRequest(tmp, NULL);
+	}
 	KSI_AggregationPdu_free(tmp);
 
-	KSI_Header_free(hdr);
+	return res;
+}
+
+int KSI_AggregationReq_enclose(KSI_AggregationReq *req, const char *loginId, const char *key, KSI_AggregationPdu **pdu) {
+	int res;
+	KSI_Header *tmp = NULL;
+	size_t loginLen;
+
+	if (req == NULL || loginId == NULL || key == NULL || pdu == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	loginLen = strlen(loginId);
+	if (loginLen > UINT_MAX){
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	/* Create header and initialize it with the loginId provided. */
+	res = KSI_Header_new(req->ctx, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_Utf8String_new(req->ctx, loginId, (unsigned)loginLen + 1, &tmp->loginId);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Every request must have a header, and at this point, this is guaranteed. */
+	if (req->ctx->requestHeaderCB != NULL) {
+		res = req->ctx->requestHeaderCB(tmp);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	res = KSI_AggregationReq_encloseWithHeader(req, tmp, key, pdu);
+	if (res != KSI_OK) goto cleanup;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+	KSI_Header_free(tmp);
 
 	return res;
 }
@@ -1734,7 +1900,7 @@ int KSI_AggregationReq_fromTlv(KSI_TLV *tlv, KSI_AggregationReq **data) {
 
 	if (tlv == NULL) {
 		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;\
+		goto cleanup;
 	}
 
 	KSI_ERR_clearErrors(ctx);
@@ -1970,7 +2136,7 @@ int KSI_AggregationResp_fromTlv(KSI_TLV *tlv, KSI_AggregationResp **data) {
 
 	if (tlv == NULL) {
 		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;\
+		goto cleanup;
 	}
 
 	KSI_ERR_clearErrors(ctx);
@@ -1986,7 +2152,7 @@ int KSI_AggregationResp_fromTlv(KSI_TLV *tlv, KSI_AggregationResp **data) {
 		goto cleanup;
 	}
 
-KSI_LOG_debug(ctx, "AggregationResp_fromTlv: %d", KSI_TLV_getTag(tlv));
+	KSI_LOG_debug(ctx, "AggregationResp_fromTlv: %x", KSI_TLV_getTag(tlv));
 	if (KSI_TLV_getTag(tlv) == 0x202) {
 		res = KSI_TlvTemplate_extract(KSI_TLV_getCtx(tlv), tmp, tlv, KSI_TLV_TEMPLATE(KSI_AggregationResp));
 	} else if (KSI_TLV_getTag(tlv) == 0x02) {
@@ -1994,11 +2160,11 @@ KSI_LOG_debug(ctx, "AggregationResp_fromTlv: %d", KSI_TLV_getTag(tlv));
 	} else {
 		res = KSI_INVALID_FORMAT;
 	}
-
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
+
 	FROMTLV_ADD_RAW(raw, 0);
 	FROMTLV_ADD_BASETLV(baseTlv);
 	*data = tmp;
@@ -2078,6 +2244,8 @@ KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_CalendarAuthRec*, calendarAuthRec,
 KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_AggregationAuthRec*, aggregationAuthRec, AggregationAuthRec);
 KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_TLV*, baseTlv, BaseTlv);
 
+KSI_IMPLEMENT_GET_CTX(KSI_AggregationResp);
+
 /**
  * KSI_ExtendReq
  */
@@ -2125,7 +2293,7 @@ int KSI_ExtendReq_fromTlv(KSI_TLV *tlv, KSI_ExtendReq **data) {
 
 	if (tlv == NULL) {
 		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;\
+		goto cleanup;
 	}
 
 	KSI_ERR_clearErrors(ctx);
@@ -2346,7 +2514,7 @@ int KSI_ExtendResp_fromTlv(KSI_TLV *tlv, KSI_ExtendResp **data) {
 
 	if (tlv == NULL) {
 		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;\
+		goto cleanup;
 	}
 
 	KSI_ERR_clearErrors(ctx);

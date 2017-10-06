@@ -65,6 +65,7 @@ ALLTESTS_OBJ = \
 	$(OBJ_DIR)\ksi_net_pduv1_test.obj \
 	$(OBJ_DIR)\ksi_net_pduv2_test.obj \
 	$(OBJ_DIR)\ksi_net_common_test.obj \
+	$(OBJ_DIR)\ksi_net_async_test.obj \
 	$(OBJ_DIR)\ksi_rdr_test.obj \
 	$(OBJ_DIR)\ksi_signature_test.obj \
 	$(OBJ_DIR)\ksi_signature_builder_test.obj \
@@ -82,11 +83,13 @@ ALLTESTS_OBJ = \
 	$(OBJ_DIR)\ksi_sdk_version_test.obj \
 	$(OBJ_DIR)\ksi_flags_test.obj \
 	$(OBJ_DIR)\ksi_blocksigner_test.obj \
-	$(OBJ_DIR)\ksi_list_test.obj
+	$(OBJ_DIR)\ksi_list_test.obj \
+	$(OBJ_DIR)\test_mock_async.obj
 
 INTTESTS_OBJ = \
 	$(OBJ_DIR)\all_integration_tests.obj \
 	$(OBJ_DIR)\aggre_integration_test.obj \
+	$(OBJ_DIR)\async_integration_test.obj \
 	$(OBJ_DIR)\ext_integration_tests.obj \
 	$(OBJ_DIR)\pub_integration_tests.obj \
 	$(OBJ_DIR)\integration_test_pack.obj \
@@ -96,6 +99,12 @@ INTTESTS_OBJ = \
 
 RESIGNER_OBJ = \
 	$(OBJ_DIR)\resigner.obj
+
+ASYNCSIGNER_OBJ = \
+	$(OBJ_DIR)\test_sign_async.obj \
+	$(OBJ_DIR)\support_tests.obj \
+	$(OBJ_DIR)\CuTest.obj \
+	$(OBJ_DIR)\test_conf.obj
 
 #Compiler and linker configuration
 #external libraries used for linking.
@@ -159,7 +168,7 @@ LDFLAGS = $(LDFLAGS) $(LDEXTRA)
 
 
 
-default: $(BIN_DIR)\alltests.exe $(BIN_DIR)\integrationtests.exe
+default: $(BIN_DIR)\alltests.exe $(BIN_DIR)\integrationtests.exe $(BIN_DIR)\async-signer.exe
 
 resigner: $(BIN_DIR)\resigner.exe
 
@@ -213,6 +222,21 @@ $(BIN_DIR)\resigner.exe: $(BIN_DIR) $(RESIGNER_OBJ)
 !ENDIF
 !ENDIF
 
+$(BIN_DIR)\async-signer.exe: $(BIN_DIR) $(ASYNCSIGNER_OBJ)
+	link $(LDFLAGS) /OUT:$@ $(ASYNCSIGNER_OBJ) $(EXT_LIB)
+!IF "$(DLL)" == "dll"
+	copy "$(LIB_DIR)\libksiapi$(RTL).dll" "$(BIN_DIR)\" /Y /D
+!IF "$(NET_PROVIDER)" == "CURL"
+!IF "$(RTL)" == "MT" || "$(RTL)" == "MD"
+	copy "$(CURL_DIR)\$(DLL)\libcurl$(RTL).dll" "$(BIN_DIR)\libcurl.dll" /Y
+!ELSE
+	copy "$(CURL_DIR)\$(DLL)\libcurl$(RTL).dll" "$(BIN_DIR)\libcurl_debug.dll" /Y
+!ENDIF
+!ENDIF
+!IF "$(HASH_PROVIDER)" == "OPENSSL" || "$(TRUST_PROVIDER)" == "OPENSSL"
+	copy "$(OPENSSL_DIR)\$(DLL)\libeay32$(RTL).dll" "$(BIN_DIR)\libeay32.dll" /Y
+!ENDIF
+!ENDIF
 
 
 #Creates OBJ_DIR for ALLTESTS_OBJ
@@ -221,6 +245,8 @@ $(ALLTESTS_OBJ): $(OBJ_DIR)
 #Creates OBJ_DIR for RESIGNER_OBJ
 $(RESIGNER_OBJ): $(OBJ_DIR)
 
+#Creates OBJ_DIR for ASYNCSIGNER_OBJ
+$(ASYNCSIGNER_OBJ): $(OBJ_DIR)
 
 #C file compilation
 {$(SRC_DIR)\}.c{$(OBJ_DIR)\}.obj:

@@ -506,25 +506,16 @@ cleanup:
 	return res;
 }
 
-/**
- *
- */
 int KSI_TLV_isNonCritical(const KSI_TLV *tlv) {
-	return tlv->isNonCritical;
+	return (tlv != NULL) ? tlv->isNonCritical : 0;
 }
 
-/**
- *
- */
 int KSI_TLV_isForward(const KSI_TLV *tlv) {
-	return tlv->isForwardable;
+	return (tlv != NULL) ? tlv->isForwardable : 0;
 }
 
-/**
- *
- */
 unsigned KSI_TLV_getTag(const KSI_TLV *tlv) {
-	return tlv->tag;
+	return (tlv != NULL) ? tlv->tag : 0;
 }
 
 int KSI_TLV_replaceNestedTlv(KSI_TLV *parentTlv, KSI_TLV *oldTlv, KSI_TLV *newTlv) {

@@ -244,6 +244,33 @@ EXPORTS
 	KSI_RequestHandle_perform
 	KSI_RequestHandle_getResponseStatus
 
+	KSI_AsyncClient_free
+	KSI_AbstractAsyncClient_new
+	KSI_TcpAsyncClient_new
+	KSI_TcpAsyncClient_setService
+	KSI_AsyncHandle_free
+	KSI_AsyncAggregationHandle_new
+	KSI_AsyncHandle_setRequestCtx
+	KSI_AsyncHandle_getRequestCtx
+	KSI_AsyncHandle_getRequestId
+	KSI_AsyncHandle_getState
+	KSI_AsyncHandle_getError
+	KSI_AsyncHandle_getExtError
+	KSI_AsyncHandle_getErrorMessage
+	KSI_AsyncHandle_getAggregationReq
+	KSI_AsyncHandle_getAggregationResp
+	KSI_AsyncHandle_getSignature
+	KSI_AsyncService_free
+	KSI_AbstractAsyncService_new
+	KSI_SigningAsyncService_new
+	KSI_AsyncService_getPendingCount
+	KSI_AsyncService_getReceivedCount
+	KSI_AsyncService_setOption
+	KSI_AsyncService_getOption
+	KSI_AsyncService_run
+	KSI_AsyncService_setEndpoint
+	KSI_AsyncService_addRequest
+
 ;net_http.h
 EXPORTS
 	KSI_HttpClient_new
@@ -261,6 +288,8 @@ EXPORTS
 	KSI_TcpClient_setExtender
 	KSI_TcpClient_setAggregator
 	KSI_TcpClient_setTransferTimeoutSeconds
+	KSI_TcpAsyncClient_new
+	KSI_TcpAsyncClient_setService
 
 ;net_file.h
 
@@ -277,6 +306,8 @@ EXPORTS
 	KSI_UriClient_setAggregator
 	KSI_UriClient_setTransferTimeoutSeconds
 	KSI_UriClient_setConnectionTimeoutSeconds
+
+	KSI_AsyncService_setEndpoint
 
 ;pkitruststore.h
 EXPORTS
@@ -515,6 +546,7 @@ EXPORTS
 	KSI_MetaData_setRequestTimeInMicros
 	KSI_ExtendPdu_free
 	KSI_ExtendPdu_new
+	KSI_ExtendPdu_verifyHmac
 	KSI_ExtendPdu_calculateHmac
 	KSI_ExtendPdu_getHeader
 	KSI_ExtendPdu_getRequest
@@ -534,6 +566,8 @@ EXPORTS
 	KSI_ExtendPdu_serialize
 	KSI_AggregationPdu_free
 	KSI_AggregationPdu_new
+	KSI_AggregationPdu_verify
+	KSI_AggregationPdu_verifyHmac
 	KSI_AggregationPdu_calculateHmac
 	KSI_AggregationPdu_getHeader
 	KSI_AggregationPdu_getRequest
@@ -913,6 +947,7 @@ EXPORTS
 ;signature_builder.h
 	KSI_SignatureBuilder_open
 	KSI_SignatureBuilder_openFromSignature
+	KSI_SignatureBuilder_openFromAggregationResp
 	KSI_SignatureBuilder_close
 	KSI_SignatureBuilder_free
 	KSI_SignatureBuilder_setCalendarHashChain
