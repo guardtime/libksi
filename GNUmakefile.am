@@ -43,8 +43,10 @@ dist_api_doc = \
 
 dist_packaging = \
 	packaging/redhat/libksi.spec.in \
-	packaging/deb/libksi/DEBIAN/changelog \
-	packaging/deb/libksi/DEBIAN/control*.in \
+	packaging/deb/control.in \
+	packaging/deb/rules.in \
+	packaging/deb/copyright \
+	packaging/deb/rebuild_changelog.sh \
 	rebuild.sh \
 	rebuild-rpm.sh \
 	rebuild-deb.sh
@@ -99,5 +101,3 @@ coverage-full: clean coverage-extended coverage-xml coverage-html
 
 clean-local:
 	rm -fr ${ZIPDOC_DIR} converage coverage.xml coverage.info valgrind.xml test.log testsuite-xunit.xml
-	$(MAKE) -C doc clean
-	$(MAKE) -C test clean

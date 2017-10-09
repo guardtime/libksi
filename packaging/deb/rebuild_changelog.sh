@@ -22,14 +22,15 @@
 set -e
 
 
- if [[ ( "$#" -gt 2 ) && ( "$#" -lt 5 ) ]]; then
+ if [[ ( "$#" -gt 3 ) && ( "$#" -lt 6 ) ]]; then
     chlogpath="$1"
     controlpath="$2"
-    outputpath="$3"
-    distribution_quide=($4)
+    packagename="$3"
+    outputpath="$4"
+    distribution_quide=($5)
  else
     echo "Usage:"
-    echo "  $0 <changelog path> <control file path> <output path> [<distribution guide>]"
+    echo "  $0 <changelog path> <control file path> <package name> <output path> [<distribution guide>]"
     echo ""
     echo "Description:"
     echo "  This script takes a path to regular changelog and debian control files and"
@@ -42,6 +43,9 @@ set -e
     echo ""
     echo "  control file path"
     echo "       - Path to debian control file."
+    echo ""
+    echo "  package name"
+    echo "       - The name of the package!"
     echo ""
     echo "  output path"
     echo "       - Output path for debian changelog. Will overwrite existing file!"
@@ -123,7 +127,7 @@ while read line; do
 
         # If this is the first release, create empty changelog file.
         if $is_first ; then
-          dch --create --package libksi --newversion "$version_str" --urgency low --controlmaint "${array[-1]}"
+          dch --create --package "$packagename" --newversion "$version_str" --urgency low --controlmaint "${array[-1]}"
         else
           dch --controlmaint -v "$version_str" --urgency low "${array[-1]}"
         fi
@@ -145,7 +149,7 @@ while read line; do
   elif [[ $line == \** ]] ; then
     array+=("${line:2}")
   fi
-done <<< $(tac -r $rela_changelog_path)
+done <<< "$(tac -r $rela_changelog_path)"
 
 cd ..
 cp $tmpdir/debian/changelog $outputpath

@@ -194,5 +194,5 @@ AC_SUBST(VER_MINOR)
 AC_SUBST(VER_BUILD)
 AC_CONFIG_FILES([src/ksi/version.h])
 
-AC_CONFIG_FILES([GNUmakefile src/ksi/GNUmakefile test/GNUmakefile doc/GNUmakefile src/example/GNUmakefile packaging/deb/libksi/DEBIAN/control packaging/deb/libksi/DEBIAN/control-source packaging/deb/libksi/DEBIAN/control-dev packaging/redhat/libksi.spec])
+AC_CONFIG_FILES([GNUmakefile src/ksi/GNUmakefile test/GNUmakefile doc/GNUmakefile src/example/GNUmakefile packaging/redhat/libksi.spec packaging/deb/control packaging/deb/rules])
 AC_OUTPUT

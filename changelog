@@ -1,3 +1,4 @@
+* IMPROVEMENT: Debian packaging refactored.
 * BUGFIX: Fixed logging in net_http_curl.c when using 32-bit OS.
 * FEATURE: Support for non-blocking TCP connection.
 * IMPROVEMENT: Added an example for non-bloking signing.
