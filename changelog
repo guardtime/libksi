@@ -2,6 +2,7 @@
 * FEATURE: Support for non-blocking TCP connection.
 * IMPROVEMENT: Added an example for non-bloking signing.
 * IMPROVEMENT: Debian package name contains debian version.
+* IMPROVEMENT: Debian packaaging dependecies fixed.
 * IMPROVEMENT: Debian changelog is generated from the main changelog.
 * IMPROVEMENT: Libksi Debian/Ubuntu dependencies changed to make it work on both Debian 9 and Ubuntu 16.
 
