@@ -42,9 +42,9 @@ static const char * const KSI_HASHALG_SM3_names[] = { "SM-3", "SM3", ""};
 
 
 static const struct KSI_hashAlgorithmInfo_st {
-	/* Hash algorithm id (should mirror the array index in #KSI_hashAlgorithmInfo) */
+	/** Hash algorithm id (should mirror the array index in #KSI_hashAlgorithmInfo) */
 	KSI_HashAlgorithm algo_id;
-	/** Upper-case name. */
+    /** Output digest bit count. */
 	unsigned int outputBitCount;
 	/** Internal bit count */
 	unsigned int blockSize;
