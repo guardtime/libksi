@@ -19,5 +19,5 @@ Conflicts: @PACKAGE@-dev
 Architecture: any
 Section: devel
 Priority: optional
-Depends: @PACKAGE@(=@VERSION@), libcurl4-gnutls-dev, libssl1.0-dev | libssl-dev
+Depends: @PACKAGE@(=@VERSION@)
 Description: KSI C API development library.
