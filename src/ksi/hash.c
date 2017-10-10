@@ -264,7 +264,7 @@ int KSI_DataHash_fromImprint(KSI_CTX *ctx, const unsigned char *imprint, size_t 
  *
  */
 const char *KSI_getHashAlgorithmName(KSI_HashAlgorithm algo_id) {
-	if (ksi_isHashAlgorithmIdValid(algo_id) && KSI_hashAlgorithmInfo[algo_id].names != NULL) {
+	if (ksi_isHashAlgorithmIdValid(algo_id)) {
 		return KSI_hashAlgorithmInfo[algo_id].names[0];
 	}
 	return NULL;
