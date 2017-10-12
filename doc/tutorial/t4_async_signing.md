@@ -21,11 +21,11 @@ After that, initialize the asynchronous signing service provider.
 
 ~~~~~~~~~~
 
-Next, set up the \c service. Similarly to basic signing (see [Signing Tutorial](tutorial/t1_signing.md)), you need to configure service location to send the signing request to. Currently only TCP connection is supported for asynchronous signing, thus let's assume the signing service address is \c tcp://signservice.somehost:1234 and it is authenticated by \c user:key.
+Next, set up the \c service. Similarly to basic signing (see [Signing Tutorial](tutorial/t1_signing.md)), you need to configure service location to send the signing request to. Currently only TCP connection is supported for asynchronous signing, thus let's assume the signing service address is \c ksi+tcp://signservice.somehost:1234 and it is authenticated by \c user:key.
 
 ~~~~~~~~~~{.c}
 
-	KSI_AsyncService_setEndpoint(service, "tcp://signingservice.somehost:1234", "user", "key");
+	KSI_AsyncService_setEndpoint(service, "ksi+tcp://signingservice.somehost:1234", "user", "key");
 
 ~~~~~~~~~~
 
