@@ -246,10 +246,16 @@ extern "C" {
 	int KSI_DataHash_fromImprint(KSI_CTX *ctx, const unsigned char *imprint, size_t imprint_length, KSI_DataHash **hash);
 
 	/**
-	 * Returns the hash algorithm specified by the \c name parameter. If the algorithm
+	 * Returns the hash algorithm specified by the case insensitive string parameter \c name . If the algorithm
 	 * name is not recognized the value of KSI_HASHALG_INVALID, witch is not a
 	 * correct hashing algorithm, is returned. To verify the correctness of the returned
 	 * value #KSI_isHashAlgorithmSupported or #KSI_isHashAlgorithmTrusted function must be used.
+	 * The valid inputs are "default" for the configured default hash algorithm or one of the following:
+	 * "sha-1", "sha1", "sha-256", "sha2-256", "sha-2", "sha2", "sha256", "ripemd-160", "ripemd160",
+	 * "sha-384", "sha384", "sha2-384", "sha-512", "sha512", "sha2-512", "sha3-224", "sha3-256", "sha3-384",
+	 * "sha3-512", "sm-3", "sm3".
+	 * \note The SHA-2 family names do not require the infix "2" as opposed to the SHA-3 family where
+	 * 		 the infix "3" is mandatory. This means "sha-256" is unambiguously the 256 bit version of SHA-2.
 	 * \param[in]	name			Name of the hash function.
 	 *
 	 * \return The hash algorithm id or -1 if it was not found.
