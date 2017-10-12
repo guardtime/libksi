@@ -58,7 +58,7 @@ When the #KSI_AsyncHandle is set up, add it to the asynchronous service provider
 2. Additional Options
 ----------------------
 
-In order to adjust the #KSI_AsyncService to meat your needs, #KSI_AsyncService_setOption should be used. The available options are described under #KSI_AsyncOption. Pay attention to the parameter type description. The updated parameters affect all transfers.
+In order to adjust the #KSI_AsyncService to meet your needs, #KSI_AsyncService_setOption should be used. The available options are described under #KSI_AsyncOption. Pay attention to the parameter type description. The updated parameters affect all transfers.
 
 The throughput of added requests is controlled via two options:
 - #KSI_ASYNC_OPT_REQUEST_CACHE_SIZE option controls how many request are open in parallel. In case the maximum number of requests is already added to the #KSI_AsyncService, the next invocation of #KSI_AsyncService_addRequest will return an error code #KSI_ASYNC_REQUEST_CACHE_FULL. In this case the implementation code should call #KSI_AsyncService_run in order to read out received responses and free up cache in #KSI_AsyncService.
