@@ -1,4 +1,4 @@
-libksi (3.16.2473) RELEASED; urgency=low
+libksi (3.16.2474) RELEASED; urgency=low
 
   * BUGFIX: Fixed logging in net_http_curl.c when using 32-bit OS.
   * FEATURE: Support for non-blocking TCP connection.
