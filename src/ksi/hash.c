@@ -497,28 +497,39 @@ cleanup:
 	return ret;
 }
 
-int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
+int KSI_DataHasher_close(KSI_DataHasher *hsr, KSI_DataHash **data_hash) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
 
-	if (hasher == NULL) {
+	if (hsr == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
-	KSI_ERR_clearErrors(hasher->ctx);
+	KSI_ERR_clearErrors(hsr->ctx);
 
-	res = alloc_dataHash(hasher->ctx, &hsh);
+	if (!hsr->isOpen) {
+		KSI_pushError(hsr->ctx, res = KSI_INVALID_STATE, "Hasher is already closed.");
+		goto cleanup;
+	}
+
+	if (hsr->closeExisting == NULL) {
+		KSI_pushError(hsr->ctx, res = KSI_INVALID_STATE, "Hasher not properly initialized.");
+		goto cleanup;
+	}
+
+
+	res = alloc_dataHash(hsr->ctx, &hsh);
 	if (res != KSI_OK) {
-		KSI_pushError(hasher->ctx, res, NULL);
+		KSI_pushError(hsr->ctx, res, NULL);
 		goto cleanup;
 	}
 
 	hsh->ref = 1;
-	hsh->ctx = hasher->ctx;
+	hsh->ctx = hsr->ctx;
 
-	res = hasher->closeExisting(hasher, hsh);
+	res = hsr->closeExisting(hsr, hsh);
 	if (res != KSI_OK) {
-		KSI_pushError(hasher->ctx, res, NULL);
+		KSI_pushError(hsr->ctx, res, NULL);
 		goto cleanup;
 	}
 
@@ -526,6 +537,8 @@ int KSI_DataHasher_close(KSI_DataHasher *hasher, KSI_DataHash **data_hash) {
 		*data_hash = hsh;
 		hsh = NULL;
 	}
+
+	hsr->isOpen = false;
 
 	res = KSI_OK;
 
@@ -535,6 +548,78 @@ cleanup:
 
 	return res;
 
+}
+
+int KSI_DataHasher_reset(KSI_DataHasher *hsr) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (hsr == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(hsr->ctx);
+
+	if (hsr->reset == NULL) {
+		KSI_pushError(hsr->ctx, res = KSI_INVALID_STATE, "Hasher not properly initialized.");
+		goto cleanup;
+	}
+
+	res = hsr->reset(hsr);
+	if (res != KSI_OK) {
+		KSI_pushError(hsr->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	hsr->isOpen = true;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_DataHasher_add(KSI_DataHasher *hsr, const void *data, size_t data_len) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (hsr == NULL || data == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(hsr->ctx);
+
+	if (!hsr->isOpen) {
+		KSI_pushError(hsr->ctx, res = KSI_INVALID_STATE, "Hasher is closed.");
+		goto cleanup;
+	}
+
+	if (hsr->add == NULL) {
+		KSI_pushError(hsr->ctx, res = KSI_INVALID_STATE, "Hasher not properly initialized.");
+		goto cleanup;
+	}
+
+	if (data_len > 0) {
+		res = hsr->add(hsr, data, data_len);
+		if (res != KSI_OK) {
+			KSI_pushError(hsr->ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+void KSI_DataHasher_free(KSI_DataHasher *hsr) {
+	if (hsr != NULL) {
+		if (hsr->cleanup != NULL) {
+			hsr->cleanup(hsr);
+		}
+		KSI_free(hsr);
+	}
 }
 
 int KSI_DataHasher_addImprint(KSI_DataHasher *hasher, const KSI_DataHash *hsh) {

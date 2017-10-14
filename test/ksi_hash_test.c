@@ -452,13 +452,29 @@ static void testAllHashing(CuTest *tc) {
 static void testReset(CuTest *tc) {
 	int res;
 	KSI_DataHasher *hsr = NULL;
+	KSI_DataHash *hsh = NULL;
+	KSI_DataHash *exp = NULL;
 
-	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA1, &hsr);
+	res = KSI_DataHasher_open(ctx, KSI_HASHALG_SHA2_256, &hsr);
 	CuAssert(tc, "Unable to create data hasher.", res == KSI_OK && hsr != NULL);
+
+	res = KSI_DataHasher_add(hsr, "random", 6);
+	CuAssert(tc, "Unable to add random data to the hasher.", res == KSI_OK);
 
 	res = KSI_DataHasher_reset(hsr);
 	CuAssert(tc, "Immediate hasher reset failed.", res == KSI_OK);
 
+	res = KSI_DataHasher_add(hsr, "LAPTOP", 6);
+	CuAssert(tc, "Unable to add random data to the hasher.", res == KSI_OK);
+
+	res = KSI_DataHasher_close(hsr, &hsh);
+	CuAssert(tc, "Unable to close valid data hasher.", res == KSI_OK && hsh != NULL);
+
+	KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &exp);
+
+	CuAssert(tc, "Output hash does not mach expected", KSI_DataHash_equals(hsh, exp));
+
+	KSI_DataHash_free(hsh);
 	KSI_DataHasher_free(hsr);
 }
 
@@ -562,6 +578,74 @@ static void testUnavailableFunctionsFromDigest(CuTest *tc) {
 	CuAssert(tc, "Hash algorithm 0x1f should not be available.", res == KSI_UNAVAILABLE_HASH_ALGORITHM && h == NULL);
 }
 
+static void testDoubleClose(CuTest *tc) {
+	int res;
+	KSI_DataHasher *hsr = NULL;
+	KSI_DataHash *hsh = NULL;
+
+	res = KSI_DataHasher_open(ctx, KSI_getHashAlgorithmByName("default"), &hsr);
+	CuAssert(tc, "Creating a hasher with default hash algorithm should succeed,", res == KSI_OK && hsr != NULL);
+
+	res = KSI_DataHasher_close(hsr, &hsh);
+	CuAssert(tc, "Closing an open hasher should succeed.", res == KSI_OK && hsh != NULL);
+
+	KSI_DataHash_free(hsh);
+	hsh = NULL;
+
+	res = KSI_DataHasher_close(hsr, &hsh);
+	CuAssert(tc, "Closing a hasher for the second time should not succeed.", res != KSI_OK && hsh == NULL);
+
+	KSI_DataHash_free(hsh);
+	KSI_DataHasher_free(hsr);
+}
+
+static void testAddToClosed(CuTest *tc) {
+	int res;
+	KSI_DataHasher *hsr = NULL;
+	KSI_DataHash *hsh = NULL;
+
+	res = KSI_DataHasher_open(ctx, KSI_getHashAlgorithmByName("default"), &hsr);
+	CuAssert(tc, "Creating a hasher with default hash algorithm should succeed,", res == KSI_OK && hsr != NULL);
+
+	res = KSI_DataHasher_close(hsr, &hsh);
+	CuAssert(tc, "Closing an open hasher should succeed.", res == KSI_OK && hsh != NULL);
+
+	KSI_DataHash_free(hsh);
+	hsh = NULL;
+
+	res = KSI_DataHasher_add(hsr, "FOO", 3);
+	CuAssert(tc, "Should not be able to add data to a closed hasher.", res == KSI_INVALID_STATE);
+
+	KSI_DataHash_free(hsh);
+	KSI_DataHasher_free(hsr);
+
+}
+
+static void testAddToCloseAndReset(CuTest *tc) {
+	int res;
+	KSI_DataHasher *hsr = NULL;
+	KSI_DataHash *hsh = NULL;
+
+	res = KSI_DataHasher_open(ctx, KSI_getHashAlgorithmByName("default"), &hsr);
+	CuAssert(tc, "Creating a hasher with default hash algorithm should succeed,", res == KSI_OK && hsr != NULL);
+
+	res = KSI_DataHasher_close(hsr, &hsh);
+	CuAssert(tc, "Closing an open hasher should succeed.", res == KSI_OK && hsh != NULL);
+
+	KSI_DataHash_free(hsh);
+	hsh = NULL;
+
+	res = KSI_DataHasher_reset(hsr);
+	CuAssert(tc, "Reseting a closed hasher should succeed.", res == KSI_OK);
+
+	res = KSI_DataHasher_add(hsr, "FOO", 3);
+	CuAssert(tc, "Should not be able to add data to a closed hasher.", res == KSI_OK);
+
+	KSI_DataHash_free(hsh);
+	KSI_DataHasher_free(hsr);
+
+}
+
 CuSuite* KSITest_Hash_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -584,6 +668,9 @@ CuSuite* KSITest_Hash_getSuite(void) {
 	SUITE_ADD_TEST(suite, testUnavailableFunction0x06);
 	SUITE_ADD_TEST(suite, testUnavailableFunctionsFromImprint);
 	SUITE_ADD_TEST(suite, testUnavailableFunctionsFromDigest);
+	SUITE_ADD_TEST(suite, testDoubleClose);
+	SUITE_ADD_TEST(suite, testAddToClosed);
+	SUITE_ADD_TEST(suite, testAddToCloseAndReset);
 
 	return suite;
 }

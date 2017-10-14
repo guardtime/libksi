@@ -213,15 +213,6 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 				/* Update hasher if algo id has changed. */
 				if (tmp != algo_id) {
 					algo_id = tmp;
-					if (hsh != NULL) {
-						KSI_DataHash_free(hsh);
-					}
-
-					res = KSI_DataHasher_close(hsr, &hsh);
-					if (res != KSI_OK) {
-						KSI_pushError(ctx, res, NULL);
-						goto cleanup;
-					}
 
 					KSI_DataHasher_free(hsr);
 					res = KSI_DataHasher_open(ctx, algo_id, &hsr);
@@ -289,6 +280,8 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
 		}
+
+		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Intermediade hash value", hsh);
 	}
 
 	KSI_snprintf(logMsg, sizeof(logMsg), "Finished %s hash chain aggregation with output hash.", isCalendar ? "calendar": "aggregation");

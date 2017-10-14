@@ -59,6 +59,21 @@ extern "C" {
 		 * \note *** DO NOT USE unless for optimization reasons only and the data hash object is not a shared pointer. ***
 		 */
 		int (*closeExisting)(KSI_DataHasher *, KSI_DataHash *);
+
+		/** Indicates if the hasher is ready to be used (true). */
+		bool isOpen;
+
+		/** This function must reset the hasher, but does not need to modify the \c DataHasher::isOpen value. */
+		int (*reset)(KSI_DataHasher *);
+
+		/** This method is meant to perform the internal cleanup of the #DataHasher but must not free the object itself. */
+		void (*cleanup)(KSI_DataHasher *);
+
+		/** Add more data to the hasher. Must not check the DataHasher::isOpen value. */
+		int (*add)(KSI_DataHasher *, const void *, size_t);
+
+		/** Closes the hasher and returns a #KSI_DataHash object. Must not check or modify the DataHasher::isOpen value. */
+		int (*close)(KSI_DataHasher *, KSI_DataHash **);
 	};
 
 #ifdef __cplusplus
