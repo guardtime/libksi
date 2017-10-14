@@ -474,6 +474,7 @@ static void testReset(CuTest *tc) {
 
 	CuAssert(tc, "Output hash does not mach expected", KSI_DataHash_equals(hsh, exp));
 
+	KSI_DataHash_free(exp);
 	KSI_DataHash_free(hsh);
 	KSI_DataHasher_free(hsr);
 }
