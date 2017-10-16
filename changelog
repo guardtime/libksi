@@ -1,3 +1,4 @@
+* FEATURE: Added CommonCrypto for hashing as an alternative to OpenSSL.
 * BUGFIX: Removed double close of the KSI_DataHasher when calculating the calendar hash chain.
 * IMPROVEMENT: Added double close guards and tests for KSI_DataHasher
 
