@@ -384,8 +384,8 @@ int main(int argc, char **argv) {
 
 	res = KSI_OK;
 cleanup:
-	printf("Succeeded request: %lu.\n", succeeded);
-	printf("Failed request   : %lu.\n", nof_requests - succeeded);
+	printf("Succeeded request: %lu.\n", (unsigned long)succeeded);
+	printf("Failed request   : %lu.\n", (unsigned long)(nof_requests - succeeded));
 
 	if (res != KSI_OK && ksi != NULL) {
 		KSI_ERR_statusDump(ksi, stderr);

@@ -1144,10 +1144,17 @@ cleanup:
 	return res;
 }
 
-static int intCmp(KSI_uint64_t a, KSI_uint64_t b){
-	if (a == b) return 0;
-	else if (a > b) return 1;
+#define COMPARE_IMPL(a, b) \
+	if (a == b) return 0; \
+	else if (a > b) return 1; \
 	else return -1;
+
+static int intCmp(KSI_uint64_t a, KSI_uint64_t b){
+	COMPARE_IMPL(a, b);
+}
+
+static int ptrCmp(void *a, void *b){
+	COMPARE_IMPL(a, b);
 }
 
 int KSI_AggregationHashChain_compare(const KSI_AggregationHashChain **left, const KSI_AggregationHashChain **right) {
@@ -1159,7 +1166,7 @@ int KSI_AggregationHashChain_compare(const KSI_AggregationHashChain **left, cons
 	KSI_AggregationHashChain_getChainIndex(l, &leftChainIndex);
 	KSI_AggregationHashChain_getChainIndex(r, &rightChainIndex);
 	if (l == r || l == NULL || r == NULL || leftChainIndex == NULL || rightChainIndex == NULL) {
-		return intCmp((KSI_uint64_t)right, (KSI_uint64_t)left);
+		return ptrCmp((void *)right, (void *)left);
 	}
 
 	return intCmp(KSI_IntegerList_length(rightChainIndex), KSI_IntegerList_length(leftChainIndex));
