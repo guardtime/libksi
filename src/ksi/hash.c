@@ -26,53 +26,51 @@
 #include "tlv.h"
 #include "ctx_impl.h"
 
-#define HASH_ALGO(id, name, bitcount, blocksize, trusted) {(id), (name), (bitcount), (blocksize), (trusted), id##_aliases}
+#define HASH_ALGO(id, bitcount, blocksize, trusted) {(id), (bitcount), (blocksize), (trusted), id##_names}
 
-
-
-/** Hash algorithm aliases. The last alias has to be an empty string */
-static const char * const KSI_HASHALG_SHA1_aliases[] = {"SHA-1", ""};
-static const char * const KSI_HASHALG_SHA2_256_aliases[] = {"DEFAULT", "SHA-2", "SHA2", "SHA256", "SHA-256", ""};
-static const char * const KSI_HASHALG_RIPEMD160_aliases[] = { "RIPEMD160", ""};
-static const char * const KSI_HASHALG_SHA2_384_aliases[] = { "SHA384", "SHA-384", ""};
-static const char * const KSI_HASHALG_SHA2_512_aliases[] = { "SHA512", "SHA-512", ""};
-static const char * const KSI_HASHALG_SHA3_244_aliases[] = { ""};
-static const char * const KSI_HASHALG_SHA3_256_aliases[] = { ""};
-static const char * const KSI_HASHALG_SHA3_384_aliases[] = { ""};
-static const char * const KSI_HASHALG_SHA3_512_aliases[] = { ""};
-static const char * const KSI_HASHALG_SM3_aliases[] = { "SM-3", ""};
+/** Hash algorithm names. The last name has to be an empty string. */
+static const char * const KSI_HASHALG_SHA1_names[] = {"SHA-1", "SHA1", ""};
+static const char * const KSI_HASHALG_SHA2_256_names[] = {"SHA-256", "SHA2-256", "SHA-2", "SHA2", "SHA256", "DEFAULT", ""};
+static const char * const KSI_HASHALG_RIPEMD160_names[] = { "RIPEMD-160", "RIPEMD160", ""};
+static const char * const KSI_HASHALG_SHA2_384_names[] = { "SHA-384", "SHA384", "SHA2-384", ""};
+static const char * const KSI_HASHALG_SHA2_512_names[] = { "SHA-512", "SHA512", "SHA2-512", ""};
+static const char * const KSI_HASHALG_SHA3_244_names[] = { "SHA3-224", ""};
+static const char * const KSI_HASHALG_SHA3_256_names[] = { "SHA3-256", ""};
+static const char * const KSI_HASHALG_SHA3_384_names[] = { "SHA3-384", ""};
+static const char * const KSI_HASHALG_SHA3_512_names[] = { "SHA3-512"};
+static const char * const KSI_HASHALG_SM3_names[] = { "SM-3", "SM3", ""};
 
 
 static const struct KSI_hashAlgorithmInfo_st {
-	/* Hash algorithm id (should mirror the array index in #KSI_hashAlgorithmInfo) */
+	/** Hash algorithm id (should mirror the array index in #KSI_hashAlgorithmInfo) */
 	KSI_HashAlgorithm algo_id;
-	/** Upper-case name. */
-	const char *name;
-	/** Output digest bit count. */
+    /** Output digest bit count. */
 	unsigned int outputBitCount;
 	/** Internal bit count */
 	unsigned int blockSize;
 	/** Is the hash algorithm trusted? */
 	int trusted;
-	/** Accepted aliases for this hash algorithm. */
-	char const * const *aliases;
+	/** Accepted names for this hash algorithm. */
+	char const * const *names;
 } KSI_hashAlgorithmInfo[] = {
-		HASH_ALGO(KSI_HASHALG_SHA1,			"SHA1", 		160, 512, 1),
-		HASH_ALGO(KSI_HASHALG_SHA2_256,		"SHA2-256", 	256, 512, 1),
-		HASH_ALGO(KSI_HASHALG_RIPEMD160,	"RIPEMD-160", 	160, 512, 1),
-		{0x03, NULL, 0, 0, 0, NULL}, /* Deprecated algorithm - do not reuse. */
-		HASH_ALGO(KSI_HASHALG_SHA2_384,		"SHA2-384", 	384, 1024, 1),
-		HASH_ALGO(KSI_HASHALG_SHA2_512,		"SHA2-512", 	512, 1024, 1),
-		{0x06, NULL, 0, 0, 0, NULL}, /* Deprecated algorithm - do not reuse. */
-		HASH_ALGO(KSI_HASHALG_SHA3_244,		"SHA3-224", 	224, 1152, 1),
-		HASH_ALGO(KSI_HASHALG_SHA3_256,		"SHA3-256", 	256, 1088, 1),
-		HASH_ALGO(KSI_HASHALG_SHA3_384,		"SHA3-384", 	384, 832, 1),
-		HASH_ALGO(KSI_HASHALG_SHA3_512,		"SHA3-512", 	512, 576, 1),
-		HASH_ALGO(KSI_HASHALG_SM3, 			"SM3", 			256, 512, 1)
+		HASH_ALGO(KSI_HASHALG_SHA1,			160, 512, 1),
+		HASH_ALGO(KSI_HASHALG_SHA2_256,		256, 512, 1),
+		HASH_ALGO(KSI_HASHALG_RIPEMD160,	160, 512, 1),
+		{0x03, 0, 0, 0, NULL}, /* Deprecated algorithm - do not reuse. */
+		HASH_ALGO(KSI_HASHALG_SHA2_384,		384, 1024, 1),
+		HASH_ALGO(KSI_HASHALG_SHA2_512,		512, 1024, 1),
+		{0x06, 0, 0, 0, NULL}, /* Deprecated algorithm - do not reuse. */
+		HASH_ALGO(KSI_HASHALG_SHA3_244,		224, 1152, 1),
+		HASH_ALGO(KSI_HASHALG_SHA3_256,		256, 1088, 1),
+		HASH_ALGO(KSI_HASHALG_SHA3_384,		384, 832, 1),
+		HASH_ALGO(KSI_HASHALG_SHA3_512,		512, 576, 1),
+		HASH_ALGO(KSI_HASHALG_SM3, 			256, 512, 1)
 };
 
+#undef HASH_ALGO
+
 static int ksi_isHashAlgorithmIdValid(int algo_id) {
-	return algo_id >= 0 && algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS && KSI_hashAlgorithmInfo[algo_id].name != NULL;
+	return algo_id >= 0 && algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS && KSI_hashAlgorithmInfo[algo_id].names != NULL;
 }
 
 /**
@@ -267,7 +265,7 @@ int KSI_DataHash_fromImprint(KSI_CTX *ctx, const unsigned char *imprint, size_t 
  */
 const char *KSI_getHashAlgorithmName(KSI_HashAlgorithm algo_id) {
 	if (ksi_isHashAlgorithmIdValid(algo_id)) {
-		return KSI_hashAlgorithmInfo[algo_id].name;
+		return KSI_hashAlgorithmInfo[algo_id].names[0];
 	}
 	return NULL;
 }
@@ -297,17 +295,12 @@ KSI_HashAlgorithm KSI_getHashAlgorithmByName(const char *name) {
 
 	for (i = 0; i < KSI_NUMBER_OF_KNOWN_HASHALGS; i++) {
 		/* Skip all records without a name. */
-		if (KSI_hashAlgorithmInfo[i].name == NULL) continue;
-
-		/* Do we have a bingo? */
-		if (!strcmp(upperName, KSI_hashAlgorithmInfo[i].name)) {
-			algo_id = i;
-			goto cleanup;
-		}
+		if (KSI_hashAlgorithmInfo[i].names == NULL) continue;
 
 		alias_id = 0;
+
 		/* Loop until a null pointer or empty string. */
-		while ((alias = KSI_hashAlgorithmInfo[i].aliases[alias_id++]) && *alias) {
+		while ((alias = KSI_hashAlgorithmInfo[i].names[alias_id++]) && *alias) {
 			if (!strcmp(upperName, alias)) {
 				algo_id = i;
 				goto cleanup;

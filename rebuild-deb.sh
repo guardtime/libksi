@@ -38,7 +38,7 @@ make dist
 # Rebuild debian changelog.
 if command  -v dch > /dev/null; then
   echo "Generating debian changelog..."
-  $DEB_DIR/rebuild_changelog.sh changelog $DEB_DIR/control libksi $DEB_DIR/changelog "3.2.1.0:UNRELEASED  3.15.2306:unstable"
+  $DEB_DIR/rebuild_changelog.sh changelog $DEB_DIR/control libksi $DEB_DIR/changelog "3.2.1.0:unstable"
 else
   >&2 echo "Error: Unable to generate Debian changelog file as dch is not installed!"
   >&2 echo "Install devscripts 'apt-get install devscripts'"
