@@ -594,7 +594,7 @@ static void testDoubleClose(CuTest *tc) {
 	hsh = NULL;
 
 	res = KSI_DataHasher_close(hsr, &hsh);
-	CuAssert(tc, "Closing a hasher for the second time should not succeed.", res != KSI_INVALID_STATE && hsh == NULL);
+	CuAssert(tc, "Closing a hasher for the second time should not succeed.", res == KSI_INVALID_STATE && hsh == NULL);
 
 	KSI_DataHash_free(hsh);
 	KSI_DataHasher_free(hsr);
