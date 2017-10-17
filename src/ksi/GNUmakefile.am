@@ -58,11 +58,14 @@ libksi_la_SOURCES = \
 	log.h \
 	net.c \
 	net.h \
+	net_async.c \
+	net_async.h \
 	net_http.c \
 	net_http_curl.c \
 	net_http.h \
 	net_http_impl.h \
 	net_impl.h \
+	net_tcp_async.c \
 	net_tcp.c \
 	net_tcp.h \
 	net_tcp_impl.h \
@@ -109,8 +112,6 @@ libksi_la_SOURCES = \
 	compatibility.h \
 	compatibility.c \
 	version.h \
-	verify_deprecated.c \
-	verify_deprecated.h \
 	impl/meta_data_impl.h \
 	impl/meta_data_element_impl.h
 
@@ -141,6 +142,7 @@ otherinclude_HEADERS = \
 	types.h \
 	types_base.h \
 	net.h \
+	net_async.h \
 	net_http.h \
 	net_tcp.h \
 	net_file.h \
@@ -149,8 +151,7 @@ otherinclude_HEADERS = \
 	verification.h \
 	verification_rule.h \
 	compatibility.h \
-	version.h \
-	verify_deprecated.h
+	version.h
 
 libksi_la_LDFLAGS=-version-info @LTVER@
 

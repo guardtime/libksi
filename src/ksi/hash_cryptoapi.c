@@ -26,8 +26,8 @@
 #include <Wincrypt.h>
 
 typedef struct CRYPTO_HASH_CTX_st {
-	HCRYPTPROV pt_CSP;		//Crypto Service Provider
-	HCRYPTHASH pt_hHash;	//hasher object
+	HCRYPTPROV pt_CSP;		/**< Crypto Service Provider. */
+	HCRYPTHASH pt_hHash;	/**< Hasher object. */
 } CRYPTO_HASH_CTX;
 
 static void CRYPTO_HASH_CTX_free(CRYPTO_HASH_CTX *cryptoCtxt){

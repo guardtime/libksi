@@ -75,6 +75,8 @@ src/example/ksi_sign
 src/example/ksi_sign_aggr
 src/example/ksi_verify
 src/example/ksi_verify_pub
+src/example/ksi_blocksign
+src/example/ksi_sign_async_tcp
 src/ksi/.libs/
 test/.dirstamp
 test/.libs/
@@ -84,6 +86,7 @@ test/resigner
 test/runner
 test/integration-tests
 test/serialize-benchmark
+test/async-signer
 testsuite-xunit.xml
 
 # Temporary and backup files
@@ -101,3 +104,7 @@ test/integrationtest.conf
 # Generated header files
 version.h
 /Debug/
+
+# doxygen generated html and (la)tex files
+/doc/html/
+/doc/latex/

@@ -924,11 +924,22 @@ int KSI_PublicationsFile_findPublicationByTime(const KSI_PublicationsFile *trust
 }
 
 int KSI_PublicationsFile_findPublication(const KSI_PublicationsFile *trust, const KSI_PublicationRecord *inRec, KSI_PublicationRecord **outRec) {
-	if ((inRec != NULL && inRec->publishedData == NULL) ||
-			(inRec->publishedData->time == NULL || inRec->publishedData->imprint == NULL)) {
-		return KSI_INVALID_STATE;
+	int res = KSI_UNKNOWN_ERROR;
+	if (inRec == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
 	}
-	return findPublication(trust, inRec->publishedData->time, inRec->publishedData->imprint, outRec);
+
+	if (inRec->publishedData == NULL ||	inRec->publishedData->time == NULL || inRec->publishedData->imprint == NULL) {
+		res = KSI_INVALID_STATE;
+		goto cleanup;
+	}
+
+	res = findPublication(trust, inRec->publishedData->time, inRec->publishedData->imprint, outRec);
+
+cleanup:
+
+	return res;
 }
 
 int KSI_PublicationsFile_setCertConstraints(KSI_PublicationsFile *pubFile, const KSI_CertConstraint *arr) {
@@ -1071,12 +1082,13 @@ int KSI_PublicationData_fromBase32(KSI_CTX *ctx, const char *publication, KSI_Pu
 
 
 	algo_id = binary_publication[8];
-	if (!KSI_isHashAlgorithmSupported(algo_id)) {
+
+	hash_size = KSI_getHashLength(algo_id);
+	if (hash_size == 0) {
 		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
 		goto cleanup;
 	}
 
-	hash_size = KSI_getHashLength(algo_id);
 	if (binary_publication_length != 8 + 1 + hash_size + 4) {
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Hash algorithm length mismatch.");
 		goto cleanup;

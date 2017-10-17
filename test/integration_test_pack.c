@@ -219,7 +219,7 @@ static void runTests(CuTest* tc, const char *testCsv, const char *rootPath) {
 			res = KSI_CTX_setOption(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
 			CuAssert(tc, "Unable to set PDU version.", res == KSI_OK);
 
-			res = KSI_CTX_setExtender(ctx, conf.extender_url, conf.extender_user, conf.extender_pass);
+			res = KSI_CTX_setExtender(ctx, KSITest_composeUri("ksi+http", &conf.extender), conf.extender.user, conf.extender.pass);
 			CuAssert(tc, "Unable to set extender url.", res == KSI_OK);
 		}
 
@@ -227,7 +227,7 @@ static void runTests(CuTest* tc, const char *testCsv, const char *rootPath) {
 			res = KSI_CTX_setPublicationUrl(ctx, getPathUri(rootPath, csvData[TEST_CF_PUBS_FILE]));
 			CuAssert(tc, "Unable to set publications file url.", res == KSI_OK);
 		} else {
-			res = KSI_CTX_setPublicationUrl(ctx, conf.publications_file_url);
+			res = KSI_CTX_setPublicationUrl(ctx, conf.pubfile.url);
 			CuAssert(tc, "Unable to set publications file url.", res == KSI_OK);
 		}
 
@@ -372,6 +372,9 @@ static void postTest(void) {
 	/* Restore default PDU version. */
 	KSI_CTX_setOption(ctx, KSI_OPT_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
 	KSI_CTX_setOption(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
+
+	/* Set default publications file. */
+	KSI_CTX_setPublicationUrl(ctx, conf.pubfile.url);
 }
 
 CuSuite* IntegrationTestPack_getSuite(void) {

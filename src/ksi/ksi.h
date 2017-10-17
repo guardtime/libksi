@@ -37,7 +37,7 @@ extern "C" {
 #endif
 
 /**
- * \addtogroup base KSI base functionality
+ * \addtogroup base KSI Base Functionality
  * @{
  */
 
@@ -296,6 +296,19 @@ enum KSI_StatusCode {
 	 * Received PDU v1 response to PDU v2 request. Configure the SDK to use PDU v1 format for the given extender.
 	 */
 	KSI_SERVICE_EXTENDER_PDU_V1_RESPONSE_TO_PDU_V2_REQUEST = 0x508,
+
+	/* Async status codes. */
+
+	/**
+	 * The async connection was closed.
+	 */
+	KSI_ASYNC_CONNECTION_CLOSED = 0x604,
+
+	/**
+	 * The async request cache is full. Meaning that no more requests can be added temporarely.
+	 */
+	KSI_ASYNC_REQUEST_CACHE_FULL = 0x607,
+
 
 	/**
 	 * Unknown error occurred.

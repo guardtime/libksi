@@ -120,6 +120,10 @@ extern "C" {
 	 */
 	typedef struct KSI_NetworkClient_st KSI_NetworkClient;
 
+	typedef struct KSI_AsyncService_st KSI_AsyncService;
+	typedef struct KSI_AsyncClient_st KSI_AsyncClient;
+	typedef struct KSI_AsyncHandle_st KSI_AsyncHandle;
+
 	/**
 	 * Representation of the aggregation hash chain.
 	 */
@@ -481,6 +485,18 @@ KSI_DEFINE_LIST(KSI_RequestHandle);
 #define KSI_RequestHandleList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_RequestHandleList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
 
+KSI_DEFINE_LIST(KSI_AsyncHandle);
+#define KSI_AsyncHandleList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
+#define KSI_AsyncHandleList_remove(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), removeElement, ((lst), (pos), (o)))
+#define KSI_AsyncHandleList_indexOf(lst, o, i) KSI_APPLY_TO_NOT_NULL((lst), indexOf, ((lst), (o), (i)))
+#define KSI_AsyncHandleList_insertAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), insertAt, ((lst), (pos), (o)))
+#define KSI_AsyncHandleList_replaceAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), replaceAt, ((lst), (pos), (o)))
+#define KSI_AsyncHandleList_elementAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), elementAt, ((lst), (pos), (o)))
+#define KSI_AsyncHandleList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
+#define KSI_AsyncHandleList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
+#define KSI_AsyncHandleList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+
+
 /*
  * KSI_MetaDataElement.
  */
@@ -555,6 +571,7 @@ KSI_DEFINE_REF(KSI_MetaData);
  */
 void KSI_ExtendPdu_free(KSI_ExtendPdu *t);
 int KSI_ExtendPdu_new(KSI_CTX *ctx, KSI_ExtendPdu **t);
+int KSI_ExtendPdu_verifyHmac(const KSI_ExtendPdu *pdu, const char *pass);
 int KSI_ExtendPdu_calculateHmac(const KSI_ExtendPdu *t, KSI_HashAlgorithm algo_id, const char *key, KSI_DataHash **hmac);
 int KSI_ExtendPdu_updateHmac(KSI_ExtendPdu *pdu, KSI_HashAlgorithm algo_id, const char *key);
 int KSI_ExtendPdu_getHeader(const KSI_ExtendPdu *t, KSI_Header **header);
@@ -592,6 +609,8 @@ int KSI_ErrorPdu_setErrorMessage(KSI_ErrorPdu *pdu, KSI_Utf8String *errorMsg);
 
 void KSI_AggregationPdu_free(KSI_AggregationPdu *t);
 int KSI_AggregationPdu_new(KSI_CTX *ctx, KSI_AggregationPdu **t);
+int KSI_AggregationPdu_verify(const KSI_AggregationPdu *pdu, const char *pass);
+int KSI_AggregationPdu_verifyHmac(const KSI_AggregationPdu *pdu, const char *pass);
 int KSI_AggregationPdu_calculateHmac(const KSI_AggregationPdu *t, KSI_HashAlgorithm algo_id, const char *key, KSI_DataHash **hmac);
 int KSI_AggregationPdu_updateHmac(KSI_AggregationPdu *pdu, KSI_HashAlgorithm algo_id, const char *key);
 int KSI_AggregationPdu_getHeader(const KSI_AggregationPdu *t, KSI_Header **header);
@@ -612,6 +631,7 @@ int KSI_AggregationPdu_setAckRequest(KSI_AggregationPdu *t, KSI_RequestAck *ackR
 int KSI_AggregationPdu_setAckResponse(KSI_AggregationPdu *t, KSI_RequestAck *ackResponse);
 int KSI_AggregationPdu_setHmac(KSI_AggregationPdu *t, KSI_DataHash *hmac);
 int KSI_AggregationPdu_setError ( KSI_AggregationPdu *t, KSI_ErrorPdu *error);
+int KSI_AggregationReq_encloseWithHeader(KSI_AggregationReq *req, KSI_Header *hdr, const char *key, KSI_AggregationPdu **pdu);
 int KSI_AggregationReq_enclose(KSI_AggregationReq *req, const char *loginId, const char *key, KSI_AggregationPdu **pdu);
 KSI_DEFINE_OBJECT_PARSE(KSI_AggregationPdu);
 KSI_DEFINE_OBJECT_SERIALIZE(KSI_AggregationPdu);
@@ -741,6 +761,8 @@ int KSI_AggregationResp_setBaseTlv (KSI_AggregationResp *o, KSI_TLV *baseTlv);
 
 int KSI_AggregationResp_fromTlv (KSI_TLV *tlv, KSI_AggregationResp **data);
 int KSI_AggregationResp_toTlv (KSI_CTX *ctx, const KSI_AggregationResp *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+
+KSI_DEFINE_GET_CTX(KSI_AggregationResp);
 
 /**
  * Verifies that the response is a correct response to the concrete request.

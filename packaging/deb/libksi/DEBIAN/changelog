@@ -1,3 +1,30 @@
+libksi (3.16.2475) RELEASED; urgency=low
+
+  * BUGFIX: Fixed logging in net_http_curl.c when using 32-bit OS.
+  * FEATURE: Support for non-blocking TCP connection.
+  * IMPROVEMENT: Added an example for non-bloking signing.
+  * IMPROVEMENT: Debian package name contains debian version.
+  * IMPROVEMENT: Debian packaaging dependecies fixed.
+  * IMPROVEMENT: Debian changelog is generated from the main changelog.
+  * IMPROVEMENT: Libksi Debian/Ubuntu dependencies changed to make it work on both Debian 9 and Ubuntu 16.
+
+libksi (3.15.2306) RELEASED; urgency=low
+
+  * BUGFIX: Fixed creating HmacHasher failure with unimplemented hash algorithm.
+  * BUGFIX: Unable to create KSI_DataHash from digest if algorithm is not implemented.
+  * IMPROVEMENT: Simplified integration test configuration (see integrationtest.conf.sample)
+  * BUGFIX: Fixed KSIEP over TCP failing.
+  * BUGFIX: Fixed clang static analyze findings.
+  * BUGFIX: GNU makefile target 'dist' does not include any unnecessary files to the resulting tarball.
+  * IMPROVEMENT: Debian packaging refactored and fixed.
+  * IMPROVEMENT: ABI version moved from configure.ac to ABI_VERSION file.
+  * IMPROVEMENT: Added KSI_SignatureBuilder_createSignatureWithAggregationChain function.
+  * IMPROVEMENT: Removed calendar-based verification from the default verification policy.
+  * IMPROVEMENT: New verification rule for verifing document hash algorithm.
+  * IMPROVEMENT: Implemented verification of PKI certificate validity during aggregation time.
+  * IMPROVEMENT: Rpm packaging spec file moved from "redhat" to "packaging/redhat".
+  * IMPROVEMENT: Set default PDU version to 2.
+
 libksi (3.14.2207) RELEASED; urgency=low
 
   * IMPROVEMENT: Unified verifivation error codes. All error code values with single digit are padded with '0' (general error codes have been changed from GEN-* to GEN-0*).

@@ -371,6 +371,9 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 			"Extend request");
 	if (res != KSI_OK) goto cleanup;
 
+	(*handle)->reqCtx = (void*)KSI_ExtendReq_ref(req);
+	(*handle)->reqCtx_free = (void (*)(void *))KSI_ExtendReq_free;
+
 	res = KSI_OK;
 
 cleanup:
@@ -484,9 +487,10 @@ int KSI_TcpClient_new(KSI_CTX *ctx, KSI_NetworkClient **tcp) {
 	}
 
 	res = KSI_AbstractNetworkClient_new(ctx, &tmp);
-	if (tmp == NULL) {
-		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
+
 	}
 
 	t = KSI_new(KSI_TcpClient);

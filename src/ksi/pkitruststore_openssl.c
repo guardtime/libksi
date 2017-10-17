@@ -495,7 +495,7 @@ static time_t ASN1_GetTimeT(ASN1_TIME* time){
 		t.tm_year -= 1900;
 	}
 	t.tm_mon  = (str[i++] - '0') * 10;
-	t.tm_mon += (str[i++] - '0') - 1; // -1 since January is 0 not 1.
+	t.tm_mon += (str[i++] - '0') - 1; /* -1 since January is 0 not 1. */
 	t.tm_mday = (str[i++] - '0') * 10;
 	t.tm_mday+= (str[i++] - '0');
 	t.tm_hour = (str[i++] - '0') * 10;
@@ -636,7 +636,7 @@ static char* pki_certificate_subjectOIDToString(const KSI_PKICertificate *cert, 
 static int pki_certificate_getSerialNumber(const KSI_PKICertificate *cert, KSI_OctetString **serial_number) {
 	int res;
 	ASN1_INTEGER *integer = NULL;
-	KSI_OctetString *tmp;
+	KSI_OctetString *tmp = NULL;
 
 	if (cert == NULL || cert->x509 == NULL  || serial_number == NULL){
 		res = KSI_INVALID_ARGUMENT;
@@ -645,8 +645,8 @@ static int pki_certificate_getSerialNumber(const KSI_PKICertificate *cert, KSI_O
 
 	integer = X509_get_serialNumber(cert->x509);
 	if (integer == NULL) {
-		res = KSI_UNKNOWN_ERROR;
-		KSI_pushError(cert->ctx, res, "Unable to extract PKI certificate serial number.");
+		KSI_pushError(cert->ctx, res = KSI_UNKNOWN_ERROR, "Unable to extract PKI certificate serial number.");
+		goto cleanup;
 	}
 
 	res = KSI_OctetString_new(cert->ctx, integer->data, integer->length, &tmp);

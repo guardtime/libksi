@@ -89,6 +89,7 @@ LIB_OBJ = \
 	$(OBJ_DIR)\list.obj \
 	$(OBJ_DIR)\log.obj \
 	$(OBJ_DIR)\net.obj \
+	$(OBJ_DIR)\net_async.obj \
 	$(OBJ_DIR)\net_http.obj \
 	$(OBJ_DIR)\net_uri.obj \
 	$(OBJ_DIR)\publicationsfile.obj \
@@ -105,11 +106,11 @@ LIB_OBJ = \
 	$(OBJ_DIR)\verification_rule.obj \
 	$(OBJ_DIR)\hmac.obj \
 	$(OBJ_DIR)\net_tcp.obj \
+	$(OBJ_DIR)\net_tcp_async.obj \
 	$(OBJ_DIR)\compatibility.obj \
 	$(OBJ_DIR)\pkitruststore.obj \
 	$(OBJ_DIR)\net_file.obj \
 	$(OBJ_DIR)\policy.obj \
-	$(OBJ_DIR)\verify_deprecated.obj \
 	$(OBJ_DIR)\blocksigner.obj
 
 INC_FILES = \
@@ -119,6 +120,7 @@ INC_FILES = \
 	fast_tlv.h \
 	hmac.h \
 	net.h \
+	net_async.h \
 	types.h \
 	crc32.h \
 	net_http.h \
@@ -146,7 +148,6 @@ INC_FILES = \
 	tree_builder.h \
 	compatibility.h \
 	policy.h \
-	verify_deprecated.h \
 	blocksigner.h \
 	$(VERSION_H)
 

@@ -35,28 +35,37 @@
 #define VERIFICATION_RULE_NAME __FUNCTION__
 
 #define VERIFICATION_START(step) \
+{\
 	result->stepsPerformed  |= (step); \
-	result->stepsSuccessful &= ~(step)\
+	result->stepsSuccessful &= ~(step); \
+}\
 
 #define VERIFICATION_RESULT_OK(step) \
+{\
 	result->resultCode       = KSI_VER_RES_OK; \
-	result->errorCode        = KSI_VER_ERR_NONE;\
+	result->errorCode        = KSI_VER_ERR_NONE; \
 	result->stepsSuccessful |= (step);\
-	result->ruleName         = VERIFICATION_RULE_NAME\
+	result->ruleName         = VERIFICATION_RULE_NAME; \
+}\
 
 #define VERIFICATION_RESULT_ERR(vrc, vec, step) \
-	result->resultCode       = (vrc);\
-	result->errorCode        = (vec);\
-	result->stepsFailed     |= (step);\
-	result->ruleName         = VERIFICATION_RULE_NAME\
+{\
+	result->resultCode       = (vrc); \
+	result->errorCode        = (vec); \
+	result->stepsFailed     |= (step); \
+	result->ruleName         = VERIFICATION_RULE_NAME; \
+}\
 
 #define VERIFICATION_RESULT_RULE(rule) \
-	result->ruleName         = (rule)\
+{\
+	result->ruleName         = (rule); \
+}\
 
 static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, const KSI_DataHash *hsh, const KSI_OctetString *suffix, int hsh_id, KSI_DataHash **out);
 static int rfc3161_verifyAggrTime(KSI_CTX *ctx, const KSI_Signature *sig);
 static int rfc3161_verifyChainIndex(KSI_CTX *ctx, const KSI_Signature *sig);
-static int getRfc3161OutputHash(const KSI_Signature *sig, KSI_DataHash **outputHash);
+static int rfc3161_extractOutputHashAlgorithm(const KSI_Signature *sig, KSI_HashAlgorithm *algorithm);
+static int rfc3161_getOutputHash(const KSI_Signature *sig, KSI_DataHash **outputHash);
 static int getExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Integer *pubTime, KSI_CalendarHashChain **extCalHashChain);
 static int initPublicationsFile(KSI_VerificationContext *info);
 static int initAggregationOutputHash(KSI_VerificationContext *info);
@@ -350,19 +359,53 @@ cleanup:
 	return res;
 }
 
-static int getRfc3161OutputHash(const KSI_Signature *sig, KSI_DataHash **outputHash) {
+static int rfc3161_extractOutputHashAlgorithm(const KSI_Signature *sig, KSI_HashAlgorithm *algorithm) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	KSI_AggregationHashChain *firstChain = NULL;
+	KSI_DataHash *inputHash = NULL;
+
+	if (sig == NULL || algorithm == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = sig->ctx;
+
+	res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &firstChain);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_AggregationHashChain_getInputHash(firstChain, &inputHash);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_DataHash_getHashAlg(inputHash, algorithm);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+static int rfc3161_getOutputHash(const KSI_Signature *sig, KSI_DataHash **outputHash) {
 	int res;
 	KSI_CTX *ctx = NULL;
 	KSI_DataHash *hsh_tstInfo = NULL;
 	KSI_DataHash *hsh_sigAttr = NULL;
 	KSI_DataHash *tmp = NULL;
-	KSI_DataHasher *hsr = NULL;
 	KSI_RFC3161 *rfc3161 = NULL;
 	const unsigned char *imprint = NULL;
 	size_t imprint_len = 0;
-	KSI_HashAlgorithm algo_id = -1;
 	KSI_HashAlgorithm tstInfoAlgoId;
 	KSI_HashAlgorithm sigAttrAlgoId;
+	KSI_HashAlgorithm algorithm = KSI_HASHALG_INVALID;
 
 	if (sig == NULL || outputHash == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -403,13 +446,13 @@ static int getRfc3161OutputHash(const KSI_Signature *sig, KSI_DataHash **outputH
 		goto cleanup;
 	}
 
-	res = KSI_Signature_getHashAlgorithm((KSI_Signature *)sig, &algo_id);
+	res = rfc3161_extractOutputHashAlgorithm(sig, &algorithm);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = KSI_DataHash_create(ctx, imprint, imprint_len, algo_id, &tmp);
+	res = KSI_DataHash_create(ctx, imprint, imprint_len, algorithm, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -420,7 +463,6 @@ static int getRfc3161OutputHash(const KSI_Signature *sig, KSI_DataHash **outputH
 
 cleanup:
 
-	KSI_DataHasher_free(hsr);
 	KSI_DataHash_free(hsh_tstInfo);
 	KSI_DataHash_free(hsh_sigAttr);
 	KSI_DataHash_free(tmp);
@@ -456,7 +498,7 @@ int KSI_VerificationRule_AggregationChainInputHashVerification(KSI_VerificationC
 
 	if (sig->rfc3161 != NULL) {
 		KSI_LOG_info(ctx, "Using input hash calculated from RFC 3161 for aggregation.");
-		res = getRfc3161OutputHash(sig, &rfc3161_outputHash);
+		res = rfc3161_getOutputHash(sig, &rfc3161_outputHash);
 		if (res != KSI_OK) {
 			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 			KSI_pushError(ctx, res, NULL);
@@ -1633,7 +1675,7 @@ int KSI_VerificationRule_InputHashAlgorithmVerification(KSI_VerificationContext 
 	sig = info->signature;
 	KSI_ERR_clearErrors(ctx);
 
-	KSI_LOG_info(ctx, "Verify document hash.");
+	KSI_LOG_info(ctx, "Verify document hash algorithm.");
 	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Document hash: ", info->documentHash);
 
 	if (sig->rfc3161 != NULL) {
@@ -3132,7 +3174,8 @@ static int extendingPermittedVerification(KSI_VerificationContext *info, KSI_Rul
 	res = KSI_OK;
 
 cleanup:
-	VERIFICATION_RESULT_RULE(rule);
+
+	if (result != NULL) VERIFICATION_RESULT_RULE(rule);
 	return res;
 }
 

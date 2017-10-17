@@ -21,6 +21,7 @@
 #define NET_IMPL_H_
 
 #include "net.h"
+#include "net_async.h"
 #include "internal.h"
 
 #ifdef __cplusplus
@@ -109,6 +110,106 @@ extern "C" {
 		/** Function to retrieve the status of the last perform call. Will return #KSI_REQUEST_PENDING if
 		 * the request has not been performed. */
 		int (*status)(KSI_RequestHandle *);
+	};
+
+	struct KSI_AsyncHandle_st {
+		KSI_CTX *ctx;
+		size_t ref;
+
+		/** Payload id. */
+		KSI_uint64_t id;
+
+		/** Application layer request context. */
+		KSI_AggregationReq *aggrReq;
+		KSI_ExtendReq *extReq;
+
+		/** Application layer response context. */
+		void *respCtx;
+		void (*respCtx_free)(void*);
+
+		/** Serialized request payload. */
+		unsigned char *raw;
+		size_t len;
+		size_t sentCount;
+
+		/** Private user pointer. */
+		void *userCtx;
+		void (*userCtx_free)(void*);
+
+		/** Handle state. */
+		int state;
+
+		/** Handle error. */
+		int err;
+		long errExt;
+		KSI_Utf8String *errMsg;
+
+		/** Time when the query has been added to the request queue. */
+		time_t reqTime;
+		/** Time when the query has been sent out. */
+		time_t sndTime;
+		/** Time when the response has been reeived. */
+		time_t rcvTime;
+
+		/** A poiter to the next handle in request queue. */
+		KSI_AsyncHandle *next;
+	};
+
+	enum KSI_AsyncPrivateOption_en {
+		__KSI_ASYNC_PRIVOPT_OFFSET = __KSI_ASYNC_OPT_COUNT,
+
+		/**
+		 * Async round duration in sec.
+		 * \param[in]		count			Paramer of type size_t.
+		 * \see #KSI_ASYNC_ROUND_DURATION_SEC default count.
+		 */
+		KSI_ASYNC_PRIVOPT_ROUND_DURATION,
+
+		__NOF_KSI_ASYNC_OPT
+	};
+
+	struct KSI_AsyncClient_st {
+		KSI_CTX *ctx;
+
+		void *clientImpl;
+		void (*clientImpl_free)(void*);
+
+		int (*addRequest)(void *, KSI_AsyncHandle *);
+		int (*getResponse)(void *, KSI_OctetString **, size_t *);
+		int (*getCredentials)(void *, const char **, const char **);
+		int (*dispatch)(void *);
+
+		KSI_uint64_t instanceId;
+		KSI_uint64_t messageId;
+
+		size_t requestCountOffset; /**< A circular counter for increasing the request id entropy. */
+		size_t requestCount; /**< Request cache position of the last allocated handle. */
+		size_t tail; /**< Request cache position of the last handle that was returned to the used. */
+		KSI_AsyncHandle **reqCache;
+
+		size_t pending; /**< Nof pending requests (including in error state). */
+		size_t received; /**< Nof received valid responses. */
+
+		size_t options[__NOF_KSI_ASYNC_OPT];
+	};
+
+	struct KSI_AsyncService_st {
+		KSI_CTX *ctx;
+
+		void *impl;
+		void (*impl_free)(void*);
+
+		int (*addRequest)(void *, KSI_AsyncHandle *);
+		int (*responseHandler)(void *);
+
+		int (*run)(void *, int (*)(void *), KSI_AsyncHandle **, size_t *);
+		int (*getPendingCount)(void *, size_t *);
+		int (*getReceivedCount)(void *, size_t *);
+
+		int (*setOption)(void *, int, void *);
+		int (*getOption)(void *, int, void *);
+
+		int (*uriSplit)(const char *uri, char **scheme, char **user, char **pass, char **host, unsigned *port, char **path, char **query, char **fragment);
 	};
 
 #ifdef __cplusplus

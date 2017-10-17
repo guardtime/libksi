@@ -99,7 +99,7 @@ int typ##_toTlv(KSI_CTX *ctx, const typ *o, unsigned tag, int isNonCritical, int
 	 int typ##_writeBytes(typ *o, unsigned char *buf, size_t buf_size, size_t *buf_len, int opt)
 
 /**
- * \addtogroup base_types Base types
+ * \addtogroup base_types Base Types
  *  @{
  */
 	#define KSI_uint64_t uint64_t
