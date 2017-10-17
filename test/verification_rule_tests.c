@@ -1130,6 +1130,191 @@ static void testRule_CalendarHashChainRegistrationTime_verifyErrorResult(CuTest 
 #undef TEST_SIGNATURE_FILE
 }
 
+static void testRule(CuTest *tc, int (*verificationRule)(KSI_VerificationContext *, KSI_RuleVerificationResult *),
+			const int step, const char *testSigFile, const int rCode, const int eCode) {
+	int res = KSI_OK;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(testSigFile), &signature);
+	if (rCode == KSI_VER_RES_OK) {
+		CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	} else {
+		CuAssert(tc, "Should fail during signature verification.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
+
+		res = KSI_CTX_getLastFailedSignature(ctx, &signature);
+		CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
+	}
+	verCtx.signature = signature;
+
+	TEST_VERIFICATION_STEP_INIT;
+
+	res = verificationRule(&verCtx, &verRes);
+	CuAssert(tc, "Failed to verify.", res == KSI_OK);
+	CuAssert(tc, "Verification result mismatch.", verRes.resultCode == rCode && verRes.errorCode == eCode);
+
+	if (rCode == KSI_VER_RES_OK) {
+		TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(step);
+	} else {
+		TEST_ASSERT_VERIFICATION_STEP_FAILED(step);
+	}
+
+	KSI_VerificationContext_clean(&verCtx);
+	KSI_Signature_free(signature);
+}
+
+static void testRule_CalendarHashChainHashAlgorithm(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+
+	testRule(tc, KSI_VerificationRule_CalendarHashChainHashAlgorithm, KSI_VERIFY_CALCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_CalendarHashChainHashAlgorithm_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-calendar-chain-has-sha1-in-right-link.ksig"
+
+	testRule(tc, KSI_VerificationRule_CalendarHashChainHashAlgorithm, KSI_VERIFY_CALCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_FAIL, KSI_VER_ERR_INT_16);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationChainInputHashAlgorithmVerification(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+
+	testRule(tc, KSI_VerificationRule_AggregationChainInputHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationChainInputHashAlgorithmVerification_withRfc3161Record(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-with-rfc3161-record-ok.ksig"
+
+	testRule(tc, KSI_VerificationRule_AggregationChainInputHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationChainInputHashAlgorithmVerification_withRfc3161Record_beforeSha1Deprecate(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/rfc3161-sha1-as-input-hash-2016-01.ksig"
+
+	testRule(tc, KSI_VerificationRule_AggregationChainInputHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationChainInputHashAlgorithmVerification_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-doc-hsh-sha1.ksig"
+
+	testRule(tc, KSI_VerificationRule_AggregationChainInputHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_FAIL, KSI_VER_ERR_INT_13);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+
+static void testRule_AggregationChainInputHashAlgorithmVerification_withRfc3161Record_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/rfc3161-sha1-as-input-hash-2017.ksig"
+
+	testRule(tc, KSI_VerificationRule_AggregationChainInputHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_FAIL, KSI_VER_ERR_INT_13);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_Rfc3161RecordHashAlgorithmVerification_NoDepAlg(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-with-rfc3161-record-ok.ksig"
+
+	testRule(tc, KSI_VerificationRule_Rfc3161RecordHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_Rfc3161RecordHashAlgorithmVerification_Sha1InSigAttr_beforeSha1Deprecate(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/rfc3161-sha1-in-sig-atr-2016-01.ksig"
+
+	testRule(tc, KSI_VerificationRule_Rfc3161RecordHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_Rfc3161RecordHashAlgorithmVerification_Sha1InSigAttr_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/rfc3161-sha1-in-sig-atr-2017.ksig"
+
+	testRule(tc, KSI_VerificationRule_Rfc3161RecordHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_FAIL, KSI_VER_ERR_INT_14);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_Rfc3161RecordHashAlgorithmVerification_Sha1InTstInfo_beforeSha1Deprecate(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/rfc3161-sha1-in-tst-algo-2016-01.ksig"
+
+	testRule(tc, KSI_VerificationRule_Rfc3161RecordHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_Rfc3161RecordHashAlgorithmVerification_Sha1InTstInfo_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/rfc3161-sha1-in-tst-algo-2017.ksig"
+
+	testRule(tc, KSI_VerificationRule_Rfc3161RecordHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_FAIL, KSI_VER_ERR_INT_14);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_Rfc3161RecordHashAlgorithmVerification_recordMissing(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+
+	testRule(tc, KSI_VerificationRule_Rfc3161RecordHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationChainHashAlgorithmVerification(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+
+	testRule(tc, KSI_VerificationRule_AggregationChainHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationChainHashAlgorithmVerification_beforeSha1Deprecate(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/sha1-as-aggregation-algo-2016-01.ksig"
+
+	testRule(tc, KSI_VerificationRule_AggregationChainHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_AggregationChainHashAlgorithmVerification_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/sha1-as-aggregation-algo-2017.ksig"
+
+	testRule(tc, KSI_VerificationRule_AggregationChainHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_FAIL, KSI_VER_ERR_INT_15);
+
+#undef TEST_SIGNATURE_FILE
+}
+
 static void testRule_CalendarAuthenticationRecordAggregationHash(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
@@ -4793,6 +4978,22 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainAggregationTime_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainRegistrationTime);
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainRegistrationTime_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_CalendarHashChainHashAlgorithm);
+	SUITE_SKIP_TEST(suite, testRule_CalendarHashChainHashAlgorithm_verifyErrorResult, "Max", "No obsolite algorithms present.");
+	SUITE_ADD_TEST(suite, testRule_AggregationChainInputHashAlgorithmVerification);
+	SUITE_ADD_TEST(suite, testRule_AggregationChainInputHashAlgorithmVerification_withRfc3161Record);
+	SUITE_ADD_TEST(suite, testRule_AggregationChainInputHashAlgorithmVerification_withRfc3161Record_beforeSha1Deprecate);
+	SUITE_ADD_TEST(suite, testRule_AggregationChainInputHashAlgorithmVerification_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_AggregationChainInputHashAlgorithmVerification_withRfc3161Record_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_Rfc3161RecordHashAlgorithmVerification_NoDepAlg);
+	SUITE_ADD_TEST(suite, testRule_Rfc3161RecordHashAlgorithmVerification_Sha1InSigAttr_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_Rfc3161RecordHashAlgorithmVerification_Sha1InSigAttr_beforeSha1Deprecate);
+	SUITE_ADD_TEST(suite, testRule_Rfc3161RecordHashAlgorithmVerification_Sha1InTstInfo_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_Rfc3161RecordHashAlgorithmVerification_Sha1InTstInfo_beforeSha1Deprecate);
+	SUITE_ADD_TEST(suite, testRule_Rfc3161RecordHashAlgorithmVerification_recordMissing);
+	SUITE_ADD_TEST(suite, testRule_AggregationChainHashAlgorithmVerification);
+	SUITE_ADD_TEST(suite, testRule_AggregationChainHashAlgorithmVerification_beforeSha1Deprecate);
+	SUITE_ADD_TEST(suite, testRule_AggregationChainHashAlgorithmVerification_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordAggregationHash);
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordAggregationHash_missingAutRec);
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordAggregationHash_verifyErrorResult);

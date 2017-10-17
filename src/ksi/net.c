@@ -197,7 +197,7 @@ static int uriCompose(const char *scheme, const char *user, const char *pass, co
 	size_t count = 0;
 	/* scheme:[//[user:password@]host[:port]][/]path[?query][#fragment] */
 
-	if (host == NULL || (user != NULL && pass == NULL) || (pass != NULL && user == NULL)) {
+	if ((user != NULL && pass == NULL) || (pass != NULL && user == NULL)) {
 		return KSI_INVALID_ARGUMENT;
 	}
 
@@ -209,7 +209,9 @@ static int uriCompose(const char *scheme, const char *user, const char *pass, co
 		count += KSI_snprintf(buf + count, len - count, "%s:%s@", user, pass);
 	}
 
-	count += KSI_snprintf(buf + count, len - count, "%s", host);
+	if (host != NULL) {
+		count += KSI_snprintf(buf + count, len - count, "%s", host);
+	}
 
 	if (port != 0) {
 		count += KSI_snprintf(buf + count, len - count, ":%d", port);
@@ -676,6 +678,62 @@ int KSI_RequestHandle_getResponse(const KSI_RequestHandle *handle, const unsigne
 	res = KSI_OK;
 
 cleanup:
+
+	return res;
+}
+
+static int pdu_verify_hmac(KSI_CTX *ctx, const KSI_DataHash *hmac, const char *key, KSI_HashAlgorithm conf_alg,
+		int (*calculateHmac)(const void*, int, const char*, KSI_DataHash**) ,void *PDU){
+	int res;
+	KSI_DataHash *actualHmac = NULL;
+	KSI_HashAlgorithm algo_id;
+
+	KSI_ERR_clearErrors(ctx);
+
+	if (ctx == NULL || hmac == NULL || key == NULL || calculateHmac == NULL || PDU == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_DataHash_getHashAlg(hmac, &algo_id);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (!KSI_isHashAlgorithmTrusted(algo_id)) {
+		KSI_pushError(ctx, res = KSI_UNTRUSTED_HASH_ALGORITHM, "HMAC not trusted.");
+		goto cleanup;
+	}
+
+	/* If configured, check if HMAC algorithm matches. */
+	if (conf_alg != KSI_HASHALG_INVALID && algo_id != conf_alg)	{
+		KSI_LOG_debug(ctx, "HMAC algorithm mismatch. Expected %s, received %s",
+				KSI_getHashAlgorithmName(conf_alg), KSI_getHashAlgorithmName(algo_id));
+		KSI_pushError(ctx, res = KSI_HMAC_ALGORITHM_MISMATCH, "HMAC algorithm mismatch.");
+		goto cleanup;
+	}
+
+	res = calculateHmac(PDU, algo_id, key, &actualHmac);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Check HMAC. */
+	if (!KSI_DataHash_equals(hmac, actualHmac)){
+		KSI_LOG_debug(ctx, "Verifying HMAC failed.");
+		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Calculated HMAC", actualHmac);
+		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "HMAC from response", hmac);
+		KSI_pushError(ctx, res = KSI_HMAC_MISMATCH, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_DataHash_free(actualHmac);
 
 	return res;
 }

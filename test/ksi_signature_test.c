@@ -967,6 +967,23 @@ static void testCreateHasher(CuTest *tc) {
 #undef TEST_SIGNATURE_FILE
 }
 
+static void testSigning_docAlgorithmDeprecated(CuTest* tc) {
+	int res;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_DataHash_createZero(ctx, KSI_HASHALG_SHA1, &hsh);
+	CuAssert(tc, "Unable to create data hash object.", res == KSI_OK && hsh != NULL);
+
+	res = KSI_createSignature(ctx, hsh, &sig);
+	CuAssert(tc, "Unable to sign the hash", res == KSI_UNTRUSTED_HASH_ALGORITHM && sig == NULL);
+
+	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
+}
+
 CuSuite* KSITest_Signature_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -998,6 +1015,7 @@ CuSuite* KSITest_Signature_getSuite(void) {
 	SUITE_ADD_TEST(suite, testSignatureGetPublicationInfo);
 	SUITE_ADD_TEST(suite, testSignatureGetPublicationInfo_verifyNullPointer);
 	SUITE_ADD_TEST(suite, testCreateHasher);
+	SUITE_ADD_TEST(suite, testSigning_docAlgorithmDeprecated);
 
 	return suite;
 }

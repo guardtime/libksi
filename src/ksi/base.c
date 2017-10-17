@@ -70,6 +70,12 @@ const char *KSI_getErrorString(int statusCode) {
 			return "The signature verification can not be completed due to invalid user data.";
 		case KSI_INVALID_ARGUMENT:
 			return "Invalid argument.";
+		case KSI_UNKNOWN_HASH_ALGORITHM_ID:
+			return "The hash algorithm ID is invalid.";
+		case KSI_HASH_ALGORITHM_DEPRECATED:
+			return "The hash algorithm was already deprecated at the time of use.";
+		case KSI_HASH_ALGORITHM_OBSOLETE:
+			return "The hash algorithm was already obsolete at the time of use.";
 		case KSI_INVALID_FORMAT:
 			return "Invalid format.";
 		case KSI_UNTRUSTED_HASH_ALGORITHM:
