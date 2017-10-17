@@ -472,7 +472,7 @@ static void testReset(CuTest *tc) {
 
 	KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &exp);
 
-	CuAssert(tc, "Output hash does not mach expected", KSI_DataHash_equals(hsh, exp));
+	CuAssert(tc, "Output hash does not match expected.", KSI_DataHash_equals(hsh, exp));
 
 	KSI_DataHash_free(exp);
 	KSI_DataHash_free(hsh);
@@ -585,7 +585,7 @@ static void testDoubleClose(CuTest *tc) {
 	KSI_DataHash *hsh = NULL;
 
 	res = KSI_DataHasher_open(ctx, KSI_getHashAlgorithmByName("default"), &hsr);
-	CuAssert(tc, "Creating a hasher with default hash algorithm should succeed,", res == KSI_OK && hsr != NULL);
+	CuAssert(tc, "Creating a hasher with default hash algorithm should succeed.", res == KSI_OK && hsr != NULL);
 
 	res = KSI_DataHasher_close(hsr, &hsh);
 	CuAssert(tc, "Closing an open hasher should succeed.", res == KSI_OK && hsh != NULL);
@@ -594,7 +594,7 @@ static void testDoubleClose(CuTest *tc) {
 	hsh = NULL;
 
 	res = KSI_DataHasher_close(hsr, &hsh);
-	CuAssert(tc, "Closing a hasher for the second time should not succeed.", res != KSI_OK && hsh == NULL);
+	CuAssert(tc, "Closing a hasher for the second time should not succeed.", res != KSI_INVALID_STATE && hsh == NULL);
 
 	KSI_DataHash_free(hsh);
 	KSI_DataHasher_free(hsr);
@@ -606,7 +606,7 @@ static void testAddToClosed(CuTest *tc) {
 	KSI_DataHash *hsh = NULL;
 
 	res = KSI_DataHasher_open(ctx, KSI_getHashAlgorithmByName("default"), &hsr);
-	CuAssert(tc, "Creating a hasher with default hash algorithm should succeed,", res == KSI_OK && hsr != NULL);
+	CuAssert(tc, "Creating a hasher with default hash algorithm should succeed.", res == KSI_OK && hsr != NULL);
 
 	res = KSI_DataHasher_close(hsr, &hsh);
 	CuAssert(tc, "Closing an open hasher should succeed.", res == KSI_OK && hsh != NULL);
@@ -628,7 +628,7 @@ static void testAddToCloseAndReset(CuTest *tc) {
 	KSI_DataHash *hsh = NULL;
 
 	res = KSI_DataHasher_open(ctx, KSI_getHashAlgorithmByName("default"), &hsr);
-	CuAssert(tc, "Creating a hasher with default hash algorithm should succeed,", res == KSI_OK && hsr != NULL);
+	CuAssert(tc, "Creating a hasher with default hash algorithm should succeed.", res == KSI_OK && hsr != NULL);
 
 	res = KSI_DataHasher_close(hsr, &hsh);
 	CuAssert(tc, "Closing an open hasher should succeed.", res == KSI_OK && hsh != NULL);

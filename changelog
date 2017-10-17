@@ -1,5 +1,5 @@
 * BUGFIX: Removed double close of the KSI_DataHasher when calculating the calendar hash chain.
-* IMPROVEMENT: Added double close guards and tests for KSI_DataHasher
+* IMPROVEMENT: Added double close guards and tests for KSI_DataHasher.
 
 Version 3.16
 

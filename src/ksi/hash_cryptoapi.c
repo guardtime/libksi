@@ -296,9 +296,11 @@ int KSI_DataHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHasher 
 
 	/* Set CSP in helper struct. */
 	tmp_cryptoCTX->pt_CSP = tmp_CSP;
+	tmp_CSP = 0;
 
 	/* Set helper struct in abstract struct. */
 	tmp_hasher->hashContext = tmp_cryptoCTX;
+	tmp_cryptoCTX = NULL;
 
 	res = KSI_DataHasher_reset(tmp_hasher);
 	if (res != KSI_OK) {
@@ -308,8 +310,6 @@ int KSI_DataHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHasher 
 
 	*hasher = tmp_hasher;
 	tmp_hasher = NULL;
-	tmp_cryptoCTX = NULL;
-	tmp_CSP = 0;
 
 	res = KSI_OK;
 

@@ -280,8 +280,6 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
 		}
-
-		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Intermediade hash value", hsh);
 	}
 
 	KSI_snprintf(logMsg, sizeof(logMsg), "Finished %s hash chain aggregation with output hash.", isCalendar ? "calendar": "aggregation");
