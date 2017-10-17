@@ -174,6 +174,8 @@ esac
 CFLAGS+= " -Wdeclaration-after-statement"
 # Add more warnings
 CFLAGS+=" -Wall"
+# Optimize for debugging
+#CFLAGS+=" -Og"
 
 AC_ARG_WITH(unit-test-xml,
 [  --with-unit-test-xml=file		Specifies the target xml of unit tests.],

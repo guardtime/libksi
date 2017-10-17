@@ -91,6 +91,7 @@ libksi_dev_includes="\
 	$include_dir/list.h \
 	$include_dir/log.h \
 	$include_dir/net.h \
+	$include_dir/net_async.h \
 	$include_dir/net_http.h \
 	$include_dir/net_tcp.h \
 	$include_dir/net_file.h \
@@ -117,6 +118,14 @@ libksi_dev_includes="\
 ./rebuild.sh
 make dist
 
+# Rebuild debian changelog.
+if command  -v dch > /dev/null; then
+  echo "Generating debian changelog..."
+  packaging/deb/libksi/rebuild_changelog.sh changelog packaging/deb/libksi/DEBIAN/control packaging/deb/libksi/DEBIAN/changelog "3.2.1.0:unstable"
+else
+  >&2 echo "Warning: Debian changelog file is not regenerated as dch is not installed."
+  >&2 echo "Install devscripts 'apt-get install devscripts'"
+fi
 
 # Create temporary directory structure.
 mkdir -p $tmp_dir_lib/libksi/$lib_install_dir

@@ -87,7 +87,7 @@ const char *KSI_getErrorString(int statusCode) {
 		case KSI_TLV_PAYLOAD_TYPE_MISMATCH:
 			return "TLV payload type mismatch.";
 		case KSI_ASYNC_NOT_FINISHED:
-			return "Asynchronous call not yet finished.";
+			return "The async operation has not finished.";
 		case KSI_INVALID_SIGNATURE:
 			return "Invalid KSI signature.";
 		case KSI_INVALID_PKI_SIGNATURE:
@@ -172,6 +172,12 @@ const char *KSI_getErrorString(int statusCode) {
 			return "Received PDU v2 response to PDU v1 request. Configure the SDK to use PDU v2 format for the given extender.";
 		case KSI_SERVICE_EXTENDER_PDU_V1_RESPONSE_TO_PDU_V2_REQUEST:
 			return "Received PDU v1 response to PDU v2 request. Configure the SDK to use PDU v1 format for the given extender.";
+
+		case KSI_ASYNC_CONNECTION_CLOSED:
+			return "Asynchronous connection was closed.";
+		case KSI_ASYNC_REQUEST_CACHE_FULL:
+			return "Asynchronous request cache is full.";
+
 		case KSI_UNKNOWN_ERROR:
 			return "Unknown internal error.";
 		default:
@@ -661,48 +667,6 @@ int KSI_receiveExtenderConfig(KSI_CTX *ctx, KSI_Config **config) {
 			(void (*)(void *))KSI_ExtendResp_free);
 }
 
-static int signatureVerifier_verifySignature(KSI_Signature *sig, KSI_CTX *ctx, const KSI_DataHash *hsh) {
-	int res;
-	KSI_VerificationContext context;
-	KSI_PolicyVerificationResult *result = NULL;
-
-	KSI_ERR_clearErrors(ctx);
-
-	if (ctx == NULL || sig == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	res = KSI_VerificationContext_init(&context, ctx);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	context.signature = sig;
-	context.documentHash = hsh;
-
-	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, "Signature verification aborted due to an error.");
-		goto cleanup;
-	}
-
-	if (result->finalResult.resultCode != KSI_VER_RES_OK) {
-		res = KSI_VERIFICATION_FAILURE;
-		KSI_pushError(ctx, res, "Verification of signature failed.");
-		goto cleanup;
-	}
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_PolicyVerificationResult_free(result);
-
-	return res;
-}
-
 int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig) {
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -712,7 +676,7 @@ int KSI_verifySignature(KSI_CTX *ctx, KSI_Signature *sig) {
 		goto cleanup;
 	}
 
-	res = signatureVerifier_verifySignature(sig, ctx, NULL);
+	res = KSI_Signature_verifyWithPolicy(sig, NULL, 0, KSI_VERIFICATION_POLICY_GENERAL, NULL);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx,res, NULL);
 		goto cleanup;
@@ -734,7 +698,7 @@ int KSI_verifyDataHash(KSI_CTX *ctx, KSI_Signature *sig, const KSI_DataHash *hsh
 		goto cleanup;
 	}
 
-	res = signatureVerifier_verifySignature(sig, ctx, hsh);
+	res = KSI_Signature_verifyWithPolicy(sig, hsh, 0, KSI_VERIFICATION_POLICY_GENERAL, NULL);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx,res, NULL);
 		goto cleanup;

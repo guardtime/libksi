@@ -593,14 +593,7 @@ cleanup:
 
 static int parseAggregationResponse(KSI_CTX *ctx, KSI_uint64_t rootLevel, KSI_AggregationResp *resp, KSI_Signature **signature) {
 	int res;
-	KSI_TLV *tmpTlv = NULL;
-	KSI_TLV *respTlv = NULL;
-	KSI_LIST(KSI_TLV) *tlvList = NULL;
 	KSI_SignatureBuilder *builder = NULL;
-
-	/* PDU Specific objects */
-	KSI_Integer *status = NULL;
-	size_t i;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || resp == NULL || signature == NULL) {
@@ -608,144 +601,7 @@ static int parseAggregationResponse(KSI_CTX *ctx, KSI_uint64_t rootLevel, KSI_Ag
 		goto cleanup;
 	}
 
-	/* Parse the pdu */
-	res = KSI_AggregationResp_getBaseTlv(resp, &respTlv);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Validate tag value */
-	if (KSI_TLV_getTag(respTlv) != 0x202 && KSI_TLV_getTag(respTlv) != 0x02) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Aggregation response element is missing.");
-		goto cleanup;
-	}
-
-	res = KSI_AggregationResp_getStatus(resp, &status);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_convertAggregatorStatusCode(status);
-	/* Check for the status of the response. */
-	if (res != KSI_OK) {
-		KSI_Utf8String *errorMessage = NULL;
-		char msg[1024];
-
-		KSI_AggregationResp_getErrorMsg(resp, &errorMessage);
-
-		KSI_snprintf(msg, sizeof(msg), "Aggregation failed: %s", KSI_Utf8String_cstr(errorMessage));
-		KSI_ERR_push(ctx, res, (long)KSI_Integer_getUInt64(status), __FILE__, __LINE__, KSI_Utf8String_cstr(errorMessage));
-		goto cleanup;
-	}
-
-	/* Create a new signature builder object. */
-	res = KSI_SignatureBuilder_open(ctx, &builder);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_AggregationResp_getAggregationAuthRec(resp, &builder->sig->aggregationAuthRec);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_AggregationResp_setAggregationAuthRec(resp, NULL);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_AggregationResp_getAggregationChainList(resp, &builder->sig->aggregationChainList);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_AggregationResp_setAggregationChainList(resp, NULL);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_AggregationResp_getCalendarAuthRec(resp, &builder->sig->calendarAuthRec);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_AggregationResp_setCalendarAuthRec(resp, NULL);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_AggregationResp_getCalendarChain(resp, &builder->sig->calendarChain);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_AggregationResp_setCalendarChain(resp, NULL);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-
-	/* Create signature TLV */
-	res = KSI_TLV_new(ctx, 0x0800, 0, 0, &tmpTlv);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_TLV_getNestedList(respTlv, &tlvList);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	i = 0;
-	while (i < KSI_TLVList_length(tlvList)) {
-		KSI_TLV *t = NULL;
-		res = KSI_TLVList_elementAt(tlvList, i, &t);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
-
-		switch (KSI_TLV_getTag(t)) {
-			case 0x01:
-			case 0x04:
-			case 0x05:
-			case 0x10:
-			case 0x11:
-				/* Ignore these tags. */
-				i++;
-				break;
-			default:
-				/* Remove it from the original list. */
-				res = KSI_TLVList_remove(tlvList, i, &t);
-				if (res != KSI_OK) {
-					KSI_pushError(ctx, res, NULL);
-					goto cleanup;
-				}
-
-				/* Copy this tag to the signature. */
-				res = KSI_TLV_appendNestedTlv(tmpTlv, t);
-				if (res != KSI_OK) {
-					KSI_pushError(ctx, res, NULL);
-					goto cleanup;
-				}
-
-		}
-	}
-
-	res = KSI_TLV_clone(tmpTlv, &builder->sig->baseTlv);
+	res = KSI_SignatureBuilder_openFromAggregationResp(resp, &builder);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -758,67 +614,9 @@ static int parseAggregationResponse(KSI_CTX *ctx, KSI_uint64_t rootLevel, KSI_Ag
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-
 	res = KSI_OK;
-
 cleanup:
-
-	KSI_TLV_free(tmpTlv);
 	KSI_SignatureBuilder_free(builder);
-
-	return res;
-}
-
-static int signatureVerifyWithPolicy(KSI_CTX *ctx, KSI_Signature *sig, const KSI_DataHash *docHsh, KSI_uint64_t rootLevel,
-		const KSI_Policy *policy, KSI_VerificationContext *verificationContext) {
-	int res;
-	KSI_VerificationContext context;
-	KSI_PolicyVerificationResult *result = NULL;
-
-	KSI_ERR_clearErrors(ctx);
-
-	if (ctx == NULL || sig == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	if (!KSI_IS_VALID_TREE_LEVEL(rootLevel)) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Aggregation level can't be larger than 0xff.");
-		goto cleanup;
-	}
-
-	res = KSI_VerificationContext_init(&context, ctx);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	if (verificationContext == NULL) {
-		context.documentHash = docHsh;
-		context.docAggrLevel = rootLevel;
-	} else {
-		context = *verificationContext;
-	}
-	context.signature = sig;
-
-	res = KSI_SignatureVerifier_verify(policy, &context, &result);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, "Internal verification of signature aborted due to an error.");
-		goto cleanup;
-	}
-
-	if (result->finalResult.resultCode != KSI_VER_RES_OK) {
-		res = KSI_VERIFICATION_FAILURE;
-		KSI_pushError(ctx, res, "Internal verification of signature failed.");
-		goto cleanup;
-	}
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_PolicyVerificationResult_free(result);
-
 	return res;
 }
 
@@ -877,7 +675,7 @@ int KSI_Signature_signAggregatedWithPolicy(KSI_CTX *ctx, KSI_DataHash *rootHash,
 		goto cleanup;
 	}
 
-	res = signatureVerifyWithPolicy(ctx, sign, rootHash, 0, policy, context);
+	res = KSI_Signature_verifyWithPolicy(sign, rootHash, 0, policy, context);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1083,7 +881,7 @@ int KSI_Signature_extendToWithPolicy(const KSI_Signature *sig, KSI_CTX *ctx, KSI
 		goto cleanup;
 	}
 
-	res = signatureVerifyWithPolicy(ctx, tmp, NULL, 0, policy, context);
+	res = KSI_Signature_verifyWithPolicy(tmp, NULL, 0, policy, context);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1155,7 +953,7 @@ int KSI_Signature_extendWithPolicy(const KSI_Signature *signature, KSI_CTX *ctx,
 	}
 	pubRecClone = NULL;
 
-	res = signatureVerifyWithPolicy(ctx, tmp, NULL, 0, policy, context);
+	res = KSI_Signature_verifyWithPolicy(tmp, NULL, 0, policy, context);
 	if (res != KSI_OK && res) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -1338,7 +1136,7 @@ int KSI_Signature_parseWithPolicy(KSI_CTX *ctx, const unsigned char *raw, size_t
 		goto cleanup;
 	}
 
-	res = signatureVerifyWithPolicy(ctx, tmp, NULL, 0, policy, context);
+	res = KSI_Signature_verifyWithPolicy(tmp, NULL, 0, policy, context);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;

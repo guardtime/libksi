@@ -50,6 +50,19 @@ extern "C" {
 	int KSI_Signature_createDataHasher(const KSI_Signature *sig, KSI_DataHasher **hsr);
 
 	/**
+	 * Verifies the signature based on the given verification policy.
+	 * \param[in]		sig			KSI signature.
+	 * \param[in]		docHsh		Document hash. Can be ommited.
+	 * \param[in]		rootLevel	The level of the input hash (usually 0).
+	 * \param[in]		policy		Verification policy. Can be ommited.
+	 * \param verificationContext
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note In case the \c docHsh is ommited, only the signature is verified.
+	 */
+	int KSI_Signature_verifyWithPolicy(KSI_Signature *sig, const KSI_DataHash *docHsh, KSI_uint64_t rootLevel,
+			const KSI_Policy *policy, KSI_VerificationContext *verificationContext);
+
+	/**
 	 * Verifies that the document matches the signature.
 	 * \param[in]	sig			KSI signature.
 	 * \param[in]	ctx			KSI context.

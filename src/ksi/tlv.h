@@ -27,7 +27,7 @@ extern "C" {
 #endif
 
 	/**
-	 * \addtogroup tlv TLV manipulation
+	 * \addtogroup tlv TLV Manipulation
 	 * Most KSI objects use a type-length-value (TLV) encoding scheme. The TLV scheme is used
 	 * to encode both the KSI data structures and also protocol data units (PDUs) for transferring
 	 * them between the entities during the signature generation process. The values are octet
@@ -48,8 +48,6 @@ extern "C" {
 	 * TLV8 and TLV16 are distinguished by the `16-Bit' flag in the first octet of the type field.
 	 * @{
 	 */
-
-	KSI_DEFINE_GET_CTX(KSI_TLV);
 
 	/**
 	 * This function creates an new TLV.

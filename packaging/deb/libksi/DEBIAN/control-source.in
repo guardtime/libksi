@@ -1,7 +1,7 @@
 Source: @PACKAGE@
 Section: devel
 Priority: optional
-Build-Depends: libcurl4-gnutls-dev, libssl-dev
+Build-Depends: libcurl4-gnutls-dev, libssl1.0-dev | libssl-dev
 Maintainer: Guardtime <support@guardtime.com>
 Standards-Version: 4.1.0.0
 
@@ -9,5 +9,6 @@ Package: @PACKAGE@
 Architecture: any
 Section: devel
 Priority: optional
-Depends: libcurl3-gnutls | libcurl3, libssl1.1 | libssl1.0.0 | libssl0.9.8
+# Note that the libcurl4-gnutls-dev depends on libcurl3-gnutls!
+Depends: libcurl3-gnutls | libcurl3, libssl1.0.2 | libssl1.0.0 | libssl0.9.8
 Description: KSI C API.

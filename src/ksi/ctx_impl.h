@@ -101,7 +101,6 @@ extern "C" {
 		size_t dataHashRecycle_maxSize;
 		/* This list is used to recycle #KSI_DataHash objects to reduce the number of allocs. */
 		KSI_LIST(KSI_DataHash) *dataHashRecycle;
-
 	};
 
 #ifdef __cplusplus

@@ -64,4 +64,4 @@ int PrintVerificationInfo(KSI_PolicyVerificationResult *result);
 }
 #endif
 
-#endif // KSI_COMMON_H
+#endif /* KSI_COMMON_H */

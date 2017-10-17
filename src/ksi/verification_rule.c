@@ -537,7 +537,6 @@ static int rfc3161_getOutputHash(const KSI_Signature *sig, KSI_DataHash **output
 	KSI_DataHash *hsh_tstInfo = NULL;
 	KSI_DataHash *hsh_sigAttr = NULL;
 	KSI_DataHash *tmp = NULL;
-	KSI_DataHasher *hsr = NULL;
 	KSI_RFC3161 *rfc3161 = NULL;
 	const unsigned char *imprint = NULL;
 	size_t imprint_len = 0;
@@ -608,7 +607,6 @@ static int rfc3161_getOutputHash(const KSI_Signature *sig, KSI_DataHash **output
 
 cleanup:
 
-	KSI_DataHasher_free(hsr);
 	KSI_DataHash_free(hsh_tstInfo);
 	KSI_DataHash_free(hsh_sigAttr);
 	KSI_DataHash_free(tmp);

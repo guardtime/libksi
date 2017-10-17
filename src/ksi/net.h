@@ -341,6 +341,16 @@ extern "C" {
 	KSI_DEFINE_REF(KSI_RequestHandle);
 
 	/**
+	 * Construct an abstract async service object.
+	 * \param[in]		ctx				KSI context.
+	 * \param[out]		service			Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_AsyncService_free
+	 * \see #KSI_SigningAsyncService_new
+	 */
+	int KSI_AbstractAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service);
+
+	/**
 	 * @}
 	 */
 

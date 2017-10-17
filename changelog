@@ -1,6 +1,16 @@
 * IMPROVEMENT: Added deprecated and obsolete times to hash functions.
 * IMPROVEMENT: SHA-1 is deprecated as of 01.07.2016T00:00 UTC.
+Version 3.16
+
+2017-10-12 release(3.16.2475)
+* BUGFIX: Fixed logging in net_http_curl.c when using 32-bit OS.
+* FEATURE: Support for non-blocking TCP connection.
+* IMPROVEMENT: Added an example for non-bloking signing.
 * IMPROVEMENT: Debian package name contains debian version.
+* IMPROVEMENT: Debian packaaging dependecies fixed.
+* IMPROVEMENT: Debian changelog is generated from the main changelog.
+* IMPROVEMENT: Libksi Debian/Ubuntu dependencies changed to make it work on both Debian 9 and Ubuntu 16.
+
 Version 3.15
 
 2017-09-12 release(3.15.2306)
