@@ -1,4 +1,6 @@
+* BUGFIX: Script rebuild-deb.sh works on Ubuntu.
 * IMPROVEMENT: Debian packaging refactored.
+
 Version 3.16
 
 2017-10-12 release(3.16.2475)
