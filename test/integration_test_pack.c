@@ -128,9 +128,10 @@ static const char *getPathUri(const char *root, const char* resource) {
 	return uriBuffer;
 }
 
-static const char *failMsg(const char *testFile, size_t line, const char *errMsg) {
-	static char buf[256];
+static const char *failMsg(const char *testFile, size_t line, const char *errMsg, const char *extMsg) {
+	static char buf[2048];
 	KSI_snprintf(buf, sizeof(buf), "%s:%d: %s", testFile, line, errMsg);
+	if (extMsg) KSI_snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), " (%s)", extMsg);
 	return buf;
 }
 
@@ -140,7 +141,7 @@ static void runTests(CuTest* tc, const char *testCsvFile, const char *rootPath) 
 	unsigned int lineCount = 0;
 
 	csvFile = fopen(getPath(rootPath, testCsvFile), "r");
-	CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to open CSV file."), csvFile != NULL);
+	CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to open CSV file.", NULL), csvFile != NULL);
 
 	while (!feof(csvFile)) {
 		char line[1024 * 2] = {0};
@@ -156,7 +157,7 @@ static void runTests(CuTest* tc, const char *testCsvFile, const char *rootPath) 
 		lineCount++;
 
 		res = KSI_VerificationContext_init(&context, ctx);
-		CuAssert(tc, failMsg(testCsvFile, lineCount, "Verification context initialization failed."), res == KSI_OK);
+		CuAssert(tc, failMsg(testCsvFile, lineCount, "Verification context initialization failed.", KSI_getErrorString(res)), res == KSI_OK);
 
 		if (fgets(line, sizeof(line), csvFile) == NULL) break;
 		/* Chech if the line is commented out. */
@@ -165,10 +166,10 @@ static void runTests(CuTest* tc, const char *testCsvFile, const char *rootPath) 
 		KSI_LOG_debug(ctx, "Test CSV (%s:%u): %s", testCsvFile, lineCount, line);
 
 		res = csvString_toArray(line, CSV_FIELD_SEP, TEST_NOF_CSV_FIELDS, csvData);
-		CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to parse CSV line."), res != -1);
-		CuAssert(tc, failMsg(testCsvFile, lineCount, "No data found on CSV line."), res > 0);
+		CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to parse CSV line.", NULL), res != -1);
+		CuAssert(tc, failMsg(testCsvFile, lineCount, "No data found on CSV line.", NULL), res > 0);
 
-		CuAssert(tc, failMsg(testCsvFile, lineCount, "Signature is not specified."), csvData[TEST_CF_SIGNATURE_URI] != NULL);
+		CuAssert(tc, failMsg(testCsvFile, lineCount, "Signature is not specified.", NULL), csvData[TEST_CF_SIGNATURE_URI] != NULL);
 
 		if (csvData[TEST_CF_VERIF_STATE]) {
 			if (strcmp(csvData[TEST_CF_VERIF_STATE], "not-implemented") == 0) verState = TEST_VS_NOT_IMPL;
@@ -176,12 +177,12 @@ static void runTests(CuTest* tc, const char *testCsvFile, const char *rootPath) 
 			else {
 				verState = ((policy = getPolicy(csvData[TEST_CF_VERIF_STATE])) != NULL) ? TEST_VS_POLICY : TEST_VS_UNKNOWN;
 			}
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unknown verification state."), verState != TEST_VS_UNKNOWN);
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unknown verification state.", NULL), verState != TEST_VS_UNKNOWN);
 
 			if (policy) {
 				if (csvData[TEST_CF_ERROR_CODE]) {
 					errCode = KSI_VerificationErrorCode_fromString(csvData[TEST_CF_ERROR_CODE]);
-					CuAssert(tc, failMsg(testCsvFile, lineCount, "Unknown error code."), errCode != KSI_VER_ERR_NONE);
+					CuAssert(tc, failMsg(testCsvFile, lineCount, "Unknown error code.", NULL), errCode != KSI_VER_ERR_NONE);
 				}
 			}
 		}
@@ -189,18 +190,18 @@ static void runTests(CuTest* tc, const char *testCsvFile, const char *rootPath) 
 		if (verState == TEST_VS_NOT_IMPL) goto test_cleanup;
 
 		if (csvData[TEST_CF_INPUT_HASH_LEVEL]) {
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to parse input level value."), getUint64(csvData[TEST_CF_INPUT_HASH_LEVEL], &context.docAggrLevel));
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to parse input level value.", NULL), getUint64(csvData[TEST_CF_INPUT_HASH_LEVEL], &context.docAggrLevel));
 		}
 
 		if (csvData[TEST_CF_AGGR_INPUT_HASH]) {
 			res = KSITest_DataHash_fromStr(ctx, csvData[TEST_CF_AGGR_INPUT_HASH], &documentHash);
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to create hash from string."), res == KSI_OK && documentHash != NULL);
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to create hash from string.", NULL), res == KSI_OK && documentHash != NULL);
 			context.documentHash = documentHash;
 		}
 
 		if (csvData[TEST_CF_PUB_STRING]) {
 			res = KSI_PublicationData_fromBase32(ctx, csvData[TEST_CF_PUB_STRING], &userPublication);
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to decode publication string."),  res == KSI_OK && userPublication != NULL);
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to decode publication string.", NULL),  res == KSI_OK && userPublication != NULL);
 			context.userPublication = userPublication;
 		}
 
@@ -212,28 +213,28 @@ static void runTests(CuTest* tc, const char *testCsvFile, const char *rootPath) 
 		if (csvData[TEST_CF_EXTEND_RESPONSE]) {
 			/* Responses are in PDU v2. */
 			res = KSI_CTX_setOption(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to set PDU version."), res == KSI_OK);
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to set PDU version.", KSI_getErrorString(res)), res == KSI_OK);
 
 			/* Restart request counter. */
 			ctx->netProvider->requestCount = 0;
 
 			res = KSI_CTX_setExtender(ctx, getPathUri(rootPath, csvData[TEST_CF_EXTEND_RESPONSE]), TEST_USER, TEST_PASS);
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to set extend response from file."), res == KSI_OK);
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to set extend response from file.", KSI_getErrorString(res)), res == KSI_OK);
 		} else {
 			/* Restore default PDU version. */
 			res = KSI_CTX_setOption(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to set PDU version."), res == KSI_OK);
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to set PDU version.", KSI_getErrorString(res)), res == KSI_OK);
 
 			res = KSI_CTX_setExtender(ctx, KSITest_composeUri("ksi+http", &conf.extender), conf.extender.user, conf.extender.pass);
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to set extender url."), res == KSI_OK);
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to set extender url.", KSI_getErrorString(res)), res == KSI_OK);
 		}
 
 		if (csvData[TEST_CF_PUBS_FILE]) {
 			res = KSI_CTX_setPublicationUrl(ctx, getPathUri(rootPath, csvData[TEST_CF_PUBS_FILE]));
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to set publications file url."), res == KSI_OK);
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to set publications file url.", KSI_getErrorString(res)), res == KSI_OK);
 		} else {
 			res = KSI_CTX_setPublicationUrl(ctx, conf.pubfile.url);
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to set publications file url."), res == KSI_OK);
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to set publications file url.", KSI_getErrorString(res)), res == KSI_OK);
 		}
 
 		res = KSI_Signature_fromFileWithPolicy(ctx, getPath(rootPath, csvData[TEST_CF_SIGNATURE_URI]),
@@ -244,18 +245,18 @@ static void runTests(CuTest* tc, const char *testCsvFile, const char *rootPath) 
 				if (errCode != KSI_VER_ERR_NONE) {
 					KSI_Signature *lastFailed = NULL;
 
-					CuAssert(tc, failMsg(testCsvFile, lineCount, "Signature did not fail with policy based verification."),
+					CuAssert(tc, failMsg(testCsvFile, lineCount, "Signature did not fail with policy based verification.", KSI_getErrorString(res)),
 							policy != NULL && res == KSI_VERIFICATION_FAILURE);
 
 					res = KSI_CTX_getLastFailedSignature(ctx, &lastFailed);
-					CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to get last failed signature."), res == KSI_OK && lastFailed != NULL);
+					CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to get last failed signature.", NULL), res == KSI_OK && lastFailed != NULL);
 
 					if (errCode != lastFailed->policyVerificationResult->finalResult.errorCode) {
 						KSI_LOG_debug(ctx, "Verification error code mismatch: ");
 						KSI_LOG_debug(ctx, "...extpected: %s", KSI_VerificationErrorCode_toString(errCode));
 						KSI_LOG_debug(ctx, "...result   : %s", KSI_VerificationErrorCode_toString(lastFailed->policyVerificationResult->finalResult.errorCode));
 
-						CuFail(tc, failMsg(testCsvFile, lineCount, "Verification error code mismatch."));
+						CuFail(tc, failMsg(testCsvFile, lineCount, "Verification error code mismatch.", NULL));
 					}
 
 					if (csvData[TEST_CF_ERROR_MESSAGE]) {
@@ -264,27 +265,27 @@ static void runTests(CuTest* tc, const char *testCsvFile, const char *rootPath) 
 							KSI_LOG_debug(ctx, "...extpected: %s", csvData[TEST_CF_ERROR_MESSAGE]);
 							KSI_LOG_debug(ctx, "...result   : %s", KSI_Policy_getErrorString(errCode));
 
-							CuFail(tc, failMsg(testCsvFile, lineCount, "Verification error message mismatch."));
+							CuFail(tc, failMsg(testCsvFile, lineCount, "Verification error message mismatch.", NULL));
 						}
 					}
 
 					KSI_Signature_free(lastFailed);
 					goto test_cleanup;
 				} else {
-					CuFail(tc, failMsg(testCsvFile, lineCount, "Unexpected error during signature verification."));
+					CuFail(tc, failMsg(testCsvFile, lineCount, "Unexpected error during signature verification.", NULL));
 				}
 			} else if (verState == TEST_VS_PARSER_FAILURE) {
 				/* Signature is expected to fail. */
 				goto test_cleanup;
 			} else {
-				CuFail(tc, failMsg(testCsvFile, lineCount, "Failed because of an unexpected error."));
+				CuFail(tc, failMsg(testCsvFile, lineCount, "Failed because of an unexpected error.", NULL));
 			}
 		} else {
 			/* Verify if the signature should have been failed during the verification state. */
 			if (verState == TEST_VS_POLICY) {
-				CuAssert(tc, failMsg(testCsvFile, lineCount, "Signature should have failed during policy verification state."),  errCode == KSI_VER_ERR_NONE);
+				CuAssert(tc, failMsg(testCsvFile, lineCount, "Signature should have failed during policy verification state.", NULL),  errCode == KSI_VER_ERR_NONE);
 			} else if (verState == TEST_VS_PARSER_FAILURE) {
-				CuFail(tc, failMsg(testCsvFile, lineCount, "Signature should have failed during parsing state."));
+				CuFail(tc, failMsg(testCsvFile, lineCount, "Signature should have failed during parsing state.", NULL));
 			}
 		}
 
@@ -294,12 +295,12 @@ static void runTests(CuTest* tc, const char *testCsvFile, const char *rootPath) 
 			KSI_DataHash *aggrRootHsh = NULL;
 
 			res = KSI_AggregationHashChainList_aggregate(sig->aggregationChainList, ctx, 0, &aggrRootHsh);
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to aggregate aggregation hash chain."), res == KSI_OK && aggrRootHsh != NULL);
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to aggregate aggregation hash chain.", KSI_getErrorString(res)), res == KSI_OK && aggrRootHsh != NULL);
 
 			res = KSITest_DataHash_fromStr(ctx, csvData[TEST_CF_CAL_INPUT_HASH], &calInHsh);
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to create hash from string"), res == KSI_OK && calInHsh != NULL);
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to create hash from string", KSI_getErrorString(res)), res == KSI_OK && calInHsh != NULL);
 
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Calendar input hash mismatch."), KSI_DataHash_equals(calInHsh, aggrRootHsh));
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Calendar input hash mismatch.", NULL), KSI_DataHash_equals(calInHsh, aggrRootHsh));
 
 			KSI_DataHash_free(calInHsh);
 			KSI_DataHash_free(aggrRootHsh);
@@ -310,12 +311,12 @@ static void runTests(CuTest* tc, const char *testCsvFile, const char *rootPath) 
 			KSI_DataHash *calRootHsh = NULL;
 
 			res = KSITest_DataHash_fromStr(ctx, csvData[TEST_CF_CAL_OUTPUT_HASH], &calOutHsh);
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to create hash from string"), res == KSI_OK && calOutHsh != NULL);
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to create hash from string", KSI_getErrorString(res)), res == KSI_OK && calOutHsh != NULL);
 
 			res = KSI_CalendarHashChain_aggregate(sig->calendarChain, &calRootHsh);
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to aggregate calendar hash chain."), res == KSI_OK && calRootHsh != NULL);
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to aggregate calendar hash chain.", KSI_getErrorString(res)), res == KSI_OK && calRootHsh != NULL);
 
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Calendar input hash mismatch."), KSI_DataHash_equals(calOutHsh, calRootHsh));
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Calendar input hash mismatch.", NULL), KSI_DataHash_equals(calOutHsh, calRootHsh));
 
 			KSI_DataHash_free(calOutHsh);
 			KSI_DataHash_free(calRootHsh);
@@ -325,24 +326,24 @@ static void runTests(CuTest* tc, const char *testCsvFile, const char *rootPath) 
 			KSI_Integer *sigAggrTime = NULL;
 			KSI_uint64_t time = 0;
 
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to parse aggregation time."), getUint64(csvData[TEST_CF_AGGR_TIME], &time));
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to parse aggregation time.", NULL), getUint64(csvData[TEST_CF_AGGR_TIME], &time));
 
 			res = KSI_Signature_getSigningTime(sig, &sigAggrTime);
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to get signature aggregation time."), res == KSI_OK && sigAggrTime != NULL);
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to get signature aggregation time.", KSI_getErrorString(res)), res == KSI_OK && sigAggrTime != NULL);
 
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Aggregation time mismatch."), KSI_Integer_getUInt64(sigAggrTime) == time);
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Aggregation time mismatch.", NULL), KSI_Integer_getUInt64(sigAggrTime) == time);
 		}
 
 		if (csvData[TEST_CF_PUB_TIME]) {
 			KSI_Integer *sigPubTime = NULL;
 			KSI_uint64_t time = 0;
 
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to parse publication time."), getUint64(csvData[TEST_CF_PUB_TIME], &time));
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to parse publication time.", NULL), getUint64(csvData[TEST_CF_PUB_TIME], &time));
 
 			KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &sigPubTime);
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to get signature publication time."), res == KSI_OK && sigPubTime != NULL);
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to get signature publication time.", KSI_getErrorString(res)), res == KSI_OK && sigPubTime != NULL);
 
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Publication time mismatch."), KSI_Integer_getUInt64(sigPubTime) == time);
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Publication time mismatch.", NULL), KSI_Integer_getUInt64(sigPubTime) == time);
 		}
 
 test_cleanup:
