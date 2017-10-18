@@ -3525,7 +3525,7 @@ static int extendingPermittedVerification(KSI_VerificationContext *info, KSI_Rul
 	res = KSI_OK;
 
 cleanup:
-
+	/* Update rule name. */
 	if (result != NULL) VERIFICATION_RESULT_RULE(rule);
 	return res;
 }
@@ -3581,7 +3581,7 @@ static int signatureCalendarChainHashAlgorithmDeprecatedAtPubTime(KSI_Verificati
 	res = KSI_OK;
 cleanup:
 	/* Update rule name. */
-	VERIFICATION_RESULT_RULE(rule);
+	if (result != NULL) VERIFICATION_RESULT_RULE(rule);
 	return res;
 }
 
