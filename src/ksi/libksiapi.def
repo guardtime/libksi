@@ -918,6 +918,9 @@ EXPORTS
 	KSI_VerificationRule_Rfc3161RecordHashAlgorithmVerification
 	KSI_VerificationRule_AggregationChainHashAlgorithmVerification
 	KSI_VerificationRule_CalendarHashChainHashAlgorithm
+	KSI_VerificationRule_Rfc3161RecordOutputHashAlgorithmVerification
+	KSI_VerificationRule_Rfc3161DoesNotExist
+	KSI_VerificationRule_Rfc3161Existence
 
 ;policy.h
 EXPORTS

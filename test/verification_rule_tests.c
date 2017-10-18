@@ -1143,15 +1143,9 @@ static void testRule(CuTest *tc, int (*verificationRule)(KSI_VerificationContext
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(testSigFile), &signature);
-	if (rCode == KSI_VER_RES_OK) {
-		CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
-	} else {
-		CuAssert(tc, "Should fail during signature verification.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
-
-		res = KSI_CTX_getLastFailedSignature(ctx, &signature);
-		CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
-	}
+	/* Load signature without verification. */
+	res = KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(testSigFile), KSI_VERIFICATION_POLICY_EMPTY, NULL, &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	verCtx.signature = signature;
 
 	TEST_VERIFICATION_STEP_INIT;
@@ -1279,15 +1273,59 @@ static void testRule_Rfc3161RecordHashAlgorithmVerification_Sha1InTstInfo_verify
 #undef TEST_SIGNATURE_FILE
 }
 
-static void testRule_Rfc3161RecordHashAlgorithmVerification_recordMissing(CuTest *tc) {
-#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+static void testRule_Rfc3161RecordOutputHashAlgorithmVerification(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-with-rfc3161-record-ok.ksig"
 
-	testRule(tc, KSI_VerificationRule_Rfc3161RecordHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+	testRule(tc, KSI_VerificationRule_Rfc3161RecordOutputHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
 			TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
 
 #undef TEST_SIGNATURE_FILE
 }
 
+static void testRule_Rfc3161RecordOutputHashAlgorithmVerification_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/rfc3161-sha1-in-aggr-input.ksig"
+
+	testRule(tc, KSI_VerificationRule_Rfc3161RecordOutputHashAlgorithmVerification, KSI_VERIFY_AGGRCHAIN_INTERNALLY,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_FAIL, KSI_VER_ERR_INT_17);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_Rfc3161DoesNotExist(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+
+	testRule(tc, KSI_VerificationRule_Rfc3161DoesNotExist, KSI_VERIFY_NONE,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_Rfc3161DoesNotExist_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-with-rfc3161-record-ok.ksig"
+
+	testRule(tc, KSI_VerificationRule_Rfc3161DoesNotExist, KSI_VERIFY_NONE,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_NA, KSI_VER_ERR_GEN_2);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_Rfc3161Existence(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-with-rfc3161-record-ok.ksig"
+
+	testRule(tc, KSI_VerificationRule_Rfc3161Existence, KSI_VERIFY_NONE,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_Rfc3161Existence_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
+
+	testRule(tc, KSI_VerificationRule_Rfc3161Existence, KSI_VERIFY_NONE,
+			TEST_SIGNATURE_FILE, KSI_VER_RES_NA, KSI_VER_ERR_GEN_2);
+
+#undef TEST_SIGNATURE_FILE
+}
 static void testRule_AggregationChainHashAlgorithmVerification(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
@@ -4955,6 +4993,10 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_AggregationHashChainConsistency);
 	SUITE_ADD_TEST(suite, testRule_AggregationHashChainConsistency_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_AggregationHashChainTimeConsistency);
+	SUITE_ADD_TEST(suite, testRule_Rfc3161DoesNotExist);
+	SUITE_ADD_TEST(suite, testRule_Rfc3161DoesNotExist_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_Rfc3161Existence);
+	SUITE_ADD_TEST(suite, testRule_Rfc3161Existence_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_AggregationHashChainTimeConsistency_validRfc3161);
 	SUITE_ADD_TEST(suite, testRule_AggregationHashChainTimeConsistency_inconsistentAggrTime_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_AggregationHashChainTimeConsistency_rfc3161AggrTimeChanged_verifyErrorResult);
@@ -4990,7 +5032,8 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_Rfc3161RecordHashAlgorithmVerification_Sha1InSigAttr_beforeSha1Deprecate);
 	SUITE_ADD_TEST(suite, testRule_Rfc3161RecordHashAlgorithmVerification_Sha1InTstInfo_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_Rfc3161RecordHashAlgorithmVerification_Sha1InTstInfo_beforeSha1Deprecate);
-	SUITE_ADD_TEST(suite, testRule_Rfc3161RecordHashAlgorithmVerification_recordMissing);
+	SUITE_ADD_TEST(suite, testRule_Rfc3161RecordOutputHashAlgorithmVerification);
+	SUITE_ADD_TEST(suite, testRule_Rfc3161RecordOutputHashAlgorithmVerification_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_AggregationChainHashAlgorithmVerification);
 	SUITE_ADD_TEST(suite, testRule_AggregationChainHashAlgorithmVerification_beforeSha1Deprecate);
 	SUITE_ADD_TEST(suite, testRule_AggregationChainHashAlgorithmVerification_verifyErrorResult);

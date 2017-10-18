@@ -51,6 +51,37 @@ extern "C" {
 	int KSI_VerificationRule_AggregationChainInputHashAlgorithmVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
+	 * Rule for verifying RFC-3161 record absence.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_Rfc3161DoesNotExist(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * Rule for verifying RFC-3161 record presence.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_Rfc3161Existence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * Rule is used to verify if the RFC-3161 record output hash algorithm (taken from the input hash from the
+	 * first aggregation hash chain) was deprecated at the aggregation time.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_Rfc3161RecordOutputHashAlgorithmVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
 	 * Rule is used to verify if the RFC-3161 record uses internally a hash function that was deprecated at the
 	 * aggregation time fail.
 	 *
