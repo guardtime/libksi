@@ -895,7 +895,6 @@ static void Test_AsyncSign_oneRequest_invalidResponse(CuTest* tc) {
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *reqHandle = NULL;
 	KSI_AsyncHandle *respHandle = NULL;
-	KSI_DataHash *hsh = NULL;
 	int state = KSI_ASYNC_STATE_UNDEFINED;
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);

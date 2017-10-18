@@ -73,9 +73,6 @@
 #define TCP_INVALID_SOCKET_FD (-1)
 #define KSI_TLV_MAX_SIZE (0xffff + 4)
 
-static const int optSet = 1;
-static const int optClr = 0;
-
 typedef struct TcpClientCtx_st {
 	KSI_CTX *ctx;
 	/* Socket descriptor. */
