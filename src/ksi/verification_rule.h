@@ -182,7 +182,7 @@ extern "C" {
 	 *
 	 * \note In case of an invalid signature the error code in verification result is set to #KSI_VER_ERR_INT_16
 	 */
-	int KSI_VerificationRule_CalendarHashChainHashAlgorithm(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_CalendarChainHashAlgorithmObsoleteAtPubTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to verify that calendar authentication record publication hash equals to calendar hash chain
@@ -360,6 +360,18 @@ extern "C" {
 	int KSI_VerificationRule_CalendarHashChainExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
+	 * Rule is used to verify if any of the calendar hash chain aggregation hash algorithms (derived from the
+	 * right link) were deprecated at the publication time.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_CalendarHashChainHashAlgorithmDeprecatedAtPubTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * Rule for verifying calendar authentication record existence.
 	 *
 	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
@@ -369,6 +381,7 @@ extern "C" {
 	int KSI_VerificationRule_CalendarAuthenticationRecordExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
+	 * Rule for verifying calendar authentication record absence.
 	 *
 	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
@@ -440,6 +453,39 @@ extern "C" {
 	 */
 	int KSI_VerificationRule_PublicationsFileExtendingPermittedVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 	int KSI_VerificationRule_UserProvidedPublicationExtendingPermittedVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * Rule is used to verify if any of the calendar hash chain aggregation hash algorithms (derived from the
+	 * right link) were deprecated at the publication time.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_PublicationsFileSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * Rule is used to verify if any of the calendar hash chain aggregation hash algorithms (derived from the
+	 * right link) were deprecated at the publication time.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_UserProvidedPublicationSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * Rule is used to verify if any of the extended calendar hash chain aggregation hash algorithms (derived from the
+	 * right link) were deprecated at the publication time.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_PublicationsFileExtendedCalendarChainHashAlgorithmDeprecatedAtPubTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to verify that publications file publication hash matches with extender response calendar root hash.
@@ -521,6 +567,17 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * Rule is used to verify if any of the extended calendar hash chain aggregation hash algorithms (derived from the
+	 * right link) were deprecated at the publication time.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_UserProvidedPublicationExtendedCalendarChainHashAlgorithmDeprecatedAtPubTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to verify that user provided publication hash matches with extender response calendar root hash
