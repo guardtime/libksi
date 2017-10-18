@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2017 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -47,7 +47,6 @@ enum CsvField_en {
 	TEST_CF_AGGR_INPUT_HASH,
 	TEST_CF_CAL_INPUT_HASH,
 	TEST_CF_CAL_OUTPUT_HASH,
-	TEST_CF_REG_TIME,
 	TEST_CF_AGGR_TIME,
 	TEST_CF_PUB_TIME,
 	TEST_CF_PUB_STRING,
@@ -322,18 +321,6 @@ static void runTests(CuTest* tc, const char *testCsvFile, const char *rootPath) 
 			KSI_DataHash_free(calRootHsh);
 		}
 
-		if (csvData[TEST_CF_REG_TIME]) {
-			time_t calcTime = 0;
-			KSI_uint64_t time = 0;
-
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to parse registration time."), getUint64(csvData[TEST_CF_REG_TIME], &time));
-
-			res = KSI_CalendarHashChain_calculateAggregationTime(sig->calendarChain, &calcTime);
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to calculate signature aggregation time."), res == KSI_OK && calcTime != 0);
-
-			CuAssert(tc, failMsg(testCsvFile, lineCount, "Registration time mismatch."), calcTime == time);
-		}
-
 		if (csvData[TEST_CF_AGGR_TIME]) {
 			KSI_Integer *sigAggrTime = NULL;
 			KSI_uint64_t time = 0;
@@ -384,6 +371,11 @@ static void TestPack_PolicyVerification(CuTest* tc) {
 	runTests(tc, "policy-verification-results.csv", getFullResourcePath("resource/test_pack/policy-verification-signatures"));
 }
 
+static void TestPack_InternalPolicySignatures(CuTest* tc) {
+	KSI_LOG_debug(ctx, "Test pack. Test invalid signatures.");
+	runTests(tc, "internal-policy-results.csv", getFullResourcePath("resource/test_pack/internal-policy-signatures"));
+}
+
 static void postTest(void) {
 	/* Restore default PDU version. */
 	KSI_CTX_setOption(ctx, KSI_OPT_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
@@ -401,7 +393,7 @@ CuSuite* IntegrationTestPack_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestPack_ValidSignatures);
 	SUITE_ADD_TEST(suite, TestPack_InvalidSignatures);
 	SUITE_ADD_TEST(suite, TestPack_PolicyVerification);
+	SUITE_ADD_TEST(suite, TestPack_InternalPolicySignatures);
 
 	return suite;
 }
-
