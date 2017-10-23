@@ -21,7 +21,7 @@
 
 #include "internal.h"
 #include "hmac.h"
-#include "hmac_impl.h"
+#include "impl/hmac_impl.h"
 
 int KSI_HMAC_create(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, const unsigned char *data, size_t data_len, KSI_DataHash **hmac) {
 	int res = KSI_UNKNOWN_ERROR;

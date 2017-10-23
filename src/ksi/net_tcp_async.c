@@ -60,15 +60,16 @@
 #endif
 
 #include "internal.h"
-#include "net_http_impl.h"
-#include "ctx_impl.h"
-#include "net_tcp_impl.h"
 #include "net_tcp.h"
 #include "io.h"
 #include "tlv.h"
 #include "fast_tlv.h"
 #include "types.h"
 #include "net_async.h"
+
+#include "impl/ctx_impl.h"
+#include "impl/net_http_impl.h"
+#include "impl/net_tcp_impl.h"
 
 #define TCP_INVALID_SOCKET_FD (-1)
 #define KSI_TLV_MAX_SIZE (0xffff + 4)

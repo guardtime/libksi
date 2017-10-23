@@ -19,19 +19,21 @@
 
 #include <string.h>
 
-#include "internal.h"
-#include "verification_impl.h"
-#include "signature_impl.h"
-#include "publicationsfile_impl.h"
 #include "tlv.h"
-#include "ctx_impl.h"
 #include "tlv_template.h"
 #include "hashchain.h"
 #include "net.h"
 #include "pkitruststore.h"
 #include "policy.h"
 #include "signature_builder.h"
-#include "signature_builder_impl.h"
+
+#include "internal.h"
+
+#include "impl/ctx_impl.h"
+#include "impl/publicationsfile_impl.h"
+#include "impl/signature_builder_impl.h"
+#include "impl/signature_impl.h"
+#include "impl/verification_impl.h"
 
 typedef struct headerRec_st HeaderRec;
 
@@ -40,7 +42,6 @@ KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationRecord);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationAuthRec);
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarAuthRec);
 KSI_IMPORT_TLV_TEMPLATE(KSI_RFC3161);
-KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationHashChain);
 
 KSI_IMPLEMENT_REF(KSI_Signature);
 

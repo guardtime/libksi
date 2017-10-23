@@ -23,10 +23,11 @@
 
 #include "cutest/CuTest.h"
 #include "all_integration_tests.h"
-#include "../src/ksi/signature_impl.h"
-#include "../src/ksi/policy_impl.h"
-#include "../src/ksi/ctx_impl.h"
-#include "../src/ksi/net_impl.h"
+
+#include "../src/ksi/impl/ctx_impl.h"
+#include "../src/ksi/impl/net_impl.h"
+#include "../src/ksi/impl/policy_impl.h"
+#include "../src/ksi/impl/signature_impl.h"
 
 
 extern KSI_CTX *ctx;

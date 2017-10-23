@@ -24,7 +24,7 @@
 #include "hashchain.h"
 #include "tlv.h"
 #include "tlv_template.h"
-#include "hashchain_impl.h"
+#include "impl/hashchain_impl.h"
 #include "impl/meta_data_element_impl.h"
 #include "compatibility.h"
 

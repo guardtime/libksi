@@ -18,14 +18,15 @@
  */
 
 #include <string.h>
-#include "all_tests.h"
-#include <ksi/signature.h>
-#include "../src/ksi/ctx_impl.h"
 
-#include "../src/ksi/signature_impl.h"
-#include "../src/ksi/ctx_impl.h"
-#include "../src/ksi/net_impl.h"
-#include "../src/ksi/tlv.h"
+#include <ksi/signature.h>
+#include <ksi/tlv.h>
+
+#include "all_tests.h"
+
+#include "../src/ksi/impl/ctx_impl.h"
+#include "../src/ksi/impl/net_impl.h"
+#include "../src/ksi/impl/signature_impl.h"
 
 extern KSI_CTX *ctx;
 

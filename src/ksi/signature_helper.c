@@ -18,8 +18,10 @@
  */
 
 #include "ksi.h"
+
 #include "internal.h"
-#include "signature_impl.h"
+
+#include "impl/signature_impl.h"
 
 int KSI_Signature_getHashAlgorithm(const KSI_Signature *sig, KSI_HashAlgorithm *algo_id) {
 	KSI_DataHash *hsh = NULL;

@@ -17,18 +17,20 @@
  * reserves and retains all trademark rights.
  */
 
-#include "cutest/CuTest.h"
-#include "all_tests.h"
 #include <string.h>
 #include <ksi/hashchain.h>
 #include <ksi/policy.h>
-#include "../src/ksi/policy_impl.h"
-#include "../src/ksi/ctx_impl.h"
-#include "../src/ksi/net_impl.h"
-#include "../src/ksi/verification_impl.h"
-#include "../src/ksi/signature_impl.h"
-#include "../src/ksi/publicationsfile_impl.h"
-#include "../src/ksi/hash_impl.h"
+
+#include "cutest/CuTest.h"
+#include "all_tests.h"
+
+#include "../src/ksi/impl/ctx_impl.h"
+#include "../src/ksi/impl/hash_impl.h"
+#include "../src/ksi/impl/net_impl.h"
+#include "../src/ksi/impl/policy_impl.h"
+#include "../src/ksi/impl/publicationsfile_impl.h"
+#include "../src/ksi/impl/signature_impl.h"
+#include "../src/ksi/impl/verification_impl.h"
 
 extern KSI_CTX *ctx;
 

@@ -28,7 +28,7 @@
 #include <ksi/ksi.h>
 #include <ksi/tlv.h>
 
-#include "../src/ksi/ctx_impl.h"
+#include "../src/ksi/impl/ctx_impl.h"
 
 #ifndef _WIN32
 #  ifdef HAVE_CONFIG_H

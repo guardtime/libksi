@@ -18,19 +18,22 @@
  */
 
 #include <string.h>
+
+#include <ksi/hashchain.h>
+#include <ksi/pkitruststore.h>
+#include <ksi/policy.h>
+#include <ksi/publicationsfile.h>
+#include <ksi/signature.h>
+#include <ksi/verification.h>
+#include <ksi/verification_rule.h>
+
 #include "all_tests.h"
-#include "../src/ksi/verification_rule.h"
-#include "../src/ksi/policy_impl.h"
-#include "../src/ksi/policy.h"
-#include "../src/ksi/verification_impl.h"
-#include "../src/ksi/verification.h"
-#include "../src/ksi/signature_impl.h"
-#include "../src/ksi/signature.h"
-#include "../src/ksi/ctx_impl.h"
-#include "../src/ksi/net_impl.h"
-#include "../src/ksi/hashchain.h"
-#include "../src/ksi/publicationsfile.h"
-#include "../src/ksi/pkitruststore.h"
+
+#include "../src/ksi/impl/ctx_impl.h"
+#include "../src/ksi/impl/net_impl.h"
+#include "../src/ksi/impl/policy_impl.h"
+#include "../src/ksi/impl/signature_impl.h"
+#include "../src/ksi/impl/verification_impl.h"
 
 extern KSI_CTX *ctx;
 

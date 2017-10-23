@@ -23,8 +23,9 @@
 
 #include "cutest/CuTest.h"
 #include "all_tests.h"
-#include "../src/ksi/ctx_impl.h"
-#include "../src/ksi/net_http_impl.h"
+
+#include "../src/ksi/impl/ctx_impl.h"
+#include "../src/ksi/impl/net_http_impl.h"
 
 extern KSI_CTX *ctx;
 

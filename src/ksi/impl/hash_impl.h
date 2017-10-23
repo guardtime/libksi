@@ -20,6 +20,7 @@
 #ifndef HASH_IMPL_H_
 #define HASH_IMPL_H_
 
+#include "../internal.h"
 #include "hash.h"
 
 #ifdef __cplusplus
