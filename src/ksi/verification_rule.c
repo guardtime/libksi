@@ -3851,6 +3851,7 @@ int KSI_VerificationRule_PublicationsFileExtendedCalendarChainHashAlgorithmDepre
 	VERIFICATION_RESULT_OK(step);
 	res = KSI_OK;
 cleanup:
+	KSI_Integer_free(sigPubTime);
 	KSI_PublicationRecord_free(pubRec);
 	return res;
 }
