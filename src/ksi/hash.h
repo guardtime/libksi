@@ -300,7 +300,6 @@ extern "C" {
 	int KSI_isHashAlgorithmTrusted(KSI_HashAlgorithm algo_id);
 
 	/**
-<<<<<<< HEAD
 	 * This function will check the status of the hash algorithm at a given time.
 	 * \param[in]	algo_id			Hash algorithm id.
 	 * \param[in]	used_at			UTC time when the algorithm was/is used.
