@@ -32,7 +32,7 @@ libksi_la_SOURCES = \
 	config.h \
 	crc32.c \
 	crc32.h \
-	ctx_impl.h \
+	impl/ctx_impl.h \
 	err.h \
 	fast_tlv.h \
 	fast_tlv.c \
@@ -44,7 +44,7 @@ libksi_la_SOURCES = \
 	impl/hash_impl.h \
 	hash_openssl.c \
 	hmac.h \
-	hmac_impl.h\
+	impl/hmac_impl.h\
 	hmac.c \
 	http_parser.h \
 	http_parser.c \
