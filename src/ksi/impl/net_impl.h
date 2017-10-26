@@ -20,9 +20,9 @@
 #ifndef NET_IMPL_H_
 #define NET_IMPL_H_
 
-#include "net.h"
-#include "net_async.h"
-#include "internal.h"
+#include "../net.h"
+#include "../net_async.h"
+#include "../internal.h"
 
 #ifdef __cplusplus
 extern "C" {

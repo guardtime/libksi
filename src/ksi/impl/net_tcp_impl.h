@@ -20,8 +20,9 @@
 #ifndef NET_TCP_INTERNAL_H_
 #define NET_TCP_INTERNAL_H_
 
-#include "internal.h"
-#include "net_http.h"
+#include "../internal.h"
+#include "../net_http.h"
+
 #include "net_impl.h"
 #include "net_http_impl.h"
 

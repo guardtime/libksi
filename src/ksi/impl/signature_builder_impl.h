@@ -21,7 +21,7 @@
 #ifndef SIGNATURE_BUILDER_IMPL_H_
 #define SIGNATURE_BUILDER_IMPL_H_
 
-#include "ksi.h"
+#include "../types.h"
 
 #ifdef __cplusplus
 extern "C" {

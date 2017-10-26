@@ -20,7 +20,7 @@
 #ifndef HMAC_IMPL_H_
 #define HMAC_IMPL_H_
 
-#include "hash.h"
+#include "../hash.h"
 
 #ifdef __cplusplus
 extern "C" {

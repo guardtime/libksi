@@ -20,7 +20,7 @@
 #ifndef NET_FILE_IMPL_H_
 #define NET_FILE_IMPL_H_
 
-#include "internal.h"
+#include "../internal.h"
 #include "net_impl.h"
 #include "net_http_impl.h"
 

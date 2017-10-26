@@ -20,9 +20,9 @@
 #ifndef POLICY_IMPL_H
 #define	POLICY_IMPL_H
 
-#include "internal.h"
-#include "policy.h"
-#include "list.h"
+#include "../internal.h"
+#include "../policy.h"
+#include "../list.h"
 
 #ifdef	__cplusplus
 extern "C" {
