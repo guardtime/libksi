@@ -20,8 +20,8 @@
 #ifndef NET_HTTP_INTERNAL_H_
 #define NET_HTTP_INTERNAL_H_
 
-#include "internal.h"
-#include "net_http.h"
+#include "../internal.h"
+#include "../net_http.h"
 #include "net_impl.h"
 
 #ifdef __cplusplus
