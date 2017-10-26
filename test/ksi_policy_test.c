@@ -2245,7 +2245,7 @@ static void TestPublicationsFileBasedPolicy_OK_WithPublicationRecord(CuTest* tc)
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_OK,
 		KSI_VER_ERR_NONE,
-		"KSI_VerificationRule_PublicationsFileContainsSignaturePublication"
+		"KSI_VerificationRule_PublicationsFileSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime"
 	};
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *signature = NULL;
@@ -2560,7 +2560,7 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithPublicationRecord(CuTe
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_OK,
 		KSI_VER_ERR_NONE,
-		"KSI_VerificationRule_UserProvidedPublicationHashVerification"
+		"KSI_VerificationRule_UserProvidedPublicationSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime"
 	};
 	KSI_Signature *signature = NULL;
 
