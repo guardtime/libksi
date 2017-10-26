@@ -17,11 +17,11 @@
  * reserves and retains all trademark rights.
  */
 
-#include "internal.h"
-
-#include <string.h>
 #include <assert.h>
 #include <ctype.h>
+#include <string.h>
+
+#include "internal.h"
 
 static const char base32EncodeTable[33] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
