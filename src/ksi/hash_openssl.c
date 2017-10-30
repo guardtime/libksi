@@ -18,7 +18,7 @@
  */
 
 #include "internal.h"
-#include "hash_impl.h"
+#include "impl/hash_impl.h"
 #include "hash.h"
 
 #if KSI_HASH_IMPL == KSI_IMPL_OPENSSL

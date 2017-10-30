@@ -18,18 +18,20 @@
  */
 
 #include <string.h>
-#include <ksi/net.h>
-#include <ksi/pkitruststore.h>
+
 #include <ksi/hashchain.h>
+#include <ksi/net.h>
+#include <ksi/net_uri.h>
+#include <ksi/pkitruststore.h>
+#include <ksi/tree_builder.h>
 
 #include "all_tests.h"
-#include "../src/ksi/ctx_impl.h"
-#include "../src/ksi/net_http_impl.h"
-#include "../src/ksi/net_uri_impl.h"
-#include "../src/ksi/net_tcp_impl.h"
-#include "ksi/net_uri.h"
-#include "ksi/tree_builder.h"
-#include "../src/ksi/signature_impl.h"
+
+#include "../src/ksi/impl/ctx_impl.h"
+#include "../src/ksi/impl/net_http_impl.h"
+#include "../src/ksi/impl/net_uri_impl.h"
+#include "../src/ksi/impl/net_tcp_impl.h"
+#include "../src/ksi/impl/signature_impl.h"
 
 
 extern KSI_CTX *ctx;

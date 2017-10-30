@@ -18,12 +18,15 @@
  */
 
 #include <string.h>
-#include "internal.h"
-#include "ctx_impl.h"
-#include "net_file_impl.h"
+#include <sys/types.h>
+
 #include "net_file.h"
-#include "sys/types.h"
 #include "fast_tlv.h"
+
+#include "internal.h"
+
+#include "impl/ctx_impl.h"
+#include "impl/net_file_impl.h"
 
 #define TLV_BUFFER_SIZE     (0xffff + 4)
 

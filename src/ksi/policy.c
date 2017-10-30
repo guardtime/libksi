@@ -17,14 +17,16 @@
  * reserves and retains all trademark rights.
  */
 
+#include <string.h>
+
 #include "policy.h"
-#include "policy_impl.h"
 #include "verification_rule.h"
 #include "hashchain.h"
-#include "signature_impl.h"
-#include "ctx_impl.h"
 
-#include <string.h>
+#include "impl/policy_impl.h"
+#include "impl/signature_impl.h"
+#include "impl/ctx_impl.h"
+
 
 static void RuleVerificationResult_free(KSI_RuleVerificationResult *result);
 static void VerificationTempData_clear(VerificationTempData *tmp);

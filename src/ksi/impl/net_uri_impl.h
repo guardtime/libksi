@@ -20,7 +20,7 @@
 #ifndef NET_URI_IMPL_H_
 #define NET_URI_IMPL_H_
 
-#include "types.h"
+#include "../types.h"
 
 #ifdef __cplusplus
 extern "C" {

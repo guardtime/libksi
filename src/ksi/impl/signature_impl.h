@@ -20,7 +20,8 @@
 #ifndef SIGNATURE_IMPL_H_
 #define SIGNATURE_IMPL_H_
 
-#include "verification.h"
+#include "../verification.h"
+
 #include "verification_impl.h"
 
 #ifdef __cplusplus

@@ -17,20 +17,21 @@
  * reserves and retains all trademark rights.
  */
 
-#include "verification_rule.h"
-#include "policy_impl.h"
-#include "policy.h"
-#include "verification_impl.h"
-#include "signature_impl.h"
 #include "hashchain.h"
-#include "publicationsfile_impl.h"
-#include "tlv.h"
-#include "pkitruststore.h"
 #include "net.h"
-#include "ctx_impl.h"
+#include "pkitruststore.h"
+#include "policy.h"
+#include "tlv.h"
 #include "verification.h"
+#include "verification_rule.h"
+
+#include "impl/ctx_impl.h"
+#include "impl/hashchain_impl.h"
 #include "impl/meta_data_element_impl.h"
-#include "hashchain_impl.h"
+#include "impl/policy_impl.h"
+#include "impl/publicationsfile_impl.h"
+#include "impl/signature_impl.h"
+#include "impl/verification_impl.h"
 
 #define VERIFICATION_RULE_NAME __FUNCTION__
 

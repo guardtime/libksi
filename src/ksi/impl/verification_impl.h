@@ -20,9 +20,9 @@
 #ifndef VERIFICATION_IMPL_H_
 #define VERIFICATION_IMPL_H_
 
-#include "ksi.h"
-#include "verification.h"
-#include "internal.h"
+#include "../types.h"
+#include "../verification.h"
+#include "../internal.h"
 
 #ifdef __cplusplus
 extern "C" {

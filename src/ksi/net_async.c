@@ -22,10 +22,10 @@
 #include <string.h>
 
 #include "internal.h"
-#include "net_impl.h"
-#include "ctx_impl.h"
 #include "signature_builder.h"
-#include "signature_builder_impl.h"
+#include "impl/signature_builder_impl.h"
+#include "impl/net_impl.h"
+#include "impl/ctx_impl.h"
 
 #define KSI_ASYNC_REQUEST_ID_OFFSET 32
 #define KSI_ASYNC_REQUEST_ID_OFFSET_MAX 0xff

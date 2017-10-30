@@ -22,9 +22,9 @@
 
 #include "hash.h"
 #include "internal.h"
-#include "hash_impl.h"
+#include "impl/hash_impl.h"
 #include "tlv.h"
-#include "ctx_impl.h"
+#include "impl/ctx_impl.h"
 
 #define HASH_ALGO(id, bitcount, blocksize, deprecatedFrom, obsoleteFrom) {(id), (bitcount), (blocksize), id##_names, (deprecatedFrom), (obsoleteFrom)}
 

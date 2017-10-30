@@ -24,8 +24,8 @@
 #include <curl/curl.h>
 #include <string.h>
 
-#include "net_http_impl.h"
-#include "net_impl.h"
+#include "impl/net_http_impl.h"
+#include "impl/net_impl.h"
 
 static size_t curlGlobal_initCount = 0;
 

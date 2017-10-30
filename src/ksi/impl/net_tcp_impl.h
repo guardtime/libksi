@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2016 Guardtime, Inc.
+ * Copyright 2013-2015 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -17,10 +17,12 @@
  * reserves and retains all trademark rights.
  */
 
-#ifndef NET_FILE_IMPL_H_
-#define NET_FILE_IMPL_H_
+#ifndef NET_TCP_INTERNAL_H_
+#define NET_TCP_INTERNAL_H_
 
-#include "internal.h"
+#include "../internal.h"
+#include "../net_http.h"
+
 #include "net_impl.h"
 #include "net_http_impl.h"
 
@@ -28,13 +30,16 @@
 extern "C" {
 #endif
 
-	struct FsClient_Endpoint_st {
-		char *path;
-		FILE *file;
+	struct TcpClient_Endpoint_st {
+		char *host;
+		unsigned port;
 	};
 
-	struct KSI_FsClient_st {
-		int (*sendRequest)(KSI_NetworkClient *, KSI_RequestHandle *, struct FsClient_Endpoint_st *endp);
+	struct KSI_TcpClient_st {
+		/* TODO: Is it required to be a signed int? */
+		int transferTimeoutSeconds;
+
+		int (*sendRequest)(KSI_NetworkClient *, KSI_RequestHandle *, char *host, unsigned port);
 		KSI_NetworkClient *http;
 	};
 
@@ -43,4 +48,4 @@ extern "C" {
 }
 #endif
 
-#endif /* NET_FILE_IMPL_H_ */
+#endif /* NET_HTTP_INTERNAL_H_ */
