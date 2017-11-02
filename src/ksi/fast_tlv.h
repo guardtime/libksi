@@ -20,6 +20,8 @@
 #ifndef FAST_TLV_H_
 #define FAST_TLV_H_
 
+#include <stdio.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

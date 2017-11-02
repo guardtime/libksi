@@ -19,10 +19,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <ksi/ksi.h>
 #include <ksi/tlv.h>
-
-#include "../src/ksi/publicationsfile_impl.h"
 
 #include <openssl/rand.h>
 #undef X509_NAME
@@ -34,6 +33,8 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+
+#include "../src/ksi/impl/publicationsfile_impl.h"
 
 int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days);
 int add_ext(X509 *cert, int nid, char *value);

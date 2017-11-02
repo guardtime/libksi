@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2016 Guardtime, Inc.
+ * Copyright 2013-2017 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -17,20 +17,21 @@
  * reserves and retains all trademark rights.
  */
 
-#include "verification_rule.h"
-#include "policy_impl.h"
-#include "policy.h"
-#include "verification_impl.h"
-#include "signature_impl.h"
 #include "hashchain.h"
-#include "publicationsfile_impl.h"
-#include "tlv.h"
-#include "pkitruststore.h"
 #include "net.h"
-#include "ctx_impl.h"
+#include "pkitruststore.h"
+#include "policy.h"
+#include "tlv.h"
 #include "verification.h"
+#include "verification_rule.h"
+
+#include "impl/ctx_impl.h"
+#include "impl/hashchain_impl.h"
 #include "impl/meta_data_element_impl.h"
-#include "hashchain_impl.h"
+#include "impl/policy_impl.h"
+#include "impl/publicationsfile_impl.h"
+#include "impl/signature_impl.h"
+#include "impl/verification_impl.h"
 
 #define VERIFICATION_RULE_NAME __FUNCTION__
 
@@ -70,7 +71,11 @@ static int getExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Integ
 static int initPublicationsFile(KSI_VerificationContext *info);
 static int initAggregationOutputHash(KSI_VerificationContext *info);
 static int extendingPermittedVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result, const KSI_VerificationStep step, const char *rule);
-
+static int getNextRightLink(KSI_HashChainLinkList *list, size_t *pos, KSI_HashChainLink **link);
+static bool wasDeprecatedAt(KSI_HashAlgorithm algorithm, time_t at);
+static bool wasObsoleteAt(KSI_HashAlgorithm algorithm, time_t at);
+static int calendarChainAggrAlgorithmState(KSI_CTX *ctx, const KSI_CalendarHashChain *calHshChain, bool (*inspector)(KSI_HashAlgorithm, time_t), bool *status);
+static int signatureCalendarChainHashAlgorithmDeprecatedAtPubTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result, const KSI_VerificationStep step, const char *rule);
 
 int KSI_VerificationRule_AggregationChainInputLevelVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -159,6 +164,305 @@ int KSI_VerificationRule_AggregationChainInputLevelVerification(KSI_Verification
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_GEN_3, step);
 		res = KSI_OK;
 		goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_AggregationChainInputHashAlgorithmVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	const KSI_Signature *sig = NULL;
+	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
+	KSI_DataHash *inputHash = NULL;
+	KSI_Integer *signTime = NULL;
+	KSI_HashAlgorithm algId = KSI_HASHALG_INVALID;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->signature;
+	KSI_ERR_clearErrors(ctx);
+
+	KSI_LOG_info(ctx, "Verify aggregation hash chain input hash algorithm.");
+
+	res = KSI_Signature_getDocumentHash(sig, &inputHash);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_DataHash_getHashAlg(inputHash, &algId);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_Signature_getSigningTime(sig, &signTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_checkHashAlgorithmAt(algId, (time_t)KSI_Integer_getUInt64(signTime));
+	switch (res) {
+		case KSI_OK:
+		case KSI_UNKNOWN_HASH_ALGORITHM_ID:
+			/* do nothing. */
+			break;
+
+		case KSI_HASH_ALGORITHM_DEPRECATED:
+		case KSI_HASH_ALGORITHM_OBSOLETE:
+			KSI_LOG_info(ctx, "Signature input hash algorithm was deprecated at aggregation time.");
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_13, step);
+			res = KSI_OK;
+			goto cleanup;
+
+		default:
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_Rfc3161DoesNotExist(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_LOG_info(info->ctx, "Verifying RFC3161 record does not exist.");
+
+	if (info->signature->rfc3161 != NULL) {
+		KSI_LOG_info(info->ctx, "RFC3161 record exists.");
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(KSI_VERIFY_NONE);
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_Rfc3161Existence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_LOG_info(info->ctx, "Verify RFC3161 record existence.");
+
+	if (info->signature->rfc3161 == NULL) {
+		KSI_LOG_info(info->ctx, "RFC3161 record is missing.");
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(KSI_VERIFY_NONE);
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_Rfc3161RecordOutputHashAlgorithmVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	const KSI_Signature *sig = NULL;
+	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
+	KSI_Integer *aggrTime = NULL;
+	KSI_HashAlgorithm algorithm = KSI_HASHALG_INVALID;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL || info->signature->rfc3161 == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->signature;
+	KSI_ERR_clearErrors(ctx);
+
+	KSI_LOG_info(ctx, "Verify RFC-3161 output hash algorithm.");
+
+	res = rfc3161_extractOutputHashAlgorithm(sig, &algorithm);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_RFC3161_getAggregationTime(sig->rfc3161, &aggrTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_checkHashAlgorithmAt(algorithm, (time_t)KSI_Integer_getUInt64(aggrTime));
+	switch (res) {
+		case KSI_OK:
+		case KSI_UNKNOWN_HASH_ALGORITHM_ID:
+			/* do nothing. */
+			break;
+
+		case KSI_HASH_ALGORITHM_DEPRECATED:
+		case KSI_HASH_ALGORITHM_OBSOLETE:
+			KSI_LOG_info(ctx, "RFC-3161 record output hash algorithm was deprecated at aggregation time.");
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_17, step);
+			res = KSI_OK;
+			goto cleanup;
+
+		default:
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_Rfc3161RecordHashAlgorithmVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	const KSI_Signature *sig = NULL;
+	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
+	KSI_Integer *aggrTime = NULL;
+	KSI_Integer *algorithm = NULL;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL || info->signature->rfc3161 == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->signature;
+	KSI_ERR_clearErrors(ctx);
+
+	KSI_LOG_info(ctx, "Verify RFC-3161 hash algorithm.");
+
+	res = KSI_RFC3161_getAggregationTime(sig->rfc3161, &aggrTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_RFC3161_getSigAttrAlgo(sig->rfc3161, &algorithm);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_checkHashAlgorithmAt((KSI_HashAlgorithm)KSI_Integer_getUInt64(algorithm), (time_t)KSI_Integer_getUInt64(aggrTime));
+	switch (res) {
+		case KSI_OK:
+		case KSI_UNKNOWN_HASH_ALGORITHM_ID:
+			/* do nothing. */
+			break;
+
+		case KSI_HASH_ALGORITHM_DEPRECATED:
+		case KSI_HASH_ALGORITHM_OBSOLETE:
+			KSI_LOG_info(ctx, "Signed attributes hash algorithm was deprecated at aggregation time.");
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_14, step);
+			res = KSI_OK;
+			goto cleanup;
+
+		default:
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+	}
+
+	algorithm = NULL;
+	res = KSI_RFC3161_getTstInfoAlgo(sig->rfc3161, &algorithm);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_checkHashAlgorithmAt((KSI_HashAlgorithm)KSI_Integer_getUInt64(algorithm), (time_t)KSI_Integer_getUInt64(aggrTime));
+	switch (res) {
+		case KSI_OK:
+		case KSI_UNKNOWN_HASH_ALGORITHM_ID:
+			/* do nothing. */
+			break;
+
+		case KSI_HASH_ALGORITHM_DEPRECATED:
+		case KSI_HASH_ALGORITHM_OBSOLETE:
+			KSI_LOG_info(ctx, "TST info hash algorithm was deprecated at aggregation time.");
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_14, step);
+			res = KSI_OK;
+			goto cleanup;
+
+		default:
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
 	}
 
 	VERIFICATION_RESULT_OK(step);
@@ -407,18 +711,13 @@ static int rfc3161_getOutputHash(const KSI_Signature *sig, KSI_DataHash **output
 	KSI_HashAlgorithm sigAttrAlgoId;
 	KSI_HashAlgorithm algorithm = KSI_HASHALG_INVALID;
 
-	if (sig == NULL || outputHash == NULL) {
+	if (sig == NULL || sig->rfc3161 == NULL || outputHash == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
 	ctx = sig->ctx;
-
 	rfc3161 = sig->rfc3161;
-	if (rfc3161 == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
 
 	if (KSI_Integer_getUInt64(rfc3161->tstInfoAlgo) > 0xff || KSI_Integer_getUInt64(rfc3161->sigAttrAlgo) > 0xff) {
 		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, "Hash algorithm can't be larger than 0xff.");
@@ -462,7 +761,6 @@ static int rfc3161_getOutputHash(const KSI_Signature *sig, KSI_DataHash **output
 	tmp = NULL;
 
 cleanup:
-
 	KSI_DataHash_free(hsh_tstInfo);
 	KSI_DataHash_free(hsh_sigAttr);
 	KSI_DataHash_free(tmp);
@@ -737,6 +1035,89 @@ int KSI_VerificationRule_AggregationChainMetaDataVerification(KSI_VerificationCo
 cleanup:
 
 	KSI_TlvElement_free(el);
+	return res;
+}
+
+int KSI_VerificationRule_AggregationChainHashAlgorithmVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	const KSI_Signature *sig = NULL;
+	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
+	size_t i;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	ctx = info->ctx;
+	sig = info->signature;
+	KSI_ERR_clearErrors(ctx);
+
+	KSI_LOG_info(ctx, "Verify aggregation hash chain hash algorithm.");
+
+	/* Loop through all the aggregation chains. */
+	for (i = 0; i < KSI_AggregationHashChainList_length(sig->aggregationChainList); i++) {
+		const KSI_AggregationHashChain* aggregationChain = NULL;
+		KSI_Integer *algorithm = NULL;
+		KSI_Integer *aggrTime = NULL;
+
+		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, (KSI_AggregationHashChain **)&aggregationChain);
+		if (res != KSI_OK) {
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		if (aggregationChain == NULL) break;
+
+		res = KSI_AggregationHashChain_getAggrHashId(aggregationChain, &algorithm);
+		if (res != KSI_OK) {
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_AggregationHashChain_getAggregationTime(aggregationChain, &aggrTime);
+		if (res != KSI_OK) {
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_checkHashAlgorithmAt((KSI_HashAlgorithm)KSI_Integer_getUInt64(algorithm), (time_t)KSI_Integer_getUInt64(aggrTime));
+		switch (res) {
+			case KSI_OK:
+			case KSI_UNKNOWN_HASH_ALGORITHM_ID:
+				/* do nothing. */
+				break;
+
+			case KSI_HASH_ALGORITHM_DEPRECATED:
+			case KSI_HASH_ALGORITHM_OBSOLETE:
+				KSI_LOG_info(ctx, "Signed attributes hash algorithm was deprecated at aggregation time.");
+				VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_15, step);
+				res = KSI_OK;
+				goto cleanup;
+
+			default:
+				VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+		}
+	}
+
+	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+
+cleanup:
 	return res;
 }
 
@@ -1317,6 +1698,122 @@ int KSI_VerificationRule_CalendarHashChainRegistrationTime(KSI_VerificationConte
 
 cleanup:
 
+	return res;
+}
+
+static bool wasDeprecatedAt(KSI_HashAlgorithm algorithm, time_t at) {
+	int res = KSI_UNKNOWN_ERROR;
+	res = KSI_checkHashAlgorithmAt(algorithm, at);
+	return (res == KSI_HASH_ALGORITHM_DEPRECATED ||
+			res == KSI_HASH_ALGORITHM_OBSOLETE);
+}
+
+static bool wasObsoleteAt(KSI_HashAlgorithm algorithm, time_t at) {
+	return (KSI_checkHashAlgorithmAt(algorithm, at) == KSI_HASH_ALGORITHM_OBSOLETE);
+}
+
+static int calendarChainAggrAlgorithmState(KSI_CTX *ctx, const KSI_CalendarHashChain *calHshChain, bool (*inspector)(KSI_HashAlgorithm, time_t), bool *status) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_HashChainLinkList *chainList = NULL;
+	size_t pos = 0;
+	KSI_Integer *pubTime = NULL;
+
+	if (calHshChain == NULL || inspector == NULL || status == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_CalendarHashChain_getPublicationTime(calHshChain, &pubTime);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_CalendarHashChain_getHashChain(calHshChain, &chainList);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	for (;;) {
+		KSI_HashChainLink *rlink = NULL;
+		KSI_DataHash *imprint = NULL;
+		KSI_HashAlgorithm algId = KSI_HASHALG_INVALID;
+
+		res = getNextRightLink(chainList, &pos, &rlink);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+		if (rlink == NULL) break;
+		pos++;
+
+		res = KSI_HashChainLink_getImprint(rlink, &imprint);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_DataHash_getHashAlg(imprint, &algId);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		if (inspector(algId, (time_t)KSI_Integer_getUInt64(pubTime))) {
+			*status = true;
+			res = KSI_OK;
+			goto cleanup;
+		}
+	}
+
+	*status = false;
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+int KSI_VerificationRule_CalendarChainHashAlgorithmObsoleteAtPubTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	const KSI_Signature *sig = NULL;
+	const KSI_VerificationStep step = KSI_VERIFY_CALCHAIN_INTERNALLY;
+	bool isTrue = false;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->signature;
+	KSI_ERR_clearErrors(ctx);
+
+	KSI_LOG_info(ctx, "Verify calendar hash chain hash algorithm was obsolete.");
+
+	res = calendarChainAggrAlgorithmState(ctx, sig->calendarChain, wasObsoleteAt, &isTrue);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (isTrue) {
+		KSI_LOG_info(ctx, "Calendar hash chain right link hash algorithm was obsolite at publication time.");
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_16, step);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+cleanup:
 	return res;
 }
 
@@ -2491,6 +2988,10 @@ cleanup:
 	return res;
 }
 
+int KSI_VerificationRule_CalendarHashChainHashAlgorithmDeprecatedAtPubTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	return signatureCalendarChainHashAlgorithmDeprecatedAtPubTime(info, result, KSI_VERIFY_NONE, VERIFICATION_RULE_NAME);
+}
+
 int KSI_VerificationRule_CalendarAuthenticationRecordExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -3174,7 +3675,7 @@ static int extendingPermittedVerification(KSI_VerificationContext *info, KSI_Rul
 	res = KSI_OK;
 
 cleanup:
-
+	/* Update rule name. */
 	if (result != NULL) VERIFICATION_RESULT_RULE(rule);
 	return res;
 }
@@ -3185,6 +3686,175 @@ int KSI_VerificationRule_PublicationsFileExtendingPermittedVerification(KSI_Veri
 
 int KSI_VerificationRule_UserProvidedPublicationExtendingPermittedVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	return 	extendingPermittedVerification(info, result , KSI_VERIFY_PUBLICATION_WITH_PUBSTRING, VERIFICATION_RULE_NAME);
+}
+
+static int signatureCalendarChainHashAlgorithmDeprecatedAtPubTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result, const KSI_VerificationStep step, const char *rule) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	const KSI_Signature *sig = NULL;
+	bool isTrue = false;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	ctx = info->ctx;
+	sig = info->signature;
+	KSI_ERR_clearErrors(ctx);
+
+	KSI_LOG_info(ctx, "Verify signature calendar chain aggr algorithm state.");
+
+	res = calendarChainAggrAlgorithmState(ctx, sig->calendarChain, wasDeprecatedAt, &isTrue);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (isTrue) {
+		KSI_LOG_info(ctx, "Calendar hash chain right link hash algorithm was deprecated at publication time.");
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+cleanup:
+	/* Update rule name. */
+	if (result != NULL) VERIFICATION_RESULT_RULE(rule);
+	return res;
+}
+
+int KSI_VerificationRule_PublicationsFileSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	return signatureCalendarChainHashAlgorithmDeprecatedAtPubTime(info, result , KSI_VERIFY_PUBLICATION_WITH_PUBFILE, VERIFICATION_RULE_NAME);
+}
+
+int KSI_VerificationRule_UserProvidedPublicationSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	return signatureCalendarChainHashAlgorithmDeprecatedAtPubTime(info, result , KSI_VERIFY_PUBLICATION_WITH_PUBSTRING, VERIFICATION_RULE_NAME);
+}
+
+int KSI_VerificationRule_PublicationsFileExtendedCalendarChainHashAlgorithmDeprecatedAtPubTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	const KSI_Signature *sig = NULL;
+	time_t aggrTime;
+	KSI_Integer *sigPubTime = NULL;
+	KSI_Integer *pubDataPubTime = NULL;
+	KSI_CalendarHashChain *extCalHashChain = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
+	KSI_DataHash *pubDataHash = NULL;
+	VerificationTempData *tempData = NULL;
+	bool isTrue = false;
+	const KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBFILE;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	ctx = info->ctx;
+	sig = info->signature;
+	KSI_ERR_clearErrors(ctx);
+
+	tempData = info->tempData;
+	if (tempData == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_STATE, "Verification context not properly initialized.");
+		goto cleanup;
+	}
+
+	KSI_LOG_info(ctx, "Verify extended calendar chain aggr algorithm state.");
+
+	res = KSI_CalendarHashChain_calculateAggregationTime(sig->calendarChain, &aggrTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_Integer_new(ctx, aggrTime, &sigPubTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = initPublicationsFile(info);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_PublicationsFile_getNearestPublication(tempData->publicationsFile, sigPubTime, &pubRec);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+	if (pubRec == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "No available publications.");
+		goto cleanup;
+	}
+	res = KSI_PublicationData_getImprint(pubRec->publishedData, &pubDataHash);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_PublicationData_getTime(pubRec->publishedData, &pubDataPubTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = getExtendedCalendarHashChain(info, pubDataPubTime, &extCalHashChain);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = calendarChainAggrAlgorithmState(ctx, extCalHashChain, wasDeprecatedAt, &isTrue);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (isTrue) {
+		KSI_LOG_info(ctx, "Extended calendar hash chain right link hash algorithm was deprecated at publication time.");
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+cleanup:
+	KSI_Integer_free(sigPubTime);
+	KSI_PublicationRecord_free(pubRec);
+	return res;
 }
 
 int KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
@@ -3800,6 +4470,71 @@ int KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(KSI_Ver
 
 cleanup:
 
+	return res;
+}
+
+int KSI_VerificationRule_UserProvidedPublicationExtendedCalendarChainHashAlgorithmDeprecatedAtPubTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	KSI_Integer *usrPubTime = NULL;
+	KSI_CalendarHashChain *extCalHashChain = NULL;
+	const KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBSTRING;
+	bool isTrue = false;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL || info->userPublication == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	KSI_ERR_clearErrors(ctx);
+
+	KSI_LOG_info(ctx, "Verify extended to user publication calendar chain aggr algorithm state.");
+
+	res = KSI_PublicationData_getTime(info->userPublication, &usrPubTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (usrPubTime == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res = KSI_INVALID_VERIFICATION_INPUT, "Missing publication time in user publication data.");
+		goto cleanup;
+	}
+
+	res = getExtendedCalendarHashChain(info, usrPubTime, &extCalHashChain);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = calendarChainAggrAlgorithmState(ctx, extCalHashChain, wasDeprecatedAt, &isTrue);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (isTrue) {
+		KSI_LOG_info(ctx, "Calendar hash chain right link hash algorithm was deprecated at publication time.");
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+cleanup:
 	return res;
 }
 

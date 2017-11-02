@@ -24,7 +24,7 @@
 #include "hashchain.h"
 #include "tlv.h"
 #include "tlv_template.h"
-#include "hashchain_impl.h"
+#include "impl/hashchain_impl.h"
 #include "impl/meta_data_element_impl.h"
 #include "compatibility.h"
 
@@ -213,15 +213,6 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 				/* Update hasher if algo id has changed. */
 				if (tmp != algo_id) {
 					algo_id = tmp;
-					if (hsh != NULL) {
-						KSI_DataHash_free(hsh);
-					}
-
-					res = KSI_DataHasher_close(hsr, &hsh);
-					if (res != KSI_OK) {
-						KSI_pushError(ctx, res, NULL);
-						goto cleanup;
-					}
 
 					KSI_DataHasher_free(hsr);
 					res = KSI_DataHasher_open(ctx, algo_id, &hsr);

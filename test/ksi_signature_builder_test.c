@@ -21,12 +21,14 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "all_tests.h"
+#include <ksi/hashchain.h>
 #include <ksi/ksi.h>
 #include <ksi/signature_builder.h>
-#include <ksi/hashchain.h>
-#include "../src/ksi/signature_impl.h"
 #include <ksi/tree_builder.h>
+
+#include "all_tests.h"
+
+#include "../src/ksi/impl/signature_impl.h"
 
 extern KSI_CTX *ctx;
 
@@ -376,7 +378,7 @@ static void testAppendChain(CuTest* tc) {
 	CuAssert(tc, "Unable to create tree builder.", res == KSI_OK && builder != NULL);
 
 	for (i = 0; data[i] != NULL; i++) {
-		res = KSI_DataHash_create(ctx, data[i], strlen(data[i]), KSI_HASHALG_SHA1, &hsh);
+		res = KSI_DataHash_create(ctx, data[i], strlen(data[i]), KSI_HASHALG_SHA2_512, &hsh);
 		CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
 
 		res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, &handles[i]);
@@ -465,7 +467,7 @@ static void testCreateSignaturesWithAggregationChains(CuTest* tc) {
 	CuAssert(tc, "Unable to create tree builder.", res == KSI_OK && builder != NULL);
 
 	for (i = 0; data[i] != NULL; i++) {
-		res = KSI_DataHash_create(ctx, data[i], strlen(data[i]), KSI_HASHALG_SHA1, &hsh);
+		res = KSI_DataHash_create(ctx, data[i], strlen(data[i]), KSI_HASHALG_SHA2_512, &hsh);
 		CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
 
 		res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, &handles[i]);

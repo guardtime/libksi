@@ -30,10 +30,10 @@
 #include <openssl/x509.h>
 
 #include "pkitruststore.h"
-#include "ctx_impl.h"
 #include "compatibility.h"
 #include "crc32.h"
 
+#include "impl/ctx_impl.h"
 
 static const char *defaultCaFile =
 #ifdef OPENSSL_CA_FILE

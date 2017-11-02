@@ -20,6 +20,8 @@
 #ifndef KSI_HASH_H_
 #define KSI_HASH_H_
 
+#include <time.h>
+
 #include "types_base.h"
 #include "common.h"
 
@@ -280,15 +282,34 @@ extern "C" {
 	 *  \return Returns the size of the data block the underlying hash algorithm or 0 on errir.
 	 */
 	unsigned int KSI_HashAlgorithm_getBlockSize(KSI_HashAlgorithm algo_id);
+
 	/**
 	 * This function is used to check if the given hash algorithm is trusted. If
-	 * the hash algorithm is trusted it returns 1, in all other cases 0.
+	 * the algorithm has been marked as deprecated or obsolete, it will return 0
+	 * or otherwise 1 is returned.
+	 * \note It is not checked if the deprecated and/or obsolete dates have passed
+	 *       but operation is impossible as soon as one of the dates is set. The intention
+	 *       is to make the change apparent right after upgrading the library rather than
+	 *       wait and possibly break normal operations in an apparently arbitrary moment.
+	 *
 	 * \param[in]	algo_id			Hash algorithm id.
 	 *
 	 * \return Returns 1 if algorithm is trusted, otherwise return 0.
-	 * \see #KSI_isHashAlgorithmSupported
+	 * \see #KSI_isHashAlgorithmSupported, #KSI_checkHashAlgorithmAt
 	 */
 	int KSI_isHashAlgorithmTrusted(KSI_HashAlgorithm algo_id);
+
+	/**
+	 * This function will check the status of the hash algorithm at a given time.
+	 * \param[in]	algo_id			Hash algorithm id.
+	 * \param[in]	used_at			UTC time when the algorithm was/is used.
+	 *
+	 * \return #KSI_UNKNOWN_HASH_ALGORITHM_ID if the hash algorithm ID is invalid, or
+	 * \return #KSI_HASH_ALGORITHM_DEPRECATED if the hash algorithm was deprecated at \c used_at, or
+	 * \return #KSI_HASH_ALGORITHM_OBSOLETE if the hash algorithm was obsolete at \c used_at, and
+	 * \return #KSI_OK otherwise.
+	 */
+	int KSI_checkHashAlgorithmAt(KSI_HashAlgorithm algo_id, time_t used_at);
 
 	/**
 	 * Is the given hash algorithm \c hash_id supported, meaning the
@@ -296,7 +317,7 @@ extern "C" {
 	 * \param[in]	algo_id			Hash algorithm id.
 	 *
 	 * \return Returns 0 if algorithm is not supported, otherwise non-zero.
-	 * \see #KSI_isHashAlgorithmTrusted
+	 * \see #KSI_isHashAlgorithmTrusted, #KSI_checkHashAlgorithmAt
 	 */
 	int KSI_isHashAlgorithmSupported(KSI_HashAlgorithm algo_id);
 

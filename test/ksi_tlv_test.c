@@ -20,14 +20,15 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "all_tests.h"
-#include <ksi/tlv.h>
-#include <ksi/io.h>
-#include <ksi/tlv_element.h>
 #include <ksi/hashchain.h>
+#include <ksi/io.h>
+#include <ksi/tlv.h>
+#include <ksi/tlv_element.h>
+#include <ksi/tlv_template.h>
 
-#include "../src/ksi/signature_impl.h"
-#include "../src/ksi/tlv_template.h"
+#include "all_tests.h"
+
+#include "../src/ksi/impl/signature_impl.h"
 
 extern KSI_CTX *ctx;
 

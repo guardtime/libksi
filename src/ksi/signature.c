@@ -19,19 +19,21 @@
 
 #include <string.h>
 
-#include "internal.h"
-#include "verification_impl.h"
-#include "signature_impl.h"
-#include "publicationsfile_impl.h"
 #include "tlv.h"
-#include "ctx_impl.h"
 #include "tlv_template.h"
 #include "hashchain.h"
 #include "net.h"
 #include "pkitruststore.h"
 #include "policy.h"
 #include "signature_builder.h"
-#include "signature_builder_impl.h"
+
+#include "internal.h"
+
+#include "impl/ctx_impl.h"
+#include "impl/publicationsfile_impl.h"
+#include "impl/signature_builder_impl.h"
+#include "impl/signature_impl.h"
+#include "impl/verification_impl.h"
 
 typedef struct headerRec_st HeaderRec;
 
@@ -40,7 +42,6 @@ KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationRecord);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationAuthRec);
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarAuthRec);
 KSI_IMPORT_TLV_TEMPLATE(KSI_RFC3161);
-KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationHashChain);
 
 KSI_IMPLEMENT_REF(KSI_Signature);
 
@@ -330,6 +331,7 @@ int KSI_createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, int lvl, KSI_Aggregat
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationReq *tmp = NULL;
 	KSI_Integer *level = NULL;
+	KSI_HashAlgorithm algo_id;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || hsh == NULL || request == NULL) {
@@ -340,6 +342,18 @@ int KSI_createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, int lvl, KSI_Aggregat
 	/* For now, the level may be just a single byte. */
 	if (lvl < 0 || lvl > 0xff) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Aggregation level may be only between 0x00 and 0xff");
+		goto cleanup;
+	}
+
+	/* Make sure the hash algorithm used is trusted. */
+	res = KSI_DataHash_extract(hsh, &algo_id, NULL, NULL);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (!KSI_isHashAlgorithmTrusted(algo_id)) {
+		KSI_pushError(ctx, res = KSI_UNTRUSTED_HASH_ALGORITHM, "The document hash algorithm is not trusted.");
 		goto cleanup;
 	}
 

@@ -28,9 +28,9 @@
 #include <Wincrypt.h>
 
 #include "pkitruststore.h"
-#include "ctx_impl.h"
 #include "crc32.h"
 
+#include "impl/ctx_impl.h"
 
 const char* getMSError(DWORD error, char *buf, size_t len){
 	LPVOID lpMsgBuf = NULL;

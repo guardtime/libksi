@@ -18,9 +18,9 @@
  */
 
 #include <string.h>
-#include "net_http_impl.h"
 #include <assert.h>
-#include "ctx_impl.h"
+#include "impl/net_http_impl.h"
+#include "impl/ctx_impl.h"
 
 typedef struct HttpClient_Endpoint_st HttpClient_Endpoint;
 
