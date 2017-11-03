@@ -1,3 +1,5 @@
+* IMPROVEMENT: Added consistency tests for public include files (make include-test).
+* IMPROVEMENT: Moved all implementation h-files into src/ksi/impl directory.
 * IMPROVEMENT: Added deprecated and obsolete times to hash functions.
 * IMPROVEMENT: SHA-1 is deprecated as of 01.07.2016T00:00 UTC.
 * BUGFIX: Removed double close of the KSI_DataHasher when calculating the calendar hash chain.

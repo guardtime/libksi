@@ -60,6 +60,9 @@ test: check
 int-test: check
 	./test/integration-tests ./test
 
+include-test:
+	CC=$(CC) CFLAGS="$(CFLAGS) -I$(top_builddir)/src/" ./test/include-test.sh ./test
+
 # You'll need valgrind for this target.
 #
 # yum install valgrind

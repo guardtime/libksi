@@ -21,6 +21,7 @@
 #define KSI_LOG_H_
 
 #include "common.h"
+#include "types.h"
 
 #ifdef __cplusplus
 extern "C" {

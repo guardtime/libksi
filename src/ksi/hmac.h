@@ -20,7 +20,7 @@
 #ifndef HMAC_H
 #define	HMAC_H
 
-#include "types_base.h"
+#include "types.h"
 
 #ifdef	__cplusplus
 extern "C" {
