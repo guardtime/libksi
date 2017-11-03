@@ -1666,7 +1666,7 @@ static void TestCalendarBasedPolicy_NA_ExtenderErrors(CuTest* tc) {
 	context.signature = signature;
 
 	for (i = 0; i < sizeof(testArray) / sizeof(testArray[0]); i++) {
-		KSI_LOG_debug(ctx, "Extender error test no %d", i);
+		KSI_LOG_debug(ctx, "Extender error test no %llu", (unsigned long long)i);
 		res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(testArray[i].name), TEST_USER, TEST_PASS);
 		CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 

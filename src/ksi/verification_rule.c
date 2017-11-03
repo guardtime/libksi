@@ -159,8 +159,8 @@ int KSI_VerificationRule_AggregationChainInputLevelVerification(KSI_Verification
 
 	if (KSI_Integer_getUInt64(lvlCorr) < info->docAggrLevel) {
 		KSI_LOG_info(ctx, "Aggregation hash chain input level is to large.");
-		KSI_LOG_debug(ctx, "Signatures initial level correction: %llu.", KSI_Integer_getUInt64(lvlCorr));
-		KSI_LOG_debug(ctx, "Document input level               : %llu.", info->docAggrLevel);
+		KSI_LOG_debug(ctx, "Signatures initial level correction: %llu.", (unsigned long long)KSI_Integer_getUInt64(lvlCorr));
+		KSI_LOG_debug(ctx, "Document input level               : %llu.", (unsigned long long)info->docAggrLevel);
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_GEN_3, step);
 		res = KSI_OK;
 		goto cleanup;
@@ -586,8 +586,8 @@ static int rfc3161_verifyAggrTime(KSI_CTX *ctx, const KSI_Signature *sig) {
 
 	if (KSI_Integer_compare(firstChain->aggregationTime, rfc3161->aggregationTime) != 0) {
 		KSI_LOG_info(ctx, "Aggregation hash chain and RFC 3161 aggregation time mismatch.");
-		KSI_LOG_debug(ctx, "Signatures aggregation time: %i.", KSI_Integer_getUInt64(firstChain->aggregationTime));
-		KSI_LOG_debug(ctx, "RFC 3161 aggregation time:   %i.", KSI_Integer_getUInt64(rfc3161->aggregationTime));
+		KSI_LOG_debug(ctx, "Signatures aggregation time: %llu.", (unsigned long long)KSI_Integer_getUInt64(firstChain->aggregationTime));
+		KSI_LOG_debug(ctx, "RFC 3161 aggregation time:   %llu.", (unsigned long long)KSI_Integer_getUInt64(rfc3161->aggregationTime));
 		KSI_pushError(ctx, res = KSI_VERIFICATION_FAILURE, "Aggregation hash chain and RFC 3161 aggregation time mismatch.");
 		goto cleanup;
 	}
@@ -629,8 +629,8 @@ static int rfc3161_verifyChainIndex(KSI_CTX *ctx, const KSI_Signature *sig) {
 
 	if (KSI_IntegerList_length(firstChain->chainIndex) != KSI_IntegerList_length(rfc3161->chainIndex)) {
 		KSI_LOG_info(ctx, "Aggregation hash chain and RFC 3161 chain index mismatch.");
-		KSI_LOG_debug(ctx, "First aggr chain index length: %i.", KSI_IntegerList_length(firstChain->chainIndex));
-		KSI_LOG_debug(ctx, "RFC 3161 chain index length  : %i.", KSI_IntegerList_length(rfc3161->chainIndex));
+		KSI_LOG_debug(ctx, "First aggr chain index length: %llu.", (unsigned long long)KSI_IntegerList_length(firstChain->chainIndex));
+		KSI_LOG_debug(ctx, "RFC 3161 chain index length  : %llu.", (unsigned long long)KSI_IntegerList_length(rfc3161->chainIndex));
 		KSI_pushError(ctx, res = KSI_VERIFICATION_FAILURE, "Aggregation hash chain and RFC 3161 aggregation index mismatch.");
 		goto cleanup;
 	}
@@ -2068,8 +2068,8 @@ int KSI_VerificationRule_SignaturePublicationRecordPublicationTime(KSI_Verificat
 
 	if (!KSI_Integer_equals(calPubTime, sigPubTime)){
 		KSI_LOG_info(ctx, "Calendar hash chain publication time mismatch.");
-		KSI_LOG_debug(ctx, "Calendar hash chain publication time: %i.", KSI_Integer_getUInt64(calPubTime));
-		KSI_LOG_debug(ctx, "Published publication time:           %i.", KSI_Integer_getUInt64(sigPubTime));
+		KSI_LOG_debug(ctx, "Calendar hash chain publication time: %llu.", (unsigned long long)KSI_Integer_getUInt64(calPubTime));
+		KSI_LOG_debug(ctx, "Published publication time:           %llu.", (unsigned long long)KSI_Integer_getUInt64(sigPubTime));
 
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_INT_7, step);
 		res = KSI_OK;
@@ -2942,8 +2942,8 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(KSI_Verif
 
 	if (!KSI_Integer_compare(aggregationChain->aggregationTime, extCalTime) == 0) {
 		KSI_LOG_info(ctx, "Invalid extended signature calendar hash chain time.");
-		KSI_LOG_debug(ctx, "Calendar hash chain time:   %i.", KSI_Integer_getUInt64(extCalTime));
-		KSI_LOG_debug(ctx, "Signature aggregation time: %i.", KSI_Integer_getUInt64(aggregationChain->aggregationTime));
+		KSI_LOG_debug(ctx, "Calendar hash chain time:   %llu.", (unsigned long long)KSI_Integer_getUInt64(extCalTime));
+		KSI_LOG_debug(ctx, "Signature aggregation time: %llu.", (unsigned long long)KSI_Integer_getUInt64(aggregationChain->aggregationTime));
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_CAL_3, step);
 		res = KSI_OK;
 		goto cleanup;
@@ -3299,9 +3299,9 @@ int KSI_VerificationRule_CertificateValidity(KSI_VerificationContext *info, KSI_
 
 	if (KSI_Integer_getUInt64(calTime) < notBefore || notAfter < KSI_Integer_getUInt64(calTime)) {
 		KSI_LOG_info(ctx, "Aggregation/Publication time is out of PKI Certificate validity timespan.");
-		KSI_LOG_debug(ctx, "Aggregation/Publication time:             %i.", KSI_Integer_getUInt64(calTime));
-		KSI_LOG_debug(ctx, "PKI Certificate validity not before time: %i.", notBefore);
-		KSI_LOG_debug(ctx, "PKI Certificate validity not after time:  %i.", notAfter);
+		KSI_LOG_debug(ctx, "Aggregation/Publication time:             %llu.", (unsigned long long)KSI_Integer_getUInt64(calTime));
+		KSI_LOG_debug(ctx, "PKI Certificate validity not before time: %llu.", (unsigned long long)notBefore);
+		KSI_LOG_debug(ctx, "PKI Certificate validity not after time:  %llu.", (unsigned long long)notAfter);
 
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_KEY_3, step);
 		res = KSI_OK;
@@ -4073,8 +4073,8 @@ int KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse(
 
 	if (!KSI_Integer_equals(pubDataPubTime, extPubTime)) {
 		KSI_LOG_info(ctx, "Invalid extended signature calendar hash chain aggregation time.");
-		KSI_LOG_debug(ctx, "Publications file publication time: %i.", KSI_Integer_getUInt64(pubDataPubTime));
-		KSI_LOG_debug(ctx, "Extended response publication time: %i.", KSI_Integer_getUInt64(extPubTime));
+		KSI_LOG_debug(ctx, "Publications file publication time: %llu.", (unsigned long long)KSI_Integer_getUInt64(pubDataPubTime));
+		KSI_LOG_debug(ctx, "Extended response publication time: %llu.", (unsigned long long)KSI_Integer_getUInt64(extPubTime));
 
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_PUB_2, step);
 		res = KSI_OK;
@@ -4328,8 +4328,8 @@ int KSI_VerificationRule_UserProvidedPublicationTimeVerification(KSI_Verificatio
 	}
 
 	if (KSI_Integer_compare(sigPubTime, usrPubTime) != 0) {
-		KSI_LOG_debug(ctx, "Publication time from signature publication: %i", KSI_Integer_getUInt64(sigPubTime));
-		KSI_LOG_debug(ctx, "Publication time from user publication     : %i", KSI_Integer_getUInt64(usrPubTime));
+		KSI_LOG_debug(ctx, "Publication time from signature publication: %llu", (unsigned long long)KSI_Integer_getUInt64(sigPubTime));
+		KSI_LOG_debug(ctx, "Publication time from user publication     : %llu", (unsigned long long)KSI_Integer_getUInt64(usrPubTime));
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		res = KSI_OK;
 		goto cleanup;
@@ -4458,8 +4458,8 @@ int KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(KSI_Ver
 	}
 
 	if (KSI_Integer_compare(sigPubTime, usrPubDataTime) != -1) {
-		KSI_LOG_debug(ctx, "Publication time from sig pub data : %i", KSI_Integer_getUInt64(sigPubTime));
-		KSI_LOG_debug(ctx, "Publication time from user pub data: %i", KSI_Integer_getUInt64(usrPubDataTime));
+		KSI_LOG_debug(ctx, "Publication time from sig pub data : %llu", (unsigned long long)KSI_Integer_getUInt64(sigPubTime));
+		KSI_LOG_debug(ctx, "Publication time from user pub data: %llu", (unsigned long long)KSI_Integer_getUInt64(usrPubDataTime));
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		res = KSI_OK;
 		goto cleanup;
@@ -4676,8 +4676,8 @@ int KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse(KSI_
 
 	if (!KSI_Integer_equals(usrPubTime, extPubTime)) {
 		KSI_LOG_info(ctx, "User provided publication time does not match extender response time.");
-		KSI_LOG_debug(ctx, "Publication time from extender response: %i", KSI_Integer_getUInt64(extPubTime));
-		KSI_LOG_debug(ctx, "Publication time from user pub data    : %i", KSI_Integer_getUInt64(usrPubTime));
+		KSI_LOG_debug(ctx, "Publication time from extender response: %llu", (unsigned long long)KSI_Integer_getUInt64(extPubTime));
+		KSI_LOG_debug(ctx, "Publication time from user pub data    : %llu", (unsigned long long)KSI_Integer_getUInt64(usrPubTime));
 
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_PUB_2, step);
 		res = KSI_OK;
@@ -4700,8 +4700,8 @@ int KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse(KSI_
 
 	if (!KSI_Integer_equals(signingTime, extAggrTime)) {
 		KSI_LOG_info(ctx, "Signature aggregation hash chain aggregation time does not math with extender aggregation time.");
-		KSI_LOG_debug(ctx, "Signing time: %i", KSI_Integer_getUInt64(signingTime));
-		KSI_LOG_debug(ctx, "Extender aggregation time: %i", KSI_Integer_getUInt64(extAggrTime));
+		KSI_LOG_debug(ctx, "Signing time: %llu", (unsigned long long)KSI_Integer_getUInt64(signingTime));
+		KSI_LOG_debug(ctx, "Extender aggregation time: %llu", (unsigned long long)KSI_Integer_getUInt64(extAggrTime));
 
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_PUB_2, step);
 		res = KSI_OK;
