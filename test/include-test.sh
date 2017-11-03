@@ -59,7 +59,7 @@ echo
 echo "==== TEST RESULTS ===="
 echo
 
-if [ $failcount == 0 ]; then
+if [ $failcount -eq 0 ]; then
 	echo "OK ($testcount tests)";
 	echo
 else
