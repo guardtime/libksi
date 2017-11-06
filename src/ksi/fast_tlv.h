@@ -78,11 +78,14 @@ extern "C" {
 	int KSI_FTLV_socketRead(int fd, unsigned char *buf, size_t len, size_t *consumed, KSI_FTLV *t);
 
 	/**
-	 * Read the TLV from a memory buffer.
+	 * Read the TLV from a memory buffer. This function will try to parse as much information
+	 * as possible even if the input is not complete (e.g. even the header is not fully available). It
+	 * will return #KSI_OK only if the header is fully available.
 	 * \param[in]	m		Pointer to the memory buffer.
 	 * \param[in]	l		Length of the buffer.
 	 * \param[in]	t		Pointer to the #KSI_FTLV object.
 	 * \return status code (\c KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note The function does not initiate the output variable if there is an issue parsing the TLV.
 	 */
 	int KSI_FTLV_memRead(const unsigned char *m, size_t l, KSI_FTLV *t);
 

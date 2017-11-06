@@ -25,34 +25,52 @@
 
 typedef int (*reader_t)(void *, unsigned char *, size_t, size_t *);
 
-static int parseHdr(const unsigned char *hdr, size_t hdrLen, struct fast_tlv_s *t) {
+static int parseHdr(const unsigned char *hdr, size_t len, struct fast_tlv_s *t) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	if (hdr == NULL || t == NULL) {
+	if (hdr == NULL || t == NULL || len == 0) {
 		res = KSI_INVALID_FORMAT;
 		goto cleanup;
 	}
 
+	/* Extract the tag value by assuming TLV8. */
 	t->tag = hdr[0] & KSI_TLV_MASK_TLV8_TYPE;
 
-	if (hdr[0] & KSI_TLV_MASK_TLV16) {
-		if (hdrLen != 4) {
-			res = KSI_INVALID_FORMAT;
-			goto cleanup;
-		}
-		t->tag = ((t->tag << 8) | hdr[1]);
-		t->dat_len = ((hdr[2] << 8) | hdr[3]) & 0xffff;
-	} else {
-		if (hdrLen != 2) {
-			res = KSI_INVALID_FORMAT;
-			goto cleanup;
-		}
-		t->dat_len = hdr[1];
-	}
-
-	t->hdr_len = hdrLen;
+	/* Extract the flags. */
 	t->is_nc = (hdr[0] & KSI_TLV_MASK_LENIENT) != 0;
 	t->is_fwd = (hdr[0] & KSI_TLV_MASK_FORWARD) != 0;
+
+	if (hdr[0] & KSI_TLV_MASK_TLV16) {
+		t->hdr_len = 4;
+		if (len > 1) {
+			t->tag = ((t->tag << 8) | hdr[1]);
+		} else {
+			res = KSI_INVALID_FORMAT;
+			goto cleanup;
+		}
+
+		if (len > 2) {
+			t->dat_len = (hdr[2] << 8) & 0xffff;
+		} else {
+			res = KSI_INVALID_FORMAT;
+			goto cleanup;
+		}
+
+		if (len > 3) {
+			t->dat_len |= hdr[3];
+		} else {
+			res = KSI_INVALID_FORMAT;
+			goto cleanup;
+		}
+	} else {
+		t->hdr_len = 2;
+		if (len > 1) {
+			t->dat_len = hdr[1];
+		} else {
+			res = KSI_INVALID_FORMAT;
+			goto cleanup;
+		}
+	}
 
 	res = KSI_OK;
 
@@ -148,7 +166,7 @@ int KSI_FTLV_socketRead(int fd, unsigned char *buf, size_t len, size_t *consumed
 int KSI_FTLV_memRead(const unsigned char *m, size_t l, KSI_FTLV *t) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	if (m == NULL || l < 2 || t == NULL) {
+	if (m == NULL || t == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -157,14 +175,10 @@ int KSI_FTLV_memRead(const unsigned char *m, size_t l, KSI_FTLV *t) {
 	t->off = 0;
 
 	if (m[0] & KSI_TLV_MASK_TLV16) {
-		if (l < 4) {
-			res = KSI_INVALID_FORMAT;
-			goto cleanup;
-		}
-		res = parseHdr(m, 4, t);
+		res = parseHdr(m, l, t);
 		if (res != KSI_OK) goto cleanup;
 	} else {
-		res = parseHdr(m, 2, t);
+		res = parseHdr(m, l, t);
 		if (res != KSI_OK) goto cleanup;
 	}
 
