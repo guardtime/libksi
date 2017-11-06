@@ -24,7 +24,7 @@
 #include "hashchain.h"
 #include "tlv.h"
 #include "tlv_template.h"
-#include "hashchain_impl.h"
+#include "impl/hashchain_impl.h"
 #include "impl/meta_data_element_impl.h"
 #include "compatibility.h"
 
@@ -280,8 +280,6 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
 		}
-
-		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Intermediade hash value", hsh);
 	}
 
 	KSI_snprintf(logMsg, sizeof(logMsg), "Finished %s hash chain aggregation with output hash.", isCalendar ? "calendar": "aggregation");
@@ -744,7 +742,7 @@ static int legacyId_verify(KSI_CTX *ctx, const unsigned char *raw, size_t raw_le
 	/* Legacy id data length is fixed to 29 octets. */
 	if (raw_len != 29) {
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID data length mismatch.");
-		KSI_LOG_debug(ctx, "Legacy ID data length: %d.", raw_len);
+		KSI_LOG_debug(ctx, "Legacy ID data length: %llu.", (unsigned long long )raw_len);
 		goto cleanup;
 	}
 	/* First two octets have fixed values. */

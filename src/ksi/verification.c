@@ -18,8 +18,10 @@
  */
 
 #include <string.h>
+
 #include "internal.h"
-#include "verification_impl.h"
+
+#include "impl/verification_impl.h"
 
 int KSI_VerificationResult_reset(KSI_VerificationResult *info) {
 	int res = KSI_UNKNOWN_ERROR;

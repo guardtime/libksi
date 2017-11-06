@@ -19,14 +19,17 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <ksi/net_uri.h>
-#include <ksi/compatibility.h>
 
-#include "../src/ksi/net_uri_impl.h"
-#include "../src/ksi/net_http_impl.h"
-#include "../src/ksi/net_tcp_impl.h"
+#include <ksi/compatibility.h>
+#include <ksi/net_uri.h>
+
 #include "cutest/CuTest.h"
 #include "all_tests.h"
+
+#include "../src/ksi/impl/net_http_impl.h"
+#include "../src/ksi/impl/net_tcp_impl.h"
+#include "../src/ksi/impl/net_uri_impl.h"
+
 
 extern KSI_CTX *ctx;
 

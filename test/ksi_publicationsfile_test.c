@@ -18,11 +18,15 @@
  */
 
 #include <string.h>
+
 #include <ksi/publicationsfile.h>
 #include <ksi/pkitruststore.h>
+
 #include "all_tests.h"
-#include "../src/ksi/publicationsfile_impl.h"
+
 #include "../src/ksi/internal.h"
+
+#include "../src/ksi/impl/publicationsfile_impl.h"
 
 extern KSI_CTX *ctx;
 

@@ -17,18 +17,20 @@
  * reserves and retains all trademark rights.
  */
 
-#include "cutest/CuTest.h"
-#include "all_tests.h"
 #include <string.h>
 #include <ksi/hashchain.h>
 #include <ksi/policy.h>
-#include "../src/ksi/policy_impl.h"
-#include "../src/ksi/ctx_impl.h"
-#include "../src/ksi/net_impl.h"
-#include "../src/ksi/verification_impl.h"
-#include "../src/ksi/signature_impl.h"
-#include "../src/ksi/publicationsfile_impl.h"
-#include "../src/ksi/hash_impl.h"
+
+#include "cutest/CuTest.h"
+#include "all_tests.h"
+
+#include "../src/ksi/impl/ctx_impl.h"
+#include "../src/ksi/impl/hash_impl.h"
+#include "../src/ksi/impl/net_impl.h"
+#include "../src/ksi/impl/policy_impl.h"
+#include "../src/ksi/impl/publicationsfile_impl.h"
+#include "../src/ksi/impl/signature_impl.h"
+#include "../src/ksi/impl/verification_impl.h"
 
 extern KSI_CTX *ctx;
 
@@ -1664,7 +1666,7 @@ static void TestCalendarBasedPolicy_NA_ExtenderErrors(CuTest* tc) {
 	context.signature = signature;
 
 	for (i = 0; i < sizeof(testArray) / sizeof(testArray[0]); i++) {
-		KSI_LOG_debug(ctx, "Extender error test no %d", i);
+		KSI_LOG_debug(ctx, "Extender error test no %llu", (unsigned long long)i);
 		res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(testArray[i].name), TEST_USER, TEST_PASS);
 		CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
@@ -2243,7 +2245,7 @@ static void TestPublicationsFileBasedPolicy_OK_WithPublicationRecord(CuTest* tc)
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_OK,
 		KSI_VER_ERR_NONE,
-		"KSI_VerificationRule_PublicationsFileContainsSignaturePublication"
+		"KSI_VerificationRule_PublicationsFileSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime"
 	};
 	KSI_CTX *ctx = NULL;
 	KSI_Signature *signature = NULL;
@@ -2558,7 +2560,7 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithPublicationRecord(CuTe
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_OK,
 		KSI_VER_ERR_NONE,
-		"KSI_VerificationRule_UserProvidedPublicationHashVerification"
+		"KSI_VerificationRule_UserProvidedPublicationSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime"
 	};
 	KSI_Signature *signature = NULL;
 

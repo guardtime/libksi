@@ -20,15 +20,16 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "support_tests.h"
-
-#include "../src/ksi/net_tcp_impl.h"
 #include <ksi/net_tcp.h>
 #include <ksi/io.h>
 #include <ksi/tlv.h>
 #include <ksi/fast_tlv.h>
 #include <ksi/types.h>
 #include <ksi/net_async.h>
+
+#include "support_tests.h"
+
+#include "../src/ksi/impl/net_tcp_impl.h"
 
 #define KSI_TLV_MAX_SIZE (0xffff + 4)
 

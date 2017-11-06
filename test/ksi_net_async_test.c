@@ -17,17 +17,19 @@
  * reserves and retains all trademark rights.
  */
 
+#include <string.h>
+
+#include <ksi/hash.h>
+#include <ksi/net.h>
+#include <ksi/net_async.h>
+
 #include "cutest/CuTest.h"
+
 #include "all_tests.h"
 #include "test_mock_async.h"
 
-#include "../src/ksi/net_async.h"
-#include "../src/ksi/net.h"
-#include "../src/ksi/hash.h"
+#include "../src/ksi/impl/ctx_impl.h"
 
-#include "../src/ksi/ctx_impl.h"
-
-#include <string.h>
 
 extern KSI_CTX *ctx;
 
@@ -895,7 +897,6 @@ static void Test_AsyncSign_oneRequest_invalidResponse(CuTest* tc) {
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *reqHandle = NULL;
 	KSI_AsyncHandle *respHandle = NULL;
-	KSI_DataHash *hsh = NULL;
 	int state = KSI_ASYNC_STATE_UNDEFINED;
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);

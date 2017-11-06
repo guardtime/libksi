@@ -21,10 +21,10 @@
 
 #include "http_parser.h"
 #include "internal.h"
-#include "net_impl.h"
 #include "tlv.h"
-#include "ctx_impl.h"
 #include "net_async.h"
+#include "impl/ctx_impl.h"
+#include "impl/net_impl.h"
 
 KSI_IMPLEMENT_GET_CTX(KSI_NetworkClient);
 KSI_IMPLEMENT_GET_CTX(KSI_RequestHandle);
@@ -197,7 +197,7 @@ static int uriCompose(const char *scheme, const char *user, const char *pass, co
 	size_t count = 0;
 	/* scheme:[//[user:password@]host[:port]][/]path[?query][#fragment] */
 
-	if (host == NULL || (user != NULL && pass == NULL) || (pass != NULL && user == NULL)) {
+	if ((user != NULL && pass == NULL) || (pass != NULL && user == NULL)) {
 		return KSI_INVALID_ARGUMENT;
 	}
 
@@ -209,7 +209,9 @@ static int uriCompose(const char *scheme, const char *user, const char *pass, co
 		count += KSI_snprintf(buf + count, len - count, "%s:%s@", user, pass);
 	}
 
-	count += KSI_snprintf(buf + count, len - count, "%s", host);
+	if (host != NULL) {
+		count += KSI_snprintf(buf + count, len - count, "%s", host);
+	}
 
 	if (port != 0) {
 		count += KSI_snprintf(buf + count, len - count, ":%d", port);

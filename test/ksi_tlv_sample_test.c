@@ -23,8 +23,10 @@
 #include <ksi/tlv.h>
 #include <ksi/tlv_template.h>
 #include <ksi/io.h>
-#include "../src/ksi/ctx_impl.h"
+
 #include "../src/ksi/internal.h"
+
+#include "../src/ksi/impl/ctx_impl.h"
 
 static char const * const ok_sample[] = {
 		"resource/tlv/ok_int-1.tlv",

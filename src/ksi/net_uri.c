@@ -19,16 +19,17 @@
 
 #include <string.h>
 
-#include "internal.h"
-
-#include "net_impl.h"
 #include "net_uri.h"
-#include "net_uri_impl.h"
 #include "net_tcp.h"
 #include "net_http.h"
 #include "net_file.h"
 #include "http_parser.h"
 #include "net_async.h"
+
+#include "internal.h"
+
+#include "impl/net_uri_impl.h"
+#include "impl/net_impl.h"
 
 static int getClientByUriScheme(const char *scheme, const char **replaceScheme);
 

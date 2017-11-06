@@ -24,14 +24,16 @@
 
 #include "base32.h"
 #include "crc32.h"
-#include "internal.h"
 #include "io.h"
-#include "publicationsfile_impl.h"
 #include "tlv.h"
 #include "tlv_template.h"
 #include "pkitruststore.h"
-#include "ctx_impl.h"
 #include "fast_tlv.h"
+
+#include "internal.h"
+
+#include "impl/ctx_impl.h"
+#include "impl/publicationsfile_impl.h"
 
 #define PUB_FILE_HEADER_ID "KSIPUBLF"
 

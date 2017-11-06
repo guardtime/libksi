@@ -17,14 +17,16 @@
  * reserves and retains all trademark rights.
  */
 
+#include <string.h>
+
 #include "policy.h"
-#include "policy_impl.h"
 #include "verification_rule.h"
 #include "hashchain.h"
-#include "signature_impl.h"
-#include "ctx_impl.h"
 
-#include <string.h>
+#include "impl/policy_impl.h"
+#include "impl/signature_impl.h"
+#include "impl/ctx_impl.h"
+
 
 static void RuleVerificationResult_free(KSI_RuleVerificationResult *result);
 static void VerificationTempData_clear(VerificationTempData *tmp);
@@ -224,6 +226,7 @@ static const KSI_Rule calendarHashChainVerificationRule[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainInputHashVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainAggregationTime},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainRegistrationTime},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarChainHashAlgorithmObsoleteAtPubTime},
 	{KSI_RULE_TYPE_COMPOSITE_AND, publicationOrCalendarAuthenticationRecordRule},
 	{KSI_RULE_TYPE_BASIC, NULL}
 };
@@ -252,11 +255,32 @@ static const KSI_Rule documentHashRule[] = {
 	{KSI_RULE_TYPE_COMPOSITE_OR, NULL}
 };
 
+static const KSI_Rule noRfc3161Rule[] = {
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_Rfc3161DoesNotExist},
+	{KSI_RULE_TYPE_BASIC, NULL}
+};
+
+static const KSI_Rule rfc3161VerificationRule[] = {
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_Rfc3161Existence},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_Rfc3161RecordHashAlgorithmVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_Rfc3161RecordOutputHashAlgorithmVerification},
+	{KSI_RULE_TYPE_BASIC, NULL}
+};
+
+static const KSI_Rule rfc3161Rule[] = {
+	{KSI_RULE_TYPE_COMPOSITE_OR, noRfc3161Rule},
+	{KSI_RULE_TYPE_COMPOSITE_OR, rfc3161VerificationRule},
+	{KSI_RULE_TYPE_COMPOSITE_OR, NULL}
+};
+
 static const KSI_Rule internalRules[] = {
 	{KSI_RULE_TYPE_COMPOSITE_AND, documentHashRule},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainInputLevelVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainInputHashAlgorithmVerification},
+	{KSI_RULE_TYPE_COMPOSITE_AND, rfc3161Rule},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainInputHashVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainMetaDataVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationChainHashAlgorithmVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainIndexContinuation},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainTimeConsistency},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_AggregationHashChainConsistency},
@@ -338,6 +362,7 @@ const KSI_Policy* KSI_VERIFICATION_POLICY_CALENDAR_BASED = &PolicyCalendarBased;
 static const KSI_Rule keyBasedRules[] = {
 	{KSI_RULE_TYPE_COMPOSITE_AND, internalRules},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainExistence},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainHashAlgorithmDeprecatedAtPubTime},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordExistence},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CertificateExistence},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CertificateValidity},
@@ -360,12 +385,14 @@ const KSI_Policy* KSI_VERIFICATION_POLICY_KEY_BASED = &PolicyKeyBased;
 static const KSI_Rule publicationPresentRule[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordExistence},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileContainsSignaturePublication},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime},
 	{KSI_RULE_TYPE_BASIC, NULL}
 };
 
 static const KSI_Rule extendToPublicationRule[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileContainsSuitablePublication},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileExtendingPermittedVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileExtendedCalendarChainHashAlgorithmDeprecatedAtPubTime},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash},
@@ -400,12 +427,14 @@ static const KSI_Rule userPublicationMatchRule[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordExistence},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationTimeVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationHashVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime},
 	{KSI_RULE_TYPE_BASIC, NULL}
 };
 
 static const KSI_Rule extendToUserPublicationRule[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationExtendingPermittedVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationExtendedCalendarChainHashAlgorithmDeprecatedAtPubTime},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash},

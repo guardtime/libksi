@@ -18,19 +18,20 @@
  */
 
 #include <string.h>
-#include <ksi/net.h>
-#include <ksi/pkitruststore.h>
+
 #include <ksi/hashchain.h>
+#include <ksi/net.h>
+#include <ksi/net_uri.h>
+#include <ksi/pkitruststore.h>
+#include <ksi/tree_builder.h>
 
 #include "all_tests.h"
-#include "../src/ksi/ctx_impl.h"
-#include "../src/ksi/net_http_impl.h"
-#include "../src/ksi/net_uri_impl.h"
-#include "../src/ksi/net_tcp_impl.h"
-#include "ksi/net_uri.h"
-#include "ksi/tree_builder.h"
-#include "../src/ksi/signature_impl.h"
 
+#include "../src/ksi/impl/ctx_impl.h"
+#include "../src/ksi/impl/net_http_impl.h"
+#include "../src/ksi/impl/net_tcp_impl.h"
+#include "../src/ksi/impl/net_uri_impl.h"
+#include "../src/ksi/impl/signature_impl.h"
 
 extern KSI_CTX *ctx;
 
@@ -131,6 +132,7 @@ static void testAggregationHeader(CuTest* tc) {
 	CuAssert(tc, "Unable to set header callback.", res == KSI_OK);
 
 	res = KSI_CTX_setAggregator(ctx, "file://dummy", TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set dummy aggregator uri.", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
 	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
@@ -205,6 +207,7 @@ static void testExtendingHeader(CuTest* tc) {
 	CuAssert(tc, "Unable to set header callback.", res == KSI_OK);
 
 	res = KSI_CTX_setExtender(ctx, "file://dummy", TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set dummy aggregator uri.", res == KSI_OK);
 
 	res = KSI_ExtendReq_new(ctx, &req);
 	CuAssert(tc, "Unable to create extending request.", res == KSI_OK && req != NULL);
@@ -214,6 +217,7 @@ static void testExtendingHeader(CuTest* tc) {
 
 	/* Set the aggregation time. */
 	res = KSI_ExtendReq_setAggregationTime(req, start);
+	CuAssert(tc, "Unable to set aggregation time.", res == KSI_OK);
 	start = NULL;
 
 	res = KSI_Integer_new(ctx, 17, &reqId);
@@ -306,7 +310,9 @@ static void aggrReqPduHmacVerify(CuTest* tc, KSI_HashAlgorithm hmacAlg) {
 static void testAggregatorHmac(CuTest *tc) {
 	size_t algo_id;
 	for (algo_id = 0; algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS; algo_id++) {
-		if (KSI_isHashAlgorithmSupported(algo_id)) aggrReqPduHmacVerify(tc, algo_id);
+		if (KSI_isHashAlgorithmSupported(algo_id) && KSI_isHashAlgorithmTrusted(algo_id)) {
+			aggrReqPduHmacVerify(tc, algo_id);
+		}
 	}
 }
 
@@ -356,7 +362,9 @@ static void extReqPduHmacVerify(CuTest* tc, KSI_HashAlgorithm hmacAlg) {
 static void testExtenderHmac(CuTest *tc) {
 	size_t algo_id;
 	for (algo_id = 0; algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS; algo_id++) {
-		if (KSI_isHashAlgorithmSupported(algo_id)) extReqPduHmacVerify(tc, algo_id);
+		if (KSI_isHashAlgorithmSupported(algo_id) && KSI_isHashAlgorithmTrusted(algo_id)) {
+			extReqPduHmacVerify(tc, algo_id);
+		}
 	}
 }
 
@@ -428,6 +436,7 @@ static 	const char *validUri[] = {
 	"http://u:p@127.0.0.1:80/test/c.txt#fragment1",
 	"file://file.name",
 	"file://path/to/file",
+	"file:///absolute/path/to/file",
 	NULL
 };
 
