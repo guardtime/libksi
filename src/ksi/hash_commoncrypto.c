@@ -17,9 +17,11 @@
  * reserves and retains all trademark rights.
  */
 
-#include "internal.h"
-#include "hash_impl.h"
 #include "hash.h"
+
+#include "internal.h"
+
+#include "impl/hash_impl.h"
 
 #if KSI_HASH_IMPL == KSI_IMPL_COMMONCRYPTO
 
