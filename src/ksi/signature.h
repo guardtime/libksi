@@ -177,8 +177,6 @@ extern "C" {
 	 */
 	int KSI_Signature_getSigningTime(const KSI_Signature *sig, KSI_Integer **signTime);
 
-	KSI_FN_DEPRECATED(int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **identity), Use #KSI_Signature_getAggregationHashChainIdentity instead.);
-
 	/**
 	 * Function for getting a list of the identities present in all aggregation hash chains.
 	 * The identities in the list are ordered - the higher-aggregator identity is before lower-aggregator identity.
