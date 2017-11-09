@@ -524,7 +524,7 @@ static void testSignerIdentity(CuTest *tc) {
 	int res;
 	const char *id_expected[] = {"GT", "testA", "36-test", NULL};
 	KSI_Signature *sig = NULL;
-	KSI_LIST(KSI_HashChainLinkIdentity) *idList = NULL;;
+	KSI_LIST(KSI_HashChainLinkIdentity) *idList = NULL;
 	size_t i;
 	KSI_Utf8String *pIdStr = NULL;
 
