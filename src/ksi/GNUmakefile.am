@@ -69,6 +69,7 @@ libksi_la_SOURCES = \
 	net_tcp.c \
 	net_tcp.h \
 	net_tcp_impl.h \
+	impl/net_sock_impl.h \
 	net_file.c \
 	net_file.h \
 	net_file_impl.h \

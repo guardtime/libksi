@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2017 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -21,7 +21,6 @@
 #define KSI_NET_TCP_H_
 
 #include "net.h"
-#include "common.h"
 
 #ifdef __cplusplus
 extern "C" {
