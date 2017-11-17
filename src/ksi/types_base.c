@@ -686,7 +686,7 @@ int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_Integer **o) {
 
 	/* Make sure the integer was coded properly. */
 	if (len > 0 && len != KSI_UINT64_MINSIZE(val)) {
-		KSI_LOG_debug(ctx, "Integer not properly formated: %d (len=%d)", val, len);
+		KSI_LOG_debug(ctx, "Integer not properly formated: %llu (len=%d)", (unsigned long long)val, (unsigned)len);
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Integer not properly formated.");
 		goto cleanup;
 	}
