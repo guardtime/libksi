@@ -1,8 +1,0 @@
-Package: @PACKAGE@
-Version: @VERSION@
-Section: devel
-Priority: optional
-Architecture: @DPKG_VERSION_REPLACED_WITH_SED@
-Depends: libcurl3-gnutls | libcurl3, libssl1.0.2 | libssl1.0.0 | libssl0.9.8
-Maintainer: Guardtime <support@guardtime.com>
-Description: KSI C API.

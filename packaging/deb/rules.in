@@ -1,0 +1,110 @@
+#!/usr/bin/make -f
+SHELL = /bin/bash
+
+#
+# Copyright 2013-2017 Guardtime, Inc.
+#
+# This file is part of the Guardtime client SDK.
+#
+# Licensed under the Apache License, Version 2.0 (the "License").
+# You may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#     http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES, CONDITIONS, OR OTHER LICENSES OF ANY KIND, either
+# express or implied. See the License for the specific language governing
+# permissions and limitations under the License.
+# "Guardtime" and "KSI" are trademarks or registered trademarks of
+# Guardtime, Inc., and no license to trademarks is granted; Guardtime
+# reserves and retains all trademark rights.
+#
+
+
+package = @PACKAGE@
+PROJECT_ROOT  = $(shell if [ "$$PWD" != "" ]; then echo $$PWD; else pwd; fi)
+FAKE_INSTALL = $(PROJECT_ROOT)/debian/$(package)
+INSTALL_ROOT=usr
+INSTALL_LIB=$(INSTALL_ROOT)/lib
+INSTALL_PCONF=$(INSTALL_LIB)/pkgconfig
+INSTALL_INCLUDE=$(INSTALL_ROOT)/include
+INSTALL_DOC=$(INSTALL_ROOT)/share/doc
+
+
+
+# Helper definitions and targets for debian rules.
+
+define is-in-build-dir
+	@test -f debian/rules -a -f src/ksi/ksi.h || (echo Not in correct directory; exit 1)
+endef
+
+define is-root
+	@test $$(id -u) = 0 || (echo need root priviledges; exit 1)
+endef
+
+
+configure-stamp:
+	$(is-in-build-dir)
+	./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/$(INSTALL_ROOT) --mandir=/$(INSTALL_MAN)
+	touch configure-stamp
+
+build-stamp: configure-stamp
+	$(is-in-build-dir)
+	rm -f build-stamp
+	$(MAKE)
+	if (doxygen -v | grep -q -P -e "((^1\.([8-9]|[1-9][0-9]+))|(^[2-9]\.[0-9]+)|(^[0-9]{2,}\.[0-9]+))\.[0-9]+$\") > /dev/null 2>&1 ; then $(MAKE) doc ; fi
+	touch build-stamp
+
+	
+# Debian rules.
+
+build: build-stamp
+
+clean: configure-stamp
+	$(is-in-build-dir)
+	rm -f *-stamp
+	$(MAKE) distclean
+	rm -rf debian/$(package)
+
+binary-indep: build
+
+binary-arch: lib-build lib-dev-build
+
+lib-build: build
+	$(is-in-build-dir)
+	$(is-root)
+	
+	rm -rf $(FAKE_INSTALL)
+	$(MAKE) install DESTDIR=$(FAKE_INSTALL)
+
+	rm -rf $(FAKE_INSTALL)/$(INSTALL_INCLUDE)
+	rm -rf $(FAKE_INSTALL)/$(INSTALL_PCONF)
+	rm $(FAKE_INSTALL)/$(INSTALL_LIB)/*.a $(FAKE_INSTALL)/$(INSTALL_LIB)/*.la
+
+	
+	# Generate the binary control file from source control.
+	mkdir $(FAKE_INSTALL)/DEBIAN
+	dpkg-gencontrol -P$(FAKE_INSTALL) -p$(package)
+	# dpkg-shlibdeps src/$(package)
+	dpkg-deb -b $(FAKE_INSTALL) ../
+
+lib-dev-build: build
+	$(is-in-build-dir)
+	$(is-root)
+
+	rm -rf $(FAKE_INSTALL)
+	$(MAKE) install DESTDIR=$(FAKE_INSTALL)
+
+	rm $(FAKE_INSTALL)/$(INSTALL_LIB)/*.so*
+	rm $(FAKE_INSTALL)/$(INSTALL_DOC)/$(package)/changelog $(FAKE_INSTALL)/$(INSTALL_DOC)/$(package)/license*
+	if [ -d doc/html ]; then cp -r doc/html $(FAKE_INSTALL)/$(INSTALL_DOC)/$(package); fi
+	
+	# Generate the binary control file from source control.
+	mkdir $(FAKE_INSTALL)/DEBIAN
+	dpkg-gencontrol -P$(FAKE_INSTALL) -p$(package)-dev
+	# dpkg-shlibdeps src/$(package)
+	dpkg-deb -b $(FAKE_INSTALL) ../	
+	
+binary: binary-indep binary-arch
+
+.PHONY: binary binary-arch binary-indep clean build
