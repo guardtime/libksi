@@ -33,6 +33,13 @@ If you do not want to build your own binaries, you can get the latest stable rel
 To set up the repository, save this repo file in your repositories directory (e.g. `/etc/yum.repos.d/`):
 [http://download.guardtime.com/ksi/configuration/guardtime.el6.repo](http://download.guardtime.com/ksi/configuration/guardtime.el6.repo)
 
+## Known Limitations ##
+
+* Curl
+
+The `libcurl` latest version `7.29.0-42` used in CentOS/RHEL 7 is not signal-proof. If your application is using signals, 
+network requests can fail. In this case `libksi` request call will return `KSI_NETWORK_ERROR`.
+
 ## Proxy Configuration ##
 
 To use a proxy, you need to configure the proxy on your operating system according to the chosen network client.
