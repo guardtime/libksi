@@ -264,6 +264,9 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 				/* Make sure cURL won't use signals. */
 				curl_easy_setopt(curlRequest->easyHandle, CURLOPT_NOSIGNAL, 1);
 
+				/* Use SSL for both control and data. */
+				curl_easy_setopt(curlRequest->easyHandle, CURLOPT_USE_SSL, CURLUSESSL_ALL);
+
 				curl_easy_setopt(curlRequest->easyHandle, CURLOPT_ERRORBUFFER, curlRequest->errMsg);
 
 				if (clientCtx->userAgent != NULL) {
@@ -489,7 +492,7 @@ static int curlGlobal_init(void) {
 		return KSI_OK;
 	}
 
-	if (curl_global_init(CURLUSESSL_ALL) != CURLE_OK) goto cleanup;
+	if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK) goto cleanup;
 
 	res = KSI_OK;
 cleanup:
