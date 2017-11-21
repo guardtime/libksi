@@ -436,8 +436,8 @@ int main(int argc, char **argv) {
 
 	res = KSI_OK;
 cleanup:
-	printf("Succeeded request: %lu.\n", succeeded);
-	printf("Failed request   : %lu.\n", nof_requests - succeeded);
+	printf("Succeeded request: %lu.\n", (unsigned long)succeeded);
+	printf("Failed request   : %lu.\n", (unsigned long)(nof_requests - succeeded));
 	printf("Spent time (sec) : %.0f.\n", difftime(time(NULL), start));
 
 	if (res != KSI_OK && ksi != NULL) {
