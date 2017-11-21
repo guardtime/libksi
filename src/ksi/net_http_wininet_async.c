@@ -34,4 +34,4 @@ int KSI_HttpAsyncClient_setService(KSI_AsyncClient *c, const char *url, const ch
 }
 
 
-#endif /* KSI_NET_HTTP_IMPL */
+#endif /* KSI_NET_HTTP_IMPLL==KSI_IMPL_WININET */
