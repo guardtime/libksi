@@ -218,7 +218,6 @@ static void reqQueue_clearWithError(KSI_AsyncHandleList *reqQueue, int err, long
 	}
 }
 
-
 static int dispatch(TcpAsyncCtx *tcpCtx) {
 	int res = KSI_UNKNOWN_ERROR;
 	struct pollfd pfd;
@@ -381,7 +380,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 
 		/* Check if the request count can be restarted. */
 		if (difftime(time(&curTime), tcpCtx->roundStartAt) >= tcpCtx->options[KSI_ASYNC_PRIVOPT_ROUND_DURATION]) {
-			KSI_LOG_info(tcpCtx->ctx, "Async TCP round request count: %u", tcpCtx->roundCount);
+			KSI_LOG_info(tcpCtx->ctx, "Async TCP round request count: %llu", (unsigned long long)tcpCtx->roundCount);
 			tcpCtx->roundCount = 0;
 			tcpCtx->roundStartAt = curTime;
 		}
@@ -424,14 +423,14 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 			if (c == KSI_SCK_SOCKET_ERROR) {
 				if (KSI_SCK_errno == KSI_SCK_EWOULDBLOCK || KSI_SCK_errno == KSI_SCK_EAGAIN) {
 					KSI_LOG_info(tcpCtx->ctx,
-								 "Async TCP send would block. Bytes sent so far %d/%d. Error: %d (%s).",
-								 req->sentCount, req->len, KSI_SCK_errno, KSI_SCK_strerror(KSI_SCK_errno));
+							"Async TCP send would block. Bytes sent so far %d/%d. Error: %d (%s).",
+							(unsigned)req->sentCount, (unsigned)req->len, KSI_SCK_errno, KSI_SCK_strerror(KSI_SCK_errno));
 					goto cleanup;
 				} else {
 					closeSocket(tcpCtx, __LINE__);
 					KSI_LOG_error(tcpCtx->ctx,
-								  "Async TCP closing connection. Unable to write to socket. Error: %d (%s).",
-								  KSI_SCK_errno, KSI_SCK_strerror(KSI_SCK_errno));
+							"Async TCP closing connection. Unable to write to socket. Error: %d (%s).",
+							KSI_SCK_errno, KSI_SCK_strerror(KSI_SCK_errno));
 					res = KSI_ASYNC_CONNECTION_CLOSED;
 					goto cleanup;
 				}
