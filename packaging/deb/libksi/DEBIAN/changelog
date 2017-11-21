@@ -1,3 +1,7 @@
+libksi (3.16.2482) RELEASED; urgency=low
+
+  * BUGFIX: Fixed EINTR (signal) issues with TCP and cURL.
+
 libksi (3.16.2475) RELEASED; urgency=low
 
   * BUGFIX: Fixed logging in net_http_curl.c when using 32-bit OS.
