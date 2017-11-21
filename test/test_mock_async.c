@@ -20,16 +20,15 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include <ksi/net_tcp.h>
-#include <ksi/io.h>
-#include <ksi/tlv.h>
-#include <ksi/fast_tlv.h>
-#include <ksi/types.h>
-#include <ksi/net_async.h>
+#include "../src/ksi/io.h"
+#include "../src/ksi/tlv.h"
+#include "../src/ksi/fast_tlv.h"
+#include "../src/ksi/types.h"
+#include "../src/ksi/net_async.h"
+#include "../src/ksi/impl/net_impl.h"
 
 #include "support_tests.h"
 
-#include "../src/ksi/impl/net_tcp_impl.h"
 
 #define KSI_TLV_MAX_SIZE (0xffff + 4)
 
@@ -38,8 +37,7 @@ typedef struct {
 	/* File descriptor. */
 	FILE *file;
 	/* Output queue. */
-	KSI_AsyncHandle *reqQueueFront;
-	KSI_AsyncHandle *reqQueueBack;
+	KSI_AsyncHandleList *reqQueue;
 	/* Input queue. */
 	KSI_OctetStringList *respQueue;
 
@@ -56,83 +54,30 @@ typedef struct {
 	size_t pathCount;
 	const char *ksi_user;
 	const char *ksi_pass;
-} FileAsyncCtx;
+} KSITest_FileAsyncClientCtx;
 
-static int reqQueue_getFront(FileAsyncCtx *clientCtx, KSI_AsyncHandle **r) {
-	int res = KSI_UNKNOWN_ERROR;
+static void reqQueue_clearWithError(KSI_AsyncHandleList *reqQueue, int err, long ext) {
+	size_t size = 0;
 
-	if (clientCtx == NULL || r == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	*r = clientCtx->reqQueueFront;
-	res = KSI_OK;
-cleanup:
-	return res;
-}
+	if (reqQueue == NULL) return;
 
-static int reqQueue_popFront(FileAsyncCtx *clientCtx, KSI_AsyncHandle **r) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_AsyncHandle *req = NULL;
+	while ((size = KSI_AsyncHandleList_length(reqQueue)) > 0) {
+		int res;
+		KSI_AsyncHandle *req = NULL;
 
-	if (clientCtx == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	req = clientCtx->reqQueueFront;
-
-	clientCtx->reqQueueFront = req->next;
-	/* Check if this is the last element in queue. */
-	if (req == clientCtx->reqQueueBack) {
-		clientCtx->reqQueueBack = NULL;
-	}
-
-	if (r != NULL) {
-		/* Return the popped value. */
-		*r = req;
-	} else {
-		KSI_AsyncHandle_free(req);
-	}
-	res = KSI_OK;
-cleanup:
-	return res;
-}
-
-static int reqQueue_pushBack(FileAsyncCtx *clientCtx, KSI_AsyncHandle *r) {
-	int res = KSI_UNKNOWN_ERROR;
-
-	if (clientCtx == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	if (clientCtx->reqQueueFront != NULL) {
-		clientCtx->reqQueueBack->next = r;
-	} else {
-		clientCtx->reqQueueFront = r;
-	}
-	clientCtx->reqQueueBack = r;
-	res = KSI_OK;
-cleanup:
-	return res;
-}
-
-static void reqQueue_clearWithError(FileAsyncCtx *clientCtx, int err) {
-	if (clientCtx == NULL) return;
-
-	while (clientCtx->reqQueueFront) {
-		KSI_AsyncHandle *req = clientCtx->reqQueueFront;
+		res = KSI_AsyncHandleList_elementAt(reqQueue, size - 1, &req);
+		if (res != KSI_OK || req == NULL) return;
 
 		/* Update request state. */
 		req->state = KSI_ASYNC_STATE_ERROR;
 		req->err = err;
+		req->errExt = ext;
 
-		reqQueue_popFront(clientCtx, NULL);
+		KSI_AsyncHandle_free(req);
 	}
 }
 
-
-static int dispatch(FileAsyncCtx *clientCtx) {
+static int dispatch(KSITest_FileAsyncClientCtx *clientCtx) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_OctetString *resp = NULL;
 
@@ -143,7 +88,7 @@ static int dispatch(FileAsyncCtx *clientCtx) {
 	KSI_ERR_clearErrors(clientCtx->ctx);
 
 	/* Handle output. */
-	while (clientCtx->reqQueueFront != NULL) {
+	while (KSI_AsyncHandleList_length(clientCtx->reqQueue) > 0) {
 		KSI_AsyncHandle *req = NULL;
 		time_t curTime = 0;
 
@@ -162,7 +107,7 @@ static int dispatch(FileAsyncCtx *clientCtx) {
 		}
 #endif
 
-		res = reqQueue_getFront(clientCtx, &req);
+		res = KSI_AsyncHandleList_elementAt(clientCtx->reqQueue, 0, &req);
 		if (res != KSI_OK) {
 			KSI_LOG_error(clientCtx->ctx, "Async FILE. Unable to extract async handle from request queue. Error: 0x%x.", res);
 			res = KSI_OK;
@@ -184,10 +129,10 @@ static int dispatch(FileAsyncCtx *clientCtx) {
 			/* Start receive timeout. */
 			req->sndTime = curTime;
 			/* The request has been successfully dispatched. Remove it from the request queue. */
-			reqQueue_popFront(clientCtx, NULL);
+			KSI_AsyncHandleList_remove(clientCtx->reqQueue, 0, NULL);
 		} else {
 			/* The state could have been changed in application layer. Just remove the request from the request queue. */
-			reqQueue_popFront(clientCtx, NULL);
+			KSI_AsyncHandleList_remove(clientCtx->reqQueue, 0, NULL);
 		}
 	}
 
@@ -213,7 +158,7 @@ static int dispatch(FileAsyncCtx *clientCtx) {
 
 			res = KSI_FTLV_fileRead(clientCtx->file, buf, KSI_TLV_MAX_SIZE,  &count, &ftlv);
 			if (res != KSI_OK && count != 0) {
-				reqQueue_clearWithError(clientCtx, res);
+				reqQueue_clearWithError(clientCtx->reqQueue, res, 0);
 				KSI_LOG_error(clientCtx->ctx, "Unable to read TLV from file. Error: 0x%x.", res);
 				res = KSI_OK;
 				goto cleanup;
@@ -221,7 +166,7 @@ static int dispatch(FileAsyncCtx *clientCtx) {
 
 			if (count != 0) {
 				if (count > KSI_TLV_MAX_SIZE){
-					reqQueue_clearWithError(clientCtx, res = KSI_BUFFER_OVERFLOW);
+					reqQueue_clearWithError(clientCtx->reqQueue, res = KSI_BUFFER_OVERFLOW, 0);
 					KSI_LOG_error(clientCtx->ctx, "Too much data read from file. Error: 0x%x.", res);
 					res = KSI_OK;
 					goto cleanup;
@@ -260,10 +205,10 @@ cleanup:
 	return res;
 }
 
-static int addToSendQueue(FileAsyncCtx *clientCtx, KSI_AsyncHandle *request) {
+static int addToSendQueue(KSITest_FileAsyncClientCtx *clientCtx, KSI_AsyncHandle *request) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	if (clientCtx == NULL || request == NULL) {
+	if (clientCtx == NULL || clientCtx->reqQueue == NULL || request == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -272,7 +217,7 @@ static int addToSendQueue(FileAsyncCtx *clientCtx, KSI_AsyncHandle *request) {
 	/* Start send timeout. */
 	time(&request->reqTime);
 
-	res = reqQueue_pushBack(clientCtx, request);
+	res = KSI_AsyncHandleList_append(clientCtx->reqQueue, request);
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_OK;
@@ -280,9 +225,8 @@ cleanup:
 	return res;
 }
 
-static int getResponse(FileAsyncCtx *clientCtx, KSI_OctetString **response, size_t *left) {
+static int getResponse(KSITest_FileAsyncClientCtx *clientCtx, KSI_OctetString **response, size_t *left) {
 	int res = KSI_UNKNOWN_ERROR;
-	size_t len = 0;
 	KSI_OctetString *tmp = NULL;
 
 	if (clientCtx == NULL || clientCtx->respQueue == NULL || response == NULL || left == NULL) {
@@ -290,24 +234,21 @@ static int getResponse(FileAsyncCtx *clientCtx, KSI_OctetString **response, size
 		goto cleanup;
 	}
 
-	len = KSI_OctetStringList_length(clientCtx->respQueue);
-	if (len != 0) {
+	if (KSI_OctetStringList_length(clientCtx->respQueue)) {
 		/* Responses should be processed in the same order as received. */
 		res = KSI_OctetStringList_remove(clientCtx->respQueue, 0, &tmp);
 		if (res != KSI_OK) goto cleanup;
 	}
 
 	*response = tmp;
-	tmp = NULL;
-	*left = (len ? len - 1 : 0);
+	*left = KSI_OctetStringList_length(clientCtx->respQueue);
 
 	res = KSI_OK;
 cleanup:
-	KSI_OctetString_free(tmp);
 	return res;
 }
 
-static int setService(FileAsyncCtx *clientCtx, const char **paths, size_t count, const char *user, const char *pass) {
+static int setService(KSITest_FileAsyncClientCtx *clientCtx, const char **paths, size_t count, const char *user, const char *pass) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (clientCtx == NULL) {
@@ -330,21 +271,16 @@ static int FileAsyncClient_setService(KSI_AsyncClient *c, const char **paths, si
 	return setService(c->clientImpl, paths, count, user, pass);
 }
 
-static int getCredentials(FileAsyncCtx *clientCtx, const char **user, const char **pass) {
+static int getCredentials(KSITest_FileAsyncClientCtx *clientCtx, const char **user, const char **pass) {
 	if (clientCtx == NULL) return KSI_INVALID_ARGUMENT;
 	if (user != NULL) *user = clientCtx->ksi_user;
 	if (pass != NULL) *pass = clientCtx->ksi_pass;
 	return KSI_OK;
 }
 
-static void FileAsyncCtx_free(FileAsyncCtx *t) {
+static void FileAsyncCtx_free(KSITest_FileAsyncClientCtx *t) {
 	if (t != NULL) {
-		KSI_AsyncHandle *handle = t->reqQueueFront;
-		while (handle) {
-			KSI_AsyncHandle *next = handle->next;
-			KSI_AsyncHandle_free(handle);
-			handle = next;
-		}
+		KSI_AsyncHandleList_free(t->reqQueue);
 		KSI_OctetStringList_free(t->respQueue);
 		if (t->file != NULL) fclose(t->file);
 		KSI_nofree(t->paths);
@@ -354,16 +290,16 @@ static void FileAsyncCtx_free(FileAsyncCtx *t) {
 	}
 }
 
-static int FileAsyncCtx_new(KSI_CTX *ctx, FileAsyncCtx **clientCtx) {
+static int FileAsyncCtx_new(KSI_CTX *ctx, KSITest_FileAsyncClientCtx **clientCtx) {
 	int res = KSI_UNKNOWN_ERROR;
-	FileAsyncCtx *tmp = NULL;
+	KSITest_FileAsyncClientCtx *tmp = NULL;
 
 	if (ctx == NULL || clientCtx == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	tmp = KSI_malloc(sizeof(FileAsyncCtx));
+	tmp = KSI_malloc(sizeof(KSITest_FileAsyncClientCtx));
 	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
@@ -371,8 +307,7 @@ static int FileAsyncCtx_new(KSI_CTX *ctx, FileAsyncCtx **clientCtx) {
 	tmp->ctx = ctx;
 	tmp->file = NULL;
 
-	tmp->reqQueueFront = NULL;
-	tmp->reqQueueBack = NULL;
+	tmp->reqQueue = NULL;
 	tmp->respQueue = NULL;
 
 	tmp->ksi_user = NULL;
@@ -385,6 +320,8 @@ static int FileAsyncCtx_new(KSI_CTX *ctx, FileAsyncCtx **clientCtx) {
 	tmp->roundCount = 0;
 
 	/* Initialize io queues. */
+	res = KSI_AsyncHandleList_new(&tmp->reqQueue);
+	if (res != KSI_OK) goto cleanup;
 	res = KSI_OctetStringList_new(&tmp->respQueue);
 	if (res != KSI_OK) goto cleanup;
 
@@ -400,7 +337,7 @@ cleanup:
 static int FileAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AsyncClient *tmp = NULL;
-	FileAsyncCtx *clientImpl = NULL;
+	KSITest_FileAsyncClientCtx *clientImpl = NULL;
 
 	if (ctx == NULL || c == NULL) {
 		res = KSI_INVALID_ARGUMENT;

@@ -150,9 +150,6 @@ extern "C" {
 		time_t sndTime;
 		/** Time when the response has been reeived. */
 		time_t rcvTime;
-
-		/** A poiter to the next handle in request queue. */
-		KSI_AsyncHandle *next;
 	};
 
 	enum KSI_AsyncPrivateOption_en {
