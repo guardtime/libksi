@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2017 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -90,6 +90,28 @@ int KSI_HttpClient_setExtender(KSI_NetworkClient *client, const char *url, const
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  */
 int KSI_HttpClient_setAggregator(KSI_NetworkClient *client, const char *url, const char *user, const char *key);
+
+
+/**
+ * Creates a new HTTP async client.
+ * \param[in]	ctx			KSI context.
+ * \param[out]	c			Pointer to the receiving pointer.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \see #KSI_AsyncClient_free
+ * \see #KSI_HttpAsyncClient_setService
+ */
+int KSI_HttpAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c);
+
+/**
+ * Setter for the HTTP service endpoint parameters.
+ * \param[in]	c			Pointer to tcp async client.
+ * \param[in]	url			Host name.
+ * \param[in]	user		User name.
+ * \param[in]	pass		HMAC shared secret.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \see #KSI_HttpAsyncClient_new
+ */
+int KSI_HttpAsyncClient_setService(KSI_AsyncClient *c, const char *url, const char *user, const char *pass);
 
 
 #ifdef __cplusplus

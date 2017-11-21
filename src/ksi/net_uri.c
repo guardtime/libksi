@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2017 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -478,7 +478,10 @@ static int uri_setAsyncService(KSI_AsyncService *s, const char *uri, const char 
 	char *path = NULL;
 	char *query = NULL;
 	char *fragment = NULL;
+	const char *scheme = NULL;
 	const char *replace = NULL;
+	int unableToParse = 0;
+	char addr[0xffff];
 	int c;
 
 	if (s == NULL || uri == NULL) {
@@ -486,8 +489,16 @@ static int uri_setAsyncService(KSI_AsyncService *s, const char *uri, const char 
 		goto cleanup;
 	}
 
-	s->uriSplit(uri, &schm, &ksi_user, &ksi_pass, &host, &port, &path, &query, &fragment);
+	if (s->impl != NULL) {
+		res = KSI_INVALID_STATE;
+		goto cleanup;
+	}
+
+	res = s->uriSplit(uri, &schm, &ksi_user, &ksi_pass, &host, &port, &path, &query, &fragment);
+	if (res != KSI_OK) unableToParse = 1;
+
 	c = getClientByUriScheme(schm, &replace);
+	scheme = (replace != NULL) ? replace : schm;
 
 	switch (c) {
 		case URI_TCP:
@@ -496,19 +507,35 @@ static int uri_setAsyncService(KSI_AsyncService *s, const char *uri, const char 
 				goto cleanup;
 			}
 
-			if (s->impl == NULL) {
-				s->impl_free = (void (*)(void*))KSI_AsyncClient_free;
-				res = KSI_TcpAsyncClient_new(s->ctx, (KSI_AsyncClient **)&s->impl);
-				if (res != KSI_OK) goto cleanup;
-			}
+			s->impl_free = (void (*)(void*))KSI_AsyncClient_free;
+			res = KSI_TcpAsyncClient_new(s->ctx, (KSI_AsyncClient **)&s->impl);
+			if (res != KSI_OK) goto cleanup;
 
-			res = KSI_TcpAsyncClient_setService(s->impl, host, port,
+			res = KSI_TcpAsyncClient_setService(s->impl,
+					host, port,
 					loginId != NULL ? loginId : ksi_user,
 					key != NULL ? key : ksi_pass);
 			if (res != KSI_OK) goto cleanup;
 			break;
 
 		case URI_HTTP:
+			if (unableToParse == 0 || replace) {
+				/* Create a new URL where the scheme is replaced with the correct one and KSI user and pass is removed. */
+				res = s->uriCompose(scheme, NULL, NULL, host, port, path, query, fragment, addr, sizeof(addr));
+				if (res != KSI_OK) goto cleanup;
+			}
+
+			s->impl_free = (void (*)(void*))KSI_AsyncClient_free;
+			res = KSI_HttpAsyncClient_new(s->ctx, (KSI_AsyncClient **)&s->impl);
+			if (res != KSI_OK) goto cleanup;
+
+			res = KSI_HttpAsyncClient_setService(s->impl,
+					strlen(addr) ? addr : uri,
+					loginId != NULL ? loginId : ksi_user,
+					key != NULL ? key : ksi_pass);
+			if (res != KSI_OK) goto cleanup;
+			break;
+
 		case URI_FILE:
 		case URI_UNKNOWN:
 		default:

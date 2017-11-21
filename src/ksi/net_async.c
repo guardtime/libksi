@@ -353,10 +353,11 @@ static int asyncClient_addAggregationRequest(KSI_AsyncClient *c, KSI_AsyncHandle
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+	KSI_ERR_clearErrors(c->ctx);
 
 	if (handle->aggrReq == NULL ||
 			c->clientImpl == NULL || c->addRequest == NULL || c->getCredentials == NULL) {
-		res = KSI_INVALID_STATE;
+		KSI_pushError(c->ctx, res = KSI_INVALID_STATE, "Async client is not initialized properly.");
 		goto cleanup;
 	}
 	impl = c->clientImpl;
@@ -588,6 +589,7 @@ static int asyncClient_processAggregationResponseQueue(KSI_AsyncClient *c) {
 			/* Get PDU object. */
 			res = KSI_AggregationPdu_parse(c->ctx, raw, len, &pdu);
 			if(res != KSI_OK){
+				KSI_LOG_logBlob(c->ctx, KSI_LOG_ERROR, "Parsing aggregation response failed", raw, len);
 				KSI_pushError(c->ctx, res, "Unable to parse aggregation pdu.");
 				goto cleanup;
 			}

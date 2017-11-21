@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2015 Guardtime, Inc.
+# Copyright 2013-2017 Guardtime, Inc.
 #
 # This file is part of the Guardtime client SDK.
 #
@@ -111,18 +111,28 @@ ASYNCSIGNER_OBJ = \
 EXT_LIB = $(LIB_NAME)$(RTL).lib \
 	wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib
 
-!IF "$(DLL)" == "lib"
 
 !IF "$(NET_PROVIDER)" == "CURL"
+CCFLAGS = $(CCFLAGS) /DKSI_NET_HTTP_IMPL=KSI_IMPL_CURL
+!IF "$(DLL)" == "lib"
 EXT_LIB = $(EXT_LIB) libcurl$(RTL).lib
 LDFLAGS = $(LDFLAGS) /LIBPATH:$(CURL_DIR)\$(DLL)
+!ENDIF
 
 !ELSE IF "$(NET_PROVIDER)" == "WININET"
+CCFLAGS = $(CCFLAGS) /DKSI_NET_HTTP_IMPL=KSI_IMPL_WININET
+!IF "$(DLL)" == "lib"
 EXT_LIB = $(EXT_LIB) wininet.lib
+!ENDIF
 
 !ELSE IF "$(NET_PROVIDER)" == "WINHTTP"
+CCFLAGS = $(CCFLAGS) /DKSI_NET_HTTP_IMPL=KSI_IMPL_WINHTTP
+!IF "$(DLL)" == "lib"
 EXT_LIB = $(EXT_LIB) winhttp.lib
 !ENDIF
+!ENDIF
+
+!IF "$(DLL)" == "lib"
 
 !IF "$(HASH_PROVIDER)" == "OPENSSL" || "$(TRUST_PROVIDER)" == "OPENSSL"
 EXT_LIB = $(EXT_LIB) libeay32$(RTL).lib advapi32.lib

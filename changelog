@@ -7,6 +7,7 @@
 * IMPROVEMENT: Added double close guards and tests for KSI_DataHasher.
 * BUGFIX: Script rebuild-deb.sh works on Ubuntu.
 * IMPROVEMENT: Debian packaging refactored.
+* FEATURE: Support for non-blocking HTTP connection (with libcurl).
 
 Version 3.16
 
