@@ -148,6 +148,8 @@ static void testMedaData(CuTest *tc) {
 
 	/* Loop over all the handles, and extract the signature. */
 	for (i = 0; clientId[i] != NULL; i++) {
+		size_t j = 0;
+
 		/* Extract the signature. */
 		res = KSI_BlockSignerHandle_getSignature(hndl[i], &sig);
 		CuAssert(tc, "Unable to extract signature.", res == KSI_OK && sig != NULL);
@@ -160,7 +162,6 @@ static void testMedaData(CuTest *tc) {
 		res = KSI_Signature_getAggregationHashChainIdentity(sig, &idList);
 		CuAssert(tc, "Unable to get signer identity from signature.", res == KSI_OK && idList != NULL);
 
-		size_t j = 0;
 		while (idPrefix[j] != NULL) {
 			pId = NULL;
 			res = KSI_HashChainLinkIdentityList_elementAt(idList, j, &pId);
