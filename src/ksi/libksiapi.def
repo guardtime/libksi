@@ -866,6 +866,9 @@ EXPORTS
 	KSI_PKICertificateList_free
 	KSI_PKICertificateList_new
 
+	KSI_AsyncHandleList_free
+	KSI_AsyncHandleList_new
+
 ;verification_rule.h
 EXPORTS
 	KSI_VerificationRule_AggregationChainInputLevelVerification
