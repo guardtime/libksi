@@ -203,7 +203,7 @@ int main(int argc, char **argv) {
 
 	{
 		size_t count = atoi(argv[ARGV_MAX_REQUEST_COUNT]);
-		KSI_LOG_info(ksi, "Setting max request count to: %lu", count);
+		KSI_LOG_info(ksi, "Setting max request count to: %u", (unsigned)count);
 		if (count) {
 			res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_MAX_REQUEST_COUNT, (void*)count);
 			if (res != KSI_OK) {
@@ -215,7 +215,7 @@ int main(int argc, char **argv) {
 
 	{
 		size_t size = atoi(argv[ARGV_REQUEST_CACHE_SIZE]);
-		KSI_LOG_info(ksi, "Setting request cache size to: %lu", size);
+		KSI_LOG_info(ksi, "Setting request cache size to: %u", (unsigned)size);
 		if (size) {
 			res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void*)size);
 			if (res != KSI_OK) {
@@ -227,7 +227,7 @@ int main(int argc, char **argv) {
 	}
 
 	nof_requests = atoi(argv[AGRV_NOF_TEST_REQUESTS]);
-	KSI_LOG_info(ksi, "Nof test requests: %lu", nof_requests);
+	KSI_LOG_info(ksi, "Nof test requests: %lu", (unsigned long)nof_requests);
 	do {
 		size_t received = 0;
 
@@ -235,7 +235,7 @@ int main(int argc, char **argv) {
 			if (reqHandle == NULL) {
 				KSI_DataHash *hshRef = NULL;
 
-				KSI_LOG_info(ksi, "Request #: %lu", req_no);
+				KSI_LOG_info(ksi, "Request #: %lu", (unsigned long)req_no);
 
 				/* Get the hash value of the input file. */
 				res = createHash(ksi, req_no, &reqHsh);
