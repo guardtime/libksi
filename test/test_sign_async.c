@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2017 Guardtime, Inc.
+ * Copyright 2013-2015 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -438,8 +438,8 @@ int main(int argc, char **argv) {
 	res = KSI_OK;
 cleanup:
 	if (nof_requests) {
-		printf("Succeeded request: %lu.\n", succeeded);
-		printf("Failed request   : %lu.\n", nof_requests - succeeded);
+		printf("Succeeded request: %lu.\n", (unsigned long)succeeded);
+		printf("Failed request   : %lu.\n", (unsigned long)(nof_requests - succeeded));
 		printf("Spent time (sec) : %.0f.\n", difftime(time(NULL), start));
 	}
 

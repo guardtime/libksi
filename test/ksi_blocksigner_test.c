@@ -112,11 +112,15 @@ static void testMedaData(CuTest *tc) {
 	KSI_MetaData *md = NULL;
 	char data[] = "LAPTOP";
 	char *clientId[] = { "Alice", "Bob", "Claire", NULL };
+	char *idPrefix[] = {"GT", "GT", "release test", "anon http", NULL};
 	size_t i;
 	KSI_DataHash *hsh = NULL;
 	KSI_BlockSignerHandle *hndl[] = {NULL, NULL, NULL};
 	KSI_Signature *sig = NULL;
 	char *id = NULL;
+	KSI_Utf8String *pIdStr = NULL;
+	KSI_HashChainLinkIdentity *pId = NULL;
+	KSI_LIST(KSI_HashChainLinkIdentity) *idList = NULL;
 
 	res = KSI_DataHash_create(ctx, data, strlen(data), KSI_HASHALG_SHA2_256, &hsh);
 	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
@@ -144,7 +148,7 @@ static void testMedaData(CuTest *tc) {
 
 	/* Loop over all the handles, and extract the signature. */
 	for (i = 0; clientId[i] != NULL; i++) {
-		char expId[0xff];
+		size_t j = 0;
 
 		/* Extract the signature. */
 		res = KSI_BlockSignerHandle_getSignature(hndl[i], &sig);
@@ -155,12 +159,35 @@ static void testMedaData(CuTest *tc) {
 		CuAssert(tc, "Unable to verify the extracted signature.", res == KSI_OK);
 
 		/* Extract the id attribution. */
-		res = KSI_Signature_getSignerIdentity(sig, &id);
-		CuAssert(tc, "Unable to extract the signer identity.", res == KSI_OK && id != NULL);
+		res = KSI_Signature_getAggregationHashChainIdentity(sig, &idList);
+		CuAssert(tc, "Unable to get signer identity from signature.", res == KSI_OK && idList != NULL);
 
-		/* Create the expected id value. */
-		KSI_snprintf(expId, sizeof(expId), "%s :: %s", "GT :: GT :: release test :: anon http", clientId[i]);
-		CuAssert(tc, "Client id not what expected.", !strcmp(id, expId));
+		while (idPrefix[j] != NULL) {
+			pId = NULL;
+			res = KSI_HashChainLinkIdentityList_elementAt(idList, j, &pId);
+			CuAssert(tc, "Unable to get signer identity.", res == KSI_OK && pId != NULL);
+
+			pIdStr = NULL;
+			res = KSI_HashChainLinkIdentity_getClientId(pId, &pIdStr);
+			CuAssert(tc, "Unable to get signer identity string.", res == KSI_OK && pIdStr != NULL);
+
+			CuAssert(tc, "Unexpected signer identity.", !strncmp(idPrefix[j], KSI_Utf8String_cstr(pIdStr), strlen(idPrefix[j])));
+			++j;
+		}
+
+		pId = NULL;
+		res = KSI_HashChainLinkIdentityList_elementAt(idList, j++, &pId);
+		CuAssert(tc, "Unable to get signer identity.", res == KSI_OK && pId != NULL);
+
+		pIdStr = NULL;
+		res = KSI_HashChainLinkIdentity_getClientId(pId, &pIdStr);
+		CuAssert(tc, "Unable to get signer identity string.", res == KSI_OK && pIdStr != NULL);
+
+		CuAssert(tc, "Unexpected signer identity.", !strncmp(clientId[i], KSI_Utf8String_cstr(pIdStr), strlen(clientId[i])));
+
+		CuAssert(tc, "Signer identity length mismatch.", j == KSI_HashChainLinkIdentityList_length(idList));
+
+		KSI_HashChainLinkIdentityList_free(idList);
 
 		/* Cleanup. */
 		KSI_Signature_free(sig);

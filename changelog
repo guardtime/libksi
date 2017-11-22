@@ -1,4 +1,5 @@
 * FEATURE: Added CommonCrypto for hashing as an alternative to OpenSSL.
+* IMPROVEMENT: Removed deprecated interface KSI_Signature_getSignerIdentity.
 * IMPROVEMENT: Added consistency tests for public include files (make include-test).
 * IMPROVEMENT: Moved all implementation h-files into src/ksi/impl directory.
 * IMPROVEMENT: Added deprecated and obsolete times to hash functions.
