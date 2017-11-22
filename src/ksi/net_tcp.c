@@ -30,25 +30,7 @@
 #include "impl/ctx_impl.h"
 #include "impl/net_http_impl.h"
 #include "impl/net_tcp_impl.h"
-
-#ifndef _WIN32
-#  include <unistd.h>
-#  include <sys/socket.h>
-#  include <netinet/in.h>
-#  ifndef __USE_MISC
-#    define __USE_MISC
-#    include <netdb.h>
-#    undef __USE_MISC
-#  else
-#    include <netdb.h>
-#  endif
-#  include <sys/time.h>
-#else
-#  include <winsock2.h>
-#  include <ws2tcpip.h>
-#  pragma comment (lib, "Ws2_32.lib") /* Link with Ws2_32.lib. */
-#  define close(soc) closesocket(soc)
-#endif
+#include "impl/net_sock_impl.h"
 
 typedef struct TcpClient_Endpoint_st TcpClientCtx, TcpClient_Endpoint;
 
