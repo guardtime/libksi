@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2017 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -91,11 +91,16 @@ struct WinHTTPAsyncReq_st {
 	size_t len;
 	bool dataComplete;
 
+	/* Synchronization event for resource cleanup. */
+	HANDLE closedEvent;
 	/* Status handling. */
 	bool reqComplete;
 	int status;
 	DWORD errExt;
-	DWORD httpCode;
+
+#ifdef KSI_DEBUG_WINHTTP_STATUS_CALLBACK
+	DWORD callbackReceived;
+#endif
 };
 
 /* Global lock for resource use synchronization. */
@@ -103,14 +108,14 @@ static CRITICAL_SECTION CriticalSection;
 
 static void WinHTTPAsyncReq_free(WinHTTPAsyncReq *o) {
 	if (o != NULL) {
-		EnterCriticalSection(&CriticalSection);
 
-		if (o->requestHandle) WinHttpCloseHandle(o->requestHandle);
+		if (o->requestHandle && WinHttpCloseHandle(o->requestHandle)) {
+			if (o->closedEvent) WaitForSingleObject(o->closedEvent, INFINITE);
+		}
+		if (o->closedEvent) CloseHandle(o->closedEvent);
 		KSI_AsyncHandle_free(o->reqCtx);
 		KSI_free(o->raw);
 		KSI_free(o);
-
-		LeaveCriticalSection(&CriticalSection);
 	}
 }
 
@@ -136,10 +141,15 @@ static int WinHTTPAsyncReq_new(KSI_CTX *ctx, WinHTTPAsyncReq **o) {
 	tmp->raw = NULL;
 	tmp->dataComplete = false;
 
+	tmp->closedEvent = NULL;
+
 	tmp->reqComplete = false;
 	tmp->status = KSI_ASYNC_NOT_FINISHED;
 	tmp->errExt = 0;
-	tmp->httpCode = 0;
+
+#ifdef KSI_DEBUG_WINHTTP_STATUS_CALLBACK
+	tmp->callbackReceived = 0;
+#endif
 
 	*o = tmp;
 	tmp = NULL;
@@ -152,31 +162,31 @@ cleanup:
 
 KSI_IMPLEMENT_LIST(WinHTTPAsyncReq, WinHTTPAsyncReq_free);
 
-
 #ifdef KSI_DEBUG_WINHTTP_STATUS_CALLBACK
 
 #define WINHTTP_STATUS_CALLBACK_LIST\
-	_(CLOSING_CONNECTION)\
-	_(CONNECTED_TO_SERVER)\
+	_(RESOLVING_NAME)\
+	_(NAME_RESOLVED)\
 	_(CONNECTING_TO_SERVER)\
+	_(CONNECTED_TO_SERVER)\
+	_(SENDING_REQUEST)\
+	_(REQUEST_SENT)\
+	_(RECEIVING_RESPONSE)\
+	_(RESPONSE_RECEIVED)\
+	_(CLOSING_CONNECTION)\
 	_(CONNECTION_CLOSED)\
-	_(DATA_AVAILABLE)\
 	_(HANDLE_CREATED)\
 	_(HANDLE_CLOSING)\
-	_(HEADERS_AVAILABLE)\
-	_(INTERMEDIATE_RESPONSE)\
-	_(NAME_RESOLVED)\
-	_(READ_COMPLETE)\
-	_(RECEIVING_RESPONSE)\
+	_(DETECTING_PROXY)\
 	_(REDIRECT)\
-	_(REQUEST_ERROR)\
-	_(REQUEST_SENT)\
-	_(RESOLVING_NAME)\
-	_(RESPONSE_RECEIVED)\
+	_(INTERMEDIATE_RESPONSE)\
 	_(SECURE_FAILURE)\
-	_(SENDING_REQUEST)\
-	_(SENDREQUEST_COMPLETE)\
-	_(WRITE_COMPLETE)
+	_(HEADERS_AVAILABLE)\
+	_(DATA_AVAILABLE)\
+	_(READ_COMPLETE)\
+	_(WRITE_COMPLETE)\
+	_(REQUEST_ERROR)\
+	_(SENDREQUEST_COMPLETE)
 
 static char *WinHTTPCallbackStatus_toString(DWORD status) {
 	switch (status) {
@@ -203,10 +213,11 @@ static void WinHTTP_asyncCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWOR
 		unsigned char *tmpBuffer = NULL;
 
 #ifdef KSI_DEBUG_WINHTTP_STATUS_CALLBACK
+		request->callbackReceived |= dwInternetStatus;
 		KSI_LOG_debug(request->ctx, "Async WinHTTP: request=%p thread=%d callback=%08x (%s)", request,
 				GetCurrentThreadId(), dwInternetStatus, WinHTTPCallbackStatus_toString(dwInternetStatus));
 #endif
-		switch(dwInternetStatus) {
+		switch (dwInternetStatus) {
 			case WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE:
 				if (!WinHttpReceiveResponse(request->requestHandle, NULL)) {
 					KSI_LOG_error(request->ctx, "Async WinHTTP: Unable to get HTTP response. Error %d", (dwError = GetLastError()));
@@ -228,7 +239,7 @@ static void WinHTTP_asyncCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWOR
 					if (httpStatus >= 400 && httpStatus < 600) {
 						KSI_LOG_error(request->ctx, "Async WinHTTP: received HTTP code %d.", httpStatus);
 						request->status = KSI_HTTP_ERROR;
-						request->httpCode = httpStatus;
+						request->errExt = httpStatus;
 						/* We are finished with the request. Close handle and for WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING. */
 						WinHttpCloseHandle(request->requestHandle);
 						request->requestHandle = NULL;
@@ -296,7 +307,7 @@ static void WinHTTP_asyncCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWOR
 				/* Close request handle and wait for WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING. */
 				WinHttpCloseHandle(request->requestHandle);
 				request->requestHandle = NULL;
-				KSI_LOG_logBlob(request->ctx, KSI_LOG_DEBUG, "Async WinHTTP: received response", request->raw, request->len);
+				KSI_LOG_logBlob(request->ctx, KSI_LOG_DEBUG, "Async WinHTTP: read complete", request->raw, request->len);
 				break;
 			case WINHTTP_CALLBACK_STATUS_REQUEST_ERROR:
 				dwError = ((WINHTTP_ASYNC_RESULT*)lpvStatusInformation)->dwError;
@@ -304,6 +315,8 @@ static void WinHTTP_asyncCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWOR
 			case WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING:
 				/* Garanteed last callback this context will ever receive. */
 				request->reqComplete = true;
+				/* Now it is save to free the context. */
+				SetEvent(request->closedEvent);
 				break;
 			default:
 				/* Do nothing. */
@@ -441,6 +454,14 @@ static int WinHTTP_sendRequest(HttpAsyncCtx *clientCtx, KSI_AsyncHandle *req) {
 		goto cleanup;
 	}
 
+	/* Create events. */
+	httpReq->closedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (httpReq->closedEvent == NULL) {
+		KSI_LOG_error(httpReq->ctx, "Async WinHTTP: failed to create event handle. Error %d", GetLastError());
+		res = KSI_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
 	/* Set timeouts (in millisec). Only set connect timeout, as other timeouts are handled internally. */
 	if (!WinHttpSetTimeouts(httpReq->requestHandle,
 				(int)clientCtx->options[KSI_ASYNC_OPT_CON_TIMEOUT] * 1000,
@@ -499,6 +520,7 @@ static int WinHTTP_handleResponse(HttpAsyncCtx *clientCtx) {
 	WinHTTPAsyncReq *httpReq = NULL;
 	KSI_OctetString *resp = NULL;
 	bool locked = false;
+	size_t i;
 
 	if (clientCtx == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -512,25 +534,30 @@ static int WinHTTP_handleResponse(HttpAsyncCtx *clientCtx) {
 	}
 	locked = true;
 
-	while (WinHTTPAsyncReqList_length(clientCtx->httpQueue) > 0 &&
-				WinHTTPAsyncReqList_elementAt(clientCtx->httpQueue, 0, &httpReq) == KSI_OK && httpReq != NULL) {
-		KSI_AsyncHandle *handle = httpReq->reqCtx;
+	for (i = 0; i < WinHTTPAsyncReqList_length(clientCtx->httpQueue); i++) {
+		KSI_AsyncHandle *handle = NULL;
+
+		res = WinHTTPAsyncReqList_elementAt(clientCtx->httpQueue, i, &httpReq);
+		if (res != KSI_OK) goto cleanup;
+
+		if (httpReq == NULL) {
+			res = KSI_INVALID_STATE;
+			goto cleanup;
+		}
+		handle = httpReq->reqCtx;
 
 		if (handle->state != KSI_ASYNC_STATE_WAITING_FOR_RESPONSE) {
-			if (httpReq->requestHandle) {
-				WinHttpCloseHandle(httpReq->requestHandle);
-				httpReq->requestHandle = NULL;
-			}
+			WinHTTPAsyncReqList_remove(clientCtx->httpQueue, i, NULL);
+			break;
 		}
 
-		/* Wait for the WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING. */
-		if (!httpReq->reqComplete) break;
+		if (!httpReq->reqComplete) continue;
 
 		if (httpReq->status != KSI_OK) {
 			KSI_LOG_debug(clientCtx->ctx, "Async WinHTTP: error result %x:%d.", httpReq->status, httpReq->errExt);
 			handle->state = KSI_ASYNC_STATE_ERROR;
 			handle->err = httpReq->status;
-			handle->errExt = (handle->err == KSI_HTTP_ERROR ? httpReq->httpCode : httpReq->errExt);
+			handle->errExt = httpReq->errExt;
 		} else {
 			KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "Async WinHTTP: received response", httpReq->raw, httpReq->len);
 
@@ -547,7 +574,8 @@ static int WinHTTP_handleResponse(HttpAsyncCtx *clientCtx) {
 			}
 			resp = NULL;
 		}
-		WinHTTPAsyncReqList_remove(clientCtx->httpQueue, 0, NULL);
+		WinHTTPAsyncReqList_remove(clientCtx->httpQueue, i, NULL);
+		break;
 	}
 
 	res = KSI_OK;
