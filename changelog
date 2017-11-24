@@ -1,5 +1,7 @@
 Version 3.16
 
+* IMPROVEMENT: Added support for OpenSSL 1.1 api.
+
 2017-11-21 release(3.16.2482)
 * BUGFIX: Fixed EINTR (signal) issues with TCP and cURL.
 

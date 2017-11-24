@@ -26,6 +26,22 @@
 #include <openssl/evp.h>
 
 /**
+ * These macros are needed to support both OpenSSL 1.0 and 1.1.
+ *
+ * "If you think good design is expensive, you should look at the cost of bad design."
+ *                                                                     -— Ralf Speth
+ */
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#  define EVP_MD_CTX_create() EVP_MD_CTX_create()
+#  define EVP_MD_CTX_destroy(md) EVP_MD_CTX_destroy((md))
+#  define EVP_MD_CTX_cleanup(md) EVP_MD_CTX_cleanup((md))
+#else
+#  define EVP_MD_CTX_create() EVP_MD_CTX_new()
+#  define EVP_MD_CTX_destroy(md) EVP_MD_free((md))
+#  define EVP_MD_CTX_cleanup(md) EVP_MD_reset((md))
+#endif
+
+/**
  * Converts hash function ID from hash chain to OpenSSL identifier
  */
 static const EVP_MD *hashAlgorithmToEVP(KSI_HashAlgorithm hash_id)
