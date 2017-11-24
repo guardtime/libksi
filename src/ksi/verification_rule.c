@@ -71,7 +71,9 @@ static int getExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Integ
 static int initPublicationsFile(KSI_VerificationContext *info);
 static int initAggregationOutputHash(KSI_VerificationContext *info);
 static int extendingPermittedVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result, const KSI_VerificationStep step, const char *rule);
-static int getNextRightLink(KSI_HashChainLinkList *list, size_t *pos, KSI_HashChainLink **link);
+static int getNextLink(KSI_HashChainLinkList *list, bool getRight, size_t *pos, KSI_HashChainLink **link);
+#define getNextRightLink(list, pos, link) getNextLink((list), true, (pos), (link))
+#define getNextLeftLink(list, pos, link) getNextLink((list), false, (pos), (link))
 static bool wasDeprecatedAt(KSI_HashAlgorithm algorithm, time_t at);
 static bool wasObsoleteAt(KSI_HashAlgorithm algorithm, time_t at);
 static int calendarChainAggrAlgorithmState(KSI_CTX *ctx, const KSI_CalendarHashChain *calHshChain, bool (*inspector)(KSI_HashAlgorithm, time_t), bool *status);
@@ -1740,7 +1742,7 @@ static int calendarChainAggrAlgorithmState(KSI_CTX *ctx, const KSI_CalendarHashC
 		KSI_DataHash *imprint = NULL;
 		KSI_HashAlgorithm algId = KSI_HASHALG_INVALID;
 
-		res = getNextRightLink(chainList, &pos, &rlink);
+		res = getNextLeftLink(chainList, &pos, &rlink);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
@@ -2319,7 +2321,7 @@ cleanup:
 	return res;
 }
 
-static int getNextRightLink(KSI_HashChainLinkList *list, size_t *pos, KSI_HashChainLink **link) {
+static int getNextLink(KSI_HashChainLinkList *list, bool getRight, size_t *pos, KSI_HashChainLink **link) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (list == NULL || pos == NULL || link == NULL) {
@@ -2337,7 +2339,7 @@ static int getNextRightLink(KSI_HashChainLinkList *list, size_t *pos, KSI_HashCh
 		if (res != KSI_OK) {
 			goto cleanup;
 		}
-		if (!isLeft) {
+		if ((isLeft && !getRight) || (!isLeft && getRight)) {
 			res = KSI_OK;
 			goto cleanup;
 		}
@@ -3692,7 +3694,7 @@ static int signatureCalendarChainHashAlgorithmDeprecatedAtPubTime(KSI_Verificati
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	const KSI_Signature *sig = NULL;
-	bool isTrue = false;
+	bool isDeprecated = false;
 
 	if (result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -3713,15 +3715,15 @@ static int signatureCalendarChainHashAlgorithmDeprecatedAtPubTime(KSI_Verificati
 
 	KSI_LOG_info(ctx, "Verify signature calendar chain aggr algorithm state.");
 
-	res = calendarChainAggrAlgorithmState(ctx, sig->calendarChain, wasDeprecatedAt, &isTrue);
+	res = calendarChainAggrAlgorithmState(ctx, sig->calendarChain, wasDeprecatedAt, &isDeprecated);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	if (isTrue) {
-		KSI_LOG_info(ctx, "Calendar hash chain right link hash algorithm was deprecated at publication time.");
+	if (isDeprecated) {
+		KSI_LOG_info(ctx, "Calendar hash chain link hash algorithm was deprecated at publication time.");
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step);
 		res = KSI_OK;
 		goto cleanup;
@@ -3843,7 +3845,7 @@ int KSI_VerificationRule_PublicationsFileExtendedCalendarChainHashAlgorithmDepre
 	}
 
 	if (isTrue) {
-		KSI_LOG_info(ctx, "Extended calendar hash chain right link hash algorithm was deprecated at publication time.");
+		KSI_LOG_info(ctx, "Extended calendar hash chain link hash algorithm was deprecated at publication time.");
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step);
 		res = KSI_OK;
 		goto cleanup;

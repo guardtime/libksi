@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2016 Guardtime, Inc.
+ * Copyright 2013-2017 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -2569,24 +2569,24 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithPublicationRecord(CuTe
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSI_Signature_getPublicationRecord(context.signature, &tempRec);
-	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && tempRec != NULL);
+	CuAssert(tc, "Unable to read signature publication record.", res == KSI_OK && tempRec != NULL);
 
 	res = KSI_PublicationRecord_getPublishedData(tempRec, (KSI_PublicationData**)&context.userPublication);
-	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && context.userPublication != NULL);
+	CuAssert(tc, "Unable to read signature publication data.", res == KSI_OK && context.userPublication != NULL);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_nofree(context.userPublication);
@@ -2594,6 +2594,57 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithPublicationRecord(CuTe
 	KSI_VerificationContext_clean(&context);
 
 #undef TEST_SIGNATURE_FILE
+}
+
+static void TestUserProvidedPublicationBasedPolicy_NA_DeprecatedAlgInCalendar(CuTest* tc) {
+#define TEST_SIGNATURE_FILE  "resource/tlv/signature-deprecated-algorithm-in-calendar-chain.ksig"
+#define TEST_USER_PUB_STRING "AAAAAA-CXOXMZ-AANVAP-PA2NRR-Z2R4MI-RT6GA3-7IC5H5-PFKUDQ-Q2QWOR-GZKWBF-BXF5VU-UTE3BL"
+
+	int res;
+	KSI_VerificationContext context;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		KSI_VER_RES_NA,
+		KSI_VER_ERR_GEN_2,
+		"KSI_VerificationRule_UserProvidedPublicationSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime"
+	};
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *signature = NULL;
+	KSI_PublicationData *userPublication = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSITest_CTX_clone(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	res = KSI_VerificationContext_init(&context, ctx);
+	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+
+	res = KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), KSI_VERIFICATION_POLICY_EMPTY, NULL, &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	context.signature = signature;
+
+	res = KSI_PublicationData_fromBase32(ctx, TEST_USER_PUB_STRING, &userPublication);
+	CuAssert(tc, "Unable to get publication from base 32.", res == KSI_OK && userPublication != NULL);
+	context.userPublication = userPublication;
+
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED, &context, &result);
+	CuAssert(tc, "Policy verification failed", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
+	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
+
+	KSI_PublicationData_free(userPublication);
+	KSI_PolicyVerificationResult_free(result);
+	KSI_Signature_free(signature);
+	KSI_VerificationContext_clean(&context);
+	KSI_CTX_free(ctx);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_USER_PUB_STRING
 }
 
 static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureAfterPublication(CuTest* tc) {
@@ -3613,6 +3664,7 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestPublicationsFileBasedPolicy_OK_WithSuitablePublication);
 	SUITE_ADD_TEST(suite, TestPublicationsFileBasedPolicy_FAIL_AfterExtending);
 	SUITE_ADD_TEST(suite, TestUserProvidedPublicationBasedPolicy_OK_WithPublicationRecord);
+	SUITE_ADD_TEST(suite, TestUserProvidedPublicationBasedPolicy_NA_DeprecatedAlgInCalendar);
 	SUITE_ADD_TEST(suite, TestUserProvidedPublicationBasedPolicy_NA_WithSignatureAfterPublication);
 	SUITE_ADD_TEST(suite, TestUserProvidedPublicationBasedPolicy_NA_WithSignatureBeforePublication);
 	SUITE_ADD_TEST(suite, TestUserProvidedPublicationBasedPolicy_OK_WithoutPublicationRecord);

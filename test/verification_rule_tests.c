@@ -1365,11 +1365,20 @@ static void testRule_PublicationsFileSignatureCalendarChainHashAlgorithmDeprecat
 #undef TEST_SIGNATURE_FILE
 }
 
-static void testRule_PublicationsFileSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime_verifyErrorResult(CuTest *tc) {
-#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-calendar-chain-has-sha1-in-right-link.ksig"
+static void testRule_PublicationsFileSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime_okInRightLink(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-deprecated-algorithm-in-calendar-chain-right-link.ksig"
 
-	testRule(tc, KSI_VerificationRule_PublicationsFileSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime, KSI_VERIFY_PUBLICATION_WITH_PUBFILE,
-			TEST_SIGNATURE_FILE, KSI_VER_RES_NA, KSI_VER_ERR_GEN_2);
+	testRule(tc, KSI_VerificationRule_PublicationsFileSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime,
+			KSI_VERIFY_PUBLICATION_WITH_PUBFILE, TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_PublicationsFileSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime_nokInLeftLink(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-deprecated-algorithm-in-calendar-chain.ksig"
+
+	testRule(tc, KSI_VerificationRule_PublicationsFileSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime,
+			KSI_VERIFY_PUBLICATION_WITH_PUBFILE, TEST_SIGNATURE_FILE, KSI_VER_RES_NA, KSI_VER_ERR_GEN_2);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1383,11 +1392,20 @@ static void testRule_UserProvidedPublicationSignatureCalendarChainHashAlgorithmD
 #undef TEST_SIGNATURE_FILE
 }
 
-static void testRule_UserProvidedPublicationSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime_verifyErrorResult(CuTest *tc) {
-#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-calendar-chain-has-sha1-in-right-link.ksig"
+static void testRule_UserProvidedPublicationSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime_okInRightLink(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-deprecated-algorithm-in-calendar-chain-right-link.ksig"
 
-	testRule(tc, KSI_VerificationRule_UserProvidedPublicationSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING,
-			TEST_SIGNATURE_FILE, KSI_VER_RES_NA, KSI_VER_ERR_GEN_2);
+	testRule(tc, KSI_VerificationRule_UserProvidedPublicationSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime,
+			KSI_VERIFY_PUBLICATION_WITH_PUBSTRING, TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_UserProvidedPublicationSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime_nokInLeftLink(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-deprecated-algorithm-in-calendar-chain.ksig"
+
+	testRule(tc, KSI_VerificationRule_UserProvidedPublicationSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime,
+			KSI_VERIFY_PUBLICATION_WITH_PUBSTRING, TEST_SIGNATURE_FILE, KSI_VER_RES_NA, KSI_VER_ERR_GEN_2);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1401,14 +1419,24 @@ static void testRule_CalendarHashChainHashAlgorithmDeprecatedAtPubTime(CuTest *t
 #undef TEST_SIGNATURE_FILE
 }
 
-static void testRule_CalendarHashChainHashAlgorithmDeprecatedAtPubTime_verifyErrorResult(CuTest *tc) {
-#define TEST_SIGNATURE_FILE "resource/tlv/nok-sig-calendar-chain-has-sha1-in-right-link.ksig"
+static void testRule_CalendarHashChainHashAlgorithmDeprecatedAtPubTime_okInRightLink(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-deprecated-algorithm-in-calendar-chain-right-link.ksig"
 
-	testRule(tc, KSI_VerificationRule_CalendarHashChainHashAlgorithmDeprecatedAtPubTime, KSI_VERIFY_NONE,
-			TEST_SIGNATURE_FILE, KSI_VER_RES_NA, KSI_VER_ERR_GEN_2);
+	testRule(tc, KSI_VerificationRule_CalendarHashChainHashAlgorithmDeprecatedAtPubTime,
+			KSI_VERIFY_NONE, TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
 
 #undef TEST_SIGNATURE_FILE
 }
+
+static void testRule_CalendarHashChainHashAlgorithmDeprecatedAtPubTime_nokInLeftLink(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/signature-deprecated-algorithm-in-calendar-chain.ksig"
+
+	testRule(tc, KSI_VerificationRule_CalendarHashChainHashAlgorithmDeprecatedAtPubTime,
+			KSI_VERIFY_NONE, TEST_SIGNATURE_FILE, KSI_VER_RES_NA, KSI_VER_ERR_GEN_2);
+
+#undef TEST_SIGNATURE_FILE
+}
+
 static void testRule_CalendarAuthenticationRecordAggregationHash(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-06-2.ksig"
 
@@ -5079,9 +5107,11 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainHashAlgorithm);
 	SUITE_SKIP_TEST(suite, testRule_CalendarHashChainHashAlgorithm_verifyErrorResult, "Max", "No obsolite algorithms present.");
 	SUITE_ADD_TEST(suite, testRule_PublicationsFileSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime);
-	SUITE_ADD_TEST(suite, testRule_PublicationsFileSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_PublicationsFileSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime_okInRightLink);
+	SUITE_ADD_TEST(suite, testRule_PublicationsFileSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime_nokInLeftLink);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime);
-	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime_okInRightLink);
+	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime_nokInLeftLink);
 	SUITE_ADD_TEST(suite, testRule_AggregationChainInputHashAlgorithmVerification);
 	SUITE_ADD_TEST(suite, testRule_AggregationChainInputHashAlgorithmVerification_withRfc3161Record);
 	SUITE_ADD_TEST(suite, testRule_AggregationChainInputHashAlgorithmVerification_withRfc3161Record_beforeSha1Deprecate);
@@ -5141,7 +5171,8 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainExistence);
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainExistence_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainHashAlgorithmDeprecatedAtPubTime);
-	SUITE_ADD_TEST(suite, testRule_CalendarHashChainHashAlgorithmDeprecatedAtPubTime_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_CalendarHashChainHashAlgorithmDeprecatedAtPubTime_okInRightLink);
+	SUITE_ADD_TEST(suite, testRule_CalendarHashChainHashAlgorithmDeprecatedAtPubTime_nokInLeftLink);
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordExistence);
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordExistence_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordDoesNotExist);
