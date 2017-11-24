@@ -33,6 +33,7 @@
 #include "ctx_impl.h"
 #include "compatibility.h"
 #include "crc32.h"
+#include "openssl_compatibility.h"
 
 
 static const char *defaultCaFile =
