@@ -172,7 +172,7 @@ cleanup:
 int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 	int res = KSI_UNKNOWN_ERROR;
 	const EVP_MD *evp_md = NULL;
-	void *context = NULL;
+	EVP_MD_CTX *context = NULL;
 
 	if (hasher == NULL) {
 		res = KSI_INVALID_ARGUMENT;
