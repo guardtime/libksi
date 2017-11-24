@@ -103,7 +103,7 @@ void KSI_DataHasher_free(KSI_DataHasher *hasher) {
 		if (hasher->hashContext != NULL) {
 			EVP_MD_CTX_cleanup(hasher->hashContext);
 		}
-		KSI_free(hasher->hashContext);
+		EVP_MD_CTX_destroy(hasher->hashContext);
 		KSI_free(hasher);
 	}
 }
@@ -172,7 +172,7 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 
 	context = hasher->hashContext;
 	if (context == NULL) {
-		context = KSI_new(EVP_MD_CTX);
+		context = EVP_MD_CTX_create();
 		if (context == NULL) {
 			KSI_pushError(hasher->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 			goto cleanup;
