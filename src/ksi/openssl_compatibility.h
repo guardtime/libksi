@@ -32,13 +32,13 @@ extern "C" {
 	 *                                                                     -— Ralf Speth
 	 */
 	#if OPENSSL_VERSION_NUMBER < 0x10100000L
-	#  define EVP_MD_CTX_create() EVP_MD_CTX_create()
-	#  define EVP_MD_CTX_destroy(md) EVP_MD_CTX_destroy((md))
-	#  define EVP_MD_CTX_cleanup(md) EVP_MD_CTX_cleanup((md))
+	#  define KSI_EVP_MD_CTX_create() EVP_MD_CTX_create()
+	#  define KSI_EVP_MD_CTX_destroy(md) EVP_MD_CTX_destroy((md))
+	#  define KSI_EVP_MD_CTX_cleanup(md) EVP_MD_CTX_cleanup((md))
 	#else
-	#  define EVP_MD_CTX_create() EVP_MD_CTX_new()
-	#  define EVP_MD_CTX_destroy(md) EVP_MD_free((md))
-	#  define EVP_MD_CTX_cleanup(md) EVP_MD_reset((md))
+	#  define KSI_EVP_MD_CTX_create() EVP_MD_CTX_new()
+	#  define KSI_EVP_MD_CTX_destroy(md) EVP_MD_CTX_free((md))
+	#  define KSI_EVP_MD_CTX_cleanup(md) EVP_MD_CTX_reset((md))
 	#endif
 
 

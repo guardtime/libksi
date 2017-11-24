@@ -102,9 +102,9 @@ int KSI_isHashAlgorithmSupported(KSI_HashAlgorithm algo_id) {
 void KSI_DataHasher_free(KSI_DataHasher *hasher) {
 	if (hasher != NULL) {
 		if (hasher->hashContext != NULL) {
-			EVP_MD_CTX_cleanup(hasher->hashContext);
+			KSI_EVP_MD_CTX_cleanup(hasher->hashContext);
 		}
-		EVP_MD_CTX_destroy(hasher->hashContext);
+		KSI_EVP_MD_CTX_destroy(hasher->hashContext);
 		KSI_free(hasher);
 	}
 }
@@ -173,7 +173,7 @@ int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
 
 	context = hasher->hashContext;
 	if (context == NULL) {
-		context = EVP_MD_CTX_create();
+		context = KSI_EVP_MD_CTX_create();
 		if (context == NULL) {
 			KSI_pushError(hasher->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 			goto cleanup;

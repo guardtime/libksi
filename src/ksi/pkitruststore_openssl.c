@@ -1028,7 +1028,7 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 
 	KSI_ERR_clearErrors(ctx);
 
-	md_ctx = EVP_MD_CTX_create();
+	md_ctx = KSI_EVP_MD_CTX_create();
 	if (md_ctx == NULL) {
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
@@ -1102,7 +1102,7 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 
 cleanup:
 
-	if (md_ctx != NULL) { EVP_MD_CTX_cleanup(md_ctx); EVP_MD_CTX_destroy(md_ctx); }
+	if (md_ctx != NULL) { KSI_EVP_MD_CTX_cleanup(md_ctx); KSI_EVP_MD_CTX_destroy(md_ctx); }
 	if (algorithm != NULL) ASN1_OBJECT_free(algorithm);
 	if (pubKey != NULL) EVP_PKEY_free(pubKey);
 
