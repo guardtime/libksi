@@ -515,8 +515,8 @@ static void testTlvElementIntegers(CuTest *tc) {
 	KSI_TlvElement *el = NULL;
 	struct {
 		int tag;
-		size_t val;
-	} inputs[] = {{0x1fff, 0xcafebabe}, {0x1, 0}, {0x20, 0xffffffffffffffffl}, {0x0, 0x0} };
+		KSI_uint64_t val;
+	} inputs[] = {{0x1fff, 0xcafebabe}, {0x1, 0}, {0x20, 0xffffffffffffffffull}, {0x0, 0x0} };
 	size_t i  = 0;
 
 	/* Create the outer tlv element. */
