@@ -20,45 +20,6 @@
 #include <string.h>
 #include <sys/types.h>
 
-#ifdef _WIN32
-#  include <winsock2.h>
-#  include <ws2tcpip.h>
-#  pragma comment (lib, "Ws2_32.lib") /* Link with Ws2_32.lib. */
-#  define close(sock) closesocket(sock)
-#  define poll WSAPoll
-#  define ioctl ioctlsocket
-#  define KSI_SCK_SOCKET_ERROR SOCKET_ERROR
-#  define KSI_SCK_errno       WSAGetLastError()
-#  define KSI_SCK_strerror(no) "n/a"
-#  define KSI_SCK_ETIMEDOUT   WSAETIMEDOUT
-#  define KSI_SCK_EAGAIN      WSAEWOULDBLOCK
-#  define KSI_SCK_EWOULDBLOCK WSAEWOULDBLOCK
-#  define KSI_SCK_EINPROGRESS WSAEINPROGRESS
-#else
-#  include <unistd.h>
-#  include <sys/socket.h>
-#  include <sys/ioctl.h>
-#  include <netinet/in.h>
-#  include <netinet/tcp.h>
-#  include <poll.h>
-# include <errno.h>
-#  ifndef __USE_MISC
-#    define __USE_MISC
-#    include <netdb.h>
-#    undef __USE_MISC
-#  else
-#    include <netdb.h>
-#  endif
-#  include <sys/time.h>
-#  define KSI_SCK_SOCKET_ERROR (-1)
-#  define KSI_SCK_errno       (errno)
-#  define KSI_SCK_strerror(no) strerror(no)
-#  define KSI_SCK_ETIMEDOUT   ETIMEDOUT
-#  define KSI_SCK_EAGAIN      EAGAIN
-#  define KSI_SCK_EWOULDBLOCK EWOULDBLOCK
-#  define KSI_SCK_EINPROGRESS EINPROGRESS
-#endif
-
 #include "internal.h"
 #include "net_tcp.h"
 #include "io.h"
@@ -70,6 +31,7 @@
 #include "impl/ctx_impl.h"
 #include "impl/net_http_impl.h"
 #include "impl/net_tcp_impl.h"
+#include "impl/net_sock_impl.h"
 
 #define TCP_INVALID_SOCKET_FD (-1)
 #define KSI_TLV_MAX_SIZE (0xffff + 4)
