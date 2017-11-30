@@ -30,25 +30,7 @@
 #include "impl/ctx_impl.h"
 #include "impl/net_http_impl.h"
 #include "impl/net_tcp_impl.h"
-
-#ifndef _WIN32
-#  include <unistd.h>
-#  include <sys/socket.h>
-#  include <netinet/in.h>
-#  ifndef __USE_MISC
-#    define __USE_MISC
-#    include <netdb.h>
-#    undef __USE_MISC
-#  else
-#    include <netdb.h>
-#  endif
-#  include <sys/time.h>
-#else
-#  include <winsock2.h>
-#  include <ws2tcpip.h>
-#  pragma comment (lib, "Ws2_32.lib") /* Link with Ws2_32.lib. */
-#  define close(soc) closesocket(soc)
-#endif
+#include "impl/net_sock_impl.h"
 
 typedef struct TcpClient_Endpoint_st TcpClientCtx, TcpClient_Endpoint;
 
@@ -92,6 +74,7 @@ static int readResponse(KSI_RequestHandle *handle) {
 	struct timeval  transferTimeout;
 #endif
 	char portStr[6];
+	int rc;
 
 	if (handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -99,6 +82,13 @@ static int readResponse(KSI_RequestHandle *handle) {
 	}
 
 	KSI_ERR_clearErrors(handle->ctx);
+
+#ifdef _WIN32
+	if (handle->request_length > INT_MAX) {
+		KSI_pushError(handle->ctx, res = KSI_BUFFER_OVERFLOW, "Unable to send more than MAX_INT bytes.");
+		goto cleanup;
+	}
+#endif
 
 	tcp = handle->implCtx;
 	client = handle->client->impl;
@@ -137,13 +127,12 @@ static int readResponse(KSI_RequestHandle *handle) {
 		setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (void*)&transferTimeout, sizeof(transferTimeout));
 
 #ifdef _WIN32
-		res = connect(sockfd, pr->ai_addr, (int)pr->ai_addrlen);
+		KSI_SCK_TEMP_FAILURE_RETRY(rc, connect(sockfd, pr->ai_addr, (int)pr->ai_addrlen));
 #else
-		res = connect(sockfd, pr->ai_addr, pr->ai_addrlen);
+		KSI_SCK_TEMP_FAILURE_RETRY(rc, connect(sockfd, pr->ai_addr, pr->ai_addrlen));
 #endif
-		if (res < 0) {
-			KSI_ERR_push(handle->ctx, KSI_NETWORK_ERROR, res, __FILE__, __LINE__, "Unable to connect.");
-			res = KSI_NETWORK_ERROR;
+		if (rc == KSI_SCK_SOCKET_ERROR) {
+			KSI_ERR_push(handle->ctx, res = KSI_NETWORK_ERROR, KSI_SCK_errno, __FILE__, __LINE__, "Unable to connect.");
 			goto cleanup;
 		}
 		/* Succeedded to connect. */
@@ -160,28 +149,26 @@ static int readResponse(KSI_RequestHandle *handle) {
 		int c;
 
 #ifdef _WIN32
-		if (handle->request_length > INT_MAX) {
-			KSI_pushError(handle->ctx, res = KSI_BUFFER_OVERFLOW, "Unable to send more than MAX_INT bytes.");
-			goto cleanup;
-		}
-		c = send(sockfd, (char *) handle->request, (int) handle->request_length, 0);
+		KSI_SCK_TEMP_FAILURE_RETRY(c, send(sockfd, (char *) handle->request + count, (int)(handle->request_length - count), 0));
 #else
-		c = send(sockfd, (char *) handle->request, handle->request_length, 0);
+		KSI_SCK_TEMP_FAILURE_RETRY(c, send(sockfd, (char *) handle->request + count, handle->request_length - count, 0));
 #endif
-		if (c < 0) {
-			KSI_pushError(handle->ctx, res = KSI_NETWORK_ERROR, "Unable to write to socket.");
+		if (c == KSI_SCK_SOCKET_ERROR) {
+			KSI_ERR_push(handle->ctx, res = KSI_NETWORK_ERROR, KSI_SCK_errno, __FILE__, __LINE__, "Unable to write to socket.");
 			goto cleanup;
 		}
 		count += c;
 	}
 
 	res = KSI_FTLV_socketRead(sockfd, buffer, sizeof(buffer), &count, &ftlv);
-	if (res != KSI_OK || count == 0) {
-		KSI_pushError(handle->ctx, res = KSI_INVALID_ARGUMENT, "Unable to read TLV from socket.");
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, "Failed to read TLV from socket.");
 		goto cleanup;
 	}
-
-	if(count > UINT_MAX){
+	if (count == 0) {
+		KSI_pushError(handle->ctx, res = KSI_INVALID_FORMAT, "Unable to read TLV from socket.");
+		goto cleanup;
+	} else if(count > UINT_MAX){
 		KSI_pushError(handle->ctx, res = KSI_BUFFER_OVERFLOW, "Too much data read from socket.");
 		goto cleanup;
 	}
@@ -200,7 +187,12 @@ static int readResponse(KSI_RequestHandle *handle) {
 
 cleanup:
 	if (result) freeaddrinfo(result);
-	if (sockfd >= 0) close(sockfd);
+	if (sockfd >= 0) {
+		KSI_SCK_TEMP_FAILURE_RETRY(rc, close(sockfd));
+		if (rc == KSI_SCK_SOCKET_ERROR) {
+			KSI_ERR_push(handle->ctx, res = KSI_IO_ERROR, KSI_SCK_errno, __FILE__, __LINE__, "Unable to close socket.");
+		}
+	}
 
 	return res;
 }
