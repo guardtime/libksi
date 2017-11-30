@@ -1150,7 +1150,7 @@ int KSI_AggregationHashChain_compare(const KSI_AggregationHashChain **left, cons
 	KSI_AggregationHashChain_getChainIndex(l, &leftChainIndex);
 	KSI_AggregationHashChain_getChainIndex(r, &rightChainIndex);
 	if (l == r || l == NULL || r == NULL || leftChainIndex == NULL || rightChainIndex == NULL) {
-		return intCmp((KSI_uint64_t)right, (KSI_uint64_t)left);
+		return intCmp((KSI_uint64_t)((size_t)right), (KSI_uint64_t)((size_t)left));
 	}
 
 	return intCmp(KSI_IntegerList_length(rightChainIndex), KSI_IntegerList_length(leftChainIndex));
