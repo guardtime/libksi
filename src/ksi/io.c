@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2017 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -24,17 +24,7 @@
 
 #include "internal.h"
 #include "io.h"
-
-#ifndef _WIN32
-#  include "sys/socket.h"
-#  define socket_error errno
-#  define socketTimedOut EWOULDBLOCK
-#else
-#  define socket_error WSAGetLastError()
-#  define socketTimedOut WSAETIMEDOUT
-#  include <winsock2.h>
-#  include <ws2tcpip.h>
-#endif
+#include "impl/net_sock_impl.h"
 
 int KSI_IO_readSocket(int fd, void *buf, size_t size, size_t *readCount) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -55,15 +45,18 @@ int KSI_IO_readSocket(int fd, void *buf, size_t size, size_t *readCount) {
 	}
 #endif
 
-
 	while (len > 0) {
 #ifdef _WIN32
-		c = recv(fd, ptr, (int) len, 0);
+		KSI_SCK_TEMP_FAILURE_RETRY(c, recv(fd, ptr, (int) len, 0));
 #else
-		c = recv(fd, ptr, len, 0);
+		KSI_SCK_TEMP_FAILURE_RETRY(c, recv(fd, ptr, len, 0));
 #endif
-		if (c <= 0) {
-			if (socket_error == socketTimedOut) {
+		if (c == 0) {
+			/* Connection closed from server side. */
+			res = KSI_NETWORK_ERROR;
+			goto cleanup;
+		} else if (c == KSI_SCK_SOCKET_ERROR) {
+			if (KSI_SCK_errno == KSI_SCK_EWOULDBLOCK || KSI_SCK_errno == KSI_SCK_ETIMEDOUT) {
 				res = KSI_NETWORK_RECIEVE_TIMEOUT;
 			} else {
 				res = KSI_IO_ERROR;
@@ -81,8 +74,6 @@ int KSI_IO_readSocket(int fd, void *buf, size_t size, size_t *readCount) {
 		len -= c;
 		ptr += c;
 	}
-
-
 
 	res = KSI_OK;
 
