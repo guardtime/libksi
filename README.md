@@ -37,8 +37,19 @@ To set up the repository, save this repo file in your repositories directory (e.
 
 * Curl
 
-The `libcurl` latest version `7.29.0-42` used in CentOS/RHEL 7 is not signal-proof. If your application is using signals, 
-network requests can fail. In this case `libksi` request call will return `KSI_NETWORK_ERROR`.
+The `libcurl` latest version `7.29.0-42` used in CentOS/RHEL 7 is not signal-proof. If your application is using signals
+in combination with `libksi` basic network service interface, network requests can fail. In this case `libksi` request
+call will return `KSI_NETWORK_ERROR`.
+
+* WinINet
+
+WinINet maximum connections per server is limited to a value of 128. In case the asynchronous interface is used, it is
+advised to set maximum parallel running request count (see `KSI_ASYNC_OPT_REQUEST_CACHE_SIZE`) to a value not greater
+than 128. Otherwise, the requests could be timed out.
+
+* Windows
+
+Build combination of `DLL=dll` and `RTL=MT(d)` is not supported.
 
 ## Proxy Configuration ##
 
@@ -57,14 +68,14 @@ In the Windows control panel:
 
 In Linux add the system variable to `/etc/bashrc`:
 ~~~
-    export http_proxy=user:pass@server:port
+	export http_proxy=user:pass@server:port
 ~~~
 
 * WinHTTP
 
 Windows command line:
 ~~~
-    netsh winhttp set proxy server:port
+	netsh winhttp set proxy server:port
 ~~~
 
 Configuring authentication is not supported by the `netsh` utility.
@@ -130,9 +141,9 @@ A simple example how to sign a document and verify the signature:
 
 	/* Calculate hash of document, sign the hash and verify the signature. */
 	int res;
-    KSI_DataHash *hsh = NULL;	/* Must be freed. */
+	KSI_DataHash *hsh = NULL;	/* Must be freed. */
 	KSI_Signature *sig = NULL;	/* Must be freed. */
-    KSI_DataHash_create(ksi, data, data_len, &hsh);
+	KSI_DataHash_create(ksi, data, data_len, &hsh);
 	KSI_createSignature(ksi, hsh, &sig);
 	res = KSI_verifySignature(ksi, sig);
 
@@ -150,7 +161,7 @@ See `license.txt` file.
 ## Dependencies ##
 | Dependency        | Version                           | License type | Source                         | Notes |
 | :---              | :---                              | :---         | :---                           |:---   |
-| OpenSSL           | Latest stable for target platform | BSD          | http://www.openssl.org/        | This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).  This product includes software written by Tim Hudson (tjh@cryptsoft.com). |
+| OpenSSL           | Latest stable for target platform | BSD          | https://www.openssl.org/       | This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).  This product includes software written by Tim Hudson (tjh@cryptsoft.com). |
 | libcurl           | Latest stable for target platform | MIT/X        | https://github.com/bagder/curl |       |
 | Windows CryptoAPI |                                   |              |                                | Can be used as alternative to OpenSSL. Build time option. |
 | Windows WinINet   |                                   |              |                                | Can be used as alternative to libcurl. Build time option. |
@@ -164,4 +175,4 @@ See `license.txt` file.
 | CentOS / RHEL 6 and 7, x86_64 architecture | Fully compatible and tested.                  |
 | Debian, ...                                | Compatible but not tested on a regular basis. |
 | OS X                                       | Compatible but not tested on a regular basis. |
-| Windows 7, 8, 10                           | Compatible but not tested on a regular basis. Build combination of DLL=dll and RTL=MT(d) not supported. |
+| Windows 7, 8, 10                           | Compatible but not tested on a regular basis. |
