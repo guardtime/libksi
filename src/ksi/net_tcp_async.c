@@ -60,9 +60,6 @@
 #endif
 
 #include "internal.h"
-#include "net_http_impl.h"
-#include "ctx_impl.h"
-#include "net_tcp_impl.h"
 #include "net_tcp.h"
 #include "io.h"
 #include "tlv.h"
@@ -70,11 +67,12 @@
 #include "types.h"
 #include "net_async.h"
 
+#include "impl/ctx_impl.h"
+#include "impl/net_http_impl.h"
+#include "impl/net_tcp_impl.h"
+
 #define TCP_INVALID_SOCKET_FD (-1)
 #define KSI_TLV_MAX_SIZE (0xffff + 4)
-
-static const int optSet = 1;
-static const int optClr = 0;
 
 typedef struct TcpClientCtx_st {
 	KSI_CTX *ctx;
@@ -432,7 +430,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 
 				/* Check if the request count can be restarted. */
 				if (difftime(time(&curTime), tcpCtx->roundStartAt) >= tcpCtx->options[KSI_ASYNC_PRIVOPT_ROUND_DURATION]) {
-					KSI_LOG_info(tcpCtx->ctx, "Async TCP round request count: %u", tcpCtx->roundCount);
+					KSI_LOG_info(tcpCtx->ctx, "Async TCP round request count: %llu", (unsigned long long)tcpCtx->roundCount);
 					tcpCtx->roundCount = 0;
 					tcpCtx->roundStartAt = curTime;
 				}
@@ -476,7 +474,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 								if (KSI_SCK_errno == KSI_SCK_EWOULDBLOCK || KSI_SCK_errno == KSI_SCK_EAGAIN) {
 									KSI_LOG_info(tcpCtx->ctx,
 											"Async TCP send would block. Bytes sent so far %d/%d. Error: %d (%s).",
-											req->sentCount, req->len, KSI_SCK_errno, KSI_SCK_strerror(KSI_SCK_errno));
+											(unsigned)req->sentCount, (unsigned)req->len, KSI_SCK_errno, KSI_SCK_strerror(KSI_SCK_errno));
 									goto cleanup;
 								} else {
 									closeSocket(tcpCtx, __LINE__);

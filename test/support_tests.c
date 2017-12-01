@@ -28,7 +28,7 @@
 #include <ksi/net_uri.h>
 #include <ksi/compatibility.h>
 
-#include "../src/ksi/ctx_impl.h"
+#include "../src/ksi/impl/ctx_impl.h"
 
 
 

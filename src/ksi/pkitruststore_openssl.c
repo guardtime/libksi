@@ -30,11 +30,11 @@
 #include <openssl/x509.h>
 
 #include "pkitruststore.h"
-#include "ctx_impl.h"
 #include "compatibility.h"
 #include "crc32.h"
 #include "openssl_compatibility.h"
 
+#include "impl/ctx_impl.h"
 
 static const char *defaultCaFile =
 #ifdef OPENSSL_CA_FILE
@@ -827,7 +827,7 @@ static int pki_truststore_verifyCertificateConstraints(const KSI_PKITruststore *
 	for (i = 0; certConstraints[i].oid != NULL; i++) {
 		KSI_CertConstraint *ptr = &certConstraints[i];
 
-		KSI_LOG_info(pki->ctx, "%d. Verifying PKI signature certificate with OID: '%s' expected value: '%s'.", i + 1, ptr->oid, ptr->val);
+		KSI_LOG_info(pki->ctx, "%llu. Verifying PKI signature certificate with OID: '%s' expected value: '%s'.", (unsigned long long)i + 1, ptr->oid, ptr->val);
 
 		oid = OBJ_txt2obj(ptr->oid, 1);
 		if (oid == NULL) {

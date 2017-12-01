@@ -20,6 +20,8 @@
 #ifndef BASE32_H
 #define BASE32_H
 
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

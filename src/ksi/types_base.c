@@ -302,15 +302,14 @@ cleanup:
 	return res;
 }
 
-static int verifyUtf8(const unsigned char *str, size_t len) {
+static int verifyUtf8(KSI_CTX *ctx, const unsigned char *str, size_t len) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i = 0;
 	size_t charContinuationLen = 0;
 
 	while (i < len) {
 		if (i + 1 != len && str[i] == 0) {
-			/* The string contains a '\0' byte where not allowed. */
-			res = KSI_INVALID_FORMAT;
+			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "The string contains a '\\0' byte where not allowed.");
 			goto cleanup;
 		} else if (str[i] <= 0x7f)
 			charContinuationLen = 0;
@@ -321,11 +320,11 @@ static int verifyUtf8(const unsigned char *str, size_t len) {
 		else if (str[i] >= 0xf0 /*11110000*/ && str[i] <= 0xf4 /* Cause of RFC 3629 */)
 			charContinuationLen = 3;
 		else {
-			res = KSI_INVALID_FORMAT;
+			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
 			goto cleanup;
 		}
 		if (i + charContinuationLen >= len) {
-			res = KSI_BUFFER_OVERFLOW;
+			KSI_pushError(ctx, res = KSI_BUFFER_OVERFLOW, NULL);
 			goto cleanup;
 		}
 
@@ -337,7 +336,7 @@ static int verifyUtf8(const unsigned char *str, size_t len) {
 			--charContinuationLen;
 		}
 		if (charContinuationLen != 0) {
-			res = KSI_INVALID_FORMAT;
+			KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
 			goto cleanup;
 		}
 	}
@@ -385,8 +384,11 @@ int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, size_t len, KSI_Utf8String
 	}
 
 	/* Verify correctness of utf-8 */
-	res = verifyUtf8((const unsigned char *)str, len);
-	if (res != KSI_OK) goto cleanup;
+	res = verifyUtf8(ctx, (const unsigned char *)str, len);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	tmp->value = KSI_malloc(len);
 	if (tmp->value == NULL) {
@@ -684,7 +686,7 @@ int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_Integer **o) {
 
 	/* Make sure the integer was coded properly. */
 	if (len > 0 && len != KSI_UINT64_MINSIZE(val)) {
-		KSI_LOG_debug(ctx, "Integer not properly formated: %d (len=%d)", val, len);
+		KSI_LOG_debug(ctx, "Integer not properly formated: %llu (len=%d)", (unsigned long long)val, (unsigned)len);
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Integer not properly formated.");
 		goto cleanup;
 	}

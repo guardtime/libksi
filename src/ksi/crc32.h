@@ -20,6 +20,8 @@
 #ifndef KSI_CRC32_H_
 #define KSI_CRC32_H_
 
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

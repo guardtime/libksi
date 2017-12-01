@@ -19,19 +19,21 @@
 
 #include <string.h>
 
-#include "internal.h"
-#include "verification_impl.h"
-#include "signature_impl.h"
-#include "publicationsfile_impl.h"
 #include "tlv.h"
-#include "ctx_impl.h"
 #include "tlv_template.h"
 #include "hashchain.h"
 #include "net.h"
 #include "pkitruststore.h"
 #include "policy.h"
 #include "signature_builder.h"
-#include "signature_builder_impl.h"
+
+#include "internal.h"
+
+#include "impl/ctx_impl.h"
+#include "impl/publicationsfile_impl.h"
+#include "impl/signature_builder_impl.h"
+#include "impl/signature_impl.h"
+#include "impl/verification_impl.h"
 
 typedef struct headerRec_st HeaderRec;
 
@@ -40,7 +42,6 @@ KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationRecord);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationAuthRec);
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarAuthRec);
 KSI_IMPORT_TLV_TEMPLATE(KSI_RFC3161);
-KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationHashChain);
 
 KSI_IMPLEMENT_REF(KSI_Signature);
 
@@ -330,6 +331,7 @@ int KSI_createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, int lvl, KSI_Aggregat
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationReq *tmp = NULL;
 	KSI_Integer *level = NULL;
+	KSI_HashAlgorithm algo_id;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || hsh == NULL || request == NULL) {
@@ -340,6 +342,18 @@ int KSI_createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, int lvl, KSI_Aggregat
 	/* For now, the level may be just a single byte. */
 	if (lvl < 0 || lvl > 0xff) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Aggregation level may be only between 0x00 and 0xff");
+		goto cleanup;
+	}
+
+	/* Make sure the hash algorithm used is trusted. */
+	res = KSI_DataHash_extract(hsh, &algo_id, NULL, NULL);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (!KSI_isHashAlgorithmTrusted(algo_id)) {
+		KSI_pushError(ctx, res = KSI_UNTRUSTED_HASH_ALGORITHM, "The document hash algorithm is not trusted.");
 		goto cleanup;
 	}
 
@@ -1182,147 +1196,6 @@ cleanup:
 
 	return res;
 
-}
-
-int KSI_Signature_getSignerIdentity(KSI_Signature *sig, char **signerIdentity) {
-	int res;
-	size_t i, j;
-	KSI_Utf8StringList *idList = NULL;
-	char *signerId = NULL;
-	size_t signerId_size = 1; // At least 1 for trailing zero.
-	size_t signerId_len = 0;
-	KSI_LIST(KSI_HashChainLink) *pLinks = NULL;
-
-	if (sig == NULL || signerIdentity == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	KSI_ERR_clearErrors(sig->ctx);
-
-	/* Create a list of separate signer identities. */
-	res = KSI_Utf8StringList_new(&idList);
-	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Extract all identities from all aggregation hash chains from top to bottom. */
-	for (i = KSI_AggregationHashChainList_length(sig->aggregationChainList); i-- > 0;) {
-		KSI_AggregationHashChain *aggrRec = NULL;
-
-		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, i, &aggrRec);
-		if (res != KSI_OK || aggrRec == NULL) {
-			KSI_pushError(sig->ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
-			goto cleanup;
-		}
-
-		res = KSI_AggregationHashChain_getChain(aggrRec, &pLinks);
-		if (res != KSI_OK || pLinks == NULL) {
-			KSI_pushError(sig->ctx, res != KSI_OK ? res : (res = KSI_INVALID_STATE), NULL);
-			goto cleanup;
-		}
-
-		for (j = KSI_HashChainLinkList_length(pLinks); j-- > 0;) {
-			KSI_HashChainLink *link = NULL;
-			KSI_MetaDataElement *metaData = NULL;
-			KSI_OctetString *legacyId = NULL;
-
-			res = KSI_HashChainLinkList_elementAt(pLinks, j, &link);
-			if (res != KSI_OK) {
-				KSI_pushError(sig->ctx, res, NULL);
-				goto cleanup;
-			}
-
-			/* Extract legacyId */
-			res = KSI_HashChainLink_getLegacyId(link, &legacyId);
-			if (res != KSI_OK) {
-				KSI_pushError(sig->ctx, res, NULL);
-				goto cleanup;
-			}
-
-			/* Extract MetaData */
-			res = KSI_HashChainLink_getMetaData(link, &metaData);
-			if (res != KSI_OK) {
-				KSI_pushError(sig->ctx, res, NULL);
-				goto cleanup;
-			}
-
-			if (legacyId != NULL) {
-				KSI_Utf8String *clientId = NULL;
-
-				res = KSI_OctetString_LegacyId_getUtf8String(legacyId, &clientId);
-				if (res != KSI_OK) {
-					KSI_pushError(sig->ctx, res, NULL);
-					goto cleanup;
-				}
-
-				signerId_size += KSI_Utf8String_size(clientId) + 4;
-
-				res = KSI_Utf8StringList_append(idList, clientId);
-				if (res != KSI_OK) {
-					KSI_pushError(sig->ctx, res, NULL);
-					goto cleanup;
-				}
-
-			} else if (metaData != NULL) {
-				KSI_Utf8String *clientId = NULL;
-				KSI_Utf8String *ref = NULL;
-
-				res = KSI_MetaDataElement_getClientId(metaData, &clientId);
-				if (res != KSI_OK) {
-					KSI_pushError(sig->ctx, res, NULL);
-					goto cleanup;
-				}
-
-				signerId_size += KSI_Utf8String_size(clientId) + 4;
-
-				res = KSI_Utf8StringList_append(idList, ref = KSI_Utf8String_ref(clientId));
-				if (res != KSI_OK) {
-					/* Cleanup the reference. */
-					KSI_Utf8String_free(ref);
-
-					KSI_pushError(sig->ctx, res, NULL);
-					goto cleanup;
-				}
-
-			} else {
-				/* Exit inner loop if this chain link does not contain a meta value block. */
-				continue;
-			}
-		}
-	}
-
-	/* Allocate the result buffer. */
-	signerId = KSI_calloc(signerId_size, 1);
-	if (signerId == NULL) {
-		KSI_pushError(sig->ctx, res = KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	/* Concatenate all together. */
-	for (i = 0; i < KSI_Utf8StringList_length(idList); i++) {
-		KSI_Utf8String *tmp = NULL;
-
-		res = KSI_Utf8StringList_elementAt(idList, i, &tmp);
-		if (res != KSI_OK) {
-			KSI_pushError(sig->ctx, res, NULL);
-			goto cleanup;
-		}
-
-		signerId_len += KSI_snprintf(signerId + signerId_len, signerId_size - signerId_len, "%s%s", signerId_len > 0 ? " :: " : "", KSI_Utf8String_cstr(tmp));
-	}
-
-	*signerIdentity = signerId;
-	signerId = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_free(signerId);
-	KSI_Utf8StringList_free(idList);
-
-	return res;
 }
 
 int KSI_Signature_getAggregationHashChainIdentity(const KSI_Signature *sig, KSI_HashChainLinkIdentityList **identity) {

@@ -24,7 +24,7 @@
 #include "hashchain.h"
 #include "tlv.h"
 #include "tlv_template.h"
-#include "hashchain_impl.h"
+#include "impl/hashchain_impl.h"
 #include "impl/meta_data_element_impl.h"
 #include "compatibility.h"
 
@@ -213,15 +213,6 @@ static int aggregateChain(KSI_CTX *ctx, KSI_LIST(KSI_HashChainLink) *chain, cons
 				/* Update hasher if algo id has changed. */
 				if (tmp != algo_id) {
 					algo_id = tmp;
-					if (hsh != NULL) {
-						KSI_DataHash_free(hsh);
-					}
-
-					res = KSI_DataHasher_close(hsr, &hsh);
-					if (res != KSI_OK) {
-						KSI_pushError(ctx, res, NULL);
-						goto cleanup;
-					}
 
 					KSI_DataHasher_free(hsr);
 					res = KSI_DataHasher_open(ctx, algo_id, &hsr);
@@ -751,7 +742,7 @@ static int legacyId_verify(KSI_CTX *ctx, const unsigned char *raw, size_t raw_le
 	/* Legacy id data length is fixed to 29 octets. */
 	if (raw_len != 29) {
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID data length mismatch.");
-		KSI_LOG_debug(ctx, "Legacy ID data length: %d.", raw_len);
+		KSI_LOG_debug(ctx, "Legacy ID data length: %llu.", (unsigned long long )raw_len);
 		goto cleanup;
 	}
 	/* First two octets have fixed values. */
@@ -1159,7 +1150,7 @@ int KSI_AggregationHashChain_compare(const KSI_AggregationHashChain **left, cons
 	KSI_AggregationHashChain_getChainIndex(l, &leftChainIndex);
 	KSI_AggregationHashChain_getChainIndex(r, &rightChainIndex);
 	if (l == r || l == NULL || r == NULL || leftChainIndex == NULL || rightChainIndex == NULL) {
-		return intCmp((KSI_uint64_t)right, (KSI_uint64_t)left);
+		return intCmp((KSI_uint64_t)((size_t)right), (KSI_uint64_t)((size_t)left));
 	}
 
 	return intCmp(KSI_IntegerList_length(rightChainIndex), KSI_IntegerList_length(leftChainIndex));

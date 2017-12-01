@@ -20,14 +20,15 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "all_tests.h"
-#include <ksi/tlv.h>
-#include <ksi/io.h>
-#include <ksi/tlv_element.h>
 #include <ksi/hashchain.h>
+#include <ksi/io.h>
+#include <ksi/tlv.h>
+#include <ksi/tlv_element.h>
+#include <ksi/tlv_template.h>
 
-#include "../src/ksi/signature_impl.h"
-#include "../src/ksi/tlv_template.h"
+#include "all_tests.h"
+
+#include "../src/ksi/impl/signature_impl.h"
 
 extern KSI_CTX *ctx;
 
@@ -514,8 +515,8 @@ static void testTlvElementIntegers(CuTest *tc) {
 	KSI_TlvElement *el = NULL;
 	struct {
 		int tag;
-		size_t val;
-	} inputs[] = {{0x1fff, 0xcafebabe}, {0x1, 0}, {0x20, 0xffffffffffffffffl}, {0x0, 0x0} };
+		KSI_uint64_t val;
+	} inputs[] = {{0x1fff, 0xcafebabe}, {0x1, 0}, {0x20, 0xffffffffffffffffull}, {0x0, 0x0} };
 	size_t i  = 0;
 
 	/* Create the outer tlv element. */

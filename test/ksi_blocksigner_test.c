@@ -23,8 +23,9 @@
 
 #include "cutest/CuTest.h"
 #include "all_tests.h"
-#include "../src/ksi/ctx_impl.h"
-#include "../src/ksi/net_http_impl.h"
+
+#include "../src/ksi/impl/ctx_impl.h"
+#include "../src/ksi/impl/net_http_impl.h"
 
 extern KSI_CTX *ctx;
 
@@ -96,7 +97,7 @@ static void testFreeBeforeClose(CuTest *tc) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_BlockSigner *bs = NULL;
 
-	res = KSI_BlockSigner_new(ctx, KSI_HASHALG_SHA1, NULL, NULL, &bs);
+	res = KSI_BlockSigner_new(ctx, KSI_HASHALG_SHA2_256, NULL, NULL, &bs);
 	CuAssert(tc, "Unable to create block signer instance.", res == KSI_OK && bs != NULL);
 
 	addInput(tc, bs, 0);
@@ -111,11 +112,15 @@ static void testMedaData(CuTest *tc) {
 	KSI_MetaData *md = NULL;
 	char data[] = "LAPTOP";
 	char *clientId[] = { "Alice", "Bob", "Claire", NULL };
+	char *idPrefix[] = {"GT", "GT", "release test", "anon http", NULL};
 	size_t i;
 	KSI_DataHash *hsh = NULL;
 	KSI_BlockSignerHandle *hndl[] = {NULL, NULL, NULL};
 	KSI_Signature *sig = NULL;
 	char *id = NULL;
+	KSI_Utf8String *pIdStr = NULL;
+	KSI_HashChainLinkIdentity *pId = NULL;
+	KSI_LIST(KSI_HashChainLinkIdentity) *idList = NULL;
 
 	res = KSI_DataHash_create(ctx, data, strlen(data), KSI_HASHALG_SHA2_256, &hsh);
 	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
@@ -143,7 +148,7 @@ static void testMedaData(CuTest *tc) {
 
 	/* Loop over all the handles, and extract the signature. */
 	for (i = 0; clientId[i] != NULL; i++) {
-		char expId[0xff];
+		size_t j = 0;
 
 		/* Extract the signature. */
 		res = KSI_BlockSignerHandle_getSignature(hndl[i], &sig);
@@ -154,12 +159,35 @@ static void testMedaData(CuTest *tc) {
 		CuAssert(tc, "Unable to verify the extracted signature.", res == KSI_OK);
 
 		/* Extract the id attribution. */
-		res = KSI_Signature_getSignerIdentity(sig, &id);
-		CuAssert(tc, "Unable to extract the signer identity.", res == KSI_OK && id != NULL);
+		res = KSI_Signature_getAggregationHashChainIdentity(sig, &idList);
+		CuAssert(tc, "Unable to get signer identity from signature.", res == KSI_OK && idList != NULL);
 
-		/* Create the expected id value. */
-		KSI_snprintf(expId, sizeof(expId), "%s :: %s", "GT :: GT :: release test :: anon http", clientId[i]);
-		CuAssert(tc, "Client id not what expected.", !strcmp(id, expId));
+		while (idPrefix[j] != NULL) {
+			pId = NULL;
+			res = KSI_HashChainLinkIdentityList_elementAt(idList, j, &pId);
+			CuAssert(tc, "Unable to get signer identity.", res == KSI_OK && pId != NULL);
+
+			pIdStr = NULL;
+			res = KSI_HashChainLinkIdentity_getClientId(pId, &pIdStr);
+			CuAssert(tc, "Unable to get signer identity string.", res == KSI_OK && pIdStr != NULL);
+
+			CuAssert(tc, "Unexpected signer identity.", !strncmp(idPrefix[j], KSI_Utf8String_cstr(pIdStr), strlen(idPrefix[j])));
+			++j;
+		}
+
+		pId = NULL;
+		res = KSI_HashChainLinkIdentityList_elementAt(idList, j++, &pId);
+		CuAssert(tc, "Unable to get signer identity.", res == KSI_OK && pId != NULL);
+
+		pIdStr = NULL;
+		res = KSI_HashChainLinkIdentity_getClientId(pId, &pIdStr);
+		CuAssert(tc, "Unable to get signer identity string.", res == KSI_OK && pIdStr != NULL);
+
+		CuAssert(tc, "Unexpected signer identity.", !strncmp(clientId[i], KSI_Utf8String_cstr(pIdStr), strlen(clientId[i])));
+
+		CuAssert(tc, "Signer identity length mismatch.", j == KSI_HashChainLinkIdentityList_length(idList));
+
+		KSI_HashChainLinkIdentityList_free(idList);
 
 		/* Cleanup. */
 		KSI_Signature_free(sig);
@@ -279,7 +307,7 @@ static void testSingle(CuTest *tc) {
 	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
 	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
 
-	res = KSI_BlockSigner_new(ctx, KSI_HASHALG_SHA1, NULL, NULL, &bs);
+	res = KSI_BlockSigner_new(ctx, KSI_HASHALG_SHA2_256, NULL, NULL, &bs);
 	CuAssert(tc, "Unable to create block signer instance.", res == KSI_OK && bs != NULL);
 
 	res = KSI_BlockSigner_addLeaf(bs, hsh, 0, NULL, &h);
@@ -320,7 +348,7 @@ static void testReset(CuTest *tc) {
 	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
 	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
 
-	res = KSI_BlockSigner_new(ctx, KSI_HASHALG_SHA1, NULL, NULL, &bs);
+	res = KSI_BlockSigner_new(ctx, KSI_HASHALG_SHA2_256, NULL, NULL, &bs);
 	CuAssert(tc, "Unable to create block signer instance.", res == KSI_OK && bs != NULL);
 
 	/* Add the temporary leafs. */
@@ -359,7 +387,7 @@ static void testReset(CuTest *tc) {
 #undef TEST_AGGR_RESPONSE_FILE
 }
 
-static void testMaskingInput(CuTest *tc) {
+static void testCreateBlockSigner(CuTest *tc) {
 	static const unsigned char diceRolls[] = {0xd5, 0x58, 0xaf, 0xfa, 0x80, 0x67, 0xf4, 0x2c, 0xd9, 0x48, 0x36, 0x21, 0xd1, 0xab,
 			0xae, 0x23, 0xed, 0xd6, 0xca, 0x04, 0x72, 0x7e, 0xcf, 0xc7, 0xdb, 0xc7, 0x6b, 0xde, 0x34, 0x77, 0x1e, 0x53};
 	int res;
@@ -386,6 +414,8 @@ static void testMaskingInput(CuTest *tc) {
 			{NULL, KSI_HASHALG_SHA2_512, NULL, iv, &bs, KSI_INVALID_ARGUMENT},
 			{NULL, KSI_HASHALG_SHA2_512, zero, NULL, &bs, KSI_INVALID_ARGUMENT},
 			{ctx, KSI_HASHALG_SHA2_512, zero, NULL, &bs, KSI_OK},
+			{ctx, KSI_HASHALG_SHA1, zero, iv, &bs, KSI_UNTRUSTED_HASH_ALGORITHM},
+			{ctx, KSI_HASHALG_SHA1, zero, NULL, &bs, KSI_UNTRUSTED_HASH_ALGORITHM},
 			{NULL, -1, NULL, NULL, NULL, -1}
 	};
 
@@ -396,9 +426,6 @@ static void testMaskingInput(CuTest *tc) {
 	/* Create random initial vector. */
 	res = KSI_OctetString_new(ctx, diceRolls, sizeof(diceRolls), &iv);
 	CuAssert(tc, "Unable to create initial vector.", res == KSI_OK && iv != NULL);
-
-	res = KSI_BlockSigner_new(ctx, KSI_HASHALG_SHA1, zero, iv, &bs);
-	CuAssert(tc, "Unable to create block signer instance with masking.", res == KSI_OK && bs != NULL);
 
 	for (i = 0; tests[i].expectedRes != -1; i++) {
 		res = KSI_BlockSigner_new(tests[i].ctx, tests[i].algo_id, tests[i].prevHash, tests[i].iv, tests[i].bs);
@@ -415,6 +442,27 @@ static void testMaskingInput(CuTest *tc) {
 	KSI_DataHash_free(zero);
 }
 
+static void testAddDeprecatedLeaf(CuTest *tc) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_BlockSigner *bs = NULL;
+	KSI_DataHash *hsh = NULL;
+	KSI_BlockSignerHandle *h = NULL;
+
+	res = KSITest_DataHash_fromStr(ctx, "00a7d2c6238a92878b2a578c2477e8a33f9d8591ab", &hsh);
+	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
+
+	res = KSI_BlockSigner_new(ctx, KSI_HASHALG_SHA2_256, NULL, NULL, &bs);
+	CuAssert(tc, "Unable to create block signer instance.", res == KSI_OK && bs != NULL);
+
+	res = KSI_BlockSigner_addLeaf(bs, hsh, 0, NULL, &h);
+	CuAssert(tc, "Unable to add hash to the blocksigner.", res == KSI_UNTRUSTED_HASH_ALGORITHM && h == NULL);
+
+	KSI_BlockSignerHandle_free(h);
+	KSI_BlockSigner_free(bs);
+	KSI_DataHash_free(hsh);
+}
+
+
 static void preTest(void) {
 	ctx->netProvider->requestCount = 0;
 }
@@ -429,7 +477,8 @@ CuSuite* KSITest_Blocksigner_getSuite(void) {
 	SUITE_ADD_TEST(suite, testIdentityMedaData);
 	SUITE_ADD_TEST(suite, testSingle);
 	SUITE_ADD_TEST(suite, testReset);
-	SUITE_ADD_TEST(suite, testMaskingInput);
+	SUITE_ADD_TEST(suite, testCreateBlockSigner);
+	SUITE_ADD_TEST(suite, testAddDeprecatedLeaf);
 
 	return suite;
 }

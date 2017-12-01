@@ -760,10 +760,10 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 			char msg[1024];
 			if (KSI_TLV_isNonCritical(tlv)) {
 				KSI_snprintf(msg, sizeof(msg), "Ignoring unknown non-critical tag: %s", track_str(tr, tr_len + 1, tr_size, buf, sizeof(buf)));
-				KSI_LOG_warn(ctx, msg);
+				KSI_LOG_warn(ctx, "%s", msg);
 			} else {
 				KSI_snprintf(msg, sizeof(msg), "Unknown critical tag: %s", track_str(tr, tr_len + 1, tr_size, buf, sizeof(buf)));
-				KSI_LOG_debug(ctx, msg);
+				KSI_LOG_debug(ctx, "%s", msg);
 				KSI_pushError(ctx, res = KSI_INVALID_FORMAT, msg);
 				goto cleanup;
 			}

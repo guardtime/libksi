@@ -32,19 +32,20 @@ libksi_la_SOURCES = \
 	config.h \
 	crc32.c \
 	crc32.h \
-	ctx_impl.h \
+	impl/ctx_impl.h \
 	err.h \
 	fast_tlv.h \
 	fast_tlv.c \
 	hash.c \
 	hashchain.c \
 	hashchain.h \
-	hashchain_impl.h \
+	impl/hashchain_impl.h \
 	hash.h \
-	hash_impl.h \
+	impl/hash_impl.h \
 	hash_openssl.c \
+	hash_commoncrypto.c \
 	hmac.h \
-	hmac_impl.h\
+	impl/hmac_impl.h\
 	hmac.c \
 	http_parser.h \
 	http_parser.c \
@@ -63,37 +64,37 @@ libksi_la_SOURCES = \
 	net_http.c \
 	net_http_curl.c \
 	net_http.h \
-	net_http_impl.h \
-	net_impl.h \
+	impl/net_http_impl.h \
+	impl/net_impl.h \
 	net_tcp_async.c \
 	net_tcp.c \
 	net_tcp.h \
-	net_tcp_impl.h \
+	impl/net_tcp_impl.h \
 	impl/net_sock_impl.h \
 	net_file.c \
 	net_file.h \
-	net_file_impl.h \
+	impl/net_file_impl.h \
 	net_uri.c \
 	net_uri.h \
-	net_uri_impl.h \
 	openssl_compatibility.h \
+	impl/net_uri_impl.h \
 	pkitruststore.c \
 	pkitruststore.h \
 	pkitruststore_openssl.c \
 	policy.c \
 	policy.h \
-	policy_impl.h \
+	impl/policy_impl.h \
 	publicationsfile.c \
 	publicationsfile.h \
-	publicationsfile_impl.h \
+	impl/publicationsfile_impl.h \
 	signature.c \
 	signature.h \
 	signature_helper.c \
 	signature_helper.h \
-	signature_impl.h \
+	impl/signature_impl.h \
 	signature_builder.c \
 	signature_builder.h \
-	signature_builder_impl.h \
+	impl/signature_builder_impl.h \
 	tlv.c \
 	tlv.h \
 	tlv_template.c \
@@ -108,7 +109,7 @@ libksi_la_SOURCES = \
 	types.h \
 	verification.c \
 	verification.h \
-	verification_impl.h \
+	impl/verification_impl.h \
 	verification_rule.c \
 	verification_rule.h \
 	compatibility.h \

@@ -17,13 +17,15 @@
  * reserves and retains all trademark rights.
  */
 #include "signature_builder.h"
-#include "signature_builder_impl.h"
-#include "internal.h"
-#include "signature_impl.h"
 #include "tlv.h"
 #include "tlv_template.h"
 #include "hashchain.h"
 #include "net.h"
+
+#include "internal.h"
+
+#include "impl/signature_impl.h"
+#include "impl/signature_builder_impl.h"
 
 KSI_IMPORT_TLV_TEMPLATE(KSI_CalendarHashChain);
 KSI_IMPORT_TLV_TEMPLATE(KSI_PublicationRecord);

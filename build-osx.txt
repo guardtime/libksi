@@ -1,0 +1,46 @@
+	
+	Copyright 2013-2017 Guardtime, Inc.
+
+	This file is part of the Guardtime client SDK.
+	
+	Licensed under the Apache License, Version 2.0 (the "License").
+	You may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+	    http://www.apache.org/licenses/LICENSE-2.0
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES, CONDITIONS, OR OTHER LICENSES OF ANY KIND, either
+	express or implied. See the License for the specific language governing
+	permissions and limitations under the License.
+	"Guardtime" and "KSI" are trademarks or registered trademarks of
+	Guardtime, Inc., and no license to trademarks is granted; Guardtime
+	reserves and retains all trademark rights.
+
+Build Targets
+=============
+  all      Builds the project without tests and example code.
+  check    Builds the project, tests and example code.
+  test     Executes all tests and generates test report xml.
+  memtest  Executes all tests and generates valgrind report xml.
+  coverage Executes all tests and generates coverage report xml.
+
+Hashing with Common Crypto
+==========================
+
+As an experimental feature, it is possible to use the CommonCrypto library
+for hash operations. Please note, this does not replace entirely the need
+for OpenSSL, that will still be used for other cryptographic operations. To
+enable this feature the flag --with-hash-provider=commoncrypto must be added
+to the cofigure script.
+
+OpenSSL Location
+================
+
+As of OSX 10.7 OpenSSL is no longer included in the OS. The easiest way to
+install it is to use Homebrew. To build the SDK you need to specify where
+OpenSSL is installed. Example:
+
+    $ ./configure --with-openssl=/usr/local/opt/openssl/
+
+
+	

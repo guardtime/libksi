@@ -24,8 +24,8 @@
 #include <windows.h>
 #include <Winhttp.h>
 
-#include "net_http_impl.h"
-#include "net_impl.h"
+#include "impl/net_http_impl.h"
+#include "impl/net_impl.h"
 
 
 typedef struct winhttpNetHandleCtx_st {

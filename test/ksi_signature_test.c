@@ -18,14 +18,15 @@
  */
 
 #include <string.h>
-#include "all_tests.h"
-#include <ksi/signature.h>
-#include "../src/ksi/ctx_impl.h"
 
-#include "../src/ksi/signature_impl.h"
-#include "../src/ksi/ctx_impl.h"
-#include "../src/ksi/net_impl.h"
-#include "../src/ksi/tlv.h"
+#include <ksi/signature.h>
+#include <ksi/tlv.h>
+
+#include "all_tests.h"
+
+#include "../src/ksi/impl/ctx_impl.h"
+#include "../src/ksi/impl/net_impl.h"
+#include "../src/ksi/impl/signature_impl.h"
 
 extern KSI_CTX *ctx;
 
@@ -521,20 +522,38 @@ static void testSignerIdentity(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-08-01.1.ksig"
 
 	int res;
-	const char id_expected[] = "GT :: testA :: 36-test";
+	const char *id_expected[] = {"GT", "testA", "36-test", NULL};
 	KSI_Signature *sig = NULL;
-	char *id_actual = NULL;
+	KSI_LIST(KSI_HashChainLinkIdentity) *idList = NULL;
+	size_t i;
+	KSI_Utf8String *pIdStr = NULL;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
-	CuAssert(tc, "Unable to load signature", res == KSI_OK && sig != NULL);
+	CuAssert(tc, "Unable to load signature.", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_getSignerIdentity(sig, &id_actual);
-	CuAssert(tc, "Unable to get signer identity from signature.", res == KSI_OK && id_actual != NULL);
+	res = KSI_Signature_getAggregationHashChainIdentity(sig, &idList);
+	CuAssert(tc, "Unable to get signer identity from signature.", res == KSI_OK && idList != NULL);
 
-	CuAssert(tc, "Unexpected signer identity", !strncmp(id_expected, id_actual, strlen(id_expected)));
+	i = 0;
+	while (id_expected[i] != NULL) {
+		KSI_HashChainLinkIdentity *pId = NULL;
+
+		pId = NULL;
+		res = KSI_HashChainLinkIdentityList_elementAt(idList, i, &pId);
+		CuAssert(tc, "Unable to get signer identity.", res == KSI_OK && pId != NULL);
+
+		pIdStr = NULL;
+		res = KSI_HashChainLinkIdentity_getClientId(pId, &pIdStr);
+		CuAssert(tc, "Unable to get signer identity string.", res == KSI_OK && pIdStr != NULL);
+
+		CuAssert(tc, "Unexpected signer identity.", !strncmp(id_expected[i], KSI_Utf8String_cstr(pIdStr), strlen(id_expected[i])));
+		++i;
+	}
+
+	CuAssert(tc, "Signer identity length mismatch.", i == KSI_HashChainLinkIdentityList_length(idList));
 
 	KSI_Signature_free(sig);
-	KSI_free(id_actual);
+	KSI_HashChainLinkIdentityList_free(idList);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -543,19 +562,38 @@ static void testSignerIdentityMetaData(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2015-09-13_21-34-00.ksig"
 
 	int res;
-	const char id_expected[] = "GT :: GT :: release test :: anon http";
+	const char *idExpected[] = {"GT", "GT", "release test", "anon http", NULL};
 	KSI_Signature *sig = NULL;
-	char *id_actual = NULL;
+	KSI_LIST(KSI_HashChainLinkIdentity) *idList = NULL;
+	size_t i;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
 	CuAssert(tc, "Unable to load signature", res == KSI_OK && sig != NULL);
 
-	res = KSI_Signature_getSignerIdentity(sig, &id_actual);
-	CuAssert(tc, "Unable to get signer identity from signature.", res == KSI_OK && id_actual != NULL);
-	CuAssert(tc, "Unexpected signer identity", !strncmp(id_expected, id_actual, strlen(id_expected)));
+	res = KSI_Signature_getAggregationHashChainIdentity(sig, &idList);
+	CuAssert(tc, "Unable to get signer identity from signature.", res == KSI_OK && idList != NULL);
+
+	i = 0;
+	while (idExpected[i] != NULL) {
+		KSI_Utf8String *pIdStr = NULL;
+		KSI_HashChainLinkIdentity *pId = NULL;
+
+		pId = NULL;
+		res = KSI_HashChainLinkIdentityList_elementAt(idList, i, &pId);
+		CuAssert(tc, "Unable to get signer identity.", res == KSI_OK && pId != NULL);
+
+		pIdStr = NULL;
+		res = KSI_HashChainLinkIdentity_getClientId(pId, &pIdStr);
+		CuAssert(tc, "Unable to get signer identity string.", res == KSI_OK && pIdStr != NULL);
+
+		CuAssert(tc, "Unexpected signer identity.", !strncmp(idExpected[i], KSI_Utf8String_cstr(pIdStr), strlen(idExpected[i])));
+		++i;
+	}
+
+	CuAssert(tc, "Signer identity length mismatch.", i == KSI_HashChainLinkIdentityList_length(idList));
 
 	KSI_Signature_free(sig);
-	KSI_free(id_actual);
+	KSI_HashChainLinkIdentityList_free(idList);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -564,7 +602,7 @@ static void testAggregationHashChainIdentity(CuTest *tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-08-01.1.ksig"
 
 	int res;
-	const char *expected[] = {"GT","testA","36-test"};
+	const char *expected[] = {"GT", "testA", "36-test"};
 	KSI_Signature *sig = NULL;
 	KSI_HashChainLinkIdentity *identity = NULL;
 	KSI_HashChainLinkIdentityList *identityList = NULL;
@@ -967,6 +1005,23 @@ static void testCreateHasher(CuTest *tc) {
 #undef TEST_SIGNATURE_FILE
 }
 
+static void testSigning_docAlgorithmDeprecated(CuTest* tc) {
+	int res;
+	KSI_DataHash *hsh = NULL;
+	KSI_Signature *sig = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_DataHash_createZero(ctx, KSI_HASHALG_SHA1, &hsh);
+	CuAssert(tc, "Unable to create data hash object.", res == KSI_OK && hsh != NULL);
+
+	res = KSI_createSignature(ctx, hsh, &sig);
+	CuAssert(tc, "Unable to sign the hash", res == KSI_UNTRUSTED_HASH_ALGORITHM && sig == NULL);
+
+	KSI_DataHash_free(hsh);
+	KSI_Signature_free(sig);
+}
+
 CuSuite* KSITest_Signature_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -998,6 +1053,7 @@ CuSuite* KSITest_Signature_getSuite(void) {
 	SUITE_ADD_TEST(suite, testSignatureGetPublicationInfo);
 	SUITE_ADD_TEST(suite, testSignatureGetPublicationInfo_verifyNullPointer);
 	SUITE_ADD_TEST(suite, testCreateHasher);
+	SUITE_ADD_TEST(suite, testSigning_docAlgorithmDeprecated);
 
 	return suite;
 }

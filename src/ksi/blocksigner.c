@@ -255,6 +255,11 @@ int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *pr
 		goto cleanup;
 	}
 
+	if (!KSI_isHashAlgorithmTrusted(algoId)) {
+		KSI_pushError(ctx, res = KSI_UNTRUSTED_HASH_ALGORITHM, "The aggregation hash algorithm is no longer trusted.");
+		goto cleanup;
+	}
+
 	tmp = KSI_new(KSI_BlockSigner);
 	if (tmp == NULL) {
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
@@ -417,6 +422,7 @@ int KSI_BlockSigner_addLeaf(KSI_BlockSigner *signer, KSI_DataHash *hsh, int leve
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TreeLeafHandle *leafHandle = NULL;
 	KSI_BlockSignerHandle *tmp = NULL;
+	KSI_HashAlgorithm algoId;
 
 	if (signer == NULL || hsh == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -424,6 +430,18 @@ int KSI_BlockSigner_addLeaf(KSI_BlockSigner *signer, KSI_DataHash *hsh, int leve
 	}
 
 	KSI_ERR_clearErrors(signer->ctx);
+
+	/* Make sure the input hash algorithm is still trusted. */
+	res = KSI_DataHash_extract(hsh, &algoId, NULL, NULL);
+	if (res != KSI_OK) {
+		KSI_pushError(signer->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (!KSI_isHashAlgorithmTrusted(algoId)) {
+		KSI_pushError(signer->ctx, res = KSI_UNTRUSTED_HASH_ALGORITHM, "The hash algorithm is no longer trusted as a leaf hash.");
+		goto cleanup;
+	}
 
 	/* Set the pointer to the meta data value. */
 	signer->metaData = metaData;

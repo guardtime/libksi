@@ -60,6 +60,7 @@
   */
 #define KSI_IMPL_OPENSSL		4
 #define KSI_IMPL_CRYPTOAPI			5
+#define KSI_IMPL_COMMONCRYPTO	6
 
 /**
  * Default implementation for HTTP network client.

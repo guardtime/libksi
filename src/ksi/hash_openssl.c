@@ -20,11 +20,11 @@
 
 #include <openssl/evp.h>
 
-#include "hash_impl.h"
+#include "internal.h"
+#include "impl/hash_impl.h"
 #include "hash.h"
 
 #include "openssl_compatibility.h"
-#include "internal.h"
 
 /**
  * Converts hash function ID from hash chain to OpenSSL identifier
@@ -99,62 +99,17 @@ int KSI_isHashAlgorithmSupported(KSI_HashAlgorithm algo_id) {
 	return hashAlgorithmToEVP(algo_id) != NULL;
 }
 
-void KSI_DataHasher_free(KSI_DataHasher *hasher) {
+static void ksi_DataHasher_cleanup(KSI_DataHasher *hasher) {
 	if (hasher != NULL) {
 		if (hasher->hashContext != NULL) {
 			KSI_EVP_MD_CTX_cleanup(hasher->hashContext);
 		}
 		KSI_EVP_MD_CTX_destroy(hasher->hashContext);
-		KSI_free(hasher);
+		hasher->hashContext = NULL;
 	}
 }
 
-int KSI_DataHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHasher **hasher) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_DataHasher *tmp_hasher = NULL;
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || hasher == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	if (!KSI_isHashAlgorithmSupported(algo_id)) {
-		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
-		goto cleanup;
-	}
-
-	tmp_hasher = KSI_new(KSI_DataHasher);
-	if (tmp_hasher == NULL) {
-		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
-	}
-
-	tmp_hasher->hashContext = NULL;
-	tmp_hasher->ctx = ctx;
-	tmp_hasher->algorithm = algo_id;
-	tmp_hasher->closeExisting = closeExisting;
-
-	res = KSI_DataHasher_reset(tmp_hasher);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	*hasher = tmp_hasher;
-	tmp_hasher = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_DataHasher_free(tmp_hasher);
-
-	return res;
-}
-
-
-int KSI_DataHasher_reset(KSI_DataHasher *hasher) {
+static int ksi_DataHasher_reset(KSI_DataHasher *hasher) {
 	int res = KSI_UNKNOWN_ERROR;
 	const EVP_MD *evp_md = NULL;
 	EVP_MD_CTX *context = NULL;
@@ -196,7 +151,7 @@ cleanup:
 	return res;
 }
 
-int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_length) {
+static int ksi_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_length) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (hasher == NULL || data == NULL) {
@@ -212,6 +167,54 @@ int KSI_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t data_len
 	res = KSI_OK;
 
 cleanup:
+
+	return res;
+}
+
+int KSI_DataHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHasher **hasher) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHasher *tmp_hasher = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || hasher == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	if (!KSI_isHashAlgorithmSupported(algo_id)) {
+		KSI_pushError(ctx, res = KSI_UNAVAILABLE_HASH_ALGORITHM, NULL);
+		goto cleanup;
+	}
+
+	tmp_hasher = KSI_new(KSI_DataHasher);
+	if (tmp_hasher == NULL) {
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	tmp_hasher->hashContext = NULL;
+	tmp_hasher->ctx = ctx;
+	tmp_hasher->algorithm = algo_id;
+	tmp_hasher->closeExisting = closeExisting;
+	tmp_hasher->isOpen = false;
+	tmp_hasher->reset = ksi_DataHasher_reset;
+	tmp_hasher->add = ksi_DataHasher_add;
+	tmp_hasher->cleanup = ksi_DataHasher_cleanup;
+
+	res = KSI_DataHasher_reset(tmp_hasher);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	*hasher = tmp_hasher;
+	tmp_hasher = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_DataHasher_free(tmp_hasher);
 
 	return res;
 }

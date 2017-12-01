@@ -86,6 +86,11 @@ extern "C" {
 		_(INT,  10,   0x200,  "INT-10",    "Aggregation hash chain chain index mismatch") \
 		_(INT,  11,   0x200,  "INT-11",    "The metadata record in the aggregation hash chain may not be trusted") \
 		_(INT,  12,   0x200,  "INT-12",    "Inconsistent chain indexes") \
+		_(INT,  13,   0x200,  "INT-13",    "Document hash algorithm deprecated at the time of signing") \
+		_(INT,  14,   0x200,  "INT-14",    "RFC3161 compatibility record composed of hash algorithms that where deprecated at the time of signing") \
+		_(INT,  15,   0x200,  "INT-15",    "Aggregation hash chain uses hash algorithm that was deprecated at the time of signing") \
+		_(INT,  16,   0x200,  "INT-16",    "Calendar hash chain hash algorithm was obsolete at publication time") \
+		_(INT,  17,   0x200,  "INT-17",    "The RFC3161 compatibility record output hash algorithm was deprecated at the time of signing") \
 		\
 		_(PUB,  1,    0x300,  "PUB-01",    "Extender response calendar root hash mismatch") \
 		_(PUB,  2,    0x300,  "PUB-02",    "Extender response inconsistent") \

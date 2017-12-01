@@ -96,6 +96,18 @@ if test ! -z "$with_openssl" ; then
 	LDFLAGS="-L$with_openssl/lib $LDFLAGS"
 fi
 
+AC_ARG_WITH(hash-provider,
+[  --with-hash-provider=<openssl|commoncrypto>       build using library for hash functions (default: openssl)],
+:, with_hash_provider=openssl)
+if test "x$with_hash_provider" = "xcommoncrypto" ; then
+	AC_DEFINE_UNQUOTED(KSI_HASH_IMPL, KSI_IMPL_COMMONCRYPTO, [Use CommonCrypto.])
+	AC_CHECK_HEADER([CommonCrypto/CommonCrypto.h])
+elif test "x$with_hash_provider" = "xopenssl" ; then
+	AC_DEFINE_UNQUOTED(KSI_HASH_IMPL, KSI_IMPL_OPENSSL, [Use OpenSSL.])
+else
+	AC_MSG_ERROR([*** Unknown hash provider.])
+fi
+
 AC_CHECK_LIB([crypto], [SHA256_Init], [], [AC_MSG_FAILURE([Could not find OpenSSL 0.9.8+ libraries.])])
 AC_CHECK_LIB([curl], [curl_easy_init], [], [AC_MSG_FAILURE([Could nod find Curl libraries.])])
 
@@ -194,5 +206,5 @@ AC_SUBST(VER_MINOR)
 AC_SUBST(VER_BUILD)
 AC_CONFIG_FILES([src/ksi/version.h])
 
-AC_CONFIG_FILES([GNUmakefile src/ksi/GNUmakefile test/GNUmakefile doc/GNUmakefile src/example/GNUmakefile packaging/deb/libksi/DEBIAN/control packaging/deb/libksi/DEBIAN/control-source packaging/deb/libksi/DEBIAN/control-dev packaging/redhat/libksi.spec])
+AC_CONFIG_FILES([GNUmakefile src/ksi/GNUmakefile test/GNUmakefile doc/GNUmakefile src/example/GNUmakefile packaging/redhat/libksi.spec packaging/deb/control packaging/deb/rules])
 AC_OUTPUT
