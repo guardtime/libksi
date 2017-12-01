@@ -1,3 +1,5 @@
+Version 3.17
+
 * FEATURE: Added CommonCrypto for hashing as an alternative to OpenSSL.
 * IMPROVEMENT: Removed deprecated interface KSI_Signature_getSignerIdentity.
 * IMPROVEMENT: Added consistency tests for public include files (make include-test).
@@ -8,10 +10,9 @@
 * IMPROVEMENT: Added double close guards and tests for KSI_DataHasher.
 * BUGFIX: Script rebuild-deb.sh works on Ubuntu.
 * IMPROVEMENT: Debian packaging refactored.
+* IMPROVEMENT: Added support for OpenSSL 1.1 api.
 
 Version 3.16
-
-* IMPROVEMENT: Added support for OpenSSL 1.1 api.
 
 2017-11-21 release(3.16.2482)
 * BUGFIX: Fixed EINTR (signal) issues with TCP and cURL.
