@@ -100,6 +100,7 @@ void CuAssertPtrEquals_LineMsg(CuTest* tc,
 
 #define SUITE_ADD_TEST(SUITE,TEST)	CuSuiteAdd(SUITE, CuTestNew(#TEST, TEST))
 #define SUITE_SKIP_TEST(SUITE, TEST, SKIPPED_BY, MSG) CuSuiteSkip(SUITE, CuTestNew(#TEST, TEST), SKIPPED_BY, MSG)
+#define SUITE_SKIP_TEST_IF(CONDITION, SUITE, TEST, SKIPPED_BY, MSG) if (CONDITION) CuSuiteSkip(SUITE, CuTestNew(#TEST, TEST), SKIPPED_BY, MSG); else CuSuiteAdd(SUITE, CuTestNew(#TEST, TEST));
 
 
 typedef struct

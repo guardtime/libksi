@@ -45,6 +45,7 @@
 enum {
 	ARGV_COMMAND = 0,
 	ARGV_TEST_ROOT,
+	ARGV_PROTOCOL,
 	ARGV_LOG_LEVEL,
 	AGRV_NOF_TEST_REQUESTS,
 	ARGV_REQUEST_CACHE_SIZE,
@@ -148,7 +149,7 @@ int main(int argc, char **argv) {
 	/* Handle command line parameters */
 	if (argc < NOF_ARGS) {
 		fprintf(stderr, "Usage:\n"
-				"  %s <test-root> <log-level> <nof-requests> <request-cache-size> <requests-per-round>\n",
+				"  %s <test-root> <protocol> <log-level> <nof-requests> <request-cache-size> <requests-per-round>\n",
 				argv[ARGV_COMMAND]);
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
@@ -191,13 +192,13 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	res = KSI_AsyncService_setEndpoint(as, KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
+	res = KSI_AsyncService_setEndpoint(as, KSITest_composeUri(argv[ARGV_PROTOCOL], &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
 	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to set aggregator to the async service client.\n");
+		fprintf(stderr, "Unable to setup aggregator endpoint.\n");
 		goto cleanup;
 	}
 	KSI_LOG_info(ksi, "Async service endpoint initialized:");
-	KSI_LOG_info(ksi, "  URI:  %s", KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator));
+	KSI_LOG_info(ksi, "  URI:  %s", KSITest_composeUri(argv[ARGV_PROTOCOL], &conf.aggregator));
 	KSI_LOG_info(ksi, "  user: %s", conf.aggregator.user);
 	KSI_LOG_info(ksi, "  pass: %s", conf.aggregator.pass);
 
@@ -436,9 +437,11 @@ int main(int argc, char **argv) {
 
 	res = KSI_OK;
 cleanup:
-	printf("Succeeded request: %lu.\n", (unsigned long)succeeded);
-	printf("Failed request   : %lu.\n", (unsigned long)(nof_requests - succeeded));
-	printf("Spent time (sec) : %.0f.\n", difftime(time(NULL), start));
+	if (nof_requests) {
+		printf("Succeeded request: %lu.\n", (unsigned long)succeeded);
+		printf("Failed request   : %lu.\n", (unsigned long)(nof_requests - succeeded));
+		printf("Spent time (sec) : %.0f.\n", difftime(time(NULL), start));
+	}
 
 	if (res != KSI_OK && ksi != NULL) {
 		KSI_LOG_logCtxError(ksi, KSI_LOG_ERROR);

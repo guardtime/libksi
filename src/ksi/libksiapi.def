@@ -1,5 +1,5 @@
 ;
-; Copyright 2013-2016 Guardtime, Inc.
+; Copyright 2013-2017 Guardtime, Inc.
 ;
 ; This file is part of the Guardtime client SDK.
 ;
@@ -247,8 +247,6 @@ EXPORTS
 
 	KSI_AsyncClient_free
 	KSI_AbstractAsyncClient_new
-	KSI_TcpAsyncClient_new
-	KSI_TcpAsyncClient_setService
 	KSI_AsyncHandle_free
 	KSI_AsyncAggregationHandle_new
 	KSI_AsyncHandle_setRequestCtx
@@ -281,6 +279,8 @@ EXPORTS
 	KSI_HttpClient_setReadTimeoutSeconds
 	KSI_HttpClient_setAggregator
 	KSI_HttpClient_setExtender
+	KSI_HttpAsyncClient_new
+	KSI_HttpAsyncClient_setService
 
 ;net_tcp.h
 
