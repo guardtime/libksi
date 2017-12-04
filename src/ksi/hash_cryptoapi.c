@@ -146,6 +146,7 @@ int KSI_isHashAlgorithmSupported(KSI_HashAlgorithm algo_id) {
 static void ksi_DataHasher_cleanup(KSI_DataHasher *hasher) {
 	if (hasher != NULL) {
 		CRYPTO_HASH_CTX_free((CRYPTO_HASH_CTX*)hasher->hashContext);
+		hasher->hashContext = NULL;
 	}
 }
 
