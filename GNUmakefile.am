@@ -54,7 +54,9 @@ EXTRA_DIST = VERSION ABI_VERSION changelog build*.txt lic*.txt \
 
 ZIPDOC_DIR = ${PACKAGE}-${VERSION}-htmldoc
 
-test: check
+test: include-test unit-test
+
+unit-test: check
 	./test/runner ./test
 
 int-test: check
