@@ -27,11 +27,6 @@
 extern "C" {
 #endif
 
-#ifndef __GNUC__
-#  define __attribute__(dummy)
-#endif
-
-
 	/**
 	 * \addtogroup log Logging
 	 * This group contains primitive functions for logging. There are 6 predefined log levels and one level
@@ -68,7 +63,7 @@ extern "C" {
 	 * \param[in]	...			Arguments.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_LOG_debug(KSI_CTX *ctx, char *format, ...)  __attribute__((format(printf, 2, 3))) __attribute__((nonnull(1)));
+	int KSI_LOG_debug(KSI_CTX *ctx, char *format, ...)  KSI_ATTRIBUTE((format(printf, 2, 3))) KSI_ATTRIBUTE((nonnull(1)));
 
 	/**
 	 * Logging for info level. Events that have no effect on service, but can aid in performance, status and statistics monitoring.
@@ -77,7 +72,7 @@ extern "C" {
 	 * \param[in]	...			Arguments.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_LOG_info(KSI_CTX *ctx, char *format, ...) __attribute__((format(printf, 2, 3))) __attribute__((nonnull(1)));
+	int KSI_LOG_info(KSI_CTX *ctx, char *format, ...) KSI_ATTRIBUTE((format(printf, 2, 3))) KSI_ATTRIBUTE((nonnull(1)));
 
 	/**
 	 * Logging for info level. Changes in state that do not necessarily cause service degradation.
@@ -86,7 +81,7 @@ extern "C" {
 	 * \param[in]	...			Arguments.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_LOG_notice(KSI_CTX *ctx, char *format, ...) __attribute__((format(printf, 2, 3))) __attribute__((nonnull(1)));
+	int KSI_LOG_notice(KSI_CTX *ctx, char *format, ...) KSI_ATTRIBUTE((format(printf, 2, 3))) KSI_ATTRIBUTE((nonnull(1)));
 
 	/**
 	 * Logging for warning level. Changes in state that affects the service degradation.
@@ -95,7 +90,7 @@ extern "C" {
 	 * \param[in]	...			Arguments.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_LOG_warn(KSI_CTX *ctx, char *format, ...) __attribute__((format(printf, 2, 3))) __attribute__((nonnull(1)));
+	int KSI_LOG_warn(KSI_CTX *ctx, char *format, ...) KSI_ATTRIBUTE((format(printf, 2, 3))) KSI_ATTRIBUTE((nonnull(1)));
 
 	/**
 	 * Logging for error level. Unrecoverable fatal errors only - gasp of death - code cannot continue and will terinate.
@@ -104,7 +99,7 @@ extern "C" {
 	 * \param[in]	...			Arguments.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_LOG_error(KSI_CTX *ctx, char *format, ...) __attribute__((format(printf, 2, 3))) __attribute__((nonnull(1)));
+	int KSI_LOG_error(KSI_CTX *ctx, char *format, ...) KSI_ATTRIBUTE((format(printf, 2, 3))) KSI_ATTRIBUTE((nonnull(1)));
 
 	/**
 	 * A helper function for logging raw data. The log message will be prefixed with \c prefix and
@@ -116,7 +111,7 @@ extern "C" {
 	 * \param[in]	data_len	Length of the data.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned char *data, size_t data_len) __attribute__((nonnull(1)));
+	int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned char *data, size_t data_len) KSI_ATTRIBUTE((nonnull(1)));
 
 	/**
 	 * A helper function for logging plain #KSI_TLV objects. The log message will be prefixed
@@ -128,7 +123,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_TLV_toString
 	 */
-	int KSI_LOG_logTlv(KSI_CTX *ctx, int level, const char *prefix, const KSI_TLV *tlv) __attribute__((nonnull(1)));
+	int KSI_LOG_logTlv(KSI_CTX *ctx, int level, const char *prefix, const KSI_TLV *tlv) KSI_ATTRIBUTE((nonnull(1)));
 
 	/**
 	 * A helper function for logging plain #KSI_TLV objects. The log message will be prefixed
@@ -140,7 +135,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_TLV_toString
 	 */
-	int KSI_LOG_logDataHash(KSI_CTX *ctx, int level, const char *prefix, const KSI_DataHash *hsh) __attribute__((nonnull(1)));
+	int KSI_LOG_logDataHash(KSI_CTX *ctx, int level, const char *prefix, const KSI_DataHash *hsh) KSI_ATTRIBUTE((nonnull(1)));
 
 	/**
 	 * A helper function for logging KSI context error trace.
@@ -149,7 +144,7 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_ERR_statusDump
 	 */
-	int KSI_LOG_logCtxError(KSI_CTX *ctx, int level) __attribute__((nonnull(1)));
+	int KSI_LOG_logCtxError(KSI_CTX *ctx, int level) KSI_ATTRIBUTE((nonnull(1)));
 
 	/**
 	 * The stream logger is a simple logging call-back to be used with #KSI_CTX_setLoggerCallback.
@@ -167,10 +162,6 @@ extern "C" {
  */
 #ifdef __cplusplus
 }
-#endif
-
-#ifndef __GNUC__
-#  undef __attribute__
 #endif
 
 #endif /* KSI_LOG_H_ */

@@ -585,7 +585,7 @@ cleanup:
 }
 
 
-int KSI_CalendarHashChainLink_toTlv(KSI_CTX *ctx, const KSI_CalendarHashChainLink *link, unsigned tag, int isNonCritica, int isForward, KSI_TLV **tlv) {
+int KSI_CalendarHashChainLink_toTlv(KSI_CTX *ctx, const KSI_CalendarHashChainLink *link, unsigned KSI_UNUSED(tag), int isNonCritica, int isForward, KSI_TLV **tlv) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tmp = NULL;
 	unsigned tagOverride = 0;
@@ -668,7 +668,7 @@ cleanup:
 }
 
 
-int KSI_HashChainLink_toTlv(KSI_CTX *ctx, const KSI_HashChainLink *link, unsigned tag, int isNonCritica, int isForward, KSI_TLV **tlv) {
+int KSI_HashChainLink_toTlv(KSI_CTX *ctx, const KSI_HashChainLink *link, unsigned KSI_UNUSED(tag), int isNonCritica, int isForward, KSI_TLV **tlv) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tmp = NULL;
 	unsigned tagOverride = 0;

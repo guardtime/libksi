@@ -305,7 +305,7 @@ KSI_HashAlgorithm KSI_getHashAlgorithmByName(const char *name) {
 	if (upperName == NULL) goto cleanup;
 
 	/* Create upper-case name */
-	for (i = 0; i < (int) strlen(name); i++) {
+	for (i = 0; i < strlen(name); i++) {
 		if (name[i] == '_') {
 			upperName[i] = '-';
 		} else {

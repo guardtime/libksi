@@ -854,9 +854,9 @@ int KSI_TLV_serializePayload(const KSI_TLV *tlv, unsigned char *buf, size_t *len
 	return KSI_TLV_writeBytes(tlv, buf, *len, len, KSI_TLV_OPT_NO_HEADER);
 }
 
-#define NOTNEG(a) (a) < 0 ? 0 : a
 
 static int stringify(const KSI_TLV *tlv, int indent, char *str, size_t size, size_t *len) {
+#define NOTNEGSUB(a, b) (a) < (b) ? 0 : ((a) - (b))
 	int res = KSI_UNKNOWN_ERROR;
 	size_t l = *len;
 	size_t i;
@@ -866,19 +866,19 @@ static int stringify(const KSI_TLV *tlv, int indent, char *str, size_t size, siz
 		goto cleanup;
 	}
 	if (indent != 0) {
-		l += KSI_snprintf(str + l, NOTNEG(size - l), "\n%*s", indent, "");
+		l += KSI_snprintf(str + l, NOTNEGSUB(size, l), "\n%*s", indent, "");
 	}
 	if (tlv->tag > 0xff) {
-		l += KSI_snprintf(str + l, NOTNEG(size - l), "TLV[0x%04x]", tlv->tag);
+		l += KSI_snprintf(str + l, NOTNEGSUB(size, l), "TLV[0x%04x]", tlv->tag);
 	} else {
-		l += KSI_snprintf(str + l, NOTNEG(size - l), "TLV[0x%02x]", tlv->tag);
+		l += KSI_snprintf(str + l, NOTNEGSUB(size, l), "TLV[0x%02x]", tlv->tag);
 	}
 
-	l += KSI_snprintf(str + l, NOTNEG(size - l), " %c", tlv->isNonCritical ? 'L' : '-');
-	l += KSI_snprintf(str + l, NOTNEG(size - l), " %c", tlv->isForwardable ? 'F' : '-');
+	l += KSI_snprintf(str + l, NOTNEGSUB(size, l), " %c", tlv->isNonCritical ? 'L' : '-');
+	l += KSI_snprintf(str + l, NOTNEGSUB(size, l), " %c", tlv->isForwardable ? 'F' : '-');
 
 	if (tlv->nested != NULL) {
-		l += KSI_snprintf(str + l, NOTNEG(size - l), ":");
+		l += KSI_snprintf(str + l, NOTNEGSUB(size, l), ":");
 		for (i = 0; i < KSI_TLVList_length(tlv->nested); i++) {
 			KSI_TLV *tmp = NULL;
 
@@ -889,9 +889,9 @@ static int stringify(const KSI_TLV *tlv, int indent, char *str, size_t size, siz
 			if (res != KSI_OK) goto cleanup;
 		}
 	} else {
-		l += KSI_snprintf(str + l, NOTNEG(size - l), " len = %llu : ", (unsigned long long)tlv->datap_len);
+		l += KSI_snprintf(str + l, NOTNEGSUB(size, l), " len = %llu : ", (unsigned long long)tlv->datap_len);
 		for (i = 0; i < tlv->datap_len; i++) {
-			l += KSI_snprintf(str + l, NOTNEG(size - l), "%02x", tlv->datap[i]);
+			l += KSI_snprintf(str + l, NOTNEGSUB(size, l), "%02x", tlv->datap[i]);
 		}
 	}
 
@@ -905,7 +905,10 @@ static int stringify(const KSI_TLV *tlv, int indent, char *str, size_t size, siz
 cleanup:
 
 	return res;
+
+#undef NOTNEGSUB
 }
+
 
 char *KSI_TLV_toString(const KSI_TLV *tlv, char *buffer, size_t buffer_len) {
 	int res = KSI_UNKNOWN_ERROR;

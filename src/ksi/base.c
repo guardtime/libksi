@@ -416,7 +416,7 @@ cleanup:
 	return res;
 }
 
-int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, size_t request_length, KSI_RequestHandle **handle) {
+int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char KSI_UNUSED(*request), size_t KSI_UNUSED(request_length), KSI_RequestHandle **handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_NetworkClient *netProvider = NULL;
 
@@ -887,7 +887,7 @@ cleanup:
 	return res;
 }
 
-static void* printer_stream_wrapper(void *toStream, size_t to_len, size_t *count, const char *format, ...) {
+static void* printer_stream_wrapper(void *toStream, size_t KSI_UNUSED(to_len), size_t *count, const char *format, ...) {
 	va_list va;
 	va_start(va, format);
 	*count = vfprintf((FILE*)toStream, format, va);
@@ -980,7 +980,7 @@ cleanup:
 	return res;
 }
 
-static int KSI_UriClient_setPublicationUrl_wrapper(KSI_NetworkClient *client, const char *uri, const char *not_used_1, const char *not_used_2){
+static int KSI_UriClient_setPublicationUrl_wrapper(KSI_NetworkClient *client, const char *uri, const char KSI_UNUSED(*not_used_1), const char KSI_UNUSED(*not_used_2)){
 	return KSI_UriClient_setPublicationUrl(client, uri);
 }
 
