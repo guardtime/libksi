@@ -718,14 +718,14 @@ CuSuite* AsyncIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_AsyncSign_addEmptyRequest_tcp);
 
 	/* HTTP test cases. */
-	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL || KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP), suite, Test_AsyncSingningService_verifyOptions_http, "Max", "Async HTTP client not implemented.");
-	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL || KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP), suite, Test_AsyncSingningService_verifyCacheSizeOption_http, "Max", "Async HTTP client not implemented.");
-	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL || KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP), suite, Test_AsyncSign_loop_http, "Max", "Async HTTP client not implemented.");
-	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL || KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP), suite, Test_AsyncSign_collect_http, "Max", "Async HTTP client not implemented.");
-	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL || KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP), suite, Test_AsyncSign_useExtender_http, "Max", "Async HTTP client not implemented.");
-	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL || KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP), suite, Test_AsyncSign_fillupCache_http, "Max", "Async HTTP client not implemented.");
-	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL || KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP), suite, Test_AsyncSign_runEmpty_http, "Max", "Async HTTP client not implemented.");
-	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL || KSI_NET_HTTP_IMPL==KSI_IMPL_WINHTTP), suite, Test_AsyncSign_addEmptyRequest_http, "Max", "Async HTTP client not implemented.");
+	SUITE_ADD_TEST(suite, Test_AsyncSingningService_verifyOptions_http);
+	SUITE_ADD_TEST(suite, Test_AsyncSingningService_verifyCacheSizeOption_http);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_loop_http);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_collect_http);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_useExtender_http);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_fillupCache_http);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_runEmpty_http);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_addEmptyRequest_http);
 
 	return suite;
 }
