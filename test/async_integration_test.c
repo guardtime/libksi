@@ -37,7 +37,6 @@
 #include <ksi/hash.h>
 
 #include "../src/ksi/internal.h"
-
 #include "../src/ksi/impl/ctx_impl.h"
 
 extern KSI_CTX *ctx;
@@ -90,6 +89,11 @@ void Test_AsyncSingningService_verifyOptions_tcp(CuTest* tc) {
 	asyncSigning_verifyOptions(tc, KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
 }
 
+void Test_AsyncSingningService_verifyOptions_http(CuTest* tc) {
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	asyncSigning_verifyOptions(tc, KSITest_composeUri(TEST_SCHEME_HTTP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
+}
+
 static void asyncSigning_verifyCacheSizeOption(CuTest* tc, const char *url, const char *user, const char *pass) {
 	int res;
 	KSI_AsyncService *as = NULL;
@@ -122,6 +126,11 @@ static void asyncSigning_verifyCacheSizeOption(CuTest* tc, const char *url, cons
 void Test_AsyncSingningService_verifyCacheSizeOption_tcp(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	asyncSigning_verifyCacheSizeOption(tc, KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
+}
+
+void Test_AsyncSingningService_verifyCacheSizeOption_http(CuTest* tc) {
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	asyncSigning_verifyCacheSizeOption(tc, KSITest_composeUri(TEST_SCHEME_HTTP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
 }
 
 static void asyncSigning_loop_getResponse(CuTest* tc, const char *url, const char *user, const char *pass) {
@@ -293,6 +302,11 @@ void Test_AsyncSign_loop_tcp(CuTest* tc) {
 	asyncSigning_loop_getResponse(tc, KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
 }
 
+void Test_AsyncSign_loop_http(CuTest* tc) {
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	asyncSigning_loop_getResponse(tc, KSITest_composeUri(TEST_SCHEME_HTTP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
+}
+
 static void asyncSigning_collect_getResponse(CuTest* tc, const char *url, const char *user, const char *pass) {
 	int res;
 	KSI_AsyncService *as = NULL;
@@ -422,7 +436,12 @@ void Test_AsyncSign_collect_tcp(CuTest* tc) {
 	asyncSigning_collect_getResponse(tc, KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
 }
 
-static void asyncSigning_getError(CuTest* tc, const char *url, const char *user, const char *pass) {
+void Test_AsyncSign_collect_http(CuTest* tc) {
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	asyncSigning_collect_getResponse(tc, KSITest_composeUri(TEST_SCHEME_HTTP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
+}
+
+static void asyncSigning_getError(CuTest* tc, const char *url, const char *user, const char *pass, int expected, long external) {
 	int res;
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *handle = NULL;
@@ -461,6 +480,7 @@ static void asyncSigning_getError(CuTest* tc, const char *url, const char *user,
 	do {
 		int state = KSI_ASYNC_STATE_UNDEFINED;
 		int err = KSI_UNKNOWN_ERROR;
+		long ext = 0;
 
 		KSI_LOG_debug(ctx, "%s: RUN.", __FUNCTION__);
 
@@ -484,7 +504,10 @@ static void asyncSigning_getError(CuTest* tc, const char *url, const char *user,
 
 		res = KSI_AsyncHandle_getError(handle, &err);
 		CuAssert(tc, "Unable to get request error.", res == KSI_OK);
-		CuAssert(tc, "Wrong error.", err == KSI_NETWORK_RECIEVE_TIMEOUT);
+		CuAssert(tc, "Wrong error.", err == expected);
+		res = KSI_AsyncHandle_getExtError(handle, &ext);
+		CuAssert(tc, "Unable to get request error.", res == KSI_OK);
+		CuAssert(tc, "Wrong extenral error.", ext == external);
 
 		KSI_AsyncHandle_free(handle);
 	} while (onHold);
@@ -499,7 +522,12 @@ static void asyncSigning_getError(CuTest* tc, const char *url, const char *user,
 
 void Test_AsyncSign_useExtender_tcp(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_getError(tc, KSITest_composeUri(TEST_SCHEME_TCP, &conf.extender), conf.extender.user, conf.extender.pass);
+	asyncSigning_getError(tc, KSITest_composeUri(TEST_SCHEME_TCP, &conf.extender), conf.extender.user, conf.extender.pass, KSI_NETWORK_RECIEVE_TIMEOUT, 0);
+}
+
+void Test_AsyncSign_useExtender_http(CuTest* tc) {
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	asyncSigning_getError(tc, KSITest_composeUri(TEST_SCHEME_HTTP, &conf.extender), conf.extender.user, conf.extender.pass, KSI_HTTP_ERROR, 400);
 }
 
 static int createDummyAggrAsyncRequest(KSI_AsyncHandle **ah) {
@@ -576,6 +604,11 @@ void Test_AsyncSign_fillupCache_tcp(CuTest* tc) {
 	asyncSigning_fillupCache(tc, KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
 }
 
+void Test_AsyncSign_fillupCache_http(CuTest* tc) {
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	asyncSigning_fillupCache(tc, KSITest_composeUri(TEST_SCHEME_HTTP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
+}
+
 static void asyncSigning_addEmptyReq(CuTest* tc, const char *url, const char *user, const char *pass) {
 	int res;
 	KSI_AsyncService *as = NULL;
@@ -607,6 +640,11 @@ static void asyncSigning_addEmptyReq(CuTest* tc, const char *url, const char *us
 void Test_AsyncSign_addEmptyRequest_tcp(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	asyncSigning_addEmptyReq(tc, KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
+}
+
+void Test_AsyncSign_addEmptyRequest_http(CuTest* tc) {
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	asyncSigning_addEmptyReq(tc, KSITest_composeUri(TEST_SCHEME_HTTP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
 }
 
 static void Test_AsyncSign_noEndpoint_addRequest(CuTest* tc) {
@@ -658,19 +696,36 @@ void Test_AsyncSign_runEmpty_tcp(CuTest* tc) {
 	asyncSigning_runEmpty(tc, KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
 }
 
+void Test_AsyncSign_runEmpty_http(CuTest* tc) {
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	asyncSigning_runEmpty(tc, KSITest_composeUri(TEST_SCHEME_HTTP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
+}
 
 CuSuite* AsyncIntegrationTests_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
+	/* Common test cases. */
+	SUITE_ADD_TEST(suite, Test_AsyncSign_noEndpoint_addRequest);
+
+	/* TCP test cases. */
 	SUITE_ADD_TEST(suite, Test_AsyncSingningService_verifyOptions_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSingningService_verifyCacheSizeOption_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_loop_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_collect_tcp);
 	SUITE_SKIP_TEST(suite, Test_AsyncSign_useExtender_tcp, "Max", "Waiting for gateway release.");
 	SUITE_ADD_TEST(suite, Test_AsyncSign_fillupCache_tcp);
-	SUITE_ADD_TEST(suite, Test_AsyncSign_noEndpoint_addRequest);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_runEmpty_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_addEmptyRequest_tcp);
+
+	/* HTTP test cases. */
+	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSingningService_verifyOptions_http, "Max", "Async HTTP client not implemented.");
+	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSingningService_verifyCacheSizeOption_http, "Max", "Async HTTP client not implemented.");
+	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSign_loop_http, "Max", "Async HTTP client not implemented.");
+	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSign_collect_http, "Max", "Async HTTP client not implemented.");
+	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSign_useExtender_http, "Max", "Async HTTP client not implemented.");
+	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSign_fillupCache_http, "Max", "Async HTTP client not implemented.");
+	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSign_runEmpty_http, "Max", "Async HTTP client not implemented.");
+	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSign_addEmptyRequest_http, "Max", "Async HTTP client not implemented.");
 
 	return suite;
 }

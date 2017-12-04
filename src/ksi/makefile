@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2015 Guardtime, Inc.
+# Copyright 2013-2017 Guardtime, Inc.
 #
 # This file is part of the Guardtime client SDK.
 #
@@ -172,6 +172,7 @@ EXT_LIB = $(EXT_LIB) Crypt32.lib advapi32.lib
 CCFLAGS = $(CCFLAGS) /I"$(CURL_DIR)\include"
 CCFLAGS = $(CCFLAGS) /DKSI_NET_HTTP_IMPL=KSI_IMPL_CURL
 LIB_OBJ = $(LIB_OBJ) $(OBJ_DIR)\net_http_curl.obj
+LIB_OBJ = $(LIB_OBJ) $(OBJ_DIR)\net_http_curl_async.obj
 !IF "$(DLL)" == "dll"
 LDFLAGS = $(LDFLAGS) /LIBPATH:"$(CURL_DIR)\$(DLL)"
 EXT_LIB = $(EXT_LIB) libcurl$(RTL).lib
@@ -182,11 +183,13 @@ CCFLAGS = $(CCFLAGS) /DCURL_STATICLIB
 !ELSE IF "$(NET_PROVIDER)" == "WININET"
 CCFLAGS = $(CCFLAGS) /DKSI_NET_HTTP_IMPL=KSI_IMPL_WININET
 LIB_OBJ = $(LIB_OBJ) $(OBJ_DIR)\net_http_wininet.obj
+LIB_OBJ = $(LIB_OBJ) $(OBJ_DIR)\net_http_wininet_async.obj
 EXT_LIB = $(EXT_LIB) wininet.lib
 
 !ELSE IF "$(NET_PROVIDER)" == "WINHTTP"
 CCFLAGS = $(CCFLAGS) /DKSI_NET_HTTP_IMPL=KSI_IMPL_WINHTTP
 LIB_OBJ = $(LIB_OBJ) $(OBJ_DIR)\net_http_winhttp.obj
+LIB_OBJ = $(LIB_OBJ) $(OBJ_DIR)\net_http_winhttp_async.obj
 EXT_LIB = $(EXT_LIB) winhttp.lib
 !ENDIF
 
