@@ -16,14 +16,15 @@
  * Guardtime, Inc., and no license to trademarks is granted; Guardtime
  * reserves and retains all trademark rights.
  */
+#if KSI_HASH_IMPL == KSI_IMPL_OPENSSL
+
+#include <openssl/evp.h>
 
 #include "internal.h"
 #include "impl/hash_impl.h"
 #include "hash.h"
 
-#if KSI_HASH_IMPL == KSI_IMPL_OPENSSL
-
-#include <openssl/evp.h>
+#include "openssl_compatibility.h"
 
 /**
  * Converts hash function ID from hash chain to OpenSSL identifier
@@ -101,16 +102,17 @@ int KSI_isHashAlgorithmSupported(KSI_HashAlgorithm algo_id) {
 static void ksi_DataHasher_cleanup(KSI_DataHasher *hasher) {
 	if (hasher != NULL) {
 		if (hasher->hashContext != NULL) {
-			EVP_MD_CTX_cleanup(hasher->hashContext);
+			KSI_EVP_MD_CTX_cleanup(hasher->hashContext);
 		}
-		KSI_free(hasher->hashContext);
+		KSI_EVP_MD_CTX_destroy(hasher->hashContext);
+		hasher->hashContext = NULL;
 	}
 }
 
 static int ksi_DataHasher_reset(KSI_DataHasher *hasher) {
 	int res = KSI_UNKNOWN_ERROR;
 	const EVP_MD *evp_md = NULL;
-	void *context = NULL;
+	EVP_MD_CTX *context = NULL;
 
 	if (hasher == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -126,7 +128,7 @@ static int ksi_DataHasher_reset(KSI_DataHasher *hasher) {
 
 	context = hasher->hashContext;
 	if (context == NULL) {
-		context = KSI_new(EVP_MD_CTX);
+		context = KSI_EVP_MD_CTX_create();
 		if (context == NULL) {
 			KSI_pushError(hasher->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 			goto cleanup;

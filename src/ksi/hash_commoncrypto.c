@@ -113,6 +113,7 @@ int KSI_isHashAlgorithmSupported(KSI_HashAlgorithm algo_id) {
 static void ksi_DataHasher_cleanup(KSI_DataHasher *hasher) {
 	if (hasher != NULL) {
 		KSI_free(hasher->hashContext);
+		hasher->hashContext = NULL;
 	}
 }
 
