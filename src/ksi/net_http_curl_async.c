@@ -328,8 +328,14 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 		goto cleanup;
 	}
 
+	/* Sanity check. */
+	if (stillRunning < 0) {
+		KSI_pushError(clientCtx->ctx, res = KSI_UNKNOWN_ERROR, "Curl returned a negative count of still running queries.");
+		goto cleanup;
+	}
+
 	/* Check if any transfer has completed. */
-	if (clientCtx->prevRunningCount > stillRunning) {
+	if (clientCtx->prevRunningCount > (size_t)stillRunning) {
 		int msgQueue;
 		while ((curlMsg = curl_multi_info_read(clientCtx->curl, &msgQueue))) {
 			CURLcode curlCode;
@@ -338,7 +344,7 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 
 			if (curlMsg->msg != CURLMSG_DONE) continue;
 
-			curlCode = curl_easy_getinfo(curlMsg->easy_handle, CURLINFO_PRIVATE, &curlResponse);
+			curlCode = curl_easy_getinfo(curlMsg->easy_handle, CURLINFO_PRIVATE, (char **)&curlResponse);
 			if (curlCode != CURLE_OK || curlResponse == NULL) {
 				KSI_LOG_error(clientCtx->ctx, "Async Curl HTTP: Failed to read private pointer.");
 			} else {
@@ -393,7 +399,7 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 			curlResponse = NULL;
 		}
 	}
-	clientCtx->prevRunningCount = stillRunning;
+	clientCtx->prevRunningCount = (size_t)stillRunning;
 
 	res = KSI_OK;
 cleanup:
@@ -515,13 +521,13 @@ static void HttpAsyncCtx_free(HttpAsyncCtx *o) {
 		do {
 			CURLMsg *msg;
 			msg = curl_multi_info_read(o->curl, &msgCount);
-			if(msg) {
-				CurlAsyncRequest *curlPriv = NULL;
+			if (msg) {
+				char *curlPriv = NULL;
 				curl_multi_remove_handle(o->curl, msg->easy_handle);
 				curl_easy_getinfo(msg->easy_handle, CURLINFO_PRIVATE, &curlPriv);
-				curlAsyncRequest_free(curlPriv);
+				curlAsyncRequest_free((CurlAsyncRequest *)curlPriv);
 			}
-		} while(msgCount);
+		} while (msgCount);
 		curl_multi_cleanup(o->curl);
 		curlGlobal_cleanup();
 
