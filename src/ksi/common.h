@@ -24,12 +24,19 @@
 extern "C" {
 #endif
 
+#ifndef __GNUC__
+#  define KSI_ATTRIBUTE(x)
+#else
+#  define KSI_ATTRIBUTE(x) __attribute__(x)
+#endif
+
+
 /**
  * A macro for validating the correctness of any given hash tree level.
  * \param[in]	level		The level to be checked.
  * \return If the parameter is a valid hash tree level a non-zero value is return, zero otherwise.
  */
-#define KSI_IS_VALID_TREE_LEVEL(level) (((level) >= 0) && ((level) <= 0xff))
+#define KSI_IS_VALID_TREE_LEVEL(level) (((level) <= 0xff) && ((int)(level) >= 0))
 
 	/**
 	 * Marks a function as deprecated.
@@ -64,6 +71,11 @@ extern "C" {
 #else
 #  define KSI_DEFINE_EXTERN(e) extern e
 #endif
+
+/**
+ * The function parameter is unused inside the function body.
+ */
+#define KSI_UNUSED(x) KSI_ATTRIBUTE((__unused__)) x
 
 #ifdef __cplusplus
 }

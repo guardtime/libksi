@@ -1,5 +1,6 @@
 Version 3.17
 
+* IMPROVEMENT: Added KSI_ATTRIB and KSI_UNUSED to annotate functions.
 * FEATURE: Added CommonCrypto for hashing as an alternative to OpenSSL.
 * IMPROVEMENT: Removed deprecated interface KSI_Signature_getSignerIdentity.
 * IMPROVEMENT: Added consistency tests for public include files (make include-test).

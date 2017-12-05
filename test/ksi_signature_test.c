@@ -665,7 +665,7 @@ static void testAggregationHashChainIdentityWithMetaData(CuTest *tc) {
 		{KSI_IDENTITY_TYPE_LEGACY_ID,	"GT",				NULL, 0, 0},
 		{KSI_IDENTITY_TYPE_LEGACY_ID,	"GT",				NULL, 0, 0},
 		{KSI_IDENTITY_TYPE_LEGACY_ID,	"release test",		NULL, 0, 0},
-		{KSI_IDENTITY_TYPE_METADATA,	"anon http",		NULL, 0, 0x051fa5314579d7}
+		{KSI_IDENTITY_TYPE_METADATA,	"anon http",		NULL, 0, 0x051fa5314579d7ll}
 	};
 	KSI_Signature *sig = NULL;
 	KSI_HashChainLinkIdentity *identity = NULL;

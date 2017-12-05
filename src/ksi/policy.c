@@ -154,7 +154,7 @@ cleanup:
  * EMPTY POLICY
  ******************/
 
-static int KSI_VerificationRule_AlwaysOk(KSI_VerificationContext *context, KSI_RuleVerificationResult *result) {
+static int KSI_VerificationRule_AlwaysOk(KSI_VerificationContext KSI_UNUSED(*context), KSI_RuleVerificationResult *result) {
 	result->resultCode = KSI_VER_RES_OK;
 	result->errorCode = KSI_VER_ERR_NONE;
 	result->ruleName = __FUNCTION__;

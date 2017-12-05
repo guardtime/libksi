@@ -32,7 +32,7 @@ KSI_IMPLEMENT_GET_CTX(KSI_RequestHandle);
 static int newStringFromExisting(char **string, const char *val, int val_len) {
 	char *tmp = NULL;
 	int res = KSI_UNKNOWN_ERROR;
-	size_t new_len = (val_len < 0) ? (strlen(val) + 1) : (val_len);
+	size_t new_len = (val_len < 0) ? (strlen(val) + 1) : ((size_t)val_len);
 
 	tmp = KSI_malloc(strlen(val) + 1);
 	if (tmp == NULL) {

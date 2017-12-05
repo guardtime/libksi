@@ -205,7 +205,7 @@ static void testTlvGetUint64(CuTest* tc) {
 	res = KSI_Integer_fromTlv(tlv, &integer);
 	CuAssert(tc, "Parsing uint64 failed.", res == KSI_OK);
 
-	CuAssert(tc, "Parsed value is not correct.", KSI_Integer_getUInt64(integer) == 0xcafebabecafeface);
+	CuAssert(tc, "Parsed value is not correct.", KSI_Integer_getUInt64(integer) == 0xcafebabecafefacell);
 
 	KSI_TLV_free(tlv);
 	KSI_Integer_free(integer);
@@ -281,7 +281,7 @@ static void testTlvGetNextNested(CuTest* tc) {
 
 	res = KSI_Integer_fromTlv(nested, &integer);
 	CuAssert(tc, "Unable to read uint from nested TLV.", res == KSI_OK);
-	CuAssert(tc, "Unexpected uint value from nested TLV.", 0xcafffffffffe == KSI_Integer_getUInt64(integer));
+	CuAssert(tc, "Unexpected uint value from nested TLV.", 0xcafffffffffell == KSI_Integer_getUInt64(integer));
 
 	res = KSI_TLVList_elementAt(list, i++, &nested);
 	CuAssert(tc, "Reading nested TLV did not fail after reading last TLV.", res == KSI_BUFFER_OVERFLOW);

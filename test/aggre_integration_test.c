@@ -74,7 +74,7 @@ static void nokAggr_TreeTooLarge(CuTest* tc, const char *scheme) {
 	res = getDataHash(&hsh);
 	CuAssert(tc, "Unable to create hash.", res == KSI_OK && hsh != NULL);
 
-	res = KSI_Integer_new(ctx, 0x5544332211, &ID);
+	res = KSI_Integer_new(ctx, 0x5544332211ll, &ID);
 	CuAssert(tc, "Unable to create request ID.", res == KSI_OK && ID != NULL);
 
 	res = KSI_Integer_new(ctx, 0xffffff, &requestLevel);
