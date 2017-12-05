@@ -174,7 +174,7 @@ static void nokExtendRequestToTheFuture(CuTest* tc, const char *scheme) {
 	res = KSI_CTX_setExtender(ctx, KSITest_composeUri(scheme, &conf.extender), conf.extender.user, conf.extender.pass);
 	CuAssert(tc, "Unable to set configure aggregator as extender.", res == KSI_OK);
 
-	getExtResponse(tc, 0x01, 1435740789, 2435827189, &response);
+	getExtResponse(tc, 0x01, 1435740789ll, 2435827189ll, &response);
 	CuAssert(tc, "Unable to send (prepare) sign request.", response != NULL);
 
 	res = KSI_ExtendResp_getStatus(response, &resp_status);
@@ -205,7 +205,7 @@ static void nokExtendRequestToPast(CuTest* tc, const char *scheme) {
 	res = KSI_CTX_setExtender(ctx, KSITest_composeUri(scheme, &conf.extender), conf.extender.user, conf.extender.pass);
 	CuAssert(tc, "Unable to set configure aggregator as extender.", res == KSI_OK);
 
-	getExtResponse(tc, 0x01, 2435827189, 1435740789, &response);
+	getExtResponse(tc, 0x01, 2435827189ll, 1435740789ll, &response);
 	CuAssert(tc, "Unable to send (prepare) sign request.", response != NULL);
 
 	res = KSI_ExtendResp_getStatus(response, &resp_status);
