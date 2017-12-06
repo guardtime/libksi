@@ -2499,6 +2499,24 @@ static void testRule_SignaturePublicationRecordExistence_verifyErrorResult(CuTes
 #undef TEST_SIGNATURE_FILE
 }
 
+static void testRule_SignaturePublicationRecordMissing(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1.ksig"
+
+	KSITest_ruleVerifier(tc, KSI_VerificationRule_SignaturePublicationRecordMissing,
+			KSI_VERIFY_NONE, TEST_SIGNATURE_FILE, KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_SignaturePublicationRecordMissing_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+
+	KSITest_ruleVerifier(tc, KSI_VerificationRule_SignaturePublicationRecordMissing,
+			KSI_VERIFY_NONE, TEST_SIGNATURE_FILE, KSI_VER_RES_NA, KSI_VER_ERR_NONE);
+
+#undef TEST_SIGNATURE_FILE
+}
+
 static void testRule_ExtendedSignatureCalendarChainRootHash(CuTest *tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 #define TEST_EXT_RESPONSE_FILE "resource/tlv/" TEST_RESOURCE_EXT_VER "/ok-sig-2014-04-30.1-extend_response.tlv"
@@ -3452,6 +3470,190 @@ static void testRule_PublicationsFileContainsSignaturePublication_verifyErrorRes
 #undef TEST_PUBLICATIONS_FILE
 }
 
+static void testRule_PublicationsFileDoesNotContainSignaturePublication(CuTest *tc) {
+#define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.15042014.tlv"
+
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	VerificationTempData tempData;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *signature = NULL;
+	KSI_PublicationsFile *userPublicationsFile = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSITest_CTX_clone(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), KSI_VERIFICATION_POLICY_EMPTY, NULL, &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	verCtx.userPublicationsFile = userPublicationsFile;
+
+	TEST_VERIFICATION_STEP_INIT;
+
+	res = KSI_VerificationRule_PublicationsFileDoesNotContainSignaturePublication(&verCtx, &verRes);
+	CuAssert(tc, "Publications file should contain signature publication", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
+
+	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_PUBLICATION_WITH_PUBFILE);
+
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_Signature_free(signature);
+	KSI_VerificationContext_clean(&verCtx);
+	KSI_CTX_free(ctx);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_PUBLICATIONS_FILE
+}
+
+static void testRule_PublicationsFileDoesNotContainSignaturePublication_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
+
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	VerificationTempData tempData;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *signature = NULL;
+	KSI_PublicationsFile *userPublicationsFile = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSITest_CTX_clone(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), KSI_VERIFICATION_POLICY_EMPTY, NULL, &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	verCtx.userPublicationsFile = userPublicationsFile;
+
+	TEST_VERIFICATION_STEP_INIT;
+
+	res = KSI_VerificationRule_PublicationsFileDoesNotContainSignaturePublication(&verCtx, &verRes);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_NONE);
+
+	TEST_ASSERT_VERIFICATION_STEP_NA(KSI_VERIFY_PUBLICATION_WITH_PUBFILE);
+
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_Signature_free(signature);
+	KSI_VerificationContext_clean(&verCtx);
+	KSI_CTX_free(ctx);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_PUBLICATIONS_FILE
+}
+
+static void testRule_PublicationsFileSignaturePublicationVerification(CuTest *tc) {
+#define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
+
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	VerificationTempData tempData;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *signature = NULL;
+	KSI_PublicationsFile *userPublicationsFile = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSITest_CTX_clone(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), KSI_VERIFICATION_POLICY_EMPTY, NULL, &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	verCtx.userPublicationsFile = userPublicationsFile;
+
+	TEST_VERIFICATION_STEP_INIT;
+
+	res = KSI_VerificationRule_PublicationsFileSignaturePublicationVerification(&verCtx, &verRes);
+	CuAssert(tc, "Publications file should contain signature publication", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
+
+	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_PUBLICATION_WITH_PUBFILE);
+
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_Signature_free(signature);
+	KSI_VerificationContext_clean(&verCtx);
+	KSI_CTX_free(ctx);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_PUBLICATIONS_FILE
+}
+
+static void testRule_PublicationsFileSignaturePublicationVerification_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE    "resource/tlv/signature-other-core-extended.ksig"
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
+
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	VerificationTempData tempData;
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *signature = NULL;
+	KSI_PublicationsFile *userPublicationsFile = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSITest_CTX_clone(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), KSI_VERIFICATION_POLICY_EMPTY, NULL, &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	verCtx.userPublicationsFile = userPublicationsFile;
+
+	TEST_VERIFICATION_STEP_INIT;
+
+	res = KSI_VerificationRule_PublicationsFileSignaturePublicationVerification(&verCtx, &verRes);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_PUB_5);
+
+	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_PUBLICATION_WITH_PUBFILE);
+
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_Signature_free(signature);
+	KSI_VerificationContext_clean(&verCtx);
+	KSI_CTX_free(ctx);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_PUBLICATIONS_FILE
+}
+
 static void testRule_PublicationsFileContainsPublication(CuTest *tc) {
 #define TEST_SIGNATURE_FILE    "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
 #define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
@@ -4183,6 +4385,86 @@ static void testRule_UserProvidedPublicationTimeVerification(CuTest *tc) {
 	CuAssert(tc, "Failed to verify signature publication data", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_PUBLICATION_WITH_PUBSTRING);
+
+	KSI_Signature_free(signature);
+	KSI_VerificationContext_clean(&verCtx);
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testRule_UserProvidedPublicationTimeDoesNotSuit(CuTest *tc) {
+#define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+#define TEST_PUB_STRING "AAAAAA-CT5VGY-AAJXGM-OSRUAE-MOQ6RW-BMQ2ZJ-CNIE5V-6HCC5D-UUXKB5-I5EKSS-MVD7PJ-MA2QLD"
+
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	KSI_PublicationData *userPublication = NULL;
+	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), KSI_VERIFICATION_POLICY_EMPTY, NULL, &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
+
+	res = KSI_PublicationData_fromBase32(ctx, TEST_PUB_STRING, &userPublication);
+	CuAssert(tc, "Failed decoding publication string.", res == KSI_OK && userPublication != NULL);
+	verCtx.userPublication = userPublication;
+
+	TEST_VERIFICATION_STEP_INIT;
+
+	res = KSI_VerificationRule_UserProvidedPublicationTimeDoesNotSuit(&verCtx, &verRes);
+	CuAssert(tc, "Failed to verify signature publication data", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
+
+	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_PUBLICATION_WITH_PUBSTRING);
+
+	KSI_PublicationData_free(userPublication);
+	KSI_Signature_free(signature);
+	KSI_VerificationContext_clean(&verCtx);
+
+#undef TEST_SIGNATURE_FILE
+#undef TEST_PUB_STRING
+}
+
+static void testRule_UserProvidedPublicationTimeDoesNotSuit_verifyErrorResult(CuTest *tc) {
+#define TEST_SIGNATURE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extended.ksig"
+
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_VerificationContext verCtx;
+	KSI_RuleVerificationResult verRes;
+	KSI_PublicationRecord *tempRec = NULL;
+	VerificationTempData tempData;
+	KSI_Signature *signature = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_VerificationContext_init(&verCtx, ctx);
+	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	memset(&tempData, 0, sizeof(tempData));
+	verCtx.tempData = &tempData;
+
+	res = KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), KSI_VERIFICATION_POLICY_EMPTY, NULL, &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	verCtx.signature = signature;
+
+	res = KSI_Signature_getPublicationRecord(verCtx.signature, &tempRec);
+	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && tempRec != NULL);
+
+	res = KSI_PublicationRecord_getPublishedData(tempRec, (KSI_PublicationData **)&verCtx.userPublication);
+	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && verCtx.userPublication != NULL);
+
+	TEST_VERIFICATION_STEP_INIT;
+
+	res = KSI_VerificationRule_UserProvidedPublicationTimeDoesNotSuit(&verCtx, &verRes);
+	CuAssert(tc, "Wrong error result returned", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_NONE);
+
+	TEST_ASSERT_VERIFICATION_STEP_NA(KSI_VERIFY_PUBLICATION_WITH_PUBSTRING);
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
@@ -5023,6 +5305,8 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_ExtendedSignatureCalendarChainRightLinksMatch_rightLinksDiffer_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_SignaturePublicationRecordExistence);
 	SUITE_ADD_TEST(suite, testRule_SignaturePublicationRecordExistence_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_SignaturePublicationRecordMissing);
+	SUITE_ADD_TEST(suite, testRule_SignaturePublicationRecordMissing_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_ExtendedSignatureCalendarChainRootHash);
 	SUITE_ADD_TEST(suite, testRule_ExtendedSignatureCalendarChainRootHash_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_CalendarHashChainDoesNotExist);
@@ -5049,6 +5333,10 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_CalendarAuthenticationRecordSignatureVerification_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFileContainsSignaturePublication);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFileContainsSignaturePublication_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_PublicationsFileDoesNotContainSignaturePublication);
+	SUITE_ADD_TEST(suite, testRule_PublicationsFileDoesNotContainSignaturePublication_verifyErrorResult);
+	SUITE_ADD_TEST(suite, testRule_PublicationsFileSignaturePublicationVerification);
+	SUITE_ADD_TEST(suite, testRule_PublicationsFileSignaturePublicationVerification_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFileContainsPublication);
 	SUITE_ADD_TEST(suite, testRule_PublicationsFileContainsPublication_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_ExtendingPermittedVerification);
@@ -5067,6 +5355,8 @@ CuSuite* KSITest_VerificationRules_getSuite(void) {
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationExistence_pubHashMissing_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationExistence_pubTimeMissing_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationTimeVerification);
+	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationTimeDoesNotSuit);
+	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationTimeDoesNotSuit_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationHashVerification);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationVerification_timeMismatch_verifyErrorResult);
 	SUITE_ADD_TEST(suite, testRule_UserProvidedPublicationVerification_hashMismatch_verifyErrorResult);
