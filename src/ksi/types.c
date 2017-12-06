@@ -47,7 +47,6 @@ KSI_IMPORT_TLV_TEMPLATE(KSI_ExtendResp_v2);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationReq);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationReq_v2);
 KSI_IMPORT_TLV_TEMPLATE(KSI_ConfigReq);
-KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationConf);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationResp);
 KSI_IMPORT_TLV_TEMPLATE(KSI_AggregationResp_v2);
 
@@ -391,7 +390,7 @@ cleanup:
 	return res;
 }
 
-int KSI_MetaDataElement_toTlv(KSI_CTX *ctx, const KSI_MetaDataElement *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv) {
+int KSI_MetaDataElement_toTlv(KSI_CTX *ctx, const KSI_MetaDataElement *data, unsigned KSI_UNUSED(tag), int KSI_UNUSED(isNonCritical), int KSI_UNUSED(isForward), KSI_TLV **tlv) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TLV *tmp = NULL;
 	unsigned char buf[0xffff + 4];

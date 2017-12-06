@@ -365,7 +365,7 @@ cleanup:
 	return res;
 }
 
-int KSI_BlockSigner_close(KSI_BlockSigner *signer, void *dummy) {
+int KSI_BlockSigner_close(KSI_BlockSigner *signer, void KSI_UNUSED(*dummy)) {
 	return KSI_BlockSigner_closeAndSign(signer);
 }
 

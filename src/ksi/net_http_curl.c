@@ -46,7 +46,7 @@ static int curlGlobal_init(void) {
 		return KSI_OK;
 	}
 
-	if (curl_global_init(CURLUSESSL_ALL) != CURLE_OK) goto cleanup;
+	if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK) goto cleanup;
 
 	res = KSI_OK;
 
@@ -127,7 +127,7 @@ static size_t receiveDataFromLibCurl(void *ptr, size_t size, size_t nmemb, void 
 	nc->len = bytesCount;
 	tmp_buffer = NULL;
 
-	KSI_LOG_debug(nc->ctx, "0x%llx: Received %llu bytes (%llu so far)", (unsigned long long)nc, (unsigned long long)bytesCount, (unsigned long long)nc->len);
+	KSI_LOG_debug(nc->ctx, "0x%p: Received %llu bytes (%llu so far)", nc, (unsigned long long)bytesCount, (unsigned long long)nc->len);
 
 	bytesCount = size * nmemb;
 
@@ -248,6 +248,9 @@ static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, cha
 
 	/* Make sure cURL won't use signals. */
 	curl_easy_setopt(implCtx->curl, CURLOPT_NOSIGNAL, 1);
+
+	/* Use SSL for both control and data. */
+	curl_easy_setopt(implCtx->curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
 
 	curl_easy_setopt(implCtx->curl, CURLOPT_ERRORBUFFER, implCtx->curlErr);
 	if (http->agentName != NULL) {

@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2015 Guardtime, Inc.
+# Copyright 2013-2017 Guardtime, Inc.
 #
 # This file is part of the Guardtime client SDK.
 #
@@ -63,6 +63,7 @@ libksi_la_SOURCES = \
 	net_async.h \
 	net_http.c \
 	net_http_curl.c \
+	net_http_curl_async.c \
 	net_http.h \
 	impl/net_http_impl.h \
 	impl/net_impl.h \
@@ -70,11 +71,13 @@ libksi_la_SOURCES = \
 	net_tcp.c \
 	net_tcp.h \
 	impl/net_tcp_impl.h \
+	impl/net_sock_impl.h \
 	net_file.c \
 	net_file.h \
 	impl/net_file_impl.h \
 	net_uri.c \
 	net_uri.h \
+	openssl_compatibility.h \
 	impl/net_uri_impl.h \
 	pkitruststore.c \
 	pkitruststore.h \

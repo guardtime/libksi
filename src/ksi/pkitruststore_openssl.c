@@ -32,6 +32,7 @@
 #include "pkitruststore.h"
 #include "compatibility.h"
 #include "crc32.h"
+#include "openssl_compatibility.h"
 
 #include "impl/ctx_impl.h"
 
@@ -1020,15 +1021,21 @@ cleanup:
 int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data, size_t data_len, const char *algoOid, const unsigned char *signature, size_t signature_len, const KSI_PKICertificate *certificate) {
 	int res;
 	ASN1_OBJECT* algorithm = NULL;
-	EVP_MD_CTX md_ctx;
+	EVP_MD_CTX *md_ctx = NULL;
 	X509 *x509 = NULL;
 	const EVP_MD *evp_md;
 	EVP_PKEY *pubKey = NULL;
 
-	/* Needs to be initialized before jumping to cleanup. */
-	EVP_MD_CTX_init(&md_ctx);
-
 	KSI_ERR_clearErrors(ctx);
+
+	md_ctx = KSI_EVP_MD_CTX_create();
+	if (md_ctx == NULL) {
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	/* Needs to be initialized before jumping to cleanup. */
+	EVP_MD_CTX_init(md_ctx);
 
 	if (ctx == NULL || data == NULL || signature == NULL || algoOid == NULL || certificate == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
@@ -1069,17 +1076,17 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 		goto cleanup;
 	}
 
-	if (!EVP_VerifyInit(&md_ctx, evp_md)) {
+	if (!EVP_VerifyInit(md_ctx, evp_md)) {
 		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, NULL);
 		goto cleanup;
 	}
 
-	if (!EVP_VerifyUpdate(&md_ctx, (unsigned char *)data, data_len)) {
+	if (!EVP_VerifyUpdate(md_ctx, (unsigned char *)data, data_len)) {
 		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, NULL);
 		goto cleanup;
 	}
 
-	res = EVP_VerifyFinal(&md_ctx, (unsigned char *)signature, (unsigned)signature_len, pubKey);
+	res = EVP_VerifyFinal(md_ctx, (unsigned char *)signature, (unsigned)signature_len, pubKey);
 	if (res < 0) {
 		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, NULL);
 		goto cleanup;
@@ -1095,7 +1102,7 @@ int KSI_PKITruststore_verifyRawSignature(KSI_CTX *ctx, const unsigned char *data
 
 cleanup:
 
-	EVP_MD_CTX_cleanup(&md_ctx);
+	if (md_ctx != NULL) { KSI_EVP_MD_CTX_cleanup(md_ctx); KSI_EVP_MD_CTX_destroy(md_ctx); }
 	if (algorithm != NULL) ASN1_OBJECT_free(algorithm);
 	if (pubKey != NULL) EVP_PKEY_free(pubKey);
 

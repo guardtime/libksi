@@ -862,7 +862,7 @@ static void testGetNearestPublicationOfFuture(CuTest *tc) {
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
 
 	/* With time set to 0, the result should be the first publication record in the publications file. */
-	res = KSI_Integer_new(ctx, 2208217600, &tm);
+	res = KSI_Integer_new(ctx, 2208217600ll, &tm);
 	CuAssert(tc, "Unable to create integer", res == KSI_OK && tm != NULL);
 
 	res = KSI_PublicationsFile_getNearestPublication(pubFile, tm, &pubRec);
@@ -940,7 +940,7 @@ static void testGetLatestPublicationOfFuture(CuTest *tc) {
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile);
 	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile != NULL);
 
-	res = KSI_Integer_new(ctx, 2405382400, &tm);
+	res = KSI_Integer_new(ctx, 2405382400ll, &tm);
 	CuAssert(tc, "Unable to create integer", res == KSI_OK && tm != NULL);
 
 	res = KSI_PublicationsFile_getLatestPublication(pubFile, tm, &pubRec);
