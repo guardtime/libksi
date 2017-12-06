@@ -334,6 +334,8 @@ extern "C" {
 	 */
 	int KSI_VerificationRule_SignaturePublicationRecordExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
+	int KSI_VerificationRule_SignaturePublicationRecordMissing(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
 	/**
 	 * This rule is used to check that reproduced calendar hash chain (reproduced by sending extension request with the
 	 * same aggregation and publication time as the attached calendar chain) matches with the already present calendar
@@ -389,6 +391,8 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_VerificationRule_CalendarHashChainExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	int KSI_VerificationRule_CalendarHashChainPresenceVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * Rule is used to verify if any of the calendar hash chain aggregation hash algorithms (derived from the
@@ -463,6 +467,9 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_VerificationRule_PublicationsFileContainsSignaturePublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	int KSI_VerificationRule_PublicationsFileDoesNotContainSignaturePublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+	int KSI_VerificationRule_PublicationsFileSignaturePublicationVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to check if publications file contains publication closest to signature registration time.
@@ -578,6 +585,8 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_VerificationRule_UserProvidedPublicationTimeVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	int KSI_VerificationRule_UserProvidedPublicationTimeDoesNotSuit(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used verify that user provided publication hash equals to publication hash inside the signature.
