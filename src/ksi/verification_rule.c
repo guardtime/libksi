@@ -3087,6 +3087,37 @@ cleanup:
 	return res;
 }
 
+int KSI_VerificationRule_CalendarAuthenticationRecordPresenceVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_LOG_info(info->ctx, "Verifying calendar authentication record existence.");
+
+	if (info->signature->calendarAuthRec == NULL) {
+		KSI_LOG_info(info->ctx, "Calendar authentication record is missing.");
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(KSI_VERIFY_NONE);
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 int KSI_VerificationRule_CalendarAuthenticationRecordDoesNotExist(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 

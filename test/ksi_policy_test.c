@@ -1993,8 +1993,8 @@ static void TestKeyBasedPolicy_NA_WithoutCalendarAuthenticationRecord(CuTest* tc
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_NA,
-		KSI_VER_ERR_NONE,
-		"KSI_VerificationRule_CalendarAuthenticationRecordExistence"
+		KSI_VER_ERR_GEN_2,
+		"KSI_VerificationRule_CalendarAuthenticationRecordPresenceVerification"
 	};
 	KSI_Signature *signature = NULL;
 
@@ -3676,8 +3676,8 @@ static void TestBackgroundVerificationWithKeyBasedPolicy(CuTest* tc) {
 	KSI_Signature *signature = NULL;
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_NA,
-		KSI_VER_ERR_NONE,
-		"KSI_VerificationRule_CalendarAuthenticationRecordExistence"
+		KSI_VER_ERR_GEN_2,
+		"KSI_VerificationRule_CalendarAuthenticationRecordPresenceVerification"
 	};
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);

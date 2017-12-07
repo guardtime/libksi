@@ -364,7 +364,7 @@ static const KSI_Rule keyBasedRules[] = {
 	{KSI_RULE_TYPE_COMPOSITE_AND, internalRules},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainPresenceVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainHashAlgorithmDeprecatedAtPubTime},
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordExistence},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordPresenceVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CertificateExistence},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CertificateValidity},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification},
