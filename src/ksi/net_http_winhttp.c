@@ -119,7 +119,7 @@ static int winHTTP_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **
 	DWORD dwordLen;
 	DWORD http_payload_len = 0;
 	DWORD http_status;
-	unsigned char *tmp = NULL;
+	unsigned char *http_payload = NULL;
 	KSI_CTX *ctx = NULL;
 	int res;
 	DWORD bytesRead = 0;
@@ -159,8 +159,8 @@ static int winHTTP_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **
 	}
 
 	/*Get memory for the HTTP payload*/
-	tmp = (unsigned char*)KSI_malloc(http_payload_len);
-	if (tmp == NULL) {
+	http_payload = (unsigned char*)KSI_malloc(http_payload_len);
+	if (http_payload == NULL) {
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
@@ -178,12 +178,13 @@ static int winHTTP_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **
 
 		/* Verify that the data will still fit into the buffer. */
 		if (bytesRead + tmpLen > http_payload_len) {
+			KSI_LOG_debug(ctx, "WinHTTP buffer overflow. Total %lu (expected %lu).", (bytesRead + tmpLen), http_payload_len);
 			KSI_pushError(ctx, res = KSI_BUFFER_OVERFLOW, "WinHTTP: To many bytes to read.");
 			goto cleanup;
 		}
 
 		/* Read data. */
-		if (!WinHttpReadData(handle, tmp + bytesRead, http_payload_len - bytesRead, &tmpLen)) {
+		if (!WinHttpReadData(handle, http_payload + bytesRead, http_payload_len - bytesRead, &tmpLen)) {
 			WINHTTP_ERROR_1(ctx, ERROR_INSUFFICIENT_BUFFER, KSI_INVALID_ARGUMENT, "WinHTTP: Insufficient buffer.")
 			WINHTTP_ERROR_N(ctx, KSI_NETWORK_ERROR, "WinHTTP: Unable to read response.")
 		}
@@ -195,15 +196,15 @@ static int winHTTP_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **
 		goto cleanup;
 	}
 
-	*buf = tmp;
+	*buf = http_payload;
 	*len = bytesRead;
-	tmp = NULL;
+	http_payload = NULL;
 
 	res = KSI_OK;;
 
 cleanup:
 
-	KSI_free(tmp);
+	KSI_free(http_payload);
 
 	return res;
 }
