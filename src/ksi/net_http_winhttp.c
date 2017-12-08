@@ -119,10 +119,10 @@ static int winHTTP_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **
 	DWORD dwordLen;
 	DWORD http_payload_len = 0;
 	DWORD http_status;
-	DWORD tmp_len = 0;
-	unsigned char *tmp = NULL;
+	unsigned char *http_payload = NULL;
 	KSI_CTX *ctx = NULL;
 	int res;
+	DWORD bytesRead = 0;
 
 	if (reqHandle == NULL || buf == NULL || len == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -159,33 +159,52 @@ static int winHTTP_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **
 	}
 
 	/*Get memory for the HTTP payload*/
-	tmp_len = http_payload_len;
-	tmp = (unsigned char*)KSI_malloc(tmp_len);
-	if (tmp == NULL) {
+	http_payload = (unsigned char*)KSI_malloc(http_payload_len);
+	if (http_payload == NULL) {
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
 
-	/*Read data*/
-	if (!WinHttpReadData(handle, tmp, tmp_len, &tmp_len)) {
-		WINHTTP_ERROR_1(ctx, ERROR_INSUFFICIENT_BUFFER, KSI_INVALID_ARGUMENT, "WinHTTP: Insufficient buffer.")
-		WINHTTP_ERROR_N(ctx, KSI_UNKNOWN_ERROR, "WinHTTP: Unable to read response.")
+	for (;;) {
+		DWORD tmpLen = 0;
+
+		if (!WinHttpQueryDataAvailable(handle, &tmpLen)) {
+			WINHTTP_ERROR_1(ctx, ERROR_WINHTTP_TIMEOUT, KSI_NETWORK_RECIEVE_TIMEOUT, NULL)
+			WINHTTP_ERROR_N(ctx, KSI_NETWORK_ERROR, "WinHTTP: Unable to query data.")
+			goto cleanup;
+		}
+		/* No more data available. */
+		if (!tmpLen) break;
+
+		/* Verify that the data will still fit into the buffer. */
+		if (bytesRead + tmpLen > http_payload_len) {
+			KSI_LOG_debug(ctx, "WinHTTP buffer overflow. Total %lu (expected %lu).", (bytesRead + tmpLen), http_payload_len);
+			KSI_pushError(ctx, res = KSI_BUFFER_OVERFLOW, "WinHTTP: To many bytes to read.");
+			goto cleanup;
+		}
+
+		/* Read data. */
+		if (!WinHttpReadData(handle, http_payload + bytesRead, http_payload_len - bytesRead, &tmpLen)) {
+			WINHTTP_ERROR_1(ctx, ERROR_INSUFFICIENT_BUFFER, KSI_INVALID_ARGUMENT, "WinHTTP: Insufficient buffer.")
+			WINHTTP_ERROR_N(ctx, KSI_NETWORK_ERROR, "WinHTTP: Unable to read response.")
+		}
+		bytesRead += tmpLen;
 	}
 
-	if (tmp_len != http_payload_len){
-		KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "WinHTTP: Unable to read all bytes.");
+	if (bytesRead != http_payload_len){
+		KSI_pushError(ctx, res = KSI_NETWORK_ERROR, "WinHTTP: Unable to read all bytes.");
 		goto cleanup;
 	}
 
-	*buf = tmp;
-	*len = tmp_len;
-	tmp = NULL;
+	*buf = http_payload;
+	*len = bytesRead;
+	http_payload = NULL;
 
 	res = KSI_OK;;
 
 cleanup:
 
-	KSI_free(tmp);
+	KSI_free(http_payload);
 
 	return res;
 }
