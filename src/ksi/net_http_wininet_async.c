@@ -547,8 +547,6 @@ static int WinINet_sendRequest(HttpAsyncCtx *clientCtx, KSI_AsyncHandle *req, DW
 		goto cleanup;
 	}
 
-#if 0
-/* the handle is not yet created? wait for status callback? */
 	/* Add MIME type header. */
 	if (clientCtx->mimeType) {
 		if (!HttpAddRequestHeaders(httpReq->requestHandle, clientCtx->mimeType, -1L,
@@ -558,7 +556,6 @@ static int WinINet_sendRequest(HttpAsyncCtx *clientCtx, KSI_AsyncHandle *req, DW
 			goto cleanup;
 		}
 	}
-#endif
 
 	EnterCriticalSection(&CriticalSection);
 	locked = true;
@@ -957,7 +954,7 @@ static int HttpAsyncCtx_new(KSI_CTX *ctx, HttpAsyncCtx **clientCtx) {
 	/* TODO: move to options. */
 	res = KSI_strdup("KSI HTTP Client", &tmp->userAgent);
 	if (res != KSI_OK) goto cleanup;
-	res = KSI_strdup("application/ksi-request", &tmp->mimeType);
+	res = KSI_strdup("Content-Type: application/ksi-request", &tmp->mimeType);
 	if (res != KSI_OK) goto cleanup;
 
 	*clientCtx = tmp;
