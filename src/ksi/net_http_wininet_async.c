@@ -211,7 +211,7 @@ static char *WinINetCallbackStatus_toString(DWORD status) {
 
 #endif
 
-static void WinINet_asyncCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWORD dwInternetStatus,
+static void CALLBACK WinINet_asyncCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWORD dwInternetStatus,
 			LPVOID lpvStatusInformation, DWORD dwStatusInformationLength) {
 
 	EnterCriticalSection(&CriticalSection);
@@ -438,7 +438,7 @@ static int WinINet_init(HttpAsyncCtx *clientCtx) {
 	}
 
 	/* Set status callback. */
-	if (InternetSetStatusCallback(hConnect, (INTERNET_STATUS_CALLBACK)WinINet_asyncCallback) == INTERNET_INVALID_STATUS_CALLBACK)	{
+	if (InternetSetStatusCallback(hConnect, WinINet_asyncCallback) == INTERNET_INVALID_STATUS_CALLBACK)	{
 		KSI_LOG_error(clientCtx->ctx, "Async WinINet: Unable to set callback. Error %d", GetLastError());
 		res = KSI_NETWORK_ERROR;
 		goto cleanup;

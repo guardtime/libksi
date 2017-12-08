@@ -199,7 +199,7 @@ static char *WinHTTPCallbackStatus_toString(DWORD status) {
 
 #endif
 
-static void WinHTTP_asyncCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWORD dwInternetStatus,
+static void CALLBACK WinHTTP_asyncCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWORD dwInternetStatus,
 			LPVOID lpvStatusInformation, DWORD dwStatusInformationLength) {
 
 	EnterCriticalSection(&CriticalSection);
@@ -486,7 +486,7 @@ static int WinHTTP_sendRequest(HttpAsyncCtx *clientCtx, KSI_AsyncHandle *req) {
 	locked = true;
 
 	/* Set status callback. */
-	if (WinHttpSetStatusCallback(httpReq->requestHandle, (WINHTTP_STATUS_CALLBACK)WinHTTP_asyncCallback,
+	if (WinHttpSetStatusCallback(httpReq->requestHandle, WinHTTP_asyncCallback,
 				WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0) == WINHTTP_INVALID_STATUS_CALLBACK)	{
 		KSI_LOG_error(clientCtx->ctx, "Async WinHTTP: Unable to set callback. Error %d", GetLastError());
 		res = KSI_NETWORK_ERROR;
