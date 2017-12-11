@@ -37,9 +37,9 @@ typedef struct {
 	/* File descriptor. */
 	FILE *file;
 	/* Output queue. */
-	KSI_AsyncHandleList *reqQueue;
+	KSI_LIST(KSI_AsyncHandle) *reqQueue;
 	/* Input queue. */
-	KSI_OctetStringList *respQueue;
+	KSI_LIST(KSI_OctetString) *respQueue;
 
 	/* Round throttling. */
 	time_t roundStartAt;
@@ -56,7 +56,7 @@ typedef struct {
 	const char *ksi_pass;
 } KSITest_FileAsyncClientCtx;
 
-static void reqQueue_clearWithError(KSI_AsyncHandleList *reqQueue, int err, long ext) {
+static void reqQueue_clearWithError(KSI_LIST(KSI_AsyncHandle) *reqQueue, int err, long ext) {
 	size_t size = 0;
 
 	if (reqQueue == NULL) return;

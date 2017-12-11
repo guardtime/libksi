@@ -41,9 +41,9 @@ typedef struct TcpClientCtx_st {
 	/* Socket descriptor. */
 	int sockfd;
 	/* Output queue. */
-	KSI_AsyncHandleList *reqQueue;
+	KSI_LIST(KSI_AsyncHandle) *reqQueue;
 	/* Input queue. */
-	KSI_OctetStringList *respQueue;
+	KSI_LIST(KSI_OctetString) *respQueue;
 	/* Input read buffer. */
 	unsigned char inBuf[KSI_TLV_MAX_SIZE * 2];
 	size_t inLen;
@@ -159,7 +159,7 @@ static void closeSocket(TcpAsyncCtx *tcpCtx, unsigned int lineNr) {
 	}
 }
 
-static void reqQueue_clearWithError(KSI_AsyncHandleList *reqQueue, int err, long ext) {
+static void reqQueue_clearWithError(KSI_LIST(KSI_AsyncHandle) *reqQueue, int err, long ext) {
 	size_t size = 0;
 
 	if (reqQueue == NULL) return;
