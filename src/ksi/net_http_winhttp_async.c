@@ -240,7 +240,7 @@ static void CALLBACK WinHTTP_asyncCallback(HINTERNET hInternet, DWORD_PTR dwCont
 						KSI_LOG_error(request->ctx, "Async WinHTTP: received HTTP code %d.", httpStatus);
 						request->status = KSI_HTTP_ERROR;
 						request->errExt = httpStatus;
-						/* We are finished with the request. Close handle and for WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING. */
+						/* We are finished with the request. Close handle and wait for WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING. */
 						WinHttpCloseHandle(request->requestHandle);
 						request->requestHandle = NULL;
 						goto cleanup;
@@ -259,7 +259,7 @@ static void CALLBACK WinHTTP_asyncCallback(HINTERNET hInternet, DWORD_PTR dwCont
 
 					if (bytesReceived == 0) {
 						request->dataComplete = true;
-						/* Dummy read for treggering WINHTTP_CALLBACK_STATUS_READ_COMPLETE event. */
+						/* Dummy read for triggering WINHTTP_CALLBACK_STATUS_READ_COMPLETE event. */
 						WinHttpReadData(request->requestHandle, NULL, 0, NULL);
 						goto cleanup;
 					}
@@ -313,7 +313,7 @@ static void CALLBACK WinHTTP_asyncCallback(HINTERNET hInternet, DWORD_PTR dwCont
 				dwError = ((WINHTTP_ASYNC_RESULT*)lpvStatusInformation)->dwError;
 				break;
 			case WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING:
-				/* Garanteed last callback this context will ever receive. */
+				/* Guaranteed last callback this context will ever receive. */
 				request->reqComplete = true;
 				/* Now it is save to free the context. */
 				SetEvent(request->closedEvent);
@@ -818,7 +818,7 @@ static void HttpAsyncCtx_free(HttpAsyncCtx *o) {
 		WinHTTPAsyncReqList_free(o->httpQueue);
 		KSI_OctetStringList_free(o->respQueue);
 
-		/* Now it is save to delete the synchronization lock. */
+		/* Now it is safe to delete the synchronization lock. */
 		if (o->criticalSecInitialized) DeleteCriticalSection(&CriticalSection);
 
 		/* Cleanup headers. */

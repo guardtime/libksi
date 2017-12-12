@@ -10,7 +10,7 @@ Version 3.17
 * IMPROVEMENT: Added double close guards and tests for KSI_DataHasher.
 * BUGFIX: Script rebuild-deb.sh works on Ubuntu.
 * IMPROVEMENT: Debian packaging refactored.
-* FEATURE: Support for non-blocking HTTP connection.
+* FEATURE: Support for non-blocking HTTP connection (with WinINet and WinHTTP).
 * FEATURE: Support for non-blocking HTTP connection (with libcurl).
 * IMPROVEMENT: Added support for OpenSSL 1.1 api.
 

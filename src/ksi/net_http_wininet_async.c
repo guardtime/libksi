@@ -228,17 +228,6 @@ static void CALLBACK WinINet_asyncCallback(HINTERNET hInternet, DWORD_PTR dwCont
 #endif
 		switch (dwInternetStatus) {
 
-#if 0
-			/* INTERNET_STATUS_REQUEST_SENT
-			 *   Successfully sent the information request to the server.
-			 *   The lpvStatusInformation parameter points to a DWORD value that contains the number of bytes sent.
-			 */
-			case INTERNET_STATUS_REQUEST_SENT:
-				KSI_LOG_logBlob(request->ctx, KSI_LOG_NOTICE, "Async WinINet: Sent", request->reqCtx->raw, request->reqCtx->len);
-				KSI_LOG_debug(request->ctx, "Async WinINet: Sent (%lu Bytes)", *((LPDWORD)lpvStatusInformation));
-				break;
-#endif
-
 			/* INTERNET_STATUS_REQUEST_COMPLETE
 			 *   An asynchronous operation has been completed.
 			 *   The lpvStatusInformation parameter contains the address of an INTERNET_ASYNC_RESULT structure:
@@ -271,7 +260,7 @@ static void CALLBACK WinINet_asyncCallback(HINTERNET hInternet, DWORD_PTR dwCont
 						KSI_LOG_error(request->ctx, "Async WinINet: received HTTP code %d.", httpStatus);
 						request->status = KSI_HTTP_ERROR;
 						request->errExt = httpStatus;
-						/* We are finished with the request. Close handle and for HANDLE_CLOSING. */
+						/* We are finished with the request. Close handle and wait for INTERNET_STATUS_HANDLE_CLOSING. */
 						InternetCloseHandle(request->requestHandle);
 						request->requestHandle = NULL;
 						goto cleanup;
@@ -291,7 +280,7 @@ static void CALLBACK WinINet_asyncCallback(HINTERNET hInternet, DWORD_PTR dwCont
 						request->raw = (unsigned char*)KSI_calloc(request->contentLen, sizeof(unsigned char));
 						if (request->raw == NULL){
 							request->status = KSI_OUT_OF_MEMORY;
-							/* We are finished with the request. Close handle and for HANDLE_CLOSING. */
+							/* We are finished with the request. Close handle and wait for INTERNET_STATUS_HANDLE_CLOSING. */
 							InternetCloseHandle(request->requestHandle);
 							request->requestHandle = NULL;
 							goto cleanup;
@@ -326,7 +315,7 @@ static void CALLBACK WinINet_asyncCallback(HINTERNET hInternet, DWORD_PTR dwCont
 							KSI_LOG_error(request->ctx, "Async WinINet: %p Received byte count mismatch (%lu of %lu).",
 									request, bytesRcved, request->contentLen);
 							request->status = KSI_NETWORK_ERROR;
-							/* We are finished with the request. Close handle and for HANDLE_CLOSING. */
+							/* We are finished with the request. Close handle and wait for INTERNET_STATUS_HANDLE_CLOSING. */
 							InternetCloseHandle(request->requestHandle);
 							request->requestHandle = NULL;
 							goto cleanup;
@@ -339,7 +328,7 @@ static void CALLBACK WinINet_asyncCallback(HINTERNET hInternet, DWORD_PTR dwCont
 					request->dataRcving = false;
 					request->dataComplete = true;
 					request->status = KSI_OK;
-					/* Close request handle and wait for HANDLE_CLOSING. */
+					/* Close request handle and wait for INTERNET_STATUS_HANDLE_CLOSING. */
 					InternetCloseHandle(request->requestHandle);
 					request->requestHandle = NULL;
 				}
@@ -367,7 +356,7 @@ cleanup:
 			/* Set error. */
 			request->status = KSI_NETWORK_ERROR;
 			request->errExt = dwError;
-			/* Close handle and wait for STATUS_HANDLE_CLOSING. */
+			/* Close handle and wait for INTERNET_STATUS_HANDLE_CLOSING. */
 			if (request->requestHandle) {
 				InternetCloseHandle(request->requestHandle);
 				request->requestHandle = NULL;
@@ -883,7 +872,7 @@ static void HttpAsyncCtx_free(HttpAsyncCtx *o) {
 		WinAsyncReqList_free(o->httpQueue);
 		KSI_OctetStringList_free(o->respQueue);
 
-		/* Now it is save to delete the synchronization lock. */
+		/* Now it is safe to delete the synchronization lock. */
 		if (o->criticalSecInitialized) DeleteCriticalSection(&CriticalSection);
 
 		/* Cleanup headers. */
