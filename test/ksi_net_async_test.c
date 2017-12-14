@@ -19,9 +19,9 @@
 
 #include <string.h>
 
-#include <ksi/hash.h>
-#include <ksi/net.h>
-#include <ksi/net_async.h>
+#include "../src/ksi/hash.h"
+#include "../src/ksi/net.h"
+#include "../src/ksi/net_async.h"
 
 #include "cutest/CuTest.h"
 
@@ -583,7 +583,7 @@ static void Test_AsyncSign_oneRequest_verifyNoError(CuTest* tc) {
 	KSI_AsyncService_free(as);
 }
 
-static void Test_AsyncSign_oneRequest_responseWithPushConf(CuTest* tc) {
+static void Test_AsyncSign_oneRequest_responseWithPushConf_viaCallback(CuTest* tc) {
 	static const char *TEST_AGGR_RESPONSE_FILES[] = {
 		"resource/tlv/" TEST_RESOURCE_AGGR_VER "/ok-sig-2014-07-01.1-aggr_response-with-conf-and-ack.tlv",
 	};
@@ -638,6 +638,83 @@ static void Test_AsyncSign_oneRequest_responseWithPushConf(CuTest* tc) {
 
 	KSI_Signature_free(signature);
 	KSI_Config_free(callbackConf);
+	KSI_AsyncHandle_free(respHandle);
+	KSI_AsyncService_free(as);
+}
+
+static void Test_AsyncSign_oneRequest_responseWithPushConf_viaHandle(CuTest* tc) {
+	static const char *TEST_AGGR_RESPONSE_FILES[] = {
+		"resource/tlv/" TEST_RESOURCE_AGGR_VER "/ok-sig-2014-07-01.1-aggr_response-with-conf-and-ack.tlv",
+	};
+	static const size_t TEST_AGGR_RESP_COUNT = sizeof(TEST_AGGR_RESPONSE_FILES) / sizeof(TEST_AGGR_RESPONSE_FILES[0]);
+
+	int res;
+	KSI_AsyncService *as = NULL;
+	KSI_AsyncHandle *reqHandle = NULL;
+	KSI_Integer *intVal = NULL;
+	KSI_AsyncHandle *confHandle = NULL;
+	KSI_AsyncHandle *respHandle = NULL;
+	KSI_Signature *signature = NULL;
+	int state = KSI_ASYNC_STATE_UNDEFINED;
+	KSI_Config *pushConf = NULL;
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	res = KSI_CTX_setOption(ctx, KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK, NULL);
+	CuAssert(tc, "Unable to set extender conf callback.", res == KSI_OK);
+
+	res = KSI_SigningAsyncService_new(ctx, &as);
+	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
+
+	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_AGGR_RESP_COUNT, "anon", "anon");
+	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
+
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
+
+	res = KSI_AsyncService_addRequest(as, reqHandle);
+	CuAssert(tc, "Unable to add request", res == KSI_OK);
+
+	/* Get push configuration. */
+	callbackCalls = 0;
+	callbackConf = NULL;
+	res = KSI_AsyncService_run(as, &confHandle, NULL);
+	CuAssert(tc, "Failed to run async service.", res == KSI_OK);
+	CuAssert(tc, "Wrong handle.",  confHandle != reqHandle);
+
+	CuAssert(tc, "Conf callback should have not been invoked.", callbackCalls == 0);
+	CuAssert(tc, "Push conf should not be set.", callbackConf == NULL);
+
+	res = KSI_AsyncHandle_getState(confHandle, &state);
+	CuAssert(tc, "Unable to get request state.", res == KSI_OK && state == KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED);
+
+	res = KSI_AsyncHandle_getSignature(confHandle, &signature);
+	CuAssert(tc, "Signature should not be returned.", res == KSI_INVALID_STATE && signature == NULL);
+
+	res = KSI_AsyncHandle_getConfig(confHandle, &pushConf);
+	CuAssert(tc, "Push configuration should be returned.", res == KSI_OK && pushConf != NULL);
+
+	res = KSI_Config_getMaxRequests(pushConf, &intVal);
+	CuAssert(tc, "Conf max requests value mismatch.", res == KSI_OK && KSI_Integer_getUInt64(intVal) == 4);
+	intVal = NULL;
+
+	res = KSI_Config_getAggrPeriod(pushConf, &intVal);
+	CuAssert(tc, "Conf aggregation period value mismatch.", res == KSI_OK && KSI_Integer_getUInt64(intVal) == 3);
+
+	/* Now get the actual response. */
+	res = KSI_AsyncService_run(as, &respHandle, NULL);
+	CuAssert(tc, "Failed to run async service.", res == KSI_OK);
+	CuAssert(tc, "Handle mismatch.",  respHandle == reqHandle);
+
+	res = KSI_AsyncHandle_getState(respHandle, &state);
+	CuAssert(tc, "Unable to get request state.", res == KSI_OK && state == KSI_ASYNC_STATE_RESPONSE_RECEIVED);
+
+	res = KSI_AsyncHandle_getSignature(respHandle, &signature);
+	CuAssert(tc, "Signature should be returned.", res == KSI_OK && signature != NULL);
+
+	KSI_Signature_free(signature);
+	KSI_Config_free(callbackConf);
+	KSI_AsyncHandle_free(confHandle);
 	KSI_AsyncHandle_free(respHandle);
 	KSI_AsyncService_free(as);
 }
@@ -1433,7 +1510,8 @@ CuSuite* KSITest_NetAsync_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_verifySignature);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_multipleResponses_verifySignature);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_verifyNoError);
-	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_responseWithPushConf);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_responseWithPushConf_viaCallback);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_responseWithPushConf_viaHandle);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_wrongResponse_getSignatureFail);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_wrongResponseReqId);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_oneRequest_wrongResponseReqId_rcvTimeout0);

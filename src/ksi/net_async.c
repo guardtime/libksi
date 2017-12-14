@@ -227,10 +227,35 @@ int KSI_AsyncHandle_getSignature(const KSI_AsyncHandle *h, KSI_Signature **signa
 			KSI_pushError(h->ctx, res, NULL);
 			goto cleanup;
 		}
+	} else if (h->extReq != NULL) {
+		KSI_pushError(h->ctx, res = KSI_INVALID_STATE, "Not implemented.");
+		goto cleanup;
 	} else {
 		KSI_pushError(h->ctx, res = KSI_INVALID_STATE, "Request is missing.");
 		goto cleanup;
 	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+int KSI_AsyncHandle_getConfig(const KSI_AsyncHandle *h, KSI_Config **config) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (h == NULL || config == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(h->ctx);
+
+	/* Verify that this is an empty handle. */
+	if (!(h->aggrReq == NULL && h->extReq == NULL)) {
+		KSI_pushError(h->ctx, res = KSI_INVALID_STATE, NULL);
+		goto cleanup;
+	}
+
+	*config = (KSI_Config*)h->respCtx;
 	res = KSI_OK;
 cleanup:
 	return res;
@@ -537,6 +562,49 @@ cleanup:
 	return res;
 }
 
+static int asyncClient_handlePushConfig(KSI_AsyncClient *c, KSI_Config *config) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_AsyncHandle *confHandle = NULL;
+	KSI_Config_Callback confCallback = NULL;
+
+	if (c == NULL || config == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(c->ctx);
+
+	confCallback = (KSI_Config_Callback)(c->ctx->options[KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK]);
+	/* It is push conf which was not explicitly requested. Invoke the user conf receive callback. */
+	if (confCallback != NULL) {
+		res = confCallback(c->ctx, config);
+		if (res != KSI_OK) {
+			KSI_pushError(c->ctx, res, NULL);
+			goto cleanup;
+		}
+	} else {
+		/* Create an empty handle. */
+		res = KSI_AbstractAsyncHandle_new(c->ctx, &confHandle);
+		if (res != KSI_OK) {
+			KSI_pushError(c->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		confHandle->respCtx = (void*)KSI_Config_ref(config);
+		confHandle->respCtx_free = (void (*)(void*))KSI_Config_free;
+		confHandle->state = KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED;
+
+		KSI_AsyncHandle_free(c->pushConf);
+		c->pushConf = confHandle;
+		confHandle = NULL;
+	}
+
+	res = KSI_OK;
+cleanup:
+	KSI_AsyncHandle_free(confHandle);
+
+	return res;
+}
+
 static int asyncClient_processAggregationResponseQueue(KSI_AsyncClient *c) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_OctetString *resp = NULL;
@@ -631,16 +699,12 @@ static int asyncClient_processAggregationResponseQueue(KSI_AsyncClient *c) {
 				goto cleanup;
 			}
 
-			/* The push config is handled only via callback. */
+			/* Handle push config. */
 			if (tmpConf != NULL) {
-				KSI_Config_Callback confCallback = (KSI_Config_Callback)(c->ctx->options[KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK]);
-				/* It is push conf which was not explicitly requested. Invoke the user conf receive callback. */
-				if (confCallback != NULL) {
-					res = confCallback(c->ctx, tmpConf);
-					if (res != KSI_OK) {
-						KSI_pushError(c->ctx, res, NULL);
-						goto cleanup;
-					}
+				res = asyncClient_handlePushConfig(c, tmpConf);
+				if (res != KSI_OK) {
+					KSI_pushError(c->ctx, res , NULL);
+					goto cleanup;
 				}
 			}
 
@@ -692,13 +756,22 @@ static int asyncClient_findNextResponse(KSI_AsyncClient *c, KSI_AsyncHandle **ha
 		goto cleanup;
 	}
 
+	/* Check if push config has been received. */
+	if (c->pushConf != NULL) {
+		*handle = c->pushConf;
+		c->pushConf = NULL;
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	/* Verify if there are any handles on hold in cache. */
 	if (c->pending == 0 && c->received == 0) {
-		/* There are no handles on hold. */
 		*handle = NULL;
 		res = KSI_OK;
 		goto cleanup;
 	}
 
+	/* Search cache for finalized requests. */
 	last = c->tail;
 	for (;;) {
 		if (c->reqCache[c->tail] != NULL) {
@@ -740,6 +813,7 @@ static int asyncClient_findNextResponse(KSI_AsyncClient *c, KSI_AsyncHandle **ha
 			break;
 		}
 	}
+	/* Nothing to return. */
 	*handle = NULL;
 	res = KSI_OK;
 cleanup:
@@ -983,6 +1057,7 @@ int KSI_AbstractAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c) {
 	tmp->reqCache = NULL;
 	tmp->pending = 0;
 	tmp->received = 0;
+	tmp->pushConf = NULL;
 
 	tmp->addRequest = NULL;
 	tmp->getResponse = NULL;

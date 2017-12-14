@@ -184,11 +184,13 @@ extern "C" {
 
 		size_t requestCountOffset; /**< A circular counter for increasing the request id entropy. */
 		size_t requestCount; /**< Request cache position of the last allocated handle. */
-		size_t tail; /**< Request cache position of the last handle that was returned to the used. */
-		KSI_AsyncHandle **reqCache;
 
+		KSI_AsyncHandle **reqCache; /**< Request cache. */
+		size_t tail; /**< Request cache position of the last handle that was returned to the used. */
 		size_t pending; /**< Nof pending requests (including in error state). */
 		size_t received; /**< Nof received valid responses. */
+
+		KSI_AsyncHandle *pushConf; /**< Push config is not part of the request cache, as it can not be assigned to a particular request. */
 
 		size_t options[__NOF_KSI_ASYNC_OPT];
 	};

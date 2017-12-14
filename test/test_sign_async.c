@@ -30,12 +30,12 @@
 #  define sleep_ms(x) usleep((x)*1000)
 #endif
 
-#include <ksi/ksi.h>
-#include <ksi/net.h>
-#include <ksi/net_async.h>
-#include <ksi/net_uri.h>
-#include <ksi/signature_builder.h>
-#include <ksi/compatibility.h>
+#include "../src/ksi/ksi.h"
+#include "../src/ksi/net.h"
+#include "../src/ksi/net_async.h"
+#include "../src/ksi/net_uri.h"
+#include "../src/ksi/signature_builder.h"
+#include "../src/ksi/compatibility.h"
 
 #include "support_tests.h"
 
@@ -378,6 +378,21 @@ int main(int argc, char **argv) {
 							}
 
 							KSI_Signature_free(signature);    signature = NULL;
+							KSI_AsyncHandle_free(respHandle); respHandle = NULL;
+						}
+						break;
+
+					case KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED: {
+							KSI_Config *pushConf = NULL;
+
+							KSI_LOG_info(ksi, "Handle push configuration.");
+
+							res = KSI_AsyncHandle_getConfig(respHandle, &pushConf);
+							if (res != KSI_OK || pushConf != NULL) {
+								fprintf(stderr, "Failed to extract push configuration.\n");
+								goto cleanup;
+							}
+
 							KSI_AsyncHandle_free(respHandle); respHandle = NULL;
 						}
 						break;
