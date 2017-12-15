@@ -4735,13 +4735,6 @@ int KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(KSI_Ver
 		goto cleanup;
 	}
 
-//	res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &sigPubTime);
-//	if (res != KSI_OK) {
-//		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-//		KSI_pushError(ctx, res, NULL);
-//		goto cleanup;
-//	}
-
 	res = KSI_PublicationData_getTime(info->userPublication, &usrPubDataTime);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
