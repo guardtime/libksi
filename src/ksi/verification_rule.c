@@ -4697,9 +4697,10 @@ int KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(KSI_Ver
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	const KSI_Signature *sig = NULL;
-	KSI_Integer *sigPubTime = NULL;
 	KSI_Integer *usrPubDataTime = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBSTRING;
+	KSI_AggregationHashChain *aggregationChain = NULL;
+	KSI_Integer *aggregationTime = NULL;
 
 	if (result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -4719,11 +4720,28 @@ int KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(KSI_Ver
 
 	KSI_LOG_info(ctx, "Verify that signature is created before user provided publication.");
 
-	res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &sigPubTime);
-	if (res != KSI_OK) {
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
+	if (sig->calendarChain != NULL) {
+		res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &aggregationTime);
+		if (res != KSI_OK) {
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+	} else {
+		/* Take the first aggregation hash chain, as all of the chain should have the same value for "aggregation time". */
+		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &aggregationChain);
+		if (res != KSI_OK) {
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_AggregationHashChain_getAggregationTime(aggregationChain, &aggregationTime);
+		if (res != KSI_OK) {
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
 	}
 
 	res = KSI_PublicationData_getTime(info->userPublication, &usrPubDataTime);
@@ -4739,8 +4757,8 @@ int KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(KSI_Ver
 		goto cleanup;
 	}
 
-	if (KSI_Integer_compare(sigPubTime, usrPubDataTime) != -1) {
-		KSI_LOG_debug(ctx, "Publication time from sig pub data : %llu", (unsigned long long)KSI_Integer_getUInt64(sigPubTime));
+	if (KSI_Integer_compare(aggregationTime, usrPubDataTime) != -1) {
+		KSI_LOG_debug(ctx, "Publication time from sig pub data : %llu", (unsigned long long)KSI_Integer_getUInt64(aggregationTime));
 		KSI_LOG_debug(ctx, "Publication time from user pub data: %llu", (unsigned long long)KSI_Integer_getUInt64(usrPubDataTime));
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		res = KSI_OK;
