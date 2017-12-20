@@ -351,15 +351,6 @@ static void requestAggregatorConfig(CuTest* tc, const char *scheme) {
 }
 
 static void Test_RequestAggregatorConfig(CuTest* tc) {
-	KSI_CTX_setFlag(ctx, KSI_OPT_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_1);
-
-	requestAggregatorConfig(tc, TEST_SCHEME_HTTP);
-	requestAggregatorConfig(tc, TEST_SCHEME_TCP);
-}
-
-static void Test_RequestAggregatorConfig_pduV2(CuTest* tc) {
-	KSI_CTX_setFlag(ctx, KSI_OPT_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_2);
-
 	requestAggregatorConfig(tc, TEST_SCHEME_HTTP);
 	requestAggregatorConfig(tc, TEST_SCHEME_TCP);
 }
@@ -378,7 +369,6 @@ CuSuite* AggreIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_CreateSignatureDifferentNetProviders);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureUserInfoFromUrl);
 	SUITE_ADD_TEST(suite, Test_RequestAggregatorConfig);
-	SUITE_ADD_TEST(suite, Test_RequestAggregatorConfig_pduV2);
 
 	return suite;
 }
