@@ -688,9 +688,6 @@ static void Test_AsyncSign_oneRequest_responseWithPushConf_viaHandle(CuTest* tc)
 	res = KSI_AsyncHandle_getState(confHandle, &state);
 	CuAssert(tc, "Unable to get request state.", res == KSI_OK && state == KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED);
 
-	res = KSI_AsyncHandle_getSignature(confHandle, &signature);
-	CuAssert(tc, "Signature should not be returned.", res == KSI_INVALID_STATE && signature == NULL);
-
 	res = KSI_AsyncHandle_getConfig(confHandle, &pushConf);
 	CuAssert(tc, "Push configuration should be returned.", res == KSI_OK && pushConf != NULL);
 
@@ -700,6 +697,9 @@ static void Test_AsyncSign_oneRequest_responseWithPushConf_viaHandle(CuTest* tc)
 
 	res = KSI_Config_getAggrPeriod(pushConf, &intVal);
 	CuAssert(tc, "Conf aggregation period value mismatch.", res == KSI_OK && KSI_Integer_getUInt64(intVal) == 3);
+
+	res = KSI_AsyncHandle_getSignature(confHandle, &signature);
+	CuAssert(tc, "Signature should not be returned.", res == KSI_INVALID_STATE && signature == NULL);
 
 	/* Now get the actual response. */
 	res = KSI_AsyncService_run(as, &respHandle, NULL);

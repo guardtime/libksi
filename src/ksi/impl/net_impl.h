@@ -190,7 +190,7 @@ extern "C" {
 		size_t pending; /**< Nof pending requests (including in error state). */
 		size_t received; /**< Nof received valid responses. */
 
-		KSI_AsyncHandle *pushConf; /**< Push config is not part of the request cache, as it can not be assigned to a particular request. */
+		KSI_AsyncHandle *serverConf; /**< Push config is not part of the request cache, as it can not be assigned to a particular request. */
 
 		size_t options[__NOF_KSI_ASYNC_OPT];
 	};
