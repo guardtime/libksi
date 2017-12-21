@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2017 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -377,6 +377,37 @@ static void testHashGetAlgByName(CuTest* tc) {
 	CuAssert(tc, "Algorithm must be trusted.", !KSI_isHashAlgorithmTrusted(algo));
 }
 
+static void testHashAlgorithmDeprecatedDates(CuTest *tc) {
+	CuAssert(tc, "Invalid algorithm has no valid date.", KSI_HashAlgorithm_getDeprecatedFrom(KSI_HASHALG_INVALID) < 0);
+
+	CuAssert(tc, "SHA1 is deprecated as of  01.07.2016T00:00 UTC.", KSI_HashAlgorithm_getDeprecatedFrom(KSI_HASHALG_SHA1) == 1467331200);
+
+	CuAssert(tc, "Hash algorithm should not be deprecated.", KSI_HashAlgorithm_getDeprecatedFrom(KSI_HASHALG_SHA2_256) == 0);
+	CuAssert(tc, "Hash algorithm should not be deprecated.", KSI_HashAlgorithm_getDeprecatedFrom(KSI_HASHALG_RIPEMD160) == 0);
+	CuAssert(tc, "Hash algorithm should not be deprecated.", KSI_HashAlgorithm_getDeprecatedFrom(KSI_HASHALG_SHA2_384) == 0);
+	CuAssert(tc, "Hash algorithm should not be deprecated.", KSI_HashAlgorithm_getDeprecatedFrom(KSI_HASHALG_SHA2_512) == 0);
+	CuAssert(tc, "Hash algorithm should not be deprecated.", KSI_HashAlgorithm_getDeprecatedFrom(KSI_HASHALG_SHA3_244) == 0);
+	CuAssert(tc, "Hash algorithm should not be deprecated.", KSI_HashAlgorithm_getDeprecatedFrom(KSI_HASHALG_SHA3_256) == 0);
+	CuAssert(tc, "Hash algorithm should not be deprecated.", KSI_HashAlgorithm_getDeprecatedFrom(KSI_HASHALG_SHA3_384) == 0);
+	CuAssert(tc, "Hash algorithm should not be deprecated.", KSI_HashAlgorithm_getDeprecatedFrom(KSI_HASHALG_SHA3_512) == 0);
+	CuAssert(tc, "Hash algorithm should not be deprecated.", KSI_HashAlgorithm_getDeprecatedFrom(KSI_HASHALG_SM3) == 0);
+}
+
+static void testHashAlgorithmObsoleteDates(CuTest *tc) {
+	CuAssert(tc, "Invalid algorithm has no valid date.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_INVALID) < 0);
+
+	CuAssert(tc, "No obsolete algorithm defined.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_SHA1) == 0);
+	CuAssert(tc, "No obsolete algorithm defined.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_SHA2_256) == 0);
+	CuAssert(tc, "No obsolete algorithm defined.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_RIPEMD160) == 0);
+	CuAssert(tc, "No obsolete algorithm defined.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_SHA2_384) == 0);
+	CuAssert(tc, "No obsolete algorithm defined.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_SHA2_512) == 0);
+	CuAssert(tc, "No obsolete algorithm defined.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_SHA3_244) == 0);
+	CuAssert(tc, "No obsolete algorithm defined.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_SHA3_256) == 0);
+	CuAssert(tc, "No obsolete algorithm defined.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_SHA3_384) == 0);
+	CuAssert(tc, "No obsolete algorithm defined.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_SHA3_512) == 0);
+	CuAssert(tc, "No obsolete algorithm defined.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_SM3) == 0);
+}
+
 static void testIncorrectHashLen(CuTest* tc) {
 	int res;
 	KSI_DataHash *hsh = NULL;
@@ -672,6 +703,8 @@ CuSuite* KSITest_Hash_getSuite(void) {
 	SUITE_ADD_TEST(suite, testSHA256fromImprint);
 	SUITE_ADD_TEST(suite, testParallelHashing);
 	SUITE_ADD_TEST(suite, testHashGetAlgByName);
+	SUITE_ADD_TEST(suite, testHashAlgorithmDeprecatedDates);
+	SUITE_ADD_TEST(suite, testHashAlgorithmObsoleteDates);
 	SUITE_ADD_TEST(suite, testIncorrectHashLen);
 	SUITE_ADD_TEST(suite, testAllHashing);
 	SUITE_ADD_TEST(suite, testReset);

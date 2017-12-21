@@ -71,7 +71,9 @@ static int getExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Integ
 static int initPublicationsFile(KSI_VerificationContext *info);
 static int initAggregationOutputHash(KSI_VerificationContext *info);
 static int extendingPermittedVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result, const KSI_VerificationStep step, const char *rule);
-static int getNextRightLink(KSI_HashChainLinkList *list, size_t *pos, KSI_HashChainLink **link);
+static int getNextLink(KSI_HashChainLinkList *list, bool getRight, size_t *pos, KSI_HashChainLink **link);
+#define getNextRightLink(list, pos, link) getNextLink((list), true, (pos), (link))
+#define getNextLeftLink(list, pos, link) getNextLink((list), false, (pos), (link))
 static bool wasDeprecatedAt(KSI_HashAlgorithm algorithm, time_t at);
 static bool wasObsoleteAt(KSI_HashAlgorithm algorithm, time_t at);
 static int calendarChainAggrAlgorithmState(KSI_CTX *ctx, const KSI_CalendarHashChain *calHshChain, bool (*inspector)(KSI_HashAlgorithm, time_t), bool *status);
@@ -266,7 +268,7 @@ int KSI_VerificationRule_Rfc3161DoesNotExist(KSI_VerificationContext *info, KSI_
 
 	if (info->signature->rfc3161 != NULL) {
 		KSI_LOG_info(info->ctx, "RFC3161 record exists.");
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_NONE, KSI_VERIFY_NONE);
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -297,7 +299,7 @@ int KSI_VerificationRule_Rfc3161Existence(KSI_VerificationContext *info, KSI_Rul
 
 	if (info->signature->rfc3161 == NULL) {
 		KSI_LOG_info(info->ctx, "RFC3161 record is missing.");
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_NONE, KSI_VERIFY_NONE);
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -1740,7 +1742,7 @@ static int calendarChainAggrAlgorithmState(KSI_CTX *ctx, const KSI_CalendarHashC
 		KSI_DataHash *imprint = NULL;
 		KSI_HashAlgorithm algId = KSI_HASHALG_INVALID;
 
-		res = getNextRightLink(chainList, &pos, &rlink);
+		res = getNextLeftLink(chainList, &pos, &rlink);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
@@ -2103,7 +2105,7 @@ int KSI_VerificationRule_DocumentHashDoesNotExist(KSI_VerificationContext *info,
 
 	if (info->documentHash != NULL) {
 		KSI_LOG_info(info->ctx, "Document hash exists.");
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_NONE, KSI_VERIFY_NONE);
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -2134,7 +2136,7 @@ int KSI_VerificationRule_DocumentHashExistence(KSI_VerificationContext *info, KS
 
 	if (info->documentHash == NULL) {
 		KSI_LOG_info(info->ctx, "Document hash is missing.");
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_NONE, KSI_VERIFY_NONE);
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -2306,7 +2308,7 @@ int KSI_VerificationRule_SignatureDoesNotContainPublication(KSI_VerificationCont
 
 	if (info->signature->publication != NULL) {
 		KSI_LOG_info(info->ctx, "Signature contains publication record.");
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_NONE, KSI_VERIFY_NONE);
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -2319,7 +2321,7 @@ cleanup:
 	return res;
 }
 
-static int getNextRightLink(KSI_HashChainLinkList *list, size_t *pos, KSI_HashChainLink **link) {
+static int getNextLink(KSI_HashChainLinkList *list, bool getRight, size_t *pos, KSI_HashChainLink **link) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (list == NULL || pos == NULL || link == NULL) {
@@ -2337,7 +2339,7 @@ static int getNextRightLink(KSI_HashChainLinkList *list, size_t *pos, KSI_HashCh
 		if (res != KSI_OK) {
 			goto cleanup;
 		}
-		if (!isLeft) {
+		if ((isLeft && !getRight) || (!isLeft && getRight)) {
 			res = KSI_OK;
 			goto cleanup;
 		}
@@ -2493,11 +2495,42 @@ int KSI_VerificationRule_SignaturePublicationRecordExistence(KSI_VerificationCon
 		goto cleanup;
 	}
 
-	KSI_LOG_info(info->ctx, "Verify signature publication record existence.");
+	KSI_LOG_info(info->ctx, "%s.", __FUNCTION__);
 
 	if (info->signature->publication == NULL) {
 		KSI_LOG_info(info->ctx, "Signature publication record is missing.");
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_NONE, KSI_VERIFY_NONE);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(KSI_VERIFY_NONE);
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_SignaturePublicationRecordMissing(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_LOG_info(info->ctx, "%s.", __FUNCTION__);
+
+	if (info->signature->publication != NULL) {
+		KSI_LOG_info(info->ctx, "Signature publication record exists.");
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_NONE, KSI_VERIFY_NONE);
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -2604,7 +2637,7 @@ int KSI_VerificationRule_CalendarHashChainDoesNotExist(KSI_VerificationContext *
 
 	if (info->signature->calendarChain != NULL) {
 		KSI_LOG_info(info->ctx, "Signature calendar hash chain is present.");
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_NONE, KSI_VERIFY_NONE);
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -2975,6 +3008,37 @@ int KSI_VerificationRule_CalendarHashChainExistence(KSI_VerificationContext *inf
 
 	if (info->signature->calendarChain == NULL) {
 		KSI_LOG_info(info->ctx, "Signature calendar hash chain is missing.");
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_NONE, KSI_VERIFY_NONE);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(KSI_VERIFY_NONE);
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_CalendarHashChainPresenceVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_LOG_info(info->ctx, "Verifying calendar hash chain existence.");
+
+	if (info->signature->calendarChain == NULL) {
+		KSI_LOG_info(info->ctx, "Signature calendar hash chain is missing.");
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		res = KSI_OK;
 		goto cleanup;
@@ -2993,6 +3057,37 @@ int KSI_VerificationRule_CalendarHashChainHashAlgorithmDeprecatedAtPubTime(KSI_V
 }
 
 int KSI_VerificationRule_CalendarAuthenticationRecordExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_LOG_info(info->ctx, "Verifying calendar authentication record existence.");
+
+	if (info->signature->calendarAuthRec == NULL) {
+		KSI_LOG_info(info->ctx, "Calendar authentication record is missing.");
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_NONE, KSI_VERIFY_NONE);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(KSI_VERIFY_NONE);
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_CalendarAuthenticationRecordPresenceVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (result == NULL) {
@@ -3041,7 +3136,7 @@ int KSI_VerificationRule_CalendarAuthenticationRecordDoesNotExist(KSI_Verificati
 
 	if (info->signature->calendarAuthRec != NULL) {
 		KSI_LOG_info(info->ctx, "Calendar hash chain authentication record is present.");
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_NONE, KSI_VERIFY_NONE);
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -3449,9 +3544,7 @@ int KSI_VerificationRule_PublicationsFileContainsSignaturePublication(KSI_Verifi
 	KSI_CTX *ctx = NULL;
 	const KSI_Signature *sig = NULL;
 	KSI_Integer *sigPubTime = NULL;
-	KSI_DataHash *sigPubHash = NULL;
 	KSI_PublicationRecord *pubRec = NULL;
-	KSI_DataHash *pubHash = NULL;
 	VerificationTempData *tempData = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBFILE;
 
@@ -3500,7 +3593,6 @@ int KSI_VerificationRule_PublicationsFileContainsSignaturePublication(KSI_Verifi
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-
 	if (sigPubTime == NULL) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Missing publication time in signature publication data.");
@@ -3515,38 +3607,158 @@ int KSI_VerificationRule_PublicationsFileContainsSignaturePublication(KSI_Verifi
 	}
 	if (pubRec == NULL) {
 		KSI_LOG_info(ctx, "Publications file does not contain signature publication.");
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_NONE, KSI_VERIFY_NONE);
 		res = KSI_OK;
 		goto cleanup;
 	}
 
-	res = KSI_PublicationData_getImprint(pubRec->publishedData, &pubHash);
+	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_PublicationRecord_free(pubRec);
+	return res;
+}
+
+int KSI_VerificationRule_PublicationsFileDoesNotContainSignaturePublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	const KSI_Signature *sig = NULL;
+	KSI_Integer *sigPubTime = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
+	VerificationTempData *tempData = NULL;
+	const KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBFILE;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->signature;
+	KSI_ERR_clearErrors(ctx);
+
+	tempData = info->tempData;
+	if (tempData == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_STATE, "Verification context not properly initialized.");
+		goto cleanup;
+	}
+
+	KSI_LOG_info(ctx, "Verify signature publication record.");
+
+	if (sig->publication == NULL) {
+		const char *msg = "Signature does not contain publication record.";
+		KSI_LOG_info(ctx, "%s", msg);
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, msg);
+		goto cleanup;
+	}
+
+	res = initPublicationsFile(info);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-	if (pubHash == NULL) {
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res = KSI_INVALID_VERIFICATION_INPUT, "Missing publication hash in publication data.");
-		goto cleanup;
-	}
 
-	res = KSI_PublicationData_getImprint(sig->publication->publishedData, &sigPubHash);
+	res = KSI_PublicationData_getTime(sig->publication->publishedData, &sigPubTime);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-	if (sigPubHash == NULL) {
+	if (sigPubTime == NULL) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Missing publication hash in signature publication data.");
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Missing publication time in signature publication data.");
 		goto cleanup;
 	}
 
-	if (!KSI_DataHash_equals(pubHash, sigPubHash)) {
-		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Publications file publication hash:", pubHash);
-		KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Signature publication record hash :", sigPubHash);
+	res = KSI_PublicationsFile_findPublicationByTime(tempData->publicationsFile, sigPubTime, &pubRec);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+	if (pubRec != NULL) {
+		KSI_LOG_info(ctx, "Publications file contain signature publication.");
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_NONE, KSI_VERIFY_NONE);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_PublicationRecord_free(pubRec);
+	return res;
+}
+
+int KSI_VerificationRule_PublicationsFileSignaturePublicationVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	const KSI_Signature *sig = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
+	VerificationTempData *tempData = NULL;
+	const KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBFILE;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->signature;
+	KSI_ERR_clearErrors(ctx);
+
+	tempData = info->tempData;
+	if (tempData == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_STATE, "Verification context not properly initialized.");
+		goto cleanup;
+	}
+
+	KSI_LOG_info(ctx, "%s.", __FUNCTION__);
+
+	if (sig->publication == NULL) {
+		const char *msg = "Signature does not contain publication record.";
+		KSI_LOG_info(ctx, "%s", msg);
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, msg);
+		goto cleanup;
+	}
+
+	res = initPublicationsFile(info);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_PublicationsFile_findPublication(tempData->publicationsFile,
+			(const KSI_PublicationRecord*)sig->publication, &pubRec);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+	if (pubRec == NULL) {
+		KSI_LOG_info(ctx, "Publications file does not contain signature publication.");
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_PUB_5, step);
 		res = KSI_OK;
 		goto cleanup;
@@ -3692,7 +3904,7 @@ static int signatureCalendarChainHashAlgorithmDeprecatedAtPubTime(KSI_Verificati
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	const KSI_Signature *sig = NULL;
-	bool isTrue = false;
+	bool isDeprecated = false;
 
 	if (result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -3711,18 +3923,18 @@ static int signatureCalendarChainHashAlgorithmDeprecatedAtPubTime(KSI_Verificati
 	sig = info->signature;
 	KSI_ERR_clearErrors(ctx);
 
-	KSI_LOG_info(ctx, "Verify signature calendar chain aggr algorithm state.");
+	KSI_LOG_info(ctx, "%s.", rule);
 
-	res = calendarChainAggrAlgorithmState(ctx, sig->calendarChain, wasDeprecatedAt, &isTrue);
+	res = calendarChainAggrAlgorithmState(ctx, sig->calendarChain, wasDeprecatedAt, &isDeprecated);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	if (isTrue) {
-		KSI_LOG_info(ctx, "Calendar hash chain right link hash algorithm was deprecated at publication time.");
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step);
+	if (isDeprecated) {
+		KSI_LOG_info(ctx, "Calendar hash chain link hash algorithm was deprecated at publication time.");
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -3843,7 +4055,7 @@ int KSI_VerificationRule_PublicationsFileExtendedCalendarChainHashAlgorithmDepre
 	}
 
 	if (isTrue) {
-		KSI_LOG_info(ctx, "Extended calendar hash chain right link hash algorithm was deprecated at publication time.");
+		KSI_LOG_info(ctx, "Extended calendar hash chain link hash algorithm was deprecated at publication time.");
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step);
 		res = KSI_OK;
 		goto cleanup;
@@ -4231,7 +4443,7 @@ int KSI_VerificationRule_UserProvidedPublicationExistence(KSI_VerificationContex
 	if (info->userPublication == NULL ||
 			info->userPublication->time == NULL || info->userPublication->imprint == NULL) {
 		KSI_LOG_info(info->ctx, "User publication data not provided.");
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_NONE, KSI_VERIFY_NONE);
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -4323,7 +4535,7 @@ int KSI_VerificationRule_UserProvidedPublicationTimeVerification(KSI_Verificatio
 
 	if (usrPubTime == NULL) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res = KSI_INVALID_VERIFICATION_INPUT, "Missing publication timein user publication data.");
+		KSI_pushError(ctx, res = KSI_INVALID_VERIFICATION_INPUT, "Missing publication time in user publication data.");
 		goto cleanup;
 	}
 
@@ -4336,6 +4548,76 @@ int KSI_VerificationRule_UserProvidedPublicationTimeVerification(KSI_Verificatio
 	}
 
 	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_UserProvidedPublicationTimeDoesNotSuit(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	const KSI_Signature *sig = NULL;
+	KSI_Integer *sigPubTime = NULL;
+	KSI_Integer *usrPubTime = NULL;
+	const KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBSTRING;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL || info->userPublication == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	ctx = info->ctx;
+	sig = info->signature;
+	KSI_ERR_clearErrors(ctx);
+
+	KSI_LOG_info(ctx, "%s.", __FUNCTION__);
+
+	res = KSI_PublicationData_getTime(sig->publication->publishedData, &sigPubTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (sigPubTime == NULL) {
+		KSI_LOG_debug(ctx, "Missing publication time in signature publication data.");
+		VERIFICATION_RESULT_OK(step);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	res = KSI_PublicationData_getTime(info->userPublication, &usrPubTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (usrPubTime == NULL) {
+		KSI_LOG_debug(ctx, "Missing publication time in user publication data.");
+		VERIFICATION_RESULT_OK(step);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	if (KSI_Integer_compare(sigPubTime, usrPubTime) != 0) {
+		KSI_LOG_debug(ctx, "Publication time from signature publication: %llu", (unsigned long long)KSI_Integer_getUInt64(sigPubTime));
+		KSI_LOG_debug(ctx, "Publication time from user publication     : %llu", (unsigned long long)KSI_Integer_getUInt64(usrPubTime));
+		VERIFICATION_RESULT_OK(step);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_NONE, KSI_VERIFY_NONE);
 	res = KSI_OK;
 
 cleanup:
@@ -4415,9 +4697,10 @@ int KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(KSI_Ver
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	const KSI_Signature *sig = NULL;
-	KSI_Integer *sigPubTime = NULL;
 	KSI_Integer *usrPubDataTime = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBSTRING;
+	KSI_AggregationHashChain *aggregationChain = NULL;
+	KSI_Integer *aggregationTime = NULL;
 
 	if (result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -4437,11 +4720,28 @@ int KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(KSI_Ver
 
 	KSI_LOG_info(ctx, "Verify that signature is created before user provided publication.");
 
-	res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &sigPubTime);
-	if (res != KSI_OK) {
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
+	if (sig->calendarChain != NULL) {
+		res = KSI_CalendarHashChain_getAggregationTime(sig->calendarChain, &aggregationTime);
+		if (res != KSI_OK) {
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+	} else {
+		/* Take the first aggregation hash chain, as all of the chain should have the same value for "aggregation time". */
+		res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &aggregationChain);
+		if (res != KSI_OK) {
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_AggregationHashChain_getAggregationTime(aggregationChain, &aggregationTime);
+		if (res != KSI_OK) {
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
 	}
 
 	res = KSI_PublicationData_getTime(info->userPublication, &usrPubDataTime);
@@ -4457,8 +4757,8 @@ int KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(KSI_Ver
 		goto cleanup;
 	}
 
-	if (KSI_Integer_compare(sigPubTime, usrPubDataTime) != -1) {
-		KSI_LOG_debug(ctx, "Publication time from sig pub data : %llu", (unsigned long long)KSI_Integer_getUInt64(sigPubTime));
+	if (KSI_Integer_compare(aggregationTime, usrPubDataTime) != -1) {
+		KSI_LOG_debug(ctx, "Publication time from sig pub data : %llu", (unsigned long long)KSI_Integer_getUInt64(aggregationTime));
 		KSI_LOG_debug(ctx, "Publication time from user pub data: %llu", (unsigned long long)KSI_Integer_getUInt64(usrPubDataTime));
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		res = KSI_OK;

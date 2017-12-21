@@ -65,9 +65,10 @@ EXPORTS
 	KSI_DataHasher_add
 	KSI_DataHasher_addImprint
 	KSI_DataHasher_addOctetString
-	KSI_DataHash_createZero
 	KSI_DataHasher_close
 	KSI_DataHasher_free
+
+	KSI_DataHash_createZero
 	KSI_DataHash_free
 	KSI_DataHash_create
 	KSI_DataHash_clone
@@ -76,17 +77,21 @@ EXPORTS
 	KSI_DataHash_fromDigest
 	KSI_DataHash_getImprint
 	KSI_DataHash_fromImprint
-	KSI_getHashAlgorithmByName
-	KSI_getHashLength
-	KSI_isHashAlgorithmTrusted
-	KSI_checkHashAlgorithmAt
-	KSI_isHashAlgorithmSupported
-	KSI_getHashAlgorithmName
 	KSI_DataHash_equals
 	KSI_DataHash_fromTlv
 	KSI_DataHash_toTlv
 	KSI_DataHash_getHashAlg
 	KSI_DataHash_toString
+
+	KSI_getHashLength
+	KSI_isHashAlgorithmTrusted
+	KSI_checkHashAlgorithmAt
+	KSI_isHashAlgorithmSupported
+	KSI_getHashAlgorithmName
+	KSI_getHashAlgorithmByName
+	KSI_HashAlgorithm_getBlockSize
+	KSI_HashAlgorithm_getDeprecatedFrom
+	KSI_HashAlgorithm_getObsoleteFrom
 
 ;hashchain.h
 EXPORTS
@@ -924,6 +929,11 @@ EXPORTS
 	KSI_VerificationRule_Rfc3161RecordOutputHashAlgorithmVerification
 	KSI_VerificationRule_Rfc3161DoesNotExist
 	KSI_VerificationRule_Rfc3161Existence
+	KSI_VerificationRule_SignaturePublicationRecordMissing
+	KSI_VerificationRule_PublicationsFileDoesNotContainSignaturePublication
+	KSI_VerificationRule_PublicationsFileSignaturePublicationVerification
+	KSI_VerificationRule_UserProvidedPublicationTimeDoesNotSuit
+	KSI_VerificationRule_CalendarAuthenticationRecordPresenceVerification
 
 ;policy.h
 EXPORTS
