@@ -323,6 +323,7 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 	KSI_Integer *reqId = NULL;
 	TcpClient_Endpoint *endp = NULL;
 	KSI_NetEndpoint *ext = NULL;
+	KSI_ExtendReq *reqRef = NULL;
 
 	if (client == NULL || req == NULL || handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -353,8 +354,11 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 		reqId = NULL;
 	}
 
-	res = KSI_ExtendReq_enclose(req, ext->ksi_user, ext->ksi_pass, &pdu);
-	if (res != KSI_OK) goto cleanup;
+	res = KSI_ExtendReq_enclose((reqRef = KSI_ExtendReq_ref(req)), ext->ksi_user, ext->ksi_pass, &pdu);
+	if (res != KSI_OK) {
+		KSI_ExtendReq_free(reqRef);
+		goto cleanup;
+	}
 
 	res = prepareRequest(
 			client,
@@ -366,7 +370,7 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 			"Extend request");
 	if (res != KSI_OK) goto cleanup;
 
-	(*handle)->reqCtx = (void*)KSI_ExtendReq_ref(req);
+	(*handle)->reqCtx = (void*)req;
 	(*handle)->reqCtx_free = (void (*)(void *))KSI_ExtendReq_free;
 
 	res = KSI_OK;
@@ -386,6 +390,7 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 	KSI_Integer *reqId = NULL;
 	TcpClient_Endpoint *endp = NULL;
 	KSI_NetEndpoint *aggr = NULL;
+	KSI_AggregationReq *reqRef = NULL;
 
 	if (client == NULL || req == NULL || handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -416,8 +421,11 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 		reqId = NULL;
 	}
 
-	res = KSI_AggregationReq_enclose(req, aggr->ksi_user, aggr->ksi_pass, &pdu);
-	if (res != KSI_OK) goto cleanup;
+	res = KSI_AggregationReq_enclose((reqRef = KSI_AggregationReq_ref(req)), aggr->ksi_user, aggr->ksi_pass, &pdu);
+	if (res != KSI_OK) {
+		KSI_AggregationReq_free(reqRef);
+		goto cleanup;
+	}
 
 	res = prepareRequest(
 			client,
@@ -429,7 +437,7 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 			"Aggregation request");
 	if (res != KSI_OK) goto cleanup;
 
-	(*handle)->reqCtx = (void*)KSI_AggregationReq_ref(req);
+	(*handle)->reqCtx = (void*)req;
 	(*handle)->reqCtx_free = (void (*)(void *))KSI_AggregationReq_free;
 
 	res = KSI_OK;

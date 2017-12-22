@@ -631,7 +631,7 @@ static void asyncSigning_addEmptyReq(CuTest* tc, const char *url, const char *us
 	CuAssert(tc, "Unable to create async request.", res == KSI_OK && handle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, handle);
-	CuAssert(tc, "Unable to add request", res == KSI_INVALID_FORMAT);
+	CuAssert(tc, "Unable to add request", res != KSI_OK && res != KSI_ASYNC_REQUEST_CACHE_FULL);
 
 	KSI_AsyncHandle_free(handle);
 	KSI_AsyncService_free(as);
@@ -789,7 +789,6 @@ void Test_AsyncSign_requestConfigOnly_http(CuTest* tc) {
 	asyncSigning_requestConfigOnly(tc, KSITest_composeUri(TEST_SCHEME_HTTP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
 }
 
-#ifdef SEND_MULTY_PAYLOAD_SUPPORTED
 static void asyncSigning_requestConfigWithAggrReq(CuTest* tc, const char *url, const char *user, const char *pass) {
 	int res;
 	KSI_AsyncService *as = NULL;
@@ -847,11 +846,10 @@ static void asyncSigning_requestConfigWithAggrReq(CuTest* tc, const char *url, c
 
 		KSI_LOG_debug(ctx, "%s: RUN.", __FUNCTION__);
 
-		handle = NULL;
 		res = KSI_AsyncService_run(as, &respHandle, &onHold);
 		CuAssert(tc, "Failed to run async service.", res == KSI_OK);
 
-		if (handle == NULL) {
+		if (respHandle == NULL) {
 			/* There is nothing has been received. */
 			/* Wait for a while to avoid busy loop. */
 			KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
@@ -895,7 +893,7 @@ static void asyncSigning_requestConfigWithAggrReq(CuTest* tc, const char *url, c
 				CuFail(tc, "Unknown state for finalized request.");
 				break;
 		}
-		KSI_AsyncHandle_free(handle);
+		KSI_AsyncHandle_free(respHandle);
 	} while (onHold);
 	CuAssert(tc, "Configuration response should have been received.", confReceived);
 	CuAssert(tc, "Aggregation response should have been received.", respReceived);
@@ -916,7 +914,6 @@ void Test_AsyncSign_requestConfigWithAggrReq_http(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	asyncSigning_requestConfigWithAggrReq(tc, KSITest_composeUri(TEST_SCHEME_HTTP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
 }
-#endif
 
 static void asyncSigning_requestConfigAndAggrRequest_loop(CuTest* tc, const char *url, const char *user, const char *pass) {
 	int res;
@@ -1087,9 +1084,7 @@ CuSuite* AsyncIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_AsyncSign_runEmpty_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_addEmptyRequest_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_requestConfigOnly_tcp);
-#ifdef SEND_MULTY_PAYLOAD_SUPPORTED
 	SUITE_ADD_TEST(suite, Test_AsyncSign_requestConfigWithAggrReq_tcp);
-#endif
 	SUITE_ADD_TEST(suite, Test_AsyncSign_requestConfigAndAggrRequest_loop_tcp);
 
 	/* HTTP test cases. */
@@ -1102,9 +1097,7 @@ CuSuite* AsyncIntegrationTests_getSuite(void) {
 	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSign_runEmpty_http, "Max", "Async HTTP client not implemented.");
 	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSign_addEmptyRequest_http, "Max", "Async HTTP client not implemented.");
 	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSign_requestConfigOnly_http, "Max", "Async HTTP client not implemented.");
-#ifdef SEND_MULTY_PAYLOAD_SUPPORTED
 	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSign_requestConfigWithAggrReq_http, "Max", "Async HTTP client not implemented.");
-#endif
 	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSign_requestConfigAndAggrRequest_loop_http, "Max", "Async HTTP client not implemented.");
 
 	return suite;

@@ -199,7 +199,7 @@ static void Test_AsyncSingningService_addEmptyReq(CuTest* tc) {
 	CuAssert(tc, "Unable to create async request.", res == KSI_OK && handle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, handle);
-	CuAssert(tc, "Request should not be added.", res == KSI_INVALID_FORMAT);
+	CuAssert(tc, "Request should not be added.", res != KSI_OK && res != KSI_ASYNC_REQUEST_CACHE_FULL);
 
 	KSI_AsyncHandle_free(handle);
 	KSI_AsyncService_free(as);

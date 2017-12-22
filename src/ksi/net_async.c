@@ -463,6 +463,7 @@ static int asyncClient_addAggregatorRequest(KSI_AsyncClient *c, KSI_AsyncHandle 
 
 	/* Cache the config request separatelly, as the response can not be assigned to any request in the common cache. */
 	if (reqConf != NULL) {
+		/* Check if this is a multy-payload request. */
 		if (reqHsh != NULL) {
 			KSI_Config *confRef = NULL;
 
@@ -478,6 +479,7 @@ static int asyncClient_addAggregatorRequest(KSI_AsyncClient *c, KSI_AsyncHandle 
 
 			res = KSI_AsyncAggregationHandle_new(c->ctx, tmpReq, &confHandle);
 			if (res != KSI_OK) goto cleanup;
+			tmpReq = NULL;
 
 			/* Copy the send state from the initial handle. */
 			confHandle->state = handle->state;
@@ -607,7 +609,6 @@ cleanup:
 static int asyncClient_handleServerConfig(KSI_AsyncClient *c, KSI_Config *config) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AsyncHandle *confHandle = NULL;
-	KSI_Config_Callback confCallback = NULL;
 
 	if (c == NULL || config == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -628,7 +629,8 @@ static int asyncClient_handleServerConfig(KSI_AsyncClient *c, KSI_Config *config
 		c->serverConf->respCtx = (void*)KSI_Config_ref(config);
 		c->serverConf->respCtx_free = (void (*)(void*))KSI_Config_free;
 	} else {
-		confCallback = (KSI_Config_Callback)(c->ctx->options[KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK]);
+		KSI_Config_Callback confCallback = (KSI_Config_Callback)(c->ctx->options[KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK]);
+
 		/* It is push conf which was not explicitly requested. Invoke the user conf receive callback. */
 		if (confCallback != NULL) {
 			res = confCallback(c->ctx, config);
