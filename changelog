@@ -13,6 +13,7 @@ Version 3.17
 * IMPROVEMENT: Debian packaging refactored.
 * FEATURE: Support for non-blocking HTTP connection (with libcurl).
 * IMPROVEMENT: Added support for OpenSSL 1.1 api.
+* FEATURE: Request server configuration using KSI_AsyncHandle.
 * FEATURE: Return push configuration via KSI_AsyncHandle if KSI_CTX option KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK is not set.
 
 Version 3.16
