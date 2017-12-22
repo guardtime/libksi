@@ -372,22 +372,46 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 							handle->errExt = httpCode;
 							if (len) KSI_Utf8String_new(clientCtx->ctx, curlResponse->errMsg, len + 1, &handle->errMsg);
 						} else {
-							KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "Async Curl HTTP: received response", curlResponse->raw, curlResponse->len);
+							size_t count = 0;
 
-							res = KSI_OctetString_new(clientCtx->ctx, curlResponse->raw, curlResponse->len, &resp);
-							if (res != KSI_OK) {
-								KSI_LOG_error(clientCtx->ctx, "Async Curl HTTP: unable to create new KSI_OctetString object. Error: 0x%x.", res);
-								res = KSI_OK;
-								goto cleanup;
-							}
+							KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "Async Curl HTTP: received stream", curlResponse->raw, curlResponse->len);
 
-							res = KSI_OctetStringList_append(clientCtx->respQueue, resp);
-							if (res != KSI_OK) {
-								KSI_LOG_error(clientCtx->ctx, "Async Curl HTTP: unable to add new response to queue. Error: 0x%x.", res);
-								res = KSI_OK;
-								goto cleanup;
+							while (count < curlResponse->len) {
+								KSI_FTLV ftlv;
+								size_t tlvSize = 0;
+
+								/* Traverse through the input stream and verify that a complete TLV is present. */
+								memset(&ftlv, 0, sizeof(KSI_FTLV));
+								res = KSI_FTLV_memRead(curlResponse->raw + count, curlResponse->len - count, &ftlv);
+								if (res != KSI_OK) {
+									KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_ERROR,
+											"Async Curl HTTP: Unable to extract TLV from input stream",
+											curlResponse->raw, curlResponse->len);
+									handle->state = KSI_ASYNC_STATE_ERROR;
+									handle->err = KSI_NETWORK_ERROR;
+									break;
+								}
+								tlvSize = ftlv.hdr_len + ftlv.dat_len;
+
+								KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "Async Curl HTTP: received response", curlResponse->raw + count, tlvSize);
+
+								res = KSI_OctetString_new(clientCtx->ctx, curlResponse->raw + count,  tlvSize, &resp);
+								if (res != KSI_OK) {
+									KSI_LOG_error(clientCtx->ctx, "Async Curl HTTP: unable to create new KSI_OctetString object. Error: 0x%x.", res);
+									res = KSI_OK;
+									goto cleanup;
+								}
+
+								res = KSI_OctetStringList_append(clientCtx->respQueue, resp);
+								if (res != KSI_OK) {
+									KSI_LOG_error(clientCtx->ctx, "Async Curl HTTP: unable to add new response to queue. Error: 0x%x.", res);
+									res = KSI_OK;
+									goto cleanup;
+								}
+								resp = NULL;
+
+								count += tlvSize;
 							}
-							resp = NULL;
 						}
 					}
 				}
