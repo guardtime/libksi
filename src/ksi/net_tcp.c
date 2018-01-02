@@ -370,14 +370,13 @@ static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, K
 			"Extend request");
 	if (res != KSI_OK) goto cleanup;
 
-	(*handle)->reqCtx = (void*)req;
+	(*handle)->reqCtx = (void*)KSI_ExtendReq_ref(req);
 	(*handle)->reqCtx_free = (void (*)(void *))KSI_ExtendReq_free;
 
 	res = KSI_OK;
 
 cleanup:
-
-	KSI_ExtendPdu_setRequest(pdu, NULL);
+	KSI_Integer_free(reqId);
 	KSI_ExtendPdu_free(pdu);
 
 	return res;
@@ -437,14 +436,14 @@ static int prepareAggregationRequest(KSI_NetworkClient *client, KSI_AggregationR
 			"Aggregation request");
 	if (res != KSI_OK) goto cleanup;
 
-	(*handle)->reqCtx = (void*)req;
+	(*handle)->reqCtx = (void*)KSI_AggregationReq_ref(req);
 	(*handle)->reqCtx_free = (void (*)(void *))KSI_AggregationReq_free;
 
 	res = KSI_OK;
 
 cleanup:
 
-	KSI_AggregationPdu_setRequest(pdu, NULL);
+	KSI_Integer_free(reqId);
 	KSI_AggregationPdu_free(pdu);
 
 	return res;

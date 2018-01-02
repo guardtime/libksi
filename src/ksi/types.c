@@ -1240,9 +1240,9 @@ int KSI_ExtendReq_enclose(KSI_ExtendReq *req, const char *loginId, const char *k
 cleanup:
 
 	/* Make sure we won't free the request on failure. */
-	/* The interface takes ownership over the request resource. */
-	if (res == KSI_OK && req != NULL) KSI_ExtendReq_free(req);
 	KSI_ExtendPdu_setRequest(tmp, NULL);
+	/* The interface takes ownership over the request resource. */
+	if (res == KSI_OK) KSI_ExtendReq_free(req);
 
 	KSI_ExtendPdu_free(tmp);
 	KSI_Header_free(hdr);
@@ -1616,10 +1616,10 @@ cleanup:
 	if (tmp != NULL) {
 		KSI_AggregationPdu_setHeader(tmp, NULL);
 		KSI_AggregationPdu_setRequest(tmp, NULL);
-	} else {
-		/* The interface takes ownership over the request resource. */
-		if (res == KSI_OK && req != NULL) KSI_AggregationReq_free(req);
 	}
+	/* The interface takes ownership over the request resource. */
+	if (res == KSI_OK) KSI_AggregationReq_free(req);
+
 	KSI_AggregationPdu_free(tmp);
 
 	return res;

@@ -613,11 +613,10 @@ static int receiveConfig(KSI_CTX *ctx, KSI_Config **config,
 		KSI_pushError(ctx,res, NULL);
 		goto cleanup;
 	}
-	req = NULL;
 
 	res = KSI_RequestHandle_perform(handle);
 	if (res != KSI_OK) {
-		KSI_pushError(ctx,res, NULL);
+		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
