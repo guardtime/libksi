@@ -19,16 +19,14 @@
 
 #include <string.h>
 
-#include "../src/ksi/hash.h"
-#include "../src/ksi/net.h"
-#include "../src/ksi/net_async.h"
+#include <ksi/hash.h>
+#include <ksi/net.h>
+#include <ksi/net_async.h>
 
 #include "cutest/CuTest.h"
 
 #include "all_tests.h"
 #include "test_mock_async.h"
-
-#include "../src/ksi/impl/ctx_impl.h"
 
 
 extern KSI_CTX *ctx;

@@ -30,12 +30,12 @@
 #  define sleep_ms(x) usleep((x)*1000)
 #endif
 
-#include "../src/ksi/ksi.h"
-#include "../src/ksi/net.h"
-#include "../src/ksi/net_async.h"
-#include "../src/ksi/net_uri.h"
-#include "../src/ksi/signature_builder.h"
-#include "../src/ksi/compatibility.h"
+#include <ksi/ksi.h>
+#include <ksi/net.h>
+#include <ksi/net_async.h>
+#include <ksi/net_uri.h>
+#include <ksi/signature_builder.h>
+#include <ksi/compatibility.h>
 
 #include "support_tests.h"
 
