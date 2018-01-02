@@ -264,6 +264,7 @@ EXPORTS
 	KSI_AsyncHandle_getAggregationReq
 	KSI_AsyncHandle_getAggregationResp
 	KSI_AsyncHandle_getSignature
+	KSI_AsyncHandle_getConfig
 	KSI_AsyncService_free
 	KSI_AbstractAsyncService_new
 	KSI_SigningAsyncService_new

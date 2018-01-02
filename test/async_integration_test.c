@@ -36,9 +36,6 @@
 #include <ksi/net.h>
 #include <ksi/hash.h>
 
-#include "../src/ksi/internal.h"
-#include "../src/ksi/impl/ctx_impl.h"
-
 extern KSI_CTX *ctx;
 extern KSITest_Conf conf;
 

@@ -382,6 +382,21 @@ int main(int argc, char **argv) {
 						}
 						break;
 
+					case KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED: {
+							KSI_Config *pushConf = NULL;
+
+							KSI_LOG_info(ksi, "Handle push configuration.");
+
+							res = KSI_AsyncHandle_getConfig(respHandle, &pushConf);
+							if (res != KSI_OK || pushConf != NULL) {
+								fprintf(stderr, "Failed to extract push configuration.\n");
+								goto cleanup;
+							}
+
+							KSI_AsyncHandle_free(respHandle); respHandle = NULL;
+						}
+						break;
+
 					case KSI_ASYNC_STATE_ERROR: {
 							KSI_DataHash *reqCtxHash = NULL;
 							int err = KSI_UNKNOWN_ERROR;

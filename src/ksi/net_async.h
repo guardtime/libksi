@@ -157,10 +157,22 @@ extern "C" {
 	int KSI_AsyncHandle_getSignature(const KSI_AsyncHandle *h, KSI_Signature **signature);
 
 	/**
+	 * Server push configuration getter.
+	 * \param[in]		h				Async handle.
+	 * \param[out]		config			Pointer to the receiving pointer.
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note A valid configuration will only be returned if the handle state is #KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED.
+	 * \see #KSI_AsyncHandle_getState for getting the state of the request.
+	 * \see #KSI_Config_free for cleaning up returned resources.
+	 */
+	int KSI_AsyncHandle_getConfig(const KSI_AsyncHandle *h, KSI_Config **config);
+
+	/**
 	 * Free async client object.
 	 * \param[in]		c				Async client object.
+	 * \note This will also handle termination of opened network connection.
 	 * \see #KSI_TcpAsyncClient_new
-	 * \note This will also handle termination of open network connection.
+	 * \see #KSI_HttpAsyncClient_new
 	 */
 	void KSI_AsyncClient_free(KSI_AsyncClient *c);
 
@@ -241,6 +253,12 @@ extern "C" {
 		 * \see #KSI_AsyncHandle_free for cleaning up resources.
 		 */
 		KSI_ASYNC_STATE_RESPONSE_RECEIVED,
+		/**
+		 * Push configuration has been received from the server. This is the final state of a request.
+		 * \see #KSI_AsyncHandle_getConfig for extracting server configuration response.
+		 * \see #KSI_AsyncHandle_free for cleaning up resources.
+		 */
+		KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED,
 		/**
 		 * An error has occured while the request was in process. This is the final state of a request.
 		 * \see #KSI_AsyncHandle_getError for reading the error code.

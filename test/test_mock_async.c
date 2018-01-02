@@ -20,11 +20,12 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "../src/ksi/io.h"
-#include "../src/ksi/tlv.h"
-#include "../src/ksi/fast_tlv.h"
-#include "../src/ksi/types.h"
-#include "../src/ksi/net_async.h"
+#include <ksi/io.h>
+#include <ksi/tlv.h>
+#include <ksi/fast_tlv.h>
+#include <ksi/types.h>
+#include <ksi/net_async.h>
+
 #include "../src/ksi/impl/net_impl.h"
 
 #include "support_tests.h"
