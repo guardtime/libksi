@@ -44,7 +44,7 @@ static const char * const KSI_HASHALG_SM3_names[] = { "SM-3", "SM3", ""};
 static const struct KSI_hashAlgorithmInfo_st {
 	/** Hash algorithm id (should mirror the array index in #KSI_hashAlgorithmInfo) */
 	KSI_HashAlgorithm algo_id;
-    /** Output digest bit count. */
+	/** Output digest bit count. */
 	unsigned int outputBitCount;
 	/** Internal bit count */
 	unsigned int blockSize;
@@ -141,6 +141,20 @@ unsigned int KSI_HashAlgorithm_getBlockSize(KSI_HashAlgorithm algo_id) {
 		return (KSI_hashAlgorithmInfo[algo_id].blockSize) >> 3;
 	}
 	return 0;
+}
+
+time_t KSI_HashAlgorithm_getDeprecatedFrom(KSI_HashAlgorithm algo_id) {
+	if (ksi_isHashAlgorithmIdValid(algo_id)) {
+		return KSI_hashAlgorithmInfo[algo_id].deprecatedFrom;
+	}
+	return -1;
+}
+
+time_t KSI_HashAlgorithm_getObsoleteFrom(KSI_HashAlgorithm algo_id) {
+	if (ksi_isHashAlgorithmIdValid(algo_id)) {
+		return KSI_hashAlgorithmInfo[algo_id].obsoleteFrom;
+	}
+	return -1;
 }
 
 /**

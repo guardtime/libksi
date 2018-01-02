@@ -245,6 +245,7 @@ static void runTests(CuTest* tc, const char *testCsvFile, const char *rootPath) 
 				/* Check if the failure is expected. */
 				if (errCode != KSI_VER_ERR_NONE) {
 					KSI_Signature *lastFailed = NULL;
+					KSI_RuleVerificationResult *verResult = NULL;
 
 					CuAssert(tc, failMsg(testCsvFile, lineCount, "Signature did not fail with policy based verification.", KSI_getErrorString(res)),
 							policy != NULL && res == KSI_VERIFICATION_FAILURE);
@@ -252,10 +253,14 @@ static void runTests(CuTest* tc, const char *testCsvFile, const char *rootPath) 
 					res = KSI_CTX_getLastFailedSignature(ctx, &lastFailed);
 					CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to get last failed signature.", NULL), res == KSI_OK && lastFailed != NULL);
 
-					if (errCode != lastFailed->policyVerificationResult->finalResult.errorCode) {
+					res = KSI_RuleVerificationResultList_elementAt(lastFailed->policyVerificationResult->ruleResults,
+							KSI_RuleVerificationResultList_length(lastFailed->policyVerificationResult->ruleResults) - 1, &verResult);
+					CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to get last failed verification result.", NULL), res == KSI_OK && verResult != NULL);
+
+					if (errCode != verResult->errorCode) {
 						KSI_LOG_debug(ctx, "Verification error code mismatch: ");
 						KSI_LOG_debug(ctx, "...extpected: %s", KSI_VerificationErrorCode_toString(errCode));
-						KSI_LOG_debug(ctx, "...result   : %s", KSI_VerificationErrorCode_toString(lastFailed->policyVerificationResult->finalResult.errorCode));
+						KSI_LOG_debug(ctx, "...result   : %s", KSI_VerificationErrorCode_toString(verResult->errorCode));
 
 						CuFail(tc, failMsg(testCsvFile, lineCount, "Verification error code mismatch.", NULL));
 					}

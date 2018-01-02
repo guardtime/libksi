@@ -120,7 +120,8 @@ static int Rule_verify(const KSI_Rule *rule, KSI_VerificationContext *context, K
 		/* Duplicate the value for ease of use. */
 		policyResult->resultCode = policyResult->finalResult.resultCode;
 
-		if (currentRule->type == KSI_RULE_TYPE_BASIC && !(res == KSI_OK && policyResult->resultCode == KSI_VER_RES_NA)) {
+		if (currentRule->type == KSI_RULE_TYPE_BASIC &&
+				!(res == KSI_OK && policyResult->finalResult.resultCode == KSI_VER_RES_NA && policyResult->finalResult.errorCode == KSI_VER_ERR_NONE)) {
 			/* For better readability, only add results of basic rules which do not confirm lack or existence of a component. */
 			PolicyVerificationResult_addLatestRuleResult(policyResult);
 		}
@@ -361,9 +362,9 @@ const KSI_Policy* KSI_VERIFICATION_POLICY_CALENDAR_BASED = &PolicyCalendarBased;
 
 static const KSI_Rule keyBasedRules[] = {
 	{KSI_RULE_TYPE_COMPOSITE_AND, internalRules},
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainExistence},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainPresenceVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainHashAlgorithmDeprecatedAtPubTime},
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordExistence},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordPresenceVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CertificateExistence},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CertificateValidity},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification},
@@ -382,14 +383,7 @@ const KSI_Policy* KSI_VERIFICATION_POLICY_KEY_BASED = &PolicyKeyBased;
  * PUBLICATION-BASED POLICY: PUBLICATION FILE
  *********************************************/
 
-static const KSI_Rule publicationPresentRule[] = {
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordExistence},
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileContainsSignaturePublication},
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime},
-	{KSI_RULE_TYPE_BASIC, NULL}
-};
-
-static const KSI_Rule extendToPublicationRule[] = {
+static const KSI_Rule extendToPublication[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileContainsSuitablePublication},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileExtendingPermittedVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileExtendedCalendarChainHashAlgorithmDeprecatedAtPubTime},
@@ -399,9 +393,36 @@ static const KSI_Rule extendToPublicationRule[] = {
 	{KSI_RULE_TYPE_BASIC, NULL}
 };
 
+
+static const KSI_Rule suitablePubExist_pubFile[] = {
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileContainsSignaturePublication},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileSignaturePublicationVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime},
+	{KSI_RULE_TYPE_BASIC, NULL}
+};
+
+static const KSI_Rule suitablePubMissing_pubFile[] = {
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileDoesNotContainSignaturePublication},
+	{KSI_RULE_TYPE_COMPOSITE_AND, extendToPublication},
+	{KSI_RULE_TYPE_BASIC, NULL}
+};
+
+static const KSI_Rule sigPubRecExist_pubFile[] = {
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordExistence},
+	{KSI_RULE_TYPE_COMPOSITE_OR, suitablePubExist_pubFile},
+	{KSI_RULE_TYPE_COMPOSITE_OR, suitablePubMissing_pubFile},
+	{KSI_RULE_TYPE_BASIC, NULL}
+};
+
+static const KSI_Rule sigPubRecMissing_pubFile[] = {
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordMissing},
+	{KSI_RULE_TYPE_COMPOSITE_AND, extendToPublication},
+	{KSI_RULE_TYPE_BASIC, NULL}
+};
+
 static const KSI_Rule publicationRecordRule_pubFile[] = {
-	{KSI_RULE_TYPE_COMPOSITE_OR, publicationPresentRule},
-	{KSI_RULE_TYPE_COMPOSITE_OR, extendToPublicationRule},
+	{KSI_RULE_TYPE_COMPOSITE_OR, sigPubRecExist_pubFile},
+	{KSI_RULE_TYPE_COMPOSITE_OR, sigPubRecMissing_pubFile},
 	{KSI_RULE_TYPE_COMPOSITE_OR, NULL}
 };
 
@@ -423,15 +444,7 @@ const KSI_Policy* KSI_VERIFICATION_POLICY_PUBLICATIONS_FILE_BASED = &PolicyPubli
  * PUBLICATION-BASED POLICY: USER PUBLICATION
  *********************************************/
 
-static const KSI_Rule userPublicationMatchRule[] = {
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordExistence},
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationTimeVerification},
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationHashVerification},
-	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime},
-	{KSI_RULE_TYPE_BASIC, NULL}
-};
-
-static const KSI_Rule extendToUserPublicationRule[] = {
+static const KSI_Rule extendToUserPublication[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationExtendingPermittedVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationExtendedCalendarChainHashAlgorithmDeprecatedAtPubTime},
@@ -441,9 +454,36 @@ static const KSI_Rule extendToUserPublicationRule[] = {
 	{KSI_RULE_TYPE_BASIC, NULL}
 };
 
+
+static const KSI_Rule suitablePubExist[] = {
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationTimeVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationHashVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationSignatureCalendarChainHashAlgorithmDeprecatedAtPubTime},
+	{KSI_RULE_TYPE_BASIC, NULL}
+};
+
+static const KSI_Rule suitablePubMissing[] = {
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationTimeDoesNotSuit},
+	{KSI_RULE_TYPE_COMPOSITE_AND, extendToUserPublication},
+	{KSI_RULE_TYPE_BASIC, NULL}
+};
+
+static const KSI_Rule sigPubRecExist[] = {
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordExistence},
+	{KSI_RULE_TYPE_COMPOSITE_OR, suitablePubExist},
+	{KSI_RULE_TYPE_COMPOSITE_OR, suitablePubMissing},
+	{KSI_RULE_TYPE_BASIC, NULL}
+};
+
+static const KSI_Rule sigPubRecMissing[] = {
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_SignaturePublicationRecordMissing},
+	{KSI_RULE_TYPE_COMPOSITE_AND, extendToUserPublication},
+	{KSI_RULE_TYPE_BASIC, NULL}
+};
+
 static const KSI_Rule publicationRecordRule_pubString[] = {
-	{KSI_RULE_TYPE_COMPOSITE_OR, userPublicationMatchRule},
-	{KSI_RULE_TYPE_COMPOSITE_OR, extendToUserPublicationRule},
+	{KSI_RULE_TYPE_COMPOSITE_OR, sigPubRecExist},
+	{KSI_RULE_TYPE_COMPOSITE_OR, sigPubRecMissing},
 	{KSI_RULE_TYPE_COMPOSITE_OR, NULL}
 };
 

@@ -1086,6 +1086,28 @@ static void testSigningBackgroundVerification(CuTest* tc) {
 #undef TEST_EXT_RESPONSE_FILE
 }
 
+static void testAggreConfRequestConfWithSig(CuTest* tc) {
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/v1/ok-aggr_response-with-conf.tlv"
+	int res;
+	KSI_Config *conf = NULL;
+	KSI_Integer *intVal = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+
+	res = KSI_receiveAggregatorConfig(ctx, &conf);
+	CuAssert(tc, "Conf request should have not failed.", res == KSI_OK && conf != NULL);
+
+	res = KSI_Config_getAggrPeriod(conf, &intVal);
+	CuAssert(tc, "Conf aggregation period value mismatch.", res == KSI_OK && KSI_Integer_getUInt64(intVal) == 400);
+
+	KSI_Config_free(conf);
+
+#undef TEST_AGGR_RESPONSE_FILE
+}
+
 static void testAggregationResponseWithInvalidId(CuTest* tc) {
 #define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_AGGR_RESPONSE_FILE "resource/tlv/v1/ok-sig-2014-07-01.1-aggr_response-wrong-id.tlv"
@@ -1270,6 +1292,7 @@ CuSuite* KSITest_NetPduV1_getSuite(void) {
 	SUITE_ADD_TEST(suite, testExtendExtended);
 	SUITE_ADD_TEST(suite, testExtendingBackgroundVerification);
 	SUITE_ADD_TEST(suite, testSigningBackgroundVerification);
+	SUITE_ADD_TEST(suite, testAggreConfRequestConfWithSig);
 	SUITE_ADD_TEST(suite, testAggregationResponseWithInvalidId);
 	SUITE_ADD_TEST(suite, testExtendingResponseWithInvalidId);
 	SUITE_ADD_TEST(suite, testSigningWithLevel);

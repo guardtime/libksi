@@ -335,6 +335,17 @@ extern "C" {
 	int KSI_VerificationRule_SignaturePublicationRecordExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
+	 * This rule is used to check if publication record is missing.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_VerificationRule_SignaturePublicationRecordExistence for opposite result.
+	 */
+	int KSI_VerificationRule_SignaturePublicationRecordMissing(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
 	 * This rule is used to check that reproduced calendar hash chain (reproduced by sending extension request with the
 	 * same aggregation and publication time as the attached calendar chain) matches with the already present calendar
 	 * hash chain root hash.
@@ -355,6 +366,7 @@ extern "C" {
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see KSI_VerificationRule_CalendarHashChainExistence for opposite result.
 	 */
 	int KSI_VerificationRule_CalendarHashChainDoesNotExist(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
@@ -380,15 +392,26 @@ extern "C" {
 	int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
-	 * Rule to check if keyless signature contains calendar hash chain. Used by key-based and publication-based
-	 * verification policies.
+	 * Rule to check if keyless signature contains calendar hash chain.
 	 *
 	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see KSI_VerificationRule_CalendarHashChainDoesNotExist for opposite result.
 	 */
 	int KSI_VerificationRule_CalendarHashChainExistence(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * Rule for verification of calendar hash chain presence in KSI signature. Used by key-based verification policy.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see KSI_VerificationRule_CalendarHashChainDoesNotExist for opposite result.
+	 */
+	int KSI_VerificationRule_CalendarHashChainPresenceVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * Rule is used to verify if any of the calendar hash chain aggregation hash algorithms (derived from the
@@ -420,6 +443,16 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_VerificationRule_CalendarAuthenticationRecordDoesNotExist(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * Rule for calendar authentication record presence verification.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_CalendarAuthenticationRecordPresenceVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule ise used to check if publications file contains certificate with certificate id present in calendar
@@ -461,8 +494,30 @@ extern "C" {
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see KSI_VerificationRule_PublicationsFileDoesNotContainSignaturePublication for opposite result.
 	 */
 	int KSI_VerificationRule_PublicationsFileContainsSignaturePublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * This rule can be used to check if signature publication record is missing from publications file.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see KSI_VerificationRule_PublicationsFileContainsSignaturePublication for opposite result.
+	 */
+	int KSI_VerificationRule_PublicationsFileDoesNotContainSignaturePublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * This rule is used to check if the hashes of the publications file publication record and the signature publication record match.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_PublicationsFileSignaturePublicationVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used to check if publications file contains publication closest to signature registration time.
@@ -476,6 +531,7 @@ extern "C" {
 
 	/**
 	 * This rule can be used to check if signature extending is permitted or not.
+	 * Rule is used by publications file based policy.
 	 *
 	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
@@ -483,6 +539,16 @@ extern "C" {
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_VerificationRule_PublicationsFileExtendingPermittedVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * This rule can be used to check if signature extending is permitted or not.
+	 * Rule is used by user provided publication based policy.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
 	int KSI_VerificationRule_UserProvidedPublicationExtendingPermittedVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
@@ -576,8 +642,20 @@ extern "C" {
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see KSI_VerificationRule_UserProvidedPublicationTimeDoesNotSuit for opposite result.
 	 */
 	int KSI_VerificationRule_UserProvidedPublicationTimeVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * This rule is used to verify that user provided publication time does not equals to publication time inside the signature.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see KSI_VerificationRule_UserProvidedPublicationTimeVerification for opposite result.
+	 */
+	int KSI_VerificationRule_UserProvidedPublicationTimeDoesNotSuit(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
 	 * This rule is used verify that user provided publication hash equals to publication hash inside the signature.

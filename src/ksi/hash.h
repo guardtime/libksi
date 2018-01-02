@@ -279,9 +279,25 @@ extern "C" {
 	 * Returns the size of the data block the underlying hash algorithm
 	 *  operates upon in bytes.
 	 *  \param[in]	algo_id			Hash algorithm id.
-	 *  \return Returns the size of the data block the underlying hash algorithm or 0 on errir.
+	 *  \return Returns the size of the data block the underlying hash algorithm or 0 on error.
 	 */
 	unsigned int KSI_HashAlgorithm_getBlockSize(KSI_HashAlgorithm algo_id);
+
+	/**
+	 * The time the function has been marked as deprecated.
+	 * \param[in]	algo_id			Hash algorithm id.
+	 * \return Hash algorithm deprecate time or 0 if not set.
+	 * \return In case of an error a negative value is returned.
+	 */
+	time_t KSI_HashAlgorithm_getDeprecatedFrom(KSI_HashAlgorithm algo_id);
+
+	/**
+	 * The time the function has been marked as obsolete.
+	 * \param[in]	algo_id			Hash algorithm id.
+	 * \return Hash algorithm obsolete time or 0 if not set.
+	 * \return In case of an error a negative value is returned.
+	 */
+	time_t KSI_HashAlgorithm_getObsoleteFrom(KSI_HashAlgorithm algo_id);
 
 	/**
 	 * This function is used to check if the given hash algorithm is trusted. If
