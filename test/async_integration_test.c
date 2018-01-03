@@ -29,15 +29,12 @@
 #include "cutest/CuTest.h"
 #include "all_integration_tests.h"
 
-#include "../src/ksi/net_uri.h"
-#include "../src/ksi/net_http.h"
-#include "../src/ksi/net_tcp.h"
-#include "../src/ksi/net_async.h"
-#include "../src/ksi/net.h"
-#include "../src/ksi/hash.h"
-
-#include "../src/ksi/internal.h"
-#include "../src/ksi/impl/ctx_impl.h"
+#include <ksi/net_uri.h>
+#include <ksi/net_http.h>
+#include <ksi/net_tcp.h>
+#include <ksi/net_async.h>
+#include <ksi/net.h>
+#include <ksi/hash.h>
 
 extern KSI_CTX *ctx;
 extern KSITest_Conf conf;
@@ -800,8 +797,8 @@ static void asyncSigning_requestConfigWithAggrReq(CuTest* tc, const char *url, c
 	KSI_DataHash *hsh = NULL;
 	size_t pendingCount = 0;
 	const char *p_req = TEST_REQUESTS[0];
-	bool confReceived = false;
-	bool respReceived = false;
+	char confReceived = 0;
+	char respReceived = 0;
 
 	KSI_LOG_debug(ctx, "%s: START (%s)", __FUNCTION__, url);
 	KSI_ERR_clearErrors(ctx);
@@ -869,7 +866,7 @@ static void asyncSigning_requestConfigWithAggrReq(CuTest* tc, const char *url, c
 					res = KSI_AsyncHandle_getAggregationResp(respHandle, &resp);
 					CuAssert(tc, "Failed to get aggregation response.", res == KSI_OK && resp != NULL);
 
-					respReceived = true;
+					respReceived = 1;
 				}
 				break;
 
@@ -881,7 +878,7 @@ static void asyncSigning_requestConfigWithAggrReq(CuTest* tc, const char *url, c
 					res = KSI_AsyncHandle_getConfig(respHandle, &respCfg);
 					CuAssert(tc, "Unable to get server config.", res == KSI_OK && respCfg != NULL);
 
-					confReceived = true;
+					confReceived = 1;
 				}
 				break;
 
@@ -1088,17 +1085,17 @@ CuSuite* AsyncIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_AsyncSign_requestConfigAndAggrRequest_loop_tcp);
 
 	/* HTTP test cases. */
-	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSingningService_verifyOptions_http, "Max", "Async HTTP client not implemented.");
-	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSingningService_verifyCacheSizeOption_http, "Max", "Async HTTP client not implemented.");
-	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSign_loop_http, "Max", "Async HTTP client not implemented.");
-	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSign_collect_http, "Max", "Async HTTP client not implemented.");
-	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSign_useExtender_http, "Max", "Async HTTP client not implemented.");
-	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSign_fillupCache_http, "Max", "Async HTTP client not implemented.");
-	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSign_runEmpty_http, "Max", "Async HTTP client not implemented.");
-	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSign_addEmptyRequest_http, "Max", "Async HTTP client not implemented.");
-	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSign_requestConfigOnly_http, "Max", "Async HTTP client not implemented.");
-	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSign_requestConfigWithAggrReq_http, "Max", "Async HTTP client not implemented.");
-	SUITE_SKIP_TEST_IF(!(KSI_NET_HTTP_IMPL==KSI_IMPL_CURL), suite, Test_AsyncSign_requestConfigAndAggrRequest_loop_http, "Max", "Async HTTP client not implemented.");
+	SUITE_ADD_TEST(suite, Test_AsyncSingningService_verifyOptions_http);
+	SUITE_ADD_TEST(suite, Test_AsyncSingningService_verifyCacheSizeOption_http);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_loop_http);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_collect_http);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_useExtender_http);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_fillupCache_http);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_runEmpty_http);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_addEmptyRequest_http);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_requestConfigOnly_http);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_requestConfigWithAggrReq_http);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_requestConfigAndAggrRequest_loop_http);
 
 	return suite;
 }
