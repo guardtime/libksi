@@ -1166,11 +1166,14 @@ int KSI_ExtendReq_enclose(KSI_ExtendReq *req, const char *loginId, const char *k
 	KSI_DataHash *hash = NULL;
 	size_t loginLen;
 	KSI_HashAlgorithm alg_id;
+	KSI_CTX *ctx = NULL;
 
 	if (req == NULL || loginId == NULL || key == NULL || pdu == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+	ctx = req->ctx;
+	KSI_ERR_clearErrors(ctx);
 
 	loginLen = strlen(loginId);
 	if (loginLen > UINT_MAX){
@@ -1179,45 +1182,47 @@ int KSI_ExtendReq_enclose(KSI_ExtendReq *req, const char *loginId, const char *k
 	}
 
 	/* Create the pdu */
-	res = KSI_ExtendPdu_new(req->ctx, &tmp);
+	res = KSI_ExtendPdu_new(ctx, &tmp);
 	if (res != KSI_OK) goto cleanup;
 
 	/* Create header and initialize it with the loginId provided. */
-	res = KSI_Header_new(req->ctx, &hdr);
+	res = KSI_Header_new(ctx, &hdr);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_Utf8String_new(req->ctx, loginId, (unsigned)loginLen + 1, &hdr->loginId);
+	res = KSI_Utf8String_new(ctx, loginId, (unsigned)loginLen + 1, &hdr->loginId);
 	if (res != KSI_OK) goto cleanup;
 
 	tmp->header = hdr;
 	hdr = NULL;
 	/* Every request must have a header, and at this point, this is guaranteed. */
-	if (req->ctx->requestHeaderCB != NULL) {
-		res = req->ctx->requestHeaderCB(tmp->header);
+	if (ctx->requestHeaderCB != NULL) {
+		res = ctx->requestHeaderCB(tmp->header);
 		if (res != KSI_OK) goto cleanup;
 	}
 
 	/* Add request. */
-	if (req->config != NULL && req->ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_2) {
+	if (req->config != NULL && ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_2) {
 		tmp->confRequest = KSI_Config_ref(req->config);
-	} else {
+	}
+	if (req->aggregationTime != NULL || req->publicationTime != NULL) {
 		tmp->request = req;
+		req = NULL;
 	}
 
 	/* Get HMAC algorithm ID. */
-	alg_id = (KSI_HashAlgorithm)req->ctx->options[KSI_OPT_EXT_HMAC_ALGORITHM];
+	alg_id = (KSI_HashAlgorithm)ctx->options[KSI_OPT_EXT_HMAC_ALGORITHM];
 	if (alg_id == KSI_HASHALG_INVALID) {
-		KSI_pushError(req->ctx, res = KSI_INVALID_STATE, "Extender HMAC algorithm not configured.");
+		KSI_pushError(ctx, res = KSI_INVALID_STATE, "Extender HMAC algorithm not configured.");
 		goto cleanup;
 	}
 
 	if (!KSI_isHashAlgorithmTrusted(alg_id)) {
-		KSI_pushError(req->ctx, res = KSI_UNTRUSTED_HASH_ALGORITHM, "Extender HMAC algorithm not trusted.");
+		KSI_pushError(ctx, res = KSI_UNTRUSTED_HASH_ALGORITHM, "Extender HMAC algorithm not trusted.");
 		goto cleanup;
 	}
 
 	/* Create and append initial empty HMAC. */
-	res = KSI_DataHash_createZero(req->ctx, alg_id, &hash);
+	res = KSI_DataHash_createZero(ctx, alg_id, &hash);
 	if (res != KSI_OK) goto cleanup;
 
 	tmp->hmac = hash;
@@ -1234,8 +1239,11 @@ int KSI_ExtendReq_enclose(KSI_ExtendReq *req, const char *loginId, const char *k
 
 cleanup:
 
-	/* Make sure we won't free the request. */
+	/* Make sure we won't free the request on failure. */
 	KSI_ExtendPdu_setRequest(tmp, NULL);
+	/* The interface takes ownership over the request resource. */
+	if (res == KSI_OK) KSI_ExtendReq_free(req);
+
 	KSI_ExtendPdu_free(tmp);
 	KSI_Header_free(hdr);
 
@@ -1547,41 +1555,47 @@ int KSI_AggregationReq_encloseWithHeader(KSI_AggregationReq *req, KSI_Header *hd
 	KSI_AggregationPdu *tmp = NULL;
 	KSI_DataHash *hash = NULL;
 	KSI_HashAlgorithm alg_id;
+	KSI_CTX *ctx = NULL;
 
 	if (req == NULL || hdr == NULL || key == NULL || pdu == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+	ctx = req->ctx;
+	KSI_ERR_clearErrors(ctx);
 
 	/* Create the pdu */
-	res = KSI_AggregationPdu_new(req->ctx, &tmp);
+	res = KSI_AggregationPdu_new(ctx, &tmp);
 	if (res != KSI_OK) goto cleanup;
 
 	/* Set header*/
 	res = KSI_AggregationPdu_setHeader(tmp, hdr);
 	if (res != KSI_OK) goto cleanup;
 
-	/* Add request. */
-	if (req->config != NULL && req->ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_2) {
+	/* Add request units. */
+	if (req->config != NULL && ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_2) {
 		tmp->confRequest = KSI_Config_ref(req->config);
-	} else {
+	}
+	if (req->requestHash != NULL ||
+			(req->config != NULL && ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1)) {
 		tmp->request = req;
+		req = NULL;
 	}
 
 	/* Get HMAC algorithm ID. */
-	alg_id = (KSI_HashAlgorithm)req->ctx->options[KSI_OPT_AGGR_HMAC_ALGORITHM];
+	alg_id = (KSI_HashAlgorithm)ctx->options[KSI_OPT_AGGR_HMAC_ALGORITHM];
 	if (alg_id == KSI_HASHALG_INVALID) {
-		KSI_pushError(req->ctx, res = KSI_INVALID_STATE, "Aggregation HMAC algorithm not configured.");
+		KSI_pushError(ctx, res = KSI_INVALID_STATE, "Aggregation HMAC algorithm not configured.");
 		goto cleanup;
 	}
 
 	if (!KSI_isHashAlgorithmTrusted(alg_id)) {
-		KSI_pushError(req->ctx, res = KSI_UNTRUSTED_HASH_ALGORITHM, "Aggregation HMAC algorithm not trusted.");
+		KSI_pushError(ctx, res = KSI_UNTRUSTED_HASH_ALGORITHM, "Aggregation HMAC algorithm not trusted.");
 		goto cleanup;
 	}
 
 	/* Create and append initial empty HMAC. */
-	res = KSI_DataHash_createZero(req->ctx, alg_id, &hash);
+	res = KSI_DataHash_createZero(ctx, alg_id, &hash);
 	if (res != KSI_OK) goto cleanup;
 
 	tmp->hmac = hash;
@@ -1603,6 +1617,9 @@ cleanup:
 		KSI_AggregationPdu_setHeader(tmp, NULL);
 		KSI_AggregationPdu_setRequest(tmp, NULL);
 	}
+	/* The interface takes ownership over the request resource. */
+	if (res == KSI_OK) KSI_AggregationReq_free(req);
+
 	KSI_AggregationPdu_free(tmp);
 
 	return res;
@@ -1980,15 +1997,20 @@ int KSI_AggregationReq_toTlv(KSI_CTX *ctx, const KSI_AggregationReq *data, unsig
 
 	if (ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1) {
 		res = KSI_TlvTemplate_construct(ctx, tmp, data, KSI_TLV_TEMPLATE(KSI_AggregationReq));
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
 	} else if (ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_2) {
-		res = KSI_TlvTemplate_construct(ctx, tmp, data, (data->config == NULL) ?
-				KSI_TLV_TEMPLATE(KSI_AggregationReq_v2) : KSI_TLV_TEMPLATE(KSI_ConfigReq));
+		if (data->requestHash != NULL) {
+			res = KSI_TlvTemplate_construct(ctx, tmp, data, KSI_TLV_TEMPLATE(KSI_AggregationReq_v2));
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
+		}
 	} else {
-		res = KSI_INVALID_FORMAT;
-	}
-
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, NULL);
 		goto cleanup;
 	}
 

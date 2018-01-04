@@ -563,7 +563,7 @@ static int createConfigRequest(KSI_CTX *ctx, void **request,
 	res = KSI_OK;
 
 cleanup:
-
+	KSI_Config_free(cfg);
 	requestFree(tmp);
 
 	return res;
@@ -616,7 +616,7 @@ static int receiveConfig(KSI_CTX *ctx, KSI_Config **config,
 
 	res = KSI_RequestHandle_perform(handle);
 	if (res != KSI_OK) {
-		KSI_pushError(ctx,res, NULL);
+		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 

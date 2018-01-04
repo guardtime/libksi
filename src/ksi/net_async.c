@@ -246,12 +246,6 @@ int KSI_AsyncHandle_getConfig(const KSI_AsyncHandle *h, KSI_Config **config) {
 	}
 	KSI_ERR_clearErrors(h->ctx);
 
-	/* Verify that this is an empty handle. */
-	if (!(h->aggrReq == NULL && h->extReq == NULL)) {
-		KSI_pushError(h->ctx, res = KSI_INVALID_STATE, NULL);
-		goto cleanup;
-	}
-
 	*config = (KSI_Config*)h->respCtx;
 	res = KSI_OK;
 cleanup:
@@ -355,7 +349,7 @@ cleanup:
 	return res;
 }
 
-static int asyncClient_addAggregationRequest(KSI_AsyncClient *c, KSI_AsyncHandle *handle) {
+static int asyncClient_addAggregatorRequest(KSI_AsyncClient *c, KSI_AsyncHandle *handle) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationReq *reqRef = NULL;
 	KSI_AggregationPdu *pdu = NULL;
@@ -370,6 +364,10 @@ static int asyncClient_addAggregationRequest(KSI_AsyncClient *c, KSI_AsyncHandle
 	void *impl = NULL;
 	KSI_AggregationReq *aggrReq = NULL;
 	KSI_Header *hdr = NULL;
+	KSI_DataHash *reqHsh = NULL;
+	KSI_Config *reqConf = NULL;
+	KSI_AsyncHandle *confHandle = NULL;
+	KSI_AggregationReq *tmpReq = NULL;
 
 	if (c == NULL || handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -394,27 +392,36 @@ static int asyncClient_addAggregationRequest(KSI_AsyncClient *c, KSI_AsyncHandle
 	handle->respCtx_free = NULL;
 	handle->id = 0;
 
-	res = KSI_AggregationReq_getRequestId(aggrReq, &reqId);
+	res = KSI_AggregationReq_getRequestHash(aggrReq, &reqHsh);
 	if (res != KSI_OK) goto cleanup;
 
-	/* Clear the request id that was set.  */
-	if (reqId != NULL) {
-		KSI_Integer_free(reqId);
-		res = KSI_AggregationReq_setRequestId(aggrReq, (reqId = NULL));
+	res = KSI_AggregationReq_getConfig(aggrReq, &reqConf);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Update request id only in case of aggregation request. */
+	if (reqHsh != NULL) {
+		res = KSI_AggregationReq_getRequestId(aggrReq, &reqId);
 		if (res != KSI_OK) goto cleanup;
+
+		/* Clear the request id that was set.  */
+		if (reqId != NULL) {
+			KSI_Integer_free(reqId);
+			res = KSI_AggregationReq_setRequestId(aggrReq, (reqId = NULL));
+			if (res != KSI_OK) goto cleanup;
+		}
+
+		/* Verify if there is spare place in the request cache and get the request id. */
+		res = asyncClient_calculateRequestId(c, &id, &idOffset);
+		if (res != KSI_OK) goto cleanup;
+
+		requestId = (idOffset << KSI_ASYNC_REQUEST_ID_OFFSET) | id;
+		res = KSI_Integer_new(c->ctx, requestId, &reqId);
+		if (res != KSI_OK) goto cleanup;
+
+		res = KSI_AggregationReq_setRequestId(aggrReq, reqId);
+		if (res != KSI_OK) goto cleanup;
+		reqId = NULL;
 	}
-
-	/* Verify if there is spare place in the request cache and get the request id. */
-	res = asyncClient_calculateRequestId(c, &id, &idOffset);
-	if (res != KSI_OK) goto cleanup;
-
-	requestId = (idOffset << KSI_ASYNC_REQUEST_ID_OFFSET) | id;
-	res = KSI_Integer_new(c->ctx, requestId, &reqId);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_AggregationReq_setRequestId(aggrReq, reqId);
-	if (res != KSI_OK) goto cleanup;
-	reqId = NULL;
 
 	res = c->getCredentials(impl, NULL, &pass);
 	if (res != KSI_OK) goto cleanup;
@@ -445,12 +452,49 @@ static int asyncClient_addAggregationRequest(KSI_AsyncClient *c, KSI_AsyncHandle
 		goto cleanup;
 	}
 
-	/* Set into local cache. */
-	c->reqCache[id] = handle;
-	c->pending++;
+	/* Set aggregation request into local cache. */
+	if (reqHsh != NULL) {
+		c->reqCache[id] = handle;
+		c->pending++;
+	}
+
+	/* Cache the config request separatelly, as the response can not be assigned to any request in the common cache. */
+	if (reqConf != NULL) {
+		/* Check if this is a multy-payload request. */
+		if (reqHsh != NULL) {
+			KSI_Config *confRef = NULL;
+
+			/* Create a separate conf request handle. */
+			res = KSI_AggregationReq_new(c->ctx, &tmpReq);
+			if (res != KSI_OK) goto cleanup;
+
+			res = KSI_AggregationReq_setConfig(tmpReq, (confRef = KSI_Config_ref(reqConf)));
+			if (res != KSI_OK) {
+				KSI_Config_free(confRef);
+				goto cleanup;
+			}
+
+			res = KSI_AsyncAggregationHandle_new(c->ctx, tmpReq, &confHandle);
+			if (res != KSI_OK) goto cleanup;
+			tmpReq = NULL;
+
+			/* Copy the send state from the initial handle. */
+			confHandle->state = handle->state;
+			confHandle->reqTime = handle->reqTime;
+		} else {
+			/* This is a server conf request. */
+			confHandle = handle;
+		}
+
+		c->serverConf = confHandle;
+		confHandle = NULL;
+		c->pending++;
+	}
 
 	res = KSI_OK;
 cleanup:
+	KSI_AggregationReq_free(tmpReq);
+	KSI_AsyncHandle_free(confHandle);
 	KSI_Header_free(hdr);
 	KSI_free(raw);
 	KSI_Integer_free(reqId);
@@ -559,10 +603,9 @@ cleanup:
 	return res;
 }
 
-static int asyncClient_handlePushConfig(KSI_AsyncClient *c, KSI_Config *config) {
+static int asyncClient_handleServerConfig(KSI_AsyncClient *c, KSI_Config *config) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AsyncHandle *confHandle = NULL;
-	KSI_Config_Callback confCallback = NULL;
 
 	if (c == NULL || config == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -570,29 +613,45 @@ static int asyncClient_handlePushConfig(KSI_AsyncClient *c, KSI_Config *config) 
 	}
 	KSI_ERR_clearErrors(c->ctx);
 
-	confCallback = (KSI_Config_Callback)(c->ctx->options[KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK]);
-	/* It is push conf which was not explicitly requested. Invoke the user conf receive callback. */
-	if (confCallback != NULL) {
-		res = confCallback(c->ctx, config);
-		if (res != KSI_OK) {
-			KSI_pushError(c->ctx, res, NULL);
-			goto cleanup;
+	if (c->serverConf != NULL) {
+		c->serverConf->state = KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED;
+		/* Update internal state if the request has been requested. */
+		if (c->serverConf->aggrReq != NULL && c->serverConf->respCtx == NULL) {
+			c->pending--;
+			c->received++;
 		}
+		/* Clear previoous response if present, as it will be renewed. */
+		if (c->serverConf->respCtx != NULL) c->serverConf->respCtx_free(c->serverConf->respCtx);
+		/* Set received config. */
+		c->serverConf->respCtx = (void*)KSI_Config_ref(config);
+		c->serverConf->respCtx_free = (void (*)(void*))KSI_Config_free;
 	} else {
-		/* Create an empty handle. */
-		res = KSI_AbstractAsyncHandle_new(c->ctx, &confHandle);
-		if (res != KSI_OK) {
-			KSI_pushError(c->ctx, res, NULL);
-			goto cleanup;
+		KSI_Config_Callback confCallback = (KSI_Config_Callback)(c->ctx->options[KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK]);
+
+		/* It is push conf which was not explicitly requested. Invoke the user conf receive callback. */
+		if (confCallback != NULL) {
+			res = confCallback(c->ctx, config);
+			if (res != KSI_OK) {
+				KSI_pushError(c->ctx, res, NULL);
+				goto cleanup;
+			}
+		} else {
+			/* Create an empty handle. */
+			res = KSI_AbstractAsyncHandle_new(c->ctx, &confHandle);
+			if (res != KSI_OK) {
+				KSI_pushError(c->ctx, res, NULL);
+				goto cleanup;
+			}
+
+			confHandle->respCtx = (void*)KSI_Config_ref(config);
+			confHandle->respCtx_free = (void (*)(void*))KSI_Config_free;
+
+			confHandle->state = KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED;
+			c->received++;
+
+			c->serverConf = confHandle;
+			confHandle = NULL;
 		}
-
-		confHandle->respCtx = (void*)KSI_Config_ref(config);
-		confHandle->respCtx_free = (void (*)(void*))KSI_Config_free;
-		confHandle->state = KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED;
-
-		KSI_AsyncHandle_free(c->pushConf);
-		c->pushConf = confHandle;
-		confHandle = NULL;
 	}
 
 	res = KSI_OK;
@@ -698,7 +757,7 @@ static int asyncClient_processAggregationResponseQueue(KSI_AsyncClient *c) {
 
 			/* Handle push config. */
 			if (tmpConf != NULL) {
-				res = asyncClient_handlePushConfig(c, tmpConf);
+				res = asyncClient_handleServerConfig(c, tmpConf);
 				if (res != KSI_OK) {
 					KSI_pushError(c->ctx, res , NULL);
 					goto cleanup;
@@ -738,6 +797,36 @@ cleanup:
 	return res;
 }
 
+static bool asyncClient_finalizeRequest(KSI_AsyncClient *c, KSI_AsyncHandle *handle) {
+	if (c == NULL || handle == NULL) return false;
+
+	switch (handle->state) {
+		case KSI_ASYNC_STATE_WAITING_FOR_RESPONSE:
+			/* Verify that the handle has not been waiting a response for too long. */
+			if (c->options[KSI_ASYNC_OPT_RCV_TIMEOUT] == 0 ||
+				difftime(time(NULL), handle->sndTime) > c->options[KSI_ASYNC_OPT_RCV_TIMEOUT]) {
+				/* Set handle into error state and return it. */
+				handle->state = KSI_ASYNC_STATE_ERROR;
+				handle->err = KSI_NETWORK_RECIEVE_TIMEOUT;
+				c->pending--;
+				return true;
+			}
+			return false;
+
+		case KSI_ASYNC_STATE_ERROR:
+			c->pending--;
+			return true;
+
+		case KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED:
+		case KSI_ASYNC_STATE_RESPONSE_RECEIVED:
+			c->received--;
+			return true;
+
+		default:
+			return false;
+	}
+}
+
 static int asyncClient_findNextResponse(KSI_AsyncClient *c, KSI_AsyncHandle **handle) {
 	int res;
 	size_t last;
@@ -753,14 +842,6 @@ static int asyncClient_findNextResponse(KSI_AsyncClient *c, KSI_AsyncHandle **ha
 		goto cleanup;
 	}
 
-	/* Check if push config has been received. */
-	if (c->pushConf != NULL) {
-		*handle = c->pushConf;
-		c->pushConf = NULL;
-		res = KSI_OK;
-		goto cleanup;
-	}
-
 	/* Verify if there are any handles on hold in cache. */
 	if (c->pending == 0 && c->received == 0) {
 		*handle = NULL;
@@ -768,42 +849,24 @@ static int asyncClient_findNextResponse(KSI_AsyncClient *c, KSI_AsyncHandle **ha
 		goto cleanup;
 	}
 
+	/* Check if server configuration has been received. */
+	if (asyncClient_finalizeRequest(c, c->serverConf) == true) {
+		*handle = c->serverConf;
+		c->serverConf = NULL;
+		res = KSI_OK;
+		goto cleanup;
+	}
+
 	/* Search cache for finalized requests. */
 	last = c->tail;
 	for (;;) {
-		if (c->reqCache[c->tail] != NULL) {
-			switch (c->reqCache[c->tail]->state) {
-				case KSI_ASYNC_STATE_WAITING_FOR_RESPONSE:
-					/* Verify that the handle has not been waiting a response for too long. */
-					if (c->options[KSI_ASYNC_OPT_RCV_TIMEOUT] == 0 ||
-							difftime(time(NULL), c->reqCache[c->tail]->sndTime) > c->options[KSI_ASYNC_OPT_RCV_TIMEOUT]) {
-						/* Set handle into error state and return it. */
-						c->reqCache[c->tail]->state = KSI_ASYNC_STATE_ERROR;
-						c->reqCache[c->tail]->err = KSI_NETWORK_RECIEVE_TIMEOUT;
-						*handle = c->reqCache[c->tail];
-						c->reqCache[c->tail] = NULL;
-						c->pending--;
-						res = KSI_OK;
-						goto cleanup;
-					}
-					break;
-				case KSI_ASYNC_STATE_ERROR:
-					*handle = c->reqCache[c->tail];
-					c->reqCache[c->tail] = NULL;
-					c->pending--;
-					res = KSI_OK;
-					goto cleanup;
-				case KSI_ASYNC_STATE_RESPONSE_RECEIVED:
-					*handle = c->reqCache[c->tail];
-					c->reqCache[c->tail] = NULL;
-					c->received--;
-					res = KSI_OK;
-					goto cleanup;
-				default:
-					/* Dont care about other states. */
-					break;
-			}
+		if (asyncClient_finalizeRequest(c, c->reqCache[c->tail]) == true) {
+			*handle = c->reqCache[c->tail];
+			c->reqCache[c->tail] = NULL;
+			res = KSI_OK;
+			goto cleanup;
 		}
+
 		if (++c->tail == c->options[KSI_ASYNC_OPT_REQUEST_CACHE_SIZE]) c->tail = KSI_ASYNC_CACHE_START_POS;
 		if (c->tail == last) {
 			/* We are back at where we began the search. There are no finalized requests to return yet. */
@@ -1019,12 +1082,16 @@ cleanup:
 
 void KSI_AsyncClient_free(KSI_AsyncClient *c) {
 	if (c != NULL) {
+		if (c->clientImpl_free) c->clientImpl_free(c->clientImpl);
+
+		/* Clear cached handles. */
 		if (c->reqCache != NULL) {
 			size_t i;
 			for (i = 0; i < c->options[KSI_ASYNC_OPT_REQUEST_CACHE_SIZE]; i++) KSI_AsyncHandle_free(c->reqCache[i]);
 			KSI_free(c->reqCache);
 		}
-		if (c->clientImpl_free) c->clientImpl_free(c->clientImpl);
+		KSI_AsyncHandle_free(c->serverConf);
+
 		KSI_free(c);
 	}
 }
@@ -1054,7 +1121,7 @@ int KSI_AbstractAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c) {
 	tmp->reqCache = NULL;
 	tmp->pending = 0;
 	tmp->received = 0;
-	tmp->pushConf = NULL;
+	tmp->serverConf = NULL;
 
 	tmp->addRequest = NULL;
 	tmp->getResponse = NULL;
@@ -1154,7 +1221,7 @@ int KSI_SigningAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service) {
 		goto cleanup;
 	}
 
-	tmp->addRequest = (int (*)(void *, KSI_AsyncHandle *))asyncClient_addAggregationRequest;
+	tmp->addRequest = (int (*)(void *, KSI_AsyncHandle *))asyncClient_addAggregatorRequest;
 	tmp->responseHandler = (int (*)(void *))asyncClient_processAggregationResponseQueue;
 	tmp->run = (int (*)(void *, int (*)(void *), KSI_AsyncHandle **, size_t *))asyncClient_run;
 

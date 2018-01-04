@@ -27,6 +27,9 @@
 
 #pragma comment(lib, "wininet.lib")
 
+#include "tlv.h"
+#include "fast_tlv.h"
+
 #include "impl/net_http_impl.h"
 #include "impl/net_impl.h"
 
@@ -238,6 +241,7 @@ static void CALLBACK WinINet_asyncCallback(HINTERNET hInternet, DWORD_PTR dwCont
 					LPINTERNET_ASYNC_RESULT asyncResult = (LPINTERNET_ASYNC_RESULT)lpvStatusInformation;
 					DWORD infoLen = sizeof(DWORD);
 					DWORD httpStatus = 0;
+					BYTE rcvBuff[2048];
 
 					if (request->status != KSI_ASYNC_NOT_FINISHED) {
 						KSI_LOG_debug(request->ctx, "Async WinINet: %p Request has completed.", request);
@@ -266,62 +270,46 @@ static void CALLBACK WinINet_asyncCallback(HINTERNET hInternet, DWORD_PTR dwCont
 						goto cleanup;
 					}
 
-					/* Is it a subsequent callback for the read completeon after ERROR_IO_PENDING. */
-					/* In case of InternetReadFile ERROR_IO_PENDING the data buffer will be filled in background thread. */
-					if (request->dataRcving == false) {
-						DWORD bytesRcved = 0;
+					for (;;) {
+						INTERNET_BUFFERS ib = { sizeof(INTERNET_BUFFERS) };
+						unsigned char *tmp_buffer = NULL;
 
-						if (!HttpQueryInfo(request->requestHandle, HTTP_QUERY_CONTENT_LENGTH | HTTP_QUERY_FLAG_NUMBER,
-								&request->contentLen, &infoLen, 0)){
-							KSI_LOG_error(request->ctx, "Async WinINet: Unable to get content length. Error %d", (dwError = GetLastError()));
+						ib.Next           = NULL;
+						ib.lpvBuffer      = rcvBuff;
+						ib.dwBufferLength = sizeof(rcvBuff);
+
+						if (!InternetReadFileEx(request->requestHandle, &ib, IRF_ASYNC | IRF_USE_CONTEXT, (LPARAM)dwContext)) {
+							dwError = GetLastError();
+							if (dwError == ERROR_IO_PENDING) {
+								/* Wait for INTERNET_STATUS_REQUEST_COMPLETE.  */
+								KSI_LOG_debug(request->ctx, "Async WinINet: %p IO pending.", request);
+							} else {
+								KSI_LOG_error(request->ctx, "Async WinINet: Unable to read data. Error %d.", dwError);
+							}
 							goto cleanup;
 						}
 
-						request->raw = (unsigned char*)KSI_calloc(request->contentLen, sizeof(unsigned char));
-						if (request->raw == NULL){
+						if (ib.dwBufferLength == 0) break;
+
+						tmp_buffer = KSI_calloc(ib.dwBufferLength + request->len, sizeof(unsigned char));
+						if (tmp_buffer == NULL) {
 							request->status = KSI_OUT_OF_MEMORY;
 							/* We are finished with the request. Close handle and wait for INTERNET_STATUS_HANDLE_CLOSING. */
 							InternetCloseHandle(request->requestHandle);
 							request->requestHandle = NULL;
 							goto cleanup;
 						}
+						memcpy(tmp_buffer, request->raw, request->len);
+						memcpy(tmp_buffer + request->len, ib.lpvBuffer, ib.dwBufferLength);
 
-						for (;;) {
-							DWORD bytesRead = 0;
+						KSI_free(request->raw);
+						request->raw = tmp_buffer;
+						request->len += ib.dwBufferLength;
+						tmp_buffer = NULL;
 
-							request->dataRcving = true;
-							if (!InternetReadFile(request->requestHandle,
-									request->raw + bytesRcved, request->contentLen - bytesRcved, &bytesRead)) {
-								dwError = GetLastError();
-								if (dwError == ERROR_IO_PENDING) {
-									/* Buffer will be filled in separate thread. Wait for REQUEST_COMPLETE.  */
-									KSI_LOG_debug(request->ctx, "Async WinINet: %p IO pending.", request);
-								} else {
-									KSI_LOG_error(request->ctx, "Async WinINet: Unable to read data. Error %d.", dwError);
-								}
-								goto cleanup;
-							}
-
-							/* End if everithing has been read. */
-							if (!bytesRead) break;
-
-							bytesRcved += bytesRead;
-							KSI_LOG_debug(request->ctx, "Async WinINet: %p Received %lu bytes (%lu total)",
-									request, bytesRead, bytesRcved);
-						}
-
-						/* Verify that the received count matches. */
-						if (request->contentLen != bytesRcved) {
-							KSI_LOG_error(request->ctx, "Async WinINet: %p Received byte count mismatch (%lu of %lu).",
-									request, bytesRcved, request->contentLen);
-							request->status = KSI_NETWORK_ERROR;
-							/* We are finished with the request. Close handle and wait for INTERNET_STATUS_HANDLE_CLOSING. */
-							InternetCloseHandle(request->requestHandle);
-							request->requestHandle = NULL;
-							goto cleanup;
-						}
+						KSI_LOG_debug(request->ctx, "Async WinINet: %p Received %lu bytes (%lu total)",
+								request, ib.dwBufferLength, request->len);
 					}
-					request->len = request->contentLen;
 
 					KSI_LOG_debug(request->ctx, "Async WinINet: %p Complete (%lu bytes received)", request, request->len);
 
@@ -623,20 +611,46 @@ static int WinINet_handleResponse(HttpAsyncCtx *clientCtx) {
 			handle->err = httpReq->status;
 			handle->errExt = httpReq->errExt;
 		} else {
-			KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "Async WinINet: received response", httpReq->raw, httpReq->len);
+			size_t count = 0;
 
-			res = KSI_OctetString_new(clientCtx->ctx, httpReq->raw, httpReq->len, &resp);
-			if (res != KSI_OK) {
-				KSI_LOG_error(clientCtx->ctx, "Async WinINet: unable to create new KSI_OctetString object. Error: %x.", res);
-				goto cleanup;
-			}
+			KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "Async WinINet: received stream", httpReq->raw, httpReq->len);
 
-			res = KSI_OctetStringList_append(clientCtx->respQueue, resp);
-			if (res != KSI_OK) {
-				KSI_LOG_error(clientCtx->ctx, "Async WinINet: unable to add new response to queue. Error: %x.", res);
-				goto cleanup;
+			while (count < httpReq->len) {
+				KSI_FTLV ftlv;
+				size_t tlvSize = 0;
+
+				/* Traverse through the input stream and verify that a complete TLV is present. */
+				memset(&ftlv, 0, sizeof(KSI_FTLV));
+				res = KSI_FTLV_memRead(httpReq->raw + count, httpReq->len - count, &ftlv);
+				if (res != KSI_OK) {
+					KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_ERROR,
+							"Async WinINet: Unable to extract TLV from input stream",
+							httpReq->raw, httpReq->len);
+					handle->state = KSI_ASYNC_STATE_ERROR;
+					handle->err = KSI_NETWORK_ERROR;
+					break;
+				}
+				tlvSize = ftlv.hdr_len + ftlv.dat_len;
+
+				KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "Async WinINet: received response", httpReq->raw + count, tlvSize);
+
+				res = KSI_OctetString_new(clientCtx->ctx, httpReq->raw + count,  tlvSize, &resp);
+				if (res != KSI_OK) {
+					KSI_LOG_error(clientCtx->ctx, "Async WinINet: unable to create new KSI_OctetString object. Error: %x.", res);
+					res = KSI_OK;
+					goto cleanup;
+				}
+
+				res = KSI_OctetStringList_append(clientCtx->respQueue, resp);
+				if (res != KSI_OK) {
+					KSI_LOG_error(clientCtx->ctx, "Async WinINet: unable to add new response to queue. Error: %x.", res);
+					res = KSI_OK;
+					goto cleanup;
+				}
+				resp = NULL;
+
+				count += tlvSize;
 			}
-			resp = NULL;
 		}
 		LeaveCriticalSection(&CriticalSection);
 		locked = false;
