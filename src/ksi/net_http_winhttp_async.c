@@ -24,6 +24,9 @@
 #include <windows.h>
 #include <winhttp.h>
 
+#include "tlv.h"
+#include "fast_tlv.h"
+
 #include "impl/net_http_impl.h"
 #include "impl/net_impl.h"
 
@@ -559,20 +562,46 @@ static int WinHTTP_handleResponse(HttpAsyncCtx *clientCtx) {
 			handle->err = httpReq->status;
 			handle->errExt = httpReq->errExt;
 		} else {
-			KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "Async WinHTTP: received response", httpReq->raw, httpReq->len);
+			size_t count = 0;
 
-			res = KSI_OctetString_new(clientCtx->ctx, httpReq->raw, httpReq->len, &resp);
-			if (res != KSI_OK) {
-				KSI_LOG_error(clientCtx->ctx, "Async WinHTTP: unable to create new KSI_OctetString object. Error: %x.", res);
-				goto cleanup;
-			}
+			KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "Async WinHTTP: received stream", httpReq->raw, httpReq->len);
 
-			res = KSI_OctetStringList_append(clientCtx->respQueue, resp);
-			if (res != KSI_OK) {
-				KSI_LOG_error(clientCtx->ctx, "Async WinHTTP: unable to add new response to queue. Error: %x.", res);
-				goto cleanup;
+			while (count < httpReq->len) {
+				KSI_FTLV ftlv;
+				size_t tlvSize = 0;
+
+				/* Traverse through the input stream and verify that a complete TLV is present. */
+				memset(&ftlv, 0, sizeof(KSI_FTLV));
+				res = KSI_FTLV_memRead(httpReq->raw + count, httpReq->len - count, &ftlv);
+				if (res != KSI_OK) {
+					KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_ERROR,
+							"Async WinHTTP: Unable to extract TLV from input stream",
+							httpReq->raw, httpReq->len);
+					handle->state = KSI_ASYNC_STATE_ERROR;
+					handle->err = KSI_NETWORK_ERROR;
+					break;
+				}
+				tlvSize = ftlv.hdr_len + ftlv.dat_len;
+
+				KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "Async WinHTTP: received response", httpReq->raw + count, tlvSize);
+
+				res = KSI_OctetString_new(clientCtx->ctx, httpReq->raw + count,  tlvSize, &resp);
+				if (res != KSI_OK) {
+					KSI_LOG_error(clientCtx->ctx, "Async WinHTTP: unable to create new KSI_OctetString object. Error: %x.", res);
+					res = KSI_OK;
+					goto cleanup;
+				}
+
+				res = KSI_OctetStringList_append(clientCtx->respQueue, resp);
+				if (res != KSI_OK) {
+					KSI_LOG_error(clientCtx->ctx, "Async WinHTTP: unable to add new response to queue. Error: %x.", res);
+					res = KSI_OK;
+					goto cleanup;
+				}
+				resp = NULL;
+
+				count += tlvSize;
 			}
-			resp = NULL;
 		}
 		WinHTTPAsyncReqList_remove(clientCtx->httpQueue, i, NULL);
 		break;
