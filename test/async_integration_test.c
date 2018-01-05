@@ -519,7 +519,7 @@ static void asyncSigning_getError(CuTest* tc, const char *url, const char *user,
 
 void Test_AsyncSign_useExtender_tcp(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_getError(tc, KSITest_composeUri(TEST_SCHEME_TCP, &conf.extender), conf.extender.user, conf.extender.pass, KSI_NETWORK_RECIEVE_TIMEOUT, 0);
+	asyncSigning_getError(tc, KSITest_composeUri(TEST_SCHEME_TCP, &conf.extender), conf.extender.user, conf.extender.pass, KSI_INVALID_FORMAT, 0);
 }
 
 void Test_AsyncSign_useExtender_http(CuTest* tc) {
@@ -1076,7 +1076,7 @@ CuSuite* AsyncIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_AsyncSingningService_verifyCacheSizeOption_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_loop_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_collect_tcp);
-	SUITE_SKIP_TEST(suite, Test_AsyncSign_useExtender_tcp, "Max", "Waiting for gateway release.");
+	SUITE_ADD_TEST(suite, Test_AsyncSign_useExtender_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_fillupCache_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_runEmpty_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_addEmptyRequest_tcp);

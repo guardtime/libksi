@@ -365,7 +365,7 @@ CuSuite* AggreIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_createSignatureUsingHashImprintWithNotImplementedHashFunction);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureWrongHMAC);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureUsingExtender);
-	SUITE_SKIP_TEST(suite, Test_CreateSignatureUsingExtender_tcp, "Max", "Waiting for gateway release.");
+	SUITE_ADD_TEST(suite, Test_CreateSignatureUsingExtender_tcp);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureDifferentNetProviders);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureUserInfoFromUrl);
 	SUITE_ADD_TEST(suite, Test_RequestAggregatorConfig);
