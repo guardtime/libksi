@@ -413,23 +413,23 @@ CuSuite* ExtIntegrationTests_getSuite(void) {
 	suite->postTest = postTest;
 
 	SUITE_ADD_TEST(suite, Test_SendOKExtendRequestDefProvider_http);
-	SUITE_SKIP_TEST(suite, Test_SendOKExtendRequestDefProvider_tcp, "Max", "Waiting for gateway release.");
+	SUITE_ADD_TEST(suite, Test_SendOKExtendRequestDefProvider_tcp);
 	SUITE_ADD_TEST(suite, Test_NOKExtendRequestToTheFuture_http);
-	SUITE_SKIP_TEST(suite, Test_NOKExtendRequestToTheFuture_tcp, "Max", "Waiting for gateway release.");
+	SUITE_ADD_TEST(suite, Test_NOKExtendRequestToTheFuture_tcp);
 	SUITE_ADD_TEST(suite, Test_NOKExtendRequestToPast_http);
-	SUITE_SKIP_TEST(suite, Test_NOKExtendRequestToPast_tcp, "Max", "Waiting for gateway release.");
+	SUITE_ADD_TEST(suite, Test_NOKExtendRequestToPast_tcp);
 	SUITE_ADD_TEST(suite, Test_OKExtendSignatureDefProvider_http);
-	SUITE_SKIP_TEST(suite, Test_OKExtendSignatureDefProvider_tcp, "Max", "Waiting for gateway release.");
+	SUITE_ADD_TEST(suite, Test_OKExtendSignatureDefProvider_tcp);
 	SUITE_ADD_TEST(suite, Test_ExtendSignatureUsingAggregator_http);
 	SUITE_ADD_TEST(suite, Test_ExtendSignatureUsingAggregator_tcp);
 	SUITE_ADD_TEST(suite, Test_ExtendSignatureDifferentNetProviders_http);
-	SUITE_SKIP_TEST(suite, Test_ExtendSignatureDifferentNetProviders_tcp, "Max", "Waiting for gateway release.");
+	SUITE_ADD_TEST(suite, Test_ExtendSignatureDifferentNetProviders_tcp);
 	SUITE_ADD_TEST(suite, Test_ExtendSignatureUserInfoFromUrl_http);
-	SUITE_SKIP_TEST(suite, Test_ExtendSignatureUserInfoFromUrl_tcp, "Max", "Waiting for gateway release.");
+	SUITE_ADD_TEST(suite, Test_ExtendSignatureUserInfoFromUrl_tcp);
 	SUITE_ADD_TEST(suite, Test_RequestExtenderConfig_http);
-	SUITE_SKIP_TEST(suite, Test_RequestExtenderConfig_tcp, "Max", "Waiting for gateway release.");
+	SUITE_ADD_TEST(suite, Test_RequestExtenderConfig_tcp);
 	SUITE_ADD_TEST(suite, Test_RequestExtenderConfig_pduV2_http);
-	SUITE_SKIP_TEST(suite, Test_RequestExtenderConfig_pduV2_tcp, "Max", "Waiting for gateway release.");
+	SUITE_ADD_TEST(suite, Test_RequestExtenderConfig_pduV2_tcp);
 
 	return suite;
 }
