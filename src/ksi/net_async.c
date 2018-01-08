@@ -340,6 +340,7 @@ static int asyncClient_composeRequestHeader(KSI_AsyncClient *c, KSI_Header **hdr
 	const char *user = NULL;
 	KSI_Utf8String *loginId = NULL;
 	KSI_Integer *instanceId = NULL;
+	KSI_Integer *messageId = NULL;
 
 	if (c == NULL || hdr == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -372,6 +373,14 @@ static int asyncClient_composeRequestHeader(KSI_AsyncClient *c, KSI_Header **hdr
 	res = KSI_Header_setInstanceId(tmp, instanceId);
 	if (res != KSI_OK) goto cleanup;
 	instanceId = NULL;
+
+	/* Do not bother about messageId to overflow. */
+	res = KSI_Integer_new(c->ctx, c->messageId++, &messageId);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_Header_setMessageId(tmp, messageId);
+	if (res != KSI_OK) goto cleanup;
+	messageId = NULL;
 
 	*hdr = tmp;
 	tmp = NULL;
