@@ -59,6 +59,17 @@ extern "C" {
 	 */
 	int KSI_AsyncAggregationHandle_new(KSI_CTX *ctx, KSI_AggregationReq *req, KSI_AsyncHandle **o);
 
+	/**
+	 * Constructor for the async handle object.
+	 * \param[in]		ctx				KSI context.
+	 * \param[in]		req				Extend request.
+	 * \param[out]		o				Pointer to the receiving pointer.
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note The handle takes ownership of the \c req resource, thus it may not be freed after a successful
+	 * call to this function.
+	 */
+	int KSI_AsyncExtendHandle_new(KSI_CTX *ctx, KSI_ExtendReq *req, KSI_AsyncHandle **o);
+
 	KSI_DEFINE_REF(KSI_AsyncHandle);
 
 	/**
@@ -135,6 +146,14 @@ extern "C" {
 	int KSI_AsyncHandle_getAggregationReq(const KSI_AsyncHandle *h, KSI_AggregationReq **req);
 
 	/**
+	 * Getter for the extend request.
+	 * \param[in]		h				Async handle.
+	 * \param[out]		req				Pointer to the receiving pointer.
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_AsyncHandle_getExtendReq(const KSI_AsyncHandle *h, KSI_ExtendReq **req);
+
+	/**
 	 * Getter for the aggregation response.
 	 * \param[in]		h				Async handle.
 	 * \param[out]		resp			Pointer to the receiving pointer.
@@ -143,6 +162,15 @@ extern "C" {
 	 * \see #KSI_AsyncHandle_getSignature for getting a verified signature.
 	 */
 	int KSI_AsyncHandle_getAggregationResp(const KSI_AsyncHandle *h, KSI_AggregationResp **resp);
+
+	/**
+	 * Getter for the extend response.
+	 * \param[in]		h				Async handle.
+	 * \param[out]		resp			Pointer to the receiving pointer.
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_AsyncHandle_getSignature for getting a verified signature.
+	 */
+	int KSI_AsyncHandle_getExtendResp(const KSI_AsyncHandle *h, KSI_ExtendResp **resp);
 
 	/**
 	 * KSI signature getter. The returned signature is verified internally.
@@ -199,6 +227,8 @@ extern "C" {
 	 * \see #KSI_AsyncService_free
 	 */
 	int KSI_SigningAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service);
+
+	int KSI_ExtendingAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service);
 
 	/**
 	 * Non-blocking aggregation request setter. All request are put into output queue untill, they are sent

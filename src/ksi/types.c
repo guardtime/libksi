@@ -124,6 +124,7 @@ struct KSI_RequestAck_st {
 };
 
 struct KSI_AggregationResp_st {
+	size_t ref;
 	KSI_CTX *ctx;
 	KSI_Integer *requestId;
 	KSI_Integer *status;
@@ -149,6 +150,7 @@ struct KSI_ExtendReq_st {
 };
 
 struct KSI_ExtendResp_st {
+	size_t ref;
 	KSI_CTX *ctx;
 	KSI_Integer *requestId;
 	KSI_Integer *status;
@@ -1061,6 +1063,48 @@ cleanup:
 	return res;
 }
 
+int KSI_ExtendPdu_verify(const KSI_ExtendPdu *pdu, const char *pass) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Header *header = NULL;
+	KSI_DataHash *respHmac = NULL;
+
+	if (pdu == NULL || pass == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(pdu->ctx);
+
+	res = KSI_ExtendPdu_getHeader(pdu, &header);
+	if (res != KSI_OK) {
+		KSI_pushError(pdu->ctx, res, NULL);
+		goto cleanup;
+	}
+	if (header == NULL){
+		KSI_pushError(pdu->ctx, res = KSI_INVALID_FORMAT, "A successful Extend response must have a Header.");
+		goto cleanup;
+	}
+
+	res = KSI_ExtendPdu_getHmac(pdu, &respHmac);
+	if (res != KSI_OK) {
+		KSI_pushError(pdu->ctx, res, NULL);
+		goto cleanup;
+	}
+	if (respHmac == NULL){
+		KSI_pushError(pdu->ctx, res = KSI_INVALID_FORMAT, "A successful Extend response must have a HMAC.");
+		goto cleanup;
+	}
+
+	res = KSI_ExtendPdu_verifyHmac(pdu, pass);
+	if (res != KSI_OK) {
+		KSI_pushError(pdu->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
 int KSI_ExtendPdu_verifyHmac(const KSI_ExtendPdu *pdu, const char *pass) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *respHmac = NULL;
@@ -1159,46 +1203,27 @@ cleanup:
 	return res;
 }
 
-int KSI_ExtendReq_enclose(KSI_ExtendReq *req, const char *loginId, const char *key, KSI_ExtendPdu **pdu) {
+int KSI_ExtendReq_encloseWithHeader(KSI_ExtendReq *req, KSI_Header *hdr, const char *key, KSI_ExtendPdu **pdu) {
 	int res;
 	KSI_ExtendPdu *tmp = NULL;
-	KSI_Header *hdr = NULL;
 	KSI_DataHash *hash = NULL;
-	size_t loginLen;
 	KSI_HashAlgorithm alg_id;
 	KSI_CTX *ctx = NULL;
 
-	if (req == NULL || loginId == NULL || key == NULL || pdu == NULL) {
+	if (req == NULL || hdr == NULL || key == NULL || pdu == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 	ctx = req->ctx;
 	KSI_ERR_clearErrors(ctx);
 
-	loginLen = strlen(loginId);
-	if (loginLen > UINT_MAX){
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
 	/* Create the pdu */
 	res = KSI_ExtendPdu_new(ctx, &tmp);
 	if (res != KSI_OK) goto cleanup;
 
-	/* Create header and initialize it with the loginId provided. */
-	res = KSI_Header_new(ctx, &hdr);
+	/* Set header*/
+	res = KSI_ExtendPdu_setHeader(tmp, hdr);
 	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_Utf8String_new(ctx, loginId, (unsigned)loginLen + 1, &hdr->loginId);
-	if (res != KSI_OK) goto cleanup;
-
-	tmp->header = hdr;
-	hdr = NULL;
-	/* Every request must have a header, and at this point, this is guaranteed. */
-	if (ctx->requestHeaderCB != NULL) {
-		res = ctx->requestHeaderCB(tmp->header);
-		if (res != KSI_OK) goto cleanup;
-	}
 
 	/* Add request. */
 	if (req->config != NULL && ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_2) {
@@ -1241,11 +1266,52 @@ cleanup:
 
 	/* Make sure we won't free the request on failure. */
 	KSI_ExtendPdu_setRequest(tmp, NULL);
+	KSI_ExtendPdu_setHeader(tmp, NULL);
 	/* The interface takes ownership over the request resource. */
 	if (res == KSI_OK) KSI_ExtendReq_free(req);
 
 	KSI_ExtendPdu_free(tmp);
-	KSI_Header_free(hdr);
+
+	return res;
+}
+
+int KSI_ExtendReq_enclose(KSI_ExtendReq *req, const char *loginId, const char *key, KSI_ExtendPdu **pdu) {
+	int res;
+	KSI_Header *tmp = NULL;
+	size_t loginLen;
+
+	if (req == NULL || loginId == NULL || key == NULL || pdu == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	loginLen = strlen(loginId);
+	if (loginLen > UINT_MAX){
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	/* Create header and initialize it with the loginId provided. */
+	res = KSI_Header_new(req->ctx, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_Utf8String_new(req->ctx, loginId, (unsigned)loginLen + 1, &tmp->loginId);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Every request must have a header, and at this point, this is guaranteed. */
+	if (req->ctx->requestHeaderCB != NULL) {
+		res = req->ctx->requestHeaderCB(tmp);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	res = KSI_ExtendReq_encloseWithHeader(req, tmp, key, pdu);
+	if (res != KSI_OK) goto cleanup;
+	tmp = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+	KSI_Header_free(tmp);
 
 	return res;
 }
@@ -2096,7 +2162,7 @@ KSI_IMPLEMENT_SETTER(KSI_RequestAck, KSI_Integer*, aggregationDrift, Aggregation
  * KSI_AggregationResp
  */
 void KSI_AggregationResp_free(KSI_AggregationResp *t) {
-	if (t != NULL) {
+	if (t != NULL && --t->ref == 0) {
 		KSI_Integer_free(t->requestId);
 		KSI_Integer_free(t->status);
 		KSI_Utf8String_free(t->errorMsg);
@@ -2121,6 +2187,7 @@ int KSI_AggregationResp_new(KSI_CTX *ctx, KSI_AggregationResp **t) {
 		goto cleanup;
 	}
 
+	tmp->ref = 1;
 	tmp->raw = NULL;
 	tmp->ctx = ctx;
 	tmp->requestId = NULL;
@@ -2287,6 +2354,8 @@ KSI_IMPLEMENT_SETTER(KSI_AggregationResp, KSI_TLV*, baseTlv, BaseTlv);
 
 KSI_IMPLEMENT_GET_CTX(KSI_AggregationResp);
 
+KSI_IMPLEMENT_REF(KSI_AggregationResp);
+
 /**
  * KSI_ExtendReq
  */
@@ -2433,7 +2502,7 @@ KSI_IMPLEMENT_REF(KSI_ExtendReq)
  * KSI_ExtendResp
  */
 void KSI_ExtendResp_free(KSI_ExtendResp *t) {
-	if (t != NULL) {
+	if (t != NULL && --t->ref == 0) {
 		KSI_Integer_free(t->requestId);
 		KSI_Integer_free(t->status);
 		KSI_Utf8String_free(t->errorMsg);
@@ -2455,6 +2524,7 @@ int KSI_ExtendResp_new(KSI_CTX *ctx, KSI_ExtendResp **t) {
 		goto cleanup;
 	}
 
+	tmp->ref = 1;
 	tmp->ctx = ctx;
 	tmp->requestId = NULL;
 	tmp->status = NULL;
@@ -2654,6 +2724,8 @@ KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_Integer*, lastTime, LastTime);
 KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_Config*, config, Config);
 KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_CalendarHashChain*, calendarHashChain, CalendarHashChain);
 KSI_IMPLEMENT_SETTER(KSI_ExtendResp, KSI_TLV*, baseTlv, BaseTlv);
+
+KSI_IMPLEMENT_REF(KSI_ExtendResp);
 
 /**
  * KSI_PKISignedData
