@@ -132,11 +132,11 @@ static int remap(KSI_TlvElement *el, unsigned char *buf, size_t buf_len) {
 			len -= consumed;
 		}
 	} else if (el->ptr != NULL) {
-		if (el->ftlv.hdr_len + el->ftlv.dat_len > len) {
+		if (el->ftlv.dat_len > len) {
 			res = KSI_BUFFER_OVERFLOW;
 			goto cleanup;
 		}
-		memmove(ptr, el->ptr, el->ftlv.hdr_len + el->ftlv.dat_len);
+		memmove(ptr, el->ptr + el->ftlv.hdr_len, el->ftlv.dat_len);
 	}
 
 	if (el->ptr_own) {
