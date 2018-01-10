@@ -91,6 +91,7 @@ INTTESTS_OBJ = \
 	$(OBJ_DIR)\aggre_integration_test.obj \
 	$(OBJ_DIR)\aggre_async_integration_test.obj \
 	$(OBJ_DIR)\ext_integration_tests.obj \
+	$(OBJ_DIR)\ext_async_integration_tests.obj \
 	$(OBJ_DIR)\pub_integration_tests.obj \
 	$(OBJ_DIR)\integration_test_pack.obj \
 	$(OBJ_DIR)\support_tests.obj \

@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2018 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -35,7 +35,8 @@ CuSuite* AggreIntegrationTests_getSuite(void);
 CuSuite* ExtIntegrationTests_getSuite(void);
 CuSuite* PubIntegrationTests_getSuite(void);
 CuSuite* IntegrationTestPack_getSuite(void);
-CuSuite* AsyncIntegrationTests_getSuite(void);
+CuSuite* AsyncAggrIntegrationTests_getSuite(void);
+CuSuite* AsyncExtIntegrationTests_getSuite(void);
 
 #ifdef	__cplusplus
 }

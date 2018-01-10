@@ -66,6 +66,7 @@ integration_tests_SOURCES= \
 	aggre_integration_test.c \
 	aggre_async_integration_test.c \
 	ext_integration_tests.c \
+	ext_async_integration_tests.c \
 	pub_integration_tests.c \
 	integration_test_pack.c
 
