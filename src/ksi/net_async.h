@@ -63,12 +63,17 @@ extern "C" {
 	 * Constructor for the async handle object.
 	 * \param[in]		ctx				KSI context.
 	 * \param[in]		req				Extend request.
+	 * \param[in]		sig				KSI signature to be extended (optional).
 	 * \param[out]		o				Pointer to the receiving pointer.
 	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \note The handle takes ownership of the \c req resource, thus it may not be freed after a successful
+	 * \note The handle takes ownership of the provided request resource, thus they may not be freed after a successful
 	 * call to this function.
+	 * \see #KSI_AsyncService_addRequest for adding asynchronous request to the output queue.
+	 * \see #KSI_AsyncHandle_getExtendResp for retrieving extend response.
+	 * \see #KSI_AsyncHandle_getSignature for retrieving an extended KSI signature. Can only be used if \c sig is provided.
+	 * \see #KSI_Signature_clone in order to provide a copy of the KSI signature \c sig.
 	 */
-	int KSI_AsyncExtendHandle_new(KSI_CTX *ctx, KSI_ExtendReq *req, KSI_AsyncHandle **o);
+	int KSI_AsyncExtendHandle_new(KSI_CTX *ctx, KSI_ExtendReq *req, KSI_Signature *sig, KSI_AsyncHandle **o);
 
 	KSI_DEFINE_REF(KSI_AsyncHandle);
 

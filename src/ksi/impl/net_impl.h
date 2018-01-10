@@ -122,6 +122,7 @@ extern "C" {
 		/** Application layer request context. */
 		KSI_AggregationReq *aggrReq;
 		KSI_ExtendReq *extReq;
+		KSI_Signature *signature;
 
 		/** Application layer response context. */
 		void *respCtx;
