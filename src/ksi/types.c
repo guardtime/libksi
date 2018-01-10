@@ -2462,17 +2462,22 @@ int KSI_ExtendReq_toTlv(KSI_CTX *ctx, const KSI_ExtendReq *data, unsigned tag, i
 
 	if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1) {
 		res = KSI_TlvTemplate_construct(ctx, tmp, data, KSI_TLV_TEMPLATE(KSI_ExtendReq));
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
 	} else if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_2) {
-		res = KSI_TlvTemplate_construct(ctx, tmp, data, (data->config == NULL) ?
-				KSI_TLV_TEMPLATE(KSI_ExtendReq) : KSI_TLV_TEMPLATE(KSI_ConfigReq));
+		if (data->aggregationTime != NULL) {
+			res = KSI_TlvTemplate_construct(ctx, tmp, data, KSI_TLV_TEMPLATE(KSI_ExtendReq));
+			if (res != KSI_OK) {
+				KSI_pushError(ctx, res, NULL);
+				goto cleanup;
+			}
+		}
 	} else {
 		res = KSI_INVALID_FORMAT;
 	}
 
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
 
 	*tlv = tmp;
 	tmp = NULL;
@@ -2560,7 +2565,7 @@ int KSI_ExtendResp_verifyWithRequest(const KSI_ExtendResp *resp, const KSI_Exten
 	}
 
 	if (!KSI_Integer_equalsUInt(resp->status, 0)) {
-		res = KSI_convertExtenderStatusCode(resp->status);
+		KSI_pushError(resp->ctx, res = KSI_convertExtenderStatusCode(resp->status), KSI_Utf8String_cstr(resp->errorMsg));
 		goto cleanup;
 	}
 
