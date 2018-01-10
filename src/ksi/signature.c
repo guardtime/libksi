@@ -473,64 +473,6 @@ cleanup:
 	return res;
 }
 
-
-
-static int removeCalAuthAndPublication(KSI_Signature *sig) {
-	KSI_LIST(KSI_TLV) *nested = NULL;
-	KSI_TLV *tlv = NULL;
-	int res;
-	int i;
-
-	if (sig == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-	KSI_ERR_clearErrors(sig->ctx);
-
-	res = KSI_TLV_getNestedList(sig->baseTlv, &nested);
-	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
-		goto cleanup;
-	}
-	/* By looping in reverse order, we can safely remove elements
-	 * and continue. */
-	for (i = (int)KSI_TLVList_length(nested) - 1; i >= 0; i--) {
-		unsigned tag;
-
-		res = KSI_TLVList_elementAt(nested, (unsigned)i, &tlv);
-		if (res != KSI_OK) {
-			KSI_pushError(sig->ctx, res, NULL);
-			goto cleanup;
-		}
-
-		tag = KSI_TLV_getTag(tlv);
-
-		if (tag == 0x0803 || tag == 0x0805) {
-			res = KSI_TLVList_remove(nested, (unsigned)i, NULL);
-			if (res != KSI_OK) {
-				KSI_pushError(sig->ctx, res, NULL);
-				goto cleanup;
-			}
-			tlv = NULL;
-		}
-	}
-
-	KSI_CalendarAuthRec_free(sig->calendarAuthRec);
-	sig->calendarAuthRec = NULL;
-
-	KSI_PublicationRecord_free(sig->publication);
-	sig->publication = NULL;
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_nofree(nested);
-	KSI_nofree(tlv);
-
-	return res;
-}
-
 int KSI_Signature_replacePublicationRecord(KSI_Signature *sig, KSI_PublicationRecord *pubRec) {
 	KSI_TLV *newPubTlv = NULL;
 
@@ -546,7 +488,7 @@ int KSI_Signature_replacePublicationRecord(KSI_Signature *sig, KSI_PublicationRe
 
 	if (pubRec != NULL) {
 		/* Remove auth records. */
-		res = removeCalAuthAndPublication(sig);
+		res = sig->removeCalAuthAndPublication(sig);
 		if (res != KSI_OK) {
 			KSI_pushError(sig->ctx, res, NULL);
 			goto cleanup;
@@ -765,18 +707,12 @@ static int KSI_signature_extendToWithoutVerification(const KSI_Signature *sig, K
 	KSI_ExtendResp *resp = NULL;
 	KSI_CalendarHashChain *calHashChain = NULL;
 	KSI_Signature *tmp = NULL;
+	KSI_SignatureBuilder *builder = NULL;
 
 
 	KSI_ERR_clearErrors(ctx);
 	if (sig == NULL || ctx == NULL || extended == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	/* Make a copy of the original signature */
-	res = KSI_Signature_clone(sig, &tmp);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
@@ -828,22 +764,20 @@ static int KSI_signature_extendToWithoutVerification(const KSI_Signature *sig, K
 		goto cleanup;
 	}
 
-	/* Add the hash chain to the signature. */
-	res = tmp->replaceCalendarChain(tmp, calHashChain);
+	res = KSI_SignatureBuilder_openFromSignature(sig, &builder);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	/* Remove the chain from the structure, as it will be freed when this function finishes. */
-	res = KSI_ExtendResp_setCalendarHashChain(resp, NULL);
+	res = KSI_SignatureBuilder_applyCalendarHashChain(builder, calHashChain);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	/* Remove calendar auth record and publication. */
-	res = removeCalAuthAndPublication(tmp);
+	builder->noVerify = 1;
+	res = KSI_SignatureBuilder_close(builder, 0, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -860,6 +794,7 @@ cleanup:
 	KSI_ExtendResp_free(resp);
 	KSI_RequestHandle_free(handle);
 	KSI_Signature_free(tmp);
+	KSI_SignatureBuilder_free(builder);
 
 	return res;
 }

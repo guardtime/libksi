@@ -96,6 +96,9 @@ extern "C" {
 		/** This function appends the aggregation chain to the signature.
 		 * It also updates the aggregation time and chain index. */
 		int (*appendAggregationChain)(KSI_Signature *sig, KSI_AggregationHashChain *aggr);
+		/** This function removes calendar authentication and publication records.
+		 * \note The function does not check the internal consistency! */
+		int (*removeCalAuthAndPublication)(KSI_Signature *sig);
 	};
 
 
