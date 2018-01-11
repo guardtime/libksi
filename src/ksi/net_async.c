@@ -48,6 +48,9 @@ void KSI_AsyncHandle_free(KSI_AsyncHandle *o) {
 		KSI_free(o->raw);
 		KSI_Utf8String_free(o->errMsg);
 
+		KSI_nofree(o->signature);
+		KSI_nofree(o->pubRec);
+
 		KSI_free(o);
 	}
 }
@@ -78,6 +81,8 @@ static int KSI_AbstractAsyncHandle_new(KSI_CTX *ctx, KSI_AsyncHandle **o) {
 
 	tmp->aggrReq = NULL;
 	tmp->extReq = NULL;
+	tmp->signature = NULL;
+	tmp->pubRec = NULL;
 
 	tmp->respCtx = NULL;
 	tmp->respCtx_free = NULL;
@@ -111,9 +116,13 @@ int KSI_AsyncAggregationHandle_new(KSI_CTX *ctx, KSI_AggregationReq *req, KSI_As
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_AbstractAsyncHandle_new(ctx, o);
-	if (res != KSI_OK) goto cleanup;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	(*o)->aggrReq = req;
 	res = KSI_OK;
@@ -121,52 +130,108 @@ cleanup:
 	return res;
 }
 
-int KSI_AsyncExtendHandle_new(KSI_CTX *ctx, KSI_ExtendReq *req, KSI_Signature *sig, KSI_AsyncHandle **o) {
+int KSI_AsyncExtendHandle_new(KSI_CTX *ctx, KSI_ExtendReq *req, KSI_AsyncHandle **o) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_ExtendReq *tmp = NULL;
 
-	if (ctx == NULL || (req == NULL && sig == NULL) || o == NULL) {
+	if (ctx == NULL || req == NULL || o == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_AbstractAsyncHandle_new(ctx, o);
-	if (res != KSI_OK) goto cleanup;
-
-	/* If request is not provided, create it from the signature. */
-	if (req == NULL) {
-		KSI_Integer *signTime = NULL;
-		KSI_Integer *ref = NULL;
-
-		/* Create extend request object. */
-		res = KSI_ExtendReq_new(ctx, &tmp);
-		if (res != KSI_OK) goto cleanup;
-
-		/* Request the calendar hash chain from this moment on. */
-		res = KSI_Signature_getSigningTime(sig, &signTime);
-		if (res != KSI_OK) goto cleanup;
-
-		/* Set the aggregation time. */
-		res = KSI_ExtendReq_setAggregationTime(tmp, ref = KSI_Integer_ref(signTime));
-		if (res != KSI_OK) {
-			KSI_Integer_free(ref);
-			goto cleanup;
-		}
-
-		(*o)->extReq = tmp;
-		tmp = NULL;
-	} else {
-		(*o)->extReq = req;
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
 	}
-	(*o)->signature = sig;
 
+	(*o)->extReq = req;
 	res = KSI_OK;
 cleanup:
-	KSI_ExtendReq_free(tmp);
-
 	return res;
 }
 
+int KSI_AsyncExtendingHandle_new(KSI_CTX *ctx, const KSI_Signature *sig, const KSI_PublicationRecord *pubRec, KSI_AsyncHandle **o) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_AsyncHandle *tmp = NULL;
+	KSI_ExtendReq *req = NULL;
+	KSI_Integer *sigTime = NULL;
+	KSI_Integer *ref = NULL;
+
+	if (ctx == NULL || sig == NULL || o == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(ctx);
+
+	/* Create extend request object. */
+	res = KSI_ExtendReq_new(ctx, &req);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Request the calendar hash chain from this moment on. */
+	res = KSI_Signature_getSigningTime(sig, &sigTime);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Set the aggregation time. */
+	res = KSI_ExtendReq_setAggregationTime(req, ref = KSI_Integer_ref(sigTime));
+	if (res != KSI_OK) {
+		KSI_Integer_free(ref);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	if (pubRec != NULL) {
+		KSI_PublicationData *pubData = NULL;
+		KSI_Integer *pubTime = NULL;
+
+		/* Extract the published data object. */
+		res = KSI_PublicationRecord_getPublishedData(pubRec, &pubData);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		/* Read the publication time from the published data object. */
+		res = KSI_PublicationData_getTime(pubData, &pubTime);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+
+		/* Set the extend to time. */
+		res = KSI_ExtendReq_setPublicationTime(req, ref = KSI_Integer_ref(pubTime));
+		if (res != KSI_OK) {
+			KSI_Integer_free(ref);
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+
+	res = KSI_AsyncExtendHandle_new(ctx, req, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+	req = NULL;
+
+	tmp->signature = sig;
+	tmp->pubRec = pubRec;
+
+	*o = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+cleanup:
+	KSI_AsyncHandle_free(tmp);
+
+	return res;
+}
 
 KSI_IMPLEMENT_REF(KSI_AsyncHandle)
 
@@ -281,6 +346,7 @@ static int createExtendedSignature(const KSI_AsyncHandle *h, KSI_Signature **sig
 	KSI_ExtendResp *resp = NULL;
 	KSI_SignatureBuilder *builder = NULL;
 	KSI_CalendarHashChain *extCalChain = NULL;
+	KSI_PublicationRecord *pubRecClone = NULL;
 
 	if (h == NULL || sig == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -288,7 +354,7 @@ static int createExtendedSignature(const KSI_AsyncHandle *h, KSI_Signature **sig
 	}
 	KSI_ERR_clearErrors(h->ctx);
 
-	if (h->extReq == NULL || h->signature || h->respCtx == NULL) {
+	if (h->extReq == NULL || h->signature == NULL || h->respCtx == NULL) {
 		KSI_pushError(h->ctx, res = KSI_INVALID_STATE, NULL);
 		goto cleanup;
 	}
@@ -320,6 +386,23 @@ static int createExtendedSignature(const KSI_AsyncHandle *h, KSI_Signature **sig
 		goto cleanup;
 	}
 
+	if (h->pubRec != NULL) {
+		/* Make a copy of the original publication record.*/
+		res = KSI_PublicationRecord_clone(h->pubRec, &pubRecClone);
+		if (res != KSI_OK) {
+			KSI_pushError(h->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		/* Set the publication as the trust anchor. */
+		res = KSI_Signature_replacePublicationRecord(tmp, pubRecClone);
+		if (res != KSI_OK) {
+			KSI_pushError(h->ctx, res, NULL);
+			goto cleanup;
+		}
+		pubRecClone = NULL;
+	}
+
 	res = KSI_Signature_verifyWithPolicy(tmp, NULL, 0, KSI_VERIFICATION_POLICY_INTERNAL, NULL);
 	if (res != KSI_OK) {
 		KSI_pushError(h->ctx, res, NULL);
@@ -331,6 +414,7 @@ static int createExtendedSignature(const KSI_AsyncHandle *h, KSI_Signature **sig
 
 	res = KSI_OK;
 cleanup:
+	KSI_PublicationRecord_free(pubRecClone);
 	KSI_SignatureBuilder_free(builder);
 	KSI_Signature_free(tmp);
 	return res;
@@ -666,7 +750,6 @@ static int asyncClient_addExtenderRequest(KSI_AsyncClient *c, KSI_AsyncHandle *h
 	KSI_ExtendReq *extReq = NULL;
 	KSI_Header *hdr = NULL;
 	KSI_Integer *aggrTime = NULL;
-	KSI_Integer *publTime = NULL;
 	KSI_Config *reqConf = NULL;
 	KSI_AsyncHandle *confHandle = NULL;
 	KSI_ExtendReq *tmpReq = NULL;
@@ -697,14 +780,11 @@ static int asyncClient_addExtenderRequest(KSI_AsyncClient *c, KSI_AsyncHandle *h
 	res = KSI_ExtendReq_getAggregationTime(extReq, &aggrTime);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_ExtendReq_getPublicationTime(extReq, &publTime);
-	if (res != KSI_OK) goto cleanup;
-
 	res = KSI_ExtendReq_getConfig(extReq, &reqConf);
 	if (res != KSI_OK) goto cleanup;
 
-	/* Update request id only in case of aggregation request. */
-	if (aggrTime != NULL || publTime != NULL) {
+	/* Update request id only in case of extending request. */
+	if (aggrTime != NULL) {
 		res = KSI_ExtendReq_getRequestId(extReq, &reqId);
 		if (res != KSI_OK) goto cleanup;
 
@@ -758,7 +838,7 @@ static int asyncClient_addExtenderRequest(KSI_AsyncClient *c, KSI_AsyncHandle *h
 	}
 
 	/* Set aggregation request into local cache. */
-	if (aggrTime != NULL || publTime != NULL) {
+	if (aggrTime != NULL) {
 		c->reqCache[id] = handle;
 		c->pending++;
 	}
@@ -766,7 +846,7 @@ static int asyncClient_addExtenderRequest(KSI_AsyncClient *c, KSI_AsyncHandle *h
 	/* Cache the config request separatelly, as the response can not be assigned to any request in the common cache. */
 	if (reqConf != NULL) {
 		/* Check if this is a multy-payload request. */
-		if (aggrTime != NULL || publTime != NULL) {
+		if (aggrTime != NULL) {
 			KSI_Config *confRef = NULL;
 
 			/* Create a separate conf request handle. */
@@ -779,7 +859,7 @@ static int asyncClient_addExtenderRequest(KSI_AsyncClient *c, KSI_AsyncHandle *h
 				goto cleanup;
 			}
 
-			res = KSI_AsyncExtendHandle_new(c->ctx, tmpReq, NULL, &confHandle);
+			res = KSI_AsyncExtendHandle_new(c->ctx, tmpReq, &confHandle);
 			if (res != KSI_OK) goto cleanup;
 			tmpReq = NULL;
 
