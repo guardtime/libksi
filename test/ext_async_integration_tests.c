@@ -785,15 +785,6 @@ static void asyncExtend_signature(CuTest* tc, const char *url, const char *user,
 
 	KSI_LOG_debug(ctx, "%s: REQUEST", __FUNCTION__);
 
-	res = KSI_ExtendReq_new(ctx, &request);
-	CuAssert(tc, "Unable to create extend request.", res == KSI_OK && request != NULL);
-
-	res = KSI_Signature_getSigningTime(sig, &signTime);
-	CuAssert(tc, "Unable to extract signature signing time.", res == KSI_OK && signTime != NULL);
-
-	res = KSI_ExtendReq_setAggregationTime(request, KSI_Integer_ref(signTime));
-	CuAssert(tc, "Unable set aggre time.", res == KSI_OK);
-
 	res = KSI_AsyncExtendingHandle_new(ctx, sig, NULL, &handle);
 	CuAssert(tc, "Unable to create async request.", res == KSI_OK && handle != NULL);
 
@@ -822,9 +813,13 @@ static void asyncExtend_signature(CuTest* tc, const char *url, const char *user,
 
 		switch (state) {
 			case KSI_ASYNC_STATE_RESPONSE_RECEIVED: {
+					KSI_ExtendResp *resp = NULL;
 					KSI_Signature *ext = NULL;
 
 					KSI_LOG_debug(ctx, "%s: RESPONSE.", __FUNCTION__);
+
+					res = KSI_AsyncHandle_getExtendResp(respHandle, &resp);
+					CuAssert(tc, "Failed to get extend response.", res == KSI_OK && resp != NULL);
 
 					res = KSI_AsyncHandle_getSignature(respHandle, &ext);
 					CuAssert(tc, "Failed to get extended signature.", res == KSI_OK && ext != NULL);
