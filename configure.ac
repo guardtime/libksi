@@ -186,8 +186,6 @@ esac
 CFLAGS+=" -Wdeclaration-after-statement"
 # Add more warnings.
 CFLAGS+=" -Wall"
-# Supppress warnings.
-CFLAGS+=" -Wno-nonnull-compare"
 # Optimize for debugging.
 #CFLAGS+=" -Og"
 
