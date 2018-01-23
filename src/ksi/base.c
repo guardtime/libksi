@@ -197,6 +197,8 @@ static void initOptions(KSI_CTX *ctx) {
 
 	KSI_CTX_setOption(ctx, KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK, NULL);
 	KSI_CTX_setOption(ctx, KSI_OPT_EXT_CONF_RECEIVED_CALLBACK, NULL);
+
+	KSI_CTX_setOption(ctx, KSI_OPT_PUBFILE_CACHE_TTL_SECONDS, (void*)KSI_CTX_PUBFILE_CACHE_DEFAULT_TTL);
 }
 
 int KSI_CTX_new(KSI_CTX **context) {
@@ -219,6 +221,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	}
 	ctx->errors_count = 0;
 	ctx->publicationsFile = NULL;
+	ctx->publicationsFileCachedAt = 0;
 	ctx->pkiTruststore = NULL;
 	ctx->netProvider = NULL;
 	ctx->publicationCertEmail_DEPRECATED = NULL;
@@ -448,6 +451,7 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 	const unsigned char *raw = NULL;
 	size_t raw_len = 0;
 	KSI_PublicationsFile *tmp = NULL;
+	time_t now = 0;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || pubFile == NULL) {
@@ -455,8 +459,8 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 		goto cleanup;
 	}
 
-	/* TODO! Implement mechanism for reloading (e.g cache timeout) */
-	if (ctx->publicationsFile == NULL) {
+	if (difftime(time(&now), ctx->publicationsFileCachedAt) >= ctx->options[KSI_OPT_PUBFILE_CACHE_TTL_SECONDS] ||
+			ctx->publicationsFile == NULL) {
 		KSI_LOG_debug(ctx, "Receiving publications file.");
 
 		res = KSI_sendPublicationRequest(ctx, NULL, 0, &handle);
@@ -483,8 +487,14 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 			goto cleanup;
 		}
 
-		ctx->publicationsFile = tmp;
+		res = KSI_CTX_setPublicationsFile(ctx, tmp);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx,res, NULL);
+			goto cleanup;
+		}
 		tmp = NULL;
+
+		ctx->publicationsFileCachedAt = now;
 
 		KSI_LOG_debug(ctx, "Publications file received.");
 	}
@@ -745,7 +755,6 @@ int KSI_extendSignatureWithPolicy(KSI_CTX *ctx, const KSI_Signature *sig, const 
 	KSI_Integer *signingTime = NULL;
 	KSI_PublicationRecord *pubRec = NULL;
 	KSI_Signature *extSig = NULL;
-	bool verifyPubFile = (ctx->publicationsFile == NULL);
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || sig == NULL || extended == NULL) {
@@ -759,12 +768,10 @@ int KSI_extendSignatureWithPolicy(KSI_CTX *ctx, const KSI_Signature *sig, const 
 		goto cleanup;
 	}
 
-	if (verifyPubFile == true) {
-		res = KSI_verifyPublicationsFile(ctx, pubFile);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx,res, NULL);
-			goto cleanup;
-		}
+	res = KSI_verifyPublicationsFile(ctx, pubFile);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
 	}
 
 	res = KSI_Signature_getSigningTime(sig, &signingTime);
@@ -1074,7 +1081,26 @@ cleanup:																					\
 	CTX_VALUEP_GETTER(var, nam, typ)														\
 
 CTX_VALUEP_SETTER(pkiTruststore, PKITruststore, KSI_PKITruststore, KSI_PKITruststore_free)
-CTX_GET_SET_VALUE(publicationsFile, PublicationsFile, KSI_PublicationsFile, KSI_PublicationsFile_free)
+
+CTX_VALUEP_GETTER(publicationsFile, PublicationsFile, KSI_PublicationsFile)
+
+int KSI_CTX_setPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile *var) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (ctx == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_PublicationsFile_free(ctx->publicationsFile);
+	ctx->publicationsFile = var;
+	/* Clear the cache timeout. */
+	ctx->publicationsFileCachedAt = 0;
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
 
 int KSI_CTX_getLastFailedSignature(KSI_CTX *ctx, KSI_Signature **lastFailedSignature) {
 	int res = KSI_UNKNOWN_ERROR;

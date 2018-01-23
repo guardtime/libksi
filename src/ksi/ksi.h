@@ -333,6 +333,7 @@ enum KSI_StatusCode {
 #define KSI_PDU_VERSION_1		1
 #define KSI_PDU_VERSION_2		2
 
+#define KSI_CTX_PUBFILE_CACHE_DEFAULT_TTL (8 * 60 * 60)
 
 /**
  * Service configuration receive callback.
@@ -344,50 +345,58 @@ typedef int (*KSI_Config_Callback)(KSI_CTX *ctx, KSI_Config *conf);
 
 typedef enum KSI_Option_en {
 	/**
-	 * Description:	PDU version for KSI aggregation messages.
-	 * Type:		size_t.
-	 * Range:		KSI_PDU_VERSION_1 .. KSI_PDU_VERSION_2
+	 * PDU version for KSI aggregation messages.
+	 * \param		version		PDU version. Paramer of type size_t.
+	 * \note		Range: KSI_PDU_VERSION_1 .. KSI_PDU_VERSION_2
 	 */
 	KSI_OPT_AGGR_PDU_VER,
 	/**
-	 * Description:	PDU version for KSI extending messages.
-	 * Type:		size_t.
-	 * Range:		KSI_PDU_VERSION_1 .. KSI_PDU_VERSION_2
+	 * PDU version for KSI extending messages.
+	 * \param		version		PDU version. Paramer of type size_t.
+	 * \note		Range: KSI_PDU_VERSION_1 .. KSI_PDU_VERSION_2
 	 */
 	KSI_OPT_EXT_PDU_VER,
 
 	/**
-	 * Description: Aggregator HMAC algorithm.
-	 * Type:		KSI_HashAlgorithm.
-	 * Range:		See #KSI_HashAlgorithm.
+	 * Aggregator HMAC algorithm.
+	 * \param		algorithm	Hash algorithm. Paramer of type #KSI_HashAlgorithm.
 	 */
 	KSI_OPT_AGGR_HMAC_ALGORITHM,
 	/**
-	 * Description: Extender HMAC algorithm.
-	 * Type:		KSI_HashAlgorithm.
-	 * Range:		See #KSI_HashAlgorithm.
+	 * Extender HMAC algorithm.
+	 * \param		algorithm	Hash algorithm. Paramer of type #KSI_HashAlgorithm.
 	 */
 	KSI_OPT_EXT_HMAC_ALGORITHM,
 
 	/**
 	 * The size of the dynamic recycle pool for #KSI_DataHash objects.
+	 * \param		count		Cache size. Paramer of type size_t.
 	 */
 	KSI_OPT_DATAHASH_CACHE_SIZE,
 
 	/**
-	 * Description: Aggregator configuration received callback.
-	 * Type:		KSI_Config_Callback.
-	 * Note:        The ownership of the #KSI_Config object is not transfered to the callback.
+	 * Aggregator configuration received callback.
+	 * \param		p_func		Callback method. Paramer of type #KSI_Config_Callback.
+	 * \note        The ownership of the #KSI_Config object is not transfered to the callback.
 	 *              However, the user can call #KSI_Config_ref in order to keep a reference of the object.
 	 */
 	KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK,
 	/**
-	 * Description: Extender configuration received callback.
-	 * Type:		KSI_Config_Callback.
-	 * Note:        The ownership of the #KSI_Config object is not transfered to the callback.
+	 * Extender configuration received callback.
+	 * \param		p_func		Callback method. Paramer of type #KSI_Config_Callback.
+	 * \note        The ownership of the #KSI_Config object is not transfered to the callback.
 	 *              However, the user can call #KSI_Config_ref in order to keep a reference of the object.
 	 */
 	KSI_OPT_EXT_CONF_RECEIVED_CALLBACK,
+
+	/**
+	 * Publications file cache timeout. After the timeout expires a call to the #KSI_receivePublicationsFile will
+	 * trigger a new publications file download.
+	 * \param		timeout		Timeout in seconds. Paramer of type size_t.
+	 * \see			#KSI_receivePublicationsFile
+	 * \note		Setting the timeout to 0 will always trigger the file download.
+	 */
+	KSI_OPT_PUBFILE_CACHE_TTL_SECONDS,
 
 	__KSI_NUMBER_OF_OPTIONS,
 } KSI_Option;
@@ -549,8 +558,14 @@ int KSI_sendPublicationRequest(KSI_CTX *ctx, const unsigned char *request, size_
  * \param[out]		pubFile		Pointer to the receiving pointer.
  *
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
- * \note The publications file is not verified, use KSI_PublicationsFile_verify to do so.
- * \see #KSI_PublicationsFile_verify
+ *
+ * \note The publications file is not verified, use #KSI_PublicationsFile_verify to do so.
+ * \note The downloaded publications file is cached. Sequential calls to this method will return the cached file, except
+ * the cache timeout #KSI_OPT_PUBFILE_CACHE_TTL_SECONDS has expired in which case a new download is triggered.
+ *
+ * \see #KSI_CTX_setPublicationUrl for setting publications file URL.
+ * \see #KSI_PublicationsFile_verify for publication file verification.
+ * \see #KSI_CTX_setOption(#KSI_OPT_PUBFILE_CACHE_TTL_SECONDS) for setting cache timeout.
  */
 int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile);
 

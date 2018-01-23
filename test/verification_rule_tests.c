@@ -60,10 +60,6 @@ extern KSI_CTX *ctx;
 	CuAssert(tc, "Invalid success step.",   verRes.stepsSuccessful == KSI_VERIFY_NONE); \
 	CuAssert(tc, "Invalid fail step.",      verRes.stepsFailed     == KSI_VERIFY_NONE) \
 
-static void preTest(void) {
-	ctx->netProvider->requestCount = 0;
-}
-
 static void KSITest_ruleVerifier(CuTest *tc, int (*verificationRule)(KSI_VerificationContext *, KSI_RuleVerificationResult *),
 			const int step, const char *testSigFile, const int rCode, const int eCode) {
 	int res = KSI_OK;
@@ -5202,10 +5198,19 @@ static void testRule_AggregationChainInputLevelVerification_sigWithLevel(CuTest 
 #undef TEST_AGGR_LEVEL
 }
 
+static void preTest(void) {
+	ctx->netProvider->requestCount = 0;
+}
+
+static void postTest(void) {
+	KSITest_setDefaultPubfileAndVerInfo(ctx);
+}
+
 CuSuite* KSITest_VerificationRules_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
 	suite->preTest = preTest;
+	suite->postTest = postTest;
 
 	SUITE_ADD_TEST(suite, testRule_AggregationChainInputHashVerification_validRfc3161);
 	SUITE_ADD_TEST(suite, testRule_AggregationChainInputHashVerification_invalidRfc3161_verifyErrorResult);

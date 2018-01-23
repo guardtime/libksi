@@ -3165,28 +3165,21 @@ static int initPublicationsFile(KSI_VerificationContext *info) {
 		goto cleanup;
 	}
 
-	if (tempData->publicationsFile == NULL) {
-		if (info->userPublicationsFile != NULL) {
-			tmp = KSI_PublicationsFile_ref(info->userPublicationsFile);
-		} else {
-			bool verifyPubFile = (info->ctx->publicationsFile == NULL);
+	if (info->userPublicationsFile != NULL) {
+		tmp = KSI_PublicationsFile_ref(info->userPublicationsFile);
+	} else {
+		res = KSI_receivePublicationsFile(info->ctx, &tmp);
+		if (res != KSI_OK) goto cleanup;
 
-			res = KSI_receivePublicationsFile(info->ctx, &tmp);
-			if (res != KSI_OK) goto cleanup;
+		KSI_LOG_info(info->ctx, "Verifying publications file.");
 
-			if (verifyPubFile == true) {
-				KSI_LOG_info(info->ctx, "Verifying implicitly publications file.");
-
-				res = KSI_verifyPublicationsFile(info->ctx, tmp);
-				if (res != KSI_OK) goto cleanup;
-
-
-			}
-		}
-
-		tempData->publicationsFile = tmp;
-		tmp = NULL;
+		res = KSI_verifyPublicationsFile(info->ctx, tmp);
+		if (res != KSI_OK) goto cleanup;
 	}
+
+	KSI_PublicationsFile_free(tempData->publicationsFile);
+	tempData->publicationsFile = tmp;
+	tmp = NULL;
 
 	res = KSI_OK;
 
