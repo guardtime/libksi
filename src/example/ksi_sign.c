@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
 	};
 
 
-	/* Handle command line parameters */
+	/* Handle command line parameters. */
 	if (argc != 7) {
 		fprintf(stderr, "Usage:\n"
 				"  %s <in-data-file> <out-sign-file> <aggregator-uri> <user> <pass> <pub-file url> \n", argv[0]);
@@ -59,10 +59,10 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	/* Input file */
+	/* Input file. */
 	in = fopen(argv[1], "rb");
 	if (in == NULL) {
-		fprintf(stderr, "Unable to open input file '%s'\n", argv[1]);
+		fprintf(stderr, "Unable to open input file '%s'.\n", argv[1]);
 		res = KSI_IO_ERROR;
 		goto cleanup;
 	}
@@ -176,10 +176,10 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	/* Output file */
+	/* Output file. */
 	out = fopen(argv[2], "wb");
 	if (out == NULL) {
-		fprintf(stderr, "Unable to open input file '%s'\n", argv[2]);
+		fprintf(stderr, "Unable to open input file '%s'.\n", argv[2]);
 		res = KSI_IO_ERROR;
 		goto cleanup;
 	}

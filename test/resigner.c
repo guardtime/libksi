@@ -57,7 +57,7 @@ int publicationsFile_changePKCS7_signature(KSI_PublicationsFile *publicationsFil
 
 	ctx = publicationsFile->ctx;
 
-	/* Create Signature TLV from PKCS7 encoded PKI signature */
+	/* Create Signature TLV from PKCS7 encoded PKI signature. */
 	res = KSI_TLV_new(ctx, 0x704, 0, 0, &tlv_tmp);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Error: unable to create TLV for new signature.");
@@ -76,7 +76,7 @@ int publicationsFile_changePKCS7_signature(KSI_PublicationsFile *publicationsFil
 		goto cleanup;
 	}
 
-	/* Create new publications file */
+	/* Create new publications file. */
 	buf_len = publicationsFile->signedDataLength + tlv_len;
 	buf = (unsigned char*)malloc(buf_len);
 	if (buf == NULL) {
@@ -84,7 +84,7 @@ int publicationsFile_changePKCS7_signature(KSI_PublicationsFile *publicationsFil
 		goto cleanup;
 	}
 
-	/* Copy publications file data part and append new signature */
+	/* Copy publications file data part and append new signature. */
 	memcpy(buf, publicationsFile->raw, publicationsFile->signedDataLength);
 	memcpy(buf + publicationsFile->signedDataLength, tlv_serialized, tlv_len);
 
@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
 		sigFileName = argv[5];
 	}
 
-	/* Init Openssl and KSI */
+	/* Init Openssl and KSI. */
 	OpenSSL_add_all_digests();
 	ERR_load_crypto_strings();
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
@@ -159,7 +159,7 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	/* Read publications file */
+	/* Read publications file. */
 	res = KSI_PublicationsFile_fromFile(ctx, pubfileName, &pubFile);
 	if (res != KSI_OK) {
 		fprintf(stderr, "Error: Unable to read KSI publications file.");
@@ -182,7 +182,7 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	/* Create new private key and cert for signing process */
+	/* Create new private key and cert for signing process. */
 	res = mkcert(&x509, &pkey, 2048, 0, 365);
 	if (res != 1) {
 		fprintf(stderr, "Error: Unable create new certificate.");
@@ -200,7 +200,7 @@ int main(int argc, char **argv) {
 	p = buf;
 	i2d_PKCS7(signature, &p);
 
-	/* Write data to output */
+	/* Write data to output. */
 	if (keyFileName) {
 		key_out = fopen(keyFileName, "wb");
 		if (key_out == NULL) {
@@ -326,11 +326,10 @@ int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days) {
 	X509_NAME_add_entry_by_txt(name, "emailAddress",
 			MBSTRING_ASC, email, -1, -1, 0);
 
-	/* It's self signed so set the issuer name to be the same as the
-	 * subject */
+	/* It's self signed so set the issuer name to be the same as the subject. */
 	X509_set_issuer_name(x, name);
 
-	/* Add various extensions: standard extensions */
+	/* Add various extensions: standard extensions. */
 	add_ext(x, NID_basic_constraints, "critical,CA:TRUE");
 	add_ext(x, NID_key_usage, "critical,keyCertSign,cRLSign");
 
@@ -348,7 +347,7 @@ err:
 }
 
 /* Add extension using V3 code: we can set the config file as NULL
- * because we won't reference any other sections */
+ * because we won't reference any other sections. */
 int add_ext(X509 *cert, int nid, char *value) {
 	X509_EXTENSION *ex;
 	X509V3_CTX ctx;
@@ -356,7 +355,7 @@ int add_ext(X509 *cert, int nid, char *value) {
 	 * No configuration database */
 	X509V3_set_ctx_nodb(&ctx);
 	/* Issuer and subject certs: both the target since it is self signed,
-	 * no request and no CRL */
+	 * no request and no CRL. */
 	X509V3_set_ctx(&ctx, cert, cert, NULL, NULL, 0);
 	ex = X509V3_EXT_conf_nid(NULL, &ctx, nid, value);
 	if (!ex) {

@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
 			{ NULL, NULL }
 	};
 
-	/* Handle command line parameters */
+	/* Handle command line parameters. */
 	if (argc != NOF_ARGS) {
 		fprintf(stderr, "Usage:\n"
 				"  %s <in-data-file> <root-level> <out-sign-file> <aggregator-uri> <user> <pass> <pub-file url> \n", argv[ARGV_COMMAND]);
@@ -76,10 +76,10 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	/* Input file */
+	/* Input file. */
 	in = fopen(argv[ARGV_IN_DATA_FILE], "rb");
 	if (in == NULL) {
-		fprintf(stderr, "Unable to open input file '%s'\n", argv[ARGV_IN_DATA_FILE]);
+		fprintf(stderr, "Unable to open input file '%s'.\n", argv[ARGV_IN_DATA_FILE]);
 		res = KSI_IO_ERROR;
 		goto cleanup;
 	}
@@ -199,10 +199,10 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	/* Output file */
+	/* Output file. */
 	out = fopen(argv[ARGV_OUT_SIGN_FILE], "wb");
 	if (out == NULL) {
-		fprintf(stderr, "Unable to open input file '%s'\n", argv[ARGV_OUT_SIGN_FILE]);
+		fprintf(stderr, "Unable to open input file '%s'.\n", argv[ARGV_OUT_SIGN_FILE]);
 		res = KSI_IO_ERROR;
 		goto cleanup;
 	}

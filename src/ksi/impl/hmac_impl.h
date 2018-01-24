@@ -32,10 +32,10 @@ extern "C" {
 	#define MAX_BUF_LEN 128
 
 	struct KSI_HmacHasher_st {
-		/** KSI context */
+		/** KSI context. */
 		KSI_CTX *ctx;
 
-		/** Data hasher */
+		/** Data hasher. */
 		KSI_DataHasher *dataHasher;
 
 		/** Inner buffer for XOR-ed key, padded with zeros. */

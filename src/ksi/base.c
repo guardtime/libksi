@@ -210,7 +210,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
-	/* Init error stack */
+	/* Init error stack. */
 	ctx->errors_size = KSI_ERR_STACK_LEN;
 	ctx->errors = KSI_malloc(sizeof(KSI_ERR) * ctx->errors_size);
 	if (ctx->errors == NULL) {
@@ -875,7 +875,7 @@ static int ksi_err_toPrinter(KSI_CTX *ctx, void *to, size_t buf_len, void* (*pri
 		nextWrite = printer(nextWrite, buf_len - count, &count, "  %3lu) %s:%u - (%d/%ld) %s\n", ctx->errors_count - i, err->fileName, err->lineNr,err->statusCode, err->extErrorCode, *err->message != '\0' ? err->message : KSI_getErrorString(err->statusCode));
 	}
 
-	/* If there where more errors than buffers for the errors, indicate the fact */
+	/* If there where more errors than buffers for the errors, indicate the fact. */
 	if (ctx->errors_count > ctx->errors_size) {
 		printer(nextWrite, buf_len - count, &count, "  ... (more errors)\n");
 	}
@@ -1104,9 +1104,9 @@ int KSI_CTX_getPKITruststore(KSI_CTX *ctx, KSI_PKITruststore **pki) {
 		goto cleanup;
 	}
 
-	/* In case the PKI truststore is not available, create a default */
+	/* In case the PKI truststore is not available, create a default. */
 	if (ctx->pkiTruststore == NULL) {
-		/* Create and set the PKI truststore */
+		/* Create and set the PKI truststore. */
 		res = KSI_PKITruststore_new(ctx, 1, &pkiTruststore);
 		if (res != KSI_OK) goto cleanup;
 		res = KSI_CTX_setPKITruststore(ctx, pkiTruststore);
@@ -1254,7 +1254,7 @@ int KSI_CTX_setDefaultPubFileCertConstraints(KSI_CTX *ctx, const KSI_CertConstra
 		}
 
 		if (arr[i].val == NULL) {
-			KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Expected OID value may not be NULL");
+			KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Expected OID value may not be NULL.");
 			goto cleanup;
 		}
 

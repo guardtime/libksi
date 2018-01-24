@@ -54,7 +54,7 @@ typedef struct KSITest_Conf_st {
 } KSITest_Conf;
 
 
-/*Returns 0 if successful, 1 otherwise.*/
+/* Returns 0 if successful, 1 otherwise. */
 int KSITest_Conf_load(const char *confFile, KSITest_Conf *conf);
 
 

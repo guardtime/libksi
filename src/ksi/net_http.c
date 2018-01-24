@@ -76,7 +76,7 @@ static int prepareRequest(
 
 	KSI_LOG_logBlob(client->ctx, KSI_LOG_DEBUG, desc, raw, raw_len);
 
-	/* Create a new request handle */
+	/* Create a new request handle. */
 	res = KSI_RequestHandle_new(client->ctx, raw, raw_len, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(client->ctx, res, NULL);
@@ -333,7 +333,7 @@ int KSI_AbstractHttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **http) {
 	c->connectionTimeoutSeconds = 10; /* FIXME! Magic constants. */
 	c->readTimeoutSeconds = 10;
 
-	res = tmp->setStringParam(&c->agentName, "KSI HTTP Client"); /** Should be only user provided */
+	res = tmp->setStringParam(&c->agentName, "KSI HTTP Client"); /** Should be only user provided. */
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;

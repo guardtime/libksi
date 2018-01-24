@@ -135,7 +135,7 @@ static void testAggregationHeader(CuTest* tc) {
 	CuAssert(tc, "Unable to set dummy aggregator uri.", res == KSI_OK);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_AggregationReq_new(ctx, &req);
 	CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
@@ -145,7 +145,7 @@ static void testAggregationHeader(CuTest* tc) {
 	hsh = NULL;
 
 	res = KSI_Integer_new(ctx, 17, &reqId);
-	CuAssert(tc, "Unable to create reqId", res == KSI_OK && reqId != NULL);
+	CuAssert(tc, "Unable to create reqId.", res == KSI_OK && reqId != NULL);
 
 	res = KSI_AggregationReq_setRequestId(req, reqId);
 	CuAssert(tc, "Unable to set request id.", res == KSI_OK);
@@ -221,7 +221,7 @@ static void testExtendingHeader(CuTest* tc) {
 	start = NULL;
 
 	res = KSI_Integer_new(ctx, 17, &reqId);
-	CuAssert(tc, "Unable to create reqId", res == KSI_OK && reqId != NULL);
+	CuAssert(tc, "Unable to create reqId.", res == KSI_OK && reqId != NULL);
 
 	res = KSI_ExtendReq_setRequestId(req, reqId);
 	CuAssert(tc, "Unable to set request id.", res == KSI_OK);
@@ -282,13 +282,13 @@ static void aggrReqPduHmacVerify(CuTest* tc, KSI_HashAlgorithm hmacAlg) {
 	CuAssert(tc, "Unable to create aggregation request.", res == KSI_OK && req != NULL);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hash);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hash != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hash != NULL);
 	res = KSI_AggregationReq_setRequestHash(req, hash);
 	CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
 	hash = NULL;
 
 	res = KSI_Integer_new(ctx, 17, &intVal);
-	CuAssert(tc, "Unable to create reqId", res == KSI_OK && intVal != NULL);
+	CuAssert(tc, "Unable to create reqId.", res == KSI_OK && intVal != NULL);
 
 	res = KSI_AggregationReq_setRequestId(req, intVal);
 	CuAssert(tc, "Unable to set request id.", res == KSI_OK);
@@ -340,7 +340,7 @@ static void extReqPduHmacVerify(CuTest* tc, KSI_HashAlgorithm hmacAlg) {
 	intVal = NULL;
 
 	res = KSI_Integer_new(ctx, 17, &intVal);
-	CuAssert(tc, "Unable to create reqId", res == KSI_OK && intVal != NULL);
+	CuAssert(tc, "Unable to create reqId.", res == KSI_OK && intVal != NULL);
 
 	res = KSI_ExtendReq_setRequestId(req, intVal);
 	CuAssert(tc, "Unable to set request id.", res == KSI_OK);
@@ -398,10 +398,10 @@ static void testUrlSplit(CuTest *tc) {
 		KSI_LOG_debug(ctx, "schema=%s, host=%s, port=%u, path=%s\n", schema, host, port, path);
 		CuAssert(tc, "KSI_UriSplitBasic did not return expected status code.", res == testData[i].res);
 		if (res == KSI_OK) {
-			CuAssertStrEquals_Msg(tc, "KSI_UriSplitBasic did not return expected schema", testData[i].expSchema, schema);
-			CuAssertStrEquals_Msg(tc, "KSI_UriSplitBasic did not return expected host", testData[i].expHost, host);
-			CuAssertStrEquals_Msg(tc, "KSI_UriSplitBasic did not return expected path", testData[i].expPath, path);
-			CuAssert(tc, "KSI_UriSplitBasic did not return expected port", testData[i].expPort == port);
+			CuAssertStrEquals_Msg(tc, "KSI_UriSplitBasic did not return expected schema.", testData[i].expSchema, schema);
+			CuAssertStrEquals_Msg(tc, "KSI_UriSplitBasic did not return expected host.", testData[i].expHost, host);
+			CuAssertStrEquals_Msg(tc, "KSI_UriSplitBasic did not return expected path.", testData[i].expPath, path);
+			CuAssert(tc, "KSI_UriSplitBasic did not return expected port.", testData[i].expPort == port);
 		}
 		KSI_free(schema);
 		KSI_free(host);

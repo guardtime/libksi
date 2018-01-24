@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 	struct KSI_DataHash_st {
-		/** KSI context */
+		/** KSI context. */
 		KSI_CTX *ctx;
 
 		/** Reference count for shared pointer. */
@@ -42,13 +42,13 @@ extern "C" {
 	};
 
 	struct KSI_DataHasher_st {
-		/** KSI context */
+		/** KSI context. */
 		KSI_CTX *ctx;
 
 		/** Implementation context. */
 		void *hashContext;
 
-		/** Algorithm id */
+		/** Algorithm id. */
 		KSI_HashAlgorithm algorithm;
 
 		/** This function functions similarly to #KSI_DataHasher_close except, it

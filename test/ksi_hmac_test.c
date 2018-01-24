@@ -56,10 +56,10 @@ static void TestSHA256Create(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_HMAC_create(ctx, KSI_HASHALG_SHA2_256, key, data, data_len, &hmac);
-	CuAssert(tc, "Failed to create HMAC", res == KSI_OK && hmac != NULL);
+	CuAssert(tc, "Failed to create HMAC.", res == KSI_OK && hmac != NULL);
 
 	res = CompareHmac(hmac, expected);
-	CuAssert(tc, "HMAC mismatch", res == KSI_OK);
+	CuAssert(tc, "HMAC mismatch.", res == KSI_OK);
 
 
 	KSI_DataHash_free(hmac);
@@ -76,16 +76,16 @@ static void TestSHA256AddEmptyData(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_HmacHasher_open(ctx, KSI_HASHALG_SHA2_256, key, &hasher);
-	CuAssert(tc, "Failed to open HMAC hasher", res == KSI_OK && hasher != NULL);
+	CuAssert(tc, "Failed to open HMAC hasher.", res == KSI_OK && hasher != NULL);
 
 	res = KSI_HmacHasher_add(hasher, empty, 0);
 	CuAssert(tc, "Failed to add data of length 0.", res == KSI_OK);
 
 	res = KSI_HmacHasher_close(hasher, &hmac);
-	CuAssert(tc, "Failed to close HMAC hasher", res == KSI_OK && hmac != NULL);
+	CuAssert(tc, "Failed to close HMAC hasher.", res == KSI_OK && hmac != NULL);
 
 	res = CompareHmac(hmac, expected);
-	CuAssert(tc, "HMAC mismatch", res == KSI_OK);
+	CuAssert(tc, "HMAC mismatch.", res == KSI_OK);
 
 
 	KSI_HmacHasher_free(hasher);
@@ -104,18 +104,18 @@ static void TestSHA256AddMany(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_HmacHasher_open(ctx, KSI_HASHALG_SHA2_256, key, &hasher);
-	CuAssert(tc, "Failed to open HMAC hasher", res == KSI_OK && hasher != NULL);
+	CuAssert(tc, "Failed to open HMAC hasher.", res == KSI_OK && hasher != NULL);
 
 	while (data[i]) {
 		res = KSI_HmacHasher_add(hasher, &data[i], 1);
-		CuAssert(tc, "Failed to add data", res == KSI_OK);
+		CuAssert(tc, "Failed to add data.", res == KSI_OK);
 		i++;
 	}
 	res = KSI_HmacHasher_close(hasher, &hmac);
-	CuAssert(tc, "Failed to close HMAC hasher", res == KSI_OK && hmac != NULL);
+	CuAssert(tc, "Failed to close HMAC hasher.", res == KSI_OK && hmac != NULL);
 
 	res = CompareHmac(hmac, expected);
-	CuAssert(tc, "HMAC mismatch", res == KSI_OK);
+	CuAssert(tc, "HMAC mismatch.", res == KSI_OK);
 
 
 	KSI_HmacHasher_free(hasher);
@@ -133,22 +133,22 @@ static void TestSHA256Reset(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_HmacHasher_open(ctx, KSI_HASHALG_SHA2_256, key, &hasher);
-	CuAssert(tc, "Failed to open HMAC hasher", res == KSI_OK && hasher != NULL);
+	CuAssert(tc, "Failed to open HMAC hasher.", res == KSI_OK && hasher != NULL);
 
 	res = KSI_HmacHasher_add(hasher, "TEST", strlen("TEST"));
-	CuAssert(tc, "Failed to add data", res == KSI_OK);
+	CuAssert(tc, "Failed to add data.", res == KSI_OK);
 
 	res = KSI_HmacHasher_reset(hasher);
-	CuAssert(tc, "Failed to reset HMAC hasher", res == KSI_OK);
+	CuAssert(tc, "Failed to reset HMAC hasher.", res == KSI_OK);
 
 	res = KSI_HmacHasher_add(hasher, (unsigned char *)data, strlen(data));
-	CuAssert(tc, "Failed to add data", res == KSI_OK);
+	CuAssert(tc, "Failed to add data.", res == KSI_OK);
 
 	res = KSI_HmacHasher_close(hasher, &hmac);
-	CuAssert(tc, "Failed to close HMAC hasher", res == KSI_OK && hmac != NULL);
+	CuAssert(tc, "Failed to close HMAC hasher.", res == KSI_OK && hmac != NULL);
 
 	res = CompareHmac(hmac, expected);
-	CuAssert(tc, "HMAC mismatch", res == KSI_OK);
+	CuAssert(tc, "HMAC mismatch.", res == KSI_OK);
 
 
 	KSI_HmacHasher_free(hasher);
@@ -165,13 +165,13 @@ static void TestSHA256NoData(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_HmacHasher_open(ctx, KSI_HASHALG_SHA2_256, key, &hasher);
-	CuAssert(tc, "Failed to open HMAC hasher", res == KSI_OK && hasher != NULL);
+	CuAssert(tc, "Failed to open HMAC hasher.", res == KSI_OK && hasher != NULL);
 
 	res = KSI_HmacHasher_close(hasher, &hmac);
-	CuAssert(tc, "Failed to close HMAC hasher", res == KSI_OK && hmac != NULL);
+	CuAssert(tc, "Failed to close HMAC hasher.", res == KSI_OK && hmac != NULL);
 
 	res = CompareHmac(hmac, expected);
-	CuAssert(tc, "HMAC mismatch", res == KSI_OK);
+	CuAssert(tc, "HMAC mismatch.", res == KSI_OK);
 
 
 	KSI_HmacHasher_free(hasher);
@@ -232,10 +232,10 @@ static void TestSHA512LongKey(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_HMAC_create(ctx, KSI_HASHALG_SHA2_512, key, data, data_len, &hmac);
-	CuAssert(tc, "Failed to create HMAC", res == KSI_OK && hmac != NULL);
+	CuAssert(tc, "Failed to create HMAC.", res == KSI_OK && hmac != NULL);
 
 	res = CompareHmac(hmac, expected);
-	CuAssert(tc, "HMAC mismatch", res == KSI_OK);
+	CuAssert(tc, "HMAC mismatch.", res == KSI_OK);
 
 
 	KSI_DataHash_free(hmac);
@@ -256,31 +256,31 @@ static void TestParallelHashing(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_HmacHasher_open(ctx, KSI_HASHALG_SHA1, key, &hasher1);
-	CuAssert(tc, "Failed to open HMAC hasher", res == KSI_OK && hasher1 != NULL);
+	CuAssert(tc, "Failed to open HMAC hasher.", res == KSI_OK && hasher1 != NULL);
 
 	res = KSI_HmacHasher_open(ctx, KSI_HASHALG_SHA2_256, key, &hasher2);
-	CuAssert(tc, "Failed to open HMAC hasher", res == KSI_OK && hasher2 != NULL);
+	CuAssert(tc, "Failed to open HMAC hasher.", res == KSI_OK && hasher2 != NULL);
 
 	while (data[i]) {
 		res = KSI_HmacHasher_add(hasher1, &data[i], 1);
-		CuAssert(tc, "Failed to add data", res == KSI_OK);
+		CuAssert(tc, "Failed to add data.", res == KSI_OK);
 
 		res = KSI_HmacHasher_add(hasher2, &data[i], 1);
-		CuAssert(tc, "Failed to add data", res == KSI_OK);
+		CuAssert(tc, "Failed to add data.", res == KSI_OK);
 		i++;
 	}
 
 	res = KSI_HmacHasher_close(hasher1, &hmac1);
-	CuAssert(tc, "Failed to close HMAC hasher", res == KSI_OK && hmac1 != NULL);
+	CuAssert(tc, "Failed to close HMAC hasher.", res == KSI_OK && hmac1 != NULL);
 
 	res = CompareHmac(hmac1, expected1);
-	CuAssert(tc, "HMAC mismatch", res == KSI_OK);
+	CuAssert(tc, "HMAC mismatch.", res == KSI_OK);
 
 	res = KSI_HmacHasher_close(hasher2, &hmac2);
-	CuAssert(tc, "Failed to close HMAC hasher", res == KSI_OK && hmac2 != NULL);
+	CuAssert(tc, "Failed to close HMAC hasher.", res == KSI_OK && hmac2 != NULL);
 
 	res = CompareHmac(hmac2, expected2);
-	CuAssert(tc, "HMAC mismatch", res == KSI_OK);
+	CuAssert(tc, "HMAC mismatch.", res == KSI_OK);
 
 	KSI_HmacHasher_free(hasher1);
 	KSI_DataHash_free(hmac1);
@@ -299,63 +299,63 @@ static void TestInvalidParams(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_HMAC_create(NULL, KSI_HASHALG_SHA2_256, key, data, data_len, &hmac);
-	CuAssert(tc, "Context NULL accepted", res != KSI_OK);
+	CuAssert(tc, "Context NULL accepted.", res != KSI_OK);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_HmacHasher_open(NULL, KSI_HASHALG_SHA2_256, key, &hasher);
-	CuAssert(tc, "Context NULL accepted", res != KSI_OK);
+	CuAssert(tc, "Context NULL accepted.", res != KSI_OK);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_HMAC_create(ctx, KSI_NUMBER_OF_KNOWN_HASHALGS, key, data, data_len, &hmac);
-	CuAssert(tc, "Invalid algorithm accepted", res != KSI_OK);
+	CuAssert(tc, "Invalid algorithm accepted.", res != KSI_OK);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_HmacHasher_open(ctx, KSI_NUMBER_OF_KNOWN_HASHALGS, key, &hasher);
-	CuAssert(tc, "Invalid algorithm accepted", res != KSI_OK);
+	CuAssert(tc, "Invalid algorithm accepted.", res != KSI_OK);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_HMAC_create(ctx, KSI_HASHALG_SHA2_256, NULL, data, data_len, &hmac);
-	CuAssert(tc, "Key NULL accepted", res != KSI_OK);
+	CuAssert(tc, "Key NULL accepted.", res != KSI_OK);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_HmacHasher_open(ctx, KSI_HASHALG_SHA2_256, NULL, &hasher);
-	CuAssert(tc, "Key NULL accepted", res != KSI_OK);
+	CuAssert(tc, "Key NULL accepted.", res != KSI_OK);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_HMAC_create(ctx, KSI_HASHALG_SHA2_256, key, NULL, data_len, &hmac);
-	CuAssert(tc, "Data NULL accepted", res != KSI_OK);
+	CuAssert(tc, "Data NULL accepted.", res != KSI_OK);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_HMAC_create(ctx, KSI_HASHALG_SHA2_256, key, data, data_len, NULL);
-	CuAssert(tc, "HMAC NULL accepted", res != KSI_OK);
+	CuAssert(tc, "HMAC NULL accepted.", res != KSI_OK);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_HmacHasher_open(ctx, KSI_HASHALG_SHA2_256, key, NULL);
-	CuAssert(tc, "HMAC hasher NULL accepted", res != KSI_OK);
+	CuAssert(tc, "HMAC hasher NULL accepted.", res != KSI_OK);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_HmacHasher_reset(NULL);
-	CuAssert(tc, "HMAC hasher NULL accepted", res != KSI_OK);
+	CuAssert(tc, "HMAC hasher NULL accepted.", res != KSI_OK);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_HmacHasher_add(NULL, data, data_len);
-	CuAssert(tc, "HMAC hasher NULL accepted", res != KSI_OK);
+	CuAssert(tc, "HMAC hasher NULL accepted.", res != KSI_OK);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_HmacHasher_close(NULL, &hmac);
-	CuAssert(tc, "HMAC hasher NULL accepted", res != KSI_OK);
+	CuAssert(tc, "HMAC hasher NULL accepted.", res != KSI_OK);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_HmacHasher_open(ctx, KSI_HASHALG_SHA2_256, key, &hasher);
-	CuAssert(tc, "Failed to open HMAC hasher", res == KSI_OK);
+	CuAssert(tc, "Failed to open HMAC hasher.", res == KSI_OK);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_HmacHasher_add(hasher, NULL, data_len);
-	CuAssert(tc, "Data NULL accepted", res != KSI_OK);
+	CuAssert(tc, "Data NULL accepted.", res != KSI_OK);
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_HmacHasher_close(hasher, NULL);
-	CuAssert(tc, "HMAC NULL accepted", res != KSI_OK);
+	CuAssert(tc, "HMAC NULL accepted.", res != KSI_OK);
 
 	KSI_HmacHasher_free(hasher);
 	KSI_DataHash_free(hmac);

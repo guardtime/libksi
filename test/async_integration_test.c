@@ -183,7 +183,7 @@ static void asyncSigning_loop_getResponse(CuTest* tc, const char *url, const cha
 			CuAssert(tc, "Unable to set request context.", res == KSI_OK);
 
 			res = KSI_AsyncService_addRequest(as, reqHandle);
-			CuAssert(tc, "Unable to add request", res == KSI_OK);
+			CuAssert(tc, "Unable to add request.", res == KSI_OK);
 			p_req++;
 
 			res = KSI_AsyncService_getPendingCount(as, &pendingCount);
@@ -358,7 +358,7 @@ static void asyncSigning_collect_getResponse(CuTest* tc, const char *url, const 
 		CuAssert(tc, "Unable to set request context.", res == KSI_OK);
 
 		res = KSI_AsyncService_addRequest(as, reqHandle);
-		CuAssert(tc, "Unable to add request", res == KSI_OK);
+		CuAssert(tc, "Unable to add request.", res == KSI_OK);
 
 		hndls[added] = reqHandle;
 		p_req++;
@@ -472,7 +472,7 @@ static void asyncSigning_getError(CuTest* tc, const char *url, const char *user,
 	CuAssert(tc, "Unable to create async request.", res == KSI_OK && handle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, handle);
-	CuAssert(tc, "Unable to add request", res == KSI_OK);
+	CuAssert(tc, "Unable to add request.", res == KSI_OK);
 
 	do {
 		int state = KSI_ASYNC_STATE_UNDEFINED;
@@ -578,19 +578,19 @@ static void asyncSigning_fillupCache(CuTest* tc, const char *url, const char *us
 	for (i = 0; i < NOF_TEST_REQUESTS; i++) {
 		hndl = NULL;
 		res = createDummyAggrAsyncRequest(&hndl);
-		CuAssert(tc, "Unable to create dummy request", res == KSI_OK && hndl != NULL);
+		CuAssert(tc, "Unable to create dummy request.", res == KSI_OK && hndl != NULL);
 
 		res = KSI_AsyncService_addRequest(as, hndl);
-		CuAssert(tc, "Unable to add request", res == KSI_OK);
+		CuAssert(tc, "Unable to add request.", res == KSI_OK);
 	}
 	hndl = NULL;
 
 	/* Try to add one more request. */
 	res = createDummyAggrAsyncRequest(&hndl);
-	CuAssert(tc, "Unable to create dummy request", res == KSI_OK && hndl != NULL);
+	CuAssert(tc, "Unable to create dummy request.", res == KSI_OK && hndl != NULL);
 
 	res = KSI_AsyncService_addRequest(as, hndl);
-	CuAssert(tc, "Unable to add request", res == KSI_ASYNC_REQUEST_CACHE_FULL);
+	CuAssert(tc, "Unable to add request.", res == KSI_ASYNC_REQUEST_CACHE_FULL);
 
 	KSI_AsyncHandle_free(hndl);
 	KSI_AsyncService_free(as);
@@ -628,7 +628,7 @@ static void asyncSigning_addEmptyReq(CuTest* tc, const char *url, const char *us
 	CuAssert(tc, "Unable to create async request.", res == KSI_OK && handle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, handle);
-	CuAssert(tc, "Unable to add request", res != KSI_OK && res != KSI_ASYNC_REQUEST_CACHE_FULL);
+	CuAssert(tc, "Unable to add request.", res != KSI_OK && res != KSI_ASYNC_REQUEST_CACHE_FULL);
 
 	KSI_AsyncHandle_free(handle);
 	KSI_AsyncService_free(as);
@@ -656,10 +656,10 @@ static void Test_AsyncSign_noEndpoint_addRequest(CuTest* tc) {
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
 
 	res = createDummyAggrAsyncRequest(&hndl);
-	CuAssert(tc, "Unable to create dummy request", res == KSI_OK && hndl != NULL);
+	CuAssert(tc, "Unable to create dummy request.", res == KSI_OK && hndl != NULL);
 
 	res = KSI_AsyncService_addRequest(as, hndl);
-	CuAssert(tc, "Unable to add request", res == KSI_INVALID_STATE);
+	CuAssert(tc, "Unable to add request.", res == KSI_INVALID_STATE);
 
 	KSI_AsyncHandle_free(hndl);
 	KSI_AsyncService_free(as);
@@ -733,7 +733,7 @@ static void asyncSigning_requestConfigOnly(CuTest* tc, const char *url, const ch
 	CuAssert(tc, "Unable to create async request.", res == KSI_OK && handle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, handle);
-	CuAssert(tc, "Unable to add request", res == KSI_OK);
+	CuAssert(tc, "Unable to add request.", res == KSI_OK);
 
 	res = KSI_AsyncService_getPendingCount(as, &pendingCount);
 	CuAssert(tc, "Unable to get pending count.", res == KSI_OK);
@@ -831,7 +831,7 @@ static void asyncSigning_requestConfigWithAggrReq(CuTest* tc, const char *url, c
 	CuAssert(tc, "Unable to create async request.", res == KSI_OK && handle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, handle);
-	CuAssert(tc, "Unable to add request", res == KSI_OK);
+	CuAssert(tc, "Unable to add request.", res == KSI_OK);
 
 	res = KSI_AsyncService_getPendingCount(as, &pendingCount);
 	CuAssert(tc, "Unable to get pending count.", res == KSI_OK);
@@ -955,7 +955,7 @@ static void asyncSigning_requestConfigAndAggrRequest_loop(CuTest* tc, const char
 	CuAssert(tc, "Unable to create async request.", res == KSI_OK && cfgHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, cfgHandle);
-	CuAssert(tc, "Unable to add request", res == KSI_OK);
+	CuAssert(tc, "Unable to add request.", res == KSI_OK);
 
 	p_req = TEST_REQUESTS;
 	do {
@@ -983,7 +983,7 @@ static void asyncSigning_requestConfigAndAggrRequest_loop(CuTest* tc, const char
 			CuAssert(tc, "Unable to create async request.", res == KSI_OK && reqHandle != NULL);
 
 			res = KSI_AsyncService_addRequest(as, reqHandle);
-			CuAssert(tc, "Unable to add request", res == KSI_OK);
+			CuAssert(tc, "Unable to add request.", res == KSI_OK);
 			p_req++;
 
 			res = KSI_AsyncService_getPendingCount(as, &pendingCount);

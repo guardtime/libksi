@@ -104,7 +104,7 @@
 /* Create a new object of type. */
 #define KSI_new(typeVar) (typeVar *)(KSI_malloc(sizeof(typeVar)))
 
-/* Returns Empty string if #str==NULL otherwise returns #str itself */
+/* Returns Empty string if #str==NULL otherwise returns #str itself. */
 #define KSI_strnvl(str) ((str) == NULL)?"":(str)
 
 /** Dummy macro for indicating that the programmer knows and did not forget to free up some pointer. */
@@ -259,7 +259,7 @@ cleanup: \
 		raw = NULL; \
 	}while(0);
 
-/*TODO: Is it safe to not free baseTlv, as on error baseTlv is still NULL and after setting "name", objects tmp free handles the memory.*/
+/* TODO: Is it safe to not free baseTlv, as on error baseTlv is still NULL and after setting "name", objects tmp free handles the memory. */
 #define FROMTLV_ADD_BASETLV(name) \
 	do{ \
 		KSI_TLV *baseTlv = NULL; \

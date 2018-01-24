@@ -218,7 +218,7 @@ static void Test_AsyncSingningService_addRequest_noEndpoint(CuTest* tc) {
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && handle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, handle);
-	CuAssert(tc, "Unable to add request", res == KSI_INVALID_STATE);
+	CuAssert(tc, "Unable to add request.", res == KSI_INVALID_STATE);
 
 	KSI_AsyncHandle_free(handle);
 	KSI_AsyncService_free(as);
@@ -267,7 +267,7 @@ static void Test_AsyncSingningService_verifyReqId(CuTest* tc) {
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && handle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, handle);
-	CuAssert(tc, "Unable to add request", res == KSI_OK);
+	CuAssert(tc, "Unable to add request.", res == KSI_OK);
 
 	req = NULL;
 	res = KSI_AsyncHandle_getAggregationReq(handle, &req);
@@ -367,7 +367,7 @@ static void Test_AsyncSign_oneRequest_verifyReqCtx(CuTest* tc) {
 	CuAssert(tc, "Unable to set request context.", res == KSI_OK);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
-	CuAssert(tc, "Unable to add request", res == KSI_OK);
+	CuAssert(tc, "Unable to add request.", res == KSI_OK);
 
 	res = KSI_AsyncService_getPendingCount(as, &pendingCount);
 	CuAssert(tc, "Unable to get pending count.", res == KSI_OK);
@@ -433,7 +433,7 @@ static void Test_AsyncSign_oneRequest_verifySignature(CuTest* tc) {
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
-	CuAssert(tc, "Unable to add request", res == KSI_OK);
+	CuAssert(tc, "Unable to add request.", res == KSI_OK);
 
 	res = KSI_AsyncService_run(as, &respHandle, NULL);
 	CuAssert(tc, "Failed to run async service.", res == KSI_OK && respHandle != NULL);
@@ -452,9 +452,9 @@ static void Test_AsyncSign_oneRequest_verifySignature(CuTest* tc) {
 	CuAssert(tc, "Unable to load sample signature.", f != NULL);
 
 	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
-	CuAssert(tc, "Failed to read sample", expected_len > 0);
+	CuAssert(tc, "Failed to read sample.", expected_len > 0);
 
-	CuAssert(tc, "Serialized signature length mismatch", expected_len == raw_len);
+	CuAssert(tc, "Serialized signature length mismatch.", expected_len == raw_len);
 	CuAssert(tc, "Serialized signature content mismatch.", !memcmp(expected, raw, raw_len));
 
 	if (f != NULL) fclose(f);
@@ -498,7 +498,7 @@ static void Test_AsyncSign_oneRequest_multipleResponses_verifySignature(CuTest* 
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
-	CuAssert(tc, "Unable to add request", res == KSI_OK);
+	CuAssert(tc, "Unable to add request.", res == KSI_OK);
 
 	res = KSI_AsyncService_run(as, &respHandle, NULL);
 	CuAssert(tc, "Failed to run async service.", res == KSI_OK && respHandle != NULL);
@@ -517,9 +517,9 @@ static void Test_AsyncSign_oneRequest_multipleResponses_verifySignature(CuTest* 
 	CuAssert(tc, "Unable to load sample signature.", f != NULL);
 
 	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
-	CuAssert(tc, "Failed to read sample", expected_len > 0);
+	CuAssert(tc, "Failed to read sample.", expected_len > 0);
 
-	CuAssert(tc, "Serialized signature length mismatch", expected_len == raw_len);
+	CuAssert(tc, "Serialized signature length mismatch.", expected_len == raw_len);
 	CuAssert(tc, "Serialized signature content mismatch.", !memcmp(expected, raw, raw_len));
 
 	if (f != NULL) fclose(f);
@@ -559,7 +559,7 @@ static void Test_AsyncSign_oneRequest_verifyNoError(CuTest* tc) {
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
-	CuAssert(tc, "Unable to add request", res == KSI_OK);
+	CuAssert(tc, "Unable to add request.", res == KSI_OK);
 
 	res = KSI_AsyncService_run(as, &respHandle, NULL);
 	CuAssert(tc, "Failed to run async service.", res == KSI_OK && respHandle != NULL);
@@ -610,7 +610,7 @@ static void Test_AsyncSign_oneRequest_responseWithPushConf_viaCallback(CuTest* t
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
-	CuAssert(tc, "Unable to add request", res == KSI_OK);
+	CuAssert(tc, "Unable to add request.", res == KSI_OK);
 
 	callbackCalls = 0;
 	callbackConf = NULL;
@@ -671,7 +671,7 @@ static void Test_AsyncSign_oneRequest_responseWithPushConf_viaHandle(CuTest* tc)
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
-	CuAssert(tc, "Unable to add request", res == KSI_OK);
+	CuAssert(tc, "Unable to add request.", res == KSI_OK);
 
 	/* Get push configuration. */
 	callbackCalls = 0;
@@ -742,7 +742,7 @@ static void Test_AsyncSign_oneRequest_wrongResponse_getSignatureFail(CuTest* tc)
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
-	CuAssert(tc, "Unable to add request", res == KSI_OK);
+	CuAssert(tc, "Unable to add request.", res == KSI_OK);
 
 	res = KSI_AsyncService_run(as, &respHandle, NULL);
 	CuAssert(tc, "Failed to run async service.", res == KSI_OK && respHandle != NULL);
@@ -781,7 +781,7 @@ static void Test_AsyncSign_oneRequest_wrongResponseReqId(CuTest* tc) {
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
-	CuAssert(tc, "Unable to add request", res == KSI_OK);
+	CuAssert(tc, "Unable to add request.", res == KSI_OK);
 
 	res = KSI_AsyncService_run(as, &respHandle, NULL);
 	CuAssert(tc, "Failed to run async service.", res == KSI_OK);
@@ -819,7 +819,7 @@ static void Test_AsyncSign_oneRequest_wrongResponseReqId_rcvTimeout0(CuTest* tc)
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
-	CuAssert(tc, "Unable to add request", res == KSI_OK);
+	CuAssert(tc, "Unable to add request.", res == KSI_OK);
 
 	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_RCV_TIMEOUT, (void *)0);
 	CuAssert(tc, "Unable to set option.", res == KSI_OK);
@@ -878,7 +878,7 @@ static void Test_AsyncSign_oneRequest_responseVerifyWithRequest(CuTest* tc) {
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
-	CuAssert(tc, "Unable to add request", res == KSI_OK);
+	CuAssert(tc, "Unable to add request.", res == KSI_OK);
 
 	res = KSI_AsyncService_run(as, &respHandle, NULL);
 	CuAssert(tc, "Failed to run async service.", res == KSI_OK && respHandle != NULL);
@@ -939,7 +939,7 @@ static void Test_AsyncSign_oneRequest_ErrorStatusWithSignatureElementsInResponse
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
-	CuAssert(tc, "Unable to add request", res == KSI_OK);
+	CuAssert(tc, "Unable to add request.", res == KSI_OK);
 
 	res = KSI_AsyncService_run(as, &respHandle, NULL);
 	CuAssert(tc, "Failed to run async service.", res == KSI_OK && respHandle != NULL);
@@ -986,7 +986,7 @@ static void Test_AsyncSign_oneRequest_invalidResponse(CuTest* tc) {
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
-	CuAssert(tc, "Unable to add request", res == KSI_OK);
+	CuAssert(tc, "Unable to add request.", res == KSI_OK);
 
 	res = KSI_AsyncService_run(as, &respHandle, NULL);
 	CuAssert(tc, "Failed to run async service.", res == KSI_OK && respHandle != NULL);
@@ -997,7 +997,7 @@ static void Test_AsyncSign_oneRequest_invalidResponse(CuTest* tc) {
 
 	res = KSI_AsyncHandle_getError(respHandle, &error);
 	CuAssert(tc, "Unable to get error.", res == KSI_OK);
-	CuAssert(tc, "Error mismatch", error == KSI_INVALID_FORMAT);
+	CuAssert(tc, "Error mismatch.", error == KSI_INVALID_FORMAT);
 
 	KSI_AsyncHandle_free(respHandle);
 	KSI_AsyncService_free(as);
@@ -1028,7 +1028,7 @@ static void Test_AsyncSign_oneRequest_twoResponsesWithSameId_validResponseFirst(
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
-	CuAssert(tc, "Unable to add request", res == KSI_OK);
+	CuAssert(tc, "Unable to add request.", res == KSI_OK);
 
 	/* Response contains two responses (PDUs) with same request IDs. First one is internally valid, second one is internally invalid. First one should be used and second one discarded. */
 	res = KSI_AsyncService_run(as, &respHandle, NULL);
@@ -1072,7 +1072,7 @@ static void Test_AsyncSign_oneRequest_twoResponsesWithSameId_invalidResponseFirs
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
-	CuAssert(tc, "Unable to add request", res == KSI_OK);
+	CuAssert(tc, "Unable to add request.", res == KSI_OK);
 
 	/* Response contains two responses (PDUs) with same request IDs. First one is internally invalid, second one is internally valid. First one should be used and second one discarded. */
 	res = KSI_AsyncService_run(as, &respHandle, NULL);
@@ -1198,7 +1198,7 @@ static void Test_AsyncSign_multipleRequests_loop(CuTest* tc) {
 			CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 			res = KSI_AsyncService_addRequest(as, reqHandle);
-			CuAssert(tc, "Unable to add request", res == KSI_OK);
+			CuAssert(tc, "Unable to add request.", res == KSI_OK);
 			p_req++;
 		}
 
@@ -1283,7 +1283,7 @@ static void Test_AsyncSign_multipleRequests_loop_cacheSize5(CuTest* tc) {
 			CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 			res = KSI_AsyncService_addRequest(as, reqHandle);
-			CuAssert(tc, "Unable to add request", res == KSI_OK);
+			CuAssert(tc, "Unable to add request.", res == KSI_OK);
 			p_req++;
 		}
 
@@ -1369,7 +1369,7 @@ static void Test_AsyncSign_multipleRequests_collect(CuTest* tc) {
 		CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 		res = KSI_AsyncService_addRequest(as, reqHandle);
-		CuAssert(tc, "Unable to add request", res == KSI_OK);
+		CuAssert(tc, "Unable to add request.", res == KSI_OK);
 		p_req++;
 
 		res = KSI_AsyncService_getPendingCount(as, &pendingCount);
@@ -1450,7 +1450,7 @@ static void Test_AsyncSign_multipleRequests_collect_aggrResp301(CuTest* tc) {
 		CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 		res = KSI_AsyncService_addRequest(as, reqHandle);
-		CuAssert(tc, "Unable to add request", res == KSI_OK);
+		CuAssert(tc, "Unable to add request.", res == KSI_OK);
 		p_req++;
 
 		res = KSI_AsyncService_getPendingCount(as, &pendingCount);

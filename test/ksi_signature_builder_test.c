@@ -42,7 +42,7 @@ static void testEmpty(CuTest* tc) {
 
 	res = KSI_SignatureBuilder_close(bldr, 0, &out);
 	CuAssert(tc, "Closing an empty signature builder should fail.", res != KSI_OK);
-	CuAssert(tc, "Signature should still be NULL", out == NULL);
+	CuAssert(tc, "Signature should still be NULL.", out == NULL);
 
 	KSI_SignatureBuilder_free(bldr);
 }
@@ -74,11 +74,11 @@ static void testCorrectWithPublication(CuTest* tc) {
 
 	/* Add the publication record to the builder. */
 	res = KSI_SignatureBuilder_setPublication(bldr, sig->publication);
-	CuAssert(tc, "Unable to add publication to the builder", res == KSI_OK);
+	CuAssert(tc, "Unable to add publication to the builder.", res == KSI_OK);
 
 	/* Add the calendar hash chain to the builder. */
 	res = KSI_SignatureBuilder_setCalendarHashChain(bldr, sig->calendarChain);
-	CuAssert(tc, "Unable to add calendar hash chain to the builder", res == KSI_OK);
+	CuAssert(tc, "Unable to add calendar hash chain to the builder.", res == KSI_OK);
 
 	{
 		size_t i;
@@ -120,11 +120,11 @@ static void testCorrectWithCalAuthRec(CuTest* tc) {
 
 	/* Add the calendar auth record to the builder. */
 	res = KSI_SignatureBuilder_setCalendarAuthRecord(bldr, sig->calendarAuthRec);
-	CuAssert(tc, "Unable to add calendar authentication record to the builder", res == KSI_OK);
+	CuAssert(tc, "Unable to add calendar authentication record to the builder.", res == KSI_OK);
 
 	/* Add the calendar hash chain to the builder. */
 	res = KSI_SignatureBuilder_setCalendarHashChain(bldr, sig->calendarChain);
-	CuAssert(tc, "Unable to add calendar hash chain to the builder", res == KSI_OK);
+	CuAssert(tc, "Unable to add calendar hash chain to the builder.", res == KSI_OK);
 
 	{
 		size_t i;
@@ -166,7 +166,7 @@ static void testCorrectRFC3161(CuTest* tc) {
 
 	/* Add the calendar auth record to the builder. */
 	res = KSI_SignatureBuilder_setCalendarAuthRecord(bldr, sig->calendarAuthRec);
-	CuAssert(tc, "Unable to add calendar authentication record to the builder", res == KSI_OK);
+	CuAssert(tc, "Unable to add calendar authentication record to the builder.", res == KSI_OK);
 
 	/* Add the RFC3161 record. */
 	res = KSI_SignatureBuilder_setRFC3161(bldr, sig->rfc3161);
@@ -174,7 +174,7 @@ static void testCorrectRFC3161(CuTest* tc) {
 
 	/* Add the calendar hash chain to the signature builder. */
 	res = KSI_SignatureBuilder_setCalendarHashChain(bldr, sig->calendarChain);
-	CuAssert(tc, "Unable to add calendar hash chain to the builder", res == KSI_OK);
+	CuAssert(tc, "Unable to add calendar hash chain to the builder.", res == KSI_OK);
 
 	{
 		size_t i;
@@ -217,20 +217,20 @@ static void testRecoverAfterEarlyClose(CuTest* tc) {
 	/* Try closing the builder before we have added anything - should fail. */
 	res = KSI_SignatureBuilder_close(bldr, 0, &out);
 	CuAssert(tc, "Closing an empty signature builder should fail.", res != KSI_OK);
-	CuAssert(tc, "Signature should still be NULL", out == NULL);
+	CuAssert(tc, "Signature should still be NULL.", out == NULL);
 
 	/* Add the calendar authentication record to the builder. */
 	res = KSI_SignatureBuilder_setCalendarAuthRecord(bldr, sig->calendarAuthRec);
-	CuAssert(tc, "Unable to add calendar authentication record to the builder", res == KSI_OK);
+	CuAssert(tc, "Unable to add calendar authentication record to the builder.", res == KSI_OK);
 
 	/* Try closing the builder before we add the calendar hash chain - should fail. */
 	res = KSI_SignatureBuilder_close(bldr, 0, &out);
 	CuAssert(tc, "Closing an empty signature builder should fail.", res != KSI_OK);
-	CuAssert(tc, "Signature should still be NULL", out == NULL);
+	CuAssert(tc, "Signature should still be NULL.", out == NULL);
 
 	/* Add the calendar hash chain to the builder. */
 	res = KSI_SignatureBuilder_setCalendarHashChain(bldr, sig->calendarChain);
-	CuAssert(tc, "Unable to add calendar hash chain to the builder", res == KSI_OK);
+	CuAssert(tc, "Unable to add calendar hash chain to the builder.", res == KSI_OK);
 
 	{
 		size_t i;
@@ -244,7 +244,7 @@ static void testRecoverAfterEarlyClose(CuTest* tc) {
 			 * iteration. */
 			res = KSI_SignatureBuilder_close(bldr, 0, &out);
 			CuAssert(tc, "Closing an empty signature builder should fail.", res != KSI_OK);
-			CuAssert(tc, "Signature should still be NULL", out == NULL);
+			CuAssert(tc, "Signature should still be NULL.", out == NULL);
 
 			res = KSI_SignatureBuilder_addAggregationChain(bldr, ptr);
 			CuAssert(tc, "Unable to add aggregation chain to the signature builder.", res == KSI_OK);
@@ -280,11 +280,11 @@ static void testPreAggregated(CuTest* tc) {
 
 	/* Add the calendar authentication record to the builder. */
 	res = KSI_SignatureBuilder_setCalendarAuthRecord(bldr, sig->calendarAuthRec);
-	CuAssert(tc, "Unable to add calendar authentication record to the builder", res == KSI_OK);
+	CuAssert(tc, "Unable to add calendar authentication record to the builder.", res == KSI_OK);
 
 	/* Add the calendar hash chain to the builder. */
 	res = KSI_SignatureBuilder_setCalendarHashChain(bldr, sig->calendarChain);
-	CuAssert(tc, "Unable to add calendar hash chain to the builder", res == KSI_OK);
+	CuAssert(tc, "Unable to add calendar hash chain to the builder.", res == KSI_OK);
 
 	{
 		size_t i;
@@ -347,7 +347,7 @@ static void testOpenWithSignature(CuTest* tc) {
 	res = KSI_Signature_serialize(sig, &rawOut, &rawOut_len);
 	CuAssert(tc, "Unable to serialize signature.", res == KSI_OK && rawOut != NULL && rawOut_len > 0);
 
-	CuAssert(tc, "Serialized signature length mismatch", rawSig_len == rawOut_len);
+	CuAssert(tc, "Serialized signature length mismatch.", rawSig_len == rawOut_len);
 	CuAssert(tc, "Serialized signature content mismatch.", !memcmp(rawSig, rawOut, rawSig_len));
 
 	KSI_SignatureBuilder_free(bldr);
@@ -382,7 +382,7 @@ static void testAppendChain(CuTest* tc) {
 		CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
 
 		res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, &handles[i]);
-		CuAssert(tc, "Unable to add data hash to the tree builder", res == KSI_OK);
+		CuAssert(tc, "Unable to add data hash to the tree builder.", res == KSI_OK);
 
 		KSI_DataHash_free(hsh);
 		hsh = NULL;
@@ -411,7 +411,7 @@ static void testAppendChain(CuTest* tc) {
 		KSI_SignatureBuilder *bldr = NULL;
 
 		res = KSI_TreeLeafHandle_getAggregationChain(handles[i], &chn);
-		CuAssert(tc, "Unable to extract aggregation chain,", res == KSI_OK && chn != NULL);
+		CuAssert(tc, "Unable to extract aggregation chain.", res == KSI_OK && chn != NULL);
 
 		res = KSI_AggregationHashChain_aggregate(chn, 0, &rootLevel, &aggrHsh);
 		CuAssert(tc, "Unable to aggregate the aggregation hash chain.", res == KSI_OK && aggrHsh != NULL);
@@ -471,7 +471,7 @@ static void testCreateSignaturesWithAggregationChains(CuTest* tc) {
 		CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
 
 		res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, &handles[i]);
-		CuAssert(tc, "Unable to add data hash to the tree builder", res == KSI_OK);
+		CuAssert(tc, "Unable to add data hash to the tree builder.", res == KSI_OK);
 
 		KSI_DataHash_free(hsh);
 		hsh = NULL;
@@ -502,7 +502,7 @@ static void testCreateSignaturesWithAggregationChains(CuTest* tc) {
 		KSI_DataHash *aggrHsh = NULL;
 
 		res = KSI_TreeLeafHandle_getAggregationChain(handles[i], &chn);
-		CuAssert(tc, "Unable to extract aggregation chain,", res == KSI_OK && chn != NULL);
+		CuAssert(tc, "Unable to extract aggregation chain.", res == KSI_OK && chn != NULL);
 
 		res = KSI_AggregationHashChain_aggregate(chn, 0, &rootLevel, &aggrHsh);
 		CuAssert(tc, "Unable to aggregate the aggregation hash chain.", res == KSI_OK && aggrHsh != NULL);

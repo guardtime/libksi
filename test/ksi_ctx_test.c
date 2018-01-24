@@ -41,7 +41,7 @@ static void TestCtxInit(CuTest* tc) {
 
 	KSI_CTX *ctx = NULL;
 	res = KSITest_CTX_clone(&ctx);
-	CuAssert(tc, "KSI_CTX_init did not return KSI_OK", res == KSI_OK);
+	CuAssert(tc, "KSI_CTX_init did not return KSI_OK.", res == KSI_OK);
 	CuAssert(tc, "Context is NULL.", ctx != NULL);
 
 	KSI_CTX_free(ctx);
@@ -60,7 +60,7 @@ static void TestRegisterGlobals(CuTest *tc) {
 	res = KSI_CTX_registerGlobals(ctx, mock_init, mock_cleanup);
 	CuAssert(tc, "Unable to register globals the 2nd time.", res == KSI_OK);
 
-	CuAssert(tc, "Global init called wrong number of times", mockInitCount == 1);
+	CuAssert(tc, "Global init called wrong number of times.", mockInitCount == 1);
 
 	KSI_CTX_free(ctx);
 

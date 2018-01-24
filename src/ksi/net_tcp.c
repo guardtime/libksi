@@ -122,7 +122,7 @@ static int readResponse(KSI_RequestHandle *handle) {
 		transferTimeout.tv_usec = 0;
 #endif
 
-		/*Set socket options*/
+		/* Set socket options. */
 		setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (void*)&transferTimeout, sizeof(transferTimeout));
 		setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (void*)&transferTimeout, sizeof(transferTimeout));
 
@@ -285,7 +285,7 @@ static int prepareRequest(
 
 	KSI_LOG_logBlob(client->ctx, KSI_LOG_DEBUG, desc, raw, raw_len);
 
-	/* Create a new request handle */
+	/* Create a new request handle. */
 	res = KSI_RequestHandle_new(client->ctx, raw, raw_len, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(client->ctx, res, NULL);

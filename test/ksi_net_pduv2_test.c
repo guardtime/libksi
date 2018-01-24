@@ -101,13 +101,13 @@ static void testSigning(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
-	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
+	CuAssert(tc, "Unable to sign the hash.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_serialize(sig, &raw, &raw_len);
 	CuAssert(tc, "Unable to serialize signature.", res == KSI_OK && raw != NULL && raw_len > 0);
@@ -116,9 +116,9 @@ static void testSigning(CuTest* tc) {
 	CuAssert(tc, "Unable to load sample signature.", f != NULL);
 
 	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
-	CuAssert(tc, "Failed to read sample", expected_len > 0);
+	CuAssert(tc, "Failed to read sample.", expected_len > 0);
 
-	CuAssert(tc, "Serialized signature length mismatch", expected_len == raw_len);
+	CuAssert(tc, "Serialized signature length mismatch.", expected_len == raw_len);
 	CuAssert(tc, "Serialized signature content mismatch.", !memcmp(expected, raw, raw_len));
 
 	if (f != NULL) fclose(f);
@@ -146,16 +146,16 @@ static void testSigning_hmacAlgorithmSha512(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_CTX_setAggregatorHmacAlgorithm(ctx, KSI_HASHALG_SHA2_512);
-	CuAssert(tc, "Unable to set aggregator HMAC algorithm", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator HMAC algorithm.", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
-	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
+	CuAssert(tc, "Unable to sign the hash.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_serialize(sig, &raw, &raw_len);
 	CuAssert(tc, "Unable to serialize signature.", res == KSI_OK && raw != NULL && raw_len > 0);
@@ -166,7 +166,7 @@ static void testSigning_hmacAlgorithmSha512(CuTest* tc) {
 	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
 	CuAssert(tc, "Failed to read sample", expected_len > 0);
 
-	CuAssert(tc, "Serialized signature length mismatch", expected_len == raw_len);
+	CuAssert(tc, "Serialized signature length mismatch.", expected_len == raw_len);
 	CuAssert(tc, "Serialized signature content mismatch.", !memcmp(expected, raw, raw_len));
 
 	if (f != NULL) fclose(f);
@@ -190,16 +190,16 @@ static void testSigning_hmacAlgorithmMismatch(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_CTX_setAggregatorHmacAlgorithm(ctx, KSI_HASHALG_SHA2_512);
-	CuAssert(tc, "Unable to set aggregator HMAC algorithm", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator HMAC algorithm.", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
-	CuAssert(tc, "Unable to sign the hash", res == KSI_HMAC_ALGORITHM_MISMATCH && sig == NULL);
+	CuAssert(tc, "Unable to sign the hash.", res == KSI_HMAC_ALGORITHM_MISMATCH && sig == NULL);
 
 	KSI_DataHash_free(hsh);
 
@@ -217,10 +217,10 @@ static void testSigningHeaderNotFirst(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Signing should fail with incorrectly ordered aggregation response.", res == KSI_INVALID_FORMAT && sig == NULL);
@@ -241,10 +241,10 @@ static void testSigningHmacNotLast(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Signing should fail with incorrectly ordered aggregation response.", res == KSI_INVALID_FORMAT && sig == NULL);
@@ -265,10 +265,10 @@ static void testSigningResponsePduV1(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Signing should fail with a different PDU version.", res == KSI_SERVICE_AGGR_PDU_V1_RESPONSE_TO_PDU_V2_REQUEST && sig == NULL);
@@ -290,10 +290,10 @@ static void testSigningWrongResponse(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSITest_DataHash_fromStr(ctx, "010000000000000000000000000000000000000000000000000000000000000000", &hsh);
-	CuAssert(tc, "Unable to create data hash", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Signing should not succeed.", res == KSI_VERIFICATION_FAILURE && sig == NULL);
@@ -315,10 +315,10 @@ static void testAggreAuthFailure(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Aggregation should fail with service error.", res == KSI_SERVICE_AUTHENTICATION_FAILURE && sig == NULL);
@@ -354,18 +354,18 @@ static void testExtending(CuTest* tc) {
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_extendSignature(ctx, sig, &ext);
-	CuAssert(tc, "Unable to extend the signature", res == KSI_OK && ext != NULL);
+	CuAssert(tc, "Unable to extend the signature.", res == KSI_OK && ext != NULL);
 
 	res = KSI_Signature_serialize(ext, &serialized, &serialized_len);
-	CuAssert(tc, "Unable to serialize extended signature", res == KSI_OK && serialized != NULL && serialized_len > 0);
+	CuAssert(tc, "Unable to serialize extended signature.", res == KSI_OK && serialized != NULL && serialized_len > 0);
 
-	/* Read in the expected result */
+	/* Read in the expected result. */
 	f = fopen(getFullResourcePath(TEST_RES_SIGNATURE_FILE), "rb");
-	CuAssert(tc, "Unable to read expected result file", f != NULL);
+	CuAssert(tc, "Unable to read expected result file.", f != NULL);
 	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
 	fclose(f);
 
-	CuAssert(tc, "Expected result length mismatch", expected_len == serialized_len);
+	CuAssert(tc, "Expected result length mismatch.", expected_len == serialized_len);
 	CuAssert(tc, "Unexpected extended signature.", !KSITest_memcmp(expected, serialized, expected_len));
 
 	KSI_free(serialized);
@@ -401,21 +401,21 @@ static void testExtending_hmacAlgorithmSha512(CuTest* tc) {
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_CTX_setExtenderHmacAlgorithm(ctx, KSI_HASHALG_SHA2_512);
-	CuAssert(tc, "Unable to set aggregator HMAC algorithm", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator HMAC algorithm.", res == KSI_OK);
 
 	res = KSI_extendSignature(ctx, sig, &ext);
-	CuAssert(tc, "Unable to extend the signature", res == KSI_OK && ext != NULL);
+	CuAssert(tc, "Unable to extend the signature.", res == KSI_OK && ext != NULL);
 
 	res = KSI_Signature_serialize(ext, &serialized, &serialized_len);
-	CuAssert(tc, "Unable to serialize extended signature", res == KSI_OK && serialized != NULL && serialized_len > 0);
+	CuAssert(tc, "Unable to serialize extended signature.", res == KSI_OK && serialized != NULL && serialized_len > 0);
 
-	/* Read in the expected result */
+	/* Read in the expected result. */
 	f = fopen(getFullResourcePath(TEST_EXT_SIGNATURE_FILE), "rb");
-	CuAssert(tc, "Unable to read expected result file", f != NULL);
+	CuAssert(tc, "Unable to read expected result file.", f != NULL);
 	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
 	fclose(f);
 
-	CuAssert(tc, "Expected result length mismatch", expected_len == serialized_len);
+	CuAssert(tc, "Expected result length mismatch.", expected_len == serialized_len);
 	CuAssert(tc, "Unexpected extended signature.", !KSITest_memcmp(expected, serialized, expected_len));
 
 	KSI_free(serialized);
@@ -445,10 +445,10 @@ static void testExtending_hmacAlgorithmMismatch(CuTest* tc) {
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_CTX_setExtenderHmacAlgorithm(ctx, KSI_HASHALG_SHA2_512);
-	CuAssert(tc, "Unable to set extender HMAC algorithm", res == KSI_OK);
+	CuAssert(tc, "Unable to set extender HMAC algorithm.", res == KSI_OK);
 
 	res = KSI_extendSignature(ctx, sig, &ext);
-	CuAssert(tc, "Unable to extend the signature", res == KSI_HMAC_ALGORITHM_MISMATCH && ext == NULL);
+	CuAssert(tc, "Unable to extend the signature.", res == KSI_HMAC_ALGORITHM_MISMATCH && ext == NULL);
 
 	KSI_Signature_free(sig);
 
@@ -560,18 +560,18 @@ static void testExtendTo(CuTest* tc) {
 	KSI_Integer_new(ctx, 1400112000, &to);
 
 	res = KSI_Signature_extendTo(sig, ctx, to, &ext);
-	CuAssert(tc, "Unable to extend the signature", res == KSI_OK && ext != NULL);
+	CuAssert(tc, "Unable to extend the signature.", res == KSI_OK && ext != NULL);
 
 	res = KSI_Signature_serialize(ext, &serialized, &serialized_len);
-	CuAssert(tc, "Unable to serialize extended signature", res == KSI_OK && serialized != NULL && serialized_len > 0);
+	CuAssert(tc, "Unable to serialize extended signature.", res == KSI_OK && serialized != NULL && serialized_len > 0);
 
-	/* Read in the expected result */
+	/* Read in the expected result. */
 	f = fopen(getFullResourcePath(TEST_RES_SIGNATURE_FILE), "rb");
-	CuAssert(tc, "Unable to read expected result file", f != NULL);
+	CuAssert(tc, "Unable to read expected result file.", f != NULL);
 	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
 	fclose(f);
 
-	CuAssert(tc, "Expected result length mismatch", expected_len == serialized_len);
+	CuAssert(tc, "Expected result length mismatch.", expected_len == serialized_len);
 	CuAssert(tc, "Unexpected extended signature.", !KSITest_memcmp(expected, serialized, expected_len));
 
 	KSI_free(serialized);
@@ -608,18 +608,18 @@ static void testExtendSigNoCalChain(CuTest* tc) {
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_extendSignature(ctx, sig, &ext);
-	CuAssert(tc, "Unable to extend the signature", res == KSI_OK && ext != NULL);
+	CuAssert(tc, "Unable to extend the signature.", res == KSI_OK && ext != NULL);
 
 	res = KSI_Signature_serialize(ext, &serialized, &serialized_len);
-	CuAssert(tc, "Unable to serialize extended signature", res == KSI_OK && serialized != NULL && serialized_len > 0);
+	CuAssert(tc, "Unable to serialize extended signature.", res == KSI_OK && serialized != NULL && serialized_len > 0);
 
-	/* Read in the expected result */
+	/* Read in the expected result. */
 	f = fopen(getFullResourcePath(TEST_RES_SIGNATURE_FILE), "rb");
-	CuAssert(tc, "Unable to read expected result file", f != NULL);
+	CuAssert(tc, "Unable to read expected result file.", f != NULL);
 	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
 	fclose(f);
 
-	CuAssert(tc, "Expected result length mismatch", expected_len == serialized_len);
+	CuAssert(tc, "Expected result length mismatch.", expected_len == serialized_len);
 
 	KSI_free(serialized);
 
@@ -708,7 +708,7 @@ static void testExtAuthFailure(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_CTX_getPKITruststore(ctx, &pki);
-	CuAssert(tc, "Unable to get PKI Truststore", res == KSI_OK && pki != NULL);
+	CuAssert(tc, "Unable to get PKI Truststore.", res == KSI_OK && pki != NULL);
 
 	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath(TEST_CRT_FILE));
 	CuAssert(tc, "Unable to add test certificate to truststore.", res == KSI_OK);
@@ -751,7 +751,7 @@ static void testExtendingWithoutPublication(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_CTX_getPKITruststore(ctx, &pki);
-	CuAssert(tc, "Unable to get PKI Truststore", res == KSI_OK && pki != NULL);
+	CuAssert(tc, "Unable to get PKI Truststore.", res == KSI_OK && pki != NULL);
 
 	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath(TEST_CRT_FILE));
 	CuAssert(tc, "Unable to add test certificate to truststore.", res == KSI_OK);
@@ -763,19 +763,19 @@ static void testExtendingWithoutPublication(CuTest* tc) {
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_Signature_extend(sig, ctx, NULL, &ext);
-	CuAssert(tc, "Unable to extend the signature to the head", res == KSI_OK && ext != NULL);
+	CuAssert(tc, "Unable to extend the signature to the head.", res == KSI_OK && ext != NULL);
 
 	res = KSI_Signature_serialize(ext, &serialized, &serialized_len);
-	CuAssert(tc, "Unable to serialize extended signature", res == KSI_OK && serialized != NULL && serialized_len > 0);
-	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Signature extended to head", serialized, serialized_len);
+	CuAssert(tc, "Unable to serialize extended signature.", res == KSI_OK && serialized != NULL && serialized_len > 0);
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Signature extended to head.", serialized, serialized_len);
 
-	/* Read in the expected result */
+	/* Read in the expected result. */
 	f = fopen(getFullResourcePath(TEST_RES_SIGNATURE_FILE), "rb");
-	CuAssert(tc, "Unable to read expected result file", f != NULL);
+	CuAssert(tc, "Unable to read expected result file.", f != NULL);
 	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
 	fclose(f);
 
-	CuAssert(tc, "Expected result length mismatch", expected_len == serialized_len);
+	CuAssert(tc, "Expected result length mismatch.", expected_len == serialized_len);
 	CuAssert(tc, "Unexpected extended signature.", !memcmp(expected, serialized, expected_len));
 
 	KSI_free(serialized);
@@ -810,7 +810,7 @@ static void testExtendingToNULL(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_CTX_getPKITruststore(ctx, &pki);
-	CuAssert(tc, "Unable to get PKI Truststore", res == KSI_OK && pki != NULL);
+	CuAssert(tc, "Unable to get PKI Truststore.", res == KSI_OK && pki != NULL);
 
 	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath(TEST_CRT_FILE));
 	CuAssert(tc, "Unable to add test certificate to truststore.", res == KSI_OK);
@@ -822,19 +822,19 @@ static void testExtendingToNULL(CuTest* tc) {
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_Signature_extendTo(sig, ctx, NULL, &ext);
-	CuAssert(tc, "Unable to extend the signature to the head", res == KSI_OK && ext != NULL);
+	CuAssert(tc, "Unable to extend the signature to the head.", res == KSI_OK && ext != NULL);
 
 	res = KSI_Signature_serialize(ext, &serialized, &serialized_len);
-	CuAssert(tc, "Unable to serialize extended signature", res == KSI_OK && serialized != NULL && serialized_len > 0);
-	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Signature extended to head", serialized, serialized_len);
+	CuAssert(tc, "Unable to serialize extended signature.", res == KSI_OK && serialized != NULL && serialized_len > 0);
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Signature extended to head.", serialized, serialized_len);
 
-	/* Read in the expected result */
+	/* Read in the expected result. */
 	f = fopen(getFullResourcePath(TEST_RES_SIGNATURE_FILE), "rb");
-	CuAssert(tc, "Unable to read expected result file", f != NULL);
+	CuAssert(tc, "Unable to read expected result file.", f != NULL);
 	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
 	fclose(f);
 
-	CuAssert(tc, "Expected result length mismatch", expected_len == serialized_len);
+	CuAssert(tc, "Expected result length mismatch.", expected_len == serialized_len);
 	CuAssert(tc, "Unexpected extended signature.", !memcmp(expected, serialized, expected_len));
 
 	KSI_free(serialized);
@@ -859,13 +859,13 @@ static void testSigningInvalidResponse(CuTest* tc){
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
-	CuAssert(tc, "Signature should not be created with invalid aggregation response", res == KSI_INVALID_FORMAT && sig == NULL);
+	CuAssert(tc, "Signature should not be created with invalid aggregation response.", res == KSI_INVALID_FORMAT && sig == NULL);
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
@@ -885,13 +885,13 @@ static void testSigningInvalidAggrChainReturned(CuTest* tc){
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, imprint, sizeof(imprint), &hsh);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
-	CuAssert(tc, "Signature should not be created with invalid aggregation response", res == KSI_VERIFICATION_FAILURE);
+	CuAssert(tc, "Signature should not be created with invalid aggregation response.", res == KSI_VERIFICATION_FAILURE);
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
@@ -909,10 +909,10 @@ static void testSigningErrorResponse(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Signature should not be created due to server error.", res == KSI_SERVICE_INVALID_PAYLOAD && sig == NULL);
@@ -937,7 +937,7 @@ static void testExtendingErrorResponse(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_CTX_getPKITruststore(ctx, &pki);
-	CuAssert(tc, "Unable to get PKI Truststore", res == KSI_OK && pki != NULL);
+	CuAssert(tc, "Unable to get PKI Truststore.", res == KSI_OK && pki != NULL);
 
 	res = KSI_PKITruststore_addLookupFile(pki, getFullResourcePath(TEST_CRT_FILE));
 	CuAssert(tc, "Unable to add test certificate to truststore.", res == KSI_OK);
@@ -949,7 +949,7 @@ static void testExtendingErrorResponse(CuTest *tc) {
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_Signature_extend(sig, ctx, NULL, &ext);
-	CuAssert(tc, "Extend should fail with server error", res == KSI_SERVICE_INVALID_PAYLOAD && ext == NULL);
+	CuAssert(tc, "Extend should fail with server error.", res == KSI_SERVICE_INVALID_PAYLOAD && ext == NULL);
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
@@ -990,13 +990,13 @@ static void testLocalAggregationSigning(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_Signature_signAggregated(ctx, hsh, TEST_AGGR_LEVEL, &sig);
-	CuAssert(tc, "Unable to sign the hash", res == KSI_OK && sig != NULL);
+	CuAssert(tc, "Unable to sign the hash.", res == KSI_OK && sig != NULL);
 
 	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Locally aggregated signature was not verifiable due to an error.", res == KSI_OK);
@@ -1035,18 +1035,18 @@ static void testExtendExtended(CuTest* tc) {
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_extendSignature(ctx, sig, &ext);
-	CuAssert(tc, "Unable to extend the signature", res == KSI_OK && ext != NULL);
+	CuAssert(tc, "Unable to extend the signature.", res == KSI_OK && ext != NULL);
 
 	res = KSI_Signature_serialize(ext, &serialized, &serialized_len);
-	CuAssert(tc, "Unable to serialize extended signature", res == KSI_OK && serialized != NULL && serialized_len > 0);
+	CuAssert(tc, "Unable to serialize extended signature.", res == KSI_OK && serialized != NULL && serialized_len > 0);
 
-	/* Read in the expected result */
+	/* Read in the expected result. */
 	f = fopen(getFullResourcePath(TEST_RES_SIGNATURE_FILE), "rb");
-	CuAssert(tc, "Unable to read expected result file", f != NULL);
+	CuAssert(tc, "Unable to read expected result file.", f != NULL);
 	expected_len = (unsigned)fread(expected, 1, sizeof(expected), f);
 	fclose(f);
 
-	CuAssert(tc, "Expected result length mismatch", expected_len == serialized_len);
+	CuAssert(tc, "Expected result length mismatch.", expected_len == serialized_len);
 	CuAssert(tc, "Unexpected extended signature.", !KSITest_memcmp(expected, serialized, expected_len));
 
 	KSI_free(serialized);
@@ -1079,22 +1079,22 @@ static void testCreateAggregated(CuTest *tc) {
 	KSI_Signature *sig = NULL;
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	/* Create the hash for the initial document. */
 	res = KSI_DataHash_create(ctx, data, sizeof(data), KSI_HASHALG_SHA2_256, &docHash);
-	CuAssert(tc, "Unable to create data hash", res == KSI_OK && docHash != NULL);
+	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && docHash != NULL);
 
 	/* Create client id object. */
 	res = KSI_Utf8String_new(ctx, clientStr, sizeof(clientStr), &clientId);
-	CuAssert(tc, "Unable to create client id", res == KSI_OK && clientId != NULL);
+	CuAssert(tc, "Unable to create client id.", res == KSI_OK && clientId != NULL);
 
 	/* Create the metadata object. */
 	res = KSI_MetaData_new(ctx, &metaData);
-	CuAssert(tc, "Unable to create metadata", res == KSI_OK && metaData != NULL);
+	CuAssert(tc, "Unable to create metadata.", res == KSI_OK && metaData != NULL);
 
 	res = KSI_MetaData_setClientId(metaData, clientId);
-	CuAssert(tc, "Unable to set meta data client id", res == KSI_OK);
+	CuAssert(tc, "Unable to set meta data client id.", res == KSI_OK);
 
 	/* Create a tree builder. */
 	res = KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &tb);
@@ -1121,7 +1121,7 @@ static void testCreateAggregated(CuTest *tc) {
 	/* Serialize the signature. */
 	res = KSI_Signature_serialize(sig, &raw, &raw_len);
 	CuAssert(tc, "Unable to serialize signature.", res == KSI_OK && raw != NULL && raw_len > 0);
-	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Serialized:", raw, raw_len);
+	KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Serialized", raw, raw_len);
 
 	KSI_Signature_free(sig);
 	sig = NULL;
@@ -1213,10 +1213,10 @@ static void testNonCriticalPayloadElementInAggregationResponse(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Signing should have not failed.", res == KSI_OK && sig != NULL);
@@ -1239,10 +1239,10 @@ static void testCriticalPayloadElementInAggregationResponse(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Signing should fail with invalid format due to critical unknown element in PDU.", res == KSI_INVALID_FORMAT && sig == NULL);
@@ -1265,10 +1265,10 @@ static void testFlagsInAggregationResponse(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Signing should have not failed.", res == KSI_OK && sig != NULL);
@@ -1291,10 +1291,10 @@ static void testErrorStatusWithSignatureElementsInResponse(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Signing should have failed with service upstream timeout error.", res == KSI_SERVICE_UPSTREAM_TIMEOUT && sig == NULL);
@@ -1545,10 +1545,10 @@ static void testAggregationResponseWithConfAndAck(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Signing should have not failed.", res == KSI_OK && sig != NULL);
@@ -1572,10 +1572,10 @@ static void testAggregationResponseWithConfCallback(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_CTX_setOption(ctx, KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK, Test_ConfigCallback);
 	CuAssert(tc, "Unable to set extender conf callback.", res == KSI_OK);
@@ -1612,7 +1612,7 @@ static void testAggreConfRequestConfWithSig(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_receiveAggregatorConfig(ctx, &conf);
 	CuAssert(tc, "Conf request should have not failed.", res == KSI_OK && conf != NULL);
@@ -1642,10 +1642,10 @@ static void testAggregationResponseWithInvalidId(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Signing should have failed because of invalid request ID.", res == KSI_REQUEST_ID_MISMATCH && sig == NULL);
@@ -1747,10 +1747,10 @@ static void testAggregationResponseMultiplePayload(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Signing should have failed with invalid response format.", res == KSI_INVALID_FORMAT && sig == NULL);
@@ -1772,10 +1772,10 @@ static void testAggregationResponseWithResponseAndErrorPayload(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
 	CuAssert(tc, "Signing should have failed with invalid request error.", res == KSI_SERVICE_INVALID_REQUEST && sig == NULL);
@@ -1804,36 +1804,36 @@ static void testSigningWithLevel(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSITest_DataHash_fromStr(ctx, "016338656636643537616332386431623465393561353133393539663566636464", &hsh);
-	CuAssert(tc, "Unable to create data hash object", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set aggregator file URI", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator file URI.", res == KSI_OK);
 
 	res = KSI_Signature_signAggregated(ctx, hsh, level, &sig);
 	CuAssert(tc, "Unable to sign the hash with level.", res == KSI_OK && sig != NULL);
 
 	res = KSI_AggregationHashChainList_elementAt(sig->aggregationChainList, 0, &aggr);
-	CuAssert(tc, "Unable to get aggregation hash chain", res == KSI_OK && aggr != NULL);
+	CuAssert(tc, "Unable to get aggregation hash chain.", res == KSI_OK && aggr != NULL);
 
 	res = KSI_AggregationHashChain_getChain(aggr, &chain);
-	CuAssert(tc, "Unable to get aggregation hash chain links", res == KSI_OK && chain != NULL);
+	CuAssert(tc, "Unable to get aggregation hash chain links.", res == KSI_OK && chain != NULL);
 
 	res = KSI_HashChainLinkList_elementAt(chain, 0, &link);
-	CuAssert(tc, "Unable to get first chain link", res == KSI_OK && link != NULL);
+	CuAssert(tc, "Unable to get first chain link.", res == KSI_OK && link != NULL);
 
 	res = KSI_HashChainLink_getLevelCorrection(link, &sigLvl);
-	CuAssert(tc, "Unable to get level corrector value", res == KSI_OK && sigLvl != NULL);
+	CuAssert(tc, "Unable to get level corrector value.", res == KSI_OK && sigLvl != NULL);
 
-	CuAssert(tc, "Signature first link level does not match with signing level", level == KSI_Integer_getUInt64(sigLvl));
+	CuAssert(tc, "Signature first link level does not match with signing level.", level == KSI_Integer_getUInt64(sigLvl));
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Unable to init verification context", res == KSI_OK);
+	CuAssert(tc, "Unable to init verification context.", res == KSI_OK);
 
 	context.signature = sig;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
 	CuAssert(tc, "Unable to verify created signature.", res == KSI_OK && result != NULL);
-	CuAssert(tc, "Unexpected verification result", result->finalResult.resultCode == KSI_VER_RES_OK);
+	CuAssert(tc, "Unexpected verification result.", result->finalResult.resultCode == KSI_VER_RES_OK);
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
@@ -1850,14 +1850,14 @@ static void testSigning_hmacAlgorithmDeprecated(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_DataHash_fromImprint(ctx, mockImprint, sizeof(mockImprint), &hsh);
-	CuAssert(tc, "Unable to create data hash object from raw imprint", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to create data hash object from raw imprint.", res == KSI_OK && hsh != NULL);
 
 
 	res = KSI_CTX_setAggregatorHmacAlgorithm(ctx, KSI_HASHALG_SHA1);
-	CuAssert(tc, "Unable to set aggregator HMAC algorithm", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator HMAC algorithm.", res == KSI_OK);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
-	CuAssert(tc, "Unable to sign the hash", res == KSI_UNTRUSTED_HASH_ALGORITHM && sig == NULL);
+	CuAssert(tc, "Unable to sign the hash.", res == KSI_UNTRUSTED_HASH_ALGORITHM && sig == NULL);
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);
@@ -1877,7 +1877,7 @@ static void testExtending_hmacAlgorithmDeprecated(CuTest* tc) {
 	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_CTX_setExtenderHmacAlgorithm(ctx, KSI_HASHALG_SHA1);
-	CuAssert(tc, "Unable to set aggregator HMAC algorithm", res == KSI_OK);
+	CuAssert(tc, "Unable to set aggregator HMAC algorithm.", res == KSI_OK);
 
 	res = KSI_extendSignature(ctx, sig, &ext);
 	CuAssert(tc, "The extending of the signature should not succeed.", res == KSI_UNTRUSTED_HASH_ALGORITHM && ext == NULL);

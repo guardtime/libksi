@@ -214,11 +214,11 @@ static int insertElementAt(KSI_List *list, size_t pos, void *o) {
 		goto cleanup;
 	}
 
-	/* Append empty element */
+	/* Append empty element. */
 	res = appendElement(list, NULL);
 	if (res != KSI_OK) goto cleanup;
 
-	/* Shift the elements */
+	/* Shift the elements. */
 	for (i = pImpl->arr_len - 1; i > pos; i--) {
 		pImpl->arr[i] = pImpl->arr[i - 1];
 	}
@@ -291,7 +291,7 @@ static int removeElement(KSI_List *list, size_t pos, void **o) {
 	} else {
 		list->obj_free(pImpl->arr[pos].ptr);
 	}
-	/* Shift the tail */
+	/* Shift the tail. */
 	for (i = pos + 1; i < pImpl->arr_len; i++) {
 		pImpl->arr[i - 1] = pImpl->arr[i];
 	}

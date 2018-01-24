@@ -35,7 +35,7 @@
 
 #define CONF_arr_str_cpy(name, pos, max, param, value) \
 	if (pos >= max) {\
-		fprintf(stderr, "Error: Parameter '%s' count too large. Max is %i\n", #name, max); \
+		fprintf(stderr, "Error: Parameter '%s' count too large. Max is %i.\n", #name, max); \
 		exit(EXIT_FAILURE);\
 	}\
 	if (conf->name[pos][0] == '\0' && isParam(param, #name)) {\
@@ -57,7 +57,7 @@ static char *string_getBetweenWhitespace(char *strn) {
 	if (strn_len == 0) return strn;
 	end = strn + strn_len - 1;
 
-	/*Replace trailing whitespace with string end characters*/
+	/* Replace trailing whitespace with string end characters. */
 	while(end != strn && isspace(*end)) {
 		*end = '\0';
 		end--;
@@ -85,13 +85,13 @@ static void parseConstraint(KSITest_PubfileConf *conf, unsigned at, const char *
 
 		if (strlen(oid) == 0) {
 			fprintf(stderr, "Error: Publications file constraint OID must not be empty string!\n");
-			fprintf(stderr, "Error: Invalid entry '%s'\n", value);
+			fprintf(stderr, "Error: Invalid entry '%s'.\n", value);
 			exit(EXIT_FAILURE);
 		}
 
 		if (strlen(val) == 0) {
 			fprintf(stderr, "Error: Publications file constraint value must not be empty string!\n");
-			fprintf(stderr, "Error: Invalid entry '%s'\n", value);
+			fprintf(stderr, "Error: Invalid entry '%s'.\n", value);
 			exit(EXIT_FAILURE);
 		}
 
@@ -185,7 +185,7 @@ int KSITest_Conf_load(const char *confFile, KSITest_Conf *conf) {
 		goto cleanup;
 	}
 
-	/*Initialize configuration object*/
+	/* Initialize configuration object. */
 	conf_clear(conf);
 
 	while(fgets(tmp, sizeof(tmp), file)){
@@ -193,14 +193,14 @@ int KSITest_Conf_load(const char *confFile, KSITest_Conf *conf) {
 		else if ((ln = strchr(tmp, 0x0A)) != NULL) *ln = 0;
 		else continue;
 
-		/*Remove whitespace character. If invalid line, continue!*/
+		/* Remove whitespace character. If invalid line, continue! */
 		line = string_getBetweenWhitespace(tmp);
 		if (line == NULL || line[0] == '\0' || line[0] == '#') continue;
 
-		/*Entry in conf file must contain =*/
+		/* Entry in conf file must contain '='. */
 		equal = strchr(line, '=');
 		if(equal == NULL) {
-			/*Its a unknown line, continue!*/
+			/* Its a unknown line, continue! */
 			continue;
 		} else {
 			*equal = '\0';

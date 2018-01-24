@@ -217,7 +217,7 @@ int KSI_PublicationsFile_parse(KSI_CTX *ctx, const void *raw, size_t raw_len, KS
 
 	tmp->signedDataLength += gen.sig_offset;
 
-	/* Copy the raw value */
+	/* Copy the raw value. */
 	tmpRaw = KSI_malloc(raw_len);
 	if (tmpRaw == NULL) {
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
@@ -270,7 +270,7 @@ int KSI_PublicationsFile_verify(const KSI_PublicationsFile *pubFile, KSI_CTX *ct
 	if (pubFile->raw == NULL) {
 		/* FIXME! At the moment the creation of publications file is not supported,
 		 * thus this error can not occur under normal conditions. */
-		KSI_pushError(useCtx, res = KSI_UNKNOWN_ERROR, "Not implemented");
+		KSI_pushError(useCtx, res = KSI_UNKNOWN_ERROR, "Not implemented.");
 		goto cleanup;
 	}
 
@@ -1273,7 +1273,7 @@ char *KSI_PublicationData_toString(const KSI_PublicationData *t, char *buffer, s
 
 	res = KSI_PublicationData_toBase32(t, &pubStr);
 	if (res != KSI_OK) {
-		KSI_LOG_debug(t->ctx, "Unable to convert publication data to base 32: %s (%d)", KSI_getErrorString(res), res);
+		KSI_LOG_debug(t->ctx, "Unable to convert publication data to base 32: %s (%d).", KSI_getErrorString(res), res);
 		goto cleanup;
 	}
 
@@ -1390,7 +1390,7 @@ int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_Publicatio
 		goto cleanup;
 	}
 
-	/*Copy publication references*/
+	/* Copy publication references. */
 	res = KSI_Utf8StringList_new(&(tmp->publicationRef));
 	if (res != KSI_OK) goto cleanup;
 
@@ -1413,7 +1413,7 @@ int KSI_PublicationRecord_clone(const KSI_PublicationRecord *rec, KSI_Publicatio
 		}
 	}
 
-	/*Copy publication data*/
+	/* Copy publication data. */
 	res = KSI_PublicationData_new(rec->ctx, &(tmp->publishedData));
 	if (res != KSI_OK) {
 		KSI_pushError(rec->ctx, res, NULL);

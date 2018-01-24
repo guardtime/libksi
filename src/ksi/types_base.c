@@ -383,7 +383,7 @@ int KSI_Utf8String_new(KSI_CTX *ctx, const char *str, size_t len, KSI_Utf8String
 		goto cleanup;
 	}
 
-	/* Verify correctness of utf-8 */
+	/* Verify correctness of utf-8. */
 	res = verifyUtf8(ctx, (const unsigned char *)str, len);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -675,7 +675,7 @@ int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_Integer **o) {
 	}
 
 	if (len > 8) {
-		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Integer larger than 64bit");
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Integer larger than 64bit.");
 		goto cleanup;
 	}
 
@@ -686,7 +686,7 @@ int KSI_Integer_fromTlv(KSI_TLV *tlv, KSI_Integer **o) {
 
 	/* Make sure the integer was coded properly. */
 	if (len > 0 && len != KSI_UINT64_MINSIZE(val)) {
-		KSI_LOG_debug(ctx, "Integer not properly formated: %llu (len=%d)", (unsigned long long)val, (unsigned)len);
+		KSI_LOG_debug(ctx, "Integer not properly formated: %llu (len=%d).", (unsigned long long)val, (unsigned)len);
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Integer not properly formated.");
 		goto cleanup;
 	}

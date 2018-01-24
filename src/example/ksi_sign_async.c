@@ -180,7 +180,7 @@ int main(int argc, char **argv) {
 
 	size_t succeeded = 0;
 
-	/* Handle command line parameters */
+	/* Handle command line parameters. */
 	if (argc <= NOF_STATIC_ARGS || strcmp("--", argv[ARGV_DELIM])) {
 		fprintf(stderr, "Usage:\n"
 				"  %s <aggregator-uri> <user> <pass> -- <in-data-file>...<in-data-file>\n", argv[ARGV_COMMAND]);

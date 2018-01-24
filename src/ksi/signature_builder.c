@@ -743,7 +743,7 @@ int KSI_SignatureBuilder_openFromAggregationResp(const KSI_AggregationResp *resp
 	KSI_LIST(KSI_AggregationHashChain) *aggrChainList = NULL;
 	KSI_LIST(KSI_AggregationHashChain) *aggrChainListRef = NULL;
 
-	/* PDU Specific objects */
+	/* PDU Specific objects. */
 	KSI_Integer *status = NULL;
 	size_t i;
 
@@ -754,14 +754,14 @@ int KSI_SignatureBuilder_openFromAggregationResp(const KSI_AggregationResp *resp
 	ctx = KSI_AggregationResp_getCtx(resp);
 	KSI_ERR_clearErrors(ctx);
 
-	/* Parse the pdu */
+	/* Parse the pdu. */
 	res = KSI_AggregationResp_getBaseTlv(resp, &baseTlv);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	/* Validate tag value */
+	/* Validate tag value. */
 	if (KSI_TLV_getTag(baseTlv) != 0x202 && KSI_TLV_getTag(baseTlv) != 0x02) {
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Aggregation response element is missing.");
 		goto cleanup;
@@ -849,7 +849,7 @@ int KSI_SignatureBuilder_openFromAggregationResp(const KSI_AggregationResp *resp
 		aggrChainListRef = NULL;
 	}
 
-	/* Create signature TLV */
+	/* Create signature TLV. */
 	res = KSI_TLV_new(ctx, 0x0800, 0, 0, &tmpTlv);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);

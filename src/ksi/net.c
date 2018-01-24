@@ -716,7 +716,7 @@ int KSI_RequestHandle_getExtendResponse(const KSI_RequestHandle *handle, KSI_Ext
 
 	KSI_LOG_logBlob(handle->ctx, KSI_LOG_DEBUG, "Parsing extend response from", raw, len);
 
-	/*Get response PDU*/
+	/* Get response PDU. */
 	res = KSI_ExtendPdu_parse(handle->ctx, raw, len, &pdu);
 	if (res != KSI_OK) {
 		int networkStatus = handle->err.code;
@@ -914,7 +914,7 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 		goto cleanup;
 	}
 
-	KSI_LOG_logBlob(handle->ctx, KSI_LOG_DEBUG, "Parsing aggregation response:", raw, len);
+	KSI_LOG_logBlob(handle->ctx, KSI_LOG_DEBUG, "Parsing aggregation response", raw, len);
 
 	/* Get PDU object. */
 	res = KSI_AggregationPdu_parse(handle->ctx, raw, len, &pdu);
@@ -957,7 +957,7 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 		goto cleanup;
 	}
 
-	/*Get response object*/
+	/* Get response object. */
 	res = KSI_AggregationPdu_getResponse(pdu, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(handle->ctx, res, NULL);
@@ -1008,14 +1008,14 @@ int KSI_RequestHandle_getAggregationResponse(const KSI_RequestHandle *handle, KS
 		KSI_LOG_warn(handle->ctx, "Expected aggregator configuration. Response PDU includes unexpected aggregation response.");
 	}
 	if (logWarn) {
-		KSI_LOG_logBlob(handle->ctx, KSI_LOG_WARN, "Response:", raw, len);
+		KSI_LOG_logBlob(handle->ctx, KSI_LOG_WARN, "Response", raw, len);
 
 		res = KSI_RequestHandle_getRequest(handle, &raw, &len);
 		if (res != KSI_OK) {
 			KSI_pushError(handle->ctx, res, NULL);
 			goto cleanup;
 		}
-		KSI_LOG_logBlob(handle->ctx, KSI_LOG_WARN, "Request :", raw, len);
+		KSI_LOG_logBlob(handle->ctx, KSI_LOG_WARN, "Request ", raw, len);
 	}
 
 	if (tmpConf != NULL) {
@@ -1245,7 +1245,7 @@ cleanup:																	\
 	return res;																\
 }
 
-/* KSI_NetEndpoint */
+/* KSI_NetEndpoint. */
 KSI_NET_OBJ_IMPLEMENT_SETTER(KSI_NetEndpoint, User, const char *, ksi_user, setStringParam);
 KSI_NET_OBJ_IMPLEMENT_SETTER(KSI_NetEndpoint, Pass, const char *, ksi_pass, setStringParam);
 
@@ -1253,7 +1253,7 @@ KSI_IMPLEMENT_GETTER(KSI_NetEndpoint, const char *, ksi_user, User);
 KSI_IMPLEMENT_GETTER(KSI_NetEndpoint, const char *, ksi_pass, Pass);
 
 
-/* KSI_NetworkClient */
+/* KSI_NetworkClient. */
 KSI_NET_OBJ_IMPLEMENT_SETTER(KSI_NetworkClient, ExtenderUser, const char *, extender->ksi_user, setStringParam);
 KSI_NET_OBJ_IMPLEMENT_SETTER(KSI_NetworkClient, ExtenderPass, const char *, extender->ksi_pass, setStringParam);
 KSI_NET_OBJ_IMPLEMENT_SETTER(KSI_NetworkClient, AggregatorUser, const char *, aggregator->ksi_user, setStringParam);
