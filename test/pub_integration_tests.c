@@ -157,6 +157,7 @@ static void Test_DownloadPubfileCacheTimeout(CuTest* tc) {
 
 	CuAssert(tc, "Same file should be returned.", pubFile2 == pubFile1);
 
+	KSI_PublicationsFile_free(pubFile1);
 	KSI_PublicationsFile_free(pubFile2);
 }
 
@@ -177,6 +178,7 @@ static void Test_DownloadPubfileCacheNoTimeout(CuTest* tc) {
 
 	CuAssert(tc, "Files should be different.", pubFile2 != pubFile1);
 
+	KSI_PublicationsFile_free(pubFile1);
 	KSI_PublicationsFile_free(pubFile2);
 }
 
@@ -195,6 +197,7 @@ static void Test_LoadFromFileAndDownloadPubfile(CuTest* tc) {
 
 	CuAssert(tc, "Files should be different.", pubFile2 != pubFile1);
 
+	KSI_PublicationsFile_free(pubFile1);
 	KSI_PublicationsFile_free(pubFile2);
 #undef TEST_PUBLICATIONS_FILE
 }
