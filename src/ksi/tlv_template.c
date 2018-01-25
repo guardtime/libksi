@@ -477,7 +477,7 @@ int KSI_TlvTemplate_extract(KSI_CTX *ctx, void *payload, KSI_TLV *tlv, const KSI
 
 	res = extract(ctx, payload, tlv, tmpl, tr, 0, sizeof(tr));
 	if (res != KSI_OK) {
-		KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Parsed tlv at failure.", tlv);
+		KSI_LOG_logTlv(ctx, KSI_LOG_DEBUG, "Parsed tlv at failure", tlv);
 	}
 	return res;
 }
