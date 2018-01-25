@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
 
 	time(&start);
 
-	/* Handle command line parameters */
+	/* Handle command line parameters. */
 	if (argc < NOF_ARGS) {
 		fprintf(stderr, "Usage:\n"
 				"  %s <test-root> <protocol> <log-level> <nof-requests> <request-cache-size> <requests-per-round>\n",
@@ -158,7 +158,7 @@ int main(int argc, char **argv) {
 	initFullResourcePath(argv[ARGV_TEST_ROOT]);
 
 	if (KSITest_Conf_load(getFullResourcePath("integrationtest.conf"), &conf)) {
-		fprintf(stderr, "Unable to load configuration");
+		fprintf(stderr, "Unable to load configuration.\n");
 		goto cleanup;
 	}
 
@@ -429,8 +429,8 @@ int main(int argc, char **argv) {
 								goto cleanup;
 							}
 
-							KSI_LOG_error(ksi, "Error: [0x%x:%ld] %s (%s)", err, extErr, KSI_getErrorString(err), KSI_Utf8String_cstr(errMsg));
-							KSI_LOG_logDataHash(ksi, KSI_LOG_ERROR, "...Context hash", reqCtxHash);
+							KSI_LOG_error(ksi, "Error: [0x%x:%ld] %s (%s).", err, extErr, KSI_getErrorString(err), KSI_Utf8String_cstr(errMsg));
+							KSI_LOG_logDataHash(ksi, KSI_LOG_ERROR, "...Context hash.", reqCtxHash);
 
 							KSI_AsyncHandle_free(respHandle);  respHandle = NULL;
 						}

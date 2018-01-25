@@ -150,7 +150,7 @@ static void closeSocket(TcpAsyncCtx *tcpCtx, unsigned int lineNr) {
 	if (tcpCtx != NULL) {
 		KSI_LOG_debug(tcpCtx->ctx, "Async TCP close socket at: L%u", lineNr);
 
-		/* Close socket */
+		/* Close socket. */
 		if (tcpCtx->sockfd != TCP_INVALID_SOCKET_FD) close(tcpCtx->sockfd);
 		tcpCtx->sockfd = TCP_INVALID_SOCKET_FD;
 		tcpCtx->socketReady = false;
@@ -342,7 +342,7 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 
 		/* Check if the request count can be restarted. */
 		if (difftime(time(&curTime), tcpCtx->roundStartAt) >= tcpCtx->options[KSI_ASYNC_PRIVOPT_ROUND_DURATION]) {
-			KSI_LOG_info(tcpCtx->ctx, "Async TCP round request count: %llu", (unsigned long long)tcpCtx->roundCount);
+			KSI_LOG_info(tcpCtx->ctx, "Async TCP round request count: %llu.", (unsigned long long)tcpCtx->roundCount);
 			tcpCtx->roundCount = 0;
 			tcpCtx->roundStartAt = curTime;
 		}

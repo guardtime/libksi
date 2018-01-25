@@ -97,7 +97,7 @@ static void escapeStr(const char *str, CuString *escaped) {
 	while (*str) {
 		/* Find the index of current char. */
 		p = (long long int)(strchr(replIndex, *str) - replIndex);
-		/* If the character is found, use the replacement */
+		/* If the character is found, use the replacement. */
 		if (p >= 0) {
 			CuStringAppendFormat(escaped, "&%s", repl[p]);
 		} else {
@@ -147,7 +147,7 @@ static void createSuiteXMLSummary(CuSuite* testSuite, CuString* summary) {
 	}
 	CuStringAppend(summary, "</testsuite>\n");
 
-	/* Cleanup */
+	/* Cleanup. */
 	CuStringDelete(tmpCuStr);
 }
 

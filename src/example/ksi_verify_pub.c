@@ -90,10 +90,10 @@ int main(int argc, char **argv) {
 	/* Read the signature. */
 	res = KSI_Signature_fromFile(ksi, argv[2], &sig);
 	if (res != KSI_OK) {
-		printf("failed (%s)\n", KSI_getErrorString(res));
+		printf("failed (%s).\n", KSI_getErrorString(res));
 		goto cleanup;
 	}
-	printf("ok\n");
+	printf("ok.\n");
 
 	/* Set signature in verification context. */
 	context.signature = sig;
@@ -126,7 +126,7 @@ int main(int argc, char **argv) {
 	printf("Verifying signature...");
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED, &context, &result);
 	if (res != KSI_OK) {
-		printf("Failed to complete verification due to error 0x%x (%s)\n", res, KSI_getErrorString(res));
+		printf("Failed to complete verification due to error 0x%x (%s).\n", res, KSI_getErrorString(res));
 		goto cleanup;
 	}
 	else {

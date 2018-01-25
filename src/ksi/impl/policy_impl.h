@@ -44,7 +44,7 @@ typedef struct VerificationTempData_st {
 	/** Publicationsfile to be used. The memory may not be freed! */
 	KSI_PublicationsFile *publicationsFile;
 
-	/** Signature aggregation output hash (calendar chain input hash) */
+	/** Signature aggregation output hash (calendar chain input hash). */
 	KSI_DataHash *aggregationOutputHash;
 } VerificationTempData;
 

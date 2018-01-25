@@ -457,7 +457,7 @@ int KSI_CalendarHashChain_calculateAggregationTime(const KSI_CalendarHashChain *
 
 	res = calculateCalendarAggregationTime(chain->hashChain, chain->publicationTime, aggrTime);
 	if (res != KSI_OK) {
-		KSI_pushError(chain->ctx, res, "Failed to calculate aggregation time");
+		KSI_pushError(chain->ctx, res, "Failed to calculate aggregation time.");
 		goto cleanup;
 	}
 
@@ -748,7 +748,7 @@ static int legacyId_verify(KSI_CTX *ctx, const unsigned char *raw, size_t raw_le
 	/* First two octets have fixed values. */
 	if (!(raw[0] == 0x03 && raw[1] == 0x00)) {
 		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Legacy ID header mismatch.");
-		KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Legacy ID data: ", raw, raw_len);
+		KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Legacy ID data", raw, raw_len);
 		goto cleanup;
 	}
 	/* Verify string length (at most 25). */
@@ -850,14 +850,14 @@ static int hashChainLink_getIdentity(const KSI_HashChainLink *link, KSI_HashChai
 
 	KSI_ERR_clearErrors(link->ctx);
 
-	/* Extract legacyId */
+	/* Extract legacyId. */
 	res = KSI_HashChainLink_getLegacyId(link, &legacyId);
 	if (res != KSI_OK) {
 		KSI_pushError(link->ctx, res, NULL);
 		goto cleanup;
 	}
 
-	/* Extract MetaData */
+	/* Extract MetaData. */
 	res = KSI_HashChainLink_getMetaData(link, &metaData);
 	if (res != KSI_OK) {
 		KSI_pushError(link->ctx, res, NULL);

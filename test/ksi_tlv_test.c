@@ -159,7 +159,7 @@ static void testTlvSetRawAsNull(CuTest* tc) {
 
 static void testParseTlv8(CuTest* tc) {
 	int res;
-	/* TLV type = 7, length = 21 */
+	/* TLV type = 7, length = 21. */
 	unsigned char raw[] = "\x07\x15THIS IS A TLV CONTENT";
 	KSI_FTLV ftlv;
 
@@ -174,7 +174,7 @@ static void testParseTlv8(CuTest* tc) {
 
 static void testParseTlv16(CuTest* tc) {
 	int res;
-	/* TLV16 type = 0x2aa, length = 21 */
+	/* TLV16 type = 0x2aa, length = 21. */
 	unsigned char raw[] = "\x82\xaa\x00\x15THIS IS A TLV CONTENT";
 	KSI_FTLV ftlv;
 
@@ -191,7 +191,7 @@ static void testParseTlv16(CuTest* tc) {
 
 static void testTlvGetUint64(CuTest* tc) {
 	int res;
-	/* TLV type = 1a, length = 8 */
+	/* TLV type = 1a, length = 8. */
 	unsigned char raw[] = {0x1a, 0x08, 0xca, 0xfe, 0xba, 0xbe, 0xca, 0xfe, 0xfa, 0xce};
 
 	KSI_TLV *tlv = NULL;
@@ -213,7 +213,7 @@ static void testTlvGetUint64(CuTest* tc) {
 
 static void testTlvGetUint64Overflow(CuTest* tc) {
 	int res;
-	/* TLV type = 1a, length = 8 */
+	/* TLV type = 1a, length = 8. */
 	unsigned char raw[] = {0x1a, 0x09, 0xca, 0xfe, 0xba, 0xbe, 0xca, 0xfe, 0xfa, 0xce, 0xee};
 
 	KSI_TLV *tlv = NULL;
@@ -232,7 +232,7 @@ static void testTlvGetUint64Overflow(CuTest* tc) {
 
 static void testTlvGetStringValue(CuTest* tc) {
 	int res;
-	/* TLV16 type = 0x2aa, length = 21 */
+	/* TLV16 type = 0x2aa, length = 21. */
 	unsigned char raw[] = "\x82\xaa\x00\x0blore ipsum\0";
 	KSI_Utf8String *utf = NULL;
 	KSI_TLV *tlv = NULL;
@@ -252,7 +252,7 @@ static void testTlvGetStringValue(CuTest* tc) {
 
 static void testTlvGetNextNested(CuTest* tc) {
 	int res;
-	/* TLV16 type = 0x2aa, length = 21 */
+	/* TLV16 type = 0x2aa, length = 21. */
 	unsigned char raw[] = "\x01\x20" "\x07\x16" "THIS IS A TLV CONTENT\0" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
 
 	KSI_TLV *tlv = NULL;
@@ -294,7 +294,7 @@ static void testTlvGetNextNested(CuTest* tc) {
 
 static void testTlvGetNextNestedSharedMemory(CuTest* tc) {
 	int res;
-	/* TLV16 type = 0x2aa, length = 21 */
+	/* TLV16 type = 0x2aa, length = 21. */
 	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
 	char *str = NULL;
 
@@ -326,7 +326,7 @@ static void testTlvGetNextNestedSharedMemory(CuTest* tc) {
 
 static void testTlvSerializeString(CuTest* tc) {
 	int res;
-	/* TLV16 type = 0x2aa, length = 21 */
+	/* TLV16 type = 0x2aa, length = 21. */
 	unsigned char raw[] = "\x82\xaa\x00\x0blore ipsum\0";
 	size_t buf_len;
 	unsigned char buf[0xffff];
@@ -353,7 +353,7 @@ static void testTlvSerializeString(CuTest* tc) {
 
 static void testTlvSerializeUint(CuTest* tc) {
 	int res;
-	/* TLV type = 1a, length = 8 */
+	/* TLV type = 1a, length = 8. */
 	unsigned char raw[] = {0x1a, 0x08, 0xca, 0xfe, 0xba, 0xbe, 0xca, 0xfe, 0xfa, 0xce};
 	size_t buf_len;
 	unsigned char buf[0xffff];
@@ -623,7 +623,7 @@ void testTlvElementNested(CuTest *tc) {
 	res = KSI_TlvElement_serialize(outer, buf, sizeof(buf), &len, 0);
 
 	CuAssert(tc, "Unexpected serialized length.", len == sizeof(exp));
-	CuAssert(tc, "Unexpected serialized value", !KSITest_memcmp(buf, exp, sizeof(exp)));
+	CuAssert(tc, "Unexpected serialized value.", !KSITest_memcmp(buf, exp, sizeof(exp)));
 
 
 	KSI_TlvElement_free(outer);

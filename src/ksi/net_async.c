@@ -412,7 +412,7 @@ static int asyncClient_addAggregatorRequest(KSI_AsyncClient *c, KSI_AsyncHandle 
 		res = KSI_AggregationReq_getRequestId(aggrReq, &reqId);
 		if (res != KSI_OK) goto cleanup;
 
-		/* Clear the request id that was set.  */
+		/* Clear the request id that was set. */
 		if (reqId != NULL) {
 			KSI_Integer_free(reqId);
 			res = KSI_AggregationReq_setRequestId(aggrReq, (reqId = NULL));
@@ -540,7 +540,7 @@ static int asyncClient_handleAggregationResp(KSI_AsyncClient *c, KSI_Aggregation
 	}
 	KSI_ERR_clearErrors(c->ctx);
 
-	/*Get response object*/
+	/* Get response object. */
 	res = KSI_AggregationPdu_getResponse(pdu, &resp);
 	if (res != KSI_OK) {
 		KSI_pushError(c->ctx, res, NULL);

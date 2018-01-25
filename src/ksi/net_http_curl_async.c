@@ -48,7 +48,7 @@ typedef struct HttpAsyncCtx_st {
 	char *userAgent;
 	char *mimeType;
 
-	/* Previous count returned by curl_multi_perform */
+	/* Previous count returned by curl_multi_perform. */
 	size_t prevRunningCount;
 
 	/* Round throttling. */
@@ -150,7 +150,7 @@ static size_t curlCallback_receive(char *ptr, size_t size, size_t nmemb, void *u
 	curlReq->len = bytesCount;
 	tmp_buffer = NULL;
 
-	KSI_LOG_debug(curlReq->ctx, "0x%p: Async Curl HTTP received %llu bytes (%llu so far)", curlReq,
+	KSI_LOG_debug(curlReq->ctx, "0x%p: Async Curl HTTP received %llu bytes (%llu so far).", curlReq,
 			(unsigned long long)bytesCount, (unsigned long long)curlReq->len);
 
 	bytesCount = bytesReceived;
@@ -213,7 +213,7 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 			goto cleanup;
 		}
 
-		/* Limit the total amount of connections this multi handle uses.*/
+		/* Limit the total amount of connections this multi handle uses. */
 		curl_multi_setopt(clientCtx->curl, CURLMOPT_MAXCONNECTS, 1L);
 	}
 
@@ -518,7 +518,7 @@ static int curlGlobal_init(void) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (curlGlobal_initCount++ > 0) {
-		/* Nothing to do */
+		/* Nothing to do. */
 		return KSI_OK;
 	}
 
@@ -595,7 +595,7 @@ static int HttpAsyncCtx_new(KSI_CTX *ctx, HttpAsyncCtx **clientCtx) {
 	tmp->roundStartAt = 0;
 	tmp->roundCount = 0;
 
-	/* Queues */
+	/* Queues. */
 	tmp->reqQueue = NULL;
 	tmp->respQueue = NULL;
 

@@ -210,7 +210,7 @@ enum KSI_StatusCode {
 	 */
 	KSI_UNSUPPORTED_PDU_VERSION = 0x212,
 
-	/* Generic service errors */
+	/* Generic service errors. */
 
 	/**
 	 * Pattern for errors with client request.
@@ -241,7 +241,7 @@ enum KSI_StatusCode {
 	 */
 	KSI_SERVICE_UNKNOWN_ERROR = 0x406,
 
-	/* Aggregator errors */
+	/* Aggregator errors. */
 
 	/**
 	 * The request indicated client-side aggregation tree larger than allowed for the client (retrying would not succeed either).

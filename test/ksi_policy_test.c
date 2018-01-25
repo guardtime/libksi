@@ -57,44 +57,44 @@ static void TestInvalidParams(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_Policy_clone(NULL, KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED, &clone);
-	CuAssert(tc, "Context NULL accepted", res == KSI_INVALID_ARGUMENT);
+	CuAssert(tc, "Context NULL accepted.", res == KSI_INVALID_ARGUMENT);
 
 	res = KSI_Policy_clone(ctx, NULL, &clone);
-	CuAssert(tc, "Policy NULL accepted", res == KSI_INVALID_ARGUMENT);
+	CuAssert(tc, "Policy NULL accepted.", res == KSI_INVALID_ARGUMENT);
 
 	res = KSI_Policy_clone(ctx, KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED, NULL);
-	CuAssert(tc, "Clone policy NULL accepted", res == KSI_INVALID_ARGUMENT);
+	CuAssert(tc, "Clone policy NULL accepted.", res == KSI_INVALID_ARGUMENT);
 
 	res = KSI_Policy_clone(ctx, KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED, &clone);
-	CuAssert(tc, "Policy cloning failed", res == KSI_OK);
+	CuAssert(tc, "Policy cloning failed.", res == KSI_OK);
 
 	res = KSI_Policy_setFallback(NULL, clone, clone);
-	CuAssert(tc, "Context NULL accepted", res == KSI_INVALID_ARGUMENT);
+	CuAssert(tc, "Context NULL accepted.", res == KSI_INVALID_ARGUMENT);
 
 	res = KSI_Policy_setFallback(NULL, NULL, clone);
-	CuAssert(tc, "Policy NULL accepted", res == KSI_INVALID_ARGUMENT);
+	CuAssert(tc, "Policy NULL accepted.", res == KSI_INVALID_ARGUMENT);
 
 	res = KSI_Policy_setFallback(NULL, clone, NULL);
-	CuAssert(tc, "Fallback policy NULL accepted", res == KSI_INVALID_ARGUMENT);
+	CuAssert(tc, "Fallback policy NULL accepted.", res == KSI_INVALID_ARGUMENT);
 
 	res = KSI_VerificationContext_init(&context, NULL);
-	CuAssert(tc, "KSI context NULL accepted", res == KSI_INVALID_ARGUMENT);
+	CuAssert(tc, "KSI context NULL accepted.", res == KSI_INVALID_ARGUMENT);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Create verification context failed", res == KSI_OK);
+	CuAssert(tc, "Create verification context failed.", res == KSI_OK);
 
 	res = KSI_SignatureVerifier_verify(NULL, &context, &result);
-	CuAssert(tc, "Policy NULL accepted", res == KSI_INVALID_ARGUMENT);
+	CuAssert(tc, "Policy NULL accepted.", res == KSI_INVALID_ARGUMENT);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED, NULL, &result);
-	CuAssert(tc, "Context NULL accepted", res == KSI_INVALID_ARGUMENT);
+	CuAssert(tc, "Context NULL accepted.", res == KSI_INVALID_ARGUMENT);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED, &context, NULL);
-	CuAssert(tc, "Result NULL accepted", res == KSI_INVALID_ARGUMENT);
+	CuAssert(tc, "Result NULL accepted.", res == KSI_INVALID_ARGUMENT);
 
-	/* TODO: create signature for verification */
+	/* TODO: create signature for verification. */
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED, &context, &result);
-	CuAssert(tc, "Policy verification accepted empty context", res == KSI_INVALID_ARGUMENT);
+	CuAssert(tc, "Policy verification accepted empty context.", res == KSI_INVALID_ARGUMENT);
 
 	KSI_ERR_clearErrors(ctx);
 	KSI_VerificationContext_clean(&context);
@@ -142,8 +142,8 @@ static void TestVerificationContext(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Create verification context failed", res == KSI_OK  && context.ctx == ctx);
-	CuAssert(tc, "Non-empty verification context created",
+	CuAssert(tc, "Create verification context failed.", res == KSI_OK  && context.ctx == ctx);
+	CuAssert(tc, "Non-empty verification context created.",
 			 context.signature == NULL &&
 			 context.documentHash == NULL &&
 			 context.userPublication == NULL &&
@@ -158,19 +158,19 @@ static void TestVerificationContext(CuTest* tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSITest_DataHash_fromStr(ctx, TEST_MOCK_IMPRINT, &hash);
-	CuAssert(tc, "Unable to create mock hash from string", res == KSI_OK && hash != NULL);
+	CuAssert(tc, "Unable to create mock hash from string.", res == KSI_OK && hash != NULL);
 
 	res = KSITest_DataHash_fromStr(ctx, TEST_MOCK_IMPRINT, &aggrHash);
-	CuAssert(tc, "Unable to create mock hash from string", res == KSI_OK && aggrHash != NULL);
+	CuAssert(tc, "Unable to create mock hash from string.", res == KSI_OK && aggrHash != NULL);
 
 	res = KSI_PublicationData_fromBase32(ctx, publicationString, &userPublication);
 	CuAssert(tc, "Failed decoding publication string.", res == KSI_OK && userPublication != NULL);
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	CuAssert(tc, "Unable to read publications file.", res == KSI_OK && userPublicationsFile != NULL);
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &publicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && publicationsFile != NULL);
+	CuAssert(tc, "Unable to read publications file.", res == KSI_OK && publicationsFile != NULL);
 
 	context.signature = sig;
 	context.documentHash = hash;
@@ -242,19 +242,19 @@ static void TestPolicyCreation(CuTest* tc) {
 	KSI_Policy *policy = NULL;
 
 	res = KSI_Policy_create(NULL, singleRules[0], "PolicyName", &policy);
-	CuAssert(tc, "Context NULL accepted", res == KSI_INVALID_ARGUMENT && policy == NULL);
+	CuAssert(tc, "Context NULL accepted.", res == KSI_INVALID_ARGUMENT && policy == NULL);
 
 	res = KSI_Policy_create(ctx, NULL, "PolicyName", &policy);
-	CuAssert(tc, "Rule NULL accepted", res == KSI_INVALID_ARGUMENT && policy == NULL);
+	CuAssert(tc, "Rule NULL accepted.", res == KSI_INVALID_ARGUMENT && policy == NULL);
 
 	res = KSI_Policy_create(ctx, singleRules[0], NULL, &policy);
-	CuAssert(tc, "Name NULL accepted", res == KSI_INVALID_ARGUMENT && policy == NULL);
+	CuAssert(tc, "Name NULL accepted.", res == KSI_INVALID_ARGUMENT && policy == NULL);
 
 	res = KSI_Policy_create(ctx, singleRules[0], "PolicyName", NULL);
-	CuAssert(tc, "Policy NULL accepted", res == KSI_INVALID_ARGUMENT && policy == NULL);
+	CuAssert(tc, "Policy NULL accepted.", res == KSI_INVALID_ARGUMENT && policy == NULL);
 
 	res = KSI_Policy_create(ctx, singleRules[0], "PolicyName", &policy);
-	CuAssert(tc, "Policy creation failed", res == KSI_OK && policy != NULL);
+	CuAssert(tc, "Policy creation failed.", res == KSI_OK && policy != NULL);
 
 	KSI_Policy_free(policy);
 }
@@ -278,15 +278,15 @@ static void TestSingleRulePolicy(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Create verification context failed", res == KSI_OK);
+	CuAssert(tc, "Create verification context failed.", res == KSI_OK);
 
 	for (i = 0; i < sizeof(rules) / sizeof(TestRule); i++) {
 		KSI_ERR_clearErrors(ctx);
 		res = KSI_Policy_create(ctx, rules[i].rule, "Single rules policy", &policy);
-		CuAssert(tc, "Policy creation failed", res == KSI_OK);
+		CuAssert(tc, "Policy creation failed.", res == KSI_OK);
 		res = KSI_SignatureVerifier_verify(policy, &context, &result);
-		CuAssert(tc, "Policy verification failed", res == rules[i].res);
-		CuAssert(tc, "Unexpected verification result", res != KSI_OK || (result->finalResult.resultCode == rules[i].result && result->finalResult.errorCode == rules[i].error));
+		CuAssert(tc, "Policy verification failed.", res == rules[i].res);
+		CuAssert(tc, "Unexpected verification result.", res != KSI_OK || (result->finalResult.resultCode == rules[i].result && result->finalResult.errorCode == rules[i].error));
 		KSI_PolicyVerificationResult_free(result);
 		result = NULL;
 		KSI_Policy_free(policy);
@@ -349,15 +349,15 @@ static void TestBasicRulesPolicy(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Create verification context failed", res == KSI_OK);
+	CuAssert(tc, "Create verification context failed.", res == KSI_OK);
 
 	for (i = 0; i < sizeof(rules) / sizeof(TestRule); i++) {
 		KSI_ERR_clearErrors(ctx);
 		res = KSI_Policy_create(ctx, rules[i].rule, "Basic rules policy", &policy);
-		CuAssert(tc, "Policy creation failed", res == KSI_OK);
+		CuAssert(tc, "Policy creation failed.", res == KSI_OK);
 		res = KSI_SignatureVerifier_verify(policy, &context, &result);
-		CuAssert(tc, "Policy verification failed", res == rules[i].res);
-		CuAssert(tc, "Unexpected verification result", res != KSI_OK || (result->finalResult.resultCode == rules[i].result && result->finalResult.errorCode == rules[i].error));
+		CuAssert(tc, "Policy verification failed.", res == rules[i].res);
+		CuAssert(tc, "Unexpected verification result.", res != KSI_OK || (result->finalResult.resultCode == rules[i].result && result->finalResult.errorCode == rules[i].error));
 		KSI_PolicyVerificationResult_free(result);
 		result = NULL;
 		KSI_Policy_free(policy);
@@ -464,15 +464,15 @@ static void TestCompositeRulesPolicy(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Create verification context failed", res == KSI_OK);
+	CuAssert(tc, "Create verification context failed.", res == KSI_OK);
 
 	for (i = 0; i < sizeof(rules) / sizeof(TestRule); i++) {
 		KSI_ERR_clearErrors(ctx);
 		res = KSI_Policy_create(ctx, rules[i].rule, "Composite rules policy", &policy);
-		CuAssert(tc, "Policy creation failed", res == KSI_OK);
+		CuAssert(tc, "Policy creation failed.", res == KSI_OK);
 		res = KSI_SignatureVerifier_verify(policy, &context, &result);
-		CuAssert(tc, "Policy verification failed", res == rules[i].res);
-		CuAssert(tc, "Unexpected verification result", res != KSI_OK || (result->finalResult.resultCode == rules[i].result && result->finalResult.errorCode == rules[i].error));
+		CuAssert(tc, "Policy verification failed.", res == rules[i].res);
+		CuAssert(tc, "Unexpected verification result.", res != KSI_OK || (result->finalResult.resultCode == rules[i].result && result->finalResult.errorCode == rules[i].error));
 		KSI_PolicyVerificationResult_free(result);
 		result = NULL;
 		KSI_Policy_free(policy);
@@ -551,17 +551,17 @@ static void TestVerificationResult(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_SignatureVerifier_verify(&policies[0], &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected final verification result", ResultsMatch(&expected[2], &result->finalResult));
-	CuAssert(tc, "Unexpected number of results", KSI_RuleVerificationResultList_length(result->policyResults) == 3);
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected final verification result.", ResultsMatch(&expected[2], &result->finalResult));
+	CuAssert(tc, "Unexpected number of results.", KSI_RuleVerificationResultList_length(result->policyResults) == 3);
 	for (i = 0; i < KSI_RuleVerificationResultList_length(result->policyResults); i++) {
 		res = KSI_RuleVerificationResultList_elementAt(result->policyResults, i, &temp);
-		CuAssert(tc, "Could not retrieve result", res == KSI_OK);
-		CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected[i], temp));
-		CuAssert(tc, "Unexpected policy name", !strcmp(temp->policyName, names[i]));
+		CuAssert(tc, "Could not retrieve result.", res == KSI_OK);
+		CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected[i], temp));
+		CuAssert(tc, "Unexpected policy name.", !strcmp(temp->policyName, names[i]));
 	}
 
 	KSI_PolicyVerificationResult_free(result);
@@ -617,10 +617,10 @@ static void TestDuplicateResults(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Create verification context failed", res == KSI_OK);
+	CuAssert(tc, "Create verification context failed.", res == KSI_OK);
 
-	res = KSI_Policy_create(ctx, rules, "Duplicate rules policy", &policy);
-	CuAssert(tc, "Policy creation failed", res == KSI_OK);
+	res = KSI_Policy_create(ctx, rules, "Duplicate rules policy.", &policy);
+	CuAssert(tc, "Policy creation failed.", res == KSI_OK);
 
 	res = KSI_SignatureVerifier_verify(policy, &context, &result);
 	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
@@ -631,8 +631,8 @@ static void TestDuplicateResults(CuTest* tc) {
 		KSI_RuleVerificationResult *tmpRes = NULL;
 
 		res = KSI_RuleVerificationResultList_elementAt(result->ruleResults, i, &tmpRes);
-		CuAssert(tc, "Could not retrieve result", res == KSI_OK);
-		CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected[i], tmpRes));
+		CuAssert(tc, "Could not retrieve result.", res == KSI_OK);
+		CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected[i], tmpRes));
 	}
 
 	KSI_PolicyVerificationResult_free(result);
@@ -657,7 +657,7 @@ static void TestInternalPolicy_FAIL_WithInvalidRfc3161(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
@@ -667,9 +667,9 @@ static void TestInternalPolicy_FAIL_WithInvalidRfc3161(CuTest* tc) {
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -695,7 +695,7 @@ static void TestInternalPolicy_FAIL_WithInvalidRfc3161AggrTime(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
@@ -705,9 +705,9 @@ static void TestInternalPolicy_FAIL_WithInvalidRfc3161AggrTime(CuTest* tc) {
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -733,7 +733,7 @@ static void TestInternalPolicy_FAIL_WithInvalidRfc3161ChainIndex(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
@@ -743,9 +743,9 @@ static void TestInternalPolicy_FAIL_WithInvalidRfc3161ChainIndex(CuTest* tc) {
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -771,7 +771,7 @@ static void TestInternalPolicy_FAIL_WithInvalidAggrChainIndex(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
@@ -781,9 +781,9 @@ static void TestInternalPolicy_FAIL_WithInvalidAggrChainIndex(CuTest* tc) {
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -809,16 +809,16 @@ static void TestInternalPolicy_OK_MetaDataWithPadding(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -843,16 +843,16 @@ static void TestInternalPolicy_OK_MetaDataWithoutPadding(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -877,7 +877,7 @@ static void TestInternalPolicy_FAIL_WithInvalidMetaDataPadding(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
@@ -887,9 +887,9 @@ static void TestInternalPolicy_FAIL_WithInvalidMetaDataPadding(CuTest* tc) {
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -915,7 +915,7 @@ static void TestInternalPolicy_FAIL_WithoutMetaDataPadding(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
@@ -925,9 +925,9 @@ static void TestInternalPolicy_FAIL_WithoutMetaDataPadding(CuTest* tc) {
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -953,7 +953,7 @@ static void TestInternalPolicy_FAIL_WithInvalidAggregationChain(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
@@ -963,9 +963,9 @@ static void TestInternalPolicy_FAIL_WithInvalidAggregationChain(CuTest* tc) {
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -989,7 +989,7 @@ static void TestInternalPolicy_FAIL_WithInconsistentAggregationChainTime(CuTest*
 
 	KSI_ERR_clearErrors(ctx);
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
@@ -999,9 +999,9 @@ static void TestInternalPolicy_FAIL_WithInconsistentAggregationChainTime(CuTest*
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -1027,16 +1027,16 @@ static void TestInternalPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -1061,7 +1061,7 @@ static void TestInternalPolicy_FAIL_WithInvalidCalendarHashChain(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
@@ -1071,10 +1071,10 @@ static void TestInternalPolicy_FAIL_WithInvalidCalendarHashChain(CuTest* tc) {
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -1100,7 +1100,7 @@ static void TestInternalPolicy_FAIL_WithInvalidCalendarHashChainAggregationTime(
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
@@ -1110,10 +1110,10 @@ static void TestInternalPolicy_FAIL_WithInvalidCalendarHashChainAggregationTime(
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -1139,16 +1139,16 @@ static void TestInternalPolicy_OK_WithoutCalendarAuthenticationRecord(CuTest* tc
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
@@ -1175,7 +1175,7 @@ static void TestInternalPolicy_FAIL_WithInvalidCalendarAuthenticationRecordHash(
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
@@ -1185,11 +1185,11 @@ static void TestInternalPolicy_FAIL_WithInvalidCalendarAuthenticationRecordHash(
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -1215,7 +1215,7 @@ static void TestInternalPolicy_FAIL_WithInvalidCalendarAuthenticationRecordTime(
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
@@ -1225,11 +1225,11 @@ static void TestInternalPolicy_FAIL_WithInvalidCalendarAuthenticationRecordTime(
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -1255,18 +1255,18 @@ static void TestInternalPolicy_OK_WithoutPublicationRecord(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -1292,7 +1292,7 @@ static void TestInternalPolicy_FAIL_WithInvalidPublicationRecordHash(CuTest* tc)
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
@@ -1302,11 +1302,11 @@ static void TestInternalPolicy_FAIL_WithInvalidPublicationRecordHash(CuTest* tc)
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -1332,7 +1332,7 @@ static void TestInternalPolicy_FAIL_WithInvalidPublicationRecordTime(CuTest* tc)
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
@@ -1342,11 +1342,11 @@ static void TestInternalPolicy_FAIL_WithInvalidPublicationRecordTime(CuTest* tc)
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -1372,18 +1372,18 @@ static void TestInternalPolicy_OK_WithPublicationRecord(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -1409,21 +1409,21 @@ static void TestInternalPolicy_OK_WithDocumentHash(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSI_Signature_getDocumentHash(context.signature, (KSI_DataHash**)&context.documentHash);
-	CuAssert(tc, "Unable to read signature document hash", res == KSI_OK && context.documentHash != NULL);
+	CuAssert(tc, "Unable to read signature document hash.", res == KSI_OK && context.documentHash != NULL);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_DOCUMENT));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_DOCUMENT));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_nofree(context.documentHash);
@@ -1452,21 +1452,21 @@ static void TestInternalPolicy_FAIL_WithDocumentHash(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSITest_DataHash_fromStr(ctx, TEST_MOCK_IMPRINT, &documentHash);
-	CuAssert(tc, "Unable to create mock hash from string", res == KSI_OK && documentHash != NULL);
+	CuAssert(tc, "Unable to create mock hash from string.", res == KSI_OK && documentHash != NULL);
 	context.documentHash = documentHash;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_NONE));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_DOCUMENT));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_NONE));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_DOCUMENT));
 
 	KSI_DataHash_free(documentHash);
 	KSI_PolicyVerificationResult_free(result);
@@ -1496,7 +1496,7 @@ static void TestInternalPolicy_OK_WithInputLevel(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
@@ -1538,7 +1538,7 @@ static void TestInternalPolicy_FAIL_WithInputLevelTooLarge(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
@@ -1578,7 +1578,7 @@ static void TestInternalPolicy_FAIL_SignatureAggreChainSameIndex(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
@@ -1588,9 +1588,9 @@ static void TestInternalPolicy_FAIL_SignatureAggreChainSameIndex(CuTest *tc) {
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -1617,7 +1617,7 @@ static void TestInternalPolicy_FAIL_SignatureAggreChainSameIndexChangedChainOrde
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
@@ -1627,9 +1627,9 @@ static void TestInternalPolicy_FAIL_SignatureAggreChainSameIndexChangedChainOrde
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -1675,24 +1675,24 @@ static void TestCalendarBasedPolicy_NA_ExtenderErrors(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	for (i = 0; i < sizeof(testArray) / sizeof(testArray[0]); i++) {
-		KSI_LOG_debug(ctx, "Extender error test no %llu", (unsigned long long)i);
+		KSI_LOG_debug(ctx, "Extender error test no %llu.", (unsigned long long)i);
 		res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(testArray[i].name), TEST_USER, TEST_PASS);
 		CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 		res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_CALENDAR_BASED, &context, &result);
 		CuAssert(tc, "Policy verification must not succeed.", res == testArray[i].res);
 		if (res == KSI_OK) {
-			CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-			CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+			CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+			CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 					KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
-			CuAssert(tc, "Unexpected verification property", InconclusiveProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
+			CuAssert(tc, "Unexpected verification property.", InconclusiveProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
 		}
 		KSI_PolicyVerificationResult_free(result);
 	}
@@ -1721,7 +1721,7 @@ static void TestCalendarBasedPolicy_OK_WithPublicationRecord(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
@@ -1731,11 +1731,11 @@ static void TestCalendarBasedPolicy_OK_WithPublicationRecord(CuTest* tc) {
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_CALENDAR_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -1763,7 +1763,7 @@ static void TestCalendarBasedPolicy_FAIL_WithPublicationRecord(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
@@ -1773,11 +1773,11 @@ static void TestCalendarBasedPolicy_FAIL_WithPublicationRecord(CuTest* tc) {
 	CuAssert(tc, "Unable to set extender response.", res == KSI_OK);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_CALENDAR_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -1805,7 +1805,7 @@ static void TestCalendarBasedPolicy_OK_WithoutPublicationRecord(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
@@ -1815,11 +1815,11 @@ static void TestCalendarBasedPolicy_OK_WithoutPublicationRecord(CuTest* tc) {
 	CuAssert(tc, "Unable to set extender response.", res == KSI_OK);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_CALENDAR_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 			KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -1846,7 +1846,7 @@ static void TestCalendarBasedPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
@@ -1856,10 +1856,10 @@ static void TestCalendarBasedPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 	CuAssert(tc, "Unable to set extender response.", res == KSI_OK);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_CALENDAR_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -1887,7 +1887,7 @@ static void TestCalendarBasedPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
@@ -1897,10 +1897,10 @@ static void TestCalendarBasedPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 	CuAssert(tc, "Unable to set extender response.", res == KSI_OK);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_CALENDAR_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -1928,7 +1928,7 @@ static void TestCalendarBasedPolicy_OK_WithAlgoChange(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
@@ -1938,10 +1938,10 @@ static void TestCalendarBasedPolicy_OK_WithAlgoChange(CuTest *tc) {
 	CuAssert(tc, "Unable to set extender response.", res == KSI_OK);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_CALENDAR_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -1968,16 +1968,16 @@ static void TestKeyBasedPolicy_NA_WithoutCalendarHashChain(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_KEY_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -2003,16 +2003,16 @@ static void TestKeyBasedPolicy_NA_WithoutCalendarAuthenticationRecord(CuTest* tc
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_KEY_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
@@ -2039,7 +2039,7 @@ static void TestKeyBasedPolicy_FAIL_WithCalendarAuthenticationRecord(CuTest* tc)
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && context.signature == NULL);
@@ -2049,11 +2049,11 @@ static void TestKeyBasedPolicy_FAIL_WithCalendarAuthenticationRecord(CuTest* tc)
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_KEY_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -2081,22 +2081,22 @@ static void TestKeyBasedPolicy_FAIL_WithoutCertificate(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	CuAssert(tc, "Unable to read publications file.", res == KSI_OK && userPublicationsFile != NULL);
 	context.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_KEY_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE));
 
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_PolicyVerificationResult_free(result);
@@ -2130,22 +2130,22 @@ static void TestKeyBasedPolicy_FAIL_WithCertificate(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	CuAssert(tc, "Unable to read publications file.", res == KSI_OK && userPublicationsFile != NULL);
 	context.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_KEY_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE));
 
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_PolicyVerificationResult_free(result);
@@ -2176,22 +2176,22 @@ static void TestKeyBasedPolicy_FAIL_CertificateValidity(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	CuAssert(tc, "Unable to read publications file.", res == KSI_OK && userPublicationsFile != NULL);
 	context.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_KEY_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE));
 
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_PolicyVerificationResult_free(result);
@@ -2225,22 +2225,22 @@ static void TestKeyBasedPolicy_OK(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	CuAssert(tc, "Unable to read publications file.", res == KSI_OK && userPublicationsFile != NULL);
 	context.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_KEY_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE));
 
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_PolicyVerificationResult_free(result);
@@ -2275,22 +2275,22 @@ static void TestPublicationsFileBasedPolicy_OK_WithPublicationRecord(CuTest* tc)
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), KSI_VERIFICATION_POLICY_EMPTY, NULL, &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	CuAssert(tc, "Unable to read publications file.", res == KSI_OK && userPublicationsFile != NULL);
 	context.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_PUBLICATIONS_FILE_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
 
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_PolicyVerificationResult_free(result);
@@ -2332,26 +2332,26 @@ static void TestPublicationsFileBasedPolicy_NA_DeprecatedAlgInCalendar(CuTest* t
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), KSI_VERIFICATION_POLICY_EMPTY, NULL, &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	CuAssert(tc, "Unable to read publications file.", res == KSI_OK && userPublicationsFile != NULL);
 	context.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_PUBLICATIONS_FILE_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expectedFinal, &result->finalResult));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expectedFinal, &result->finalResult));
 
 	res = KSI_RuleVerificationResultList_elementAt(result->ruleResults, KSI_RuleVerificationResultList_length(result->ruleResults) - 1, &lastFailed);
 	CuAssert(tc, "Failed to get last rule result.", res == KSI_OK && lastFailed != NULL);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expectedFail, lastFailed));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(lastFailed,
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expectedFail, lastFailed));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(lastFailed,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
-	CuAssert(tc, "Unexpected verification property", InconclusiveProperty(lastFailed, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
+	CuAssert(tc, "Unexpected verification property.", InconclusiveProperty(lastFailed, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
 
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_PolicyVerificationResult_free(result);
@@ -2392,26 +2392,26 @@ static void TestPublicationsFileBasedPolicy_NA_WithPublicationRecord(CuTest* tc)
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), KSI_VERIFICATION_POLICY_EMPTY, NULL, &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	CuAssert(tc, "Unable to read publications file.", res == KSI_OK && userPublicationsFile != NULL);
 	context.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_PUBLICATIONS_FILE_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expectedFinal, &result->finalResult));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expectedFinal, &result->finalResult));
 
 	res = KSI_RuleVerificationResultList_elementAt(result->ruleResults, KSI_RuleVerificationResultList_length(result->ruleResults) - 1, &lastFailed);
 	CuAssert(tc, "Failed to get last rule result.", res == KSI_OK && lastFailed != NULL);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expectedFail, lastFailed));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(lastFailed,
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expectedFail, lastFailed));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(lastFailed,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
-	CuAssert(tc, "Unexpected verification property", InconclusiveProperty(lastFailed, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
+	CuAssert(tc, "Unexpected verification property.", InconclusiveProperty(lastFailed, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
 
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_PolicyVerificationResult_free(result);
@@ -2446,22 +2446,22 @@ static void TestPublicationsFileBasedPolicy_NA_WithoutSuitablePublication(CuTest
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), KSI_VERIFICATION_POLICY_EMPTY, NULL, &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	CuAssert(tc, "Unable to read publications file.", res == KSI_OK && userPublicationsFile != NULL);
 	context.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_PUBLICATIONS_FILE_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", InconclusiveProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
+	CuAssert(tc, "Unexpected verification property.", InconclusiveProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
 
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_PolicyVerificationResult_free(result);
@@ -2496,22 +2496,22 @@ static void TestPublicationsFileBasedPolicy_NA_WithSuitablePublication(CuTest* t
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), KSI_VERIFICATION_POLICY_EMPTY, NULL, &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	CuAssert(tc, "Unable to read publications file.", res == KSI_OK && userPublicationsFile != NULL);
 	context.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_PUBLICATIONS_FILE_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", InconclusiveProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
+	CuAssert(tc, "Unexpected verification property.", InconclusiveProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
 
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_PolicyVerificationResult_free(result);
@@ -2547,7 +2547,7 @@ static void TestPublicationsFileBasedPolicy_OK_WithSuitablePublication(CuTest* t
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
@@ -2557,17 +2557,17 @@ static void TestPublicationsFileBasedPolicy_OK_WithSuitablePublication(CuTest* t
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	CuAssert(tc, "Unable to read publications file.", res == KSI_OK && userPublicationsFile != NULL);
 	context.userPublicationsFile = userPublicationsFile;
 
 	context.extendingAllowed = 1;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_PUBLICATIONS_FILE_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
 
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_PolicyVerificationResult_free(result);
@@ -2605,7 +2605,7 @@ static void TestPublicationsFileBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
@@ -2615,17 +2615,17 @@ static void TestPublicationsFileBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	CuAssert(tc, "Unable to read publications file.", res == KSI_OK && userPublicationsFile != NULL);
 	context.userPublicationsFile = userPublicationsFile;
 
 	context.extendingAllowed = 1;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_PUBLICATIONS_FILE_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
 
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_PolicyVerificationResult_free(result);
@@ -2713,7 +2713,7 @@ static void TestUserProvidedPublicationBasedPolicy_NA_DeprecatedAlgInCalendar(Cu
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), KSI_VERIFICATION_POLICY_EMPTY, NULL, &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
@@ -2724,15 +2724,15 @@ static void TestUserProvidedPublicationBasedPolicy_NA_DeprecatedAlgInCalendar(Cu
 	context.userPublication = userPublication;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expectedFinal, &result->finalResult));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expectedFinal, &result->finalResult));
 
 	res = KSI_RuleVerificationResultList_elementAt(result->ruleResults, KSI_RuleVerificationResultList_length(result->ruleResults) - 1, &lastFailed);
 	CuAssert(tc, "Failed to get last rule result.", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expectedFail, lastFailed));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(lastFailed,
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expectedFail, lastFailed));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(lastFailed,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_PUBLICATION));
-	CuAssert(tc, "Unexpected verification property", InconclusiveProperty(lastFailed, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
+	CuAssert(tc, "Unexpected verification property.", InconclusiveProperty(lastFailed, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
 
 
 	KSI_PublicationData_free(userPublication);
@@ -2768,7 +2768,7 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureAfterPublicat
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
@@ -2778,25 +2778,25 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureAfterPublicat
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sigWithPub != NULL);
 
 	res = KSI_Signature_getPublicationRecord(sigWithPub, &tempRec);
-	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && tempRec != NULL);
+	CuAssert(tc, "Unable to read signature publication record.", res == KSI_OK && tempRec != NULL);
 
 	res = KSI_PublicationRecord_getPublishedData(tempRec, &userPublication);
-	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && userPublication != NULL);
+	CuAssert(tc, "Unable to read signature publication data.", res == KSI_OK && userPublication != NULL);
 	context.userPublication = userPublication;
 
 	res = KSI_Integer_new(ctx, TEST_TIMESTAMP, &mockTime);
-	CuAssert(tc, "Unable to create publication time", res == KSI_OK && mockTime != NULL);
+	CuAssert(tc, "Unable to create publication time.", res == KSI_OK && mockTime != NULL);
 
 	KSI_Integer_free(userPublication->time);
 	res = KSI_PublicationData_setTime(userPublication, mockTime);
 	CuAssert(tc, "Unable to set publication time.", res == KSI_OK);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", InconclusiveProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
+	CuAssert(tc, "Unexpected verification property.", InconclusiveProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_nofree(context.userPublication);
@@ -2829,7 +2829,7 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureBeforePublica
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
@@ -2839,17 +2839,17 @@ static void TestUserProvidedPublicationBasedPolicy_NA_WithSignatureBeforePublica
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sigWithPub != NULL);
 
 	res = KSI_Signature_getPublicationRecord(sigWithPub, &tempRec);
-	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && tempRec != NULL);
+	CuAssert(tc, "Unable to read signature publication record.", res == KSI_OK && tempRec != NULL);
 
 	res = KSI_PublicationRecord_getPublishedData(tempRec, (KSI_PublicationData**)&context.userPublication);
-	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && context.userPublication != NULL);
+	CuAssert(tc, "Unable to read signature publication data.", res == KSI_OK && context.userPublication != NULL);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", InconclusiveProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
+	CuAssert(tc, "Unexpected verification property.", InconclusiveProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_nofree(context.userPublication);
@@ -2882,7 +2882,7 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithoutPublicationRecord(C
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
@@ -2892,10 +2892,10 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithoutPublicationRecord(C
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sigWithPub != NULL);
 
 	res = KSI_Signature_getPublicationRecord(sigWithPub, &tempRec);
-	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && tempRec != NULL);
+	CuAssert(tc, "Unable to read signature publication record.", res == KSI_OK && tempRec != NULL);
 
 	res = KSI_PublicationRecord_getPublishedData(tempRec, (KSI_PublicationData**)&context.userPublication);
-	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && context.userPublication != NULL);
+	CuAssert(tc, "Unable to read signature publication data.", res == KSI_OK && context.userPublication != NULL);
 
 	context.extendingAllowed = 1;
 
@@ -2903,11 +2903,11 @@ static void TestUserProvidedPublicationBasedPolicy_OK_WithoutPublicationRecord(C
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_nofree(context.userPublication);
@@ -2942,7 +2942,7 @@ static void TestUserProvidedPublicationBasedPolicy_FAIL_AfterExtending(CuTest* t
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
@@ -2955,19 +2955,19 @@ static void TestUserProvidedPublicationBasedPolicy_FAIL_AfterExtending(CuTest* t
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sigWithPub != NULL);
 
 	res = KSI_Signature_getPublicationRecord(sigWithPub, &tempRec);
-	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && tempRec != NULL);
+	CuAssert(tc, "Unable to read signature publication record.", res == KSI_OK && tempRec != NULL);
 
 	res = KSI_PublicationRecord_getPublishedData(tempRec, (KSI_PublicationData**)&context.userPublication);
-	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && context.userPublication != NULL);
+	CuAssert(tc, "Unable to read signature publication data.", res == KSI_OK && context.userPublication != NULL);
 
 	context.extendingAllowed = 1;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_USER_PUBLICATION_BASED, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(sigWithPub);
@@ -2996,7 +2996,7 @@ static void TestGeneralPolicy_FAIL_WithInvalidAggregationChain(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_VERIFICATION_FAILURE && signature == NULL);
@@ -3006,9 +3006,9 @@ static void TestGeneralPolicy_FAIL_WithInvalidAggregationChain(CuTest* tc) {
 	context.signature = signature;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -3040,22 +3040,22 @@ static void TestGeneralPolicy_FAIL_WithCertificate(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	CuAssert(tc, "Unable to read publications file.", res == KSI_OK && userPublicationsFile != NULL);
 	context.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE));
 
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_PolicyVerificationResult_free(result);
@@ -3089,22 +3089,22 @@ static void TestGeneralPolicy_OK_WithCertificate(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	CuAssert(tc, "Unable to read publications file.", res == KSI_OK && userPublicationsFile != NULL);
 	context.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE));
 
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_PolicyVerificationResult_free(result);
@@ -3140,7 +3140,7 @@ static void TestGeneralPolicy_FAIL_AfterExtendingToPublication(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
@@ -3150,17 +3150,17 @@ static void TestGeneralPolicy_FAIL_AfterExtendingToPublication(CuTest* tc) {
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	CuAssert(tc, "Unable to read publications file.", res == KSI_OK && userPublicationsFile != NULL);
 	context.userPublicationsFile = userPublicationsFile;
 
 	context.extendingAllowed = 1;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
 
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_PolicyVerificationResult_free(result);
@@ -3196,7 +3196,7 @@ static void TestGeneralPolicy_OK_AfterExtendingToPublication(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
@@ -3206,17 +3206,17 @@ static void TestGeneralPolicy_OK_AfterExtendingToPublication(CuTest* tc) {
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	CuAssert(tc, "Unable to read publications file.", res == KSI_OK && userPublicationsFile != NULL);
 	context.userPublicationsFile = userPublicationsFile;
 
 	context.extendingAllowed = 1;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
 
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_PolicyVerificationResult_free(result);
@@ -3254,7 +3254,7 @@ static void TestGeneralPolicy_FAIL_AfterExtendingToUserPublication(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
@@ -3264,26 +3264,26 @@ static void TestGeneralPolicy_FAIL_AfterExtendingToUserPublication(CuTest* tc) {
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	CuAssert(tc, "Unable to read publications file.", res == KSI_OK && userPublicationsFile != NULL);
 	context.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE_WITH_PUBLICATION), &sigWithPub);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sigWithPub != NULL);
 
 	res = KSI_Signature_getPublicationRecord(sigWithPub, &tempRec);
-	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && tempRec != NULL);
+	CuAssert(tc, "Unable to read signature publication record.", res == KSI_OK && tempRec != NULL);
 
 	res = KSI_PublicationRecord_getPublishedData(tempRec, (KSI_PublicationData**)&context.userPublication);
-	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && context.userPublication != NULL);
+	CuAssert(tc, "Unable to read signature publication data.", res == KSI_OK && context.userPublication != NULL);
 
 	context.extendingAllowed = 1;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
 
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_PolicyVerificationResult_free(result);
@@ -3326,24 +3326,24 @@ static void TestGeneralPolicy_OK_AfterExtendingToUserPublication(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
 	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &userPublicationsFile);
-	CuAssert(tc, "Unable to read publications file", res == KSI_OK && userPublicationsFile != NULL);
+	CuAssert(tc, "Unable to read publications file.", res == KSI_OK && userPublicationsFile != NULL);
 	context.userPublicationsFile = userPublicationsFile;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE_WITH_PUBLICATION), &sigWithPub);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sigWithPub != NULL);
 
 	res = KSI_Signature_getPublicationRecord(sigWithPub, &tempRec);
-	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && tempRec != NULL);
+	CuAssert(tc, "Unable to read signature publication record.", res == KSI_OK && tempRec != NULL);
 
 	res = KSI_PublicationRecord_getPublishedData(tempRec, (KSI_PublicationData**)&context.userPublication);
-	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && context.userPublication != NULL);
+	CuAssert(tc, "Unable to read signature publication data.", res == KSI_OK && context.userPublication != NULL);
 
 	context.extendingAllowed = 1;
 
@@ -3351,11 +3351,11 @@ static void TestGeneralPolicy_OK_AfterExtendingToUserPublication(CuTest* tc) {
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult,
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
 
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_PolicyVerificationResult_free(result);
@@ -3389,7 +3389,7 @@ static void TestGeneralPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), KSI_VERIFICATION_POLICY_EMPTY, NULL, &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
@@ -3399,9 +3399,9 @@ static void TestGeneralPolicy_FAIL_WithoutCalendarHashChain(CuTest* tc) {
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -3429,7 +3429,7 @@ static void TestGeneralPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), KSI_VERIFICATION_POLICY_EMPTY, NULL, &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
@@ -3439,9 +3439,9 @@ static void TestGeneralPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult, KSI_VERIFY_AGGRCHAIN_INTERNALLY));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -3460,7 +3460,7 @@ static void TestPolicyCloning(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_Policy_clone(ctx, KSI_VERIFICATION_POLICY_KEY_BASED, &policy);
-	CuAssert(tc, "Policy cloning failed", res == KSI_OK && KSI_VERIFICATION_POLICY_KEY_BASED != policy &&
+	CuAssert(tc, "Policy cloning failed.", res == KSI_OK && KSI_VERIFICATION_POLICY_KEY_BASED != policy &&
 			 policy->rules == KSI_VERIFICATION_POLICY_KEY_BASED->rules &&
 			 policy->fallbackPolicy == KSI_VERIFICATION_POLICY_KEY_BASED->fallbackPolicy &&
 			 !strcmp(policy->policyName, KSI_VERIFICATION_POLICY_KEY_BASED->policyName));
@@ -3487,13 +3487,13 @@ static void TestFallbackPolicy_CalendarBased_OK_KeyBased_NA(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_Policy_clone(ctx, KSI_VERIFICATION_POLICY_CALENDAR_BASED, &policy);
-	CuAssert(tc, "Policy cloning failed", res == KSI_OK);
+	CuAssert(tc, "Policy cloning failed.", res == KSI_OK);
 
 	res = KSI_Policy_setFallback(ctx, policy, KSI_VERIFICATION_POLICY_KEY_BASED);
-	CuAssert(tc, "Fallback policy setup failed", res == KSI_OK);
+	CuAssert(tc, "Fallback policy setup failed.", res == KSI_OK);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
@@ -3503,8 +3503,8 @@ static void TestFallbackPolicy_CalendarBased_OK_KeyBased_NA(CuTest* tc) {
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 	res = KSI_SignatureVerifier_verify(policy, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -3534,13 +3534,13 @@ static void TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_Policy_clone(ctx, KSI_VERIFICATION_POLICY_CALENDAR_BASED, &policy);
-	CuAssert(tc, "Policy cloning failed", res == KSI_OK);
+	CuAssert(tc, "Policy cloning failed.", res == KSI_OK);
 
 	res = KSI_Policy_setFallback(ctx, policy, KSI_VERIFICATION_POLICY_KEY_BASED);
-	CuAssert(tc, "Fallback policy setup failed", res == KSI_OK);
+	CuAssert(tc, "Fallback policy setup failed.", res == KSI_OK);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
@@ -3550,8 +3550,8 @@ static void TestFallbackPolicy_CalendarBased_FAIL_KeyBased_NA(CuTest* tc) {
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 	res = KSI_SignatureVerifier_verify(policy, &context, &result);
-	CuAssert(tc, "Policy verification failed", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_Signature_free(signature);
@@ -3591,7 +3591,7 @@ static void TestUserPublicationWithBadCalAuthRec(CuTest *tc) {
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &ver, &result);
 	CuAssert(tc, "Unable to verify signature.", res == KSI_OK && result != NULL);
-	CuAssert(tc, "Signature must fail with default configuration", result->resultCode == KSI_VER_RES_FAIL);
+	CuAssert(tc, "Signature must fail with default configuration.", result->resultCode == KSI_VER_RES_FAIL);
 
 	KSI_PolicyVerificationResult_free(result);
 	result = NULL;
@@ -3601,7 +3601,7 @@ static void TestUserPublicationWithBadCalAuthRec(CuTest *tc) {
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &ver, &result);
 	CuAssert(tc, "Unable to verify signature.", res == KSI_OK && result != NULL);
-	CuAssert(tc, "Signature must verify with user publication", result->resultCode == KSI_VER_RES_OK);
+	CuAssert(tc, "Signature must verify with user publication.", result->resultCode == KSI_VER_RES_OK);
 
 	KSI_PublicationData_free(pub);
 	KSI_Signature_free(sig);
@@ -3631,7 +3631,7 @@ static void TestBackgroundVerificationWithUserPublicationBasedPolicy(CuTest* tc)
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
@@ -3640,10 +3640,10 @@ static void TestBackgroundVerificationWithUserPublicationBasedPolicy(CuTest* tc)
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sigWithPub != NULL);
 
 	res = KSI_Signature_getPublicationRecord(sigWithPub, &tempRec);
-	CuAssert(tc, "Unable to read signature publication record", res == KSI_OK && tempRec != NULL);
+	CuAssert(tc, "Unable to read signature publication record.", res == KSI_OK && tempRec != NULL);
 
 	res = KSI_PublicationRecord_getPublishedData(tempRec, (KSI_PublicationData**)&context.userPublication);
-	CuAssert(tc, "Unable to read signature publication data", res == KSI_OK && context.userPublication != NULL);
+	CuAssert(tc, "Unable to read signature publication data.", res == KSI_OK && context.userPublication != NULL);
 
 	context.extendingAllowed = 1;
 
@@ -3653,10 +3653,10 @@ static void TestBackgroundVerificationWithUserPublicationBasedPolicy(CuTest* tc)
 	res = KSI_CTX_getLastFailedSignature(ctx, &signature);
 	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && signature != NULL);
 
-	CuAssert(tc, "Unexpected verification result", ResultsMatch(&expected, &signature->policyVerificationResult->finalResult));
-	CuAssert(tc, "Unexpected verification property", SuccessfulProperty(&signature->policyVerificationResult->finalResult,
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &signature->policyVerificationResult->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&signature->policyVerificationResult->finalResult,
 				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
-	CuAssert(tc, "Unexpected verification property", FailedProperty(&signature->policyVerificationResult->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
+	CuAssert(tc, "Unexpected verification property.", FailedProperty(&signature->policyVerificationResult->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING));
 
 	KSI_PolicyVerificationResult_free(result);
 	KSI_nofree(context.userPublication);
@@ -3685,7 +3685,7 @@ static void TestBackgroundVerificationWithKeyBasedPolicy(CuTest* tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed", res == KSI_OK);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
 
 	res = KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), KSI_VERIFICATION_POLICY_KEY_BASED, &context, &signature);
 	CuAssert(tc, "Background verification should fail.", res == KSI_VERIFICATION_FAILURE && signature == NULL);

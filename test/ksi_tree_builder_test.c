@@ -84,7 +84,7 @@ static void testGetAggregationChain(CuTest* tc) {
 		CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
 
 		res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, &handles[i]);
-		CuAssert(tc, "Unable to add data hash to the tree builder", res == KSI_OK);
+		CuAssert(tc, "Unable to add data hash to the tree builder.", res == KSI_OK);
 
 		KSI_DataHash_free(hsh);
 		hsh = NULL;
@@ -97,7 +97,7 @@ static void testGetAggregationChain(CuTest* tc) {
 	/* Calculate the root hash for every aggr chain. */
 	for (i = 0; data[i] != NULL; i++) {
 		res = KSI_TreeLeafHandle_getAggregationChain(handles[i], &chn);
-		CuAssert(tc, "Unable to extract aggregation chain,", res == KSI_OK && chn != NULL);
+		CuAssert(tc, "Unable to extract aggregation chain.", res == KSI_OK && chn != NULL);
 
 		res = KSI_AggregationHashChain_aggregate(chn, 0, NULL, &tmp);
 		CuAssert(tc, "Unable to aggregate the aggregation hash chain.", res == KSI_OK && tmp != NULL);
@@ -107,7 +107,7 @@ static void testGetAggregationChain(CuTest* tc) {
 		} else {
 			KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Expected root hash", root);
 			KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Actual root hash  ", tmp);
-			CuAssert(tc, "Root hashes mismatch", KSI_DataHash_equals(root, tmp));
+			CuAssert(tc, "Root hashes mismatch.", KSI_DataHash_equals(root, tmp));
 			KSI_DataHash_free(tmp);
 			tmp = NULL;
 		}

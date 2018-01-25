@@ -42,20 +42,20 @@ static const char * const KSI_HASHALG_SM3_names[] = { "SM-3", "SM3", ""};
 
 
 static const struct KSI_hashAlgorithmInfo_st {
-	/** Hash algorithm id (should mirror the array index in #KSI_hashAlgorithmInfo) */
+	/** Hash algorithm id (should mirror the array index in #KSI_hashAlgorithmInfo). */
 	KSI_HashAlgorithm algo_id;
 	/** Output digest bit count. */
 	unsigned int outputBitCount;
-	/** Internal bit count */
+	/** Internal bit count. */
 	unsigned int blockSize;
 	/** Accepted names for this hash algorithm. */
 	char const * const *names;
-	/* The time the function has been marked as deprecated. */
+	/** The time the function has been marked as deprecated. */
 	time_t deprecatedFrom;
-	/* The time the function has been marked as obsolete. */
+	/** The time the function has been marked as obsolete. */
 	time_t obsoleteFrom;
 } KSI_hashAlgorithmInfo[] = {
-		/* SHA1 is deprecated as of  01.07.2016T00:00 UTC .*/
+		/* SHA1 is deprecated as of  01.07.2016T00:00 UTC. */
 		HASH_ALGO(KSI_HASHALG_SHA1,			160, 512, 1467331200, 0),
 		HASH_ALGO(KSI_HASHALG_SHA2_256,		256, 512, 0, 0),
 		HASH_ALGO(KSI_HASHALG_RIPEMD160,	160, 512, 0, 0),

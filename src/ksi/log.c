@@ -208,7 +208,7 @@ int KSI_LOG_logCtxError(KSI_CTX *ctx, int level) {
 		KSI_LOG_log(ctx, level, "  %3u) %s:%u - (%d/%ld) %s", ctx->errors_count - i, err->fileName, err->lineNr,err->statusCode, err->extErrorCode, err->message);
 	}
 
-	/* If there where more errors than buffers for the errors, indicate the fact */
+	/* If there where more errors than buffers for the errors, indicate the fact. */
 	if (ctx->errors_count > ctx->errors_size) {
 		KSI_LOG_log(ctx, level, "  ... (more errors)");
 	}

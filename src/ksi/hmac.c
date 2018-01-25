@@ -143,7 +143,7 @@ int KSI_HmacHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key
 		}
 
 		if (digest == NULL || digest_len > blockSize) {
-			KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "The hash of the key is invalid");
+			KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "The hash of the key is invalid.");
 			goto cleanup;
 		}
 
@@ -248,7 +248,7 @@ int KSI_HmacHasher_close(KSI_HmacHasher *hasher, KSI_DataHash **hmac) {
 	}
 	KSI_ERR_clearErrors(hasher->ctx);
 
-	KSI_LOG_debug(hasher->ctx, "Closing inner hasher");
+	KSI_LOG_debug(hasher->ctx, "Closing inner hasher.");
 
 	res = KSI_DataHasher_close(hasher->dataHasher, &innerHash);
 	if (res != KSI_OK) {
@@ -283,7 +283,7 @@ int KSI_HmacHasher_close(KSI_HmacHasher *hasher, KSI_DataHash **hmac) {
 		goto cleanup;
 	}
 
-	KSI_LOG_debug(hasher->ctx, "Closing outer hasher");
+	KSI_LOG_debug(hasher->ctx, "Closing outer hasher.");
 
 	res = KSI_DataHasher_close(hasher->dataHasher, &outerHash);
 	if (res != KSI_OK) {

@@ -525,7 +525,7 @@ int KSI_TlvElement_getElement(KSI_TlvElement *parent, unsigned tag, KSI_TlvEleme
 
 	switch (KSI_TlvElementList_length(fc.result)) {
 		case 0:
-			/* Nothing to do - tag not found.*/
+			/* Nothing to do - tag not found. */
 			break;
 		case 1:
 			res = KSI_TlvElementList_elementAt(fc.result, 0, &tmp);

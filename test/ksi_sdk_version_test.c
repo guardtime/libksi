@@ -36,10 +36,10 @@ static void testCompareVesions(CuTest* tc) {
 	char *chNum = NULL;
 
 	f = fopen(VERSION_FILE, "r");
-	CuAssert(tc, "Unable to open version file", f != NULL);
+	CuAssert(tc, "Unable to open version file.", f != NULL);
 
 	readRes = fgets(verStr, BUFF_SIZE, f);
-	CuAssert(tc, "Unable to read version string", readRes != NULL);
+	CuAssert(tc, "Unable to read version string.", readRes != NULL);
 
 	fclose(f);
 
@@ -49,12 +49,12 @@ static void testCompareVesions(CuTest* tc) {
 
 		i++;
 		chNum = strtok(NULL, ".");
-		CuAssert(tc, "Inconsistency in version string format. Should be: X.Y.Z", !(i >= 3 && chNum != NULL));
+		CuAssert(tc, "Inconsistency in version string format. Should be: 'X.Y.Z'.", !(i >= 3 && chNum != NULL));
 	}
 
-	CuAssert(tc, "Failed to verify SDK version major number", KSI_SDK_VER_MAJOR == verNums[0]);
-	CuAssert(tc, "Failed to verify SDK version minor number", KSI_SDK_VER_MINOR == verNums[1]);
-	CuAssert(tc, "Failed to verify SDK version build number", KSI_SDK_VER_BUILD == verNums[2]);
+	CuAssert(tc, "Failed to verify SDK version major number.", KSI_SDK_VER_MAJOR == verNums[0]);
+	CuAssert(tc, "Failed to verify SDK version minor number.", KSI_SDK_VER_MINOR == verNums[1]);
+	CuAssert(tc, "Failed to verify SDK version build number.", KSI_SDK_VER_BUILD == verNums[2]);
 }
 
 CuSuite* KSITest_versionNumber_getSuite(void) {

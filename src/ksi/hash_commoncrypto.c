@@ -59,9 +59,9 @@ static const struct {
 		CC_IMPL_NA,
 		/** The SHA3-384 algorithm. */
 		CC_IMPL_NA,
-		/** The SHA3-512 algorithm */
+		/** The SHA3-512 algorithm. */
 		CC_IMPL_NA,
-		/** The SM3 algorithm.*/
+		/** The SM3 algorithm. */
 		CC_IMPL_NA
 };
 

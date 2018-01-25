@@ -489,7 +489,7 @@ static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, con
 		goto cleanup;
 	}
 
-	/*Generate TST Info structure and get its hash*/
+	/* Generate TST Info structure and get its hash. */
 	res = KSI_DataHasher_open(ctx, hsh_id, &hsr);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -537,7 +537,7 @@ static int rfc3161_preSufHasher(KSI_CTX *ctx, const KSI_OctetString *prefix, con
 	}
 
 
-	/*Get hash and its imprint*/
+	/* Get hash and its imprint. */
 	res = KSI_DataHasher_close(hsr, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -877,7 +877,7 @@ static int metaDataPadding_verify(KSI_CTX *ctx, KSI_TlvElement *el) {
 				KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Metadata padding has invalid value.");
 				goto cleanup;
 			}
-			/* no break */
+			/* no break; */
 
 		case 1:
 			if (el->ptr[el->ftlv.hdr_len] != 0x01) {
@@ -1172,7 +1172,7 @@ int KSI_VerificationRule_AggregationHashChainConsistency(KSI_VerificationContext
 		}
 
 		if (hsh != NULL) {
-			/* Validate input hash */
+			/* Validate input hash. */
 			if (!KSI_DataHash_equals(hsh, aggregationChain->inputHash)) {
 				KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Calculated hash :", hsh);
 				KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Expected hash   :", aggregationChain->inputHash);
@@ -1348,7 +1348,7 @@ int KSI_VerificationRule_AggregationHashChainIndexContinuation(KSI_VerificationC
 			goto cleanup;
 		}
 
-		/* Verify chain indeces */
+		/* Verify chain indeces. */
 		if (prevChain != NULL) {
 			/* Verify chain index length. */
 			if (KSI_IntegerList_length(prevChain->chainIndex) != KSI_IntegerList_length(aggregationChain->chainIndex) + 1) {
@@ -1985,7 +1985,7 @@ int KSI_VerificationRule_SignaturePublicationRecordPublicationHash(KSI_Verificat
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-	/* Get publication data from publication record */
+	/* Get publication data from publication record. */
 	res = KSI_PublicationRecord_getPublishedData(sig->publication, &pubData);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
@@ -2053,14 +2053,14 @@ int KSI_VerificationRule_SignaturePublicationRecordPublicationTime(KSI_Verificat
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-	/* Get publication data from publication record */
+	/* Get publication data from publication record. */
 	res = KSI_PublicationRecord_getPublishedData(sig->publication, &pubData);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-	/* Get publication time */
+	/* Get publication time. */
 	res = KSI_PublicationData_getTime(pubData, &sigPubTime);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
@@ -2440,7 +2440,7 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch(KSI_Verif
 
 		if (sigRightLink == NULL || extSigRightLink == NULL) {
 			/* Mismatch: one chain over before the other. */
-			KSI_LOG_info(ctx, "Different number of right links in calendar hash chains");
+			KSI_LOG_info(ctx, "Different number of right links in calendar hash chains.");
 
 			VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_CAL_4, step);
 			res = KSI_OK;
@@ -2462,7 +2462,7 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch(KSI_Verif
 
 		if (!KSI_DataHash_equals(sigRightLinkHash, extSigRightLinkHash)) {
 			/* Mismatch: different hash values. */
-			KSI_LOG_info(ctx, "Different sibling hashes in right links in calendar hash chains");
+			KSI_LOG_info(ctx, "Different sibling hashes in right links in calendar hash chains.");
 			KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Signature right link hash     :", sigRightLinkHash);
 			KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "Ext signature right link hash :", extSigRightLinkHash);
 
@@ -2800,9 +2800,9 @@ static int getExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Integ
 		goto cleanup;
 	}
 
-	/* Check if signature has been already extended */
+	/* Check if signature has been already extended. */
 	if (tempData->calendarChain == NULL) {
-		/* Extend the signature to the publication time as attached calendar chain, or to head if time is NULL */
+		/* Extend the signature to the publication time as attached calendar chain, or to head if time is NULL. */
 		res = initExtendedCalendarHashChain(info, pubTime);
 		if (res != KSI_OK) goto cleanup;
 	}
@@ -2852,7 +2852,7 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(KSI_Verificatio
 	KSI_LOG_info(ctx, "Verify extended signature calendar hash chain input hash.");
 
 	/* If the calendar chain is available, then take the publication from calendar chain. */
-	/* Otherwice the extender will extend to head (pubTime == NULL) */
+	/* Otherwice the extender will extend to head (pubTime == NULL). */
 	if (sig->calendarChain != NULL) {
 		res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &pubTime);
 		if (res != KSI_OK) {
@@ -2930,7 +2930,7 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(KSI_Verif
 	KSI_LOG_info(ctx, "Verify extended signature calendar hash chain aggregation time.");
 
 	/* If the calendar chain is available, then take the publication from calendar chain. */
-	/* Otherwice the extender will extend to head (pubTime == NULL) */
+	/* Otherwice the extender will extend to head (pubTime == NULL). */
 	if (sig->calendarChain != NULL) {
 		res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &pubTime);
 		if (res != KSI_OK) {

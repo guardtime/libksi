@@ -312,7 +312,7 @@ static char *track_str(struct tlv_track_s *tr, size_t tr_len, size_t tr_size, ch
 	/* Make sure, the return value is null-terminated. */
 	buf[0] = '\0';
 
-	/* Generate the printable result string, by separating values with "->" */
+	/* Generate the printable result string, by separating values with "->". */
 	for (i = 0; i < tr_len && i < tr_size; i++) {
 		if (i != 0) len += KSI_snprintf(buf + len, buf_len - len, "->");
 		len += KSI_snprintf(buf + len, buf_len - len, "[0x%02x]%s", tr[i].tag, tr[i].desc != NULL ? tr[i].desc : "");
@@ -643,7 +643,7 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 
 	/* Make sure there will be no buffer overflow. */
 	if (template_len > MAX_TEMPLATE_SIZE) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Template too big");
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Template too big.");
 		goto cleanup;
 	}
 	memset(templateHit, 0, sizeof(templateHit));
@@ -715,7 +715,7 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 
 			valuep = NULL;
 			if (tmpl[i].getValue != NULL) {
-				/* Validate the value has not been set */
+				/* Validate the value has not been set. */
 				res = tmpl[i].getValue(payload, (void **)&valuep);
 				if (res != KSI_OK) {
 					KSI_pushError(ctx, res, NULL);
@@ -724,11 +724,11 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 			}
 
 			if (valuep != NULL && !tmpl[i].multiple) {
-				KSI_LOG_debug(ctx, "Multiple occurrences of a unique tag 0x%02x", tmpl[i].tag);
+				KSI_LOG_debug(ctx, "Multiple occurrences of a unique tag 0x%02x.", tmpl[i].tag);
 				KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "To avoid memory leaks, a value may not be set more than once while parsing.");
 				goto cleanup;
 			}
-			/* Parse the current TLV */
+			/* Parse the current TLV. */
 			switch (tmpl[i].type) {
 				case KSI_TLV_TEMPLATE_OBJECT:
 					res = extractObject(ctx, &tmpl[i], payload, tlv);
@@ -748,7 +748,7 @@ static int extractGenerator(KSI_CTX *ctx, void *payload, void *generatorCtx, con
 				default:
 					KSI_LOG_error(ctx, "No template found - this might be caused by memory corruption.");
 					/* Should not happen, but just in case. */
-					KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Undefined template type");
+					KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Undefined template type.");
 					goto cleanup;
 			}
 
