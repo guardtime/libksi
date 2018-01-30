@@ -73,6 +73,8 @@ extern "C" {
 
 		/** Pointer to an instance of a publications file. */
 		KSI_PublicationsFile *publicationsFile;
+		/** Publications file cached timestamp. */
+		time_t publicationsFileCachedAt;
 
 		/** This field is kept only for compatibility - will be removed in the future. */
 		char *publicationCertEmail_DEPRECATED;

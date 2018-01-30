@@ -16,6 +16,7 @@ Version 3.17
 * IMPROVEMENT: Added support for OpenSSL 1.1 api.
 * FEATURE: Request server configuration using KSI_AsyncHandle.
 * FEATURE: Return push configuration via KSI_AsyncHandle if KSI_CTX option KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK is not set.
+* FEATURE: KSI_CTX options KSI_OPT_PUBFILE_CACHE_TTL_SECONDS for setting the cached publications file timeout.
 
 Version 3.16
 
