@@ -3418,9 +3418,9 @@ static void TestGeneralPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		KSI_VER_RES_NA,
-		KSI_VER_ERR_GEN_2,
-		"KSI_VerificationRule_CalendarHashChainPresenceVerification"
+		KSI_VER_RES_OK,
+		KSI_VER_ERR_NONE,
+		"KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash"
 	};
 	KSI_Signature *signature = NULL;
 
@@ -3428,15 +3428,16 @@ static void TestGeneralPolicy_OK_WithoutCalendarHashChain(CuTest* tc) {
 
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
-
 	res = KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), KSI_VERIFICATION_POLICY_EMPTY, NULL, &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
-	context.signature = signature;
 
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
 	CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
+
+	res = KSI_VerificationContext_init(&context, ctx);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
+	context.signature = signature;
+	context.extendingAllowed = 1;
 
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
 	CuAssert(tc, "Policy verification failed.", res == KSI_OK);

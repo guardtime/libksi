@@ -203,9 +203,7 @@ extern "C" {
 	 * \param[in]	pubTime			Publication time.
 	 * \param[out]	pubRec			Pointer to receiving pointer.
 	 *
-	 * \return status code (#KSI_OK, when operation succeeded, otherwise an
-	 * error code).
-	 * \note The output object may not be freed by the user.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_PublicationsFile_getNearestPublication(const KSI_PublicationsFile *pubFile, const KSI_Integer *pubTime, KSI_PublicationRecord **pubRec);
 
