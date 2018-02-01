@@ -4581,6 +4581,13 @@ int KSI_VerificationRule_UserProvidedPublicationTimeDoesNotSuit(KSI_Verification
 
 	KSI_LOG_info(ctx, "%s.", __FUNCTION__);
 
+	if (sig->publication == NULL) {
+		KSI_LOG_debug(ctx, "Missing publication data.");
+		VERIFICATION_RESULT_OK(step);
+		res = KSI_OK;
+		goto cleanup;
+	}
+
 	res = KSI_PublicationData_getTime(sig->publication->publishedData, &sigPubTime);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
