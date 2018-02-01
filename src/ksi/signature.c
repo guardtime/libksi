@@ -592,35 +592,6 @@ cleanup:
 	return res;
 }
 
-static int parseAggregationResponse(KSI_CTX *ctx, KSI_uint64_t rootLevel, KSI_AggregationResp *resp, KSI_Signature **signature) {
-	int res;
-	KSI_SignatureBuilder *builder = NULL;
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || resp == NULL || signature == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_SignatureBuilder_openFromAggregationResp(resp, &builder);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Turn off the verification. */
-	builder->noVerify = 1;
-	res = KSI_SignatureBuilder_close(builder, rootLevel, signature);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-	res = KSI_OK;
-cleanup:
-	KSI_SignatureBuilder_free(builder);
-	return res;
-}
-
 int KSI_Signature_signAggregatedWithPolicy(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel,
 		const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **signature) {
 	int res;
@@ -628,6 +599,7 @@ int KSI_Signature_signAggregatedWithPolicy(KSI_CTX *ctx, KSI_DataHash *rootHash,
 	KSI_AggregationResp *response = NULL;
 	KSI_Signature *sign = NULL;
 	KSI_AggregationReq *req = NULL;
+	KSI_SignatureBuilder *builder = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || rootHash == NULL || signature == NULL) {
@@ -670,7 +642,15 @@ int KSI_Signature_signAggregatedWithPolicy(KSI_CTX *ctx, KSI_DataHash *rootHash,
 		goto cleanup;
 	}
 
-	res = parseAggregationResponse(ctx, rootLevel, response, &sign);
+	res = KSI_SignatureBuilder_openFromAggregationResp(response, &builder);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Turn off the verification. */
+	builder->noVerify = 1;
+	res = KSI_SignatureBuilder_close(builder, rootLevel, &sign);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -693,6 +673,7 @@ cleanup:
 	KSI_Signature_free(sign);
 	KSI_RequestHandle_free(handle);
 	KSI_AggregationReq_free(req);
+	KSI_SignatureBuilder_free(builder);
 
 	return res;
 }
