@@ -739,8 +739,6 @@ cleanup:
 	return res;
 }
 
-/*
- */
 int KSI_PublicationsFile_getNearestPublication(const KSI_PublicationsFile *trust, const KSI_Integer *pubTime, KSI_PublicationRecord **pubRec) {
 	int res;
 	size_t i;
