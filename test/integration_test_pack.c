@@ -24,6 +24,7 @@
 #include "cutest/CuTest.h"
 #include "all_integration_tests.h"
 
+#include <ksi/pkitruststore.h>
 #include "../src/ksi/impl/ctx_impl.h"
 #include "../src/ksi/impl/net_impl.h"
 #include "../src/ksi/impl/policy_impl.h"
@@ -54,6 +55,7 @@ enum CsvField_en {
 	TEST_CF_EXTEND_PERM,
 	TEST_CF_EXTEND_RESPONSE,
 	TEST_CF_PUBS_FILE,
+	TEST_CF_CERT_FILE,
 
 	TEST_NOF_CSV_FIELDS
 };
@@ -228,6 +230,25 @@ static void runTests(CuTest* tc, const char *testCsvFile, const char *rootPath) 
 
 			res = KSI_CTX_setExtender(ctx, KSITest_composeUri("ksi+http", &conf.extender), conf.extender.user, conf.extender.pass);
 			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to set extender url.", KSI_getErrorString(res)), res == KSI_OK);
+		}
+
+		if (csvData[TEST_CF_CERT_FILE]) {
+			KSI_PKITruststore *pki = NULL;
+
+			res = KSI_CTX_setPKITruststore(ctx, NULL);
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to reset PKI truststore.", KSI_getErrorString(res)), res == KSI_OK);
+
+			res = KSI_PKITruststore_new(ctx, 0, &pki);
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to create PKI truststore.", KSI_getErrorString(res)), res == KSI_OK);
+
+			res = KSI_PKITruststore_addLookupFile(pki, getPath(rootPath, csvData[TEST_CF_CERT_FILE]));
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to add lookup file.", KSI_getErrorString(res)), res == KSI_OK);
+
+			res = KSI_CTX_setPKITruststore(ctx, pki);
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to set PKI truststore.", KSI_getErrorString(res)), res == KSI_OK);
+		} else {
+			res = KSI_CTX_setPKITruststore(ctx, NULL);
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to reset PKI truststore.", KSI_getErrorString(res)), res == KSI_OK);
 		}
 
 		if (csvData[TEST_CF_PUBS_FILE]) {

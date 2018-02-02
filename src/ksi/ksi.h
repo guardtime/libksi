@@ -677,6 +677,7 @@ int KSI_CTX_setRequestHeaderCallback(KSI_CTX *ctx, KSI_RequestHeaderCallback cb)
  * \param[in]	ctx		KSI_context.
  * \param[in]	uri		URL to the publications file.
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ * \note The publications file cache will be reset.
  */
 int KSI_CTX_setPublicationUrl(KSI_CTX *ctx, const char *uri);
 
