@@ -47,7 +47,7 @@ extern "C" {
 		KSI_VerificationStepResult steps[32];
 		size_t steps_len;
 
-		/** Indicates if the document hash should be verified */
+		/** Indicates if the document hash should be verified. */
 		bool verifyDocumentHash;
 
 		/* Initial aggregation level. */

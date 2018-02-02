@@ -70,7 +70,7 @@ struct KSI_PKISignature_st {
 
 static int openSslGlobal_init(void) {
 	if (KSI_PKITruststore_global_initCount++ > 0) {
-		/* Nothing to do */
+		/* Nothing to do. */
 	} else {
 		OpenSSL_add_all_digests();
 	}
@@ -80,7 +80,7 @@ static int openSslGlobal_init(void) {
 
 static void openSslGlobal_cleanup(void) {
 	if (--KSI_PKITruststore_global_initCount > 0) {
-		/* Nothing to do */
+		/* Nothing to do. */
 	} else {
 		EVP_cleanup();
 	}
@@ -483,12 +483,12 @@ static time_t ASN1_GetTimeT(ASN1_TIME* time){
 	if (time == NULL) return 0;
 	memset(&t, 0, sizeof(t));
 
-	if (time->type == V_ASN1_UTCTIME) {/* two digit year */
+	if (time->type == V_ASN1_UTCTIME) {/* Two digit year. */
 		t.tm_year = (str[i++] - '0') * 10;
 		t.tm_year += (str[i++] - '0');
 		if (t.tm_year < 70)
 			t.tm_year += 100;
-	} else if (time->type == V_ASN1_GENERALIZEDTIME) {/* four digit year */
+	} else if (time->type == V_ASN1_GENERALIZEDTIME) {/* Four digit year. */
 		t.tm_year = (str[i++] - '0') * 1000;
 		t.tm_year+= (str[i++] - '0') * 100;
 		t.tm_year+= (str[i++] - '0') * 10;
@@ -506,7 +506,7 @@ static time_t ASN1_GetTimeT(ASN1_TIME* time){
 	t.tm_sec  = (str[i++] - '0') * 10;
 	t.tm_sec += (str[i++] - '0');
 
-	/* Note: we did not adjust the time based on time zone information */
+	/* Note: we did not adjust the time based on time zone information. */
 	return KSI_CalendarTimeToUnixTime(&t);
 }
 

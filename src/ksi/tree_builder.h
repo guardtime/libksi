@@ -54,7 +54,7 @@ struct KSI_TreeNode_st {
 	KSI_CTX *ctx;
 	/** Hash value of the node, may not be not NULL when metaData is not NULL. */
 	KSI_DataHash *hash;
-	/** Metadata value of the node, may not be not NULL when hash is not NULL */
+	/** Metadata value of the node, may not be not NULL when hash is not NULL. */
 	KSI_MetaData *metaData;
 	/** The aggregation level of this node, 0 for leafs and 0xff is the maximum value. */
 	unsigned level;

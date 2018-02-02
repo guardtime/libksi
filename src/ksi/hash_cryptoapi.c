@@ -190,7 +190,7 @@ static int ksi_DataHasher_reset(KSI_DataHasher *hasher) {
 	/* Create new hasher object. */
 	if (!CryptCreateHash(pCSP, msHashAlg, 0,0,&pTmp_hash)) {
 		DWORD error = GetLastError();
-		KSI_LOG_debug(hasher->ctx, "Cryptoapi: Create hash error %i\n", error);
+		KSI_LOG_debug(hasher->ctx, "Cryptoapi: Create hash error %i.", error);
 		KSI_pushError(hasher->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}
@@ -234,8 +234,8 @@ static int ksi_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t d
 
 	if (!CryptHashData(pHash, data, (DWORD)data_length, 0)){
 		DWORD error = GetLastError();
-		KSI_LOG_debug(ctx, "Cryptoapi: HashData error %i\n", error);
-		KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Cryptoapi: Unable to add data to the hash");
+		KSI_LOG_debug(ctx, "Cryptoapi: HashData error %i.", error);
+		KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Cryptoapi: Unable to add data to the hash.");
 		goto cleanup;
 	}
 
@@ -290,7 +290,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHasher 
 	/* Create new crypto service provider (CSP). */
 	if (!CryptAcquireContext(&tmp_CSP, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)){
 		char errm[1024];
-		KSI_snprintf(errm, sizeof(errm), "Wincrypt Error (%d)", GetLastError());
+		KSI_snprintf(errm, sizeof(errm), "Wincrypt Error (%d).", GetLastError());
 		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, errm);
 		goto cleanup;
 	}

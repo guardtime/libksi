@@ -46,7 +46,7 @@ static void getExtResponse(CuTest* tc, KSI_uint64_t id, KSI_uint64_t aggrTime, K
 
 	KSI_ERR_clearErrors(ctx);
 
-	/*Create objects*/
+	/* Create objects. */
 	res = KSI_ExtendReq_new(ctx, &request);
 	CuAssert(tc, "Unable to create extend request.", res == KSI_OK && request != NULL);
 
@@ -60,7 +60,7 @@ static void getExtResponse(CuTest* tc, KSI_uint64_t id, KSI_uint64_t aggrTime, K
 	CuAssert(tc, "Unable to pub time.", res == KSI_OK && pub_time != NULL);
 
 
-	/*Combine objects*/
+	/* Combine objects. */
 	res = KSI_ExtendReq_setRequestId(request, ID);
 	CuAssert(tc, "Unable set request ID.", res == KSI_OK);
 	ID = NULL;
@@ -73,7 +73,7 @@ static void getExtResponse(CuTest* tc, KSI_uint64_t id, KSI_uint64_t aggrTime, K
 	CuAssert(tc, "Unable set pub time.", res == KSI_OK);
 	pub_time = NULL;
 
-	/*Send request and get response*/
+	/* Send request and get response. */
 	res = KSI_sendExtendRequest(ctx, request, &handle);
 	CuAssert(tc, "Unable to send (prepare) sign request.", res == KSI_OK);
 
@@ -144,7 +144,7 @@ static void okExtendSignatureDefProvider(CuTest* tc, const char *scheme) {
 	CuAssert(tc, "Unable to read signature frome file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_extend(sig, ctx, NULL, &ext);
-	CuAssert(tc, "Unable to extend signature", res == KSI_OK && ext != NULL);
+	CuAssert(tc, "Unable to extend signature.", res == KSI_OK && ext != NULL);
 
 	res = KSI_Signature_verifyWithPolicy(sig, NULL, 0, KSI_VERIFICATION_POLICY_CALENDAR_BASED, NULL);
 	CuAssert(tc, "Unable to verify signature", res == KSI_OK);

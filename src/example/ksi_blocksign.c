@@ -177,7 +177,7 @@ int main(int argc, char **argv) {
 	KSI_BlockSignerHandle *hndl = NULL;
 	KSI_Signature *sig = NULL;
 
-	/* Handle command line parameters */
+	/* Handle command line parameters. */
 	if (argc < 4) {
 		printHelp(argv[0]);
 		res = KSI_INVALID_ARGUMENT;

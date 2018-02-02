@@ -75,9 +75,9 @@ extern "C" {
 		KSI_HASHALG_SHA3_256 = 0x08,
 		/** The SHA3-384 algorithm. */
 		KSI_HASHALG_SHA3_384 = 0x09,
-		/** The SHA3-512 algorithm */
+		/** The SHA3-512 algorithm. */
 		KSI_HASHALG_SHA3_512 = 0x0a,
-		/** The SM3 algorithm.*/
+		/** The SM3 algorithm. */
 		KSI_HASHALG_SM3 = 0x0b,
 
 		/* Number of known hash algorithms. */
@@ -88,7 +88,7 @@ extern "C" {
 	/**
 	 * The maximum length of an imprint.
 	 */
-	#define KSI_MAX_IMPRINT_LEN 65 /* Algorithm ID (1 byte) + longest digest */
+	#define KSI_MAX_IMPRINT_LEN 65 /* Algorithm ID (1 byte) + longest digest. */
 
 	/**
 	 * Starts a hash computation.

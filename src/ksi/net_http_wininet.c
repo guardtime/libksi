@@ -204,7 +204,7 @@ static int wininetReceive(KSI_RequestHandle *handle) {
 
 cleanup:
 
-    KSI_free(resp);
+	KSI_free(resp);
 
 	return res;
 }
@@ -277,7 +277,7 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 
 	KSI_LOG_debug(ctx, "WinINet: Sending request to: %s.", url);
 	/* Preparing session handle
-	   Opens an HTTP session for a given site */
+	   Opens an HTTP session for a given site. */
 	wininetHandle->session_handle = InternetConnectA(internetHandle, hostName, port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
 	if (wininetHandle->session_handle == NULL) {
 		WININET_ERROR(ctx, GetLastError(), KSI_NETWORK_ERROR, "WinINet: Unable to initialize connection handle.");
@@ -302,7 +302,7 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 		}
 	}
 
-	/*TODO Timeout is set, but seems to have no effect*/
+	/* TODO Timeout is set, but seems to have no effect. */
 	if (http->connectionTimeoutSeconds >= 0) {
 		DWORD dw = (http->connectionTimeoutSeconds == 0 ? 0xFFFFFFFF : http->connectionTimeoutSeconds * 1000);
 		if (!InternetSetOption(wininetHandle->request_handle, INTERNET_OPTION_CONNECT_TIMEOUT, &dw, sizeof(dw))){
@@ -323,13 +323,13 @@ static int wininetSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	handle->readResponse = wininetReceive;
 	handle->client = client;
 
-    res = KSI_RequestHandle_setImplContext(handle, wininetHandle, (void (*)(void *))wininetNetHandleCtx_free);
+	res = KSI_RequestHandle_setImplContext(handle, wininetHandle, (void (*)(void *))wininetNetHandleCtx_free);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-    wininetHandle = NULL;
+	wininetHandle = NULL;
 	res = KSI_OK;
 
 cleanup:

@@ -634,7 +634,7 @@ static int addRequest(KSI_AsyncClient *c, KSI_AsyncHandle *handle, void *req,
 		res = req_getRequestId(req, &reqId);
 		if (res != KSI_OK) goto cleanup;
 
-		/* Clear the request id that was set.  */
+		/* Clear the request id that was set. */
 		if (reqId != NULL) {
 			KSI_Integer_free(reqId);
 			res = req_setRequestId(req, (reqId = NULL));

@@ -457,6 +457,8 @@ EXPORTS
 	KSI_TlvElement_setUtf8String
 	KSI_TlvElement_setOctetString
 	KSI_TlvElement_setInteger
+	KSI_TlvElement_parse
+	KSI_TlvElement_detach
 
 ;tlv.h
 EXPORTS

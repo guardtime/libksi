@@ -99,7 +99,7 @@ static int Rule_verify(const KSI_Rule *rule, KSI_VerificationContext *context, K
 		switch (currentRule->type) {
 			case KSI_RULE_TYPE_BASIC:
 				res = ((Verifier)(currentRule->rule))(context, &policyResult->finalResult);
-				KSI_LOG_debug(context->ctx, "Rule result: 0x%x 0x%x 0x%x %s %s",
+				KSI_LOG_debug(context->ctx, "Rule result: 0x%x 0x%x 0x%x %s %s.",
 							  res,
 							  policyResult->finalResult.resultCode,
 							  policyResult->finalResult.errorCode,
@@ -700,7 +700,7 @@ static int Policy_verifySignature(const KSI_Policy *policy, KSI_VerificationCont
 	}
 
 	res = Rule_verify(policy->rules, context, policyResult);
-	KSI_LOG_debug(context->ctx, "Policy result: 0x%x 0x%x 0x%x %s %s",
+	KSI_LOG_debug(context->ctx, "Policy result: 0x%x 0x%x 0x%x %s %s.",
 				  res,
 				  policyResult->finalResult.resultCode,
 				  policyResult->finalResult.errorCode,

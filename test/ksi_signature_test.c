@@ -111,7 +111,7 @@ static void testVerifyLegacySignatureAndDoc(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_verifyDocument(sig, ctx, doc, strlen(doc));
-	CuAssert(tc, "Failed to verify valid document", res == KSI_OK);
+	CuAssert(tc, "Failed to verify valid document.", res == KSI_OK);
 
 	res = KSI_Signature_verifyDocument(sig, ctx, doc, sizeof(doc));
 	CuAssert(tc, "Verification did not fail with expected error.", res == KSI_VERIFICATION_FAILURE);
@@ -134,7 +134,7 @@ static void testVerifyLegacyExtendedSignatureAndDoc(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_verifyDocument(sig, ctx, doc, strlen(doc));
-	CuAssert(tc, "Failed to verify valid document", res == KSI_OK);
+	CuAssert(tc, "Failed to verify valid document.", res == KSI_OK);
 
 	res = KSI_Signature_verifyDocument(sig, ctx, doc, sizeof(doc));
 	CuAssert(tc, "Verification did not fail with expected error.", res == KSI_VERIFICATION_FAILURE);
@@ -292,7 +292,7 @@ static void testVerifySignatureExtendedToHead(CuTest *tc) {
 	KSI_VerificationContext_init(&verifier, ctx);
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
-	CuAssert(tc, "Signature should have either a calendar auth record or publication", res == KSI_OK && sig != NULL);
+	CuAssert(tc, "Signature should have either a calendar auth record or publication.", res == KSI_OK && sig != NULL);
 
 	/* Set the extend response. */
 	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
@@ -327,7 +327,7 @@ static void testSignatureSigningTime(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_getSigningTime(sig, &sigTime);
-	CuAssert(tc, "Unable to get signing time from signature", res == KSI_OK && sigTime != NULL);
+	CuAssert(tc, "Unable to get signing time from signature.", res == KSI_OK && sigTime != NULL);
 
 	utc = KSI_Integer_getUInt64(sigTime);
 
@@ -387,12 +387,12 @@ static void testSerializeSignature(CuTest *tc) {
 	fclose(f);
 
 	res = KSI_Signature_parse(ctx, in, in_len, &sig);
-	CuAssert(tc, "Failed to parse signature", res == KSI_OK && sig != NULL);
+	CuAssert(tc, "Failed to parse signature.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_serialize(sig, &out, &out_len);
-	CuAssert(tc, "Failed to serialize signature", res == KSI_OK);
-	CuAssert(tc, "Serialized signature length mismatch", in_len == out_len);
-	CuAssert(tc, "Serialized signature content mismatch", !memcmp(in, out, in_len));
+	CuAssert(tc, "Failed to serialize signature.", res == KSI_OK);
+	CuAssert(tc, "Serialized signature length mismatch.", in_len == out_len);
+	CuAssert(tc, "Serialized signature content mismatch.", !memcmp(in, out, in_len));
 
 	KSI_free(out);
 	KSI_Signature_free(sig);
@@ -424,10 +424,10 @@ static void testVerifyDocument(CuTest *tc) {
 	fclose(f);
 
 	res = KSI_Signature_parse(ctx, in, in_len, &sig);
-	CuAssert(tc, "Failed to parse signature", res == KSI_OK && sig != NULL);
+	CuAssert(tc, "Failed to parse signature.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_verifyDocument(sig, ctx, doc, strlen(doc));
-	CuAssert(tc, "Failed to verify valid document", res == KSI_OK);
+	CuAssert(tc, "Failed to verify valid document.", res == KSI_OK);
 
 	res = KSI_Signature_verifyDocument(sig, ctx, doc, sizeof(doc));
 	CuAssert(tc, "Verification did not fail with expected error.", res == KSI_VERIFICATION_FAILURE);
@@ -467,11 +467,11 @@ static void testVerifyDocumentHash(CuTest *tc) {
 	fclose(f);
 
 	res = KSI_Signature_parse(ctx, in, in_len, &sig);
-	CuAssert(tc, "Failed to parse signature", res == KSI_OK && sig != NULL);
+	CuAssert(tc, "Failed to parse signature.", res == KSI_OK && sig != NULL);
 
 	/* Chech correct document. */
 	res = KSI_DataHash_create(ctx, doc, strlen(doc), KSI_HASHALG_SHA2_256, &hsh);
-	CuAssert(tc, "Failed to create data hash", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Failed to create data hash.", res == KSI_OK && hsh != NULL);
 
 	verifier.signature = sig;
 	verifier.documentHash = hsh;
@@ -486,7 +486,7 @@ static void testVerifyDocumentHash(CuTest *tc) {
 
 	/* Chech wrong document. */
 	res = KSI_DataHash_create(ctx, doc, sizeof(doc), KSI_HASHALG_SHA2_256, &hsh);
-	CuAssert(tc, "Failed to create data hash", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Failed to create data hash.", res == KSI_OK && hsh != NULL);
 
 	verifier.documentHash = hsh;
 
@@ -501,7 +501,7 @@ static void testVerifyDocumentHash(CuTest *tc) {
 
 	/* Check correct document with wrong hash algorithm. */
 	res = KSI_DataHash_create(ctx, doc, strlen(doc), KSI_HASHALG_SHA2_512, &hsh);
-	CuAssert(tc, "Failed to create data hash", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Failed to create data hash.", res == KSI_OK && hsh != NULL);
 
 	verifier.documentHash = hsh;
 
@@ -568,7 +568,7 @@ static void testSignerIdentityMetaData(CuTest *tc) {
 	size_t i;
 
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
-	CuAssert(tc, "Unable to load signature", res == KSI_OK && sig != NULL);
+	CuAssert(tc, "Unable to load signature.", res == KSI_OK && sig != NULL);
 
 	res = KSI_Signature_getAggregationHashChainIdentity(sig, &idList);
 	CuAssert(tc, "Unable to get signer identity from signature.", res == KSI_OK && idList != NULL);
@@ -785,7 +785,7 @@ static void testCreateAggregationAuthRec(CuTest *tc) {
 	KSI_AggregationAuthRec *auhtRec = NULL;
 
 	res = KSI_AggregationAuthRec_new(ctx, &auhtRec);
-	CuAssert(tc, "Unable to create aggregation authentication record", res == KSI_OK && auhtRec != NULL);
+	CuAssert(tc, "Unable to create aggregation authentication record.", res == KSI_OK && auhtRec != NULL);
 
 	KSI_AggregationAuthRec_free(auhtRec);
 }
@@ -877,7 +877,7 @@ static void testSignatureGetPublicationInfo(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature publication time.", res == KSI_OK && pubDate != NULL);
 	CuAssert(tc, "Publication date mismatch.", KSI_Integer_equalsUInt(pubDate, infoPubDate) != 0);
 
-	/* Release resources */
+	/* Release resources. */
 	KSI_DataHash_free(infoPubHsh);
 	KSI_Utf8String_free(infoPubStr);
 	KSI_Utf8StringList_free(infoPubRef);
@@ -961,7 +961,7 @@ static void testSignatureGetPublicationInfo_verifyNullPointer(CuTest *tc) {
 	CuAssert(tc, "Unable to read signature publication time.", res == KSI_OK && pubDate != NULL);
 	CuAssert(tc, "Publication date mismatch.", KSI_Integer_equalsUInt(pubDate, infoPubDate) != 0);
 
-	/* Release resources */
+	/* Release resources. */
 	KSI_DataHash_free(infoPubHsh);
 	KSI_Utf8String_free(infoPubStr);
 	KSI_Utf8StringList_free(infoPubRef);
@@ -993,7 +993,7 @@ static void testCreateHasher(CuTest *tc) {
 
 	res = KSI_DataHasher_close(hsr, &hsh);
 	KSI_LOG_logDataHash(ctx, KSI_LOG_DEBUG, "######", hsh);
-	CuAssert(tc, "Unable to close the data hasher", res == KSI_OK && hsh != NULL);
+	CuAssert(tc, "Unable to close the data hasher.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_verifySignature(ctx, sig);
 	CuAssert(tc, "Data hash verification should not fail.", res == KSI_OK);
@@ -1016,7 +1016,7 @@ static void testSigning_docAlgorithmDeprecated(CuTest* tc) {
 	CuAssert(tc, "Unable to create data hash object.", res == KSI_OK && hsh != NULL);
 
 	res = KSI_createSignature(ctx, hsh, &sig);
-	CuAssert(tc, "Unable to sign the hash", res == KSI_UNTRUSTED_HASH_ALGORITHM && sig == NULL);
+	CuAssert(tc, "Unable to sign the hash.", res == KSI_UNTRUSTED_HASH_ALGORITHM && sig == NULL);
 
 	KSI_DataHash_free(hsh);
 	KSI_Signature_free(sig);

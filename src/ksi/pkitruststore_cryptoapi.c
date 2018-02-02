@@ -80,7 +80,7 @@ struct KSI_PKISignature_st {
 
 static int cryptopapiGlobal_init(void) {
 	if (KSI_PKITruststore_global_initCount++ > 0) {
-		/* Nothing to do */
+		/* Nothing to do. */
 	} else {
 		;
 	}
@@ -90,7 +90,7 @@ static int cryptopapiGlobal_init(void) {
 
 static void cryptopapiGlobal_cleanup(void) {
 	if (--KSI_PKITruststore_global_initCount > 0) {
-		/* Nothing to do */
+		/* Nothing to do. */
 	} else {
 		;
 	}
@@ -118,13 +118,13 @@ void KSI_PKITruststore_free(KSI_PKITruststore *trust) {
 	}
 }
 
-/*TODO: Not supported*/
+/* TODO: Not supported. */
 int KSI_PKITruststore_addLookupDir(const KSI_PKITruststore *trust, const char *path) {
 	KSI_LOG_debug(trust->ctx, "CryptoAPI: Not implemented.");
 	return KSI_OK;
 }
 
-/*TODO: Not supported*/
+/* TODO: Not supported. */
 int KSI_PKITruststore_addLookupFile(const KSI_PKITruststore *trust, const char *path) {
 	int res = KSI_UNKNOWN_ERROR;
 	HCERTSTORE tmp_FileTrustStore = NULL;
@@ -136,7 +136,7 @@ int KSI_PKITruststore_addLookupFile(const KSI_PKITruststore *trust, const char *
 	}
 	KSI_ERR_clearErrors(trust->ctx);
 
-	/*Open new store */
+	/* Open new store. */
 	tmp_FileTrustStore = CertOpenStore(CERT_STORE_PROV_FILENAME_A, 0, 0, 0, path);
 	if (tmp_FileTrustStore == NULL) {
 		const char *errmsg = getMSError(GetLastError(), buf, sizeof(buf));
@@ -145,7 +145,7 @@ int KSI_PKITruststore_addLookupFile(const KSI_PKITruststore *trust, const char *
 		goto cleanup;
 	}
 
-	/*Update with priority 0 store*/
+	/* Update with priority 0 store. */
 	if (!CertAddStoreToCollection(trust->collectionStore, tmp_FileTrustStore, 0, 0)) {
 		const char *errmsg = getMSError(GetLastError(), buf, sizeof(buf));
 		KSI_LOG_debug(trust->ctx, (char *)errmsg);
@@ -184,8 +184,8 @@ int KSI_PKITruststore_new(KSI_CTX *ctx, int setDefaults, KSI_PKITruststore **tru
 		goto cleanup;
 	}
 
-	//TODO: Will be removed
-	/*Open certificate store as collection of other stores*/
+	/* TODO: Will be removed. */
+	/* Open certificate store as collection of other stores. */
 	collectionStore = CertOpenStore(CERT_STORE_PROV_COLLECTION, PKCS_7_ASN_ENCODING | X509_ASN_ENCODING, 0, 0, NULL);
 	if (collectionStore == NULL) {
 		KSI_LOG_debug(ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
@@ -544,7 +544,7 @@ static int pki_certificate_getSerialNumber(const KSI_PKICertificate *cert, KSI_O
 	}
 
 	count = cert->x509->pCertInfo->SerialNumber.cbData;
-	/*Data is stored as little-endian. 0xFFFFFF88 is stored as {0x88, 0xFF, 0xFF, 0xFF}.*/
+	/* Data is stored as little-endian. 0xFFFFFF88 is stored as {0x88, 0xFF, 0xFF, 0xFF}. */
 	data = cert->x509->pCertInfo->SerialNumber.pbData;
 
 	for(n = 0, i = count - 1; i >= 0; i--) {
@@ -568,7 +568,7 @@ cleanup:
 	return res;
 }
 
-/*cert obj must be freed*/
+/* cert obj must be freed. */
 int KSI_PKISignature_extractCertificate(const KSI_PKISignature *signature, KSI_PKICertificate **cert) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
@@ -773,34 +773,34 @@ static int verify_X509_certificate(const KSI_PKITruststore *pki, HCERTSTORE addi
 	KSI_ERR_clearErrors(ctx);
 
 	/* Get the certificate chain of certificate under verification. */
-	/*OID List for certificate trust list extensions*/
+	/* OID List for certificate trust list extensions. */
 	enhkeyUsage.cUsageIdentifier = 0;
 	enhkeyUsage.rgpszUsageIdentifier = NULL;
-	/*Criteria for identifying issuer certificate for chain building*/
+	/* Criteria for identifying issuer certificate for chain building. */
 	certUsage.dwType = USAGE_MATCH_TYPE_AND;
 	certUsage.Usage = enhkeyUsage;
-	/*Searching and matching criteria for chain building*/
+	/* Searching and matching criteria for chain building. */
 	chainPara.cbSize = sizeof(CERT_CHAIN_PARA);
 	chainPara.RequestedUsage = certUsage;
 
-	/*Use CERT_CHAIN_CACHE_ONLY_URL_RETRIEVAL for no automatic cert store update by windows.
-	 It is useful when there is need to remove default cert from system store*/
-	/*Build Certificate Chain from top to root certificate*/
+	/* Use CERT_CHAIN_CACHE_ONLY_URL_RETRIEVAL for no automatic cert store update by windows.
+	 * It is useful when there is need to remove default cert from system store. */
+	/* Build Certificate Chain from top to root certificate. */
 	if (!CertGetCertificateChain(NULL, cert, NULL, additional_store, &chainPara, 0, NULL, &pChainContext)) {
 		KSI_LOG_debug(pki->ctx, "%s", getMSError(GetLastError(), buf, sizeof(buf)));
-		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, "Unable to get PKI certificate chain");
+		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, "Unable to get PKI certificate chain.");
 		goto cleanup;
 	}
 
-	/*TODO: REMOVE*/
-	/*If chain is based on untrusted root, determine if it's in pki->collectionStore.
-	 If it is, enable chain verification to trust untrusted roots*/
+	/* TODO: REMOVE. */
+	/* If chain is based on untrusted root, determine if it's in pki->collectionStore.
+	 * If it is, enable chain verification to trust untrusted roots. */
 	if (pChainContext->TrustStatus.dwErrorStatus&CERT_TRUST_IS_UNTRUSTED_ROOT){
 		KSI_LOG_debug(ctx, "CryptoAPI: Root certificate is not present under Windows 'Trusted Root Certification Authorities'.");
 		KSI_LOG_debug(ctx, "CryptoAPI: Searching if it is present under PKI Trust Store from files.");
 		if (isUntrustedRootCertInStore(pki, pChainContext)){
 			policyPara.dwFlags =  CERT_CHAIN_POLICY_ALLOW_UNKNOWN_CA_FLAG;
-			KSI_LOG_debug(ctx, "CryptoAPI: Certificate is present. Allow untrusted root certificates");
+			KSI_LOG_debug(ctx, "CryptoAPI: Certificate is present. Allow untrusted root certificates.");
 		}
 		else{
 			policyPara.dwFlags = 0;
@@ -956,7 +956,7 @@ static int get_signature_internal_non_selfsigned_certs(const KSI_PKISignature *s
 	}
 
 	do{
-		/* If certFound != NULL, it is released by the function and the next certificate is returned.*/
+		/* If certFound != NULL, it is released by the function and the next certificate is returned. */
 		certFound = CertEnumCertificatesInStore(signature_internal_cert_store, certFound);
 
 		if (certFound != NULL) {

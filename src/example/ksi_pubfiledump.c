@@ -108,11 +108,11 @@ static int printCerts(KSI_PublicationsFile *pubFile) {
 
 		f = fopen(fileName, "w");
 		if (f == NULL) {
-			fprintf(stderr, "Unable to write file '%s'\n", fileName);
+			fprintf(stderr, "Unable to write file '%s'.\n", fileName);
 			goto cleanup;
 		}
 
-		/* TODO! Check for write errors */
+		/* TODO! Check for write errors. */
 		fwrite(raw, 1, len, f);
 
 		fclose(f);
@@ -210,7 +210,7 @@ int main(int argc, char **argv) {
 
 		res = KSI_PublicationRecord_getPublishedData(rec, &pubDat);
 		if (res != KSI_OK) {
-			fprintf(stderr, "Failed to extract published data\n");
+			fprintf(stderr, "Failed to extract published data.\n");
 			goto cleanup;
 		}
 
@@ -229,7 +229,7 @@ int main(int argc, char **argv) {
 
 		res = KSI_PublicationData_getTime(pubDat, &pubTimeO);
 		if (res != KSI_OK || pubTimeO == NULL) {
-			fprintf(stderr, "Failed to get publication time\n");
+			fprintf(stderr, "Failed to get publication time.\n");
 			goto cleanup;
 		}
 
@@ -261,7 +261,7 @@ int main(int argc, char **argv) {
 
 	res = printCerts(publicationsFile);
 	if (res != KSI_OK) {
-		fprintf(stderr, "Failed to print certificates");
+		fprintf(stderr, "Failed to print certificates.\n");
 		goto cleanup;
 	}
 

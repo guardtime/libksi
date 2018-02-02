@@ -60,7 +60,7 @@ extern "C" {
 	typedef struct KSI_PublicationRecord_st KSI_PublicationRecord;
 	typedef struct KSI_ErrorPdu_st KSI_ErrorPdu;
 
-	/* Typedef for the struct KSI_CertConstraint_st */
+	/** Typedef for the struct KSI_CertConstraint_st. */
 	typedef struct KSI_CertConstraint_st KSI_CertConstraint;
 
 	/** Typedef for the signature object. */

@@ -30,7 +30,7 @@ struct KSI_TLV_st {
 	/** Context. */
 	KSI_CTX *ctx;
 
-	/** Flags */
+	/** Flags. */
 	int isNonCritical;
 	int isForwardable;
 
@@ -370,7 +370,7 @@ cleanup:
 void KSI_TLV_free(KSI_TLV *tlv) {
 	if (tlv != NULL) {
 		KSI_free(tlv->buffer);
-		/* Free nested data */
+		/* Free nested data. */
 
 		KSI_TLVList_free(tlv->nested);
 		KSI_free(tlv);
@@ -730,12 +730,12 @@ static int serializeTlv(const KSI_TLV *tlv, unsigned char *buf, size_t buf_size,
 	}
 
 	if ((opt & KSI_TLV_OPT_NO_HEADER) == 0) {
-		/* Write header */
+		/* Write header. */
 		if (len > 0xff || tlv->tag > KSI_TLV_MASK_TLV8_TYPE) {
 			hdr_len = 4;
 
 			if (ptr != NULL) {
-				/* Encode as TLV16 */
+				/* Encode as TLV16. */
 				if (buf_size < hdr_len + len) {
 					KSI_pushError(tlv->ctx, res = KSI_BUFFER_OVERFLOW, NULL);
 					goto cleanup;
@@ -749,7 +749,7 @@ static int serializeTlv(const KSI_TLV *tlv, unsigned char *buf, size_t buf_size,
 			hdr_len = 2;
 
 			if (ptr != NULL) {
-				/* Encode as TLV8 */
+				/* Encode as TLV8. */
 				if (buf_size < hdr_len + len) {
 					KSI_pushError(tlv->ctx, res = KSI_BUFFER_OVERFLOW, NULL);
 					goto cleanup;
@@ -940,9 +940,9 @@ static int expandNested(const KSI_TLV *sample, KSI_TLV *tlv) {
 
 	KSI_ERR_clearErrors(sample->ctx);
 
-	/* Fail if the TLV tags differ */
+	/* Fail if the TLV tags differ. */
 	if (sample->tag != tlv->tag) {
-		KSI_pushError(sample->ctx, res = KSI_INVALID_ARGUMENT, "TLV types differ");
+		KSI_pushError(sample->ctx, res = KSI_INVALID_ARGUMENT, "TLV types differ.");
 		goto cleanup;
 	}
 
@@ -955,7 +955,7 @@ static int expandNested(const KSI_TLV *sample, KSI_TLV *tlv) {
 				goto cleanup;
 			}
 		}
-		/* Check if nested element count matches */
+		/* Check if nested element count matches. */
 		if (KSI_TLVList_length(sample->nested) != KSI_TLVList_length(tlv->nested)) {
 			KSI_pushError(sample->ctx, res = KSI_INVALID_ARGUMENT, "Different number of nested TLV's.");
 			goto cleanup;
@@ -1010,14 +1010,14 @@ int KSI_TLV_clone(const KSI_TLV *tlv, KSI_TLV **clone) {
 
 	KSI_ERR_clearErrors(tlv->ctx);
 
-	/* Serialize the entire tlv */
+	/* Serialize the entire tlv. */
 	res = KSI_TLV_serialize(tlv, &buf, &buf_len);
 	if (res != KSI_OK) {
 		KSI_pushError(tlv->ctx, res, NULL);
 		goto cleanup;
 	}
 
-	/* Recreate the TLV */
+	/* Recreate the TLV. */
 	res = KSI_TLV_parseBlob2(tlv->ctx, buf, buf_len, 1, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(tlv->ctx, res, NULL);
@@ -1025,7 +1025,7 @@ int KSI_TLV_clone(const KSI_TLV *tlv, KSI_TLV **clone) {
 	}
 	buf = NULL;
 
-	/* Reexpand the nested (if any) TLV's */
+	/* Reexpand the nested (if any) TLV's. */
 	res = expandNested(tlv, tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(tlv->ctx, res, NULL);

@@ -183,10 +183,10 @@ case "${target_os}" in
 esac
 
 # To ensure compatibility with Microsoft compiler.
-CFLAGS+= " -Wdeclaration-after-statement"
-# Add more warnings
+CFLAGS+=" -Wdeclaration-after-statement"
+# Add more warnings.
 CFLAGS+=" -Wall"
-# Optimize for debugging
+# Optimize for debugging.
 #CFLAGS+=" -Og"
 
 AC_ARG_WITH(unit-test-xml,

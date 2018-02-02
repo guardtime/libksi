@@ -217,13 +217,13 @@ static void CALLBACK WinHTTP_asyncCallback(HINTERNET hInternet, DWORD_PTR dwCont
 
 #ifdef KSI_DEBUG_WINHTTP_STATUS_CALLBACK
 		request->callbackReceived |= dwInternetStatus;
-		KSI_LOG_debug(request->ctx, "Async WinHTTP: request=%p thread=%d callback=%08x (%s)", request,
+		KSI_LOG_debug(request->ctx, "Async WinHTTP: request=%p thread=%d callback=%08x (%s).", request,
 				GetCurrentThreadId(), dwInternetStatus, WinHTTPCallbackStatus_toString(dwInternetStatus));
 #endif
 		switch (dwInternetStatus) {
 			case WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE:
 				if (!WinHttpReceiveResponse(request->requestHandle, NULL)) {
-					KSI_LOG_error(request->ctx, "Async WinHTTP: Unable to get HTTP response. Error %d", (dwError = GetLastError()));
+					KSI_LOG_error(request->ctx, "Async WinHTTP: Unable to get HTTP response. Error %d.", (dwError = GetLastError()));
 					goto cleanup;
 				}
 				break;
@@ -231,11 +231,11 @@ static void CALLBACK WinHTTP_asyncCallback(HINTERNET hInternet, DWORD_PTR dwCont
 					DWORD statusLen;
 					DWORD httpStatus = 0;
 
-					/*Get HTTP status code*/
+					/* Get HTTP status code. */
 					statusLen = sizeof(httpStatus);
 					if (!WinHttpQueryHeaders(request->requestHandle, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
 								WINHTTP_HEADER_NAME_BY_INDEX, &httpStatus, &statusLen, NULL)) {
-						KSI_LOG_error(request->ctx, "Async WinHTTP: Unable to get HTTP status. Error %d", (dwError = GetLastError()));
+						KSI_LOG_error(request->ctx, "Async WinHTTP: Unable to get HTTP status. Error %d.", (dwError = GetLastError()));
 						goto cleanup;
 					}
 
@@ -251,7 +251,7 @@ static void CALLBACK WinHTTP_asyncCallback(HINTERNET hInternet, DWORD_PTR dwCont
 
 					/* Query data and wait for WINHTTP_STATUS_CALLBACK_DATA_AVAILABLE. */
 					if (!WinHttpQueryDataAvailable(request->requestHandle, NULL)) {
-						KSI_LOG_error(request->ctx, "Async WinHTTP: Unable to get HTTP data status. Error %d", (dwError = GetLastError()));
+						KSI_LOG_error(request->ctx, "Async WinHTTP: Unable to get HTTP data status. Error %d.", (dwError = GetLastError()));
 						goto cleanup;
 					}
 				}
@@ -286,10 +286,10 @@ static void CALLBACK WinHTTP_asyncCallback(HINTERNET hInternet, DWORD_PTR dwCont
 					if (request->len) memcpy(tmpBuffer, request->raw, request->len);
 
 					if (!WinHttpReadData(request->requestHandle, tmpBuffer + request->len, bytesReceived, NULL)) {
-						KSI_LOG_error(request->ctx, "Async WinHTTP: Unable to get HTTP data status. Error %d", (dwError = GetLastError()));
+						KSI_LOG_error(request->ctx, "Async WinHTTP: Unable to get HTTP data status. Error %d.", (dwError = GetLastError()));
 						goto cleanup;
 					}
-					KSI_LOG_debug(request->ctx, "Async WinHTTP: request %p: received %d bytes (%llu total)", request, (unsigned long long) bytesReceived, bytesCount);
+					KSI_LOG_debug(request->ctx, "Async WinHTTP: request %p: received %d bytes (%llu total).", request, (unsigned long long) bytesReceived, bytesCount);
 
 					KSI_free(request->raw);
 					request->raw = tmpBuffer;
@@ -298,7 +298,7 @@ static void CALLBACK WinHTTP_asyncCallback(HINTERNET hInternet, DWORD_PTR dwCont
 
 					/* Query data and wait for WINHTTP_STATUS_CALLBACK_DATA_AVAILABLE. */
 					if (!WinHttpQueryDataAvailable(request->requestHandle, NULL)) {
-						KSI_LOG_error(request->ctx, "Async WinHTTP: Unable to get HTTP data status. Error %d", (dwError = GetLastError()));
+						KSI_LOG_error(request->ctx, "Async WinHTTP: Unable to get HTTP data status. Error %d.", (dwError = GetLastError()));
 						goto cleanup;
 					}
 				}
@@ -434,7 +434,7 @@ static int WinHTTP_sendRequest(HttpAsyncCtx *clientCtx, KSI_AsyncHandle *req) {
 
 	/* Verify the length on the raw data. */
 	if (req->len > DWORD_MAX) {
-		KSI_LOG_error(clientCtx->ctx, "Async WinHTTP: Request length larger than DWORD_MAX %d", httpReq->len);
+		KSI_LOG_error(clientCtx->ctx, "Async WinHTTP: Request length larger than DWORD_MAX %d.", httpReq->len);
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -452,7 +452,7 @@ static int WinHTTP_sendRequest(HttpAsyncCtx *clientCtx, KSI_AsyncHandle *req) {
 			clientCtx->path, NULL, NULL, NULL,
 			clientCtx->isSecure ? WINHTTP_FLAG_SECURE : 0);
 	if (httpReq->requestHandle == NULL) {
-		KSI_LOG_error(clientCtx->ctx, "Async WinHTTP: Unable to initialize request handle. Error %d", GetLastError());
+		KSI_LOG_error(clientCtx->ctx, "Async WinHTTP: Unable to initialize request handle. Error %d.", GetLastError());
 		res = KSI_NETWORK_ERROR;
 		goto cleanup;
 	}
@@ -460,7 +460,7 @@ static int WinHTTP_sendRequest(HttpAsyncCtx *clientCtx, KSI_AsyncHandle *req) {
 	/* Create events. */
 	httpReq->closedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	if (httpReq->closedEvent == NULL) {
-		KSI_LOG_error(httpReq->ctx, "Async WinHTTP: failed to create event handle. Error %d", GetLastError());
+		KSI_LOG_error(httpReq->ctx, "Async WinHTTP: failed to create event handle. Error %d.", GetLastError());
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
@@ -479,7 +479,7 @@ static int WinHTTP_sendRequest(HttpAsyncCtx *clientCtx, KSI_AsyncHandle *req) {
 	if (clientCtx->mimeType) {
 		if (!WinHttpAddRequestHeaders(httpReq->requestHandle, clientCtx->mimeType, -1L,
 				WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE)) {
-			KSI_LOG_error(clientCtx->ctx, "Async WinHTTP: Unable to initialize request handle. Error %d", GetLastError());
+			KSI_LOG_error(clientCtx->ctx, "Async WinHTTP: Unable to initialize request handle. Error %d.", GetLastError());
 			res = KSI_NETWORK_ERROR;
 			goto cleanup;
 		}
@@ -491,7 +491,7 @@ static int WinHTTP_sendRequest(HttpAsyncCtx *clientCtx, KSI_AsyncHandle *req) {
 	/* Set status callback. */
 	if (WinHttpSetStatusCallback(httpReq->requestHandle, WinHTTP_asyncCallback,
 				WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0) == WINHTTP_INVALID_STATUS_CALLBACK)	{
-		KSI_LOG_error(clientCtx->ctx, "Async WinHTTP: Unable to set callback. Error %d", GetLastError());
+		KSI_LOG_error(clientCtx->ctx, "Async WinHTTP: Unable to set callback. Error %d.", GetLastError());
 		res = KSI_NETWORK_ERROR;
 		goto cleanup;
 	}
@@ -651,7 +651,7 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 
 		/* Check if the request count can be restarted. */
 		if (difftime(time(&curTime), clientCtx->roundStartAt) >= clientCtx->options[KSI_ASYNC_PRIVOPT_ROUND_DURATION]) {
-			KSI_LOG_info(clientCtx->ctx, "Async WinHTTP round request count: %u", clientCtx->roundCount);
+			KSI_LOG_info(clientCtx->ctx, "Async WinHTTP round request count: %u.", clientCtx->roundCount);
 			clientCtx->roundCount = 0;
 			clientCtx->roundStartAt = curTime;
 		}
@@ -886,7 +886,7 @@ static int HttpAsyncCtx_new(KSI_CTX *ctx, HttpAsyncCtx **clientCtx) {
 	tmp->roundStartAt = 0;
 	tmp->roundCount = 0;
 
-	/* Queues */
+	/* Queues. */
 	tmp->reqQueue = NULL;
 	tmp->httpQueue = NULL;
 	tmp->respQueue = NULL;

@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
 	printf("Verifying signature...");
 	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_GENERAL, &context, &result);
 	if (res != KSI_OK) {
-		printf("Failed to complete verification due to an error 0x%x (%s)\n", res, KSI_getErrorString(res));
+		printf("Failed to complete verification due to an error 0x%x (%s).\n", res, KSI_getErrorString(res));
 		goto cleanup;
 	}
 	else {

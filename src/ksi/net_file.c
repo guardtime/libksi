@@ -73,7 +73,7 @@ static int readResponse(KSI_RequestHandle *handle) {
 
 	fs = handle->implCtx;
 
-	KSI_LOG_debug(handle->ctx, "File: Read response from: %s", fs->path);
+	KSI_LOG_debug(handle->ctx, "File: Read response from '%s'.", fs->path);
 	/* Open the file if accessing for the first time. */
 	if (fs->file == NULL) {
 		fs->file = fopen(fs->path, "rb");
@@ -167,7 +167,7 @@ static int prepareRequest(KSI_NetworkClient *client,
 
 	KSI_ERR_clearErrors(client->ctx);
 
-	KSI_LOG_debug(client->ctx, "File: %s", desc);
+	KSI_LOG_debug(client->ctx, "File: %s.", desc);
 
 	res = serialize(pdu, &raw, &raw_len);
 	if (res != KSI_OK) {
@@ -176,7 +176,7 @@ static int prepareRequest(KSI_NetworkClient *client,
 	}
 	KSI_LOG_logBlob(client->ctx, KSI_LOG_DEBUG, desc, raw, raw_len);
 
-	/* Create a new request handle */
+	/* Create a new request handle. */
 	res = KSI_RequestHandle_new(client->ctx, raw, raw_len, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(client->ctx, res, NULL);
@@ -355,7 +355,7 @@ static int publicationFileReceive(KSI_RequestHandle *handle) {
 
 	fs = handle->implCtx;
 
-	KSI_LOG_debug(handle->ctx, "File: Read publication file response from: %s", fs->path);
+	KSI_LOG_debug(handle->ctx, "File: Read publication file response from '%s'.", fs->path);
 	f = fopen(fs->path, "rb");
 	if (f == NULL) {
 		KSI_pushError(handle->ctx, res = KSI_IO_ERROR, "Unable to open file.");
@@ -363,7 +363,7 @@ static int publicationFileReceive(KSI_RequestHandle *handle) {
 		goto cleanup;
 	}
 
-	/* Find size of the file */
+	/* Find size of the file. */
 	res = fseek(f, 0, SEEK_END);
 	if (res != 0) {
 		KSI_pushError(handle->ctx, res = KSI_IO_ERROR, NULL);
@@ -625,7 +625,7 @@ static int setService(KSI_NetworkClient *client, KSI_NetEndpoint *abs_endp, cons
 
 	endp = abs_endp->implCtx;
 
-	/* Set path to the file */
+	/* Set path to the file. */
 	res = client->setStringParam(&endp->path, path);
 	if (res != KSI_OK) goto cleanup;
 

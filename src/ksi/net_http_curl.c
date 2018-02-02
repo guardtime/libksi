@@ -42,7 +42,7 @@ static int curlGlobal_init(void) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	if (curlGlobal_initCount++ > 0) {
-		/* Nothing to do */
+		/* Nothing to do. */
 		return KSI_OK;
 	}
 
@@ -127,7 +127,7 @@ static size_t receiveDataFromLibCurl(void *ptr, size_t size, size_t nmemb, void 
 	nc->len = bytesCount;
 	tmp_buffer = NULL;
 
-	KSI_LOG_debug(nc->ctx, "0x%p: Received %llu bytes (%llu so far)", nc, (unsigned long long)bytesCount, (unsigned long long)nc->len);
+	KSI_LOG_debug(nc->ctx, "0x%p: Received %llu bytes (%llu so far).", nc, (unsigned long long)bytesCount, (unsigned long long)nc->len);
 
 	bytesCount = size * nmemb;
 
@@ -203,7 +203,7 @@ static int curlReceive(KSI_RequestHandle *handle) {
 		goto cleanup;
 	}
 
-	/* Cleanup on success.*/
+	/* Cleanup on success. */
 	KSI_free(implCtx->raw);
 	implCtx->raw = NULL;
 	implCtx->len = 0;

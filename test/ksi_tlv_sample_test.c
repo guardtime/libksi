@@ -82,13 +82,13 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 
 	switch (KSI_TLV_getTag(tlv)) {
 		case 0x01:
-			/* Cast as numeric TLV */
-			/* Parse number */
+			/* Cast as numeric TLV. */
+			/* Parse number. */
 			res = KSI_Integer_fromTlv(tlv, &integer);
 			if (res != KSI_OK) goto cleanup;
 			break;
 		case 0x02:
-			/* Cast as string TLV */
+			/* Cast as string TLV. */
 			res = KSI_Utf8String_fromTlv(tlv, &utf);
 			if (res != KSI_OK) goto cleanup;
 			break;
@@ -97,7 +97,7 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 			res = KSI_TLV_getNestedList(tlv, &list);
 			if (res != KSI_OK) goto cleanup;
 
-			/* Parse nested */
+			/* Parse nested. */
 			for (i = 0; i < KSI_TLVList_length(list); i++) {
 				res = KSI_TLVList_elementAt(list, i, &nested);
 				if (res != KSI_OK) goto cleanup;
@@ -109,7 +109,7 @@ static int parseStructure(KSI_TLV *tlv, int indent) {
 			}
 			break;
 		case 0x04:
-			/* Cast as octet string*/
+			/* Cast as octet string. */
 			res = KSI_OctetString_fromTlv(tlv, &octet);
 			if (res != KSI_OK) goto cleanup;
 			break;
@@ -202,7 +202,7 @@ static void TestSerialize(CuTest* tc) {
 		res = parseStructure(tlv, 0);
 		CuAssert(tc, "Unable to parse TLV structure.", res == KSI_OK);
 
-		/* Re assemble TLV */
+		/* Re assemble TLV. */
 		KSI_TLV_serialize_ex(tlv, out, sizeof(out), &out_len);
 
 		CuAssert(tc, "Serialized TLV size mismatch.", in_len == out_len);
@@ -250,7 +250,7 @@ static void TestClone(CuTest *tc) {
 		res = KSI_TLV_clone(tlv, &clone);
 		CuAssert(tc, "Unsable to clone TLV.", res == KSI_OK && clone != NULL);
 
-		/* Re assemble TLV */
+		/* Re assemble TLV. */
 		res = KSI_TLV_serialize_ex(clone, out1, sizeof(out1), &out_len);
 		CuAssert(tc, "Unable to serialize TLV.", res == KSI_OK);
 

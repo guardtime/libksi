@@ -161,7 +161,7 @@ static void createSignatureUsingHashImprintWithNotImplementedHashFunction(CuTest
 	res = KSI_CTX_setAggregator(ctx, KSITest_composeUri(scheme, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
 	CuAssert(tc, "Unable to configure aggregator.", res == KSI_OK);
 
-	/*Hash imprint that is using not implemented hash algorithm, must be accepted as input hash.*/
+	/* Hash imprint that is using not implemented hash algorithm, must be accepted as input hash. */
 	res = KSITest_DataHash_fromStr(ctx, "080000000000000000000000000000000000000000000000000000000000000000", &hsh);
 	CuAssert(tc, "Unable to create hash.", res == KSI_OK && hsh != NULL);
 
@@ -195,7 +195,7 @@ static void createSignatureWrongHMAC(CuTest* tc, const char *scheme) {
 	res = KSI_CTX_setAggregator(ctx, KSITest_composeUri(scheme, &conf.aggregator), "test-test", "tset-tset");
 	CuAssert(tc, "Unable to spoil aggregator authentication data.", res == KSI_OK);
 
-	/*Reset old aggregator password.*/
+	/* Reset old aggregator password. */
 	res = KSI_Signature_sign(ctx, hsh, &sig);
 	CuAssert(tc, "Unable to create signature.", res == KSI_SERVICE_AUTHENTICATION_FAILURE && sig == NULL);
 
@@ -315,7 +315,7 @@ static void Test_CreateSignatureDifferentNetProviders(CuTest* tc) {
 			KSI_UriClient_new,
 			uriHttp_setAggrWrapper);
 
-	/* Uri provider */
+	/* Uri provider. */
 	Test_CreateSignature_useProvider(tc, &conf.aggregator,
 			KSI_UriClient_new,
 			uriTcp_setAggrWrapper);

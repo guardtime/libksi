@@ -197,6 +197,8 @@ static void initOptions(KSI_CTX *ctx) {
 
 	KSI_CTX_setOption(ctx, KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK, NULL);
 	KSI_CTX_setOption(ctx, KSI_OPT_EXT_CONF_RECEIVED_CALLBACK, NULL);
+
+	KSI_CTX_setOption(ctx, KSI_OPT_PUBFILE_CACHE_TTL_SECONDS, (void*)KSI_CTX_PUBFILE_CACHE_DEFAULT_TTL);
 }
 
 int KSI_CTX_new(KSI_CTX **context) {
@@ -210,7 +212,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
-	/* Init error stack */
+	/* Init error stack. */
 	ctx->errors_size = KSI_ERR_STACK_LEN;
 	ctx->errors = KSI_malloc(sizeof(KSI_ERR) * ctx->errors_size);
 	if (ctx->errors == NULL) {
@@ -219,6 +221,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	}
 	ctx->errors_count = 0;
 	ctx->publicationsFile = NULL;
+	ctx->publicationsFileCachedAt = 0;
 	ctx->pkiTruststore = NULL;
 	ctx->netProvider = NULL;
 	ctx->publicationCertEmail_DEPRECATED = NULL;
@@ -448,6 +451,7 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 	const unsigned char *raw = NULL;
 	size_t raw_len = 0;
 	KSI_PublicationsFile *tmp = NULL;
+	time_t now = 0;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || pubFile == NULL) {
@@ -455,8 +459,8 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 		goto cleanup;
 	}
 
-	/* TODO! Implement mechanism for reloading (e.g cache timeout) */
-	if (ctx->publicationsFile == NULL) {
+	if (difftime(time(&now), ctx->publicationsFileCachedAt) >= ctx->options[KSI_OPT_PUBFILE_CACHE_TTL_SECONDS] ||
+			ctx->publicationsFile == NULL) {
 		KSI_LOG_debug(ctx, "Receiving publications file.");
 
 		res = KSI_sendPublicationRequest(ctx, NULL, 0, &handle);
@@ -483,8 +487,14 @@ int KSI_receivePublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile **pubFile) {
 			goto cleanup;
 		}
 
-		ctx->publicationsFile = tmp;
+		res = KSI_CTX_setPublicationsFile(ctx, tmp);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx,res, NULL);
+			goto cleanup;
+		}
 		tmp = NULL;
+
+		ctx->publicationsFileCachedAt = now;
 
 		KSI_LOG_debug(ctx, "Publications file received.");
 	}
@@ -745,7 +755,6 @@ int KSI_extendSignatureWithPolicy(KSI_CTX *ctx, const KSI_Signature *sig, const 
 	KSI_Integer *signingTime = NULL;
 	KSI_PublicationRecord *pubRec = NULL;
 	KSI_Signature *extSig = NULL;
-	bool verifyPubFile = (ctx->publicationsFile == NULL);
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || sig == NULL || extended == NULL) {
@@ -759,12 +768,10 @@ int KSI_extendSignatureWithPolicy(KSI_CTX *ctx, const KSI_Signature *sig, const 
 		goto cleanup;
 	}
 
-	if (verifyPubFile == true) {
-		res = KSI_verifyPublicationsFile(ctx, pubFile);
-		if (res != KSI_OK) {
-			KSI_pushError(ctx,res, NULL);
-			goto cleanup;
-		}
+	res = KSI_verifyPublicationsFile(ctx, pubFile);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
 	}
 
 	res = KSI_Signature_getSigningTime(sig, &signingTime);
@@ -875,7 +882,7 @@ static int ksi_err_toPrinter(KSI_CTX *ctx, void *to, size_t buf_len, void* (*pri
 		nextWrite = printer(nextWrite, buf_len - count, &count, "  %3lu) %s:%u - (%d/%ld) %s\n", ctx->errors_count - i, err->fileName, err->lineNr,err->statusCode, err->extErrorCode, *err->message != '\0' ? err->message : KSI_getErrorString(err->statusCode));
 	}
 
-	/* If there where more errors than buffers for the errors, indicate the fact */
+	/* If there where more errors than buffers for the errors, indicate the fact. */
 	if (ctx->errors_count > ctx->errors_size) {
 		printer(nextWrite, buf_len - count, &count, "  ... (more errors)\n");
 	}
@@ -993,7 +1000,32 @@ int KSI_CTX_setExtender(KSI_CTX *ctx, const char *uri, const char *loginId, cons
 }
 
 int KSI_CTX_setPublicationUrl(KSI_CTX *ctx, const char *uri){
-	return KSI_CTX_setUri(ctx, uri, uri, uri, KSI_UriClient_setPublicationUrl_wrapper);
+	int res = KSI_UNKNOWN_ERROR;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || uri == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_CTX_setUri(ctx, uri, uri, uri, KSI_UriClient_setPublicationUrl_wrapper);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
+
+	/* Clear the cached publications file. */
+	res = KSI_CTX_setPublicationsFile(ctx, NULL);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
 }
 
 int KSI_CTX_setOption(KSI_CTX *ctx, KSI_Option opt, void *param) {
@@ -1074,7 +1106,26 @@ cleanup:																					\
 	CTX_VALUEP_GETTER(var, nam, typ)														\
 
 CTX_VALUEP_SETTER(pkiTruststore, PKITruststore, KSI_PKITruststore, KSI_PKITruststore_free)
-CTX_GET_SET_VALUE(publicationsFile, PublicationsFile, KSI_PublicationsFile, KSI_PublicationsFile_free)
+
+CTX_VALUEP_GETTER(publicationsFile, PublicationsFile, KSI_PublicationsFile)
+
+int KSI_CTX_setPublicationsFile(KSI_CTX *ctx, KSI_PublicationsFile *var) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (ctx == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_PublicationsFile_free(ctx->publicationsFile);
+	ctx->publicationsFile = var;
+	/* Clear the cache timeout. */
+	ctx->publicationsFileCachedAt = 0;
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
 
 int KSI_CTX_getLastFailedSignature(KSI_CTX *ctx, KSI_Signature **lastFailedSignature) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -1104,9 +1155,9 @@ int KSI_CTX_getPKITruststore(KSI_CTX *ctx, KSI_PKITruststore **pki) {
 		goto cleanup;
 	}
 
-	/* In case the PKI truststore is not available, create a default */
+	/* In case the PKI truststore is not available, create a default. */
 	if (ctx->pkiTruststore == NULL) {
-		/* Create and set the PKI truststore */
+		/* Create and set the PKI truststore. */
 		res = KSI_PKITruststore_new(ctx, 1, &pkiTruststore);
 		if (res != KSI_OK) goto cleanup;
 		res = KSI_CTX_setPKITruststore(ctx, pkiTruststore);
@@ -1254,7 +1305,7 @@ int KSI_CTX_setDefaultPubFileCertConstraints(KSI_CTX *ctx, const KSI_CertConstra
 		}
 
 		if (arr[i].val == NULL) {
-			KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Expected OID value may not be NULL");
+			KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Expected OID value may not be NULL.");
 			goto cleanup;
 		}
 

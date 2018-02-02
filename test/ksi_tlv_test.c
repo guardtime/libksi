@@ -159,7 +159,7 @@ static void testTlvSetRawAsNull(CuTest* tc) {
 
 static void testParseTlv8(CuTest* tc) {
 	int res;
-	/* TLV type = 7, length = 21 */
+	/* TLV type = 7, length = 21. */
 	unsigned char raw[] = "\x07\x15THIS IS A TLV CONTENT";
 	KSI_FTLV ftlv;
 
@@ -174,7 +174,7 @@ static void testParseTlv8(CuTest* tc) {
 
 static void testParseTlv16(CuTest* tc) {
 	int res;
-	/* TLV16 type = 0x2aa, length = 21 */
+	/* TLV16 type = 0x2aa, length = 21. */
 	unsigned char raw[] = "\x82\xaa\x00\x15THIS IS A TLV CONTENT";
 	KSI_FTLV ftlv;
 
@@ -191,7 +191,7 @@ static void testParseTlv16(CuTest* tc) {
 
 static void testTlvGetUint64(CuTest* tc) {
 	int res;
-	/* TLV type = 1a, length = 8 */
+	/* TLV type = 1a, length = 8. */
 	unsigned char raw[] = {0x1a, 0x08, 0xca, 0xfe, 0xba, 0xbe, 0xca, 0xfe, 0xfa, 0xce};
 
 	KSI_TLV *tlv = NULL;
@@ -213,7 +213,7 @@ static void testTlvGetUint64(CuTest* tc) {
 
 static void testTlvGetUint64Overflow(CuTest* tc) {
 	int res;
-	/* TLV type = 1a, length = 8 */
+	/* TLV type = 1a, length = 8. */
 	unsigned char raw[] = {0x1a, 0x09, 0xca, 0xfe, 0xba, 0xbe, 0xca, 0xfe, 0xfa, 0xce, 0xee};
 
 	KSI_TLV *tlv = NULL;
@@ -232,7 +232,7 @@ static void testTlvGetUint64Overflow(CuTest* tc) {
 
 static void testTlvGetStringValue(CuTest* tc) {
 	int res;
-	/* TLV16 type = 0x2aa, length = 21 */
+	/* TLV16 type = 0x2aa, length = 21. */
 	unsigned char raw[] = "\x82\xaa\x00\x0blore ipsum\0";
 	KSI_Utf8String *utf = NULL;
 	KSI_TLV *tlv = NULL;
@@ -252,7 +252,7 @@ static void testTlvGetStringValue(CuTest* tc) {
 
 static void testTlvGetNextNested(CuTest* tc) {
 	int res;
-	/* TLV16 type = 0x2aa, length = 21 */
+	/* TLV16 type = 0x2aa, length = 21. */
 	unsigned char raw[] = "\x01\x20" "\x07\x16" "THIS IS A TLV CONTENT\0" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
 
 	KSI_TLV *tlv = NULL;
@@ -294,7 +294,7 @@ static void testTlvGetNextNested(CuTest* tc) {
 
 static void testTlvGetNextNestedSharedMemory(CuTest* tc) {
 	int res;
-	/* TLV16 type = 0x2aa, length = 21 */
+	/* TLV16 type = 0x2aa, length = 21. */
 	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
 	char *str = NULL;
 
@@ -326,7 +326,7 @@ static void testTlvGetNextNestedSharedMemory(CuTest* tc) {
 
 static void testTlvSerializeString(CuTest* tc) {
 	int res;
-	/* TLV16 type = 0x2aa, length = 21 */
+	/* TLV16 type = 0x2aa, length = 21. */
 	unsigned char raw[] = "\x82\xaa\x00\x0blore ipsum\0";
 	size_t buf_len;
 	unsigned char buf[0xffff];
@@ -353,7 +353,7 @@ static void testTlvSerializeString(CuTest* tc) {
 
 static void testTlvSerializeUint(CuTest* tc) {
 	int res;
-	/* TLV type = 1a, length = 8 */
+	/* TLV type = 1a, length = 8. */
 	unsigned char raw[] = {0x1a, 0x08, 0xca, 0xfe, 0xba, 0xbe, 0xca, 0xfe, 0xfa, 0xce};
 	size_t buf_len;
 	unsigned char buf[0xffff];
@@ -623,7 +623,7 @@ void testTlvElementNested(CuTest *tc) {
 	res = KSI_TlvElement_serialize(outer, buf, sizeof(buf), &len, 0);
 
 	CuAssert(tc, "Unexpected serialized length.", len == sizeof(exp));
-	CuAssert(tc, "Unexpected serialized value", !KSITest_memcmp(buf, exp, sizeof(exp)));
+	CuAssert(tc, "Unexpected serialized value.", !KSITest_memcmp(buf, exp, sizeof(exp)));
 
 
 	KSI_TlvElement_free(outer);
@@ -633,6 +633,32 @@ void testTlvElementNested(CuTest *tc) {
 	KSI_Integer_free(sub2);
 	KSI_Integer_free(sub3);
 	KSI_Integer_free(sub4);
+}
+
+void testTlvElementDetachment(CuTest *tc) {
+	int res;
+	KSI_TlvElement *tlv = NULL;
+	/* # TLV to be parsed and detached.
+		TLV[1f00]:
+			TLV[08]:
+				TLV[01]: abcd
+				TLV[02]: 1234
+			TLV[1600]:
+				TLV[03]: 1a2b
+				TLV[04]: 11aa
+	 */
+	unsigned char buf[] = {0x9f, 0x00, 0x00, 0x16, 0x08, 0x08, 0x01, 0x02, 0xab, 0xcd, 0x02, 0x02, 0x12, 0x34, 0x96, 0x00, 0x00, 0x08, 0x03, 0x02, 0x1a, 0x2b, 0x04, 0x02, 0x11, 0xaa};
+
+	res = KSI_TlvElement_parse(buf, sizeof(buf), &tlv);
+	CuAssert(tc, "Unable to parse TLV.", res == KSI_OK && tlv != NULL);
+	CuAssert(tc, "TLV not expected to own its buffer.", tlv->ptr == buf && tlv->ptr_own == 0);
+
+	res = KSI_TlvElement_detach(tlv);
+	CuAssert(tc, "Unable to detach TLV from its outer resources.", res == KSI_OK);
+	CuAssert(tc, "TLV expected to own its buffer.", tlv->ptr != buf && tlv->ptr_own == 1);
+	CuAssert(tc, "TLV buffer not properly detached.", tlv->ftlv.hdr_len + tlv->ftlv.dat_len == sizeof(buf) && !memcmp(buf, tlv->ptr, sizeof(buf)));
+
+	KSI_TlvElement_free(tlv);
 }
 
 CuSuite* KSITest_TLV_getSuite(void)
@@ -660,6 +686,7 @@ CuSuite* KSITest_TLV_getSuite(void)
 	SUITE_ADD_TEST(suite, testBadUtf8WithZeros);
 	SUITE_ADD_TEST(suite, testTlvElementIntegers);
 	SUITE_ADD_TEST(suite, testTlvElementNested);
+	SUITE_ADD_TEST(suite, testTlvElementDetachment);
 
 	return suite;
 }

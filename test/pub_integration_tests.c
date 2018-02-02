@@ -25,6 +25,7 @@ extern KSITest_Conf conf;
 
 static void postTest(void) {
 	KSI_CTX_setPublicationUrl(ctx, conf.pubfile.url);
+	KSI_CTX_setOption(ctx, KSI_OPT_PUBFILE_CACHE_TTL_SECONDS, (void*)KSI_CTX_PUBFILE_CACHE_DEFAULT_TTL);
 }
 
 
@@ -139,6 +140,68 @@ static void Test_DownloadPubfile_ChangeClient(CuTest* tc) {
 	KSI_CTX_setPublicationsFile(ctx, NULL);
 }
 
+static void Test_DownloadPubfileCacheTimeout(CuTest* tc) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_PublicationsFile *pubFile1 = NULL;
+	KSI_PublicationsFile *pubFile2 = NULL;
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_receivePublicationsFile(ctx, &pubFile1);
+	CuAssert(tc, "Unable to receive publications file.", res == KSI_OK && pubFile1 != NULL);
+
+	res = KSI_CTX_setOption(ctx, KSI_OPT_PUBFILE_CACHE_TTL_SECONDS, (void*)60);
+	CuAssert(tc, "Unable to set publications file cache timeout.", res == KSI_OK);
+
+	res = KSI_receivePublicationsFile(ctx, &pubFile2);
+	CuAssert(tc, "Unable to receive publications file.", res == KSI_OK && pubFile2 != NULL);
+
+	CuAssert(tc, "Same file should be returned.", pubFile2 == pubFile1);
+
+	KSI_PublicationsFile_free(pubFile1);
+	KSI_PublicationsFile_free(pubFile2);
+}
+
+static void Test_DownloadPubfileCacheNoTimeout(CuTest* tc) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_PublicationsFile *pubFile1 = NULL;
+	KSI_PublicationsFile *pubFile2 = NULL;
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_receivePublicationsFile(ctx, &pubFile1);
+	CuAssert(tc, "Unable to receive publications file.", res == KSI_OK && pubFile1 != NULL);
+
+	res = KSI_CTX_setOption(ctx, KSI_OPT_PUBFILE_CACHE_TTL_SECONDS, (void*)0);
+	CuAssert(tc, "Unable to set publications file cache timeout.", res == KSI_OK);
+
+	res = KSI_receivePublicationsFile(ctx, &pubFile2);
+	CuAssert(tc, "Unable to receive publications file.", res == KSI_OK && pubFile2 != NULL);
+
+	CuAssert(tc, "Files should be different.", pubFile2 != pubFile1);
+
+	KSI_PublicationsFile_free(pubFile1);
+	KSI_PublicationsFile_free(pubFile2);
+}
+
+static void Test_LoadFromFileAndDownloadPubfile(CuTest* tc) {
+#define TEST_PUBLICATIONS_FILE "resource/tlv/publications.tlv"
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_PublicationsFile *pubFile1 = NULL;
+	KSI_PublicationsFile *pubFile2 = NULL;
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_PublicationsFile_fromFile(ctx, getFullResourcePath(TEST_PUBLICATIONS_FILE), &pubFile1);
+	CuAssert(tc, "Unable to read publications file", res == KSI_OK && pubFile1 != NULL);
+
+	res = KSI_receivePublicationsFile(ctx, &pubFile2);
+	CuAssert(tc, "Unable to receive publications file.", res == KSI_OK && pubFile2 != NULL);
+
+	CuAssert(tc, "Files should be different.", pubFile2 != pubFile1);
+
+	KSI_PublicationsFile_free(pubFile1);
+	KSI_PublicationsFile_free(pubFile2);
+#undef TEST_PUBLICATIONS_FILE
+}
+
 CuSuite* PubIntegrationTests_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -147,6 +210,9 @@ CuSuite* PubIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_DownloadPubfile);
 	SUITE_ADD_TEST(suite, Test_DownloadPubfileInvalidConstraints);
 	SUITE_ADD_TEST(suite, Test_DownloadPubfile_ChangeClient);
+	SUITE_ADD_TEST(suite, Test_DownloadPubfileCacheTimeout);
+	SUITE_ADD_TEST(suite, Test_DownloadPubfileCacheNoTimeout);
+	SUITE_ADD_TEST(suite, Test_LoadFromFileAndDownloadPubfile);
 
 	return suite;
 }

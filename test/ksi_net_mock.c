@@ -41,11 +41,11 @@ static int mockPublicationsFileReceive(KSI_RequestHandle *handle) {
 	unsigned char *raw = NULL;
 	unsigned len;
 	long int raw_size = 0;
-	
+
 	if (handle == NULL) goto cleanup;
 
-	KSI_LOG_debug(ctx, "Connecting to MOCK publications file service");
-	
+	KSI_LOG_debug(ctx, "Connecting to MOCK publications file service.");
+
 	f = fopen(getFullResourcePath("resource/tlv/publications.tlv"), "rb");
 	if (f == NULL) {
 		res = KSI_IO_ERROR;

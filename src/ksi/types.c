@@ -834,7 +834,7 @@ int pdu_verifyHmac(KSI_CTX *ctx, const KSI_DataHash *hmac, const char *key, KSI_
 
 	/* If configured, check if HMAC algorithm matches. */
 	if (conf_alg != KSI_HASHALG_INVALID && algo_id != conf_alg)	{
-		KSI_LOG_debug(ctx, "HMAC algorithm mismatch. Expected %s, received %s",
+		KSI_LOG_debug(ctx, "HMAC algorithm mismatch. Expected %s, received %s.",
 				KSI_getHashAlgorithmName(conf_alg), KSI_getHashAlgorithmName(algo_id));
 		KSI_pushError(ctx, res = KSI_HMAC_ALGORITHM_MISMATCH, "HMAC algorithm mismatch.");
 		goto cleanup;
@@ -1630,11 +1630,11 @@ int KSI_AggregationReq_encloseWithHeader(KSI_AggregationReq *req, KSI_Header *hd
 	ctx = req->ctx;
 	KSI_ERR_clearErrors(ctx);
 
-	/* Create the pdu */
+	/* Create the pdu. */
 	res = KSI_AggregationPdu_new(ctx, &tmp);
 	if (res != KSI_OK) goto cleanup;
 
-	/* Set header*/
+	/* Set header. */
 	res = KSI_AggregationPdu_setHeader(tmp, hdr);
 	if (res != KSI_OK) goto cleanup;
 

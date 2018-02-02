@@ -341,7 +341,7 @@ int KSI_createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, int lvl, KSI_Aggregat
 
 	/* For now, the level may be just a single byte. */
 	if (lvl < 0 || lvl > 0xff) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Aggregation level may be only between 0x00 and 0xff");
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Aggregation level may be only between 0x00 and 0xff.");
 		goto cleanup;
 	}
 
@@ -357,7 +357,7 @@ int KSI_createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, int lvl, KSI_Aggregat
 		goto cleanup;
 	}
 
-	/* Create request object */
+	/* Create request object. */
 	res = KSI_AggregationReq_new(ctx, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -392,7 +392,7 @@ int KSI_createSignRequest(KSI_CTX *ctx, KSI_DataHash *hsh, int lvl, KSI_Aggregat
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
 		}
-		/* Will be freed by KSI_AggregationReq_free */
+		/* Will be freed by KSI_AggregationReq_free. */
 		level = NULL;
 	}
 
@@ -494,21 +494,21 @@ int KSI_Signature_replacePublicationRecord(KSI_Signature *sig, KSI_PublicationRe
 			goto cleanup;
 		}
 
-		/* Create a new TLV object */
+		/* Create a new TLV object. */
 		res = KSI_TLV_new(sig->ctx, 0x0803, 0, 0, &newPubTlv);
 		if (res != KSI_OK) {
 			KSI_pushError(sig->ctx, res, NULL);
 			goto cleanup;
 		}
 
-		/* Evaluate the TLV object */
+		/* Evaluate the TLV object. */
 		res = KSI_TlvTemplate_construct(sig->ctx, newPubTlv, pubRec, KSI_TLV_TEMPLATE(KSI_PublicationRecord));
 		if (res != KSI_OK) {
 			KSI_pushError(sig->ctx, res, NULL);
 			goto cleanup;
 		}
 
-		/* Find previous publication */
+		/* Find previous publication. */
 		res = KSI_TLV_getNestedList(sig->baseTlv, &nestedList);
 		if (res != KSI_OK) {
 			KSI_pushError(sig->ctx, res, NULL);
@@ -534,35 +534,6 @@ cleanup:
 	return res;
 }
 
-static int parseAggregationResponse(KSI_CTX *ctx, KSI_uint64_t rootLevel, KSI_AggregationResp *resp, KSI_Signature **signature) {
-	int res;
-	KSI_SignatureBuilder *builder = NULL;
-
-	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || resp == NULL || signature == NULL) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
-		goto cleanup;
-	}
-
-	res = KSI_SignatureBuilder_openFromAggregationResp(resp, &builder);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	/* Turn off the verification. */
-	builder->noVerify = 1;
-	res = KSI_SignatureBuilder_close(builder, rootLevel, signature);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-	res = KSI_OK;
-cleanup:
-	KSI_SignatureBuilder_free(builder);
-	return res;
-}
-
 int KSI_Signature_signAggregatedWithPolicy(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel,
 		const KSI_Policy *policy, KSI_VerificationContext *context, KSI_Signature **signature) {
 	int res;
@@ -570,6 +541,7 @@ int KSI_Signature_signAggregatedWithPolicy(KSI_CTX *ctx, KSI_DataHash *rootHash,
 	KSI_AggregationResp *response = NULL;
 	KSI_Signature *sign = NULL;
 	KSI_AggregationReq *req = NULL;
+	KSI_SignatureBuilder *builder = NULL;
 
 	KSI_ERR_clearErrors(ctx);
 	if (ctx == NULL || rootHash == NULL || signature == NULL) {
@@ -612,7 +584,15 @@ int KSI_Signature_signAggregatedWithPolicy(KSI_CTX *ctx, KSI_DataHash *rootHash,
 		goto cleanup;
 	}
 
-	res = parseAggregationResponse(ctx, rootLevel, response, &sign);
+	res = KSI_SignatureBuilder_openFromAggregationResp(response, &builder);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Turn off the verification. */
+	builder->noVerify = 1;
+	res = KSI_SignatureBuilder_close(builder, rootLevel, &sign);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -635,6 +615,7 @@ cleanup:
 	KSI_Signature_free(sign);
 	KSI_RequestHandle_free(handle);
 	KSI_AggregationReq_free(req);
+	KSI_SignatureBuilder_free(builder);
 
 	return res;
 }
@@ -757,7 +738,7 @@ static int KSI_signature_extendToWithoutVerification(const KSI_Signature *sig, K
 		goto cleanup;
 	}
 
-	/* Extract the calendar hash chain */
+	/* Extract the calendar hash chain. */
 	res = KSI_ExtendResp_getCalendarHashChain(resp, &calHashChain);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -852,7 +833,7 @@ int KSI_Signature_extendWithPolicy(const KSI_Signature *signature, KSI_CTX *ctx,
 		KSI_PublicationData *pubData = NULL;
 
 
-		/* Make a copy of the original publication record .*/
+		/* Make a copy of the original publication record. */
 		res = KSI_PublicationRecord_clone(pubRec, &pubRecClone);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
@@ -1250,13 +1231,13 @@ int KSI_Signature_getPublicationInfo(const KSI_Signature *sig,
 		KSI_pushError(sig->ctx, res, NULL);
 		goto cleanup;
 	}
-	/* Check whether publication record is valid */
+	/* Check whether publication record is valid. */
 	if (pubRec == NULL) {
 		KSI_pushError(sig->ctx, res = KSI_INVALID_FORMAT, NULL);
 		goto cleanup;
 	}
 
-	/* Get publication reference list */
+	/* Get publication reference list. */
 	if (pubRefs != NULL) {
 		res = KSI_Utf8StringList_new(&tmpPubRefs);
 		if (res != KSI_OK) {
@@ -1270,7 +1251,7 @@ int KSI_Signature_getPublicationInfo(const KSI_Signature *sig,
 		}
 	}
 
-	/* Get Repository URL list*/
+	/* Get Repository URL list. */
 	if (repUrls != NULL) {
 		res = KSI_Utf8StringList_new(&tmpRepUrls);
 		if (res != KSI_OK) {
@@ -1284,14 +1265,14 @@ int KSI_Signature_getPublicationInfo(const KSI_Signature *sig,
 		}
 	}
 
-	/* Get publication data */
+	/* Get publication data. */
 	res = KSI_PublicationRecord_getPublishedData(pubRec, &pubData);
 	if (res != KSI_OK) {
 		KSI_pushError(sig->ctx, res, NULL);
 		goto cleanup;
 	}
 
-	/* Convert publication data into base-32 string */
+	/* Convert publication data into base-32 string. */
 	if (pubStr != NULL) {
 		res = KSI_PublicationData_toBase32(pubData, &tmpStr);
 		if (res != KSI_OK) {
@@ -1305,12 +1286,12 @@ int KSI_Signature_getPublicationInfo(const KSI_Signature *sig,
 		}
 	}
 
-	/* Get publication time */
+	/* Get publication time. */
 	if (pubDate != NULL) {
 		tmpPubDate = KSI_Integer_getUInt64(pubData->time);
 	}
 
-	/* Get data hash imprint */
+	/* Get data hash imprint. */
 	if (pubHsh != NULL) {
 		tmpPubHsh = KSI_DataHash_ref(pubData->imprint);
 	}

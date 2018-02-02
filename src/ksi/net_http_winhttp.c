@@ -142,7 +142,7 @@ static int winHTTP_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **
 		goto cleanup;
 	}
 
-	/*Get HTTP status code*/
+	/* Get HTTP status code. */
 	dwordLen = sizeof(DWORD);
 	if (!WinHttpQueryHeaders(handle, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, &http_status, &dwordLen, 0)) {
 		WINHTTP_ERROR_1(ctx, ERROR_INSUFFICIENT_BUFFER, KSI_INVALID_ARGUMENT, "WinHTTP: Insufficient buffer.")
@@ -151,14 +151,14 @@ static int winHTTP_ReadFromHandle(KSI_RequestHandle *reqHandle, unsigned char **
 
 	reqHandle->err.code = http_status;
 
-	/*Get response length*/
+	/* Get response length. */
 	dwordLen = sizeof(DWORD);
 	if (!WinHttpQueryHeaders(handle, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, &http_payload_len, &dwordLen, 0)) {
 		WINHTTP_ERROR_1(ctx, ERROR_INSUFFICIENT_BUFFER, KSI_INVALID_ARGUMENT, "WinHTTP: Insufficient buffer.")
 		WINHTTP_ERROR_N(ctx, KSI_NETWORK_ERROR, "WinHTTP: Unable to get HTTP content length.")
 	}
 
-	/*Get memory for the HTTP payload*/
+	/* Get memory for the HTTP payload. */
 	http_payload = (unsigned char*)KSI_malloc(http_payload_len);
 	if (http_payload == NULL) {
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
@@ -239,7 +239,7 @@ static int winhttpReceive(KSI_RequestHandle *handle) {
 	}
 
 	if (request_len > DWORD_MAX) {
-		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Request length larger than DWORD_MAX");
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Request length larger than DWORD_MAX.");
 		goto cleanup;
 	}
 
@@ -305,7 +305,7 @@ static int winhttpSendRequest(KSI_NetworkClient *client, KSI_RequestHandle *hand
 	}
 
 
-	/*Initializing of winhttp helper struct*/
+	/* Initializing of winhttp helper struct. */
 	res = winhttpNetHandleCtx_new(&implCtx);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
