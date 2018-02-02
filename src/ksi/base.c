@@ -1000,7 +1000,32 @@ int KSI_CTX_setExtender(KSI_CTX *ctx, const char *uri, const char *loginId, cons
 }
 
 int KSI_CTX_setPublicationUrl(KSI_CTX *ctx, const char *uri){
-	return KSI_CTX_setUri(ctx, uri, uri, uri, KSI_UriClient_setPublicationUrl_wrapper);
+	int res = KSI_UNKNOWN_ERROR;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || uri == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_CTX_setUri(ctx, uri, uri, uri, KSI_UriClient_setPublicationUrl_wrapper);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
+
+	/* Clear the cached publications file. */
+	res = KSI_CTX_setPublicationsFile(ctx, NULL);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx,res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
 }
 
 int KSI_CTX_setOption(KSI_CTX *ctx, KSI_Option opt, void *param) {
