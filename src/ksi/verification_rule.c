@@ -3154,7 +3154,7 @@ static int initPublicationsFile(KSI_VerificationContext *info) {
 	VerificationTempData *tempData = NULL;
 	KSI_PublicationsFile *tmp = NULL;
 
-	if (info == NULL) {
+	if (info == NULL || info->ctx == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -3425,6 +3425,7 @@ int KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification(KSI_V
 	KSI_Utf8String *sigtype = NULL;
 	VerificationTempData *tempData = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE;
+	KSI_TLV *baseTlv = NULL;
 
 	if (result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -3505,7 +3506,14 @@ int KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification(KSI_V
 		goto cleanup;
 	}
 
-	res = KSI_TLV_serialize(sig->calendarAuthRec->pubData->baseTlv, &rawData, &rawData_len);
+	res = KSI_PublicationData_getBaseTlv(sig->calendarAuthRec->pubData, &baseTlv);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_TLV_serialize(baseTlv, &rawData, &rawData_len);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -4513,6 +4521,14 @@ int KSI_VerificationRule_UserProvidedPublicationTimeVerification(KSI_Verificatio
 
 	KSI_LOG_info(ctx, "Verify user publication time.");
 
+	if (sig->publication == NULL) {
+		const char *msg = "Signature does not contain publication record.";
+		KSI_LOG_info(ctx, "%s", msg);
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, msg);
+		goto cleanup;
+	}
+
 	res = KSI_PublicationData_getTime(sig->publication->publishedData, &sigPubTime);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
@@ -4657,6 +4673,14 @@ int KSI_VerificationRule_UserProvidedPublicationHashVerification(KSI_Verificatio
 	KSI_ERR_clearErrors(ctx);
 
 	KSI_LOG_info(ctx, "Verify user publication hash.");
+
+	if (sig->publication == NULL) {
+		const char *msg = "Signature does not contain publication record.";
+		KSI_LOG_info(ctx, "%s", msg);
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, msg);
+		goto cleanup;
+	}
 
 	res = KSI_PublicationData_getImprint(sig->publication->publishedData, &sigPubHash);
 	if (res != KSI_OK) {
