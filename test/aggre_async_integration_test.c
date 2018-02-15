@@ -1065,7 +1065,7 @@ void Test_AsyncSign_requestConfigAndAggrRequest_loop_http(CuTest* tc) {
 	asyncSigning_requestConfigAndAggrRequest_loop(tc, KSITest_composeUri(TEST_SCHEME_HTTP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
 }
 
-CuSuite* AsyncIntegrationTests_getSuite(void) {
+CuSuite* AsyncAggrIntegrationTests_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
 	/* Common test cases. */

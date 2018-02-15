@@ -98,6 +98,18 @@ extern "C" {
 	int KSI_SignatureBuilder_setCalendarHashChain(KSI_SignatureBuilder *builder, KSI_CalendarHashChain *cal);
 
 	/**
+	 * This function applies the calendar hash chain of the signature. It will replace the existing calendar hash
+	 * chain if present and remove calendar hash chain authentication record or publication recond.
+	 * A use case is to apply an extended calendar hash chain to a KSI signature.
+	 * \param[in]	builder		Pointer to the builder.
+	 * \param[in]	cal			Calendar chain.
+	 * \note It is the responsibility of the caller to free the input parameters after use.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_SignatureBuilder_openFromSignature to initialize \c builder with a KSI signature.
+	 */
+	int KSI_SignatureBuilder_applyCalendarHashChain(KSI_SignatureBuilder *builder, KSI_CalendarHashChain *cal);
+
+	/**
 	 * This function adds an aggregation chain to the signature.
 	 * \param[in]	builder		Pointer to the builder.
 	 * \param[in]	aggr		Aggregation chain.

@@ -250,10 +250,14 @@ EXPORTS
 	KSI_RequestHandle_perform
 	KSI_RequestHandle_getResponseStatus
 
+;net_async.h
+EXPORTS
 	KSI_AsyncClient_free
 	KSI_AbstractAsyncClient_new
 	KSI_AsyncHandle_free
 	KSI_AsyncAggregationHandle_new
+	KSI_AsyncExtendHandle_new
+	KSI_AsyncExtendingHandle_new
 	KSI_AsyncHandle_setRequestCtx
 	KSI_AsyncHandle_getRequestCtx
 	KSI_AsyncHandle_getRequestId
@@ -263,11 +267,13 @@ EXPORTS
 	KSI_AsyncHandle_getErrorMessage
 	KSI_AsyncHandle_getAggregationReq
 	KSI_AsyncHandle_getAggregationResp
+	KSI_AsyncHandle_getExtendResp
 	KSI_AsyncHandle_getSignature
 	KSI_AsyncHandle_getConfig
 	KSI_AsyncService_free
 	KSI_AbstractAsyncService_new
 	KSI_SigningAsyncService_new
+	KSI_ExtendingAsyncService_new
 	KSI_AsyncService_getPendingCount
 	KSI_AsyncService_getReceivedCount
 	KSI_AsyncService_setOption
@@ -392,18 +398,12 @@ EXPORTS
 ;signature.h
 EXPORTS
 	KSI_Signature_free
-	KSI_Signature_verifyDocument
 	KSI_Signature_clone
 	KSI_Signature_parseWithPolicy
-	KSI_Signature_fromFileWithPolicy
 	KSI_Signature_serialize
-	KSI_Signature_create
-	KSI_Signature_createAggregated
 	KSI_Signature_extendWithPolicy
 	KSI_Signature_extendToWithPolicy
 	KSI_Signature_getDocumentHash
-	KSI_Signature_getHashAlgorithm
-	KSI_Signature_createDataHasher
 	KSI_Signature_getSigningTime
 	KSI_Signature_getAggregationHashChainIdentity
 	KSI_Signature_getPublicationRecord
@@ -428,10 +428,20 @@ EXPORTS
 	KSI_AggregationHashChainList_aggregate
 	KSI_Signature_getPublicationInfo
 	KSI_Signature_signAggregatedWithPolicy
-	KSI_Signature_signWithPolicy
 	KSI_Signature_signAggregationChain
 	KSI_AggregationHashChain_aggregate
 	KSI_AggregationHashChain_getIdentity
+
+;signature_helper.h
+EXPORTS
+	KSI_Signature_create
+	KSI_Signature_createAggregated
+	KSI_Signature_createDataHasher
+	KSI_Signature_fromFileWithPolicy
+	KSI_Signature_getHashAlgorithm
+	KSI_Signature_signWithPolicy
+	KSI_Signature_verifyDocument
+	KSI_Signature_verifyWithPolicy
 
 ;tlv_element.h
 EXPORTS
@@ -554,6 +564,7 @@ EXPORTS
 	KSI_MetaData_setRequestTimeInMicros
 	KSI_ExtendPdu_free
 	KSI_ExtendPdu_new
+	KSI_ExtendPdu_verify
 	KSI_ExtendPdu_verifyHmac
 	KSI_ExtendPdu_calculateHmac
 	KSI_ExtendPdu_getHeader
@@ -675,9 +686,11 @@ EXPORTS
 	KSI_ExtendReq_getRequestId
 	KSI_ExtendReq_getAggregationTime
 	KSI_ExtendReq_getPublicationTime
+	KSI_ExtendReq_getConfig
 	KSI_ExtendReq_setRequestId
 	KSI_ExtendReq_setAggregationTime
 	KSI_ExtendReq_setPublicationTime
+	KSI_ExtendReq_setConfig
 	KSI_ExtendReq_enclose
 	KSI_ExtendResp_free
 	KSI_ExtendResp_new
@@ -977,6 +990,7 @@ EXPORTS
 	KSI_SignatureBuilder_close
 	KSI_SignatureBuilder_free
 	KSI_SignatureBuilder_setCalendarHashChain
+	KSI_SignatureBuilder_applyCalendarHashChain
 	KSI_SignatureBuilder_addAggregationChain
 	KSI_SignatureBuilder_appendAggregationChain
 	KSI_SignatureBuilder_createSignatureWithAggregationChain

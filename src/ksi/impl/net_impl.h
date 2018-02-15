@@ -120,8 +120,12 @@ extern "C" {
 		KSI_uint64_t id;
 
 		/** Application layer request context. */
+		/* Aggregation request. */
 		KSI_AggregationReq *aggrReq;
+		/* Extend request. */
 		KSI_ExtendReq *extReq;
+		const KSI_Signature *signature;
+		const KSI_PublicationRecord *pubRec;
 
 		/** Application layer response context. */
 		void *respCtx;

@@ -56,6 +56,62 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_Signature)
 	KSI_TLV_COMPOSITE(0x0806, KSI_TLV_TMPL_FLG_NONE, KSI_Signature_getRFC3161, KSI_Signature_setRFC3161, KSI_RFC3161, "rfc3161_rec")
 KSI_END_TLV_TEMPLATE
 
+static int removeCalAuthAndPublication(KSI_Signature *sig) {
+	KSI_LIST(KSI_TLV) *nested = NULL;
+	KSI_TLV *tlv = NULL;
+	int res;
+	int i;
+
+	if (sig == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(sig->ctx);
+
+	res = KSI_TLV_getNestedList(sig->baseTlv, &nested);
+	if (res != KSI_OK) {
+		KSI_pushError(sig->ctx, res, NULL);
+		goto cleanup;
+	}
+	/* By looping in reverse order, we can safely remove elements
+	 * and continue. */
+	for (i = (int)KSI_TLVList_length(nested) - 1; i >= 0; i--) {
+		unsigned tag;
+
+		res = KSI_TLVList_elementAt(nested, (unsigned)i, &tlv);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		tag = KSI_TLV_getTag(tlv);
+
+		if (tag == 0x0803 || tag == 0x0805) {
+			res = KSI_TLVList_remove(nested, (unsigned)i, NULL);
+			if (res != KSI_OK) {
+				KSI_pushError(sig->ctx, res, NULL);
+				goto cleanup;
+			}
+			tlv = NULL;
+		}
+	}
+
+	KSI_CalendarAuthRec_free(sig->calendarAuthRec);
+	sig->calendarAuthRec = NULL;
+
+	KSI_PublicationRecord_free(sig->publication);
+	sig->publication = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_nofree(nested);
+	KSI_nofree(tlv);
+
+	return res;
+}
+
 static int replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calendarHashChain) {
 	int res;
 	KSI_DataHash *aggrOutputHash = NULL;
@@ -630,6 +686,7 @@ static int KSI_Signature_new(KSI_CTX *ctx, KSI_Signature **sig) {
 	tmp->publication = NULL;
 	tmp->replaceCalendarChain = replaceCalendarChain;
 	tmp->appendAggregationChain = appendAggregationChain;
+	tmp->removeCalAuthAndPublication = removeCalAuthAndPublication;
 
 	res = KSI_VerificationResult_init(&tmp->verificationResult, ctx);
 	if (res != KSI_OK) {
@@ -1090,6 +1147,37 @@ int KSI_SignatureBuilder_setCalendarHashChain(KSI_SignatureBuilder *builder, KSI
 cleanup:
 
 	KSI_CalendarHashChain_free(tmp);
+
+	return res;
+}
+
+int KSI_SignatureBuilder_applyCalendarHashChain(KSI_SignatureBuilder *builder, KSI_CalendarHashChain *cal) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CalendarHashChain *tmp = NULL;
+
+	if (builder == NULL || cal == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(builder->ctx);
+
+	/* Add the hash chain to the signature. */
+	res = replaceCalendarChain(builder->sig, tmp = KSI_CalendarHashChain_ref(cal));
+	if (res != KSI_OK) {
+		KSI_CalendarHashChain_free(tmp);
+		KSI_pushError(builder->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Remove calendar auth record and publication. */
+	res = removeCalAuthAndPublication(builder->sig);
+	if (res != KSI_OK) {
+		KSI_pushError(builder->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
 
 	return res;
 }
