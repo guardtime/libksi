@@ -127,7 +127,10 @@ In order to get trial access to the KSI platform, go to [https://guardtime.com/b
 A simple example how to sign a document and verify the signature:
 ```C
 
+
 	#include <ksi/ksi.h>
+	#include <stdio.h>
+	#include <string.h>
 
 	int main(void) {
 		/* Return values of libksi function calls. */
@@ -150,11 +153,11 @@ A simple example how to sign a document and verify the signature:
 		/* Publications file siging cert verification constraints. */
 		KSI_CertConstraint certConstr[] = {
 			{ KSI_CERT_EMAIL, "publications@guardtime.com"},
-			{ NULL, NULL};
+			{ NULL, NULL}
 		};
 
 		/* Set the verification criteria. */
-		KSI_PublicationsFile_setCertConstrains(pubFile, certConstr);
+		KSI_PublicationsFile_setCertConstraints(pubFile, certConstr);
 
 		/* Verify the publications file. */
 		res = KSI_PublicationsFile_verify(pubFile, ksi);
@@ -168,12 +171,16 @@ A simple example how to sign a document and verify the signature:
 		/* Calculate hash of document, sign the hash and verify the signature. */
 		KSI_DataHash *hsh = NULL;       /* Must be freed. */
 		KSI_Signature *sig = NULL;      /* Must be freed. */
-		KSI_DataHash_create(ksi, data, data_len, &hsh);
+		char *data = "Hello KSI!";
+		size_t data_len = strlen(data);
+		KSI_DataHash_create(ksi, data, data_len, KSI_HASHALG_SHA2_256, &hsh);
 		KSI_createSignature(ksi, hsh, &sig);
 
 		res = KSI_verifySignature(ksi, sig);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable to verify the signature.\n");
+		} else {
+			printf("Verified!");
 		}
 	}
 
