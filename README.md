@@ -176,7 +176,7 @@ A simple example how to sign a document and verify the signature:
 		KSI_DataHash_create(ksi, data, data_len, KSI_HASHALG_SHA2_256, &hsh);
 		KSI_createSignature(ksi, hsh, &sig);
 
-		res = KSI_verifySignature(ksi, sig);
+		res = KSI_verifyDataHash(ksi, sig, hsh);
 		if (res != KSI_OK) {
 			fprintf(stderr, "Unable to verify the signature.\n");
 		} else {
