@@ -27,7 +27,7 @@
 #include "impl/net_http_impl.h"
 #include "impl/net_impl.h"
 
-static size_t curlGlobal_initCount = 0;
+size_t curlGlobal_initCount = 0;
 
 typedef struct CurlNetHandleCtx_st {
 	KSI_CTX *ctx;

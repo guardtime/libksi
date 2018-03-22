@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2017 Guardtime, Inc.
+ * Copyright 2013-2018 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -27,17 +27,28 @@
 #include <curl/curl.h>
 
 #include "net_http.h"
-#include "impl/net_impl.h"
+#include "impl/net_async_impl.h"
 #include "net_async.h"
 #include "tlv.h"
 #include "fast_tlv.h"
 #include "types.h"
+#include "list.h"
 
-typedef struct HttpAsyncCtx_st {
+
+typedef struct HttpAsyncCtx_st HttpAsyncCtx;
+typedef struct CurlMulti_st CurlMulti;
+typedef struct CurlAsyncRequest_st CurlAsyncRequest;
+
+struct CurlMulti_st {
+	size_t initCount;
+	CURLM *handle;
+};
+
+struct HttpAsyncCtx_st {
 	KSI_CTX *ctx;
 
 	/* Curl multi handle. */
-	CURLM *curl;
+	CurlMulti *curl;
 
 	/* Output queue. */
 	KSI_LIST(KSI_AsyncHandle) *reqQueue;
@@ -62,10 +73,10 @@ typedef struct HttpAsyncCtx_st {
 	char *ksi_user;
 	char *ksi_pass;
 	char *url;
-} HttpAsyncCtx;
+};
 
-typedef struct CurlAsyncRequest_st {
-	KSI_CTX *ctx;
+struct CurlAsyncRequest_st {
+	HttpAsyncCtx *client;
 	/* Curl easy handle. */
 	CURL *easyHandle;
 	/* Curl HTTP header list. */
@@ -77,10 +88,11 @@ typedef struct CurlAsyncRequest_st {
 	size_t len;
 	/* Request context. */
 	KSI_AsyncHandle *reqCtx;
-} CurlAsyncRequest;
+};
 
 static void curlAsyncRequest_free(CurlAsyncRequest *t) {
 	if (t != NULL) {
+		KSI_nofree(t->client);
 		KSI_AsyncHandle_free(t->reqCtx);
 		KSI_free(t->raw);
 		if (t->httpHeaders != NULL) curl_slist_free_all(t->httpHeaders);
@@ -89,11 +101,11 @@ static void curlAsyncRequest_free(CurlAsyncRequest *t) {
 	}
 }
 
-static int curlAsyncRequest_new(KSI_CTX *ctx, CurlAsyncRequest **t) {
+static int curlAsyncRequest_new(HttpAsyncCtx *client, CurlAsyncRequest **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	CurlAsyncRequest *tmp = NULL;
 
-	if (ctx == NULL || t == NULL) {
+	if (client == NULL || t == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -103,7 +115,7 @@ static int curlAsyncRequest_new(KSI_CTX *ctx, CurlAsyncRequest **t) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
-	tmp->ctx = ctx;
+	tmp->client = client;
 
 	tmp->easyHandle = NULL;
 	tmp->len = 0;
@@ -114,7 +126,7 @@ static int curlAsyncRequest_new(KSI_CTX *ctx, CurlAsyncRequest **t) {
 
 	tmp->easyHandle = curl_easy_init();
 	if (tmp->easyHandle == NULL) {
-		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, "Curl: Unable to init easy handle.");
+		KSI_pushError(client->ctx, res = KSI_OUT_OF_MEMORY, "Curl: Unable to init easy handle.");
 		goto cleanup;
 	}
 
@@ -127,6 +139,69 @@ cleanup:
 	return res;
 }
 
+static int curlAsyncRequest_processResponse(CurlAsyncRequest *curlResponse) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_OctetString *resp = NULL;
+	HttpAsyncCtx *clientCtx = NULL;
+	KSI_AsyncHandle *handle = NULL;
+
+	if (curlResponse == NULL || curlResponse->client == NULL || curlResponse->reqCtx == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	clientCtx = curlResponse->client;
+	handle = curlResponse->reqCtx;
+
+	KSI_ERR_clearErrors(clientCtx->ctx);
+
+	if (handle->state == KSI_ASYNC_STATE_WAITING_FOR_RESPONSE) {
+		size_t count = 0;
+
+		/* The stream might contain several response PDUs. */
+		while (count < curlResponse->len) {
+			KSI_FTLV ftlv;
+			size_t tlvSize = 0;
+
+			/* Traverse through the input stream and verify that a complete TLV is present. */
+			memset(&ftlv, 0, sizeof(KSI_FTLV));
+			res = KSI_FTLV_memRead(curlResponse->raw + count, curlResponse->len - count, &ftlv);
+			if (res != KSI_OK) {
+				KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_ERROR,
+						"Async Curl HTTP: Unable to extract TLV from input stream",
+						curlResponse->raw, curlResponse->len);
+				handle->state = KSI_ASYNC_STATE_ERROR;
+				handle->err = KSI_NETWORK_ERROR;
+				break;
+			}
+			tlvSize = ftlv.hdr_len + ftlv.dat_len;
+
+			KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "Async Curl HTTP: received response", curlResponse->raw + count, tlvSize);
+
+			res = KSI_OctetString_new(clientCtx->ctx, curlResponse->raw + count,  tlvSize, &resp);
+			if (res != KSI_OK) {
+				KSI_LOG_error(clientCtx->ctx, "Async Curl HTTP: unable to create new KSI_OctetString object. Error: 0x%x.", res);
+				res = KSI_OK;
+				goto cleanup;
+			}
+
+			res = KSI_OctetStringList_append(clientCtx->respQueue, resp);
+			if (res != KSI_OK) {
+				KSI_LOG_error(clientCtx->ctx, "Async Curl HTTP: unable to add new response to queue. Error: 0x%x.", res);
+				res = KSI_OK;
+				goto cleanup;
+			}
+			resp = NULL;
+
+			count += tlvSize;
+		}
+	}
+
+	res = KSI_OK;
+cleanup:
+	KSI_OctetString_free(resp);
+	return res;
+}
+
 static size_t curlCallback_receive(char *ptr, size_t size, size_t nmemb, void *userdata) {
 	const size_t bytesReceived = size * nmemb;
 	CurlAsyncRequest *curlReq = (CurlAsyncRequest*)userdata;
@@ -135,7 +210,7 @@ static size_t curlCallback_receive(char *ptr, size_t size, size_t nmemb, void *u
 
 	bytesCount = curlReq->len + bytesReceived;
 	if (bytesCount > UINT_MAX) {
-		KSI_LOG_debug(curlReq->ctx, "Async Curl HTTP: too many bytes received %llu bytes (%llu so far).",
+		KSI_LOG_debug(curlReq->client->ctx, "Async Curl HTTP: too many bytes received %llu bytes (%llu so far).",
 				(unsigned long long)curlReq->len, (unsigned long long)bytesReceived);
 		goto cleanup;
 	}
@@ -150,7 +225,7 @@ static size_t curlCallback_receive(char *ptr, size_t size, size_t nmemb, void *u
 	curlReq->len = bytesCount;
 	tmp_buffer = NULL;
 
-	KSI_LOG_debug(curlReq->ctx, "0x%p: Async Curl HTTP received %llu bytes (%llu so far).", curlReq,
+	KSI_LOG_debug(curlReq->client->ctx, "0x%p: Async Curl HTTP received %llu bytes (%llu so far).", curlReq,
 			(unsigned long long)bytesCount, (unsigned long long)curlReq->len);
 
 	bytesCount = bytesReceived;
@@ -196,27 +271,10 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 	}
 	KSI_ERR_clearErrors(clientCtx->ctx);
 
-	/* Check connection. */
 	if (clientCtx->curl == NULL) {
-		/* Only open connection if there is anything in request queue. */
-		if (KSI_AsyncHandleList_length(clientCtx->reqQueue) == 0) {
-			KSI_LOG_debug(clientCtx->ctx, "Async Curl HTTP not ready.");
-			res = KSI_OK;
-			goto cleanup;
-		}
-
-		clientCtx->curl = curl_multi_init();
-		if (clientCtx->curl == NULL) {
-			KSI_LOG_error(clientCtx->ctx, "Async Curl HTTP: Unable to init multi handle.");
-			reqQueue_clearWithError(clientCtx->reqQueue, KSI_OUT_OF_MEMORY, 0);
-			res = KSI_OK;
-			goto cleanup;
-		}
-
-		/* Limit the total amount of connections this multi handle uses. */
-		curl_multi_setopt(clientCtx->curl, CURLMOPT_MAXCONNECTS, 1L);
+		KSI_pushError(clientCtx->ctx, res = KSI_INVALID_STATE, "Curl multi handle is not initialized.");
+		goto cleanup;
 	}
-
 
 	/* Handle output. */
 	/* Add all requests to the curl multi handle. */
@@ -248,7 +306,7 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 			} else {
 				KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "Curl HTTP: Preparing request", req->raw, req->len);
 
-				res = curlAsyncRequest_new(clientCtx->ctx, &curlRequest);
+				res = curlAsyncRequest_new(clientCtx, &curlRequest);
 				if (res != KSI_OK) {
 					KSI_pushError(clientCtx->ctx, res, NULL);
 					goto cleanup;
@@ -280,7 +338,7 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 					KSI_snprintf(header, sizeof(header), "Content-Type: %s", clientCtx->mimeType);
 					slist = curl_slist_append(curlRequest->httpHeaders, header);
 					if (slist == NULL) {
-						KSI_pushError(clientCtx->ctx, res, NULL);
+						KSI_pushError(clientCtx->ctx, res = KSI_INVALID_STATE, "Failed to set mime type.");
 						goto cleanup;
 					}
 					curlRequest->httpHeaders = slist;
@@ -303,7 +361,7 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 				curl_easy_setopt(curlRequest->easyHandle, CURLOPT_URL, clientCtx->url);
 
 				/* Add easy handle to the multi handle. */
-				curl_multi_add_handle(clientCtx->curl, curlRequest->easyHandle);
+				curl_multi_add_handle(clientCtx->curl->handle, curlRequest->easyHandle);
 				curlRequest = NULL;
 				clientCtx->roundCount++;
 
@@ -320,7 +378,7 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 		}
 	}
 
-	while((curlmCode = curl_multi_perform(clientCtx->curl, &stillRunning)) == CURLM_CALL_MULTI_PERFORM);
+	while((curlmCode = curl_multi_perform(clientCtx->curl->handle, &stillRunning)) == CURLM_CALL_MULTI_PERFORM);
 	if (curlmCode != CURLM_OK) {
 		KSI_LOG_error(clientCtx->ctx, "Async Curl HTTP returned error. Error: %d (%s).", curlmCode, curl_multi_strerror(curlmCode));
 		reqQueue_clearWithError(clientCtx->reqQueue, KSI_NETWORK_ERROR, curlmCode);
@@ -337,90 +395,59 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 	/* Check if any transfer has completed. */
 	if (clientCtx->prevRunningCount > (size_t)stillRunning) {
 		int msgQueue;
-		while ((curlMsg = curl_multi_info_read(clientCtx->curl, &msgQueue))) {
+
+		while ((curlMsg = curl_multi_info_read(clientCtx->curl->handle, &msgQueue))) {
 			CURLcode curlCode;
-			KSI_AsyncHandle *handle = NULL;
-			long httpCode = 0;
 
 			if (curlMsg->msg != CURLMSG_DONE) continue;
 
+			curlResponse = NULL;
 			curlCode = curl_easy_getinfo(curlMsg->easy_handle, CURLINFO_PRIVATE, (char **)&curlResponse);
 			if (curlCode != CURLE_OK || curlResponse == NULL) {
 				KSI_LOG_error(clientCtx->ctx, "Async Curl HTTP: Failed to read private pointer.");
 			} else {
+				KSI_AsyncHandle *handle = NULL;
+
 				handle = curlResponse->reqCtx;
-				if (handle->state == KSI_ASYNC_STATE_WAITING_FOR_RESPONSE) {
-					if (curlMsg->data.result != CURLE_OK) {
+				if (curlMsg->data.result != CURLE_OK) {
+					size_t len = strlen(curlResponse->errMsg);
+					KSI_LOG_error(clientCtx->ctx, "Async Curl HTTP: error result %d (%s).", curlMsg->data.result, curlResponse->errMsg);
+					handle->state = KSI_ASYNC_STATE_ERROR;
+					handle->err = KSI_NETWORK_ERROR;
+					handle->errExt = curlMsg->data.result;
+					if (len) KSI_Utf8String_new(clientCtx->ctx, curlResponse->errMsg, len + 1, &handle->errMsg);
+				} else {
+					long httpCode = 0;
+
+					/* Read HTTP error code. */
+					if (curl_easy_getinfo(curlMsg->easy_handle, CURLINFO_RESPONSE_CODE, &httpCode) == CURLE_OK ||
+							curl_easy_getinfo(curlMsg->easy_handle, CURLINFO_HTTP_CODE, &httpCode) == CURLE_OK) {
+						KSI_LOG_debug(clientCtx->ctx, "Async Curl HTTP: Async received HTTP status code %ld.", httpCode);
+					}
+
+					if (httpCode >= 400 && httpCode < 600) {
 						size_t len = strlen(curlResponse->errMsg);
-						KSI_LOG_error(clientCtx->ctx, "Async Curl HTTP: error result %d (%s).", curlMsg->data.result, curlResponse->errMsg);
+						KSI_LOG_debug(clientCtx->ctx, "Async Curl HTTP: received HTTP code %ld. Curl error '%s'.", httpCode, curlResponse->errMsg);
 						handle->state = KSI_ASYNC_STATE_ERROR;
-						handle->err = KSI_NETWORK_ERROR;
-						handle->errExt = curlMsg->data.result;
+						handle->err = KSI_HTTP_ERROR;
+						handle->errExt = httpCode;
 						if (len) KSI_Utf8String_new(clientCtx->ctx, curlResponse->errMsg, len + 1, &handle->errMsg);
 					} else {
-						/* Read HTTP error code. */
-						if (curl_easy_getinfo(curlMsg->easy_handle, CURLINFO_RESPONSE_CODE, &httpCode) == CURLE_OK ||
-								curl_easy_getinfo(curlMsg->easy_handle, CURLINFO_HTTP_CODE, &httpCode) == CURLE_OK) {
-							KSI_LOG_debug(clientCtx->ctx, "Async Curl HTTP: Async received HTTP status code %ld.", httpCode);
-						}
-
-						if (httpCode >= 400 && httpCode < 600) {
-							size_t len = strlen(curlResponse->errMsg);
-							KSI_LOG_debug(clientCtx->ctx, "Async Curl HTTP: received HTTP code %ld. Curl error '%s'.", httpCode, curlResponse->errMsg);
-							handle->state = KSI_ASYNC_STATE_ERROR;
-							handle->err = KSI_HTTP_ERROR;
-							handle->errExt = httpCode;
-							if (len) KSI_Utf8String_new(clientCtx->ctx, curlResponse->errMsg, len + 1, &handle->errMsg);
-						} else {
-							size_t count = 0;
-
-							KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "Async Curl HTTP: received stream", curlResponse->raw, curlResponse->len);
-
-							while (count < curlResponse->len) {
-								KSI_FTLV ftlv;
-								size_t tlvSize = 0;
-
-								/* Traverse through the input stream and verify that a complete TLV is present. */
-								memset(&ftlv, 0, sizeof(KSI_FTLV));
-								res = KSI_FTLV_memRead(curlResponse->raw + count, curlResponse->len - count, &ftlv);
-								if (res != KSI_OK) {
-									KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_ERROR,
-											"Async Curl HTTP: Unable to extract TLV from input stream",
-											curlResponse->raw, curlResponse->len);
-									handle->state = KSI_ASYNC_STATE_ERROR;
-									handle->err = KSI_NETWORK_ERROR;
-									break;
-								}
-								tlvSize = ftlv.hdr_len + ftlv.dat_len;
-
-								KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "Async Curl HTTP: received response", curlResponse->raw + count, tlvSize);
-
-								res = KSI_OctetString_new(clientCtx->ctx, curlResponse->raw + count,  tlvSize, &resp);
-								if (res != KSI_OK) {
-									KSI_LOG_error(clientCtx->ctx, "Async Curl HTTP: unable to create new KSI_OctetString object. Error: 0x%x.", res);
-									res = KSI_OK;
-									goto cleanup;
-								}
-
-								res = KSI_OctetStringList_append(clientCtx->respQueue, resp);
-								if (res != KSI_OK) {
-									KSI_LOG_error(clientCtx->ctx, "Async Curl HTTP: unable to add new response to queue. Error: 0x%x.", res);
-									res = KSI_OK;
-									goto cleanup;
-								}
-								resp = NULL;
-
-								count += tlvSize;
-							}
+						/* Process responses for all active clients. */
+						res = curlAsyncRequest_processResponse(curlResponse);
+						if (res != KSI_OK) {
+							KSI_LOG_error(clientCtx->ctx, "Async Curl HTTP: unable to process curl response. Error: 0x%x.", res);
+							KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_ERROR, "Async Curl HTTP: response stream", curlResponse->raw, curlResponse->len);
+							res = KSI_OK;
+							goto cleanup;
 						}
 					}
 				}
+				curl_multi_remove_handle(clientCtx->curl->handle, curlResponse->easyHandle);
+				curlAsyncRequest_free(curlResponse);
+				curlResponse = NULL;
 			}
-
-			curl_multi_remove_handle(clientCtx->curl, curlMsg->easy_handle);
 			curlMsg = NULL;
-			curlAsyncRequest_free(curlResponse);
-			curlResponse = NULL;
 		}
 	}
 	clientCtx->prevRunningCount = (size_t)stillRunning;
@@ -429,8 +456,10 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 cleanup:
 	curlAsyncRequest_free(curlRequest);
 
-	if (curlResponse != NULL) curl_multi_remove_handle(clientCtx->curl, curlResponse->easyHandle);
-	curlAsyncRequest_free(curlResponse);
+	if (curlResponse != NULL) {
+		curl_multi_remove_handle(clientCtx->curl->handle, curlResponse->easyHandle);
+		curlAsyncRequest_free(curlResponse);
+	}
 
 	KSI_OctetString_free(resp);
 	return res;
@@ -512,7 +541,7 @@ static int getCredentials(HttpAsyncCtx *asyncCtx, const char **user, const char 
 	return KSI_OK;
 }
 
-static size_t curlGlobal_initCount = 0;
+extern size_t curlGlobal_initCount;
 
 static int curlGlobal_init(void) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -537,22 +566,65 @@ static void curlGlobal_cleanup(void) {
 	curl_global_cleanup();
 }
 
-static void HttpAsyncCtx_free(HttpAsyncCtx *o) {
+static CurlMulti *_curlMulti = NULL;
+
+static void CurlMulti_free(CurlMulti *o) {
 	if (o != NULL) {
 		int msgCount = 0;
 
-		/* Cleanup curl multi handle. */
+		/* Cleanup curl easy handles attached to the multi handle. */
 		do {
 			CURLMsg *msg;
-			msg = curl_multi_info_read(o->curl, &msgCount);
+			msg = curl_multi_info_read(o->handle, &msgCount);
 			if (msg) {
 				char *curlPriv = NULL;
-				curl_multi_remove_handle(o->curl, msg->easy_handle);
+				curl_multi_remove_handle(o->handle, msg->easy_handle);
 				curl_easy_getinfo(msg->easy_handle, CURLINFO_PRIVATE, &curlPriv);
 				curlAsyncRequest_free((CurlAsyncRequest *)curlPriv);
 			}
 		} while (msgCount);
-		curl_multi_cleanup(o->curl);
+		curl_multi_cleanup(_curlMulti->handle);
+
+		KSI_free(o);
+	}
+}
+
+static CurlMulti *curlMulti_init(void) {
+	CurlMulti *tmp = NULL;
+
+	if (_curlMulti == NULL) {
+		tmp = KSI_new(CurlMulti);
+		if (tmp == NULL) goto cleanup;
+
+		tmp->handle = NULL;
+		tmp->initCount = 0;
+
+		if ((tmp->handle = curl_multi_init()) == NULL) goto cleanup;
+
+#ifdef LIMIT_MAXCONNS
+		/* Limit the total amount of connections this multi handle uses. */
+		curl_multi_setopt(curlMulti->handle, CURLMOPT_MAXCONNECTS, (long)count);
+#endif
+
+		_curlMulti = tmp;
+		tmp = NULL;
+	}
+	_curlMulti->initCount++;
+cleanup:
+	CurlMulti_free(tmp);
+	return _curlMulti;
+}
+
+static void curlMulti_cleanup(void) {
+	if (_curlMulti != NULL && --_curlMulti->initCount == 0) {
+		CurlMulti_free(_curlMulti);
+		_curlMulti = NULL;
+	}
+}
+
+static void HttpAsyncCtx_free(HttpAsyncCtx *o) {
+	if (o != NULL) {
+		curlMulti_cleanup();
 		curlGlobal_cleanup();
 
 		/* Cleanup queues. */
@@ -604,6 +676,11 @@ static int HttpAsyncCtx_new(KSI_CTX *ctx, HttpAsyncCtx **clientCtx) {
 	tmp->ksi_pass = NULL;
 	tmp->url = NULL;
 
+	tmp->curl = curlMulti_init();
+	if (tmp->curl == NULL) {
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, "Curl: Unable to init multi handle.");
+		goto cleanup;
+	}
 
 	/* Initialize io queues. */
 	res = KSI_AsyncHandleList_new(&tmp->reqQueue);
@@ -673,5 +750,3 @@ int KSI_HttpAsyncClient_setService(KSI_AsyncClient *c, const char *url, const ch
 }
 
 #endif /* KSI_NET_HTTP_IMPL==KSI_IMPL_CURL */
-
-
