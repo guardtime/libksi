@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2018 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -101,18 +101,64 @@ static void parseConstraint(KSITest_PubfileConf *conf, unsigned at, const char *
 }
 
 static void conf_append(KSITest_Conf *conf, const char *param, const char *value) {
+
+	/* Parse extender configuration. */
 	CONF_str_cpy(extender.host, param, value);
 	CONF_int_set(extender.port, param, value);
 	CONF_str_cpy(extender.pass, param, value);
 	CONF_str_cpy(extender.user, param, value);
 	CONF_str_cpy(extender.hmac, param, value);
 
+	/* HA Service conf. */
+	CONF_str_cpy(ha.extender[0].host, param, value);
+	CONF_int_set(ha.extender[0].port, param, value);
+	CONF_str_cpy(ha.extender[0].pass, param, value);
+	CONF_str_cpy(ha.extender[0].user, param, value);
+	CONF_str_cpy(ha.extender[0].hmac, param, value);
+
+	CONF_str_cpy(ha.extender[1].host, param, value);
+	CONF_int_set(ha.extender[1].port, param, value);
+	CONF_str_cpy(ha.extender[1].pass, param, value);
+	CONF_str_cpy(ha.extender[1].user, param, value);
+	CONF_str_cpy(ha.extender[1].hmac, param, value);
+
+	CONF_str_cpy(ha.extender[2].host, param, value);
+	CONF_int_set(ha.extender[2].port, param, value);
+	CONF_str_cpy(ha.extender[2].pass, param, value);
+	CONF_str_cpy(ha.extender[2].user, param, value);
+	CONF_str_cpy(ha.extender[2].hmac, param, value);
+
+
+
+	/* Parse aggregator configuration. */
 	CONF_str_cpy(aggregator.host, param, value);
 	CONF_int_set(aggregator.port, param, value);
 	CONF_str_cpy(aggregator.pass, param, value);
 	CONF_str_cpy(aggregator.user, param, value);
 	CONF_str_cpy(aggregator.hmac, param, value);
 
+	/* HA Service conf. */
+	CONF_str_cpy(ha.aggregator[0].host, param, value);
+	CONF_int_set(ha.aggregator[0].port, param, value);
+	CONF_str_cpy(ha.aggregator[0].pass, param, value);
+	CONF_str_cpy(ha.aggregator[0].user, param, value);
+	CONF_str_cpy(ha.aggregator[0].hmac, param, value);
+
+	CONF_str_cpy(ha.aggregator[1].host, param, value);
+	CONF_int_set(ha.aggregator[1].port, param, value);
+	CONF_str_cpy(ha.aggregator[1].pass, param, value);
+	CONF_str_cpy(ha.aggregator[1].user, param, value);
+	CONF_str_cpy(ha.aggregator[1].hmac, param, value);
+
+	CONF_str_cpy(ha.aggregator[2].host, param, value);
+	CONF_int_set(ha.aggregator[2].port, param, value);
+	CONF_str_cpy(ha.aggregator[2].pass, param, value);
+	CONF_str_cpy(ha.aggregator[2].user, param, value);
+	CONF_str_cpy(ha.aggregator[2].hmac, param, value);
+
+
+
+	/* Parse publications file configuration. */
 	CONF_str_cpy(pubfile.url, param, value);
 	CONF_arr_str_cpy(pubfile.cnstr, conf->pubfile.cnstrCount, CONF_MAX_CONSTRAINTS, param, value);
 
@@ -151,15 +197,19 @@ static int conf_control(KSITest_Conf *conf) {
 	CONF_CONTROL_STR(conf, aggregator.pass, res);
 	CONF_CONTROL_STR(conf, aggregator.user, res);
 	CONF_CONTROL_INT(conf, aggregator.port, res, 0);
-	/* Optional values: */
-	/*CONF_CONTROL_STR(conf, aggregator.hmac, res);*/
+	/* Optional values:
+	 * - aggregator.hmac
+	 * - ha.aggregator[].*
+	 */
 
 	CONF_CONTROL_STR(conf, extender.host, res);
 	CONF_CONTROL_STR(conf, extender.pass, res);
 	CONF_CONTROL_STR(conf, extender.user, res);
 	CONF_CONTROL_INT(conf, extender.port, res, 0);
-	/* Optional values: */
-	/*CONF_CONTROL_STR(conf, extender.hmac, res);*/
+	/* Optional values:
+	 * - extender.hmac
+	 * - ha.extender[].*
+	 */
 
 	CONF_CONTROL_STR(conf, pubfile.url, res);
 
