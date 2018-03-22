@@ -28,7 +28,7 @@
 #include "fast_tlv.h"
 
 #include "impl/net_http_impl.h"
-#include "impl/net_impl.h"
+#include "impl/net_async_impl.h"
 
 typedef struct WinHTTPAsyncReq_st  WinHTTPAsyncReq;
 

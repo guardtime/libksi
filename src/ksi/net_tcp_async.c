@@ -29,8 +29,7 @@
 #include "net_async.h"
 
 #include "impl/ctx_impl.h"
-#include "impl/net_http_impl.h"
-#include "impl/net_tcp_impl.h"
+#include "impl/net_async_impl.h"
 #include "impl/net_sock_impl.h"
 
 #define TCP_INVALID_SOCKET_FD (-1)
