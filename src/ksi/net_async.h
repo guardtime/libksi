@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2018 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -47,6 +47,8 @@ extern "C" {
 	 * \param[in]		o				Instance to be freed.
 	 */
 	void KSI_AsyncHandle_free(KSI_AsyncHandle *o);
+
+	int KSI_AbstractAsyncHandle_new(KSI_CTX *ctx, KSI_AsyncHandle **o);
 
 	/**
 	 * Constructor for the async handle object.
@@ -245,12 +247,19 @@ extern "C" {
 	 */
 	int KSI_SigningAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service);
 
+	/**
+	 * Creates and initalizes a concrete async service object to be used to interract with extender endpoint.
+	 * \param[in]		ctx				KSI context.
+	 * \param[out]		service			Pointer to the receiving pointer.
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_AsyncService_free
+	 */
 	int KSI_ExtendingAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service);
 
 	/**
 	 * Non-blocking aggregation request setter. All request are put into output queue untill, they are sent
 	 * during #KSI_AsyncService_run call.
-	 * \param[in]		s				Async service instance.
+	 * \param[in]		service			Async service instance.
 	 * \param[out]		handle			Async handle associated with the request.
 	 * \return #KSI_OK, when operation succeeded;
 	 * \return #KSI_ASYNC_REQUEST_CACHE_FULL, if the internal cache is full. In this case the
@@ -264,7 +273,7 @@ extern "C" {
 	 * \see #KSI_AsyncService_run for handling communication towards service endpoint.
 	 * \see #KSI_ASYNC_OPT_REQUEST_CACHE_SIZE for increasing the cache size.
 	 */
-	int KSI_AsyncService_addRequest(KSI_AsyncService *s, KSI_AsyncHandle *handle);
+	int KSI_AsyncService_addRequest(KSI_AsyncService *service, KSI_AsyncHandle *handle);
 
 	/**
 	 * Non-blocking send/receive worker. The method will open a connection to remote service, dispatch cached
@@ -289,10 +298,12 @@ extern "C" {
 	typedef enum KSI_AsyncHandleState_en {
 		/** The state of the request is undefined. */
 		KSI_ASYNC_STATE_UNDEFINED = 0,
+
 		/** The request is cached in the output queue. */
 		KSI_ASYNC_STATE_WAITING_FOR_DISPATCH,
 		/** The request has been dispathed. */
 		KSI_ASYNC_STATE_WAITING_FOR_RESPONSE,
+
 		/**
 		 * The response has been received and is ready to be read. This is the final state of a request.
 		 * \see #KSI_AsyncHandle_getAggregationResp for extracting aggregation response.
@@ -393,6 +404,28 @@ extern "C" {
 		 */
 		KSI_ASYNC_OPT_MAX_REQUEST_COUNT,
 
+		/**
+		 * If configured, on reception of #KSI_Config the callback is invoked instead of returning the configuration via
+		 * #KSI_AsyncHandle with the state #KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED.
+		 * \param		p_func		Paramer of type #KSI_Config_Callback.
+		 * \note For reading the stored value via #KSI_AsyncService_getOption a parameter of type size_t should be used,
+		 * and casted to #KSI_Config_Callback before use.
+		 * \note The #KSI_CTX push config callback configuration will be overriden by current setting.
+		 * \see #KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK and #KSI_OPT_EXT_CONF_RECEIVED_CALLBACK for #KSI_CTX callback
+		 * configuration.
+		 */
+		KSI_ASYNC_OPT_PUSH_CONF_CALLBACK,
+
+		/**
+		 * Get the list of high availability service subservices.
+		 * \param[out]	p_list		Paramer of type #KSI_AsyncServiceList.
+		 * \note Only functioning as option getter on a high availability service.
+		 * \note For reading the stored value via #KSI_AsyncService_getOption a parameter of type size_t should be used,
+		 * and casted to #KSI_AsyncServiceList before use.
+		 * \see #KSI_AsyncService_setEndpoint for adding a subservice to the high availability service.
+		 */
+		KSI_ASYNC_OPT_HA_SUBSERVICE_LIST,
+
 		__KSI_ASYNC_OPT_COUNT
 	} KSI_AsyncOption;
 
@@ -405,6 +438,7 @@ extern "C" {
 	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncOption defines supported options and parameter types.
 	 * \see #KSI_AsyncService_getOption for extracting option values.
+	 * \note Before appling any options the service endpoint has to be configured.
 	 */
 	int KSI_AsyncService_setOption(KSI_AsyncService *s, const KSI_AsyncOption option, void *value);
 
@@ -418,6 +452,24 @@ extern "C" {
 	 * \see #KSI_AsyncService_setOption for applying option values.
 	 */
 	int KSI_AsyncService_getOption(const KSI_AsyncService *s, const KSI_AsyncOption option, void *value);
+
+	/**
+	 * Setter for the service endpoint.
+	 * \param[in]	service		Pointer to the async service.
+	 * \param[in]	uri			Host name.
+	 * \param[in]	loginId		User name.
+	 * \param[in]	key			HMAC shared secret.
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_SigningAsyncService_new or #KSI_ExtendingAsyncService_new for constucting async service.
+	 * \see #KSI_SigningHighAvailabilityService_new or #KSI_ExtendingHighAvailabilityService_new for constucting
+	 * high availability async service.
+	 * \see #KSI_AsyncService_free
+	 * \see #KSI_HA_MAX_SUBSERVICES for the maximum number of high availability subservices.
+	 * \note In order to setup several subservices on a high availability #KSI_AsyncService returned from
+	 * #KSI_SigningHighAvailabilityService_new or #KSI_ExtendingHighAvailabilityService_new, the method should
+	 * be called multiple times.
+	 */
+	int KSI_AsyncService_setEndpoint(KSI_AsyncService *service, const char *uri, const char *loginId, const char *key);
 
 	/**
 	 * @}

@@ -26,7 +26,7 @@
 #include <ksi/types.h>
 #include <ksi/net_async.h>
 
-#include "../src/ksi/impl/net_impl.h"
+#include "../src/ksi/impl/net_async_impl.h"
 
 #include "support_tests.h"
 
