@@ -763,8 +763,6 @@ static void asyncExtend_signature(CuTest* tc, const char *url, const char *user,
 	int res;
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *handle = NULL;
-	KSI_ExtendReq *request = NULL;
-	KSI_Integer *signTime = NULL;
 	time_t startTime;
 	size_t onHold = 0;
 	char respReceived = 0;

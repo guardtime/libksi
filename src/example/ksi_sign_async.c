@@ -364,6 +364,7 @@ int main(int argc, char **argv) {
 						fprintf(stderr, "Error: [0x%x:%ld] %s ", err, extErr, KSI_getErrorString(err));
 						if (errMsg != NULL) fprintf(stderr, "(%s) ", KSI_Utf8String_cstr(errMsg));
 
+						/* Try to resend the failed request. */
 						res = KSI_AsyncService_addRequest(as, respHandle);
 						if (res == KSI_OK) {
 							fprintf(stderr, " ...resending.\n");

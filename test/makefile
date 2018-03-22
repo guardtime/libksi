@@ -90,6 +90,7 @@ INTTESTS_OBJ = \
 	$(OBJ_DIR)\all_integration_tests.obj \
 	$(OBJ_DIR)\aggre_integration_test.obj \
 	$(OBJ_DIR)\aggre_async_integration_test.obj \
+	$(OBJ_DIR)\aggre_ha_integration_test.obj \
 	$(OBJ_DIR)\ext_integration_tests.obj \
 	$(OBJ_DIR)\ext_async_integration_tests.obj \
 	$(OBJ_DIR)\pub_integration_tests.obj \
@@ -102,7 +103,13 @@ RESIGNER_OBJ = \
 	$(OBJ_DIR)\resigner.obj
 
 ASYNCSIGNER_OBJ = \
-	$(OBJ_DIR)\test_sign_async.obj \
+	$(OBJ_DIR)\test_async_signer.obj \
+	$(OBJ_DIR)\support_tests.obj \
+	$(OBJ_DIR)\CuTest.obj \
+	$(OBJ_DIR)\test_conf.obj
+
+HASIGNER_OBJ = \
+	$(OBJ_DIR)\test_ha_signer.obj \
 	$(OBJ_DIR)\support_tests.obj \
 	$(OBJ_DIR)\CuTest.obj \
 	$(OBJ_DIR)\test_conf.obj
@@ -179,7 +186,7 @@ LDFLAGS = $(LDFLAGS) $(LDEXTRA)
 
 
 
-default: $(BIN_DIR)\alltests.exe $(BIN_DIR)\integrationtests.exe $(BIN_DIR)\async-signer.exe
+default: $(BIN_DIR)\alltests.exe $(BIN_DIR)\integrationtests.exe $(BIN_DIR)\async-signer.exe $(BIN_DIR)\ha-signer.exe
 
 resigner: $(BIN_DIR)\resigner.exe
 
@@ -249,6 +256,22 @@ $(BIN_DIR)\async-signer.exe: $(BIN_DIR) $(ASYNCSIGNER_OBJ)
 !ENDIF
 !ENDIF
 
+$(BIN_DIR)\ha-signer.exe: $(BIN_DIR) $(HASIGNER_OBJ)
+	link $(LDFLAGS) /OUT:$@ $(HASIGNER_OBJ) $(EXT_LIB)
+!IF "$(DLL)" == "dll"
+	copy "$(LIB_DIR)\libksiapi$(RTL).dll" "$(BIN_DIR)\" /Y /D
+!IF "$(NET_PROVIDER)" == "CURL"
+!IF "$(RTL)" == "MT" || "$(RTL)" == "MD"
+	copy "$(CURL_DIR)\$(DLL)\libcurl$(RTL).dll" "$(BIN_DIR)\libcurl.dll" /Y
+!ELSE
+	copy "$(CURL_DIR)\$(DLL)\libcurl$(RTL).dll" "$(BIN_DIR)\libcurl_debug.dll" /Y
+!ENDIF
+!ENDIF
+!IF "$(HASH_PROVIDER)" == "OPENSSL" || "$(TRUST_PROVIDER)" == "OPENSSL"
+	copy "$(OPENSSL_DIR)\$(DLL)\libeay32$(RTL).dll" "$(BIN_DIR)\libeay32.dll" /Y
+!ENDIF
+!ENDIF
+
 
 #Creates OBJ_DIR for ALLTESTS_OBJ
 $(ALLTESTS_OBJ): $(OBJ_DIR)
@@ -258,6 +281,9 @@ $(RESIGNER_OBJ): $(OBJ_DIR)
 
 #Creates OBJ_DIR for ASYNCSIGNER_OBJ
 $(ASYNCSIGNER_OBJ): $(OBJ_DIR)
+
+#Creates OBJ_DIR for HASIGNER_OBJ
+$(HASIGNER_OBJ): $(OBJ_DIR)
 
 #C file compilation
 {$(SRC_DIR)\}.c{$(OBJ_DIR)\}.obj:

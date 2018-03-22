@@ -31,6 +31,7 @@ int KSITest_memcmp(void *ptr1, void *ptr2, size_t len);
 #define TEST_SCHEME_TCP "ksi+tcp"
 
 const char *KSITest_composeUri(const char *scheme, const KSITest_ServiceConf *service);
+int KSITest_HighAvailabilityService_setEndpoint(KSI_AsyncService *service, const char *scheme, KSITest_ServiceConf *srvConf, KSITest_ServiceConf *haConf);
 
 #ifdef	__cplusplus
 }

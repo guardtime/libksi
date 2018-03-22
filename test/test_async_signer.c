@@ -173,7 +173,7 @@ int main(int argc, char **argv) {
 	{
 		int level = atoi(argv[ARGV_LOG_LEVEL]);
 		if (level) {
-			logFile = fopen("test_sign_async.log", "w");
+			logFile = fopen("async-signer.log", "w");
 			if (logFile == NULL) {
 				fprintf(stderr, "Unable to open log file.\n");
 				exit(EXIT_FAILURE);
