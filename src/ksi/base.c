@@ -932,7 +932,7 @@ int KSI_ERR_getBaseErrorMessage(KSI_CTX *ctx, char *buf, size_t len, int *error,
 	err = ctx->errors;
 
 	if (ctx->errors_count) {
-		KSI_strncpy(buf, err->message, len);
+		KSI_strncpy(buf, *err->message != '\0' ? err->message : KSI_getErrorString(err->statusCode), len);
 		if (error != NULL)	*error = err->statusCode;
 		if (ext != NULL)	*ext = err->extErrorCode;
 	} else {
