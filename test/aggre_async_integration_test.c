@@ -273,6 +273,9 @@ static void asyncSigning_loop_getResponse(CuTest* tc, const char *url, const cha
 					KSI_Signature_free(signature);
 				}
 				break;
+			case KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED:
+				/* do nothing. */
+				break;
 
 			case KSI_ASYNC_STATE_ERROR:
 				CuFail(tc, "Requests must succeed.");
@@ -410,6 +413,9 @@ static void asyncSigning_collect_getResponse(CuTest* tc, const char *url, const 
 					res = KSI_AsyncHandle_getAggregationResp(handle, &resp);
 					CuAssert(tc, "Failed to get aggregation response.", res == KSI_OK && resp != NULL);
 				}
+				break;
+			case KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED:
+				/* do nothing. */
 				break;
 
 			default:

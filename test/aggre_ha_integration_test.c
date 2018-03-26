@@ -40,8 +40,6 @@
 extern KSI_CTX *ctx;
 extern KSITest_Conf conf;
 
-#define KSITEST_ASYNC_SLEEP_TIME_MS 100
-
 static const char *TEST_REQUESTS[] = {
 	"Guardtime", "KSI", "Blockchain",
 	"is an", "industrial", "scale", "blockchain", "platform",
@@ -178,6 +176,7 @@ static void asyncSigning_loop_getResponse(CuTest* tc, KSI_AsyncService *as) {
 	const char **p_req = NULL;
 	size_t onHold = 0;
 	size_t received = 0;
+	size_t slept = 0;
 
 	KSI_LOG_debug(ctx, "%s: START", __FUNCTION__);
 	KSI_ERR_clearErrors(ctx);
@@ -230,16 +229,18 @@ static void asyncSigning_loop_getResponse(CuTest* tc, KSI_AsyncService *as) {
 
 		res = KSI_AsyncService_run(as, &respHandle, &onHold);
 		CuAssert(tc, "Failed to run async service.", res == KSI_OK);
-
 		if (respHandle == NULL) {
 			if (*p_req == NULL) {
+				CuAssert(tc, "No response within timeout.", slept < KSITEST_ASYNC_NO_RESP_TIMEOUT_MS);
 				/* There is nothing to be sent. */
 				/* Wait for a while to avoid busy loop. */
 				KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
 				sleep_ms(KSITEST_ASYNC_SLEEP_TIME_MS);
+				slept += KSITEST_ASYNC_SLEEP_TIME_MS;
 			}
 			continue;
 		}
+		slept = 0;
 
 		res = KSI_AsyncHandle_getState(respHandle, &state);
 		CuAssert(tc, "Unable to get request state.", res == KSI_OK && state != KSI_ASYNC_STATE_UNDEFINED);
@@ -307,6 +308,9 @@ static void asyncSigning_loop_getResponse(CuTest* tc, KSI_AsyncService *as) {
 
 					KSI_Signature_free(signature);
 				}
+				break;
+			case KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED:
+				/* do nothing. */
 				break;
 
 			case KSI_ASYNC_STATE_ERROR:
@@ -443,6 +447,7 @@ static void asyncSigning_collect_getResponse(CuTest* tc, const char *scheme) {
 	size_t receivedCount = 0;
 	size_t i;
 	KSI_List *list = NULL;
+	size_t slept = 0;
 
 	KSI_LOG_debug(ctx, "%s: START", __FUNCTION__);
 	KSI_ERR_clearErrors(ctx);
@@ -504,6 +509,7 @@ static void asyncSigning_collect_getResponse(CuTest* tc, const char *scheme) {
 		size_t prevCount = receivedCount;
 
 		KSI_LOG_debug(ctx, "%s: RUN.", __FUNCTION__);
+		CuAssert(tc, "No response within timeout.", slept < KSITEST_ASYNC_NO_RESP_TIMEOUT_MS * 5);
 
 		res = KSI_AsyncService_run(as, NULL, NULL);
 		CuAssert(tc, "Failed to run async service.", res == KSI_OK);
@@ -515,7 +521,11 @@ static void asyncSigning_collect_getResponse(CuTest* tc, const char *scheme) {
 			/* Wait for a while to avoid busy loop. */
 			KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
 			sleep_ms(KSITEST_ASYNC_SLEEP_TIME_MS);
+			slept += KSITEST_ASYNC_SLEEP_TIME_MS;
+		} else {
+			slept = 0;
 		}
+
 	} while (receivedCount != added);
 
 	for (i = 0; i < receivedCount; i++) {
@@ -549,6 +559,9 @@ static void asyncSigning_collect_getResponse(CuTest* tc, const char *scheme) {
 					res = KSI_AsyncHandle_getAggregationResp(handle, &resp);
 					CuAssert(tc, "Failed to get aggregation response.", res == KSI_OK && resp != NULL);
 				}
+				break;
+			case KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED:
+				/* do nothing. */
 				break;
 
 			default:
@@ -586,6 +599,7 @@ static void asyncSigning_getError(CuTest* tc, const char *scheme, KSITest_Servic
 	size_t onHold = 0;
 	KSI_AggregationReq *req = NULL;
 	KSI_DataHash *hsh = NULL;
+	size_t slept = 0;
 
 	KSI_LOG_debug(ctx, "%s: START", __FUNCTION__);
 	KSI_ERR_clearErrors(ctx);
@@ -626,12 +640,15 @@ static void asyncSigning_getError(CuTest* tc, const char *scheme, KSITest_Servic
 		CuAssert(tc, "Failed to run async service.", res == KSI_OK);
 
 		if (handle == NULL) {
+			CuAssert(tc, "No response within timeout.", slept < KSITEST_ASYNC_NO_RESP_TIMEOUT_MS);
 			/* There is nothing has been received. */
 			/* Wait for a while to avoid busy loop. */
 			KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
 			sleep_ms(KSITEST_ASYNC_SLEEP_TIME_MS);
+			slept += KSITEST_ASYNC_SLEEP_TIME_MS;
 			continue;
 		}
+		slept = 0;
 
 		res = KSI_AsyncHandle_getState(handle, &state);
 		CuAssert(tc, "Unable to get request state.", res == KSI_OK && state != KSI_ASYNC_STATE_UNDEFINED);
@@ -906,14 +923,14 @@ static void asyncSigning_requestConfigOnly(CuTest* tc, KSI_AsyncService *as) {
 
 		if (handle == NULL) {
 			CuAssert(tc, "No response in during timeout.", slept < (KSITEST_ASYNC_SLEEP_TIME_MS * 10));
-			slept += KSITEST_ASYNC_SLEEP_TIME_MS;
-
 			/* There is nothing has been received. */
 			/* Wait for a while to avoid busy loop. */
 			KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
 			sleep_ms(KSITEST_ASYNC_SLEEP_TIME_MS);
+			slept += KSITEST_ASYNC_SLEEP_TIME_MS;
 			continue;
 		}
+		slept = 0;
 
 		res = KSI_AsyncHandle_getState(handle, &state);
 		CuAssert(tc, "Unable to get request state.", res == KSI_OK && state != KSI_ASYNC_STATE_UNDEFINED);
@@ -978,6 +995,7 @@ static void asyncSigning_requestConfigOnlyUseCallback(CuTest* tc, KSI_AsyncServi
 	KSI_AggregationReq *req = NULL;
 	KSI_Config *cfg = NULL;
 	size_t pendingCount = 0;
+	size_t slept = 0;
 
 	KSI_LOG_debug(ctx, "%s: START", __FUNCTION__);
 	KSI_ERR_clearErrors(ctx);
@@ -1013,16 +1031,18 @@ static void asyncSigning_requestConfigOnlyUseCallback(CuTest* tc, KSI_AsyncServi
 		CuAssert(tc, "Failed to run async service.", res == KSI_OK);
 		CuAssert(tc, "No handle should be returned.", handle == NULL);
 
-		if (onHold) {
+		if (!onHold) {
+			CuAssert(tc, "No response within timeout.", slept < KSITEST_ASYNC_NO_RESP_TIMEOUT_MS);
 			/* There is nothing has been received. */
 			/* Wait for a while to avoid busy loop. */
 			KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
 			sleep_ms(KSITEST_ASYNC_SLEEP_TIME_MS);
+			slept += KSITEST_ASYNC_SLEEP_TIME_MS;
 			continue;
 		}
+		slept = 0;
 	} while (onHold);
 	CuAssert(tc, "Callback must have been invoked.", callbackCount > 0);
-
 
 	KSI_LOG_debug(ctx, "%s: FINISH in %fs.", __FUNCTION__, difftime(time(NULL), startTime));
 }
@@ -1123,6 +1143,7 @@ static void asyncSigning_requestConfigWithAggrReq(CuTest* tc, const char *scheme
 	const char *p_req = TEST_REQUESTS[0];
 	char confReceived = 0;
 	char respReceived = 0;
+	size_t slept = 0;
 
 	KSI_LOG_debug(ctx, "%s: START", __FUNCTION__);
 	KSI_ERR_clearErrors(ctx);
@@ -1171,12 +1192,15 @@ static void asyncSigning_requestConfigWithAggrReq(CuTest* tc, const char *scheme
 		CuAssert(tc, "Failed to run async service.", res == KSI_OK);
 
 		if (respHandle == NULL) {
+			CuAssert(tc, "No response within timeout.", slept < KSITEST_ASYNC_NO_RESP_TIMEOUT_MS);
 			/* There is nothing has been received. */
 			/* Wait for a while to avoid busy loop. */
 			KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
 			sleep_ms(KSITEST_ASYNC_SLEEP_TIME_MS);
+			slept += KSITEST_ASYNC_SLEEP_TIME_MS;
 			continue;
 		}
+		slept = 0;
 
 		res = KSI_AsyncHandle_getState(respHandle, &state);
 		CuAssert(tc, "Unable to get request state.", res == KSI_OK && state != KSI_ASYNC_STATE_UNDEFINED);
@@ -1247,6 +1271,7 @@ static void asyncSigning_requestConfigAndAggrRequest_loop(CuTest* tc, const char
 	KSI_Config *cfg = NULL;
 	KSI_AsyncHandle *cfgHandle = NULL;
 	KSI_AggregationReq *cfgReq = NULL;
+	size_t slept = 0;
 
 	KSI_LOG_debug(ctx, "%s: START", __FUNCTION__);
 	KSI_ERR_clearErrors(ctx);
@@ -1322,13 +1347,16 @@ static void asyncSigning_requestConfigAndAggrRequest_loop(CuTest* tc, const char
 
 		if (respHandle == NULL) {
 			if (*p_req == NULL) {
+				CuAssert(tc, "No response within timeout.", slept < KSITEST_ASYNC_NO_RESP_TIMEOUT_MS);
 				/* There is nothing to be sent. */
 				/* Wait for a while to avoid busy loop. */
 				KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
 				sleep_ms(KSITEST_ASYNC_SLEEP_TIME_MS);
+				slept += KSITEST_ASYNC_SLEEP_TIME_MS;
 			}
 			continue;
 		}
+		slept = 0;
 
 		res = KSI_AsyncHandle_getState(respHandle, &state);
 		CuAssert(tc, "Unable to get request state.", res == KSI_OK && state != KSI_ASYNC_STATE_UNDEFINED);
