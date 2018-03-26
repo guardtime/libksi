@@ -167,7 +167,7 @@ static void reqQueue_clearWithError(KSI_LIST(KSI_AsyncHandle) *reqQueue, int err
 		int res;
 		KSI_AsyncHandle *req = NULL;
 
-		res = KSI_AsyncHandleList_elementAt(reqQueue, size - 1, &req);
+		res = KSI_AsyncHandleList_remove(reqQueue, size - 1, &req);
 		if (res != KSI_OK || req == NULL) return;
 
 		/* Update request state. */
