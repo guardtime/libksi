@@ -730,6 +730,10 @@ static int responseHandler(KSI_HighAvailabilityService *has, KSI_Config_Callback
 						KSI_pushError(has->ctx, res, NULL);
 						goto cleanup;
 					}
+					if (haRequest == NULL) {
+						KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "HA missing request context.");
+						goto cleanup;
+					}
 					haRequest->expectedRespCount--;
 					reqHndl = haRequest->asyncHandle;
 
@@ -784,6 +788,10 @@ static int responseHandler(KSI_HighAvailabilityService *has, KSI_Config_Callback
 					res = KSI_AsyncHandle_getRequestCtx(respHndl, (const void **)&haRequest);
 					if (res != KSI_OK) {
 						KSI_pushError(has->ctx, res, NULL);
+						goto cleanup;
+					}
+					if (haRequest == NULL) {
+						KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "HA missing request context.");
 						goto cleanup;
 					}
 					haRequest->expectedRespCount--;
